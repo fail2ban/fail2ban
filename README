@@ -38,7 +38,9 @@ retrieves the message time using timeregex and timepattern.
 It finally gets the ip and if it has already done 3 or more
 password failures in the last banTime, the ip is banned for
 banTime using a iptable rule. After banTime, the rule is
-deleted.
+deleted. Notice that if no "plain" ip is available, Fail2Ban
+try to do DNS lookup in order to found one or several ip's to
+ban.
 
 Sections can be freely added so it is possible to monitor
 several daemons at the same time.
@@ -54,6 +56,7 @@ Installation:
 
 Require: python-2.3 (http://www.python.org)
          log4py-1.1 (http://sourceforge.net/projects/log4py)
+         host (http://www.isc.org/products/BIND/bind9.html)
 
 To install, just do:
 
