@@ -26,10 +26,10 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import posix,sys,os
-import string,re,time
+import posix, time, sys
 
 from firewall.iptables import Iptables
+from logreader.metalog import Metalog
 
 def checkForRoot():
 	""" Check for root user.
@@ -40,132 +40,35 @@ def checkForRoot():
 	else:
 		return False
 
-# start: To be removed
-def executeCmd(cmd):
-	return #os.system(cmd)
-
-def unBanIP(ip):
-	iptables = 'iptables -D INPUT -i eth0 -s '+ip+' -j DROP'
-	executeCmd(iptables)
-	print iptables
-
-def banIP(ip):
-	iptables = 'iptables -I INPUT 1 -i eth0 -s '+ip+' -j DROP'
-	executeCmd(iptables)
-	print iptables
-# end:
-
-def checkForUnBan(banList, currentTime, banTime):
-	""" Check for user to remove from ban list.
-	"""
-	iterBanList = banList.iteritems()
-	for i in range(len(banList)):
-		element = iterBanList.next()
-		ip = element[0]
-		btime = element[1]
-		if btime < currentTime-banTime:
-			del banList[ip]
-			unBanIP(ip)
-			print '`->', currentTime
-	return banList
-
-def checkForBan(retryList, banList, currentTime):
-	iterRetry = retryList.iteritems()
-	for i in range(len(retryList)):
-		element = iterRetry.next()
-		retry = element[1][0]
-		ip = element[0]
-		if element[1][0] > 2 and not banList.has_key(ip):
-			banList[ip] = currentTime
-			banIP(ip)
-			print '`->', currentTime
-	return banList
-
-def flushBanList(banList):
-	iterBanList = banList.iteritems()
-	for i in range(len(banList)):
-		element = iterBanList.next()
-		ip = element[0]
-		unBanIP(ip)
-
-def parseLogLine(line):
-	""" Match sshd failed password log
-	"""
-	if re.search("Failed password", line):
-		matchIP = re.search("(?:\d{1,3}\.){3}\d{1,3}", line)
-		return matchIP
-
 if __name__ == "__main__":
 	
-	# start: For object oriented testing
-	f = Iptables()
-	f.banIP('11', 1231)
-	f.banIP('13', 1232)
-	f.banIP('13', 1233)
-	f.unBanIP('11')
-	f.viewBanList()
-	f.flushBanList()
-	# end:
+	fireWall = Iptables(600)
+	logFile = Metalog("./log-test/test", 600)
 	
 	if not checkForRoot():
 		print "You must be root."
 		#sys.exit(-1)
 	
-	logPath = './log-test/test'
-	banTime = 60
-	ignoreIPs = '127.0.0.1'
+	logFile.addIgnoreIP("127.0.0.1")
 	
-	lastModTime = 0
-	banList = dict()
 	while True:
-		try:
-			currentTime = time.time()
+		try:			
+			fireWall.checkForUnBan()
 			
-			banList = checkForUnBan(banList, currentTime, banTime)
-			
-			try:
-				pwdFailStats = os.stat(logPath)
-			except OSError:
-				print "Unable to get stat on", logPath
-				sys.exit(-1)
-			
-			if lastModTime == pwdFailStats.st_mtime:
+			if not logFile.isModified():
 				time.sleep(1)
 				continue
 			
-			print logPath, 'has been modified'
-			lastModTime = pwdFailStats.st_mtime
+			failList = logFile.getPwdFailure()
 			
-			try:
-				pwdfail = open(logPath)
-			except OSError:
-				print "Unable to open", logPath
-				sys.exit(-1)
+			iterFailList = failList.iteritems()
+			for i in range(len(failList)):
+				element = iterFailList.next()
+				if element[1][0] > 2:
+					fireWall.addBanIP(element[0])
 			
-			retryList = dict()
-			for line in pwdfail.readlines():
-				match = parseLogLine(line)
-				if match:
-					ip = match.group()
-					date = list(time.strptime(line[0:15], "%b %d %H:%M:%S"))
-					date[0] = time.gmtime()[0]
-					unixTime = time.mktime(date)
-					if unixTime < currentTime-banTime:
-						continue
-					if re.search(ip, ignoreIPs):
-						print 'Ignore ', ip
-						continue
-					print 'Found', ip, 'at', unixTime
-					if retryList.has_key(`ip`):
-						retryList[`ip`] = (retryList[`ip`][0]+1,unixTime)
-					else:
-						retryList[`ip`] = (1,unixTime)
-		
-			pwdfail.close()
-		
-			banList = checkForBan(retryList, banList, currentTime)
 		except KeyboardInterrupt:
 			print 'Restoring iptables...'
-			flushBanList(banList)
+			fireWall.flushBanList()
 			print 'Exiting...'
 			sys.exit(0)
