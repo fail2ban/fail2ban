@@ -63,7 +63,7 @@ def usage():
 	print "  -l <FILE>  log message in FILE"
 	print "  -r <VALUE> allow a max of VALUE password failure"
 	print "  -t <TIME>  ban IP for TIME seconds"
-	print "  -v         verbose"
+	print "  -v         verbose. Use twice for greater effect"
 	print "  -w <FIWA>  select the firewall to use. Can be iptables,"
 	print "             ipfwadm or ipfw"
 	print
@@ -212,7 +212,7 @@ if __name__ == "__main__":
 	logSys.set_formatstring("%T %L %M")
 	
 	conf = dict()
-	conf["verbose"] = False
+	conf["verbose"] = 0
 	conf["background"] = False
 	conf["debug"] = False
 	conf["conffile"] = "/etc/fail2ban.conf"
@@ -357,7 +357,7 @@ if __name__ == "__main__":
 		if opt[0] == "-h":
 			usage()
 		if opt[0] == "-v":
-			conf["verbose"] = True
+			conf["verbose"] = conf["verbose"] + 1
 		if opt[0] == "-b":
 			conf["background"] = True
 		if opt[0] == "-d":
@@ -393,8 +393,12 @@ if __name__ == "__main__":
 
 	# Process some options
 	for c in conf:
-		if c == "verbose" and conf[c]:
-			logSys.set_loglevel(log4py.LOGLEVEL_VERBOSE)
+		if c == "verbose":
+			logSys.warn("Verbose level is "+`conf[c]`)
+			if conf[c] == 1:
+				logSys.set_loglevel(log4py.LOGLEVEL_VERBOSE)
+			elif conf[c] > 1:
+				logSys.set_loglevel(log4py.LOGLEVEL_DEBUG)
 		elif c == "debug" and conf[c]:
 			logSys.set_loglevel(log4py.LOGLEVEL_DEBUG)
 			logSys.set_formatstring(log4py.FMT_DEBUG)
