@@ -12,6 +12,7 @@ ver. 0.3.0 (02/??/2005) - alpha
 - Re-writting of parts of the code in order to handle several
   log files with different rules
 - Removed sshd.py because it is no more needed
+- Fixed a bug when exiting with IP in the ban list
 
 ver. 0.1.2 (11/21/2004) - beta
 ----------
