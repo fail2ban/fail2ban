@@ -29,9 +29,9 @@ from firewall import Firewall
 class Iptables(Firewall):
 	
 	def banIP(self, ip):
-		query = 'iptables -I INPUT 1 -i eth0 -s '+ip+' -j DROP'
+		query = "iptables -I INPUT 1 -i eth0 -s "+ip+" -j DROP"
 		return query
 	
 	def unBanIP(self, ip):
-		query = 'iptables -D INPUT -i eth0 -s '+ip+' -j DROP'
+		query = "iptables -D INPUT -i eth0 -s "+ip+" -j DROP"
 		return query
