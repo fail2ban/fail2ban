@@ -85,6 +85,7 @@ options:
   -d         start fail2ban in debug mode
   -e <INTF>  ban IP on the INTF interface
   -c <FILE>  read configuration file FILE
+  -p <FILE>  create PID lock in FILE
   -h         display this help message
   -i <IP(s)> IP(s) to ignore
   -l <FILE>  log message in FILE
