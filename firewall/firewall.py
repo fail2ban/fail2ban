@@ -24,24 +24,54 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import time
+
 class Firewall:
 	
 	banList = dict()
 	
-	def addBanIP(self, ip, time):
-		self.banList[ip] = time
+	def __init__(self, banTime):
+		self.banTime = banTime
+	
+	def addBanIP(self, ip):
+		if not self.inBanList(ip):
+			self.banList[ip] = time.time()
+			self.executeCmd(self.banIP(ip))
+		else:
+			print ip, "already in ban list"
 	
 	def delBanIP(self, ip):
-		del self.banList[ip]
+		if self.inBanList(ip):
+			del self.banList[ip]
+			self.executeCmd(self.unBanIP(ip))
+		else:
+			print ip, "not in ban list"
+	
+	def inBanList(self, ip):
+		return self.banList.has_key(ip)
+	
+	def checkForUnBan(self):
+		""" Check for user to remove from ban list.
+		"""
+		banListTemp = self.banList.copy()
+		iterBanList = banListTemp.iteritems()
+		for i in range(len(self.banList)):
+			element = iterBanList.next()
+			ip = element[0]
+			btime = element[1]
+			if btime < time.time()-self.banTime:
+				self.delBanIP(ip)
+				print '`->', time.time()
 	
 	def flushBanList(self):
 		iterBanList = self.banList.iteritems()
 		for i in range(len(self.banList)):
 			element = iterBanList.next()
 			ip = element[0]
-			self.unBanIP(ip)
+			self.delBanIP(ip)
 	
 	def executeCmd(self, cmd):
+		print cmd
 		return #os.system(cmd)
 		
 	def viewBanList(self):
