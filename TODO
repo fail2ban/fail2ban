@@ -1,0 +1,15 @@
+               __      _ _ ___ _               
+              / _|__ _(_) |_  ) |__  __ _ _ _  
+             |  _/ _` | | |/ /| '_ \/ _` | ' \ 
+             |_| \__,_|_|_/___|_.__/\__,_|_||_|
+
+=============================================================
+ToDo
+=============================================================
+
+- cleanup fail2ban.py
+- resolve DNS with 'host' and os.popen (???)
+- improve configuration file and command line options
+  handling
+- improve installation process
+- create a web page for the project
