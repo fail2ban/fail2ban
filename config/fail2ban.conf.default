@@ -16,6 +16,10 @@ background = false
 # and bypass root user test.
 debug = false
 
+# pidlock: the path of the PID lock file. Fail2Ban must be
+# able to write into that file.
+#pidlock = /var/run/fail2ban.pid
+
 # logfile: the path of the file for logging messages of
 # fail2ban.
 logfile = /var/log/fail2ban.log
@@ -54,12 +58,13 @@ logfile = log-test/apache
 timeregex = \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
 
 # timepattern: indicates the "timeregex" fields signification.
+# Notice that '%' must be espaced with '%'.
 # See syntax here: http://rgruet.free.fr/PQR2.3.html#timeModule
 timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
 
 # failregex: regular expression which have to match the
 # message written in the log file in case of password failure.
-failregex = authentication failure
+failregex = authentication failure|user .* not found
 
 [SSH]
 # logfile: file to monitor.
@@ -71,10 +76,11 @@ logfile = log-test/current
 timeregex = \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
 
 # timepattern: indicates the "timeregex" fields signification.
+# Notice that '%' must be espaced with '%'.
 # See syntax here: http://rgruet.free.fr/PQR2.3.html#timeModule
 timepattern = %%b %%d %%H:%%M:%%S
 
 # failregex: regular expression which have to match the
 # message written in the log file in case of password failure.
-failregex = Authentication failure
+failregex = Authentication failure|Failed password
 
