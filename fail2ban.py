@@ -365,7 +365,7 @@ if __name__ == "__main__":
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t)
 		lObj = LogReader(logSys, l["logfile"], l["timeregex"],
-						l["timepattern"], l["failregex"])
+						l["timepattern"], l["failregex"], conf["bantime"])
 		lObj.openLogFile()
 		logList.append(lObj)
 	
