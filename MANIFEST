@@ -14,4 +14,6 @@ logreader/__init__.py
 logreader/logreader.py
 confreader/__init__.py
 confreader/configreader.py
+utils/__init__.py
+utils/dns.py
 config/fail2ban.conf.default
