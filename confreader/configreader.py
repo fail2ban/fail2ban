@@ -29,29 +29,39 @@ import os, sys, time
 from ConfigParser import *
 
 class ConfigReader:
-    """ Reads a log file and reports information about IP that make password
-        failure, bad user or anything else that is considered as doubtful login
-        attempt.    
-    """
-    
-    optionValues = ("logfile", "timeregex", "timepattern", "failregex")
-    
-    def __init__(self, confPath):
-        self.confPath = confPath
-        self.configParser = SafeConfigParser()
-        
-    def openConf(self):
-        self.configParser.read(self.confPath)
-    
-    def getSections(self):
-        return self.configParser.sections()
-        
-    def getLogOptions(self, sec):
-        values = dict()
-        for option in self.optionValues:
-            v = self.configParser.get(sec, option)
-            values[option] = v
-        return values
-        
-    
-    
+	""" This class allow the handling of the configuration options.
+		The DEFAULT section contains the global information about
+		Fail2Ban. Each other section is for a different log file.
+	"""
+	
+	optionValues = ("logfile", "timeregex", "timepattern", "failregex")
+	
+	def __init__(self, logSys, confPath):
+		self.confPath = confPath
+		self.configParser = SafeConfigParser()
+		self.logSys = logSys
+		
+	def openConf(self):
+		""" Opens the configuration file.
+		"""
+		self.configParser.read(self.confPath)
+	
+	def getSections(self):
+		""" Returns all the sections present in the configuration
+			file except the DEFAULT section.
+		"""
+		return self.configParser.sections()
+		
+	def getLogOptions(self, sec):
+		""" Gets all the options of a given section. The options
+			are defined in the optionValues list.
+		"""
+		values = dict()
+		for option in self.optionValues:
+			try:
+				v = self.configParser.get(sec, option)
+				values[option] = v
+			except NoOptionError:
+				self.logSys.info("No "+option+" defined in "+sec)
+		return values
+		
