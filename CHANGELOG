@@ -7,6 +7,14 @@
 Fail2Ban (version 0.1.1)                           10/23/2004
 =============================================================
 
+ver. 0.?.? (??/??/2004) - ???
+----------
+- Add ipfw and ipfwadm support. The rules are taken from
+  BlockIt. Thanks to Robert Edeker
+- Add -e option which allows to set the interface. Thanks to
+  Robert Edeker who reminded me this
+- Small code cleaning
+
 ver. 0.1.1 (10/23/2004) - beta
 ----------
 - Add SIGTERM handler in order to exit nicely when in daemon
