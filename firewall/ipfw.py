@@ -39,7 +39,7 @@ class Ipfw(Firewall):
 	
 	crtRuleNbr = 0
 	
-	def getCrtRuleNbr():
+	def getCrtRuleNbr(self):
 		""" Gets the current rule number.
 		"""
 		return self.crtRuleNbr
