@@ -20,8 +20,16 @@
 # 
 # $Revision$
 
+__author__ = "Cyril Jaquier"
+__version__ = "$Revision$"
+__date__ = "$Date$"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__license__ = "GPL"
+
 import posix,sys,os
 import string,re,time
+
+from firewall.iptables import Iptables
 
 def checkForRoot():
 	""" Check for root user.
@@ -32,6 +40,7 @@ def checkForRoot():
 	else:
 		return False
 
+# start: To be removed
 def executeCmd(cmd):
 	return #os.system(cmd)
 
@@ -44,6 +53,7 @@ def banIP(ip):
 	iptables = 'iptables -I INPUT 1 -i eth0 -s '+ip+' -j DROP'
 	executeCmd(iptables)
 	print iptables
+# end:
 
 def checkForUnBan(banList, currentTime, banTime):
 	""" Check for user to remove from ban list.
@@ -87,11 +97,21 @@ def parseLogLine(line):
 
 if __name__ == "__main__":
 	
+	# start: For object oriented testing
+	f = Iptables()
+	f.banIP('11', 1231)
+	f.banIP('13', 1232)
+	f.banIP('13', 1233)
+	f.unBanIP('11')
+	f.viewBanList()
+	f.flushBanList()
+	# end:
+	
 	if not checkForRoot():
 		print "You must be root."
 		#sys.exit(-1)
 	
-	logPath = './log/temp'
+	logPath = './log-test/test'
 	banTime = 60
 	ignoreIPs = '127.0.0.1'
 	
