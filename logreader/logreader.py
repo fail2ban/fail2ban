@@ -118,7 +118,7 @@ class LogReader:
 		"""
 		ipList = dict()
 		logFile = self.openLogFile()
-		self.setFilePos(logFile)
+		#self.setFilePos(logFile)
 		for line in logFile.readlines():
 			failList = self.findFailure(line)
 			for element in failList:
@@ -134,7 +134,7 @@ class LogReader:
 					ipList[ip] = (ipList[ip][0]+1, unixTime)
 				else:
 					ipList[ip] = (1, unixTime)
-		self.lastPos = logFile.tell()
+		#self.lastPos = logFile.tell()
 		logFile.close()
 		return ipList
 
