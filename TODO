@@ -8,7 +8,7 @@ ToDo
 =============================================================
 
 - cleanup fail2ban.py
-- resolve DNS with 'host' and os.popen (???)
 - improve configuration file and command line options
   handling
 - improve installation process
+- add init script
