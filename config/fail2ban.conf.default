@@ -8,6 +8,10 @@
 # the available options are: iptables, ipfwadm, ipfw
 firewall = iptables
 
+# ipfw-start-rule: set the first rule number used by Fail2Ban.
+# This option is only used if firewall = ipfw.
+ipfw-start-rule = 100
+
 # background: true to start fail2ban as a daemon. Output
 # is redirect to logfile.
 background = false
@@ -49,6 +53,9 @@ polltime = 1
 # options: logfile, timeregex, timepattern, failregex.
 
 [Apache]
+# enabled: is this section active ?
+enabled = true
+
 # logfile: file to monitor.
 logfile = log-test/apache
 
@@ -67,6 +74,9 @@ timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
 failregex = authentication failure|user .* not found
 
 [SSH]
+# enabled: is this section active ?
+enabled = true
+
 # logfile: file to monitor.
 logfile = log-test/current
 
