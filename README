@@ -88,6 +88,7 @@ options:
   -p <FILE>  create PID lock in FILE
   -h         display this help message
   -i <IP(s)> IP(s) to ignore
+  -k         kill a currently running Fail2Ban instance
   -l <FILE>  log message in FILE
   -r <VALUE> allow a max of VALUE password failure
   -t <TIME>  ban IP for TIME seconds

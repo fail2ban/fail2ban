@@ -59,6 +59,7 @@ def usage():
 	print "  -p <FILE>  create PID lock in FILE"
 	print "  -h         display this help message"
 	print "  -i <IP(s)> IP(s) to ignore"
+	print "  -k         kill a currently running Fail2Ban instance"
 	print "  -l <FILE>  log message in FILE"
 	print "  -r <VALUE> allow a max of VALUE password failure"
 	print "  -t <TIME>  ban IP for TIME seconds"
@@ -187,6 +188,12 @@ def removePID(lockfile):
 	os.remove(lockfile)
 	logSys.debug("Removed PID lock "+lockfile)
 
+def killPID(pid):
+	""" Kills the process with the given PID using the
+		INT signal (same effect as <ctrl>+<c>).
+	"""
+	return os.kill(pid, 2)
+
 if __name__ == "__main__":
 	
 	# Gets an instance of log4py.
@@ -211,7 +218,7 @@ if __name__ == "__main__":
 	
 	# Reads the command line options.
 	try:
-		optList, args = getopt.getopt(sys.argv[1:], 'hvbdc:l:t:i:r:e:w:p:')
+		optList, args = getopt.getopt(sys.argv[1:], 'hvbdkc:l:t:i:r:e:w:p:')
 	except getopt.GetoptError:
 		usage()
 	
@@ -363,6 +370,15 @@ if __name__ == "__main__":
 			conf["firewall"] = opt[1]
 		if opt[0] == "-p":
 			conf["pidlock"] = opt[1]
+		if opt[0] == "-k":
+			pid = checkForPID(conf["pidlock"])
+			if pid:
+				killPID(int(pid))
+				logSys.warn("Killed Fail2Ban with PID "+pid)
+				sys.exit(0)
+			else:
+				logSys.error("No running Fail2Ban found")
+				sys.exit(-1)
 
 	# Process some options
 	for c in conf:
@@ -498,7 +514,7 @@ if __name__ == "__main__":
 		except KeyboardInterrupt:
 			# When the user press <ctrl>+<c> we flush the ban list
 			# and exit nicely.
-			logSys.info("Restoring iptables...")
+			logSys.info("Restoring firewall rules...")
 			fireWall.flushBanList(conf["debug"])
 			removePID(conf["pidlock"])
 			logSys.warn("Exiting...")
