@@ -30,22 +30,25 @@ class Firewall:
 	
 	banList = dict()
 	
-	def __init__(self, banTime):
+	def __init__(self, banTime, verbose = False):
 		self.banTime = banTime
+		self.verbose = verbose
 	
 	def addBanIP(self, ip):
 		if not self.inBanList(ip):
 			self.banList[ip] = time.time()
 			self.executeCmd(self.banIP(ip))
 		else:
-			print ip, "already in ban list"
+			if self.verbose:
+				print ip, "already in ban list"
 	
 	def delBanIP(self, ip):
 		if self.inBanList(ip):
 			del self.banList[ip]
 			self.executeCmd(self.unBanIP(ip))
 		else:
-			print ip, "not in ban list"
+			if self.verbose:
+				print ip, "not in ban list"
 	
 	def inBanList(self, ip):
 		return self.banList.has_key(ip)
@@ -61,7 +64,8 @@ class Firewall:
 			btime = element[1]
 			if btime < time.time()-self.banTime:
 				self.delBanIP(ip)
-				print '`->', time.time()
+				if self.verbose:
+					print '`->', time.time()
 	
 	def flushBanList(self):
 		iterBanList = self.banList.iteritems()
@@ -71,7 +75,8 @@ class Firewall:
 			self.delBanIP(ip)
 	
 	def executeCmd(self, cmd):
-		print cmd
+		if self.verbose:
+			print cmd
 		return #os.system(cmd)
 		
 	def viewBanList(self):

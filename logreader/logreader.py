@@ -28,11 +28,12 @@ import os, sys
 
 class LogReader:
 	
-	def __init__(self, logPath, findTime = 3600):
+	def __init__(self, logPath, findTime = 3600, verbose = False):
 		self.logPath = logPath
 		self.findTime = findTime
 		self.ignoreIpList = []
 		self.lastModTime = 0
+		self.verbose = verbose
 	
 	def addIgnoreIP(self, ip):
 		self.ignoreIpList.append(ip)
@@ -58,7 +59,8 @@ class LogReader:
 		if self.lastModTime == logStats.st_mtime:
 			return False
 		else:
-			print self.logPath, 'has been modified'
+			if self.verbose:
+				print self.logPath, 'has been modified'
 			self.lastModTime = logStats.st_mtime
 			return True
 	
