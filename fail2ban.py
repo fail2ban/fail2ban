@@ -29,11 +29,28 @@ __license__ = "GPL"
 import posix, time, sys, getopt, os, signal
 import log4py
 
+# Appends our own modules path
+sys.path.append('/usr/lib/fail2ban')
+
 from firewall.iptables import Iptables
 from logreader.metalog import Metalog
+from version import version
 
 def usage():
-	print "fail2ban [-h][-v][-b][-d][-f <pwdfail file>][-l <log file>]"
+	print "Usage: fail2ban.py [OPTIONS]"
+	print
+	print "Fail2Ban v"+version+" reads log file that contains password failure report"
+	print "and bans the corresponding IP address using iptables."
+	print
+	print "  -b         start fail2ban in background"
+	print "  -d         start fail2ban in debug mode"
+	print "  -f <FILE>  read password failure from FILE"
+	print "  -h         display this help message"
+	print "  -l <FILE>  log message in FILE"
+	print "  -t <TIME>  ban IP for TIME seconds"
+	print "  -v         verbose"
+	print
+	print "Report bugs to <lostcontrol@users.sourceforge.net>"
 	sys.exit(0)
 
 def checkForRoot():
@@ -127,12 +144,14 @@ if __name__ == "__main__":
 	logSys.set_formatstring("%T %L %M")
 	
 	try:
-		optList, args = getopt.getopt(sys.argv[1:], 'hvbdf:l:')
+		optList, args = getopt.getopt(sys.argv[1:], 'hvbdf:l:t:i:')
 	except getopt.GetoptError:
 		usage()
 
 	debug = False
 	logFilePath = "/var/log/pwdfail/current"
+	banTime = 600
+	ignoreIPList = {}
 	
 	for opt in optList:
 		if opt[0] == "-h":
@@ -157,18 +176,33 @@ if __name__ == "__main__":
 				logSys.set_target(opt[1])
 			except IOError:
 				logSys.error("Unable to log to "+opt[1])
-				logSys.error("Use default output for logging")
+				logSys.error("Using default output for logging")
+		if opt[0] == "-t":
+			try:
+				banTime = int(opt[1])
+			except ValueError:
+				logSys.error("banTime must be an integer")
+				logSys.error("Using default value")
+		if opt[0] == "-i":
+			ignoreIPList = opt[1].split(' ')
 	
 	if not checkForRoot():
 		logSys.error("You must be root")
 		if not debug:
 			sys.exit(-1)
 	
-	fireWall = Iptables(600, logSys)
-	logFile = Metalog(logFilePath, logSys, 600)
+	logSys.debug("logFilePath is "+logFilePath)
+	logSys.debug("BanTime is "+`banTime`)
+	
+	fireWall = Iptables(banTime, logSys)
+	logFile = Metalog(logFilePath, logSys, banTime)
 	
 	logFile.addIgnoreIP("127.0.0.1")
+	while len(ignoreIPList) > 0:
+		ip = ignoreIPList.pop()
+		logFile.addIgnoreIP(ip)
 	
+	logSys.info("Fail2Ban v"+version+" is running")
 	while True:
 		try:
 			sys.stdout.flush()
