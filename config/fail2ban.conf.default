@@ -4,6 +4,10 @@
 
 [DEFAULT]
 
+# firewall: select the firewall system to use. Actually,
+# the available options are: iptables, ipfwadm, ipfw
+firewall = iptables
+
 # background: true to start fail2ban as a daemon. Output
 # is redirect to logfile.
 background = false
@@ -30,6 +34,10 @@ bantime = 600
 # will be ignore by fail2ban. Example:
 # ignoreip = 192.168.0.1 123.45.235.65
 ignoreip = 
+
+# interface: the interface name on which the IP will be
+# banned.
+interface = eth0
 
 # polltime: the number of seconds that fail2ban sleeps
 # between two iteration (check for IP to unban - parse
