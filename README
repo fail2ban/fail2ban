@@ -4,11 +4,11 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.3.0)                           02/24/2005
+Fail2Ban (version 0.3.1)                           03/31/2005
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
-that makes too much password failures. It updates firewall
+that makes too many password failures. It updates firewall
 rules to reject the IP address. Currently iptables, ipfw and
 ipfwadm are supported. Fail2Ban can read multiple log files
 such as sshd or Apache web server ones. It needs log4py.
@@ -59,8 +59,8 @@ Require: python-2.3 (http://www.python.org)
 
 To install, just do:
 
-> tar xvfj fail2ban-0.3.0.tar.bz2
-> cd fail2ban-0.3.0
+> tar xvfj fail2ban-0.3.1.tar.bz2
+> cd fail2ban-0.3.1
 > python setup.py install
 
 This will install Fail2Ban into /usr/lib/fail2ban. The
