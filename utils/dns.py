@@ -59,7 +59,7 @@ def textToDns(text):
 	if match:
 		return match
 	else:
-		return None
+		return []
 
 def searchIP(text):
 	""" Search if an IP address if directly available and return
@@ -69,7 +69,7 @@ def searchIP(text):
 	if match:
 		return match
 	else:
-		return None
+		return []
 
 def textToIp(text):
 	""" Return the IP of DNS found in a given text.
@@ -77,9 +77,8 @@ def textToIp(text):
 	ipList = list()
 	# Search for plain IP
 	plainIP = searchIP(text)
-	if plainIP:
-		for element in plainIP:
-			ipList.append(element)
+	for element in plainIP:
+		ipList.append(element)
 	else:
 		# Try to get IP from possible DNS
 		dnsList = textToDns(text)
