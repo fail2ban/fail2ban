@@ -44,6 +44,8 @@ class LogReader:
 		self.lastModTime = 0
 		self.logSys = logSys
 		self.lastPos = 0
+		self.lastSize = 0
+		self.logStats = None
 		
 	def setName(self, name):
 		""" Sets the name of the log reader.
@@ -80,17 +82,32 @@ class LogReader:
 		""" Checks if the log file has been modified using os.stat().
 		"""
 		try:
-			logStats = os.stat(self.logPath)
+			self.logStats = os.stat(self.logPath)
 		except OSError:
 			self.logSys.error("Unable to get stat on "+self.logPath)
 			sys.exit(-1)
 		
-		if self.lastModTime == logStats.st_mtime:
+		if self.lastModTime == self.logStats.st_mtime:
 			return False
 		else:
 			self.logSys.debug(self.logPath+" has been modified")
-			self.lastModTime = logStats.st_mtime
+			self.lastModTime = self.logStats.st_mtime
 			return True
+	
+	def setFilePos(self, file):
+		""" Sets the file position. We must take care of log file rotation
+			and reset the position to 0 in that case. Use the file size in
+			order to detect this. Not the best solution yet.		
+		"""
+		if self.lastSize > self.logStats.st_size:
+			self.logSys.debug("Size " + `self.logStats.st_size` + " is " +
+							"smaller than " + `self.lastSize`)
+			self.logSys.debug("Log rotation detected")
+			self.lastPos = 0
+		
+		self.lastSize = self.logStats.st_size
+		self.logSys.debug("Setting file position to " + `self.lastPos`)
+		file.seek(self.lastPos)
 	
 	def getFailures(self):
 		""" Gets all the failure in the log file which are
@@ -101,8 +118,7 @@ class LogReader:
 		"""
 		ipList = dict()
 		logFile = self.openLogFile()
-		self.logSys.debug("Setting file position to " + `self.lastPos`)
-		logFile.seek(self.lastPos)
+		self.setFilePos(logFile)
 		for line in logFile.readlines():
 			failList = self.findFailure(line)
 			for element in failList:
