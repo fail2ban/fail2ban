@@ -146,6 +146,15 @@ def createDaemon():
 
 	return(0)
 
+def sigTERMhandler(signum, frame):
+	""" Handles the TERM signal when in daemon mode in order to
+		exit properly.
+	"""
+	logSys.debug("Signal handler called with sig "+`signum`)
+	logSys.info("Restoring iptables...")
+	fireWall.flushBanList(conf["debug"])
+	logSys.info("Exiting...")
+	sys.exit(0)
 
 if __name__ == "__main__":
 	
@@ -289,6 +298,7 @@ if __name__ == "__main__":
 			logSys.set_formatstring(log4py.FMT_DEBUG)
 		elif c == "background" and conf[c]:
 			retCode = createDaemon()
+			signal.signal(signal.SIGTERM, sigTERMhandler)
 			logSys.set_target(conf["logfile"])
 			if retCode != 0:
 				logSys.error("Unable to start daemon")
@@ -351,7 +361,7 @@ if __name__ == "__main__":
 			iterFailList = failList.iteritems()
 			for i in range(len(failList)):
 				element = iterFailList.next()
-				if element[1][0] >= retryAllowed:
+				if element[1][0] >= conf["maxretry"]:
 					fireWall.addBanIP(element[0], conf["debug"])
 			
 		except KeyboardInterrupt:
