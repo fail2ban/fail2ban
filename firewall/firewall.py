@@ -33,9 +33,10 @@ class Firewall:
 	
 	banList = dict()
 	
-	def __init__(self, banTime, logSys):
+	def __init__(self, banTime, logSys, interface):
 		self.banTime = banTime
 		self.logSys = logSys
+		self.interface = interface
 	
 	def addBanIP(self, ip, debug):
 		""" Bans an IP.

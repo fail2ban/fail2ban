@@ -38,11 +38,11 @@ class Iptables(Firewall):
 	def banIP(self, ip):
 		""" Returns query to ban IP.
 		"""
-		query = "iptables -I INPUT 1 -i eth0 -s "+ip+" -j DROP"
+		query = "iptables -I INPUT 1 -i "+self.interface+" -s "+ip+" -j DROP"
 		return query
 	
 	def unBanIP(self, ip):
 		""" Returns query to unban IP.
 		"""
-		query = "iptables -D INPUT -i eth0 -s "+ip+" -j DROP"
+		query = "iptables -D INPUT -i "+self.interface+" -s "+ip+" -j DROP"
 		return query
