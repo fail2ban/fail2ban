@@ -24,36 +24,36 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time
+import time, os
 
 class Firewall:
 	
 	banList = dict()
 	
-	def __init__(self, banTime, verbose = False):
+	def __init__(self, banTime, logSys):
 		self.banTime = banTime
-		self.verbose = verbose
+		self.logSys = logSys
 	
-	def addBanIP(self, ip):
+	def addBanIP(self, ip, debug):
 		if not self.inBanList(ip):
+			self.logSys.info("Ban "+ip)
 			self.banList[ip] = time.time()
-			self.executeCmd(self.banIP(ip))
+			self.executeCmd(self.banIP(ip), debug)
 		else:
-			if self.verbose:
-				print ip, "already in ban list"
+			self.logSys.info(ip+" already in ban list")
 	
-	def delBanIP(self, ip):
+	def delBanIP(self, ip, debug):
 		if self.inBanList(ip):
+			self.logSys.info("Unban "+ip)
 			del self.banList[ip]
-			self.executeCmd(self.unBanIP(ip))
+			self.executeCmd(self.unBanIP(ip), debug)
 		else:
-			if self.verbose:
-				print ip, "not in ban list"
+			self.logSys.info(ip+" not in ban list")
 	
 	def inBanList(self, ip):
 		return self.banList.has_key(ip)
 	
-	def checkForUnBan(self):
+	def checkForUnBan(self, debug):
 		""" Check for user to remove from ban list.
 		"""
 		banListTemp = self.banList.copy()
@@ -63,21 +63,21 @@ class Firewall:
 			ip = element[0]
 			btime = element[1]
 			if btime < time.time()-self.banTime:
-				self.delBanIP(ip)
-				if self.verbose:
-					print '`->', time.time()
+				self.delBanIP(ip, debug)
 	
-	def flushBanList(self):
+	def flushBanList(self, debug):
 		iterBanList = self.banList.iteritems()
 		for i in range(len(self.banList)):
 			element = iterBanList.next()
 			ip = element[0]
-			self.delBanIP(ip)
+			self.delBanIP(ip, debug)
 	
-	def executeCmd(self, cmd):
-		if self.verbose:
-			print cmd
-		return #os.system(cmd)
+	def executeCmd(self, cmd, debug):
+		self.logSys.debug(cmd)
+		if not debug:
+			return os.system(cmd)
+		else:
+			return None
 		
 	def viewBanList(self):
 		iterBanList = self.banList.iteritems()
