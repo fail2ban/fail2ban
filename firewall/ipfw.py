@@ -52,8 +52,8 @@ class Ipfw(Firewall):
 	def banIP(self, ip):
 		""" Returns query to ban IP.
 		"""
-		self.crtRuleNbr = self.crtRuleNbr + 1
 		query = "ipfw -q add "+`self.crtRuleNbr`+" deny ip from "+ip+" to any"
+		self.crtRuleNbr = self.crtRuleNbr + 1
 		return query
 	
 	def unBanIP(self, ip):
