@@ -16,6 +16,7 @@ ver. 0.3.0 (02/??/2005) - beta
 - Added PID lock file
 - Improved some parts of the code
 - Added ipfw-start-rule option (thanks to Robert Edeker)
+- Added -k option which kills a currently running Fail2Ban
 
 ver. 0.1.2 (11/21/2004) - beta
 ----------
