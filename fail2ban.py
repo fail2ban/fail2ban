@@ -152,15 +152,22 @@ def createDaemon():
 	os.open("/dev/null", os.O_RDWR)		# standard output (1)
 	os.open("/dev/null", os.O_RDWR)		# standard error (2)
 
-	return(0)
+	return True
 
 def sigTERMhandler(signum, frame):
 	""" Handles the TERM signal when in daemon mode in order to
 		exit properly.
 	"""
 	logSys.debug("Signal handler called with sig "+`signum`)
-	logSys.info("Restoring iptables...")
+	killApp()
+
+def killApp():
+	""" Flush the ban list, remove the PID lock file and exit
+		nicely.
+	"""
+	logSys.warn("Restoring firewall rules...")
 	fireWall.flushBanList(conf["debug"])
+	removePID(conf["pidlock"])
 	logSys.info("Exiting...")
 	sys.exit(0)
 	
@@ -467,7 +474,7 @@ if __name__ == "__main__":
 		for element in logList:
 			element.addIgnoreIP(ip)
 	
-	logSys.warn("Fail2Ban v"+version+" is running")
+	logSys.info("Fail2Ban v"+version+" is running")
 	# Main loop
 	while True:
 		try:
@@ -495,9 +502,7 @@ if __name__ == "__main__":
 			failList = dict()
 			for element in modList:
 				e = element.getFailures()
-				iter = e.iterkeys()
-				for i in range(len(e)):
-					key = iter.next()
+				for key in e.iterkeys():
 					if failList.has_key(key):
 						if failList[key][0] < e[key][0]:
 							failList[key] = (e[key][0], e[key][1],
@@ -509,19 +514,12 @@ if __name__ == "__main__":
 			
 			# We iterate the failure list and ban IP that make
 			# *retryAllowed* login failures.
-			iterFailList = failList.iteritems()
-			for i in range(len(failList)):
-				element = iterFailList.next()
+			for element in failList.iteritems():
 				if element[1][0] >= conf["maxretry"]:
-					logSys.warn(`element[1][2]`+": "+element[0]+" has "+
+					logSys.info(`element[1][2]`+": "+element[0]+" has "+
 								`element[1][0]`+" login failure(s). Banned.")
 					fireWall.addBanIP(element[0], conf["debug"])
 			
 		except KeyboardInterrupt:
-			# When the user press <ctrl>+<c> we flush the ban list
-			# and exit nicely.
-			logSys.info("Restoring firewall rules...")
-			fireWall.flushBanList(conf["debug"])
-			removePID(conf["pidlock"])
-			logSys.warn("Exiting...")
-			sys.exit(0)
+			# When the user press <ctrl>+<c> we exit nicely.
+			killApp()
