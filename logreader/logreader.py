@@ -24,9 +24,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import os, sys, time
-
-from sshd import Sshd
+import os, sys, time, re
 
 class LogReader:
 	""" Reads a log file and reports information about IP that make password
@@ -34,13 +32,15 @@ class LogReader:
 		attempt.	
 	"""
 	
-	def __init__(self, logPath, logSys, findTime = 3600):
+	def __init__(self, logSys, logPath, timeregex, timepattern, failregex, findTime = 3600):
 		self.logPath = logPath
+		self.timeregex = timeregex
+		self.timepattern = timepattern
+		self.failregex = failregex
 		self.findTime = findTime
 		self.ignoreIpList = []
 		self.lastModTime = 0
 		self.logSys = logSys
-		self.parserList = ["Sshd"]
 	
 	def addIgnoreIP(self, ip):
 		""" Adds an IP to the ignore list.
@@ -79,30 +79,14 @@ class LogReader:
 			self.lastModTime = logStats.st_mtime
 			return True
 	
-	def matchLine(self, line):
-		""" Checks if the line contains a pattern. It does this for all
-			classes specified in *parserList*. We use a singleton to avoid
-			creating/destroying objects too much.
-			
-			Return a dict with the IP and number of retries.
-		"""
-		for i in self.parserList:
-			match = eval(i).getInstance().parseLogLine(line)
-			if match:
-				return match
-		return None
-	
-	def getFailInfo(self, findTime):
-		""" Gets the failed login attempt. Returns a dict() which contains
-			IP and the number of retries.
-		"""
+	def getFailures(self):
 		ipList = dict()
 		logFile = self.openLogFile()
 		for line in logFile.readlines():
-			match = self.matchLine(line)
-			if match:
-				ip = match[0]
-				unixTime = match[1]
+			value = self.findFailure(line)
+			if value:
+				ip = value[0]
+				unixTime = value[1]
 				if unixTime < time.time()-self.findTime:
 					continue
 				if self.inIgnoreIPList(ip):
@@ -115,9 +99,35 @@ class LogReader:
 					ipList[ip] = (1, unixTime)
 		logFile.close()
 		return ipList
+
+	def findFailure(self, line):
+		match = self.matchLine(line, self.failregex)
+		if match:
+			timeMatch = self.matchLine(match.string, self.timeregex)
+			if timeMatch:
+				date = self.getUnixTime(timeMatch.group(), self.timepattern)
+				ipMatch = self.matchAddress(match.string)
+				if ipMatch:
+					ip = ipMatch.group()
+					return [ip, date]
+		return None
+		
+	def getUnixTime(self, value, pattern):
+		date = list(time.strptime(value, pattern))
+		if date[0] < 2000:
+			date[0] = time.gmtime()[0]
+		unixTime = time.mktime(date)
+		return unixTime
 	
-	def getPwdFailure(self):
-		""" Executes the getFailInfo method. Not very usefull...
+	def matchLine(self, line, pattern):
+		""" Checks if the line contains a pattern. It does this for all
+			classes specified in *parserList*. We use a singleton to avoid
+			creating/destroying objects too much.
+			
+			Return a dict with the IP and number of retries.
 		"""
-		failList = self.getFailInfo(self.findTime)
-		return failList
+		return re.search(pattern, line)
+		
+	def matchAddress(self, line):
+		return re.search("(?:\d{1,3}\.){3}\d{1,3}", line)
+	

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -25,18 +23,3 @@ __version__ = "$Revision$"
 __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
-
-from distutils.core import setup
-from version import version
-
-setup(
-        name = "fail2ban",
-        version = version,
-        description = "Ban IPs that make too much password failure",
-        author = "Cyril Jaquier",
-        author_email = "lostcontrol@users.sourceforge.net",
-        url = "http://www.sourceforge.net/projects/fail2ban",
-        scripts = ['fail2ban.py'],
-        py_modules = ['version'],
-        packages = ['firewall', 'logreader', 'confreader']
-)

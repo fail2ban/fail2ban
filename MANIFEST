@@ -12,5 +12,6 @@ firewall/ipfwadm.py
 logreader/__init__.py
 logreader/logreader.py
 logreader/parser.py
-logreader/sshd.py
+confreader/__init__.py
+confreader/configreader.py
 config/fail2ban.conf.default

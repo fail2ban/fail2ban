@@ -24,32 +24,34 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from parser import Parser
+import os, sys, time
 
-class Sshd(Parser):
-    """ OpenSSH daemon log parser. Contains specific code for sshd.
+from ConfigParser import *
+
+class ConfigReader:
+    """ Reads a log file and reports information about IP that make password
+        failure, bad user or anything else that is considered as doubtful login
+        attempt.    
     """
     
-    _instance = None
-    # This is the pattern to look for.
-    pattern = "Failed password|Illegal user"
+    optionValues = ("logfile", "timeregex", "timepattern", "failregex")
     
-    def getInstance():
-        """ We use a singleton.
-        """
-        if not Sshd._instance:
-            Sshd._instance = Sshd()
-        return Sshd._instance
-                   
-    getInstance = staticmethod(getInstance)
+    def __init__(self, confPath):
+        self.confPath = confPath
+        self.configParser = SafeConfigParser()
+        
+    def openConf(self):
+        self.configParser.read(self.confPath)
     
-    def parseLogLine(self, line):
-        """ Matches sshd bad login attempt. Returns the IP and the
-            log time.
-        """
-        if self.getLogMatch(self.pattern, line):
-            matchIP = self.getLogIP(line)
-            if matchIP:
-                return [matchIP, self.getLogTime(line)]
-            else:
-                return False
+    def getSections(self):
+        return self.configParser.sections()
+        
+    def getLogOptions(self, sec):
+        values = dict()
+        for option in self.optionValues:
+            v = self.configParser.get(sec, option)
+            values[option] = v
+        return values
+        
+    
+    
