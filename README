@@ -4,13 +4,14 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.1.1)                           10/23/2004
+Fail2Ban (version 0.3.0)                           02/??/2005
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
 that makes too much password failures. It updates firewall
-rules to reject the IP address. Currently sshd, iptables,
-ipfw and ipfwadm are supported. It needs log4py.
+rules to reject the IP address. Currently iptables, ipfw and
+ipfwadm are supported. Fail2Ban can read multiple log files
+such as sshd or Apache web server ones. It needs log4py.
 
 This is my first Python program. I began learning Python for
 less than one week so please be understanding ;-) English is
@@ -31,17 +32,21 @@ some google searches, I found that sshd was not able of that.
 So I search for a script or program that do it. Found
 nothing :-( So I decide to write mine and to learn Python :-)
 
-I read the log file (/var/log/pwdfail/current on metalog) and
-search for a given pattern which indicates a login attempt.
-Then I get the ip and if it has already done 3 or more
-password failure in the last banTime, I ban the ip for
+For each sections defined in the configuration file, Fail2Ban
+tries to find lines which match the failregex. Then it
+retrieves the message time using timeregex and timepattern.
+It finally gets the ip and if it has already done 3 or more
+password failures in the last banTime, the ip is banned for
 banTime using a iptable rule. After banTime, the rule is
 deleted.
 
+Sections can be freely added so it is possible to monitor
+several daemons at the same time.
+
 Runs on my server and does its job rather well :-) The idea
-is to make fail2ban usable with most syslog daemons and
-services that require a login (sshd, telnetd, ...). It should
-also support others firewalls than iptables.
+is to make fail2ban usable with daemons and services that
+require a login (sshd, telnetd, ...). It should also support
+others firewalls than iptables.
 
 
 Installation:
@@ -52,8 +57,8 @@ Require: python-2.3 (http://www.python.org)
 
 To install, just do:
 
-> tar xvfj fail2ban-0.1.2.tar.bz2
-> cd fail2ban-0.1.2
+> tar xvfj fail2ban-0.3.0.tar.bz2
+> cd fail2ban-0.3.0
 > python setup.py install
 
 This will install Fail2Ban into /usr/lib/fail2ban. The
