@@ -4,10 +4,10 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.3.0)                           02/??/2005
+Fail2Ban (version 0.3.0)                           02/24/2005
 =============================================================
 
-ver. 0.3.0 (02/??/2005) - beta
+ver. 0.3.0 (02/24/2005) - beta
 ----------
 - Re-writting of parts of the code in order to handle several
   log files with different rules
