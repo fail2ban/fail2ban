@@ -402,7 +402,7 @@ if __name__ == "__main__":
 			retCode = createDaemon()
 			signal.signal(signal.SIGTERM, sigTERMhandler)
 			logSys.set_target(conf["logfile"])
-			if retCode != 0:
+			if not retCode:
 				logSys.error("Unable to start daemon")
 				sys.exit(-1)
 		elif c == "logging" and conf[c]:
