@@ -28,14 +28,10 @@ from firewall import Firewall
 
 class Iptables(Firewall):
 	
-	def banIP(self, ip, time):
-		query = 'iptables -I INPUT 1 -i eth0 -s '+str(ip)+' -j DROP'
-		self.addBanIP(ip, time)
-		self.executeCmd(query)
-		print query
+	def banIP(self, ip):
+		query = 'iptables -I INPUT 1 -i eth0 -s '+ip+' -j DROP'
+		return query
 	
 	def unBanIP(self, ip):
-		query = 'iptables -D INPUT -i eth0 -s '+str(ip)+' -j DROP'
-		self.delBanIP(ip)
-		self.executeCmd(query)
-		print query
+		query = 'iptables -D INPUT -i eth0 -s '+ip+' -j DROP'
+		return query
