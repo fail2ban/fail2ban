@@ -37,10 +37,23 @@ class Ipfw(Firewall):
 		http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/266468
 	"""
 	
+	crtRuleNbr = 0
+	
+	def getCrtRuleNbr():
+		""" Gets the current rule number.
+		"""
+		return self.crtRuleNbr
+		
+	def setCrtRuleNbr(self, value):
+		""" Sets the current rule number.
+		"""
+		self.crtRuleNbr = value
+	
 	def banIP(self, ip):
 		""" Returns query to ban IP.
 		"""
-		query = "ipfw -q add deny ip from "+ip+" to any"
+		self.crtRuleNbr = self.crtRuleNbr + 1
+		query = "ipfw -q add "+`self.crtRuleNbr`+" deny ip from "+ip+" to any"
 		return query
 	
 	def unBanIP(self, ip):
