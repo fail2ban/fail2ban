@@ -9,9 +9,8 @@ Fail2Ban (version 0.1.0)                           10/12/2004
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
 that makes too much password failures. It updates firewall
-rules to reject the IP address. Currently metalog and
-iptables are supported but it should work with other syslog
-daemons. It needs log4py.
+rules to reject the IP address. Currently sshd and iptables
+are supported. It needs log4py.
 
 This is my first Python program. I began learning Python for
 less than one week so please be understanding ;-) English is
@@ -47,7 +46,7 @@ also support others firewalls than iptables.
 Installation:
 -------------
 
-Require: python-2.? (http://www.python.org)
+Require: python-2.2 (http://www.python.org)
          log4py-1.1 (http://sourceforge.net/projects/log4py)
 
 To install, just do:
@@ -55,6 +54,9 @@ To install, just do:
 > tar xvfj fail2ban-0.1.0.tar.bz2
 > cd fail2ban-0.1.0
 > python setup.py install
+
+This will install Fail2Ban into /usr/lib/fail2ban. The
+fail2ban.py executable is placed into /usr/bin.
 
 Fail2Ban should now be correctly installed. Just type:
 
@@ -74,6 +76,7 @@ commande line options instead. Here are the options:
   -f <FILE>  read password failure from FILE
   -h         display this help message
   -l <FILE>  log message in FILE
+  -r <VALUE> allow a max of VALUE password failure
   -t <TIME>  ban IP for TIME seconds
   -v         verbose
 
