@@ -26,7 +26,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import posix, time, sys, getopt, os, signal
+import time, sys, getopt, os, signal, string
 from ConfigParser import *
 
 # Checks if log4py is present.
@@ -40,6 +40,8 @@ except:
 sys.path.append('/usr/lib/fail2ban')
 
 from firewall.iptables import Iptables
+from firewall.ipfw import Ipfw
+from firewall.ipfwadm import Ipfwadm
 from logreader.logreader import LogReader
 from version import version
 
@@ -51,6 +53,7 @@ def usage():
 	print
 	print "  -b         start fail2ban in background"
 	print "  -d         start fail2ban in debug mode"
+	print "  -e <INTF>  ban IP on the INTF interface"
 	print "  -f <FILE>  read password failure from FILE"
 	print "  -h         display this help message"
 	print "  -i <IP(s)> IP(s) to ignore"
@@ -58,6 +61,8 @@ def usage():
 	print "  -r <VALUE> allow a max of VALUE password failure"
 	print "  -t <TIME>  ban IP for TIME seconds"
 	print "  -v         verbose"
+	print "  -w <FIWA>  select the firewall to use. Can be iptables,"
+	print "             ipfwadm or ipfw"
 	print
 	print "Report bugs to <lostcontrol@users.sourceforge.net>"
 	sys.exit(0)
@@ -65,7 +70,7 @@ def usage():
 def checkForRoot():
 	""" Check for root user.
 	"""
-	uid = `posix.getuid()`
+	uid = `os.getuid()`
 	if uid == '0':
 		return True
 	else:
@@ -176,6 +181,8 @@ if __name__ == "__main__":
 	conf["maxretry"] = 3
 	conf["bantime"] = 600
 	conf["ignoreip"] = ''
+	conf["interface"] = "eth0"
+	conf["firewall"] = "iptables"
 	conf["polltime"] = 1
 	
 	# background
@@ -248,6 +255,26 @@ if __name__ == "__main__":
 		logSys.warn("ignoreip option not in config file")
 		logSys.warn("Using default value")
 		
+	# interface
+	try:
+		conf["interface"] = configParser.get("DEFAULT", "interface")
+	except ValueError:
+		logSys.warn("interface option should be a string")
+		logSys.warn("Using default value")
+	except NoOptionError:
+		logSys.warn("interface option not in config file")
+		logSys.warn("Using default value")
+		
+	# interface
+	try:
+		conf["firewall"] = configParser.get("DEFAULT", "firewall")
+	except ValueError:
+		logSys.warn("firewall option should be a string")
+		logSys.warn("Using default value")
+	except NoOptionError:
+		logSys.warn("firewall option not in config file")
+		logSys.warn("Using default value")
+
 	# polltime
 	try:
 		conf["polltime"] = configParser.getint("DEFAULT", "polltime")
@@ -260,7 +287,7 @@ if __name__ == "__main__":
 	
 	# Reads the command line options.
 	try:
-		optList, args = getopt.getopt(sys.argv[1:], 'hvbdf:l:t:i:r:')
+		optList, args = getopt.getopt(sys.argv[1:], 'hvbdf:l:t:i:r:e:w:')
 	except getopt.GetoptError:
 		usage()
 	
@@ -273,6 +300,8 @@ if __name__ == "__main__":
 			conf["background"] = True
 		if opt[0] == "-d":
 			conf["debug"] = True
+		if opt[0] == "-e":
+			conf["interface"] = opt[1]
 		if opt[0] == "-f":
 			conf["pwdfailfile"] = opt[1]
 		if opt[0] == "-l":
@@ -288,6 +317,8 @@ if __name__ == "__main__":
 			conf["ignoreip"] = opt[1]
 		if opt[0] == "-r":
 			conf["retrymax"] = int(opt[1])
+		if opt[0] == "-w":
+			conf["firewall"] = opt[1]
 
 	# Process some options
 	for c in conf:
@@ -312,6 +343,14 @@ if __name__ == "__main__":
 				logSys.warn("Using default output for logging")
 		elif c == "ignoreip":
 			ignoreIPList = conf[c].split(' ')
+		elif c == "firewall":
+			conf[c] = string.lower(conf[c])
+			if conf[c] == "ipfw":
+				fireWallName = "Ipfw"
+			elif conf[c] == "ipfwadm":
+				fireWallName = "Ipfwadm"
+			else:
+				fireWallName = "Iptables"
 	
 	# Checks for root user. This is necessary because log files
 	# are owned by root and firewall needs root access.
@@ -324,8 +363,10 @@ if __name__ == "__main__":
 	logSys.debug("BanTime is "+`conf["bantime"]`)
 	logSys.debug("retryAllowed is "+`conf["maxretry"]`)
 	
-	# Creates one instance of Iptables and one of LogReader.
-	fireWall = Iptables(conf["bantime"], logSys)
+	# Creates one instance of Iptables (thanks to Pyhton dynamic
+	# features) and one of LogReader.
+	fireWallObj = eval(fireWallName)
+	fireWall = fireWallObj(conf["bantime"], logSys, conf["interface"])
 	logFile = LogReader(conf["pwdfailfile"], logSys, conf["bantime"])
 	
 	# We add 127.0.0.1 to the ignore list has we do not want
