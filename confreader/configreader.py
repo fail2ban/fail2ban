@@ -34,9 +34,15 @@ class ConfigReader:
 		Fail2Ban. Each other section is for a different log file.
 	"""
 	
-	optionValues = (["bool", "enabled"], ["str", "logfile"],
-					["str", "timeregex"], ["str", "timepattern"],
-					["str", "failregex"])
+	# Each optionValues entry is composed of an array with:
+	# 0 -> the type of the option
+	# 1 -> the name of the option
+	# 2 -> the default value for the option
+	optionValues = (["bool", "enabled", True],
+					["str", "logfile", "/dev/null"],
+					["str", "timeregex", ""],
+					["str", "timepattern", ""],
+					["str", "failregex", ""])
 	
 	def __init__(self, logSys, confPath):
 		self.confPath = confPath
@@ -70,6 +76,7 @@ class ConfigReader:
 				
 				values[option[1]] = v
 			except NoOptionError:
-				self.logSys.info("No "+option+" defined in "+sec)
+				self.logSys.info("No '"+option[1]+"' defined in '"+sec+"'")
+				values[option[1]] = option[2]
 		return values
 		
