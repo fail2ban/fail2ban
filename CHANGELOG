@@ -9,6 +9,8 @@ Fail2Ban (version 0.1.0)                           10/12/2004
 
 ver. 0.1.1 (??/??/????) - alpha
 ----------
+- Add SIGTERM handler in order to exit nicely when in daemon
+  mode
 - Add -r option which allows to set the maximum number of
   login failures
 - Remove the Metalog class as the log file are not so syslog
