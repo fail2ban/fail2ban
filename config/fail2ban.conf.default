@@ -41,7 +41,8 @@ interface = eth0
 polltime = 1
 
 # You can define a new section for each log file to check for
-# password failure.
+# password failure. Each section has to define the following
+# options: logfile, timeregex, timepattern, failregex.
 
 [Apache]
 # logfile: file to monitor.

@@ -80,6 +80,12 @@ class LogReader:
 			return True
 	
 	def getFailures(self):
+		""" Gets all the failure in the log file which are
+			newer than time.time()-self.findTime.
+			
+			Returns a dict with the IP, the number of failure
+			and the latest failure time.
+		"""
 		ipList = dict()
 		logFile = self.openLogFile()
 		for line in logFile.readlines():
@@ -101,33 +107,44 @@ class LogReader:
 		return ipList
 
 	def findFailure(self, line):
-		match = self.matchLine(line, self.failregex)
+		""" Finds the failure in line. Uses the failregex pattern
+			to find it and timeregex in order to find the logging
+			time.
+			
+			Returns a dict with IP and timestamp.
+		"""
+		match = self.matchLine(self.failregex, line)
 		if match:
-			timeMatch = self.matchLine(match.string, self.timeregex)
+			timeMatch = self.matchLine(self.timeregex, match.string)
 			if timeMatch:
-				date = self.getUnixTime(timeMatch.group(), self.timepattern)
+				date = self.getUnixTime(timeMatch.group())
 				ipMatch = self.matchAddress(match.string)
 				if ipMatch:
 					ip = ipMatch.group()
 					return [ip, date]
 		return None
 		
-	def getUnixTime(self, value, pattern):
-		date = list(time.strptime(value, pattern))
+	def getUnixTime(self, value):
+		""" Returns the Unix timestamp of the given value.
+			Pattern should describe the date construction of
+			value.
+		"""
+		date = list(time.strptime(value, self.timepattern))
 		if date[0] < 2000:
 			date[0] = time.gmtime()[0]
 		unixTime = time.mktime(date)
 		return unixTime
 	
-	def matchLine(self, line, pattern):
-		""" Checks if the line contains a pattern. It does this for all
-			classes specified in *parserList*. We use a singleton to avoid
-			creating/destroying objects too much.
+	def matchLine(self, pattern, line):
+		""" Checks if the line contains a pattern.
 			
-			Return a dict with the IP and number of retries.
+			Return a match object.
 		"""
 		return re.search(pattern, line)
 		
 	def matchAddress(self, line):
-		return re.search("(?:\d{1,3}\.){3}\d{1,3}", line)
+		""" Return a match on the IP address present in
+			line.		
+		"""
+		return self.matchLine("(?:\d{1,3}\.){3}\d{1,3}", line)
 	
