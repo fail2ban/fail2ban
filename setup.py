@@ -32,7 +32,7 @@ from version import version
 setup(
         name = "fail2ban",
         version = version,
-        description = "Ban IPs that make too much password failure",
+        description = "Ban IPs that make too many password failure",
         author = "Cyril Jaquier",
         author_email = "lostcontrol@users.sourceforge.net",
         url = "http://www.sourceforge.net/projects/fail2ban",
