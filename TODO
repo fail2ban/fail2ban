@@ -12,3 +12,4 @@ ToDo
   handling
 - improve installation process
 - add init script
+- use FAM (inotify, gamin, ...)
