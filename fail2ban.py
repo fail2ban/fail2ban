@@ -27,12 +27,13 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import posix, time, sys, getopt, os, signal
+import log4py
 
 from firewall.iptables import Iptables
 from logreader.metalog import Metalog
 
 def usage():
-	print "fail2ban [-h][-v][-b]"
+	print "fail2ban [-h][-v][-b][-d][-f <pwdfail file>][-l <log file>]"
 	sys.exit(0)
 
 def checkForRoot():
@@ -90,7 +91,7 @@ def createDaemon():
 		if (pid == 0):	  # The second child.
 			# Ensure that the daemon doesn't keep any directory in use.  Failure
 			# to do this could make a filesystem unmountable.
-			#os.chdir("/")
+			os.chdir("/")
 			# Give the child complete control over permissions.
 			os.umask(0)
 		else:
@@ -114,39 +115,57 @@ def createDaemon():
 
 	# Redirect the standard file descriptors to /dev/null.
    	os.open("/dev/null", os.O_RDONLY)	# standard input (0)
-	#os.open("/dev/null", os.O_RDWR)	   # standard output (1)
-	os.open("/tmp/fail2ban.log", os.O_CREAT|os.O_APPEND|os.O_RDWR)	   # standard output (1)
-	#os.open("/dev/null", os.O_RDWR)	   # standard error (2)
-	os.open("/tmp/fail2ban.log", os.O_CREAT|os.O_APPEND|os.O_RDWR)	   # standard error (2)
+	os.open("/dev/null", os.O_RDWR)		# standard output (1)
+	os.open("/dev/null", os.O_RDWR)		# standard error (2)
 
 	return(0)
 
 
 if __name__ == "__main__":
 	
+	logSys = log4py.Logger().get_instance()
+	logSys.set_formatstring("%T %L %M")
+	
 	try:
-		optList, args = getopt.getopt(sys.argv[1:], 'hvb')
+		optList, args = getopt.getopt(sys.argv[1:], 'hvbdf:l:')
 	except getopt.GetoptError:
 		usage()
 
-	verbose = False
+	debug = False
+	logFilePath = "/var/log/pwdfail/current"
+	
 	for opt in optList:
 		if opt[0] == "-h":
 			usage()
 		if opt[0] == "-v":
-			verbose = True
+			logSys.set_loglevel(log4py.LOGLEVEL_VERBOSE)
 		if opt[0] == "-b":
 			retCode = createDaemon()
+			logSys.set_target("/tmp/fail2ban.log")
 			if retCode != 0:
-				print "Unable to start daemon"
+				logSys.error("Unable to start daemon")
 				sys.exit(-1)
+		if opt[0] == "-d":
+			debug = True
+			logSys.set_loglevel(log4py.LOGLEVEL_DEBUG)
+			logSys.set_formatstring(log4py.FMT_DEBUG)
+		if opt[0] == "-f":
+			logFilePath = opt[1]
+		if opt[0] == "-l":
+			try:
+				open(opt[1], "a")
+				logSys.set_target(opt[1])
+			except IOError:
+				logSys.error("Unable to log to "+opt[1])
+				logSys.error("Use default output for logging")
 	
 	if not checkForRoot():
-		print "You must be root."
-		#sys.exit(-1)
+		logSys.error("You must be root")
+		if not debug:
+			sys.exit(-1)
 	
-	fireWall = Iptables(600, verbose = verbose)
-	logFile = Metalog("./log-test/test", 600, verbose = verbose)
+	fireWall = Iptables(600, logSys)
+	logFile = Metalog(logFilePath, logSys, 600)
 	
 	logFile.addIgnoreIP("127.0.0.1")
 	
@@ -155,7 +174,7 @@ if __name__ == "__main__":
 			sys.stdout.flush()
 			sys.stderr.flush()
 			
-			fireWall.checkForUnBan()
+			fireWall.checkForUnBan(debug)
 			
 			if not logFile.isModified():
 				time.sleep(1)
@@ -167,10 +186,10 @@ if __name__ == "__main__":
 			for i in range(len(failList)):
 				element = iterFailList.next()
 				if element[1][0] > 2:
-					fireWall.addBanIP(element[0])
+					fireWall.addBanIP(element[0], debug)
 			
 		except KeyboardInterrupt:
-			print 'Restoring iptables...'
-			fireWall.flushBanList()
-			print 'Exiting...'
+			logSys.info("Restoring iptables...")
+			fireWall.flushBanList(debug)
+			logSys.info("Exiting...")
 			sys.exit(0)
