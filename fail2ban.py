@@ -56,6 +56,7 @@ def usage():
 	print "  -d         start fail2ban in debug mode"
 	print "  -e <INTF>  ban IP on the INTF interface"
 	print "  -c <FILE>  read configuration file FILE"
+	print "  -p <FILE>  create PID lock in FILE"
 	print "  -h         display this help message"
 	print "  -i <IP(s)> IP(s) to ignore"
 	print "  -l <FILE>  log message in FILE"
@@ -161,6 +162,30 @@ def sigTERMhandler(signum, frame):
 	fireWall.flushBanList(conf["debug"])
 	logSys.info("Exiting...")
 	sys.exit(0)
+	
+def checkForPID(lockfile):
+	""" Checks for running Fail2Ban.
+	
+		Returns the current PID if Fail2Ban is running or False
+		if no instance found.
+	"""
+	try:
+		fileHandler = open(lockfile)
+		pid = fileHandler.readline()
+		return pid
+	except IOError:
+		fileHandler = open(lockfile, mode='w')
+		pid = os.getpid()
+		fileHandler.write(`pid`+'\n')
+		fileHandler.close()
+		logSys.debug("Created PID lock ("+`pid`+") in "+lockfile)
+		return False
+		
+def removePID(lockfile):
+	""" Remove PID lock.
+	"""
+	os.remove(lockfile)
+	logSys.debug("Removed PID lock "+lockfile)
 
 if __name__ == "__main__":
 	
@@ -173,6 +198,7 @@ if __name__ == "__main__":
 	conf["background"] = False
 	conf["debug"] = False
 	conf["conffile"] = "/etc/fail2ban.conf"
+	conf["pidlock"] = "/tmp/fail2ban.pid"
 	conf["logging"] = False
 	conf["logfile"] = "/var/log/fail2ban.log"
 	conf["maxretry"] = 3
@@ -184,7 +210,7 @@ if __name__ == "__main__":
 	
 	# Reads the command line options.
 	try:
-		optList, args = getopt.getopt(sys.argv[1:], 'hvbdc:l:t:i:r:e:w:')
+		optList, args = getopt.getopt(sys.argv[1:], 'hvbdc:l:t:i:r:e:w:p:')
 	except getopt.GetoptError:
 		usage()
 	
@@ -225,6 +251,16 @@ if __name__ == "__main__":
 		logSys.warn("Using default value")
 	except NoOptionError:
 		logSys.warn("logfile option not in config file")
+		logSys.warn("Using default value")
+		
+	# pidlock
+	try:
+		conf["pidlock"] = configParser.get("DEFAULT", "pidlock")
+	except ValueError:
+		logSys.warn("pidlock option should be a string")
+		logSys.warn("Using default value")
+	except NoOptionError:
+		logSys.warn("pidlock option not in config file")
 		logSys.warn("Using default value")
 		
 	# maxretry
@@ -313,6 +349,8 @@ if __name__ == "__main__":
 			conf["retrymax"] = int(opt[1])
 		if opt[0] == "-w":
 			conf["firewall"] = opt[1]
+		if opt[0] == "-p":
+			conf["pidlock"] = opt[1]
 
 	# Process some options
 	for c in conf:
@@ -352,6 +390,12 @@ if __name__ == "__main__":
 		logSys.error("You must be root")
 		if not conf["debug"]:
 			sys.exit(-1)
+			
+	# Checks that no instance of Fail2Ban is currently running.
+	pid = checkForPID(conf["pidlock"])
+	if pid:
+		logSys.error("Fail2Ban already running with PID "+pid)
+		sys.exit(-1)
 	
 	logSys.debug("ConfFile is "+conf["conffile"])
 	logSys.debug("BanTime is "+`conf["bantime"]`)
@@ -366,7 +410,7 @@ if __name__ == "__main__":
 		l = confReader.getLogOptions(t)
 		lObj = LogReader(logSys, l["logfile"], l["timeregex"],
 						l["timepattern"], l["failregex"], conf["bantime"])
-		lObj.openLogFile()
+		lObj.setName(t)
 		logList.append(lObj)
 	
 	# Creates one instance of Iptables (thanks to Pyhton dynamic
@@ -383,7 +427,7 @@ if __name__ == "__main__":
 		for element in logList:
 			element.addIgnoreIP(ip)
 	
-	logSys.info("Fail2Ban v"+version+" is running")
+	logSys.warn("Fail2Ban v"+version+" is running")
 	# Main loop
 	while True:
 		try:
@@ -397,21 +441,31 @@ if __name__ == "__main__":
 			# If the log file has not been modified since the
 			# last time, we sleep for 1 second. This is active
 			# polling so not very effective.
-			isModified = False
 			modList = list()
 			for element in logList:
 				if element.isModified():
-					isModified = True
 					modList.append(element)
 			
-			if not isModified:
+			if len(modList) == 0:
 				time.sleep(conf["polltime"])
 				continue
 			
-			# Gets the failure list from the log file.
+			# Gets the failure list from the log file. For a given IP,
+			# takes only the service which has the most password failures.
 			failList = dict()
 			for element in modList:
-				failList.update(element.getFailures())
+				e = element.getFailures()
+				iter = e.iterkeys()
+				for i in range(len(e)):
+					key = iter.next()
+					if failList.has_key(key):
+						if failList[key][0] < e[key][0]:
+							failList[key] = (e[key][0], e[key][1],
+											element.getName())
+					else:
+						failList[key] = (e[key][0], e[key][1],
+										element.getName())
+				
 			
 			# We iterate the failure list and ban IP that make
 			# *retryAllowed* login failures.
@@ -419,6 +473,8 @@ if __name__ == "__main__":
 			for i in range(len(failList)):
 				element = iterFailList.next()
 				if element[1][0] >= conf["maxretry"]:
+					logSys.warn(`element[1][2]`+": "+element[0]+" has "+
+								`element[1][0]`+" login failure(s). Banned.")
 					fireWall.addBanIP(element[0], conf["debug"])
 			
 		except KeyboardInterrupt:
@@ -426,5 +482,6 @@ if __name__ == "__main__":
 			# and exit nicely.
 			logSys.info("Restoring iptables...")
 			fireWall.flushBanList(conf["debug"])
-			logSys.info("Exiting...")
+			removePID(conf["pidlock"])
+			logSys.warn("Exiting...")
 			sys.exit(0)
