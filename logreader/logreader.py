@@ -28,12 +28,12 @@ import os, sys
 
 class LogReader:
 	
-	def __init__(self, logPath, findTime = 3600, verbose = False):
+	def __init__(self, logPath, logSys, findTime = 3600):
 		self.logPath = logPath
 		self.findTime = findTime
 		self.ignoreIpList = []
 		self.lastModTime = 0
-		self.verbose = verbose
+		self.logSys = logSys
 	
 	def addIgnoreIP(self, ip):
 		self.ignoreIpList.append(ip)
@@ -45,7 +45,7 @@ class LogReader:
 		try:
 			fileHandler = open(self.logPath)
 		except OSError:
-			print "Unable to open", self.logPath
+			self.logSys.error("Unable to open "+self.logPath)
 			sys.exit(-1)
 		return fileHandler
 		
@@ -53,14 +53,13 @@ class LogReader:
 		try:
 			logStats = os.stat(self.logPath)
 		except OSError:
-			print "Unable to get stat on", logPath
+			self.logSys.error("Unable to get stat on "+self.logPath)
 			sys.exit(-1)
 		
 		if self.lastModTime == logStats.st_mtime:
 			return False
 		else:
-			if self.verbose:
-				print self.logPath, 'has been modified'
+			self.logSys.debug(self.logPath+" has been modified")
 			self.lastModTime = logStats.st_mtime
 			return True
 	
