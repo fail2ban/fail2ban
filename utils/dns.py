@@ -70,11 +70,3 @@ def textToIp(text):
 			for e in dns:
 				ipList.append(e)
 	return ipList
-
-if __name__ == "__main__":
-	print textToIp("jlkjlk 123.456.789.000 jlkjl rhost=lslpc49.epfl.ch www.google.ch")
-	try:
-		print socket.gethostbyname_ex("195.122.223.30")[2]
-	except socket.gaierror:
-		print "Error"
-	
