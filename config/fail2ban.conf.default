@@ -1,0 +1,38 @@
+# Fail2Ban configuration file
+#
+# $Revision$
+
+[DEFAULT]
+
+# background: true to start fail2ban as a daemon. Output
+# is redirect to logfile.
+background = false
+
+# debug: true to enable debug mode. More verbose output
+# and bypass root user test.
+debug = false
+
+# pwdfailfile: the path of the file which contains the
+# password failure log.
+pwdfailfile = /var/log/pwdfail/current
+
+# logfile: the path of the file for logging messages of
+# fail2ban.
+logfile = /var/log/fail2ban.log
+
+# maxretry: the number of retry before IP gets ban.
+maxretry = 3
+
+# bantime: the number of seconds an IP will be ban.
+bantime = 600
+
+# ignoreip: a space separated list that contains IP which
+# will be ignore by fail2ban. Example:
+# ignoreip = 192.168.0.1 123.45.235.65
+ignoreip = 
+
+# polltime: the number of seconds that fail2ban sleeps
+# between two iteration (check for IP to unban - parse
+# log file). 1 is a good value.
+polltime = 1
+
