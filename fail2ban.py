@@ -475,6 +475,7 @@ if __name__ == "__main__":
 			element.addIgnoreIP(ip)
 	
 	logSys.info("Fail2Ban v"+version+" is running")
+	failListFull = dict()
 	# Main loop
 	while True:
 		try:
@@ -505,20 +506,36 @@ if __name__ == "__main__":
 				for key in e.iterkeys():
 					if failList.has_key(key):
 						if failList[key][0] < e[key][0]:
-							failList[key] = (e[key][0], e[key][1],
-											element.getName())
+							failList[key] = (e[key][0], e[key][1], element)
 					else:
-						failList[key] = (e[key][0], e[key][1],
-										element.getName())
+						failList[key] = (e[key][0], e[key][1], element)
 				
+			# Add the last log failures to the global failure list.
+			for key in failList.iterkeys():
+				if failListFull.has_key(key):
+					failListFull[key] = (failListFull[key][0] + 1,
+										failList[key][1], failList[key][2])
+				else:
+					failListFull[key] = failList[key]
+			
+			# Remove the oldest failure attempts from the global list.
+			unixTime = time.time()
+			failListFullTemp = failListFull.copy()
+			for key in failListFullTemp.iterkeys():
+				failTime = failListFullTemp[key][2].getFindTime()
+				if failListFullTemp[key][1] < unixTime - failTime:
+					del failListFull[key]
 			
 			# We iterate the failure list and ban IP that make
 			# *retryAllowed* login failures.
-			for element in failList.iteritems():
-				if element[1][0] >= conf["maxretry"]:
-					logSys.info(`element[1][2]`+": "+element[0]+" has "+
-								`element[1][0]`+" login failure(s). Banned.")
-					fireWall.addBanIP(element[0], conf["debug"])
+			failListFullTemp = failListFull.copy()
+			for key in failListFullTemp.iterkeys():
+				element = failListFullTemp[key]
+				if element[0] >= conf["maxretry"]:
+					logSys.info(element[2].getName()+": "+key+" has "+
+								`element[0]`+" login failure(s). Banned.")
+					fireWall.addBanIP(key, conf["debug"])
+					del failListFull[key]
 			
 		except KeyboardInterrupt:
 			# When the user press <ctrl>+<c> we exit nicely.
