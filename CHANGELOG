@@ -7,7 +7,7 @@
 Fail2Ban (version 0.3.0)                           02/??/2005
 =============================================================
 
-ver. 0.3.0 (02/??/2005) - alpha
+ver. 0.3.0 (02/??/2005) - beta
 ----------
 - Re-writting of parts of the code in order to handle several
   log files with different rules
@@ -15,6 +15,7 @@ ver. 0.3.0 (02/??/2005) - alpha
 - Fixed a bug when exiting with IP in the ban list
 - Added PID lock file
 - Improved some parts of the code
+- Added ipfw-start-rule option (thanks to Robert Edeker)
 
 ver. 0.1.2 (11/21/2004) - beta
 ----------
