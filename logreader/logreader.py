@@ -34,7 +34,8 @@ class LogReader:
 		attempt.	
 	"""
 	
-	def __init__(self, logSys, logPath, timeregex, timepattern, failregex, findTime = 3600):
+	def __init__(self, logSys, logPath, timeregex, timepattern, failregex,
+		findTime = 3600):
 		self.logPath = logPath
 		self.timeregex = timeregex
 		self.timepattern = timepattern
@@ -44,7 +45,7 @@ class LogReader:
 		self.lastModTime = 0
 		self.logSys = logSys
 		self.lastPos = 0
-		self.lastSize = 0
+		self.lastDate = 0
 		self.logStats = None
 		
 	def setName(self, name):
@@ -56,6 +57,11 @@ class LogReader:
 		""" Gets the name of the log reader.
 		"""
 		return self.name
+	
+	def getFindTime(self):
+		""" Gets the find time.
+		"""
+		return self.findTime
 	
 	def addIgnoreIP(self, ip):
 		""" Adds an IP to the ignore list.
@@ -96,16 +102,16 @@ class LogReader:
 	
 	def setFilePos(self, file):
 		""" Sets the file position. We must take care of log file rotation
-			and reset the position to 0 in that case. Use the file size in
-			order to detect this. Not the best solution yet.		
+			and reset the position to 0 in that case. Use the log message
+			timestamp in order to detect this.		
 		"""
-		if self.lastSize > self.logStats.st_size:
-			self.logSys.debug("Size " + `self.logStats.st_size` + " is " +
-							"smaller than " + `self.lastSize`)
+		line = file.readline()
+		if self.lastDate < self.getTime(line):
+			self.logSys.debug("Date " + `self.lastDate` + " is " +
+							"smaller than " + `self.getTime(line)`)
 			self.logSys.debug("Log rotation detected")
 			self.lastPos = 0
 		
-		self.lastSize = self.logStats.st_size
 		self.logSys.debug("Setting file position to " + `self.lastPos`)
 		file.seek(self.lastPos)
 	
@@ -118,8 +124,10 @@ class LogReader:
 		"""
 		ipList = dict()
 		logFile = self.openLogFile()
-		#self.setFilePos(logFile)
+		self.setFilePos(logFile)
+		lastLine = ''
 		for line in logFile.readlines():
+			lastLine = line
 			failList = self.findFailure(line)
 			for element in failList:
 				ip = element[0]
@@ -134,7 +142,8 @@ class LogReader:
 					ipList[ip] = (ipList[ip][0]+1, unixTime)
 				else:
 					ipList[ip] = (1, unixTime)
-		#self.lastPos = logFile.tell()
+		self.lastPos = logFile.tell()
+		self.lastDate = self.getTime(lastLine)
 		logFile.close()
 		return ipList
 
@@ -156,6 +165,15 @@ class LogReader:
 					for ip in ipMatch:
 						failList.append([ip, date])
 		return failList
+	
+	def getTime(self, line):
+		""" Gets the time of a log message.
+		"""
+		date = 0
+		timeMatch = re.search(self.timeregex, line)
+		if timeMatch:
+			date = self.getUnixTime(timeMatch.group())
+		return date
 		
 	def getUnixTime(self, value):
 		""" Returns the Unix timestamp of the given value.
