@@ -36,6 +36,7 @@ class LogReader:
 		self.logSys = logSys
 	
 	def addIgnoreIP(self, ip):
+		self.logSys.debug("Add "+ip+" to ignore list")
 		self.ignoreIpList.append(ip)
 		
 	def inIgnoreIPList(self, ip):
