@@ -7,6 +7,8 @@ fail2ban.py
 firewall/__init__.py
 firewall/firewall.py
 firewall/iptables.py
+firewall/ipfw.py
+firewall/ipfwadm.py
 logreader/__init__.py
 logreader/logreader.py
 logreader/parser.py
