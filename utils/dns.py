@@ -28,7 +28,7 @@ import os, re, socket
 
 def dnsToIp(dns):
 	""" Convert a DNS into an IP address using the Python socket module.
-		Thanks to Kévin Drapel.
+		Thanks to Kevin Drapel.
 	"""
 	try:
 		return socket.gethostbyname_ex(dns)[2]
@@ -62,7 +62,7 @@ def textToIp(text):
 	plainIP = searchIP(text)
 	for element in plainIP:
 		ipList.append(element)
-	else:
+	if not ipList:
 		# Try to get IP from possible DNS
 		dnsList = textToDns(text)
 		for element in dnsList:
@@ -74,7 +74,7 @@ def textToIp(text):
 if __name__ == "__main__":
 	print textToIp("jlkjlk 123.456.789.000 jlkjl rhost=lslpc49.epfl.ch www.google.ch")
 	try:
-		print socket.gethostbyname_ex("www.google")[2]
+		print socket.gethostbyname_ex("195.122.223.30")[2]
 	except socket.gaierror:
 		print "Error"
 	
