@@ -56,7 +56,6 @@ Installation:
 
 Require: python-2.3 (http://www.python.org)
          log4py-1.1 (http://sourceforge.net/projects/log4py)
-         host (http://www.isc.org/products/BIND/bind9.html)
 
 To install, just do:
 
