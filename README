@@ -79,7 +79,7 @@ options:
   -b         start fail2ban in background
   -d         start fail2ban in debug mode
   -e <INTF>  ban IP on the INTF interface
-  -f <FILE>  read password failure from FILE
+  -c <FILE>  read configuration file FILE
   -h         display this help message
   -i <IP(s)> IP(s) to ignore
   -l <FILE>  log message in FILE

@@ -44,6 +44,7 @@ from firewall.ipfw import Ipfw
 from firewall.ipfwadm import Ipfwadm
 from logreader.logreader import LogReader
 from version import version
+from confreader.configreader import ConfigReader
 
 def usage():
 	print "Usage: fail2ban.py [OPTIONS]"
@@ -54,7 +55,7 @@ def usage():
 	print "  -b         start fail2ban in background"
 	print "  -d         start fail2ban in debug mode"
 	print "  -e <INTF>  ban IP on the INTF interface"
-	print "  -f <FILE>  read password failure from FILE"
+	print "  -c <FILE>  read configuration file FILE"
 	print "  -h         display this help message"
 	print "  -i <IP(s)> IP(s) to ignore"
 	print "  -l <FILE>  log message in FILE"
@@ -167,15 +168,12 @@ if __name__ == "__main__":
 	logSys = log4py.Logger().get_instance()
 	logSys.set_formatstring("%T %L %M")
 	
-	# Config file
-	configParser = SafeConfigParser()
-	configParser.read("/etc/fail2ban.conf")
-	
 	conf = dict()
 	conf["verbose"] = False
 	conf["background"] = False
 	conf["debug"] = False
-	conf["pwdfailfile"] = "/var/log/pwdfail/current"
+	conf["conffile"] = "/etc/fail2ban.conf"
+	conf["apachefile"] = "log-test/current"
 	conf["logging"] = False
 	conf["logfile"] = "/var/log/fail2ban.log"
 	conf["maxretry"] = 3
@@ -184,6 +182,21 @@ if __name__ == "__main__":
 	conf["interface"] = "eth0"
 	conf["firewall"] = "iptables"
 	conf["polltime"] = 1
+	
+	# Reads the command line options.
+	try:
+		optList, args = getopt.getopt(sys.argv[1:], 'hvbdc:l:t:i:r:e:w:')
+	except getopt.GetoptError:
+		usage()
+	
+	# Pre-parsing of command line options for the -c option
+	for opt in optList:
+		if opt[0] == "-c":
+			conf["conffile"] = opt[1]
+	
+	# Config file
+	configParser = SafeConfigParser()
+	configParser.read(conf["conffile"])
 	
 	# background
 	try:
@@ -203,16 +216,6 @@ if __name__ == "__main__":
 		logSys.warn("Using default value")
 	except NoOptionError:
 		logSys.warn("debug option not in config file")
-		logSys.warn("Using default value")
-	
-	# pwdfailfile
-	try:
-		conf["pwdfailfile"] = configParser.get("DEFAULT", "pwdfailfile")
-	except ValueError:
-		logSys.warn("pwdfailfile option should be a string")
-		logSys.warn("Using default value")
-	except NoOptionError:
-		logSys.warn("pwdfailfile option not in config file")
 		logSys.warn("Using default value")
 
 	# logfile
@@ -265,7 +268,7 @@ if __name__ == "__main__":
 		logSys.warn("interface option not in config file")
 		logSys.warn("Using default value")
 		
-	# interface
+	# firewall
 	try:
 		conf["firewall"] = configParser.get("DEFAULT", "firewall")
 	except ValueError:
@@ -285,12 +288,6 @@ if __name__ == "__main__":
 		logSys.warn("polltime option not in config file")
 		logSys.warn("Using default value")
 	
-	# Reads the command line options.
-	try:
-		optList, args = getopt.getopt(sys.argv[1:], 'hvbdf:l:t:i:r:e:w:')
-	except getopt.GetoptError:
-		usage()
-	
 	for opt in optList:
 		if opt[0] == "-h":
 			usage()
@@ -302,8 +299,6 @@ if __name__ == "__main__":
 			conf["debug"] = True
 		if opt[0] == "-e":
 			conf["interface"] = opt[1]
-		if opt[0] == "-f":
-			conf["pwdfailfile"] = opt[1]
 		if opt[0] == "-l":
 			conf["logging"] = True
 			conf["logfile"] = opt[1]
@@ -359,22 +354,35 @@ if __name__ == "__main__":
 		if not conf["debug"]:
 			sys.exit(-1)
 	
-	logSys.debug("logFilePath is "+conf["pwdfailfile"])
+	logSys.debug("ConfFile is "+conf["conffile"])
 	logSys.debug("BanTime is "+`conf["bantime"]`)
 	logSys.debug("retryAllowed is "+`conf["maxretry"]`)
+	
+	# Reads the config file and create a LogReader instance for
+	# each log file to check.
+	confReader = ConfigReader(conf["conffile"]);
+	confReader.openConf()
+	logList = list()
+	for t in confReader.getSections():
+		l = confReader.getLogOptions(t)
+		lObj = LogReader(logSys, l["logfile"], l["timeregex"],
+						l["timepattern"], l["failregex"])
+		lObj.openLogFile()
+		logList.append(lObj)
 	
 	# Creates one instance of Iptables (thanks to Pyhton dynamic
 	# features) and one of LogReader.
 	fireWallObj = eval(fireWallName)
 	fireWall = fireWallObj(conf["bantime"], logSys, conf["interface"])
-	logFile = LogReader(conf["pwdfailfile"], logSys, conf["bantime"])
 	
 	# We add 127.0.0.1 to the ignore list has we do not want
 	# to be ban ourself.
-	logFile.addIgnoreIP("127.0.0.1")
+	for element in logList:
+		element.addIgnoreIP("127.0.0.1")
 	while len(ignoreIPList) > 0:
 		ip = ignoreIPList.pop()
-		logFile.addIgnoreIP(ip)
+		for element in logList:
+			element.addIgnoreIP(ip)
 	
 	logSys.info("Fail2Ban v"+version+" is running")
 	# Main loop
@@ -390,12 +398,19 @@ if __name__ == "__main__":
 			# If the log file has not been modified since the
 			# last time, we sleep for 1 second. This is active
 			# polling so not very effective.
-			if not logFile.isModified():
+			isModified = False
+			for element in logList:
+				if element.isModified():
+					isModified = True
+			
+			if not isModified:
 				time.sleep(conf["polltime"])
 				continue
 			
 			# Gets the failure list from the log file.
-			failList = logFile.getPwdFailure()
+			failList = dict()
+			for element in logList:
+				failList.update(element.getFailures())
 			
 			# We iterate the failure list and ban IP that make
 			# *retryAllowed* login failures.

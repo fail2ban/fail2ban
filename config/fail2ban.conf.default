@@ -16,10 +16,6 @@ background = false
 # and bypass root user test.
 debug = false
 
-# pwdfailfile: the path of the file which contains the
-# password failure log.
-pwdfailfile = /var/log/pwdfail/current
-
 # logfile: the path of the file for logging messages of
 # fail2ban.
 logfile = /var/log/fail2ban.log
@@ -43,4 +39,41 @@ interface = eth0
 # between two iteration (check for IP to unban - parse
 # log file). 1 is a good value.
 polltime = 1
+
+# You can define a new section for each log file to check for
+# password failure.
+
+[Apache]
+# logfile: file to monitor.
+logfile = log-test/apache
+
+# timeregex: regular expression which have to match the
+# timestamp of an Apache log event.
+# [Wed Jan 05 15:08:01 2005]
+timeregex = \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
+
+# timepattern: indicates the "timeregex" fields signification.
+# See syntax here: http://rgruet.free.fr/PQR2.3.html#timeModule
+timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
+
+# failregex: regular expression which have to match the
+# message written in the log file in case of password failure.
+failregex = authentication failure
+
+[SSH]
+# logfile: file to monitor.
+logfile = log-test/current
+
+# timeregex: regular expression which have to match the
+# timestamp of an Apache log event.
+# Mar  7 17:53:28
+timeregex = \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
+
+# timepattern: indicates the "timeregex" fields signification.
+# See syntax here: http://rgruet.free.fr/PQR2.3.html#timeModule
+timepattern = %%b %%d %%H:%%M:%%S
+
+# failregex: regular expression which have to match the
+# message written in the log file in case of password failure.
+failregex = Authentication failure
 
