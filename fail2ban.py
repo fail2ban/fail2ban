@@ -27,13 +27,19 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import posix, time, sys, getopt, os, signal
-import log4py
+
+# Checks if log4py is present.
+try:
+	import log4py
+except:
+	print "log4py is needed (see README)"
+	sys.exit(-1)
 
 # Appends our own modules path
 sys.path.append('/usr/lib/fail2ban')
 
 from firewall.iptables import Iptables
-from logreader.metalog import Metalog
+from logreader.logreader import LogReader
 from version import version
 
 def usage():
@@ -47,6 +53,7 @@ def usage():
 	print "  -f <FILE>  read password failure from FILE"
 	print "  -h         display this help message"
 	print "  -l <FILE>  log message in FILE"
+	print "  -r <VALUE> allow a max of VALUE password failure"
 	print "  -t <TIME>  ban IP for TIME seconds"
 	print "  -v         verbose"
 	print
@@ -140,18 +147,22 @@ def createDaemon():
 
 if __name__ == "__main__":
 	
+	# Gets an instance of log4py.
 	logSys = log4py.Logger().get_instance()
 	logSys.set_formatstring("%T %L %M")
 	
-	try:
-		optList, args = getopt.getopt(sys.argv[1:], 'hvbdf:l:t:i:')
-	except getopt.GetoptError:
-		usage()
-
+	# Initializes some variables.
 	debug = False
 	logFilePath = "/var/log/pwdfail/current"
 	banTime = 600
 	ignoreIPList = {}
+	retryAllowed = 3
+	
+	# Reads the command line options.
+	try:
+		optList, args = getopt.getopt(sys.argv[1:], 'hvbdf:l:t:i:r:')
+	except getopt.GetoptError:
+		usage()
 	
 	for opt in optList:
 		if opt[0] == "-h":
@@ -185,7 +196,15 @@ if __name__ == "__main__":
 				logSys.error("Using default value")
 		if opt[0] == "-i":
 			ignoreIPList = opt[1].split(' ')
+		if opt[0] == "-r":
+			try:
+				retryAllowed = int(opt[1])
+			except ValueError:
+				logSys.error("retryAllowed must be an integer")
+				logSys.error("Using default value")
 	
+	# Checks for root user. This is necessary because log files
+	# are owned by root and firewall needs root access.
 	if not checkForRoot():
 		logSys.error("You must be root")
 		if not debug:
@@ -193,36 +212,51 @@ if __name__ == "__main__":
 	
 	logSys.debug("logFilePath is "+logFilePath)
 	logSys.debug("BanTime is "+`banTime`)
+	logSys.debug("retryAllowed is "+`retryAllowed`)
 	
+	# Creates one instance of Iptables and one of LogReader.
 	fireWall = Iptables(banTime, logSys)
-	logFile = Metalog(logFilePath, logSys, banTime)
+	logFile = LogReader(logFilePath, logSys, banTime)
 	
+	# We add 127.0.0.1 to the ignore list has we do not want
+	# to be ban ourself.
 	logFile.addIgnoreIP("127.0.0.1")
 	while len(ignoreIPList) > 0:
 		ip = ignoreIPList.pop()
 		logFile.addIgnoreIP(ip)
 	
 	logSys.info("Fail2Ban v"+version+" is running")
+	# Main loop
 	while True:
 		try:
 			sys.stdout.flush()
 			sys.stderr.flush()
 			
+			# Checks if some IP have to be remove from ban
+			# list.
 			fireWall.checkForUnBan(debug)
 			
+			# If the log file has not been modified since the
+			# last time, we sleep for 1 second. This is active
+			# polling so not very effective.
 			if not logFile.isModified():
 				time.sleep(1)
 				continue
 			
+			# Gets the failure list from the log file.
 			failList = logFile.getPwdFailure()
-						
+			
+			# We iterate the failure list and ban IP that make
+			# *retryAllowed* login failures.
 			iterFailList = failList.iteritems()
 			for i in range(len(failList)):
 				element = iterFailList.next()
-				if element[1][0] > 2:
+				if element[1][0] >= retryAllowed:
 					fireWall.addBanIP(element[0], debug)
 			
 		except KeyboardInterrupt:
+			# When the user press <ctrl>+<c> we flush the ban list
+			# and exit nicely.
 			logSys.info("Restoring iptables...")
 			fireWall.flushBanList(debug)
 			logSys.info("Exiting...")
