@@ -41,9 +41,11 @@ class Metalog(LogReader):
 				if unixTime < time.time()-self.findTime:
 					continue
 				if self.inIgnoreIPList(ip):
-					print 'Ignore', ip
+					if self.verbose:
+						print 'Ignore', ip
 					continue
-				print 'Found', ip, 'at', unixTime
+				if self.verbose:
+					print 'Found', ip, 'at', unixTime
 				if ipList.has_key(ip):
 					ipList[ip] = (ipList[ip][0]+1, unixTime)
 				else:
