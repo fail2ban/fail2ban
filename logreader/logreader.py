@@ -109,10 +109,11 @@ class LogReader:
 		if self.lastDate < self.getTime(line):
 			self.logSys.debug("Date " + `self.lastDate` + " is " +
 							"smaller than " + `self.getTime(line)`)
-			self.logSys.debug("Log rotation detected")
+			self.logSys.debug("Log rotation detected for " + self.logPath)
 			self.lastPos = 0
 		
-		self.logSys.debug("Setting file position to " + `self.lastPos`)
+		self.logSys.debug("Setting file position to " + `self.lastPos` + " for "
+						+ self.logPath)
 		file.seek(self.lastPos)
 	
 	def getFailures(self):
@@ -123,6 +124,7 @@ class LogReader:
 			and the latest failure time.
 		"""
 		ipList = dict()
+		self.logSys.debug(self.logPath)
 		logFile = self.openLogFile()
 		self.setFilePos(logFile)
 		lastLine = ''
