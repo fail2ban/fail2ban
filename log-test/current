@@ -1,4 +1,0 @@
-                - Last output repeated 2 times -
-Oct  7 11:47:08 [sshd] Failed password for illegal user test from 69.182.27.122 port 34015 ssh2
-Oct  7 11:47:09 [sshd] Failed password for illegal user guest from 69.182.27.122 port 34068 ssh2
-Oct  7 11:47:11 [sshd] Failed password for illegal user admin from 69.182.27.122 port 34127 ssh2
