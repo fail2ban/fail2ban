@@ -46,7 +46,7 @@ also support others firewalls than iptables.
 Installation:
 -------------
 
-Require: python-2.2 (http://www.python.org)
+Require: python-2.3 (http://www.python.org)
          log4py-1.1 (http://sourceforge.net/projects/log4py)
 
 To install, just do:
@@ -62,19 +62,24 @@ Fail2Ban should now be correctly installed. Just type:
 
 > fail2ban.py -h
 
-to see if everything is alright.
+to see if everything is alright. You can configure fail2ban
+with a config file. Copy config/fail2ban.conf.default to
+/etc/fail2ban.conf.
 
 
 Configuration:
 --------------
 
-For the time, there is no configuration file. You must use
-commande line options instead. Here are the options:
+You can configure fail2ban using the file /etc/fail2ban.conf
+or using command line options. Command line options override
+the value stored in fail2ban.conf. Here are the command line
+options:
 
   -b         start fail2ban in background
   -d         start fail2ban in debug mode
   -f <FILE>  read password failure from FILE
   -h         display this help message
+  -i <IP(s)> IP(s) to ignore
   -l <FILE>  log message in FILE
   -r <VALUE> allow a max of VALUE password failure
   -t <TIME>  ban IP for TIME seconds
