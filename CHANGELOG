@@ -15,6 +15,7 @@ ver. 0.1.1 (??/??/????) - alpha
   daemon specific
 - Rewrite log reader to be service centered. Sshd support
   added. Match "Failed password" and "Illegal user"
+- Add /etc/fail2ban.conf configuration support
 - Code documentation
 
 

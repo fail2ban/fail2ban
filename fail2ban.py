@@ -27,6 +27,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import posix, time, sys, getopt, os, signal
+from ConfigParser import *
 
 # Checks if log4py is present.
 try:
@@ -52,6 +53,7 @@ def usage():
 	print "  -d         start fail2ban in debug mode"
 	print "  -f <FILE>  read password failure from FILE"
 	print "  -h         display this help message"
+	print "  -i <IP(s)> IP(s) to ignore"
 	print "  -l <FILE>  log message in FILE"
 	print "  -r <VALUE> allow a max of VALUE password failure"
 	print "  -t <TIME>  ban IP for TIME seconds"
@@ -151,12 +153,101 @@ if __name__ == "__main__":
 	logSys = log4py.Logger().get_instance()
 	logSys.set_formatstring("%T %L %M")
 	
-	# Initializes some variables.
-	debug = False
-	logFilePath = "/var/log/pwdfail/current"
-	banTime = 600
-	ignoreIPList = {}
-	retryAllowed = 3
+	# Config file
+	configParser = SafeConfigParser()
+	configParser.read("/etc/fail2ban.conf")
+	
+	conf = dict()
+	conf["verbose"] = False
+	conf["background"] = False
+	conf["debug"] = False
+	conf["pwdfailfile"] = "/var/log/pwdfail/current"
+	conf["logging"] = False
+	conf["logfile"] = "/var/log/fail2ban.log"
+	conf["maxretry"] = 3
+	conf["bantime"] = 600
+	conf["ignoreip"] = ''
+	conf["polltime"] = 1
+	
+	# background
+	try:
+		conf["background"] = configParser.getboolean("DEFAULT", "background")
+	except ValueError:
+		logSys.warn("background option should be a boolean")
+		logSys.warn("Using default value")
+	except NoOptionError:
+		logSys.warn("background option not in config file")
+		logSys.warn("Using default value")
+
+	# debug
+	try:
+		conf["debug"] = configParser.getboolean("DEFAULT", "debug")
+	except ValueError:
+		logSys.warn("debug option should be a boolean")
+		logSys.warn("Using default value")
+	except NoOptionError:
+		logSys.warn("debug option not in config file")
+		logSys.warn("Using default value")
+	
+	# pwdfailfile
+	try:
+		conf["pwdfailfile"] = configParser.get("DEFAULT", "pwdfailfile")
+	except ValueError:
+		logSys.warn("pwdfailfile option should be a string")
+		logSys.warn("Using default value")
+	except NoOptionError:
+		logSys.warn("pwdfailfile option not in config file")
+		logSys.warn("Using default value")
+
+	# logfile
+	try:
+		conf["logfile"] = configParser.get("DEFAULT", "logfile")
+	except ValueError:
+		logSys.warn("logfile option should be a string")
+		logSys.warn("Using default value")
+	except NoOptionError:
+		logSys.warn("logfile option not in config file")
+		logSys.warn("Using default value")
+		
+	# maxretry
+	try:
+		conf["maxretry"] = configParser.getint("DEFAULT", "maxretry")
+	except ValueError:
+		logSys.warn("maxretry option should be an integer")
+		logSys.warn("Using default value")
+	except NoOptionError:
+		logSys.warn("maxretry option not in config file")
+		logSys.warn("Using default value")
+
+	# bantime
+	try:
+		conf["bantime"] = configParser.getint("DEFAULT", "bantime")
+	except ValueError:
+		logSys.warn("bantime option should be an integer")
+		logSys.warn("Using default value")
+	except NoOptionError:
+		logSys.warn("bantime option not in config file")
+		logSys.warn("Using default value")
+
+	# ignoreip
+	try:
+		conf["ignoreip"] = configParser.get("DEFAULT", "ignoreip")
+	except ValueError:
+		logSys.warn("ignoreip option should be a string")
+		logSys.warn("Using default value")
+	except NoOptionError:
+		logSys.warn("ignoreip option not in config file")
+		logSys.warn("Using default value")
+		
+	# polltime
+	try:
+		conf["polltime"] = configParser.getint("DEFAULT", "polltime")
+	except ValueError:
+		logSys.warn("polltime option should be an integer")
+		logSys.warn("Using default value")
+	except NoOptionError:
+		logSys.warn("polltime option not in config file")
+		logSys.warn("Using default value")
 	
 	# Reads the command line options.
 	try:
@@ -168,55 +259,64 @@ if __name__ == "__main__":
 		if opt[0] == "-h":
 			usage()
 		if opt[0] == "-v":
-			logSys.set_loglevel(log4py.LOGLEVEL_VERBOSE)
+			conf["verbose"] = True
 		if opt[0] == "-b":
+			conf["background"] = True
+		if opt[0] == "-d":
+			conf["debug"] = True
+		if opt[0] == "-f":
+			conf["pwdfailfile"] = opt[1]
+		if opt[0] == "-l":
+			conf["logging"] = True
+			conf["logfile"] = opt[1]
+		if opt[0] == "-t":
+			try:
+				conf["bantime"] = int(opt[1])
+			except ValueError:
+				logSys.warn("banTime must be an integer")
+				logSys.warn("Using default value")
+		if opt[0] == "-i":
+			conf["ignoreip"] = opt[1]
+		if opt[0] == "-r":
+			conf["retrymax"] = int(opt[1])
+
+	# Process some options
+	for c in conf:
+		if c == "verbose" and conf[c]:
+			logSys.set_loglevel(log4py.LOGLEVEL_VERBOSE)
+		elif c == "debug" and conf[c]:
+			logSys.set_loglevel(log4py.LOGLEVEL_DEBUG)
+			logSys.set_formatstring(log4py.FMT_DEBUG)
+		elif c == "background" and conf[c]:
 			retCode = createDaemon()
-			logSys.set_target("/tmp/fail2ban.log")
+			logSys.set_target(conf["logfile"])
 			if retCode != 0:
 				logSys.error("Unable to start daemon")
 				sys.exit(-1)
-		if opt[0] == "-d":
-			debug = True
-			logSys.set_loglevel(log4py.LOGLEVEL_DEBUG)
-			logSys.set_formatstring(log4py.FMT_DEBUG)
-		if opt[0] == "-f":
-			logFilePath = opt[1]
-		if opt[0] == "-l":
+		elif c == "logging" and conf[c]:
 			try:
-				open(opt[1], "a")
-				logSys.set_target(opt[1])
+				open(conf["logfile"], "a")
+				logSys.set_target(conf["logfile"])
 			except IOError:
-				logSys.error("Unable to log to "+opt[1])
-				logSys.error("Using default output for logging")
-		if opt[0] == "-t":
-			try:
-				banTime = int(opt[1])
-			except ValueError:
-				logSys.error("banTime must be an integer")
-				logSys.error("Using default value")
-		if opt[0] == "-i":
-			ignoreIPList = opt[1].split(' ')
-		if opt[0] == "-r":
-			try:
-				retryAllowed = int(opt[1])
-			except ValueError:
-				logSys.error("retryAllowed must be an integer")
-				logSys.error("Using default value")
+				logSys.warn("Unable to log to "+conf["logfile"])
+				logSys.warn("Using default output for logging")
+		elif c == "ignoreip":
+			ignoreIPList = conf[c].split(' ')
 	
 	# Checks for root user. This is necessary because log files
 	# are owned by root and firewall needs root access.
 	if not checkForRoot():
 		logSys.error("You must be root")
-		if not debug:
+		if not conf["debug"]:
 			sys.exit(-1)
 	
-	logSys.debug("logFilePath is "+logFilePath)
-	logSys.debug("BanTime is "+`banTime`)
-	logSys.debug("retryAllowed is "+`retryAllowed`)
+	logSys.debug("logFilePath is "+conf["pwdfailfile"])
+	logSys.debug("BanTime is "+`conf["bantime"]`)
+	logSys.debug("retryAllowed is "+`conf["maxretry"]`)
 	
 	# Creates one instance of Iptables and one of LogReader.
-	fireWall = Iptables(banTime, logSys)
-	logFile = LogReader(logFilePath, logSys, banTime)
+	fireWall = Iptables(conf["bantime"], logSys)
+	logFile = LogReader(conf["pwdfailfile"], logSys, conf["bantime"])
 	
 	# We add 127.0.0.1 to the ignore list has we do not want
 	# to be ban ourself.
@@ -234,13 +334,13 @@ if __name__ == "__main__":
 			
 			# Checks if some IP have to be remove from ban
 			# list.
-			fireWall.checkForUnBan(debug)
+			fireWall.checkForUnBan(conf["debug"])
 			
 			# If the log file has not been modified since the
 			# last time, we sleep for 1 second. This is active
 			# polling so not very effective.
 			if not logFile.isModified():
-				time.sleep(1)
+				time.sleep(conf["polltime"])
 				continue
 			
 			# Gets the failure list from the log file.
@@ -252,12 +352,12 @@ if __name__ == "__main__":
 			for i in range(len(failList)):
 				element = iterFailList.next()
 				if element[1][0] >= retryAllowed:
-					fireWall.addBanIP(element[0], debug)
+					fireWall.addBanIP(element[0], conf["debug"])
 			
 		except KeyboardInterrupt:
 			# When the user press <ctrl>+<c> we flush the ban list
 			# and exit nicely.
 			logSys.info("Restoring iptables...")
-			fireWall.flushBanList(debug)
+			fireWall.flushBanList(conf["debug"])
 			logSys.info("Exiting...")
 			sys.exit(0)
