@@ -24,33 +24,16 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import os, re
+import os, re, socket
 
 def dnsToIp(dns):
-	""" Convert a DNS into an IP address using the "host" command.
-		We make sure that there is no malicious usage of this function.
+	""" Convert a DNS into an IP address using the Python socket module.
+		Thanks to Kévin Drapel.
 	"""
-	ipList = list()
-	# Check for command injection
-	if checkInjection(dns):
-		return ipList
-	result = os.popen("host "+dns, 'r')
-	for i in result.readlines():
-		match = re.search("(?:\d{1,3}\.){3}\d{1,3}", i)
-		if match:
-			ipList.append(match.group())
-	return ipList
-
-def checkInjection(command):
-	""" Check that command could not be used to inject shell commands.
-	"""
-	# Characters which have nothing to do in "command"
-	invalid = "<|>|;|\&|\||`|!"
-	match = re.search(invalid, command)
-	if match:
-		return True
-	else:
-		return False
+	try:
+		return socket.gethostbyname_ex(dns)[2]
+	except socket.gaierror:
+		return list()
 
 def textToDns(text):
 	""" Search for possible DNS in an arbitrary text.
@@ -90,4 +73,8 @@ def textToIp(text):
 
 if __name__ == "__main__":
 	print textToIp("jlkjlk 123.456.789.000 jlkjl rhost=lslpc49.epfl.ch www.google.ch")
+	try:
+		print socket.gethostbyname_ex("www.google")[2]
+	except socket.gaierror:
+		print "Error"
 	
