@@ -34,7 +34,9 @@ class ConfigReader:
 		Fail2Ban. Each other section is for a different log file.
 	"""
 	
-	optionValues = ("logfile", "timeregex", "timepattern", "failregex")
+	optionValues = (["bool", "enabled"], ["str", "logfile"],
+					["str", "timeregex"], ["str", "timepattern"],
+					["str", "failregex"])
 	
 	def __init__(self, logSys, confPath):
 		self.confPath = confPath
@@ -59,8 +61,14 @@ class ConfigReader:
 		values = dict()
 		for option in self.optionValues:
 			try:
-				v = self.configParser.get(sec, option)
-				values[option] = v
+				if option[0] == "bool":
+					v = self.configParser.getboolean(sec, option[1])
+				elif option[0] == "int":
+					v = self.configParser.getint(sec, option[1])
+				else:
+					v = self.configParser.get(sec, option[1])
+				
+				values[option[1]] = v
 			except NoOptionError:
 				self.logSys.info("No "+option+" defined in "+sec)
 		return values
