@@ -206,6 +206,7 @@ if __name__ == "__main__":
 	conf["ignoreip"] = ''
 	conf["interface"] = "eth0"
 	conf["firewall"] = "iptables"
+	conf["ipfw-start-rule"] = 0
 	conf["polltime"] = 1
 	
 	# Reads the command line options.
@@ -312,6 +313,17 @@ if __name__ == "__main__":
 	except NoOptionError:
 		logSys.warn("firewall option not in config file")
 		logSys.warn("Using default value")
+	
+	# ipfw-start-rule
+	try:
+		conf["ipfw-start-rule"] = configParser.getint("DEFAULT",
+													"ipfw-start-rule")
+	except ValueError:
+		logSys.warn("ipfw-start-rule option should be an integer")
+		logSys.warn("Using default value")
+	except NoOptionError:
+		logSys.warn("ipfw-start-rule option not in config file")
+		logSys.warn("Using default value")
 
 	# polltime
 	try:
@@ -408,15 +420,21 @@ if __name__ == "__main__":
 	logList = list()
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t)
-		lObj = LogReader(logSys, l["logfile"], l["timeregex"],
-						l["timepattern"], l["failregex"], conf["bantime"])
-		lObj.setName(t)
-		logList.append(lObj)
+		if l["enabled"]:
+			lObj = LogReader(logSys, l["logfile"], l["timeregex"],
+							l["timepattern"], l["failregex"], conf["bantime"])
+			lObj.setName(t)
+			logList.append(lObj)
 	
 	# Creates one instance of Iptables (thanks to Pyhton dynamic
-	# features) and one of LogReader.
+	# features).
 	fireWallObj = eval(fireWallName)
 	fireWall = fireWallObj(conf["bantime"], logSys, conf["interface"])
+	
+	# IPFW needs rules number. The configuration option "ipfw-start-rule"
+	# defines the first rule number used by Fail2Ban.
+	if fireWallName == "Ipfw":
+		fireWall.setCrtRuleNbr(conf["ipfw-start-rule"])
 	
 	# We add 127.0.0.1 to the ignore list has we do not want
 	# to be ban ourself.
