@@ -7,6 +7,17 @@
 Fail2Ban (version 0.1.0)                           10/12/2004
 =============================================================
 
+ver. 0.1.1 (??/??/????) - alpha
+----------
+- Add -r option which allows to set the maximum number of
+  login failures
+- Remove the Metalog class as the log file are not so syslog
+  daemon specific
+- Rewrite log reader to be service centered. Sshd support
+  added. Match "Failed password" and "Illegal user"
+- Code documentation
+
+
 ver. 0.1.0 (10/12/2004) - alpha
 ----------
 - Initial release
