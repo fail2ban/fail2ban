@@ -26,6 +26,8 @@ __license__ = "GPL"
 
 import os, sys, time, re
 
+from utils.dns import *
+
 class LogReader:
 	""" Reads a log file and reports information about IP that make password
 		failure, bad user or anything else that is considered as doubtful login
@@ -41,6 +43,7 @@ class LogReader:
 		self.ignoreIpList = []
 		self.lastModTime = 0
 		self.logSys = logSys
+		self.lastPos = 0
 		
 	def setName(self, name):
 		""" Sets the name of the log reader.
@@ -98,13 +101,15 @@ class LogReader:
 		"""
 		ipList = dict()
 		logFile = self.openLogFile()
+		self.logSys.debug("Setting file position to " + `self.lastPos`)
+		logFile.seek(self.lastPos)
 		for line in logFile.readlines():
-			value = self.findFailure(line)
-			if value:
-				ip = value[0]
-				unixTime = value[1]
+			failList = self.findFailure(line)
+			for element in failList:
+				ip = element[0]
+				unixTime = element[1]
 				if unixTime < time.time()-self.findTime:
-					continue
+					break
 				if self.inIgnoreIPList(ip):
 					self.logSys.debug("Ignore "+ip)
 					continue
@@ -113,6 +118,7 @@ class LogReader:
 					ipList[ip] = (ipList[ip][0]+1, unixTime)
 				else:
 					ipList[ip] = (1, unixTime)
+		self.lastPos = logFile.tell()
 		logFile.close()
 		return ipList
 
@@ -123,16 +129,17 @@ class LogReader:
 			
 			Returns a dict with IP and timestamp.
 		"""
-		match = self.matchLine(self.failregex, line)
+		failList = list()
+		match = re.search(self.failregex, line)
 		if match:
-			timeMatch = self.matchLine(self.timeregex, match.string)
+			timeMatch = re.search(self.timeregex, match.string)
 			if timeMatch:
 				date = self.getUnixTime(timeMatch.group())
-				ipMatch = self.matchAddress(match.string)
+				ipMatch = textToIp(match.string)
 				if ipMatch:
-					ip = ipMatch.group()
-					return [ip, date]
-		return None
+					for ip in ipMatch:
+						failList.append([ip, date])
+		return failList
 		
 	def getUnixTime(self, value):
 		""" Returns the Unix timestamp of the given value.
@@ -144,17 +151,3 @@ class LogReader:
 			date[0] = time.gmtime()[0]
 		unixTime = time.mktime(date)
 		return unixTime
-	
-	def matchLine(self, pattern, line):
-		""" Checks if the line contains a pattern.
-			
-			Return a match object.
-		"""
-		return re.search(pattern, line)
-		
-	def matchAddress(self, line):
-		""" Return a match on the IP address present in
-			line.		
-		"""
-		return self.matchLine("(?:\d{1,3}\.){3}\d{1,3}", line)
-	
