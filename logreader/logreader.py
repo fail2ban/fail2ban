@@ -41,6 +41,16 @@ class LogReader:
 		self.ignoreIpList = []
 		self.lastModTime = 0
 		self.logSys = logSys
+		
+	def setName(self, name):
+		""" Sets the name of the log reader.
+		"""
+		self.name = name
+		
+	def getName(self):
+		""" Gets the name of the log reader.
+		"""
+		return self.name
 	
 	def addIgnoreIP(self, ip):
 		""" Adds an IP to the ignore list.
