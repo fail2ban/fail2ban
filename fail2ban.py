@@ -43,8 +43,8 @@ from firewall.iptables import Iptables
 from firewall.ipfw import Ipfw
 from firewall.ipfwadm import Ipfwadm
 from logreader.logreader import LogReader
-from version import version
 from confreader.configreader import ConfigReader
+from version import version
 
 def usage():
 	print "Usage: fail2ban.py [OPTIONS]"
@@ -173,7 +173,6 @@ if __name__ == "__main__":
 	conf["background"] = False
 	conf["debug"] = False
 	conf["conffile"] = "/etc/fail2ban.conf"
-	conf["apachefile"] = "log-test/current"
 	conf["logging"] = False
 	conf["logfile"] = "/var/log/fail2ban.log"
 	conf["maxretry"] = 3
@@ -360,7 +359,7 @@ if __name__ == "__main__":
 	
 	# Reads the config file and create a LogReader instance for
 	# each log file to check.
-	confReader = ConfigReader(conf["conffile"]);
+	confReader = ConfigReader(logSys, conf["conffile"]);
 	confReader.openConf()
 	logList = list()
 	for t in confReader.getSections():
@@ -399,9 +398,11 @@ if __name__ == "__main__":
 			# last time, we sleep for 1 second. This is active
 			# polling so not very effective.
 			isModified = False
+			modList = list()
 			for element in logList:
 				if element.isModified():
 					isModified = True
+					modList.append(element)
 			
 			if not isModified:
 				time.sleep(conf["polltime"])
@@ -409,7 +410,7 @@ if __name__ == "__main__":
 			
 			# Gets the failure list from the log file.
 			failList = dict()
-			for element in logList:
+			for element in modList:
 				failList.update(element.getFailures())
 			
 			# We iterate the failure list and ban IP that make
