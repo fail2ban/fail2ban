@@ -38,5 +38,5 @@ setup(
         url = "http://www.sourceforge.net/projects/fail2ban",
         scripts = ['fail2ban.py'],
         py_modules = ['version'],
-        packages = ['firewall', 'logreader', 'confreader']
+        packages = ['firewall', 'logreader', 'confreader', 'utils']
 )
