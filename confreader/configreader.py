@@ -24,8 +24,6 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import os, sys, time
-
 from ConfigParser import *
 
 class ConfigReader:
@@ -76,7 +74,7 @@ class ConfigReader:
 				
 				values[option[1]] = v
 			except NoOptionError:
-				self.logSys.info("No '"+option[1]+"' defined in '"+sec+"'")
+				self.logSys.warn("No '"+option[1]+"' defined in '"+sec+"'")
 				values[option[1]] = option[2]
 		return values
 		
