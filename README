@@ -94,7 +94,7 @@ options:
   -l <FILE>  log message in FILE
   -r <VALUE> allow a max of VALUE password failure
   -t <TIME>  ban IP for TIME seconds
-  -v         verbose
+  -v         verbose. Use twice for greater effect
   -w <FIWA>  select the firewall to use. Can be iptables,
              ipfwadm or ipfw
 

@@ -12,6 +12,7 @@ ver. 0.3.1 (??/??/2005) - beta
 - Corrected level of messages
 - Added DNS lookup support
 - Improved parsing speed. Only parse the new log messages
+- Added a second verbose level (-vv)
 
 ver. 0.3.0 (02/24/2005) - beta
 ----------
