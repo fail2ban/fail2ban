@@ -79,7 +79,8 @@ class Firewall:
 		""" Flushes the ban list and of course the firewall rules.
 			Called when fail2ban exits.
 		"""
-		iterBanList = self.banList.iteritems()
+		banListTemp = self.banList.copy()
+		iterBanList = banListTemp.iteritems()
 		for i in range(len(self.banList)):
 			element = iterBanList.next()
 			ip = element[0]
@@ -101,4 +102,3 @@ class Firewall:
 		for i in range(len(self.banList)):
 			element = iterBanList.next()
 			print element
-		
