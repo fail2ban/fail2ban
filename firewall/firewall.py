@@ -42,21 +42,21 @@ class Firewall:
 		""" Bans an IP.
 		"""
 		if not self.inBanList(ip):
-			self.logSys.info("Ban "+ip)
+			self.logSys.warn("Ban "+ip)
 			self.banList[ip] = time.time()
 			self.__executeCmd(self.banIP(ip), debug)
 		else:
-			self.logSys.info(ip+" already in ban list")
+			self.logSys.error(ip+" already in ban list")
 	
 	def delBanIP(self, ip, debug):
 		""" Unban an IP.
 		"""
 		if self.inBanList(ip):
-			self.logSys.info("Unban "+ip)
+			self.logSys.warn("Unban "+ip)
 			del self.banList[ip]
 			self.__executeCmd(self.unBanIP(ip), debug)
 		else:
-			self.logSys.info(ip+" not in ban list")
+			self.logSys.error(ip+" not in ban list")
 	
 	def inBanList(self, ip):
 		""" Checks if IP is in ban list.
@@ -67,9 +67,7 @@ class Firewall:
 		""" Check for IP to remove from ban list.
 		"""
 		banListTemp = self.banList.copy()
-		iterBanList = banListTemp.iteritems()
-		for i in range(len(self.banList)):
-			element = iterBanList.next()
+		for element in banListTemp.iteritems():
 			ip = element[0]
 			btime = element[1]
 			if btime < time.time()-self.banTime:
@@ -80,9 +78,7 @@ class Firewall:
 			Called when fail2ban exits.
 		"""
 		banListTemp = self.banList.copy()
-		iterBanList = banListTemp.iteritems()
-		for i in range(len(self.banList)):
-			element = iterBanList.next()
+		for element in banListTemp.iteritems():
 			ip = element[0]
 			self.delBanIP(ip, debug)
 	
@@ -98,7 +94,5 @@ class Firewall:
 	def viewBanList(self):
 		""" Prints the ban list on screen. Usefull for debugging.
 		"""
-		iterBanList = self.banList.iteritems()
-		for i in range(len(self.banList)):
-			element = iterBanList.next()
+		for element in self.banList.iteritems():
 			print element
