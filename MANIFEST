@@ -11,3 +11,4 @@ logreader/__init__.py
 logreader/logreader.py
 logreader/parser.py
 logreader/sshd.py
+config/fail2ban.conf.default
