@@ -175,12 +175,16 @@ def checkForPID(lockfile):
 		pid = fileHandler.readline()
 		return pid
 	except IOError:
-		fileHandler = open(lockfile, mode='w')
-		pid = os.getpid()
-		fileHandler.write(`pid`+'\n')
-		fileHandler.close()
-		logSys.debug("Created PID lock ("+`pid`+") in "+lockfile)
 		return False
+		
+def createPID(lockfile):
+	""" Creates a PID lock file with the current PID.
+	"""
+	fileHandler = open(lockfile, mode='w')
+	pid = os.getpid()
+	fileHandler.write(`pid`+'\n')
+	fileHandler.close()
+	logSys.debug("Created PID lock ("+`pid`+") in "+lockfile)
 		
 def removePID(lockfile):
 	""" Remove PID lock.
@@ -424,6 +428,8 @@ if __name__ == "__main__":
 	if pid:
 		logSys.error("Fail2Ban already running with PID "+pid)
 		sys.exit(-1)
+	else:
+		createPID(conf["pidlock"])
 	
 	logSys.debug("ConfFile is "+conf["conffile"])
 	logSys.debug("BanTime is "+`conf["bantime"]`)
