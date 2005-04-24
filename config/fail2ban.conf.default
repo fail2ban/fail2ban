@@ -54,7 +54,7 @@ polltime = 1
 
 [Apache]
 # enabled: is this section active ?
-enabled = true
+enabled = false
 
 # logfile: file to monitor.
 logfile = log-test/apache
@@ -75,7 +75,7 @@ failregex = authentication failure|user .* not found
 
 [SSH]
 # enabled: is this section active ?
-enabled = true
+enabled = false
 
 # logfile: file to monitor.
 logfile = log-test/current
@@ -92,5 +92,4 @@ timepattern = %%b %%d %%H:%%M:%%S
 
 # failregex: regular expression which have to match the
 # message written in the log file in case of password failure.
-failregex = Authentication failure|Failed password
-
+failregex = Authentication failure|Failed password|Invalid user
