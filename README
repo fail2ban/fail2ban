@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.3.1)                           03/31/2005
+Fail2Ban (version 0.4.0)                           04/24/2005
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -13,9 +13,8 @@ rules to reject the IP address. Currently iptables, ipfw and
 ipfwadm are supported. Fail2Ban can read multiple log files
 such as sshd or Apache web server ones. It needs log4py.
 
-This is my first Python program. I began learning Python for
-less than one week so please be understanding ;-) English is
-not either my mother tongue...
+This is my first Python program. Moreover, English is not my
+mother tongue...
 
 
 More details:
@@ -28,8 +27,8 @@ brute force or scripts. They try 10, 20 and sometimes more
 user/password (without success anyway). In order to
 discourage these script kiddies, I wanted that sshd refuse
 login from a specific ip after 3 password failures. After
-some google searches, I found that sshd was not able of that.
-So I search for a script or program that do it. Found
+some Google searches, I found that sshd was not able of that.
+So I search for a script or program that do it. I found
 nothing :-( So I decide to write mine and to learn Python :-)
 
 For each sections defined in the configuration file, Fail2Ban
@@ -37,7 +36,7 @@ tries to find lines which match the failregex. Then it
 retrieves the message time using timeregex and timepattern.
 It finally gets the ip and if it has already done 3 or more
 password failures in the last banTime, the ip is banned for
-banTime using a iptable rule. After banTime, the rule is
+banTime using a firewall rule. After banTime, the rule is
 deleted. Notice that if no "plain" ip is available, Fail2Ban
 try to do DNS lookup in order to found one or several ip's to
 ban.
@@ -65,6 +64,8 @@ To install, just do:
 
 This will install Fail2Ban into /usr/lib/fail2ban. The
 fail2ban.py executable is placed into /usr/bin.
+
+For Gentoo users, an ebuild is available on the website.
 
 Fail2Ban should now be correctly installed. Just type:
 
