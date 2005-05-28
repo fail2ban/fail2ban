@@ -37,8 +37,9 @@ def dnsToIp(dns):
 
 def textToDns(text):
 	""" Search for possible DNS in an arbitrary text.
+		Thanks to Tom Pike.
 	"""
-	match = re.findall("\S*\.\w*\.\w*", text)
+	match = re.findall("(?:(?:\w|-)+\.){2,}\w+", text)
 	if match:
 		return match
 	else:
