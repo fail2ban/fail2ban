@@ -1,51 +1,75 @@
 # Fail2Ban configuration file
 #
 # $Revision$
+#
+# 2005.06.21  modified for readability  Iain Lea  iain@bricbrac.de
 
 [DEFAULT]
-
-# firewall: select the firewall system to use. Actually,
-# the available options are: iptables, ipfwadm, ipfw
+# Option:  firewall
+# Notes.:  select the firewall system to use.
+# Values:  [iptables | ipfwadm | ipfw]  Default:  iptables
+#
 firewall = iptables
 
-# ipfw-start-rule: set the first rule number used by Fail2Ban.
-# This option is only used if firewall = ipfw.
+# Option:  ipfw-start-rule
+# Notes.:  set first firewall rule number used (only used if firewall = ipfw).
+# Values:  NUM  Default:  100
+#
 ipfw-start-rule = 100
 
-# background: true to start fail2ban as a daemon. Output
-# is redirect to logfile.
+# Option:  background
+# Notes.:  start fail2ban as a daemon. Output is redirect to logfile.
+# Values:  [true | false]  Default:  false
+#
 background = false
 
-# debug: true to enable debug mode. More verbose output
-# and bypass root user test.
+# Option:  debug
+# Notes.:  enable debug mode. More verbose output and bypass root user test.
+# Values:  [true | false]  Default:  false
+#
 debug = false
 
-# pidlock: the path of the PID lock file. Fail2Ban must be
-# able to write into that file.
-#pidlock = /var/run/fail2ban.pid
+# Option:  pidlock
+# Notes.:  path of the PID lock file (must be able to write to file).
+# Values:  FILE  Default:  /var/run/fail2ban.pid
+#
+pidlock = /var/run/fail2ban.pid
 
-# logfile: the path of the file for logging messages of
-# fail2ban.
+# Option:  logfile
+# Notes.:  logfile for logging fail2ban messages.
+# Values:  FILE  Default:  /var/log/fail2ban.log
+#
 logfile = /var/log/fail2ban.log
 
-# maxretry: the number of retry before IP gets ban.
+# Option:  maxretry
+# Notes.:  number of retrys before IP gets banned.
+# Values:  NUM  Default:  3
+#
 maxretry = 3
 
-# bantime: the number of seconds an IP will be ban.
+# Option:  bantime
+# Notes.:  number of seconds an IP will be banned.
+# Values:  NUM  Default:  600
+#
 bantime = 600
 
-# ignoreip: a space separated list that contains IP which
-# will be ignore by fail2ban. Example:
-# ignoreip = 192.168.0.1 123.45.235.65
+# Option:  ignoreip
+# Notes.:  space separated list of IP's to be ignored by fail2ban
+#          Example:  ignoreip = 192.168.0.1 123.45.235.65
+# Values:  IP  Default:  
+#
 ignoreip = 
 
-# interface: the interface name on which the IP will be
-# banned.
+# Option:  interface
+# Notes.:  interface name on which the IP will be banned.
+# Values:  INT  Default:  eth0
+#
 interface = eth0
 
-# polltime: the number of seconds that fail2ban sleeps
-# between two iteration (check for IP to unban - parse
-# log file). 1 is a good value.
+# Option:  polltime
+# Notes.:  number of seconds fail2ban sleeps between iterations.
+# Values:  NUM  Default:  1
+#
 polltime = 1
 
 # You can define a new section for each log file to check for
@@ -53,43 +77,67 @@ polltime = 1
 # options: logfile, timeregex, timepattern, failregex.
 
 [Apache]
-# enabled: is this section active ?
+# Option:  enabled
+# Notes.:  enable monitoring for this section.
+# Values:  [true | false]  Default:  false
+#
 enabled = false
 
-# logfile: file to monitor.
-logfile = log-test/apache
+# Option:  logfile
+# Notes.:  logfile to monitor.
+# Values:  FILE  Default:  /var/log/httpd/access_log
+#
+logfile = /var/log/httpd/access_log
 
-# timeregex: regular expression which have to match the
-# timestamp of an Apache log event.
-# [Wed Jan 05 15:08:01 2005]
+# Option:  timeregex
+# Notes.:  regex to match timestamp in Apache logfile.
+# Values:  [Wed Jan 05 15:08:01 2005]  
+# Default  \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
+#
 timeregex = \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
 
-# timepattern: indicates the "timeregex" fields signification.
-# Notice that '%' must be espaced with '%'.
-# See syntax here: http://rgruet.free.fr/PQR2.3.html#timeModule
+# Option:  timepattern
+# Notes.:  format used in "timeregex" fields definition. Note that '%' must be
+#          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
+# Values:  TEXT  Default:  %%a %%b %%d %%H:%%M:%%S %%Y
+#
 timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
 
-# failregex: regular expression which have to match the
-# message written in the log file in case of password failure.
+# Option:  failregex
+# Notes.:  regex to match the password failure messages in the logfile.
+# Values:  TEXT  Default:  authentication failure|user .* not found
+#
 failregex = authentication failure|user .* not found
 
 [SSH]
-# enabled: is this section active ?
-enabled = false
+# Option:  enabled
+# Notes.:  enable monitoring for this section.
+# Values:  [true | false]  Default:  true
+#
+enabled = true
 
-# logfile: file to monitor.
-logfile = log-test/current
+# Option:  logfile
+# Notes.:  logfile to monitor.
+# Values:  FILE  Default:  /var/log/secure
+#
+logfile = /var/log/secure
 
-# timeregex: regular expression which have to match the
-# timestamp of an Apache log event.
-# Mar  7 17:53:28
+# Option:  timeregex
+# Notes.:  regex to match timestamp in SSH logfile.
+# Values:  [Mar  7 17:53:28]  
+# Default  \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
+#
 timeregex = \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
 
-# timepattern: indicates the "timeregex" fields signification.
-# Notice that '%' must be espaced with '%'.
-# See syntax here: http://rgruet.free.fr/PQR2.3.html#timeModule
+# Option:  timepattern
+# Notes.:  format used in "timeregex" fields definition. Note that '%' must be
+#          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
+# Values:  TEXT  Default:  %%b %%d %%H:%%M:%%S
+#
 timepattern = %%b %%d %%H:%%M:%%S
 
-# failregex: regular expression which have to match the
-# message written in the log file in case of password failure.
+# Option:  failregex
+# Notes.:  regex to match the password failures messages in the logfile.
+# Values:  TEXT  Default:  Authentication failure|Failed password|Invalid user
+#
 failregex = Authentication failure|Failed password|Invalid user
