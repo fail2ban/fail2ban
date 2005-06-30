@@ -4,8 +4,17 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.4.0)                           04/24/2005
+Fail2Ban (version 0.4.1)                           06/30/2005
 =============================================================
+
+ver. 0.4.1 (06/30/2005) - stable
+----------
+- Fixed textToDNS method which generated wrong matches for
+  "rhost=12-xyz...". Thanks to Tom Pike
+- fail2ban.conf modified for readability. Thanks to Iain Lea
+- Added an initd script for Gentoo
+- Changed default PID lock file location from /tmp to
+  /var/run
 
 ver. 0.4.0 (04/24/2005) - stable
 ----------
