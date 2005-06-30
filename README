@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.4.0)                           04/24/2005
+Fail2Ban (version 0.4.1)                           06/30/2005
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -58,8 +58,8 @@ Require: python-2.3 (http://www.python.org)
 
 To install, just do:
 
-> tar xvfj fail2ban-0.3.1.tar.bz2
-> cd fail2ban-0.3.1
+> tar xvfj fail2ban-0.4.1.tar.bz2
+> cd fail2ban-0.4.1
 > python setup.py install
 
 This will install Fail2Ban into /usr/lib/fail2ban. The
@@ -75,6 +75,13 @@ to see if everything is alright. You can configure fail2ban
 with a config file. Copy config/fail2ban.conf.default to
 /etc/fail2ban.conf.
 
+Gentoo users can use the initd script available in config/.
+Copy gentoo-initd to /etc/init.d/fail2ban and gentoo-confd
+to /etc/conf.d/fail2ban. You can start fail2ban and add it
+to your default runlevel:
+
+> /etc/init.d/fail2ban start
+> rc-update add fail2ban default
 
 Configuration:
 --------------
@@ -113,7 +120,8 @@ Cyril Jaquier: <lostcontrol@users.sourceforge.net>
 Thanks:
 -------
 
-Kévin Drapel, Marvin Rouge, Sireyessire, Robert Edeker
+Kévin Drapel, Marvin Rouge, Sireyessire, Robert Edeker,
+Tom Pike, Iain Lea
 
 
 License:
