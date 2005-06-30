@@ -221,7 +221,7 @@ if __name__ == "__main__":
 	conf["background"] = False
 	conf["debug"] = False
 	conf["conffile"] = "/etc/fail2ban.conf"
-	conf["pidlock"] = "/tmp/fail2ban.pid"
+	conf["pidlock"] = "/var/run/fail2ban.pid"
 	conf["logging"] = False
 	conf["logfile"] = "/var/log/fail2ban.log"
 	conf["maxretry"] = 3
