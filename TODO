@@ -1,0 +1,15 @@
+               __      _ _ ___ _               
+              / _|__ _(_) |_  ) |__  __ _ _ _  
+             |  _/ _` | | |/ /| '_ \/ _` | ' \ 
+             |_| \__,_|_|_/___|_.__/\__,_|_||_|
+
+=============================================================
+ToDo
+=============================================================
+
+- cleanup fail2ban.py
+- improve configuration file and command line options
+  handling
+- improve installation process
+- add init script
+- use FAM (inotify, gamin, ...)
