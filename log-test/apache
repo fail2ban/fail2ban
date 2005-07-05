@@ -1,3 +1,4 @@
+[Wed Mar 31 15:11:28 2005] [error] [client www.google.ch] user cyril: authentication failure for "/phpinfo": Password Mismatch
 [Mon Jan 03 05:02:15 2005] [error] [client 81.83.248.17] File does not exist: /var/www/jaquier.dyndns.org/htdocs/msadc
 [Mon Jan 03 05:02:20 2005] [error] [client 81.83.248.17] File does not exist: /var/www/jaquier.dyndns.org/htdocs/msadc
 [Mon Jan 03 05:02:20 2005] [error] [client 81.83.248.17] File does not exist: /var/www/jaquier.dyndns.org/htdocs/msadc
@@ -98,5 +99,10 @@
 [Wed Jan 05 15:14:24 2005] [error] [client 192.168.0.129] File does not exist: /var/www/jaquier.dyndns.org/htdocs/favicon.ico
 [Wed Jan 05 15:14:29 2005] [error] [client 192.168.0.129] File does not exist: /var/www/jaquier.dyndns.org/htdocs/favicon.ico
 [Wed Jan 05 15:14:34 2005] [error] [client 192.168.0.129] File does not exist: /var/www/jaquier.dyndns.org/htdocs/favicon.ico
-[Wed Mar 05 15:08:28 2005] [error] [client 192.168.0.128] user cyril: authentication failure for "/phpinfo": Password Mismatch
-[Wed Mar 05 15:09:28 2005] [error] [client 192.168.0.128] user cyril: authentication failure for "/phpinfo": Password Mismatch
+[Wed Mar 10 15:08:28 2005] [error] [client www.google.ch] user cyril: authentication failure for "/phpinfo": Password Mismatch
+[Wed Mar 10 15:09:28 2005] [error] [client www.google.ch] user cyril: authentication failure for "/phpinfo": Password Mismatch
+[Wed Mar 10 15:11:28 2005] [error] [client www.google.ch] user cyril: authentication failure for "/phpinfo": Password Mismatch
+[Wed Mar 30 15:11:28 2005] [error] [client www.google.ch] user cyril: authentication failure for "/phpinfo": Password Mismatch
+[Wed Mar 30 15:11:28 2005] [error] [client www.google.ch] user cyril: authentication failure for "/phpinfo": Password Mismatch
+[Wed Mar 30 15:11:28 2005] [error] [client www.google.ch] user cyril: authentication failure for "/phpinfo": Password Mismatch
+[Wed Mar 30 15:11:28 2005] [error] [client www.google.ch] user cyril: authentication failure for "/phpinfo": Password Mismatch

@@ -26,7 +26,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, sys, getopt, os, signal, string
+import time, sys, getopt, os, string, signal
 from ConfigParser import *
 
 # Checks if log4py is present.
@@ -39,12 +39,14 @@ except:
 # Appends our own modules path
 sys.path.append('/usr/lib/fail2ban')
 
-from firewall.iptables import Iptables
-from firewall.ipfw import Ipfw
-from firewall.ipfwadm import Ipfwadm
+from firewall.firewall import Firewall
 from logreader.logreader import LogReader
 from confreader.configreader import ConfigReader
+from utils.process import *
 from version import version
+
+# Gets the instance of log4py.
+logSys = log4py.Logger().get_instance()
 
 def usage():
 	print "Usage: fail2ban.py [OPTIONS]"
@@ -79,141 +81,26 @@ def checkForRoot():
 	else:
 		return False
 
-def createDaemon():
-	"""Detach a process from the controlling terminal and run it in the
-	background as a daemon.
-	
-	http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/278731
-	"""
-
-	try:
-		# Fork a child process so the parent can exit.  This will return control
-		# to the command line or shell.  This is required so that the new process
-		# is guaranteed not to be a process group leader.  We have this guarantee
-		# because the process GID of the parent is inherited by the child, but
-		# the child gets a new PID, making it impossible for its PID to equal its
-		# PGID.
-		pid = os.fork()
-	except OSError, e:
-		return((e.errno, e.strerror))	 # ERROR (return a tuple)
-
-	if (pid == 0):	   # The first child.
-
-		# Next we call os.setsid() to become the session leader of this new
-		# session.  The process also becomes the process group leader of the
-		# new process group.  Since a controlling terminal is associated with a
-		# session, and this new session has not yet acquired a controlling
-		# terminal our process now has no controlling terminal.  This shouldn't
-		# fail, since we're guaranteed that the child is not a process group
-		# leader.
-		os.setsid()
-	
-		# When the first child terminates, all processes in the second child
-		# are sent a SIGHUP, so it's ignored.
-		signal.signal(signal.SIGHUP, signal.SIG_IGN)
-	
-		try:
-			# Fork a second child to prevent zombies.  Since the first child is
-			# a session leader without a controlling terminal, it's possible for
-			# it to acquire one by opening a terminal in the future.  This second
-			# fork guarantees that the child is no longer a session leader, thus
-			# preventing the daemon from ever acquiring a controlling terminal.
-			pid = os.fork()		# Fork a second child.
-		except OSError, e:
-			return((e.errno, e.strerror))  # ERROR (return a tuple)
-	
-		if (pid == 0):	  # The second child.
-			# Ensure that the daemon doesn't keep any directory in use.  Failure
-			# to do this could make a filesystem unmountable.
-			os.chdir("/")
-			# Give the child complete control over permissions.
-			os.umask(0)
-		else:
-			os._exit(0)	  # Exit parent (the first child) of the second child.
-	else:
-		os._exit(0)		 # Exit parent of the first child.
-
-	# Close all open files.  Try the system configuration variable, SC_OPEN_MAX,
-	# for the maximum number of open files to close.  If it doesn't exist, use
-	# the default value (configurable).
-	try:
-		maxfd = os.sysconf("SC_OPEN_MAX")
-	except (AttributeError, ValueError):
-		maxfd = 256	   # default maximum
-
-	for fd in range(0, maxfd):
-		try:
-			os.close(fd)
-		except OSError:   # ERROR (ignore)
-			pass
-
-	# Redirect the standard file descriptors to /dev/null.
-   	os.open("/dev/null", os.O_RDONLY)	# standard input (0)
-	os.open("/dev/null", os.O_RDWR)		# standard output (1)
-	os.open("/dev/null", os.O_RDWR)		# standard error (2)
-
-	return True
-
 def sigTERMhandler(signum, frame):
 	""" Handles the TERM signal when in daemon mode in order to
 		exit properly.
 	"""
 	logSys.debug("Signal handler called with sig "+`signum`)
-	killApp()
+	killApp()	
 
 def killApp():
 	""" Flush the ban list, remove the PID lock file and exit
 		nicely.
 	"""
 	logSys.warn("Restoring firewall rules...")
-	fireWall.flushBanList(conf["debug"])
+	for element in logFwList:
+		element[2].flushBanList(conf["debug"])
 	removePID(conf["pidlock"])
 	logSys.info("Exiting...")
 	sys.exit(0)
-	
-def checkForPID(lockfile):
-	""" Checks for running Fail2Ban.
-	
-		Returns the current PID if Fail2Ban is running or False
-		if no instance found.
-	"""
-	try:
-		fileHandler = open(lockfile)
-		pid = fileHandler.readline()
-		return pid
-	except IOError:
-		return False
-		
-def createPID(lockfile):
-	""" Creates a PID lock file with the current PID.
-	"""
-	fileHandler = open(lockfile, mode='w')
-	pid = os.getpid()
-	fileHandler.write(`pid`+'\n')
-	fileHandler.close()
-	logSys.debug("Created PID lock ("+`pid`+") in "+lockfile)
-		
-def removePID(lockfile):
-	""" Remove PID lock.
-	"""
-	os.remove(lockfile)
-	logSys.debug("Removed PID lock "+lockfile)
-
-def killPID(pid):
-	""" Kills the process with the given PID using the
-		INT signal (same effect as <ctrl>+<c>).
-	"""
-	try:
-		return os.kill(pid, 2)
-	except OSError:
-		logSys.error("Can not kill process " + `pid` + ". Please check that " +
-					"Fail2Ban is not running and remove the file " +
-					"'/tmp/fail2ban.pid'")
 
 if __name__ == "__main__":
 	
-	# Gets an instance of log4py.
-	logSys = log4py.Logger().get_instance()
 	logSys.set_formatstring("%T %L %M")
 	
 	conf = dict()
@@ -453,38 +340,32 @@ if __name__ == "__main__":
 	
 	# Reads the config file and create a LogReader instance for
 	# each log file to check.
-	confReader = ConfigReader(logSys, conf["conffile"]);
+	confReader = ConfigReader(conf["conffile"]);
 	confReader.openConf()
-	logList = list()
+	logFwList = list()
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t)
 		if l["enabled"]:
-			lObj = LogReader(logSys, l["logfile"], l["timeregex"],
-							l["timepattern"], l["failregex"], conf["bantime"])
-			lObj.setName(t)
-			logList.append(lObj)
-	
-	# Creates one instance of Iptables (thanks to Pyhton dynamic
-	# features).
-	fireWallObj = eval(fireWallName)
-	fireWall = fireWallObj(conf["bantime"], logSys, conf["interface"])
-	
-	# IPFW needs rules number. The configuration option "ipfw-start-rule"
-	# defines the first rule number used by Fail2Ban.
-	if fireWallName == "Ipfw":
-		fireWall.setCrtRuleNbr(conf["ipfw-start-rule"])
+			# Creates a logreader object
+			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
+								l["failregex"], conf["bantime"])
+			# Creates a firewall object
+			fObj = Firewall(l["fwbanrule"], l["fwunbanrule"], conf["bantime"],
+							conf["interface"])
+			# Links them into a list. I'm not really happy
+			# with this :/
+			logFwList.append([t, lObj, fObj, dict()])
 	
 	# We add 127.0.0.1 to the ignore list has we do not want
 	# to be ban ourself.
-	for element in logList:
-		element.addIgnoreIP("127.0.0.1")
+	for element in logFwList:
+		element[1].addIgnoreIP("127.0.0.1")
 	while len(ignoreIPList) > 0:
 		ip = ignoreIPList.pop()
-		for element in logList:
-			element.addIgnoreIP(ip)
+		for element in logFwList:
+			element[1].addIgnoreIP(ip)
 	
 	logSys.info("Fail2Ban v"+version+" is running")
-	failListFull = dict()
 	# Main loop
 	while True:
 		try:
@@ -493,14 +374,15 @@ if __name__ == "__main__":
 			
 			# Checks if some IP have to be remove from ban
 			# list.
-			fireWall.checkForUnBan(conf["debug"])
-			
+			for element in logFwList:
+				element[2].checkForUnBan(conf["debug"])
+
 			# If the log file has not been modified since the
 			# last time, we sleep for 1 second. This is active
 			# polling so not very effective.
 			modList = list()
-			for element in logList:
-				if element.isModified():
+			for element in logFwList:
+				if element[1].isModified():
 					modList.append(element)
 			
 			if len(modList) == 0:
@@ -509,42 +391,32 @@ if __name__ == "__main__":
 			
 			# Gets the failure list from the log file. For a given IP,
 			# takes only the service which has the most password failures.
-			failList = dict()
 			for element in modList:
-				e = element.getFailures()
+				e = element[1].getFailures()
 				for key in e.iterkeys():
-					if failList.has_key(key):
-						if failList[key][0] < e[key][0]:
-							failList[key] = (e[key][0], e[key][1], element)
+					if element[3].has_key(key):
+						element[3][key] = (element[3][key][0] + e[key][0],
+											e[key][1])
 					else:
-						failList[key] = (e[key][0], e[key][1], element)
-				
-			# Add the last log failures to the global failure list.
-			for key in failList.iterkeys():
-				if failListFull.has_key(key):
-					failListFull[key] = (failListFull[key][0] + 1,
-										failList[key][1], failList[key][2])
-				else:
-					failListFull[key] = failList[key]
+						element[3][key] = (e[key][0], e[key][1])
 			
 			# Remove the oldest failure attempts from the global list.
-			unixTime = time.time()
-			failListFullTemp = failListFull.copy()
-			for key in failListFullTemp.iterkeys():
-				failTime = failListFullTemp[key][2].getFindTime()
-				if failListFullTemp[key][1] < unixTime - failTime:
-					del failListFull[key]
-			
 			# We iterate the failure list and ban IP that make
 			# *retryAllowed* login failures.
-			failListFullTemp = failListFull.copy()
-			for key in failListFullTemp.iterkeys():
-				element = failListFullTemp[key]
-				if element[0] >= conf["maxretry"]:
-					logSys.info(element[2].getName()+": "+key+" has "+
-								`element[0]`+" login failure(s). Banned.")
-					fireWall.addBanIP(key, conf["debug"])
-					del failListFull[key]
+			unixTime = time.time()
+			for element in logFwList:
+				fails = element[3].copy()
+				findTime = element[1].getFindTime()
+				for attempt in fails:
+					failTime = fails[attempt][1]
+					if failTime < unixTime - failTime:
+						del element[3][attempt]
+					elif fails[attempt][0] >= conf["maxretry"]:
+						logSys.info(element[0] + ": " + attempt + " has " +
+									`element[3][attempt][0]` +
+									" login failure(s). Banned.")
+						element[2].addBanIP(attempt, conf["debug"])
+						del element[3][attempt]
 			
 		except KeyboardInterrupt:
 			# When the user press <ctrl>+<c> we exit nicely.
