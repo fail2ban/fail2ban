@@ -24,7 +24,10 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, os
+import time, os, log4py, re
+
+# Gets the instance of log4py.
+logSys = log4py.Logger().get_instance()
 
 class Firewall:
 	""" Manages the ban list and executes the command that ban
@@ -33,30 +36,31 @@ class Firewall:
 	
 	banList = dict()
 	
-	def __init__(self, banTime, logSys, interface):
+	def __init__(self, banRule, unBanRule, banTime, interface):
+		self.banRule = banRule
+		self.unBanRule = unBanRule
 		self.banTime = banTime
-		self.logSys = logSys
 		self.interface = interface
 	
 	def addBanIP(self, ip, debug):
 		""" Bans an IP.
 		"""
 		if not self.inBanList(ip):
-			self.logSys.warn("Ban "+ip)
+			logSys.warn("Ban "+ip)
 			self.banList[ip] = time.time()
 			self.__executeCmd(self.banIP(ip), debug)
 		else:
-			self.logSys.error(ip+" already in ban list")
+			logSys.error(ip+" already in ban list")
 	
 	def delBanIP(self, ip, debug):
 		""" Unban an IP.
 		"""
 		if self.inBanList(ip):
-			self.logSys.warn("Unban "+ip)
+			logSys.warn("Unban "+ip)
 			del self.banList[ip]
 			self.__executeCmd(self.unBanIP(ip), debug)
 		else:
-			self.logSys.error(ip+" not in ban list")
+			logSys.error(ip+" not in ban list")
 	
 	def inBanList(self, ip):
 		""" Checks if IP is in ban list.
@@ -85,12 +89,30 @@ class Firewall:
 	def __executeCmd(self, cmd, debug):
 		""" Executes an OS command.
 		"""
-		self.logSys.debug(cmd)
+		logSys.debug(cmd)
 		if not debug:
 			return os.system(cmd)
 		else:
 			return None
-		
+			
+	def banIP(self, ip):
+		""" Returns query to ban IP.
+		"""
+		query = self.replaceTag(self.banRule, ip, self.interface)
+		return query
+	
+	def unBanIP(self, ip):
+		""" Returns query to unban IP.
+		"""
+		query = self.replaceTag(self.unBanRule, ip, self.interface)
+		return query
+	
+	def replaceTag(self, query, ip, interface):
+		string = query
+		string = string.replace("<ip>", ip)
+		string = string.replace("<if>", interface)
+		return string
+	
 	def viewBanList(self):
 		""" Prints the ban list on screen. Usefull for debugging.
 		"""

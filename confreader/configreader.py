@@ -24,7 +24,12 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import log4py
+
 from ConfigParser import *
+
+# Gets the instance of log4py.
+logSys = log4py.Logger().get_instance()
 
 class ConfigReader:
 	""" This class allow the handling of the configuration options.
@@ -40,12 +45,13 @@ class ConfigReader:
 					["str", "logfile", "/dev/null"],
 					["str", "timeregex", ""],
 					["str", "timepattern", ""],
-					["str", "failregex", ""])
+					["str", "failregex", ""],
+					["str", "fwbanrule", ""],
+					["str", "fwunbanrule", ""])
 	
-	def __init__(self, logSys, confPath):
+	def __init__(self, confPath):
 		self.confPath = confPath
 		self.configParser = SafeConfigParser()
-		self.logSys = logSys
 		
 	def openConf(self):
 		""" Opens the configuration file.
@@ -74,7 +80,7 @@ class ConfigReader:
 				
 				values[option[1]] = v
 			except NoOptionError:
-				self.logSys.warn("No '"+option[1]+"' defined in '"+sec+"'")
+				logSys.warn("No '" + option[1] + "' defined in '" + sec + "'")
 				values[option[1]] = option[2]
 		return values
 		

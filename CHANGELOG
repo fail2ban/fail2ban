@@ -9,6 +9,8 @@ Fail2Ban (version 0.?.?)                           ??/??/2005
 
 ver. 0.?.? (??/??/2005) - ???
 ----------
+- Added firewall rules definition in the configuration file
+- Cleaned a bit fail2ban.py
 - Added an initd script for RedHat/Fedora. Thanks to Andrey
   G. Grozin
 
