@@ -29,6 +29,10 @@ __license__ = "GPL"
 import time, sys, getopt, os, signal, string
 from ConfigParser import *
 
+# Appends our own modules path
+# you: moved before loading log4py so we add path to it
+sys.path.append('/usr/lib/fail2ban')
+
 # Checks if log4py is present.
 try:
 	import log4py
@@ -36,8 +40,6 @@ except:
 	print "log4py is needed (see README)"
 	sys.exit(-1)
 
-# Appends our own modules path
-sys.path.append('/usr/lib/fail2ban')
 
 from firewall.iptables import Iptables
 from firewall.ipfw import Ipfw

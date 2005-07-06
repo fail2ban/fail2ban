@@ -1,0 +1,61 @@
+#! /bin/sh
+#
+# skeleton	example file to build /etc/init.d/ scripts.
+#		This file should be used to construct scripts for /etc/init.d.
+#
+#		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
+#		Modified for Debian 
+#		by Ian Murdock <imurdock@gnu.ai.mit.edu>.
+#
+# Version:	@(#)skeleton  1.9  26-Feb-2001  miquels@cistron.nl
+#
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/sbin/fail2ban
+NAME=fail2ban
+DESC=fail2ban
+PIDFILE=/var/run/$NAME.pid
+
+test -x $DAEMON || exit 0
+
+# Include fail2ban defaults if available
+if [ -f /etc/default/fail2ban ] ; then
+	. /etc/default/fail2ban
+fi
+DAEMON_OPTS=$FAIL2BAN_OPTS
+set -e
+
+case "$1" in
+  start)
+	echo -n "Starting $DESC: "
+        [ -f $PIDFILE ] && [ ! -d /proc/`cat $PIDFILE` ] && rm -f $PIDFILE
+	start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid \
+	        -b --exec $DAEMON -- $DAEMON_OPTS
+	echo "$NAME."
+	;;
+  stop)
+	echo -n "Stopping $DESC: "
+	start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid 
+        rm -f $PIDFILE
+	echo "$NAME."
+	;;
+  restart|force-reload)
+	#
+	#	If the "reload" option is implemented, move the "force-reload"
+	#	option to the "reload" entry above. If not, "force-reload" is
+	#	just the same as "restart".
+	#
+	echo -n "Restarting $DESC: "
+        ( $0 stop )
+	sleep 1
+        $0 start
+	;;
+  *)
+	N=/etc/init.d/$NAME
+	# echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+	echo "Usage: $N {start|stop|restart|force-reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0
