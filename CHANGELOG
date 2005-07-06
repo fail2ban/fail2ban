@@ -1,0 +1,66 @@
+               __      _ _ ___ _               
+              / _|__ _(_) |_  ) |__  __ _ _ _  
+             |  _/ _` | | |/ /| '_ \/ _` | ' \ 
+             |_| \__,_|_|_/___|_.__/\__,_|_||_|
+
+=============================================================
+Fail2Ban (version 0.4.1)                           06/30/2005
+=============================================================
+
+ver. 0.4.1 (06/30/2005) - stable
+----------
+- Fixed textToDNS method which generated wrong matches for
+  "rhost=12-xyz...". Thanks to Tom Pike
+- fail2ban.conf modified for readability. Thanks to Iain Lea
+- Added an initd script for Gentoo
+- Changed default PID lock file location from /tmp to
+  /var/run
+
+ver. 0.4.0 (04/24/2005) - stable
+----------
+- Fixed textToDNS which did not recognize strings like
+  "12-345-67-890.abcd.mnopqr.xyz"
+
+ver. 0.3.1 (03/31/2005) - beta
+----------
+- Corrected level of messages
+- Added DNS lookup support
+- Improved parsing speed. Only parse the new log messages
+- Added a second verbose level (-vv)
+
+ver. 0.3.0 (02/24/2005) - beta
+----------
+- Re-writting of parts of the code in order to handle several
+  log files with different rules
+- Removed sshd.py because it is no more needed
+- Fixed a bug when exiting with IP in the ban list
+- Added PID lock file
+- Improved some parts of the code
+- Added ipfw-start-rule option (thanks to Robert Edeker)
+- Added -k option which kills a currently running Fail2Ban
+
+ver. 0.1.2 (11/21/2004) - beta
+----------
+- Add ipfw and ipfwadm support. The rules are taken from
+  BlockIt. Thanks to Robert Edeker
+- Add -e option which allows to set the interface. Thanks to
+  Robert Edeker who reminded me this
+- Small code cleaning
+
+ver. 0.1.1 (10/23/2004) - beta
+----------
+- Add SIGTERM handler in order to exit nicely when in daemon
+  mode
+- Add -r option which allows to set the maximum number of
+  login failures
+- Remove the Metalog class as the log file are not so syslog
+  daemon specific
+- Rewrite log reader to be service centered. Sshd support
+  added. Match "Failed password" and "Illegal user"
+- Add /etc/fail2ban.conf configuration support
+- Code documentation
+
+
+ver. 0.1.0 (10/12/2004) - alpha
+----------
+- Initial release
