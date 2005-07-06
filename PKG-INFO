@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: fail2ban
+Version: 0.4.1
+Summary: Ban IPs that make too many password failure
+Home-page: http://www.sourceforge.net/projects/fail2ban
+Author: Cyril Jaquier
+Author-email: lostcontrol@users.sourceforge.net
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
