@@ -21,7 +21,7 @@ ipfw-start-rule = 100
 # Notes.:  start fail2ban as a daemon. Output is redirect to logfile.
 # Values:  [true | false]  Default:  false
 #
-background = false
+background = true
 
 # Option:  debug
 # Notes.:  enable debug mode. More verbose output and bypass root user test.
@@ -45,7 +45,7 @@ logfile = /var/log/fail2ban.log
 # Notes.:  number of retrys before IP gets banned.
 # Values:  NUM  Default:  3
 #
-maxretry = 3
+maxretry = 5
 
 # Option:  bantime
 # Notes.:  number of seconds an IP will be banned.
@@ -85,9 +85,9 @@ enabled = false
 
 # Option:  logfile
 # Notes.:  logfile to monitor.
-# Values:  FILE  Default:  /var/log/httpd/access_log
+# Values:  FILE  Default:  /var/log/apache/access_log
 #
-logfile = /var/log/httpd/access_log
+logfile = /var/log/apache/access_log
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in Apache logfile.
@@ -118,9 +118,9 @@ enabled = true
 
 # Option:  logfile
 # Notes.:  logfile to monitor.
-# Values:  FILE  Default:  /var/log/secure
+# Values:  FILE  Default:  /var/log/auth.log
 #
-logfile = /var/log/secure
+logfile = /var/log/auth.log
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in SSH logfile.
@@ -140,4 +140,4 @@ timepattern = %%b %%d %%H:%%M:%%S
 # Notes.:  regex to match the password failures messages in the logfile.
 # Values:  TEXT  Default:  Authentication failure|Failed password|Invalid user
 #
-failregex = Authentication failure|Failed password|Invalid user
+failregex = Authentication failure|Failed password|Invalid user|Illegal user|Failed keyboard-interactive

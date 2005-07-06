@@ -1,0 +1,6 @@
+fail2ban (0.4.1-1) unstable; urgency=low
+
+  * First upstream release of a Debian package
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 04 Jul 2005 11:47:23 +0300
+

@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+# Copyrignt 2003-04 Yaroslav Halchenko <debian@onerussian.com>
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/makefile.mk
+include /usr/share/cdbs/1/class/python-distutils.mk
+#include /usr/share/cdbs/1/rules/buildcore.mk
+#include /usr/share/cdbs/1/class/autotools.mk
+
+#DEB_MAKE_INSTALL_TARGET := "install DESTDIR=debian/fail2ban"
+# does on package by package bases so doesn't work :-/
+#DEB_DH_INSTALL_ARGS := --list-missing
+# DEB_OPT_FLAG := 
+# DEB_CONFIGURE_EXTRA_FLAGS := --enable-debug
+# tight versioning
+#DEB_DH_MAKESHLIBS_ARGS := -V
+common-install-prehook-impl::
+	make install
+clean::
+	make clean

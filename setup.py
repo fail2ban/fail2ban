@@ -36,7 +36,7 @@ setup(
         author = "Cyril Jaquier",
         author_email = "lostcontrol@users.sourceforge.net",
         url = "http://www.sourceforge.net/projects/fail2ban",
-        scripts = ['fail2ban.py'],
+        scripts = ['fail2ban'],
         py_modules = ['version'],
         packages = ['firewall', 'logreader', 'confreader', 'utils']
 )

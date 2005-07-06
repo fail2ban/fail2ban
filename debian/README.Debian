@@ -1,0 +1,12 @@
+fail2ban for Debian
+-------------------
+
+This package is nearly 100% identical to the upstream version. It was merely
+packaged to be installed on a Debian system.
+
+Module log4py installed into lib/fail2ban directory because there is no package for not-developed-in-a-long-time fail2ban
+
+See the file TODO.Debian for more details, as well as the Debian Bug Tracking
+system.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>, Tue, 4 Jul 2005 00:00:00 -1000
