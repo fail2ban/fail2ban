@@ -80,7 +80,7 @@ binary-arch: build install
 	dh_installinit
 #	dh_installcron
 #	dh_installinfo
-	dh_installman fail2ban.1
+	dh_installman fail2ban.1x
 	dh_link
 	dh_strip
 	dh_compress
