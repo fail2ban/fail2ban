@@ -4,6 +4,7 @@ TODO
 setup.cfg
 setup.py
 version.py
+fail2ban
 fail2ban.py
 firewall/__init__.py
 firewall/firewall.py
