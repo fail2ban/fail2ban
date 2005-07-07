@@ -21,7 +21,7 @@
 
 opts="start stop restart showlog"
 
-FAIL2BAN="/usr/bin/fail2ban.py"
+FAIL2BAN="/usr/bin/fail2ban"
 
 depend() {
 	need net
