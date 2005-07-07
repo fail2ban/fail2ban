@@ -2,7 +2,7 @@ Source: fail2ban
 Section: net
 Priority: optional
 Maintainer: Yaroslav Halchenko <yoh@onerussian.com>
-Build-Depends-Indep: debhelper (>= 4.1.67), python, python2.3-dev
+Build-Depends-Indep: debhelper (>= 4.1.67), python, python2.3-dev, cdbs
 Standards-Version: 3.6.1
 
 Package: fail2ban
