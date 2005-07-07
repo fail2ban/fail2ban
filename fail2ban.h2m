@@ -8,6 +8,11 @@ fail2ban \- Ban IPs that make too many password failure
 [files]
 \fI/etc/fail2ban.conf\fR, \fI/etc/default/fail2ban\fR
 
+[REPORTING BUGS]
+
+We know that man page has duplicate of options. That will be 
+fixed soon. Hang on and don't report it for now.
+
 [copyright]
 Copyright (c) 2004 Cyril Jaquier
 .br
