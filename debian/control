@@ -9,8 +9,8 @@ Package: fail2ban
 Architecture: all
 Depends: python, iptables
 Description: Ban IPs that make too many password failure
- Fail2Ban scans log files like /var/log/pwdfail or
- /var/log/apache/error_log and bans IP that makes too many password
+ The Fail2Ban scans log files like /var/log/auth.log or
+ /var/log/apache/access.log and bans IP that makes too many password
  failures. It updates firewall rules to reject the IP
  address. Currently, iptables, ipfwadm and ipfw are supported.
  .
