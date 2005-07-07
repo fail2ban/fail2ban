@@ -49,7 +49,7 @@ from confreader.configreader import ConfigReader
 from version import version
 
 def usage():
-	print "Usage: fail2ban.py [OPTIONS]"
+	print "Usage: "+sys.argv[0]+" [OPTIONS]"
 	print
 	print "Fail2Ban v"+version+" reads log file that contains password failure report"
 	print "and bans the corresponding IP address using iptables."

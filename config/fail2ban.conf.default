@@ -85,9 +85,9 @@ enabled = false
 
 # Option:  logfile
 # Notes.:  logfile to monitor.
-# Values:  FILE  Default:  /var/log/apache/access_log
+# Values:  FILE  Default:  /var/log/apache/access.log
 #
-logfile = /var/log/apache/access_log
+logfile = /var/log/apache/access.log
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in Apache logfile.

@@ -2,9 +2,15 @@
 # install target involved only if using autotools
 DESTDIR=debian/fail2ban
 
-all:: 
+all::  fail2ban fail2ban.1x
+
+
+fail2ban.1x: fail2ban fail2ban.h2m
+	help2man --include fail2ban.h2m --section=1x --no-info --output $@ ./fail2ban
+	
+fail2ban: fail2ban.py
 	cp fail2ban.py fail2ban
-	help2man -N -s 1 ./fail2ban >| fail2ban.1
+
 
 install:: all
 	mkdir -p $(DESTDIR)/etc/default
@@ -15,4 +21,4 @@ install:: all
 	cp log4py.py $(DESTDIR)/usr/lib/fail2ban/
 
 clean::
-	rm -rf changelog.gz fail2ban{,.1} build* `find -iname '*.pyc' `
+	rm -rf changelog.gz fail2ban{,.1x} build* `find -iname '*.pyc' `
