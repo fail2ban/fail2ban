@@ -36,19 +36,7 @@ class ConfigReader:
 		The DEFAULT section contains the global information about
 		Fail2Ban. Each other section is for a different log file.
 	"""
-	
-	# Each optionValues entry is composed of an array with:
-	# 0 -> the type of the option
-	# 1 -> the name of the option
-	# 2 -> the default value for the option
-	optionValues = (["bool", "enabled", True],
-					["str", "logfile", "/dev/null"],
-					["str", "timeregex", ""],
-					["str", "timepattern", ""],
-					["str", "failregex", ""],
-					["str", "fwbanrule", ""],
-					["str", "fwunbanrule", ""])
-	
+
 	def __init__(self, confPath):
 		self.confPath = confPath
 		self.configParser = SafeConfigParser()
@@ -63,13 +51,17 @@ class ConfigReader:
 			file except the DEFAULT section.
 		"""
 		return self.configParser.sections()
-		
-	def getLogOptions(self, sec):
+	
+	# Each optionValues entry is composed of an array with:
+	# 0 -> the type of the option
+	# 1 -> the name of the option
+	# 2 -> the default value for the option
+	def getLogOptions(self, sec, options):
 		""" Gets all the options of a given section. The options
 			are defined in the optionValues list.
 		"""
 		values = dict()
-		for option in self.optionValues:
+		for option in options:
 			try:
 				if option[0] == "bool":
 					v = self.configParser.getboolean(sec, option[1])
