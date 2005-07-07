@@ -1,5 +1,5 @@
-# quick dirty hack to avoid reading documentation for cdbs where
-# install target involved only if using autotools
+# quick dirty hacks
+#
 DESTDIR=debian/fail2ban
 
 all::  fail2ban fail2ban.1x
