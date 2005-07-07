@@ -60,11 +60,17 @@ bantime = 600
 #
 ignoreip = 
 
-# Option:  interface
-# Notes.:  interface name on which the IP will be banned.
-# Values:  INT  Default:  eth0
-#
-interface = eth0
+# Option:  cmdstart
+# Notes.:  command executed once at the start of Fail2Ban
+# Values:  CMD
+# Default  
+cmdstart = 
+
+# Option:  cmdend
+# Notes.:  command executed once at the end of Fail2Ban
+# Values:  CMD
+# Default  
+cmdend = 
 
 # Option:  polltime
 # Notes.:  number of seconds fail2ban sleeps between iterations.
@@ -87,25 +93,35 @@ enabled = false
 # Notes.:  logfile to monitor.
 # Values:  FILE  Default:  /var/log/httpd/access_log
 #
-logfile = /home/cyril/workspace/fail2ban/log-test/apache
+logfile = /home/cyril/workspace/fail2ban-unstable/log-test/apache
 
-# Option:  fwbanrule
+# Option:  fwstart
+# Notes.:  command executed once at the start of Fail2Ban
+# Values:  CMD
+# Default  
+fwstart = 
+
+# Option:  fwend
+# Notes.:  command executed once at the end of Fail2Ban
+# Values:  CMD
+# Default  
+fwend = 
+
+# Option:  fwban
 # Notes.:  command executed when banning an IP. Take care that the
 #          command is executed with Fail2Ban user rights.
-#          <if>  interface name
 #          <ip>  IP address
 # Values:  CMD
-# Default  iptables -I INPUT 1 -i <if> -s <ip> -j DROP
-fwbanrule = iptables -I INPUT 1 -i <if> -s <ip> -j DROP
+# Default  iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 
-# Option:  fwunbanrule
+# Option:  fwunban
 # Notes.:  command executed when unbanning an IP. Take care that the
 #          command is executed with Fail2Ban user rights.
-#          <if>  interface name
 #          <ip>  IP address
 # Values:  CMD
-# Default  iptables -D INPUT -i <if> -s <ip> -j DROP
-fwunbanrule = iptables -D INPUT -i <if> -s <ip> -j DROP
+# Default  iptables -D INPUT -i eth0 -s <ip> -j DROP
+fwunban = iptables -D INPUT -i eth0 -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in Apache logfile.
@@ -138,25 +154,35 @@ enabled = true
 # Notes.:  logfile to monitor.
 # Values:  FILE  Default:  /var/log/secure
 #
-logfile = /home/cyril/workspace/fail2ban/log-test/test
+logfile = /home/cyril/workspace/fail2ban-unstable/log-test/test
+
+# Option:  fwstart
+# Notes.:  command executed once at the start of Fail2Ban
+# Values:  CMD
+# Default  
+fwstart = 
+
+# Option:  fwend
+# Notes.:  command executed once at the end of Fail2Ban
+# Values:  CMD
+# Default  
+fwend = 
 
 # Option:  fwbanrule
 # Notes.:  command executed when banning an IP. Take care that the
 #          command is executed with Fail2Ban user rights.
-#          <if>  interface name
 #          <ip>  IP address
 # Values:  CMD
-# Default  iptables -I INPUT 1 -i <if> -s <ip> -j DROP
-fwbanrule = iptables -I INPUT 1 -i <if> -s <ip> -j DROP
+# Default  iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 
 # Option:  fwunbanrule
 # Notes.:  command executed when unbanning an IP. Take care that the
 #          command is executed with Fail2Ban user rights.
-#          <if>  interface name
 #          <ip>  IP address
 # Values:  CMD
-# Default  iptables -D INPUT -i <if> -s <ip> -j DROP
-fwunbanrule = iptables -D INPUT -i <if> -s <ip> -j DROP
+# Default  iptables -D INPUT -i eth0 -s <ip> -j DROP
+fwunban = iptables -D INPUT -i eth0 -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in SSH logfile.
