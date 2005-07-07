@@ -26,6 +26,8 @@ __license__ = "GPL"
 
 import time, os, log4py, re
 
+from utils.process import executeCmd
+
 # Gets the instance of log4py.
 logSys = log4py.Logger().get_instance()
 
@@ -36,11 +38,10 @@ class Firewall:
 	
 	banList = dict()
 	
-	def __init__(self, banRule, unBanRule, banTime, interface):
+	def __init__(self, banRule, unBanRule, banTime):
 		self.banRule = banRule
 		self.unBanRule = unBanRule
 		self.banTime = banTime
-		self.interface = interface
 	
 	def addBanIP(self, ip, debug):
 		""" Bans an IP.
@@ -48,7 +49,7 @@ class Firewall:
 		if not self.inBanList(ip):
 			logSys.warn("Ban "+ip)
 			self.banList[ip] = time.time()
-			self.__executeCmd(self.banIP(ip), debug)
+			executeCmd(self.banIP(ip), debug)
 		else:
 			logSys.error(ip+" already in ban list")
 	
@@ -58,7 +59,7 @@ class Firewall:
 		if self.inBanList(ip):
 			logSys.warn("Unban "+ip)
 			del self.banList[ip]
-			self.__executeCmd(self.unBanIP(ip), debug)
+			executeCmd(self.unBanIP(ip), debug)
 		else:
 			logSys.error(ip+" not in ban list")
 	
@@ -85,32 +86,24 @@ class Firewall:
 		for element in banListTemp.iteritems():
 			ip = element[0]
 			self.delBanIP(ip, debug)
-	
-	def __executeCmd(self, cmd, debug):
-		""" Executes an OS command.
-		"""
-		logSys.debug(cmd)
-		if not debug:
-			return os.system(cmd)
-		else:
-			return None
 			
 	def banIP(self, ip):
 		""" Returns query to ban IP.
 		"""
-		query = self.replaceTag(self.banRule, ip, self.interface)
+		query = self.replaceTag(self.banRule, ip)
 		return query
 	
 	def unBanIP(self, ip):
 		""" Returns query to unban IP.
 		"""
-		query = self.replaceTag(self.unBanRule, ip, self.interface)
+		query = self.replaceTag(self.unBanRule, ip)
 		return query
 	
-	def replaceTag(self, query, ip, interface):
+	def replaceTag(self, query, ip):
+		""" Replace tag in query
+		"""
 		string = query
 		string = string.replace("<ip>", ip)
-		string = string.replace("<if>", interface)
 		return string
 	
 	def viewBanList(self):
