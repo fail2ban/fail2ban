@@ -9,8 +9,11 @@ Fail2Ban (version 0.?.?)                           ??/??/2005
 
 ver. 0.?.? (??/??/2005) - ???
 ----------
+- Remove interface option
+- Added start and end commands in the configuration file.
+  Thanks to Yaroslav Halchenko
 - Added firewall rules definition in the configuration file
-- Cleaned a bit fail2ban.py
+- Cleaned fail2ban.py
 - Added an initd script for RedHat/Fedora. Thanks to Andrey
   G. Grozin
 
