@@ -35,8 +35,8 @@ setup(
         description = "Ban IPs that make too many password failure",
         author = "Cyril Jaquier",
         author_email = "lostcontrol@users.sourceforge.net",
-        url = "http://www.sourceforge.net/projects/fail2ban",
-        scripts = ['fail2ban.py'],
-        py_modules = ['version'],
+        url = "http://fail2ban.sourceforge.net",
+        scripts = ['fail2ban'],
+        py_modules = ['fail2ban', 'version'],
         packages = ['firewall', 'logreader', 'confreader', 'utils']
 )
