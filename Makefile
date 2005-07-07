@@ -4,7 +4,7 @@ DESTDIR=debian/fail2ban
 
 all:: 
 	cp fail2ban.py fail2ban
-	help2man -N -s 1 fail2ban >| fail2ban.1
+	help2man -N -s 1 ./fail2ban >| fail2ban.1
 
 install:: all
 	mkdir -p $(DESTDIR)/etc/default
