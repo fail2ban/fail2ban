@@ -4,14 +4,14 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.4.1)                           06/30/2005
+Fail2Ban (version 0.?.?)                           ??/??/2005
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
 that makes too many password failures. It updates firewall
-rules to reject the IP address. Currently iptables, ipfw and
-ipfwadm are supported. Fail2Ban can read multiple log files
-such as sshd or Apache web server ones. It needs log4py.
+rules to reject the IP address. These rules can be defined by
+the user. Fail2Ban can read multiple log files such as sshd
+or Apache web server ones. It needs log4py.
 
 This is my first Python program. Moreover, English is not my
 mother tongue...
@@ -36,18 +36,19 @@ tries to find lines which match the failregex. Then it
 retrieves the message time using timeregex and timepattern.
 It finally gets the ip and if it has already done 3 or more
 password failures in the last banTime, the ip is banned for
-banTime using a firewall rule. After banTime, the rule is
-deleted. Notice that if no "plain" ip is available, Fail2Ban
-try to do DNS lookup in order to found one or several ip's to
-ban.
+banTime using a firewall rule. This rule is set by the user
+in the configuration file. Thus, Fail2Ban can be adapted for
+lots of firewall. After banTime, the rule is deleted. Notice
+that if no "plain" ip is available, Fail2Ban try to do DNS
+lookup in order to found one or several ip's to ban.
 
 Sections can be freely added so it is possible to monitor
 several daemons at the same time.
 
 Runs on my server and does its job rather well :-) The idea
 is to make fail2ban usable with daemons and services that
-require a login (sshd, telnetd, ...). It should also support
-others firewalls than iptables.
+require a login (sshd, telnetd, ...) and with different
+firewalls.
 
 
 Installation:
@@ -65,7 +66,8 @@ To install, just do:
 This will install Fail2Ban into /usr/lib/fail2ban. The
 fail2ban.py executable is placed into /usr/bin.
 
-For Gentoo users, an ebuild is available on the website.
+Gentoo: an ebuild is available on the website.
+Debian: a package is available on the website.
 
 Fail2Ban should now be correctly installed. Just type:
 
@@ -93,7 +95,6 @@ options:
 
   -b         start fail2ban in background
   -d         start fail2ban in debug mode
-  -e <INTF>  ban IP on the INTF interface
   -c <FILE>  read configuration file FILE
   -p <FILE>  create PID lock in FILE
   -h         display this help message
@@ -103,8 +104,6 @@ options:
   -r <VALUE> allow a max of VALUE password failure
   -t <TIME>  ban IP for TIME seconds
   -v         verbose. Use twice for greater effect
-  -w <FIWA>  select the firewall to use. Can be iptables,
-             ipfwadm or ipfw
 
 Contact:
 --------
@@ -121,7 +120,7 @@ Thanks:
 -------
 
 Kévin Drapel, Marvin Rouge, Sireyessire, Robert Edeker,
-Tom Pike, Iain Lea, Andrey G. Grozin
+Tom Pike, Iain Lea, Andrey G. Grozin, Yaroslav Halchenko
 
 License:
 --------
