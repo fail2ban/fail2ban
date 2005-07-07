@@ -21,7 +21,7 @@
 [ "${NETWORKING}" = "no" ] && exit 0
 [ -f /etc/fail2ban.conf ] || exit 0
 
-FAIL2BAN="/usr/bin/fail2ban.py"
+FAIL2BAN="/usr/bin/fail2ban"
 PIDFILE="/var/run/fail2ban.pid"
 
 RETVAL=0
@@ -55,7 +55,7 @@ case "$1" in
         stop
         ;;
   status)
-        status fail2ban.py
+        status fail2ban
         RETVAL=$?
         ;;
   reload)
