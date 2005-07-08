@@ -10,8 +10,8 @@ fail2ban \- Ban IPs that make too many password failure
 
 [REPORTING BUGS]
 
-We know that man page has duplicate of options. That will be 
-fixed soon. Hang on and don't report it for now.
+Please report Debian related bugs via Debian bug tracking system
+http://www.debian.org/Bugs/
 
 [copyright]
 Copyright (c) 2004 Cyril Jaquier

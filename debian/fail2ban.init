@@ -11,7 +11,7 @@
 #
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/sbin/fail2ban
+DAEMON=/usr/bin/fail2ban
 NAME=fail2ban
 DESC=fail2ban
 PIDFILE=/var/run/$NAME.pid
