@@ -236,8 +236,9 @@ if __name__ == "__main__":
 	
 	# Reads the command line options.
 	try:
-		optList, args = getopt.getopt(sys.argv[1:], 'hvbdkc:l:t:i:r:e:w:p:')
+		optList, args = getopt.getopt(sys.argv[1:], 'hvbdkc:l:t:i:r:e:w:p:', ['help','version'])
 	except getopt.GetoptError:
+		sys.stderr.write("Error during parsing of command line parameters\n");
 		usage()
 	
 	# Pre-parsing of command line options for the -c option
@@ -361,8 +362,11 @@ if __name__ == "__main__":
 		logSys.warn("Using default value")
 	
 	for opt in optList:
-		if opt[0] == "-h":
+		if opt[0] in ["-h","--help"]:
 			usage()
+		if opt[0] in ["--version"]:
+			print version
+			sys.exit(0)
 		if opt[0] == "-v":
 			conf["verbose"] = conf["verbose"] + 1
 		if opt[0] == "-b":
