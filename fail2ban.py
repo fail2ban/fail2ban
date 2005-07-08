@@ -40,8 +40,10 @@ logSys = log4py.Logger().get_instance()
 logFwList = list()
 conf = dict()
 
-def usage():
-	print "Usage: fail2ban [OPTIONS]"
+def dispUsage():
+	""" Prints Fail2Ban command line options and exits
+	"""
+	print "Usage: "+sys.argv[0]+" [OPTIONS]"
 	print
 	print "Fail2Ban v"+version+" reads log file that contains password failure report"
 	print "and bans the corresponding IP address using iptables."
@@ -57,8 +59,15 @@ def usage():
 	print "  -r <VALUE> allow a max of VALUE password failure"
 	print "  -t <TIME>  ban IP for TIME seconds"
 	print "  -v         verbose. Use twice for greater effect"
+	print "  -V         print software version"
 	print
 	print "Report bugs to <lostcontrol@users.sourceforge.net>"
+	sys.exit(0)
+
+def dispVersion():
+	""" Prints Fail2Ban version and exits
+	"""
+	print sys.argv[0]+" "+version
 	sys.exit(0)
 
 def checkForRoot():
@@ -99,8 +108,10 @@ def getCmdLineOptions(optList):
 	""" Gets the command line options
 	"""
 	for opt in optList:
-		if opt[0] == "-h":
-			usage()
+		if opt[0] in ["-h", "--help"]:
+ 			dispUsage()
+		if opt[0] in ["-V", "--version"]:
+			dispVersion()
 		if opt[0] == "-v":
 			conf["verbose"] = conf["verbose"] + 1
 		if opt[0] == "-b":
@@ -143,9 +154,11 @@ def main():
 	
 	# Reads the command line options.
 	try:
-		optList, args = getopt.getopt(sys.argv[1:], 'hvbdkc:l:t:i:r:p:')
+		cmdOpts = 'hvVbdkc:l:t:i:r:p:'
+		cmdLongOpts = ['help','version']
+		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
 	except getopt.GetoptError:
-		usage()
+		dispUsage()
 	
 	# Pre-parsing of command line options for the -c option
 	for opt in optList:
