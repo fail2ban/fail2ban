@@ -43,23 +43,27 @@ class Firewall:
 		self.unBanRule = unBanRule
 		self.banTime = banTime
 	
-	def addBanIP(self, ip, debug):
+	def addBanIP(self, aInfo, debug):
 		""" Bans an IP.
 		"""
+		ip = aInfo["ip"]
 		if not self.inBanList(ip):
-			logSys.warn("Ban "+ip)
-			self.banList[ip] = time.time()
-			executeCmd(self.banIP(ip), debug)
+			crtTime = time.time()
+			logSys.warn("Ban " + ip)
+			self.banList[ip] = crtTime
+			aInfo["bantime"] = crtTime
+			executeCmd(self.banIP(aInfo), debug)
 		else:
 			logSys.error(ip+" already in ban list")
 	
-	def delBanIP(self, ip, debug):
+	def delBanIP(self, aInfo, debug):
 		""" Unban an IP.
 		"""
+		ip = aInfo["ip"]
 		if self.inBanList(ip):
 			logSys.warn("Unban "+ip)
 			del self.banList[ip]
-			executeCmd(self.unBanIP(ip), debug)
+			executeCmd(self.unBanIP(aInfo), debug)
 		else:
 			logSys.error(ip+" not in ban list")
 	
@@ -73,10 +77,12 @@ class Firewall:
 		"""
 		banListTemp = self.banList.copy()
 		for element in banListTemp.iteritems():
-			ip = element[0]
 			btime = element[1]
 			if btime < time.time()-self.banTime:
-				self.delBanIP(ip, debug)
+				aInfo = {"ip": element[0],
+						 "bantime": btime,
+						 "unbantime": time.time()}
+				self.delBanIP(aInfo, debug)
 	
 	def flushBanList(self, debug):
 		""" Flushes the ban list and of course the firewall rules.
@@ -84,26 +90,29 @@ class Firewall:
 		"""
 		banListTemp = self.banList.copy()
 		for element in banListTemp.iteritems():
-			ip = element[0]
-			self.delBanIP(ip, debug)
+			aInfo = {"ip": element[0],
+					 "bantime": element[1],
+					 "unbantime": time.time()}
+			self.delBanIP(aInfo, debug)
 			
-	def banIP(self, ip):
+	def banIP(self, aInfo):
 		""" Returns query to ban IP.
 		"""
-		query = self.replaceTag(self.banRule, ip)
+		query = self.replaceTag(self.banRule, aInfo)
 		return query
 	
-	def unBanIP(self, ip):
+	def unBanIP(self, aInfo):
 		""" Returns query to unban IP.
 		"""
-		query = self.replaceTag(self.unBanRule, ip)
+		query = self.replaceTag(self.unBanRule, aInfo)
 		return query
 	
-	def replaceTag(self, query, ip):
-		""" Replace tag in query
+	def replaceTag(self, query, aInfo):
+		""" Replace tags in query
 		"""
 		string = query
-		string = string.replace("<ip>", ip)
+		for tag in aInfo:
+			string = string.replace('<'+tag+'>', `aInfo[tag]`)
 		return string
 	
 	def viewBanList(self):
