@@ -9,7 +9,9 @@ Fail2Ban (version 0.?.?)                           ??/??/2005
 
 ver. 0.?.? (??/??/2005) - ???
 ----------
-- Remove interface option
+- Added tags replacement in rules definition. Should allow a
+  clean solution for Feature Request #1229479
+- Removed "interface" and "firewall" options
 - Added start and end commands in the configuration file.
   Thanks to Yaroslav Halchenko
 - Added firewall rules definition in the configuration file
