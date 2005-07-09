@@ -321,10 +321,13 @@ def main():
 					if failTime < unixTime - findTime:
 						del element[3][attempt]
 					elif fails[attempt][0] >= conf["maxretry"]:
-						logSys.info(element[0] + ": " + attempt + " has " +
-									`element[3][attempt][0]` +
+						aInfo = {"ip": attempt,
+								 "failures": element[3][attempt][0],
+								 "failtime": failTime}
+						logSys.info(element[0] + ": " + aInfo["ip"] +
+									" has " + `aInfo["failures"]` +
 									" login failure(s). Banned.")
-						element[2].addBanIP(attempt, conf["debug"])
+						element[2].addBanIP(aInfo, conf["debug"])
 						del element[3][attempt]
 			
 		except KeyboardInterrupt:
