@@ -5,18 +5,6 @@
 # 2005.06.21  modified for readability  Iain Lea  iain@bricbrac.de
 
 [DEFAULT]
-# Option:  firewall
-# Notes.:  select the firewall system to use.
-# Values:  [iptables | ipfwadm | ipfw]  Default:  iptables
-#
-firewall = iptables
-
-# Option:  ipfw-start-rule
-# Notes.:  set first firewall rule number used (only used if firewall = ipfw).
-# Values:  NUM  Default:  100
-#
-ipfw-start-rule = 100
-
 # Option:  background
 # Notes.:  start fail2ban as a daemon. Output is redirect to logfile.
 # Values:  [true | false]  Default:  false
@@ -62,14 +50,14 @@ ignoreip =
 
 # Option:  cmdstart
 # Notes.:  command executed once at the start of Fail2Ban
-# Values:  CMD
-# Default  
+# Values:  CMD  Default:
+#
 cmdstart = 
 
 # Option:  cmdend
 # Notes.:  command executed once at the end of Fail2Ban
-# Values:  CMD
-# Default  
+# Values:  CMD  Default:
+#
 cmdend = 
 
 # Option:  polltime
@@ -80,7 +68,8 @@ polltime = 1
 
 # You can define a new section for each log file to check for
 # password failure. Each section has to define the following
-# options: logfile, timeregex, timepattern, failregex.
+# options: logfile, fwban, fwunban, timeregex, timepattern,
+# failregex.
 
 [Apache]
 # Option:  enabled
@@ -97,14 +86,14 @@ logfile = /home/cyril/workspace/fail2ban-unstable/log-test/apache
 
 # Option:  fwstart
 # Notes.:  command executed once at the start of Fail2Ban
-# Values:  CMD
-# Default  
+# Values:  CMD  Default:
+#
 fwstart = 
 
 # Option:  fwend
 # Notes.:  command executed once at the end of Fail2Ban
-# Values:  CMD
-# Default  
+# Values:  CMD  Default:
+#
 fwend = 
 
 # Option:  fwban
@@ -112,7 +101,8 @@ fwend =
 #          command is executed with Fail2Ban user rights.
 #          <ip>  IP address
 # Values:  CMD
-# Default  iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+# Default: iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+#
 fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 
 # Option:  fwunban
@@ -120,13 +110,14 @@ fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 #          command is executed with Fail2Ban user rights.
 #          <ip>  IP address
 # Values:  CMD
-# Default  iptables -D INPUT -i eth0 -s <ip> -j DROP
+# Default: iptables -D INPUT -i eth0 -s <ip> -j DROP
+#
 fwunban = iptables -D INPUT -i eth0 -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in Apache logfile.
 # Values:  [Wed Jan 05 15:08:01 2005]  
-# Default  \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
+# Default: \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
 #
 timeregex = \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
 
@@ -158,14 +149,14 @@ logfile = /home/cyril/workspace/fail2ban-unstable/log-test/test
 
 # Option:  fwstart
 # Notes.:  command executed once at the start of Fail2Ban
-# Values:  CMD
-# Default  
+# Values:  CMD  Default:
+#
 fwstart = 
 
 # Option:  fwend
 # Notes.:  command executed once at the end of Fail2Ban
-# Values:  CMD
-# Default  
+# Values:  CMD  Default:
+#
 fwend = 
 
 # Option:  fwbanrule
@@ -173,7 +164,8 @@ fwend =
 #          command is executed with Fail2Ban user rights.
 #          <ip>  IP address
 # Values:  CMD
-# Default  iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+# Default: iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+#
 fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 
 # Option:  fwunbanrule
@@ -181,13 +173,14 @@ fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 #          command is executed with Fail2Ban user rights.
 #          <ip>  IP address
 # Values:  CMD
-# Default  iptables -D INPUT -i eth0 -s <ip> -j DROP
+# Default: iptables -D INPUT -i eth0 -s <ip> -j DROP
+#
 fwunban = iptables -D INPUT -i eth0 -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in SSH logfile.
 # Values:  [Mar  7 17:53:28]  
-# Default  \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
+# Default: \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
 #
 timeregex = \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
 
