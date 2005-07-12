@@ -48,9 +48,12 @@ class ConfigReader:
 	
 	def getSections(self):
 		""" Returns all the sections present in the configuration
-			file except the DEFAULT section.
+			file except the DEFAULT and MAIL sections.
 		"""
-		return self.configParser.sections()
+		sections = self.configParser.sections()
+		sections.remove("MAIL")
+		logSys.debug("Found sections: " + `sections`)
+		return sections
 	
 	# Each optionValues entry is composed of an array with:
 	# 0 -> the type of the option
