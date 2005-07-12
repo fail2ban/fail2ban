@@ -42,11 +42,12 @@ maxretry = 3
 bantime = 600
 
 # Option:  ignoreip
-# Notes.:  space separated list of IP's to be ignored by fail2ban
-#          Example:  ignoreip = 192.168.0.1 123.45.235.65
-# Values:  IP  Default:  
+# Notes.:  space separated list of IP's to be ignored by fail2ban.
+#          You can use CIDR mask in order to specify a range.
+#          Example:  ignoreip = 192.168.0.1/24 123.45.235.65
+# Values:  IP  Default:  192.168.0.0/24
 #
-ignoreip = 
+ignoreip = 192.168.0.0/24
 
 # Option:  cmdstart
 # Notes.:  command executed once at the start of Fail2Ban
@@ -65,6 +66,60 @@ cmdend =
 # Values:  NUM  Default:  1
 #
 polltime = 1
+
+[MAIL]
+# Option:  enabled
+# Notes.:  enable mail notification when banning an IP address.
+# Values:  [true | false]  Default:  false
+#
+enabled = false
+
+# Option:  host
+# Notes.:  host running the mail server.
+# Values:  STR  Default:  localhost
+#
+host = localhost
+
+# Option:  port
+# Notes.:  port of the mail server.
+# Values:  INT  Default:  25
+#
+port = 25
+
+# Option:  from
+# Notes.:  e-mail address of the sender.
+# Values:  MAIL  Default:  fail2ban
+#
+from = fail2ban
+
+# Option:  to
+# Notes.:  e-mail address of the receiver.
+# Values:  MAIL  Default:  root
+#
+to = root
+
+# Option:  subject
+# Notes.:  subject of the e-mail.
+# Tags:    <ip>  IP address
+#          <failures>  number of failures
+#          <failtime>  unix timestamp of the last failure
+# Values:  TEXT  Default:  [Fail2Ban] Banned <ip>
+#
+subject = [Fail2Ban] Banned <ip>
+
+# Option:  message
+# Notes.:  message of the e-mail.
+# Tags:    <ip>  IP address
+#          <failures>  number of failures
+#          <failtime>  unix timestamp of the last failure
+#          <br>  new line
+# Values:  TEXT  Default:  
+#
+message = Hi,<br>
+		  The IP <ip> has just been banned by Fail2Ban after
+		  <failures> attempts.<br>
+		  Regards,<br>
+		  Fail2Ban
 
 # You can define a new section for each log file to check for
 # password failure. Each section has to define the following
