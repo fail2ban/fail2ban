@@ -31,6 +31,7 @@ from firewall.firewall import Firewall
 from logreader.logreader import LogReader
 from confreader.configreader import ConfigReader
 from utils.process import *
+from utils.mail import Mail
 from version import version
 
 # Gets the instance of log4py.
@@ -55,7 +56,7 @@ def dispUsage():
 	print "  -h         display this help message"
 	print "  -i <IP(s)> IP(s) to ignore"
 	print "  -k         kill a currently running Fail2Ban instance"
-	print "  -l <FILE>  log message in FILE"
+	print "  -l <FILE>  log messages in FILE"
 	print "  -r <VALUE> allow a max of VALUE password failure"
 	print "  -t <TIME>  ban IP for TIME seconds"
 	print "  -v         verbose. Use twice for greater effect"
@@ -119,7 +120,6 @@ def getCmdLineOptions(optList):
 		if opt[0] == "-d":
 			conf["debug"] = True
 		if opt[0] == "-l":
-			conf["logging"] = True
 			conf["logfile"] = opt[1]
 		if opt[0] == "-t":
 			try:
@@ -150,7 +150,6 @@ def main():
 	
 	conf["verbose"] = 0
 	conf["conffile"] = "/etc/fail2ban.conf"
-	conf["logging"] = False
 	
 	# Reads the command line options.
 	try:
@@ -189,32 +188,39 @@ def main():
 	getCmdLineOptions(optList)
 
 	# Process some options
-	for c in conf:
-		if c == "verbose":
-			logSys.warn("Verbose level is "+`conf[c]`)
-			if conf[c] == 1:
-				logSys.set_loglevel(log4py.LOGLEVEL_VERBOSE)
-			elif conf[c] > 1:
-				logSys.set_loglevel(log4py.LOGLEVEL_DEBUG)
-		elif c == "debug" and conf[c]:
+	# Verbose level
+	if conf["verbose"]:
+		logSys.warn("Verbose level is "+`conf["verbose"]`)
+		if conf["verbose"] == 1:
+			logSys.set_loglevel(log4py.LOGLEVEL_VERBOSE)
+		elif conf["verbose"] > 1:
 			logSys.set_loglevel(log4py.LOGLEVEL_DEBUG)
-			logSys.set_formatstring(log4py.FMT_DEBUG)
-		elif c == "background" and conf[c]:
-			retCode = createDaemon()
-			signal.signal(signal.SIGTERM, sigTERMhandler)
+		
+	# Set debug log level
+	if conf["debug"]:
+		logSys.set_loglevel(log4py.LOGLEVEL_DEBUG)
+		logSys.set_formatstring(log4py.FMT_DEBUG)
+		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
+					"ONLY DISPLAYED IN THE LOG MESSAGES")
+
+	# Start Fail2Ban in daemon mode
+	if conf["background"]:
+		retCode = createDaemon()
+		signal.signal(signal.SIGTERM, sigTERMhandler)
+		if not retCode:
+			logSys.error("Unable to start daemon")
+			sys.exit(-1)
+		# Bug fix for #1234699
+		os.umask(0077)
+		try:
+			open(conf["logfile"], "a")
 			logSys.set_target(conf["logfile"])
-			if not retCode:
-				logSys.error("Unable to start daemon")
-				sys.exit(-1)
-		elif c == "logging" and conf[c]:
-			try:
-				open(conf["logfile"], "a")
-				logSys.set_target(conf["logfile"])
-			except IOError:
-				logSys.warn("Unable to log to "+conf["logfile"])
-				logSys.warn("Using default output for logging")
-		elif c == "ignoreip":
-			ignoreIPList = conf[c].split(' ')
+		except IOError:
+			logSys.error("Unable to log to " + conf["logfile"])
+			logSys.warn("Using default output for logging")
+	
+	# Ignores IP list
+	ignoreIPList = conf["ignoreip"].split(' ')
 	
 	# Checks for root user. This is necessary because log files
 	# are owned by root and firewall needs root access.
@@ -236,6 +242,26 @@ def main():
 	logSys.debug("retryAllowed is "+`conf["maxretry"]`)
 	
 	# Options
+	optionValues = (["bool", "enabled", False],
+					["str", "host", "localhost"],
+					["int", "port", "25"],
+					["str", "from", "root"],
+					["str", "to", "root"],
+					["str", "subject", "[Fail2Ban] Banned <ip>"],
+					["str", "message", "Fail2Ban notification"])
+	
+	# Gets global configuration options
+	mailConf = confReader.getLogOptions("MAIL", optionValues)
+	
+	# Create mailer if enabled
+	if mailConf["enabled"]:
+		logSys.debug("Mail enabled")
+		mail = Mail(mailConf["host"], mailConf["port"])
+		mail.setFromAddr(mailConf["from"])
+		mail.setToAddr(mailConf["to"])
+		logSys.debug("to: " + mailConf["to"] + " from: " + mailConf["from"])
+	
+	# Options
 	optionValues = (["bool", "enabled", True],
 					["str", "logfile", "/dev/null"],
 					["str", "timeregex", ""],
@@ -252,7 +278,7 @@ def main():
 		if l["enabled"]:
 			# Creates a logreader object
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
-								l["failregex"], conf["bantime"])
+							 l["failregex"], conf["bantime"])
 			# Creates a firewall object
 			fObj = Firewall(l["fwban"], l["fwunban"], conf["bantime"])
 			# Links them into a list. I'm not really happy
@@ -328,6 +354,10 @@ def main():
 									" has " + `aInfo["failures"]` +
 									" login failure(s). Banned.")
 						element[2].addBanIP(aInfo, conf["debug"])
+						# Send a mail notification
+						if 'mail' in locals():
+							mail.sendmail(mailConf["subject"],
+										  mailConf["message"], aInfo)
 						del element[3][attempt]
 			
 		except KeyboardInterrupt:
