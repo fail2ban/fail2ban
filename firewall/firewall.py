@@ -27,6 +27,7 @@ __license__ = "GPL"
 import time, os, log4py, re
 
 from utils.process import executeCmd
+from utils.strings import replaceTag
 
 # Gets the instance of log4py.
 logSys = log4py.Logger().get_instance()
@@ -98,22 +99,14 @@ class Firewall:
 	def banIP(self, aInfo):
 		""" Returns query to ban IP.
 		"""
-		query = self.replaceTag(self.banRule, aInfo)
+		query = replaceTag(self.banRule, aInfo)
 		return query
 	
 	def unBanIP(self, aInfo):
 		""" Returns query to unban IP.
 		"""
-		query = self.replaceTag(self.unBanRule, aInfo)
+		query = replaceTag(self.unBanRule, aInfo)
 		return query
-	
-	def replaceTag(self, query, aInfo):
-		""" Replace tags in query
-		"""
-		string = query
-		for tag in aInfo:
-			string = string.replace('<'+tag+'>', `aInfo[tag]`)
-		return string
 	
 	def viewBanList(self):
 		""" Prints the ban list on screen. Usefull for debugging.
