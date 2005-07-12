@@ -64,7 +64,17 @@ class LogReader:
 	def inIgnoreIPList(self, ip):
 		""" Checks if IP is in the ignore list.
 		"""
-		return ip in self.ignoreIpList
+		for i in self.ignoreIpList:
+			s = i.split('/', 1)
+			# IP address without CIDR mask
+			if len(s) == 1:
+				s.insert(1, '32')
+			s[1] = long(s[1])
+			a = cidr(s[0], s[1])
+			b = cidr(ip, s[1])
+			if a == b:
+				return True
+		return False
 	
 	def openLogFile(self):
 		""" Opens the log file specified on init.
