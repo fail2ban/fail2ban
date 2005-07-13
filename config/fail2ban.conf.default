@@ -47,7 +47,7 @@ bantime = 600
 #          Example:  ignoreip = 192.168.0.1/24 123.45.235.65
 # Values:  IP  Default:  192.168.0.0/24
 #
-ignoreip = 192.168.0.0/24
+ignoreip = 192.168.0.0/16
 
 # Option:  cmdstart
 # Notes.:  command executed once at the start of Fail2Ban
