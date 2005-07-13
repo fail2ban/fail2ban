@@ -77,7 +77,8 @@ def createDaemon():
 			# to do this could make a filesystem unmountable.
 			os.chdir("/")
 			# Give the child complete control over permissions.
-			os.umask(0)
+                        # yoh: evil evil evil!
+			# os.umask(0)
 		else:
 			os._exit(0)	  # Exit parent (the first child) of the second child.
 	else:
