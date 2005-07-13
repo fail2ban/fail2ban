@@ -17,4 +17,4 @@ install:: all
 #	cp log4py.py $(DESTDIR)/usr/lib/fail2ban/
 
 clean::
-	rm -rf changelog.gz fail2ban{,.1x} build* `find -iname '*.pyc' `
+	rm -rf changelog.gz fail2ban.1x build* `find -iname '*.pyc' `
