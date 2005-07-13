@@ -17,11 +17,11 @@
 #
 # Author: Sireyessire, Cyril Jaquier
 # 
-# $Revision: 1.1 $
+# $Revision: 1.1.2.1 $
 
 opts="start stop restart showlog"
 
-FAIL2BAN="/usr/bin/fail2ban.py"
+FAIL2BAN="/usr/bin/fail2ban"
 
 depend() {
 	need net

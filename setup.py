@@ -18,11 +18,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.4 $
+# $Revision: 1.4.2.1 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.4 $"
-__date__ = "$Date: 2005/03/31 15:52:02 $"
+__version__ = "$Revision: 1.4.2.1 $"
+__date__ = "$Date: 2005/07/07 16:57:05 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -35,8 +35,8 @@ setup(
         description = "Ban IPs that make too many password failure",
         author = "Cyril Jaquier",
         author_email = "lostcontrol@users.sourceforge.net",
-        url = "http://www.sourceforge.net/projects/fail2ban",
+        url = "http://fail2ban.sourceforge.net",
         scripts = ['fail2ban'],
-        py_modules = ['version'],
+        py_modules = ['fail2ban', 'version','log4py'],
         packages = ['firewall', 'logreader', 'confreader', 'utils']
 )

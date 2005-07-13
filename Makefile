@@ -2,15 +2,11 @@
 #
 DESTDIR=debian/fail2ban
 
-all::  fail2ban fail2ban.1x
+all:: fail2ban.1x
 
 
 fail2ban.1x: fail2ban fail2ban.h2m
 	help2man --include fail2ban.h2m --section=1x --no-info --output $@ ./fail2ban
-	
-fail2ban: fail2ban.py
-	cp fail2ban.py fail2ban
-
 
 install:: all
 	mkdir -p $(DESTDIR)/etc/default
@@ -18,7 +14,7 @@ install:: all
 	cp config/fail2ban.conf.default $(DESTDIR)/etc/fail2ban.conf
 	cp config/gentoo-confd   $(DESTDIR)/etc/default/fail2ban
 	mkdir -p $(DESTDIR)/usr/lib/fail2ban/
-	cp log4py.py $(DESTDIR)/usr/lib/fail2ban/
+#	cp log4py.py $(DESTDIR)/usr/lib/fail2ban/
 
 clean::
 	rm -rf changelog.gz fail2ban{,.1x} build* `find -iname '*.pyc' `

@@ -16,17 +16,20 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.13 $
+# $Revision: 1.13.2.2 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.13 $"
-__date__ = "$Date: 2005/03/31 15:45:24 $"
+__version__ = "$Revision: 1.13.2.2 $"
+__date__ = "$Date: 2005/07/12 13:09:09 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import os, sys, time, re
+import os, sys, time, re, log4py
 
 from utils.dns import *
+
+# Gets the instance of log4py.
+logSys = log4py.Logger().get_instance()
 
 class LogReader:
 	""" Reads a log file and reports information about IP that make password
@@ -34,8 +37,8 @@ class LogReader:
 		attempt.	
 	"""
 	
-	def __init__(self, logSys, logPath, timeregex, timepattern, failregex,
-		findTime = 3600):
+	def __init__(self, logPath, timeregex, timepattern, failregex,
+				  findTime = 3600):
 		self.logPath = logPath
 		self.timeregex = timeregex
 		self.timepattern = timepattern
@@ -43,20 +46,9 @@ class LogReader:
 		self.findTime = findTime
 		self.ignoreIpList = []
 		self.lastModTime = 0
-		self.logSys = logSys
 		self.lastPos = 0
 		self.lastDate = 0
 		self.logStats = None
-		
-	def setName(self, name):
-		""" Sets the name of the log reader.
-		"""
-		self.name = name
-		
-	def getName(self):
-		""" Gets the name of the log reader.
-		"""
-		return self.name
 	
 	def getFindTime(self):
 		""" Gets the find time.
@@ -66,13 +58,23 @@ class LogReader:
 	def addIgnoreIP(self, ip):
 		""" Adds an IP to the ignore list.
 		"""
-		self.logSys.debug("Add "+ip+" to ignore list")
+		logSys.debug("Add "+ip+" to ignore list")
 		self.ignoreIpList.append(ip)
 		
 	def inIgnoreIPList(self, ip):
 		""" Checks if IP is in the ignore list.
 		"""
-		return ip in self.ignoreIpList
+		for i in self.ignoreIpList:
+			s = i.split('/', 1)
+			# IP address without CIDR mask
+			if len(s) == 1:
+				s.insert(1, '32')
+			s[1] = long(s[1])
+			a = cidr(s[0], s[1])
+			b = cidr(ip, s[1])
+			if a == b:
+				return True
+		return False
 	
 	def openLogFile(self):
 		""" Opens the log file specified on init.
@@ -80,7 +82,7 @@ class LogReader:
 		try:
 			fileHandler = open(self.logPath)
 		except OSError:
-			self.logSys.error("Unable to open "+self.logPath)
+			logSys.error("Unable to open "+self.logPath)
 			sys.exit(-1)
 		return fileHandler
 		
@@ -90,13 +92,13 @@ class LogReader:
 		try:
 			self.logStats = os.stat(self.logPath)
 		except OSError:
-			self.logSys.error("Unable to get stat on "+self.logPath)
+			logSys.error("Unable to get stat on "+self.logPath)
 			sys.exit(-1)
 		
 		if self.lastModTime == self.logStats.st_mtime:
 			return False
 		else:
-			self.logSys.debug(self.logPath+" has been modified")
+			logSys.debug(self.logPath+" has been modified")
 			self.lastModTime = self.logStats.st_mtime
 			return True
 	
@@ -107,13 +109,13 @@ class LogReader:
 		"""
 		line = file.readline()
 		if self.lastDate < self.getTime(line):
-			self.logSys.debug("Date " + `self.lastDate` + " is " +
-							"smaller than " + `self.getTime(line)`)
-			self.logSys.debug("Log rotation detected for " + self.logPath)
+			logSys.debug("Date " + `self.lastDate` + " is " + "smaller than " +
+							`self.getTime(line)`)
+			logSys.debug("Log rotation detected for " + self.logPath)
 			self.lastPos = 0
 		
-		self.logSys.debug("Setting file position to " + `self.lastPos` + " for "
-						+ self.logPath)
+		logSys.debug("Setting file position to " + `self.lastPos` + " for " +
+						self.logPath)
 		file.seek(self.lastPos)
 	
 	def getFailures(self):
@@ -124,7 +126,7 @@ class LogReader:
 			and the latest failure time.
 		"""
 		ipList = dict()
-		self.logSys.debug(self.logPath)
+		logSys.debug(self.logPath)
 		logFile = self.openLogFile()
 		self.setFilePos(logFile)
 		lastLine = ''
@@ -137,9 +139,9 @@ class LogReader:
 				if unixTime < time.time()-self.findTime:
 					break
 				if self.inIgnoreIPList(ip):
-					self.logSys.debug("Ignore "+ip)
+					logSys.debug("Ignore "+ip)
 					continue
-				self.logSys.debug("Found "+ip)
+				logSys.debug("Found "+ip)
 				if ipList.has_key(ip):
 					ipList[ip] = (ipList[ip][0]+1, unixTime)
 				else:

@@ -1,3 +1,10 @@
+fail2ban (0.5.0-1) unstable; urgency=low
+
+  * New upstream release
+  * Corrections to the description of the package
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 12 Jul 2005 23:33:20 -1000
+
 fail2ban (0.4.1-1) unstable; urgency=low
 
   * First upstream release of a Debian package

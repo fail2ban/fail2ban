@@ -16,15 +16,21 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.8 $
+# $Revision: 1.8.2.4 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.8 $"
-__date__ = "$Date: 2005/03/06 17:46:56 $"
+__version__ = "$Revision: 1.8.2.4 $"
+__date__ = "$Date: 2005/07/12 13:08:24 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, os
+import time, os, log4py, re
+
+from utils.process import executeCmd
+from utils.strings import replaceTag
+
+# Gets the instance of log4py.
+logSys = log4py.Logger().get_instance()
 
 class Firewall:
 	""" Manages the ban list and executes the command that ban
@@ -33,30 +39,34 @@ class Firewall:
 	
 	banList = dict()
 	
-	def __init__(self, banTime, logSys, interface):
+	def __init__(self, banRule, unBanRule, banTime):
+		self.banRule = banRule
+		self.unBanRule = unBanRule
 		self.banTime = banTime
-		self.logSys = logSys
-		self.interface = interface
 	
-	def addBanIP(self, ip, debug):
+	def addBanIP(self, aInfo, debug):
 		""" Bans an IP.
 		"""
+		ip = aInfo["ip"]
 		if not self.inBanList(ip):
-			self.logSys.warn("Ban "+ip)
-			self.banList[ip] = time.time()
-			self.__executeCmd(self.banIP(ip), debug)
+			crtTime = time.time()
+			logSys.warn("Ban " + ip)
+			self.banList[ip] = crtTime
+			aInfo["bantime"] = crtTime
+			executeCmd(self.banIP(aInfo), debug)
 		else:
-			self.logSys.error(ip+" already in ban list")
+			logSys.error(ip+" already in ban list")
 	
-	def delBanIP(self, ip, debug):
+	def delBanIP(self, aInfo, debug):
 		""" Unban an IP.
 		"""
+		ip = aInfo["ip"]
 		if self.inBanList(ip):
-			self.logSys.warn("Unban "+ip)
+			logSys.warn("Unban "+ip)
 			del self.banList[ip]
-			self.__executeCmd(self.unBanIP(ip), debug)
+			executeCmd(self.unBanIP(aInfo), debug)
 		else:
-			self.logSys.error(ip+" not in ban list")
+			logSys.error(ip+" not in ban list")
 	
 	def inBanList(self, ip):
 		""" Checks if IP is in ban list.
@@ -68,10 +78,12 @@ class Firewall:
 		"""
 		banListTemp = self.banList.copy()
 		for element in banListTemp.iteritems():
-			ip = element[0]
 			btime = element[1]
 			if btime < time.time()-self.banTime:
-				self.delBanIP(ip, debug)
+				aInfo = {"ip": element[0],
+						 "bantime": btime,
+						 "unbantime": time.time()}
+				self.delBanIP(aInfo, debug)
 	
 	def flushBanList(self, debug):
 		""" Flushes the ban list and of course the firewall rules.
@@ -79,18 +91,23 @@ class Firewall:
 		"""
 		banListTemp = self.banList.copy()
 		for element in banListTemp.iteritems():
-			ip = element[0]
-			self.delBanIP(ip, debug)
-	
-	def __executeCmd(self, cmd, debug):
-		""" Executes an OS command.
+			aInfo = {"ip": element[0],
+					 "bantime": element[1],
+					 "unbantime": time.time()}
+			self.delBanIP(aInfo, debug)
+			
+	def banIP(self, aInfo):
+		""" Returns query to ban IP.
 		"""
-		self.logSys.debug(cmd)
-		if not debug:
-			return os.system(cmd)
-		else:
-			return None
-		
+		query = replaceTag(self.banRule, aInfo)
+		return query
+	
+	def unBanIP(self, aInfo):
+		""" Returns query to unban IP.
+		"""
+		query = replaceTag(self.unBanRule, aInfo)
+		return query
+	
 	def viewBanList(self):
 		""" Prints the ban list on screen. Usefull for debugging.
 		"""

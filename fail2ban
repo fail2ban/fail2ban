@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -16,33 +18,31 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.1 $
+# $Revision: 1.4.2.2 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.1 $"
-__date__ = "$Date: 2004/11/06 14:02:27 $"
+__version__ = "$Revision: 1.4.2.2 $"
+__date__ = "$Date: 2005/07/08 10:21:52 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from firewall import Firewall
+from sys import exit, path
 
-class Ipfwadm(Firewall):
-	""" This class contains specific methods and variables for the
-		iptables firewall. Must implements the 'abstracts' methods
-		banIP(ip) and unBanIP(ip).
-		
-		Must adds abstract methods definition:
-		http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/266468
-	"""
-	
-	def banIP(self, ip):
-		""" Returns query to ban IP.
-		"""
-		query = "ipfwadm -I -a deny -W "+self.interface+" -S "+ip
-		return query
-	
-	def unBanIP(self, ip):
-		""" Returns query to unban IP.
-		"""
-		query = "ipfwadm -I -d deny -W "+self.interface+" -S "+ip
-		return query
+#yoh: We do need to load this path first if we ship log4py with fail2ban
+# Appends our own modules path
+path.append('/usr/lib/fail2ban')
+
+
+# Checks for required libs
+# Checks if log4py is present.
+try:
+	import log4py
+except:
+	print "log4py is needed (see README)"
+	exit(-1)
+
+# Now we can import our module
+import fail2ban
+
+# Start the application
+fail2ban.main()

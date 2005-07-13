@@ -1,22 +1,10 @@
 # Fail2Ban configuration file
 #
-# $Revision: 1.8 $
+# $Revision: 1.8.2.5 $
 #
 # 2005.06.21  modified for readability  Iain Lea  iain@bricbrac.de
 
 [DEFAULT]
-# Option:  firewall
-# Notes.:  select the firewall system to use.
-# Values:  [iptables | ipfwadm | ipfw]  Default:  iptables
-#
-firewall = iptables
-
-# Option:  ipfw-start-rule
-# Notes.:  set first firewall rule number used (only used if firewall = ipfw).
-# Values:  NUM  Default:  100
-#
-ipfw-start-rule = 100
-
 # Option:  background
 # Notes.:  start fail2ban as a daemon. Output is redirect to logfile.
 # Values:  [true | false]  Default:  false
@@ -54,17 +42,24 @@ maxretry = 5
 bantime = 600
 
 # Option:  ignoreip
-# Notes.:  space separated list of IP's to be ignored by fail2ban
-#          Example:  ignoreip = 192.168.0.1 123.45.235.65
-# Values:  IP  Default:  
+# Notes.:  space separated list of IP's to be ignored by fail2ban.
+#          You can use CIDR mask in order to specify a range.
+#          Example:  ignoreip = 192.168.0.1/24 123.45.235.65
+# Values:  IP  Default:  192.168.0.0/24
 #
-ignoreip = 
+ignoreip = 192.168.0.0/24
 
-# Option:  interface
-# Notes.:  interface name on which the IP will be banned.
-# Values:  INT  Default:  eth0
+# Option:  cmdstart
+# Notes.:  command executed once at the start of Fail2Ban
+# Values:  CMD  Default:
 #
-interface = eth0
+cmdstart = 
+
+# Option:  cmdend
+# Notes.:  command executed once at the end of Fail2Ban
+# Values:  CMD  Default:
+#
+cmdend = 
 
 # Option:  polltime
 # Notes.:  number of seconds fail2ban sleeps between iterations.
@@ -72,9 +67,64 @@ interface = eth0
 #
 polltime = 1
 
+[MAIL]
+# Option:  enabled
+# Notes.:  enable mail notification when banning an IP address.
+# Values:  [true | false]  Default:  false
+#
+enabled = false
+
+# Option:  host
+# Notes.:  host running the mail server.
+# Values:  STR  Default:  localhost
+#
+host = localhost
+
+# Option:  port
+# Notes.:  port of the mail server.
+# Values:  INT  Default:  25
+#
+port = 25
+
+# Option:  from
+# Notes.:  e-mail address of the sender.
+# Values:  MAIL  Default:  fail2ban
+#
+from = fail2ban
+
+# Option:  to
+# Notes.:  e-mail address of the receiver.
+# Values:  MAIL  Default:  root
+#
+to = root
+
+# Option:  subject
+# Notes.:  subject of the e-mail.
+# Tags:    <ip>  IP address
+#          <failures>  number of failures
+#          <failtime>  unix timestamp of the last failure
+# Values:  TEXT  Default:  [Fail2Ban] Banned <ip>
+#
+subject = [Fail2Ban] Banned <ip>
+
+# Option:  message
+# Notes.:  message of the e-mail.
+# Tags:    <ip>  IP address
+#          <failures>  number of failures
+#          <failtime>  unix timestamp of the last failure
+#          <br>  new line
+# Values:  TEXT  Default:  
+#
+message = Hi,<br>
+		  The IP <ip> has just been banned by Fail2Ban after
+		  <failures> attempts.<br>
+		  Regards,<br>
+		  Fail2Ban
+
 # You can define a new section for each log file to check for
 # password failure. Each section has to define the following
-# options: logfile, timeregex, timepattern, failregex.
+# options: logfile, fwban, fwunban, timeregex, timepattern,
+# failregex.
 
 [Apache]
 # Option:  enabled
@@ -89,10 +139,45 @@ enabled = false
 #
 logfile = /var/log/apache/access.log
 
+# Option:  fwstart
+# Notes.:  command executed once at the start of Fail2Ban
+# Values:  CMD  Default:
+#
+fwstart = 
+
+# Option:  fwend
+# Notes.:  command executed once at the end of Fail2Ban
+# Values:  CMD  Default:
+#
+fwend = 
+
+# Option:  fwban
+# Notes.:  command executed when banning an IP. Take care that the
+#          command is executed with Fail2Ban user rights.
+# Tags:    <ip>  IP address
+#          <failures>  number of failures
+#          <failtime>  unix timestamp of the last failure
+#          <bantime>  unix timestamp of the ban time
+# Values:  CMD
+# Default: iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+#
+fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+
+# Option:  fwunban
+# Notes.:  command executed when unbanning an IP. Take care that the
+#          command is executed with Fail2Ban user rights.
+# Tags:    <ip>  IP address
+#          <bantime>  unix timestamp of the ban time
+#          <unbantime>  unix timestamp of the unban time
+# Values:  CMD
+# Default: iptables -D INPUT -i eth0 -s <ip> -j DROP
+#
+fwunban = iptables -D INPUT -i eth0 -s <ip> -j DROP
+
 # Option:  timeregex
 # Notes.:  regex to match timestamp in Apache logfile.
 # Values:  [Wed Jan 05 15:08:01 2005]  
-# Default  \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
+# Default: \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
 #
 timeregex = \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
 
@@ -122,10 +207,45 @@ enabled = true
 #
 logfile = /var/log/auth.log
 
+# Option:  fwstart
+# Notes.:  command executed once at the start of Fail2Ban
+# Values:  CMD  Default:
+#
+fwstart = 
+
+# Option:  fwend
+# Notes.:  command executed once at the end of Fail2Ban
+# Values:  CMD  Default:
+#
+fwend = 
+
+# Option:  fwbanrule
+# Notes.:  command executed when banning an IP. Take care that the
+#          command is executed with Fail2Ban user rights.
+# Tags:    <ip>  IP address
+#          <failures>  number of failures
+#          <failtime>  unix timestamp of the last failure
+#          <bantime>  unix timestamp of the ban time
+# Values:  CMD
+# Default: iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+#
+fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+
+# Option:  fwunbanrule
+# Notes.:  command executed when unbanning an IP. Take care that the
+#          command is executed with Fail2Ban user rights.
+# Tags:    <ip>  IP address
+#          <bantime>  unix timestamp of the ban time
+#          <unbantime>  unix timestamp of the unban time
+# Values:  CMD
+# Default: iptables -D INPUT -i eth0 -s <ip> -j DROP
+#
+fwunban = iptables -D INPUT -i eth0 -s <ip> -j DROP
+
 # Option:  timeregex
 # Notes.:  regex to match timestamp in SSH logfile.
 # Values:  [Mar  7 17:53:28]  
-# Default  \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
+# Default: \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
 #
 timeregex = \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
 
