@@ -47,7 +47,7 @@ def dispUsage():
 	print "Usage: "+sys.argv[0]+" [OPTIONS]"
 	print
 	print "Fail2Ban v"+version+" reads log file that contains password failure report"
-	print "and bans the corresponding IP address using iptables."
+	print "and bans the corresponding IP addresses using firewall rules."
 	print
 	print "  -b         start fail2ban in background"
 	print "  -d         start fail2ban in debug mode"
