@@ -28,15 +28,45 @@ __license__ = "GPL"
 
 from distutils.core import setup
 from version import version
+from os.path import isfile, join
+from sys import exit, argv
 
 setup(
-        name = "fail2ban",
-        version = version,
-        description = "Ban IPs that make too many password failure",
-        author = "Cyril Jaquier",
-        author_email = "lostcontrol@users.sourceforge.net",
-        url = "http://fail2ban.sourceforge.net",
-        scripts = ['fail2ban'],
-        py_modules = ['fail2ban', 'version'],
-        packages = ['firewall', 'logreader', 'confreader', 'utils']
+	name = "fail2ban",
+	version = version,
+	description = "Ban IPs that make too many password failure",
+	author = "Cyril Jaquier",
+	author_email = "lostcontrol@users.sourceforge.net",
+	url = "http://fail2ban.sourceforge.net",
+	scripts = ['fail2ban'],
+	py_modules = ['fail2ban', 'version'],
+	packages = ['firewall', 'logreader', 'confreader', 'utils']
 )
+
+# Do some checks after installation
+# Search for obsolete files.
+obsoleteFiles = []
+elements = {"/usr/bin/": ["fail2ban.py"],
+			"/usr/lib/fail2ban/firewall/": ["iptables.py", "ipfwadm.py",
+											"ipfw.py"]}
+for dir in elements:
+	for f in elements[dir]:
+		path = join(dir, f)
+		if isfile(path):
+			obsoleteFiles.append(path)
+if obsoleteFiles:
+	print
+	print "Obsolete files from previous Fail2Ban versions were found on " \
+		  "your system."
+	print "Please delete them:"
+	print
+	for f in obsoleteFiles:
+		print "\t" + f
+	print
+
+# Update config file
+if argv[1] == "install":
+	print
+	print "Please do not forget to update your configuration file."
+	print "Use config/fail2ban.conf.default as example."
+	print
