@@ -6,6 +6,11 @@ pointed from the project page of the upstream author
 Cyril Jaquier: <lostcontrol@users.sourceforge.net>
 http://fail2ban.sourceforge.net
 
+log4py.py module included in this package is distributed in complience
+with MIT License provided in
+/usr/share/doc/fail2ban/LICENSE.log4py.
+log4py copyright is owned by the author: Martin Preishuber.
+
 Copyright:
 
 This program is free software; you can redistribute it and/or modify

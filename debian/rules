@@ -68,7 +68,7 @@ binary-arch: build install
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs CHANGELOG
-	dh_installdocs
+	dh_installdocs LICENSE.log4py
 	dh_installexamples
 #	dh_install
 #	dh_installmenu
