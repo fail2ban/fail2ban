@@ -37,12 +37,11 @@ class Firewall:
 		the IP.
 	"""
 	
-	banList = dict()
-	
 	def __init__(self, banRule, unBanRule, banTime):
 		self.banRule = banRule
 		self.unBanRule = unBanRule
 		self.banTime = banTime
+		self.banList = dict()
 	
 	def addBanIP(self, aInfo, debug):
 		""" Bans an IP.
