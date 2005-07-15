@@ -7,9 +7,7 @@
 ToDo
 =============================================================
 
-- cleanup fail2ban.py
-- improve configuration file and command line options
-  handling
-- improve installation process
-- add init script
-- use FAM (inotify, gamin, ...)
+See Feature Request Tracking System at SourceForge.net
+
+- improve installation process (better prefix support)
+- add better documentation (man page)

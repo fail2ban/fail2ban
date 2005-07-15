@@ -4,8 +4,17 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.5.0)                           2005/07/12
+Fail2Ban (version 0.5.?)                           2005/07/??
 =============================================================
+
+ver. 0.5.? (2005/07/??) - beta
+----------
+- Changed iptables rules in order to create a separated chain
+  for each section
+- Fixed static banList in firewall.py
+- Added an initd script for Debian. Thanks to Yaroslav
+  Halchenko
+- Check for obsolete files after install
 
 ver. 0.5.0 (2005/07/12) - beta
 ----------
