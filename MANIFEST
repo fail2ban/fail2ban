@@ -21,3 +21,4 @@ config/fail2ban.conf.default
 config/gentoo-initd
 config/gentoo-confd
 config/redhat-initd
+config/debian-initd
