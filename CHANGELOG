@@ -9,6 +9,7 @@ Fail2Ban (version 0.5.?)                           2005/07/??
 
 ver. 0.5.? (2005/07/??) - beta
 ----------
+- Added log targets in configuration file. Removed -l option
 - Changed iptables rules in order to create a separated chain
   for each section
 - Fixed static banList in firewall.py
