@@ -100,7 +100,6 @@ options:
   -h         display this help message
   -i <IP(s)> IP(s) to ignore
   -k         kill a currently running Fail2Ban instance
-  -l <FILE>  log messages in FILE
   -r <VALUE> allow a max of VALUE password failure
   -t <TIME>  ban IP for TIME seconds
   -v         verbose. Use twice for greater effect
