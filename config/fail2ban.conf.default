@@ -93,7 +93,8 @@ port = 25
 from = fail2ban
 
 # Option:  to
-# Notes.:  e-mail address of the receiver.
+# Notes.:  e-mail addresses of the receiver. Addresses are space
+#          separated.
 # Values:  MAIL  Default:  root
 #
 to = root
@@ -116,10 +117,10 @@ subject = [Fail2Ban] Banned <ip>
 # Values:  TEXT  Default:  
 #
 message = Hi,<br>
-		  The IP <ip> has just been banned by Fail2Ban after
-		  <failures> attempts.<br>
-		  Regards,<br>
-		  Fail2Ban
+          The IP <ip> has just been banned by Fail2Ban after
+          <failures> attempts.<br>
+          Regards,<br>
+          Fail2Ban
 
 # You can define a new section for each log file to check for
 # password failure. Each section has to define the following
@@ -137,19 +138,23 @@ enabled = false
 # Notes.:  logfile to monitor.
 # Values:  FILE  Default:  /var/log/httpd/access_log
 #
-logfile = /home/cyril/workspace/fail2ban-unstable/log-test/apache
+logfile = /var/log/httpd/access_log
 
 # Option:  fwstart
 # Notes.:  command executed once at the start of Fail2Ban
 # Values:  CMD  Default:
 #
-fwstart = 
+fwstart = iptables -N FAIL2BAN-HTTP
+          iptables -I INPUT -i eth0 -p tcp --dport http -j FAIL2BAN-HTTP
+          iptables -A FAIL2BAN-HTTP -j RETURN
 
 # Option:  fwend
 # Notes.:  command executed once at the end of Fail2Ban
 # Values:  CMD  Default:
 #
-fwend = 
+fwend = iptables -D INPUT -i eth0 -p tcp --dport http -j FAIL2BAN-HTTP
+        iptables -D FAIL2BAN-HTTP -j RETURN
+        iptables -X FAIL2BAN-HTTP
 
 # Option:  fwban
 # Notes.:  command executed when banning an IP. Take care that the
@@ -161,7 +166,7 @@ fwend =
 # Values:  CMD
 # Default: iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 #
-fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+fwban = iptables -I FAIL2BAN-HTTP 1 -i eth0 -s <ip> -j DROP
 
 # Option:  fwunban
 # Notes.:  command executed when unbanning an IP. Take care that the
@@ -172,7 +177,7 @@ fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 # Values:  CMD
 # Default: iptables -D INPUT -i eth0 -s <ip> -j DROP
 #
-fwunban = iptables -D INPUT -i eth0 -s <ip> -j DROP
+fwunban = iptables -D FAIL2BAN-HTTP -i eth0 -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in Apache logfile.
@@ -205,19 +210,23 @@ enabled = true
 # Notes.:  logfile to monitor.
 # Values:  FILE  Default:  /var/log/secure
 #
-logfile = /home/cyril/workspace/fail2ban-unstable/log-test/test
+logfile = /var/log/secure
 
 # Option:  fwstart
 # Notes.:  command executed once at the start of Fail2Ban
 # Values:  CMD  Default:
 #
-fwstart = 
+fwstart = iptables -N FAIL2BAN-SSH
+          iptables -I INPUT -i eth0 -p tcp --dport ssh -j FAIL2BAN-SSH
+          iptables -A FAIL2BAN-SSH -j RETURN
 
 # Option:  fwend
 # Notes.:  command executed once at the end of Fail2Ban
 # Values:  CMD  Default:
 #
-fwend = 
+fwend = iptables -D INPUT -i eth0 -p tcp --dport ssh -j FAIL2BAN-SSH
+        iptables -D FAIL2BAN-SSH -j RETURN
+        iptables -X FAIL2BAN-SSH
 
 # Option:  fwbanrule
 # Notes.:  command executed when banning an IP. Take care that the
@@ -229,7 +238,7 @@ fwend =
 # Values:  CMD
 # Default: iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 #
-fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+fwban = iptables -I FAIL2BAN-SSH 1 -i eth0 -s <ip> -j DROP
 
 # Option:  fwunbanrule
 # Notes.:  command executed when unbanning an IP. Take care that the
@@ -240,7 +249,7 @@ fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 # Values:  CMD
 # Default: iptables -D INPUT -i eth0 -s <ip> -j DROP
 #
-fwunban = iptables -D INPUT -i eth0 -s <ip> -j DROP
+fwunban = iptables -D FAIL2BAN-SSH -i eth0 -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in SSH logfile.
