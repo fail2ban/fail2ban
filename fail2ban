@@ -30,7 +30,7 @@ from sys import exit, path
 
 #yoh: We do need to load this path first if we ship log4py with fail2ban
 # Appends our own modules path
-path.append('/usr/lib/fail2ban')
+path.append('/usr/share/fail2ban')
 
 
 # Checks for required libs
