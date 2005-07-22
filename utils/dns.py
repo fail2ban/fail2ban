@@ -55,6 +55,15 @@ def searchIP(text):
 	else:
 		return []
 
+def isValidIP(str):
+	""" Return true if str is a valid IP
+	"""
+	try:
+		socket.inet_aton(str)
+		return True
+	except socket.error:
+		return False
+
 def textToIp(text):
 	""" Return the IP of DNS found in a given text.
 	"""
@@ -62,7 +71,8 @@ def textToIp(text):
 	# Search for plain IP
 	plainIP = searchIP(text)
 	for element in plainIP:
-		ipList.append(element)
+		if isValidIP(element):
+			ipList.append(element)
 	if not ipList:
 		# Try to get IP from possible DNS
 		dnsList = textToDns(text)
