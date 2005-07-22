@@ -27,12 +27,13 @@ __license__ = "GPL"
 import time, sys, getopt, os, string, signal, log4py
 from ConfigParser import *
 
+from version import version
 from firewall.firewall import Firewall
 from logreader.logreader import LogReader
 from confreader.configreader import ConfigReader
-from utils.process import *
 from utils.mail import Mail
-from version import version
+from utils.dns import *
+from utils.process import *
 
 # Gets the instance of log4py.
 logSys = log4py.Logger().get_instance()
@@ -305,8 +306,10 @@ def main():
 		element[1].addIgnoreIP("127.0.0.1")
 	while len(ignoreIPList) > 0:
 		ip = ignoreIPList.pop()
-		for element in logFwList:
-			element[1].addIgnoreIP(ip)
+		# Bug fix for #1239557
+		if isValidIP(ip):
+			for element in logFwList:
+				element[1].addIgnoreIP(ip)
 	
 	logSys.info("Fail2Ban v"+version+" is running")
 	# Execute global start command
