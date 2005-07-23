@@ -9,7 +9,6 @@ fail2ban.1x: fail2ban fail2ban.h2m
 	help2man --include fail2ban.h2m --section=1x --no-info --output $@ ./fail2ban
 
 install:: all
-	mkdir -p $(DESTDIR)/etc/default
 	python setup.py install --root=debian/fail2ban/
 
 clean::
