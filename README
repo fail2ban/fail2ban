@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.5.0)                           2005/07/12
+Fail2Ban (version 0.5.1)                           2005/07/23
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -55,34 +55,36 @@ Installation:
 -------------
 
 Require: python-2.3 (http://www.python.org)
-         log4py-1.1 (http://sourceforge.net/projects/log4py)
+         log4py-1.3 (http://sourceforge.net/projects/log4py)
 
 To install, just do:
 
-> tar xvfj fail2ban-0.5.0.tar.bz2
-> cd fail2ban-0.5.0
+> tar xvfj fail2ban-0.5.1.tar.bz2
+> cd fail2ban-0.5.1
 > python setup.py install
 
-This will install Fail2Ban into /usr/lib/fail2ban. The
-fail2ban.py executable is placed into /usr/bin.
+This will install Fail2Ban into /usr/lib/fail2ban. The fail2ban
+executable is placed into /usr/bin.
 
 Gentoo: an ebuild is available on the website.
 Debian: a package is available on the website.
 
 Fail2Ban should now be correctly installed. Just type:
 
-> fail2ban.py -h
+> fail2ban -h
 
 to see if everything is alright. You can configure fail2ban
 with a config file. Copy config/fail2ban.conf.default to
 /etc/fail2ban.conf.
 
-Gentoo users can use the initd script available in config/.
-Copy gentoo-initd to /etc/init.d/fail2ban and gentoo-confd
-to /etc/conf.d/fail2ban. You can start fail2ban and add it
-to your default runlevel:
+You can use the initd script available in config/. Copy
+<dist>-initd to /etc/init.d/fail2ban. Gentoo users must copy
+gentoo-confd to /etc/conf.d/fail2ban. You can start fail2ban:
 
 > /etc/init.d/fail2ban start
+
+Gentoo users can add it to the default runlevel:
+
 > rc-update add fail2ban default
 
 Configuration:
