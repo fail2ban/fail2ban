@@ -39,7 +39,14 @@ build-stamp: configure-stamp
 
 	touch build-stamp
 
-clean:
+copy-inits:
+	cp config/gentoo-confd debian/fail2ban.default 
+	cp config/debian-initd debian/fail2ban.init
+
+clean-inits:
+	rm -f debian/fail2ban.default debian/fail2ban.init
+	
+clean:	clean-inits
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp configure-stamp
@@ -64,7 +71,7 @@ binary-indep: build install
 # We have nothing to do by default.
 
 # Build architecture-dependent files here.
-binary-arch: build install
+binary-arch: build install copy-inits
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs CHANGELOG
@@ -95,4 +102,4 @@ binary-arch: build install
 	dh_builddeb
 
 binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install configure
+.PHONY: build clean binary-indep binary-arch binary install configure copy-inits clean-inits

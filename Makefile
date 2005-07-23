@@ -12,7 +12,6 @@ install:: all
 	mkdir -p $(DESTDIR)/etc/default
 	python setup.py install --root=debian/fail2ban/
 	cp config/fail2ban.conf.default $(DESTDIR)/etc/fail2ban.conf
-	cp config/gentoo-confd   $(DESTDIR)/etc/default/fail2ban
 
 clean::
 	rm -rf changelog.gz fail2ban.1x build* `find -iname '*.pyc' `

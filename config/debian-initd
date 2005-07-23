@@ -8,7 +8,7 @@
 #               Adjusted for Fail2Ban
 #                by Yaroslav Halchenko <debian@onerussian.com>.
 #                
-# Version:	$Id: $
+# Version:	$Id$
 #
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
