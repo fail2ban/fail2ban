@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.8.2.4 $
+# $Revision: 1.8.2.5 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.8.2.4 $"
-__date__ = "$Date: 2005/07/12 13:08:24 $"
+__version__ = "$Revision: 1.8.2.5 $"
+__date__ = "$Date: 2005/07/15 14:07:08 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -37,12 +37,11 @@ class Firewall:
 		the IP.
 	"""
 	
-	banList = dict()
-	
 	def __init__(self, banRule, unBanRule, banTime):
 		self.banRule = banRule
 		self.unBanRule = unBanRule
 		self.banTime = banTime
+		self.banList = dict()
 	
 	def addBanIP(self, aInfo, debug):
 		""" Bans an IP.

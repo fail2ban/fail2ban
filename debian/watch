@@ -2,7 +2,5 @@
 # Run the "uscan" command to check for upstream updates and more.
 # Site		Directory		Pattern			Version	Script
 version=3
-http://sf.net/fail2ban/fail2ban-(.*)\.tar\.bz2
-#http://voxel.dl.sourceforge.net/sourceforge/fail2ban/ \
-#         fail2ban-([0-9]+\.[0-9]+\.[0-9]*)\.tar\.bz2
-#         debian uupdate
+
+http://sf.net/fail2ban/fail2ban-(.*)\.tar\.bz2 debian svn-upgrade

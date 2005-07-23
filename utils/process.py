@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.1.2.1 $
+# $Revision: 1.1.2.2 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.1.2.1 $"
-__date__ = "$Date: 2005/07/07 16:53:47 $"
+__version__ = "$Revision: 1.1.2.2 $"
+__date__ = "$Date: 2005/07/15 14:08:17 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -76,9 +76,6 @@ def createDaemon():
 			# Ensure that the daemon doesn't keep any directory in use.  Failure
 			# to do this could make a filesystem unmountable.
 			os.chdir("/")
-			# Give the child complete control over permissions.
-                        # yoh: evil evil evil!
-			# os.umask(0)
 		else:
 			os._exit(0)	  # Exit parent (the first child) of the second child.
 	else:

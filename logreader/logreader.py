@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.13.2.2 $
+# $Revision: 1.13.2.4 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.13.2.2 $"
-__date__ = "$Date: 2005/07/12 13:09:09 $"
+__version__ = "$Revision: 1.13.2.4 $"
+__date__ = "$Date: 2005/07/23 09:07:53 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -186,6 +186,12 @@ class LogReader:
 		"""
 		date = list(time.strptime(value, self.timepattern))
 		if date[0] < 2000:
+			# There is probably no year field in the logs
 			date[0] = time.gmtime()[0]
+			# Bug fix for #1241756
+			# If the date is greater than the current time, we suppose
+			# that the log is not from this year but from the year before
+			if time.mktime(date) > time.time():
+				date[0] -= 1
 		unixTime = time.mktime(date)
 		return unixTime

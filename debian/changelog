@@ -1,6 +1,13 @@
+fail2ban (0.5.1-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 23 Jul 2005 08:50:00 -1000
+
 fail2ban (0.5.0-1) unstable; urgency=low
 
   * New upstream release
+  * Libraries placed under /usr/share/fail2ban instead of /usr/lib/fail2ban
   * Corrections to the description of the package
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 12 Jul 2005 23:33:20 -1000

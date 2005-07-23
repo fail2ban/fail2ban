@@ -18,20 +18,20 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.4.2.2 $
+# $Revision: 1.4.2.3 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.4.2.2 $"
-__date__ = "$Date: 2005/07/08 10:21:52 $"
+__version__ = "$Revision: 1.4.2.3 $"
+__date__ = "$Date: 2005/07/15 14:11:21 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from sys import exit, path
 
 #yoh: We do need to load this path first if we ship log4py with fail2ban
-# Appends our own modules path
+# Appends our own modules path. Added before log4py import
+# because log4py could be distributed with Fail2Ban.
 path.append('/usr/share/fail2ban')
-
 
 # Checks for required libs
 # Checks if log4py is present.

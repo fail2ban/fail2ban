@@ -1,6 +1,6 @@
 # Fail2Ban configuration file
 #
-# $Revision: 1.8.2.5 $
+# $Revision: 1.8.2.7 $
 #
 # 2005.06.21  modified for readability  Iain Lea  iain@bricbrac.de
 
@@ -17,17 +17,17 @@ background = true
 #
 debug = false
 
+# Option:  logtargets
+# Notes.:  log targets. Space separated list of logging targets.
+# Values:  STDOUT STDERR SYSLOG file  Default:  STDOUT /var/log/fail2ban.log
+#
+logtargets = STDOUT /var/log/fail2ban.log
+
 # Option:  pidlock
 # Notes.:  path of the PID lock file (must be able to write to file).
 # Values:  FILE  Default:  /var/run/fail2ban.pid
 #
 pidlock = /var/run/fail2ban.pid
-
-# Option:  logfile
-# Notes.:  logfile for logging fail2ban messages.
-# Values:  FILE  Default:  /var/log/fail2ban.log
-#
-logfile = /var/log/fail2ban.log
 
 # Option:  maxretry
 # Notes.:  number of retrys before IP gets banned.
@@ -45,9 +45,12 @@ bantime = 600
 # Notes.:  space separated list of IP's to be ignored by fail2ban.
 #          You can use CIDR mask in order to specify a range.
 #          Example:  ignoreip = 192.168.0.1/24 123.45.235.65
-# Values:  IP  Default:  192.168.0.0/24
+# Values:  IP  Default:  empty
+# Examples
+#  ignoreip = 192.168.0.0/24
 #
-ignoreip = 192.168.0.0/16
+ignoreip =
+
 
 # Option:  cmdstart
 # Notes.:  command executed once at the start of Fail2Ban
@@ -93,7 +96,8 @@ port = 25
 from = fail2ban
 
 # Option:  to
-# Notes.:  e-mail address of the receiver.
+# Notes.:  e-mail addresses of the receiver. Addresses are space
+#          separated.
 # Values:  MAIL  Default:  root
 #
 to = root
@@ -116,10 +120,10 @@ subject = [Fail2Ban] Banned <ip>
 # Values:  TEXT  Default:  
 #
 message = Hi,<br>
-		  The IP <ip> has just been banned by Fail2Ban after
-		  <failures> attempts.<br>
-		  Regards,<br>
-		  Fail2Ban
+          The IP <ip> has just been banned by Fail2Ban after
+          <failures> attempts.<br>
+          Regards,<br>
+          Fail2Ban
 
 # You can define a new section for each log file to check for
 # password failure. Each section has to define the following
@@ -143,13 +147,17 @@ logfile = /var/log/apache/access.log
 # Notes.:  command executed once at the start of Fail2Ban
 # Values:  CMD  Default:
 #
-fwstart = 
+fwstart = iptables -N FAIL2BAN-HTTP
+          iptables -I INPUT -i eth0 -p tcp --dport http -j FAIL2BAN-HTTP
+          iptables -A FAIL2BAN-HTTP -j RETURN
 
 # Option:  fwend
 # Notes.:  command executed once at the end of Fail2Ban
 # Values:  CMD  Default:
 #
-fwend = 
+fwend = iptables -D INPUT -i eth0 -p tcp --dport http -j FAIL2BAN-HTTP
+        iptables -D FAIL2BAN-HTTP -j RETURN
+        iptables -X FAIL2BAN-HTTP
 
 # Option:  fwban
 # Notes.:  command executed when banning an IP. Take care that the
@@ -161,7 +169,7 @@ fwend =
 # Values:  CMD
 # Default: iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 #
-fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+fwban = iptables -I FAIL2BAN-HTTP 1 -i eth0 -s <ip> -j DROP
 
 # Option:  fwunban
 # Notes.:  command executed when unbanning an IP. Take care that the
@@ -172,7 +180,7 @@ fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 # Values:  CMD
 # Default: iptables -D INPUT -i eth0 -s <ip> -j DROP
 #
-fwunban = iptables -D INPUT -i eth0 -s <ip> -j DROP
+fwunban = iptables -D FAIL2BAN-HTTP -i eth0 -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in Apache logfile.
@@ -211,13 +219,17 @@ logfile = /var/log/auth.log
 # Notes.:  command executed once at the start of Fail2Ban
 # Values:  CMD  Default:
 #
-fwstart = 
+fwstart = iptables -N FAIL2BAN-SSH
+          iptables -I INPUT -i eth0 -p tcp --dport ssh -j FAIL2BAN-SSH
+          iptables -A FAIL2BAN-SSH -j RETURN
 
 # Option:  fwend
 # Notes.:  command executed once at the end of Fail2Ban
 # Values:  CMD  Default:
 #
-fwend = 
+fwend = iptables -D INPUT -i eth0 -p tcp --dport ssh -j FAIL2BAN-SSH
+        iptables -D FAIL2BAN-SSH -j RETURN
+        iptables -X FAIL2BAN-SSH
 
 # Option:  fwbanrule
 # Notes.:  command executed when banning an IP. Take care that the
@@ -229,7 +241,7 @@ fwend =
 # Values:  CMD
 # Default: iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 #
-fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+fwban = iptables -I FAIL2BAN-SSH 1 -i eth0 -s <ip> -j DROP
 
 # Option:  fwunbanrule
 # Notes.:  command executed when unbanning an IP. Take care that the
@@ -240,7 +252,7 @@ fwban = iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 # Values:  CMD
 # Default: iptables -D INPUT -i eth0 -s <ip> -j DROP
 #
-fwunban = iptables -D INPUT -i eth0 -s <ip> -j DROP
+fwunban = iptables -D FAIL2BAN-SSH -i eth0 -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in SSH logfile.

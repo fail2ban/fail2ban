@@ -16,23 +16,24 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.20.2.5 $
+# $Revision: 1.20.2.8 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.20.2.5 $"
-__date__ = "$Date: 2005/07/12 13:11:58 $"
+__version__ = "$Revision: 1.20.2.8 $"
+__date__ = "$Date: 2005/07/22 21:13:19 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import time, sys, getopt, os, string, signal, log4py
 from ConfigParser import *
 
+from version import version
 from firewall.firewall import Firewall
 from logreader.logreader import LogReader
 from confreader.configreader import ConfigReader
-from utils.process import *
 from utils.mail import Mail
-from version import version
+from utils.dns import *
+from utils.process import *
 
 # Gets the instance of log4py.
 logSys = log4py.Logger().get_instance()
@@ -56,7 +57,6 @@ def dispUsage():
 	print "  -h         display this help message"
 	print "  -i <IP(s)> IP(s) to ignore"
 	print "  -k         kill a currently running Fail2Ban instance"
-	print "  -l <FILE>  log messages in FILE"
 	print "  -r <VALUE> allow a max of VALUE password failure"
 	print "  -t <TIME>  ban IP for TIME seconds"
 	print "  -v         verbose. Use twice for greater effect"
@@ -119,8 +119,6 @@ def getCmdLineOptions(optList):
 			conf["background"] = True
 		if opt[0] == "-d":
 			conf["debug"] = True
-		if opt[0] == "-l":
-			conf["logfile"] = opt[1]
 		if opt[0] == "-t":
 			try:
 				conf["bantime"] = int(opt[1])
@@ -153,7 +151,7 @@ def main():
 	
 	# Reads the command line options.
 	try:
-		cmdOpts = 'hvVbdkc:l:t:i:r:p:'
+		cmdOpts = 'hvVbdkc:t:i:r:p:'
 		cmdLongOpts = ['help','version']
 		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
 	except getopt.GetoptError:
@@ -171,8 +169,8 @@ def main():
 	
 	# Options
 	optionValues = (["bool", "background", False],
+					["str", "logtargets", "STDOUT /var/log/fail2ban.log"],
 					["bool", "debug", False],
-					["str", "logfile", "/var/log/fail2ban.log"],
 					["str", "pidlock", "/var/run/fail2ban.pid"],
 					["int", "maxretry", 3],
 					["int", "bantime", 600],
@@ -188,6 +186,31 @@ def main():
 	getCmdLineOptions(optList)
 
 	# Process some options
+	# Log targets
+	# Bug fix for #1234699
+	os.umask(0077)
+	# Remove all the targets before setting our own
+	logSys.remove_all_targets()
+	for target in conf["logtargets"].split():
+		if target == "STDOUT":
+			logSys.add_target(log4py.TARGET_SYS_STDOUT)
+		elif target == "STDERR":
+			logSys.add_target(log4py.TARGET_SYS_STDERR)
+		elif target == "SYSLOG":
+			logSys.add_target(log4py.TARGET_SYSLOG)
+		else:
+			# Target should be a file
+			try:
+				open(target, "a")
+				logSys.add_target(target)
+			except IOError:
+				logSys.error("Unable to log to " + target)
+	
+	# Check if at least one target exists
+	if len(logSys.get_targets()) == 0:
+		logSys.add_target(log4py.TARGET_SYS_STDOUT)
+		logSys.error("No valid logging target found. Logging to STDOUT")
+	
 	# Verbose level
 	if conf["verbose"]:
 		logSys.warn("Verbose level is "+`conf["verbose"]`)
@@ -210,14 +233,6 @@ def main():
 		if not retCode:
 			logSys.error("Unable to start daemon")
 			sys.exit(-1)
-		# Bug fix for #1234699
-		os.umask(0077)
-		try:
-			open(conf["logfile"], "a")
-			logSys.set_target(conf["logfile"])
-		except IOError:
-			logSys.error("Unable to log to " + conf["logfile"])
-			logSys.warn("Using default output for logging")
 	
 	# Ignores IP list
 	ignoreIPList = conf["ignoreip"].split(' ')
@@ -291,8 +306,10 @@ def main():
 		element[1].addIgnoreIP("127.0.0.1")
 	while len(ignoreIPList) > 0:
 		ip = ignoreIPList.pop()
-		for element in logFwList:
-			element[1].addIgnoreIP(ip)
+		# Bug fix for #1239557
+		if isValidIP(ip):
+			for element in logFwList:
+				element[1].addIgnoreIP(ip)
 	
 	logSys.info("Fail2Ban v"+version+" is running")
 	# Execute global start command
