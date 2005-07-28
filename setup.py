@@ -31,13 +31,23 @@ from version import version
 from os.path import isfile, join
 from sys import exit, argv
 
+longdesc = '''
+Fail2Ban scans log files like /var/log/pwdfail or
+/var/log/apache/error_log and bans IP that makes
+too many password failures. It updates firewall rules
+to reject the IP address or executes user defined
+commands. It needs log4py.'''
+
 setup(
 	name = "fail2ban",
 	version = version,
 	description = "Ban IPs that make too many password failure",
+	long_description = longdesc,
 	author = "Cyril Jaquier",
 	author_email = "lostcontrol@users.sourceforge.net",
 	url = "http://fail2ban.sourceforge.net",
+	license = "GPL",
+	platforms = "Posix",
 	scripts = ['fail2ban'],
 	py_modules = ['fail2ban', 'version'],
 	packages = ['firewall', 'logreader', 'confreader', 'utils']
