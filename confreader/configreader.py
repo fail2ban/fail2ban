@@ -77,5 +77,9 @@ class ConfigReader:
 			except NoOptionError:
 				logSys.warn("No '" + option[1] + "' defined in '" + sec + "'")
 				values[option[1]] = option[2]
+			except ValueError:
+				logSys.warn("Wrong value for '" + option[1] + "' in '" + sec +
+							"'. Using default one: '" + `option[2]` + "'")
+				values[option[1]] = option[2]
 		return values
 		
