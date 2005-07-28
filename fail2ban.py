@@ -128,7 +128,7 @@ def getCmdLineOptions(optList):
 		if opt[0] == "-i":
 			conf["ignoreip"] = opt[1]
 		if opt[0] == "-r":
-			conf["retrymax"] = int(opt[1])
+			conf["maxretry"] = int(opt[1])
 		if opt[0] == "-p":
 			conf["pidlock"] = opt[1]
 		if opt[0] == "-k":
@@ -237,6 +237,12 @@ def main():
 	# Ignores IP list
 	ignoreIPList = conf["ignoreip"].split(' ')
 	
+	# maxretry option
+	maxRetry = conf["maxretry"]
+	
+	# bantime option
+	banTime = conf["bantime"]
+	
 	# Checks for root user. This is necessary because log files
 	# are owned by root and firewall needs root access.
 	if not checkForRoot():
@@ -277,8 +283,10 @@ def main():
 		logSys.debug("to: " + mailConf["to"] + " from: " + mailConf["from"])
 	
 	# Options
-	optionValues = (["bool", "enabled", True],
+	optionValues = (["bool", "enabled", False],
 					["str", "logfile", "/dev/null"],
+					["int", "maxretry", None],
+					["int", "bantime", None],
 					["str", "timeregex", ""],
 					["str", "timepattern", ""],
 					["str", "failregex", ""],
@@ -291,11 +299,19 @@ def main():
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t, optionValues)
 		if l["enabled"]:
+			# Override maxretry option
+			if not l["maxretry"] == None:
+				maxRetry = l["maxretry"]
+			
+			# Override bantime option
+			if not l["bantime"] == None:
+				banTime = l["bantime"]
+			
 			# Creates a logreader object
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
-							 l["failregex"], conf["bantime"])
+							 l["failregex"], maxRetry, banTime)
 			# Creates a firewall object
-			fObj = Firewall(l["fwban"], l["fwunban"], conf["bantime"])
+			fObj = Firewall(l["fwban"], l["fwunban"], banTime)
 			# Links them into a list. I'm not really happy
 			# with this :/
 			logFwList.append([t, lObj, fObj, dict(), l])
@@ -363,7 +379,7 @@ def main():
 					failTime = fails[attempt][1]
 					if failTime < unixTime - findTime:
 						del element[3][attempt]
-					elif fails[attempt][0] >= conf["maxretry"]:
+					elif fails[attempt][0] >= element[1].getMaxRetry():
 						aInfo = {"ip": attempt,
 								 "failures": element[3][attempt][0],
 								 "failtime": failTime}
