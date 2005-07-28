@@ -38,8 +38,9 @@ class LogReader:
 	"""
 	
 	def __init__(self, logPath, timeregex, timepattern, failregex,
-				  findTime = 3600):
+				  maxRetry, findTime):
 		self.logPath = logPath
+		self.maxRetry = maxRetry
 		self.timeregex = timeregex
 		self.timepattern = timepattern
 		self.failregex = failregex
@@ -49,6 +50,11 @@ class LogReader:
 		self.lastPos = 0
 		self.lastDate = 0
 		self.logStats = None
+	
+	def getMaxRetry(self):
+		""" Gets the maximum number of failures
+		"""
+		return self.maxRetry
 	
 	def getFindTime(self):
 		""" Gets the find time.
@@ -130,7 +136,7 @@ class LogReader:
 		logFile = self.openLogFile()
 		self.setFilePos(logFile)
 		lastLine = ''
-		for line in logFile.readlines():
+		for line in logFile:
 			lastLine = line
 			failList = self.findFailure(line)
 			for element in failList:
