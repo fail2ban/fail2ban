@@ -144,17 +144,17 @@ logfile = /var/log/httpd/access_log
 # Notes.:  command executed once at the start of Fail2Ban
 # Values:  CMD  Default:
 #
-fwstart = iptables -N FAIL2BAN-HTTP
-          iptables -I INPUT -i eth0 -p tcp --dport http -j FAIL2BAN-HTTP
-          iptables -A FAIL2BAN-HTTP -j RETURN
+fwstart = iptables -N fail2ban-http
+          iptables -I INPUT -i eth0 -p tcp --dport http -j fail2ban-http
+          iptables -A fail2ban-http -j RETURN
 
 # Option:  fwend
 # Notes.:  command executed once at the end of Fail2Ban
 # Values:  CMD  Default:
 #
-fwend = iptables -D INPUT -i eth0 -p tcp --dport http -j FAIL2BAN-HTTP
-        iptables -D FAIL2BAN-HTTP -j RETURN
-        iptables -X FAIL2BAN-HTTP
+fwend = iptables -D INPUT -i eth0 -p tcp --dport http -j fail2ban-http
+        iptables -D fail2ban-http -j RETURN
+        iptables -X fail2ban-http
 
 # Option:  fwban
 # Notes.:  command executed when banning an IP. Take care that the
@@ -166,7 +166,7 @@ fwend = iptables -D INPUT -i eth0 -p tcp --dport http -j FAIL2BAN-HTTP
 # Values:  CMD
 # Default: iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 #
-fwban = iptables -I FAIL2BAN-HTTP 1 -i eth0 -s <ip> -j DROP
+fwban = iptables -I fail2ban-http 1 -i eth0 -s <ip> -j DROP
 
 # Option:  fwunban
 # Notes.:  command executed when unbanning an IP. Take care that the
@@ -177,7 +177,7 @@ fwban = iptables -I FAIL2BAN-HTTP 1 -i eth0 -s <ip> -j DROP
 # Values:  CMD
 # Default: iptables -D INPUT -i eth0 -s <ip> -j DROP
 #
-fwunban = iptables -D FAIL2BAN-HTTP -i eth0 -s <ip> -j DROP
+fwunban = iptables -D fail2ban-http -i eth0 -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in Apache logfile.
@@ -216,17 +216,17 @@ logfile = /var/log/secure
 # Notes.:  command executed once at the start of Fail2Ban
 # Values:  CMD  Default:
 #
-fwstart = iptables -N FAIL2BAN-SSH
-          iptables -I INPUT -i eth0 -p tcp --dport ssh -j FAIL2BAN-SSH
-          iptables -A FAIL2BAN-SSH -j RETURN
+fwstart = iptables -N fail2ban-ssh
+          iptables -I INPUT -i eth0 -p tcp --dport ssh -j fail2ban-ssh
+          iptables -A fail2ban-ssh -j RETURN
 
 # Option:  fwend
 # Notes.:  command executed once at the end of Fail2Ban
 # Values:  CMD  Default:
 #
-fwend = iptables -D INPUT -i eth0 -p tcp --dport ssh -j FAIL2BAN-SSH
-        iptables -D FAIL2BAN-SSH -j RETURN
-        iptables -X FAIL2BAN-SSH
+fwend = iptables -D INPUT -i eth0 -p tcp --dport ssh -j fail2ban-ssh
+        iptables -D fail2ban-ssh -j RETURN
+        iptables -X fail2ban-ssh
 
 # Option:  fwbanrule
 # Notes.:  command executed when banning an IP. Take care that the
@@ -238,7 +238,7 @@ fwend = iptables -D INPUT -i eth0 -p tcp --dport ssh -j FAIL2BAN-SSH
 # Values:  CMD
 # Default: iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
 #
-fwban = iptables -I FAIL2BAN-SSH 1 -i eth0 -s <ip> -j DROP
+fwban = iptables -I fail2ban-ssh 1 -i eth0 -s <ip> -j DROP
 
 # Option:  fwunbanrule
 # Notes.:  command executed when unbanning an IP. Take care that the
@@ -249,7 +249,7 @@ fwban = iptables -I FAIL2BAN-SSH 1 -i eth0 -s <ip> -j DROP
 # Values:  CMD
 # Default: iptables -D INPUT -i eth0 -s <ip> -j DROP
 #
-fwunban = iptables -D FAIL2BAN-SSH -i eth0 -s <ip> -j DROP
+fwunban = iptables -D fail2ban-ssh -i eth0 -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in SSH logfile.
