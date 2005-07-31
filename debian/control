@@ -2,7 +2,7 @@ Source: fail2ban
 Section: net
 Priority: optional
 Maintainer: Yaroslav Halchenko <debian@onerussian.com>
-Build-Depends-Indep: debhelper (>= 4.1.67), python, python2.3-dev, help2man
+Build-Depends-Indep: debhelper (>= 4.1.67), python, python-dev, help2man
 Standards-Version: 3.6.2
 
 Package: fail2ban
@@ -13,8 +13,6 @@ Description: bans IPs that cause multiple authentication errors for ssh/apache
  /var/log/apache/access.log) and temporarily bans failure-prone
  addresses by updating existing firewall rules.  Currently, iptables,
  ipfwadm and ipfw are supported.
- .
- Fail2ban is written in python.
  .
  Homepage: http://www.sourceforge.net/projects/fail2ban
 
