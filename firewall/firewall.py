@@ -24,13 +24,13 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, os, log4py, re
+import time, os, logging, re
 
 from utils.process import executeCmd
 from utils.strings import replaceTag
 
-# Gets the instance of log4py.
-logSys = log4py.Logger().get_instance()
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
 
 class Firewall:
 	""" Manages the ban list and executes the command that ban

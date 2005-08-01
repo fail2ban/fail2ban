@@ -24,12 +24,12 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import os, sys, time, re, log4py
+import os, sys, time, re, logging
 
 from utils.dns import *
 
-# Gets the instance of log4py.
-logSys = log4py.Logger().get_instance()
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
 
 class LogReader:
 	""" Reads a log file and reports information about IP that make password
