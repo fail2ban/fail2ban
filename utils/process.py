@@ -24,10 +24,10 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import os, log4py, signal
+import os, logging, signal
 
-# Gets the instance of log4py.
-logSys = log4py.Logger().get_instance()
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
 
 def createDaemon():
 	"""Detach a process from the controlling terminal and run it in the
@@ -111,6 +111,7 @@ def checkForPID(lockfile):
 	try:
 		fileHandler = open(lockfile)
 		pid = fileHandler.readline()
+		fileHandler.close()
 		return pid
 	except IOError:
 		return False
@@ -151,6 +152,9 @@ def executeCmd(cmd, debug):
 	
 	logSys.debug(cmd)
 	if not debug:
-		return os.system(cmd)
+		retval = os.system(cmd)
+		if not retval == 0:
+			logSys.error("'" + cmd + "' returned " + `retval`)
+		return retval
 	else:
 		return None
