@@ -24,7 +24,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, sys, getopt, os, string, signal, log4py
+import time, sys, getopt, os, string, signal, logging, logging.handlers
 from ConfigParser import *
 
 from version import version
@@ -35,8 +35,8 @@ from utils.mail import Mail
 from utils.dns import *
 from utils.process import *
 
-# Gets the instance of log4py.
-logSys = log4py.Logger().get_instance()
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
 
 # Global variables
 logFwList = list()
@@ -50,13 +50,13 @@ def dispUsage():
 	print "Fail2Ban v"+version+" reads log file that contains password failure report"
 	print "and bans the corresponding IP addresses using firewall rules."
 	print
-	print "  -b         start fail2ban in background"
-	print "  -d         start fail2ban in debug mode"
+	print "  -b         start in background"
+	print "  -d         start in debug mode"
 	print "  -c <FILE>  read configuration file FILE"
 	print "  -p <FILE>  create PID lock in FILE"
 	print "  -h         display this help message"
 	print "  -i <IP(s)> IP(s) to ignore"
-	print "  -k         kill a currently running Fail2Ban instance"
+	print "  -k         kill a currently running instance"
 	print "  -r <VALUE> allow a max of VALUE password failure"
 	print "  -t <TIME>  ban IP for TIME seconds"
 	print "  -v         verbose. Use twice for greater effect"
@@ -103,6 +103,7 @@ def killApp():
 	# Remove the PID lock
 	removePID(conf["pidlock"])
 	logSys.info("Exiting...")
+	logging.shutdown()
 	sys.exit(0)
 
 def getCmdLineOptions(optList):
@@ -144,7 +145,14 @@ def getCmdLineOptions(optList):
 def main():
 	""" Fail2Ban main function
 	"""
-	logSys.set_formatstring("%T %L %M")
+	
+	# Add the default logging handler
+	stdout = logging.StreamHandler(sys.stdout)
+	logSys.addHandler(stdout)
+	
+	# Default formatter
+	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+	stdout.setFormatter(formatter)
 	
 	conf["verbose"] = 0
 	conf["conffile"] = "/etc/fail2ban.conf"
@@ -169,7 +177,7 @@ def main():
 	
 	# Options
 	optionValues = (["bool", "background", False],
-					["str", "logtargets", "STDOUT /var/log/fail2ban.log"],
+					["str", "logtargets", "/var/log/fail2ban.log"],
 					["bool", "debug", False],
 					["str", "pidlock", "/var/run/fail2ban.pid"],
 					["int", "maxretry", 3],
@@ -185,46 +193,44 @@ def main():
 	# Gets command line options
 	getCmdLineOptions(optList)
 
-	# Process some options
-	# Log targets
-	# Bug fix for #1234699
-	os.umask(0077)
-	# Remove all the targets before setting our own
-	logSys.remove_all_targets()
-	for target in conf["logtargets"].split():
-		if target == "STDOUT":
-			logSys.add_target(log4py.TARGET_SYS_STDOUT)
-		elif target == "STDERR":
-			logSys.add_target(log4py.TARGET_SYS_STDERR)
-		elif target == "SYSLOG":
-			logSys.add_target(log4py.TARGET_SYSLOG)
-		else:
-			# Target should be a file
-			try:
-				open(target, "a")
-				logSys.add_target(target)
-			except IOError:
-				logSys.error("Unable to log to " + target)
-	
-	# Check if at least one target exists
-	if len(logSys.get_targets()) == 0:
-		logSys.add_target(log4py.TARGET_SYS_STDOUT)
-		logSys.error("No valid logging target found. Logging to STDOUT")
-	
 	# Verbose level
 	if conf["verbose"]:
 		logSys.warn("Verbose level is "+`conf["verbose"]`)
 		if conf["verbose"] == 1:
-			logSys.set_loglevel(log4py.LOGLEVEL_VERBOSE)
+			logSys.setLevel(logging.VERBOSE)
 		elif conf["verbose"] > 1:
-			logSys.set_loglevel(log4py.LOGLEVEL_DEBUG)
+			logSys.setLevel(logging.DEBUG)
 		
 	# Set debug log level
 	if conf["debug"]:
-		logSys.set_loglevel(log4py.LOGLEVEL_DEBUG)
-		logSys.set_formatstring(log4py.FMT_DEBUG)
+		logSys.setLevel(logging.DEBUG)
+		formatter = logging.Formatter("%(asctime)s %(levelname)s " +
+									  "[%(filename)s (%(lineno)d)] " +
+									  "%(message)s")
+		stdout.setFormatter(formatter)
 		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
 					"ONLY DISPLAYED IN THE LOG MESSAGES")
+
+	# Process some options
+	# Log targets
+	# Bug fix for #1234699
+	os.umask(0077)
+	for target in conf["logtargets"].split():
+		if target == "STDERR":
+			hdlr = logging.StreamHandler(sys.stderr)
+		elif target == "SYSLOG":
+			hdlr = logging.handlers.SysLogHandler()
+		else:
+			# Target should be a file
+			try:
+				open(target, "a")
+				hdlr = logging.FileHandler(target)
+			except IOError:
+				logSys.error("Unable to log to " + target)
+				continue
+		# Set formatter and add handler to logger
+		hdlr.setFormatter(formatter)
+		logSys.addHandler(hdlr)
 
 	# Start Fail2Ban in daemon mode
 	if conf["background"]:
