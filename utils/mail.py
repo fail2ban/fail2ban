@@ -24,12 +24,12 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import log4py, smtplib
+import logging, smtplib
 
 from utils.strings import replaceTag
 
-# Gets the instance of log4py.
-logSys = log4py.Logger().get_instance()
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
 
 class Mail:
 	""" Mailer class

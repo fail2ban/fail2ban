@@ -19,9 +19,9 @@ debug = false
 
 # Option:  logtargets
 # Notes.:  log targets. Space separated list of logging targets.
-# Values:  STDOUT STDERR SYSLOG file  Default:  STDOUT /var/log/fail2ban.log
+# Values:  STDERR SYSLOG file  Default:  /var/log/fail2ban.log
 #
-logtargets = STDOUT /var/log/fail2ban.log
+logtargets = /var/log/fail2ban.log
 
 # Option:  pidlock
 # Notes.:  path of the PID lock file (must be able to write to file).

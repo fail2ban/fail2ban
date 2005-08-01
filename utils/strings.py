@@ -24,10 +24,10 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import log4py
+import logging
 
-# Gets the instance of log4py.
-logSys = log4py.Logger().get_instance()
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
 
 def replaceTag(query, aInfo):
 	""" Replace tags in query
