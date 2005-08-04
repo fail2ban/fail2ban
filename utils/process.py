@@ -30,10 +30,10 @@ import os, logging, signal
 logSys = logging.getLogger("fail2ban")
 
 def createDaemon():
-	"""Detach a process from the controlling terminal and run it in the
-	background as a daemon.
+	""" Detach a process from the controlling terminal and run it in the
+		background as a daemon.
 	
-	http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/278731
+		http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/278731
 	"""
 
 	try:
@@ -101,35 +101,6 @@ def createDaemon():
 	os.open("/dev/null", os.O_RDWR)		# standard error (2)
 
 	return True
-	
-def checkForPID(lockfile):
-	""" Checks for running Fail2Ban.
-	
-		Returns the current PID if Fail2Ban is running or False
-		if no instance found.
-	"""
-	try:
-		fileHandler = open(lockfile)
-		pid = fileHandler.readline()
-		fileHandler.close()
-		return pid
-	except IOError:
-		return False
-		
-def createPID(lockfile):
-	""" Creates a PID lock file with the current PID.
-	"""
-	fileHandler = open(lockfile, mode='w')
-	pid = os.getpid()
-	fileHandler.write(`pid`+'\n')
-	fileHandler.close()
-	logSys.debug("Created PID lock ("+`pid`+") in "+lockfile)
-		
-def removePID(lockfile):
-	""" Remove PID lock.
-	"""
-	os.remove(lockfile)
-	logSys.debug("Removed PID lock "+lockfile)
 
 def killPID(pid):
 	""" Kills the process with the given PID using the
