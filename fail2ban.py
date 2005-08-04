@@ -32,11 +32,15 @@ from firewall.firewall import Firewall
 from logreader.logreader import LogReader
 from confreader.configreader import ConfigReader
 from utils.mail import Mail
+from utils.pidlock import PIDLock
 from utils.dns import *
 from utils.process import *
 
-# Gets the instance of the logger.
+# Get the instance of the logger.
 logSys = logging.getLogger("fail2ban")
+
+# Get PID lock file instance
+pidLock = PIDLock()
 
 # Global variables
 logFwList = list()
@@ -101,7 +105,7 @@ def killApp():
 	# Execute global start command
 	executeCmd(conf["cmdend"], conf["debug"])
 	# Remove the PID lock
-	removePID(conf["pidlock"])
+	pidLock.remove()
 	logSys.info("Exiting...")
 	logging.shutdown()
 	sys.exit(0)
@@ -193,6 +197,14 @@ def main():
 	# Gets command line options
 	getCmdLineOptions(optList)
 
+	# Start Fail2Ban in daemon mode
+	if conf["background"]:
+		retCode = createDaemon()
+		signal.signal(signal.SIGTERM, sigTERMhandler)
+		if not retCode:
+			logSys.error("Unable to start daemon")
+			sys.exit(-1)
+
 	# Verbose level
 	if conf["verbose"]:
 		logSys.warn("Verbose level is "+`conf["verbose"]`)
@@ -231,14 +243,9 @@ def main():
 		# Set formatter and add handler to logger
 		hdlr.setFormatter(formatter)
 		logSys.addHandler(hdlr)
-
-	# Start Fail2Ban in daemon mode
-	if conf["background"]:
-		retCode = createDaemon()
-		signal.signal(signal.SIGTERM, sigTERMhandler)
-		if not retCode:
-			logSys.error("Unable to start daemon")
-			sys.exit(-1)
+	
+	# PID lock
+	pidLock.setPath(conf["pidlock"])
 	
 	# Ignores IP list
 	ignoreIPList = conf["ignoreip"].split(' ')
@@ -257,16 +264,16 @@ def main():
 			sys.exit(-1)
 			
 	# Checks that no instance of Fail2Ban is currently running.
-	pid = checkForPID(conf["pidlock"])
+	pid = pidLock.exists()
 	if pid:
 		logSys.error("Fail2Ban already running with PID "+pid)
 		sys.exit(-1)
 	else:
-		createPID(conf["pidlock"])
+		pidLock.create()
 	
-	logSys.debug("ConfFile is "+conf["conffile"])
-	logSys.debug("BanTime is "+`conf["bantime"]`)
-	logSys.debug("retryAllowed is "+`conf["maxretry"]`)
+	logSys.debug("ConfFile is " + conf["conffile"])
+	logSys.debug("BanTime is " + `conf["bantime"]`)
+	logSys.debug("retryAllowed is " + `conf["maxretry"]`)
 	
 	# Options
 	optionValues = (["bool", "enabled", False],
@@ -333,7 +340,7 @@ def main():
 			for element in logFwList:
 				element[1].addIgnoreIP(ip)
 	
-	logSys.info("Fail2Ban v"+version+" is running")
+	logSys.info("Fail2Ban v" + version + " is running")
 	# Execute global start command
 	executeCmd(conf["cmdstart"], conf["debug"])
 	# Execute start command of each section
