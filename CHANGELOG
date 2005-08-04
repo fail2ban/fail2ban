@@ -9,6 +9,7 @@ Fail2Ban (version 0.5.?)                           2005/??/??
 
 ver. 0.5.? (2005/??/??) - ???
 ----------
+- Better PID lock file handling. Should close #1239562
 - Added man pages
 - Removed log4py dependency. Use logging module instead
 - "maxretry" and "bantime" can be overridden in each section
