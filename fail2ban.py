@@ -209,7 +209,7 @@ def main():
 	if conf["verbose"]:
 		logSys.warn("Verbose level is "+`conf["verbose"]`)
 		if conf["verbose"] == 1:
-			logSys.setLevel(logging.VERBOSE)
+			logSys.setLevel(logging.INFO)
 		elif conf["verbose"] > 1:
 			logSys.setLevel(logging.DEBUG)
 		
