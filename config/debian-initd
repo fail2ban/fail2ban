@@ -37,7 +37,7 @@ case "$1" in
   stop)
 	echo -n "Stopping $DESC: "
 	start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid 
-        rm -f $PIDFILE
+        # rm -f $PIDFILE # now is removed by fail2ban itself
 	echo "$NAME."
 	;;
   restart|force-reload)
