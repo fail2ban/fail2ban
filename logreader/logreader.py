@@ -89,7 +89,7 @@ class LogReader:
 			fileHandler = open(self.logPath)
 		except OSError:
 			logSys.error("Unable to open "+self.logPath)
-			sys.exit(-1)
+			
 		return fileHandler
 		
 	def isModified(self):
@@ -99,7 +99,6 @@ class LogReader:
 			self.logStats = os.stat(self.logPath)
 		except OSError:
 			logSys.error("Unable to get stat on "+self.logPath)
-			sys.exit(-1)
 		
 		if self.lastModTime == self.logStats.st_mtime:
 			return False
