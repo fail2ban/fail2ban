@@ -57,7 +57,7 @@ setup(
 # Search for obsolete files.
 obsoleteFiles = []
 elements = {"/usr/bin/": ["fail2ban.py"],
-			"/usr/lib/fail2ban/firewall/": ["iptables.py", "ipfwadm.py",
+			"/usr/share/fail2ban/firewall/": ["iptables.py", "ipfwadm.py",
 											"ipfw.py"]}
 for dir in elements:
 	for f in elements[dir]:
