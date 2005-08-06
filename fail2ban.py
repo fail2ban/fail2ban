@@ -114,10 +114,6 @@ def getCmdLineOptions(optList):
 	""" Gets the command line options
 	"""
 	for opt in optList:
-		if opt[0] in ["-h", "--help"]:
- 			dispUsage()
-		if opt[0] in ["-V", "--version"]:
-			dispVersion()
 		if opt[0] == "-v":
 			conf["verbose"] = conf["verbose"] + 1
 		if opt[0] == "-b":
@@ -164,6 +160,10 @@ def main():
 	
 	# Pre-parsing of command line options for the -c option
 	for opt in optList:
+		if opt[0] in ["-h", "--help"]:
+ 			dispUsage()
+		if opt[0] in ["-V", "--version"]:
+			dispVersion()
 		if opt[0] == "-c":
 			conf["conffile"] = opt[1]
 	
