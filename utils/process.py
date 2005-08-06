@@ -16,24 +16,24 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.1.2.2 $
+# $Revision: 1.1.2.4 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.1.2.2 $"
-__date__ = "$Date: 2005/07/15 14:08:17 $"
+__version__ = "$Revision: 1.1.2.4 $"
+__date__ = "$Date: 2005/08/04 20:48:30 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import os, log4py, signal
+import os, logging, signal
 
-# Gets the instance of log4py.
-logSys = log4py.Logger().get_instance()
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
 
 def createDaemon():
-	"""Detach a process from the controlling terminal and run it in the
-	background as a daemon.
+	""" Detach a process from the controlling terminal and run it in the
+		background as a daemon.
 	
-	http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/278731
+		http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/278731
 	"""
 
 	try:
@@ -101,34 +101,6 @@ def createDaemon():
 	os.open("/dev/null", os.O_RDWR)		# standard error (2)
 
 	return True
-	
-def checkForPID(lockfile):
-	""" Checks for running Fail2Ban.
-	
-		Returns the current PID if Fail2Ban is running or False
-		if no instance found.
-	"""
-	try:
-		fileHandler = open(lockfile)
-		pid = fileHandler.readline()
-		return pid
-	except IOError:
-		return False
-		
-def createPID(lockfile):
-	""" Creates a PID lock file with the current PID.
-	"""
-	fileHandler = open(lockfile, mode='w')
-	pid = os.getpid()
-	fileHandler.write(`pid`+'\n')
-	fileHandler.close()
-	logSys.debug("Created PID lock ("+`pid`+") in "+lockfile)
-		
-def removePID(lockfile):
-	""" Remove PID lock.
-	"""
-	os.remove(lockfile)
-	logSys.debug("Removed PID lock "+lockfile)
 
 def killPID(pid):
 	""" Kills the process with the given PID using the
@@ -151,6 +123,9 @@ def executeCmd(cmd, debug):
 	
 	logSys.debug(cmd)
 	if not debug:
-		return os.system(cmd)
+		retval = os.system(cmd)
+		if not retval == 0:
+			logSys.error("'" + cmd + "' returned " + `retval`)
+		return retval
 	else:
 		return None

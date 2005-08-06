@@ -4,8 +4,18 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.5.1)                           2005/07/23
+Fail2Ban (version 0.5.2)                           2005/08/06
 =============================================================
+
+ver. 0.5.2 (2005/08/06) - beta
+----------
+- Better PID lock file handling. Should close #1239562
+- Added man pages
+- Removed log4py dependency. Use logging module instead
+- "maxretry" and "bantime" can be overridden in each section
+- Fixed bug #1246278 (excessive memory usage)
+- Fixed crash on wrong option value in configuration file
+- Changed custom chains to lowercase
 
 ver. 0.5.1 (2005/07/23) - beta
 ----------

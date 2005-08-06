@@ -9,7 +9,7 @@
 #
 # Author: Andrey G. Grozin
 # 
-# $Revision: 1.1.2.1 $
+# $Revision: 1.1.2.2 $
 
 # Source function library.
 . /etc/init.d/functions
@@ -28,7 +28,7 @@ RETVAL=0
 
 start() {
     echo -n $"Starting fail2ban: "
-    "${FAIL2BAN}" -b
+    "${FAIL2BAN}" -b > /dev/null
     RETVAL=$?
     echo
 }
@@ -36,7 +36,7 @@ start() {
 stop() {
     if [ -f "${PIDFILE}" ]; then
 	echo -n $"Stopping fail2ban: "
-	"${FAIL2BAN}" -k
+	"${FAIL2BAN}" -k > /dev/null
 	echo
     fi
 }

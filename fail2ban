@@ -18,31 +18,43 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.4.2.3 $
+# $Revision: 1.4.2.5 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.4.2.3 $"
-__date__ = "$Date: 2005/07/15 14:11:21 $"
+__version__ = "$Revision: 1.4.2.5 $"
+__date__ = "$Date: 2005/08/04 20:51:14 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from sys import exit, path
+import sys, traceback, logging
 
-#yoh: We do need to load this path first if we ship log4py with fail2ban
-# Appends our own modules path. Added before log4py import
-# because log4py could be distributed with Fail2Ban.
-path.append('/usr/share/fail2ban')
+# Appends our own modules path.
+sys.path.append("/usr/lib/fail2ban")
 
-# Checks for required libs
-# Checks if log4py is present.
-try:
-	import log4py
-except:
-	print "log4py is needed (see README)"
-	exit(-1)
-
-# Now we can import our module
+# Now we can import our modules.
 import fail2ban
+from utils.pidlock import PIDLock
 
-# Start the application
-fail2ban.main()
+# Get the instance of the logger.
+logSys = logging.getLogger("fail2ban")
+
+# Get PID lock file instance
+pidLock = PIDLock()
+
+# Start the application. Handle all the unhandled exceptions
+try:
+	fail2ban.main()
+except SystemExit:
+	# We called sys.exit(). Nothing wrong so just pass
+	pass
+except Exception, e:
+	# Print the exception data
+	(type, value, tb) = sys.exc_info()
+	tbStack = traceback.extract_tb(tb)
+	logSys.error("Fail2Ban got an unhandled exception and died.")
+	logSys.error("Type: " + `type.__name__` + "\n" +
+				 "Value: " + `e.args` + "\n" +
+				 "TB: " + `tbStack`)
+	# Remove the PID lock file. Should close #1239562
+	pidLock.remove()
+	logging.shutdown()

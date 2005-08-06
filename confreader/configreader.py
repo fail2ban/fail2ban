@@ -16,20 +16,20 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.5.2.3 $
+# $Revision: 1.5.2.5 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.5.2.3 $"
-__date__ = "$Date: 2005/07/12 13:07:35 $"
+__version__ = "$Revision: 1.5.2.5 $"
+__date__ = "$Date: 2005/08/01 16:31:13 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import log4py
+import logging
 
 from ConfigParser import *
 
-# Gets the instance of log4py.
-logSys = log4py.Logger().get_instance()
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
 
 class ConfigReader:
 	""" This class allow the handling of the configuration options.
@@ -76,6 +76,10 @@ class ConfigReader:
 				values[option[1]] = v
 			except NoOptionError:
 				logSys.warn("No '" + option[1] + "' defined in '" + sec + "'")
+				values[option[1]] = option[2]
+			except ValueError:
+				logSys.warn("Wrong value for '" + option[1] + "' in '" + sec +
+							"'. Using default one: '" + `option[2]` + "'")
 				values[option[1]] = option[2]
 		return values
 		

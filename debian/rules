@@ -87,7 +87,7 @@ binary-arch: build install copy-inits
 	dh_installinit
 #	dh_installcron
 #	dh_installinfo
-	dh_installman fail2ban.1x
+	dh_installman fail2ban.1x man/fail2ban.conf.5
 	dh_link
 	dh_strip
 	dh_compress

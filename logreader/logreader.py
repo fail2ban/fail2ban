@@ -16,20 +16,20 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.13.2.4 $
+# $Revision: 1.13.2.7 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.13.2.4 $"
-__date__ = "$Date: 2005/07/23 09:07:53 $"
+__version__ = "$Revision: 1.13.2.7 $"
+__date__ = "$Date: 2005/08/06 18:43:11 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import os, sys, time, re, log4py
+import os, sys, time, re, logging
 
 from utils.dns import *
 
-# Gets the instance of log4py.
-logSys = log4py.Logger().get_instance()
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
 
 class LogReader:
 	""" Reads a log file and reports information about IP that make password
@@ -38,8 +38,9 @@ class LogReader:
 	"""
 	
 	def __init__(self, logPath, timeregex, timepattern, failregex,
-				  findTime = 3600):
+				  maxRetry, findTime):
 		self.logPath = logPath
+		self.maxRetry = maxRetry
 		self.timeregex = timeregex
 		self.timepattern = timepattern
 		self.failregex = failregex
@@ -49,6 +50,11 @@ class LogReader:
 		self.lastPos = 0
 		self.lastDate = 0
 		self.logStats = None
+	
+	def getMaxRetry(self):
+		""" Gets the maximum number of failures
+		"""
+		return self.maxRetry
 	
 	def getFindTime(self):
 		""" Gets the find time.
@@ -83,7 +89,7 @@ class LogReader:
 			fileHandler = open(self.logPath)
 		except OSError:
 			logSys.error("Unable to open "+self.logPath)
-			sys.exit(-1)
+			
 		return fileHandler
 		
 	def isModified(self):
@@ -93,7 +99,6 @@ class LogReader:
 			self.logStats = os.stat(self.logPath)
 		except OSError:
 			logSys.error("Unable to get stat on "+self.logPath)
-			sys.exit(-1)
 		
 		if self.lastModTime == self.logStats.st_mtime:
 			return False
@@ -130,7 +135,7 @@ class LogReader:
 		logFile = self.openLogFile()
 		self.setFilePos(logFile)
 		lastLine = ''
-		for line in logFile.readlines():
+		for line in logFile:
 			lastLine = line
 			failList = self.findFailure(line)
 			for element in failList:

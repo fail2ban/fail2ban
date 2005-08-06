@@ -1,3 +1,11 @@
+fail2ban (0.5.2-1) unstable; urgency=low
+
+  * New upstream release
+  * No log4py any more
+  * removed -i eth0 from config
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat,  6 Aug 2005 09:21:07 -1000
+
 fail2ban (0.5.1-1) unstable; urgency=low
 
   * New upstream release

@@ -4,14 +4,14 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.5.1)                           2005/07/23
+Fail2Ban (version 0.5.2)                           2005/08/06
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
 that makes too many password failures. It updates firewall
 rules to reject the IP address. These rules can be defined by
 the user. Fail2Ban can read multiple log files such as sshd
-or Apache web server ones. It needs log4py.
+or Apache web server ones.
 
 This is my first Python program. Moreover, English is not my
 mother tongue...
@@ -55,12 +55,11 @@ Installation:
 -------------
 
 Require: python-2.3 (http://www.python.org)
-         log4py-1.3 (http://sourceforge.net/projects/log4py)
 
 To install, just do:
 
-> tar xvfj fail2ban-0.5.1.tar.bz2
-> cd fail2ban-0.5.1
+> tar xvfj fail2ban-0.5.2.tar.bz2
+> cd fail2ban-0.5.2
 > python setup.py install
 
 This will install Fail2Ban into /usr/lib/fail2ban. The fail2ban
@@ -95,13 +94,13 @@ or using command line options. Command line options override
 the value stored in fail2ban.conf. Here are the command line
 options:
 
-  -b         start fail2ban in background
-  -d         start fail2ban in debug mode
+  -b         start in background
+  -d         start in debug mode
   -c <FILE>  read configuration file FILE
   -p <FILE>  create PID lock in FILE
   -h         display this help message
   -i <IP(s)> IP(s) to ignore
-  -k         kill a currently running Fail2Ban instance
+  -k         kill a currently running instance
   -r <VALUE> allow a max of VALUE password failure
   -t <TIME>  ban IP for TIME seconds
   -v         verbose. Use twice for greater effect

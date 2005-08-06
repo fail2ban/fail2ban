@@ -16,18 +16,18 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.1.2.1 $
+# $Revision: 1.1.2.2 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.1.2.1 $"
-__date__ = "$Date: 2005/07/12 13:09:47 $"
+__version__ = "$Revision: 1.1.2.2 $"
+__date__ = "$Date: 2005/08/01 16:35:18 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import log4py
+import logging
 
-# Gets the instance of log4py.
-logSys = log4py.Logger().get_instance()
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
 
 def replaceTag(query, aInfo):
 	""" Replace tags in query

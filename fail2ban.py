@@ -16,15 +16,15 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.20.2.8 $
+# $Revision: 1.20.2.13 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.20.2.8 $"
-__date__ = "$Date: 2005/07/22 21:13:19 $"
+__version__ = "$Revision: 1.20.2.13 $"
+__date__ = "$Date: 2005/08/06 18:44:06 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, sys, getopt, os, string, signal, log4py
+import time, sys, getopt, os, string, signal, logging, logging.handlers
 from ConfigParser import *
 
 from version import version
@@ -32,11 +32,15 @@ from firewall.firewall import Firewall
 from logreader.logreader import LogReader
 from confreader.configreader import ConfigReader
 from utils.mail import Mail
+from utils.pidlock import PIDLock
 from utils.dns import *
 from utils.process import *
 
-# Gets the instance of log4py.
-logSys = log4py.Logger().get_instance()
+# Get the instance of the logger.
+logSys = logging.getLogger("fail2ban")
+
+# Get PID lock file instance
+pidLock = PIDLock()
 
 # Global variables
 logFwList = list()
@@ -50,13 +54,13 @@ def dispUsage():
 	print "Fail2Ban v"+version+" reads log file that contains password failure report"
 	print "and bans the corresponding IP addresses using firewall rules."
 	print
-	print "  -b         start fail2ban in background"
-	print "  -d         start fail2ban in debug mode"
+	print "  -b         start in background"
+	print "  -d         start in debug mode"
 	print "  -c <FILE>  read configuration file FILE"
 	print "  -p <FILE>  create PID lock in FILE"
 	print "  -h         display this help message"
 	print "  -i <IP(s)> IP(s) to ignore"
-	print "  -k         kill a currently running Fail2Ban instance"
+	print "  -k         kill a currently running instance"
 	print "  -r <VALUE> allow a max of VALUE password failure"
 	print "  -t <TIME>  ban IP for TIME seconds"
 	print "  -v         verbose. Use twice for greater effect"
@@ -101,8 +105,9 @@ def killApp():
 	# Execute global start command
 	executeCmd(conf["cmdend"], conf["debug"])
 	# Remove the PID lock
-	removePID(conf["pidlock"])
+	pidLock.remove()
 	logSys.info("Exiting...")
+	logging.shutdown()
 	sys.exit(0)
 
 def getCmdLineOptions(optList):
@@ -128,23 +133,23 @@ def getCmdLineOptions(optList):
 		if opt[0] == "-i":
 			conf["ignoreip"] = opt[1]
 		if opt[0] == "-r":
-			conf["retrymax"] = int(opt[1])
+			conf["maxretry"] = int(opt[1])
 		if opt[0] == "-p":
 			conf["pidlock"] = opt[1]
 		if opt[0] == "-k":
-			pid = checkForPID(conf["pidlock"])
-			if pid:
-				killPID(int(pid))
-				logSys.warn("Killed Fail2Ban with PID "+pid)
-				sys.exit(0)
-			else:
-				logSys.error("No running Fail2Ban found")
-				sys.exit(-1)
+			conf["kill"] = True
 
 def main():
 	""" Fail2Ban main function
 	"""
-	logSys.set_formatstring("%T %L %M")
+	
+	# Add the default logging handler
+	stdout = logging.StreamHandler(sys.stdout)
+	logSys.addHandler(stdout)
+	
+	# Default formatter
+	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+	stdout.setFormatter(formatter)
 	
 	conf["verbose"] = 0
 	conf["conffile"] = "/etc/fail2ban.conf"
@@ -169,7 +174,7 @@ def main():
 	
 	# Options
 	optionValues = (["bool", "background", False],
-					["str", "logtargets", "STDOUT /var/log/fail2ban.log"],
+					["str", "logtargets", "/var/log/fail2ban.log"],
 					["bool", "debug", False],
 					["str", "pidlock", "/var/run/fail2ban.pid"],
 					["int", "maxretry", 3],
@@ -184,47 +189,23 @@ def main():
 	
 	# Gets command line options
 	getCmdLineOptions(optList)
-
-	# Process some options
-	# Log targets
-	# Bug fix for #1234699
-	os.umask(0077)
-	# Remove all the targets before setting our own
-	logSys.remove_all_targets()
-	for target in conf["logtargets"].split():
-		if target == "STDOUT":
-			logSys.add_target(log4py.TARGET_SYS_STDOUT)
-		elif target == "STDERR":
-			logSys.add_target(log4py.TARGET_SYS_STDERR)
-		elif target == "SYSLOG":
-			logSys.add_target(log4py.TARGET_SYSLOG)
+	
+	# PID lock
+	pidLock.setPath(conf["pidlock"])
+	
+	# Now we can kill properly a running instance if needed
+	try:
+		conf["kill"]
+		pid = pidLock.exists()
+		if pid:
+			killPID(int(pid))
+			logSys.warn("Killed Fail2Ban with PID "+pid)
+			sys.exit(0)
 		else:
-			# Target should be a file
-			try:
-				open(target, "a")
-				logSys.add_target(target)
-			except IOError:
-				logSys.error("Unable to log to " + target)
-	
-	# Check if at least one target exists
-	if len(logSys.get_targets()) == 0:
-		logSys.add_target(log4py.TARGET_SYS_STDOUT)
-		logSys.error("No valid logging target found. Logging to STDOUT")
-	
-	# Verbose level
-	if conf["verbose"]:
-		logSys.warn("Verbose level is "+`conf["verbose"]`)
-		if conf["verbose"] == 1:
-			logSys.set_loglevel(log4py.LOGLEVEL_VERBOSE)
-		elif conf["verbose"] > 1:
-			logSys.set_loglevel(log4py.LOGLEVEL_DEBUG)
-		
-	# Set debug log level
-	if conf["debug"]:
-		logSys.set_loglevel(log4py.LOGLEVEL_DEBUG)
-		logSys.set_formatstring(log4py.FMT_DEBUG)
-		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
-					"ONLY DISPLAYED IN THE LOG MESSAGES")
+			logSys.error("No running Fail2Ban found")
+			sys.exit(-1)
+	except KeyError:
+		pass
 
 	# Start Fail2Ban in daemon mode
 	if conf["background"]:
@@ -233,9 +214,54 @@ def main():
 		if not retCode:
 			logSys.error("Unable to start daemon")
 			sys.exit(-1)
+
+	# Verbose level
+	if conf["verbose"]:
+		logSys.warn("Verbose level is "+`conf["verbose"]`)
+		if conf["verbose"] == 1:
+			logSys.setLevel(logging.INFO)
+		elif conf["verbose"] > 1:
+			logSys.setLevel(logging.DEBUG)
+		
+	# Set debug log level
+	if conf["debug"]:
+		logSys.setLevel(logging.DEBUG)
+		formatter = logging.Formatter("%(asctime)s %(levelname)s " +
+									  "[%(filename)s (%(lineno)d)] " +
+									  "%(message)s")
+		stdout.setFormatter(formatter)
+		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
+					"ONLY DISPLAYED IN THE LOG MESSAGES")
+
+	# Process some options
+	# Log targets
+	# Bug fix for #1234699
+	os.umask(0077)
+	for target in conf["logtargets"].split():
+		if target == "STDERR":
+			hdlr = logging.StreamHandler(sys.stderr)
+		elif target == "SYSLOG":
+			hdlr = logging.handlers.SysLogHandler()
+		else:
+			# Target should be a file
+			try:
+				open(target, "a")
+				hdlr = logging.FileHandler(target)
+			except IOError:
+				logSys.error("Unable to log to " + target)
+				continue
+		# Set formatter and add handler to logger
+		hdlr.setFormatter(formatter)
+		logSys.addHandler(hdlr)
 	
 	# Ignores IP list
 	ignoreIPList = conf["ignoreip"].split(' ')
+	
+	# maxretry option
+	maxRetry = conf["maxretry"]
+	
+	# bantime option
+	banTime = conf["bantime"]
 	
 	# Checks for root user. This is necessary because log files
 	# are owned by root and firewall needs root access.
@@ -245,16 +271,16 @@ def main():
 			sys.exit(-1)
 			
 	# Checks that no instance of Fail2Ban is currently running.
-	pid = checkForPID(conf["pidlock"])
+	pid = pidLock.exists()
 	if pid:
 		logSys.error("Fail2Ban already running with PID "+pid)
 		sys.exit(-1)
 	else:
-		createPID(conf["pidlock"])
+		pidLock.create()
 	
-	logSys.debug("ConfFile is "+conf["conffile"])
-	logSys.debug("BanTime is "+`conf["bantime"]`)
-	logSys.debug("retryAllowed is "+`conf["maxretry"]`)
+	logSys.debug("ConfFile is " + conf["conffile"])
+	logSys.debug("BanTime is " + `conf["bantime"]`)
+	logSys.debug("retryAllowed is " + `conf["maxretry"]`)
 	
 	# Options
 	optionValues = (["bool", "enabled", False],
@@ -277,8 +303,10 @@ def main():
 		logSys.debug("to: " + mailConf["to"] + " from: " + mailConf["from"])
 	
 	# Options
-	optionValues = (["bool", "enabled", True],
+	optionValues = (["bool", "enabled", False],
 					["str", "logfile", "/dev/null"],
+					["int", "maxretry", None],
+					["int", "bantime", None],
 					["str", "timeregex", ""],
 					["str", "timepattern", ""],
 					["str", "failregex", ""],
@@ -291,11 +319,19 @@ def main():
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t, optionValues)
 		if l["enabled"]:
+			# Override maxretry option
+			if not l["maxretry"] == None:
+				maxRetry = l["maxretry"]
+			
+			# Override bantime option
+			if not l["bantime"] == None:
+				banTime = l["bantime"]
+			
 			# Creates a logreader object
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
-							 l["failregex"], conf["bantime"])
+							 l["failregex"], maxRetry, banTime)
 			# Creates a firewall object
-			fObj = Firewall(l["fwban"], l["fwunban"], conf["bantime"])
+			fObj = Firewall(l["fwban"], l["fwunban"], banTime)
 			# Links them into a list. I'm not really happy
 			# with this :/
 			logFwList.append([t, lObj, fObj, dict(), l])
@@ -311,7 +347,7 @@ def main():
 			for element in logFwList:
 				element[1].addIgnoreIP(ip)
 	
-	logSys.info("Fail2Ban v"+version+" is running")
+	logSys.info("Fail2Ban v" + version + " is running")
 	# Execute global start command
 	executeCmd(conf["cmdstart"], conf["debug"])
 	# Execute start command of each section
@@ -363,7 +399,7 @@ def main():
 					failTime = fails[attempt][1]
 					if failTime < unixTime - findTime:
 						del element[3][attempt]
-					elif fails[attempt][0] >= conf["maxretry"]:
+					elif fails[attempt][0] >= element[1].getMaxRetry():
 						aInfo = {"ip": attempt,
 								 "failures": element[3][attempt][0],
 								 "failtime": failTime}

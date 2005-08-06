@@ -16,21 +16,21 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.8.2.5 $
+# $Revision: 1.8.2.6 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.8.2.5 $"
-__date__ = "$Date: 2005/07/15 14:07:08 $"
+__version__ = "$Revision: 1.8.2.6 $"
+__date__ = "$Date: 2005/08/01 16:31:42 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, os, log4py, re
+import time, os, logging, re
 
 from utils.process import executeCmd
 from utils.strings import replaceTag
 
-# Gets the instance of log4py.
-logSys = log4py.Logger().get_instance()
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
 
 class Firewall:
 	""" Manages the ban list and executes the command that ban

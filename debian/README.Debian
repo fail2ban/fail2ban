@@ -10,9 +10,6 @@ Currently the main difference with upstream: python libraries are
 placed under /usr/share/fail2ban insteadh of /usr/lib/fail2ban to
 comply with policy regarding architecture independent resources.
 
-Module log4py installed along into fail2ban directory because there is
-no package for not-developed-in-a-long-time fail2ban
-
 See the file TODO.Debian for more details, as well as the Debian Bug
 Tracking system.
 

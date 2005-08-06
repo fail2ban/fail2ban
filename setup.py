@@ -18,11 +18,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.4.2.2 $
+# $Revision: 1.4.2.3 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.4.2.2 $"
-__date__ = "$Date: 2005/07/15 14:14:12 $"
+__version__ = "$Revision: 1.4.2.3 $"
+__date__ = "$Date: 2005/07/28 20:30:34 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -31,15 +31,25 @@ from version import version
 from os.path import isfile, join
 from sys import exit, argv
 
+longdesc = '''
+Fail2Ban scans log files like /var/log/pwdfail or
+/var/log/apache/error_log and bans IP that makes
+too many password failures. It updates firewall rules
+to reject the IP address or executes user defined
+commands.'''
+
 setup(
 	name = "fail2ban",
 	version = version,
 	description = "Ban IPs that make too many password failure",
+	long_description = longdesc,
 	author = "Cyril Jaquier",
 	author_email = "lostcontrol@users.sourceforge.net",
 	url = "http://fail2ban.sourceforge.net",
+	license = "GPL",
+	platforms = "Posix",
 	scripts = ['fail2ban'],
-	py_modules = ['fail2ban', 'version', 'log4py'],
+	py_modules = ['fail2ban', 'version'],
 	packages = ['firewall', 'logreader', 'confreader', 'utils']
 )
 
