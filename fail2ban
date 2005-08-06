@@ -29,7 +29,7 @@ __license__ = "GPL"
 import sys, traceback, logging
 
 # Appends our own modules path.
-sys.path.append("/usr/lib/fail2ban")
+sys.path.append("/usr/share/fail2ban")
 
 # Now we can import our modules.
 import fail2ban
