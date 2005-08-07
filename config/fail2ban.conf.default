@@ -45,9 +45,9 @@ bantime = 600
 # Notes.:  space separated list of IP's to be ignored by fail2ban.
 #          You can use CIDR mask in order to specify a range.
 #          Example:  ignoreip = 192.168.0.1/24 123.45.235.65
-# Values:  IP  Default:  192.168.0.0/24
+# Values:  IP  Default:  192.168.0.0/16
 #
-ignoreip = 192.168.0.0/24
+ignoreip = 192.168.0.0/16
 
 # Option:  cmdstart
 # Notes.:  command executed once at the start of Fail2Ban
@@ -145,14 +145,14 @@ logfile = /var/log/httpd/access_log
 # Values:  CMD  Default:
 #
 fwstart = iptables -N fail2ban-http
-          iptables -I INPUT -i eth0 -p tcp --dport http -j fail2ban-http
+          iptables -I INPUT -p tcp --dport http -j fail2ban-http
           iptables -A fail2ban-http -j RETURN
 
 # Option:  fwend
 # Notes.:  command executed once at the end of Fail2Ban
 # Values:  CMD  Default:
 #
-fwend = iptables -D INPUT -i eth0 -p tcp --dport http -j fail2ban-http
+fwend = iptables -D INPUT -p tcp --dport http -j fail2ban-http
         iptables -D fail2ban-http -j RETURN
         iptables -X fail2ban-http
 
@@ -164,9 +164,9 @@ fwend = iptables -D INPUT -i eth0 -p tcp --dport http -j fail2ban-http
 #          <failtime>  unix timestamp of the last failure
 #          <bantime>  unix timestamp of the ban time
 # Values:  CMD
-# Default: iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+# Default: iptables -I INPUT 1 -s <ip> -j DROP
 #
-fwban = iptables -I fail2ban-http 1 -i eth0 -s <ip> -j DROP
+fwban = iptables -I fail2ban-http 1 -s <ip> -j DROP
 
 # Option:  fwunban
 # Notes.:  command executed when unbanning an IP. Take care that the
@@ -175,9 +175,9 @@ fwban = iptables -I fail2ban-http 1 -i eth0 -s <ip> -j DROP
 #          <bantime>  unix timestamp of the ban time
 #          <unbantime>  unix timestamp of the unban time
 # Values:  CMD
-# Default: iptables -D INPUT -i eth0 -s <ip> -j DROP
+# Default: iptables -D INPUT -s <ip> -j DROP
 #
-fwunban = iptables -D fail2ban-http -i eth0 -s <ip> -j DROP
+fwunban = iptables -D fail2ban-http -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in Apache logfile.
@@ -217,14 +217,14 @@ logfile = /var/log/secure
 # Values:  CMD  Default:
 #
 fwstart = iptables -N fail2ban-ssh
-          iptables -I INPUT -i eth0 -p tcp --dport ssh -j fail2ban-ssh
+          iptables -I INPUT -p tcp --dport ssh -j fail2ban-ssh
           iptables -A fail2ban-ssh -j RETURN
 
 # Option:  fwend
 # Notes.:  command executed once at the end of Fail2Ban
 # Values:  CMD  Default:
 #
-fwend = iptables -D INPUT -i eth0 -p tcp --dport ssh -j fail2ban-ssh
+fwend = iptables -D INPUT -p tcp --dport ssh -j fail2ban-ssh
         iptables -D fail2ban-ssh -j RETURN
         iptables -X fail2ban-ssh
 
@@ -236,9 +236,9 @@ fwend = iptables -D INPUT -i eth0 -p tcp --dport ssh -j fail2ban-ssh
 #          <failtime>  unix timestamp of the last failure
 #          <bantime>  unix timestamp of the ban time
 # Values:  CMD
-# Default: iptables -I INPUT 1 -i eth0 -s <ip> -j DROP
+# Default: iptables -I INPUT 1 -s <ip> -j DROP
 #
-fwban = iptables -I fail2ban-ssh 1 -i eth0 -s <ip> -j DROP
+fwban = iptables -I fail2ban-ssh 1 -s <ip> -j DROP
 
 # Option:  fwunbanrule
 # Notes.:  command executed when unbanning an IP. Take care that the
@@ -247,9 +247,9 @@ fwban = iptables -I fail2ban-ssh 1 -i eth0 -s <ip> -j DROP
 #          <bantime>  unix timestamp of the ban time
 #          <unbantime>  unix timestamp of the unban time
 # Values:  CMD
-# Default: iptables -D INPUT -i eth0 -s <ip> -j DROP
+# Default: iptables -D INPUT -s <ip> -j DROP
 #
-fwunban = iptables -D fail2ban-ssh -i eth0 -s <ip> -j DROP
+fwunban = iptables -D fail2ban-ssh -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in SSH logfile.
