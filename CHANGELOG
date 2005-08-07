@@ -4,8 +4,16 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.5.2)                           2005/08/06
+Fail2Ban (version 0.?.?)                           2005/08/??
 =============================================================
+
+ver. 0.?.? (2005/08/??) - ???
+----------
+- Fixed exception handling in PIDLock
+- Removed warning when using "-V" or "-h" with no config
+  file. Thanks to Yaroslav Halchenko
+- Removed "-i eth0" from config file. Thanks to Yaroslav
+  Halchenko
 
 ver. 0.5.2 (2005/08/06) - beta
 ----------
