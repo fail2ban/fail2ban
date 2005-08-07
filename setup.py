@@ -36,7 +36,7 @@ Fail2Ban scans log files like /var/log/pwdfail or
 /var/log/apache/error_log and bans IP that makes
 too many password failures. It updates firewall rules
 to reject the IP address or executes user defined
-commands. It needs log4py.'''
+commands.'''
 
 setup(
 	name = "fail2ban",
