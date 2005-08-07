@@ -114,10 +114,6 @@ def getCmdLineOptions(optList):
 	""" Gets the command line options
 	"""
 	for opt in optList:
-		if opt[0] in ["-h", "--help"]:
- 			dispUsage()
-		if opt[0] in ["-V", "--version"]:
-			dispVersion()
 		if opt[0] == "-v":
 			conf["verbose"] = conf["verbose"] + 1
 		if opt[0] == "-b":
@@ -166,6 +162,10 @@ def main():
 	for opt in optList:
 		if opt[0] == "-c":
 			conf["conffile"] = opt[1]
+		if opt[0] in ["-h", "--help"]:
+ 			dispUsage()
+		if opt[0] in ["-V", "--version"]:
+			dispVersion()
 	
 	# Reads the config file and create a LogReader instance for
 	# each log file to check.
@@ -276,7 +276,10 @@ def main():
 		logSys.error("Fail2Ban already running with PID "+pid)
 		sys.exit(-1)
 	else:
-		pidLock.create()
+		ret = pidLock.create()
+		if not ret:
+			# Unable to create PID lock. Exit
+			sys.exit(-1)
 	
 	logSys.debug("ConfFile is " + conf["conffile"])
 	logSys.debug("BanTime is " + `conf["bantime"]`)
