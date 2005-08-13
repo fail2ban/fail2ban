@@ -1,3 +1,10 @@
+fail2ban (0.5.2-2) unstable; urgency=low
+
+  * Updated description to reflect flexibility in application of fail2ban
+  * Included logrotate (Thanks to Baruch Even)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 13 Aug 2005 04:51:57 -0400
+
 fail2ban (0.5.2-1) unstable; urgency=low
 
   * New upstream release
