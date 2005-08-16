@@ -1,3 +1,9 @@
+fail2ban (0.5.2-3) unstable; urgency=low
+
+  * Fixed errata in /etc/default/fail2ban. (Closes: #323451)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 16 Aug 2005 11:23:28 -1000
+
 fail2ban (0.5.2-2) unstable; urgency=low
 
   * Updated description to reflect flexibility in application of fail2ban
