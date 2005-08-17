@@ -58,8 +58,9 @@ def searchIP(text):
 def isValidIP(str):
 	""" Return true if str is a valid IP
 	"""
+	s = str.split('/', 1)
 	try:
-		socket.inet_aton(str)
+		socket.inet_aton(s[0])
 		return True
 	except socket.error:
 		return False
