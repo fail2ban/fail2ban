@@ -9,6 +9,7 @@ Fail2Ban (version 0.?.?)                           2005/08/??
 
 ver. 0.?.? (2005/08/??) - ???
 ----------
+- Fixed bug #1262345
 - Fixed exception handling in PIDLock
 - Removed warning when using "-V" or "-h" with no config
   file. Thanks to Yaroslav Halchenko
