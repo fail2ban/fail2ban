@@ -349,6 +349,8 @@ def main():
 		if isValidIP(ip):
 			for element in logFwList:
 				element[1].addIgnoreIP(ip)
+		else:
+			logSys.warn(ip + " is not a valid IP address")
 	
 	logSys.info("Fail2Ban v" + version + " is running")
 	# Execute global start command
