@@ -24,10 +24,14 @@ Licensed under the GNU General Public License v2 (GPL).
 [author]
 Original fail2ban by Cyril Jaquier <lostcontrol@users.sourceforge.net>.
 .br
-Modified by
+Modified and packaged for Debian by
 .br
  - Yaroslav O. Halchenko <debian@onerussian.com>.
 .br
 Sponsored for Debian by
 .br
  - Barak A. Pearlmutter <barak@cs.nuim.ie>.
+
+[see also]
+.br 
+fail2ban.conf(5)
