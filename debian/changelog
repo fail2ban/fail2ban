@@ -1,3 +1,9 @@
+fail2ban (0.5.2-4) unstable; urgency=low
+
+  * Format of SYSLOG entries is up to the standard now
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 19 Aug 2005 00:06:44 -1000
+
 fail2ban (0.5.2-3) unstable; urgency=low
 
   * Fixed errata in /etc/default/fail2ban (closes: #323451)

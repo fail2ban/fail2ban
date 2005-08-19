@@ -145,7 +145,8 @@ def main():
 	logSys.addHandler(stdout)
 	
 	# Default formatter
-	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+	formatterstring='%(levelname)s: %(message)s'
+	formatter = logging.Formatter('%(asctime)s ' + formatterstring)
 	stdout.setFormatter(formatter)
 	
 	conf["verbose"] = 0
@@ -230,9 +231,9 @@ def main():
 	# Set debug log level
 	if conf["debug"]:
 		logSys.setLevel(logging.DEBUG)
-		formatter = logging.Formatter("%(asctime)s %(levelname)s " +
-									  "[%(filename)s (%(lineno)d)] " +
-									  "%(message)s")
+		formatterstring = ('%(levelname)s: [%(filename)s (%(lineno)d)] ' +
+						   '%(message)s')
+		formatter = logging.Formatter("%(asctime)s " + formatterstring)
 		stdout.setFormatter(formatter)
 		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
 					"ONLY DISPLAYED IN THE LOG MESSAGES")
@@ -242,6 +243,9 @@ def main():
 	# Bug fix for #1234699
 	os.umask(0077)
 	for target in conf["logtargets"].split():
+		# target formatter 
+		# By default global formatter is taken. Is different for SYSLOG
+		tformatter = formatter
 		if target == "STDERR":
 			hdlr = logging.StreamHandler(sys.stderr)
 		elif target == "SYSLOG":
@@ -273,7 +277,8 @@ def main():
 						port = int(syslogtargets[3])
 					syslogtarget = (syslogtargets[1], port)
 				hdlr = logging.handlers.SysLogHandler(syslogtarget, facility)
-				
+			tformatter = logging.Formatter("fail2ban[%(process)d]: " +
+										   formatterstring);
 		else:
 			# Target should be a file
 			try:
@@ -283,7 +288,7 @@ def main():
 				logSys.error("Unable to log to " + target)
 				continue
 		# Set formatter and add handler to logger
-		hdlr.setFormatter(formatter)
+		hdlr.setFormatter(tformatter)
 		logSys.addHandler(hdlr)
 	
 	# Ignores IP list
