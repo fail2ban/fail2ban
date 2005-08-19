@@ -341,9 +341,9 @@ def main():
 	# Options
 	optionValues = (["bool", "enabled", False],
 					["str", "logfile", "/dev/null"],
-					["int", "maxretry", maxretry],
-					["int", "bantime", bantime],
-					["int", "findtime", findtime],
+					["int", "maxretry", maxRetry],
+					["int", "bantime", banTime],
+					["int", "findtime", findTime],
 					["str", "timeregex", ""],
 					["str", "timepattern", ""],
 					["str", "failregex", ""],
