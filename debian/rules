@@ -45,7 +45,7 @@ copy-inits:
 
 clean-inits:
 	rm -f debian/fail2ban.default debian/fail2ban.init
-	
+
 clean:	clean-inits
 	dh_testdir
 	dh_testroot
@@ -87,7 +87,7 @@ binary-arch: build install copy-inits
 	dh_installinit
 #	dh_installcron
 #	dh_installinfo
-	dh_installman fail2ban.1x man/fail2ban.conf.5
+	dh_installman fail2ban.8 man/fail2ban.conf.5
 	dh_link
 	dh_strip
 	dh_compress
