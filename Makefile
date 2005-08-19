@@ -1,11 +1,11 @@
 # quick dirty hacks
 #
 DESTDIR=debian/fail2ban
+MANPAGE=fail2ban.8
+all:: $(MANPAGE)
 
-all:: fail2ban.8
 
-
-fail2ban.8: fail2ban fail2ban.h2m
+$(MANPAGE): fail2ban fail2ban.h2m
 	help2man --include fail2ban.h2m --section=1x --no-info --output $@ ./fail2ban
 
 install:: all
@@ -14,4 +14,4 @@ install:: all
 	cp config/fail2ban.conf.default $(DESTDIR)/etc/fail2ban.conf
 
 clean::
-	rm -rf changelog.gz fail2ban.1x build* `find -iname '*.pyc' `
+	rm -rf changelog.gz $(MANPAGE) build* `find -iname '*.pyc' `
