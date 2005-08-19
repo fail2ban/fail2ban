@@ -10,7 +10,11 @@ Currently the main difference with upstream: python libraries are
 placed under /usr/share/fail2ban insteadh of /usr/lib/fail2ban to
 comply with policy regarding architecture independent resources.
 
-See the file TODO.Debian for more details, as well as the Debian Bug
+Only handling of ssh files is enabled by default. If you want to use
+fail2ban with apache, please enable apache section manually in
+/etc/fail2ban.conf.
+
+See  TODO.Debian for more details, as well as the Debian Bug
 Tracking system.
 
- -- Yaroslav O. Halchenko <debian@onerussian.com>, Sat Jul 23 09:09:51 2005
+ -- Yaroslav O. Halchenko <debian@onerussian.com>, Thu Aug 18 20:53:58 2005

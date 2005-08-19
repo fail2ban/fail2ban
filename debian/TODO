@@ -1,4 +1,3 @@
-Because this is just a quick hack to package fail2ban it might be missing
-some crucial parts...
+* Collect more sections for other log files
 
 -- debian@onerussian.com

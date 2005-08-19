@@ -1,7 +1,14 @@
 fail2ban (0.5.2-3) unstable; urgency=low
 
-  * Fixed errata in /etc/default/fail2ban. (Closes: #323451)
-
+  * Fixed errata in /etc/default/fail2ban (closes: #323451)
+  * Fixed handling of SYSLOG logging target. Now it can log to any syslog
+    target and facility as directed by the config (revisions 160:166 patch
+    from syslog branch) (closes: #323543)
+  * Included upstream README and TODO
+  * Mentioned in README.Debian that apache section is disabled by default
+  * Adjusted man pages to cross-reference each other (closes: #323840)
+  * Moved fail2ban man page under section 8 as in upstream
+  
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 16 Aug 2005 11:23:28 -1000
 
 fail2ban (0.5.2-2) unstable; urgency=low
