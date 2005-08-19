@@ -15,6 +15,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # Author: Cyril Jaquier
+# Modified by: Yaroslav Halchenko (SYSLOG, findtime)
 # 
 # $Revision: 1.20.2.13 $
 
@@ -181,6 +182,7 @@ def main():
 					["str", "pidlock", "/var/run/fail2ban.pid"],
 					["int", "maxretry", 3],
 					["int", "bantime", 600],
+					["int", "findtime", 600],
 					["str", "ignoreip", ""],
 					["int", "polltime", 1],
 					["str", "cmdstart", ""],
@@ -292,6 +294,9 @@ def main():
 	
 	# bantime option
 	banTime = conf["bantime"]
+
+	# findtime option
+	findTime = conf["findtime"]
 	
 	# Checks for root user. This is necessary because log files
 	# are owned by root and firewall needs root access.
@@ -310,6 +315,7 @@ def main():
 	
 	logSys.debug("ConfFile is " + conf["conffile"])
 	logSys.debug("BanTime is " + `conf["bantime"]`)
+	logSys.debug("FindTime is " + `conf["findtime"]`)
 	logSys.debug("retryAllowed is " + `conf["maxretry"]`)
 	
 	# Options
@@ -335,8 +341,9 @@ def main():
 	# Options
 	optionValues = (["bool", "enabled", False],
 					["str", "logfile", "/dev/null"],
-					["int", "maxretry", None],
-					["int", "bantime", None],
+					["int", "maxretry", maxretry],
+					["int", "bantime", bantime],
+					["int", "findtime", findtime],
 					["str", "timeregex", ""],
 					["str", "timepattern", ""],
 					["str", "failregex", ""],
@@ -349,19 +356,12 @@ def main():
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t, optionValues)
 		if l["enabled"]:
-			# Override maxretry option
-			if not l["maxretry"] == None:
-				maxRetry = l["maxretry"]
-			
-			# Override bantime option
-			if not l["bantime"] == None:
-				banTime = l["bantime"]
 			
 			# Creates a logreader object
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
-							 l["failregex"], maxRetry, banTime)
+							 l["failregex"], l["maxretry"], l["findtime"])
 			# Creates a firewall object
-			fObj = Firewall(l["fwban"], l["fwunban"], banTime)
+			fObj = Firewall(l["fwban"], l["fwunban"], l["bantime"])
 			# Links them into a list. I'm not really happy
 			# with this :/
 			logFwList.append([t, lObj, fObj, dict(), l])

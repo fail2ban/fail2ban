@@ -6,8 +6,10 @@ fail2ban (0.5.2-3) unstable; urgency=low
     from syslog branch) (closes: #323543)
   * Included upstream README and TODO
   * Mentioned in README.Debian that apache section is disabled by default
-  * Adjusted man pages to cross-reference each other (closes: #323840)
+  * Adjusted man pages to cross-reference each other
   * Moved fail2ban man page under section 8 as in upstream
+  * Introduced findtime configuration variable to control the lifetime
+    of caught "failed" log entries (closes: #323840)
   
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 16 Aug 2005 11:23:28 -1000
 
