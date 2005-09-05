@@ -129,7 +129,7 @@ def getCmdLineOptions(optList):
 		if opt[0] == "-i":
 			conf["ignoreip"] = opt[1]
 		if opt[0] == "-r":
-			conf["maxretry"] = int(opt[1])
+			conf["maxfailures"] = int(opt[1])
 		if opt[0] == "-p":
 			conf["pidlock"] = opt[1]
 		if opt[0] == "-k":
@@ -177,7 +177,7 @@ def main():
 					["str", "logtargets", "/var/log/fail2ban.log"],
 					["bool", "debug", False],
 					["str", "pidlock", "/var/run/fail2ban.pid"],
-					["int", "maxretry", 3],
+					["int", "maxfailures", 5],
 					["int", "bantime", 600],
 					["str", "ignoreip", ""],
 					["int", "polltime", 1],
@@ -257,12 +257,6 @@ def main():
 	# Ignores IP list
 	ignoreIPList = conf["ignoreip"].split(' ')
 	
-	# maxretry option
-	maxRetry = conf["maxretry"]
-	
-	# bantime option
-	banTime = conf["bantime"]
-	
 	# Checks for root user. This is necessary because log files
 	# are owned by root and firewall needs root access.
 	if not checkForRoot():
@@ -283,7 +277,7 @@ def main():
 	
 	logSys.debug("ConfFile is " + conf["conffile"])
 	logSys.debug("BanTime is " + `conf["bantime"]`)
-	logSys.debug("retryAllowed is " + `conf["maxretry"]`)
+	logSys.debug("MaxFailure is " + `conf["maxfailures"]`)
 	
 	# Options
 	optionValues = (["bool", "enabled", False],
@@ -308,7 +302,7 @@ def main():
 	# Options
 	optionValues = (["bool", "enabled", False],
 					["str", "logfile", "/dev/null"],
-					["int", "maxretry", None],
+					["int", "maxfailures", None],
 					["int", "bantime", None],
 					["str", "timeregex", ""],
 					["str", "timepattern", ""],
@@ -322,17 +316,21 @@ def main():
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t, optionValues)
 		if l["enabled"]:
-			# Override maxretry option
-			if not l["maxretry"] == None:
-				maxRetry = l["maxretry"]
+			# Override maxfailures option
+			if not l["maxfailures"] == None:
+				maxFailures = l["maxfailures"]
+			else:
+				maxFailures = conf["maxfailures"]
 			
 			# Override bantime option
 			if not l["bantime"] == None:
 				banTime = l["bantime"]
+			else:
+				banTime = conf["bantime"]
 			
 			# Creates a logreader object
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
-							 l["failregex"], maxRetry, banTime)
+							 l["failregex"], maxFailures, banTime)
 			# Creates a firewall object
 			fObj = Firewall(l["fwban"], l["fwunban"], banTime)
 			# Links them into a list. I'm not really happy
