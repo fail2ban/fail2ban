@@ -29,11 +29,11 @@ logtargets = /var/log/fail2ban.log
 #
 pidlock = /var/run/fail2ban.pid
 
-# Option:  maxretry
-# Notes.:  number of retrys before IP gets banned.
-# Values:  NUM  Default:  3
+# Option:  maxfailures
+# Notes.:  number of failures before IP gets banned.
+# Values:  NUM  Default:  5
 #
-maxretry = 3
+maxfailures = 5
 
 # Option:  bantime
 # Notes.:  number of seconds an IP will be banned.
