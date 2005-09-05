@@ -9,6 +9,13 @@ Fail2Ban (version 0.?.?)                           2005/08/??
 
 ver. 0.?.? (2005/08/??) - ???
 ----------
+- Fixed a bug when overriding "maxfailures" or "bantime".
+  Thanks to Yaroslav Halchenko
+- Added more debug output if an error occurs when sending
+  mail. Thanks to Stephen Gildea
+- Renamed "maxretry" to "maxfailures" and changed default
+  value to 5. Thanks to Stephen Gildea
+- Hopefully fixed bug #1256075
 - Fixed bug #1262345
 - Fixed exception handling in PIDLock
 - Removed warning when using "-V" or "-h" with no config
