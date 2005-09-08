@@ -64,8 +64,8 @@ class Mail:
 			server.sendmail(self.fromAddr, self.toAddr, mail)
 			logSys.debug("Email sent to " + `self.toAddr`)
 			server.quit()	
-		except Exception:
+		except Exception, e:
 			logSys.error("Unable to send mail to " + self.host + ":" +
 						 `self.port` + " from " + self.fromAddr + " to " +
-						 `self.toAddr`)
+						 `self.toAddr` + ": " + `e` + ": " + `e.args`)
 		
