@@ -1,3 +1,12 @@
+fail2ban (0.5.2-5) unstable; urgency=low
+
+  * Included a patch from Stephen Gildea to provide "status" report by
+    init.d script
+  * Included a note in README.Debian regarding the fail2ban iptable's
+    chains
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri,  9 Sep 2005 14:52:24 -0400
+
 fail2ban (0.5.2-4) unstable; urgency=low
 
   * Format of SYSLOG entries is up to the standard now
@@ -16,7 +25,7 @@ fail2ban (0.5.2-3) unstable; urgency=low
   * Moved fail2ban man page under section 8 as in upstream
   * Introduced findtime configuration variable to control the lifetime
     of caught "failed" log entries (closes: #323840)
-  
+
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 16 Aug 2005 11:23:28 -1000
 
 fail2ban (0.5.2-2) unstable; urgency=low
@@ -53,4 +62,3 @@ fail2ban (0.4.1-1) unstable; urgency=low
   * First upstream release of a Debian package
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 04 Jul 2005 11:47:23 +0300
-

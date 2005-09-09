@@ -14,7 +14,11 @@ Only handling of ssh files is enabled by default. If you want to use
 fail2ban with apache, please enable apache section manually in
 /etc/fail2ban.conf.
 
+Currently no checks if an iptables queue generated at the beginning
+(fail2ban-http and fail2ban-ssh) exists. So if your firewall resets
+the iptable rules -- it is your responsibility to restart fail2ban.
+
 See  TODO.Debian for more details, as well as the Debian Bug
 Tracking system.
 
- -- Yaroslav O. Halchenko <debian@onerussian.com>, Thu Aug 18 20:53:58 2005
+ -- Yaroslav O. Halchenko <debian@onerussian.com>, Fri Sep  9 14:55:29 2005
