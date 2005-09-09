@@ -17,11 +17,11 @@
 # Author: Cyril Jaquier
 # Modified by: Yaroslav Halchenko (SYSLOG, findtime)
 # 
-# $Revision: 1.20.2.13 $
+# $Revision: 1.20.2.16 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.20.2.13 $"
-__date__ = "$Date: 2005/08/06 18:44:06 $"
+__version__ = "$Revision: 1.20.2.16 $"
+__date__ = "$Date: 2005/09/05 21:12:08 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -130,7 +130,7 @@ def getCmdLineOptions(optList):
 		if opt[0] == "-i":
 			conf["ignoreip"] = opt[1]
 		if opt[0] == "-r":
-			conf["maxretry"] = int(opt[1])
+			conf["maxfailures"] = int(opt[1])
 		if opt[0] == "-p":
 			conf["pidlock"] = opt[1]
 		if opt[0] == "-k":
@@ -162,12 +162,12 @@ def main():
 	
 	# Pre-parsing of command line options for the -c option
 	for opt in optList:
+		if opt[0] == "-c":
+			conf["conffile"] = opt[1]
 		if opt[0] in ["-h", "--help"]:
  			dispUsage()
 		if opt[0] in ["-V", "--version"]:
 			dispVersion()
-		if opt[0] == "-c":
-			conf["conffile"] = opt[1]
 	
 	# Reads the config file and create a LogReader instance for
 	# each log file to check.
@@ -181,7 +181,7 @@ def main():
 					["int", "syslog-facility", 1],
 					["bool", "debug", False],
 					["str", "pidlock", "/var/run/fail2ban.pid"],
-					["int", "maxretry", 3],
+					["int", "maxfailures", 5],
 					["int", "bantime", 600],
 					["int", "findtime", 600],
 					["str", "ignoreip", ""],
@@ -293,16 +293,7 @@ def main():
 	
 	# Ignores IP list
 	ignoreIPList = conf["ignoreip"].split(' ')
-	
-	# maxretry option
-	maxRetry = conf["maxretry"]
-	
-	# bantime option
-	banTime = conf["bantime"]
 
-	# findtime option
-	findTime = conf["findtime"]
-	
 	# Checks for root user. This is necessary because log files
 	# are owned by root and firewall needs root access.
 	if not checkForRoot():
@@ -316,12 +307,15 @@ def main():
 		logSys.error("Fail2Ban already running with PID "+pid)
 		sys.exit(-1)
 	else:
-		pidLock.create()
+		ret = pidLock.create()
+		if not ret:
+			# Unable to create PID lock. Exit
+			sys.exit(-1)
 	
 	logSys.debug("ConfFile is " + conf["conffile"])
 	logSys.debug("BanTime is " + `conf["bantime"]`)
 	logSys.debug("FindTime is " + `conf["findtime"]`)
-	logSys.debug("retryAllowed is " + `conf["maxretry"]`)
+	logSys.debug("MaxFailure is " + `conf["maxfailures"]`)
 	
 	# Options
 	optionValues = (["bool", "enabled", False],
@@ -346,9 +340,9 @@ def main():
 	# Options
 	optionValues = (["bool", "enabled", False],
 					["str", "logfile", "/dev/null"],
-					["int", "maxretry", maxRetry],
-					["int", "bantime", banTime],
-					["int", "findtime", findTime],
+					["int", "maxfailures", conf["maxfailures"]],
+					["int", "bantime", conf["bantime"]],
+					["int", "findtime", conf["findtime"]],
 					["str", "timeregex", ""],
 					["str", "timepattern", ""],
 					["str", "failregex", ""],
@@ -364,7 +358,7 @@ def main():
 			
 			# Creates a logreader object
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
-							 l["failregex"], l["maxretry"], l["findtime"])
+							 l["failregex"], l["maxfailures"], l["findtime"])
 			# Creates a firewall object
 			fObj = Firewall(l["fwban"], l["fwunban"], l["bantime"])
 			# Links them into a list. I'm not really happy
@@ -381,6 +375,8 @@ def main():
 		if isValidIP(ip):
 			for element in logFwList:
 				element[1].addIgnoreIP(ip)
+		else:
+			logSys.warn(ip + " is not a valid IP address")
 	
 	logSys.info("Fail2Ban v" + version + " is running")
 	# Execute global start command

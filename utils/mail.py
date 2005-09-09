@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.1.2.2 $
+# $Revision: 1.1.2.3 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.1.2.2 $"
-__date__ = "$Date: 2005/08/01 16:35:18 $"
+__version__ = "$Revision: 1.1.2.3 $"
+__date__ = "$Date: 2005/09/08 18:05:59 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -64,8 +64,8 @@ class Mail:
 			server.sendmail(self.fromAddr, self.toAddr, mail)
 			logSys.debug("Email sent to " + `self.toAddr`)
 			server.quit()	
-		except Exception:
+		except Exception, e:
 			logSys.error("Unable to send mail to " + self.host + ":" +
 						 `self.port` + " from " + self.fromAddr + " to " +
-						 `self.toAddr`)
+						 `self.toAddr` + ": " + `e` + ": " + `e.args`)
 		

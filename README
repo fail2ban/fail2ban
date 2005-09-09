@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.5.2)                           2005/08/06
+Fail2Ban (version 0.5.3)                           2005/09/08
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -58,15 +58,16 @@ Require: python-2.3 (http://www.python.org)
 
 To install, just do:
 
-> tar xvfj fail2ban-0.5.2.tar.bz2
-> cd fail2ban-0.5.2
+> tar xvfj fail2ban-0.5.3.tar.bz2
+> cd fail2ban-0.5.3
 > python setup.py install
 
 This will install Fail2Ban into /usr/lib/fail2ban. The fail2ban
 executable is placed into /usr/bin.
 
-Gentoo: an ebuild is available on the website.
-Debian: a package is available on the website.
+Gentoo: ebuilds are available on the website.
+Debian: Fail2Ban is in Debian unstable.
+RedHat: packages are available on the website.
 
 Fail2Ban should now be correctly installed. Just type:
 
@@ -121,7 +122,8 @@ Thanks:
 -------
 
 Kévin Drapel, Marvin Rouge, Sireyessire, Robert Edeker,
-Tom Pike, Iain Lea, Andrey G. Grozin, Yaroslav Halchenko
+Tom Pike, Iain Lea, Andrey G. Grozin, Yaroslav Halchenko,
+Jonathan Kamens, Stephen Gildea
 
 License:
 --------

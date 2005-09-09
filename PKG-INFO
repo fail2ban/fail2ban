@@ -1,6 +1,6 @@
 Metadata-Version: 1.0
 Name: fail2ban
-Version: 0.5.2
+Version: 0.5.3
 Summary: Ban IPs that make too many password failure
 Home-page: http://fail2ban.sourceforge.net
 Author: Cyril Jaquier
@@ -11,5 +11,5 @@ Description:
         /var/log/apache/error_log and bans IP that makes
         too many password failures. It updates firewall rules
         to reject the IP address or executes user defined
-        commands. It needs log4py.
+        commands.
 Platform: Posix

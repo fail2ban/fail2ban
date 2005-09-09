@@ -1,6 +1,6 @@
 # Fail2Ban configuration file
 #
-# $Revision: 1.8.2.9 $
+# $Revision: 1.8.2.11 $
 #
 # 2005.06.21  modified for readability  Iain Lea  iain@bricbrac.de
 
@@ -39,11 +39,11 @@ syslog-facility = 1
 #
 pidlock = /var/run/fail2ban.pid
 
-# Option:  maxretry
-# Notes.:  number of retrys before IP gets banned.
-# Values:  NUM  Default:  3
+# Option:  maxfailures
+# Notes.:  number of failures before IP gets banned.
+# Values:  NUM  Default:  5
 #
-maxretry = 5
+maxfailures = 5
 
 # Option:  bantime
 # Notes.:  number of seconds an IP will be banned.
@@ -61,9 +61,7 @@ findtime = 600
 # Notes.:  space separated list of IP's to be ignored by fail2ban.
 #          You can use CIDR mask in order to specify a range.
 #          Example:  ignoreip = 192.168.0.1/24 123.45.235.65
-# Values:  IP  Default:  empty
-# Examples
-#  ignoreip = 192.168.0.0/24
+# Values:  IP  Default:  192.168.0.0/16
 #
 ignoreip = 192.168.0.0/16
 
@@ -133,7 +131,7 @@ subject = [Fail2Ban] Banned <ip>
 #          <failures>  number of failures
 #          <failtime>  unix timestamp of the last failure
 #          <br>  new line
-# Values:  TEXT  Default:  
+# Values:  TEXT  Default:
 #
 message = Hi,<br>
           The IP <ip> has just been banned by Fail2Ban after
@@ -200,7 +198,7 @@ fwunban = iptables -D fail2ban-http -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in Apache logfile.
-# Values:  [Wed Jan 05 15:08:01 2005]  
+# Values:  [Wed Jan 05 15:08:01 2005]
 # Default: \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
 #
 timeregex = \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
@@ -272,7 +270,7 @@ fwunban = iptables -D fail2ban-ssh -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in SSH logfile.
-# Values:  [Mar  7 17:53:28]  
+# Values:  [Mar  7 17:53:28]
 # Default: \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
 #
 timeregex = \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}

@@ -10,3 +10,5 @@ ToDo
 See Feature Request Tracking System at SourceForge.net
 
 - improve installation process (better prefix support)
+- install Fail2ban into /usr/share
+- better configuration files

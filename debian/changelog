@@ -1,3 +1,9 @@
+fail2ban (0.5.3-1) UNRELEASED; urgency=low
+
+  * (NOT RELEASED YET) New upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri,  9 Sep 2005 16:55:00 -0400
+
 fail2ban (0.5.2-5) unstable; urgency=low
 
   * Included a patch from Stephen Gildea to provide "status" report by
