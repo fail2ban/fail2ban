@@ -18,6 +18,6 @@
 # 
 # $Revision$
 
-# Command line options for Fail2Ban. Refer to "fail2ban.py -h" for
+# Command line options for Fail2Ban. Refer to "fail2ban -h" for
 # valid options.
 FAIL2BAN_OPTS="-v"
