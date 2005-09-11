@@ -15,8 +15,11 @@ fail2ban with apache, please enable apache section manually in
 /etc/fail2ban.conf.
 
 Currently no checks if an iptables queue generated at the beginning
-(fail2ban-http and fail2ban-ssh) exists. So if your firewall resets
-the iptable rules -- it is your responsibility to restart fail2ban.
+(fail2ban-http and fail2ban-ssh) exists. So if your firewall resets the iptable
+rules -- it is your responsibility to restart fail2ban.  Also you can
+augment fwban and fwunban rules and include as first lines full
+definitions of fwstart. That is nasty solution and probably it will get
+resolved in the future.
 
 See  TODO.Debian for more details, as well as the Debian Bug
 Tracking system.
