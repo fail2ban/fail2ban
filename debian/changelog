@@ -1,3 +1,10 @@
+fail2ban (0.5.3-2) UNRELEASED; urgency=low
+
+  * Refined comments in README.Debian
+  * Reindented init.d script
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 11 Sep 2005 15:19:44 -0400
+
 fail2ban (0.5.3-1) unstable; urgency=low
 
   * New upstream release
