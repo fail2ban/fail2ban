@@ -4,11 +4,12 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.5.3)                           2005/09/08
+Fail2Ban (version 0.?.?)                           2005/09/??
 =============================================================
 
 ver. ?.?.? (????/??/??) - ?
 ----------
+- Fixed bug #1286222.
 - Propagated patches introduced by Debian maintainer 
   (Yaroslav Halchenko):
   * Fixed handling of SYSLOG logging target. Now it can log
