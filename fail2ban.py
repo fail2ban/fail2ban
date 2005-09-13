@@ -249,9 +249,8 @@ def main():
 		if target == "STDERR":
 			hdlr = logging.StreamHandler(sys.stderr)
 		elif target == "SYSLOG":
-
 			# SYSLOG target can be either
-			#    a socket (file, so it starts with /)
+			# a socket (file, so it starts with /)
 			# or hostname
 			# or hostname:port
 			syslogtargets = re.findall("(/[\w/]*)|([^/ ][^: ]*)(:(\d+)){,1}",
@@ -270,7 +269,7 @@ def main():
 			else:
 				if not ( syslogtargets[0] == "" ): # got socket
 					syslogtarget = syslogtargets[0]
-				else:		# got hostname and may be a port
+				else:		# got hostname and maybe a port
 					if syslogtargets[3] == "": # no port specified
 						port = 514
 					else:
@@ -355,7 +354,6 @@ def main():
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t, optionValues)
 		if l["enabled"]:
-			
 			# Creates a logreader object
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
 							 l["failregex"], l["maxfailures"], l["findtime"])
