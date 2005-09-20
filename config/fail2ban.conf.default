@@ -1,6 +1,6 @@
 # Fail2Ban configuration file
 #
-# $Revision: 1.8.2.11 $
+# $Revision: 1.8.2.13 $
 #
 # 2005.06.21  modified for readability  Iain Lea  iain@bricbrac.de
 
@@ -23,14 +23,16 @@ debug = false
 #
 logtargets = /var/log/fail2ban.log
 
-# Option: syslog-target
-# Notes.: where to find syslog facility if logtarget SYSLOG.
-# Values: file(socket) hostname hostname:port Default: /dev/log
+# Option:  syslog-target
+# Notes.:  where to find syslog facility if logtarget SYSLOG.
+# Values:  SOCKET HOST HOST:PORT  Default: /dev/log
+#
 syslog-target = /dev/log
 
-# Option: syslog-facility
-# Notes.: which syslog facility to use if logtarget SYSLOG.
-# Values: NUM Default: 1
+# Option:  syslog-facility
+# Notes.:  which syslog facility to use if logtarget SYSLOG.
+# Values:  NUM  Default: 1
+#
 syslog-facility = 1
 
 # Option:  pidlock

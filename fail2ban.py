@@ -16,12 +16,12 @@
 
 # Author: Cyril Jaquier
 # Modified by: Yaroslav Halchenko (SYSLOG, findtime)
-# 
-# $Revision: 1.20.2.16 $
+#
+# $Revision: 1.20.2.18 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.20.2.16 $"
-__date__ = "$Date: 2005/09/05 21:12:08 $"
+__version__ = "$Revision: 1.20.2.18 $"
+__date__ = "$Date: 2005/09/13 20:42:33 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -90,7 +90,7 @@ def sigTERMhandler(signum, frame):
 		exit properly.
 	"""
 	logSys.debug("Signal handler called with sig "+`signum`)
-	killApp()	
+	killApp()
 
 def killApp():
 	""" Flush the ban list, remove the PID lock file and exit
@@ -227,7 +227,7 @@ def main():
 			logSys.setLevel(logging.INFO)
 		elif conf["verbose"] > 1:
 			logSys.setLevel(logging.DEBUG)
-		
+	
 	# Set debug log level
 	if conf["debug"]:
 		logSys.setLevel(logging.DEBUG)
@@ -243,15 +243,14 @@ def main():
 	# Bug fix for #1234699
 	os.umask(0077)
 	for target in conf["logtargets"].split():
-		# target formatter 
+		# target formatter
 		# By default global formatter is taken. Is different for SYSLOG
 		tformatter = formatter
 		if target == "STDERR":
 			hdlr = logging.StreamHandler(sys.stderr)
 		elif target == "SYSLOG":
-
 			# SYSLOG target can be either
-			#    a socket (file, so it starts with /)
+			# a socket (file, so it starts with /)
 			# or hostname
 			# or hostname:port
 			syslogtargets = re.findall("(/[\w/]*)|([^/ ][^: ]*)(:(\d+)){,1}",
@@ -270,7 +269,7 @@ def main():
 			else:
 				if not ( syslogtargets[0] == "" ): # got socket
 					syslogtarget = syslogtargets[0]
-				else:		# got hostname and may be a port
+				else:		# got hostname and maybe a port
 					if syslogtargets[3] == "": # no port specified
 						port = 514
 					else:
@@ -300,7 +299,7 @@ def main():
 		logSys.error("You must be root")
 		if not conf["debug"]:
 			sys.exit(-1)
-			
+	
 	# Checks that no instance of Fail2Ban is currently running.
 	pid = pidLock.exists()
 	if pid:
@@ -350,12 +349,11 @@ def main():
 					["str", "fwend", ""],
 					["str", "fwban", ""],
 					["str", "fwunban", ""])
-					
+	
 	# Gets the options of each sections
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t, optionValues)
 		if l["enabled"]:
-			
 			# Creates a logreader object
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
 							 l["failregex"], l["maxfailures"], l["findtime"])

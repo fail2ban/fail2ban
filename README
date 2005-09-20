@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.5.3)                           2005/09/08
+Fail2Ban (version 0.5.4)                           2005/09/13
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -58,8 +58,8 @@ Require: python-2.3 (http://www.python.org)
 
 To install, just do:
 
-> tar xvfj fail2ban-0.5.3.tar.bz2
-> cd fail2ban-0.5.3
+> tar xvfj fail2ban-0.5.4.tar.bz2
+> cd fail2ban-0.5.4
 > python setup.py install
 
 This will install Fail2Ban into /usr/lib/fail2ban. The fail2ban
