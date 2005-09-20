@@ -1,4 +1,4 @@
-fail2ban (0.5.3-2) UNRELEASED; urgency=low
+fail2ban (0.5.3-2) unstable; urgency=low
 
   * Refined comments in README.Debian
   * Reindented init.d script
