@@ -10,8 +10,7 @@
 #
 # Version:	$Id$
 #
-
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+export PATH="${PATH:+$PATH:}/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 DAEMON=/usr/bin/fail2ban
 NAME=fail2ban
 DESC=fail2ban
@@ -31,7 +30,7 @@ case "$1" in
 		echo -n "Starting $DESC: "
 		[ -f $PIDFILE ] && [ ! -d /proc/`cat $PIDFILE` ] && rm -f $PIDFILE
 		start-stop-daemon --start --quiet --pidfile $PIDFILE \
-			-b --exec $DAEMON -- $DAEMON_OPTS
+			--exec $DAEMON -- $DAEMON_OPTS
 		echo "$NAME."
 		;;
 	stop)
