@@ -429,7 +429,8 @@ def main():
 					if failTime < unixTime - findTime:
 						del element[3][attempt]
 					elif fails[attempt][0] >= element[1].getMaxRetry():
-						aInfo = {"ip": attempt,
+						aInfo = {"section": element[0],
+								 "ip": attempt,
 								 "failures": element[3][attempt][0],
 								 "failtime": failTime}
 						logSys.info(element[0] + ": " + aInfo["ip"] +

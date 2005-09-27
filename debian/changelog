@@ -4,8 +4,13 @@ fail2ban (0.5.4-2) unstable; urgency=low
     problems finding iptables in the cases when PATH was not exported outside
     (cfengine, broken shell environment) (closes: #329304)
   * Removed -b from start-stop-daemon because fail2ban detahes on its own
+  * Added @localhost to MAIL:from and MAIL:to in fail2ban.conf and placed
+    a note to README.Debian regarding necessity to specify full email
+    address in MAIL:from (closes: #329722)
+  * Added a keyword <section> in parsing of the subject and the body of an
+    email sent out by fail2ban (closes: #330311)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 21 Sep 2005 08:09:06 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 27 Sep 2005 08:09:06 -0400
 
 fail2ban (0.5.4-1) unstable; urgency=low
 

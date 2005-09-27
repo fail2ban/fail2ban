@@ -10,9 +10,17 @@ Currently the main difference with upstream: python libraries are
 placed under /usr/share/fail2ban insteadh of /usr/lib/fail2ban to
 comply with policy regarding architecture independent resources.
 
+Default behavior:
+-----------------
+
 Only handling of ssh files is enabled by default. If you want to use
 fail2ban with apache, please enable apache section manually in
 /etc/fail2ban.conf.
+
+Troubleshooting:
+---------------
+
+Broken chain:
 
 Currently no checks if an iptables queue generated at the beginning
 (fail2ban-http and fail2ban-ssh) exists. So if your firewall resets the iptable
@@ -21,7 +29,15 @@ augment fwban and fwunban rules and include as first lines full
 definitions of fwstart. That is nasty solution and probably it will get
 resolved in the future.
 
-See  TODO.Debian for more details, as well as the Debian Bug
-Tracking system.
+Mailing:
 
- -- Yaroslav O. Halchenko <debian@onerussian.com>, Fri Sep  9 14:55:29 2005
+As it was reported (bug #329722) you might need to provide a full
+e-mail address in fail2ban.conf option MAIL:from to make your mail
+server accept that email. I've added @localhost to both MAIL:from and
+MAIL:to in the default configuration shipped with Debian. It seems to
+work nicely now
+
+See TODO.Debian for more details, as well as the Debian Bug Tracking
+system.
+
+ -- Yaroslav O. Halchenko <debian@onerussian.com>, Tue Sep 27 11:36:41 2005

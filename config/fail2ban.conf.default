@@ -109,27 +109,29 @@ port = 25
 # Notes.:  e-mail address of the sender.
 # Values:  MAIL  Default:  fail2ban
 #
-from = fail2ban
+from = fail2ban@localhost
 
 # Option:  to
 # Notes.:  e-mail addresses of the receiver. Addresses are space
 #          separated.
 # Values:  MAIL  Default:  root
 #
-to = root
+to = root@localhost
 
 # Option:  subject
 # Notes.:  subject of the e-mail.
-# Tags:    <ip>  IP address
+# Tags:    <section> active section (eg ssh, apache, etc)
+#          <ip>  IP address
 #          <failures>  number of failures
 #          <failtime>  unix timestamp of the last failure
-# Values:  TEXT  Default:  [Fail2Ban] Banned <ip>
+# Values:  TEXT  Default:  [Fail2Ban:<section>] Banned <ip>
 #
-subject = [Fail2Ban] Banned <ip>
+subject = [Fail2Ban:<section>] Banned <ip>
 
 # Option:  message
 # Notes.:  message of the e-mail.
-# Tags:    <ip>  IP address
+# Tags:    <section> active section (eg ssh, apache, etc)
+#          <ip>  IP address
 #          <failures>  number of failures
 #          <failtime>  unix timestamp of the last failure
 #          <br>  new line
