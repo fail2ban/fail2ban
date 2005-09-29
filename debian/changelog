@@ -1,3 +1,9 @@
+fail2ban (0.5.4-4) unstable; urgency=low
+
+  * On a request from Calum Mackay added reporting of the enabled sections
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 29 Sep 2005 11:20:43 -1000
+
 fail2ban (0.5.4-3) unstable; urgency=low
 
   * Resolved the mistery of debug mode in which commands are not really

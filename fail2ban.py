@@ -352,11 +352,15 @@ def main():
 					["str", "fwban", ""],
 					["str", "fwunban", ""])
 	
+	logSys.info("Fail2Ban v" + version + " is running")
+	
+	enabledSections = ""
 	# Gets the options of each sections
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t, optionValues)
 		if l["enabled"]:
 			# Creates a logreader object
+			enabledSections += " %s"%t
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
 							 l["failregex"], l["maxfailures"], l["findtime"])
 			# Creates a firewall object
@@ -364,6 +368,8 @@ def main():
 			# Links them into a list. I'm not really happy
 			# with this :/
 			logFwList.append([t, lObj, fObj, dict(), l])
+	
+	logSys.info("Sections [%s] are enabled"%t)
 	
 	# We add 127.0.0.1 to the ignore list has we do not want
 	# to be ban ourself.
@@ -378,7 +384,6 @@ def main():
 		else:
 			logSys.warn(ip + " is not a valid IP address")
 	
-	logSys.info("Fail2Ban v" + version + " is running")
 	# Execute global start command
 	executeCmd(conf["cmdstart"], conf["debug"])
 	# Execute start command of each section
