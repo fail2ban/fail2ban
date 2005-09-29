@@ -11,8 +11,19 @@
 #
 background = true
 
+# Option:  verbose
+# Notes.:  verbosity of the output.
+#           0 - regular level
+#           1 - INFO level
+#           2 - DEBUG level (but commands get executed as opposed to
+#                debug option)
+# Values:  NUM  Default:  0
+#
+verbose = 1
+
 # Option:  debug
-# Notes.:  enable debug mode. More verbose output and bypass root user test.
+# Notes.:  enable debug mode. No real commands gets executed but only
+#          reported, more verbose output, bypass root user test.
 # Values:  [true | false]  Default:  false
 #
 debug = false

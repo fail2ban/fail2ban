@@ -1,3 +1,13 @@
+fail2ban (0.5.4-3) unstable; urgency=low
+
+  * Resolved the mistery of debug mode in which commands are not really
+    executed: added verbose option to config file, removed -v from
+    /etc/default/fail2ban, reordered code a bit so that log targets are
+    setup right after background and then only loglevel (verbose,debug) is
+    processed, so the warning could be seen in the logs
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 29 Sep 2005 00:20:43 -1000
+
 fail2ban (0.5.4-2) unstable; urgency=low
 
   * Now exporting PATH explicitely in init.d/fail2ban script, to avoid

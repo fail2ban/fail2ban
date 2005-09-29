@@ -180,6 +180,7 @@ def main():
 					["str", "syslog-target", "/dev/log"],
 					["int", "syslog-facility", 1],
 					["bool", "debug", False],
+					["int", "verbose", conf["verbose"]],
 					["str", "pidlock", "/var/run/fail2ban.pid"],
 					["int", "maxfailures", 5],
 					["int", "bantime", 600],
@@ -188,7 +189,7 @@ def main():
 					["int", "polltime", 1],
 					["str", "cmdstart", ""],
 					["str", "cmdend", ""])
-	
+
 	# Gets global configuration options
 	conf.update(confReader.getLogOptions("DEFAULT", optionValues))
 	
@@ -197,7 +198,7 @@ def main():
 	
 	# PID lock
 	pidLock.setPath(conf["pidlock"])
-	
+
 	# Now we can kill properly a running instance if needed
 	try:
 		conf["kill"]
@@ -220,26 +221,7 @@ def main():
 			logSys.error("Unable to start daemon")
 			sys.exit(-1)
 
-	# Verbose level
-	if conf["verbose"]:
-		logSys.warn("Verbose level is "+`conf["verbose"]`)
-		if conf["verbose"] == 1:
-			logSys.setLevel(logging.INFO)
-		elif conf["verbose"] > 1:
-			logSys.setLevel(logging.DEBUG)
-	
-	# Set debug log level
-	if conf["debug"]:
-		logSys.setLevel(logging.DEBUG)
-		formatterstring = ('%(levelname)s: [%(filename)s (%(lineno)d)] ' +
-						   '%(message)s')
-		formatter = logging.Formatter("%(asctime)s " + formatterstring)
-		stdout.setFormatter(formatter)
-		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
-					"ONLY DISPLAYED IN THE LOG MESSAGES")
-
-	# Process some options
-	# Log targets
+	# First setup Log targets
 	# Bug fix for #1234699
 	os.umask(0077)
 	for target in conf["logtargets"].split():
@@ -289,7 +271,27 @@ def main():
 		# Set formatter and add handler to logger
 		hdlr.setFormatter(tformatter)
 		logSys.addHandler(hdlr)
-	
+
+	# Process some options
+
+	# Verbose level
+	if conf["verbose"]:
+		logSys.warn("Verbose level is "+`conf["verbose"]`)
+		if conf["verbose"] == 1:
+			logSys.setLevel(logging.INFO)
+		elif conf["verbose"] > 1:
+			logSys.setLevel(logging.DEBUG)
+
+	# Set debug log level
+	if conf["debug"]:
+		logSys.setLevel(logging.DEBUG)
+		formatterstring = ('%(levelname)s: [%(filename)s (%(lineno)d)] ' +
+						   '%(message)s')
+		formatter = logging.Formatter("%(asctime)s " + formatterstring)
+		stdout.setFormatter(formatter)
+		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
+					"ONLY DISPLAYED IN THE LOG MESSAGES")
+
 	# Ignores IP list
 	ignoreIPList = conf["ignoreip"].split(' ')
 
