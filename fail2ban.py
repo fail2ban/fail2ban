@@ -354,13 +354,13 @@ def main():
 	
 	logSys.info("Fail2Ban v" + version + " is running")
 	
-	enabledSections = ""
+	enabledSections = []
 	# Gets the options of each sections
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t, optionValues)
 		if l["enabled"]:
 			# Creates a logreader object
-			enabledSections += " %s"%t
+			enabledSections.append(t)
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
 							 l["failregex"], l["maxfailures"], l["findtime"])
 			# Creates a firewall object
@@ -369,7 +369,7 @@ def main():
 			# with this :/
 			logFwList.append([t, lObj, fObj, dict(), l])
 	
-	logSys.info("Sections [%s] are enabled"%t)
+	logSys.info("Sections %s are enabled"%enabledSections)
 	
 	# We add 127.0.0.1 to the ignore list has we do not want
 	# to be ban ourself.
