@@ -369,7 +369,7 @@ def main():
 			# with this :/
 			logFwList.append([t, lObj, fObj, dict(), l])
 	
-	logSys.info("Sections %s are enabled"%enabledSections)
+	logSys.info("Enabled sections: %s"%enabledSections)
 	
 	# We add 127.0.0.1 to the ignore list has we do not want
 	# to be ban ourself.
