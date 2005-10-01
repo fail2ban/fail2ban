@@ -20,6 +20,18 @@ fail2ban with apache, please enable apache section manually in
 Troubleshooting:
 ---------------
 
+Updated failregex:
+
+To resolve the security bug #330827 [1] failregex expressions must
+provide a named group (?P<host>...) as a placeholder of the abuser's
+host. The naming of the group was introduced to capture possible
+future generalizations of failregex to provide even more
+information. At a current point, all named groups are considered as
+possible locations of the host addresses, but usually you should need
+just a single group (?P<host>...)
+
+[1] http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=330827
+
 Broken chain:
 
 Currently no checks if an iptables queue generated at the beginning
@@ -40,4 +52,4 @@ work nicely now
 See TODO.Debian for more details, as well as the Debian Bug Tracking
 system.
 
- -- Yaroslav O. Halchenko <debian@onerussian.com>, Tue Sep 27 11:36:41 2005
+ -- Yaroslav O. Halchenko <debian@onerussian.com>, Sat Oct  1 02:47:46 2005

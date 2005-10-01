@@ -172,7 +172,16 @@ class LogReader:
 			timeMatch = re.search(self.timeregex, match.string)
 			if timeMatch:
 				date = self.getUnixTime(timeMatch.group())
-				ipMatch = textToIp(match.string)
+				# Bug fix for Debian #330827
+				hostMatch = match.groupdict()
+				if len(hostMatch)==0:
+					logSys.warn("Must have been using old style of failregex! "
+								"Security Breach! Read README.Debian")
+					ipMatch = textToIp(match.string)
+				else:
+ 					ipMatch = reduce(lambda x,y:x+textToIp(y),
+									 hostMatch.values(), [])
+					
 				if ipMatch:
 					for ip in ipMatch:
 						failList.append([ip, date])

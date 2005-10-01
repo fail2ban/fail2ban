@@ -227,9 +227,9 @@ timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
 
 # Option:  failregex
 # Notes.:  regex to match the password failure messages in the logfile.
-# Values:  TEXT  Default:  authentication failure|user .* not found
+# Values:  TEXT  Default:  [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)
 #
-failregex = authentication failure|user .* not found
+failregex = [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)
 
 [SSH]
 # Option:  enabled
@@ -299,6 +299,6 @@ timepattern = %%b %%d %%H:%%M:%%S
 
 # Option:  failregex
 # Notes.:  regex to match the password failures messages in the logfile.
-# Values:  TEXT  Default:  Authentication failure|Failed password|Invalid user
+# Values:  TEXT  Default:  (?:Authentication failure|Failed (?:keyboard-interactive/pam|password)) for(?: illegal user)? .* from (?:::f{4,6}:)?(?P<host>\S*)
 #
-failregex = Authentication failure|Failed password|Invalid user|Illegal user|Failed keyboard-interactive
+failregex = (?:Authentication failure|Failed (?:keyboard-interactive/pam|password)) for(?: illegal user)? .* from (?:::f{4,6}:)?(?P<host>\S*)
