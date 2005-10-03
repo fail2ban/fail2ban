@@ -1,4 +1,4 @@
-fail2ban (0.5.4-5pre1) unstable; urgency=low
+fail2ban (0.5.4-5) unstable; urgency=low
 
   * Made failregex'es more specific to don't allow usernames to be used as a
     tool for denial of service attacks. Config files (or at least
