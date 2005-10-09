@@ -1,4 +1,4 @@
-fail2ban (0.5.4-5.2) unstable; urgency=low
+fail2ban (0.5.4-5.3) unstable; urgency=low
 
   * Added a notification regarding the importance of 0.5.4-5 change of
     failregex in the config file
