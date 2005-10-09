@@ -301,4 +301,4 @@ timepattern = %%b %%d %%H:%%M:%%S
 # Notes.:  regex to match the password failures messages in the logfile.
 # Values:  TEXT  Default:  (?:Authentication failure|Failed (?:keyboard-interactive/pam|password)) for(?: illegal user)? .* from (?:::f{4,6}:)?(?P<host>\S*)
 #
-failregex = (?:Authentication failure|Failed (?:keyboard-interactive/pam|password)) for(?: illegal user)? .* from (?:::f{4,6}:)?(?P<host>\S*)
+failregex = : (?:Authentication failure for |Failed (?:keyboard-interactive/pam|password|unknown) for )?(?:[iI]llegal user )?.* from (?:::f{4,6}:)?(?P<host>\S*)
