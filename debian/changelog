@@ -1,11 +1,14 @@
-fail2ban (0.5.4-5.4) unstable; urgency=low
+fail2ban (0.5.4-5.5) unstable; urgency=low
 
   * Added a notification regarding the importance of 0.5.4-5 change of
     failregex in the config file
   * Adjusted address to FSF
   * Adjusted failregex for SSH so it bans "Illegal user" entries as well, and
     restricted full failregex more to include ":" at the beginning, because
-    otherwise it might not be sufficient and would revive bug 330827
+    otherwise it might not be sufficient and would revive bug 330827 (closes:
+    #333056)
+  * Adjusted failregex for SSH to accommodate recent changes in logging of
+    SSH: Illegal -> Invalid. Should match both now
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  3 Oct 2005 22:26:28 -1000
 
