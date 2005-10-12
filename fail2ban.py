@@ -25,7 +25,7 @@ __date__ = "$Date: 2005/09/13 20:42:33 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, sys, getopt, os, string, signal, logging, logging.handlers
+import time, sys, getopt, os, string, signal, logging, logging.handlers, copy
 from ConfigParser import *
 
 from version import version
@@ -92,12 +92,34 @@ def sigTERMhandler(signum, frame):
 	logSys.debug("Signal handler called with sig "+`signum`)
 	killApp()
 
+def initializeFwRules():
+	""" Initializes firewalls by running cmdstart and then
+	    fwstart for each section
+	"""
+	# Execute global start command
+	executeCmd(conf["cmdstart"], conf["debug"])
+	# Execute start command of each section
+	for element in logFwList:
+		l = element[4]
+		executeCmd(l["fwstart"], conf["debug"])
+
+
+def reBan():
+	""" For each section asks the Firewall to reban known IPs
+	"""
+	for element in logFwList:
+		element[2].reBan(conf["debug"])
+
 def restoreFwRules():
 	""" Flush the ban list
 	"""
 	logSys.warn("Restoring firewall rules...")
 	for element in logFwList:
-		element[2].flushBanList(conf["debug"])
+		try:
+			element[2].flushBanList(conf["debug"])
+		except ExternalError, e:
+			# nothing bad really - we can survive :-)
+			pass
 	# Execute end command of each section
 	for element in logFwList:
 		l = element[4]
@@ -106,11 +128,15 @@ def restoreFwRules():
 	executeCmd(conf["cmdend"], conf["debug"])
 
 def killApp():
-	""" Flush the ban list, remove and exit
+	""" Flush the ban list, remove the PID lock file and exit
 		nicely.
 	"""
 	# Restore Fw rules
 	restoreFwRules()
+	# Remove the PID lock
+	pidLock.remove()
+	logSys.info("Exiting...")
+	logging.shutdown()
 	sys.exit(0)
 
 def getCmdLineOptions(optList):
@@ -138,12 +164,9 @@ def getCmdLineOptions(optList):
 		if opt[0] == "-k":
 			conf["kill"] = True
 
-def main(secondaryStart):
+def main():
 	""" Fail2Ban main function
 	"""
-	# (re)Initialize global variables
-	logFwList.__init__()
-	conf.clear()
 	
 	# Add the default logging handler
 	stdout = logging.StreamHandler(sys.stdout)
@@ -218,110 +241,106 @@ def main(secondaryStart):
 	except KeyError:
 		pass
 
-	# If it is not a hot restart
-	#   fork, setup logging, create pid, check for root
-	if not secondaryStart:
-		# Start Fail2Ban in daemon mode 
-		if conf["background"]:
-			logSys.debug("Daemonizing")
-			retCode = createDaemon()
-			signal.signal(signal.SIGTERM, sigTERMhandler)
-			if not retCode:
-				logSys.error("Unable to start daemon")
-				sys.exit(-1)
-
-		# First setup Log targets
-		# Bug fix for #1234699
-		os.umask(0077)
-		for target in conf["logtargets"].split():
-			# target formatter
-			# By default global formatter is taken. Is different for SYSLOG
-			tformatter = formatter
-			if target == "STDERR":
-				hdlr = logging.StreamHandler(sys.stderr)
-			elif target == "SYSLOG":
-				# SYSLOG target can be either
-				# a socket (file, so it starts with /)
-				# or hostname
-				# or hostname:port
-				syslogtargets = re.findall("(/[\w/]*)|([^/ ][^: ]*)(:(\d+)){,1}",
-										   conf["syslog-target"])
-				# we are waiting for a single match
-				syslogtargets = syslogtargets[0]
-
-				# assign facility if it was defined
-				if conf["syslog-facility"] < 0:
-					facility = handlers.SysLogHandler.LOG_USER
-				else:
-					facility = conf["syslog-facility"]
-
-				if len(syslogtargets) == 0: # everything default
-					hdlr = logging.handlers.SysLogHandler()
-				else:
-					if not ( syslogtargets[0] == "" ): # got socket
-						syslogtarget = syslogtargets[0]
-					else:		# got hostname and maybe a port
-						if syslogtargets[3] == "": # no port specified
-							port = 514
-						else:
-							port = int(syslogtargets[3])
-						syslogtarget = (syslogtargets[1], port)
-					hdlr = logging.handlers.SysLogHandler(syslogtarget, facility)
-				tformatter = logging.Formatter("fail2ban[%(process)d]: " +
-											   formatterstring);
-			else:
-				# Target should be a file
-				try:
-					open(target, "a")
-					hdlr = logging.FileHandler(target)
-				except IOError:
-					logSys.error("Unable to log to " + target)
-					continue
-			# Set formatter and add handler to logger
-			hdlr.setFormatter(tformatter)
-			logSys.addHandler(hdlr)
-
-		# Process some options
-
-		# Verbose level
-		if conf["verbose"]:
-			logSys.warn("Verbose level is "+`conf["verbose"]`)
-			if conf["verbose"] == 1:
-				logSys.setLevel(logging.INFO)
-			elif conf["verbose"] > 1:
-				logSys.setLevel(logging.DEBUG)
-
-		# Set debug log level
-		if conf["debug"]:
-			logSys.setLevel(logging.DEBUG)
-			formatterstring = ('%(levelname)s: [%(filename)s (%(lineno)d)] ' +
-							   '%(message)s')
-			formatter = logging.Formatter("%(asctime)s " + formatterstring)
-			stdout.setFormatter(formatter)
-			logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
-						"ONLY DISPLAYED IN THE LOG MESSAGES")
-
-		# Checks for root user. This is necessary because log files
-		# are owned by root and firewall needs root access.
-		if not checkForRoot():
-			logSys.error("You must be root")
-			if not conf["debug"]:
-				sys.exit(-1)
-
-		# Checks that no instance of Fail2Ban is currently running.
-		pid = pidLock.exists()
-		if pid:
-			logSys.error("Fail2Ban already running with PID "+pid)
+	# Start Fail2Ban in daemon mode
+	if conf["background"]:
+		retCode = createDaemon()
+		signal.signal(signal.SIGTERM, sigTERMhandler)
+		if not retCode:
+			logSys.error("Unable to start daemon")
 			sys.exit(-1)
+
+	# First setup Log targets
+	# Bug fix for #1234699
+	os.umask(0077)
+	for target in conf["logtargets"].split():
+		# target formatter
+		# By default global formatter is taken. Is different for SYSLOG
+		tformatter = formatter
+		if target == "STDERR":
+			hdlr = logging.StreamHandler(sys.stderr)
+		elif target == "SYSLOG":
+			# SYSLOG target can be either
+			# a socket (file, so it starts with /)
+			# or hostname
+			# or hostname:port
+			syslogtargets = re.findall("(/[\w/]*)|([^/ ][^: ]*)(:(\d+)){,1}",
+									   conf["syslog-target"])
+			# we are waiting for a single match
+			syslogtargets = syslogtargets[0]
+
+			# assign facility if it was defined
+			if conf["syslog-facility"] < 0:
+				facility = handlers.SysLogHandler.LOG_USER
+			else:
+				facility = conf["syslog-facility"]
+
+			if len(syslogtargets) == 0: # everything default
+				hdlr = logging.handlers.SysLogHandler()
+			else:
+				if not ( syslogtargets[0] == "" ): # got socket
+					syslogtarget = syslogtargets[0]
+				else:		# got hostname and maybe a port
+					if syslogtargets[3] == "": # no port specified
+						port = 514
+					else:
+						port = int(syslogtargets[3])
+					syslogtarget = (syslogtargets[1], port)
+				hdlr = logging.handlers.SysLogHandler(syslogtarget, facility)
+			tformatter = logging.Formatter("fail2ban[%(process)d]: " +
+										   formatterstring);
 		else:
-			ret = pidLock.create()
-			if not ret:
-				# Unable to create PID lock. Exit
-				sys.exit(-1)
+			# Target should be a file
+			try:
+				open(target, "a")
+				hdlr = logging.FileHandler(target)
+			except IOError:
+				logSys.error("Unable to log to " + target)
+				continue
+		# Set formatter and add handler to logger
+		hdlr.setFormatter(tformatter)
+		logSys.addHandler(hdlr)
+
+	# Process some options
+
+	# Verbose level
+	if conf["verbose"]:
+		logSys.warn("Verbose level is "+`conf["verbose"]`)
+		if conf["verbose"] == 1:
+			logSys.setLevel(logging.INFO)
+		elif conf["verbose"] > 1:
+			logSys.setLevel(logging.DEBUG)
+
+	# Set debug log level
+	if conf["debug"]:
+		logSys.setLevel(logging.DEBUG)
+		formatterstring = ('%(levelname)s: [%(filename)s (%(lineno)d)] ' +
+						   '%(message)s')
+		formatter = logging.Formatter("%(asctime)s " + formatterstring)
+		stdout.setFormatter(formatter)
+		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
+					"ONLY DISPLAYED IN THE LOG MESSAGES")
 
 	# Ignores IP list
 	ignoreIPList = conf["ignoreip"].split(' ')
 
+	# Checks for root user. This is necessary because log files
+	# are owned by root and firewall needs root access.
+	if not checkForRoot():
+		logSys.error("You must be root")
+		if not conf["debug"]:
+			sys.exit(-1)
+	
+	# Checks that no instance of Fail2Ban is currently running.
+	pid = pidLock.exists()
+	if pid:
+		logSys.error("Fail2Ban already running with PID "+pid)
+		sys.exit(-1)
+	else:
+		ret = pidLock.create()
+		if not ret:
+			# Unable to create PID lock. Exit
+			sys.exit(-1)
+	
 	logSys.debug("ConfFile is " + conf["conffile"])
 	logSys.debug("BanTime is " + `conf["bantime"]`)
 	logSys.debug("FindTime is " + `conf["findtime"]`)
@@ -394,12 +413,15 @@ def main(secondaryStart):
 		else:
 			logSys.warn(ip + " is not a valid IP address")
 	
-	# Execute global start command
-	executeCmd(conf["cmdstart"], conf["debug"])
-	# Execute start command of each section
-	for element in logFwList:
-		l = element[4]
-		executeCmd(l["fwstart"], conf["debug"])
+	initializeFwRules()
+	
+	# yoh: I don't think that this parameters need to be configured
+	#      and probably maxRestarts should be removed
+	legitRestartTime = 10				 # legitimate minimal restart time
+	maxRestarts = 100			  # max number of times to perform restart
+
+	lastRestartTime = time.time()
+	restarts = 0
 	# Main loop
 	while True:
 		try:
@@ -459,10 +481,27 @@ def main(secondaryStart):
 							mail.sendmail(mailConf["subject"],
 										  mailConf["message"], aInfo)
 						del element[3][attempt]
-		except ExternalError:
-			# restore as much as possible before restart
+		except ExternalError, e:
+			# Something wrong while dealing with Iptables.
+			# May be chain got removed?
+			logSys.error("Fail2Ban got a problem: " + e.__str__())
+			if (unixTime - lastRestartTime > legitRestartTime) and (restarts < maxRestarts):
+				logSys.error("Reinitializing firewalls for the %dst time "%restarts)
+				lastRestartTime = time.time()
+			else:
+				logSys.error("Exiting: restarts follow too often, or too many restart attempts")
+				killApp()
+
+			# save firewalls to keep a list of IPs for rebanning
+			logFwListCopy = copy.deepcopy(logFwList)
+			# restore as much as possible
 			restoreFwRules()
-			raise
+			# reinitialize all the chains
+			initializeFwRules()
+			# restore the lists of baned IPs
+			logFwList = logFwListCopy
+			# reBan known IPs
+			reBan()
 		except KeyboardInterrupt:
 			# When the user press <ctrl>+<c> we exit nicely.
 			killApp()

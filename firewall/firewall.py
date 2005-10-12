@@ -72,6 +72,20 @@ class Firewall:
 			executeCmd(self.unBanIP(aInfo), debug)
 		else:
 			logSys.error(ip+" not in ban list")
+
+	def reBan(self, debug):
+		""" Re-Bans known IPs.
+		"""
+		for ip in self.banList:
+			aInfo = {"ip": ip,
+					 "bantime":self.banList[ip]}
+			logSys.warn("ReBan "+ip)
+			# next piece is similar to the on in addBanIp
+			# so might be one more function will not hurt
+			self.runCheck("pre-fw-reban", debug)
+			cmd = self.banIP(aInfo)
+			if executeCmd(cmd, debug):
+				raise ExternalError("Firewall: execution of fwban command '%s' failed"%cmd)
 	
 	def inBanList(self, ip):
 		""" Checks if IP is in ban list.
@@ -106,7 +120,7 @@ class Firewall:
 					 "bantime": element[1],
 					 "unbantime": time.time()}
 			self.delBanIP(aInfo, debug)
-			
+	
 	def banIP(self, aInfo):
 		""" Returns query to ban IP.
 		"""
