@@ -70,6 +70,9 @@ class PIDLock:
 				logSys.debug("Removed PID lock " + self.path)
 			except OSError:
 				logSys.error("Unable to remove PID lock " + self.path)
+			# AttributeError if self.path wasn't specified yet
+			except AttributeError:
+				logSys.debug("PID lock not removed because not defined yet")
 		
 		def exists(self):
 			""" Returns the current PID if Fail2Ban is running or False
