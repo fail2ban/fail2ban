@@ -28,6 +28,7 @@ import time, os, logging, re
 
 from utils.process import executeCmd
 from utils.strings import replaceTag
+from utils.process import ExternalError
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")
@@ -37,9 +38,10 @@ class Firewall:
 		the IP.
 	"""
 	
-	def __init__(self, banRule, unBanRule, banTime):
+	def __init__(self, banRule, unBanRule, checkRule, banTime):
 		self.banRule = banRule
 		self.unBanRule = unBanRule
+		self.checkRule = checkRule
 		self.banTime = banTime
 		self.banList = dict()
 	
@@ -52,7 +54,10 @@ class Firewall:
 			logSys.warn("Ban " + ip)
 			self.banList[ip] = crtTime
 			aInfo["bantime"] = crtTime
-			executeCmd(self.banIP(aInfo), debug)
+			self.runCheck("pre-fwban", debug)
+			cmd = self.banIP(aInfo)
+			if executeCmd(cmd, debug):
+				raise ExternalError("Firewall: execution of fwban command '%s' failed"%cmd)
 		else:
 			logSys.error(ip+" already in ban list")
 	
@@ -63,6 +68,7 @@ class Firewall:
 		if self.inBanList(ip):
 			logSys.warn("Unban "+ip)
 			del self.banList[ip]
+			self.runCheck("pre-fwunban", debug)
 			executeCmd(self.unBanIP(aInfo), debug)
 		else:
 			logSys.error(ip+" not in ban list")
@@ -71,7 +77,13 @@ class Firewall:
 		""" Checks if IP is in ban list.
 		"""
 		return self.banList.has_key(ip)
-	
+
+	def runCheck(self, location, debug):
+		""" Runs fwcheck command and throws an exception if it returns non-0 result """
+		if executeCmd(self.checkRule, debug):
+			raise ExternalError("Firewall: %s fwcheck command '%s' failed"
+								%(location,self.checkRule))
+		
 	def checkForUnBan(self, debug):
 		""" Check for IP to remove from ban list.
 		"""

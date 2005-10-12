@@ -185,8 +185,14 @@ fwstart = iptables -N fail2ban-http
 # Values:  CMD  Default:
 #
 fwend = iptables -D INPUT -p tcp --dport http -j fail2ban-http
-        iptables -D fail2ban-http -j RETURN
+        iptables -F fail2ban-http
         iptables -X fail2ban-http
+
+# Option:  fwcheck
+# Notes.:  command executed once before each fwban command
+# Values:  CMD  Default:
+#
+fwcheck = iptables -L INPUT | grep -q fail2ban-http
 
 # Option:  fwban
 # Notes.:  command executed when banning an IP. Take care that the
@@ -257,8 +263,14 @@ fwstart = iptables -N fail2ban-ssh
 # Values:  CMD  Default:
 #
 fwend = iptables -D INPUT -p tcp --dport ssh -j fail2ban-ssh
-        iptables -D fail2ban-ssh -j RETURN
+        iptables -F fail2ban-ssh
         iptables -X fail2ban-ssh
+
+# Option:  fwcheck
+# Notes.:  command executed once before each fwban command
+# Values:  CMD  Default:
+#
+fwcheck = iptables -L INPUT | grep -q fail2ban-ssh
 
 # Option:  fwbanrule
 # Notes.:  command executed when banning an IP. Take care that the

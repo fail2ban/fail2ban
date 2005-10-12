@@ -26,7 +26,7 @@ __date__ = "$Date: 2005/08/04 20:51:14 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import sys, traceback, logging
+import sys, traceback, logging, time
 
 # Appends our own modules path.
 sys.path.append("/usr/share/fail2ban")
@@ -34,6 +34,16 @@ sys.path.append("/usr/share/fail2ban")
 # Now we can import our modules.
 import fail2ban
 from utils.pidlock import PIDLock
+from utils.process import ExternalError
+
+# Start the application. Handle all the unhandled exceptions
+# yoh: I don't think that this parameters need to be configured
+#      and probably maxRestarts should be removed
+legitRestartTime = 10				 # legitimate minimal restart time
+maxRestarts = 100			  # max number of times to perform restart
+
+lastRestartTime = time.time()
+restarts = 0
 
 # Get the instance of the logger.
 logSys = logging.getLogger("fail2ban")
@@ -41,9 +51,21 @@ logSys = logging.getLogger("fail2ban")
 # Get PID lock file instance
 pidLock = PIDLock()
 
-# Start the application. Handle all the unhandled exceptions
 try:
-	fail2ban.main()
+	while True:
+		restarts += 1
+		try:
+			fail2ban.main(restarts>1)
+		except ExternalError, e:
+			# There went something wrong while dealing with Iptables. May be chain got
+			# removed?
+			logSys.error("Fail2Ban got a problem: " + e.__str__())
+			if (time.time() - lastRestartTime > legitRestartTime) and (restarts < maxRestarts):
+				logSys.error("Restarting for the %d time "%restarts)
+				lastRestartTime = time.time()
+			else:
+				logSys.error("Exiting: restarts follow too often, or too many restart attempts")
+				sys.exit(0)
 except SystemExit:
 	# We called sys.exit(). Nothing wrong so just pass
 	pass
@@ -55,6 +77,9 @@ except Exception, e:
 	logSys.error("Type: " + `type.__name__` + "\n" +
 				 "Value: " + `e.args` + "\n" +
 				 "TB: " + `tbStack`)
-	# Remove the PID lock file. Should close #1239562
-	pidLock.remove()
-	logging.shutdown()
+
+# Remove the PID lock file. Should close #1239562
+pidLock.remove()
+logSys.info("Exiting...")
+logging.shutdown()
+	

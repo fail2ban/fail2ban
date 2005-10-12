@@ -1,4 +1,4 @@
-fail2ban (0.5.4-5.6) unstable; urgency=low
+fail2ban (0.5.4-5.7) unstable; urgency=low
 
   * Added a notification regarding the importance of 0.5.4-5 change of
     failregex in the config file
@@ -11,6 +11,9 @@ fail2ban (0.5.4-5.6) unstable; urgency=low
     SSH: Illegal -> Invalid. Should match both now
   * Fixed a problem of raise AttributeError exception reported as a side
     effect of crash during parsing of the config file
+  * Introduced fwcheck option to verify consistency of the
+    chains. Implemented automatic restart of fail2ban main function in
+    case if check of fwban failed. Should close few bugs
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  3 Oct 2005 22:26:28 -1000
 

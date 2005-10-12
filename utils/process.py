@@ -29,6 +29,10 @@ import os, logging, signal
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")
 
+class ExternalError(UserWarning):
+	""" Exception to warn about failed fwcheck or fwban command """
+	pass
+
 def createDaemon():
 	""" Detach a process from the controlling terminal and run it in the
 		background as a daemon.
