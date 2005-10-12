@@ -32,15 +32,6 @@ just a single group (?P<host>...)
 
 [1] http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=330827
 
-Broken chain:
-
-Currently no checks if an iptables queue generated at the beginning
-(fail2ban-http and fail2ban-ssh) exists. So if your firewall resets the iptable
-rules -- it is your responsibility to restart fail2ban.  Also you can
-augment fwban and fwunban rules and include as first lines full
-definitions of fwstart. That is nasty solution and probably it will get
-resolved in the future.
-
 Mailing:
 
 As it was reported (bug #329722) you might need to provide a full
@@ -52,4 +43,4 @@ work nicely now
 See TODO.Debian for more details, as well as the Debian Bug Tracking
 system.
 
- -- Yaroslav O. Halchenko <debian@onerussian.com>, Sat Oct  1 02:47:46 2005
+ -- Yaroslav O. Halchenko <debian@onerussian.com>, Wed Oct 12 13:14:48 2005

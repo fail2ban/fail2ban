@@ -26,18 +26,28 @@ case "$1" in
 
        # Note regarding changed configuration file
 		if [ ! -z $preversion ] \
-			&& dpkg --compare-versions $preversion lt 0.5.4-5;
+			&& dpkg --compare-versions $preversion lt 0.5.4-6;
 			then
-			cat <<EOF 
+			cat <<EOF
 WARNING!
- Configuration file /etc/fail2ban.conf, failregex configuration parameter
- specificly, were changed in 0.5.4-5 to close reported security breach.
 
+ Configuration file /etc/fail2ban.conf, failregex configuration
+ parameter specificly, were changed in 0.5.4-5 to close reported
+ security breach, and in 0.5.4-6 to close few other bugs.
+
+updating from <0.5.4-5
  Unless configuration file (or corresponding failregex'es) gets updated,
  security breach is not closed and corresponding warning will be reported
  by the fail2ban (in the log files).
 
- Please review the configuration file and make appropriate changes. 
+updating from <0.5.4-6
+ Bugs #329163, #331695 dealing with changed iptables rules
+ outside of fail2ban were fixed in 0.5.4-6, and require upgrade of the
+ configuration file (fwcheck option was introduced) to take full
+ advantage of the problem solution (otherwise some problems might
+ persist)
+
+ Please review the configuration file and make appropriate changes.
 ENJOY!
 
 EOF
