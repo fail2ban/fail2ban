@@ -97,6 +97,21 @@ cmdend =
 #
 polltime = 1
 
+# Option:  reinittime
+# Notes.:  minimal number of seconds between the re-initialization of
+#          firewalls due to external changes in their rules (see fwcheck)
+# Values:  NUM  Default:  100
+#
+reinittime = 10
+
+# Option:  maxreinits
+# Notes.:  maximal number of re-initialization of firewalls due to external
+#          changes. -1 stays for infinite, so only reinittime is of importance
+# Values:  NUM  Default:  -1
+#
+maxreinits = -1
+
+
 [MAIL]
 # Option:  enabled
 # Notes.:  enable mail notification when banning an IP address.

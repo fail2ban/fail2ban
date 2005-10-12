@@ -49,12 +49,12 @@ class Firewall:
 		""" Bans an IP.
 		"""
 		ip = aInfo["ip"]
+		self.runCheck("pre-fwban", debug)
 		if not self.inBanList(ip):
 			crtTime = time.time()
 			logSys.warn("Ban " + ip)
 			self.banList[ip] = crtTime
 			aInfo["bantime"] = crtTime
-			self.runCheck("pre-fwban", debug)
 			cmd = self.banIP(aInfo)
 			if executeCmd(cmd, debug):
 				raise ExternalError("Firewall: execution of fwban command '%s' failed"%cmd)

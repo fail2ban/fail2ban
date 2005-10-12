@@ -216,7 +216,9 @@ def main():
 					["str", "ignoreip", ""],
 					["int", "polltime", 1],
 					["str", "cmdstart", ""],
-					["str", "cmdend", ""])
+					["str", "cmdend", ""],
+					["int", "reinittime", 100],
+					["int", "maxreinits", 100])
 
 	# Gets global configuration options
 	conf.update(confReader.getLogOptions("DEFAULT", optionValues))
@@ -415,13 +417,8 @@ def main():
 	
 	initializeFwRules()
 	
-	# yoh: I don't think that this parameters need to be configured
-	#      and probably maxRestarts should be removed
-	legitRestartTime = 10				 # legitimate minimal restart time
-	maxRestarts = 100			  # max number of times to perform restart
-
-	lastRestartTime = time.time()
-	restarts = 0
+	lastReinitTime = time.time()-conf["reinittime"]-1 # try to reinit once if it fails immediately
+	reinits = 0
 	# Main loop
 	while True:
 		try:
@@ -484,12 +481,14 @@ def main():
 		except ExternalError, e:
 			# Something wrong while dealing with Iptables.
 			# May be chain got removed?
-			logSys.error("Fail2Ban got a problem: " + e.__str__())
-			if (unixTime - lastRestartTime > legitRestartTime) and (restarts < maxRestarts):
-				logSys.error("Reinitializing firewalls for the %dst time "%restarts)
-				lastRestartTime = time.time()
+			reinits += 1
+			logSys.error(e)
+			if ((unixTime - lastReinitTime > conf["reinittime"]) and
+				((conf["maxreinits"]<0) or (reinits < conf["maxreinits"]))):
+				logSys.warn("#%d reinitialization of firewalls"%reinits)
+				lastReinitTime = unixTime
 			else:
-				logSys.error("Exiting: restarts follow too often, or too many restart attempts")
+				logSys.error("Exiting: reinits follow too often, or too many reinit attempts")
 				killApp()
 
 			# save firewalls to keep a list of IPs for rebanning
@@ -499,7 +498,7 @@ def main():
 			# reinitialize all the chains
 			initializeFwRules()
 			# restore the lists of baned IPs
-			logFwList = logFwListCopy
+			logFwList.__init__(logFwListCopy)
 			# reBan known IPs
 			reBan()
 		except KeyboardInterrupt:
