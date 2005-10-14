@@ -30,7 +30,8 @@ import os, logging, signal
 logSys = logging.getLogger("fail2ban")
 
 class ExternalError(UserWarning):
-	""" Exception to warn about failed fwcheck or fwban command """
+	""" Exception to warn about failed command
+	"""
 	pass
 
 def createDaemon():
@@ -130,6 +131,7 @@ def executeCmd(cmd, debug):
 		retval = os.system(cmd)
 		if not retval == 0:
 			logSys.error("'" + cmd + "' returned " + `retval`)
+			raise ExternalError("Execution of command '%s' failed" % cmd)
 		return retval
 	else:
 		return None

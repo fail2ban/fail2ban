@@ -28,7 +28,6 @@ import time, os, logging, re
 
 from utils.process import executeCmd
 from utils.strings import replaceTag
-from utils.process import ExternalError
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")
@@ -42,23 +41,44 @@ class Firewall:
 		self.banRule = banRule
 		self.unBanRule = unBanRule
 		self.checkRule = checkRule
+		self.startRule = ""
+		self.endRule = ""
 		self.banTime = banTime
 		self.banList = dict()
+	
+	def setStartRule(self, cmd):
+		self.startRule = cmd
+		
+	def getStartRule(self):
+		return self.startRule
+	
+	def setEndRule(self, cmd):
+		self.endRule = cmd
+		
+	def getEndRule(self):
+		return self.endRule
+	
+	def initialize(self, debug):
+		logSys.debug("Initialize firewall rules")
+		executeCmd(self.startRule, debug)
+	
+	def restore(self, debug):
+		logSys.debug("Restore firewall rules")
+		executeCmd(self.endRule, debug)
 	
 	def addBanIP(self, aInfo, debug):
 		""" Bans an IP.
 		"""
 		ip = aInfo["ip"]
-		self.runCheck("pre-fwban", debug)
 		if not self.inBanList(ip):
 			crtTime = time.time()
 			logSys.warn("Ban " + ip)
 			self.banList[ip] = crtTime
 			aInfo["bantime"] = crtTime
-			cmd = self.banIP(aInfo)
-			if executeCmd(cmd, debug):
-				raise ExternalError("Firewall: execution of fwban command '%s' failed"%cmd)
+			self.runCheck(debug)
+			executeCmd(self.banIP(aInfo), debug)
 		else:
+			self.runCheck(debug)
 			logSys.error(ip+" already in ban list")
 	
 	def delBanIP(self, aInfo, debug):
@@ -66,37 +86,36 @@ class Firewall:
 		"""
 		ip = aInfo["ip"]
 		if self.inBanList(ip):
-			logSys.warn("Unban "+ip)
+			logSys.warn("Unban " + ip)
 			del self.banList[ip]
-			self.runCheck("pre-fwunban", debug)
+			self.runCheck(debug)
 			executeCmd(self.unBanIP(aInfo), debug)
 		else:
 			logSys.error(ip+" not in ban list")
 
 	def reBan(self, debug):
 		""" Re-Bans known IPs.
+			TODO: implement "failures" and "failtime"
 		"""
 		for ip in self.banList:
 			aInfo = {"ip": ip,
-					 "bantime":self.banList[ip]}
-			logSys.warn("ReBan "+ip)
+					 "bantime": self.banList[ip]}
+			logSys.warn("ReBan " + ip)
 			# next piece is similar to the on in addBanIp
 			# so might be one more function will not hurt
-			self.runCheck("pre-fw-reban", debug)
-			cmd = self.banIP(aInfo)
-			if executeCmd(cmd, debug):
-				raise ExternalError("Firewall: execution of fwban command '%s' failed"%cmd)
+			self.runCheck(debug)
+			executeCmd(self.banIP(aInfo), debug)
 	
 	def inBanList(self, ip):
 		""" Checks if IP is in ban list.
 		"""
 		return self.banList.has_key(ip)
 
-	def runCheck(self, location, debug):
-		""" Runs fwcheck command and throws an exception if it returns non-0 result """
-		if executeCmd(self.checkRule, debug):
-			raise ExternalError("Firewall: %s fwcheck command '%s' failed"
-								%(location,self.checkRule))
+	def runCheck(self, debug):
+		""" Runs fwcheck command and throws an exception if it returns non-0
+			result
+		"""
+		executeCmd(self.checkRule, debug)
 		
 	def checkForUnBan(self, debug):
 		""" Check for IP to remove from ban list.

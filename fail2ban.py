@@ -100,9 +100,7 @@ def initializeFwRules():
 	executeCmd(conf["cmdstart"], conf["debug"])
 	# Execute start command of each section
 	for element in logFwList:
-		l = element[4]
-		executeCmd(l["fwstart"], conf["debug"])
-
+		element[2].initialize(conf["debug"])
 
 def reBan():
 	""" For each section asks the Firewall to reban known IPs
@@ -117,13 +115,12 @@ def restoreFwRules():
 	for element in logFwList:
 		try:
 			element[2].flushBanList(conf["debug"])
-		except ExternalError, e:
+		except ExternalError:
 			# nothing bad really - we can survive :-)
 			pass
 	# Execute end command of each section
 	for element in logFwList:
-		l = element[4]
-		executeCmd(l["fwend"], conf["debug"])
+		element[2].restore(conf["debug"])
 	# Execute global end command
 	executeCmd(conf["cmdend"], conf["debug"])
 
@@ -219,6 +216,7 @@ def main():
 					["str", "cmdend", ""],
 					["int", "reinittime", 100],
 					["int", "maxreinits", 100])
+
 
 	# Gets global configuration options
 	conf.update(confReader.getLogOptions("DEFAULT", optionValues))
@@ -398,7 +396,7 @@ def main():
 			fObj = Firewall(l["fwban"], l["fwunban"], l["fwcheck"], l["bantime"])
 			# Links them into a list. I'm not really happy
 			# with this :/
-			logFwList.append([t, lObj, fObj, dict(), l])
+			logFwList.append([t, lObj, fObj, dict()])
 	
 	logSys.info("Enabled sections: %s"%enabledSections)
 	
@@ -416,8 +414,8 @@ def main():
 			logSys.warn(ip + " is not a valid IP address")
 	
 	initializeFwRules()
-	
-	lastReinitTime = time.time()-conf["reinittime"]-1 # try to reinit once if it fails immediately
+	# try to reinit once if it fails immediately
+	lastReinitTime = time.time() - conf["reinittime"] - 1
 	reinits = 0
 	# Main loop
 	while True:
@@ -484,23 +482,28 @@ def main():
 			reinits += 1
 			logSys.error(e)
 			if ((unixTime - lastReinitTime > conf["reinittime"]) and
-				((conf["maxreinits"]<0) or (reinits < conf["maxreinits"]))):
+				((conf["maxreinits"] < 0) or (reinits < conf["maxreinits"]))):
 				logSys.warn("#%d reinitialization of firewalls"%reinits)
 				lastReinitTime = unixTime
 			else:
-				logSys.error("Exiting: reinits follow too often, or too many reinit attempts")
+				logSys.error("Exiting: reinits follow too often, or too many " +
+							 "reinit attempts")
 				killApp()
-
 			# save firewalls to keep a list of IPs for rebanning
 			logFwListCopy = copy.deepcopy(logFwList)
-			# restore as much as possible
-			restoreFwRules()
-			# reinitialize all the chains
-			initializeFwRules()
-			# restore the lists of baned IPs
-			logFwList.__init__(logFwListCopy)
-			# reBan known IPs
-			reBan()
+			try:
+				# restore as much as possible
+				restoreFwRules()
+				# reinitialize all the chains
+				initializeFwRules()
+				# restore the lists of baned IPs
+				logFwList.__init__(logFwListCopy)
+				# reBan known IPs
+				reBan()
+			except ExternalError:
+				raise ExternalError("Big Oops happened: situation is out of " +
+									"control. Something is wrong with your " +
+									"setup. Please check your settings")
 		except KeyboardInterrupt:
 			# When the user press <ctrl>+<c> we exit nicely.
 			killApp()

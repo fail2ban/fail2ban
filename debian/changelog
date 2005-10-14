@@ -1,4 +1,4 @@
-fail2ban (0.5.4-5.9) unstable; urgency=low
+fail2ban (0.5.4-5.10) unstable; urgency=low
 
   * Added a notification regarding the importance of 0.5.4-5 change of
     failregex in the config file.
@@ -14,6 +14,7 @@ fail2ban (0.5.4-5.9) unstable; urgency=low
   * Introduced fwcheck option to verify consistency of the
     chains. Implemented automatic restart of fail2ban main function in
     case if check of fwban or fwban command failed (closes: #329163, #331695).
+    (Introduced patch was further adjusted by upstream author)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  3 Oct 2005 22:26:28 -1000
 
