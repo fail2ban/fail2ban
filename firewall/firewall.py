@@ -27,6 +27,10 @@ __license__ = "GPL"
 import time, os, logging, re
 
 from utils.process import executeCmd
+# unfortunately but I have to bring ExternalError in especially
+# for flushBanList: if one of IPs got flushed manually outside or something,
+# we might endup with not "full" flush unless we handle exception within the loop
+from utils.process import ExternalError
 from utils.strings import replaceTag
 
 # Gets the instance of the logger.
@@ -46,42 +50,51 @@ class Firewall:
 		self.endRule = endRule
 		self.banTime = banTime
 		self.banList = dict()
-	
+		self.section = ""
+
+	def setSection(self, section):
+		""" Set optional section name for clarify of logging
+		"""
+		self.section = section
+		
 	def initialize(self, debug):
-		logSys.debug("Initialize firewall rules")
+		logSys.debug("%s: Initialize firewall rules"%self.section)
 		executeCmd(self.startRule, debug)
 	
 	def restore(self, debug):
-		logSys.debug("Restore firewall rules")
-		flushBanList(debug)
-		executeCmd(self.endRule, debug)
-	
+		logSys.debug("%s: Restore firewall rules"%self.section)
+		try:
+			self.flushBanList(debug)
+			executeCmd(self.endRule, debug)
+		except ExternalError:
+			pass
+		
 	def addBanIP(self, aInfo, debug):
 		""" Bans an IP.
 		"""
 		ip = aInfo["ip"]
 		if not self.inBanList(ip):
 			crtTime = time.time()
-			logSys.warn("Ban " + ip)
+			logSys.warn("%s: Ban "%self.section + ip)
 			self.banList[ip] = crtTime
 			aInfo["bantime"] = crtTime
 			self.runCheck(debug)
 			executeCmd(self.banIP(aInfo), debug)
 		else:
 			self.runCheck(debug)
-			logSys.error(ip+" already in ban list")
+			logSys.error("%s: "%self.section+ip+" already in ban list")
 	
 	def delBanIP(self, aInfo, debug):
 		""" Unban an IP.
 		"""
 		ip = aInfo["ip"]
 		if self.inBanList(ip):
-			logSys.warn("Unban " + ip)
+			logSys.warn("%s: Unban "%self.section + ip)
 			del self.banList[ip]
 			self.runCheck(debug)
 			executeCmd(self.unBanIP(aInfo), debug)
 		else:
-			logSys.error(ip+" not in ban list")
+			logSys.error("%s: "%self.section+ip+" not in ban list")
 
 	def reBan(self, debug):
 		""" Re-Bans known IPs.
@@ -90,7 +103,7 @@ class Firewall:
 		for ip in self.banList:
 			aInfo = {"ip": ip,
 					 "bantime": self.banList[ip]}
-			logSys.warn("ReBan " + ip)
+			logSys.warn("%s: ReBan "%self.section + ip)
 			# next piece is similar to the on in addBanIp
 			# so might be one more function will not hurt
 			self.runCheck(debug)
@@ -128,8 +141,13 @@ class Firewall:
 			aInfo = {"ip": element[0],
 					 "bantime": element[1],
 					 "unbantime": time.time()}
-			self.delBanIP(aInfo, debug)
-	
+			try:
+				self.delBanIP(aInfo, debug)
+			except ExternalError:
+				# we must let it fail here in the loop, or we don't
+				# flush properly
+				pass
+			
 	def banIP(self, aInfo):
 		""" Returns query to ban IP.
 		"""
