@@ -62,8 +62,9 @@ def dispUsage():
 	print "  -h         display this help message"
 	print "  -i <IP(s)> IP(s) to ignore"
 	print "  -k         kill a currently running instance"
-	print "  -r <VALUE> allow a max of VALUE password failure"
-	print "  -t <TIME>  ban IP for TIME seconds"
+	print "  -r <VALUE> allow a max of VALUE password failure [maxfailures]"
+	print "  -t <TIME>  ban IP for TIME seconds [bantime]"
+	print "  -f <TIME>  lifetime in secods of failed entry [findtime]"
 	print "  -v         verbose. Use twice for greater effect"
 	print "  -V         print software version"
 	print
@@ -149,6 +150,12 @@ def getCmdLineOptions(optList):
 				conf["bantime"] = int(opt[1])
 			except ValueError:
 				logSys.warn("banTime must be an integer")
+				logSys.warn("Using default value")
+		if opt[0] == "-f":
+			try:
+				conf["findtime"] = int(opt[1])
+			except ValueError:
+				logSys.warn("findTime must be an integer")
 				logSys.warn("Using default value")
 		if opt[0] == "-i":
 			conf["ignoreip"] = opt[1]
