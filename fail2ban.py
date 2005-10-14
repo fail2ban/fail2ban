@@ -112,17 +112,16 @@ def restoreFwRules():
 	""" Flush the ban list
 	"""
 	logSys.warn("Restoring firewall rules...")
-	for element in logFwList:
-		try:
+	try:
+		for element in logFwList:
+			# Execute end command of each section
 			element[2].flushBanList(conf["debug"])
-		except ExternalError:
-			# nothing bad really - we can survive :-)
-			pass
-	# Execute end command of each section
-	for element in logFwList:
-		element[2].restore(conf["debug"])
-	# Execute global end command
-	executeCmd(conf["cmdend"], conf["debug"])
+			element[2].restore(conf["debug"])
+		# Execute global end command
+		executeCmd(conf["cmdend"], conf["debug"])
+	except ExternalError:
+		# nothing bad really - we can survive :-)
+		pass
 
 def killApp():
 	""" Flush the ban list, remove the PID lock file and exit
@@ -393,7 +392,8 @@ def main():
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
 							 l["failregex"], l["maxfailures"], l["findtime"])
 			# Creates a firewall object
-			fObj = Firewall(l["fwban"], l["fwunban"], l["fwcheck"], l["bantime"])
+			fObj = Firewall(l["fwstart"], l["fwend"],
+							l["fwban"], l["fwunban"], l["fwcheck"], l["bantime"])
 			# Links them into a list. I'm not really happy
 			# with this :/
 			logFwList.append([t, lObj, fObj, dict()])

@@ -37,26 +37,15 @@ class Firewall:
 		the IP.
 	"""
 	
-	def __init__(self, banRule, unBanRule, checkRule, banTime):
+	def __init__(self, startRule, endRule,
+		     banRule, unBanRule, checkRule, banTime):
 		self.banRule = banRule
 		self.unBanRule = unBanRule
 		self.checkRule = checkRule
-		self.startRule = ""
-		self.endRule = ""
+		self.startRule = startRule
+		self.endRule = endRule
 		self.banTime = banTime
 		self.banList = dict()
-	
-	def setStartRule(self, cmd):
-		self.startRule = cmd
-		
-	def getStartRule(self):
-		return self.startRule
-	
-	def setEndRule(self, cmd):
-		self.endRule = cmd
-		
-	def getEndRule(self):
-		return self.endRule
 	
 	def initialize(self, debug):
 		logSys.debug("Initialize firewall rules")
