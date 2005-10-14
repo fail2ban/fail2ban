@@ -53,6 +53,7 @@ class Firewall:
 	
 	def restore(self, debug):
 		logSys.debug("Restore firewall rules")
+		flushBanList(debug)
 		executeCmd(self.endRule, debug)
 	
 	def addBanIP(self, aInfo, debug):

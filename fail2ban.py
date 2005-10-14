@@ -112,11 +112,16 @@ def restoreFwRules():
 	""" Flush the ban list
 	"""
 	logSys.warn("Restoring firewall rules...")
-	try:
-		for element in logFwList:
-			# Execute end command of each section
-			element[2].flushBanList(conf["debug"])
+	for element in logFwList:
+		# Execute end command of each section
+		try:
 			element[2].restore(conf["debug"])
+		except ExternalError:
+			# nothing bad really - we can survive :-)
+			# but it has to be a separate exception handler
+			# for each section, so we don't miss anything
+			pass
+	try:
 		# Execute global end command
 		executeCmd(conf["cmdend"], conf["debug"])
 	except ExternalError:
