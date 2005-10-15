@@ -228,6 +228,13 @@ def main():
 	
 	# Gets command line options
 	getCmdLineOptions(optList)
+
+	# Now we need to update confReader.configParser with 'commandline'
+	# overwritten parameters. There is no way to assign configParser
+	# with defaults (as I thought before) below in the code: thus defaults
+	# have to be overridden
+	for t, label, v in optionValues:
+		confReader.setValue("DEFAULT", label, `conf[label]`)
 	
 	# PID lock
 	pidLock.setPath(conf["pidlock"])

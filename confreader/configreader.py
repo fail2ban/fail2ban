@@ -54,6 +54,12 @@ class ConfigReader:
 		sections.remove("MAIL")
 		logSys.debug("Found sections: " + `sections`)
 		return sections
+
+	def setValue(self, sec, label, value):
+		""" Override a value for a section
+		"""
+		self.configParser.set(sec, label, value)
+
 	
 	# Each optionValues entry is composed of an array with:
 	# 0 -> the type of the option

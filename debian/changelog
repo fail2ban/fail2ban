@@ -16,7 +16,8 @@ fail2ban (0.5.4-5.11) unstable; urgency=low
     case if check of fwban or fwban command failed (closes: #329163, #331695).
     (Introduced patch was further adjusted by upstream author)
   * Added -f command line parameter for [findtime]
-  * Fixing the issue of not respecting command line parameters
+  * Fixed the issue of not respecting command line parameters for parameters
+    within sections
   
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  3 Oct 2005 22:26:28 -1000
 
