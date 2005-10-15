@@ -136,6 +136,20 @@ def killApp():
 	logging.shutdown()
 	sys.exit(0)
 
+
+def isEnabledSection(b, name):
+	""" Uses @b or searches @name in the conf['enabledsections'] to
+		determine if section is enabled. Removes also a value from the
+		list if it was there
+		Decided to place as a function to avoid duplication between
+		MAIL and regular sections
+	"""
+	v = b
+	if (name.upper() in conf["enabledsections"]):
+		v = True
+		conf["enabledsections"].remove(name.upper())
+	return v
+
 def getCmdLineOptions(optList):
 	""" Gets the command line options
 	"""
@@ -377,7 +391,7 @@ def main():
 	mailConf = confReader.getLogOptions("MAIL", optionValues)
 	
 	# Create mailer if enabled
-	if mailConf["enabled"] or ("MAIL" in conf["enabledsections"]):
+	if isEnabledSection(mailConf["enabled"], "MAIL"):
 		logSys.debug("Mail enabled")
 		mail = Mail(mailConf["host"], mailConf["port"])
 		mail.setFromAddr(mailConf["from"])
@@ -405,7 +419,7 @@ def main():
 	# Gets the options of each sections
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t, optionValues)
-		if l["enabled"] or ( t.upper() in conf["enabledsections"] ) :
+		if isEnabledSection(l["enabled"], t):
 			# Creates a logreader object
 			enabledSections.append(t)
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
@@ -415,9 +429,6 @@ def main():
 							l["fwban"], l["fwunban"], l["fwcheck"], l["bantime"])
 			# "Name" the firewall
 			fObj.setSection(t)
-			# Remove it if it was in conf["enabledsections"]
-			if t.upper() in conf["enabledsections"]:
-				conf["enabledsections"].remove(t.upper())
 			# Links them into a list. I'm not really happy
 			# with this :/
 			logFwList.append([t, lObj, fObj, dict()])
