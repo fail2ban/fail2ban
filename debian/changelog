@@ -1,4 +1,4 @@
-fail2ban (0.5.4-5.11) unstable; urgency=low
+fail2ban (0.5.4-5.12) unstable; urgency=low
 
   * Added a notification regarding the importance of 0.5.4-5 change of
     failregex in the config file.
@@ -14,10 +14,12 @@ fail2ban (0.5.4-5.11) unstable; urgency=low
   * Introduced fwcheck option to verify consistency of the
     chains. Implemented automatic restart of fail2ban main function in
     case if check of fwban or fwban command failed (closes: #329163, #331695).
-    (Introduced patch was further adjusted by upstream author)
-  * Added -f command line parameter for [findtime]
+    (Introduced patch was further adjusted by upstream author).
+  * Added -f command line parameter for [findtime].
   * Fixed the issue of not respecting command line parameters for parameters
-    within sections
+    within sections.
+  * Added -e command line parameter to provide enabled sections from command
+    line.
   
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  3 Oct 2005 22:26:28 -1000
 

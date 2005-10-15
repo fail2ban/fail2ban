@@ -65,6 +65,7 @@ def dispUsage():
 	print "  -r <VALUE> allow a max of VALUE password failure [maxfailures]"
 	print "  -t <TIME>  ban IP for TIME seconds [bantime]"
 	print "  -f <TIME>  lifetime in secods of failed entry [findtime]"
+	print "  -e <NAMEs> enable sections listed in NAMEs (coma or colon separated)"
 	print "  -v         verbose. Use twice for greater effect"
 	print "  -V         print software version"
 	print
@@ -138,6 +139,8 @@ def killApp():
 def getCmdLineOptions(optList):
 	""" Gets the command line options
 	"""
+	# enabledsections can be defined just from the command line
+	conf["enabledsections"] = []
 	for opt in optList:
 		if opt[0] == "-v":
 			conf["verbose"] = conf["verbose"] + 1
@@ -165,6 +168,9 @@ def getCmdLineOptions(optList):
 			conf["pidlock"] = opt[1]
 		if opt[0] == "-k":
 			conf["kill"] = True
+		if opt[0] == "-e":
+			conf["enabledsections"] = map(lambda x: x.upper(),
+										  re.split("[:, \t\n]", opt[1]))
 
 def main():
 	""" Fail2Ban main function
@@ -184,8 +190,8 @@ def main():
 	
 	# Reads the command line options.
 	try:
-		cmdOpts = 'hvVbdkc:t:i:r:p:'
-		cmdLongOpts = ['help','version']
+		cmdOpts = 'hvVbdkc:t:f:i:r:p:e:'
+		cmdLongOpts = ['help', 'version']
 		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
 	except getopt.GetoptError:
 		dispUsage()
@@ -371,7 +377,7 @@ def main():
 	mailConf = confReader.getLogOptions("MAIL", optionValues)
 	
 	# Create mailer if enabled
-	if mailConf["enabled"]:
+	if mailConf["enabled"] or ("MAIL" in conf["enabledsections"]):
 		logSys.debug("Mail enabled")
 		mail = Mail(mailConf["host"], mailConf["port"])
 		mail.setFromAddr(mailConf["from"])
@@ -399,7 +405,7 @@ def main():
 	# Gets the options of each sections
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t, optionValues)
-		if l["enabled"]:
+		if l["enabled"] or ( t.upper() in conf["enabledsections"] ) :
 			# Creates a logreader object
 			enabledSections.append(t)
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
@@ -409,11 +415,19 @@ def main():
 							l["fwban"], l["fwunban"], l["fwcheck"], l["bantime"])
 			# "Name" the firewall
 			fObj.setSection(t)
+			# Remove it if it was in conf["enabledsections"]
+			if t.upper() in conf["enabledsections"]:
+				conf["enabledsections"].remove(t.upper())
 			# Links them into a list. I'm not really happy
 			# with this :/
 			logFwList.append([t, lObj, fObj, dict()])
 	
 	logSys.info("Enabled sections: %s"%enabledSections)
+
+	# Warn about such "bad" sections
+	if len(conf["enabledsections"])>0:
+		logSys.warn("Sections %s defined in command "%conf["enabledsections"] +
+					"line were not found in config, thus ignored")
 	
 	# We add 127.0.0.1 to the ignore list has we do not want
 	# to be ban ourself.
