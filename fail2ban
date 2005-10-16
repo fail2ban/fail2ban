@@ -55,6 +55,12 @@ except Exception, e:
 	logSys.error("Type: " + `type.__name__` + "\n" +
 				 "Value: " + `e.args` + "\n" +
 				 "TB: " + `tbStack`)
+	# Try to clean up after ourselves
+	# just for extreme caution - wrapping with try
+	try:
+		fail2ban.restoreFwRules()
+	except Exception:
+		pass
 	# Remove the PID lock file. Should close #1239562
 	pidLock.remove()
 	logging.shutdown()

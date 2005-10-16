@@ -97,15 +97,17 @@ class LogReader:
 		"""
 		try:
 			self.logStats = os.stat(self.logPath)
+			
+			if self.lastModTime == self.logStats.st_mtime:
+				return False
+			else:
+				logSys.debug(self.logPath+" has been modified")
+				self.lastModTime = self.logStats.st_mtime
+			return True
 		except OSError:
 			logSys.error("Unable to get stat on "+self.logPath)
-		
-		if self.lastModTime == self.logStats.st_mtime:
 			return False
-		else:
-			logSys.debug(self.logPath+" has been modified")
-			self.lastModTime = self.logStats.st_mtime
-			return True
+
 	
 	def setFilePos(self, file):
 		""" Sets the file position. We must take care of log file rotation

@@ -1,4 +1,4 @@
-fail2ban (0.5.4-5.13) unstable; urgency=low
+fail2ban (0.5.4-5.14) unstable; urgency=low
 
   * Added a notification regarding the importance of 0.5.4-5 change of
     failregex in the config file.
@@ -20,6 +20,10 @@ fail2ban (0.5.4-5.13) unstable; urgency=low
     within sections.
   * Added -e command line parameter to provide enabled sections from command
     line.
+  * Added a cleanup of firewall rules on emergency shutdown when unknown
+    exception is catched.
+  * Fail2ban should not crash now if a wrong file name is specified in
+    config.
   
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  3 Oct 2005 22:26:28 -1000
 
