@@ -84,7 +84,7 @@ binary-arch: build install copy-inits
 #	dh_installemacsen
 #	dh_installpam
 #	dh_installmime
-	dh_installinit -uparams -- defaults 99
+	dh_installinit -- defaults 99
 #	dh_installcron
 #	dh_installinfo
 	dh_installman fail2ban.8 man/fail2ban.conf.5
