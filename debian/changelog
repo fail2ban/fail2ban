@@ -1,3 +1,17 @@
+fail2ban (0.5.4-6.1) unstable; urgency=low
+
+  * Fixed typos (thanx to Ross Boylan).
+  * Robust startup: if iptables module gets fully initialized after
+    startup of fail2ban, fail2ban will do "maxreinit" attempts to
+    initialize its own firewall. It will sleep between attempts for
+    "polltime" number of seconds (closes: #334272).
+  * To overcome possible conflict with other firewall solutions and as a
+    secondary solution for the bug 334272, fail2ban startup is moved
+    during bootup to the latest (S99) sequenece position. That should not
+    cause any discomfort I believe.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 18 Oct 2005 15:54:38 -0400
+
 fail2ban (0.5.4-5.14) unstable; urgency=low
 
   * Added a notification regarding the importance of 0.5.4-5 change of
@@ -13,7 +27,7 @@ fail2ban (0.5.4-5.14) unstable; urgency=low
     effect of crash during parsing of the config file.
   * Introduced fwcheck option to verify consistency of the
     chains. Implemented automatic restart of fail2ban main function in
-    case if check of fwban or fwban command failed (closes: #329163, #331695).
+    case check of fwban or fwunban command failed (closes: #329163, #331695).
     (Introduced patch was further adjusted by upstream author).
   * Added -f command line parameter for [findtime].
   * Fixed the issue of not respecting command line parameters for parameters
@@ -24,7 +38,7 @@ fail2ban (0.5.4-5.14) unstable; urgency=low
     exception is catched.
   * Fail2ban should not crash now if a wrong file name is specified in
     config.
-  
+
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  3 Oct 2005 22:26:28 -1000
 
 fail2ban (0.5.4-5) unstable; urgency=low
@@ -44,7 +58,7 @@ fail2ban (0.5.4-4) unstable; urgency=low
 
 fail2ban (0.5.4-3) unstable; urgency=low
 
-  * Resolved the mistery of debug mode in which commands are not really
+  * Resolved the mystery of debug mode in which commands are not really
     executed: added verbose option to config file, removed -v from
     /etc/default/fail2ban, reordered code a bit so that log targets are
     setup right after background and then only loglevel (verbose,debug) is

@@ -43,4 +43,10 @@ work nicely now
 See TODO.Debian for more details, as well as the Debian Bug Tracking
 system.
 
- -- Yaroslav O. Halchenko <debian@onerussian.com>, Wed Oct 12 13:14:48 2005
+Dirty exit:
+
+If firewall rules gets cleaned out before fail2ban exits (like was
+happening with firestarter), errors get reported during the exit of
+fail2ban, but they are "safe" and can be ignored.
+
+ -- Yaroslav O. Halchenko <debian@onerussian.com>, Thu Oct 20 13:24:56 2005
