@@ -1,4 +1,4 @@
-fail2ban (0.5.4-6.1) unstable; urgency=low
+fail2ban (0.5.4-6.2) unstable; urgency=low
 
   * Fixed typos (thanx to Ross Boylan).
   * Robust startup: if iptables module gets fully initialized after
