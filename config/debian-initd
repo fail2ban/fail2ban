@@ -28,15 +28,41 @@ set -e
 case "$1" in
 	start)
 		echo -n "Starting $DESC: "
+		if $0 status >/dev/null
+			then
+			$0 status
+			exit 1
+		fi
 		[ -f $PIDFILE ] && [ ! -d /proc/`cat $PIDFILE` ] && rm -f $PIDFILE
 		start-stop-daemon --start --quiet --pidfile $PIDFILE \
 			--exec $DAEMON -- $DAEMON_OPTS
-		echo "$NAME."
+		echo ".done"
 		;;
 	stop)
 		echo -n "Stopping $DESC: "
+		if $0 status >/dev/null
+			then
+			fail2banpid=`cat $PIDFILE`
+		else
+			( $0 status )
+			echo "Not stopping fail2ban"
+			exit 1
+		fi
 		start-stop-daemon --stop --quiet --pidfile $PIDFILE
-		echo "$NAME."
+		maxsecs=30
+		i=0
+		while  [ -f $PIDFILE ] && [ -d /proc/$fail2banpid ] \
+			&& [ $i -le $maxsecs ]; do
+		  echo -n "."
+		  sleep 1
+		  i=$(($i+1))
+		done
+		if [ $i -eq $maxsecs ]; then
+			echo "ERROR: Fail2ban failed to stop properly. Tail of the log file is"
+			tail /var/log/fail2ban.log
+			exit 1
+		fi
+		echo "done"
 		;;
 	restart|force-reload)
 		echo -n "Restarting $DESC: "
