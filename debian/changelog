@@ -1,4 +1,11 @@
-fail2ban (0.5.4-6.3) unstable; urgency=low
+fail2ban (0.5.4-7) unstable; urgency=low
+
+  * Adjusted init.d script so it is resistant to delayed shutdowns of
+    fail2ban and in general more stable
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 20 Oct 2005 21:22:03 -0400
+
+fail2ban (0.5.4-6.2) unstable; urgency=low
 
   * Fixed typos (thanx to Ross Boylan).
   * Robust startup: if iptables module gets fully initialized after
@@ -9,8 +16,6 @@ fail2ban (0.5.4-6.3) unstable; urgency=low
     secondary solution for the bug 334272, fail2ban startup is moved
     during bootup to the latest (S99) sequenece position. That should not
     cause any discomfort I believe.
-  * Adjusted init.d script so it is resistant to delayed shutdowns of
-    fail2ban and in general more stable
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 18 Oct 2005 15:54:38 -0400
 
