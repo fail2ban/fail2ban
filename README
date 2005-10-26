@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.5.4)                           2005/09/13
+Fail2Ban (version 0.5.5)                           2005/10/26
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -54,12 +54,12 @@ firewalls.
 Installation:
 -------------
 
-Require: python-2.3 (http://www.python.org)
+Require: python-2.4 (http://www.python.org)
 
 To install, just do:
 
-> tar xvfj fail2ban-0.5.4.tar.bz2
-> cd fail2ban-0.5.4
+> tar xvfj fail2ban-0.5.5.tar.bz2
+> cd fail2ban-0.5.5
 > python setup.py install
 
 This will install Fail2Ban into /usr/lib/fail2ban. The fail2ban
@@ -102,8 +102,9 @@ options:
   -h         display this help message
   -i <IP(s)> IP(s) to ignore
   -k         kill a currently running instance
-  -r <VALUE> allow a max of VALUE password failure
-  -t <TIME>  ban IP for TIME seconds
+  -r <VALUE> allow a max of VALUE password failure [maxfailures]
+  -t <TIME>  ban IP for TIME seconds [bantime]
+  -f <TIME>  lifetime in seconds of failed entry [findtime]
   -v         verbose. Use twice for greater effect
   -V         print software version
 
