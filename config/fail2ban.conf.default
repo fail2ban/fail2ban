@@ -85,6 +85,21 @@ cmdend =
 #
 polltime = 1
 
+# Option:  reinittime
+# Notes.:  minimal number of seconds between the re-initialization of
+#          firewalls due to external changes in their rules (see fwcheck)
+# Values:  NUM  Default:  100
+#
+reinittime = 10
+
+# Option:  maxreinits
+# Notes.:  maximal number of re-initialization of firewalls due to external
+#          changes. -1 stays for infinite, so only reinittime is of importance
+# Values:  NUM  Default:  -1
+#
+maxreinits = -1
+
+
 [MAIL]
 # Option:  enabled
 # Notes.:  enable mail notification when banning an IP address.
@@ -119,16 +134,18 @@ to = root
 
 # Option:  subject
 # Notes.:  subject of the e-mail.
-# Tags:    <ip>  IP address
+# Tags:    <section> active section (eg ssh, apache, etc)
+#          <ip>  IP address
 #          <failures>  number of failures
 #          <failtime>  unix timestamp of the last failure
-# Values:  TEXT  Default:  [Fail2Ban] Banned <ip>
+# Values:  TEXT  Default:  [Fail2Ban] <section>: Banned <ip>
 #
-subject = [Fail2Ban] Banned <ip>
+subject = [Fail2Ban] <section>: Banned <ip>
 
 # Option:  message
 # Notes.:  message of the e-mail.
-# Tags:    <ip>  IP address
+# Tags:    <section> active section (eg ssh, apache, etc)
+#          <ip>  IP address
 #          <failures>  number of failures
 #          <failtime>  unix timestamp of the last failure
 #          <br>  new line
@@ -136,7 +153,7 @@ subject = [Fail2Ban] Banned <ip>
 #
 message = Hi,<br>
           The IP <ip> has just been banned by Fail2Ban after
-          <failures> attempts.<br>
+          <failures> attempts against <section>.<br>
           Regards,<br>
           Fail2Ban
 
@@ -144,6 +161,7 @@ message = Hi,<br>
 # password failure. Each section has to define the following
 # options: logfile, fwban, fwunban, timeregex, timepattern,
 # failregex.
+
 
 [Apache]
 # Option:  enabled
@@ -171,8 +189,14 @@ fwstart = iptables -N fail2ban-http
 # Values:  CMD  Default:
 #
 fwend = iptables -D INPUT -p tcp --dport http -j fail2ban-http
-        iptables -D fail2ban-http -j RETURN
+        iptables -F fail2ban-http
         iptables -X fail2ban-http
+
+# Option:  fwcheck
+# Notes.:  command executed once before each fwban command
+# Values:  CMD  Default:
+#
+fwcheck = iptables -L INPUT | grep -q fail2ban-http
 
 # Option:  fwban
 # Notes.:  command executed when banning an IP. Take care that the
@@ -217,6 +241,7 @@ timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
 #
 failregex = authentication failure|user .* not found
 
+
 [SSH]
 # Option:  enabled
 # Notes.:  enable monitoring for this section.
@@ -243,8 +268,14 @@ fwstart = iptables -N fail2ban-ssh
 # Values:  CMD  Default:
 #
 fwend = iptables -D INPUT -p tcp --dport ssh -j fail2ban-ssh
-        iptables -D fail2ban-ssh -j RETURN
+        iptables -F fail2ban-ssh
         iptables -X fail2ban-ssh
+
+# Option:  fwcheck
+# Notes.:  command executed once before each fwban command
+# Values:  CMD  Default:
+#
+fwcheck = iptables -L INPUT | grep -q fail2ban-ssh
 
 # Option:  fwbanrule
 # Notes.:  command executed when banning an IP. Take care that the
