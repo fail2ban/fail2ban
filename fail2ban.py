@@ -25,7 +25,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, sys, getopt, os, string, signal, logging, logging.handlers
+import time, sys, getopt, os, string, signal, logging, logging.handlers, copy
 from ConfigParser import *
 
 from version import version
@@ -62,8 +62,9 @@ def dispUsage():
 	print "  -h         display this help message"
 	print "  -i <IP(s)> IP(s) to ignore"
 	print "  -k         kill a currently running instance"
-	print "  -r <VALUE> allow a max of VALUE password failure"
-	print "  -t <TIME>  ban IP for TIME seconds"
+	print "  -r <VALUE> allow a max of VALUE password failure [maxfailures]"
+	print "  -t <TIME>  ban IP for TIME seconds [bantime]"
+	print "  -f <TIME>  lifetime in seconds of failed entry [findtime]"
 	print "  -v         verbose. Use twice for greater effect"
 	print "  -V         print software version"
 	print
@@ -92,19 +93,48 @@ def sigTERMhandler(signum, frame):
 	logSys.debug("Signal handler called with sig "+`signum`)
 	killApp()	
 
+def setFwMustCheck(value):
+	""" Set the mustCheck value of the firewalls (True/False)
+	"""
+	for element in logFwList:
+		element[2].setMustCheck(value)
+
+def initializeFwRules():
+	""" Initializes firewalls by running cmdstart and then
+	    fwstart for each section
+	"""
+	# Execute global start command
+	executeCmd(conf["cmdstart"], conf["debug"])
+	# Execute start command of each section
+	for element in logFwList:
+		element[2].initialize(conf["debug"])
+
+def reBan():
+	""" For each section asks the Firewall to reban known IPs
+	"""
+	for element in logFwList:
+		element[2].reBan(conf["debug"])
+
+def restoreFwRules():
+	""" Flush the ban list
+	"""
+	logSys.warn("Restoring firewall rules...")
+	try:
+		for element in logFwList:
+			# Execute end command of each section
+			element[2].restore(conf["debug"])
+		# Execute global end command
+		executeCmd(conf["cmdend"], conf["debug"])
+	except ExternalError:
+		# nothing bad really - we can survive :-)
+		pass
+
 def killApp():
 	""" Flush the ban list, remove the PID lock file and exit
 		nicely.
 	"""
-	logSys.warn("Restoring firewall rules...")
-	for element in logFwList:
-		element[2].flushBanList(conf["debug"])
-	# Execute end command of each section
-	for element in logFwList:
-		l = element[4]
-		executeCmd(l["fwend"], conf["debug"])
-	# Execute global start command
-	executeCmd(conf["cmdend"], conf["debug"])
+	# Restore Fw rules
+	restoreFwRules()
 	# Remove the PID lock
 	pidLock.remove()
 	logSys.info("Exiting...")
@@ -126,6 +156,12 @@ def getCmdLineOptions(optList):
 				conf["bantime"] = int(opt[1])
 			except ValueError:
 				logSys.warn("banTime must be an integer")
+				logSys.warn("Using default value")
+		if opt[0] == "-f":
+			try:
+				conf["findtime"] = int(opt[1])
+			except ValueError:
+				logSys.warn("findTime must be an integer")
 				logSys.warn("Using default value")
 		if opt[0] == "-i":
 			conf["ignoreip"] = opt[1]
@@ -149,6 +185,7 @@ def main():
 	formatter = logging.Formatter('%(asctime)s ' + formatterstring)
 	stdout.setFormatter(formatter)
 	
+	conf["kill"] = False
 	conf["verbose"] = 0
 	conf["conffile"] = "/etc/fail2ban.conf"
 	
@@ -187,7 +224,9 @@ def main():
 					["str", "ignoreip", ""],
 					["int", "polltime", 1],
 					["str", "cmdstart", ""],
-					["str", "cmdend", ""])
+					["str", "cmdend", ""],
+					["int", "reinittime", 100],
+					["int", "maxreinits", 100])
 	
 	# Gets global configuration options
 	conf.update(confReader.getLogOptions("DEFAULT", optionValues))
@@ -199,8 +238,7 @@ def main():
 	pidLock.setPath(conf["pidlock"])
 	
 	# Now we can kill properly a running instance if needed
-	try:
-		conf["kill"]
+	if conf["kill"]:
 		pid = pidLock.exists()
 		if pid:
 			killPID(int(pid))
@@ -209,8 +247,6 @@ def main():
 		else:
 			logSys.error("No running Fail2Ban found")
 			sys.exit(-1)
-	except KeyError:
-		pass
 
 	# Start Fail2Ban in daemon mode
 	if conf["background"]:
@@ -220,26 +256,8 @@ def main():
 			logSys.error("Unable to start daemon")
 			sys.exit(-1)
 
-	# Verbose level
-	if conf["verbose"]:
-		logSys.warn("Verbose level is "+`conf["verbose"]`)
-		if conf["verbose"] == 1:
-			logSys.setLevel(logging.INFO)
-		elif conf["verbose"] > 1:
-			logSys.setLevel(logging.DEBUG)
-		
-	# Set debug log level
-	if conf["debug"]:
-		logSys.setLevel(logging.DEBUG)
-		formatterstring = ('%(levelname)s: [%(filename)s (%(lineno)d)] ' +
-						   '%(message)s')
-		formatter = logging.Formatter("%(asctime)s " + formatterstring)
-		stdout.setFormatter(formatter)
-		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
-					"ONLY DISPLAYED IN THE LOG MESSAGES")
-
 	# Process some options
-	# Log targets
+	# First setup Log targets
 	# Bug fix for #1234699
 	os.umask(0077)
 	for target in conf["logtargets"].split():
@@ -289,6 +307,24 @@ def main():
 		# Set formatter and add handler to logger
 		hdlr.setFormatter(tformatter)
 		logSys.addHandler(hdlr)
+	
+	# Verbose level
+	if conf["verbose"]:
+		logSys.warn("Verbose level is "+`conf["verbose"]`)
+		if conf["verbose"] == 1:
+			logSys.setLevel(logging.INFO)
+		elif conf["verbose"] > 1:
+			logSys.setLevel(logging.DEBUG)
+		
+	# Set debug log level
+	if conf["debug"]:
+		logSys.setLevel(logging.DEBUG)
+		formatterstring = ('%(levelname)s: [%(filename)s (%(lineno)d)] ' +
+						   '%(message)s')
+		formatter = logging.Formatter("%(asctime)s " + formatterstring)
+		stdout.setFormatter(formatter)
+		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
+					"ONLY DISPLAYED IN THE LOG MESSAGES")
 	
 	# Ignores IP list
 	ignoreIPList = conf["ignoreip"].split(' ')
@@ -348,8 +384,11 @@ def main():
 					["str", "fwstart", ""],
 					["str", "fwend", ""],
 					["str", "fwban", ""],
-					["str", "fwunban", ""])
-					
+					["str", "fwunban", ""],
+					["str", "fwcheck", ""])
+	
+	logSys.info("Fail2Ban v" + version + " is running")
+	
 	# Gets the options of each sections
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t, optionValues)
@@ -358,7 +397,10 @@ def main():
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
 							 l["failregex"], l["maxfailures"], l["findtime"])
 			# Creates a firewall object
-			fObj = Firewall(l["fwban"], l["fwunban"], l["bantime"])
+			fObj = Firewall(l["fwstart"], l["fwend"], l["fwban"], l["fwunban"],
+							l["fwcheck"], l["bantime"])
+			# "Name" the firewall
+			fObj.setSection(t)
 			# Links them into a list. I'm not really happy
 			# with this :/
 			logFwList.append([t, lObj, fObj, dict(), l])
@@ -376,13 +418,10 @@ def main():
 		else:
 			logSys.warn(ip + " is not a valid IP address")
 	
-	logSys.info("Fail2Ban v" + version + " is running")
-	# Execute global start command
-	executeCmd(conf["cmdstart"], conf["debug"])
-	# Execute start command of each section
-	for element in logFwList:
-		l = element[4]
-		executeCmd(l["fwstart"], conf["debug"])
+	initializeFwRules()
+	# try to reinit once if it fails immediately
+	lastReinitTime = time.time() - conf["reinittime"] - 1
+	reinits = 0
 	# Main loop
 	while True:
 		try:
@@ -429,7 +468,8 @@ def main():
 					if failTime < unixTime - findTime:
 						del element[3][attempt]
 					elif fails[attempt][0] >= element[1].getMaxRetry():
-						aInfo = {"ip": attempt,
+						aInfo = {"section": element[0],
+								 "ip": attempt,
 								 "failures": element[3][attempt][0],
 								 "failtime": failTime}
 						logSys.info(element[0] + ": " + aInfo["ip"] +
@@ -441,7 +481,39 @@ def main():
 							mail.sendmail(mailConf["subject"],
 										  mailConf["message"], aInfo)
 						del element[3][attempt]
-			
+		except ExternalError, e:
+			# Something wrong while dealing with Iptables.
+			# May be chain got removed?
+			reinits += 1
+			logSys.error(e)
+			if ((unixTime - lastReinitTime > conf["reinittime"]) and
+				((conf["maxreinits"] < 0) or (reinits < conf["maxreinits"]))):
+				logSys.warn("#%d reinitialization of firewalls"%reinits)
+				lastReinitTime = unixTime
+			else:
+				logSys.error("Exiting: reinits follow too often, or too many " +
+							 "reinit attempts")
+				killApp()
+			# We already failed runCheck so disable it until
+			# restoring a safe state
+			setFwMustCheck(False)
+			# save firewalls to keep a list of IPs for rebanning
+			logFwListCopy = copy.deepcopy(logFwList)
+			try:
+				# restore as much as possible
+				restoreFwRules()
+				# reinitialize all the chains
+				initializeFwRules()
+				# restore the lists of baned IPs
+				logFwList.__init__(logFwListCopy)
+				# reBan known IPs
+				reBan()
+				# Now we can enable the runCheck test again
+				setFwMustCheck(True)
+			except ExternalError:
+				raise ExternalError("Big Oops happened: situation is out of " +
+									"control. Something is wrong with your " +
+									"setup. Please check your settings")
 		except KeyboardInterrupt:
 			# When the user press <ctrl>+<c> we exit nicely.
 			killApp()
