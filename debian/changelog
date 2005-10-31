@@ -1,3 +1,15 @@
+fail2ban (0.5.4-9) UNRELEASED; urgency=low
+
+  * NOT RELEASED YET
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 31 Oct 2005 16:58:51 -0500
+
+fail2ban (0.5.4-8) unstable; urgency=low
+
+  * Added config option MAIL.localtime (closes: #336449)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 31 Oct 2005 16:53:19 -0500
+
 fail2ban (0.5.4-7) unstable; urgency=low
 
   * Adjusted init.d script so it is resistant to delayed shutdowns of

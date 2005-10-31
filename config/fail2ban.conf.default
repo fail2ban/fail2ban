@@ -144,6 +144,12 @@ from = fail2ban@localhost
 #
 to = root@localhost
 
+# Option:  localtime
+# Notes.:  report local time (including timezone) or GMT
+# Values:  [true | false]  Default:  false
+#
+localtime = true
+
 # Option:  subject
 # Notes.:  subject of the e-mail.
 # Tags:    <section> active section (eg ssh, apache, etc)
