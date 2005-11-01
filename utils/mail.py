@@ -24,10 +24,9 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging, smtplib
+import logging, smtplib, email.Utils
 
 from utils.strings import replaceTag
-from time import strftime, gmtime
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")
@@ -39,6 +38,7 @@ class Mail:
 	def __init__(self, host, port = 25):
 		self.host = host
 		self.port = port
+		self.localTimeFlag = False
 		
 	def setFromAddr(self, fromAddr):
 		""" Set from: address
@@ -50,6 +50,11 @@ class Mail:
 		"""
 		self.toAddr = toAddr.split()
 
+	def setLocalTimeFlag(self, localTimeFlag):
+		""" Set to: address
+		"""
+		self.localTimeFlag = localTimeFlag
+
 	def sendmail(self, subject, message, aInfo):
 		""" Send an email using smtplib
 		"""
@@ -58,7 +63,7 @@ class Mail:
 		
 		mail = ("From: %s\r\nTo: %s\r\nDate: %s\r\nSubject: %s\r\n\r\n" %
 				(self.fromAddr, ", ".join(self.toAddr),
-				strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()),
+				email.Utils.formatdate(localtime = self.localTimeFlag),
 				subj)) + msg
 		
 		try:

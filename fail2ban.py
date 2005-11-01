@@ -358,6 +358,7 @@ def main():
 					["int", "port", "25"],
 					["str", "from", "root"],
 					["str", "to", "root"],
+					["bool", "localtime", False],
 					["str", "subject", "[Fail2Ban] Banned <ip>"],
 					["str", "message", "Fail2Ban notification"])
 	
@@ -370,6 +371,7 @@ def main():
 		mail = Mail(mailConf["host"], mailConf["port"])
 		mail.setFromAddr(mailConf["from"])
 		mail.setToAddr(mailConf["to"])
+		mail.setLocalTimeFlag(mailConf["localtime"])
 		logSys.debug("to: " + mailConf["to"] + " from: " + mailConf["from"])
 	
 	# Options
