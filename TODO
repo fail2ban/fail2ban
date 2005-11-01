@@ -20,3 +20,4 @@ See Feature Request Tracking System at SourceForge.net
   Example: /etc/fail2ban/scripts.d/apache
 - remove debug mode (root check)
 - better return values in function
+- use more email.Utils in mail.py

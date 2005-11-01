@@ -4,8 +4,15 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.5.5)                           2005/10/26
+Fail2Ban (version 0.?.?)                           2005/11/??
 =============================================================
+
+ver. 0.?.? (2005/11/??) - ???
+----------
+- Propagated patches introduced by Debian maintainer 
+  (Yaroslav Halchenko):
+  * Added an option to report local time (including timezone)
+    or GMT in mail notification.
 
 ver. 0.5.5 (2005/10/26) - beta
 ----------
