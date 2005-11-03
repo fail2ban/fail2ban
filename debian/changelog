@@ -1,3 +1,12 @@
+fail2ban (0.5.4-9) unstable; urgency=low
+
+  * Fixed init.d script so it doesn't return non-0 status if fail2ban is not
+    running. That fixes issues with purging the package and leaving garbage in
+    /usr/share/fail2ban (Thanx to Justin Pryzby for the insight) 
+    (closes: #337223)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  3 Nov 2005 17:05:20 -0500
+
 fail2ban (0.5.4-8) unstable; urgency=low
 
   * Added config option MAIL.localtime (closes: #336449)

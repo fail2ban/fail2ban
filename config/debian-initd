@@ -30,7 +30,7 @@ case "$1" in
 		echo -n "Starting $DESC: "
 		if $0 status >/dev/null
 			then
-			$0 status
+			( $0 status )
 			exit 1
 		fi
 		[ -f $PIDFILE ] && [ ! -d /proc/`cat $PIDFILE` ] && rm -f $PIDFILE
@@ -40,15 +40,17 @@ case "$1" in
 		;;
 	stop)
 		echo -n "Stopping $DESC: "
-		if $0 status >/dev/null
-			then
-			fail2banpid=`cat $PIDFILE`
-		else
-			( $0 status )
-			echo "Not stopping fail2ban"
-			exit 1
-		fi
-		start-stop-daemon --stop --quiet --pidfile $PIDFILE
+		( $0 status >/dev/null )
+		case "$?" in
+			0) fail2banpid=`cat $PIDFILE` ;;
+			3) echo "done"; exit 0;;
+			*)
+				( $0 status )
+				echo "Not stopping fail2ban"
+				exit 1
+		esac
+
+		start-stop-daemon --oknodo --stop --quiet --pidfile $PIDFILE
 		maxsecs=30
 		i=0
 		while  [ -f $PIDFILE ] && [ -d /proc/$fail2banpid ] \
