@@ -1,3 +1,11 @@
+fail2ban (0.5.4-10) unstable; urgency=low
+
+  * Fixed the order of ssh and apache rules to avoid possible race
+    condition (Thanks to Jefferson Cowart for the bug report) (closes:
+    #339133)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 14 Nov 2005 23:44:45 -0500
+
 fail2ban (0.5.4-9) unstable; urgency=low
 
   * Fixed init.d script so it doesn't return non-0 status if fail2ban is not

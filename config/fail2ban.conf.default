@@ -198,8 +198,8 @@ logfile = /var/log/apache/access.log
 # Values:  CMD  Default:
 #
 fwstart = iptables -N fail2ban-http
-          iptables -I INPUT -p tcp --dport http -j fail2ban-http
           iptables -A fail2ban-http -j RETURN
+          iptables -I INPUT -p tcp --dport http -j fail2ban-http
 
 # Option:  fwend
 # Notes.:  command executed once at the end of Fail2Ban
@@ -276,8 +276,8 @@ logfile = /var/log/auth.log
 # Values:  CMD  Default:
 #
 fwstart = iptables -N fail2ban-ssh
-          iptables -I INPUT -p tcp --dport ssh -j fail2ban-ssh
           iptables -A fail2ban-ssh -j RETURN
+          iptables -I INPUT -p tcp --dport ssh -j fail2ban-ssh
 
 # Option:  fwend
 # Notes.:  command executed once at the end of Fail2Ban
