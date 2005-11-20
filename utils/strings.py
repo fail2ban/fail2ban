@@ -24,25 +24,17 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from firewall import Firewall
+import logging
 
-class Iptables(Firewall):
-	""" This class contains specific methods and variables for the
-		iptables firewall. Must implements the 'abstracts' methods
-		banIP(ip) and unBanIP(ip).
-		
-		Must adds abstract methods definition:
-		http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/266468
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
+
+def replaceTag(query, aInfo):
+	""" Replace tags in query
 	"""
-	
-	def banIP(self, ip):
-		""" Returns query to ban IP.
-		"""
-		query = "iptables -I INPUT 1 -i "+self.interface+" -s "+ip+" -j DROP"
-		return query
-	
-	def unBanIP(self, ip):
-		""" Returns query to unban IP.
-		"""
-		query = "iptables -D INPUT -i "+self.interface+" -s "+ip+" -j DROP"
-		return query
+	string = query
+	for tag in aInfo:
+		string = string.replace('<'+tag+'>', `aInfo[tag]`)
+	# New line
+	string = string.replace('<br>', '\n')
+	return string

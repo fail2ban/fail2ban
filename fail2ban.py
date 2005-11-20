@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -17,6 +15,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # Author: Cyril Jaquier
+# Modified by: Yaroslav Halchenko (SYSLOG, findtime)
 # 
 # $Revision$
 
@@ -26,48 +25,56 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, sys, getopt, os, signal, string
+import time, sys, getopt, os, string, signal, logging, logging.handlers, copy
 from ConfigParser import *
 
-# Checks if log4py is present.
-try:
-	import log4py
-except:
-	print "log4py is needed (see README)"
-	sys.exit(-1)
-
-# Appends our own modules path
-sys.path.append('/usr/lib/fail2ban')
-
-from firewall.iptables import Iptables
-from firewall.ipfw import Ipfw
-from firewall.ipfwadm import Ipfwadm
+from version import version
+from firewall.firewall import Firewall
 from logreader.logreader import LogReader
 from confreader.configreader import ConfigReader
-from version import version
+from utils.mail import Mail
+from utils.pidlock import PIDLock
+from utils.dns import *
+from utils.process import *
 
-def usage():
-	print "Usage: fail2ban.py [OPTIONS]"
+# Get the instance of the logger.
+logSys = logging.getLogger("fail2ban")
+
+# Get PID lock file instance
+pidLock = PIDLock()
+
+# Global variables
+logFwList = list()
+conf = dict()
+
+def dispUsage():
+	""" Prints Fail2Ban command line options and exits
+	"""
+	print "Usage: "+sys.argv[0]+" [OPTIONS]"
 	print
 	print "Fail2Ban v"+version+" reads log file that contains password failure report"
-	print "and bans the corresponding IP address using iptables."
+	print "and bans the corresponding IP addresses using firewall rules."
 	print
-	print "  -b         start fail2ban in background"
-	print "  -d         start fail2ban in debug mode"
-	print "  -e <INTF>  ban IP on the INTF interface"
+	print "  -b         start in background"
+	print "  -d         start in debug mode"
 	print "  -c <FILE>  read configuration file FILE"
 	print "  -p <FILE>  create PID lock in FILE"
 	print "  -h         display this help message"
 	print "  -i <IP(s)> IP(s) to ignore"
-	print "  -k         kill a currently running Fail2Ban instance"
-	print "  -l <FILE>  log message in FILE"
-	print "  -r <VALUE> allow a max of VALUE password failure"
-	print "  -t <TIME>  ban IP for TIME seconds"
+	print "  -k         kill a currently running instance"
+	print "  -r <VALUE> allow a max of VALUE password failure [maxfailures]"
+	print "  -t <TIME>  ban IP for TIME seconds [bantime]"
+	print "  -f <TIME>  lifetime in seconds of failed entry [findtime]"
 	print "  -v         verbose. Use twice for greater effect"
-	print "  -w <FIWA>  select the firewall to use. Can be iptables,"
-	print "             ipfwadm or ipfw"
+	print "  -V         print software version"
 	print
 	print "Report bugs to <lostcontrol@users.sourceforge.net>"
+	sys.exit(0)
+
+def dispVersion():
+	""" Prints Fail2Ban version and exits
+	"""
+	print sys.argv[0]+" "+version
 	sys.exit(0)
 
 def checkForRoot():
@@ -79,359 +86,249 @@ def checkForRoot():
 	else:
 		return False
 
-def createDaemon():
-	"""Detach a process from the controlling terminal and run it in the
-	background as a daemon.
-	
-	http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/278731
-	"""
-
-	try:
-		# Fork a child process so the parent can exit.  This will return control
-		# to the command line or shell.  This is required so that the new process
-		# is guaranteed not to be a process group leader.  We have this guarantee
-		# because the process GID of the parent is inherited by the child, but
-		# the child gets a new PID, making it impossible for its PID to equal its
-		# PGID.
-		pid = os.fork()
-	except OSError, e:
-		return((e.errno, e.strerror))	 # ERROR (return a tuple)
-
-	if (pid == 0):	   # The first child.
-
-		# Next we call os.setsid() to become the session leader of this new
-		# session.  The process also becomes the process group leader of the
-		# new process group.  Since a controlling terminal is associated with a
-		# session, and this new session has not yet acquired a controlling
-		# terminal our process now has no controlling terminal.  This shouldn't
-		# fail, since we're guaranteed that the child is not a process group
-		# leader.
-		os.setsid()
-	
-		# When the first child terminates, all processes in the second child
-		# are sent a SIGHUP, so it's ignored.
-		signal.signal(signal.SIGHUP, signal.SIG_IGN)
-	
-		try:
-			# Fork a second child to prevent zombies.  Since the first child is
-			# a session leader without a controlling terminal, it's possible for
-			# it to acquire one by opening a terminal in the future.  This second
-			# fork guarantees that the child is no longer a session leader, thus
-			# preventing the daemon from ever acquiring a controlling terminal.
-			pid = os.fork()		# Fork a second child.
-		except OSError, e:
-			return((e.errno, e.strerror))  # ERROR (return a tuple)
-	
-		if (pid == 0):	  # The second child.
-			# Ensure that the daemon doesn't keep any directory in use.  Failure
-			# to do this could make a filesystem unmountable.
-			os.chdir("/")
-			# Give the child complete control over permissions.
-			os.umask(0)
-		else:
-			os._exit(0)	  # Exit parent (the first child) of the second child.
-	else:
-		os._exit(0)		 # Exit parent of the first child.
-
-	# Close all open files.  Try the system configuration variable, SC_OPEN_MAX,
-	# for the maximum number of open files to close.  If it doesn't exist, use
-	# the default value (configurable).
-	try:
-		maxfd = os.sysconf("SC_OPEN_MAX")
-	except (AttributeError, ValueError):
-		maxfd = 256	   # default maximum
-
-	for fd in range(0, maxfd):
-		try:
-			os.close(fd)
-		except OSError:   # ERROR (ignore)
-			pass
-
-	# Redirect the standard file descriptors to /dev/null.
-   	os.open("/dev/null", os.O_RDONLY)	# standard input (0)
-	os.open("/dev/null", os.O_RDWR)		# standard output (1)
-	os.open("/dev/null", os.O_RDWR)		# standard error (2)
-
-	return True
-
 def sigTERMhandler(signum, frame):
 	""" Handles the TERM signal when in daemon mode in order to
 		exit properly.
 	"""
 	logSys.debug("Signal handler called with sig "+`signum`)
-	killApp()
+	killApp()	
+
+def setFwMustCheck(value):
+	""" Set the mustCheck value of the firewalls (True/False)
+	"""
+	for element in logFwList:
+		element[2].setMustCheck(value)
+
+def initializeFwRules():
+	""" Initializes firewalls by running cmdstart and then
+	    fwstart for each section
+	"""
+	# Execute global start command
+	executeCmd(conf["cmdstart"], conf["debug"])
+	# Execute start command of each section
+	for element in logFwList:
+		element[2].initialize(conf["debug"])
+
+def reBan():
+	""" For each section asks the Firewall to reban known IPs
+	"""
+	for element in logFwList:
+		element[2].reBan(conf["debug"])
+
+def restoreFwRules():
+	""" Flush the ban list
+	"""
+	logSys.warn("Restoring firewall rules...")
+	try:
+		for element in logFwList:
+			# Execute end command of each section
+			element[2].restore(conf["debug"])
+		# Execute global end command
+		executeCmd(conf["cmdend"], conf["debug"])
+	except ExternalError:
+		# nothing bad really - we can survive :-)
+		pass
 
 def killApp():
 	""" Flush the ban list, remove the PID lock file and exit
 		nicely.
 	"""
-	logSys.warn("Restoring firewall rules...")
-	fireWall.flushBanList(conf["debug"])
-	removePID(conf["pidlock"])
+	# Restore Fw rules
+	restoreFwRules()
+	# Remove the PID lock
+	pidLock.remove()
 	logSys.info("Exiting...")
+	logging.shutdown()
 	sys.exit(0)
-	
-def checkForPID(lockfile):
-	""" Checks for running Fail2Ban.
-	
-		Returns the current PID if Fail2Ban is running or False
-		if no instance found.
-	"""
-	try:
-		fileHandler = open(lockfile)
-		pid = fileHandler.readline()
-		return pid
-	except IOError:
-		return False
-		
-def createPID(lockfile):
-	""" Creates a PID lock file with the current PID.
-	"""
-	fileHandler = open(lockfile, mode='w')
-	pid = os.getpid()
-	fileHandler.write(`pid`+'\n')
-	fileHandler.close()
-	logSys.debug("Created PID lock ("+`pid`+") in "+lockfile)
-		
-def removePID(lockfile):
-	""" Remove PID lock.
-	"""
-	os.remove(lockfile)
-	logSys.debug("Removed PID lock "+lockfile)
 
-def killPID(pid):
-	""" Kills the process with the given PID using the
-		INT signal (same effect as <ctrl>+<c>).
+def getCmdLineOptions(optList):
+	""" Gets the command line options
 	"""
-	try:
-		return os.kill(pid, 2)
-	except OSError:
-		logSys.error("Can not kill process " + `pid` + ". Please check that " +
-					"Fail2Ban is not running and remove the file " +
-					"'/tmp/fail2ban.pid'")
-
-if __name__ == "__main__":
-	
-	# Gets an instance of log4py.
-	logSys = log4py.Logger().get_instance()
-	logSys.set_formatstring("%T %L %M")
-	
-	conf = dict()
-	conf["verbose"] = 0
-	conf["background"] = False
-	conf["debug"] = False
-	conf["conffile"] = "/etc/fail2ban.conf"
-	conf["pidlock"] = "/var/run/fail2ban.pid"
-	conf["logging"] = False
-	conf["logfile"] = "/var/log/fail2ban.log"
-	conf["maxretry"] = 3
-	conf["bantime"] = 600
-	conf["ignoreip"] = ''
-	conf["interface"] = "eth0"
-	conf["firewall"] = "iptables"
-	conf["ipfw-start-rule"] = 0
-	conf["polltime"] = 1
-	
-	# Reads the command line options.
-	try:
-		optList, args = getopt.getopt(sys.argv[1:], 'hvbdkc:l:t:i:r:e:w:p:')
-	except getopt.GetoptError:
-		usage()
-	
-	# Pre-parsing of command line options for the -c option
 	for opt in optList:
-		if opt[0] == "-c":
-			conf["conffile"] = opt[1]
-	
-	# Config file
-	configParser = SafeConfigParser()
-	configParser.read(conf["conffile"])
-	
-	# background
-	try:
-		conf["background"] = configParser.getboolean("DEFAULT", "background")
-	except ValueError:
-		logSys.warn("background option should be a boolean")
-		logSys.warn("Using default value")
-	except NoOptionError:
-		logSys.warn("background option not in config file")
-		logSys.warn("Using default value")
-
-	# debug
-	try:
-		conf["debug"] = configParser.getboolean("DEFAULT", "debug")
-	except ValueError:
-		logSys.warn("debug option should be a boolean")
-		logSys.warn("Using default value")
-	except NoOptionError:
-		logSys.warn("debug option not in config file")
-		logSys.warn("Using default value")
-
-	# logfile
-	try:
-		conf["logfile"] = configParser.get("DEFAULT", "logfile")
-	except ValueError:
-		logSys.warn("logfile option should be a string")
-		logSys.warn("Using default value")
-	except NoOptionError:
-		logSys.warn("logfile option not in config file")
-		logSys.warn("Using default value")
-		
-	# pidlock
-	try:
-		conf["pidlock"] = configParser.get("DEFAULT", "pidlock")
-	except ValueError:
-		logSys.warn("pidlock option should be a string")
-		logSys.warn("Using default value")
-	except NoOptionError:
-		logSys.warn("pidlock option not in config file")
-		logSys.warn("Using default value")
-		
-	# maxretry
-	try:
-		conf["maxretry"] = configParser.getint("DEFAULT", "maxretry")
-	except ValueError:
-		logSys.warn("maxretry option should be an integer")
-		logSys.warn("Using default value")
-	except NoOptionError:
-		logSys.warn("maxretry option not in config file")
-		logSys.warn("Using default value")
-
-	# bantime
-	try:
-		conf["bantime"] = configParser.getint("DEFAULT", "bantime")
-	except ValueError:
-		logSys.warn("bantime option should be an integer")
-		logSys.warn("Using default value")
-	except NoOptionError:
-		logSys.warn("bantime option not in config file")
-		logSys.warn("Using default value")
-
-	# ignoreip
-	try:
-		conf["ignoreip"] = configParser.get("DEFAULT", "ignoreip")
-	except ValueError:
-		logSys.warn("ignoreip option should be a string")
-		logSys.warn("Using default value")
-	except NoOptionError:
-		logSys.warn("ignoreip option not in config file")
-		logSys.warn("Using default value")
-		
-	# interface
-	try:
-		conf["interface"] = configParser.get("DEFAULT", "interface")
-	except ValueError:
-		logSys.warn("interface option should be a string")
-		logSys.warn("Using default value")
-	except NoOptionError:
-		logSys.warn("interface option not in config file")
-		logSys.warn("Using default value")
-		
-	# firewall
-	try:
-		conf["firewall"] = configParser.get("DEFAULT", "firewall")
-	except ValueError:
-		logSys.warn("firewall option should be a string")
-		logSys.warn("Using default value")
-	except NoOptionError:
-		logSys.warn("firewall option not in config file")
-		logSys.warn("Using default value")
-	
-	# ipfw-start-rule
-	try:
-		conf["ipfw-start-rule"] = configParser.getint("DEFAULT",
-													"ipfw-start-rule")
-	except ValueError:
-		logSys.warn("ipfw-start-rule option should be an integer")
-		logSys.warn("Using default value")
-	except NoOptionError:
-		logSys.warn("ipfw-start-rule option not in config file")
-		logSys.warn("Using default value")
-
-	# polltime
-	try:
-		conf["polltime"] = configParser.getint("DEFAULT", "polltime")
-	except ValueError:
-		logSys.warn("polltime option should be an integer")
-		logSys.warn("Using default value")
-	except NoOptionError:
-		logSys.warn("polltime option not in config file")
-		logSys.warn("Using default value")
-	
-	for opt in optList:
-		if opt[0] == "-h":
-			usage()
 		if opt[0] == "-v":
 			conf["verbose"] = conf["verbose"] + 1
 		if opt[0] == "-b":
 			conf["background"] = True
 		if opt[0] == "-d":
 			conf["debug"] = True
-		if opt[0] == "-e":
-			conf["interface"] = opt[1]
-		if opt[0] == "-l":
-			conf["logging"] = True
-			conf["logfile"] = opt[1]
 		if opt[0] == "-t":
 			try:
 				conf["bantime"] = int(opt[1])
 			except ValueError:
 				logSys.warn("banTime must be an integer")
 				logSys.warn("Using default value")
+		if opt[0] == "-f":
+			try:
+				conf["findtime"] = int(opt[1])
+			except ValueError:
+				logSys.warn("findTime must be an integer")
+				logSys.warn("Using default value")
 		if opt[0] == "-i":
 			conf["ignoreip"] = opt[1]
 		if opt[0] == "-r":
-			conf["retrymax"] = int(opt[1])
-		if opt[0] == "-w":
-			conf["firewall"] = opt[1]
+			conf["maxfailures"] = int(opt[1])
 		if opt[0] == "-p":
 			conf["pidlock"] = opt[1]
 		if opt[0] == "-k":
-			pid = checkForPID(conf["pidlock"])
-			if pid:
-				killPID(int(pid))
-				logSys.warn("Killed Fail2Ban with PID "+pid)
-				sys.exit(0)
-			else:
-				logSys.error("No running Fail2Ban found")
-				sys.exit(-1)
+			conf["kill"] = True
+
+def main():
+	""" Fail2Ban main function
+	"""
+	
+	# Add the default logging handler
+	stdout = logging.StreamHandler(sys.stdout)
+	logSys.addHandler(stdout)
+	
+	# Default formatter
+	formatterstring='%(levelname)s: %(message)s'
+	formatter = logging.Formatter('%(asctime)s ' + formatterstring)
+	stdout.setFormatter(formatter)
+	
+	conf["kill"] = False
+	conf["verbose"] = 0
+	conf["conffile"] = "/etc/fail2ban.conf"
+	
+	# Reads the command line options.
+	try:
+		cmdOpts = 'hvVbdkc:t:i:r:p:'
+		cmdLongOpts = ['help','version']
+		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
+	except getopt.GetoptError:
+		dispUsage()
+	
+	# Pre-parsing of command line options for the -c option
+	for opt in optList:
+		if opt[0] == "-c":
+			conf["conffile"] = opt[1]
+		if opt[0] in ["-h", "--help"]:
+ 			dispUsage()
+		if opt[0] in ["-V", "--version"]:
+			dispVersion()
+	
+	# Reads the config file and create a LogReader instance for
+	# each log file to check.
+	confReader = ConfigReader(conf["conffile"]);
+	confReader.openConf()
+	
+	# Options
+	optionValues = (["bool", "background", False],
+					["str", "logtargets", "/var/log/fail2ban.log"],
+					["str", "syslog-target", "/dev/log"],
+					["int", "syslog-facility", 1],
+					["bool", "debug", False],
+					["str", "pidlock", "/var/run/fail2ban.pid"],
+					["int", "maxfailures", 5],
+					["int", "bantime", 600],
+					["int", "findtime", 600],
+					["str", "ignoreip", ""],
+					["int", "polltime", 1],
+					["str", "cmdstart", ""],
+					["str", "cmdend", ""],
+					["int", "reinittime", 100],
+					["int", "maxreinits", 100])
+	
+	# Gets global configuration options
+	conf.update(confReader.getLogOptions("DEFAULT", optionValues))
+	
+	# Gets command line options
+	getCmdLineOptions(optList)
+	
+	# PID lock
+	pidLock.setPath(conf["pidlock"])
+	
+	# Now we can kill properly a running instance if needed
+	if conf["kill"]:
+		pid = pidLock.exists()
+		if pid:
+			killPID(int(pid))
+			logSys.warn("Killed Fail2Ban with PID "+pid)
+			sys.exit(0)
+		else:
+			logSys.error("No running Fail2Ban found")
+			sys.exit(-1)
+
+	# Start Fail2Ban in daemon mode
+	if conf["background"]:
+		retCode = createDaemon()
+		signal.signal(signal.SIGTERM, sigTERMhandler)
+		if not retCode:
+			logSys.error("Unable to start daemon")
+			sys.exit(-1)
 
 	# Process some options
-	for c in conf:
-		if c == "verbose":
-			logSys.warn("Verbose level is "+`conf[c]`)
-			if conf[c] == 1:
-				logSys.set_loglevel(log4py.LOGLEVEL_VERBOSE)
-			elif conf[c] > 1:
-				logSys.set_loglevel(log4py.LOGLEVEL_DEBUG)
-		elif c == "debug" and conf[c]:
-			logSys.set_loglevel(log4py.LOGLEVEL_DEBUG)
-			logSys.set_formatstring(log4py.FMT_DEBUG)
-		elif c == "background" and conf[c]:
-			retCode = createDaemon()
-			signal.signal(signal.SIGTERM, sigTERMhandler)
-			logSys.set_target(conf["logfile"])
-			if not retCode:
-				logSys.error("Unable to start daemon")
-				sys.exit(-1)
-		elif c == "logging" and conf[c]:
-			try:
-				open(conf["logfile"], "a")
-				logSys.set_target(conf["logfile"])
-			except IOError:
-				logSys.warn("Unable to log to "+conf["logfile"])
-				logSys.warn("Using default output for logging")
-		elif c == "ignoreip":
-			ignoreIPList = conf[c].split(' ')
-		elif c == "firewall":
-			conf[c] = string.lower(conf[c])
-			if conf[c] == "ipfw":
-				fireWallName = "Ipfw"
-			elif conf[c] == "ipfwadm":
-				fireWallName = "Ipfwadm"
+	# First setup Log targets
+	# Bug fix for #1234699
+	os.umask(0077)
+	for target in conf["logtargets"].split():
+		# target formatter 
+		# By default global formatter is taken. Is different for SYSLOG
+		tformatter = formatter
+		if target == "STDERR":
+			hdlr = logging.StreamHandler(sys.stderr)
+		elif target == "SYSLOG":
+			# SYSLOG target can be either
+			# a socket (file, so it starts with /)
+			# or hostname
+			# or hostname:port
+			syslogtargets = re.findall("(/[\w/]*)|([^/ ][^: ]*)(:(\d+)){,1}",
+									   conf["syslog-target"])
+			# we are waiting for a single match
+			syslogtargets = syslogtargets[0]
+
+			# assign facility if it was defined
+			if conf["syslog-facility"] < 0:
+				facility = handlers.SysLogHandler.LOG_USER
 			else:
-				fireWallName = "Iptables"
+				facility = conf["syslog-facility"]
+
+			if len(syslogtargets) == 0: # everything default
+				hdlr = logging.handlers.SysLogHandler()
+			else:
+				if not ( syslogtargets[0] == "" ): # got socket
+					syslogtarget = syslogtargets[0]
+				else:		# got hostname and maybe a port
+					if syslogtargets[3] == "": # no port specified
+						port = 514
+					else:
+						port = int(syslogtargets[3])
+					syslogtarget = (syslogtargets[1], port)
+				hdlr = logging.handlers.SysLogHandler(syslogtarget, facility)
+			tformatter = logging.Formatter("fail2ban[%(process)d]: " +
+										   formatterstring);
+		else:
+			# Target should be a file
+			try:
+				open(target, "a")
+				hdlr = logging.FileHandler(target)
+			except IOError:
+				logSys.error("Unable to log to " + target)
+				continue
+		# Set formatter and add handler to logger
+		hdlr.setFormatter(tformatter)
+		logSys.addHandler(hdlr)
 	
+	# Verbose level
+	if conf["verbose"]:
+		logSys.warn("Verbose level is "+`conf["verbose"]`)
+		if conf["verbose"] == 1:
+			logSys.setLevel(logging.INFO)
+		elif conf["verbose"] > 1:
+			logSys.setLevel(logging.DEBUG)
+		
+	# Set debug log level
+	if conf["debug"]:
+		logSys.setLevel(logging.DEBUG)
+		formatterstring = ('%(levelname)s: [%(filename)s (%(lineno)d)] ' +
+						   '%(message)s')
+		formatter = logging.Formatter("%(asctime)s " + formatterstring)
+		stdout.setFormatter(formatter)
+		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
+					"ONLY DISPLAYED IN THE LOG MESSAGES")
+	
+	# Ignores IP list
+	ignoreIPList = conf["ignoreip"].split(' ')
+
 	# Checks for root user. This is necessary because log files
 	# are owned by root and firewall needs root access.
 	if not checkForRoot():
@@ -440,51 +337,93 @@ if __name__ == "__main__":
 			sys.exit(-1)
 			
 	# Checks that no instance of Fail2Ban is currently running.
-	pid = checkForPID(conf["pidlock"])
+	pid = pidLock.exists()
 	if pid:
 		logSys.error("Fail2Ban already running with PID "+pid)
 		sys.exit(-1)
 	else:
-		createPID(conf["pidlock"])
+		ret = pidLock.create()
+		if not ret:
+			# Unable to create PID lock. Exit
+			sys.exit(-1)
 	
-	logSys.debug("ConfFile is "+conf["conffile"])
-	logSys.debug("BanTime is "+`conf["bantime"]`)
-	logSys.debug("retryAllowed is "+`conf["maxretry"]`)
+	logSys.debug("ConfFile is " + conf["conffile"])
+	logSys.debug("BanTime is " + `conf["bantime"]`)
+	logSys.debug("FindTime is " + `conf["findtime"]`)
+	logSys.debug("MaxFailure is " + `conf["maxfailures"]`)
 	
-	# Reads the config file and create a LogReader instance for
-	# each log file to check.
-	confReader = ConfigReader(logSys, conf["conffile"]);
-	confReader.openConf()
-	logList = list()
+	# Options
+	optionValues = (["bool", "enabled", False],
+					["str", "host", "localhost"],
+					["int", "port", "25"],
+					["str", "from", "root"],
+					["str", "to", "root"],
+					["bool", "localtime", False],
+					["str", "subject", "[Fail2Ban] Banned <ip>"],
+					["str", "message", "Fail2Ban notification"])
+	
+	# Gets global configuration options
+	mailConf = confReader.getLogOptions("MAIL", optionValues)
+	
+	# Create mailer if enabled
+	if mailConf["enabled"]:
+		logSys.debug("Mail enabled")
+		mail = Mail(mailConf["host"], mailConf["port"])
+		mail.setFromAddr(mailConf["from"])
+		mail.setToAddr(mailConf["to"])
+		mail.setLocalTimeFlag(mailConf["localtime"])
+		logSys.debug("to: " + mailConf["to"] + " from: " + mailConf["from"])
+	
+	# Options
+	optionValues = (["bool", "enabled", False],
+					["str", "logfile", "/dev/null"],
+					["int", "maxfailures", conf["maxfailures"]],
+					["int", "bantime", conf["bantime"]],
+					["int", "findtime", conf["findtime"]],
+					["str", "timeregex", ""],
+					["str", "timepattern", ""],
+					["str", "failregex", ""],
+					["str", "fwstart", ""],
+					["str", "fwend", ""],
+					["str", "fwban", ""],
+					["str", "fwunban", ""],
+					["str", "fwcheck", ""])
+	
+	logSys.info("Fail2Ban v" + version + " is running")
+	
+	# Gets the options of each sections
 	for t in confReader.getSections():
-		l = confReader.getLogOptions(t)
+		l = confReader.getLogOptions(t, optionValues)
 		if l["enabled"]:
-			lObj = LogReader(logSys, l["logfile"], l["timeregex"],
-							l["timepattern"], l["failregex"], conf["bantime"])
-			lObj.setName(t)
-			logList.append(lObj)
-	
-	# Creates one instance of Iptables (thanks to Pyhton dynamic
-	# features).
-	fireWallObj = eval(fireWallName)
-	fireWall = fireWallObj(conf["bantime"], logSys, conf["interface"])
-	
-	# IPFW needs rules number. The configuration option "ipfw-start-rule"
-	# defines the first rule number used by Fail2Ban.
-	if fireWallName == "Ipfw":
-		fireWall.setCrtRuleNbr(conf["ipfw-start-rule"])
+			# Creates a logreader object
+			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
+							 l["failregex"], l["maxfailures"], l["findtime"])
+			# Creates a firewall object
+			fObj = Firewall(l["fwstart"], l["fwend"], l["fwban"], l["fwunban"],
+							l["fwcheck"], l["bantime"])
+			# "Name" the firewall
+			fObj.setSection(t)
+			# Links them into a list. I'm not really happy
+			# with this :/
+			logFwList.append([t, lObj, fObj, dict(), l])
 	
 	# We add 127.0.0.1 to the ignore list has we do not want
 	# to be ban ourself.
-	for element in logList:
-		element.addIgnoreIP("127.0.0.1")
+	for element in logFwList:
+		element[1].addIgnoreIP("127.0.0.1")
 	while len(ignoreIPList) > 0:
 		ip = ignoreIPList.pop()
-		for element in logList:
-			element.addIgnoreIP(ip)
+		# Bug fix for #1239557
+		if isValidIP(ip):
+			for element in logFwList:
+				element[1].addIgnoreIP(ip)
+		else:
+			logSys.warn(ip + " is not a valid IP address")
 	
-	logSys.info("Fail2Ban v"+version+" is running")
-	failListFull = dict()
+	initializeFwRules()
+	# try to reinit once if it fails immediately
+	lastReinitTime = time.time() - conf["reinittime"] - 1
+	reinits = 0
 	# Main loop
 	while True:
 		try:
@@ -493,14 +432,15 @@ if __name__ == "__main__":
 			
 			# Checks if some IP have to be remove from ban
 			# list.
-			fireWall.checkForUnBan(conf["debug"])
-			
+			for element in logFwList:
+				element[2].checkForUnBan(conf["debug"])
+
 			# If the log file has not been modified since the
 			# last time, we sleep for 1 second. This is active
 			# polling so not very effective.
 			modList = list()
-			for element in logList:
-				if element.isModified():
+			for element in logFwList:
+				if element[1].isModified():
 					modList.append(element)
 			
 			if len(modList) == 0:
@@ -509,43 +449,73 @@ if __name__ == "__main__":
 			
 			# Gets the failure list from the log file. For a given IP,
 			# takes only the service which has the most password failures.
-			failList = dict()
 			for element in modList:
-				e = element.getFailures()
+				e = element[1].getFailures()
 				for key in e.iterkeys():
-					if failList.has_key(key):
-						if failList[key][0] < e[key][0]:
-							failList[key] = (e[key][0], e[key][1], element)
+					if element[3].has_key(key):
+						element[3][key] = (element[3][key][0] + e[key][0],
+											e[key][1])
 					else:
-						failList[key] = (e[key][0], e[key][1], element)
-				
-			# Add the last log failures to the global failure list.
-			for key in failList.iterkeys():
-				if failListFull.has_key(key):
-					failListFull[key] = (failListFull[key][0] + 1,
-										failList[key][1], failList[key][2])
-				else:
-					failListFull[key] = failList[key]
+						element[3][key] = (e[key][0], e[key][1])
 			
 			# Remove the oldest failure attempts from the global list.
-			unixTime = time.time()
-			failListFullTemp = failListFull.copy()
-			for key in failListFullTemp.iterkeys():
-				failTime = failListFullTemp[key][2].getFindTime()
-				if failListFullTemp[key][1] < unixTime - failTime:
-					del failListFull[key]
-			
 			# We iterate the failure list and ban IP that make
 			# *retryAllowed* login failures.
-			failListFullTemp = failListFull.copy()
-			for key in failListFullTemp.iterkeys():
-				element = failListFullTemp[key]
-				if element[0] >= conf["maxretry"]:
-					logSys.info(element[2].getName()+": "+key+" has "+
-								`element[0]`+" login failure(s). Banned.")
-					fireWall.addBanIP(key, conf["debug"])
-					del failListFull[key]
-			
+			unixTime = time.time()
+			for element in logFwList:
+				fails = element[3].copy()
+				findTime = element[1].getFindTime()
+				for attempt in fails:
+					failTime = fails[attempt][1]
+					if failTime < unixTime - findTime:
+						del element[3][attempt]
+					elif fails[attempt][0] >= element[1].getMaxRetry():
+						aInfo = {"section": element[0],
+								 "ip": attempt,
+								 "failures": element[3][attempt][0],
+								 "failtime": failTime}
+						logSys.info(element[0] + ": " + aInfo["ip"] +
+									" has " + `aInfo["failures"]` +
+									" login failure(s). Banned.")
+						element[2].addBanIP(aInfo, conf["debug"])
+						# Send a mail notification
+						if 'mail' in locals():
+							mail.sendmail(mailConf["subject"],
+										  mailConf["message"], aInfo)
+						del element[3][attempt]
+		except ExternalError, e:
+			# Something wrong while dealing with Iptables.
+			# May be chain got removed?
+			reinits += 1
+			logSys.error(e)
+			if ((unixTime - lastReinitTime > conf["reinittime"]) and
+				((conf["maxreinits"] < 0) or (reinits < conf["maxreinits"]))):
+				logSys.warn("#%d reinitialization of firewalls"%reinits)
+				lastReinitTime = unixTime
+			else:
+				logSys.error("Exiting: reinits follow too often, or too many " +
+							 "reinit attempts")
+				killApp()
+			# We already failed runCheck so disable it until
+			# restoring a safe state
+			setFwMustCheck(False)
+			# save firewalls to keep a list of IPs for rebanning
+			logFwListCopy = copy.deepcopy(logFwList)
+			try:
+				# restore as much as possible
+				restoreFwRules()
+				# reinitialize all the chains
+				initializeFwRules()
+				# restore the lists of baned IPs
+				logFwList.__init__(logFwListCopy)
+				# reBan known IPs
+				reBan()
+				# Now we can enable the runCheck test again
+				setFwMustCheck(True)
+			except ExternalError:
+				raise ExternalError("Big Oops happened: situation is out of " +
+									"control. Something is wrong with your " +
+									"setup. Please check your settings")
 		except KeyboardInterrupt:
 			# When the user press <ctrl>+<c> we exit nicely.
 			killApp()

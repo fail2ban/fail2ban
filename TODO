@@ -4,12 +4,20 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-ToDo
+ToDo                                     $Revision$
 =============================================================
 
-- cleanup fail2ban.py
-- improve configuration file and command line options
-  handling
-- improve installation process
-- add init script
-- use FAM (inotify, gamin, ...)
+See Feature Request Tracking System at SourceForge.net
+
+- improve installation process (better prefix support)
+- install Fail2ban into /usr/share
+- better configuration files
+- add a check to see if the time of the log messages is
+  correctly detected (valid regexp)
+- split configuration files in /etc/fail2ban/services.d
+  Example: /etc/fail2ban/services.d/apache
+- template for common services in /etc/fail2ban/scripts.d
+  Example: /etc/fail2ban/scripts.d/apache
+- remove debug mode (root check)
+- better return values in function
+- use more email.Utils in mail.py
