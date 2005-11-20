@@ -4,14 +4,14 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.4.1)                           06/30/2005
+Fail2Ban (version 0.6.0)                           2005/11/20
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
 that makes too many password failures. It updates firewall
-rules to reject the IP address. Currently iptables, ipfw and
-ipfwadm are supported. Fail2Ban can read multiple log files
-such as sshd or Apache web server ones. It needs log4py.
+rules to reject the IP address. These rules can be defined by
+the user. Fail2Ban can read multiple log files such as sshd
+or Apache web server ones.
 
 This is my first Python program. Moreover, English is not my
 mother tongue...
@@ -36,51 +36,55 @@ tries to find lines which match the failregex. Then it
 retrieves the message time using timeregex and timepattern.
 It finally gets the ip and if it has already done 3 or more
 password failures in the last banTime, the ip is banned for
-banTime using a firewall rule. After banTime, the rule is
-deleted. Notice that if no "plain" ip is available, Fail2Ban
-try to do DNS lookup in order to found one or several ip's to
-ban.
+banTime using a firewall rule. This rule is set by the user
+in the configuration file. Thus, Fail2Ban can be adapted for
+lots of firewall. After banTime, the rule is deleted. Notice
+that if no "plain" ip is available, Fail2Ban try to do DNS
+lookup in order to found one or several ip's to ban.
 
 Sections can be freely added so it is possible to monitor
 several daemons at the same time.
 
 Runs on my server and does its job rather well :-) The idea
 is to make fail2ban usable with daemons and services that
-require a login (sshd, telnetd, ...). It should also support
-others firewalls than iptables.
+require a login (sshd, telnetd, ...) and with different
+firewalls.
 
 
 Installation:
 -------------
 
-Require: python-2.3 (http://www.python.org)
-         log4py-1.1 (http://sourceforge.net/projects/log4py)
+Require: python-2.4 (http://www.python.org)
 
 To install, just do:
 
-> tar xvfj fail2ban-0.4.1.tar.bz2
-> cd fail2ban-0.4.1
+> tar xvfj fail2ban-0.6.0.tar.bz2
+> cd fail2ban-0.6.0
 > python setup.py install
 
-This will install Fail2Ban into /usr/lib/fail2ban. The
-fail2ban.py executable is placed into /usr/bin.
+This will install Fail2Ban into /usr/lib/fail2ban. The fail2ban
+executable is placed into /usr/bin.
 
-For Gentoo users, an ebuild is available on the website.
+Gentoo: ebuilds are available on the website.
+Debian: Fail2Ban is in Debian unstable.
+RedHat: packages are available on the website.
 
 Fail2Ban should now be correctly installed. Just type:
 
-> fail2ban.py -h
+> fail2ban -h
 
 to see if everything is alright. You can configure fail2ban
 with a config file. Copy config/fail2ban.conf.default to
 /etc/fail2ban.conf.
 
-Gentoo users can use the initd script available in config/.
-Copy gentoo-initd to /etc/init.d/fail2ban and gentoo-confd
-to /etc/conf.d/fail2ban. You can start fail2ban and add it
-to your default runlevel:
+You can use the initd script available in config/. Copy
+<dist>-initd to /etc/init.d/fail2ban. Gentoo users must copy
+gentoo-confd to /etc/conf.d/fail2ban. You can start fail2ban:
 
 > /etc/init.d/fail2ban start
+
+Gentoo users can add it to the default runlevel:
+
 > rc-update add fail2ban default
 
 Configuration:
@@ -91,20 +95,18 @@ or using command line options. Command line options override
 the value stored in fail2ban.conf. Here are the command line
 options:
 
-  -b         start fail2ban in background
-  -d         start fail2ban in debug mode
-  -e <INTF>  ban IP on the INTF interface
+  -b         start in background
+  -d         start in debug mode
   -c <FILE>  read configuration file FILE
   -p <FILE>  create PID lock in FILE
   -h         display this help message
   -i <IP(s)> IP(s) to ignore
-  -k         kill a currently running Fail2Ban instance
-  -l <FILE>  log message in FILE
-  -r <VALUE> allow a max of VALUE password failure
-  -t <TIME>  ban IP for TIME seconds
+  -k         kill a currently running instance
+  -r <VALUE> allow a max of VALUE password failure [maxfailures]
+  -t <TIME>  ban IP for TIME seconds [bantime]
+  -f <TIME>  lifetime in seconds of failed entry [findtime]
   -v         verbose. Use twice for greater effect
-  -w <FIWA>  select the firewall to use. Can be iptables,
-             ipfwadm or ipfw
+  -V         print software version
 
 Contact:
 --------
@@ -112,7 +114,7 @@ Contact:
 You need some new features, you found bugs or you just
 appreciate this program, you can contact me at :
 
-Website: http://www.sourceforge.net/projects/fail2ban
+Website: http://fail2ban.sourceforge.net
 
 Cyril Jaquier: <lostcontrol@users.sourceforge.net>
 
@@ -121,8 +123,8 @@ Thanks:
 -------
 
 Kévin Drapel, Marvin Rouge, Sireyessire, Robert Edeker,
-Tom Pike, Iain Lea
-
+Tom Pike, Iain Lea, Andrey G. Grozin, Yaroslav Halchenko,
+Jonathan Kamens, Stephen Gildea
 
 License:
 --------

@@ -24,28 +24,22 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import logging
+
 from ConfigParser import *
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
 
 class ConfigReader:
 	""" This class allow the handling of the configuration options.
 		The DEFAULT section contains the global information about
 		Fail2Ban. Each other section is for a different log file.
 	"""
-	
-	# Each optionValues entry is composed of an array with:
-	# 0 -> the type of the option
-	# 1 -> the name of the option
-	# 2 -> the default value for the option
-	optionValues = (["bool", "enabled", True],
-					["str", "logfile", "/dev/null"],
-					["str", "timeregex", ""],
-					["str", "timepattern", ""],
-					["str", "failregex", ""])
-	
-	def __init__(self, logSys, confPath):
+
+	def __init__(self, confPath):
 		self.confPath = confPath
 		self.configParser = SafeConfigParser()
-		self.logSys = logSys
 		
 	def openConf(self):
 		""" Opens the configuration file.
@@ -54,16 +48,23 @@ class ConfigReader:
 	
 	def getSections(self):
 		""" Returns all the sections present in the configuration
-			file except the DEFAULT section.
+			file except the DEFAULT and MAIL sections.
 		"""
-		return self.configParser.sections()
-		
-	def getLogOptions(self, sec):
+		sections = self.configParser.sections()
+		sections.remove("MAIL")
+		logSys.debug("Found sections: " + `sections`)
+		return sections
+	
+	# Each optionValues entry is composed of an array with:
+	# 0 -> the type of the option
+	# 1 -> the name of the option
+	# 2 -> the default value for the option
+	def getLogOptions(self, sec, options):
 		""" Gets all the options of a given section. The options
 			are defined in the optionValues list.
 		"""
 		values = dict()
-		for option in self.optionValues:
+		for option in options:
 			try:
 				if option[0] == "bool":
 					v = self.configParser.getboolean(sec, option[1])
@@ -74,7 +75,11 @@ class ConfigReader:
 				
 				values[option[1]] = v
 			except NoOptionError:
-				self.logSys.warn("No '"+option[1]+"' defined in '"+sec+"'")
+				logSys.warn("No '" + option[1] + "' defined in '" + sec + "'")
+				values[option[1]] = option[2]
+			except ValueError:
+				logSys.warn("Wrong value for '" + option[1] + "' in '" + sec +
+							"'. Using default one: '" + `option[2]` + "'")
 				values[option[1]] = option[2]
 		return values
 		

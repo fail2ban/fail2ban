@@ -21,14 +21,14 @@
 [ "${NETWORKING}" = "no" ] && exit 0
 [ -f /etc/fail2ban.conf ] || exit 0
 
-FAIL2BAN="/usr/bin/fail2ban.py"
+FAIL2BAN="/usr/bin/fail2ban"
 PIDFILE="/var/run/fail2ban.pid"
 
 RETVAL=0
 
 start() {
     echo -n $"Starting fail2ban: "
-    "${FAIL2BAN}" -b
+    "${FAIL2BAN}" -b > /dev/null
     RETVAL=$?
     echo
 }
@@ -36,7 +36,7 @@ start() {
 stop() {
     if [ -f "${PIDFILE}" ]; then
 	echo -n $"Stopping fail2ban: "
-	"${FAIL2BAN}" -k
+	"${FAIL2BAN}" -k > /dev/null
 	echo
     fi
 }
@@ -55,7 +55,7 @@ case "$1" in
         stop
         ;;
   status)
-        status fail2ban.py
+        status fail2ban
         RETVAL=$?
         ;;
   reload)

@@ -1,0 +1,61 @@
+.\" 
+.TH "FAIL2BAN" "8" "July 2005" "Cyril Jaquier" "System administration tools"
+.SH "NAME"
+fail2ban \- bans IP that makes too many password failures
+.SH "SYNOPSIS"
+.B fail2ban
+[\fIOPTIONS\fR]
+.SH "DESCRIPTION"
+\fBFail2Ban\fR reads log file that contains password failure report
+and bans the corresponding IP addresses using firewall rules. It updates
+firewall rules to reject the IP address.
+.SH "OPTIONS"
+.TP 
+\fB\-b\fR
+start in background
+.TP 
+\fB\-d\fR
+start in debug mode. Commands are NOT executed but only displayed
+.TP 
+\fB\-c\fR \fIFILE\fR
+read configuration file \fIFILE\fR
+.TP 
+\fB\-p\fR \fIFILE\fR
+create PID lock in \fIFILE\fR
+.TP 
+\fB\-h, \-\-help\fR
+display this help message
+.TP 
+\fB\-i\fR \fIIP\fR
+\fIIP\fR(s) to ignore
+.TP 
+\fB\-k\fR
+kill a currently running Fail2Ban instance
+.TP 
+\fB\-r\fR \fIVALUE\fR
+allow a max of \fIVALUE\fR password failure [maxfailures]
+.TP 
+\fB\-t\fR \fITIME\fR
+ban IP for \fITIME\fR seconds [bantime]
+.TP 
+\fB\-f\fR \fITIME\fR
+lifetime in seconds of failed entry [findtime]
+.TP 
+\fB\-v\fR
+verbose. Use twice for greater effect
+.TP 
+\fB\-V, \-\-version\fR
+print software version
+.SH "FILES"
+.I /etc/fail2ban.conf
+.RS
+The configuration file. See \fBfail2ban.conf\fR(5) for further details.
+.SH "REPORTING BUGS"
+Please report bugs at http://sourceforge.net/projects/fail2ban/
+via bug tracker
+.SH "AUTHOR"
+Cyril Jaquier <lostcontrol@users.sourceforge.net>
+.SH "SEE ALSO"
+.TP 
+See
+.BR "http://fail2ban.sourceforge.net/".

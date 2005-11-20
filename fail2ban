@@ -1,0 +1,66 @@
+#!/usr/bin/env python
+
+# This file is part of Fail2Ban.
+#
+# Fail2Ban is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Fail2Ban is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Fail2Ban; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# Author: Cyril Jaquier
+# 
+# $Revision$
+
+__author__ = "Cyril Jaquier"
+__version__ = "$Revision$"
+__date__ = "$Date$"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__license__ = "GPL"
+
+import sys, traceback, logging
+
+# Appends our own modules path.
+sys.path.append("/usr/lib/fail2ban")
+
+# Now we can import our modules.
+import fail2ban
+from utils.pidlock import PIDLock
+
+# Get the instance of the logger.
+logSys = logging.getLogger("fail2ban")
+
+# Get PID lock file instance
+pidLock = PIDLock()
+
+# Start the application. Handle all the unhandled exceptions
+try:
+	fail2ban.main()
+except SystemExit:
+	# We called sys.exit(). Nothing wrong so just pass
+	pass
+except Exception, e:
+	# Print the exception data
+	(type, value, tb) = sys.exc_info()
+	tbStack = traceback.extract_tb(tb)
+	logSys.error("Fail2Ban got an unhandled exception and died.")
+	logSys.error("Type: " + `type.__name__` + "\n" +
+				 "Value: " + `e.args` + "\n" +
+				 "TB: " + `tbStack`)
+	# Try to clean up after ourselves
+	# just for extreme caution - wrapping with try
+	try:
+		fail2ban.restoreFwRules()
+	except Exception:
+		pass
+	# Remove the PID lock file. Should close #1239562
+	pidLock.remove()
+	logging.shutdown()

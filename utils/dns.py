@@ -24,7 +24,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import os, re, socket
+import os, re, socket, struct
 
 def dnsToIp(dns):
 	""" Convert a DNS into an IP address using the Python socket module.
@@ -55,6 +55,16 @@ def searchIP(text):
 	else:
 		return []
 
+def isValidIP(str):
+	""" Return true if str is a valid IP
+	"""
+	s = str.split('/', 1)
+	try:
+		socket.inet_aton(s[0])
+		return True
+	except socket.error:
+		return False
+
 def textToIp(text):
 	""" Return the IP of DNS found in a given text.
 	"""
@@ -62,7 +72,8 @@ def textToIp(text):
 	# Search for plain IP
 	plainIP = searchIP(text)
 	for element in plainIP:
-		ipList.append(element)
+		if isValidIP(element):
+			ipList.append(element)
 	if not ipList:
 		# Try to get IP from possible DNS
 		dnsList = textToDns(text)
@@ -71,3 +82,21 @@ def textToIp(text):
 			for e in dns:
 				ipList.append(e)
 	return ipList
+
+def cidr(i, n):
+	""" Convert an IP address string with a CIDR mask into a 32-bit
+		integer.
+	"""
+	# 32-bit IPv4 address mask
+	MASK = 0xFFFFFFFFL
+	return ~(MASK >> n) & MASK & addr2bin(i)
+
+def addr2bin(str):
+	""" Convert a string IPv4 address into an unsigned integer.
+	"""
+	return struct.unpack("!L", socket.inet_aton(str))[0]
+
+def bin2addr(addr):
+	""" Convert a numeric IPv4 address into string n.n.n.n form.
+	"""
+	return socket.inet_ntoa(struct.pack("!L", addr))
