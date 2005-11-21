@@ -16,18 +16,17 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.1.2.4 $
+# $Revision: 1.2 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.1.2.4 $"
-__date__ = "$Date: 2005/09/12 14:42:08 $"
+__version__ = "$Revision: 1.2 $"
+__date__ = "$Date: 2005/11/20 17:07:47 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging, smtplib
+import logging, smtplib, email.Utils
 
 from utils.strings import replaceTag
-import email.Utils
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")
@@ -64,7 +63,7 @@ class Mail:
 		
 		mail = ("From: %s\r\nTo: %s\r\nDate: %s\r\nSubject: %s\r\n\r\n" %
 				(self.fromAddr, ", ".join(self.toAddr),
-				email.Utils.formatdate(localtime=self.localTimeFlag),
+				email.Utils.formatdate(localtime = self.localTimeFlag),
 				subj)) + msg
 		
 		try:

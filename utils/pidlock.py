@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.1.2.2 $
+# $Revision: 1.2 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.1.2.2 $"
-__date__ = "$Date: 2005/08/07 13:08:18 $"
+__version__ = "$Revision: 1.2 $"
+__date__ = "$Date: 2005/11/20 17:07:47 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -70,8 +70,8 @@ class PIDLock:
 				logSys.debug("Removed PID lock " + self.path)
 			except OSError:
 				logSys.error("Unable to remove PID lock " + self.path)
-			# AttributeError if self.path wasn't specified yet
 			except AttributeError:
+				# AttributeError if self.path wasn't specified yet
 				logSys.debug("PID lock not removed because not defined yet")
 		
 		def exists(self):

@@ -4,8 +4,36 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.5.4)                           2005/09/13
+Fail2Ban (version 0.6.0)                           2005/11/20
 =============================================================
+
+ver. 0.6.0 (2005/11/20) - stable
+----------
+- Propagated patches introduced by Debian maintainer 
+  (Yaroslav Halchenko):
+  * Added an option to report local time (including timezone)
+    or GMT in mail notification.
+
+ver. 0.5.5 (2005/10/26) - beta
+----------
+- Propagated patches introduced by Debian maintainer 
+  (Yaroslav Halchenko):
+  * Introduced fwcheck option to verify consistency of the
+    chains. Implemented automatic restart of fail2ban main
+    function in case check of fwban or fwunban command failed
+    (closes: #329163, #331695). (Introduced patch was further
+    adjusted by upstream author).
+  * Added -f command line parameter for [findtime].
+  * Added a cleanup of firewall rules on emergency shutdown
+    when unknown exception is catched.
+  * Fail2ban should not crash now if a wrong file name is
+    specified in config.
+  * reordered code a bit so that log targets are setup right
+    after background and then only loglevel (verbose, debug)
+    is processed, so the warning could be seen in the logs
+  * Added a keyword <section> in parsing of the subject and
+    the body of an email sent out by fail2ban (closes:
+    #330311)
 
 ver. 0.5.4 (2005/09/13) - beta
 ----------

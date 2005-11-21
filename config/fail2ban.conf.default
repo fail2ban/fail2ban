@@ -1,6 +1,6 @@
 # Fail2Ban configuration file
 #
-# $Revision: 1.8.2.13 $
+# $Revision: 1.9 $
 #
 # 2005.06.21  modified for readability  Iain Lea  iain@bricbrac.de
 
@@ -156,9 +156,9 @@ localtime = true
 #          <ip>  IP address
 #          <failures>  number of failures
 #          <failtime>  unix timestamp of the last failure
-# Values:  TEXT  Default:  [Fail2Ban:<section>] Banned <ip>
+# Values:  TEXT  Default:  [Fail2Ban] <section>: Banned <ip>
 #
-subject = [Fail2Ban:<section>] Banned <ip>
+subject = [Fail2Ban] <section>: Banned <ip>
 
 # Option:  message
 # Notes.:  message of the e-mail.
@@ -171,7 +171,7 @@ subject = [Fail2Ban:<section>] Banned <ip>
 #
 message = Hi,<br>
           The IP <ip> has just been banned by Fail2Ban after
-          <failures> attempts.<br>
+          <failures> attempts against <section>.<br>
           Regards,<br>
           Fail2Ban
 
@@ -179,6 +179,7 @@ message = Hi,<br>
 # password failure. Each section has to define the following
 # options: logfile, fwban, fwunban, timeregex, timepattern,
 # failregex.
+
 
 [Apache]
 # Option:  enabled
@@ -257,6 +258,7 @@ timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
 # Values:  TEXT  Default:  [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)
 #
 failregex = [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)
+
 
 [SSH]
 # Option:  enabled

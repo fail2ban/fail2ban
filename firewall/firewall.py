@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.8.2.6 $
+# $Revision: 1.9 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.8.2.6 $"
-__date__ = "$Date: 2005/08/01 16:31:42 $"
+__version__ = "$Revision: 1.9 $"
+__date__ = "$Date: 2005/11/20 17:07:47 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -32,6 +32,10 @@ from utils.process import executeCmd
 # we might endup with not "full" flush unless we handle exception within the loop
 from utils.process import ExternalError
 from utils.strings import replaceTag
+# unfortunately but I have to bring ExternalError in especially for
+# flushBanList: if one of IPs got flushed manually outside or something, we
+# might endup with not "full" flush unless we handle exception within the loop
+from utils.process import ExternalError
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")
@@ -41,8 +45,8 @@ class Firewall:
 		the IP.
 	"""
 	
-	def __init__(self, startRule, endRule,
-		     banRule, unBanRule, checkRule, banTime):
+	def __init__(self, startRule, endRule, banRule, unBanRule, checkRule,
+				 banTime):
 		self.banRule = banRule
 		self.unBanRule = unBanRule
 		self.checkRule = checkRule
@@ -51,16 +55,27 @@ class Firewall:
 		self.banTime = banTime
 		self.banList = dict()
 		self.section = ""
+		self.mustCheck = True
 
 	def setSection(self, section):
 		""" Set optional section name for clarify of logging
 		"""
 		self.section = section
 		
-	def initialize(self, debug):
-		logSys.debug("%s: Initialize firewall rules"%self.section)
-		executeCmd(self.startRule, debug)
+	def getMustCheck(self):
+		""" Return true if the runCheck test is executed
+		"""
+		return self.mustCheck
 	
+	def setMustCheck(self, value):
+		""" Enable or disable the execution of runCheck test
+		"""
+		self.mustCheck = value
+
+  	def initialize(self, debug):
+		logSys.debug("%s: Initialize firewall rules"%self.section)
+  		executeCmd(self.startRule, debug)
+
 	def restore(self, debug):
 		logSys.debug("%s: Restore firewall rules"%self.section)
 		try:
@@ -68,7 +83,7 @@ class Firewall:
 			executeCmd(self.endRule, debug)
 		except ExternalError:
 			pass
-		
+
 	def addBanIP(self, aInfo, debug):
 		""" Bans an IP.
 		"""
@@ -79,7 +94,10 @@ class Firewall:
 			self.banList[ip] = crtTime
 			aInfo["bantime"] = crtTime
 			self.runCheck(debug)
-			executeCmd(self.banIP(aInfo), debug)
+			cmd = self.banIP(aInfo)
+			if executeCmd(cmd, debug):
+				raise ExternalError("Firewall: execution of fwban command " +
+									"'%s' failed"%cmd)
 		else:
 			self.runCheck(debug)
 			logSys.error("%s: "%self.section+ip+" already in ban list")
@@ -102,7 +120,7 @@ class Firewall:
 		"""
 		for ip in self.banList:
 			aInfo = {"ip": ip,
-					 "bantime": self.banList[ip]}
+					 "bantime":self.banList[ip]}
 			logSys.warn("%s: ReBan "%self.section + ip)
 			# next piece is similar to the on in addBanIp
 			# so might be one more function will not hurt
@@ -118,8 +136,11 @@ class Firewall:
 		""" Runs fwcheck command and throws an exception if it returns non-0
 			result
 		"""
-		executeCmd(self.checkRule, debug)
-		
+		if self.mustCheck:
+			executeCmd(self.checkRule, debug)
+		else:
+			return None
+
 	def checkForUnBan(self, debug):
 		""" Check for IP to remove from ban list.
 		"""

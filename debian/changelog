@@ -1,3 +1,12 @@
+fail2ban (0.6.0-1) unstable; urgency=low
+
+  * Merged with the latest stable upstream release. That incure some
+    changes for the Debian configuration of the package to be more
+    upstream-like:
+	- subject in the sent email includes section outside of [Fail2Ban]
+  
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 20 Nov 2005 14:56:41 -0500
+
 fail2ban (0.5.4-10) unstable; urgency=low
 
   * Fixed the order of ssh and apache rules to avoid possible race
@@ -10,7 +19,7 @@ fail2ban (0.5.4-9) unstable; urgency=low
 
   * Fixed init.d script so it doesn't return non-0 status if fail2ban is not
     running. That fixes issues with purging the package and leaving garbage in
-    /usr/share/fail2ban (Thanx to Justin Pryzby for the insight) 
+    /usr/share/fail2ban (Thanx to Justin Pryzby for the insight)
     (closes: #337223)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  3 Nov 2005 17:05:20 -0500
