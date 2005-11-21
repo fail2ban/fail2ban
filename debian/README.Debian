@@ -1,13 +1,13 @@
 fail2ban for Debian
 -------------------
 
-This package is nearly 100% identical to the upstream version. It was
-merely packaged to be installed on a Debian system and due to tight
-collaboration with upstream author most of the Debian modifications
-penetrate into the next upstream.
+This package is ~96% identical to the upstream version. Few feature
+could have been added but not yet propagated into upstream
+version. Due to tight collaboration with upstream author most of the
+Debian modifications penetrate into the next upstream.
 
 Currently the main difference with upstream: python libraries are
-placed under /usr/share/fail2ban insteadh of /usr/lib/fail2ban to
+placed under /usr/share/fail2ban instead of /usr/lib/fail2ban to
 comply with policy regarding architecture independent resources.
 
 Default behavior:
@@ -15,7 +15,9 @@ Default behavior:
 
 Only handling of ssh files is enabled by default. If you want to use
 fail2ban with apache, please enable apache section manually in
-/etc/fail2ban.conf.
+/etc/fail2ban.conf or enable section using command line parameter -e
+in /etc/default/fail2ban to avoid conflicts during upgrade of the
+config file.
 
 Troubleshooting:
 ---------------
@@ -49,4 +51,13 @@ If firewall rules gets cleaned out before fail2ban exits (like was
 happening with firestarter), errors get reported during the exit of
 fail2ban, but they are "safe" and can be ignored.
 
- -- Yaroslav O. Halchenko <debian@onerussian.com>, Thu Oct 20 13:24:56 2005
+Ban time:
+
+An IP is banned for "bantime" not since the last failed login attempt
+from the IP, but rather since the moment when failed login was
+detected by fail2ban. Thus, if fail2ban gets [re]started, any IP which
+had enough of failed logins within "findtime" will be banned for
+"bantime" since [re]start moment, not since the last failed login
+time.
+
+ -- Yaroslav O. Halchenko <debian@onerussian.com>, Sun Nov 20 21:44:56 2005
