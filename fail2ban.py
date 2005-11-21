@@ -356,14 +356,6 @@ def main():
 		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
 					"ONLY DISPLAYED IN THE LOG MESSAGES")
 
-	# Verbose level
-	if conf["verbose"]:
-		logSys.warn("Verbose level is "+`conf["verbose"]`)
-		if conf["verbose"] == 1:
-			logSys.setLevel(logging.INFO)
-		elif conf["verbose"] > 1:
-			logSys.setLevel(logging.DEBUG)
-		
 	# Set debug log level
 	if conf["debug"]:
 		logSys.setLevel(logging.DEBUG)
