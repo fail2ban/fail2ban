@@ -2,9 +2,9 @@ fail2ban (0.6.0-1) unstable; urgency=low
 
   * Merged with the latest stable upstream release. That incure some
     changes for the Debian configuration of the package to be more
-    upstream-like:
-	- subject in the sent email includes section outside of [Fail2Ban]
-  
+    upstream-like. Visible one is: subject in the sent email includes
+    section outside of "[Fail2Ban]"
+
  -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 20 Nov 2005 14:56:41 -0500
 
 fail2ban (0.5.4-10) unstable; urgency=low
