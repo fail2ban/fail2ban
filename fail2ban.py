@@ -208,7 +208,7 @@ def main():
 	
 	# Reads the config file and create a LogReader instance for
 	# each log file to check.
-	confReader = ConfigReader(conf["conffile"]);
+	confReader = ConfigReader(conf["conffile"])
 	confReader.openConf()
 	
 	# Options
