@@ -86,7 +86,11 @@ class Firewall:
 		ip = aInfo["ip"]
 		if not self.inBanList(ip):
 			crtTime = time.time()
-			logSys.warn("%s: Ban "%self.section + ip)
+			if self.banTime < 0:
+				banMsg = "Ban (permanent)"
+			else:
+				banMsg = "Ban (%d s)"%self.banTime
+			logSys.warn("%s: %s "%(self.section, banMsg) + ip)
 			self.banList[ip] = crtTime
 			aInfo["bantime"] = crtTime
 			self.runCheck(debug)
@@ -138,8 +142,12 @@ class Firewall:
 			return None
 
 	def checkForUnBan(self, debug):
-		""" Check for IP to remove from ban list.
+		""" Check for IP to remove from ban list. If banTime is smaller than
+			zero, IP will be never removed.
 		"""
+		if self.banTime < 0:
+			# Permanent banning
+			return
 		banListTemp = self.banList.copy()
 		for element in banListTemp.iteritems():
 			btime = element[1]

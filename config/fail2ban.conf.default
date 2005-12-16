@@ -48,7 +48,8 @@ pidlock = /var/run/fail2ban.pid
 maxfailures = 5
 
 # Option:  bantime
-# Notes.:  number of seconds an IP will be banned.
+# Notes.:  number of seconds an IP will be banned. If set to a negative
+#          value, IP will never be unbanned (permanent banning).
 # Values:  NUM  Default:  600
 #
 bantime = 600
