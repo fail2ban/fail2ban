@@ -201,7 +201,12 @@ class LogReader:
 			Pattern should describe the date construction of
 			value.
 		"""
-		date = list(time.strptime(value, self.timepattern))
+		try:
+			date = list(time.strptime(value, self.timepattern))
+		except ValueError, e:
+			logSys.error(e)
+			logSys.error("Please check the format and your locale settings.")
+			return None
 		if date[0] < 2000:
 			# There is probably no year field in the logs
 			date[0] = time.gmtime()[0]
