@@ -12,6 +12,7 @@ ver. 0.6.? (200?/??/??) - ???
 - Added permanent banning. Set banTime to a negative value to
   enable this feature (-1 is perfect). Thanks to Mannone
 - Fixed locale bug. Thanks to Fernando José
+- Fixed crash when time format does not match data
 
 ver. 0.6.0 (2005/11/20) - stable
 ----------
