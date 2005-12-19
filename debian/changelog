@@ -1,3 +1,11 @@
+fail2ban (0.6.0-2) unstable; urgency=low
+
+  * fail2ban path is inserted first in the list to avoid a conflict with
+    existing elsewhere modules with the same names. (Thanks for report and
+    patch to Nick Craig-Wood) (closes: #343821) 
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 19 Dec 2005 17:44:58 +0200
+
 fail2ban (0.6.0-1) unstable; urgency=low
 
   * Merged with the latest stable upstream release. That incure some
