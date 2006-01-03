@@ -21,3 +21,6 @@ See Feature Request Tracking System at SourceForge.net
 - remove debug mode (root check)
 - better return values in function
 - use more email.Utils in mail.py
+- add gettext support
+- send an email when fail2ban is running
+- use Gentoo Portage style for scripts
