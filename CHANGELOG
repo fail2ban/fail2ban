@@ -16,6 +16,13 @@ ver. 0.6.? (200?/??/??) - ???
 - Propagated patch from Debian to fix fail2ban search path 
   addition to the path search list: now it is added first. 
   Thanks to Nick Craig-Wood
+- Added SMTP authentification for mail notification. Thanks
+  to Markus Hoffmann
+- Removed debug mode as it is confusing for people
+- Added parsing of timestamp in TAI64N format (#1275325).
+  Thanks to Mark Edgington
+- Added patch #1382936 (Default formatted syslog logging).
+  Thanks to Patrick Börjesson
 
 ver. 0.6.0 (2005/11/20) - stable
 ----------

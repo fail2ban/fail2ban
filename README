@@ -62,8 +62,8 @@ To install, just do:
 > cd fail2ban-0.6.0
 > python setup.py install
 
-This will install Fail2Ban into /usr/lib/fail2ban. The fail2ban
-executable is placed into /usr/bin.
+This will install Fail2Ban into /usr/lib/fail2ban. The
+fail2ban executable is placed into /usr/bin.
 
 Gentoo: ebuilds are available on the website.
 Debian: Fail2Ban is in Debian unstable.
@@ -96,7 +96,6 @@ the value stored in fail2ban.conf. Here are the command line
 options:
 
   -b         start in background
-  -d         start in debug mode
   -c <FILE>  read configuration file FILE
   -p <FILE>  create PID lock in FILE
   -h         display this help message
@@ -124,7 +123,8 @@ Thanks:
 
 Kévin Drapel, Marvin Rouge, Sireyessire, Robert Edeker,
 Tom Pike, Iain Lea, Andrey G. Grozin, Yaroslav Halchenko,
-Jonathan Kamens, Stephen Gildea
+Jonathan Kamens, Stephen Gildea, Markus Hoffmann, Mark
+Edgington, Patrick Börjesson
 
 License:
 --------
