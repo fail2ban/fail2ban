@@ -202,7 +202,13 @@ class LogReader:
 			value.
 		"""
 		try:
-			date = list(time.strptime(value, self.timepattern))
+			# Check if the parsed value is in TAI64N format
+			if not self.timepattern.lower() == "tai64n":
+				date = list(time.strptime(value, self.timepattern))
+			else:
+				# extract part of format which represents seconds since epoch
+				seconds_since_epoch = value[2:17]
+				date = list(time.gmtime(int(seconds_since_epoch, 16)))
 		except ValueError, e:
 			logSys.error(e)
 			logSys.error("Please check the format and your locale settings.")
