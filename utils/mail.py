@@ -44,6 +44,16 @@ class Mail:
 		""" Set from: address
 		"""
 		self.fromAddr = fromAddr
+
+	def setUser(self, user):
+		""" Set smtpuser
+		"""
+		self.user = user
+
+	def setPassword(self, password):
+		""" Set smtppassword
+		"""
+		self.password = password
 	
 	def setToAddr(self, toAddr):
 		""" Set to: address
@@ -69,6 +79,8 @@ class Mail:
 		try:
 			server = smtplib.SMTP(self.host, self.port)
 			#server.set_debuglevel(1)
+			if not self.user == '':
+				server.login(self.user, self.password)
 			server.sendmail(self.fromAddr, self.toAddr, mail)
 			logSys.debug("Email sent to " + `self.toAddr`)
 			server.quit()	
