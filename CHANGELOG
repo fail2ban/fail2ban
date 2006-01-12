@@ -23,6 +23,8 @@ ver. 0.6.? (200?/??/??) - ???
   Thanks to Mark Edgington
 - Added patch #1382936 (Default formatted syslog logging).
   Thanks to Patrick Börjesson
+- Removed 192.168.0.0/16 from ignoreip. Attacks could also
+  come from the local network.
 
 ver. 0.6.0 (2005/11/20) - stable
 ----------
