@@ -1,3 +1,9 @@
+fail2ban (0.6.0-3) unstable; urgency=low
+
+  * ignoreip is now empty by default (closes: #347766)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 12 Jan 2006 18:32:14 -0500
+
 fail2ban (0.6.0-2) unstable; urgency=low
 
   * fail2ban path is inserted first in the list to avoid a conflict with

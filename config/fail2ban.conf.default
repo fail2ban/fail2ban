@@ -74,9 +74,9 @@ findtime = 600
 # Notes.:  space separated list of IP's to be ignored by fail2ban.
 #          You can use CIDR mask in order to specify a range.
 #          Example:  ignoreip = 192.168.0.1/24 123.45.235.65
-# Values:  IP  Default:  192.168.0.0/16
+# Values:  IP  Default:
 #
-ignoreip = 192.168.0.0/16
+ignoreip = 
 
 
 # Option:  cmdstart
