@@ -1,6 +1,12 @@
 fail2ban (0.6.0-3) unstable; urgency=low
 
   * ignoreip is now empty by default (closes: #347766)
+  * increased verbosity in verbose=2 mode: now prints options accepted
+    from the config file
+  * to make fail2ban.conf more compact, thus to improve its readability,
+    fail2ban.conf was converted to use "interpolations" provided by
+    ConfigParser class. fw{start,end,{,un}ban} options were moved into
+    DEFAULT section and required options (port, protocol) were added
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 12 Jan 2006 18:32:14 -0500
 

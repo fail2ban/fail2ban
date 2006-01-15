@@ -80,6 +80,8 @@ class ConfigReader:
 					v = self.configParser.get(sec, option[1])
 				
 				values[option[1]] = v
+				logSys.debug("%s: Accepted value %s=%s"%(
+					sec, option[1], `v`))
 			except NoOptionError:
 				logSys.warn("No '" + option[1] + "' defined in '" + sec +
 							"'. Using default one: '" + `option[2]` + "'")

@@ -76,20 +76,20 @@ findtime = 600
 #          Example:  ignoreip = 192.168.0.1/24 123.45.235.65
 # Values:  IP  Default:
 #
-ignoreip = 
+ignoreip =
 
 
 # Option:  cmdstart
 # Notes.:  command executed once at the start of Fail2Ban
 # Values:  CMD  Default:
 #
-cmdstart = 
+cmdstart =
 
 # Option:  cmdend
 # Notes.:  command executed once at the end of Fail2Ban.
 # Values:  CMD  Default:
 #
-cmdend = 
+cmdend =
 
 # Option:  polltime
 # Notes.:  number of seconds fail2ban sleeps between iterations.
@@ -110,6 +110,68 @@ reinittime = 10
 # Values:  NUM  Default:  -1
 #
 maxreinits = -1
+
+#
+# NOTE: Interpolations
+#
+# fwstart, as well as fwend, fwcheck, fwban, fwunban, ise interpolations
+#  so %(__name__)s  will be substituted by a name of each section
+#  (unless the option is overriden in a section).
+#  If you are going to use interpolations in your setup, please make
+#  sure that you specified options port and protocol (which also has
+#  an option in DEFAULT)
+#
+
+# Option:  protocol
+# Notes.:  internally used by config reader for interpolations.
+# Values:  [ tcp | udp | icmp | all ] Default: tcp
+#
+protocol = tcp
+
+# Option:  fwstart
+# Notes.:  command executed once at the start of Fail2Ban.
+# Values:  CMD  Default:
+#
+fwstart = iptables -N fail2ban-%(__name__)s
+          iptables -A fail2ban-%(__name__)s -j RETURN
+          iptables -I INPUT -p %(protocol)s --dport %(port)s -j fail2ban-%(__name__)s
+
+# Option:  fwend
+# Notes.:  command executed once at the end of Fail2Ban
+# Values:  CMD  Default:
+#
+fwend = iptables -D INPUT -p %(protocol)s --dport %(port)s -j fail2ban-%(__name__)s
+        iptables -F fail2ban-%(__name__)s
+        iptables -X fail2ban-%(__name__)s
+
+# Option:  fwcheck
+# Notes.:  command executed once before each fwban command
+# Values:  CMD  Default:
+#
+fwcheck = iptables -L INPUT | grep -q fail2ban-%(__name__)s
+
+# Option:  fwban
+# Notes.:  command executed when banning an IP. Take care that the
+#          command is executed with Fail2Ban user rights.
+# Tags:    <ip>  IP address
+#          <failures>  number of failures
+#          <failtime>  unix timestamp of the last failure
+#          <bantime>  unix timestamp of the ban time
+# Values:  CMD
+# Default: iptables -I INPUT 1 -s <ip> -j DROP
+#
+fwban = iptables -I fail2ban-%(__name__)s 1 -s <ip> -j DROP
+
+# Option:  fwunban
+# Notes.:  command executed when unbanning an IP. Take care that the
+#          command is executed with Fail2Ban user rights.
+# Tags:    <ip>  IP address
+#          <bantime>  unix timestamp of the ban time
+#          <unbantime>  unix timestamp of the unban time
+# Values:  CMD
+# Default: iptables -D INPUT -s <ip> -j DROP
+#
+fwunban = iptables -D fail2ban-%(__name__)s -s <ip> -j DROP
 
 
 [MAIL]
@@ -188,56 +250,17 @@ message = Hi,<br>
 #
 enabled = false
 
+# Option:  port
+# Notes.:  specifies port to monitor
+# Values:  [ NUM | STRING ]  Default:
+#
+port = http
+
 # Option:  logfile
 # Notes.:  logfile to monitor.
 # Values:  FILE  Default:  /var/log/apache/access.log
 #
 logfile = /var/log/apache/access.log
-
-# Option:  fwstart
-# Notes.:  command executed once at the start of Fail2Ban
-# Values:  CMD  Default:
-#
-fwstart = iptables -N fail2ban-http
-          iptables -A fail2ban-http -j RETURN
-          iptables -I INPUT -p tcp --dport http -j fail2ban-http
-
-# Option:  fwend
-# Notes.:  command executed once at the end of Fail2Ban
-# Values:  CMD  Default:
-#
-fwend = iptables -D INPUT -p tcp --dport http -j fail2ban-http
-        iptables -F fail2ban-http
-        iptables -X fail2ban-http
-
-# Option:  fwcheck
-# Notes.:  command executed once before each fwban command
-# Values:  CMD  Default:
-#
-fwcheck = iptables -L INPUT | grep -q fail2ban-http
-
-# Option:  fwban
-# Notes.:  command executed when banning an IP. Take care that the
-#          command is executed with Fail2Ban user rights.
-# Tags:    <ip>  IP address
-#          <failures>  number of failures
-#          <failtime>  unix timestamp of the last failure
-#          <bantime>  unix timestamp of the ban time
-# Values:  CMD
-# Default: iptables -I INPUT 1 -s <ip> -j DROP
-#
-fwban = iptables -I fail2ban-http 1 -s <ip> -j DROP
-
-# Option:  fwunban
-# Notes.:  command executed when unbanning an IP. Take care that the
-#          command is executed with Fail2Ban user rights.
-# Tags:    <ip>  IP address
-#          <bantime>  unix timestamp of the ban time
-#          <unbantime>  unix timestamp of the unban time
-# Values:  CMD
-# Default: iptables -D INPUT -s <ip> -j DROP
-#
-fwunban = iptables -D fail2ban-http -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in Apache logfile.
@@ -267,56 +290,17 @@ failregex = [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not fo
 #
 enabled = true
 
+# Option:  port
+# Notes.:  specifies port to monitor
+# Values:  [ NUM | STRING ]  Default:
+#
+port = ssh
+
 # Option:  logfile
 # Notes.:  logfile to monitor.
 # Values:  FILE  Default:  /var/log/auth.log
 #
 logfile = /var/log/auth.log
-
-# Option:  fwstart
-# Notes.:  command executed once at the start of Fail2Ban
-# Values:  CMD  Default:
-#
-fwstart = iptables -N fail2ban-ssh
-          iptables -A fail2ban-ssh -j RETURN
-          iptables -I INPUT -p tcp --dport ssh -j fail2ban-ssh
-
-# Option:  fwend
-# Notes.:  command executed once at the end of Fail2Ban
-# Values:  CMD  Default:
-#
-fwend = iptables -D INPUT -p tcp --dport ssh -j fail2ban-ssh
-        iptables -F fail2ban-ssh
-        iptables -X fail2ban-ssh
-
-# Option:  fwcheck
-# Notes.:  command executed once before each fwban command
-# Values:  CMD  Default:
-#
-fwcheck = iptables -L INPUT | grep -q fail2ban-ssh
-
-# Option:  fwbanrule
-# Notes.:  command executed when banning an IP. Take care that the
-#          command is executed with Fail2Ban user rights.
-# Tags:    <ip>  IP address
-#          <failures>  number of failures
-#          <failtime>  unix timestamp of the last failure
-#          <bantime>  unix timestamp of the ban time
-# Values:  CMD
-# Default: iptables -I INPUT 1 -s <ip> -j DROP
-#
-fwban = iptables -I fail2ban-ssh 1 -s <ip> -j DROP
-
-# Option:  fwunbanrule
-# Notes.:  command executed when unbanning an IP. Take care that the
-#          command is executed with Fail2Ban user rights.
-# Tags:    <ip>  IP address
-#          <bantime>  unix timestamp of the ban time
-#          <unbantime>  unix timestamp of the unban time
-# Values:  CMD
-# Default: iptables -D INPUT -s <ip> -j DROP
-#
-fwunban = iptables -D fail2ban-ssh -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in SSH logfile.

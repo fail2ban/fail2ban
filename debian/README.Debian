@@ -34,6 +34,19 @@ just a single group (?P<host>...)
 
 [1] http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=330827
 
+"Interpolations" in the config file:
+
+Since version 0.6.0-3 to reduce duplication, thus to improve
+readability of the config file, interpolations provided by the module
+ConfigParser are used. If you had custom sections defined before, you
+might benefit from updating config file and adding appropriate
+information for the new sections.
+
+N.B. If you have some nice additional sections defined, I would really
+appreciate if you share them with me, so they could be eventually
+included in the fail2ban package for general use by the rest of the
+community.
+
 Mailing:
 
 As it was reported (bug #329722) you might need to provide a full
@@ -60,4 +73,4 @@ had enough of failed logins within "findtime" will be banned for
 "bantime" since [re]start moment, not since the last failed login
 time.
 
- -- Yaroslav O. Halchenko <debian@onerussian.com>, Sun Nov 20 21:44:56 2005
+ -- Yaroslav O. Halchenko <debian@onerussian.com>, Sun Jan 15 15:18:13 2006
