@@ -18,7 +18,9 @@ utils/process.py
 utils/mail.py
 utils/strings.py
 utils/pidlock.py
-config/fail2ban.conf.default
+config/fail2ban.conf.iptables
+config/fail2ban.conf.shorewall
+config/fail2ban.conf.hostsdeny
 config/gentoo-initd
 config/gentoo-confd
 config/redhat-initd

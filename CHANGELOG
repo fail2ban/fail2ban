@@ -25,6 +25,18 @@ ver. 0.6.? (200?/??/??) - ???
   Thanks to Patrick Börjesson
 - Removed 192.168.0.0/16 from ignoreip. Attacks could also
   come from the local network.
+- Robust startup: if iptables module does not get fully
+  initialized after startup of fail2ban, fail2ban will do
+  "maxreinit" attempts to initialize its own firewall. It
+  will sleep between attempts for "polltime" number of
+  seconds (closes Debian: #334272). Thanks to Yaroslav
+  Halchenko
+- Added "interpolations" in fail2ban.conf. This is provided
+  by the ConfigParser module. Old configuration files still
+  work. Thanks to Yaroslav Halchenko
+- Added initial support for hosts.deny and shorewall. Need
+  more testing. Please test. Thanks to kojiro from Gentoo
+  forum for hosts.deny support
 
 ver. 0.6.0 (2005/11/20) - stable
 ----------

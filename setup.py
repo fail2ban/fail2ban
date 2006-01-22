@@ -78,5 +78,5 @@ if obsoleteFiles:
 if argv[1] == "install":
 	print
 	print "Please do not forget to update your configuration file."
-	print "Use config/fail2ban.conf.default as example."
+	print "Use config/fail2ban.conf.* as example."
 	print
