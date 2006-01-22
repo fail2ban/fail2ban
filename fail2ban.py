@@ -423,7 +423,25 @@ def main():
 		else:
 			logSys.warn(ip + " is not a valid IP address")
 	
-	initializeFwRules()
+	# Startup loop -- necessary to avoid crash if it takes time for iptables
+	# to startup. To avoid introduction of new config options, reusing
+	# maxreinits and polltime.
+	reinits = 0
+	while True:
+		try:
+			initializeFwRules()
+			break
+		except ExternalError, e:
+			reinits += 1
+			logSys.warn(e)
+			if conf["maxreinits"] < 0 or (reinits < conf["maxreinits"]):
+				logSys.warn("#%d attempt to initialize the firewalls" % reinits)
+			else:
+				logSys.error("Exiting: Too many attempts to initialize the " +
+							 "firewall")
+				killApp()
+			time.sleep(conf["polltime"])
+
 	# try to reinit once if it fails immediately
 	lastReinitTime = time.time() - conf["reinittime"] - 1
 	reinits = 0
