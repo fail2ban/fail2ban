@@ -301,6 +301,12 @@ port = http
 #
 logfile = /var/log/apache/access.log
 
+# Option:  maxfailures
+# Notes.:  number of failures before IP gets banned.
+# Values:  NUM  Default:  5
+#
+maxfailures = 2
+
 # Option:  timeregex
 # Notes.:  regex to match timestamp in Apache logfile.
 # Values:  [Wed Jan 05 15:08:01 2005]
