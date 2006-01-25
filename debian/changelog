@@ -1,3 +1,12 @@
+fail2ban (0.6.0-3.1) unstable; urgency=low
+
+  * Added section ApacheAttacks to specify some common patterns of attacks on
+    a webserver (awstats.pl as a try). This section stays split from Apache
+    since it is of different nature and might be not appropriate for some
+    users
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 16 Jan 2006 04:05:19 -0500
+
 fail2ban (0.6.0-3) unstable; urgency=low
 
   * ignoreip is now empty by default (closes: #347766)

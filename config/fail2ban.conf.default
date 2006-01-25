@@ -282,6 +282,44 @@ timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
 #
 failregex = [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)
 
+[ApacheAttacks]
+# Option:  enabled
+# Notes.:  enable monitoring for this section.
+# Values:  [true | false]  Default:  false
+#
+enabled = false
+
+# Option:  port
+# Notes.:  specifies port to monitor
+# Values:  [ NUM | STRING ]  Default:
+#
+port = http
+
+# Option:  logfile
+# Notes.:  logfile to monitor.
+# Values:  FILE  Default:  /var/log/apache/access.log
+#
+logfile = /var/log/apache/access.log
+
+# Option:  timeregex
+# Notes.:  regex to match timestamp in Apache logfile.
+# Values:  [Wed Jan 05 15:08:01 2005]
+# Default: \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
+#
+timeregex = \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
+
+# Option:  timepattern
+# Notes.:  format used in "timeregex" fields definition. Note that '%' must be
+#          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
+# Values:  TEXT  Default:  %%a %%b %%d %%H:%%M:%%S %%Y
+#
+timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
+
+# Option:  failregex
+# Notes.:  regex to match the password failure messages in the logfile.
+# Values:  TEXT  Default:  [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)
+#
+failregex = ^(?P<host>\S*) -.*"GET .*awstats\.pl\?configdir=\|echo.*404
 
 [SSH]
 # Option:  enabled
