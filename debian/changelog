@@ -1,4 +1,4 @@
-fail2ban (0.6.0-3.1) unstable; urgency=low
+fail2ban (0.6.0-3.2) unstable; urgency=low
 
   * Added section ApacheAttacks to specify some common patterns of attacks on
     a webserver (awstats.pl as a try). This section stays split from Apache

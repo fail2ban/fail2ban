@@ -319,7 +319,7 @@ timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
 # Notes.:  regex to match the password failure messages in the logfile.
 # Values:  TEXT  Default:  [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)
 #
-failregex = ^(?P<host>\S*) -.*"GET .*awstats\.pl\?configdir=\|echo.*404
+failregex = ^(?P<host>\S*) -.*"GET .*awstats\.pl\?configdir=\|echo.*
 
 [SSH]
 # Option:  enabled
