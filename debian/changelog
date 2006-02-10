@@ -1,5 +1,12 @@
-fail2ban (0.6.0-3.3) unstable; urgency=low
+fail2ban (0.6.0-3.4) UNRELEASED; urgency=low
 
+  * Modifications in README.Debian to reflect a "finding" on
+    not-AllowedUsers banning which requires default Debian configuration
+    of "ChallengeResponseAuthentication no" and "PasswordAuthentication
+    yes"
+  * Fixed Apache timeregex and timepattern to confirm
+    the fomat of time stamp used in Debian's acccess.log (error.log uses
+    RFC 2822 format)
   * Added section ApacheAttacks to specify some common patterns of attacks on
     a webserver (awstats.pl as a try). This section stays split from Apache
     since it is of different nature and might be not appropriate for some

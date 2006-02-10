@@ -1,12 +1,14 @@
 fail2ban for Debian
 -------------------
 
-This package is ~96% identical to the upstream version. Few feature
+This package is ~95% identical to the upstream version. Few feature
 could have been added but not yet propagated into upstream
-version. Due to tight collaboration with upstream author most of the
-Debian modifications penetrate into the next upstream.
+version. And although due to tight collaboration with upstream author
+most of the Debian modifications penetrate into the next upstream, few
+features present in Debian release were rejected by the upstream
+author (-e option for instance)
 
-Currently the main difference with upstream: python libraries are
+Currently, the major difference with upstream: python libraries are
 placed under /usr/share/fail2ban instead of /usr/lib/fail2ban to
 comply with policy regarding architecture independent resources.
 
@@ -19,10 +21,14 @@ fail2ban with apache, please enable apache section manually in
 in /etc/default/fail2ban to avoid conflicts during upgrade of the
 config file.
 
+N.B. '-e' command line parameter is present solely in Debian release
+ of fail2ban, thus it will not work if you decided to proceed with
+ vanilla upstream.
+
 Troubleshooting:
 ---------------
 
-Updated failregex:
+* Updated failregex:
 
 To resolve the security bug #330827 [1] failregex expressions must
 provide a named group (?P<host>...) as a placeholder of the abuser's
@@ -34,7 +40,8 @@ just a single group (?P<host>...)
 
 [1] http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=330827
 
-"Interpolations" in the config file:
+
+* "Interpolations" in the config file:
 
 Since version 0.6.0-3 to reduce duplication, thus to improve
 readability of the config file, interpolations provided by the module
@@ -47,7 +54,8 @@ appreciate if you share them with me, so they could be eventually
 included in the fail2ban package for general use by the rest of the
 community.
 
-Mailing:
+
+* Mailing:
 
 As it was reported (bug #329722) you might need to provide a full
 e-mail address in fail2ban.conf option MAIL:from to make your mail
@@ -58,13 +66,26 @@ work nicely now
 See TODO.Debian for more details, as well as the Debian Bug Tracking
 system.
 
-Dirty exit:
+
+* Dirty exit:
 
 If firewall rules gets cleaned out before fail2ban exits (like was
 happening with firestarter), errors get reported during the exit of
 fail2ban, but they are "safe" and can be ignored.
 
-Ban time:
+
+* Ban "Not allowed" attempts:
+
+Make sure that you have
+ChallengeResponseAuthentication no
+PasswordAuthentication yes
+
+Details from the bug report #350980 [2]
+
+[2]  http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=350980
+
+
+* Bantime:
 
 An IP is banned for "bantime" not since the last failed login attempt
 from the IP, but rather since the moment when failed login was

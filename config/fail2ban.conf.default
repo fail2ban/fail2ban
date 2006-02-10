@@ -263,18 +263,19 @@ port = http
 logfile = /var/log/apache/access.log
 
 # Option:  timeregex
-# Notes.:  regex to match timestamp in Apache logfile.
-# Values:  [Wed Jan 05 15:08:01 2005]
+# Notes.:  regex to match timestamp in Apache logfile. Seems to be
+#          Debian specific configuration
+# Values:  [08/Feb/2006:01:08:46]
 # Default: \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
 #
-timeregex = \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
+timeregex = \d{2}/\S{3}/\d{4}:\d{2}:\d{2}:\d{2}
 
 # Option:  timepattern
 # Notes.:  format used in "timeregex" fields definition. Note that '%' must be
 #          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
 # Values:  TEXT  Default:  %%a %%b %%d %%H:%%M:%%S %%Y
 #
-timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
+timepattern = %%d/%%b/%%Y:%%H:%%M:%%S
 
 # Option:  failregex
 # Notes.:  regex to match the password failure messages in the logfile.
@@ -312,14 +313,14 @@ maxfailures = 2
 # Values:  [Wed Jan 05 15:08:01 2005]
 # Default: \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
 #
-timeregex = \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
+timeregex = \d{2}/\S{3}/\d{4}:\d{2}:\d{2}:\d{2}
 
 # Option:  timepattern
 # Notes.:  format used in "timeregex" fields definition. Note that '%' must be
 #          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
 # Values:  TEXT  Default:  %%a %%b %%d %%H:%%M:%%S %%Y
 #
-timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
+timepattern = %%d/%%b/%%Y:%%H:%%M:%%S
 
 # Option:  failregex
 # Notes.:  regex to match the password failure messages in the logfile.
