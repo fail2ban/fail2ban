@@ -74,8 +74,17 @@ Fail2Ban should now be correctly installed. Just type:
 > fail2ban -h
 
 to see if everything is alright. You can configure fail2ban
-with a config file. Copy config/fail2ban.conf.default to
-/etc/fail2ban.conf.
+with a config file. Different kind of configuration files are
+available:
+
+iptables:   copy config/fail2ban.conf.iptables to
+            /etc/fail2ban.conf
+hosts.deny: copy config/fail2ban.conf.hostsdeny to
+            /etc/fail2ban.conf
+shorewall:  copy config/fail2ban.conf.shorewall to
+            /etc/fail2ban.conf
+
+Do not forget to edit fail2ban.conf to meet your needs.
 
 You can use the initd script available in config/. Copy
 <dist>-initd to /etc/init.d/fail2ban. Gentoo users must copy
@@ -124,7 +133,7 @@ Thanks:
 Kévin Drapel, Marvin Rouge, Sireyessire, Robert Edeker,
 Tom Pike, Iain Lea, Andrey G. Grozin, Yaroslav Halchenko,
 Jonathan Kamens, Stephen Gildea, Markus Hoffmann, Mark
-Edgington, Patrick Börjesson, kojiro
+Edgington, Patrick Börjesson, kojiro, zugeschmiert
 
 License:
 --------

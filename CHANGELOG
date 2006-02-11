@@ -37,6 +37,7 @@ ver. 0.6.? (200?/??/??) - ???
 - Added initial support for hosts.deny and shorewall. Need
   more testing. Please test. Thanks to kojiro from Gentoo
   forum for hosts.deny support
+- Added support for vsftpd. Thanks to zugeschmiert
 
 ver. 0.6.0 (2005/11/20) - stable
 ----------
