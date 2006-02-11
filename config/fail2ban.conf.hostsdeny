@@ -251,6 +251,46 @@ timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
 failregex = authentication failure|user .* not found
 
 
+[VSFTPD]
+# Option: enabled
+# Notes.: enable monitoring for this section.
+# Values: [true | false] Default: false
+#
+enabled = false
+
+# Option: logfile
+# Notes.: logfile to monitor.
+# Values: FILE Default: /var/log/secure
+#
+logfile = /var/log/vsftpd.log
+
+# Option:  port
+# Notes.:  specifies port to monitor
+# Values:  [ NUM | STRING ]  Default:
+#
+port = ftp
+
+# Option: timeregex
+# Notes.: regex to match timestamp in VSFTPD logfile.
+# Values: [Mar 7 17:53:28]
+# Default: \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
+#
+timeregex = \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
+
+# Option: timepattern
+# Notes.: format used in "timeregex" fields definition. Note that '%' must be
+# escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
+# Values: TEXT Default: %%b %%d %%H:%%M:%%S
+#
+timepattern = %%b %%d %%H:%%M:%%S
+
+# Option: failregex
+# Notes.: regex to match the password failures messages in the logfile.
+# Values: TEXT Default: Authentication failure|Failed password|Invalid user
+#
+failregex = FAIL LOGIN
+
+
 [SSH]
 # Option:  enabled
 # Notes.:  enable monitoring for this section.
