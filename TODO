@@ -77,3 +77,6 @@ See Feature Request Tracking System at SourceForge.net
   Example: logfile = /var/log/apache2/access-*.log
   Should we start one thread per file or just one thread per
   serivce?
+
+- optionally read failure patterns from file. If one regex
+  matches, consider it as a breaking in attempt.
