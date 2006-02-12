@@ -11,7 +11,9 @@ See Feature Request Tracking System at SourceForge.net
 
 - improve installation process (better prefix support)
 
-- improve documentation and website
+- improve documentation and website for user
+
+- use Doxygen
 
 - better configuration files
 
@@ -70,3 +72,8 @@ See Feature Request Tracking System at SourceForge.net
 - remove PID file.
 
 - remove most of the command lines options if possible.
+
+- add the possibility to specify wildcard in log files.
+  Example: logfile = /var/log/apache2/access-*.log
+  Should we start one thread per file or just one thread per
+  serivce?
