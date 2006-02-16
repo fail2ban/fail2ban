@@ -69,6 +69,8 @@ install: build
 # Build architecture-independent files here.
 binary-indep: build install
 # We have nothing to do by default.
+	# migrated from binary-arch
+	dh_python
 
 # Build architecture-dependent files here.
 binary-arch: build install copy-inits
@@ -93,7 +95,6 @@ binary-arch: build install copy-inits
 	dh_compress
 	dh_fixperms
 #	dh_perl
-	dh_python
 #	dh_makeshlibs
 	dh_installdeb
 	dh_shlibdeps
