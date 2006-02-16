@@ -3,6 +3,8 @@ fail2ban (0.6.0-4) unstable; urgency=low
   In this version the new section ApacheAttacks was introduced to ban IPs
   which are found to run some known attack on the host. For now it captures
   just awstats related attacks. Besides that to make it function the bug of
-  wrongly specified timeregexp for Apache's access.log file was fixed
+  wrongly specified timeregexp for Apache's access.log file was fixed.
+  Besides that group of log files has changed to be adm, and now they are
+  readable by the group
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 10 Feb 2006 13:05:07 -0500

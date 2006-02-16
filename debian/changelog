@@ -11,6 +11,8 @@ fail2ban (0.6.0-3.5) UNRELEASED; urgency=low
     a webserver (awstats.pl as a try). This section stays split from Apache
     since it is of different nature and might be not appropriate for some
     users
+  * Forced owner/permissions of log file to be root:adm/640 in postinst and
+    logrotate (closes: #352053)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 16 Jan 2006 04:05:19 -0500
 
