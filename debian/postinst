@@ -25,8 +25,8 @@ case "$1" in
 
        LOG=/var/log/fail2ban.log
        touch $LOG
-       chown root:adm $LOG
-       chmod 640 $LOG
+       chown root:adm ${LOG}*
+       chmod 640 ${LOG}*
         
        # Note regarding changed configuration file
 		if [ ! -z $preversion ] \
