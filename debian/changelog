@@ -1,4 +1,4 @@
-fail2ban (0.6.0-3.6) UNRELEASED; urgency=low
+fail2ban (0.6.0-4) unstable; urgency=low
 
   * Modifications in README.Debian to reflect a "finding" on
     not-AllowedUsers banning which requires default Debian configuration
