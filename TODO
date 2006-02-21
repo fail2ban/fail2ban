@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-ToDo                                         $Revision$
+ToDo                                        $Revision$
 =============================================================
 
 See Feature Request Tracking System at SourceForge.net
@@ -14,6 +14,8 @@ See Feature Request Tracking System at SourceForge.net
 - improve documentation and website for user
 
 - use Doxygen
+
+- use PyLint to check the code
 
 - better configuration files
 
