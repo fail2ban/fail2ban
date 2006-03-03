@@ -1,3 +1,14 @@
+fail2ban (0.6.0-6) unstable; urgency=low
+
+  * Updated README.Debian with information about some cases with
+    not-as-shipped configurations of sshd on the boxes running older versions
+    of openssh server
+  * Included regexps for SSH in case iff authentication as root using keys was
+    attempted whenever PermitRootLogin is set to something else than "yes" and
+    key authentication fails.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri,  3 Mar 2006 16:32:38 -0500
+
 fail2ban (0.6.0-5) unstable; urgency=low
 
   * Fixed Apache section: changed filepath to point at error.log, thus I had
