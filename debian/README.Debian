@@ -74,6 +74,8 @@ happening with firestarter), errors get reported during the exit of
 fail2ban, but they are "safe" and can be ignored.
 
 
+** SSHD Configuration Specific Problems
+
 * Ban "Not allowed" attempts:
 
 Make sure that you have
@@ -83,6 +85,16 @@ PasswordAuthentication yes
 Details from the bug report #350980 [2]
 
 [2]  http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=350980
+
+
+* Not caught attempts to login as root
+
+On the boxes running older versions of openssh (e.g. sarge
+distribution) in the case when PermitRootLogin is set to something
+else than "yes" and iff AllowUsers is active, failed root logins do
+not confirm to the standard logging message -- they omit the source
+IP, thus allowing attack to persist since such messages are not caught
+by fail2ban.
 
 
 * Bantime:
