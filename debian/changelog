@@ -5,8 +5,10 @@ fail2ban (0.6.0-6) unstable; urgency=low
     of openssh server
   * Included regexps for SSH in case iff authentication as root using keys was
     attempted whenever PermitRootLogin is set to something else than "yes" and
-    key authentication fails.
-
+    key authentication fails
+  * Included postrm script to remove log files during purge to comply with
+    policy 10.8 (closes: #355443)
+ 
  -- Yaroslav Halchenko <debian@onerussian.com>  Fri,  3 Mar 2006 16:32:38 -0500
 
 fail2ban (0.6.0-5) unstable; urgency=low
