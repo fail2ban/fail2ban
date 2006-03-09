@@ -1,3 +1,9 @@
+fail2ban (0.6.0-7) unstable; urgency=low
+
+  * Fixed a typo in failregex for SSH section (closes: #356112)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  9 Mar 2006 15:13:48 -0500
+
 fail2ban (0.6.0-6) unstable; urgency=low
 
   * Updated README.Debian with information about some cases with
