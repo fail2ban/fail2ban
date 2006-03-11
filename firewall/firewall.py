@@ -32,10 +32,6 @@ from utils.process import executeCmd
 # we might endup with not "full" flush unless we handle exception within the loop
 from utils.process import ExternalError
 from utils.strings import replaceTag
-# unfortunately but I have to bring ExternalError in especially for
-# flushBanList: if one of IPs got flushed manually outside or something, we
-# might endup with not "full" flush unless we handle exception within the loop
-from utils.process import ExternalError
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")

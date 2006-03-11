@@ -9,42 +9,28 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-
-
-
-CFLAGS = -Wall -g
-
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -O0
-else
-	CFLAGS += -O2
-endif
+MANPAGE=fail2ban.8
+DESTDIR=$(CURDIR)/debian/fail2ban
 
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-
 	touch configure-stamp
-
 
 build: build-stamp
 
 build-stamp: configure-stamp 
 	dh_testdir
-
-	# Add here commands to compile the package.
-	$(MAKE)
-	#docbook-to-man debian/fail2ban.sgml > fail2ban.1
-
 	touch build-stamp
 
 copy-inits:
 	cp config/gentoo-confd debian/fail2ban.default 
 	cp config/debian-initd debian/fail2ban.init
+	cp config/fail2ban.logrotate debian/
 
 clean-inits:
-	rm -f debian/fail2ban.default debian/fail2ban.init
+	rm -f debian/fail2ban.{default,init,logrotate}
 
 clean:	clean-inits
 	dh_testdir
@@ -52,7 +38,7 @@ clean:	clean-inits
 	rm -f build-stamp configure-stamp
 
 	# Add here commands to clean up after the build process.
-	-$(MAKE) clean
+	rm -rf changelog.gz $(MANPAGE) build* `find -iname '*.pyc' `
 
 	dh_clean 
 
@@ -63,12 +49,17 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/fail2ban.
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/fail2ban
+	python setup.py install --root=$(DESTDIR)
+	mkdir -p $(DESTDIR)/etc
+	cp config/fail2ban.conf.default $(DESTDIR)/etc/fail2ban.conf
 
-
+# To build manpage
+$(MANPAGE): fail2ban fail2ban.h2m
+	help2man --include fail2ban.h2m --section=1x --no-info --output $@ ./fail2ban
+ 
 # Build architecture-independent files here.
-binary-indep: build install
-# We have nothing to do by default.
+binary-indep: build install $(MANPAGE)
+	
 	# migrated from binary-arch
 	dh_python
 

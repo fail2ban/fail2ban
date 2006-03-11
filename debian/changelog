@@ -1,3 +1,9 @@
+fail2ban (0.6.0-8) unstable; urgency=low
+
+  * Minor adjustments to reduce the deviation from the upstream code
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 11 Mar 2006 00:48:14 -0500
+
 fail2ban (0.6.0-7) unstable; urgency=low
 
   * Fixed a typo in failregex for SSH section (closes: #356112)
