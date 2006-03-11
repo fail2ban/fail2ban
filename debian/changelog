@@ -1,4 +1,4 @@
-fail2ban (0.6.0-8) unstable; urgency=low
+fail2ban (0.6.0-8.1) unstable; urgency=low
 
   * Minor adjustments to reduce the deviation from the upstream code
 
