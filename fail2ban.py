@@ -355,16 +355,6 @@ def main():
 		stdout.setFormatter(formatter)
 		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
 					"ONLY DISPLAYED IN THE LOG MESSAGES")
-
-	# Set debug log level
-	if conf["debug"]:
-		logSys.setLevel(logging.DEBUG)
-		formatterstring = ('%(levelname)s: [%(filename)s (%(lineno)d)] ' +
-						   '%(message)s')
-		formatter = logging.Formatter("%(asctime)s " + formatterstring)
-		stdout.setFormatter(formatter)
-		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
-					"ONLY DISPLAYED IN THE LOG MESSAGES")
 	
 	# Ignores IP list
 	ignoreIPList = conf["ignoreip"].split(' ')
