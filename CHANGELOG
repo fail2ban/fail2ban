@@ -4,10 +4,10 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.6.?)                           200?/??/??
+Fail2Ban (version 0.6.1)                           2006/03/16
 =============================================================
 
-ver. 0.6.? (200?/??/??) - ???
+ver. 0.6.1 (2006/03/16) - stable
 ----------
 - Added permanent banning. Set banTime to a negative value to
   enable this feature (-1 is perfect). Thanks to Mannone
