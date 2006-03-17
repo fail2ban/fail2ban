@@ -330,8 +330,7 @@ enabled = true
 # Notes.:  logfile to monitor.
 # Values:  FILE  Default:  /var/log/secure
 #
-#logfile = /var/log/secure
-logfile = /home/cyril/workspace/fail2ban-stable/log-test/test
+logfile = /var/log/secure
 
 # Option:  port
 # Notes.:  specifies port to monitor
