@@ -18,15 +18,22 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.5 $
+# $Revision: 1.7 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.5 $"
-__date__ = "$Date: 2005/11/20 17:07:47 $"
+__version__ = "$Revision: 1.7 $"
+__date__ = "$Date: 2005/12/27 15:09:50 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import sys, traceback, logging
+import sys, traceback, logging, locale
+
+# Set the locale with the user's default setting
+try:
+	locale.setlocale(locale.LC_ALL, '')
+except Exception:
+	print "Unable to set locale to " + `locale.getdefaultlocale()`
+	sys.exit(-1)
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
@@ -42,8 +49,9 @@ logSys = logging.getLogger("fail2ban")
 # Get PID lock file instance
 pidLock = PIDLock()
 
-# Start the application. Handle all the unhandled exceptions
+# Handle all the unhandled exceptions
 try:
+	# Start the application
 	fail2ban.main()
 except SystemExit:
 	# We called sys.exit(). Nothing wrong so just pass

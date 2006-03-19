@@ -18,11 +18,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.5 $"
-__date__ = "$Date: 2005/11/20 17:07:47 $"
+__version__ = "$Revision: 1.6 $"
+__date__ = "$Date: 2006/01/22 11:08:42 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -78,5 +78,5 @@ if obsoleteFiles:
 if argv[1] == "install":
 	print
 	print "Please do not forget to update your configuration file."
-	print "Use config/fail2ban.conf.default as example."
+	print "Use config/fail2ban.conf.* as example."
 	print

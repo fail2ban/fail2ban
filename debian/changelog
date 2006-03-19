@@ -1,3 +1,9 @@
+fail2ban (0.6.1-0.1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 18 Mar 2006 23:11:53 -0500
+
 fail2ban (0.6.0-8) unstable; urgency=low
 
   * Minor adjustments to reduce the deviation from the upstream code

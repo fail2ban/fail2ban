@@ -1,6 +1,6 @@
 # Fail2Ban configuration file
 #
-# $Revision: 1.9 $
+# $Revision: 1.2 $
 #
 # 2005.06.21  modified for readability  Iain Lea  iain@bricbrac.de
 
@@ -9,24 +9,7 @@
 # Notes.:  start fail2ban as a daemon. Output is redirect to logfile.
 # Values:  [true | false]  Default:  false
 #
-background = true
-
-# Option:  verbose
-# Notes.:  verbosity of the output.
-#           0 - regular level
-#           1 - INFO level
-#           2 - DEBUG level (but commands get executed as opposed to
-#                debug option)
-# Values:  NUM  Default:  0
-#
-verbose = 1
-
-# Option:  debug
-# Notes.:  enable debug mode. No real commands gets executed but only
-#          reported, more verbose output, bypass root user test.
-# Values:  [true | false]  Default:  false
-#
-debug = false
+background = false
 
 # Option:  logtargets
 # Notes.:  log targets. Space separated list of logging targets.
@@ -59,7 +42,8 @@ pidlock = /var/run/fail2ban.pid
 maxfailures = 5
 
 # Option:  bantime
-# Notes.:  number of seconds an IP will be banned.
+# Notes.:  number of seconds an IP will be banned. If set to a negative
+#          value, IP will never be unbanned (permanent banning).
 # Values:  NUM  Default:  600
 #
 bantime = 600
@@ -74,22 +58,21 @@ findtime = 600
 # Notes.:  space separated list of IP's to be ignored by fail2ban.
 #          You can use CIDR mask in order to specify a range.
 #          Example:  ignoreip = 192.168.0.1/24 123.45.235.65
-# Values:  IP  Default:
+# Values:  IP  Default:  
 #
-ignoreip =
-
+ignoreip = 
 
 # Option:  cmdstart
 # Notes.:  command executed once at the start of Fail2Ban
 # Values:  CMD  Default:
 #
-cmdstart =
+cmdstart = 
 
 # Option:  cmdend
 # Notes.:  command executed once at the end of Fail2Ban.
 # Values:  CMD  Default:
 #
-cmdend =
+cmdend = 
 
 # Option:  polltime
 # Notes.:  number of seconds fail2ban sleeps between iterations.
@@ -111,44 +94,21 @@ reinittime = 10
 #
 maxreinits = -1
 
-#
 # NOTE: Interpolations
 #
-# fwstart, as well as fwend, fwcheck, fwban, fwunban, ise interpolations
-#  so %(__name__)s  will be substituted by a name of each section
-#  (unless the option is overriden in a section).
-#  If you are going to use interpolations in your setup, please make
-#  sure that you specified options port and protocol (which also has
-#  an option in DEFAULT)
+# fwstart, as well as fwend, fwcheck, fwban, fwunban, use interpolations
+# so %(__name__)s  will be substituted by a name of each section
+# (unless the option is overriden in a section).
+# If you are going to use interpolations in your setup, please make
+# sure that you specified options port and protocol (which also has
+# an option in DEFAULT).
 #
 
-# Option:  protocol
-# Notes.:  internally used by config reader for interpolations.
-# Values:  [ tcp | udp | icmp | all ] Default: tcp
+# Option:  hostsdeny
+# Notes.:  hosts.deny file path.
+# Values:  STR  Default:  /etc/hosts.deny
 #
-protocol = tcp
-
-# Option:  fwstart
-# Notes.:  command executed once at the start of Fail2Ban.
-# Values:  CMD  Default:
-#
-fwstart = iptables -N fail2ban-%(__name__)s
-          iptables -A fail2ban-%(__name__)s -j RETURN
-          iptables -I INPUT -p %(protocol)s --dport %(port)s -j fail2ban-%(__name__)s
-
-# Option:  fwend
-# Notes.:  command executed once at the end of Fail2Ban
-# Values:  CMD  Default:
-#
-fwend = iptables -D INPUT -p %(protocol)s --dport %(port)s -j fail2ban-%(__name__)s
-        iptables -F fail2ban-%(__name__)s
-        iptables -X fail2ban-%(__name__)s
-
-# Option:  fwcheck
-# Notes.:  command executed once before each fwban command
-# Values:  CMD  Default:
-#
-fwcheck = iptables -L INPUT | grep -q fail2ban-%(__name__)s
+hostsdeny = /etc/hosts.deny
 
 # Option:  fwban
 # Notes.:  command executed when banning an IP. Take care that the
@@ -160,7 +120,7 @@ fwcheck = iptables -L INPUT | grep -q fail2ban-%(__name__)s
 # Values:  CMD
 # Default: iptables -I INPUT 1 -s <ip> -j DROP
 #
-fwban = iptables -I fail2ban-%(__name__)s 1 -s <ip> -j DROP
+fwban = IP=<ip> && echo "ALL: $IP" >> %(hostsdeny)s
 
 # Option:  fwunban
 # Notes.:  command executed when unbanning an IP. Take care that the
@@ -171,8 +131,7 @@ fwban = iptables -I fail2ban-%(__name__)s 1 -s <ip> -j DROP
 # Values:  CMD
 # Default: iptables -D INPUT -s <ip> -j DROP
 #
-fwunban = iptables -D fail2ban-%(__name__)s -s <ip> -j DROP
-
+fwunban = IP=<ip> && sed -i.old s/ALL:\ $IP// %(hostsdeny)s
 
 [MAIL]
 # Option:  enabled
@@ -193,18 +152,31 @@ host = localhost
 #
 port = 25
 
+# Option:  user
+# Notes.:  the username for smtp-server if authentification is required.
+#          if user is empty, no authentification is done.
+# Values:  STR  Default:  
+#
+user = 
+
+# Option:  password
+# Notes.:  the smtp-user's password if authentification is required.
+# Values:  STR  Default:  
+#
+password = 
+
 # Option:  from
 # Notes.:  e-mail address of the sender.
 # Values:  MAIL  Default:  fail2ban
 #
-from = fail2ban@localhost
+from = fail2ban
 
 # Option:  to
 # Notes.:  e-mail addresses of the receiver. Addresses are space
 #          separated.
 # Values:  MAIL  Default:  root
 #
-to = root@localhost
+to = root
 
 # Option:  localtime
 # Notes.:  report local time (including timezone) or GMT
@@ -250,20 +222,15 @@ message = Hi,<br>
 #
 enabled = false
 
-# Option:  port
-# Notes.:  specifies port to monitor
-# Values:  [ NUM | STRING ]  Default:
-#
-port = http
-
 # Option:  logfile
 # Notes.:  logfile to monitor.
-# Values:  FILE  Default:  /var/log/apache/error.log
+# Values:  FILE  Default:  /var/log/httpd/access_log
 #
-logfile = /var/log/apache/error.log
+logfile = /var/log/httpd/access_log
 
 # Option:  timeregex
-# Notes.:  regex to match timestamp in Apache error logfile.
+# Notes.:  regex to match timestamp in Apache logfile. For TAI64N format,
+#          use timeregex = @[0-9a-f]{24}
 # Values:  [Wed Jan 05 15:08:01 2005]
 # Default: \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
 #
@@ -271,61 +238,58 @@ timeregex = \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
 
 # Option:  timepattern
 # Notes.:  format used in "timeregex" fields definition. Note that '%' must be
-#          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
+#          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule).
+#          For TAI64N format, use timepattern = tai64n
 # Values:  TEXT  Default:  %%a %%b %%d %%H:%%M:%%S %%Y
 #
 timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
 
 # Option:  failregex
 # Notes.:  regex to match the password failure messages in the logfile.
-# Values:  TEXT  Default:  [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)
+# Values:  TEXT  Default:  authentication failure|user .* not found
 #
-failregex = [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)
+failregex = authentication failure|user .* not found
 
-[ApacheAttacks]
-# Option:  enabled
-# Notes.:  enable monitoring for this section.
-# Values:  [true | false]  Default:  false
+
+[VSFTPD]
+# Option: enabled
+# Notes.: enable monitoring for this section.
+# Values: [true | false] Default: false
 #
 enabled = false
+
+# Option: logfile
+# Notes.: logfile to monitor.
+# Values: FILE Default: /var/log/secure
+#
+logfile = /var/log/vsftpd.log
 
 # Option:  port
 # Notes.:  specifies port to monitor
 # Values:  [ NUM | STRING ]  Default:
 #
-port = http
+port = ftp
 
-# Option:  logfile
-# Notes.:  logfile to monitor.
-# Values:  FILE  Default:  /var/log/apache/access.log
+# Option: timeregex
+# Notes.: regex to match timestamp in VSFTPD logfile.
+# Values: [Mar 7 17:53:28]
+# Default: \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
 #
-logfile = /var/log/apache/access.log
+timeregex = \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
 
-# Option:  maxfailures
-# Notes.:  number of failures before IP gets banned.
-# Values:  NUM  Default:  5
+# Option: timepattern
+# Notes.: format used in "timeregex" fields definition. Note that '%' must be
+# escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
+# Values: TEXT Default: %%b %%d %%H:%%M:%%S
 #
-maxfailures = 2
+timepattern = %%b %%d %%H:%%M:%%S
 
-# Option:  timeregex
-# Notes.:  regex to match timestamp in Apache access logfile.
-# Values:  [19/Feb/2006:08:38:18]
-# Default: \d{2}/\S{3}/\d{4}:\d{2}:\d{2}:\d{2}
+# Option: failregex
+# Notes.: regex to match the password failures messages in the logfile.
+# Values: TEXT Default: Authentication failure|Failed password|Invalid user
 #
-timeregex = \d{2}/\S{3}/\d{4}:\d{2}:\d{2}:\d{2}
+failregex = FAIL LOGIN
 
-# Option:  timepattern
-# Notes.:  format used in "timeregex" fields definition. Note that '%' must be
-#          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
-# Values:  TEXT  Default: %%d/%%b/%%Y:%%H:%%M:%%S
-#
-timepattern = %%d/%%b/%%Y:%%H:%%M:%%S
-
-# Option:  failregex
-# Notes.:  regex to match the password failure messages in the logfile.
-# Values:  TEXT  Default:  [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)
-#
-failregex = ^(?P<host>\S*) -.*"GET .*(?:awstats\.pl\?configdir=|index2\.php\?_REQUEST\[option\].*)\|echo.*
 
 [SSH]
 # Option:  enabled
@@ -334,20 +298,15 @@ failregex = ^(?P<host>\S*) -.*"GET .*(?:awstats\.pl\?configdir=|index2\.php\?_RE
 #
 enabled = true
 
-# Option:  port
-# Notes.:  specifies port to monitor
-# Values:  [ NUM | STRING ]  Default:
-#
-port = ssh
-
 # Option:  logfile
 # Notes.:  logfile to monitor.
-# Values:  FILE  Default:  /var/log/auth.log
+# Values:  FILE  Default:  /var/log/secure
 #
-logfile = /var/log/auth.log
+logfile = /var/log/secure
 
 # Option:  timeregex
-# Notes.:  regex to match timestamp in SSH logfile.
+# Notes.:  regex to match timestamp in SSH logfile. For TAI64N format,
+#          use timeregex = @[0-9a-f]{24}
 # Values:  [Mar  7 17:53:28]
 # Default: \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
 #
@@ -355,13 +314,14 @@ timeregex = \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
 
 # Option:  timepattern
 # Notes.:  format used in "timeregex" fields definition. Note that '%' must be
-#          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
+#          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule).
+#          For TAI64N format, use timepattern = tai64n
 # Values:  TEXT  Default:  %%b %%d %%H:%%M:%%S
 #
 timepattern = %%b %%d %%H:%%M:%%S
 
 # Option:  failregex
 # Notes.:  regex to match the password failures messages in the logfile.
-# Values:  TEXT  Default:  (?:Authentication failure|Failed (?:keyboard-interactive/pam|password)) for(?: illegal user)? .* from (?:::f{4,6}:)?(?P<host>\S*)
+# Values:  TEXT  Default:  Authentication failure|Failed password|Invalid user
 #
-failregex = : (?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) (?:::f{4,6}:)?(?P<host>\S*)
+failregex = Authentication failure|Failed password|Invalid user

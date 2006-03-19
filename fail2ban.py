@@ -15,13 +15,13 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # Author: Cyril Jaquier
-# Modified by: Yaroslav Halchenko (SYSLOG, findtime)
-#
-# $Revision: 1.21 $
+# Modified by: Yaroslav Halchenko (SYSLOG, findtime, and oth)
+# 
+# $Revision: 1.24 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.21 $"
-__date__ = "$Date: 2005/11/20 17:07:47 $"
+__version__ = "$Revision: 1.24 $"
+__date__ = "$Date: 2006/01/22 11:10:29 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -206,13 +206,14 @@ def main():
 	stdout.setFormatter(formatter)
 	
 	conf["kill"] = False
+	conf["debug"] = False
 	conf["verbose"] = 0
 	conf["conffile"] = "/etc/fail2ban.conf"
 	
 	# Reads the command line options.
 	try:
 		cmdOpts = 'hvVbdkc:t:f:i:r:p:e:'
-		cmdLongOpts = ['help', 'version']
+		cmdLongOpts = ['help','version']
 		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
 	except getopt.GetoptError:
 		dispUsage()
@@ -228,7 +229,7 @@ def main():
 	
 	# Reads the config file and create a LogReader instance for
 	# each log file to check.
-	confReader = ConfigReader(conf["conffile"]);
+	confReader = ConfigReader(conf["conffile"])
 	confReader.openConf()
 	
 	# Options
@@ -264,7 +265,7 @@ def main():
 	
 	# PID lock
 	pidLock.setPath(conf["pidlock"])
-
+	
 	# Now we can kill properly a running instance if needed
 	if conf["kill"]:
 		pid = pidLock.exists()
@@ -289,7 +290,7 @@ def main():
 	# Bug fix for #1234699
 	os.umask(0077)
 	for target in conf["logtargets"].split():
-		# target formatter
+		# target formatter 
 		# By default global formatter is taken. Is different for SYSLOG
 		tformatter = formatter
 		if target == "STDERR":
@@ -335,9 +336,7 @@ def main():
 		# Set formatter and add handler to logger
 		hdlr.setFormatter(tformatter)
 		logSys.addHandler(hdlr)
-
-	# Process some options
-
+	
 	# Verbose level
 	if conf["verbose"]:
 		logSys.warn("Verbose level is "+`conf["verbose"]`)
@@ -345,14 +344,14 @@ def main():
 			logSys.setLevel(logging.INFO)
 		elif conf["verbose"] > 1:
 			logSys.setLevel(logging.DEBUG)
-
-	# Set debug log level
-	if conf["debug"]:
-		logSys.setLevel(logging.DEBUG)
-		formatterstring = ('%(levelname)s: [%(filename)s (%(lineno)d)] ' +
+		if conf["verbose"] > 2:
+			formatterstring = ('%(levelname)s: [%(filename)s (%(lineno)d)] ' +
 						   '%(message)s')
-		formatter = logging.Formatter("%(asctime)s " + formatterstring)
-		stdout.setFormatter(formatter)
+			formatter = logging.Formatter("%(asctime)s " + formatterstring)
+			stdout.setFormatter(formatter)
+	
+	# Debug mode. Should only be used by developers
+	if conf["debug"]:
 		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
 					"ONLY DISPLAYED IN THE LOG MESSAGES")
 	
@@ -365,7 +364,7 @@ def main():
 		logSys.error("You must be root")
 		if not conf["debug"]:
 			sys.exit(-1)
-	
+			
 	# Checks that no instance of Fail2Ban is currently running.
 	pid = pidLock.exists()
 	if pid:
@@ -388,6 +387,8 @@ def main():
 					["int", "port", "25"],
 					["str", "from", "root"],
 					["str", "to", "root"],
+					["str", "user", ''],
+					["str", "password", ''],
 					["bool", "localtime", False],
 					["str", "subject", "[Fail2Ban] Banned <ip>"],
 					["str", "message", "Fail2Ban notification"])
@@ -400,6 +401,8 @@ def main():
 		logSys.debug("Mail enabled")
 		mail = Mail(mailConf["host"], mailConf["port"])
 		mail.setFromAddr(mailConf["from"])
+		mail.setUser(mailConf["user"])
+		mail.setPassword(mailConf["password"])
 		mail.setToAddr(mailConf["to"])
 		mail.setLocalTimeFlag(mailConf["localtime"])
 		logSys.debug("to: " + mailConf["to"] + " from: " + mailConf["from"])
@@ -458,10 +461,10 @@ def main():
 				element[1].addIgnoreIP(ip)
 		else:
 			logSys.warn(ip + " is not a valid IP address")
-
+	
 	# Startup loop -- necessary to avoid crash if it takes time for iptables
-	# to startup
-	# To avoid introduction of new config options, reusing maxreinits and polltime
+	# to startup. To avoid introduction of new config options, reusing
+	# maxreinits and polltime.
 	reinits = 0
 	while True:
 		try:
@@ -471,9 +474,10 @@ def main():
 			reinits += 1
 			logSys.warn(e)
 			if conf["maxreinits"] < 0 or (reinits < conf["maxreinits"]):
-				logSys.warn("#%d attempt to initialize the firewalls"%reinits)
+				logSys.warn("#%d attempt to initialize the firewalls" % reinits)
 			else:
-				logSys.error("Exiting: Too many attempts to initialize the firewall")
+				logSys.error("Exiting: Too many attempts to initialize the " +
+							 "firewall")
 				killApp()
 			time.sleep(conf["polltime"])
 
