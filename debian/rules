@@ -69,7 +69,7 @@ binary-arch: build install copy-inits
 	dh_testroot
 	dh_installchangelogs CHANGELOG
 	dh_installdocs
-	dh_installexamples
+	dh_installexamples config/fail2ban.conf.*
 #	dh_install
 #	dh_installmenu
 #	dh_installdebconf
