@@ -136,6 +136,11 @@ class LogReader:
 		self.setFilePos(logFile)
 		lastLine = None
 		for line in logFile:
+			try:
+				# Try to convert UTF-8 string to Latin-1
+				line = line.decode('utf-8').encode('latin-1')
+			except UnicodeDecodeError:
+				pass
 			if not self.hasTime(line):
 				# There is no valid time in this line
 				continue
