@@ -1,6 +1,8 @@
 fail2ban (0.6.1-0.1) unstable; urgency=low
 
   * New upstream release
+  * In config file added fwchain to ease switching to another input chain
+    (closes: #357164)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 18 Mar 2006 23:11:53 -0500
 

@@ -127,19 +127,25 @@ maxreinits = -1
 #
 protocol = tcp
 
+# Option:  fwchain
+# Notes.:  chain from which to jump into fail2ban chains
+# Values:  TEXT  Default: INPUT
+#
+fwchain = INPUT
+
 # Option:  fwstart
 # Notes.:  command executed once at the start of Fail2Ban.
 # Values:  CMD  Default:
 #
 fwstart = iptables -N fail2ban-%(__name__)s
           iptables -A fail2ban-%(__name__)s -j RETURN
-          iptables -I INPUT -p %(protocol)s --dport %(port)s -j fail2ban-%(__name__)s
+          iptables -I %(fwchain)s -p %(protocol)s --dport %(port)s -j fail2ban-%(__name__)s
 
 # Option:  fwend
 # Notes.:  command executed once at the end of Fail2Ban
 # Values:  CMD  Default:
 #
-fwend = iptables -D INPUT -p %(protocol)s --dport %(port)s -j fail2ban-%(__name__)s
+fwend = iptables -D %(fwchain)s -p %(protocol)s --dport %(port)s -j fail2ban-%(__name__)s
         iptables -F fail2ban-%(__name__)s
         iptables -X fail2ban-%(__name__)s
 
@@ -147,7 +153,7 @@ fwend = iptables -D INPUT -p %(protocol)s --dport %(port)s -j fail2ban-%(__name_
 # Notes.:  command executed once before each fwban command
 # Values:  CMD  Default:
 #
-fwcheck = iptables -L INPUT | grep -q fail2ban-%(__name__)s
+fwcheck = iptables -L %(fwchain)s | grep -q fail2ban-%(__name__)s
 
 # Option:  fwban
 # Notes.:  command executed when banning an IP. Take care that the
