@@ -20,12 +20,12 @@ configure-stamp:
 
 build: build-stamp
 
-build-stamp: configure-stamp 
+build-stamp: configure-stamp
 	dh_testdir
 	touch build-stamp
 
 copy-inits:
-	cp config/gentoo-confd debian/fail2ban.default 
+	cp config/gentoo-confd debian/fail2ban.default
 	cp config/debian-initd debian/fail2ban.init
 	cp config/fail2ban.logrotate debian/
 
@@ -40,26 +40,26 @@ clean:	clean-inits
 	# Add here commands to clean up after the build process.
 	rm -rf changelog.gz $(MANPAGE) build* `find -iname '*.pyc' `
 
-	dh_clean 
+	dh_clean
 
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k 
+	dh_clean -k
 	dh_installdirs
 
 	# Add here commands to install the package into debian/fail2ban.
 	python setup.py install --root=$(DESTDIR)
 	mkdir -p $(DESTDIR)/etc
-	cp config/fail2ban.conf.default $(DESTDIR)/etc/fail2ban.conf
+	cp config/fail2ban.conf.iptables $(DESTDIR)/etc/fail2ban.conf
 
 # To build manpage
 $(MANPAGE): fail2ban fail2ban.h2m
 	help2man --include fail2ban.h2m --section=1x --no-info --output $@ ./fail2ban
- 
+
 # Build architecture-independent files here.
 binary-indep: build install $(MANPAGE)
-	
+
 	# migrated from binary-arch
 	dh_python
 
@@ -72,7 +72,7 @@ binary-arch: build install copy-inits
 	dh_installexamples
 #	dh_install
 #	dh_installmenu
-#	dh_installdebconf	
+#	dh_installdebconf
 	dh_installlogrotate
 #	dh_installemacsen
 #	dh_installpam

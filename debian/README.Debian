@@ -1,16 +1,24 @@
 fail2ban for Debian
 -------------------
 
-This package is ~95% identical to the upstream version. Few feature
-could have been added but not yet propagated into upstream
-version. And although due to tight collaboration with upstream author
+This package is ~95% identical to the upstream version. Few features
+could have been added but not yet propagated into upstream version and
+some modifications might be Debian-specific (logsys logging
+format). And although due to tight collaboration with upstream author
 most of the Debian modifications penetrate into the next upstream, few
 features present in Debian release were rejected by the upstream
-author (-e option for instance)
+author (-e option for instance).
 
 Currently, the major difference with upstream: python libraries are
 placed under /usr/share/fail2ban instead of /usr/lib/fail2ban to
 comply with policy regarding architecture independent resources.
+
+Also the main config file /etc/fail2ban.conf is a copy of
+/usr/share/doc/examples/fail2ban.conf.iptables. There are config files
+for banning via shorewall or hosts.deny are provided BUT they might
+miss additional sections present in fail2ban.conf. Please copy them
+taking care about added sections. Those files will be obsolete in the
+next release which would handle split configuration files.
 
 Default behavior:
 -----------------
@@ -106,4 +114,4 @@ had enough of failed logins within "findtime" will be banned for
 "bantime" since [re]start moment, not since the last failed login
 time.
 
- -- Yaroslav O. Halchenko <debian@onerussian.com>, Sun Jan 15 15:18:13 2006
+ -- Yaroslav O. Halchenko <debian@onerussian.com>, Sun, 19 Mar 2006 00:27:22 -0500
