@@ -21,6 +21,13 @@ background = true
 #
 verbose = 1
 
+# Option:  debug
+# Notes.:  enable debug mode. No real commands gets executed but only
+#          reported, more verbose output, bypass root user test.
+# Values:  [true | false]  Default:  false
+#
+debug = false
+
 # Option:  logtargets
 # Notes.:  log targets. Space separated list of logging targets.
 # Values:  STDERR SYSLOG file  Default:  /var/log/fail2ban.log
