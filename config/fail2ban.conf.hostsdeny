@@ -92,7 +92,7 @@ reinittime = 10
 #          changes. -1 stays for infinite, so only reinittime is of importance
 # Values:  NUM  Default:  -1
 #
-maxreinits = -1
+maxreinits = 1000
 
 # NOTE: Interpolations
 #
