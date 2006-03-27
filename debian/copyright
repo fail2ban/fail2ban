@@ -2,11 +2,11 @@ This package was originally debianized by Yaroslav Halchenko
 <debian@onerussian.com> on Mon Jul  4 14:41:34 HST 2005
 
 It was downloaded from http://www.sourceforge.net/projects/fail2ban
-pointed from the project page of the upstream author
-Cyril Jaquier: <lostcontrol@users.sourceforge.net>
-http://fail2ban.sourceforge.net
 
-Copyright:
+Author: Cyril Jaquier: <lostcontrol@users.sourceforge.net>
+        http://fail2ban.sourceforge.net
+
+Copyright: 2004, 2005, 2006 Cyril Jaquier
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
