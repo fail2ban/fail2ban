@@ -2,6 +2,7 @@ fail2ban (0.6.1-2) unstable; urgency=low
 
   * Assigned maxreinits to 1000 to be reasonable since otherwise logfile grows
     indefinetly if there is a real problem on the system (closes: #359218)
+  * Adjusted debian/{copyright,watch}
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 27 Mar 2006 12:55:39 -0500
 
