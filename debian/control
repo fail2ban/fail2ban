@@ -8,7 +8,7 @@ Standards-Version: 3.6.2
 
 Package: fail2ban
 Architecture: all
-Depends: python, iptables
+Depends: python, iptables, lsb-base (>=2.0-7)
 Description: bans IPs that cause multiple authentication errors
  Monitors (in daemon mode) or just scans log files (e.g. /var/log/auth.log,
  /var/log/apache/access.log) and temporarily bans failure-prone
