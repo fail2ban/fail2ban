@@ -1,8 +1,8 @@
 #! /bin/sh
 ### BEGIN INIT INFO
 # Provides:          fail2ban
-# Required-Start:    $local_fs $remote_fs $syslog
-# Required-Stop:     $local_fs $remote_fs $syslog
+# Required-Start:    $local_fs $remote_fs
+# Required-Stop:     $local_fs $remote_fs
 # Should-Start:      $time $network $syslog iptables firehol shorewall ipmasq
 # Should-Stop:       $network $syslog iptables firehol shorewall ipmasq
 # Default-Start:     2 3 4 5
