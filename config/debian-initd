@@ -1,100 +1,144 @@
 #! /bin/sh
+### BEGIN INIT INFO
+# Provides:          fail2ban
+# Required-Start:    $local_fs $remote_fs $syslog
+# Required-Stop:     $local_fs $remote_fs $syslog
+# Should-Start:      $time $network $syslog iptables firehol shorewall ipmasq
+# Should-Stop:       $network $syslog iptables firehol shorewall ipmasq
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start/stop fail2ban
+# Description:       Start/stop fail2ban, a daemon scanning the log files and
+#                    banning potential attackers.
+### END INIT INFO
+
+# Author: Aaron Isotton <aaron@isotton.com>
+# Modified: by Yaroslav Halchenko <debian@onerussian.com>
+#  reindented + minor corrections + to work on sarge without modifications
 #
-# Fail2Ban init.d file - to be launched on boot
-#
-#		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
-#		Modified for Debian
-#		 by Ian Murdock <imurdock@gnu.ai.mit.edu>.
-#               Adjusted for Fail2Ban
-#                by Yaroslav Halchenko <debian@onerussian.com>.
-#
-# Version:	$Id$
-#
-export PATH="${PATH:+$PATH:}/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-DAEMON=/usr/bin/fail2ban
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+DESC="authentication failure monitor"
 NAME=fail2ban
-DESC=fail2ban
+DAEMON=/usr/bin/$NAME
 PIDFILE=/var/run/$NAME.pid
+SCRIPTNAME=/etc/init.d/$NAME
 
-test -x $DAEMON || exit 0
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
 
-# Include fail2ban defaults if available
-if [ -f /etc/default/fail2ban ] ; then
-	. /etc/default/fail2ban
-fi
-DAEMON_OPTS=$FAIL2BAN_OPTS
-set -e
+# Read configuration variable file if it is present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+DAEMON_ARGS="$FAIL2BAN_OPTS"
+
+# Load the VERBOSE setting and other rcS variables
+[ -f /etc/default/rcS ] && . /etc/default/rcS
+
+# Predefine what can be missing from lsb source later on -- necessary to run
+# on sarge. Just present it in a bit more compact way from what was shipped
+log_daemon_msg () {
+	[ -z "$1" ] && return 1
+	echo -n "$1:"
+	[ -z "$2" ] || echo -n " $2"
+}
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
+# Actually has to (>=2.0-7) present in sarge. log_daemon_msg is predefined
+#  so we must be ok
+. /lib/lsb/init-functions
+
+#
+# Function that starts the daemon/service
+#
+do_start()
+{
+	# Return
+	#	0 if daemon has been started
+	#	1 if daemon was already running
+	#	2 if daemon could not be started
+	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
+		|| return 1
+	# we need to remove pid file or fail2ban would refuse to start
+	# probably check could be ommited but... better be safe
+	pidofproc $NAME $PIDFILE > /dev/null
+	[ $? -eq 2 ] && rm -rf $PIDFILE
+	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- \
+		$DAEMON_ARGS \
+		|| return 2
+}
+
+#
+# Function that stops the daemon/service
+#
+do_stop()
+{
+	# Return
+	#	0 if daemon has been stopped
+	#	1 if daemon was already stopped
+	#	2 if daemon could not be stopped
+	#	other if a failure occurred
+	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $NAME
+	RETVAL="$?"
+	[ "$RETVAL" = 2 ] && return 2
+	start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON
+	[ "$?" = 2 ] && return 2
+	return "$RETVAL"
+}
+
+#
+# yoh hates code duplication that is why to prevent multiple cloned case
+# clauses lets use array. Trailing 1s just for safety if new error codes come up
+log_ends=(0 0 1 1 1)
 
 case "$1" in
 	start)
-		echo -n "Starting $DESC: "
-		if $0 status >/dev/null
-			then
-			( $0 status )
-			exit 1
-		fi
-		[ -f $PIDFILE ] && [ ! -d /proc/`cat $PIDFILE` ] && rm -f $PIDFILE
-		start-stop-daemon --start --quiet --pidfile $PIDFILE \
-			--exec $DAEMON -- $DAEMON_OPTS
-		echo ".done"
+		[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
+		do_start
+		[ "$VERBOSE" != no ] && log_end_msg ${log_ends[$?]}
 		;;
 	stop)
-		echo -n "Stopping $DESC: "
-		( $0 status >/dev/null )
-		case "$?" in
-			0) fail2banpid=`cat $PIDFILE` ;;
-			3) echo "done"; exit 0;;
-			*)
-				( $0 status )
-				echo "Not stopping fail2ban"
-				exit 1
-		esac
-
-		start-stop-daemon --oknodo --stop --quiet --pidfile $PIDFILE
-		maxsecs=30
-		i=0
-		while  [ -f $PIDFILE ] && [ -d /proc/$fail2banpid ] \
-			&& [ $i -le $maxsecs ]; do
-		  echo -n "."
-		  sleep 1
-		  i=$(($i+1))
-		done
-		if [ $i -eq $maxsecs ]; then
-			echo "ERROR: Fail2ban failed to stop properly. Tail of the log file is"
-			tail /var/log/fail2ban.log
-			exit 1
-		fi
-		echo "done"
+		[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+		do_stop
+		[ "$VERBOSE" != no ] && log_end_msg ${log_ends[$?]}
 		;;
 	restart|force-reload)
-		echo -n "Restarting $DESC: "
-		( $0 stop )
-		sleep 1
-		$0 start
+		log_daemon_msg "Restarting $DESC" "$NAME"
+		do_stop
+		case "$?" in
+			0|1)
+				do_start
+				# we need to shift by 1 in our log_ends
+				log_end_msg ${log_ends[$(($?+1))]}
+				;;
+			*)
+				# Failed to stop
+				log_end_msg 1
+				;;
+		esac
 		;;
-    status)
-		echo -n "Status of $DESC: "
-		if [ ! -e "$PIDFILE" ]; then
-			echo "$NAME is not running."
-			exit 3
-		fi
-		if [ ! -r "$PIDFILE" ]; then
-			echo "$PIDFILE not readable, status of $NAME unknown."
-			exit 4
-		fi
-		if [ -d /proc/`cat "$PIDFILE"` ]; then
-			echo "$NAME is running."
-			exit 0
-		else
-			echo "$NAME is not running but $PIDFILE exists."
-			exit 1
-		fi
-	;;
+	status)
+		log_daemon_msg "Status of $DESC"
+		pidofproc $NAME $PIDFILE > /dev/null
+		status=$?
+		case $status in
+			0)  log_success_msg " $NAME is running"
+				exit 0
+				;;
+			1|2) log_failure_msg " $NAME is not running but $PIDFILE exists"
+				exit 1
+				;;
+			3)  log_warning_msg " $NAME is not running"
+				exit 3
+				;;
+			4)  log_failure_msg " $PIDFILE not readable, status of $NAME unknown"
+				exit 4
+				;;
+		esac
+		;;
 	*)
-		N=/etc/init.d/$NAME
-		echo "Usage: $N {start|stop|restart|force-reload|status}" >&2
-		exit 1
+		echo "Usage: $SCRIPTNAME {start|stop|restart|force-reload|status}" >&2
+		exit 3
 		;;
 esac
 
-exit 0
+:
