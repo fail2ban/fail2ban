@@ -1,0 +1,20 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 00_vsftpd_regexp.dpatch by  <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Fix of debian bug #366687: strict regexp for vsftpd
+
+@DPATCH@
+
+diff -rNu fail2ban-0.6.1.orig/config/fail2ban.conf.iptables fail2ban-0.6.1.fixed/config/fail2ban.conf.iptables
+--- fail2ban-0.6.1.orig/config/fail2ban.conf.iptables	2006-03-27 12:56:38.000000000 -0500
++++ fail2ban-0.6.1.fixed/config/fail2ban.conf.iptables	2006-05-10 13:47:40.000000000 -0400
+@@ -383,7 +383,7 @@
+ # Notes.: regex to match the password failures messages in the logfile.
+ # Values: TEXT Default: Authentication failure|Failed password|Invalid user
+ #
+-failregex = FAIL LOGIN
++failregex = \[.+\] FAIL LOGIN: Client "(?P<host>\S+)"$
+ 
+ [SSH]
+ # Option:  enabled

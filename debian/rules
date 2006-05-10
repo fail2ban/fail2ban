@@ -12,13 +12,18 @@
 MANPAGE=fail2ban.8
 DESTDIR=$(CURDIR)/debian/fail2ban
 
+# no parallel execution -- required for dpatch
+.NOTPARALLEL:
+
+include /usr/share/dpatch/dpatch.make
+
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
 	touch configure-stamp
 
-build: build-stamp
+build: patch build-stamp
 
 build-stamp: configure-stamp
 	dh_testdir
@@ -32,7 +37,7 @@ copy-inits:
 clean-inits:
 	rm -f debian/fail2ban.{default,init,logrotate}
 
-clean:	clean-inits
+clean: clean-inits unpatch
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp configure-stamp

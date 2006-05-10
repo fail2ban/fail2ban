@@ -3,7 +3,7 @@ Section: net
 Priority: optional
 Maintainer: Yaroslav Halchenko <debian@onerussian.com>
 Uploaders: Barak Pearlmutter <bap@debian.org>
-Build-Depends-Indep: debhelper (>= 4.1.67), python, python-dev, help2man
+Build-Depends-Indep: debhelper (>= 4.1.67), python, python-dev, help2man, dpatch
 Standards-Version: 3.6.2
 
 Package: fail2ban
