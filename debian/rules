@@ -23,11 +23,7 @@ configure-stamp:
 	# Add here commands to configure the package.
 	touch configure-stamp
 
-build: patch build-stamp
-
-build-stamp: configure-stamp
-	dh_testdir
-	touch build-stamp
+build: patch
 
 copy-inits:
 	cp config/gentoo-confd debian/fail2ban.default
@@ -47,7 +43,7 @@ clean: clean-inits unpatch
 
 	dh_clean
 
-install: build
+install: build copy-inits
 	dh_testdir
 	dh_testroot
 	dh_clean -k
@@ -63,13 +59,7 @@ $(MANPAGE): fail2ban fail2ban.h2m
 	help2man --include fail2ban.h2m --section=1x --no-info --output $@ ./fail2ban
 
 # Build architecture-independent files here.
-binary-indep: build install $(MANPAGE)
-
-	# migrated from binary-arch
-	dh_python
-
-# Build architecture-dependent files here.
-binary-arch: build install copy-inits
+binary-indep: install $(MANPAGE)
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs CHANGELOG
@@ -82,6 +72,9 @@ binary-arch: build install copy-inits
 #	dh_installcron
 #	dh_installinfo
 	dh_installman fail2ban.8 man/fail2ban.conf.5
+# just for maint scripts. I don't want to use ${python:Depends} to be portable between
+# systems with different pythons
+	dh_python
 	dh_link
 	dh_compress
 	dh_fixperms
@@ -91,5 +84,5 @@ binary-arch: build install copy-inits
 	dh_md5sums
 	dh_builddeb
 
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install configure copy-inits clean-inits
+binary: binary-indep
+.PHONY: build clean binary-indep binary install configure copy-inits clean-inits
