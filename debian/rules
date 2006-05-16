@@ -43,7 +43,7 @@ clean: clean-inits unpatch
 	rm -f build-stamp configure-stamp
 
 	# Add here commands to clean up after the build process.
-	rm -rf changelog.gz $(MANPAGE) build* `find -iname '*.pyc' `
+	rm -rf changelog.gz $(MANPAGE) build* 
 
 	dh_clean
 
@@ -54,7 +54,7 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/fail2ban.
-	python setup.py install --root=$(DESTDIR)
+	python setup.py install --root=$(DESTDIR) --no-compile
 	mkdir -p $(DESTDIR)/etc
 	cp config/fail2ban.conf.iptables $(DESTDIR)/etc/fail2ban.conf
 
