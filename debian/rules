@@ -57,6 +57,9 @@ install: build copy-inits
 # To build manpage
 $(MANPAGE): fail2ban fail2ban.h2m
 	help2man --include fail2ban.h2m --section=1x --no-info --output $@ ./fail2ban
+# 
+# Just to comply with policy 4.8
+binary-arch:
 
 # Build architecture-independent files here.
 binary-indep: install $(MANPAGE)
@@ -85,4 +88,4 @@ binary-indep: install $(MANPAGE)
 	dh_builddeb
 
 binary: binary-indep
-.PHONY: build clean binary-indep binary install configure copy-inits clean-inits
+.PHONY: build clean binary-indep binary-arch binary install configure copy-inits clean-inits

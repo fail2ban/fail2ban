@@ -1,3 +1,10 @@
+fail2ban (0.6.1-5) unstable; urgency=low
+
+  * Further fixed debian packaging: to comply with policy empty target
+    binary-arch was provided
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 16 May 2006 16:43:37 -0400
+
 fail2ban (0.6.1-4) unstable; urgency=low
 
   * Adjusted debian packaging:
