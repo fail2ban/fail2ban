@@ -1,7 +1,9 @@
 fail2ban (0.6.1-4) unstable; urgency=low
 
-  * Clean up of debian/rules: removed commented out dh_ scripts which
-    definetly will never be used
+  * Adjusted debian packaging:
+    - Clean up of debian/rules: removed commented out dh_ scripts which
+      definetly will never be used
+    - debhelper and dpatch moved to Build-Depends
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 16 May 2006 15:53:06 -0400
 
