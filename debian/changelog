@@ -1,3 +1,10 @@
+fail2ban (0.6.1-6) unstable; urgency=low
+
+  * Removed bashism (arrays) from init.d script to make it POSIX shell
+    complient (closes: #368218)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 22 May 2006 15:37:17 -0400
+
 fail2ban (0.6.1-5) unstable; urgency=low
 
   * Further fixed debian packaging: to comply with policy empty target

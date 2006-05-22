@@ -85,21 +85,27 @@ do_stop()
 	return "$RETVAL"
 }
 
+
+# yoh:
+# shortcut function to don't duplicate case statements and to don't use
+# bashisms (arrays). Fixes #368218
 #
-# yoh hates code duplication that is why to prevent multiple cloned case
-# clauses lets use array. Trailing 1s just for safety if new error codes come up
-log_ends=(0 0 1 1 1)
+log_end_msg_wrapper()
+{
+	[ $1 -lt $2 ] && value=0 || value=1
+	log_end_msg $value
+}
 
 case "$1" in
 	start)
 		[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
 		do_start
-		[ "$VERBOSE" != no ] && log_end_msg ${log_ends[$?]}
+		[ "$VERBOSE" != no ] && log_end_msg_wrapper $? 2
 		;;
 	stop)
 		[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
 		do_stop
-		[ "$VERBOSE" != no ] && log_end_msg ${log_ends[$?]}
+		[ "$VERBOSE" != no ] && log_end_msg_wrapper $? 2
 		;;
 	restart|force-reload)
 		log_daemon_msg "Restarting $DESC" "$NAME"
@@ -107,14 +113,13 @@ case "$1" in
 		case "$?" in
 			0|1)
 				do_start
-				# we need to shift by 1 in our log_ends
-				log_end_msg ${log_ends[$(($?+1))]}
+				log_end_msg_wrapper $? 1
 				;;
 			*)
 				# Failed to stop
 				log_end_msg 1
 				;;
-		esac
+ 		esac
 		;;
 	status)
 		log_daemon_msg "Status of $DESC"
