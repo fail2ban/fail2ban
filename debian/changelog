@@ -3,7 +3,10 @@ fail2ban (0.6.1-7) unstable; urgency=low
   * Removed bashism (arrays) from init.d script to make it POSIX shell
     complient (closes: #368218)
   * Added new proftpd section
-
+  * Mentioned apache2 log file in Other. comment field for FILE in 
+    apache section.  Nothing has to be changed besides the logfile path to
+    work with apache2 (closes: #342144)
+    
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 22 May 2006 15:37:17 -0400
 
 fail2ban (0.6.1-5) unstable; urgency=low
