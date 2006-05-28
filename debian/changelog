@@ -1,7 +1,8 @@
-fail2ban (0.6.1-6) unstable; urgency=low
+fail2ban (0.6.1-7) unstable; urgency=low
 
   * Removed bashism (arrays) from init.d script to make it POSIX shell
     complient (closes: #368218)
+  * Added new proftpd section
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 22 May 2006 15:37:17 -0400
 
