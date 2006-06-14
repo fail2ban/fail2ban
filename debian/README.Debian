@@ -23,6 +23,8 @@ next release which would handle split configuration files.
 Default behavior:
 -----------------
 
+* Enabled Sections:
+
 Only handling of ssh files is enabled by default. If you want to use
 fail2ban with apache, please enable apache section manually in
 /etc/fail2ban.conf or enable section using command line parameter -e
@@ -33,6 +35,17 @@ N.B. '-e' command line parameter is present solely in Debian release
  of fail2ban, thus it will not work if you decided to proceed with
  vanilla upstream.
 
+* Multiport banning:
+
+Comment for the wishlist #373592. 
+Default iptables rules for banning use --dport statement which allows to
+ban just a single port. For multiport banning you would need to adjust iptables
+rules to use multiport module ( -m multiport --dports %(port)s ). If you would
+like to ban all ports for that host, just redefine fwban/fwunban commands to
+don't have --dport %(port)s statement at all (can be redefined on per-section 
+basis as well)
+Such option is not enabled by default since multiport module might not be 
+compiled for some hand compiled kernels.
 Troubleshooting:
 ---------------
 

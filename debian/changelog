@@ -1,3 +1,12 @@
+fail2ban (0.6.1-9) unstable; urgency=low
+
+  * Adjusted rm commands in init script to don't use -r for removal of
+    the pidfile (thanks Stephen Gran)
+  * Added clarification about multiport banning to README.Debian 
+    (closes: #373592)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 14 Jun 2006 12:05:44 -0400
+
 fail2ban (0.6.1-8) unstable; urgency=low
 
   * Removed bashism (arrays) from init.d script to make it POSIX shell

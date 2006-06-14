@@ -61,7 +61,7 @@ do_start()
 	# we need to remove pid file or fail2ban would refuse to start
 	# probably check could be ommited but... better be safe
 	pidofproc $NAME $PIDFILE > /dev/null
-	[ $? -eq 2 ] && rm -rf $PIDFILE
+	[ $? -eq 2 ] && rm -f $PIDFILE
 	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- \
 		$DAEMON_ARGS \
 		|| return 2
