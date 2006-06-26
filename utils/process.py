@@ -51,8 +51,8 @@ def createDaemon():
 		pid = os.fork()
 	except OSError, e:
 		return((e.errno, e.strerror))	 # ERROR (return a tuple)
-
-	if (pid == 0):	   # The first child.
+	
+	if pid == 0:	   # The first child.
 
 		# Next we call os.setsid() to become the session leader of this new
 		# session.  The process also becomes the process group leader of the
@@ -85,7 +85,7 @@ def createDaemon():
 			os._exit(0)	  # Exit parent (the first child) of the second child.
 	else:
 		os._exit(0)		 # Exit parent of the first child.
-
+	
 	# Close all open files.  Try the system configuration variable, SC_OPEN_MAX,
 	# for the maximum number of open files to close.  If it doesn't exist, use
 	# the default value (configurable).
@@ -104,34 +104,5 @@ def createDaemon():
    	os.open("/dev/null", os.O_RDONLY)	# standard input (0)
 	os.open("/dev/null", os.O_RDWR)		# standard output (1)
 	os.open("/dev/null", os.O_RDWR)		# standard error (2)
-
-	return True
-
-def killPID(pid):
-	""" Kills the process with the given PID using the
-		INT signal (same effect as <ctrl>+<c>).
-	"""
-	try:
-		return os.kill(pid, 2)
-	except OSError:
-		logSys.error("Can not kill process " + `pid` + ". Please check that " +
-					"Fail2Ban is not running and remove the file " +
-					"'/tmp/fail2ban.pid'")
-		return False
-
-def executeCmd(cmd, debug):
-	""" Executes an OS command.
-	"""
-	if cmd == "":
-		logSys.debug("Nothing to do")
-		return None
 	
-	logSys.debug(cmd)
-	if not debug:
-		retval = os.system(cmd)
-		if not retval == 0:
-			logSys.error("'" + cmd + "' returned " + `retval`)
-			raise ExternalError("Execution of command '%s' failed" % cmd)
-		return retval
-	else:
-		return None
+	return True

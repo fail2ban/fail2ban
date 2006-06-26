@@ -1,0 +1,236 @@
+#!/usr/bin/env python
+# This file is part of Fail2Ban.
+#
+# Fail2Ban is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Fail2Ban is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Fail2Ban; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# Author: Cyril Jaquier
+# 
+# $Revision: 1.1 $
+
+__author__ = "Cyril Jaquier"
+__version__ = "$Revision: 1.1 $"
+__date__ = "$Date: 2004/10/10 13:33:40 $"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__license__ = "GPL"
+
+import sys, string, os, pickle, re, logging, getopt, time
+
+# Inserts our own modules path first in the list
+# fix for bug #343821
+sys.path.insert(1, "/usr/lib/fail2ban")
+
+# Now we can import our modules
+from client.csocket import CSocket
+from client.configurator import Configurator
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban.client")
+
+##
+#
+# @todo This class needs cleanup.
+
+class Fail2banClient:
+
+	def __init__(self):
+		self.argv = None
+		self.stream = None
+		self.conf = dict()
+		self.conf["cmdfile"] = None
+		self.conf["background"] = True
+		self.conf["dump"] = False
+	
+	def dispUsage(self):
+		""" Prints Fail2Ban command line options and exits
+		"""
+		print "Usage: "+self.argv[0]+" [OPTIONS] <COMMAND>"
+		print
+		print "Fail2Ban v0.7 reads log file that contains password failure report"
+		print "and bans the corresponding IP addresses using firewall rules."
+		print
+		print "  -b         start in background"
+		print "  -f         start in foreground"
+		print "  -c <DIR>   configuration directory"
+		print "  -s <FILE>  read command file"
+		print "  -d         dump configuration"
+		print "  -h         display this help message"
+		print
+		print "Report bugs to <lostcontrol@users.sourceforge.net>"
+		sys.exit(0)
+	
+	def getCmdLineOptions(self, optList):
+		""" Gets the command line options
+		"""
+		for opt in optList:
+			if opt[0] == "-d":
+				self.conf["dump"] = True
+			if opt[0] == "-b":
+				self.conf["background"] = True
+			if opt[0] == "-f":
+				self.conf["background"] = False
+			if opt[0] == "-s":
+				self.conf["cmdfile"] = opt[1]
+			if opt[0] in ["-h", "--help"]:
+	 			self.dispUsage()
+	
+	def ping(self):
+		return self.processCmd([["ping"]])
+	
+	@staticmethod
+	def processCmd(cmd):
+		for c in cmd:
+			try:
+				client = CSocket()
+			except Exception, e:
+				logSys.error(e)
+				logSys.error("Arrggh... Start the server first")
+				return False
+			ret = client.send(c)
+			if ret[0] == 0:
+				logSys.info("OK : " + `ret[1]`)
+			else:
+				logSys.info("NOK: " + `ret[1].args`)
+				return False
+		return True
+		
+	##
+	# Process a command line.
+	#
+	# Process one command line and exit.
+	# @param cmd the command line
+
+	def processCommand(self, cmd):
+		if self.conf["dump"]:
+			self.readConfig()
+			self.dumpConfig(self.stream)
+			return True
+		
+		if len(sys.argv) < 2:
+			logSys.error("Add some options...")
+			return False
+		
+		if cmd[0] == "start" and len(cmd) == 1:
+			self.readConfig()
+			self.startServer(self.conf["background"])
+			# Configure the server
+			self.processCmd(self.stream)
+		else:
+			try:
+				client = CSocket()
+				ret = client.send(cmd)
+				if ret[0] == 0:
+					logSys.info("OK : " + `ret[1]`)
+					return True
+				else:
+					logSys.info("NOK: " + `ret[1].args`)
+					return False
+			except SystemExit, e:
+				return True
+			except Exception, e:
+				logSys.error(e)
+				logSys.error("Arrggh... Start the server first")
+				return False
+	
+	##
+	# Process a script file.
+	#
+	# Read each line of the file and execute the command. Lines which
+	# start with '#' are ignored.
+	# @bug The splitting of the command is wrong and awful.
+	# @param file the path of the script file
+	
+	def processFile(self, file):
+		try:
+			handler = open(file)
+		except IOError:
+			logSys.fatal("Unable to open " + file)
+			return False
+		for line in handler:
+			l = line.strip()
+			if l.find('#') != 0:
+				s = re.split("\s+", l, 3)
+				j = list()
+				for i in s:
+					j.append(i.strip("'"))
+				self.processCommand(j)
+		return True
+	
+	##
+	# Start Fail2Ban server.
+	#
+	# Start the Fail2ban server in daemon mode.
+	
+	def startServer(self, background = True):
+		args = list()
+		args.append("fail2ban-server")
+		if background:
+			args.append("-b")
+		else:
+			args.append("-f")
+		
+		pid = os.fork()
+		if pid == 0:
+			os.execv("fail2ban-server", args)
+		else:
+			# Wait for the server to start
+			while not self.ping():
+				time.sleep(0.1)
+	
+	def start(self, argv):
+		# Command line options
+		self.argv = argv
+		
+		# Reads the command line options.
+		try:
+			cmdOpts = 'bfhc:s:d'
+			cmdLongOpts = ['help']
+			optList, args = getopt.getopt(self.argv[1:], cmdOpts, cmdLongOpts)
+		except getopt.GetoptError:
+			self.dispUsage()
+			
+		self.getCmdLineOptions(optList)
+		
+		logSys.setLevel(logging.DEBUG)
+		# Add the default logging handler
+		stdout = logging.StreamHandler(sys.stdout)
+		# set a format which is simpler for console use
+		formatter = logging.Formatter('%(name)-16s: %(levelname)-6s %(message)s')
+		# tell the handler to use this format
+		stdout.setFormatter(formatter)
+		logSys.addHandler(stdout)
+
+		if self.conf["cmdfile"] == None:
+			self.processCommand(args)
+		else:
+			self.processFile(self.conf["cmdfile"])
+
+	def readConfig(self):
+		# Read the configuration
+		cfg = Configurator()
+		cfg.setBaseDir("config")
+		cfg.readAll()
+		cfg.getAllOptions()
+		cfg.convertToProtocol()
+		self.stream = cfg.getConfigStream()
+	
+	@staticmethod
+	def dumpConfig(cmd):
+		for c in cmd:
+			print c
+		return True
+
+if __name__ == "__main__":
+	client = Fail2banClient()
+	client.start(sys.argv)
