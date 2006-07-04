@@ -1,8 +1,17 @@
+fail2ban (0.6.1-10) unstable; urgency=low
+
+  * Filtered out empty entries for ignoreip to reduce confusing WARNING log
+    message
+  * Added configuration parameter "locale" to specify LC_TIME for time
+    pattern matching (closes: #367990,363391)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  3 Jul 2006 21:59:34 -0400
+
 fail2ban (0.6.1-9) unstable; urgency=low
 
   * Adjusted rm commands in init script to don't use -r for removal of
     the pidfile (thanks Stephen Gran)
-  * Added clarification about multiport banning to README.Debian 
+  * Added clarification about multiport banning to README.Debian
     (closes: #373592)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 14 Jun 2006 12:05:44 -0400

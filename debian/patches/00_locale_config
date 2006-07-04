@@ -1,0 +1,128 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 00_locale_config.dpatch by  <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Set up LC_TIME per configuration option, not by resetting LC_ALL to 
+## DP: default locale as it was done before. So this patch effectively changes 
+## DP: bug into a feature
+
+@DPATCH@
+
+diff -x '*~' -Naur fail2ban-0.6.1.pre/config/fail2ban.conf.hostsdeny fail2ban-0.6.1.post/config/fail2ban.conf.hostsdeny
+--- fail2ban-0.6.1.pre/config/fail2ban.conf.hostsdeny	2006-03-27 12:56:38.000000000 -0500
++++ fail2ban-0.6.1.post/config/fail2ban.conf.hostsdeny	2006-07-03 22:20:21.000000000 -0400
+@@ -11,6 +11,15 @@
+ #
+ background = false
+ 
++# Option:  locale
++# Notes.:  global (cannot be redefined per section) locale to use for
++#          timestamp pattern matching by changing LC_TIME for
++#          fail2ban process. Empty entry sets locale to default one
++#          (usually specified by LC_ALL environment variable).
++# Values:  LOCALE  Default:
++#
++locale = 
++
+ # Option:  logtargets
+ # Notes.:  log targets. Space separated list of logging targets.
+ # Values:  STDERR SYSLOG file  Default:  /var/log/fail2ban.log
+diff -x '*~' -Naur fail2ban-0.6.1.pre/config/fail2ban.conf.iptables fail2ban-0.6.1.post/config/fail2ban.conf.iptables
+--- fail2ban-0.6.1.pre/config/fail2ban.conf.iptables	2006-03-27 12:56:38.000000000 -0500
++++ fail2ban-0.6.1.post/config/fail2ban.conf.iptables	2006-07-03 22:17:30.000000000 -0400
+@@ -28,6 +28,15 @@
+ #
+ debug = false
+ 
++# Option:  locale
++# Notes.:  global (cannot be redefined per section) locale to use for
++#          timestamp pattern matching by changing LC_TIME for
++#          fail2ban process. Empty entry sets locale to default one
++#          (usually specified by LC_ALL environment variable).
++# Values:  LOCALE  Default:
++#
++locale = 
++
+ # Option:  logtargets
+ # Notes.:  log targets. Space separated list of logging targets.
+ # Values:  STDERR SYSLOG file  Default:  /var/log/fail2ban.log
+diff -x '*~' -Naur fail2ban-0.6.1.pre/config/fail2ban.conf.shorewall fail2ban-0.6.1.post/config/fail2ban.conf.shorewall
+--- fail2ban-0.6.1.pre/config/fail2ban.conf.shorewall	2006-03-27 12:56:38.000000000 -0500
++++ fail2ban-0.6.1.post/config/fail2ban.conf.shorewall	2006-07-03 22:20:01.000000000 -0400
+@@ -11,6 +11,15 @@
+ #
+ background = false
+ 
++# Option:  locale
++# Notes.:  global (cannot be redefined per section) locale to use for
++#          timestamp pattern matching by changing LC_TIME for
++#          fail2ban process. Empty entry sets locale to default one
++#          (usually specified by LC_ALL environment variable).
++# Values:  LOCALE  Default:
++#
++locale = 
++
+ # Option:  logtargets
+ # Notes.:  log targets. Space separated list of logging targets.
+ # Values:  STDERR SYSLOG file  Default:  /var/log/fail2ban.log
+diff -x '*~' -Naur fail2ban-0.6.1.pre/fail2ban fail2ban-0.6.1.post/fail2ban
+--- fail2ban-0.6.1.pre/fail2ban	2006-03-19 00:20:44.000000000 -0500
++++ fail2ban-0.6.1.post/fail2ban	2006-07-03 22:38:11.000000000 -0400
+@@ -26,14 +26,7 @@
+ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+ __license__ = "GPL"
+ 
+-import sys, traceback, logging, locale
+-
+-# Set the locale with the user's default setting
+-try:
+-	locale.setlocale(locale.LC_ALL, '')
+-except Exception:
+-	print "Unable to set locale to " + `locale.getdefaultlocale()`
+-	sys.exit(-1)
++import sys, traceback, logging
+ 
+ # Inserts our own modules path first in the list
+ # fix for bug #343821
+diff -x '*~' -Naur fail2ban-0.6.1.pre/fail2ban.py fail2ban-0.6.1.post/fail2ban.py
+--- fail2ban-0.6.1.pre/fail2ban.py	2006-03-19 00:20:44.000000000 -0500
++++ fail2ban-0.6.1.post/fail2ban.py	2006-07-03 23:02:03.000000000 -0400
+@@ -25,7 +25,8 @@
+ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+ __license__ = "GPL"
+ 
+-import time, sys, getopt, os, string, signal, logging, logging.handlers, copy
++import time, sys, getopt, os, string, signal, logging, logging.handlers, \
++	   copy, locale
+ from ConfigParser import *
+ 
+ from version import version
+@@ -240,6 +241,7 @@
+ 					["bool", "debug", False],
+ 					["int", "verbose", conf["verbose"]],
+ 					["str", "pidlock", "/var/run/fail2ban.pid"],
++					["str", "locale", ""],
+ 					["int", "maxfailures", 5],
+ 					["int", "bantime", 600],
+ 					["int", "findtime", 600],
+@@ -262,10 +264,18 @@
+ 	# have to be overridden
+ 	for t, label, v in optionValues:
+ 		confReader.setValue("DEFAULT", label, `conf[label]`)
+-	
++
+ 	# PID lock
+ 	pidLock.setPath(conf["pidlock"])
+-	
++
++	# Set the LC_TIME with the user's default setting
++	try:
++		logSys.info("Setting LC_TIME locale option to '%s'"%conf["locale"])
++		locale.setlocale(locale.LC_TIME, conf["locale"])
++	except Exception:
++		logSys.error("Unable to set locale to '%s'"%conf["locale"])
++		sys.exit(-1)
++
+ 	# Now we can kill properly a running instance if needed
+ 	if conf["kill"]:
+ 		pid = pidLock.exists()
