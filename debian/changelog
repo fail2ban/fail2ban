@@ -4,6 +4,7 @@ fail2ban (0.6.1-10) unstable; urgency=low
     message
   * Added configuration parameter "locale" to specify LC_TIME for time
     pattern matching (closes: #367990,363391)
+  * Verbosity is chosen to be max between cmdline parameters and config file
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  3 Jul 2006 21:59:34 -0400
 
