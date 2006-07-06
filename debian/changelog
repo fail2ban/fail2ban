@@ -1,12 +1,14 @@
 fail2ban (0.6.1-10) unstable; urgency=low
 
+  * Adjusted to comply with recent changes in debian python policy and use
+    pycentral to byte compile modules
   * Filtered out empty entries for ignoreip to reduce confusing WARNING log
     message
   * Added configuration parameter "locale" to specify LC_TIME for time
     pattern matching (closes: #367990,363391)
   * Verbosity is chosen to be max between cmdline parameters and config file
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  3 Jul 2006 21:59:34 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue,  4 Jul 2006 00:22:19 -0400
 
 fail2ban (0.6.1-9) unstable; urgency=low
 

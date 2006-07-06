@@ -75,8 +75,7 @@ binary-indep: install $(MANPAGE)
 #	dh_installcron
 #	dh_installinfo
 	dh_installman fail2ban.8 man/fail2ban.conf.5
-# just for maint scripts. I don't want to use ${python:Depends} to be portable between
-# systems with different pythons
+	dh_pycentral
 	dh_python
 	dh_link
 	dh_compress
