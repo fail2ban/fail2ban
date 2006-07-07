@@ -8,7 +8,7 @@ fail2ban (0.6.1-10) unstable; urgency=low
     pattern matching (closes: #367990,363391)
   * Verbosity is chosen to be max between cmdline parameters and config file
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue,  4 Jul 2006 00:22:19 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  6 Jul 2006 20:19:54 -0400
 
 fail2ban (0.6.1-9) unstable; urgency=low
 
