@@ -53,8 +53,7 @@ class ActionReader(ConfigReader):
 		ConfigReader.read(self, "action.d/" + self.file)
 	
 	def getOptions(self, pOpts):
-		opts = [["string", "bantime", "600"],
-				["string", "actionstart", ""],
+		opts = [["string", "actionstart", ""],
 				["string", "actionstop", ""],
 				["string", "actioncheck", ""],
 				["string", "actionban", ""],
@@ -62,19 +61,19 @@ class ActionReader(ConfigReader):
 		self.opts = ConfigReader.getOptions(self, "DEFAULT", opts, pOpts)
 	
 	def convert(self):
+		head = ["set", self.name]
 		stream = list()
+		stream.append(head + ["addaction", self.file])
 		for opt in self.opts:
-			if opt == "bantime":
-				stream.append(["set", self.name, "bantime", self.opts[opt]])
-			elif opt == "actionstart":
-				stream.append(["set", self.name, "actionstart", self.opts[opt]])
+			if opt == "actionstart":
+				stream.append(head + ["actionstart", self.file, self.opts[opt]])
 			elif opt == "actionstop":
-				stream.append(["set", self.name, "actionstop", self.opts[opt]])
+				stream.append(head + ["actionstop", self.file, self.opts[opt]])
 			elif opt == "actioncheck":
-				stream.append(["set", self.name, "actioncheck", self.opts[opt]])
+				stream.append(head + ["actioncheck", self.file, self.opts[opt]])
 			elif opt == "actionban":
-				stream.append(["set", self.name, "actionban", self.opts[opt]])
+				stream.append(head + ["actionban", self.file, self.opts[opt]])
 			elif opt == "actionunban":
-				stream.append(["set", self.name, "actionunban", self.opts[opt]])
+				stream.append(head + ["actionunban", self.file, self.opts[opt]])
 		return stream
 		

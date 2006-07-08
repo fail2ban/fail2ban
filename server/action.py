@@ -24,13 +24,10 @@ __date__ = "$Date: 2004/10/10 13:33:40 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from banmanager import BanManager
-from failmanager import FailManager, FailManagerEmpty
-from jailthread import JailThread
 import time, logging, os
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.action")
+logSys = logging.getLogger("fail2ban.actions.action")
 
 ##
 # Execute commands.
@@ -39,20 +36,10 @@ logSys = logging.getLogger("fail2ban.action")
 # action has to be taken. A BanManager take care of the banned IP
 # addresses.
 
-class Action(JailThread):
+class Action:
 	
-	##
-	# Constructor.
-	#
-	# Initialize the filter object with default values.
-	# @param jail the jail object
-	
-	def __init__(self, jail):
-		JailThread.__init__(self, jail)
-		## The jail which contains this action.
-		self.jail = jail
-		## The ban manager.
-		self.banManager = BanManager()
+	def __init__(self, name):
+		self.name = name
 		## Command executed in order to initialize the system.
 		self.actionStart = ''
 		## Command executed when an IP address gets banned.
@@ -64,7 +51,13 @@ class Action(JailThread):
 		## Command executed in order to stop the system.
 		self.actionStop = ''
 		logSys.debug("Created Action")
-
+	
+	def setName(self, name):
+		self.name = name
+	
+	def getName(self):
+		return self.name
+	
 	##
 	# Set the "start" command.
 	#
@@ -81,6 +74,9 @@ class Action(JailThread):
 	
 	def getActionStart(self):
 		return self.actionStart
+	
+	def execActionStart(self, aInfo):
+		return self.executeCmd(self.actionStart, aInfo);
 	
 	##
 	# Set the "ban" command.
@@ -99,6 +95,9 @@ class Action(JailThread):
 	def getActionBan(self):
 		return self.actionBan
 	
+	def execActionBan(self, aInfo):
+		return self.executeCmd(self.actionBan, aInfo);
+	
 	##
 	# Set the "unban" command.
 	#
@@ -115,6 +114,9 @@ class Action(JailThread):
 	
 	def getActionUnban(self):
 		return self.actionUnban
+	
+	def execActionUnban(self, aInfo):
+		return self.executeCmd(self.actionUnban, aInfo);
 	
 	##
 	# Set the "check" command.
@@ -133,6 +135,9 @@ class Action(JailThread):
 	def getActionCheck(self):
 		return self.actionCheck
 	
+	def execActionCheck(self, aInfo):
+		return self.executeCmd(self.actionCheck, aInfo);
+	
 	##
 	# Set the "stop" command.
 	#
@@ -150,104 +155,8 @@ class Action(JailThread):
 	def getActionStop(self):
 		return self.actionStop
 	
-	##
-	# Set the ban time.
-	#
-	# @param value the time
-	
-	def setBanTime(self, value):
-		self.banManager.setBanTime(value)
-		logSys.info("Set banTime = %s" % value)
-	
-	##
-	# Get the ban time.
-	#
-	# @return the time
-	
-	def getBanTime(self):
-		return self.banManager.getBanTime()
-	
-	##
-	# Main loop.
-	#
-	# This function is the main loop of the thread. It checks the Jail
-	# queue and executes commands when an IP address is banned.
-	# @return True when the thread exits nicely
-	
-	def run(self):
-		self.executeCmd(self.actionStart)
-		self.setActive(True)
-		while self.isActive():
-			if not self.isIdle:
-				#logSys.debug(self.jail.getName() + ": action")
-				ret = self.checkBan()
-				if not ret:
-					self.checkUnBan()
-					time.sleep(self.sleepTime)
-			else:
-				time.sleep(self.sleepTime)
-		self.flushBan()
-		self.executeCmd(self.actionStop)
-		logSys.debug(self.jail.getName() + ": action terminated")
-		return True
-
-	##
-	# Check for IP address to ban.
-	#
-	# Look in the Jail queue for FailTicket. If a ticket is available,
-	# it executes the "ban" command and add a ticket to the BanManager.
-	# @return True if an IP address get banned
-	
-	def checkBan(self):
-		logSys.debug("Check for IP address to ban")
-		ticket = self.jail.getFailTicket()
-		if ticket != False:
-			aInfo = dict()
-			bTicket = BanManager.createBanTicket(ticket)
-			aInfo["ip"] = bTicket.getIP()
-			logSys.info("Ban %s" % aInfo["ip"])
-			self.executeCmd(self.replaceTag(self.actionBan, aInfo))
-			self.banManager.addBanTicket(bTicket)
-			return True
-		return False
-	
-	##
-	# Check for IP address to unban.
-	#
-	# Unban IP address which are outdated.
-	
-	def checkUnBan(self):
-		logSys.debug("Check for IP address to unban")
-		for ticket in self.banManager.unBanList(time.time()):
-			aInfo = dict()
-			aInfo["ip"] = ticket.getIP()
-			logSys.info("Unban %s" % aInfo["ip"])
-			self.executeCmd(self.replaceTag(self.actionUnban, aInfo))
-	
-	##
-	# Flush the ban list.
-	#
-	# Unban all IP address which are still in the banning list.
-	
-	def flushBan(self):
-		logSys.debug("Flush ban list")
-		for ticket in self.banManager.flushBanList():
-			aInfo = dict()
-			aInfo["ip"] = ticket.getIP()
-			logSys.info("Unban %s" % aInfo["ip"])
-			self.executeCmd(self.replaceTag(self.actionUnban, aInfo))
-	
-	##
-	# Get the status of the filter.
-	#
-	# Get some informations about the filter state such as the total
-	# number of failures.
-	# @return a list with tuple
-	
-	def status(self):
-		ret = [("Currently banned", self.banManager.size()),
-			   ("Total banned", self.banManager.getBanTotal())]
-		return ret
+	def execActionStop(self, aInfo):
+		return self.executeCmd(self.actionStop, aInfo);
 	
 	@staticmethod
 	def replaceTag(query, aInfo):
@@ -261,21 +170,26 @@ class Action(JailThread):
 		return string
 	
 	@staticmethod
-	def executeCmd(cmd):
+	def executeCmd(cmd, aInfo = None):
 		""" Executes an OS command.
 		"""
 		if cmd == "":
 			logSys.debug("Nothing to do")
 			return True
 		
-		logSys.debug(cmd)
-		retval = os.system(cmd)
+		# Replace tags
+		if not aInfo == None:
+			realCmd = Action.replaceTag(cmd, aInfo)
+		else:
+			realCmd = cmd
+		
+		logSys.debug(realCmd)
+		retval = os.system(realCmd)
 		#if not retval == 0:
 		#	logSys.error("'" + cmd + "' returned " + `retval`)
 		#	raise Exception("Execution of command '%s' failed" % cmd)
 		if retval == 0:
 			return True
 		else:
-			logSys.error("%s returned %x" % (cmd, retval))
+			logSys.error("%s returned %x" % (realCmd, retval))
 			return False
-		

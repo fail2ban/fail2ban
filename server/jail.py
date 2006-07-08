@@ -24,7 +24,7 @@ __date__ = "$Date: 2004/10/10 13:33:40 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from action import Action
+from actions import Actions
 from filter import Filter
 import Queue
 
@@ -35,7 +35,7 @@ class Jail:
 		self.name = name
 		self.queue = Queue.Queue()
 		self.filter = Filter(self)
-		self.action = Action(self)
+		self.action = Actions(self)
 	
 	def setName(self, name):
 		self.name = name

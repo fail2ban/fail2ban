@@ -1,2 +1,2 @@
 - Don't close socket after a send
-- Multiple actions !!!
+- Refactoring in server.py, actions.py, filter.py

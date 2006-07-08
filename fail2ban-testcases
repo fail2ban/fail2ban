@@ -28,6 +28,11 @@ __license__ = "GPL"
 
 import unittest, logging, sys
 
+# Inserts our own modules path first in the list
+# fix for bug #343821
+sys.path.insert(1, "/usr/lib/fail2ban")
+
+from version import version
 from testcases import filtertestcase
 from testcases import servertestcase
 from testcases import failmanagertestcase
@@ -40,7 +45,7 @@ stdout = logging.StreamHandler(sys.stdout)
 logSys.addHandler(stdout)
 logSys.setLevel(logging.FATAL)
 
-print "Fail2ban test suite. Please wait..."
+print "Fail2ban " + version + " test suite. Please wait..."
 
 tests = unittest.TestSuite()
 

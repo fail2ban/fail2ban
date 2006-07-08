@@ -162,7 +162,25 @@ class Server:
 		else:
 			raise ServerUnknownJail(name)
 	
-	# Action	
+	# Action
+	def addAction(self, name, value):
+		if self.jails.has_key(name):
+			self.jails[name].getAction().addAction(value)
+		else:
+			raise ServerUnknownJail(name)
+	
+	def getLastAction(self, name):
+		if self.jails.has_key(name):
+			return self.jails[name].getAction().getLastAction()
+		else:
+			raise ServerUnknownJail(name)
+	
+	def delAction(self, name, value):
+		if self.jails.has_key(name):
+			self.jails[name].getAction().delAction(value)
+		else:
+			raise ServerUnknownJail(name)
+	
 	def setBanTime(self, name, value):
 		if self.jails.has_key(name):
 			self.jails[name].getAction().setBanTime(value)
@@ -175,63 +193,63 @@ class Server:
 		else:
 			raise ServerUnknownJail(name)
 	
-	def setActionStart(self, name, value):
+	def setActionStart(self, name, action, value):
 		if self.jails.has_key(name):
-			self.jails[name].getAction().setActionStart(value)
+			self.jails[name].getAction().getAction(action).setActionStart(value)
 		else:
 			raise ServerUnknownJail(name)
 	
-	def getActionStart(self, name):
+	def getActionStart(self, name, action):
 		if self.jails.has_key(name):
-			return self.jails[name].getAction().getActionStart()
+			return self.jails[name].getAction().getAction(action).getActionStart()
 		else:
 			raise ServerUnknownJail(name)
 		
-	def setActionStop(self, name, value):
+	def setActionStop(self, name, action, value):
 		if self.jails.has_key(name):
-			self.jails[name].getAction().setActionStop(value)
+			self.jails[name].getAction().getAction(action).setActionStop(value)
 		else:
 			raise ServerUnknownJail(name)
 	
-	def getActionStop(self, name):
+	def getActionStop(self, name, action):
 		if self.jails.has_key(name):
-			return self.jails[name].getAction().getActionStop()
+			return self.jails[name].getAction().getAction(action).getActionStop()
 		else:
 			raise ServerUnknownJail(name)
 	
-	def setActionCheck(self, name, value):
+	def setActionCheck(self, name, action, value):
 		if self.jails.has_key(name):
-			self.jails[name].getAction().setActionCheck(value)
+			self.jails[name].getAction().getAction(action).setActionCheck(value)
 		else:
 			raise ServerUnknownJail(name)
 	
-	def getActionCheck(self, name):
+	def getActionCheck(self, name, action):
 		if self.jails.has_key(name):
-			return self.jails[name].getAction().getActionCheck()
+			return self.jails[name].getAction().getAction(action).getActionCheck()
 		else:
 			raise ServerUnknownJail(name)
 	
-	def setActionBan(self, name, value):
+	def setActionBan(self, name, action, value):
 		if self.jails.has_key(name):
-			self.jails[name].getAction().setActionBan(value)
+			self.jails[name].getAction().getAction(action).setActionBan(value)
 		else:
 			raise ServerUnknownJail(name)
 	
-	def getActionBan(self, name):
+	def getActionBan(self, name, action):
 		if self.jails.has_key(name):
-			return self.jails[name].getAction().getActionBan()
+			return self.jails[name].getAction().getAction(action).getActionBan()
 		else:
 			raise ServerUnknownJail(name)
 	
-	def setActionUnban(self, name, value):
+	def setActionUnban(self, name, action, value):
 		if self.jails.has_key(name):
-			self.jails[name].getAction().setActionUnban(value)
+			self.jails[name].getAction().getAction(action).setActionUnban(value)
 		else:
 			raise ServerUnknownJail(name)
 	
-	def getActionUnban(self, name):
+	def getActionUnban(self, name, action):
 		if self.jails.has_key(name):
-			return self.jails[name].getAction().getActionUnban()
+			return self.jails[name].getAction().getAction(action).getActionUnban()
 		else:
 			raise ServerUnknownJail(name)
 		
