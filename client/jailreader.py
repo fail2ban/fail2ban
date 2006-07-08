@@ -38,7 +38,7 @@ class JailReader(ConfigReader):
 		ConfigReader.__init__(self)
 		self.name = name
 		self.filter = None
-		self.action = None
+		self.actions = list()
 	
 	def setName(self, value):
 		self.name = value
@@ -55,7 +55,7 @@ class JailReader(ConfigReader):
 	def getOptions(self):
 		opts = [["bool", "enabled", "false"],
 				["int", "maxretry", None],
-				["int", "bantime", None],
+				["int", "bantime", 600],
 				["string", "filter", ""],
 				["string", "action", ""]]
 		self.opts = ConfigReader.getOptions(self, self.name, opts)
@@ -67,9 +67,11 @@ class JailReader(ConfigReader):
 			self.filter.getOptions(self.opts)
 			
 			# Read action
-			self.action = ActionReader(self.opts["action"], self.name)
-			self.action.read()
-			self.action.getOptions(self.opts)
+			for act in self.opts["action"].split():
+				action = ActionReader(act, self.name)
+				action.read()
+				action.getOptions(self.opts)
+				self.actions.append(action)
 	
 	def convert(self):
 		stream = [["add", self.name]]
@@ -79,6 +81,7 @@ class JailReader(ConfigReader):
 			elif opt == "bantime":
 				stream.append(["set", self.name, "bantime", self.opts[opt]])
 		stream.extend(self.filter.convert())
-		stream.extend(self.action.convert())
+		for action in self.actions:
+			stream.extend(action.convert())
 		return stream
 	

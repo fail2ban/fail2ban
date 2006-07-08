@@ -4,8 +4,19 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.6.1)                           2006/03/16
+Fail2Ban (version 0.7.0)                           2006/07/??
 =============================================================
+
+ver. 0.7.0 (2006/07/??) - alpha
+----------
+- Almost a complete rewrite :) Fail2ban design is really
+  better (IMHO). There is a lot of new features
+- Client/Server architecture
+- Multithreading. Each jail has its own threads: one for the
+  log reading and another for the actions
+- Execute several actions
+- Split configuration files. They are more readable and easy
+  to use
 
 ver. 0.6.1 (2006/03/16) - stable
 ----------

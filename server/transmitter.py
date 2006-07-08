@@ -104,7 +104,7 @@ class Transmitter:
 			self.server.setLogLevel(value)
 			return self.server.getLogLevel()
 		# Jail
-		if action[1] == "idle":
+		elif action[1] == "idle":
 			if action[2] == "on":
 				self.server.setIdleJail(name, True)
 			elif action[2] == "off":
@@ -140,26 +140,38 @@ class Transmitter:
 			value = action[2]
 			self.server.setBanTime(name, int(value))
 			return self.server.getBanTime(name)
+		elif action[1] == "addaction":
+			value = action[2]
+			self.server.addAction(name, value)
+			return self.server.getLastAction(name).getName()
+		elif action[1] == "delaction":
+			self.server.delAction(name, value)
+			return None
 		elif action[1] == "actionstart":
-			value = action[2]
-			self.server.setActionStart(name, value)
-			return self.server.getActionStart(name)
+			act = action[2]
+			value = action[3]
+			self.server.setActionStart(name, act, value)
+			return self.server.getActionStart(name, act)
 		elif action[1] == "actionstop":
-			value = action[2]
-			self.server.setActionStop(name, value)
-			return self.server.getActionStop(name)
+			act = action[2]
+			value = action[3]
+			self.server.setActionStop(name, act, value)
+			return self.server.getActionStop(name, act)
 		elif action[1] == "actioncheck":
-			value = action[2]
-			self.server.setActionCheck(name, value)
-			return self.server.getActionCheck(name)
+			act = action[2]
+			value = action[3]
+			self.server.setActionCheck(name, act, value)
+			return self.server.getActionCheck(name, act)
 		elif action[1] == "actionban":
-			value = action[2]
-			self.server.setActionBan(name, value)
-			return self.server.getActionBan(name)
+			act = action[2]
+			value = action[3]
+			self.server.setActionBan(name, act, value)
+			return self.server.getActionBan(name, act)
 		elif action[1] == "actionunban":
-			value = action[2]
-			self.server.setActionUnban(name, value)
-			return self.server.getActionUnban(name)
+			act = action[2]
+			value = action[3]
+			self.server.setActionUnban(name, act, value)
+			return self.server.getActionUnban(name, act)
 		raise Exception("Invalid command (no set action)")
 	
 	def actionGet(self, action):

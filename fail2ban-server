@@ -25,9 +25,15 @@ __date__ = "$Date: 2004/10/10 13:33:40 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import locale, getopt, logging, sys
+
+# Inserts our own modules path first in the list
+# fix for bug #343821
+sys.path.insert(1, "/usr/lib/fail2ban")
+
+from version import version
 from server.server import Server
 from utils.process import *
-import locale, getopt, logging, sys
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")
@@ -53,7 +59,7 @@ class Fail2banServer:
 		"""
 		print "Usage: "+self.argv[0]+" [OPTIONS]"
 		print
-		print "Fail2Ban v0.7 reads log file that contains password failure report"
+		print "Fail2Ban v" + version + " reads log file that contains password failure report"
 		print "and bans the corresponding IP addresses using firewall rules."
 		print
 		print "  -b         start in background"
