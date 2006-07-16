@@ -24,7 +24,7 @@ __date__ = "$Date: 2005/11/20 17:07:47 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging
+import logging, re
 from configreader import ConfigReader
 from filterreader import FilterReader
 from actionreader import ActionReader
@@ -68,7 +68,8 @@ class JailReader(ConfigReader):
 			
 			# Read action
 			for act in self.opts["action"].split():
-				action = ActionReader(act, self.name)
+				splitAct = JailReader.splitAction(act)
+				action = ActionReader(splitAct, self.name)
 				action.read()
 				action.getOptions(self.opts)
 				self.actions.append(action)
@@ -85,3 +86,12 @@ class JailReader(ConfigReader):
 			stream.extend(action.convert())
 		return stream
 	
+	@staticmethod
+	def splitAction(action):
+		m = re.match("^(\w+)(?:\[(.*)\])?$", action)
+		d = dict()
+		if m.group(2) <> None:
+			for param in m.group(2).split(','):
+				p = param.split('=')
+				d[p[0]] = p[1]
+		return [m.group(1), d]

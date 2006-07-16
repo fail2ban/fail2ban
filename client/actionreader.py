@@ -32,9 +32,10 @@ logSys = logging.getLogger("fail2ban.client.config")
 
 class ActionReader(ConfigReader):
 	
-	def __init__(self, file, name):
+	def __init__(self, action, name):
 		ConfigReader.__init__(self)
-		self.file = file
+		self.file = action[0]
+		self.cInfo = action[1]
 		self.name = name
 	
 	def setFile(self, file):
@@ -58,7 +59,12 @@ class ActionReader(ConfigReader):
 				["string", "actioncheck", ""],
 				["string", "actionban", ""],
 				["string", "actionunban", ""]]
-		self.opts = ConfigReader.getOptions(self, "DEFAULT", opts, pOpts)
+		self.opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
+		
+		if self.has_section("Init"):
+			for opt in self.options("Init"):
+				if not self.cInfo.has_key(opt):
+					self.cInfo[opt] = self.get("Init", opt)
 	
 	def convert(self):
 		head = ["set", self.name]
@@ -75,5 +81,10 @@ class ActionReader(ConfigReader):
 				stream.append(head + ["actionban", self.file, self.opts[opt]])
 			elif opt == "actionunban":
 				stream.append(head + ["actionunban", self.file, self.opts[opt]])
+		# cInfo
+		if self.cInfo:
+			for p in self.cInfo:
+				stream.append(head + ["setcinfo", self.file, p, self.cInfo[p]])
+
 		return stream
 		

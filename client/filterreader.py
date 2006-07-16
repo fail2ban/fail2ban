@@ -59,7 +59,7 @@ class FilterReader(ConfigReader):
 				["string", "failregex", ""],
 				["int", "maxtime", 600],
 				["int", "maxretry", 3]]
-		self.opts = ConfigReader.getOptions(self, "DEFAULT", opts, pOpts)
+		self.opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
 	
 	def convert(self):
 		stream = list()

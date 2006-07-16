@@ -103,7 +103,7 @@ class Actions(JailThread):
 	
 	def run(self):
 		for action in self.actions:
-			action.execActionStart(None)
+			action.execActionStart()
 		self.setActive(True)
 		while self.isActive():
 			if not self.isIdle:
@@ -116,7 +116,7 @@ class Actions(JailThread):
 				time.sleep(self.sleepTime)
 		self.flushBan()
 		for action in self.actions:
-			action.execActionStop(None)
+			action.execActionStop()
 		logSys.debug(self.jail.getName() + ": action terminated")
 		return True
 

@@ -147,6 +147,17 @@ class Transmitter:
 		elif action[1] == "delaction":
 			self.server.delAction(name, value)
 			return None
+		elif action[1] == "setcinfo":
+			act = action[2]
+			key = action[3]
+			value = action[4]
+			self.server.setCInfo(name, act, key, value)
+			return self.server.getCInfo(name, act, key)
+		elif action[1] == "delcinfo":
+			act = action[2]
+			key = action[3]
+			self.server.delCInfo(name, act, key)
+			return None
 		elif action[1] == "actionstart":
 			act = action[2]
 			value = action[3]
