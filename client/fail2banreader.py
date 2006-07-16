@@ -40,7 +40,7 @@ class Fail2banReader(ConfigReader):
 	
 	def getOptions(self):
 		opts = [["int", "loglevel", 1]]
-		self.opts = ConfigReader.getOptions(self, "DEFAULT", opts)
+		self.opts = ConfigReader.getOptions(self, "Definition", opts)
 	
 	def convert(self):
 		stream = list()

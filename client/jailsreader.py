@@ -42,7 +42,7 @@ class JailsReader(ConfigReader):
 	
 	def getOptions(self):
 		opts = []
-		self.opts = ConfigReader.getOptions(self, "DEFAULT", opts)
+		self.opts = ConfigReader.getOptions(self, "Definition", opts)
 
 		for sec in self.sections():
 			jail = JailReader(sec)

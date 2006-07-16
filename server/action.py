@@ -40,6 +40,7 @@ class Action:
 	
 	def __init__(self, name):
 		self.name = name
+		self.cInfo = dict()
 		## Command executed in order to initialize the system.
 		self.actionStart = ''
 		## Command executed when an IP address gets banned.
@@ -58,6 +59,15 @@ class Action:
 	def getName(self):
 		return self.name
 	
+	def setCInfo(self, key, value):
+		self.cInfo[key] = value
+	
+	def getCInfo(self, key):
+		return self.cInfo[key]
+	
+	def delCInfo(self, key):
+		del self.cInfo[key]
+	
 	##
 	# Set the "start" command.
 	#
@@ -75,8 +85,9 @@ class Action:
 	def getActionStart(self):
 		return self.actionStart
 	
-	def execActionStart(self, aInfo):
-		return self.executeCmd(self.actionStart, aInfo);
+	def execActionStart(self):
+		startCmd = Action.replaceTag(self.actionStart, self.cInfo)
+		return Action.executeCmd(startCmd)
 	
 	##
 	# Set the "ban" command.
@@ -96,7 +107,7 @@ class Action:
 		return self.actionBan
 	
 	def execActionBan(self, aInfo):
-		return self.executeCmd(self.actionBan, aInfo);
+		return self.processCmd(self.actionBan, aInfo);
 	
 	##
 	# Set the "unban" command.
@@ -116,7 +127,7 @@ class Action:
 		return self.actionUnban
 	
 	def execActionUnban(self, aInfo):
-		return self.executeCmd(self.actionUnban, aInfo);
+		return self.processCmd(self.actionUnban, aInfo);
 	
 	##
 	# Set the "check" command.
@@ -135,9 +146,6 @@ class Action:
 	def getActionCheck(self):
 		return self.actionCheck
 	
-	def execActionCheck(self, aInfo):
-		return self.executeCmd(self.actionCheck, aInfo);
-	
 	##
 	# Set the "stop" command.
 	#
@@ -155,8 +163,9 @@ class Action:
 	def getActionStop(self):
 		return self.actionStop
 	
-	def execActionStop(self, aInfo):
-		return self.executeCmd(self.actionStop, aInfo);
+	def execActionStop(self):
+		stopCmd = Action.replaceTag(self.actionStop, self.cInfo)
+		return Action.executeCmd(stopCmd)
 	
 	@staticmethod
 	def replaceTag(query, aInfo):
@@ -169,20 +178,38 @@ class Action:
 		string = string.replace("<br>", '\n')
 		return string
 	
-	@staticmethod
-	def executeCmd(cmd, aInfo = None):
+	def processCmd(self, cmd, aInfo = None):
 		""" Executes an OS command.
 		"""
 		if cmd == "":
 			logSys.debug("Nothing to do")
 			return True
 		
+		checkCmd = Action.replaceTag(self.actionCheck, self.cInfo)
+		if not Action.executeCmd(checkCmd):
+			logSys.error("Invariant check failed. Trying to restore a sane" +
+						 " environment")
+			stopCmd = Action.replaceTag(self.actionStop, self.cInfo)
+			Action.executeCmd(stopCmd)
+			startCmd = Action.replaceTag(self.actionStart, self.cInfo)
+			Action.executeCmd(startCmd)
+			if not Action.executeCmd(checkCmd):
+				logSys.fatal("Unable to restore environment")
+				return False
+
 		# Replace tags
 		if not aInfo == None:
 			realCmd = Action.replaceTag(cmd, aInfo)
 		else:
 			realCmd = cmd
 		
+		# Replace static fields
+		realCmd = Action.replaceTag(realCmd, self.cInfo)
+		
+  		return Action.executeCmd(realCmd)
+
+  	@staticmethod
+	def executeCmd(realCmd):
 		logSys.debug(realCmd)
 		retval = os.system(realCmd)
 		#if not retval == 0:
@@ -193,3 +220,4 @@ class Action:
 		else:
 			logSys.error("%s returned %x" % (realCmd, retval))
 			return False
+		

@@ -181,6 +181,24 @@ class Server:
 		else:
 			raise ServerUnknownJail(name)
 	
+	def setCInfo(self, name, action, key, value):
+		if self.jails.has_key(name):
+			self.jails[name].getAction().getAction(action).setCInfo(key, value)
+		else:
+			raise ServerUnknownJail(name)
+	
+	def getCInfo(self, name, action, key):
+		if self.jails.has_key(name):
+			return self.jails[name].getAction().getAction(action).getCInfo(key)
+		else:
+			raise ServerUnknownJail(name)
+	
+	def delCInfo(self, name, action, key):
+		if self.jails.has_key(name):
+			self.jails[name].getAction().getAction(action).delCInfo(key)
+		else:
+			raise ServerUnknownJail(name)
+	
 	def setBanTime(self, name, value):
 		if self.jails.has_key(name):
 			self.jails[name].getAction().setBanTime(value)
