@@ -433,8 +433,8 @@ class Filter(JailThread):
 			# Bug fix for #1241756
 			# If the date is greater than the current time, we suppose
 			# that the log is not from this year but from the year before
-			#if time.mktime(date) > time.time():
-			#	date[0] -= 1
+			if time.mktime(date) > time.time():
+				date[0] -= 1
 		unixTime = time.mktime(date)
 		return unixTime
 
