@@ -97,7 +97,10 @@ class FailManager:
 			if data.getRetry() >= self.maxRetry:
 				self.delFailure(ip)
 				self.lock.release()
-				return FailTicket(ip, data.getLastTime())
+				# Create a FailTicket from BanData
+				failTicket = FailTicket(ip, data.getLastTime())
+				failTicket.setAttempt(data.getRetry())
+				return failTicket
 		self.lock.release()
 		raise FailManagerEmpty
 

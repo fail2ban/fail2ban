@@ -34,6 +34,7 @@ class Ticket:
 	def __init__(self, ip, time):
 		self.ip = ip
 		self.time = time
+		self.attempt = 0
 	
 	def setIP(self, value):
 		self.ip = value
@@ -46,4 +47,10 @@ class Ticket:
 	
 	def getTime(self):
 		return self.time
+	
+	def setAttempt(self, value):
+		self.attempt = value
+	
+	def getAttempt(self):
+		return self.attempt
 	

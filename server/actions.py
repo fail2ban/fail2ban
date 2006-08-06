@@ -134,7 +134,7 @@ class Actions(JailThread):
 			aInfo = dict()
 			bTicket = BanManager.createBanTicket(ticket)
 			aInfo["ip"] = bTicket.getIP()
-			aInfo["failures"] = bTicket.getTime()
+			aInfo["failures"] = bTicket.getAttempt()
 			logSys.info("Ban %s" % aInfo["ip"])
 			for action in self.actions:
 				action.execActionBan(aInfo)
