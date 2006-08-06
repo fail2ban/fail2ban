@@ -101,7 +101,9 @@ class BanManager:
 		ip = ticket.getIP()
 		#lastTime = ticket.getTime()
 		lastTime = time.time()
-		return BanTicket(ip, lastTime)
+		banTicket = BanTicket(ip, lastTime)
+		banTicket.setAttempt(ticket.getAttempt())
+		return banTicket
 	
 	##
 	# Add a ban ticket.
