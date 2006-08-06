@@ -13,7 +13,11 @@ Legend:
 # partially done
 * done
 
-See Feature Request Tracking System at SourceForge.net
+- see Feature Request Tracking System at SourceForge.net
+
+- findall in dns.py should be no more needed
+
+- remove utils/ directory
 
 - improve installation process (better prefix support)
 
