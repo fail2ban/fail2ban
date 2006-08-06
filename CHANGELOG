@@ -17,6 +17,8 @@ ver. 0.7.0 (2006/07/??) - alpha
 - Execute several actions
 - Split configuration files. They are more readable and easy
   to use
+- failregex uses group (<host>) now. This feature was already
+  present in the Debian package
 
 ver. 0.6.1 (2006/03/16) - stable
 ----------
