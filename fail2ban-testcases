@@ -33,10 +33,11 @@ import unittest, logging, sys
 sys.path.insert(1, "/usr/lib/fail2ban")
 
 from version import version
+from testcases import banmanagertestcase
+from testcases import clientreadertestcase
+from testcases import failmanagertestcase
 from testcases import filtertestcase
 from testcases import servertestcase
-from testcases import failmanagertestcase
-from testcases import banmanagertestcase
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")
@@ -60,6 +61,8 @@ tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
 tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 # BanManager
 tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
+# ClientReader
+tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
 
 # Tests runner
 testRunner = unittest.TextTestRunner()
