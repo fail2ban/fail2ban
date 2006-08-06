@@ -61,10 +61,12 @@ class Filter(JailThread):
 		self.logPath = ''
 		## The regular expression matching the date.
 		self.timeRegex = ''
+		self.timeRegexObj = None
 		## The pattern matching the date.
 		self.timePattern = ''
 		## The regular expression matching the failure.
 		self.failRegex = ''
+		self.failRegexObj = None
 		## The amount of time to look back.
 		self.findTime = 6000
 		## The ignore IP list.
@@ -103,6 +105,7 @@ class Filter(JailThread):
 	
 	def setTimeRegex(self, value):
 		self.timeRegex = value
+		self.timeRegexObj = re.compile(value)
 		logSys.info("Set timeregex = %s" % value)
 	
 	##
@@ -139,6 +142,7 @@ class Filter(JailThread):
 	
 	def setFailRegex(self, value):
 		self.failRegex = value
+		self.failRegexObj = re.compile(value)
 		logSys.info("Set failregex = %s" % value)
 	
 	##
@@ -369,15 +373,19 @@ class Filter(JailThread):
 
 	def findFailure(self, line):
 		failList = list()
-		match = re.search(self.failRegex, line)
+		match = self.failRegexObj.search(line)
 		if match:
-			timeMatch = re.search(self.timeRegex, match.string)
+			timeMatch = self.timeRegexObj.search(match.string)
 			if timeMatch:
 				date = self.getUnixTime(timeMatch.group())
-				ipMatch = textToIp(match.string)
-				if ipMatch:
-					for ip in ipMatch:
-						failList.append([ip, date])
+				try:
+					ipMatch = textToIp(match.group("host"))
+					if ipMatch:
+						for ip in ipMatch:
+							failList.append([ip, date])
+				except IndexError:
+					logSys.error("There is no 'host' group in the rule. " +
+								 "Please correct your configuration.")
 		return failList
 	
 	##
