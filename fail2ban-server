@@ -25,7 +25,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import locale, getopt, logging, sys
+import locale, getopt, sys
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
@@ -34,9 +34,6 @@ sys.path.insert(1, "/usr/lib/fail2ban")
 from version import version
 from server.server import Server
 from utils.process import *
-
-# Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban")
 
 ##
 # \mainpage Fail2Ban
@@ -101,19 +98,11 @@ class Fail2banServer:
 			
 		self.getCmdLineOptions(optList)
 		
-		# Add the default logging handler
-		stdout = logging.StreamHandler(sys.stdout)
-		# set a format which is simpler for console use
-		formatter = logging.Formatter('%(name)-16s: %(levelname)-6s %(message)s')
-		# tell the handler to use this format
-		stdout.setFormatter(formatter)
-		logSys.addHandler(stdout)
-		
 		if self.conf["background"]:
 			retCode = createDaemon()
 			#signal.signal(signal.SIGTERM, sigTERMhandler)
 			if not retCode:
-				logSys.error("Unable to start daemon")
+				print "Unable to start daemon"
 				sys.exit(-1)
 		
 		try:
