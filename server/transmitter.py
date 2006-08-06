@@ -103,6 +103,10 @@ class Transmitter:
 			value = int(action[1])
 			self.server.setLogLevel(value)
 			return self.server.getLogLevel()
+		elif name == "logtarget":
+			value = action[1]
+			self.server.setLogTarget(value)
+			return self.server.getLogTarget()
 		# Jail
 		elif action[1] == "idle":
 			if action[2] == "on":
