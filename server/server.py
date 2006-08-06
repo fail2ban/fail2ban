@@ -26,7 +26,7 @@ __license__ = "GPL"
 
 from jail import Jail
 from transmitter import Transmitter
-import locale, logging
+import locale, logging, sys
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.server")
@@ -37,8 +37,10 @@ class Server:
 		self.jails = dict()
 		self.transm = Transmitter(self)
 		self.logLevel = 3
+		self.logTarget = "STDERR"
 		# Set logging level
 		self.setLogLevel(self.logLevel)
+		self.setLogTarget(self.logTarget)
 	
 	def start(self):
 		# Start the communication
@@ -322,6 +324,33 @@ class Server:
 	
 	def getLogLevel(self):
 		return self.logLevel
+	
+	def setLogTarget(self, target):
+		# Remove previous handler
+		logging.getLogger("fail2ban").handlers = []
+		self.logTarget = target
+		if target == "SYSLOG":
+			logSys.error("Not yet implemented")
+			return False
+		elif target == "STDERR":
+			hdlr = logging.StreamHandler(sys.stderr)
+		else:
+			# Target should be a file
+			try:
+				open(target, "a")
+				hdlr = logging.FileHandler(target)
+			except IOError:
+				logSys.error("Unable to log to " + target)
+				return False
+		# set a format which is simpler for console use
+		formatter = logging.Formatter('%(name)-16s: %(levelname)-6s %(message)s')
+		# tell the handler to use this format
+		hdlr.setFormatter(formatter)
+		logging.getLogger("fail2ban").addHandler(hdlr)
+		return True
+	
+	def getLogTarget(self):
+		return self.logTarget
 
 class ServerUnknownJail(Exception):
 	pass

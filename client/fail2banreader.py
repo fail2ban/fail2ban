@@ -39,7 +39,8 @@ class Fail2banReader(ConfigReader):
 		ConfigReader.read(self, "fail2ban")
 	
 	def getOptions(self):
-		opts = [["int", "loglevel", 1]]
+		opts = [["int", "loglevel", 1],
+				["string", "logtarget", "STDERR"]]
 		self.opts = ConfigReader.getOptions(self, "Definition", opts)
 	
 	def convert(self):
@@ -47,5 +48,7 @@ class Fail2banReader(ConfigReader):
 		for opt in self.opts:
 			if opt == "loglevel":
 				stream.append(["set", "loglevel", self.opts[opt]])
+			elif opt == "logtarget":
+				stream.append(["set", "logtarget", self.opts[opt]])
 		return stream
 	
