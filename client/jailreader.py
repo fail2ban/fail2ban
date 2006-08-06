@@ -88,7 +88,7 @@ class JailReader(ConfigReader):
 	
 	@staticmethod
 	def splitAction(action):
-		m = re.match("^(\w+)(?:\[(.*)\])?$", action)
+		m = re.match("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$", action)
 		d = dict()
 		if m.group(2) <> None:
 			for param in m.group(2).split(','):
