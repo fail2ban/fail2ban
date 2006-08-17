@@ -49,8 +49,8 @@ class Fail2banClient:
 		self.argv = None
 		self.stream = None
 		self.conf = dict()
-		self.conf["background"] = True
 		self.conf["dump"] = False
+		self.conf["force"] = False
 	
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
@@ -60,10 +60,9 @@ class Fail2banClient:
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
 		print "and bans the corresponding IP addresses using firewall rules."
 		print
-		print "  -b         start in background"
-		print "  -f         start in foreground"
 		print "  -c <DIR>   configuration directory"
 		print "  -d         dump configuration"
+		print "  -x         force execution of the server"
 		print "  -h         display this help message"
 		print
 		print "Report bugs to <lostcontrol@users.sourceforge.net>"
@@ -75,10 +74,8 @@ class Fail2banClient:
 		for opt in optList:
 			if opt[0] == "-d":
 				self.conf["dump"] = True
-			if opt[0] == "-b":
-				self.conf["background"] = True
-			if opt[0] == "-f":
-				self.conf["background"] = False
+			if opt[0] == "-x":
+				self.conf["force"] = True
 			if opt[0] in ["-h", "--help"]:
 	 			self.dispUsage()
 	
@@ -118,51 +115,53 @@ class Fail2banClient:
 			self.dispUsage()
 		
 		if cmd[0] == "start" and len(cmd) == 1:
-			self.readConfig()
-			self.startServer(self.conf["background"])
-			# Configure the server
-			self.processCmd(self.stream)
-		elif cmd[0] == "loadconf" and len(cmd) == 1:
-			self.readConfig()
-			# Configure the server
-			self.processCmd(self.stream)
-		else:
-			try:
-				client = CSocket()
-				ret = client.send(cmd)
-				if ret[0] == 0:
-					logSys.info("OK : " + `ret[1]`)
-					return True
-				else:
-					logSys.info("NOK: " + `ret[1].args`)
-					return False
-			except SystemExit, e:
-				return True
-			except Exception, e:
-				logSys.error(e)
-				logSys.error("Arrggh... Start the server first")
+			if self.ping():
+				logSys.info("Server already running")
 				return False
+			else:
+				self.startServerAsync(self.conf["force"])
+				# Read the config while the server is starting
+				self.readConfig()
+				try:
+					# Wait for the server to start
+					self.waitOnServer()
+					# Configure the server
+					self.processCmd(self.stream)
+					return True
+				except ServerExecutionException:
+					logSys.error("Could not start server. Try -x option")
+					return False
+		else:
+			return self.processCmd([cmd])
+	
 	
 	##
 	# Start Fail2Ban server.
 	#
 	# Start the Fail2ban server in daemon mode.
 	
-	def startServer(self, background = True):
+	def startServerAsync(self, force = False):
 		args = list()
+		
 		args.append("fail2ban-server")
-		if background:
-			args.append("-b")
-		else:
-			args.append("-f")
+		args.append("-b")
+		if force:
+			args.append("-x")
 		
 		pid = os.fork()
 		if pid == 0:
 			os.execv("fail2ban-server", args)
-		else:
-			# Wait for the server to start
-			while not self.ping():
-				time.sleep(0.1)
+						
+			
+	def waitOnServer(self):
+		# Wait for the server to start
+		cnt = 0
+		while not self.ping():
+			if cnt > 10:
+				raise ServerExecutionException("Failed to start server")
+			time.sleep(0.1)
+			cnt = cnt + 1
+			
 	
 	def start(self, argv):
 		# Command line options
@@ -170,7 +169,7 @@ class Fail2banClient:
 		
 		# Reads the command line options.
 		try:
-			cmdOpts = 'bfhc:s:d'
+			cmdOpts = 'hc:xd'
 			cmdLongOpts = ['help']
 			optList, args = getopt.getopt(self.argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
@@ -203,6 +202,10 @@ class Fail2banClient:
 		for c in cmd:
 			print c
 		return True
+
+
+class ServerExecutionException(Exception):
+	pass
 
 if __name__ == "__main__":
 	client = Fail2banClient()
