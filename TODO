@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-ToDo                                        $Revision$
+ToDo                                         $Revision$
 =============================================================
 
 Legend:
@@ -12,6 +12,8 @@ Legend:
 ? maybe
 # partially done
 * done
+
+- add a reload option to fail2ban-client
 
 - see Feature Request Tracking System at SourceForge.net
 
