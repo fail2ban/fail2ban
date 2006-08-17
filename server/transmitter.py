@@ -25,6 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from ssocket import SSocket
+from ssocket import SSocketErrorException
 import re, pickle, logging
 
 # Gets the instance of the logger.
@@ -36,9 +37,12 @@ class Transmitter:
 		self.server = server
 		self.socket = SSocket(self)
 	
-	def start(self):
-		self.socket.initialize()
-		self.socket.start()
+	def start(self, force):
+		try:
+			self.socket.initialize(force)
+			self.socket.start()
+		except SSocketErrorException:
+			logSys.error("Could not start server")
 	
 	##
 	# Stop the transmitter.
@@ -78,8 +82,11 @@ class Transmitter:
 			self.server.startJail(name)
 			return None
 		elif action[0] == "stop":
-			name = action[1]
-			self.server.stopJail(name)
+			if len(action) == 1:
+				self.server.quit()
+			else:
+				name = action[1]
+				self.server.stopJail(name)
 			return None
 		elif action[0] == "sleep":
 			value = action[1]
@@ -90,10 +97,7 @@ class Transmitter:
 		elif action[0] == "get":
 			return self.actionGet(action[1:])
 		elif action[0] == "status":
-			return self.status(action[1:])
-		elif action[0] == "quit":
-			self.server.quit()
-			return None
+			return self.status(action[1:])			
 		raise Exception("Invalid command")
 	
 	def actionSet(self, action):
