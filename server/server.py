@@ -42,9 +42,9 @@ class Server:
 		self.setLogLevel(self.logLevel)
 		self.setLogTarget(self.logTarget)
 	
-	def start(self):
+	def start(self, force):
 		# Start the communication
-		self.transm.start()
+		self.transm.start(force)
 	
 	def quit(self):
 		for jail in self.jails.copy():

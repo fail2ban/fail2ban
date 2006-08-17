@@ -39,10 +39,15 @@ class SSocket(Thread):
 		self.isRunning = False
 		logSys.debug("Created SSocket")
 	
-	def initialize(self):
+	def initialize(self, force = False):
 		# Remove socket
 		if os.path.exists(self.socketFile):
-			os.remove(self.socketFile)
+			logSys.error("Fail2ban seems to be already running")
+			if force:
+				logSys.warn("Forcing execution of the server")
+				os.remove(self.socketFile)
+			else:
+				raise SSocketErrorException("Server already running")
 		# Create an INET, STREAMing socket
 		#self.ssock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.ssock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -101,3 +106,7 @@ class SSocket(Thread):
 				raise RuntimeError, "socket connection broken"
 			msg = msg + chunk
 		return pickle.loads(msg)
+
+
+class SSocketErrorException(Exception):
+	pass
