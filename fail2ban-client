@@ -49,7 +49,6 @@ class Fail2banClient:
 		self.argv = None
 		self.stream = None
 		self.conf = dict()
-		self.conf["cmdfile"] = None
 		self.conf["background"] = True
 		self.conf["dump"] = False
 	
@@ -64,7 +63,6 @@ class Fail2banClient:
 		print "  -b         start in background"
 		print "  -f         start in foreground"
 		print "  -c <DIR>   configuration directory"
-		print "  -s <FILE>  read command file"
 		print "  -d         dump configuration"
 		print "  -h         display this help message"
 		print
@@ -81,8 +79,6 @@ class Fail2banClient:
 				self.conf["background"] = True
 			if opt[0] == "-f":
 				self.conf["background"] = False
-			if opt[0] == "-s":
-				self.conf["cmdfile"] = opt[1]
 			if opt[0] in ["-h", "--help"]:
 	 			self.dispUsage()
 	
@@ -119,8 +115,7 @@ class Fail2banClient:
 			return True
 		
 		if len(sys.argv) < 2:
-			logSys.error("Add some options...")
-			return False
+			self.dispUsage()
 		
 		if cmd[0] == "start" and len(cmd) == 1:
 			self.readConfig()
@@ -147,30 +142,6 @@ class Fail2banClient:
 				logSys.error(e)
 				logSys.error("Arrggh... Start the server first")
 				return False
-	
-	##
-	# Process a script file.
-	#
-	# Read each line of the file and execute the command. Lines which
-	# start with '#' are ignored.
-	# @bug The splitting of the command is wrong and awful.
-	# @param file the path of the script file
-	
-	def processFile(self, file):
-		try:
-			handler = open(file)
-		except IOError:
-			logSys.fatal("Unable to open " + file)
-			return False
-		for line in handler:
-			l = line.strip()
-			if l.find('#') != 0:
-				s = re.split("\s+", l, 3)
-				j = list()
-				for i in s:
-					j.append(i.strip("'"))
-				self.processCommand(j)
-		return True
 	
 	##
 	# Start Fail2Ban server.
@@ -216,10 +187,7 @@ class Fail2banClient:
 		stdout.setFormatter(formatter)
 		logSys.addHandler(stdout)
 
-		if self.conf["cmdfile"] == None:
-			self.processCommand(args)
-		else:
-			self.processFile(self.conf["cmdfile"])
+		self.processCommand(args)
 
 	def readConfig(self):
 		# Read the configuration
