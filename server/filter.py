@@ -468,8 +468,8 @@ import socket, struct
 
 class DNSUtils:
 	
-	dnsRe = re.compile("(?:(?:\w|-)+\.){2,}\w+")
-	ipRe = re.compile("(?:\d{1,3}\.){3}\d{1,3}")
+	dnsCRE = re.compile("(?:(?:\w|-)+\.){2,}\w+")
+	ipCRE = re.compile("(?:\d{1,3}\.){3}\d{1,3}")
 	
 	@staticmethod
 	def dnsToIp(dns):
@@ -486,7 +486,7 @@ class DNSUtils:
 		""" Search for possible DNS in an arbitrary text.
 			Thanks to Tom Pike.
 		"""
-		match = dnsRe.find(text)
+		match = DNSUtils.dnsCRE.match(text)
 		if match:
 			return match
 		else:
@@ -497,7 +497,8 @@ class DNSUtils:
 		""" Search if an IP address if directly available and return
 			it.
 		"""
-		match = ipRe.find(text)
+		print DNSUtils.ipCRE
+		match = DNSUtils.ipCRE.match(text)
 		if match:
 			return match
 		else:

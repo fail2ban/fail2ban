@@ -34,6 +34,8 @@ logSys = logging.getLogger("fail2ban.client.config")
 
 class JailReader(ConfigReader):
 	
+	actionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
+	
 	def __init__(self, name):
 		ConfigReader.__init__(self)
 		self.name = name
@@ -92,7 +94,7 @@ class JailReader(ConfigReader):
 	
 	@staticmethod
 	def splitAction(action):
-		m = re.match("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$", action)
+		m = JailReader.actionCRE.match(action)
 		d = dict()
 		if m.group(2) <> None:
 			for param in m.group(2).split(','):
