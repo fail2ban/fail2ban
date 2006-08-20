@@ -497,7 +497,6 @@ class DNSUtils:
 		""" Search if an IP address if directly available and return
 			it.
 		"""
-		print DNSUtils.ipCRE
 		match = DNSUtils.ipCRE.match(text)
 		if match:
 			return match
@@ -523,14 +522,15 @@ class DNSUtils:
 		# Search for plain IP
 		plainIP = DNSUtils.searchIP(text)
 		if not plainIP == None:
-			if isValidIP(element):
-				ipList.append(element)
+			plainIPStr = plainIP.group(0)
+			if DNSUtils.isValidIP(plainIPStr):
+				ipList.append(plainIPStr)
 		if not ipList:
 			# Try to get IP from possible DNS
-			dnsList = DNSUtils.textToDns(text)
-			if not dnsList == None:
-				dns = DNSUtils.dnsToIp(element)
-				for e in dns:
+			dns = DNSUtils.textToDns(text)
+			if not dns == None:
+				ip = DNSUtils.dnsToIp(dns.group(0))
+				for e in ip:
 					ipList.append(e)
 		return ipList
 	
