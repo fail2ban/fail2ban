@@ -76,7 +76,7 @@ class GetFailures(unittest.TestCase):
 		self.filter.setLogPath("testcases/files/testcase01.log")
 		self.filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 		self.filter.setTimePattern("%b %d %H:%M:%S")
-		self.filter.setFailRegex("Authentication failure")
+		self.filter.setFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) (?:::f{4,6}:)?(?P<host>\S*)")
 
 	def tearDown(self):
 		"""Call after every test case."""
