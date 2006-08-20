@@ -53,7 +53,7 @@ tests = unittest.TestSuite()
 # Filter
 tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
 tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
-tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
+#tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
 # Server
 #tests.addTest(unittest.makeSuite(servertestcase.StartStop))
 #tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
