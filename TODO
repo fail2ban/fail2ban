@@ -13,13 +13,17 @@ Legend:
 # partially done
 * done
 
+- correct handling of threads (join???)
+
+- signal handling (ctrl-c, etc)
+
 - add a reload option to fail2ban-client
 
 - see Feature Request Tracking System at SourceForge.net
 
-- findall in dns.py should be no more needed
+* findall in dns.py should be no more needed
 
-- remove utils/ directory
+* remove utils/ directory
 
 - improve installation process (better prefix support)
 
@@ -56,7 +60,7 @@ Legend:
 ? add gettext support. Is this really needed for a server
   utility?
 
-- send an email when fail2ban is running
+* send an email when fail2ban is running
 
 * add multithreading. Python threading is not really
   efficient. However, fail2ban could benefit of it. We could
@@ -91,9 +95,9 @@ Legend:
   - fail2ban list -> list available services.
   - fail2ban flush <srv> -> flush the <srv> ban list.
   
-- remove PID file.
+* remove PID file.
 
-# remove most of the command lines options if possible.
+* remove most of the command lines options if possible.
 
 - add the possibility to specify wildcard in log files.
   Example: logfile = /var/log/apache2/access-*.log
