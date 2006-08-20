@@ -97,5 +97,5 @@ class JailReader(ConfigReader):
 		if m.group(2) <> None:
 			for param in m.group(2).split(','):
 				p = param.split('=')
-				d[p[0]] = p[1]
+				d[p[0].strip()] = p[1].strip()
 		return [m.group(1), d]
