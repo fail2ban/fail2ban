@@ -28,7 +28,6 @@ from failmanager import FailManager
 from failmanager import FailManagerEmpty
 from failticket import FailTicket
 from jailthread import JailThread
-from utils.dns import *
 import time, logging, os, re, sys, socket
 
 # Gets the instance of the logger.
@@ -257,8 +256,8 @@ class Filter(JailThread):
 				s.insert(1, '32')
 			s[1] = long(s[1])
 			try:
-				a = cidr(s[0], s[1])
-				b = cidr(ip, s[1])
+				a = DNSUtils.cidr(s[0], s[1])
+				b = DNSUtils.cidr(ip, s[1])
 			except Exception:
 				return False
 			if a == b:
@@ -379,7 +378,7 @@ class Filter(JailThread):
 			if timeMatch:
 				date = self.getUnixTime(timeMatch.group())
 				try:
-					ipMatch = textToIp(match.group("host"))
+					ipMatch = DNSUtils.textToIp(match.group("host"))
 					if ipMatch:
 						for ip in ipMatch:
 							failList.append([ip, date])
@@ -457,4 +456,100 @@ class Filter(JailThread):
 		ret = [("Currently failed", self.failManager.size()),
 			   ("Total failed", self.failManager.getFailTotal())]
 		return ret
+
+
+##
+# Utils class for DNS and IP handling.
+#
+# This class contains only static methods used to handle DNS and IP
+# addresses.
+
+import socket, struct
+
+class DNSUtils:
 	
+	dnsRe = re.compile("(?:(?:\w|-)+\.){2,}\w+")
+	ipRe = re.compile("(?:\d{1,3}\.){3}\d{1,3}")
+	
+	@staticmethod
+	def dnsToIp(dns):
+		""" Convert a DNS into an IP address using the Python socket module.
+			Thanks to Kevin Drapel.
+		"""
+		try:
+			return socket.gethostbyname_ex(dns)[2]
+		except socket.gaierror:
+			return list()
+	
+	@staticmethod
+	def textToDns(text):
+		""" Search for possible DNS in an arbitrary text.
+			Thanks to Tom Pike.
+		"""
+		match = dnsRe.find(text)
+		if match:
+			return match
+		else:
+			return None
+	
+	@staticmethod
+	def searchIP(text):
+		""" Search if an IP address if directly available and return
+			it.
+		"""
+		match = ipRe.find(text)
+		if match:
+			return match
+		else:
+			return None
+	
+	@staticmethod
+	def isValidIP(str):
+		""" Return true if str is a valid IP
+		"""
+		s = str.split('/', 1)
+		try:
+			socket.inet_aton(s[0])
+			return True
+		except socket.error:
+			return False
+	
+	@staticmethod
+	def textToIp(text):
+		""" Return the IP of DNS found in a given text.
+		"""
+		ipList = list()
+		# Search for plain IP
+		plainIP = DNSUtils.searchIP(text)
+		if not plainIP == None:
+			if isValidIP(element):
+				ipList.append(element)
+		if not ipList:
+			# Try to get IP from possible DNS
+			dnsList = DNSUtils.textToDns(text)
+			if not dnsList == None:
+				dns = DNSUtils.dnsToIp(element)
+				for e in dns:
+					ipList.append(e)
+		return ipList
+	
+	@staticmethod
+	def cidr(i, n):
+		""" Convert an IP address string with a CIDR mask into a 32-bit
+			integer.
+		"""
+		# 32-bit IPv4 address mask
+		MASK = 0xFFFFFFFFL
+		return ~(MASK >> n) & MASK & DNSUtils.addr2bin(i)
+	
+	@staticmethod
+	def addr2bin(str):
+		""" Convert a string IPv4 address into an unsigned integer.
+		"""
+		return struct.unpack("!L", socket.inet_aton(str))[0]
+	
+	@staticmethod
+	def bin2addr(addr):
+		""" Convert a numeric IPv4 address into string n.n.n.n form.
+		"""
+		return socket.inet_ntoa(struct.pack("!L", addr))
