@@ -51,6 +51,7 @@ class Fail2banClient:
 		self.conf = dict()
 		self.conf["dump"] = False
 		self.conf["force"] = False
+		self.conf["verbose"] = 2
 	
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
@@ -62,6 +63,8 @@ class Fail2banClient:
 		print
 		print "  -c <DIR>   configuration directory"
 		print "  -d         dump configuration"
+		print "  -v         increase verbosity"
+		print "  -q         decrease verbosity"
 		print "  -x         force execution of the server"
 		print "  -h         display this help message"
 		print
@@ -74,28 +77,35 @@ class Fail2banClient:
 		for opt in optList:
 			if opt[0] == "-d":
 				self.conf["dump"] = True
-			if opt[0] == "-x":
+			elif opt[0] == "-v":
+				self.conf["verbose"] = self.conf["verbose"] + 1
+			elif opt[0] == "-q":
+				self.conf["verbose"] = self.conf["verbose"] - 1
+			elif opt[0] == "-x":
 				self.conf["force"] = True
-			if opt[0] in ["-h", "--help"]:
+			elif opt[0] in ["-h", "--help"]:
 	 			self.dispUsage()
 	
 	def ping(self):
-		return self.processCmd([["ping"]])
+		return self.processCmd([["ping"]], False)
 	
 	@staticmethod
-	def processCmd(cmd):
+	def processCmd(cmd, showRet = True):
 		for c in cmd:
 			try:
 				client = CSocket()
 			except Exception, e:
-				logSys.error(e)
-				logSys.error("Arrggh... Start the server first")
+				if showRet:
+					logSys.error(e)
+					logSys.error("Arrggh... Start the server first")
 				return False
 			ret = client.send(c)
 			if ret[0] == 0:
-				logSys.info("OK : " + `ret[1]`)
+				logSys.debug("OK : " + `ret[1]`)
+				if showRet:
+					print `ret[1]`
 			else:
-				logSys.info("NOK: " + `ret[1].args`)
+				logSys.error("NOK: " + `ret[1].args`)
 				return False
 		return True
 		
@@ -114,7 +124,7 @@ class Fail2banClient:
 		if len(sys.argv) < 2:
 			self.dispUsage()
 		
-		if cmd[0] == "start" and len(cmd) == 1:
+		if len(cmd) == 1 and cmd[0] == "start":
 			if self.ping():
 				logSys.info("Server already running")
 				return False
@@ -126,17 +136,17 @@ class Fail2banClient:
 					# Wait for the server to start
 					self.waitOnServer()
 					# Configure the server
-					self.processCmd(self.stream)
+					self.processCmd(self.stream, False)
 					return True
 				except ServerExecutionException:
 					logSys.error("Could not start server. Try -x option")
 					return False
-		elif cmd[0] == "reload" and len(cmd) == 1:
+		elif len(cmd) == 1 and cmd[0] == "reload":
 			if self.ping():
 				self.readConfig()
-				self.processCmd(['stop', 'all'])
+				self.processCmd(['stop', 'all'], False)
 				# Configure the server
-				self.processCmd(self.stream)
+				self.processCmd(self.stream, False)
 			else:
 				logSys.error("Could not find server")
 		else:
@@ -177,7 +187,7 @@ class Fail2banClient:
 		
 		# Reads the command line options.
 		try:
-			cmdOpts = 'hc:xd'
+			cmdOpts = 'hc:xdvq'
 			cmdLongOpts = ['help']
 			optList, args = getopt.getopt(self.argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
@@ -185,11 +195,19 @@ class Fail2banClient:
 			
 		self.getCmdLineOptions(optList)
 		
-		logSys.setLevel(logging.DEBUG)
+		verbose = self.conf["verbose"]
+		if verbose <= 0:
+			logSys.setLevel(logging.ERROR)
+		elif verbose == 1:
+			logSys.setLevel(logging.WARN)
+		elif verbose == 2:
+			logSys.setLevel(logging.INFO)
+		else:
+			logSys.setLevel(logging.DEBUG)
 		# Add the default logging handler
 		stdout = logging.StreamHandler(sys.stdout)
 		# set a format which is simpler for console use
-		formatter = logging.Formatter('%(name)-16s: %(levelname)-6s %(message)s')
+		formatter = logging.Formatter('%(levelname)-6s %(message)s')
 		# tell the handler to use this format
 		stdout.setFormatter(formatter)
 		logSys.addHandler(stdout)
