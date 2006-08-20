@@ -33,7 +33,7 @@ class StartStop(unittest.TestCase):
 		"""Call before every test case."""
 		self.server = Server()
 		self.server.setLogLevel(0)
-		self.server.start()
+		self.server.start(False)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -53,7 +53,7 @@ class Transmitter(unittest.TestCase):
 		"""Call before every test case."""
 		self.server = Server()
 		self.server.setLogLevel(0)
-		self.server.start()
+		self.server.start(False)
 
 	def tearDown(self):
 		"""Call after every test case."""
