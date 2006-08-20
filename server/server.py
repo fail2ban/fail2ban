@@ -47,8 +47,7 @@ class Server:
 		self.transm.start(force)
 	
 	def quit(self):
-		for jail in self.jails.copy():
-			self.stopJail(jail)
+		self.stopAllJail()
 		self.transm.stop()
 	
 	def addJail(self, name):
@@ -73,6 +72,10 @@ class Server:
 				self.delJail(name)
 		else:
 			raise ServerUnknownJail(name)
+	
+	def stopAllJail(self):
+		for jail in self.jails.copy():
+			self.stopJail(jail)
 			
 	def isActive(self, name):
 		if self.jails.has_key(name):

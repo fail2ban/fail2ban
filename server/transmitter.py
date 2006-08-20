@@ -75,6 +75,8 @@ class Transmitter:
 			return "pong"
 		elif action[0] == "add":
 			name = action[1]
+			if name == "all":
+				raise Exception("Reserved name")
 			self.server.addJail(name)
 			return name
 		elif action[0] == "start":
@@ -84,6 +86,8 @@ class Transmitter:
 		elif action[0] == "stop":
 			if len(action) == 1:
 				self.server.quit()
+			elif action[1] == "all":
+				self.server.stopAllJail()
 			else:
 				name = action[1]
 				self.server.stopJail(name)
