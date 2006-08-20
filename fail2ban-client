@@ -131,6 +131,14 @@ class Fail2banClient:
 				except ServerExecutionException:
 					logSys.error("Could not start server. Try -x option")
 					return False
+		elif cmd[0] == "reload" and len(cmd) == 1:
+			if self.ping():
+				self.readConfig()
+				self.processCmd(['stop', 'all'])
+				# Configure the server
+				self.processCmd(self.stream)
+			else:
+				logSys.error("Could not find server")
 		else:
 			return self.processCmd([cmd])
 	
