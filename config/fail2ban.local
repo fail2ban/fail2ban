@@ -1,4 +1,0 @@
-[Definition]
-
-logtarget = /tmp/fail2ban.log
-loglevel = 4
