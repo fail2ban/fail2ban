@@ -29,6 +29,7 @@ server/jail.py
 server/__init__.py
 server/banmanager.py
 setup.py
+setup.cfg
 testcases/banmanagertestcase.py
 testcases/failmanagertestcase.py
 testcases/clientreadertestcase.py
