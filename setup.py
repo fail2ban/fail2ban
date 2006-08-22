@@ -48,19 +48,63 @@ setup(
 	url = "http://fail2ban.sourceforge.net",
 	license = "GPL",
 	platforms = "Posix",
-	scripts = ['fail2ban-client', 'fail2ban-server',
-			   'fail2ban-testcases'],
-	py_modules = ['version'],
-	packages = ['client', 'server', 'testcases', 'utils']
+	scripts =	[
+					'fail2ban-client',
+					'fail2ban-server',
+					'fail2ban-testcases'
+				],
+	py_modules =	['version'],
+	packages =	[
+					'client',
+					'server',
+					'testcases'
+				],
+	data_files =	[
+						('/etc/fail2ban',
+							[
+								'config/fail2ban.conf',
+								'config/jail.conf'
+							]
+						),
+						('/etc/fail2ban/filter.d',
+							[
+								'config/filter.d/vsftpd.conf',
+								'config/filter.d/apache-auth.conf',
+								'config/filter.d/sshd.conf'
+							]
+						),
+						('/etc/fail2ban/action.d',
+							[
+								'config/action.d/iptables.conf',
+								'config/action.d/mail-whois.conf',
+								'config/action.d/dummy.conf',
+								'config/action.d/mail.conf',
+								'config/action.d/hostsdeny.conf'
+							]
+						)
+					]
 )
 
 # Do some checks after installation
 # Search for obsolete files.
 obsoleteFiles = []
-elements = {"/etc/": ["fail2ban.conf"],
-			"/usr/bin/": ["fail2ban.py"],
-			"/usr/lib/fail2ban/firewall/": ["iptables.py", "ipfwadm.py",
-											"ipfw.py"]}
+elements =	{
+				"/etc/":
+					[
+						"fail2ban.conf"
+					],
+				"/usr/bin/":
+					[
+						"fail2ban.py"
+					],
+				"/usr/lib/fail2ban/firewall/":
+					[
+						"iptables.py",
+						"ipfwadm.py",
+						"ipfw.py"
+					]
+			}
+
 for dir in elements:
 	for f in elements[dir]:
 		path = join(dir, f)
@@ -80,5 +124,5 @@ if obsoleteFiles:
 if argv[1] == "install":
 	print
 	print "Please do not forget to update your configuration files."
-	print "Use config/ as an example."
+	print "They are in /etc/fail2ban/."
 	print
