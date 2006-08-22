@@ -33,7 +33,6 @@ sys.path.insert(1, "/usr/lib/fail2ban")
 
 from version import version
 from server.server import Server
-from utils.process import *
 
 ##
 # \mainpage Fail2Ban
