@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.6.1)                           2006/03/16
+Fail2Ban (version 0.7.0)                           2006/08/23
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -58,12 +58,12 @@ Require: python-2.4 (http://www.python.org)
 
 To install, just do:
 
-> tar xvfj fail2ban-0.6.1.tar.bz2
-> cd fail2ban-0.6.1
+> tar xvfj fail2ban-0.7.0.tar.bz2
+> cd fail2ban-0.7.0
 > python setup.py install
 
 This will install Fail2Ban into /usr/lib/fail2ban. The
-fail2ban executable is placed into /usr/bin.
+executable scripts are placed into /usr/bin.
 
 Gentoo: ebuilds are available on the website.
 Debian: Fail2Ban is in Debian unstable.
@@ -71,50 +71,45 @@ RedHat: packages are available on the website.
 
 Fail2Ban should now be correctly installed. Just type:
 
-> fail2ban -h
+> fail2ban-client -h
 
-to see if everything is alright. You can configure fail2ban
-with a config file. Different kind of configuration files are
-available:
-
-iptables:   copy config/fail2ban.conf.iptables to
-            /etc/fail2ban.conf
-hosts.deny: copy config/fail2ban.conf.hostsdeny to
-            /etc/fail2ban.conf
-shorewall:  copy config/fail2ban.conf.shorewall to
-            /etc/fail2ban.conf
-
-Do not forget to edit fail2ban.conf to meet your needs.
-
-You can use the initd script available in config/. Copy
-<dist>-initd to /etc/init.d/fail2ban. Gentoo users must copy
-gentoo-confd to /etc/conf.d/fail2ban. You can start fail2ban:
-
-> /etc/init.d/fail2ban start
-
-Gentoo users can add it to the default runlevel:
-
-> rc-update add fail2ban default
+to see if everything is alright.
 
 Configuration:
 --------------
 
-You can configure fail2ban using the file /etc/fail2ban.conf
-or using command line options. Command line options override
-the value stored in fail2ban.conf. Here are the command line
-options:
+You can configure fail2ban using the files in /etc/fail2ban
+or using command line. Here are the available command line
+options (not complete yet):
 
-  -b         start in background
-  -c <FILE>  read configuration file FILE
-  -p <FILE>  create PID lock in FILE
-  -h         display this help message
-  -i <IP(s)> IP(s) to ignore
-  -k         kill a currently running instance
-  -r <VALUE> allow a max of VALUE password failure [maxfailures]
-  -t <TIME>  ban IP for TIME seconds [bantime]
-  -f <TIME>  lifetime in seconds of failed entry [findtime]
-  -v         verbose. Use twice for greater effect
-  -V         print software version
+  <COMMAND>
+
+    start                   start the server and the jails
+    reload                  reload the configuration
+    stop                    stop all jails and terminate the
+                            server
+    status                  get the current status
+
+    set loglevel <LEVEL>    set loglevel to <LEVEL>
+    get loglevel            get loglevel
+    set logtarget <TARGET>  set log target to <TARGET>
+    get logtarget           get log target
+
+    add <JAIL>              create <JAIL>
+    set <JAIL> <CMD>        set the <CMD> value for <JAIL>
+    get <JAIL> <CMD>        get the <CMD> value for <JAIL>
+    start <JAIL>            start <JAIL>
+    stop <JAIL>             stop <JAIL>. The jail is removed
+    status <JAIL>           get the current status of <JAIL>
+
+  [OPTIONS]
+
+    -c <DIR>                configuration directory
+    -d                      dump configuration. For debugging
+    -v                      increase verbosity
+    -q                      decrease verbosity
+    -x                      force execution of the server
+    -h                      display this help message
 
 Contact:
 --------
