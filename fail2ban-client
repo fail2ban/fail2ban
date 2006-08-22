@@ -49,6 +49,7 @@ class Fail2banClient:
 		self.argv = None
 		self.stream = None
 		self.conf = dict()
+		self.conf["conf"] = "/etc/fail2ban"
 		self.conf["dump"] = False
 		self.conf["force"] = False
 		self.conf["verbose"] = 2
@@ -95,7 +96,9 @@ class Fail2banClient:
 		""" Gets the command line options
 		"""
 		for opt in optList:
-			if opt[0] == "-d":
+			if opt[0] == "-c":
+				self.conf["conf"] = opt[1]
+			elif opt[0] == "-d":
 				self.conf["dump"] = True
 			elif opt[0] == "-v":
 				self.conf["verbose"] = self.conf["verbose"] + 1
@@ -240,7 +243,7 @@ class Fail2banClient:
 	def readConfig(self):
 		# Read the configuration
 		cfg = Configurator()
-		cfg.setBaseDir("config")
+		cfg.setBaseDir(self.conf["conf"])
 		cfg.readAll()
 		cfg.getAllOptions()
 		cfg.convertToProtocol()
