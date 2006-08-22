@@ -4,10 +4,10 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.7.0)                           2006/07/??
+Fail2Ban (version 0.7.0)                           2006/08/23
 =============================================================
 
-ver. 0.7.0 (2006/07/??) - alpha
+ver. 0.7.0 (2006/08/23) - alpha
 ----------
 - Almost a complete rewrite :) Fail2ban design is really
   better (IMHO). There is a lot of new features
@@ -19,6 +19,7 @@ ver. 0.7.0 (2006/07/??) - alpha
   to use
 - failregex uses group (<host>) now. This feature was already
   present in the Debian package
+- lots of things...
 
 ver. 0.6.1 (2006/03/16) - stable
 ----------
