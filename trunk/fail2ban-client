@@ -1,0 +1,269 @@
+#!/usr/bin/env python
+# This file is part of Fail2Ban.
+#
+# Fail2Ban is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Fail2Ban is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Fail2Ban; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# Author: Cyril Jaquier
+# 
+# $Revision$
+
+__author__ = "Cyril Jaquier"
+__version__ = "$Revision$"
+__date__ = "$Date$"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__license__ = "GPL"
+
+import sys, string, os, pickle, re, logging, getopt, time
+
+# Inserts our own modules path first in the list
+# fix for bug #343821
+sys.path.insert(1, "/usr/lib/fail2ban")
+
+# Now we can import our modules
+from version import version
+from client.csocket import CSocket
+from client.configurator import Configurator
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban.client")
+
+##
+#
+# @todo This class needs cleanup.
+
+class Fail2banClient:
+
+	def __init__(self):
+		self.argv = None
+		self.stream = None
+		self.conf = dict()
+		self.conf["conf"] = "/etc/fail2ban"
+		self.conf["dump"] = False
+		self.conf["force"] = False
+		self.conf["verbose"] = 2
+	
+	def dispUsage(self):
+		""" Prints Fail2Ban command line options and exits
+		"""
+		print "Usage: "+self.argv[0]+" [OPTIONS] <COMMAND>"
+		print
+		print "Fail2Ban v" + version + " reads log file that contains password failure report"
+		print "and bans the corresponding IP addresses using firewall rules."
+		print
+		print "  <COMMAND>"
+		print
+		print "    start                   start the server and the jails"
+		print "    reload                  reload the configuration"
+		print "    stop                    stop all jails and terminate the server"
+		print "    status                  get the current status"
+		print
+		print "    set loglevel <LEVEL>    set loglevel to <LEVEL>"
+		print "    get loglevel            get loglevel"
+		print "    set logtarget <TARGET>  set log target to <TARGET>"
+		print "    get logtarget           get log target"
+		print
+		print "    add <JAIL>              create <JAIL>"
+		print "    set <JAIL> <CMD>        set the <CMD> value for <JAIL>"
+		print "    get <JAIL> <CMD>        get the <CMD> value for <JAIL>"
+		print "    start <JAIL>            start <JAIL>"
+		print "    stop <JAIL>             stop <JAIL>. The jail is removed"
+		print "    status <JAIL>           get the current status of <JAIL>"
+		print
+		print "  [OPTIONS]"
+		print
+		print "    -c <DIR>                configuration directory"
+		print "    -d                      dump configuration. For debugging"
+		print "    -v                      increase verbosity"
+		print "    -q                      decrease verbosity"
+		print "    -x                      force execution of the server"
+		print "    -h                      display this help message"
+		print
+		print "Report bugs to <lostcontrol@users.sourceforge.net>"
+	
+	def getCmdLineOptions(self, optList):
+		""" Gets the command line options
+		"""
+		for opt in optList:
+			if opt[0] == "-c":
+				self.conf["conf"] = opt[1]
+			elif opt[0] == "-d":
+				self.conf["dump"] = True
+			elif opt[0] == "-v":
+				self.conf["verbose"] = self.conf["verbose"] + 1
+			elif opt[0] == "-q":
+				self.conf["verbose"] = self.conf["verbose"] - 1
+			elif opt[0] == "-x":
+				self.conf["force"] = True
+			elif opt[0] in ["-h", "--help"]:
+	 			self.dispUsage()
+	 			sys.exit(0)
+	
+	def ping(self):
+		return self.processCmd([["ping"]], False)
+	
+	@staticmethod
+	def processCmd(cmd, showRet = True):
+		for c in cmd:
+			try:
+				client = CSocket()
+			except Exception, e:
+				if showRet:
+					logSys.error(e)
+					logSys.error("Arrggh... Start the server first")
+				return False
+			ret = client.send(c)
+			if ret[0] == 0:
+				logSys.debug("OK : " + `ret[1]`)
+				if showRet:
+					print `ret[1]`
+			else:
+				logSys.error("NOK: " + `ret[1].args`)
+				return False
+		return True
+		
+	##
+	# Process a command line.
+	#
+	# Process one command line and exit.
+	# @param cmd the command line
+
+	def processCommand(self, cmd):
+		if self.conf["dump"]:
+			self.readConfig()
+			self.dumpConfig(self.stream)
+			return True
+		
+		if len(sys.argv) < 2:
+			self.dispUsage()
+			return False
+		
+		if len(cmd) == 1 and cmd[0] == "start":
+			if self.ping():
+				logSys.info("Server already running")
+				return False
+			else:
+				self.startServerAsync(self.conf["force"])
+				# Read the config while the server is starting
+				self.readConfig()
+				try:
+					# Wait for the server to start
+					self.waitOnServer()
+					# Configure the server
+					self.processCmd(self.stream, False)
+					return True
+				except ServerExecutionException:
+					logSys.error("Could not start server. Try -x option")
+					return False
+		elif len(cmd) == 1 and cmd[0] == "reload":
+			if self.ping():
+				self.readConfig()
+				self.processCmd(['stop', 'all'], False)
+				# Configure the server
+				return self.processCmd(self.stream, False)
+			else:
+				logSys.error("Could not find server")
+				return False
+		else:
+			return self.processCmd([cmd])
+	
+	
+	##
+	# Start Fail2Ban server.
+	#
+	# Start the Fail2ban server in daemon mode.
+	
+	def startServerAsync(self, force = False):
+		args = list()
+		
+		args.append("fail2ban-server")
+		args.append("-b")
+		if force:
+			args.append("-x")
+		
+		pid = os.fork()
+		if pid == 0:
+			os.execv("fail2ban-server", args)
+						
+			
+	def waitOnServer(self):
+		# Wait for the server to start
+		cnt = 0
+		while not self.ping():
+			if cnt > 10:
+				raise ServerExecutionException("Failed to start server")
+			time.sleep(0.1)
+			cnt = cnt + 1
+			
+	
+	def start(self, argv):
+		# Command line options
+		self.argv = argv
+		
+		# Reads the command line options.
+		try:
+			cmdOpts = 'hc:xdvq'
+			cmdLongOpts = ['help']
+			optList, args = getopt.getopt(self.argv[1:], cmdOpts, cmdLongOpts)
+		except getopt.GetoptError:
+			self.dispUsage()
+			
+		self.getCmdLineOptions(optList)
+		
+		verbose = self.conf["verbose"]
+		if verbose <= 0:
+			logSys.setLevel(logging.ERROR)
+		elif verbose == 1:
+			logSys.setLevel(logging.WARN)
+		elif verbose == 2:
+			logSys.setLevel(logging.INFO)
+		else:
+			logSys.setLevel(logging.DEBUG)
+		# Add the default logging handler
+		stdout = logging.StreamHandler(sys.stdout)
+		# set a format which is simpler for console use
+		formatter = logging.Formatter('%(levelname)-6s %(message)s')
+		# tell the handler to use this format
+		stdout.setFormatter(formatter)
+		logSys.addHandler(stdout)
+
+		return self.processCommand(args)
+
+	def readConfig(self):
+		# Read the configuration
+		cfg = Configurator()
+		cfg.setBaseDir(self.conf["conf"])
+		cfg.readAll()
+		cfg.getAllOptions()
+		cfg.convertToProtocol()
+		self.stream = cfg.getConfigStream()
+	
+	@staticmethod
+	def dumpConfig(cmd):
+		for c in cmd:
+			print c
+		return True
+
+
+class ServerExecutionException(Exception):
+	pass
+
+if __name__ == "__main__":
+	client = Fail2banClient()
+	# Exit with correct return value
+	if client.start(sys.argv):
+		sys.exit(0)
+	else:
+		sys.exit(-1)
+

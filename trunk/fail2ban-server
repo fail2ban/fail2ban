@@ -1,0 +1,121 @@
+#!/usr/bin/env python
+# This file is part of Fail2Ban.
+#
+# Fail2Ban is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Fail2Ban is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Fail2Ban; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# Author: Cyril Jaquier
+# 
+# $Revision$
+
+__author__ = "Cyril Jaquier"
+__version__ = "$Revision$"
+__date__ = "$Date$"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__license__ = "GPL"
+
+import locale, getopt, sys
+
+# Inserts our own modules path first in the list
+# fix for bug #343821
+sys.path.insert(1, "/usr/lib/fail2ban")
+
+from version import version
+from server.server import Server
+from utils.process import *
+
+##
+# \mainpage Fail2Ban
+#
+# \section Introduction
+#
+# Fail2ban is designed to protect your server against brute force attacks.
+# Its first goal was to protect a SSH server.
+
+class Fail2banServer:
+	
+	def __init__(self):
+		self.server = None
+		self.argv = None
+		self.conf = dict()
+		self.conf["background"] = True
+		self.conf["force"] = False
+	
+	def dispUsage(self):
+		""" Prints Fail2Ban command line options and exits
+		"""
+		print "Usage: "+self.argv[0]+" [OPTIONS]"
+		print
+		print "Fail2Ban v" + version + " reads log file that contains password failure report"
+		print "and bans the corresponding IP addresses using firewall rules."
+		print
+		print "  -b         start in background"
+		print "  -f         start in foreground"
+		print "  -x         force execution of the server"
+		print "  -h         display this help message"
+		print
+		print "Report bugs to <lostcontrol@users.sourceforge.net>"
+		sys.exit(0)
+	
+	def getCmdLineOptions(self, optList):
+		""" Gets the command line options
+		"""
+		for opt in optList:
+			if opt[0] == "-b":
+				self.conf["background"] = True
+			if opt[0] == "-f":
+				self.conf["background"] = False
+			if opt[0] == "-x":
+				self.conf["force"] = True
+			if opt[0] in ["-h", "--help"]:
+	 			self.dispUsage()
+	
+	#def sigTERMhandler(signum, frame):
+	#	""" Handles the TERM signal when in daemon mode in order to
+	#		exit properly.
+	#	"""
+	#	logSys.debug("Signal handler called with sig "+`signum`)
+	#	server.quit()
+	
+	def start(self, argv):
+		# Command line options
+		self.argv = argv
+		
+		# Reads the command line options.
+		try:
+			cmdOpts = 'bfxh'
+			cmdLongOpts = ['help']
+			optList, args = getopt.getopt(self.argv[1:], cmdOpts, cmdLongOpts)
+		except getopt.GetoptError:
+			self.dispUsage()
+			
+		self.getCmdLineOptions(optList)
+		
+		if self.conf["background"]:
+			retCode = createDaemon()
+			#signal.signal(signal.SIGTERM, sigTERMhandler)
+			if not retCode:
+				print "Unable to start daemon"
+				sys.exit(-1)
+		
+		try:
+			self.server = Server()
+			self.server.start(self.conf["force"])
+		except Exception, e:
+			print e
+			self.server.quit()
+		
+if __name__ == "__main__":
+	server = Fail2banServer()
+	server.start(sys.argv)
