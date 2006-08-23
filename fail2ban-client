@@ -169,7 +169,7 @@ class Fail2banClient:
 		elif len(cmd) == 1 and cmd[0] == "reload":
 			if self.ping():
 				self.readConfig()
-				self.processCmd(['stop', 'all'], False)
+				self.processCmd([['stop', 'all']], False)
 				# Configure the server
 				return self.processCmd(self.stream, False)
 			else:
