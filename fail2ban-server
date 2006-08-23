@@ -101,20 +101,18 @@ class Fail2banServer:
 			
 		self.getCmdLineOptions(optList)
 		
-		if self.conf["background"]:
-			retCode = createDaemon()
-			#signal.signal(signal.SIGTERM, sigTERMhandler)
-			if not retCode:
-				print "Unable to start daemon"
-				sys.exit(-1)
-		
 		try:
-			self.server = Server()
+			self.server = Server(self.conf["background"])
 			self.server.start(self.conf["force"])
+			return True
 		except Exception, e:
 			print e
 			self.server.quit()
+			return False
 		
 if __name__ == "__main__":
 	server = Fail2banServer()
-	server.start(sys.argv)
+	if server.start(sys.argv):
+		sys.exit(0)
+	else:
+		sys.exit(-1)

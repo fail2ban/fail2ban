@@ -37,10 +37,16 @@ class Transmitter:
 		self.server = server
 		self.socket = SSocket(self)
 	
+	##
+	# Start the transmittion server.
+	#
+	# This function wait for the socket thread.
+	
 	def start(self, force):
 		try:
 			self.socket.initialize(force)
 			self.socket.start()
+			self.socket.join()
 		except SSocketErrorException:
 			logSys.error("Could not start server")
 	
@@ -61,7 +67,7 @@ class Transmitter:
 			ret = self.actionHandler(action)
 			ack = 0, ret
 		except Exception, e:
-			logSys.warn("Invalid command")
+			logSys.warn("Invalid command: " + `action`)
 			ack = 1, e
 		return ack
 	
