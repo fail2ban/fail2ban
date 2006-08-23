@@ -194,7 +194,16 @@ class Fail2banClient:
 		
 		pid = os.fork()
 		if pid == 0:
-			os.execv("fail2ban-server", args)
+			try:
+				# Use the PATH env
+				os.execvp("fail2ban-server", args)
+			except OSError:
+				try:
+					# Use the current directory
+					os.execv("fail2ban-server", args)
+				except OSError:
+					print "Could not find fail2ban-server"
+					os.exit(-1)
 						
 			
 	def waitOnServer(self):
