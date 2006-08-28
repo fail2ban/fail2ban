@@ -28,25 +28,27 @@ import socket, pickle
 
 class CSocket:
 	
+	END_STRING = "<F2B_END_COMMAND>"
+	SOCKET_FILE = "/tmp/fail2ban.sock"
+	
 	def __init__(self):
-		self.socketFile = "/tmp/fail2ban.sock"
 		# Create an INET, STREAMing socket
 		#self.csock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.csock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 		#self.csock.connect(("localhost", 2222))
-		self.csock.connect(self.socketFile)
+		self.csock.connect(CSocket.SOCKET_FILE)
 	
 	def send(self, msg):
 		# Convert every list member to string
 		obj = pickle.dumps(map(str, msg))
-		self.csock.send(obj + "<F2B_END_COMMAND>")
+		self.csock.send(obj + CSocket.END_STRING)
 		ret = self.receive(self.csock)
 		self.csock.close()
 		return ret
 	
 	def receive(self, socket):
 		msg = ''
-		while msg.rfind("<F2B_END_COMMAND>") == -1:
+		while msg.rfind(CSocket.END_STRING) == -1:
 			chunk = socket.recv(6)
 			if chunk == '':
 				raise RuntimeError, "socket connection broken"

@@ -32,20 +32,22 @@ logSys = logging.getLogger("fail2ban.comm")
 
 class SSocket(Thread):
 	
+	END_STRING = "<F2B_END_COMMAND>"
+	SOCKET_FILE = "/tmp/fail2ban.sock"
+	
 	def __init__(self, transmitter):
 		Thread.__init__(self)
-		self.socketFile = "/tmp/fail2ban.sock"
 		self.transmit = transmitter
 		self.isRunning = False
 		logSys.debug("Created SSocket")
 	
 	def initialize(self, force = False):
 		# Remove socket
-		if os.path.exists(self.socketFile):
+		if os.path.exists(SSocket.SOCKET_FILE):
 			logSys.error("Fail2ban seems to be already running")
 			if force:
 				logSys.warn("Forcing execution of the server")
-				os.remove(self.socketFile)
+				os.remove(SSocket.SOCKET_FILE)
 			else:
 				raise SSocketErrorException("Server already running")
 		# Create an INET, STREAMing socket
@@ -55,7 +57,7 @@ class SSocket(Thread):
 		self.ssock.setblocking(False)
 		# Bind the socket to a public host and a well-known port
 		#self.ssock.bind(("localhost", 2222))
-		self.ssock.bind(self.socketFile)
+		self.ssock.bind(SSocket.SOCKET_FILE)
 		# Become a server socket
 		self.ssock.listen(1)
 	
@@ -79,9 +81,9 @@ class SSocket(Thread):
 					stime = 1.0
 		self.ssock.close()
 		# Remove socket
-		if os.path.exists(self.socketFile):
-			logSys.debug("Removed socket file " + self.socketFile)
-			os.remove(self.socketFile)
+		if os.path.exists(SSocket.SOCKET_FILE):
+			logSys.debug("Removed socket file " + SSocket.SOCKET_FILE)
+			os.remove(SSocket.SOCKET_FILE)
 		logSys.debug("Socket shutdown")
 		return True
 	
@@ -96,11 +98,11 @@ class SSocket(Thread):
 	
 	def send(self, socket, msg):
 		obj = pickle.dumps(msg)
-		socket.send(obj + "<F2B_END_COMMAND>")
+		socket.send(obj + SSocket.END_STRING)
 	
 	def receive(self, socket):
 		msg = ''
-		while msg.rfind("<F2B_END_COMMAND>") == -1:
+		while msg.rfind(SSocket.END_STRING) == -1:
 			chunk = socket.recv(6)
 			if chunk == '':
 				raise RuntimeError, "socket connection broken"
