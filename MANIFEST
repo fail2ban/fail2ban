@@ -4,6 +4,7 @@ TODO
 fail2ban-client
 fail2ban-server
 fail2ban-testcases
+client/beautifier.py
 client/configreader.py
 client/jailreader.py
 client/fail2banreader.py
