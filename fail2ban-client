@@ -35,6 +35,7 @@ sys.path.insert(1, "/usr/lib/fail2ban")
 from version import version
 from client.csocket import CSocket
 from client.configurator import Configurator
+from client.beautifier import Beautifier
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.client")
@@ -115,7 +116,9 @@ class Fail2banClient:
 	
 	@staticmethod
 	def processCmd(cmd, showRet = True):
+		beautifier = Beautifier()
 		for c in cmd:
+			beautifier.setInputCmd(c)
 			try:
 				client = CSocket()
 			except Exception, e:
@@ -127,9 +130,10 @@ class Fail2banClient:
 			if ret[0] == 0:
 				logSys.debug("OK : " + `ret[1]`)
 				if showRet:
-					print `ret[1]`
+					print beautifier.beautify(ret[1])
 			else:
-				logSys.error("NOK: " + `ret[1].args`)
+				logSys.debug("NOK: " + `ret[1].args`)
+				print beautifier.beautifyError(ret[1])
 				return False
 		return True
 		
