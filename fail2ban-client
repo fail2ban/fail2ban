@@ -149,7 +149,7 @@ class Fail2banClient:
 			self.dumpConfig(self.stream)
 			return True
 		
-		if len(sys.argv) < 2:
+		if len(cmd) < 1:
 			self.dispUsage()
 			return False
 		
@@ -231,6 +231,7 @@ class Fail2banClient:
 			optList, args = getopt.getopt(self.argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
 			self.dispUsage()
+			return False
 			
 		self.getCmdLineOptions(optList)
 		
