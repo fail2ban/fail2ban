@@ -62,7 +62,10 @@ class Server:
 		self.transm.stop()
 	
 	def addJail(self, name):
-		self.jails[name] = Jail(name)
+		if self.jails.has_key(name):
+			raise ServerDuplicateJail(name)
+		else:
+			self.jails[name] = Jail(name)
 		
 	def delJail(self, name):
 		if self.jails.has_key(name):
@@ -87,7 +90,19 @@ class Server:
 	def stopAllJail(self):
 		for jail in self.jails.copy():
 			self.stopJail(jail)
-			
+	
+	def getAction(self, name):
+		if self.jails.has_key(name):
+			return self.jails[name].getAction()
+		else:
+			raise ServerUnknownJail(name)
+	
+	def getFilter(self, name):
+		if self.jails.has_key(name):
+			return self.jails[name].getFilter()
+		else:
+			raise ServerUnknownJail(name)
+	
 	def isActive(self, name):
 		if self.jails.has_key(name):
 			return self.jails[name].isActive()
@@ -113,179 +128,98 @@ class Server:
 			self.jails[name].getFilter().setLogPath(file)
 	
 	def getLogPath(self, name):
-		if self.jails.has_key(name):
-			return self.jails[name].getFilter().getLogPath()
-		else:
-			raise ServerUnknownJail(name)
+		return self.getFilter(name).getLogPath()
 	
 	def setTimeRegex(self, name, value):
-		if self.jails.has_key(name):
-			self.jails[name].getFilter().setTimeRegex(value)
-		else:
-			raise ServerUnknownJail(name)
+		self.getFilter(name).setTimeRegex(value)
 	
 	def getTimeRegex(self, name):
-		if self.jails.has_key(name):
-			return self.jails[name].getFilter().getTimeRegex()
-		else:
-			raise ServerUnknownJail(name)
-	
+		return self.getFilter(name).getTimeRegex()
+
 	def setTimePattern(self, name, value):
-		if self.jails.has_key(name):
-			self.jails[name].getFilter().setTimePattern(value)
-		else:
-			raise ServerUnknownJail(name)
+		self.getFilter(name).setTimePattern(value)
 	
 	def getTimePattern(self, name):
-		if self.jails.has_key(name):
-			return self.jails[name].getFilter().getTimePattern()
-		else:
-			raise ServerUnknownJail(name)
+		return self.getFilter(name).getTimePattern()
+	
+	def setFindTime(self, name, value):
+		self.getFilter(name).setFindTime(value)
+	
+	def getFindTime(self):
+		return self.getFilter(name).getFindTime()
 
 	def setFailRegex(self, name, value):
-		if self.jails.has_key(name):
-			self.jails[name].getFilter().setFailRegex(value)
-		else:
-			raise ServerUnknownJail(name)
+		self.getFilter(name).setFailRegex(value)
 	
 	def getFailRegex(self, name):
-		if self.jails.has_key(name):
-			return self.jails[name].getFilter().getFailRegex()
-		else:
-			raise ServerUnknownJail(name)
+		return self.getFilter(name).getFailRegex()
 	
 	def setMaxRetry(self, name, value):
-		if self.jails.has_key(name):
-			self.jails[name].getFilter().setMaxRetry(value)
-		else:
-			raise ServerUnknownJail(name)
+		self.getFilter(name).setMaxRetry(value)
 	
 	def getMaxRetry(self, name):
-		if self.jails.has_key(name):
-			return self.jails[name].getFilter().getMaxRetry()
-		else:
-			raise ServerUnknownJail(name)
+		return self.getFilter(name).getMaxRetry()
 	
 	def setMaxTime(self, name, value):
-		if self.jails.has_key(name):
-			self.jails[name].getFilter().setMaxTime(value)
-		else:
-			raise ServerUnknownJail(name)
+		self.getFilter(name).setMaxTime(value)
 	
 	def getMaxTime(self, name):
-		if self.jails.has_key(name):
-			return self.jails[name].getFilter().getMaxTime()
-		else:
-			raise ServerUnknownJail(name)
+		return self.getFilter(name).getMaxTime()
 	
 	# Action
 	def addAction(self, name, value):
-		if self.jails.has_key(name):
-			self.jails[name].getAction().addAction(value)
-		else:
-			raise ServerUnknownJail(name)
+		self.getAction(name).addAction(value)
 	
 	def getLastAction(self, name):
-		if self.jails.has_key(name):
-			return self.jails[name].getAction().getLastAction()
-		else:
-			raise ServerUnknownJail(name)
+		return self.getAction(name).getLastAction()
 	
 	def delAction(self, name, value):
-		if self.jails.has_key(name):
-			self.jails[name].getAction().delAction(value)
-		else:
-			raise ServerUnknownJail(name)
+		self.getAction(name).delAction(value)
 	
 	def setCInfo(self, name, action, key, value):
-		if self.jails.has_key(name):
-			self.jails[name].getAction().getAction(action).setCInfo(key, value)
-		else:
-			raise ServerUnknownJail(name)
+		self.getAction(name).getAction(action).setCInfo(key, value)
 	
 	def getCInfo(self, name, action, key):
-		if self.jails.has_key(name):
-			return self.jails[name].getAction().getAction(action).getCInfo(key)
-		else:
-			raise ServerUnknownJail(name)
+		return self.getAction(name).getAction(action).getCInfo(key)
 	
 	def delCInfo(self, name, action, key):
-		if self.jails.has_key(name):
-			self.jails[name].getAction().getAction(action).delCInfo(key)
-		else:
-			raise ServerUnknownJail(name)
+		self.getAction(name).getAction(action).delCInfo(key)
 	
 	def setBanTime(self, name, value):
-		if self.jails.has_key(name):
-			self.jails[name].getAction().setBanTime(value)
-		else:
-			raise ServerUnknownJail(name)
+		self.getAction(name).setBanTime(value)
 	
 	def getBanTime(self, name):
-		if self.jails.has_key(name):
-			return self.jails[name].getAction().getBanTime()
-		else:
-			raise ServerUnknownJail(name)
+		return self.getAction(name).getBanTime()
 	
 	def setActionStart(self, name, action, value):
-		if self.jails.has_key(name):
-			self.jails[name].getAction().getAction(action).setActionStart(value)
-		else:
-			raise ServerUnknownJail(name)
+		self.getAction(name).getAction(action).setActionStart(value)
 	
 	def getActionStart(self, name, action):
-		if self.jails.has_key(name):
-			return self.jails[name].getAction().getAction(action).getActionStart()
-		else:
-			raise ServerUnknownJail(name)
+		return self.getAction(name).getAction(action).getActionStart()
 		
 	def setActionStop(self, name, action, value):
-		if self.jails.has_key(name):
-			self.jails[name].getAction().getAction(action).setActionStop(value)
-		else:
-			raise ServerUnknownJail(name)
+		self.getAction(name).getAction(action).setActionStop(value)
 	
 	def getActionStop(self, name, action):
-		if self.jails.has_key(name):
-			return self.jails[name].getAction().getAction(action).getActionStop()
-		else:
-			raise ServerUnknownJail(name)
+		return self.getAction(name).getAction(action).getActionStop()
 	
 	def setActionCheck(self, name, action, value):
-		if self.jails.has_key(name):
-			self.jails[name].getAction().getAction(action).setActionCheck(value)
-		else:
-			raise ServerUnknownJail(name)
+		self.getAction(name).getAction(action).setActionCheck(value)
 	
 	def getActionCheck(self, name, action):
-		if self.jails.has_key(name):
-			return self.jails[name].getAction().getAction(action).getActionCheck()
-		else:
-			raise ServerUnknownJail(name)
+		return self.getAction(name).getAction(action).getActionCheck()
 	
 	def setActionBan(self, name, action, value):
-		if self.jails.has_key(name):
-			self.jails[name].getAction().getAction(action).setActionBan(value)
-		else:
-			raise ServerUnknownJail(name)
+		self.getAction(name).getAction(action).setActionBan(value)
 	
 	def getActionBan(self, name, action):
-		if self.jails.has_key(name):
-			return self.jails[name].getAction().getAction(action).getActionBan()
-		else:
-			raise ServerUnknownJail(name)
+		return self.getAction(name).getAction(action).getActionBan()
 	
 	def setActionUnban(self, name, action, value):
-		if self.jails.has_key(name):
-			self.jails[name].getAction().getAction(action).setActionUnban(value)
-		else:
-			raise ServerUnknownJail(name)
+		self.getAction(name).getAction(action).setActionUnban(value)
 	
 	def getActionUnban(self, name, action):
-		if self.jails.has_key(name):
-			return self.jails[name].getAction().getAction(action).getActionUnban()
-		else:
-			raise ServerUnknownJail(name)
+		return self.getAction(name).getAction(action).getActionUnban()
 		
 	# Status
 	def status(self):
@@ -295,7 +229,7 @@ class Server:
 		length = len(jailList)
 		if not length == 0:
 			jailList = jailList[:length-2]
-		ret = [("Number of jail", len(self.jails)),
+		ret = [("Number of jail", len(self.jails)), 
 			   ("Jail list", jailList)]
 		return ret
 	
@@ -438,6 +372,9 @@ class Server:
 		os.open("/dev/null", os.O_RDWR)		# standard error (2)
 		return True
 
+
+class ServerDuplicateJail(Exception):
+	pass
 
 class ServerUnknownJail(Exception):
 	pass

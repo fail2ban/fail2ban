@@ -149,6 +149,10 @@ class Transmitter:
 			value = action[2]
 			self.server.setMaxTime(name, int(value))
 			return self.server.getMaxTime(name)
+		elif action[1] == "findtime":
+			value = action[2]
+			self.server.setFindTime(name, int(value))
+			return self.server.getFindTime(name)
 		elif action[1] == "maxretry":
 			value = action[2]
 			self.server.setMaxRetry(name, int(value))
@@ -201,7 +205,7 @@ class Transmitter:
 			value = action[3]
 			self.server.setActionUnban(name, act, value)
 			return self.server.getActionUnban(name, act)
-		raise Exception("Invalid command (no set action)")
+		raise Exception("Invalid command (no set action or not yet implemented)")
 	
 	def actionGet(self, action):
 		name = action[0]
@@ -211,7 +215,7 @@ class Transmitter:
 		# Filter
 		if action[1] == "logpath":
 			return self.server.getLogPath(name)
-		raise Exception("Invalid command (no get action)")
+		raise Exception("Invalid command (no get action or not yet implemented)")
 	
 	def status(self, action):
 		if len(action) == 0:
