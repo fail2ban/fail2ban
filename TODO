@@ -13,11 +13,13 @@ Legend:
 # partially done
 * done
 
+# implement all get/set functions
+
 - correct handling of threads (join???)
 
 - signal handling (ctrl-c, etc)
 
-- add a reload option to fail2ban-client
+* add a reload option to fail2ban-client
 
 - see Feature Request Tracking System at SourceForge.net
 
@@ -37,19 +39,6 @@ Legend:
 
 - add a check to see if the time of the log messages is
   correctly detected (valid regexp)
-
-? use Gentoo Portage style for scripts.
-  - banning engines script in /etc/fail2ban/scripts.d
-    Example: /etc/fail2ban/scripts.d/iptables
-    Will be mostly bash scripting which is more "user
-    friendly".
-  - split configuration files in /etc/fail2ban/services.d
-    for log files
-    Example: /etc/fail2ban/services.d/apache
-    Mainly regular expressions.
-  - template for common regex in /etc/fail2ban/templates.d
-    Example: /etc/fail2ban/templates.d/date
-    Mainly regular expressions.
 
 * remove debug mode (root check)
 
@@ -108,7 +97,7 @@ Legend:
   format and sort them using the hit ratio. Should avoid
   user problem with regex and not have a big impact on perfs.
 
-- restart automatically the daemon if an exception occurs.
+? restart automatically the daemon if an exception occurs.
 
 - do not close socket after a send
 
