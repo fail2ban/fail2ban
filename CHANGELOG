@@ -11,6 +11,7 @@ ver. 0.7.2 (2006/??/??) - ???
 ----------
 - Refactoring and code cleanup
 - Improved client output
+- Added more get/set commands
 
 ver. 0.7.1 (2006/08/23) - alpha
 ----------
