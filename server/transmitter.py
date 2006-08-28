@@ -212,9 +212,40 @@ class Transmitter:
 		# Logging
 		if name == "loglevel":
 			return self.server.getLogLevel()
-		# Filter
-		if action[1] == "logpath":
+		elif action[1] == "logpath":
 			return self.server.getLogPath(name)
+		elif action[1] == "timeregex":
+			return self.server.getTimeRegex(name)
+		elif action[1] == "timepattern":
+			return self.server.getTimePattern(name)
+		elif action[1] == "failregex":
+			return self.server.getFailRegex(name)
+		elif action[1] == "maxtime":
+			return self.server.getMaxTime(name)
+		elif action[1] == "findtime":
+			return self.server.getFindTime(name)
+		elif action[1] == "maxretry":
+			return self.server.getMaxRetry(name)
+		# Filter
+		elif action[1] == "bantime":
+			return self.server.getBanTime(name)
+		elif action[1] == "addaction":
+			return self.server.getLastAction(name).getName()
+		elif action[1] == "actionstart":
+			act = action[2]
+			return self.server.getActionStart(name, act)
+		elif action[1] == "actionstop":
+			act = action[2]
+			return self.server.getActionStop(name, act)
+		elif action[1] == "actioncheck":
+			act = action[2]
+			return self.server.getActionCheck(name, act)
+		elif action[1] == "actionban":
+			act = action[2]
+			return self.server.getActionBan(name, act)
+		elif action[1] == "actionunban":
+			act = action[2]
+			return self.server.getActionUnban(name, act)
 		raise Exception("Invalid command (no get action or not yet implemented)")
 	
 	def status(self, action):
