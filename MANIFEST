@@ -44,6 +44,7 @@ config/jail.conf
 config/filter.d/vsftpd.conf
 config/filter.d/apache-auth.conf
 config/filter.d/sshd.conf
+config/filter.d/couriersmtp.conf
 config/action.d/iptables.conf
 config/action.d/mail-whois.conf
 config/action.d/dummy.conf
