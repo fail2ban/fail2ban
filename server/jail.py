@@ -31,7 +31,7 @@ import Queue
 
 class Jail:
 	
-	def __init__(self, name, filter = None, action = None):
+	def __init__(self, name):
 		self.name = name
 		self.queue = Queue.Queue()
 		self.filter = Filter(self)
