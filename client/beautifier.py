@@ -76,6 +76,9 @@ class Beautifier:
 				msg = msg + "DEBUG"
 			else:
 				msg = msg + `response`
+		elif self.inputCmd == ["stop"]:
+			if response == None:
+				msg = "Shutdown successful"
 		return msg
 
 	def beautifyError(self, response):
