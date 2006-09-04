@@ -56,7 +56,9 @@ class JailReader(ConfigReader):
 	
 	def getOptions(self):
 		opts = [["bool", "enabled", "false"],
-				["int", "maxretry", None],
+				["string", "logpath", "/var/log/messages"],
+				["int", "maxretry", 3],
+				["int", "maxtime", 600],
 				["int", "bantime", 600],
 				["string", "filter", ""],
 				["string", "action", ""]]
@@ -83,8 +85,12 @@ class JailReader(ConfigReader):
 	def convert(self):
 		stream = [["add", self.name]]
 		for opt in self.opts:
-			if opt == "maxretry":
+			if opt == "logpath":
+				stream.append(["set", self.name, "logpath", self.opts[opt]])
+			elif opt == "maxretry":
 				stream.append(["set", self.name, "maxretry", self.opts[opt]])
+			elif opt == "maxtime":
+				stream.append(["set", self.name, "maxtime", self.opts[opt]])
 			elif opt == "bantime":
 				stream.append(["set", self.name, "bantime", self.opts[opt]])
 		stream.extend(self.filter.convert())

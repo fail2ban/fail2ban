@@ -53,28 +53,19 @@ class FilterReader(ConfigReader):
 		ConfigReader.read(self, "filter.d/" + self.file)
 	
 	def getOptions(self, pOpts):
-		opts = [["string", "logpath", "/var/log/sshd.log"],
-				["string", "timeregex", ""],
+		opts = [["string", "timeregex", ""],
 				["string", "timepattern", ""],
-				["string", "failregex", ""],
-				["int", "maxtime", 600],
-				["int", "maxretry", 3]]
+				["string", "failregex", ""]]
 		self.opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
 	
 	def convert(self):
 		stream = list()
 		for opt in self.opts:
-			if opt == "logpath":
-				stream.append(["set", self.name, "logpath", self.opts[opt]])
-			elif opt == "timeregex":
+			if opt == "timeregex":
 				stream.append(["set", self.name, "timeregex", self.opts[opt]])
 			elif opt == "timepattern":
 				stream.append(["set", self.name, "timepattern", self.opts[opt]])
 			elif opt == "failregex":
-				stream.append(["set", self.name, "failregex", self.opts[opt]])
-			elif opt == "maxtime":
-				stream.append(["set", self.name, "maxtime", self.opts[opt]])
-			elif opt == "maxretry":
-				stream.append(["set", self.name, "maxretry", self.opts[opt]])
+				stream.append(["set", self.name, "failregex", self.opts[opt]])		
 		return stream
 		
