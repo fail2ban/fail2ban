@@ -25,7 +25,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import sys, string, os, pickle, re, logging, getopt, time
+import sys, string, os, pickle, re, logging, getopt, time, readline, shlex
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
@@ -46,6 +46,8 @@ logSys = logging.getLogger("fail2ban.client")
 
 class Fail2banClient:
 
+	prompt = "fail2ban> "
+
 	def __init__(self):
 		self.argv = None
 		self.stream = None
@@ -54,6 +56,7 @@ class Fail2banClient:
 		self.conf["dump"] = False
 		self.conf["force"] = False
 		self.conf["verbose"] = 2
+		self.conf["interactive"] = False
 	
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
@@ -93,6 +96,11 @@ class Fail2banClient:
 		print
 		print "Report bugs to <lostcontrol@users.sourceforge.net>"
 	
+	def dispInteractive(self):
+		print "Fail2Ban v" + version + " reads log file that contains password failure report"
+		print "and bans the corresponding IP addresses using firewall rules."
+		print 
+	
 	def getCmdLineOptions(self, optList):
 		""" Gets the command line options
 		"""
@@ -107,6 +115,8 @@ class Fail2banClient:
 				self.conf["verbose"] = self.conf["verbose"] - 1
 			elif opt[0] == "-x":
 				self.conf["force"] = True
+			elif opt[0] == "-i":
+				self.conf["interactive"] = True
 			elif opt[0] in ["-h", "--help"]:
 	 			self.dispUsage()
 	 			sys.exit(0)
@@ -144,15 +154,6 @@ class Fail2banClient:
 	# @param cmd the command line
 
 	def processCommand(self, cmd):
-		if self.conf["dump"]:
-			self.readConfig()
-			self.dumpConfig(self.stream)
-			return True
-		
-		if len(cmd) < 1:
-			self.dispUsage()
-			return False
-		
 		if len(cmd) == 1 and cmd[0] == "start":
 			if self.ping():
 				logSys.info("Server already running")
@@ -226,7 +227,7 @@ class Fail2banClient:
 		
 		# Reads the command line options.
 		try:
-			cmdOpts = 'hc:xdvq'
+			cmdOpts = 'hc:xdviq'
 			cmdLongOpts = ['help']
 			optList, args = getopt.getopt(self.argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
@@ -252,7 +253,36 @@ class Fail2banClient:
 		stdout.setFormatter(formatter)
 		logSys.addHandler(stdout)
 
-		return self.processCommand(args)
+		if self.conf["dump"]:
+			self.readConfig()
+			self.dumpConfig(self.stream)
+			return True
+		
+		# Interactive mode
+		if self.conf["interactive"]:
+			try:
+				ret = True
+				if len(args) > 0:
+					ret = self.processCommand(args)
+				if ret:
+					readline.parse_and_bind("tab: complete")
+					self.dispInteractive()
+					while True:
+						cmd = raw_input(self.prompt)
+						if cmd == "exit" or cmd == "quit":
+							# Exit
+							return True
+						if not cmd == "":
+							self.processCommand(shlex.split(cmd))
+			except (EOFError, KeyboardInterrupt):
+				print
+				return True
+		# Single command mode
+		else:
+			if len(args) < 1:
+				self.dispUsage()
+				return False
+			return self.processCommand(args)
 
 	def readConfig(self):
 		# Read the configuration
