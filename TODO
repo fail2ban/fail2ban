@@ -13,6 +13,8 @@ Legend:
 # partially done
 * done
 
+- Is there a do...while loop in Python? For interactive mode
+
 # implement all get/set functions
 
 - correct handling of threads (join???)
@@ -101,4 +103,4 @@ Legend:
 
 - do not close socket after a send
 
-- refactoring in server.py, actions.py, filter.py
+# refactoring in server.py, actions.py, filter.py

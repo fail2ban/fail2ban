@@ -13,6 +13,9 @@ ver. 0.7.2 (2006/??/??) - ???
 - Improved client output
 - Added more get/set commands
 - Added more configuration templates
+- Removed "logpath" and "maxretry" from filter templates.
+  They must be defined in jail.conf now
+- Added interactive mode. Use "-i"
 
 ver. 0.7.1 (2006/08/23) - alpha
 ----------
@@ -50,7 +53,7 @@ ver. 0.6.1 (2006/03/16) - stable
 - Added parsing of timestamp in TAI64N format (#1275325).
   Thanks to Mark Edgington
 - Added patch #1382936 (Default formatted syslog logging).
-  Thanks to Patrick Börjesson
+  Thanks to Patrick Bï¿½rjesson
 - Removed 192.168.0.0/16 from ignoreip. Attacks could also
   come from the local network.
 - Robust startup: if iptables module does not get fully
