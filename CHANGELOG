@@ -16,6 +16,8 @@ ver. 0.7.2 (2006/??/??) - ???
 - Removed "logpath" and "maxretry" from filter templates.
   They must be defined in jail.conf now
 - Added interactive mode. Use "-i"
+- Added a date detector. "timeregex" and "timepattern" are no
+  more needed
 
 ver. 0.7.1 (2006/08/23) - alpha
 ----------
