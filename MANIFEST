@@ -17,6 +17,8 @@ client/csocket.py
 server/ssocket.py
 server/banticket.py
 server/filter.py
+server/datedetector.py
+server/datetemplate.py
 server/server.py
 server/failticket.py
 server/actions.py
