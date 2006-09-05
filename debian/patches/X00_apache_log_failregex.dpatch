@@ -1,0 +1,17 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## apache_log_failregex.dpatch by  <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Fixed apache failregex
+
+@DPATCH@
+
+diff -Naur -x '*~' fail2ban-0.7.1/config/filter.d/apache-auth.conf fail2ban-0.7.1.modified/config/filter.d/apache-auth.conf
+--- fail2ban-0.7.1/config/filter.d/apache-auth.conf	2006-09-05 11:13:54.000000000 -0400
++++ fail2ban-0.7.1.modified/config/filter.d/apache-auth.conf	2006-09-05 11:12:19.000000000 -0400
+@@ -39,4 +39,4 @@
+ # Notes.:  regex to match the password failure messages in the logfile.
+ # Values:  TEXT  Default:  authentication failure|user .* not found
+ #
+-failregex = authentication failure|user .* not found
++failregex = [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)

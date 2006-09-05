@@ -1,0 +1,20 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## ssh_path.dpatch by  <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Debian specific ssh path
+
+@DPATCH@
+
+diff -x '*~' -Naur fail2ban-0.7.1/config/filter.d/sshd.conf fail2ban-0.7.1.modified/config/filter.d/sshd.conf
+--- fail2ban-0.7.1/config/filter.d/sshd.conf	2006-08-06 18:12:57.000000000 -0400
++++ fail2ban-0.7.1.modified/config/filter.d/sshd.conf	2006-09-05 10:39:21.000000000 -0400
+@@ -17,7 +17,7 @@
+ # Notes.:  logfile to monitor.
+ # Values:  FILE  Default:  /var/log/secure
+ #
+-logpath = /var/log/secure
++logpath = /var/log/auth.log
+ 
+ # Option:  timeregex
+ # Notes.:  regex to match timestamp in SSH logfile. For TAI64N format,

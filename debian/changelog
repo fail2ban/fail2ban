@@ -1,6 +1,6 @@
-fail2ban (0.7.1-1) UNRELEASED; urgency=low
+fail2ban (0.7.1-0.1) UNRELEASED; urgency=low
 
-  * (NOT RELEASED YET) New upstream release
+  * New upstream release (closes: #370095,#366307)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue,  5 Sep 2006 00:26:08 -0400
 
