@@ -1,0 +1,39 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## fail2ban_conf_5_manpage.dpatch by  <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Adjusts manpage for configuration file to reflect Debian specific 
+## DP: changes
+
+@DPATCH@
+
+diff -Naur fail2ban-0.6.1.orig/man/fail2ban.conf.5 fail2ban-0.6.1.mod/man/fail2ban.conf.5
+--- fail2ban-0.6.1.orig/man/fail2ban.conf.5	2006-08-16 00:30:19.000000000 +0300
++++ fail2ban-0.6.1.mod/man/fail2ban.conf.5	2006-08-16 00:28:44.000000000 +0300
+@@ -5,7 +5,7 @@
+ .SH "DESCRIPTION"
+ \fB/etc/fail2ban.conf\fR contains data about the general configuration of fail2ban, the mail notification and services to monitor.
+ .SH "VARIABLES"
+-Please look at the file itself
++Please look at the file itself. Had you modified it and kept modified version during upgrades, please look at fail2ban.conf.iptables.gz file at /usr/share/doc/fail2ban/examples, which provides full version of the shipped configuration file.
+ .SH "FILES"
+ .I /etc/fail2ban.conf
+ .SH "REPORTING BUGS"
+@@ -13,8 +13,16 @@
+ via bug tracker
+ .SH "AUTHOR"
+ Cyril Jaquier <lostcontrol@users.sourceforge.net>
++.br
++Modified by
++.br
++ - Yaroslav O. Halchenko <debian@onerussian.com>.
++.br
++Sponsored for Debian by
++.br
++ - Barak A. Pearlmutter <barak@cs.nuim.ie>.
+ .SH "SEE ALSO"
+-.BR fail2ban (8)
++.BR fail2ban(8)
+ .TP 
+ See
+ .BR "http://fail2ban.sourceforge.net/".

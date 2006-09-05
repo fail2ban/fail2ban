@@ -1,3 +1,12 @@
+fail2ban (0.6.1-11) unstable; urgency=low
+
+  * Adjusted manpage for fail2ban.conf to point to shipped examples of
+    configuration files as the source of details about available configuration
+    options (closes: #382403)
+  * Changes in man/fail2ban.conf.5 are managed via dpatch now
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 16 Aug 2006 00:18:59 +0300
+
 fail2ban (0.6.1-10) unstable; urgency=low
 
   * Adjusted to comply with recent changes in debian python policy and use
