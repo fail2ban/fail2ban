@@ -26,12 +26,12 @@ configure-stamp:
 build: patch
 
 copy-inits:
-	cp config/gentoo-confd debian/fail2ban.default
-	cp config/debian-initd debian/fail2ban.init
-	cp config/fail2ban.logrotate debian/
+#	cp config/gentoo-confd debian/fail2ban.default
+#	cp config/debian-initd debian/fail2ban.init
+#	cp config/fail2ban.logrotate debian/
 
 clean-inits:
-	rm -f debian/fail2ban.{default,init,logrotate}
+#	rm -f debian/fail2ban.{default,init,logrotate}
 
 clean: clean-inits unpatch
 	dh_testdir
@@ -51,8 +51,11 @@ install: build copy-inits
 
 	# Add here commands to install the package into debian/fail2ban.
 	python setup.py install --root=$(DESTDIR) --no-compile
-	mkdir -p $(DESTDIR)/etc
-	cp config/fail2ban.conf.iptables $(DESTDIR)/etc/fail2ban.conf
+	#X Evil - must be removed after Debian switches over to 2.4, now
+	#  distutils.setup will override the enterpreter line to /usr/bin/python
+	install fail2ban-server fail2ban-client $(DESTDIR)/usr/bin
+#X	mkdir -p $(DESTDIR)/etc
+#X	cp config/fail2ban.conf.iptables $(DESTDIR)/etc/fail2ban.conf
 
 # To build manpage
 $(MANPAGE): fail2ban fail2ban.h2m
@@ -62,19 +65,20 @@ $(MANPAGE): fail2ban fail2ban.h2m
 binary-arch:
 
 # Build architecture-independent files here.
-binary-indep: install $(MANPAGE)
+#X binary-indep: install $(MANPAGE)
+binary-indep: install
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs CHANGELOG
 	dh_installdocs
-	dh_installexamples config/fail2ban.conf.*
+#X	dh_installexamples config/fail2ban.conf.*
 #	dh_install
 #	dh_installdebconf
 	dh_installlogrotate
 	dh_installinit -- defaults 99
 #	dh_installcron
 #	dh_installinfo
-	dh_installman fail2ban.8 man/fail2ban.conf.5
+#X	dh_installman fail2ban.8 man/fail2ban.conf.5
 	dh_pycentral
 	dh_python
 	dh_link

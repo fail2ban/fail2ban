@@ -1,3 +1,9 @@
+fail2ban (0.7.1-1) UNRELEASED; urgency=low
+
+  * (NOT RELEASED YET) New upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue,  5 Sep 2006 00:26:08 -0400
+
 fail2ban (0.6.1-11) unstable; urgency=low
 
   * Adjusted manpage for fail2ban.conf to point to shipped examples of
