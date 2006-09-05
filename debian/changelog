@@ -1,3 +1,9 @@
+fail2ban (0.6.1-11.1) unstable; urgency=low
+
+  * Split out 0.6 to prepare 0.7
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  4 Sep 2006 23:35:22 -0400
+
 fail2ban (0.6.1-11) unstable; urgency=low
 
   * Adjusted manpage for fail2ban.conf to point to shipped examples of
