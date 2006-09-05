@@ -53,8 +53,8 @@ class FilterReader(ConfigReader):
 		ConfigReader.read(self, "filter.d/" + self.file)
 	
 	def getOptions(self, pOpts):
-		opts = [["string", "timeregex", ""],
-				["string", "timepattern", ""],
+		opts = [["string", "timeregex", None],
+				["string", "timepattern", None],
 				["string", "failregex", ""]]
 		self.opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
 	

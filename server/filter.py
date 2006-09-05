@@ -28,6 +28,8 @@ from failmanager import FailManager
 from failmanager import FailManagerEmpty
 from failticket import FailTicket
 from jailthread import JailThread
+from datedetector import DateDetector
+
 import time, logging, os, re, sys, socket
 
 # Gets the instance of the logger.
@@ -58,11 +60,6 @@ class Filter(JailThread):
 		self.fileHandler = None
 		## The log file path.
 		self.logPath = ''
-		## The regular expression matching the date.
-		self.timeRegex = ''
-		self.timeRegexObj = None
-		## The pattern matching the date.
-		self.timePattern = ''
 		## The regular expression matching the failure.
 		self.failRegex = ''
 		self.failRegexObj = None
@@ -78,6 +75,8 @@ class Filter(JailThread):
 		self.lastDate = 0
 		## The file statistics.
 		self.logStats = None
+		self.dateDetector = DateDetector()
+		self.dateDetector.addDefaultTemplate()
 		logSys.info("Created Filter")
 
 	##
@@ -103,9 +102,8 @@ class Filter(JailThread):
 	# @param value the regular expression
 	
 	def setTimeRegex(self, value):
-		self.timeRegex = value
-		self.timeRegexObj = re.compile(value)
-		logSys.info("Set timeregex = %s" % value)
+		self.dateDetector.setDefaultRegex(value)
+		logSys.info("Set default regex = %s" % value)
 	
 	##
 	# Get the regular expression which matches the time.
@@ -113,7 +111,7 @@ class Filter(JailThread):
 	# @return the regular expression
 		
 	def getTimeRegex(self):
-		return self.timeRegex
+		return self.dateDetector.getDefaultRegex()
 	
 	##
 	# Set the time pattern.
@@ -121,8 +119,8 @@ class Filter(JailThread):
 	# @param value the time pattern
 	
 	def setTimePattern(self, value):
-		self.timePattern = value
-		logSys.info("Set timepattern = %s" % value)
+		self.dateDetector.setDefaultPattern(value)
+		logSys.info("Set default pattern = %s" % value)
 	
 	##
 	# Get the time pattern.
@@ -130,7 +128,7 @@ class Filter(JailThread):
 	# @return the time pattern
 	
 	def getTimePattern(self):
-		return self.timePattern
+		return self.dateDetector.getDefaultPattern()
 	
 	##
 	# Set the regular expression which matches the failure.
@@ -309,9 +307,9 @@ class Filter(JailThread):
 	
 	def setFilePos(self):
 		line = self.fileHandler.readline()
-		if self.lastDate < self.getTime(line):
+		if self.lastDate < self.dateDetector.getTime(line):
 			logSys.debug("Date " + `self.lastDate` + " is " + "smaller than " +
-							`self.getTime(line)`)
+							`self.dateDetector.getTime(line)`)
 			logSys.debug("Log rotation detected for " + self.logPath)
 			self.lastPos = 0
 		
@@ -344,7 +342,7 @@ class Filter(JailThread):
 				line = line.decode('utf-8').encode('latin-1')
 			except UnicodeDecodeError:
 				pass
-			if not self.hasTime(line):
+			if not self.dateDetector.matchTime(line):
 				# There is no valid time in this line
 				continue
 			lastLine = line
@@ -360,7 +358,7 @@ class Filter(JailThread):
 				self.failManager.addFailure(FailTicket(ip, unixTime))
 		self.lastPos = self.getFilePos()
 		if lastLine:
-			self.lastDate = self.getTime(lastLine)
+			self.lastDate = self.dateDetector.getTime(lastLine)
 		self.closeLogFile()
 
 	##
@@ -374,9 +372,8 @@ class Filter(JailThread):
 		failList = list()
 		match = self.failRegexObj.search(line)
 		if match:
-			timeMatch = self.timeRegexObj.search(match.string)
-			if timeMatch:
-				date = self.getUnixTime(timeMatch.group())
+			date = self.dateDetector.getUnixTime(match.string)
+			if date <> None:
 				try:
 					ipMatch = DNSUtils.textToIp(match.group("host"))
 					if ipMatch:
@@ -387,63 +384,6 @@ class Filter(JailThread):
 								 "Please correct your configuration.")
 		return failList
 	
-	##
-	# Check is a line contains a valid date.
-	#
-	# @param line the line
-	# @return True if the line contains a valid date
-	
-	def hasTime(self, line):
-		timeMatch = re.search(self.timeRegex, line)
-		if timeMatch:
-			return True
-		else:
-			return False
-
-	##
-	# Get the time of a log line.
-	#
-	# @param line the line
-	# @return the timestamp of the log line
-	
-	def getTime(self, line):
-		date = 0
-		timeMatch = re.search(self.timeRegex, line)
-		if timeMatch:
-			date = self.getUnixTime(timeMatch.group())
-		return date
-
-	##
-	# Get the Unix timestamp.
-	#
-	# Get the Unix timestamp of a given date. Pattern should describe the
-	# date construction of value.
-	# @param value the date
-	# @return the Unix timestamp
-		
-	def getUnixTime(self, value):
-		try:
-			# Check if the parsed value is in TAI64N format
-			if not self.timePattern.lower() == "tai64n":
-				date = list(time.strptime(value, self.timePattern))
-			else:
-				# extract part of format which represents seconds since epoch
-				seconds_since_epoch = value[2:17]
-				date = list(time.gmtime(int(seconds_since_epoch, 16)))
-		except ValueError, e:
-			logSys.error(e)
-			logSys.error("Please check the format and your locale settings.")
-			return None
-		if date[0] < 2000:
-			# There is probably no year field in the logs
-			date[0] = time.gmtime()[0]
-			# Bug fix for #1241756
-			# If the date is greater than the current time, we suppose
-			# that the log is not from this year but from the year before
-			if time.mktime(date) > time.time():
-				date[0] -= 1
-		unixTime = time.mktime(date)
-		return unixTime
 
 	##
 	# Get the status of the filter.
