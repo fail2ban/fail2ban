@@ -69,7 +69,10 @@ setup(
 							[
 								'config/filter.d/vsftpd.conf',
 								'config/filter.d/apache-auth.conf',
-								'config/filter.d/sshd.conf'
+								'config/filter.d/sshd.conf',
+								'config/filter.d/couriersmtp.conf',
+								'config/filter.d/postfix.conf',
+								'config/filter.d/qmail.conf'
 							]
 						),
 						('/etc/fail2ban/action.d',
