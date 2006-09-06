@@ -89,6 +89,7 @@ class Fail2banClient:
 		print
 		print "    -c <DIR>                configuration directory"
 		print "    -d                      dump configuration. For debugging"
+		print "    -i                      interactive mode"
 		print "    -v                      increase verbosity"
 		print "    -q                      decrease verbosity"
 		print "    -x                      force execution of the server"
