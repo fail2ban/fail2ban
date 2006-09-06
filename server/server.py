@@ -291,7 +291,7 @@ class Server:
 				logSys.error("Unable to log to " + target)
 				return False
 		# set a format which is simpler for console use
-		formatter = logging.Formatter('%(name)-16s: %(levelname)-6s %(message)s')
+		formatter = logging.Formatter("%(asctime)s %(name)-16s: %(levelname)-6s %(message)s")
 		# tell the handler to use this format
 		hdlr.setFormatter(formatter)
 		logging.getLogger("fail2ban").addHandler(hdlr)
