@@ -77,6 +77,7 @@ class Filter(JailThread):
 		self.logStats = None
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
+		self.fileNotFoundCnt = 0
 		logSys.info("Created Filter")
 
 	##
@@ -288,6 +289,7 @@ class Filter(JailThread):
 	def isModified(self):
 		try:
 			self.logStats = os.stat(self.logPath)
+			self.fileNotFoundCnt = 0
 			if self.lastModTime == self.logStats.st_mtime:
 				return False
 			else:
@@ -296,6 +298,11 @@ class Filter(JailThread):
 				return True
 		except OSError:
 			logSys.error("Unable to get stat on " + self.logPath)
+			self.fileNotFoundCnt = self.fileNotFoundCnt + 1
+			if self.fileNotFoundCnt > 2:
+				logSys.warn("Too much read error. Set the jail idle")
+				self.jail.setIdle(True)
+				self.fileNotFoundCnt = 0
 			return False
 
 	##
