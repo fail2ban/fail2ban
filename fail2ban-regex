@@ -25,7 +25,7 @@ __date__ = "$Date: 2006-08-23 21:53:09 +0200 (Wed, 23 Aug 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import locale, getopt, sys, time
+import locale, getopt, sys, time, logging
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
@@ -66,6 +66,29 @@ class Fail2banRegex:
 			for i in ret:
 				ipList = ipList + " " + i[0]
 			print "IP  :" + ipList
+			print
+			print "Benchmark. Executing 1000..."
+			total = 0
+			maxValue = 0
+			maxPos = 0
+			minValue = 99999999
+			minPos = 0
+			for i in range(1000):
+				start = time.time()
+				ret = self.filter.findFailure(line)
+				end = time.time()
+				diff = (end - start) * 1000
+				total = total + diff
+				minValue = min(minValue, diff)
+				if minValue == diff:
+					minPos = i
+				maxValue = max(maxValue, diff)
+				if maxValue == diff:
+					maxPos = i
+			print "Performance"
+			print "Avg: " + `total / 1000` + " ms"
+			print "Max: " + `maxValue` + " ms (Run " + `maxPos` + ")"
+			print "Min: " + `minValue` + " ms (Run " + `minPos` + ")"
 			return True
 			
 if __name__ == "__main__":
