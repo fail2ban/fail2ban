@@ -50,7 +50,8 @@ setup(
 	platforms = "Posix",
 	scripts =	[
 					'fail2ban-client',
-					'fail2ban-server'
+					'fail2ban-server',
+					'fail2ban-regex'
 				],
 	py_modules =	['version'],
 	packages =	[
