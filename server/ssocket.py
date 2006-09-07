@@ -54,31 +54,22 @@ class SSocket(Thread):
 		#self.ssock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.ssock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 		#self.ssock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		self.ssock.setblocking(False)
+		#self.ssock.setblocking(False)
+		self.ssock.setblocking(True)
 		# Bind the socket to a public host and a well-known port
 		#self.ssock.bind(("localhost", 2222))
 		self.ssock.bind(SSocket.SOCKET_FILE)
 		# Become a server socket
-		self.ssock.listen(1)
+		self.ssock.listen(5)
 	
 	def run(self):
 		self.isRunning = True
-		stime = 1.0
 		while self.isRunning:
-			try:
-				# Accept connections from outside
-				(csock, address) = self.ssock.accept()
-				stime /= 10
-				logSys.debug("Connection accepted")
-				msg = self.receive(csock)
-				msg = self.transmit.proceed(msg)
-				self.send(csock, msg)
-				csock.close()
-			except Exception:
-				time.sleep(stime)
-				stime += 0.05
-				if stime > 1.0:
-					stime = 1.0
+			# TODO Fix shutdown. A new request is required because accept()
+			# is blocking.
+			(csock, address) = self.ssock.accept()
+			thread = SocketWorker(csock, self.transmit)
+			thread.start()
 		self.ssock.close()
 		# Remove socket
 		if os.path.exists(SSocket.SOCKET_FILE):
@@ -95,6 +86,21 @@ class SSocket(Thread):
 	
 	def stop(self):
 		self.isRunning = False
+
+
+class SocketWorker(Thread):
+	
+	def __init__(self, csock, transmitter):
+		Thread.__init__(self)
+		self.csock = csock
+		self.transmit = transmitter
+		
+	def run(self):
+		logSys.debug("Starting new thread to handle the request")
+		msg = self.receive(self.csock)
+		msg = self.transmit.proceed(msg)
+		self.send(self.csock, msg)
+		self.csock.close()
 	
 	def send(self, socket, msg):
 		obj = pickle.dumps(msg)
