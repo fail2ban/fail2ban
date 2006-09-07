@@ -51,7 +51,7 @@ class ActionReader(ConfigReader):
 		return self.name
 	
 	def read(self):
-		ConfigReader.read(self, "action.d/" + self.file)
+		return ConfigReader.read(self, "action.d/" + self.file)
 	
 	def getOptions(self, pOpts):
 		opts = [["string", "actionstart", ""],

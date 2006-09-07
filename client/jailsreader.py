@@ -47,10 +47,13 @@ class JailsReader(ConfigReader):
 		for sec in self.sections():
 			jail = JailReader(sec)
 			jail.read()
-			jail.getOptions()
-			if jail.isEnabled():
-				# We only add enabled jails
-				self.jails.append(jail)
+			ret = jail.getOptions()
+			if ret:
+				if jail.isEnabled():
+					# We only add enabled jails
+					self.jails.append(jail)
+			else:
+				logSys.error("Errors in jail '" + sec + "'. Skipping...")
 	
 	def getFilterOptions(self, file):
 		filter = FilterReader(file)
