@@ -181,6 +181,11 @@ class Fail2banClient:
 			else:
 				logSys.error("Could not find server")
 				return False
+		elif len(cmd) == 1 and cmd[0] == "stop":
+			# Workaround for the shutdown
+			ret = self.processCmd([cmd])
+			self.ping()
+			return ret
 		else:
 			return self.processCmd([cmd])
 	
