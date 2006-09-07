@@ -67,20 +67,29 @@ class JailReader(ConfigReader):
 		if self.isEnabled():
 			# Read filter
 			self.filter = FilterReader(self.opts["filter"], self.name)
-			self.filter.read()
-			self.filter.getOptions(self.opts)
+			ret = self.filter.read()
+			if ret:
+				self.filter.getOptions(self.opts)
+			else:
+				logSys.error("Unable to read the filter")
+				return False
 			
 			# Read action
 			for act in self.opts["action"].split('\n'):
 				try:
 					splitAct = JailReader.splitAction(act)
 					action = ActionReader(splitAct, self.name)
-					action.read()
-					action.getOptions(self.opts)
-					self.actions.append(action)
+					ret = action.read()
+					if ret:
+						action.getOptions(self.opts)
+						self.actions.append(action)
+					else:
+						raise AttributeError("Unable to read action")
 				except AttributeError, e:
 					logSys.error("Error in action definition " + act)
 					logSys.debug(e)
+					return False
+		return True
 	
 	def convert(self):
 		stream = [["add", self.name]]

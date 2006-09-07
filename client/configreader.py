@@ -24,7 +24,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging
+import logging, os
 from ConfigParser import *
 
 # Gets the instance of the logger.
@@ -53,7 +53,14 @@ class ConfigReader(SafeConfigParser):
 		global basedir
 		basename = basedir + filename
 		logSys.debug("Reading " + basename)
-		SafeConfigParser.read(self, [basename + ".conf", basename + ".local"])
+		bConf = basename + ".conf"
+		bLocal = basename + ".local"
+		if os.path.exists(bConf) or os.path.exists(bLocal):
+			SafeConfigParser.read(self, [bConf, bLocal])
+			return True
+		else:
+			logSys.error(bConf + " and " + bLocal + " do not exist")
+			return False
 	
 	##
 	# Read the options.

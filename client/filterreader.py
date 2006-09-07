@@ -50,7 +50,7 @@ class FilterReader(ConfigReader):
 		return self.name
 	
 	def read(self):
-		ConfigReader.read(self, "filter.d/" + self.file)
+		return ConfigReader.read(self, "filter.d/" + self.file)
 	
 	def getOptions(self, pOpts):
 		opts = [["string", "timeregex", None],
