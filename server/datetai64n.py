@@ -26,46 +26,21 @@ __license__ = "GPL"
 
 import re, time
 
-class DateTemplate:
+from datetemplate import DateTemplate
+
+class DateTai64n(DateTemplate):
 	
 	def __init__(self):
-		self.name = ""
-		self.regex = ""
-		self.cRegex = None
-		self.pattern = ""
-		self.hits = 0
-	
-	def setName(self, name):
-		self.name = name
-		
-	def getName(self):
-		return self.name
-	
-	def setRegex(self, regex):
-		self.regex = regex
-		self.cRegex = re.compile(regex)
-		
-	def getRegex(self):
-		return self.regex
-	
-	def setPattern(self, pattern):
-		self.pattern = pattern
-		
-	def getPattern(self):
-		return self.pattern
-	
-	def isValid(self):
-		return self.regex != "" and self.pattern != ""
-	
-	def incHits(self):
-		self.hits = self.hits + 1
-	
-	def getHits(self):
-		return self.hits
-	
-	def matchDate(self, line):
-		dateMatch = self.cRegex.search(line)
-		return dateMatch
+		DateTemplate.__init__(self)
+		# We already know the format for TAI64N
+		self.setRegex("@[0-9a-f]{24}")
 	
 	def getDate(self, line):
-		raise Exception("matchDate() is abstract")
+		date = None
+		dateMatch = self.matchDate(line)
+		if dateMatch:
+			# extract part of format which represents seconds since epoch
+			value = dateMatch.group()
+			seconds_since_epoch = value[2:17]
+			date = list(time.gmtime(int(seconds_since_epoch, 16)))
+		return date
