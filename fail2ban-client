@@ -25,7 +25,8 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import sys, string, os, pickle, re, logging, getopt, time, readline, shlex
+import sys, string, os, pickle, re, logging
+import getopt, time, readline, shlex, socket
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
@@ -132,19 +133,22 @@ class Fail2banClient:
 			beautifier.setInputCmd(c)
 			try:
 				client = CSocket()
+				ret = client.send(c)
+				if ret[0] == 0:
+					logSys.debug("OK : " + `ret[1]`)
+					if showRet:
+						print beautifier.beautify(ret[1])
+				else:
+					logSys.debug("NOK: " + `ret[1].args`)
+					print beautifier.beautifyError(ret[1])
+					return False
+			except socket.error:
+				logSys.error("Unable to contact server. Is it running?")
+				return False
 			except Exception, e:
 				if showRet:
 					logSys.error(e)
 					logSys.error("Arrggh... Start the server first")
-				return False
-			ret = client.send(c)
-			if ret[0] == 0:
-				logSys.debug("OK : " + `ret[1]`)
-				if showRet:
-					print beautifier.beautify(ret[1])
-			else:
-				logSys.debug("NOK: " + `ret[1].args`)
-				print beautifier.beautifyError(ret[1])
 				return False
 		return True
 		
@@ -181,11 +185,6 @@ class Fail2banClient:
 			else:
 				logSys.error("Could not find server")
 				return False
-		elif len(cmd) == 1 and cmd[0] == "stop":
-			# Workaround for the shutdown
-			ret = self.processCmd([cmd])
-			self.ping()
-			return ret
 		else:
 			return self.processCmd([cmd])
 	
