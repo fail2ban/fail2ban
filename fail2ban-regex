@@ -25,7 +25,7 @@ __date__ = "$Date: 2006-08-23 21:53:09 +0200 (Wed, 23 Aug 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import locale, getopt, sys, time, logging
+import locale, getopt, sys, time, logging, gc
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
@@ -67,7 +67,12 @@ class Fail2banRegex:
 				ipList = ipList + " " + i[0]
 			print "IP  :" + ipList
 			print
+			print "Date template hits:"
+			for template in self.filter.dateDetector.templates:
+				print `template.getHits()` + " hit: " + template.getName()
+			print
 			print "Benchmark. Executing 1000..."
+			gc.disable()
 			total = 0
 			maxValue = 0
 			maxPos = 0
@@ -85,6 +90,7 @@ class Fail2banRegex:
 				maxValue = max(maxValue, diff)
 				if maxValue == diff:
 					maxPos = i
+			gc.enable()
 			print "Performance"
 			print "Avg: " + `total / 1000` + " ms"
 			print "Max: " + `maxValue` + " ms (Run " + `maxPos` + ")"
