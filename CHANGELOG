@@ -4,10 +4,10 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.7.2)                           2006/??/??
+Fail2Ban (version 0.7.2)                           2006/09/10
 =============================================================
 
-ver. 0.7.2 (2006/??/??) - ???
+ver. 0.7.2 (2006/09/10) - beta
 ----------
 - Refactoring and code cleanup
 - Improved client output
@@ -21,7 +21,7 @@ ver. 0.7.2 (2006/??/??) - ???
 - Added "fail2ban-regex". This is a tool to help finding
   "failregex"
 - Improved server communication. Start a new thread for each
-  incoming request
+  incoming request. Fail2ban is not really thread-safe yet
 
 ver. 0.7.1 (2006/08/23) - alpha
 ----------

@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.7.1)                           2006/08/23
+Fail2Ban (version 0.7.2)                           2006/09/10
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -13,43 +13,8 @@ rules to reject the IP address. These rules can be defined by
 the user. Fail2Ban can read multiple log files such as sshd
 or Apache web server ones.
 
-This is my first Python program. Moreover, English is not my
-mother tongue...
-
-
-More details:
--------------
-
-Fail2Ban is rather simple. I have a home server connected to
-the Internet which runs apache, samba, sshd, ... I see in my
-logs that people are trying to log into my box using "manual"
-brute force or scripts. They try 10, 20 and sometimes more
-user/password (without success anyway). In order to
-discourage these script kiddies, I wanted that sshd refuse
-login from a specific ip after 3 password failures. After
-some Google searches, I found that sshd was not able of that.
-So I search for a script or program that do it. I found
-nothing :-( So I decide to write mine and to learn Python :-)
-
-For each sections defined in the configuration file, Fail2Ban
-tries to find lines which match the failregex. Then it
-retrieves the message time using timeregex and timepattern.
-It finally gets the ip and if it has already done 3 or more
-password failures in the last banTime, the ip is banned for
-banTime using a firewall rule. This rule is set by the user
-in the configuration file. Thus, Fail2Ban can be adapted for
-lots of firewall. After banTime, the rule is deleted. Notice
-that if no "plain" ip is available, Fail2Ban try to do DNS
-lookup in order to found one or several ip's to ban.
-
-Sections can be freely added so it is possible to monitor
-several daemons at the same time.
-
-Runs on my server and does its job rather well :-) The idea
-is to make fail2ban usable with daemons and services that
-require a login (sshd, telnetd, ...) and with different
-firewalls.
-
+Documentation, FAQ, HOWTOs are available on the project
+website: http://fail2ban.sourceforge.net
 
 Installation:
 -------------
@@ -58,8 +23,8 @@ Require: python-2.4 (http://www.python.org)
 
 To install, just do:
 
-> tar xvfj fail2ban-0.7.1.tar.bz2
-> cd fail2ban-0.7.1
+> tar xvfj fail2ban-0.7.2.tar.bz2
+> cd fail2ban-0.7.2
 > python setup.py install
 
 This will install Fail2Ban into /usr/lib/fail2ban. The
@@ -106,6 +71,7 @@ options (not complete yet):
 
     -c <DIR>                configuration directory
     -d                      dump configuration. For debugging
+    -i                      interactive mode
     -v                      increase verbosity
     -q                      decrease verbosity
     -x                      force execution of the server
@@ -121,14 +87,13 @@ Website: http://fail2ban.sourceforge.net
 
 Cyril Jaquier: <lostcontrol@users.sourceforge.net>
 
-
 Thanks:
 -------
 
-Kévin Drapel, Marvin Rouge, Sireyessire, Robert Edeker,
+KÃ©vin Drapel, Marvin Rouge, Sireyessire, Robert Edeker,
 Tom Pike, Iain Lea, Andrey G. Grozin, Yaroslav Halchenko,
 Jonathan Kamens, Stephen Gildea, Markus Hoffmann, Mark
-Edgington, Patrick Börjesson, kojiro, zugeschmiert
+Edgington, Patrick BÃ¶rjesson, kojiro, zugeschmiert
 
 License:
 --------
