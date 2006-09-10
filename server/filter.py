@@ -217,6 +217,7 @@ class Filter(JailThread):
 			if not self.isIdle:
 				if self.isModified():
 					self.getFailures()
+					self.dateDetector.sortTemplate()
 				try:
 					ticket = self.failManager.toBan()
 					self.jail.putFailTicket(ticket)
