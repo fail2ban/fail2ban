@@ -38,6 +38,14 @@ class DateDetectorTest(unittest.TestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 	
+	def testGetEpochTime(self):
+		log = "1138049999 [sshd] error: PAM: Authentication failure"
+		date = [2006, 1, 23, 20, 59, 59, 0, 23, 0]
+		dateUnix = 1138046399.0
+		
+		self.assertEqual(self.datedetector.getTime(log), date)
+		self.assertEqual(self.datedetector.getUnixTime(log), dateUnix)
+	
 	def testGetTime(self):
 		log = "Jan 23 21:59:59 [sshd] error: PAM: Authentication failure"
 		date = [2006, 1, 23, 21, 59, 59, 1, 23, -1]
