@@ -143,12 +143,12 @@ class Fail2banClient:
 					print beautifier.beautifyError(ret[1])
 					return False
 			except socket.error:
-				logSys.error("Unable to contact server. Is it running?")
+				if showRet:
+					logSys.error("Unable to contact server. Is it running?")
 				return False
 			except Exception, e:
 				if showRet:
 					logSys.error(e)
-					logSys.error("Arrggh... Start the server first")
 				return False
 		return True
 		
