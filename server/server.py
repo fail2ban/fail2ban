@@ -26,7 +26,7 @@ __license__ = "GPL"
 
 from jail import Jail
 from transmitter import Transmitter
-import locale, logging, sys, os, signal
+import locale, logging, logging.handlers, sys, os, signal
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.server")
@@ -38,7 +38,7 @@ class Server:
 		self.daemon = daemon
 		self.transm = Transmitter(self)
 		self.logLevel = 3
-		self.logTarget = "STDERR"
+		self.logTarget = "STDOUT"
 		# Set logging level
 		self.setLogLevel(self.logLevel)
 		self.setLogTarget(self.logTarget)
@@ -278,8 +278,9 @@ class Server:
 		logging.getLogger("fail2ban").handlers = []
 		self.logTarget = target
 		if target == "SYSLOG":
-			logSys.error("Not yet implemented")
-			return False
+			hdlr = logging.handlers.SysLogHandler()
+		elif target == "STDOUT":
+			hdlr = logging.StreamHandler(sys.stdout)
 		elif target == "STDERR":
 			hdlr = logging.StreamHandler(sys.stderr)
 		else:
