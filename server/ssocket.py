@@ -55,7 +55,10 @@ class SSocket(Thread):
 		self.ssock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 		#self.ssock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		#self.ssock.setblocking(False)
-		self.ssock.setblocking(True)
+		# Do not use a blocking socket as there is problem at shutdown.
+		# Use a timeout instead. Daemon exits at most 'timeout' seconds
+		# after the command.
+		self.ssock.settimeout(1)
 		# Bind the socket to a public host and a well-known port
 		#self.ssock.bind(("localhost", 2222))
 		self.ssock.bind(SSocket.SOCKET_FILE)
@@ -65,11 +68,13 @@ class SSocket(Thread):
 	def run(self):
 		self.isRunning = True
 		while self.isRunning:
-			# TODO Fix shutdown. A new request is required because accept()
-			# is blocking.
-			(csock, address) = self.ssock.accept()
-			thread = SocketWorker(csock, self.transmit)
-			thread.start()
+			try:
+				(csock, address) = self.ssock.accept()
+				thread = SocketWorker(csock, self.transmit)
+				thread.start()
+			except socket.timeout:
+				# Do nothing here
+				pass
 		self.ssock.close()
 		# Remove socket
 		if os.path.exists(SSocket.SOCKET_FILE):
@@ -101,6 +106,7 @@ class SocketWorker(Thread):
 		msg = self.transmit.proceed(msg)
 		self.send(self.csock, msg)
 		self.csock.close()
+		logSys.debug("Connection closed")
 	
 	def send(self, socket, msg):
 		obj = pickle.dumps(msg)
