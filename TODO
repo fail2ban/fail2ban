@@ -13,7 +13,9 @@ Legend:
 # partially done
 * done
 
-- Is there a do...while loop in Python? For interactive mode
+- Verify TAI64N
+
+* Is there a do...while loop in Python? For interactive mode
 
 # implement all get/set functions
 
@@ -23,7 +25,7 @@ Legend:
 
 * add a reload option to fail2ban-client
 
-- see Feature Request Tracking System at SourceForge.net
+# see Feature Request Tracking System at SourceForge.net
 
 * findall in dns.py should be no more needed
 
@@ -39,7 +41,7 @@ Legend:
 
 * better configuration files
 
-- add a check to see if the time of the log messages is
+* add a check to see if the time of the log messages is
   correctly detected (valid regexp)
 
 * remove debug mode (root check)
@@ -95,7 +97,7 @@ Legend:
   Should we start one thread per file or just one thread per
   serivce?
 
-- autodetect date format in log file. Match the most popular
+# autodetect date format in log file. Match the most popular
   format and sort them using the hit ratio. Should avoid
   user problem with regex and not have a big impact on perfs.
 
