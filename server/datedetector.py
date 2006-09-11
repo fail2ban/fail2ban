@@ -52,7 +52,7 @@ class DateDetector:
 		# asctime
 		template = DateStrptime()
 		template.setName("Weekday Month Day Hour:Minute:Second Year")
-		template.setRegex("^\S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}")
+		template.setRegex("\S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}")
 		template.setPattern("%a %b %d %H:%M:%S %Y")
 		self.templates.append(template)
 		# TAI64N
