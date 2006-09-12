@@ -73,10 +73,11 @@ class Fail2banServer:
 		print "fail2ban-client instead."
 		print
 		print "Options:"
-		print "  -b         start in background"
-		print "  -f         start in foreground"
-		print "  -x         force execution of the server"
-		print "  -h         display this help message"
+		print "  -b             start in background"
+		print "  -f             start in foreground"
+		print "  -x             force execution of the server"
+		print "  -h, --help     display this help message"
+		print "  -V, --version  print the version"
 		print
 		print "Report bugs to <lostcontrol@users.sourceforge.net>"
 	
