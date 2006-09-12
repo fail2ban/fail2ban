@@ -58,17 +58,36 @@ class Fail2banClient:
 		self.conf["force"] = False
 		self.conf["verbose"] = 2
 		self.conf["interactive"] = False
+		
+	def dispVersion(self):
+		print "Fail2Ban v" + version
+		print
+		print "Copyright (c) 2004-2006 Cyril Jaquier"
+		print "Copyright of modifications held by their respective authors."
+		print "Licensed under the GNU General Public License v2 (GPL)."
+		print
+		print "Written by Cyril Jaquier <lostcontrol@users.sourceforge.net>."
+		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
 	
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
 		"""
-		print "Usage: "+self.argv[0]+" [OPTIONS] <COMMAND>"
+		print "Usage: "+self.argv[0]+" [OPTIONS]... <COMMAND>"
 		print
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
 		print "and bans the corresponding IP addresses using firewall rules."
 		print
-		print "  <COMMAND>"
+		print "Options:"
+		print "    -c <DIR>                configuration directory"
+		print "    -d                      dump configuration. For debugging"
+		print "    -i                      interactive mode"
+		print "    -v                      increase verbosity"
+		print "    -q                      decrease verbosity"
+		print "    -x                      force execution of the server"
+		print "    -h, --help              display this help message"
+		print "    -V, --version           print the version"
 		print
+		print "Command:"
 		print "    start                   start the server and the jails"
 		print "    reload                  reload the configuration"
 		print "    stop                    stop all jails and terminate the server"
@@ -85,16 +104,6 @@ class Fail2banClient:
 		print "    start <JAIL>            start <JAIL>"
 		print "    stop <JAIL>             stop <JAIL>. The jail is removed"
 		print "    status <JAIL>           get the current status of <JAIL>"
-		print
-		print "  [OPTIONS]"
-		print
-		print "    -c <DIR>                configuration directory"
-		print "    -d                      dump configuration. For debugging"
-		print "    -i                      interactive mode"
-		print "    -v                      increase verbosity"
-		print "    -q                      decrease verbosity"
-		print "    -x                      force execution of the server"
-		print "    -h                      display this help message"
 		print
 		print "Report bugs to <lostcontrol@users.sourceforge.net>"
 	
@@ -121,6 +130,9 @@ class Fail2banClient:
 				self.conf["interactive"] = True
 			elif opt[0] in ["-h", "--help"]:
 	 			self.dispUsage()
+	 			sys.exit(0)
+	 		elif opt[0] in ["-V", "--version"]:
+	 			self.dispVersion()
 	 			sys.exit(0)
 	
 	def ping(self):
@@ -232,8 +244,8 @@ class Fail2banClient:
 		
 		# Reads the command line options.
 		try:
-			cmdOpts = 'hc:xdviq'
-			cmdLongOpts = ['help']
+			cmdOpts = 'hc:xdviqV'
+			cmdLongOpts = ['help', 'version']
 			optList, args = getopt.getopt(self.argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
 			self.dispUsage()
