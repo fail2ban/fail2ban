@@ -51,6 +51,16 @@ class Fail2banServer:
 		self.conf["background"] = True
 		self.conf["force"] = False
 	
+	def dispVersion(self):
+		print "Fail2Ban v" + version
+		print
+		print "Copyright (c) 2004-2006 Cyril Jaquier"
+		print "Copyright of modifications held by their respective authors."
+		print "Licensed under the GNU General Public License v2 (GPL)."
+		print
+		print "Written by Cyril Jaquier <lostcontrol@users.sourceforge.net>."
+		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
+	
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
 		"""
@@ -59,13 +69,16 @@ class Fail2banServer:
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
 		print "and bans the corresponding IP addresses using firewall rules."
 		print
+		print "Only use this command for debugging purpose. Start the server with"
+		print "fail2ban-client instead."
+		print
+		print "Options:"
 		print "  -b         start in background"
 		print "  -f         start in foreground"
 		print "  -x         force execution of the server"
 		print "  -h         display this help message"
 		print
 		print "Report bugs to <lostcontrol@users.sourceforge.net>"
-		sys.exit(0)
 	
 	def getCmdLineOptions(self, optList):
 		""" Gets the command line options
@@ -79,6 +92,10 @@ class Fail2banServer:
 				self.conf["force"] = True
 			if opt[0] in ["-h", "--help"]:
 	 			self.dispUsage()
+				sys.exit(0)
+			if opt[0] in ["-V", "--version"]:
+	 			self.dispVersion()
+				sys.exit(0)
 	
 	#def sigTERMhandler(signum, frame):
 	#	""" Handles the TERM signal when in daemon mode in order to
@@ -93,8 +110,8 @@ class Fail2banServer:
 		
 		# Reads the command line options.
 		try:
-			cmdOpts = 'bfxh'
-			cmdLongOpts = ['help']
+			cmdOpts = 'bfxhV'
+			cmdLongOpts = ['help', 'version']
 			optList, args = getopt.getopt(self.argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
 			self.dispUsage()

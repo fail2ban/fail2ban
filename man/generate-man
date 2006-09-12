@@ -1,0 +1,5 @@
+#!/bin/bash
+
+help2man --section=1 --no-info --include=fail2ban-client.h2m --output fail2ban-client.1 ../fail2ban-client
+help2man --section=1 --no-info --include=fail2ban-server.h2m --output fail2ban-server.1 ../fail2ban-server
+
