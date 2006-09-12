@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# fail2ban-client
 help2man --section=1 --no-info --include=fail2ban-client.h2m --output fail2ban-client.1 ../fail2ban-client
+sed -i -e 's/.SS "Command:"/.SH COMMAND/' fail2ban-client.1
+
+# fail2ban-server
 help2man --section=1 --no-info --include=fail2ban-server.h2m --output fail2ban-server.1 ../fail2ban-server
 

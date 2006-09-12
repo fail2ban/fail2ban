@@ -4,9 +4,6 @@ $Id:  $
 [name]
 fail2ban-client \- configure and control the server
 
-/print the version/
-.SH COMMAND
-
 [files]
 \fI/etc/fail2ban/*\fR
 
