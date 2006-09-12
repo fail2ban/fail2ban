@@ -58,4 +58,6 @@ config/action.d/dummy.conf
 config/action.d/mail.conf
 config/action.d/hostsdeny.conf
 config/fail2ban.conf
+man/fail2ban-client.1
+man/fail2ban-server.1
 files/gentoo-initd
