@@ -129,9 +129,14 @@ class Transmitter:
 				self.server.setIdleJail(name, False)
 			return self.server.getIdleJail(name)
 		# Filter
-		elif action[1] == "logpath":
+		elif action[1] == "addlogpath":
+			value = action[2:]
+			for path in value:
+				self.server.addLogPath(name, path)
+			return self.server.getLogPath(name)
+		elif action[1] == "dellogpath":
 			value = action[2]
-			self.server.setLogPath(name, value)
+			self.server.delLogPath(name, value)
 			return self.server.getLogPath(name)
 		elif action[1] == "timeregex":
 			value = action[2]

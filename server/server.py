@@ -123,9 +123,13 @@ class Server:
 			raise ServerUnknownJail(name)
 	
 	# Filter
-	def setLogPath(self, name, file):
+	def addLogPath(self, name, file):
 		if self.jails.has_key(name):
-			self.jails[name].getFilter().setLogPath(file)
+			self.jails[name].getFilter().addLogPath(file)
+	
+	def delLogPath(self, name, file):
+		if self.jails.has_key(name):
+			self.jails[name].getFilter().delLogPath(file)
 	
 	def getLogPath(self, name):
 		return self.getFilter(name).getLogPath()

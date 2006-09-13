@@ -24,7 +24,8 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging, re
+import logging, re, glob
+
 from configreader import ConfigReader
 from filterreader import FilterReader
 from actionreader import ActionReader
@@ -95,7 +96,11 @@ class JailReader(ConfigReader):
 		stream = [["add", self.name]]
 		for opt in self.opts:
 			if opt == "logpath":
-				stream.append(["set", self.name, "logpath", self.opts[opt]])
+				pathList = glob.glob(self.opts[opt])
+				if len(pathList) == 0:
+					logSys.error("No file found for " + self.opts[opt])
+				for path in pathList:
+					stream.append(["set", self.name, "addlogpath", path])
 			elif opt == "maxretry":
 				stream.append(["set", self.name, "maxretry", self.opts[opt]])
 			elif opt == "maxtime":

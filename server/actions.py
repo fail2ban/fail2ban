@@ -128,7 +128,6 @@ class Actions(JailThread):
 	# @return True if an IP address get banned
 	
 	def checkBan(self):
-		logSys.debug("Check for IP address to ban")
 		ticket = self.jail.getFailTicket()
 		if ticket != False:
 			aInfo = dict()
@@ -148,7 +147,6 @@ class Actions(JailThread):
 	# Unban IP address which are outdated.
 	
 	def checkUnBan(self):
-		logSys.debug("Check for IP address to unban")
 		for ticket in self.banManager.unBanList(time.time()):
 			aInfo = dict()
 			aInfo["ip"] = ticket.getIP()
