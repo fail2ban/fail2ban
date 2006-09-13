@@ -50,10 +50,11 @@ class Beautifier:
 		
 	def beautify(self, response):
 		logSys.debug("Beautify " + `response` + " with " + `self.inputCmd`)
+		inC = self.inputCmd
 		msg = response
-		if self.inputCmd[0:1] == ['status']:
-			if len(self.inputCmd) > 1:
-				msg = "Status for the jail: " + self.inputCmd[1] + "\n"
+		if inC[0:1] == ['status']:
+			if len(inC) > 1:
+				msg = "Status for the jail: " + inC[1] + "\n"
 				msg = msg + "|- " + response[0][0] + "\n"
 				msg = msg + "|  |- " + response[0][1][0][0] + ":\t\t" + `response[0][1][0][1]` + "\n"
 				msg = msg + "|  `- " + response[0][1][1][0] + ":\t\t" + `response[0][1][1][1]` + "\n"
@@ -64,7 +65,7 @@ class Beautifier:
 				msg = "Status\n"
 				msg = msg + "|- " + response[0][0] + ":\t" + `response[0][1]` + "\n"
 				msg = msg + "`- " + response[1][0] + ":\t\t" + response[1][1]
-		elif self.inputCmd[1:2] == ['loglevel']:
+		elif inC[1:2] == ['loglevel']:
 			msg = "Current logging level is "
 			if response == 1:
 				msg = msg + "ERROR"
@@ -76,9 +77,14 @@ class Beautifier:
 				msg = msg + "DEBUG"
 			else:
 				msg = msg + `response`
-		elif self.inputCmd == ["stop"]:
+		elif inC == ["stop"]:
 			if response == None:
 				msg = "Shutdown successful"
+		elif inC[2] == "logpath" or inC[2] == "addlogpath" or inC[2] == "dellogpath":
+			msg = "Current monitored log file(s):\n"
+			for path in response[:-1]:
+				msg = msg + "|- " + path + "\n"
+			msg = msg + "`- " + response[len(response)-1]
 		return msg
 
 	def beautifyError(self, response):

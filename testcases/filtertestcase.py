@@ -52,20 +52,21 @@ class IgnoreIP(unittest.TestCase):
 
 class LogFile(unittest.TestCase):
 
+	filename = "testcases/files/testcase01.log"
+
 	def setUp(self):
 		"""Call before every test case."""
 		self.filter = Filter(None)
-		self.filter.setLogPath("testcases/files/testcase01.log")
+		self.filter.addLogPath(LogFile.filename)
 
 	def tearDown(self):
 		"""Call after every test case."""
 		
 	def testOpen(self):
-		self.filter.openLogFile()
+		self.filter.openLogFile(LogFile.filename)
 	
 	def testIsModified(self):
-		self.filter.openLogFile()
-		self.assertTrue(self.filter.isModified())
+		self.assertTrue(self.filter.isModified(LogFile.filename))
 
 
 class GetFailures(unittest.TestCase):
@@ -73,7 +74,7 @@ class GetFailures(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		self.filter = Filter(None)
-		self.filter.setLogPath("testcases/files/testcase01.log")
+		self.filter.addLogPath("testcases/files/testcase01.log")
 		self.filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 		self.filter.setTimePattern("%b %d %H:%M:%S")
 		self.filter.setFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) (?:::f{4,6}:)?(?P<host>\S*)")

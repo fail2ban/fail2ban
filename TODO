@@ -92,10 +92,11 @@ Legend:
 
 * remove most of the command lines options if possible.
 
-- add the possibility to specify wildcard in log files.
+* add the possibility to specify wildcard in log files.
   Example: logfile = /var/log/apache2/access-*.log
   Should we start one thread per file or just one thread per
   serivce?
+  We use just one thread per service
 
 # autodetect date format in log file. Match the most popular
   format and sort them using the hit ratio. Should avoid

@@ -57,9 +57,10 @@ class Filter(JailThread):
 		## The failures manager.
 		self.failManager = FailManager()
 		## The log file handler.
-		self.fileHandler = None
+		self.crtHandler = None
+		self.crtFilename = None
 		## The log file path.
-		self.logPath = ''
+		self.logPath = []
 		## The regular expression matching the failure.
 		self.failRegex = ''
 		self.failRegexObj = None
@@ -68,26 +69,49 @@ class Filter(JailThread):
 		## The ignore IP list.
 		self.ignoreIpList = []
 		## The time of the last modification of the file.
-		self.lastModTime = 0
+		self.lastModTime = dict()
 		## The last position of the file.
-		self.lastPos = 0
+		self.lastPos = dict()
 		## The last date in tht log file.
-		self.lastDate = 0
-		## The file statistics.
-		self.logStats = None
+		self.lastDate = dict()
+		self.file404Cnt = dict()
+		
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
-		self.fileNotFoundCnt = 0
 		logSys.info("Created Filter")
 
 	##
-	# Set the log file path
+	# Add a log file path
 	#
-	# @param value log file path
+	# @param path log file path
 
-	def setLogPath(self, value):
-		self.logPath = value
-		logSys.info("Set logfile = %s" % value)
+	def addLogPath(self, path):
+		try:
+			self.logPath.index(path)
+			logSys.error(path + " already exists")
+		except ValueError:
+			self.logPath.append(path)
+			# Initialize default values
+			self.lastDate[path] = 0
+			self.lastModTime[path] = 0
+			self.lastPos[path] = 0
+			self.file404Cnt[path] = 0
+			logSys.info("Added logfile = %s" % path)
+	
+	##
+	# Delete a log path
+	#
+	# @param path the log file to delete
+	
+	def delLogPath(self, path):
+		try:
+			self.logPath.remove(path)
+			del self.lastDate[path]
+			del self.lastModTime[path]
+			del self.lastPos[path]
+			logSys.info("Removed logfile = %s" % path)
+		except ValueError:
+			logSys.error(path + " is not monitored")
 
 	##
 	# Get the log file path
@@ -213,11 +237,16 @@ class Filter(JailThread):
 
 	def run(self):
 		self.setActive(True)
+		prevModified = False
 		while self.isActive():
 			if not self.isIdle:
-				if self.isModified():
-					self.getFailures()
+				if prevModified:
 					self.dateDetector.sortTemplate()
+				prevModified = False
+				for file in self.logPath:
+					if self.isModified(file):
+						self.getFailures(file)
+						prevModified = True
 				try:
 					ticket = self.failManager.toBan()
 					self.jail.putFailTicket(ticket)
@@ -267,19 +296,21 @@ class Filter(JailThread):
 	##
 	# Open the log file.
 	
-	def openLogFile(self):
+	def openLogFile(self, filename):
 		""" Opens the log file specified on init.
 		"""
 		try:
-			self.fileHandler = open(self.logPath)
+			self.crtFilename = filename
+			self.crtHandler = open(filename)
 		except OSError:
-			logSys.error("Unable to open "+self.logPath)
+			logSys.error("Unable to open " + filename)
 	
 	##
 	# Close the log file.
 	
 	def closeLogFile(self):
-		self.fileHandler.close()
+		self.crtFilename = None
+		self.crtHandler.close()
 	
 	##
 	# Checks if the log file has been modified.
@@ -287,23 +318,23 @@ class Filter(JailThread):
 	# Checks if the log file has been modified using os.stat().
 	# @return True if log file has been modified
 	
-	def isModified(self):
+	def isModified(self, filename):
 		try:
-			self.logStats = os.stat(self.logPath)
-			self.fileNotFoundCnt = 0
-			if self.lastModTime == self.logStats.st_mtime:
+			logStats = os.stat(filename)
+			self.file404Cnt[filename] = 0
+			if self.lastModTime[filename] == logStats.st_mtime:
 				return False
 			else:
-				logSys.debug(self.logPath + " has been modified")
-				self.lastModTime = self.logStats.st_mtime
+				logSys.debug(filename + " has been modified")
+				self.lastModTime[filename] = logStats.st_mtime
 				return True
 		except OSError:
-			logSys.error("Unable to get stat on " + self.logPath)
-			self.fileNotFoundCnt = self.fileNotFoundCnt + 1
-			if self.fileNotFoundCnt > 2:
+			logSys.error("Unable to get stat on " + filename)
+			self.file404Cnt[filename] = self.file404Cnt[filename] + 1
+			if self.file404Cnt[filename] > 2:
 				logSys.warn("Too much read error. Set the jail idle")
 				self.jail.setIdle(True)
-				self.fileNotFoundCnt = 0
+				self.file404Cnt[filename] = 0
 			return False
 
 	##
@@ -314,22 +345,23 @@ class Filter(JailThread):
 	# timestamp in order to detect this.
 	
 	def setFilePos(self):
-		line = self.fileHandler.readline()
-		if self.lastDate < self.dateDetector.getTime(line):
-			logSys.debug("Date " + `self.lastDate` + " is " + "smaller than " +
-							`self.dateDetector.getTime(line)`)
-			logSys.debug("Log rotation detected for " + self.logPath)
-			self.lastPos = 0
-		
-		logSys.debug("Setting file position to " + `self.lastPos` + " for " +
-						self.logPath)
-		self.fileHandler.seek(self.lastPos)
+		line = self.crtHandler.readline()
+		lastDate = self.lastDate[self.crtFilename]
+		lineDate = self.dateDetector.getUnixTime(line)
+		if lastDate < lineDate:
+			logSys.debug("Date " + `lastDate` + " is smaller than " + `lineDate`)
+			logSys.debug("Log rotation detected for " + self.crtFilename)
+			self.lastPos[self.crtFilename] = 0
+		lastPos = self.lastPos[self.crtFilename]
+		logSys.debug("Setting file position to " + `lastPos` + " for " +
+					 self.crtFilename)
+		self.crtHandler.seek(lastPos)
 
 	##
 	# Get the file position.
 	
 	def getFilePos(self):
-		return self.fileHandler.tell()
+		return self.crtHandler.tell()
 
 	##
 	# Gets all the failure in the log file.
@@ -338,18 +370,20 @@ class Filter(JailThread):
 	# time.time()-self.findTime. When a failure is detected, a FailTicket
 	# is created and is added to the FailManager.
 	
-	def getFailures(self):
+	def getFailures(self, filename):
 		ipList = dict()
-		logSys.debug(self.logPath)
-		self.openLogFile()
+		logSys.debug(filename)
+		self.openLogFile(filename)
 		self.setFilePos()
 		lastLine = None
-		for line in self.fileHandler:
+		for line in self.crtHandler:
 			try:
 				# Try to convert UTF-8 string to Latin-1
 				line = line.decode('utf-8').encode('latin-1')
 			except UnicodeDecodeError:
 				pass
+			except UnicodeEncodeError:
+				logSys.warn("Mmhh... Are you sure you watch the correct file?")
 			if not self.dateDetector.matchTime(line):
 				# There is no valid time in this line
 				continue
@@ -364,9 +398,9 @@ class Filter(JailThread):
 					continue
 				logSys.debug("Found "+ip)
 				self.failManager.addFailure(FailTicket(ip, unixTime))
-		self.lastPos = self.getFilePos()
+		self.lastPos[filename] = self.getFilePos()
 		if lastLine:
-			self.lastDate = self.dateDetector.getTime(lastLine)
+			self.lastDate[filename] = self.dateDetector.getTime(lastLine)
 		self.closeLogFile()
 
 	##
