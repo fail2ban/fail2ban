@@ -80,7 +80,7 @@ class Beautifier:
 		elif inC == ["stop"]:
 			if response == None:
 				msg = "Shutdown successful"
-		elif inC[2] == "logpath" or inC[2] == "addlogpath" or inC[2] == "dellogpath":
+		elif inC[2] in ("logpath", "addlogpath", "dellogpath"):
 			msg = "Current monitored log file(s):\n"
 			for path in response[:-1]:
 				msg = msg + "|- " + path + "\n"
