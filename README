@@ -19,7 +19,11 @@ website: http://fail2ban.sourceforge.net
 Installation:
 -------------
 
-Require: python-2.4 (http://www.python.org)
+Required:
+   >=python-2.4 (http://www.python.org)
+
+Optional:
+   >=gamin-0.0.21 (http://www.gnome.org/~veillard/gamin)
 
 To install, just do:
 
