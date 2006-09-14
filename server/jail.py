@@ -24,17 +24,27 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from actions import Actions
-from filter import Filter
-import Queue
+import Queue, logging
 
+from actions import Actions
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban.jail")
 
 class Jail:
 	
 	def __init__(self, name):
 		self.name = name
 		self.queue = Queue.Queue()
-		self.filter = Filter(self)
+		try:
+			import gamin
+			logSys.info("Gamin available. Using it instead of poller")
+			from filtergamin import FilterGamin
+			self.filter = FilterGamin(self)
+		except ImportError:
+			logSys.info("Gamin not available. Using poller")
+			from filterpoll import FilterPoll
+			self.filter = FilterPoll(self)
 		self.action = Actions(self)
 	
 	def setName(self, name):

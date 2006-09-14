@@ -68,17 +68,18 @@ class Filter(JailThread):
 		self.findTime = 6000
 		## The ignore IP list.
 		self.ignoreIpList = []
+		self.modified = False
 		## The time of the last modification of the file.
 		self.lastModTime = dict()
 		## The last position of the file.
 		self.lastPos = dict()
 		## The last date in tht log file.
 		self.lastDate = dict()
-		self.file404Cnt = dict()
 		
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
 		logSys.info("Created Filter")
+
 
 	##
 	# Add a log file path
@@ -86,17 +87,7 @@ class Filter(JailThread):
 	# @param path log file path
 
 	def addLogPath(self, path):
-		try:
-			self.logPath.index(path)
-			logSys.error(path + " already exists")
-		except ValueError:
-			self.logPath.append(path)
-			# Initialize default values
-			self.lastDate[path] = 0
-			self.lastModTime[path] = 0
-			self.lastPos[path] = 0
-			self.file404Cnt[path] = 0
-			logSys.info("Added logfile = %s" % path)
+		raise Exception("addLogPath() is abstract")
 	
 	##
 	# Delete a log path
@@ -104,14 +95,7 @@ class Filter(JailThread):
 	# @param path the log file to delete
 	
 	def delLogPath(self, path):
-		try:
-			self.logPath.remove(path)
-			del self.lastDate[path]
-			del self.lastModTime[path]
-			del self.lastPos[path]
-			logSys.info("Removed logfile = %s" % path)
-		except ValueError:
-			logSys.error(path + " is not monitored")
+		raise Exception("delLogPath() is abstract")
 
 	##
 	# Get the log file path
@@ -236,27 +220,7 @@ class Filter(JailThread):
 	# @return True when the thread exits nicely
 
 	def run(self):
-		self.setActive(True)
-		prevModified = False
-		while self.isActive():
-			if not self.isIdle:
-				if prevModified:
-					self.dateDetector.sortTemplate()
-				prevModified = False
-				for file in self.logPath:
-					if self.isModified(file):
-						self.getFailures(file)
-						prevModified = True
-				try:
-					ticket = self.failManager.toBan()
-					self.jail.putFailTicket(ticket)
-				except FailManagerEmpty:
-					self.failManager.cleanup(time.time())
-					time.sleep(self.sleepTime)
-			else:
-				time.sleep(self.sleepTime)
-		logSys.debug(self.jail.getName() + ": filter terminated")
-		return True
+		raise Exception("run() is abstract")
 	
 	##
 	# Add an IP to the ignore list.
@@ -311,31 +275,6 @@ class Filter(JailThread):
 	def closeLogFile(self):
 		self.crtFilename = None
 		self.crtHandler.close()
-	
-	##
-	# Checks if the log file has been modified.
-	#
-	# Checks if the log file has been modified using os.stat().
-	# @return True if log file has been modified
-	
-	def isModified(self, filename):
-		try:
-			logStats = os.stat(filename)
-			self.file404Cnt[filename] = 0
-			if self.lastModTime[filename] == logStats.st_mtime:
-				return False
-			else:
-				logSys.debug(filename + " has been modified")
-				self.lastModTime[filename] = logStats.st_mtime
-				return True
-		except OSError:
-			logSys.error("Unable to get stat on " + filename)
-			self.file404Cnt[filename] = self.file404Cnt[filename] + 1
-			if self.file404Cnt[filename] > 2:
-				logSys.warn("Too much read error. Set the jail idle")
-				self.jail.setIdle(True)
-				self.file404Cnt[filename] = 0
-			return False
 
 	##
 	# Set the file position.

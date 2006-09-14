@@ -11,6 +11,7 @@ ver. 0.7.3 (2006/??/??) - beta
 ----------
 - Added man pages. Thanks to Yaroslav Halchenko
 - Added wildcard support for "logpath"
+- Added Gamin (file and directory monitoring system) support
 
 ver. 0.7.2 (2006/09/10) - beta
 ----------

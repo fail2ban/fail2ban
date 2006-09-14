@@ -25,14 +25,14 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import unittest, socket
-from server.filter import Filter
+from server.filterpoll import FilterPoll
 from server.failmanager import FailManager
 
 class IgnoreIP(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.filter = Filter(None)
+		self.filter = FilterPoll(None)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -56,7 +56,7 @@ class LogFile(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.filter = Filter(None)
+		self.filter = FilterPoll(None)
 		self.filter.addLogPath(LogFile.filename)
 
 	def tearDown(self):
@@ -73,7 +73,7 @@ class GetFailures(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.filter = Filter(None)
+		self.filter = FilterPoll(None)
 		self.filter.addLogPath("testcases/files/testcase01.log")
 		self.filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 		self.filter.setTimePattern("%b %d %H:%M:%S")
