@@ -26,6 +26,7 @@ __license__ = "GPL"
 
 from ssocket import SSocket
 from ssocket import SSocketErrorException
+from threading import Lock
 import re, pickle, logging
 
 # Gets the instance of the logger.
@@ -34,6 +35,7 @@ logSys = logging.getLogger("fail2ban.comm")
 class Transmitter:
 	
 	def __init__(self, server):
+		self.lock = Lock()
 		self.server = server
 		self.socket = SSocket(self)
 	
@@ -44,11 +46,14 @@ class Transmitter:
 	
 	def start(self, force):
 		try:
+			self.lock.acquire()
 			self.socket.initialize(force)
 			self.socket.start()
+			self.lock.release()
 			self.socket.join()
 		except SSocketErrorException:
 			logSys.error("Could not start server")
+			self.lock.release()
 	
 	##
 	# Stop the transmitter.
@@ -58,18 +63,22 @@ class Transmitter:
 	
 	def stop(self):
 		self.socket.stop()
-		#self.socket.join()
+		self.socket.join()
 		
 	def proceed(self, action):
 		# Deserialize object
-		logSys.debug("Action: " + `action`)
 		try:
-			ret = self.actionHandler(action)
-			ack = 0, ret
-		except Exception, e:
-			logSys.warn("Invalid command: " + `action`)
-			ack = 1, e
-		return ack
+			self.lock.acquire()
+			logSys.debug("Action: " + `action`)
+			try:
+				ret = self.actionHandler(action)
+				ack = 0, ret
+			except Exception, e:
+				logSys.warn("Invalid command: " + `action`)
+				ack = 1, e
+			return ack
+		finally:
+			self.lock.release()
 	
 	##
 	# Handle an action.
@@ -129,6 +138,14 @@ class Transmitter:
 				self.server.setIdleJail(name, False)
 			return self.server.getIdleJail(name)
 		# Filter
+		elif action[1] == "addignoreip":
+			value = action[2]
+			self.server.addIgnoreIP(name, value)
+			return self.server.getIgnoreIP(name)
+		elif action[1] == "delignoreip":
+			value = action[2]
+			self.server.delIgnoreIP(name, value)
+			return self.server.getIgnoreIP(name)
 		elif action[1] == "addlogpath":
 			value = action[2:]
 			for path in value:
@@ -217,8 +234,13 @@ class Transmitter:
 		# Logging
 		if name == "loglevel":
 			return self.server.getLogLevel()
+		elif name == "logtarget":
+			return self.server.getLogTarget()
+		# Filter
 		elif action[1] == "logpath":
 			return self.server.getLogPath(name)
+		elif action[1] == "ignoreip":
+			return self.server.getIgnoreIP(name)
 		elif action[1] == "timeregex":
 			return self.server.getTimeRegex(name)
 		elif action[1] == "timepattern":
@@ -231,7 +253,7 @@ class Transmitter:
 			return self.server.getFindTime(name)
 		elif action[1] == "maxretry":
 			return self.server.getMaxRetry(name)
-		# Filter
+		# Action
 		elif action[1] == "bantime":
 			return self.server.getBanTime(name)
 		elif action[1] == "addaction":

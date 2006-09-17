@@ -42,22 +42,40 @@ class FailManager:
 		self.failTotal = 0
 	
 	def setFailTotal(self, value):
+		self.lock.acquire()
 		self.failTotal = value
+		self.lock.release()
 		
 	def getFailTotal(self):
-		return self.failTotal
+		try:
+			self.lock.acquire()
+			return self.failTotal
+		finally:
+			self.lock.release()
 	
 	def setMaxRetry(self, value):
+		self.lock.acquire()
 		self.maxRetry = value
+		self.lock.release()
 	
 	def getMaxRetry(self):
-		return self.maxRetry
+		try:
+			self.lock.acquire()
+			return self.maxRetry
+		finally:
+			self.lock.release()
 	
 	def setMaxTime(self, value):
+		self.lock.acquire()
 		self.maxTime = value
+		self.lock.release()
 	
 	def getMaxTime(self):
-		return self.maxTime
+		try:
+			self.lock.acquire()
+			return self.maxTime
+		finally:
+			self.lock.release()
 
 	def addFailure(self, ticket):
 		self.lock.acquire()
@@ -76,33 +94,38 @@ class FailManager:
 		self.lock.release()
 	
 	def size(self):
-		return len(self.failList)
+		try:
+			self.lock.acquire()
+			return len(self.failList)
+		finally:
+			self.lock.release()
 	
 	def cleanup(self, time):
 		self.lock.acquire()
 		tmp = self.failList.copy()
 		for item in tmp:
 			if tmp[item].getLastTime() < time - self.maxTime:
-				self.delFailure(item)
+				self.__delFailure(item)
 		self.lock.release()
 	
-	def delFailure(self, ip):
+	def __delFailure(self, ip):
 		if self.failList.has_key(ip):
 			del self.failList[ip]
 	
 	def toBan(self):
-		self.lock.acquire()
-		for ip in self.failList:
-			data = self.failList[ip]
-			if data.getRetry() >= self.maxRetry:
-				self.delFailure(ip)
-				self.lock.release()
-				# Create a FailTicket from BanData
-				failTicket = FailTicket(ip, data.getLastTime())
-				failTicket.setAttempt(data.getRetry())
-				return failTicket
-		self.lock.release()
-		raise FailManagerEmpty
+		try:
+			self.lock.acquire()
+			for ip in self.failList:
+				data = self.failList[ip]
+				if data.getRetry() >= self.maxRetry:
+					self.delFailure(ip)
+					# Create a FailTicket from BanData
+					failTicket = FailTicket(ip, data.getLastTime())
+					failTicket.setAttempt(data.getRetry())
+					return failTicket
+			raise FailManagerEmpty
+		finally:
+			self.lock.release()
 
 class FailManagerEmpty(Exception):
 	pass
