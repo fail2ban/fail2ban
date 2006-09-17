@@ -24,7 +24,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from jail import Jail
+from jails import Jails
 from transmitter import Transmitter
 import locale, logging, logging.handlers, sys, os, signal
 
@@ -34,7 +34,7 @@ logSys = logging.getLogger("fail2ban.server")
 class Server:
 	
 	def __init__(self, daemon = False):
-		self.jails = dict()
+		self.jails = Jails()
 		self.daemon = daemon
 		self.transm = Transmitter(self)
 		self.logLevel = 3
@@ -45,6 +45,8 @@ class Server:
 	
 	def start(self, force):
 		logSys.info("Starting Fail2ban")
+		# First set the mask to only allow access to owner
+		os.umask(0077)
 		if self.daemon:
 			ret = self.createDaemon()
 			if ret:
@@ -62,185 +64,158 @@ class Server:
 		self.transm.stop()
 	
 	def addJail(self, name):
-		if self.jails.has_key(name):
-			raise ServerDuplicateJail(name)
-		else:
-			self.jails[name] = Jail(name)
+		self.jails.add(name)
 		
 	def delJail(self, name):
-		if self.jails.has_key(name):
-			del self.jails[name]
-		else:
-			raise ServerUnknownJail(name)
+		self.jails.remove(name)
 	
 	def startJail(self, name):
-		if self.jails.has_key(name):
-			self.jails[name].start()
-		else:
-			raise ServerUnknownJail(name)
+		if not self.isActive(name):
+			self.jails.get(name).start()
 	
 	def stopJail(self, name):
-		if self.jails.has_key(name):
-			if self.isActive(name):
-				self.jails[name].stop()
-				self.delJail(name)
-		else:
-			raise ServerUnknownJail(name)
+		if self.isActive(name):
+			self.jails.get(name).stop()
+			self.delJail(name)
 	
 	def stopAllJail(self):
-		for jail in self.jails.copy():
+		for jail in self.jails.getAll():
 			self.stopJail(jail)
 	
-	def getAction(self, name):
-		if self.jails.has_key(name):
-			return self.jails[name].getAction()
-		else:
-			raise ServerUnknownJail(name)
-	
-	def getFilter(self, name):
-		if self.jails.has_key(name):
-			return self.jails[name].getFilter()
-		else:
-			raise ServerUnknownJail(name)
-	
 	def isActive(self, name):
-		if self.jails.has_key(name):
-			return self.jails[name].isActive()
-		else:
-			raise ServerUnknownJail(name)
+		return self.jails.get(name).isActive()
 	
 	def setIdleJail(self, name, value):
-		if self.jails.has_key(name):
-			self.jails[name].setIdle(value)
-			return True
-		else:
-			raise ServerUnknownJail(name)
+		self.jails.get(name).setIdle(value)
+		return True
 
 	def getIdleJail(self, name):
-		if self.jails.has_key(name):
-			return self.jails[name].getIdle()
-		else:
-			raise ServerUnknownJail(name)
+		return self.jails.get(name).getIdle()
 	
 	# Filter
+	def addIgnoreIP(self, name, ip):
+		self.jails.getFilter(name).addIgnoreIP(ip)
+	
+	def delIgnoreIP(self, name, ip):
+		self.jails.getFilter(name).delIgnoreIP(ip)
+	
+	def getIgnoreIP(self, name):
+		return self.jails.getFilter(name).getIgnoreIP()
+	
 	def addLogPath(self, name, file):
-		if self.jails.has_key(name):
-			self.jails[name].getFilter().addLogPath(file)
+		self.jails.getFilter(name).addLogPath(file)
 	
 	def delLogPath(self, name, file):
-		if self.jails.has_key(name):
-			self.jails[name].getFilter().delLogPath(file)
+		self.jails.getFilter(name).delLogPath(file)
 	
 	def getLogPath(self, name):
-		return self.getFilter(name).getLogPath()
+		return self.jails.getFilter(name).getLogPath()
 	
 	def setTimeRegex(self, name, value):
-		self.getFilter(name).setTimeRegex(value)
+		self.jails.getFilter(name).setTimeRegex(value)
 	
 	def getTimeRegex(self, name):
-		return self.getFilter(name).getTimeRegex()
+		return self.jails.getFilter(name).getTimeRegex()
 
 	def setTimePattern(self, name, value):
-		self.getFilter(name).setTimePattern(value)
+		self.jails.getFilter(name).setTimePattern(value)
 	
 	def getTimePattern(self, name):
-		return self.getFilter(name).getTimePattern()
+		return self.jails.getFilter(name).getTimePattern()
 	
 	def setFindTime(self, name, value):
-		self.getFilter(name).setFindTime(value)
+		self.jails.getFilter(name).setFindTime(value)
 	
 	def getFindTime(self):
-		return self.getFilter(name).getFindTime()
+		return self.jails.getFilter(name).getFindTime()
 
 	def setFailRegex(self, name, value):
-		self.getFilter(name).setFailRegex(value)
+		self.jails.getFilter(name).setFailRegex(value)
 	
 	def getFailRegex(self, name):
-		return self.getFilter(name).getFailRegex()
+		return self.jails.getFilter(name).getFailRegex()
 	
 	def setMaxRetry(self, name, value):
-		self.getFilter(name).setMaxRetry(value)
+		self.jails.getFilter(name).setMaxRetry(value)
 	
 	def getMaxRetry(self, name):
-		return self.getFilter(name).getMaxRetry()
+		return self.jails.getFilter(name).getMaxRetry()
 	
 	def setMaxTime(self, name, value):
-		self.getFilter(name).setMaxTime(value)
+		self.jails.getFilter(name).setMaxTime(value)
 	
 	def getMaxTime(self, name):
-		return self.getFilter(name).getMaxTime()
+		return self.jails.getFilter(name).getMaxTime()
 	
 	# Action
 	def addAction(self, name, value):
-		self.getAction(name).addAction(value)
+		self.jails.getAction(name).addAction(value)
 	
 	def getLastAction(self, name):
-		return self.getAction(name).getLastAction()
+		return self.jails.getAction(name).getLastAction()
 	
 	def delAction(self, name, value):
-		self.getAction(name).delAction(value)
+		self.jails.getAction(name).delAction(value)
 	
 	def setCInfo(self, name, action, key, value):
-		self.getAction(name).getAction(action).setCInfo(key, value)
+		self.jails.getAction(name).getAction(action).setCInfo(key, value)
 	
 	def getCInfo(self, name, action, key):
-		return self.getAction(name).getAction(action).getCInfo(key)
+		return self.jails.getAction(name).getAction(action).getCInfo(key)
 	
 	def delCInfo(self, name, action, key):
-		self.getAction(name).getAction(action).delCInfo(key)
+		self.jails.getAction(name).getAction(action).delCInfo(key)
 	
 	def setBanTime(self, name, value):
-		self.getAction(name).setBanTime(value)
+		self.jails.getAction(name).setBanTime(value)
 	
 	def getBanTime(self, name):
-		return self.getAction(name).getBanTime()
+		return self.jails.getAction(name).getBanTime()
 	
 	def setActionStart(self, name, action, value):
-		self.getAction(name).getAction(action).setActionStart(value)
+		self.jails.getAction(name).getAction(action).setActionStart(value)
 	
 	def getActionStart(self, name, action):
-		return self.getAction(name).getAction(action).getActionStart()
+		return self.jails.getAction(name).getAction(action).getActionStart()
 		
 	def setActionStop(self, name, action, value):
-		self.getAction(name).getAction(action).setActionStop(value)
+		self.jails.getAction(name).getAction(action).setActionStop(value)
 	
 	def getActionStop(self, name, action):
-		return self.getAction(name).getAction(action).getActionStop()
+		return self.jails.getAction(name).getAction(action).getActionStop()
 	
 	def setActionCheck(self, name, action, value):
-		self.getAction(name).getAction(action).setActionCheck(value)
+		self.jails.getAction(name).getAction(action).setActionCheck(value)
 	
 	def getActionCheck(self, name, action):
-		return self.getAction(name).getAction(action).getActionCheck()
+		return self.jails.getAction(name).getAction(action).getActionCheck()
 	
 	def setActionBan(self, name, action, value):
-		self.getAction(name).getAction(action).setActionBan(value)
+		self.jails.getAction(name).getAction(action).setActionBan(value)
 	
 	def getActionBan(self, name, action):
-		return self.getAction(name).getAction(action).getActionBan()
+		return self.jails.getAction(name).getAction(action).getActionBan()
 	
 	def setActionUnban(self, name, action, value):
-		self.getAction(name).getAction(action).setActionUnban(value)
+		self.jails.getAction(name).getAction(action).setActionUnban(value)
 	
 	def getActionUnban(self, name, action):
-		return self.getAction(name).getAction(action).getActionUnban()
+		return self.jails.getAction(name).getAction(action).getActionUnban()
 		
 	# Status
 	def status(self):
 		jailList = ''
-		for jail in self.jails:
+		for jail in self.jails.getAll():
 			jailList += jail + ', '
 		length = len(jailList)
 		if not length == 0:
 			jailList = jailList[:length-2]
-		ret = [("Number of jail", len(self.jails)), 
+		ret = [("Number of jail", self.jails.size()), 
 			   ("Jail list", jailList)]
 		return ret
 	
 	def statusJail(self, name):
-		if self.jails.has_key(name):
-			return self.jails[name].getStatus()
-		raise ServerUnknownJail(name)
+		return self.jails.get(name).getStatus()
 	
 	# Logging
 	
@@ -377,12 +352,6 @@ class Server:
 		os.open("/dev/null", os.O_RDWR)		# standard error (2)
 		return True
 
-
-class ServerDuplicateJail(Exception):
-	pass
-
-class ServerUnknownJail(Exception):
-	pass
 
 class ServerInitializationError(Exception):
 	pass
