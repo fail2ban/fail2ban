@@ -118,7 +118,7 @@ class FailManager:
 			for ip in self.failList:
 				data = self.failList[ip]
 				if data.getRetry() >= self.maxRetry:
-					self.delFailure(ip)
+					self.__delFailure(ip)
 					# Create a FailTicket from BanData
 					failTicket = FailTicket(ip, data.getLastTime())
 					failTicket.setAttempt(data.getRetry())
