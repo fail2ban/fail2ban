@@ -52,9 +52,8 @@ class FilterGamin(Filter):
 	
 	def __init__(self, jail):
 		Filter.__init__(self, jail)
-		
+		# Gamin monitor
 		self.monitor = gamin.WatchMonitor()
-		
 		logSys.info("Created FilterGamin")
 
 
