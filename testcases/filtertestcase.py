@@ -44,7 +44,7 @@ class IgnoreIP(unittest.TestCase):
 			self.assertTrue(self.filter.inIgnoreIPList(ip))
 	
 	def testIgnoreIPNOK(self):
-		ipList = "", "999.999.999.999", "abcdef", "192.168.0"
+		ipList = "", "999.999.999.999", "abcdef", "192.168.0."
 		for ip in ipList:
 			self.filter.addIgnoreIP(ip)
 			self.assertFalse(self.filter.inIgnoreIPList(ip))
