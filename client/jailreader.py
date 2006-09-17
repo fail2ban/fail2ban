@@ -61,6 +61,7 @@ class JailReader(ConfigReader):
 				["int", "maxretry", 3],
 				["int", "maxtime", 600],
 				["int", "bantime", 600],
+				["string", "ignoreip", None],
 				["string", "filter", ""],
 				["string", "action", ""]]
 		self.opts = ConfigReader.getOptions(self, self.name, opts)
@@ -103,6 +104,8 @@ class JailReader(ConfigReader):
 					stream.append(["set", self.name, "addlogpath", path])
 			elif opt == "maxretry":
 				stream.append(["set", self.name, "maxretry", self.opts[opt]])
+			elif opt == "ignoreip":
+				stream.append(["set", self.name, "addignoreip", self.opts[opt]])
 			elif opt == "maxtime":
 				stream.append(["set", self.name, "maxtime", self.opts[opt]])
 			elif opt == "bantime":
