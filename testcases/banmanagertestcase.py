@@ -46,11 +46,11 @@ class AddFailure(unittest.TestCase):
 		self.assertFalse(self.banManager.addBanTicket(self.ticket))
 		self.assertEqual(self.banManager.size(), 1)
 		
-	def testInListOK(self):
+	def _testInListOK(self):
 		ticket = BanTicket('193.168.0.128', 1167605999.0)
 		self.assertTrue(self.banManager.inBanList(ticket))
 	
-	def testInListNOK(self):
+	def _testInListNOK(self):
 		ticket = BanTicket('111.111.1.111', 1167605999.0)
 		self.assertFalse(self.banManager.inBanList(ticket))
 		
