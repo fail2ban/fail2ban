@@ -33,6 +33,7 @@ server/transmitter.py
 server/action.py
 server/ticket.py
 server/jail.py
+server/jails.py
 server/__init__.py
 server/dateepoch.py
 server/banmanager.py
