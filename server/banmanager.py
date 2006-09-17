@@ -131,7 +131,7 @@ class BanManager:
 	def addBanTicket(self, ticket):
 		try:
 			self.lock.acquire()
-			if not self.inBanList(ticket):
+			if not self.__inBanList(ticket):
 				self.banList.append(ticket)
 				self.banTotal += 1
 				return True
@@ -168,15 +168,11 @@ class BanManager:
 	# @param ticket the ticket
 	# @return True if a ticket already exists
 	
-	def inBanList(self, ticket):
-		try:
-			self.lock.acquire()
-			for i in self.banList:
-				if ticket.getIP() == i.getIP():
-					return True
-			return False
-		finally:
-			self.lock.release()
+	def __inBanList(self, ticket):
+		for i in self.banList:
+			if ticket.getIP() == i.getIP():
+				return True
+		return False
 	
 	##
 	# Get the list of IP address to unban.
