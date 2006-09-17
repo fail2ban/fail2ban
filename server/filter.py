@@ -230,8 +230,18 @@ class Filter(JailThread):
 	# @param ip IP address to ignore
 	
 	def addIgnoreIP(self, ip):
-		logSys.debug("Add " + ip + " to ignore list")
-		self.ignoreIpList.append(ip)
+		if DNSUtils.isValidIP(ip):
+			logSys.debug("Add " + ip + " to ignore list")
+			self.ignoreIpList.append(ip)
+		else:
+			logSys.warn(ip + " is not a valid address")
+		
+	def delIgnoreIP(self, ip):
+		logSys.debug("Remove " + ip + " from ignore list")
+		self.ignoreIpList.remove(ip)
+		
+	def getIgnoreIP(self):
+		return self.ignoreIpList
 	
 	##
 	# Check if IP address is in the ignore list.
