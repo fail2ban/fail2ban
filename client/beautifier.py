@@ -24,8 +24,8 @@ __date__ = "$Date: 2006-08-22 23:59:51 +0200 (Tue, 22 Aug 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from server.server import ServerUnknownJail
-from server.server import ServerDuplicateJail
+from server.jails import UnknownJailException
+from server.jails import DuplicateJailException
 import logging
 
 # Gets the instance of the logger.
@@ -52,48 +52,76 @@ class Beautifier:
 		logSys.debug("Beautify " + `response` + " with " + `self.inputCmd`)
 		inC = self.inputCmd
 		msg = response
-		if inC[0:1] == ['status']:
-			if len(inC) > 1:
-				msg = "Status for the jail: " + inC[1] + "\n"
-				msg = msg + "|- " + response[0][0] + "\n"
-				msg = msg + "|  |- " + response[0][1][0][0] + ":\t\t" + `response[0][1][0][1]` + "\n"
-				msg = msg + "|  `- " + response[0][1][1][0] + ":\t\t" + `response[0][1][1][1]` + "\n"
-				msg = msg + "`- " + response[1][0] + "\n"
-				msg = msg + "   |- " + response[1][1][0][0] + ":\t\t" + `response[1][1][0][1]` + "\n"
-				msg = msg + "   `- " + response[1][1][1][0] + ":\t\t" + `response[1][1][1][1]`
-			else:
-				msg = "Status\n"
-				msg = msg + "|- " + response[0][0] + ":\t" + `response[0][1]` + "\n"
-				msg = msg + "`- " + response[1][0] + ":\t\t" + response[1][1]
-		elif inC[1:2] == ['loglevel']:
-			msg = "Current logging level is "
-			if response == 1:
-				msg = msg + "ERROR"
-			elif response == 2:
-				msg = msg + "WARN"
-			elif response == 3:
-				msg = msg + "INFO"
-			elif response == 4:
-				msg = msg + "DEBUG"
-			else:
-				msg = msg + `response`
-		elif inC == ["stop"]:
-			if response == None:
-				msg = "Shutdown successful"
-		elif inC[2] in ("logpath", "addlogpath", "dellogpath"):
-			msg = "Current monitored log file(s):\n"
-			for path in response[:-1]:
-				msg = msg + "|- " + path + "\n"
-			msg = msg + "`- " + response[len(response)-1]
+		try:
+			if inC[0] == "start":
+				msg = "Jail started"
+			elif inC[0] == "stop":
+				if len(inC) == 1:
+					if response == None:
+						msg = "Shutdown successful"
+				else:
+					if response == None:
+						msg = "Jail stopped"
+			elif inC[0] == "add":
+				msg = "Added jail " + response
+			elif inC[0:1] == ['status']:
+				if len(inC) > 1:
+					msg = "Status for the jail: " + inC[1] + "\n"
+					msg = msg + "|- " + response[0][0] + "\n"
+					msg = msg + "|  |- " + response[0][1][0][0] + ":\t\t" + `response[0][1][0][1]` + "\n"
+					msg = msg + "|  `- " + response[0][1][1][0] + ":\t\t" + `response[0][1][1][1]` + "\n"
+					msg = msg + "`- " + response[1][0] + "\n"
+					msg = msg + "   |- " + response[1][1][0][0] + ":\t\t" + `response[1][1][0][1]` + "\n"
+					msg = msg + "   `- " + response[1][1][1][0] + ":\t\t" + `response[1][1][1][1]`
+				else:
+					msg = "Status\n"
+					msg = msg + "|- " + response[0][0] + ":\t" + `response[0][1]` + "\n"
+					msg = msg + "`- " + response[1][0] + ":\t\t" + response[1][1]
+			elif inC[1] == "logtarget":
+				msg = "Current logging target is:\n"
+				msg = msg + "`- " + response
+			elif inC[1:2] == ['loglevel']:
+				msg = "Current logging level is "
+				if response == 1:
+					msg = msg + "ERROR"
+				elif response == 2:
+					msg = msg + "WARN"
+				elif response == 3:
+					msg = msg + "INFO"
+				elif response == 4:
+					msg = msg + "DEBUG"
+				else:
+					msg = msg + `response`
+			elif inC[2] in ("logpath", "addlogpath", "dellogpath"):
+				if len(response) == 0:
+					msg = "No file is currently monitored"
+				else:
+					msg = "Current monitored log file(s):\n"
+					for path in response[:-1]:
+						msg = msg + "|- " + path + "\n"
+					msg = msg + "`- " + response[len(response)-1]
+			elif inC[2] in ("ignoreip", "addignoreip", "delignoreip"):
+				if len(response) == 0:
+					msg = "No IP address/network is ignored"
+				else:
+					msg = "These IP addresses/networks are ignored:\n"
+					for ip in response[:-1]:
+						msg = msg + "|- " + ip + "\n"
+					msg = msg + "`- " + response[len(response)-1]				
+		except Exception:
+			logSys.warn("Beautifier error. Please report the error")
+			logSys.error("Beautify " + `response` + " with " + `self.inputCmd` +
+						 " failed")
+			msg = msg + `response`
 		return msg
 
 	def beautifyError(self, response):
 		logSys.debug("Beautify (error) " + `response` + " with " + `self.inputCmd`)
 		msg = response
-		if isinstance(response, ServerUnknownJail):
+		if isinstance(response, UnknownJailException):
 			msg = "Sorry but the jail '" + response[0] + "' does not exist"
 		elif isinstance(response, IndexError):
 			msg = "Sorry but the command is invalid"
-		elif isinstance(response, ServerDuplicateJail):
+		elif isinstance(response, DuplicateJailException):
 			msg = "The jail '" + response[0] + "' already exists"
 		return msg
