@@ -92,8 +92,8 @@ class Jail:
 	
 	def getFailTicket(self):
 		try:
+			self.lock.acquire()
 			try:
-				self.lock.acquire()
 				return self.queue.get(False)
 			except Queue.Empty:
 				return False
