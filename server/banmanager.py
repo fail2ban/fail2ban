@@ -110,16 +110,12 @@ class BanManager:
 	
 	@staticmethod
 	def createBanTicket(ticket):
-		try:
-			self.lock.acquire()
-			ip = ticket.getIP()
-			#lastTime = ticket.getTime()
-			lastTime = time.time()
-			banTicket = BanTicket(ip, lastTime)
-			banTicket.setAttempt(ticket.getAttempt())
-			return banTicket
-		finally:
-			self.lock.release()
+		ip = ticket.getIP()
+		#lastTime = ticket.getTime()
+		lastTime = time.time()
+		banTicket = BanTicket(ip, lastTime)
+		banTicket.setAttempt(ticket.getAttempt())
+		return banTicket
 	
 	##
 	# Add a ban ticket.
