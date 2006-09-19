@@ -61,7 +61,7 @@ class FilterGamin(Filter):
 		logSys.debug("Got event: " + `event` + " for " + path)
 		if event in (gamin.GAMCreated, gamin.GAMChanged, gamin.GAMExists):
 			logSys.debug("File changed: " + path)
-			self.__getFailures(path)
+			self.getFailures(path)
 			self.modified = True
 
 

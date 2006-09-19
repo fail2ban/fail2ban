@@ -106,7 +106,7 @@ class FilterPoll(Filter):
 				# Get file modification
 				for file in self.getLogPath():
 					if self.isModified(file):
-						self.__getFailures(file)
+						self.getFailures(file)
 						prevModified = True
 
 				if self.modified:
