@@ -25,7 +25,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import locale, getopt, sys
+import getopt, sys
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
