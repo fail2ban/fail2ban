@@ -28,16 +28,39 @@ import re, time
 
 from datetemplate import DateTemplate
 
+##
+# Use strptime() to parse a date. Our current locale is the 'C'
+# one because we do not set the locale explicitly. This is POSIX
+# standard.
+
 class DateStrptime(DateTemplate):
+	
+	TABLE = dict()
+	TABLE["Oct"] = ["Okt"]
+	TABLE["Dec"] = ["Dez"]
 	
 	def __init__(self):
 		DateTemplate.__init__(self)
+	
+	@staticmethod
+	def convertLocale(date):
+		for t in DateStrptime.TABLE:
+			for m in DateStrptime.TABLE[t]:
+				if date.find(m) >= 0:
+					return date.replace(m, t)
+		return date
 	
 	def getDate(self, line):
 		date = None
 		dateMatch = self.matchDate(line)
 		if dateMatch:
-			date = list(time.strptime(dateMatch.group(), self.getPattern()))
+			try:
+				# Try first with 'C' locale
+				date = list(time.strptime(dateMatch.group(), self.getPattern()))
+			except ValueError:
+				# Try to convert date string to 'C' locale
+				conv = self.convertLocale(dateMatch.group())
+				date = list(time.strptime(conv, self.getPattern()))
 			if date[0] < 2000:
 				# There is probably no year field in the logs
 				date[0] = time.gmtime()[0]
