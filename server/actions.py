@@ -52,29 +52,29 @@ class Actions(JailThread):
 		JailThread.__init__(self, jail)
 		## The jail which contains this action.
 		self.jail = jail
-		self.actions = list()
+		self.__actions = list()
 		## The ban manager.
-		self.banManager = BanManager()
+		self.__banManager = BanManager()
 	
 	def addAction(self, name):
 		action = Action(name)
-		self.actions.append(action)
+		self.__actions.append(action)
 	
 	def delAction(self, name):
-		for action in self.actions:
+		for action in self.__actions:
 			if action.getName() == name:
-				self.actions.remove(action)
+				self.__actions.remove(action)
 				break
 	
 	def getAction(self, name):
-		for action in self.actions:
+		for action in self.__actions:
 			if action.getName() == name:
 				return action
 		raise KeyError
 	
 	def getLastAction(self):
-		action = self.actions.pop()
-		self.actions.append(action)
+		action = self.__actions.pop()
+		self.__actions.append(action)
 		return action
 	
 	##
@@ -83,7 +83,7 @@ class Actions(JailThread):
 	# @param value the time
 	
 	def setBanTime(self, value):
-		self.banManager.setBanTime(value)
+		self.__banManager.setBanTime(value)
 		logSys.info("Set banTime = %s" % value)
 	
 	##
@@ -92,7 +92,7 @@ class Actions(JailThread):
 	# @return the time
 	
 	def getBanTime(self):
-		return self.banManager.getBanTime()
+		return self.__banManager.getBanTime()
 	
 	##
 	# Main loop.
@@ -102,20 +102,20 @@ class Actions(JailThread):
 	# @return True when the thread exits nicely
 	
 	def run(self):
-		for action in self.actions:
+		for action in self.__actions:
 			action.execActionStart()
 		self.setActive(True)
 		while self.isActive():
-			if not self.isIdle:
+			if not self.getIdle():
 				#logSys.debug(self.jail.getName() + ": action")
-				ret = self.checkBan()
+				ret = self.__checkBan()
 				if not ret:
-					self.checkUnBan()
-					time.sleep(self.sleepTime)
+					self.__checkUnBan()
+					time.sleep(self.getSleepTime())
 			else:
-				time.sleep(self.sleepTime)
-		self.flushBan()
-		for action in self.actions:
+				time.sleep(self.getSleepTime())
+		self.__flushBan()
+		for action in self.__actions:
 			action.execActionStop()
 		logSys.debug(self.jail.getName() + ": action terminated")
 		return True
@@ -127,7 +127,7 @@ class Actions(JailThread):
 	# it executes the "ban" command and add a ticket to the BanManager.
 	# @return True if an IP address get banned
 	
-	def checkBan(self):
+	def __checkBan(self):
 		ticket = self.jail.getFailTicket()
 		if ticket != False:
 			aInfo = dict()
@@ -135,9 +135,9 @@ class Actions(JailThread):
 			aInfo["ip"] = bTicket.getIP()
 			aInfo["failures"] = bTicket.getAttempt()
 			logSys.info("Ban %s" % aInfo["ip"])
-			for action in self.actions:
+			for action in self.__actions:
 				action.execActionBan(aInfo)
-			self.banManager.addBanTicket(bTicket)
+			self.__banManager.addBanTicket(bTicket)
 			return True
 		return False
 	
@@ -146,12 +146,12 @@ class Actions(JailThread):
 	#
 	# Unban IP address which are outdated.
 	
-	def checkUnBan(self):
-		for ticket in self.banManager.unBanList(time.time()):
+	def __checkUnBan(self):
+		for ticket in self.__banManager.unBanList(time.time()):
 			aInfo = dict()
 			aInfo["ip"] = ticket.getIP()
 			logSys.info("Unban %s" % aInfo["ip"])
-			for action in self.actions:
+			for action in self.__actions:
 				action.execActionUnban(aInfo)
 	
 	##
@@ -159,13 +159,13 @@ class Actions(JailThread):
 	#
 	# Unban all IP address which are still in the banning list.
 	
-	def flushBan(self):
+	def __flushBan(self):
 		logSys.debug("Flush ban list")
-		for ticket in self.banManager.flushBanList():
+		for ticket in self.__banManager.flushBanList():
 			aInfo = dict()
 			aInfo["ip"] = ticket.getIP()
 			logSys.info("Unban %s" % aInfo["ip"])
-			for action in self.actions:
+			for action in self.__actions:
 				action.execActionUnban(aInfo)
 	
 	##
@@ -176,7 +176,7 @@ class Actions(JailThread):
 	# @return a list with tuple
 	
 	def status(self):
-		ret = [("Currently banned", self.banManager.size()),
-			   ("Total banned", self.banManager.getBanTotal())]
+		ret = [("Currently banned", self.__banManager.size()),
+			   ("Total banned", self.__banManager.getBanTotal())]
 		return ret
 		

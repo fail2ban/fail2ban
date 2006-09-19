@@ -41,14 +41,14 @@ class Fail2banReader(ConfigReader):
 	def getOptions(self):
 		opts = [["int", "loglevel", 1],
 				["string", "logtarget", "STDERR"]]
-		self.opts = ConfigReader.getOptions(self, "Definition", opts)
+		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
 	
 	def convert(self):
 		stream = list()
-		for opt in self.opts:
+		for opt in self.__opts:
 			if opt == "loglevel":
-				stream.append(["set", "loglevel", self.opts[opt]])
+				stream.append(["set", "loglevel", self.__opts[opt]])
 			elif opt == "logtarget":
-				stream.append(["set", "logtarget", self.opts[opt]])
+				stream.append(["set", "logtarget", self.__opts[opt]])
 		return stream
 	

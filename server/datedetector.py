@@ -38,9 +38,9 @@ logSys = logging.getLogger("fail2ban.filter.datedetector")
 class DateDetector:
 	
 	def __init__(self):
-		self.lock = Lock()
-		self.templates = list()
-		self.defTemplate = DateTemplate()
+		self.__lock = Lock()
+		self.__templates = list()
+		self.__defTemplate = DateTemplate()
 	
 	def addDefaultTemplate(self):
 		# standard
@@ -48,67 +48,67 @@ class DateDetector:
 		template.setName("Month Day Hour:Minute:Second")
 		template.setRegex("^\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 		template.setPattern("%b %d %H:%M:%S")
-		self.templates.append(template)
+		self.__templates.append(template)
 		# asctime
 		template = DateStrptime()
 		template.setName("Weekday Month Day Hour:Minute:Second Year")
 		template.setRegex("\S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}")
 		template.setPattern("%a %b %d %H:%M:%S %Y")
-		self.templates.append(template)
+		self.__templates.append(template)
 		# TAI64N
 		template = DateTai64n()
 		template.setName("TAI64N")
-		self.templates.append(template)
+		self.__templates.append(template)
 		# Epoch
 		template = DateEpoch()
 		template.setName("Epoch")
-		self.templates.append(template)
+		self.__templates.append(template)
 	
 	def setDefaultRegex(self, value):
-		self.defTemplate.setRegex(value)
+		self.__defTemplate.setRegex(value)
 	
 	def getDefaultRegex(self):
-		return self.defTemplate.getRegex()
+		return self.__defTemplate.getRegex()
 	
 	def setDefaultPattern(self, value):
-		self.defTemplate.setPattern(value)
+		self.__defTemplate.setPattern(value)
 	
 	def getDefaultPattern(self):
-		return self.defTemplate.getPattern()
+		return self.__defTemplate.getPattern()
 	
 	def matchTime(self, line):
-		if self.defTemplate.isValid():
-			return self.defTemplate.matchDate(line)
+		if self.__defTemplate.isValid():
+			return self.__defTemplate.matchDate(line)
 		else:
-			self.lock.acquire()
-			for template in self.templates:
+			self.__lock.acquire()
+			for template in self.__templates:
 				match = template.matchDate(line)
 				if match <> None:
-					self.lock.release()
+					self.__lock.release()
 					return match
-			self.lock.release()
+			self.__lock.release()
 			return None
 
 	def getTime(self, line):
-		if self.defTemplate.isValid():
+		if self.__defTemplate.isValid():
 			try:
-				date = self.defTemplate.getDate(line)
+				date = self.__defTemplate.getDate(line)
 				return date
 			except ValueError:
 				return None
 		else:
-			self.lock.acquire()
-			for template in self.templates:
+			self.__lock.acquire()
+			for template in self.__templates:
 				try:
 					date = template.getDate(line)
 					if date == None:
 						continue
 					template.incHits()
-					self.lock.release()
+					self.__lock.release()
 					return date
 				except ValueError:
 					pass
-			self.lock.release()
+			self.__lock.release()
 			return None
 
 	def getUnixTime(self, line):
@@ -123,8 +123,8 @@ class DateDetector:
 	# in this object and thus should be called from time to time.
 	
 	def sortTemplate(self):
-		self.lock.acquire()
+		self.__lock.acquire()
 		logSys.debug("Sorting the template list")
-		self.templates.sort(cmp = lambda x, y: cmp(x.getHits(), y.getHits()), 
+		self.__templates.sort(cmp = lambda x, y: cmp(x.getHits(), y.getHits()), 
 							reverse=True)
-		self.lock.release()
+		self.__lock.release()

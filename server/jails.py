@@ -31,73 +31,73 @@ from threading import Lock
 class Jails:
 	
 	def __init__(self):
-		self.lock = Lock()
-		self.jails = dict()
+		self.__lock = Lock()
+		self.__jails = dict()
 	
 	def add(self, name):
-		self.lock.acquire()
-		if self.jails.has_key(name):
-			self.lock.release()
+		self.__lock.acquire()
+		if self.__jails.has_key(name):
+			self.__lock.release()
 			raise DuplicateJailException(name)
 		else:
-			self.jails[name] = Jail(name)
-			self.lock.release()
+			self.__jails[name] = Jail(name)
+			self.__lock.release()
 	
 	def remove(self, name):
-		self.lock.acquire()
-		if self.jails.has_key(name):
-			del self.jails[name]
-			self.lock.release()
+		self.__lock.acquire()
+		if self.__jails.has_key(name):
+			del self.__jails[name]
+			self.__lock.release()
 		else:
-			self.lock.release()
+			self.__lock.release()
 			raise UnknownJailException(name)
 	
 	def get(self, name):
 		try:
-			self.lock.acquire()
-			if self.jails.has_key(name):
-				jail = self.jails[name]
+			self.__lock.acquire()
+			if self.__jails.has_key(name):
+				jail = self.__jails[name]
 				return jail
 			else:
 				raise UnknownJailException(name)
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	def getAction(self, name):
 		try:
-			self.lock.acquire()
-			if self.jails.has_key(name):
-				action = self.jails[name].getAction()
+			self.__lock.acquire()
+			if self.__jails.has_key(name):
+				action = self.__jails[name].getAction()
 				return action
 			else:
 				raise UnknownJailException(name)
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	def getFilter(self, name):
 		try:
-			self.lock.acquire()
-			if self.jails.has_key(name):
-				action = self.jails[name].getFilter()
+			self.__lock.acquire()
+			if self.__jails.has_key(name):
+				action = self.__jails[name].getFilter()
 				return action
 			else:
 				raise UnknownJailException(name)
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	def getAll(self):
 		try:
-			self.lock.acquire()
-			return self.jails.copy()
+			self.__lock.acquire()
+			return self.__jails.copy()
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	def size(self):
 		try:
-			self.lock.acquire()
-			return len(self.jails)
+			self.__lock.acquire()
+			return len(self.__jails)
 		finally:
-			self.lock.release()
+			self.__lock.release()
 
 
 class DuplicateJailException(Exception):

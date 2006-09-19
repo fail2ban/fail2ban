@@ -36,7 +36,7 @@ class ConfigReader(SafeConfigParser):
 	
 	def __init__(self):
 		SafeConfigParser.__init__(self)
-		self.opts = None
+		self.__opts = None
 	
 	@staticmethod
 	def setBaseDir(dir):

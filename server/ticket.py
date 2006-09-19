@@ -32,25 +32,25 @@ logSys = logging.getLogger("fail2ban")
 class Ticket:
 	
 	def __init__(self, ip, time):
-		self.ip = ip
-		self.time = time
-		self.attempt = 0
+		self.__ip = ip
+		self.__time = time
+		self.__attempt = 0
 	
 	def setIP(self, value):
-		self.ip = value
+		self.__ip = value
 	
 	def getIP(self):
-		return self.ip
+		return self.__ip
 	
 	def setTime(self, value):
-		self.time = value
+		self.__time = value
 	
 	def getTime(self):
-		return self.time
+		return self.__time
 	
 	def setAttempt(self, value):
-		self.attempt = value
+		self.__attempt = value
 	
 	def getAttempt(self):
-		return self.attempt
+		return self.__attempt
 	

@@ -35,114 +35,114 @@ logSys = logging.getLogger("fail2ban.jail")
 class Jail:
 	
 	def __init__(self, name):
-		self.lock = Lock()
-		self.name = name
-		self.queue = Queue.Queue()
+		self.__lock = Lock()
+		self.__name = name
+		self.__queue = Queue.Queue()
 		try:
 			import gamin
 			logSys.info("Gamin available. Using it instead of poller")
 			from filtergamin import FilterGamin
-			self.filter = FilterGamin(self)
+			self.__filter = FilterGamin(self)
 		except ImportError:
 			logSys.info("Gamin not available. Using poller")
 			from filterpoll import FilterPoll
-			self.filter = FilterPoll(self)
-		self.action = Actions(self)
+			self.__filter = FilterPoll(self)
+		self.__action = Actions(self)
 	
 	def setName(self, name):
-		self.lock.acquire()
-		self.name = name
-		self.lock.release()
+		self.__lock.acquire()
+		self.__name = name
+		self.__lock.release()
 	
 	def getName(self):
 		try:
-			self.lock.acquire()
-			return self.name
+			self.__lock.acquire()
+			return self.__name
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	def setFilter(self, filter):
-		self.lock.acquire()
-		self.filter = filter
-		self.lock.release()
+		self.__lock.acquire()
+		self.__filter = filter
+		self.__lock.release()
 	
 	def getFilter(self):
 		try:
-			self.lock.acquire()
-			return self.filter
+			self.__lock.acquire()
+			return self.__filter
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	def setAction(self, action):
-		self.lock.acquire()
-		self.action = action
-		self.lock.release()
+		self.__lock.acquire()
+		self.__action = action
+		self.__lock.release()
 	
 	def getAction(self):
 		try:
-			self.lock.acquire()
-			return self.action
+			self.__lock.acquire()
+			return self.__action
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	def putFailTicket(self, ticket):
-		self.lock.acquire()
-		self.queue.put(ticket)
-		self.lock.release()
+		self.__lock.acquire()
+		self.__queue.put(ticket)
+		self.__lock.release()
 	
 	def getFailTicket(self):
 		try:
-			self.lock.acquire()
+			self.__lock.acquire()
 			try:
-				return self.queue.get(False)
+				return self.__queue.get(False)
 			except Queue.Empty:
 				return False
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	def start(self):
-		self.lock.acquire()
-		self.filter.start()
-		self.action.start()
-		self.lock.release()
+		self.__lock.acquire()
+		self.__filter.start()
+		self.__action.start()
+		self.__lock.release()
 	
 	def stop(self):
-		self.lock.acquire()
-		self.filter.stop()
-		self.action.stop()
-		self.lock.release()
-		self.filter.join()
-		self.action.join()
+		self.__lock.acquire()
+		self.__filter.stop()
+		self.__action.stop()
+		self.__lock.release()
+		self.__filter.join()
+		self.__action.join()
 	
 	def isActive(self):
 		try:
-			self.lock.acquire()
-			isActive0 = self.filter.isActive()
-			isActive1 = self.action.isActive()
+			self.__lock.acquire()
+			isActive0 = self.__filter.isActive()
+			isActive1 = self.__action.isActive()
 			return isActive0 or isActive1
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	def setIdle(self, value):
-		self.lock.acquire()
-		self.filter.setIdle(value)
-		self.action.setIdle(value)
-		self.lock.release()
+		self.__lock.acquire()
+		self.__filter.setIdle(value)
+		self.__action.setIdle(value)
+		self.__lock.release()
 	
 	def getIdle(self):
 		try:
-			self.lock.acquire()
-			return self.filter.getIdle() or self.action.getIdle()
+			self.__lock.acquire()
+			return self.__filter.getIdle() or self.__action.getIdle()
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	def getStatus(self):
 		try:
-			self.lock.acquire()
-			fStatus = self.filter.status()
-			aStatus = self.action.status()
+			self.__lock.acquire()
+			fStatus = self.__filter.status()
+			aStatus = self.__action.status()
 			ret = [("filter", fStatus),
 				   ("action", aStatus)]
 			return ret
 		finally:
-			self.lock.release()
+			self.__lock.release()

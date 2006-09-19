@@ -293,7 +293,7 @@ class Filter(JailThread):
 	# and reset the position to 0 in that case. Use the log message
 	# timestamp in order to detect this.
 	
-	def setFilePos(self):
+	def __setFilePos(self):
 		line = self.crtHandler.readline()
 		lastDate = self.lastDate[self.crtFilename]
 		lineDate = self.dateDetector.getUnixTime(line)
@@ -309,7 +309,7 @@ class Filter(JailThread):
 	##
 	# Get the file position.
 	
-	def getFilePos(self):
+	def __getFilePos(self):
 		return self.crtHandler.tell()
 
 	##
@@ -319,11 +319,11 @@ class Filter(JailThread):
 	# time.time()-self.findTime. When a failure is detected, a FailTicket
 	# is created and is added to the FailManager.
 	
-	def getFailures(self, filename):
+	def __getFailures(self, filename):
 		ipList = dict()
 		logSys.debug(filename)
 		self.openLogFile(filename)
-		self.setFilePos()
+		self.__setFilePos()
 		lastLine = None
 		for line in self.crtHandler:
 			try:
@@ -347,7 +347,7 @@ class Filter(JailThread):
 					continue
 				logSys.debug("Found "+ip)
 				self.failManager.addFailure(FailTicket(ip, unixTime))
-		self.lastPos[filename] = self.getFilePos()
+		self.lastPos[filename] = self.__getFilePos()
 		if lastLine:
 			self.lastDate[filename] = self.dateDetector.getTime(lastLine)
 		self.closeLogFile()

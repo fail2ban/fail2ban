@@ -37,11 +37,11 @@ class JailThread(Thread):
 	def __init__(self, jail):
 		Thread.__init__(self)
 		## Control the state of the thread.
-		self.isRunning = False
+		self.__isRunning = False
 		## Control the idle state of the thread.
-		self.isIdle = False
+		self.__isIdle = False
 		## The time the thread sleeps in the loop.
-		self.sleepTime = 1
+		self.__sleepTime = 1
 	
 	##
 	# Set the time that the thread sleeps.
@@ -51,7 +51,7 @@ class JailThread(Thread):
 	# @param value the polling time (second)
 	
 	def setSleepTime(self, value):
-		self.sleepTime = value
+		self.__sleepTime = value
 		logSys.info("Set sleeptime = " + value)
 	
 	##
@@ -60,7 +60,7 @@ class JailThread(Thread):
 	# @return the polling time
 	
 	def getSleepTime(self):
-		return self.sleeptime
+		return self.__sleepTime
 	
 	##
 	# Set the idle flag.
@@ -69,7 +69,7 @@ class JailThread(Thread):
 	# @param value boolean value
 	
 	def setIdle(self, value):
-		self.isIdle = value
+		self.__isIdle = value
 	
 	##
 	# Get the idle state.
@@ -77,7 +77,7 @@ class JailThread(Thread):
 	# @return the idle state
 	
 	def getIdle(self):
-		return self.isIdle
+		return self.__isIdle
 	
 	##
 	# Stop the thread.
@@ -85,7 +85,7 @@ class JailThread(Thread):
 	# Stop the exection of the thread and quit.
 	
 	def stop(self):
-		self.isRunning = False
+		self.__isRunning = False
 	
 	##
 	# Set the isRunning flag.
@@ -93,7 +93,7 @@ class JailThread(Thread):
 	# @param value True if the thread is running
 	
 	def setActive(self, value):
-		self.isRunning = value
+		self.__isRunning = value
 	
 	##
 	# Check if the thread is active.
@@ -102,7 +102,7 @@ class JailThread(Thread):
 	# @return True if the thread is running
 	
 	def isActive(self):
-		return self.isRunning
+		return self.__isRunning
 	
 	##
 	# Get the status of the thread

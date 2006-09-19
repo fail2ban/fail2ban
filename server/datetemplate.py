@@ -29,42 +29,42 @@ import re, time
 class DateTemplate:
 	
 	def __init__(self):
-		self.name = ""
-		self.regex = ""
-		self.cRegex = None
-		self.pattern = ""
-		self.hits = 0
+		self.__name = ""
+		self.__regex = ""
+		self.__cRegex = None
+		self.__pattern = ""
+		self.__hits = 0
 	
 	def setName(self, name):
-		self.name = name
+		self.__name = name
 		
 	def getName(self):
-		return self.name
+		return self.__name
 	
 	def setRegex(self, regex):
-		self.regex = regex
-		self.cRegex = re.compile(regex)
+		self.__regex = regex
+		self.__cRegex = re.compile(regex)
 		
 	def getRegex(self):
-		return self.regex
+		return self.__regex
 	
 	def setPattern(self, pattern):
-		self.pattern = pattern
+		self.__pattern = pattern
 		
 	def getPattern(self):
-		return self.pattern
+		return self.__pattern
 	
 	def isValid(self):
-		return self.regex != "" and self.pattern != ""
+		return self.__regex != "" and self.__pattern != ""
 	
 	def incHits(self):
-		self.hits = self.hits + 1
+		self.__hits = self.__hits + 1
 	
 	def getHits(self):
-		return self.hits
+		return self.__hits
 	
 	def matchDate(self, line):
-		dateMatch = self.cRegex.search(line)
+		dateMatch = self.__cRegex.search(line)
 		return dateMatch
 	
 	def getDate(self, line):

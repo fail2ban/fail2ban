@@ -35,14 +35,14 @@ class JailsReader(ConfigReader):
 	
 	def __init__(self):
 		ConfigReader.__init__(self)
-		self.jails = list()
+		self.__jails = list()
 	
 	def read(self):
 		ConfigReader.read(self, "jail")
 	
 	def getOptions(self):
 		opts = []
-		self.opts = ConfigReader.getOptions(self, "Definition", opts)
+		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
 
 		for sec in self.sections():
 			jail = JailReader(sec)
@@ -51,7 +51,7 @@ class JailsReader(ConfigReader):
 			if ret:
 				if jail.isEnabled():
 					# We only add enabled jails
-					self.jails.append(jail)
+					self.__jails.append(jail)
 			else:
 				logSys.error("Errors in jail '" + sec + "'. Skipping...")
 	
@@ -62,14 +62,14 @@ class JailsReader(ConfigReader):
 	
 	def convert(self):
 		stream = list()
-		for opt in self.opts:
+		for opt in self.__opts:
 			if opt == "":
 				stream.append([])
 		# Convert jails
-		for jail in self.jails:
+		for jail in self.__jails:
 			stream.extend(jail.convert())
 		# Start jails
-		for jail in self.jails:
+		for jail in self.__jails:
 			stream.append(["start", jail.getName()])
 		
 		return stream

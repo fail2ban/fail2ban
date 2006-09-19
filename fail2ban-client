@@ -50,14 +50,14 @@ class Fail2banClient:
 	prompt = "fail2ban> "
 
 	def __init__(self):
-		self.argv = None
-		self.stream = None
-		self.conf = dict()
-		self.conf["conf"] = "/etc/fail2ban"
-		self.conf["dump"] = False
-		self.conf["force"] = False
-		self.conf["verbose"] = 2
-		self.conf["interactive"] = False
+		self.__argv = None
+		self.__stream = None
+		self.__conf = dict()
+		self.__conf["conf"] = "/etc/fail2ban"
+		self.__conf["dump"] = False
+		self.__conf["force"] = False
+		self.__conf["verbose"] = 2
+		self.__conf["interactive"] = False
 		
 	def dispVersion(self):
 		print "Fail2Ban v" + version
@@ -72,7 +72,7 @@ class Fail2banClient:
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
 		"""
-		print "Usage: "+self.argv[0]+" [OPTIONS]... <COMMAND>"
+		print "Usage: "+self.__argv[0]+" [OPTIONS]... <COMMAND>"
 		print
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
 		print "and bans the corresponding IP addresses using firewall rules."
@@ -112,22 +112,22 @@ class Fail2banClient:
 		print "and bans the corresponding IP addresses using firewall rules."
 		print 
 	
-	def getCmdLineOptions(self, optList):
+	def __getCmdLineOptions(self, optList):
 		""" Gets the command line options
 		"""
 		for opt in optList:
 			if opt[0] == "-c":
-				self.conf["conf"] = opt[1]
+				self.__conf["conf"] = opt[1]
 			elif opt[0] == "-d":
-				self.conf["dump"] = True
+				self.__conf["dump"] = True
 			elif opt[0] == "-v":
-				self.conf["verbose"] = self.conf["verbose"] + 1
+				self.__conf["verbose"] = self.__conf["verbose"] + 1
 			elif opt[0] == "-q":
-				self.conf["verbose"] = self.conf["verbose"] - 1
+				self.__conf["verbose"] = self.__conf["verbose"] - 1
 			elif opt[0] == "-x":
-				self.conf["force"] = True
+				self.__conf["force"] = True
 			elif opt[0] == "-i":
-				self.conf["interactive"] = True
+				self.__conf["interactive"] = True
 			elif opt[0] in ["-h", "--help"]:
 	 			self.dispUsage()
 	 			sys.exit(0)
@@ -135,7 +135,7 @@ class Fail2banClient:
 	 			self.dispVersion()
 	 			sys.exit(0)
 	
-	def ping(self):
+	def __ping(self):
 		return self.processCmd([["ping"]], False)
 	
 	@staticmethod
@@ -170,30 +170,30 @@ class Fail2banClient:
 	# Process one command line and exit.
 	# @param cmd the command line
 
-	def processCommand(self, cmd):
+	def __processCommand(self, cmd):
 		if len(cmd) == 1 and cmd[0] == "start":
-			if self.ping():
+			if self.__ping():
 				logSys.info("Server already running")
 				return False
 			else:
-				self.startServerAsync(self.conf["force"])
+				self.__startServerAsync(self.__conf["force"])
 				# Read the config while the server is starting
-				self.readConfig()
+				self.__readConfig()
 				try:
 					# Wait for the server to start
-					self.waitOnServer()
+					self.__waitOnServer()
 					# Configure the server
-					self.processCmd(self.stream, False)
+					self.processCmd(self.__stream, False)
 					return True
 				except ServerExecutionException:
 					logSys.error("Could not start server. Try -x option")
 					return False
 		elif len(cmd) == 1 and cmd[0] == "reload":
-			if self.ping():
-				self.readConfig()
+			if self.__ping():
+				self.__readConfig()
 				self.processCmd([['stop', 'all']], False)
 				# Configure the server
-				return self.processCmd(self.stream, False)
+				return self.processCmd(self.__stream, False)
 			else:
 				logSys.error("Could not find server")
 				return False
@@ -206,7 +206,7 @@ class Fail2banClient:
 	#
 	# Start the Fail2ban server in daemon mode.
 	
-	def startServerAsync(self, force = False):
+	def __startServerAsync(self, force = False):
 		args = list()
 		
 		args.append("fail2ban-server")
@@ -228,10 +228,10 @@ class Fail2banClient:
 					os.exit(-1)
 						
 			
-	def waitOnServer(self):
+	def __waitOnServer(self):
 		# Wait for the server to start
 		cnt = 0
-		while not self.ping():
+		while not self.__ping():
 			if cnt > 10:
 				raise ServerExecutionException("Failed to start server")
 			time.sleep(0.1)
@@ -240,20 +240,20 @@ class Fail2banClient:
 	
 	def start(self, argv):
 		# Command line options
-		self.argv = argv
+		self.__argv = argv
 		
 		# Reads the command line options.
 		try:
 			cmdOpts = 'hc:xdviqV'
 			cmdLongOpts = ['help', 'version']
-			optList, args = getopt.getopt(self.argv[1:], cmdOpts, cmdLongOpts)
+			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
 			self.dispUsage()
 			return False
 			
-		self.getCmdLineOptions(optList)
+		self.__getCmdLineOptions(optList)
 		
-		verbose = self.conf["verbose"]
+		verbose = self.__conf["verbose"]
 		if verbose <= 0:
 			logSys.setLevel(logging.ERROR)
 		elif verbose == 1:
@@ -270,17 +270,17 @@ class Fail2banClient:
 		stdout.setFormatter(formatter)
 		logSys.addHandler(stdout)
 
-		if self.conf["dump"]:
-			self.readConfig()
-			self.dumpConfig(self.stream)
+		if self.__conf["dump"]:
+			self.__readConfig()
+			self.dumpConfig(self.__stream)
 			return True
 		
 		# Interactive mode
-		if self.conf["interactive"]:
+		if self.__conf["interactive"]:
 			try:
 				ret = True
 				if len(args) > 0:
-					ret = self.processCommand(args)
+					ret = self.__processCommand(args)
 				if ret:
 					readline.parse_and_bind("tab: complete")
 					self.dispInteractive()
@@ -290,7 +290,7 @@ class Fail2banClient:
 							# Exit
 							return True
 						if not cmd == "":
-							self.processCommand(shlex.split(cmd))
+							self.__processCommand(shlex.split(cmd))
 			except (EOFError, KeyboardInterrupt):
 				print
 				return True
@@ -299,16 +299,16 @@ class Fail2banClient:
 			if len(args) < 1:
 				self.dispUsage()
 				return False
-			return self.processCommand(args)
+			return self.__processCommand(args)
 
-	def readConfig(self):
+	def __readConfig(self):
 		# Read the configuration
 		cfg = Configurator()
-		cfg.setBaseDir(self.conf["conf"])
+		cfg.setBaseDir(self.__conf["conf"])
 		cfg.readAll()
 		cfg.getAllOptions()
 		cfg.convertToProtocol()
-		self.stream = cfg.getConfigStream()
+		self.__stream = cfg.getConfigStream()
 	
 	@staticmethod
 	def dumpConfig(cmd):

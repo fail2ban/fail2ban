@@ -53,7 +53,7 @@ class FilterPoll(Filter):
 	def __init__(self, jail):
 		Filter.__init__(self, jail)
 		
-		self.file404Cnt = dict()
+		self.__file404Cnt = dict()
 		
 		logSys.info("Created FilterPoll")
 
@@ -64,15 +64,15 @@ class FilterPoll(Filter):
 
 	def addLogPath(self, path):
 		try:
-			self.logPath.index(path)
+			self.getLogPath().index(path)
 			logSys.error(path + " already exists")
 		except ValueError:
-			self.logPath.append(path)
+			self.getLogPath().append(path)
 			# Initialize default values
 			self.lastDate[path] = 0
 			self.lastModTime[path] = 0
 			self.lastPos[path] = 0
-			self.file404Cnt[path] = 0
+			self.__file404Cnt[path] = 0
 			logSys.info("Added logfile = %s" % path)
 	
 	##
@@ -82,11 +82,11 @@ class FilterPoll(Filter):
 	
 	def delLogPath(self, path):
 		try:
-			self.logPath.remove(path)
+			self.getLogPath().remove(path)
 			del self.lastDate[path]
 			del self.lastModTime[path]
 			del self.lastPos[path]
-			del self.file404Cnt[path]
+			del self.__file404Cnt[path]
 			logSys.info("Removed logfile = %s" % path)
 		except ValueError:
 			logSys.error(path + " is not monitored")
@@ -102,11 +102,11 @@ class FilterPoll(Filter):
 	def run(self):
 		self.setActive(True)
 		while self.isActive():
-			if not self.isIdle:
+			if not self.getIdle():
 				# Get file modification
-				for file in self.logPath:
+				for file in self.getLogPath():
 					if self.isModified(file):
-						self.getFailures(file)
+						self.__getFailures(file)
 						prevModified = True
 
 				if self.modified:
@@ -117,9 +117,9 @@ class FilterPoll(Filter):
 						self.failManager.cleanup(time.time())
 					self.dateDetector.sortTemplate()
 					prevModified = False
-				time.sleep(self.sleepTime)
+				time.sleep(self.getSleepTime())
 			else:
-				time.sleep(self.sleepTime)
+				time.sleep(self.getSleepTime())
 		logSys.debug(self.jail.getName() + ": filter terminated")
 		return True
 
@@ -132,7 +132,7 @@ class FilterPoll(Filter):
 	def isModified(self, filename):
 		try:
 			logStats = os.stat(filename)
-			self.file404Cnt[filename] = 0
+			self.__file404Cnt[filename] = 0
 			if self.lastModTime[filename] == logStats.st_mtime:
 				return False
 			else:
@@ -141,9 +141,9 @@ class FilterPoll(Filter):
 				return True
 		except OSError:
 			logSys.error("Unable to get stat on " + filename)
-			self.file404Cnt[filename] = self.file404Cnt[filename] + 1
-			if self.file404Cnt[filename] > 2:
+			self.__file404Cnt[filename] = self.__file404Cnt[filename] + 1
+			if self.__file404Cnt[filename] > 2:
 				logSys.warn("Too much read error. Set the jail idle")
 				self.jail.setIdle(True)
-				self.file404Cnt[filename] = 0
+				self.__file404Cnt[filename] = 0
 			return False
