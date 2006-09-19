@@ -282,7 +282,7 @@ class Filter(JailThread):
 	##
 	# Close the log file.
 	
-	def closeLogFile(self):
+	def __closeLogFile(self):
 		self.crtFilename = None
 		self.crtHandler.close()
 
@@ -319,7 +319,7 @@ class Filter(JailThread):
 	# time.time()-self.findTime. When a failure is detected, a FailTicket
 	# is created and is added to the FailManager.
 	
-	def __getFailures(self, filename):
+	def getFailures(self, filename):
 		ipList = dict()
 		logSys.debug(filename)
 		self.openLogFile(filename)
@@ -350,7 +350,7 @@ class Filter(JailThread):
 		self.lastPos[filename] = self.__getFilePos()
 		if lastLine:
 			self.lastDate[filename] = self.dateDetector.getTime(lastLine)
-		self.closeLogFile()
+		self.__closeLogFile()
 
 	##
 	# Finds the failure in a line.
