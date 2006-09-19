@@ -64,6 +64,9 @@ class DateDetector:
 		template.setName("Epoch")
 		self.__templates.append(template)
 	
+	def getTemplates(self):
+		return self.__templates
+	
 	def setDefaultRegex(self, value):
 		self.__defTemplate.setRegex(value)
 	

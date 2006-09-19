@@ -68,7 +68,7 @@ class Fail2banRegex:
 			print "IP  :" + ipList
 			print
 			print "Date template hits:"
-			for template in self.__filter.dateDetector.templates:
+			for template in self.__filter.dateDetector.getTemplates():
 				print `template.getHits()` + " hit: " + template.getName()
 			print
 			print "Benchmark. Executing 1000..."
