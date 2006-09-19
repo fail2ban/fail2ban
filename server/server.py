@@ -34,21 +34,21 @@ logSys = logging.getLogger("fail2ban.server")
 class Server:
 	
 	def __init__(self, daemon = False):
-		self.jails = Jails()
-		self.daemon = daemon
-		self.transm = Transmitter(self)
-		self.logLevel = 3
-		self.logTarget = "STDOUT"
+		self.__jails = Jails()
+		self.__daemon = daemon
+		self.__transm = Transmitter(self)
+		self.__logLevel = 3
+		self.__logTarget = "STDOUT"
 		# Set logging level
-		self.setLogLevel(self.logLevel)
-		self.setLogTarget(self.logTarget)
+		self.setLogLevel(self.__logLevel)
+		self.setLogTarget(self.__logTarget)
 	
 	def start(self, force):
 		logSys.info("Starting Fail2ban")
 		# First set the mask to only allow access to owner
 		os.umask(0077)
-		if self.daemon:
-			ret = self.createDaemon()
+		if self.__daemon:
+			ret = self.__createDaemon()
 			if ret:
 				logSys.info("Daemon started")
 			else:
@@ -56,166 +56,166 @@ class Server:
 				raise ServerInitializationError("Could not create daemon")
 		# Start the communication
 		logSys.debug("Starting communication")
-		self.transm.start(force)
+		self.__transm.start(force)
 		logSys.info("Exiting Fail2ban")
 	
 	def quit(self):
 		self.stopAllJail()
-		self.transm.stop()
+		self.__transm.stop()
 	
 	def addJail(self, name):
-		self.jails.add(name)
+		self.__jails.add(name)
 		
 	def delJail(self, name):
-		self.jails.remove(name)
+		self.__jails.remove(name)
 	
 	def startJail(self, name):
 		if not self.isActive(name):
-			self.jails.get(name).start()
+			self.__jails.get(name).start()
 	
 	def stopJail(self, name):
 		if self.isActive(name):
-			self.jails.get(name).stop()
+			self.__jails.get(name).stop()
 			self.delJail(name)
 	
 	def stopAllJail(self):
-		for jail in self.jails.getAll():
+		for jail in self.__jails.getAll():
 			self.stopJail(jail)
 	
 	def isActive(self, name):
-		return self.jails.get(name).isActive()
+		return self.__jails.get(name).isActive()
 	
 	def setIdleJail(self, name, value):
-		self.jails.get(name).setIdle(value)
+		self.__jails.get(name).setIdle(value)
 		return True
 
 	def getIdleJail(self, name):
-		return self.jails.get(name).getIdle()
+		return self.__jails.get(name).getIdle()
 	
 	# Filter
 	def addIgnoreIP(self, name, ip):
-		self.jails.getFilter(name).addIgnoreIP(ip)
+		self.__jails.getFilter(name).addIgnoreIP(ip)
 	
 	def delIgnoreIP(self, name, ip):
-		self.jails.getFilter(name).delIgnoreIP(ip)
+		self.__jails.getFilter(name).delIgnoreIP(ip)
 	
 	def getIgnoreIP(self, name):
-		return self.jails.getFilter(name).getIgnoreIP()
+		return self.__jails.getFilter(name).getIgnoreIP()
 	
 	def addLogPath(self, name, file):
-		self.jails.getFilter(name).addLogPath(file)
+		self.__jails.getFilter(name).addLogPath(file)
 	
 	def delLogPath(self, name, file):
-		self.jails.getFilter(name).delLogPath(file)
+		self.__jails.getFilter(name).delLogPath(file)
 	
 	def getLogPath(self, name):
-		return self.jails.getFilter(name).getLogPath()
+		return self.__jails.getFilter(name).getLogPath()
 	
 	def setTimeRegex(self, name, value):
-		self.jails.getFilter(name).setTimeRegex(value)
+		self.__jails.getFilter(name).setTimeRegex(value)
 	
 	def getTimeRegex(self, name):
-		return self.jails.getFilter(name).getTimeRegex()
+		return self.__jails.getFilter(name).getTimeRegex()
 
 	def setTimePattern(self, name, value):
-		self.jails.getFilter(name).setTimePattern(value)
+		self.__jails.getFilter(name).setTimePattern(value)
 	
 	def getTimePattern(self, name):
-		return self.jails.getFilter(name).getTimePattern()
+		return self.__jails.getFilter(name).getTimePattern()
 	
 	def setFindTime(self, name, value):
-		self.jails.getFilter(name).setFindTime(value)
+		self.__jails.getFilter(name).setFindTime(value)
 	
 	def getFindTime(self):
-		return self.jails.getFilter(name).getFindTime()
+		return self.__jails.getFilter(name).getFindTime()
 
 	def setFailRegex(self, name, value):
-		self.jails.getFilter(name).setFailRegex(value)
+		self.__jails.getFilter(name).setFailRegex(value)
 	
 	def getFailRegex(self, name):
-		return self.jails.getFilter(name).getFailRegex()
+		return self.__jails.getFilter(name).getFailRegex()
 	
 	def setMaxRetry(self, name, value):
-		self.jails.getFilter(name).setMaxRetry(value)
+		self.__jails.getFilter(name).setMaxRetry(value)
 	
 	def getMaxRetry(self, name):
-		return self.jails.getFilter(name).getMaxRetry()
+		return self.__jails.getFilter(name).getMaxRetry()
 	
 	def setMaxTime(self, name, value):
-		self.jails.getFilter(name).setMaxTime(value)
+		self.__jails.getFilter(name).setMaxTime(value)
 	
 	def getMaxTime(self, name):
-		return self.jails.getFilter(name).getMaxTime()
+		return self.__jails.getFilter(name).getMaxTime()
 	
 	# Action
 	def addAction(self, name, value):
-		self.jails.getAction(name).addAction(value)
+		self.__jails.getAction(name).addAction(value)
 	
 	def getLastAction(self, name):
-		return self.jails.getAction(name).getLastAction()
+		return self.__jails.getAction(name).getLastAction()
 	
 	def delAction(self, name, value):
-		self.jails.getAction(name).delAction(value)
+		self.__jails.getAction(name).delAction(value)
 	
 	def setCInfo(self, name, action, key, value):
-		self.jails.getAction(name).getAction(action).setCInfo(key, value)
+		self.__jails.getAction(name).getAction(action).setCInfo(key, value)
 	
 	def getCInfo(self, name, action, key):
-		return self.jails.getAction(name).getAction(action).getCInfo(key)
+		return self.__jails.getAction(name).getAction(action).getCInfo(key)
 	
 	def delCInfo(self, name, action, key):
-		self.jails.getAction(name).getAction(action).delCInfo(key)
+		self.__jails.getAction(name).getAction(action).delCInfo(key)
 	
 	def setBanTime(self, name, value):
-		self.jails.getAction(name).setBanTime(value)
+		self.__jails.getAction(name).setBanTime(value)
 	
 	def getBanTime(self, name):
-		return self.jails.getAction(name).getBanTime()
+		return self.__jails.getAction(name).getBanTime()
 	
 	def setActionStart(self, name, action, value):
-		self.jails.getAction(name).getAction(action).setActionStart(value)
+		self.__jails.getAction(name).getAction(action).setActionStart(value)
 	
 	def getActionStart(self, name, action):
-		return self.jails.getAction(name).getAction(action).getActionStart()
+		return self.__jails.getAction(name).getAction(action).getActionStart()
 		
 	def setActionStop(self, name, action, value):
-		self.jails.getAction(name).getAction(action).setActionStop(value)
+		self.__jails.getAction(name).getAction(action).setActionStop(value)
 	
 	def getActionStop(self, name, action):
-		return self.jails.getAction(name).getAction(action).getActionStop()
+		return self.__jails.getAction(name).getAction(action).getActionStop()
 	
 	def setActionCheck(self, name, action, value):
-		self.jails.getAction(name).getAction(action).setActionCheck(value)
+		self.__jails.getAction(name).getAction(action).setActionCheck(value)
 	
 	def getActionCheck(self, name, action):
-		return self.jails.getAction(name).getAction(action).getActionCheck()
+		return self.__jails.getAction(name).getAction(action).getActionCheck()
 	
 	def setActionBan(self, name, action, value):
-		self.jails.getAction(name).getAction(action).setActionBan(value)
+		self.__jails.getAction(name).getAction(action).setActionBan(value)
 	
 	def getActionBan(self, name, action):
-		return self.jails.getAction(name).getAction(action).getActionBan()
+		return self.__jails.getAction(name).getAction(action).getActionBan()
 	
 	def setActionUnban(self, name, action, value):
-		self.jails.getAction(name).getAction(action).setActionUnban(value)
+		self.__jails.getAction(name).getAction(action).setActionUnban(value)
 	
 	def getActionUnban(self, name, action):
-		return self.jails.getAction(name).getAction(action).getActionUnban()
+		return self.__jails.getAction(name).getAction(action).getActionUnban()
 		
 	# Status
 	def status(self):
 		jailList = ''
-		for jail in self.jails.getAll():
+		for jail in self.__jails.getAll():
 			jailList += jail + ', '
 		length = len(jailList)
 		if not length == 0:
 			jailList = jailList[:length-2]
-		ret = [("Number of jail", self.jails.size()), 
+		ret = [("Number of jail", self.__jails.size()), 
 			   ("Jail list", jailList)]
 		return ret
 	
 	def statusJail(self, name):
-		return self.jails.get(name).getStatus()
+		return self.__jails.get(name).getStatus()
 	
 	# Logging
 	
@@ -231,7 +231,7 @@ class Server:
 	# @param value the level
 	
 	def setLogLevel(self, value):
-		self.logLevel = value
+		self.__logLevel = value
 		logLevel = logging.DEBUG
 		if value == 0:
 			logLevel = logging.FATAL
@@ -250,12 +250,12 @@ class Server:
 	# @return the log level
 	
 	def getLogLevel(self):
-		return self.logLevel
+		return self.__logLevel
 	
 	def setLogTarget(self, target):
 		# Remove previous handler
 		logging.getLogger("fail2ban").handlers = []
-		self.logTarget = target
+		self.__logTarget = target
 		if target == "SYSLOG":
 			hdlr = logging.handlers.SysLogHandler()
 		elif target == "STDOUT":
@@ -278,9 +278,9 @@ class Server:
 		return True
 	
 	def getLogTarget(self):
-		return self.logTarget
+		return self.__logTarget
 	
-	def createDaemon(self):
+	def __createDaemon(self):
 		""" Detach a process from the controlling terminal and run it in the
 			background as a daemon.
 		

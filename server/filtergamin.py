@@ -61,7 +61,7 @@ class FilterGamin(Filter):
 		logSys.debug("Got event: " + `event` + " for " + path)
 		if event in (gamin.GAMCreated, gamin.GAMChanged, gamin.GAMExists):
 			logSys.debug("File changed: " + path)
-			self.getFailures(path)
+			self.__getFailures(path)
 			self.modified = True
 
 
@@ -72,11 +72,11 @@ class FilterGamin(Filter):
 
 	def addLogPath(self, path):
 		try:
-			self.logPath.index(path)
+			self.getLogPath().index(path)
 			logSys.error(path + " already exists")
 		except ValueError:
 			self.monitor.watch_file(path, self.callback)
-			self.logPath.append(path)
+			self.getLogPath().append(path)
 			# Initialize default values
 			self.lastDate[path] = 0
 			self.lastModTime[path] = 0
@@ -91,7 +91,7 @@ class FilterGamin(Filter):
 	def delLogPath(self, path):
 		try:
 			self.monitor.stop_watch(path)
-			self.logPath.remove(path)
+			self.getLogPath().remove(path)
 			del self.lastDate[path]
 			del self.lastModTime[path]
 			del self.lastPos[path]
@@ -110,7 +110,7 @@ class FilterGamin(Filter):
 	def run(self):
 		self.setActive(True)
 		while self.isActive():
-			if not self.isIdle:
+			if not self.getIdle():
 				# We cannot block here because we want to be able to
 				# exit.
 				if self.monitor.event_pending():
@@ -124,8 +124,8 @@ class FilterGamin(Filter):
 						self.failManager.cleanup(time.time())
 					self.dateDetector.sortTemplate()
 					self.modified = False
-				time.sleep(self.sleepTime)
+				time.sleep(self.getSleepTime())
 			else:
-				time.sleep(self.sleepTime)
+				time.sleep(self.getSleepTime())
 		logSys.debug(self.jail.getName() + ": filter terminated")
 		return True

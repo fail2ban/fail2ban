@@ -39,34 +39,34 @@ logSys = logging.getLogger("fail2ban.actions.action")
 class Action:
 	
 	def __init__(self, name):
-		self.name = name
-		self.cInfo = dict()
+		self.__name = name
+		self.__cInfo = dict()
 		## Command executed in order to initialize the system.
-		self.actionStart = ''
+		self.__actionStart = ''
 		## Command executed when an IP address gets banned.
-		self.actionBan = ''
+		self.__actionBan = ''
 		## Command executed when an IP address gets removed.
-		self.actionUnban = ''
+		self.__actionUnban = ''
 		## Command executed in order to check requirements.
-		self.actionCheck = ''
+		self.__actionCheck = ''
 		## Command executed in order to stop the system.
-		self.actionStop = ''
+		self.__actionStop = ''
 		logSys.debug("Created Action")
 	
 	def setName(self, name):
-		self.name = name
+		self.__name = name
 	
 	def getName(self):
-		return self.name
+		return self.__name
 	
 	def setCInfo(self, key, value):
-		self.cInfo[key] = value
+		self.__cInfo[key] = value
 	
 	def getCInfo(self, key):
-		return self.cInfo[key]
+		return self.__cInfo[key]
 	
 	def delCInfo(self, key):
-		del self.cInfo[key]
+		del self.__cInfo[key]
 	
 	##
 	# Set the "start" command.
@@ -74,7 +74,7 @@ class Action:
 	# @param value the command
 		
 	def setActionStart(self, value):
-		self.actionStart = value
+		self.__actionStart = value
 		logSys.info("Set actionStart = %s" % value)
 	
 	##
@@ -83,10 +83,10 @@ class Action:
 	# @return the command
 	
 	def getActionStart(self):
-		return self.actionStart
+		return self.__actionStart
 	
 	def execActionStart(self):
-		startCmd = Action.replaceTag(self.actionStart, self.cInfo)
+		startCmd = Action.replaceTag(self.__actionStart, self.__cInfo)
 		return Action.executeCmd(startCmd)
 	
 	##
@@ -95,7 +95,7 @@ class Action:
 	# @param value the command
 	
 	def setActionBan(self, value):
-		self.actionBan = value
+		self.__actionBan = value
 		logSys.info("Set actionBan = %s" % value)
 	
 	##
@@ -104,10 +104,10 @@ class Action:
 	# @return the command
 	
 	def getActionBan(self):
-		return self.actionBan
+		return self.__actionBan
 	
 	def execActionBan(self, aInfo):
-		return self.processCmd(self.actionBan, aInfo);
+		return self.__processCmd(self.__actionBan, aInfo);
 	
 	##
 	# Set the "unban" command.
@@ -115,7 +115,7 @@ class Action:
 	# @param value the command
 	
 	def setActionUnban(self, value):
-		self.actionUnban = value
+		self.__actionUnban = value
 		logSys.info("Set actionUnban = %s" % value)
 	
 	##
@@ -124,10 +124,10 @@ class Action:
 	# @return the command
 	
 	def getActionUnban(self):
-		return self.actionUnban
+		return self.__actionUnban
 	
 	def execActionUnban(self, aInfo):
-		return self.processCmd(self.actionUnban, aInfo);
+		return self.__processCmd(self.__actionUnban, aInfo);
 	
 	##
 	# Set the "check" command.
@@ -135,7 +135,7 @@ class Action:
 	# @param value the command
 	
 	def setActionCheck(self, value):
-		self.actionCheck = value
+		self.__actionCheck = value
 		logSys.info("Set actionCheck = %s" % value)
 	
 	##
@@ -144,7 +144,7 @@ class Action:
 	# @return the command
 	
 	def getActionCheck(self):
-		return self.actionCheck
+		return self.__actionCheck
 	
 	##
 	# Set the "stop" command.
@@ -152,7 +152,7 @@ class Action:
 	# @param value the command
 	
 	def setActionStop(self, value):
-		self.actionStop = value
+		self.__actionStop = value
 		logSys.info("Set actionStop = %s" % value)
 	
 	##
@@ -161,10 +161,10 @@ class Action:
 	# @return the command
 	
 	def getActionStop(self):
-		return self.actionStop
+		return self.__actionStop
 	
 	def execActionStop(self):
-		stopCmd = Action.replaceTag(self.actionStop, self.cInfo)
+		stopCmd = Action.replaceTag(self.__actionStop, self.__cInfo)
 		return Action.executeCmd(stopCmd)
 	
 	@staticmethod
@@ -178,20 +178,20 @@ class Action:
 		string = string.replace("<br>", '\n')
 		return string
 	
-	def processCmd(self, cmd, aInfo = None):
+	def __processCmd(self, cmd, aInfo = None):
 		""" Executes an OS command.
 		"""
 		if cmd == "":
 			logSys.debug("Nothing to do")
 			return True
 		
-		checkCmd = Action.replaceTag(self.actionCheck, self.cInfo)
+		checkCmd = Action.replaceTag(self.__actionCheck, self.__cInfo)
 		if not Action.executeCmd(checkCmd):
 			logSys.error("Invariant check failed. Trying to restore a sane" +
 						 " environment")
-			stopCmd = Action.replaceTag(self.actionStop, self.cInfo)
+			stopCmd = Action.replaceTag(self.__actionStop, self.__cInfo)
 			Action.executeCmd(stopCmd)
-			startCmd = Action.replaceTag(self.actionStart, self.cInfo)
+			startCmd = Action.replaceTag(self.__actionStart, self.__cInfo)
 			Action.executeCmd(startCmd)
 			if not Action.executeCmd(checkCmd):
 				logSys.fatal("Unable to restore environment")
@@ -204,7 +204,7 @@ class Action:
 			realCmd = cmd
 		
 		# Replace static fields
-		realCmd = Action.replaceTag(realCmd, self.cInfo)
+		realCmd = Action.replaceTag(realCmd, self.__cInfo)
 		
   		return Action.executeCmd(realCmd)
 

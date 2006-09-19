@@ -37,7 +37,7 @@ from server.filter import Filter
 class Fail2banRegex:
 	
 	def __init__(self):
-		self.filter = Filter(None)
+		self.__filter = Filter(None)
 	
 	def dispUsage(self):
 		print "Usage: "+sys.argv[0]+" <logline> <failregex>"
@@ -46,12 +46,12 @@ class Fail2banRegex:
 		print "and bans the corresponding IP addresses using firewall rules."
 	
 	def setRegex(self, value):
-		self.filter.setFailRegex(value)
+		self.__filter.setFailRegex(value)
 	
 	def testRegex(self, line):
 		print
 		try:
-			ret = self.filter.findFailure(line)
+			ret = self.__filter.findFailure(line)
 		except IndexError:
 			print "Sorry, but no <host> found in regex"
 			return False
@@ -68,7 +68,7 @@ class Fail2banRegex:
 			print "IP  :" + ipList
 			print
 			print "Date template hits:"
-			for template in self.filter.dateDetector.templates:
+			for template in self.__filter.dateDetector.templates:
 				print `template.getHits()` + " hit: " + template.getName()
 			print
 			print "Benchmark. Executing 1000..."
@@ -80,7 +80,7 @@ class Fail2banRegex:
 			minPos = 0
 			for i in range(1000):
 				start = time.time()
-				ret = self.filter.findFailure(line)
+				ret = self.__filter.findFailure(line)
 				end = time.time()
 				diff = (end - start) * 1000
 				total = total + diff

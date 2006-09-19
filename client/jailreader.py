@@ -39,21 +39,21 @@ class JailReader(ConfigReader):
 	
 	def __init__(self, name):
 		ConfigReader.__init__(self)
-		self.name = name
-		self.filter = None
-		self.actions = list()
+		self.__name = name
+		self.__filter = None
+		self.__actions = list()
 	
 	def setName(self, value):
-		self.name = value
+		self.__name = value
 	
 	def getName(self):
-		return self.name
+		return self.__name
 	
 	def read(self):
 		ConfigReader.read(self, "jail")
 	
 	def isEnabled(self):
-		return self.opts["enabled"]
+		return self.__opts["enabled"]
 	
 	def getOptions(self):
 		opts = [["bool", "enabled", "false"],
@@ -64,27 +64,27 @@ class JailReader(ConfigReader):
 				["string", "ignoreip", None],
 				["string", "filter", ""],
 				["string", "action", ""]]
-		self.opts = ConfigReader.getOptions(self, self.name, opts)
+		self.__opts = ConfigReader.getOptions(self, self.__name, opts)
 		
 		if self.isEnabled():
 			# Read filter
-			self.filter = FilterReader(self.opts["filter"], self.name)
-			ret = self.filter.read()
+			self.__filter = FilterReader(self.__opts["filter"], self.__name)
+			ret = self.__filter.read()
 			if ret:
-				self.filter.getOptions(self.opts)
+				self.__filter.getOptions(self.__opts)
 			else:
 				logSys.error("Unable to read the filter")
 				return False
 			
 			# Read action
-			for act in self.opts["action"].split('\n'):
+			for act in self.__opts["action"].split('\n'):
 				try:
 					splitAct = JailReader.splitAction(act)
-					action = ActionReader(splitAct, self.name)
+					action = ActionReader(splitAct, self.__name)
 					ret = action.read()
 					if ret:
-						action.getOptions(self.opts)
-						self.actions.append(action)
+						action.getOptions(self.__opts)
+						self.__actions.append(action)
 					else:
 						raise AttributeError("Unable to read action")
 				except AttributeError, e:
@@ -94,24 +94,24 @@ class JailReader(ConfigReader):
 		return True
 	
 	def convert(self):
-		stream = [["add", self.name]]
-		for opt in self.opts:
+		stream = [["add", self.__name]]
+		for opt in self.__opts:
 			if opt == "logpath":
-				pathList = glob.glob(self.opts[opt])
+				pathList = glob.glob(self.__opts[opt])
 				if len(pathList) == 0:
-					logSys.error("No file found for " + self.opts[opt])
+					logSys.error("No file found for " + self.__opts[opt])
 				for path in pathList:
-					stream.append(["set", self.name, "addlogpath", path])
+					stream.append(["set", self.__name, "addlogpath", path])
 			elif opt == "maxretry":
-				stream.append(["set", self.name, "maxretry", self.opts[opt]])
+				stream.append(["set", self.__name, "maxretry", self.__opts[opt]])
 			elif opt == "ignoreip":
-				stream.append(["set", self.name, "addignoreip", self.opts[opt]])
+				stream.append(["set", self.__name, "addignoreip", self.__opts[opt]])
 			elif opt == "maxtime":
-				stream.append(["set", self.name, "maxtime", self.opts[opt]])
+				stream.append(["set", self.__name, "maxtime", self.__opts[opt]])
 			elif opt == "bantime":
-				stream.append(["set", self.name, "bantime", self.opts[opt]])
-		stream.extend(self.filter.convert())
-		for action in self.actions:
+				stream.append(["set", self.__name, "bantime", self.__opts[opt]])
+		stream.extend(self.__filter.convert())
+		for action in self.__actions:
 			stream.extend(action.convert())
 		return stream
 	

@@ -40,17 +40,17 @@ logSys = logging.getLogger("fail2ban.client.config")
 class Beautifier:
 	
 	def __init__(self, cmd = None):
-		self.inputCmd = cmd
+		self.__inputCmd = cmd
 
 	def setInputCmd(self, cmd):
-		self.inputCmd = cmd
+		self.__inputCmd = cmd
 		
 	def getInputCmd(self):
-		return self.inputCmd
+		return self.__inputCmd
 		
 	def beautify(self, response):
-		logSys.debug("Beautify " + `response` + " with " + `self.inputCmd`)
-		inC = self.inputCmd
+		logSys.debug("Beautify " + `response` + " with " + `self.__inputCmd`)
+		inC = self.__inputCmd
 		msg = response
 		try:
 			if inC[0] == "start":
@@ -110,13 +110,13 @@ class Beautifier:
 					msg = msg + "`- " + response[len(response)-1]				
 		except Exception:
 			logSys.warn("Beautifier error. Please report the error")
-			logSys.error("Beautify " + `response` + " with " + `self.inputCmd` +
+			logSys.error("Beautify " + `response` + " with " + `self.__inputCmd` +
 						 " failed")
 			msg = msg + `response`
 		return msg
 
 	def beautifyError(self, response):
-		logSys.debug("Beautify (error) " + `response` + " with " + `self.inputCmd`)
+		logSys.debug("Beautify (error) " + `response` + " with " + `self.__inputCmd`)
 		msg = response
 		if isinstance(response, UnknownJailException):
 			msg = "Sorry but the jail '" + response[0] + "' does not exist"

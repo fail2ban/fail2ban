@@ -32,22 +32,22 @@ logSys = logging.getLogger("fail2ban")
 class FailData:
 	
 	def __init__(self):
-		self.retry = 0
-		self.lastTime = 0
+		self.__retry = 0
+		self.__lastTime = 0
 	
 	def setRetry(self, value):
-		self.retry = value
+		self.__retry = value
 	
 	def getRetry(self):
-		return self.retry
+		return self.__retry
 	
 	def inc(self):
-		self.retry += 1
+		self.__retry += 1
 	
 	def setLastTime(self, value):
-		if value > self.lastTime:
-			self.lastTime = value
+		if value > self.__lastTime:
+			self.__lastTime = value
 	
 	def getLastTime(self):
-		return self.lastTime
+		return self.__lastTime
 	

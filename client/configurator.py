@@ -35,10 +35,10 @@ logSys = logging.getLogger("fail2ban.client.config")
 class Configurator:
 	
 	def __init__(self):
-		self.settings = dict()
-		self.streams = dict()
-		self.fail2ban = Fail2banReader()
-		self.jails = JailsReader()
+		self.__settings = dict()
+		self.__streams = dict()
+		self.__fail2ban = Fail2banReader()
+		self.__jails = JailsReader()
 	
 	def setBaseDir(self, dir):
 		ConfigReader.setBaseDir(dir)
@@ -47,22 +47,22 @@ class Configurator:
 		return ConfigReader.getBaseDir()
 	
 	def readAll(self):
-		self.fail2ban.read()
-		self.jails.read()
+		self.__fail2ban.read()
+		self.__jails.read()
 	
 	def getAllOptions(self):
-		self.settings["general"] = self.fail2ban.getOptions()
-		self.settings["jails"] = self.jails.getOptions()
+		self.__settings["general"] = self.__fail2ban.getOptions()
+		self.__settings["jails"] = self.__jails.getOptions()
 		
 	def convertToProtocol(self):
-		self.streams["general"] = self.fail2ban.convert()
-		self.streams["jails"] = self.jails.convert()
+		self.__streams["general"] = self.__fail2ban.convert()
+		self.__streams["jails"] = self.__jails.convert()
 	
 	def getConfigStream(self):
 		cmds = list()
-		for opt in self.streams["general"]:
+		for opt in self.__streams["general"]:
 			cmds.append(opt)
-		for opt in self.streams["jails"]:
+		for opt in self.__streams["jails"]:
 			cmds.append(opt)
 		return cmds
 	

@@ -37,7 +37,7 @@ class DateStrptime(DateTemplate):
 		date = None
 		dateMatch = self.matchDate(line)
 		if dateMatch:
-			date = list(time.strptime(dateMatch.group(), self.pattern))
+			date = list(time.strptime(dateMatch.group(), self.getPattern()))
 			if date[0] < 2000:
 				# There is probably no year field in the logs
 				date[0] = time.gmtime()[0]

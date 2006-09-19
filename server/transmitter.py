@@ -35,9 +35,9 @@ logSys = logging.getLogger("fail2ban.comm")
 class Transmitter:
 	
 	def __init__(self, server):
-		self.lock = Lock()
-		self.server = server
-		self.socket = SSocket(self)
+		self.__lock = Lock()
+		self.__server = server
+		self.__socket = SSocket(self)
 	
 	##
 	# Start the transmittion server.
@@ -46,14 +46,14 @@ class Transmitter:
 	
 	def start(self, force):
 		try:
-			self.lock.acquire()
-			self.socket.initialize(force)
-			self.socket.start()
-			self.lock.release()
-			self.socket.join()
+			self.__lock.acquire()
+			self.__socket.initialize(force)
+			self.__socket.start()
+			self.__lock.release()
+			self.__socket.join()
 		except SSocketErrorException:
 			logSys.error("Could not start server")
-			self.lock.release()
+			self.__lock.release()
 	
 	##
 	# Stop the transmitter.
@@ -62,224 +62,224 @@ class Transmitter:
 	# happen which disappear when using join() in this function.
 	
 	def stop(self):
-		self.socket.stop()
-		self.socket.join()
+		self.__socket.stop()
+		self.__socket.join()
 		
 	def proceed(self, action):
 		# Deserialize object
 		try:
-			self.lock.acquire()
+			self.__lock.acquire()
 			logSys.debug("Action: " + `action`)
 			try:
-				ret = self.actionHandler(action)
+				ret = self.__actionHandler(action)
 				ack = 0, ret
 			except Exception, e:
 				logSys.warn("Invalid command: " + `action`)
 				ack = 1, e
 			return ack
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	##
 	# Handle an action.
 	#
 	# 
 	
-	def actionHandler(self, action):
+	def __actionHandler(self, action):
 		if action[0] == "ping":
 			return "pong"
 		elif action[0] == "add":
 			name = action[1]
 			if name == "all":
 				raise Exception("Reserved name")
-			self.server.addJail(name)
+			self.__server.addJail(name)
 			return name
 		elif action[0] == "start":
 			name = action[1]
-			self.server.startJail(name)
+			self.__server.startJail(name)
 			return None
 		elif action[0] == "stop":
 			if len(action) == 1:
-				self.server.quit()
+				self.__server.quit()
 			elif action[1] == "all":
-				self.server.stopAllJail()
+				self.__server.stopAllJail()
 			else:
 				name = action[1]
-				self.server.stopJail(name)
+				self.__server.stopJail(name)
 			return None
 		elif action[0] == "sleep":
 			value = action[1]
 			time.sleep(int(value))
 			return None
 		elif action[0] == "set":
-			return self.actionSet(action[1:])
+			return self.__actionSet(action[1:])
 		elif action[0] == "get":
-			return self.actionGet(action[1:])
+			return self.__actionGet(action[1:])
 		elif action[0] == "status":
 			return self.status(action[1:])			
 		raise Exception("Invalid command")
 	
-	def actionSet(self, action):
+	def __actionSet(self, action):
 		name = action[0]
 		# Logging
 		if name == "loglevel":
 			value = int(action[1])
-			self.server.setLogLevel(value)
-			return self.server.getLogLevel()
+			self.__server.setLogLevel(value)
+			return self.__server.getLogLevel()
 		elif name == "logtarget":
 			value = action[1]
-			self.server.setLogTarget(value)
-			return self.server.getLogTarget()
+			self.__server.setLogTarget(value)
+			return self.__server.getLogTarget()
 		# Jail
 		elif action[1] == "idle":
 			if action[2] == "on":
-				self.server.setIdleJail(name, True)
+				self.__server.setIdleJail(name, True)
 			elif action[2] == "off":
-				self.server.setIdleJail(name, False)
-			return self.server.getIdleJail(name)
+				self.__server.setIdleJail(name, False)
+			return self.__server.getIdleJail(name)
 		# Filter
 		elif action[1] == "addignoreip":
 			value = action[2]
-			self.server.addIgnoreIP(name, value)
-			return self.server.getIgnoreIP(name)
+			self.__server.addIgnoreIP(name, value)
+			return self.__server.getIgnoreIP(name)
 		elif action[1] == "delignoreip":
 			value = action[2]
-			self.server.delIgnoreIP(name, value)
-			return self.server.getIgnoreIP(name)
+			self.__server.delIgnoreIP(name, value)
+			return self.__server.getIgnoreIP(name)
 		elif action[1] == "addlogpath":
 			value = action[2:]
 			for path in value:
-				self.server.addLogPath(name, path)
-			return self.server.getLogPath(name)
+				self.__server.addLogPath(name, path)
+			return self.__server.getLogPath(name)
 		elif action[1] == "dellogpath":
 			value = action[2]
-			self.server.delLogPath(name, value)
-			return self.server.getLogPath(name)
+			self.__server.delLogPath(name, value)
+			return self.__server.getLogPath(name)
 		elif action[1] == "timeregex":
 			value = action[2]
-			self.server.setTimeRegex(name, value)
-			return self.server.getTimeRegex(name)
+			self.__server.setTimeRegex(name, value)
+			return self.__server.getTimeRegex(name)
 		elif action[1] == "timepattern":
 			value = action[2]
-			self.server.setTimePattern(name, value)
-			return self.server.getTimePattern(name)
+			self.__server.setTimePattern(name, value)
+			return self.__server.getTimePattern(name)
 		elif action[1] == "failregex":
 			value = action[2]
-			self.server.setFailRegex(name, value)
-			return self.server.getFailRegex(name)
+			self.__server.setFailRegex(name, value)
+			return self.__server.getFailRegex(name)
 		elif action[1] == "maxtime":
 			value = action[2]
-			self.server.setMaxTime(name, int(value))
-			return self.server.getMaxTime(name)
+			self.__server.setMaxTime(name, int(value))
+			return self.__server.getMaxTime(name)
 		elif action[1] == "findtime":
 			value = action[2]
-			self.server.setFindTime(name, int(value))
-			return self.server.getFindTime(name)
+			self.__server.setFindTime(name, int(value))
+			return self.__server.getFindTime(name)
 		elif action[1] == "maxretry":
 			value = action[2]
-			self.server.setMaxRetry(name, int(value))
-			return self.server.getMaxRetry(name)
+			self.__server.setMaxRetry(name, int(value))
+			return self.__server.getMaxRetry(name)
 		# Action
 		elif action[1] == "bantime":
 			value = action[2]
-			self.server.setBanTime(name, int(value))
-			return self.server.getBanTime(name)
+			self.__server.setBanTime(name, int(value))
+			return self.__server.getBanTime(name)
 		elif action[1] == "addaction":
 			value = action[2]
-			self.server.addAction(name, value)
-			return self.server.getLastAction(name).getName()
+			self.__server.addAction(name, value)
+			return self.__server.getLastAction(name).getName()
 		elif action[1] == "delaction":
-			self.server.delAction(name, value)
+			self.__server.delAction(name, value)
 			return None
 		elif action[1] == "setcinfo":
 			act = action[2]
 			key = action[3]
 			value = action[4]
-			self.server.setCInfo(name, act, key, value)
-			return self.server.getCInfo(name, act, key)
+			self.__server.setCInfo(name, act, key, value)
+			return self.__server.getCInfo(name, act, key)
 		elif action[1] == "delcinfo":
 			act = action[2]
 			key = action[3]
-			self.server.delCInfo(name, act, key)
+			self.__server.delCInfo(name, act, key)
 			return None
 		elif action[1] == "actionstart":
 			act = action[2]
 			value = action[3]
-			self.server.setActionStart(name, act, value)
-			return self.server.getActionStart(name, act)
+			self.__server.setActionStart(name, act, value)
+			return self.__server.getActionStart(name, act)
 		elif action[1] == "actionstop":
 			act = action[2]
 			value = action[3]
-			self.server.setActionStop(name, act, value)
-			return self.server.getActionStop(name, act)
+			self.__server.setActionStop(name, act, value)
+			return self.__server.getActionStop(name, act)
 		elif action[1] == "actioncheck":
 			act = action[2]
 			value = action[3]
-			self.server.setActionCheck(name, act, value)
-			return self.server.getActionCheck(name, act)
+			self.__server.setActionCheck(name, act, value)
+			return self.__server.getActionCheck(name, act)
 		elif action[1] == "actionban":
 			act = action[2]
 			value = action[3]
-			self.server.setActionBan(name, act, value)
-			return self.server.getActionBan(name, act)
+			self.__server.setActionBan(name, act, value)
+			return self.__server.getActionBan(name, act)
 		elif action[1] == "actionunban":
 			act = action[2]
 			value = action[3]
-			self.server.setActionUnban(name, act, value)
-			return self.server.getActionUnban(name, act)
+			self.__server.setActionUnban(name, act, value)
+			return self.__server.getActionUnban(name, act)
 		raise Exception("Invalid command (no set action or not yet implemented)")
 	
-	def actionGet(self, action):
+	def __actionGet(self, action):
 		name = action[0]
 		# Logging
 		if name == "loglevel":
-			return self.server.getLogLevel()
+			return self.__server.getLogLevel()
 		elif name == "logtarget":
-			return self.server.getLogTarget()
+			return self.__server.getLogTarget()
 		# Filter
 		elif action[1] == "logpath":
-			return self.server.getLogPath(name)
+			return self.__server.getLogPath(name)
 		elif action[1] == "ignoreip":
-			return self.server.getIgnoreIP(name)
+			return self.__server.getIgnoreIP(name)
 		elif action[1] == "timeregex":
-			return self.server.getTimeRegex(name)
+			return self.__server.getTimeRegex(name)
 		elif action[1] == "timepattern":
-			return self.server.getTimePattern(name)
+			return self.__server.getTimePattern(name)
 		elif action[1] == "failregex":
-			return self.server.getFailRegex(name)
+			return self.__server.getFailRegex(name)
 		elif action[1] == "maxtime":
-			return self.server.getMaxTime(name)
+			return self.__server.getMaxTime(name)
 		elif action[1] == "findtime":
-			return self.server.getFindTime(name)
+			return self.__server.getFindTime(name)
 		elif action[1] == "maxretry":
-			return self.server.getMaxRetry(name)
+			return self.__server.getMaxRetry(name)
 		# Action
 		elif action[1] == "bantime":
-			return self.server.getBanTime(name)
+			return self.__server.getBanTime(name)
 		elif action[1] == "addaction":
-			return self.server.getLastAction(name).getName()
+			return self.__server.getLastAction(name).getName()
 		elif action[1] == "actionstart":
 			act = action[2]
-			return self.server.getActionStart(name, act)
+			return self.__server.getActionStart(name, act)
 		elif action[1] == "actionstop":
 			act = action[2]
-			return self.server.getActionStop(name, act)
+			return self.__server.getActionStop(name, act)
 		elif action[1] == "actioncheck":
 			act = action[2]
-			return self.server.getActionCheck(name, act)
+			return self.__server.getActionCheck(name, act)
 		elif action[1] == "actionban":
 			act = action[2]
-			return self.server.getActionBan(name, act)
+			return self.__server.getActionBan(name, act)
 		elif action[1] == "actionunban":
 			act = action[2]
-			return self.server.getActionUnban(name, act)
+			return self.__server.getActionUnban(name, act)
 		raise Exception("Invalid command (no get action or not yet implemented)")
 	
 	def status(self, action):
 		if len(action) == 0:
-			return self.server.status()
+			return self.__server.status()
 		else:
 			name = action[0]
-			return self.server.statusJail(name)
+			return self.__server.statusJail(name)
 		raise Exception("Invalid command (no status)")
 	

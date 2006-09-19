@@ -46,13 +46,13 @@ class BanManager:
 	
 	def __init__(self):
 		## Mutex used to protect the ban list.
-		self.lock = Lock()
+		self.__lock = Lock()
 		## The ban list.
-		self.banList = list()
+		self.__banList = list()
 		## The amount of time an IP address gets banned.
-		self.banTime = 600
+		self.__banTime = 600
 		## Total number of banned IP address
-		self.banTotal = 0
+		self.__banTotal = 0
 	
 	##
 	# Set the ban time.
@@ -61,9 +61,9 @@ class BanManager:
 	# @param value the time
 	
 	def setBanTime(self, value):
-		self.lock.acquire()
-		self.banTime = int(value)
-		self.lock.release()
+		self.__lock.acquire()
+		self.__banTime = int(value)
+		self.__lock.release()
 	
 	##
 	# Get the ban time.
@@ -73,10 +73,10 @@ class BanManager:
 	
 	def getBanTime(self):
 		try:
-			self.lock.acquire()
-			return self.banTime
+			self.__lock.acquire()
+			return self.__banTime
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	##
 	# Set the total number of banned address.
@@ -84,9 +84,9 @@ class BanManager:
 	# @param value total number
 	
 	def setBanTotal(self, value):
-		self.lock.acquire()
-		self.banTotal = value
-		self.lock.release()
+		self.__lock.acquire()
+		self.__banTotal = value
+		self.__lock.release()
 	
 	##
 	# Get the total number of banned address.
@@ -95,10 +95,10 @@ class BanManager:
 	
 	def getBanTotal(self):
 		try:
-			self.lock.acquire()
-			return self.banTotal
+			self.__lock.acquire()
+			return self.__banTotal
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	##
 	# Create a ban ticket.
@@ -126,14 +126,14 @@ class BanManager:
 	
 	def addBanTicket(self, ticket):
 		try:
-			self.lock.acquire()
+			self.__lock.acquire()
 			if not self.__inBanList(ticket):
-				self.banList.append(ticket)
-				self.banTotal += 1
+				self.__banList.append(ticket)
+				self.__banTotal += 1
 				return True
 			return False
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	##
 	# Delete a ban ticket.
@@ -142,7 +142,7 @@ class BanManager:
 	# @param ticket the ticket
 	
 	def __delBanTicket(self, ticket):
-		self.banList.remove(ticket)
+		self.__banList.remove(ticket)
 	
 	##
 	# Get the size of the ban list.
@@ -151,10 +151,10 @@ class BanManager:
 	
 	def size(self):
 		try:
-			self.lock.acquire()
-			return len(self.banList)
+			self.__lock.acquire()
+			return len(self.__banList)
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	##
 	# Check if a ticket is in the list.
@@ -165,7 +165,7 @@ class BanManager:
 	# @return True if a ticket already exists
 	
 	def __inBanList(self, ticket):
-		for i in self.banList:
+		for i in self.__banList:
 			if ticket.getIP() == i.getIP():
 				return True
 		return False
@@ -180,15 +180,15 @@ class BanManager:
 	
 	def unBanList(self, time):
 		try:
-			self.lock.acquire()
+			self.__lock.acquire()
 			uBList = list()
-			for ticket in self.banList:
-				if ticket.getTime() < time - self.banTime:
+			for ticket in self.__banList:
+				if ticket.getTime() < time - self.__banTime:
 					uBList.append(ticket)
 					self.__delBanTicket(ticket)
 			return uBList
 		finally:
-			self.lock.release()
+			self.__lock.release()
 	
 	##
 	# Flush the ban list.
@@ -198,9 +198,9 @@ class BanManager:
 	
 	def flushBanList(self):
 		try:
-			self.lock.acquire()
-			uBList = self.banList
-			self.banList = list()
+			self.__lock.acquire()
+			uBList = self.__banList
+			self.__banList = list()
 			return uBList
 		finally:
-			self.lock.release()
+			self.__lock.release()

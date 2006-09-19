@@ -45,11 +45,11 @@ from server.server import Server
 class Fail2banServer:
 	
 	def __init__(self):
-		self.server = None
-		self.argv = None
-		self.conf = dict()
-		self.conf["background"] = True
-		self.conf["force"] = False
+		self.__server = None
+		self.__argv = None
+		self.__conf = dict()
+		self.__conf["background"] = True
+		self.__conf["force"] = False
 	
 	def dispVersion(self):
 		print "Fail2Ban v" + version
@@ -64,7 +64,7 @@ class Fail2banServer:
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
 		"""
-		print "Usage: "+self.argv[0]+" [OPTIONS]"
+		print "Usage: "+self.__argv[0]+" [OPTIONS]"
 		print
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
 		print "and bans the corresponding IP addresses using firewall rules."
@@ -81,16 +81,16 @@ class Fail2banServer:
 		print
 		print "Report bugs to <lostcontrol@users.sourceforge.net>"
 	
-	def getCmdLineOptions(self, optList):
+	def __getCmdLineOptions(self, optList):
 		""" Gets the command line options
 		"""
 		for opt in optList:
 			if opt[0] == "-b":
-				self.conf["background"] = True
+				self.__conf["background"] = True
 			if opt[0] == "-f":
-				self.conf["background"] = False
+				self.__conf["background"] = False
 			if opt[0] == "-x":
-				self.conf["force"] = True
+				self.__conf["force"] = True
 			if opt[0] in ["-h", "--help"]:
 	 			self.dispUsage()
 				sys.exit(0)
@@ -107,25 +107,25 @@ class Fail2banServer:
 	
 	def start(self, argv):
 		# Command line options
-		self.argv = argv
+		self.__argv = argv
 		
 		# Reads the command line options.
 		try:
 			cmdOpts = 'bfxhV'
 			cmdLongOpts = ['help', 'version']
-			optList, args = getopt.getopt(self.argv[1:], cmdOpts, cmdLongOpts)
+			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
 			self.dispUsage()
 			
-		self.getCmdLineOptions(optList)
+		self.__getCmdLineOptions(optList)
 		
 		try:
-			self.server = Server(self.conf["background"])
-			self.server.start(self.conf["force"])
+			self.__server = Server(self.__conf["background"])
+			self.__server.start(self.__conf["force"])
 			return True
 		except Exception, e:
 			print e
-			self.server.quit()
+			self.__server.quit()
 			return False
 		
 if __name__ == "__main__":

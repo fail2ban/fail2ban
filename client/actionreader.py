@@ -34,24 +34,24 @@ class ActionReader(ConfigReader):
 	
 	def __init__(self, action, name):
 		ConfigReader.__init__(self)
-		self.file = action[0]
-		self.cInfo = action[1]
-		self.name = name
+		self.__file = action[0]
+		self.__cInfo = action[1]
+		self.__name = name
 	
 	def setFile(self, file):
-		self.file = file
+		self.__file = file
 	
 	def getFile(self):
-		return self.file
+		return self.__file
 	
 	def setName(self, name):
-		self.name = name
+		self.__name = name
 	
 	def getName(self):
-		return self.name
+		return self.__name
 	
 	def read(self):
-		return ConfigReader.read(self, "action.d/" + self.file)
+		return ConfigReader.read(self, "action.d/" + self.__file)
 	
 	def getOptions(self, pOpts):
 		opts = [["string", "actionstart", ""],
@@ -59,32 +59,32 @@ class ActionReader(ConfigReader):
 				["string", "actioncheck", ""],
 				["string", "actionban", ""],
 				["string", "actionunban", ""]]
-		self.opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
+		self.__opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
 		
 		if self.has_section("Init"):
 			for opt in self.options("Init"):
-				if not self.cInfo.has_key(opt):
-					self.cInfo[opt] = self.get("Init", opt)
+				if not self.__cInfo.has_key(opt):
+					self.__cInfo[opt] = self.get("Init", opt)
 	
 	def convert(self):
-		head = ["set", self.name]
+		head = ["set", self.__name]
 		stream = list()
-		stream.append(head + ["addaction", self.file])
-		for opt in self.opts:
+		stream.append(head + ["addaction", self.__file])
+		for opt in self.__opts:
 			if opt == "actionstart":
-				stream.append(head + ["actionstart", self.file, self.opts[opt]])
+				stream.append(head + ["actionstart", self.__file, self.__opts[opt]])
 			elif opt == "actionstop":
-				stream.append(head + ["actionstop", self.file, self.opts[opt]])
+				stream.append(head + ["actionstop", self.__file, self.__opts[opt]])
 			elif opt == "actioncheck":
-				stream.append(head + ["actioncheck", self.file, self.opts[opt]])
+				stream.append(head + ["actioncheck", self.__file, self.__opts[opt]])
 			elif opt == "actionban":
-				stream.append(head + ["actionban", self.file, self.opts[opt]])
+				stream.append(head + ["actionban", self.__file, self.__opts[opt]])
 			elif opt == "actionunban":
-				stream.append(head + ["actionunban", self.file, self.opts[opt]])
+				stream.append(head + ["actionunban", self.__file, self.__opts[opt]])
 		# cInfo
-		if self.cInfo:
-			for p in self.cInfo:
-				stream.append(head + ["setcinfo", self.file, p, self.cInfo[p]])
+		if self.__cInfo:
+			for p in self.__cInfo:
+				stream.append(head + ["setcinfo", self.__file, p, self.__cInfo[p]])
 
 		return stream
 		

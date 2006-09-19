@@ -34,16 +34,16 @@ class CSocket:
 	def __init__(self):
 		# Create an INET, STREAMing socket
 		#self.csock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.csock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+		self.__csock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 		#self.csock.connect(("localhost", 2222))
-		self.csock.connect(CSocket.SOCKET_FILE)
+		self.__csock.connect(CSocket.SOCKET_FILE)
 	
 	def send(self, msg):
 		# Convert every list member to string
 		obj = pickle.dumps(map(str, msg))
-		self.csock.send(obj + CSocket.END_STRING)
-		ret = self.receive(self.csock)
-		self.csock.close()
+		self.__csock.send(obj + CSocket.END_STRING)
+		ret = self.receive(self.__csock)
+		self.__csock.close()
 		return ret
 	
 	def receive(self, socket):

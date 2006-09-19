@@ -34,38 +34,38 @@ class FilterReader(ConfigReader):
 	
 	def __init__(self, file, name):
 		ConfigReader.__init__(self)
-		self.file = file
-		self.name = name
+		self.__file = file
+		self.__name = name
 	
 	def setFile(self, file):
-		self.file = file
+		self.__file = file
 	
 	def getFile(self):
-		return self.file
+		return self.__file
 	
 	def setName(self, name):
-		self.name = name
+		self.__name = name
 	
 	def getName(self):
-		return self.name
+		return self.__name
 	
 	def read(self):
-		return ConfigReader.read(self, "filter.d/" + self.file)
+		return ConfigReader.read(self, "filter.d/" + self.__file)
 	
 	def getOptions(self, pOpts):
 		opts = [["string", "timeregex", None],
 				["string", "timepattern", None],
 				["string", "failregex", ""]]
-		self.opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
+		self.__opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
 	
 	def convert(self):
 		stream = list()
-		for opt in self.opts:
+		for opt in self.__opts:
 			if opt == "timeregex":
-				stream.append(["set", self.name, "timeregex", self.opts[opt]])
+				stream.append(["set", self.__name, "timeregex", self.__opts[opt]])
 			elif opt == "timepattern":
-				stream.append(["set", self.name, "timepattern", self.opts[opt]])
+				stream.append(["set", self.__name, "timepattern", self.__opts[opt]])
 			elif opt == "failregex":
-				stream.append(["set", self.name, "failregex", self.opts[opt]])		
+				stream.append(["set", self.__name, "failregex", self.__opts[opt]])		
 		return stream
 		

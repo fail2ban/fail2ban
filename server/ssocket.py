@@ -37,8 +37,8 @@ class SSocket(Thread):
 	
 	def __init__(self, transmitter):
 		Thread.__init__(self)
-		self.transmit = transmitter
-		self.isRunning = False
+		self.__transmit = transmitter
+		self.__isRunning = False
 		logSys.debug("Created SSocket")
 	
 	def initialize(self, force = False):
@@ -66,11 +66,11 @@ class SSocket(Thread):
 		self.ssock.listen(5)
 	
 	def run(self):
-		self.isRunning = True
-		while self.isRunning:
+		self.__isRunning = True
+		while self.__isRunning:
 			try:
 				(csock, address) = self.ssock.accept()
-				thread = SocketWorker(csock, self.transmit)
+				thread = SocketWorker(csock, self.__transmit)
 				thread.start()
 			except socket.timeout:
 				# Do nothing here
@@ -90,29 +90,29 @@ class SSocket(Thread):
 	# @bug It seems to be some concurrency problem with this flag
 	
 	def stop(self):
-		self.isRunning = False
+		self.__isRunning = False
 
 
 class SocketWorker(Thread):
 	
 	def __init__(self, csock, transmitter):
 		Thread.__init__(self)
-		self.csock = csock
-		self.transmit = transmitter
+		self.__csock = csock
+		self.__transmit = transmitter
 		
 	def run(self):
 		logSys.debug("Starting new thread to handle the request")
-		msg = self.receive(self.csock)
-		msg = self.transmit.proceed(msg)
-		self.send(self.csock, msg)
-		self.csock.close()
+		msg = self.__receive(self.__csock)
+		msg = self.__transmit.proceed(msg)
+		self.__send(self.__csock, msg)
+		self.__csock.close()
 		logSys.debug("Connection closed")
 	
-	def send(self, socket, msg):
+	def __send(self, socket, msg):
 		obj = pickle.dumps(msg)
 		socket.send(obj + SSocket.END_STRING)
 	
-	def receive(self, socket):
+	def __receive(self, socket):
 		msg = ''
 		while msg.rfind(SSocket.END_STRING) == -1:
 			chunk = socket.recv(6)
