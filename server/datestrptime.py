@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -36,8 +37,18 @@ from datetemplate import DateTemplate
 class DateStrptime(DateTemplate):
 	
 	TABLE = dict()
+	TABLE["Jan"] = []
+	TABLE["Feb"] = ["Fév"]
+	TABLE["Mar"] = ["Mär"]
+	TABLE["Apr"] = ["Avr"]
+	TABLE["May"] = ["Mai"]
+	TABLE["Jun"] = []
+	TABLE["Jul"] = []
+	TABLE["Aug"] = ["Aou"]
+	TABLE["Sep"] = []
 	TABLE["Oct"] = ["Okt"]
-	TABLE["Dec"] = ["Dez"]
+	TABLE["Nov"] = []
+	TABLE["Dec"] = ["Déc", "Dez"]
 	
 	def __init__(self):
 		DateTemplate.__init__(self)
