@@ -276,8 +276,14 @@ class Filter(JailThread):
 		try:
 			self.crtFilename = filename
 			self.crtHandler = open(filename)
+			logSys.debug("Opened " + filename)
+			return True
 		except OSError:
 			logSys.error("Unable to open " + filename)
+		except IOError:
+			logSys.error("Unable to read " + filename +
+						 ". Please check permissions")
+		return False
 	
 	##
 	# Close the log file.
@@ -321,18 +327,21 @@ class Filter(JailThread):
 	
 	def getFailures(self, filename):
 		ipList = dict()
-		logSys.debug(filename)
-		self.openLogFile(filename)
+		ret = self.openLogFile(filename)
+		if not ret:
+			logSys.error("Unable to get failures in " + filename)
+			return False
 		self.__setFilePos()
 		lastLine = None
 		for line in self.crtHandler:
 			try:
 				# Try to convert UTF-8 string to Latin-1
-				line = line.decode('utf-8').encode('latin-1')
+				#line = line.decode('utf-8').encode('latin-1')
+				line = line.decode('utf-8')
 			except UnicodeDecodeError:
 				pass
-			except UnicodeEncodeError:
-				logSys.warn("Mmhh... Are you sure you watch the correct file?")
+			#except UnicodeEncodeError:
+			#	logSys.warn("Mmhh... Are you sure you watch the correct file?")
 			if not self.dateDetector.matchTime(line):
 				# There is no valid time in this line
 				continue
@@ -351,6 +360,7 @@ class Filter(JailThread):
 		if lastLine:
 			self.lastDate[filename] = self.dateDetector.getTime(lastLine)
 		self.__closeLogFile()
+		return True
 
 	##
 	# Finds the failure in a line.
