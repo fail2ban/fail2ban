@@ -15,6 +15,7 @@ ver. 0.7.3 (2006/??/??) - beta
 - (Re)added "ignoreip" option
 - Added more concurrency protection
 - First attempt at solving bug #1457620
+- Performance improvements
 
 ver. 0.7.2 (2006/09/10) - beta
 ----------
