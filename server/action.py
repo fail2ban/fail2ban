@@ -24,7 +24,8 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, logging, os
+import time, logging
+from subprocess import call
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.actions.action")
@@ -211,13 +212,13 @@ class Action:
   	@staticmethod
 	def executeCmd(realCmd):
 		logSys.debug(realCmd)
-		retval = os.system(realCmd)
-		#if not retval == 0:
-		#	logSys.error("'" + cmd + "' returned " + `retval`)
-		#	raise Exception("Execution of command '%s' failed" % cmd)
-		if retval == 0:
-			return True
-		else:
-			logSys.error("%s returned %x" % (realCmd, retval))
-			return False
-		
+		try:
+			retcode = call(realCmd, shell=True)
+			if retcode < 0:
+				logSys.error("%s returned %x" % (realCmd, -retcode))
+			else:
+				logSys.debug("%s returned %x" % (realCmd, retcode))
+				return True
+		except OSError, e:
+			logSys.error("%s failed with %s" % (realCmd, e))
+		return False
