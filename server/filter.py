@@ -56,25 +56,23 @@ class Filter(JailThread):
 		self.jail = jail
 		## The failures manager.
 		self.failManager = FailManager()
-		## The log file handler.
-		self.crtHandler = None
-		self.crtFilename = None
-		## The log file path.
-		self.logPath = []
-		## The regular expression matching the failure.
-		self.failRegex = ''
-		self.failRegexObj = None
-		## The amount of time to look back.
-		self.findTime = 6000
-		## The ignore IP list.
-		self.ignoreIpList = []
 		self.modified = False
-		## The time of the last modification of the file.
-		self.lastModTime = dict()
+		## The log file handler.
+		self.__crtHandler = None
+		self.__crtFilename = None
+		## The log file path.
+		self.__logPath = []
+		## The regular expression matching the failure.
+		self.__failRegex = ''
+		self.__failRegexObj = None
+		## The amount of time to look back.
+		self.__findTime = 6000
+		## The ignore IP list.
+		self.__ignoreIpList = []
 		## The last position of the file.
-		self.lastPos = dict()
+		self.__lastPos = dict()
 		## The last date in tht log file.
-		self.lastDate = dict()
+		self.__lastDate = dict()
 		
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
@@ -87,7 +85,10 @@ class Filter(JailThread):
 	# @param path log file path
 
 	def addLogPath(self, path):
-		raise Exception("addLogPath() is abstract")
+		self.getLogPath().append(path)
+		# Initialize default values
+		self.__lastDate[path] = 0
+		self.__lastPos[path] = 0
 	
 	##
 	# Delete a log path
@@ -95,7 +96,9 @@ class Filter(JailThread):
 	# @param path the log file to delete
 	
 	def delLogPath(self, path):
-		raise Exception("delLogPath() is abstract")
+		self.getLogPath().remove(path)
+		del self.__lastDate[path]
+		del self.__lastPos[path]
 
 	##
 	# Get the log file path
@@ -103,7 +106,20 @@ class Filter(JailThread):
 	# @return log file path
 		
 	def getLogPath(self):
-		return self.logPath
+		return self.__logPath
+	
+	##
+	# Check whether path is already monitored.
+	#
+	# @param path The path
+	# @return True if the path is already monitored else False
+	
+	def containsLogPath(self, path):
+		try:
+			self.getLogPath().index(path)
+			return True
+		except ValueError:
+			return False
 	
 	##
 	# Set the regular expression which matches the time.
@@ -147,8 +163,8 @@ class Filter(JailThread):
 	# @param value the regular expression
 	
 	def setFailRegex(self, value):
-		self.failRegex = value
-		self.failRegexObj = re.compile(value)
+		self.__failRegex = value
+		self.__failRegexObj = re.compile(value)
 		logSys.info("Set failregex = %s" % value)
 	
 	##
@@ -157,7 +173,7 @@ class Filter(JailThread):
 	# @return the regular expression
 	
 	def getFailRegex(self):
-		return self.failRegex
+		return self.__failRegex
 	
 	##
 	# Set the time needed to find a failure.
@@ -167,7 +183,7 @@ class Filter(JailThread):
 	# @param value the time
 	
 	def setFindTime(self, value):
-		self.findTime = value
+		self.__findTime = value
 		logSys.info("Set findtime = %s" % value)
 	
 	##
@@ -176,7 +192,7 @@ class Filter(JailThread):
 	# @return the time
 	
 	def getFindTime(self):
-		return self.findTime
+		return self.__findTime
 	
 	##
 	# Set the maximum retry value.
@@ -232,16 +248,16 @@ class Filter(JailThread):
 	def addIgnoreIP(self, ip):
 		if DNSUtils.isValidIP(ip):
 			logSys.debug("Add " + ip + " to ignore list")
-			self.ignoreIpList.append(ip)
+			self.__ignoreIpList.append(ip)
 		else:
 			logSys.warn(ip + " is not a valid address")
 		
 	def delIgnoreIP(self, ip):
 		logSys.debug("Remove " + ip + " from ignore list")
-		self.ignoreIpList.remove(ip)
+		self.__ignoreIpList.remove(ip)
 		
 	def getIgnoreIP(self):
-		return self.ignoreIpList
+		return self.__ignoreIpList
 	
 	##
 	# Check if IP address is in the ignore list.
@@ -252,7 +268,7 @@ class Filter(JailThread):
 	# @return True if IP address is in ignore list
 	
 	def inIgnoreIPList(self, ip):
-		for i in self.ignoreIpList:
+		for i in self.__ignoreIpList:
 			s = i.split('/', 1)
 			# IP address without CIDR mask
 			if len(s) == 1:
@@ -274,8 +290,8 @@ class Filter(JailThread):
 		""" Opens the log file specified on init.
 		"""
 		try:
-			self.crtFilename = filename
-			self.crtHandler = open(filename)
+			self.__crtFilename = filename
+			self.__crtHandler = open(filename)
 			logSys.debug("Opened " + filename)
 			return True
 		except OSError:
@@ -289,8 +305,8 @@ class Filter(JailThread):
 	# Close the log file.
 	
 	def __closeLogFile(self):
-		self.crtFilename = None
-		self.crtHandler.close()
+		self.__crtFilename = None
+		self.__crtHandler.close()
 
 	##
 	# Set the file position.
@@ -300,23 +316,25 @@ class Filter(JailThread):
 	# timestamp in order to detect this.
 	
 	def __setFilePos(self):
-		line = self.crtHandler.readline()
-		lastDate = self.lastDate[self.crtFilename]
+		line = self.__crtHandler.readline()
+		lastDate = self.__lastDate[self.__crtFilename]
 		lineDate = self.dateDetector.getUnixTime(line)
+		print lastDate
+		print lineDate
 		if lastDate < lineDate:
 			logSys.debug("Date " + `lastDate` + " is smaller than " + `lineDate`)
-			logSys.debug("Log rotation detected for " + self.crtFilename)
-			self.lastPos[self.crtFilename] = 0
-		lastPos = self.lastPos[self.crtFilename]
+			logSys.debug("Log rotation detected for " + self.__crtFilename)
+			self.__lastPos[self.__crtFilename] = 0
+		lastPos = self.__lastPos[self.__crtFilename]
 		logSys.debug("Setting file position to " + `lastPos` + " for " +
-					 self.crtFilename)
-		self.crtHandler.seek(lastPos)
+					 self.__crtFilename)
+		self.__crtHandler.seek(lastPos)
 
 	##
 	# Get the file position.
 	
 	def __getFilePos(self):
-		return self.crtHandler.tell()
+		return self.__crtHandler.tell()
 
 	##
 	# Gets all the failure in the log file.
@@ -333,7 +351,7 @@ class Filter(JailThread):
 			return False
 		self.__setFilePos()
 		lastLine = None
-		for line in self.crtHandler:
+		for line in self.__crtHandler:
 			try:
 				# Try to convert UTF-8 string to Latin-1
 				#line = line.decode('utf-8').encode('latin-1')
@@ -349,16 +367,16 @@ class Filter(JailThread):
 			for element in self.findFailure(line):
 				ip = element[0]
 				unixTime = element[1]
-				if unixTime < time.time()-self.findTime:
+				if unixTime < time.time()-self.__findTime:
 					break
 				if self.inIgnoreIPList(ip):
 					logSys.debug("Ignore "+ip)
 					continue
 				logSys.debug("Found "+ip)
 				self.failManager.addFailure(FailTicket(ip, unixTime))
-		self.lastPos[filename] = self.__getFilePos()
+		self.__lastPos[filename] = self.__getFilePos()
 		if lastLine:
-			self.lastDate[filename] = self.dateDetector.getTime(lastLine)
+			self.__lastDate[filename] = self.dateDetector.getUnixTime(lastLine)
 		self.__closeLogFile()
 		return True
 
@@ -371,7 +389,7 @@ class Filter(JailThread):
 
 	def findFailure(self, line):
 		failList = list()
-		match = self.failRegexObj.search(line)
+		match = self.__failRegexObj.search(line)
 		if match:
 			date = self.dateDetector.getUnixTime(match.string)
 			if date <> None:

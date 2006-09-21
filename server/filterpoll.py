@@ -52,9 +52,9 @@ class FilterPoll(Filter):
 	
 	def __init__(self, jail):
 		Filter.__init__(self, jail)
-		
+		## The time of the last modification of the file.
+		self.__lastModTime = dict()
 		self.__file404Cnt = dict()
-		
 		logSys.info("Created FilterPoll")
 
 	##
@@ -63,17 +63,13 @@ class FilterPoll(Filter):
 	# @param path log file path
 
 	def addLogPath(self, path):
-		try:
-			self.getLogPath().index(path)
+		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
-		except ValueError:
-			self.getLogPath().append(path)
-			# Initialize default values
-			self.lastDate[path] = 0
-			self.lastModTime[path] = 0
-			self.lastPos[path] = 0
+		else:
+			self.__lastModTime[path] = 0
 			self.__file404Cnt[path] = 0
-			logSys.info("Added logfile = %s" % path)
+			Filter.addLogPath(self, path)
+			logSys.info("Added logfile = %s" % path)	
 	
 	##
 	# Delete a log path
@@ -81,16 +77,13 @@ class FilterPoll(Filter):
 	# @param path the log file to delete
 	
 	def delLogPath(self, path):
-		try:
-			self.getLogPath().remove(path)
-			del self.lastDate[path]
-			del self.lastModTime[path]
-			del self.lastPos[path]
-			del self.__file404Cnt[path]
-			logSys.info("Removed logfile = %s" % path)
-		except ValueError:
+		if not self.containsLogPath(path):
 			logSys.error(path + " is not monitored")
-
+		else:
+			del self.__lastModTime[path]
+			del self.__file404Cnt[path]
+			Filter.delLogPath(self, path)
+			logSys.info("Removed logfile = %s" % path)
 	
 	##
 	# Main loop.
@@ -107,7 +100,7 @@ class FilterPoll(Filter):
 				for file in self.getLogPath():
 					if self.isModified(file):
 						self.getFailures(file)
-						prevModified = True
+						self.modified = True
 
 				if self.modified:
 					try:
@@ -116,7 +109,7 @@ class FilterPoll(Filter):
 					except FailManagerEmpty:
 						self.failManager.cleanup(time.time())
 					self.dateDetector.sortTemplate()
-					prevModified = False
+					self.modified = False
 				time.sleep(self.getSleepTime())
 			else:
 				time.sleep(self.getSleepTime())
@@ -133,11 +126,11 @@ class FilterPoll(Filter):
 		try:
 			logStats = os.stat(filename)
 			self.__file404Cnt[filename] = 0
-			if self.lastModTime[filename] == logStats.st_mtime:
+			if self.__lastModTime[filename] == logStats.st_mtime:
 				return False
 			else:
 				logSys.debug(filename + " has been modified")
-				self.lastModTime[filename] = logStats.st_mtime
+				self.__lastModTime[filename] = logStats.st_mtime
 				return True
 		except OSError:
 			logSys.error("Unable to get stat on " + filename)
