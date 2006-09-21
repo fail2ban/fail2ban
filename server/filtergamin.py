@@ -71,17 +71,12 @@ class FilterGamin(Filter):
 	# @param path log file path
 
 	def addLogPath(self, path):
-		try:
-			self.getLogPath().index(path)
+		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
-		except ValueError:
+		else:
 			self.monitor.watch_file(path, self.callback)
-			self.getLogPath().append(path)
-			# Initialize default values
-			self.lastDate[path] = 0
-			self.lastModTime[path] = 0
-			self.lastPos[path] = 0
-			logSys.info("Added logfile = %s" % path)
+			Filter.addLogPath(self, path)
+			logSys.info("Added logfile = %s" % path)			
 	
 	##
 	# Delete a log path
@@ -89,17 +84,13 @@ class FilterGamin(Filter):
 	# @param path the log file to delete
 	
 	def delLogPath(self, path):
-		try:
-			self.monitor.stop_watch(path)
-			self.getLogPath().remove(path)
-			del self.lastDate[path]
-			del self.lastModTime[path]
-			del self.lastPos[path]
-			logSys.info("Removed logfile = %s" % path)
-		except ValueError:
+		if not self.containsLogPath(path):
 			logSys.error(path + " is not monitored")
-
-
+		else:
+			self.monitor.stop_watch(path)
+			Filter.delLogPath(self, path)
+			logSys.info("Removed logfile = %s" % path)
+		
 	##
 	# Main loop.
 	#
