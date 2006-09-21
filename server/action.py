@@ -24,7 +24,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, logging
+import time, logging, os
 from subprocess import call
 
 # Gets the instance of the logger.
@@ -213,7 +213,9 @@ class Action:
 	def executeCmd(realCmd):
 		logSys.debug(realCmd)
 		try:
-			retcode = call(realCmd, shell=True)
+			# The following line gives deadlock with multiple jails
+			#retcode = call(realCmd, shell=True)
+			retcode = os.system(realCmd)
 			if retcode < 0:
 				logSys.error("%s returned %x" % (realCmd, -retcode))
 			else:
