@@ -319,8 +319,6 @@ class Filter(JailThread):
 		line = self.__crtHandler.readline()
 		lastDate = self.__lastDate[self.__crtFilename]
 		lineDate = self.dateDetector.getUnixTime(line)
-		print lastDate
-		print lineDate
 		if lastDate < lineDate:
 			logSys.debug("Date " + `lastDate` + " is smaller than " + `lineDate`)
 			logSys.debug("Log rotation detected for " + self.__crtFilename)
