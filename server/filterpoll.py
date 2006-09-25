@@ -24,10 +24,7 @@ __date__ = "$Date: 2006-09-13 23:31:22 +0200 (Wed, 13 Sep 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from failmanager import FailManager
 from failmanager import FailManagerEmpty
-from failticket import FailTicket
-from datedetector import DateDetector
 from filter import Filter
 
 import time, logging, os

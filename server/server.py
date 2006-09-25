@@ -26,7 +26,7 @@ __license__ = "GPL"
 
 from jails import Jails
 from transmitter import Transmitter
-import locale, logging, logging.handlers, sys, os, signal
+import logging, logging.handlers, sys, os, signal
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.server")
@@ -126,7 +126,7 @@ class Server:
 	def setFindTime(self, name, value):
 		self.__jails.getFilter(name).setFindTime(value)
 	
-	def getFindTime(self):
+	def getFindTime(self, name):
 		return self.__jails.getFilter(name).getFindTime()
 
 	def setFailRegex(self, name, value):

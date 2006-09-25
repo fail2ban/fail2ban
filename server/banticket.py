@@ -24,7 +24,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, logging
+import logging
 from ticket import Ticket
 
 # Gets the instance of the logger.

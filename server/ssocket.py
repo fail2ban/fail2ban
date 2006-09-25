@@ -25,7 +25,8 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from threading import Thread
-import socket, time, logging, cPickle, os, os.path
+from cPickle import dumps, loads
+import socket, logging, os, os.path
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.comm")
@@ -109,7 +110,7 @@ class SocketWorker(Thread):
 		logSys.debug("Connection closed")
 	
 	def __send(self, socket, msg):
-		obj = cPickle.dumps(msg)
+		obj = dumps(msg)
 		socket.send(obj + SSocket.END_STRING)
 	
 	def __receive(self, socket):
@@ -119,7 +120,7 @@ class SocketWorker(Thread):
 			if chunk == '':
 				raise RuntimeError, "socket connection broken"
 			msg = msg + chunk
-		return cPickle.loads(msg)
+		return loads(msg)
 
 
 class SSocketErrorException(Exception):

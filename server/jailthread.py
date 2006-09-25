@@ -25,6 +25,10 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from threading import Thread
+import logging
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban.server")
 
 class JailThread(Thread):
 	

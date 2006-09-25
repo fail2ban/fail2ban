@@ -27,7 +27,7 @@ __license__ = "GPL"
 from ssocket import SSocket
 from ssocket import SSocketErrorException
 from threading import Lock
-import re, pickle, logging
+import logging, time
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.comm")

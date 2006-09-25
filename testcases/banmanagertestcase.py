@@ -32,25 +32,25 @@ class AddFailure(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.ticket = BanTicket('193.168.0.128', 1167605999.0)
-		self.banManager = BanManager()
-		self.assertTrue(self.banManager.addBanTicket(self.ticket))
+		self.__ticket = BanTicket('193.168.0.128', 1167605999.0)
+		self.__banManager = BanManager()
+		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
 
 	def tearDown(self):
 		"""Call after every test case."""
 	
 	def testAdd(self):
-		self.assertEqual(self.banManager.size(), 1)
+		self.assertEqual(self.__banManager.size(), 1)
 	
 	def testAddDuplicate(self):
-		self.assertFalse(self.banManager.addBanTicket(self.ticket))
-		self.assertEqual(self.banManager.size(), 1)
+		self.assertFalse(self.__banManager.addBanTicket(self.__ticket))
+		self.assertEqual(self.__banManager.size(), 1)
 		
 	def _testInListOK(self):
 		ticket = BanTicket('193.168.0.128', 1167605999.0)
-		self.assertTrue(self.banManager.inBanList(ticket))
+		self.assertTrue(self.__banManager.inBanList(ticket))
 	
 	def _testInListNOK(self):
 		ticket = BanTicket('111.111.1.111', 1167605999.0)
-		self.assertFalse(self.banManager.inBanList(ticket))
+		self.assertFalse(self.__banManager.inBanList(ticket))
 		

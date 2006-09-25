@@ -31,33 +31,33 @@ class StartStop(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.server = Server()
-		self.server.setLogLevel(0)
-		self.server.start(False)
+		self.__server = Server()
+		self.__server.setLogLevel(0)
+		self.__server.start(False)
 
 	def tearDown(self):
 		"""Call after every test case."""
-		self.server.quit()
+		self.__server.quit()
 	
 	def testStartStopJail(self):
 		name = "TestCase"
-		self.server.addJail(name)
-		self.server.startJail(name)
+		self.__server.addJail(name)
+		self.__server.startJail(name)
 		time.sleep(1)
-		self.server.stopJail(name)
+		self.__server.stopJail(name)
 
 
 class Transmitter(unittest.TestCase):
 	
 	def setUp(self):
 		"""Call before every test case."""
-		self.server = Server()
-		self.server.setLogLevel(0)
-		self.server.start(False)
+		self.__server = Server()
+		self.__server.setLogLevel(0)
+		self.__server.start(False)
 
 	def tearDown(self):
 		"""Call after every test case."""
-		self.server.quit()
+		self.__server.quit()
 	
 	def testSetActionOK(self):
 		name = "TestCase"
@@ -79,7 +79,7 @@ class Transmitter(unittest.TestCase):
 		
 		cnt = 0
 		for cmd in cmdList:
-			self.assertEqual(self.server.transm.proceed(cmd), outList[cnt])
+			self.assertEqual(self.__server.transm.proceed(cmd), outList[cnt])
 			cnt += 1
 	
 	def testSetActionNOK(self):
@@ -102,7 +102,7 @@ class Transmitter(unittest.TestCase):
 		
 		cnt = 0
 		for cmd in cmdList:
-			msg = self.server.transm.proceed(cmd)
+			msg = self.__server.transm.proceed(cmd)
 			self.assertEqual(msg[0], outList[cnt])
 			cnt += 1
 	
@@ -118,10 +118,10 @@ class Transmitter(unittest.TestCase):
 				   ["quit"]]
 				  
 		for cmd in cmdList:
-			self.server.transm.proceed(cmd)
+			self.__server.transm.proceed(cmd)
 			if cmd == ["start", name]:
 				time.sleep(2)
-				jail = self.server.jails[name]
+				jail = self.__server.jails[name]
 				self.assertEqual(jail.getFilter().failManager.size(), 0)
 				self.assertEqual(jail.getAction().banManager.size(), 2)
 		

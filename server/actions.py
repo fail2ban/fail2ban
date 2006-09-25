@@ -25,10 +25,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from banmanager import BanManager
-from failmanager import FailManager, FailManagerEmpty
 from jailthread import JailThread
 from action import Action
-import time, logging, os
+import time, logging
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.actions")
