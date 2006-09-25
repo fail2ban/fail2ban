@@ -16,6 +16,7 @@ ver. 0.7.3 (2006/??/??) - beta
 - Added more concurrency protection
 - First attempt at solving bug #1457620 (locale issue)
 - Performance improvements
+- (Re)added permanent banning with banTime < 0
 
 ver. 0.7.2 (2006/09/10) - beta
 ----------
