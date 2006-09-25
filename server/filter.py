@@ -29,7 +29,7 @@ from failticket import FailTicket
 from jailthread import JailThread
 from datedetector import DateDetector
 
-import time, logging, re, socket
+import time, logging, re
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
