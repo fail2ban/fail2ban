@@ -182,6 +182,9 @@ class BanManager:
 		try:
 			self.__lock.acquire()
 			uBList = list()
+			# Permanent banning
+			if self.__banTime < 0:
+				return uBList
 			for ticket in self.__banList:
 				if ticket.getTime() < time - self.__banTime:
 					uBList.append(ticket)
