@@ -16,8 +16,6 @@ Legend:
 - Improve execution of action. Why does subprocess.call
   deadlock with multi-jails?
 
-# Prefix all private functions with "__"
-
 - Verify TAI64N
 
 # implement all get/set functions
@@ -45,10 +43,6 @@ Legend:
 # add a test framework. We could use unittest which is in
   Python since 2.1. It should be possible to run all tests
   automatically.
-
-# autodetect date format in log file. Match the most popular
-  format and sort them using the hit ratio. Should avoid
-  user problem with regex and not have a big impact on perfs.
 
 ? restart automatically the daemon if an exception occurs.
 
