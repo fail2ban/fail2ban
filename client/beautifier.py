@@ -53,7 +53,9 @@ class Beautifier:
 		inC = self.__inputCmd
 		msg = response
 		try:
-			if inC[0] == "start":
+			if inC[0] == "ping":
+				msg = "Server replied: " + response
+			elif inC[0] == "start":
 				msg = "Jail started"
 			elif inC[0] == "stop":
 				if len(inC) == 1:
