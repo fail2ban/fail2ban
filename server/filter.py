@@ -25,12 +25,11 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from failmanager import FailManager
-from failmanager import FailManagerEmpty
 from failticket import FailTicket
 from jailthread import JailThread
 from datedetector import DateDetector
 
-import time, logging, os, re, sys, socket
+import time, logging, re, socket
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -286,7 +285,7 @@ class Filter(JailThread):
 	##
 	# Open the log file.
 	
-	def openLogFile(self, filename):
+	def __openLogFile(self, filename):
 		""" Opens the log file specified on init.
 		"""
 		try:
@@ -343,7 +342,7 @@ class Filter(JailThread):
 	
 	def getFailures(self, filename):
 		ipList = dict()
-		ret = self.openLogFile(filename)
+		ret = self.__openLogFile(filename)
 		if not ret:
 			logSys.error("Unable to get failures in " + filename)
 			return False

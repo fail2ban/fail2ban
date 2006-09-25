@@ -24,7 +24,8 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import socket, cPickle
+from cPickle import dumps, loads
+import socket
 
 class CSocket:
 	
@@ -40,7 +41,7 @@ class CSocket:
 	
 	def send(self, msg):
 		# Convert every list member to string
-		obj = cPickle.dumps(map(str, msg))
+		obj = dumps(map(str, msg))
 		self.__csock.send(obj + CSocket.END_STRING)
 		ret = self.receive(self.__csock)
 		self.__csock.close()
@@ -53,4 +54,4 @@ class CSocket:
 			if chunk == '':
 				raise RuntimeError, "socket connection broken"
 			msg = msg + chunk
-		return cPickle.loads(msg)
+		return loads(msg)

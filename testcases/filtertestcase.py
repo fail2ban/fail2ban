@@ -32,7 +32,7 @@ class IgnoreIP(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.filter = FilterPoll(None)
+		self.__filter = FilterPoll(None)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -40,44 +40,44 @@ class IgnoreIP(unittest.TestCase):
 	def testIgnoreIPOK(self):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
 		for ip in ipList:
-			self.filter.addIgnoreIP(ip)
-			self.assertTrue(self.filter.inIgnoreIPList(ip))
+			self.__filter.addIgnoreIP(ip)
+			self.assertTrue(self.__filter.inIgnoreIPList(ip))
 	
 	def testIgnoreIPNOK(self):
 		ipList = "", "999.999.999.999", "abcdef", "192.168.0."
 		for ip in ipList:
-			self.filter.addIgnoreIP(ip)
-			self.assertFalse(self.filter.inIgnoreIPList(ip))
+			self.__filter.addIgnoreIP(ip)
+			self.assertFalse(self.__filter.inIgnoreIPList(ip))
 
 
 class LogFile(unittest.TestCase):
 
-	filename = "testcases/files/testcase01.log"
+	FILENAME = "testcases/files/testcase01.log"
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.filter = FilterPoll(None)
-		self.filter.addLogPath(LogFile.filename)
+		self.__filter = FilterPoll(None)
+		self.__filter.addLogPath(LogFile.FILENAME)
 
 	def tearDown(self):
 		"""Call after every test case."""
 		
-	def testOpen(self):
-		self.filter.openLogFile(LogFile.filename)
+	#def testOpen(self):
+	#	self.__filter.openLogFile(LogFile.FILENAME)
 	
 	def testIsModified(self):
-		self.assertTrue(self.filter.isModified(LogFile.filename))
+		self.assertTrue(self.__filter.isModified(LogFile.FILENAME))
 
 
 class GetFailures(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.filter = FilterPoll(None)
-		self.filter.addLogPath("testcases/files/testcase01.log")
-		self.filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
-		self.filter.setTimePattern("%b %d %H:%M:%S")
-		self.filter.setFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) (?:::f{4,6}:)?(?P<host>\S*)")
+		self.__filter = FilterPoll(None)
+		self.__filter.addLogPath("testcases/files/testcase01.log")
+		self.__filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
+		self.__filter.setTimePattern("%b %d %H:%M:%S")
+		self.__filter.setFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) (?:::f{4,6}:)?(?P<host>\S*)")
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -86,12 +86,12 @@ class GetFailures(unittest.TestCase):
 		output = [('87.142.124.10', 3, 1167605999.0),
 				  ('193.168.0.128', 3, 1167605999.0)]
 
-		self.filter.openLogFile()
-		self.filter.getFailures()
+		self.__filter.openLogFile()
+		self.__filter.getFailures()
 		
 		found = []
-		for ip in self.filter.failManager.failList:
-			fData = self.filter.failManager.failList[ip]
+		for ip in self.__filter.failManager.failList:
+			fData = self.__filter.failManager.failList[ip]
 			retry = fData.getRetry()
 			lTime = fData.getLastTime()
 			found.append((ip, retry, lTime))

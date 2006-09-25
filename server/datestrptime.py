@@ -25,7 +25,7 @@ __date__ = "$Date: 2006-09-04 21:19:58 +0200 (Mon, 04 Sep 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import re, time
+import time
 
 from datetemplate import DateTemplate
 

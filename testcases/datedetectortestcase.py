@@ -32,8 +32,8 @@ class DateDetectorTest(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.datedetector = DateDetector()
-		self.datedetector.addDefaultTemplate()
+		self.__datedetector = DateDetector()
+		self.__datedetector.addDefaultTemplate()
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -43,18 +43,18 @@ class DateDetectorTest(unittest.TestCase):
 		date = [2006, 1, 23, 20, 59, 59, 0, 23, 0]
 		dateUnix = 1138046399.0
 		
-		self.assertEqual(self.datedetector.getTime(log), date)
-		self.assertEqual(self.datedetector.getUnixTime(log), dateUnix)
+		self.assertEqual(self.__datedetector.getTime(log), date)
+		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
 	
 	def testGetTime(self):
 		log = "Jan 23 21:59:59 [sshd] error: PAM: Authentication failure"
 		date = [2006, 1, 23, 21, 59, 59, 1, 23, -1]
 		dateUnix = 1138049999.0
 	
-		self.assertEqual(self.datedetector.getTime(log), date)
-		self.assertEqual(self.datedetector.getTime(log), date)
-		self.assertEqual(self.datedetector.getTime(log), date)
-		self.assertEqual(self.datedetector.getUnixTime(log), dateUnix)
-		self.assertEqual(self.datedetector.getUnixTime(log), dateUnix)
-		self.assertEqual(self.datedetector.getUnixTime(log), dateUnix)
+		self.assertEqual(self.__datedetector.getTime(log), date)
+		self.assertEqual(self.__datedetector.getTime(log), date)
+		self.assertEqual(self.__datedetector.getTime(log), date)
+		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
+		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
+		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
 		

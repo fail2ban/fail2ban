@@ -24,8 +24,8 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, logging, os
-from subprocess import call
+import logging, os
+#from subprocess import call
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.actions.action")
