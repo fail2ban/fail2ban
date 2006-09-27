@@ -238,18 +238,15 @@ class Filter(JailThread):
 		raise Exception("run() is abstract")
 	
 	##
-	# Add an IP to the ignore list.
+	# Add an IP/DNS to the ignore list.
 	#
 	# IP addresses in the ignore list are not taken into account
-	# when finding failures. CIDR mask are also accepted.
+	# when finding failures. CIDR mask and DNS are also accepted.
 	# @param ip IP address to ignore
 	
 	def addIgnoreIP(self, ip):
-		if DNSUtils.isValidIP(ip):
-			logSys.debug("Add " + ip + " to ignore list")
-			self.__ignoreIpList.append(ip)
-		else:
-			logSys.warn(ip + " is not a valid address")
+		logSys.debug("Add " + ip + " to ignore list")
+		self.__ignoreIpList.append(ip)
 		
 	def delIgnoreIP(self, ip):
 		logSys.debug("Remove " + ip + " from ignore list")
@@ -259,15 +256,18 @@ class Filter(JailThread):
 		return self.__ignoreIpList
 	
 	##
-	# Check if IP address is in the ignore list.
+	# Check if IP address/DNS is in the ignore list.
 	#
-	# Check if the given IP address matches an IP address or a CIDR
+	# Check if the given IP address matches an IP address/DNS or a CIDR
 	# mask in the ignore list.
 	# @param ip IP address
 	# @return True if IP address is in ignore list
 	
 	def inIgnoreIPList(self, ip):
 		for i in self.__ignoreIpList:
+			# An empty string is always false
+			if i == "":
+				return False
 			s = i.split('/', 1)
 			# IP address without CIDR mask
 			if len(s) == 1:
@@ -277,7 +277,12 @@ class Filter(JailThread):
 				a = DNSUtils.cidr(s[0], s[1])
 				b = DNSUtils.cidr(ip, s[1])
 			except Exception:
-				return False
+				# Check if IP in DNS
+				ips = DNSUtils.dnsToIp(i)
+				if ip in ips:
+					return True
+				else:
+					return False
 			if a == b:
 				return True
 		return False
@@ -424,8 +429,8 @@ import socket, struct
 
 class DNSUtils:
 	
-	dnsCRE = re.compile("(?:(?:\w|-)+\.){2,}\w+")
-	ipCRE = re.compile("(?:\d{1,3}\.){3}\d{1,3}")
+	DNS_CRE = re.compile("(?:(?:\w|-)+\.){2,}\w+")
+	IP_CRE = re.compile("(?:\d{1,3}\.){3}\d{1,3}")
 	
 	@staticmethod
 	def dnsToIp(dns):
@@ -442,7 +447,7 @@ class DNSUtils:
 		""" Search for possible DNS in an arbitrary text.
 			Thanks to Tom Pike.
 		"""
-		match = DNSUtils.dnsCRE.match(text)
+		match = DNSUtils.DNS_CRE.match(text)
 		if match:
 			return match
 		else:
@@ -453,7 +458,7 @@ class DNSUtils:
 		""" Search if an IP address if directly available and return
 			it.
 		"""
-		match = DNSUtils.ipCRE.match(text)
+		match = DNSUtils.IP_CRE.match(text)
 		if match:
 			return match
 		else:

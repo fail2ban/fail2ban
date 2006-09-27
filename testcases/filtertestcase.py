@@ -42,12 +42,18 @@ class IgnoreIP(unittest.TestCase):
 		for ip in ipList:
 			self.__filter.addIgnoreIP(ip)
 			self.assertTrue(self.__filter.inIgnoreIPList(ip))
+		# Test DNS
+		self.__filter.addIgnoreIP("www.epfl.ch")
+		self.assertTrue(self.__filter.inIgnoreIPList("128.178.50.12"))
 	
 	def testIgnoreIPNOK(self):
 		ipList = "", "999.999.999.999", "abcdef", "192.168.0."
 		for ip in ipList:
 			self.__filter.addIgnoreIP(ip)
 			self.assertFalse(self.__filter.inIgnoreIPList(ip))
+		# Test DNS
+		self.__filter.addIgnoreIP("www.epfl.ch")
+		self.assertFalse(self.__filter.inIgnoreIPList("127.177.50.10"))
 
 
 class LogFile(unittest.TestCase):
