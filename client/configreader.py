@@ -49,7 +49,7 @@ class ConfigReader(SafeConfigParser):
 		global basedir
 		return basedir
 	
-	def read(self, FILENAME):
+	def read(self, filename):
 		global basedir
 		basename = basedir + filename
 		logSys.debug("Reading " + basename)
