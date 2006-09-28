@@ -13,12 +13,12 @@ Legend:
 # partially done
 * done
 
+- Improve communication. (asyncore, asynchat??)
+
 - Improve execution of action. Why does subprocess.call
   deadlock with multi-jails?
 
 - Verify TAI64N
-
-# implement all get/set functions
 
 # correct handling of threads (join???), concurrency, etc
   protect "jails" in server.py

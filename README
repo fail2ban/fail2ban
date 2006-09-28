@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.7.2)                           2006/09/10
+Fail2Ban (version 0.7.3)                           2006/09/28
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -27,8 +27,8 @@ Optional:
 
 To install, just do:
 
-> tar xvfj fail2ban-0.7.2.tar.bz2
-> cd fail2ban-0.7.2
+> tar xvfj fail2ban-0.7.3.tar.bz2
+> cd fail2ban-0.7.3
 > python setup.py install
 
 This will install Fail2Ban into /usr/lib/fail2ban. The
@@ -51,8 +51,17 @@ You can configure fail2ban using the files in /etc/fail2ban
 or using command line. Here are the available command line
 options (not complete yet):
 
-  <COMMAND>
+Options:
+    -c <DIR>                configuration directory
+    -d                      dump configuration. For debugging
+    -i                      interactive mode
+    -v                      increase verbosity
+    -q                      decrease verbosity
+    -x                      force execution of the server
+    -h, --help              display this help message
+    -V, --version           print the version
 
+Command:
     start                   start the server and the jails
     reload                  reload the configuration
     stop                    stop all jails and terminate the
@@ -70,16 +79,6 @@ options (not complete yet):
     start <JAIL>            start <JAIL>
     stop <JAIL>             stop <JAIL>. The jail is removed
     status <JAIL>           get the current status of <JAIL>
-
-  [OPTIONS]
-
-    -c <DIR>                configuration directory
-    -d                      dump configuration. For debugging
-    -i                      interactive mode
-    -v                      increase verbosity
-    -q                      decrease verbosity
-    -x                      force execution of the server
-    -h                      display this help message
 
 Contact:
 --------
