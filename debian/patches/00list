@@ -1,5 +1,3 @@
 X00_rigid_python24
-X00_ssh_path
-X00_apache_log_path
-X00_default_jails
 X00_apache_log_failregex
+10_dbts_manpages

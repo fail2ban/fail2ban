@@ -9,7 +9,6 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-MANPAGE=fail2ban.8
 DESTDIR=$(CURDIR)/debian/fail2ban
 
 # no parallel execution -- required for dpatch
@@ -39,7 +38,7 @@ clean: clean-inits unpatch
 	rm -f build-stamp configure-stamp
 
 	# Add here commands to clean up after the build process.
-	rm -rf changelog.gz $(MANPAGE) build* 
+	rm -rf changelog.gz build* 
 
 	dh_clean
 
@@ -54,31 +53,31 @@ install: build copy-inits
 	#X Evil - must be removed after Debian switches over to 2.4, now
 	#  distutils.setup will override the enterpreter line to /usr/bin/python
 	install fail2ban-server fail2ban-client $(DESTDIR)/usr/bin
+	#  Install Debian shipped jail file in 1 piece (instead of patching
+	#  the shipped one since there are too many changes)
+	install -m 644 debian/jail.conf $(DESTDIR)/etc/fail2ban
 #X	mkdir -p $(DESTDIR)/etc
 #X	cp config/fail2ban.conf.iptables $(DESTDIR)/etc/fail2ban.conf
 
-# To build manpage
-$(MANPAGE): fail2ban fail2ban.h2m
-	help2man --include fail2ban.h2m --section=1x --no-info --output $@ ./fail2ban
 # 
 # Just to comply with policy 4.8
 binary-arch:
 
 # Build architecture-independent files here.
-#X binary-indep: install $(MANPAGE)
+#X binary-indep: install
 binary-indep: install
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs CHANGELOG
 	dh_installdocs
-#X	dh_installexamples config/fail2ban.conf.*
+	dh_installexamples config/jail.conf
 #	dh_install
 #	dh_installdebconf
 	dh_installlogrotate
 	dh_installinit -- defaults 99
 #	dh_installcron
 #	dh_installinfo
-#X	dh_installman fail2ban.8 man/fail2ban.conf.5
+	dh_installman man/*
 	dh_pycentral
 	dh_python
 	dh_link

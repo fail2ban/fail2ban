@@ -1,3 +1,9 @@
+fail2ban (0.7.3-1) UNRELEASED; urgency=low
+
+  * New upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 28 Sep 2006 22:17:16 -0400
+
 fail2ban (0.7.1-0.2) experimental; urgency=low
 
   * New upstream release (closes: #370095,#366307)

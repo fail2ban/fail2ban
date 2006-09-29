@@ -3,8 +3,8 @@ Section: net
 Priority: optional
 Maintainer: Yaroslav Halchenko <debian@onerussian.com>
 Uploaders: Barak Pearlmutter <bap@debian.org>
-Build-Depends: debhelper (>= 4.1.67), dpatch
-Build-Depends-Indep: python, python-dev, help2man, python-central (>= 0.4.17)
+Build-Depends: debhelper (>= 5.0.37.2), dpatch
+Build-Depends-Indep: python, python-dev, help2man, python-central (>= 0.5)
 XS-Python-Version: current, >= 2.4
 Standards-Version: 3.7.2
 
