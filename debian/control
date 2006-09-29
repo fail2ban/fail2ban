@@ -21,9 +21,9 @@ Description: bans IPs that cause multiple authentication errors
  easy specification of different actions to be taken such as to ban an
  IP using iptables or hostsdeny rules, or simply to send a
  notification email. Currently, by default, supports ssh/apache/vsftpd
- but configuration can be easily extended for scanning the other ASCII
- log files. All filters and actions are given in the config files,
- thus fail2ban can be adopted to be used with a variety of files and
+ but configuration can be easily extended for monitoring any other ASCII
+ file. All filters and actions are given in the config files, thus 
+ fail2ban can be adopted to be used with a variety of files and
  firewalls.
  .
  Homepage: http://www.sourceforge.net/projects/fail2ban
