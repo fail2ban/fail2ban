@@ -1,0 +1,25 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 10_proftpd_section.dpatch by  <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad fail2ban-0.7.3~/config/filter.d/proftpd.conf fail2ban-0.7.3/config/filter.d/proftpd.conf
+--- fail2ban-0.7.3~/config/filter.d/proftpd.conf	1969-12-31 19:00:00.000000000 -0500
++++ fail2ban-0.7.3/config/filter.d/proftpd.conf	2006-09-29 00:11:33.000000000 -0400
+@@ -0,0 +1,14 @@
++# Fail2Ban configuration file
++#
++# Author: Yaroslav Halchenko
++#
++# $Revision: 331 $
++#
++
++[Definition]
++
++# Option: failregex
++# Notes.: regex to match the password failures messages in the logfile.
++# Values: TEXT Default: Authentication failure|Failed password|Invalid user
++#
++failregex = USER \S+: no such user found from \S* ?\[(?P<host>\S+)\] to \S+\s*$
