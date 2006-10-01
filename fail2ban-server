@@ -97,14 +97,7 @@ class Fail2banServer:
 			if opt[0] in ["-V", "--version"]:
 	 			self.dispVersion()
 				sys.exit(0)
-	
-	#def sigTERMhandler(signum, frame):
-	#	""" Handles the TERM signal when in daemon mode in order to
-	#		exit properly.
-	#	"""
-	#	logSys.debug("Signal handler called with sig "+`signum`)
-	#	server.quit()
-	
+		
 	def start(self, argv):
 		# Command line options
 		self.__argv = argv
