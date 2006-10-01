@@ -39,11 +39,37 @@ class Fail2banRegex:
 	def __init__(self):
 		self.__filter = Filter(None)
 	
+	def dispVersion(self):
+		print "Fail2Ban v" + version
+		print
+		print "Copyright (c) 2004-2006 Cyril Jaquier"
+		print "Copyright of modifications held by their respective authors."
+		print "Licensed under the GNU General Public License v2 (GPL)."
+		print
+		print "Written by Cyril Jaquier <lostcontrol@users.sourceforge.net>."
+		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
+	
 	def dispUsage(self):
 		print "Usage: "+sys.argv[0]+" <logline> <failregex>"
 		print
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
 		print "and bans the corresponding IP addresses using firewall rules."
+		print
+		print "This tools can test and benchmark your regular expressions for the \"failregex\""
+		print "option."
+		print
+		print "Report bugs to <lostcontrol@users.sourceforge.net>"
+	
+	def getCmdLineOptions(self, optList):
+		""" Gets the command line options
+		"""
+		for opt in optList:
+			if opt[0] in ["-h", "--help"]:
+	 			self.dispUsage()
+	 			sys.exit(0)
+	 		elif opt[0] in ["-V", "--version"]:
+	 			self.dispVersion()
+	 			sys.exit(0)
 	
 	def setRegex(self, value):
 		self.__filter.setFailRegex(value)
@@ -99,6 +125,17 @@ class Fail2banRegex:
 			
 if __name__ == "__main__":
 	regex = Fail2banRegex()
+	# Reads the command line options.
+	try:
+		cmdOpts = 'hV'
+		cmdLongOpts = ['help', 'version']
+		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
+	except getopt.GetoptError:
+		regex.dispUsage()
+		sys.exit(-1)
+	# Process command line
+	regex.getCmdLineOptions(optList)
+	# We need exactly 3 parameters
 	if len(sys.argv) <> 3:
 		regex.dispUsage()
 		sys.exit(-1)
