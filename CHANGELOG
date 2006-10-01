@@ -4,8 +4,14 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.7.3)                           2006/09/28
+Fail2Ban (version 0.7.4)                           2006/??/??
 =============================================================
+
+ver. 0.7.4 (2006/09/28) - beta
+----------
+- Improved configuration files. Thanks to Yaroslav Halchenko
+- Added man page for "fail2ban-regex"
+- Moved ban/unban messages from "info" level to "warn"
 
 ver. 0.7.3 (2006/09/28) - beta
 ----------

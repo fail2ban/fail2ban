@@ -20,9 +20,6 @@ Legend:
 
 - Verify TAI64N
 
-# correct handling of threads (join???), concurrency, etc
-  protect "jails" in server.py
-
 - signal handling (ctrl-c, etc)
 
 # see Feature Request Tracking System at SourceForge.net
@@ -34,8 +31,6 @@ Legend:
 - use PyLint to check the code
 
 # better return values in function
-
-? use more email.Utils in mail.py
 
 ? add gettext support. Is this really needed for a server
   utility?
