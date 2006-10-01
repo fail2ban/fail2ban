@@ -57,10 +57,14 @@ config/filter.d/couriersmtp.conf
 config/filter.d/sshd.conf
 config/action.d/iptables.conf
 config/action.d/mail-whois.conf
-config/action.d/dummy.conf
 config/action.d/mail.conf
 config/action.d/hostsdeny.conf
 config/fail2ban.conf
 man/fail2ban-client.1
+man/fail2ban-client.h2m
 man/fail2ban-server.1
+man/fail2ban-server.h2m
+man/fail2ban-regex.1
+man/fail2ban-regex.h2m
+man/generate-man
 files/gentoo-initd
