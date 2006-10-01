@@ -79,7 +79,6 @@ setup(
 							[
 								'config/action.d/iptables.conf',
 								'config/action.d/mail-whois.conf',
-								'config/action.d/dummy.conf',
 								'config/action.d/mail.conf',
 								'config/action.d/hostsdeny.conf'
 							]
