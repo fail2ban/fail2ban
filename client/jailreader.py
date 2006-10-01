@@ -97,11 +97,12 @@ class JailReader(ConfigReader):
 		stream = [["add", self.__name]]
 		for opt in self.__opts:
 			if opt == "logpath":
-				pathList = glob.glob(self.__opts[opt])
-				if len(pathList) == 0:
-					logSys.error("No file found for " + self.__opts[opt])
-				for path in pathList:
-					stream.append(["set", self.__name, "addlogpath", path])
+				for path in self.__opts[opt].split("\n"):
+					pathList = glob.glob(path)
+					if len(pathList) == 0:
+						logSys.error("No file found for " + path)
+					for p in pathList:
+						stream.append(["set", self.__name, "addlogpath", p])
 			elif opt == "maxretry":
 				stream.append(["set", self.__name, "maxretry", self.__opts[opt]])
 			elif opt == "ignoreip":
