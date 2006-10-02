@@ -55,6 +55,8 @@ config/filter.d/apache-auth.conf
 config/filter.d/qmail.conf
 config/filter.d/couriersmtp.conf
 config/filter.d/sshd.conf
+config/filter.d/proftpd.conf
+config/filter.d/sasl.conf
 config/action.d/iptables.conf
 config/action.d/mail-whois.conf
 config/action.d/mail.conf
