@@ -1,3 +1,15 @@
+fail2ban (0.7.1-1) unstable; urgency=low
+
+  0.7.x versions of fail2ban is a complete rewrite of the tool since 0.6, and
+  is went through restructuring of the configuration files. If you had
+  adjusted config file /etc/fail2ban.conf or /etc/defaults/fail2ban, you need
+  to adjust new config files (under /etc/fail2ban/ and /etc/default/fail2ban)
+  to take advantage of the upgrade. Now fail2ban uses split configs and local
+  modifications can be introduced in corresponding .local files. Please
+  remove old configuration file /etc/fail2ban.conf thereafter.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 12 Sep 2006 10:31:15 -0400
+
 fail2ban (0.6.0-4) unstable; urgency=low
 
   In this version the new section ApacheAttacks was introduced to ban IPs

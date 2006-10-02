@@ -1,4 +1,4 @@
-fail2ban (0.7.3-1) UNRELEASED; urgency=low
+fail2ban (0.7.3-1) experimental; urgency=low
 
   * New upstream release
 
