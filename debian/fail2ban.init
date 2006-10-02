@@ -19,8 +19,11 @@
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
 DESC="authentication failure monitor"
 NAME=fail2ban
+
+# fail2ban-client is not a daemon itself but starts a daemon and
+# loads its with configuration
 DAEMON=/usr/bin/$NAME-client
-PIDFILE=/var/run/$NAME.pid
+SOCKFILE=/tmp/$NAME.sock
 SCRIPTNAME=/etc/init.d/$NAME
 
 # Exit if the package is not installed
@@ -117,20 +120,24 @@ case "$1" in
 		;;
 	status)
 		log_daemon_msg "Status of $DESC"
-		pidofproc $NAME $PIDFILE > /dev/null
-		status=$?
-		case $status in
+		$DAEMON status > /dev/null
+		case $? in
 			0)  log_success_msg " $NAME is running"
 				exit 0
 				;;
-			1|2) log_failure_msg " $NAME is not running but $PIDFILE exists"
-				exit 1
-				;;
-			3)  log_warning_msg " $NAME is not running"
-				exit 3
-				;;
-			4)  log_failure_msg " $PIDFILE not readable, status of $NAME unknown"
-				exit 4
+			255)
+				if [ -S $SOCKFILE ]; then
+					if [ -r $SOCKFILE ]; then
+						log_failure_msg " $NAME is not running but $SOCKFILE exists"
+						exit 1
+					else
+						log_failure_msg " $SOCKFILE not readable, status of $NAME unknown"
+						exit 4
+					fi
+				else
+					log_warning_msg " $NAME is not running"
+					exit 3
+				fi
 				;;
 		esac
 		;;
