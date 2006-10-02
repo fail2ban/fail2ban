@@ -1,6 +1,8 @@
 fail2ban (0.7.3-1) experimental; urgency=low
 
   * New upstream release
+  * Debian shipped jail.conf
+  * Refreshen init.d script
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 28 Sep 2006 22:17:16 -0400
 
