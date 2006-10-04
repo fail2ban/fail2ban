@@ -50,6 +50,7 @@ class Fail2banServer:
 		self.__conf = dict()
 		self.__conf["background"] = True
 		self.__conf["force"] = False
+		self.__conf["socket"] = "/tmp/fail2ban.sock"
 	
 	def dispVersion(self):
 		print "Fail2Ban v" + version
@@ -75,6 +76,7 @@ class Fail2banServer:
 		print "Options:"
 		print "  -b             start in background"
 		print "  -f             start in foreground"
+		print "  -s <FILE>      socket path"
 		print "  -x             force execution of the server"
 		print "  -h, --help     display this help message"
 		print "  -V, --version  print the version"
@@ -89,6 +91,8 @@ class Fail2banServer:
 				self.__conf["background"] = True
 			if opt[0] == "-f":
 				self.__conf["background"] = False
+			if opt[0] == "-s":
+				self.__conf["socket"] = opt[1]
 			if opt[0] == "-x":
 				self.__conf["force"] = True
 			if opt[0] in ["-h", "--help"]:
@@ -104,7 +108,7 @@ class Fail2banServer:
 		
 		# Reads the command line options.
 		try:
-			cmdOpts = 'bfxhV'
+			cmdOpts = 'bfs:xhV'
 			cmdLongOpts = ['help', 'version']
 			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
@@ -114,7 +118,7 @@ class Fail2banServer:
 		
 		try:
 			self.__server = Server(self.__conf["background"])
-			self.__server.start(self.__conf["force"])
+			self.__server.start(self.__conf["socket"], self.__conf["force"])
 			return True
 		except Exception, e:
 			print e
