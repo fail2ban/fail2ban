@@ -24,8 +24,6 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from ssocket import SSocket
-from ssocket import SSocketErrorException
 from threading import Lock
 import logging, time
 
@@ -37,33 +35,6 @@ class Transmitter:
 	def __init__(self, server):
 		self.__lock = Lock()
 		self.__server = server
-		self.__socket = SSocket(self)
-	
-	##
-	# Start the transmittion server.
-	#
-	# This function wait for the socket thread.
-	
-	def start(self, force):
-		try:
-			self.__lock.acquire()
-			self.__socket.initialize(force)
-			self.__socket.start()
-			self.__lock.release()
-			self.__socket.join()
-		except SSocketErrorException:
-			logSys.error("Could not start server")
-			self.__lock.release()
-	
-	##
-	# Stop the transmitter.
-	#
-	# @bug Fix the issue with join(). When using servertestcase.py, errors
-	# happen which disappear when using join() in this function.
-	
-	def stop(self):
-		self.__socket.stop()
-		self.__socket.join()
 		
 	def proceed(self, action):
 		# Deserialize object

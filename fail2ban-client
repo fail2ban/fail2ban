@@ -58,6 +58,7 @@ class Fail2banClient:
 		self.__conf["force"] = False
 		self.__conf["verbose"] = 2
 		self.__conf["interactive"] = False
+		self.__conf["socket"] = "/tmp/fail2ban.sock"
 		
 	def dispVersion(self):
 		print "Fail2Ban v" + version
@@ -79,6 +80,7 @@ class Fail2banClient:
 		print
 		print "Options:"
 		print "    -c <DIR>                configuration directory"
+		print "    -s <FILE>               socket path"
 		print "    -d                      dump configuration. For debugging"
 		print "    -i                      interactive mode"
 		print "    -v                      increase verbosity"
@@ -118,6 +120,8 @@ class Fail2banClient:
 		for opt in optList:
 			if opt[0] == "-c":
 				self.__conf["conf"] = opt[1]
+			elif opt[0] == "-s":
+				self.__conf["socket"] = opt[1]
 			elif opt[0] == "-d":
 				self.__conf["dump"] = True
 			elif opt[0] == "-v":
@@ -136,15 +140,14 @@ class Fail2banClient:
 	 			sys.exit(0)
 	
 	def __ping(self):
-		return self.processCmd([["ping"]], False)
+		return self.__processCmd([["ping"]], False)
 	
-	@staticmethod
-	def processCmd(cmd, showRet = True):
+	def __processCmd(self, cmd, showRet = True):
 		beautifier = Beautifier()
 		for c in cmd:
 			beautifier.setInputCmd(c)
 			try:
-				client = CSocket()
+				client = CSocket(self.__conf["socket"])
 				ret = client.send(c)
 				if ret[0] == 0:
 					logSys.debug("OK : " + `ret[1]`)
@@ -183,7 +186,7 @@ class Fail2banClient:
 					# Wait for the server to start
 					self.__waitOnServer()
 					# Configure the server
-					self.processCmd(self.__stream, False)
+					self.__processCmd(self.__stream, False)
 					return True
 				except ServerExecutionException:
 					logSys.error("Could not start server. Try -x option")
@@ -191,14 +194,14 @@ class Fail2banClient:
 		elif len(cmd) == 1 and cmd[0] == "reload":
 			if self.__ping():
 				self.__readConfig()
-				self.processCmd([['stop', 'all']], False)
+				self.__processCmd([['stop', 'all']], False)
 				# Configure the server
-				return self.processCmd(self.__stream, False)
+				return self.__processCmd(self.__stream, False)
 			else:
 				logSys.error("Could not find server")
 				return False
 		else:
-			return self.processCmd([cmd])
+			return self.__processCmd([cmd])
 	
 	
 	##
@@ -244,7 +247,7 @@ class Fail2banClient:
 		
 		# Reads the command line options.
 		try:
-			cmdOpts = 'hc:xdviqV'
+			cmdOpts = 'hc:s:xdviqV'
 			cmdLongOpts = ['help', 'version']
 			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
@@ -327,4 +330,3 @@ if __name__ == "__main__":
 		sys.exit(0)
 	else:
 		sys.exit(-1)
-

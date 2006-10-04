@@ -26,6 +26,8 @@ __license__ = "GPL"
 
 from jails import Jails
 from transmitter import Transmitter
+from ssocket import SSocket
+from ssocket import SSocketErrorException
 import logging, logging.handlers, sys, os, signal
 
 # Gets the instance of the logger.
@@ -37,13 +39,14 @@ class Server:
 		self.__jails = Jails()
 		self.__daemon = daemon
 		self.__transm = Transmitter(self)
+		self.__socket = SSocket(self.__transm)
 		self.__logLevel = 3
 		self.__logTarget = "STDOUT"
 		# Set logging level
 		self.setLogLevel(self.__logLevel)
 		self.setLogTarget(self.__logTarget)
 	
-	def start(self, force):
+	def start(self, sock, force = False):
 		logSys.info("Starting Fail2ban")
 		# First set the mask to only allow access to owner
 		os.umask(0077)
@@ -56,12 +59,18 @@ class Server:
 				raise ServerInitializationError("Could not create daemon")
 		# Start the communication
 		logSys.debug("Starting communication")
-		self.__transm.start(force)
+		try:
+			self.__socket.initialize(sock, force)
+			self.__socket.start()
+			self.__socket.join()
+		except SSocketErrorException:
+			logSys.error("Could not start server")
 		logSys.info("Exiting Fail2ban")
 	
 	def quit(self):
 		self.stopAllJail()
-		self.__transm.stop()
+		# Stop communication
+		self.__socket.stop()
 	
 	def addJail(self, name):
 		self.__jails.add(name)
