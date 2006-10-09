@@ -38,6 +38,10 @@ class Fail2banReader(ConfigReader):
 	def read(self):
 		ConfigReader.read(self, "fail2ban")
 	
+	def getEarlyOptions(self):
+		opts = [["string", "socket", "/tmp/fail2ban.sock"]]
+		return ConfigReader.getOptions(self, "Definition", opts)
+	
 	def getOptions(self):
 		opts = [["int", "loglevel", 1],
 				["string", "logtarget", "STDERR"]]

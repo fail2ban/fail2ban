@@ -46,9 +46,15 @@ class Configurator:
 	def getBaseDir(self):
 		return ConfigReader.getBaseDir()
 	
-	def readAll(self):
+	def readEarly(self):
 		self.__fail2ban.read()
+	
+	def readAll(self):
+		self.readEarly()
 		self.__jails.read()
+		
+	def getEarlyOptions(self):
+		return self.__fail2ban.getEarlyOptions()
 	
 	def getAllOptions(self):
 		self.__settings["general"] = self.__fail2ban.getOptions()
