@@ -52,13 +52,14 @@ class Fail2banClient:
 	def __init__(self):
 		self.__argv = None
 		self.__stream = None
+		self.__configurator = Configurator()
 		self.__conf = dict()
 		self.__conf["conf"] = "/etc/fail2ban"
 		self.__conf["dump"] = False
 		self.__conf["force"] = False
 		self.__conf["verbose"] = 2
 		self.__conf["interactive"] = False
-		self.__conf["socket"] = "/tmp/fail2ban.sock"
+		self.__conf["socket"] = None
 		
 	def dispVersion(self):
 		print "Fail2Ban v" + version
@@ -273,6 +274,16 @@ class Fail2banClient:
 		stdout.setFormatter(formatter)
 		logSys.addHandler(stdout)
 
+		# Set the configuration path
+		self.__configurator.setBaseDir(self.__conf["conf"])
+		
+		# Set socket path
+		self.__configurator.readEarly()
+		socket = self.__configurator.getEarlyOptions()
+		if self.__conf["socket"] == None:
+			self.__conf["socket"] = socket["socket"]
+		logSys.warn("Using socket file " + self.__conf["socket"])
+
 		if self.__conf["dump"]:
 			self.__readConfig()
 			self.dumpConfig(self.__stream)
@@ -306,12 +317,10 @@ class Fail2banClient:
 
 	def __readConfig(self):
 		# Read the configuration
-		cfg = Configurator()
-		cfg.setBaseDir(self.__conf["conf"])
-		cfg.readAll()
-		cfg.getAllOptions()
-		cfg.convertToProtocol()
-		self.__stream = cfg.getConfigStream()
+		self.__configurator.readAll()
+		self.__configurator.getAllOptions()
+		self.__configurator.convertToProtocol()
+		self.__stream = self.__configurator.getConfigStream()
 	
 	@staticmethod
 	def dumpConfig(cmd):
