@@ -72,8 +72,8 @@ class Server:
 		# Stop communication
 		self.__socket.stop()
 	
-	def addJail(self, name):
-		self.__jails.add(name)
+	def addJail(self, name, backend):
+		self.__jails.add(name, backend)
 		
 	def delJail(self, name):
 		self.__jails.remove(name)

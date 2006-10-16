@@ -7,13 +7,14 @@
 Fail2Ban (version 0.7.4)                           2006/??/??
 =============================================================
 
-ver. 0.7.4 (2006/09/28) - beta
+ver. 0.7.4 (2006/??/??) - beta
 ----------
 - Improved configuration files. Thanks to Yaroslav Halchenko
 - Added man page for "fail2ban-regex"
 - Moved ban/unban messages from "info" level to "warn"
 - Added "-s" option to specify the socket path and "socket"
   option in "fail2ban.conf"
+- Added "backend" option in "jail.conf"
 
 ver. 0.7.3 (2006/09/28) - beta
 ----------

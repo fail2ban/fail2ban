@@ -58,6 +58,7 @@ class JailReader(ConfigReader):
 	def getOptions(self):
 		opts = [["bool", "enabled", "false"],
 				["string", "logpath", "/var/log/messages"],
+				["string", "backend", "auto"],
 				["int", "maxretry", 3],
 				["int", "maxtime", 600],
 				["int", "bantime", 600],
@@ -94,7 +95,7 @@ class JailReader(ConfigReader):
 		return True
 	
 	def convert(self):
-		stream = [["add", self.__name]]
+		stream = []
 		for opt in self.__opts:
 			if opt == "logpath":
 				for path in self.__opts[opt].split("\n"):
@@ -103,6 +104,8 @@ class JailReader(ConfigReader):
 						logSys.error("No file found for " + path)
 					for p in pathList:
 						stream.append(["set", self.__name, "addlogpath", p])
+			elif opt == "backend":
+				backend = self.__opts[opt]
 			elif opt == "maxretry":
 				stream.append(["set", self.__name, "maxretry", self.__opts[opt]])
 			elif opt == "ignoreip":
@@ -114,6 +117,7 @@ class JailReader(ConfigReader):
 		stream.extend(self.__filter.convert())
 		for action in self.__actions:
 			stream.extend(action.convert())
+		stream.insert(0, ["add", self.__name, backend])
 		return stream
 	
 	@staticmethod

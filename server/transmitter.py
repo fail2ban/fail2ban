@@ -63,7 +63,11 @@ class Transmitter:
 			name = action[1]
 			if name == "all":
 				raise Exception("Reserved name")
-			self.__server.addJail(name)
+			try:
+				backend = action[2]
+			except IndexError:
+				backend = "auto"
+			self.__server.addJail(name, backend)
 			return name
 		elif action[0] == "start":
 			name = action[1]

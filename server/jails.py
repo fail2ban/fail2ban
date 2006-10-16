@@ -34,13 +34,13 @@ class Jails:
 		self.__lock = Lock()
 		self.__jails = dict()
 	
-	def add(self, name):
+	def add(self, name, backend):
 		self.__lock.acquire()
 		if self.__jails.has_key(name):
 			self.__lock.release()
 			raise DuplicateJailException(name)
 		else:
-			self.__jails[name] = Jail(name)
+			self.__jails[name] = Jail(name, backend)
 			self.__lock.release()
 	
 	def remove(self, name):
