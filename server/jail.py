@@ -34,20 +34,30 @@ logSys = logging.getLogger("fail2ban.jail")
 
 class Jail:
 	
-	def __init__(self, name):
+	def __init__(self, name, backend = "auto"):
 		self.__lock = Lock()
 		self.__name = name
 		self.__queue = Queue.Queue()
-		try:
-			import gamin
-			logSys.info("Gamin available. Using it instead of poller")
-			from filtergamin import FilterGamin
-			self.__filter = FilterGamin(self)
-		except ImportError:
-			logSys.info("Gamin not available. Using poller")
-			from filterpoll import FilterPoll
-			self.__filter = FilterPoll(self)
+		self.__filter = None
+		if backend == "polling":
+			self.__initPoller()
+		else:
+			try:
+				self.__initGamin()
+			except ImportError:
+				self.__initPoller()
 		self.__action = Actions(self)
+	
+	def __initPoller(self):
+		logSys.info("Using poller")
+		from filterpoll import FilterPoll
+		self.__filter = FilterPoll(self)
+	
+	def __initGamin(self):
+		import gamin
+		logSys.info("Using Gamin")
+		from filtergamin import FilterGamin
+		self.__filter = FilterGamin(self)
 	
 	def setName(self, name):
 		self.__lock.acquire()
@@ -61,22 +71,12 @@ class Jail:
 		finally:
 			self.__lock.release()
 	
-	def setFilter(self, filter):
-		self.__lock.acquire()
-		self.__filter = filter
-		self.__lock.release()
-	
 	def getFilter(self):
 		try:
 			self.__lock.acquire()
 			return self.__filter
 		finally:
 			self.__lock.release()
-	
-	def setAction(self, action):
-		self.__lock.acquire()
-		self.__action = action
-		self.__lock.release()
 	
 	def getAction(self):
 		try:
@@ -141,7 +141,7 @@ class Jail:
 			self.__lock.acquire()
 			fStatus = self.__filter.status()
 			aStatus = self.__action.status()
-			ret = [("filter", fStatus),
+			ret = [("filter", fStatus), 
 				   ("action", aStatus)]
 			return ret
 		finally:
