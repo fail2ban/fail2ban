@@ -30,6 +30,7 @@ from distutils.core import setup
 from version import version
 from os.path import isfile, join
 from sys import exit, argv
+from glob import glob
 
 longdesc = '''
 Fail2Ban scans log files like /var/log/pwdfail or
@@ -60,31 +61,13 @@ setup(
 				],
 	data_files =	[
 						('/etc/fail2ban',
-							[
-								'config/fail2ban.conf',
-								'config/jail.conf'
-							]
+							glob("config/*.conf")
 						),
 						('/etc/fail2ban/filter.d',
-							[
-								'config/filter.d/vsftpd.conf',
-								'config/filter.d/apache-auth.conf',
-								'config/filter.d/apache-noscript.conf',
-								'config/filter.d/proftpd.conf',
-								'config/filter.d/sasl.conf',
-								'config/filter.d/sshd.conf',
-								'config/filter.d/couriersmtp.conf',
-								'config/filter.d/postfix.conf',
-								'config/filter.d/qmail.conf'
-							]
+							glob("config/filter.d/*.conf")
 						),
 						('/etc/fail2ban/action.d',
-							[
-								'config/action.d/iptables.conf',
-								'config/action.d/mail-whois.conf',
-								'config/action.d/mail.conf',
-								'config/action.d/hostsdeny.conf'
-							]
+							glob("config/action.d/*.conf")
 						)
 					]
 )
