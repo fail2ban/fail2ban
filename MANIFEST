@@ -62,6 +62,7 @@ config/action.d/iptables.conf
 config/action.d/mail-whois.conf
 config/action.d/mail.conf
 config/action.d/hostsdeny.conf
+config/action.d/shorewall.conf
 config/fail2ban.conf
 man/fail2ban-client.1
 man/fail2ban-client.h2m
