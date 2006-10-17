@@ -101,7 +101,7 @@ class Fail2banClient:
 		print "    set logtarget <TARGET>  set log target to <TARGET>"
 		print "    get logtarget           get log target"
 		print
-		print "    add <JAIL>              create <JAIL>"
+		print "    add <JAIL> [BACKEND]    create <JAIL> using [BACKEND]"
 		print "    set <JAIL> <CMD>        set the <CMD> value for <JAIL>"
 		print "    get <JAIL> <CMD>        get the <CMD> value for <JAIL>"
 		print "    start <JAIL>            start <JAIL>"
