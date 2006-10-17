@@ -69,6 +69,9 @@ setup(
 							[
 								'config/filter.d/vsftpd.conf',
 								'config/filter.d/apache-auth.conf',
+								'config/filter.d/apache-noscript.conf',
+								'config/filter.d/proftpd.conf',
+								'config/filter.d/sasl.conf',
 								'config/filter.d/sshd.conf',
 								'config/filter.d/couriersmtp.conf',
 								'config/filter.d/postfix.conf',
