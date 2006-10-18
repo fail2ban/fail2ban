@@ -27,6 +27,7 @@ __license__ = "GPL"
 from banmanager import BanManager
 from jailthread import JailThread
 from action import Action
+from mytime import MyTime
 import time, logging
 
 # Gets the instance of the logger.
@@ -146,7 +147,7 @@ class Actions(JailThread):
 	# Unban IP address which are outdated.
 	
 	def __checkUnBan(self):
-		for ticket in self.__banManager.unBanList(time.time()):
+		for ticket in self.__banManager.unBanList(MyTime.time()):
 			aInfo = dict()
 			aInfo["ip"] = ticket.getIP()
 			logSys.warn("[%s] Unban %s" % (self.jail.getName(), aInfo["ip"]))
