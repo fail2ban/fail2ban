@@ -39,6 +39,11 @@ from testcases import failmanagertestcase
 from testcases import filtertestcase
 from testcases import servertestcase
 from testcases import datedetectortestcase
+from server.mytime import MyTime
+
+# Set the time to a fixed, known value
+# Sun Aug 14 12:00:00 CEST 2005
+MyTime.setTime(1124013600)
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")
@@ -54,7 +59,7 @@ tests = unittest.TestSuite()
 # Filter
 tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
 tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
-#tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
+tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
 # Server
 #tests.addTest(unittest.makeSuite(servertestcase.StartStop))
 #tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
