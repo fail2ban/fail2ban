@@ -87,6 +87,7 @@ class ConfigReader(SafeConfigParser):
 			except NoSectionError, e:
 				# No "Definition" section or wrong basedir
 				logSys.error(e)
+				values[option[1]] = option[2]
 			except NoOptionError:
 				if not option[2] == None:
 					logSys.warn("No '" + option[1] + "' defined in '" + sec + "'")
