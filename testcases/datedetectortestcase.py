@@ -48,13 +48,9 @@ class DateDetectorTest(unittest.TestCase):
 	
 	def testGetTime(self):
 		log = "Jan 23 21:59:59 [sshd] error: PAM: Authentication failure"
-		date = [2006, 1, 23, 21, 59, 59, 1, 23, -1]
-		dateUnix = 1138049999.0
+		date = [2005, 1, 23, 21, 59, 59, 1, 23, -1]
+		dateUnix = 1106513999.0
 	
 		self.assertEqual(self.__datedetector.getTime(log), date)
-		self.assertEqual(self.__datedetector.getTime(log), date)
-		self.assertEqual(self.__datedetector.getTime(log), date)
-		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
-		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
 		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
 		
