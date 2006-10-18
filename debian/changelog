@@ -1,3 +1,9 @@
+fail2ban (0.7.3-2) experimental; urgency=low
+
+  * Added wuftpd section
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 18 Oct 2006 01:15:00 -0400
+
 fail2ban (0.7.3-1) experimental; urgency=low
 
   * New upstream release

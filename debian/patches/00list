@@ -2,4 +2,5 @@ X00_rigid_python24
 X00_apache_log_failregex
 10_dbts_manpages
 10_proftpd_section
+10_wuftpd_section
 10_sasl_section
