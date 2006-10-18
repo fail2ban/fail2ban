@@ -26,6 +26,7 @@ __license__ = "GPL"
 
 from banticket import BanTicket
 from threading import Lock
+from mytime import MyTime
 import time, logging
 
 # Gets the instance of the logger.
@@ -112,7 +113,7 @@ class BanManager:
 	def createBanTicket(ticket):
 		ip = ticket.getIP()
 		#lastTime = ticket.getTime()
-		lastTime = time.time()
+		lastTime = MyTime.time()
 		banTicket = BanTicket(ip, lastTime)
 		banTicket.setAttempt(ticket.getAttempt())
 		return banTicket

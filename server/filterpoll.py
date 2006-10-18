@@ -26,6 +26,7 @@ __license__ = "GPL"
 
 from failmanager import FailManagerEmpty
 from filter import Filter
+from mytime import MyTime
 
 import time, logging, os
 
@@ -104,7 +105,7 @@ class FilterPoll(Filter):
 						ticket = self.failManager.toBan()
 						self.jail.putFailTicket(ticket)
 					except FailManagerEmpty:
-						self.failManager.cleanup(time.time())
+						self.failManager.cleanup(MyTime.time())
 					self.dateDetector.sortTemplate()
 					self.modified = False
 				time.sleep(self.getSleepTime())

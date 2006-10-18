@@ -28,6 +28,7 @@ from failmanager import FailManager
 from failticket import FailTicket
 from jailthread import JailThread
 from datedetector import DateDetector
+from mytime import MyTime
 
 import time, logging, re
 
@@ -342,7 +343,7 @@ class Filter(JailThread):
 	# Gets all the failure in the log file.
 	#
 	# Gets all the failure in the log file which are newer than
-	# time.time()-self.findTime. When a failure is detected, a FailTicket
+	# MyTime.time()-self.findTime. When a failure is detected, a FailTicket
 	# is created and is added to the FailManager.
 	
 	def getFailures(self, filename):
@@ -369,7 +370,7 @@ class Filter(JailThread):
 			for element in self.findFailure(line):
 				ip = element[0]
 				unixTime = element[1]
-				if unixTime < time.time()-self.__findTime:
+				if unixTime < MyTime.time()-self.__findTime:
 					break
 				if self.inIgnoreIPList(ip):
 					logSys.debug("Ignore "+ip)

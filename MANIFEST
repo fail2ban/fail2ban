@@ -38,6 +38,7 @@ server/__init__.py
 server/dateepoch.py
 server/banmanager.py
 server/datetemplate.py
+server/mytime.py
 testcases/banmanagertestcase.py
 testcases/failmanagertestcase.py
 testcases/clientreadertestcase.py
