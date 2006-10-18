@@ -1,8 +1,8 @@
-fail2ban (0.6.1-11.1) unstable; urgency=low
+fail2ban (0.6.1-12) unstable; urgency=low
 
-  * Split out 0.6 to prepare 0.7
+  * Added section for WUFTPD (Thanks to Jesse Wyant) (closes: #386381)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  4 Sep 2006 23:35:22 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 18 Oct 2006 01:05:31 -0400
 
 fail2ban (0.6.1-11) unstable; urgency=low
 
