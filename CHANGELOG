@@ -15,7 +15,8 @@ ver. 0.7.4 (2006/??/??) - beta
 - Added "-s" option to specify the socket path and "socket"
   option in "fail2ban.conf"
 - Added "backend" option in "jail.conf"
-- Added more filters/actions and jail samples
+- Added more filters/actions and jail samples. Thanks to Nick
+  Munger
 - Improved testing framework
 
 ver. 0.7.3 (2006/09/28) - beta

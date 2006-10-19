@@ -60,6 +60,7 @@ config/filter.d/sshd.conf
 config/filter.d/proftpd.conf
 config/filter.d/sasl.conf
 config/action.d/iptables.conf
+config/action.d/ipfw.conf
 config/action.d/mail-whois.conf
 config/action.d/mail.conf
 config/action.d/hostsdeny.conf
