@@ -30,7 +30,7 @@ from jailthread import JailThread
 from datedetector import DateDetector
 from mytime import MyTime
 
-import time, logging, re
+import logging, re
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -356,13 +356,10 @@ class Filter(JailThread):
 		lastLine = None
 		for line in self.__crtHandler:
 			try:
-				# Try to convert UTF-8 string to Latin-1
-				#line = line.decode('utf-8').encode('latin-1')
+				# Decode line to UTF-8
 				line = line.decode('utf-8')
 			except UnicodeDecodeError:
 				pass
-			#except UnicodeEncodeError:
-			#	logSys.warn("Mmhh... Are you sure you watch the correct file?")
 			if not self.dateDetector.matchTime(line):
 				# There is no valid time in this line
 				continue
