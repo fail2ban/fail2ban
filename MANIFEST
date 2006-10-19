@@ -46,6 +46,10 @@ testcases/filtertestcase.py
 testcases/__init__.py
 testcases/datedetectortestcase.py
 testcases/servertestcase.py
+testcases/files/testcase01.log
+testcases/files/testcase02.log
+testcases/files/testcase03.log
+testcases/files/testcase04.log
 setup.py
 setup.cfg
 version.py
