@@ -28,6 +28,7 @@ import unittest, socket
 from server.filterpoll import FilterPoll
 from server.filter import Filter
 from server.failmanager import FailManager
+from server.failmanager import FailManagerEmpty
 
 class IgnoreIP(unittest.TestCase):
 
@@ -78,23 +79,27 @@ class LogFile(unittest.TestCase):
 
 class GetFailures(unittest.TestCase):
 
-	FILENAME = "testcases/files/testcase01.log"
+	FILENAME_01 = "testcases/files/testcase01.log"
+	FILENAME_02 = "testcases/files/testcase02.log"
+	FILENAME_03 = "testcases/files/testcase03.log"
+	FILENAME_04 = "testcases/files/testcase04.log"
 
 	def setUp(self):
 		"""Call before every test case."""
 		self.__filter = Filter(None)
-		self.__filter.addLogPath(FILENAME)
 		#self.__filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 		#self.__filter.setTimePattern("%b %d %H:%M:%S")
-		self.__filter.setFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) (?:::f{4,6}:)?(?P<host>\S*)")
 
 	def tearDown(self):
 		"""Call after every test case."""
 		
-	def testGetFailures(self):
+	def testGetFailures01(self):
 		output = ('193.168.0.128', 3, 1124013599.0)
+		
+		self.__filter.addLogPath(GetFailures.FILENAME_01)
+		self.__filter.setFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) (?:::f{4,6}:)?(?P<host>\S*)")
 
-		self.__filter.getFailures(FILENAME)
+		self.__filter.getFailures(GetFailures.FILENAME_01)
 		
 		ticket = self.__filter.failManager.toBan()
 
@@ -104,4 +109,58 @@ class GetFailures(unittest.TestCase):
 		found = (ip, attempts, date)
 		
 		self.assertEqual(found, output)
+	
+	def testGetFailures02(self):
+		output = ('141.3.81.106', 4, 1124013539.0)
+
+		self.__filter.addLogPath(GetFailures.FILENAME_02)
+		self.__filter.setFailRegex("Failed .* (?:::f{4,6}:)(?P<host>\S*)")
+		
+		self.__filter.getFailures(GetFailures.FILENAME_02)
+		
+		ticket = self.__filter.failManager.toBan()
+
+		attempts = ticket.getAttempt()
+		date = ticket.getTime()
+		ip = ticket.getIP()
+		found = (ip, attempts, date)
+		
+		self.assertEqual(found, output)	
+
+	def testGetFailures03(self):
+		output = ('203.162.223.135', 6, 1124013544.0)
+
+		self.__filter.addLogPath(GetFailures.FILENAME_03)
+		self.__filter.setFailRegex("error,relay=(?:::f{4,6}:)?(?P<host>\S*),.*550 User unknown")
+		
+		self.__filter.getFailures(GetFailures.FILENAME_03)
+		
+		ticket = self.__filter.failManager.toBan()
+		
+		attempts = ticket.getAttempt()
+		date = ticket.getTime()
+		ip = ticket.getIP()
+		found = (ip, attempts, date)
+		
+		self.assertEqual(found, output)	
+
+	def testGetFailures04(self):
+		output = [('212.41.96.186', 4, 1124013600.0),
+				  ('212.41.96.185', 4, 1124013598.0)]
+
+		self.__filter.addLogPath(GetFailures.FILENAME_04)
+		self.__filter.setFailRegex("Invalid user .* (?P<host>\S*)")
+		
+		self.__filter.getFailures(GetFailures.FILENAME_04)
+
+		try:
+			for i in range(2):
+				ticket = self.__filter.failManager.toBan()		
+				attempts = ticket.getAttempt()
+				date = ticket.getTime()
+				ip = ticket.getIP()
+				found = (ip, attempts, date)
+				self.assertEqual(found, output[i])
+		except FailManagerEmpty:
+			pass
 		
