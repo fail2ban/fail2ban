@@ -109,7 +109,8 @@ class JailReader(ConfigReader):
 			elif opt == "maxretry":
 				stream.append(["set", self.__name, "maxretry", self.__opts[opt]])
 			elif opt == "ignoreip":
-				stream.append(["set", self.__name, "addignoreip", self.__opts[opt]])
+				for ip in self.__opts[opt].split():
+					stream.append(["set", self.__name, "addignoreip", ip])
 			elif opt == "maxtime":
 				stream.append(["set", self.__name, "maxtime", self.__opts[opt]])
 			elif opt == "bantime":
