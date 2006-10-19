@@ -39,8 +39,8 @@ class DateStrptime(DateTemplate):
 	
 	TABLE = dict()
 	TABLE["Jan"] = []
-	TABLE["Feb"] = ["Fév"]
-	TABLE["Mar"] = ["Mär"]
+	TABLE["Feb"] = [u"Fév"]
+	TABLE["Mar"] = [u"Mär"]
 	TABLE["Apr"] = ["Avr"]
 	TABLE["May"] = ["Mai"]
 	TABLE["Jun"] = []
@@ -49,7 +49,7 @@ class DateStrptime(DateTemplate):
 	TABLE["Sep"] = []
 	TABLE["Oct"] = ["Okt"]
 	TABLE["Nov"] = []
-	TABLE["Dec"] = ["Déc", "Dez"]
+	TABLE["Dec"] = [u"Déc", "Dez"]
 	
 	def __init__(self):
 		DateTemplate.__init__(self)
