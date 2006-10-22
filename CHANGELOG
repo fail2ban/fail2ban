@@ -16,7 +16,7 @@ ver. 0.7.4 (2006/??/??) - beta
   option in "fail2ban.conf"
 - Added "backend" option in "jail.conf"
 - Added more filters/actions and jail samples. Thanks to Nick
-  Munger
+  Munger, Christoph Haas
 - Improved testing framework
 
 ver. 0.7.3 (2006/09/28) - beta
