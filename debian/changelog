@@ -1,3 +1,10 @@
+fail2ban (0.7.4~pre20061023.2-1) experimental; urgency=low
+
+  * Fresh upstream: fixed a bug with not handling error producing
+    actioncheck call
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 23 Oct 2006 17:00:03 -0400
+
 fail2ban (0.7.4~pre2006102-1) experimental; urgency=low
 
   * Currrent snapshot of trunk
