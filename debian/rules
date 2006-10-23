@@ -77,7 +77,7 @@ binary-indep: install
 	dh_installinit -- defaults 99
 #	dh_installcron
 #	dh_installinfo
-	dh_installman man/*
+	dh_installman man/*.1
 	dh_pycentral
 	dh_python
 	dh_link
