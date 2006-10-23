@@ -45,6 +45,7 @@ testcases/clientreadertestcase.py
 testcases/filtertestcase.py
 testcases/__init__.py
 testcases/datedetectortestcase.py
+testcases/actiontestcase.py
 testcases/servertestcase.py
 testcases/files/testcase01.log
 testcases/files/testcase02.log
