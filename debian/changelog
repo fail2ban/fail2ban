@@ -1,3 +1,11 @@
+fail2ban (0.7.4~pre2006102-1) experimental; urgency=low
+
+  * Currrent snapshot of trunk
+  * Removed outdated (applied in 0.7.4 or specific for 0.6.?) patches
+    from debian/patches
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 23 Oct 2006 00:17:55 -0400
+
 fail2ban (0.7.3-2) experimental; urgency=low
 
   * Added wuftpd section

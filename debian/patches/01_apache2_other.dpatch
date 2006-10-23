@@ -12,7 +12,7 @@ diff -x '*~' -Naur fail2ban-0.6.1.pre/config/fail2ban.conf.iptables fail2ban-0.6
 @@ -270,6 +270,7 @@
  # Option:  logfile
  # Notes.:  logfile to monitor.
- # Values:  FILE  Default:  /var/log/apache/error.log
+ # Values:  FILE
 +# Other.: /var/log/apache2/error.log
  #
  logfile = /var/log/apache/error.log
