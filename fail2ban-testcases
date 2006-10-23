@@ -39,6 +39,7 @@ from testcases import failmanagertestcase
 from testcases import filtertestcase
 from testcases import servertestcase
 from testcases import datedetectortestcase
+from testcases import actiontestcase
 from server.mytime import MyTime
 
 # Set the time to a fixed, known value
@@ -63,6 +64,7 @@ tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
 # Server
 #tests.addTest(unittest.makeSuite(servertestcase.StartStop))
 #tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
+tests.addTest(unittest.makeSuite(actiontestcase.ExecuteAction))
 # FailManager
 tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 # BanManager
