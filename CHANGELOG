@@ -18,6 +18,8 @@ ver. 0.7.4 (2006/??/??) - beta
 - Added more filters/actions and jail samples. Thanks to Nick
   Munger, Christoph Haas
 - Improved testing framework
+- Fixed a bug in the return code handling of the executed
+  commands. Thanks to Yaroslav Halchenko
 
 ver. 0.7.3 (2006/09/28) - beta
 ----------
