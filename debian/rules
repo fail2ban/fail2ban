@@ -79,7 +79,6 @@ binary-indep: install
 #	dh_installinfo
 	dh_installman man/*.1
 	dh_pycentral
-	dh_python
 	dh_link
 	dh_compress
 	dh_fixperms

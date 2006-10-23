@@ -5,6 +5,9 @@ fail2ban (0.7.4~pre2006102-1) experimental; urgency=low
     from debian/patches
   * Adjusted rule to install man pages -- only .1 files since there are also
     h2m sources
+  * debian/{rules,control} adjusted to conform all points in recent python
+    policy changes
+  * install under /usr/share instead of /usr/lib
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 23 Oct 2006 00:17:55 -0400
 
