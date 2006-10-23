@@ -25,7 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging, os
-#from subprocess import call
+from subprocess import call
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.actions.action")
@@ -214,13 +214,13 @@ class Action:
 		logSys.debug(realCmd)
 		try:
 			# The following line gives deadlock with multiple jails
-			#retcode = call(realCmd, shell=True)
-			retcode = os.system(realCmd)
-			if retcode < 0:
-				logSys.error("%s returned %x" % (realCmd, -retcode))
-			else:
-				logSys.debug("%s returned %x" % (realCmd, retcode))
+			retcode = call(realCmd, shell=True)
+			#retcode = os.system(realCmd)
+			if retcode == 0:
+				logSys.debug("%s returned successfully" % realCmd)
 				return True
+			else:
+				logSys.error("%s returned %x" % (realCmd, retcode))
 		except OSError, e:
 			logSys.error("%s failed with %s" % (realCmd, e))
 		return False
