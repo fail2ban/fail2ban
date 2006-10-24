@@ -55,11 +55,6 @@ class JailsReader(ConfigReader):
 			else:
 				logSys.error("Errors in jail '" + sec + "'. Skipping...")
 	
-	def getFilterOptions(self, file):
-		filter = FilterReader(file)
-		filter.read()
-		return filter.getOptions()
-	
 	def convert(self):
 		stream = list()
 		for opt in self.__opts:

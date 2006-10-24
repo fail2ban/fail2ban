@@ -25,33 +25,31 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging, os
-from ConfigParser import *
+from ConfigParser import SafeConfigParser
+from ConfigParser import NoOptionError, NoSectionError
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.client.config")
 
 class ConfigReader(SafeConfigParser):
 	
-	basedir = "/etc/fail2ban/"
+	BASE_DIRECTORY = "/etc/fail2ban/"
 	
 	def __init__(self):
 		SafeConfigParser.__init__(self)
 		self.__opts = None
 	
 	@staticmethod
-	def setBaseDir(dir):
-		global basedir
-		path = dir.rstrip('/')
-		basedir = path + '/'
+	def setBaseDir(folderName):
+		path = folderName.rstrip('/')
+		ConfigReader.BASE_DIRECTORY = path + '/'
 		
 	@staticmethod
 	def getBaseDir():
-		global basedir
-		return basedir
+		return ConfigReader.BASE_DIRECTORY
 	
 	def read(self, filename):
-		global basedir
-		basename = basedir + filename
+		basename = ConfigReader.BASE_DIRECTORY + filename
 		logSys.debug("Reading " + basename)
 		bConf = basename + ".conf"
 		bLocal = basename + ".local"

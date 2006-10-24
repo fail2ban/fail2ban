@@ -125,7 +125,7 @@ class JailReader(ConfigReader):
 	def splitAction(action):
 		m = JailReader.actionCRE.match(action)
 		d = dict()
-		if m.group(2) <> None:
+		if not m.group(2) == None:
 			for param in m.group(2).split(','):
 				p = param.split('=')
 				d[p[0].strip()] = p[1].strip()

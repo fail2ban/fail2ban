@@ -40,10 +40,12 @@ class Configurator:
 		self.__fail2ban = Fail2banReader()
 		self.__jails = JailsReader()
 	
-	def setBaseDir(self, dir):
-		ConfigReader.setBaseDir(dir)
+	@staticmethod
+	def setBaseDir(folderName):
+		ConfigReader.setBaseDir(folderName)
 	
-	def getBaseDir(self):
+	@staticmethod
+	def getBaseDir():
 		return ConfigReader.getBaseDir()
 	
 	def readEarly(self):
@@ -57,8 +59,8 @@ class Configurator:
 		return self.__fail2ban.getEarlyOptions()
 	
 	def getAllOptions(self):
-		self.__settings["general"] = self.__fail2ban.getOptions()
-		self.__settings["jails"] = self.__jails.getOptions()
+		self.__fail2ban.getOptions()
+		self.__jails.getOptions()
 		
 	def convertToProtocol(self):
 		self.__streams["general"] = self.__fail2ban.convert()

@@ -108,7 +108,7 @@ class Action:
 		return self.__actionBan
 	
 	def execActionBan(self, aInfo):
-		return self.__processCmd(self.__actionBan, aInfo);
+		return self.__processCmd(self.__actionBan, aInfo)
 	
 	##
 	# Set the "unban" command.
@@ -128,7 +128,7 @@ class Action:
 		return self.__actionUnban
 	
 	def execActionUnban(self, aInfo):
-		return self.__processCmd(self.__actionUnban, aInfo);
+		return self.__processCmd(self.__actionUnban, aInfo)
 	
 	##
 	# Set the "check" command.
@@ -207,7 +207,7 @@ class Action:
 		# Replace static fields
 		realCmd = Action.replaceTag(realCmd, self.__cInfo)
 		
-  		return Action.executeCmd(realCmd)
+		return Action.executeCmd(realCmd)
 
   	@staticmethod
 	def executeCmd(realCmd):

@@ -49,7 +49,7 @@ class Actions(JailThread):
 	# @param jail the jail object
 	
 	def __init__(self, jail):
-		JailThread.__init__(self, jail)
+		JailThread.__init__(self)
 		## The jail which contains this action.
 		self.jail = jail
 		self.__actions = list()
