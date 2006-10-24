@@ -92,7 +92,7 @@ class DateDetector:
 			self.__lock.acquire()
 			for template in self.__templates:
 				match = template.matchDate(line)
-				if match <> None:
+				if not match == None:
 					self.__lock.release()
 					return match
 			self.__lock.release()

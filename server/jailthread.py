@@ -38,7 +38,7 @@ class JailThread(Thread):
 	# Initialize the filter object with default values.
 	# @param jail the jail object
 	
-	def __init__(self, jail):
+	def __init__(self):
 		Thread.__init__(self)
 		## Control the state of the thread.
 		self.__isRunning = False

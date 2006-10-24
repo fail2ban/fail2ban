@@ -38,8 +38,8 @@ class ActionReader(ConfigReader):
 		self.__cInfo = action[1]
 		self.__name = name
 	
-	def setFile(self, file):
-		self.__file = file
+	def setFile(self, fileName):
+		self.__file = fileName
 	
 	def getFile(self):
 		return self.__file

@@ -51,7 +51,7 @@ class Filter(JailThread):
 	# @param jail the jail object
 	
 	def __init__(self, jail):
-		JailThread.__init__(self, jail)
+		JailThread.__init__(self)
 		## The jail which contains this filter.
 		self.jail = jail
 		## The failures manager.
@@ -347,7 +347,6 @@ class Filter(JailThread):
 	# is created and is added to the FailManager.
 	
 	def getFailures(self, filename):
-		ipList = dict()
 		ret = self.__openLogFile(filename)
 		if not ret:
 			logSys.error("Unable to get failures in " + filename)
@@ -392,7 +391,7 @@ class Filter(JailThread):
 		match = self.__failRegexObj.search(line)
 		if match:
 			date = self.dateDetector.getUnixTime(match.string)
-			if date <> None:
+			if not date == None:
 				try:
 					ipMatch = DNSUtils.textToIp(match.group("host"))
 					if ipMatch:
@@ -463,10 +462,10 @@ class DNSUtils:
 			return None
 	
 	@staticmethod
-	def isValidIP(str):
+	def isValidIP(string):
 		""" Return true if str is a valid IP
 		"""
-		s = str.split('/', 1)
+		s = string.split('/', 1)
 		try:
 			socket.inet_aton(s[0])
 			return True
@@ -503,10 +502,10 @@ class DNSUtils:
 		return ~(MASK >> n) & MASK & DNSUtils.addr2bin(i)
 	
 	@staticmethod
-	def addr2bin(str):
+	def addr2bin(string):
 		""" Convert a string IPv4 address into an unsigned integer.
 		"""
-		return struct.unpack("!L", socket.inet_aton(str))[0]
+		return struct.unpack("!L", socket.inet_aton(string))[0]
 	
 	@staticmethod
 	def bin2addr(addr):

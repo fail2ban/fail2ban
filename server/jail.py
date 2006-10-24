@@ -54,6 +54,7 @@ class Jail:
 		self.__filter = FilterPoll(self)
 	
 	def __initGamin(self):
+		# Try to import gamin
 		import gamin
 		logSys.info("Using Gamin")
 		from filtergamin import FilterGamin

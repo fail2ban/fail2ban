@@ -40,6 +40,7 @@ class SSocket(Thread):
 		self.__transmit = transmitter
 		self.__isRunning = False
 		self.__socket = "/tmp/fail2ban.sock"
+		self.__ssock = None
 		logSys.debug("Created SSocket")
 	
 	def initialize(self, sock = "/tmp/fail2ban.sock", force = False):
@@ -53,31 +54,31 @@ class SSocket(Thread):
 			else:
 				raise SSocketErrorException("Server already running")
 		# Create an INET, STREAMing socket
-		#self.ssock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.ssock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-		#self.ssock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		#self.ssock.setblocking(False)
+		#self.__ssock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.__ssock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+		#self.__ssock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		#self.__ssock.setblocking(False)
 		# Do not use a blocking socket as there is problem at shutdown.
 		# Use a timeout instead. Daemon exits at most 'timeout' seconds
 		# after the command.
-		self.ssock.settimeout(1)
+		self.__ssock.settimeout(1)
 		# Bind the socket to a public host and a well-known port
-		#self.ssock.bind(("localhost", 2222))
-		self.ssock.bind(sock)
+		#self.__ssock.bind(("localhost", 2222))
+		self.__ssock.bind(sock)
 		# Become a server socket
-		self.ssock.listen(5)
+		self.__ssock.listen(5)
 	
 	def run(self):
 		self.__isRunning = True
 		while self.__isRunning:
 			try:
-				(csock, address) = self.ssock.accept()
+				(csock, address) = self.__ssock.accept()
 				thread = SocketWorker(csock, self.__transmit)
 				thread.start()
 			except socket.timeout:
 				# Do nothing here
 				pass
-		self.ssock.close()
+		self.__ssock.close()
 		# Remove socket
 		if os.path.exists(self.__socket):
 			logSys.debug("Removed socket file " + self.__socket)
@@ -110,14 +111,16 @@ class SocketWorker(Thread):
 		self.__csock.close()
 		logSys.debug("Connection closed")
 	
-	def __send(self, socket, msg):
+	@staticmethod
+	def __send(sock, msg):
 		obj = dumps(msg)
-		socket.send(obj + SSocket.END_STRING)
+		sock.send(obj + SSocket.END_STRING)
 	
-	def __receive(self, socket):
+	@staticmethod
+	def __receive(sock):
 		msg = ''
 		while msg.rfind(SSocket.END_STRING) == -1:
-			chunk = socket.recv(6)
+			chunk = sock.recv(6)
 			if chunk == '':
 				raise RuntimeError, "socket connection broken"
 			msg = msg + chunk

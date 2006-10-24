@@ -27,7 +27,7 @@ __license__ = "GPL"
 from banticket import BanTicket
 from threading import Lock
 from mytime import MyTime
-import time, logging
+import logging
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.action")

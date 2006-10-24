@@ -34,7 +34,7 @@ import logging, logging.handlers, sys, os, signal
 logSys = logging.getLogger("fail2ban.server")
 
 class Server:
-	
+
 	def __init__(self, daemon = False):
 		self.__jails = Jails()
 		self.__daemon = daemon
@@ -111,11 +111,11 @@ class Server:
 	def getIgnoreIP(self, name):
 		return self.__jails.getFilter(name).getIgnoreIP()
 	
-	def addLogPath(self, name, file):
-		self.__jails.getFilter(name).addLogPath(file)
+	def addLogPath(self, name, fileName):
+		self.__jails.getFilter(name).addLogPath(fileName)
 	
-	def delLogPath(self, name, file):
-		self.__jails.getFilter(name).delLogPath(file)
+	def delLogPath(self, name, fileName):
+		self.__jails.getFilter(name).delLogPath(fileName)
 	
 	def getLogPath(self, name):
 		return self.__jails.getFilter(name).getLogPath()
@@ -356,7 +356,7 @@ class Server:
 				pass
 	
 		# Redirect the standard file descriptors to /dev/null.
-	   	os.open("/dev/null", os.O_RDONLY)	# standard input (0)
+		os.open("/dev/null", os.O_RDONLY)	# standard input (0)
 		os.open("/dev/null", os.O_RDWR)		# standard output (1)
 		os.open("/dev/null", os.O_RDWR)		# standard error (2)
 		return True

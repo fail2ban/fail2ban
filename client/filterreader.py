@@ -32,13 +32,13 @@ logSys = logging.getLogger("fail2ban.client.config")
 
 class FilterReader(ConfigReader):
 	
-	def __init__(self, file, name):
+	def __init__(self, fileName, name):
 		ConfigReader.__init__(self)
-		self.__file = file
+		self.__file = fileName
 		self.__name = name
 	
-	def setFile(self, file):
-		self.__file = file
+	def setFile(self, fileName):
+		self.__file = fileName
 	
 	def getFile(self):
 		return self.__file

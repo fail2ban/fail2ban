@@ -95,9 +95,9 @@ class FilterPoll(Filter):
 		while self.isActive():
 			if not self.getIdle():
 				# Get file modification
-				for file in self.getLogPath():
-					if self.isModified(file):
-						self.getFailures(file)
+				for f in self.getLogPath():
+					if self.isModified(f):
+						self.getFailures(f)
 						self.modified = True
 
 				if self.modified:
