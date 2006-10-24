@@ -209,7 +209,7 @@ class Action:
 		
 		return Action.executeCmd(realCmd)
 
-  	@staticmethod
+	@staticmethod
 	def executeCmd(realCmd):
 		logSys.debug(realCmd)
 		try:
