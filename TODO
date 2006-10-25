@@ -28,16 +28,7 @@ Legend:
 
 # improve documentation and website for user
 
-- use PyLint to check the code
-
 # better return values in function
-
-? add gettext support. Is this really needed for a server
-  utility?
-
-# add a test framework. We could use unittest which is in
-  Python since 2.1. It should be possible to run all tests
-  automatically.
 
 ? restart automatically the daemon if an exception occurs.
 
