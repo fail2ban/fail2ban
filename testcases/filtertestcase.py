@@ -24,7 +24,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, socket
+import unittest
 from server.filterpoll import FilterPoll
 from server.filter import Filter
 from server.failmanager import FailManager
@@ -87,6 +87,8 @@ class GetFailures(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		self.__filter = Filter(None)
+		self.__filter.setActive(True)
+		# TODO Test this
 		#self.__filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 		#self.__filter.setTimePattern("%b %d %H:%M:%S")
 
