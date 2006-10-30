@@ -128,5 +128,8 @@ class JailReader(ConfigReader):
 		if not m.group(2) == None:
 			for param in m.group(2).split(','):
 				p = param.split('=')
-				d[p[0].strip()] = p[1].strip()
+				try:
+					d[p[0].strip()] = p[1].strip()
+				except IndexError:
+					logSys.error("Invalid argument %s in '%s'" % (p, m.group(2)))
 		return [m.group(1), d]
