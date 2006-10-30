@@ -46,8 +46,17 @@ class Server:
 		self.setLogLevel(self.__logLevel)
 		self.setLogTarget(self.__logTarget)
 	
+	def __sigTERMhandler(self, signum, frame):
+		logSys.debug("Caught signal %d. Exiting" % signum)
+		self.quit()
+	
 	def start(self, sock, force = False):
 		logSys.info("Starting Fail2ban")
+		
+		# Install signal handlers
+		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
+		signal.signal(signal.SIGINT, self.__sigTERMhandler)
+		
 		# First set the mask to only allow access to owner
 		os.umask(0077)
 		if self.__daemon:
@@ -62,7 +71,10 @@ class Server:
 		try:
 			self.__socket.initialize(sock, force)
 			self.__socket.start()
-			self.__socket.join()
+			# Workaround (???) for join() bug.
+			# https://sourceforge.net/tracker/?func=detail&atid=105470&aid=1167930&group_id=5470
+			while self.__socket.isAlive():
+				self.__socket.join(1)
 		except SSocketErrorException:
 			logSys.error("Could not start server")
 		logSys.info("Exiting Fail2ban")
