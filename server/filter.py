@@ -354,6 +354,9 @@ class Filter(JailThread):
 		self.__setFilePos()
 		lastLine = None
 		for line in self.__crtHandler:
+			if not self.isActive():
+				# The jail has been stopped
+				break
 			try:
 				# Decode line to UTF-8
 				line = line.decode('utf-8')
