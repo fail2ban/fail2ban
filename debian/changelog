@@ -1,3 +1,18 @@
+fail2ban (0.7.4~pre20061023.2-3) experimental; urgency=low
+
+  * Corrected init.d script to properly perform restart due to server delay to
+    react to client command to stop. Handling of status was adjusted as well
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 29 Oct 2006 22:29:27 -0500
+
+fail2ban (0.7.4~pre20061023.2-2) experimental; urgency=low
+
+  * Added apache-noscript to jail.conf
+  * Default action does not send emails to be inline with previous (0.6.x)
+    behavior
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 26 Oct 2006 13:27:20 -0400
+
 fail2ban (0.7.4~pre20061023.2-1) experimental; urgency=low
 
   * Fresh upstream: fixed a bug with not handling error producing

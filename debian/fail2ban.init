@@ -59,12 +59,46 @@ do_start()
 	#	0 if daemon has been started
 	#	1 if daemon was already running
 	#	2 if daemon could not be started
-	start-stop-daemon --start --quiet --user root --exec $DAEMON --test -- \
-		$DAEMON_ARGS start > /dev/null \
-		|| return 1
+	do_status && return 1
 	start-stop-daemon --start --quiet --chuid root --exec $DAEMON -- \
 		$DAEMON_ARGS start > /dev/null\
 		|| return 2
+}
+
+#
+# Shortcut function for abnormal init script interruption
+#
+report_bug()
+{
+	echo $*
+	echo "Please submit a bug report to Debian BTS (reportbug fail2ban)"
+	exit 1
+}
+
+#
+# Function that checks the status of fail2ban and returns
+# corresponding code
+#
+do_status()
+{
+	$DAEMON status > /dev/null
+	case $? in
+		0) return 0
+			;;
+		255)
+			if [ -S $SOCKFILE ]; then
+				if [ -r $SOCKFILE ]; then
+					return 1
+				else
+					return 4
+				fi
+			else
+				return 3
+			fi
+			;;
+		*)
+			report_bug "Unknown return code from fail2ban."
+	esac
 }
 
 #
@@ -109,6 +143,16 @@ case "$1" in
 		do_stop
 		case "$?" in
 			0|1)
+                # now we need actually to wait a bit since it might take time
+   		        # for server to react on client's stop request
+				count=1
+				while do_status && [ $count -lt 10 ]; do
+					sleep 1
+					count=$(($count+1))
+				done
+
+				[ $count -lt 10 ] || log_end_msg 1 # failed to stop
+
 				do_start
 				log_end_msg_wrapper $? 1
 				;;
@@ -120,25 +164,13 @@ case "$1" in
 		;;
 	status)
 		log_daemon_msg "Status of $DESC"
-		$DAEMON status > /dev/null
+		do_status
 		case $? in
-			0)  log_success_msg " $NAME is running"
-				exit 0
-				;;
-			255)
-				if [ -S $SOCKFILE ]; then
-					if [ -r $SOCKFILE ]; then
-						log_failure_msg " $NAME is not running but $SOCKFILE exists"
-						exit 1
-					else
-						log_failure_msg " $SOCKFILE not readable, status of $NAME unknown"
-						exit 4
-					fi
-				else
-					log_warning_msg " $NAME is not running"
-					exit 3
-				fi
-				;;
+			0)  log_success_msg " $NAME is running" ;;
+			1)  log_failure_msg " $NAME is not running but $SOCKFILE exists" ;;
+			3)  log_warning_msg " $NAME is not running" ;;
+			4)  log_failure_msg " $SOCKFILE not readable, status of $NAME unknown";;
+			*)  report_bug "Unknown status code"
 		esac
 		;;
 	*)
