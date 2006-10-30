@@ -20,6 +20,8 @@ ver. 0.7.4 (2006/??/??) - beta
 - Improved testing framework
 - Fixed a bug in the return code handling of the executed
   commands. Thanks to Yaroslav Halchenko
+- Signal handling. There is a bug with join() and signal in
+  Python
 
 ver. 0.7.3 (2006/09/28) - beta
 ----------
