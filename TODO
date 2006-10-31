@@ -13,6 +13,8 @@ Legend:
 # partially done
 * done
 
+- Fix the cPickle issue with Python 2.5
+
 - Multiline log reading
 
 - Improve communication. (asyncore, asynchat??)
