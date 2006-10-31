@@ -30,7 +30,7 @@ from jailthread import JailThread
 from datedetector import DateDetector
 from mytime import MyTime
 
-import logging, re
+import logging, re, sre_constants
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -163,9 +163,12 @@ class Filter(JailThread):
 	# @param value the regular expression
 	
 	def setFailRegex(self, value):
-		self.__failRegex = value
-		self.__failRegexObj = re.compile(value)
-		logSys.info("Set failregex = %s" % value)
+		try:
+			self.__failRegexObj = re.compile(value)
+			self.__failRegex = value
+			logSys.info("Set failregex = %s" % value)
+		except sre_constants.error:
+			logSys.error("Unable to compile regular expression " + value)
 	
 	##
 	# Get the regular expression which matches the failure.
@@ -391,18 +394,26 @@ class Filter(JailThread):
 
 	def findFailure(self, line):
 		failList = list()
-		match = self.__failRegexObj.search(line)
-		if match:
-			date = self.dateDetector.getUnixTime(match.string)
-			if not date == None:
-				try:
-					ipMatch = DNSUtils.textToIp(match.group("host"))
-					if ipMatch:
-						for ip in ipMatch:
-							failList.append([ip, date])
-				except IndexError:
-					logSys.error("There is no 'host' group in the rule. " +
-								 "Please correct your configuration.")
+		if self.__failRegexObj == None:
+			logSys.error("No failregex is set")
+		else:
+			match = self.__failRegexObj.search(line)
+			if match:
+				date = self.dateDetector.getUnixTime(match.string)
+				if date == None:
+					logSys.debug("Found a match but no valid date/time found "
+								 + "for " + match.string + ". Please contact "
+								 + "the author in order to get support for "
+								 + "this format")
+				else:
+					try:
+						ipMatch = DNSUtils.textToIp(match.group("host"))
+						if ipMatch:
+							for ip in ipMatch:
+								failList.append([ip, date])
+					except IndexError:
+						logSys.error("There is no 'host' group in the rule. " +
+									 "Please correct your configuration.")
 		return failList
 	
 
