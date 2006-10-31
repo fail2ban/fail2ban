@@ -25,7 +25,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from threading import Thread
-from cPickle import dumps, loads
+# cPickle generates an exception with Python 2.5
+#from cPickle import dumps, loads, HIGHEST_PROTOCOL
+from pickle import dumps, loads, HIGHEST_PROTOCOL
 import socket, logging, os, os.path
 
 # Gets the instance of the logger.
@@ -113,7 +115,7 @@ class SocketWorker(Thread):
 	
 	@staticmethod
 	def __send(sock, msg):
-		obj = dumps(msg)
+		obj = dumps(msg, HIGHEST_PROTOCOL)
 		sock.send(obj + SSocket.END_STRING)
 	
 	@staticmethod

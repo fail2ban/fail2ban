@@ -24,6 +24,8 @@ ver. 0.7.4 (2006/??/??) - beta
   Python
 - Better debugging output for "fail2ban-regex"
 - Added support for more date format
+- cPickle does not work with Python 2.5. Use pickle instead
+  (performance is not a problem in our case)
 
 ver. 0.7.3 (2006/09/28) - beta
 ----------

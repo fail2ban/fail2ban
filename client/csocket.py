@@ -24,7 +24,8 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from cPickle import dumps, loads
+#from cPickle import dumps, loads, HIGHEST_PROTOCOL
+from pickle import dumps, loads, HIGHEST_PROTOCOL
 import socket
 
 class CSocket:
@@ -40,7 +41,7 @@ class CSocket:
 	
 	def send(self, msg):
 		# Convert every list member to string
-		obj = dumps(map(str, msg))
+		obj = dumps(map(str, msg), HIGHEST_PROTOCOL)
 		self.__csock.send(obj + CSocket.END_STRING)
 		ret = self.receive(self.__csock)
 		self.__csock.close()
