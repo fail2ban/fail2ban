@@ -13,14 +13,12 @@ Legend:
 # partially done
 * done
 
+- Multiline log reading
+
 - Improve communication. (asyncore, asynchat??)
 
 - Improve execution of action. Why does subprocess.call
   deadlock with multi-jails?
-
-- Verify TAI64N
-
-- signal handling (ctrl-c, etc)
 
 # see Feature Request Tracking System at SourceForge.net
 
