@@ -57,7 +57,7 @@ class Fail2banClient:
 		self.__conf["conf"] = "/etc/fail2ban"
 		self.__conf["dump"] = False
 		self.__conf["force"] = False
-		self.__conf["verbose"] = 2
+		self.__conf["verbose"] = 1
 		self.__conf["interactive"] = False
 		self.__conf["socket"] = None
 		
@@ -177,7 +177,7 @@ class Fail2banClient:
 	def __processCommand(self, cmd):
 		if len(cmd) == 1 and cmd[0] == "start":
 			if self.__ping():
-				logSys.info("Server already running")
+				logSys.error("Server already running")
 				return False
 			else:
 				self.__startServerAsync(self.__conf["force"])
@@ -282,7 +282,7 @@ class Fail2banClient:
 		socket = self.__configurator.getEarlyOptions()
 		if self.__conf["socket"] == None:
 			self.__conf["socket"] = socket["socket"]
-		logSys.warn("Using socket file " + self.__conf["socket"])
+		logSys.info("Using socket file " + self.__conf["socket"])
 
 		if self.__conf["dump"]:
 			self.__readConfig()
