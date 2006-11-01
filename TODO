@@ -13,6 +13,8 @@ Legend:
 # partially done
 * done
 
+- Add gettext support (I8N)
+
 - Fix the cPickle issue with Python 2.5
 
 - Multiline log reading
