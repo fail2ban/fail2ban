@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.7.3)                           2006/09/28
+Fail2Ban (version 0.7.4)                           2006/11/01
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -27,8 +27,8 @@ Optional:
 
 To install, just do:
 
-> tar xvfj fail2ban-0.7.3.tar.bz2
-> cd fail2ban-0.7.3
+> tar xvfj fail2ban-0.7.4.tar.bz2
+> cd fail2ban-0.7.4
 > python setup.py install
 
 This will install Fail2Ban into /usr/lib/fail2ban. The
@@ -53,6 +53,7 @@ options (not complete yet):
 
 Options:
     -c <DIR>                configuration directory
+    -s <FILE>               socket path
     -d                      dump configuration. For debugging
     -i                      interactive mode
     -v                      increase verbosity
@@ -73,7 +74,7 @@ Command:
     set logtarget <TARGET>  set log target to <TARGET>
     get logtarget           get log target
 
-    add <JAIL>              create <JAIL>
+    add <JAIL> [BACKEND]    create <JAIL> using [BACKEND]
     set <JAIL> <CMD>        set the <CMD> value for <JAIL>
     get <JAIL> <CMD>        get the <CMD> value for <JAIL>
     start <JAIL>            start <JAIL>
