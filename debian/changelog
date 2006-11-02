@@ -1,3 +1,9 @@
+fail2ban (0.7.4-1) experimental; urgency=low
+
+  * New upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed,  1 Nov 2006 20:54:14 -0500
+
 fail2ban (0.7.4~pre20061023.2-3) experimental; urgency=low
 
   * Corrected init.d script to properly perform restart due to server delay to
