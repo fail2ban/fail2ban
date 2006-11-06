@@ -13,7 +13,7 @@ Legend:
 # partially done
 * done
 
-- Add gettext support (I8N)
+- Add gettext support (I18N)
 
 - Fix the cPickle issue with Python 2.5
 
