@@ -1,4 +1,4 @@
-fail2ban (0.7.4-2) experimental; urgency=low
+fail2ban (0.7.4-2) unstable; urgency=low
 
   * Added reload/force-reload actions to init script
   * Adjusted jail.conf a bit
