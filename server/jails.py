@@ -28,29 +28,63 @@ __license__ = "GPL"
 from jail import Jail
 from threading import Lock
 
+##
+# Handles the jails.
+#
+# This class handles the jails. Creation, deletion or access to a jail must be
+# done through this class. This class is thread-safe which is not the case of
+# the jail itself, including filter and actions.
+
 class Jails:
+	
+	##
+	# Constructor.
 	
 	def __init__(self):
 		self.__lock = Lock()
 		self.__jails = dict()
 	
+	##
+	# Adds a jail.
+	#
+	# Adds a new jail which should use the given backend. Raises a
+	# <code>DuplicateJailException</code> if the jail is already defined.
+	# @param name The name of the jail
+	# @param backend The backend to use
+	
 	def add(self, name, backend):
-		self.__lock.acquire()
-		if self.__jails.has_key(name):
-			self.__lock.release()
-			raise DuplicateJailException(name)
-		else:
-			self.__jails[name] = Jail(name, backend)
+		try:
+			self.__lock.acquire()
+			if self.__jails.has_key(name):
+				raise DuplicateJailException(name)
+			else:
+				self.__jails[name] = Jail(name, backend)
+		finally:
 			self.__lock.release()
 	
+	##
+	# Removes a jail.
+	#
+	# Removes the jail <code>name</code>. Raise an <code>UnknownJailException</code>
+	# if the jail does not exist.
+	# @param name The name of the jail
+	
 	def remove(self, name):
-		self.__lock.acquire()
-		if self.__jails.has_key(name):
-			del self.__jails[name]
+		try:
+			self.__lock.acquire()
+			if self.__jails.has_key(name):
+				del self.__jails[name]
+			else:
+				raise UnknownJailException(name)
+		finally:
 			self.__lock.release()
-		else:
-			self.__lock.release()
-			raise UnknownJailException(name)
+	
+	##
+	# Returns a jail.
+	#
+	# Returns the jail <code>name</code>. Raise an <code>UnknownJailException</code>
+	# if the jail does not exist.
+	# @param name The name of the jail
 	
 	def get(self, name):
 		try:
@@ -63,6 +97,13 @@ class Jails:
 		finally:
 			self.__lock.release()
 	
+	##
+	# Returns an action class instance.
+	#
+	# Returns the action object of the jail <code>name</code>. Raise an
+	# <code>UnknownJailException</code> if the jail does not exist.
+	# @param name The name of the jail
+	
 	def getAction(self, name):
 		try:
 			self.__lock.acquire()
@@ -73,6 +114,13 @@ class Jails:
 				raise UnknownJailException(name)
 		finally:
 			self.__lock.release()
+	
+	##
+	# Returns a filter class instance.
+	#
+	# Returns the filter object of the jail <code>name</code>. Raise an
+	# <code>UnknownJailException</code> if the jail does not exist.
+	# @param name The name of the jail
 	
 	def getFilter(self, name):
 		try:
@@ -85,12 +133,22 @@ class Jails:
 		finally:
 			self.__lock.release()
 	
+	##
+	# Returns the jails.
+	#
+	# Returns a copy of the jails list.
+	
 	def getAll(self):
 		try:
 			self.__lock.acquire()
 			return self.__jails.copy()
 		finally:
 			self.__lock.release()
+	
+	##
+	# Returns the size of the jails.
+	#
+	# Returns the number of jails.
 	
 	def size(self):
 		try:
