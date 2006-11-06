@@ -50,6 +50,7 @@ class FilterPoll(Filter):
 	
 	def __init__(self, jail):
 		Filter.__init__(self, jail)
+		self.__modified = False
 		## The time of the last modification of the file.
 		self.__lastModTime = dict()
 		self.__file404Cnt = dict()
@@ -98,16 +99,16 @@ class FilterPoll(Filter):
 				for f in self.getLogPath():
 					if self.isModified(f):
 						self.getFailures(f)
-						self.modified = True
+						self.__modified = True
 
-				if self.modified:
+				if self.__modified:
 					try:
 						ticket = self.failManager.toBan()
 						self.jail.putFailTicket(ticket)
 					except FailManagerEmpty:
 						self.failManager.cleanup(MyTime.time())
 					self.dateDetector.sortTemplate()
-					self.modified = False
+					self.__modified = False
 				time.sleep(self.getSleepTime())
 			else:
 				time.sleep(self.getSleepTime())
