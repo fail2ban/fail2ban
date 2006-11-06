@@ -1,3 +1,10 @@
+fail2ban (0.7.4-2) experimental; urgency=low
+
+  * Added reload/force-reload actions to init script
+  * Adjusted jail.conf a bit
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  6 Nov 2006 09:18:58 -0500
+
 fail2ban (0.7.4-1) experimental; urgency=low
 
   * New upstream release

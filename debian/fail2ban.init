@@ -116,6 +116,13 @@ do_stop()
 	return 0
 }
 
+#
+# Function to reload configuration
+#
+do_reload() {
+	$DAEMON reload > /dev/null && return 0 || return 1
+	return 0
+}
 
 # yoh:
 # shortcut function to don't duplicate case statements and to don't use
@@ -162,6 +169,13 @@ case "$1" in
 				;;
  		esac
 		;;
+
+	reload|force-reload)
+        log_daemon_msg "Reloading $DESC" "$NAME"
+        do_reload
+        log_end_msg $?
+        ;;
+
 	status)
 		log_daemon_msg "Status of $DESC"
 		do_status
