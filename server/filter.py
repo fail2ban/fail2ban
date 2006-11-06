@@ -56,7 +56,6 @@ class Filter(JailThread):
 		self.jail = jail
 		## The failures manager.
 		self.failManager = FailManager()
-		self.modified = False
 		## The log file handler.
 		self.__crtHandler = None
 		self.__crtFilename = None
