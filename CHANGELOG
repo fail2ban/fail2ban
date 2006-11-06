@@ -4,12 +4,16 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.6.?)                           2006/??/??
+Fail2Ban (version 0.6.2)                           2006/??/??
 =============================================================
 
-ver. 0.6.? (2006/??/??) - ???
+ver. 0.6.2 (2006/??/??) - ???
 ----------
 - Fixed UTF-8 log file parsing
+- Propagated patches introduced by Debian maintainer 
+  (Yaroslav Halchenko):
+  * Made locale configurable
+  * Fixed warning if ignoreip is empty
 
 ver. 0.6.1 (2006/03/16) - stable
 ----------
@@ -26,7 +30,7 @@ ver. 0.6.1 (2006/03/16) - stable
 - Added parsing of timestamp in TAI64N format (#1275325).
   Thanks to Mark Edgington
 - Added patch #1382936 (Default formatted syslog logging).
-  Thanks to Patrick Börjesson
+  Thanks to Patrick Bï¿½rjesson
 - Removed 192.168.0.0/16 from ignoreip. Attacks could also
   come from the local network.
 - Robust startup: if iptables module does not get fully
