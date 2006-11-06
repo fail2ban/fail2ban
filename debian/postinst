@@ -29,9 +29,25 @@ case "$1" in
        chmod 640 ${LOG}*
         
        # Note regarding changed configuration file
-		if [ ! -z $preversion ] \
-			&& dpkg --compare-versions $preversion lt 0.5.4-5.14;
-			then
+       # Note regarding changed configuration file
+		if [ ! -z $preversion ]; then
+			if dpkg --compare-versions $preversion lt 0.7.1-1; then
+			cat <<EOF
+WARNING!
+
+  0.7.x versions of fail2ban is a complete rewrite of the tool since 0.6, and
+  it went through restructuring of the configuration files. If you had
+  adjusted config file /etc/fail2ban.conf or /etc/defaults/fail2ban, you need
+  to adjust new config files (under /etc/fail2ban/ and /etc/default/fail2ban)
+  to take advantage of the upgrade. Now fail2ban uses split configs and local
+  modifications can be introduced in corresponding .local files. Please
+  remove old configuration file /etc/fail2ban.conf thereafter.
+
+  Please review the configuration file and make appropriate changes.
+ENJOY!
+EOF
+			fi
+			if dpkg --compare-versions $preversion lt 0.5.4-5.14; then
 			cat <<EOF
 WARNING!
 

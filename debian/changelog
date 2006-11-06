@@ -2,6 +2,9 @@ fail2ban (0.7.4-2) unstable; urgency=low
 
   * Added reload/force-reload actions to init script
   * Adjusted jail.conf a bit
+  * Warning NEWS entry for 0.7.1 was not shown during installation on test
+    boxes, thus postinst was adjusted accordingly to inform the user about the
+    changes in the configuration files since 0.6.
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  6 Nov 2006 09:18:58 -0500
 
