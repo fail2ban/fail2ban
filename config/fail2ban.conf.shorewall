@@ -11,6 +11,15 @@
 #
 background = false
 
+# Option:  locale
+# Notes.:  global (cannot be redefined per section) locale to use for
+#          timestamp pattern matching by changing LC_TIME for
+#          fail2ban process. Empty entry sets locale to default one
+#          (usually specified by LC_ALL environment variable).
+# Values:  LOCALE  Default:
+#
+locale = 
+
 # Option:  logtargets
 # Notes.:  log targets. Space separated list of logging targets.
 # Values:  STDERR SYSLOG file  Default:  /var/log/fail2ban.log
