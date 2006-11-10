@@ -1,3 +1,9 @@
+fail2ban (0.7.4-3) unstable; urgency=low
+
+  * Reincarnated logrotate configuration (Closes: #397878)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 10 Nov 2006 10:53:39 -0500
+
 fail2ban (0.7.4-2) unstable; urgency=low
 
   * Added reload/force-reload actions to init script
@@ -5,8 +11,9 @@ fail2ban (0.7.4-2) unstable; urgency=low
   * Warning NEWS entry for 0.7.1 was not shown during installation on test
     boxes, thus postinst was adjusted accordingly to inform the user about the
     changes in the configuration files since 0.6.
+  * no logrotation anymore? (Closes: #397878)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  6 Nov 2006 09:18:58 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 10 Nov 2006 10:53:23 -0500
 
 fail2ban (0.7.4-1) experimental; urgency=low
 

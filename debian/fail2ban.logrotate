@@ -1,10 +1,13 @@
 /var/log/fail2ban.log {
+   
     weekly
     rotate 4
     compress
+
+    delaycompress
     missingok
     postrotate
-	/etc/init.d/fail2ban restart >/dev/null
+	invoke-rc.d --quiet fail2ban reload >/dev/null
     endscript
     create 640 root adm
 }
