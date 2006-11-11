@@ -1,4 +1,4 @@
-fail2ban (0.7.4-3~1) unstable; urgency=low
+fail2ban (0.7.4-3~2) unstable; urgency=low
 
   * Reincarnated logrotate configuration (Closes: #397878)
   * Only block new connects by using a new action iptables-new instead of
