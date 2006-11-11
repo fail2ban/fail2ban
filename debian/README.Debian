@@ -1,51 +1,67 @@
-fail2ban for Debian
--------------------
+fail2ban (>=0.7.0) for Debian
+-----------------------------
 
-This package is ~95% identical to the upstream version. Few features
+This package is ~99% identical to the upstream version. Few features
 could have been added but not yet propagated into upstream version and
-some modifications might be Debian-specific (logsys logging
-format). And although due to tight collaboration with upstream author
-most of the Debian modifications penetrate into the next upstream, few
-features present in Debian release were rejected by the upstream
-author (-e option for instance).
+some modifications might be Debian-specific. Debian specific jail.conf
+file is shipped. Original upstream file is available from
+/usr/share/doc/fail2ban/examples/jail.conf
 
 Currently, the major difference with upstream: python libraries are
 placed under /usr/share/fail2ban instead of /usr/lib/fail2ban to
 comply with policy regarding architecture independent resources.
 
-Also the main config file /etc/fail2ban.conf is a copy of
-/usr/share/doc/examples/fail2ban.conf.iptables. There are config files
-for banning via shorewall or hosts.deny are provided BUT they might
-miss additional sections present in fail2ban.conf. Please copy them
-taking care about added sections. Those files will be obsolete in the
-next release which would handle split configuration files.
+Upgrade from 0.6 versions:
+-------------------------
 
-Default behavior:
------------------
+* New Config Files Format:
+
+If you had introduced your own sections in /etc/fail2ban.conf, you
+would need manually to convert them into a new format. At minimum you
+need to create /etc/fail2ban/filter.d/NAME.local (leave .conf files
+for me and upstream please to avoid any conflicts -- introduce your
+changes in .local) with failregex in [Definition] section. And provide
+appropriate jail definition in /etc/fail2ban/jail.local
+
 
 * Enabled Sections:
 
 Only handling of ssh files is enabled by default. If you want to use
 fail2ban with apache, please enable apache section manually in
-/etc/fail2ban.conf or enable section using command line parameter -e
-in /etc/default/fail2ban to avoid conflicts during upgrade of the
-config file.
+/etc/fail2ban/jail.local by including next lines:
 
-N.B. '-e' command line parameter is present solely in Debian release
- of fail2ban, thus it will not work if you decided to proceed with
- vanilla upstream.
+[apache]
+enabled = true
+
+NOTE: -e command line parameter is non existant in 0.7.x
+
 
 * Multiport banning:
+Comment for the wishlist #373592.
 
-Comment for the wishlist #373592. 
 Default iptables rules for banning use --dport statement which allows to
 ban just a single port. For multiport banning you would need to adjust iptables
 rules to use multiport module ( -m multiport --dports %(port)s ). If you would
 like to ban all ports for that host, just redefine fwban/fwunban commands to
-don't have --dport %(port)s statement at all (can be redefined on per-section 
+don't have --dport %(port)s statement at all (can be redefined on per-section
 basis as well)
-Such option is not enabled by default since multiport module might not be 
+Such option is not enabled by default since multiport module might not be
 compiled for some hand compiled kernels.
+
+
+* Blocking of NEW connections only
+Comment for the wishlist #350746.
+
+It might be benefitial in some cases to ban only new connections. For
+that just use iptables-new action instead of default iptables:
+/etc/fail2ban/jail.local:
+
+[DEFAULT]
+action = iptables-new[name=%(__name__)s, port=%(port)s]
+
+or override action within interesting for you section
+
+
 Troubleshooting:
 ---------------
 
@@ -61,6 +77,8 @@ just a single group (?P<host>...)
 
 [1] http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=330827
 
+You might benefit from using fail2ban-regex to construct and debug
+your failregex statements.
 
 * "Interpolations" in the config file:
 
@@ -127,4 +145,4 @@ had enough of failed logins within "findtime" will be banned for
 "bantime" since [re]start moment, not since the last failed login
 time.
 
- -- Yaroslav O. Halchenko <debian@onerussian.com>, Sun, 19 Mar 2006 00:27:22 -0500
+ -- Yaroslav O. Halchenko <debian@onerussian.com>, Fri, 10 Nov 2006 18:19:48 -0500

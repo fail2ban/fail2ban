@@ -1,8 +1,12 @@
 fail2ban (0.7.4-3~1) unstable; urgency=low
 
   * Reincarnated logrotate configuration (Closes: #397878)
+  * Only block new connects by using a new action iptables-new instead of
+    iptables (Closes: #350746)
+  * Updated README.Debian to reflect transition over to 0.7 branch and to
+    comment on 350746
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 10 Nov 2006 10:53:39 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 10 Nov 2006 18:02:54 -0500
 
 fail2ban (0.7.4-2) unstable; urgency=low
 
