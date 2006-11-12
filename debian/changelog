@@ -1,12 +1,13 @@
-fail2ban (0.7.4-3~2) unstable; urgency=low
+fail2ban (0.7.4-3~3) unstable; urgency=low
 
   * Reincarnated logrotate configuration (Closes: #397878)
   * Only block new connects by using a new action iptables-new instead of
     iptables (Closes: #350746)
   * Updated README.Debian to reflect transition over to 0.7 branch and to
     comment on 350746
+  * "Clean" target removes generated .pyc files now (Closes: #398146)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 10 Nov 2006 18:02:54 -0500
+ -- Yaroslav O. Halchenko <debian@onerussian.com>  Sat, 11 Nov 2006 21:00:18 -0500
 
 fail2ban (0.7.4-2) unstable; urgency=low
 

@@ -38,6 +38,7 @@ clean: clean-inits unpatch
 	rm -f build-stamp configure-stamp
 
 	# Add here commands to clean up after the build process.
+	find -iname \*.pyc | xargs rm -f
 	rm -rf changelog.gz build* 
 
 	dh_clean
