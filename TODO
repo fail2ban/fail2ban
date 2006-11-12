@@ -26,14 +26,8 @@ Legend:
 
 # see Feature Request Tracking System at SourceForge.net
 
-- improve installation process (better prefix support)
-
 # improve documentation and website for user
 
 # better return values in function
-
-? restart automatically the daemon if an exception occurs.
-
-- do not close socket after a send
 
 # refactoring in server.py, actions.py, filter.py

@@ -7,5 +7,6 @@
 <path>/fail2ban-unstable/client</path>
 <path>/fail2ban-unstable/server</path>
 <path>/fail2ban-unstable/testcases</path>
+<path>/fail2ban-unstable</path>
 </pydev_pathproperty>
 </pydev_project>
