@@ -37,6 +37,7 @@ from version import version
 from client.csocket import CSocket
 from client.configurator import Configurator
 from client.beautifier import Beautifier
+from protocol import printFormatted
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.client")
@@ -91,22 +92,10 @@ class Fail2banClient:
 		print "    -V, --version           print the version"
 		print
 		print "Command:"
-		print "    start                   start the server and the jails"
-		print "    reload                  reload the configuration"
-		print "    stop                    stop all jails and terminate the server"
-		print "    status                  get the current status"
-		print
-		print "    set loglevel <LEVEL>    set loglevel to <LEVEL>"
-		print "    get loglevel            get loglevel"
-		print "    set logtarget <TARGET>  set log target to <TARGET>"
-		print "    get logtarget           get log target"
-		print
-		print "    add <JAIL> [BACKEND]    create <JAIL> using [BACKEND]"
-		print "    set <JAIL> <CMD>        set the <CMD> value for <JAIL>"
-		print "    get <JAIL> <CMD>        get the <CMD> value for <JAIL>"
-		print "    start <JAIL>            start <JAIL>"
-		print "    stop <JAIL>             stop <JAIL>. The jail is removed"
-		print "    status <JAIL>           get the current status of <JAIL>"
+		
+		# Prints the protocol
+		printFormatted()
+		
 		print
 		print "Report bugs to <lostcontrol@users.sourceforge.net>"
 	

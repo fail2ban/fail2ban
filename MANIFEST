@@ -54,6 +54,7 @@ testcases/files/testcase04.log
 setup.py
 setup.cfg
 version.py
+protocol.py
 config/jail.conf
 config/filter.d/postfix.conf
 config/filter.d/vsftpd.conf
