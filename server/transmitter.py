@@ -167,7 +167,7 @@ class Transmitter:
 		elif command[1] == "addaction":
 			value = command[2]
 			self.__server.addAction(name, value)
-			return self.__server.getLastcommand(name).getName()
+			return self.__server.getLastAction(name).getName()
 		elif command[1] == "delaction":
 			self.__server.delAction(name, value)
 			return None
