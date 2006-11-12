@@ -64,6 +64,9 @@ class Filter(JailThread):
 		## The regular expression matching the failure.
 		self.__failRegex = ''
 		self.__failRegexObj = None
+		## The regular expression with expression to ignore.
+		self.__ignoreRegex = ''
+		self.__ignoreRegexObj = None
 		## The amount of time to look back.
 		self.__findTime = 6000
 		## The ignore IP list.
@@ -163,7 +166,10 @@ class Filter(JailThread):
 	
 	def setFailRegex(self, value):
 		try:
-			self.__failRegexObj = re.compile(value)
+			if value.lstrip() == '':
+				self.__failRegexObj = None
+			else:
+				self.__failRegexObj = re.compile(value)
 			self.__failRegex = value
 			logSys.info("Set failregex = %s" % value)
 		except sre_constants.error:
@@ -176,6 +182,32 @@ class Filter(JailThread):
 	
 	def getFailRegex(self):
 		return self.__failRegex
+	
+	##
+	# Set the regular expression which matches the failure.
+	#
+	# The regular expression can also match any other pattern than failures
+	# and thus can be used for many purporse.
+	# @param value the regular expression
+	
+	def setIgnoreRegex(self, value):
+		try:
+			if value.lstrip() == '':
+				self.__ignoreRegexObj = None
+			else:
+				self.__ignoreRegexObj = re.compile(value)
+			self.__ignoreRegex = value
+			logSys.info("Set ignoreregex = %s" % value)
+		except sre_constants.error:
+			logSys.error("Unable to compile regular expression " + value)
+	
+	##
+	# Get the regular expression which matches the failure.
+	#
+	# @return the regular expression
+	
+	def getIgnoreRegex(self):
+		return self.__ignoreRegex
 	
 	##
 	# Set the time needed to find a failure.
@@ -393,26 +425,35 @@ class Filter(JailThread):
 
 	def findFailure(self, line):
 		failList = list()
+		# Checks if failregex is defined.
 		if self.__failRegexObj == None:
 			logSys.error("No failregex is set")
-		else:
-			match = self.__failRegexObj.search(line)
+			return failList
+		# Checks if ignoreregex is defined.
+		if not self.__ignoreRegexObj == None:
+			match = self.__ignoreRegexObj.search(line)
 			if match:
-				date = self.dateDetector.getUnixTime(match.string)
-				if date == None:
-					logSys.debug("Found a match but no valid date/time found "
-								 + "for " + match.string + ". Please contact "
-								 + "the author in order to get support for "
-								 + "this format")
-				else:
-					try:
-						ipMatch = DNSUtils.textToIp(match.group("host"))
-						if ipMatch:
-							for ip in ipMatch:
-								failList.append([ip, date])
-					except IndexError:
-						logSys.error("There is no 'host' group in the rule. " +
-									 "Please correct your configuration.")
+				# The ignoreregex matched. Return.
+				logSys.debug("Ignoring this line")
+				return failList
+		match = self.__failRegexObj.search(line)
+		if match:
+			# The failregex matched.
+			date = self.dateDetector.getUnixTime(match.string)
+			if date == None:
+				logSys.debug("Found a match but no valid date/time found "
+							 + "for " + match.string + ". Please contact "
+							 + "the author in order to get support for "
+							 + "this format")
+			else:
+				try:
+					ipMatch = DNSUtils.textToIp(match.group("host"))
+					if ipMatch:
+						for ip in ipMatch:
+							failList.append([ip, date])
+				except IndexError:
+					logSys.error("There is no 'host' group in the rule. " +
+								 "Please correct your configuration.")
 		return failList
 	
 
@@ -424,7 +465,7 @@ class Filter(JailThread):
 	# @return a list with tuple
 	
 	def status(self):
-		ret = [("Currently failed", self.failManager.size()),
+		ret = [("Currently failed", self.failManager.size()), 
 			   ("Total failed", self.failManager.getFailTotal())]
 		return ret
 

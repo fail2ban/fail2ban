@@ -14,6 +14,8 @@ ver. 0.7.5 (2006/??/??) - ???
 - The supported tags in "action(un)ban" are <ip>, <failures>
   and <time>
 - Fixed refactoring bug (getLastcommand -> getLastAction)
+- Added option "ignoreregex" in filter scripts and jail.conf.
+  Feature Request #1283304
 
 ver. 0.7.4 (2006/11/01) - beta
 ----------

@@ -55,6 +55,7 @@ class FilterReader(ConfigReader):
 	def getOptions(self, pOpts):
 		opts = [["string", "timeregex", None],
 				["string", "timepattern", None],
+				["string", "ignoreregex", ""],
 				["string", "failregex", ""]]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
 	
@@ -66,6 +67,8 @@ class FilterReader(ConfigReader):
 			elif opt == "timepattern":
 				stream.append(["set", self.__name, "timepattern", self.__opts[opt]])
 			elif opt == "failregex":
-				stream.append(["set", self.__name, "failregex", self.__opts[opt]])		
+				stream.append(["set", self.__name, "failregex", self.__opts[opt]])
+			elif opt == "ignoreregex":
+				stream.append(["set", self.__name, "ignoreregex", self.__opts[opt]])		
 		return stream
 		
