@@ -136,14 +136,6 @@ class BanManager:
 		finally:
 			self.__lock.release()
 	
-	##
-	# Delete a ban ticket.
-	#
-	# Remove a BanTicket from the ban list.
-	# @param ticket the ticket
-	
-	def __delBanTicket(self, ticket):
-		self.__banList.remove(ticket)
 	
 	##
 	# Get the size of the ban list.
@@ -177,20 +169,23 @@ class BanManager:
 	# Return a list of BanTicket which need to be unbanned.
 	# @param time the time
 	# @return the list of ticket to unban
-	# @todo Check the delete operation
 	
 	def unBanList(self, time):
 		try:
 			self.__lock.acquire()
-			uBList = list()
 			# Permanent banning
 			if self.__banTime < 0:
-				return uBList
-			for ticket in self.__banList:
-				if ticket.getTime() < time - self.__banTime:
-					uBList.append(ticket)
-					self.__delBanTicket(ticket)
-			return uBList
+				return list()
+
+			# Gets the list of ticket to remove.
+			unBanList = [ticket for ticket in self.__banList
+						 if ticket.getTime() < time - self.__banTime]
+			
+			# Removes tickets.
+			self.__banList = [ticket for ticket in self.__banList
+							  if ticket not in unBanList]
+						
+			return unBanList
 		finally:
 			self.__lock.release()
 	
