@@ -26,7 +26,6 @@ __license__ = "GPL"
 
 import time, logging
 
-from datetemplate import DateTemplate
 from datestrptime import DateStrptime
 from datetai64n	import DateTai64n
 from dateepoch import DateEpoch
@@ -40,7 +39,7 @@ class DateDetector:
 	def __init__(self):
 		self.__lock = Lock()
 		self.__templates = list()
-		self.__defTemplate = DateTemplate()
+		self.__defTemplate = DateStrptime()
 	
 	def addDefaultTemplate(self):
 		# standard
