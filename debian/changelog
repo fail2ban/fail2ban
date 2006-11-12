@@ -8,7 +8,7 @@ fail2ban (0.7.4-3) unstable; urgency=low
   * "Clean" target removes generated .pyc files now (Closes: #398146)
   * Cleaned up debian/rules a bit
 
- -- Yaroslav O. Halchenko <debian@onerussian.com>  Sat, 11 Nov 2006 21:00:18 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 11 Nov 2006 21:00:18 -0500
 
 fail2ban (0.7.4-2) unstable; urgency=low
 
