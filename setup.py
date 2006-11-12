@@ -54,7 +54,10 @@ setup(
 					'fail2ban-server',
 					'fail2ban-regex'
 				],
-	py_modules =	['version'],
+	py_modules =	[
+						'version',
+						'protocol'
+					],
 	packages =	[
 					'client',
 					'server'
