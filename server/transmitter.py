@@ -147,6 +147,10 @@ class Transmitter:
 			value = command[2]
 			self.__server.setFailRegex(name, value)
 			return self.__server.getFailRegex(name)
+		elif command[1] == "ignoreregex":
+			value = command[2]
+			self.__server.setIgnoreRegex(name, value)
+			return self.__server.getIgnoreRegex(name)
 		elif command[1] == "maxtime":
 			value = command[2]
 			self.__server.setMaxTime(name, int(value))
@@ -227,6 +231,8 @@ class Transmitter:
 			return self.__server.getTimePattern(name)
 		elif command[1] == "failregex":
 			return self.__server.getFailRegex(name)
+		elif command[1] == "ignoreregex":
+			return self.__server.getIgnoreRegex(name)
 		elif command[1] == "maxtime":
 			return self.__server.getMaxTime(name)
 		elif command[1] == "findtime":

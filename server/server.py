@@ -171,6 +171,12 @@ class Server:
 	def getFailRegex(self, name):
 		return self.__jails.getFilter(name).getFailRegex()
 	
+	def setIgnoreRegex(self, name, value):
+		self.__jails.getFilter(name).setIgnoreRegex(value)
+	
+	def getIgnoreRegex(self, name):
+		return self.__jails.getFilter(name).getIgnoreRegex()
+	
 	def setMaxRetry(self, name, value):
 		self.__jails.getFilter(name).setMaxRetry(value)
 	

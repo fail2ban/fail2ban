@@ -62,6 +62,8 @@ class JailReader(ConfigReader):
 				["int", "maxretry", 3],
 				["int", "maxtime", 600],
 				["int", "bantime", 600],
+				["string", "failregex", None],
+				["string", "ignoreregex", None],
 				["string", "ignoreip", None],
 				["string", "filter", ""],
 				["string", "action", ""]]
@@ -115,6 +117,10 @@ class JailReader(ConfigReader):
 				stream.append(["set", self.__name, "maxtime", self.__opts[opt]])
 			elif opt == "bantime":
 				stream.append(["set", self.__name, "bantime", self.__opts[opt]])
+			elif opt == "failregex":
+				stream.append(["set", self.__name, "failregex", self.__opts[opt]])
+			elif opt == "ignoreregex":
+				stream.append(["set", self.__name, "ignoreregex", self.__opts[opt]])
 		stream.extend(self.__filter.convert())
 		for action in self.__actions:
 			stream.extend(action.convert())

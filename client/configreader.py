@@ -69,6 +69,7 @@ class ConfigReader(SafeConfigParser):
 	# 0 -> the type of the option
 	# 1 -> the name of the option
 	# 2 -> the default value for the option
+	
 	def getOptions(self, sec, options, pOptions = None):
 		values = dict()
 		for option in options:
@@ -88,7 +89,8 @@ class ConfigReader(SafeConfigParser):
 				values[option[1]] = option[2]
 			except NoOptionError:
 				if not option[2] == None:
-					logSys.warn("No '" + option[1] + "' defined in '" + sec + "'")
+					logSys.warn("'%s' not defined in '%s'. Using default value"
+								% (option[1], sec))
 					values[option[1]] = option[2]
 			except ValueError:
 				logSys.warn("Wrong value for '" + option[1] + "' in '" + sec +
