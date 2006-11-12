@@ -16,6 +16,7 @@ ver. 0.7.5 (2006/??/??) - ???
 - Fixed refactoring bug (getLastcommand -> getLastAction)
 - Added option "ignoreregex" in filter scripts and jail.conf.
   Feature Request #1283304
+- Fixed a bug in user defined time regex/pattern
 
 ver. 0.7.4 (2006/11/01) - beta
 ----------
