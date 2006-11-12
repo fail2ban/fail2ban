@@ -24,26 +24,15 @@ configure-stamp:
 
 build: patch
 
-copy-inits:
-#	cp config/gentoo-confd debian/fail2ban.default
-#	cp config/debian-initd debian/fail2ban.init
-#	cp config/fail2ban.logrotate debian/
-
-clean-inits:
-#	rm -f debian/fail2ban.{default,init,logrotate}
-
 clean: clean-inits unpatch
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp configure-stamp
 
-	# Add here commands to clean up after the build process.
-	find -iname \*.pyc | xargs rm -f
-	rm -rf changelog.gz build* 
+	rm -rf build 
+	dh_clean *.pyc
 
-	dh_clean
-
-install: build copy-inits
+install: build 
 	dh_testdir
 	dh_testroot
 	dh_clean -k
@@ -57,8 +46,6 @@ install: build copy-inits
 	#  Install Debian shipped jail file in 1 piece (instead of patching
 	#  the shipped one since there are too many changes)
 	install -m 644 debian/jail.conf $(DESTDIR)/etc/fail2ban
-#X	mkdir -p $(DESTDIR)/etc
-#X	cp config/fail2ban.conf.iptables $(DESTDIR)/etc/fail2ban.conf
 
 # 
 # Just to comply with policy 4.8
@@ -72,12 +59,8 @@ binary-indep: install
 	dh_installchangelogs CHANGELOG
 	dh_installdocs
 	dh_installexamples config/jail.conf
-#	dh_install
-#	dh_installdebconf
 	dh_installlogrotate
 	dh_installinit -- defaults 99
-#	dh_installcron
-#	dh_installinfo
 	dh_installman man/*.1
 	dh_pycentral
 	dh_link

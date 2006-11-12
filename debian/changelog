@@ -6,6 +6,7 @@ fail2ban (0.7.4-3~3) unstable; urgency=low
   * Updated README.Debian to reflect transition over to 0.7 branch and to
     comment on 350746
   * "Clean" target removes generated .pyc files now (Closes: #398146)
+  * Cleaned up debian/rules a bit
 
  -- Yaroslav O. Halchenko <debian@onerussian.com>  Sat, 11 Nov 2006 21:00:18 -0500
 
