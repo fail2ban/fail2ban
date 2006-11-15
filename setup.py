@@ -29,7 +29,7 @@ __license__ = "GPL"
 from distutils.core import setup
 from version import version
 from os.path import isfile, join
-from sys import exit, argv
+from sys import argv
 from glob import glob
 
 longdesc = '''
@@ -40,38 +40,38 @@ to reject the IP address or executes user defined
 commands.'''
 
 setup(
-	name = "fail2ban",
-	version = version,
-	description = "Ban IPs that make too many password failure",
-	long_description = longdesc,
-	author = "Cyril Jaquier",
-	author_email = "lostcontrol@users.sourceforge.net",
-	url = "http://fail2ban.sourceforge.net",
-	license = "GPL",
-	platforms = "Posix",
+	name = "fail2ban", 
+	version = version, 
+	description = "Ban IPs that make too many password failure", 
+	long_description = longdesc, 
+	author = "Cyril Jaquier", 
+	author_email = "lostcontrol@users.sourceforge.net", 
+	url = "http://fail2ban.sourceforge.net", 
+	license = "GPL", 
+	platforms = "Posix", 
 	scripts =	[
-					'fail2ban-client',
-					'fail2ban-server',
+					'fail2ban-client', 
+					'fail2ban-server', 
 					'fail2ban-regex'
-				],
+				], 
 	py_modules =	[
-						'version',
+						'version', 
 						'protocol'
-					],
+					], 
 	packages =	[
-					'client',
+					'client', 
 					'server'
-				],
+				], 
 	data_files =	[
-						('/etc/fail2ban',
+						('/etc/fail2ban', 
 							glob("config/*.conf")
-						),
-						('/etc/fail2ban/filter.d',
+																								), 
+						('/etc/fail2ban/filter.d', 
 							glob("config/filter.d/*.conf")
-						),
-						('/etc/fail2ban/action.d',
+																								), 
+						('/etc/fail2ban/action.d', 
 							glob("config/action.d/*.conf")
-						)
+																								)
 					]
 )
 
@@ -82,22 +82,22 @@ elements =	{
 				"/etc/":
 					[
 						"fail2ban.conf"
-					],
+					], 
 				"/usr/bin/":
 					[
 						"fail2ban.py"
-					],
+					], 
 				"/usr/lib/fail2ban/firewall/":
 					[
-						"iptables.py",
-						"ipfwadm.py",
+						"iptables.py", 
+						"ipfwadm.py", 
 						"ipfw.py"
 					]
 			}
 
-for dir in elements:
-	for f in elements[dir]:
-		path = join(dir, f)
+for directory in elements:
+	for f in elements[directory]:
+		path = join(directory, f)
 		if isfile(path):
 			obsoleteFiles.append(path)
 if obsoleteFiles:
