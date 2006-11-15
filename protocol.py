@@ -52,8 +52,37 @@ protocol = [
 ["set <JAIL> timepattern <PATTERN>", "sets the pattern <PATTERN> to match the date format for <JAIL>"], 
 ["set <JAIL> failregex <REGEX>", "sets the regular expression <REGEX> which must match failures for <JAIL>"], 
 ["set <JAIL> ignoreregex <REGEX>", "sets the regular expression <REGEX> which should match pattern to exclude for <JAIL>"], 
+["set <JAIL> maxtime <TIME>", "TODO"], 
+["set <JAIL> findtime <TIME>", "TODO"], 
+["set <JAIL> bantime <TIME>", "TODO"], 
+["set <JAIL> maxretry <RETRY>", "TODO"], 
+["set <JAIL> addaction <NAME>", "TODO"], 
+["set <JAIL> delaction <NAME>", "TODO"], 
+["set <JAIL> setcinfo <NAME> <VALUE>", "TODO"], 
+["set <JAIL> delcinfo <NAME> <VALUE>", "TODO"], 
+["set <JAIL> actionstart <NAME> <CMD>", "TODO"], 
+["set <JAIL> actionstop <NAME> <CMD>", "TODO"], 
+["set <JAIL> actioncheck <NAME> <CMD>", "TODO"], 
+["set <JAIL> actionban <NAME> <CMD>", "TODO"],
+["set <JAIL> actionunban <NAME> <CMD>", "TODO"], 
 ['', ''], 
-["get <JAIL> <CMD>", "gets the <CMD> value for <JAIL>"], 
+["get <JAIL> <CMD>", "gets the <CMD> value for <JAIL>"],
+["get <JAIL> logpath", "TODO"],
+["get <JAIL> ignoreip", "TODO"],
+["get <JAIL> timeregex", "TODO"],
+["get <JAIL> timepattern", "TODO"],
+["get <JAIL> failregex", "TODO"],
+["get <JAIL> ignoreregex", "TODO"],
+["get <JAIL> maxtime", "TODO"],
+["get <JAIL> findtime", "TODO"],
+["get <JAIL> bantime", "TODO"],
+["get <JAIL> maxretry", "TODO"],
+["get <JAIL> addaction", "TODO"],
+["get <JAIL> actionstart <NAME>", "TODO"],
+["get <JAIL> actionstop <NAME>", "TODO"],
+["get <JAIL> actioncheck <NAME>", "TODO"],
+["get <JAIL> actionban <NAME>", "TODO"],
+["get <JAIL> actionunban <NAME>", "TODO"],
 ['', ''], 
 ["start <JAIL>", "starts <JAIL>"], 
 ["stop <JAIL>", "stops <JAIL>. The jail is removed"], 
@@ -66,8 +95,8 @@ protocol = [
 
 def printFormatted():
 	INDENT=4
-	MARGIN=35
-	WIDTH=40
+	MARGIN=37
+	WIDTH=38
 	for m in protocol:
 		if m[0] == '':
 			print
