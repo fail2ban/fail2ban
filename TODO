@@ -13,6 +13,8 @@ Legend:
 # partially done
 * done
 
+- Better handling of the protocol in transmitter.py
+
 - Add gettext support (I18N)
 
 - Fix the cPickle issue with Python 2.5
