@@ -32,7 +32,7 @@ import unittest, logging, sys
 # fix for bug #343821
 sys.path.insert(1, "/usr/lib/fail2ban")
 
-from version import version
+from common.version import version
 from testcases import banmanagertestcase
 from testcases import clientreadertestcase
 from testcases import failmanagertestcase

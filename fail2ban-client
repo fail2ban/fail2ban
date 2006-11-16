@@ -33,11 +33,11 @@ import getopt, time, readline, shlex, socket
 sys.path.insert(1, "/usr/lib/fail2ban")
 
 # Now we can import our modules
-from version import version
+from common.version import version
+from common.protocol import printFormatted
 from client.csocket import CSocket
 from client.configurator import Configurator
 from client.beautifier import Beautifier
-from protocol import printFormatted
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.client")

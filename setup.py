@@ -27,7 +27,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from distutils.core import setup
-from version import version
+from common.version import version
 from os.path import isfile, join
 from sys import argv
 from glob import glob
@@ -54,24 +54,21 @@ setup(
 					'fail2ban-server', 
 					'fail2ban-regex'
 				], 
-	py_modules =	[
-						'version', 
-						'protocol'
-					], 
 	packages =	[
+					'common', 
 					'client', 
 					'server'
 				], 
 	data_files =	[
 						('/etc/fail2ban', 
 							glob("config/*.conf")
-																								), 
+						), 
 						('/etc/fail2ban/filter.d', 
 							glob("config/filter.d/*.conf")
-																								), 
+						), 
 						('/etc/fail2ban/action.d', 
 							glob("config/action.d/*.conf")
-																								)
+						)
 					]
 )
 
@@ -100,6 +97,7 @@ for directory in elements:
 		path = join(directory, f)
 		if isfile(path):
 			obsoleteFiles.append(path)
+
 if obsoleteFiles:
 	print
 	print "Obsolete files from previous Fail2Ban versions were found on " \
