@@ -31,7 +31,7 @@ import getopt, sys
 # fix for bug #343821
 sys.path.insert(1, "/usr/lib/fail2ban")
 
-from version import version
+from common.version import version
 from server.server import Server
 
 ##
