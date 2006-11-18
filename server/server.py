@@ -183,12 +183,6 @@ class Server:
 	def getMaxRetry(self, name):
 		return self.__jails.getFilter(name).getMaxRetry()
 	
-	def setMaxTime(self, name, value):
-		self.__jails.getFilter(name).setMaxTime(value)
-	
-	def getMaxTime(self, name):
-		return self.__jails.getFilter(name).getMaxTime()
-	
 	# Action
 	def addAction(self, name, value):
 		self.__jails.getAction(name).addAction(value)
