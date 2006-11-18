@@ -60,7 +60,7 @@ class JailReader(ConfigReader):
 				["string", "logpath", "/var/log/messages"],
 				["string", "backend", "auto"],
 				["int", "maxretry", 3],
-				["int", "maxtime", 600],
+				["int", "findtime", 600],
 				["int", "bantime", 600],
 				["string", "failregex", None],
 				["string", "ignoreregex", None],
@@ -113,8 +113,8 @@ class JailReader(ConfigReader):
 			elif opt == "ignoreip":
 				for ip in self.__opts[opt].split():
 					stream.append(["set", self.__name, "addignoreip", ip])
-			elif opt == "maxtime":
-				stream.append(["set", self.__name, "maxtime", self.__opts[opt]])
+			elif opt == "findtime":
+				stream.append(["set", self.__name, "findtime", self.__opts[opt]])
 			elif opt == "bantime":
 				stream.append(["set", self.__name, "bantime", self.__opts[opt]])
 			elif opt == "failregex":

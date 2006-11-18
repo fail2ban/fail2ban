@@ -218,6 +218,7 @@ class Filter(JailThread):
 	
 	def setFindTime(self, value):
 		self.__findTime = value
+		self.failManager.setMaxTime(value)
 		logSys.info("Set findtime = %s" % value)
 	
 	##
@@ -245,23 +246,6 @@ class Filter(JailThread):
 	def getMaxRetry(self):
 		return self.failManager.getMaxRetry()
 	
-	##
-	# Set the maximum time a failure stays in the list.
-	#
-	# @param value the maximum time
-	
-	def setMaxTime(self, value):
-		self.failManager.setMaxTime(value)
-		logSys.info("Set maxTime = %s" % value)
-	
-	##
-	# Get the maximum time a failure stays in the list.
-	#
-	# @return the time value
-	
-	def getMaxTime(self):
-		return self.failManager.getMaxTime()
-
 	##
 	# Main loop.
 	#

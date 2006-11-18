@@ -19,6 +19,7 @@ ver. 0.7.5 (2006/??/??) - ???
 - Fixed a bug in user defined time regex/pattern
 - Improved documentation
 - Moved version.py and protocol.py to common/
+- Merged "maxtime" option with "findtime"
 
 ver. 0.7.4 (2006/11/01) - beta
 ----------

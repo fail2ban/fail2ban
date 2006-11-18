@@ -38,214 +38,202 @@ display this help message
 print the version
 .SH COMMAND
 .TP
-start
+\fBstart\fR
 starts the server and the jails
 .TP
-reload
+\fBreload\fR
 reloads the configuration
 .TP
-stop
+\fBstop\fR
 stops all jails and terminate the
 server
 .TP
-status
+\fBstatus\fR
 gets the current status of the
 server
 .TP
-ping
+\fBping\fR
 tests if the server is alive
 .TP
-set loglevel <LEVEL>
+\fBset loglevel <LEVEL>\fR
 sets logging level to <LEVEL>. 0
 is minimal, 4 is debug
 .TP
-get loglevel
+\fBget loglevel\fR
 gets the logging level
 .TP
-set logtarget <TARGET>
+\fBset logtarget <TARGET>\fR
 sets logging target to <TARGET>.
 Can be STDOUT, STDERR, SYSLOG or a
 file
 .TP
-get logtarget
+\fBget logtarget\fR
 gets logging target
 .TP
-add <JAIL> <BACKEND>
+\fBadd <JAIL> <BACKEND>\fR
 creates <JAIL> using <BACKEND>
 .TP
-set <JAIL> idle on|off
+\fBset <JAIL> idle on|off\fR
 sets the idle state of <JAIL>
 .TP
-set <JAIL> addignoreip <IP>
+\fBset <JAIL> addignoreip <IP>\fR
 adds <IP> to the ignore list of
 <JAIL>
 .TP
-set <JAIL> delignoreip <IP>
+\fBset <JAIL> delignoreip <IP>\fR
 removes <IP> from the ignore list
 of <JAIL>
 .TP
-set <JAIL> addlogpath <FILE>
+\fBset <JAIL> addlogpath <FILE>\fR
 adds <FILE> to the monitoring list
 of <JAIL>
 .TP
-set <JAIL> dellogpath <FILE>
+\fBset <JAIL> dellogpath <FILE>\fR
 removes <FILE> to the monitoring
 list of <JAIL>
 .TP
-set <JAIL> timeregex <REGEX>
+\fBset <JAIL> timeregex <REGEX>\fR
 sets the regular expression
 <REGEX> to match the date format
 for <JAIL>. This will disable the
 autodetection feature.
 .TP
-set <JAIL> timepattern <PATTERN>
+\fBset <JAIL> timepattern <PATTERN>\fR
 sets the pattern <PATTERN> to
 match the date format for <JAIL>.
 This will disable the
 autodetection feature.
 .TP
-set <JAIL> failregex <REGEX>
+\fBset <JAIL> failregex <REGEX>\fR
 sets the regular expression
 <REGEX> which must match failures
 for <JAIL>
 .TP
-set <JAIL> ignoreregex <REGEX>
+\fBset <JAIL> ignoreregex <REGEX>\fR
 sets the regular expression
 <REGEX> which should match pattern
 to exclude for <JAIL>
 .TP
-set <JAIL> maxtime <TIME>
-sets the number of seconds <TIME>
-a failure stay in the list for
-<JAIL>
-.TP
-set <JAIL> findtime <TIME>
+\fBset <JAIL> findtime <TIME>\fR
 sets the number of seconds <TIME>
 for which the filter will look
 back for <JAIL>
 .TP
-set <JAIL> bantime <TIME>
+\fBset <JAIL> bantime <TIME>\fR
 sets the number of seconds <TIME>
 a host will be banned for <JAIL>
 .TP
-set <JAIL> maxretry <RETRY>
+\fBset <JAIL> maxretry <RETRY>\fR
 sets the number of failures
 <RETRY> before banning the host
 for <JAIL>
 .TP
-set <JAIL> addaction <ACT>
+\fBset <JAIL> addaction <ACT>\fR
 adds a new action named <NAME> for
 <JAIL>
 .TP
-set <JAIL> delaction <ACT>
+\fBset <JAIL> delaction <ACT>\fR
 removes the action <NAME> from
 <JAIL>
 .TP
-set <JAIL> setcinfo <ACT> <KEY> <VALUE>
+\fBset <JAIL> setcinfo <ACT> <KEY> <VALUE>\fR
 sets <VALUE> for <KEY> of the
 action <NAME> for <JAIL>
 .TP
-set <JAIL> delcinfo <ACT> <KEY>
+\fBset <JAIL> delcinfo <ACT> <KEY>\fR
 removes <KEY> for the action
 <NAME> for <JAIL>
 .TP
-set <JAIL> actionstart <ACT> <CMD>
+\fBset <JAIL> actionstart <ACT> <CMD>\fR
 sets the start command <CMD> of
 the action <ACT> for <JAIL>
 .TP
-set <JAIL> actionstop <ACT> <CMD>
+\fBset <JAIL> actionstop <ACT> <CMD>\fR
 sets the stop command <CMD> of the
 action <ACT> for <JAIL>
 .TP
-set <JAIL> actioncheck <ACT> <CMD>
+\fBset <JAIL> actioncheck <ACT> <CMD>\fR
 sets the check command <CMD> of
 the action <ACT> for <JAIL>
 .TP
-set <JAIL> actionban <ACT> <CMD>
+\fBset <JAIL> actionban <ACT> <CMD>\fR
 sets the ban command <CMD> of the
 action <ACT> for <JAIL>
 .TP
-set <JAIL> actionunban <ACT> <CMD>
+\fBset <JAIL> actionunban <ACT> <CMD>\fR
 sets the unban command <CMD> of
 the action <ACT> for <JAIL>
 .TP
-get <JAIL> <CMD>
-gets the <CMD> value for <JAIL>
-.TP
-get <JAIL> logpath
+\fBget <JAIL> logpath\fR
 gets the list of the monitored
 files for <JAIL>
 .TP
-get <JAIL> ignoreip
+\fBget <JAIL> ignoreip\fR
 gets the list of ignored IP
 addresses for <JAIL>
 .TP
-get <JAIL> timeregex
+\fBget <JAIL> timeregex\fR
 gets the regular expression used
 for the time detection for <JAIL>
 .TP
-get <JAIL> timepattern
+\fBget <JAIL> timepattern\fR
 gets the pattern used for the time
 detection for <JAIL>
 .TP
-get <JAIL> failregex
+\fBget <JAIL> failregex\fR
 gets the regular expression which
 matches the failures for <JAIL>
 .TP
-get <JAIL> ignoreregex
+\fBget <JAIL> ignoreregex\fR
 gets the regular expression which
 matches patterns to ignore for
 <JAIL>
 .TP
-get <JAIL> maxtime
-gets the time a failure stays in
-the list for <JAIL>
-.TP
-get <JAIL> findtime
+\fBget <JAIL> findtime\fR
 gets the time for which the filter
 will look back for failures for
 <JAIL>
 .TP
-get <JAIL> bantime
+\fBget <JAIL> bantime\fR
 gets the time a host is banned for
 <JAIL>
 .TP
-get <JAIL> maxretry
+\fBget <JAIL> maxretry\fR
 gets the number of failures
 allowed for <JAIL>
 .TP
-get <JAIL> addaction
+\fBget <JAIL> addaction\fR
 gets the last action which has
 been added for <JAIL>
 .TP
-get <JAIL> actionstart <ACT>
+\fBget <JAIL> actionstart <ACT>\fR
 gets the start command for the
 action <ACT> for <JAIL>
 .TP
-get <JAIL> actionstop <ACT>
+\fBget <JAIL> actionstop <ACT>\fR
 gets the stop command for the
 action <ACT> for <JAIL>
 .TP
-get <JAIL> actioncheck <ACT>
+\fBget <JAIL> actioncheck <ACT>\fR
 gets the check command for the
 action <ACT> for <JAIL>
 .TP
-get <JAIL> actionban <ACT>
+\fBget <JAIL> actionban <ACT>\fR
 gets the ban command for the
 action <ACT> for <JAIL>
 .TP
-get <JAIL> actionunban <ACT>
+\fBget <JAIL> actionunban <ACT>\fR
 gets the unban command for the
 action <ACT> for <JAIL>
 .TP
-start <JAIL>
+\fBstart <JAIL>\fR
 starts the jail <JAIL>
 .TP
-stop <JAIL>
+\fBstop <JAIL>\fR
 stops the jail <JAIL>. The jail is
 removed
 .TP
-status <JAIL>
+\fBstatus <JAIL>\fR
 gets the current status of <JAIL>
 .SH FILES
 \fI/etc/fail2ban/*\fR
