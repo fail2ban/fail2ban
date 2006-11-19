@@ -20,6 +20,11 @@ ver. 0.7.5 (2006/??/??) - ???
 - Improved documentation
 - Moved version.py and protocol.py to common/
 - Merged "maxtime" option with "findtime"
+- Added "<HOST>" tag support in failregex which matches
+  default IP address/hostname. "(?P<host>\S)" is still valid
+  and supported
+- Fixed exception when calling fail2ban-server with unknown
+  option
 
 ver. 0.7.4 (2006/11/01) - beta
 ----------
