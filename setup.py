@@ -89,6 +89,11 @@ elements =	{
 						"iptables.py", 
 						"ipfwadm.py", 
 						"ipfw.py"
+					],
+				"/usr/lib/fail2ban/":
+					[
+						"version.py", 
+						"protocol.py"
 					]
 			}
 
