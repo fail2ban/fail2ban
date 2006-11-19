@@ -13,7 +13,8 @@ rules to reject the IP address. These rules can be defined by
 the user. Fail2Ban can read multiple log files such as sshd
 or Apache web server ones.
 
-Documentation, FAQ, HOWTOs are available on the project
+This README is a quick introduction to Fail2ban. More
+documentation, FAQ, HOWTOs are available on the project
 website: http://fail2ban.sourceforge.net
 
 Installation:
@@ -38,54 +39,26 @@ Gentoo: ebuilds are available on the website.
 Debian: Fail2Ban is in Debian unstable.
 RedHat: packages are available on the website.
 
-Fail2Ban should now be correctly installed. Just type:
+Fail2Ban should be correctly installed now. Just type:
 
 > fail2ban-client -h
 
-to see if everything is alright.
+to see if everything is alright. You should always use
+fail2ban-client and never call fail2ban-server directly.
 
 Configuration:
 --------------
 
-You can configure fail2ban using the files in /etc/fail2ban
-or using command line. Here are the available command line
-options (not complete yet):
-
-Options:
-    -c <DIR>                configuration directory
-    -s <FILE>               socket path
-    -d                      dump configuration. For debugging
-    -i                      interactive mode
-    -v                      increase verbosity
-    -q                      decrease verbosity
-    -x                      force execution of the server
-    -h, --help              display this help message
-    -V, --version           print the version
-
-Command:
-    start                   start the server and the jails
-    reload                  reload the configuration
-    stop                    stop all jails and terminate the
-                            server
-    status                  get the current status
-
-    set loglevel <LEVEL>    set loglevel to <LEVEL>
-    get loglevel            get loglevel
-    set logtarget <TARGET>  set log target to <TARGET>
-    get logtarget           get log target
-
-    add <JAIL> [BACKEND]    create <JAIL> using [BACKEND]
-    set <JAIL> <CMD>        set the <CMD> value for <JAIL>
-    get <JAIL> <CMD>        get the <CMD> value for <JAIL>
-    start <JAIL>            start <JAIL>
-    stop <JAIL>             stop <JAIL>. The jail is removed
-    status <JAIL>           get the current status of <JAIL>
+You can configure Fail2ban using the files in /etc/fail2ban.
+It is possible to configure the server using commands sent to
+it by fail2ban-client. The available commands are described
+in the man page of fail2ban-client. Please refer to it.
 
 Contact:
 --------
 
 You need some new features, you found bugs or you just
-appreciate this program, you can contact me at :
+appreciate this program, you can contact me at:
 
 Website: http://fail2ban.sourceforge.net
 
