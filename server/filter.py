@@ -167,13 +167,17 @@ class Filter(JailThread):
 	def setFailRegex(self, value):
 		try:
 			if value.lstrip() == '':
+				self.__failRegex = value
 				self.__failRegexObj = None
 			else:
-				self.__failRegexObj = re.compile(value)
-			self.__failRegex = value
-			logSys.info("Set failregex = %s" % value)
+				# Replace "<HOST>" with default regular expression for host.
+				regex = value.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>\S+)")
+				self.__failRegex = regex
+				self.__failRegexObj = re.compile(regex)
+			logSys.info("Set failregex = %s" % self.__failRegex)
 		except sre_constants.error:
-			logSys.error("Unable to compile regular expression " + value)
+			logSys.error("Unable to compile regular expression " +
+						self.__failRegex)
 	
 	##
 	# Get the regular expression which matches the failure.
@@ -475,6 +479,8 @@ class DNSUtils:
 		try:
 			return socket.gethostbyname_ex(dns)[2]
 		except socket.gaierror:
+			logSys.warn("Unable to find a corresponding IP address for %s"
+						% dns)
 			return list()
 	
 	@staticmethod
