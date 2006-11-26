@@ -25,6 +25,8 @@ ver. 0.7.5 (2006/??/??) - ???
   and supported
 - Fixed exception when calling fail2ban-server with unknown
   option
+- Fixed Debian bug 400162. The "socket" option is now handled
+  correctly by fail2ban-client
 
 ver. 0.7.4 (2006/11/01) - beta
 ----------
