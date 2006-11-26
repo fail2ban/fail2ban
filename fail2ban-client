@@ -169,7 +169,8 @@ class Fail2banClient:
 				logSys.error("Server already running")
 				return False
 			else:
-				self.__startServerAsync(self.__conf["force"])
+				self.__startServerAsync(self.__conf["socket"],
+										self.__conf["force"])
 				# Read the config while the server is starting
 				self.__readConfig()
 				try:
@@ -199,14 +200,19 @@ class Fail2banClient:
 	#
 	# Start the Fail2ban server in daemon mode.
 	
-	def __startServerAsync(self, force = False):
+	def __startServerAsync(self, socket, force = False):
 		args = list()
 		
 		args.append("fail2ban-server")
+		# Start in background mode.
 		args.append("-b")
+		# Set the socket path.
+		args.append("-s")
+		args.append(socket)
+		# Force the execution if needed.
 		if force:
 			args.append("-x")
-		
+		print args
 		pid = os.fork()
 		if pid == 0:
 			try:
