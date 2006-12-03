@@ -201,20 +201,19 @@ class Fail2banClient:
 	# Start the Fail2ban server in daemon mode.
 	
 	def __startServerAsync(self, socket, force = False):
-		args = list()
-		
-		args.append("fail2ban-server")
-		# Start in background mode.
-		args.append("-b")
-		# Set the socket path.
-		args.append("-s")
-		args.append(socket)
-		# Force the execution if needed.
-		if force:
-			args.append("-x")
-		print args
+		# Forks the current process.
 		pid = os.fork()
 		if pid == 0:
+			args = list()
+			args.append("fail2ban-server")
+			# Start in background mode.
+			args.append("-b")
+			# Set the socket path.
+			args.append("-s")
+			args.append(socket)
+			# Force the execution if needed.
+			if force:
+				args.append("-x")
 			try:
 				# Use the PATH env
 				os.execvp("fail2ban-server", args)
@@ -231,10 +230,11 @@ class Fail2banClient:
 		# Wait for the server to start
 		cnt = 0
 		while not self.__ping():
-			if cnt > 10:
+			# The server has 30 secondes to start.
+			if cnt >= 300:
 				raise ServerExecutionException("Failed to start server")
 			time.sleep(0.1)
-			cnt = cnt + 1
+			cnt += 1
 			
 	
 	def start(self, argv):
