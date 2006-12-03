@@ -27,7 +27,7 @@ getpid() {
 start() {
     echo -n $"Starting fail2ban: "
     getpid
-    if [ -z "$pid"]; then
+    if [ -z "$pid" ]; then
         $FAIL2BAN start > /dev/null
         RETVAL=$?
     fi
@@ -77,8 +77,8 @@ case "$1" in
         fi
         ;;
   restart)
+  		stop
         start
-        stop
         ;;
   *)
         echo $"Usage: $0 {start|stop|status|restart}"
