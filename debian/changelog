@@ -1,3 +1,10 @@
+fail2ban (0.7.4-4) unstable; urgency=low
+
+  * Added debian/backports to contain patches necessary for backporting. It
+    gets used by pbuilder-ssh to create package for backports.org
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  4 Dec 2006 08:55:48 -0500
+
 fail2ban (0.7.4-3) unstable; urgency=low
 
   * Reincarnated logrotate configuration (Closes: #397878)

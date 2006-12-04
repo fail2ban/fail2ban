@@ -1,0 +1,40 @@
+diff -x '*~' -x .svn -Naur trunk/debian/control trunk.backports/debian/control
+--- trunk/debian/control	2006-10-23 00:57:02.000000000 -0400
++++ trunk.backports/debian/control	2006-12-04 08:45:25.000000000 -0500
+@@ -4,13 +4,13 @@
+ Maintainer: Yaroslav Halchenko <debian@onerussian.com>
+ Uploaders: Barak Pearlmutter <bap@debian.org>
+ Build-Depends: debhelper (>= 5.0.37.2), dpatch
+-Build-Depends-Indep: python, python-dev, help2man, python-central (>= 0.5.6)
++Build-Depends-Indep: python, python2.4, python2.4-dev, help2man
+ XS-Python-Version: current, >= 2.4
+ Standards-Version: 3.7.2
+ 
+ Package: fail2ban
+ Architecture: all
+-Depends: ${python:Depends}, iptables, lsb-base (>=2.0-7)
++Depends: python2.4, iptables, lsb-base (>=2.0-7)
+ Suggests: python-gamin
+ XB-Python-Version: ${python:Versions}
+ Description: bans IPs that cause multiple authentication errors
+diff -x '*~' -x .svn -Naur trunk/debian/rules trunk.backports/debian/rules
+--- trunk/debian/rules	2006-11-11 21:19:14.000000000 -0500
++++ trunk.backports/debian/rules	2006-12-04 08:45:45.000000000 -0500
+@@ -39,7 +39,7 @@
+ 	dh_installdirs
+ 
+ 	# Add here commands to install the package into debian/fail2ban.
+-	python setup.py install --root=$(DESTDIR) --no-compile
++	python2.4 setup.py install --root=$(DESTDIR) --no-compile
+ 	#X Evil - must be removed after Debian switches over to 2.4, now
+ 	#  distutils.setup will override the enterpreter line to /usr/bin/python
+ 	install fail2ban-server fail2ban-client $(DESTDIR)/usr/bin
+@@ -62,7 +62,7 @@
+ 	dh_installlogrotate
+ 	dh_installinit -- defaults 99
+ 	dh_installman man/*.1
+-	dh_pycentral
++	dh_python
+ 	dh_link
+ 	dh_compress
+ 	dh_fixperms
