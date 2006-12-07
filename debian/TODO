@@ -1,7 +1,6 @@
 * Collect more sections for other log files
-* Compose a filter for logwatch (almost done -- testing, submission)
-* In the next release split file configuration will be implemented,
-   that is why no split files is enabled for current release 
-   (as of v0.6.1   Sun Mar 19 00:18:08 EST 2006)
+* Find proper answer to "Syslog entries can be 'forged' by a regular
+   user" mentioned in README.Debian
 
- -- Yaroslav O. Halchenko <debian@onerussian.com>, Sun Jan 15 15:18:13 2006
+ -- Yaroslav O. Halchenko <debian@onerussian.com>  Wed,  6 Dec 2006 22:14:26 -0500
+
