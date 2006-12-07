@@ -4,10 +4,10 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.7.5)                           2006/??/??
+Fail2Ban (version 0.7.5)                           2006/12/07
 =============================================================
 
-ver. 0.7.5 (2006/??/??) - ???
+ver. 0.7.5 (2006/12/07) - beta
 ----------
 - Do not ban a host that is currently banned. Thanks to
   Yaroslav Halchenko
@@ -29,7 +29,7 @@ ver. 0.7.5 (2006/??/??) - ???
   correctly by fail2ban-client
 - Fixed RedHat init script. Thanks to Justin Shore
 - Changed timeout to 30 secondes before assuming the server
-  cannot be started
+  cannot be started. Thanks to Joël Bertrand
 
 ver. 0.7.4 (2006/11/01) - beta
 ----------
