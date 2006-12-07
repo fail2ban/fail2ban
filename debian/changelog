@@ -3,13 +3,13 @@ fail2ban (0.7.4-5) unstable; urgency=low
   * Added Suggests on mailx and relevant comments in README.Debian about
     invoking mail actions (closes: #396668)
   * Removed obsolete entries in TODO and README
-  * README.Debian describes a bit issue of interpolations vs parameters passed
-    from jail.{conf,local} into an action or a filter definition (closes:
+  * README.Debian describes the use of interpolations vs parameters passed
+    from jail.{conf,local} into an action definitions (closes:
     #398739)
-  * Initial version of postfix filter (closes: #377711)
+  * Initial version of postfix filter has been present in 0.7 (closes:
+    #377711)
   * Removed Uploaded field from control since I am a DD now. Big thanks to
-    Barak Pearlmutter for being the sponsor of my packages for few
-    years.
+    Barak Pearlmutter for being the sponsor of my packages for few years.
 
  -- Yaroslav O. Halchenko <debian@onerussian.com>  Wed,  6 Dec 2006 22:14:26 -0500
 

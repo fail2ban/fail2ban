@@ -37,18 +37,19 @@ NOTE: -e command line parameter is non existant in 0.7.x
 
 
 * Interpolations vs actions/filters parameters:
-For details see #398739.
 
-Summary: every pair of .conf and then .local (if exists) files read
-separately from the others, so interpolations cannot penetrate from
-(for instance) jail.* into actions.d/iptables.conf. To overcome this,
-you are welcome to create/use any parameter which can be substituted
-in actions/filters [Definition] section, whenever it is also defined
-in the [Init] section of that file and used in place of necessary
-placement as <parameter>. Parameters can be specified in the
-definitions within jail.{conf,local}. For instance 1 lengthy example,
-where fwchain is both used as interpolation (in jail.local) and
-parameter (in iptables-flex.local).
+For details see #398739 or wait for a closure of #400416
+
+Every pair of .conf and then .local (if exists) files is read
+separately from any other configuration file, so interpolations cannot
+penetrate from jail.* into actions.d/*. To overcome this, it is
+necessary to create a PARAMETER which can be substituted in actions
+[Definition] section, if it is also defined in the [Init] section of
+that file and is used in place of necessary allocation as <PARAMETER>
+tag. Parameters can be specified in the definitions within
+jail.{conf,local}. For instance, 1 lengthy example, where the same
+name "fwchain" is used both as interpolation (in jail.local) and as a
+parameter (in iptables-flex.local) (from #398739)
 
 ==> /etc/fail2ban/jail.local <==
 [DEFAULT]
@@ -199,4 +200,4 @@ P.S. Anyone is welcome to recommend proper security solution to this
 issue, such as an alternative to sysklogd which allows better control
 over users logging to specific facilities (such as AUTH)
 
- -- Yaroslav O. Halchenko <debian@onerussian.com>, Wed,  6 Dec 2006 22:56:20 -0500
+ -- Yaroslav O. Halchenko <debian@onerussian.com>, Thu,  7 Dec 2006 18:09:36 -0500
