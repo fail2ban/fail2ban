@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.7.4)                           2006/11/01
+Fail2Ban (version 0.7.5)                           2006/12/07
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -28,8 +28,8 @@ Optional:
 
 To install, just do:
 
-> tar xvfj fail2ban-0.7.4.tar.bz2
-> cd fail2ban-0.7.4
+> tar xvfj fail2ban-0.7.5.tar.bz2
+> cd fail2ban-0.7.5
 > python setup.py install
 
 This will install Fail2Ban into /usr/lib/fail2ban. The
@@ -52,7 +52,8 @@ Configuration:
 You can configure Fail2ban using the files in /etc/fail2ban.
 It is possible to configure the server using commands sent to
 it by fail2ban-client. The available commands are described
-in the man page of fail2ban-client. Please refer to it.
+in the man page of fail2ban-client. Please refer to it or to
+the website: http://fail2ban.sourceforge.net
 
 Contact:
 --------
@@ -71,7 +72,7 @@ Kévin Drapel, Marvin Rouge, Sireyessire, Robert Edeker,
 Tom Pike, Iain Lea, Andrey G. Grozin, Yaroslav Halchenko,
 Jonathan Kamens, Stephen Gildea, Markus Hoffmann, Mark
 Edgington, Patrick Börjesson, kojiro, zugeschmiert, Tyler,
-Nick Munger, Christoph Haas
+Nick Munger, Christoph Haas, Justin Shore, Joël Bertrand
 
 License:
 --------
