@@ -22,4 +22,4 @@ diff -urNad fail2ban-0.7.3~/config/filter.d/wuftpd.conf fail2ban-0.7.3/config/fi
 +# Notes.: regex to match the password failures messages in the logfile.
 +# Values: TEXT
 +#
-+failregex = wu-ftpd\[\d+\]:\s+\(pam_unix\)\s+authentication failure.* rhost=(?P<host>\S*)
++failregex = wu-ftpd\[\d+\]:\s+\(pam_unix\)\s+authentication failure.* rhost=<HOST>
