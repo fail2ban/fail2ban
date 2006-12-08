@@ -1,3 +1,12 @@
+fail2ban (0.7.5-1) unstable; urgency=low
+
+  * New upstream release which fixes next issues
+   + Socket parameter not work with other path (Closes: #400162)
+   + fail2ban does not start with /etc/init.d/fail2ban start but
+     with fail2ban-client start (Closes: #400278)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  7 Dec 2006 20:19:09 -0500
+
 fail2ban (0.7.4-5) unstable; urgency=low
 
   * Added Suggests on mailx and relevant comments in README.Debian about
