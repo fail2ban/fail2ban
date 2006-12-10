@@ -285,7 +285,7 @@ timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
 # Notes.:  regex to match the password failure messages in the logfile.
 # Values:  TEXT  Default:  authentication failure|user .* not found
 #
-failregex = authentication failure|user .* not found
+failregex = [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)
 
 
 [VSFTPD]
@@ -325,7 +325,7 @@ timepattern = %%b %%d %%H:%%M:%%S
 # Notes.: regex to match the password failures messages in the logfile.
 # Values: TEXT Default: Authentication failure|Failed password|Invalid user
 #
-failregex = FAIL LOGIN
+failregex = vsftpd: \(pam_unix\) authentication failure; .* rhost=(?P<host>\S+)
 
 
 [SSH]
@@ -367,4 +367,4 @@ timepattern = %%b %%d %%H:%%M:%%S
 # Notes.:  regex to match the password failures messages in the logfile.
 # Values:  TEXT  Default:  Authentication failure|Failed password|Invalid user
 #
-failregex = Authentication failure|Failed password|Invalid user
+failregex = : (?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) (?:::f{4,6}:)?(?P<host>\S*)

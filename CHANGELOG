@@ -14,6 +14,8 @@ ver. 0.6.2 (2006/??/??) - ???
   (Yaroslav Halchenko):
   * Made locale configurable
   * Fixed warning if ignoreip is empty
+- Added named group "host" for "failregex". Fixed security
+  vulnerability CVE-2006-6302
 
 ver. 0.6.1 (2006/03/16) - stable
 ----------

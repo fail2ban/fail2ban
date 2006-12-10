@@ -177,7 +177,16 @@ class LogReader:
 			timeMatch = re.search(self.timeregex, match.string)
 			if timeMatch:
 				date = self.getUnixTime(timeMatch.group())
-				ipMatch = textToIp(match.string)
+				try:
+					# Fix for CVE-2006-6302
+					matchString = match.group("host")
+				except IndexError:
+					# However does not break the current configuration
+					logSys.warn("No 'host' group defined. This is a security " +
+								"issue. Please fix your configuration file " +
+								"and look at CVE-2006-6302")
+					matchString = match.string
+				ipMatch = textToIp(matchString)
 				if ipMatch:
 					for ip in ipMatch:
 						failList.append([ip, date])
