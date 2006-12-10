@@ -1,9 +1,14 @@
 fail2ban (0.7.5-2) UNRELEASED; urgency=low
 
-  * NEWS.Debian confusions - the latest NEWS entry and postinst message
-    were rephrased (Closes: #402350)
+  * NEWS.Debian confusions - the latest NEWS entry and postinst message were
+    rephrased (Closes: #402350)
+  * Added mail-whois-lines action, which emails log lines containing abuser
+    IP. Those lines are often required for proper abuse reports sent to the
+    Internet providers.  Forwarding of such received emails to the email
+    addresses of abuse departments present in the output of whois is a
+    tentative solution for semi-automatic abuse reporting (Closes: #358810)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Sat,  9 Dec 2006 14:12:43 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 10 Dec 2006 18:29:23 -0500
 
 fail2ban (0.7.5-1) unstable; urgency=low
 
