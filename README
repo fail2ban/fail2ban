@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.6.2)                           2006/??/??
+Fail2Ban (version 0.6.2)                           2006/12/11
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -115,6 +115,12 @@ options:
   -f <TIME>  lifetime in seconds of failed entry [findtime]
   -v         verbose. Use twice for greater effect
   -V         print software version
+
+Please note that a vulnerability (CVE-2006-6302) affects
+version < 0.6.2. Since 0.6.2, a named group "host" was added
+to "failregex". This group must match the host address. Old
+configuration files will still work but will generate a
+warning. In this case, please update your configuration file.
 
 Contact:
 --------
