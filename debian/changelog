@@ -1,6 +1,7 @@
 fail2ban (0.6.2-1) unstable; urgency=low
 
-  * New upstream release
+  * New upstream release:
+    + locale_config and empty_ip patches got absorbed upstream
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 11 Dec 2006 20:53:30 -0500
 

@@ -1,5 +1,3 @@
-00_empty_ip
-00_locale_config
 00_verbosity
 00_proftpd_section
 00_vsftpd_regexp
