@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.16 $
+# $Revision: 484 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.16 $"
-__date__ = "$Date: 2006/01/03 15:13:04 $"
+__version__ = "$Revision: 484 $"
+__date__ = "$Date: 2006-12-10 22:16:26 +0100 (Sun, 10 Dec 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -136,6 +136,11 @@ class LogReader:
 		self.setFilePos(logFile)
 		lastLine = None
 		for line in logFile:
+			try:
+				# Try to convert UTF-8 string to Latin-1
+				line = line.decode('utf-8').encode('latin-1')
+			except UnicodeDecodeError:
+				pass
 			if not self.hasTime(line):
 				# There is no valid time in this line
 				continue
@@ -172,16 +177,16 @@ class LogReader:
 			timeMatch = re.search(self.timeregex, match.string)
 			if timeMatch:
 				date = self.getUnixTime(timeMatch.group())
-				# Bug fix for Debian #330827
-				hostMatch = match.groupdict()
-				if len(hostMatch)==0:
-					logSys.warn("Must have been using old style of failregex! "
-								"Security Breach! Read README.Debian")
-					ipMatch = textToIp(match.string)
-				else:
- 					ipMatch = reduce(lambda x,y:x+textToIp(y),
-									 hostMatch.values(), [])
-					
+				try:
+					# Fix for CVE-2006-6302
+					matchString = match.group("host")
+				except IndexError:
+					# However does not break the current configuration
+					logSys.warn("No 'host' group defined. This is a security " +
+								"issue. Please fix your configuration file " +
+								"and look at CVE-2006-6302")
+					matchString = match.string
+				ipMatch = textToIp(matchString)
 				if ipMatch:
 					for ip in ipMatch:
 						failList.append([ip, date])

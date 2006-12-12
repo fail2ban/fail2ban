@@ -18,22 +18,15 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.7 $
+# $Revision: 449 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.7 $"
-__date__ = "$Date: 2005/12/27 15:09:50 $"
+__version__ = "$Revision: 449 $"
+__date__ = "$Date: 2006-11-06 23:43:42 +0100 (Mon, 06 Nov 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import sys, traceback, logging, locale
-
-# Set the locale with the user's default setting
-try:
-	locale.setlocale(locale.LC_ALL, '')
-except Exception:
-	print "Unable to set locale to " + `locale.getdefaultlocale()`
-	sys.exit(-1)
+import sys, traceback, logging
 
 # Inserts our own modules path first in the list
 # fix for bug #343821

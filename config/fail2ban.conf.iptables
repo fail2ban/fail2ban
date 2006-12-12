@@ -1,6 +1,6 @@
 # Fail2Ban configuration file
 #
-# $Revision: 1.9 $
+# $Revision: 484 $
 #
 # 2005.06.21  modified for readability  Iain Lea  iain@bricbrac.de
 
@@ -27,6 +27,15 @@ verbose = 1
 # Values:  [true | false]  Default:  false
 #
 debug = false
+
+# Option:  locale
+# Notes.:  global (cannot be redefined per section) locale to use for
+#          timestamp pattern matching by changing LC_TIME for
+#          fail2ban process. Empty entry sets locale to default one
+#          (usually specified by LC_ALL environment variable).
+# Values:  LOCALE  Default:
+#
+locale = 
 
 # Option:  logtargets
 # Notes.:  log targets. Space separated list of logging targets.
@@ -383,7 +392,7 @@ timepattern = %%b %%d %%H:%%M:%%S
 # Notes.: regex to match the password failures messages in the logfile.
 # Values: TEXT Default: Authentication failure|Failed password|Invalid user
 #
-failregex = FAIL LOGIN
+failregex = vsftpd: \(pam_unix\) authentication failure; .* rhost=(?P<host>\S+)
 
 [SSH]
 # Option:  enabled

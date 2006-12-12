@@ -1,6 +1,6 @@
 # Fail2Ban configuration file
 #
-# $Revision: 1.2 $
+# $Revision: 484 $
 #
 # 2005.06.21  modified for readability  Iain Lea  iain@bricbrac.de
 
@@ -10,6 +10,15 @@
 # Values:  [true | false]  Default:  false
 #
 background = false
+
+# Option:  locale
+# Notes.:  global (cannot be redefined per section) locale to use for
+#          timestamp pattern matching by changing LC_TIME for
+#          fail2ban process. Empty entry sets locale to default one
+#          (usually specified by LC_ALL environment variable).
+# Values:  LOCALE  Default:
+#
+locale = 
 
 # Option:  logtargets
 # Notes.:  log targets. Space separated list of logging targets.
@@ -248,7 +257,7 @@ timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
 # Notes.:  regex to match the password failure messages in the logfile.
 # Values:  TEXT  Default:  authentication failure|user .* not found
 #
-failregex = authentication failure|user .* not found
+failregex = [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)
 
 
 [VSFTPD]
@@ -288,7 +297,7 @@ timepattern = %%b %%d %%H:%%M:%%S
 # Notes.: regex to match the password failures messages in the logfile.
 # Values: TEXT Default: Authentication failure|Failed password|Invalid user
 #
-failregex = FAIL LOGIN
+failregex = vsftpd: \(pam_unix\) authentication failure; .* rhost=(?P<host>\S+)
 
 
 [SSH]
@@ -324,4 +333,4 @@ timepattern = %%b %%d %%H:%%M:%%S
 # Notes.:  regex to match the password failures messages in the logfile.
 # Values:  TEXT  Default:  Authentication failure|Failed password|Invalid user
 #
-failregex = Authentication failure|Failed password|Invalid user
+failregex = : (?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) (?:::f{4,6}:)?(?P<host>\S*)

@@ -9,7 +9,7 @@
 #
 # Author: Andrey G. Grozin
 # 
-# $Revision: 1.2 $
+# $Revision: 216 $
 
 # Source function library.
 . /etc/init.d/functions

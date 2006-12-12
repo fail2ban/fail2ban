@@ -17,15 +17,16 @@
 # Author: Cyril Jaquier
 # Modified by: Yaroslav Halchenko (SYSLOG, findtime, and oth)
 # 
-# $Revision: 1.24 $
+# $Revision: 449 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.24 $"
-__date__ = "$Date: 2006/01/22 11:10:29 $"
+__version__ = "$Revision: 449 $"
+__date__ = "$Date: 2006-11-06 23:43:42 +0100 (Mon, 06 Nov 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, sys, getopt, os, string, signal, logging, logging.handlers, copy
+import time, sys, getopt, os, string, signal, logging, logging.handlers, \
+	   copy, locale
 from ConfigParser import *
 
 from version import version
@@ -213,7 +214,7 @@ def main():
 	# Reads the command line options.
 	try:
 		cmdOpts = 'hvVbdkc:t:f:i:r:p:e:'
-		cmdLongOpts = ['help','version']
+		cmdLongOpts = ['help', 'version']
 		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
 	except getopt.GetoptError:
 		dispUsage()
@@ -240,6 +241,7 @@ def main():
 					["bool", "debug", False],
 					["int", "verbose", conf["verbose"]],
 					["str", "pidlock", "/var/run/fail2ban.pid"],
+					["str", "locale", ""], 
 					["int", "maxfailures", 5],
 					["int", "bantime", 600],
 					["int", "findtime", 600],
@@ -265,6 +267,14 @@ def main():
 	
 	# PID lock
 	pidLock.setPath(conf["pidlock"])
+	
+	# Set the LC_TIME with the user's default setting
+	try:
+		logSys.info("Setting LC_TIME locale option to '%s'"%conf["locale"])
+		locale.setlocale(locale.LC_TIME, conf["locale"])
+	except Exception:
+		logSys.error("Unable to set locale to '%s'"%conf["locale"])
+		sys.exit(-1)
 	
 	# Now we can kill properly a running instance if needed
 	if conf["kill"]:
@@ -300,7 +310,7 @@ def main():
 			# a socket (file, so it starts with /)
 			# or hostname
 			# or hostname:port
-			syslogtargets = re.findall("(/[\w/]*)|([^/ ][^: ]*)(:(\d+)){,1}",
+			syslogtargets = re.findall("(/[\w/]*)|([^/ ][^: ]*)(:(\d+)){,1}", 
 									   conf["syslog-target"])
 			# we are waiting for a single match
 			syslogtargets = syslogtargets[0]
@@ -314,7 +324,7 @@ def main():
 			if len(syslogtargets) == 0: # everything default
 				hdlr = logging.handlers.SysLogHandler()
 			else:
-				if not ( syslogtargets[0] == "" ): # got socket
+				if not (syslogtargets[0] == ""): # got socket
 					syslogtarget = syslogtargets[0]
 				else:		# got hostname and maybe a port
 					if syslogtargets[3] == "": # no port specified
@@ -356,7 +366,9 @@ def main():
 					"ONLY DISPLAYED IN THE LOG MESSAGES")
 	
 	# Ignores IP list
-	ignoreIPList = conf["ignoreip"].split(' ')
+	# and filter out empty entries. Otherwise
+	#  WARNING:  is not a valid IP address
+	ignoreIPList = filter(None, conf["ignoreip"].split(' '))
 
 	# Checks for root user. This is necessary because log files
 	# are owned by root and firewall needs root access.
@@ -382,15 +394,15 @@ def main():
 	logSys.debug("MaxFailure is " + `conf["maxfailures"]`)
 	
 	# Options
-	optionValues = (["bool", "enabled", False],
-					["str", "host", "localhost"],
-					["int", "port", "25"],
-					["str", "from", "root"],
-					["str", "to", "root"],
-					["str", "user", ''],
-					["str", "password", ''],
-					["bool", "localtime", False],
-					["str", "subject", "[Fail2Ban] Banned <ip>"],
+	optionValues = (["bool", "enabled", False], 
+					["str", "host", "localhost"], 
+					["int", "port", "25"], 
+					["str", "from", "root"], 
+					["str", "to", "root"], 
+					["str", "user", ''], 
+					["str", "password", ''], 
+					["bool", "localtime", False], 
+					["str", "subject", "[Fail2Ban] Banned <ip>"], 
 					["str", "message", "Fail2Ban notification"])
 	
 	# Gets global configuration options
@@ -408,18 +420,18 @@ def main():
 		logSys.debug("to: " + mailConf["to"] + " from: " + mailConf["from"])
 	
 	# Options
-	optionValues = (["bool", "enabled", False],
-					["str", "logfile", "/dev/null"],
-					["int", "maxfailures", conf["maxfailures"]],
-					["int", "bantime", conf["bantime"]],
-					["int", "findtime", conf["findtime"]],
-					["str", "timeregex", ""],
-					["str", "timepattern", ""],
-					["str", "failregex", ""],
-					["str", "fwstart", ""],
-					["str", "fwend", ""],
-					["str", "fwban", ""],
-					["str", "fwunban", ""],
+	optionValues = (["bool", "enabled", False], 
+					["str", "logfile", "/dev/null"], 
+					["int", "maxfailures", conf["maxfailures"]], 
+					["int", "bantime", conf["bantime"]], 
+					["int", "findtime", conf["findtime"]], 
+					["str", "timeregex", ""], 
+					["str", "timepattern", ""], 
+					["str", "failregex", ""], 
+					["str", "fwstart", ""], 
+					["str", "fwend", ""], 
+					["str", "fwban", ""], 
+					["str", "fwunban", ""], 
 					["str", "fwcheck", ""])
 	
 	logSys.info("Fail2Ban v" + version + " is running")
@@ -431,10 +443,10 @@ def main():
 		if isEnabledSection(l["enabled"], t):
 			# Creates a logreader object
 			enabledSections.append(t)
-			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
+			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"], 
 							 l["failregex"], l["maxfailures"], l["findtime"])
 			# Creates a firewall object
-			fObj = Firewall(l["fwstart"], l["fwend"], l["fwban"], l["fwunban"],
+			fObj = Firewall(l["fwstart"], l["fwend"], l["fwban"], l["fwunban"], 
 							l["fwcheck"], l["bantime"])
 			# "Name" the firewall
 			fObj.setSection(t)
@@ -513,7 +525,7 @@ def main():
 				e = element[1].getFailures()
 				for key in e.iterkeys():
 					if element[3].has_key(key):
-						element[3][key] = (element[3][key][0] + e[key][0],
+						element[3][key] = (element[3][key][0] + e[key][0], 
 											e[key][1])
 					else:
 						element[3][key] = (e[key][0], e[key][1])
@@ -530,9 +542,9 @@ def main():
 					if failTime < unixTime - findTime:
 						del element[3][attempt]
 					elif fails[attempt][0] >= element[1].getMaxRetry():
-						aInfo = {"section": element[0],
-								 "ip": attempt,
-								 "failures": element[3][attempt][0],
+						aInfo = {"section": element[0], 
+								 "ip": attempt, 
+								 "failures": element[3][attempt][0], 
 								 "failtime": failTime}
 						logSys.info(element[0] + ": " + aInfo["ip"] +
 									" has " + `aInfo["failures"]` +
@@ -540,7 +552,7 @@ def main():
 						element[2].addBanIP(aInfo, conf["debug"])
 						# Send a mail notification
 						if 'mail' in locals():
-							mail.sendmail(mailConf["subject"],
+							mail.sendmail(mailConf["subject"], 
 										  mailConf["message"], aInfo)
 						del element[3][attempt]
 		except ExternalError, e:

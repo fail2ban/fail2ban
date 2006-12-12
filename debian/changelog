@@ -1,3 +1,9 @@
+fail2ban (0.6.2-1) UNRELEASED; urgency=low
+
+  * (NOT RELEASED YET) New upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 11 Dec 2006 20:42:04 -0500
+
 fail2ban (0.6.1-12) unstable; urgency=low
 
   * Added section for WUFTPD (Thanks to Jesse Wyant) (closes: #386381)
