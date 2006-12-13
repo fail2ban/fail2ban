@@ -306,7 +306,9 @@ class Server:
 			# Remove previous handler
 			logging.getLogger("fail2ban").handlers = []
 			if target == "SYSLOG":
-				hdlr = logging.handlers.SysLogHandler()
+				facility = logging.handlers.SysLogHandler.LOG_DAEMON
+				hdlr = logging.handlers.SysLogHandler("/dev/log",
+													  facility = facility)
 			elif target == "STDOUT":
 				hdlr = logging.StreamHandler(sys.stdout)
 			elif target == "STDERR":
