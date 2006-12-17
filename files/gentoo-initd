@@ -17,7 +17,7 @@
 #
 # Author: Sireyessire, Cyril Jaquier
 # 
-# $Revision: 1.2 $
+# $Revision$
 
 opts="start stop restart reload showlog"
 
@@ -39,6 +39,32 @@ stop() {
 	ebegin "Stopping fail2ban"
 	${FAIL2BAN} stop &> /dev/null
 	eend $? "Failed to stop fail2ban"
+}
+
+restart() {
+    if ! service_stopped "${SVCNAME}" ; then
+            svc_stop || return "$?"
+            einfon "Waiting for server to shutdown ."
+			cnt=0
+			while [ 1 ]; do
+				# Ping fail2ban-server
+				${FAIL2BAN} ping &> /dev/null
+				if [ ! "$?" == "0" ]; then
+					break
+				fi
+				cnt=`expr $cnt + 1`
+				if [ $cnt -gt 60 ] ; then
+					# We have waited 1 minute. Failed
+					echo
+					eend 1 "Failed"
+					break
+				fi
+				sleep 1
+				echo -n "."
+			done
+			echo
+    fi
+    svc_start
 }
 
 reload() {
