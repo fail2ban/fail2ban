@@ -112,7 +112,7 @@ def killPID(pid):
 		INT signal (same effect as <ctrl>+<c>).
 	"""
 	try:
-		return os.kill(pid, 2)
+		return os.kill(pid, signal.SIGTERM)
 	except OSError:
 		logSys.error("Can not kill process " + `pid` + ". Please check that " +
 					"Fail2Ban is not running and remove the file " +
