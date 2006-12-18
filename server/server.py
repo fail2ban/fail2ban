@@ -300,14 +300,18 @@ class Server:
 		finally:
 			self.__loggingLock.release()
 	
+	##
+	# Sets the logging target.
+	#
+	# target can be a file, SYSLOG, STDOUT or STDERR.
+	# @param target the logging target
+	
 	def setLogTarget(self, target):
 		try:
 			self.__loggingLock.acquire()
-			# Remove previous handler
-			logging.getLogger("fail2ban").handlers = []
 			if target == "SYSLOG":
 				facility = logging.handlers.SysLogHandler.LOG_DAEMON
-				hdlr = logging.handlers.SysLogHandler("/dev/log",
+				hdlr = logging.handlers.SysLogHandler("/dev/log", 
 													  facility = facility)
 			elif target == "STDOUT":
 				hdlr = logging.StreamHandler(sys.stdout)
@@ -320,8 +324,11 @@ class Server:
 					hdlr = logging.FileHandler(target)
 				except IOError:
 					logSys.error("Unable to log to " + target)
+					logSys.info("Logging to previous target " + self.__logTarget)
 					return False
 			self.__logTarget = target
+			# Remove previous handler
+			logging.getLogger("fail2ban").handlers = []
 			# set a format which is simpler for console use
 			formatter = logging.Formatter("%(asctime)s %(name)-16s: %(levelname)-6s %(message)s")
 			# tell the handler to use this format
