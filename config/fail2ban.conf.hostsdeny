@@ -140,7 +140,7 @@ fwban = IP=<ip> && echo "ALL: $IP" >> %(hostsdeny)s
 # Values:  CMD
 # Default: iptables -D INPUT -s <ip> -j DROP
 #
-fwunban = IP=<ip> && sed -i.old s/ALL:\ $IP// %(hostsdeny)s
+fwunban = IP=<ip> && sed -i.old /ALL:\ $IP/d %(hostsdeny)s
 
 [MAIL]
 # Option:  enabled

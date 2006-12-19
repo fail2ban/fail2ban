@@ -10,6 +10,7 @@ Fail2Ban (version 0.6.3)                           200?/??/??
 ver. 0.6.3 (200?/??/??) - stable
 ----------
 - Send SIGTERM instead of SIGINT when using "-k"
+- Fixed removal of host in hosts.deny. Thanks to René Berber
 
 ver. 0.6.2 (2006/12/11) - stable
 ----------
