@@ -1,3 +1,10 @@
+fail2ban (0.7.5-3~pre1) unstable; urgency=low
+
+  * Fail2ban now bans vsftpd logins (corrected logfile path and failregex)
+    (Closes: #404060)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 21 Dec 2006 11:53:22 -0500
+
 fail2ban (0.7.5-2) unstable; urgency=low
 
   * NEWS.Debian confusions - the latest NEWS entry and postinst message were
