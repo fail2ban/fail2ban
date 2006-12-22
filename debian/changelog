@@ -1,7 +1,8 @@
-fail2ban (0.7.5-3~pre2) unstable; urgency=low
+fail2ban (0.7.5-3~pre3) unstable; urgency=low
 
   * Fail2ban now bans vsftpd logins (corrected logfile path and failregex)
     (Closes: #404060)
+  * Made fail2ban-server tollerate multiple <HOST> entries in failregex
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 21 Dec 2006 11:53:22 -0500
 
