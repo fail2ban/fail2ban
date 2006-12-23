@@ -435,10 +435,18 @@ class Filter(JailThread):
 							 + "this format")
 			else:
 				try:
-					ipMatch = DNSUtils.textToIp(match.group("host"))
-					if ipMatch:
-						for ip in ipMatch:
-							failList.append([ip, date])
+					matchGroup = match.group("host")
+					# For strange reasons, match.group can return None with some
+					# regular expressions. However, these expressions can be
+					# compiled successfully.
+					if matchGroup == None:
+						logSys.error("Unexpected error. Please correct your "
+									 + "configuration.")
+					else:
+						ipMatch = DNSUtils.textToIp(match.group("host"))
+						if ipMatch:
+							for ip in ipMatch:
+								failList.append([ip, date])
 				except IndexError:
 					logSys.error("There is no 'host' group in the rule. " +
 								 "Please correct your configuration.")
