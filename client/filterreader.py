@@ -68,9 +68,13 @@ class FilterReader(ConfigReader):
 				stream.append(["set", self.__name, "timepattern", self.__opts[opt]])
 			elif opt == "failregex":
 				for regex in self.__opts[opt].split('\n'):
-					stream.append(["set", self.__name, "addfailregex", regex])
+					# Do not send a command if the rule is empty.
+					if regex != '':
+						stream.append(["set", self.__name, "addfailregex", regex])
 			elif opt == "ignoreregex":
 				for regex in self.__opts[opt].split('\n'):
-					stream.append(["set", self.__name, "addignoreregex", regex])		
+					# Do not send a command if the rule is empty.
+					if regex != '':
+						stream.append(["set", self.__name, "addignoreregex", regex])		
 		return stream
 		

@@ -42,6 +42,8 @@ class Regex:
 	
 	def __init__(self, regex):
 		self._matchCache = None
+		if regex.lstrip() == '':
+			raise RegexException("Cannot add empty regex")
 		try:
 			self._regexObj = re.compile(regex)
 			self._regex = regex
