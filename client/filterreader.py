@@ -67,8 +67,10 @@ class FilterReader(ConfigReader):
 			elif opt == "timepattern":
 				stream.append(["set", self.__name, "timepattern", self.__opts[opt]])
 			elif opt == "failregex":
-				stream.append(["set", self.__name, "failregex", self.__opts[opt]])
+				for regex in self.__opts[opt].split('\n'):
+					stream.append(["set", self.__name, "addfailregex", regex])
 			elif opt == "ignoreregex":
-				stream.append(["set", self.__name, "ignoreregex", self.__opts[opt]])		
+				for regex in self.__opts[opt].split('\n'):
+					stream.append(["set", self.__name, "addignoreregex", regex])		
 		return stream
 		

@@ -33,6 +33,7 @@ sys.path.insert(1, "/usr/lib/fail2ban")
 
 from common.version import version
 from server.filter import Filter
+from server.regex import RegexException
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.regex")
@@ -83,17 +84,17 @@ class Fail2banRegex:
 	 			self.dispVersion()
 	 			sys.exit(0)
 	
-	def setRegex(self, value):
-		print
-		self.__filter.setFailRegex(value)
-	
-	def testRegex(self, line):
+	def testRegex(self, line, regex):
 		print
 		try:
 			logging.getLogger("fail2ban").setLevel(logging.DEBUG)
+			self.__filter.addFailRegex(regex)
 			ret = self.__filter.findFailure(line)
 			print
 			logging.getLogger("fail2ban").setLevel(logging.CRITICAL)
+		except RegexException, e:
+			print e
+			return False
 		except IndexError:
 			print "Sorry, but no <host> found in regex"
 			return False
@@ -156,8 +157,7 @@ if __name__ == "__main__":
 		regex.dispUsage()
 		sys.exit(-1)
 	else:
-		regex.setRegex(sys.argv[2])
-		ret = regex.testRegex(sys.argv[1])
+		ret = regex.testRegex(sys.argv[1], sys.argv[2])
 		if ret:
 			sys.exit(0)
 		else:

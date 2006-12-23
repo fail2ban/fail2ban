@@ -143,13 +143,21 @@ class Transmitter:
 			value = command[2]
 			self.__server.setTimePattern(name, value)
 			return self.__server.getTimePattern(name)
-		elif command[1] == "failregex":
+		elif command[1] == "addfailregex":
 			value = command[2]
-			self.__server.setFailRegex(name, value)
+			self.__server.addFailRegex(name, value)
 			return self.__server.getFailRegex(name)
-		elif command[1] == "ignoreregex":
+		elif command[1] == "delfailregex":
+			value = int(command[2])
+			self.__server.delFailRegex(name, value)
+			return self.__server.getFailRegex(name)
+		elif command[1] == "addignoreregex":
 			value = command[2]
-			self.__server.setIgnoreRegex(name, value)
+			self.__server.addIgnoreRegex(name, value)
+			return self.__server.getIgnoreRegex(name)
+		elif command[1] == "delignoreregex":
+			value = int(command[2])
+			self.__server.delIgnoreRegex(name, value)
 			return self.__server.getIgnoreRegex(name)
 		elif command[1] == "findtime":
 			value = command[2]
