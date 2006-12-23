@@ -165,14 +165,20 @@ class Server:
 	def getFindTime(self, name):
 		return self.__jails.getFilter(name).getFindTime()
 
-	def setFailRegex(self, name, value):
-		self.__jails.getFilter(name).setFailRegex(value)
+	def addFailRegex(self, name, value):
+		self.__jails.getFilter(name).addFailRegex(value)
+	
+	def delFailRegex(self, name, index):
+		self.__jails.getFilter(name).delFailRegex(index)
 	
 	def getFailRegex(self, name):
 		return self.__jails.getFilter(name).getFailRegex()
 	
-	def setIgnoreRegex(self, name, value):
-		self.__jails.getFilter(name).setIgnoreRegex(value)
+	def addIgnoreRegex(self, name, value):
+		self.__jails.getFilter(name).addIgnoreRegex(value)
+	
+	def delIgnoreRegex(self, name, index):
+		self.__jails.getFilter(name).delIgnoreRegex(index)
 	
 	def getIgnoreRegex(self, name):
 		return self.__jails.getFilter(name).getIgnoreRegex()

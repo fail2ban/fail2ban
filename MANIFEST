@@ -39,6 +39,8 @@ server/dateepoch.py
 server/banmanager.py
 server/datetemplate.py
 server/mytime.py
+server/regex.py
+server/failregex.py
 testcases/banmanagertestcase.py
 testcases/failmanagertestcase.py
 testcases/clientreadertestcase.py

@@ -109,7 +109,18 @@ class Beautifier:
 					msg = "These IP addresses/networks are ignored:\n"
 					for ip in response[:-1]:
 						msg = msg + "|- " + ip + "\n"
-					msg = msg + "`- " + response[len(response)-1]				
+					msg = msg + "`- " + response[len(response)-1]
+			elif inC[2] in ("failregex", "addfailregex", "delfailregex",
+							"ignoreregex", "addignoreregex", "delignoreregex"):
+				if len(response) == 0:
+					msg = "No regular expression is defined"
+				else:
+					msg = "The following regular expression are defined:\n"
+					c = 0
+					for ip in response[:-1]:
+						msg = msg + "|- [" + str(c) + "]: " + ip + "\n"
+						c += 1
+					msg = msg + "`- [" + str(c) + "]: " + response[len(response)-1]
 		except Exception:
 			logSys.warn("Beautifier error. Please report the error")
 			logSys.error("Beautify " + `response` + " with " + `self.__inputCmd` +
