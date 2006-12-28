@@ -5,8 +5,11 @@ fail2ban (0.7.5-3~pre4) unstable; urgency=low
   * Made fail2ban-server tollerate multiple <HOST> entries in failregex
   * Moved call to dh_pycentral before dh_installinit
   * Removed unnecessary call of dh_shlibdeps
+  * Added filter ssh-ddos to fight DDOS attacks. Must be used with caution if
+    there is a possibility of clients accessing through unreliable connection 
+    (Closes: #404487)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 21 Dec 2006 11:53:22 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 26 Dec 2006 21:56:58 -0500
 
 fail2ban (0.7.5-2) unstable; urgency=low
 

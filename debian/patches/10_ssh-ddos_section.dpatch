@@ -1,0 +1,52 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 10_ssh-ddos_section.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad fail2ban-0.7.4~/config/filter.d/sshd-ddos.conf fail2ban-0.7.4/config/filter.d/sshd-ddos.conf
+--- fail2ban-0.7.4~/config/filter.d/sshd-ddos.conf	1969-12-31 19:00:00.000000000 -0500
++++ fail2ban-0.7.4/config/filter.d/sshd-ddos.conf	2006-12-26 21:59:03.000000000 -0500
+@@ -0,0 +1,22 @@
++# Fail2Ban configuration file
++#
++# Author: Yaroslav Halchenko
++#
++# $Revision: 471 $
++#
++
++[Definition]
++
++# Option:  failregex
++# Notes.:  regex to match the password failures messages in the logfile. The
++#          host must be matched by a group named "host". The tag "<HOST>" can
++#          be used for standard IP/hostname matching.
++# Values:  TEXT
++#
++failregex = sshd\[\S*\]: Did not receive identification string from <HOST>
++
++# Option:  ignoreregex
++# Notes.:  regex to ignore. If this regex matches, the line is ignored.
++# Values:  TEXT
++#
++ignoreregex = 
+diff -urNad fail2ban-0.7.4~/config/jail.conf fail2ban-0.7.4/config/jail.conf
+--- fail2ban-0.7.4~/config/jail.conf	2006-10-19 16:13:01.000000000 -0400
++++ fail2ban-0.7.4/config/jail.conf	2006-12-26 22:00:03.000000000 -0500
+@@ -33,6 +33,15 @@
+ logpath  = /var/log/sshd.log
+ maxretry = 5
+ 
++[ssh-ddos-iptables]
++
++enabled  = false
++filter   = sshd-ddos
++action   = iptables[name=SSH, port=ssh, protocol=tcp]
++           mail-whois[name=SSH, dest=yourmail@mail.com]
++logpath  = /var/log/sshd.log
++maxretry = 5
++
+ [proftpd-iptables]
+ 
+ enabled  = false
