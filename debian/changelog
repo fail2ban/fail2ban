@@ -8,6 +8,8 @@ fail2ban (0.7.5-3~pre4) unstable; urgency=low
   * Added filter ssh-ddos to fight DDOS attacks. Must be used with caution if
     there is a possibility of clients accessing through unreliable connection 
     (Closes: #404487)
+  * Not applying patch any more for rigid python2.4 - it is default now in
+    sid/etch
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 26 Dec 2006 21:56:58 -0500
 
