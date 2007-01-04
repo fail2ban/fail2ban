@@ -4,16 +4,16 @@ fail2ban (0.7.6-1~pre1) UNRELEASED; urgency=low
     non-released versions (which were suggested to the users to overcome
     problems reported in bug reports). In particular attention should be paid
     to upstream changelog entries
-  
+
     - Several "failregex" and "ignoreregex" are now accepted.
       Creation of rules should be easier now.
-    
+
       This is an alternative solution to 'multiple <HOST>' entries fix,
       which is not applied to this shipped version - pay cautios if upgrading
       from 0.7.5-3~pre?
-   
+
     - Allow comma in action options. The value of the option must
-      be escaped with " or '. 
+      be escaped with " or '.
 
       That allowed to implement requested ability to ban multiple ports
       at once (See 373592). README.Debian and jail.conf adjusted to reflect
@@ -28,10 +28,13 @@ fail2ban (0.7.6-1~pre1) UNRELEASED; urgency=low
     - Added option banaction which is to incorporate banning agent
       (usually some flavor of iptables rule), which can then be easily
       overriden globally or per section
-    
+
     - Multiple actions are defined as action_* to serve as shortcuts
-   
- -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  4 Jan 2007 12:21:30 -0500
+
+  * Initd script was modified to inform about present socket file which
+    would forbid fail2ban-server from starting.
+
+  -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  4 Jan 2007 12:21:30 -0500
 
 fail2ban (0.7.5-3~pre6) unstable; urgency=low
 

@@ -23,8 +23,12 @@ NAME=fail2ban
 # fail2ban-client is not a daemon itself but starts a daemon and
 # loads its with configuration
 DAEMON=/usr/bin/$NAME-client
-SOCKFILE=/tmp/$NAME.sock
 SCRIPTNAME=/etc/init.d/$NAME
+
+# Ad-hoc way to parse out socket file name
+SOCKFILE=`grep -h '^[^#]*socket *=' /etc/$NAME/$NAME.conf /etc/$NAME/$NAME.local 2>/dev/null \
+          | tail -n 1 | sed -e 's/.*socket *= *//g' -e 's/ *$//g'`
+[ -z "$SOCKFILE" ] && SOCKFILE='/tmp/fail2ban.sock'
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
@@ -51,21 +55,6 @@ log_daemon_msg () {
 . /lib/lsb/init-functions
 
 #
-# Function that starts the daemon/service
-#
-do_start()
-{
-	# Return
-	#	0 if daemon has been started
-	#	1 if daemon was already running
-	#	2 if daemon could not be started
-	do_status && return 1
-	start-stop-daemon --start --quiet --chuid root --exec $DAEMON -- \
-		$DAEMON_ARGS start > /dev/null\
-		|| return 2
-}
-
-#
 # Shortcut function for abnormal init script interruption
 #
 report_bug()
@@ -76,29 +65,54 @@ report_bug()
 }
 
 #
+# Helper function to check if socket is present, which is often left after
+# abnormal exit of fail2ban and needs to be removed
+#
+check_socket()
+{
+	# Return
+	#	0 if socket is present and readable
+	#	1 if socket file is not present
+	#	2 if socket file is present but not readable
+	#	3 if socket file is present but is not a socket
+	[ -e "$SOCKFILE" ] || return 1
+	[ -r "$SOCKFILE" ] || return 2
+	[ -S "$SOCKFILE" ] || return 3
+	return 0
+}
+
+#
+# Function that starts the daemon/service
+#
+do_start()
+{
+	# Return
+	#	0 if daemon has been started
+	#	1 if daemon was already running
+	#	2 if daemon could not be started
+	do_status && return 1
+
+	if [ -e "$SOCKFILE" ]; then
+		log_failure_msg "Socket file $SOCKFILE is present"
+		return 2
+	fi
+
+	start-stop-daemon --start --quiet --chuid root --exec $DAEMON -- \
+		$DAEMON_ARGS start > /dev/null\
+		|| return 2
+
+	return 0
+}
+
+
+#
 # Function that checks the status of fail2ban and returns
 # corresponding code
 #
 do_status()
 {
 	$DAEMON ping > /dev/null
-	case $? in
-		0) return 0
-			;;
-		255)
-			if [ -S $SOCKFILE ]; then
-				if [ -r $SOCKFILE ]; then
-					return 1
-				else
-					return 4
-				fi
-			else
-				return 3
-			fi
-			;;
-		*)
-			report_bug "Unknown return code from fail2ban."
-	esac
+	return $?
 }
 
 #
@@ -182,10 +196,17 @@ case "$1" in
 		do_status
 		case $? in
 			0)  log_success_msg " $NAME is running" ;;
-			1)  log_failure_msg " $NAME is not running but $SOCKFILE exists" ;;
-			3)  log_warning_msg " $NAME is not running" ;;
-			4)  log_failure_msg " $SOCKFILE not readable, status of $NAME unknown";;
-			*)  report_bug "Unknown status code"
+			255)
+				check_socket
+				case $? in
+					1)  log_warning_msg " $NAME is not running" ;;
+					0)  log_failure_msg " $NAME is not running but $SOCKFILE exists" ;;
+					2)  log_failure_msg " $SOCKFILE not readable, status of $NAME is unknown";;
+					3)  log_failure_msg " $SOCKFILE exists but not a socket, status of $NAME is unknown";;
+					*)  report_bug "Unknown return code from $NAME:check_socket.";;
+				esac
+				;;
+			*)  report_bug "Unknown $NAME status code"
 		esac
 		;;
 	*)
