@@ -30,7 +30,7 @@ import unittest, logging, sys
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
-sys.path.insert(1, "/usr/lib/fail2ban")
+sys.path.insert(1, "/usr/share/fail2ban")
 
 from common.version import version
 from testcases import banmanagertestcase

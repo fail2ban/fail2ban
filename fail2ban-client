@@ -30,7 +30,7 @@ import getopt, time, readline, shlex, socket
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
-sys.path.insert(1, "/usr/lib/fail2ban")
+sys.path.insert(1, "/usr/share/fail2ban")
 
 # Now we can import our modules
 from common.version import version
