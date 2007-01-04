@@ -13,6 +13,8 @@ Legend:
 # partially done
 * done
 
+- Improve parsing of the action parameters in jailreader.py
+
 - Better handling of the protocol in transmitter.py
 
 - Add gettext support (I18N)
