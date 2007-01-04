@@ -34,7 +34,10 @@ fail2ban (0.7.6-1) unstable; urgency=low
   * Initd script was modified to inform about present socket file which
     would forbid fail2ban-server from starting
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  4 Jan 2007 14:48:37 -0500
+  * Adjusted default log file for postfix to be /var/log/mail.log
+    (Closes: #404921)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  4 Jan 2007 15:24:52 -0500
 
 fail2ban (0.7.5-3~pre6) unstable; urgency=low
 
