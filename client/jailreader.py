@@ -134,7 +134,31 @@ class JailReader(ConfigReader):
 		m = JailReader.actionCRE.match(action)
 		d = dict()
 		if not m.group(2) == None:
-			for param in m.group(2).split(','):
+			# Huge bad hack :( This method really sucks. TODO Reimplement it.
+			actions = ""
+			escapeChar = None
+			allowComma = False
+			for c in m.group(2):
+				if c in ('"', "'") and not allowComma:
+					# Start
+					escapeChar = c
+					allowComma = True
+				elif c == escapeChar:
+					# End
+					escapeChar = None
+					allowComma = False
+				else:
+					if c == ',' and allowComma:
+						actions += "<COMMA>"
+					else:
+						actions += c
+			
+			# Split using ,
+			actionsSplit = actions.split(',')
+			# Replace the tag <COMMA> with ,
+			actionsSplit = [n.replace("<COMMA>", ',') for n in actionsSplit]
+			
+			for param in actionsSplit:
 				p = param.split('=')
 				try:
 					d[p[0].strip()] = p[1].strip()
