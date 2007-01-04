@@ -78,7 +78,7 @@ class Fail2banServer:
 		print "    -b                   start in background"
 		print "    -f                   start in foreground"
 		print "    -s <FILE>            socket path"
-		print "    -x                   force execution of the server"
+		print "    -x                   force execution of the server (remove socket file)"
 		print "    -h, --help           display this help message"
 		print "    -V, --version        print the version"
 		print
