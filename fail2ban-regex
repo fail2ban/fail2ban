@@ -29,7 +29,7 @@ import locale, getopt, sys, time, logging, gc
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
-sys.path.insert(1, "/usr/lib/fail2ban")
+sys.path.insert(1, "/usr/share/fail2ban")
 
 from common.version import version
 from server.filter import Filter
