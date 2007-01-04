@@ -1,4 +1,4 @@
-fail2ban (0.7.6-1~pre1) UNRELEASED; urgency=low
+fail2ban (0.7.6-1) unstable; urgency=low
 
   * New upstream release, which incorporates fixes introduced in 3~pre
     non-released versions (which were suggested to the users to overcome
@@ -32,9 +32,9 @@ fail2ban (0.7.6-1~pre1) UNRELEASED; urgency=low
     - Multiple actions are defined as action_* to serve as shortcuts
 
   * Initd script was modified to inform about present socket file which
-    would forbid fail2ban-server from starting.
+    would forbid fail2ban-server from starting
 
-  -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  4 Jan 2007 12:21:30 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  4 Jan 2007 14:48:37 -0500
 
 fail2ban (0.7.5-3~pre6) unstable; urgency=low
 
