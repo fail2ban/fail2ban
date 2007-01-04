@@ -1,15 +1,20 @@
-fail2ban (0.7.5-3~pre5) unstable; urgency=low
+fail2ban (0.7.5-3~pre6) unstable; urgency=low
 
   * Fail2ban now bans vsftpd logins (corrected logfile path and failregex)
     (Closes: #404060)
   * Made fail2ban-server tollerate multiple <HOST> entries in failregex
   * Moved call to dh_pycentral before dh_installinit
   * Removed unnecessary call of dh_shlibdeps
-  * Added filter ssh-ddos to fight DDOS attacks. Must be used with caution if
-    there is a possibility of clients accessing through unreliable connection 
-    (Closes: #404487)
+  * Added filter ssh-ddos to fight DDOS attacks. Must be used with caution
+    if there is a possibility of valid clients accessing through
+    unreliable connection or faulty firewall (Closes: #404487)
   * Not applying patch any more for rigid python2.4 - it is default now in
     sid/etch
+  * Moving waiting loop for fail2ban-server to stop under do_stop
+    function, so it gets invoked by both 'restart' and 'stop' commands
+  * do_status action of init script is now using 'fail2ban-client ping'
+    instead of '... status' since we don't really use returned status
+    information, besides the return error code
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 26 Dec 2006 21:56:58 -0500
 

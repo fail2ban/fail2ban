@@ -81,7 +81,7 @@ report_bug()
 #
 do_status()
 {
-	$DAEMON status > /dev/null
+	$DAEMON ping > /dev/null
 	case $? in
 		0) return 0
 			;;
@@ -113,6 +113,17 @@ do_stop()
 	#	other if a failure occurred
 	$DAEMON status > /dev/null || return 1
 	$DAEMON stop > /dev/null || return 2
+
+	# now we need actually to wait a bit since it might take time
+	# for server to react on client's stop request. Especially
+	# important for restart command on slow boxes
+	count=1
+	while do_status && [ $count -lt 60 ]; do
+		sleep 1
+		count=$(($count+1))
+	done
+	[ $count -lt 60 ] || return 3 # failed to stop
+
 	return 0
 }
 
@@ -150,16 +161,6 @@ case "$1" in
 		do_stop
 		case "$?" in
 			0|1)
-                # now we need actually to wait a bit since it might take time
-   		        # for server to react on client's stop request
-				count=1
-				while do_status && [ $count -lt 10 ]; do
-					sleep 1
-					count=$(($count+1))
-				done
-
-				[ $count -lt 10 ] || log_end_msg 1 # failed to stop
-
 				do_start
 				log_end_msg_wrapper $? 1
 				;;
