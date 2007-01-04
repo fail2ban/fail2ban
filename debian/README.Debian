@@ -79,27 +79,32 @@ protocol = tcp
 
 * Multiport banning: Comment for the wishlist #373592.
 
-Default iptables rules for banning use --dport statement which allows to
-ban just a single port. For multiport banning you would need to adjust iptables
-rules to use multiport module ( -m multiport --dports %(port)s ). If you would
-like to ban all ports for that host, just redefine fwban/fwunban commands to
-don't have --dport %(port)s statement at all (can be redefined on per-section
-basis as well)
-Such option is not enabled by default since multiport module might not be
-compiled for some hand compiled kernels.
+Default iptables rules for banning use --dport statement which allows
+to ban just a single port. For multiport banning you would need to use
+iptables-multiport action (just override banaction in jail.local),
+which is present in fail2ban shipped in Debian since 0.7.6-1.
+
+If you would like to ban all ports for that host, just redefine
+fwban/fwunban commands to don't have --dport %(port)s statement at
+all, or use shorewall, where actionban bans whole IP.
+
+iptables-multiport action is not default banaction since multiport
+module might not be compiled for some hand compiled kernels.
 
 
 * Blocking of NEW connections only
 Comment for the wishlist #350746.
 
 It might be benefitial in some cases to ban only new connections. For
-that just use iptables-new action instead of default iptables:
+that just use iptables-new action instead of default banaction
+
 /etc/fail2ban/jail.local:
 
 [DEFAULT]
-action = iptables-new[name=%(__name__)s, port=%(port)s]
+banaction=iptables-new
 
-or override action within interesting for you section
+(you can override banaction within interesting for you section).
+ Also you can redefine the whole action parameter if you like.
 
 
 Troubleshooting:
@@ -200,4 +205,4 @@ P.S. Anyone is welcome to recommend proper security solution to this
 issue, such as an alternative to sysklogd which allows better control
 over users logging to specific facilities (such as AUTH)
 
- -- Yaroslav O. Halchenko <debian@onerussian.com>, Thu,  7 Dec 2006 18:09:36 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>, Thu,  4 Jan 2007 15:18:39 -0500
