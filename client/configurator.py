@@ -60,7 +60,7 @@ class Configurator:
 	
 	def getAllOptions(self):
 		self.__fail2ban.getOptions()
-		self.__jails.getOptions()
+		return self.__jails.getOptions()
 		
 	def convertToProtocol(self):
 		self.__streams["general"] = self.__fail2ban.convert()

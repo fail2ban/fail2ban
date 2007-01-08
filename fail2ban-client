@@ -175,10 +175,14 @@ class Fail2banClient:
 				logSys.error("Server already running")
 				return False
 			else:
+				# Read the config
+				ret = self.__readConfig()
+				# Do not continue if configuration is not 100% valid
+				if not ret:
+					return False
+				# Start the server
 				self.__startServerAsync(self.__conf["socket"],
 										self.__conf["force"])
-				# Read the config while the server is starting
-				self.__readConfig()
 				try:
 					# Wait for the server to start
 					self.__waitOnServer()
@@ -194,7 +198,10 @@ class Fail2banClient:
 					return False
 		elif len(cmd) == 1 and cmd[0] == "reload":
 			if self.__ping():
-				self.__readConfig()
+				ret = self.__readConfig()
+				# Do not continue if configuration is not 100% valid
+				if not ret:
+					return False
 				self.__processCmd([['stop', 'all']], False)
 				# Configure the server
 				return self.__processCmd(self.__stream, False)
@@ -312,9 +319,9 @@ class Fail2banClient:
 		logSys.info("Using socket file " + self.__conf["socket"])
 
 		if self.__conf["dump"]:
-			self.__readConfig()
+			ret = self.__readConfig()
 			self.dumpConfig(self.__stream)
-			return True
+			return ret
 		
 		# Interactive mode
 		if self.__conf["interactive"]:
@@ -345,9 +352,10 @@ class Fail2banClient:
 	def __readConfig(self):
 		# Read the configuration
 		self.__configurator.readAll()
-		self.__configurator.getAllOptions()
+		ret = self.__configurator.getAllOptions()
 		self.__configurator.convertToProtocol()
 		self.__stream = self.__configurator.getConfigStream()
+		return ret
 	
 	@staticmethod
 	def dumpConfig(cmd):
