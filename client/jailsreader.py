@@ -54,6 +54,8 @@ class JailsReader(ConfigReader):
 					self.__jails.append(jail)
 			else:
 				logSys.error("Errors in jail '" + sec + "'. Skipping...")
+				return False
+		return True
 	
 	def convert(self):
 		stream = list()
