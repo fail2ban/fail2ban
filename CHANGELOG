@@ -13,6 +13,7 @@ ver. 0.7.7 (2007/??/??)
 - Added a wonderful visual effect when waiting on the server
 - fail2ban-client returns an error code if configuration is
   not valid
+- Added new filters/actions. Thanks to Yaroslav Halchenko
 
 ver. 0.7.6 (2007/01/04) - beta
 ----------
