@@ -1,3 +1,12 @@
+fail2ban (0.7.6-2) unstable; urgency=low
+
+  * iptables-multiport is default action to take since Debian kernel arrives
+    with multiport module. That is to address the fact that most services
+    listen on multiple port (for encrypted and non-encrypted connections)
+  * Added [courierauth] jail (First 2 items are to partially address #407404
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 18 Jan 2007 10:35:36 -0500
+
 fail2ban (0.7.6-1) unstable; urgency=low
 
   * New upstream release, which incorporates fixes introduced in 3~pre
