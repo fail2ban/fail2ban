@@ -66,7 +66,7 @@ actionstop  = iptables -D <fwchain> -j <whitelist>
                iptables -D <fwchain> -m state --state NEW -p <protocol> --dport <port> -j fail2ban-<name>
                iptables -F fail2ban-<name>
                iptables -X fail2ban-<name>
-actioncheck = iptables -L <fwchain> | grep -q fail2ban-<name>
+actioncheck = iptables -n -L <fwchain> | grep -q fail2ban-<name>
 actionban   = iptables -I fail2ban-<name> 1 -s <ip> -j DROP
 actionunban = iptables -D fail2ban-<name> -s <ip> -j DROP
 [Init]

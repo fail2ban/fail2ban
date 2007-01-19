@@ -1,24 +1,24 @@
 #! /bin/sh /usr/share/dpatch/dpatch-run
-## 00_iptables-mports.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+## 00_iptables_mports.dpatch by Yaroslav Halchenko <debian@onerussian.com>
 ##
 ## All lines beginning with `## DP:' are a description of the patch.
 ## DP: No description.
 
 @DPATCH@
-diff -urNad fail2ban-0.7.5~/config/action.d/iptables-multiport.conf fail2ban-0.7.5/config/action.d/iptables-multiport.conf
---- fail2ban-0.7.5~/config/action.d/iptables-multiport.conf	1969-12-31 19:00:00.000000000 -0500
-+++ fail2ban-0.7.5/config/action.d/iptables-multiport.conf	2007-01-04 12:28:46.000000000 -0500
+diff -urNad fail2ban-0.7.6~/config/action.d/iptables-multiport.conf fail2ban-0.7.6/config/action.d/iptables-multiport.conf
+--- fail2ban-0.7.6~/config/action.d/iptables-multiport.conf	1969-12-31 19:00:00.000000000 -0500
++++ fail2ban-0.7.6/config/action.d/iptables-multiport.conf	2007-01-19 10:40:54.000000000 -0500
 @@ -0,0 +1,69 @@
 +# Fail2Ban configuration file
 +#
 +# Author: Cyril Jaquier
 +# Modified by Yaroslav Halchenko for multiport banning
-+# $Revision: 455 $
++# $Revision: 520 $
 +#
 +
 +[Definition]
 +
-+# Option:  fwstart
++# Option:  actionstart
 +# Notes.:  command executed once at the start of Fail2Ban.
 +# Values:  CMD
 +#
@@ -26,7 +26,7 @@ diff -urNad fail2ban-0.7.5~/config/action.d/iptables-multiport.conf fail2ban-0.7
 +              iptables -A fail2ban-<name> -j RETURN
 +              iptables -I INPUT -p <protocol> -m multiport --dports <port> -j fail2ban-<name>
 +
-+# Option:  fwend
++# Option:  actionend
 +# Notes.:  command executed once at the end of Fail2Ban
 +# Values:  CMD
 +#
@@ -34,13 +34,13 @@ diff -urNad fail2ban-0.7.5~/config/action.d/iptables-multiport.conf fail2ban-0.7
 +             iptables -F fail2ban-<name>
 +             iptables -X fail2ban-<name>
 +
-+# Option:  fwcheck
-+# Notes.:  command executed once before each fwban command
++# Option:  actioncheck
++# Notes.:  command executed once before each actionban command
 +# Values:  CMD
 +#
-+actioncheck = iptables -L INPUT | grep -q fail2ban-<name>
++actioncheck = iptables -n -L INPUT | grep -q fail2ban-<name>
 +
-+# Option:  fwban
++# Option:  actionban
 +# Notes.:  command executed when banning an IP. Take care that the
 +#          command is executed with Fail2Ban user rights.
 +# Tags:    <ip>  IP address
@@ -50,7 +50,7 @@ diff -urNad fail2ban-0.7.5~/config/action.d/iptables-multiport.conf fail2ban-0.7
 +#
 +actionban = iptables -I fail2ban-<name> 1 -s <ip> -j DROP
 +
-+# Option:  fwunban
++# Option:  actionunban
 +# Notes.:  command executed when unbanning an IP. Take care that the
 +#          command is executed with Fail2Ban user rights.
 +# Tags:    <ip>  IP address

@@ -1,3 +1,11 @@
+fail2ban (0.7.6-3) unstable; urgency=low
+
+  * Synchronized action.d/iptables-* rules from upstream SVN (closes:
+    #407561)
+  * Minor: options renames in the comments to be in sync with upstream
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 19 Jan 2007 10:43:59 -0500
+
 fail2ban (0.7.6-2) unstable; urgency=low
 
   * iptables-multiport is default action to take since Debian kernel arrives
