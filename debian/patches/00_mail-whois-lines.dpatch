@@ -19,7 +19,7 @@ diff -urNad fail2ban-0.7.5~/config/action.d/mail-whois-lines.conf fail2ban-0.7.5
 +
 +[Definition]
 +
-+# Option:  fwstart
++# Option:  actionstart
 +# Notes.:  command executed once at the start of Fail2Ban.
 +# Values:  CMD
 +#
@@ -28,7 +28,7 @@ diff -urNad fail2ban-0.7.5~/config/action.d/mail-whois-lines.conf fail2ban-0.7.5
 +              Regards,\n
 +              Fail2Ban"|mail -s "[Fail2Ban] <name>: started" <dest>
 +
-+# Option:  fwend
++# Option:  actionstop
 +# Notes.:  command executed once at the end of Fail2Ban
 +# Values:  CMD
 +#
