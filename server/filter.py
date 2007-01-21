@@ -378,8 +378,8 @@ class Filter(JailThread):
 	# is created and is added to the FailManager.
 	
 	def getFailures(self, filename):
-		ret = self.__openLogFile(filename)
-		if not ret:
+		# Try to open log file.
+		if not self.__openLogFile(filename):
 			logSys.error("Unable to get failures in " + filename)
 			return False
 		self.__setFilePos()
