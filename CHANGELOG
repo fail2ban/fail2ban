@@ -14,6 +14,9 @@ ver. 0.7.7 (2007/??/??)
 - fail2ban-client returns an error code if configuration is
   not valid
 - Added new filters/actions. Thanks to Yaroslav Halchenko
+- Call Python interpreter directly (instead of using "env")
+- Added file support to fail2ban-regex. Benchmark feature has
+  been removed
 
 ver. 0.7.6 (2007/01/04) - beta
 ----------
