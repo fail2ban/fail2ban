@@ -17,6 +17,7 @@ ver. 0.7.7 (2007/??/??)
 - Call Python interpreter directly (instead of using "env")
 - Added file support to fail2ban-regex. Benchmark feature has
   been removed
+- Added cacti script and template.
 
 ver. 0.7.6 (2007/01/04) - beta
 ----------
