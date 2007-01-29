@@ -1,4 +1,4 @@
-#!/usr/bin/python -O
+#!/usr/bin/python
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -133,22 +133,32 @@ class Fail2banRegex:
 			reader = SafeConfigParser()
 			try:
 				reader.read(value)
+				print "Use regex file : " + value
 				self.__failregex = [RegexStat(m)
 									for m in reader.get("Definition", "failregex").split('\n')]
 			except NoSectionError:
 				print "No [Definition] section in " + value
+				print
 				return False
 			except NoOptionError:
 				print "No failregex option in " + value
+				print
 				return False
 			except MissingSectionHeaderError:
 				print "No section headers in " + value
+				print
 				return False
 		else:
+			if len(value) > 53:
+				stripReg = value[0:50] + "..."
+			else:
+				stripReg = value
+			print "Use regex line : " + stripReg
 			self.__failregex = [RegexStat(value)]
 		return True
 	
 	def testRegex(self, line):
+		found = False
 		for regex in self.__failregex:
 			logging.getLogger("fail2ban").setLevel(logging.DEBUG)
 			try:
@@ -156,6 +166,11 @@ class Fail2banRegex:
 				try:
 					ret = self.__filter.findFailure(line)
 					if not len(ret) == 0:
+						if found == True:
+							ret[0].append(True)
+						else:
+							found = True
+							ret[0].append(False)
 						regex.inc()
 						regex.appendIP(ret)
 				except RegexException, e:
@@ -210,7 +225,11 @@ class Fail2banRegex:
 				for ip in failregex.getIPList():
 					timeTuple = time.localtime(ip[1])
 					timeString = time.strftime("%a %b %d %H:%M:%S %Y", timeTuple)
-					print "    " + ip[0] + " (" + timeString + ")"
+					if ip[2]:
+						dup = " (already matched)"
+					else:
+						dup = ""
+					print "    " + ip[0] + " (" + timeString + ")" + dup
 				cnt += 1
 			
 			print
@@ -245,19 +264,32 @@ if __name__ == "__main__":
 		fail2banRegex.dispUsage()
 		sys.exit(-1)
 	else:
-		if fail2banRegex.readRegex(sys.argv[2]) == False:
-			sys.exit(-1)
-
 		print
 		print "Running tests"
 		print "============="
 		print
 
+		if fail2banRegex.readRegex(sys.argv[2]) == False:
+			sys.exit(-1)
+
 		if fail2banRegex.logIsFile(sys.argv[1]):
-			hdlr = open(sys.argv[1])
-			for line in hdlr:
-				fail2banRegex.testRegex(line)
+			try:
+				hdlr = open(sys.argv[1])
+				print "Use log file   : " + sys.argv[1]
+				print
+				for line in hdlr:
+					fail2banRegex.testRegex(line)
+			except IOError, e:
+				print e
+				print
+				sys.exit(-1)
 		else:
+			if len(sys.argv[1]) > 53:
+				stripLog = sys.argv[1][0:50] + "..."
+			else:
+				stripLog = sys.argv[1]
+			print "Use single line: " + stripLog
+			print
 			fail2banRegex.testRegex(sys.argv[1])
 		
 		if fail2banRegex.printStats():
