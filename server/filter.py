@@ -463,7 +463,8 @@ class Filter(JailThread):
 	
 	def status(self):
 		ret = [("Currently failed", self.failManager.size()), 
-			   ("Total failed", self.failManager.getFailTotal())]
+			   ("Total failed", self.failManager.getFailTotal()),
+			   ("IP List", self.failManager.getBanList())]
 		return ret
 
 

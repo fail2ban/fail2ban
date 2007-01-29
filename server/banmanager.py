@@ -100,7 +100,19 @@ class BanManager:
 			return self.__banTotal
 		finally:
 			self.__lock.release()
+
+	##
+	# Returns a copy of the IP list.
+	#
+	# @return IP list
 	
+	def getBanList(self):
+		try:
+			self.__lock.acquire()
+			return list(self.__banList)
+		finally:
+			self.__lock.release()
+
 	##
 	# Create a ban ticket.
 	#

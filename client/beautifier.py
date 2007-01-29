@@ -70,11 +70,13 @@ class Beautifier:
 				if len(inC) > 1:
 					msg = "Status for the jail: " + inC[1] + "\n"
 					msg = msg + "|- " + response[0][0] + "\n"
-					msg = msg + "|  |- " + response[0][1][0][0] + ":\t\t" + `response[0][1][0][1]` + "\n"
-					msg = msg + "|  `- " + response[0][1][1][0] + ":\t\t" + `response[0][1][1][1]` + "\n"
+					msg = msg + "|  |- " + response[0][1][0][0] + ":\t" + `response[0][1][0][1]` + "\n"
+					msg = msg + "|  |  `- " + response[0][1][2][0] + ":\t" + `response[0][1][2][1]` + "\n"
+					msg = msg + "|  `- " + response[0][1][1][0] + ":\t" + `response[0][1][1][1]` + "\n"
 					msg = msg + "`- " + response[1][0] + "\n"
-					msg = msg + "   |- " + response[1][1][0][0] + ":\t\t" + `response[1][1][0][1]` + "\n"
-					msg = msg + "   `- " + response[1][1][1][0] + ":\t\t" + `response[1][1][1][1]`
+					msg = msg + "   |- " + response[1][1][0][0] + ":\t" + `response[1][1][0][1]` + "\n"
+					msg = msg + "   |  `- " + response[1][1][2][0] + ":\t" + `response[1][1][2][1]` + "\n"
+					msg = msg + "   `- " + response[1][1][1][0] + ":\t" + `response[1][1][1][1]`
 				else:
 					msg = "Status\n"
 					msg = msg + "|- " + response[0][0] + ":\t" + `response[0][1]` + "\n"

@@ -189,6 +189,6 @@ class Actions(JailThread):
 	
 	def status(self):
 		ret = [("Currently banned", self.__banManager.size()), 
-			   ("Total banned", self.__banManager.getBanTotal())]
+			   ("Total banned", self.__banManager.getBanTotal()),
+			   ("IP list", self.__banManager.getBanList())]
 		return ret
-		

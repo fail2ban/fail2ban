@@ -18,6 +18,7 @@ ver. 0.7.7 (2007/??/??)
 - Added file support to fail2ban-regex. Benchmark feature has
   been removed
 - Added cacti script and template.
+- Added IP list in "status <JAIL>". Thanks to Eric Gerbier
 
 ver. 0.7.6 (2007/01/04) - beta
 ----------
