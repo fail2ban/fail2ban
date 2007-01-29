@@ -13,6 +13,19 @@ Legend:
 # partially done
 * done
 
+- Uniformize filters and actions name. Use the software name
+  (openssh, postfix, proftp)
+
+- Added <USER> tag for failregex. Add features using this
+  information
+
+- Look at the memory consumption
+
+- More detailed statistics
+
+- Auto-enable function (search for log files), check
+  modification date to see if service is still in use
+
 - Improve parsing of the action parameters in jailreader.py
 
 - Better handling of the protocol in transmitter.py
