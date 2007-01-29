@@ -3,7 +3,7 @@
 .SH NAME
 fail2ban-client \- configure and control the server
 .SH DESCRIPTION
-[?1034hUsage: ../fail2ban\-client [OPTIONS]... <COMMAND>
+[?1034hUsage: ../fail2ban\-client [OPTIONS] <COMMAND>
 .PP
 Fail2Ban v0.7.6\-SVN reads log file that contains password failure report
 and bans the corresponding IP addresses using firewall rules.
@@ -37,7 +37,7 @@ display this help message
 print the version
 .SH COMMAND
 .IP
-Basic
+BASIC
 .TP
 \fBstart\fR
 starts the server and the jails
@@ -56,7 +56,7 @@ server
 \fBping\fR
 tests if the server is alive
 .IP
-Logging
+LOGGING
 .TP
 \fBset loglevel <LEVEL>\fR
 sets logging level to <LEVEL>. 0
@@ -73,7 +73,7 @@ file
 \fBget logtarget\fR
 gets logging target
 .IP
-Jail control
+JAIL CONTROL
 .TP
 \fBadd <JAIL> <BACKEND>\fR
 creates <JAIL> using <BACKEND>
@@ -88,7 +88,7 @@ removed
 \fBstatus <JAIL>\fR
 gets the current status of <JAIL>
 .IP
-Jail configuration
+JAIL CONFIGURATION
 .TP
 \fBset <JAIL> idle on|off\fR
 sets the idle state of <JAIL>
@@ -189,7 +189,7 @@ action <ACT> for <JAIL>
 sets the unban command <CMD> of
 the action <ACT> for <JAIL>
 .IP
-Jail information
+JAIL INFORMATION
 .TP
 \fBget <JAIL> logpath\fR
 gets the list of the monitored
