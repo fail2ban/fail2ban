@@ -90,3 +90,4 @@ man/fail2ban-regex.h2m
 man/generate-man
 files/gentoo-initd
 files/redhat-initd
+files/cacti/fail2ban_stats.sh
