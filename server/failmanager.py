@@ -85,7 +85,7 @@ class FailManager:
 	def getBanList(self):
 		try:
 			self.__lock.acquire()
-			return list(self.__failList)
+			return [m.getIP() for m in self.__failList]
 		finally:
 			self.__lock.release()
 

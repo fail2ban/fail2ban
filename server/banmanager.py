@@ -109,7 +109,7 @@ class BanManager:
 	def getBanList(self):
 		try:
 			self.__lock.acquire()
-			return list(self.__banList)
+			return [m.getIP() for m in self.__banList]
 		finally:
 			self.__lock.release()
 
