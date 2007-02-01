@@ -77,18 +77,6 @@ class FailManager:
 		finally:
 			self.__lock.release()
 
-	##
-	# Returns a copy of the IP list.
-	#
-	# @return IP list
-	
-	def getBanList(self):
-		try:
-			self.__lock.acquire()
-			return [m.getIP() for m in self.__failList]
-		finally:
-			self.__lock.release()
-
 	def addFailure(self, ticket):
 		self.__lock.acquire()
 		ip = ticket.getIP()
