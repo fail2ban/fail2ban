@@ -13,13 +13,18 @@ Legend:
 # partially done
 * done
 
+- Add timeout to external commands (signal alarm, watchdog
+  thread, etc)
+
+- New backend: pynotify
+
 - Uniformize filters and actions name. Use the software name
   (openssh, postfix, proftp)
 
 - Added <USER> tag for failregex. Add features using this
   information
 
-- Look at the memory consumption
+- Look at the memory consumption. Decrease memory usage
 
 - More detailed statistics
 
