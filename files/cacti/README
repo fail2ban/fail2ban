@@ -1,0 +1,53 @@
+               __      _ _ ___ _               
+              / _|__ _(_) |_  ) |__  __ _ _ _  
+             |  _/ _` | | |/ /| '_ \/ _` | ' \ 
+             |_| \__,_|_|_/___|_.__/\__,_|_||_|
+
+=============================================================
+Fail2Ban (version 0.7.7)                           2007/??/??
+=============================================================
+
+Cacti is a graphing solution using RRDTool. It is possible to
+use Cacti to display statistics about Fail2ban.
+
+Installation:
+-------------
+
+1/ Install Fail2ban version 0.7 or higher and ensure that it
+   works properly.
+2/ The user running poller.php must have read and write
+   access to the socket used by Fail2ban.
+3/ Copy fail2ban_stats.sh to scripts/. You can test it with
+   bash scripts/fail2ban_stats.sh
+4/ Import the template cacti_host_template_fail2ban.xml
+5/ TO BE CONTINUED...
+
+Contact:
+--------
+
+You need some new features, you found bugs or you just
+appreciate this program, you can contact me at:
+
+Website: http://www.fail2ban.org
+
+Cyril Jaquier: <lostcontrol@users.sourceforge.net>
+
+License:
+--------
+
+Fail2Ban is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later
+version.
+
+Fail2Ban is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the GNU General Public License for more
+details.
+
+You should have received a copy of the GNU General Public
+License along with Fail2Ban; if not, write to the Free
+Software Foundation, Inc., 59 Temple Place, Suite 330,
+Boston, MA  02111-1307  USA
