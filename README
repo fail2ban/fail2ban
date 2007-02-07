@@ -15,7 +15,7 @@ or Apache web server ones.
 
 This README is a quick introduction to Fail2ban. More
 documentation, FAQ, HOWTOs are available on the project
-website: http://fail2ban.sourceforge.net
+website: http://www.fail2ban.org
 
 Installation:
 -------------
@@ -53,7 +53,7 @@ You can configure Fail2ban using the files in /etc/fail2ban.
 It is possible to configure the server using commands sent to
 it by fail2ban-client. The available commands are described
 in the man page of fail2ban-client. Please refer to it or to
-the website: http://fail2ban.sourceforge.net
+the website: http://www.fail2ban.org
 
 Contact:
 --------
@@ -61,7 +61,7 @@ Contact:
 You need some new features, you found bugs or you just
 appreciate this program, you can contact me at:
 
-Website: http://fail2ban.sourceforge.net
+Website: http://www.fail2ban.org
 
 Cyril Jaquier: <lostcontrol@users.sourceforge.net>
 
