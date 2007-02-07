@@ -1,3 +1,10 @@
+fail2ban (0.7.6-4) UNRELEASED; urgency=low
+
+  * NOT RELEASED YET
+  * Made homepage in description verbatim
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed,  7 Feb 2007 10:24:56 -0500
+
 fail2ban (0.7.6-3) unstable; urgency=low
 
   * Synchronized action.d/iptables-* rules from upstream SVN (closes:

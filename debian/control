@@ -25,5 +25,5 @@ Description: bans IPs that cause multiple authentication errors
  fail2ban can be adopted to be used with a variety of files and
  firewalls.
  .
- Homepage: http://www.sourceforge.net/projects/fail2ban
+  Homepage: http://www.sourceforge.net/projects/fail2ban
 
