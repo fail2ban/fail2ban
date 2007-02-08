@@ -4,10 +4,10 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.7.7)                           2007/??/??
+Fail2Ban (version 0.7.7)                           2007/02/08
 =============================================================
 
-ver. 0.7.7 (2007/??/??)
+ver. 0.7.7 (2007/02/08) - release candidate
 ----------
 - Added signal handling in fail2ban-client
 - Added a wonderful visual effect when waiting on the server
