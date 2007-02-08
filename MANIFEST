@@ -91,3 +91,5 @@ man/generate-man
 files/gentoo-initd
 files/redhat-initd
 files/cacti/fail2ban_stats.sh
+files/cacti/cacti_host_template_fail2ban.xml
+files/cacti/README
