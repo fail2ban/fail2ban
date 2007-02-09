@@ -1,7 +1,2 @@
-X00_rigid_usrbinpython
-00_iptables-mports
-00_iptables_NEW
 00_mail-whois-lines
 10_dbts_manpages
-10_wuftpd_section
-10_vsftpd_regex

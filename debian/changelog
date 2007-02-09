@@ -1,9 +1,10 @@
-fail2ban (0.7.6-4) UNRELEASED; urgency=low
+fail2ban (0.7.7-1) unstable; urgency=low
 
-  * NOT RELEASED YET
-  * Made homepage in description verbatim
+  * New upstream release (included most of the debian-provided patches -- new
+    filters and actions)
+  * Refreshed and made verbatim homepage in description
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Wed,  7 Feb 2007 10:24:56 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  8 Feb 2007 22:20:49 -0500
 
 fail2ban (0.7.6-3) unstable; urgency=low
 
