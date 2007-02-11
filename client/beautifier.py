@@ -68,13 +68,18 @@ class Beautifier:
 				msg = "Added jail " + response
 			elif inC[0:1] == ['status']:
 				if len(inC) > 1:
+					# Create IP list
+					ipList = ""
+					for ip in response[1][1][2][1]:
+						ipList += ip + " "
+					# Display information
 					msg = "Status for the jail: " + inC[1] + "\n"
 					msg = msg + "|- " + response[0][0] + "\n"
 					msg = msg + "|  |- " + response[0][1][0][0] + ":\t" + `response[0][1][0][1]` + "\n"
 					msg = msg + "|  `- " + response[0][1][1][0] + ":\t" + `response[0][1][1][1]` + "\n"
 					msg = msg + "`- " + response[1][0] + "\n"
 					msg = msg + "   |- " + response[1][1][0][0] + ":\t" + `response[1][1][0][1]` + "\n"
-					msg = msg + "   |  `- " + response[1][1][2][0] + ":\t" + `response[1][1][2][1]` + "\n"
+					msg = msg + "   |  `- " + response[1][1][2][0] + ":\t" + ipList + "\n"
 					msg = msg + "   `- " + response[1][1][1][0] + ":\t" + `response[1][1][1][1]`
 				else:
 					msg = "Status\n"
