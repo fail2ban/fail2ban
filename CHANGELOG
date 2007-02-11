@@ -7,6 +7,10 @@
 Fail2Ban (version 0.7.7)                           2007/02/08
 =============================================================
 
+ver. 0.?.? (2007/??/??) - ???
+----------
+- Fixed asctime pattern in datedetector.py
+
 ver. 0.7.7 (2007/02/08) - release candidate
 ----------
 - Added signal handling in fail2ban-client

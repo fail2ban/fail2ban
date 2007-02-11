@@ -13,6 +13,12 @@ Legend:
 # partially done
 * done
 
+- Discuss where Fail2ban should be installed (/usr/share,
+  /usr/lib/python/site-packages/, etc)
+
+- Cleanup fail2ban-client and fail2ban-server. Move code to
+  server/ and client/
+
 - Add timeout to external commands (signal alarm, watchdog
   thread, etc)
 
@@ -22,7 +28,7 @@ Legend:
   (openssh, postfix, proftp)
 
 - Added <USER> tag for failregex. Add features using this
-  information
+  information. Maybe add more tags
 
 - Look at the memory consumption. Decrease memory usage
 
