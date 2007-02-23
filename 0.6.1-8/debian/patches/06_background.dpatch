@@ -1,0 +1,31 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 06_background.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad 0.6.1-8~/config/fail2ban.conf.hostsdeny 0.6.1-8/config/fail2ban.conf.hostsdeny
+--- 0.6.1-8~/config/fail2ban.conf.hostsdeny	2007-02-22 22:20:43.000000000 -0500
++++ 0.6.1-8/config/fail2ban.conf.hostsdeny	2007-02-22 22:20:58.000000000 -0500
+@@ -9,7 +9,7 @@
+ # Notes.:  start fail2ban as a daemon. Output is redirect to logfile.
+ # Values:  [true | false]  Default:  false
+ #
+-background = false
++background = true
+ 
+ # Option:  logtargets
+ # Notes.:  log targets. Space separated list of logging targets.
+diff -urNad 0.6.1-8~/config/fail2ban.conf.shorewall 0.6.1-8/config/fail2ban.conf.shorewall
+--- 0.6.1-8~/config/fail2ban.conf.shorewall	2007-02-22 22:20:43.000000000 -0500
++++ 0.6.1-8/config/fail2ban.conf.shorewall	2007-02-22 22:21:06.000000000 -0500
+@@ -9,7 +9,7 @@
+ # Notes.:  start fail2ban as a daemon. Output is redirect to logfile.
+ # Values:  [true | false]  Default:  false
+ #
+-background = false
++background = true
+ 
+ # Option:  logtargets
+ # Notes.:  log targets. Space separated list of logging targets.
