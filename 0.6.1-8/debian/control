@@ -1,0 +1,23 @@
+Source: fail2ban
+Section: net
+Priority: optional
+Maintainer: Yaroslav Halchenko <debian@onerussian.com>
+Uploaders: Barak Pearlmutter <bap@debian.org>
+Build-Depends: debhelper (>= 4.1.67), dpatch
+Build-Depends-Indep: python, python-dev, help2man
+Standards-Version: 3.7.2
+
+Package: fail2ban
+Architecture: all
+Depends: python (>=2.3), iptables, lsb-base (>=2.0-7)
+Description: bans IPs that cause multiple authentication errors
+ Monitors (in daemon mode) or just scans log files (e.g. /var/log/auth.log,
+ /var/log/apache/access.log) and temporarily bans failure-prone
+ addresses by updating existing firewall rules.  Currently, by default, 
+ supports ssh/apache but configuration can be easily extended for scanning
+ the other ASCII log files. Firewall rules are given in the config file,
+ thus it can be adopted to be used with a variety of firewalls (e.g. iptables,
+ ipfwadm).
+ .
+ Homepage: http://www.sourceforge.net/projects/fail2ban
+

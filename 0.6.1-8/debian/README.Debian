@@ -1,0 +1,117 @@
+fail2ban for Debian
+-------------------
+
+This package is ~95% identical to the upstream version. Few features
+could have been added but not yet propagated into upstream version and
+some modifications might be Debian-specific (logsys logging
+format). And although due to tight collaboration with upstream author
+most of the Debian modifications penetrate into the next upstream, few
+features present in Debian release were rejected by the upstream
+author (-e option for instance).
+
+Currently, the major difference with upstream: python libraries are
+placed under /usr/share/fail2ban instead of /usr/lib/fail2ban to
+comply with policy regarding architecture independent resources.
+
+Also the main config file /etc/fail2ban.conf is a copy of
+/usr/share/doc/examples/fail2ban.conf.iptables. There are config files
+for banning via shorewall or hosts.deny are provided BUT they might
+miss additional sections present in fail2ban.conf. Please copy them
+taking care about added sections. Those files will be obsolete in the
+next release which would handle split configuration files.
+
+Default behavior:
+-----------------
+
+Only handling of ssh files is enabled by default. If you want to use
+fail2ban with apache, please enable apache section manually in
+/etc/fail2ban.conf or enable section using command line parameter -e
+in /etc/default/fail2ban to avoid conflicts during upgrade of the
+config file.
+
+N.B. '-e' command line parameter is present solely in Debian release
+ of fail2ban, thus it will not work if you decided to proceed with
+ vanilla upstream.
+
+Troubleshooting:
+---------------
+
+* Updated failregex:
+
+To resolve the security bug #330827 [1] failregex expressions must
+provide a named group (?P<host>...) as a placeholder of the abuser's
+host. The naming of the group was introduced to capture possible
+future generalizations of failregex to provide even more
+information. At a current point, all named groups are considered as
+possible locations of the host addresses, but usually you should need
+just a single group (?P<host>...)
+
+[1] http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=330827
+
+
+* "Interpolations" in the config file:
+
+Since version 0.6.0-3 to reduce duplication, thus to improve
+readability of the config file, interpolations provided by the module
+ConfigParser are used. If you had custom sections defined before, you
+might benefit from updating config file and adding appropriate
+information for the new sections.
+
+N.B. If you have some nice additional sections defined, I would really
+appreciate if you share them with me, so they could be eventually
+included in the fail2ban package for general use by the rest of the
+community.
+
+
+* Mailing:
+
+As it was reported (bug #329722) you might need to provide a full
+e-mail address in fail2ban.conf option MAIL:from to make your mail
+server accept that email. I've added @localhost to both MAIL:from and
+MAIL:to in the default configuration shipped with Debian. It seems to
+work nicely now
+
+See TODO.Debian for more details, as well as the Debian Bug Tracking
+system.
+
+
+* Dirty exit:
+
+If firewall rules gets cleaned out before fail2ban exits (like was
+happening with firestarter), errors get reported during the exit of
+fail2ban, but they are "safe" and can be ignored.
+
+
+** SSHD Configuration Specific Problems
+
+* Ban "Not allowed" attempts:
+
+Make sure that you have
+ChallengeResponseAuthentication no
+PasswordAuthentication yes
+
+Details from the bug report #350980 [2]
+
+[2]  http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=350980
+
+
+* Not caught attempts to login as root
+
+On the boxes running older versions of openssh (e.g. sarge
+distribution) in the case when PermitRootLogin is set to something
+else than "yes" and iff AllowUsers is active, failed root logins do
+not confirm to the standard logging message -- they omit the source
+IP, thus allowing attack to persist since such messages are not caught
+by fail2ban.
+
+
+* Bantime:
+
+An IP is banned for "bantime" not since the last failed login attempt
+from the IP, but rather since the moment when failed login was
+detected by fail2ban. Thus, if fail2ban gets [re]started, any IP which
+had enough of failed logins within "findtime" will be banned for
+"bantime" since [re]start moment, not since the last failed login
+time.
+
+ -- Yaroslav O. Halchenko <debian@onerussian.com>, Sun, 19 Mar 2006 00:27:22 -0500

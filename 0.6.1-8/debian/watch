@@ -1,0 +1,6 @@
+# watch control file for uscan
+# Run the "uscan" command to check for upstream updates and more.
+# Site		Directory		Pattern			Version	Script
+version=3
+
+http://sf.net/fail2ban/ fail2ban-(.*)\.tar\.bz2 debian svn-upgrade

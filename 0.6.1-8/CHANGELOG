@@ -1,0 +1,191 @@
+               __      _ _ ___ _               
+              / _|__ _(_) |_  ) |__  __ _ _ _  
+             |  _/ _` | | |/ /| '_ \/ _` | ' \ 
+             |_| \__,_|_|_/___|_.__/\__,_|_||_|
+
+=============================================================
+Fail2Ban (version 0.6.1)                           2006/03/16
+=============================================================
+
+ver. 0.6.1 (2006/03/16) - stable
+----------
+- Added permanent banning. Set banTime to a negative value to
+  enable this feature (-1 is perfect). Thanks to Mannone
+- Fixed locale bug. Thanks to Fernando JosÃ©
+- Fixed crash when time format does not match data
+- Propagated patch from Debian to fix fail2ban search path 
+  addition to the path search list: now it is added first. 
+  Thanks to Nick Craig-Wood
+- Added SMTP authentification for mail notification. Thanks
+  to Markus Hoffmann
+- Removed debug mode as it is confusing for people
+- Added parsing of timestamp in TAI64N format (#1275325).
+  Thanks to Mark Edgington
+- Added patch #1382936 (Default formatted syslog logging).
+  Thanks to Patrick Börjesson
+- Removed 192.168.0.0/16 from ignoreip. Attacks could also
+  come from the local network.
+- Robust startup: if iptables module does not get fully
+  initialized after startup of fail2ban, fail2ban will do
+  "maxreinit" attempts to initialize its own firewall. It
+  will sleep between attempts for "polltime" number of
+  seconds (closes Debian: #334272). Thanks to Yaroslav
+  Halchenko
+- Added "interpolations" in fail2ban.conf. This is provided
+  by the ConfigParser module. Old configuration files still
+  work. Thanks to Yaroslav Halchenko
+- Added initial support for hosts.deny and shorewall. Need
+  more testing. Please test. Thanks to kojiro from Gentoo
+  forum for hosts.deny support
+- Added support for vsftpd. Thanks to zugeschmiert
+
+ver. 0.6.0 (2005/11/20) - stable
+----------
+- Propagated patches introduced by Debian maintainer 
+  (Yaroslav Halchenko):
+  * Added an option to report local time (including timezone)
+    or GMT in mail notification.
+
+ver. 0.5.5 (2005/10/26) - beta
+----------
+- Propagated patches introduced by Debian maintainer 
+  (Yaroslav Halchenko):
+  * Introduced fwcheck option to verify consistency of the
+    chains. Implemented automatic restart of fail2ban main
+    function in case check of fwban or fwunban command failed
+    (closes: #329163, #331695). (Introduced patch was further
+    adjusted by upstream author).
+  * Added -f command line parameter for [findtime].
+  * Added a cleanup of firewall rules on emergency shutdown
+    when unknown exception is catched.
+  * Fail2ban should not crash now if a wrong file name is
+    specified in config.
+  * reordered code a bit so that log targets are setup right
+    after background and then only loglevel (verbose, debug)
+    is processed, so the warning could be seen in the logs
+  * Added a keyword <section> in parsing of the subject and
+    the body of an email sent out by fail2ban (closes:
+    #330311)
+
+ver. 0.5.4 (2005/09/13) - beta
+----------
+- Fixed bug #1286222.
+- Propagated patches introduced by Debian maintainer 
+  (Yaroslav Halchenko):
+  * Fixed handling of SYSLOG logging target. Now it can log
+    to any SYSLOG target and facility as directed by the 
+    config
+  * Format of SYSLOG entries fixed to look closer to standard
+  * Fixed errata in config/gentoo-confd
+  * Introduced findtime configuration variable to control the
+    lifetime of caught "failed" log entries
+	
+ver. 0.5.3 (2005/09/08) - beta
+----------
+- Fixed a bug when overriding "maxfailures" or "bantime".
+  Thanks to Yaroslav Halchenko
+- Added more debug output if an error occurs when sending
+  mail. Thanks to Stephen Gildea
+- Renamed "maxretry" to "maxfailures" and changed default
+  value to 5. Thanks to Stephen Gildea
+- Hopefully fixed bug #1256075
+- Fixed bug #1262345
+- Fixed exception handling in PIDLock
+- Removed warning when using "-V" or "-h" with no config
+  file. Thanks to Yaroslav Halchenko
+- Removed "-i eth0" from config file. Thanks to Yaroslav
+  Halchenko
+
+ver. 0.5.2 (2005/08/06) - beta
+----------
+- Better PID lock file handling. Should close #1239562
+- Added man pages
+- Removed log4py dependency. Use logging module instead
+- "maxretry" and "bantime" can be overridden in each section
+- Fixed bug #1246278 (excessive memory usage)
+- Fixed crash on wrong option value in configuration file
+- Changed custom chains to lowercase
+
+ver. 0.5.1 (2005/07/23) - beta
+----------
+- Fixed bugs #1241756, #1239557
+- Added log targets in configuration file. Removed -l option
+- Changed iptables rules in order to create a separated chain
+  for each section
+- Fixed static banList in firewall.py
+- Added an initd script for Debian. Thanks to Yaroslav
+  Halchenko
+- Check for obsolete files after install
+
+ver. 0.5.0 (2005/07/12) - beta
+----------
+- Added support for CIDR mask in ignoreip
+- Added mail notification support
+- Fixed bug #1234699
+- Added tags replacement in rules definition. Should allow a
+  clean solution for Feature Request #1229479
+- Removed "interface" and "firewall" options
+- Added start and end commands in the configuration file.
+  Thanks to Yaroslav Halchenko
+- Added firewall rules definition in the configuration file
+- Cleaned fail2ban.py
+- Added an initd script for RedHat/Fedora. Thanks to Andrey
+  G. Grozin
+
+ver. 0.4.1 (2005/06/30) - stable
+----------
+- Fixed textToDNS method which generated wrong matches for
+  "rhost=12-xyz...". Thanks to Tom Pike
+- fail2ban.conf modified for readability. Thanks to Iain Lea
+- Added an initd script for Gentoo
+- Changed default PID lock file location from /tmp to
+  /var/run
+
+ver. 0.4.0 (2005/04/24) - stable
+----------
+- Fixed textToDNS which did not recognize strings like
+  "12-345-67-890.abcd.mnopqr.xyz"
+
+ver. 0.3.1 (2005/03/31) - beta
+----------
+- Corrected level of messages
+- Added DNS lookup support
+- Improved parsing speed. Only parse the new log messages
+- Added a second verbose level (-vv)
+
+ver. 0.3.0 (2005/02/24) - beta
+----------
+- Re-writting of parts of the code in order to handle several
+  log files with different rules
+- Removed sshd.py because it is no more needed
+- Fixed a bug when exiting with IP in the ban list
+- Added PID lock file
+- Improved some parts of the code
+- Added ipfw-start-rule option (thanks to Robert Edeker)
+- Added -k option which kills a currently running Fail2Ban
+
+ver. 0.1.2 (2004/11/21) - beta
+----------
+- Add ipfw and ipfwadm support. The rules are taken from
+  BlockIt. Thanks to Robert Edeker
+- Add -e option which allows to set the interface. Thanks to
+  Robert Edeker who reminded me this
+- Small code cleaning
+
+ver. 0.1.1 (2004/10/23) - beta
+----------
+- Add SIGTERM handler in order to exit nicely when in daemon
+  mode
+- Add -r option which allows to set the maximum number of
+  login failures
+- Remove the Metalog class as the log file are not so syslog
+  daemon specific
+- Rewrite log reader to be service centered. Sshd support
+  added. Match "Failed password" and "Illegal user"
+- Add /etc/fail2ban.conf configuration support
+- Code documentation
+
+
+ver. 0.1.0 (2004/10/12) - alpha
+----------
+- Initial release

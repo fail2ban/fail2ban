@@ -1,0 +1,149 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          fail2ban
+# Required-Start:    $local_fs $remote_fs
+# Required-Stop:     $local_fs $remote_fs
+# Should-Start:      $time $network $syslog iptables firehol shorewall ipmasq
+# Should-Stop:       $network $syslog iptables firehol shorewall ipmasq
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start/stop fail2ban
+# Description:       Start/stop fail2ban, a daemon scanning the log files and
+#                    banning potential attackers.
+### END INIT INFO
+
+# Author: Aaron Isotton <aaron@isotton.com>
+# Modified: by Yaroslav Halchenko <debian@onerussian.com>
+#  reindented + minor corrections + to work on sarge without modifications
+#
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+DESC="authentication failure monitor"
+NAME=fail2ban
+DAEMON=/usr/bin/$NAME
+PIDFILE=/var/run/$NAME.pid
+SCRIPTNAME=/etc/init.d/$NAME
+
+# Exit if the package is not installed
+[ -x "$DAEMON" ] || exit 0
+
+# Read configuration variable file if it is present
+[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+DAEMON_ARGS="$FAIL2BAN_OPTS"
+
+# Load the VERBOSE setting and other rcS variables
+[ -f /etc/default/rcS ] && . /etc/default/rcS
+
+# Predefine what can be missing from lsb source later on -- necessary to run
+# on sarge. Just present it in a bit more compact way from what was shipped
+log_daemon_msg () {
+	[ -z "$1" ] && return 1
+	echo -n "$1:"
+	[ -z "$2" ] || echo -n " $2"
+}
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
+# Actually has to (>=2.0-7) present in sarge. log_daemon_msg is predefined
+#  so we must be ok
+. /lib/lsb/init-functions
+
+#
+# Function that starts the daemon/service
+#
+do_start()
+{
+	# Return
+	#	0 if daemon has been started
+	#	1 if daemon was already running
+	#	2 if daemon could not be started
+	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
+		|| return 1
+	# we need to remove pid file or fail2ban would refuse to start
+	# probably check could be ommited but... better be safe
+	pidofproc $NAME $PIDFILE > /dev/null
+	[ $? -eq 2 ] && rm -rf $PIDFILE
+	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- \
+		$DAEMON_ARGS \
+		|| return 2
+}
+
+#
+# Function that stops the daemon/service
+#
+do_stop()
+{
+	# Return
+	#	0 if daemon has been stopped
+	#	1 if daemon was already stopped
+	#	2 if daemon could not be stopped
+	#	other if a failure occurred
+	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $NAME
+	RETVAL="$?"
+	[ "$RETVAL" = 2 ] && return 2
+	start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON
+	[ "$?" = 2 ] && return 2
+	return "$RETVAL"
+}
+
+
+# yoh:
+# shortcut function to don't duplicate case statements and to don't use
+# bashisms (arrays). Fixes #368218
+#
+log_end_msg_wrapper()
+{
+	[ $1 -lt $2 ] && value=0 || value=1
+	log_end_msg $value
+}
+
+case "$1" in
+	start)
+		[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
+		do_start
+		[ "$VERBOSE" != no ] && log_end_msg_wrapper $? 2
+		;;
+	stop)
+		[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
+		do_stop
+		[ "$VERBOSE" != no ] && log_end_msg_wrapper $? 2
+		;;
+	restart|force-reload)
+		log_daemon_msg "Restarting $DESC" "$NAME"
+		do_stop
+		case "$?" in
+			0|1)
+				do_start
+				log_end_msg_wrapper $? 1
+				;;
+			*)
+				# Failed to stop
+				log_end_msg 1
+				;;
+ 		esac
+		;;
+	status)
+		log_daemon_msg "Status of $DESC"
+		pidofproc $NAME $PIDFILE > /dev/null
+		status=$?
+		case $status in
+			0)  log_success_msg " $NAME is running"
+				exit 0
+				;;
+			1|2) log_failure_msg " $NAME is not running but $PIDFILE exists"
+				exit 1
+				;;
+			3)  log_warning_msg " $NAME is not running"
+				exit 3
+				;;
+			4)  log_failure_msg " $PIDFILE not readable, status of $NAME unknown"
+				exit 4
+				;;
+		esac
+		;;
+	*)
+		echo "Usage: $SCRIPTNAME {start|stop|restart|force-reload|status}" >&2
+		exit 3
+		;;
+esac
+
+:

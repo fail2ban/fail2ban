@@ -1,0 +1,10 @@
+/var/log/fail2ban.log {
+    weekly
+    rotate 4
+    compress
+    missingok
+    postrotate
+	/etc/init.d/fail2ban restart >/dev/null
+    endscript
+    create 640 root adm
+}

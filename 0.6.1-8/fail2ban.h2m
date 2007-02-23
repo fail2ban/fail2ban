@@ -1,0 +1,37 @@
+Include file for help2man man page
+$Id:  $
+
+[name]
+fail2ban \- Ban IPs that make too many password failure
+
+
+[files]
+\fI/etc/fail2ban.conf\fR, \fI/etc/default/fail2ban\fR
+
+[REPORTING BUGS]
+
+Please report Debian related bugs via Debian bug tracking system
+http://www.debian.org/Bugs/
+
+[copyright]
+Copyright (c) 2004 Cyril Jaquier
+.br
+Copyright of modifications held by their respective authors.
+.PP
+Licensed under the GNU General Public License v2 (GPL).
+
+
+[author]
+Original fail2ban by Cyril Jaquier <lostcontrol@users.sourceforge.net>.
+.br
+Modified and packaged for Debian by
+.br
+ - Yaroslav O. Halchenko <debian@onerussian.com>.
+.br
+Sponsored for Debian by
+.br
+ - Barak A. Pearlmutter <barak@cs.nuim.ie>.
+
+[see also]
+.br 
+fail2ban.conf(5)
