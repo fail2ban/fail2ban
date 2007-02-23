@@ -1,4 +1,4 @@
-fail2ban (0.6.1-7bpo3) sarge-backports; urgency=low
+fail2ban (0.6.1-8~bpo.3) sarge-backports; urgency=low
 
   * Adjustsed failregex'es in non-iptables (shorewall, hostsdeny) example
     files. That is to fix issue reported at
