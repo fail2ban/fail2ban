@@ -3,6 +3,7 @@ fail2ban (0.6.1-7bpo3) sarge-backports; urgency=low
   * Adjustsed failregex'es in non-iptables (shorewall, hostsdeny) example
     files. That is to fix issue reported at
     http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-6302
+  * Adjusted logfile paths in (shorewall, hostsdeny) example files
   * Adjusted fwcheck command for iptables action to don't perform name
     resolution (-n switch)
 

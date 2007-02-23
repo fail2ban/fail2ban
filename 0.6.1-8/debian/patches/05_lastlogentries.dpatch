@@ -1,0 +1,49 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 05_lastlogentries.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad 0.6.1-8~/config/fail2ban.conf.hostsdeny 0.6.1-8/config/fail2ban.conf.hostsdeny
+--- 0.6.1-8~/config/fail2ban.conf.hostsdeny	2007-02-22 19:49:33.000000000 -0500
++++ 0.6.1-8/config/fail2ban.conf.hostsdeny	2007-02-22 21:56:43.000000000 -0500
+@@ -226,7 +226,7 @@
+ # Notes.:  logfile to monitor.
+ # Values:  FILE  Default:  /var/log/httpd/access_log
+ #
+-logfile = /var/log/httpd/access_log
++logfile = /var/log/apache/access.log
+ 
+ # Option:  timeregex
+ # Notes.:  regex to match timestamp in Apache logfile. For TAI64N format,
+@@ -302,7 +302,7 @@
+ # Notes.:  logfile to monitor.
+ # Values:  FILE  Default:  /var/log/secure
+ #
+-logfile = /var/log/secure
++logfile = /var/log/auth.log
+ 
+ # Option:  timeregex
+ # Notes.:  regex to match timestamp in SSH logfile. For TAI64N format,
+diff -urNad 0.6.1-8~/config/fail2ban.conf.shorewall 0.6.1-8/config/fail2ban.conf.shorewall
+--- 0.6.1-8~/config/fail2ban.conf.shorewall	2007-02-22 19:49:33.000000000 -0500
++++ 0.6.1-8/config/fail2ban.conf.shorewall	2007-02-22 21:56:43.000000000 -0500
+@@ -220,7 +220,7 @@
+ # Notes.:  logfile to monitor.
+ # Values:  FILE  Default:  /var/log/httpd/access_log
+ #
+-logfile = /var/log/httpd/access_log
++logfile = /var/log/apache/access.log
+ 
+ # Option:  timeregex
+ # Notes.:  regex to match timestamp in Apache logfile. For TAI64N format,
+@@ -289,7 +289,7 @@
+ # Notes.:  logfile to monitor.
+ # Values:  FILE  Default:  /var/log/secure
+ #
+-logfile = /var/log/secure
++logfile = /var/log/auth.log
+ 
+ # Option:  timeregex
+ # Notes.:  regex to match timestamp in SSH logfile. For TAI64N format,
