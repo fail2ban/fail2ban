@@ -1,0 +1,43 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 03_failregexes.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad 0.6.1-8~/config/fail2ban.conf.hostsdeny 0.6.1-8/config/fail2ban.conf.hostsdeny
+--- 0.6.1-8~/config/fail2ban.conf.hostsdeny	2007-02-22 19:49:33.000000000 -0500
++++ 0.6.1-8/config/fail2ban.conf.hostsdeny	2007-02-22 21:14:08.000000000 -0500
+@@ -248,7 +248,7 @@
+ # Notes.:  regex to match the password failure messages in the logfile.
+ # Values:  TEXT  Default:  authentication failure|user .* not found
+ #
+-failregex = authentication failure|user .* not found
++failregex = [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)
+ 
+ 
+ [VSFTPD]
+@@ -324,4 +324,4 @@
+ # Notes.:  regex to match the password failures messages in the logfile.
+ # Values:  TEXT  Default:  Authentication failure|Failed password|Invalid user
+ #
+-failregex = Authentication failure|Failed password|Invalid user
++failregex = : (?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) (?:::f{4,6}:)?(?P<host>\S*)
+diff -urNad 0.6.1-8~/config/fail2ban.conf.shorewall 0.6.1-8/config/fail2ban.conf.shorewall
+--- 0.6.1-8~/config/fail2ban.conf.shorewall	2007-02-22 19:49:33.000000000 -0500
++++ 0.6.1-8/config/fail2ban.conf.shorewall	2007-02-22 21:14:08.000000000 -0500
+@@ -242,7 +242,7 @@
+ # Notes.:  regex to match the password failure messages in the logfile.
+ # Values:  TEXT  Default:  authentication failure|user .* not found
+ #
+-failregex = authentication failure|user .* not found
++failregex = [[]client (?P<host>\S*)[]] user .*(?:: authentication failure|not found)
+ 
+ [VSFTPD]
+ # Option: enabled
+@@ -311,4 +311,4 @@
+ # Notes.:  regex to match the password failures messages in the logfile.
+ # Values:  TEXT  Default:  Authentication failure|Failed password|Invalid user
+ #
+-failregex = Authentication failure|Failed password|Invalid user
++failregex = : (?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) (?:::f{4,6}:)?(?P<host>\S*)

@@ -5,11 +5,110 @@
 ## DP: Added saslauthd section from martin f krafft <madduck@debian.org>
 
 @DPATCH@
-
-diff -x '*~' -Naur fail2ban-0.6.1.pre/config/fail2ban.conf.iptables fail2ban-0.6.1.post/config/fail2ban.conf.iptables
---- fail2ban-0.6.1.pre/config/fail2ban.conf.iptables	2006-05-30 10:03:16.000000000 -0400
-+++ fail2ban-0.6.1.post/config/fail2ban.conf.iptables	2006-05-30 10:13:56.000000000 -0400
+diff -urNad 0.6.1-8~/config/fail2ban.conf.hostsdeny 0.6.1-8/config/fail2ban.conf.hostsdeny
+--- 0.6.1-8~/config/fail2ban.conf.hostsdeny	2007-02-22 21:06:31.000000000 -0500
++++ 0.6.1-8/config/fail2ban.conf.hostsdeny	2007-02-22 21:06:31.000000000 -0500
+@@ -215,6 +215,46 @@
+ # failregex.
+ 
+ 
++[SASL]
++# Option:  enabled
++# Notes.:  enable monitoring for this section.
++# Values:  [true | false]  Default:  true
++#
++enabled = false
++
++# Option:  port
++# Notes.:  specifies port to monitor
++# Values:  [ NUM | STRING ]  Default:
++#
++port = smtp
++
++# Option:  logfile
++# Notes.:  logfile to monitor.
++# Values:  FILE  Default:  /var/log/auth.log
++#
++logfile = /var/log/mail.log
++
++# Option:  timeregex
++# Notes.:  regex to match timestamp
++# Values:  [Mar  7 17:53:28]
++# Default: \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
++#
++timeregex = \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
++
++# Option:  timepattern
++# Notes.:  format used in "timeregex" fields definition. Note that '%' must be
++#          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
++# Values:  TEXT  Default:  %%b %%d %%H:%%M:%%S
++#
++timepattern = %%b %%d %%H:%%M:%%S
++
++# Option:  failregex
++# Notes.:  regex to match the password failures messages in the logfile.
++# Values:  TEXT  Default:
++#
++failregex = : warning: [-._\w]+\[(?P<host>[.\d]+)\]: SASL (?:LOGIN|PLAIN|(?:CRAM|DIGEST)-MD5) authentication failed$
++
++
+ [Apache]
+ # Option:  enabled
+ # Notes.:  enable monitoring for this section.
+diff -urNad 0.6.1-8~/config/fail2ban.conf.iptables 0.6.1-8/config/fail2ban.conf.iptables
+--- 0.6.1-8~/config/fail2ban.conf.iptables	2007-02-22 21:06:31.000000000 -0500
++++ 0.6.1-8/config/fail2ban.conf.iptables	2007-02-22 21:06:31.000000000 -0500
 @@ -260,6 +260,46 @@
+ # failregex.
+ 
+ 
++[SASL]
++# Option:  enabled
++# Notes.:  enable monitoring for this section.
++# Values:  [true | false]  Default:  true
++#
++enabled = false
++
++# Option:  port
++# Notes.:  specifies port to monitor
++# Values:  [ NUM | STRING ]  Default:
++#
++port = smtp
++
++# Option:  logfile
++# Notes.:  logfile to monitor.
++# Values:  FILE  Default:  /var/log/auth.log
++#
++logfile = /var/log/mail.log
++
++# Option:  timeregex
++# Notes.:  regex to match timestamp
++# Values:  [Mar  7 17:53:28]
++# Default: \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
++#
++timeregex = \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
++
++# Option:  timepattern
++# Notes.:  format used in "timeregex" fields definition. Note that '%' must be
++#          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
++# Values:  TEXT  Default:  %%b %%d %%H:%%M:%%S
++#
++timepattern = %%b %%d %%H:%%M:%%S
++
++# Option:  failregex
++# Notes.:  regex to match the password failures messages in the logfile.
++# Values:  TEXT  Default:
++#
++failregex = : warning: [-._\w]+\[(?P<host>[.\d]+)\]: SASL (?:LOGIN|PLAIN|(?:CRAM|DIGEST)-MD5) authentication failed$
++
++
+ [Apache]
+ # Option:  enabled
+ # Notes.:  enable monitoring for this section.
+diff -urNad 0.6.1-8~/config/fail2ban.conf.shorewall 0.6.1-8/config/fail2ban.conf.shorewall
+--- 0.6.1-8~/config/fail2ban.conf.shorewall	2007-02-22 21:06:31.000000000 -0500
++++ 0.6.1-8/config/fail2ban.conf.shorewall	2007-02-22 21:06:31.000000000 -0500
+@@ -209,6 +209,46 @@
  # failregex.
  
  

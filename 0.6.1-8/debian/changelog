@@ -1,3 +1,11 @@
+fail2ban (0.6.1-7bpo3) sarge-backports; urgency=low
+
+  * Adjustsed failregex'es in non-iptables (shorewall, hostsdeny) example
+    files. That is to fix issue reported at
+    http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-6302
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 22 Feb 2007 20:26:10 -0500
+
 fail2ban (0.6.1-7bpo2) sarge-backports; urgency=low
 
   * Backported build of Debian package version 0.6.1-8 by pbuilder-ssh

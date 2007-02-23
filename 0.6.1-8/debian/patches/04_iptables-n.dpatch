@@ -1,0 +1,19 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 04_iptables-n.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad 0.6.1-8~/config/fail2ban.conf.iptables 0.6.1-8/config/fail2ban.conf.iptables
+--- 0.6.1-8~/config/fail2ban.conf.iptables	2007-02-22 21:15:49.000000000 -0500
++++ 0.6.1-8/config/fail2ban.conf.iptables	2007-02-22 21:17:07.000000000 -0500
+@@ -153,7 +153,7 @@
+ # Notes.:  command executed once before each fwban command
+ # Values:  CMD  Default:
+ #
+-fwcheck = iptables -L %(fwchain)s | grep -q fail2ban-%(__name__)s
++fwcheck = iptables -n -L %(fwchain)s | grep -q fail2ban-%(__name__)s
+ 
+ # Option:  fwban
+ # Notes.:  command executed when banning an IP. Take care that the
