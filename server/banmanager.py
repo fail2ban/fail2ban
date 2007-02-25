@@ -62,9 +62,11 @@ class BanManager:
 	# @param value the time
 	
 	def setBanTime(self, value):
-		self.__lock.acquire()
-		self.__banTime = int(value)
-		self.__lock.release()
+		try:
+			self.__lock.acquire()
+			self.__banTime = int(value)
+		finally:
+			self.__lock.release()
 	
 	##
 	# Get the ban time.
@@ -85,9 +87,11 @@ class BanManager:
 	# @param value total number
 	
 	def setBanTotal(self, value):
-		self.__lock.acquire()
-		self.__banTotal = value
-		self.__lock.release()
+		try:
+			self.__lock.acquire()
+			self.__banTotal = value
+		finally:
+			self.__lock.release()
 	
 	##
 	# Get the total number of banned address.
