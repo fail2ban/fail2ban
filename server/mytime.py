@@ -26,13 +26,34 @@ __license__ = "GPL"
 
 import time
 
+##
+# MyTime class.
+#
+# This class is a wrapper around time.time()  and time.gmtime(). When
+# performing unit test, it is very useful to get a fixed value from these
+# functions.
+# Thus, time.time() and time.gmtime() should never be called directly.
+# This wrapper should be called instead. The API are equivalent.
+
 class MyTime:
 	
 	myTime = None
 	
+	##
+	# Sets the current time.
+	#
+	# Use None in order to always get the real current time.
+	#
+	# @param t the time to set or None
+	
 	@staticmethod
 	def setTime(t):
 		MyTime.myTime = t
+	
+	##
+	# Equivalent to time.time()
+	#
+	# @return time.time() if setTime was called with None
 	
 	@staticmethod
 	def time():
@@ -40,6 +61,11 @@ class MyTime:
 			return time.time()
 		else:
 			return MyTime.myTime
+	
+	##
+	# Equivalent to time.gmtime()
+	#
+	# @return time.gmtime() if setTime was called with None
 	
 	@staticmethod
 	def gmtime():

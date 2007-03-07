@@ -56,9 +56,19 @@ class Actions(JailThread):
 		## The ban manager.
 		self.__banManager = BanManager()
 	
+	##
+	# Adds an action.
+	#
+	# @param name The action name
+	
 	def addAction(self, name):
 		action = Action(name)
 		self.__actions.append(action)
+	
+	##
+	# Removes an action.
+	#
+	# @param name The action name
 	
 	def delAction(self, name):
 		for action in self.__actions:
@@ -66,11 +76,24 @@ class Actions(JailThread):
 				self.__actions.remove(action)
 				break
 	
+	##
+	# Returns an action.
+	#
+	# Raises a KeyError exception if the action does not exist.
+	#
+	# @param name the action name
+	# @return the action
+	
 	def getAction(self, name):
 		for action in self.__actions:
 			if action.getName() == name:
 				return action
 		raise KeyError
+	
+	##
+	# Returns the last defined action.
+	#
+	# @return The last defined action.
 	
 	def getLastAction(self):
 		action = self.__actions.pop()
