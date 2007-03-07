@@ -13,6 +13,8 @@ Legend:
 # partially done
 * done
 
+- Removed relative imports
+
 - Discuss where Fail2ban should be installed (/usr/share,
   /usr/lib/python/site-packages/, etc)
 
@@ -22,7 +24,7 @@ Legend:
 - Add timeout to external commands (signal alarm, watchdog
   thread, etc)
 
-- New backend: pynotify
+- New backend: pyinotify
 
 - Uniformize filters and actions name. Use the software name
   (openssh, postfix, proftp)
