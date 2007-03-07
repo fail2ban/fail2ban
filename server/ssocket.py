@@ -68,7 +68,7 @@ class SSocket(Thread):
 		#self.__ssock.bind(("localhost", 2222))
 		self.__ssock.bind(sock)
 		# Become a server socket
-		self.__ssock.listen(5)
+		self.__ssock.listen(1)
 	
 	def run(self):
 		self.__isRunning = True
@@ -78,6 +78,9 @@ class SSocket(Thread):
 				thread = SocketWorker(csock, self.__transmit)
 				thread.start()
 			except socket.timeout:
+				# Do nothing here
+				pass
+			except socket.error:
 				# Do nothing here
 				pass
 		self.__ssock.close()
@@ -122,7 +125,7 @@ class SocketWorker(Thread):
 	def __receive(sock):
 		msg = ''
 		while msg.rfind(SSocket.END_STRING) == -1:
-			chunk = sock.recv(6)
+			chunk = sock.recv(128)
 			if chunk == '':
 				raise RuntimeError, "socket connection broken"
 			msg = msg + chunk
