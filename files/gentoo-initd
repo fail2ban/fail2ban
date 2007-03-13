@@ -21,7 +21,7 @@
 
 opts="start stop restart reload showlog"
 
-FAIL2BAN="/usr/bin/fail2ban-client"
+FAIL2BAN="/usr/bin/fail2ban-client ${FAIL2BAN_OPTIONS}"
 
 depend() {
 	need net
