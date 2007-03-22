@@ -117,5 +117,15 @@ class FilterGamin(Filter):
 				time.sleep(self.getSleepTime())
 			else:
 				time.sleep(self.getSleepTime())
+		# Cleanup Gamin
+		self.__cleanup()
 		logSys.debug(self.jail.getName() + ": filter terminated")
 		return True
+
+	##
+	# Desallocates the resources used by Gamin.
+
+	def __cleanup(self):
+		for path in Filter.getLogPath(self):
+			self.monitor.stop_watch(path)
+		del self.monitor
