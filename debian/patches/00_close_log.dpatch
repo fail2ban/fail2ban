@@ -5,11 +5,9 @@
 ## DP: post release patches
 
 @DPATCH@
-
-Index: server/server.py
-===================================================================
---- server/server.py	(revision 562)
-+++ server/server.py	(revision 563)
+diff -urNad fail2ban-0.7.8~/server/server.py fail2ban-0.7.8/server/server.py
+--- fail2ban-0.7.8~/server/server.py	2007-02-07 14:22:44.000000000 -0500
++++ fail2ban-0.7.8/server/server.py	2007-03-24 18:39:32.000000000 -0400
 @@ -326,15 +326,18 @@
  			else:
  				# Target should be a file
