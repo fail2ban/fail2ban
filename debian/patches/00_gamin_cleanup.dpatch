@@ -1,0 +1,26 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 00_gamin_cleanup.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+
+--- server/filtergamin.py	(revision 563)
++++ server/filtergamin.py	(revision 565)
+@@ -117,5 +117,15 @@
+ 				time.sleep(self.getSleepTime())
+ 			else:
+ 				time.sleep(self.getSleepTime())
++		# Cleanup Gamin
++		self.__cleanup()
+ 		logSys.debug(self.jail.getName() + ": filter terminated")
+ 		return True
++
++	##
++	# Desallocates the resources used by Gamin.
++
++	def __cleanup(self):
++		for path in Filter.getLogPath(self):
++			self.monitor.stop_watch(path)
++		del self.monitor

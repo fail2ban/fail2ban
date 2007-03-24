@@ -1,0 +1,34 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 00_close_log.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: post release patches
+
+@DPATCH@
+
+Index: server/server.py
+===================================================================
+--- server/server.py	(revision 562)
++++ server/server.py	(revision 563)
+@@ -326,15 +326,18 @@
+ 			else:
+ 				# Target should be a file
+ 				try:
+-					open(target, "a")
++					open(target, "a").close()
+ 					hdlr = logging.FileHandler(target)
+ 				except IOError:
+ 					logSys.error("Unable to log to " + target)
+ 					logSys.info("Logging to previous target " + self.__logTarget)
+ 					return False
+ 			self.__logTarget = target
+-			# Remove previous handler
+-			logging.getLogger("fail2ban").handlers = []
++			# Removes previous handlers
++			for handler in logging.getLogger("fail2ban").handlers:
++				# Closes the handler.
++				handler.close()
++				logging.getLogger("fail2ban").removeHandler(handler)
+ 			# set a format which is simpler for console use
+ 			formatter = logging.Formatter("%(asctime)s %(name)-16s: %(levelname)-6s %(message)s")
+ 			# tell the handler to use this format

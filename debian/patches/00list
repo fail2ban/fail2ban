@@ -1,2 +1,4 @@
 00_mail-whois-lines
 10_dbts_manpages
+00_close_log
+00_gamin_cleanup
