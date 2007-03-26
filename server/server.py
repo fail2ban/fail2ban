@@ -96,7 +96,7 @@ class Server:
 	def startJail(self, name):
 		try:
 			self.__lock.acquire()
-			if not self.isActive(name):
+			if not self.isAlive(name):
 				self.__jails.get(name).start()
 		finally:
 			self.__lock.release()
@@ -104,7 +104,7 @@ class Server:
 	def stopJail(self, name):
 		try:
 			self.__lock.acquire()
-			if self.isActive(name):
+			if self.isAlive(name):
 				self.__jails.get(name).stop()
 				self.delJail(name)
 		finally:
@@ -118,8 +118,8 @@ class Server:
 		finally:
 			self.__lock.release()
 	
-	def isActive(self, name):
-		return self.__jails.get(name).isActive()
+	def isAlive(self, name):
+		return self.__jails.get(name).isAlive()
 	
 	def setIdleJail(self, name, value):
 		self.__jails.get(name).setIdle(value)

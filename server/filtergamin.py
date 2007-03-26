@@ -99,7 +99,7 @@ class FilterGamin(Filter):
 
 	def run(self):
 		self.setActive(True)
-		while self.isActive():
+		while self._isActive():
 			if not self.getIdle():
 				# We cannot block here because we want to be able to
 				# exit.
