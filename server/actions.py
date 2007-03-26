@@ -125,10 +125,10 @@ class Actions(JailThread):
 	# @return True when the thread exits nicely
 	
 	def run(self):
+		self.setActive(True)
 		for action in self.__actions:
 			action.execActionStart()
-		self.setActive(True)
-		while self.isActive():
+		while self._isActive():
 			if not self.getIdle():
 				#logSys.debug(self.jail.getName() + ": action")
 				ret = self.__checkBan()

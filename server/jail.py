@@ -89,10 +89,10 @@ class Jail:
 		self.__filter.join()
 		self.__action.join()
 	
-	def isActive(self):
-		isActive0 = self.__filter.isActive()
-		isActive1 = self.__action.isActive()
-		return isActive0 or isActive1
+	def isAlive(self):
+		isAlive0 = self.__filter.isAlive()
+		isAlive1 = self.__action.isAlive()
+		return isAlive0 or isAlive1
 	
 	def setIdle(self, value):
 		self.__filter.setIdle(value)

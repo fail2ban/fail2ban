@@ -105,7 +105,7 @@ class JailThread(Thread):
 	# Check if the filter thread is running.
 	# @return True if the thread is running
 	
-	def isActive(self):
+	def _isActive(self):
 		return self.__isRunning
 	
 	##

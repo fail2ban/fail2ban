@@ -93,7 +93,7 @@ class FilterPoll(Filter):
 
 	def run(self):
 		self.setActive(True)
-		while self.isActive():
+		while self._isActive():
 			if not self.getIdle():
 				# Get file modification
 				for f in self.getLogPath():

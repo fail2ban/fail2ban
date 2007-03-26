@@ -385,7 +385,7 @@ class Filter(JailThread):
 		self.__setFilePos()
 		lastLine = None
 		for line in self.__crtHandler:
-			if not self.isActive():
+			if not self._isActive():
 				# The jail has been stopped
 				break
 			try:
