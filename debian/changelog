@@ -1,11 +1,12 @@
-fail2ban (0.7.8-1~pre3) UNRELEASED; urgency=low
+fail2ban (0.7.8-1) unstable; urgency=low
 
   * New upstream release
   * Applied post-release upstream changes to resolve issues with
-   - Close opened handlers to log file
-   - Fixed "reload" bug
+   - Fix to close opened handlers to log file
+   - Tentative incomplete gamin fix
+   - Fix to "reload" bug
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 21 Mar 2007 20:59:15 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 26 Mar 2007 17:52:23 -0400
 
 fail2ban (0.7.7-1) unstable; urgency=low
 
