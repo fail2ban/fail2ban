@@ -1,8 +1,9 @@
-fail2ban (0.7.8-1~pre2) UNRELEASED; urgency=low
+fail2ban (0.7.8-1~pre3) UNRELEASED; urgency=low
 
   * New upstream release
-  * Applied post-release changes to resolve issues with gamin and not closed
-    on reload log file
+  * Applied post-release upstream changes to resolve issues with
+   - Close opened handlers to log file
+   - Fixed "reload" bug
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 21 Mar 2007 20:59:15 -0400
 
