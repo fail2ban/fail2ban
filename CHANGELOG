@@ -13,6 +13,7 @@ ver. 0.?.? (2007/??/??) - ???
 - Fixed "reload" bug. Many many thanks to Yaroslav Halchenko
 - Added date format for asctime without year
 - Modified filters config. Thanks to Michael C. Haller
+- Fixed a small bug in mail-buffered.conf
 
 ver. 0.7.8 (2007/03/21) - release candidate
 ----------
