@@ -4,10 +4,10 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.?.?)                           2007/??/??
+Fail2Ban (version 0.7.9)                           2007/04/19
 =============================================================
 
-ver. 0.?.? (2007/??/??) - ???
+ver. 0.7.9 (2007/04/19) - release candidate
 ----------
 - Close opened handlers. Thanks to Yaroslav Halchenko
 - Fixed "reload" bug. Many many thanks to Yaroslav Halchenko
