@@ -1,3 +1,9 @@
+fail2ban (0.7.5-2etch1~pre1) stable-security; urgency=low
+
+  * Propagated fix for asctime pattern from 0.7.8 release (closes: #421848)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 01 May 2007 22:18:03 -0400
+
 fail2ban (0.7.5-2) unstable; urgency=low
 
   * NEWS.Debian confusions - the latest NEWS entry and postinst message were

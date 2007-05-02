@@ -1,0 +1,19 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## s00_asctime-0.7.8.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Propagates fix from 0.7.8 to have #421848 fixed
+
+@DPATCH@
+diff -urNad fail2ban-0.7.5~/server/datedetector.py fail2ban-0.7.5/server/datedetector.py
+--- fail2ban-0.7.5~/server/datedetector.py	2006-11-12 12:18:35.000000000 -0500
++++ fail2ban-0.7.5/server/datedetector.py	2007-05-01 22:35:51.000000000 -0400
+@@ -51,7 +51,7 @@
+ 		# asctime
+ 		template = DateStrptime()
+ 		template.setName("Weekday Month Day Hour:Minute:Second Year")
+-		template.setRegex("\S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}")
++		template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2} \d{4}")
+ 		template.setPattern("%a %b %d %H:%M:%S %Y")
+ 		self.__templates.append(template)
+ 		# simple date
