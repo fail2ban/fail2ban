@@ -6,56 +6,82 @@
 ## DP: abuser IP over the log files
 
 @DPATCH@
-diff -urNad fail2ban-0.7.7~/config/action.d/mail-whois-lines.conf fail2ban-0.7.7/config/action.d/mail-whois-lines.conf
---- fail2ban-0.7.7~/config/action.d/mail-whois-lines.conf	2007-01-08 16:40:40.000000000 -0500
-+++ fail2ban-0.7.7/config/action.d/mail-whois-lines.conf	2007-02-08 22:07:12.000000000 -0500
-@@ -2,12 +2,12 @@
- #
- # Author: Cyril Jaquier
- # Modified-By: Yaroslav Halchenko to include grepping on IP over log files
--# $Revision: 520 $
+diff -urNad fail2ban-0.7.5~/config/action.d/mail-whois-lines.conf fail2ban-0.7.5/config/action.d/mail-whois-lines.conf
+--- fail2ban-0.7.5~/config/action.d/mail-whois-lines.conf	1969-12-31 19:00:00.000000000 -0500
++++ fail2ban-0.7.5/config/action.d/mail-whois-lines.conf	2006-12-10 18:27:46.000000000 -0500
+@@ -0,0 +1,75 @@
++# Fail2Ban configuration file
++#
++# Author: Cyril Jaquier
++# Modified-By: Yaroslav Halchenko to include grepping on IP over log files
 +# $Revision: 254 $
- #
- 
- [Definition]
- 
--# Option:  fwstart
-+# Option:  actionstart
- # Notes.:  command executed once at the start of Fail2Ban.
- # Values:  CMD
- #
-@@ -16,7 +16,7 @@
-               Regards,\n
-               Fail2Ban"|mail -s "[Fail2Ban] <name>: started" <dest>
- 
--# Option:  fwend
-+# Option:  actionstop
- # Notes.:  command executed once at the end of Fail2Ban
- # Values:  CMD
- #
-@@ -25,13 +25,13 @@
-              Regards,\n
-              Fail2Ban"|mail -s "[Fail2Ban] <name>: stopped" <dest>
- 
--# Option:  fwcheck
--# Notes.:  command executed once before each fwban command
-+# Option:  actioncheck
-+# Notes.:  command executed once before each actionban command
- # Values:  CMD
- #
- actioncheck = 
- 
--# Option:  fwban
-+# Option:  actionban
- # Notes.:  command executed when banning an IP. Take care that the
- #          command is executed with Fail2Ban user rights.
- # Tags:    <ip>  IP address
-@@ -50,7 +50,7 @@
-             Regards,\n
-             Fail2Ban"|mail -s "[Fail2Ban] <name>: banned <ip>" <dest>
- 
--# Option:  fwunban
-+# Option:  actionunban
- # Notes.:  command executed when unbanning an IP. Take care that the
- #          command is executed with Fail2Ban user rights.
- # Tags:    <ip>  IP address
++#
++
++[Definition]
++
++# Option:  fwstart
++# Notes.:  command executed once at the start of Fail2Ban.
++# Values:  CMD
++#
++actionstart = echo -en "Hi,\n
++              The jail <name> has been started successfuly.\n
++              Regards,\n
++              Fail2Ban"|mail -s "[Fail2Ban] <name>: started" <dest>
++
++# Option:  fwend
++# Notes.:  command executed once at the end of Fail2Ban
++# Values:  CMD
++#
++actionstop = echo -en "Hi,\n
++             The jail <name> has been stopped.\n
++             Regards,\n
++             Fail2Ban"|mail -s "[Fail2Ban] <name>: stopped" <dest>
++
++# Option:  fwcheck
++# Notes.:  command executed once before each fwban command
++# Values:  CMD
++#
++actioncheck = 
++
++# Option:  fwban
++# Notes.:  command executed when banning an IP. Take care that the
++#          command is executed with Fail2Ban user rights.
++# Tags:    <ip>  IP address
++#          <failures>  number of failures
++#          <failtime>  unix timestamp of the last failure
++#          <bantime>  unix timestamp of the ban time
++# Values:  CMD
++#
++actionban = echo -en "Hi,\n
++            The IP <ip> has just been banned by Fail2Ban after
++            <failures> attempts against <name>.\n\n
++            Here are more information about <ip>:\n
++            `whois <ip>`\n\n
++            Lines containing IP:<ip> in <logpath>\n
++            `grep '\<<ip>\>' <logpath>`\n\n
++            Regards,\n
++            Fail2Ban"|mail -s "[Fail2Ban] <name>: banned <ip>" <dest>
++
++# Option:  fwunban
++# Notes.:  command executed when unbanning an IP. Take care that the
++#          command is executed with Fail2Ban user rights.
++# Tags:    <ip>  IP address
++#          <bantime>  unix timestamp of the ban time
++#          <unbantime>  unix timestamp of the unban time
++# Values:  CMD
++#
++actionunban = 
++
++[Init]
++
++# Defaut name of the chain
++#
++name = default
++
++# Destinataire of the mail
++#
++dest = root
++
++# Path to the log files which contain relevant lines for the abuser IP
++#
++logpath = /dev/null

@@ -60,13 +60,14 @@ binary-indep: install
 	dh_installdocs
 	dh_installexamples config/jail.conf
 	dh_installlogrotate
-	dh_pycentral
 	dh_installinit -- defaults 99
 	dh_installman man/*.1
+	dh_pycentral
 	dh_link
 	dh_compress
 	dh_fixperms
 	dh_installdeb
+	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
