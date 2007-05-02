@@ -1,0 +1,54 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 10_multiple_HOST_regexp.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad fail2ban-0.7.5~/server/filter.py fail2ban-0.7.5/server/filter.py
+--- fail2ban-0.7.5~/server/filter.py	2006-11-26 15:37:31.000000000 -0500
++++ fail2ban-0.7.5/server/filter.py	2006-12-22 13:30:25.000000000 -0500
+@@ -170,8 +170,17 @@
+ 				self.__failRegex = value
+ 				self.__failRegexObj = None
+ 			else:
+-				# Replace "<HOST>" with default regular expression for host.
+-				regex = value.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>\S+)")
++				# Replace "<HOST>"s with regular expression for a hostname,
++				# naming groups hostX where X is a number starting with 1
++				regex = value
++				oldregex = ''; k = 0
++				while ( regex != oldregex ):
++					oldregex = regex
++					k += 1
++					regex = regex.replace("<HOST>",
++										  "(?:::f{4,6}:)?(?P<host%d>\S+)" % k,
++										  1)
++
+ 				self.__failRegex = regex
+ 				self.__failRegexObj = re.compile(regex)
+ 			logSys.info("Set failregex = %s" % self.__failRegex)
+@@ -435,12 +444,18 @@
+ 							 + "this format")
+ 			else:
+ 				try:
+-					ipMatch = DNSUtils.textToIp(match.group("host"))
+-					if ipMatch:
+-						for ip in ipMatch:
+-							failList.append([ip, date])
++					allGroups = match.groupdict()
++					hostRe = re.compile('host\d*$')
++					# Select only groups named host\d*
++					hostGroups = filter(lambda x: hostRe.match(x[0]) and x[1],
++										allGroups.iteritems())
++					for hostGroup, hostEntry in hostGroups:
++						ipMatch = DNSUtils.textToIp(hostEntry)
++						if ipMatch:
++							for ip in ipMatch:
++								failList.append([ip, date])
+ 				except IndexError:
+-					logSys.error("There is no 'host' group in the rule. " +
++					logSys.error("There is no 'hostX' group in the rule. " +
+ 								 "Please correct your configuration.")
+ 		return failList
+ 	

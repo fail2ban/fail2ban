@@ -1,3 +1,99 @@
+fail2ban (0.7.9-1) unstable; urgency=low
+
+  * New upstream release
+  * Updated copyright to include current year
+  * Removed patches absorbed upstream
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 19 Apr 2007 21:44:28 -0400
+
+fail2ban (0.7.8-1) unstable; urgency=low
+
+  * New upstream release
+  * Applied post-release upstream changes to resolve issues with
+   - Fix to close opened handlers to log file
+   - Tentative incomplete gamin fix
+   - Fix to "reload" bug
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 26 Mar 2007 17:52:23 -0400
+
+fail2ban (0.7.7-1) unstable; urgency=low
+
+  * New upstream release (included most of the debian-provided patches -- new
+    filters and actions)
+  * Refreshed and made verbatim homepage in description
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  8 Feb 2007 22:20:49 -0500
+
+fail2ban (0.7.6-3) unstable; urgency=low
+
+  * Synchronized action.d/iptables-* rules from upstream SVN (closes:
+    #407561)
+  * Minor: options renames in the comments to be in sync with upstream
+  * Use /usr/bin/python interpreter instead of wrapped call to python by
+    /usr/bin/env
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 19 Jan 2007 10:43:59 -0500
+
+fail2ban (0.7.6-2) unstable; urgency=low
+
+  * iptables-multiport is default action to take since Debian kernel arrives
+    with multiport module. That is to address the fact that most services
+    listen on multiple port (for encrypted and non-encrypted connections)
+  * Added [courierauth] jail (First 2 items are to partially address #407404
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 18 Jan 2007 10:35:36 -0500
+
+fail2ban (0.7.6-1) unstable; urgency=low
+
+  * New upstream release, which incorporates fixes introduced in 3~pre
+    non-released versions (which were suggested to the users to overcome
+    problems reported in bug reports). In particular attention should be paid
+    to upstream changelog entries
+    - Several "failregex" and "ignoreregex" are now accepted.
+      Creation of rules should be easier now.
+      This is an alternative solution to 'multiple <HOST>' entries fix,
+      which is not applied to this shipped version - pay caution if upgrading
+      from 0.7.5-3~pre?
+    - Allow comma in action options. The value of the option must
+      be escaped with " or '.
+      That allowed to implement requested ability to ban multiple ports
+      at once (See 373592). README.Debian and jail.conf adjusted to reflect
+      possible use of iptables-mport
+    - Now Fail2ban goes in /usr/share/fail2ban instead of
+      /usr/lib/fail2ban. This is more compliant with FHS.
+      Patch 00_share_insteadof_lib no longer applied
+  * Refactored installed by debian package jail.conf:
+    - Added option banaction which is to incorporate banning agent
+      (usually some flavor of iptables rule), which can then be easily
+      overriden globally or per section
+    - Multiple actions are defined as action_* to serve as shortcuts
+  * Initd script was modified to inform about present socket file which
+    would forbid fail2ban-server from starting
+  * Adjusted default log file for postfix to be /var/log/mail.log
+    (Closes: #404921)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  4 Jan 2007 15:24:52 -0500
+
+fail2ban (0.7.5-3~pre6) unstable; urgency=low
+
+  * Fail2ban now bans vsftpd logins (corrected logfile path and failregex)
+    (Closes: #404060)
+  * Made fail2ban-server tollerate multiple <HOST> entries in failregex
+  * Moved call to dh_pycentral before dh_installinit
+  * Removed unnecessary call of dh_shlibdeps
+  * Added filter ssh-ddos to fight DDOS attacks. Must be used with caution
+    if there is a possibility of valid clients accessing through
+    unreliable connection or faulty firewall (Closes: #404487)
+  * Not applying patch any more for rigid python2.4 - it is default now in
+    sid/etch
+  * Moving waiting loop for fail2ban-server to stop under do_stop
+    function, so it gets invoked by both 'restart' and 'stop' commands
+  * do_status action of init script is now using 'fail2ban-client ping'
+    instead of '... status' since we don't really use returned status
+    information, besides the return error code
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 26 Dec 2006 21:56:58 -0500
+
 fail2ban (0.7.5-2) unstable; urgency=low
 
   * NEWS.Debian confusions - the latest NEWS entry and postinst message were
