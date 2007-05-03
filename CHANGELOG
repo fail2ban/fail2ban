@@ -4,10 +4,10 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.8.0)                           2007/05/??
+Fail2Ban (version 0.8.0)                           2007/05/03
 =============================================================
 
-ver. 0.8.0 (2007/05/??) - stable
+ver. 0.8.0 (2007/05/03) - stable
 ----------
 - Fixed RedHat init script. Thanks to Jonathan Underwood
 - Added Solaris 10 files. Thanks to Hanno 'Rince' Wagner
