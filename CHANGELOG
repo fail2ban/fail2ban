@@ -10,6 +10,7 @@ Fail2Ban (version 0.8.0)                           2007/05/??
 ver. 0.8.0 (2007/05/??) - stable
 ----------
 - Fixed RedHat init script. Thanks to Jonathan Underwood
+- Added Solaris 10 files. Thanks to Hanno 'Rince' Wagner
 
 ver. 0.7.9 (2007/04/19) - release candidate
 ----------
