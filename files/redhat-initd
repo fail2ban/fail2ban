@@ -1,0 +1,90 @@
+#!/bin/bash
+#
+# chkconfig: 345 92 08
+# description: Fail2ban daemon
+#              http://fail2ban.sourceforge.net/wiki/index.php/Main_Page
+# process name: fail2ban-server
+#
+#
+# Author: Tyler Owen
+#
+
+# Source function library.
+. /etc/init.d/functions
+
+# Check that the config file exists
+[ -f /etc/fail2ban/fail2ban.conf ] || exit 0
+
+FAIL2BAN="/usr/bin/fail2ban-client"
+
+RETVAL=0
+
+getpid() {
+        #pid=`ps -ef | grep fail2ban-|grep -v grep|grep -v bash|awk '{print $2}'`
+        pid=`ps -ef | grep fail2ban-|grep -v grep|awk '{print $2}'`
+}
+
+start() {
+    echo -n $"Starting fail2ban: "
+    getpid
+    if [ -z "$pid" ]; then
+        $FAIL2BAN start > /dev/null
+        RETVAL=$?
+    fi
+    if [ $RETVAL -eq 0 ]; then
+        touch /var/lock/subsys/fail2ban
+        echo_success
+    else
+        echo_failure
+    fi
+    echo
+    return $RETVAL
+}
+
+stop() {
+    echo -n $"Stopping fail2ban: "
+    getpid
+    RETVAL=$?
+    if [ -n "$pid" ]; then
+        $FAIL2BAN stop > /dev/null
+    fi
+    sleep 1
+    getpid
+    if [ -z "$pid" ]; then
+        rm -f /var/lock/subsys/fail2ban
+        echo_success
+    else
+        echo_failure
+    fi
+    echo
+    return $RETVAL
+}
+
+# See how we were called.
+case "$1" in
+  start)
+        start
+        ;;
+  stop)
+        stop
+        ;;
+  status)
+        getpid
+        if [ -n "$pid" ]; then
+                echo "Fail2ban (pid $pid) is running..."
+        else
+                RETVAL=1
+                echo "Fail2ban is stopped"
+        fi
+        ;;
+  restart)
+  		stop
+        start
+        ;;
+  *)
+        echo $"Usage: $0 {start|stop|status|restart}"
+        exit 1
+        ;;
+esac
+
+exit $RETVAL

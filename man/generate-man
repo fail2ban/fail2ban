@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# fail2ban-client
+echo -n "Generating fail2ban-client "
+help2man --section=1 --no-info --include=fail2ban-client.h2m --output fail2ban-client.1 ../fail2ban-client
+echo "[done]"
+echo -n "Patching fail2ban-client   "
+# Changes the title.
+sed -i -e 's/.SS "Command:"/.SH COMMAND/' fail2ban-client.1
+# Sets bold font for commands.
+IFS="
+"
+NEXT=0
+FOUND=0
+LINES=$( cat fail2ban-client.1 )
+echo -n "" > fail2ban-client.1
+for LINE in $LINES; do
+	if [ "$LINE" = ".SH COMMAND" ]; then
+		FOUND=1
+	fi
+	if [ $NEXT -eq 1 ] && [ $FOUND -eq 1 ]; then
+		echo "\fB$LINE\fR" >> fail2ban-client.1
+	else
+		echo "$LINE" >> fail2ban-client.1
+	fi
+	if [ "$LINE" = ".TP" ]; then
+		NEXT=1
+	else
+		NEXT=0
+	fi
+done
+echo "[done]"
+
+# fail2ban-server
+echo -n "Generating fail2ban-server "
+help2man --section=1 --no-info --include=fail2ban-server.h2m --output fail2ban-server.1 ../fail2ban-server
+echo "[done]"
+
+# fail2ban-regex
+echo -n "Generating fail2ban-regex  "
+help2man --section=1 --no-info --include=fail2ban-regex.h2m --output fail2ban-regex.1 ../fail2ban-regex
+echo "[done]"
+echo -n "Patching fail2ban-regex    "
+# Changes the title.
+sed -i -e 's/.SS "Log:"/.SH LOG/' fail2ban-regex.1
+sed -i -e 's/.SS "Regex:"/.SH REGEX/' fail2ban-regex.1
+# Sets bold font for commands.
+IFS="
+"
+NEXT=0
+FOUND=0
+LINES=$( cat fail2ban-regex.1 )
+echo -n "" > fail2ban-regex.1
+for LINE in $LINES; do
+	if [ "$LINE" = ".SH LOG" ]; then
+		FOUND=1
+	fi
+	if [ $NEXT -eq 1 ] && [ $FOUND -eq 1 ]; then
+		echo "\fB$LINE\fR" >> fail2ban-regex.1
+	else
+		echo "$LINE" >> fail2ban-regex.1
+	fi
+	if [ "$LINE" = ".TP" ]; then
+		NEXT=1
+	else
+		NEXT=0
+	fi
+done
+echo "[done]"

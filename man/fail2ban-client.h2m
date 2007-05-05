@@ -1,0 +1,12 @@
+Include file for help2man man page
+$Id:  $
+
+[name]
+fail2ban-client \- configure and control the server
+
+[files]
+\fI/etc/fail2ban/*\fR
+
+[see also]
+.br 
+fail2ban-server(1)

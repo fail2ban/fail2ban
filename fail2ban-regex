@@ -1,0 +1,298 @@
+#!/usr/bin/python
+# This file is part of Fail2Ban.
+#
+# Fail2Ban is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Fail2Ban is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Fail2Ban; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# Author: Cyril Jaquier
+# 
+# $Revision: 530 $
+
+__author__ = "Cyril Jaquier"
+__version__ = "$Revision: 530 $"
+__date__ = "$Date: 2007-01-29 21:31:04 +0100 (Mon, 29 Jan 2007) $"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__license__ = "GPL"
+
+import getopt, sys, time, logging, os
+
+# Inserts our own modules path first in the list
+# fix for bug #343821
+sys.path.insert(1, "/usr/share/fail2ban")
+
+from ConfigParser import SafeConfigParser
+from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
+from common.version import version
+from server.filter import Filter
+from server.regex import RegexException
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban.regex")
+
+class RegexStat:
+
+	def __init__(self, failregex):
+		self.__stats = 0
+		self.__failregex = failregex
+		self.__ipList = list()
+	
+	def inc(self):
+		self.__stats += 1
+	
+	def getStats(self):
+		return self.__stats
+
+	def getFailRegex(self):
+		return self.__failregex
+	
+	def appendIP(self, value):
+		self.__ipList.extend(value)
+	
+	def getIPList(self):
+		return self.__ipList
+
+class Fail2banRegex:
+	
+	test = None
+	
+	def __init__(self):
+		self.__filter = Filter(None)
+		self.__failregex = list()
+		# Setup logging
+		logging.getLogger("fail2ban").handlers = []
+		self.__hdlr = logging.StreamHandler(Fail2banRegex.test)
+		# set a format which is simpler for console use
+		formatter = logging.Formatter("%(message)s")
+		# tell the handler to use this format
+		self.__hdlr.setFormatter(formatter)
+		logging.getLogger("fail2ban").addHandler(self.__hdlr)
+		logging.getLogger("fail2ban").setLevel(logging.ERROR)
+	
+	@staticmethod
+	def dispVersion():
+		print "Fail2Ban v" + version
+		print
+		print "Copyright (c) 2004-2006 Cyril Jaquier"
+		print "Copyright of modifications held by their respective authors."
+		print "Licensed under the GNU General Public License v2 (GPL)."
+		print
+		print "Written by Cyril Jaquier <lostcontrol@users.sourceforge.net>."
+		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
+	
+	@staticmethod
+	def dispUsage():
+		print "Usage: "+sys.argv[0]+" [OPTIONS] <LOG> <REGEX>"
+		print
+		print "Fail2Ban v" + version + " reads log file that contains password failure report"
+		print "and bans the corresponding IP addresses using firewall rules."
+		print
+		print "This tools can test regular expressions for \"fail2ban\"."
+		print
+		print "Options:"
+		print "    -h, --help              display this help message"
+		print "    -V, --version           print the version"
+		print
+		print "Log:"
+		print "    string                  a string representing a log line"
+		print "    filename                path to a log file (/var/log/auth.log)"
+		print
+		print "Regex:"
+		print "    string                  a string representing a 'failregex'"
+		print "    filename                path to a filter file (filter.d/sshd.conf)"
+		print
+		print "Report bugs to <lostcontrol@users.sourceforge.net>"
+	
+	def getCmdLineOptions(self, optList):
+		""" Gets the command line options
+		"""
+		for opt in optList:
+			if opt[0] in ["-h", "--help"]:
+				self.dispUsage()
+				sys.exit(0)
+			elif opt[0] in ["-V", "--version"]:
+				self.dispVersion()
+				sys.exit(0)
+
+	@staticmethod
+	def logIsFile(value):
+		return os.path.isfile(value)
+
+	def readRegex(self, value):
+		if os.path.isfile(value):
+			reader = SafeConfigParser()
+			try:
+				reader.read(value)
+				print "Use regex file : " + value
+				self.__failregex = [RegexStat(m)
+									for m in reader.get("Definition", "failregex").split('\n')]
+			except NoSectionError:
+				print "No [Definition] section in " + value
+				print
+				return False
+			except NoOptionError:
+				print "No failregex option in " + value
+				print
+				return False
+			except MissingSectionHeaderError:
+				print "No section headers in " + value
+				print
+				return False
+		else:
+			if len(value) > 53:
+				stripReg = value[0:50] + "..."
+			else:
+				stripReg = value
+			print "Use regex line : " + stripReg
+			self.__failregex = [RegexStat(value)]
+		return True
+	
+	def testRegex(self, line):
+		found = False
+		for regex in self.__failregex:
+			logging.getLogger("fail2ban").setLevel(logging.DEBUG)
+			try:
+				self.__filter.addFailRegex(regex.getFailRegex())
+				try:
+					ret = self.__filter.findFailure(line)
+					if not len(ret) == 0:
+						if found == True:
+							ret[0].append(True)
+						else:
+							found = True
+							ret[0].append(False)
+						regex.inc()
+						regex.appendIP(ret)
+				except RegexException, e:
+					print e
+					return False
+				except IndexError:
+					print "Sorry, but no <host> found in regex"
+					return False
+			finally:
+				self.__filter.delFailRegex(0)
+				logging.getLogger("fail2ban").setLevel(logging.CRITICAL)
+	
+	def printStats(self):
+		print
+		print "Results"
+		print "======="
+		print
+		
+		# Print title
+		cnt = 1
+		print "Failregex:"
+		for failregex in self.__failregex:
+			print "[" + str(cnt) + "] " + failregex.getFailRegex()
+			cnt += 1
+		
+		print
+		
+		# Print stats
+		cnt = 1
+		total = 0
+		print "Number of matches:"
+		for failregex in self.__failregex:
+			match = failregex.getStats()
+			total += match
+			print "[" + str(cnt) + "] " + str(match) + " match(es)"
+			cnt += 1
+		
+		print
+		
+		if total == 0:
+			print "Sorry, no match"
+			print
+			print "Look at the above section 'Running tests' which could contain important"
+			print "information."
+			return False
+		else:
+			# Print stats
+			cnt = 1
+			print "Addresses found:"
+			for failregex in self.__failregex:
+				print "[" + str(cnt) + "]"
+				for ip in failregex.getIPList():
+					timeTuple = time.localtime(ip[1])
+					timeString = time.strftime("%a %b %d %H:%M:%S %Y", timeTuple)
+					if ip[2]:
+						dup = " (already matched)"
+					else:
+						dup = ""
+					print "    " + ip[0] + " (" + timeString + ")" + dup
+				cnt += 1
+			
+			print
+			
+			print "Date template hits:"
+			for template in self.__filter.dateDetector.getTemplates():
+				print `template.getHits()` + " hit: " + template.getName()
+			
+			print
+			
+			print "Success, the total number of match is " + str(total)
+			print
+			print "However, look at the above section 'Running tests' which could contain important"
+			print "information."
+			return True
+
+			
+if __name__ == "__main__":
+	fail2banRegex = Fail2banRegex()
+	# Reads the command line options.
+	try:
+		cmdOpts = 'hV'
+		cmdLongOpts = ['help', 'version']
+		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
+	except getopt.GetoptError:
+		fail2banRegex.dispUsage()
+		sys.exit(-1)
+	# Process command line
+	fail2banRegex.getCmdLineOptions(optList)
+	# We need exactly 3 parameters
+	if not len(sys.argv) == 3:
+		fail2banRegex.dispUsage()
+		sys.exit(-1)
+	else:
+		print
+		print "Running tests"
+		print "============="
+		print
+
+		if fail2banRegex.readRegex(sys.argv[2]) == False:
+			sys.exit(-1)
+
+		if fail2banRegex.logIsFile(sys.argv[1]):
+			try:
+				hdlr = open(sys.argv[1])
+				print "Use log file   : " + sys.argv[1]
+				print
+				for line in hdlr:
+					fail2banRegex.testRegex(line)
+			except IOError, e:
+				print e
+				print
+				sys.exit(-1)
+		else:
+			if len(sys.argv[1]) > 53:
+				stripLog = sys.argv[1][0:50] + "..."
+			else:
+				stripLog = sys.argv[1]
+			print "Use single line: " + stripLog
+			print
+			fail2banRegex.testRegex(sys.argv[1])
+		
+		if fail2banRegex.printStats():
+			sys.exit(0)
+		else:
+			sys.exit(-1)

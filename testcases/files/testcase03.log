@@ -1,0 +1,9 @@
+Aug 14 11:53:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.
+Aug 14 11:54:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.
+Aug 14 11:55:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.
+Aou 14 11:56:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.
+Aou 14 11:57:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.
+Aoü 14 11:58:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.
+Aug 14 11:59:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.
+Aug 14 12:50:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.
+Aug 14 12:51:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.

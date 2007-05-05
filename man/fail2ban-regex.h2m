@@ -1,0 +1,10 @@
+Include file for help2man man page
+$Id:  $
+
+[name]
+fail2ban-regex \- test Fail2ban "failregex" option
+
+[see also]
+.br 
+fail2ban-client(1)
+fail2ban-server(1)

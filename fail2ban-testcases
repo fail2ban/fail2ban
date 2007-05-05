@@ -1,0 +1,75 @@
+#!/usr/bin/python
+# This file is part of Fail2Ban.
+#
+# Fail2Ban is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Fail2Ban is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Fail2Ban; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# Author: Cyril Jaquier
+# 
+# $Revision: 522 $
+
+__author__ = "Cyril Jaquier"
+__version__ = "$Revision: 522 $"
+__date__ = "$Date: 2007-01-21 23:19:57 +0100 (Sun, 21 Jan 2007) $"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__license__ = "GPL"
+
+
+import unittest, logging, sys
+
+from common.version import version
+from testcases import banmanagertestcase
+from testcases import clientreadertestcase
+from testcases import failmanagertestcase
+from testcases import filtertestcase
+from testcases import servertestcase
+from testcases import datedetectortestcase
+from testcases import actiontestcase
+from server.mytime import MyTime
+
+# Set the time to a fixed, known value
+# Sun Aug 14 12:00:00 CEST 2005
+MyTime.setTime(1124013600)
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
+# Add the default logging handler
+stdout = logging.StreamHandler(sys.stdout)
+logSys.addHandler(stdout)
+logSys.setLevel(logging.FATAL)
+
+print "Fail2ban " + version + " test suite. Please wait..."
+
+tests = unittest.TestSuite()
+
+# Filter
+tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
+tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
+tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
+# Server
+#tests.addTest(unittest.makeSuite(servertestcase.StartStop))
+#tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
+tests.addTest(unittest.makeSuite(actiontestcase.ExecuteAction))
+# FailManager
+tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
+# BanManager
+tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
+# ClientReader
+tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
+# DateDetector
+tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
+
+# Tests runner
+testRunner = unittest.TextTestRunner()
+testRunner.run(tests)
