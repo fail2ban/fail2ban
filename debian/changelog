@@ -1,11 +1,17 @@
-fail2ban (0.8.0-2~pre1) unstable; urgency=low
+fail2ban (0.8.0-2~pre2) unstable; urgency=low
 
   * Manually changing the order of debhelper inserted scripts in prerm
     (Closes: #422655)
   * Removed obsolete hack to have /bin/env invocation of python for
     fail2ban-* scripts
+  * Applied changes submitted by Bernd Zeimetz (thanks Bernd):
+    - Removed obsolete Build-Depends-Indep on help2man, python-dev
+  	- Explicit removal of *.pyc files compiled during build
+  	- Invoke 'python setup.py clean' in clean target, which required also
+  	  to move python into Build-Depends
+  * Minor clean up of debian/rules
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 10 May 2007 11:32:32 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 15 May 2007 10:22:11 -0400
 
 fail2ban (0.8.0-1) unstable; urgency=low
 

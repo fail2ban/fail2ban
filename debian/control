@@ -2,8 +2,8 @@ Source: fail2ban
 Section: net
 Priority: optional
 Maintainer: Yaroslav Halchenko <debian@onerussian.com>
-Build-Depends: debhelper (>= 5.0.37.2), dpatch
-Build-Depends-Indep: python, python-dev, help2man, python-central (>= 0.5.6)
+Build-Depends: debhelper (>= 5.0.37.2), dpatch, python
+Build-Depends-Indep: python-central (>= 0.5.6)
 XS-Python-Version: current, >= 2.4
 Standards-Version: 3.7.2
 
@@ -21,7 +21,7 @@ Description: bans IPs that cause multiple authentication errors
  IP using iptables or hostsdeny rules, or simply to send a
  notification email. Currently, by default, supports ssh/apache/vsftpd
  but configuration can be easily extended for monitoring any other ASCII
- file. All filters and actions are given in the config files, thus 
+ file. All filters and actions are given in the config files, thus
  fail2ban can be adopted to be used with a variety of files and
  firewalls.
  .
