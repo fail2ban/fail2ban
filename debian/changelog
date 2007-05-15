@@ -6,9 +6,9 @@ fail2ban (0.8.0-2~pre2) unstable; urgency=low
     fail2ban-* scripts
   * Applied changes submitted by Bernd Zeimetz (thanks Bernd):
     - Removed obsolete Build-Depends-Indep on help2man, python-dev
-  	- Explicit removal of *.pyc files compiled during build
-  	- Invoke 'python setup.py clean' in clean target, which required also
-  	  to move python into Build-Depends
+    - Explicit removal of *.pyc files compiled during build
+    - Invoke 'python setup.py clean' in clean target, which required also
+      to move python into Build-Depends
   * Minor clean up of debian/rules
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 15 May 2007 10:22:11 -0400
