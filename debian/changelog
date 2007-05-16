@@ -1,4 +1,4 @@
-fail2ban (0.8.0-2~pre2) unstable; urgency=low
+fail2ban (0.8.0-2) unstable; urgency=low
 
   * Manually changing the order of debhelper inserted scripts in prerm
     (Closes: #422655)
@@ -11,7 +11,7 @@ fail2ban (0.8.0-2~pre2) unstable; urgency=low
       to move python into Build-Depends
   * Minor clean up of debian/rules
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 15 May 2007 10:22:11 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 16 May 2007 14:13:57 -0400
 
 fail2ban (0.8.0-1) unstable; urgency=low
 
