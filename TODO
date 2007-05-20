@@ -13,6 +13,11 @@ Legend:
 # partially done
 * done
 
+- <HOST> should not be mandatory. It should be possible to
+  start an action without an host
+
+- Use Python 2.3
+
 - Removed relative imports
 
 - Discuss where Fail2ban should be installed (/usr/share,
