@@ -39,14 +39,16 @@ class ConfigReader(SafeConfigParser):
 		SafeConfigParser.__init__(self)
 		self.__opts = None
 	
-	@staticmethod
+	#@staticmethod
 	def setBaseDir(folderName):
 		path = folderName.rstrip('/')
 		ConfigReader.BASE_DIRECTORY = path + '/'
+	setBaseDir = staticmethod(setBaseDir)
 		
-	@staticmethod
+	#@staticmethod
 	def getBaseDir():
 		return ConfigReader.BASE_DIRECTORY
+	getBaseDir = staticmethod(getBaseDir)
 	
 	def read(self, filename):
 		basename = ConfigReader.BASE_DIRECTORY + filename

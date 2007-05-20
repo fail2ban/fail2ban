@@ -47,7 +47,7 @@ class CSocket:
 		self.__csock.close()
 		return ret
 	
-	@staticmethod
+	#@staticmethod
 	def receive(sock):
 		msg = ''
 		while msg.rfind(CSocket.END_STRING) == -1:
@@ -56,3 +56,4 @@ class CSocket:
 				raise RuntimeError, "socket connection broken"
 			msg = msg + chunk
 		return loads(msg)
+	receive = staticmethod(receive)

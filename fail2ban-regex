@@ -79,7 +79,7 @@ class Fail2banRegex:
 		logging.getLogger("fail2ban").addHandler(self.__hdlr)
 		logging.getLogger("fail2ban").setLevel(logging.ERROR)
 	
-	@staticmethod
+	#@staticmethod
 	def dispVersion():
 		print "Fail2Ban v" + version
 		print
@@ -89,8 +89,9 @@ class Fail2banRegex:
 		print
 		print "Written by Cyril Jaquier <lostcontrol@users.sourceforge.net>."
 		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
+	dispVersion = staticmethod(dispVersion)
 	
-	@staticmethod
+	#@staticmethod
 	def dispUsage():
 		print "Usage: "+sys.argv[0]+" [OPTIONS] <LOG> <REGEX>"
 		print
@@ -112,6 +113,7 @@ class Fail2banRegex:
 		print "    filename                path to a filter file (filter.d/sshd.conf)"
 		print
 		print "Report bugs to <lostcontrol@users.sourceforge.net>"
+	dispUsage = staticmethod(dispUsage)
 	
 	def getCmdLineOptions(self, optList):
 		""" Gets the command line options
@@ -124,9 +126,10 @@ class Fail2banRegex:
 				self.dispVersion()
 				sys.exit(0)
 
-	@staticmethod
+	#@staticmethod
 	def logIsFile(value):
 		return os.path.isfile(value)
+	logIsFile = staticmethod(logIsFile)
 
 	def readRegex(self, value):
 		if os.path.isfile(value):

@@ -43,19 +43,19 @@ class IgnoreIP(unittest.TestCase):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
 		for ip in ipList:
 			self.__filter.addIgnoreIP(ip)
-			self.assertTrue(self.__filter.inIgnoreIPList(ip))
+			self.failUnless(self.__filter.inIgnoreIPList(ip))
 		# Test DNS
 		self.__filter.addIgnoreIP("www.epfl.ch")
-		self.assertTrue(self.__filter.inIgnoreIPList("128.178.50.12"))
+		self.failUnless(self.__filter.inIgnoreIPList("128.178.50.12"))
 	
 	def testIgnoreIPNOK(self):
 		ipList = "", "999.999.999.999", "abcdef", "192.168.0."
 		for ip in ipList:
 			self.__filter.addIgnoreIP(ip)
-			self.assertFalse(self.__filter.inIgnoreIPList(ip))
+			self.failIf(self.__filter.inIgnoreIPList(ip))
 		# Test DNS
 		self.__filter.addIgnoreIP("www.epfl.ch")
-		self.assertFalse(self.__filter.inIgnoreIPList("127.177.50.10"))
+		self.failIf(self.__filter.inIgnoreIPList("127.177.50.10"))
 
 
 class LogFile(unittest.TestCase):
@@ -74,7 +74,7 @@ class LogFile(unittest.TestCase):
 	#	self.__filter.openLogFile(LogFile.FILENAME)
 	
 	def testIsModified(self):
-		self.assertTrue(self.__filter.isModified(LogFile.FILENAME))
+		self.failUnless(self.__filter.isModified(LogFile.FILENAME))
 
 
 class GetFailures(unittest.TestCase):

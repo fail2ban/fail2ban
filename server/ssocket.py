@@ -116,12 +116,13 @@ class SocketWorker(Thread):
 		self.__csock.close()
 		logSys.debug("Connection closed")
 	
-	@staticmethod
+	#@staticmethod
 	def __send(sock, msg):
 		obj = dumps(msg, HIGHEST_PROTOCOL)
 		sock.send(obj + SSocket.END_STRING)
+	__send = staticmethod(__send)
 	
-	@staticmethod
+	#@staticmethod
 	def __receive(sock):
 		msg = ''
 		while msg.rfind(SSocket.END_STRING) == -1:
@@ -130,6 +131,7 @@ class SocketWorker(Thread):
 				raise RuntimeError, "socket connection broken"
 			msg = msg + chunk
 		return loads(msg)
+	__receive = staticmethod(__receive)
 
 
 class SSocketErrorException(Exception):

@@ -231,7 +231,7 @@ class Action:
 	# @param aInfo the properties
 	# @return a string
 	
-	@staticmethod
+	#@staticmethod
 	def replaceTag(query, aInfo):
 		""" Replace tags in query
 		"""
@@ -241,6 +241,7 @@ class Action:
 		# New line
 		string = string.replace("<br>", '\n')
 		return string
+	replaceTag = staticmethod(replaceTag)
 	
 	##
 	# Executes a command with preliminary checks and substitutions.
@@ -297,7 +298,7 @@ class Action:
 	# @param realCmd the command to execute
 	# @return True if the command succeeded
 
-	@staticmethod
+	#@staticmethod
 	def executeCmd(realCmd):
 		logSys.debug(realCmd)
 		try:
@@ -312,3 +313,4 @@ class Action:
 		except OSError, e:
 			logSys.error("%s failed with %s" % (realCmd, e))
 		return False
+	executeCmd = staticmethod(executeCmd)

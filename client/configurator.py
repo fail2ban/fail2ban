@@ -40,13 +40,15 @@ class Configurator:
 		self.__fail2ban = Fail2banReader()
 		self.__jails = JailsReader()
 	
-	@staticmethod
+	#@staticmethod
 	def setBaseDir(folderName):
 		ConfigReader.setBaseDir(folderName)
+	setBaseDir = staticmethod(setBaseDir)
 	
-	@staticmethod
+	#@staticmethod
 	def getBaseDir():
 		return ConfigReader.getBaseDir()
+	getBaseDir = staticmethod(getBaseDir)
 	
 	def readEarly(self):
 		self.__fail2ban.read()

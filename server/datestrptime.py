@@ -54,13 +54,14 @@ class DateStrptime(DateTemplate):
 	def __init__(self):
 		DateTemplate.__init__(self)
 	
-	@staticmethod
+	#@staticmethod
 	def convertLocale(date):
 		for t in DateStrptime.TABLE:
 			for m in DateStrptime.TABLE[t]:
 				if date.find(m) >= 0:
 					return date.replace(m, t)
 		return date
+	convertLocale = staticmethod(convertLocale)
 	
 	def getDate(self, line):
 		date = None
