@@ -2,11 +2,11 @@
 <?eclipse-pydev version="1.0"?>
 
 <pydev_project>
-<pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.4</pydev_property>
+<pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.3</pydev_property>
 <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
-<path>/fail2ban-unstable/client</path>
-<path>/fail2ban-unstable/server</path>
-<path>/fail2ban-unstable/testcases</path>
-<path>/fail2ban-unstable</path>
+<path>/fail2ban-head/client</path>
+<path>/fail2ban-head/server</path>
+<path>/fail2ban-head/testcases</path>
+<path>/fail2ban-head</path>
 </pydev_pathproperty>
 </pydev_project>
