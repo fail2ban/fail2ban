@@ -27,7 +27,6 @@ __license__ = "GPL"
 
 import sys, string, os, pickle, re, logging, signal
 import getopt, time, shlex, socket
-#import readline
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
