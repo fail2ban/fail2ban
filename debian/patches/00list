@@ -1,2 +1,4 @@
 00_mail-whois-lines
+00_HOST_ignoreregex
+00_daemon_pids
 10_dbts_manpages
