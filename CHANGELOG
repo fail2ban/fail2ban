@@ -10,6 +10,7 @@ Fail2Ban (version 0.8.1)                           2007/??/??
 ver. 0.8.1 (2007/??/??) - stable
 ----------
 - Fixed vulnerability in sshd.conf. Thanks to Daniel B. Cid
+- Expand <HOST> in ignoreregex. Thanks to Yaroslav Halchenko
 
 ver. 0.8.0 (2007/05/03) - stable
 ----------
