@@ -13,6 +13,7 @@ ver. 0.9.0 (2007/??/??) - alpha
 - Made interactive mode optional in fail2ban-client
 - Fixed vulnerability in sshd.conf. Thanks to Daniel B. Cid
 - Expand <HOST> in ignoreregex. Thanks to Yaroslav Halchenko
+- Improved regular expressions. Thanks to Yaroslav Halchenko
 
 ver. 0.8.0 (2007/05/03) - stable
 ----------
