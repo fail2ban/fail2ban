@@ -42,6 +42,9 @@ class Regex:
 	
 	def __init__(self, regex):
 		self._matchCache = None
+		# Perform shortcuts expansions
+		# Replace "<HOST>" with default regular expression for host.
+		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>\S+)")
 		if regex.lstrip() == '':
 			raise RegexException("Cannot add empty regex")
 		try:

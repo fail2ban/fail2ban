@@ -40,9 +40,7 @@ class FailRegex(Regex):
 	# avoid construction of invalid object.
 	# @param value the regular expression
 	
-	def __init__(self, value):
-		# Replace "<HOST>" with default regular expression for host.
-		regex = value.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>\S+)")
+	def __init__(self, regex):
 		# Initializes the parent.
 		Regex.__init__(self, regex)
 		# Check for group "host"
