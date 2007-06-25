@@ -2,3 +2,5 @@
 00_HOST_ignoreregex
 00_daemon_pids
 10_dbts_manpages
+00_iptables_allports
+00_pam_generic

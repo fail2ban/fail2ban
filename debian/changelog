@@ -4,6 +4,8 @@ fail2ban (0.8.0-3~pre1) unstable; urgency=low
     Andrewartha.
   * Added optional regexp entry for process PID in some entries (closes:
     #426050). Thanks Roderick Schertler.
+  * Added a filter pam_generic to catch any login errors.
+  * Added iptables-allports.
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 19 Jun 2007 23:04:02 -0400
 
