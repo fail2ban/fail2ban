@@ -1,0 +1,20 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 00_var_run_socket.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: to close 425746: move socket under /var/run
+
+@DPATCH@
+diff -urNad trunk~/config/fail2ban.conf trunk/config/fail2ban.conf
+--- trunk~/config/fail2ban.conf	2007-05-05 21:30:21.000000000 -0400
++++ trunk/config/fail2ban.conf	2007-07-03 18:21:52.000000000 -0400
+@@ -28,7 +28,7 @@
+ # Notes.: Set the socket file. This is used to communicate with the daemon. Do
+ #         not remove this file when Fail2ban runs. It will not be possible to
+ #         communicate with the server afterwards.
+-# Values: FILE  Default:  /tmp/fail2ban.sock
++# Values: FILE  Default:  /var/run/fail2ban.sock
+ #
+-socket = /tmp/fail2ban.sock
++socket = /var/run/fail2ban.sock
+ 

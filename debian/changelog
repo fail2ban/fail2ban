@@ -6,6 +6,7 @@ fail2ban (0.8.0-3~pre2) unstable; urgency=low
     #426050). Thanks Roderick Schertler.
   * Added a filter pam_generic to catch any login errors.
   * Added iptables-allports.
+  * Use /var/run to keep socket file (closes: #425746)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 19 Jun 2007 23:04:02 -0400
 
