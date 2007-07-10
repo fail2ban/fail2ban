@@ -14,6 +14,7 @@ ver. 0.8.1 (2007/??/??) - stable
 - Improved regular expressions. Thanks to Yaroslav Halchenko
 - Added sendmail actions. The action started with "mail" are
   now deprecated. Thanks to Raphaël Marichez
+- Added "ignoreregex" support to fail2ban-regex
 
 ver. 0.8.0 (2007/05/03) - stable
 ----------
