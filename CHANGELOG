@@ -12,6 +12,7 @@ ver. 0.8.1 (2007/??/??) - stable
 - Fixed vulnerability in sshd.conf. Thanks to Daniel B. Cid
 - Expand <HOST> in ignoreregex. Thanks to Yaroslav Halchenko
 - Improved regular expressions. Thanks to Yaroslav Halchenko
+  and others
 - Added sendmail actions. The action started with "mail" are
   now deprecated. Thanks to Raphaël Marichez
 - Added "ignoreregex" support to fail2ban-regex
