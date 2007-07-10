@@ -414,6 +414,20 @@ class Filter(JailThread):
 		return True
 
 	##
+	# Returns true if the line should be ignored.
+	#
+	# Uses ignoreregex.
+	# @param line: the line
+	# @return: a boolean
+
+	def ignoreLine(self, line):
+		for ignoreRegex in self.__ignoreRegex:
+			ignoreRegex.search(line)
+			if ignoreRegex.hasMatched():
+				return True
+		return False
+
+	##
 	# Finds the failure in a line.
 	#
 	# Uses the failregex pattern to find it and timeregex in order
@@ -423,12 +437,9 @@ class Filter(JailThread):
 	def findFailure(self, line):
 		failList = list()
 		# Checks if we must ignore this line.
-		for ignoreRegex in self.__ignoreRegex:
-			ignoreRegex.search(line)
-			if ignoreRegex.hasMatched():
-				# The ignoreregex matched. Return.
-				logSys.debug("Ignoring this line")
-				return failList
+		if self.ignoreLine(line):
+			# The ignoreregex matched. Return.
+			return failList
 		# Iterates over all the regular expressions.
 		for failRegex in self.__failRegex:
 			failRegex.search(line)
