@@ -102,6 +102,7 @@ files/gentoo-confd
 files/redhat-initd
 files/solaris-fail2ban.xml
 files/solaris-svc-fail2ban
+files/suse-initd
 files/cacti/fail2ban_stats.sh
 files/cacti/cacti_host_template_fail2ban.xml
 files/cacti/README
