@@ -20,6 +20,8 @@ ver. 0.8.1 (2007/??/??) - stable
   Christian Rauch
 - Tightening up the pid check in redhat-initd. Thanks to
   David Nutter
+- Added webmin authentication filter. Thanks to Guillaume
+  Delvit
 
 ver. 0.8.0 (2007/05/03) - stable
 ----------
