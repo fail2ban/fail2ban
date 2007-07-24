@@ -7,7 +7,7 @@
 @DPATCH@
 diff -urNad trunk~/config/filter.d/pam-generic.conf trunk/config/filter.d/pam-generic.conf
 --- trunk~/config/filter.d/pam-generic.conf	1969-12-31 19:00:00.000000000 -0500
-+++ trunk/config/filter.d/pam-generic.conf	2007-07-20 22:29:38.000000000 -0400
++++ trunk/config/filter.d/pam-generic.conf	2007-07-24 13:25:12.000000000 -0400
 @@ -0,0 +1,25 @@
 +# Fail2Ban configuration file for generic PAM authentication errors
 +#
@@ -19,7 +19,7 @@ diff -urNad trunk~/config/filter.d/pam-generic.conf trunk/config/filter.d/pam-ge
 +[Definition]
 +
 +# if you want to catch only login erros from specific daemons, use smth like
-+#_ttys_re=(?:ssh|pure-ftpd)
++#_ttys_re=(?:ssh|pure-ftpd|ftp)
 +# To catch all failed logins
 +_ttys_re=\S*
 +
@@ -36,7 +36,7 @@ diff -urNad trunk~/config/filter.d/pam-generic.conf trunk/config/filter.d/pam-ge
 +failregex = \s\S+ \S+%(__pam_combs_re)s\s+authentication failure; logname=\S* uid=\S* euid=\S* tty=%(_ttys_re)s ruser=\S* rhost=<HOST>(?:\s+user=.*)?\s*$
 diff -urNad trunk~/config/filter.d/pam-generic.examples trunk/config/filter.d/pam-generic.examples
 --- trunk~/config/filter.d/pam-generic.examples	1969-12-31 19:00:00.000000000 -0500
-+++ trunk/config/filter.d/pam-generic.examples	2007-07-20 22:29:18.000000000 -0400
++++ trunk/config/filter.d/pam-generic.examples	2007-07-24 13:24:49.000000000 -0400
 @@ -0,0 +1,7 @@
 +Feb  7 15:10:42 example pure-ftpd: (pam_unix) authentication failure; logname= uid=0 euid=0 tty=pure-ftpd ruser=sample-user rhost=192.168.1.1 
 +May 12 09:47:54 vaio sshd[16004]: (pam_unix) authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=71-13-115-12.static.mdsn.wi.charter.com  user=root
