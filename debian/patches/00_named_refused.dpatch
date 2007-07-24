@@ -7,7 +7,7 @@
 @DPATCH@
 diff -urNad trunk~/config/filter.d/named-refused.conf trunk/config/filter.d/named-refused.conf
 --- trunk~/config/filter.d/named-refused.conf	1969-12-31 19:00:00.000000000 -0500
-+++ trunk/config/filter.d/named-refused.conf	2007-07-24 13:56:43.000000000 -0400
++++ trunk/config/filter.d/named-refused.conf	2007-07-24 16:02:15.000000000 -0400
 @@ -0,0 +1,33 @@
 +# Fail2Ban configuration file for named (bind9). Trying to generalize the
 +#          structure which is general to capture general patterns in log
@@ -39,242 +39,23 @@ diff -urNad trunk~/config/filter.d/named-refused.conf trunk/config/filter.d/name
 +# Values: TEXT
 +#
 +failregex = %(__line_prefix)sunexpected RCODE \(%(_named_rcodes)s\) resolving '.*': <HOST>#\S+$
-+		    %(__line_prefix)sclient <HOST>#\S+: query\s*\(cache\) '.*' denied$
++		    %(__line_prefix)sclient <HOST>#\S+: query(?: \(cache\))? '.*' denied\s*$
 +
 +
 diff -urNad trunk~/config/filter.d/named-refused.examples trunk/config/filter.d/named-refused.examples
 --- trunk~/config/filter.d/named-refused.examples	1969-12-31 19:00:00.000000000 -0500
-+++ trunk/config/filter.d/named-refused.examples	2007-07-24 13:57:18.000000000 -0400
-@@ -0,0 +1,232 @@
-+Jul 24 12:28:45 raid5 named[3935]: client 148.160.29.6#33081: query(cache) 'wolfsmensch.de/NS/IN' denied
-+Jul 24 12:31:56 raid5 named[3935]: client 148.160.29.6#33081: query(cache) 'innomate.de/NS/IN' denied
++++ trunk/config/filter.d/named-refused.examples	2007-07-24 16:02:15.000000000 -0400
+@@ -0,0 +1,13 @@
 +Jul 15 18:42:00 raid5 named[3888]: unexpected RCODE (SERVFAIL) resolving 'skira.de/NS/IN': 216.14.208.5#53
 +Jul 15 18:42:01 raid5 named[3888]: unexpected RCODE (SERVFAIL) resolving 'skira.de/NS/IN': 216.14.208.4#53
-+Jul 15 18:42:02 raid5 named[3888]: unexpected RCODE (SERVFAIL) resolving 'skira.de/NS/IN': 216.199.54.11#53
-+Jul 15 18:42:03 raid5 named[3888]: unexpected RCODE (SERVFAIL) resolving 'skira.de/NS/IN': 216.199.0.132#53
-+Jul 16 05:20:50 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'er-solution.de/NS/IN': 216.199.54.11#53
-+Jul 16 05:20:51 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'er-solution.de/NS/IN': 216.14.208.5#53
-+Jul 16 05:20:51 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'er-solution.de/NS/IN': 216.199.0.132#53
-+Jul 16 05:20:52 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'er-solution.de/NS/IN': 216.14.208.4#53
-+Jul 16 07:28:27 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'weisberg.de/NS/IN': 216.14.208.5#53
-+Jul 16 07:28:28 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'weisberg.de/NS/IN': 216.199.54.11#53
-+Jul 16 07:28:28 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'weisberg.de/NS/IN': 216.14.208.4#53
-+Jul 16 07:28:29 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'weisberg.de/NS/IN': 216.199.0.132#53
-+Jul 16 09:03:03 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'schwaebischhall-tourismus.de/A/IN': 216.14.208.4#53
-+Jul 16 09:03:04 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'schwaebischhall-tourismus.de/A/IN': 216.14.208.5#53
-+Jul 16 09:03:05 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'schwaebischhall-tourismus.de/A/IN': 216.199.54.11#53
-+Jul 16 09:03:07 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'schwaebischhall-tourismus.de/A/IN': 216.199.0.132#53
-+Jul 16 09:03:07 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'schwaebischhall-tourismus.de/A/IN': 217.69.160.18#53
-+Jul 16 09:03:07 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'schwaebischhall-tourismus.de/A/IN': 217.69.161.92#53
-+Jul 16 11:17:05 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'joyfleming.de/A/IN': 216.14.208.4#53
-+Jul 16 11:17:07 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'joyfleming.de/A/IN': 216.199.0.132#53
-+Jul 16 11:17:07 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'joyfleming.de/A/IN': 216.199.54.11#53
-+Jul 16 19:04:04 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'linkbanner.de/A/IN': 216.14.208.5#53
-+Jul 16 19:04:05 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'linkbanner.de/A/IN': 216.14.208.4#53
-+Jul 16 19:04:05 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'linkbanner.de/A/IN': 216.199.54.11#53
-+Jul 16 19:04:06 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'linkbanner.de/A/IN': 216.199.0.132#53
-+Jul 17 00:21:34 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'it-prosystems.de/NS/IN': 216.14.208.4#53
-+Jul 17 00:21:35 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'it-prosystems.de/NS/IN': 216.14.208.5#53
-+Jul 17 00:21:35 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'it-prosystems.de/NS/IN': 216.199.54.11#53
-+Jul 17 00:21:36 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'it-prosystems.de/NS/IN': 216.199.0.132#53
-+Jul 17 01:46:04 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'vallone.de/A/IN': 216.199.54.11#53
-+Jul 17 01:46:06 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'vallone.de/A/IN': 216.14.208.4#53
-+Jul 17 01:46:07 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'vallone.de/A/IN': 216.14.208.5#53
-+Jul 17 01:46:08 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'vallone.de/A/IN': 216.199.0.132#53
-+Jul 17 01:46:09 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'vallone.de/A/IN': 193.158.124.144#53
 +Jul 17 01:46:09 raid5 named[3866]: lame server resolving 'vallone.de' (in 'vallone.de'?): 62.156.146.242#53
-+Jul 17 01:46:09 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'vallone.de/A/IN': 193.158.124.143#53
 +Jul 17 01:49:41 raid5 named[3866]: unexpected RCODE (REFUSED) resolving 'a-s-l.de/A/IN': 192.76.144.17#53
 +Jul 17 01:49:41 raid5 named[3866]: unexpected RCODE (REFUSED) resolving 'a-s-l.de/A/IN': 194.128.171.100#53
-+Jul 17 01:49:57 raid5 named[3866]: unexpected RCODE (REFUSED) resolving 'ns1.a-s-l.de/AAAA/IN': 194.128.171.100#53
-+Jul 17 01:49:57 raid5 named[3866]: unexpected RCODE (REFUSED) resolving 'ns1.a-s-l.de/AAAA/IN': 192.76.144.17#53
-+Jul 17 02:30:49 raid5 syslog-ng[2594]: STATS: dropped 0
-+Jul 17 03:30:50 raid5 syslog-ng[2594]: STATS: dropped 0
-+Jul 17 04:30:50 raid5 syslog-ng[2594]: STATS: dropped 0
-+Jul 17 05:15:51 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'metal-fuer-alle.de/NS/IN': 216.199.0.132#53
-+Jul 17 05:15:52 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'metal-fuer-alle.de/NS/IN': 216.14.208.4#53
-+Jul 17 05:15:53 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'metal-fuer-alle.de/NS/IN': 216.199.54.11#53
-+Jul 17 05:15:54 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'metal-fuer-alle.de/NS/IN': 216.14.208.5#53
-+Jul 17 05:15:54 raid5 named[3866]: unexpected RCODE (REFUSED) resolving 'metal-fuer-alle.de/NS/IN': 212.78.206.21#53
-+Jul 17 05:15:55 raid5 named[3866]: unexpected RCODE (REFUSED) resolving 'metal-fuer-alle.de/NS/IN': 212.78.192.249#53
-+Jul 17 05:15:55 raid5 named[3866]: unexpected RCODE (REFUSED) resolving 'metal-fuer-alle.de/NS/IN': 212.78.206.22#53
-+Jul 17 11:18:37 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'stadtkrankenhaus-ruesselsheim.de/A/IN': 216.199.0.132#53
-+Jul 17 11:18:38 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'stadtkrankenhaus-ruesselsheim.de/A/IN': 216.199.54.11#53
-+Jul 17 11:18:38 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'stadtkrankenhaus-ruesselsheim.de/A/IN': 216.14.208.4#53
-+Jul 17 11:18:39 raid5 named[3866]: unexpected RCODE (SERVFAIL) resolving 'stadtkrankenhaus-ruesselsheim.de/A/IN': 216.14.208.5#53
 +Jul 17 11:18:39 raid5 named[3866]: unexpected RCODE (REFUSED) resolving 'stadtkrankenhaus-ruesselsheim.de/A/IN': 192.76.144.15#53
 +Jul 17 11:18:39 raid5 named[3866]: unexpected RCODE (REFUSED) resolving 'stadtkrankenhaus-ruesselsheim.de/A/IN': 194.128.171.101#53
-+Jul 17 11:44:32 raid5 named[3866]: shutting down: flushing changes
-+Jul 17 11:44:32 raid5 named[3866]: stopping command channel on 127.0.0.1#953
-+Jul 17 11:44:32 raid5 named[3866]: stopping command channel on ::1#953
-+Jul 17 11:44:32 raid5 named[3866]: no longer listening on ::#53
-+Jul 17 11:44:32 raid5 named[3866]: no longer listening on 127.0.0.1#53
-+Jul 17 11:44:32 raid5 named[3866]: no longer listening on 70.46.31.227#53
-+Jul 17 11:44:32 raid5 named[3866]: exiting
-+Jul 17 11:46:22 raid5 named[3800]: starting BIND 9.3.2 -t /var/lib/named -u named
-+Jul 17 11:46:22 raid5 named[3800]: found 1 CPU, using 1 worker thread
-+Jul 17 11:46:22 raid5 named[3800]: loading configuration from '/etc/named.conf'
-+Jul 17 11:46:22 raid5 named[3800]: listening on IPv6 interfaces, port 53
-+Jul 17 11:46:22 raid5 named[3800]: listening on IPv4 interface lo, 127.0.0.1#53
-+Jul 17 11:46:22 raid5 named[3800]: listening on IPv4 interface eth0, 70.46.31.227#53
-+Jul 17 11:46:23 raid5 named[3800]: command channel listening on 127.0.0.1#953
-+Jul 17 11:46:23 raid5 named[3800]: command channel listening on ::1#953
-+Jul 17 11:46:23 raid5 named[3800]: zone 0.0.127.in-addr.arpa/IN: loaded serial 42
-+Jul 17 11:46:23 raid5 named[3800]: zone ricreig.com/IN: loaded serial 2007071302
-+Jul 17 11:46:23 raid5 named[3800]: zone localhost/IN: loaded serial 42
-+Jul 17 11:46:23 raid5 named[3800]: running
-+Jul 17 12:23:08 raid5 named[3842]: unexpected RCODE (SERVFAIL) resolving 'lea-nrw.de/A/IN': 216.199.0.132#53
-+Jul 17 12:23:08 raid5 named[3842]: unexpected RCODE (SERVFAIL) resolving 'lea-nrw.de/A/IN': 216.14.208.5#53
-+Jul 17 12:23:09 raid5 named[3842]: unexpected RCODE (SERVFAIL) resolving 'lea-nrw.de/A/IN': 216.14.208.4#53
-+Jul 17 12:23:09 raid5 named[3842]: unexpected RCODE (SERVFAIL) resolving 'lea-nrw.de/A/IN': 216.199.54.11#53
-+Jul 17 12:23:10 raid5 named[3842]: lame server resolving 'lea-nrw.de' (in 'lea-nrw.de'?): 213.203.238.202#53
-+Jul 17 12:23:10 raid5 named[3842]: lame server resolving 'lea-nrw.de' (in 'lea-nrw.de'?): 83.220.144.3#53
-+Jul 17 16:06:51 raid5 named[3770]: unexpected RCODE (SERVFAIL) resolving 'linuxbox.de/A/IN': 217.160.113.11#53
-+Jul 17 16:06:52 raid5 named[3770]: unexpected RCODE (SERVFAIL) resolving 'linuxbox.de/A/IN': 62.116.129.129#53
-+Jul 17 16:06:52 raid5 named[3770]: unexpected RCODE (SERVFAIL) resolving 'linuxbox.de/A/IN': 69.64.50.226#53
-+Jul 17 16:06:52 raid5 named[3770]: unexpected RCODE (SERVFAIL) resolving 'linuxbox.de/A/IN': 62.116.163.100#53
-+Jul 17 16:36:48 raid5 named[3770]: shutting down: flushing changes
-+Jul 17 16:36:48 raid5 named[3770]: stopping command channel on 127.0.0.1#953
-+Jul 17 16:36:48 raid5 named[3770]: stopping command channel on ::1#953
-+Jul 17 16:36:48 raid5 named[3770]: no longer listening on ::#53
-+Jul 17 16:36:48 raid5 named[3770]: no longer listening on 127.0.0.1#53
-+Jul 17 16:36:48 raid5 named[3770]: no longer listening on 70.46.31.227#53
-+Jul 17 16:36:48 raid5 named[3770]: exiting
-+Jul 17 23:02:06 raid5 named[3861]: unexpected RCODE (SERVFAIL) resolving 'diesel-motor-tuning.de/A/IN': 216.199.54.11#53
-+Jul 17 23:02:06 raid5 named[3861]: unexpected RCODE (SERVFAIL) resolving 'diesel-motor-tuning.de/A/IN': 216.199.0.132#53
-+Jul 17 23:02:07 raid5 named[3861]: unexpected RCODE (SERVFAIL) resolving 'diesel-motor-tuning.de/A/IN': 216.14.208.4#53
-+Jul 17 23:02:07 raid5 named[3861]: unexpected RCODE (SERVFAIL) resolving 'diesel-motor-tuning.de/A/IN': 216.14.208.5#53
-+Jul 17 23:02:08 raid5 named[3861]: lame server resolving 'diesel-motor-tuning.de' (in 'diesel-motor-tuning.de'?): 85.214.0.246#53
-+Jul 17 23:02:08 raid5 named[3861]: lame server resolving 'diesel-motor-tuning.de' (in 'diesel-motor-tuning.de'?): 81.169.146.16#53
-+Jul 18 05:43:33 raid5 named[3861]: stopping command channel on 127.0.0.1#953
-+Jul 18 05:43:33 raid5 named[3861]: stopping command channel on ::1#953
-+Jul 18 05:43:33 raid5 named[3861]: no longer listening on ::#53
-+Jul 18 05:43:33 raid5 named[3861]: no longer listening on 127.0.0.1#53
-+Jul 18 05:43:33 raid5 named[3861]: no longer listening on 70.46.31.227#53
-+Jul 18 05:43:33 raid5 named[3861]: exiting
-+Jul 18 05:45:19 raid5 named[3891]: starting BIND 9.3.2 -t /var/lib/named -u named
-+Jul 18 05:45:19 raid5 named[3891]: found 1 CPU, using 1 worker thread
-+Jul 18 05:45:19 raid5 named[3891]: loading configuration from '/etc/named.conf'
-+Jul 18 05:45:19 raid5 named[3891]: listening on IPv6 interfaces, port 53
-+Jul 18 05:45:19 raid5 named[3891]: listening on IPv4 interface lo, 127.0.0.1#53
-+Jul 18 05:45:19 raid5 named[3891]: listening on IPv4 interface eth0, 70.46.31.227#53
-+Jul 18 14:04:01 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'b-kr.de/A/IN': 216.199.54.11#53
-+Jul 18 14:04:02 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'b-kr.de/A/IN': 216.14.208.4#53
-+Jul 18 14:04:02 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'b-kr.de/A/IN': 216.199.0.132#53
-+Jul 18 14:04:03 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'b-kr.de/A/IN': 216.14.208.5#53
-+Jul 18 14:04:03 raid5 named[3891]: lame server resolving 'b-kr.de' (in 'b-kr.de'?): 85.214.0.232#53
-+Jul 18 14:04:03 raid5 named[3891]: lame server resolving 'b-kr.de' (in 'b-kr.de'?): 81.169.146.20#53
-+Jul 18 20:11:55 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'kwok.de/A/IN': 216.199.54.11#53
-+Jul 18 20:11:55 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'kwok.de/A/IN': 216.14.208.5#53
-+Jul 18 20:11:56 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'kwok.de/A/IN': 216.199.0.132#53
-+Jul 18 20:11:57 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'kwok.de/A/IN': 216.14.208.4#53
-+Jul 18 20:11:57 raid5 named[3891]: lame server resolving 'kwok.de' (in 'kwok.de'?): 85.214.0.247#53
-+Jul 18 20:11:57 raid5 named[3891]: lame server resolving 'kwok.de' (in 'kwok.de'?): 81.169.146.29#53
-+Jul 18 20:50:35 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'www.nrlmry.navy.mil/A/IN': 216.14.208.4#53
-+Jul 18 20:51:38 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'www.nrlmry.navy.mil/A/IN': 216.14.208.4#53
-+Jul 18 23:26:31 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'golgotha.de/A/IN': 216.14.208.5#53
-+Jul 18 23:26:33 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'golgotha.de/A/IN': 216.14.208.4#53
-+Jul 18 23:26:33 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'golgotha.de/A/IN': 216.199.54.11#53
-+Jul 18 23:26:34 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'golgotha.de/A/IN': 216.199.0.132#53
 +Jul 18 23:26:34 raid5 named[3891]: unexpected RCODE (REFUSED) resolving 'golgotha.de/A/IN': 217.195.32.108#53
-+Jul 18 23:26:35 raid5 named[3891]: unexpected RCODE (REFUSED) resolving 'golgotha.de/A/IN': 81.3.2.142#53
-+Jul 19 00:44:46 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'dr-levien.de/NS/IN': 216.14.208.4#53
-+Jul 19 00:44:47 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'dr-levien.de/NS/IN': 216.199.0.132#53
-+Jul 19 00:44:48 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'dr-levien.de/NS/IN': 216.14.208.5#53
-+Jul 19 00:44:51 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'dr-levien.de/NS/IN': 216.199.54.11#53
-+Jul 19 00:44:52 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'dr-levien.de/NS/IN': 212.112.227.247#53
-+Jul 19 00:44:52 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'dr-levien.de/NS/IN': 212.124.35.10#53
-+Jul 19 00:59:02 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'requena.de/A/IN': 216.14.208.4#53
-+Jul 19 00:59:03 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'requena.de/A/IN': 216.14.208.5#53
-+Jul 19 00:59:03 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'requena.de/A/IN': 216.199.54.11#53
-+Jul 19 00:59:04 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'requena.de/A/IN': 216.199.0.132#53
-+Jul 19 00:59:05 raid5 named[3891]: lame server resolving 'requena.de' (in 'requena.de'?): 87.106.31.55#53
-+Jul 19 02:32:35 raid5 mountd[3982]: authenticated unmount request from 70.46.31.226:734 for /usr/share (/usr/share)
-+Jul 19 02:32:58 raid5 mountd[3982]: authenticated unmount request from 70.46.31.226:734 for /usr/share (/usr/share)
-+Jul 19 02:32:58 raid5 mountd[3982]: authenticated unmount request from 70-46-31-226.orl.fdn.com:734 for /usr/share (/usr/share)
-+Jul 19 02:32:58 raid5 mountd[3982]: authenticated unmount request from 70-46-31-226.orl.fdn.com:734 for /usr/share (/usr/share)
-+Jul 19 02:32:58 raid5 mountd[3982]: authenticated unmount request from 70-46-31-226.orl.fdn.com:734 for /usr/share (/usr/share)
-+Jul 19 02:32:58 raid5 mountd[3982]: authenticated unmount request from 70-46-31-226.orl.fdn.com:734 for /usr/share (/usr/share)
-+Jul 19 02:32:58 raid5 mountd[3982]: authenticated unmount request from 70-46-31-226.orl.fdn.com:734 for /usr/share (/usr/share)
-+Jul 19 02:32:58 raid5 mountd[3982]: authenticated unmount request from 70-46-31-226.orl.fdn.com:735 for /multimedia (/multimedia)
-+Jul 19 02:32:59 raid5 mountd[3982]: authenticated unmount request from 70-46-31-226.orl.fdn.com:735 for /multimedia (/multimedia)
-+Jul 19 02:32:59 raid5 mountd[3982]: authenticated unmount request from 70-46-31-226.orl.fdn.com:735 for /multimedia (/multimedia)
-+Jul 19 02:32:59 raid5 mountd[3982]: authenticated unmount request from 70-46-31-226.orl.fdn.com:735 for /multimedia (/multimedia)
-+Jul 19 02:32:59 raid5 mountd[3982]: authenticated unmount request from 70-46-31-226.orl.fdn.com:735 for /multimedia (/multimedia)
-+Jul 19 02:32:59 raid5 mountd[3982]: authenticated unmount request from 70-46-31-226.orl.fdn.com:735 for /multimedia (/multimedia)
-+Jul 19 03:40:14 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'scully.de/NS/IN': 216.199.54.11#53
-+Jul 19 03:40:15 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'scully.de/NS/IN': 216.14.208.5#53
-+Jul 19 03:40:16 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'scully.de/NS/IN': 216.199.0.132#53
-+Jul 19 03:40:16 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'scully.de/NS/IN': 216.14.208.4#53
-+Jul 19 03:40:16 raid5 named[3891]: lame server resolving 'scully.de' (in 'scully.de'?): 212.172.221.3#53
-+Jul 19 03:40:17 raid5 named[3891]: lame server resolving 'scully.de' (in 'scully.de'?): 62.26.219.10#53
-+Jul 19 05:37:37 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'ladyluna.de/A/IN': 216.14.208.5#53
-+Jul 19 05:37:37 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'ladyluna.de/A/IN': 216.199.54.11#53
-+Jul 19 05:37:37 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'ladyluna.de/A/IN': 216.199.0.132#53
-+Jul 19 05:37:39 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'ladyluna.de/A/IN': 216.14.208.4#53
-+Jul 19 05:37:39 raid5 named[3891]: lame server resolving 'ladyluna.de' (in 'ladyluna.de'?): 85.214.34.122#53
-+Jul 19 05:37:39 raid5 named[3891]: lame server resolving 'ladyluna.de' (in 'ladyluna.de'?): 213.73.103.1#53
-+Jul 19 07:10:07 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'theater-getuerkt.de/A/IN': 216.199.54.11#53
-+Jul 19 07:10:09 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'theater-getuerkt.de/A/IN': 216.199.0.132#53
-+Jul 19 07:10:10 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'theater-getuerkt.de/A/IN': 216.14.208.4#53
-+Jul 19 07:10:12 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'theater-getuerkt.de/A/IN': 216.14.208.5#53
-+Jul 19 08:27:29 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'ns1.softgroup.net/AAAA/IN': 216.199.0.132#53
-+Jul 19 08:27:29 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'ns2.softgroup.net/AAAA/IN': 216.199.0.132#53
-+Jul 19 08:27:29 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'ns1.softgroup.net/AAAA/IN': 216.14.208.5#53
-+Jul 19 08:27:29 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'ns2.softgroup.net/AAAA/IN': 216.14.208.5#53
-+Jul 19 08:27:30 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'ns1.softgroup.net/AAAA/IN': 216.199.54.11#53
-+Jul 19 08:27:30 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'ns2.softgroup.net/AAAA/IN': 216.199.54.11#53
-+Jul 19 08:27:30 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'ns1.softgroup.net/AAAA/IN': 216.14.208.4#53
-+Jul 19 08:27:30 raid5 named[3891]: unexpected RCODE (SERVFAIL) resolving 'ns2.softgroup.net/AAAA/IN': 216.14.208.4#53
-+Jul 19 08:27:30 raid5 named[3891]: FORMERR resolving 'ns1.softgroup.net/AAAA/IN': 64.14.244.254#53
-+Jul 19 08:27:30 raid5 named[3891]: FORMERR resolving 'ns2.softgroup.net/AAAA/IN': 64.14.244.254#53
-+Jul 19 08:27:30 raid5 named[3891]: FORMERR resolving 'ns1.softgroup.net/AAAA/IN': 64.34.46.254#53
-+Jul 19 08:27:30 raid5 named[3891]: FORMERR resolving 'ns2.softgroup.net/AAAA/IN': 64.34.46.254#53
-+Jul 21 05:30:45 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.14.208.5#53
-+Jul 21 05:30:46 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.199.0.132#53
-+Jul 21 05:30:47 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.199.54.11#53
-+Jul 21 05:30:48 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.14.208.4#53
-+Jul 21 05:30:48 raid5 named[11450]: unexpected RCODE (REFUSED) resolving 'losmac.de/NS/IN': 212.78.206.22#53
-+Jul 21 05:30:48 raid5 named[11450]: unexpected RCODE (REFUSED) resolving 'losmac.de/NS/IN': 212.78.192.249#53
-+Jul 21 05:30:48 raid5 named[11450]: unexpected RCODE (REFUSED) resolving 'losmac.de/NS/IN': 212.78.206.21#53
-+Jul 21 05:30:49 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.14.208.5#53
-+Jul 21 05:30:50 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.199.54.11#53
-+Jul 21 05:30:51 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.199.0.132#53
-+Jul 21 05:30:52 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.14.208.4#53
-+Jul 21 05:30:52 raid5 named[11450]: unexpected RCODE (REFUSED) resolving 'losmac.de/NS/IN': 212.78.206.22#53
-+Jul 21 05:30:52 raid5 named[11450]: unexpected RCODE (REFUSED) resolving 'losmac.de/NS/IN': 212.78.206.21#53
-+Jul 21 05:30:52 raid5 named[11450]: unexpected RCODE (REFUSED) resolving 'losmac.de/NS/IN': 212.78.192.249#53
-+Jul 21 05:30:53 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.14.208.5#53
-+Jul 21 05:30:53 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.14.208.4#53
-+Jul 21 05:30:54 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.199.54.11#53
-+Jul 21 05:30:55 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.199.0.132#53
-+Jul 21 05:30:55 raid5 named[11450]: unexpected RCODE (REFUSED) resolving 'losmac.de/NS/IN': 212.78.206.22#53
-+Jul 21 05:30:55 raid5 named[11450]: unexpected RCODE (REFUSED) resolving 'losmac.de/NS/IN': 212.78.206.21#53
-+Jul 21 05:30:56 raid5 named[11450]: unexpected RCODE (REFUSED) resolving 'losmac.de/NS/IN': 212.78.192.249#53
-+Jul 21 05:30:56 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.14.208.4#53
-+Jul 21 05:30:57 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.14.208.5#53
-+Jul 21 05:30:58 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.199.54.11#53
-+Jul 21 05:30:59 raid5 named[11450]: unexpected RCODE (SERVFAIL) resolving 'losmac.de/NS/IN': 216.199.0.132#53
-+Jul 21 05:30:59 raid5 named[11450]: unexpected RCODE (REFUSED) resolving 'losmac.de/NS/IN': 212.78.206.22#53
-+Jul 21 05:30:59 raid5 named[11450]: unexpected RCODE (REFUSED) resolving 'losmac.de/NS/IN': 212.78.206.21#53
-+Jul 21 05:30:59 raid5 named[11450]: unexpected RCODE (REFUSED) resolving 'losmac.de/NS/IN': 212.78.192.249#53
-+
-+
-+
-+
-+
-+However, anything in MY network 70.46.31.22? should be ignored (of course it wont be refused or have  RCODE etc either)
-+
-+Jul 20 20:01:05 raid5 named[10909]: client 70.46.31.227#1137: query: pop.gmail.com IN AAAA +
-+Jul 20 20:01:05 raid5 named[10909]: client 70.46.31.227#1137: query: pop.gmail.com IN A +
-+Jul 20 20:01:16 raid5 named[10909]: client 70.46.31.227#1137: query: www.ricreig.com IN AAAA +
-+Jul 20 20:01:16 raid5 named[10909]: client 70.46.31.227#1137: query: www.ricreig.com.ricreig.com IN AAAA +
-+Jul 20 20:01:16 raid5 named[10909]: client 70.46.31.227#1137: query: www.ricreig.com IN A +
-+Jul 20 20:03:25 raid5 named[10909]: client 148.160.29.6#33079: query: kwg-store.de IN NS +
-+Jul 20 20:03:28 raid5 named[10909]: client 148.160.29.10#34769: query: adv-ag.de IN A +
-+Jul 20 20:03:31 raid5 named[10909]: client 70.46.31.227#1137: query: mail.ricreig.com IN AAAA +
-+Jul 20 20:03:31 raid5 named[10909]: client 70.46.31.227#1137: query: mail.ricreig.com.ricreig.com IN AAAA +
-+Jul 20 20:03:31 raid5 named[10909]: client 70.46.31.227#1137: query: mail.ricreig.com IN AAAA +
-+Jul 20 20:03:31 raid5 named[10909]: client 70.46.31.227#1137: query: mail.ricreig.com.ricreig.com IN AAAA +
-+Jul 20 20:03:32 raid5 named[10909]: client 70.46.31.227#1137: query: pop3.fdn.com IN A +
-+Jul 20 20:03:32 raid5 named[10909]: client 70.46.31.227#1138: query: pop3.fdn.com IN AAAA +
++Jul 24 14:16:55 raid5 named[3935]: client 194.145.196.18#4795: query 'ricreig.com/NS/IN' denied
++Jul 24 14:16:56 raid5 named[3935]: client 62.123.164.113#32768: query 'ricreig.com/NS/IN' denied
++Jul 24 14:17:13 raid5 named[3935]: client 148.160.29.6#33081: query (cache) 'geo-mueller.de/NS/IN' denied
++Jul 24 14:20:25 raid5 named[3935]: client 148.160.29.6#33081: query (cache) 'shivaree.de/NS/IN' denied
++Jul 24 14:23:36 raid5 named[3935]: client 148.160.29.6#33081: query (cache) 'mietberatung.de/NS/IN' denied
