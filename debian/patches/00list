@@ -5,3 +5,4 @@
 10_dbts_manpages
 00_iptables_allports
 00_pam_generic
+00_named_refused
