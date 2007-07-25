@@ -1,4 +1,4 @@
-fail2ban (0.8.0-3~pre3) unstable; urgency=low
+fail2ban (0.8.0-3~pre4) unstable; urgency=low
 
   * Moved <HOST> expansion into regex.py (closes: #429263). Thanks James
     Andrewartha.
@@ -8,6 +8,8 @@ fail2ban (0.8.0-3~pre3) unstable; urgency=low
   * Added iptables-allports.
   * Use /var/run to keep socket file (closes: #425746)
   * Added a filter for named to catch refused/denied queries
+  * jail.conf has specification of protocol (default to tcp) to be provided to
+    banaction
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 19 Jun 2007 23:04:02 -0400
 
