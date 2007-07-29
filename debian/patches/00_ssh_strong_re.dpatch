@@ -1,0 +1,49 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 00_ssh_strong_re.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad fail2ban-0.8.0~/config/filter.d/sshd.conf fail2ban-0.8.0/config/filter.d/sshd.conf
+--- fail2ban-0.8.0~/config/filter.d/sshd.conf	2007-02-22 15:52:37.000000000 -0500
++++ fail2ban-0.8.0/config/filter.d/sshd.conf	2007-07-29 13:14:50.000000000 -0400
+@@ -14,10 +14,11 @@
+ #          (?:::f{4,6}:)?(?P<host>\S+)
+ # Values:  TEXT
+ #
+-failregex = Authentication failure for .* from <HOST>
+-            Failed [-/\w]+ for .* from <HOST>
+-            ROOT LOGIN REFUSED .* FROM <HOST>
+-            [iI](?:llegal|nvalid) user .* from <HOST>
++failregex = (?:error: PAM: )?Authentication failure for .* from <HOST>\s*$
++            Failed [-/\w]+ for .* from <HOST>(?: port \d*)?(?: ssh\d*)?$
++            ROOT LOGIN REFUSED.* FROM <HOST>\s*$
++            [iI](?:llegal|nvalid) user .* from <HOST>\s*$
++            User \S+ from <HOST> not allowed because not listed in AllowUsers$
+ 
+ # Option:  ignoreregex
+ # Notes.:  regex to ignore. If this regex matches, the line is ignored.
+diff -urNad fail2ban-0.8.0~/config/filter.d/sshd.examples fail2ban-0.8.0/config/filter.d/sshd.examples
+--- fail2ban-0.8.0~/config/filter.d/sshd.examples	1969-12-31 19:00:00.000000000 -0500
++++ fail2ban-0.8.0/config/filter.d/sshd.examples	2007-07-29 13:14:22.000000000 -0400
+@@ -0,0 +1,19 @@
++#1
++Jun 21 16:47:48 digital-mlhhyiqscv sshd[13709]: error: PAM: Authentication failure for myhlj1374 from 192.030.0.6
++May 29 20:56:52 imago sshd[28732]: error: PAM: Authentication failure for stefanor from www.onerussian.com
++
++#2
++Feb 25 14:34:10 belka sshd[31602]: Failed password for invalid user ROOT from 194.117.26.69 port 50273 ssh2
++Feb 25 14:34:10 belka sshd[31602]: Failed password for invalid user ROOT from 194.117.26.70 port 12345
++
++#3
++Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM 1.2.3.4
++Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM ::ffff:1.2.3.4
++
++#4
++Jul 20 14:42:11 localhost sshd[22708]: Invalid user ftp from 211.114.51.213
++
++
++#5 new filter introduced after looking at 44087D8C.9090407@bluewin.ch
++Mar  3 00:17:22 [sshd] User root from 210.188.220.49 not allowed because not listed in AllowUsers
++Feb 25 14:34:11 belka sshd[31607]: User root from ferrari.inescn.pt not allowed because not listed in AllowUsers

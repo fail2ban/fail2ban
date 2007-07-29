@@ -4,5 +4,6 @@
 00_daemon_pids
 10_dbts_manpages
 00_iptables_allports
+00_ssh_strong_re
 00_pam_generic
 00_named_refused

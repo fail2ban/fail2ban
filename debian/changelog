@@ -1,4 +1,4 @@
-fail2ban (0.8.0-3~pre4) unstable; urgency=low
+fail2ban (0.8.0-4) unstable; urgency=low
 
   * Moved <HOST> expansion into regex.py (closes: #429263). Thanks James
     Andrewartha.
@@ -10,6 +10,11 @@ fail2ban (0.8.0-3~pre4) unstable; urgency=low
   * Added a filter for named to catch refused/denied queries
   * jail.conf has specification of protocol (default to tcp) to be provided to
     banaction
+  * Adjusted failregex for sshd filter:
+    - anchored properly at the end of line, and source code has .examples
+      files to perform testing of the rules.
+    - added new explicit rule for users not in the AllowUsers lists
+
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 19 Jun 2007 23:04:02 -0400
 
