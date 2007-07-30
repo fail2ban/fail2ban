@@ -8,6 +8,7 @@ fail2ban (0.8.0-4) unstable; urgency=low
   * Added iptables-allports.
   * Use /var/run to keep socket file (closes: #425746)
   * Added a filter for named to catch refused/denied queries
+  * Added new time template matching named log entries
   * jail.conf has specification of protocol (default to tcp) to be provided to
     banaction
   * Adjusted failregex for sshd filter:

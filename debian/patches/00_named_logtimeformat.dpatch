@@ -1,0 +1,23 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 00_named_logtimeformat.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad trunk~/server/datedetector.py trunk/server/datedetector.py
+--- trunk~/server/datedetector.py	2007-04-01 16:42:08.000000000 -0400
++++ trunk/server/datedetector.py	2007-07-29 22:28:52.000000000 -0400
+@@ -80,6 +80,12 @@
+ 			template.setRegex("\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
+ 			template.setPattern("%Y-%m-%d %H:%M:%S")
+ 			self.__templates.append(template)
++			# named 26-Jul-2007 15:20:52.252 
++			template = DateStrptime()
++			template.setName("Day-Month-Year Hour:Minute:Second[.Millisecond]")
++			template.setRegex("\d{2}-\S{3}-\d{4} \d{2}:\d{2}:\d{2}")
++			template.setPattern("%d-%b-%Y %H:%M:%S")
++			self.__templates.append(template)
+ 			# TAI64N
+ 			template = DateTai64n()
+ 			template.setName("TAI64N")
