@@ -1,3 +1,9 @@
+fail2ban (0.8.0-5~pre1) unstable; urgency=low
+
+  * Added optional spaces at the end of failregex for vsftpd.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 05 Aug 2007 21:38:44 -0400
+
 fail2ban (0.8.0-4) unstable; urgency=low
 
   * Moved <HOST> expansion into regex.py (closes: #429263). Thanks James

@@ -1,4 +1,5 @@
 00_mail-whois-lines
+00_vsftp_filter_spaces
 00_var_run_socket
 00_HOST_ignoreregex
 00_daemon_pids
