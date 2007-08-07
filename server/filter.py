@@ -504,17 +504,6 @@ class DNSUtils:
 			return list()
 	
 	@staticmethod
-	def textToDns(text):
-		""" Search for possible DNS in an arbitrary text.
-			Thanks to Tom Pike.
-		"""
-		match = DNSUtils.DNS_CRE.match(text)
-		if match:
-			return match
-		else:
-			return None
-	
-	@staticmethod
 	def searchIP(text):
 		""" Search if an IP address if directly available and return
 			it.
@@ -549,11 +538,9 @@ class DNSUtils:
 				ipList.append(plainIPStr)
 		if not ipList:
 			# Try to get IP from possible DNS
-			dns = DNSUtils.textToDns(text)
-			if not dns == None:
-				ip = DNSUtils.dnsToIp(dns.group(0))
-				for e in ip:
-					ipList.append(e)
+			ip = DNSUtils.dnsToIp(text)
+			for e in ip:
+				ipList.append(e)
 		return ipList
 	
 	@staticmethod
