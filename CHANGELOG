@@ -22,6 +22,8 @@ ver. 0.8.1 (2007/??/??) - stable
   David Nutter
 - Added webmin authentication filter. Thanks to Guillaume
   Delvit
+- Removed textToDns() which is not required anymore. Thanks
+  to Yaroslav Halchenko
 
 ver. 0.8.0 (2007/05/03) - stable
 ----------
