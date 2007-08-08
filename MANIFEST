@@ -66,6 +66,7 @@ config/filter.d/apache-noscript.conf
 config/filter.d/courierlogin.conf
 config/filter.d/couriersmtp.conf
 config/filter.d/exim.conf
+config/filter.d/named-refused.conf
 config/filter.d/postfix.conf
 config/filter.d/proftpd.conf
 config/filter.d/pure-ftpd.conf
@@ -79,6 +80,7 @@ config/filter.d/wuftpd.conf
 config/action.d/hostsdeny.conf
 config/action.d/ipfw.conf
 config/action.d/iptables.conf
+config/action.d/iptables-allports.conf
 config/action.d/iptables-multiport.conf
 config/action.d/iptables-new.conf
 config/action.d/mail.conf
