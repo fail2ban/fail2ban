@@ -30,6 +30,7 @@ ver. 0.8.1 (2007/??/??) - stable
   Yaroslav Halchenko
 - Added filter file for named (bind9). Thanks to Yaroslav
   Halchenko
+- Fixed vsftpd filter. Thanks to Yaroslav Halchenko
 
 ver. 0.8.0 (2007/05/03) - stable
 ----------
