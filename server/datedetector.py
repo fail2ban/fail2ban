@@ -80,6 +80,12 @@ class DateDetector:
 			template.setRegex("\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%Y-%m-%d %H:%M:%S")
 			self.__templates.append(template)
+			# named 26-Jul-2007 15:20:52.252 
+			template = DateStrptime()
+			template.setName("Day-Month-Year Hour:Minute:Second[.Millisecond]")
+			template.setRegex("\d{2}-\S{3}-\d{4} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%d-%b-%Y %H:%M:%S")
+			self.__templates.append(template)
 			# TAI64N
 			template = DateTai64n()
 			template.setName("TAI64N")
