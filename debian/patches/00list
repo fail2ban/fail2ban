@@ -3,6 +3,7 @@
 00_var_run_socket
 00_HOST_ignoreregex
 00_daemon_pids
+00_resolve_all_names
 10_dbts_manpages
 00_iptables_allports
 00_ssh_strong_re

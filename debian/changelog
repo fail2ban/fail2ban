@@ -1,6 +1,8 @@
 fail2ban (0.8.0-5~pre1) unstable; urgency=low
 
   * Added optional spaces at the end of failregex for vsftpd.
+  * Resolve all "names" which became a part of <HOST>. Previousely only fqdn's
+    were resolved
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 05 Aug 2007 21:38:44 -0400
 
