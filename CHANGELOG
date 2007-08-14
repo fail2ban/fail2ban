@@ -4,10 +4,10 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.8.1)                           2007/??/??
+Fail2Ban (version 0.8.1)                           2007/08/14
 =============================================================
 
-ver. 0.8.1 (2007/??/??) - stable
+ver. 0.8.1 (2007/08/14) - stable
 ----------
 - Fixed vulnerability in sshd.conf. Thanks to Daniel B. Cid
 - Expand <HOST> in ignoreregex. Thanks to Yaroslav Halchenko
