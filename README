@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.8.0)                           2007/05/03
+Fail2Ban (version 0.8.1)                           2007/08/14
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -28,8 +28,8 @@ Optional:
 
 To install, just do:
 
-> tar xvfj fail2ban-0.8.0.tar.bz2
-> cd fail2ban-0.8.0
+> tar xvfj fail2ban-0.8.1.tar.bz2
+> cd fail2ban-0.8.1
 > python setup.py install
 
 This will install Fail2Ban into /usr/share/fail2ban. The
@@ -73,7 +73,9 @@ Jonathan Kamens, Stephen Gildea, Markus Hoffmann, Mark
 Edgington, Patrick Börjesson, kojiro, zugeschmiert, Tyler,
 Nick Munger, Christoph Haas, Justin Shore, Joël Bertrand,
 René Berber, mEDI, Axel Thimm, Eric Gerbier, Christian Rauch,
-Michael C. Haller, Jonathan Underwood, Hanno 'Rince' Wagner
+Michael C. Haller, Jonathan Underwood, Hanno 'Rince' Wagner,
+Daniel B. Cid, David Nutter, Raphaël Marichez, Guillaume
+Delvit, Vaclav Misek
 
 License:
 --------

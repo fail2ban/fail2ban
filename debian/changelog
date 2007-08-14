@@ -1,3 +1,9 @@
+fail2ban (0.8.1-1) UNRELEASED; urgency=low
+
+  * (NOT RELEASED YET) New upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 14 Aug 2007 19:12:53 -0400
+
 fail2ban (0.8.0-5~pre1) UNRELEASED; urgency=low
 
   * Added optional spaces at the end of failregex for vsftpd.
