@@ -1,4 +1,4 @@
-fail2ban (0.8.0-5~pre1) unstable; urgency=low
+fail2ban (0.8.0-5~pre1) UNRELEASED; urgency=low
 
   * Added optional spaces at the end of failregex for vsftpd.
   * Resolve all "names" which became a part of <HOST>. Previousely only fqdn's
