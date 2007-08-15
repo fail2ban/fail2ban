@@ -1,4 +1,4 @@
-fail2ban (0.8.1-1) UNRELEASED; urgency=low
+fail2ban (0.8.1-1~pre1) UNRELEASED; urgency=low
 
   * (NOT RELEASED YET) New upstream release.
      Patches absorbed upstream:
