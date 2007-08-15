@@ -6,16 +6,10 @@
 ## DP: abuser IP over the log files
 
 @DPATCH@
-diff -urNad fail2ban-0.7.7~/config/action.d/mail-whois-lines.conf fail2ban-0.7.7/config/action.d/mail-whois-lines.conf
---- fail2ban-0.7.7~/config/action.d/mail-whois-lines.conf	2007-01-08 16:40:40.000000000 -0500
-+++ fail2ban-0.7.7/config/action.d/mail-whois-lines.conf	2007-02-08 22:07:12.000000000 -0500
-@@ -2,12 +2,12 @@
- #
- # Author: Cyril Jaquier
- # Modified-By: Yaroslav Halchenko to include grepping on IP over log files
--# $Revision: 520 $
-+# $Revision: 254 $
- #
+diff -urNad trunk~/config/action.d/mail-whois-lines.conf trunk/config/action.d/mail-whois-lines.conf
+--- trunk~/config/action.d/mail-whois-lines.conf	2007-08-14 19:12:48.000000000 -0400
++++ trunk/config/action.d/mail-whois-lines.conf	2007-08-14 19:24:17.000000000 -0400
+@@ -7,7 +7,7 @@
  
  [Definition]
  

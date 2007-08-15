@@ -1,6 +1,16 @@
 fail2ban (0.8.1-1) UNRELEASED; urgency=low
 
-  * (NOT RELEASED YET) New upstream release
+  * (NOT RELEASED YET) New upstream release.
+     Patches absorbed upstream:
+      00_daemon_pids.dpatch
+      00_iptables_allports.dpatch
+      00_vsftp_filter_spaces.dpatch
+      00_resolve_all_names.dpatch
+      00_HOST_ignoreregex.dpatch
+     Patches which needed some tune-up:
+      00_ssh_strong_re.dpatch
+      00_mail-whois-lines.dpatch
+      00_named_refused.dpatch
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 14 Aug 2007 19:12:53 -0400
 
