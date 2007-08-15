@@ -1,6 +1,6 @@
-fail2ban (0.8.1-1~pre1) UNRELEASED; urgency=low
+fail2ban (0.8.1-1) unstable; urgency=low
 
-  * (NOT RELEASED YET) New upstream release.
+  * New upstream release.
      Patches absorbed upstream:
       00_daemon_pids.dpatch
       00_iptables_allports.dpatch
@@ -12,7 +12,7 @@ fail2ban (0.8.1-1~pre1) UNRELEASED; urgency=low
       00_mail-whois-lines.dpatch
       00_named_refused.dpatch
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 14 Aug 2007 19:12:53 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 14 Aug 2007 23:15:21 -0400
 
 fail2ban (0.8.0-5~pre1) UNRELEASED; urgency=low
 
