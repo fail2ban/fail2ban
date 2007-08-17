@@ -5,20 +5,75 @@
 ## DP: No description.
 
 @DPATCH@
+diff -urNad trunk~/config/filter.d/named-refused.conf trunk/config/filter.d/named-refused.conf
+--- trunk~/config/filter.d/named-refused.conf	2007-08-14 19:42:35.000000000 -0400
++++ trunk/config/filter.d/named-refused.conf	2007-08-17 12:36:28.000000000 -0400
+@@ -9,10 +9,8 @@
+ 
+ [Definition]
+ 
+-# if you want to catch only login erros from specific daemons, use smth like
+-#_named_rcodes=(?:REFUSED|SERVFAIL)
+-# To catch all REFUSED queries only
+-_named_rcodes=REFUSED
++# 
++# Daemon name
+ _daemon=named
+ 
+ #
+@@ -28,7 +26,6 @@
+ # Notes.: regex to match the password failures messages in the logfile.
+ # Values: TEXT
+ #
+-failregex = %(__line_prefix)sunexpected RCODE \(%(_named_rcodes)s\) resolving '.*': <HOST>#\S+$
+-		    %(__line_prefix)sclient <HOST>#\S+: query(?: \(cache\))? '.*' denied\s*$
++failregex = %(__line_prefix)sclient <HOST>#\S+: query(?: \(cache\))? '.*' denied\s*$
+ 
+ 
 diff -urNad trunk~/config/filter.d/named-refused.examples trunk/config/filter.d/named-refused.examples
 --- trunk~/config/filter.d/named-refused.examples	1969-12-31 19:00:00.000000000 -0500
-+++ trunk/config/filter.d/named-refused.examples	2007-08-14 19:44:13.000000000 -0400
-@@ -0,0 +1,13 @@
-+Jul 15 18:42:00 raid5 named[3888]: unexpected RCODE (SERVFAIL) resolving 'skira.de/NS/IN': 216.14.208.5#53
-+Jul 15 18:42:01 raid5 named[3888]: unexpected RCODE (SERVFAIL) resolving 'skira.de/NS/IN': 216.14.208.4#53
-+Jul 17 01:46:09 raid5 named[3866]: lame server resolving 'vallone.de' (in 'vallone.de'?): 62.156.146.242#53
-+Jul 17 01:49:41 raid5 named[3866]: unexpected RCODE (REFUSED) resolving 'a-s-l.de/A/IN': 192.76.144.17#53
-+Jul 17 01:49:41 raid5 named[3866]: unexpected RCODE (REFUSED) resolving 'a-s-l.de/A/IN': 194.128.171.100#53
-+Jul 17 11:18:39 raid5 named[3866]: unexpected RCODE (REFUSED) resolving 'stadtkrankenhaus-ruesselsheim.de/A/IN': 192.76.144.15#53
-+Jul 17 11:18:39 raid5 named[3866]: unexpected RCODE (REFUSED) resolving 'stadtkrankenhaus-ruesselsheim.de/A/IN': 194.128.171.101#53
-+Jul 18 23:26:34 raid5 named[3891]: unexpected RCODE (REFUSED) resolving 'golgotha.de/A/IN': 217.195.32.108#53
++++ trunk/config/filter.d/named-refused.examples	2007-08-17 12:36:00.000000000 -0400
+@@ -0,0 +1,5 @@
 +Jul 24 14:16:55 raid5 named[3935]: client 194.145.196.18#4795: query 'ricreig.com/NS/IN' denied
 +Jul 24 14:16:56 raid5 named[3935]: client 62.123.164.113#32768: query 'ricreig.com/NS/IN' denied
 +Jul 24 14:17:13 raid5 named[3935]: client 148.160.29.6#33081: query (cache) 'geo-mueller.de/NS/IN' denied
 +Jul 24 14:20:25 raid5 named[3935]: client 148.160.29.6#33081: query (cache) 'shivaree.de/NS/IN' denied
 +Jul 24 14:23:36 raid5 named[3935]: client 148.160.29.6#33081: query (cache) 'mietberatung.de/NS/IN' denied
+diff -urNad trunk~/config/jail.conf trunk/config/jail.conf
+--- trunk~/config/jail.conf	2007-08-14 19:12:48.000000000 -0400
++++ trunk/config/jail.conf	2007-08-17 12:36:00.000000000 -0400
+@@ -170,13 +170,13 @@
+ # with bind9 installation. You will need something like this:
+ #
+ # logging {
+-#     channel lame-servers_file {
+-#         file "/var/log/named/lame-servers.log" versions 3 size 30m;
++#     channel security_file {
++#         file "/var/log/named/security.log" versions 3 size 30m;
+ #         severity dynamic;
+ #         print-time yes;
+ #     };
+-#     category lame-servers {
+-#         lame-servers_file;
++#     category security {
++#         security_file;
+ #     };
+ # }
+ #
+@@ -189,7 +189,7 @@
+ filter   = named-refused
+ action   = iptables-multiport[name=Named, port="domain,953", protocol=udp]
+            sendmail-whois[name=Named, dest=you@mail.com]
+-logpath  = /var/log/named/lame-servers.log
++logpath  = /var/log/named/security.log
+ ignoreip = 168.192.0.1
+ 
+ # This jail blocks TCP traffic for DNS requests.
+@@ -200,6 +200,6 @@
+ filter   = named-refused
+ action   = iptables-multiport[name=Named, port="domain,953", protocol=tcp]
+            sendmail-whois[name=Named, dest=you@mail.com]
+-logpath  = /var/log/named/lame-servers.log
++logpath  = /var/log/named/security.log
+ ignoreip = 168.192.0.1
+ 

@@ -1,3 +1,9 @@
+fail2ban (0.8.1-2~pre1) UNRELEASED; urgency=low
+
+  * Fixed named-refused filter.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 14 Aug 2007 23:16:56 -0400
+
 fail2ban (0.8.1-1) unstable; urgency=low
 
   * New upstream release.
