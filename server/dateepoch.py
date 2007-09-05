@@ -40,5 +40,5 @@ class DateEpoch(DateTemplate):
 		dateMatch = self.matchDate(line)
 		if dateMatch:
 			# extract part of format which represents seconds since epoch
-			date = list(time.gmtime(float(dateMatch.group())))
+			date = list(time.localtime(float(dateMatch.group())))
 		return date
