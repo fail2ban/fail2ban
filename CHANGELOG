@@ -12,6 +12,8 @@ ver. 0.8.2 (2007/??/??) - stable
 - Fixed named filter. Thanks to Yaroslav Halchenko
 - Fixed wrong path for apache-auth in jail.conf. Thanks to
   Vincent Deffontaines
+- Fixed timezone bug with epoch date template. Thanks to
+  Michael Hanselmann
 
 ver. 0.8.1 (2007/08/14) - stable
 ----------
