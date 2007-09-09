@@ -16,7 +16,6 @@ client/actionreader.py
 client/__init__.py
 client/configurator.py
 client/csocket.py
-server/ssocket.py
 server/banticket.py
 server/filter.py
 server/filtergamin.py
@@ -42,6 +41,8 @@ server/datetemplate.py
 server/mytime.py
 server/regex.py
 server/failregex.py
+server/communication/__init__.py
+server/communication/asyncserver.py
 testcases/banmanagertestcase.py
 testcases/failmanagertestcase.py
 testcases/clientreadertestcase.py

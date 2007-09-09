@@ -27,8 +27,8 @@ __license__ = "GPL"
 from threading import Lock, RLock
 from jails import Jails
 from transmitter import Transmitter
-from ssocket import SSocket
-from ssocket import SSocketErrorException
+from communication.asyncserver import AsyncServer
+from communication.asyncserver import AsyncServerException
 import logging, logging.handlers, sys, os, signal
 
 # Gets the instance of the logger.
@@ -42,7 +42,7 @@ class Server:
 		self.__jails = Jails()
 		self.__daemon = daemon
 		self.__transm = Transmitter(self)
-		self.__socket = SSocket(self.__transm)
+		self.__asyncServer = AsyncServer(self.__transm)
 		self.__logLevel = 3
 		self.__logTarget = "STDOUT"
 		# Set logging level
@@ -72,20 +72,15 @@ class Server:
 		# Start the communication
 		logSys.debug("Starting communication")
 		try:
-			self.__socket.initialize(sock, force)
-			self.__socket.start()
-			# Workaround (???) for join() bug.
-			# https://sourceforge.net/tracker/?func=detail&atid=105470&aid=1167930&group_id=5470
-			while self.__socket.isAlive():
-				self.__socket.join(1)
-		except SSocketErrorException:
+			self.__asyncServer.start(sock, force)
+		except AsyncServerException:
 			logSys.error("Could not start server")
 		logSys.info("Exiting Fail2ban")
 	
 	def quit(self):
 		self.stopAllJail()
 		# Stop communication
-		self.__socket.stop()
+		self.__asyncServer.stop()
 	
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend)

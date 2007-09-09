@@ -16,6 +16,8 @@ ver. 0.9.0 (2007/??/??) - alpha
 - Improved regular expressions. Thanks to Yaroslav Halchenko
 - Removed textToDns() which is not required anymore. Thanks
   to Yaroslav Halchenko
+- Replaced ssocket.py with asyncore/asynchat implementation.
+  Correct fix for bug #1769616
 
 ver. 0.8.0 (2007/05/03) - stable
 ----------
