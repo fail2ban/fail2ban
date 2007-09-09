@@ -267,7 +267,7 @@ class Filter(JailThread):
 	# @return True when the thread exits nicely
 
 	def run(self):
-		raise Exception("run() is abstract")
+		raise NotImplementedException("run() is abstract")
 	
 	##
 	# Add an IP/DNS to the ignore list.
@@ -495,18 +495,6 @@ class DNSUtils:
 	dnsToIp = staticmethod(dnsToIp)
 	
 	#@staticmethod
-	def textToDns(text):
-		""" Search for possible DNS in an arbitrary text.
-			Thanks to Tom Pike.
-		"""
-		match = DNSUtils.DNS_CRE.match(text)
-		if match:
-			return match
-		else:
-			return None
-	textToDns = staticmethod(textToDns)
-	
-	#@staticmethod
 	def searchIP(text):
 		""" Search if an IP address if directly available and return
 			it.
@@ -543,11 +531,9 @@ class DNSUtils:
 				ipList.append(plainIPStr)
 		if not ipList:
 			# Try to get IP from possible DNS
-			dns = DNSUtils.textToDns(text)
-			if not dns == None:
-				ip = DNSUtils.dnsToIp(dns.group(0))
-				for e in ip:
-					ipList.append(e)
+			ip = DNSUtils.dnsToIp(text)
+			for e in ip:
+				ipList.append(e)
 		return ipList
 	textToIp = staticmethod(textToIp)
 	
