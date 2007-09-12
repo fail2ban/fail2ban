@@ -383,7 +383,7 @@ class Filter(JailThread):
 			logSys.error("Unable to get failures in " + filename)
 			return False
 		self.__setFilePos()
-		lastLine = None
+		lastTimeLine = None
 		for line in self.__crtHandler:
 			if not self._isActive():
 				# The jail has been stopped
@@ -393,11 +393,18 @@ class Filter(JailThread):
 				line = line.decode('utf-8')
 			except UnicodeDecodeError:
 				pass
-			if not self.dateDetector.matchTime(line):
+			timeMatch = self.dateDetector.matchTime(line)
+			if not timeMatch:
 				# There is no valid time in this line
 				continue
-			lastLine = line
-			for element in self.findFailure(line):
+			# Lets split into time part and log part of the line
+			timeLine = timeMatch.group()
+			# Lets leave the beginning in as well, so if there is no
+			# anchore at the beginning of the time regexp, we don't
+			# at least allow injection. Should be harmless otherwise
+			logLine  = line[:timeMatch.start()] + line[timeMatch.end():]
+			lastTimeLine = timeLine
+			for element in self.findFailure(timeLine, logLine):
 				ip = element[0]
 				unixTime = element[1]
 				if unixTime < MyTime.time()-self.__findTime:
@@ -408,8 +415,8 @@ class Filter(JailThread):
 				logSys.debug("Found "+ip)
 				self.failManager.addFailure(FailTicket(ip, unixTime))
 		self.__lastPos[filename] = self.__getFilePos()
-		if lastLine:
-			self.__lastDate[filename] = self.dateDetector.getUnixTime(lastLine)
+		if lastTimeLine:
+			self.__lastDate[filename] = self.dateDetector.getUnixTime(lastTimeLine)
 		self.__closeLogFile()
 		return True
 
@@ -428,27 +435,28 @@ class Filter(JailThread):
 		return False
 
 	##
-	# Finds the failure in a line.
+	# Finds the failure in a line given split into time and log parts.
 	#
 	# Uses the failregex pattern to find it and timeregex in order
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, line):
+	def findFailure(self, timeLine, logLine):
 		failList = list()
 		# Checks if we must ignore this line.
-		if self.ignoreLine(line):
+		if self.ignoreLine(logLine):
 			# The ignoreregex matched. Return.
 			return failList
 		# Iterates over all the regular expressions.
 		for failRegex in self.__failRegex:
-			failRegex.search(line)
+			failRegex.search(logLine)
 			if failRegex.hasMatched():
 				# The failregex matched.
-				date = self.dateDetector.getUnixTime(line)
+				date = self.dateDetector.getUnixTime(timeLine)
 				if date == None:
-					logSys.debug("Found a match but no valid date/time found "
-								 + "for " + line + ". Please contact the "
+					logSys.debug("Found a match for '" + logLine +"' but no "
+								 + "valid date/time found for '"
+								 + timeLine + "'. Please contact the "
 								 + "author in order to get support for this "
 								 + "format")
 				else:

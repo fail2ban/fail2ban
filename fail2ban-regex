@@ -31,7 +31,7 @@ import getopt, sys, time, logging, os
 # fix for bug #343821
 sys.path.insert(1, "/usr/share/fail2ban")
 
-from ConfigParser import SafeConfigParser
+from client.configparserinc import SafeConfigParserWithIncludes
 from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
 from common.version import version
 from server.filter import Filter
@@ -65,7 +65,9 @@ class RegexStat:
 class Fail2banRegex:
 	
 	test = None
-	
+
+	CONFIG_DEFAULTS = {'configpath' : "/etc/fail2ban/"}
+
 	def __init__(self):
 		self.__filter = Filter(None)
 		self.__ignoreregex = list()
@@ -135,7 +137,7 @@ class Fail2banRegex:
 
 	def readIgnoreRegex(self, value):
 		if os.path.isfile(value):
-			reader = SafeConfigParser()
+			reader = SafeConfigParserWithIncludes(defaults=self.CONFIG_DEFAULTS)
 			try:
 				reader.read(value)
 				print "Use ignoreregex file : " + value
@@ -164,7 +166,7 @@ class Fail2banRegex:
 
 	def readRegex(self, value):
 		if os.path.isfile(value):
-			reader = SafeConfigParser()
+			reader = SafeConfigParserWithIncludes(defaults=self.CONFIG_DEFAULTS)
 			try:
 				reader.read(value)
 				print "Use regex file : " + value
