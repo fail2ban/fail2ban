@@ -15,7 +15,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # Author: Cyril Jaquier
-# 
+# Modified by: Yaroslav Halchenko (SafeConfigParserWithIncludes)
 # $Revision$
 
 __author__ = "Cyril Jaquier"
@@ -25,18 +25,20 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging, os
-from ConfigParser import SafeConfigParser
+from configparserinc import SafeConfigParserWithIncludes
 from ConfigParser import NoOptionError, NoSectionError
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.client.config")
 
-class ConfigReader(SafeConfigParser):
+class ConfigReader(SafeConfigParserWithIncludes):
 	
 	BASE_DIRECTORY = "/etc/fail2ban/"
 	
 	def __init__(self):
-		SafeConfigParser.__init__(self)
+		SafeConfigParserWithIncludes.__init__(self,
+											  {'configpath' : \
+											   ConfigReader.BASE_DIRECTORY} )
 		self.__opts = None
 	
 	@staticmethod
@@ -54,7 +56,7 @@ class ConfigReader(SafeConfigParser):
 		bConf = basename + ".conf"
 		bLocal = basename + ".local"
 		if os.path.exists(bConf) or os.path.exists(bLocal):
-			SafeConfigParser.read(self, [bConf, bLocal])
+			SafeConfigParserWithIncludes.read(self, [bConf, bLocal])
 			return True
 		else:
 			logSys.error(bConf + " and " + bLocal + " do not exist")
