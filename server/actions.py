@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 455 $
+# $Revision: 535 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 455 $"
-__date__ = "$Date: 2006-11-12 11:56:21 +0100 (Sun, 12 Nov 2006) $"
+__version__ = "$Revision: 535 $"
+__date__ = "$Date: 2007-01-29 22:46:59 +0100 (Mon, 29 Jan 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -189,6 +189,6 @@ class Actions(JailThread):
 	
 	def status(self):
 		ret = [("Currently banned", self.__banManager.size()), 
-			   ("Total banned", self.__banManager.getBanTotal())]
+			   ("Total banned", self.__banManager.getBanTotal()),
+			   ("IP list", self.__banManager.getBanList())]
 		return ret
-		

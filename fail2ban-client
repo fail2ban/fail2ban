@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -17,15 +17,15 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 511 $
+# $Revision: 528 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 511 $"
-__date__ = "$Date: 2007-01-04 13:58:21 +0100 (Thu, 04 Jan 2007) $"
+__version__ = "$Revision: 528 $"
+__date__ = "$Date: 2007-01-29 21:27:01 +0100 (Mon, 29 Jan 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import sys, string, os, pickle, re, logging
+import sys, string, os, pickle, re, logging, signal
 import getopt, time, readline, shlex, socket
 
 # Inserts our own modules path first in the list
@@ -75,7 +75,7 @@ class Fail2banClient:
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
 		"""
-		print "Usage: "+self.__argv[0]+" [OPTIONS]... <COMMAND>"
+		print "Usage: "+self.__argv[0]+" [OPTIONS] <COMMAND>"
 		print
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
 		print "and bans the corresponding IP addresses using firewall rules."
@@ -87,7 +87,7 @@ class Fail2banClient:
 		print "    -i                      interactive mode"
 		print "    -v                      increase verbosity"
 		print "    -q                      decrease verbosity"
-		print "    -x                      force execution of the server"
+		print "    -x                      force execution of the server (remove socket file)"
 		print "    -h, --help              display this help message"
 		print "    -V, --version           print the version"
 		print
@@ -103,7 +103,13 @@ class Fail2banClient:
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
 		print "and bans the corresponding IP addresses using firewall rules."
 		print 
-	
+
+	def __sigTERMhandler(self, signum, frame):
+		# Print a new line because we probably come from wait
+		print
+		logSys.warn("Caught signal %d. Exiting" % signum)
+		sys.exit(-1)
+
 	def __getCmdLineOptions(self, optList):
 		""" Gets the command line options
 		"""
@@ -169,10 +175,14 @@ class Fail2banClient:
 				logSys.error("Server already running")
 				return False
 			else:
+				# Read the config
+				ret = self.__readConfig()
+				# Do not continue if configuration is not 100% valid
+				if not ret:
+					return False
+				# Start the server
 				self.__startServerAsync(self.__conf["socket"],
 										self.__conf["force"])
-				# Read the config while the server is starting
-				self.__readConfig()
 				try:
 					# Wait for the server to start
 					self.__waitOnServer()
@@ -180,11 +190,18 @@ class Fail2banClient:
 					self.__processCmd(self.__stream, False)
 					return True
 				except ServerExecutionException:
-					logSys.error("Could not start server. Try -x option")
+					logSys.error("Could not start server. Maybe an old " +
+								 "socket file is still present. Try to " +
+								 "remove " + self.__conf["socket"] + ". If " +
+								 "you used fail2ban-client to start the " +
+								 "server, adding the -x option will do it")
 					return False
 		elif len(cmd) == 1 and cmd[0] == "reload":
 			if self.__ping():
-				self.__readConfig()
+				ret = self.__readConfig()
+				# Do not continue if configuration is not 100% valid
+				if not ret:
+					return False
 				self.__processCmd([['stop', 'all']], False)
 				# Configure the server
 				return self.__processCmd(self.__stream, False)
@@ -229,17 +246,39 @@ class Fail2banClient:
 	def __waitOnServer(self):
 		# Wait for the server to start
 		cnt = 0
+		if self.__conf["verbose"] > 1:
+			pos = 0
+			delta = 1
+			mask = "[          ]"
 		while not self.__ping():
+			# Wonderful visual :)
+			if self.__conf["verbose"] > 1:
+				pos += delta
+				sys.stdout.write("\rINFO   " + mask[:pos] + '#' + mask[pos+1:] +
+								 " Waiting on the server...")
+				sys.stdout.flush()
+				if pos > len(mask)-3:
+					delta = -1
+				elif pos < 2:
+					delta = 1
 			# The server has 30 secondes to start.
 			if cnt >= 300:
+				if self.__conf["verbose"] > 1:
+					sys.stdout.write('\n')
 				raise ServerExecutionException("Failed to start server")
 			time.sleep(0.1)
 			cnt += 1
+		if self.__conf["verbose"] > 1:
+			sys.stdout.write('\n')
 			
 	
 	def start(self, argv):
 		# Command line options
 		self.__argv = argv
+		
+		# Install signal handlers
+		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
+		signal.signal(signal.SIGINT, self.__sigTERMhandler)
 		
 		# Reads the command line options.
 		try:
@@ -280,9 +319,9 @@ class Fail2banClient:
 		logSys.info("Using socket file " + self.__conf["socket"])
 
 		if self.__conf["dump"]:
-			self.__readConfig()
+			ret = self.__readConfig()
 			self.dumpConfig(self.__stream)
-			return True
+			return ret
 		
 		# Interactive mode
 		if self.__conf["interactive"]:
@@ -313,9 +352,10 @@ class Fail2banClient:
 	def __readConfig(self):
 		# Read the configuration
 		self.__configurator.readAll()
-		self.__configurator.getAllOptions()
+		ret = self.__configurator.getAllOptions()
 		self.__configurator.convertToProtocol()
 		self.__stream = self.__configurator.getConfigStream()
+		return ret
 	
 	@staticmethod
 	def dumpConfig(cmd):
