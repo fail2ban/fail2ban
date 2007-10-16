@@ -17,11 +17,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 300 $
+# $Revision: 511 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 300 $"
-__date__ = "$Date: 2006-08-23 21:53:09 +0200 (Wed, 23 Aug 2006) $"
+__version__ = "$Revision: 511 $"
+__date__ = "$Date: 2007-01-04 13:58:21 +0100 (Thu, 04 Jan 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -29,10 +29,11 @@ import locale, getopt, sys, time, logging, gc
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
-sys.path.insert(1, "/usr/lib/fail2ban")
+sys.path.insert(1, "/usr/share/fail2ban")
 
 from common.version import version
 from server.filter import Filter
+from server.regex import RegexException
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.regex")
@@ -83,17 +84,17 @@ class Fail2banRegex:
 	 			self.dispVersion()
 	 			sys.exit(0)
 	
-	def setRegex(self, value):
-		print
-		self.__filter.setFailRegex(value)
-	
-	def testRegex(self, line):
+	def testRegex(self, line, regex):
 		print
 		try:
 			logging.getLogger("fail2ban").setLevel(logging.DEBUG)
+			self.__filter.addFailRegex(regex)
 			ret = self.__filter.findFailure(line)
 			print
 			logging.getLogger("fail2ban").setLevel(logging.CRITICAL)
+		except RegexException, e:
+			print e
+			return False
 		except IndexError:
 			print "Sorry, but no <host> found in regex"
 			return False
@@ -156,8 +157,7 @@ if __name__ == "__main__":
 		regex.dispUsage()
 		sys.exit(-1)
 	else:
-		regex.setRegex(sys.argv[2])
-		ret = regex.testRegex(sys.argv[1])
+		ret = regex.testRegex(sys.argv[1], sys.argv[2])
 		if ret:
 			sys.exit(0)
 		else:

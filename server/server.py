@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 470 $
+# $Revision: 503 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 470 $"
-__date__ = "$Date: 2006-11-18 16:15:58 +0100 (Sat, 18 Nov 2006) $"
+__version__ = "$Revision: 503 $"
+__date__ = "$Date: 2006-12-23 17:31:00 +0100 (Sat, 23 Dec 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -165,14 +165,20 @@ class Server:
 	def getFindTime(self, name):
 		return self.__jails.getFilter(name).getFindTime()
 
-	def setFailRegex(self, name, value):
-		self.__jails.getFilter(name).setFailRegex(value)
+	def addFailRegex(self, name, value):
+		self.__jails.getFilter(name).addFailRegex(value)
+	
+	def delFailRegex(self, name, index):
+		self.__jails.getFilter(name).delFailRegex(index)
 	
 	def getFailRegex(self, name):
 		return self.__jails.getFilter(name).getFailRegex()
 	
-	def setIgnoreRegex(self, name, value):
-		self.__jails.getFilter(name).setIgnoreRegex(value)
+	def addIgnoreRegex(self, name, value):
+		self.__jails.getFilter(name).addIgnoreRegex(value)
+	
+	def delIgnoreRegex(self, name, index):
+		self.__jails.getFilter(name).delIgnoreRegex(index)
 	
 	def getIgnoreRegex(self, name):
 		return self.__jails.getFilter(name).getIgnoreRegex()
@@ -300,13 +306,19 @@ class Server:
 		finally:
 			self.__loggingLock.release()
 	
+	##
+	# Sets the logging target.
+	#
+	# target can be a file, SYSLOG, STDOUT or STDERR.
+	# @param target the logging target
+	
 	def setLogTarget(self, target):
 		try:
 			self.__loggingLock.acquire()
-			# Remove previous handler
-			logging.getLogger("fail2ban").handlers = []
 			if target == "SYSLOG":
-				hdlr = logging.handlers.SysLogHandler()
+				facility = logging.handlers.SysLogHandler.LOG_DAEMON
+				hdlr = logging.handlers.SysLogHandler("/dev/log", 
+													  facility = facility)
 			elif target == "STDOUT":
 				hdlr = logging.StreamHandler(sys.stdout)
 			elif target == "STDERR":
@@ -318,8 +330,11 @@ class Server:
 					hdlr = logging.FileHandler(target)
 				except IOError:
 					logSys.error("Unable to log to " + target)
+					logSys.info("Logging to previous target " + self.__logTarget)
 					return False
 			self.__logTarget = target
+			# Remove previous handler
+			logging.getLogger("fail2ban").handlers = []
 			# set a format which is simpler for console use
 			formatter = logging.Formatter("%(asctime)s %(name)-16s: %(levelname)-6s %(message)s")
 			# tell the handler to use this format

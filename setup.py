@@ -18,17 +18,17 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 473 $
+# $Revision: 511 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 473 $"
-__date__ = "$Date: 2006-11-19 22:35:54 +0100 (Sun, 19 Nov 2006) $"
+__version__ = "$Revision: 511 $"
+__date__ = "$Date: 2007-01-04 13:58:21 +0100 (Thu, 04 Jan 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from distutils.core import setup
 from common.version import version
-from os.path import isfile, join
+from os.path import isfile, join, isdir
 from sys import argv
 from glob import glob
 
@@ -111,6 +111,13 @@ if obsoleteFiles:
 	print
 	for f in obsoleteFiles:
 		print "\t" + f
+	print
+
+if isdir("/usr/lib/fail2ban"):
+	print
+	print "Fail2ban is not installed under /usr/lib anymore. The new " \
+		  "location is under /usr/share. Please remove the directory " \
+		  "/usr/lib/fail2ban and everything under this directory."
 	print
 
 # Update config file

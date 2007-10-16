@@ -48,6 +48,7 @@ stop() {
     if [ -n "$pid" ]; then
         $FAIL2BAN stop > /dev/null
     fi
+    sleep 1
     getpid
     if [ -z "$pid" ]; then
         rm -f /var/lock/subsys/fail2ban

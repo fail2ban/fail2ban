@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-ToDo                                         $Revision: 468 $
+ToDo                                         $Revision: 509 $
 =============================================================
 
 Legend:
@@ -12,6 +12,8 @@ Legend:
 ? maybe
 # partially done
 * done
+
+- Improve parsing of the action parameters in jailreader.py
 
 - Better handling of the protocol in transmitter.py
 

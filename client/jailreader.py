@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 470 $
+# $Revision: 509 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 470 $"
-__date__ = "$Date: 2006-11-18 16:15:58 +0100 (Sat, 18 Nov 2006) $"
+__version__ = "$Revision: 509 $"
+__date__ = "$Date: 2007-01-04 12:58:58 +0100 (Thu, 04 Jan 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -112,7 +112,9 @@ class JailReader(ConfigReader):
 				stream.append(["set", self.__name, "maxretry", self.__opts[opt]])
 			elif opt == "ignoreip":
 				for ip in self.__opts[opt].split():
-					stream.append(["set", self.__name, "addignoreip", ip])
+					# Do not send a command if the rule is empty.
+					if ip != '':
+						stream.append(["set", self.__name, "addignoreip", ip])
 			elif opt == "findtime":
 				stream.append(["set", self.__name, "findtime", self.__opts[opt]])
 			elif opt == "bantime":
@@ -132,7 +134,31 @@ class JailReader(ConfigReader):
 		m = JailReader.actionCRE.match(action)
 		d = dict()
 		if not m.group(2) == None:
-			for param in m.group(2).split(','):
+			# Huge bad hack :( This method really sucks. TODO Reimplement it.
+			actions = ""
+			escapeChar = None
+			allowComma = False
+			for c in m.group(2):
+				if c in ('"', "'") and not allowComma:
+					# Start
+					escapeChar = c
+					allowComma = True
+				elif c == escapeChar:
+					# End
+					escapeChar = None
+					allowComma = False
+				else:
+					if c == ',' and allowComma:
+						actions += "<COMMA>"
+					else:
+						actions += c
+			
+			# Split using ,
+			actionsSplit = actions.split(',')
+			# Replace the tag <COMMA> with ,
+			actionsSplit = [n.replace("<COMMA>", ',') for n in actionsSplit]
+			
+			for param in actionsSplit:
 				p = param.split('=')
 				try:
 					d[p[0].strip()] = p[1].strip()
