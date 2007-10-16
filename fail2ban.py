@@ -15,12 +15,13 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # Author: Cyril Jaquier
+# Modified by: Yaroslav Halchenko (SYSLOG, findtime)
 # 
-# $Revision: 1.20.2.16 $
+# $Revision: 1.20.2.18 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.20.2.16 $"
-__date__ = "$Date: 2005/09/05 21:12:08 $"
+__version__ = "$Revision: 1.20.2.18 $"
+__date__ = "$Date: 2005/09/13 20:42:33 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -144,7 +145,8 @@ def main():
 	logSys.addHandler(stdout)
 	
 	# Default formatter
-	formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+	formatterstring='%(levelname)s: %(message)s'
+	formatter = logging.Formatter('%(asctime)s ' + formatterstring)
 	stdout.setFormatter(formatter)
 	
 	conf["verbose"] = 0
@@ -175,10 +177,13 @@ def main():
 	# Options
 	optionValues = (["bool", "background", False],
 					["str", "logtargets", "/var/log/fail2ban.log"],
+					["str", "syslog-target", "/dev/log"],
+					["int", "syslog-facility", 1],
 					["bool", "debug", False],
 					["str", "pidlock", "/var/run/fail2ban.pid"],
 					["int", "maxfailures", 5],
 					["int", "bantime", 600],
+					["int", "findtime", 600],
 					["str", "ignoreip", ""],
 					["int", "polltime", 1],
 					["str", "cmdstart", ""],
@@ -226,9 +231,9 @@ def main():
 	# Set debug log level
 	if conf["debug"]:
 		logSys.setLevel(logging.DEBUG)
-		formatter = logging.Formatter("%(asctime)s %(levelname)s " +
-									  "[%(filename)s (%(lineno)d)] " +
-									  "%(message)s")
+		formatterstring = ('%(levelname)s: [%(filename)s (%(lineno)d)] ' +
+						   '%(message)s')
+		formatter = logging.Formatter("%(asctime)s " + formatterstring)
 		stdout.setFormatter(formatter)
 		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
 					"ONLY DISPLAYED IN THE LOG MESSAGES")
@@ -238,10 +243,41 @@ def main():
 	# Bug fix for #1234699
 	os.umask(0077)
 	for target in conf["logtargets"].split():
+		# target formatter 
+		# By default global formatter is taken. Is different for SYSLOG
+		tformatter = formatter
 		if target == "STDERR":
 			hdlr = logging.StreamHandler(sys.stderr)
 		elif target == "SYSLOG":
-			hdlr = logging.handlers.SysLogHandler()
+			# SYSLOG target can be either
+			# a socket (file, so it starts with /)
+			# or hostname
+			# or hostname:port
+			syslogtargets = re.findall("(/[\w/]*)|([^/ ][^: ]*)(:(\d+)){,1}",
+									   conf["syslog-target"])
+			# we are waiting for a single match
+			syslogtargets = syslogtargets[0]
+
+			# assign facility if it was defined
+			if conf["syslog-facility"] < 0:
+				facility = handlers.SysLogHandler.LOG_USER
+			else:
+				facility = conf["syslog-facility"]
+
+			if len(syslogtargets) == 0: # everything default
+				hdlr = logging.handlers.SysLogHandler()
+			else:
+				if not ( syslogtargets[0] == "" ): # got socket
+					syslogtarget = syslogtargets[0]
+				else:		# got hostname and maybe a port
+					if syslogtargets[3] == "": # no port specified
+						port = 514
+					else:
+						port = int(syslogtargets[3])
+					syslogtarget = (syslogtargets[1], port)
+				hdlr = logging.handlers.SysLogHandler(syslogtarget, facility)
+			tformatter = logging.Formatter("fail2ban[%(process)d]: " +
+										   formatterstring);
 		else:
 			# Target should be a file
 			try:
@@ -251,12 +287,12 @@ def main():
 				logSys.error("Unable to log to " + target)
 				continue
 		# Set formatter and add handler to logger
-		hdlr.setFormatter(formatter)
+		hdlr.setFormatter(tformatter)
 		logSys.addHandler(hdlr)
 	
 	# Ignores IP list
 	ignoreIPList = conf["ignoreip"].split(' ')
-	
+
 	# Checks for root user. This is necessary because log files
 	# are owned by root and firewall needs root access.
 	if not checkForRoot():
@@ -277,6 +313,7 @@ def main():
 	
 	logSys.debug("ConfFile is " + conf["conffile"])
 	logSys.debug("BanTime is " + `conf["bantime"]`)
+	logSys.debug("FindTime is " + `conf["findtime"]`)
 	logSys.debug("MaxFailure is " + `conf["maxfailures"]`)
 	
 	# Options
@@ -302,8 +339,9 @@ def main():
 	# Options
 	optionValues = (["bool", "enabled", False],
 					["str", "logfile", "/dev/null"],
-					["int", "maxfailures", None],
-					["int", "bantime", None],
+					["int", "maxfailures", conf["maxfailures"]],
+					["int", "bantime", conf["bantime"]],
+					["int", "findtime", conf["findtime"]],
 					["str", "timeregex", ""],
 					["str", "timepattern", ""],
 					["str", "failregex", ""],
@@ -316,23 +354,11 @@ def main():
 	for t in confReader.getSections():
 		l = confReader.getLogOptions(t, optionValues)
 		if l["enabled"]:
-			# Override maxfailures option
-			if not l["maxfailures"] == None:
-				maxFailures = l["maxfailures"]
-			else:
-				maxFailures = conf["maxfailures"]
-			
-			# Override bantime option
-			if not l["bantime"] == None:
-				banTime = l["bantime"]
-			else:
-				banTime = conf["bantime"]
-			
 			# Creates a logreader object
 			lObj = LogReader(l["logfile"], l["timeregex"], l["timepattern"],
-							 l["failregex"], maxFailures, banTime)
+							 l["failregex"], l["maxfailures"], l["findtime"])
 			# Creates a firewall object
-			fObj = Firewall(l["fwban"], l["fwunban"], banTime)
+			fObj = Firewall(l["fwban"], l["fwunban"], l["bantime"])
 			# Links them into a list. I'm not really happy
 			# with this :/
 			logFwList.append([t, lObj, fObj, dict(), l])

@@ -1,6 +1,6 @@
 # Fail2Ban configuration file
 #
-# $Revision: 1.8.2.11 $
+# $Revision: 1.8.2.13 $
 #
 # 2005.06.21  modified for readability  Iain Lea  iain@bricbrac.de
 
@@ -23,6 +23,18 @@ debug = false
 #
 logtargets = /var/log/fail2ban.log
 
+# Option:  syslog-target
+# Notes.:  where to find syslog facility if logtarget SYSLOG.
+# Values:  SOCKET HOST HOST:PORT  Default: /dev/log
+#
+syslog-target = /dev/log
+
+# Option:  syslog-facility
+# Notes.:  which syslog facility to use if logtarget SYSLOG.
+# Values:  NUM  Default: 1
+#
+syslog-facility = 1
+
 # Option:  pidlock
 # Notes.:  path of the PID lock file (must be able to write to file).
 # Values:  FILE  Default:  /var/run/fail2ban.pid
@@ -41,6 +53,12 @@ maxfailures = 5
 #
 bantime = 600
 
+# Option:  findtime
+# Notes.:  lifetime in seconds of a "failed" log entry.
+# Values:  NUM  Default:  600
+#
+findtime = 600
+
 # Option:  ignoreip
 # Notes.:  space separated list of IP's to be ignored by fail2ban.
 #          You can use CIDR mask in order to specify a range.
@@ -56,7 +74,7 @@ ignoreip = 192.168.0.0/16
 cmdstart = 
 
 # Option:  cmdend
-# Notes.:  command executed once at the end of Fail2Ban
+# Notes.:  command executed once at the end of Fail2Ban.
 # Values:  CMD  Default:
 #
 cmdend = 
@@ -114,7 +132,7 @@ subject = [Fail2Ban] Banned <ip>
 #          <failures>  number of failures
 #          <failtime>  unix timestamp of the last failure
 #          <br>  new line
-# Values:  TEXT  Default:  
+# Values:  TEXT  Default:
 #
 message = Hi,<br>
           The IP <ip> has just been banned by Fail2Ban after
@@ -181,7 +199,7 @@ fwunban = iptables -D fail2ban-http -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in Apache logfile.
-# Values:  [Wed Jan 05 15:08:01 2005]  
+# Values:  [Wed Jan 05 15:08:01 2005]
 # Default: \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
 #
 timeregex = \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
@@ -253,7 +271,7 @@ fwunban = iptables -D fail2ban-ssh -s <ip> -j DROP
 
 # Option:  timeregex
 # Notes.:  regex to match timestamp in SSH logfile.
-# Values:  [Mar  7 17:53:28]  
+# Values:  [Mar  7 17:53:28]
 # Default: \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
 #
 timeregex = \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}

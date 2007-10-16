@@ -16,17 +16,18 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.1.2.3 $
+# $Revision: 1.1.2.4 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.1.2.3 $"
-__date__ = "$Date: 2005/09/08 18:05:59 $"
+__version__ = "$Revision: 1.1.2.4 $"
+__date__ = "$Date: 2005/09/12 14:42:08 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging, smtplib
 
 from utils.strings import replaceTag
+from time import strftime, gmtime
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")
@@ -55,8 +56,10 @@ class Mail:
 		subj = replaceTag(subject, aInfo)
 		msg = replaceTag(message, aInfo)
 		
-		mail = ("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n" %
-				 (self.fromAddr, ", ".join(self.toAddr), subj)) + msg
+		mail = ("From: %s\r\nTo: %s\r\nDate: %s\r\nSubject: %s\r\n\r\n" %
+				(self.fromAddr, ", ".join(self.toAddr),
+				strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()),
+				subj)) + msg
 		
 		try:
 			server = smtplib.SMTP(self.host, self.port)
