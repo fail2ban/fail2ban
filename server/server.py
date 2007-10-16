@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 503 $
+# $Revision: 567 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 503 $"
-__date__ = "$Date: 2006-12-23 17:31:00 +0100 (Sat, 23 Dec 2006) $"
+__version__ = "$Revision: 567 $"
+__date__ = "$Date: 2007-03-26 23:17:31 +0200 (Mon, 26 Mar 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -96,7 +96,7 @@ class Server:
 	def startJail(self, name):
 		try:
 			self.__lock.acquire()
-			if not self.isActive(name):
+			if not self.isAlive(name):
 				self.__jails.get(name).start()
 		finally:
 			self.__lock.release()
@@ -104,7 +104,7 @@ class Server:
 	def stopJail(self, name):
 		try:
 			self.__lock.acquire()
-			if self.isActive(name):
+			if self.isAlive(name):
 				self.__jails.get(name).stop()
 				self.delJail(name)
 		finally:
@@ -118,8 +118,8 @@ class Server:
 		finally:
 			self.__lock.release()
 	
-	def isActive(self, name):
-		return self.__jails.get(name).isActive()
+	def isAlive(self, name):
+		return self.__jails.get(name).isAlive()
 	
 	def setIdleJail(self, name, value):
 		self.__jails.get(name).setIdle(value)
@@ -326,15 +326,18 @@ class Server:
 			else:
 				# Target should be a file
 				try:
-					open(target, "a")
+					open(target, "a").close()
 					hdlr = logging.FileHandler(target)
 				except IOError:
 					logSys.error("Unable to log to " + target)
 					logSys.info("Logging to previous target " + self.__logTarget)
 					return False
 			self.__logTarget = target
-			# Remove previous handler
-			logging.getLogger("fail2ban").handlers = []
+			# Removes previous handlers
+			for handler in logging.getLogger("fail2ban").handlers:
+				# Closes the handler.
+				handler.close()
+				logging.getLogger("fail2ban").removeHandler(handler)
 			# set a format which is simpler for console use
 			formatter = logging.Formatter("%(asctime)s %(name)-16s: %(levelname)-6s %(message)s")
 			# tell the handler to use this format

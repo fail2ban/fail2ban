@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 504 $
+# $Revision: 567 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 504 $"
-__date__ = "$Date: 2006-12-23 17:37:17 +0100 (Sat, 23 Dec 2006) $"
+__version__ = "$Revision: 567 $"
+__date__ = "$Date: 2007-03-26 23:17:31 +0200 (Mon, 26 Mar 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -93,7 +93,7 @@ class FilterPoll(Filter):
 
 	def run(self):
 		self.setActive(True)
-		while self.isActive():
+		while self._isActive():
 			if not self.getIdle():
 				# Get file modification
 				for f in self.getLogPath():

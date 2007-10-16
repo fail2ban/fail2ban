@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 556 $
+# $Revision: 567 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 556 $"
-__date__ = "$Date: 2007-03-07 21:54:32 +0100 (Wed, 07 Mar 2007) $"
+__version__ = "$Revision: 567 $"
+__date__ = "$Date: 2007-03-26 23:17:31 +0200 (Mon, 26 Mar 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -125,10 +125,10 @@ class Actions(JailThread):
 	# @return True when the thread exits nicely
 	
 	def run(self):
+		self.setActive(True)
 		for action in self.__actions:
 			action.execActionStart()
-		self.setActive(True)
-		while self.isActive():
+		while self._isActive():
 			if not self.getIdle():
 				#logSys.debug(self.jail.getName() + ": action")
 				ret = self.__checkBan()

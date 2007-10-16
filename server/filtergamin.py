@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 451 $
+# $Revision: 567 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 451 $"
-__date__ = "$Date: 2006-11-06 23:47:24 +0100 (Mon, 06 Nov 2006) $"
+__version__ = "$Revision: 567 $"
+__date__ = "$Date: 2007-03-26 23:17:31 +0200 (Mon, 26 Mar 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -99,7 +99,7 @@ class FilterGamin(Filter):
 
 	def run(self):
 		self.setActive(True)
-		while self.isActive():
+		while self._isActive():
 			if not self.getIdle():
 				# We cannot block here because we want to be able to
 				# exit.
@@ -117,5 +117,15 @@ class FilterGamin(Filter):
 				time.sleep(self.getSleepTime())
 			else:
 				time.sleep(self.getSleepTime())
+		# Cleanup Gamin
+		self.__cleanup()
 		logSys.debug(self.jail.getName() + ": filter terminated")
 		return True
+
+	##
+	# Desallocates the resources used by Gamin.
+
+	def __cleanup(self):
+		for path in Filter.getLogPath(self):
+			self.monitor.stop_watch(path)
+		del self.monitor

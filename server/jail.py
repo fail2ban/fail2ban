@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 452 $
+# $Revision: 567 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 452 $"
-__date__ = "$Date: 2006-11-06 23:48:46 +0100 (Mon, 06 Nov 2006) $"
+__version__ = "$Revision: 567 $"
+__date__ = "$Date: 2007-03-26 23:17:31 +0200 (Mon, 26 Mar 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -89,10 +89,10 @@ class Jail:
 		self.__filter.join()
 		self.__action.join()
 	
-	def isActive(self):
-		isActive0 = self.__filter.isActive()
-		isActive1 = self.__action.isActive()
-		return isActive0 or isActive1
+	def isAlive(self):
+		isAlive0 = self.__filter.isAlive()
+		isAlive1 = self.__action.isAlive()
+		return isAlive0 or isAlive1
 	
 	def setIdle(self, value):
 		self.__filter.setIdle(value)
