@@ -1,0 +1,74 @@
+<?xml version='1.0'?>
+<!DOCTYPE service_bundle SYSTEM '/usr/share/lib/xml/dtd/service_bundle.dtd.1'>
+<!--
+	Hanno 'Rince' Wagner 03 2007
+	Service manifest for fail2ban
+	E-Mail: wagner@rince.de
+-->
+
+<service_bundle type='manifest' name='fail2ban:fail2ban'>
+
+<service
+	name='network/fail2ban'
+	type='service'
+	version='1'>
+	<create_default_instance enabled='false' />
+	<single_instance />
+
+	<dependency name='fs'
+		grouping='require_all'
+		restart_on='none'
+		type='service'>
+		<service_fmri value='svc:/system/filesystem/local' />
+	</dependency>
+
+	<dependency name='net'
+		grouping='require_all'
+		restart_on='none'
+		type='service'>
+		<service_fmri value='svc:/network/loopback' />
+	</dependency>
+
+
+	<exec_method
+		type='method'
+		name='start'
+		exec='/lib/svc/method/svc-fail2ban start'
+		timeout_seconds='-1'>
+		<method_context>
+			<method_credential user='root' group='root' />
+		</method_context>
+	</exec_method>
+
+	<exec_method
+		type='method'
+		name='stop'
+		exec='/lib/svc/method/svc-fail2ban stop'
+		timeout_seconds='-1'>
+	</exec_method>
+
+        <exec_method
+                type='method'
+                name='reload'
+                exec='/lib/svc/method/svc-fail2ban reload'
+                timeout_seconds='-1'>
+        </exec_method>
+
+       <exec_method
+                type='method'
+                name='refresh'
+                exec='/lib/svc/method/svc-fail2ban refresh'
+                timeout_seconds='-1'>
+        </exec_method>
+
+
+	<exec_method
+		type='method'
+		name='restart'
+		exec='/lib/svc/method/svc-fail2ban restart'
+		timeout_seconds='-1'>
+	</exec_method>
+
+</service>
+
+</service_bundle>
