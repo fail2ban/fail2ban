@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 553 $
+# $Revision: 568 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 553 $"
-__date__ = "$Date: 2007-02-26 00:53:22 +0100 (Mon, 26 Feb 2007) $"
+__version__ = "$Revision: 568 $"
+__date__ = "$Date: 2007-04-01 22:42:05 +0200 (Sun, 01 Apr 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -55,6 +55,12 @@ class DateDetector:
 			template.setName("Weekday Month Day Hour:Minute:Second Year")
 			template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2} \d{4}")
 			template.setPattern("%a %b %d %H:%M:%S %Y")
+			self.__templates.append(template)
+			# asctime without year
+			template = DateStrptime()
+			template.setName("Weekday Month Day Hour:Minute:Second")
+			template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%a %b %d %H:%M:%S")
 			self.__templates.append(template)
 			# simple date
 			template = DateStrptime()

@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 433 $
+# $Revision: 567 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 433 $"
-__date__ = "$Date: 2006-10-24 21:40:51 +0200 (Tue, 24 Oct 2006) $"
+__version__ = "$Revision: 567 $"
+__date__ = "$Date: 2007-03-26 23:17:31 +0200 (Mon, 26 Mar 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -105,7 +105,7 @@ class JailThread(Thread):
 	# Check if the filter thread is running.
 	# @return True if the thread is running
 	
-	def isActive(self):
+	def _isActive(self):
 		return self.__isRunning
 	
 	##

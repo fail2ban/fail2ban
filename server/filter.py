@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 537 $
+# $Revision: 567 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 537 $"
-__date__ = "$Date: 2007-02-01 21:50:12 +0100 (Thu, 01 Feb 2007) $"
+__version__ = "$Revision: 567 $"
+__date__ = "$Date: 2007-03-26 23:17:31 +0200 (Mon, 26 Mar 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -385,7 +385,7 @@ class Filter(JailThread):
 		self.__setFilePos()
 		lastLine = None
 		for line in self.__crtHandler:
-			if not self.isActive():
+			if not self._isActive():
 				# The jail has been stopped
 				break
 			try:
