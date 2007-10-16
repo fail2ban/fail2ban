@@ -17,11 +17,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 406 $
+# $Revision: 472 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 406 $"
-__date__ = "$Date: 2006-10-05 00:17:53 +0200 (Thu, 05 Oct 2006) $"
+__version__ = "$Revision: 472 $"
+__date__ = "$Date: 2006-11-19 22:26:47 +0100 (Sun, 19 Nov 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -31,7 +31,7 @@ import getopt, sys
 # fix for bug #343821
 sys.path.insert(1, "/usr/lib/fail2ban")
 
-from version import version
+from common.version import version
 from server.server import Server
 
 ##
@@ -71,15 +71,16 @@ class Fail2banServer:
 		print "and bans the corresponding IP addresses using firewall rules."
 		print
 		print "Only use this command for debugging purpose. Start the server with"
-		print "fail2ban-client instead."
+		print "fail2ban-client instead. The default behaviour is to start the server"
+		print "in background."
 		print
 		print "Options:"
-		print "  -b             start in background"
-		print "  -f             start in foreground"
-		print "  -s <FILE>      socket path"
-		print "  -x             force execution of the server"
-		print "  -h, --help     display this help message"
-		print "  -V, --version  print the version"
+		print "    -b                   start in background"
+		print "    -f                   start in foreground"
+		print "    -s <FILE>            socket path"
+		print "    -x                   force execution of the server"
+		print "    -h, --help           display this help message"
+		print "    -V, --version        print the version"
 		print
 		print "Report bugs to <lostcontrol@users.sourceforge.net>"
 	
@@ -113,6 +114,7 @@ class Fail2banServer:
 			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
 			self.dispUsage()
+			sys.exit(-1)
 			
 		self.__getCmdLineOptions(optList)
 		

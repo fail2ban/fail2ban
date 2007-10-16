@@ -16,14 +16,15 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 436 $
+# $Revision: 470 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 436 $"
-__date__ = "$Date: 2006-10-30 23:47:30 +0100 (Mon, 30 Oct 2006) $"
+__version__ = "$Revision: 470 $"
+__date__ = "$Date: 2006-11-18 16:15:58 +0100 (Sat, 18 Nov 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+from threading import Lock, RLock
 from jails import Jails
 from transmitter import Transmitter
 from ssocket import SSocket
@@ -36,6 +37,8 @@ logSys = logging.getLogger("fail2ban.server")
 class Server:
 
 	def __init__(self, daemon = False):
+		self.__loggingLock = Lock()
+		self.__lock = RLock()
 		self.__jails = Jails()
 		self.__daemon = daemon
 		self.__transm = Transmitter(self)
@@ -91,17 +94,29 @@ class Server:
 		self.__jails.remove(name)
 	
 	def startJail(self, name):
-		if not self.isActive(name):
-			self.__jails.get(name).start()
+		try:
+			self.__lock.acquire()
+			if not self.isActive(name):
+				self.__jails.get(name).start()
+		finally:
+			self.__lock.release()
 	
 	def stopJail(self, name):
-		if self.isActive(name):
-			self.__jails.get(name).stop()
-			self.delJail(name)
+		try:
+			self.__lock.acquire()
+			if self.isActive(name):
+				self.__jails.get(name).stop()
+				self.delJail(name)
+		finally:
+			self.__lock.release()
 	
 	def stopAllJail(self):
-		for jail in self.__jails.getAll():
-			self.stopJail(jail)
+		try:
+			self.__lock.acquire()
+			for jail in self.__jails.getAll():
+				self.stopJail(jail)
+		finally:
+			self.__lock.release()
 	
 	def isActive(self, name):
 		return self.__jails.get(name).isActive()
@@ -156,17 +171,17 @@ class Server:
 	def getFailRegex(self, name):
 		return self.__jails.getFilter(name).getFailRegex()
 	
+	def setIgnoreRegex(self, name, value):
+		self.__jails.getFilter(name).setIgnoreRegex(value)
+	
+	def getIgnoreRegex(self, name):
+		return self.__jails.getFilter(name).getIgnoreRegex()
+	
 	def setMaxRetry(self, name, value):
 		self.__jails.getFilter(name).setMaxRetry(value)
 	
 	def getMaxRetry(self, name):
 		return self.__jails.getFilter(name).getMaxRetry()
-	
-	def setMaxTime(self, name, value):
-		self.__jails.getFilter(name).setMaxTime(value)
-	
-	def getMaxTime(self, name):
-		return self.__jails.getFilter(name).getMaxTime()
 	
 	# Action
 	def addAction(self, name, value):
@@ -225,15 +240,19 @@ class Server:
 		
 	# Status
 	def status(self):
-		jailList = ''
-		for jail in self.__jails.getAll():
-			jailList += jail + ', '
-		length = len(jailList)
-		if not length == 0:
-			jailList = jailList[:length-2]
-		ret = [("Number of jail", self.__jails.size()), 
-			   ("Jail list", jailList)]
-		return ret
+		try:
+			self.__lock.acquire()
+			jailList = ''
+			for jail in self.__jails.getAll():
+				jailList += jail + ', '
+			length = len(jailList)
+			if not length == 0:
+				jailList = jailList[:length-2]
+			ret = [("Number of jail", self.__jails.size()), 
+				   ("Jail list", jailList)]
+			return ret
+		finally:
+			self.__lock.release()
 	
 	def statusJail(self, name):
 		return self.__jails.get(name).getStatus()
@@ -252,17 +271,21 @@ class Server:
 	# @param value the level
 	
 	def setLogLevel(self, value):
-		self.__logLevel = value
-		logLevel = logging.DEBUG
-		if value == 0:
-			logLevel = logging.FATAL
-		elif value == 1:
-			logLevel = logging.ERROR
-		elif value == 2:
-			logLevel = logging.WARNING
-		elif value == 3:
-			logLevel = logging.INFO
-		logging.getLogger("fail2ban").setLevel(logLevel)
+		try:
+			self.__loggingLock.acquire()
+			self.__logLevel = value
+			logLevel = logging.DEBUG
+			if value == 0:
+				logLevel = logging.FATAL
+			elif value == 1:
+				logLevel = logging.ERROR
+			elif value == 2:
+				logLevel = logging.WARNING
+			elif value == 3:
+				logLevel = logging.INFO
+			logging.getLogger("fail2ban").setLevel(logLevel)
+		finally:
+			self.__loggingLock.release()
 	
 	##
 	# Get the logging level.
@@ -271,35 +294,47 @@ class Server:
 	# @return the log level
 	
 	def getLogLevel(self):
-		return self.__logLevel
+		try:
+			self.__loggingLock.acquire()
+			return self.__logLevel
+		finally:
+			self.__loggingLock.release()
 	
 	def setLogTarget(self, target):
-		# Remove previous handler
-		logging.getLogger("fail2ban").handlers = []
-		self.__logTarget = target
-		if target == "SYSLOG":
-			hdlr = logging.handlers.SysLogHandler()
-		elif target == "STDOUT":
-			hdlr = logging.StreamHandler(sys.stdout)
-		elif target == "STDERR":
-			hdlr = logging.StreamHandler(sys.stderr)
-		else:
-			# Target should be a file
-			try:
-				open(target, "a")
-				hdlr = logging.FileHandler(target)
-			except IOError:
-				logSys.error("Unable to log to " + target)
-				return False
-		# set a format which is simpler for console use
-		formatter = logging.Formatter("%(asctime)s %(name)-16s: %(levelname)-6s %(message)s")
-		# tell the handler to use this format
-		hdlr.setFormatter(formatter)
-		logging.getLogger("fail2ban").addHandler(hdlr)
-		return True
+		try:
+			self.__loggingLock.acquire()
+			# Remove previous handler
+			logging.getLogger("fail2ban").handlers = []
+			if target == "SYSLOG":
+				hdlr = logging.handlers.SysLogHandler()
+			elif target == "STDOUT":
+				hdlr = logging.StreamHandler(sys.stdout)
+			elif target == "STDERR":
+				hdlr = logging.StreamHandler(sys.stderr)
+			else:
+				# Target should be a file
+				try:
+					open(target, "a")
+					hdlr = logging.FileHandler(target)
+				except IOError:
+					logSys.error("Unable to log to " + target)
+					return False
+			self.__logTarget = target
+			# set a format which is simpler for console use
+			formatter = logging.Formatter("%(asctime)s %(name)-16s: %(levelname)-6s %(message)s")
+			# tell the handler to use this format
+			hdlr.setFormatter(formatter)
+			logging.getLogger("fail2ban").addHandler(hdlr)
+			return True
+		finally:
+			self.__loggingLock.release()
 	
 	def getLogTarget(self):
-		return self.__logTarget
+		try:
+			self.__loggingLock.acquire()
+			return self.__logTarget
+		finally:
+			self.__loggingLock.release()
 	
 	def __createDaemon(self):
 		""" Detach a process from the controlling terminal and run it in the

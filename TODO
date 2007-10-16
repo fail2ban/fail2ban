@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-ToDo                                         $Revision: 446 $
+ToDo                                         $Revision: 468 $
 =============================================================
 
 Legend:
@@ -13,7 +13,9 @@ Legend:
 # partially done
 * done
 
-- Add gettext support (I8N)
+- Better handling of the protocol in transmitter.py
+
+- Add gettext support (I18N)
 
 - Fix the cPickle issue with Python 2.5
 
@@ -26,14 +28,8 @@ Legend:
 
 # see Feature Request Tracking System at SourceForge.net
 
-- improve installation process (better prefix support)
-
 # improve documentation and website for user
 
 # better return values in function
-
-? restart automatically the daemon if an exception occurs.
-
-- do not close socket after a send
 
 # refactoring in server.py, actions.py, filter.py

@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 433 $
+# $Revision: 458 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 433 $"
-__date__ = "$Date: 2006-10-24 21:40:51 +0200 (Tue, 24 Oct 2006) $"
+__version__ = "$Revision: 458 $"
+__date__ = "$Date: 2006-11-12 15:52:36 +0100 (Sun, 12 Nov 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -69,6 +69,7 @@ class ConfigReader(SafeConfigParser):
 	# 0 -> the type of the option
 	# 1 -> the name of the option
 	# 2 -> the default value for the option
+	
 	def getOptions(self, sec, options, pOptions = None):
 		values = dict()
 		for option in options:
@@ -88,7 +89,8 @@ class ConfigReader(SafeConfigParser):
 				values[option[1]] = option[2]
 			except NoOptionError:
 				if not option[2] == None:
-					logSys.warn("No '" + option[1] + "' defined in '" + sec + "'")
+					logSys.warn("'%s' not defined in '%s'. Using default value"
+								% (option[1], sec))
 					values[option[1]] = option[2]
 			except ValueError:
 				logSys.warn("Wrong value for '" + option[1] + "' in '" + sec +

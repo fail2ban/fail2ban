@@ -42,14 +42,14 @@ class DateTemplate:
 		return self.__name
 	
 	def setRegex(self, regex):
-		self.__regex = regex
+		self.__regex = regex.strip()
 		self.__cRegex = re.compile(regex)
 		
 	def getRegex(self):
 		return self.__regex
 	
 	def setPattern(self, pattern):
-		self.__pattern = pattern
+		self.__pattern = pattern.strip()
 		
 	def getPattern(self):
 		return self.__pattern

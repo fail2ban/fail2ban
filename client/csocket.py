@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 443 $
+# $Revision: 459 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 443 $"
-__date__ = "$Date: 2006-11-01 00:36:59 +0100 (Wed, 01 Nov 2006) $"
+__version__ = "$Revision: 459 $"
+__date__ = "$Date: 2006-11-12 22:55:57 +0100 (Sun, 12 Nov 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -41,7 +41,7 @@ class CSocket:
 	
 	def send(self, msg):
 		# Convert every list member to string
-		obj = dumps(map(str, msg), HIGHEST_PROTOCOL)
+		obj = dumps([str(m) for m in msg], HIGHEST_PROTOCOL)
 		self.__csock.send(obj + CSocket.END_STRING)
 		ret = self.receive(self.__csock)
 		self.__csock.close()
