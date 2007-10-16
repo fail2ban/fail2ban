@@ -17,11 +17,11 @@
 #
 # Author: Sireyessire, Cyril Jaquier
 # 
-# $Revision: 491 $
+# $Revision: 559 $
 
 opts="start stop restart reload showlog"
 
-FAIL2BAN="/usr/bin/fail2ban-client"
+FAIL2BAN="/usr/bin/fail2ban-client ${FAIL2BAN_OPTIONS}"
 
 depend() {
 	need net
@@ -42,29 +42,11 @@ stop() {
 }
 
 restart() {
-    if ! service_stopped "${SVCNAME}" ; then
-            svc_stop || return "$?"
-            einfon "Waiting for server to shutdown ."
-			cnt=0
-			while [ 1 ]; do
-				# Ping fail2ban-server
-				${FAIL2BAN} ping &> /dev/null
-				if [ ! "$?" == "0" ]; then
-					break
-				fi
-				cnt=`expr $cnt + 1`
-				if [ $cnt -gt 60 ] ; then
-					# We have waited 1 minute. Failed
-					echo
-					eend 1 "Failed"
-					break
-				fi
-				sleep 1
-				echo -n "."
-			done
-			echo
-    fi
-    svc_start
+	if ! service_stopped "${SVCNAME}" ; then
+		svc_stop || return "$?"
+		sleep 1
+	fi
+	svc_start
 }
 
 reload() {

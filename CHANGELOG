@@ -4,8 +4,16 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.7.7)                           2007/02/08
+Fail2Ban (version 0.7.8)                           2007/03/21
 =============================================================
+
+ver. 0.7.8 (2007/03/21) - release candidate
+----------
+- Fixed asctime pattern in datedetector.py
+- Added new filters/actions. Thanks to Yaroslav Halchenko
+- Added Suse init script and modified gentoo-initd. Thanks to
+  Christian Rauch
+- Moved every locking statements in a try..finally block
 
 ver. 0.7.7 (2007/02/08) - release candidate
 ----------

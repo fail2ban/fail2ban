@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 536 $
+# $Revision: 553 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 536 $"
-__date__ = "$Date: 2007-01-31 23:31:42 +0100 (Wed, 31 Jan 2007) $"
+__version__ = "$Revision: 553 $"
+__date__ = "$Date: 2007-02-26 00:53:22 +0100 (Mon, 26 Feb 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -62,9 +62,11 @@ class BanManager:
 	# @param value the time
 	
 	def setBanTime(self, value):
-		self.__lock.acquire()
-		self.__banTime = int(value)
-		self.__lock.release()
+		try:
+			self.__lock.acquire()
+			self.__banTime = int(value)
+		finally:
+			self.__lock.release()
 	
 	##
 	# Get the ban time.
@@ -85,9 +87,11 @@ class BanManager:
 	# @param value total number
 	
 	def setBanTotal(self, value):
-		self.__lock.acquire()
-		self.__banTotal = value
-		self.__lock.release()
+		try:
+			self.__lock.acquire()
+			self.__banTotal = value
+		finally:
+			self.__lock.release()
 	
 	##
 	# Get the total number of banned address.
