@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 458 $
+# $Revision: 505 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 458 $"
-__date__ = "$Date: 2006-11-12 15:52:36 +0100 (Sun, 12 Nov 2006) $"
+__version__ = "$Revision: 505 $"
+__date__ = "$Date: 2006-12-24 00:20:16 +0100 (Sun, 24 Dec 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -67,8 +67,14 @@ class FilterReader(ConfigReader):
 			elif opt == "timepattern":
 				stream.append(["set", self.__name, "timepattern", self.__opts[opt]])
 			elif opt == "failregex":
-				stream.append(["set", self.__name, "failregex", self.__opts[opt]])
+				for regex in self.__opts[opt].split('\n'):
+					# Do not send a command if the rule is empty.
+					if regex != '':
+						stream.append(["set", self.__name, "addfailregex", regex])
 			elif opt == "ignoreregex":
-				stream.append(["set", self.__name, "ignoreregex", self.__opts[opt]])		
+				for regex in self.__opts[opt].split('\n'):
+					# Do not send a command if the rule is empty.
+					if regex != '':
+						stream.append(["set", self.__name, "addignoreregex", regex])		
 		return stream
 		

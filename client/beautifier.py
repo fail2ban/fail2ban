@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 288 $
+# $Revision: 504 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 288 $"
-__date__ = "$Date: 2006-08-22 23:59:51 +0200 (Tue, 22 Aug 2006) $"
+__version__ = "$Revision: 504 $"
+__date__ = "$Date: 2006-12-23 17:37:17 +0100 (Sat, 23 Dec 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -109,7 +109,18 @@ class Beautifier:
 					msg = "These IP addresses/networks are ignored:\n"
 					for ip in response[:-1]:
 						msg = msg + "|- " + ip + "\n"
-					msg = msg + "`- " + response[len(response)-1]				
+					msg = msg + "`- " + response[len(response)-1]
+			elif inC[2] in ("failregex", "addfailregex", "delfailregex",
+							"ignoreregex", "addignoreregex", "delignoreregex"):
+				if len(response) == 0:
+					msg = "No regular expression is defined"
+				else:
+					msg = "The following regular expression are defined:\n"
+					c = 0
+					for ip in response[:-1]:
+						msg = msg + "|- [" + str(c) + "]: " + ip + "\n"
+						c += 1
+					msg = msg + "`- [" + str(c) + "]: " + response[len(response)-1]
 		except Exception:
 			logSys.warn("Beautifier error. Please report the error")
 			logSys.error("Beautify " + `response` + " with " + `self.__inputCmd` +

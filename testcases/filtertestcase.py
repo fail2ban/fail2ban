@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 437 $
+# $Revision: 503 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 437 $"
-__date__ = "$Date: 2006-10-30 23:48:52 +0100 (Mon, 30 Oct 2006) $"
+__version__ = "$Revision: 503 $"
+__date__ = "$Date: 2006-12-23 17:31:00 +0100 (Sat, 23 Dec 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -99,7 +99,7 @@ class GetFailures(unittest.TestCase):
 		output = ('193.168.0.128', 3, 1124013599.0)
 		
 		self.__filter.addLogPath(GetFailures.FILENAME_01)
-		self.__filter.setFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) (?:::f{4,6}:)?(?P<host>\S*)")
+		self.__filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) (?:::f{4,6}:)?(?P<host>\S*)")
 
 		self.__filter.getFailures(GetFailures.FILENAME_01)
 		
@@ -116,7 +116,7 @@ class GetFailures(unittest.TestCase):
 		output = ('141.3.81.106', 4, 1124013539.0)
 
 		self.__filter.addLogPath(GetFailures.FILENAME_02)
-		self.__filter.setFailRegex("Failed .* (?:::f{4,6}:)(?P<host>\S*)")
+		self.__filter.addFailRegex("Failed .* (?:::f{4,6}:)(?P<host>\S*)")
 		
 		self.__filter.getFailures(GetFailures.FILENAME_02)
 		
@@ -127,13 +127,13 @@ class GetFailures(unittest.TestCase):
 		ip = ticket.getIP()
 		found = (ip, attempts, date)
 		
-		self.assertEqual(found, output)	
+		self.assertEqual(found, output)
 
 	def testGetFailures03(self):
 		output = ('203.162.223.135', 6, 1124013544.0)
 
 		self.__filter.addLogPath(GetFailures.FILENAME_03)
-		self.__filter.setFailRegex("error,relay=(?:::f{4,6}:)?(?P<host>\S*),.*550 User unknown")
+		self.__filter.addFailRegex("error,relay=(?:::f{4,6}:)?(?P<host>\S*),.*550 User unknown")
 		
 		self.__filter.getFailures(GetFailures.FILENAME_03)
 		
@@ -151,7 +151,7 @@ class GetFailures(unittest.TestCase):
 				  ('212.41.96.185', 4, 1124013598.0)]
 
 		self.__filter.addLogPath(GetFailures.FILENAME_04)
-		self.__filter.setFailRegex("Invalid user .* (?P<host>\S*)")
+		self.__filter.addFailRegex("Invalid user .* (?P<host>\S*)")
 		
 		self.__filter.getFailures(GetFailures.FILENAME_04)
 
@@ -166,3 +166,32 @@ class GetFailures(unittest.TestCase):
 		except FailManagerEmpty:
 			pass
 		
+	def testGetFailuresMultiRegex(self):
+		output = ('141.3.81.106', 8, 1124013541.0)
+
+		self.__filter.addLogPath(GetFailures.FILENAME_02)
+		self.__filter.addFailRegex("Failed .* from <HOST>")
+		self.__filter.addFailRegex("Accepted .* from <HOST>")
+		
+		self.__filter.getFailures(GetFailures.FILENAME_02)
+		
+		ticket = self.__filter.failManager.toBan()
+
+		attempts = ticket.getAttempt()
+		date = ticket.getTime()
+		ip = ticket.getIP()
+		found = (ip, attempts, date)
+		
+		self.assertEqual(found, output)
+	
+	def testGetFailuresIgnoreRegex(self):
+		output = ('141.3.81.106', 8, 1124013541.0)
+
+		self.__filter.addLogPath(GetFailures.FILENAME_02)
+		self.__filter.addFailRegex("Failed .* from <HOST>")
+		self.__filter.addFailRegex("Accepted .* from <HOST>")
+		self.__filter.addIgnoreRegex("for roehl")
+		
+		self.__filter.getFailures(GetFailures.FILENAME_02)
+		
+		self.assertRaises(FailManagerEmpty, self.__filter.failManager.toBan)

@@ -17,11 +17,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 467 $
+# $Revision: 511 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 467 $"
-__date__ = "$Date: 2006-11-16 22:07:42 +0100 (Thu, 16 Nov 2006) $"
+__version__ = "$Revision: 511 $"
+__date__ = "$Date: 2007-01-04 13:58:21 +0100 (Thu, 04 Jan 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -30,7 +30,7 @@ import unittest, logging, sys
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
-sys.path.insert(1, "/usr/lib/fail2ban")
+sys.path.insert(1, "/usr/share/fail2ban")
 
 from common.version import version
 from testcases import banmanagertestcase

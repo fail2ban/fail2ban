@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 470 $
+# $Revision: 503 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 470 $"
-__date__ = "$Date: 2006-11-18 16:15:58 +0100 (Sat, 18 Nov 2006) $"
+__version__ = "$Revision: 503 $"
+__date__ = "$Date: 2006-12-23 17:31:00 +0100 (Sat, 23 Dec 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -143,13 +143,21 @@ class Transmitter:
 			value = command[2]
 			self.__server.setTimePattern(name, value)
 			return self.__server.getTimePattern(name)
-		elif command[1] == "failregex":
+		elif command[1] == "addfailregex":
 			value = command[2]
-			self.__server.setFailRegex(name, value)
+			self.__server.addFailRegex(name, value)
 			return self.__server.getFailRegex(name)
-		elif command[1] == "ignoreregex":
+		elif command[1] == "delfailregex":
+			value = int(command[2])
+			self.__server.delFailRegex(name, value)
+			return self.__server.getFailRegex(name)
+		elif command[1] == "addignoreregex":
 			value = command[2]
-			self.__server.setIgnoreRegex(name, value)
+			self.__server.addIgnoreRegex(name, value)
+			return self.__server.getIgnoreRegex(name)
+		elif command[1] == "delignoreregex":
+			value = int(command[2])
+			self.__server.delIgnoreRegex(name, value)
 			return self.__server.getIgnoreRegex(name)
 		elif command[1] == "findtime":
 			value = command[2]

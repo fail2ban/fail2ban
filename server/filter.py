@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 471 $
+# $Revision: 503 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 471 $"
-__date__ = "$Date: 2006-11-19 22:25:51 +0100 (Sun, 19 Nov 2006) $"
+__version__ = "$Revision: 503 $"
+__date__ = "$Date: 2006-12-23 17:31:00 +0100 (Sat, 23 Dec 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -29,8 +29,10 @@ from failticket import FailTicket
 from jailthread import JailThread
 from datedetector import DateDetector
 from mytime import MyTime
+from regex import Regex, RegexException
+from failregex import FailRegex
 
-import logging, re, sre_constants
+import logging, re
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -61,12 +63,10 @@ class Filter(JailThread):
 		self.__crtFilename = None
 		## The log file path.
 		self.__logPath = []
-		## The regular expression matching the failure.
-		self.__failRegex = ''
-		self.__failRegexObj = None
-		## The regular expression with expression to ignore.
-		self.__ignoreRegex = ''
-		self.__ignoreRegexObj = None
+		## The regular expression list matching the failures.
+		self.__failRegex = list()
+		## The regular expression list with expressions to ignore.
+		self.__ignoreRegex = list()
 		## The amount of time to look back.
 		self.__findTime = 6000
 		## The ignore IP list.
@@ -158,26 +158,26 @@ class Filter(JailThread):
 		return self.dateDetector.getDefaultPattern()
 	
 	##
-	# Set the regular expression which matches the failure.
+	# Add a regular expression which matches the failure.
 	#
 	# The regular expression can also match any other pattern than failures
 	# and thus can be used for many purporse.
 	# @param value the regular expression
 	
-	def setFailRegex(self, value):
+	def addFailRegex(self, value):
 		try:
-			if value.lstrip() == '':
-				self.__failRegex = value
-				self.__failRegexObj = None
-			else:
-				# Replace "<HOST>" with default regular expression for host.
-				regex = value.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>\S+)")
-				self.__failRegex = regex
-				self.__failRegexObj = re.compile(regex)
-			logSys.info("Set failregex = %s" % self.__failRegex)
-		except sre_constants.error:
-			logSys.error("Unable to compile regular expression " +
-						self.__failRegex)
+			regex = FailRegex(value)
+			self.__failRegex.append(regex)
+		except RegexException, e:
+			logSys.error(e)
+	
+
+	def delFailRegex(self, index):
+		try:
+			del self.__failRegex[index]
+		except IndexError:
+			logSys.error("Cannot remove regular expression. Index %d is not "
+						 "valid" % index)
 	
 	##
 	# Get the regular expression which matches the failure.
@@ -185,25 +185,31 @@ class Filter(JailThread):
 	# @return the regular expression
 	
 	def getFailRegex(self):
-		return self.__failRegex
+		failRegex = list()
+		for regex in self.__failRegex:
+			failRegex.append(regex.getRegex())
+		return failRegex
 	
 	##
-	# Set the regular expression which matches the failure.
+	# Add the regular expression which matches the failure.
 	#
 	# The regular expression can also match any other pattern than failures
 	# and thus can be used for many purporse.
 	# @param value the regular expression
 	
-	def setIgnoreRegex(self, value):
+	def addIgnoreRegex(self, value):
 		try:
-			if value.lstrip() == '':
-				self.__ignoreRegexObj = None
-			else:
-				self.__ignoreRegexObj = re.compile(value)
-			self.__ignoreRegex = value
-			logSys.info("Set ignoreregex = %s" % value)
-		except sre_constants.error:
-			logSys.error("Unable to compile regular expression " + value)
+			regex = Regex(value)
+			self.__ignoreRegex.append(regex)
+		except RegexException, e:
+			logSys.error(e)
+	
+	def delIgnoreRegex(self, index):
+		try:
+			del self.__ignoreRegex[index]
+		except IndexError:
+			logSys.error("Cannot remove regular expression. Index %d is not "
+						 "valid" % index)
 	
 	##
 	# Get the regular expression which matches the failure.
@@ -211,7 +217,10 @@ class Filter(JailThread):
 	# @return the regular expression
 	
 	def getIgnoreRegex(self):
-		return self.__ignoreRegex
+		ignoreRegex = list()
+		for regex in self.__ignoreRegex:
+			ignoreRegex.append(regex.getRegex())
+		return ignoreRegex
 	
 	##
 	# Set the time needed to find a failure.
@@ -413,35 +422,35 @@ class Filter(JailThread):
 
 	def findFailure(self, line):
 		failList = list()
-		# Checks if failregex is defined.
-		if self.__failRegexObj == None:
-			logSys.error("No failregex is set")
-			return failList
-		# Checks if ignoreregex is defined.
-		if not self.__ignoreRegexObj == None:
-			match = self.__ignoreRegexObj.search(line)
-			if match:
+		# Checks if we must ignore this line.
+		for ignoreRegex in self.__ignoreRegex:
+			ignoreRegex.search(line)
+			if ignoreRegex.hasMatched():
 				# The ignoreregex matched. Return.
 				logSys.debug("Ignoring this line")
 				return failList
-		match = self.__failRegexObj.search(line)
-		if match:
-			# The failregex matched.
-			date = self.dateDetector.getUnixTime(match.string)
-			if date == None:
-				logSys.debug("Found a match but no valid date/time found "
-							 + "for " + match.string + ". Please contact "
-							 + "the author in order to get support for "
-							 + "this format")
-			else:
-				try:
-					ipMatch = DNSUtils.textToIp(match.group("host"))
-					if ipMatch:
-						for ip in ipMatch:
-							failList.append([ip, date])
-				except IndexError:
-					logSys.error("There is no 'host' group in the rule. " +
-								 "Please correct your configuration.")
+		# Iterates over all the regular expressions.
+		for failRegex in self.__failRegex:
+			failRegex.search(line)
+			if failRegex.hasMatched():
+				# The failregex matched.
+				date = self.dateDetector.getUnixTime(line)
+				if date == None:
+					logSys.debug("Found a match but no valid date/time found "
+								 + "for " + line + ". Please contact the "
+								 + "author in order to get support for this "
+								 + "format")
+				else:
+					try:
+						host = failRegex.getHost()
+						ipMatch = DNSUtils.textToIp(host)
+						if ipMatch:
+							for ip in ipMatch:
+								failList.append([ip, date])
+							# We matched a regex, it is enough to stop.
+							break
+					except RegexException, e:
+						logSys.error(e)
 		return failList
 	
 

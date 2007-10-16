@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 321 $
+# $Revision: 504 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 321 $"
-__date__ = "$Date: 2006-09-04 21:19:58 +0200 (Mon, 04 Sep 2006) $"
+__version__ = "$Revision: 504 $"
+__date__ = "$Date: 2006-12-23 17:37:17 +0100 (Sat, 23 Dec 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -65,6 +65,12 @@ class DateDetector:
 		template.setName("Day/Month/Year:Hour:Minute:Second")
 		template.setRegex("\d{2}/\S{3}/\d{4}:\d{2}:\d{2}:\d{2}")
 		template.setPattern("%d/%b/%Y:%H:%M:%S")
+		self.__templates.append(template)
+		# Exim 2006-12-21 06:43:20
+		template = DateStrptime()
+		template.setName("Year-Month-Day Hour:Minute:Second")
+		template.setRegex("\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
+		template.setPattern("%Y-%m-%d %H:%M:%S")
 		self.__templates.append(template)
 		# TAI64N
 		template = DateTai64n()
