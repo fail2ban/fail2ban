@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.2 $"
-__date__ = "$Date: 2005/11/20 17:07:47 $"
+__version__ = "$Revision: 1.3 $"
+__date__ = "$Date: 2006/01/03 15:13:41 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -44,6 +44,16 @@ class Mail:
 		""" Set from: address
 		"""
 		self.fromAddr = fromAddr
+
+	def setUser(self, user):
+		""" Set smtpuser
+		"""
+		self.user = user
+
+	def setPassword(self, password):
+		""" Set smtppassword
+		"""
+		self.password = password
 	
 	def setToAddr(self, toAddr):
 		""" Set to: address
@@ -69,6 +79,8 @@ class Mail:
 		try:
 			server = smtplib.SMTP(self.host, self.port)
 			#server.set_debuglevel(1)
+			if not self.user == '':
+				server.login(self.user, self.password)
 			server.sendmail(self.fromAddr, self.toAddr, mail)
 			logSys.debug("Email sent to " + `self.toAddr`)
 			server.quit()	

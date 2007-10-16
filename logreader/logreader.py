@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.14 $
+# $Revision: 1.16 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.14 $"
-__date__ = "$Date: 2005/11/20 17:07:47 $"
+__version__ = "$Revision: 1.16 $"
+__date__ = "$Date: 2006/01/03 15:13:04 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -201,7 +201,18 @@ class LogReader:
 			Pattern should describe the date construction of
 			value.
 		"""
-		date = list(time.strptime(value, self.timepattern))
+		try:
+			# Check if the parsed value is in TAI64N format
+			if not self.timepattern.lower() == "tai64n":
+				date = list(time.strptime(value, self.timepattern))
+			else:
+				# extract part of format which represents seconds since epoch
+				seconds_since_epoch = value[2:17]
+				date = list(time.gmtime(int(seconds_since_epoch, 16)))
+		except ValueError, e:
+			logSys.error(e)
+			logSys.error("Please check the format and your locale settings.")
+			return None
 		if date[0] < 2000:
 			# There is probably no year field in the logs
 			date[0] = time.gmtime()[0]

@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.6.0)                           2005/11/20
+Fail2Ban (version 0.6.1)                           2006/03/16
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -58,12 +58,12 @@ Require: python-2.4 (http://www.python.org)
 
 To install, just do:
 
-> tar xvfj fail2ban-0.6.0.tar.bz2
-> cd fail2ban-0.6.0
+> tar xvfj fail2ban-0.6.1.tar.bz2
+> cd fail2ban-0.6.1
 > python setup.py install
 
-This will install Fail2Ban into /usr/lib/fail2ban. The fail2ban
-executable is placed into /usr/bin.
+This will install Fail2Ban into /usr/lib/fail2ban. The
+fail2ban executable is placed into /usr/bin.
 
 Gentoo: ebuilds are available on the website.
 Debian: Fail2Ban is in Debian unstable.
@@ -74,8 +74,17 @@ Fail2Ban should now be correctly installed. Just type:
 > fail2ban -h
 
 to see if everything is alright. You can configure fail2ban
-with a config file. Copy config/fail2ban.conf.default to
-/etc/fail2ban.conf.
+with a config file. Different kind of configuration files are
+available:
+
+iptables:   copy config/fail2ban.conf.iptables to
+            /etc/fail2ban.conf
+hosts.deny: copy config/fail2ban.conf.hostsdeny to
+            /etc/fail2ban.conf
+shorewall:  copy config/fail2ban.conf.shorewall to
+            /etc/fail2ban.conf
+
+Do not forget to edit fail2ban.conf to meet your needs.
 
 You can use the initd script available in config/. Copy
 <dist>-initd to /etc/init.d/fail2ban. Gentoo users must copy
@@ -96,7 +105,6 @@ the value stored in fail2ban.conf. Here are the command line
 options:
 
   -b         start in background
-  -d         start in debug mode
   -c <FILE>  read configuration file FILE
   -p <FILE>  create PID lock in FILE
   -h         display this help message
@@ -124,7 +132,8 @@ Thanks:
 
 Kévin Drapel, Marvin Rouge, Sireyessire, Robert Edeker,
 Tom Pike, Iain Lea, Andrey G. Grozin, Yaroslav Halchenko,
-Jonathan Kamens, Stephen Gildea
+Jonathan Kamens, Stephen Gildea, Markus Hoffmann, Mark
+Edgington, Patrick Börjesson, kojiro, zugeschmiert
 
 License:
 --------
