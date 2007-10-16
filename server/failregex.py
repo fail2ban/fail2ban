@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 503 $
+# $Revision: 589 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 503 $"
-__date__ = "$Date: 2006-12-23 17:31:00 +0100 (Sat, 23 Dec 2006) $"
+__version__ = "$Revision: 589 $"
+__date__ = "$Date: 2007-06-25 23:43:25 +0200 (Mon, 25 Jun 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -40,9 +40,7 @@ class FailRegex(Regex):
 	# avoid construction of invalid object.
 	# @param value the regular expression
 	
-	def __init__(self, value):
-		# Replace "<HOST>" with default regular expression for host.
-		regex = value.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>\S+)")
+	def __init__(self, regex):
 		# Initializes the parent.
 		Regex.__init__(self, regex)
 		# Check for group "host"

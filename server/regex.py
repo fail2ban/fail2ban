@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 505 $
+# $Revision: 589 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 505 $"
-__date__ = "$Date: 2006-12-24 00:20:16 +0100 (Sun, 24 Dec 2006) $"
+__version__ = "$Revision: 589 $"
+__date__ = "$Date: 2007-06-25 23:43:25 +0200 (Mon, 25 Jun 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -42,6 +42,9 @@ class Regex:
 	
 	def __init__(self, regex):
 		self._matchCache = None
+		# Perform shortcuts expansions.
+		# Replace "<HOST>" with default regular expression for host.
+		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>\S+)")
 		if regex.lstrip() == '':
 			raise RegexException("Cannot add empty regex")
 		try:

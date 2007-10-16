@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 567 $
+# $Revision: 605 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 567 $"
-__date__ = "$Date: 2007-03-26 23:17:31 +0200 (Mon, 26 Mar 2007) $"
+__version__ = "$Revision: 605 $"
+__date__ = "$Date: 2007-08-08 00:11:34 +0200 (Wed, 08 Aug 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -414,6 +414,20 @@ class Filter(JailThread):
 		return True
 
 	##
+	# Returns true if the line should be ignored.
+	#
+	# Uses ignoreregex.
+	# @param line: the line
+	# @return: a boolean
+
+	def ignoreLine(self, line):
+		for ignoreRegex in self.__ignoreRegex:
+			ignoreRegex.search(line)
+			if ignoreRegex.hasMatched():
+				return True
+		return False
+
+	##
 	# Finds the failure in a line.
 	#
 	# Uses the failregex pattern to find it and timeregex in order
@@ -423,12 +437,9 @@ class Filter(JailThread):
 	def findFailure(self, line):
 		failList = list()
 		# Checks if we must ignore this line.
-		for ignoreRegex in self.__ignoreRegex:
-			ignoreRegex.search(line)
-			if ignoreRegex.hasMatched():
-				# The ignoreregex matched. Return.
-				logSys.debug("Ignoring this line")
-				return failList
+		if self.ignoreLine(line):
+			# The ignoreregex matched. Return.
+			return failList
 		# Iterates over all the regular expressions.
 		for failRegex in self.__failRegex:
 			failRegex.search(line)
@@ -493,17 +504,6 @@ class DNSUtils:
 			return list()
 	
 	@staticmethod
-	def textToDns(text):
-		""" Search for possible DNS in an arbitrary text.
-			Thanks to Tom Pike.
-		"""
-		match = DNSUtils.DNS_CRE.match(text)
-		if match:
-			return match
-		else:
-			return None
-	
-	@staticmethod
 	def searchIP(text):
 		""" Search if an IP address if directly available and return
 			it.
@@ -538,11 +538,9 @@ class DNSUtils:
 				ipList.append(plainIPStr)
 		if not ipList:
 			# Try to get IP from possible DNS
-			dns = DNSUtils.textToDns(text)
-			if not dns == None:
-				ip = DNSUtils.dnsToIp(dns.group(0))
-				for e in ip:
-					ipList.append(e)
+			ip = DNSUtils.dnsToIp(text)
+			for e in ip:
+				ipList.append(e)
 		return ipList
 	
 	@staticmethod
