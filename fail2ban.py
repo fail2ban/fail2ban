@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
+# $Revision: 1.20.2.13 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
+__version__ = "$Revision: 1.20.2.13 $"
+__date__ = "$Date: 2005/08/06 18:44:06 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -137,14 +137,7 @@ def getCmdLineOptions(optList):
 		if opt[0] == "-p":
 			conf["pidlock"] = opt[1]
 		if opt[0] == "-k":
-			pid = checkForPID(conf["pidlock"])
-			if pid:
-				killPID(int(pid))
-				logSys.warn("Killed Fail2Ban with PID "+pid)
-				sys.exit(0)
-			else:
-				logSys.error("No running Fail2Ban found")
-				sys.exit(-1)
+			conf["kill"] = True
 
 def main():
 	""" Fail2Ban main function
@@ -196,6 +189,23 @@ def main():
 	
 	# Gets command line options
 	getCmdLineOptions(optList)
+	
+	# PID lock
+	pidLock.setPath(conf["pidlock"])
+	
+	# Now we can kill properly a running instance if needed
+	try:
+		conf["kill"]
+		pid = pidLock.exists()
+		if pid:
+			killPID(int(pid))
+			logSys.warn("Killed Fail2Ban with PID "+pid)
+			sys.exit(0)
+		else:
+			logSys.error("No running Fail2Ban found")
+			sys.exit(-1)
+	except KeyError:
+		pass
 
 	# Start Fail2Ban in daemon mode
 	if conf["background"]:
@@ -243,9 +253,6 @@ def main():
 		# Set formatter and add handler to logger
 		hdlr.setFormatter(formatter)
 		logSys.addHandler(hdlr)
-	
-	# PID lock
-	pidLock.setPath(conf["pidlock"])
 	
 	# Ignores IP list
 	ignoreIPList = conf["ignoreip"].split(' ')

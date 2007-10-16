@@ -17,7 +17,7 @@
 #
 # Author: Sireyessire, Cyril Jaquier
 # 
-# $Revision$
+# $Revision: 1.1.2.2 $
 
 opts="start stop restart showlog"
 

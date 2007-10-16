@@ -16,7 +16,7 @@
 #
 # Author: Cyril Jaquier
 # 
-# $Revision$
+# $Revision: 1.1 $
 
 # Command line options for Fail2Ban. Refer to "fail2ban.py -h" for
 # valid options.
