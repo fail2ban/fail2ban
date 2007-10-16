@@ -4,20 +4,92 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-ToDo                                     $Revision: 1.5 $
+ToDo                                        $Revision: 1.11 $
 =============================================================
 
 See Feature Request Tracking System at SourceForge.net
 
 - improve installation process (better prefix support)
-- install Fail2ban into /usr/share
+
+- improve documentation and website for user
+
+- use Doxygen
+
+- use PyLint to check the code
+
 - better configuration files
+
 - add a check to see if the time of the log messages is
   correctly detected (valid regexp)
-- split configuration files in /etc/fail2ban/services.d
-  Example: /etc/fail2ban/services.d/apache
-- template for common services in /etc/fail2ban/scripts.d
-  Example: /etc/fail2ban/scripts.d/apache
+
+- use Gentoo Portage style for scripts.
+  - banning engines script in /etc/fail2ban/scripts.d
+    Example: /etc/fail2ban/scripts.d/iptables
+    Will be mostly bash scripting which is more "user
+    friendly".
+  - split configuration files in /etc/fail2ban/services.d
+    for log files
+    Example: /etc/fail2ban/services.d/apache
+    Mainly regular expressions.
+  - template for common regex in /etc/fail2ban/templates.d
+    Example: /etc/fail2ban/templates.d/date
+    Mainly regular expressions.
+
 - remove debug mode (root check)
+
 - better return values in function
+
 - use more email.Utils in mail.py
+
+- add gettext support. Is this really needed for a server
+  utility?
+
+- send an email when fail2ban is running
+
+- add multithreading. Python threading is not really
+  efficient. However, fail2ban could benefit of it. We could
+  use threads like this:
+  - one thread which check for host to unban.
+  - one thread per file to watch. This will allow things like
+    different polling time for each file.
+  <srv> is read-only (we only read log files) thus no locks
+  are required. However, <meth> is read-write and must take
+  care of concurrency in case of multithreading.
+
+- add FAM/Gamin support. Should be quite efficient with
+  threading. Take care that handle_one_event() release the
+  Python lock.
+
+- add a test framework. We could use unittest which is in
+  Python since 2.1. It should be possible to run all tests
+  automatically.
+
+- add client/server using socket. Something similar to
+  gdesklets. DBUS seems to be designed for desktop use.
+  - fail2ban start -> start the daemon.
+  - fail2ban stop -> stop the daemon.
+  - fail2ban add <srv> <meth> -> add <srv> monitoring with
+    <meth> ban method (iptables, hosts.deny, etc).
+  - fail2ban del <srv> -> remove <srv> monitoring.
+  - fail2ban status <srv> -> query current fail2ban status.
+    Should return infos like a ban counter. Could be graph
+    with rrdtool.
+  - fail2ban pause <srv> -> suspend monitoring.
+  - fail2ban resume <srv> -> resume monitoring.
+  - fail2ban list -> list available services.
+  - fail2ban flush <srv> -> flush the <srv> ban list.
+  
+- remove PID file.
+
+- remove most of the command lines options if possible.
+
+- add the possibility to specify wildcard in log files.
+  Example: logfile = /var/log/apache2/access-*.log
+  Should we start one thread per file or just one thread per
+  serivce?
+
+- autodetect date format in log file. Match the most popular
+  format and sort them using the hit ratio. Should avoid
+  user problem with regex and not have a big impact on perfs.
+
+- restart automatically the daemon if an exception occurs.

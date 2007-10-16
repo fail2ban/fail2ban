@@ -1,6 +1,6 @@
 # Fail2Ban configuration file
 #
-# $Revision: 1.9 $
+# $Revision: 1.2 $
 #
 # 2005.06.21  modified for readability  Iain Lea  iain@bricbrac.de
 
@@ -10,12 +10,6 @@
 # Values:  [true | false]  Default:  false
 #
 background = false
-
-# Option:  debug
-# Notes.:  enable debug mode. More verbose output and bypass root user test.
-# Values:  [true | false]  Default:  false
-#
-debug = false
 
 # Option:  logtargets
 # Notes.:  log targets. Space separated list of logging targets.
@@ -48,7 +42,8 @@ pidlock = /var/run/fail2ban.pid
 maxfailures = 5
 
 # Option:  bantime
-# Notes.:  number of seconds an IP will be banned.
+# Notes.:  number of seconds an IP will be banned. If set to a negative
+#          value, IP will never be unbanned (permanent banning).
 # Values:  NUM  Default:  600
 #
 bantime = 600
@@ -63,9 +58,9 @@ findtime = 600
 # Notes.:  space separated list of IP's to be ignored by fail2ban.
 #          You can use CIDR mask in order to specify a range.
 #          Example:  ignoreip = 192.168.0.1/24 123.45.235.65
-# Values:  IP  Default:  192.168.0.0/16
+# Values:  IP  Default:  
 #
-ignoreip = 192.168.0.0/16
+ignoreip = 
 
 # Option:  cmdstart
 # Notes.:  command executed once at the start of Fail2Ban
@@ -99,6 +94,44 @@ reinittime = 10
 #
 maxreinits = -1
 
+# NOTE: Interpolations
+#
+# fwstart, as well as fwend, fwcheck, fwban, fwunban, use interpolations
+# so %(__name__)s  will be substituted by a name of each section
+# (unless the option is overriden in a section).
+# If you are going to use interpolations in your setup, please make
+# sure that you specified options port and protocol (which also has
+# an option in DEFAULT).
+#
+
+# Option:  hostsdeny
+# Notes.:  hosts.deny file path.
+# Values:  STR  Default:  /etc/hosts.deny
+#
+hostsdeny = /etc/hosts.deny
+
+# Option:  fwban
+# Notes.:  command executed when banning an IP. Take care that the
+#          command is executed with Fail2Ban user rights.
+# Tags:    <ip>  IP address
+#          <failures>  number of failures
+#          <failtime>  unix timestamp of the last failure
+#          <bantime>  unix timestamp of the ban time
+# Values:  CMD
+# Default: iptables -I INPUT 1 -s <ip> -j DROP
+#
+fwban = IP=<ip> && echo "ALL: $IP" >> %(hostsdeny)s
+
+# Option:  fwunban
+# Notes.:  command executed when unbanning an IP. Take care that the
+#          command is executed with Fail2Ban user rights.
+# Tags:    <ip>  IP address
+#          <bantime>  unix timestamp of the ban time
+#          <unbantime>  unix timestamp of the unban time
+# Values:  CMD
+# Default: iptables -D INPUT -s <ip> -j DROP
+#
+fwunban = IP=<ip> && sed -i.old s/ALL:\ $IP// %(hostsdeny)s
 
 [MAIL]
 # Option:  enabled
@@ -118,6 +151,19 @@ host = localhost
 # Values:  INT  Default:  25
 #
 port = 25
+
+# Option:  user
+# Notes.:  the username for smtp-server if authentification is required.
+#          if user is empty, no authentification is done.
+# Values:  STR  Default:  
+#
+user = 
+
+# Option:  password
+# Notes.:  the smtp-user's password if authentification is required.
+# Values:  STR  Default:  
+#
+password = 
 
 # Option:  from
 # Notes.:  e-mail address of the sender.
@@ -182,53 +228,9 @@ enabled = false
 #
 logfile = /var/log/httpd/access_log
 
-# Option:  fwstart
-# Notes.:  command executed once at the start of Fail2Ban
-# Values:  CMD  Default:
-#
-fwstart = iptables -N fail2ban-http
-          iptables -I INPUT -p tcp --dport http -j fail2ban-http
-          iptables -A fail2ban-http -j RETURN
-
-# Option:  fwend
-# Notes.:  command executed once at the end of Fail2Ban
-# Values:  CMD  Default:
-#
-fwend = iptables -D INPUT -p tcp --dport http -j fail2ban-http
-        iptables -F fail2ban-http
-        iptables -X fail2ban-http
-
-# Option:  fwcheck
-# Notes.:  command executed once before each fwban command
-# Values:  CMD  Default:
-#
-fwcheck = iptables -L INPUT | grep -q fail2ban-http
-
-# Option:  fwban
-# Notes.:  command executed when banning an IP. Take care that the
-#          command is executed with Fail2Ban user rights.
-# Tags:    <ip>  IP address
-#          <failures>  number of failures
-#          <failtime>  unix timestamp of the last failure
-#          <bantime>  unix timestamp of the ban time
-# Values:  CMD
-# Default: iptables -I INPUT 1 -s <ip> -j DROP
-#
-fwban = iptables -I fail2ban-http 1 -s <ip> -j DROP
-
-# Option:  fwunban
-# Notes.:  command executed when unbanning an IP. Take care that the
-#          command is executed with Fail2Ban user rights.
-# Tags:    <ip>  IP address
-#          <bantime>  unix timestamp of the ban time
-#          <unbantime>  unix timestamp of the unban time
-# Values:  CMD
-# Default: iptables -D INPUT -s <ip> -j DROP
-#
-fwunban = iptables -D fail2ban-http -s <ip> -j DROP
-
 # Option:  timeregex
-# Notes.:  regex to match timestamp in Apache logfile.
+# Notes.:  regex to match timestamp in Apache logfile. For TAI64N format,
+#          use timeregex = @[0-9a-f]{24}
 # Values:  [Wed Jan 05 15:08:01 2005]
 # Default: \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
 #
@@ -236,7 +238,8 @@ timeregex = \S{3} \S{3} \d{2} \d{2}:\d{2}:\d{2} \d{4}
 
 # Option:  timepattern
 # Notes.:  format used in "timeregex" fields definition. Note that '%' must be
-#          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
+#          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule).
+#          For TAI64N format, use timepattern = tai64n
 # Values:  TEXT  Default:  %%a %%b %%d %%H:%%M:%%S %%Y
 #
 timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
@@ -246,6 +249,46 @@ timepattern = %%a %%b %%d %%H:%%M:%%S %%Y
 # Values:  TEXT  Default:  authentication failure|user .* not found
 #
 failregex = authentication failure|user .* not found
+
+
+[VSFTPD]
+# Option: enabled
+# Notes.: enable monitoring for this section.
+# Values: [true | false] Default: false
+#
+enabled = false
+
+# Option: logfile
+# Notes.: logfile to monitor.
+# Values: FILE Default: /var/log/secure
+#
+logfile = /var/log/vsftpd.log
+
+# Option:  port
+# Notes.:  specifies port to monitor
+# Values:  [ NUM | STRING ]  Default:
+#
+port = ftp
+
+# Option: timeregex
+# Notes.: regex to match timestamp in VSFTPD logfile.
+# Values: [Mar 7 17:53:28]
+# Default: \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
+#
+timeregex = \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
+
+# Option: timepattern
+# Notes.: format used in "timeregex" fields definition. Note that '%' must be
+# escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
+# Values: TEXT Default: %%b %%d %%H:%%M:%%S
+#
+timepattern = %%b %%d %%H:%%M:%%S
+
+# Option: failregex
+# Notes.: regex to match the password failures messages in the logfile.
+# Values: TEXT Default: Authentication failure|Failed password|Invalid user
+#
+failregex = FAIL LOGIN
 
 
 [SSH]
@@ -261,53 +304,9 @@ enabled = true
 #
 logfile = /var/log/secure
 
-# Option:  fwstart
-# Notes.:  command executed once at the start of Fail2Ban
-# Values:  CMD  Default:
-#
-fwstart = iptables -N fail2ban-ssh
-          iptables -I INPUT -p tcp --dport ssh -j fail2ban-ssh
-          iptables -A fail2ban-ssh -j RETURN
-
-# Option:  fwend
-# Notes.:  command executed once at the end of Fail2Ban
-# Values:  CMD  Default:
-#
-fwend = iptables -D INPUT -p tcp --dport ssh -j fail2ban-ssh
-        iptables -F fail2ban-ssh
-        iptables -X fail2ban-ssh
-
-# Option:  fwcheck
-# Notes.:  command executed once before each fwban command
-# Values:  CMD  Default:
-#
-fwcheck = iptables -L INPUT | grep -q fail2ban-ssh
-
-# Option:  fwbanrule
-# Notes.:  command executed when banning an IP. Take care that the
-#          command is executed with Fail2Ban user rights.
-# Tags:    <ip>  IP address
-#          <failures>  number of failures
-#          <failtime>  unix timestamp of the last failure
-#          <bantime>  unix timestamp of the ban time
-# Values:  CMD
-# Default: iptables -I INPUT 1 -s <ip> -j DROP
-#
-fwban = iptables -I fail2ban-ssh 1 -s <ip> -j DROP
-
-# Option:  fwunbanrule
-# Notes.:  command executed when unbanning an IP. Take care that the
-#          command is executed with Fail2Ban user rights.
-# Tags:    <ip>  IP address
-#          <bantime>  unix timestamp of the ban time
-#          <unbantime>  unix timestamp of the unban time
-# Values:  CMD
-# Default: iptables -D INPUT -s <ip> -j DROP
-#
-fwunban = iptables -D fail2ban-ssh -s <ip> -j DROP
-
 # Option:  timeregex
-# Notes.:  regex to match timestamp in SSH logfile.
+# Notes.:  regex to match timestamp in SSH logfile. For TAI64N format,
+#          use timeregex = @[0-9a-f]{24}
 # Values:  [Mar  7 17:53:28]
 # Default: \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
 #
@@ -315,7 +314,8 @@ timeregex = \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}
 
 # Option:  timepattern
 # Notes.:  format used in "timeregex" fields definition. Note that '%' must be
-#          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule)
+#          escaped with '%' (see http://rgruet.free.fr/PQR2.3.html#timeModule).
+#          For TAI64N format, use timepattern = tai64n
 # Values:  TEXT  Default:  %%b %%d %%H:%%M:%%S
 #
 timepattern = %%b %%d %%H:%%M:%%S

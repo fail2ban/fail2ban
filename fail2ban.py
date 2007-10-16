@@ -17,11 +17,11 @@
 # Author: Cyril Jaquier
 # Modified by: Yaroslav Halchenko (SYSLOG, findtime)
 # 
-# $Revision: 1.21 $
+# $Revision: 1.24 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.21 $"
-__date__ = "$Date: 2005/11/20 17:07:47 $"
+__version__ = "$Revision: 1.24 $"
+__date__ = "$Date: 2006/01/22 11:10:29 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -56,7 +56,6 @@ def dispUsage():
 	print "and bans the corresponding IP addresses using firewall rules."
 	print
 	print "  -b         start in background"
-	print "  -d         start in debug mode"
 	print "  -c <FILE>  read configuration file FILE"
 	print "  -p <FILE>  create PID lock in FILE"
 	print "  -h         display this help message"
@@ -186,6 +185,7 @@ def main():
 	stdout.setFormatter(formatter)
 	
 	conf["kill"] = False
+	conf["debug"] = False
 	conf["verbose"] = 0
 	conf["conffile"] = "/etc/fail2ban.conf"
 	
@@ -208,7 +208,7 @@ def main():
 	
 	# Reads the config file and create a LogReader instance for
 	# each log file to check.
-	confReader = ConfigReader(conf["conffile"]);
+	confReader = ConfigReader(conf["conffile"])
 	confReader.openConf()
 	
 	# Options
@@ -216,7 +216,6 @@ def main():
 					["str", "logtargets", "/var/log/fail2ban.log"],
 					["str", "syslog-target", "/dev/log"],
 					["int", "syslog-facility", 1],
-					["bool", "debug", False],
 					["str", "pidlock", "/var/run/fail2ban.pid"],
 					["int", "maxfailures", 5],
 					["int", "bantime", 600],
@@ -294,8 +293,8 @@ def main():
 						port = int(syslogtargets[3])
 					syslogtarget = (syslogtargets[1], port)
 				hdlr = logging.handlers.SysLogHandler(syslogtarget, facility)
-			tformatter = logging.Formatter("fail2ban[%(process)d]: " +
-										   formatterstring);
+			tformatter = logging.Formatter("%(asctime)s %(name)s " +
+										    formatterstring, "%b %e %T");
 		else:
 			# Target should be a file
 			try:
@@ -315,14 +314,14 @@ def main():
 			logSys.setLevel(logging.INFO)
 		elif conf["verbose"] > 1:
 			logSys.setLevel(logging.DEBUG)
-		
-	# Set debug log level
-	if conf["debug"]:
-		logSys.setLevel(logging.DEBUG)
-		formatterstring = ('%(levelname)s: [%(filename)s (%(lineno)d)] ' +
+		if conf["verbose"] > 2:
+			formatterstring = ('%(levelname)s: [%(filename)s (%(lineno)d)] ' +
 						   '%(message)s')
-		formatter = logging.Formatter("%(asctime)s " + formatterstring)
-		stdout.setFormatter(formatter)
+			formatter = logging.Formatter("%(asctime)s " + formatterstring)
+			stdout.setFormatter(formatter)
+	
+	# Debug mode. Should only be used by developers
+	if conf["debug"]:
 		logSys.warn("DEBUG MODE: FIREWALL COMMANDS ARE _NOT_ EXECUTED BUT " +
 					"ONLY DISPLAYED IN THE LOG MESSAGES")
 	
@@ -358,6 +357,8 @@ def main():
 					["int", "port", "25"],
 					["str", "from", "root"],
 					["str", "to", "root"],
+					["str", "user", ''],
+					["str", "password", ''],
 					["bool", "localtime", False],
 					["str", "subject", "[Fail2Ban] Banned <ip>"],
 					["str", "message", "Fail2Ban notification"])
@@ -370,6 +371,8 @@ def main():
 		logSys.debug("Mail enabled")
 		mail = Mail(mailConf["host"], mailConf["port"])
 		mail.setFromAddr(mailConf["from"])
+		mail.setUser(mailConf["user"])
+		mail.setPassword(mailConf["password"])
 		mail.setToAddr(mailConf["to"])
 		mail.setLocalTimeFlag(mailConf["localtime"])
 		logSys.debug("to: " + mailConf["to"] + " from: " + mailConf["from"])
@@ -420,7 +423,25 @@ def main():
 		else:
 			logSys.warn(ip + " is not a valid IP address")
 	
-	initializeFwRules()
+	# Startup loop -- necessary to avoid crash if it takes time for iptables
+	# to startup. To avoid introduction of new config options, reusing
+	# maxreinits and polltime.
+	reinits = 0
+	while True:
+		try:
+			initializeFwRules()
+			break
+		except ExternalError, e:
+			reinits += 1
+			logSys.warn(e)
+			if conf["maxreinits"] < 0 or (reinits < conf["maxreinits"]):
+				logSys.warn("#%d attempt to initialize the firewalls" % reinits)
+			else:
+				logSys.error("Exiting: Too many attempts to initialize the " +
+							 "firewall")
+				killApp()
+			time.sleep(conf["polltime"])
+
 	# try to reinit once if it fails immediately
 	lastReinitTime = time.time() - conf["reinittime"] - 1
 	reinits = 0

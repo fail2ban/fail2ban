@@ -4,8 +4,40 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.6.0)                           2005/11/20
+Fail2Ban (version 0.6.1)                           2006/03/16
 =============================================================
+
+ver. 0.6.1 (2006/03/16) - stable
+----------
+- Added permanent banning. Set banTime to a negative value to
+  enable this feature (-1 is perfect). Thanks to Mannone
+- Fixed locale bug. Thanks to Fernando JosÃ©
+- Fixed crash when time format does not match data
+- Propagated patch from Debian to fix fail2ban search path 
+  addition to the path search list: now it is added first. 
+  Thanks to Nick Craig-Wood
+- Added SMTP authentification for mail notification. Thanks
+  to Markus Hoffmann
+- Removed debug mode as it is confusing for people
+- Added parsing of timestamp in TAI64N format (#1275325).
+  Thanks to Mark Edgington
+- Added patch #1382936 (Default formatted syslog logging).
+  Thanks to Patrick Börjesson
+- Removed 192.168.0.0/16 from ignoreip. Attacks could also
+  come from the local network.
+- Robust startup: if iptables module does not get fully
+  initialized after startup of fail2ban, fail2ban will do
+  "maxreinit" attempts to initialize its own firewall. It
+  will sleep between attempts for "polltime" number of
+  seconds (closes Debian: #334272). Thanks to Yaroslav
+  Halchenko
+- Added "interpolations" in fail2ban.conf. This is provided
+  by the ConfigParser module. Old configuration files still
+  work. Thanks to Yaroslav Halchenko
+- Added initial support for hosts.deny and shorewall. Need
+  more testing. Please test. Thanks to kojiro from Gentoo
+  forum for hosts.deny support
+- Added support for vsftpd. Thanks to zugeschmiert
 
 ver. 0.6.0 (2005/11/20) - stable
 ----------
