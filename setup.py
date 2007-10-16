@@ -18,11 +18,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.4.2.3 $
+# $Revision: 1.4.2.4 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.4.2.3 $"
-__date__ = "$Date: 2005/07/28 20:30:34 $"
+__version__ = "$Revision: 1.4.2.4 $"
+__date__ = "$Date: 2005/08/07 13:10:39 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -36,7 +36,7 @@ Fail2Ban scans log files like /var/log/pwdfail or
 /var/log/apache/error_log and bans IP that makes
 too many password failures. It updates firewall rules
 to reject the IP address or executes user defined
-commands. It needs log4py.'''
+commands.'''
 
 setup(
 	name = "fail2ban",

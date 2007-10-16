@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.7.2.2 $
+# $Revision: 1.7.2.3 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.7.2.2 $"
-__date__ = "$Date: 2005/07/22 21:11:42 $"
+__version__ = "$Revision: 1.7.2.3 $"
+__date__ = "$Date: 2005/08/17 19:26:49 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -58,8 +58,9 @@ def searchIP(text):
 def isValidIP(str):
 	""" Return true if str is a valid IP
 	"""
+	s = str.split('/', 1)
 	try:
-		socket.inet_aton(str)
+		socket.inet_aton(s[0])
 		return True
 	except socket.error:
 		return False

@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.1.2.1 $
+# $Revision: 1.1.2.2 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.1.2.1 $"
-__date__ = "$Date: 2005/08/04 20:48:30 $"
+__version__ = "$Revision: 1.1.2.2 $"
+__date__ = "$Date: 2005/08/07 13:08:18 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -51,17 +51,25 @@ class PIDLock:
 		def create(self):
 			""" Create PID lock.
 			"""
-			fileHandler = open(self.path, mode='w')
-			pid = os.getpid()
-			fileHandler.write(`pid` + '\n')
-			fileHandler.close()
-			logSys.debug("Created PID lock (" + `pid` + ") in " + self.path)
+			try:
+				fileHandler = open(self.path, mode='w')
+				pid = os.getpid()
+				fileHandler.write(`pid` + '\n')
+				fileHandler.close()
+				logSys.debug("Created PID lock (" + `pid` + ") in " + self.path)
+				return True
+			except:
+				logSys.error("Unable to create PID lock " + self.path)
+				return False	
 		
 		def remove(self):
 			""" Remove PID lock.
 			"""
-			os.remove(self.path)
-			logSys.debug("Removed PID lock " + self.path)
+			try:
+				os.remove(self.path)
+				logSys.debug("Removed PID lock " + self.path)
+			except OSError:
+				logSys.error("Unable to remove PID lock " + self.path)
 		
 		def exists(self):
 			""" Returns the current PID if Fail2Ban is running or False

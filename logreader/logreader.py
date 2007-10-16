@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.13.2.7 $
+# $Revision: 1.13.2.8 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.13.2.7 $"
-__date__ = "$Date: 2005/08/06 18:43:11 $"
+__version__ = "$Revision: 1.13.2.8 $"
+__date__ = "$Date: 2005/09/05 21:06:15 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -134,11 +134,13 @@ class LogReader:
 		logSys.debug(self.logPath)
 		logFile = self.openLogFile()
 		self.setFilePos(logFile)
-		lastLine = ''
+		lastLine = None
 		for line in logFile:
+			if not self.hasTime(line):
+				# There is no valid time in this line
+				continue
 			lastLine = line
-			failList = self.findFailure(line)
-			for element in failList:
+			for element in self.findFailure(line):
 				ip = element[0]
 				unixTime = element[1]
 				if unixTime < time.time()-self.findTime:
@@ -152,7 +154,8 @@ class LogReader:
 				else:
 					ipList[ip] = (1, unixTime)
 		self.lastPos = logFile.tell()
-		self.lastDate = self.getTime(lastLine)
+		if lastLine:
+			self.lastDate = self.getTime(lastLine)
 		logFile.close()
 		return ipList
 
@@ -174,6 +177,15 @@ class LogReader:
 					for ip in ipMatch:
 						failList.append([ip, date])
 		return failList
+	
+	def hasTime(self, line):
+		""" Return true if the line contains a date
+		"""
+		timeMatch = re.search(self.timeregex, line)
+		if timeMatch:
+			return True
+		else:
+			return False
 	
 	def getTime(self, line):
 		""" Gets the time of a log message.
