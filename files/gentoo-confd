@@ -1,0 +1,8 @@
+# Config file for /etc/init.d/fail2ban
+#
+# For information on options, see "/usr/bin/fail2ban-client -h".
+
+FAIL2BAN_OPTIONS=""
+
+# Force execution of the server even if the socket already exists:
+#FAIL2BAN_OPTIONS="-x"

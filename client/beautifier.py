@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 537 $
+# $Revision: 547 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 537 $"
-__date__ = "$Date: 2007-02-01 21:50:12 +0100 (Thu, 01 Feb 2007) $"
+__version__ = "$Revision: 547 $"
+__date__ = "$Date: 2007-02-12 00:21:56 +0100 (Mon, 12 Feb 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -68,13 +68,18 @@ class Beautifier:
 				msg = "Added jail " + response
 			elif inC[0:1] == ['status']:
 				if len(inC) > 1:
+					# Create IP list
+					ipList = ""
+					for ip in response[1][1][2][1]:
+						ipList += ip + " "
+					# Display information
 					msg = "Status for the jail: " + inC[1] + "\n"
 					msg = msg + "|- " + response[0][0] + "\n"
 					msg = msg + "|  |- " + response[0][1][0][0] + ":\t" + `response[0][1][0][1]` + "\n"
 					msg = msg + "|  `- " + response[0][1][1][0] + ":\t" + `response[0][1][1][1]` + "\n"
 					msg = msg + "`- " + response[1][0] + "\n"
 					msg = msg + "   |- " + response[1][1][0][0] + ":\t" + `response[1][1][0][1]` + "\n"
-					msg = msg + "   |  `- " + response[1][1][2][0] + ":\t" + `response[1][1][2][1]` + "\n"
+					msg = msg + "   |  `- " + response[1][1][2][0] + ":\t" + ipList + "\n"
 					msg = msg + "   `- " + response[1][1][1][0] + ":\t" + `response[1][1][1][1]`
 				else:
 					msg = "Status\n"

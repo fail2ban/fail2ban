@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 535 $
+# $Revision: 556 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 535 $"
-__date__ = "$Date: 2007-01-29 22:46:59 +0100 (Mon, 29 Jan 2007) $"
+__version__ = "$Revision: 556 $"
+__date__ = "$Date: 2007-03-07 21:54:32 +0100 (Wed, 07 Mar 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -56,9 +56,19 @@ class Actions(JailThread):
 		## The ban manager.
 		self.__banManager = BanManager()
 	
+	##
+	# Adds an action.
+	#
+	# @param name The action name
+	
 	def addAction(self, name):
 		action = Action(name)
 		self.__actions.append(action)
+	
+	##
+	# Removes an action.
+	#
+	# @param name The action name
 	
 	def delAction(self, name):
 		for action in self.__actions:
@@ -66,11 +76,24 @@ class Actions(JailThread):
 				self.__actions.remove(action)
 				break
 	
+	##
+	# Returns an action.
+	#
+	# Raises a KeyError exception if the action does not exist.
+	#
+	# @param name the action name
+	# @return the action
+	
 	def getAction(self, name):
 		for action in self.__actions:
 			if action.getName() == name:
 				return action
 		raise KeyError
+	
+	##
+	# Returns the last defined action.
+	#
+	# @return The last defined action.
 	
 	def getLastAction(self):
 		action = self.__actions.pop()

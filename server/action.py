@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 434 $
+# $Revision: 556 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 434 $"
-__date__ = "$Date: 2006-10-24 21:49:31 +0200 (Tue, 24 Oct 2006) $"
+__version__ = "$Revision: 556 $"
+__date__ = "$Date: 2007-03-07 21:54:32 +0100 (Wed, 07 Mar 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -54,17 +54,47 @@ class Action:
 		self.__actionStop = ''
 		logSys.debug("Created Action")
 	
+	##
+	# Sets the action name.
+	#
+	# @param name the name of the action
+	
 	def setName(self, name):
 		self.__name = name
+	
+	##
+	# Returns the action name.
+	#
+	# @return the name of the action
 	
 	def getName(self):
 		return self.__name
 	
+	##
+	# Sets a "CInfo".
+	#
+	# CInfo are statically defined properties. They can be definied by
+	# the user and are used to set e-mail addresses, port, host or
+	# anything that should not change during the life of the server.
+	#
+	# @param key the property name
+	# @param value the property value
+	
 	def setCInfo(self, key, value):
 		self.__cInfo[key] = value
 	
+	##
+	# Returns a "CInfo".
+	#
+	# @param key the property name
+	
 	def getCInfo(self, key):
 		return self.__cInfo[key]
+	
+	##
+	# Removes a "CInfo".
+	#
+	# @param key the property name
 	
 	def delCInfo(self, key):
 		del self.__cInfo[key]
@@ -85,6 +115,14 @@ class Action:
 	
 	def getActionStart(self):
 		return self.__actionStart
+	
+	##
+	# Executes the action "start" command.
+	#
+	# Replaces the tags in the action command with value of "cInfo"
+	# and executes the resulting command.
+	#
+	# @return True if the command succeeded
 	
 	def execActionStart(self):
 		startCmd = Action.replaceTag(self.__actionStart, self.__cInfo)
@@ -107,6 +145,11 @@ class Action:
 	def getActionBan(self):
 		return self.__actionBan
 	
+	##
+	# Executes the action "ban" command.
+	#
+	# @return True if the command succeeded
+	
 	def execActionBan(self, aInfo):
 		return self.__processCmd(self.__actionBan, aInfo)
 	
@@ -126,6 +169,11 @@ class Action:
 	
 	def getActionUnban(self):
 		return self.__actionUnban
+	
+	##
+	# Executes the action "unban" command.
+	#
+	# @return True if the command succeeded
 	
 	def execActionUnban(self, aInfo):
 		return self.__processCmd(self.__actionUnban, aInfo)
@@ -164,9 +212,24 @@ class Action:
 	def getActionStop(self):
 		return self.__actionStop
 	
+	##
+	# Executes the action "stop" command.
+	#
+	# Replaces the tags in the action command with value of "cInfo"
+	# and executes the resulting command.
+	#
+	# @return True if the command succeeded
+	
 	def execActionStop(self):
 		stopCmd = Action.replaceTag(self.__actionStop, self.__cInfo)
 		return Action.executeCmd(stopCmd)
+	
+	##
+	# Replaces tags in query with property values in aInfo.
+	#
+	# @param query the query string with tags
+	# @param aInfo the properties
+	# @return a string
 	
 	@staticmethod
 	def replaceTag(query, aInfo):
@@ -178,6 +241,19 @@ class Action:
 		# New line
 		string = string.replace("<br>", '\n')
 		return string
+	
+	##
+	# Executes a command with preliminary checks and substitutions.
+	#
+	# Before executing any commands, executes the "check" command first
+	# in order to check if prerequirements are met. If this check fails,
+	# it tries to restore a sane environnement before executing the real
+	# command.
+	# Replaces "aInfo" and "cInfo" in the query too.
+	#
+	# @param cmd The command to execute
+	# @param aInfo Dynamic properties
+	# @return True if the command succeeded
 	
 	def __processCmd(self, cmd, aInfo = None):
 		""" Executes an OS command.
@@ -208,6 +284,18 @@ class Action:
 		realCmd = Action.replaceTag(realCmd, self.__cInfo)
 		
 		return Action.executeCmd(realCmd)
+
+	##
+	# Executes a command.
+	#
+	# We need a shell here because commands are mainly shell script. They
+	# contain pipe, redirection, etc.
+	# 
+	# @todo Force the use of bash!?
+	# @todo Kill the command after a given timeout
+	#
+	# @param realCmd the command to execute
+	# @return True if the command succeeded
 
 	@staticmethod
 	def executeCmd(realCmd):

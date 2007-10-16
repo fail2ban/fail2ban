@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-ToDo                                         $Revision: 540 $
+ToDo                                         $Revision: 557 $
 =============================================================
 
 Legend:
@@ -13,16 +13,24 @@ Legend:
 # partially done
 * done
 
+- Removed relative imports
+
+- Discuss where Fail2ban should be installed (/usr/share,
+  /usr/lib/python/site-packages/, etc)
+
+- Cleanup fail2ban-client and fail2ban-server. Move code to
+  server/ and client/
+
 - Add timeout to external commands (signal alarm, watchdog
   thread, etc)
 
-- New backend: pynotify
+- New backend: pyinotify
 
 - Uniformize filters and actions name. Use the software name
   (openssh, postfix, proftp)
 
 - Added <USER> tag for failregex. Add features using this
-  information
+  information. Maybe add more tags
 
 - Look at the memory consumption. Decrease memory usage
 

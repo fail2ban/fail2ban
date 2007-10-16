@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 537 $
+# $Revision: 553 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 537 $"
-__date__ = "$Date: 2007-02-01 21:50:12 +0100 (Thu, 01 Feb 2007) $"
+__version__ = "$Revision: 553 $"
+__date__ = "$Date: 2007-02-26 00:53:22 +0100 (Mon, 26 Feb 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -42,9 +42,11 @@ class FailManager:
 		self.__failTotal = 0
 	
 	def setFailTotal(self, value):
-		self.__lock.acquire()
-		self.__failTotal = value
-		self.__lock.release()
+		try:
+			self.__lock.acquire()
+			self.__failTotal = value
+		finally:
+			self.__lock.release()
 		
 	def getFailTotal(self):
 		try:
@@ -54,9 +56,11 @@ class FailManager:
 			self.__lock.release()
 	
 	def setMaxRetry(self, value):
-		self.__lock.acquire()
-		self.__maxRetry = value
-		self.__lock.release()
+		try:
+			self.__lock.acquire()
+			self.__maxRetry = value
+		finally:
+			self.__lock.release()
 	
 	def getMaxRetry(self):
 		try:
@@ -66,9 +70,11 @@ class FailManager:
 			self.__lock.release()
 	
 	def setMaxTime(self, value):
-		self.__lock.acquire()
-		self.__maxTime = value
-		self.__lock.release()
+		try:
+			self.__lock.acquire()
+			self.__maxTime = value
+		finally:
+			self.__lock.release()
 	
 	def getMaxTime(self):
 		try:
@@ -78,20 +84,22 @@ class FailManager:
 			self.__lock.release()
 
 	def addFailure(self, ticket):
-		self.__lock.acquire()
-		ip = ticket.getIP()
-		unixTime = ticket.getTime()
-		if self.__failList.has_key(ip):
-			fData = self.__failList[ip]
-			fData.inc()
-			fData.setLastTime(unixTime)
-		else:
-			fData = FailData()
-			fData.inc()
-			fData.setLastTime(unixTime)
-			self.__failList[ip] = fData
-		self.__failTotal += 1
-		self.__lock.release()
+		try:
+			self.__lock.acquire()
+			ip = ticket.getIP()
+			unixTime = ticket.getTime()
+			if self.__failList.has_key(ip):
+				fData = self.__failList[ip]
+				fData.inc()
+				fData.setLastTime(unixTime)
+			else:
+				fData = FailData()
+				fData.inc()
+				fData.setLastTime(unixTime)
+				self.__failList[ip] = fData
+			self.__failTotal += 1
+		finally:
+			self.__lock.release()
 	
 	def size(self):
 		try:
@@ -101,12 +109,14 @@ class FailManager:
 			self.__lock.release()
 	
 	def cleanup(self, time):
-		self.__lock.acquire()
-		tmp = self.__failList.copy()
-		for item in tmp:
-			if tmp[item].getLastTime() < time - self.__maxTime:
-				self.__delFailure(item)
-		self.__lock.release()
+		try:
+			self.__lock.acquire()
+			tmp = self.__failList.copy()
+			for item in tmp:
+				if tmp[item].getLastTime() < time - self.__maxTime:
+					self.__delFailure(item)
+		finally:
+			self.__lock.release()
 	
 	def __delFailure(self, ip):
 		if self.__failList.has_key(ip):
@@ -129,4 +139,3 @@ class FailManager:
 
 class FailManagerEmpty(Exception):
 	pass
-	
