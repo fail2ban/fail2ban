@@ -16,12 +16,35 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 446 $
+# $Revision: 321 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 446 $"
-__date__ = "$Date: 2006-11-01 23:13:44 +0100 (Wed, 01 Nov 2006) $"
+__version__ = "$Revision: 321 $"
+__date__ = "$Date: 2006-09-04 21:19:58 +0200 (Mon, 04 Sep 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-version = "0.7.4"
+import time
+
+class MyTime:
+	
+	myTime = None
+	
+	@staticmethod
+	def setTime(t):
+		MyTime.myTime = t
+	
+	@staticmethod
+	def time():
+		if MyTime.myTime == None:
+			return time.time()
+		else:
+			return MyTime.myTime
+	
+	@staticmethod
+	def gmtime():
+		if MyTime.myTime == None:
+			return time.gmtime()
+		else:
+			return time.gmtime(MyTime.myTime)
+	

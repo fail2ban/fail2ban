@@ -4,8 +4,77 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.6.1)                           2006/03/16
+Fail2Ban (version 0.7.4)                           2006/11/01
 =============================================================
+
+ver. 0.7.4 (2006/11/01) - beta
+----------
+- Improved configuration files. Thanks to Yaroslav Halchenko
+- Added man page for "fail2ban-regex"
+- Moved ban/unban messages from "info" level to "warn"
+- Added "-s" option to specify the socket path and "socket"
+  option in "fail2ban.conf"
+- Added "backend" option in "jail.conf"
+- Added more filters/actions and jail samples. Thanks to Nick
+  Munger, Christoph Haas
+- Improved testing framework
+- Fixed a bug in the return code handling of the executed
+  commands. Thanks to Yaroslav Halchenko
+- Signal handling. There is a bug with join() and signal in
+  Python
+- Better debugging output for "fail2ban-regex"
+- Added support for more date format
+- cPickle does not work with Python 2.5. Use pickle instead
+  (performance is not a problem in our case)
+
+ver. 0.7.3 (2006/09/28) - beta
+----------
+- Added man pages. Thanks to Yaroslav Halchenko
+- Added wildcard support for "logpath"
+- Added Gamin (file and directory monitoring system) support
+- (Re)added "ignoreip" option
+- Added more concurrency protection
+- First attempt at solving bug #1457620 (locale issue)
+- Performance improvements
+- (Re)added permanent banning with banTime < 0
+- Added DNS support to "ignoreip". Feature Request #1285859
+
+ver. 0.7.2 (2006/09/10) - beta
+----------
+- Refactoring and code cleanup
+- Improved client output
+- Added more get/set commands
+- Added more configuration templates
+- Removed "logpath" and "maxretry" from filter templates.
+  They must be defined in jail.conf now
+- Added interactive mode. Use "-i"
+- Added a date detector. "timeregex" and "timepattern" are no
+  more needed
+- Added "fail2ban-regex". This is a tool to help finding
+  "failregex"
+- Improved server communication. Start a new thread for each
+  incoming request. Fail2ban is not really thread-safe yet
+
+ver. 0.7.1 (2006/08/23) - alpha
+----------
+- Fixed daemon mode bug
+- Added Gentoo init.d script
+- Fixed path bug when trying to start "fail2ban-server"
+- Fixed reload command
+
+ver. 0.7.0 (2006/08/23) - alpha
+----------
+- Almost a complete rewrite :) Fail2ban design is really
+  better (IMHO). There is a lot of new features
+- Client/Server architecture
+- Multithreading. Each jail has its own threads: one for the
+  log reading and another for the actions
+- Execute several actions
+- Split configuration files. They are more readable and easy
+  to use
+- failregex uses group (<host>) now. This feature was already
+  present in the Debian package
+- lots of things...
 
 ver. 0.6.1 (2006/03/16) - stable
 ----------
@@ -22,7 +91,7 @@ ver. 0.6.1 (2006/03/16) - stable
 - Added parsing of timestamp in TAI64N format (#1275325).
   Thanks to Mark Edgington
 - Added patch #1382936 (Default formatted syslog logging).
-  Thanks to Patrick Börjesson
+  Thanks to Patrick Bï¿½rjesson
 - Removed 192.168.0.0/16 from ignoreip. Attacks could also
   come from the local network.
 - Robust startup: if iptables module does not get fully

@@ -1,3 +1,4 @@
+#!/sbin/runscript
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -13,15 +14,39 @@
 # You should have received a copy of the GNU General Public License
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-# Author: Cyril Jaquier
+#
+# Author: Sireyessire, Cyril Jaquier
 # 
-# $Revision: 446 $
+# $Revision: 1.2 $
 
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision: 446 $"
-__date__ = "$Date: 2006-11-01 23:13:44 +0100 (Wed, 01 Nov 2006) $"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
-__license__ = "GPL"
+opts="start stop restart reload showlog"
 
-version = "0.7.4"
+FAIL2BAN="/usr/bin/fail2ban-client"
+
+depend() {
+	need net
+	need logger
+	after iptables
+}
+
+start() {
+	ebegin "Starting fail2ban"
+	${FAIL2BAN} start &> /dev/null
+	eend $? "Failed to start fail2ban"
+}
+
+stop() {
+	ebegin "Stopping fail2ban"
+	${FAIL2BAN} stop &> /dev/null
+	eend $? "Failed to stop fail2ban"
+}
+
+reload() {
+	ebegin "Reloading fail2ban"
+	${FAIL2BAN} reload > /dev/null
+	eend $? "Failed to reload fail2ban"
+}
+
+showlog(){
+	less /var/log/fail2ban.log
+}

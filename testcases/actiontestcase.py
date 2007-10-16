@@ -16,12 +16,32 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 446 $
+# $Revision: 382 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 446 $"
-__date__ = "$Date: 2006-11-01 23:13:44 +0100 (Wed, 01 Nov 2006) $"
+__version__ = "$Revision: 382 $"
+__date__ = "$Date: 2006-09-25 19:03:48 +0200 (Mon, 25 Sep 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-version = "0.7.4"
+import unittest, time
+from server.action import Action
+
+class ExecuteAction(unittest.TestCase):
+
+	def setUp(self):
+		"""Call before every test case."""
+		self.__action = Action("Test")
+
+	def tearDown(self):
+		"""Call after every test case."""
+		self.__action.execActionStop()
+	
+	def testExecuteActionBan(self):
+		self.__action.setActionStart("touch /tmp/fail2ban.test")
+		self.__action.setActionStop("rm -f /tmp/fail2ban.test")
+		self.__action.setActionBan("echo -n")
+		self.__action.setActionCheck("[ -e /tmp/fail2ban.test ]")
+		
+		self.assertTrue(self.__action.execActionBan(None))
+		

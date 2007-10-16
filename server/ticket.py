@@ -16,12 +16,41 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 446 $
+# $Revision: 382 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 446 $"
-__date__ = "$Date: 2006-11-01 23:13:44 +0100 (Wed, 01 Nov 2006) $"
+__version__ = "$Revision: 382 $"
+__date__ = "$Date: 2006-09-25 19:03:48 +0200 (Mon, 25 Sep 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-version = "0.7.4"
+import logging
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
+
+class Ticket:
+	
+	def __init__(self, ip, time):
+		self.__ip = ip
+		self.__time = time
+		self.__attempt = 0
+	
+	def setIP(self, value):
+		self.__ip = value
+	
+	def getIP(self):
+		return self.__ip
+	
+	def setTime(self, value):
+		self.__time = value
+	
+	def getTime(self):
+		return self.__time
+	
+	def setAttempt(self, value):
+		self.__attempt = value
+	
+	def getAttempt(self):
+		return self.__attempt
+	
