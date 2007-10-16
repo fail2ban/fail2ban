@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.1.2.4 $
+# $Revision: 1.2 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.1.2.4 $"
-__date__ = "$Date: 2005/08/04 20:48:30 $"
+__version__ = "$Revision: 1.2 $"
+__date__ = "$Date: 2005/11/20 17:07:47 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -28,6 +28,11 @@ import os, logging, signal
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")
+
+class ExternalError(UserWarning):
+	""" Exception to warn about failed fwcheck or fwban command
+	"""
+	pass
 
 def createDaemon():
 	""" Detach a process from the controlling terminal and run it in the
@@ -126,6 +131,7 @@ def executeCmd(cmd, debug):
 		retval = os.system(cmd)
 		if not retval == 0:
 			logSys.error("'" + cmd + "' returned " + `retval`)
+			raise ExternalError("Execution of command '%s' failed" % cmd)
 		return retval
 	else:
 		return None

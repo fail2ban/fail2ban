@@ -8,7 +8,7 @@
 #               Adjusted for Fail2Ban
 #                by Yaroslav Halchenko <debian@onerussian.com>.
 #
-# Version:	$Id: debian-initd,v 1.1.2.2 2005/09/11 15:42:32 yarikoptic Exp $
+# Version:	$Id: debian-initd,v 1.2 2005/11/20 17:07:47 lostcontrol Exp $
 #
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin

@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.13.2.8 $
+# $Revision: 1.14 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.13.2.8 $"
-__date__ = "$Date: 2005/09/05 21:06:15 $"
+__version__ = "$Revision: 1.14 $"
+__date__ = "$Date: 2005/11/20 17:07:47 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -97,15 +97,15 @@ class LogReader:
 		"""
 		try:
 			self.logStats = os.stat(self.logPath)
+			if self.lastModTime == self.logStats.st_mtime:
+				return False
+			else:
+				logSys.debug(self.logPath+" has been modified")
+				self.lastModTime = self.logStats.st_mtime
+				return True
 		except OSError:
 			logSys.error("Unable to get stat on "+self.logPath)
-		
-		if self.lastModTime == self.logStats.st_mtime:
 			return False
-		else:
-			logSys.debug(self.logPath+" has been modified")
-			self.lastModTime = self.logStats.st_mtime
-			return True
 	
 	def setFilePos(self, file):
 		""" Sets the file position. We must take care of log file rotation

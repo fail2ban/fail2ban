@@ -18,11 +18,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.4.2.5 $
+# $Revision: 1.5 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.4.2.5 $"
-__date__ = "$Date: 2005/08/04 20:51:14 $"
+__version__ = "$Revision: 1.5 $"
+__date__ = "$Date: 2005/11/20 17:07:47 $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -55,6 +55,12 @@ except Exception, e:
 	logSys.error("Type: " + `type.__name__` + "\n" +
 				 "Value: " + `e.args` + "\n" +
 				 "TB: " + `tbStack`)
+	# Try to clean up after ourselves
+	# just for extreme caution - wrapping with try
+	try:
+		fail2ban.restoreFwRules()
+	except Exception:
+		pass
 	# Remove the PID lock file. Should close #1239562
 	pidLock.remove()
 	logging.shutdown()
