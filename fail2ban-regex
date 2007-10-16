@@ -17,11 +17,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 530 $
+# $Revision: 596 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 530 $"
-__date__ = "$Date: 2007-01-29 21:31:04 +0100 (Mon, 29 Jan 2007) $"
+__version__ = "$Revision: 596 $"
+__date__ = "$Date: 2007-07-10 21:54:01 +0200 (Tue, 10 Jul 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -68,6 +68,7 @@ class Fail2banRegex:
 	
 	def __init__(self):
 		self.__filter = Filter(None)
+		self.__ignoreregex = list()
 		self.__failregex = list()
 		# Setup logging
 		logging.getLogger("fail2ban").handlers = []
@@ -92,7 +93,7 @@ class Fail2banRegex:
 	
 	@staticmethod
 	def dispUsage():
-		print "Usage: "+sys.argv[0]+" [OPTIONS] <LOG> <REGEX>"
+		print "Usage: "+sys.argv[0]+" [OPTIONS] <LOG> <REGEX> [IGNOREREGEX]"
 		print
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
 		print "and bans the corresponding IP addresses using firewall rules."
@@ -111,6 +112,10 @@ class Fail2banRegex:
 		print "    string                  a string representing a 'failregex'"
 		print "    filename                path to a filter file (filter.d/sshd.conf)"
 		print
+		print "IgnoreRegex:"
+		print "    string                  a string representing an 'ignoreregex'"
+		print "    filename                path to a filter file (filter.d/sshd.conf)"
+		print
 		print "Report bugs to <lostcontrol@users.sourceforge.net>"
 	
 	def getCmdLineOptions(self, optList):
@@ -127,6 +132,35 @@ class Fail2banRegex:
 	@staticmethod
 	def logIsFile(value):
 		return os.path.isfile(value)
+
+	def readIgnoreRegex(self, value):
+		if os.path.isfile(value):
+			reader = SafeConfigParser()
+			try:
+				reader.read(value)
+				print "Use ignoreregex file : " + value
+				self.__ignoreregex = [RegexStat(m)
+									for m in reader.get("Definition", "ignoreregex").split('\n')]
+			except NoSectionError:
+				print "No [Definition] section in " + value
+				print
+				return False
+			except NoOptionError:
+				print "No failregex option in " + value
+				print
+				return False
+			except MissingSectionHeaderError:
+				print "No section headers in " + value
+				print
+				return False
+		else:
+			if len(value) > 53:
+				stripReg = value[0:50] + "..."
+			else:
+				stripReg = value
+			print "Use ignoreregex line : " + stripReg
+			self.__ignoreregex = [RegexStat(value)]
+		return True
 
 	def readRegex(self, value):
 		if os.path.isfile(value):
@@ -157,8 +191,27 @@ class Fail2banRegex:
 			self.__failregex = [RegexStat(value)]
 		return True
 	
+	def testIgnoreRegex(self, line):
+		found = False
+		for regex in self.__ignoreregex:
+			logging.getLogger("fail2ban").setLevel(logging.DEBUG)
+			try:
+				self.__filter.addIgnoreRegex(regex.getFailRegex())
+				try:
+					ret = self.__filter.ignoreLine(line)
+					if ret:
+						regex.inc()
+				except RegexException, e:
+					print e
+					return False
+			finally:
+				self.__filter.delIgnoreRegex(0)
+				logging.getLogger("fail2ban").setLevel(logging.CRITICAL)
+	
 	def testRegex(self, line):
 		found = False
+		for regex in self.__ignoreregex:
+			self.__filter.addIgnoreRegex(regex.getFailRegex())
 		for regex in self.__failregex:
 			logging.getLogger("fail2ban").setLevel(logging.DEBUG)
 			try:
@@ -182,6 +235,8 @@ class Fail2banRegex:
 			finally:
 				self.__filter.delFailRegex(0)
 				logging.getLogger("fail2ban").setLevel(logging.CRITICAL)
+		for regex in self.__ignoreregex:
+					self.__filter.delIgnoreRegex(0)
 	
 	def printStats(self):
 		print
@@ -191,23 +246,49 @@ class Fail2banRegex:
 		
 		# Print title
 		cnt = 1
-		print "Failregex:"
+		print "Failregex"
+		print "|- Regular expressions:"
 		for failregex in self.__failregex:
-			print "[" + str(cnt) + "] " + failregex.getFailRegex()
+			print "|  [" + str(cnt) + "] " + failregex.getFailRegex()
 			cnt += 1
+		cnt = 1
 		
-		print
+		print "|"
 		
 		# Print stats
 		cnt = 1
 		total = 0
-		print "Number of matches:"
+		print "`- Number of matches:"
 		for failregex in self.__failregex:
 			match = failregex.getStats()
 			total += match
-			print "[" + str(cnt) + "] " + str(match) + " match(es)"
+			print "   [" + str(cnt) + "] " + str(match) + " match(es)"
 			cnt += 1
 		
+		print
+		
+		# Print title
+		cnt = 1
+		print "Ignoreregex"
+		print "|- Regular expressions:"
+		for failregex in self.__ignoreregex:
+			print "|  [" + str(cnt) + "] " + failregex.getFailRegex()
+			cnt += 1
+		cnt = 1
+		
+		print "|"
+		
+		# Print stats
+		cnt = 1
+		print "`- Number of matches:"
+		for failregex in self.__ignoreregex:
+			match = failregex.getStats()
+			print "   [" + str(cnt) + "] " + str(match) + " match(es)"
+			cnt += 1
+		
+		print
+		print "Summary"
+		print "======="
 		print
 		
 		if total == 0:
@@ -236,7 +317,7 @@ class Fail2banRegex:
 			
 			print "Date template hits:"
 			for template in self.__filter.dateDetector.getTemplates():
-				print `template.getHits()` + " hit: " + template.getName()
+				print `template.getHits()` + " hit(s): " + template.getName()
 			
 			print
 			
@@ -260,7 +341,7 @@ if __name__ == "__main__":
 	# Process command line
 	fail2banRegex.getCmdLineOptions(optList)
 	# We need exactly 3 parameters
-	if not len(sys.argv) == 3:
+	if not len(sys.argv) in (3, 4):
 		fail2banRegex.dispUsage()
 		sys.exit(-1)
 	else:
@@ -268,6 +349,10 @@ if __name__ == "__main__":
 		print "Running tests"
 		print "============="
 		print
+
+		if len(sys.argv) == 4:
+			if fail2banRegex.readIgnoreRegex(sys.argv[3]) == False:
+				sys.exit(-1)
 
 		if fail2banRegex.readRegex(sys.argv[2]) == False:
 			sys.exit(-1)
@@ -278,6 +363,7 @@ if __name__ == "__main__":
 				print "Use log file   : " + sys.argv[1]
 				print
 				for line in hdlr:
+					fail2banRegex.testIgnoreRegex(line)
 					fail2banRegex.testRegex(line)
 			except IOError, e:
 				print e
@@ -290,6 +376,7 @@ if __name__ == "__main__":
 				stripLog = sys.argv[1]
 			print "Use single line: " + stripLog
 			print
+			fail2banRegex.testIgnoreRegex(sys.argv[1])
 			fail2banRegex.testRegex(sys.argv[1])
 		
 		if fail2banRegex.printStats():

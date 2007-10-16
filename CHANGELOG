@@ -4,8 +4,33 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.8.0)                           2007/05/03
+Fail2Ban (version 0.8.1)                           2007/08/14
 =============================================================
+
+ver. 0.8.1 (2007/08/14) - stable
+----------
+- Fixed vulnerability in sshd.conf. Thanks to Daniel B. Cid
+- Expand <HOST> in ignoreregex. Thanks to Yaroslav Halchenko
+- Improved regular expressions. Thanks to Yaroslav Halchenko
+  and others
+- Added sendmail actions. The action started with "mail" are
+  now deprecated. Thanks to Raphaël Marichez
+- Added "ignoreregex" support to fail2ban-regex
+- Updated suse-initd and added it to MANIFEST. Thanks to
+  Christian Rauch
+- Tightening up the pid check in redhat-initd. Thanks to
+  David Nutter
+- Added webmin authentication filter. Thanks to Guillaume
+  Delvit
+- Removed textToDns() which is not required anymore. Thanks
+  to Yaroslav Halchenko
+- Added new action iptables-allports. Thanks to Yaroslav
+  Halchenko
+- Added "named" date format to date detector. Thanks to
+  Yaroslav Halchenko
+- Added filter file for named (bind9). Thanks to Yaroslav
+  Halchenko
+- Fixed vsftpd filter. Thanks to Yaroslav Halchenko
 
 ver. 0.8.0 (2007/05/03) - stable
 ----------

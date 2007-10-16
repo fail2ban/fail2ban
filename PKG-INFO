@@ -1,6 +1,6 @@
 Metadata-Version: 1.0
 Name: fail2ban
-Version: 0.8.0
+Version: 0.8.1
 Summary: Ban IPs that make too many password failure
 Home-page: http://fail2ban.sourceforge.net
 Author: Cyril Jaquier
