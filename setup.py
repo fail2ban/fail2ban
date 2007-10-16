@@ -18,11 +18,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.6 $
+# $Revision: 413 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 1.6 $"
-__date__ = "$Date: 2006/01/22 11:08:42 $"
+__version__ = "$Revision: 413 $"
+__date__ = "$Date: 2006-10-17 23:13:11 +0200 (Tue, 17 Oct 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -30,6 +30,7 @@ from distutils.core import setup
 from version import version
 from os.path import isfile, join
 from sys import exit, argv
+from glob import glob
 
 longdesc = '''
 Fail2Ban scans log files like /var/log/pwdfail or
@@ -48,17 +49,49 @@ setup(
 	url = "http://fail2ban.sourceforge.net",
 	license = "GPL",
 	platforms = "Posix",
-	scripts = ['fail2ban'],
-	py_modules = ['fail2ban', 'version'],
-	packages = ['firewall', 'logreader', 'confreader', 'utils']
+	scripts =	[
+					'fail2ban-client',
+					'fail2ban-server',
+					'fail2ban-regex'
+				],
+	py_modules =	['version'],
+	packages =	[
+					'client',
+					'server'
+				],
+	data_files =	[
+						('/etc/fail2ban',
+							glob("config/*.conf")
+						),
+						('/etc/fail2ban/filter.d',
+							glob("config/filter.d/*.conf")
+						),
+						('/etc/fail2ban/action.d',
+							glob("config/action.d/*.conf")
+						)
+					]
 )
 
 # Do some checks after installation
 # Search for obsolete files.
 obsoleteFiles = []
-elements = {"/usr/bin/": ["fail2ban.py"],
-			"/usr/lib/fail2ban/firewall/": ["iptables.py", "ipfwadm.py",
-											"ipfw.py"]}
+elements =	{
+				"/etc/":
+					[
+						"fail2ban.conf"
+					],
+				"/usr/bin/":
+					[
+						"fail2ban.py"
+					],
+				"/usr/lib/fail2ban/firewall/":
+					[
+						"iptables.py",
+						"ipfwadm.py",
+						"ipfw.py"
+					]
+			}
+
 for dir in elements:
 	for f in elements[dir]:
 		path = join(dir, f)
@@ -77,6 +110,6 @@ if obsoleteFiles:
 # Update config file
 if argv[1] == "install":
 	print
-	print "Please do not forget to update your configuration file."
-	print "Use config/fail2ban.conf.* as example."
+	print "Please do not forget to update your configuration files."
+	print "They are in /etc/fail2ban/."
 	print

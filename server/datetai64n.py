@@ -16,12 +16,31 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 446 $
+# $Revision: 321 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 446 $"
-__date__ = "$Date: 2006-11-01 23:13:44 +0100 (Wed, 01 Nov 2006) $"
+__version__ = "$Revision: 321 $"
+__date__ = "$Date: 2006-09-04 21:19:58 +0200 (Mon, 04 Sep 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-version = "0.7.4"
+import time
+
+from datetemplate import DateTemplate
+
+class DateTai64n(DateTemplate):
+	
+	def __init__(self):
+		DateTemplate.__init__(self)
+		# We already know the format for TAI64N
+		self.setRegex("@[0-9a-f]{24}")
+	
+	def getDate(self, line):
+		date = None
+		dateMatch = self.matchDate(line)
+		if dateMatch:
+			# extract part of format which represents seconds since epoch
+			value = dateMatch.group()
+			seconds_since_epoch = value[2:17]
+			date = list(time.gmtime(int(seconds_since_epoch, 16)))
+		return date

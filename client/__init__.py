@@ -16,12 +16,10 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 446 $
+# $Revision: 433 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 446 $"
-__date__ = "$Date: 2006-11-01 23:13:44 +0100 (Wed, 01 Nov 2006) $"
+__version__ = "$Revision: 433 $"
+__date__ = "$Date: 2006-10-24 21:40:51 +0200 (Tue, 24 Oct 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
-
-version = "0.7.4"

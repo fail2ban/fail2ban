@@ -16,12 +16,35 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 446 $
+# $Revision: 382 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 446 $"
-__date__ = "$Date: 2006-11-01 23:13:44 +0100 (Wed, 01 Nov 2006) $"
+__version__ = "$Revision: 382 $"
+__date__ = "$Date: 2006-09-25 19:03:48 +0200 (Mon, 25 Sep 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-version = "0.7.4"
+import logging
+from ticket import Ticket
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
+
+##
+# Ban Ticket.
+#
+# This class extends the Ticket class. It is mainly used by the BanManager.
+
+class BanTicket(Ticket):
+	
+	##
+	# Constructor.
+	#
+	# Call the Ticket (parent) constructor and initialize default
+	# values.
+	# @param ip the IP address
+	# @param time the ban time
+	
+	def __init__(self, ip, time):
+		Ticket.__init__(self, ip, time)
+	

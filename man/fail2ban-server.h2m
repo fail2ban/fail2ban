@@ -1,0 +1,9 @@
+Include file for help2man man page
+$Id:  $
+
+[name]
+fail2ban-server \- start the server
+
+[see also]
+.br 
+fail2ban-client(1)
