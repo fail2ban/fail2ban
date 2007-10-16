@@ -33,10 +33,13 @@ display this help message
 kill a currently running Fail2Ban instance
 .TP 
 \fB\-r\fR \fIVALUE\fR
-allow a max of \fIVALUE\fR password failure
+allow a max of \fIVALUE\fR password failure [maxfailures]
 .TP 
 \fB\-t\fR \fITIME\fR
-ban IP for \fITIME\fR seconds
+ban IP for \fITIME\fR seconds [bantime]
+.TP 
+\fB\-f\fR \fITIME\fR
+lifetime in seconds of failed entry [findtime]
 .TP 
 \fB\-v\fR
 verbose. Use twice for greater effect
