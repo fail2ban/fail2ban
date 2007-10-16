@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 504 $
+# $Revision: 529 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 504 $"
-__date__ = "$Date: 2006-12-23 17:37:17 +0100 (Sat, 23 Dec 2006) $"
+__version__ = "$Revision: 529 $"
+__date__ = "$Date: 2007-01-29 21:27:51 +0100 (Mon, 29 Jan 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -30,23 +30,23 @@ import textwrap
 # Describes the protocol used to communicate with the server.
 
 protocol = [
-['', "Basic", ""],
+['', "BASIC", ""],
 ["start", "starts the server and the jails"], 
 ["reload", "reloads the configuration"], 
 ["stop", "stops all jails and terminate the server"], 
 ["status", "gets the current status of the server"], 
 ["ping", "tests if the server is alive"], 
-['', "Logging", ""],
+['', "LOGGING", ""],
 ["set loglevel <LEVEL>", "sets logging level to <LEVEL>. 0 is minimal, 4 is debug"], 
 ["get loglevel", "gets the logging level"], 
 ["set logtarget <TARGET>", "sets logging target to <TARGET>. Can be STDOUT, STDERR, SYSLOG or a file"], 
 ["get logtarget", "gets logging target"], 
-['', "Jail control", ""],
+['', "JAIL CONTROL", ""],
 ["add <JAIL> <BACKEND>", "creates <JAIL> using <BACKEND>"], 
 ["start <JAIL>", "starts the jail <JAIL>"], 
 ["stop <JAIL>", "stops the jail <JAIL>. The jail is removed"], 
 ["status <JAIL>", "gets the current status of <JAIL>"],
-['', "Jail configuration", ""],
+['', "JAIL CONFIGURATION", ""],
 ["set <JAIL> idle on|off", "sets the idle state of <JAIL>"], 
 ["set <JAIL> addignoreip <IP>", "adds <IP> to the ignore list of <JAIL>"], 
 ["set <JAIL> delignoreip <IP>", "removes <IP> from the ignore list of <JAIL>"], 
@@ -70,7 +70,7 @@ protocol = [
 ["set <JAIL> actioncheck <ACT> <CMD>", "sets the check command <CMD> of the action <ACT> for <JAIL>"], 
 ["set <JAIL> actionban <ACT> <CMD>", "sets the ban command <CMD> of the action <ACT> for <JAIL>"],
 ["set <JAIL> actionunban <ACT> <CMD>", "sets the unban command <CMD> of the action <ACT> for <JAIL>"], 
-['', "Jail information", ""],
+['', "JAIL INFORMATION", ""],
 ["get <JAIL> logpath", "gets the list of the monitored files for <JAIL>"],
 ["get <JAIL> ignoreip", "gets the list of ignored IP addresses for <JAIL>"],
 ["get <JAIL> timeregex", "gets the regular expression used for the time detection for <JAIL>"],

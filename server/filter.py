@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 503 $
+# $Revision: 537 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 503 $"
-__date__ = "$Date: 2006-12-23 17:31:00 +0100 (Sat, 23 Dec 2006) $"
+__version__ = "$Revision: 537 $"
+__date__ = "$Date: 2007-02-01 21:50:12 +0100 (Thu, 01 Feb 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -378,8 +378,8 @@ class Filter(JailThread):
 	# is created and is added to the FailManager.
 	
 	def getFailures(self, filename):
-		ret = self.__openLogFile(filename)
-		if not ret:
+		# Try to open log file.
+		if not self.__openLogFile(filename):
 			logSys.error("Unable to get failures in " + filename)
 			return False
 		self.__setFilePos()

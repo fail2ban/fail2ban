@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 433 $
+# $Revision: 518 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 433 $"
-__date__ = "$Date: 2006-10-24 21:40:51 +0200 (Tue, 24 Oct 2006) $"
+__version__ = "$Revision: 518 $"
+__date__ = "$Date: 2007-01-08 22:15:47 +0100 (Mon, 08 Jan 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -54,6 +54,8 @@ class JailsReader(ConfigReader):
 					self.__jails.append(jail)
 			else:
 				logSys.error("Errors in jail '" + sec + "'. Skipping...")
+				return False
+		return True
 	
 	def convert(self):
 		stream = list()

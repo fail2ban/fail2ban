@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-ToDo                                         $Revision: 509 $
+ToDo                                         $Revision: 540 $
 =============================================================
 
 Legend:
@@ -12,6 +12,24 @@ Legend:
 ? maybe
 # partially done
 * done
+
+- Add timeout to external commands (signal alarm, watchdog
+  thread, etc)
+
+- New backend: pynotify
+
+- Uniformize filters and actions name. Use the software name
+  (openssh, postfix, proftp)
+
+- Added <USER> tag for failregex. Add features using this
+  information
+
+- Look at the memory consumption. Decrease memory usage
+
+- More detailed statistics
+
+- Auto-enable function (search for log files), check
+  modification date to see if service is still in use
 
 - Improve parsing of the action parameters in jailreader.py
 

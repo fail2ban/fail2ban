@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.7.6)                           2007/01/04
+Fail2Ban (version 0.7.7)                           2007/02/08
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -15,7 +15,7 @@ or Apache web server ones.
 
 This README is a quick introduction to Fail2ban. More
 documentation, FAQ, HOWTOs are available on the project
-website: http://fail2ban.sourceforge.net
+website: http://www.fail2ban.org
 
 Installation:
 -------------
@@ -28,8 +28,8 @@ Optional:
 
 To install, just do:
 
-> tar xvfj fail2ban-0.7.6.tar.bz2
-> cd fail2ban-0.7.6
+> tar xvfj fail2ban-0.7.7.tar.bz2
+> cd fail2ban-0.7.7
 > python setup.py install
 
 This will install Fail2Ban into /usr/share/fail2ban. The
@@ -53,7 +53,7 @@ You can configure Fail2ban using the files in /etc/fail2ban.
 It is possible to configure the server using commands sent to
 it by fail2ban-client. The available commands are described
 in the man page of fail2ban-client. Please refer to it or to
-the website: http://fail2ban.sourceforge.net
+the website: http://www.fail2ban.org
 
 Contact:
 --------
@@ -61,7 +61,7 @@ Contact:
 You need some new features, you found bugs or you just
 appreciate this program, you can contact me at:
 
-Website: http://fail2ban.sourceforge.net
+Website: http://www.fail2ban.org
 
 Cyril Jaquier: <lostcontrol@users.sourceforge.net>
 
@@ -73,7 +73,7 @@ Tom Pike, Iain Lea, Andrey G. Grozin, Yaroslav Halchenko,
 Jonathan Kamens, Stephen Gildea, Markus Hoffmann, Mark
 Edgington, Patrick Börjesson, kojiro, zugeschmiert, Tyler,
 Nick Munger, Christoph Haas, Justin Shore, Joël Bertrand,
-René Berber, mEDI, Axel Thimm
+René Berber, mEDI, Axel Thimm, Eric Gerbier
 
 License:
 --------

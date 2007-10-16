@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 454 $
+# $Revision: 536 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 454 $"
-__date__ = "$Date: 2006-11-12 11:54:19 +0100 (Sun, 12 Nov 2006) $"
+__version__ = "$Revision: 536 $"
+__date__ = "$Date: 2007-01-31 23:31:42 +0100 (Wed, 31 Jan 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -100,7 +100,19 @@ class BanManager:
 			return self.__banTotal
 		finally:
 			self.__lock.release()
+
+	##
+	# Returns a copy of the IP list.
+	#
+	# @return IP list
 	
+	def getBanList(self):
+		try:
+			self.__lock.acquire()
+			return [m.getIP() for m in self.__banList]
+		finally:
+			self.__lock.release()
+
 	##
 	# Create a ban ticket.
 	#
