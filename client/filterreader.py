@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 433 $
+# $Revision: 458 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 433 $"
-__date__ = "$Date: 2006-10-24 21:40:51 +0200 (Tue, 24 Oct 2006) $"
+__version__ = "$Revision: 458 $"
+__date__ = "$Date: 2006-11-12 15:52:36 +0100 (Sun, 12 Nov 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -55,6 +55,7 @@ class FilterReader(ConfigReader):
 	def getOptions(self, pOpts):
 		opts = [["string", "timeregex", None],
 				["string", "timepattern", None],
+				["string", "ignoreregex", ""],
 				["string", "failregex", ""]]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
 	
@@ -66,6 +67,8 @@ class FilterReader(ConfigReader):
 			elif opt == "timepattern":
 				stream.append(["set", self.__name, "timepattern", self.__opts[opt]])
 			elif opt == "failregex":
-				stream.append(["set", self.__name, "failregex", self.__opts[opt]])		
+				stream.append(["set", self.__name, "failregex", self.__opts[opt]])
+			elif opt == "ignoreregex":
+				stream.append(["set", self.__name, "ignoreregex", self.__opts[opt]])		
 		return stream
 		

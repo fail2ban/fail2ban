@@ -17,11 +17,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 444 $
+# $Revision: 477 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 444 $"
-__date__ = "$Date: 2006-11-01 23:03:48 +0100 (Wed, 01 Nov 2006) $"
+__version__ = "$Revision: 477 $"
+__date__ = "$Date: 2006-12-03 23:01:18 +0100 (Sun, 03 Dec 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -33,7 +33,8 @@ import getopt, time, readline, shlex, socket
 sys.path.insert(1, "/usr/lib/fail2ban")
 
 # Now we can import our modules
-from version import version
+from common.version import version
+from common.protocol import printFormatted
 from client.csocket import CSocket
 from client.configurator import Configurator
 from client.beautifier import Beautifier
@@ -91,22 +92,10 @@ class Fail2banClient:
 		print "    -V, --version           print the version"
 		print
 		print "Command:"
-		print "    start                   start the server and the jails"
-		print "    reload                  reload the configuration"
-		print "    stop                    stop all jails and terminate the server"
-		print "    status                  get the current status"
-		print
-		print "    set loglevel <LEVEL>    set loglevel to <LEVEL>"
-		print "    get loglevel            get loglevel"
-		print "    set logtarget <TARGET>  set log target to <TARGET>"
-		print "    get logtarget           get log target"
-		print
-		print "    add <JAIL> [BACKEND]    create <JAIL> using [BACKEND]"
-		print "    set <JAIL> <CMD>        set the <CMD> value for <JAIL>"
-		print "    get <JAIL> <CMD>        get the <CMD> value for <JAIL>"
-		print "    start <JAIL>            start <JAIL>"
-		print "    stop <JAIL>             stop <JAIL>. The jail is removed"
-		print "    status <JAIL>           get the current status of <JAIL>"
+		
+		# Prints the protocol
+		printFormatted()
+		
 		print
 		print "Report bugs to <lostcontrol@users.sourceforge.net>"
 	
@@ -180,7 +169,8 @@ class Fail2banClient:
 				logSys.error("Server already running")
 				return False
 			else:
-				self.__startServerAsync(self.__conf["force"])
+				self.__startServerAsync(self.__conf["socket"],
+										self.__conf["force"])
 				# Read the config while the server is starting
 				self.__readConfig()
 				try:
@@ -210,16 +200,20 @@ class Fail2banClient:
 	#
 	# Start the Fail2ban server in daemon mode.
 	
-	def __startServerAsync(self, force = False):
-		args = list()
-		
-		args.append("fail2ban-server")
-		args.append("-b")
-		if force:
-			args.append("-x")
-		
+	def __startServerAsync(self, socket, force = False):
+		# Forks the current process.
 		pid = os.fork()
 		if pid == 0:
+			args = list()
+			args.append("fail2ban-server")
+			# Start in background mode.
+			args.append("-b")
+			# Set the socket path.
+			args.append("-s")
+			args.append(socket)
+			# Force the execution if needed.
+			if force:
+				args.append("-x")
 			try:
 				# Use the PATH env
 				os.execvp("fail2ban-server", args)
@@ -236,10 +230,11 @@ class Fail2banClient:
 		# Wait for the server to start
 		cnt = 0
 		while not self.__ping():
-			if cnt > 10:
+			# The server has 30 secondes to start.
+			if cnt >= 300:
 				raise ServerExecutionException("Failed to start server")
 			time.sleep(0.1)
-			cnt = cnt + 1
+			cnt += 1
 			
 	
 	def start(self, argv):

@@ -17,11 +17,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 429 $
+# $Revision: 467 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 429 $"
-__date__ = "$Date: 2006-10-23 22:13:21 +0200 (Mon, 23 Oct 2006) $"
+__version__ = "$Revision: 467 $"
+__date__ = "$Date: 2006-11-16 22:07:42 +0100 (Thu, 16 Nov 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -32,7 +32,7 @@ import unittest, logging, sys
 # fix for bug #343821
 sys.path.insert(1, "/usr/lib/fail2ban")
 
-from version import version
+from common.version import version
 from testcases import banmanagertestcase
 from testcases import clientreadertestcase
 from testcases import failmanagertestcase

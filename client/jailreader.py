@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 438 $
+# $Revision: 470 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 438 $"
-__date__ = "$Date: 2006-10-31 00:02:05 +0100 (Tue, 31 Oct 2006) $"
+__version__ = "$Revision: 470 $"
+__date__ = "$Date: 2006-11-18 16:15:58 +0100 (Sat, 18 Nov 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -60,8 +60,10 @@ class JailReader(ConfigReader):
 				["string", "logpath", "/var/log/messages"],
 				["string", "backend", "auto"],
 				["int", "maxretry", 3],
-				["int", "maxtime", 600],
+				["int", "findtime", 600],
 				["int", "bantime", 600],
+				["string", "failregex", None],
+				["string", "ignoreregex", None],
 				["string", "ignoreip", None],
 				["string", "filter", ""],
 				["string", "action", ""]]
@@ -111,10 +113,14 @@ class JailReader(ConfigReader):
 			elif opt == "ignoreip":
 				for ip in self.__opts[opt].split():
 					stream.append(["set", self.__name, "addignoreip", ip])
-			elif opt == "maxtime":
-				stream.append(["set", self.__name, "maxtime", self.__opts[opt]])
+			elif opt == "findtime":
+				stream.append(["set", self.__name, "findtime", self.__opts[opt]])
 			elif opt == "bantime":
 				stream.append(["set", self.__name, "bantime", self.__opts[opt]])
+			elif opt == "failregex":
+				stream.append(["set", self.__name, "failregex", self.__opts[opt]])
+			elif opt == "ignoreregex":
+				stream.append(["set", self.__name, "ignoreregex", self.__opts[opt]])
 		stream.extend(self.__filter.convert())
 		for action in self.__actions:
 			stream.extend(action.convert())

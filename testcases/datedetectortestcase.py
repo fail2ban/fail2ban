@@ -24,7 +24,7 @@ __date__ = "$Date: 2006-07-17 00:21:58 +0200 (Mon, 17 Jul 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, time
+import unittest
 from server.datedetector import DateDetector
 from server.datetemplate import DateTemplate
 
@@ -53,4 +53,15 @@ class DateDetectorTest(unittest.TestCase):
 	
 		self.assertEqual(self.__datedetector.getTime(log), date)
 		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
+
+	def testDefaultTempate(self):
+		self.__datedetector.setDefaultRegex("^\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
+		self.__datedetector.setDefaultPattern("%b %d %H:%M:%S")
 		
+		log = "Jan 23 21:59:59 [sshd] error: PAM: Authentication failure"
+		date = [2005, 1, 23, 21, 59, 59, 1, 23, -1]
+		dateUnix = 1106513999.0
+		
+		self.assertEqual(self.__datedetector.getTime(log), date)
+		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
+	

@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 418 $
+# $Revision: 451 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 418 $"
-__date__ = "$Date: 2006-10-19 00:30:57 +0200 (Thu, 19 Oct 2006) $"
+__version__ = "$Revision: 451 $"
+__date__ = "$Date: 2006-11-06 23:47:24 +0100 (Mon, 06 Nov 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -50,6 +50,7 @@ class FilterGamin(Filter):
 	
 	def __init__(self, jail):
 		Filter.__init__(self, jail)
+		self.__modified = False
 		# Gamin monitor
 		self.monitor = gamin.WatchMonitor()
 		logSys.info("Created FilterGamin")
@@ -60,7 +61,7 @@ class FilterGamin(Filter):
 		if event in (gamin.GAMCreated, gamin.GAMChanged, gamin.GAMExists):
 			logSys.debug("File changed: " + path)
 			self.getFailures(path)
-			self.modified = True
+			self.__modified = True
 
 
 	##
@@ -105,14 +106,14 @@ class FilterGamin(Filter):
 				if self.monitor.event_pending():
 					self.monitor.handle_events()
 
-				if self.modified:
+				if self.__modified:
 					try:
 						ticket = self.failManager.toBan()
 						self.jail.putFailTicket(ticket)
 					except FailManagerEmpty:
 						self.failManager.cleanup(MyTime.time())
 					self.dateDetector.sortTemplate()
-					self.modified = False
+					self.__modified = False
 				time.sleep(self.getSleepTime())
 			else:
 				time.sleep(self.getSleepTime())

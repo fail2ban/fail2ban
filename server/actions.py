@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 433 $
+# $Revision: 455 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 433 $"
-__date__ = "$Date: 2006-10-24 21:40:51 +0200 (Tue, 24 Oct 2006) $"
+__version__ = "$Revision: 455 $"
+__date__ = "$Date: 2006-11-12 11:56:21 +0100 (Sun, 12 Nov 2006) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -134,11 +134,15 @@ class Actions(JailThread):
 			bTicket = BanManager.createBanTicket(ticket)
 			aInfo["ip"] = bTicket.getIP()
 			aInfo["failures"] = bTicket.getAttempt()
-			logSys.warn("[%s] Ban %s" % (self.jail.getName(), aInfo["ip"]))
-			for action in self.__actions:
-				action.execActionBan(aInfo)
-			self.__banManager.addBanTicket(bTicket)
-			return True
+			aInfo["time"] = bTicket.getTime()
+			if self.__banManager.addBanTicket(bTicket):
+				logSys.warn("[%s] Ban %s" % (self.jail.getName(), aInfo["ip"]))
+				for action in self.__actions:
+					action.execActionBan(aInfo)
+				return True
+			else:
+				logSys.warn("[%s] %s already banned" % (self.jail.getName(), 
+														aInfo["ip"]))
 		return False
 	
 	##
@@ -148,11 +152,7 @@ class Actions(JailThread):
 	
 	def __checkUnBan(self):
 		for ticket in self.__banManager.unBanList(MyTime.time()):
-			aInfo = dict()
-			aInfo["ip"] = ticket.getIP()
-			logSys.warn("[%s] Unban %s" % (self.jail.getName(), aInfo["ip"]))
-			for action in self.__actions:
-				action.execActionUnban(aInfo)
+			self.__unBan(ticket)
 	
 	##
 	# Flush the ban list.
@@ -162,11 +162,23 @@ class Actions(JailThread):
 	def __flushBan(self):
 		logSys.debug("Flush ban list")
 		for ticket in self.__banManager.flushBanList():
-			aInfo = dict()
-			aInfo["ip"] = ticket.getIP()
-			logSys.warn("[%s] Unban %s" % (self.jail.getName(), aInfo["ip"]))
-			for action in self.__actions:
-				action.execActionUnban(aInfo)
+			self.__unBan(ticket)
+	
+	##
+	# Unbans host corresponding to the ticket.
+	#
+	# Executes the actions in order to unban the host given in the
+	# ticket.
+	
+	def __unBan(self, ticket):
+		aInfo = dict()
+		aInfo["ip"] = ticket.getIP()
+		aInfo["failures"] = ticket.getAttempt()
+		aInfo["time"] = ticket.getTime()
+		logSys.warn("[%s] Unban %s" % (self.jail.getName(), aInfo["ip"]))
+		for action in self.__actions:
+			action.execActionUnban(aInfo)
+			
 	
 	##
 	# Get the status of the filter.
@@ -176,7 +188,7 @@ class Actions(JailThread):
 	# @return a list with tuple
 	
 	def status(self):
-		ret = [("Currently banned", self.__banManager.size()),
+		ret = [("Currently banned", self.__banManager.size()), 
 			   ("Total banned", self.__banManager.getBanTotal())]
 		return ret
 		
