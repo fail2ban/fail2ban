@@ -1,8 +1,11 @@
-fail2ban (0.8.1-2~pre1) UNRELEASED; urgency=low
+fail2ban (0.8.1-2) unstable; urgency=low
 
   * Fixed named-refused filter.
+  * Added force-start action to init script, so it could be forced
+    to start if previous run crashed and left a socket file. Must to be
+    used with caution.
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 14 Aug 2007 23:16:56 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 18 Oct 2007 18:31:58 -0400
 
 fail2ban (0.8.1-1) unstable; urgency=low
 

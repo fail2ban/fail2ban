@@ -94,7 +94,10 @@ do_start()
 
 	if [ -e "$SOCKFILE" ]; then
 		log_failure_msg "Socket file $SOCKFILE is present"
-		return 2
+		[ "$1" == "force-start" ] \
+			&& log_success_msg "Starting anyway as requested" \
+			|| return 2
+		DAEMON_ARGS="$DAEMON_ARGS -x"
 	fi
 
 	start-stop-daemon --start --quiet --chuid root --exec $DAEMON -- \
@@ -159,17 +162,20 @@ log_end_msg_wrapper()
 	log_end_msg $value
 }
 
-case "$1" in
-	start)
+command="$1"
+case "$command" in
+	start|force-start)
 		[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
-		do_start
+		do_start "$command"
 		[ "$VERBOSE" != no ] && log_end_msg_wrapper $? 2
 		;;
+
 	stop)
 		[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
 		do_stop
 		[ "$VERBOSE" != no ] && log_end_msg_wrapper $? 2
 		;;
+
 	restart|force-reload)
 		log_daemon_msg "Restarting $DESC" "$NAME"
 		do_stop
@@ -210,7 +216,7 @@ case "$1" in
 		esac
 		;;
 	*)
-		echo "Usage: $SCRIPTNAME {start|stop|restart|force-reload|status}" >&2
+		echo "Usage: $SCRIPTNAME {start|force-start|stop|restart|force-reload|status}" >&2
 		exit 3
 		;;
 esac
