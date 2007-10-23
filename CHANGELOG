@@ -17,6 +17,7 @@ ver. 0.8.2 (2007/??/??) - stable
 - Added "full line failregex" patch. Thanks to Yaroslav
   Halchenko. It will be possible to create stronger failregex
   against log injection
+- Fixed ipfw action script. Thanks to Nick Munger
 
 ver. 0.8.1 (2007/08/14) - stable
 ----------
