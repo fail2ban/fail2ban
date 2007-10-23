@@ -18,6 +18,7 @@ ver. 0.9.0 (2007/??/??) - alpha
   to Yaroslav Halchenko
 - Replaced ssocket.py with asyncore/asynchat implementation.
   Correct fix for bug #1769616
+- Fixed ipfw action script. Thanks to Nick Munger
 
 ver. 0.8.0 (2007/05/03) - stable
 ----------
