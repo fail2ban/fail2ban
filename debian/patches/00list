@@ -3,6 +3,7 @@ X00_rigid_python24
 00_iptables_NEW
 00_close_log
 00_reload
+00_numeric_iptables-L
 10_dbts_manpages
 10_wuftpd_section
 00_mail-whois-lines

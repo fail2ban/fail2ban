@@ -1,0 +1,19 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 00_numeric_iptables-L.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad fail2ban~/config/action.d/iptables.conf fail2ban/config/action.d/iptables.conf
+--- fail2ban~/config/action.d/iptables.conf	2007-11-06 15:00:04.000000000 -0500
++++ fail2ban/config/action.d/iptables.conf	2007-11-06 15:01:33.000000000 -0500
+@@ -27,7 +27,7 @@
+ # Notes.:  command executed once before each fwban command
+ # Values:  CMD
+ #
+-actioncheck = iptables -L INPUT | grep -q fail2ban-<name>
++actioncheck = iptables -n -L INPUT | grep -q fail2ban-<name>
+ 
+ # Option:  fwban
+ # Notes.:  command executed when banning an IP. Take care that the
