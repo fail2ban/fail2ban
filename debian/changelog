@@ -1,7 +1,11 @@
-fail2ban (0.7.5-2etch1~pre1) stable-security; urgency=low
+fail2ban (0.7.5-2etch1~pre2) stable-security; urgency=low
 
   * NOT RELEASED YET
   * Propagated fix for asctime pattern from 0.7.8 release (closes: #421848)
+  * Propagated fix for not closed log files from 0.7.8-1 
+    (closes: #439962,434368)
+  * Propagated fix for "reload" bug which is as sever as #439962 and just
+    never was hit by any Debian user yet
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 01 May 2007 22:18:03 -0400
 
