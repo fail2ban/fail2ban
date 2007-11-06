@@ -1,0 +1,164 @@
+#!/usr/bin/env python
+# This file is part of Fail2Ban.
+#
+# Fail2Ban is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Fail2Ban is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Fail2Ban; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# Author: Cyril Jaquier
+# 
+# $Revision: 300 $
+
+__author__ = "Cyril Jaquier"
+__version__ = "$Revision: 300 $"
+__date__ = "$Date: 2006-08-23 21:53:09 +0200 (Wed, 23 Aug 2006) $"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__license__ = "GPL"
+
+import locale, getopt, sys, time, logging, gc
+
+# Inserts our own modules path first in the list
+# fix for bug #343821
+sys.path.insert(1, "/usr/lib/fail2ban")
+
+from common.version import version
+from server.filter import Filter
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban.regex")
+
+class Fail2banRegex:
+	
+	def __init__(self):
+		self.__filter = Filter(None)
+		# Setup logging
+		logging.getLogger("fail2ban").handlers = []
+		self.__hdlr = logging.StreamHandler(sys.stdout)
+		# set a format which is simpler for console use
+		formatter = logging.Formatter("%(message)s")
+		# tell the handler to use this format
+		self.__hdlr.setFormatter(formatter)
+		logging.getLogger("fail2ban").addHandler(self.__hdlr)
+		logging.getLogger("fail2ban").setLevel(logging.ERROR)
+	
+	def dispVersion(self):
+		print "Fail2Ban v" + version
+		print
+		print "Copyright (c) 2004-2006 Cyril Jaquier"
+		print "Copyright of modifications held by their respective authors."
+		print "Licensed under the GNU General Public License v2 (GPL)."
+		print
+		print "Written by Cyril Jaquier <lostcontrol@users.sourceforge.net>."
+		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
+	
+	def dispUsage(self):
+		print "Usage: "+sys.argv[0]+" <logline> <failregex>"
+		print
+		print "Fail2Ban v" + version + " reads log file that contains password failure report"
+		print "and bans the corresponding IP addresses using firewall rules."
+		print
+		print "This tools can test and benchmark your regular expressions for the \"failregex\""
+		print "option."
+		print
+		print "Report bugs to <lostcontrol@users.sourceforge.net>"
+	
+	def getCmdLineOptions(self, optList):
+		""" Gets the command line options
+		"""
+		for opt in optList:
+			if opt[0] in ["-h", "--help"]:
+	 			self.dispUsage()
+	 			sys.exit(0)
+	 		elif opt[0] in ["-V", "--version"]:
+	 			self.dispVersion()
+	 			sys.exit(0)
+	
+	def setRegex(self, value):
+		print
+		self.__filter.setFailRegex(value)
+	
+	def testRegex(self, line):
+		print
+		try:
+			logging.getLogger("fail2ban").setLevel(logging.DEBUG)
+			ret = self.__filter.findFailure(line)
+			print
+			logging.getLogger("fail2ban").setLevel(logging.CRITICAL)
+		except IndexError:
+			print "Sorry, but no <host> found in regex"
+			return False
+		if len(ret) == 0:
+			print "Sorry, no match"
+			return False
+		else:
+			print "Success, the following data were found:"
+			timeTuple = time.localtime(ret[0][1])
+			print "Date: " + time.strftime("%a %b %d %H:%M:%S %Y", timeTuple)
+			ipList = ""
+			for i in ret:
+				ipList = ipList + " " + i[0]
+			print "IP  :" + ipList
+			print
+			print "Date template hits:"
+			for template in self.__filter.dateDetector.getTemplates():
+				print `template.getHits()` + " hit: " + template.getName()
+			print
+			print "Benchmark. Executing 1000..."
+			gc.disable()
+			total = 0
+			maxValue = 0
+			maxPos = 0
+			minValue = 99999999
+			minPos = 0
+			for i in range(1000):
+				start = time.time()
+				ret = self.__filter.findFailure(line)
+				end = time.time()
+				diff = (end - start) * 1000
+				total = total + diff
+				minValue = min(minValue, diff)
+				if minValue == diff:
+					minPos = i
+				maxValue = max(maxValue, diff)
+				if maxValue == diff:
+					maxPos = i
+			gc.enable()
+			print "Performance"
+			print "Avg: " + `total / 1000` + " ms"
+			print "Max: " + `maxValue` + " ms (Run " + `maxPos` + ")"
+			print "Min: " + `minValue` + " ms (Run " + `minPos` + ")"
+			return True
+			
+if __name__ == "__main__":
+	regex = Fail2banRegex()
+	# Reads the command line options.
+	try:
+		cmdOpts = 'hV'
+		cmdLongOpts = ['help', 'version']
+		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
+	except getopt.GetoptError:
+		regex.dispUsage()
+		sys.exit(-1)
+	# Process command line
+	regex.getCmdLineOptions(optList)
+	# We need exactly 3 parameters
+	if len(sys.argv) <> 3:
+		regex.dispUsage()
+		sys.exit(-1)
+	else:
+		regex.setRegex(sys.argv[2])
+		ret = regex.testRegex(sys.argv[1])
+		if ret:
+			sys.exit(0)
+		else:
+			sys.exit(-1)

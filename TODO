@@ -1,0 +1,35 @@
+               __      _ _ ___ _               
+              / _|__ _(_) |_  ) |__  __ _ _ _  
+             |  _/ _` | | |/ /| '_ \/ _` | ' \ 
+             |_| \__,_|_|_/___|_.__/\__,_|_||_|
+
+=============================================================
+ToDo                                         $Revision: 468 $
+=============================================================
+
+Legend:
+- not yet done
+? maybe
+# partially done
+* done
+
+- Better handling of the protocol in transmitter.py
+
+- Add gettext support (I18N)
+
+- Fix the cPickle issue with Python 2.5
+
+- Multiline log reading
+
+- Improve communication. (asyncore, asynchat??)
+
+- Improve execution of action. Why does subprocess.call
+  deadlock with multi-jails?
+
+# see Feature Request Tracking System at SourceForge.net
+
+# improve documentation and website for user
+
+# better return values in function
+
+# refactoring in server.py, actions.py, filter.py

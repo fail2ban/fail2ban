@@ -1,0 +1,15 @@
+Metadata-Version: 1.0
+Name: fail2ban
+Version: 0.7.5
+Summary: Ban IPs that make too many password failure
+Home-page: http://fail2ban.sourceforge.net
+Author: Cyril Jaquier
+Author-email: lostcontrol@users.sourceforge.net
+License: GPL
+Description: 
+        Fail2Ban scans log files like /var/log/pwdfail or
+        /var/log/apache/error_log and bans IP that makes
+        too many password failures. It updates firewall rules
+        to reject the IP address or executes user defined
+        commands.
+Platform: Posix

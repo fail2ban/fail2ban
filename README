@@ -1,0 +1,95 @@
+               __      _ _ ___ _               
+              / _|__ _(_) |_  ) |__  __ _ _ _  
+             |  _/ _` | | |/ /| '_ \/ _` | ' \ 
+             |_| \__,_|_|_/___|_.__/\__,_|_||_|
+
+=============================================================
+Fail2Ban (version 0.7.5)                           2006/12/07
+=============================================================
+
+Fail2Ban scans log files like /var/log/pwdfail and bans IP
+that makes too many password failures. It updates firewall
+rules to reject the IP address. These rules can be defined by
+the user. Fail2Ban can read multiple log files such as sshd
+or Apache web server ones.
+
+This README is a quick introduction to Fail2ban. More
+documentation, FAQ, HOWTOs are available on the project
+website: http://fail2ban.sourceforge.net
+
+Installation:
+-------------
+
+Required:
+   >=python-2.4 (http://www.python.org)
+
+Optional:
+   >=gamin-0.0.21 (http://www.gnome.org/~veillard/gamin)
+
+To install, just do:
+
+> tar xvfj fail2ban-0.7.5.tar.bz2
+> cd fail2ban-0.7.5
+> python setup.py install
+
+This will install Fail2Ban into /usr/lib/fail2ban. The
+executable scripts are placed into /usr/bin.
+
+Gentoo: ebuilds are available on the website.
+Debian: Fail2Ban is in Debian unstable.
+RedHat: packages are available on the website.
+
+Fail2Ban should be correctly installed now. Just type:
+
+> fail2ban-client -h
+
+to see if everything is alright. You should always use
+fail2ban-client and never call fail2ban-server directly.
+
+Configuration:
+--------------
+
+You can configure Fail2ban using the files in /etc/fail2ban.
+It is possible to configure the server using commands sent to
+it by fail2ban-client. The available commands are described
+in the man page of fail2ban-client. Please refer to it or to
+the website: http://fail2ban.sourceforge.net
+
+Contact:
+--------
+
+You need some new features, you found bugs or you just
+appreciate this program, you can contact me at:
+
+Website: http://fail2ban.sourceforge.net
+
+Cyril Jaquier: <lostcontrol@users.sourceforge.net>
+
+Thanks:
+-------
+
+Kévin Drapel, Marvin Rouge, Sireyessire, Robert Edeker,
+Tom Pike, Iain Lea, Andrey G. Grozin, Yaroslav Halchenko,
+Jonathan Kamens, Stephen Gildea, Markus Hoffmann, Mark
+Edgington, Patrick Börjesson, kojiro, zugeschmiert, Tyler,
+Nick Munger, Christoph Haas, Justin Shore, Joël Bertrand
+
+License:
+--------
+
+Fail2Ban is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later
+version.
+
+Fail2Ban is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the GNU General Public License for more
+details.
+
+You should have received a copy of the GNU General Public
+License along with Fail2Ban; if not, write to the Free
+Software Foundation, Inc., 59 Temple Place, Suite 330,
+Boston, MA  02111-1307  USA

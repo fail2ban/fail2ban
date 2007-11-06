@@ -1,0 +1,135 @@
+#!/usr/bin/env python
+# This file is part of Fail2Ban.
+#
+# Fail2Ban is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Fail2Ban is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Fail2Ban; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# Author: Cyril Jaquier
+# 
+# $Revision: 472 $
+
+__author__ = "Cyril Jaquier"
+__version__ = "$Revision: 472 $"
+__date__ = "$Date: 2006-11-19 22:26:47 +0100 (Sun, 19 Nov 2006) $"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__license__ = "GPL"
+
+import getopt, sys
+
+# Inserts our own modules path first in the list
+# fix for bug #343821
+sys.path.insert(1, "/usr/lib/fail2ban")
+
+from common.version import version
+from server.server import Server
+
+##
+# \mainpage Fail2Ban
+#
+# \section Introduction
+#
+# Fail2ban is designed to protect your server against brute force attacks.
+# Its first goal was to protect a SSH server.
+
+class Fail2banServer:
+	
+	def __init__(self):
+		self.__server = None
+		self.__argv = None
+		self.__conf = dict()
+		self.__conf["background"] = True
+		self.__conf["force"] = False
+		self.__conf["socket"] = "/tmp/fail2ban.sock"
+	
+	def dispVersion(self):
+		print "Fail2Ban v" + version
+		print
+		print "Copyright (c) 2004-2006 Cyril Jaquier"
+		print "Copyright of modifications held by their respective authors."
+		print "Licensed under the GNU General Public License v2 (GPL)."
+		print
+		print "Written by Cyril Jaquier <lostcontrol@users.sourceforge.net>."
+		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
+	
+	def dispUsage(self):
+		""" Prints Fail2Ban command line options and exits
+		"""
+		print "Usage: "+self.__argv[0]+" [OPTIONS]"
+		print
+		print "Fail2Ban v" + version + " reads log file that contains password failure report"
+		print "and bans the corresponding IP addresses using firewall rules."
+		print
+		print "Only use this command for debugging purpose. Start the server with"
+		print "fail2ban-client instead. The default behaviour is to start the server"
+		print "in background."
+		print
+		print "Options:"
+		print "    -b                   start in background"
+		print "    -f                   start in foreground"
+		print "    -s <FILE>            socket path"
+		print "    -x                   force execution of the server"
+		print "    -h, --help           display this help message"
+		print "    -V, --version        print the version"
+		print
+		print "Report bugs to <lostcontrol@users.sourceforge.net>"
+	
+	def __getCmdLineOptions(self, optList):
+		""" Gets the command line options
+		"""
+		for opt in optList:
+			if opt[0] == "-b":
+				self.__conf["background"] = True
+			if opt[0] == "-f":
+				self.__conf["background"] = False
+			if opt[0] == "-s":
+				self.__conf["socket"] = opt[1]
+			if opt[0] == "-x":
+				self.__conf["force"] = True
+			if opt[0] in ["-h", "--help"]:
+	 			self.dispUsage()
+				sys.exit(0)
+			if opt[0] in ["-V", "--version"]:
+	 			self.dispVersion()
+				sys.exit(0)
+		
+	def start(self, argv):
+		# Command line options
+		self.__argv = argv
+		
+		# Reads the command line options.
+		try:
+			cmdOpts = 'bfs:xhV'
+			cmdLongOpts = ['help', 'version']
+			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
+		except getopt.GetoptError:
+			self.dispUsage()
+			sys.exit(-1)
+			
+		self.__getCmdLineOptions(optList)
+		
+		try:
+			self.__server = Server(self.__conf["background"])
+			self.__server.start(self.__conf["socket"], self.__conf["force"])
+			return True
+		except Exception, e:
+			print e
+			self.__server.quit()
+			return False
+		
+if __name__ == "__main__":
+	server = Fail2banServer()
+	if server.start(sys.argv):
+		sys.exit(0)
+	else:
+		sys.exit(-1)
