@@ -1,0 +1,32 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 00_hostsdeny.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad fail2ban~/config/action.d/hostsdeny.conf fail2ban/config/action.d/hostsdeny.conf
+--- fail2ban~/config/action.d/hostsdeny.conf	2007-11-06 16:19:12.000000000 -0500
++++ fail2ban/config/action.d/hostsdeny.conf	2007-11-06 16:19:56.000000000 -0500
+@@ -44,9 +44,7 @@
+ #          <time>  unix timestamp of the ban time
+ # Values:  CMD
+ #
+-actionunban = IP=<ip> &&
+-              grep -v "ALL: $IP" <file> > <tmpfile> &&
+-              mv <tmpfile> <file>
++actionunban = IP=<ip> && sed -i.old /ALL:\ $IP/d <file>
+ 
+ [Init]
+ 
+@@ -55,10 +53,3 @@
+ # Values:  STR  Default:  /etc/hosts.deny
+ #
+ file = /etc/hosts.deny
+-
+-# Option:  file
+-# Notes.:  hosts.deny temporary file path.
+-# Values:  STR  Default:  /etc/hostsdeny.failban
+-#
+-tmpfile = /tmp/hosts.deny.tmp
+-

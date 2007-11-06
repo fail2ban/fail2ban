@@ -8,6 +8,8 @@ fail2ban (0.7.5-2etch1~pre3) stable-security; urgency=low
     never was hit by any Debian user yet
   * Added patch 00_numeric_iptables-L to avoid possible DoS attacks
     (introduced upstream in 0.7.6)
+  * Propagated "Fixed removal of host in hosts.deny" from 0.7.6, to prevent
+    possible DoS
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 01 May 2007 22:18:03 -0400
 
