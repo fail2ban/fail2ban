@@ -10,6 +10,8 @@ fail2ban (0.7.5-2etch1~pre3) stable-security; urgency=low
     (introduced upstream in 0.7.6)
   * Propagated "Fixed removal of host in hosts.deny" from 0.7.6, to prevent
     possible DoS
+  * Rigid call to python2.4 instead of via /usr/bin/env to prevent
+    in-the-middle attack via environment poisoning
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 01 May 2007 22:18:03 -0400
 

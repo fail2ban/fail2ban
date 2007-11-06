@@ -1,0 +1,44 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## rigid_python2.4.dpatch by  <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Due to currently default python2.3 we need to hardcode use of python2.4 
+## DP: for now
+
+@DPATCH@
+diff -urNad fail2ban~/fail2ban-client fail2ban/fail2ban-client
+--- fail2ban~/fail2ban-client	2007-11-06 18:02:02.000000000 -0500
++++ fail2ban/fail2ban-client	2007-11-06 18:02:27.000000000 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python2.4
++#!/usr/bin/python2.4
+ # This file is part of Fail2Ban.
+ #
+ # Fail2Ban is free software; you can redistribute it and/or modify
+diff -urNad fail2ban~/fail2ban-server fail2ban/fail2ban-server
+--- fail2ban~/fail2ban-server	2007-11-06 18:02:02.000000000 -0500
++++ fail2ban/fail2ban-server	2007-11-06 18:02:29.000000000 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python2.4
++#!/usr/bin/python2.4
+ # This file is part of Fail2Ban.
+ #
+ # Fail2Ban is free software; you can redistribute it and/or modify
+diff -urNad fail2ban~/fail2ban-testcases fail2ban/fail2ban-testcases
+--- fail2ban~/fail2ban-testcases	2007-11-06 18:02:02.000000000 -0500
++++ fail2ban/fail2ban-testcases	2007-11-06 18:02:31.000000000 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python2.4
++#!/usr/bin/python2.4
+ # This file is part of Fail2Ban.
+ #
+ # Fail2Ban is free software; you can redistribute it and/or modify
+diff -urNad fail2ban~/setup.py fail2ban/setup.py
+--- fail2ban~/setup.py	2007-11-06 18:02:02.000000000 -0500
++++ fail2ban/setup.py	2007-11-06 18:02:35.000000000 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python2.4
++#!/usr/bin/python2.4
+ 
+ # This file is part of Fail2Ban.
+ #
