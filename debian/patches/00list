@@ -10,3 +10,4 @@ X00_rigid_python24
 s00_asctime-0.7.8
 00_hostsdeny
 X00_rigid_usrbinpython
+00_stronger_failregex

@@ -1,0 +1,31 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 00_stronger_failregex.dpatch by Yaroslav Halchenko <debian@onerussian.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad fail2ban~/config/filter.d/sshd.conf fail2ban/config/filter.d/sshd.conf
+--- fail2ban~/config/filter.d/sshd.conf	2007-11-06 17:57:04.000000000 -0500
++++ fail2ban/config/filter.d/sshd.conf	2007-11-07 01:04:17.000000000 -0500
+@@ -13,7 +13,7 @@
+ #          be used for standard IP/hostname matching.
+ # Values:  TEXT
+ #
+-failregex = (?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>
++failregex = (?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>(?: port \d*)?(?: ssh\d*)\s*$
+ 
+ # Option:  ignoreregex
+ # Notes.:  regex to ignore. If this regex matches, the line is ignored.
+diff -urNad fail2ban~/config/filter.d/vsftpd.conf fail2ban/config/filter.d/vsftpd.conf
+--- fail2ban~/config/filter.d/vsftpd.conf	2007-11-06 17:57:04.000000000 -0500
++++ fail2ban/config/filter.d/vsftpd.conf	2007-11-07 01:06:31.000000000 -0500
+@@ -13,7 +13,7 @@
+ #          be used for standard IP/hostname matching.
+ # Values: TEXT
+ #
+-failregex = vsftpd: \(pam_unix\) authentication failure; .* rhost=<HOST>
++failregex = vsftpd: \(pam_unix\) authentication failure; .* rhost=<HOST>\s*$
+ 
+ # Option:  ignoreregex
+ # Notes.:  regex to ignore. If this regex matches, the line is ignored.
