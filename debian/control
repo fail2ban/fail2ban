@@ -5,7 +5,11 @@ Maintainer: Yaroslav Halchenko <debian@onerussian.com>
 Build-Depends: debhelper (>= 5.0.37.2), dpatch, python
 Build-Depends-Indep: python-central (>= 0.5.6)
 XS-Python-Version: current, >= 2.4
+Homepage: http://www.fail2ban.org
+Vcs-Browser: http://git.onerussian.com/?p=fail2ban
+Vcs-git: http://git.onerussian.com/vcs/fail2ban
 Standards-Version: 3.7.2
+
 
 Package: fail2ban
 Architecture: all
@@ -24,6 +28,4 @@ Description: bans IPs that cause multiple authentication errors
  file. All filters and actions are given in the config files, thus
  fail2ban can be adopted to be used with a variety of files and
  firewalls.
- .
-  Homepage: http://www.fail2ban.org
 
