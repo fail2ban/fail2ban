@@ -1,12 +1,15 @@
-fail2ban (0.8.1-3~pre2~1.gbp5ac568) UNRELEASED; urgency=low
+fail2ban (0.8.1-3~pre2~2.gbpb2ab5f) UNRELEASED; urgency=low
+
+  ** SNAPSHOT build @b2ab5fc085525a29b8a57ac1ad17c510b26f5290 **
 
   * Propagated patch from 0.9 upstream branch: Replaced ssocket.py with
     asyncore/asynchat implementation.  Correct fix for bug #1769616. That is
     supposed to resolve spontaneous 100% CPU utilization by fail2ban-server.
   * BF: removed sftp from ssh jails (closes: #436053)
+  * NF: new filter for 'refused connect' (closes: #451093). Thanks Guido
+    Bozzetto
 
-
- -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 11 Nov 2007 01:12:18 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 23 Nov 2007 09:01:11 -0500
 
 fail2ban (0.8.1-2) unstable; urgency=low
 
