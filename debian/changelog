@@ -1,3 +1,9 @@
+fail2ban (0.8.1-3) unstable; urgency=low
+
+  * Added Vcs- fields, moved Homepage into source header's field
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 23 Nov 2007 11:08:09 -0500
+
 fail2ban (0.8.1-2) unstable; urgency=low
 
   * Fixed named-refused filter.
