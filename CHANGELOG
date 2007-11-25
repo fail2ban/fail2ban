@@ -18,6 +18,8 @@ ver. 0.8.2 (2007/??/??) - stable
   Halchenko. It will be possible to create stronger failregex
   against log injection
 - Fixed ipfw action script. Thanks to Nick Munger
+- Removed date from logging message when using SYSLOG. Thanks
+  to Iain Lea
 
 ver. 0.8.1 (2007/08/14) - stable
 ----------
