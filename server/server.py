@@ -315,7 +315,11 @@ class Server:
 	def setLogTarget(self, target):
 		try:
 			self.__loggingLock.acquire()
+			# set a format which is simpler for console use
+			formatter = logging.Formatter("%(asctime)s %(name)-16s: %(levelname)-6s %(message)s")
 			if target == "SYSLOG":
+				# Syslog daemons already add date to the message.
+				formatter = logging.Formatter("%(name)-16s: %(levelname)-6s %(message)s")
 				facility = logging.handlers.SysLogHandler.LOG_DAEMON
 				hdlr = logging.handlers.SysLogHandler("/dev/log", 
 													  facility = facility)
@@ -336,10 +340,8 @@ class Server:
 			# Removes previous handlers
 			for handler in logging.getLogger("fail2ban").handlers:
 				# Closes the handler.
-				handler.close()
 				logging.getLogger("fail2ban").removeHandler(handler)
-			# set a format which is simpler for console use
-			formatter = logging.Formatter("%(asctime)s %(name)-16s: %(levelname)-6s %(message)s")
+				handler.close()
 			# tell the handler to use this format
 			hdlr.setFormatter(formatter)
 			logging.getLogger("fail2ban").addHandler(hdlr)
