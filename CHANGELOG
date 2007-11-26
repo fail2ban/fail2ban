@@ -20,6 +20,8 @@ ver. 0.8.2 (2007/??/??) - stable
 - Fixed ipfw action script. Thanks to Nick Munger
 - Removed date from logging message when using SYSLOG. Thanks
   to Iain Lea
+- Fixed "ignore IPs". Only the first value was taken into
+  account. Thanks to Adrien Clerc
 
 ver. 0.8.1 (2007/08/14) - stable
 ----------

@@ -299,7 +299,7 @@ class Filter(JailThread):
 		for i in self.__ignoreIpList:
 			# An empty string is always false
 			if i == "":
-				return False
+				continue
 			s = i.split('/', 1)
 			# IP address without CIDR mask
 			if len(s) == 1:
@@ -314,7 +314,7 @@ class Filter(JailThread):
 				if ip in ips:
 					return True
 				else:
-					return False
+					continue
 			if a == b:
 				return True
 		return False
