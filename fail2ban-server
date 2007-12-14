@@ -25,9 +25,10 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import getopt, sys, logging
+
 from common.version import version
 from server.server import Server
-import getopt, sys, logging
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
