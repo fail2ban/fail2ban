@@ -50,7 +50,7 @@ class Fail2banServer:
 		self.__conf = dict()
 		self.__conf["background"] = True
 		self.__conf["force"] = False
-		self.__conf["socket"] = "/tmp/fail2ban.sock"
+		self.__conf["socket"] = "/var/run/fail2ban/fail2ban.sock"
 	
 	def dispVersion(self):
 		print "Fail2Ban v" + version
