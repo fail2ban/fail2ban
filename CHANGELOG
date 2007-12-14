@@ -22,6 +22,8 @@ ver. 0.8.2 (2007/??/??) - stable
   to Iain Lea
 - Fixed "ignore IPs". Only the first value was taken into
   account. Thanks to Adrien Clerc
+- Moved socket to /var/run/fail2ban.
+- Rewrote the communication server.
 
 ver. 0.8.1 (2007/08/14) - stable
 ----------
