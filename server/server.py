@@ -81,6 +81,12 @@ class Server:
 		self.stopAllJail()
 		# Stop communication
 		self.__asyncServer.stop()
+		# Shutdowns the logging.
+		try:
+			self.__loggingLock.acquire()
+			logging.shutdown()
+		finally:
+			self.__loggingLock.release()
 	
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend)
