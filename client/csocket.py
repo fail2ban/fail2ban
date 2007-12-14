@@ -32,7 +32,7 @@ class CSocket:
 	
 	END_STRING = "<F2B_END_COMMAND>"
 	
-	def __init__(self, sock = "/tmp/fail2ban.sock"):
+	def __init__(self, sock = "/var/run/fail2ban/fail2ban.sock"):
 		# Create an INET, STREAMing socket
 		#self.csock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.__csock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
