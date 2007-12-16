@@ -129,7 +129,7 @@ class JailReader(ConfigReader):
 		stream.insert(0, ["add", self.__name, backend])
 		return stream
 	
-	@staticmethod
+	#@staticmethod
 	def splitAction(action):
 		m = JailReader.actionCRE.match(action)
 		d = dict()
@@ -165,3 +165,4 @@ class JailReader(ConfigReader):
 				except IndexError:
 					logSys.error("Invalid argument %s in '%s'" % (p, m.group(2)))
 		return [m.group(1), d]
+	splitAction = staticmethod(splitAction)

@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.8.1)                           2007/08/14
+Fail2Ban (version 0.8.2)                           2007/??/??
 =============================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP
@@ -21,15 +21,15 @@ Installation:
 -------------
 
 Required:
-   >=python-2.4 (http://www.python.org)
+   >=python-2.3 (http://www.python.org)
 
 Optional:
    >=gamin-0.0.21 (http://www.gnome.org/~veillard/gamin)
 
 To install, just do:
 
-> tar xvfj fail2ban-0.8.1.tar.bz2
-> cd fail2ban-0.8.1
+> tar xvfj fail2ban-0.8.2.tar.bz2
+> cd fail2ban-0.8.2
 > python setup.py install
 
 This will install Fail2Ban into /usr/share/fail2ban. The
