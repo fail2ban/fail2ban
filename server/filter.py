@@ -29,8 +29,7 @@ from failticket import FailTicket
 from jailthread import JailThread
 from datedetector import DateDetector
 from mytime import MyTime
-from regex import Regex, RegexException
-from failregex import FailRegex
+from failregex import FailRegex, Regex, RegexException
 
 import logging, re
 

@@ -26,9 +26,9 @@ __license__ = "GPL"
 
 import time, logging
 
-from datestrptime import DateStrptime
-from datetai64n	import DateTai64n
-from dateepoch import DateEpoch
+from datetemplate import DateStrptime
+from datetemplate import DateTai64n
+from datetemplate import DateEpoch
 from threading import Lock
 
 # Gets the instance of the logger.
