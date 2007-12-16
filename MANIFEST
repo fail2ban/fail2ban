@@ -23,10 +23,8 @@ server/filter.py
 server/filtergamin.py
 server/filterpoll.py
 server/server.py
-server/datestrptime.py
 server/failticket.py
 server/actions.py
-server/datetai64n.py
 server/faildata.py
 server/failmanager.py
 server/datedetector.py
@@ -37,11 +35,9 @@ server/ticket.py
 server/jail.py
 server/jails.py
 server/__init__.py
-server/dateepoch.py
 server/banmanager.py
 server/datetemplate.py
 server/mytime.py
-server/regex.py
 server/failregex.py
 testcases/banmanagertestcase.py
 testcases/failmanagertestcase.py

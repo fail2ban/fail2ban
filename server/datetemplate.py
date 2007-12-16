@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -24,7 +25,9 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import re
+import re, time
+
+from mytime import MyTime
 
 class DateTemplate:
 	
@@ -69,3 +72,91 @@ class DateTemplate:
 	
 	def getDate(self, line):
 		raise Exception("matchDate() is abstract")
+
+
+class DateEpoch(DateTemplate):
+	
+	def __init__(self):
+		DateTemplate.__init__(self)
+		# We already know the format for TAI64N
+		self.setRegex("^\d{10}(\.\d{6})?")
+	
+	def getDate(self, line):
+		date = None
+		dateMatch = self.matchDate(line)
+		if dateMatch:
+			# extract part of format which represents seconds since epoch
+			date = list(time.localtime(float(dateMatch.group())))
+		return date
+
+
+##
+# Use strptime() to parse a date. Our current locale is the 'C'
+# one because we do not set the locale explicitly. This is POSIX
+# standard.
+
+class DateStrptime(DateTemplate):
+	
+	TABLE = dict()
+	TABLE["Jan"] = []
+	TABLE["Feb"] = [u"Fév"]
+	TABLE["Mar"] = [u"Mär"]
+	TABLE["Apr"] = ["Avr"]
+	TABLE["May"] = ["Mai"]
+	TABLE["Jun"] = []
+	TABLE["Jul"] = []
+	TABLE["Aug"] = ["Aou"]
+	TABLE["Sep"] = []
+	TABLE["Oct"] = ["Okt"]
+	TABLE["Nov"] = []
+	TABLE["Dec"] = [u"Déc", "Dez"]
+	
+	def __init__(self):
+		DateTemplate.__init__(self)
+	
+	@staticmethod
+	def convertLocale(date):
+		for t in DateStrptime.TABLE:
+			for m in DateStrptime.TABLE[t]:
+				if date.find(m) >= 0:
+					return date.replace(m, t)
+		return date
+	
+	def getDate(self, line):
+		date = None
+		dateMatch = self.matchDate(line)
+		if dateMatch:
+			try:
+				# Try first with 'C' locale
+				date = list(time.strptime(dateMatch.group(), self.getPattern()))
+			except ValueError:
+				# Try to convert date string to 'C' locale
+				conv = self.convertLocale(dateMatch.group())
+				date = list(time.strptime(conv, self.getPattern()))
+			if date[0] < 2000:
+				# There is probably no year field in the logs
+				date[0] = MyTime.gmtime()[0]
+				# Bug fix for #1241756
+				# If the date is greater than the current time, we suppose
+				# that the log is not from this year but from the year before
+				if time.mktime(date) > MyTime.time():
+					date[0] -= 1
+		return date
+
+
+class DateTai64n(DateTemplate):
+	
+	def __init__(self):
+		DateTemplate.__init__(self)
+		# We already know the format for TAI64N
+		self.setRegex("@[0-9a-f]{24}")
+	
+	def getDate(self, line):
+		date = None
+		dateMatch = self.matchDate(line)
+		if dateMatch:
+			# extract part of format which represents seconds since epoch
+			value = dateMatch.group()
+			seconds_since_epoch = value[2:17]
+			date = list(time.gmtime(int(seconds_since_epoch, 16)))
+		return date

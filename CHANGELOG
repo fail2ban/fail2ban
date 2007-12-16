@@ -24,6 +24,7 @@ ver. 0.8.2 (2007/??/??) - stable
   account. Thanks to Adrien Clerc
 - Moved socket to /var/run/fail2ban.
 - Rewrote the communication server.
+- Refactoring. Reduced number of files.
 
 ver. 0.8.1 (2007/08/14) - stable
 ----------
