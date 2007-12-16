@@ -2,7 +2,7 @@
 <?eclipse-pydev version="1.0"?>
 
 <pydev_project>
-<pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.4</pydev_property>
+<pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.3</pydev_property>
 <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
 <path>/fail2ban-0.8/client</path>
 <path>/fail2ban-0.8/server</path>

@@ -55,7 +55,7 @@ files_after = 1.conf
 
 	"""
 
-	@staticmethod
+	#@staticmethod
 	def getIncludedFiles(filename, sectionName='INCLUDES',
 						 defaults={}, seen=[]):
 		"""
@@ -83,6 +83,7 @@ files_after = 1.conf
 		filenames = newFiles[0][1] + [filename] + newFiles[1][1]
 		#print "Includes list for " + filename + " is " + `filenames`
 		return filenames
+	getIncludedFiles = staticmethod(getIncludedFiles)
 
 
 	def read(self, filenames):

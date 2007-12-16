@@ -357,11 +357,12 @@ class Fail2banClient:
 		self.__stream = self.__configurator.getConfigStream()
 		return ret
 	
-	@staticmethod
+	#@staticmethod
 	def dumpConfig(cmd):
 		for c in cmd:
 			print c
 		return True
+	dumpConfig = staticmethod(dumpConfig)
 
 
 class ServerExecutionException(Exception):

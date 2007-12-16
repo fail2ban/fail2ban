@@ -498,7 +498,7 @@ class DNSUtils:
 	DNS_CRE = re.compile("(?:(?:\w|-)+\.){2,}\w+")
 	IP_CRE = re.compile("(?:\d{1,3}\.){3}\d{1,3}")
 	
-	@staticmethod
+	#@staticmethod
 	def dnsToIp(dns):
 		""" Convert a DNS into an IP address using the Python socket module.
 			Thanks to Kevin Drapel.
@@ -509,8 +509,9 @@ class DNSUtils:
 			logSys.warn("Unable to find a corresponding IP address for %s"
 						% dns)
 			return list()
+	dnsToIp = staticmethod(dnsToIp)
 	
-	@staticmethod
+	#@staticmethod
 	def searchIP(text):
 		""" Search if an IP address if directly available and return
 			it.
@@ -520,8 +521,9 @@ class DNSUtils:
 			return match
 		else:
 			return None
+	searchIP = staticmethod(searchIP)
 	
-	@staticmethod
+	#@staticmethod
 	def isValidIP(string):
 		""" Return true if str is a valid IP
 		"""
@@ -531,8 +533,9 @@ class DNSUtils:
 			return True
 		except socket.error:
 			return False
+	isValidIP = staticmethod(isValidIP)
 	
-	@staticmethod
+	#@staticmethod
 	def textToIp(text):
 		""" Return the IP of DNS found in a given text.
 		"""
@@ -549,8 +552,9 @@ class DNSUtils:
 			for e in ip:
 				ipList.append(e)
 		return ipList
+	textToIp = staticmethod(textToIp)
 	
-	@staticmethod
+	#@staticmethod
 	def cidr(i, n):
 		""" Convert an IP address string with a CIDR mask into a 32-bit
 			integer.
@@ -558,15 +562,18 @@ class DNSUtils:
 		# 32-bit IPv4 address mask
 		MASK = 0xFFFFFFFFL
 		return ~(MASK >> n) & MASK & DNSUtils.addr2bin(i)
+	cidr = staticmethod(cidr)
 	
-	@staticmethod
+	#@staticmethod
 	def addr2bin(string):
 		""" Convert a string IPv4 address into an unsigned integer.
 		"""
 		return struct.unpack("!L", socket.inet_aton(string))[0]
+	addr2bin = staticmethod(addr2bin)
 	
-	@staticmethod
+	#@staticmethod
 	def bin2addr(addr):
 		""" Convert a numeric IPv4 address into string n.n.n.n form.
 		"""
 		return socket.inet_ntoa(struct.pack("!L", addr))
+	bin2addr = staticmethod(bin2addr)
