@@ -60,14 +60,13 @@ class DateTemplate:
 	def isValid(self):
 		return self.__regex != "" and self.__pattern != ""
 	
-	def incHits(self):
-		self.__hits = self.__hits + 1
-	
 	def getHits(self):
 		return self.__hits
 	
 	def matchDate(self, line):
 		dateMatch = self.__cRegex.search(line)
+		if not dateMatch == None:
+			self.__hits += 1
 		return dateMatch
 	
 	def getDate(self, line):
