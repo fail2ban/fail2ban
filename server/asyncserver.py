@@ -25,7 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from pickle import dumps, loads, HIGHEST_PROTOCOL
-import asyncore, asynchat, socket, os, logging, sys
+import asyncore, asynchat, socket, os, logging
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.server")
@@ -46,7 +46,6 @@ class RequestHandler(asynchat.async_chat):
 		self.__buffer = []
 		# Sets the terminator.
 		self.set_terminator(RequestHandler.END_STRING)
-		self.found_terminator = self.handle_request_line
 
 	def collect_incoming_data(self, data):
 		logSys.debug("Received raw data: " + str(data))
@@ -57,7 +56,7 @@ class RequestHandler(asynchat.async_chat):
 	#
 	# This method is called once we have a complete request.
 
-	def handle_request_line(self):
+	def found_terminator(self):
 		# Joins the buffer items.
 		message = loads("".join(self.__buffer))
 		# Gives the message to the transmitter.
@@ -125,12 +124,15 @@ class AsyncServer(asyncore.dispatcher):
 		# Creates the socket.
 		self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
 		self.set_reuse_addr()
-		self.bind(sock)
+		try:
+			self.bind(sock)
+		except Exception:
+			raise AsyncServerException("Unable to bind socket %s" % self.__sock)
 		self.listen(1)
 		# Sets the init flag.
 		self.__init = True
 		# TODO Add try..catch
-		asyncore.loop(timeout = 2)
+		asyncore.loop()
 	
 	##
 	# Stops the communication server.
