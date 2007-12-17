@@ -25,7 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from faildata import FailData
-from failticket import FailTicket
+from ticket import FailTicket
 from threading import Lock
 import logging
 

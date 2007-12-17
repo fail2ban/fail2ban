@@ -24,7 +24,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from banticket import BanTicket
+from ticket import BanTicket
 from threading import Lock
 from mytime import MyTime
 import logging

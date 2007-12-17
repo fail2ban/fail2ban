@@ -18,12 +18,10 @@ client/__init__.py
 client/configurator.py
 client/csocket.py
 server/asyncserver.py
-server/banticket.py
 server/filter.py
 server/filtergamin.py
 server/filterpoll.py
 server/server.py
-server/failticket.py
 server/actions.py
 server/faildata.py
 server/failmanager.py

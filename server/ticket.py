@@ -53,4 +53,28 @@ class Ticket:
 	
 	def getAttempt(self):
 		return self.__attempt
+
+
+class FailTicket(Ticket):
 	
+	def __init__(self, ip, time):
+		Ticket.__init__(self, ip, time)
+
+
+##
+# Ban Ticket.
+#
+# This class extends the Ticket class. It is mainly used by the BanManager.
+
+class BanTicket(Ticket):
+	
+	##
+	# Constructor.
+	#
+	# Call the Ticket (parent) constructor and initialize default
+	# values.
+	# @param ip the IP address
+	# @param time the ban time
+	
+	def __init__(self, ip, time):
+		Ticket.__init__(self, ip, time)

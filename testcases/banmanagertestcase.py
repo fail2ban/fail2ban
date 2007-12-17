@@ -24,9 +24,9 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, socket, time, pickle
+import unittest
 from server.banmanager import BanManager
-from server.banticket import BanTicket
+from server.ticket import BanTicket
 
 class AddFailure(unittest.TestCase):
 
