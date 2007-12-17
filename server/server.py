@@ -73,8 +73,8 @@ class Server:
 		logSys.debug("Starting communication")
 		try:
 			self.__asyncServer.start(sock, force)
-		except AsyncServerException:
-			logSys.error("Could not start server")
+		except AsyncServerException, e:
+			logSys.error("Could not start server: %s", e)
 		logSys.info("Exiting Fail2ban")
 	
 	def quit(self):
@@ -147,18 +147,6 @@ class Server:
 	
 	def getLogPath(self, name):
 		return self.__jails.getFilter(name).getLogPath()
-	
-	def setTimeRegex(self, name, value):
-		self.__jails.getFilter(name).setTimeRegex(value)
-	
-	def getTimeRegex(self, name):
-		return self.__jails.getFilter(name).getTimeRegex()
-
-	def setTimePattern(self, name, value):
-		self.__jails.getFilter(name).setTimePattern(value)
-	
-	def getTimePattern(self, name):
-		return self.__jails.getFilter(name).getTimePattern()
 	
 	def setFindTime(self, name, value):
 		self.__jails.getFilter(name).setFindTime(value)

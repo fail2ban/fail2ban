@@ -135,14 +135,6 @@ class Transmitter:
 			value = command[2]
 			self.__server.delLogPath(name, value)
 			return self.__server.getLogPath(name)
-		elif command[1] == "timeregex":
-			value = command[2]
-			self.__server.setTimeRegex(name, value)
-			return self.__server.getTimeRegex(name)
-		elif command[1] == "timepattern":
-			value = command[2]
-			self.__server.setTimePattern(name, value)
-			return self.__server.getTimePattern(name)
 		elif command[1] == "addfailregex":
 			value = command[2]
 			self.__server.addFailRegex(name, value)
@@ -229,10 +221,6 @@ class Transmitter:
 			return self.__server.getLogPath(name)
 		elif command[1] == "ignoreip":
 			return self.__server.getIgnoreIP(name)
-		elif command[1] == "timeregex":
-			return self.__server.getTimeRegex(name)
-		elif command[1] == "timepattern":
-			return self.__server.getTimePattern(name)
 		elif command[1] == "failregex":
 			return self.__server.getFailRegex(name)
 		elif command[1] == "ignoreregex":
