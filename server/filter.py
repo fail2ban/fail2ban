@@ -25,7 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from failmanager import FailManager
-from failticket import FailTicket
+from ticket import FailTicket
 from jailthread import JailThread
 from datedetector import DateDetector
 from mytime import MyTime
@@ -121,40 +121,6 @@ class Filter(JailThread):
 			return True
 		except ValueError:
 			return False
-	
-	##
-	# Set the regular expression which matches the time.
-	#
-	# @param value the regular expression
-	
-	def setTimeRegex(self, value):
-		self.dateDetector.setDefaultRegex(value)
-		logSys.info("Set default regex = %s" % value)
-	
-	##
-	# Get the regular expression which matches the time.
-	#
-	# @return the regular expression
-		
-	def getTimeRegex(self):
-		return self.dateDetector.getDefaultRegex()
-	
-	##
-	# Set the time pattern.
-	#
-	# @param value the time pattern
-	
-	def setTimePattern(self, value):
-		self.dateDetector.setDefaultPattern(value)
-		logSys.info("Set default pattern = %s" % value)
-	
-	##
-	# Get the time pattern.
-	#
-	# @return the time pattern
-	
-	def getTimePattern(self):
-		return self.dateDetector.getDefaultPattern()
 	
 	##
 	# Add a regular expression which matches the failure.

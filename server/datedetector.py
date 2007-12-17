@@ -39,7 +39,6 @@ class DateDetector:
 	def __init__(self):
 		self.__lock = Lock()
 		self.__templates = list()
-		self.__defTemplate = DateStrptime()
 	
 	def addDefaultTemplate(self):
 		try:
@@ -100,54 +99,31 @@ class DateDetector:
 	def getTemplates(self):
 		return self.__templates
 	
-	def setDefaultRegex(self, value):
-		self.__defTemplate.setRegex(value)
-	
-	def getDefaultRegex(self):
-		return self.__defTemplate.getRegex()
-	
-	def setDefaultPattern(self, value):
-		self.__defTemplate.setPattern(value)
-	
-	def getDefaultPattern(self):
-		return self.__defTemplate.getPattern()
-	
 	def matchTime(self, line):
-		if self.__defTemplate.isValid():
-			return self.__defTemplate.matchDate(line)
-		else:
-			try:
-				self.__lock.acquire()
-				for template in self.__templates:
-					match = template.matchDate(line)
-					if not match == None:
-						return match
-				return None
-			finally:
-				self.__lock.release()
+		try:
+			self.__lock.acquire()
+			for template in self.__templates:
+				match = template.matchDate(line)
+				if not match == None:
+					return match
+			return None
+		finally:
+			self.__lock.release()
 
 	def getTime(self, line):
-		if self.__defTemplate.isValid():
-			try:
-				date = self.__defTemplate.getDate(line)
-				return date
-			except ValueError:
-				return None
-		else:
-			try:
-				self.__lock.acquire()
-				for template in self.__templates:
-					try:
-						date = template.getDate(line)
-						if date == None:
-							continue
-						template.incHits()
-						return date
-					except ValueError:
-						pass
-				return None
-			finally:
-				self.__lock.release()
+		try:
+			self.__lock.acquire()
+			for template in self.__templates:
+				try:
+					date = template.getDate(line)
+					if date == None:
+						continue
+					return date
+				except ValueError:
+					pass
+			return None
+		finally:
+			self.__lock.release()
 
 	def getUnixTime(self, line):
 		date = self.getTime(line)
