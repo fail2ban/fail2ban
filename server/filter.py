@@ -461,7 +461,6 @@ import socket, struct
 
 class DNSUtils:
 	
-	DNS_CRE = re.compile("(?:(?:\w|-)+\.){2,}\w+")
 	IP_CRE = re.compile("(?:\d{1,3}\.){3}\d{1,3}")
 	
 	#@staticmethod
