@@ -26,7 +26,7 @@ __license__ = "GPL"
 
 import unittest
 from server.filterpoll import FilterPoll
-from server.filter import Filter
+from server.filter import FileFilter
 from server.failmanager import FailManager
 from server.failmanager import FailManagerEmpty
 
@@ -34,7 +34,7 @@ class IgnoreIP(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.__filter = Filter(None)
+		self.__filter = FileFilter(None)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -86,7 +86,7 @@ class GetFailures(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.__filter = Filter(None)
+		self.__filter = FileFilter(None)
 		self.__filter.setActive(True)
 		# TODO Test this
 		#self.__filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
