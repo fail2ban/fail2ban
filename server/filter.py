@@ -57,11 +57,6 @@ class Filter(JailThread):
 		self.jail = jail
 		## The failures manager.
 		self.failManager = FailManager()
-		## The log file handler.
-		self.__crtHandler = None
-		self.__crtFilename = None
-		## The log file path.
-		self.__logPath = []
 		## The regular expression list matching the failures.
 		self.__failRegex = list()
 		## The regular expression list with expressions to ignore.
@@ -70,58 +65,12 @@ class Filter(JailThread):
 		self.__findTime = 6000
 		## The ignore IP list.
 		self.__ignoreIpList = []
-		## The last position of the file.
-		self.__lastPos = dict()
-		## The last date in tht log file.
-		self.__lastDate = dict()
 		
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
 		logSys.info("Created Filter")
 
 
-	##
-	# Add a log file path
-	#
-	# @param path log file path
-
-	def addLogPath(self, path):
-		self.getLogPath().append(path)
-		# Initialize default values
-		self.__lastDate[path] = 0
-		self.__lastPos[path] = 0
-	
-	##
-	# Delete a log path
-	#
-	# @param path the log file to delete
-	
-	def delLogPath(self, path):
-		self.getLogPath().remove(path)
-		del self.__lastDate[path]
-		del self.__lastPos[path]
-
-	##
-	# Get the log file path
-	#
-	# @return log file path
-		
-	def getLogPath(self):
-		return self.__logPath
-	
-	##
-	# Check whether path is already monitored.
-	#
-	# @param path The path
-	# @return True if the path is already monitored else False
-	
-	def containsLogPath(self, path):
-		try:
-			self.getLogPath().index(path)
-			return True
-		except ValueError:
-			return False
-	
 	##
 	# Add a regular expression which matches the failure.
 	#
@@ -284,106 +233,37 @@ class Filter(JailThread):
 				return True
 		return False
 	
-	##
-	# Open the log file.
-	
-	def __openLogFile(self, filename):
-		""" Opens the log file specified on init.
-		"""
+
+	def processLine(self, line):
+		if not self._isActive():
+			# The jail has been stopped
+			return
 		try:
-			self.__crtFilename = filename
-			self.__crtHandler = open(filename)
-			logSys.debug("Opened " + filename)
-			return True
-		except OSError:
-			logSys.error("Unable to open " + filename)
-		except IOError:
-			logSys.error("Unable to read " + filename +
-						 ". Please check permissions")
-		return False
-	
-	##
-	# Close the log file.
-	
-	def __closeLogFile(self):
-		self.__crtFilename = None
-		self.__crtHandler.close()
-
-	##
-	# Set the file position.
-	#
-	# Sets the file position. We must take care of log file rotation
-	# and reset the position to 0 in that case. Use the log message
-	# timestamp in order to detect this.
-	
-	def __setFilePos(self):
-		line = self.__crtHandler.readline()
-		lastDate = self.__lastDate[self.__crtFilename]
-		lineDate = self.dateDetector.getUnixTime(line)
-		if lastDate < lineDate:
-			logSys.debug("Date " + `lastDate` + " is smaller than " + `lineDate`)
-			logSys.debug("Log rotation detected for " + self.__crtFilename)
-			self.__lastPos[self.__crtFilename] = 0
-		lastPos = self.__lastPos[self.__crtFilename]
-		logSys.debug("Setting file position to " + `lastPos` + " for " +
-					 self.__crtFilename)
-		self.__crtHandler.seek(lastPos)
-
-	##
-	# Get the file position.
-	
-	def __getFilePos(self):
-		return self.__crtHandler.tell()
-
-	##
-	# Gets all the failure in the log file.
-	#
-	# Gets all the failure in the log file which are newer than
-	# MyTime.time()-self.findTime. When a failure is detected, a FailTicket
-	# is created and is added to the FailManager.
-	
-	def getFailures(self, filename):
-		# Try to open log file.
-		if not self.__openLogFile(filename):
-			logSys.error("Unable to get failures in " + filename)
-			return False
-		self.__setFilePos()
-		lastTimeLine = None
-		for line in self.__crtHandler:
-			if not self._isActive():
-				# The jail has been stopped
+			# Decode line to UTF-8
+			l = line.decode('utf-8')
+		except UnicodeDecodeError:
+			pass
+		timeMatch = self.dateDetector.matchTime(line)
+		if not timeMatch:
+			# There is no valid time in this line
+			return
+		# Lets split into time part and log part of the line
+		timeLine = timeMatch.group()
+		# Lets leave the beginning in as well, so if there is no
+		# anchore at the beginning of the time regexp, we don't
+		# at least allow injection. Should be harmless otherwise
+		logLine  = l[:timeMatch.start()] + l[timeMatch.end():]
+		for element in self.findFailure(timeLine, logLine):
+			ip = element[0]
+			unixTime = element[1]
+			if unixTime < MyTime.time() - self.__findTime:
 				break
-			try:
-				# Decode line to UTF-8
-				line = line.decode('utf-8')
-			except UnicodeDecodeError:
-				pass
-			timeMatch = self.dateDetector.matchTime(line)
-			if not timeMatch:
-				# There is no valid time in this line
+			if self.inIgnoreIPList(ip):
+				logSys.debug("Ignore "+ip)
 				continue
-			# Lets split into time part and log part of the line
-			timeLine = timeMatch.group()
-			# Lets leave the beginning in as well, so if there is no
-			# anchore at the beginning of the time regexp, we don't
-			# at least allow injection. Should be harmless otherwise
-			logLine  = line[:timeMatch.start()] + line[timeMatch.end():]
-			lastTimeLine = timeLine
-			for element in self.findFailure(timeLine, logLine):
-				ip = element[0]
-				unixTime = element[1]
-				if unixTime < MyTime.time()-self.__findTime:
-					break
-				if self.inIgnoreIPList(ip):
-					logSys.debug("Ignore "+ip)
-					continue
-				logSys.debug("Found "+ip)
-				self.failManager.addFailure(FailTicket(ip, unixTime))
-		self.__lastPos[filename] = self.__getFilePos()
-		if lastTimeLine:
-			self.__lastDate[filename] = self.dateDetector.getUnixTime(lastTimeLine)
-		self.__closeLogFile()
-		return True
+			logSys.debug("Found "+ip)
+			self.failManager.addFailure(FailTicket(ip, unixTime))
+
 
 	##
 	# Returns true if the line should be ignored.
@@ -449,6 +329,164 @@ class Filter(JailThread):
 		ret = [("Currently failed", self.failManager.size()), 
 			   ("Total failed", self.failManager.getFailTotal())]
 		return ret
+
+
+class FileFilter(Filter):
+	
+	def __init__(self, jail):
+		Filter.__init__(self, jail)
+		## The log file handler.
+		self.__crtHandler = None
+		self.__crtFilename = None
+		## The log file path.
+		self.__logPath = []
+		## The last position of the file.
+		self.__lastPos = dict()
+		## The last date in tht log file.
+		self.__lastDate = dict()
+	
+	##
+	# Add a log file path
+	#
+	# @param path log file path
+
+	def addLogPath(self, path):
+		self.getLogPath().append(path)
+		# Initialize default values
+		self.__lastDate[path] = 0
+		self.__lastPos[path] = 0
+	
+	##
+	# Delete a log path
+	#
+	# @param path the log file to delete
+	
+	def delLogPath(self, path):
+		self.getLogPath().remove(path)
+		del self.__lastDate[path]
+		del self.__lastPos[path]
+
+	##
+	# Get the log file path
+	#
+	# @return log file path
+		
+	def getLogPath(self):
+		return self.__logPath
+	
+	##
+	# Check whether path is already monitored.
+	#
+	# @param path The path
+	# @return True if the path is already monitored else False
+	
+	def containsLogPath(self, path):
+		try:
+			self.getLogPath().index(path)
+			return True
+		except ValueError:
+			return False
+	
+	##
+	# Open the log file.
+	
+	def __openLogFile(self, filename):
+		""" Opens the log file specified on init.
+		"""
+		try:
+			self.__crtFilename = filename
+			self.__crtHandler = open(filename)
+			logSys.debug("Opened " + filename)
+			return True
+		except OSError:
+			logSys.error("Unable to open " + filename)
+		except IOError:
+			logSys.error("Unable to read " + filename +
+						 ". Please check permissions")
+		return False
+	
+	##
+	# Close the log file.
+	
+	def __closeLogFile(self):
+		self.__crtFilename = None
+		self.__crtHandler.close()
+
+	##
+	# Set the file position.
+	#
+	# Sets the file position. We must take care of log file rotation
+	# and reset the position to 0 in that case. Use the log message
+	# timestamp in order to detect this.
+	
+	def __setFilePos(self):
+		line = self.__crtHandler.readline()
+		lastDate = self.__lastDate[self.__crtFilename]
+		lineDate = self.dateDetector.getUnixTime(line)
+		if lastDate < lineDate:
+			logSys.debug("Date " + `lastDate` + " is smaller than " + `lineDate`)
+			logSys.debug("Log rotation detected for " + self.__crtFilename)
+			self.__lastPos[self.__crtFilename] = 0
+		lastPos = self.__lastPos[self.__crtFilename]
+		logSys.debug("Setting file position to " + `lastPos` + " for " +
+					 self.__crtFilename)
+		self.__crtHandler.seek(lastPos)
+
+	##
+	# Get the file position.
+	
+	def __getFilePos(self):
+		return self.__crtHandler.tell()
+	
+	##
+	# Gets all the failure in the log file.
+	#
+	# Gets all the failure in the log file which are newer than
+	# MyTime.time()-self.findTime. When a failure is detected, a FailTicket
+	# is created and is added to the FailManager.
+	
+	def getFailures(self, filename):
+		# Try to open log file.
+		if not self.__openLogFile(filename):
+			logSys.error("Unable to get failures in " + filename)
+			return False
+		self.__setFilePos()
+		lastTimeLine = None
+		for line in self.__crtHandler:
+			if not self._isActive():
+				# The jail has been stopped
+				break
+			try:
+				# Decode line to UTF-8
+				line = line.decode('utf-8')
+			except UnicodeDecodeError:
+				pass
+			timeMatch = self.dateDetector.matchTime(line)
+			if not timeMatch:
+				# There is no valid time in this line
+				continue
+			# Lets split into time part and log part of the line
+			timeLine = timeMatch.group()
+			# Lets leave the beginning in as well, so if there is no
+			# anchore at the beginning of the time regexp, we don't
+			# at least allow injection. Should be harmless otherwise
+			logLine  = line[:timeMatch.start()] + line[timeMatch.end():]
+			lastTimeLine = timeLine
+			for element in self.findFailure(timeLine, logLine):
+				ip = element[0]
+				unixTime = element[1]
+				if unixTime < MyTime.time() - self.getFindTime():
+					break
+				if self.inIgnoreIPList(ip):
+					logSys.debug("Ignore "+ip)
+					continue
+				logSys.debug("Found "+ip)
+				self.failManager.addFailure(FailTicket(ip, unixTime))
+		self.__lastPos[filename] = self.__getFilePos()
+		if lastTimeLine:
+			self.__lastDate[filename] = self.dateDetector.getUnixTime(lastTimeLine)
+		self.__closeLogFile()
+		return True
 
 
 ##

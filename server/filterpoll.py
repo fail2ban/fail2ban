@@ -25,7 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from failmanager import FailManagerEmpty
-from filter import Filter
+from filter import FileFilter
 from mytime import MyTime
 
 import time, logging, os
@@ -40,7 +40,7 @@ logSys = logging.getLogger("fail2ban.filter")
 # that matches a given regular expression. This class is instanciated by
 # a Jail object.
 
-class FilterPoll(Filter):
+class FilterPoll(FileFilter):
 
 	##
 	# Constructor.
@@ -49,7 +49,7 @@ class FilterPoll(Filter):
 	# @param jail the jail object
 	
 	def __init__(self, jail):
-		Filter.__init__(self, jail)
+		FileFilter.__init__(self, jail)
 		self.__modified = False
 		## The time of the last modification of the file.
 		self.__lastModTime = dict()
@@ -67,7 +67,7 @@ class FilterPoll(Filter):
 		else:
 			self.__lastModTime[path] = 0
 			self.__file404Cnt[path] = 0
-			Filter.addLogPath(self, path)
+			FileFilter.addLogPath(self, path)
 			logSys.info("Added logfile = %s" % path)	
 	
 	##
@@ -81,7 +81,7 @@ class FilterPoll(Filter):
 		else:
 			del self.__lastModTime[path]
 			del self.__file404Cnt[path]
-			Filter.delLogPath(self, path)
+			FileFilter.delLogPath(self, path)
 			logSys.info("Removed logfile = %s" % path)
 	
 	##
