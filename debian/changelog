@@ -1,4 +1,4 @@
-fail2ban (0.7.5-2etch1~pre4) stable-security; urgency=low
+fail2ban (0.7.5-2etch1~pre5) stable-security; urgency=low
 
   * NOT RELEASED YET
   * Propagated fix for asctime pattern from 0.7.8 release (closes: #421848)
@@ -10,8 +10,6 @@ fail2ban (0.7.5-2etch1~pre4) stable-security; urgency=low
     (introduced upstream in 0.7.6)
   * Propagated "Fixed removal of host in hosts.deny" from 0.7.6, to prevent
     possible DoS
-  * Rigid call to python2.4 instead of via /usr/bin/env to prevent
-    in-the-middle attack via environment poisoning
   * Anchored sshd and vsftpd failregex at the end of line to prevent DoS on
     those services, which is related to CVE-2007-4321 and closed in sid
     438187.
