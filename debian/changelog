@@ -1,6 +1,5 @@
-fail2ban (0.7.5-2etch1~pre5) stable-security; urgency=low
+fail2ban (0.7.5-2etch1) stable-security; urgency=low
 
-  * NOT RELEASED YET
   * Propagated fix for asctime pattern from 0.7.8 release (closes: #421848)
   * Propagated fix for not closed log files from 0.7.8-1
     (closes: #439962,434368)
