@@ -10,9 +10,9 @@ fail2ban (0.7.5-2etch1~pre5) stable-security; urgency=low
     (introduced upstream in 0.7.6)
   * Propagated "Fixed removal of host in hosts.deny" from 0.7.6, to prevent
     possible DoS
-  * Anchored sshd and vsftpd failregex at the end of line to prevent DoS on
-    those services, which is related to CVE-2007-4321 and closed in sid
-    438187.
+  * CVE-2007-4321: anchored sshd and vsftpd failregex at the end of line
+    to prevent DoS on those services. This issue was resolved in sid's version
+    0.8.0-4 (bugreport 438187).
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 01 May 2007 22:18:03 -0400
 
