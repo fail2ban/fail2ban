@@ -6,8 +6,8 @@
 
 @DPATCH@
 diff -urNad fail2ban~/config/filter.d/sshd.conf fail2ban/config/filter.d/sshd.conf
---- fail2ban~/config/filter.d/sshd.conf	2008-01-04 11:42:10.000000000 -0500
-+++ fail2ban/config/filter.d/sshd.conf	2008-01-04 11:44:39.000000000 -0500
+--- fail2ban~/config/filter.d/sshd.conf	2008-01-04 12:02:47.000000000 -0500
++++ fail2ban/config/filter.d/sshd.conf	2008-01-04 12:10:25.000000000 -0500
 @@ -13,7 +13,7 @@
  #          be used for standard IP/hostname matching.
  # Values:  TEXT
@@ -18,14 +18,14 @@ diff -urNad fail2ban~/config/filter.d/sshd.conf fail2ban/config/filter.d/sshd.co
  # Option:  ignoreregex
  # Notes.:  regex to ignore. If this regex matches, the line is ignored.
 diff -urNad fail2ban~/config/filter.d/vsftpd.conf fail2ban/config/filter.d/vsftpd.conf
---- fail2ban~/config/filter.d/vsftpd.conf	2008-01-04 11:42:10.000000000 -0500
-+++ fail2ban/config/filter.d/vsftpd.conf	2008-01-04 11:46:48.000000000 -0500
+--- fail2ban~/config/filter.d/vsftpd.conf	2008-01-04 12:02:47.000000000 -0500
++++ fail2ban/config/filter.d/vsftpd.conf	2008-01-04 12:10:25.000000000 -0500
 @@ -13,7 +13,7 @@
  #          be used for standard IP/hostname matching.
  # Values: TEXT
  #
 -failregex = vsftpd: \(pam_unix\) authentication failure; .* rhost=<HOST>
-+failregex = vsftpd: \(pam_unix\) authentication failure; .* rhost=<HOST>(?: user=\w*)?\s*$
++failregex = vsftpd: \(pam_unix\) authentication failure; .* rhost=<HOST>(?:\s+user=\S*)?\s*$
  
  # Option:  ignoreregex
  # Notes.:  regex to ignore. If this regex matches, the line is ignored.
