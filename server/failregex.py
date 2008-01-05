@@ -123,5 +123,8 @@ class FailRegex(Regex):
 	def getHost(self):
 		host = self._matchCache.group("host")
 		if host == None:
-			raise RegexException("Unexpected error. Please check your regex")
+			# Gets a few information.
+			s = self._matchCache.string
+			r = self._matchCache.re
+			raise RegexException("No 'host' found in '%s' using '%s'" % (s, r))
 		return host
