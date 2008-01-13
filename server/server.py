@@ -29,6 +29,7 @@ from jails import Jails
 from transmitter import Transmitter
 from asyncserver import AsyncServer
 from asyncserver import AsyncServerException
+from common import version
 import logging, logging.handlers, sys, os, signal
 
 # Gets the instance of the logger.
@@ -54,7 +55,7 @@ class Server:
 		self.quit()
 	
 	def start(self, sock, force = False):
-		logSys.info("Starting Fail2ban")
+		logSys.info("Starting Fail2ban v" + version.version)
 		
 		# Install signal handlers
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
