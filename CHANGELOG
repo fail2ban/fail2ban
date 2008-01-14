@@ -4,10 +4,10 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.8.2)                           2007/??/??
+Fail2Ban (version 0.8.2)                           2008/??/??
 =============================================================
 
-ver. 0.8.2 (2007/??/??) - stable
+ver. 0.8.2 (2008/??/??) - stable
 ----------
 - Fixed named filter. Thanks to Yaroslav Halchenko
 - Fixed wrong path for apache-auth in jail.conf. Thanks to
@@ -27,6 +27,8 @@ ver. 0.8.2 (2007/??/??) - stable
 - Refactoring. Reduced number of files.
 - Removed Python 2.4. Minimum required version is now Python
   2.3.
+- New log rotation detection algorithm.
+- Print monitored files in status.
 
 ver. 0.8.1 (2007/08/14) - stable
 ----------

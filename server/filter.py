@@ -242,8 +242,8 @@ class Filter(JailThread):
 			# Decode line to UTF-8
 			l = line.decode('utf-8')
 		except UnicodeDecodeError:
-			pass
-		timeMatch = self.dateDetector.matchTime(line)
+			l = line
+		timeMatch = self.dateDetector.matchTime(l)
 		if not timeMatch:
 			# There is no valid time in this line
 			return
@@ -335,26 +335,17 @@ class FileFilter(Filter):
 	
 	def __init__(self, jail):
 		Filter.__init__(self, jail)
-		## The log file handler.
-		self.__crtHandler = None
-		self.__crtFilename = None
 		## The log file path.
 		self.__logPath = []
-		## The last position of the file.
-		self.__lastPos = dict()
-		## The last date in tht log file.
-		self.__lastDate = dict()
 	
 	##
 	# Add a log file path
 	#
 	# @param path log file path
 
-	def addLogPath(self, path):
-		self.getLogPath().append(path)
-		# Initialize default values
-		self.__lastDate[path] = 0
-		self.__lastPos[path] = 0
+	def addLogPath(self, path, tail = False):
+		container = FileContainer(path, tail)
+		self.__logPath.append(container)
 	
 	##
 	# Delete a log path
@@ -362,9 +353,10 @@ class FileFilter(Filter):
 	# @param path the log file to delete
 	
 	def delLogPath(self, path):
-		self.getLogPath().remove(path)
-		del self.__lastDate[path]
-		del self.__lastPos[path]
+		for log in self.__logPath:
+			if log.getFileName() == path:
+				self.__logPath.remove(log)
+				return
 
 	##
 	# Get the log file path
@@ -381,62 +373,16 @@ class FileFilter(Filter):
 	# @return True if the path is already monitored else False
 	
 	def containsLogPath(self, path):
-		try:
-			self.getLogPath().index(path)
-			return True
-		except ValueError:
-			return False
-	
-	##
-	# Open the log file.
-	
-	def __openLogFile(self, filename):
-		""" Opens the log file specified on init.
-		"""
-		try:
-			self.__crtFilename = filename
-			self.__crtHandler = open(filename)
-			logSys.debug("Opened " + filename)
-			return True
-		except OSError:
-			logSys.error("Unable to open " + filename)
-		except IOError:
-			logSys.error("Unable to read " + filename +
-						 ". Please check permissions")
+		for log in self.__logPath:
+			if log.getFileName() == path:
+				return True
 		return False
 	
-	##
-	# Close the log file.
-	
-	def __closeLogFile(self):
-		self.__crtFilename = None
-		self.__crtHandler.close()
-
-	##
-	# Set the file position.
-	#
-	# Sets the file position. We must take care of log file rotation
-	# and reset the position to 0 in that case. Use the log message
-	# timestamp in order to detect this.
-	
-	def __setFilePos(self):
-		line = self.__crtHandler.readline()
-		lastDate = self.__lastDate[self.__crtFilename]
-		lineDate = self.dateDetector.getUnixTime(line)
-		if lastDate < lineDate:
-			logSys.debug("Date " + `lastDate` + " is smaller than " + `lineDate`)
-			logSys.debug("Log rotation detected for " + self.__crtFilename)
-			self.__lastPos[self.__crtFilename] = 0
-		lastPos = self.__lastPos[self.__crtFilename]
-		logSys.debug("Setting file position to " + `lastPos` + " for " +
-					 self.__crtFilename)
-		self.__crtHandler.seek(lastPos)
-
-	##
-	# Get the file position.
-	
-	def __getFilePos(self):
-		return self.__crtHandler.tell()
+	def getFileContainer(self, path):
+		for log in self.__logPath:
+			if log.getFileName() == path:
+				return log
+		return None
 	
 	##
 	# Gets all the failure in the log file.
@@ -446,13 +392,20 @@ class FileFilter(Filter):
 	# is created and is added to the FailManager.
 	
 	def getFailures(self, filename):
-		# Try to open log file.
-		if not self.__openLogFile(filename):
+		container = self.getFileContainer(filename)
+		if container == None:
 			logSys.error("Unable to get failures in " + filename)
 			return False
-		self.__setFilePos()
-		lastTimeLine = None
-		for line in self.__crtHandler:
+		# Try to open log file.
+		try:
+			container.open()
+		except Exception, e:
+			logSys.error("Unable to open %s" % filename)
+			logSys.exception(e)
+			return False
+		
+		line = container.readline()
+		while not line == "":
 			if not self._isActive():
 				# The jail has been stopped
 				break
@@ -464,6 +417,7 @@ class FileFilter(Filter):
 			timeMatch = self.dateDetector.matchTime(line)
 			if not timeMatch:
 				# There is no valid time in this line
+				line = container.readline()
 				continue
 			# Lets split into time part and log part of the line
 			timeLine = timeMatch.group()
@@ -471,7 +425,6 @@ class FileFilter(Filter):
 			# anchore at the beginning of the time regexp, we don't
 			# at least allow injection. Should be harmless otherwise
 			logLine  = line[:timeMatch.start()] + line[timeMatch.end():]
-			lastTimeLine = timeLine
 			for element in self.findFailure(timeLine, logLine):
 				ip = element[0]
 				unixTime = element[1]
@@ -482,11 +435,76 @@ class FileFilter(Filter):
 					continue
 				logSys.debug("Found "+ip)
 				self.failManager.addFailure(FailTicket(ip, unixTime))
-		self.__lastPos[filename] = self.__getFilePos()
-		if lastTimeLine:
-			self.__lastDate[filename] = self.dateDetector.getUnixTime(lastTimeLine)
-		self.__closeLogFile()
+			# Read a new line.
+			line = container.readline()
+		container.close()
 		return True
+	
+	def status(self):
+		ret = Filter.status(self)
+		path = [m.getFileName() for m in self.getLogPath()]
+		ret.append(("File list", path))
+		return ret
+
+##
+# FileContainer class.
+#
+# This class manages a file handler and takes care of log rotation detection.
+# In order to detect log rotation, the hash (MD5) of the first line of the file
+# is computed and compared to the previous hash of this line.
+
+import md5
+
+class FileContainer:
+	
+	def __init__(self, filename, tail = False):
+		self.__filename = filename
+		self.__tail = tail
+		self.__handler = None
+		# Try to open the file. Raises an exception if an error occured.
+		handler = open(filename)
+		try:
+			firstLine = handler.readline()
+			# Computes the MD5 of the first line.
+			self.__hash = md5.new(firstLine).digest()
+			# Start at the beginning of file if tail mode is off.
+			if tail:
+				handler.seek(0, 2)
+				self.__pos = handler.tell()
+			else:
+				self.__pos = 0
+		finally:
+			handler.close()
+	
+	def getFileName(self):
+		return self.__filename
+	
+	def open(self):
+		self.__handler = open(self.__filename)
+		firstLine = self.__handler.readline()
+		# Computes the MD5 of the first line.
+		myHash = md5.new(firstLine).digest()
+		# Compare hash.
+		if not self.__hash == myHash:
+			logSys.info("Log rotation detected for %s" % self.__filename)
+			self.__hash = myHash
+			self.__pos = 0
+		# Sets the file pointer to the last position.
+		self.__handler.seek(self.__pos)
+	
+	def readline(self):
+		if self.__handler == None:
+			return ""
+		return self.__handler.readline()
+	
+	def close(self):
+		if not self.__handler == None:
+			# Saves the last position.
+			self.__pos = self.__handler.tell()
+			# Closes the file.
+			self.__handler.close()
+			self.__handler = None
+
 
 
 ##
