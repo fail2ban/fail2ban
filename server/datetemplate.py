@@ -35,7 +35,6 @@ class DateTemplate:
 		self.__name = ""
 		self.__regex = ""
 		self.__cRegex = None
-		self.__pattern = ""
 		self.__hits = 0
 	
 	def setName(self, name):
@@ -50,15 +49,6 @@ class DateTemplate:
 		
 	def getRegex(self):
 		return self.__regex
-	
-	def setPattern(self, pattern):
-		self.__pattern = pattern.strip()
-		
-	def getPattern(self):
-		return self.__pattern
-	
-	def isValid(self):
-		return self.__regex != "" and self.__pattern != ""
 	
 	def getHits(self):
 		return self.__hits
@@ -112,6 +102,13 @@ class DateStrptime(DateTemplate):
 	
 	def __init__(self):
 		DateTemplate.__init__(self)
+		self.__pattern = ""
+	
+	def setPattern(self, pattern):
+		self.__pattern = pattern.strip()
+		
+	def getPattern(self):
+		return self.__pattern
 	
 	#@staticmethod
 	def convertLocale(date):
