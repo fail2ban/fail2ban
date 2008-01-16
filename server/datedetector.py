@@ -41,8 +41,8 @@ class DateDetector:
 		self.__templates = list()
 	
 	def addDefaultTemplate(self):
+		self.__lock.acquire()
 		try:
-			self.__lock.acquire()
 			# standard
 			template = DateStrptime()
 			template.setName("Month Day Hour:Minute:Second")
@@ -100,8 +100,8 @@ class DateDetector:
 		return self.__templates
 	
 	def matchTime(self, line):
+		self.__lock.acquire()
 		try:
-			self.__lock.acquire()
 			for template in self.__templates:
 				match = template.matchDate(line)
 				if not match == None:
@@ -111,8 +111,8 @@ class DateDetector:
 			self.__lock.release()
 
 	def getTime(self, line):
+		self.__lock.acquire()
 		try:
-			self.__lock.acquire()
 			for template in self.__templates:
 				try:
 					date = template.getDate(line)
@@ -137,8 +137,8 @@ class DateDetector:
 	# in this object and thus should be called from time to time.
 	
 	def sortTemplate(self):
+		self.__lock.acquire()
 		try:
-			self.__lock.acquire()
 			logSys.debug("Sorting the template list")
 			self.__templates.sort(lambda x, y: cmp(x.getHits(), y.getHits()))
 			self.__templates.reverse()
