@@ -27,13 +27,12 @@ __license__ = "GPL"
 
 import getopt, sys, logging
 
-from common.version import version
-from server.server import Server
-
 # Inserts our own modules path first in the list
 # fix for bug #343821
 sys.path.insert(1, "/usr/share/fail2ban")
 
+from common.version import version
+from server.server import Server
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")
