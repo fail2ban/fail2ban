@@ -36,6 +36,8 @@ import logging, logging.handlers, sys, os, signal
 logSys = logging.getLogger("fail2ban.server")
 
 class Server:
+	
+	PID_FILE = "/var/run/fail2ban/fail2ban.pid"
 
 	def __init__(self, daemon = False):
 		self.__loggingLock = Lock()
@@ -57,6 +59,15 @@ class Server:
 	def start(self, sock, force = False):
 		logSys.info("Starting Fail2ban v" + version.version)
 		
+		# Creates a PID file.
+		try:
+			logSys.debug("Creating PID file %s" % Server.PID_FILE)
+			pidFile = open(Server.PID_FILE, 'w')
+			pidFile.write("%s\n" % os.getpid())
+			pidFile.close()
+		except IOError, e:
+			logSys.error("Unable to create PID file: %s" % e)
+		
 		# Install signal handlers
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
 		signal.signal(signal.SIGINT, self.__sigTERMhandler)
@@ -76,6 +87,12 @@ class Server:
 			self.__asyncServer.start(sock, force)
 		except AsyncServerException, e:
 			logSys.error("Could not start server: %s", e)
+		# Removes the PID file.
+		try:
+			logSys.debug("Remove PID file %s" % Server.PID_FILE)
+			os.remove(Server.PID_FILE)
+		except OSError, e:
+			logSys.error("Unable to remove PID file: %s" % e)
 		logSys.info("Exiting Fail2ban")
 	
 	def quit(self):

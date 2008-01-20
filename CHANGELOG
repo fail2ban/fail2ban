@@ -29,6 +29,8 @@ ver. 0.8.2 (2008/??/??) - stable
   2.3.
 - New log rotation detection algorithm.
 - Print monitored files in status.
+- Create a PID file in /var/run/fail2ban/. Thanks to Julien
+  Perez.
 
 ver. 0.8.1 (2007/08/14) - stable
 ----------
