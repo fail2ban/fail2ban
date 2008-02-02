@@ -48,7 +48,7 @@ class RequestHandler(asynchat.async_chat):
 		self.set_terminator(RequestHandler.END_STRING)
 
 	def collect_incoming_data(self, data):
-		logSys.debug("Received raw data: " + str(data))
+		#logSys.debug("Received raw data: " + str(data))
 		self.__buffer.append(data)
 
 	##
