@@ -69,12 +69,12 @@ class FilterGamin(FileFilter):
 	#
 	# @param path log file path
 
-	def addLogPath(self, path):
+	def addLogPath(self, path, tail = False):
 		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
 		else:
 			self.monitor.watch_file(path, self.callback)
-			FileFilter.addLogPath(self, path)
+			FileFilter.addLogPath(self, path, tail)
 			logSys.info("Added logfile = %s" % path)			
 	
 	##

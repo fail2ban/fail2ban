@@ -61,13 +61,13 @@ class FilterPoll(FileFilter):
 	#
 	# @param path log file path
 
-	def addLogPath(self, path):
+	def addLogPath(self, path, tail = False):
 		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
 		else:
 			self.__lastModTime[path] = 0
 			self.__file404Cnt[path] = 0
-			FileFilter.addLogPath(self, path)
+			FileFilter.addLogPath(self, path, tail)
 			logSys.info("Added logfile = %s" % path)	
 	
 	##
@@ -96,9 +96,9 @@ class FilterPoll(FileFilter):
 		while self._isActive():
 			if not self.getIdle():
 				# Get file modification
-				for f in self.getLogPath():
-					if self.isModified(f):
-						self.getFailures(f)
+				for container in self.getLogPath():
+					if self.isModified(container.getFileName()):
+						self.getFailures(container.getFileName())
 						self.__modified = True
 
 				if self.__modified:
