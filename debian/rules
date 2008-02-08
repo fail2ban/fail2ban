@@ -57,7 +57,7 @@ binary-indep: install
 	dh_testroot
 	dh_installchangelogs CHANGELOG
 	dh_installdocs
-	dh_installexamples config/jail.conf
+	dh_installexamples config/jail.conf files/ipmasq-*
 	dh_installlogrotate
 	dh_pycentral
 	dh_installinit -- defaults 99
