@@ -11,19 +11,14 @@
 
 DESTDIR=$(CURDIR)/debian/fail2ban
 
-# no parallel execution -- required for dpatch
-.NOTPARALLEL:
-
-include /usr/share/dpatch/dpatch.make
-
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	touch configure-stamp
 
-build: patch
+build:
 
-clean: clean-inits unpatch
+clean: clean-inits
 	dh_testdir
 	dh_testroot
 	rm -f  build-stamp configure-stamp
