@@ -1,0 +1,5 @@
+Jul 24 14:16:55 raid5 named[3935]: client 194.145.196.18#4795: query 'ricreig.com/NS/IN' denied
+Jul 24 14:16:56 raid5 named[3935]: client 62.123.164.113#32768: query 'ricreig.com/NS/IN' denied
+Jul 24 14:17:13 raid5 named[3935]: client 148.160.29.6#33081: query (cache) 'geo-mueller.de/NS/IN' denied
+Jul 24 14:20:25 raid5 named[3935]: client 148.160.29.6#33081: query (cache) 'shivaree.de/NS/IN' denied
+Jul 24 14:23:36 raid5 named[3935]: client 148.160.29.6#33081: query (cache) 'mietberatung.de/NS/IN' denied
