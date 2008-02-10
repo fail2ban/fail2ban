@@ -1,3 +1,23 @@
+fail2ban (0.8.1-4) unstable; urgency=low
+
+  * Debian packaging switched from git+dpatch into pure git way via
+    feature-branches. That revealed the true amount of accumulated patching
+    done of top of vanilla upstream, thus this is the last Debian release
+    prior 0.8.2 upstream release which will hopefully absorb most of the
+    patches
+  * vsftp filter anchoring
+  * Fix/extension of proftpd failrexes (Closes: #461412). Thanks Guido
+    Bozzetto
+  * Added ipmasq rule file (in the examples) to restart fail2ban when
+    iptables are wiped out (closes: #461417). Thanks Guido Bozzetto
+  * Extended apache-noscript filter with more file extensions and to
+    react to "script not found or unable to stat" log message (closes:
+    #456565). Thanks Tim Connors
+  * Fixed == bashism (Closes: #464647). Thanks Raphael Geisser
+  * Confirms to policy 3.7.3 (no changes)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 09 Feb 2008 22:08:55 -0500
+
 fail2ban (0.8.1-3) unstable; urgency=low
 
   * Added Vcs- fields, moved Homepage into source header's field
