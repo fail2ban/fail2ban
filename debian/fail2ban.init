@@ -94,7 +94,7 @@ do_start()
 
 	if [ -e "$SOCKFILE" ]; then
 		log_failure_msg "Socket file $SOCKFILE is present"
-		[ "$1" == "force-start" ] \
+		[ "$1" = "force-start" ] \
 			&& log_success_msg "Starting anyway as requested" \
 			|| return 2
 		DAEMON_ARGS="$DAEMON_ARGS -x"

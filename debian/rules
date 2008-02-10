@@ -11,19 +11,14 @@
 
 DESTDIR=$(CURDIR)/debian/fail2ban
 
-# no parallel execution -- required for dpatch
-.NOTPARALLEL:
-
-include /usr/share/dpatch/dpatch.make
-
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	touch configure-stamp
 
-build: patch
+build:
 
-clean: clean-inits unpatch
+clean: clean-inits
 	dh_testdir
 	dh_testroot
 	rm -f  build-stamp configure-stamp
@@ -57,7 +52,7 @@ binary-indep: install
 	dh_testroot
 	dh_installchangelogs CHANGELOG
 	dh_installdocs
-	dh_installexamples config/jail.conf
+	dh_installexamples config/jail.conf files/ipmasq-*
 	dh_installlogrotate
 	dh_pycentral
 	dh_installinit -- defaults 99

@@ -107,6 +107,16 @@ banaction=iptables-new
  Also you can redefine the whole action parameter if you like.
 
 
+* Interaction with ipmasq
+  Comment to #461417
+
+Although fail2ban should detect and recreate missing chains if the external
+command wipes out iptables, it is better to explicitely to force-reload
+fail2ban. For this reason there is examples/ipmasq-ZZZzzz|fail2ban.rul file is
+shipped along to be installed under name ZZZzzz|fail2ban.rul within
+/etc/ipmasq.
+
+
 Troubleshooting:
 ---------------
 
