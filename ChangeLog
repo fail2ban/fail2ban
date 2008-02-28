@@ -31,6 +31,8 @@ ver. 0.8.2 (2008/??/??) - stable
 - Print monitored files in status.
 - Create a PID file in /var/run/fail2ban/. Thanks to Julien
   Perez.
+- Fixed "Feb 29" bug. Thanks to James Andrewartha who pointed
+  this out. Thanks to Yaroslav Halchenko for the fix.
 
 ver. 0.8.1 (2007/08/14) - stable
 ----------
