@@ -1,3 +1,11 @@
+fail2ban (0.8.1-5) unstable; urgency=low
+
+  * manually "cherry picked" f6639981:  Fixed "Feb 29" bug. Thanks to
+    James Andrewartha who pointed this out. Thanks to Yaroslav Halchenko
+    for the fix (closes: #468382)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 28 Feb 2008 19:51:53 -0500
+
 fail2ban (0.8.1-4) unstable; urgency=low
 
   * Debian packaging switched from git+dpatch into pure git way via
