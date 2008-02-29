@@ -72,7 +72,14 @@ class DateStrptime(DateTemplate):
 			except ValueError:
 				# Try to convert date string to 'C' locale
 				conv = self.convertLocale(dateMatch.group())
-				date = list(time.strptime(conv, self.getPattern()))
+				try:
+					date = list(time.strptime(conv, self.getPattern()))
+				except ValueError:
+					# Try to add the current year to the pattern. Should fix
+					# the "Feb 29" issue.
+					conv += " %s" % MyTime.gmtime()[0]
+					pattern = "%s %%Y" % self.getPattern()
+					date = list(time.strptime(conv, pattern))
 			if date[0] < 2000:
 				# There is probably no year field in the logs
 				date[0] = MyTime.gmtime()[0]
