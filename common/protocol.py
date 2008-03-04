@@ -33,6 +33,7 @@ protocol = [
 ['', "BASIC", ""],
 ["start", "starts the server and the jails"], 
 ["reload", "reloads the configuration"], 
+["reload <JAIL>", "reloads the jail <JAIL>"], 
 ["stop", "stops all jails and terminate the server"], 
 ["status", "gets the current status of the server"], 
 ["ping", "tests if the server is alive"], 
