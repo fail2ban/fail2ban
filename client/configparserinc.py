@@ -15,6 +15,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # Author: Yaroslav Halchenko
+# Modified: Cyril Jaquier
 # $Revision$
 
 __author__ = 'Yaroslav Halhenko'
@@ -23,8 +24,11 @@ __date__ = '$Date:  $'
 __copyright__ = 'Copyright (c) 2007 Yaroslav Halchenko'
 __license__ = 'GPL'
 
+import logging, os
 from ConfigParser import SafeConfigParser
-from ConfigParser import NoOptionError, NoSectionError
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban.client.config")
 
 class SafeConfigParserWithIncludes(SafeConfigParser):
 	"""
@@ -38,10 +42,10 @@ class SafeConfigParserWithIncludes(SafeConfigParser):
 	Example:
 
 [INCLUDES]
-files_before = 1.conf
+before = 1.conf
 			   3.conf
 
-files_after = 1.conf
+after = 1.conf
 
 	It is a simple implementation, so just basic care is taken about
 	recursion. Includes preserve right order, ie new files are
@@ -55,35 +59,42 @@ files_after = 1.conf
 
 	"""
 
+	SECTION_NAME = "INCLUDES"
+
 	#@staticmethod
-	def getIncludedFiles(filename, sectionName='INCLUDES',
-						 defaults={}, seen=[]):
+	def getIncludes(resource, seen = []):
 		"""
-		Given 1 config filename returns list of included files
+		Given 1 config resource returns list of included files
 		(recursively) with the original one as well
 		Simple loops are taken care about
 		"""
-		filenames = []
-		#print "Opening file " + filename
-		d = defaults.copy()		# so that we do not poison our defaults
-		parser = SafeConfigParser(defaults = d)
-		parser.read(filename)
-		newFiles = [ ('files_before', []), ('files_after', []) ]
-		if sectionName in parser.sections():
+		
+		# Use a short class name ;)
+		SCPWI = SafeConfigParserWithIncludes
+		
+		parser = SafeConfigParser()
+		parser.read(resource)
+		
+		resourceDir = os.path.dirname(resource)
+
+		newFiles = [ ('before', []), ('after', []) ]
+		if SCPWI.SECTION_NAME in parser.sections():
 			for option_name, option_list in newFiles:
-				if option_name in parser.options(sectionName):
-					newFileNames = parser.get(sectionName, option_name)
-					for newFileName in newFileNames.split('\n'):
-						if newFileName in seen: continue
-						option_list += SafeConfigParserWithIncludes.\
-									   getIncludedFiles(newFileName,
-														defaults=defaults,
-														seen=seen + [filename])
+				if option_name in parser.options(SCPWI.SECTION_NAME):
+					newResources = parser.get(SCPWI.SECTION_NAME, option_name)
+					for newResource in newResources.split('\n'):
+						if os.path.isabs(newResource):
+							r = newResource
+						else:
+							r = "%s/%s" % (resourceDir, newResource)
+						if r in seen:
+							continue
+						s = seen + [resource]
+						option_list += SCPWI.getIncludes(r, s)
 		# combine lists
-		filenames = newFiles[0][1] + [filename] + newFiles[1][1]
-		#print "Includes list for " + filename + " is " + `filenames`
-		return filenames
-	getIncludedFiles = staticmethod(getIncludedFiles)
+		return newFiles[0][1] + [resource] + newFiles[1][1]
+		#print "Includes list for " + resource + " is " + `resources`
+	getIncludes = staticmethod(getIncludes)
 
 
 	def read(self, filenames):
@@ -91,8 +102,7 @@ files_after = 1.conf
 		if not isinstance(filenames, list):
 			filenames = [ filenames ]
 		for filename in filenames:
-			fileNamesFull += SafeConfigParserWithIncludes.\
-							 getIncludedFiles(filename, defaults=self._defaults)
-		#print "Opening config files " + `fileNamesFull`
+			fileNamesFull += SafeConfigParserWithIncludes.getIncludes(filename)
+		logSys.debug("Reading files: %s" % fileNamesFull)
 		return SafeConfigParser.read(self, fileNamesFull)
 
