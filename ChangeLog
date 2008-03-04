@@ -36,6 +36,7 @@ ver. 0.8.2 (2008/??/??) - stable
 - "reload <jail>" reloads a single jail and the parameters in
   fail2ban.conf.
 - Added Mac OS/X startup script. Thanks to Bill Heaton.
+- Absorbed some Debian patches. Thanks to Yaroslav Halchenko.
 
 ver. 0.8.1 (2007/08/14) - stable
 ----------
