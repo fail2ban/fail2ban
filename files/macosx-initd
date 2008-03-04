@@ -1,0 +1,19 @@
+/Library/LaunchDaemonsm/org.fail2ban.plist
+===================================
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+        <key>Disabled</key>
+        <false/>
+        <key>Label</key>
+        <string>fail2ban</string>
+        <key>ProgramArguments</key>
+        <array>
+                <string>/usr/local/bin/fail2ban-client</string>
+                <string>start</string>
+        </array>
+        <key>RunAtLoad</key>
+        <true/>
+</dict>
+</plist>
