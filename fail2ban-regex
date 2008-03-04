@@ -222,7 +222,7 @@ class Fail2banRegex:
 			try:
 				self.__filter.addFailRegex(regex.getFailRegex())
 				try:
-					ret = self.__filter.findFailure(line)
+					ret = self.__filter.processLine(line)
 					if not len(ret) == 0:
 						if found == True:
 							ret[0].append(True)

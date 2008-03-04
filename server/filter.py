@@ -235,9 +235,6 @@ class Filter(JailThread):
 	
 
 	def processLine(self, line):
-		if not self._isActive():
-			# The jail has been stopped
-			return
 		try:
 			# Decode line to UTF-8
 			l = line.decode('utf-8')
@@ -246,24 +243,26 @@ class Filter(JailThread):
 		timeMatch = self.dateDetector.matchTime(l)
 		if not timeMatch:
 			# There is no valid time in this line
-			return
+			return []
 		# Lets split into time part and log part of the line
 		timeLine = timeMatch.group()
 		# Lets leave the beginning in as well, so if there is no
 		# anchore at the beginning of the time regexp, we don't
 		# at least allow injection. Should be harmless otherwise
 		logLine  = l[:timeMatch.start()] + l[timeMatch.end():]
-		for element in self.findFailure(timeLine, logLine):
+		return self.findFailure(timeLine, logLine)
+
+	def processLineAndAdd(self, line):
+		for element in self.processLine(line):
 			ip = element[0]
 			unixTime = element[1]
-			if unixTime < MyTime.time() - self.__findTime:
+			if unixTime < MyTime.time() - self.getFindTime():
 				break
 			if self.inIgnoreIPList(ip):
-				logSys.debug("Ignore "+ip)
+				logSys.debug("Ignore %s" % ip)
 				continue
-			logSys.debug("Found "+ip)
+			logSys.debug("Found %s" % ip)
 			self.failManager.addFailure(FailTicket(ip, unixTime))
-
 
 	##
 	# Returns true if the line should be ignored.
@@ -409,32 +408,7 @@ class FileFilter(Filter):
 			if not self._isActive():
 				# The jail has been stopped
 				break
-			try:
-				# Decode line to UTF-8
-				line = line.decode('utf-8')
-			except UnicodeDecodeError:
-				pass
-			timeMatch = self.dateDetector.matchTime(line)
-			if not timeMatch:
-				# There is no valid time in this line
-				line = container.readline()
-				continue
-			# Lets split into time part and log part of the line
-			timeLine = timeMatch.group()
-			# Lets leave the beginning in as well, so if there is no
-			# anchore at the beginning of the time regexp, we don't
-			# at least allow injection. Should be harmless otherwise
-			logLine  = line[:timeMatch.start()] + line[timeMatch.end():]
-			for element in self.findFailure(timeLine, logLine):
-				ip = element[0]
-				unixTime = element[1]
-				if unixTime < MyTime.time() - self.getFindTime():
-					break
-				if self.inIgnoreIPList(ip):
-					logSys.debug("Ignore "+ip)
-					continue
-				logSys.debug("Found "+ip)
-				self.failManager.addFailure(FailTicket(ip, unixTime))
+			self.processLineAndAdd(line)
 			# Read a new line.
 			line = container.readline()
 		container.close()

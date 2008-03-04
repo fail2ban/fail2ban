@@ -36,9 +36,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 	BASE_DIRECTORY = "/etc/fail2ban/"
 	
 	def __init__(self):
-		SafeConfigParserWithIncludes.__init__(self,
-											  {'configpath' : \
-											   ConfigReader.BASE_DIRECTORY} )
+		SafeConfigParserWithIncludes.__init__(self)
 		self.__opts = None
 	
 	#@staticmethod
