@@ -40,12 +40,13 @@ class JailsReader(ConfigReader):
 	def read(self):
 		ConfigReader.read(self, "jail")
 	
-	def getOptions(self):
+	def getOptions(self, section = None):
 		opts = []
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
 
-		for sec in self.sections():
-			jail = JailReader(sec)
+		if section:
+			# Get the options of a specific jail.
+			jail = JailReader(section)
 			jail.read()
 			ret = jail.getOptions()
 			if ret:
@@ -53,8 +54,21 @@ class JailsReader(ConfigReader):
 					# We only add enabled jails
 					self.__jails.append(jail)
 			else:
-				logSys.error("Errors in jail '" + sec + "'. Skipping...")
+				logSys.error("Errors in jail '%s'. Skipping..." % section)
 				return False
+		else:
+			# Get the options of all jails.
+			for sec in self.sections():
+				jail = JailReader(sec)
+				jail.read()
+				ret = jail.getOptions()
+				if ret:
+					if jail.isEnabled():
+						# We only add enabled jails
+						self.__jails.append(jail)
+				else:
+					logSys.error("Errors in jail '" + sec + "'. Skipping...")
+					return False
 		return True
 	
 	def convert(self):
