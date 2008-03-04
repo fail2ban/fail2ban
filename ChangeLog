@@ -38,6 +38,8 @@ ver. 0.8.2 (2008/??/??) - stable
 - Added Mac OS/X startup script. Thanks to Bill Heaton.
 - Absorbed some Debian patches. Thanks to Yaroslav Halchenko.
 - Replaced "echo" with "printf" in actions. Fix #1839673
+- Replaced "reject" with "drop" in shorwall action. Fix
+  #1854875
 
 ver. 0.8.1 (2007/08/14) - stable
 ----------
