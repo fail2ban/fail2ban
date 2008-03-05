@@ -74,6 +74,7 @@ config/filter.d/sshd-ddos.conf
 config/filter.d/vsftpd.conf
 config/filter.d/webmin-auth.conf
 config/filter.d/wuftpd.conf
+config/filter.d/xinetd-fail.conf
 config/action.d/hostsdeny.conf
 config/action.d/ipfw.conf
 config/action.d/iptables.conf
