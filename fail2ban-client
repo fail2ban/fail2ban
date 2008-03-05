@@ -26,7 +26,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import sys, string, os, pickle, re, logging, signal
-import getopt, time, readline, shlex, socket
+import getopt, time, shlex, socket
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
@@ -340,6 +340,11 @@ class Fail2banClient:
 		
 		# Interactive mode
 		if self.__conf["interactive"]:
+			try:
+				import readline
+			except ImportError:
+				logSys.error("Readline not available")
+				return False
 			try:
 				ret = True
 				if len(args) > 0:
