@@ -4,10 +4,10 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.8.2)                           2008/??/??
+Fail2Ban (version 0.8.2)                           2008/03/06
 =============================================================
 
-ver. 0.8.2 (2008/??/??) - stable
+ver. 0.8.2 (2008/03/06) - stable
 ----------
 - Fixed named filter. Thanks to Yaroslav Halchenko
 - Fixed wrong path for apache-auth in jail.conf. Thanks to
