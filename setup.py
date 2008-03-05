@@ -45,8 +45,8 @@ setup(
 	description = "Ban IPs that make too many password failure", 
 	long_description = longdesc, 
 	author = "Cyril Jaquier", 
-	author_email = "lostcontrol@users.sourceforge.net", 
-	url = "http://fail2ban.sourceforge.net", 
+	author_email = "cyril.jaquier@fail2ban.org", 
+	url = "http://www.fail2ban.org", 
 	license = "GPL", 
 	platforms = "Posix", 
 	scripts =	[
