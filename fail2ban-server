@@ -62,7 +62,7 @@ class Fail2banServer:
 		print "Copyright of modifications held by their respective authors."
 		print "Licensed under the GNU General Public License v2 (GPL)."
 		print
-		print "Written by Cyril Jaquier <lostcontrol@users.sourceforge.net>."
+		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
 		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
 	
 	def dispUsage(self):
@@ -85,7 +85,7 @@ class Fail2banServer:
 		print "    -h, --help           display this help message"
 		print "    -V, --version        print the version"
 		print
-		print "Report bugs to <lostcontrol@users.sourceforge.net>"
+		print "Report bugs to <cyril.jaquier@fail2ban.org>"
 	
 	def __getCmdLineOptions(self, optList):
 		""" Gets the command line options

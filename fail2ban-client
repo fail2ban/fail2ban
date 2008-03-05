@@ -70,7 +70,7 @@ class Fail2banClient:
 		print "Copyright of modifications held by their respective authors."
 		print "Licensed under the GNU General Public License v2 (GPL)."
 		print
-		print "Written by Cyril Jaquier <lostcontrol@users.sourceforge.net>."
+		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
 		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
 	
 	def dispUsage(self):
@@ -98,7 +98,7 @@ class Fail2banClient:
 		printFormatted()
 		
 		print
-		print "Report bugs to <lostcontrol@users.sourceforge.net>"
+		print "Report bugs to <cyril.jaquier@fail2ban.org>"
 	
 	def dispInteractive(self):
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
