@@ -58,7 +58,7 @@ class Fail2banServer:
 	def dispVersion(self):
 		print "Fail2Ban v" + version
 		print
-		print "Copyright (c) 2004-2006 Cyril Jaquier"
+		print "Copyright (c) 2004-2008 Cyril Jaquier"
 		print "Copyright of modifications held by their respective authors."
 		print "Licensed under the GNU General Public License v2 (GPL)."
 		print
