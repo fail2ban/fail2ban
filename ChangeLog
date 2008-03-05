@@ -40,7 +40,7 @@ ver. 0.8.2 (2008/??/??) - stable
 - Replaced "echo" with "printf" in actions. Fix #1839673
 - Replaced "reject" with "drop" in shorwall action. Fix
   #1854875
-- Fixed Debian bug #456567, #468477
+- Fixed Debian bug #456567, #468477, #462060
 
 ver. 0.8.1 (2007/08/14) - stable
 ----------
