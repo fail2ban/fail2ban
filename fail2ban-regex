@@ -90,7 +90,7 @@ class Fail2banRegex:
 		print "Copyright of modifications held by their respective authors."
 		print "Licensed under the GNU General Public License v2 (GPL)."
 		print
-		print "Written by Cyril Jaquier <lostcontrol@users.sourceforge.net>."
+		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
 		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
 	dispVersion = staticmethod(dispVersion)
 	
@@ -119,7 +119,7 @@ class Fail2banRegex:
 		print "    string                  a string representing an 'ignoreregex'"
 		print "    filename                path to a filter file (filter.d/sshd.conf)"
 		print
-		print "Report bugs to <lostcontrol@users.sourceforge.net>"
+		print "Report bugs to <cyril.jaquier@fail2ban.org>"
 	dispUsage = staticmethod(dispUsage)
 	
 	def getCmdLineOptions(self, optList):
