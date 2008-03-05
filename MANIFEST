@@ -79,6 +79,7 @@ config/action.d/ipfw.conf
 config/action.d/iptables.conf
 config/action.d/iptables-allports.conf
 config/action.d/iptables-multiport.conf
+config/action.d/iptables-multiport-log.conf
 config/action.d/iptables-new.conf
 config/action.d/mail.conf
 config/action.d/mail-buffered.conf
