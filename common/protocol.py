@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 529 $
+# $Revision: 662 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 529 $"
-__date__ = "$Date: 2007-01-29 21:27:51 +0100 (Mon, 29 Jan 2007) $"
+__version__ = "$Revision: 662 $"
+__date__ = "$Date: 2008-03-05 00:41:58 +0100 (Wed, 05 Mar 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -33,6 +33,7 @@ protocol = [
 ['', "BASIC", ""],
 ["start", "starts the server and the jails"], 
 ["reload", "reloads the configuration"], 
+["reload <JAIL>", "reloads the jail <JAIL>"], 
 ["stop", "stops all jails and terminate the server"], 
 ["status", "gets the current status of the server"], 
 ["ping", "tests if the server is alive"], 
@@ -51,9 +52,7 @@ protocol = [
 ["set <JAIL> addignoreip <IP>", "adds <IP> to the ignore list of <JAIL>"], 
 ["set <JAIL> delignoreip <IP>", "removes <IP> from the ignore list of <JAIL>"], 
 ["set <JAIL> addlogpath <FILE>", "adds <FILE> to the monitoring list of <JAIL>"], 
-["set <JAIL> dellogpath <FILE>", "removes <FILE> to the monitoring list of <JAIL>"], 
-["set <JAIL> timeregex <REGEX>", "sets the regular expression <REGEX> to match the date format for <JAIL>. This will disable the autodetection feature."], 
-["set <JAIL> timepattern <PATTERN>", "sets the pattern <PATTERN> to match the date format for <JAIL>. This will disable the autodetection feature."], 
+["set <JAIL> dellogpath <FILE>", "removes <FILE> to the monitoring list of <JAIL>"],
 ["set <JAIL> addfailregex <REGEX>", "adds the regular expression <REGEX> which must match failures for <JAIL>"], 
 ["set <JAIL> delfailregex <INDEX>", "removes the regular expression at <INDEX> for failregex"], 
 ["set <JAIL> addignoreregex <REGEX>", "adds the regular expression <REGEX> which should match pattern to exclude for <JAIL>"],

@@ -1,10 +1,10 @@
 Metadata-Version: 1.0
 Name: fail2ban
-Version: 0.8.1
+Version: 0.8.2
 Summary: Ban IPs that make too many password failure
-Home-page: http://fail2ban.sourceforge.net
+Home-page: http://www.fail2ban.org
 Author: Cyril Jaquier
-Author-email: lostcontrol@users.sourceforge.net
+Author-email: cyril.jaquier@fail2ban.org
 License: GPL
 Description: 
         Fail2Ban scans log files like /var/log/pwdfail or

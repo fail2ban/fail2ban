@@ -16,15 +16,15 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 553 $
+# $Revision: 638 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 553 $"
-__date__ = "$Date: 2007-02-26 00:53:22 +0100 (Mon, 26 Feb 2007) $"
+__version__ = "$Revision: 638 $"
+__date__ = "$Date: 2007-12-17 21:00:36 +0100 (Mon, 17 Dec 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from banticket import BanTicket
+from ticket import BanTicket
 from threading import Lock
 from mytime import MyTime
 import logging
@@ -125,7 +125,7 @@ class BanManager:
 	# @param ticket the FailTicket
 	# @return a BanTicket
 	
-	@staticmethod
+	#@staticmethod
 	def createBanTicket(ticket):
 		ip = ticket.getIP()
 		#lastTime = ticket.getTime()
@@ -133,6 +133,7 @@ class BanManager:
 		banTicket = BanTicket(ip, lastTime)
 		banTicket.setAttempt(ticket.getAttempt())
 		return banTicket
+	createBanTicket = staticmethod(createBanTicket)
 	
 	##
 	# Add a ban ticket.

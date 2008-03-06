@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 509 $
+# $Revision: 659 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 509 $"
-__date__ = "$Date: 2007-01-04 12:58:58 +0100 (Thu, 04 Jan 2007) $"
+__version__ = "$Revision: 659 $"
+__date__ = "$Date: 2008-03-05 00:09:30 +0100 (Wed, 05 Mar 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -90,7 +90,7 @@ class JailReader(ConfigReader):
 						self.__actions.append(action)
 					else:
 						raise AttributeError("Unable to read action")
-				except AttributeError, e:
+				except Exception, e:
 					logSys.error("Error in action definition " + act)
 					logSys.debug(e)
 					return False
@@ -129,7 +129,7 @@ class JailReader(ConfigReader):
 		stream.insert(0, ["add", self.__name, backend])
 		return stream
 	
-	@staticmethod
+	#@staticmethod
 	def splitAction(action):
 		m = JailReader.actionCRE.match(action)
 		d = dict()
@@ -165,3 +165,4 @@ class JailReader(ConfigReader):
 				except IndexError:
 					logSys.error("Invalid argument %s in '%s'" % (p, m.group(2)))
 		return [m.group(1), d]
+	splitAction = staticmethod(splitAction)

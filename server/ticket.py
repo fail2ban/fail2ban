@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 382 $
+# $Revision: 638 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 382 $"
-__date__ = "$Date: 2006-09-25 19:03:48 +0200 (Mon, 25 Sep 2006) $"
+__version__ = "$Revision: 638 $"
+__date__ = "$Date: 2007-12-17 21:00:36 +0100 (Mon, 17 Dec 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -53,4 +53,28 @@ class Ticket:
 	
 	def getAttempt(self):
 		return self.__attempt
+
+
+class FailTicket(Ticket):
 	
+	def __init__(self, ip, time):
+		Ticket.__init__(self, ip, time)
+
+
+##
+# Ban Ticket.
+#
+# This class extends the Ticket class. It is mainly used by the BanManager.
+
+class BanTicket(Ticket):
+	
+	##
+	# Constructor.
+	#
+	# Call the Ticket (parent) constructor and initialize default
+	# values.
+	# @param ip the IP address
+	# @param time the ban time
+	
+	def __init__(self, ip, time):
+		Ticket.__init__(self, ip, time)

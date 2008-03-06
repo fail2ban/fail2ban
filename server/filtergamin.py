@@ -16,16 +16,16 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 567 $
+# $Revision: 649 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 567 $"
-__date__ = "$Date: 2007-03-26 23:17:31 +0200 (Mon, 26 Mar 2007) $"
+__version__ = "$Revision: 649 $"
+__date__ = "$Date: 2008-02-02 18:04:11 +0100 (Sat, 02 Feb 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from failmanager import FailManagerEmpty
-from filter import Filter
+from filter import FileFilter
 from mytime import MyTime
 
 import time, logging, gamin
@@ -40,7 +40,7 @@ logSys = logging.getLogger("fail2ban.filter")
 # that matches a given regular expression. This class is instanciated by
 # a Jail object.
 
-class FilterGamin(Filter):
+class FilterGamin(FileFilter):
 
 	##
 	# Constructor.
@@ -49,7 +49,7 @@ class FilterGamin(Filter):
 	# @param jail the jail object
 	
 	def __init__(self, jail):
-		Filter.__init__(self, jail)
+		FileFilter.__init__(self, jail)
 		self.__modified = False
 		# Gamin monitor
 		self.monitor = gamin.WatchMonitor()
@@ -69,12 +69,12 @@ class FilterGamin(Filter):
 	#
 	# @param path log file path
 
-	def addLogPath(self, path):
+	def addLogPath(self, path, tail = False):
 		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
 		else:
 			self.monitor.watch_file(path, self.callback)
-			Filter.addLogPath(self, path)
+			FileFilter.addLogPath(self, path, tail)
 			logSys.info("Added logfile = %s" % path)			
 	
 	##
@@ -87,7 +87,7 @@ class FilterGamin(Filter):
 			logSys.error(path + " is not monitored")
 		else:
 			self.monitor.stop_watch(path)
-			Filter.delLogPath(self, path)
+			FileFilter.delLogPath(self, path)
 			logSys.info("Removed logfile = %s" % path)
 		
 	##
@@ -126,6 +126,6 @@ class FilterGamin(Filter):
 	# Desallocates the resources used by Gamin.
 
 	def __cleanup(self):
-		for path in Filter.getLogPath(self):
-			self.monitor.stop_watch(path)
+		for path in self.getLogPath():
+			self.monitor.stop_watch(path.getFileName())
 		del self.monitor
