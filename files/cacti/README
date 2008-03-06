@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.7.7)                           2007/??/??
+Fail2Ban (version 0.8.2)                           2008/03/06
 =============================================================
 
 Cacti is a graphing solution using RRDTool. It is possible to
@@ -13,7 +13,7 @@ use Cacti to display statistics about Fail2ban.
 Installation:
 -------------
 
-1/ Install Fail2ban version 0.7 or higher and ensure that it
+1/ Install Fail2ban version 0.8 or higher and ensure that it
    works properly.
 2/ The user running poller.php must have read and write
    access to the socket used by Fail2ban.
@@ -30,7 +30,7 @@ appreciate this program, you can contact me at:
 
 Website: http://www.fail2ban.org
 
-Cyril Jaquier: <lostcontrol@users.sourceforge.net>
+Cyril Jaquier: <cyril.jaquier@fail2ban.org>
 
 License:
 --------

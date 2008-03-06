@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 556 $
+# $Revision: 635 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 556 $"
-__date__ = "$Date: 2007-03-07 21:54:32 +0100 (Wed, 07 Mar 2007) $"
+__version__ = "$Revision: 635 $"
+__date__ = "$Date: 2007-12-16 22:38:04 +0100 (Sun, 16 Dec 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -46,31 +46,34 @@ class MyTime:
 	#
 	# @param t the time to set or None
 	
-	@staticmethod
+	#@staticmethod
 	def setTime(t):
 		MyTime.myTime = t
+	setTime = staticmethod(setTime)
 	
 	##
 	# Equivalent to time.time()
 	#
 	# @return time.time() if setTime was called with None
 	
-	@staticmethod
+	#@staticmethod
 	def time():
 		if MyTime.myTime == None:
 			return time.time()
 		else:
 			return MyTime.myTime
+	time = staticmethod(time)
 	
 	##
 	# Equivalent to time.gmtime()
 	#
 	# @return time.gmtime() if setTime was called with None
 	
-	@staticmethod
+	#@staticmethod
 	def gmtime():
 		if MyTime.myTime == None:
 			return time.gmtime()
 		else:
 			return time.gmtime(MyTime.myTime)
+	gmtime = staticmethod(gmtime)
 	

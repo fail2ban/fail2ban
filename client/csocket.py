@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 459 $
+# $Revision: 635 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 459 $"
-__date__ = "$Date: 2006-11-12 22:55:57 +0100 (Sun, 12 Nov 2006) $"
+__version__ = "$Revision: 635 $"
+__date__ = "$Date: 2007-12-16 22:38:04 +0100 (Sun, 16 Dec 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -32,7 +32,7 @@ class CSocket:
 	
 	END_STRING = "<F2B_END_COMMAND>"
 	
-	def __init__(self, sock = "/tmp/fail2ban.sock"):
+	def __init__(self, sock = "/var/run/fail2ban/fail2ban.sock"):
 		# Create an INET, STREAMing socket
 		#self.csock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.__csock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -47,7 +47,7 @@ class CSocket:
 		self.__csock.close()
 		return ret
 	
-	@staticmethod
+	#@staticmethod
 	def receive(sock):
 		msg = ''
 		while msg.rfind(CSocket.END_STRING) == -1:
@@ -56,3 +56,4 @@ class CSocket:
 				raise RuntimeError, "socket connection broken"
 			msg = msg + chunk
 		return loads(msg)
+	receive = staticmethod(receive)

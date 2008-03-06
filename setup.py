@@ -18,11 +18,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 522 $
+# $Revision: 671 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 522 $"
-__date__ = "$Date: 2007-01-21 23:19:57 +0100 (Sun, 21 Jan 2007) $"
+__version__ = "$Revision: 671 $"
+__date__ = "$Date: 2008-03-06 00:12:41 +0100 (Thu, 06 Mar 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -45,8 +45,8 @@ setup(
 	description = "Ban IPs that make too many password failure", 
 	long_description = longdesc, 
 	author = "Cyril Jaquier", 
-	author_email = "lostcontrol@users.sourceforge.net", 
-	url = "http://fail2ban.sourceforge.net", 
+	author_email = "cyril.jaquier@fail2ban.org", 
+	url = "http://www.fail2ban.org", 
 	license = "GPL", 
 	platforms = "Posix", 
 	scripts =	[

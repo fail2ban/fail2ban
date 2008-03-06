@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 518 $
+# $Revision: 655 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 518 $"
-__date__ = "$Date: 2007-01-08 22:15:47 +0100 (Mon, 08 Jan 2007) $"
+__version__ = "$Revision: 655 $"
+__date__ = "$Date: 2008-03-04 01:13:39 +0100 (Tue, 04 Mar 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -40,12 +40,13 @@ class JailsReader(ConfigReader):
 	def read(self):
 		ConfigReader.read(self, "jail")
 	
-	def getOptions(self):
+	def getOptions(self, section = None):
 		opts = []
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
 
-		for sec in self.sections():
-			jail = JailReader(sec)
+		if section:
+			# Get the options of a specific jail.
+			jail = JailReader(section)
 			jail.read()
 			ret = jail.getOptions()
 			if ret:
@@ -53,8 +54,21 @@ class JailsReader(ConfigReader):
 					# We only add enabled jails
 					self.__jails.append(jail)
 			else:
-				logSys.error("Errors in jail '" + sec + "'. Skipping...")
+				logSys.error("Errors in jail '%s'. Skipping..." % section)
 				return False
+		else:
+			# Get the options of all jails.
+			for sec in self.sections():
+				jail = JailReader(sec)
+				jail.read()
+				ret = jail.getOptions()
+				if ret:
+					if jail.isEnabled():
+						# We only add enabled jails
+						self.__jails.append(jail)
+				else:
+					logSys.error("Errors in jail '" + sec + "'. Skipping...")
+					return False
 		return True
 	
 	def convert(self):
