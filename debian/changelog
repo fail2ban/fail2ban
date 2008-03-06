@@ -1,3 +1,19 @@
+fail2ban (0.8.2-1) UNRELEASED; urgency=low
+
+  * New upstream release! Divergence from Debian version descreased
+    considerably, Major changes:
+     - "full line failregex"
+     - Moved socket to /var/run/fail2ban.
+     - Removed Python 2.4. Minimum required version is now Python 2.3.
+     - New log rotation detection algorithm.
+     - Some wishlists got accepted (closes: #456567, #468477, #462060,
+     #461426)
+     - Leap year issue (closes: #468452)
+  * debian/watch: switched to git-import-orig
+  * 2 new jails: xinetd-fail, apache-overflows added to jails.conf
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 05 Mar 2008 22:50:48 -0500
+
 fail2ban (0.8.1-5) unstable; urgency=low
 
   * manually "cherry picked" f6639981:  Fixed "Feb 29" bug. Thanks to
