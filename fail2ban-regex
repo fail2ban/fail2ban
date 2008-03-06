@@ -17,11 +17,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 596 $
+# $Revision: 672 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 596 $"
-__date__ = "$Date: 2007-07-10 21:54:01 +0200 (Tue, 10 Jul 2007) $"
+__version__ = "$Revision: 672 $"
+__date__ = "$Date: 2008-03-06 00:18:06 +0100 (Thu, 06 Mar 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -31,11 +31,11 @@ import getopt, sys, time, logging, os
 # fix for bug #343821
 sys.path.insert(1, "/usr/share/fail2ban")
 
-from ConfigParser import SafeConfigParser
+from client.configparserinc import SafeConfigParserWithIncludes
 from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
 from common.version import version
 from server.filter import Filter
-from server.regex import RegexException
+from server.failregex import RegexException
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.regex")
@@ -65,7 +65,9 @@ class RegexStat:
 class Fail2banRegex:
 	
 	test = None
-	
+
+	CONFIG_DEFAULTS = {'configpath' : "/etc/fail2ban/"}
+
 	def __init__(self):
 		self.__filter = Filter(None)
 		self.__ignoreregex = list()
@@ -80,18 +82,19 @@ class Fail2banRegex:
 		logging.getLogger("fail2ban").addHandler(self.__hdlr)
 		logging.getLogger("fail2ban").setLevel(logging.ERROR)
 	
-	@staticmethod
+	#@staticmethod
 	def dispVersion():
 		print "Fail2Ban v" + version
 		print
-		print "Copyright (c) 2004-2006 Cyril Jaquier"
+		print "Copyright (c) 2004-2008 Cyril Jaquier"
 		print "Copyright of modifications held by their respective authors."
 		print "Licensed under the GNU General Public License v2 (GPL)."
 		print
-		print "Written by Cyril Jaquier <lostcontrol@users.sourceforge.net>."
+		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
 		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
+	dispVersion = staticmethod(dispVersion)
 	
-	@staticmethod
+	#@staticmethod
 	def dispUsage():
 		print "Usage: "+sys.argv[0]+" [OPTIONS] <LOG> <REGEX> [IGNOREREGEX]"
 		print
@@ -116,7 +119,8 @@ class Fail2banRegex:
 		print "    string                  a string representing an 'ignoreregex'"
 		print "    filename                path to a filter file (filter.d/sshd.conf)"
 		print
-		print "Report bugs to <lostcontrol@users.sourceforge.net>"
+		print "Report bugs to <cyril.jaquier@fail2ban.org>"
+	dispUsage = staticmethod(dispUsage)
 	
 	def getCmdLineOptions(self, optList):
 		""" Gets the command line options
@@ -129,13 +133,14 @@ class Fail2banRegex:
 				self.dispVersion()
 				sys.exit(0)
 
-	@staticmethod
+	#@staticmethod
 	def logIsFile(value):
 		return os.path.isfile(value)
+	logIsFile = staticmethod(logIsFile)
 
 	def readIgnoreRegex(self, value):
 		if os.path.isfile(value):
-			reader = SafeConfigParser()
+			reader = SafeConfigParserWithIncludes(defaults=self.CONFIG_DEFAULTS)
 			try:
 				reader.read(value)
 				print "Use ignoreregex file : " + value
@@ -164,7 +169,7 @@ class Fail2banRegex:
 
 	def readRegex(self, value):
 		if os.path.isfile(value):
-			reader = SafeConfigParser()
+			reader = SafeConfigParserWithIncludes(defaults=self.CONFIG_DEFAULTS)
 			try:
 				reader.read(value)
 				print "Use regex file : " + value
@@ -217,7 +222,7 @@ class Fail2banRegex:
 			try:
 				self.__filter.addFailRegex(regex.getFailRegex())
 				try:
-					ret = self.__filter.findFailure(line)
+					ret = self.__filter.processLine(line)
 					if not len(ret) == 0:
 						if found == True:
 							ret[0].append(True)

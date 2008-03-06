@@ -16,21 +16,20 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 605 $
+# $Revision: 656 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 605 $"
-__date__ = "$Date: 2007-08-08 00:11:34 +0200 (Wed, 08 Aug 2007) $"
+__version__ = "$Revision: 656 $"
+__date__ = "$Date: 2008-03-04 01:17:56 +0100 (Tue, 04 Mar 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from failmanager import FailManager
-from failticket import FailTicket
+from ticket import FailTicket
 from jailthread import JailThread
 from datedetector import DateDetector
 from mytime import MyTime
-from regex import Regex, RegexException
-from failregex import FailRegex
+from failregex import FailRegex, Regex, RegexException
 
 import logging, re
 
@@ -58,11 +57,6 @@ class Filter(JailThread):
 		self.jail = jail
 		## The failures manager.
 		self.failManager = FailManager()
-		## The log file handler.
-		self.__crtHandler = None
-		self.__crtFilename = None
-		## The log file path.
-		self.__logPath = []
 		## The regular expression list matching the failures.
 		self.__failRegex = list()
 		## The regular expression list with expressions to ignore.
@@ -71,92 +65,12 @@ class Filter(JailThread):
 		self.__findTime = 6000
 		## The ignore IP list.
 		self.__ignoreIpList = []
-		## The last position of the file.
-		self.__lastPos = dict()
-		## The last date in tht log file.
-		self.__lastDate = dict()
 		
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
 		logSys.info("Created Filter")
 
 
-	##
-	# Add a log file path
-	#
-	# @param path log file path
-
-	def addLogPath(self, path):
-		self.getLogPath().append(path)
-		# Initialize default values
-		self.__lastDate[path] = 0
-		self.__lastPos[path] = 0
-	
-	##
-	# Delete a log path
-	#
-	# @param path the log file to delete
-	
-	def delLogPath(self, path):
-		self.getLogPath().remove(path)
-		del self.__lastDate[path]
-		del self.__lastPos[path]
-
-	##
-	# Get the log file path
-	#
-	# @return log file path
-		
-	def getLogPath(self):
-		return self.__logPath
-	
-	##
-	# Check whether path is already monitored.
-	#
-	# @param path The path
-	# @return True if the path is already monitored else False
-	
-	def containsLogPath(self, path):
-		try:
-			self.getLogPath().index(path)
-			return True
-		except ValueError:
-			return False
-	
-	##
-	# Set the regular expression which matches the time.
-	#
-	# @param value the regular expression
-	
-	def setTimeRegex(self, value):
-		self.dateDetector.setDefaultRegex(value)
-		logSys.info("Set default regex = %s" % value)
-	
-	##
-	# Get the regular expression which matches the time.
-	#
-	# @return the regular expression
-		
-	def getTimeRegex(self):
-		return self.dateDetector.getDefaultRegex()
-	
-	##
-	# Set the time pattern.
-	#
-	# @param value the time pattern
-	
-	def setTimePattern(self, value):
-		self.dateDetector.setDefaultPattern(value)
-		logSys.info("Set default pattern = %s" % value)
-	
-	##
-	# Get the time pattern.
-	#
-	# @return the time pattern
-	
-	def getTimePattern(self):
-		return self.dateDetector.getDefaultPattern()
-	
 	##
 	# Add a regular expression which matches the failure.
 	#
@@ -299,7 +213,7 @@ class Filter(JailThread):
 		for i in self.__ignoreIpList:
 			# An empty string is always false
 			if i == "":
-				return False
+				continue
 			s = i.split('/', 1)
 			# IP address without CIDR mask
 			if len(s) == 1:
@@ -314,104 +228,41 @@ class Filter(JailThread):
 				if ip in ips:
 					return True
 				else:
-					return False
+					continue
 			if a == b:
 				return True
 		return False
 	
-	##
-	# Open the log file.
-	
-	def __openLogFile(self, filename):
-		""" Opens the log file specified on init.
-		"""
+
+	def processLine(self, line):
 		try:
-			self.__crtFilename = filename
-			self.__crtHandler = open(filename)
-			logSys.debug("Opened " + filename)
-			return True
-		except OSError:
-			logSys.error("Unable to open " + filename)
-		except IOError:
-			logSys.error("Unable to read " + filename +
-						 ". Please check permissions")
-		return False
-	
-	##
-	# Close the log file.
-	
-	def __closeLogFile(self):
-		self.__crtFilename = None
-		self.__crtHandler.close()
+			# Decode line to UTF-8
+			l = line.decode('utf-8')
+		except UnicodeDecodeError:
+			l = line
+		timeMatch = self.dateDetector.matchTime(l)
+		if not timeMatch:
+			# There is no valid time in this line
+			return []
+		# Lets split into time part and log part of the line
+		timeLine = timeMatch.group()
+		# Lets leave the beginning in as well, so if there is no
+		# anchore at the beginning of the time regexp, we don't
+		# at least allow injection. Should be harmless otherwise
+		logLine  = l[:timeMatch.start()] + l[timeMatch.end():]
+		return self.findFailure(timeLine, logLine)
 
-	##
-	# Set the file position.
-	#
-	# Sets the file position. We must take care of log file rotation
-	# and reset the position to 0 in that case. Use the log message
-	# timestamp in order to detect this.
-	
-	def __setFilePos(self):
-		line = self.__crtHandler.readline()
-		lastDate = self.__lastDate[self.__crtFilename]
-		lineDate = self.dateDetector.getUnixTime(line)
-		if lastDate < lineDate:
-			logSys.debug("Date " + `lastDate` + " is smaller than " + `lineDate`)
-			logSys.debug("Log rotation detected for " + self.__crtFilename)
-			self.__lastPos[self.__crtFilename] = 0
-		lastPos = self.__lastPos[self.__crtFilename]
-		logSys.debug("Setting file position to " + `lastPos` + " for " +
-					 self.__crtFilename)
-		self.__crtHandler.seek(lastPos)
-
-	##
-	# Get the file position.
-	
-	def __getFilePos(self):
-		return self.__crtHandler.tell()
-
-	##
-	# Gets all the failure in the log file.
-	#
-	# Gets all the failure in the log file which are newer than
-	# MyTime.time()-self.findTime. When a failure is detected, a FailTicket
-	# is created and is added to the FailManager.
-	
-	def getFailures(self, filename):
-		# Try to open log file.
-		if not self.__openLogFile(filename):
-			logSys.error("Unable to get failures in " + filename)
-			return False
-		self.__setFilePos()
-		lastLine = None
-		for line in self.__crtHandler:
-			if not self._isActive():
-				# The jail has been stopped
+	def processLineAndAdd(self, line):
+		for element in self.processLine(line):
+			ip = element[0]
+			unixTime = element[1]
+			if unixTime < MyTime.time() - self.getFindTime():
 				break
-			try:
-				# Decode line to UTF-8
-				line = line.decode('utf-8')
-			except UnicodeDecodeError:
-				pass
-			if not self.dateDetector.matchTime(line):
-				# There is no valid time in this line
+			if self.inIgnoreIPList(ip):
+				logSys.debug("Ignore %s" % ip)
 				continue
-			lastLine = line
-			for element in self.findFailure(line):
-				ip = element[0]
-				unixTime = element[1]
-				if unixTime < MyTime.time()-self.__findTime:
-					break
-				if self.inIgnoreIPList(ip):
-					logSys.debug("Ignore "+ip)
-					continue
-				logSys.debug("Found "+ip)
-				self.failManager.addFailure(FailTicket(ip, unixTime))
-		self.__lastPos[filename] = self.__getFilePos()
-		if lastLine:
-			self.__lastDate[filename] = self.dateDetector.getUnixTime(lastLine)
-		self.__closeLogFile()
-		return True
+			logSys.debug("Found %s" % ip)
+			self.failManager.addFailure(FailTicket(ip, unixTime))
 
 	##
 	# Returns true if the line should be ignored.
@@ -428,27 +279,28 @@ class Filter(JailThread):
 		return False
 
 	##
-	# Finds the failure in a line.
+	# Finds the failure in a line given split into time and log parts.
 	#
 	# Uses the failregex pattern to find it and timeregex in order
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, line):
+	def findFailure(self, timeLine, logLine):
 		failList = list()
 		# Checks if we must ignore this line.
-		if self.ignoreLine(line):
+		if self.ignoreLine(logLine):
 			# The ignoreregex matched. Return.
 			return failList
 		# Iterates over all the regular expressions.
 		for failRegex in self.__failRegex:
-			failRegex.search(line)
+			failRegex.search(logLine)
 			if failRegex.hasMatched():
 				# The failregex matched.
-				date = self.dateDetector.getUnixTime(line)
+				date = self.dateDetector.getUnixTime(timeLine)
 				if date == None:
-					logSys.debug("Found a match but no valid date/time found "
-								 + "for " + line + ". Please contact the "
+					logSys.debug("Found a match for '" + logLine +"' but no "
+								 + "valid date/time found for '"
+								 + timeLine + "'. Please contact the "
 								 + "author in order to get support for this "
 								 + "format")
 				else:
@@ -478,6 +330,157 @@ class Filter(JailThread):
 		return ret
 
 
+class FileFilter(Filter):
+	
+	def __init__(self, jail):
+		Filter.__init__(self, jail)
+		## The log file path.
+		self.__logPath = []
+	
+	##
+	# Add a log file path
+	#
+	# @param path log file path
+
+	def addLogPath(self, path, tail = False):
+		container = FileContainer(path, tail)
+		self.__logPath.append(container)
+	
+	##
+	# Delete a log path
+	#
+	# @param path the log file to delete
+	
+	def delLogPath(self, path):
+		for log in self.__logPath:
+			if log.getFileName() == path:
+				self.__logPath.remove(log)
+				return
+
+	##
+	# Get the log file path
+	#
+	# @return log file path
+		
+	def getLogPath(self):
+		return self.__logPath
+	
+	##
+	# Check whether path is already monitored.
+	#
+	# @param path The path
+	# @return True if the path is already monitored else False
+	
+	def containsLogPath(self, path):
+		for log in self.__logPath:
+			if log.getFileName() == path:
+				return True
+		return False
+	
+	def getFileContainer(self, path):
+		for log in self.__logPath:
+			if log.getFileName() == path:
+				return log
+		return None
+	
+	##
+	# Gets all the failure in the log file.
+	#
+	# Gets all the failure in the log file which are newer than
+	# MyTime.time()-self.findTime. When a failure is detected, a FailTicket
+	# is created and is added to the FailManager.
+	
+	def getFailures(self, filename):
+		container = self.getFileContainer(filename)
+		if container == None:
+			logSys.error("Unable to get failures in " + filename)
+			return False
+		# Try to open log file.
+		try:
+			container.open()
+		except Exception, e:
+			logSys.error("Unable to open %s" % filename)
+			logSys.exception(e)
+			return False
+		
+		line = container.readline()
+		while not line == "":
+			if not self._isActive():
+				# The jail has been stopped
+				break
+			self.processLineAndAdd(line)
+			# Read a new line.
+			line = container.readline()
+		container.close()
+		return True
+	
+	def status(self):
+		ret = Filter.status(self)
+		path = [m.getFileName() for m in self.getLogPath()]
+		ret.append(("File list", path))
+		return ret
+
+##
+# FileContainer class.
+#
+# This class manages a file handler and takes care of log rotation detection.
+# In order to detect log rotation, the hash (MD5) of the first line of the file
+# is computed and compared to the previous hash of this line.
+
+import md5
+
+class FileContainer:
+	
+	def __init__(self, filename, tail = False):
+		self.__filename = filename
+		self.__tail = tail
+		self.__handler = None
+		# Try to open the file. Raises an exception if an error occured.
+		handler = open(filename)
+		try:
+			firstLine = handler.readline()
+			# Computes the MD5 of the first line.
+			self.__hash = md5.new(firstLine).digest()
+			# Start at the beginning of file if tail mode is off.
+			if tail:
+				handler.seek(0, 2)
+				self.__pos = handler.tell()
+			else:
+				self.__pos = 0
+		finally:
+			handler.close()
+	
+	def getFileName(self):
+		return self.__filename
+	
+	def open(self):
+		self.__handler = open(self.__filename)
+		firstLine = self.__handler.readline()
+		# Computes the MD5 of the first line.
+		myHash = md5.new(firstLine).digest()
+		# Compare hash.
+		if not self.__hash == myHash:
+			logSys.info("Log rotation detected for %s" % self.__filename)
+			self.__hash = myHash
+			self.__pos = 0
+		# Sets the file pointer to the last position.
+		self.__handler.seek(self.__pos)
+	
+	def readline(self):
+		if self.__handler == None:
+			return ""
+		return self.__handler.readline()
+	
+	def close(self):
+		if not self.__handler == None:
+			# Saves the last position.
+			self.__pos = self.__handler.tell()
+			# Closes the file.
+			self.__handler.close()
+			self.__handler = None
+
+
+
 ##
 # Utils class for DNS and IP handling.
 #
@@ -488,10 +491,9 @@ import socket, struct
 
 class DNSUtils:
 	
-	DNS_CRE = re.compile("(?:(?:\w|-)+\.){2,}\w+")
 	IP_CRE = re.compile("(?:\d{1,3}\.){3}\d{1,3}")
 	
-	@staticmethod
+	#@staticmethod
 	def dnsToIp(dns):
 		""" Convert a DNS into an IP address using the Python socket module.
 			Thanks to Kevin Drapel.
@@ -502,8 +504,9 @@ class DNSUtils:
 			logSys.warn("Unable to find a corresponding IP address for %s"
 						% dns)
 			return list()
+	dnsToIp = staticmethod(dnsToIp)
 	
-	@staticmethod
+	#@staticmethod
 	def searchIP(text):
 		""" Search if an IP address if directly available and return
 			it.
@@ -513,8 +516,9 @@ class DNSUtils:
 			return match
 		else:
 			return None
+	searchIP = staticmethod(searchIP)
 	
-	@staticmethod
+	#@staticmethod
 	def isValidIP(string):
 		""" Return true if str is a valid IP
 		"""
@@ -524,8 +528,9 @@ class DNSUtils:
 			return True
 		except socket.error:
 			return False
+	isValidIP = staticmethod(isValidIP)
 	
-	@staticmethod
+	#@staticmethod
 	def textToIp(text):
 		""" Return the IP of DNS found in a given text.
 		"""
@@ -542,8 +547,9 @@ class DNSUtils:
 			for e in ip:
 				ipList.append(e)
 		return ipList
+	textToIp = staticmethod(textToIp)
 	
-	@staticmethod
+	#@staticmethod
 	def cidr(i, n):
 		""" Convert an IP address string with a CIDR mask into a 32-bit
 			integer.
@@ -551,15 +557,18 @@ class DNSUtils:
 		# 32-bit IPv4 address mask
 		MASK = 0xFFFFFFFFL
 		return ~(MASK >> n) & MASK & DNSUtils.addr2bin(i)
+	cidr = staticmethod(cidr)
 	
-	@staticmethod
+	#@staticmethod
 	def addr2bin(string):
 		""" Convert a string IPv4 address into an unsigned integer.
 		"""
 		return struct.unpack("!L", socket.inet_aton(string))[0]
+	addr2bin = staticmethod(addr2bin)
 	
-	@staticmethod
+	#@staticmethod
 	def bin2addr(addr):
 		""" Convert a numeric IPv4 address into string n.n.n.n form.
 		"""
 		return socket.inet_ntoa(struct.pack("!L", addr))
+	bin2addr = staticmethod(bin2addr)
