@@ -1,4 +1,4 @@
-fail2ban (0.8.2-1) UNRELEASED; urgency=low
+fail2ban (0.8.2-1) unstable; urgency=low
 
   * New upstream release! Divergence from Debian version descreased
     considerably, Major changes:
@@ -12,7 +12,7 @@ fail2ban (0.8.2-1) UNRELEASED; urgency=low
   * debian/watch: switched to git-import-orig
   * 2 new jails: xinetd-fail, apache-overflows added to jails.conf
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 05 Mar 2008 22:50:48 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 05 Mar 2008 23:30:56 -0500
 
 fail2ban (0.8.1-5) unstable; urgency=low
 
