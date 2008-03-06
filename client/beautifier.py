@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 547 $
+# $Revision: 644 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 547 $"
-__date__ = "$Date: 2007-02-12 00:21:56 +0100 (Mon, 12 Feb 2007) $"
+__version__ = "$Revision: 644 $"
+__date__ = "$Date: 2008-01-15 00:12:21 +0100 (Tue, 15 Jan 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -72,9 +72,14 @@ class Beautifier:
 					ipList = ""
 					for ip in response[1][1][2][1]:
 						ipList += ip + " "
+					# Creates file list.
+					fileList = ""
+					for f in response[0][1][2][1]:
+						fileList += f + " "
 					# Display information
 					msg = "Status for the jail: " + inC[1] + "\n"
 					msg = msg + "|- " + response[0][0] + "\n"
+					msg = msg + "|  |- " + response[0][1][2][0] + ":\t" + fileList + "\n"
 					msg = msg + "|  |- " + response[0][1][0][0] + ":\t" + `response[0][1][0][1]` + "\n"
 					msg = msg + "|  `- " + response[0][1][1][0] + ":\t" + `response[0][1][1][1]` + "\n"
 					msg = msg + "`- " + response[1][0] + "\n"

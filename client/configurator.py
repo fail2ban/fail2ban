@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 518 $
+# $Revision: 655 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 518 $"
-__date__ = "$Date: 2007-01-08 22:15:47 +0100 (Mon, 08 Jan 2007) $"
+__version__ = "$Revision: 655 $"
+__date__ = "$Date: 2008-03-04 01:13:39 +0100 (Tue, 04 Mar 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -40,13 +40,15 @@ class Configurator:
 		self.__fail2ban = Fail2banReader()
 		self.__jails = JailsReader()
 	
-	@staticmethod
+	#@staticmethod
 	def setBaseDir(folderName):
 		ConfigReader.setBaseDir(folderName)
+	setBaseDir = staticmethod(setBaseDir)
 	
-	@staticmethod
+	#@staticmethod
 	def getBaseDir():
 		return ConfigReader.getBaseDir()
+	getBaseDir = staticmethod(getBaseDir)
 	
 	def readEarly(self):
 		self.__fail2ban.read()
@@ -54,13 +56,13 @@ class Configurator:
 	def readAll(self):
 		self.readEarly()
 		self.__jails.read()
-		
+	
 	def getEarlyOptions(self):
 		return self.__fail2ban.getEarlyOptions()
-	
-	def getAllOptions(self):
+
+	def getOptions(self, jail = None):
 		self.__fail2ban.getOptions()
-		return self.__jails.getOptions()
+		return self.__jails.getOptions(jail)
 		
 	def convertToProtocol(self):
 		self.__streams["general"] = self.__fail2ban.convert()

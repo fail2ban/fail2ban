@@ -4,7 +4,7 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-ToDo                                         $Revision: 557 $
+ToDo                                         $Revision: 653 $
 =============================================================
 
 Legend:
@@ -14,9 +14,6 @@ Legend:
 * done
 
 - Removed relative imports
-
-- Discuss where Fail2ban should be installed (/usr/share,
-  /usr/lib/python/site-packages/, etc)
 
 - Cleanup fail2ban-client and fail2ban-server. Move code to
   server/ and client/
@@ -45,11 +42,7 @@ Legend:
 
 - Add gettext support (I18N)
 
-- Fix the cPickle issue with Python 2.5
-
 - Multiline log reading
-
-- Improve communication. (asyncore, asynchat??)
 
 - Improve execution of action. Why does subprocess.call
   deadlock with multi-jails?

@@ -16,17 +16,17 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 503 $
+# $Revision: 641 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 503 $"
-__date__ = "$Date: 2006-12-23 17:31:00 +0100 (Sat, 23 Dec 2006) $"
+__version__ = "$Revision: 641 $"
+__date__ = "$Date: 2007-12-26 12:46:22 +0100 (Wed, 26 Dec 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import unittest
 from server.filterpoll import FilterPoll
-from server.filter import Filter
+from server.filter import FileFilter
 from server.failmanager import FailManager
 from server.failmanager import FailManagerEmpty
 
@@ -34,7 +34,7 @@ class IgnoreIP(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.__filter = Filter(None)
+		self.__filter = FileFilter(None)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -86,7 +86,7 @@ class GetFailures(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.__filter = Filter(None)
+		self.__filter = FileFilter(None)
 		self.__filter.setActive(True)
 		# TODO Test this
 		#self.__filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")

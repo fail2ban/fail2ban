@@ -16,15 +16,82 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 589 $
+# $Revision: 642 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 589 $"
-__date__ = "$Date: 2007-06-25 23:43:25 +0200 (Mon, 25 Jun 2007) $"
+__version__ = "$Revision: 642 $"
+__date__ = "$Date: 2008-01-05 23:33:44 +0100 (Sat, 05 Jan 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from regex import Regex, RegexException
+import re, sre_constants
+
+##
+# Regular expression class.
+#
+# This class represents a regular expression with its compiled version.
+
+class Regex:
+
+	##
+	# Constructor.
+	#
+	# Creates a new object. This method can throw RegexException in order to
+	# avoid construction of invalid object.
+	# @param value the regular expression
+	
+	def __init__(self, regex):
+		self._matchCache = None
+		# Perform shortcuts expansions.
+		# Replace "<HOST>" with default regular expression for host.
+		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>\S+)")
+		if regex.lstrip() == '':
+			raise RegexException("Cannot add empty regex")
+		try:
+			self._regexObj = re.compile(regex)
+			self._regex = regex
+		except sre_constants.error:
+			raise RegexException("Unable to compile regular expression '%s'" %
+								 regex)
+	
+	##
+	# Gets the regular expression.
+	#
+	# The effective regular expression used is returned.
+	# @return the regular expression
+	
+	def getRegex(self):
+		return self._regex
+	
+	##
+	# Searches the regular expression.
+	#
+	# Sets an internal cache (match object) in order to avoid searching for
+	# the pattern again. This method must be called before calling any other
+	# method of this object.
+	# @param value the line
+	
+	def search(self, value):
+		self._matchCache = self._regexObj.search(value)
+	
+	##
+	# Checks if the previous call to search() matched.
+	#
+	# @return True if a match was found, False otherwise
+	
+	def hasMatched(self):
+		if self._matchCache:
+			return True
+		else:
+			return False
+
+
+##
+# Exception dedicated to the class Regex.
+
+class RegexException(Exception):
+	pass
+
 
 ##
 # Regular expression class.
@@ -56,5 +123,8 @@ class FailRegex(Regex):
 	def getHost(self):
 		host = self._matchCache.group("host")
 		if host == None:
-			raise RegexException("Unexpected error. Please check your regex")
+			# Gets a few information.
+			s = self._matchCache.string
+			r = self._matchCache.re
+			raise RegexException("No 'host' found in '%s' using '%s'" % (s, r))
 		return host

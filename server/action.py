@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 556 $
+# $Revision: 635 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 556 $"
-__date__ = "$Date: 2007-03-07 21:54:32 +0100 (Wed, 07 Mar 2007) $"
+__version__ = "$Revision: 635 $"
+__date__ = "$Date: 2007-12-16 22:38:04 +0100 (Sun, 16 Dec 2007) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -231,7 +231,7 @@ class Action:
 	# @param aInfo the properties
 	# @return a string
 	
-	@staticmethod
+	#@staticmethod
 	def replaceTag(query, aInfo):
 		""" Replace tags in query
 		"""
@@ -241,6 +241,7 @@ class Action:
 		# New line
 		string = string.replace("<br>", '\n')
 		return string
+	replaceTag = staticmethod(replaceTag)
 	
 	##
 	# Executes a command with preliminary checks and substitutions.
@@ -297,7 +298,7 @@ class Action:
 	# @param realCmd the command to execute
 	# @return True if the command succeeded
 
-	@staticmethod
+	#@staticmethod
 	def executeCmd(realCmd):
 		logSys.debug(realCmd)
 		try:
@@ -312,3 +313,5 @@ class Action:
 		except OSError, e:
 			logSys.error("%s failed with %s" % (realCmd, e))
 		return False
+	executeCmd = staticmethod(executeCmd)
+	
