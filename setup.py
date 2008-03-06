@@ -57,8 +57,7 @@ setup(
 	packages =	[
 					'common', 
 					'client', 
-					'server',
-					'server.communication'
+					'server'
 				], 
 	data_files =	[
 						('/etc/fail2ban', 
