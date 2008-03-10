@@ -68,6 +68,9 @@ setup(
 						), 
 						('/etc/fail2ban/action.d', 
 							glob("config/action.d/*.conf")
+						),
+						('/var/run/fail2ban',
+							''
 						)
 					]
 )
