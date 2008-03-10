@@ -12,6 +12,8 @@ ver. 0.8.3 (2008/??/??) - stable
 - Process failtickets as long as failmanager is not empty.
 - Added "pam-generic" filter and more configuration fixes.
   Thanks to Yaroslav Halchenko.
+- Fixed socket path in redhat and suse init script. Thanks to
+  Jim Wight.
 
 ver. 0.8.2 (2008/03/06) - stable
 ----------
