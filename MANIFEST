@@ -68,6 +68,7 @@ config/filter.d/postfix.conf
 config/filter.d/proftpd.conf
 config/filter.d/pure-ftpd.conf
 config/filter.d/qmail.conf
+config/filter.d/pam-generic.conf
 config/filter.d/sasl.conf
 config/filter.d/sshd.conf
 config/filter.d/sshd-ddos.conf

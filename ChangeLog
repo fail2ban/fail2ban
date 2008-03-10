@@ -10,6 +10,8 @@ Fail2Ban (version 0.8.3)                           2008/??/??
 ver. 0.8.3 (2008/??/??) - stable
 ----------
 - Process failtickets as long as failmanager is not empty.
+- Added "pam-generic" filter and more configuration fixes.
+  Thanks to Yaroslav Halchenko.
 
 ver. 0.8.2 (2008/03/06) - stable
 ----------
