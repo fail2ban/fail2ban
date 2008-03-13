@@ -14,6 +14,8 @@ ver. 0.8.3 (2008/??/??) - stable
   Thanks to Yaroslav Halchenko.
 - Fixed socket path in redhat and suse init script. Thanks to
   Jim Wight.
+- Fixed PID file while started in daemon mode. Thanks to
+  Christian Jobic who submitted a similar patch.
 
 ver. 0.8.2 (2008/03/06) - stable
 ----------
