@@ -11,6 +11,7 @@ From ver. 0.8.3 (2008/??/??) - stable
 ----------
 - Fixed PID file while started in daemon mode. Thanks to
   Christian Jobic who submitted a similar patch.
+- Fixed "fail2ban-client get <jail> logpath". Bug #1916986.
 
 ver. 0.8.2 (2008/03/06) - stable
 ----------
