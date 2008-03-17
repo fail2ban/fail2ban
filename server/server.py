@@ -165,7 +165,8 @@ class Server:
 		self.__jails.getFilter(name).delLogPath(fileName)
 	
 	def getLogPath(self, name):
-		return self.__jails.getFilter(name).getLogPath()
+		return [m.getFileName()
+				for m in self.__jails.getFilter(name).getLogPath()]
 	
 	def setFindTime(self, name, value):
 		self.__jails.getFilter(name).setFindTime(value)
