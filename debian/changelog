@@ -1,3 +1,9 @@
+fail2ban (0.8.2-2) unstable; urgency=low
+
+  * BF: Recommends whois, which is used in some actions (LP: #213227)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 07 Apr 2008 10:25:52 -0400
+
 fail2ban (0.8.2-1) unstable; urgency=low
 
   * New upstream release! Divergence from Debian version descreased
