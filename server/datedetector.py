@@ -67,6 +67,12 @@ class DateDetector:
 			template.setRegex("\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%Y/%m/%d %H:%M:%S")
 			self.__templates.append(template)
+			# simple date too (from x11vnc)
+			template = DateStrptime()
+			template.setName("Day/Month/Year Hour:Minute:Second")
+			template.setRegex("\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%d/%m/%Y %H:%M:%S")
+			self.__templates.append(template)
 			# Apache format [31/Oct/2006:09:22:55 -0000]
 			template = DateStrptime()
 			template.setName("Day/Month/Year:Hour:Minute:Second")
