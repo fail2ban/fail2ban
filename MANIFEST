@@ -63,6 +63,7 @@ config/filter.d/apache-overflows.conf
 config/filter.d/courierlogin.conf
 config/filter.d/couriersmtp.conf
 config/filter.d/exim.conf
+config/filter.d/gssftpd.conf
 config/filter.d/named-refused.conf
 config/filter.d/postfix.conf
 config/filter.d/proftpd.conf
