@@ -14,7 +14,7 @@ Standards-Version: 3.7.3
 Package: fail2ban
 Architecture: all
 Depends: ${python:Depends}, lsb-base (>=2.0-7)
-Recommends: iptables
+Recommends: iptables, whois
 Suggests: python-gamin, mailx
 XB-Python-Version: ${python:Versions}
 Description: bans IPs that cause multiple authentication errors
