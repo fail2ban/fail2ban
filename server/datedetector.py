@@ -26,9 +26,9 @@ __license__ = "GPL"
 
 import time, logging
 
-from datestrptime import DateStrptime
-from datetai64n	import DateTai64n
-from dateepoch import DateEpoch
+from datetemplate import DateStrptime
+from datetemplate import DateTai64n
+from datetemplate import DateEpoch
 from threading import Lock
 
 # Gets the instance of the logger.
@@ -39,11 +39,10 @@ class DateDetector:
 	def __init__(self):
 		self.__lock = Lock()
 		self.__templates = list()
-		self.__defTemplate = DateStrptime()
 	
 	def addDefaultTemplate(self):
+		self.__lock.acquire()
 		try:
-			self.__lock.acquire()
 			# standard
 			template = DateStrptime()
 			template.setName("Month Day Hour:Minute:Second")
@@ -68,6 +67,12 @@ class DateDetector:
 			template.setRegex("\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%Y/%m/%d %H:%M:%S")
 			self.__templates.append(template)
+			# simple date too (from x11vnc)
+			template = DateStrptime()
+			template.setName("Day/Month/Year Hour:Minute:Second")
+			template.setRegex("\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%d/%m/%Y %H:%M:%S")
+			self.__templates.append(template)
 			# Apache format [31/Oct/2006:09:22:55 -0000]
 			template = DateStrptime()
 			template.setName("Day/Month/Year:Hour:Minute:Second")
@@ -79,6 +84,12 @@ class DateDetector:
 			template.setName("Year-Month-Day Hour:Minute:Second")
 			template.setRegex("\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%Y-%m-%d %H:%M:%S")
+			self.__templates.append(template)
+			# named 26-Jul-2007 15:20:52.252 
+			template = DateStrptime()
+			template.setName("Day-Month-Year Hour:Minute:Second[.Millisecond]")
+			template.setRegex("\d{2}-\S{3}-\d{4} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%d-%b-%Y %H:%M:%S")
 			self.__templates.append(template)
 			# TAI64N
 			template = DateTai64n()
@@ -94,54 +105,31 @@ class DateDetector:
 	def getTemplates(self):
 		return self.__templates
 	
-	def setDefaultRegex(self, value):
-		self.__defTemplate.setRegex(value)
-	
-	def getDefaultRegex(self):
-		return self.__defTemplate.getRegex()
-	
-	def setDefaultPattern(self, value):
-		self.__defTemplate.setPattern(value)
-	
-	def getDefaultPattern(self):
-		return self.__defTemplate.getPattern()
-	
 	def matchTime(self, line):
-		if self.__defTemplate.isValid():
-			return self.__defTemplate.matchDate(line)
-		else:
-			try:
-				self.__lock.acquire()
-				for template in self.__templates:
-					match = template.matchDate(line)
-					if not match == None:
-						return match
-				return None
-			finally:
-				self.__lock.release()
+		self.__lock.acquire()
+		try:
+			for template in self.__templates:
+				match = template.matchDate(line)
+				if not match == None:
+					return match
+			return None
+		finally:
+			self.__lock.release()
 
 	def getTime(self, line):
-		if self.__defTemplate.isValid():
-			try:
-				date = self.__defTemplate.getDate(line)
-				return date
-			except ValueError:
-				return None
-		else:
-			try:
-				self.__lock.acquire()
-				for template in self.__templates:
-					try:
-						date = template.getDate(line)
-						if date == None:
-							continue
-						template.incHits()
-						return date
-					except ValueError:
-						pass
-				return None
-			finally:
-				self.__lock.release()
+		self.__lock.acquire()
+		try:
+			for template in self.__templates:
+				try:
+					date = template.getDate(line)
+					if date == None:
+						continue
+					return date
+				except ValueError:
+					pass
+			return None
+		finally:
+			self.__lock.release()
 
 	def getUnixTime(self, line):
 		date = self.getTime(line)
@@ -155,8 +143,8 @@ class DateDetector:
 	# in this object and thus should be called from time to time.
 	
 	def sortTemplate(self):
+		self.__lock.acquire()
 		try:
-			self.__lock.acquire()
 			logSys.debug("Sorting the template list")
 			self.__templates.sort(lambda x, y: cmp(x.getHits(), y.getHits()))
 			self.__templates.reverse()

@@ -106,7 +106,7 @@ class Action:
 		
 	def setActionStart(self, value):
 		self.__actionStart = value
-		logSys.info("Set actionStart = %s" % value)
+		logSys.debug("Set actionStart = %s" % value)
 	
 	##
 	# Get the "start" command.
@@ -135,7 +135,7 @@ class Action:
 	
 	def setActionBan(self, value):
 		self.__actionBan = value
-		logSys.info("Set actionBan = %s" % value)
+		logSys.debug("Set actionBan = %s" % value)
 	
 	##
 	# Get the "ban" command.
@@ -160,7 +160,7 @@ class Action:
 	
 	def setActionUnban(self, value):
 		self.__actionUnban = value
-		logSys.info("Set actionUnban = %s" % value)
+		logSys.debug("Set actionUnban = %s" % value)
 	
 	##
 	# Get the "unban" command.
@@ -185,7 +185,7 @@ class Action:
 	
 	def setActionCheck(self, value):
 		self.__actionCheck = value
-		logSys.info("Set actionCheck = %s" % value)
+		logSys.debug("Set actionCheck = %s" % value)
 	
 	##
 	# Get the "check" command.
@@ -202,7 +202,7 @@ class Action:
 	
 	def setActionStop(self, value):
 		self.__actionStop = value
-		logSys.info("Set actionStop = %s" % value)
+		logSys.debug("Set actionStop = %s" % value)
 	
 	##
 	# Get the "stop" command.
@@ -314,3 +314,4 @@ class Action:
 			logSys.error("%s failed with %s" % (realCmd, e))
 		return False
 	executeCmd = staticmethod(executeCmd)
+	

@@ -26,7 +26,7 @@ __license__ = "GPL"
 
 import unittest
 from server.filterpoll import FilterPoll
-from server.filter import Filter
+from server.filter import FileFilter
 from server.failmanager import FailManager
 from server.failmanager import FailManagerEmpty
 
@@ -34,7 +34,7 @@ class IgnoreIP(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.__filter = Filter(None)
+		self.__filter = FileFilter(None)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -43,19 +43,19 @@ class IgnoreIP(unittest.TestCase):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
 		for ip in ipList:
 			self.__filter.addIgnoreIP(ip)
-			self.failUnless(self.__filter.inIgnoreIPList(ip))
+			self.assertTrue(self.__filter.inIgnoreIPList(ip))
 		# Test DNS
 		self.__filter.addIgnoreIP("www.epfl.ch")
-		self.failUnless(self.__filter.inIgnoreIPList("128.178.50.12"))
+		self.assertTrue(self.__filter.inIgnoreIPList("128.178.50.12"))
 	
 	def testIgnoreIPNOK(self):
 		ipList = "", "999.999.999.999", "abcdef", "192.168.0."
 		for ip in ipList:
 			self.__filter.addIgnoreIP(ip)
-			self.failIf(self.__filter.inIgnoreIPList(ip))
+			self.assertFalse(self.__filter.inIgnoreIPList(ip))
 		# Test DNS
 		self.__filter.addIgnoreIP("www.epfl.ch")
-		self.failIf(self.__filter.inIgnoreIPList("127.177.50.10"))
+		self.assertFalse(self.__filter.inIgnoreIPList("127.177.50.10"))
 
 
 class LogFile(unittest.TestCase):
@@ -74,7 +74,7 @@ class LogFile(unittest.TestCase):
 	#	self.__filter.openLogFile(LogFile.FILENAME)
 	
 	def testIsModified(self):
-		self.failUnless(self.__filter.isModified(LogFile.FILENAME))
+		self.assertTrue(self.__filter.isModified(LogFile.FILENAME))
 
 
 class GetFailures(unittest.TestCase):
@@ -86,7 +86,7 @@ class GetFailures(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.__filter = Filter(None)
+		self.__filter = FileFilter(None)
 		self.__filter.setActive(True)
 		# TODO Test this
 		#self.__filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")

@@ -43,5 +43,5 @@ class ExecuteAction(unittest.TestCase):
 		self.__action.setActionBan("echo -n")
 		self.__action.setActionCheck("[ -e /tmp/fail2ban.test ]")
 		
-		self.failUnless(self.__action.execActionBan(None))
+		self.assertTrue(self.__action.execActionBan(None))
 		

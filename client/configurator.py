@@ -56,13 +56,13 @@ class Configurator:
 	def readAll(self):
 		self.readEarly()
 		self.__jails.read()
-		
+	
 	def getEarlyOptions(self):
 		return self.__fail2ban.getEarlyOptions()
-	
-	def getAllOptions(self):
+
+	def getOptions(self, jail = None):
 		self.__fail2ban.getOptions()
-		return self.__jails.getOptions()
+		return self.__jails.getOptions(jail)
 		
 	def convertToProtocol(self):
 		self.__streams["general"] = self.__fail2ban.convert()

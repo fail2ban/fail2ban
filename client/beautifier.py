@@ -72,9 +72,14 @@ class Beautifier:
 					ipList = ""
 					for ip in response[1][1][2][1]:
 						ipList += ip + " "
+					# Creates file list.
+					fileList = ""
+					for f in response[0][1][2][1]:
+						fileList += f + " "
 					# Display information
 					msg = "Status for the jail: " + inC[1] + "\n"
 					msg = msg + "|- " + response[0][0] + "\n"
+					msg = msg + "|  |- " + response[0][1][2][0] + ":\t" + fileList + "\n"
 					msg = msg + "|  |- " + response[0][1][0][0] + ":\t" + `response[0][1][0][1]` + "\n"
 					msg = msg + "|  `- " + response[0][1][1][0] + ":\t" + `response[0][1][1][1]` + "\n"
 					msg = msg + "`- " + response[1][0] + "\n"

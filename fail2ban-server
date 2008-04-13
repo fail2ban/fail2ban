@@ -25,7 +25,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import getopt, sys
+import getopt, sys, logging
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
@@ -33,6 +33,9 @@ sys.path.insert(1, "/usr/share/fail2ban")
 
 from common.version import version
 from server.server import Server
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban")
 
 ##
 # \mainpage Fail2Ban
@@ -50,16 +53,16 @@ class Fail2banServer:
 		self.__conf = dict()
 		self.__conf["background"] = True
 		self.__conf["force"] = False
-		self.__conf["socket"] = "/tmp/fail2ban.sock"
+		self.__conf["socket"] = "/var/run/fail2ban/fail2ban.sock"
 	
 	def dispVersion(self):
 		print "Fail2Ban v" + version
 		print
-		print "Copyright (c) 2004-2006 Cyril Jaquier"
+		print "Copyright (c) 2004-2008 Cyril Jaquier"
 		print "Copyright of modifications held by their respective authors."
 		print "Licensed under the GNU General Public License v2 (GPL)."
 		print
-		print "Written by Cyril Jaquier <lostcontrol@users.sourceforge.net>."
+		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
 		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
 	
 	def dispUsage(self):
@@ -82,7 +85,7 @@ class Fail2banServer:
 		print "    -h, --help           display this help message"
 		print "    -V, --version        print the version"
 		print
-		print "Report bugs to <lostcontrol@users.sourceforge.net>"
+		print "Report bugs to <cyril.jaquier@fail2ban.org>"
 	
 	def __getCmdLineOptions(self, optList):
 		""" Gets the command line options
@@ -123,7 +126,7 @@ class Fail2banServer:
 			self.__server.start(self.__conf["socket"], self.__conf["force"])
 			return True
 		except Exception, e:
-			print e
+			logSys.exception(e)
 			self.__server.quit()
 			return False
 		

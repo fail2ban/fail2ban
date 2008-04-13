@@ -27,14 +27,17 @@ __license__ = "GPL"
 from threading import Lock, RLock
 from jails import Jails
 from transmitter import Transmitter
-from communication.asyncserver import AsyncServer
-from communication.asyncserver import AsyncServerException
+from asyncserver import AsyncServer
+from asyncserver import AsyncServerException
+from common import version
 import logging, logging.handlers, sys, os, signal
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.server")
 
 class Server:
+	
+	PID_FILE = "/var/run/fail2ban/fail2ban.pid"
 
 	def __init__(self, daemon = False):
 		self.__loggingLock = Lock()
@@ -54,7 +57,7 @@ class Server:
 		self.quit()
 	
 	def start(self, sock, force = False):
-		logSys.info("Starting Fail2ban")
+		logSys.info("Starting Fail2ban v" + version.version)
 		
 		# Install signal handlers
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
@@ -69,18 +72,40 @@ class Server:
 			else:
 				logSys.error("Could not create daemon")
 				raise ServerInitializationError("Could not create daemon")
+		
+		# Creates a PID file.
+		try:
+			logSys.debug("Creating PID file %s" % Server.PID_FILE)
+			pidFile = open(Server.PID_FILE, 'w')
+			pidFile.write("%s\n" % os.getpid())
+			pidFile.close()
+		except IOError, e:
+			logSys.error("Unable to create PID file: %s" % e)
+		
 		# Start the communication
 		logSys.debug("Starting communication")
 		try:
 			self.__asyncServer.start(sock, force)
-		except AsyncServerException:
-			logSys.error("Could not start server")
+		except AsyncServerException, e:
+			logSys.error("Could not start server: %s", e)
+		# Removes the PID file.
+		try:
+			logSys.debug("Remove PID file %s" % Server.PID_FILE)
+			os.remove(Server.PID_FILE)
+		except OSError, e:
+			logSys.error("Unable to remove PID file: %s" % e)
 		logSys.info("Exiting Fail2ban")
 	
 	def quit(self):
 		self.stopAllJail()
 		# Stop communication
 		self.__asyncServer.stop()
+		# Shutdowns the logging.
+		try:
+			self.__loggingLock.acquire()
+			logging.shutdown()
+		finally:
+			self.__loggingLock.release()
 	
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend)
@@ -140,19 +165,8 @@ class Server:
 		self.__jails.getFilter(name).delLogPath(fileName)
 	
 	def getLogPath(self, name):
-		return self.__jails.getFilter(name).getLogPath()
-	
-	def setTimeRegex(self, name, value):
-		self.__jails.getFilter(name).setTimeRegex(value)
-	
-	def getTimeRegex(self, name):
-		return self.__jails.getFilter(name).getTimeRegex()
-
-	def setTimePattern(self, name, value):
-		self.__jails.getFilter(name).setTimePattern(value)
-	
-	def getTimePattern(self, name):
-		return self.__jails.getFilter(name).getTimePattern()
+		return [m.getFileName()
+				for m in self.__jails.getFilter(name).getLogPath()]
 	
 	def setFindTime(self, name, value):
 		self.__jails.getFilter(name).setFindTime(value)
@@ -310,7 +324,11 @@ class Server:
 	def setLogTarget(self, target):
 		try:
 			self.__loggingLock.acquire()
+			# set a format which is simpler for console use
+			formatter = logging.Formatter("%(asctime)s %(name)-16s: %(levelname)-6s %(message)s")
 			if target == "SYSLOG":
+				# Syslog daemons already add date to the message.
+				formatter = logging.Formatter("%(name)-16s: %(levelname)-6s %(message)s")
 				facility = logging.handlers.SysLogHandler.LOG_DAEMON
 				hdlr = logging.handlers.SysLogHandler("/dev/log", 
 													  facility = facility)
@@ -331,10 +349,8 @@ class Server:
 			# Removes previous handlers
 			for handler in logging.getLogger("fail2ban").handlers:
 				# Closes the handler.
-				handler.close()
 				logging.getLogger("fail2ban").removeHandler(handler)
-			# set a format which is simpler for console use
-			formatter = logging.Formatter("%(asctime)s %(name)-16s: %(levelname)-6s %(message)s")
+				handler.close()
 			# tell the handler to use this format
 			hdlr.setFormatter(formatter)
 			logging.getLogger("fail2ban").addHandler(hdlr)

@@ -48,7 +48,8 @@ logSys = logging.getLogger("fail2ban.client")
 
 class Fail2banClient:
 
-	prompt = "fail2ban> "
+	SERVER = "fail2ban-server"
+	PROMPT = "fail2ban> "
 
 	def __init__(self):
 		self.__argv = None
@@ -65,11 +66,11 @@ class Fail2banClient:
 	def dispVersion(self):
 		print "Fail2Ban v" + version
 		print
-		print "Copyright (c) 2004-2006 Cyril Jaquier"
+		print "Copyright (c) 2004-2008 Cyril Jaquier"
 		print "Copyright of modifications held by their respective authors."
 		print "Licensed under the GNU General Public License v2 (GPL)."
 		print
-		print "Written by Cyril Jaquier <lostcontrol@users.sourceforge.net>."
+		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
 		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
 	
 	def dispUsage(self):
@@ -97,7 +98,7 @@ class Fail2banClient:
 		printFormatted()
 		
 		print
-		print "Report bugs to <lostcontrol@users.sourceforge.net>"
+		print "Report bugs to <cyril.jaquier@fail2ban.org>"
 	
 	def dispInteractive(self):
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
@@ -208,6 +209,19 @@ class Fail2banClient:
 			else:
 				logSys.error("Could not find server")
 				return False
+		elif len(cmd) == 2 and cmd[0] == "reload":
+			if self.__ping():
+				jail = cmd[1]
+				ret = self.__readJailConfig(jail)
+				# Do not continue if configuration is not 100% valid
+				if not ret:
+					return False
+				self.__processCmd([['stop', jail]], False)
+				# Configure the server
+				return self.__processCmd(self.__stream, False)
+			else:
+				logSys.error("Could not find server")
+				return False
 		else:
 			return self.__processCmd([cmd])
 	
@@ -222,7 +236,7 @@ class Fail2banClient:
 		pid = os.fork()
 		if pid == 0:
 			args = list()
-			args.append("fail2ban-server")
+			args.append(self.SERVER)
 			# Start in background mode.
 			args.append("-b")
 			# Set the socket path.
@@ -232,14 +246,15 @@ class Fail2banClient:
 			if force:
 				args.append("-x")
 			try:
-				# Use the PATH env
-				os.execvp("fail2ban-server", args)
+				# Use the current directory.
+				exe = os.path.abspath(os.path.join(sys.path[0], self.SERVER))
+				os.execv(exe, args)
 			except OSError:
 				try:
-					# Use the current directory
-					os.execv("fail2ban-server", args)
+					# Use the PATH env.
+					os.execvp(self.SERVER, args)
 				except OSError:
-					print "Could not find fail2ban-server"
+					print "Could not find %s" % self.SERVER
 					os.exit(-1)
 						
 			
@@ -338,7 +353,7 @@ class Fail2banClient:
 					readline.parse_and_bind("tab: complete")
 					self.dispInteractive()
 					while True:
-						cmd = raw_input(self.prompt)
+						cmd = raw_input(self.PROMPT)
 						if cmd == "exit" or cmd == "quit":
 							# Exit
 							return True
@@ -357,7 +372,14 @@ class Fail2banClient:
 	def __readConfig(self):
 		# Read the configuration
 		self.__configurator.readAll()
-		ret = self.__configurator.getAllOptions()
+		ret = self.__configurator.getOptions()
+		self.__configurator.convertToProtocol()
+		self.__stream = self.__configurator.getConfigStream()
+		return ret
+	
+	def __readJailConfig(self, jail):
+		self.__configurator.readAll()
+		ret = self.__configurator.getOptions(jail)
 		self.__configurator.convertToProtocol()
 		self.__stream = self.__configurator.getConfigStream()
 		return ret

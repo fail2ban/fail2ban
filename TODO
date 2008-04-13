@@ -13,15 +13,7 @@ Legend:
 # partially done
 * done
 
-- <HOST> should not be mandatory. It should be possible to
-  start an action without an host
-
-- Use Python 2.3
-
 - Removed relative imports
-
-- Discuss where Fail2ban should be installed (/usr/share,
-  /usr/lib/python/site-packages/, etc)
 
 - Cleanup fail2ban-client and fail2ban-server. Move code to
   server/ and client/
@@ -50,11 +42,7 @@ Legend:
 
 - Add gettext support (I18N)
 
-- Fix the cPickle issue with Python 2.5
-
 - Multiline log reading
-
-- Improve communication. (asyncore, asynchat??)
 
 - Improve execution of action. Why does subprocess.call
   deadlock with multi-jails?

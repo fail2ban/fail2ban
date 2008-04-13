@@ -20,14 +20,14 @@ FAIL2BAN="/usr/bin/fail2ban-client"
 RETVAL=0
 
 getpid() {
-    pid=`ps -ef | grep fail2ban-|grep -v grep|awk '{print $2}'`
+    pid=`ps -eo pid,comm | grep fail2ban- | awk '{ print $1 }'`
 }
 
 start() {
     echo -n $"Starting fail2ban: "
     getpid
     if [ -z "$pid" ]; then
-	rm -rf /tmp/fail2ban.sock # in case of unclean shutdown
+	rm -rf /var/run/fail2ban/fail2ban.sock # in case of unclean shutdown
         $FAIL2BAN start > /dev/null
         RETVAL=$?
     fi

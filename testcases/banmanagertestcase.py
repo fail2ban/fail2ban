@@ -24,9 +24,9 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, socket, time, pickle
+import unittest
 from server.banmanager import BanManager
-from server.banticket import BanTicket
+from server.ticket import BanTicket
 
 class AddFailure(unittest.TestCase):
 
@@ -34,7 +34,7 @@ class AddFailure(unittest.TestCase):
 		"""Call before every test case."""
 		self.__ticket = BanTicket('193.168.0.128', 1167605999.0)
 		self.__banManager = BanManager()
-		self.failUnless(self.__banManager.addBanTicket(self.__ticket))
+		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -43,14 +43,14 @@ class AddFailure(unittest.TestCase):
 		self.assertEqual(self.__banManager.size(), 1)
 	
 	def testAddDuplicate(self):
-		self.failIf(self.__banManager.addBanTicket(self.__ticket))
+		self.assertFalse(self.__banManager.addBanTicket(self.__ticket))
 		self.assertEqual(self.__banManager.size(), 1)
 		
 	def _testInListOK(self):
 		ticket = BanTicket('193.168.0.128', 1167605999.0)
-		self.failUnless(self.__banManager.inBanList(ticket))
+		self.assertTrue(self.__banManager.inBanList(ticket))
 	
 	def _testInListNOK(self):
 		ticket = BanTicket('111.111.1.111', 1167605999.0)
-		self.failIf(self.__banManager.inBanList(ticket))
+		self.assertFalse(self.__banManager.inBanList(ticket))
 		
