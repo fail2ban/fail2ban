@@ -27,11 +27,10 @@ __license__ = "GPL"
 from failmanager import FailManager
 from ticket import FailTicket
 from jailthread import JailThread
-from datedetector import DateDetector
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
 
-import logging, re
+import logging, re, time
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -65,9 +64,6 @@ class Filter(JailThread):
 		self.__findTime = 6000
 		## The ignore IP list.
 		self.__ignoreIpList = []
-		
-		self.dateDetector = DateDetector()
-		self.dateDetector.addDefaultTemplate()
 		logSys.info("Created Filter")
 
 
@@ -101,7 +97,7 @@ class Filter(JailThread):
 	def getFailRegex(self):
 		failRegex = list()
 		for regex in self.__failRegex:
-			failRegex.append(regex.getRegex())
+			failRegex.append(regex.getOriginalRegex())
 		return failRegex
 	
 	##
@@ -232,28 +228,14 @@ class Filter(JailThread):
 			if a == b:
 				return True
 		return False
-	
 
-	def processLine(self, line):
+	def processLineAndAdd(self, line):
 		try:
 			# Decode line to UTF-8
 			l = line.decode('utf-8')
 		except UnicodeDecodeError:
 			l = line
-		timeMatch = self.dateDetector.matchTime(l)
-		if not timeMatch:
-			# There is no valid time in this line
-			return []
-		# Lets split into time part and log part of the line
-		timeLine = timeMatch.group()
-		# Lets leave the beginning in as well, so if there is no
-		# anchore at the beginning of the time regexp, we don't
-		# at least allow injection. Should be harmless otherwise
-		logLine  = l[:timeMatch.start()] + l[timeMatch.end():]
-		return self.findFailure(timeLine, logLine)
-
-	def processLineAndAdd(self, line):
-		for element in self.processLine(line):
+		for element in self.findFailure(l):
 			ip = element[0]
 			unixTime = element[1]
 			if unixTime < MyTime.time() - self.getFindTime():
@@ -273,8 +255,8 @@ class Filter(JailThread):
 
 	def ignoreLine(self, line):
 		for ignoreRegex in self.__ignoreRegex:
-			ignoreRegex.search(line)
-			if ignoreRegex.hasMatched():
+			ignoreRegex.process()
+			if ignoreRegex.match(line):
 				return True
 		return False
 
@@ -285,35 +267,33 @@ class Filter(JailThread):
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, timeLine, logLine):
+	def findFailure(self, line):
 		failList = list()
 		# Checks if we must ignore this line.
-		if self.ignoreLine(logLine):
+		if self.ignoreLine(line):
 			# The ignoreregex matched. Return.
 			return failList
 		# Iterates over all the regular expressions.
 		for failRegex in self.__failRegex:
-			failRegex.search(logLine)
+			failRegex.search(line)
 			if failRegex.hasMatched():
 				# The failregex matched.
-				date = self.dateDetector.getUnixTime(timeLine)
-				if date == None:
-					logSys.debug("Found a match for '" + logLine +"' but no "
-								 + "valid date/time found for '"
-								 + timeLine + "'. Please contact the "
-								 + "author in order to get support for this "
-								 + "format")
-				else:
-					try:
-						host = failRegex.getHost()
-						ipMatch = DNSUtils.textToIp(host)
-						if ipMatch:
-							for ip in ipMatch:
-								failList.append([ip, date])
-							# We matched a regex, it is enough to stop.
-							break
-					except RegexException, e:
-						logSys.error(e)
+				try:
+					host = failRegex.getHost()
+					date = failRegex.getTime()
+					if not date:
+						logSys.warning("Unable to get a valid date: %s" % line)
+						break
+					# Use Unix timestamp.
+					dateUnix = time.mktime(date)
+					ipMatch = DNSUtils.textToIp(host)
+					if ipMatch:
+						for ip in ipMatch:
+							failList.append([ip, dateUnix])
+						# We matched a regex, it is enough to stop.
+						break
+				except RegexException, e:
+					logSys.error(e)
 		return failList
 	
 
@@ -325,7 +305,7 @@ class Filter(JailThread):
 	# @return a list with tuple
 	
 	def status(self):
-		ret = [("Currently failed", self.failManager.size()), 
+		ret = [("Currently failed", self.failManager.size()),
 			   ("Total failed", self.failManager.getFailTotal())]
 		return ret
 
@@ -342,7 +322,7 @@ class FileFilter(Filter):
 	#
 	# @param path log file path
 
-	def addLogPath(self, path, tail = False):
+	def addLogPath(self, path, tail = True):
 		container = FileContainer(path, tail)
 		self.__logPath.append(container)
 	

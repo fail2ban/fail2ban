@@ -222,7 +222,12 @@ class Fail2banRegex:
 			try:
 				self.__filter.addFailRegex(regex.getFailRegex())
 				try:
-					ret = self.__filter.processLine(line)
+					try:
+						# Decode line to UTF-8
+						l = line.decode('utf-8')
+					except UnicodeDecodeError:
+						l = line
+					ret = self.__filter.findFailure(l)
 					if not len(ret) == 0:
 						if found == True:
 							ret[0].append(True)
@@ -320,12 +325,6 @@ class Fail2banRegex:
 			
 			print
 			
-			print "Date template hits:"
-			for template in self.__filter.dateDetector.getTemplates():
-				print `template.getHits()` + " hit(s): " + template.getName()
-			
-			print
-			
 			print "Success, the total number of match is " + str(total)
 			print
 			print "However, look at the above section 'Running tests' which could contain important"
@@ -333,7 +332,7 @@ class Fail2banRegex:
 			return True
 
 			
-if __name__ == "__main__":
+def main():
 	fail2banRegex = Fail2banRegex()
 	# Reads the command line options.
 	try:
@@ -388,3 +387,9 @@ if __name__ == "__main__":
 			sys.exit(0)
 		else:
 			sys.exit(-1)
+
+if __name__ == "__main__":
+	try:
+		main()
+	except KeyboardInterrupt:
+		print "Interrupted by the user"

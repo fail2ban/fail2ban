@@ -108,7 +108,6 @@ class FilterPoll(FileFilter):
 							self.jail.putFailTicket(ticket)
 					except FailManagerEmpty:
 						self.failManager.cleanup(MyTime.time())
-					self.dateDetector.sortTemplate()
 					self.__modified = False
 				time.sleep(self.getSleepTime())
 			else:

@@ -24,66 +24,119 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import re, sre_constants
+import re, sre_constants, logging
 
-##
-# Regular expression class.
-#
-# This class represents a regular expression with its compiled version.
+from template import Template
+from timetemplate import TimeTemplates
+from prefixtemplate import PrefixTemplates
+from hosttemplate import HostTemplates
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban.filter.failregex")
 
 class Regex:
-
-	##
-	# Constructor.
-	#
-	# Creates a new object. This method can throw RegexException in order to
-	# avoid construction of invalid object.
-	# @param value the regular expression
 	
 	def __init__(self, regex):
-		self._matchCache = None
-		# Perform shortcuts expansions.
-		# Replace "<HOST>" with default regular expression for host.
-		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>\S+)")
-		if regex.lstrip() == '':
-			raise RegexException("Cannot add empty regex")
+		self.__originalRegex = regex
+		self.__convertedRegex = None
+		self.__compiledRegex = None
+		self.__templates = dict()
+		self.__hostRegex = None
+		self.__dateRegex = None
+		self.__prefixRegex = None
+		
+	def process(self):
+		regex = self.__originalRegex
+		for item in self.__templates.values():
+			regex = regex.replace(item.getTag(), item.getRegex(), 1)
 		try:
-			self._regexObj = re.compile(regex)
-			self._regex = regex
+			self.__compiledRegex = re.compile(regex)
+			self.__convertedRegex = regex
 		except sre_constants.error:
 			raise RegexException("Unable to compile regular expression '%s'" %
 								 regex)
+
+	def register(self, template):
+		self.__templates[template.getName()] = template
 	
-	##
-	# Gets the regular expression.
-	#
-	# The effective regular expression used is returned.
-	# @return the regular expression
+	def getTemplate(self, tag):
+		return self.__templates[tag]
+
+	def match(self, line):
+		return self.__compiledRegex.match(line)
 	
-	def getRegex(self):
-		return self._regex
+	def getOriginalRegex(self):
+		return self.__originalRegex
 	
-	##
-	# Searches the regular expression.
-	#
-	# Sets an internal cache (match object) in order to avoid searching for
-	# the pattern again. This method must be called before calling any other
-	# method of this object.
-	# @param value the line
+	def getConvertedRegex(self):
+		return self.__convertedRegex
+
+
+class FailRegex:
 	
-	def search(self, value):
-		self._matchCache = self._regexObj.search(value)
+	HOST_TEMPLATES = HostTemplates()
+	PREFIX_TEMPLATES = PrefixTemplates()
+	TIME_TEMPLATES = TimeTemplates()
 	
-	##
-	# Checks if the previous call to search() matched.
-	#
-	# @return True if a match was found, False otherwise
+	def __init__(self, regex):
+		self.__regex = Regex(regex)
+		self.__match = None
+		self.__found = False
+
+	def __autoDetection(self, line):
+		for host in self.HOST_TEMPLATES.getTemplates():
+			self.__regex.register(host)
+			for date in self.TIME_TEMPLATES.getTemplates():
+				self.__regex.register(date)
+				for prefix in self.PREFIX_TEMPLATES.getTemplates():
+					self.__regex.register(prefix)
+					self.__regex.process()
+					match = self.__regex.match(line)
+					if match:
+						self.__found = True
+						#logSys.debug("Auto-detection succeeded")
+						#logSys.debug("failregex is %s" %
+						#			self.__regex.getConvertedRegex())
+						return match
+		return None
+
+	def search(self, line):
+		if self.__found:
+			self.__match = self.__regex.match(line)
+		else:
+			self.__match = self.__autoDetection(line)
 	
 	def hasMatched(self):
-		if self._matchCache:
+		if self.__match:
 			return True
 		else:
 			return False
+	
+	def getOriginalRegex(self):
+		return self.__regex.getOriginalRegex()
+	
+	def getHost(self):
+		template = self.__regex.getTemplate(Template.TEMPLATE_HOST)
+		host = self.__match.group(template.getName())
+		if host == None:
+			# Gets a few information.
+			s = self.__match.string
+			r = self.__match.re
+			raise RegexException("No 'host' found in '%s' using '%s'" % (s, r))
+		return host
+	
+	def getTime(self):
+		template = self.__regex.getTemplate(Template.TEMPLATE_TIME)
+		time = self.__match.group(template.getName())
+		if time == None:
+			# Gets a few information.
+			s = self.__match.string
+			r = self.__match.re
+			raise RegexException("No 'time' found in '%s' using '%s'" % (s, r))
+		try:
+			return template.getTime(time)
+		except Exception:
+			return None
 
 
 ##
@@ -91,40 +144,3 @@ class Regex:
 
 class RegexException(Exception):
 	pass
-
-
-##
-# Regular expression class.
-#
-# This class represents a regular expression with its compiled version.
-
-class FailRegex(Regex):
-
-	##
-	# Constructor.
-	#
-	# Creates a new object. This method can throw RegexException in order to
-	# avoid construction of invalid object.
-	# @param value the regular expression
-	
-	def __init__(self, regex):
-		# Initializes the parent.
-		Regex.__init__(self, regex)
-		# Check for group "host"
-		if "host" not in self._regexObj.groupindex:
-			raise RegexException("No 'host' group in '%s'" % self._regex)
-	
-	##
-	# Returns the matched host.
-	#
-	# This corresponds to the pattern matched by the named group "host".
-	# @return the matched host
-	
-	def getHost(self):
-		host = self._matchCache.group("host")
-		if host == None:
-			# Gets a few information.
-			s = self._matchCache.string
-			r = self._matchCache.re
-			raise RegexException("No 'host' found in '%s' using '%s'" % (s, r))
-		return host

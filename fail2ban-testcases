@@ -34,7 +34,6 @@ from testcases import clientreadertestcase
 from testcases import failmanagertestcase
 from testcases import filtertestcase
 from testcases import servertestcase
-from testcases import datedetectortestcase
 from testcases import actiontestcase
 from server.mytime import MyTime
 
@@ -67,8 +66,6 @@ tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
 # ClientReader
 tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
-# DateDetector
-tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
 
 # Tests runner
 testRunner = unittest.TextTestRunner()
