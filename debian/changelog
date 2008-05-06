@@ -1,3 +1,18 @@
+fail2ban (0.8.2-3) unstable; urgency=low
+
+  * Changes propagated from upstream trunk (future 0.8.3):
+    - Fixed "fail2ban-client get <jail> logpath". Bug #1916986.
+    - Changed some log level.
+    - Added "Day/Month/Year Hour:Minute:Second" date template. Thanks to
+      Dennis Winter.
+    - Fixed PID file while started in daemon mode. Thanks to Christian
+      Jobic who submitted a similar patch (closes: #479703)
+    - Added gssftpd filter. Thanks to Kevin Zembower.
+    - Process failtickets as long as failmanager is not empty.
+  * Assure that /var/run/fail2ban exists upon start (LP: #222804, #223706)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 06 May 2008 10:49:34 -0400
+
 fail2ban (0.8.2-2) unstable; urgency=low
 
   * BF: Recommends whois, which is used in some actions (LP: #213227)
