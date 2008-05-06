@@ -9,6 +9,7 @@ Fail2Ban (version 0.8.2)                           2008/03/06
 
 From ver. 0.8.3 (2008/??/??) - stable
 ----------
+- Process failtickets as long as failmanager is not empty.
 - Fixed PID file while started in daemon mode. Thanks to
   Christian Jobic who submitted a similar patch.
 - Fixed "fail2ban-client get <jail> logpath". Bug #1916986.

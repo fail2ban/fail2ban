@@ -103,8 +103,9 @@ class FilterPoll(FileFilter):
 
 				if self.__modified:
 					try:
-						ticket = self.failManager.toBan()
-						self.jail.putFailTicket(ticket)
+						while True:
+							ticket = self.failManager.toBan()
+							self.jail.putFailTicket(ticket)
 					except FailManagerEmpty:
 						self.failManager.cleanup(MyTime.time())
 					self.dateDetector.sortTemplate()
