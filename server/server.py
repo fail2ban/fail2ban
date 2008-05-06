@@ -59,15 +59,6 @@ class Server:
 	def start(self, sock, force = False):
 		logSys.info("Starting Fail2ban v" + version.version)
 		
-		# Creates a PID file.
-		try:
-			logSys.debug("Creating PID file %s" % Server.PID_FILE)
-			pidFile = open(Server.PID_FILE, 'w')
-			pidFile.write("%s\n" % os.getpid())
-			pidFile.close()
-		except IOError, e:
-			logSys.error("Unable to create PID file: %s" % e)
-		
 		# Install signal handlers
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
 		signal.signal(signal.SIGINT, self.__sigTERMhandler)
@@ -81,6 +72,16 @@ class Server:
 			else:
 				logSys.error("Could not create daemon")
 				raise ServerInitializationError("Could not create daemon")
+		
+		# Creates a PID file.
+		try:
+			logSys.debug("Creating PID file %s" % Server.PID_FILE)
+			pidFile = open(Server.PID_FILE, 'w')
+			pidFile.write("%s\n" % os.getpid())
+			pidFile.close()
+		except IOError, e:
+			logSys.error("Unable to create PID file: %s" % e)
+		
 		# Start the communication
 		logSys.debug("Starting communication")
 		try:
