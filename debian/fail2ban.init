@@ -100,6 +100,9 @@ do_start()
 		DAEMON_ARGS="$DAEMON_ARGS -x"
 	fi
 
+	# Assure that /var/run/fail2ban exists
+	[ -d /var/run/fail2ban ] || mkdir -p /var/run/fail2ban
+
 	start-stop-daemon --start --quiet --chuid root --exec $DAEMON -- \
 		$DAEMON_ARGS start > /dev/null\
 		|| return 2
