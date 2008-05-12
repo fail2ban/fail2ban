@@ -122,7 +122,10 @@ class JailReader(ConfigReader):
 			elif opt == "failregex":
 				stream.append(["set", self.__name, "failregex", self.__opts[opt]])
 			elif opt == "ignoreregex":
-				stream.append(["set", self.__name, "ignoreregex", self.__opts[opt]])
+				for regex in self.__opts[opt].split('\n'):
+					# Do not send a command if the rule is empty.
+					if regex != '':
+						stream.append(["set", self.__name, "addignoreregex", regex])
 		stream.extend(self.__filter.convert())
 		for action in self.__actions:
 			stream.extend(action.convert())
