@@ -21,6 +21,8 @@ ver. 0.8.3 (2008/??/??) - stable
 - Added gssftpd filter. Thanks to Kevin Zembower.
 - Added "Day/Month/Year Hour:Minute:Second" date template.
   Thanks to Dennis Winter.
+- Fixed ignoreregex processing in fail2ban-client. Thanks to
+  René Berber.
 
 ver. 0.8.2 (2008/03/06) - stable
 ----------
