@@ -122,7 +122,7 @@ class JailReader(ConfigReader):
 			elif opt == "failregex":
 				stream.append(["set", self.__name, "failregex", self.__opts[opt]])
 			elif opt == "ignoreregex":
-				stream.append(["set", self.__name, "ignoreregex", self.__opts[opt]])
+				stream.append(["set", self.__name, "addignoreregex", self.__opts[opt]])
 		stream.extend(self.__filter.convert())
 		for action in self.__actions:
 			stream.extend(action.convert())
