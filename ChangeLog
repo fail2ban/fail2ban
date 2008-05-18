@@ -23,6 +23,7 @@ ver. 0.8.3 (2008/??/??) - stable
   Thanks to Dennis Winter.
 - Fixed ignoreregex processing in fail2ban-client. Thanks to
   René Berber.
+- Added ISO 8601 date/time format.
 
 ver. 0.8.2 (2008/03/06) - stable
 ----------

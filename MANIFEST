@@ -21,6 +21,7 @@ server/asyncserver.py
 server/filter.py
 server/filtergamin.py
 server/filterpoll.py
+server/iso8601.py
 server/server.py
 server/actions.py
 server/faildata.py
