@@ -26,9 +26,7 @@ __license__ = "GPL"
 
 import time, logging
 
-from datetemplate import DateStrptime
-from datetemplate import DateTai64n
-from datetemplate import DateEpoch
+from datetemplate import DateStrptime, DateTai64n, DateEpoch, DateISO8601
 from threading import Lock
 
 # Gets the instance of the logger.
@@ -98,6 +96,10 @@ class DateDetector:
 			# Epoch
 			template = DateEpoch()
 			template.setName("Epoch")
+			self.__templates.append(template)
+			# ISO 8601
+			template = DateISO8601()
+			template.setName("ISO 8601")
 			self.__templates.append(template)
 		finally:
 			self.__lock.release()

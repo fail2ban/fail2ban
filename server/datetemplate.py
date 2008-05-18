@@ -28,6 +28,7 @@ __license__ = "GPL"
 import re, time
 
 from mytime import MyTime
+import iso8601
 
 class DateTemplate:
 	
@@ -163,4 +164,24 @@ class DateTai64n(DateTemplate):
 			value = dateMatch.group()
 			seconds_since_epoch = value[2:17]
 			date = list(time.gmtime(int(seconds_since_epoch, 16)))
+		return date
+
+
+class DateISO8601(DateTemplate):
+
+	def __init__(self):
+		DateTemplate.__init__(self)
+		date_re = "[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}" \
+		".[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?" \
+		"(Z|(([-+])([0-9]{2}):([0-9]{2})))?"
+		self.setRegex(date_re)
+	
+	def getDate(self, line):
+		date = None
+		dateMatch = self.matchDate(line)
+		if dateMatch:
+			# Parses the date.
+			value = dateMatch.group()
+			print value
+			date = list(iso8601.parse_date(value).utctimetuple())
 		return date
