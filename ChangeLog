@@ -9,6 +9,8 @@ Fail2Ban (version 0.9.0)                           2008/??/??
 
 ver. 0.9.0 (2008/??/??) - alpha
 ----------
+- Added new prefix remover.
+- Added ISO 8601 date/time format.
 
 ver. 0.8.3 (2008/??/??) - stable
 ----------

@@ -22,6 +22,7 @@ server/filter.py
 server/filtergamin.py
 server/filterpoll.py
 server/server.py
+server/iso8601.py
 server/actions.py
 server/faildata.py
 server/failmanager.py
@@ -44,7 +45,6 @@ testcases/failmanagertestcase.py
 testcases/clientreadertestcase.py
 testcases/filtertestcase.py
 testcases/__init__.py
-testcases/datedetectortestcase.py
 testcases/actiontestcase.py
 testcases/servertestcase.py
 testcases/files/testcase01.log

@@ -25,10 +25,16 @@ __date__ = "$Date: 2008-01-16 23:55:04 +0100 (Wed, 16 Jan 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time
+import time, logging
 
 from template import Template, Templates
 from mytime import MyTime
+
+# Import ISO 8601 support.
+import iso8601
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban.timetemplate")
 
 class TimeTemplate(Template):
 	
@@ -40,6 +46,20 @@ class TimeTemplate(Template):
 	
 	def getTime(self, line):
 		raise Exception("getTime() is abstract")
+
+
+class TimeISO8601(TimeTemplate):
+
+	def __init__(self):
+		TimeTemplate.__init__(self)
+		date_re = "[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}" \
+		".[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?" \
+		"(Z|(([-+])([0-9]{2}):([0-9]{2})))?"
+		self.setRegex(date_re)
+	
+	def getTime(self, line):
+		# Parses the date.
+		return list(iso8601.parse_date(line).utctimetuple())
 
 
 class TimeEpoch(TimeTemplate):
@@ -192,4 +212,8 @@ class TimeTemplates(Templates):
 		# Epoch
 		template = TimeEpoch()
 		template.setDescription("Epoch")
+		self.templates.append(template)
+		# ISO 8601
+		template = TimeISO8601()
+		template.setDescription("ISO 8601")
 		self.templates.append(template)
