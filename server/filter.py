@@ -68,7 +68,7 @@ class Filter(JailThread):
 		
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
-		logSys.info("Created Filter")
+		logSys.debug("Created Filter")
 
 
 	##

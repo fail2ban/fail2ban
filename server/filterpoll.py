@@ -54,7 +54,7 @@ class FilterPoll(FileFilter):
 		## The time of the last modification of the file.
 		self.__lastModTime = dict()
 		self.__file404Cnt = dict()
-		logSys.info("Created FilterPoll")
+		logSys.debug("Created FilterPoll")
 
 	##
 	# Add a log file path

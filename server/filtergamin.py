@@ -53,7 +53,7 @@ class FilterGamin(FileFilter):
 		self.__modified = False
 		# Gamin monitor
 		self.monitor = gamin.WatchMonitor()
-		logSys.info("Created FilterGamin")
+		logSys.debug("Created FilterGamin")
 
 
 	def callback(self, path, event):
