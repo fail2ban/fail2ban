@@ -53,7 +53,7 @@ class FilterGamin(FileFilter):
 		self.__modified = False
 		# Gamin monitor
 		self.monitor = gamin.WatchMonitor()
-		logSys.info("Created FilterGamin")
+		logSys.debug("Created FilterGamin")
 
 
 	def callback(self, path, event):
@@ -69,7 +69,7 @@ class FilterGamin(FileFilter):
 	#
 	# @param path log file path
 
-	def addLogPath(self, path, tail = False):
+	def addLogPath(self, path, tail = True):
 		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
 		else:

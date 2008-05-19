@@ -54,14 +54,14 @@ class FilterPoll(FileFilter):
 		## The time of the last modification of the file.
 		self.__lastModTime = dict()
 		self.__file404Cnt = dict()
-		logSys.info("Created FilterPoll")
+		logSys.debug("Created FilterPoll")
 
 	##
 	# Add a log file path
 	#
 	# @param path log file path
 
-	def addLogPath(self, path, tail = False):
+	def addLogPath(self, path, tail = True):
 		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
 		else:

@@ -64,7 +64,7 @@ class Filter(JailThread):
 		self.__findTime = 6000
 		## The ignore IP list.
 		self.__ignoreIpList = []
-		logSys.info("Created Filter")
+		logSys.debug("Created Filter")
 
 
 	##
@@ -411,7 +411,7 @@ import md5
 
 class FileContainer:
 	
-	def __init__(self, filename, tail = False):
+	def __init__(self, filename, tail = True):
 		self.__filename = filename
 		self.__tail = tail
 		self.__handler = None
