@@ -24,6 +24,8 @@ ver. 0.8.3 (2008/??/??) - stable
   René Berber.
 - Added ISO 8601 date/time format.
 - Added and changed some logging level and messages.
+- Added missing ignoreregex to filters. Thanks to Klaus
+  Lehmann.
 
 ver. 0.8.2 (2008/03/06) - stable
 ----------
