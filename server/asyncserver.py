@@ -132,7 +132,7 @@ class AsyncServer(asyncore.dispatcher):
 		# Sets the init flag.
 		self.__init = True
 		# TODO Add try..catch
-		asyncore.loop()
+		asyncore.loop(use_poll = True)
 	
 	##
 	# Stops the communication server.

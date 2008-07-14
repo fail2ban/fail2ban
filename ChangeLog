@@ -26,6 +26,9 @@ ver. 0.8.3 (2008/??/??) - stable
 - Added and changed some logging level and messages.
 - Added missing ignoreregex to filters. Thanks to Klaus
   Lehmann.
+- Use poll instead of select in asyncore.loop. This should
+  solve the "Unknown error 514". Thanks to Michael Geiger and
+  Klaus Lehmann.
 
 ver. 0.8.2 (2008/03/06) - stable
 ----------
