@@ -1,3 +1,9 @@
+fail2ban (0.8.1-4) UNRELEASED; urgency=low
+
+  * Adjusted vcs paths
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 17 Jul 2008 11:21:15 -0400
+
 fail2ban (0.8.1-3) unstable; urgency=low
 
   * Added Vcs- fields, moved Homepage into source header's field
