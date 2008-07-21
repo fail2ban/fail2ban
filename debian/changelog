@@ -2,6 +2,11 @@ fail2ban (0.8.3-1) unstable; urgency=low
 
   * Fresh upstream release
   * Boosted policy compliance to 3.8.0 (no changes needed)
+  * Specify explicitely facilities in "Failed .. for". Thanks Dean
+    Gaudet. (closes: #481760)
+  * Added failregex for "User not known" in sshd.conf. thanks Alexander
+    Gerasiov (closes: #479966)
+
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 21 Jul 2008 10:27:12 -0400
 
