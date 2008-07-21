@@ -1,8 +1,9 @@
-fail2ban (0.8.2-4) UNRELEASED; urgency=low
+fail2ban (0.8.3-1) unstable; urgency=low
 
-  * Adjusted vcs paths
+  * Fresh upstream release
+  * Boosted policy compliance to 3.8.0 (no changes needed)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 17 Jul 2008 11:21:15 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 21 Jul 2008 10:27:12 -0400
 
 fail2ban (0.8.2-3) unstable; urgency=low
 
