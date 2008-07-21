@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 649 $
+# $Revision: 696 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 649 $"
-__date__ = "$Date: 2008-02-02 18:04:11 +0100 (Sat, 02 Feb 2008) $"
+__version__ = "$Revision: 696 $"
+__date__ = "$Date: 2008-05-19 23:05:32 +0200 (Mon, 19 May 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -53,7 +53,7 @@ class FilterGamin(FileFilter):
 		self.__modified = False
 		# Gamin monitor
 		self.monitor = gamin.WatchMonitor()
-		logSys.info("Created FilterGamin")
+		logSys.debug("Created FilterGamin")
 
 
 	def callback(self, path, event):

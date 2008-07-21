@@ -16,19 +16,17 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 645 $
+# $Revision: 692 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 645 $"
-__date__ = "$Date: 2008-01-16 23:55:04 +0100 (Wed, 16 Jan 2008) $"
+__version__ = "$Revision: 692 $"
+__date__ = "$Date: 2008-05-18 21:53:18 +0200 (Sun, 18 May 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import time, logging
 
-from datetemplate import DateStrptime
-from datetemplate import DateTai64n
-from datetemplate import DateEpoch
+from datetemplate import DateStrptime, DateTai64n, DateEpoch, DateISO8601
 from threading import Lock
 
 # Gets the instance of the logger.
@@ -98,6 +96,10 @@ class DateDetector:
 			# Epoch
 			template = DateEpoch()
 			template.setName("Epoch")
+			self.__templates.append(template)
+			# ISO 8601
+			template = DateISO8601()
+			template.setName("ISO 8601")
 			self.__templates.append(template)
 		finally:
 			self.__lock.release()

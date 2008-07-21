@@ -18,11 +18,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 671 $
+# $Revision: 678 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 671 $"
-__date__ = "$Date: 2008-03-06 00:12:41 +0100 (Thu, 06 Mar 2008) $"
+__version__ = "$Revision: 678 $"
+__date__ = "$Date: 2008-03-10 23:34:46 +0100 (Mon, 10 Mar 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -68,6 +68,9 @@ setup(
 						), 
 						('/etc/fail2ban/action.d', 
 							glob("config/action.d/*.conf")
+						),
+						('/var/run/fail2ban',
+							''
 						)
 					]
 )

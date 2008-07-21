@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 567 $
+# $Revision: 696 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 567 $"
-__date__ = "$Date: 2007-03-26 23:17:31 +0200 (Mon, 26 Mar 2007) $"
+__version__ = "$Revision: 696 $"
+__date__ = "$Date: 2008-05-19 23:05:32 +0200 (Mon, 19 May 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -37,6 +37,7 @@ class Jail:
 		self.__name = name
 		self.__queue = Queue.Queue()
 		self.__filter = None
+		logSys.info("Creating new jail '%s'" % self.__name)
 		if backend == "polling":
 			self.__initPoller()
 		else:
@@ -47,14 +48,14 @@ class Jail:
 		self.__action = Actions(self)
 	
 	def __initPoller(self):
-		logSys.info("Using poller")
+		logSys.info("Jail '%s' uses poller" % self.__name)
 		from filterpoll import FilterPoll
 		self.__filter = FilterPoll(self)
 	
 	def __initGamin(self):
 		# Try to import gamin
 		import gamin
-		logSys.info("Using Gamin")
+		logSys.info("Jail '%s' uses Gamin" % self.__name)
 		from filtergamin import FilterGamin
 		self.__filter = FilterGamin(self)
 	
@@ -82,12 +83,14 @@ class Jail:
 	def start(self):
 		self.__filter.start()
 		self.__action.start()
+		logSys.info("Jail '%s' started" % self.__name)
 	
 	def stop(self):
 		self.__filter.stop()
 		self.__action.stop()
 		self.__filter.join()
 		self.__action.join()
+		logSys.info("Jail '%s' stopped" % self.__name)
 	
 	def isAlive(self):
 		isAlive0 = self.__filter.isAlive()
