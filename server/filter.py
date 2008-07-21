@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 656 $
+# $Revision: 696 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 656 $"
-__date__ = "$Date: 2008-03-04 01:17:56 +0100 (Tue, 04 Mar 2008) $"
+__version__ = "$Revision: 696 $"
+__date__ = "$Date: 2008-05-19 23:05:32 +0200 (Mon, 19 May 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -68,7 +68,7 @@ class Filter(JailThread):
 		
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
-		logSys.info("Created Filter")
+		logSys.debug("Created Filter")
 
 
 	##

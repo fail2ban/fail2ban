@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 659 $
+# $Revision: 690 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 659 $"
-__date__ = "$Date: 2008-03-05 00:09:30 +0100 (Wed, 05 Mar 2008) $"
+__version__ = "$Revision: 690 $"
+__date__ = "$Date: 2008-05-12 10:34:42 +0200 (Mon, 12 May 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -122,7 +122,10 @@ class JailReader(ConfigReader):
 			elif opt == "failregex":
 				stream.append(["set", self.__name, "failregex", self.__opts[opt]])
 			elif opt == "ignoreregex":
-				stream.append(["set", self.__name, "ignoreregex", self.__opts[opt]])
+				for regex in self.__opts[opt].split('\n'):
+					# Do not send a command if the rule is empty.
+					if regex != '':
+						stream.append(["set", self.__name, "addignoreregex", regex])
 		stream.extend(self.__filter.convert())
 		for action in self.__actions:
 			stream.extend(action.convert())

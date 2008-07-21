@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 647 $
+# $Revision: 696 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 647 $"
-__date__ = "$Date: 2008-01-20 17:30:35 +0100 (Sun, 20 Jan 2008) $"
+__version__ = "$Revision: 696 $"
+__date__ = "$Date: 2008-05-19 23:05:32 +0200 (Mon, 19 May 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -46,11 +46,11 @@ class Server:
 		self.__daemon = daemon
 		self.__transm = Transmitter(self)
 		self.__asyncServer = AsyncServer(self.__transm)
-		self.__logLevel = 3
-		self.__logTarget = "STDOUT"
+		self.__logLevel = None
+		self.__logTarget = None
 		# Set logging level
-		self.setLogLevel(self.__logLevel)
-		self.setLogTarget(self.__logTarget)
+		self.setLogLevel(3)
+		self.setLogTarget("STDOUT")
 	
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
@@ -58,6 +58,21 @@ class Server:
 	
 	def start(self, sock, force = False):
 		logSys.info("Starting Fail2ban v" + version.version)
+		
+		# Install signal handlers
+		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
+		signal.signal(signal.SIGINT, self.__sigTERMhandler)
+		
+		# First set the mask to only allow access to owner
+		os.umask(0077)
+		if self.__daemon:
+			logSys.info("Starting in daemon mode")
+			ret = self.__createDaemon()
+			if ret:
+				logSys.info("Daemon started")
+			else:
+				logSys.error("Could not create daemon")
+				raise ServerInitializationError("Could not create daemon")
 		
 		# Creates a PID file.
 		try:
@@ -68,19 +83,6 @@ class Server:
 		except IOError, e:
 			logSys.error("Unable to create PID file: %s" % e)
 		
-		# Install signal handlers
-		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
-		signal.signal(signal.SIGINT, self.__sigTERMhandler)
-		
-		# First set the mask to only allow access to owner
-		os.umask(0077)
-		if self.__daemon:
-			ret = self.__createDaemon()
-			if ret:
-				logSys.info("Daemon started")
-			else:
-				logSys.error("Could not create daemon")
-				raise ServerInitializationError("Could not create daemon")
 		# Start the communication
 		logSys.debug("Starting communication")
 		try:
@@ -164,7 +166,8 @@ class Server:
 		self.__jails.getFilter(name).delLogPath(fileName)
 	
 	def getLogPath(self, name):
-		return self.__jails.getFilter(name).getLogPath()
+		return [m.getFileName()
+				for m in self.__jails.getFilter(name).getLogPath()]
 	
 	def setFindTime(self, name, value):
 		self.__jails.getFilter(name).setFindTime(value)
@@ -343,7 +346,6 @@ class Server:
 					logSys.error("Unable to log to " + target)
 					logSys.info("Logging to previous target " + self.__logTarget)
 					return False
-			self.__logTarget = target
 			# Removes previous handlers
 			for handler in logging.getLogger("fail2ban").handlers:
 				# Closes the handler.
@@ -352,6 +354,12 @@ class Server:
 			# tell the handler to use this format
 			hdlr.setFormatter(formatter)
 			logging.getLogger("fail2ban").addHandler(hdlr)
+			# Does not display this message at startup.
+			if not self.__logTarget == None:
+				logSys.info("Changed logging target to %s for Fail2ban v%s" %
+						(target, version.version))
+			# Sets the logging target.
+			self.__logTarget = target
 			return True
 		finally:
 			self.__loggingLock.release()
