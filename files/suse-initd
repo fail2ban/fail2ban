@@ -16,7 +16,7 @@
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/sbin:/usr/sbin:/usr/bin:/bin
 FAIL2BAN_BIN=/usr/local/bin/fail2ban-client
 FAIL2BAN_SERVER=/usr/local/bin/fail2ban-server
-FAIL2BAN_SOCKET=/tmp/fail2ban.sock
+FAIL2BAN_SOCKET=/var/run/fail2ban/fail2ban.sock
 test -x $FAIL2BAN_BIN || { echo "$FAIL2BAN_BIN not installed";
         if [ "$1" = "stop" ]; then exit 0;
         else exit 5; fi; }

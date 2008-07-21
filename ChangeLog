@@ -4,8 +4,31 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.8.2)                           2008/03/06
+Fail2Ban (version 0.8.3)                           2008/07/17
 =============================================================
+
+ver. 0.8.3 (2008/07/17) - stable
+----------
+- Process failtickets as long as failmanager is not empty.
+- Added "pam-generic" filter and more configuration fixes.
+  Thanks to Yaroslav Halchenko.
+- Fixed socket path in redhat and suse init script. Thanks to
+  Jim Wight.
+- Fixed PID file while started in daemon mode. Thanks to
+  Christian Jobic who submitted a similar patch.
+- Fixed "fail2ban-client get <jail> logpath". Bug #1916986.
+- Added gssftpd filter. Thanks to Kevin Zembower.
+- Added "Day/Month/Year Hour:Minute:Second" date template.
+  Thanks to Dennis Winter.
+- Fixed ignoreregex processing in fail2ban-client. Thanks to
+  René Berber.
+- Added ISO 8601 date/time format.
+- Added and changed some logging level and messages.
+- Added missing ignoreregex to filters. Thanks to Klaus
+  Lehmann.
+- Use poll instead of select in asyncore.loop. This should
+  solve the "Unknown error 514". Thanks to Michael Geiger and
+  Klaus Lehmann.
 
 ver. 0.8.2 (2008/03/06) - stable
 ----------

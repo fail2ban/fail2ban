@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 649 $
+# $Revision: 696 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 649 $"
-__date__ = "$Date: 2008-02-02 18:04:11 +0100 (Sat, 02 Feb 2008) $"
+__version__ = "$Revision: 696 $"
+__date__ = "$Date: 2008-05-19 23:05:32 +0200 (Mon, 19 May 2008) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -54,7 +54,7 @@ class FilterPoll(FileFilter):
 		## The time of the last modification of the file.
 		self.__lastModTime = dict()
 		self.__file404Cnt = dict()
-		logSys.info("Created FilterPoll")
+		logSys.debug("Created FilterPoll")
 
 	##
 	# Add a log file path
@@ -103,8 +103,9 @@ class FilterPoll(FileFilter):
 
 				if self.__modified:
 					try:
-						ticket = self.failManager.toBan()
-						self.jail.putFailTicket(ticket)
+						while True:
+							ticket = self.failManager.toBan()
+							self.jail.putFailTicket(ticket)
 					except FailManagerEmpty:
 						self.failManager.cleanup(MyTime.time())
 					self.dateDetector.sortTemplate()
