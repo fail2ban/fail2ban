@@ -9,6 +9,8 @@ Fail2Ban (version 0.8.4)                           2008/??/??
 
 ver. 0.8.4 (2008/??/??) - stable
 ----------
+- Merged patches from Debian package. Thanks to Yaroslav
+  Halchenko.
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------
