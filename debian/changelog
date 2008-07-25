@@ -1,3 +1,10 @@
+fail2ban (0.8.3-2) unstable; urgency=low
+
+  * BF in apache-noscript.conf - regexp matched in referer (Closes: #492319).
+    Thanks Bernd Zeimetz.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 25 Jul 2008 13:33:56 -0400
+
 fail2ban (0.8.3-1) unstable; urgency=low
 
   * Fresh upstream release
