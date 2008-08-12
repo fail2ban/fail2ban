@@ -11,6 +11,8 @@ ver. 0.8.4 (2008/??/??) - stable
 ----------
 - Merged patches from Debian package. Thanks to Yaroslav
   Halchenko.
+- Use current day and month instead of Jan 1st if both are
+  not available in the log. Thanks to Andreas Itzchak Rehberg
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------

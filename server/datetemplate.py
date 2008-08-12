@@ -146,6 +146,11 @@ class DateStrptime(DateTemplate):
 				# that the log is not from this year but from the year before
 				if time.mktime(date) > MyTime.time():
 					date[0] -= 1
+				elif date[1] == 1 and date[2] == 1:
+					# If it is Jan 1st, it is either really Jan 1st or there
+					# is neither month nor day in the log.
+					date[1] = MyTime.gmtime()[1]
+					date[2] = MyTime.gmtime()[2]
 		return date
 
 
