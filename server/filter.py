@@ -241,15 +241,16 @@ class Filter(JailThread):
 		except UnicodeDecodeError:
 			l = line
 		timeMatch = self.dateDetector.matchTime(l)
-		if not timeMatch:
-			# There is no valid time in this line
-			return []
-		# Lets split into time part and log part of the line
-		timeLine = timeMatch.group()
-		# Lets leave the beginning in as well, so if there is no
-		# anchore at the beginning of the time regexp, we don't
-		# at least allow injection. Should be harmless otherwise
-		logLine  = l[:timeMatch.start()] + l[timeMatch.end():]
+		if timeMatch:
+			# Lets split into time part and log part of the line
+			timeLine = timeMatch.group()
+			# Lets leave the beginning in as well, so if there is no
+			# anchore at the beginning of the time regexp, we don't
+			# at least allow injection. Should be harmless otherwise
+			logLine  = l[:timeMatch.start()] + l[timeMatch.end():]
+		else:
+			timeLine = l
+			logLine = l
 		return self.findFailure(timeLine, logLine)
 
 	def processLineAndAdd(self, line):
