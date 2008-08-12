@@ -101,6 +101,12 @@ class DateDetector:
 			template = DateISO8601()
 			template.setName("ISO 8601")
 			self.__templates.append(template)
+			# Only time information in the log
+			template = DateStrptime()
+			template.setName("Hour:Minute:Second")
+			template.setRegex("^\d{2}:\d{2}:\d{2}")
+			template.setPattern("%H:%M:%S")
+			self.__templates.append(template)
 		finally:
 			self.__lock.release()
 	
