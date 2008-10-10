@@ -113,6 +113,12 @@ class DateDetector:
 			template.setRegex("^\d{2}:\d{2}:\d{2}")
 			template.setPattern("%H:%M:%S")
 			self.__templates.append(template)
+			# <09/16/08@05:03:30>
+			template = DateStrptime()
+			template.setName("<Month/Day/Year@Hour:Minute:Second>")
+			template.setRegex("^<\d{2}/\d{2}/\d{2}@\d{2}:\d{2}:\d{2}>")
+			template.setPattern("<%m/%d/%y@%H:%M:%S>")
+			self.__templates.append(template)
 		finally:
 			self.__lock.release()
 	
