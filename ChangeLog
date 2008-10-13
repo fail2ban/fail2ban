@@ -17,6 +17,7 @@ ver. 0.8.4 (2008/??/??) - stable
 - Try to match the regex even if the line does not contain a
   valid date/time. Described in Debian #491253. Thanks to
   Yaroslav Halchenko.
+- Added/improved filters and date formats.
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------

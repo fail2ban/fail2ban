@@ -59,6 +59,7 @@ config/jail.conf
 config/filter.d/common.conf
 config/filter.d/apache-auth.conf
 config/filter.d/apache-badbots.conf
+config/filter.d/apache-nohome.conf
 config/filter.d/apache-noscript.conf
 config/filter.d/apache-overflows.conf
 config/filter.d/courierlogin.conf
