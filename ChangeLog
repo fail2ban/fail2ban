@@ -18,6 +18,8 @@ ver. 0.8.4 (2008/??/??) - stable
   valid date/time. Described in Debian #491253. Thanks to
   Yaroslav Halchenko.
 - Added/improved filters and date formats.
+- Added actions to report abuse to ISP, DShield and
+  myNetWatchman. Thanks to Russell Odom.
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------

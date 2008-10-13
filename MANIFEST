@@ -79,6 +79,8 @@ config/filter.d/vsftpd.conf
 config/filter.d/webmin-auth.conf
 config/filter.d/wuftpd.conf
 config/filter.d/xinetd-fail.conf
+config/action.d/complain.conf
+config/action.d/dshield.conf
 config/action.d/hostsdeny.conf
 config/action.d/ipfw.conf
 config/action.d/iptables.conf
@@ -90,6 +92,7 @@ config/action.d/mail.conf
 config/action.d/mail-buffered.conf
 config/action.d/mail-whois.conf
 config/action.d/mail-whois-lines.conf
+config/action.d/mynetwatchman.conf
 config/action.d/sendmail.conf
 config/action.d/sendmail-buffered.conf
 config/action.d/sendmail-whois.conf
