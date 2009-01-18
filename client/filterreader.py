@@ -53,20 +53,14 @@ class FilterReader(ConfigReader):
 		return ConfigReader.read(self, "filter.d/" + self.__file)
 	
 	def getOptions(self, pOpts):
-		opts = [["string", "timeregex", None],
-				["string", "timepattern", None],
-				["string", "ignoreregex", ""],
+		opts = [["string", "ignoreregex", ""],
 				["string", "failregex", ""]]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
 	
 	def convert(self):
 		stream = list()
 		for opt in self.__opts:
-			if opt == "timeregex":
-				stream.append(["set", self.__name, "timeregex", self.__opts[opt]])
-			elif opt == "timepattern":
-				stream.append(["set", self.__name, "timepattern", self.__opts[opt]])
-			elif opt == "failregex":
+			if opt == "failregex":
 				for regex in self.__opts[opt].split('\n'):
 					# Do not send a command if the rule is empty.
 					if regex != '':
