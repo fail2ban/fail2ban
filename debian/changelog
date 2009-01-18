@@ -1,3 +1,9 @@
+fail2ban (0.8.3-3) unstable; urgency=low
+
+  * BF: addressing added bang to ssh log (closes: #512193). Thanks Silvestre Zabala.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 18 Jan 2009 10:26:16 -0500
+
 fail2ban (0.8.3-2) unstable; urgency=low
 
   * BF in apache-noscript.conf - regexp matched in referer (Closes: #492319).
