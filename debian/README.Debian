@@ -190,9 +190,20 @@ by fail2ban.
 An IP is banned for "bantime" not since the last failed login attempt
 from the IP, but rather since the moment when failed login was
 detected by fail2ban. Thus, if fail2ban gets [re]started, any IP which
-had enough of failed logins within "findtime" will be banned for
+had enough of failed logins with durations less than "findtime" between
+them prior to the [re]start moment, will be banned for
 "bantime" since [re]start moment, not since the last failed login
 time.
+
+* Findtime:
+
+"Findtime" option of a jail actually defines a duration to reset the
+counter of failed login attempts, if no new attempt was detected within
+that time frame (i.e.  within "findtime").
+
+See
+http://www.fail2ban.org/wiki/index.php/MANUAL_0_8#Jail_Options
+for more information on jail options.
 
 
 * Syslog entries can be 'forged' by a regular user
