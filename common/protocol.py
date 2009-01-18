@@ -72,8 +72,6 @@ protocol = [
 ['', "JAIL INFORMATION", ""],
 ["get <JAIL> logpath", "gets the list of the monitored files for <JAIL>"],
 ["get <JAIL> ignoreip", "gets the list of ignored IP addresses for <JAIL>"],
-["get <JAIL> timeregex", "gets the regular expression used for the time detection for <JAIL>"],
-["get <JAIL> timepattern", "gets the pattern used for the time detection for <JAIL>"],
 ["get <JAIL> failregex", "gets the list of regular expressions which matches the failures for <JAIL>"],
 ["get <JAIL> ignoreregex", "gets the list of regular expressions which matches patterns to ignore for <JAIL>"],
 ["get <JAIL> findtime", "gets the time for which the filter will look back for failures for <JAIL>"],
