@@ -44,7 +44,7 @@ class DateDetector:
 			# standard
 			template = DateStrptime()
 			template.setName("MONTH Day Hour:Minute:Second")
-			template.setRegex("^\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
+			template.setRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%b %d %H:%M:%S")
 			self.__templates.append(template)
 			# asctime
