@@ -4,8 +4,22 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.8.3)                           2008/07/17
+Fail2Ban (version 0.8.4)                           2008/??/??
 =============================================================
+
+ver. 0.8.4 (2008/??/??) - stable
+----------
+- Merged patches from Debian package. Thanks to Yaroslav
+  Halchenko.
+- Use current day and month instead of Jan 1st if both are
+  not available in the log. Thanks to Andreas Itzchak
+  Rehberg.
+- Try to match the regex even if the line does not contain a
+  valid date/time. Described in Debian #491253. Thanks to
+  Yaroslav Halchenko.
+- Added/improved filters and date formats.
+- Added actions to report abuse to ISP, DShield and
+  myNetWatchman. Thanks to Russell Odom.
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------

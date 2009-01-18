@@ -43,19 +43,19 @@ class DateDetector:
 		try:
 			# standard
 			template = DateStrptime()
-			template.setName("Month Day Hour:Minute:Second")
+			template.setName("MONTH Day Hour:Minute:Second")
 			template.setRegex("^\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%b %d %H:%M:%S")
 			self.__templates.append(template)
 			# asctime
 			template = DateStrptime()
-			template.setName("Weekday Month Day Hour:Minute:Second Year")
+			template.setName("WEEKDAY MONTH Day Hour:Minute:Second Year")
 			template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2} \d{4}")
 			template.setPattern("%a %b %d %H:%M:%S %Y")
 			self.__templates.append(template)
 			# asctime without year
 			template = DateStrptime()
-			template.setName("Weekday Month Day Hour:Minute:Second")
+			template.setName("WEEKDAY MONTH Day Hour:Minute:Second")
 			template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%a %b %d %H:%M:%S")
 			self.__templates.append(template)
@@ -73,7 +73,7 @@ class DateDetector:
 			self.__templates.append(template)
 			# Apache format [31/Oct/2006:09:22:55 -0000]
 			template = DateStrptime()
-			template.setName("Day/Month/Year:Hour:Minute:Second")
+			template.setName("Day/MONTH/Year:Hour:Minute:Second")
 			template.setRegex("\d{2}/\S{3}/\d{4}:\d{2}:\d{2}:\d{2}")
 			template.setPattern("%d/%b/%Y:%H:%M:%S")
 			self.__templates.append(template)
@@ -85,9 +85,15 @@ class DateDetector:
 			self.__templates.append(template)
 			# named 26-Jul-2007 15:20:52.252 
 			template = DateStrptime()
-			template.setName("Day-Month-Year Hour:Minute:Second[.Millisecond]")
+			template.setName("Day-MONTH-Year Hour:Minute:Second[.Millisecond]")
 			template.setRegex("\d{2}-\S{3}-\d{4} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%d-%b-%Y %H:%M:%S")
+			self.__templates.append(template)
+			# 17-07-2008 17:23:25
+			template = DateStrptime()
+			template.setName("Day-Month-Year Hour:Minute:Second")
+			template.setRegex("\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%d-%m-%Y %H:%M:%S")
 			self.__templates.append(template)
 			# TAI64N
 			template = DateTai64n()
@@ -100,6 +106,18 @@ class DateDetector:
 			# ISO 8601
 			template = DateISO8601()
 			template.setName("ISO 8601")
+			self.__templates.append(template)
+			# Only time information in the log
+			template = DateStrptime()
+			template.setName("Hour:Minute:Second")
+			template.setRegex("^\d{2}:\d{2}:\d{2}")
+			template.setPattern("%H:%M:%S")
+			self.__templates.append(template)
+			# <09/16/08@05:03:30>
+			template = DateStrptime()
+			template.setName("<Month/Day/Year@Hour:Minute:Second>")
+			template.setRegex("^<\d{2}/\d{2}/\d{2}@\d{2}:\d{2}:\d{2}>")
+			template.setPattern("<%m/%d/%y@%H:%M:%S>")
 			self.__templates.append(template)
 		finally:
 			self.__lock.release()
