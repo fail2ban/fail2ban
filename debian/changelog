@@ -1,8 +1,31 @@
-fail2ban (0.8.3-3) unstable; urgency=low
+fail2ban (0.8.3-3) experimental; urgency=low
 
   * BF: addressing added bang to ssh log (closes: #512193). Thanks Silvestre Zabala.
+  * added example for BREAK-IN in ssh
+  * Syncing current debian revision to FAIL2BAN-0_8@717 of upstream,
+    since it includes fixes to some forwarded bugs. Total list of 
+    functional changes
+    - Added actions to report abuse to ISP, DShield and myNetWatchman.
+      Thanks to Russell Odom.
+    - Added apache-nohome.conf. Thanks to Yaroslav Halchenko.
+    - Added new time format. No idea from where it comes...
+    - Added new regex. Thanks to Tobias Offermann.
+    - Try to match the regex even if the line does not contain a valid
+    date/time. Described in Debian #491253. Thanks to Yaroslav
+    Halchenko.
+    - Removed "timeregex" and "timepattern" stuff that is not needed
+    anymore.
+    - Added date template for Day-Month-Year Hour:Minute:Second 
+      (closes: #491253)
+    - Added date pattern for Hour:Minute:Second. Thanks to Andreas
+      Itzchak Rehberg.
+    - Use current day and month instead of Jan 1st if both are not
+      available in the log. Thanks to Andreas Itzchak Rehberg.
+    - Improved pattern. Thanks to Yaroslav Halchenko.
+    - Merged patches from Debian package. Thanks to Yaroslav Halchenko.
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 18 Jan 2009 10:26:16 -0500
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 18 Jan 2009 11:31:01 -0500
 
 fail2ban (0.8.3-2) unstable; urgency=low
 
