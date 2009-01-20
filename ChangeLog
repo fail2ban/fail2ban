@@ -20,6 +20,8 @@ ver. 0.8.4 (2008/??/??) - stable
 - Added/improved filters and date formats.
 - Added actions to report abuse to ISP, DShield and
   myNetWatchman. Thanks to Russell Odom.
+- Suse init script. Remove socket file on startup is fail2ban
+  crashed. Thanks to Detlef Reichelt.
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------

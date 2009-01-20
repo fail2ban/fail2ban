@@ -35,6 +35,13 @@ rc_reset
 case "$1" in
     start)
         echo -n "Starting Fail2Ban "
+        # a cleanup workaround, since /etc/init.d/boot.local removes only. 
+        # regular files, and not sockets 
+        if test -e $FAIL2BAN_SOCKET; then
+            if ! lsof -n $FAIL2BAN_SOCKET &>/dev/null; then
+                rm $FAIL2BAN_SOCKET
+            fi
+        fi
         /sbin/startproc $FAIL2BAN_BIN start &>/dev/null
         rc_status -v
         ;;
