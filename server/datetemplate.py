@@ -132,7 +132,7 @@ class DateStrptime(DateTemplate):
 				conv = self.convertLocale(dateMatch.group())
 				try:
 					date = list(time.strptime(conv, self.getPattern()))
-				except ValueError:
+				except ValueError, e:
 					# Try to add the current year to the pattern. Should fix
 					# the "Feb 29" issue.
 					conv += " %s" % MyTime.gmtime()[0]
@@ -187,6 +187,5 @@ class DateISO8601(DateTemplate):
 		if dateMatch:
 			# Parses the date.
 			value = dateMatch.group()
-			print value
 			date = list(iso8601.parse_date(value).utctimetuple())
 		return date
