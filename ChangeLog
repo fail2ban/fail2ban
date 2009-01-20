@@ -22,6 +22,8 @@ ver. 0.8.4 (2008/??/??) - stable
   myNetWatchman. Thanks to Russell Odom.
 - Suse init script. Remove socket file on startup is fail2ban
   crashed. Thanks to Detlef Reichelt.
+- Removed begin-line anchor for "standard" timestamp. Fixed
+  Debian bug #500824.
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------
