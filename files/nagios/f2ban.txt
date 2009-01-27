@@ -1,0 +1,18 @@
+It seems that Fail2ban is currently not working, please login and check
+
+HELP:
+
+1.) stop the Service
+/etc/init.d/fail2ban stop
+
+2.) delete the socket if avalible
+rm /tmp/fail2ban.sock
+
+3.) start the Service 
+/etc/init.d/fail2ban start
+
+4.) check if fail2ban is working
+fail2ban-client ping
+Answer should be "pong"
+
+5.) if the answer is not "pong" run away or  CRY FOR HELP ;-) 
