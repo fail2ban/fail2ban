@@ -29,6 +29,8 @@ ver. 0.8.4 (2008/??/??) - stable
   #1967610.
 - Improved SASL filter. Thanks to Loic Pefferkorn. Tracker
   #2310410.
+- Added NetBSD ipfilter (ipf command) action. Thanks to Ed
+  Ravin. Tracker #2484115.
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------

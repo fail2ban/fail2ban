@@ -83,6 +83,7 @@ config/action.d/complain.conf
 config/action.d/dshield.conf
 config/action.d/hostsdeny.conf
 config/action.d/ipfw.conf
+config/action.d/ipfilter.conf
 config/action.d/iptables.conf
 config/action.d/iptables-allports.conf
 config/action.d/iptables-multiport.conf
