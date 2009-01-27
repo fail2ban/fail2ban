@@ -25,6 +25,8 @@ ver. 0.8.4 (2008/??/??) - stable
 - Removed begin-line anchor for "standard" timestamp. Fixed
   Debian bug #500824.
 - Added nagios script. Thanks to Sebastian Mueller.
+- Added CPanel date format. Thanks to David Collins. Tracker
+  #1967610
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------
