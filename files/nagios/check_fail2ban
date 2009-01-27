@@ -1,0 +1,106 @@
+#!/bin/bash
+#
+# Usage: ./check_fail2ban
+###############################################################################################
+# Description: 
+#		This plugin will check the status of Fail2ban.  
+#
+# Created:      2008-10-25 (Sebastian Mueller)
+#
+# Changes:      2008-10-26 fixed some issues (Sebastian Mueller)
+# Changes:      2009-01-25 add the second check, when server is not replying and the
+#		process is hang-up (Sebastian Mueller)
+#
+# please visit my website http://www.elchtest.eu or my personal WIKI http://wiki.elchtest.eu
+#
+################################################################################################
+# if you have any questions, send a mail to linux@krabbe-offline.de 
+#
+# this script is for my personal use. read the script before running/using it!!!
+#
+#
+# YOU HAVE BEEN WARNED. THIS MAY DESTROY YOUR MACHINE. I ACCEPT NO RESPONSIBILITY.
+###############################################################################################
+
+
+SECOND_CHECK=0 
+STATE_OK=0
+STATE_CRITICAL=2
+
+######################################################################
+# Read the Status from fail2ban-client 
+######################################################################
+check_processes_fail2ban()
+{
+        
+  F2B=`sudo -u root fail2ban-client ping | awk -F " " '{print $3}'`
+  exit_fail2ban=0
+
+  if  [[ $F2B = "pong" ]]; then
+   exit_fail2ban=$STATE_OK
+ else
+ exit_fail2ban=$STATE_CRITICAL
+ fi
+
+}
+######################################################################
+# first check in the Background, PID will be killed when no response
+# after 10 seconds, might be possible, otherwise the scipt will be
+# pressent in your memory all the time
+#
+######################################################################
+
+check_processes_fail2ban &
+pid=$!
+
+typeset -i i=0
+while ps $pid >/dev/null
+do
+ sleep 1
+ i=$i+1
+if [ $i -ge 10 ]
+ then
+ kill $pid 
+   SECOND_CHECK=1
+   exit_fail2ban=$STATE_CRITICAL
+   break
+fi
+done
+
+######################################################################
+# when the Server response (doesent mean the FAIL2BAN is working)
+# in the first step, then it will run again and test the Service 
+# and provide the real status
+######################################################################
+
+
+if [ $SECOND_CHECK -eq 0  ]; then
+  check_processes_fail2ban
+ elif [ $SECOND_CHECK -eq 1 ]; then
+  exit_fail2ban=$STATE_CRITICAL
+fi
+
+
+
+######################################################################
+# Mainmenu
+######################################################################
+
+
+final_exit=$exit_fail2ban
+if [ $final_exit -eq 0  ]; then
+  echo "SYSTEM OK - Fail2ban is working normaly"
+  exitstatus=$STATE_OK
+elif [ $final_exit -ne "0" ]; then
+  echo "SYSTEM WARNING - Fail2Ban is not working"
+######################################################################
+# If don't have a Nagios Server for monitoring, remove the comment and
+# add your Mail Addres. You can check it with a Cron Job once a hour.
+# put a txt file on your server and describe how to fix the issue, this 
+# could be attached to the mail.
+######################################################################
+#  mutt -s "FAIL2BAN NOT WORKING" your@email.com < /home/f2ban.txt
+
+  exitstatus=$STATE_CRITICAL
+fi
+exit $exitstatus
