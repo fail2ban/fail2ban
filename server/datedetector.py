@@ -77,6 +77,12 @@ class DateDetector:
 			template.setRegex("\d{2}/\S{3}/\d{4}:\d{2}:\d{2}:\d{2}")
 			template.setPattern("%d/%b/%Y:%H:%M:%S")
 			self.__templates.append(template)
+			# CPanel 05/20/2008:01:57:39
+			template = DateStrptime()
+			template.setName("Month/Day/Year:Hour:Minute:Second")
+			template.setRegex("\d{2}/\d{2}/\d{4}:\d{2}:\d{2}:\d{2}")
+			template.setPattern("%m/%d/%Y:%H:%M:%S")
+			self.__templates.append(template)
 			# Exim 2006-12-21 06:43:20
 			template = DateStrptime()
 			template.setName("Year-Month-Day Hour:Minute:Second")
