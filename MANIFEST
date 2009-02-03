@@ -64,6 +64,7 @@ config/filter.d/apache-noscript.conf
 config/filter.d/apache-overflows.conf
 config/filter.d/courierlogin.conf
 config/filter.d/couriersmtp.conf
+config/filter.d/cyrus-imap.conf
 config/filter.d/exim.conf
 config/filter.d/gssftpd.conf
 config/filter.d/named-refused.conf
@@ -73,6 +74,7 @@ config/filter.d/pure-ftpd.conf
 config/filter.d/qmail.conf
 config/filter.d/pam-generic.conf
 config/filter.d/sasl.conf
+config/filter.d/sieve.conf
 config/filter.d/sshd.conf
 config/filter.d/sshd-ddos.conf
 config/filter.d/vsftpd.conf

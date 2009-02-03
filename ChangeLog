@@ -31,6 +31,8 @@ ver. 0.8.4 (2008/??/??) - stable
   #2310410.
 - Added NetBSD ipfilter (ipf command) action. Thanks to Ed
   Ravin. Tracker #2484115.
+- Added cyrus-imap and sieve filters. Thanks to Jan Wagner.
+  Debian bug #513953.
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------
