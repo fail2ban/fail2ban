@@ -26,7 +26,7 @@ __license__ = "GPL"
 
 import unittest
 from server.filterpoll import FilterPoll
-from server.filter import FileFilter
+from server.filter import FileFilter, DNSUtils
 from server.failmanager import FailManager
 from server.failmanager import FailManagerEmpty
 
@@ -195,3 +195,15 @@ class GetFailures(unittest.TestCase):
 		self.__filter.getFailures(GetFailures.FILENAME_02)
 		
 		self.assertRaises(FailManagerEmpty, self.__filter.failManager.toBan)
+
+class DNSUtilsTests(unittest.TestCase):
+
+	def testTextToIp(self):
+		bogus = [
+			'doh1.2.3.4.buga.xxxxx.yyy',
+			'1.2.3.4.buga.xxxxx.yyy',
+			]
+		"""Really bogus addresses which should have no matches"""
+		for s in bogus:
+			res = DNSUtils.textToIp(s)
+			self.assertEqual(res, [])
