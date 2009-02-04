@@ -44,7 +44,7 @@ class Regex:
 		self._matchCache = None
 		# Perform shortcuts expansions.
 		# Replace "<HOST>" with default regular expression for host.
-		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>\S+)")
+		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>[\w\-.^_]+)")
 		if regex.lstrip() == '':
 			raise RegexException("Cannot add empty regex")
 		try:
