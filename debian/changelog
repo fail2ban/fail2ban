@@ -1,3 +1,10 @@
+fail2ban (0.7.5-2etch2) stable-security; urgency=high
+
+  * BF: anchoring regex for IP with "$" at the end + adjust regexp for
+    <HOST> (closes: #514163)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 05 Feb 2009 11:17:38 -0500
+
 fail2ban (0.7.5-2etch1) stable-security; urgency=high
 
   * Propagated fix for asctime pattern from 0.7.8 release (closes: #421848)
