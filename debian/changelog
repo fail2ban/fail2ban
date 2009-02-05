@@ -1,3 +1,11 @@
+fail2ban (0.8.3-2sid1) unstable; urgency=low
+
+  * NF: adding unittests for previous commit
+  * BF: anchoring regex for IP with " *$" at the end + adjust regexp for
+    <HOST> (closes: #514163)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 05 Feb 2009 10:23:12 -0500
+
 fail2ban (0.8.3-2) unstable; urgency=low
 
   * BF in apache-noscript.conf - regexp matched in referer (Closes: #492319).
