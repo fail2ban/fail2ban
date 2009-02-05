@@ -171,7 +171,7 @@ class Filter(JailThread):
 				self.__failRegexObj = None
 			else:
 				# Replace "<HOST>" with default regular expression for host.
-				regex = value.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>\S+)")
+				regex = value.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>[\w\-.^_]+)")
 				self.__failRegex = regex
 				self.__failRegexObj = re.compile(regex)
 			logSys.info("Set failregex = %s" % self.__failRegex)
@@ -469,7 +469,7 @@ import socket, struct
 class DNSUtils:
 	
 	DNS_CRE = re.compile("(?:(?:\w|-)+\.){2,}\w+")
-	IP_CRE = re.compile("(?:\d{1,3}\.){3}\d{1,3}")
+	IP_CRE = re.compile("(?:\d{1,3}\.){3}\d{1,3}$")
 	
 	@staticmethod
 	def dnsToIp(dns):
