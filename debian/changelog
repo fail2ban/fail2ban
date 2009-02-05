@@ -1,3 +1,11 @@
+fail2ban (0.8.3-5) experimental; urgency=low
+
+  * BF: anchoring regex for IP with " *$" at the end + adjust regexp for
+    <HOST> (closes: #514163)
+  * NF: adding unittests for previous BF
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 05 Feb 2009 09:51:45 -0500
+
 fail2ban (0.8.3-4) experimental; urgency=low
 
   * BF: added missing semicolon in a logging template for bind within
