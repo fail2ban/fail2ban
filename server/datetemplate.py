@@ -187,5 +187,5 @@ class DateISO8601(DateTemplate):
 		if dateMatch:
 			# Parses the date.
 			value = dateMatch.group()
-			date = list(iso8601.parse_date(value).utctimetuple())
+			date = list(iso8601.parse_date(value).timetuple())
 		return date

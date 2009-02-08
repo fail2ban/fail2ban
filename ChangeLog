@@ -35,6 +35,8 @@ ver. 0.8.4 (2008/??/??) - stable
   Debian bug #513953.
 - Changed <HOST> template to be more restrictive. Debian bug
   #514163.
+- Use timetuple instead of utctimetuple for ISO 8601. Maybe
+  not a 100% correct fix but seems to work. Tracker #2500276.
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------
