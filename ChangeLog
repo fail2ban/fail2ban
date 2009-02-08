@@ -33,6 +33,8 @@ ver. 0.8.4 (2008/??/??) - stable
   Ravin. Tracker #2484115.
 - Added cyrus-imap and sieve filters. Thanks to Jan Wagner.
   Debian bug #513953.
+- Changed <HOST> template to be more restrictive. Debian bug
+  #514163.
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------
