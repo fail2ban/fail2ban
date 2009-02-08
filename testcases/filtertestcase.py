@@ -99,7 +99,7 @@ class GetFailures(unittest.TestCase):
 		output = ('193.168.0.128', 3, 1124013599.0)
 		
 		self.__filter.addLogPath(GetFailures.FILENAME_01)
-		self.__filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) (?:::f{4,6}:)?(?P<host>\S*)")
+		self.__filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 
 		self.__filter.getFailures(GetFailures.FILENAME_01)
 		
@@ -116,7 +116,7 @@ class GetFailures(unittest.TestCase):
 		output = ('141.3.81.106', 4, 1124013539.0)
 
 		self.__filter.addLogPath(GetFailures.FILENAME_02)
-		self.__filter.addFailRegex("Failed .* (?:::f{4,6}:)(?P<host>\S*)")
+		self.__filter.addFailRegex("Failed .* from <HOST>")
 		
 		self.__filter.getFailures(GetFailures.FILENAME_02)
 		
@@ -133,7 +133,7 @@ class GetFailures(unittest.TestCase):
 		output = ('203.162.223.135', 6, 1124013544.0)
 
 		self.__filter.addLogPath(GetFailures.FILENAME_03)
-		self.__filter.addFailRegex("error,relay=(?:::f{4,6}:)?(?P<host>\S*),.*550 User unknown")
+		self.__filter.addFailRegex("error,relay=<HOST>,.*550 User unknown")
 		
 		self.__filter.getFailures(GetFailures.FILENAME_03)
 		
@@ -151,7 +151,7 @@ class GetFailures(unittest.TestCase):
 				  ('212.41.96.185', 4, 1124013598.0)]
 
 		self.__filter.addLogPath(GetFailures.FILENAME_04)
-		self.__filter.addFailRegex("Invalid user .* (?P<host>\S*)")
+		self.__filter.addFailRegex("Invalid user .* <HOST>")
 		
 		self.__filter.getFailures(GetFailures.FILENAME_04)
 
