@@ -38,7 +38,9 @@ ver. 0.8.4 (2008/??/??) - stable
 - Use timetuple instead of utctimetuple for ISO 8601. Maybe
   not a 100% correct fix but seems to work. Tracker #2500276.
 - Made the named-refused regex a bit less restrictive in
-  order to match logs with "view". Thanks to Stephen Gildea. 
+  order to match logs with "view". Thanks to Stephen Gildea.
+- Fixed maxretry/findtime rate. Many thanks to Christos
+  Psonis. Tracker #2019714.
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------
