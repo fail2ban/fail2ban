@@ -34,6 +34,7 @@ class FailData:
 	def __init__(self):
 		self.__retry = 0
 		self.__lastTime = 0
+		self.__lastReset = 0
 	
 	def setRetry(self, value):
 		self.__retry = value
@@ -50,4 +51,9 @@ class FailData:
 	
 	def getLastTime(self):
 		return self.__lastTime
-	
+
+	def getLastReset(self):
+		return self.__lastReset
+
+	def setLastReset(self, value):
+		self.__lastReset = value
