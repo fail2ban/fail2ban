@@ -37,6 +37,8 @@ ver. 0.8.4 (2008/??/??) - stable
   #514163.
 - Use timetuple instead of utctimetuple for ISO 8601. Maybe
   not a 100% correct fix but seems to work. Tracker #2500276.
+- Made the named-refused regex a bit less restrictive in
+  order to match logs with "view". Thanks to Stephen Gildea. 
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------
