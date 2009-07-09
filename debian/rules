@@ -41,6 +41,10 @@ install: build
 	# Install Debian shipped jail file in 1 piece (instead of patching
 	# the shipped one since there are too many changes)
 	install -m 644 debian/jail.conf $(DESTDIR)/etc/fail2ban
+	# Remove explicitely created /var/run/fail2ban
+	# just to please lintian since init file will
+	# take care about it anyways
+	rm -rf $(DESTDIR)/var/run/fail2ban
 
 #
 # Just to comply with policy 4.8
