@@ -90,11 +90,15 @@ class FailManager:
 			unixTime = ticket.getTime()
 			if self.__failList.has_key(ip):
 				fData = self.__failList[ip]
+				if fData.getLastReset() < unixTime - self.__maxTime:
+					fData.setLastReset(unixTime)
+					fData.setRetry(0)
 				fData.inc()
 				fData.setLastTime(unixTime)
 			else:
 				fData = FailData()
 				fData.inc()
+				fData.setLastReset(unixTime)
 				fData.setLastTime(unixTime)
 				self.__failList[ip] = fData
 			self.__failTotal += 1
