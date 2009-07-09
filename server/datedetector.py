@@ -44,7 +44,7 @@ class DateDetector:
 			# standard
 			template = DateStrptime()
 			template.setName("MONTH Day Hour:Minute:Second")
-			template.setRegex("^\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
+			template.setRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%b %d %H:%M:%S")
 			self.__templates.append(template)
 			# asctime
@@ -76,6 +76,12 @@ class DateDetector:
 			template.setName("Day/MONTH/Year:Hour:Minute:Second")
 			template.setRegex("\d{2}/\S{3}/\d{4}:\d{2}:\d{2}:\d{2}")
 			template.setPattern("%d/%b/%Y:%H:%M:%S")
+			self.__templates.append(template)
+			# CPanel 05/20/2008:01:57:39
+			template = DateStrptime()
+			template.setName("Month/Day/Year:Hour:Minute:Second")
+			template.setRegex("\d{2}/\d{2}/\d{4}:\d{2}:\d{2}:\d{2}")
+			template.setPattern("%m/%d/%Y:%H:%M:%S")
 			self.__templates.append(template)
 			# Exim 2006-12-21 06:43:20
 			template = DateStrptime()
