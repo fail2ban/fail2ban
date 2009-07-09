@@ -18,7 +18,7 @@ if [ -s $_INITSCRIPT ]; then
 	s/.*socket\s*=\s*\(\S\+\).*/\1/p;q}' $_CONFIG 2>/dev/null`
   [ -z "$SOCKFILE" ] && SOCKFILE="/tmp/$_NAME.sock"
   if [ -S "$SOCKFILE" ]; then # Is daemon running ?
-    if [ "$SHOWRULES" == "yes" ]; then
+    if [ "$SHOWRULES" = "yes" ]; then
       echo "#: Reinitializing $_NAME"
       echo $_INITSCRIPT force-reload
     else
