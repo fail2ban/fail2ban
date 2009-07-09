@@ -34,9 +34,14 @@ fail2ban (0.8.3-6) unstable; urgency=low
   * Allow for trailing spaces in proftpd logs (closes: #507986)
     (git branch up/fixes).
   * Removed duplicate entry for DataCha0s/2\.0 in badbots (closes: #519557)
-    (git branch up/fixes)
-  * Adjusted Git-vcs field to point to git://
-  * Boosted policy to 3.8.2 (no changes are due)
+    (git branch up/fixes).
+  * Adjusted Git-vcs field to point to git:// .
+  * Thanks lintian fixes:
+    - Boosted policy to 3.8.2 (no changes are due).
+    - Boosted debhelper compatibility to 5.
+    - Misspell in README.Debian
+    - Removing stale /var/run/fail2ban from dirs -- should be created by 
+      init script
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 09 Jul 2009 01:08:40 -0400
 
