@@ -492,7 +492,7 @@ import socket, struct
 
 class DNSUtils:
 	
-	IP_CRE = re.compile("(?:\d{1,3}\.){3}\d{1,3}$")
+	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
 	
 	#@staticmethod
 	def dnsToIp(dns):

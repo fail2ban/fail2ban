@@ -39,7 +39,12 @@ class AddFailure(unittest.TestCase):
 					    ['193.168.0.128', 1167605999.0],
 					    ['87.142.124.10', 1167605999.0],
 					    ['87.142.124.10', 1167605999.0],
-					    ['87.142.124.10', 1167605999.0]]
+					    ['87.142.124.10', 1167605999.0],
+					    ['100.100.10.10', 1000000000.0],
+					    ['100.100.10.10', 1000000500.0],
+					    ['100.100.10.10', 1000001000.0],
+					    ['100.100.10.10', 1000001500.0],
+					    ['100.100.10.10', 1000002000.0]]
 		
 		self.__failManager = FailManager()
 		for i in self.__items:
@@ -49,7 +54,7 @@ class AddFailure(unittest.TestCase):
 		"""Call after every test case."""
 	
 	def testAdd(self):
-		self.assertEqual(self.__failManager.size(), 2)
+		self.assertEqual(self.__failManager.size(), 3)
 	
 	def _testDel(self):
 		self.__failManager.delFailure('193.168.0.128')
@@ -75,4 +80,11 @@ class AddFailure(unittest.TestCase):
 	
 	def testbanNOK(self):
 		self.__failManager.setMaxRetry(10)
+		self.assertRaises(FailManagerEmpty, self.__failManager.toBan)
+
+	def testWindow(self):
+		ticket = self.__failManager.toBan()
+		self.assertNotEqual(ticket.getIP(), "100.100.10.10")
+		ticket = self.__failManager.toBan()
+		self.assertNotEqual(ticket.getIP(), "100.100.10.10")
 		self.assertRaises(FailManagerEmpty, self.__failManager.toBan)
