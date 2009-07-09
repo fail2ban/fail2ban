@@ -1,3 +1,45 @@
+fail2ban (0.8.3-6) unstable; urgency=low
+
+  * Time to shake the ground with upload to unstable.
+  * Merged upstream's development as of SVN revision 732:
+     - Fixed maxretry/findtime rate. Many thanks to Christos Psonis.
+       Tracker #2019714.
+     - Made the named-refused regex a bit less restrictive in order to match
+       logs with "view". Thanks to Stephen Gildea.
+     - Use timetuple instead of utctimetuple for ISO 8601. Maybe not a 100%
+       correct fix but seems to work. Tracker #2500276.
+     - Changed <HOST> template to be more restrictive (closes: #514163).
+     - Added cyrus-imap and sieve filters. Thanks to Jan Wagner.  (closes:
+       #513953).
+     - Pull a commit from Yaroslav git repo. BF: addressing added bang to ssh
+       log (closes: #512193).
+     - Added missing semi-colon in the bind9 example. Thanks to Yaroslav
+       Halchenko.
+     - Added NetBSD ipfilter (ipf command) action. Thanks to Ed Ravin. Tracker
+       #2484115.
+     - Improved SASL filter. Thanks to Loic Pefferkorn. Tracker #2310410.
+       (closes: #507990)
+     - Added CPanel date format. Thanks to David Collins. Tracker #1967610.
+     - Added nagios script. Thanks to Sebastian Mueller.
+     - Removed print.
+     - Removed begin-line anchor for "standard" timestamp (closes: #500824)
+     - Remove socket file on startup is fail2ban crashed. Thanks to Detlef
+       Reichelt.
+  * Added a comment into Debian-shipped jail.conf about sasl logpath -- it
+    might preferable to monitor warn.log in case of postfix (To complete react
+    to #507990) (git branch up/fixes). Also added sasl example log file (git
+    branch up/log_examples).
+  * Removing minor bashism in ipmasq example file (closes: #530078).
+    Thanks Raphael Geissert (git branch up/ipmasq)
+  * Allow for trailing spaces in proftpd logs (closes: #507986)
+    (git branch up/fixes).
+  * Removed duplicate entry for DataCha0s/2\.0 in badbots (closes: #519557)
+    (git branch up/fixes)
+  * Adjusted Git-vcs field to point to git://
+  * Boosted policy to 3.8.2 (no changes are due)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 09 Jul 2009 01:08:40 -0400
+
 fail2ban (0.8.3-5) experimental; urgency=low
 
   * BF: anchoring regex for IP with " *$" at the end + adjust regexp for
