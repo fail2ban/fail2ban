@@ -12,9 +12,13 @@ ver. 0.9.0 (2009/??/??) - alpha
 - Added new prefix remover.
 - Added ISO 8601 date/time format.
 - Removed deprecated mail*.conf actions.
-- Added fail2ban-client command to manually ban a given IP for a given jail
 
-ver. 0.8.3 (2008/??/??) - stable
+ver. 0.8.4 (2009/??/??) - beta
+----------
+- Added "banip" command to fail2ban-client. Manually ban a given IP for a given jail.
+- Added jails lighttpd-fastci and php-url-fopen
+
+ver. 0.8.3 (2008/07/18) - stable
 ----------
 - Process failtickets as long as failmanager is not empty.
 - Added "pam-generic" filter and more configuration fixes.

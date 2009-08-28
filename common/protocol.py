@@ -59,6 +59,7 @@ protocol = [
 ["set <JAIL> delignoreregex <INDEX>", "removes the regular expression at <INDEX> for ignoreregex"], 
 ["set <JAIL> findtime <TIME>", "sets the number of seconds <TIME> for which the filter will look back for <JAIL>"], 
 ["set <JAIL> bantime <TIME>", "sets the number of seconds <TIME> a host will be banned for <JAIL>"], 
+["set <JAIL> banip <IP>", "manually Ban <IP> for <JAIL>"], 
 ["set <JAIL> maxretry <RETRY>", "sets the number of failures <RETRY> before banning the host for <JAIL>"], 
 ["set <JAIL> addaction <ACT>", "adds a new action named <NAME> for <JAIL>"], 
 ["set <JAIL> delaction <ACT>", "removes the action <NAME> from <JAIL>"], 

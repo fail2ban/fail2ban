@@ -222,6 +222,9 @@ class Server:
 	def setBanTime(self, name, value):
 		self.__jails.getAction(name).setBanTime(value)
 	
+	def setBanIP(self, name, value):
+		return self.__jails.getFilter(name).addBannedIP(value)
+		
 	def getBanTime(self, name):
 		return self.__jails.getAction(name).getBanTime()
 	

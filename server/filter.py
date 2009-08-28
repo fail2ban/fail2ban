@@ -180,6 +180,17 @@ class Filter(JailThread):
 		raise Exception("run() is abstract")
 	
 	##
+	# Ban an IP - http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
+	# Arturo 'Buanzo' Busleiman <buanzo@buanzo.com.ar>
+	#
+	# to enable banip fail2ban-client BAN command
+	
+	def addBannedIP(self, ip):
+		unixTime = time.time()
+		self.failManager.addFailure(FailTicket(ip, unixTime))
+		return ip
+	
+	##
 	# Add an IP/DNS to the ignore list.
 	#
 	# IP addresses in the ignore list are not taken into account
