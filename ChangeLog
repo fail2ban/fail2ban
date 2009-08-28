@@ -4,14 +4,15 @@
              |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 =============================================================
-Fail2Ban (version 0.9.0)                           2008/??/??
+Fail2Ban (version 0.9.0)                           2009/??/??
 =============================================================
 
-ver. 0.9.0 (2008/??/??) - alpha
+ver. 0.9.0 (2009/??/??) - alpha
 ----------
 - Added new prefix remover.
 - Added ISO 8601 date/time format.
 - Removed deprecated mail*.conf actions.
+- Added fail2ban-client command to manually ban a given IP for a given jail
 
 ver. 0.8.3 (2008/??/??) - stable
 ----------
