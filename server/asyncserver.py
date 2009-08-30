@@ -133,7 +133,12 @@ class AsyncServer(asyncore.dispatcher):
 		self.__init = True
 		# TODO Add try..catch
 		# There's a bug report for Python 2.6/3.0 that use_poll=True yields some 2.5 incompatibilities:
-		asyncore.loop(use_poll = False) # fixes the "Unexpected communication problem" issue on Python 2.6.
+		if (sys.version_info[0] == 2 and sys.version_info[1] == 6) or (sys.version_info[0] == 3): # if python 2.6 or 3.*...
+			logSys.debug("Detected Python 2.6 or 3.*. asyncore.loop() not using poll")
+			asyncore.loop(use_poll = False) # fixes the "Unexpected communication problem" issue on Python 2.6 and 3.0
+		else:
+			logSys.debug("NOT Python 2.6/3.* - asyncore.loop() using poll")
+			asyncore.loop(use_poll = True)
 	
 	##
 	# Stops the communication server.
