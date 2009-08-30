@@ -25,23 +25,11 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from pickle import dumps, loads, HIGHEST_PROTOCOL
+from common import helpers
 import asyncore, asynchat, socket, os, logging, sys
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.server")
-
-# we should move this to some sort of helper functions module
-
-def formatExceptionInfo():
-	""" Author: Arturo 'Buanzo' Busleiman """
-	import sys
-	cla, exc = sys.exc_info()[:2]
-	excName = cla.__name__
-	try:
-		excArgs = exc.__dict__["args"]
-	except KeyError:
-		excArgs = str(exc)
-	return (excName, excArgs)
 
 ##
 # Request handler class.
@@ -82,7 +70,7 @@ class RequestHandler(asynchat.async_chat):
 		self.close_when_done()
 		
 	def handle_error(self):
-		e1,e2 = formatExceptionInfo()
+		e1,e2 = helpers.formatExceptionInfo()
 		logSys.error("Unexpected communication error: "+e2)
 		logSys.error(traceback.format_exc().splitlines())
 		self.close()
