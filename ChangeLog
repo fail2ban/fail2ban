@@ -9,6 +9,8 @@ Fail2Ban (version 0.8.4)                                              2009/02/??
 
 ver. 0.8.4 (2009/??/??) - stable
 ----------
+- Fixed the 'unexpected communication error' problem by means of
+  use_poll=False in Python >= 2.6.
 - Merged patches from Debian package. Thanks to Yaroslav Halchenko.
 - Use current day and month instead of Jan 1st if both are not available in the
   log. Thanks to Andreas Itzchak Rehberg.
