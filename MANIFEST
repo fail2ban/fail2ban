@@ -68,12 +68,14 @@ config/filter.d/couriersmtp.conf
 config/filter.d/cyrus-imap.conf
 config/filter.d/exim.conf
 config/filter.d/gssftpd.conf
+config/filter.d/lighttpd-fastcgi.conf
 config/filter.d/named-refused.conf
 config/filter.d/postfix.conf
 config/filter.d/proftpd.conf
 config/filter.d/pure-ftpd.conf
 config/filter.d/qmail.conf
 config/filter.d/pam-generic.conf
+config/filter.d/php-url-fopen.conf
 config/filter.d/sasl.conf
 config/filter.d/sieve.conf
 config/filter.d/sshd.conf
@@ -122,5 +124,3 @@ files/cacti/cacti_host_template_fail2ban.xml
 files/cacti/README
 files/nagios/check_fail2ban
 files/nagios/f2ban.txt
-config/filter.d/lighttpd-fastcgi.conf 
-config/filter.d/php-url-fopen.conf
