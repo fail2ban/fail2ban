@@ -132,7 +132,8 @@ class AsyncServer(asyncore.dispatcher):
 		# Sets the init flag.
 		self.__init = True
 		# TODO Add try..catch
-		asyncore.loop(use_poll = True)
+		# There's a bug report for Python 2.6/3.0 that use_poll=True yields some 2.5 incompatibilities:
+		asyncore.loop(use_poll = False) # fixes the "Unexpected communication problem" issue on Python 2.6.
 	
 	##
 	# Stops the communication server.
