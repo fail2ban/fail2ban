@@ -53,6 +53,7 @@ testcases/files/testcase04.log
 setup.py
 setup.cfg
 common/__init__.py
+common/helpers.py
 common/version.py
 common/protocol.py
 config/jail.conf
