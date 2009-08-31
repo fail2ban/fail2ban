@@ -9,6 +9,9 @@ Fail2Ban (version 0.8.4)                                              2009/02/??
 
 ver. 0.8.4 (2009/??/??) - stable
 ----------
+- Moved the shutdown of the logging subsystem out of Server.quit() to
+  the end of Server.start(). Fixes the 'cannot release un-acquired lock'
+  error.
 - Added "Ban IP" command. Thanks to Arturo 'Buanzo' Busleiman.
 - Added two new filters: lighttpd-fastcgi and php-url-fopen.
 - Fixed the 'unexpected communication error' problem by means of
