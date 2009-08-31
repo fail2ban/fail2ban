@@ -96,17 +96,17 @@ class Server:
 		except OSError, e:
 			logSys.error("Unable to remove PID file: %s" % e)
 		logSys.info("Exiting Fail2ban")
-	
-	def quit(self):
-		self.stopAllJail()
-		# Stop communication
-		self.__asyncServer.stop()
 		# Shutdowns the logging.
 		try:
 			self.__loggingLock.acquire()
 			logging.shutdown()
 		finally:
 			self.__loggingLock.release()
+	
+	def quit(self):
+		self.stopAllJail()
+		# Stop communication
+		self.__asyncServer.stop()
 	
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend)
