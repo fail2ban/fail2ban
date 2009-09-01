@@ -31,7 +31,7 @@ from datedetector import DateDetector
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
 
-import logging, re
+import logging, re, os
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -449,6 +449,8 @@ class FileContainer:
 		self.__handler = None
 		# Try to open the file. Raises an exception if an error occured.
 		handler = open(filename)
+		stats = os.fstat(handler.fileno())
+		self.__ino = stats.st_ino
 		try:
 			firstLine = handler.readline()
 			# Computes the MD5 of the first line.
@@ -470,10 +472,12 @@ class FileContainer:
 		firstLine = self.__handler.readline()
 		# Computes the MD5 of the first line.
 		myHash = md5.new(firstLine).digest()
-		# Compare hash.
-		if not self.__hash == myHash:
+		stats = os.fstat(self.__handler.fileno())
+		# Compare hash and inode
+		if self.__hash != myHash or self.__ino != stats.st_ino:
 			logSys.info("Log rotation detected for %s" % self.__filename)
 			self.__hash = myHash
+			self.__ino = stats.st_ino
 			self.__pos = 0
 		# Sets the file pointer to the last position.
 		self.__handler.seek(self.__pos)
