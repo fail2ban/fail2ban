@@ -26,7 +26,7 @@ __license__ = "GPL"
 
 from pickle import dumps, loads, HIGHEST_PROTOCOL
 from common import helpers
-import asyncore, asynchat, socket, os, logging, sys
+import asyncore, asynchat, socket, os, logging, sys, traceback
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.server")
