@@ -52,7 +52,7 @@ protocol = [
 ["set <JAIL> addignoreip <IP>", "adds <IP> to the ignore list of <JAIL>"], 
 ["set <JAIL> delignoreip <IP>", "removes <IP> from the ignore list of <JAIL>"], 
 ["set <JAIL> addlogpath <FILE>", "adds <FILE> to the monitoring list of <JAIL>"], 
-["set <JAIL> dellogpath <FILE>", "removes <FILE> to the monitoring list of <JAIL>"],
+["set <JAIL> dellogpath <FILE>", "removes <FILE> from the monitoring list of <JAIL>"],
 ["set <JAIL> addfailregex <REGEX>", "adds the regular expression <REGEX> which must match failures for <JAIL>"], 
 ["set <JAIL> delfailregex <INDEX>", "removes the regular expression at <INDEX> for failregex"], 
 ["set <JAIL> addignoreregex <REGEX>", "adds the regular expression <REGEX> which should match pattern to exclude for <JAIL>"],
