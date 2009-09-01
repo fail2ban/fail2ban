@@ -9,6 +9,8 @@ Fail2Ban (version 0.8.4)                                              2009/02/??
 
 ver. 0.8.4 (2009/??/??) - stable
 ----------
+- Check the inode number for rotation in addition to checking the first line of
+  the file. Thanks to Jonathan Kamens. Red Hat #503852. Tracker #2800279.
 - Moved the shutdown of the logging subsystem out of Server.quit() to
   the end of Server.start(). Fixes the 'cannot release un-acquired lock'
   error.
