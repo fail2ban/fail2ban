@@ -4,10 +4,10 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.4)                                              2009/02/??
+Fail2Ban (version 0.8.4)                                              2009/09/07
 ================================================================================
 
-ver. 0.8.4 (2009/??/??) - stable
+ver. 0.8.4 (2009/09/07) - stable
 ----------
 - Check the inode number for rotation in addition to checking the first line of
   the file. Thanks to Jonathan Kamens. Red Hat #503852. Tracker #2800279.
