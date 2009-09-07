@@ -4,7 +4,7 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.4)                                              2009/??/??
+Fail2Ban (version 0.8.4)                                              2009/09/07
 ================================================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP that makes too many
@@ -71,7 +71,8 @@ Munger, Christoph Haas, Justin Shore, Joël Bertrand, René Berber, mEDI, Axel
 Thimm, Eric Gerbier, Christian Rauch, Michael C. Haller, Jonathan Underwood,
 Hanno 'Rince' Wagner, Daniel B. Cid, David Nutter, Raphaël Marichez, Guillaume
 Delvit, Vaclav Misek, Adrien Clerc, Michael Hanselmann, Vincent Deffontaines,
-Bill Heaton, Russell Odom, Christos Psonis and many others.
+Bill Heaton, Russell Odom, Christos Psonis, Arturo 'Buanzo' Busleiman and many
+others.
 
 License:
 --------
