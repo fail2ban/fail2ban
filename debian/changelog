@@ -1,3 +1,19 @@
+fail2ban (0.8.4-1~pre2) unstable; urgency=low
+
+  * New upstream release. Fixes compatibility issue with python2.6
+  * Yet only in Debian fixes:
+   - escaping () in pure-ftpd. Thanks Teodor (Closes: #544744)
+   - use "set logtarget" instead of "reload" while logrotate. Thanks
+     J.M.Roth (Closes: #537773)
+   - be able to detect time for VNC recording only 2 letters of year
+     (Closes: #537610)
+   - proftpd filter: count all failed logins regardless of the reason
+  * Debian-specific changes:
+   - adjusted README.Debian - multiport is default (closes: #545971)
+   - Boosted policy to 3.8.3 (no changes seems to be due)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 10 Sep 2009 11:16:51 -0400
+
 fail2ban (0.8.3-6) unstable; urgency=low
 
   * Time to shake the ground with upload to unstable.
