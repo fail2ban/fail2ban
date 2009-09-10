@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 639 $
+# $Revision: 745 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 639 $"
-__date__ = "$Date: 2007-12-17 21:04:29 +0100 (Mon, 17 Dec 2007) $"
+__version__ = "$Revision: 745 $"
+__date__ = "$Date: 2009-08-30 20:26:15 +0200 (Sun, 30 Aug 2009) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -164,6 +164,9 @@ class Transmitter:
 			value = command[2]
 			self.__server.setBanTime(name, int(value))
 			return self.__server.getBanTime(name)
+		elif command[1] == "banip":
+			value = command[2]
+			return self.__server.setBanIP(name,value)
 		elif command[1] == "addaction":
 			value = command[2]
 			self.__server.addAction(name, value)

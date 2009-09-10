@@ -25,7 +25,8 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from pickle import dumps, loads, HIGHEST_PROTOCOL
-import asyncore, asynchat, socket, os, logging
+from common import helpers
+import asyncore, asynchat, socket, os, logging, sys, traceback
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.server")
@@ -69,7 +70,9 @@ class RequestHandler(asynchat.async_chat):
 		self.close_when_done()
 		
 	def handle_error(self):
-		logSys.error("Unexpected communication error")
+		e1,e2 = helpers.formatExceptionInfo()
+		logSys.error("Unexpected communication error: "+e2)
+		logSys.error(traceback.format_exc().splitlines())
 		self.close()
 		
 ##
@@ -132,7 +135,13 @@ class AsyncServer(asyncore.dispatcher):
 		# Sets the init flag.
 		self.__init = True
 		# TODO Add try..catch
-		asyncore.loop(use_poll = True)
+		# There's a bug report for Python 2.6/3.0 that use_poll=True yields some 2.5 incompatibilities:
+		if sys.version_info >= (2, 6): # if python 2.6 or greater...
+			logSys.debug("Detected Python 2.6 or greater. asyncore.loop() not using poll")
+			asyncore.loop(use_poll = False) # fixes the "Unexpected communication problem" issue on Python 2.6 and 3.0
+		else:
+			logSys.debug("NOT Python 2.6/3.* - asyncore.loop() using poll")
+			asyncore.loop(use_poll = True)
 	
 	##
 	# Stops the communication server.

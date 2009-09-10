@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 696 $
+# $Revision: 752 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 696 $"
-__date__ = "$Date: 2008-05-19 23:05:32 +0200 (Mon, 19 May 2008) $"
+__version__ = "$Revision: 752 $"
+__date__ = "$Date: 2009-09-01 23:21:30 +0200 (Tue, 01 Sep 2009) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -31,7 +31,7 @@ from datedetector import DateDetector
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
 
-import logging, re
+import logging, re, os
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -182,6 +182,17 @@ class Filter(JailThread):
 
 	def run(self):
 		raise Exception("run() is abstract")
+	
+	##
+	# Ban an IP - http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
+	# Arturo 'Buanzo' Busleiman <buanzo@buanzo.com.ar>
+	#
+	# to enable banip fail2ban-client BAN command
+	
+	def addBannedIP(self, ip):
+		unixTime = time.time()
+		self.failManager.addFailure(FailTicket(ip, unixTime))
+		return ip
 	
 	##
 	# Add an IP/DNS to the ignore list.
@@ -438,6 +449,8 @@ class FileContainer:
 		self.__handler = None
 		# Try to open the file. Raises an exception if an error occured.
 		handler = open(filename)
+		stats = os.fstat(handler.fileno())
+		self.__ino = stats.st_ino
 		try:
 			firstLine = handler.readline()
 			# Computes the MD5 of the first line.
@@ -459,10 +472,12 @@ class FileContainer:
 		firstLine = self.__handler.readline()
 		# Computes the MD5 of the first line.
 		myHash = md5.new(firstLine).digest()
-		# Compare hash.
-		if not self.__hash == myHash:
+		stats = os.fstat(self.__handler.fileno())
+		# Compare hash and inode
+		if self.__hash != myHash or self.__ino != stats.st_ino:
 			logSys.info("Log rotation detected for %s" % self.__filename)
 			self.__hash = myHash
+			self.__ino = stats.st_ino
 			self.__pos = 0
 		# Sets the file pointer to the last position.
 		self.__handler.seek(self.__pos)
