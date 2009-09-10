@@ -71,6 +71,13 @@ class DateDetector:
 			template.setRegex("\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%d/%m/%Y %H:%M:%S")
 			self.__templates.append(template)
+			# previous one but with year given by 2 digits
+			# (See http://bugs.debian.org/537610)
+			template = DateStrptime()
+			template.setName("Day/Month/Year Hour:Minute:Second")
+			template.setRegex("\d{2}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%d/%m/%y %H:%M:%S")
+			self.__templates.append(template)
 			# Apache format [31/Oct/2006:09:22:55 -0000]
 			template = DateStrptime()
 			template.setName("Day/MONTH/Year:Hour:Minute:Second")
