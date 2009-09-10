@@ -77,20 +77,15 @@ port = ssh
 protocol = tcp
 
 
-* Multiport banning: Comment for the wishlist #373592.
+* Multiport banning: Comment for #373592, #545971
 
-Default iptables rules for banning use --dport statement which allows
-to ban just a single port. For multiport banning you would need to use
-iptables-multiport action (just override banaction in jail.local),
-which is present in fail2ban shipped in Debian since 0.7.6-1.
+iptables-multiport action is now default banaction (file jail.conf, to
+be customized within jail.local). Therefore assure that you have built
+multiport module if you use custom kernel.
 
 If you would like to ban all ports for that host, just redefine
 fwban/fwunban commands to don't have --dport %(port)s statement at
 all, or use shorewall, where actionban bans whole IP.
-
-iptables-multiport action is not default banaction since multiport
-module might not be compiled for some hand compiled kernels.
-
 
 * Blocking of NEW connections only
 Comment for the wishlist #350746.
