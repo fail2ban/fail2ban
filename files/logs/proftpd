@@ -1,0 +1,5 @@
+Jan 10 00:00:00 myhost proftpd[12345] myhost.domain.com (123.123.123.123[123.123.123.123]): USER username (Login failed): User in /etc/ftpusers
+Feb 1 00:00:00 myhost proftpd[12345] myhost.domain.com (123.123.123.123[123.123.123.123]): USER username: no such user found from 123.123.123.123 [123.123.123.123] to 234.234.234.234:21 
+
+
+
