@@ -8,7 +8,7 @@ XS-Python-Version: current, >= 2.4
 Homepage: http://www.fail2ban.org
 Vcs-Browser: http://git.onerussian.com/?p=deb/fail2ban.git
 Vcs-git: git://git.onerussian.com/deb/fail2ban.git
-Standards-Version: 3.8.2
+Standards-Version: 3.8.3
 
 
 Package: fail2ban
