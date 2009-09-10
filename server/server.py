@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 696 $
+# $Revision: 748 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 696 $"
-__date__ = "$Date: 2008-05-19 23:05:32 +0200 (Mon, 19 May 2008) $"
+__version__ = "$Revision: 748 $"
+__date__ = "$Date: 2009-08-31 16:14:02 +0200 (Mon, 31 Aug 2009) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -96,17 +96,17 @@ class Server:
 		except OSError, e:
 			logSys.error("Unable to remove PID file: %s" % e)
 		logSys.info("Exiting Fail2ban")
-	
-	def quit(self):
-		self.stopAllJail()
-		# Stop communication
-		self.__asyncServer.stop()
 		# Shutdowns the logging.
 		try:
 			self.__loggingLock.acquire()
 			logging.shutdown()
 		finally:
 			self.__loggingLock.release()
+	
+	def quit(self):
+		self.stopAllJail()
+		# Stop communication
+		self.__asyncServer.stop()
 	
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend)
@@ -160,7 +160,7 @@ class Server:
 		return self.__jails.getFilter(name).getIgnoreIP()
 	
 	def addLogPath(self, name, fileName):
-		self.__jails.getFilter(name).addLogPath(fileName)
+		self.__jails.getFilter(name).addLogPath(fileName, True)
 	
 	def delLogPath(self, name, fileName):
 		self.__jails.getFilter(name).delLogPath(fileName)
@@ -221,6 +221,9 @@ class Server:
 	def setBanTime(self, name, value):
 		self.__jails.getAction(name).setBanTime(value)
 	
+	def setBanIP(self, name, value):
+		return self.__jails.getFilter(name).addBannedIP(value)
+		
 	def getBanTime(self, name):
 		return self.__jails.getAction(name).getBanTime()
 	

@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 662 $
+# $Revision: 751 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 662 $"
-__date__ = "$Date: 2008-03-05 00:41:58 +0100 (Wed, 05 Mar 2008) $"
+__version__ = "$Revision: 751 $"
+__date__ = "$Date: 2009-09-01 22:25:32 +0200 (Tue, 01 Sep 2009) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -52,13 +52,14 @@ protocol = [
 ["set <JAIL> addignoreip <IP>", "adds <IP> to the ignore list of <JAIL>"], 
 ["set <JAIL> delignoreip <IP>", "removes <IP> from the ignore list of <JAIL>"], 
 ["set <JAIL> addlogpath <FILE>", "adds <FILE> to the monitoring list of <JAIL>"], 
-["set <JAIL> dellogpath <FILE>", "removes <FILE> to the monitoring list of <JAIL>"],
+["set <JAIL> dellogpath <FILE>", "removes <FILE> from the monitoring list of <JAIL>"],
 ["set <JAIL> addfailregex <REGEX>", "adds the regular expression <REGEX> which must match failures for <JAIL>"], 
 ["set <JAIL> delfailregex <INDEX>", "removes the regular expression at <INDEX> for failregex"], 
 ["set <JAIL> addignoreregex <REGEX>", "adds the regular expression <REGEX> which should match pattern to exclude for <JAIL>"],
 ["set <JAIL> delignoreregex <INDEX>", "removes the regular expression at <INDEX> for ignoreregex"], 
 ["set <JAIL> findtime <TIME>", "sets the number of seconds <TIME> for which the filter will look back for <JAIL>"], 
 ["set <JAIL> bantime <TIME>", "sets the number of seconds <TIME> a host will be banned for <JAIL>"], 
+["set <JAIL> banip <IP>", "manually Ban <IP> for <JAIL>"], 
 ["set <JAIL> maxretry <RETRY>", "sets the number of failures <RETRY> before banning the host for <JAIL>"], 
 ["set <JAIL> addaction <ACT>", "adds a new action named <NAME> for <JAIL>"], 
 ["set <JAIL> delaction <ACT>", "removes the action <NAME> from <JAIL>"], 
