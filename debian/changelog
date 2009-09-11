@@ -1,4 +1,4 @@
-fail2ban (0.8.4-1~pre2) unstable; urgency=low
+fail2ban (0.8.4-1) unstable; urgency=low
 
   * New upstream release. Fixes compatibility issue with python2.6
   * Yet only in Debian fixes:
