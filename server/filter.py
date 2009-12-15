@@ -31,7 +31,7 @@ from datedetector import DateDetector
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
 
-import logging, re, os
+import logging, re, os, fcntl
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -469,6 +469,9 @@ class FileContainer:
 	
 	def open(self):
 		self.__handler = open(self.__filename)
+		# Set the file descriptor to be FD_CLOEXEC
+		fd = self.__handler.fileno()
+		fcntl.fcntl(fd, fcntl.F_SETFD, fd | fcntl.FD_CLOEXEC)
 		firstLine = self.__handler.readline()
 		# Computes the MD5 of the first line.
 		myHash = md5.new(firstLine).digest()
