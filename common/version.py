@@ -24,4 +24,4 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-version = "0.8.4"
+version = "0.8.4-SVN"
