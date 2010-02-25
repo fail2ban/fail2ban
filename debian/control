@@ -2,13 +2,13 @@ Source: fail2ban
 Section: net
 Priority: optional
 Maintainer: Yaroslav Halchenko <debian@onerussian.com>
-Build-Depends: debhelper (>= 5.0.37.2), python
+Build-Depends: debhelper (>= 5.0.37.2), python (>= 2.5.4-1~)
 Build-Depends-Indep: python-central (>= 0.5.6)
 XS-Python-Version: current, >= 2.4
 Homepage: http://www.fail2ban.org
 Vcs-Browser: http://git.onerussian.com/?p=deb/fail2ban.git
 Vcs-git: git://git.onerussian.com/deb/fail2ban.git
-Standards-Version: 3.8.3
+Standards-Version: 3.8.4
 
 
 Package: fail2ban
