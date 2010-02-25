@@ -1,3 +1,14 @@
+fail2ban (0.8.4-2) unstable; urgency=low
+
+  * Merged few upstream patches (svn rev ) which fixed:
+    - Patch to make log file descriptors cloexec to stop leaking file
+      descriptors on fork/exec.
+  * debian/rules,control: -install-layout=deb for setup.py +  python (>=
+    2.5.4-1~) to fix install with python2.6 (Closes: #571213).
+  * Boosted policy to 3.8.4 (no changes seems to be due).
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 25 Feb 2010 00:17:07 -0500
+
 fail2ban (0.8.4-1) unstable; urgency=low
 
   * New upstream release. Fixes compatibility issue with python2.6
