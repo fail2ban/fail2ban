@@ -31,7 +31,7 @@ from datedetector import DateDetector
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
 
-import logging, re, os, fcntl
+import logging, re, os, fcntl, time
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
