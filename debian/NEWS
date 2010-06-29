@@ -1,4 +1,12 @@
-fail2ban (0.7.1-1) unstable; urgency=low
+fail2ban (0.8.4-3) unstable; urgency=low
+
+  * Jail named-refused-udp is unsafe and opens possibility for easy DoS,
+    thus discouraged to be used, and commented out (see #583364 for more
+    information).
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 28 Jun 2010 22:12:22 -0400
+
+fail2ban (0.7.1-0.2) unstable; urgency=low
 
   fail2ban 0.7 is a complete rewrite of the 0.6 version, and if you
   customized any of provided configuration or startup files
