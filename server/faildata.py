@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 382 $
+# $Revision: 731 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 382 $"
-__date__ = "$Date: 2006-09-25 19:03:48 +0200 (Mon, 25 Sep 2006) $"
+__version__ = "$Revision: 731 $"
+__date__ = "$Date: 2009-02-09 23:08:21 +0100 (Mon, 09 Feb 2009) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -34,6 +34,7 @@ class FailData:
 	def __init__(self):
 		self.__retry = 0
 		self.__lastTime = 0
+		self.__lastReset = 0
 	
 	def setRetry(self, value):
 		self.__retry = value
@@ -50,4 +51,9 @@ class FailData:
 	
 	def getLastTime(self):
 		return self.__lastTime
-	
+
+	def getLastReset(self):
+		return self.__lastReset
+
+	def setLastReset(self, value):
+		self.__lastReset = value

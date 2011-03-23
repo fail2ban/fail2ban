@@ -1,11 +1,11 @@
-               __      _ _ ___ _               
-              / _|__ _(_) |_  ) |__  __ _ _ _  
-             |  _/ _` | | |/ /| '_ \/ _` | ' \ 
-             |_| \__,_|_|_/___|_.__/\__,_|_||_|
+                         __      _ _ ___ _               
+                        / _|__ _(_) |_  ) |__  __ _ _ _  
+                       |  _/ _` | | |/ /| '_ \/ _` | ' \ 
+                       |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
-=============================================================
-ToDo                                         $Revision: 653 $
-=============================================================
+================================================================================
+ToDo                                                            $Revision: 732 $
+================================================================================
 
 Legend:
 - not yet done
@@ -15,26 +15,24 @@ Legend:
 
 - Removed relative imports
 
-- Cleanup fail2ban-client and fail2ban-server. Move code to
-  server/ and client/
+- Cleanup fail2ban-client and fail2ban-server. Move code to server/ and client/
 
-- Add timeout to external commands (signal alarm, watchdog
-  thread, etc)
+- Add timeout to external commands (signal alarm, watchdog thread, etc)
 
 - New backend: pyinotify
 
-- Uniformize filters and actions name. Use the software name
-  (openssh, postfix, proftp)
+- Uniformize filters and actions name. Use the software name (openssh, postfix,
+  proftp)
 
-- Added <USER> tag for failregex. Add features using this
-  information. Maybe add more tags
+- Added <USER> tag for failregex. Add features using this information. Maybe add
+  more tags
 
 - Look at the memory consumption. Decrease memory usage
 
 - More detailed statistics
 
-- Auto-enable function (search for log files), check
-  modification date to see if service is still in use
+- Auto-enable function (search for log files), check modification date to see if
+  service is still in use
 
 - Improve parsing of the action parameters in jailreader.py
 
@@ -44,8 +42,8 @@ Legend:
 
 - Multiline log reading
 
-- Improve execution of action. Why does subprocess.call
-  deadlock with multi-jails?
+- Improve execution of action. Why does subprocess.call deadlock with
+  multi-jails?
 
 # see Feature Request Tracking System at SourceForge.net
 

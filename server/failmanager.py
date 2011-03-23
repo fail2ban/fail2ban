@@ -16,11 +16,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 638 $
+# $Revision: 731 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 638 $"
-__date__ = "$Date: 2007-12-17 21:00:36 +0100 (Mon, 17 Dec 2007) $"
+__version__ = "$Revision: 731 $"
+__date__ = "$Date: 2009-02-09 23:08:21 +0100 (Mon, 09 Feb 2009) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -90,11 +90,15 @@ class FailManager:
 			unixTime = ticket.getTime()
 			if self.__failList.has_key(ip):
 				fData = self.__failList[ip]
+				if fData.getLastReset() < unixTime - self.__maxTime:
+					fData.setLastReset(unixTime)
+					fData.setRetry(0)
 				fData.inc()
 				fData.setLastTime(unixTime)
 			else:
 				fData = FailData()
 				fData.inc()
+				fData.setLastReset(unixTime)
 				fData.setLastTime(unixTime)
 				self.__failList[ip] = fData
 			self.__failTotal += 1

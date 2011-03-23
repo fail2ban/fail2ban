@@ -17,11 +17,11 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision: 692 $
+# $Revision: 729 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 692 $"
-__date__ = "$Date: 2008-05-18 21:53:18 +0200 (Sun, 18 May 2008) $"
+__version__ = "$Revision: 729 $"
+__date__ = "$Date: 2009-02-08 20:50:44 +0100 (Sun, 08 Feb 2009) $"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -132,7 +132,7 @@ class DateStrptime(DateTemplate):
 				conv = self.convertLocale(dateMatch.group())
 				try:
 					date = list(time.strptime(conv, self.getPattern()))
-				except ValueError:
+				except ValueError, e:
 					# Try to add the current year to the pattern. Should fix
 					# the "Feb 29" issue.
 					conv += " %s" % MyTime.gmtime()[0]
@@ -187,6 +187,5 @@ class DateISO8601(DateTemplate):
 		if dateMatch:
 			# Parses the date.
 			value = dateMatch.group()
-			print value
-			date = list(iso8601.parse_date(value).utctimetuple())
+			date = list(iso8601.parse_date(value).timetuple())
 		return date

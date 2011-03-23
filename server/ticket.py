@@ -35,12 +35,19 @@ class Ticket:
 		self.__ip = ip
 		self.__time = time
 		self.__attempt = 0
+		self.__file = None
 	
 	def setIP(self, value):
 		self.__ip = value
 	
 	def getIP(self):
 		return self.__ip
+	
+	def setFile(self, value):
+		self.__file = value
+	
+	def getFile(self):
+		return self.__file
 	
 	def setTime(self, value):
 		self.__time = value

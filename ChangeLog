@@ -1,109 +1,111 @@
-               __      _ _ ___ _               
-              / _|__ _(_) |_  ) |__  __ _ _ _  
-             |  _/ _` | | |/ /| '_ \/ _` | ' \ 
-             |_| \__,_|_|_/___|_.__/\__,_|_||_|
+                         __      _ _ ___ _               
+                        / _|__ _(_) |_  ) |__  __ _ _ _  
+                       |  _/ _` | | |/ /| '_ \/ _` | ' \ 
+                       |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
-=============================================================
-Fail2Ban (version 0.8.4)                           2008/??/??
-=============================================================
+================================================================================
+Fail2Ban (version 0.8.4)                                              2009/09/07
+================================================================================
 
-ver. 0.8.4 (2008/??/??) - stable
+ver. 0.8.4 (2009/09/07) - stable
 ----------
-- Merged patches from Debian package. Thanks to Yaroslav
-  Halchenko.
-- Use current day and month instead of Jan 1st if both are
-  not available in the log. Thanks to Andreas Itzchak
-  Rehberg.
-- Try to match the regex even if the line does not contain a
-  valid date/time. Described in Debian #491253. Thanks to
-  Yaroslav Halchenko.
+- Check the inode number for rotation in addition to checking the first line of
+  the file. Thanks to Jonathan Kamens. Red Hat #503852. Tracker #2800279.
+- Moved the shutdown of the logging subsystem out of Server.quit() to
+  the end of Server.start(). Fixes the 'cannot release un-acquired lock'
+  error.
+- Added "Ban IP" command. Thanks to Arturo 'Buanzo' Busleiman.
+- Added two new filters: lighttpd-fastcgi and php-url-fopen.
+- Fixed the 'unexpected communication error' problem by means of
+  use_poll=False in Python >= 2.6.
+- Merged patches from Debian package. Thanks to Yaroslav Halchenko.
+- Use current day and month instead of Jan 1st if both are not available in the
+  log. Thanks to Andreas Itzchak Rehberg.
+- Try to match the regex even if the line does not contain a valid date/time.
+  Described in Debian #491253. Thanks to Yaroslav Halchenko.
 - Added/improved filters and date formats.
-- Added actions to report abuse to ISP, DShield and
-  myNetWatchman. Thanks to Russell Odom.
+- Added actions to report abuse to ISP, DShield and myNetWatchman. Thanks to
+  Russell Odom.
+- Suse init script. Remove socket file on startup is fail2ban crashed. Thanks to
+  Detlef Reichelt.
+- Removed begin-line anchor for "standard" timestamp. Fixed Debian bug #500824.
+- Added nagios script. Thanks to Sebastian Mueller.
+- Added CPanel date format. Thanks to David Collins. Tracker #1967610.
+- Improved SASL filter. Thanks to Loic Pefferkorn. Tracker #2310410.
+- Added NetBSD ipfilter (ipf command) action. Thanks to Ed Ravin. Tracker
+  #2484115.
+- Added cyrus-imap and sieve filters. Thanks to Jan Wagner. Debian bug #513953.
+- Changed <HOST> template to be more restrictive. Debian bug #514163.
+- Use timetuple instead of utctimetuple for ISO 8601. Maybe not a 100% correct
+  fix but seems to work. Tracker #2500276.
+- Made the named-refused regex a bit less restrictive in order to match logs
+  with "view". Thanks to Stephen Gildea.
+- Fixed maxretry/findtime rate. Many thanks to Christos Psonis. Tracker
+  #2019714.
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------
 - Process failtickets as long as failmanager is not empty.
-- Added "pam-generic" filter and more configuration fixes.
-  Thanks to Yaroslav Halchenko.
-- Fixed socket path in redhat and suse init script. Thanks to
-  Jim Wight.
-- Fixed PID file while started in daemon mode. Thanks to
-  Christian Jobic who submitted a similar patch.
+- Added "pam-generic" filter and more configuration fixes. Thanks to Yaroslav
+  Halchenko.
+- Fixed socket path in redhat and suse init script. Thanks to Jim Wight.
+- Fixed PID file while started in daemon mode. Thanks to Christian Jobic who
+  submitted a similar patch.
 - Fixed "fail2ban-client get <jail> logpath". Bug #1916986.
 - Added gssftpd filter. Thanks to Kevin Zembower.
-- Added "Day/Month/Year Hour:Minute:Second" date template.
-  Thanks to Dennis Winter.
-- Fixed ignoreregex processing in fail2ban-client. Thanks to
-  René Berber.
+- Added "Day/Month/Year Hour:Minute:Second" date template. Thanks to Dennis
+  Winter.
+- Fixed ignoreregex processing in fail2ban-client. Thanks to René Berber.
 - Added ISO 8601 date/time format.
 - Added and changed some logging level and messages.
-- Added missing ignoreregex to filters. Thanks to Klaus
-  Lehmann.
-- Use poll instead of select in asyncore.loop. This should
-  solve the "Unknown error 514". Thanks to Michael Geiger and
-  Klaus Lehmann.
+- Added missing ignoreregex to filters. Thanks to Klaus Lehmann.
+- Use poll instead of select in asyncore.loop. This should solve the "Unknown
+  error 514". Thanks to Michael Geiger and Klaus Lehmann.
 
 ver. 0.8.2 (2008/03/06) - stable
 ----------
 - Fixed named filter. Thanks to Yaroslav Halchenko
-- Fixed wrong path for apache-auth in jail.conf. Thanks to
-  Vincent Deffontaines
-- Fixed timezone bug with epoch date template. Thanks to
-  Michael Hanselmann
-- Added "full line failregex" patch. Thanks to Yaroslav
-  Halchenko. It will be possible to create stronger failregex
-  against log injection
+- Fixed wrong path for apache-auth in jail.conf. Thanks to Vincent Deffontaines
+- Fixed timezone bug with epoch date template. Thanks to Michael Hanselmann
+- Added "full line failregex" patch. Thanks to Yaroslav Halchenko. It will be
+  possible to create stronger failregex against log injection
 - Fixed ipfw action script. Thanks to Nick Munger
-- Removed date from logging message when using SYSLOG. Thanks
-  to Iain Lea
-- Fixed "ignore IPs". Only the first value was taken into
-  account. Thanks to Adrien Clerc
+- Removed date from logging message when using SYSLOG. Thanks to Iain Lea
+- Fixed "ignore IPs". Only the first value was taken into account. Thanks to
+  Adrien Clerc
 - Moved socket to /var/run/fail2ban.
 - Rewrote the communication server.
 - Refactoring. Reduced number of files.
-- Removed Python 2.4. Minimum required version is now Python
-  2.3.
+- Removed Python 2.4. Minimum required version is now Python 2.3.
 - New log rotation detection algorithm.
 - Print monitored files in status.
-- Create a PID file in /var/run/fail2ban/. Thanks to Julien
-  Perez.
-- Fixed "Feb 29" bug. Thanks to James Andrewartha who pointed
-  this out. Thanks to Yaroslav Halchenko for the fix.
-- "reload <jail>" reloads a single jail and the parameters in
-  fail2ban.conf.
+- Create a PID file in /var/run/fail2ban/. Thanks to Julien Perez.
+- Fixed "Feb 29" bug. Thanks to James Andrewartha who pointed this out. Thanks
+  to Yaroslav Halchenko for the fix.
+- "reload <jail>" reloads a single jail and the parameters in fail2ban.conf.
 - Added Mac OS/X startup script. Thanks to Bill Heaton.
 - Absorbed some Debian patches. Thanks to Yaroslav Halchenko.
 - Replaced "echo" with "printf" in actions. Fix #1839673
-- Replaced "reject" with "drop" in shorwall action. Fix
-  #1854875
+- Replaced "reject" with "drop" in shorwall action. Fix #1854875
 - Fixed Debian bug #456567, #468477, #462060, #461426
-- readline is now optional in fail2ban-client (not needed in
-  fail2ban-server).
+- readline is now optional in fail2ban-client (not needed in fail2ban-server).
 
 ver. 0.8.1 (2007/08/14) - stable
 ----------
 - Fixed vulnerability in sshd.conf. Thanks to Daniel B. Cid
 - Expand <HOST> in ignoreregex. Thanks to Yaroslav Halchenko
-- Improved regular expressions. Thanks to Yaroslav Halchenko
-  and others
-- Added sendmail actions. The action started with "mail" are
-  now deprecated. Thanks to Raphaël Marichez
+- Improved regular expressions. Thanks to Yaroslav Halchenko and others
+- Added sendmail actions. The action started with "mail" are now deprecated.
+  Thanks to Raphaël Marichez
 - Added "ignoreregex" support to fail2ban-regex
-- Updated suse-initd and added it to MANIFEST. Thanks to
-  Christian Rauch
-- Tightening up the pid check in redhat-initd. Thanks to
-  David Nutter
-- Added webmin authentication filter. Thanks to Guillaume
-  Delvit
-- Removed textToDns() which is not required anymore. Thanks
-  to Yaroslav Halchenko
-- Added new action iptables-allports. Thanks to Yaroslav
+- Updated suse-initd and added it to MANIFEST. Thanks to Christian Rauch
+- Tightening up the pid check in redhat-initd. Thanks to David Nutter
+- Added webmin authentication filter. Thanks to Guillaume Delvit
+- Removed textToDns() which is not required anymore. Thanks to Yaroslav
   Halchenko
-- Added "named" date format to date detector. Thanks to
-  Yaroslav Halchenko
-- Added filter file for named (bind9). Thanks to Yaroslav
-  Halchenko
+- Added new action iptables-allports. Thanks to Yaroslav Halchenko
+- Added "named" date format to date detector. Thanks to Yaroslav Halchenko
+- Added filter file for named (bind9). Thanks to Yaroslav Halchenko
 - Fixed vsftpd filter. Thanks to Yaroslav Halchenko
 
 ver. 0.8.0 (2007/05/03) - stable
@@ -123,20 +125,17 @@ ver. 0.7.8 (2007/03/21) - release candidate
 ----------
 - Fixed asctime pattern in datedetector.py
 - Added new filters/actions. Thanks to Yaroslav Halchenko
-- Added Suse init script and modified gentoo-initd. Thanks to
-  Christian Rauch
+- Added Suse init script and modified gentoo-initd. Thanks to Christian Rauch
 - Moved every locking statements in a try..finally block
 
 ver. 0.7.7 (2007/02/08) - release candidate
 ----------
 - Added signal handling in fail2ban-client
 - Added a wonderful visual effect when waiting on the server
-- fail2ban-client returns an error code if configuration is
-  not valid
+- fail2ban-client returns an error code if configuration is not valid
 - Added new filters/actions. Thanks to Yaroslav Halchenko
 - Call Python interpreter directly (instead of using "env")
-- Added file support to fail2ban-regex. Benchmark feature has
-  been removed
+- Added file support to fail2ban-regex. Benchmark feature has been removed
 - Added cacti script and template.
 - Added IP list in "status <JAIL>". Thanks to Eric Gerbier
 
@@ -146,60 +145,53 @@ ver. 0.7.6 (2007/01/04) - beta
 - Use /dev/log for SYSLOG output. Thanks to Joerg Sommrey
 - Use numeric output for iptables in "actioncheck"
 - Fixed removal of host in hosts.deny. Thanks to René Berber
-- Added new date format (2006-12-21 06:43:20) and Exim4
-  filter. Thanks to mEDI
-- Several "failregex" and "ignoreregex" are now accepted.
-  Creation of rules should be easier now.
+- Added new date format (2006-12-21 06:43:20) and Exim4 filter. Thanks to mEDI
+- Several "failregex" and "ignoreregex" are now accepted. Creation of rules
+  should be easier now.
 - Added license in COPYING. Thanks to Axel Thimm
-- Allow comma in action options. The value of the option must
-  be escaped with " or '. Thanks to Yaroslav Halchenko
-- Now Fail2ban goes in /usr/share/fail2ban instead of
-  /usr/lib/fail2ban. This is more compliant with FHS. Thanks
-  to Axel Thimm and Yaroslav Halchenko
+- Allow comma in action options. The value of the option must be escaped with "
+  or '. Thanks to Yaroslav Halchenko
+- Now Fail2ban goes in /usr/share/fail2ban instead of /usr/lib/fail2ban. This is
+  more compliant with FHS. Thanks to Axel Thimm and Yaroslav Halchenko
 
 ver. 0.7.5 (2006/12/07) - beta
 ----------
-- Do not ban a host that is currently banned. Thanks to
-  Yaroslav Halchenko
-- The supported tags in "action(un)ban" are <ip>, <failures>
-  and <time>
+- Do not ban a host that is currently banned. Thanks to Yaroslav Halchenko
+- The supported tags in "action(un)ban" are <ip>, <failures> and <time>
 - Fixed refactoring bug (getLastcommand -> getLastAction)
-- Added option "ignoreregex" in filter scripts and jail.conf.
-  Feature Request #1283304
+- Added option "ignoreregex" in filter scripts and jail.conf. Feature Request
+  #1283304
 - Fixed a bug in user defined time regex/pattern
 - Improved documentation
 - Moved version.py and protocol.py to common/
 - Merged "maxtime" option with "findtime"
-- Added "<HOST>" tag support in failregex which matches
-  default IP address/hostname. "(?P<host>\S)" is still valid
-  and supported
-- Fixed exception when calling fail2ban-server with unknown
-  option
-- Fixed Debian bug 400162. The "socket" option is now handled
-  correctly by fail2ban-client
+- Added "<HOST>" tag support in failregex which matches default IP
+  address/hostname. "(?P<host>\S)" is still valid and supported
+- Fixed exception when calling fail2ban-server with unknown option
+- Fixed Debian bug 400162. The "socket" option is now handled correctly by
+  fail2ban-client
 - Fixed RedHat init script. Thanks to Justin Shore
-- Changed timeout to 30 secondes before assuming the server
-  cannot be started. Thanks to Joël Bertrand
+- Changed timeout to 30 secondes before assuming the server cannot be started.
+  Thanks to Joël Bertrand
 
 ver. 0.7.4 (2006/11/01) - beta
 ----------
 - Improved configuration files. Thanks to Yaroslav Halchenko
 - Added man page for "fail2ban-regex"
 - Moved ban/unban messages from "info" level to "warn"
-- Added "-s" option to specify the socket path and "socket"
-  option in "fail2ban.conf"
+- Added "-s" option to specify the socket path and "socket" option in
+  "fail2ban.conf"
 - Added "backend" option in "jail.conf"
-- Added more filters/actions and jail samples. Thanks to Nick
-  Munger, Christoph Haas
+- Added more filters/actions and jail samples. Thanks to Nick Munger, Christoph
+  Haas
 - Improved testing framework
-- Fixed a bug in the return code handling of the executed
-  commands. Thanks to Yaroslav Halchenko
-- Signal handling. There is a bug with join() and signal in
-  Python
+- Fixed a bug in the return code handling of the executed commands. Thanks to
+  Yaroslav Halchenko
+- Signal handling. There is a bug with join() and signal in Python
 - Better debugging output for "fail2ban-regex"
 - Added support for more date format
-- cPickle does not work with Python 2.5. Use pickle instead
-  (performance is not a problem in our case)
+- cPickle does not work with Python 2.5. Use pickle instead (performance is not
+  a problem in our case)
 
 ver. 0.7.3 (2006/09/28) - beta
 ----------
@@ -219,15 +211,13 @@ ver. 0.7.2 (2006/09/10) - beta
 - Improved client output
 - Added more get/set commands
 - Added more configuration templates
-- Removed "logpath" and "maxretry" from filter templates.
-  They must be defined in jail.conf now
+- Removed "logpath" and "maxretry" from filter templates. They must be defined
+  in jail.conf now
 - Added interactive mode. Use "-i"
-- Added a date detector. "timeregex" and "timepattern" are no
-  more needed
-- Added "fail2ban-regex". This is a tool to help finding
-  "failregex"
-- Improved server communication. Start a new thread for each
-  incoming request. Fail2ban is not really thread-safe yet
+- Added a date detector. "timeregex" and "timepattern" are no more needed
+- Added "fail2ban-regex". This is a tool to help finding "failregex"
+- Improved server communication. Start a new thread for each incoming request.
+  Fail2ban is not really thread-safe yet
 
 ver. 0.7.1 (2006/08/23) - alpha
 ----------
@@ -238,106 +228,91 @@ ver. 0.7.1 (2006/08/23) - alpha
 
 ver. 0.7.0 (2006/08/23) - alpha
 ----------
-- Almost a complete rewrite :) Fail2ban design is really
-  better (IMHO). There is a lot of new features
+- Almost a complete rewrite :) Fail2ban design is really better (IMHO). There is
+  a lot of new features
 - Client/Server architecture
-- Multithreading. Each jail has its own threads: one for the
-  log reading and another for the actions
+- Multithreading. Each jail has its own threads: one for the log reading and
+  another for the actions
 - Execute several actions
-- Split configuration files. They are more readable and easy
-  to use
-- failregex uses group (<host>) now. This feature was already
-  present in the Debian package
+- Split configuration files. They are more readable and easy to use
+- failregex uses group (<host>) now. This feature was already present in the
+  Debian package
 - lots of things...
 
 ver. 0.6.1 (2006/03/16) - stable
 ----------
-- Added permanent banning. Set banTime to a negative value to
-  enable this feature (-1 is perfect). Thanks to Mannone
+- Added permanent banning. Set banTime to a negative value to enable this
+  feature (-1 is perfect). Thanks to Mannone
 - Fixed locale bug. Thanks to Fernando José
 - Fixed crash when time format does not match data
-- Propagated patch from Debian to fix fail2ban search path 
-  addition to the path search list: now it is added first. 
-  Thanks to Nick Craig-Wood
-- Added SMTP authentification for mail notification. Thanks
-  to Markus Hoffmann
+- Propagated patch from Debian to fix fail2ban search path addition to the path
+  search list: now it is added first. Thanks to Nick Craig-Wood
+- Added SMTP authentification for mail notification. Thanks to Markus Hoffmann
 - Removed debug mode as it is confusing for people
-- Added parsing of timestamp in TAI64N format (#1275325).
-  Thanks to Mark Edgington
-- Added patch #1382936 (Default formatted syslog logging).
-  Thanks to Patrick B�rjesson
-- Removed 192.168.0.0/16 from ignoreip. Attacks could also
-  come from the local network.
-- Robust startup: if iptables module does not get fully
-  initialized after startup of fail2ban, fail2ban will do
-  "maxreinit" attempts to initialize its own firewall. It
-  will sleep between attempts for "polltime" number of
-  seconds (closes Debian: #334272). Thanks to Yaroslav
-  Halchenko
-- Added "interpolations" in fail2ban.conf. This is provided
-  by the ConfigParser module. Old configuration files still
-  work. Thanks to Yaroslav Halchenko
-- Added initial support for hosts.deny and shorewall. Need
-  more testing. Please test. Thanks to kojiro from Gentoo
-  forum for hosts.deny support
+- Added parsing of timestamp in TAI64N format (#1275325). Thanks to Mark
+  Edgington
+- Added patch #1382936 (Default formatted syslog logging). Thanks to Patrick
+  B�rjesson
+- Removed 192.168.0.0/16 from ignoreip. Attacks could also come from the local
+  network.
+- Robust startup: if iptables module does not get fully initialized after
+  startup of fail2ban, fail2ban will do "maxreinit" attempts to initialize its
+  own firewall. It will sleep between attempts for "polltime" number of seconds
+  (closes Debian: #334272). Thanks to Yaroslav Halchenko
+- Added "interpolations" in fail2ban.conf. This is provided by the ConfigParser
+  module. Old configuration files still work. Thanks to Yaroslav Halchenko
+- Added initial support for hosts.deny and shorewall. Need more testing. Please
+  test. Thanks to kojiro from Gentoo forum for hosts.deny support
 - Added support for vsftpd. Thanks to zugeschmiert
 
 ver. 0.6.0 (2005/11/20) - stable
 ----------
-- Propagated patches introduced by Debian maintainer 
-  (Yaroslav Halchenko):
-  * Added an option to report local time (including timezone)
-    or GMT in mail notification.
+- Propagated patches introduced by Debian maintainer (Yaroslav Halchenko):
+  * Added an option to report local time (including timezone) or GMT in mail
+    notification.
 
 ver. 0.5.5 (2005/10/26) - beta
 ----------
-- Propagated patches introduced by Debian maintainer 
-  (Yaroslav Halchenko):
-  * Introduced fwcheck option to verify consistency of the
-    chains. Implemented automatic restart of fail2ban main
-    function in case check of fwban or fwunban command failed
-    (closes: #329163, #331695). (Introduced patch was further
-    adjusted by upstream author).
+- Propagated patches introduced by Debian maintainer (Yaroslav Halchenko):
+  * Introduced fwcheck option to verify consistency of the chains. Implemented
+    automatic restart of fail2ban main function in case check of fwban or
+    fwunban command failed (closes: #329163, #331695). (Introduced patch was
+    further adjusted by upstream author).
   * Added -f command line parameter for [findtime].
-  * Added a cleanup of firewall rules on emergency shutdown
-    when unknown exception is catched.
-  * Fail2ban should not crash now if a wrong file name is
-    specified in config.
-  * reordered code a bit so that log targets are setup right
-    after background and then only loglevel (verbose, debug)
-    is processed, so the warning could be seen in the logs
-  * Added a keyword <section> in parsing of the subject and
-    the body of an email sent out by fail2ban (closes:
-    #330311)
+  * Added a cleanup of firewall rules on emergency shutdown when unknown
+    exception is catched.
+  * Fail2ban should not crash now if a wrong file name is specified in config.
+  * reordered code a bit so that log targets are setup right after background
+    and then only loglevel (verbose, debug) is processed, so the warning could
+    be seen in the logs
+  * Added a keyword <section> in parsing of the subject and the body of an email
+    sent out by fail2ban (closes: #330311)
 
 ver. 0.5.4 (2005/09/13) - beta
 ----------
 - Fixed bug #1286222.
-- Propagated patches introduced by Debian maintainer 
-  (Yaroslav Halchenko):
-  * Fixed handling of SYSLOG logging target. Now it can log
-    to any SYSLOG target and facility as directed by the 
-    config
+- Propagated patches introduced by Debian maintainer (Yaroslav Halchenko):
+  * Fixed handling of SYSLOG logging target. Now it can log to any SYSLOG target
+    and facility as directed by the config
   * Format of SYSLOG entries fixed to look closer to standard
   * Fixed errata in config/gentoo-confd
-  * Introduced findtime configuration variable to control the
-    lifetime of caught "failed" log entries
+  * Introduced findtime configuration variable to control the lifetime of caught
+    "failed" log entries
 	
 ver. 0.5.3 (2005/09/08) - beta
 ----------
-- Fixed a bug when overriding "maxfailures" or "bantime".
-  Thanks to Yaroslav Halchenko
-- Added more debug output if an error occurs when sending
-  mail. Thanks to Stephen Gildea
-- Renamed "maxretry" to "maxfailures" and changed default
-  value to 5. Thanks to Stephen Gildea
+- Fixed a bug when overriding "maxfailures" or "bantime". Thanks to Yaroslav
+  Halchenko
+- Added more debug output if an error occurs when sending mail. Thanks to
+  Stephen Gildea
+- Renamed "maxretry" to "maxfailures" and changed default value to 5. Thanks to
+  Stephen Gildea
 - Hopefully fixed bug #1256075
 - Fixed bug #1262345
 - Fixed exception handling in PIDLock
-- Removed warning when using "-V" or "-h" with no config
-  file. Thanks to Yaroslav Halchenko
-- Removed "-i eth0" from config file. Thanks to Yaroslav
-  Halchenko
+- Removed warning when using "-V" or "-h" with no config file. Thanks to
+  Yaroslav Halchenko
+- Removed "-i eth0" from config file. Thanks to Yaroslav Halchenko
 
 ver. 0.5.2 (2005/08/06) - beta
 ----------
@@ -353,11 +328,9 @@ ver. 0.5.1 (2005/07/23) - beta
 ----------
 - Fixed bugs #1241756, #1239557
 - Added log targets in configuration file. Removed -l option
-- Changed iptables rules in order to create a separated chain
-  for each section
+- Changed iptables rules in order to create a separated chain for each section
 - Fixed static banList in firewall.py
-- Added an initd script for Debian. Thanks to Yaroslav
-  Halchenko
+- Added an initd script for Debian. Thanks to Yaroslav Halchenko
 - Check for obsolete files after install
 
 ver. 0.5.0 (2005/07/12) - beta
@@ -365,24 +338,22 @@ ver. 0.5.0 (2005/07/12) - beta
 - Added support for CIDR mask in ignoreip
 - Added mail notification support
 - Fixed bug #1234699
-- Added tags replacement in rules definition. Should allow a
-  clean solution for Feature Request #1229479
+- Added tags replacement in rules definition. Should allow a clean solution for
+  Feature Request #1229479
 - Removed "interface" and "firewall" options
-- Added start and end commands in the configuration file.
-  Thanks to Yaroslav Halchenko
+- Added start and end commands in the configuration file. Thanks to Yaroslav
+  Halchenko
 - Added firewall rules definition in the configuration file
 - Cleaned fail2ban.py
-- Added an initd script for RedHat/Fedora. Thanks to Andrey
-  G. Grozin
+- Added an initd script for RedHat/Fedora. Thanks to Andrey G. Grozin
 
 ver. 0.4.1 (2005/06/30) - stable
 ----------
-- Fixed textToDNS method which generated wrong matches for
-  "rhost=12-xyz...". Thanks to Tom Pike
+- Fixed textToDNS method which generated wrong matches for "rhost=12-xyz...".
+  Thanks to Tom Pike
 - fail2ban.conf modified for readability. Thanks to Iain Lea
 - Added an initd script for Gentoo
-- Changed default PID lock file location from /tmp to
-  /var/run
+- Changed default PID lock file location from /tmp to /var/run
 
 ver. 0.4.0 (2005/04/24) - stable
 ----------
@@ -398,8 +369,8 @@ ver. 0.3.1 (2005/03/31) - beta
 
 ver. 0.3.0 (2005/02/24) - beta
 ----------
-- Re-writting of parts of the code in order to handle several
-  log files with different rules
+- Re-writting of parts of the code in order to handle several log files with
+  different rules
 - Removed sshd.py because it is no more needed
 - Fixed a bug when exiting with IP in the ban list
 - Added PID lock file
@@ -409,25 +380,21 @@ ver. 0.3.0 (2005/02/24) - beta
 
 ver. 0.1.2 (2004/11/21) - beta
 ----------
-- Add ipfw and ipfwadm support. The rules are taken from
-  BlockIt. Thanks to Robert Edeker
-- Add -e option which allows to set the interface. Thanks to
-  Robert Edeker who reminded me this
+- Add ipfw and ipfwadm support. The rules are taken from BlockIt. Thanks to
+  Robert Edeker
+- Add -e option which allows to set the interface. Thanks to Robert Edeker who
+  reminded me this
 - Small code cleaning
 
 ver. 0.1.1 (2004/10/23) - beta
 ----------
-- Add SIGTERM handler in order to exit nicely when in daemon
-  mode
-- Add -r option which allows to set the maximum number of
-  login failures
-- Remove the Metalog class as the log file are not so syslog
-  daemon specific
-- Rewrite log reader to be service centered. Sshd support
-  added. Match "Failed password" and "Illegal user"
+- Add SIGTERM handler in order to exit nicely when in daemon mode
+- Add -r option which allows to set the maximum number of login failures
+- Remove the Metalog class as the log file are not so syslog daemon specific
+- Rewrite log reader to be service centered. Sshd support added. Match "Failed
+  password" and "Illegal user"
 - Add /etc/fail2ban.conf configuration support
 - Code documentation
-
 
 ver. 0.1.0 (2004/10/12) - alpha
 ----------

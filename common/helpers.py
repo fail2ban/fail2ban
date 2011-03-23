@@ -15,13 +15,24 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # Author: Cyril Jaquier
+# Author: Arturo 'Buanzo' Busleiman
 # 
-# $Revision: 754 $
+# $Revision: 741 $
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 754 $"
-__date__ = "$Date: 2009-09-07 21:13:45 +0200 (Mon, 07 Sep 2009) $"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__version__ = "$Revision: 741 $"
+__date__ = "$Date: 2009-08-30 16:13:04 +0200 (Sun, 30 Aug 2009) $"
+__copyright__ = "Copyright (c) 2009 Cyril Jaquier"
 __license__ = "GPL"
 
-version = "0.8.4"
+
+def formatExceptionInfo():
+    """ Author: Arturo 'Buanzo' Busleiman """
+    import sys
+    cla, exc = sys.exc_info()[:2]
+    excName = cla.__name__
+    try:
+        excArgs = exc.__dict__["args"]
+    except KeyError:
+        excArgs = str(exc)
+    return (excName, excArgs)
