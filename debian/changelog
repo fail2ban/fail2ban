@@ -1,3 +1,37 @@
+fail2ban (0.8.4+svn20110323-1) unstable; urgency=low
+
+  * Fresh upstream snapshot which absorbed some of the patches from Debian
+    and
+	- [c6d64e9] debug entry for lines ignored due to falling below
+      findtime (v2)
+  	- [fc20f12] Tai64N stores time in GMT, we need to convert to
+      local time before returning
+  	- [b0331bb] default ignoreip to ignore entire loopback zone (/8)
+  	  (Closes: #598200)
+    - [b9f15f6] ENH: dovecot filter
+    - [69165b1] ENH: add <chain> to action.d/iptables*. Thanks
+      Matthijs Kooijman
+    - [8330a20] ENH: make filter.d/apache-overflows.conf catch more
+      (Closes: #574182)
+	- [66cc6cb] BF: allow space in the trailing of failregex for sasl.conf
+      (Closes: #573314)
+	- [2714019] ENH: dropbear filter (Closes: #546913)
+    - [ea7d352] BF: Use /var/run/fail2ban instead of /tmp for temp files in
+      actions (Closes: #544232)
+  * debian/jail.conf:
+    - [bc8e22d] spellcheck (Closes: #598206). Thanks Christoph Anton Mitterer
+    - [d7f3e23] adjusted description for sasl jail (Closes: #615952)
+    - [92fb484] debian/jail.conf: closing " for protocol specification
+    - [f828c31] debian/jail.conf: got 'chain' parameter to be specified for
+      iptables actions (Closes: #515599)
+  * debian/control:
+    - [858af30] slight rewordings of the long description (Closes: #588176)
+    - [167dfd4] Boosted policy compliance version to 3.9.1 (no changes seems
+      to be due)
+  * [4e1e845] debian/copyright: updated copyright years
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 23 Mar 2011 17:04:56 -0400
+
 fail2ban (0.8.4-3) unstable; urgency=low
 
   * Commenting out named-refused-udp jail and providing even fatter
