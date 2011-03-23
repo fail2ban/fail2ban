@@ -2,20 +2,20 @@ fail2ban (0.8.4+svn20110323-1) unstable; urgency=low
 
   * Fresh upstream snapshot which absorbed some of the patches from Debian
     and
-	- [c6d64e9] debug entry for lines ignored due to falling below
+    - [c6d64e9] debug entry for lines ignored due to falling below
       findtime (v2)
-  	- [fc20f12] Tai64N stores time in GMT, we need to convert to
+    - [fc20f12] Tai64N stores time in GMT, we need to convert to
       local time before returning
-  	- [b0331bb] default ignoreip to ignore entire loopback zone (/8)
-  	  (Closes: #598200)
+    - [b0331bb] default ignoreip to ignore entire loopback zone (/8)
+      (Closes: #598200)
     - [b9f15f6] ENH: dovecot filter
     - [69165b1] ENH: add <chain> to action.d/iptables*. Thanks
       Matthijs Kooijman
     - [8330a20] ENH: make filter.d/apache-overflows.conf catch more
       (Closes: #574182)
-	- [66cc6cb] BF: allow space in the trailing of failregex for sasl.conf
+    - [66cc6cb] BF: allow space in the trailing of failregex for sasl.conf
       (Closes: #573314)
-	- [2714019] ENH: dropbear filter (Closes: #546913)
+    - [2714019] ENH: dropbear filter (Closes: #546913)
     - [ea7d352] BF: Use /var/run/fail2ban instead of /tmp for temp files in
       actions (Closes: #544232)
   * debian/jail.conf:
