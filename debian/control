@@ -17,16 +17,17 @@ Depends: ${python:Depends}, ${misc:Depends}, lsb-base (>=2.0-7)
 Recommends: iptables, whois
 Suggests: python-gamin, mailx
 XB-Python-Version: ${python:Versions}
-Description: bans IPs that cause multiple authentication errors
- Monitors log files (e.g. /var/log/auth.log,
+Description: ban hosts that cause multiple authentication errors
+ Fail2ban monitors log files (e.g. /var/log/auth.log,
  /var/log/apache/access.log) and temporarily or persistently bans
- failure-prone addresses by updating existing firewall rules. The
- software was completely rewritten at version 0.7.0 and now allows
+ failure-prone addresses by updating existing firewall rules.  Fail2ban allows
  easy specification of different actions to be taken such as to ban an
  IP using iptables or hostsdeny rules, or simply to send a
- notification email. Currently, by default, supports ssh/apache/vsftpd
- but configuration can be easily extended for monitoring any other ASCII
- file. All filters and actions are given in the config files, thus
- fail2ban can be adopted to be used with a variety of files and
- firewalls.
+ notification email.
+ .
+ By default, it comes with filter expressions for various services
+ (sshd, apache, qmail, proftpd, sasl etc.) but configuration can be
+ easily extended for monitoring any other text file.  All filters and
+ actions are given in the config files, thus fail2ban can be adopted
+ to be used with a variety of files and firewalls.
 
