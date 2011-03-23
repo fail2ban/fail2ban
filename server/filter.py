@@ -31,7 +31,7 @@ from datedetector import DateDetector
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
 
-import logging, re, os, fcntl
+import logging, re, os, fcntl, time
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -268,7 +268,11 @@ class Filter(JailThread):
 		for element in self.processLine(line):
 			ip = element[0]
 			unixTime = element[1]
+			logSys.debug("Processing line with time:%s and ip:%s"
+						 % (unixTime, ip))
 			if unixTime < MyTime.time() - self.getFindTime():
+				logSys.debug("Ignore line since time %s < %s - %s"
+							 % (unixTime, MyTime.time(), self.getFindTime()))
 				break
 			if self.inIgnoreIPList(ip):
 				logSys.debug("Ignore %s" % ip)
