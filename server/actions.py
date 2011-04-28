@@ -156,6 +156,9 @@ class Actions(JailThread):
 			aInfo = dict()
 			bTicket = BanManager.createBanTicket(ticket)
 			aInfo["ip"] = bTicket.getIP()
+			# TODO: adopt IPv6 handling from Rogerio
+			# and assign namespace here accordingly
+			aInfo["ipv"] = 4			# 4 for now
 			aInfo["failures"] = bTicket.getAttempt()
 			aInfo["time"] = bTicket.getTime()
 			if self.__banManager.addBanTicket(bTicket):

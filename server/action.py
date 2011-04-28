@@ -81,6 +81,14 @@ class Action:
 	# @param value the property value
 	
 	def setCInfo(self, key, value):
+		if '/' in value:
+			logSys.debug("Evaluating the value to dict")
+			try:
+				value = eval("dict(%s)" % value)
+			except Exception, e:
+				logSys.error("Failed to evaluate value %r for %s as dict"
+							 % (value, key))
+		logSys.debug("Set cinfo %s = %r" % (key, value))
 		self.__cInfo[key] = value
 	
 	##
@@ -237,7 +245,30 @@ class Action:
 		"""
 		string = query
 		for tag in aInfo:
-			string = string.replace('<' + tag + '>', str(aInfo[tag]))
+			# simple replacement string or a dictionary
+			val = aInfo[tag]
+			if '/' in tag:
+				# dict Info and we should take after '/' as the key
+				# which would determine which actual tag to take from
+				# aInfo
+				tag_, key_tag = tag.split('/', 1)
+				if not key_tag in aInfo:
+					logSys.error(
+						"Failed to find information for key tag %s among %s. "
+						"Tag %s was ignored" % (key_tag, aInfo.keys(), tag))
+					continue
+				if not isinstance(val, dict):
+					logSys.error("Tags defined as X/Y must contain dictionary "
+								 "entries. Got %r. Tag %s was ignored"
+								 % (val, tag))
+					continue
+				if not aInfo[key_tag] in val:
+					logSys.error("There is no %s in %r. Tag %s was ignored"
+								 % (aInfo[key_tag], val, tag))
+					continue
+				tag = tag_			# TODO: pylint would scream here I guess
+				val = aInfo[tag][aInfo[key_tag]]
+			string = string.replace('<' + tag + '>', str(val))
 		# New line
 		string = string.replace("<br>", '\n')
 		return string
