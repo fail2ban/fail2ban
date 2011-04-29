@@ -81,13 +81,13 @@ class Action:
 	# @param value the property value
 	
 	def setCInfo(self, key, value):
-		if '/' in value:
+		if '/' in key:
 			logSys.debug("Evaluating the value to dict")
 			try:
 				value = eval("dict(%s)" % value)
 			except Exception, e:
-				logSys.error("Failed to evaluate value %r for %s as dict"
-							 % (value, key))
+				logSys.error("Failed to evaluate value dict(%s) for %s "
+							 "as dict due to %r" % (value, key, e))
 		logSys.debug("Set cinfo %s = %r" % (key, value))
 		self.__cInfo[key] = value
 	
@@ -247,28 +247,36 @@ class Action:
 		for tag in aInfo:
 			# simple replacement string or a dictionary
 			val = aInfo[tag]
+			subs = [(tag, val)]			#   by default just 1 substitution pair
 			if '/' in tag:
 				# dict Info and we should take after '/' as the key
 				# which would determine which actual tag to take from
 				# aInfo
 				tag_, key_tag = tag.split('/', 1)
-				if not key_tag in aInfo:
-					logSys.error(
-						"Failed to find information for key tag %s among %s. "
-						"Tag %s was ignored" % (key_tag, aInfo.keys(), tag))
-					continue
 				if not isinstance(val, dict):
 					logSys.error("Tags defined as X/Y must contain dictionary "
 								 "entries. Got %r. Tag %s was ignored"
 								 % (val, tag))
 					continue
-				if not aInfo[key_tag] in val:
-					logSys.error("There is no %s in %r. Tag %s was ignored"
-								 % (aInfo[key_tag], val, tag))
-					continue
-				tag = tag_			# TODO: pylint would scream here I guess
-				val = aInfo[tag][aInfo[key_tag]]
-			string = string.replace('<' + tag + '>', str(val))
+				if not key_tag in aInfo:
+					# Need to duplicate for all known and unique
+					logSys.debug(
+						"No information for key tag %s among %s. "
+						"Duplicating the string for all keys"
+						% (key_tag, aInfo.keys()))
+					subs = [(tag_, v) for v in val.itervalues()]
+				else:
+					# There is a key
+					if not aInfo[key_tag] in val:
+						logSys.error("There is no value for %s in %r. Tag %s was ignored"
+									 % (aInfo[key_tag], val, tag))
+						continue
+					subs = [(tag_, val[aInfo[key_tag]])]
+			strings = [string.replace('<' + t + '>', str(v)) for t,v in subs]
+			# only unique, so we do not run the same command multiple times,
+			# if that tag wasn't even in place.  anyways order of them is arbitrary
+			# due to arbitrary order of keys in a val dict above
+			string = '; '.join(list(set(strings)))
 		# New line
 		string = string.replace("<br>", '\n')
 		return string
@@ -305,15 +313,15 @@ class Action:
 			if not Action.executeCmd(checkCmd):
 				logSys.fatal("Unable to restore environment")
 				return False
-
-		# Replace tags
-		if not aInfo == None:
-			realCmd = Action.replaceTag(cmd, aInfo)
-		else:
-			realCmd = cmd
 		
-		# Replace static fields
-		realCmd = Action.replaceTag(realCmd, self.__cInfo)
+		# Compose ultimate untagging dictionary with aInfo overriding
+		# present in cInfo
+		allInfo = self.__cInfo.copy()
+		if aInfo:
+			allInfo.update(aInfo)
+		
+		# Replace tags
+		realCmd = Action.replaceTag(cmd, allInfo)
 		
 		return Action.executeCmd(realCmd)
 
