@@ -43,7 +43,7 @@ class SafeConfigParserWithIncludes(SafeConfigParser):
 
 [INCLUDES]
 before = 1.conf
-			   3.conf
+         3.conf
 
 after = 1.conf
 
@@ -54,8 +54,8 @@ after = 1.conf
 	the tree.
 
 	I wasn't sure what would be the right way to implement generic (aka c++
-    template) so we could base at any *configparser class... so I will
-    leave it for the future
+	template) so we could base at any *configparser class... so I will
+	leave it for the future
 
 	"""
 
