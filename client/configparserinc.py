@@ -86,7 +86,7 @@ after = 1.conf
 						if os.path.isabs(newResource):
 							r = newResource
 						else:
-							r = "%s/%s" % (resourceDir, newResource)
+							r = os.path.join(resourceDir, newResource)
 						if r in seen:
 							continue
 						s = seen + [resource]
