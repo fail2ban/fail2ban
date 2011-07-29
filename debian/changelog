@@ -1,11 +1,15 @@
-fail2ban (0.8.5-1) UNRELEASED; urgency=low
+fail2ban (0.8.5-1) unstable; urgency=low
 
   * [de95777] Fresh upstream release FAIL2BAN-0_8_5:
     - [00e1827] BF: use addfailregex instead of failregex while processing
       per-jail "failregex" parameter (Closes: #635830) (LP: #635036)
+      Thanks Marat Khayrullin for the patch and Daniel T Chen for forwarding to
+      Debian.
   * [1cbdafc] Set backend to auto and recommends python-gamin (Closes: #524425)
+  * [ef449f4] Added a note on diverting logrotate configuration for custom
+    logtarget=SYSLOG (Closes: #631917).  Thanks Kenyon Ralph for report
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 28 Jul 2011 23:03:28 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 28 Jul 2011 23:20:55 -0400
 
 fail2ban (0.8.4+svn20110323-1) unstable; urgency=low
 
