@@ -21,7 +21,7 @@
 __author__ = "Cyril Jaquier"
 __version__ = "$Revision: 754 $"
 __date__ = "$Date: 2009-09-07 21:13:45 +0200 (Mon, 07 Sep 2009) $"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011 Yaroslav Halchenko"
 __license__ = "GPL"
 
-version = "0.8.4-SVN"
+version = "0.8.5"
