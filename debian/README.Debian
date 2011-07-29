@@ -111,6 +111,16 @@ fail2ban. For this reason there is examples/ipmasq-ZZZzzz|fail2ban.rul file is
 shipped along to be installed under name ZZZzzz|fail2ban.rul within
 /etc/ipmasq.
 
+* Interaction with logrotate with custom logtarget
+  Comment to #631917
+
+if you use an alternative logtarget (e.g. SYSLOG) thus not using
+/var/log/fail2ban.log you should divert logrotate configuration into
+a disabled state, e.g.
+
+sudo dpkg-divert --rename --divert \
+	 /etc/logrotate.d/fail2ban.disabled /etc/logrotate.d/fail2ban
+
 
 Troubleshooting:
 ---------------
@@ -221,4 +231,4 @@ P.S. Anyone is welcome to recommend proper security solution to this
 issue, such as an alternative to sysklogd which allows better control
 over users logging to specific facilities (such as AUTH)
 
- -- Yaroslav Halchenko <debian@onerussian.com>, Thu,  4 Jan 2007 15:18:39 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>, Thu, 28 Jul 2011 23:19:44 -0400
