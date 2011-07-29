@@ -1,3 +1,12 @@
+fail2ban (0.8.5-1) UNRELEASED; urgency=low
+
+  * [de95777] Fresh upstream release FAIL2BAN-0_8_5:
+    - [00e1827] BF: use addfailregex instead of failregex while processing
+      per-jail "failregex" parameter (Closes: #635830) (LP: #635036)
+  * [1cbdafc] Set backend to auto and recommends python-gamin (Closes: #524425)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 28 Jul 2011 23:03:28 -0400
+
 fail2ban (0.8.4+svn20110323-1) unstable; urgency=low
 
   * Fresh upstream snapshot which absorbed some of the patches from Debian
