@@ -4,8 +4,46 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.4)                                              2009/09/07
+Fail2Ban (version 0.8.5)                                              2011/07/28
 ================================================================================
+
+ver. 0.8.5 (2011/07/28) - stable
+----------
+- Fix: use addfailregex instead of failregex while processing per-jail
+  "failregex" parameter (Fixed Debian bug #635830, LP: #635036). Thanks to
+  Marat Khayrullin for the patch and Daniel T Chen for forwarding to
+  Debian.
+- Fix: use os.path.join to generate full path - fixes includes in configs
+  given local filename (5 weeks ago) [yarikoptic]
+- Fix: allowed for trailing spaces in proftpd logs
+- Fix: escaped () in pure-ftpd filter. Thanks to Teodor
+- Fix: allowed space in the trailing of failregex for sasl.conf:
+  see http://bugs.debian.org/573314
+- Fix: use /var/run/fail2ban instead of /tmp for temp files in actions:
+  see http://bugs.debian.org/544232
+- Fix: Tai64N stores time in GMT, needed to convert to local time before
+  returning
+- Fix: disabled named-refused-udp jail entirely with a big fat warning
+- Fix: added time module. Bug reported in buanzo's blog:
+  see http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
+- Fix: Patch to make log file descriptors cloexec to stop leaking file
+  descriptors on fork/exec. Thanks to Jonathan Underwood:
+  see https://bugzilla.redhat.com/show_bug.cgi?id=230191#c24
+- Enhancement: added author for dovecot filter and pruned unneeded space
+  in the regexp
+- Enhancement: proftpd filter -- if login failed -- count regardless of the
+  reason for failure
+- Enhancement: added <chain> to action.d/iptables*. Thanks to Matthijs Kooijman:
+  see http://bugs.debian.org/515599
+- Enhancement: added filter.d/dovecot.conf from Martin Waschbuesch
+- Enhancement: made filter.d/apache-overflows.conf catch more:
+  see http://bugs.debian.org/574182
+- Enhancement: added dropbear filter from Francis Russell and Zak B. Elep:
+  see http://bugs.debian.org/546913
+- Enhancement: changed default ignoreip to ignore entire loopback zone (/8):
+  see http://bugs.debian.org/598200
+- Minor: spell-checked jail.conf. Thanks to Christoph Anton Mitterer
+- Few minor cosmetic changes
 
 ver. 0.8.4 (2009/09/07) - stable
 ----------

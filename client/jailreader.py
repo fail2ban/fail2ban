@@ -120,7 +120,7 @@ class JailReader(ConfigReader):
 			elif opt == "bantime":
 				stream.append(["set", self.__name, "bantime", self.__opts[opt]])
 			elif opt == "failregex":
-				stream.append(["set", self.__name, "failregex", self.__opts[opt]])
+				stream.append(["set", self.__name, "addfailregex", self.__opts[opt]])
 			elif opt == "ignoreregex":
 				for regex in self.__opts[opt].split('\n'):
 					# Do not send a command if the rule is empty.

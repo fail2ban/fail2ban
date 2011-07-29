@@ -99,7 +99,7 @@ elif [ $final_exit -ne "0" ]; then
 # put a txt file on your server and describe how to fix the issue, this 
 # could be attached to the mail.
 ######################################################################
-#  mutt -s "FAIL2BAN NOT WORKING" your@email.com < /home/f2ban.txt
+#  mutt -s "FAIL2BAN NOT WORKING" your@example.com < /home/f2ban.txt
 
   exitstatus=$STATE_CRITICAL
 fi
