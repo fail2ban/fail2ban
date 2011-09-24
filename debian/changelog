@@ -1,3 +1,11 @@
+fail2ban (0.8.5-2) unstable; urgency=low
+
+  * [5242e73] BF: (cherry-picked from upstream, DEP-3 yet TODO) Lock
+    server's executeCmd to prevent racing among iptables calls (Closes:
+    #554162) Many kudos go to Michael Saavedra for the patch
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 23 Sep 2011 22:12:08 -0400
+
 fail2ban (0.8.5-1) unstable; urgency=low
 
   * [de95777] Fresh upstream release FAIL2BAN-0_8_5:
