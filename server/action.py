@@ -25,10 +25,14 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging, os
+import threading
 #from subprocess import call
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.actions.action")
+
+# Create a lock for running system commands
+_cmd_lock = threading.Lock()
 
 ##
 # Execute commands.
@@ -301,17 +305,21 @@ class Action:
 	#@staticmethod
 	def executeCmd(realCmd):
 		logSys.debug(realCmd)
-		try:
-			# The following line gives deadlock with multiple jails
-			#retcode = call(realCmd, shell=True)
-			retcode = os.system(realCmd)
-			if retcode == 0:
-				logSys.debug("%s returned successfully" % realCmd)
-				return True
-			else:
-				logSys.error("%s returned %x" % (realCmd, retcode))
-		except OSError, e:
-			logSys.error("%s failed with %s" % (realCmd, e))
+		_cmd_lock.acquire()
+		try: # Try wrapped within another try needed for python version < 2.5
+			try:
+				# The following line gives deadlock with multiple jails
+				#retcode = call(realCmd, shell=True)
+				retcode = os.system(realCmd)
+				if retcode == 0:
+					logSys.debug("%s returned successfully" % realCmd)
+					return True
+				else:
+					logSys.error("%s returned %x" % (realCmd, retcode))
+			except OSError, e:
+				logSys.error("%s failed with %s" % (realCmd, e))
+		finally:
+			_cmd_lock.release()
 		return False
 	executeCmd = staticmethod(executeCmd)
 	
