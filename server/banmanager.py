@@ -133,7 +133,7 @@ class BanManager:
 		ip = ticket.getIP()
 		#lastTime = ticket.getTime()
 		lastTime = MyTime.time()
-		banTicket = BanTicket(ip, lastTime)
+		banTicket = BanTicket(ip, lastTime, ticket.getMatches())
 		banTicket.setAttempt(ticket.getAttempt())
 		return banTicket
 	createBanTicket = staticmethod(createBanTicket)

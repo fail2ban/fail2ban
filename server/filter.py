@@ -281,7 +281,7 @@ class Filter(JailThread):
 				logSys.debug("Ignore %s" % ip)
 				continue
 			logSys.debug("Found %s" % ip)
-			self.failManager.addFailure(FailTicket(ip, unixTime))
+			self.failManager.addFailure(FailTicket(ip, unixTime, [line]))
 
 	##
 	# Returns true if the line should be ignored.

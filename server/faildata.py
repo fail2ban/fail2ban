@@ -38,16 +38,24 @@ class FailData:
 		self.__retry = 0
 		self.__lastTime = 0
 		self.__lastReset = 0
-	
+		self.__matches = []
+
 	def setRetry(self, value):
 		self.__retry = value
-	
+		# keep only the last matches or reset entirely
+		self.__matches = self.__matches[-min(len(self.__matches, value)):] \
+						 if value else []
+
 	def getRetry(self):
 		return self.__retry
-	
-	def inc(self):
+
+	def getMatches(self):
+		return self.__matches
+
+	def inc(self, matches=None):
 		self.__retry += 1
-	
+		self.__matches += matches or []
+
 	def setLastTime(self, value):
 		if value > self.__lastTime:
 			self.__lastTime = value

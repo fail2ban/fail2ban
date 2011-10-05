@@ -91,16 +91,17 @@ class FailManager:
 			self.__lock.acquire()
 			ip = ticket.getIP()
 			unixTime = ticket.getTime()
+			matches = ticket.getMatches()
 			if self.__failList.has_key(ip):
 				fData = self.__failList[ip]
 				if fData.getLastReset() < unixTime - self.__maxTime:
 					fData.setLastReset(unixTime)
 					fData.setRetry(0)
-				fData.inc()
+				fData.inc(matches)
 				fData.setLastTime(unixTime)
 			else:
 				fData = FailData()
-				fData.inc()
+				fData.inc(matches)
 				fData.setLastReset(unixTime)
 				fData.setLastTime(unixTime)
 				self.__failList[ip] = fData
@@ -139,7 +140,7 @@ class FailManager:
 				if data.getRetry() >= self.__maxRetry:
 					self.__delFailure(ip)
 					# Create a FailTicket from BanData
-					failTicket = FailTicket(ip, data.getLastTime())
+					failTicket = FailTicket(ip, data.getLastTime(), data.getMatches())
 					failTicket.setAttempt(data.getRetry())
 					return failTicket
 			raise FailManagerEmpty
