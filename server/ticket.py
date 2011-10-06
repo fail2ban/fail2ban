@@ -35,6 +35,10 @@ class Ticket:
 		self.__ip = ip
 		self.__time = time
 		self.__attempt = 0
+
+	def __str__(self):
+		return "%s: ip=%s time=%s #attempts=%d" % \
+			   (self.__class__, self.__ip, self.__time, self.__attempt)
 	
 	def setIP(self, value):
 		self.__ip = value
