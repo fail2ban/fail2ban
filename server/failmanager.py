@@ -101,6 +101,8 @@ class FailManager:
 				fData.setLastReset(unixTime)
 				fData.setLastTime(unixTime)
 				self.__failList[ip] = fData
+			logSys.debug("Currently have failures from %d IPs: %s"
+						 % (len(self.__failList), self.__failList.keys()))
 			self.__failTotal += 1
 		finally:
 			self.__lock.release()
