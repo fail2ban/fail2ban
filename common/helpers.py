@@ -1,3 +1,6 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: t -*-
+# vi: set ft=python sts=4 ts=4 sw=4 noet :
+
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -27,12 +30,12 @@ __license__ = "GPL"
 
 
 def formatExceptionInfo():
-    """ Author: Arturo 'Buanzo' Busleiman """
-    import sys
-    cla, exc = sys.exc_info()[:2]
-    excName = cla.__name__
-    try:
-        excArgs = exc.__dict__["args"]
-    except KeyError:
-        excArgs = str(exc)
-    return (excName, excArgs)
+	""" Author: Arturo 'Buanzo' Busleiman """
+	import sys
+	cla, exc = sys.exc_info()[:2]
+	excName = cla.__name__
+	try:
+		excArgs = exc.__dict__["args"]
+	except KeyError:
+		excArgs = str(exc)
+	return (excName, excArgs)

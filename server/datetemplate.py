@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+# emacs: -*- mode: python; coding: utf-8; py-indent-offset: 4; indent-tabs-mode: t -*-
+# vi: set ft=python sts=4 ts=4 sw=4 noet :
+
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
