@@ -30,6 +30,10 @@ import re, time
 from mytime import MyTime
 import iso8601
 
+import logging
+logSys = logging.getLogger("fail2ban.datetemplate")
+
+
 class DateTemplate:
 	
 	def __init__(self):
@@ -76,7 +80,7 @@ class DateEpoch(DateTemplate):
 		dateMatch = self.matchDate(line)
 		if dateMatch:
 			# extract part of format which represents seconds since epoch
-			date = list(time.localtime(float(dateMatch.group())))
+			date = list(MyTime.localtime(float(dateMatch.group())))
 		return date
 
 
@@ -116,6 +120,8 @@ class DateStrptime(DateTemplate):
 		for t in DateStrptime.TABLE:
 			for m in DateStrptime.TABLE[t]:
 				if date.find(m) >= 0:
+					logSys.debug(u"Replacing %r with %r in %r" %
+								 (m, t, date))
 					return date.replace(m, t)
 		return date
 	convertLocale = staticmethod(convertLocale)
@@ -145,6 +151,9 @@ class DateStrptime(DateTemplate):
 				# If the date is greater than the current time, we suppose
 				# that the log is not from this year but from the year before
 				if time.mktime(date) > MyTime.time():
+					logSys.debug(
+						u"Correcting deduced year from %d to %d since %f > %f" %
+						(date[0], date[0]-1, time.mktime(date), MyTime.time()))
 					date[0] -= 1
 				elif date[1] == 1 and date[2] == 1:
 					# If it is Jan 1st, it is either really Jan 1st or there
@@ -169,7 +178,7 @@ class DateTai64n(DateTemplate):
 			value = dateMatch.group()
 			seconds_since_epoch = value[2:17]
 			# convert seconds from HEX into local time stamp
-			date = list(time.localtime(int(seconds_since_epoch, 16)))
+			date = list(MyTime.localtime(int(seconds_since_epoch, 16)))
 		return date
 
 
