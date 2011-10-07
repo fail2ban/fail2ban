@@ -110,9 +110,13 @@ class GetFailures(unittest.TestCase):
 					time.localtime(found[2]),\
 					time.localtime(output[2])
 		self.assertEqual(found_time, output_time)
+		if len(found) > 3:				# match matches
+			self.assertEqual(found[3], output[3])
+
 
 	def testGetFailures01(self):
-		output = ('193.168.0.128', 3, 1124013599.0)
+		output = ('193.168.0.128', 3, 1124013599.0,
+				  ['Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128\n']*3)
 
 		self.__filter.addLogPath(GetFailures.FILENAME_01)
 		self.__filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
@@ -124,12 +128,15 @@ class GetFailures(unittest.TestCase):
 		attempts = ticket.getAttempt()
 		date = ticket.getTime()
 		ip = ticket.getIP()
-		found = (ip, attempts, date)
+		matches = ticket.getMatches()
+		found = (ip, attempts, date, matches)
 
 		self._assertEqualEntries(found, output)
 	
 	def testGetFailures02(self):
-		output = ('141.3.81.106', 4, 1124013539.0)
+		output = ('141.3.81.106', 4, 1124013539.0,
+				  ['Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n'
+				   % m for m in 53, 54, 57, 58])
 
 		self.__filter.addLogPath(GetFailures.FILENAME_02)
 		self.__filter.addFailRegex("Failed .* from <HOST>")
@@ -141,7 +148,8 @@ class GetFailures(unittest.TestCase):
 		attempts = ticket.getAttempt()
 		date = ticket.getTime()
 		ip = ticket.getIP()
-		found = (ip, attempts, date)
+		matches = ticket.getMatches()
+		found = (ip, attempts, date, matches)
 		
 		self._assertEqualEntries(found, output)
 
