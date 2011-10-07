@@ -76,4 +76,10 @@ class MyTime:
 		else:
 			return time.gmtime(MyTime.myTime)
 	gmtime = staticmethod(gmtime)
-	
+
+	def localtime(x=None):
+		if MyTime.myTime == None or x is not None:
+			return time.localtime(x)
+		else:
+			return time.localtime(MyTime.myTime)
+	localtime = staticmethod(localtime)
