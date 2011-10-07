@@ -26,7 +26,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 
-import unittest, logging, sys
+import unittest, logging, sys, time, os
 
 from common.version import version
 from testcases import banmanagertestcase
@@ -40,6 +40,11 @@ from server.mytime import MyTime
 
 # Set the time to a fixed, known value
 # Sun Aug 14 12:00:00 CEST 2005
+
+# yoh: we need to adjust TZ to match the one used by Cyril so all the timestamps match
+old_TZ = os.environ.get('TZ', None)
+os.environ['TZ'] = 'Europe/Zurich'
+time.tzset()
 MyTime.setTime(1124013600)
 
 # Gets the instance of the logger.
@@ -73,3 +78,10 @@ tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
 # Tests runner
 testRunner = unittest.TextTestRunner()
 testRunner.run(tests)
+
+# Just for the sake of it reset the TZ
+# yoh is planing to move all this into setup/teardown methods within tests
+os.environ.pop('TZ')
+if old_TZ:
+    os.environ['TZ'] = old_TZ
+time.tzset()
