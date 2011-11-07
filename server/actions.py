@@ -161,7 +161,7 @@ class Actions(JailThread):
 			aInfo["ip"] = bTicket.getIP()
 			aInfo["failures"] = bTicket.getAttempt()
 			aInfo["time"] = bTicket.getTime()
-			aInfo["matches"] = bTicket.getMatches()
+			aInfo["matches"] = "".join(bTicket.getMatches())
 			if self.__banManager.addBanTicket(bTicket):
 				logSys.warn("[%s] Ban %s" % (self.jail.getName(), aInfo["ip"]))
 				for action in self.__actions:
@@ -202,7 +202,7 @@ class Actions(JailThread):
 		aInfo["ip"] = ticket.getIP()
 		aInfo["failures"] = ticket.getAttempt()
 		aInfo["time"] = ticket.getTime()
-		aInfo["matches"] = ticket.getMatches()
+		aInfo["matches"] = "".join(ticket.getMatches())
 		logSys.warn("[%s] Unban %s" % (self.jail.getName(), aInfo["ip"]))
 		for action in self.__actions:
 			action.execActionUnban(aInfo)
