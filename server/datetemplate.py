@@ -92,7 +92,8 @@ class DateEpoch(DateTemplate):
 # standard.
 
 class DateStrptime(DateTemplate):
-	
+
+	TABLE = dict()
 	TABLE["Jan"] = ["Sty"]
 	TABLE["Feb"] = [u"Fév", "Lut"]
 	TABLE["Mar"] = [u"Mär", "Mar"]
