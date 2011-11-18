@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?eclipse-pydev version="1.0"?>
+
+<pydev_project>
+<pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.3</pydev_property>
+<pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
+<path>/fail2ban-0.8/client</path>
+<path>/fail2ban-0.8/server</path>
+<path>/fail2ban-0.8/testcases</path>
+<path>/fail2ban-0.8</path>
+</pydev_pathproperty>
+</pydev_project>
