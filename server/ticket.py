@@ -45,6 +45,7 @@ class Ticket:
 		self.__ip = ip
 		self.__time = time
 		self.__attempt = 0
+		self.__file = None
 		self.__matches = matches or []
 
 	def __str__(self):
@@ -57,6 +58,12 @@ class Ticket:
 	
 	def getIP(self):
 		return self.__ip
+	
+	def setFile(self, value):
+		self.__file = value
+	
+	def getFile(self):
+		return self.__file
 	
 	def setTime(self, value):
 		self.__time = value
