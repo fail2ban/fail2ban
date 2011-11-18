@@ -446,7 +446,14 @@ class FileFilter(Filter):
 # In order to detect log rotation, the hash (MD5) of the first line of the file
 # is computed and compared to the previous hash of this line.
 
-import hashlib
+try:
+	import hashlib
+	md5sum = hashlib.md5
+except ImportError:
+	# hashlib was introduced in Python 2.5.  For compatibility with those
+	# elderly Pythons, import from md5
+	import md5
+	md5sum = md5.new
 
 class FileContainer:
 	
@@ -461,7 +468,7 @@ class FileContainer:
 		try:
 			firstLine = handler.readline()
 			# Computes the MD5 of the first line.
-			self.__hash = hashlib.md5(firstLine).digest()
+			self.__hash = md5sum(firstLine).digest()
 			# Start at the beginning of file if tail mode is off.
 			if tail:
 				handler.seek(0, 2)
@@ -481,7 +488,7 @@ class FileContainer:
 		fcntl.fcntl(fd, fcntl.F_SETFD, fd | fcntl.FD_CLOEXEC)
 		firstLine = self.__handler.readline()
 		# Computes the MD5 of the first line.
-		myHash = hashlib.md5(firstLine).digest()
+		myHash = md5sum(firstLine).digest()
 		stats = os.fstat(self.__handler.fileno())
 		# Compare hash and inode
 		if self.__hash != myHash or self.__ino != stats.st_ino:
