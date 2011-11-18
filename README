@@ -26,8 +26,8 @@ Optional:
 
 To install, just do:
 
-> tar xvfj fail2ban-0.8.4.tar.bz2
-> cd fail2ban-0.8.4
+> tar xvfj fail2ban-0.8.5.tar.bz2
+> cd fail2ban-0.8.5
 > python setup.py install
 
 This will install Fail2Ban into /usr/share/fail2ban. The executable scripts are
@@ -64,15 +64,7 @@ Cyril Jaquier: <cyril.jaquier@fail2ban.org>
 Thanks:
 -------
 
-Kévin Drapel, Marvin Rouge, Sireyessire, Robert Edeker, Tom Pike, Iain Lea,
-Andrey G. Grozin, Yaroslav Halchenko, Jonathan Kamens, Stephen Gildea, Markus
-Hoffmann, Mark Edgington, Patrick Börjesson, kojiro, zugeschmiert, Tyler, Nick
-Munger, Christoph Haas, Justin Shore, Joël Bertrand, René Berber, mEDI, Axel
-Thimm, Eric Gerbier, Christian Rauch, Michael C. Haller, Jonathan Underwood,
-Hanno 'Rince' Wagner, Daniel B. Cid, David Nutter, Raphaël Marichez, Guillaume
-Delvit, Vaclav Misek, Adrien Clerc, Michael Hanselmann, Vincent Deffontaines,
-Bill Heaton, Russell Odom, Christos Psonis, Arturo 'Buanzo' Busleiman and many
-others.
+See THANKS file.
 
 License:
 --------

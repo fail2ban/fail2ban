@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+# emacs: -*- mode: python; coding: utf-8; py-indent-offset: 4; indent-tabs-mode: t -*-
+# vi: set ft=python sts=4 ts=4 sw=4 noet :
+
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -29,6 +31,10 @@ import re, time
 
 from mytime import MyTime
 import iso8601
+
+import logging
+logSys = logging.getLogger("fail2ban.datetemplate")
+
 
 class DateTemplate:
 	
@@ -76,7 +82,7 @@ class DateEpoch(DateTemplate):
 		dateMatch = self.matchDate(line)
 		if dateMatch:
 			# extract part of format which represents seconds since epoch
-			date = list(time.localtime(float(dateMatch.group())))
+			date = list(MyTime.localtime(float(dateMatch.group())))
 		return date
 
 
@@ -86,20 +92,20 @@ class DateEpoch(DateTemplate):
 # standard.
 
 class DateStrptime(DateTemplate):
-	
+
 	TABLE = dict()
-	TABLE["Jan"] = []
-	TABLE["Feb"] = [u"Fév"]
-	TABLE["Mar"] = [u"Mär"]
-	TABLE["Apr"] = ["Avr"]
-	TABLE["May"] = ["Mai"]
-	TABLE["Jun"] = []
-	TABLE["Jul"] = []
-	TABLE["Aug"] = ["Aou"]
-	TABLE["Sep"] = []
-	TABLE["Oct"] = ["Okt"]
-	TABLE["Nov"] = []
-	TABLE["Dec"] = [u"Déc", "Dez"]
+	TABLE["Jan"] = ["Sty"]
+	TABLE["Feb"] = [u"Fév", "Lut"]
+	TABLE["Mar"] = [u"Mär", "Mar"]
+	TABLE["Apr"] = ["Avr", "Kwi"]
+	TABLE["May"] = ["Mai", "Maj"]
+	TABLE["Jun"] = ["Lip"]
+	TABLE["Jul"] = ["Sie"]
+	TABLE["Aug"] = ["Aou", "Wrz"]
+	TABLE["Sep"] = ["Sie"]
+	TABLE["Oct"] = [u"Paź"]
+	TABLE["Nov"] = ["Lis"]
+	TABLE["Dec"] = [u"Déc", "Dez", "Gru"]
 	
 	def __init__(self):
 		DateTemplate.__init__(self)
@@ -116,6 +122,8 @@ class DateStrptime(DateTemplate):
 		for t in DateStrptime.TABLE:
 			for m in DateStrptime.TABLE[t]:
 				if date.find(m) >= 0:
+					logSys.debug(u"Replacing %r with %r in %r" %
+								 (m, t, date))
 					return date.replace(m, t)
 		return date
 	convertLocale = staticmethod(convertLocale)
@@ -145,6 +153,9 @@ class DateStrptime(DateTemplate):
 				# If the date is greater than the current time, we suppose
 				# that the log is not from this year but from the year before
 				if time.mktime(date) > MyTime.time():
+					logSys.debug(
+						u"Correcting deduced year from %d to %d since %f > %f" %
+						(date[0], date[0]-1, time.mktime(date), MyTime.time()))
 					date[0] -= 1
 				elif date[1] == 1 and date[2] == 1:
 					# If it is Jan 1st, it is either really Jan 1st or there
@@ -169,7 +180,7 @@ class DateTai64n(DateTemplate):
 			value = dateMatch.group()
 			seconds_since_epoch = value[2:17]
 			# convert seconds from HEX into local time stamp
-			date = list(time.localtime(int(seconds_since_epoch, 16)))
+			date = list(MyTime.localtime(int(seconds_since_epoch, 16)))
 		return date
 
 

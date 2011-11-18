@@ -1,3 +1,6 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: t -*-
+# vi: set ft=python sts=4 ts=4 sw=4 noet :
+
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -130,7 +133,7 @@ class BanManager:
 		ip = ticket.getIP()
 		#lastTime = ticket.getTime()
 		lastTime = MyTime.time()
-		banTicket = BanTicket(ip, lastTime)
+		banTicket = BanTicket(ip, lastTime, ticket.getMatches())
 		banTicket.setAttempt(ticket.getAttempt())
 		return banTicket
 	createBanTicket = staticmethod(createBanTicket)

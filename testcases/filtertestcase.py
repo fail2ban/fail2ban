@@ -1,3 +1,6 @@
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: t -*-
+# vi: set ft=python sts=4 ts=4 sw=4 noet :
+
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -25,6 +28,8 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import unittest
+import time
+
 from server.filterpoll import FilterPoll
 from server.filter import FileFilter, DNSUtils
 from server.failmanager import FailManager
@@ -94,26 +99,44 @@ class GetFailures(unittest.TestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
-		
+
+	def _assertEqualEntries(self, found, output):
+		"""Little helper to unify comparisons with the target entries
+
+		and report helpful failure reports instead of millions of seconds ;)
+		"""
+		self.assertEqual(found[:2], output[:2])
+		found_time, output_time = \
+					time.localtime(found[2]),\
+					time.localtime(output[2])
+		self.assertEqual(found_time, output_time)
+		if len(found) > 3:				# match matches
+			self.assertEqual(found[3], output[3])
+
+
 	def testGetFailures01(self):
-		output = ('193.168.0.128', 3, 1124013599.0)
-		
+		output = ('193.168.0.128', 3, 1124013599.0,
+				  ['Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128\n']*3)
+
 		self.__filter.addLogPath(GetFailures.FILENAME_01)
 		self.__filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 
 		self.__filter.getFailures(GetFailures.FILENAME_01)
-		
+
 		ticket = self.__filter.failManager.toBan()
 
 		attempts = ticket.getAttempt()
 		date = ticket.getTime()
 		ip = ticket.getIP()
-		found = (ip, attempts, date)
-		
-		self.assertEqual(found, output)
+		matches = ticket.getMatches()
+		found = (ip, attempts, date, matches)
+
+		self._assertEqualEntries(found, output)
 	
 	def testGetFailures02(self):
-		output = ('141.3.81.106', 4, 1124013539.0)
+		output = ('141.3.81.106', 4, 1124013539.0,
+				  ['Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n'
+				   % m for m in 53, 54, 57, 58])
 
 		self.__filter.addLogPath(GetFailures.FILENAME_02)
 		self.__filter.addFailRegex("Failed .* from <HOST>")
@@ -125,9 +148,10 @@ class GetFailures(unittest.TestCase):
 		attempts = ticket.getAttempt()
 		date = ticket.getTime()
 		ip = ticket.getIP()
-		found = (ip, attempts, date)
+		matches = ticket.getMatches()
+		found = (ip, attempts, date, matches)
 		
-		self.assertEqual(found, output)
+		self._assertEqualEntries(found, output)
 
 	def testGetFailures03(self):
 		output = ('203.162.223.135', 6, 1124013544.0)
@@ -144,7 +168,7 @@ class GetFailures(unittest.TestCase):
 		ip = ticket.getIP()
 		found = (ip, attempts, date)
 		
-		self.assertEqual(found, output)	
+		self._assertEqualEntries(found, output)	
 
 	def testGetFailures04(self):
 		output = [('212.41.96.186', 4, 1124013600.0),
@@ -182,7 +206,7 @@ class GetFailures(unittest.TestCase):
 		ip = ticket.getIP()
 		found = (ip, attempts, date)
 		
-		self.assertEqual(found, output)
+		self._assertEqualEntries(found, output)
 	
 	def testGetFailuresIgnoreRegex(self):
 		output = ('141.3.81.106', 8, 1124013541.0)
