@@ -19,7 +19,7 @@
 # 
 # $Revision$
 
-opts="start stop restart reload showlog"
+opts="reload showlog"
 
 FAIL2BAN="/usr/bin/fail2ban-client ${FAIL2BAN_OPTIONS}"
 
@@ -39,14 +39,6 @@ stop() {
 	ebegin "Stopping fail2ban"
 	${FAIL2BAN} stop &> /dev/null
 	eend $? "Failed to stop fail2ban"
-}
-
-restart() {
-	if ! service_stopped "${SVCNAME}" ; then
-		svc_stop || return "$?"
-		sleep 1
-	fi
-	svc_start
 }
 
 reload() {
