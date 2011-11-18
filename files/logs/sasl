@@ -1,0 +1,5 @@
+#1 Example from postfix from dbts #507990
+Dec  2 22:24:22 hel postfix/smtpd[7676]: warning: 114-44-142-233.dynamic.hinet.net[114.44.142.233]: SASL CRAM-MD5 authentication failed: PDc3OTEwNTkyNTEyMzA2NDIuMTIyODI1MzA2MUBoZWw+
+#2 Example from postfix from dbts #573314
+Mar 10 13:33:30 gandalf postfix/smtpd[3937]: warning: HOSTNAME[1.1.1.1]: SASL LOGIN authentication failed: authentication failure
+
