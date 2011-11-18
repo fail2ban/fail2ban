@@ -163,7 +163,7 @@ class Server:
 		return self.__jails.getFilter(name).getIgnoreIP()
 	
 	def addLogPath(self, name, fileName):
-		self.__jails.getFilter(name).addLogPath(fileName)
+		self.__jails.getFilter(name).addLogPath(fileName, True)
 	
 	def delLogPath(self, name, fileName):
 		self.__jails.getFilter(name).delLogPath(fileName)
