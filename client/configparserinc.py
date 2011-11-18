@@ -16,11 +16,11 @@
 
 # Author: Yaroslav Halchenko
 # Modified: Cyril Jaquier
-# $Revision: 656 $
+# $Revision$
 
 __author__ = 'Yaroslav Halhenko'
-__revision__ = '$Revision: $'
-__date__ = '$Date:  $'
+__revision__ = '$Revision$'
+__date__ = '$Date$'
 __copyright__ = 'Copyright (c) 2007 Yaroslav Halchenko'
 __license__ = 'GPL'
 

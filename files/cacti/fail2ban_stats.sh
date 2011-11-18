@@ -25,7 +25,7 @@
 #
 # Author: Cyril Jaquier
 # 
-# $Revision: 527 $
+# $Revision$
 
 FAIL2BAN="fail2ban-client"
 

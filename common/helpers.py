@@ -17,11 +17,11 @@
 # Author: Cyril Jaquier
 # Author: Arturo 'Buanzo' Busleiman
 # 
-# $Revision: 741 $
+# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision: 741 $"
-__date__ = "$Date: 2009-08-30 16:13:04 +0200 (Sun, 30 Aug 2009) $"
+__version__ = "$Revision$"
+__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2009 Cyril Jaquier"
 __license__ = "GPL"
 

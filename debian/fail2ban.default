@@ -16,7 +16,7 @@
 #
 # Author: Cyril Jaquier
 # 
-# $Revision: 1.2 $
+# $Revision$
 
 # Command line options for Fail2Ban. Refer to "fail2ban-client -h" for
 # valid options.
