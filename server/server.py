@@ -126,6 +126,7 @@ class Server:
 			self.__lock.release()
 	
 	def stopJail(self, name):
+		logSys.debug("Stopping jail %s" % name)
 		try:
 			self.__lock.acquire()
 			if self.isAlive(name):
@@ -135,6 +136,7 @@ class Server:
 			self.__lock.release()
 	
 	def stopAllJail(self):
+		logSys.info("Stopping all jails")
 		try:
 			self.__lock.acquire()
 			for jail in self.__jails.getAll():
