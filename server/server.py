@@ -107,9 +107,15 @@ class Server:
 			self.__loggingLock.release()
 	
 	def quit(self):
-		self.stopAllJail()
-		# Stop communication
+		# Stop communication first because if jail's unban action
+		# tries to communicate via fail2ban-client we get a lockup
+		# among threads.  So the simplest resolution is to stop all
+		# communications first (which should be ok anyways since we
+		# are exiting)
+		# See https://github.com/fail2ban/fail2ban/issues/7
 		self.__asyncServer.stop()
+		# Now stop all the jails
+		self.stopAllJail()
 	
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend)
