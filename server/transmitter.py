@@ -121,6 +121,10 @@ class Transmitter:
 				self.__server.setIdleJail(name, False)
 			return self.__server.getIdleJail(name)
 		# Filter
+		elif name == "opentail":
+			value = command[1]
+			self.__server.setOpenTail(value)
+			return self.__server.getOpenTail()
 		elif command[1] == "addignoreip":
 			value = command[2]
 			self.__server.addIgnoreIP(name, value)

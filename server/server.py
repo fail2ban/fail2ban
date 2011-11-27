@@ -51,6 +51,7 @@ class Server:
 		self.__asyncServer = AsyncServer(self.__transm)
 		self.__logLevel = None
 		self.__logTarget = None
+		self.__openTail = True			# either open "logpath"s at the tail or parse from the beginning
 		# Set logging level
 		self.setLogLevel(3)
 		self.setLogTarget("STDOUT")
@@ -159,6 +160,12 @@ class Server:
 
 	def getIdleJail(self, name):
 		return self.__jails.get(name).getIdle()
+
+	def getJails(self):
+		return self.__jails
+
+	def getTransm(self):
+		return self.__transm
 	
 	# Filter
 	def addIgnoreIP(self, name, ip):
@@ -171,7 +178,7 @@ class Server:
 		return self.__jails.getFilter(name).getIgnoreIP()
 	
 	def addLogPath(self, name, fileName):
-		self.__jails.getFilter(name).addLogPath(fileName, True)
+		self.__jails.getFilter(name).addLogPath(fileName, self.__openTail)
 	
 	def delLogPath(self, name, fileName):
 		self.__jails.getFilter(name).delLogPath(fileName)
@@ -267,7 +274,23 @@ class Server:
 	
 	def getActionUnban(self, name, action):
 		return self.__jails.getAction(name).getAction(action).getActionUnban()
-		
+
+	def setOpenTail(self, value):
+		if isinstance(value, str):
+			value = value.lower()
+			if value in ["0", "false"]:
+				value = False
+			elif value in ["1", "True"]:
+				value = True
+			else:
+				raise ValueError("Do not know how to treat %r as bool" % (value,))
+		else:
+			value = bool(value)
+		self.__openTail = value
+
+	def getOpenTail(self):
+		return self.__openTail
+
 	# Status
 	def status(self):
 		try:
