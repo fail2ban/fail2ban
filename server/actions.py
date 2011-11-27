@@ -55,9 +55,9 @@ class Actions(JailThread):
 		JailThread.__init__(self)
 		## The jail which contains this action.
 		self.jail = jail
-		self.__actions = list()
 		## The ban manager.
-		self.__banManager = BanManager()
+		self.banManager = BanManager()
+		self.__actions = list()
 	
 	##
 	# Adds an action.
@@ -109,7 +109,7 @@ class Actions(JailThread):
 	# @param value the time
 	
 	def setBanTime(self, value):
-		self.__banManager.setBanTime(value)
+		self.banManager.setBanTime(value)
 		logSys.info("Set banTime = %s" % value)
 	
 	##
@@ -118,8 +118,8 @@ class Actions(JailThread):
 	# @return the time
 	
 	def getBanTime(self):
-		return self.__banManager.getBanTime()
-	
+		return self.banManager.getBanTime()
+
 	##
 	# Main loop.
 	#
@@ -162,7 +162,9 @@ class Actions(JailThread):
 			aInfo["failures"] = bTicket.getAttempt()
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "".join(bTicket.getMatches())
-			if self.__banManager.addBanTicket(bTicket):
+			aInfo["banned_ips"] = ", ".join(self.banManager.getBanList())
+			aInfo["num_banned_ips"] = self.banManager.size()
+			if self.banManager.addBanTicket(bTicket):
 				logSys.warn("[%s] Ban %s" % (self.jail.getName(), aInfo["ip"]))
 				for action in self.__actions:
 					action.execActionBan(aInfo)
@@ -178,7 +180,7 @@ class Actions(JailThread):
 	# Unban IP address which are outdated.
 	
 	def __checkUnBan(self):
-		for ticket in self.__banManager.unBanList(MyTime.time()):
+		for ticket in self.banManager.unBanList(MyTime.time()):
 			self.__unBan(ticket)
 	
 	##
@@ -188,7 +190,7 @@ class Actions(JailThread):
 	
 	def __flushBan(self):
 		logSys.debug("Flush ban list")
-		for ticket in self.__banManager.flushBanList():
+		for ticket in self.banManager.flushBanList():
 			self.__unBan(ticket)
 	
 	##
@@ -203,6 +205,8 @@ class Actions(JailThread):
 		aInfo["failures"] = ticket.getAttempt()
 		aInfo["time"] = ticket.getTime()
 		aInfo["matches"] = "".join(ticket.getMatches())
+		aInfo["banned_ips"] = ", ".join(self.banManager.getBanList())
+		aInfo["num_banned_ips"] = self.banManager.size()
 		logSys.warn("[%s] Unban %s" % (self.jail.getName(), aInfo["ip"]))
 		for action in self.__actions:
 			action.execActionUnban(aInfo)
@@ -216,7 +220,7 @@ class Actions(JailThread):
 	# @return a list with tuple
 	
 	def status(self):
-		ret = [("Currently banned", self.__banManager.size()), 
-			   ("Total banned", self.__banManager.getBanTotal()),
-			   ("IP list", self.__banManager.getBanList())]
+		ret = [("Currently banned", self.banManager.size()), 
+			   ("Total banned", self.banManager.getBanTotal()),
+			   ("IP list", self.banManager.getBanList())]
 		return ret
