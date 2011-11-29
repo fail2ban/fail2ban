@@ -43,8 +43,11 @@ class FailData:
 	def setRetry(self, value):
 		self.__retry = value
 		# keep only the last matches or reset entirely
-		self.__matches = self.__matches[-min(len(self.__matches, value)):] \
-						 if value else []
+		# Explicit if/else for compatibility with Python 2.4
+		if value:
+			self.__matches = self.__matches[-min(len(self.__matches, value)):]
+		else:
+			self.__matches = []
 
 	def getRetry(self):
 		return self.__retry

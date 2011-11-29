@@ -4,8 +4,51 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.5)                                              2011/07/28
+Fail2Ban (version 0.8.6)                                              2011/11/28
 ================================================================================
+
+ver. 0.8.6 (2011/11/28) - stable
+----------
+- Fixes:
+  Markos Chandras & Yaroslav Halchenko
+   * [492d8e5,bd658fc] Use hashlib (instead of deprecated md5) where available
+  Robert Trace & Michael Lorant
+   * [c48c2b1] gentoo-initd cleanup and fixes: assure /var/run + remove stale
+     sock file
+  Michael Saavedra
+   * [3a58d0e] Lock server's executeCmd to prevent racing among iptables calls:
+     see http://bugs.debian.org/554162
+  Yaroslav Halchenko
+   * [3eb5e3b] Allow for trailing spaces in sasl logs
+   * [1632244] Stop server-side communication before stopping the
+     jails (prevents lockup if actions use fail2ban-client upon
+	 unban): see https://github.com/fail2ban/fail2ban/issues/7
+   * [5a2d518] Various changes to reincarnate unittests
+  Yehuda
+   * Wiki was cleaned from SPAM
+- Enhancements:
+  Adam Spiers
+   * [3152afb] Recognise time-stamped kernel messages
+  Guido Bozzetto
+   * [713fea6] Added ipmasq rule file to restart fail2ban when iptables are
+     wiped out: see http://bugs.debian.org/461417
+  Łukasz
+   * [5f23542] Matching of month names in Polish (thanks michaelberg79
+     for QA)
+  Tom Hendrikx
+   * [9fa54cf] Added Date: header for sendmail*.conf actions
+  Yaroslav Halchenko & Tom Hendrikx
+   * [b52d420..22b7007] <matches> in action files now can be used
+     to provide matched	loglines which triggered action
+  Yaroslav Halchenko
+   * [ed0bf3a] Removed duplicate entry for DataCha0s/2\.0 in badbots:
+     see http://bugs.debian.org/519557
+   * [dad91f7] sshd.conf: allow user names to have spaces and
+     trailing spaces in the line
+   * [a9be451] removed expansions for few Date and Revision SVN keywords
+   * [a33135c] set/getFile for ticket.py -- found in source distribution
+     of 0.8.4
+   * [fbce415] additional logging while stopping the jails
 
 ver. 0.8.5 (2011/07/28) - stable
 ----------

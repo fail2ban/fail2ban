@@ -99,6 +99,12 @@ class DateDetector:
 			template.setRegex("\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%Y-%m-%d %H:%M:%S")
 			self.__templates.append(template)
+			# custom for syslog-ng 2006.12.21 06:43:20
+			template = DateStrptime()
+			template.setName("Year.Month.Day Hour:Minute:Second")
+			template.setRegex("\d{4}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%Y.%m.%d %H:%M:%S")
+			self.__templates.append(template)
 			# named 26-Jul-2007 15:20:52.252 
 			template = DateStrptime()
 			template.setName("Day-MONTH-Year Hour:Minute:Second[.Millisecond]")

@@ -57,6 +57,26 @@ class DateDetectorTest(unittest.TestCase):
 		self.assertEqual(self.__datedetector.getTime(log), date)
 		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
 
+	def testVariousTimes(self):
+		"""Test detection of various common date/time formats f2b should understand
+		"""
+		date = [2005, 1, 23, 21, 59, 59, 1, 23, -1]
+		dateUnix = 1106513999.0
+
+		for sdate in (
+			"Jan 23 21:59:59",
+			"2005.01.23 21:59:59",
+			"23/01/2005 21:59:59",
+			):
+			log = sdate + "[sshd] error: PAM: Authentication failure"
+			# exclude
+
+			# TODO (Yarik is confused): figure out why for above it is
+			#      "1" as day of the week which would be Tue, although it
+			#      was Sun
+			self.assertEqual(self.__datedetector.getTime(log)[:6], date[:6])
+			self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
+
 #	def testDefaultTempate(self):
 #		self.__datedetector.setDefaultRegex("^\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 #		self.__datedetector.setDefaultPattern("%b %d %H:%M:%S")

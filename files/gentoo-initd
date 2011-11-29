@@ -19,7 +19,7 @@
 # 
 # $Revision$
 
-opts="start stop restart reload showlog"
+opts="reload showlog"
 
 FAIL2BAN="/usr/bin/fail2ban-client ${FAIL2BAN_OPTIONS}"
 
@@ -31,6 +31,14 @@ depend() {
 
 start() {
 	ebegin "Starting fail2ban"
+	if [ ! -d /var/run/fail2ban ]; then
+		mkdir /var/run/fail2ban || return 1
+	fi
+	if [ -e /var/run/fail2ban/fail2ban.sock ]; then
+		# remove stalled sock file after system crash
+		# bug 347477
+		rm -rf /var/run/fail2ban/fail2ban.sock || return 1
+	fi
 	${FAIL2BAN} start &> /dev/null
 	eend $? "Failed to start fail2ban"
 }
@@ -39,14 +47,6 @@ stop() {
 	ebegin "Stopping fail2ban"
 	${FAIL2BAN} stop &> /dev/null
 	eend $? "Failed to stop fail2ban"
-}
-
-restart() {
-	if ! service_stopped "${SVCNAME}" ; then
-		svc_stop || return "$?"
-		sleep 1
-	fi
-	svc_start
 }
 
 reload() {
