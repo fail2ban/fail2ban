@@ -2,5 +2,5 @@
 # Run the "uscan" command to check for upstream updates and more.
 # Site		Directory		Pattern			Version	Script
 version=3
-
-http://sf.net/fail2ban/ fail2ban-(.*)\.tar\.bz2 debian git-import-orig
+opts="filenamemangle=s/.*\/(.*).tar.gz/fail2ban_$1\.orig.tar.gz/" \
+ http://githubredir.debian.net/github/fail2ban/fail2ban /([0-9].*).tar.gz

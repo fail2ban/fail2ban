@@ -2,6 +2,7 @@ fail2ban (0.8.6-1) unstable; urgency=low
 
   * [1efe1bc] Fresh upstream release (Closes: #648324)
   * Boosted policy compliance to 3.9.2 -- no changes
+  * Adjusted debian/watch to fetch tarballs from github
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 28 Nov 2011 22:27:18 -0500
 
