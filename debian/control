@@ -6,8 +6,8 @@ Build-Depends: debhelper (>= 5.0.37.2), python (>= 2.5.4-1~)
 Build-Depends-Indep: python-central (>= 0.5.6)
 XS-Python-Version: current, >= 2.4
 Homepage: http://www.fail2ban.org
-Vcs-Browser: http://git.onerussian.com/?p=deb/fail2ban.git
-Vcs-git: git://git.onerussian.com/deb/fail2ban.git
+Vcs-Browser: git://github.com/fail2ban/fail2ban.git
+Vcs-git: http://github.com/fail2ban/fail2ban
 Standards-Version: 3.9.2
 
 
