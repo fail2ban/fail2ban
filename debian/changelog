@@ -1,3 +1,10 @@
+fail2ban (0.8.6-1) unstable; urgency=low
+
+  * [1efe1bc] Fresh upstream release (Closes: #648324)
+  * Boosted policy compliance to 3.9.2 -- no changes
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 28 Nov 2011 22:27:18 -0500
+
 fail2ban (0.8.5-2) unstable; urgency=low
 
   * [5242e73] BF: (cherry-picked from upstream, DEP-3 yet TODO) Lock
