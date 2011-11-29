@@ -27,4 +27,4 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011 Yaroslav Halchenko"
 __license__ = "GPL"
 
-version = "0.8.5"
+version = "0.8.6"
