@@ -45,9 +45,8 @@ check_processes_fail2ban()
 }
 ######################################################################
 # first check in the Background, PID will be killed when no response
-# after 10 seconds, might be possible, otherwise the scipt will be
-# pressent in your memory all the time
-#
+# after 10 seconds, might be possible, otherwise the script will be
+# present in your memory all the time
 ######################################################################
 
 check_processes_fail2ban &
@@ -68,7 +67,7 @@ fi
 done
 
 ######################################################################
-# when the Server response (doesent mean the FAIL2BAN is working)
+# when the Server response (does not mean the FAIL2BAN is working)
 # in the first step, then it will run again and test the Service 
 # and provide the real status
 ######################################################################
@@ -83,19 +82,19 @@ fi
 
 
 ######################################################################
-# Mainmenu
+# Main Menu
 ######################################################################
 
 
 final_exit=$exit_fail2ban
 if [ $final_exit -eq 0  ]; then
-  echo "SYSTEM OK - Fail2ban is working normaly"
+  echo "SYSTEM OK - Fail2ban is working normally"
   exitstatus=$STATE_OK
 elif [ $final_exit -ne "0" ]; then
   echo "SYSTEM WARNING - Fail2Ban is not working"
 ######################################################################
 # If don't have a Nagios Server for monitoring, remove the comment and
-# add your Mail Addres. You can check it with a Cron Job once a hour.
+# add your Mail Address. You can check it with a Cron Job once an hour.
 # put a txt file on your server and describe how to fix the issue, this 
 # could be attached to the mail.
 ######################################################################
