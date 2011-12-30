@@ -20,6 +20,7 @@ client/configurator.py
 client/csocket.py
 server/asyncserver.py
 server/filter.py
+server/filterpyinotify.py
 server/filtergamin.py
 server/filterpoll.py
 server/iso8601.py
