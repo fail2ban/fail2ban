@@ -78,7 +78,7 @@ class FilterPyinotify(FileFilter):
 		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
 		else:
-			wd = self.monitor.add_watch(path, pyinotify.IN_MODIFY)
+			self.monitor.add_watch(path, pyinotify.IN_MODIFY)
 			FileFilter.addLogPath(self, path, tail)
 			logSys.info("Added logfile = %s" % path)
 
@@ -109,7 +109,6 @@ class FilterPyinotify(FileFilter):
 		while self._isActive():
 			if not self.getIdle():
 				self.notifier.process_events()
-				# Convert sleep seconds to millis
 				if self.notifier.check_events():
 					self.notifier.read_events()
 			else:
