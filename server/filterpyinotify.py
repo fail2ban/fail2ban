@@ -31,9 +31,7 @@ from failmanager import FailManagerEmpty
 from filter import FileFilter
 from mytime import MyTime
 
-import  time, logging, pyinotify
-
-
+import time, logging, pyinotify
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -45,28 +43,19 @@ logSys = logging.getLogger("fail2ban.filter")
 # that matches a given regular expression. This class is instantiated by
 # a Jail object.
 
-class ProcessPyinotify(pyinotify.ProcessEvent):
-	def __init__(self, FileFilter, **kargs):
-		super(ProcessPyinotify, self).__init__(**kargs)
-		self.__FileFilter = FileFilter
-		pass
-
-	# just need default, since using mask on watch to limit events
-	def process_default(self, event):
-		logSys.debug("PYINOTIFY: Callback for Event: %s" % event)
-		self.__FileFilter.callback(event.pathname)
-
-
 class FilterPyinotify(FileFilter):
+	##
 	# Constructor.
 	#
 	# Initialize the filter object with default values.
 	# @param jail the jail object
+
 	def __init__(self, jail):
 		FileFilter.__init__(self, jail)
 		self.__modified = False
+		# Pyinotify watch manager
 		self.monitor = pyinotify.WatchManager()
-		self.watches = dict()
+		logSys.debug("Created FilterPyinotify")
 
 
 	def callback(self, path):
@@ -84,12 +73,12 @@ class FilterPyinotify(FileFilter):
 	# Add a log file path
 	#
 	# @param path log file path
+
 	def addLogPath(self, path, tail=False):
 		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
 		else:
 			wd = self.monitor.add_watch(path, pyinotify.IN_MODIFY)
-			self.watches[path] = wd[path]
 			FileFilter.addLogPath(self, path, tail)
 			logSys.info("Added logfile = %s" % path)
 
@@ -102,7 +91,6 @@ class FilterPyinotify(FileFilter):
 		if not self.containsLogPath(path):
 			logSys.error(path + " is not monitored")
 		else:
-			self.monitor.rm_watch(self.watches[path])
 			FileFilter.delLogPath(self, path)
 			logSys.info("Removed logfile = %s" % path)
 
@@ -146,3 +134,15 @@ class FilterPyinotify(FileFilter):
 	def __cleanup(self):
 		del self.notifier
 		del self.monitor
+
+
+class ProcessPyinotify(pyinotify.ProcessEvent):
+	def __init__(self, FileFilter, **kargs):
+		super(ProcessPyinotify, self).__init__(**kargs)
+		self.__FileFilter = FileFilter
+		pass
+
+	# just need default, since using mask on watch to limit events
+	def process_default(self, event):
+		logSys.debug("PYINOTIFY: Callback for Event: %s" % event)
+		self.__FileFilter.callback(event.pathname)
