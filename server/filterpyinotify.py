@@ -18,13 +18,11 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # Author: Cyril Jaquier
-#
-# $Revision$
 
-__author__ = "Cyril Jaquier"
+__author__ = "Lee Clemens"
 __version__ = "$Revision$"
 __date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__copyright__ = "Copyright (c) 2011 Lee Clemens"
 __license__ = "GPL"
 
 from failmanager import FailManagerEmpty
