@@ -54,6 +54,7 @@ class FilterPyinotify(FileFilter):
 		# Pyinotify watch manager
 		self.monitor = pyinotify.WatchManager()
 		logSys.debug("Created FilterPyinotify")
+		self.__watches = dict()
 
 
 	def callback(self, path):
@@ -76,7 +77,8 @@ class FilterPyinotify(FileFilter):
 		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
 		else:
-			self.monitor.add_watch(path, pyinotify.IN_MODIFY)
+			wd = self.monitor.add_watch(path, pyinotify.IN_MODIFY)
+			self.__watches.update(wd)
 			FileFilter.addLogPath(self, path, tail)
 			logSys.info("Added logfile = %s" % path)
 
@@ -89,8 +91,14 @@ class FilterPyinotify(FileFilter):
 		if not self.containsLogPath(path):
 			logSys.error(path + " is not monitored")
 		else:
-			FileFilter.delLogPath(self, path)
-			logSys.info("Removed logfile = %s" % path)
+			wdInt = self.__watches[path]
+			wd = self.monitor.rm_watch(wdInt)
+			if wd[wdInt]:
+				del self.__watches[path]
+				FileFilter.delLogPath(self, path)
+				logSys.info("Removed logfile = %s" % path)
+			else:
+				logSys.error("Failed to remove watch on path: %s", path)
 
 	##
 	# Main loop.
