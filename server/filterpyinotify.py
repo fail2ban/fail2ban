@@ -52,7 +52,7 @@ class FilterPyinotify(FileFilter):
 		FileFilter.__init__(self, jail)
 		self.__modified = False
 		# Pyinotify watch manager
-		self.monitor = pyinotify.WatchManager()
+		self.__monitor = pyinotify.WatchManager()
 		logSys.debug("Created FilterPyinotify")
 		self.__watches = dict()
 
@@ -77,7 +77,7 @@ class FilterPyinotify(FileFilter):
 		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
 		else:
-			wd = self.monitor.add_watch(path, pyinotify.IN_MODIFY)
+			wd = self.__monitor.add_watch(path, pyinotify.IN_MODIFY)
 			self.__watches.update(wd)
 			FileFilter.addLogPath(self, path, tail)
 			logSys.info("Added logfile = %s" % path)
@@ -92,7 +92,7 @@ class FilterPyinotify(FileFilter):
 			logSys.error(path + " is not monitored")
 		else:
 			wdInt = self.__watches[path]
-			wd = self.monitor.rm_watch(wdInt)
+			wd = self.__monitor.rm_watch(wdInt)
 			if wd[wdInt]:
 				del self.__watches[path]
 				FileFilter.delLogPath(self, path)
@@ -109,14 +109,14 @@ class FilterPyinotify(FileFilter):
 
 	def run(self):
 		self.setActive(True)
-		self.notifier = pyinotify.ThreadedNotifier(self.monitor,
+		self.__notifier = pyinotify.ThreadedNotifier(self.__monitor,
 			ProcessPyinotify(self))
-		self.notifier.start()
+		self.__notifier.start()
 		while self._isActive():
 			if not self.getIdle():
-				self.notifier.process_events()
-				if self.notifier.check_events():
-					self.notifier.read_events()
+				self.__notifier.process_events()
+				if self.__notifier.check_events():
+					self.__notifier.read_events()
 			else:
 				time.sleep(self.getSleepTime())
 		# Cleanup pyinotify
@@ -131,14 +131,14 @@ class FilterPyinotify(FileFilter):
 		# Call super to set __isRunning
 		super(FilterPyinotify, self).stop()
 		# Now stop the Notifier, otherwise we're deadlocked
-		self.notifier.stop()
+		self.__notifier.stop()
 
 	##
 	# Deallocates the resources used by pyinotify.
 
 	def __cleanup(self):
-		del self.notifier
-		del self.monitor
+		del self.__notifier
+		del self.__monitor
 
 
 class ProcessPyinotify(pyinotify.ProcessEvent):
