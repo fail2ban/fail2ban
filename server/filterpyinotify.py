@@ -149,5 +149,5 @@ class ProcessPyinotify(pyinotify.ProcessEvent):
 
 	# just need default, since using mask on watch to limit events
 	def process_default(self, event):
-		logSys.debug("PYINOTIFY: Callback for Event: %s" % event)
+		logSys.debug("Callback for Event: %s" % event)
 		self.__FileFilter.callback(event.pathname)
