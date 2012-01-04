@@ -53,8 +53,8 @@ class FilterPyinotify(FileFilter):
 		self.__modified = False
 		# Pyinotify watch manager
 		self.__monitor = pyinotify.WatchManager()
-		logSys.debug("Created FilterPyinotify")
 		self.__watches = dict()
+		logSys.debug("Created FilterPyinotify")
 
 
 	def callback(self, path):
