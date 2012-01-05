@@ -33,6 +33,9 @@ SOCKFILE=`grep -h '^[^#]*socket *=' /etc/$NAME/$NAME.conf /etc/$NAME/$NAME.local
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
 
+# Run as root by default.
+FAIL2BAN_USER=root
+
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
 DAEMON_ARGS="$FAIL2BAN_OPTS"
@@ -103,7 +106,17 @@ do_start()
 	# Assure that /var/run/fail2ban exists
 	[ -d /var/run/fail2ban ] || mkdir -p /var/run/fail2ban
 
-	start-stop-daemon --start --quiet --chuid root --exec $DAEMON -- \
+	if [ "$FAIL2BAN_USER" != "root" ]; then
+		# Make the socket directory, IP lists and fail2ban log
+		# files writable by fail2ban
+		chown "$FAIL2BAN_USER" /var/run/fail2ban
+		# Create the logfile if it doesn't exist
+		touch /var/log/fail2ban.log
+		chown "$FAIL2BAN_USER" /var/log/fail2ban.log
+		find /proc/net/xt_recent -name 'fail2ban-*' -exec chown "$FAIL2BAN_USER" {} \;
+	fi
+
+	start-stop-daemon --start --quiet --chuid "$FAIL2BAN_USER" --exec $DAEMON -- \
 		$DAEMON_ARGS start > /dev/null\
 		|| return 2
 
