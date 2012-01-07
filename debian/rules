@@ -18,6 +18,10 @@ configure-stamp:
 
 build:
 
+build-arch:
+
+build-indep:
+
 clean: clean-inits
 	dh_testdir
 	dh_testroot
