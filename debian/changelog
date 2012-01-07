@@ -1,7 +1,9 @@
-fail2ban (0.8.6-2) UNRELEASED; urgency=low
+fail2ban (0.8.6-2~pre1) UNRELEASED; urgency=low
 
   * Added pure-ftpd section to Debian's jail.conf.  Thanks to Laurent
     Léonard (Closes: #654412)
+  * Enhancement: action to use /proc/net/xt_recent and run f2b as a normal
+    user. Many many thanks to Zbyszek Szmek (Closes: #602016)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 03 Jan 2012 10:36:24 -0500
 
