@@ -224,8 +224,8 @@ class DNSUtilsTests(unittest.TestCase):
 
 	def testTextToIp(self):
 		bogus = [
-			'doh1.2.3.4.buga.xxxxx.yyy',
-			'1.2.3.4.buga.xxxxx.yyy',
+			'doh1.2.3.4.buga.xxxxx.yyy.invalid',
+			'1.2.3.4.buga.xxxxx.yyy.invalid',
 			]
 		"""Really bogus addresses which should have no matches"""
 		for s in bogus:
