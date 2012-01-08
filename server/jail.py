@@ -41,13 +41,37 @@ class Jail:
 		self.__queue = Queue.Queue()
 		self.__filter = None
 		logSys.info("Creating new jail '%s'" % self.__name)
-		if backend == "polling":
-			self.__initPoller()
-		else:
+		self.__setBackend = False
+		if backend == "auto":
+			# Quick-escape for auto (default/fall-back condition)
+			self.__setBackend = False
+		elif backend == "pyinotify":
+			try:
+				self.__initPyinotify()
+				self.__setBackend = True
+			except ImportError:
+				self.__setBackend = False
+		elif backend == "gamin":
 			try:
 				self.__initGamin()
+				self.__setBackend = True
 			except ImportError:
-				self.__initPoller()
+				self.__setBackend = False
+		elif backend == "polling":
+			self.__initPoller()
+			self.__setBackend = True
+
+		if not self.__setBackend:
+			# If auto, or unrecognized, or failed using an explicit value
+			try:
+				self.__initPyinotify()
+			except ImportError:
+				try:
+					self.__initGamin()
+				except ImportError:
+					self.__initPoller()
+					self.__setBackend = True
+
 		self.__action = Actions(self)
 	
 	def __initPoller(self):
@@ -61,6 +85,13 @@ class Jail:
 		logSys.info("Jail '%s' uses Gamin" % self.__name)
 		from filtergamin import FilterGamin
 		self.__filter = FilterGamin(self)
+	
+	def __initPyinotify(self):
+		# Try to import pyinotify
+		import pyinotify
+		logSys.info("Jail '%s' uses pyinotify" % self.__name)
+		from filterpyinotify import FilterPyinotify
+		self.__filter = FilterPyinotify(self)
 	
 	def setName(self, name):
 		self.__name = name
