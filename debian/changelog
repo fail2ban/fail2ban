@@ -1,4 +1,4 @@
-fail2ban (0.8.6-2~pre1) UNRELEASED; urgency=low
+fail2ban (0.8.6-2) unstable; urgency=low
 
   * Added pure-ftpd section to Debian's jail.conf.  Thanks to Laurent
     Léonard (Closes: #654412)
