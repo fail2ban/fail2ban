@@ -48,28 +48,45 @@ without the ability to mess up other iptables rules.
 The xt_recent-echo jail can be used under the root user without
 further configuration. To run not as root, futher setup is necessary:
 
-- add user fail2ban who can read /var/log/auth.log and other
-  necessary log files. Log files are owned by group 'adm', so
-  it is enough if this user belongs to this group.
+- Create user:
 
-  The user can be created e.g. with
-    useradd --system --no-create-home --home-dir / --groups adm fail2ban
+  - set FAIL2BAN_USER in /etc/default/fail2ban.
 
-- put a rule to check the xt_recent list in the static firewall
-  initialization script, with a name like fail2ban-ssh.
+    This probably should be fail2ban.
 
-  Sample invocation might be
-    iptables -I INPUT -m recent --update --seconds 3600 --name fail2ban-<name> -j DROP
-  with <name> suitably replaced.
+  - add user fail2ban who can read /var/log/auth.log and other
+    necessary log files. Log files are owned by group 'adm', so
+    it is enough if this user belongs to this group.
 
-- set FAIL2BAN_USER in /etc/default/fail2ban.
+    The user can be created e.g. with
 
-  This probably should be fail2ban.
+     useradd --system --no-create-home --home-dir / --groups adm fail2ban
 
-- make sure that logfiles of fail2ban itself are writable by the
-  fail2ban user. /etc/init.d/fail2ban will change the ownership at
-  startup, but it is also necessary to modify
-  /etc/logrotate.d/fail2ban.
+- Statically initialize chains firewall:
+
+  - put a rule to check the xt_recent list in the static firewall initialization
+    script, with names like fail2ban-ssh (action uses separate chains per each
+    jail, so define here the ones you need 1-per-jail)
+
+    Sample invocation might be
+
+     iptables -I INPUT -m recent --update --seconds 3600 --name fail2ban-<name> -j DROP
+
+    with <name> suitably replaced.
+
+  - suppress actionstart for iptables-xt_recent-echo action by creating an override file
+    iptables-xt_recent-echo.local to accompany iptables-xt_recent-echo.conf with
+
+     [Definition]
+     actionstart =
+
+- Permissions:
+
+  make sure that configuration files under /etc/fail2ban are readable by
+  fail2ban user. Make sure that logfiles of fail2ban itself are writable
+  by the fail2ban user. /etc/init.d/fail2ban will change the ownership at
+  startup, but it is also necessary to modify /etc/logrotate.d/fail2ban.
 
   The simplest way is to replace '# create ...' with the following
     # create 640 fail2ban adm
+
