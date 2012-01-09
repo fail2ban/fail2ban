@@ -17,12 +17,10 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
+# Original author: Cyril Jaquier
 
-__author__ = "Lee Clemens"
-__version__ = "$Revision$"
-__date__ = "$Date$"
-__copyright__ = "Copyright (c) 2011 Lee Clemens"
+__author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
 from failmanager import FailManagerEmpty
@@ -143,7 +141,11 @@ class FilterPyinotify(FileFilter):
 
 class ProcessPyinotify(pyinotify.ProcessEvent):
 	def __init__(self, FileFilter, **kargs):
-		super(ProcessPyinotify, self).__init__(**kargs)
+		#super(ProcessPyinotify, self).__init__(**kargs)
+		# for some reason root class _ProcessEvent is old-style (is
+		# not derived from object), so to play safe let's avoid super
+		# for now, and call superclass directly
+		pyinotify.ProcessEvent.__init__(self, **kargs)
 		self.__FileFilter = FileFilter
 		pass
 
