@@ -18,13 +18,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
-# $Revision$
 
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Cyril Jaquier, Lee Celemens, Yaroslav Halchenko"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import Queue, logging
@@ -35,58 +31,62 @@ from actions import Actions
 logSys = logging.getLogger("fail2ban.jail")
 
 class Jail:
-	
+
+	_BACKENDS = ('pyinotify', 'gamin', 'pull')
+	"""Known backends.  Each backend should have corresponding
+	__initBackend method
+	"""
+
 	def __init__(self, name, backend = "auto"):
 		self.__name = name
 		self.__queue = Queue.Queue()
 		self.__filter = None
 		logSys.info("Creating new jail '%s'" % self.__name)
-		self.__setBackend = False
-		if backend == "auto":
-			# Quick-escape for auto (default/fall-back condition)
-			self.__setBackend = False
-		elif backend == "pyinotify":
-			try:
-				self.__initPyinotify()
-				self.__setBackend = True
-			except ImportError:
-				self.__setBackend = False
-		elif backend == "gamin":
-			try:
-				self.__initGamin()
-				self.__setBackend = True
-			except ImportError:
-				self.__setBackend = False
-		elif backend == "polling":
-			self.__initPoller()
-			self.__setBackend = True
+		self._setBackend(backend)
 
-		if not self.__setBackend:
-			# If auto, or unrecognized, or failed using an explicit value
-			try:
-				self.__initPyinotify()
-			except ImportError:
-				try:
-					self.__initGamin()
-				except ImportError:
-					self.__initPoller()
-					self.__setBackend = True
+	def _setBackend(self, backend):
+		backend = backend.lower()		# to assure consistent matching
 
-		self.__action = Actions(self)
-	
-	def __initPoller(self):
+		backends = self._BACKENDS
+		if backend != 'auto':
+			# we have got strict specification of the backend to use
+			if not (backend in self._BACKENDS):
+				raise ValueError("Unknown backend %s. Must be among %s or 'auto'"
+								 % (backend, backends))
+			# so explore starting from it till the 'end'
+			backends = backends[backends.index(backend):]
+
+		for b in backends:
+			initmethod = getattr(self, '_init%s' % b.capitalize())
+			try:
+				initmethod()
+				if backend != 'auto' and b != backend:
+					logSys.warning("Could only initiated %r backend whenever "
+								   "%r was requested" % (b, backend))
+				else:
+					logSys.info("Initiated %r backend" % b)
+				self.__action = Actions(self)
+				return					# we are done
+			except ImportError, e:
+				logSys.debug(
+					"Backend %r failed to initialize due to %s" % (b, e))
+		raise RuntimeError(
+			"We should have initialized at least 'polling' backend")
+
+
+	def _initPoller(self):
 		logSys.info("Jail '%s' uses poller" % self.__name)
 		from filterpoll import FilterPoll
 		self.__filter = FilterPoll(self)
 	
-	def __initGamin(self):
+	def _initGamin(self):
 		# Try to import gamin
 		import gamin
 		logSys.info("Jail '%s' uses Gamin" % self.__name)
 		from filtergamin import FilterGamin
 		self.__filter = FilterGamin(self)
 	
-	def __initPyinotify(self):
+	def _initPyinotify(self):
 		# Try to import pyinotify
 		import pyinotify
 		logSys.info("Jail '%s' uses pyinotify" % self.__name)
