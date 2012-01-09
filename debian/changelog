@@ -1,3 +1,10 @@
+fail2ban (0.8.6-3) UNRELEASED; urgency=low
+
+  * Added dovecot section to Debian's jail.conf.  Thanks to Laurent
+    Léonard (Closes: #655182)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 08 Jan 2012 21:46:24 -0500
+
 fail2ban (0.8.6-2) unstable; urgency=low
 
   * Added pure-ftpd section to Debian's jail.conf.  Thanks to Laurent
