@@ -212,7 +212,7 @@ class Server:
 	
 	def setMaxRetry(self, name, value):
 		self.__jails.getFilter(name).setMaxRetry(value)
-	n
+	
 	def getMaxRetry(self, name):
 		return self.__jails.getFilter(name).getMaxRetry()
 	
