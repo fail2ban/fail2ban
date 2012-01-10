@@ -205,9 +205,11 @@ class Server:
 		return self.__jails.getFilter(name).getIgnoreRegex()
 	
 	def setUseDns(self, name, value):
+		logSys.debug("USE_DNS: in server.setUseDns: %s" % value)
 		self.__jails.getFilter(name).setUseDns(value)
 	
 	def getUseDns(self, name):
+		logSys.debug("USE_DNS: in server.getUseDns: %s" % name)
 		return self.__jails.getFilter(name).getUseDns()
 	
 	def setMaxRetry(self, name, value):

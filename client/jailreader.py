@@ -61,11 +61,11 @@ class JailReader(ConfigReader):
 	def getOptions(self):
 		opts = [["bool", "enabled", "false"],
 				["string", "logpath", "/var/log/messages"],
-				["string", "use_dns", "warn"],
 				["string", "backend", "auto"],
 				["int", "maxretry", 3],
 				["int", "findtime", 600],
 				["int", "bantime", 600],
+				["string", "use_dns", "warn"],
 				["string", "failregex", None],
 				["string", "ignoreregex", None],
 				["string", "ignoreip", None],
@@ -123,6 +123,9 @@ class JailReader(ConfigReader):
 				stream.append(["set", self.__name, "findtime", self.__opts[opt]])
 			elif opt == "bantime":
 				stream.append(["set", self.__name, "bantime", self.__opts[opt]])
+			elif opt == "use_dns":
+				logSys.debug("USE_DNS: In jailreader.convert")
+				stream.append(["set", self.__name, "use_dns", self.__opts[opt]])
 			elif opt == "failregex":
 				stream.append(["set", self.__name, "addfailregex", self.__opts[opt]])
 			elif opt == "ignoreregex":
