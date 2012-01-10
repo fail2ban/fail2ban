@@ -124,7 +124,6 @@ class JailReader(ConfigReader):
 			elif opt == "bantime":
 				stream.append(["set", self.__name, "bantime", self.__opts[opt]])
 			elif opt == "use_dns":
-				logSys.debug("USE_DNS: In jailreader.convert")
 				stream.append(["set", self.__name, "use_dns", self.__opts[opt]])
 			elif opt == "failregex":
 				stream.append(["set", self.__name, "addfailregex", self.__opts[opt]])
