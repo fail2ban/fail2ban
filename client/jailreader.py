@@ -61,6 +61,7 @@ class JailReader(ConfigReader):
 	def getOptions(self):
 		opts = [["bool", "enabled", "false"],
 				["string", "logpath", "/var/log/messages"],
+				["string", "use_dns", "warn"],
 				["string", "backend", "auto"],
 				["int", "maxretry", 3],
 				["int", "findtime", 600],
