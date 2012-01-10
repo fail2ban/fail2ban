@@ -19,7 +19,7 @@
 
 # Author: Cyril Jaquier
 
-__author__ = "Cyril Jaquier, Lee Celemens, Yaroslav Halchenko"
+__author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
@@ -32,10 +32,8 @@ logSys = logging.getLogger("fail2ban.jail")
 
 class Jail:
 
-	_BACKENDS = ('pyinotify', 'gamin', 'pull')
-	"""Known backends.  Each backend should have corresponding
-	__initBackend method
-	"""
+	#Known backends. Each backend should have corresponding __initBackend method
+	_BACKENDS = ('pyinotify', 'gamin', 'polling')
 
 	def __init__(self, name, backend = "auto"):
 		self.__name = name
