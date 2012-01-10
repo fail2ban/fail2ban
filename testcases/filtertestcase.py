@@ -222,12 +222,12 @@ class GetFailures(unittest.TestCase):
 
 class DNSUtilsTests(unittest.TestCase):
 
-	def testTextToIp(self):
+	def testTextToIp(self, useDns):
 		# Bogus addresses which should have no DNS matches
 		bogus = [
 			'doh1.2.3.4.buga.xxxxx.yyy.invalid',
 			'1.2.3.4.buga.xxxxx.yyy.invalid',
 			]
 		for s in bogus:
-			res = DNSUtils.textToIp(s)
+			res = DNSUtils.textToIp(s, useDns)
 			self.assertEqual(res, [])
