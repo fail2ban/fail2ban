@@ -22,7 +22,12 @@ Required:
    >=python-2.3 (http://www.python.org)
 
 Optional:
-   >=gamin-0.0.21 (http://www.gnome.org/~veillard/gamin)
+   pyinotify:
+      >=linux-2.6.13
+      >=python-2.4
+      >=pyinotify-0.8.3 (https://github.com/seb-m/pyinotify)
+   Gamin:
+      >=gamin-0.0.21 (http://www.gnome.org/~veillard/gamin)
 
 To install, just do:
 

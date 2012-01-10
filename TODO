@@ -19,8 +19,6 @@ Legend:
 
 - Add timeout to external commands (signal alarm, watchdog thread, etc)
 
-- New backend: pyinotify
-
 - Uniformize filters and actions name. Use the software name (openssh, postfix,
   proftp)
 
@@ -52,3 +50,5 @@ Legend:
 # better return values in function
 
 # refactoring in server.py, actions.py, filter.py
+
+* New backend: pyinotify

@@ -18,13 +18,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
-# $Revision$
 
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import Queue, logging
@@ -35,32 +31,65 @@ from actions import Actions
 logSys = logging.getLogger("fail2ban.jail")
 
 class Jail:
-	
+
+	#Known backends. Each backend should have corresponding __initBackend method
+	_BACKENDS = ('pyinotify', 'gamin', 'polling')
+
 	def __init__(self, name, backend = "auto"):
 		self.__name = name
 		self.__queue = Queue.Queue()
 		self.__filter = None
 		logSys.info("Creating new jail '%s'" % self.__name)
-		if backend == "polling":
-			self.__initPoller()
-		else:
+		self._setBackend(backend)
+
+	def _setBackend(self, backend):
+		backend = backend.lower()		# to assure consistent matching
+
+		backends = self._BACKENDS
+		if backend != 'auto':
+			# we have got strict specification of the backend to use
+			if not (backend in self._BACKENDS):
+				raise ValueError("Unknown backend %s. Must be among %s or 'auto'"
+								 % (backend, backends))
+			# so explore starting from it till the 'end'
+			backends = backends[backends.index(backend):]
+
+		for b in backends:
+			initmethod = getattr(self, '_init%s' % b.capitalize())
 			try:
-				self.__initGamin()
-			except ImportError:
-				self.__initPoller()
-		self.__action = Actions(self)
-	
-	def __initPoller(self):
+				initmethod()
+				if backend != 'auto' and b != backend:
+					logSys.warning("Could only initiated %r backend whenever "
+								   "%r was requested" % (b, backend))
+				else:
+					logSys.info("Initiated %r backend" % b)
+				self.__action = Actions(self)
+				return					# we are done
+			except ImportError, e:
+				logSys.debug(
+					"Backend %r failed to initialize due to %s" % (b, e))
+		raise RuntimeError(
+			"We should have initialized at least 'polling' backend")
+
+
+	def _initPoller(self):
 		logSys.info("Jail '%s' uses poller" % self.__name)
 		from filterpoll import FilterPoll
 		self.__filter = FilterPoll(self)
 	
-	def __initGamin(self):
+	def _initGamin(self):
 		# Try to import gamin
 		import gamin
 		logSys.info("Jail '%s' uses Gamin" % self.__name)
 		from filtergamin import FilterGamin
 		self.__filter = FilterGamin(self)
+	
+	def _initPyinotify(self):
+		# Try to import pyinotify
+		import pyinotify
+		logSys.info("Jail '%s' uses pyinotify" % self.__name)
+		from filterpyinotify import FilterPyinotify
+		self.__filter = FilterPyinotify(self)
 	
 	def setName(self, name):
 		self.__name = name
