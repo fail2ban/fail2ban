@@ -147,13 +147,14 @@ class Filter(JailThread):
 	
 	def setUseDns(self, value):
 		self.__useDns = value
-		logSys.info("Set use_dns = %s" % value)
+		logSys.info("USE_DNS: Set use_dns = %s" % value)
 	
 	##
 	# Get the use_dns mode
 	# @return the use_dns mode
 	
 	def getUseDns(self):
+		logSys.debug("USE_DNS: Get use_dns = %s" % self.__useDns)
 		return self.__useDns
 	
 	##
@@ -584,13 +585,13 @@ class DNSUtils:
 	def textToIp(text, useDns):
 		""" Return the IP of DNS found in a given text.
 		"""
-		logSys.debug("Checking rDNS: %s" % text)
-		logSys.debug("DNS use_dns == %s" % useDns)
+		logSys.debug("USE_DNS: Checking rDNS: %s" % text)
+		logSys.debug("USE_DNS: DNS use_dns == %s" % useDns)
 		if useDns == "no":
-			logSys.debug("use_dns == no")
+			logSys.debug("USE_DNS: use_dns == no")
 			return None
 		else:
-			logSys.debug("use_dns != no")
+			logSys.debug("USE_DNS: use_dns != no")
 			ipList = list()
 			# Search for plain IP
 			plainIP = DNSUtils.searchIP(text)
