@@ -143,14 +143,14 @@ class Filter(JailThread):
 	
 	##
 	# Set the Use DNS mode
-	# @param value the use_dns mode
+	# @param value the usedns mode
 	
 	def setUseDns(self, value):
 		self.__useDns = value
 	
 	##
-	# Get the use_dns mode
-	# @return the use_dns mode
+	# Get the usedns mode
+	# @return the usedns mode
 	
 	def getUseDns(self):
 		return self.__useDns
@@ -586,7 +586,7 @@ class DNSUtils:
 		if useDns == "no":
 			return None
 		else:
-			logSys.debug("use_dns = %s" % useDns)
+			logSys.debug("usedns = %s" % useDns)
 			ipList = list()
 			# Search for plain IP
 			plainIP = DNSUtils.searchIP(text)
