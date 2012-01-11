@@ -599,7 +599,6 @@ class DNSUtils:
 				ip = DNSUtils.dnsToIp(text)
 				for e in ip:
 					ipList.append(e)
-			logSys.debug("At bottom of textToIp, ipList == %s" % ipList)
 			if useDns == "warn":
 				logSys.warning("Determined IP using DNS Reverse Lookup: %s = %s",
 					text, ipList)
