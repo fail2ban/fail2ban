@@ -72,7 +72,7 @@ class Jail:
 			"We should have initialized at least 'polling' backend")
 
 
-	def _initPoller(self):
+	def _initPolling(self):
 		logSys.info("Jail '%s' uses poller" % self.__name)
 		from filterpoll import FilterPoll
 		self.__filter = FilterPoll(self)
