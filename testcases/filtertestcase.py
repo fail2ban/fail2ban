@@ -233,13 +233,13 @@ class DNSUtilsTests(unittest.TestCase):
 	def testTextToIp(self):
 		# Test hostnames
 		hostnames = [
-			'www.example.com'
+			'www.example.com',
 			'doh1.2.3.4.buga.xxxxx.yyy.invalid',
 			'1.2.3.4.buga.xxxxx.yyy.invalid',
 			]
 		for s in hostnames:
 			res = DNSUtils.textToIp(s, 'yes')
-			if s is 'www.example.com':
+			if s == 'www.example.com':
 				self.assertEqual(res, ['192.0.43.10'])
 			else:
 				self.assertEqual(res, [])
