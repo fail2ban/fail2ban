@@ -601,7 +601,7 @@ class DNSUtils:
 					ipList.append(e)
 			logSys.debug("At bottom of textToIp, ipList == %s" % ipList)
 			if useDns == "warn":
-				logSys.warning("IP Banned after DNS Reverse Lookup: %s = %s",
+				logSys.warning("Determined IP using DNS Reverse Lookup: %s = %s",
 					text, ipList)
 			return ipList
 	textToIp = staticmethod(textToIp)
