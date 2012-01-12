@@ -72,7 +72,7 @@ class Jail:
 		logSys.error(
 			"Failed to initialize any backend for Jail %r" % self.__name)
 		raise RuntimeError(
-			"Failed to initialize any backend for jail %r" % self.__name)
+			"Failed to initialize any backend for Jail %r" % self.__name)
 
 
 	def _initPolling(self):
