@@ -49,8 +49,10 @@ class Jail:
 		if backend != 'auto':
 			# we have got strict specification of the backend to use
 			if not (backend in self._BACKENDS):
+				logSys.error("Unknown backend %s. Must be among %s or 'auto'"
+					% (backend, backends))
 				raise ValueError("Unknown backend %s. Must be among %s or 'auto'"
-								 % (backend, backends))
+					% (backend, backends))
 			# so explore starting from it till the 'end'
 			backends = backends[backends.index(backend):]
 
