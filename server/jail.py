@@ -70,9 +70,9 @@ class Jail:
 					"Backend %r failed to initialize due to %s" % (b, e))
 		# log error since runtime error message isn't printed, INVALID COMMAND
 		logSys.error(
-			"Failed to initialize any backend for jail %s" % self.__name)
+			"Failed to initialize any backend for Jail %r" % self.__name)
 		raise RuntimeError(
-			"Failed to initialize any backend for jail %s" % self.__name)
+			"Failed to initialize any backend for jail %r" % self.__name)
 
 
 	def _initPolling(self):
