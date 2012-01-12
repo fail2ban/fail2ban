@@ -68,8 +68,11 @@ class Jail:
 			except ImportError, e:
 				logSys.debug(
 					"Backend %r failed to initialize due to %s" % (b, e))
+		# log error since runtime error message isn't printed, INVALID COMMAND
+		logSys.error(
+			"Failed to initialize any backend for jail %s" % self.__name)
 		raise RuntimeError(
-			"We should have initialized at least 'polling' backend")
+			"Failed to initialize any backend for jail %s" % self.__name)
 
 
 	def _initPolling(self):
