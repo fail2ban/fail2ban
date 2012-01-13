@@ -204,6 +204,12 @@ class Server:
 	def getIgnoreRegex(self, name):
 		return self.__jails.getFilter(name).getIgnoreRegex()
 	
+	def setUseDns(self, name, value):
+		self.__jails.getFilter(name).setUseDns(value)
+	
+	def getUseDns(self, name):
+		return self.__jails.getFilter(name).getUseDns()
+	
 	def setMaxRetry(self, name, value):
 		self.__jails.getFilter(name).setMaxRetry(value)
 	

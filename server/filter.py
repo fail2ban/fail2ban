@@ -64,6 +64,8 @@ class Filter(JailThread):
 		self.__failRegex = list()
 		## The regular expression list with expressions to ignore.
 		self.__ignoreRegex = list()
+		## Use DNS setting
+		self.__useDns = "warn"
 		## The amount of time to look back.
 		self.__findTime = 6000
 		## The ignore IP list.
@@ -138,6 +140,20 @@ class Filter(JailThread):
 		for regex in self.__ignoreRegex:
 			ignoreRegex.append(regex.getRegex())
 		return ignoreRegex
+	
+	##
+	# Set the Use DNS mode
+	# @param value the usedns mode
+	
+	def setUseDns(self, value):
+		self.__useDns = value
+	
+	##
+	# Get the usedns mode
+	# @return the usedns mode
+	
+	def getUseDns(self):
+		return self.__useDns
 	
 	##
 	# Set the time needed to find a failure.
@@ -325,7 +341,7 @@ class Filter(JailThread):
 				else:
 					try:
 						host = failRegex.getHost()
-						ipMatch = DNSUtils.textToIp(host)
+						ipMatch = DNSUtils.textToIp(host, self.__useDns)
 						if ipMatch:
 							for ip in ipMatch:
 								failList.append([ip, date])
@@ -564,22 +580,29 @@ class DNSUtils:
 	isValidIP = staticmethod(isValidIP)
 	
 	#@staticmethod
-	def textToIp(text):
+	def textToIp(text, useDns):
 		""" Return the IP of DNS found in a given text.
 		"""
-		ipList = list()
-		# Search for plain IP
-		plainIP = DNSUtils.searchIP(text)
-		if not plainIP == None:
-			plainIPStr = plainIP.group(0)
-			if DNSUtils.isValidIP(plainIPStr):
-				ipList.append(plainIPStr)
-		if not ipList:
-			# Try to get IP from possible DNS
-			ip = DNSUtils.dnsToIp(text)
-			for e in ip:
-				ipList.append(e)
-		return ipList
+		if useDns == "no":
+			return None
+		else:
+			logSys.debug("usedns = %s" % useDns)
+			ipList = list()
+			# Search for plain IP
+			plainIP = DNSUtils.searchIP(text)
+			if not plainIP is None:
+				plainIPStr = plainIP.group(0)
+				if DNSUtils.isValidIP(plainIPStr):
+					ipList.append(plainIPStr)
+			if not ipList:
+				# Try to get IP from possible DNS
+				ip = DNSUtils.dnsToIp(text)
+				for e in ip:
+					ipList.append(e)
+				if useDns == "warn":
+					logSys.warning("Determined IP using DNS Reverse Lookup: %s = %s",
+						text, ipList)
+			return ipList
 	textToIp = staticmethod(textToIp)
 	
 	#@staticmethod

@@ -154,6 +154,10 @@ class Transmitter:
 			value = int(command[2])
 			self.__server.delIgnoreRegex(name, value)
 			return self.__server.getIgnoreRegex(name)
+		elif command[1] == "usedns":
+			value = command[2]
+			self.__server.setUseDns(name, value)
+			return self.__server.getUseDns(name)
 		elif command[1] == "findtime":
 			value = command[2]
 			self.__server.setFindTime(name, int(value))
@@ -231,6 +235,8 @@ class Transmitter:
 			return self.__server.getFailRegex(name)
 		elif command[1] == "ignoreregex":
 			return self.__server.getIgnoreRegex(name)
+		elif command[1] == "usedns":
+			return self.__server.getUseDns(name)
 		elif command[1] == "findtime":
 			return self.__server.getFindTime(name)
 		elif command[1] == "maxretry":

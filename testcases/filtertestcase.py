@@ -222,12 +222,24 @@ class GetFailures(unittest.TestCase):
 
 class DNSUtilsTests(unittest.TestCase):
 
+	def testUseDns(self):
+		res = DNSUtils.textToIp('www.example.com', 'no')
+		self.assertEqual(res, None)
+		res = DNSUtils.textToIp('www.example.com', 'warn')
+		self.assertEqual(res, ['192.0.43.10'])
+		res = DNSUtils.textToIp('www.example.com', 'yes')
+		self.assertEqual(res, ['192.0.43.10'])
+	
 	def testTextToIp(self):
-		# Bogus addresses which should have no DNS matches
-		bogus = [
+		# Test hostnames
+		hostnames = [
+			'www.example.com',
 			'doh1.2.3.4.buga.xxxxx.yyy.invalid',
 			'1.2.3.4.buga.xxxxx.yyy.invalid',
 			]
-		for s in bogus:
-			res = DNSUtils.textToIp(s)
-			self.assertEqual(res, [])
+		for s in hostnames:
+			res = DNSUtils.textToIp(s, 'yes')
+			if s == 'www.example.com':
+				self.assertEqual(res, ['192.0.43.10'])
+			else:
+				self.assertEqual(res, [])
