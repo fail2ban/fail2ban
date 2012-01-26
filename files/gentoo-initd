@@ -19,7 +19,8 @@
 # 
 # $Revision$
 
-opts="reload showlog"
+extra_commands="showlog"
+extra_started_commands="reload"
 
 FAIL2BAN="/usr/bin/fail2ban-client ${FAIL2BAN_OPTIONS}"
 
