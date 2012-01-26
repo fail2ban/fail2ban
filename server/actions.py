@@ -163,13 +163,13 @@ class Actions(JailThread):
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "".join(bTicket.getMatches())
 			if self.__banManager.addBanTicket(bTicket):
-				logSys.warn("[%s] Ban %s" % (self.jail.getName(), aInfo["ip"]))
+				logSys.warn("[%s] Ban %s" % (self.jail.getName(), str(aInfo["ip"])))
 				for action in self.__actions:
 					action.execActionBan(aInfo)
 				return True
 			else:
 				logSys.warn("[%s] %s already banned" % (self.jail.getName(), 
-														aInfo["ip"]))
+														str(aInfo["ip"])))
 		return False
 	
 	##
