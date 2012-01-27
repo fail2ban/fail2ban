@@ -20,7 +20,7 @@ Legend:
 - Add timeout to external commands (signal alarm, watchdog thread, etc)
 
 - Uniformize filters and actions name. Use the software name (openssh, postfix,
-  proftp)
+  proftp) and possible qualifier (e.g. auth) after a '-'
 
 - Added <USER> tag for failregex. Add features using this information. Maybe add
   more tags
