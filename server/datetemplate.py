@@ -61,7 +61,12 @@ class DateTemplate:
 		return self.__hits
 	
 	def matchDate(self, line):
+		# TODO be more aggressive and match optional ms
 		dateMatch = self.__cRegex.search(line)
+		# XXX also now for each matching dateline it would be
+		# invoked twice since in filter.py:284  processLine
+		# it first matches time to discover its string location
+		# and then it processes it to obtain actual time
 		if not dateMatch == None:
 			self.__hits += 1
 		return dateMatch

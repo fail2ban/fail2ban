@@ -167,6 +167,15 @@ class DateDetector:
 	def getTime(self, line):
 		self.__lock.acquire()
 		try:
+			# TODO: collect all matches and choose the one most
+			# appropriate
+			# TODO (OPT): make it smarter and converging
+			# on 1 specific pattern for each jail/file
+			# so we don't need to cycle all over again and again
+			# wasting cpu cycles and possibly confusing multiple
+			# matching patterns (might need to be an option, if
+			# someone wants to monitor some file without strict
+			# date pattern -- are there such?)
 			for template in self.__templates:
 				try:
 					date = template.getDate(line)
