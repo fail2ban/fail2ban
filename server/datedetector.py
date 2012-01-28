@@ -117,6 +117,12 @@ class DateDetector:
 			template.setRegex("\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%d-%m-%Y %H:%M:%S")
 			self.__templates.append(template)
+			# 01-27-2012 16:22:44.252
+			template = DateStrptime()
+			template.setName("Month-Day-Year Hour:Minute:Second[.Millisecond]")
+			template.setRegex("\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%m-%d-%Y %H:%M:%S")
+			self.__templates.append(template)
 			# TAI64N
 			template = DateTai64n()
 			template.setName("TAI64N")

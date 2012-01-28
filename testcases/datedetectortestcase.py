@@ -67,6 +67,7 @@ class DateDetectorTest(unittest.TestCase):
 			"Jan 23 21:59:59",
 			"2005.01.23 21:59:59",
 			"23/01/2005 21:59:59",
+			"01-23-2005 21:59:59.252", # reported on f2b, causes Feb29 fix to break
 			):
 			log = sdate + "[sshd] error: PAM: Authentication failure"
 			# exclude
