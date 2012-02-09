@@ -223,7 +223,7 @@ case "$command" in
 			255)
 				check_socket
 				case $? in
-					1)  log_warning_msg " $NAME is not running" && exit 3 ;;
+					1)  log_failure_msg " $NAME is not running" && exit 3 ;;
 					0)  log_failure_msg " $NAME is not running but $SOCKFILE exists" && exit 3 ;;
 					2)  log_failure_msg " $SOCKFILE not readable, status of $NAME is unknown" && exit 3 ;;
 					3)  log_failure_msg " $SOCKFILE exists but not a socket, status of $NAME is unknown" && exit 3 ;;
