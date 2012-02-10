@@ -1,7 +1,10 @@
-fail2ban (0.8.6-3) UNRELEASED; urgency=low
+fail2ban (0.8.6-3) unstable; urgency=low
 
   * Added dovecot section to Debian's jail.conf.  Thanks to Laurent
     Léonard (Closes: #655182)
+  * init.d script now returns non-0 exit codes upon status command
+    with not running / failed to connect server.  Thanks to
+    Glenn Aaldering for the patch
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 08 Jan 2012 21:46:24 -0500
 
