@@ -73,8 +73,11 @@ class Filter(JailThread):
 		
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
-		logSys.debug("Created Filter")
+		logSys.debug("Created %s" % self)
 
+
+	def __repr__(self):
+		return "%s(%r)" % (self.__class__.__name__, self.jail)
 
 	##
 	# Add a regular expression which matches the failure.
@@ -146,6 +149,7 @@ class Filter(JailThread):
 	# @param value the usedns mode
 	
 	def setUseDns(self, value):
+		logSys.debug("Setting usedns = %s for %s" % (value, self))
 		self.__useDns = value
 	
 	##
@@ -586,7 +590,6 @@ class DNSUtils:
 		if useDns == "no":
 			return None
 		else:
-			logSys.debug("usedns = %s" % useDns)
 			ipList = list()
 			# Search for plain IP
 			plainIP = DNSUtils.searchIP(text)

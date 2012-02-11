@@ -42,6 +42,9 @@ class Jail:
 		logSys.info("Creating new jail '%s'" % self.__name)
 		self._setBackend(backend)
 
+	def __repr__(self):
+		return "%s(%r)" % (self.__class__.__name__, self.__name)
+
 	def _setBackend(self, backend):
 		backend = backend.lower()		# to assure consistent matching
 
