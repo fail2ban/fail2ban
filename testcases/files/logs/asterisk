@@ -1,0 +1,11 @@
+# Sample log files for asterisk 
+[2012-02-13 17:21:54] NOTICE[1638] chan_sip.c: Registration from '<sip:301@asclepios.eyepea.be>' failed for '1.2.3.4' - Wrong password
+[2012-02-13 17:18:22] NOTICE[1638] chan_sip.c: Registration from '<sip:301@asclepios.eyepea.be>' failed for '1.2.3.4' - No matching peer found
+[2012-02-13 17:21:21] NOTICE[1638] chan_sip.c: Registration from '<sip:301@asclepios.eyepea.be>' failed for '1.2.3.4' - Username/auth name mismatch
+[2012-02-13 17:32:01] NOTICE[1638] chan_sip.c: Registration from '<sip:301@asclepios.eyepea.be>' failed for '1.2.3.4' - Device does not match ACL
+[2012-02-13 17:34:10] NOTICE[1638] chan_sip.c: Registration from '<sip:301@asclepios.eyepea.be>' failed for '1.2.3.4' - Peer is not supposed to register
+[2012-02-13 17:36:23] NOTICE[1638] chan_sip.c: Registration from '<sip:301@asclepios.eyepea.be>' failed for '1.2.3.4' - ACL error (permit/deny)
+[2012-02-13 17:53:59] NOTICE[1638] chan_iax2.c: Host 1.2.3.4 failed to authenticate as 'Fail2ban'
+[2012-02-13 17:39:20] NOTICE[1638] chan_iax2.c: No registration for peer 'Fail2ban' (from 1.2.3.4)
+[2012-02-13 17:44:26] NOTICE[1638] chan_iax2.c: Host 1.2.3.4 failed MD5 authentication for 'Fail2ban' (e7df7cd2ca07f4f1ab415d457a6e1c13 != 53ac4bc41ee4ec77888ed4aa50677247)
+[2012-02-13 17:37:07] NOTICE[1638] chan_sip.c: Failed to authenticate user "Fail2ban" <sip:301@1.2.3.4>;tag=1r698745234
