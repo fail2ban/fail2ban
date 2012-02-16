@@ -1,10 +1,14 @@
 fail2ban (0.8.4-3+squeeze1) stable; urgency=low
 
-  * Non-maintainer upload.
+  [ Jonathan Wiltshire ]
   * [e2232fc] Backport patch to fix CVE-2009-5023: Insecure creation of
     tempfile (Closes: #544232, #635746)
 
- -- Jonathan Wiltshire <jmw@debian.org>  Thu, 28 Jul 2011 14:14:17 +0100
+  [ Yaroslav Halchenko ]
+  * [6fc6c7b] Backport patch: Lock server's executeCmd to prevent racing
+    among iptables calls (Closes: #650678)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 16 Feb 2012 10:29:08 -0500
 
 fail2ban (0.8.4-3) unstable; urgency=low
 
