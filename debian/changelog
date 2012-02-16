@@ -1,3 +1,11 @@
+fail2ban (0.8.4-3+squeeze1) stable; urgency=low
+
+  * Non-maintainer upload.
+  * [e2232fc] Backport patch to fix CVE-2009-5023: Insecure creation of
+    tempfile (Closes: #544232, #635746)
+
+ -- Jonathan Wiltshire <jmw@debian.org>  Thu, 28 Jul 2011 14:14:17 +0100
+
 fail2ban (0.8.4-3) unstable; urgency=low
 
   * Commenting out named-refused-udp jail and providing even fatter
