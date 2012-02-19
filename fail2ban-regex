@@ -314,7 +314,7 @@ if __name__ == "__main__":
 	fail2banRegex = Fail2banRegex()
 	# Reads the command line options.
 	try:
-		cmdOpts = 'hVc'
+		cmdOpts = 'hVcv'
 		cmdLongOpts = ['help', 'version', 'verbose']
 		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
 	except getopt.GetoptError:
