@@ -73,6 +73,7 @@ protocol = [
 ["set <JAIL> actionstop <ACT> <CMD>", "sets the stop command <CMD> of the action <ACT> for <JAIL>"], 
 ["set <JAIL> actioncheck <ACT> <CMD>", "sets the check command <CMD> of the action <ACT> for <JAIL>"], 
 ["set <JAIL> actionban <ACT> <CMD>", "sets the ban command <CMD> of the action <ACT> for <JAIL>"],
+["set <JAIL> actionreban <ACT> <CMD>", "sets the reban command <CMD> of the action <ACT> for <JAIL>"],
 ["set <JAIL> actionunban <ACT> <CMD>", "sets the unban command <CMD> of the action <ACT> for <JAIL>"], 
 ['', "JAIL INFORMATION", ""],
 ["get <JAIL> logpath", "gets the list of the monitored files for <JAIL>"],
@@ -88,6 +89,7 @@ protocol = [
 ["get <JAIL> actionstop <ACT>", "gets the stop command for the action <ACT> for <JAIL>"],
 ["get <JAIL> actioncheck <ACT>", "gets the check command for the action <ACT> for <JAIL>"],
 ["get <JAIL> actionban <ACT>", "gets the ban command for the action <ACT> for <JAIL>"],
+["get <JAIL> actionreban <ACT>", "gets the reban command for the action <ACT> for <JAIL>"],
 ["get <JAIL> actionunban <ACT>", "gets the unban command for the action <ACT> for <JAIL>"],
 ]
 

@@ -268,6 +268,12 @@ class Server:
 	def getActionBan(self, name, action):
 		return self.__jails.getAction(name).getAction(action).getActionBan()
 	
+	def setActionReban(self, name, action, value):
+		self.__jails.getAction(name).getAction(action).setActionReban(value)
+	
+	def getActionReban(self, name, action):
+		return self.__jails.getAction(name).getAction(action).getActionReban()
+	
 	def setActionUnban(self, name, action, value):
 		self.__jails.getAction(name).getAction(action).setActionUnban(value)
 	

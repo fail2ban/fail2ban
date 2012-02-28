@@ -61,6 +61,7 @@ class ActionReader(ConfigReader):
 				["string", "actionstop", ""],
 				["string", "actioncheck", ""],
 				["string", "actionban", ""],
+				["string", "actionreban", ""],
 				["string", "actionunban", ""]]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
 		
@@ -82,6 +83,8 @@ class ActionReader(ConfigReader):
 				stream.append(head + ["actioncheck", self.__file, self.__opts[opt]])
 			elif opt == "actionban":
 				stream.append(head + ["actionban", self.__file, self.__opts[opt]])
+			elif opt == "actionreban":
+				stream.append(head + ["actionreban", self.__file, self.__opts[opt]])
 			elif opt == "actionunban":
 				stream.append(head + ["actionunban", self.__file, self.__opts[opt]])
 		# cInfo
