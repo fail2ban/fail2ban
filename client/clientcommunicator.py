@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 # $Revision$
 
 __author__ = "Cyril Jaquier"
@@ -29,32 +29,56 @@ __license__ = "GPL"
 
 #from cPickle import dumps, loads, HIGHEST_PROTOCOL
 from pickle import dumps, loads, HIGHEST_PROTOCOL
-import socket
+import socket, logging
 
-class CSocket:
-	
+
+# Gets the instance of the logger.
+logSys = logging.getLogger("fail2ban.client.config")
+
+
+class clientCommunicator:
+
 	END_STRING = "<F2B_END_COMMAND>"
-	
-	def __init__(self, sock = "/var/run/fail2ban/fail2ban.sock"):
+
+	def __init__(self, socket, sockettype="socket"):
+		# sockType: network (AF_INET) or socket (AF_UNIX)
+		self.sockettype = sockettype
+		if self.sockettype == "socket":
+			self.socket = socket
+			self.unixClient(self.socket)
+		elif self.sockettype == "network":
+			self.serverlist = socket
+			self.networkClient(self.serverlist)
+		else:
+			logSys.error("Connection type invalid:" + self.sockettype)
+
+	def unixClient(self, socketpath="/var/run/fail2ban/fail2ban.sock"):
+		# Connect to local domain (unix) socket
+		self.__clientConn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+		self.__clientConn.connect(socketpath)
+
+	def networkClient(self, serverlist="localhost:2222"):
 		# Create an INET, STREAMing socket
-		#self.csock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.__csock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-		#self.csock.connect(("localhost", 2222))
-		self.__csock.connect(sock)
-	
+		HOST, PORT = serverlist.split(':')
+		PORT = int(PORT)
+		self.__clientConn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.__clientConn.connect((HOST, PORT))
+
 	def send(self, msg):
 		# Convert every list member to string
 		obj = dumps([str(m) for m in msg], HIGHEST_PROTOCOL)
-		self.__csock.send(obj + CSocket.END_STRING)
-		ret = self.receive(self.__csock)
-		self.__csock.close()
+		self.__clientConn.send(obj + clientCommunicator.END_STRING)
+		ret = self.receive(self.__clientConn)
+		self.__clientConn.close()
 		return ret
-	
+
 	#@staticmethod
-	def receive(sock):
+	def receive(socket):
 		msg = ''
-		while msg.rfind(CSocket.END_STRING) == -1:
-			chunk = sock.recv(6)
+		while msg.rfind(clientCommunicator.END_STRING) == -1:
+			# END_STRING is 16 bits
+			# recv buffer should be at least twice the size
+			chunk = socket.recv(64)
 			if chunk == '':
 				raise RuntimeError, "socket connection broken"
 			msg = msg + chunk

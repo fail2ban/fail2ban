@@ -35,24 +35,24 @@ from ConfigParser import NoOptionError, NoSectionError
 logSys = logging.getLogger("fail2ban.client.config")
 
 class ConfigReader(SafeConfigParserWithIncludes):
-	
+
 	BASE_DIRECTORY = "/etc/fail2ban/"
-	
+
 	def __init__(self):
 		SafeConfigParserWithIncludes.__init__(self)
 		self.__opts = None
-	
+
 	#@staticmethod
 	def setBaseDir(folderName):
 		path = folderName.rstrip('/')
 		ConfigReader.BASE_DIRECTORY = path + '/'
 	setBaseDir = staticmethod(setBaseDir)
-		
+
 	#@staticmethod
 	def getBaseDir():
 		return ConfigReader.BASE_DIRECTORY
 	getBaseDir = staticmethod(getBaseDir)
-	
+
 	def read(self, filename):
 		basename = ConfigReader.BASE_DIRECTORY + filename
 		logSys.debug("Reading " + basename)
@@ -64,7 +64,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 		else:
 			logSys.error(bConf + " and " + bLocal + " do not exist")
 			return False
-	
+
 	##
 	# Read the options.
 	#
@@ -74,7 +74,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 	# 0 -> the type of the option
 	# 1 -> the name of the option
 	# 2 -> the default value for the option
-	
+
 	def getOptions(self, sec, options, pOptions = None):
 		values = dict()
 		for option in options:
