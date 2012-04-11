@@ -28,7 +28,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import getopt, sys, logging
+import getopt, sys, logging, ipaddr
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
@@ -84,7 +84,6 @@ class Fail2banServer:
 		print "Options:"
 		print "    -b                   start in background"
 		print "    -f                   start in foreground"
-		print "    -t                   socket type"
 		print "    -s <FILE|IP:PORT>    socket path or server ip address and port"
 		print "    -x                   force execution of the server (remove socket file)"
 		print "    -h, --help           display this help message"
@@ -100,8 +99,6 @@ class Fail2banServer:
 				self.__conf["background"] = True
 			if opt[0] == "-f":
 				self.__conf["background"] = False
-			if opt[0] == "-t":
-				self.__conf["sockettype"] = opt[1]
 			if opt[0] == "-s":
 				self.__conf["socket"] = opt[1]
 			if opt[0] == "-x":
@@ -118,7 +115,7 @@ class Fail2banServer:
 		self.__argv = argv
 		# Reads the command line options.
 		try:
-			cmdOpts = 'bft:s:xhV'
+			cmdOpts = 'bfs:xhV'
 			cmdLongOpts = ['help', 'version']
 			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
@@ -129,12 +126,41 @@ class Fail2banServer:
 
 		try:
 			self.__server = Server(self.__conf["background"])
-			self.__server.start(self.__conf["socket"], self.__conf["sockettype"], self.__conf["force"])
+			self.__server.start(self.__conf["socket"], self.__conf["force"])
 			return True
 		except Exception, e:
 			logSys.exception(e)
 			self.__server.quit()
 			return False
+
+
+	# Try to determine socket type (network/AF_INET or local/AF_UNIX)
+	# and set socket type in configuration
+	def __determineAndSetSocketType(self, socket):
+		__socket = socket
+
+		# the port will be anything after the last :
+		tempVarA = __socket.rfind(":")
+
+		# ipv6 literals should have a closing brace
+		tempVarB = __socket.rfind("]")
+
+		# if the last : is outside the [addr] part (or if we don't have []'s
+		if (tempVarA > tempVarB):
+			__socket = __socket[:tempVarA]
+
+		# now strip off ipv6 []'s if there are any
+		if __socket and __socket[0] == '[' and __socket[-1] == ']':
+			__socket = __socket[1:-1]
+
+		try:
+			ipaddr.IPAddress(__socket)
+			logSys.debug(__socket + " looks like IP address")
+			self.__conf["sockettype"] = "network"
+		except ValueError:
+			logSys.debug(__socket + " does not look like IP address")
+			self.__conf["sockettype"] = "socket"
+
 
 if __name__ == "__main__":
 	server = Fail2banServer()

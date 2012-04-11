@@ -40,6 +40,7 @@ logSys = logging.getLogger("fail2ban.server")
 # This class extends asynchat in order to provide a request handler for
 # incoming query.
 
+
 class RequestHandler(asynchat.async_chat):
 
 	END_STRING = "<F2B_END_COMMAND>"
@@ -73,8 +74,8 @@ class RequestHandler(asynchat.async_chat):
 		self.close_when_done()
 
 	def handle_error(self):
-		e1,e2 = helpers.formatExceptionInfo()
-		logSys.error("Unexpected communication error: "+e2)
+		e1, e2 = helpers.formatExceptionInfo()
+		logSys.error("Unexpected communication error: " + e2)
 		logSys.error(traceback.format_exc().splitlines())
 		self.close()
 
@@ -84,13 +85,14 @@ class RequestHandler(asynchat.async_chat):
 # This class extends asyncore and dispatches connection requests to
 # RequestHandler.
 
+
 class AsyncServer(asyncore.dispatcher):
 
 	def __init__(self, transmitter):
 		asyncore.dispatcher.__init__(self)
 		self.__transmitter = transmitter
-		self.__sockettype = "socket"
 		self.__sock = "/var/run/fail2ban/fail2ban.sock"
+		self.__sockettype = None
 		self.__init = False
 
 	##
@@ -102,15 +104,18 @@ class AsyncServer(asyncore.dispatcher):
 	def handle_accept(self):
 		try:
 			conn, addr = self.accept()
-			if self.__sockettype == "network":
-				__client_ip = addr[0] # get IP part from addr
-				__client_ip = ipaddr.IPAddress(__client_ip)
-				__allowedclients = ('127.0.0.1/24', '195.25.2.5/8')
-				for __allowedclient in __allowedclients:
-					if __client_ip not in ipaddr.IP(__allowedclient):
-						logSys.info("Client" + str(__client_ip) +
-							" not in allowed clients list. Ignoring")
-						return
+			#if self.__sockettype == "network":
+			#	# get IP part from addr
+			#	__client_ip = addr[0]
+
+			#	# form IPAddress object
+			#	__client_ip = ipaddr.IPAddress(__client_ip)
+			#	__allowedclients = ('127.0.0.1/24', '195.25.2.5/8')
+			#	for __allowedclient in __allowedclients:
+			#		if __client_ip not in ipaddr.IPNetwork(__allowedclient):
+			#			logSys.info("Client" + str(__client_ip) +
+			#				" not in allowed clients list. Ignoring")
+			#			return
 		except socket.error:
 			logSys.warning("Socket error")
 			return
@@ -127,9 +132,12 @@ class AsyncServer(asyncore.dispatcher):
 	# @param sock: socket file.
 	# @param force: remove the socket file if exists.
 
-	def start(self, sock, sockettype, force):
+	def start(self, sock, force):
 		# sockType: network (AF_INET) or socket (AF_UNIX)
-		self.__sockettype = sockettype
+
+		# Determine and set socket type (network/INET or socket/UNIX)
+		self.__determineAndSetSocketType(sock)
+
 		if self.__sockettype == "socket":
 			# Connect to local domain (unix) socket
 			self.socketpath = sock
@@ -155,7 +163,6 @@ class AsyncServer(asyncore.dispatcher):
 		elif self.__sockettype == "network":
 			# Create an INET, STREAMing socket
 			self.serveraddress = sock
-			print self.serveraddress
 
 			HOST, PORT = self.serveraddress.split(':')
 			PORT = int(PORT)
@@ -200,6 +207,32 @@ class AsyncServer(asyncore.dispatcher):
 				os.remove(self.__sock)
 			logSys.debug("Socket shutdown")
 
+	# Try to determine socket type (network/AF_INET or local/AF_UNIX)
+	# and set socket type in configuration
+	def __determineAndSetSocketType(self, socket):
+		__socket = socket
+
+		# the port will be anything after the last :
+		tempVarA = __socket.rfind(":")
+
+		# ipv6 literals should have a closing brace
+		tempVarB = __socket.rfind("]")
+
+		# if the last : is outside the [addr] part (or if we don't have []'s
+		if (tempVarA > tempVarB):
+			__socket = __socket[:tempVarA]
+
+		# now strip off ipv6 []'s if there are any
+		if __socket and __socket[0] == '[' and __socket[-1] == ']':
+			__socket = __socket[1:-1]
+
+		try:
+			ipaddr.IPAddress(__socket)
+			logSys.debug(__socket + " looks like IP address")
+			self.__sockettype = "network"
+		except ValueError:
+			logSys.debug(__socket + " does not look like IP address")
+			self.__sockettype = "socket"
 
 ##
 # AsyncServerException is used to wrap communication exceptions.

@@ -59,7 +59,7 @@ class Server:
 		logSys.debug("Caught signal %d. Exiting" % signum)
 		self.quit()
 
-	def start(self, sock, sockettype, force=False):
+	def start(self, sock, force=False):
 		logSys.info("Starting Fail2ban v" + version.version)
 
 		# Install signal handlers
@@ -89,7 +89,7 @@ class Server:
 		# Start the communication
 		logSys.debug("Starting communication")
 		try:
-			self.__asyncServer.start(sock, sockettype, force)
+			self.__asyncServer.start(sock, force)
 		except AsyncServerException, e:
 			logSys.error("Could not start server: %s", e)
 		# Removes the PID file.
