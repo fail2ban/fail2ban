@@ -16,11 +16,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 # Author: Sireyessire, Cyril Jaquier
-# 
+#
 # $Revision$
 
-extra_commands="showlog"
-extra_started_commands="reload"
+extra_started_commands="reload showlog"
 
 FAIL2BAN="/usr/bin/fail2ban-client ${FAIL2BAN_OPTIONS}"
 
