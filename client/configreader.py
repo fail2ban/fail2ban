@@ -90,7 +90,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 				values[option[1]] = v
 			except NoSectionError, e:
 				# No "Definition" section or wrong basedir
-				logSys.error(e)
+				logSys.error("Error getting options:" + e)
 				values[option[1]] = option[2]
 			except NoOptionError:
 				if not option[2] == None:

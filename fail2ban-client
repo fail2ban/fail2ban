@@ -144,9 +144,10 @@ class Fail2banClient:
 	 			sys.exit(0)
 
 	def __ping(self):
-		return self.__processCmd([["ping"]], False)
+		self.__processCmd([["ping"]], False)
+		return self._cmdSendSuccess
 
-	def __processCmd(self, cmd, showRet = True):
+	def __processCmd(self, cmd, showRet = False):
 		beautifier = Beautifier()
 		for c in cmd:
 			beautifier.setInputCmd(c)
@@ -160,6 +161,8 @@ class Fail2banClient:
 
 			# iterate through all servers
 			for __socket in __socketlist:
+				self._cmdSendSuccess = True
+
 				try:
 					client = clientCommunicator(__socket)
 
@@ -169,20 +172,22 @@ class Fail2banClient:
 					if ret[0] == 0:
 						logSys.debug("OK : " + `ret[0]`)
 						if showRet:
-							print beautifier.beautify(ret[1], __socket)
+							print beautifier.beautify(str(ret[1]), __socket)
 					else:
 						logSys.debug("NOK: " + `ret[0].args`)
 						print beautifier.beautifyError(ret[0])
 						return False
 				except socket.error:
-					if showRet:
-						logSys.error(__socket + " Unable to contact server. Is it running?")
-					return False
+						logSys.error("Unable to contact server "+__socket+" Is it running?")
+						self._cmdSendSuccess = False
+						continue
 				except Exception, e:
-					if showRet:
-						logSys.error(str(e))
-					return False
-		return True
+						logSys.error("Error while processing command" + str(c) + " : " + str(e))
+						self._cmdSendSuccess = False
+						continue
+
+		# not necessarily true. maybe one server in a list failed?
+		#return True
 
 	##
 	# Process a command line.
@@ -191,7 +196,7 @@ class Fail2banClient:
 	# @param cmd the command line
 
 	def __processCommand(self, cmd):
-		if len(cmd) == 1 and cmd[0] == "start" and self.__conf["startserver"] == True:
+		if len(cmd) == 1 and cmd[0] == "start":
 			if self.__ping():
 				logSys.error("Server already running")
 				return False
@@ -201,28 +206,33 @@ class Fail2banClient:
 				# Do not continue if configuration is not 100% valid
 				if not ret:
 					return False
+
 				# Start the server
-				self.__startServerAsync(self.__conf["socket"], self.__conf["force"])
-				try:
-					# Wait for the server to start
-					self.__waitOnServer()
-					# Configure the server
-					self.__processCmd(self.__stream, False)
-					return True
-				except ServerExecutionException:
-					logSys.info("Could not start server." +
-							"\n\t" +
-							"Maybe an old socket file is still present." +
-							" Try to remove socket" +
-							"\n\t" +
-							"(If you used fail2ban-client to start the " +
-							"server, adding the -x option will do it)" +
-							"\n\t" +
-							"Maybe network connection to the server(s) is broken " +
-							"or server not running")
-					return False
-		elif self.__conf["startserver"] == False:
-			logSys.info("Not starting server (because of configuration or command line option)")
+				if self.__conf["startserver"] == True:
+
+					self.__startServerAsync(self.__conf["socket"], self.__conf["force"])
+					try:
+						# Wait for the server to start
+						self.__waitOnServer()
+					
+						# Configure the server
+						self.__processCmd(self.__stream, False)
+						return True
+					except ServerExecutionException:
+						logSys.info("Could not start server." +
+								"\n\t" +
+								"Maybe an old socket file is still present." +
+								" Try to remove socket" +
+								"\n\t" +
+								"(If you used fail2ban-client to start the " +
+								"server, adding the -x option will do it)" +
+								"\n\t" +
+								"Maybe network connection to the server(s) is broken " +
+								"or server not running")
+						return False
+				else:
+					logSys.info("Not starting server (because of configuration or command line option)")
+
 		elif len(cmd) == 1 and cmd[0] == "reload":
 			if self.__ping():
 				ret = self.__readConfig()

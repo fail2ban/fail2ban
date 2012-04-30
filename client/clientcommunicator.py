@@ -49,7 +49,7 @@ class clientCommunicator:
 		# Determine and set socket type (network/INET or socket/UNIX)
 		self.__determineAndSetSocketType(__socket)
 
-		logSys.info("Socket type: " + self.__sockettype)
+		logSys.debug("Socket type: " + self.__sockettype)
 
 		if self.__sockettype == "socket":
 			self.unixClient(__socket)
