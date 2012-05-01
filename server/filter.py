@@ -214,7 +214,9 @@ class Filter(JailThread):
 	
 	def addBannedIP(self, ip):
 		unixTime = time.time()
-		self.failManager.addFailure(FailTicket(ip, unixTime))
+		for i in xrange(self.failManager.getMaxRetry()):
+			self.failManager.addFailure(FailTicket(ip, unixTime))
+
 		return ip
 	
 	##
