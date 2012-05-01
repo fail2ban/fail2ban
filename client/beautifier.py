@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 # $Revision$
 
 __author__ = "Cyril Jaquier"
@@ -41,23 +41,23 @@ logSys = logging.getLogger("fail2ban.client.config")
 # converted into user readable messages.
 
 class Beautifier:
-	
+
 	def __init__(self, cmd = None):
 		self.__inputCmd = cmd
 
 	def setInputCmd(self, cmd):
 		self.__inputCmd = cmd
-		
+
 	def getInputCmd(self):
 		return self.__inputCmd
-		
-	def beautify(self, response):
-		logSys.debug("Beautify " + `response` + " with " + `self.__inputCmd`)
+
+	def beautify(self, response, server = ""):
+		logSys.debug("Beautify " + response + " with " + str(self.__inputCmd))
 		inC = self.__inputCmd
 		msg = response
 		try:
 			if inC[0] == "ping":
-				msg = "Server replied: " + response
+				msg = server + " Server replied: " + response
 			elif inC[0] == "start":
 				msg = "Jail started"
 			elif inC[0] == "stop":

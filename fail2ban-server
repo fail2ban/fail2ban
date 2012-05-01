@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 # $Revision$
 
 __author__ = "Cyril Jaquier"
@@ -28,7 +28,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import getopt, sys, logging
+import getopt, sys, logging, ipaddr
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
@@ -49,15 +49,16 @@ logSys = logging.getLogger("fail2ban")
 # Its first goal was to protect a SSH server.
 
 class Fail2banServer:
-	
+
 	def __init__(self):
 		self.__server = None
 		self.__argv = None
 		self.__conf = dict()
 		self.__conf["background"] = True
 		self.__conf["force"] = False
+		self.__conf["sockettype"] = "socket"
 		self.__conf["socket"] = "/var/run/fail2ban/fail2ban.sock"
-	
+
 	def dispVersion(self):
 		print "Fail2Ban v" + version
 		print
@@ -67,7 +68,7 @@ class Fail2banServer:
 		print
 		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
 		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
-	
+
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
 		"""
@@ -83,13 +84,13 @@ class Fail2banServer:
 		print "Options:"
 		print "    -b                   start in background"
 		print "    -f                   start in foreground"
-		print "    -s <FILE>            socket path"
+		print "    -s <FILE|IP:PORT>    socket path or server ip address and port"
 		print "    -x                   force execution of the server (remove socket file)"
 		print "    -h, --help           display this help message"
 		print "    -V, --version        print the version"
 		print
 		print "Report bugs to <cyril.jaquier@fail2ban.org>"
-	
+
 	def __getCmdLineOptions(self, optList):
 		""" Gets the command line options
 		"""
@@ -103,16 +104,15 @@ class Fail2banServer:
 			if opt[0] == "-x":
 				self.__conf["force"] = True
 			if opt[0] in ["-h", "--help"]:
-	 			self.dispUsage()
+				self.dispUsage()
 				sys.exit(0)
 			if opt[0] in ["-V", "--version"]:
-	 			self.dispVersion()
+				self.dispVersion()
 				sys.exit(0)
-		
+
 	def start(self, argv):
 		# Command line options
 		self.__argv = argv
-		
 		# Reads the command line options.
 		try:
 			cmdOpts = 'bfs:xhV'
@@ -121,9 +121,9 @@ class Fail2banServer:
 		except getopt.GetoptError:
 			self.dispUsage()
 			sys.exit(-1)
-			
+
 		self.__getCmdLineOptions(optList)
-		
+
 		try:
 			self.__server = Server(self.__conf["background"])
 			self.__server.start(self.__conf["socket"], self.__conf["force"])
@@ -132,7 +132,36 @@ class Fail2banServer:
 			logSys.exception(e)
 			self.__server.quit()
 			return False
-		
+
+
+	# Try to determine socket type (network/AF_INET or local/AF_UNIX)
+	# and set socket type in configuration
+	def __determineAndSetSocketType(self, socket):
+		__socket = socket
+
+		# the port will be anything after the last :
+		tempVarA = __socket.rfind(":")
+
+		# ipv6 literals should have a closing brace
+		tempVarB = __socket.rfind("]")
+
+		# if the last : is outside the [addr] part (or if we don't have []'s
+		if (tempVarA > tempVarB):
+			__socket = __socket[:tempVarA]
+
+		# now strip off ipv6 []'s if there are any
+		if __socket and __socket[0] == '[' and __socket[-1] == ']':
+			__socket = __socket[1:-1]
+
+		try:
+			ipaddr.IPAddress(__socket)
+			logSys.debug(__socket + " looks like IP address")
+			self.__conf["sockettype"] = "network"
+		except ValueError:
+			logSys.debug(__socket + " does not look like IP address")
+			self.__conf["sockettype"] = "socket"
+
+
 if __name__ == "__main__":
 	server = Fail2banServer()
 	if server.start(sys.argv):

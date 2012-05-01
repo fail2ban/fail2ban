@@ -19,7 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 # $Revision$
 
 __author__ = "Cyril Jaquier"
@@ -38,7 +38,7 @@ sys.path.insert(1, "/usr/share/fail2ban")
 # Now we can import our modules
 from common.version import version
 from common.protocol import printFormatted
-from client.csocket import CSocket
+from client.clientcommunicator import clientCommunicator
 from client.configurator import Configurator
 from client.beautifier import Beautifier
 
@@ -65,7 +65,8 @@ class Fail2banClient:
 		self.__conf["verbose"] = 1
 		self.__conf["interactive"] = False
 		self.__conf["socket"] = None
-		
+		self.__conf["startserver"] = True
+
 	def dispVersion(self):
 		print "Fail2Ban v" + version
 		print
@@ -75,7 +76,7 @@ class Fail2banClient:
 		print
 		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
 		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
-	
+
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
 		"""
@@ -86,27 +87,28 @@ class Fail2banClient:
 		print
 		print "Options:"
 		print "    -c <DIR>                configuration directory"
-		print "    -s <FILE>               socket path"
+		print "    -s <FILE|IP:PORT>       socket path"
 		print "    -d                      dump configuration. For debugging"
 		print "    -i                      interactive mode"
 		print "    -v                      increase verbosity"
 		print "    -q                      decrease verbosity"
+		print "    --dontstartserver       don't start server"
 		print "    -x                      force execution of the server (remove socket file)"
 		print "    -h, --help              display this help message"
 		print "    -V, --version           print the version"
 		print
 		print "Command:"
-		
+
 		# Prints the protocol
 		printFormatted()
-		
+
 		print
 		print "Report bugs to <cyril.jaquier@fail2ban.org>"
-	
+
 	def dispInteractive(self):
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
 		print "and bans the corresponding IP addresses using firewall rules."
-		print 
+		print
 
 	def __sigTERMhandler(self, signum, frame):
 		# Print a new line because we probably come from wait
@@ -132,41 +134,61 @@ class Fail2banClient:
 				self.__conf["force"] = True
 			elif opt[0] == "-i":
 				self.__conf["interactive"] = True
+			elif opt[0] == "--dontstartserver":
+	 			self.__conf["startserver"] = False
 			elif opt[0] in ["-h", "--help"]:
 	 			self.dispUsage()
 	 			sys.exit(0)
 	 		elif opt[0] in ["-V", "--version"]:
 	 			self.dispVersion()
 	 			sys.exit(0)
-	
+
 	def __ping(self):
-		return self.__processCmd([["ping"]], False)
-	
-	def __processCmd(self, cmd, showRet = True):
+		self.__processCmd([["ping"]], False)
+		return self._cmdSendSuccess
+
+	def __processCmd(self, cmd, showRet = False):
 		beautifier = Beautifier()
 		for c in cmd:
 			beautifier.setInputCmd(c)
-			try:
-				client = CSocket(self.__conf["socket"])
-				ret = client.send(c)
-				if ret[0] == 0:
-					logSys.debug("OK : " + `ret[1]`)
-					if showRet:
-						print beautifier.beautify(ret[1])
-				else:
-					logSys.debug("NOK: " + `ret[1].args`)
-					print beautifier.beautifyError(ret[1])
-					return False
-			except socket.error:
-				if showRet:
-					logSys.error("Unable to contact server. Is it running?")
-				return False
-			except Exception, e:
-				if showRet:
-					logSys.error(e)
-				return False
-		return True
-		
+
+			__socketlist = self.__conf["socket"]
+
+			# split multiple socket definitions (delimiters: space and coma)
+			# and remove empty strings from list
+			__socketlist = re.split(' |,',__socketlist)
+			__socketlist = filter(None, __socketlist)
+
+			# iterate through all servers
+			for __socket in __socketlist:
+				self._cmdSendSuccess = True
+
+				try:
+					client = clientCommunicator(__socket)
+
+					# get server address and it's response
+					ret = client.send(c)
+
+					if ret[0] == 0:
+						logSys.debug("OK : " + `ret[0]`)
+						if showRet:
+							print beautifier.beautify(str(ret[1]), __socket)
+					else:
+						logSys.debug("NOK: " + `ret[0].args`)
+						print beautifier.beautifyError(ret[0])
+						return False
+				except socket.error:
+						logSys.error("Unable to contact server "+__socket+" Is it running?")
+						self._cmdSendSuccess = False
+						continue
+				except Exception, e:
+						logSys.error("Error while processing command" + str(c) + " : " + str(e))
+						self._cmdSendSuccess = False
+						continue
+
+		# not necessarily true. maybe one server in a list failed?
+		#return True
+
 	##
 	# Process a command line.
 	#
@@ -184,22 +206,33 @@ class Fail2banClient:
 				# Do not continue if configuration is not 100% valid
 				if not ret:
 					return False
+
 				# Start the server
-				self.__startServerAsync(self.__conf["socket"],
-										self.__conf["force"])
-				try:
-					# Wait for the server to start
-					self.__waitOnServer()
-					# Configure the server
-					self.__processCmd(self.__stream, False)
-					return True
-				except ServerExecutionException:
-					logSys.error("Could not start server. Maybe an old " +
-								 "socket file is still present. Try to " +
-								 "remove " + self.__conf["socket"] + ". If " +
-								 "you used fail2ban-client to start the " +
-								 "server, adding the -x option will do it")
-					return False
+				if self.__conf["startserver"] == True:
+
+					self.__startServerAsync(self.__conf["socket"], self.__conf["force"])
+					try:
+						# Wait for the server to start
+						self.__waitOnServer()
+					
+						# Configure the server
+						self.__processCmd(self.__stream, False)
+						return True
+					except ServerExecutionException:
+						logSys.info("Could not start server." +
+								"\n\t" +
+								"Maybe an old socket file is still present." +
+								" Try to remove socket" +
+								"\n\t" +
+								"(If you used fail2ban-client to start the " +
+								"server, adding the -x option will do it)" +
+								"\n\t" +
+								"Maybe network connection to the server(s) is broken " +
+								"or server not running")
+						return False
+				else:
+					logSys.info("Not starting server (because of configuration or command line option)")
+
 		elif len(cmd) == 1 and cmd[0] == "reload":
 			if self.__ping():
 				ret = self.__readConfig()
@@ -227,22 +260,24 @@ class Fail2banClient:
 				return False
 		else:
 			return self.__processCmd([cmd])
-	
-	
+
+
 	##
 	# Start Fail2Ban server.
 	#
 	# Start the Fail2ban server in daemon mode.
-	
+
 	def __startServerAsync(self, socket, force = False):
 		# Forks the current process.
 		pid = os.fork()
 		if pid == 0:
 			args = list()
+			print self.SERVER
 			args.append(self.SERVER)
 			# Start in background mode.
-			args.append("-b")
-			# Set the socket path.
+			#args.append("-b")
+			# Set socket type
+			# Set the socket path or address.
 			args.append("-s")
 			args.append(socket)
 			# Force the execution if needed.
@@ -251,6 +286,7 @@ class Fail2banClient:
 			try:
 				# Use the current directory.
 				exe = os.path.abspath(os.path.join(sys.path[0], self.SERVER))
+				logSys.debug("Starting server:" + str(exe) + " " + str(args))
 				os.execv(exe, args)
 			except OSError:
 				try:
@@ -259,8 +295,8 @@ class Fail2banClient:
 				except OSError:
 					print "Could not find %s" % self.SERVER
 					os.exit(-1)
-						
-			
+
+
 	def __waitOnServer(self):
 		# Wait for the server to start
 		cnt = 0
@@ -288,27 +324,27 @@ class Fail2banClient:
 			cnt += 1
 		if self.__conf["verbose"] > 1:
 			sys.stdout.write('\n')
-			
-	
+
+
 	def start(self, argv):
 		# Command line options
 		self.__argv = argv
-		
+
 		# Install signal handlers
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
 		signal.signal(signal.SIGINT, self.__sigTERMhandler)
-		
+
 		# Reads the command line options.
 		try:
 			cmdOpts = 'hc:s:xdviqV'
-			cmdLongOpts = ['help', 'version']
+			cmdLongOpts = ['help', 'version', "dontstartserver"]
 			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
 			self.dispUsage()
 			return False
-			
+
 		self.__getCmdLineOptions(optList)
-		
+
 		verbose = self.__conf["verbose"]
 		if verbose <= 0:
 			logSys.setLevel(logging.ERROR)
@@ -328,19 +364,19 @@ class Fail2banClient:
 
 		# Set the configuration path
 		self.__configurator.setBaseDir(self.__conf["conf"])
-		
-		# Set socket path
+
 		self.__configurator.readEarly()
-		socket = self.__configurator.getEarlyOptions()
+		self.earlyOptions = self.__configurator.getEarlyOptions()
+
+		# Get socket path or network address of server
 		if self.__conf["socket"] == None:
-			self.__conf["socket"] = socket["socket"]
-		logSys.info("Using socket file " + self.__conf["socket"])
+			self.__conf["socket"] = self.earlyOptions["socket"]
 
 		if self.__conf["dump"]:
 			ret = self.__readConfig()
 			self.dumpConfig(self.__stream)
 			return ret
-		
+
 		# Interactive mode
 		if self.__conf["interactive"]:
 			try:
@@ -372,6 +408,7 @@ class Fail2banClient:
 				return False
 			return self.__processCommand(args)
 
+
 	def __readConfig(self):
 		# Read the configuration
 		self.__configurator.readAll()
@@ -379,14 +416,14 @@ class Fail2banClient:
 		self.__configurator.convertToProtocol()
 		self.__stream = self.__configurator.getConfigStream()
 		return ret
-	
+
 	def __readJailConfig(self, jail):
 		self.__configurator.readAll()
 		ret = self.__configurator.getOptions(jail)
 		self.__configurator.convertToProtocol()
 		self.__stream = self.__configurator.getConfigStream()
 		return ret
-	
+
 	#@staticmethod
 	def dumpConfig(cmd):
 		for c in cmd:

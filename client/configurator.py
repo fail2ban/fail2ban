@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 # $Revision$
 
 __author__ = "Cyril Jaquier"
@@ -36,41 +36,41 @@ from jailsreader import JailsReader
 logSys = logging.getLogger("fail2ban.client.config")
 
 class Configurator:
-	
+
 	def __init__(self):
 		self.__settings = dict()
 		self.__streams = dict()
 		self.__fail2ban = Fail2banReader()
 		self.__jails = JailsReader()
-	
+
 	#@staticmethod
 	def setBaseDir(folderName):
 		ConfigReader.setBaseDir(folderName)
 	setBaseDir = staticmethod(setBaseDir)
-	
+
 	#@staticmethod
 	def getBaseDir():
 		return ConfigReader.getBaseDir()
 	getBaseDir = staticmethod(getBaseDir)
-	
+
 	def readEarly(self):
 		self.__fail2ban.read()
-	
+
 	def readAll(self):
 		self.readEarly()
 		self.__jails.read()
-	
+
 	def getEarlyOptions(self):
 		return self.__fail2ban.getEarlyOptions()
 
 	def getOptions(self, jail = None):
 		self.__fail2ban.getOptions()
 		return self.__jails.getOptions(jail)
-		
+
 	def convertToProtocol(self):
 		self.__streams["general"] = self.__fail2ban.convert()
 		self.__streams["jails"] = self.__jails.convert()
-	
+
 	def getConfigStream(self):
 		cmds = list()
 		for opt in self.__streams["general"]:
@@ -78,4 +78,4 @@ class Configurator:
 		for opt in self.__streams["jails"]:
 			cmds.append(opt)
 		return cmds
-	
+
