@@ -1,2 +1,2 @@
-Jun  2 12:05:27 hostname suhosin[16892]: ALERT - ASCII-NUL chars not allowed within request variables - dropped variable 'h' (attacker '123.123.123.123', file '/var/lib/mediawiki/index.php')
-Jun  2 12:49:04 hostname suhosin[18413]: ALERT - ASCII-NUL chars not allowed within request variables - dropped variable 'controller' (attacker '123.123.123.123', file '/var/www/example.com/page.php')
+Jun  2 12:05:27 hostname suhosin[16892]: ALERT - ASCII-NUL chars not allowed within request variables - dropped variable 'h' (attacker '192.0.43.10', file '/var/lib/mediawiki/index.php')
+Jun  2 12:49:04 hostname suhosin[18413]: ALERT - ASCII-NUL chars not allowed within request variables - dropped variable 'controller' (attacker '192.0.43.10', file '/var/www/example.com/page.php')
