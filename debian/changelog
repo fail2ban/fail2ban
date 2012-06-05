@@ -1,3 +1,10 @@
+fail2ban (0.8.6-4) UNRELEASED; urgency=low
+
+  * Provide instrucitons in jail.conf on how to comment (Closes: #676146)
+    Thanks Stefano Forli for a hint
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 04 Jun 2012 22:45:32 -0400
+
 fail2ban (0.8.6-3) unstable; urgency=low
 
   * Added dovecot section to Debian's jail.conf.  Thanks to Laurent
