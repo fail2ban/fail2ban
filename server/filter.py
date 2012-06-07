@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Fail2Ban; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
 # 
@@ -64,6 +64,8 @@ class Filter(JailThread):
 		self.__failRegex = list()
 		## The regular expression list with expressions to ignore.
 		self.__ignoreRegex = list()
+		## Use DNS setting
+		self.__useDns = "warn"
 		## The amount of time to look back.
 		self.__findTime = 6000
 		## The ignore IP list.
@@ -71,8 +73,11 @@ class Filter(JailThread):
 		
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
-		logSys.debug("Created Filter")
+		logSys.debug("Created %s" % self)
 
+
+	def __repr__(self):
+		return "%s(%r)" % (self.__class__.__name__, self.jail)
 
 	##
 	# Add a regular expression which matches the failure.
@@ -140,6 +145,21 @@ class Filter(JailThread):
 		return ignoreRegex
 	
 	##
+	# Set the Use DNS mode
+	# @param value the usedns mode
+	
+	def setUseDns(self, value):
+		logSys.debug("Setting usedns = %s for %s" % (value, self))
+		self.__useDns = value
+	
+	##
+	# Get the usedns mode
+	# @return the usedns mode
+	
+	def getUseDns(self):
+		return self.__useDns
+	
+	##
 	# Set the time needed to find a failure.
 	#
 	# This value tells the filter how long it has to take failures into
@@ -194,7 +214,9 @@ class Filter(JailThread):
 	
 	def addBannedIP(self, ip):
 		unixTime = time.time()
-		self.failManager.addFailure(FailTicket(ip, unixTime))
+		for i in xrange(self.failManager.getMaxRetry()):
+			self.failManager.addFailure(FailTicket(ip, unixTime))
+
 		return ip
 	
 	##
@@ -325,7 +347,7 @@ class Filter(JailThread):
 				else:
 					try:
 						host = failRegex.getHost()
-						ipMatch = DNSUtils.textToIp(host)
+						ipMatch = DNSUtils.textToIp(host, self.__useDns)
 						if ipMatch:
 							for ip in ipMatch:
 								failList.append([ip, date])
@@ -564,22 +586,28 @@ class DNSUtils:
 	isValidIP = staticmethod(isValidIP)
 	
 	#@staticmethod
-	def textToIp(text):
+	def textToIp(text, useDns):
 		""" Return the IP of DNS found in a given text.
 		"""
-		ipList = list()
-		# Search for plain IP
-		plainIP = DNSUtils.searchIP(text)
-		if not plainIP == None:
-			plainIPStr = plainIP.group(0)
-			if DNSUtils.isValidIP(plainIPStr):
-				ipList.append(plainIPStr)
-		if not ipList:
-			# Try to get IP from possible DNS
-			ip = DNSUtils.dnsToIp(text)
-			for e in ip:
-				ipList.append(e)
-		return ipList
+		if useDns == "no":
+			return None
+		else:
+			ipList = list()
+			# Search for plain IP
+			plainIP = DNSUtils.searchIP(text)
+			if not plainIP is None:
+				plainIPStr = plainIP.group(0)
+				if DNSUtils.isValidIP(plainIPStr):
+					ipList.append(plainIPStr)
+			if not ipList:
+				# Try to get IP from possible DNS
+				ip = DNSUtils.dnsToIp(text)
+				for e in ip:
+					ipList.append(e)
+				if useDns == "warn":
+					logSys.warning("Determined IP using DNS Reverse Lookup: %s = %s",
+						text, ipList)
+			return ipList
 	textToIp = staticmethod(textToIp)
 	
 	#@staticmethod

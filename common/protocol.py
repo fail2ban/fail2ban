@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Fail2Ban; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
 # 
@@ -62,6 +62,7 @@ protocol = [
 ["set <JAIL> delignoreregex <INDEX>", "removes the regular expression at <INDEX> for ignoreregex"], 
 ["set <JAIL> findtime <TIME>", "sets the number of seconds <TIME> for which the filter will look back for <JAIL>"], 
 ["set <JAIL> bantime <TIME>", "sets the number of seconds <TIME> a host will be banned for <JAIL>"], 
+["set <JAIL> usedns <VALUE>", "sets the usedns mode for <JAIL>"],
 ["set <JAIL> banip <IP>", "manually Ban <IP> for <JAIL>"], 
 ["set <JAIL> maxretry <RETRY>", "sets the number of failures <RETRY> before banning the host for <JAIL>"], 
 ["set <JAIL> addaction <ACT>", "adds a new action named <NAME> for <JAIL>"], 
@@ -80,6 +81,7 @@ protocol = [
 ["get <JAIL> ignoreregex", "gets the list of regular expressions which matches patterns to ignore for <JAIL>"],
 ["get <JAIL> findtime", "gets the time for which the filter will look back for failures for <JAIL>"],
 ["get <JAIL> bantime", "gets the time a host is banned for <JAIL>"],
+["get <JAIL> usedns", "gets the usedns setting for <JAIL>"],
 ["get <JAIL> maxretry", "gets the number of failures allowed for <JAIL>"],
 ["get <JAIL> addaction", "gets the last action which has been added for <JAIL>"],
 ["get <JAIL> actionstart <ACT>", "gets the start command for the action <ACT> for <JAIL>"],

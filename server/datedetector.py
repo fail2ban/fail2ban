@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Fail2Ban; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
 # 
@@ -116,6 +116,12 @@ class DateDetector:
 			template.setName("Day-Month-Year Hour:Minute:Second")
 			template.setRegex("\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%d-%m-%Y %H:%M:%S")
+			self.__templates.append(template)
+			# 01-27-2012 16:22:44.252
+			template = DateStrptime()
+			template.setName("Month-Day-Year Hour:Minute:Second[.Millisecond]")
+			template.setRegex("\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%m-%d-%Y %H:%M:%S")
 			self.__templates.append(template)
 			# TAI64N
 			template = DateTai64n()

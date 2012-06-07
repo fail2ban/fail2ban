@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Fail2Ban; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
 # 
@@ -140,12 +140,22 @@ class DateStrptime(DateTemplate):
 				conv = self.convertLocale(dateMatch.group())
 				try:
 					date = list(time.strptime(conv, self.getPattern()))
-				except ValueError, e:
+				except (ValueError, re.error), e:
 					# Try to add the current year to the pattern. Should fix
 					# the "Feb 29" issue.
-					conv += " %s" % MyTime.gmtime()[0]
-					pattern = "%s %%Y" % self.getPattern()
-					date = list(time.strptime(conv, pattern))
+					opattern = self.getPattern()
+					# makes sense only if %Y is not in already:
+					if not '%Y' in opattern:
+						pattern = "%s %%Y" % opattern
+						conv += " %s" % MyTime.gmtime()[0]
+						date = list(time.strptime(conv, pattern))
+					else:
+						# we are helpless here
+						raise ValueError(
+							"Given pattern %r does not match. Original "
+							"exception was %r and Feb 29 workaround could not "
+							"be tested due to already present year mark in the "
+							"pattern" % (opattern, e))
 			if date[0] < 2000:
 				# There is probably no year field in the logs
 				date[0] = MyTime.gmtime()[0]

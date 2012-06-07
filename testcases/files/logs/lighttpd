@@ -1,0 +1,2 @@
+#authentification failure (mod_auth)
+2011-12-25 17:09:20: (http_auth.c.875) password doesn't match for /gitweb/ username: francois, IP: 4.4.4.4

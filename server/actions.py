@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Fail2Ban; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
 # 
@@ -163,13 +163,13 @@ class Actions(JailThread):
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "".join(bTicket.getMatches())
 			if self.__banManager.addBanTicket(bTicket):
-				logSys.warn("[%s] Ban %s" % (self.jail.getName(), aInfo["ip"]))
+				logSys.warn("[%s] Ban %s" % (self.jail.getName(), str(aInfo["ip"])))
 				for action in self.__actions:
 					action.execActionBan(aInfo)
 				return True
 			else:
 				logSys.warn("[%s] %s already banned" % (self.jail.getName(), 
-														aInfo["ip"]))
+														str(aInfo["ip"])))
 		return False
 	
 	##

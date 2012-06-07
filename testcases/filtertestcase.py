@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Fail2Ban; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
 # 
@@ -222,12 +222,24 @@ class GetFailures(unittest.TestCase):
 
 class DNSUtilsTests(unittest.TestCase):
 
+	def testUseDns(self):
+		res = DNSUtils.textToIp('www.example.com', 'no')
+		self.assertEqual(res, None)
+		res = DNSUtils.textToIp('www.example.com', 'warn')
+		self.assertEqual(res, ['192.0.43.10'])
+		res = DNSUtils.textToIp('www.example.com', 'yes')
+		self.assertEqual(res, ['192.0.43.10'])
+	
 	def testTextToIp(self):
-		bogus = [
-			'doh1.2.3.4.buga.xxxxx.yyy',
-			'1.2.3.4.buga.xxxxx.yyy',
+		# Test hostnames
+		hostnames = [
+			'www.example.com',
+			'doh1.2.3.4.buga.xxxxx.yyy.invalid',
+			'1.2.3.4.buga.xxxxx.yyy.invalid',
 			]
-		"""Really bogus addresses which should have no matches"""
-		for s in bogus:
-			res = DNSUtils.textToIp(s)
-			self.assertEqual(res, [])
+		for s in hostnames:
+			res = DNSUtils.textToIp(s, 'yes')
+			if s == 'www.example.com':
+				self.assertEqual(res, ['192.0.43.10'])
+			else:
+				self.assertEqual(res, [])

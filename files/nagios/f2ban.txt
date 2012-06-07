@@ -5,7 +5,7 @@ HELP:
 1.) stop the Service
 /etc/init.d/fail2ban stop
 
-2.) delete the socket if avalible
+2.) delete the socket if available
 rm /tmp/fail2ban.sock
 
 3.) start the Service 

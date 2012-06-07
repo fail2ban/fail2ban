@@ -24,3 +24,6 @@ Nov 11 23:33:27 Server sshd[5174]: refused connect from _U2FsdGVkX19P3BCJmFBHhjL
 #7 added exclamation mark to BREAK-IN
 Oct 15 19:51:35 server sshd[7592]: Address 1.2.3.4 maps to 1234.bbbbbb.com, but this does not map back to the address - POSSIBLE BREAK-IN ATTEMPT
 Oct 15 19:51:35 server sshd[7592]: Address 1.2.3.4 maps to 1234.bbbbbb.com, but this does not map back to the address - POSSIBLE BREAK-IN ATTEMPT!
+
+#8 DenyUsers https://github.com/fail2ban/fail2ban/issues/47
+Apr 16 22:01:15 al-ribat sshd[5154]: User root from 46.45.128.3 not allowed because listed in DenyUsers

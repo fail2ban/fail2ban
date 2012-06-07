@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Fail2Ban; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
 # 
@@ -67,6 +67,7 @@ class DateDetectorTest(unittest.TestCase):
 			"Jan 23 21:59:59",
 			"2005.01.23 21:59:59",
 			"23/01/2005 21:59:59",
+			"01-23-2005 21:59:59.252", # reported on f2b, causes Feb29 fix to break
 			):
 			log = sdate + "[sshd] error: PAM: Authentication failure"
 			# exclude
