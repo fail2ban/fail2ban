@@ -1,3 +1,11 @@
+fail2ban (0.8.6~+git69-gb4099da-1) UNRELEASED; urgency=low
+
+  * New upstream snapshot from master at 0.8.6-69-gb4099da
+  * Marked with additional ~ so poor users could "upgrade" back to the
+  stock 0.8.6 having done experimeting with it
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 06 Jun 2012 23:39:44 -0400
+
 fail2ban (0.8.6-4) UNRELEASED; urgency=low
 
   * Provide instrucitons in jail.conf on how to comment (Closes: #676146)
