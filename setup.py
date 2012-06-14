@@ -54,7 +54,8 @@ setup(
 	scripts =	[
 					'fail2ban-client', 
 					'fail2ban-server', 
-					'fail2ban-regex'
+					'fail2ban-regex' ,
+					'fail2ban-iptwrp'
 				], 
 	packages =	[
 					'common', 
