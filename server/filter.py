@@ -54,7 +54,7 @@ class Filter(JailThread):
 	# Initialize the filter object with default values.
 	# @param jail the jail object
 	
-	def __init__(self, jail):
+	def __init__(self, jail, useDns='warn'):
 		JailThread.__init__(self)
 		## The jail which contains this filter.
 		self.jail = jail
@@ -65,7 +65,7 @@ class Filter(JailThread):
 		## The regular expression list with expressions to ignore.
 		self.__ignoreRegex = list()
 		## Use DNS setting
-		self.__useDns = "warn"
+		self.setUseDns(useDns)
 		## The amount of time to look back.
 		self.__findTime = 6000
 		## The ignore IP list.
@@ -149,6 +149,13 @@ class Filter(JailThread):
 	# @param value the usedns mode
 	
 	def setUseDns(self, value):
+		if isinstance(value, bool):
+			value = {True: 'yes', False: 'no'}[value]
+		value = value.lower()			  # must be a string by now
+		if not (value in ('yes', 'no', 'warn')):
+			logSys.error("Incorrect value %r specified for usedns. "
+						 "Using safe 'no'" % (value,))
+			value = 'no'
 		logSys.debug("Setting usedns = %s for %s" % (value, self))
 		self.__useDns = value
 	
@@ -373,8 +380,8 @@ class Filter(JailThread):
 
 class FileFilter(Filter):
 	
-	def __init__(self, jail):
-		Filter.__init__(self, jail)
+	def __init__(self, jail, **kwargs):
+		Filter.__init__(self, jail, **kwargs)
 		## The log file path.
 		self.__logPath = []
 	
@@ -589,25 +596,24 @@ class DNSUtils:
 	def textToIp(text, useDns):
 		""" Return the IP of DNS found in a given text.
 		"""
-		if useDns == "no":
-			return None
-		else:
-			ipList = list()
-			# Search for plain IP
-			plainIP = DNSUtils.searchIP(text)
-			if not plainIP is None:
-				plainIPStr = plainIP.group(0)
-				if DNSUtils.isValidIP(plainIPStr):
-					ipList.append(plainIPStr)
-			if not ipList:
-				# Try to get IP from possible DNS
-				ip = DNSUtils.dnsToIp(text)
-				for e in ip:
-					ipList.append(e)
-				if useDns == "warn":
-					logSys.warning("Determined IP using DNS Reverse Lookup: %s = %s",
-						text, ipList)
-			return ipList
+		ipList = list()
+		# Search for plain IP
+		plainIP = DNSUtils.searchIP(text)
+		if not plainIP is None:
+			plainIPStr = plainIP.group(0)
+			if DNSUtils.isValidIP(plainIPStr):
+				ipList.append(plainIPStr)
+
+		# If we are allowed to resolve -- give it a try if nothing was found
+		if useDns in ("yes", "warn") and not ipList:
+			# Try to get IP from possible DNS
+			ip = DNSUtils.dnsToIp(text)
+			ipList.extend(ip)
+			if ip and useDns == "warn":
+				logSys.warning("Determined IP using DNS Reverse Lookup: %s = %s",
+					text, ipList)
+
+		return ipList
 	textToIp = staticmethod(textToIp)
 	
 	#@staticmethod
