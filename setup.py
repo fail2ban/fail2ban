@@ -55,7 +55,7 @@ setup(
 					'fail2ban-client', 
 					'fail2ban-server', 
 					'fail2ban-regex' ,
-					'fail2ban-iptwrp'
+					'fail2ban-iptables'
 				], 
 	packages =	[
 					'common', 
