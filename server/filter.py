@@ -582,10 +582,20 @@ class DNSUtils:
 	
 	#@staticmethod
 	def isValidIP(string):
-		""" Return true if str is a valid IP
-		We Consider that logfiles didn't make errors ;) 
-		"""
-		return True
+		# Return true if str is a valid IP
+            	s = string.split('/', 1)
+          	# try to convert to ipv4
+          	try:
+      			socket.inet_aton(s[0])
+      			return True
+    		except socket.error:
+    			# if it had failed try to convert ipv6
+    			try:  
+            			socket.inet_pton(socket.AF_INET6, s[0])
+          			return True
+        		except socket.error: 
+    				# not a valid address in both stacks
+          			return False
 	isValidIP = staticmethod(isValidIP)
 	
 	#@staticmethod
