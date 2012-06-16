@@ -17,14 +17,9 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
+# Fail2Ban developers
 
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier; 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import unittest
@@ -52,7 +47,7 @@ class IgnoreIP(unittest.TestCase):
 		# Test DNS
 		self.__filter.addIgnoreIP("www.epfl.ch")
 		self.assertTrue(self.__filter.inIgnoreIPList("128.178.50.12"))
-	
+
 	def testIgnoreIPNOK(self):
 		ipList = "", "999.999.999.999", "abcdef", "192.168.0."
 		for ip in ipList:
@@ -74,10 +69,11 @@ class LogFile(unittest.TestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
-		
+		pass
+
 	#def testOpen(self):
 	#	self.__filter.openLogFile(LogFile.FILENAME)
-	
+
 	def testIsModified(self):
 		self.assertTrue(self.__filter.isModified(LogFile.FILENAME))
 
@@ -91,7 +87,11 @@ class GetFailures(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.__filter = FileFilter(None)
+		# TODO: RF tests so we could do parametric testing easily.
+		#       useDns='warn' and useDns='yes'
+		#       both must be tested appropriately but ATM more
+		#       critical is to assure correct behavior of 'no'
+		self.__filter = FileFilter(None, useDns='warn')
 		self.__filter.setActive(True)
 		# TODO Test this
 		#self.__filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
@@ -110,8 +110,23 @@ class GetFailures(unittest.TestCase):
 					time.localtime(found[2]),\
 					time.localtime(output[2])
 		self.assertEqual(found_time, output_time)
-		if len(found) > 3:				# match matches
+		if len(output) > 3:				# match matches
 			self.assertEqual(found[3], output[3])
+
+	def _assertCorrectLastAtempt(self, output):
+		"""Additional helper to wrap most common test case
+
+		Test current filter to contain target ticket
+		"""
+		ticket = self.__filter.failManager.toBan()
+
+		attempts = ticket.getAttempt()
+		date = ticket.getTime()
+		ip = ticket.getIP()
+		matches = ticket.getMatches()
+		found = (ip, attempts, date, matches)
+
+		self._assertEqualEntries(found, output)
 
 
 	def testGetFailures01(self):
@@ -120,19 +135,10 @@ class GetFailures(unittest.TestCase):
 
 		self.__filter.addLogPath(GetFailures.FILENAME_01)
 		self.__filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
-
 		self.__filter.getFailures(GetFailures.FILENAME_01)
+		self._assertCorrectLastAtempt(output)
 
-		ticket = self.__filter.failManager.toBan()
 
-		attempts = ticket.getAttempt()
-		date = ticket.getTime()
-		ip = ticket.getIP()
-		matches = ticket.getMatches()
-		found = (ip, attempts, date, matches)
-
-		self._assertEqualEntries(found, output)
-	
 	def testGetFailures02(self):
 		output = ('141.3.81.106', 4, 1124013539.0,
 				  ['Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n'
@@ -140,35 +146,16 @@ class GetFailures(unittest.TestCase):
 
 		self.__filter.addLogPath(GetFailures.FILENAME_02)
 		self.__filter.addFailRegex("Failed .* from <HOST>")
-		
 		self.__filter.getFailures(GetFailures.FILENAME_02)
-		
-		ticket = self.__filter.failManager.toBan()
-
-		attempts = ticket.getAttempt()
-		date = ticket.getTime()
-		ip = ticket.getIP()
-		matches = ticket.getMatches()
-		found = (ip, attempts, date, matches)
-		
-		self._assertEqualEntries(found, output)
+		self._assertCorrectLastAtempt(output)
 
 	def testGetFailures03(self):
 		output = ('203.162.223.135', 6, 1124013544.0)
 
 		self.__filter.addLogPath(GetFailures.FILENAME_03)
 		self.__filter.addFailRegex("error,relay=<HOST>,.*550 User unknown")
-		
 		self.__filter.getFailures(GetFailures.FILENAME_03)
-		
-		ticket = self.__filter.failManager.toBan()
-		
-		attempts = ticket.getAttempt()
-		date = ticket.getTime()
-		ip = ticket.getIP()
-		found = (ip, attempts, date)
-		
-		self._assertEqualEntries(found, output)	
+		self._assertCorrectLastAtempt(output)
 
 	def testGetFailures04(self):
 		output = [('212.41.96.186', 4, 1124013600.0),
@@ -176,38 +163,23 @@ class GetFailures(unittest.TestCase):
 
 		self.__filter.addLogPath(GetFailures.FILENAME_04)
 		self.__filter.addFailRegex("Invalid user .* <HOST>")
-		
 		self.__filter.getFailures(GetFailures.FILENAME_04)
 
 		try:
-			for i in range(2):
-				ticket = self.__filter.failManager.toBan()		
-				attempts = ticket.getAttempt()
-				date = ticket.getTime()
-				ip = ticket.getIP()
-				found = (ip, attempts, date)
-				self.assertEqual(found, output[i])
+			for i, out in enumerate(output):
+				self._assertCorrectLastAtempt(out)
 		except FailManagerEmpty:
 			pass
-		
+
 	def testGetFailuresMultiRegex(self):
 		output = ('141.3.81.106', 8, 1124013541.0)
 
 		self.__filter.addLogPath(GetFailures.FILENAME_02)
 		self.__filter.addFailRegex("Failed .* from <HOST>")
 		self.__filter.addFailRegex("Accepted .* from <HOST>")
-		
 		self.__filter.getFailures(GetFailures.FILENAME_02)
-		
-		ticket = self.__filter.failManager.toBan()
+		self._assertCorrectLastAtempt(output)
 
-		attempts = ticket.getAttempt()
-		date = ticket.getTime()
-		ip = ticket.getIP()
-		found = (ip, attempts, date)
-		
-		self._assertEqualEntries(found, output)
-	
 	def testGetFailuresIgnoreRegex(self):
 		output = ('141.3.81.106', 8, 1124013541.0)
 
@@ -215,9 +187,9 @@ class GetFailures(unittest.TestCase):
 		self.__filter.addFailRegex("Failed .* from <HOST>")
 		self.__filter.addFailRegex("Accepted .* from <HOST>")
 		self.__filter.addIgnoreRegex("for roehl")
-		
+
 		self.__filter.getFailures(GetFailures.FILENAME_02)
-		
+
 		self.assertRaises(FailManagerEmpty, self.__filter.failManager.toBan)
 
 class DNSUtilsTests(unittest.TestCase):
@@ -229,7 +201,7 @@ class DNSUtilsTests(unittest.TestCase):
 		self.assertEqual(res, ['192.0.43.10'])
 		res = DNSUtils.textToIp('www.example.com', 'yes')
 		self.assertEqual(res, ['192.0.43.10'])
-	
+
 	def testTextToIp(self):
 		# Test hostnames
 		hostnames = [
