@@ -23,22 +23,26 @@ import sys, re, subprocess
 
 def main(argv):
  regv4 = re.compile('([0-9]{1,3}\.){3}[0-9]{1,3}')
- print "-" + argv + "-"
  if regv4.search(argv):   
     # we are facing to a ipv4
-    subprocess.call(["iptables", argv])
-    sys.exit                  
+    ret = subprocess.call(["iptables", argv])
+    sys.exit(ret)                  
  else:
     # if not, maybe it's a ipv6
     regv6 = re.compile('::[A-Fa-f0-9]{1,4}|(:[A-Fa-f0-9]{1,4}){2,}')
     if regv6.search(argv):
-       subprocess.call(["ip6tables", argv])
-       sys.exit                  
+       ret6 = subprocess.call(["ip6tables", argv])
+       sys.exit(ret6)                  
     else:
        # if it's not a ipv6 either, we call both iptables
-       subprocess.call(["iptables", argv])
-       subprocess.call(["ip6tables", argv])
-
+       ret = subprocess.call(["iptables", argv])
+       ret6 = subprocess.call(["ip6tables", argv])
+       # return worst error code  
+       if ret > ret6:
+	  sys.exit(ret)
+       else:
+          sys.exit(ret6)
+	
 # Main call, pass all variables
 if __name__ == "__main__":
     main(" ".join(sys.argv[1:]))
