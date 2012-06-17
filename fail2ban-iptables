@@ -21,6 +21,15 @@
 
 import sys, re, subprocess
 
+# Try to avoid any shell injections
+def noinject(str):
+	for banned_chr in "`&;|":
+		if banned_chr in str: 
+			print "I don't like some chars in your iptables syntax"
+			sys.exit(2)                  
+	return True
+
+# Main procedure
 def main(argv):
  regv4 = re.compile('([0-9]{1,3}\.){3}[0-9]{1,3}')
  if regv4.search(argv):   
@@ -45,4 +54,6 @@ def main(argv):
 	
 # Main call, pass all variables
 if __name__ == "__main__":
-    main(" ".join(sys.argv[1:]))
+	pline = " ".join(sys.argv[1:])
+	if noinject(pline):
+		main(pline)
