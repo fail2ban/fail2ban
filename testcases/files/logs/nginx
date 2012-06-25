@@ -1,0 +1,5 @@
+2012/04/09 12:47:24 [error] 2865#0: *71820 open() "/var/www/phpmyadmin" failed (2: No such file or directory), client: 192.0.43.10, server: www.myhost.com, request: "GET /phpmyadmin HTTP/1.1", host: "www.myhost.com"
+2012/04/09 12:50:21 [error] 2865#0: *72115 open() "/var/www/xyz.html" failed (2: No such file or directory), client: 192.0.43.10, server: www.myhost.com, request: "GET /xyz.html HTTP/1.1", host: "www.myhost.com"
+2012/04/09 11:53:29 [error] 2865#0: *66647 user "xyz" was not found in "/var/www/.htpasswd", client: 192.0.43.10, server: www.myhost.com, request: "GET / HTTP/1.1", host: "www.myhost.com"
+2012/04/09 11:53:36 [error] 2865#0: *66647 user "xyz": password mismatch, client: 192.0.43.10, server: www.myhost.com, request: "GET / HTTP/1.1", host: "www.myhost.com"
+2012/04/08 16:54:15 [error] 11853#0: *143197 open() "/var/www/~" failed (2: No such file or directory), client: 192.0.43.10, server: www.myhost.com, request: "GET /~ HTTP/1.1", host: "www.myhost.com"
