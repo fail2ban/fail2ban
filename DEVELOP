@@ -1,0 +1,30 @@
+                         __      _ _ ___ _               
+                        / _|__ _(_) |_  ) |__  __ _ _ _  
+                       |  _/ _` | | |/ /| '_ \/ _` | ' \ 
+                       |_| \__,_|_|_/___|_.__/\__,_|_||_|
+
+================================================================================
+How to develop for Fail2Ban
+================================================================================
+
+Fail2Ban uses GIT (http://git-scm.com/) distributed source control. This gives 
+each developer their own complete copy of the entire repository. Developers can 
+add and switch branches and commit changes when ever they want and then ask a 
+maintainer to merge their changes.
+
+Fail2Ban uses GitHub (https://github.com/fail2ban/fail2ban) to manage access to 
+the Git repository. GitHub provides free hosting for open-source projects as 
+well as a web-based Git repository browser and an issue tracker.
+
+If you are familiar with Python and you have a bug fix or a feature that you 
+would like to add to Fail2Ban, the best way to do so it to use the GitHub Pull 
+Request feature. You can find more details on the Fail2Ban wiki 
+(http://www.fail2ban.org/wiki/index.php/Get_Involved)
+
+Unit Testing:
+-------------
+Coming Soon.
+
+Coding Standards:
+-----------------
+Coming Soon.
