@@ -21,9 +21,12 @@ would like to add to Fail2Ban, the best way to do so it to use the GitHub Pull
 Request feature. You can find more details on the Fail2Ban wiki 
 (http://www.fail2ban.org/wiki/index.php/Get_Involved)
 
-Unit Testing:
+Testing:
 -------------
-Coming Soon.
+Existing tests can be run by executing `fail2ban-testcases`.
+
+Documentation about creating tests (when tests are required and some guidelines 
+for creating good tests) will be added soon.
 
 Coding Standards:
 -----------------
