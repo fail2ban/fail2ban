@@ -23,7 +23,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier; 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import unittest
+import os
 import time
+import tempfile
 
 from server.filterpoll import FilterPoll
 from server.filter import FileFilter, DNSUtils
@@ -43,9 +45,11 @@ class IgnoreIP(unittest.TestCase):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
 		for ip in ipList:
 			self.__filter.addIgnoreIP(ip)
+
 			self.assertTrue(self.__filter.inIgnoreIPList(ip))
 		# Test DNS
 		self.__filter.addIgnoreIP("www.epfl.ch")
+
 		self.assertTrue(self.__filter.inIgnoreIPList("128.178.50.12"))
 
 	def testIgnoreIPNOK(self):
@@ -76,6 +80,77 @@ class LogFile(unittest.TestCase):
 
 	def testIsModified(self):
 		self.assertTrue(self.__filter.isModified(LogFile.FILENAME))
+
+
+def _killfile(f, name):
+	try:
+		f.close()
+	except:
+		pass
+	try:
+		os.unlink(name)
+	except:
+		pass
+
+def get_monitor_failures_testcase(Filter_):
+	"""Generator of TestCase's for different filters
+	"""
+
+	class MonitorFailures(unittest.TestCase):
+		def setUp(self):
+			"""Call before every test case."""
+			self.filter = self.name = 'NA'
+			_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
+			self.file = open(self.name, 'a')
+			self.filter = Filter_(None)
+			self.filter.addLogPath(self.name)
+
+
+		def tearDown(self):
+			_killfile(self.file, self.name)
+
+		def __str__(self):
+			return "MonitorFailures(%s, %s)" % (self.filter, self.name)
+
+		def isModified(self):
+			return self.filter.isModified(self.name)
+
+		def testNewChangeViaIsModified(self):
+			if not hasattr(self.filter, 'isModified'):
+				raise unittest.SkipTest(
+					"%s does not have isModified (present only in poll atm"
+					% (self.filter,))
+			# it is a brand new one -- so first we think it is modified
+			self.assertTrue(self.isModified())
+			# but not any longer
+			self.assertFalse(self.isModified())
+			self.assertFalse(self.isModified())
+			for i in range(4):			  # few changes
+				# unless we write into it
+				self.file.write("line%d\n" % i)
+				self.file.flush()
+				time.sleep(0.1)			 # just give it some time to pull may be
+				self.assertTrue(self.isModified())
+				self.assertFalse(self.isModified())
+			os.rename(self.name, self.name + '.old')
+			time.sleep(0.1)			 # just give it some time to pull may be
+			# we are not signaling as modified whenever
+			# it gets away
+			self.assertFalse(self.isModified())
+			f = open(self.name, 'a')
+			time.sleep(0.1)			 # just give it some time to pull may be
+			self.assertTrue(self.isModified())
+			self.assertFalse(self.isModified())
+			f.write("line%d\n" % i)
+			f.flush()
+			time.sleep(0.1)			 # just give it some time to pull may be
+			self.assertTrue(self.isModified())
+			self.assertFalse(self.isModified())
+			_killfile(f, self.name)
+			_killfile(self.name, self.name + '.old')
+			pass
+
+	return MonitorFailures
 
 
 class GetFailures(unittest.TestCase):
