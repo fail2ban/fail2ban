@@ -52,8 +52,8 @@ def get_opt_parser():
 	p.add_options([
 		Option('-l', "--log-level", type="choice",
 			   dest="log_level",
-			   choices=('debug', 'fatal'),
-			   default='fatal',
+			   choices=('debug', 'info', 'warn', 'error', 'fatal'),
+			   default=None,
 			   help="Log level for the logger to use during running tests"),
 		])
 
@@ -77,9 +77,17 @@ logSys = logging.getLogger("fail2ban")
 # Add the default logging handler
 stdout = logging.StreamHandler(sys.stdout)
 logSys.addHandler(stdout)
-logSys.setLevel(getattr(logging, opts.log_level.upper()))
+if opts.log_level is not None:
+	# so we had explicit settings
+	logSys.setLevel(getattr(logging, opts.log_level.upper()))
+else:
+	# suppress the logging but it would leave unittests' progress dots
+	# ticking, unless like with '-l fatal' which would be silent
+	# unless error occurs
+	logSys.setLevel(getattr(logging, 'FATAL'))
 
-print "Fail2ban " + version + " test suite. Please wait..."
+if not opts.log_level or opts.log_level != 'fatal':
+	print "Fail2ban " + version + " test suite. Please wait..."
 
 tests = unittest.TestSuite()
 
@@ -102,7 +110,8 @@ filters = [FilterPoll]					  # always available
 #      with good old unittest
 try:
 	from server.filtergamin import FilterGamin
-	#filters.append(FilterGamin)
+	# That shmug plain doesn't work and stalls things ATM
+	# filters.append(FilterGamin)
 except:
 	pass
 
@@ -131,7 +140,13 @@ tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
 tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
 
 # Tests runner
-testRunner = unittest.TextTestRunner()
+testRunner = unittest.TextTestRunner(
+	verbosity={'debug': 3,
+			   'info': 2,
+			   'warn': 1,
+			   'error': 1,
+			   'fatal': 0,
+			   None: 1}[opts.log_level])
 testRunner.run(tests)
 
 # Just for the sake of it reset the TZ
