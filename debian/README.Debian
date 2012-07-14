@@ -214,7 +214,7 @@ for more information on jail options.
 * Syslog entries can be 'forged' by a regular user
 
 From
-http://fail2ban.sourceforge.net/wiki/index.php/FAQ_english#What_do_I_have_to_consider_when_using_Fail2ban
+http://www.fail2ban.org/wiki/index.php/MANUAL_0_8#Possibility_of_DOS_attack_by_a_local_user
 
 Especially on systems wich provide ssh/CGI/PHP services to unknown
 users it is possible to block other users from ssh and probably other
