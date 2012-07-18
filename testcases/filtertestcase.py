@@ -153,9 +153,120 @@ class LogFile(unittest.TestCase):
 		self.assertTrue(self.filter.isModified(LogFile.FILENAME))
 
 
+class LogFileMonitor(unittest.TestCase):
+	"""Few more tests for FilterPoll API
+	"""
+	def setUp(self):
+		"""Call before every test case."""
+		self.filter = self.name = 'NA'
+		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
+		self.file = open(self.name, 'a')
+		self.filter = FilterPoll(None)
+		self.filter.addLogPath(self.name)
+		self.filter.setActive(True)
+		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
+
+	def tearDown(self):
+		_killfile(self.file, self.name)
+		pass
+
+	def isModified(self, delay=2.):
+		"""Wait up to `delay` sec to assure that it was modified or not
+		"""
+		time0 = time.time()
+		while time.time() < time0 + delay:
+			if self.filter.isModified(self.name):
+				return True
+			time.sleep(0.1)
+		return False
+
+	def notModified(self):
+		# shorter wait time for not modified status
+		return not self.isModified(0.4)
+
+	def _testNewChangeViaIsModified(self):
+		if not hasattr(self.filter, 'isModified'):
+			raise unittest.SkipTest(
+				"%s does not have isModified (present only in poll atm"
+				% (self.filter,))
+		# it is a brand new one -- so first we think it is modified
+		self.assertTrue(self.isModified())
+		# but not any longer
+		self.assertTrue(self.notModified())
+		self.assertTrue(self.notModified())
+		for i in range(4):			  # few changes
+			# unless we write into it
+			self.file.write("line%d\n" % i)
+			self.file.flush()
+			self.assertTrue(self.isModified())
+			self.assertTrue(self.notModified())
+		os.rename(self.name, self.name + '.old')
+		# we are not signaling as modified whenever
+		# it gets away
+		self.assertTrue(self.notModified())
+		f = open(self.name, 'a')
+		self.assertTrue(self.isModified())
+		self.assertTrue(self.notModified())
+		f.write("line%d\n" % i)
+		f.flush()
+		self.assertTrue(self.isModified())
+		self.assertTrue(self.notModified())
+		_killfile(f, self.name)
+		_killfile(self.name, self.name + '.old')
+		pass
+
+	def testNewChangeViaGetFailures_simple(self):
+		# suck in lines from this sample log file
+		self.filter.getFailures(self.name)
+		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+
+		# Now let's feed it with entries from the file
+		_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=5)
+		self.filter.getFailures(self.name)
+		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+		# and it should have not been enough
+
+		_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=5)
+		self.filter.getFailures(self.name)
+		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
+
+	def testNewChangeViaGetFailures_rewrite(self):
+		#
+		# if we rewrite the file at once
+		self.file.close()
+		_copy_lines_between_files(GetFailures.FILENAME_01, self.name)
+		self.filter.getFailures(self.name)
+		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
+
+		# What if file gets overridden
+		# yoh: skip so we skip those 2 identical lines which our
+		# filter "marked" as the known beginning, otherwise it
+		# would not detect "rotation"
+		self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+											  skip=3, mode='w')
+		self.filter.getFailures(self.name)
+		#self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
+
+	def testNewChangeViaGetFailures_move(self):
+		#
+		# if we move file into a new location while it has been open already
+		self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+											  n=14, mode='w')
+		self.filter.getFailures(self.name)
+		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+		self.assertEqual(self.filter.failManager.getFailTotal(), 2)
+
+		# move aside, but leaving the handle still open...
+		os.rename(self.name, self.name + '.bak')
+		_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14)
+		self.filter.getFailures(self.name)
+		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
+		self.assertEqual(self.filter.failManager.getFailTotal(), 3)
+
 
 def get_monitor_failures_testcase(Filter_):
-	"""Generator of TestCase's for different filters
+	"""Generator of TestCase's for different filters/backends
 	"""
 
 	class MonitorFailures(unittest.TestCase):
@@ -246,7 +357,7 @@ def get_monitor_failures_testcase(Filter_):
 			self.filter.getFailures(self.name)
 			_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
 
-			# What if file gets overriden
+			# What if file gets overridden
 			# yoh: skip so we skip those 2 identical lines which our
 			# filter "marked" as the known beginning, otherwise it
 			# would not detect "rotation"

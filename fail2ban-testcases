@@ -133,6 +133,7 @@ for Filter_ in filters:
 # Filter
 tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
 tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
+tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
 tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
 tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
 
