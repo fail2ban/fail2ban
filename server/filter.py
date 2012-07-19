@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 # $Revision$
 
 __author__ = "Cyril Jaquier"
@@ -53,8 +53,8 @@ class Filter(JailThread):
 	#
 	# Initialize the filter object with default values.
 	# @param jail the jail object
-	
-	def __init__(self, jail):
+
+	def __init__(self, jail, useDns='warn'):
 		JailThread.__init__(self)
 		## The jail which contains this filter.
 		self.jail = jail
@@ -65,12 +65,12 @@ class Filter(JailThread):
 		## The regular expression list with expressions to ignore.
 		self.__ignoreRegex = list()
 		## Use DNS setting
-		self.__useDns = "warn"
+		self.setUseDns(useDns)
 		## The amount of time to look back.
 		self.__findTime = 6000
 		## The ignore IP list.
 		self.__ignoreIpList = []
-		
+
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
 		logSys.debug("Created %s" % self)
@@ -85,14 +85,14 @@ class Filter(JailThread):
 	# The regular expression can also match any other pattern than failures
 	# and thus can be used for many purporse.
 	# @param value the regular expression
-	
+
 	def addFailRegex(self, value):
 		try:
 			regex = FailRegex(value)
 			self.__failRegex.append(regex)
 		except RegexException, e:
 			logSys.error(e)
-	
+
 
 	def delFailRegex(self, index):
 		try:
@@ -100,102 +100,109 @@ class Filter(JailThread):
 		except IndexError:
 			logSys.error("Cannot remove regular expression. Index %d is not "
 						 "valid" % index)
-	
+
 	##
 	# Get the regular expression which matches the failure.
 	#
 	# @return the regular expression
-	
+
 	def getFailRegex(self):
 		failRegex = list()
 		for regex in self.__failRegex:
 			failRegex.append(regex.getRegex())
 		return failRegex
-	
+
 	##
 	# Add the regular expression which matches the failure.
 	#
 	# The regular expression can also match any other pattern than failures
 	# and thus can be used for many purporse.
 	# @param value the regular expression
-	
+
 	def addIgnoreRegex(self, value):
 		try:
 			regex = Regex(value)
 			self.__ignoreRegex.append(regex)
 		except RegexException, e:
 			logSys.error(e)
-	
+
 	def delIgnoreRegex(self, index):
 		try:
 			del self.__ignoreRegex[index]
 		except IndexError:
 			logSys.error("Cannot remove regular expression. Index %d is not "
 						 "valid" % index)
-	
+
 	##
 	# Get the regular expression which matches the failure.
 	#
 	# @return the regular expression
-	
+
 	def getIgnoreRegex(self):
 		ignoreRegex = list()
 		for regex in self.__ignoreRegex:
 			ignoreRegex.append(regex.getRegex())
 		return ignoreRegex
-	
+
 	##
 	# Set the Use DNS mode
 	# @param value the usedns mode
-	
+
 	def setUseDns(self, value):
+		if isinstance(value, bool):
+			value = {True: 'yes', False: 'no'}[value]
+		value = value.lower()			  # must be a string by now
+		if not (value in ('yes', 'no', 'warn')):
+			logSys.error("Incorrect value %r specified for usedns. "
+						 "Using safe 'no'" % (value,))
+			value = 'no'
 		logSys.debug("Setting usedns = %s for %s" % (value, self))
 		self.__useDns = value
-	
+
 	##
 	# Get the usedns mode
 	# @return the usedns mode
-	
+
 	def getUseDns(self):
 		return self.__useDns
-	
+
 	##
 	# Set the time needed to find a failure.
 	#
 	# This value tells the filter how long it has to take failures into
 	# account.
 	# @param value the time
-	
+
 	def setFindTime(self, value):
 		self.__findTime = value
 		self.failManager.setMaxTime(value)
 		logSys.info("Set findtime = %s" % value)
-	
+
 	##
 	# Get the time needed to find a failure.
 	#
 	# @return the time
-	
+
 	def getFindTime(self):
 		return self.__findTime
-	
+
 	##
 	# Set the maximum retry value.
 	#
 	# @param value the retry value
-	
+
 	def setMaxRetry(self, value):
 		self.failManager.setMaxRetry(value)
 		logSys.info("Set maxRetry = %s" % value)
-	
+
 	##
 	# Get the maximum retry value.
 	#
 	# @return the retry value
-	
+
 	def getMaxRetry(self):
 		return self.failManager.getMaxRetry()
-	
+
 	##
 	# Main loop.
 	#
@@ -205,38 +212,38 @@ class Filter(JailThread):
 
 	def run(self):
 		raise Exception("run() is abstract")
-	
+
 	##
 	# Ban an IP - http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
 	# Arturo 'Buanzo' Busleiman <buanzo@buanzo.com.ar>
 	#
 	# to enable banip fail2ban-client BAN command
-	
+
 	def addBannedIP(self, ip):
 		unixTime = time.time()
 		for i in xrange(self.failManager.getMaxRetry()):
 			self.failManager.addFailure(FailTicket(ip, unixTime))
 
 		return ip
-	
+
 	##
 	# Add an IP/DNS to the ignore list.
 	#
 	# IP addresses in the ignore list are not taken into account
 	# when finding failures. CIDR mask and DNS are also accepted.
 	# @param ip IP address to ignore
-	
+
 	def addIgnoreIP(self, ip):
 		logSys.debug("Add " + ip + " to ignore list")
 		self.__ignoreIpList.append(ip)
-		
+
 	def delIgnoreIP(self, ip):
 		logSys.debug("Remove " + ip + " from ignore list")
 		self.__ignoreIpList.remove(ip)
-		
+
 	def getIgnoreIP(self):
 		return self.__ignoreIpList
-	
+
 	##
 	# Check if IP address/DNS is in the ignore list.
 	#
@@ -244,7 +251,7 @@ class Filter(JailThread):
 	# mask in the ignore list.
 	# @param ip IP address
 	# @return True if IP address is in ignore list
-	
+
 	def inIgnoreIPList(self, ip):
 		for i in self.__ignoreIpList:
 			# An empty string is always false
@@ -268,9 +275,11 @@ class Filter(JailThread):
 			if a == b:
 				return True
 		return False
-	
+
 
 	def processLine(self, line):
+		"""Split the time portion from log msg and return findFailures on them
+		"""
 		try:
 			# Decode line to UTF-8
 			l = line.decode('utf-8')
@@ -290,6 +299,8 @@ class Filter(JailThread):
 		return self.findFailure(timeLine, logLine)
 
 	def processLineAndAdd(self, line):
+		"""Processes the line for failures and populates failManager
+		"""
 		for element in self.processLine(line):
 			ip = element[0]
 			unixTime = element[1]
@@ -339,11 +350,11 @@ class Filter(JailThread):
 				# The failregex matched.
 				date = self.dateDetector.getUnixTime(timeLine)
 				if date == None:
-					logSys.debug("Found a match for '" + logLine +"' but no "
-								 + "valid date/time found for '"
-								 + timeLine + "'. Please contact the "
-								 + "author in order to get support for this "
-								 + "format")
+					logSys.debug("Found a match for %r but no valid date/time "
+								 "found for %r. Please file a detailed issue on"
+								 " https://github.com/fail2ban/fail2ban/issues "
+								 "in order to get support for this format."
+								 % (logLine, timeLine))
 				else:
 					try:
 						host = failRegex.getHost()
@@ -356,7 +367,7 @@ class Filter(JailThread):
 					except RegexException, e:
 						logSys.error(e)
 		return failList
-	
+
 
 	##
 	# Get the status of the filter.
@@ -364,20 +375,20 @@ class Filter(JailThread):
 	# Get some informations about the filter state such as the total
 	# number of failures.
 	# @return a list with tuple
-	
+
 	def status(self):
-		ret = [("Currently failed", self.failManager.size()), 
-			   ("Total failed", self.failManager.getFailTotal())]
+		ret = [("Currently failed", self.failManager.size()),
+		       ("Total failed", self.failManager.getFailTotal())]
 		return ret
 
 
 class FileFilter(Filter):
-	
-	def __init__(self, jail):
-		Filter.__init__(self, jail)
+
+	def __init__(self, jail, **kwargs):
+		Filter.__init__(self, jail, **kwargs)
 		## The log file path.
 		self.__logPath = []
-	
+
 	##
 	# Add a log file path
 	#
@@ -386,12 +397,12 @@ class FileFilter(Filter):
 	def addLogPath(self, path, tail = False):
 		container = FileContainer(path, tail)
 		self.__logPath.append(container)
-	
+
 	##
 	# Delete a log path
 	#
 	# @param path the log file to delete
-	
+
 	def delLogPath(self, path):
 		for log in self.__logPath:
 			if log.getFileName() == path:
@@ -402,35 +413,35 @@ class FileFilter(Filter):
 	# Get the log file path
 	#
 	# @return log file path
-		
+
 	def getLogPath(self):
 		return self.__logPath
-	
+
 	##
 	# Check whether path is already monitored.
 	#
 	# @param path The path
 	# @return True if the path is already monitored else False
-	
+
 	def containsLogPath(self, path):
 		for log in self.__logPath:
 			if log.getFileName() == path:
 				return True
 		return False
-	
+
 	def getFileContainer(self, path):
 		for log in self.__logPath:
 			if log.getFileName() == path:
 				return log
 		return None
-	
+
 	##
 	# Gets all the failure in the log file.
 	#
 	# Gets all the failure in the log file which are newer than
 	# MyTime.time()-self.findTime. When a failure is detected, a FailTicket
 	# is created and is added to the FailManager.
-	
+
 	def getFailures(self, filename):
 		container = self.getFileContainer(filename)
 		if container == None:
@@ -443,18 +454,16 @@ class FileFilter(Filter):
 			logSys.error("Unable to open %s" % filename)
 			logSys.exception(e)
 			return False
-		
-		line = container.readline()
-		while not line == "":
-			if not self._isActive():
-				# The jail has been stopped
+
+		while True:
+			line = container.readline()
+			if (line == "") or not self._isActive():
+				# The jail reached the bottom or has been stopped
 				break
 			self.processLineAndAdd(line)
-			# Read a new line.
-			line = container.readline()
 		container.close()
 		return True
-	
+
 	def status(self):
 		ret = Filter.status(self)
 		path = [m.getFileName() for m in self.getLogPath()]
@@ -478,7 +487,7 @@ except ImportError:
 	md5sum = md5.new
 
 class FileContainer:
-	
+
 	def __init__(self, filename, tail = False):
 		self.__filename = filename
 		self.__tail = tail
@@ -499,10 +508,10 @@ class FileContainer:
 				self.__pos = 0
 		finally:
 			handler.close()
-	
+
 	def getFileName(self):
 		return self.__filename
-	
+
 	def open(self):
 		self.__handler = open(self.__filename)
 		# Set the file descriptor to be FD_CLOEXEC
@@ -520,12 +529,12 @@ class FileContainer:
 			self.__pos = 0
 		# Sets the file pointer to the last position.
 		self.__handler.seek(self.__pos)
-	
+
 	def readline(self):
 		if self.__handler == None:
 			return ""
 		return self.__handler.readline()
-	
+
 	def close(self):
 		if not self.__handler == None:
 			# Saves the last position.
@@ -545,9 +554,9 @@ class FileContainer:
 import socket, struct
 
 class DNSUtils:
-	
+
 	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
-	
+
 	#@staticmethod
 	def dnsToIp(dns):
 		""" Convert a DNS into an IP address using the Python socket module.
@@ -560,7 +569,7 @@ class DNSUtils:
 						% dns)
 			return list()
 	dnsToIp = staticmethod(dnsToIp)
-	
+
 	#@staticmethod
 	def searchIP(text):
 		""" Search if an IP address if directly available and return
@@ -572,7 +581,7 @@ class DNSUtils:
 		else:
 			return None
 	searchIP = staticmethod(searchIP)
-	
+
 	#@staticmethod
 	def isValidIP(string):
 		""" Return true if str is a valid IP
@@ -584,32 +593,31 @@ class DNSUtils:
 		except socket.error:
 			return False
 	isValidIP = staticmethod(isValidIP)
-	
+
 	#@staticmethod
 	def textToIp(text, useDns):
 		""" Return the IP of DNS found in a given text.
 		"""
-		if useDns == "no":
-			return None
-		else:
-			ipList = list()
-			# Search for plain IP
-			plainIP = DNSUtils.searchIP(text)
-			if not plainIP is None:
-				plainIPStr = plainIP.group(0)
-				if DNSUtils.isValidIP(plainIPStr):
-					ipList.append(plainIPStr)
-			if not ipList:
-				# Try to get IP from possible DNS
-				ip = DNSUtils.dnsToIp(text)
-				for e in ip:
-					ipList.append(e)
-				if useDns == "warn":
-					logSys.warning("Determined IP using DNS Reverse Lookup: %s = %s",
-						text, ipList)
-			return ipList
+		ipList = list()
+		# Search for plain IP
+		plainIP = DNSUtils.searchIP(text)
+		if not plainIP is None:
+			plainIPStr = plainIP.group(0)
+			if DNSUtils.isValidIP(plainIPStr):
+				ipList.append(plainIPStr)
+
+		# If we are allowed to resolve -- give it a try if nothing was found
+		if useDns in ("yes", "warn") and not ipList:
+			# Try to get IP from possible DNS
+			ip = DNSUtils.dnsToIp(text)
+			ipList.extend(ip)
+			if ip and useDns == "warn":
+				logSys.warning("Determined IP using DNS Reverse Lookup: %s = %s",
+					text, ipList)
+
+		return ipList
 	textToIp = staticmethod(textToIp)
-	
+
 	#@staticmethod
 	def cidr(i, n):
 		""" Convert an IP address string with a CIDR mask into a 32-bit
@@ -619,14 +627,14 @@ class DNSUtils:
 		MASK = 0xFFFFFFFFL
 		return ~(MASK >> n) & MASK & DNSUtils.addr2bin(i)
 	cidr = staticmethod(cidr)
-	
+
 	#@staticmethod
 	def addr2bin(string):
 		""" Convert a string IPv4 address into an unsigned integer.
 		"""
 		return struct.unpack("!L", socket.inet_aton(string))[0]
 	addr2bin = staticmethod(addr2bin)
-	
+
 	#@staticmethod
 	def bin2addr(addr):
 		""" Convert a numeric IPv4 address into string n.n.n.n form.

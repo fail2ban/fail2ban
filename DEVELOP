@@ -1,0 +1,156 @@
+                         __      _ _ ___ _               
+                        / _|__ _(_) |_  ) |__  __ _ _ _  
+                       |  _/ _` | | |/ /| '_ \/ _` | ' \ 
+                       |_| \__,_|_|_/___|_.__/\__,_|_||_|
+
+================================================================================
+How to develop for Fail2Ban
+================================================================================
+
+Fail2Ban uses GIT (http://git-scm.com/) distributed source control. This gives 
+each developer their own complete copy of the entire repository. Developers can 
+add and switch branches and commit changes when ever they want and then ask a 
+maintainer to merge their changes.
+
+Fail2Ban uses GitHub (https://github.com/fail2ban/fail2ban) to manage access to 
+the Git repository. GitHub provides free hosting for open-source projects as 
+well as a web-based Git repository browser and an issue tracker.
+
+If you are familiar with Python and you have a bug fix or a feature that you 
+would like to add to Fail2Ban, the best way to do so it to use the GitHub Pull 
+Request feature. You can find more details on the Fail2Ban wiki 
+(http://www.fail2ban.org/wiki/index.php/Get_Involved)
+
+Testing
+=======
+
+Existing tests can be run by executing `fail2ban-testcases`.
+
+Documentation about creating tests (when tests are required and some guidelines 
+for creating good tests) will be added soon.
+
+Coding Standards
+================
+Coming Soon.
+
+
+Design
+======
+
+Fail2Ban was initially developed with Python 2.3 (IIRC). It should
+still be compatible with Python 2.4 and such compatibility assurance
+makes code ... old-fashioned in many places (RF-Note).  In 0.7 the
+design went through major refactoring into client/server,
+a-thread-per-jail design which made it a bit difficult to follow.
+Below you can find a sketchy description of the main components of the
+system to orient yourself better.
+
+server/
+------
+
+Core classes hierarchy (feel welcome to draw a better/more complete
+one)::
+
+ ->   inheritance
+ +    delegation
+ *    storage of multiple instances
+
+ RF-Note   just a note which might be useful to address while doing RF
+
+ JailThread -> Filter -> FileFilter -> {FilterPoll, FilterPyinotify, ...}
+         |     |         * FileContainer
+         |     + FailManager
+		 |     + DateDetector
+         \- -> Actions
+               * Actions
+               + BanManager
+
+ Server
+   + Jails
+      * Jail
+        + Filter
+        * tickets (in __queue)
+
+failmanager.py
+~~~~~~~~~~~~~~
+
+FailManager
+
+  Keeps track of failures, recorded as 'tickets'.  All operations are
+  done via acquiring a lock
+
+FailManagerEmpty(Exception)
+
+  raised by FailManager.toBan after reaching the list of tickets
+  (RF-Note: asks to become a generator ;) )
+
+
+filter.py
+~~~~~~~~~~
+
+Filter(JailThread)
+
+  Wraps (non-threaded) FailManager (and proxies to it quite a bit),
+  and provides all primary logic for processing new lines, what IPs to
+  ignore, etc
+
+  .failManager  [FailManager]
+  .dateDetector [DateDetector]
+  .__failRegex  [list]
+  .__ignoreRegex [list]
+    Contains regular expressions for failures and ignores
+  .__findTime   [numeric]
+    Used in `processLineAndAdd` to skip old lines
+
+FileFilter(Filter):
+
+  Files-aware Filter
+
+  .__logPath [list]
+    keeps the tracked files (added 1-by-1 using addLogPath)
+    stored as FileContainer's
+  .getFailures
+    actually just returns
+    True
+      if managed to open and get lines (until empty)
+    False
+      if failed to open or absent container matching the filename
+
+FileContainer
+
+  Adapter for a file to deal with log rotation.
+
+  .open,.close,.readline
+     RF-Note: readline returns "" with handler absent... shouldn't it be None?
+  .__pos
+    Keeps the position pointer
+
+DNSUtils
+
+  Utility class for DNS and IP handling
+
+  RF-Note: convert to functions within a separate submodule
+
+
+filter*.py
+~~~~~~~~~~
+
+Implementations of FileFilter's for specific backends.  Derived
+classes should provide an implementation of `run` and usually
+override `addLogPath`, `delLogPath` methods.  In run() method they all
+one way or another provide
+
+		try:
+			while True:
+				ticket = self.failManager.toBan()
+				self.jail.putFailTicket(ticket)
+		except FailManagerEmpty:
+			self.failManager.cleanup(MyTime.time())
+
+thus channeling "ban tickets" from their failManager to a
+corresponding jail.
+
+action.py
+~~~~~~~~~
+
+Takes care about executing start/check/ban/unban/stop commands
