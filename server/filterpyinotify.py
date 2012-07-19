@@ -101,42 +101,36 @@ class FilterPyinotify(FileFilter):
 	##
 	# Main loop.
 	#
-	# This function is the main loop of the thread. It checks if the
-	# file has been modified and looks for failures.
-	# @return True when the thread exits nicely
+	# Since all detection is offloaded to pyinotifier -- no manual
+	# loop is necessary
 
 	def run(self):
 		self.setActive(True)
 		self.__notifier = pyinotify.ThreadedNotifier(self.__monitor,
 			ProcessPyinotify(self))
 		self.__notifier.start()
-		while self._isActive():
-			if not self.getIdle():
-				self.__notifier.process_events()
-				if self.__notifier.check_events():
-					self.__notifier.read_events()
-			else:
-				time.sleep(self.getSleepTime())
-		# Cleanup pyinotify
-		self.__cleanup()
-		logSys.debug(self.jail.getName() + ": filter terminated")
+		logSys.debug("pyinotifier started for %s." % self.jail.getName())
+		# TODO: verify that there is nothing really to be done for
+		#       idle jails
 		return True
 
 	##
 	# Call super.stop() and then stop the 'Notifier'
 
 	def stop(self):
-		# Call super to set __isRunning
 		super(FilterPyinotify, self).stop()
-		# Now stop the Notifier, otherwise we're deadlocked
+
+		# Stop the notifier thread
 		self.__notifier.stop()
+		self.__notifier.join()			# to not exit before notifier does
+		self.__cleanup()				# for pedantic ones
 
 	##
 	# Deallocates the resources used by pyinotify.
 
 	def __cleanup(self):
-		del self.__notifier
-		del self.__monitor
+		self.__notifier = None
+		self.__monitor = None
 
 
 class ProcessPyinotify(pyinotify.ProcessEvent):
