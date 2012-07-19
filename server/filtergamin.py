@@ -72,27 +72,17 @@ class FilterGamin(FileFilter):
 	#
 	# @param path log file path
 
-	def addLogPath(self, path, tail = False):
-		if self.containsLogPath(path):
-			logSys.error(path + " already exists")
-		else:
-			self.monitor.watch_file(path, self.callback)
-			FileFilter.addLogPath(self, path, tail)
-			logSys.info("Added logfile = %s" % path)			
-	
+	def _addLogPath(self, path):
+		self.monitor.watch_file(path, self.callback)
+
 	##
 	# Delete a log path
 	#
 	# @param path the log file to delete
-	
+
 	def delLogPath(self, path):
-		if not self.containsLogPath(path):
-			logSys.error(path + " is not monitored")
-		else:
-			self.monitor.stop_watch(path)
-			FileFilter.delLogPath(self, path)
-			logSys.info("Removed logfile = %s" % path)
-		
+		self.monitor.stop_watch(path)
+
 	##
 	# Main loop.
 	#
