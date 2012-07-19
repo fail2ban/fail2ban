@@ -122,7 +122,7 @@ class Fail2banRegex:
 		print "    string                  a string representing an 'ignoreregex'"
 		print "    filename                path to a filter file (filter.d/sshd.conf)"
 		print
-		print "Report bugs to <cyril.jaquier@fail2ban.org>"
+		print "Report bugs to https://github.com/fail2ban/fail2ban/issues"
 	dispUsage = staticmethod(dispUsage)
 	
 	def getCmdLineOptions(self, optList):

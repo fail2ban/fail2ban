@@ -88,7 +88,7 @@ class Fail2banServer:
 		print "    -h, --help           display this help message"
 		print "    -V, --version        print the version"
 		print
-		print "Report bugs to <cyril.jaquier@fail2ban.org>"
+		print "Report bugs to https://github.com/fail2ban/fail2ban/issues"
 	
 	def __getCmdLineOptions(self, optList):
 		""" Gets the command line options
