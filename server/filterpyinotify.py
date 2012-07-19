@@ -29,6 +29,8 @@ from mytime import MyTime
 
 import time, logging, pyinotify
 
+from os.path import dirname, sep as pathsep
+
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
 
@@ -77,10 +79,21 @@ class FilterPyinotify(FileFilter):
 		else:
 			wd = self.__monitor.add_watch(path, pyinotify.IN_MODIFY)
 			self.__watches.update(wd)
+
 			FileFilter.addLogPath(self, path, tail)
 			logSys.info("Added logfile = %s" % path)
 
-	##
+			path_dir = dirname(path)
+			if not (path_dir in self.__watches):
+				# we need to watch also  the directory for IN_CREATE
+				self.__watches.update(
+					self.__monitor.add_watch(path_dir, pyinotify.IN_CREATE))
+				logSys.debug("Monitor also parent directory %s" % path_dir)
+
+		# sniff the file
+		self.callback(path)
+
+    ##
 	# Delete a log path
 	#
 	# @param path the log file to delete
@@ -97,6 +110,16 @@ class FilterPyinotify(FileFilter):
 				logSys.info("Removed logfile = %s" % path)
 			else:
 				logSys.error("Failed to remove watch on path: %s", path)
+
+			path_dir = dirname(path)
+			if not len([k for k in self.__watches
+						if k.startswith(path_dir + pathsep)]):
+				# Remove watches for the directory
+				# since there is no other monitored file under this directory
+				wdInt = self.__watches.pop(path_dir)
+				_ = self.__monitor.rm_watch(wdInt)
+				logSys.debug("Remove monitor for the parent directory %s" % path_dir)
+
 
 	##
 	# Main loop.
