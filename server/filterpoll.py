@@ -63,28 +63,18 @@ class FilterPoll(FileFilter):
 	#
 	# @param path log file path
 
-	def addLogPath(self, path, tail = False):
-		if self.containsLogPath(path):
-			logSys.error(path + " already exists")
-		else:
-			self.__lastModTime[path] = 0
-			self.__file404Cnt[path] = 0
-			FileFilter.addLogPath(self, path, tail)
-			logSys.info("Added logfile = %s" % path)
+	def _addLogPath(self, path):
+		self.__lastModTime[path] = 0
+		self.__file404Cnt[path] = 0
 
 	##
 	# Delete a log path
 	#
 	# @param path the log file to delete
 
-	def delLogPath(self, path):
-		if not self.containsLogPath(path):
-			logSys.error(path + " is not monitored")
-		else:
-			del self.__lastModTime[path]
-			del self.__file404Cnt[path]
-			FileFilter.delLogPath(self, path)
-			logSys.info("Removed logfile = %s" % path)
+	def _delLogPath(self, path):
+		del self.__lastModTime[path]
+		del self.__file404Cnt[path]
 
 	##
 	# Main loop.
