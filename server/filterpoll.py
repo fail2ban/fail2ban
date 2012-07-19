@@ -17,14 +17,13 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
+# Author: Cyril Jaquier, Yaroslav Halchenko
+#
 
-__author__ = "Cyril Jaquier"
+__author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __version__ = "$Revision$"
 __date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier; 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
 from failmanager import FailManagerEmpty
@@ -50,7 +49,7 @@ class FilterPoll(FileFilter):
 	#
 	# Initialize the filter object with default values.
 	# @param jail the jail object
-	
+
 	def __init__(self, jail):
 		FileFilter.__init__(self, jail)
 		self.__modified = False
@@ -71,13 +70,13 @@ class FilterPoll(FileFilter):
 			self.__lastModTime[path] = 0
 			self.__file404Cnt[path] = 0
 			FileFilter.addLogPath(self, path, tail)
-			logSys.info("Added logfile = %s" % path)	
-	
+			logSys.info("Added logfile = %s" % path)
+
 	##
 	# Delete a log path
 	#
 	# @param path the log file to delete
-	
+
 	def delLogPath(self, path):
 		if not self.containsLogPath(path):
 			logSys.error(path + " is not monitored")
@@ -86,7 +85,7 @@ class FilterPoll(FileFilter):
 			del self.__file404Cnt[path]
 			FileFilter.delLogPath(self, path)
 			logSys.info("Removed logfile = %s" % path)
-	
+
 	##
 	# Main loop.
 	#
@@ -100,8 +99,9 @@ class FilterPoll(FileFilter):
 			if not self.getIdle():
 				# Get file modification
 				for container in self.getLogPath():
-					if self.isModified(container.getFileName()):
-						self.getFailures(container.getFileName())
+					filename = container.getFileName()
+					if self.isModified(filename):
+						self.getFailures(filename)
 						self.__modified = True
 
 				if self.__modified:
@@ -116,7 +116,8 @@ class FilterPoll(FileFilter):
 				time.sleep(self.getSleepTime())
 			else:
 				time.sleep(self.getSleepTime())
-		logSys.debug(self.jail.getName() + ": filter terminated")
+		logSys.debug((self.jail and self.jail.getName() or "jailless") +
+					 " filter terminated")
 		return True
 
 	##
@@ -124,7 +125,7 @@ class FilterPoll(FileFilter):
 	#
 	# Checks if the log file has been modified using os.stat().
 	# @return True if log file has been modified
-	
+
 	def isModified(self, filename):
 		try:
 			logStats = os.stat(filename)
@@ -135,11 +136,15 @@ class FilterPoll(FileFilter):
 				logSys.debug(filename + " has been modified")
 				self.__lastModTime[filename] = logStats.st_mtime
 				return True
-		except OSError:
-			logSys.error("Unable to get stat on " + filename)
-			self.__file404Cnt[filename] = self.__file404Cnt[filename] + 1
+		except OSError, e:
+			logSys.error("Unable to get stat on %s because of: %s"
+						 % (filename, e))
+			self.__file404Cnt[filename] += 1
 			if self.__file404Cnt[filename] > 2:
-				logSys.warn("Too much read error. Set the jail idle")
-				self.jail.setIdle(True)
+				logSys.warn("Too many errors. Setting the jail idle")
+				if self.jail:
+					self.jail.setIdle(True)
+				else:
+					logSys.warn("No jail is assigned to %s" % self)
 				self.__file404Cnt[filename] = 0
 			return False
