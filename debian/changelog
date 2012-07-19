@@ -1,6 +1,6 @@
-fail2ban (0.8.6~+git90-g08564bd-1) UNRELEASED; urgency=low
+fail2ban (0.8.6~+git95-gc0c1232-1) UNRELEASED; urgency=low
 
-  * New upstream snapshot from 0.8.6-90-g08564bd
+  * New upstream snapshot from 0.8.6-95-gc0c1232
   * Marked with additional ~ so poor users could "upgrade" back to the
   stock 0.8.6 having done experimeting with it
 
