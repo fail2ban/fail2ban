@@ -455,14 +455,12 @@ class FileFilter(Filter):
 			logSys.exception(e)
 			return False
 
-		line = container.readline()
-		while not line == "":
-			if not self._isActive():
-				# The jail has been stopped
+		while True:
+			line = container.readline()
+			if (line == "") or not self._isActive():
+				# The jail reached the bottom or has been stopped
 				break
 			self.processLineAndAdd(line)
-			# Read a new line.
-			line = container.readline()
 		container.close()
 		return True
 
