@@ -119,6 +119,20 @@ tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
 # ClientReader
 tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
 
+# Filter
+tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
+tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
+tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
+tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
+tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
+
+# DateDetector
+tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
+
+#
+# Extensive use-tests of different available filters backends
+#
+
 from server.filterpoll import FilterPoll
 filters = [FilterPoll]					  # always available
 
@@ -127,8 +141,7 @@ filters = [FilterPoll]					  # always available
 #      with good old unittest
 try:
 	from server.filtergamin import FilterGamin
-	# That shmug plain doesn't work and stalls things ATM
-	# filters.append(FilterGamin)
+	filters.append(FilterGamin)
 except:
 	pass
 
@@ -141,22 +154,6 @@ except:
 for Filter_ in filters:
 	tests.addTest(unittest.makeSuite(
 		filtertestcase.get_monitor_failures_testcase(Filter_)))
-
-# yoh: adding them (in particular datadetectortestscase before above
-#      get_monitor_failures_testcase's makes them fail (probably due
-#      to additional thread making it busier or smth like
-#      that)... TODO
-
-# Filter
-tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
-tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
-tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
-tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
-tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
-
-# DateDetector
-tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
-
 
 
 #
