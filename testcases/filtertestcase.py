@@ -47,6 +47,18 @@ def _killfile(f, name):
 	except:
 		pass
 
+def _sleep_4_poll():
+	"""PollFilter relies on file timestamps - so we might need to
+	sleep to guarantee that they differ
+	"""
+	if sys.version_info[:2] <= (2,4):
+		# on old Python st_mtime is int, so we should give
+		# at least 1 sec so polling filter could detect
+		# the change
+		time.sleep(1.)
+	else:
+		time.sleep(0.1)
+
 def _assert_equal_entries(utest, found, output, count=None):
 	"""Little helper to unify comparisons with the target entries
 
@@ -207,6 +219,7 @@ class LogFileMonitor(unittest.TestCase):
 			self.file.flush()
 			self.assertTrue(self.isModified())
 			self.assertTrue(self.notModified())
+			_sleep_4_poll()				# to guarantee freshier mtime
 		os.rename(self.name, self.name + '.old')
 		# we are not signaling as modified whenever
 		# it gets away
@@ -214,6 +227,7 @@ class LogFileMonitor(unittest.TestCase):
 		f = open(self.name, 'a')
 		self.assertTrue(self.isModified())
 		self.assertTrue(self.notModified())
+		_sleep_4_poll()
 		f.write("line%d\n" % i)
 		f.flush()
 		self.assertTrue(self.isModified())
@@ -356,13 +370,7 @@ def get_monitor_failures_testcase(Filter_):
 			# actions might be happening too fast in the tests,
 			# sleep a bit to guarantee reliable time stamps
 			if isinstance(self.filter, FilterPoll):
-				if sys.version_info[:2] <= (2,4):
-					# on old Python st_mtime is int, so we should give
-					# at least 1 sec so polling filter could detect
-					# the change
-					time.sleep(0.5)
-				else:
-					time.sleep(0.1)
+				_sleep_4_poll()
 
 		def isEmpty(self, delay=0.4):
 			# shorter wait time for not modified status
