@@ -213,6 +213,7 @@ class LogFileMonitor(unittest.TestCase):
 		# but not any longer
 		self.assertTrue(self.notModified())
 		self.assertTrue(self.notModified())
+		_sleep_4_poll()				# to guarantee freshier mtime
 		for i in range(4):			  # few changes
 			# unless we write into it
 			self.file.write("line%d\n" % i)
