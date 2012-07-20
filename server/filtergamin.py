@@ -17,14 +17,10 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
+# Author: Cyril Jaquier, Yaroslav Halchenko
 
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Cyril Jaquier, Yaroslav Halchenko"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
 from failmanager import FailManagerEmpty
@@ -50,7 +46,7 @@ class FilterGamin(FileFilter):
 	#
 	# Initialize the filter object with default values.
 	# @param jail the jail object
-	
+
 	def __init__(self, jail):
 		FileFilter.__init__(self, jail)
 		self.__modified = False
@@ -63,9 +59,26 @@ class FilterGamin(FileFilter):
 		logSys.debug("Got event: " + `event` + " for " + path)
 		if event in (gamin.GAMCreated, gamin.GAMChanged, gamin.GAMExists):
 			logSys.debug("File changed: " + path)
-			self.getFailures(path)
 			self.__modified = True
 
+		self._process_file(path)
+
+
+	def _process_file(self, path):
+		"""Process a given file
+
+		TODO -- RF:
+		this is a common logic and must be shared/provided by FileFilter
+		"""
+		self.getFailures(path)
+		try:
+			while True:
+				ticket = self.failManager.toBan()
+				self.jail.putFailTicket(ticket)
+		except FailManagerEmpty:
+			self.failManager.cleanup(MyTime.time())
+		self.dateDetector.sortTemplate()
+		self.__modified = False
 
 	##
 	# Add a log file path
@@ -80,7 +93,7 @@ class FilterGamin(FileFilter):
 	#
 	# @param path the log file to delete
 
-	def delLogPath(self, path):
+	def _delLogPath(self, path):
 		self.monitor.stop_watch(path)
 
 	##
@@ -92,29 +105,21 @@ class FilterGamin(FileFilter):
 
 	def run(self):
 		self.setActive(True)
+		# Gamin needs a loop to collect and dispatch events
 		while self._isActive():
 			if not self.getIdle():
 				# We cannot block here because we want to be able to
 				# exit.
 				if self.monitor.event_pending():
 					self.monitor.handle_events()
-
-				if self.__modified:
-					try:
-						while True:
-							ticket = self.failManager.toBan()
-							self.jail.putFailTicket(ticket)
-					except FailManagerEmpty:
-						self.failManager.cleanup(MyTime.time())
-					self.dateDetector.sortTemplate()
-					self.__modified = False
-				time.sleep(self.getSleepTime())
-			else:
-				time.sleep(self.getSleepTime())
-		# Cleanup Gamin
-		self.__cleanup()
+			time.sleep(self.getSleepTime())
 		logSys.debug(self.jail.getName() + ": filter terminated")
 		return True
+
+
+	def stop(self):
+		super(FilterGamin, self).stop()
+		self.__cleanup()
 
 	##
 	# Desallocates the resources used by Gamin.
