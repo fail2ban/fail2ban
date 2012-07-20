@@ -137,7 +137,18 @@ filter*.py
 
 Implementations of FileFilter's for specific backends.  Derived
 classes should provide an implementation of `run` and usually
-override `addLogPath`, `delLogPath` methods.
+override `addLogPath`, `delLogPath` methods.  In run() method they all
+one way or another provide
+
+		try:
+			while True:
+				ticket = self.failManager.toBan()
+				self.jail.putFailTicket(ticket)
+		except FailManagerEmpty:
+			self.failManager.cleanup(MyTime.time())
+
+thus channeling "ban tickets" from their failManager to a
+corresponding jail.
 
 action.py
 ~~~~~~~~~

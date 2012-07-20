@@ -395,8 +395,19 @@ class FileFilter(Filter):
 	# @param path log file path
 
 	def addLogPath(self, path, tail = False):
-		container = FileContainer(path, tail)
-		self.__logPath.append(container)
+		if self.containsLogPath(path):
+			logSys.error(path + " already exists")
+		else:
+			container = FileContainer(path, tail)
+			self.__logPath.append(container)
+			logSys.info("Added logfile = %s" % path)
+			self._addLogPath(path)			# backend specific
+
+	def _addLogPath(self, path):
+		# nothing to do by default
+		# to be overriden by backends
+		pass
+
 
 	##
 	# Delete a log path
@@ -407,7 +418,14 @@ class FileFilter(Filter):
 		for log in self.__logPath:
 			if log.getFileName() == path:
 				self.__logPath.remove(log)
+				logSys.info("Removed logfile = %s" % path)
+				self._delLogPath(path)
 				return
+
+	def _delLogPath(self, path):
+		# nothing to do by default
+		# to be overriden by backends
+		pass
 
 	##
 	# Get the log file path
@@ -455,14 +473,12 @@ class FileFilter(Filter):
 			logSys.exception(e)
 			return False
 
-		line = container.readline()
-		while not line == "":
-			if not self._isActive():
-				# The jail has been stopped
+		while True:
+			line = container.readline()
+			if (line == "") or not self._isActive():
+				# The jail reached the bottom or has been stopped
 				break
 			self.processLineAndAdd(line)
-			# Read a new line.
-			line = container.readline()
 		container.close()
 		return True
 
