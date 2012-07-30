@@ -22,7 +22,7 @@ ver. 0.8.6 (2011/11/28) - stable
    * [3eb5e3b] Allow for trailing spaces in sasl logs
    * [1632244] Stop server-side communication before stopping the
      jails (prevents lockup if actions use fail2ban-client upon
-	 unban): see https://github.com/fail2ban/fail2ban/issues/7
+         unban): see https://github.com/fail2ban/fail2ban/issues/7
    * [5a2d518] Various changes to reincarnate unittests
   Yehuda
    * Wiki was cleaned from SPAM
@@ -39,7 +39,7 @@ ver. 0.8.6 (2011/11/28) - stable
    * [9fa54cf] Added Date: header for sendmail*.conf actions
   Yaroslav Halchenko & Tom Hendrikx
    * [b52d420..22b7007] <matches> in action files now can be used
-     to provide matched	loglines which triggered action
+     to provide matched loglines which triggered action
   Yaroslav Halchenko
    * [ed0bf3a] Removed duplicate entry for DataCha0s/2\.0 in badbots:
      see http://bugs.debian.org/519557
@@ -333,7 +333,7 @@ ver. 0.6.1 (2006/03/16) - stable
 - Added parsing of timestamp in TAI64N format (#1275325). Thanks to Mark
   Edgington
 - Added patch #1382936 (Default formatted syslog logging). Thanks to Patrick
-  B�rjesson
+  Börjesson
 - Removed 192.168.0.0/16 from ignoreip. Attacks could also come from the local
   network.
 - Robust startup: if iptables module does not get fully initialized after
