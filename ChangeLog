@@ -69,6 +69,8 @@ ver. 0.8.7 (2012/07/31) - stable
      to comment (Thanks Stefano Forli for the note)
    * [6ad55f6] added failregex for wu-ftpd to match against syslog instead
      of DoS-prone auth.log's rhost (Closes: #514239)
+   * [2082fee] match possibly present "pam_unix(sshd:auth):" portion for
+     sshd filter (Closes: #648020)
   Yehuda Katz & Yaroslav Halchenko
    * [322f53e,bd40cc7] ./DEVELOP -- documentation for developers
 
