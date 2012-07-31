@@ -17,6 +17,9 @@ fail2ban (0.8.7-1) experimental; urgency=low
   * debian/jail.conf:
     - adopted few jails from "upstreams" jail.conf: asterisk, recidive,
       lighttpd, php-url-open
+  * debian/fail2ban.init:
+    - Should-(start|stop): iptables-persistent (Closes: #598109),
+      ferm (Closes: #604843)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 31 Jul 2012 14:04:02 -0400
 
