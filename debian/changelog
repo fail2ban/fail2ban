@@ -26,6 +26,9 @@ fail2ban (0.8.7-1) experimental; urgency=low
       Thanks Glenn Aaldering for the patch
   * debian/source:
     - switch to 3.0 (quilt) format
+  * debian/control,rules:
+    - switch to use dh_python2 (Closes: #616803)
+    - boost policy compliance to 3.9.3
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 31 Jul 2012 16:51:40 -0400
 

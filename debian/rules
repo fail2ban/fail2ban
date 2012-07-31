@@ -62,13 +62,16 @@ binary-indep: install
 	dh_installdocs
 	dh_installexamples config/jail.conf files/ipmasq-*
 	dh_installlogrotate
-	dh_pycentral
+	dh_python2 /usr/share/fail2ban
 	dh_installinit -- defaults 99
-	# perform swap of order of calls to init and pycentral in prerm
-	# to close #422655 -- pycentral section is cut and placed at
-	# the end of the file
-	sed -i -e '/^#.*ed by dh_pycentral/,/# End auto/{H;d};$$G' \
+
+	# perform swap of order of calls to init and pycentral (or even
+	# bleedingly new dh_python2) in prerm to close #422655 --
+	# python-cleanup section is cut and placed at the end of the file
+	# since .init script would trigger their compilation again
+	sed -i -e '/^#.*ed by dh_python2/,/# End auto/{H;d};$$G' \
 		debian/fail2ban.prerm.debhelper
+
 	dh_installman man/*.1
 	dh_link
 	dh_compress
