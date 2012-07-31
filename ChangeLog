@@ -24,8 +24,10 @@ ver. 0.8.7 (2012/07/31) - stable
      message stays non-unicode. Close gh-32
    * [b257be4] added %m-%d-%Y pattern + do not add %Y for Feb 29 fix if
      already present in the pattern
-   * [47e956b] Replace "|" with "_" in ipmasq-ZZZzzz|fail2ban.rul to be
+   * [47e956b] replace "|" with "_" in ipmasq-ZZZzzz|fail2ban.rul to be
      friend to developers stuck with Windows (Closes gh-66)
+   * [80b191c] anchor grep regexp in actioncheck to not match partial names
+     of the jails (Closes: #672228) (Thanks Szépe Viktor for the report)
 - New features:
   François Boulogne
    * [a7cb20e..] add lighttpd-auth filter/jail
