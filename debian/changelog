@@ -1,10 +1,16 @@
-fail2ban (0.8.6~+git100-gdca5634-1) UNRELEASED; urgency=low
+fail2ban (0.8.7-1) experimental; urgency=low
 
-  * New upstream snapshot from GIT
-  * Marked with additional ~ so poor users could "upgrade" back to the
-  stock 0.8.6 having done experimeting with it
+  * New upstream release:
+    - inotify backend is supported (and the default if pyinotify is present).
+      It should bring number of wakeups to minimum (Closes: #481265)
+    - usedns jail.conf parameter to disable reverse DNS mapping to
+      avoid of DoS (see #588431, #514239 for related discussions)
+    - enforces non-unicode logging (Closes: #657286)
+    - new jail "recidive" to ban repeated offenders (Closes: #333557)
+    - catch failed ssh logins due to being listed in DenyUsers (Closes: #669063)
+    - document in config/*.conf on how to inline comments (Closes: #676146)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 06 Jun 2012 23:39:44 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 31 Jul 2012 14:04:02 -0400
 
 fail2ban (0.8.6-4) UNRELEASED; urgency=low
 
