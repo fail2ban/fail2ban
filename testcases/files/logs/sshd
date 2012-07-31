@@ -27,3 +27,6 @@ Oct 15 19:51:35 server sshd[7592]: Address 1.2.3.4 maps to 1234.bbbbbb.com, but 
 
 #8 DenyUsers https://github.com/fail2ban/fail2ban/issues/47
 Apr 16 22:01:15 al-ribat sshd[5154]: User root from 46.45.128.3 not allowed because listed in DenyUsers
+
+# http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=648020
+Nov  8 11:19:38 bar sshd[25427]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=1.2.3.6
