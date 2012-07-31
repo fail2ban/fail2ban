@@ -11,7 +11,8 @@ fail2ban (0.8.7-1) experimental; urgency=low
     - document in config/*.conf on how to inline comments (Closes: #676146)
     - match possibly present "pam_unix(sshd:auth):" portion for sshd
       (Closes: #648020)
-    - add wu-ftpd failregex for use against syslog (Closes: #514239)
+    - wu-ftpd: added failregex for use against syslog. Switch to monitor syslog
+      (instead of auth.log) by default (Closes: #514239)
     - anchor chain name in actioncheck's for iptables actions (Closes: #672228)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 31 Jul 2012 14:04:02 -0400
