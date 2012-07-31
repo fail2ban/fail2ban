@@ -8,7 +8,7 @@ Subject: tune ups in upstream manpages to direct users to use reportbug
  Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>.
  Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>.
  .SH "REPORTING BUGS"
--Report bugs to https://github.com/fail2ban/fail2ban/issues
+-Report bugs on https://github.com/fail2ban/fail2ban/issues
 +Please report bugs via Debian bug tracking system
 +http://www.debian.org/Bugs/.
  .SH COPYRIGHT
@@ -20,7 +20,7 @@ Subject: tune ups in upstream manpages to direct users to use reportbug
  Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>.
  Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>.
  .SH "REPORTING BUGS"
--Report bugs to https://github.com/fail2ban/fail2ban/issues
+-Report bugs on https://github.com/fail2ban/fail2ban/issues
 +Please report bugs via Debian bug tracking system
 +http://www.debian.org/Bugs/.
  .SH COPYRIGHT
