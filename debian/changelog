@@ -17,20 +17,15 @@ fail2ban (0.8.7-1) experimental; urgency=low
   * debian/jail.conf:
     - adopted few jails from "upstreams" jail.conf: asterisk, recidive,
       lighttpd, php-url-open
+    - provide instructions in jail.conf on how to comment (Closes: #676146)
+      Thanks Stefano Forli for a report
   * debian/fail2ban.init:
     - Should-(start|stop): iptables-persistent (Closes: #598109),
       ferm (Closes: #604843)
     - 'status' exits with code 3 if fail2ban is not running (Closes: #653074)
       Thanks Glenn Aaldering for the patch
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 31 Jul 2012 14:04:02 -0400
-
-fail2ban (0.8.6-4) UNRELEASED; urgency=low
-
-  * Provide instrucitons in jail.conf on how to comment (Closes: #676146)
-    Thanks Stefano Forli for a hint
-
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 04 Jun 2012 22:45:32 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 31 Jul 2012 16:51:40 -0400
 
 fail2ban (0.8.6-3) unstable; urgency=low
 
