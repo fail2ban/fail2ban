@@ -24,6 +24,8 @@ fail2ban (0.8.7-1) experimental; urgency=low
       ferm (Closes: #604843)
     - 'status' exits with code 3 if fail2ban is not running (Closes: #653074)
       Thanks Glenn Aaldering for the patch
+  * debian/source:
+    - switch to 3.0 (quilt) format
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 31 Jul 2012 16:51:40 -0400
 
