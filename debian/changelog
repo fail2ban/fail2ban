@@ -29,6 +29,7 @@ fail2ban (0.8.7-1) experimental; urgency=low
   * debian/control,rules:
     - switch to use dh_python2 (Closes: #616803)
     - boost policy compliance to 3.9.3
+    - recommend python-pyinotify and only suggest python-gamin
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 31 Jul 2012 16:51:40 -0400
 
