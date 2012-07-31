@@ -14,6 +14,9 @@ fail2ban (0.8.7-1) experimental; urgency=low
     - wu-ftpd: added failregex for use against syslog. Switch to monitor syslog
       (instead of auth.log) by default (Closes: #514239)
     - anchor chain name in actioncheck's for iptables actions (Closes: #672228)
+  * debian/jail.conf:
+    - adopted few jails from "upstreams" jail.conf: asterisk, recidive,
+      lighttpd, php-url-open
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 31 Jul 2012 14:04:02 -0400
 
