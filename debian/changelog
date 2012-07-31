@@ -20,6 +20,8 @@ fail2ban (0.8.7-1) experimental; urgency=low
   * debian/fail2ban.init:
     - Should-(start|stop): iptables-persistent (Closes: #598109),
       ferm (Closes: #604843)
+    - 'status' exits with code 3 if fail2ban is not running (Closes: #653074)
+      Thanks Glenn Aaldering for the patch
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 31 Jul 2012 14:04:02 -0400
 
