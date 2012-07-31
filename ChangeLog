@@ -24,8 +24,10 @@ ver. 0.8.7 (2012/07/31) - stable
      message stays non-unicode. Close gh-32
    * [b257be4] added %m-%d-%Y pattern + do not add %Y for Feb 29 fix if
      already present in the pattern
-   * [47e956b] Replace "|" with "_" in ipmasq-ZZZzzz|fail2ban.rul to be
+   * [47e956b] replace "|" with "_" in ipmasq-ZZZzzz|fail2ban.rul to be
      friend to developers stuck with Windows (Closes gh-66)
+   * [80b191c] anchor grep regexp in actioncheck to not match partial names
+     of the jails (Closes: #672228) (Thanks Szépe Viktor for the report)
 - New features:
   François Boulogne
    * [a7cb20e..] add lighttpd-auth filter/jail
@@ -65,6 +67,10 @@ ver. 0.8.7 (2012/07/31) - stable
      default with -v to control verbosity
    * [b4099da] adjusted header for config/*.conf to mention .local and way
      to comment (Thanks Stefano Forli for the note)
+   * [6ad55f6] added failregex for wu-ftpd to match against syslog instead
+     of DoS-prone auth.log's rhost (Closes: #514239)
+   * [2082fee] match possibly present "pam_unix(sshd:auth):" portion for
+     sshd filter (Closes: #648020)
   Yehuda Katz & Yaroslav Halchenko
    * [322f53e,bd40cc7] ./DEVELOP -- documentation for developers
 
