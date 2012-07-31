@@ -67,6 +67,8 @@ ver. 0.8.7 (2012/07/31) - stable
      default with -v to control verbosity
    * [b4099da] adjusted header for config/*.conf to mention .local and way
      to comment (Thanks Stefano Forli for the note)
+   * [6ad55f6] added failregex for wu-ftpd to match against syslog instead
+     of DoS-prone auth.log's rhost (Closes: #514239)
   Yehuda Katz & Yaroslav Halchenko
    * [322f53e,bd40cc7] ./DEVELOP -- documentation for developers
 
