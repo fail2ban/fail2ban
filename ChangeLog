@@ -4,8 +4,69 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.6)                                              2011/11/28
+Fail2Ban (version 0.8.7)                                              2012/07/31
 ================================================================================
+
+ver. 0.8.7 (2012/07/31) - stable
+----------
+
+- Fixes:
+  Tom Hendrikx & Jeremy Olexa
+   * [0eaa4c2,444e4ac] Fix Gentoo init script: $opts variable is deprecated.
+     See http://forums.gentoo.org/viewtopic-t-899018.html
+  Chris Reffett
+   * [a018a26] Fixed addBannedIP to add enough failures to trigger a ban,
+     rather than just one failure.
+  Yaroslav Halchenko
+   * [4c76fb3] allow trailing white-spaces in lighttpd-auth.conf
+   * [25f1e8d] allow trailing whitespace in few missing it regexes for sshd.conf
+   * [ed16ecc] enforce "ip" field returned as str, not unicode so that log
+     message stays non-unicode. Close gh-32
+   * [b257be4] added %m-%d-%Y pattern + do not add %Y for Feb 29 fix if
+     already present in the pattern
+   * [47e956b] Replace "|" with "_" in ipmasq-ZZZzzz|fail2ban.rul to be
+     friend to developers stuck with Windows (Closes gh-66)
+- New features:
+  François Boulogne
+   * [a7cb20e..] add lighttpd-auth filter/jail
+  Lee Clemens & Yaroslav Halchenko
+   * [e442503] pyinotify backend (default if backend='auto' and pyinotify
+     is available)
+   * [d73a71f,3989d24] usedns parameter for the jails to allow disabling
+     use of DNS
+  Tom Hendrikx
+   * [f94a121..] 'recidive' filter/jail to monitor fail2ban.conf to ban
+     repeated offenders. Close gh-19
+  Xavier Devlamynck
+   * [7d465f9..] Add asterisk support
+  Zbigniew Jędrzejewski-Szmek
+   * [de502cf..] allow running fail2ban as non-root user (disabled by
+     default) via xt_recent. See doc/run-rootless.txt
+- Enhancements
+  Lee Clemens
+   * [47c03a2] files/nagios - spelling/grammar fixes
+   * [b083038] updated Free Software Foundation's address
+   * [9092a63] changed TLDs to invalid domains, in accordance with RFC 2606
+   * [642d9af,3282f86] reformated printing of jail's name to be consistent
+     with init's info messages
+   * [3282f86] uniform use of capitalized Jail in the messages
+  Leonardo Chiquitto
+   * [4502adf] Fix comments in dshield.conf and mynetwatchman.conf
+     to reflect code
+   * [a7d47e8] Update Free Software Foundation's address
+  Petr Voralek
+   * [4007751] catch failed ssh logins due to being listed in DenyUsers.
+     Close gh-47 (Closes: #669063)
+  Yaroslav Halchenko
+   * [MANY]    extended and robustified unittests: test different backends
+   * [d9248a6] refactored Filter's to avoid duplicate functionality
+   * [7821174] direct users to issues on github
+   * [d2ffee0..] re-factored fail2ban-regex -- more condensed output by
+     default with -v to control verbosity
+   * [b4099da] adjusted header for config/*.conf to mention .local and way
+     to comment (Thanks Stefano Forli for the note)
+  Yehuda Katz & Yaroslav Halchenko
+   * [322f53e,bd40cc7] ./DEVELOP -- documentation for developers
 
 ver. 0.8.6 (2011/11/28) - stable
 ----------
@@ -22,9 +83,9 @@ ver. 0.8.6 (2011/11/28) - stable
    * [3eb5e3b] Allow for trailing spaces in sasl logs
    * [1632244] Stop server-side communication before stopping the
      jails (prevents lockup if actions use fail2ban-client upon
-	 unban): see https://github.com/fail2ban/fail2ban/issues/7
+     unban): see https://github.com/fail2ban/fail2ban/issues/7
    * [5a2d518] Various changes to reincarnate unittests
-  Yehuda
+  Yehuda Katz
    * Wiki was cleaned from SPAM
 - Enhancements:
   Adam Spiers
@@ -39,7 +100,7 @@ ver. 0.8.6 (2011/11/28) - stable
    * [9fa54cf] Added Date: header for sendmail*.conf actions
   Yaroslav Halchenko & Tom Hendrikx
    * [b52d420..22b7007] <matches> in action files now can be used
-     to provide matched	loglines which triggered action
+     to provide matched loglines which triggered action
   Yaroslav Halchenko
    * [ed0bf3a] Removed duplicate entry for DataCha0s/2\.0 in badbots:
      see http://bugs.debian.org/519557
@@ -333,7 +394,7 @@ ver. 0.6.1 (2006/03/16) - stable
 - Added parsing of timestamp in TAI64N format (#1275325). Thanks to Mark
   Edgington
 - Added patch #1382936 (Default formatted syslog logging). Thanks to Patrick
-  B�rjesson
+  Börjesson
 - Removed 192.168.0.0/16 from ignoreip. Attacks could also come from the local
   network.
 - Robust startup: if iptables module does not get fully initialized after

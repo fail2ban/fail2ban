@@ -4,7 +4,7 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.6)                                              2011/11/28
+Fail2Ban (version 0.8.7)                                              2012/07/31
 ================================================================================
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP that makes too many
@@ -31,8 +31,8 @@ Optional:
 
 To install, just do:
 
-> tar xvfj fail2ban-0.8.6.tar.bz2
-> cd fail2ban-0.8.6
+> tar xvfj fail2ban-0.8.7.tar.bz2
+> cd fail2ban-0.8.7
 > python setup.py install
 
 This will install Fail2Ban into /usr/share/fail2ban. The executable scripts are
@@ -68,8 +68,9 @@ and if your issue is not yet known -- file a bug report.
 If you would like to troubleshoot or discuss: join the mailing list
 https://lists.sourceforge.net/lists/listinfo/fail2ban-users
 
-If you just appreciate this program: send kudos to the original
-author: Cyril Jaquier: <cyril.jaquier@fail2ban.org>
+If you just appreciate this program: send kudos to the original author
+(Cyril Jaquier: <cyril.jaquier@fail2ban.org>) or the mailing list
+https://lists.sourceforge.net/lists/listinfo/fail2ban-users
 
 
 Thanks:
