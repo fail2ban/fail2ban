@@ -7,6 +7,13 @@
 Fail2Ban (version 0.8.7)                                              2012/07/31
 ================================================================================
 
+ver. 0.8.7.1 (2012/07/31) - stable
+----------
+
+- Fixes:
+  Yaroslav Halchenko
+   * [e9762f3] Removed sneaked in comment on sys.path.insert
+
 ver. 0.8.7 (2012/07/31) - stable
 ----------
 
