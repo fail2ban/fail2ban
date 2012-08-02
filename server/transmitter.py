@@ -55,7 +55,8 @@ class Transmitter:
 			ret = self.__commandHandler(command)
 			ack = 0, ret
 		except Exception, e:
-			logSys.warn("Invalid command: " + `command`)
+			logSys.warn("Command %r has failed. Received %r"
+						% (command, e))
 			ack = 1, e
 		return ack
 	
