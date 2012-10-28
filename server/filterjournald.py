@@ -33,10 +33,10 @@ import time, logging, datetime, pyjournalctl
 logSys = logging.getLogger("fail2ban.filter")
 
 ##
-# Log reader class.
+# Journal reader class.
 #
-# This class reads a log file and detects login failures or anything else
-# that matches a given regular expression. This class is instantiated by
+# This class reads from systemd journal and detects login failures or anything
+# else that matches a given regular expression. This class is instantiated by
 # a Jail object.
 
 class FilterJournald(Filter):
@@ -56,7 +56,7 @@ class FilterJournald(Filter):
 		logSys.debug("Created FilterJournald")
 
 	##
-	# Add a log file path
+	# Add a journal match filter
 	#
 	# @param path log file path
 
@@ -71,6 +71,11 @@ class FilterJournald(Filter):
 				self.__matches.append(match)
 				logSys.debug("Adding journal match for: %s", match)
 
+	##
+	# Delete a journal match filter
+	#
+	# @param path log file path
+
 	def delJournalMatch(self, match):
 		if match in self.__matches:
 			self.__journalctl.flush_matches()
@@ -81,14 +86,19 @@ class FilterJournald(Filter):
 			for match in match_copy:
 				self.addJournalMatch(match)
 
+	##
+	# Get current journal match filter
+	#
+	# @param path log file path
+
 	def getJournalMatch(self):
 		return self.__matches
 
 	##
 	# Main loop.
 	#
-	# Since all detection is offloaded to pyinotifier -- no manual
-	# loop is necessary
+	# Peridocily check for new journal entries matching the filter and
+	# handover to FailManager
 
 	def run(self):
 		self.setActive(True)
