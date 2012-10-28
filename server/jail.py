@@ -33,7 +33,7 @@ logSys = logging.getLogger("fail2ban.jail")
 class Jail:
 
 	#Known backends. Each backend should have corresponding __initBackend method
-	_BACKENDS = ('pyinotify', 'gamin', 'polling')
+	_BACKENDS = ('pyinotify', 'gamin', 'polling', 'journald')
 
 	def __init__(self, name, backend = "auto"):
 		self.__name = name
@@ -98,6 +98,13 @@ class Jail:
 		logSys.info("Jail '%s' uses pyinotify" % self.__name)
 		from filterpyinotify import FilterPyinotify
 		self.__filter = FilterPyinotify(self)
+	
+	def _initJournald(self):
+		# Try to import pyjournalctl
+		import pyjournalctl
+		logSys.info("Jail '%s' uses journald" % self.__name)
+		from filterjournald import FilterJournald
+		self.__filter = FilterJournald(self)
 	
 	def setName(self, name):
 		self.__name = name

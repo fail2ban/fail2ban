@@ -180,6 +180,15 @@ class Server:
 		return [m.getFileName()
 				for m in self.__jails.getFilter(name).getLogPath()]
 	
+	def addJournalMatch(self, name, match):
+		self.__jails.getFilter(name).addJournalMatch(match)
+	
+	def delJournalMatch(self, name, match):
+		self.__jails.getFilter(name).delJournalMatch(match)
+	
+	def getJournalMatch(self, name):
+		return self.__jails.getFilter(name).getJournalMatch()
+	
 	def setFindTime(self, name, value):
 		self.__jails.getFilter(name).setFindTime(value)
 	
