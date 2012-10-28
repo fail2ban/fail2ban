@@ -123,7 +123,7 @@ class FilterJournald(Filter):
 					self.__modified = False
 				time.sleep(self.getSleepTime())
 			else:
-				time.sleep(self.getSleepTime())
+				self.__journalctl.wait() # Wait indefinitely for update
 		logSys.debug((self.jail and self.jail.getName() or "jailless") +
 					 " filter terminated")
 		return True
