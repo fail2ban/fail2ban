@@ -142,14 +142,14 @@ filters = [FilterPoll]					  # always available
 try:
 	from server.filtergamin import FilterGamin
 	filters.append(FilterGamin)
-except:
-	pass
+except Exception, e:
+	print "I: Skipping gamin backend testing. Got exception '%s'" % e
 
 try:
 	from server.filterpyinotify import FilterPyinotify
 	filters.append(FilterPyinotify)
-except:
-	pass
+except Exception, e:
+	print "I: Skipping pyinotify backend testing. Got exception '%s'" % e
 
 for Filter_ in filters:
 	tests.addTest(unittest.makeSuite(
