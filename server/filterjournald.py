@@ -109,8 +109,9 @@ class FilterJournald(Filter):
 				while self._isActive():
 					logentry = self.__journalctl.get_next()
 					if logentry:
+						logDateTime = datetime.datetime.fromtimestamp(int(logentry.get("_SOURCE_REALTIME_TIMESTAMP", logentry.get("__REALTIME_TIMESTAMP", 0)))/1E6)
 						self.processLineAndAdd(
-							"%s %s" % (datetime.datetime.fromtimestamp(int(logentry.get("_SOURCE_REALTIME_TIMESTAMP", 0))/1E6).strftime("%b %d %H:%M:%S"), logentry.get('MESSAGE', '')))
+							"%s %s" % (logDateTime.strftime("%b %d %H:%M:%S"), logentry.get('MESSAGE', '')))
 						self.__modified = True
 					else:
 						break
