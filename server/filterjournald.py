@@ -51,7 +51,9 @@ class FilterJournald(Filter):
 		self.__modified = False
 		# Initialise systemd-journald connection
 		self.__journalctl = pyjournalctl.Journalctl()
-		self.__journalctl.seek(0, 2) # Seek to end
+		start_time = datetime.datetime.utcnow() - \
+				datetime.timedelta(seconds=int(self.getFindTime()))
+		self.__journalctl.seek_realtime(int(start_time.strftime("%s"))*1E6)
 		self.__matches = []
 		logSys.debug("Created FilterJournald")
 
