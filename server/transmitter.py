@@ -175,6 +175,9 @@ class Transmitter:
 		elif command[1] == "banip":
 			value = command[2]
 			return self.__server.setBanIP(name,value)
+		elif command[1] == "unbanip":
+			value = command[2]
+			return self.__server.setUnbanIP(name,value)
 		elif command[1] == "addaction":
 			value = command[2]
 			self.__server.addAction(name, value)

@@ -208,7 +208,7 @@ class BanManager:
 			return unBanList
 		finally:
 			self.__lock.release()
-	
+
 	##
 	# Flush the ban list.
 	#
@@ -221,5 +221,29 @@ class BanManager:
 			uBList = self.__banList
 			self.__banList = list()
 			return uBList
+		finally:
+			self.__lock.release()
+
+	##
+	# Gets the ticket for the specified IP.
+	#
+	# @return the ticket for the IP or False.
+	def getTicketByIP(self, ip):
+		try:
+			ipticket = False
+			self.__lock.acquire()
+
+			# Find the ticket the IP goes with.
+			for ticket in self.__banList:
+				if ticket.getIP() == ip:
+					ipticket = ticket
+					break
+
+			unBanList = [ipticket]
+			# Remove the ticket from the ban list.
+			self.__banList = [ticket for ticket in self.__banList
+							  if ticket not in unBanList]
+
+			return ipticket
 		finally:
 			self.__lock.release()
