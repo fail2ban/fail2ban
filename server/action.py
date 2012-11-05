@@ -255,7 +255,7 @@ class Action:
 			if tag == 'matches':
 				# That one needs to be escaped since its content is
 				# out of our control
-				value = escapeTag(value)
+				value = Action.escapeTag(value)
 			string = string.replace('<' + tag + '>', value)
 		# New line
 		string = string.replace("<br>", '\n')
