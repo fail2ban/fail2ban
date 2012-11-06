@@ -100,7 +100,8 @@ logSys.addHandler(stdout)
 # Let know the version
 #
 if not opts.log_level or opts.log_level != 'fatal':
-	print "Fail2ban " + version + " test suite. Please wait..."
+	print "Fail2ban %s test suite. Python %s. Please wait..." \
+	    % (version, str(sys.version).replace('\n', ''))
 
 
 #
