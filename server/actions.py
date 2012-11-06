@@ -181,7 +181,7 @@ class Actions(JailThread):
 					action.execActionBan(aInfo)
 				return True
 			else:
-				logSys.warn("[%s] %s already banned" % (self.jail.getName(), 
+				logSys.info("[%s] %s already banned" % (self.jail.getName(),
 														str(aInfo["ip"])))
 		return False
 	
