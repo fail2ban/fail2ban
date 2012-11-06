@@ -22,6 +22,7 @@ Feb 25 14:34:11 belka sshd[31607]: User root from ferrari.inescn.pt not allowed 
 Nov 11 23:33:27 Server sshd[5174]: refused connect from _U2FsdGVkX19P3BCJmFBHhjLza8BcMH06WCUVwttMHpE=_@::ffff:218.249.210.161 (::ffff:218.249.210.161)
 
 #7 added exclamation mark to BREAK-IN
+#  Now should be a negative since we decided not to catch those
 Oct 15 19:51:35 server sshd[7592]: Address 1.2.3.4 maps to 1234.bbbbbb.com, but this does not map back to the address - POSSIBLE BREAK-IN ATTEMPT
 Oct 15 19:51:35 server sshd[7592]: Address 1.2.3.4 maps to 1234.bbbbbb.com, but this does not map back to the address - POSSIBLE BREAK-IN ATTEMPT!
 
