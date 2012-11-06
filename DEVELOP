@@ -58,18 +58,20 @@ one)::
  RF-Note   just a note which might be useful to address while doing RF
 
  JailThread -> Filter -> FileFilter -> {FilterPoll, FilterPyinotify, ...}
-         |     |         * FileContainer
-         |     + FailManager
-         |     + DateDetector
-         \- -> Actions
-               * Actions
-               + BanManager
-
+               |         * FileContainer
+               + FailManager
+               + DateDetector
+			   + Jail (provided in __init__) which contains this Filter
+                 (used for passing tickets from FailManager to Jail's __queue)
  Server
    + Jails
       * Jail
-        + Filter
+        + Filter  (in __filter)
         * tickets (in __queue)
+        + Actions (in __action)
+          * Action
+          + BanManager
+
 
 failmanager.py
 ~~~~~~~~~~~~~~
@@ -147,7 +149,7 @@ one way or another provide
 		except FailManagerEmpty:
 			self.failManager.cleanup(MyTime.time())
 
-thus channeling "ban tickets" from their failManager to a
+thus channeling "ban tickets" from their failManager to the
 corresponding jail.
 
 action.py
