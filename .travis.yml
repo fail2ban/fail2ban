@@ -9,7 +9,6 @@ env:
     - PYTHON=python PYSUF=''
     # - PYTHON=python3 PYSUF=3 : python3-numpy not currently available
 install:
-    - sudo apt-get install $PYTHON-pyinotify
-    - sudo apt-get install $PYTHON-gamin
+    - sudo apt-get install $PYTHON-all $PYTHON-pyinotify $PYTHON-gamin
 script:
-    - ./fail2ban-testcases
+    - set -e; for p in `pyversions -s`; do echo "I: $p"; $p ./fail2ban-testcases; done
