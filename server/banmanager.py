@@ -230,20 +230,14 @@ class BanManager:
 	# @return the ticket for the IP or False.
 	def getTicketByIP(self, ip):
 		try:
-			ipticket = False
 			self.__lock.acquire()
 
-			# Find the ticket the IP goes with.
-			for ticket in self.__banList:
+			# Find the ticket the IP goes with and return it
+			for i, ticket in enumerate(self.__banList):
 				if ticket.getIP() == ip:
-					ipticket = ticket
-					break
-
-			unBanList = [ipticket]
-			# Remove the ticket from the ban list.
-			self.__banList = [ticket for ticket in self.__banList
-							  if ticket not in unBanList]
-
-			return ipticket
+					# Return the ticket after removing (popping)
+					# if from the ban list.
+					return self.__banList.pop(i)
 		finally:
 			self.__lock.release()
+		return None						  # if none found

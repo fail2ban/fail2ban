@@ -127,7 +127,7 @@ class Actions(JailThread):
 	def removeBannedIP(self, ip):
 		# Find the ticket with the IP.
 		ticket = self.__banManager.getTicketByIP(ip)
-		if ticket != False:
+		if ticket is not None:
 			# Unban the IP.
 			self.__unBan(ticket)
 			return ip
