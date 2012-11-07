@@ -11,4 +11,4 @@ env:
 install:
     - sudo apt-get install $PYTHON-all $PYTHON-all-dbg $PYTHON-pyinotify $PYTHON-gamin
 script:
-    - ./failban-testcases-all
+    - ./fail2ban-testcases-all
