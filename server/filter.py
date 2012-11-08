@@ -583,6 +583,7 @@ import socket, struct
 class DNSUtils:
 
 	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
+	IP_CRE6 = re.compile("^(?:[0-9:A-Fa-f]{3,})$")
 
 	#@staticmethod
 	def dnsToIp(dns):
@@ -606,19 +607,31 @@ class DNSUtils:
 		if match:
 			return match
 		else:
-			return None
+			match = DNSUtils.IP_CRE6.match(text)
+			if match:
+				""" Right Here, we faced to a ipv6
+				"""
+				return match
+			else:
+				return None
 	searchIP = staticmethod(searchIP)
 
 	#@staticmethod
 	def isValidIP(string):
-		""" Return true if str is a valid IP
-		"""
-		s = string.split('/', 1)
-		try:
-			socket.inet_aton(s[0])
-			return True
-		except socket.error:
-			return False
+		# Return true if str is a valid IP
+            	s = string.split('/', 1)
+          	# try to convert to ipv4
+          	try:
+      			socket.inet_aton(s[0])
+      			return True
+    		except socket.error:
+    			# if it had failed try to convert ipv6
+    			try:  
+            			socket.inet_pton(socket.AF_INET6, s[0])
+          			return True
+        		except socket.error: 
+    				# not a valid address in both stacks
+          			return False
 	isValidIP = staticmethod(isValidIP)
 
 	#@staticmethod

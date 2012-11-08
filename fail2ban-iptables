@@ -1,0 +1,59 @@
+#!/usr/bin/python
+# This file is part of Fail2Ban.
+#
+# Fail2Ban is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Fail2Ban is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Fail2Ban; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+
+# Iptable wrapper, call the right iptables depending of the ip proposed
+# Author: Paul J Aka "Thanat0s"
+
+import sys, re, subprocess
+
+IPTABLES='/sbin/iptables'
+IP6TABLES='/sbin/ip6tables'
+
+# Main procedure
+def main(argv):
+    pline = " ".join(argv)
+    regv4 = re.compile('([0-9]{1,3}\.){3}[0-9]{1,3}')
+    if regv4.search(pline):   
+        # we are facing to a ipv4
+        ret = subprocess.call([IPTABLES] + argv)
+        sys.exit(ret)                  
+    else:
+        # if not, maybe it's a ipv6
+        regv6 = re.compile('::[A-Fa-f0-9]{1,4}|(:[A-Fa-f0-9]{1,4}){2,}')
+        if regv6.search(pline):
+            ret6 = subprocess.call([IP6TABLES] + argv)
+            sys.exit(ret6)
+        else:
+            # if it's not a ipv6 either, we call both iptables
+            proc = subprocess.Popen([IPTABLES] + argv)
+            proc6 = subprocess.Popen([IP6TABLES] + argv)
+
+            # Splitting the Popen and wait() calls lets us run them in
+            # parallel, rather than one after the other
+            ret = proc.wait()
+            ret6 = proc6.wait()
+            
+            # return worst error code
+            if ret > ret6:
+                sys.exit(ret)
+            else:
+                sys.exit(ret6)
+
+# Main call, pass all variables
+if __name__ == "__main__":
+    main(sys.argv[1:])
