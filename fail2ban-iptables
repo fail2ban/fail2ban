@@ -21,39 +21,39 @@
 
 import sys, re, subprocess
 
-# Try to avoid any shell injections
-def noinject(str):
-	for banned_chr in "`&;|":
-		if banned_chr in str: 
-			print "I don't like some chars in your iptables syntax"
-			sys.exit(2)                  
-	return True
+IPTABLES='/sbin/iptables'
+IP6TABLES='/sbin/ip6tables'
 
 # Main procedure
 def main(argv):
- regv4 = re.compile('([0-9]{1,3}\.){3}[0-9]{1,3}')
- if regv4.search(argv):   
-    # we are facing to a ipv4
-    ret = subprocess.call(["iptables", argv])
-    sys.exit(ret)                  
- else:
-    # if not, maybe it's a ipv6
-    regv6 = re.compile('::[A-Fa-f0-9]{1,4}|(:[A-Fa-f0-9]{1,4}){2,}')
-    if regv6.search(argv):
-       ret6 = subprocess.call(["ip6tables", argv])
-       sys.exit(ret6)                  
+    pline = " ".join(argv)
+    regv4 = re.compile('([0-9]{1,3}\.){3}[0-9]{1,3}')
+    if regv4.search(pline):   
+        # we are facing to a ipv4
+        ret = subprocess.call([IPTABLES] + argv)
+        sys.exit(ret)                  
     else:
-       # if it's not a ipv6 either, we call both iptables
-       ret = subprocess.call(["iptables", argv])
-       ret6 = subprocess.call(["ip6tables", argv])
-       # return worst error code  
-       if ret > ret6:
-	  sys.exit(ret)
-       else:
-          sys.exit(ret6)
-	
+        # if not, maybe it's a ipv6
+        regv6 = re.compile('::[A-Fa-f0-9]{1,4}|(:[A-Fa-f0-9]{1,4}){2,}')
+        if regv6.search(pline):
+            ret6 = subprocess.call([IP6TABLES] + argv)
+            sys.exit(ret6)
+        else:
+            # if it's not a ipv6 either, we call both iptables
+            proc = subprocess.Popen([IPTABLES] + argv)
+            proc6 = subprocess.Popen([IP6TABLES] + argv)
+
+            # Splitting the Popen and wait() calls lets us run them in
+            # parallel, rather than one after the other
+            ret = proc.wait()
+            ret6 = proc6.wait()
+            
+            # return worst error code
+            if ret > ret6:
+                sys.exit(ret)
+            else:
+                sys.exit(ret6)
+
 # Main call, pass all variables
 if __name__ == "__main__":
-	pline = " ".join(sys.argv[1:])
-	if noinject(pline):
-		main(pline)
+    main(sys.argv[1:])
