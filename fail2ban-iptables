@@ -1,4 +1,7 @@
 #!/usr/bin/python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
+# vi: set ft=python sts=4 ts=4 sw=4 et :
+#
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -28,18 +31,18 @@ IP6TABLES='/sbin/ip6tables'
 def main(argv):
     pline = " ".join(argv)
     regv4 = re.compile('([0-9]{1,3}\.){3}[0-9]{1,3}')
-    if regv4.search(pline):   
-        # we are facing to a ipv4
+    if regv4.search(pline):
+        # we are facing to an ipv4
         ret = subprocess.call([IPTABLES] + argv)
-        sys.exit(ret)                  
+        sys.exit(ret)
     else:
-        # if not, maybe it's a ipv6
+        # if not, maybe it's an ipv6
         regv6 = re.compile('::[A-Fa-f0-9]{1,4}|(:[A-Fa-f0-9]{1,4}){2,}')
         if regv6.search(pline):
             ret6 = subprocess.call([IP6TABLES] + argv)
             sys.exit(ret6)
         else:
-            # if it's not a ipv6 either, we call both iptables
+            # if it's not an ipv6 either, we call both iptables
             proc = subprocess.Popen([IPTABLES] + argv)
             proc6 = subprocess.Popen([IP6TABLES] + argv)
 
@@ -47,12 +50,9 @@ def main(argv):
             # parallel, rather than one after the other
             ret = proc.wait()
             ret6 = proc6.wait()
-            
+
             # return worst error code
-            if ret > ret6:
-                sys.exit(ret)
-            else:
-                sys.exit(ret6)
+            sys.exit(max(ret, ret6))
 
 # Main call, pass all variables
 if __name__ == "__main__":
