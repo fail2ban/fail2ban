@@ -582,8 +582,8 @@ import socket, struct
 
 class DNSUtils:
 
-	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
-	IP_CRE6 = re.compile("^(?:[0-9:A-Fa-f]{3,})$")
+	IPv4_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
+	IPv6_CRE = re.compile("^[0-9:A-Fa-f]{3,}$")
 
 	#@staticmethod
 	def dnsToIp(dns):
@@ -600,20 +600,15 @@ class DNSUtils:
 
 	#@staticmethod
 	def searchIP(text):
-		""" Search if an IP address if directly available and return
+		""" Search if an IP address is directly available and return
 			it.
 		"""
-		match = DNSUtils.IP_CRE.match(text)
-		if match:
-			return match
-		else:
-			match = DNSUtils.IP_CRE6.match(text)
-			if match:
-				""" Right Here, we faced to a ipv6
-				"""
-				return match
-			else:
-				return None
+		match = DNSUtils.IPv4_CRE.match(text) \
+		     or DNSUtils.IPv6_CRE.match(text)
+		# return None if no match (so and fails right away)
+		# or actual match (string) otherwise
+		return match and match.group(0)
+
 	searchIP = staticmethod(searchIP)
 
 	#@staticmethod
@@ -623,38 +618,34 @@ class DNSUtils:
 		# try to convert to ipv4
 		try:
 			socket.inet_aton(s[0])
-			return True
 		except socket.error:
 			# if it had failed try to convert ipv6
 			try:
 				socket.inet_pton(socket.AF_INET6, s[0])
-				return True
 			except socket.error:
 				# not a valid address in both stacks
 				return False
+		return True
+
 	isValidIP = staticmethod(isValidIP)
 
 	#@staticmethod
-	def textToIp(text, useDns):
-		""" Return the IP of DNS found in a given text.
+	def textToIp(text, useDns='no'):
+		""" Converts text to an IP optionally performing DNS resolution.
 		"""
-		ipList = list()
+		ipList = []
 		# Search for plain IP
 		plainIP = DNSUtils.searchIP(text)
-		if not plainIP is None:
-			plainIPStr = plainIP.group(0)
-			if DNSUtils.isValidIP(plainIPStr):
-				ipList.append(plainIPStr)
-
-		# If we are allowed to resolve -- give it a try if nothing was found
-		if useDns in ("yes", "warn") and not ipList:
+		if plainIP and DNSUtils.isValidIP(plainIP):
+			ipList.append(plainIP)
+		elif useDns in ("yes", "warn"):
+			# If we are allowed to resolve -- give it a try if it is not IP
 			# Try to get IP from possible DNS
 			ip = DNSUtils.dnsToIp(text)
 			ipList.extend(ip)
 			if ip and useDns == "warn":
 				logSys.warning("Determined IP using DNS Reverse Lookup: %s = %s",
 					text, ipList)
-
 		return ipList
 	textToIp = staticmethod(textToIp)
 

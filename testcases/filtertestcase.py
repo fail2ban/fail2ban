@@ -605,6 +605,45 @@ class GetFailures(unittest.TestCase):
 		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
 class DNSUtilsTests(unittest.TestCase):
+	_ips_hosts = [
+		'1.2.3.4',
+		'1.2.3.255',
+		'255.255.255.255',
+		]
+	_ips_nets =  [
+		'1.2.3.0/24',
+		# and now ipv6
+		'::1/128',
+		'2001:0:53ab:63c:418:2bbf:e7c3:123e/32',
+		'fe80::ffff:ffff:ffff/64',
+		]
+	_ips_v6_same = [
+		# the 3 views of the same ip
+		'2001:0000:0234:C1AB:0000:00A0:AABC:003F',
+		'2001:0:234:C1AB:0:A0:AABC:3F',
+		'2001:0:0234:C1ab:0:A0:aabc:3F',
+		]
+
+	def testIsValidIP(self):
+		# just a basic check if works
+		for ip in self._ips_hosts + self._ips_nets + self._ips_v6_same:
+			self.assertTrue(DNSUtils.isValidIP(ip),
+							 msg="%r IS a valid IP" % ip)
+
+		for ip in ['1.2.3.256',
+				   '::ffffffff',
+				   '2001::0234:C1ab::A0:aabc:003F']:
+			self.assertFalse(DNSUtils.isValidIP(ip),
+							 msg="%r is not a valid IP" % ip)
+
+	def testSearchIP(self):
+		# just sweep through a set of them and see if returns the same
+		for ip in self._ips_hosts + self._ips_v6_same:
+			self.assertEqual(ip, DNSUtils.searchIP(ip))
+
+		# should be None for networks
+		for ip in self._ips_nets:
+			self.assertEqual(None, DNSUtils.searchIP(ip))
 
 	def testUseDns(self):
 		res = DNSUtils.textToIp('www.example.com', 'no')
@@ -620,13 +659,23 @@ class DNSUtilsTests(unittest.TestCase):
 			'www.example.com',
 			'doh1.2.3.4.buga.xxxxx.yyy.invalid',
 			'1.2.3.4.buga.xxxxx.yyy.invalid',
+			'1.2.3.',
+			# '1.2.3',  # socket manages to resolve it to 1.2.0.3
 			]
 		for s in hostnames:
 			res = DNSUtils.textToIp(s, 'yes')
 			if s == 'www.example.com':
 				self.assertEqual(res, ['192.0.43.10'])
 			else:
-				self.assertEqual(res, [])
+				self.assertEqual(res, [],
+					msg="Should have failed to get ip for %r. "
+					    "Got %s" % (s, res))
+
+		# make sure that normal IPs are not cut anyhow
+		for useDns in ('yes', 'no'):
+			for s in self._ips_hosts + self._ips_v6_same:
+				res = DNSUtils.textToIp(s, useDns)
+				self.assertEqual([s], res)
 
 class JailTests(unittest.TestCase):
 
