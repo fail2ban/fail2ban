@@ -15,21 +15,17 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
-
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Cyril Jaquier, Yaroslav Halchenko"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import getopt, sys, time, logging, os
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
-sys.path.insert(1, "/usr/share/fail2ban")
+if os.path.abspath(__file__).startswith('/usr/'):
+	# makes sense to use system-wide library iff -regex is also under /usr/
+    sys.path.insert(1, "/usr/share/fail2ban")
 
 from client.configparserinc import SafeConfigParserWithIncludes
 from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
