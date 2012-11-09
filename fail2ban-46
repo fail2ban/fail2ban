@@ -17,34 +17,33 @@
 # You should have received a copy of the GNU General Public License
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-
-# Iptable wrapper, call the right iptables depending of the ip proposed
+#
+# Wrapper to dispatch different commands depending of the IP address
+# space present in the command line.
+#
 # Author: Paul J Aka "Thanat0s"
 
-import sys, re, subprocess
-
-IPTABLES='/sbin/iptables'
-IP6TABLES='/sbin/ip6tables'
+import sys
+import re, subprocess
 
 # Main procedure
-def main(argv):
+def main(cmd4, cmd6, argv):
     pline = " ".join(argv)
     regv4 = re.compile('([0-9]{1,3}\.){3}[0-9]{1,3}')
     if regv4.search(pline):
         # we are facing to an ipv4
-        ret = subprocess.call([IPTABLES] + argv)
+        ret = subprocess.call([cmd4] + argv)
         sys.exit(ret)
     else:
         # if not, maybe it's an ipv6
         regv6 = re.compile('::[A-Fa-f0-9]{1,4}|(:[A-Fa-f0-9]{1,4}){2,}')
         if regv6.search(pline):
-            ret6 = subprocess.call([IP6TABLES] + argv)
+            ret6 = subprocess.call([cmd6] + argv)
             sys.exit(ret6)
         else:
-            # if it's not an ipv6 either, we call both iptables
-            proc = subprocess.Popen([IPTABLES] + argv)
-            proc6 = subprocess.Popen([IP6TABLES] + argv)
+            # if it's not an ipv6 either, we call both
+            proc = subprocess.Popen([cmd4] + argv)
+            proc6 = subprocess.Popen([cmd6] + argv)
 
             # Splitting the Popen and wait() calls lets us run them in
             # parallel, rather than one after the other
@@ -54,6 +53,23 @@ def main(argv):
             # return worst error code
             sys.exit(max(ret, ret6))
 
+
+def dispUsage(exit_code=None):
+    print """Usage: %s ipv4_command ipv6_command [options]
+
+Fail2Ban's ipv4/ipv6 dispatcher would call ipv4_command if detects an
+IPv4 address among options, and ipv6_command if an IPv6.  If none --
+it would call both ipv4_command and ipv6_command.
+[options] are passed to each corresponding ipv*_command call.
+""" % argv[0]
+    if exit_code is not None:
+        sys.exit(exit_code)
+
 # Main call, pass all variables
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    argv = sys.argv
+    if len(argv)>1 and argv[1] in ('-h', '--help'):
+        dispUsage(0)
+    if len(argv) < 3:
+        dispUsage(1)
+    main(argv[1], argv[2], argv[3:])
