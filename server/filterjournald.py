@@ -53,7 +53,7 @@ class FilterJournald(Filter):
 		self.__journalctl = pyjournalctl.Journalctl()
 		start_time = datetime.datetime.utcnow() - \
 				datetime.timedelta(seconds=int(self.getFindTime()))
-		self.__journalctl.seek_realtime(int(start_time.strftime("%s"))*1E6)
+		self.__journalctl.seek_realtime(start_time)
 		self.__matches = []
 		logSys.debug("Created FilterJournald")
 
@@ -109,7 +109,7 @@ class FilterJournald(Filter):
 				while self._isActive():
 					logentry = self.__journalctl.get_next()
 					if logentry:
-						logDateTime = datetime.datetime.fromtimestamp(int(logentry.get("_SOURCE_REALTIME_TIMESTAMP", logentry.get("__REALTIME_TIMESTAMP", 0)))/1E6)
+						logDateTime = logentry.get("_SOURCE_REALTIME_TIMESTAMP", logentry.get("__REALTIME_TIMESTAMP"))
 						self.processLineAndAdd(
 							"%s %s" % (logDateTime.strftime("%b %d %H:%M:%S"), logentry.get('MESSAGE', '')))
 						self.__modified = True
