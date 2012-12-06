@@ -37,6 +37,17 @@ logSys = logging.getLogger("fail2ban.actions.action")
 # Create a lock for running system commands
 _cmd_lock = threading.Lock()
 
+# Some hints on common abnormal exit codes
+_RETCODE_HINTS = {
+	0x7f00: '"Command not found".  Make sure that all commands in %(realCmd)r '
+	        'are in the PATH of fail2ban-server process '
+			'(grep -a PATH= /proc/`pidof -x fail2ban-server`/environ). '
+			'You may want to start '
+			'"fail2ban-server -f" separately, initiate it with '
+			'"fail2ban-client reload" in another shell session and observe if '
+			'additional informative error messages appear in the terminals.'
+	}
+
 ##
 # Execute commands.
 #
@@ -230,7 +241,14 @@ class Action:
 	def execActionStop(self):
 		stopCmd = Action.replaceTag(self.__actionStop, self.__cInfo)
 		return Action.executeCmd(stopCmd)
-	
+
+	def escapeTag(tag):
+		for c in '\\#&;`|*?~<>^()[]{}$\n':
+			if c in tag:
+				tag = tag.replace(c, '\\' + c)
+		return tag
+	escapeTag = staticmethod(escapeTag)
+
 	##
 	# Replaces tags in query with property values in aInfo.
 	#
@@ -243,8 +261,13 @@ class Action:
 		""" Replace tags in query
 		"""
 		string = query
-		for tag in aInfo:
-			string = string.replace('<' + tag + '>', str(aInfo[tag]))
+		for tag, value in aInfo.iteritems():
+			value = str(value)			  # assure string
+			if tag == 'matches':
+				# That one needs to be escaped since its content is
+				# out of our control
+				value = Action.escapeTag(value)
+			string = string.replace('<' + tag + '>', value)
 		# New line
 		string = string.replace("<br>", '\n')
 		return string
@@ -318,7 +341,11 @@ class Action:
 					logSys.debug("%s returned successfully" % realCmd)
 					return True
 				else:
-					logSys.error("%s returned %x" % (realCmd, retcode))
+					msg = _RETCODE_HINTS.get(retcode, None)
+ 					logSys.error("%s returned %x" % (realCmd, retcode))
+					if msg:
+						logSys.info("HINT on %x: %s"
+									% (retcode, msg % locals()))
 			except OSError, e:
 				logSys.error("%s failed with %s" % (realCmd, e))
 		finally:

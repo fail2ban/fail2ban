@@ -42,7 +42,7 @@ class Ticket:
 		@param matches (log) lines caused the ticket
 		"""
 
-		self.__ip = ip
+		self.setIP(ip)
 		self.__time = time
 		self.__attempt = 0
 		self.__file = None
@@ -54,6 +54,9 @@ class Ticket:
 	
 
 	def setIP(self, value):
+		if isinstance(value, basestring):
+			# guarantee using regular str instead of unicode for the IP
+			value = str(value)
 		self.__ip = value
 	
 	def getIP(self):

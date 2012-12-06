@@ -28,6 +28,7 @@ import sys
 import time
 import tempfile
 
+from server.jail import Jail
 from server.filterpoll import FilterPoll
 from server.filter import FileFilter, DNSUtils
 from server.failmanager import FailManager
@@ -626,3 +627,10 @@ class DNSUtilsTests(unittest.TestCase):
 				self.assertEqual(res, ['192.0.43.10'])
 			else:
 				self.assertEqual(res, [])
+
+class JailTests(unittest.TestCase):
+
+	def testSetBackend_gh83(self):
+		# smoke test
+		jail = Jail('test', backend='polling') # Must not fail to initiate
+

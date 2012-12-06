@@ -7,18 +7,18 @@
 How to develop for Fail2Ban
 ================================================================================
 
-Fail2Ban uses GIT (http://git-scm.com/) distributed source control. This gives 
-each developer their own complete copy of the entire repository. Developers can 
-add and switch branches and commit changes when ever they want and then ask a 
+Fail2Ban uses GIT (http://git-scm.com/) distributed source control. This gives
+each developer their own complete copy of the entire repository. Developers can
+add and switch branches and commit changes when ever they want and then ask a
 maintainer to merge their changes.
 
-Fail2Ban uses GitHub (https://github.com/fail2ban/fail2ban) to manage access to 
-the Git repository. GitHub provides free hosting for open-source projects as 
+Fail2Ban uses GitHub (https://github.com/fail2ban/fail2ban) to manage access to
+the Git repository. GitHub provides free hosting for open-source projects as
 well as a web-based Git repository browser and an issue tracker.
 
-If you are familiar with Python and you have a bug fix or a feature that you 
-would like to add to Fail2Ban, the best way to do so it to use the GitHub Pull 
-Request feature. You can find more details on the Fail2Ban wiki 
+If you are familiar with Python and you have a bug fix or a feature that you
+would like to add to Fail2Ban, the best way to do so it to use the GitHub Pull
+Request feature. You can find more details on the Fail2Ban wiki
 (http://www.fail2ban.org/wiki/index.php/Get_Involved)
 
 Testing
@@ -26,7 +26,7 @@ Testing
 
 Existing tests can be run by executing `fail2ban-testcases`.
 
-Documentation about creating tests (when tests are required and some guidelines 
+Documentation about creating tests (when tests are required and some guidelines
 for creating good tests) will be added soon.
 
 Coding Standards
@@ -58,18 +58,20 @@ one)::
  RF-Note   just a note which might be useful to address while doing RF
 
  JailThread -> Filter -> FileFilter -> {FilterPoll, FilterPyinotify, ...}
-         |     |         * FileContainer
-         |     + FailManager
-		 |     + DateDetector
-         \- -> Actions
-               * Actions
-               + BanManager
-
+               |         * FileContainer
+               + FailManager
+               + DateDetector
+			   + Jail (provided in __init__) which contains this Filter
+                 (used for passing tickets from FailManager to Jail's __queue)
  Server
    + Jails
       * Jail
-        + Filter
+        + Filter  (in __filter)
         * tickets (in __queue)
+        + Actions (in __action)
+          * Action
+          + BanManager
+
 
 failmanager.py
 ~~~~~~~~~~~~~~
@@ -147,7 +149,7 @@ one way or another provide
 		except FailManagerEmpty:
 			self.failManager.cleanup(MyTime.time())
 
-thus channeling "ban tickets" from their failManager to a
+thus channeling "ban tickets" from their failManager to the
 corresponding jail.
 
 action.py

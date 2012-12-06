@@ -27,6 +27,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+from failmanager import FailManagerEmpty
 from failmanager import FailManager
 from ticket import FailTicket
 from jailthread import JailThread
@@ -220,9 +221,17 @@ class Filter(JailThread):
 	# to enable banip fail2ban-client BAN command
 
 	def addBannedIP(self, ip):
-		unixTime = time.time()
+		unixTime = MyTime.time()
 		for i in xrange(self.failManager.getMaxRetry()):
 			self.failManager.addFailure(FailTicket(ip, unixTime))
+
+		# Perform the banning of the IP now.
+		try:
+			while True:
+				ticket = self.failManager.toBan()
+				self.jail.putFailTicket(ticket)
+		except FailManagerEmpty:
+			self.failManager.cleanup(MyTime.time())
 
 		return ip
 

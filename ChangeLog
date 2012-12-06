@@ -4,8 +4,40 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.7)                                              2012/07/31
+Fail2Ban (version 0.8.8)                                              2012/12/06
 ================================================================================
+
+ver. 0.8.8 (2012/12/06) - stable
+----------
+- Fixes:
+  Alan Jenkins
+   * [8c38907] Removed 'POSSIBLE BREAK-IN ATTEMPT' from sshd filter to avoid
+     banning due to misconfigured DNS. Close gh-64
+  Yaroslav Halchenko
+   * [83109bc] IMPORTANT: escape the content of <matches> (if used in
+     custom action files) since its value could contain arbitrary
+     symbols.  Thanks for discovery go to the NBS System security
+     team
+   * [0935566,5becaf8] Various python 2.4 and 2.5 compatibility fixes. Close gh-83
+   * [b159eab] do not enable pyinotify backend if pyinotify < 0.8.3
+   * [37a2e59] store IP as a base, non-unicode str to avoid spurious messages
+     in the console. Close gh-91
+- New features:
+  David Engeset
+   * [2d672d1,6288ec2] 'unbanip' command for the client + avoidance of touching
+     the log file to take 'banip' or 'unbanip' in effect. Close gh-81, gh-86
+  Yaroslav Halchenko
+- Enhancements:
+   * [2d66f31] replaced uninformative "Invalid command" message with warning log
+     exception why command actually failed
+   * [958a1b0] improved failregex to "support" auth.backend = "htdigest"
+   * [9e7a3b7] until we make it proper module -- adjusted sys.path only if
+     system-wide run
+   * [f52ba99] downgraded "already banned" from WARN to INFO level. Closes gh-79
+   * [f105379] added hints into the log on some failure return codes (e.g. 0x7f00
+     for this gh-87)
+   * Various others: travis-ci integration, script to run tests
+     against all available Python versions, etc
 
 ver. 0.8.7.1 (2012/07/31) - stable
 ----------

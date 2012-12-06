@@ -18,21 +18,17 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
-
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import getopt, sys, logging
+import getopt, sys, logging, os
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
-sys.path.insert(1, "/usr/share/fail2ban")
+if os.path.abspath(__file__).startswith('/usr/'):
+	# makes sense to use system-wide library iff -server is also under /usr/
+	sys.path.insert(1, "/usr/share/fail2ban")
 
 from common.version import version
 from server.server import Server
@@ -61,7 +57,7 @@ class Fail2banServer:
 	def dispVersion(self):
 		print "Fail2Ban v" + version
 		print
-		print "Copyright (c) 2004-2008 Cyril Jaquier"
+		print "Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors"
 		print "Copyright of modifications held by their respective authors."
 		print "Licensed under the GNU General Public License v2 (GPL)."
 		print
