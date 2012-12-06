@@ -1,3 +1,9 @@
+fail2ban (0.8.8-1) experimental; urgency=low
+
+  * Primarily a bugfix upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 05 Dec 2012 22:53:15 -0500
+
 fail2ban (0.8.7.1-1) experimental; urgency=low
 
   * Minor upstream bugfix release
