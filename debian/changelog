@@ -1,3 +1,9 @@
+fail2ban (0.8.8-1+lucid0) UNRELEASED; urgency=low
+
+  * Added lucid-dsc-patch to use pycentral on systems without dh_python2
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 06 Dec 2012 12:52:30 -0500
+
 fail2ban (0.8.8-1) experimental; urgency=low
 
   * Primarily a bugfix upstream release
