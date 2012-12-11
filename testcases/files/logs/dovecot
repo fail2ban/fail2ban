@@ -1,6 +1,4 @@
-@400000004c91b044077a9e94
-  imap-login: Info: Aborted login (auth failed, 1 attempts): user=<martin@waschbuesch.de>, method=CRAM-MD5, rip=80.187.101.33, lip=80.254.129.240, TLS
+@400000004c91b044077a9e94 imap-login: Info: Aborted login (auth failed, 1 attempts): user=<martin@waschbuesch.de>, method=CRAM-MD5, rip=80.187.101.33, lip=80.254.129.240, TLS
 
-@e040c6d8a3bfa62d358083300119c259cd44dcd0
-  dovecot-auth: pam_unix(dovecot:auth): authentication failure; logname= uid=0 euid=0 tty=dovecot ruser=web rhost=176.61.140.224
-  dovecot-auth: pam_unix(dovecot:auth): authentication failure; logname= uid=0 euid=0 tty=dovecot ruser=root rhost=176.61.140.224  user=root
+@e040c6d8a3bfa62d358083300119c259cd44dcd0 dovecot-auth: pam_unix(dovecot:auth): authentication failure; logname= uid=0 euid=0 tty=dovecot ruser=web rhost=176.61.140.224
+@e040c6d8a3bfa62d358083300119c259cd44dcd0 dovecot-auth: pam_unix(dovecot:auth): authentication failure; logname= uid=0 euid=0 tty=dovecot ruser=root rhost=176.61.140.224  user=root
