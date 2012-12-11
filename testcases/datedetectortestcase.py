@@ -78,6 +78,14 @@ class DateDetectorTest(unittest.TestCase):
 			self.assertEqual(self.__datedetector.getTime(log)[:6], date[:6])
 			self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
 
+	def testStableSortTemplate(self):
+		old_names = [x.getName() for x in self.__datedetector.getTemplates()]
+		self.__datedetector.sortTemplate()
+		# If there were no hits -- sorting should not change the order
+		for old_name, n in zip(old_names, self.__datedetector.getTemplates()):
+			self.assertEqual(old_name, n.getName()) # "Sort must be stable"
+
+		
 #	def testDefaultTempate(self):
 #		self.__datedetector.setDefaultRegex("^\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 #		self.__datedetector.setDefaultPattern("%b %d %H:%M:%S")
