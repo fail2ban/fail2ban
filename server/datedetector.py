@@ -77,7 +77,7 @@ class DateDetector:
 			# previous one but with year given by 2 digits
 			# (See http://bugs.debian.org/537610)
 			template = DateStrptime()
-			template.setName("Day/Month/Year Hour:Minute:Second")
+			template.setName("Day/Month/Year2 Hour:Minute:Second")
 			template.setRegex("\d{2}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%d/%m/%y %H:%M:%S")
 			self.__templates.append(template)
@@ -158,7 +158,8 @@ class DateDetector:
 		try:
 			for template in self.__templates:
 				match = template.matchDate(line)
-				if not match == None:
+				if not match is None:
+					logSys.debug("Matched time template %s" % template.getName())
 					return match
 			return None
 		finally:
@@ -170,8 +171,9 @@ class DateDetector:
 			for template in self.__templates:
 				try:
 					date = template.getDate(line)
-					if date == None:
+					if date is None:
 						continue
+					logSys.debug("Got time using template %s" % template.getName())
 					return date
 				except ValueError:
 					pass
