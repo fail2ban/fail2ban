@@ -42,7 +42,7 @@ from optparse import OptionParser, Option
 def get_opt_parser():
 	# use module docstring for help output
 	p = OptionParser(
-				usage="%s [OPTIONS]\n" % sys.argv[0] + __doc__,
+				usage="%s [OPTIONS] [regexps]\n" % sys.argv[0] + __doc__,
 				version="%prog " + version)
 
 	p.add_options([
@@ -56,8 +56,7 @@ def get_opt_parser():
 	return p
 
 parser = get_opt_parser()
-(opts, files) = parser.parse_args()
-assert(not len(files))
+(opts, regexps) = parser.parse_args()
 
 #
 # Logging
@@ -103,7 +102,20 @@ if not opts.log_level or opts.log_level != 'fatal':
 #
 # Gather the tests
 #
-tests = unittest.TestSuite()
+if not len(regexps):
+	tests = unittest.TestSuite()
+else:
+	import re
+	class FilteredTestSuite(unittest.TestSuite):
+		_regexps = [re.compile(r) for r in regexps]
+		def addTest(self, suite):
+			suite_str = str(suite)
+			for r in self._regexps:
+				if r.search(suite_str):
+					super(FilteredTestSuite, self).addTest(suite)
+					return
+
+	tests = FilteredTestSuite()
 
 # Server
 #tests.addTest(unittest.makeSuite(servertestcase.StartStop))
