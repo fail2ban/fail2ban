@@ -85,7 +85,10 @@ class DateDetectorTest(unittest.TestCase):
 		for old_name, n in zip(old_names, self.__datedetector.getTemplates()):
 			self.assertEqual(old_name, n.getName()) # "Sort must be stable"
 
-		
+	def testAllUniqueTemplateNames(self):
+		self.assertRaises(ValueError, self.__datedetector._appendTemplate,
+						  self.__datedetector.getTemplates()[0])
+
 #	def testDefaultTempate(self):
 #		self.__datedetector.setDefaultRegex("^\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 #		self.__datedetector.setDefaultPattern("%b %d %H:%M:%S")
