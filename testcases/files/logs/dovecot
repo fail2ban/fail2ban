@@ -1,4 +1,8 @@
 @400000004c91b044077a9e94 imap-login: Info: Aborted login (auth failed, 1 attempts): user=<martin@waschbuesch.de>, method=CRAM-MD5, rip=80.187.101.33, lip=80.254.129.240, TLS
 
 @e040c6d8a3bfa62d358083300119c259cd44dcd0 dovecot-auth: pam_unix(dovecot:auth): authentication failure; logname= uid=0 euid=0 tty=dovecot ruser=web rhost=176.61.140.224
+# Above example with injected rhost into ruser -- should not match for 1.2.3.4
+@e040c6d8a3bfa62d358083300119c259cd44dcd0 dovecot-auth: pam_unix(dovecot:auth): authentication failure; logname= uid=0 euid=0 tty=dovecot ruser=rhost=1.2.3.4 rhost=192.0.43.10
 @e040c6d8a3bfa62d358083300119c259cd44dcd0 dovecot-auth: pam_unix(dovecot:auth): authentication failure; logname= uid=0 euid=0 tty=dovecot ruser=root rhost=176.61.140.224  user=root
+
+Dec 12 11:19:11 dunnart dovecot: pop3-login: Aborted login (tried to use disabled plaintext auth): rip=190.210.136.21, lip=113.212.99.193
