@@ -639,7 +639,7 @@ class DNSUtils:
 			ip = DNSUtils.dnsToIp(text)
 			ipList.extend(ip)
 			if ip and useDns == "warn":
-				logSys.warning("Determined IP using DNS Reverse Lookup: %s = %s",
+				logSys.warning("Determined IP using DNS Lookup: %s = %s",
 					text, ipList)
 
 		return ipList
