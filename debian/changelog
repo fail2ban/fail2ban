@@ -1,3 +1,10 @@
+fail2ban (0.8.6-3wheezy1) unstable; urgency=high
+
+  * CVE-2012-5642: Escape the content of <matches> since its value could
+    contain arbitrary symbols (Closes: #696184)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 17 Dec 2012 13:19:32 -0500
+
 fail2ban (0.8.6-3) unstable; urgency=low
 
   * Added dovecot section to Debian's jail.conf.  Thanks to Laurent

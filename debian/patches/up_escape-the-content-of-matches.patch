@@ -1,0 +1,47 @@
+From: Yaroslav Halchenko <debian@onerussian.com>
+Date: Mon, 8 Oct 2012 22:14:51 -0400
+Subject: [PATCH] BF: escape the content of <matches> since its value could contain arbitrary symbols
+
+  Contains two commits 83109bce144f443a48ef31165a5389b7b83f4e0e and 09355663f7a3c0409e08efdebf98b1bbf47d1d9c
+
+Bug-Debian: http://bugs.debian.org/696184
+Origin: upstream
+
+---
+ server/action.py | 18 +++++++++++++++---
+ 1 file changed, 15 insertions(+), 3 deletions(-)
+
+--- a/server/action.py
++++ b/server/action.py
+@@ -230,7 +230,14 @@ class Action:
+ 	def execActionStop(self):
+ 		stopCmd = Action.replaceTag(self.__actionStop, self.__cInfo)
+ 		return Action.executeCmd(stopCmd)
+-	
++
++	def escapeTag(tag):
++		for c in '\\#&;`|*?~<>^()[]{}$\n':
++			if c in tag:
++				tag = tag.replace(c, '\\' + c)
++		return tag
++	escapeTag = staticmethod(escapeTag)
++
+ 	##
+ 	# Replaces tags in query with property values in aInfo.
+ 	#
+@@ -243,8 +250,13 @@ class Action:
+ 		""" Replace tags in query
+ 		"""
+ 		string = query
+-		for tag in aInfo:
+-			string = string.replace('<' + tag + '>', str(aInfo[tag]))
++		for tag, value in aInfo.iteritems():
++			value = str(value)			  # assure string
++			if tag == 'matches':
++				# That one needs to be escaped since its content is
++				# out of our control
++				value = Action.escapeTag(value)
++			string = string.replace('<' + tag + '>', value)
+ 		# New line
+ 		string = string.replace("<br>", '\n')
+ 		return string
