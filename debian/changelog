@@ -2,6 +2,8 @@ fail2ban (0.8.6-3wheezy1) unstable; urgency=high
 
   * CVE-2012-5642: Escape the content of <matches> since its value could
     contain arbitrary symbols (Closes: #696184)
+  * Since package source format remained 1.0, manpages patch
+    (deb_manpages_reportbug) was not applied -- fold it into .diff.gz
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 17 Dec 2012 13:19:32 -0500
 

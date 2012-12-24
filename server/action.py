@@ -230,7 +230,14 @@ class Action:
 	def execActionStop(self):
 		stopCmd = Action.replaceTag(self.__actionStop, self.__cInfo)
 		return Action.executeCmd(stopCmd)
-	
+
+	def escapeTag(tag):
+		for c in '\\#&;`|*?~<>^()[]{}$\n':
+			if c in tag:
+				tag = tag.replace(c, '\\' + c)
+		return tag
+	escapeTag = staticmethod(escapeTag)
+
 	##
 	# Replaces tags in query with property values in aInfo.
 	#
@@ -243,8 +250,13 @@ class Action:
 		""" Replace tags in query
 		"""
 		string = query
-		for tag in aInfo:
-			string = string.replace('<' + tag + '>', str(aInfo[tag]))
+		for tag, value in aInfo.iteritems():
+			value = str(value)			  # assure string
+			if tag == 'matches':
+				# That one needs to be escaped since its content is
+				# out of our control
+				value = Action.escapeTag(value)
+			string = string.replace('<' + tag + '>', value)
 		# New line
 		string = string.replace("<br>", '\n')
 		return string
