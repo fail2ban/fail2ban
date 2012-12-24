@@ -1,4 +1,7 @@
 #!/usr/bin/python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: t -*-
+# vi: set ft=python sts=4 ts=4 sw=4 noet :
+#
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -42,6 +45,10 @@ class RegexStat:
 		self.__stats = 0
 		self.__failregex = failregex
 		self.__ipList = list()
+
+	def __str__(self):
+		return "%s(%r) %d failed: %s" \
+		  % (self.__class__, self.__failregex, self.__stats, self.__ipList)
 	
 	def inc(self):
 		self.__stats += 1
