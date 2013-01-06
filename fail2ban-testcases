@@ -49,6 +49,7 @@ if json:
 	from testcases import samplestestcase
 
 from testcases.utils import FormatterWithTraceBack
+from testcases import actionstestcase
 from server.mytime import MyTime
 
 from optparse import OptionParser, Option
@@ -153,6 +154,7 @@ else: # pragma: no cover
 tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
 tests.addTest(unittest.makeSuite(servertestcase.JailTests))
 tests.addTest(unittest.makeSuite(actiontestcase.ExecuteAction))
+tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
 # FailManager
 tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 # BanManager
