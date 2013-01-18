@@ -121,6 +121,19 @@ class Actions(JailThread):
 		return self.__banManager.getBanTime()
 	
 	##
+	# Remove a banned IP now, rather than waiting for it to expire, even if set to never expire.
+	#
+	# @return the IP string or 'None' if not unbanned.
+	def removeBannedIP(self, ip):
+		# Find the ticket with the IP.
+		ticket = self.__banManager.getTicketByIP(ip)
+		if ticket is not None:
+			# Unban the IP.
+			self.__unBan(ticket)
+			return ip
+		return 'None'
+
+	##
 	# Main loop.
 	#
 	# This function is the main loop of the thread. It checks the Jail
@@ -163,13 +176,13 @@ class Actions(JailThread):
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "".join(bTicket.getMatches())
 			if self.__banManager.addBanTicket(bTicket):
-				logSys.warn("[%s] Ban %s" % (self.jail.getName(), str(aInfo["ip"])))
+				logSys.warn("[%s] Ban %s" % (self.jail.getName(), aInfo["ip"]))
 				for action in self.__actions:
 					action.execActionBan(aInfo)
 				return True
 			else:
-				logSys.warn("[%s] %s already banned" % (self.jail.getName(), 
-														str(aInfo["ip"])))
+				logSys.info("[%s] %s already banned" % (self.jail.getName(),
+														aInfo["ip"]))
 		return False
 	
 	##

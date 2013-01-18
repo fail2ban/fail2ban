@@ -35,11 +35,11 @@ class AddFailure(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.__items = [['193.168.0.128', 1167605999.0],
-					    ['193.168.0.128', 1167605999.0],
-					    ['193.168.0.128', 1167605999.0],
-					    ['193.168.0.128', 1167605999.0],
-					    ['193.168.0.128', 1167605999.0],
+		self.__items = [[u'193.168.0.128', 1167605999.0],
+					    [u'193.168.0.128', 1167605999.0],
+					    [u'193.168.0.128', 1167605999.0],
+					    [u'193.168.0.128', 1167605999.0],
+					    [u'193.168.0.128', 1167605999.0],
 					    ['87.142.124.10', 1167605999.0],
 					    ['87.142.124.10', 1167605999.0],
 					    ['87.142.124.10', 1167605999.0],
@@ -80,6 +80,7 @@ class AddFailure(unittest.TestCase):
 		#ticket = FailTicket('193.168.0.128', None)
 		ticket = self.__failManager.toBan()
 		self.assertEqual(ticket.getIP(), "193.168.0.128")
+		self.assertTrue(isinstance(ticket.getIP(), str))
 	
 	def testbanNOK(self):
 		self.__failManager.setMaxRetry(10)

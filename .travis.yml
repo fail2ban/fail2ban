@@ -1,0 +1,11 @@
+# vim ft=yaml
+# travis-ci.org definition for Fail2Ban build
+language: python
+python:
+  - "2.5"
+  - "2.6"
+  - "2.7"
+install:
+  - "pip install pyinotify"
+script:
+    - python ./fail2ban-testcases

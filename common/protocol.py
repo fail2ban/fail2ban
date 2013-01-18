@@ -66,6 +66,7 @@ protocol = [
 ["set <JAIL> bantime <TIME>", "sets the number of seconds <TIME> a host will be banned for <JAIL>"], 
 ["set <JAIL> usedns <VALUE>", "sets the usedns mode for <JAIL>"],
 ["set <JAIL> banip <IP>", "manually Ban <IP> for <JAIL>"], 
+["set <JAIL> unbanip <IP>", "manually Unban <IP> in <JAIL>"], 
 ["set <JAIL> maxretry <RETRY>", "sets the number of failures <RETRY> before banning the host for <JAIL>"], 
 ["set <JAIL> addaction <ACT>", "adds a new action named <NAME> for <JAIL>"], 
 ["set <JAIL> delaction <ACT>", "removes the action <NAME> from <JAIL>"], 

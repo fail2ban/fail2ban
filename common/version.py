@@ -21,8 +21,8 @@
 # 
 # $Revision$
 
-__author__ = "Cyril Jaquier"
+__author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-version = "0.8.7.1"
+version = "0.8.8"

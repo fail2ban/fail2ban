@@ -33,7 +33,9 @@ logSys = logging.getLogger("fail2ban.jail")
 class Jail:
 
 	#Known backends. Each backend should have corresponding __initBackend method
-	_BACKENDS = ('pyinotify', 'gamin', 'polling', 'journald')
+	# yoh: stored in a list instead of a tuple since only
+	#      list had .index until 2.6
+	_BACKENDS = ['pyinotify', 'gamin', 'polling', 'journald']
 
 	def __init__(self, name, backend = "auto"):
 		self.__name = name
