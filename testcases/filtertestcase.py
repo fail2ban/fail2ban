@@ -605,13 +605,10 @@ def get_monitor_failures_journal_testcase(Filter_):
 			self.assert_correct_ban("193.168.0.128", 3)
 			self.assertEqual(len(self.jail), 0)
 
-			#return
-			# just for fun let's copy all of them again and see if that results
-			# in a new ban
+			# Lets read some more to check it bans again
 			_copy_lines_to_journal(
-				self.test_file, self.journal_fields, n=100)
-			self.assert_correct_ban("193.168.0.128", 12)
-			self.assert_correct_ban("87.142.124.10", 4)
+				self.test_file, self.journal_fields, skip=5, n=4)
+			self.assert_correct_ban("193.168.0.128", 3)
 
 		def test_delJournalMatch(self):
 			# Smoke test for removing of match
