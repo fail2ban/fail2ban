@@ -123,8 +123,13 @@ class FilterJournald(Filter):
 					logentry = self.__journalctl.get_next()
 					if logentry:
 						logDateTime = logentry.get("_SOURCE_REALTIME_TIMESTAMP", logentry.get("__REALTIME_TIMESTAMP"))
+						if isinstance(logentry.get('MESSAGE',''), list):
+							logMessage = " ".join(logentry['MESSAGE'])
+						else:
+							logMessage = logentry.get('MESSAGE', '')
 						self.processLineAndAdd(
-							"%s %s" % (logDateTime.strftime("%b %d %H:%M:%S"), logentry.get('MESSAGE', '')))
+							"%s %s" % (logDateTime.strftime("%b %d %H:%M:%S"),
+										logMessage))
 						self.__modified = True
 					else:
 						break
@@ -137,9 +142,9 @@ class FilterJournald(Filter):
 						self.failManager.cleanup(MyTime.time())
 					self.dateDetector.sortTemplate()
 					self.__modified = False
-				time.sleep(self.getSleepTime())
+				self.__journalctl.wait(self.getSleepTime())
 			else:
-				self.__journalctl.wait() # Wait indefinitely for update
+				self.__journalctl.wait(self.getSleepTime())
 		logSys.debug((self.jail and self.jail.getName() or "jailless") +
 					 " filter terminated")
 		return True
