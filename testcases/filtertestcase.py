@@ -499,6 +499,7 @@ class GetFailures(unittest.TestCase):
 	FILENAME_03 = "testcases/files/testcase03.log"
 	FILENAME_04 = "testcases/files/testcase04.log"
 	FILENAME_USEDNS = "testcases/files/testcase-usedns.log"
+	FILENAME_MULTILINE = "testcases/files/testcase-multiline.log"
 
 	# so that they could be reused by other tests
 	FAILURES_01 = ('193.168.0.128', 3, 1124013599.0,
@@ -601,6 +602,20 @@ class GetFailures(unittest.TestCase):
 		self.filter.addIgnoreRegex("for roehl")
 
 		self.filter.getFailures(GetFailures.FILENAME_02)
+
+		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+
+	def testGetFailuresMultiLine(self):
+		output = ("212.41.96.185", 3, 1124013598.0)
+		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
+		self.filter.addFailRegex("Invalid user .+\n.+ from <HOST>$")
+		self.filter.addIgnoreRegex("user fuck")
+
+		self.filter.setMaxLines(2)
+
+		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)
+
+		_assert_correct_last_attempt(self, self.filter, output)
 
 		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 

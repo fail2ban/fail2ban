@@ -36,6 +36,7 @@ from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
 
 import logging, re, os, fcntl, time
+from collections import deque
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -71,6 +72,10 @@ class Filter(JailThread):
 		self.__findTime = 6000
 		## The ignore IP list.
 		self.__ignoreIpList = []
+		## Size of line buffer
+		self.__line_buffer_size = 1
+		## Line buffer
+		self.__line_buffer = deque()
 
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
@@ -205,6 +210,25 @@ class Filter(JailThread):
 		return self.failManager.getMaxRetry()
 
 	##
+	# Set the maximum line buffer size.
+	#
+	# @param value the line buffer size
+
+	def setMaxLines(self, value):
+		if value < 1:
+			value = 1
+		self.__line_buffer_size = value
+		logSys.info("Set maxLines = %s" % value)
+
+	##
+	# Get the maximum line buffer size.
+	#
+	# @return the line buffer size
+
+	def getMaxLines(self):
+		return self.__line_buffer_size
+
+	##
 	# Main loop.
 	#
 	# This function is the main loop of the thread. It checks if the
@@ -305,7 +329,10 @@ class Filter(JailThread):
 		else:
 			timeLine = l
 			logLine = l
-		return self.findFailure(timeLine, logLine)
+		self.__line_buffer.append(logLine)
+		while len(self.__line_buffer) > self.__line_buffer_size:
+			self.__line_buffer.popleft()
+		return self.findFailure(timeLine, "".join(self.__line_buffer))
 
 	def processLineAndAdd(self, line):
 		"""Processes the line for failures and populates failManager
@@ -365,6 +392,7 @@ class Filter(JailThread):
 								 "in order to get support for this format."
 								 % (logLine, timeLine))
 				else:
+					self.__line_buffer.clear()
 					try:
 						host = failRegex.getHost()
 						ipMatch = DNSUtils.textToIp(host, self.__useDns)

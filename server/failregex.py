@@ -51,7 +51,7 @@ class Regex:
 		if regex.lstrip() == '':
 			raise RegexException("Cannot add empty regex")
 		try:
-			self._regexObj = re.compile(regex)
+			self._regexObj = re.compile(regex, re.MULTILINE)
 			self._regex = regex
 		except sre_constants.error:
 			raise RegexException("Unable to compile regular expression '%s'" %
