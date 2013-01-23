@@ -36,7 +36,6 @@ from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
 
 import logging, re, os, fcntl, time
-from collections import deque
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -73,9 +72,9 @@ class Filter(JailThread):
 		## The ignore IP list.
 		self.__ignoreIpList = []
 		## Size of line buffer
-		self.__line_buffer_size = 1
+		self.__lineBufferSize = 1
 		## Line buffer
-		self.__line_buffer = deque()
+		self.__lineBuffer = []
 
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
@@ -215,10 +214,8 @@ class Filter(JailThread):
 	# @param value the line buffer size
 
 	def setMaxLines(self, value):
-		if value < 1:
-			value = 1
-		self.__line_buffer_size = value
-		logSys.info("Set maxLines = %s" % value)
+		self.__lineBufferSize = max(1, value)
+		logSys.info("Set maxLines = %i" % self.__lineBufferSize)
 
 	##
 	# Get the maximum line buffer size.
@@ -226,7 +223,7 @@ class Filter(JailThread):
 	# @return the line buffer size
 
 	def getMaxLines(self):
-		return self.__line_buffer_size
+		return self.__lineBufferSize
 
 	##
 	# Main loop.
@@ -329,10 +326,9 @@ class Filter(JailThread):
 		else:
 			timeLine = l
 			logLine = l
-		self.__line_buffer.append(logLine)
-		while len(self.__line_buffer) > self.__line_buffer_size:
-			self.__line_buffer.popleft()
-		return self.findFailure(timeLine, "".join(self.__line_buffer))
+		self.__lineBuffer = ((self.__lineBuffer +
+				[logLine])[-self.__lineBufferSize:])
+		return self.findFailure(timeLine, "".join(self.__lineBuffer))
 
 	def processLineAndAdd(self, line):
 		"""Processes the line for failures and populates failManager
@@ -392,7 +388,7 @@ class Filter(JailThread):
 								 "in order to get support for this format."
 								 % (logLine, timeLine))
 				else:
-					self.__line_buffer.clear()
+					self.__lineBuffer = []
 					try:
 						host = failRegex.getHost()
 						ipMatch = DNSUtils.textToIp(host, self.__useDns)
