@@ -608,8 +608,8 @@ class GetFailures(unittest.TestCase):
 	def testGetFailuresMultiLine(self):
 		output = ("212.41.96.185", 3, 1124013598.0)
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
-		self.filter.addFailRegex("Invalid user .+\n.+ from <HOST>$")
-		self.filter.addIgnoreRegex("user fuck")
+		self.filter.addFailRegex("Invalid user .+\n.* from <HOST>$")
+		self.filter.addIgnoreRegex("user duck")
 
 		self.filter.setMaxLines(2)
 

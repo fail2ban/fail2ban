@@ -75,6 +75,8 @@ class Filter(JailThread):
 		self.__lineBufferSize = 1
 		## Line buffer
 		self.__lineBuffer = []
+		## Store last time stamp, applicable for multi-line
+		self.__lastTimeLine = ""
 
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
@@ -319,12 +321,13 @@ class Filter(JailThread):
 		if timeMatch:
 			# Lets split into time part and log part of the line
 			timeLine = timeMatch.group()
+			self.__lastTimeLine = timeLine
 			# Lets leave the beginning in as well, so if there is no
 			# anchore at the beginning of the time regexp, we don't
 			# at least allow injection. Should be harmless otherwise
 			logLine  = l[:timeMatch.start()] + l[timeMatch.end():]
 		else:
-			timeLine = l
+			timeLine = self.__lastTimeLine or l
 			logLine = l
 		self.__lineBuffer = ((self.__lineBuffer +
 				[logLine])[-self.__lineBufferSize:])
