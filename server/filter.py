@@ -391,7 +391,7 @@ class Filter(JailThread):
 								 "in order to get support for this format."
 								 % (logLine, timeLine))
 				else:
-					self.__lineBuffer = []
+					self.__lineBuffer = failRegex.getUnmatchedLines()
 					try:
 						host = failRegex.getHost()
 						ipMatch = DNSUtils.textToIp(host, self.__useDns)

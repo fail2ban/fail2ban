@@ -48,6 +48,11 @@ class Regex:
 		# Perform shortcuts expansions.
 		# Replace "<HOST>" with default regular expression for host.
 		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>[\w\-.^_]+)")
+		# Replace "<SKIPLINES>" with regular expression for multiple lines.
+		regexSplit = regex.split("<SKIPLINES>")
+		regex = regexSplit[0]
+		for n, regexLine in enumerate(regexSplit[1:]):
+			regex += "\n(?P<skiplines%i>(?:(.*\n)*?))" % n + regexLine
 		if regex.lstrip() == '':
 			raise RegexException("Cannot add empty regex")
 		try:
@@ -131,3 +136,21 @@ class FailRegex(Regex):
 			r = self._matchCache.re
 			raise RegexException("No 'host' found in '%s' using '%s'" % (s, r))
 		return host
+
+	##
+	# Returns unmatched lines.
+	#
+	# This returns unmatched lines inlcuding captured by the <SKIPLINES> tag.
+	# @return list of unmatched lines
+	
+	def getUnmatchedLines(self):
+		unmatchedLines = self._matchCache.string[:self._matchCache.start()]
+		n = 0
+		while True:
+			try:
+				unmatchedLines += self._matchCache.group("skiplines%i" % n)
+				n += 1
+			except IndexError:
+				break
+		unmatchedLines += self._matchCache.string[self._matchCache.end():]
+		return unmatchedLines.splitlines(True)

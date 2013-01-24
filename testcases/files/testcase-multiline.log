@@ -19,6 +19,10 @@ Aug 14 11:59:58 yyyy smartd[2635]: Device: /dev/sdb [SAT], previous self-test co
 Aug 14 11:59:58 yyyy rsyncd[7788]: connect from irrelevant (192.0.43.11)
 Aug 14 11:59:58 yyyy rsyncd[7788]: rsync on xxx/ from irrelevant (192.0.43.11)
 Aug 14 11:59:58 yyyy rsyncd[7788]: building file list
-Aug 14 11:59:58 yyyy rsyncd[7788]: sent 294382 bytes  received 781 bytes  total size 29221543998
 Aug 14 11:59:58 yyyy rsyncd[21919]: sent 2836906453 bytes  received 6768 bytes  total size 29221543998
 Aug 14 11:59:58 yyyy rsyncd[23864]: rsync error: timeout in data send/receive (code 30) at io.c(137) [sender=3.0.9]
+Aug 14 11:59:58 yyyy rsyncd[5534]: connect from irrelevant (192.0.43.11)
+Aug 14 11:59:58 yyyy rsyncd[5534]: rsync on xxx/ from irrelevant (192.0.43.11)
+Aug 14 11:59:58 yyyy rsyncd[5534]: building file list
+Aug 14 11:59:58 yyyy rsyncd[7788]: rsync error: timeout in data send/receive (code 30) at io.c(137) [sender=3.0.9]
+Aug 14 11:59:58 yyyy rsyncd[5534]: sent 294382 bytes  received 781 bytes  total size 29221543998
