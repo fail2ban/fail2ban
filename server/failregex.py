@@ -140,7 +140,7 @@ class FailRegex(Regex):
 	##
 	# Returns unmatched lines.
 	#
-	# This returns unmatched lines inlcuding captured by the <SKIPLINES> tag.
+	# This returns unmatched lines including captured by the <SKIPLINES> tag.
 	# @return list of unmatched lines
 	
 	def getUnmatchedLines(self):
