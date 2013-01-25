@@ -96,9 +96,6 @@ else:
 	stdout.setFormatter(logging.Formatter(' %(message)s'))
 logSys.addHandler(stdout)
 
-if opts.no_network is None:
-    opts.no_network = False
-
 #
 # Let know the version
 #
