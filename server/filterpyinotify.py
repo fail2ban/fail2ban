@@ -65,7 +65,11 @@ class FilterPyinotify(FileFilter):
 
 	def callback(self, event):
 		path = event.pathname
-		if event.mask == pyinotify.IN_CREATE:
+		if event.mask & pyinotify.IN_CREATE:
+			# skip directories altogether
+			if event.mask & pyinotify.IN_ISDIR:
+				logSys.debug("Ignoring creation of directory %s" % path)
+				return
 			# check if that is a file we care about
 			if not path in self.__watches:
 				logSys.debug("Ignoring creation of %s we do not monitor" % path)
