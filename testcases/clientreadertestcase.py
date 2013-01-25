@@ -29,6 +29,8 @@ __license__ = "GPL"
 
 import unittest
 from client.jailreader import JailReader
+from client.configreader import ConfigReader
+from client.filterreader import FilterReader
 
 class JailReaderTest(unittest.TestCase):
 
@@ -44,3 +46,38 @@ class JailReaderTest(unittest.TestCase):
 		result = JailReader.splitAction(action)
 		self.assertEquals(expected, result)
 		
+class FilterReaderTest(unittest.TestCase):
+
+	def setUp(self):
+		"""Call before every test case."""
+		ConfigReader.setBaseDir("testcases/files/")
+
+	def tearDown(self):
+		"""Call after every test case."""
+
+	def testConvert(self):
+		output = [['set', 'testcase01', 'addfailregex',
+			"^\\s*(?:\\S+ )?(?:kernel: \\[\\d+\\.\\d+\\] )?(?:@vserver_\\S+ )"
+			"?(?:(?:\\[\\d+\\])?:\\s+[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?|"
+			"[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?(?:\\[\\d+\\])?:)?\\s*(?:"
+			"error: PAM: )?Authentication failure for .* from <HOST>\\s*$"],
+			['set', 'testcase01', 'addfailregex',
+			"^\\s*(?:\\S+ )?(?:kernel: \\[\\d+\\.\\d+\\] )?(?:@vserver_\\S+ )"
+			"?(?:(?:\\[\\d+\\])?:\\s+[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?|"
+			"[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?(?:\\[\\d+\\])?:)?\\s*(?:"
+			"error: PAM: )?User not known to the underlying authentication mo"
+			"dule for .* from <HOST>\\s*$"],
+			['set', 'testcase01', 'addfailregex',
+			"^\\s*(?:\\S+ )?(?:kernel: \\[\\d+\\.\\d+\\] )?(?:@vserver_\\S+ )"
+			"?(?:(?:\\[\\d+\\])?:\\s+[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?|"
+			"[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?(?:\\[\\d+\\])?:)?\\s*(?:"
+			"error: PAM: )?User not known to the\\nunderlying authentication."
+			"+$<SKIPLINES>^.+ module for .* from <HOST>\\s*$"],
+			['set', 'testcase01', 'addignoreregex', 
+			"^.+ john from host 192.168.1.1\\s*$"]]
+		filterReader = FilterReader("testcase01", "testcase01")
+		filterReader.read()
+		#filterReader.getOptions(["failregex", "ignoreregex"])
+		filterReader.getOptions(None)
+
+		self.assertEquals(filterReader.convert(), output)
