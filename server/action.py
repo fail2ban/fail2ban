@@ -243,7 +243,7 @@ class Action:
 		return Action.executeCmd(stopCmd)
 
 	def escapeTag(tag):
-		for c in '\\#&;`|*?~<>^()[]{}$\n':
+		for c in '\\#&;`|*?~<>^()[]{}$\n\'"':
 			if c in tag:
 				tag = tag.replace(c, '\\' + c)
 		return tag
