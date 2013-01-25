@@ -53,6 +53,12 @@ def get_opt_parser():
 			   help="Log level for the logger to use during running tests"),
 		])
 
+	p.add_options([
+		Option('-n', "--no-network", action="store_true",
+			   dest="no_network",
+			   help="Do not run tests that require the network"),
+		])
+
 	return p
 
 parser = get_opt_parser()
@@ -90,6 +96,8 @@ else:
 	stdout.setFormatter(logging.Formatter(' %(message)s'))
 logSys.addHandler(stdout)
 
+if opts.no_network is None:
+    opts.no_network = False
 
 #
 # Let know the version
@@ -129,11 +137,13 @@ tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
 tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
 
 # Filter
-tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
+if not opts.no_network:
+    tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
 tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
 tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
-tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
-tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
+if not opts.no_network:
+    tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
+    tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
 tests.addTest(unittest.makeSuite(filtertestcase.JailTests))
 
 # DateDetector
