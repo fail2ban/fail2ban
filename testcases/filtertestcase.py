@@ -634,6 +634,24 @@ class GetFailures(unittest.TestCase):
 
 		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
+	def testGetFailuresMultiLineMultiRegex(self):
+		output = [("192.0.43.10", 2, 1124013599.0),
+			("192.0.43.11", 1, 1124013598.0),
+			("192.0.43.15", 1, 1124013598.0)]
+		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
+		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
+		self.filter.addFailRegex("^.* sendmail\[.*, msgid=<(?P<msgid>[^>]+).*relay=\[<HOST>\].*$<SKIPLINES>^.+ spamd: result: Y \d+ .*,mid=<(?P=msgid)>(,bayes=[.\d]+)?(,autolearn=\S+)?\s*$")
+		self.filter.setMaxLines(100)
+		self.filter.setMaxRetry(1)
+
+		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)
+
+		_assert_correct_last_attempt(self, self.filter, output.pop())
+		_assert_correct_last_attempt(self, self.filter, output.pop())
+		_assert_correct_last_attempt(self, self.filter, output.pop())
+
+		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+
 class DNSUtilsTests(unittest.TestCase):
 
 	def testUseDns(self):
