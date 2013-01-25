@@ -374,14 +374,15 @@ class Filter(JailThread):
 
 	def findFailure(self, timeLine, logLine):
 		failList = list()
-		# Checks if we must ignore this line.
-		if self.ignoreLine(logLine):
-			# The ignoreregex matched. Return.
-			return failList
 		# Iterates over all the regular expressions.
 		for failRegex in self.__failRegex:
 			failRegex.search(logLine)
 			if failRegex.hasMatched():
+				# Checks if we must ignore this match.
+				if self.ignoreLine("".join(failRegex.getMatchedLines())):
+					# The ignoreregex matched. Remove ignored match.
+					self.__lineBuffer = failRegex.getUnmatchedLines()
+					continue
 				# The failregex matched.
 				date = self.dateDetector.getUnixTime(timeLine)
 				if date == None:

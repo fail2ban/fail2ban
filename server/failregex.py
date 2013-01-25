@@ -93,6 +93,54 @@ class Regex:
 		else:
 			return False
 
+	##
+	# Returns skipped lines.
+	#
+	# This returns skipped lines captured by the <SKIPLINES> tag.
+	# @return list of skipped lines
+	
+	def getSkippedLines(self):
+		if not self._matchCache:
+			return []
+		skippedLines = ""
+		n = 0
+		while True:
+			try:
+				skippedLines += self._matchCache.group("skiplines%i" % n)
+				n += 1
+			except IndexError:
+				break
+		return skippedLines.splitlines(True)
+
+	##
+	# Returns unmatched lines.
+	#
+	# This returns unmatched lines including captured by the <SKIPLINES> tag.
+	# @return list of unmatched lines
+	
+	def getUnmatchedLines(self):
+		if not self._matchCache:
+			return []
+		unmatchedLines = (
+			self._matchCache.string[:self._matchCache.start()].splitlines(True)
+			+ self.getSkippedLines()
+			+ self._matchCache.string[self._matchCache.end():].splitlines(True))
+		return unmatchedLines
+
+	##
+	# Returns matched lines.
+	#
+	# This returns matched lines by excluding those captured
+	# by the <SKIPLINES> tag.
+	# @return list of matched lines
+	
+	def getMatchedLines(self):
+		if not self._matchCache:
+			return []
+		matchedLines = self._matchCache.string[
+			self._matchCache.start():self._matchCache.end()].splitlines(True)
+		return [line for line in matchedLines
+			if line not in self.getSkippedLines()]
 
 ##
 # Exception dedicated to the class Regex.
@@ -136,21 +184,3 @@ class FailRegex(Regex):
 			r = self._matchCache.re
 			raise RegexException("No 'host' found in '%s' using '%s'" % (s, r))
 		return host
-
-	##
-	# Returns unmatched lines.
-	#
-	# This returns unmatched lines including captured by the <SKIPLINES> tag.
-	# @return list of unmatched lines
-	
-	def getUnmatchedLines(self):
-		unmatchedLines = self._matchCache.string[:self._matchCache.start()]
-		n = 0
-		while True:
-			try:
-				unmatchedLines += self._matchCache.group("skiplines%i" % n)
-				n += 1
-			except IndexError:
-				break
-		unmatchedLines += self._matchCache.string[self._matchCache.end():]
-		return unmatchedLines.splitlines(True)
