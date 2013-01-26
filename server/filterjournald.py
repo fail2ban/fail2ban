@@ -24,7 +24,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Y
 __license__ = "GPL"
 
 from failmanager import FailManagerEmpty
-from filter import Filter
+from filter import JournalFilter
 from mytime import MyTime
 
 import time, logging, datetime
@@ -41,15 +41,15 @@ logSys = logging.getLogger("fail2ban.filter")
 # else that matches a given regular expression. This class is instantiated by
 # a Jail object.
 
-class FilterJournald(Filter):
+class FilterJournald(JournalFilter):
 	##
 	# Constructor.
 	#
 	# Initialize the filter object with default values.
 	# @param jail the jail object
 
-	def __init__(self, jail):
-		Filter.__init__(self, jail)
+	def __init__(self, jail, **kwargs):
+		JournalFilter.__init__(self, jail, **kwargs)
 		self.__modified = False
 		# Initialise systemd-journald connection
 		self.__journalctl = pyjournalctl.Journalctl()
@@ -150,6 +150,6 @@ class FilterJournald(Filter):
 		return True
 
 	def status(self):
-		ret = Filter.status(self)
+		ret = JournalFilter.status(self)
 		ret.append(("Match list", self.__matches))
 		return ret

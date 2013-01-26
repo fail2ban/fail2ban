@@ -571,6 +571,27 @@ class FileContainer:
 			self.__handler = None
 
 
+##
+# JournalFilter class.
+#
+# Dummy class for instance checks, used by FilterJournald
+
+class JournalFilter(Filter):
+	def __init__(self, jail, **kwargs):
+		Filter.__init__(self, jail, **kwargs)
+
+	def addJournalMatch(self, match):
+		pass
+
+	def delJournalMatch(self, match):
+		pass
+
+	def getJournalMatch(self, match):
+		return []
+
+	def status(self):
+		ret = Filter.status(self)
+		return ret
 
 ##
 # Utils class for DNS and IP handling.
