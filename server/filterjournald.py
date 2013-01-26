@@ -27,7 +27,7 @@ from failmanager import FailManagerEmpty
 from filter import JournalFilter
 from mytime import MyTime
 
-import time, logging, datetime
+import logging, datetime
 
 import pyjournalctl
 
@@ -62,7 +62,7 @@ class FilterJournald(JournalFilter):
 	##
 	# Add a journal match filter
 	#
-	# @param path log file path
+	# @param match journalctl syntax matches
 
 	def addJournalMatch(self, match):
 		if self.__matches:
@@ -83,7 +83,7 @@ class FilterJournald(JournalFilter):
 	##
 	# Reset a journal match filter called on removal or failure
 	#
-	# @param 
+	# @return None 
 
 	def resetJournalMatches(self):
 		self.__journalctl.flush_matches()
@@ -96,7 +96,7 @@ class FilterJournald(JournalFilter):
 	##
 	# Delete a journal match filter
 	#
-	# @param path log file path
+	# @param match journalctl syntax matches
 
 	def delJournalMatch(self, match):
 		if match in self.__matches:
@@ -106,7 +106,7 @@ class FilterJournald(JournalFilter):
 	##
 	# Get current journal match filter
 	#
-	# @param path log file path
+	# @return journalctl syntax matches
 
 	def getJournalMatch(self):
 		return self.__matches
@@ -148,6 +148,13 @@ class FilterJournald(JournalFilter):
 		logSys.debug((self.jail and self.jail.getName() or "jailless") +
 					 " filter terminated")
 		return True
+
+    ##
+    # Get the status of the filter.
+    #           
+    # Get some informations about the filter state such as the total
+    # number of failures.
+    # @return a list with tuple
 
 	def status(self):
 		ret = JournalFilter.status(self)
