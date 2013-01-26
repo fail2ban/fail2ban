@@ -19,15 +19,17 @@
 
 # Original author: Cyril Jaquier
 
-__author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko"
+__author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko, Steven Hiscocks"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko, 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 from failmanager import FailManagerEmpty
 from filter import Filter
 from mytime import MyTime
 
-import time, logging, datetime, pyjournalctl
+import time, logging, datetime
+
+import pyjournalctl
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -142,9 +144,7 @@ class FilterJournald(Filter):
 						self.failManager.cleanup(MyTime.time())
 					self.dateDetector.sortTemplate()
 					self.__modified = False
-				self.__journalctl.wait(self.getSleepTime())
-			else:
-				self.__journalctl.wait(self.getSleepTime())
+			self.__journalctl.wait(self.getSleepTime())
 		logSys.debug((self.jail and self.jail.getName() or "jailless") +
 					 " filter terminated")
 		return True

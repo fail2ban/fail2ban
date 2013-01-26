@@ -57,7 +57,8 @@ class FilterReader(ConfigReader):
 	
 	def getOptions(self, pOpts):
 		opts = [["string", "ignoreregex", ""],
-				["string", "failregex", ""]]
+				["string", "failregex", ""],
+				["string", "journalmatch", ""]]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
 	
 	def convert(self):
@@ -73,5 +74,10 @@ class FilterReader(ConfigReader):
 					# Do not send a command if the rule is empty.
 					if regex != '':
 						stream.append(["set", self.__name, "addignoreregex", regex])		
+			elif opt == "journalmatch":
+				for match in self.__opts[opt].split('\n'):
+					# Do not send a command if the match is empty.
+					if match != '':
+						stream.append(["set", self.__name, "addjournalmatch", match])
 		return stream
 		
