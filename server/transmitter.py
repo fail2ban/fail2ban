@@ -140,12 +140,11 @@ class Transmitter:
 			self.__server.delLogPath(name, value)
 			return self.__server.getLogPath(name)
 		elif command[1] == "addjournalmatch":
-			value = command[2:]
-			for path in value:
-				self.__server.addJournalMatch(name, path)
+			value = ' '.join(command[2:])
+			self.__server.addJournalMatch(name, value)
 			return self.__server.getJournalMatch(name)
 		elif command[1] == "deljournalmatch":
-			value = command[2]
+			value = ' '.join(command[2:])
 			self.__server.delJournalMatch(name, value)
 			return self.__server.getJournalMatch(name)
 		elif command[1] == "addfailregex":

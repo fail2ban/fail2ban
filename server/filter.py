@@ -574,11 +574,9 @@ class FileContainer:
 ##
 # JournalFilter class.
 #
-# Dummy class for instance checks, used by FilterJournald
+# Base interface class for systemd journal filters
 
 class JournalFilter(Filter):
-	def __init__(self, jail, **kwargs):
-		Filter.__init__(self, jail, **kwargs)
 
 	def addJournalMatch(self, match):
 		pass
@@ -588,10 +586,6 @@ class JournalFilter(Filter):
 
 	def getJournalMatch(self, match):
 		return []
-
-	def status(self):
-		ret = Filter.status(self)
-		return ret
 
 ##
 # Utils class for DNS and IP handling.

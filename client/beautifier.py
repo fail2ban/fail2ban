@@ -121,7 +121,7 @@ class Beautifier:
 					msg = "No journal match filter set"
 				else:
 					msg = "Current match filter:\n"
-					msg += ' '.join(response)
+					msg += ' + '.join(response)
 			elif inC[2] in ("ignoreip", "addignoreip", "delignoreip"):
 				if len(response) == 0:
 					msg = "No IP address/network is ignored"

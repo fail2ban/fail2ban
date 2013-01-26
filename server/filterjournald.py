@@ -65,21 +65,21 @@ class FilterJournald(JournalFilter):
 	# @param path log file path
 
 	def addJournalMatch(self, match):
-		if not (match in self.__matches):
-			if self.__matches:
-				self.__journalctl.add_disjunction() # Add OR
-			try:
-				for match_element in match.split():
-					if match_element == "+":
-						self.__journalctl.add_disjunction()
-					else:
-						self.__journalctl.add_match(match_element)
-			except IOError:
-				logSys.error("Error adding journal match for: %s", match)
-				self.resetJournalMatches()
-			else:
-				self.__matches.append(match)
-				logSys.debug("Adding journal match for: %s", match)
+		if self.__matches:
+			self.__journalctl.add_disjunction() # Add OR
+		try:
+			for match_element in match.split():
+				if match_element == "+":
+					self.__journalctl.add_disjunction()
+				else:
+					self.__journalctl.add_match(match_element)
+		except:
+			logSys.error("Error adding journal match for: %s", match)
+			self.resetJournalMatches()
+		else:
+			for match_element in match.split('+'):
+				self.__matches.append(match_element.strip())
+			logSys.debug("Adding journal match for: %s", match)
 	##
 	# Reset a journal match filter called on removal or failure
 	#
@@ -151,5 +151,5 @@ class FilterJournald(JournalFilter):
 
 	def status(self):
 		ret = JournalFilter.status(self)
-		ret.append(("Match list", self.__matches))
+		ret.append(("Journal matches", [" + ".join(self.__matches)]))
 		return ret
