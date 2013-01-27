@@ -21,6 +21,12 @@ __license__ = "GPL"
 
 import getopt, sys, time, logging, os
 
+try:
+	from server.filterjournald import FilterJournald
+	import pyjournalctl
+except:
+	pass
+
 # Inserts our own modules path first in the list
 # fix for bug #343821
 if os.path.abspath(__file__).startswith('/usr/'):
@@ -109,6 +115,7 @@ class Fail2banRegex:
 		print "Log:"
 		print "    string                  a string representing a log line"
 		print "    filename                path to a log file (/var/log/auth.log)"
+		print "    \"systemd-journal\"       search systemd journal (pyjournalctl required)"
 		print
 		print "Regex:"
 		print "    string                  a string representing a 'failregex'"
@@ -348,6 +355,15 @@ if __name__ == "__main__":
 				print e
 				print
 				sys.exit(-1)
+		elif cmd_log == "systemd-journal":
+			print "Use systemd journal"
+			print
+			journal = pyjournalctl.Journalctl()
+			journal.this_boot() # Limit to this boot
+			for entry in journal:
+				line = FilterJournald.formatJournalEntry(entry)
+				fail2banRegex.testIgnoreRegex(line)
+				fail2banRegex.testRegex(line)
 		else:
 			if len(sys.argv[1]) > 53:
 				stripLog = cmd_log[0:50] + "..."
