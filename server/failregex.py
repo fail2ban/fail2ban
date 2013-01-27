@@ -81,6 +81,19 @@ class Regex:
 	
 	def search(self, value):
 		self._matchCache = self._regexObj.search(value)
+		if self.hasMatched():
+			# Find start of the first line where the match was found
+			try:
+				self._matchLineStart = self._matchCache.string.rindex(
+					"\n", 0, self._matchCache.start() +1 ) + 1
+			except ValueError:
+				self._matchLineStart = 0
+			# Find end of the last line where the match was found
+			try:
+				self._matchLineEnd = self._matchCache.string.index(
+					"\n", self._matchCache.end() - 1) + 1
+			except ValueError:
+				self._matchLineEnd = len(self._matchCache.string)
 	
 	##
 	# Checks if the previous call to search() matched.
@@ -119,12 +132,12 @@ class Regex:
 	# @return list of unmatched lines
 	
 	def getUnmatchedLines(self):
-		if not self._matchCache:
+		if not self.hasMatched():
 			return []
 		unmatchedLines = (
-			self._matchCache.string[:self._matchCache.start()].splitlines(True)
+			self._matchCache.string[:self._matchLineStart].splitlines(True)
 			+ self.getSkippedLines()
-			+ self._matchCache.string[self._matchCache.end():].splitlines(True))
+			+ self._matchCache.string[self._matchLineEnd:].splitlines(True))
 		return unmatchedLines
 
 	##
@@ -135,10 +148,10 @@ class Regex:
 	# @return list of matched lines
 	
 	def getMatchedLines(self):
-		if not self._matchCache:
+		if not self.hasMatched():
 			return []
 		matchedLines = self._matchCache.string[
-			self._matchCache.start():self._matchCache.end()].splitlines(True)
+			self._matchLineStart:self._matchLineEnd].splitlines(True)
 		return [line for line in matchedLines
 			if line not in self.getSkippedLines()]
 
