@@ -112,6 +112,32 @@ class FilterJournald(JournalFilter):
 		return self.__matches
 
 	##
+	# Format journal log entry into syslog style
+	#
+	# @param entry systemd journal entry dict
+	# @return format log line
+
+	@staticmethod
+	def formatJournalEntry(logentry):
+		loglines = [logentry.get('_SOURCE_REALTIME_TIMESTAMP',
+			logentry.get('__REALTIME_TIMESTAMP')).strftime("%b %d %H:%M:%S")]
+		if logentry.get('_HOSTNAME'):
+			loglines.append(logentry['_HOSTNAME'])
+		if logentry.get('SYSLOG_IDENTIFIER'):
+			loglines.append(logentry['SYSLOG_IDENTIFIER'])
+			if logentry.get('_PID'):
+				loglines[-1] += ("[%i]:" % logentry['_PID'])
+		elif logentry.get('_COMM'):
+			loglines.append(logentry['_COMM'])
+			if logentry.get('_PID'):
+				loglines[-1] += ("[%i]:" % logentry['_PID'])
+		if isinstance(logentry.get('MESSAGE',''), list):
+			loglines.append(" ".join(logentry['MESSAGE']))
+		else:
+			loglines.append(logentry.get('MESSAGE', ''))
+		return " ".join(loglines) + "\n"
+
+	##
 	# Main loop.
 	#
 	# Peridocily check for new journal entries matching the filter and
@@ -124,14 +150,8 @@ class FilterJournald(JournalFilter):
 				while self._isActive():
 					logentry = self.__journalctl.get_next()
 					if logentry:
-						logDateTime = logentry.get("_SOURCE_REALTIME_TIMESTAMP", logentry.get("__REALTIME_TIMESTAMP"))
-						if isinstance(logentry.get('MESSAGE',''), list):
-							logMessage = " ".join(logentry['MESSAGE'])
-						else:
-							logMessage = logentry.get('MESSAGE', '')
 						self.processLineAndAdd(
-							"%s %s" % (logDateTime.strftime("%b %d %H:%M:%S"),
-										logMessage))
+							self.formatJournalEntry(logentry))
 						self.__modified = True
 					else:
 						break
