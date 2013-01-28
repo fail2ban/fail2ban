@@ -27,12 +27,13 @@ import getopt, time, shlex, socket
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
-if os.path.abspath(__file__).startswith('/usr/'):
-	# makes sense to use system-wide library iff -client is also under /usr/
+try:
+	from common.version import version
+except ImportError, e:
 	sys.path.insert(1, "/usr/share/fail2ban")
+	from common.version import version
 
-# Now we can import our modules
-from common.version import version
+# Now we can import the rest of modules
 from common.protocol import printFormatted
 from client.csocket import CSocket
 from client.configurator import Configurator

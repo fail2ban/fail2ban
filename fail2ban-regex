@@ -26,13 +26,14 @@ import getopt, sys, time, logging, os
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
-if os.path.abspath(__file__).startswith('/usr/'):
-	# makes sense to use system-wide library iff -regex is also under /usr/
-    sys.path.insert(1, "/usr/share/fail2ban")
+try:
+	from common.version import version
+except ImportError, e:
+	sys.path.insert(1, "/usr/share/fail2ban")
+	from common.version import version
 
 from client.configparserinc import SafeConfigParserWithIncludes
 from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
-from common.version import version
 from server.filter import Filter
 from server.failregex import RegexException
 
