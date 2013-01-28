@@ -126,16 +126,22 @@ class FilterJournald(JournalFilter):
 		if logentry.get('SYSLOG_IDENTIFIER'):
 			loglines.append(logentry['SYSLOG_IDENTIFIER'])
 			if logentry.get('_PID'):
-				loglines[-1] += ("[%i]:" % logentry['_PID'])
+				loglines[-1] += ("[%i]" % logentry['_PID'])
+			loglines[-1] += ":"
 		elif logentry.get('_COMM'):
 			loglines.append(logentry['_COMM'])
 			if logentry.get('_PID'):
-				loglines[-1] += ("[%i]:" % logentry['_PID'])
+				loglines[-1] += ("[%i]" % logentry['_PID'])
+			loglines[-1] += ":"
 		if isinstance(logentry.get('MESSAGE',''), list):
 			loglines.append(" ".join(logentry['MESSAGE']))
 		else:
 			loglines.append(logentry.get('MESSAGE', ''))
-		return " ".join(loglines) + "\n"
+
+		try:
+			return u" ".join(loglines) + u"\n"
+		except UnicodeDecodeError:
+			return " ".join([str(logline) for logline in loglines]) + "\n"
 
 	##
 	# Main loop.
