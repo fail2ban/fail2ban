@@ -26,11 +26,12 @@ import getopt, sys, logging, os
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
-if os.path.abspath(__file__).startswith('/usr/'):
-	# makes sense to use system-wide library iff -server is also under /usr/
+try:
+	from common.version import version
+except ImportError, e:
 	sys.path.insert(1, "/usr/share/fail2ban")
+	from common.version import version
 
-from common.version import version
 from server.server import Server
 
 # Gets the instance of the logger.
