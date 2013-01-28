@@ -74,6 +74,7 @@ class Fail2banRegex:
 		self.__filter = Filter(None)
 		self.__ignoreregex = list()
 		self.__failregex = list()
+		self.__journalmatch = ""
 		self.__verbose = False
 		# Setup logging
 		logging.getLogger("fail2ban").handlers = []
@@ -111,6 +112,9 @@ class Fail2banRegex:
 		print "    -h, --help              display this help message"
 		print "    -V, --version           print the version"
 		print "    -v, --verbose           verbose output"
+		print "    -m MATCHES, --matches=MATCHES"
+		print "                            journalctl style matches, overriding filter file."
+		print "                            Special value \"ALL\" searches entire journal"
 		print
 		print "Log:"
 		print "    string                  a string representing a log line"
@@ -195,6 +199,10 @@ class Fail2banRegex:
 				print "No section headers in " + value
 				print
 				return False
+			try:
+				self.__journalmatch = reader.get("Definition", "journalmatch")
+			except:
+				pass
 		else:
 			if len(value) > 53:
 				stripReg = value[0:50] + "..."
@@ -312,13 +320,15 @@ class Fail2banRegex:
 			print "information."
 			return True
 
+	def getJournalMatch(self):
+		return self.__journalmatch
 			
 if __name__ == "__main__":
 	fail2banRegex = Fail2banRegex()
 	# Reads the command line options.
 	try:
-		cmdOpts = 'hVcv'
-		cmdLongOpts = ['help', 'version', 'verbose']
+		cmdOpts = 'hVcvm:'
+		cmdLongOpts = ['help', 'version', 'verbose', 'matches=']
 		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
 	except getopt.GetoptError:
 		fail2banRegex.dispUsage()
@@ -356,10 +366,31 @@ if __name__ == "__main__":
 				print
 				sys.exit(-1)
 		elif cmd_log == "systemd-journal":
-			print "Use systemd journal"
-			print
-			journal = pyjournalctl.Journalctl()
-			journal.this_boot() # Limit to this boot
+			try:
+				journal = pyjournalctl.Journalctl()
+			except NameError:
+				print "Error: pyjournalctl not found. Exiting..."
+				sys.exit(-1)
+			journalmatch = ""
+			# Parse journal matches from command line
+			for opt in optList:
+				if opt[0] in ["-m", "--matches"]:
+					journalmatch = opt[1]
+			# If no command line option, take journal match from filter
+			if not journalmatch:
+				journalmatch = fail2banRegex.getJournalMatch()
+			try:
+				if journalmatch != "ALL":
+					for element in journalmatch.split():
+						if element == "+":
+							journal.add_disjunction()
+						else:
+							journal.add_match(element)
+			except:
+				print "Error: Invalid journal match: %s" % journalmatch
+				print "Exiting..."
+				sys.exit(-1)
+			print "Use systemd journal match: %s" % (journalmatch or "ALL")
 			for entry in journal:
 				line = FilterJournald.formatJournalEntry(entry)
 				fail2banRegex.testIgnoreRegex(line)
