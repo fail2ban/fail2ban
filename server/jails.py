@@ -17,16 +17,11 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
-
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Cyril Jaquier, Yaroslav Halchenko"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2013- Yaroslav Halchenko"
 __license__ = "GPL"
 
+from common.exceptions import DuplicateJailException, UnknownJailException
 
 from jail import Jail
 from threading import Lock
@@ -160,9 +155,3 @@ class Jails:
 		finally:
 			self.__lock.release()
 
-
-class DuplicateJailException(Exception):
-	pass
-
-class UnknownJailException(Exception):
-	pass
