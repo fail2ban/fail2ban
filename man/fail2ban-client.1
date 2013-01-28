@@ -113,14 +113,6 @@ of <JAIL>
 removes <FILE> to the monitoring
 list of <JAIL>
 .TP
-\fBset <JAIL> addjournalmatch <FILE>\fR
-adds <MATCH> to the journal filter
-of <JAIL>
-.TP
-\fBset <JAIL> deljournalmatch <FILE>\fR
-removes <MATCH> from the journal filter
-list of <JAIL>
-.TP
 \fBset <JAIL> addfailregex <REGEX>\fR
 adds the regular expression
 <REGEX> which must match failures
@@ -194,10 +186,6 @@ JAIL INFORMATION
 \fBget <JAIL> logpath\fR
 gets the list of the monitored
 files for <JAIL>
-.TP
-\fBget <JAIL> journalmatch\fR
-gets the journal filter match
-for <JAIL>
 .TP
 \fBget <JAIL> ignoreip\fR
 gets the list of ignored IP
