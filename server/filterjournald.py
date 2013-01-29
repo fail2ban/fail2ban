@@ -133,6 +133,11 @@ class FilterJournald(JournalFilter):
 			if logentry.get('_PID'):
 				loglines[-1] += ("[%i]" % logentry['_PID'])
 			loglines[-1] += ":"
+		if loglines[-1] == "kernel:":
+			loglines.append("[%12.6f]" % (
+				logentry.get('_SOURCE_MONOTONIC_TIMESTAMP',
+				logentry.get('__MONOTONIC_TIMESTAMP')
+				).total_seconds()))
 		if isinstance(logentry.get('MESSAGE',''), list):
 			loglines.append(" ".join(logentry['MESSAGE']))
 		else:
