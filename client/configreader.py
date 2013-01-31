@@ -60,8 +60,13 @@ class ConfigReader(SafeConfigParserWithIncludes):
 		bLocal = basename + ".local"
 		if os.path.exists(bConf) or os.path.exists(bLocal):
 			if not os.access(bConf, os.R_OK) and not os.access(bLocal, os.R_OK):
-				logSys.warning(
-					"Unable to read either \"%s\" or \"%s\"" % (bConf, bLocal))
+				if os.path.exists(bConf) and not os.path.exists(bLocal):
+					logSys.error("Unable to read \"%s\" " % bConf)
+				elif os.path.exists(bLocal) and not os.path.exists(bConf):
+					logSys.error("Unable to read \"%s\" " % bLocal)
+				else:
+					logSys.error(
+						"Unable to read \"%s\" and \"%s\"" % (bConf, bLocal))
 				return False
 			elif os.path.exists(bConf) and not os.access(bConf, os.R_OK):
 				logSys.warning(
