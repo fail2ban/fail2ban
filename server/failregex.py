@@ -130,4 +130,4 @@ class FailRegex(Regex):
 			s = self._matchCache.string
 			r = self._matchCache.re
 			raise RegexException("No 'host' found in '%s' using '%s'" % (s, r))
-		return host
+		return str(host)
