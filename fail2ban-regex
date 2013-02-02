@@ -22,7 +22,7 @@ __license__ = "GPL"
 import getopt, sys, time, logging, os
 
 try:
-	from server.filterjournald import FilterJournald
+	from server.filterpyjournalctl import FilterPyjournalctl
 	import pyjournalctl
 except:
 	pass
@@ -392,7 +392,7 @@ if __name__ == "__main__":
 				sys.exit(-1)
 			print "Use systemd journal match: %s" % (journalmatch or "ALL")
 			for entry in journal:
-				line = FilterJournald.formatJournalEntry(entry)
+				line = FilterPyjournalctl.formatJournalEntry(entry)
 				fail2banRegex.testIgnoreRegex(line)
 				fail2banRegex.testRegex(line)
 		else:

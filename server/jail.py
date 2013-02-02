@@ -35,7 +35,7 @@ class Jail:
 	#Known backends. Each backend should have corresponding __initBackend method
 	# yoh: stored in a list instead of a tuple since only
 	#      list had .index until 2.6
-	_BACKENDS = ['pyinotify', 'gamin', 'polling', 'journald']
+	_BACKENDS = ['pyinotify', 'gamin', 'polling', 'pyjournalctl']
 
 	def __init__(self, name, backend = "auto"):
 		self.__name = name
@@ -101,12 +101,12 @@ class Jail:
 		from filterpyinotify import FilterPyinotify
 		self.__filter = FilterPyinotify(self)
 	
-	def _initJournald(self):
+	def _initPyjournalctl(self):
 		# Try to import pyjournalctl
 		import pyjournalctl
-		logSys.info("Jail '%s' uses journald" % self.__name)
-		from filterjournald import FilterJournald
-		self.__filter = FilterJournald(self)
+		logSys.info("Jail '%s' uses pyjournalctl" % self.__name)
+		from filterpyjournalctl import FilterPyjournalctl
+		self.__filter = FilterPyjournalctl(self)
 	
 	def setName(self, name):
 		self.__name = name

@@ -41,7 +41,7 @@ logSys = logging.getLogger("fail2ban.filter")
 # else that matches a given regular expression. This class is instantiated by
 # a Jail object.
 
-class FilterJournald(JournalFilter):
+class FilterPyjournalctl(JournalFilter):
 	##
 	# Constructor.
 	#
@@ -51,13 +51,13 @@ class FilterJournald(JournalFilter):
 	def __init__(self, jail, **kwargs):
 		JournalFilter.__init__(self, jail, **kwargs)
 		self.__modified = False
-		# Initialise systemd-journald connection
+		# Initialise systemd-journal connection
 		self.__journalctl = pyjournalctl.Journalctl()
 		start_time = datetime.datetime.utcnow() - \
 				datetime.timedelta(seconds=int(self.getFindTime()))
 		self.__journalctl.seek_realtime(start_time)
 		self.__matches = []
-		logSys.debug("Created FilterJournald")
+		logSys.debug("Created FilterPyjournalctl")
 
 	##
 	# Add a journal match filter

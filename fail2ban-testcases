@@ -181,14 +181,14 @@ finally:
 
 # Journal tests cannot be run in modified TZ and time, so run separately
 try:
-	from server.filterjournald import FilterJournald
+	from server.filterpyjournalctl import FilterPyjournalctl
 	from systemd import journal #Required for testing
 	print "Please wait..."
 	tests2 = unittest.TestSuite()
 	tests2.addTest(unittest.makeSuite(
-		filtertestcase.get_monitor_failures_journal_testcase(FilterJournald)))
+		filtertestcase.get_monitor_failures_journal_testcase(FilterPyjournalctl)))
 except Exception, e:
-	print "I: Skipping journald backend testing. Got exception '%s'" % e
+	print "I: Skipping pyjournalctl backend testing. Got exception '%s'" % e
 	tests2_success = True # Ignore
 else:
 	tests2_results = testRunner.run(tests2)

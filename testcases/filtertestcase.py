@@ -129,7 +129,7 @@ def _copy_lines_between_files(fin, fout, n=None, skip=0, mode='a', terminal_line
 	return fout
 
 def _copy_lines_to_journal(fin, fields={},n=None, skip=0, terminal_line=""):
-	"""Copy lines from one file to systemd journald
+	"""Copy lines from one file to systemd journal
 
 	Returns None
 	"""
