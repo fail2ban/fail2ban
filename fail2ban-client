@@ -380,7 +380,9 @@ class Fail2banClient:
 						if cmd == "exit" or cmd == "quit":
 							# Exit
 							return True
-						if not cmd == "":
+						if cmd == "help":
+							self.dispUsage()
+						elif not cmd == "":
 							self.__processCommand(shlex.split(cmd))
 			except (EOFError, KeyboardInterrupt):
 				print
