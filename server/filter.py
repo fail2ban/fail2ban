@@ -71,6 +71,12 @@ class Filter(JailThread):
 		self.__findTime = 6000
 		## The ignore IP list.
 		self.__ignoreIpList = []
+		## Size of line buffer
+		self.__lineBufferSize = 1
+		## Line buffer
+		self.__lineBuffer = []
+		## Store last time stamp, applicable for multi-line
+		self.__lastTimeLine = ""
 
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
@@ -205,6 +211,23 @@ class Filter(JailThread):
 		return self.failManager.getMaxRetry()
 
 	##
+	# Set the maximum line buffer size.
+	#
+	# @param value the line buffer size
+
+	def setMaxLines(self, value):
+		self.__lineBufferSize = max(1, value)
+		logSys.info("Set maxLines = %i" % self.__lineBufferSize)
+
+	##
+	# Get the maximum line buffer size.
+	#
+	# @return the line buffer size
+
+	def getMaxLines(self):
+		return self.__lineBufferSize
+
+	##
 	# Main loop.
 	#
 	# This function is the main loop of the thread. It checks if the
@@ -298,14 +321,17 @@ class Filter(JailThread):
 		if timeMatch:
 			# Lets split into time part and log part of the line
 			timeLine = timeMatch.group()
+			self.__lastTimeLine = timeLine
 			# Lets leave the beginning in as well, so if there is no
 			# anchore at the beginning of the time regexp, we don't
 			# at least allow injection. Should be harmless otherwise
 			logLine  = l[:timeMatch.start()] + l[timeMatch.end():]
 		else:
-			timeLine = l
+			timeLine = self.__lastTimeLine or l
 			logLine = l
-		return self.findFailure(timeLine, logLine)
+		self.__lineBuffer = ((self.__lineBuffer +
+				[logLine])[-self.__lineBufferSize:])
+		return self.findFailure(timeLine, "".join(self.__lineBuffer))
 
 	def processLineAndAdd(self, line):
 		"""Processes the line for failures and populates failManager
@@ -348,14 +374,15 @@ class Filter(JailThread):
 
 	def findFailure(self, timeLine, logLine):
 		failList = list()
-		# Checks if we must ignore this line.
-		if self.ignoreLine(logLine):
-			# The ignoreregex matched. Return.
-			return failList
 		# Iterates over all the regular expressions.
 		for failRegex in self.__failRegex:
 			failRegex.search(logLine)
 			if failRegex.hasMatched():
+				# Checks if we must ignore this match.
+				if self.ignoreLine("".join(failRegex.getMatchedLines())):
+					# The ignoreregex matched. Remove ignored match.
+					self.__lineBuffer = failRegex.getUnmatchedLines()
+					continue
 				# The failregex matched.
 				date = self.dateDetector.getUnixTime(timeLine)
 				if date == None:
@@ -365,6 +392,7 @@ class Filter(JailThread):
 								 "in order to get support for this format."
 								 % (logLine, timeLine))
 				else:
+					self.__lineBuffer = failRegex.getUnmatchedLines()
 					try:
 						host = failRegex.getHost()
 						ipMatch = DNSUtils.textToIp(host, self.__useDns)

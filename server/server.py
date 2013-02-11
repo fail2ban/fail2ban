@@ -216,6 +216,12 @@ class Server:
 	def getMaxRetry(self, name):
 		return self.__jails.getFilter(name).getMaxRetry()
 	
+	def setMaxLines(self, name, value):
+		self.__jails.getFilter(name).setMaxLines(value)
+	
+	def getMaxLines(self, name):
+		return self.__jails.getFilter(name).getMaxLines()
+	
 	# Action
 	def addAction(self, name, value):
 		self.__jails.getAction(name).addAction(value)

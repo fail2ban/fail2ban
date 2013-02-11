@@ -132,6 +132,7 @@ tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
 # ClientReader
 tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
+tests.addTest(unittest.makeSuite(clientreadertestcase.FilterReaderTest))
 
 # Filter
 if not opts.no_network:
