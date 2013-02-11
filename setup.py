@@ -36,33 +36,33 @@ to reject the IP address or executes user defined
 commands.'''
 
 setup(
-	name = "fail2ban", 
-	version = version, 
-	description = "Ban IPs that make too many password failure", 
-	long_description = longdesc, 
-	author = "Cyril Jaquier", 
-	author_email = "cyril.jaquier@fail2ban.org", 
-	url = "http://www.fail2ban.org", 
-	license = "GPL", 
-	platforms = "Posix", 
+	name = "fail2ban",
+	version = version,
+	description = "Ban IPs that make too many password failure",
+	long_description = longdesc,
+	author = "Cyril Jaquier",
+	author_email = "cyril.jaquier@fail2ban.org",
+	url = "http://www.fail2ban.org",
+	license = "GPL",
+	platforms = "Posix",
 	scripts =	[
-					'fail2ban-client', 
-					'fail2ban-server', 
+					'fail2ban-client',
+					'fail2ban-server',
 					'fail2ban-regex'
-				], 
+				],
 	packages =	[
-					'common', 
-					'client', 
+					'common',
+					'client',
 					'server'
-				], 
+				],
 	data_files =	[
-						('/etc/fail2ban', 
+						('/etc/fail2ban',
 							glob("config/*.conf")
-						), 
-						('/etc/fail2ban/filter.d', 
+						),
+						('/etc/fail2ban/filter.d',
 							glob("config/filter.d/*.conf")
-						), 
-						('/etc/fail2ban/action.d', 
+						),
+						('/etc/fail2ban/action.d',
 							glob("config/action.d/*.conf")
 						),
 						('/var/run/fail2ban',
@@ -78,20 +78,20 @@ elements =	{
 				"/etc/":
 					[
 						"fail2ban.conf"
-					], 
+					],
 				"/usr/bin/":
 					[
 						"fail2ban.py"
-					], 
+					],
 				"/usr/lib/fail2ban/firewall/":
 					[
-						"iptables.py", 
-						"ipfwadm.py", 
+						"iptables.py",
+						"ipfwadm.py",
 						"ipfw.py"
 					],
 				"/usr/lib/fail2ban/":
 					[
-						"version.py", 
+						"version.py",
 						"protocol.py"
 					]
 			}
