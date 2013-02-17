@@ -56,7 +56,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 	
 	def read(self, filename):
 		basename = os.path.join(self._basedir, filename)
-		logSys.debug("Reading " + basename)
+		logSys.debug("Reading configs for %s under %s "  % (basename, self._basedir))
 		config_files = [ basename + ".conf",
 						 basename + ".local" ]
 
@@ -88,7 +88,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 			return True
 		else:
 			logSys.error("Found no accessible config files for %r " % filename
-						 + (["",
+						 + (["under %s" % self.getBaseDir(),
 							 "among existing ones: " + ', '.join(config_files)][bool(len(config_files))]))
 
 			return False

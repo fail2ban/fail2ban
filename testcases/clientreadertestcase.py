@@ -39,7 +39,6 @@ class ConfigReaderTest(unittest.TestCase):
 		self.d = tempfile.mkdtemp(prefix="f2b-temp")
 		self.c = ConfigReader(basedir=self.d)
 
-
 	def tearDown(self):
 		"""Call after every test case."""
 		shutil.rmtree(self.d)
@@ -61,9 +60,18 @@ option = %s
 		self.assertTrue(self.c.read('c'))	# we still should have some
 
 
-	def _getoption(self):
-		self.assertTrue(self.c.read('c'))	# we got some now
+	def _getoption(self, f='c'):
+		self.assertTrue(self.c.read(f))	# we got some now
 		return self.c.getOptions('section', [("int", 'option')])['option']
+
+
+	def testInaccessibleFile(self):
+		f = os.path.join(self.d, "d.conf")  # inaccessible file
+		self._write('d.conf', 0)
+		self.assertEqual(self._getoption('d'), 0)
+		os.chmod(f, 0)
+		self.assertFalse(self.c.read('d'))	# should not be readable BUT present
+
 
 	def testOptionalDotDDir(self):
 		self.assertFalse(self.c.read('c'))	# nothing is there yet
