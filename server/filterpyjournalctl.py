@@ -176,8 +176,8 @@ class FilterPyjournalctl(JournalFilter):
 					self.dateDetector.sortTemplate()
 					self.__modified = False
 			self.__journalctl.wait(self.getSleepTime())
-		logSys.debug((self.jail and self.jail.getName() or "jailless") +
-					 " filter terminated")
+		logSys.debug((self.jail is not None and self.jail.getName()
+                      or "jailless") +" filter terminated")
 		return True
 
     ##
