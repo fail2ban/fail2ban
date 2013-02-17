@@ -109,6 +109,11 @@ class JailReaderTest(unittest.TestCase):
 		self.assertFalse(jail.isEnabled())
 		self.assertEqual(jail.getName(), 'ssh-iptables')
 
+	def testSplitAction(self):
+		action = "mail-whois[name=SSH]"
+		expected = ['mail-whois', {'name': 'SSH'}]
+		result = JailReader.splitAction(action)
+		self.assertEquals(expected, result)
 
 class JailsReaderTest(unittest.TestCase):
 
