@@ -35,8 +35,8 @@ logSys = logging.getLogger("fail2ban.client.config")
 
 class Fail2banReader(ConfigReader):
 	
-	def __init__(self):
-		ConfigReader.__init__(self)
+	def __init__(self, **kwargs):
+		ConfigReader.__init__(self, **kwargs)
 	
 	def read(self):
 		ConfigReader.read(self, "fail2ban")

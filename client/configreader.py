@@ -27,7 +27,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging, os
+import glob, logging, os
 from configparserinc import SafeConfigParserWithIncludes
 from ConfigParser import NoOptionError, NoSectionError
 
@@ -35,36 +35,64 @@ from ConfigParser import NoOptionError, NoSectionError
 logSys = logging.getLogger("fail2ban.client.config")
 
 class ConfigReader(SafeConfigParserWithIncludes):
+
+	DEFAULT_BASEDIR = '/etc/fail2ban'
 	
-	BASE_DIRECTORY = "/etc/fail2ban/"
-	
-	def __init__(self):
+	def __init__(self, basedir=None):
 		SafeConfigParserWithIncludes.__init__(self)
+		self.setBaseDir(basedir)
 		self.__opts = None
 	
-	#@staticmethod
-	def setBaseDir(folderName):
-		path = folderName.rstrip('/')
-		ConfigReader.BASE_DIRECTORY = path + '/'
-	setBaseDir = staticmethod(setBaseDir)
-		
-	#@staticmethod
-	def getBaseDir():
-		return ConfigReader.BASE_DIRECTORY
-	getBaseDir = staticmethod(getBaseDir)
+	def setBaseDir(self, basedir):
+		if basedir is None:
+			basedir = ConfigReader.DEFAULT_BASEDIR	# stock system location
+		if not (os.path.exists(basedir) and os.access(basedir, os.R_OK | os.X_OK)):
+			raise ValueError("Base configuration directory %s either does not exist "
+							 "or is not accessible" % basedir)
+		self._basedir = basedir.rstrip('/')
+	
+	def getBaseDir(self):
+		return self._basedir
 	
 	def read(self, filename):
-		basename = ConfigReader.BASE_DIRECTORY + filename
+		basename = os.path.join(self._basedir, filename)
 		logSys.debug("Reading " + basename)
-		bConf = basename + ".conf"
-		bLocal = basename + ".local"
-		if os.path.exists(bConf) or os.path.exists(bLocal):
-			SafeConfigParserWithIncludes.read(self, [bConf, bLocal])
+		config_files = [ basename + ".conf",
+						 basename + ".local" ]
+
+		# choose only existing ones
+		config_files = filter(os.path.exists, config_files)
+
+		# possible further customizations under a .conf.d directory
+		config_dir = basename + '.d'
+		if os.path.exists(config_dir):
+			if os.path.isdir(config_dir) and os.access(config_dir, os.X_OK | os.R_OK):
+				# files must carry .conf suffix as well
+				config_files += sorted(glob.glob('%s/*.conf' % config_dir))
+			else:
+				logSys.warn("%s exists but not a directory or not accessible"
+							 % config_dir)
+
+		# check if files are accessible, warn if any is not accessible
+		# and remove it from the list
+		config_files_accessible = []
+		for f in config_files:
+			if os.access(f, os.R_OK):
+				config_files_accessible.append(f)
+			else:
+				logSys.warn("%s exists but not accessible - skipping" % f)
+
+		if len(config_files_accessible):
+			# at least one config exists and accessible
+			SafeConfigParserWithIncludes.read(self, config_files_accessible)
 			return True
 		else:
-			logSys.error(bConf + " and " + bLocal + " do not exist")
+			logSys.error("Found no accessible config files for %r " % filename
+						 + (["",
+							 "among existing ones: " + ', '.join(config_files)][bool(len(config_files))]))
+
 			return False
-	
+
 	##
 	# Read the options.
 	#
