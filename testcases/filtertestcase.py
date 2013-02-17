@@ -27,7 +27,7 @@ import os
 import sys
 import time
 import tempfile
-import uuid
+
 try:
 	from systemd import journal
 except ImportError:
@@ -531,6 +531,7 @@ def get_monitor_failures_journal_testcase(Filter_):
 			self.filter = Filter_(self.jail)
 			# UUID used to ensure that only meeages generated
 			# as part of this test are picked up by the filter
+			import uuid
 			self.test_uuid = str(uuid.uuid4())
 			self.name = "monitorjournalfailures-%s" % self.test_uuid
 			self.filter.addJournalMatch(
