@@ -1,3 +1,10 @@
+fail2ban (0.8.8-2) UNRELEASED; urgency=low
+
+  * debian/jail.conf:
+    - added findtime and documentation on those basic options from jail.conf
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 18 Feb 2013 18:51:00 -0500
+
 fail2ban (0.8.8-1+lucid0) UNRELEASED; urgency=low
 
   * Added lucid-dsc-patch to use pycentral on systems without dh_python2
