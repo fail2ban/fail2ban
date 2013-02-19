@@ -134,11 +134,11 @@ class Fail2banClient:
 			elif opt[0] == "-i":
 				self.__conf["interactive"] = True
 			elif opt[0] in ["-h", "--help"]:
-	 			self.dispUsage()
-	 			sys.exit(0)
-	 		elif opt[0] in ["-V", "--version"]:
-	 			self.dispVersion()
-	 			sys.exit(0)
+				self.dispUsage()
+				sys.exit(0)
+			elif opt[0] in ["-V", "--version"]:
+				self.dispVersion()
+				sys.exit(0)
 	
 	def __ping(self):
 		return self.__processCmd([["ping"]], False)
@@ -185,6 +185,18 @@ class Fail2banClient:
 				# Do not continue if configuration is not 100% valid
 				if not ret:
 					return False
+				# verify that directory for the socket file exists
+				socket_dir = os.path.dirname(self.__conf["socket"])
+				if not os.path.exists(socket_dir):
+					logSys.error(
+						"There is no directory %s to contain the socket file %s."
+						% (socket_dir, self.__conf["socket"]))
+					return False
+				if not os.access(socket_dir, os.W_OK | os.X_OK):
+					logSys.error(
+						"Directory %s exists but not accessible for writing"
+						% (socket_dir,))
+					return False
 				# Start the server
 				self.__startServerAsync(self.__conf["socket"],
 										self.__conf["pidfile"],
@@ -196,10 +208,10 @@ class Fail2banClient:
 					self.__processCmd(self.__stream, False)
 					return True
 				except ServerExecutionException:
-					logSys.error("Could not start server. Maybe an old " +
-								 "socket file is still present. Try to " +
-								 "remove " + self.__conf["socket"] + ". If " +
-								 "you used fail2ban-client to start the " +
+					logSys.error("Could not start server. Maybe an old "
+								 "socket file is still present. Try to "
+								 "remove " + self.__conf["socket"] + ". If "
+								 "you used fail2ban-client to start the "
 								 "server, adding the -x option will do it")
 					return False
 		elif len(cmd) == 1 and cmd[0] == "reload":
@@ -256,16 +268,17 @@ class Fail2banClient:
 			try:
 				# Use the current directory.
 				exe = os.path.abspath(os.path.join(sys.path[0], self.SERVER))
+				logSys.debug("Starting %r with args %r" % (exe, args))
 				os.execv(exe, args)
 			except OSError:
 				try:
 					# Use the PATH env.
+					logSys.warning("Initial start attempt failed.  Starting %r with the same args" % (self.SERVER,))
 					os.execvp(self.SERVER, args)
 				except OSError:
-					print "Could not find %s" % self.SERVER
+					logSys.error("Could not start %s" % self.SERVER)
 					os.exit(-1)
-						
-			
+	
 	def __waitOnServer(self):
 		# Wait for the server to start
 		cnt = 0
