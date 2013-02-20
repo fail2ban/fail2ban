@@ -433,9 +433,10 @@ class Transmitter(unittest.TestCase):
 			self.__transm.proceed(
 				["set", self.jailName, "delcinfo", action, "KEY"]),
 			(0, None))
-		#FIXME: This is broken in server.transmitter (value not defined)
-		"""
 		self.assertEqual(
 			self.__transm.proceed(["set", self.jailName, "delaction", action]),
 			(0, None))
-		"""
+		self.assertEqual(
+			self.__transm.proceed(
+				["set", self.jailName, "delaction", "Doesn't exist"]),
+			(0, None)) #NOTE: Should this return 1?

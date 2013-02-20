@@ -183,6 +183,7 @@ class Transmitter:
 			self.__server.addAction(name, value)
 			return self.__server.getLastAction(name).getName()
 		elif command[1] == "delaction":
+			value = command[2]
 			self.__server.delAction(name, value)
 			return None
 		elif command[1] == "setcinfo":
