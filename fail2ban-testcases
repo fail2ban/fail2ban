@@ -124,7 +124,7 @@ else:
 
 # Server
 #tests.addTest(unittest.makeSuite(servertestcase.StartStop))
-#tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
+tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
 tests.addTest(unittest.makeSuite(actiontestcase.ExecuteAction))
 # FailManager
 tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
