@@ -266,6 +266,10 @@ class Transmitter:
 		elif command[1] == "actionunban":
 			act = command[2]
 			return self.__server.getActionUnban(name, act)
+		elif command[1] == "cinfo":
+			act = command[2]
+			key = command[3]
+			return self.__server.getCInfo(name, act, key)
 		raise Exception("Invalid command (no get action or not yet implemented)")
 	
 	def status(self, command):

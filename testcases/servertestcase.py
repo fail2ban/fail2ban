@@ -422,13 +422,14 @@ class Transmitter(unittest.TestCase):
 			self.__transm.proceed(
 				["set", self.jailName, "setcinfo", action, "KEY", "VALUE"]),
 			(0, "VALUE"))
-		#TODO: Implement below in server.transmitter?
-		"""
 		self.assertEqual(
 			self.__transm.proceed(
 				["get", self.jailName, "cinfo", action, "KEY"]),
 			(0, "VALUE"))
-		"""
+		self.assertEqual(
+			self.__transm.proceed(
+				["get", self.jailName, "cinfo", action, "InvalidKey"])[0],
+			1)
 		self.assertEqual(
 			self.__transm.proceed(
 				["set", self.jailName, "delcinfo", action, "KEY"]),
