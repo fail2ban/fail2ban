@@ -97,12 +97,6 @@ class Server:
 		except OSError, e:
 			logSys.error("Unable to remove PID file: %s" % e)
 		logSys.info("Exiting Fail2ban")
-		# Shutdowns the logging.
-		try:
-			self.__loggingLock.acquire()
-			logging.shutdown()
-		finally:
-			self.__loggingLock.release()
 	
 	def quit(self):
 		# Stop communication first because if jail's unban action
@@ -112,8 +106,17 @@ class Server:
 		# are exiting)
 		# See https://github.com/fail2ban/fail2ban/issues/7
 		self.__asyncServer.stop()
+
 		# Now stop all the jails
 		self.stopAllJail()
+
+		# Only now shutdown the logging.
+		try:
+			self.__loggingLock.acquire()
+			logging.shutdown()
+		finally:
+			self.__loggingLock.release()
+
 	
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend)
