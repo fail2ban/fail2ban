@@ -90,6 +90,7 @@ protocol = [
 ["get <JAIL> actioncheck <ACT>", "gets the check command for the action <ACT> for <JAIL>"],
 ["get <JAIL> actionban <ACT>", "gets the ban command for the action <ACT> for <JAIL>"],
 ["get <JAIL> actionunban <ACT>", "gets the unban command for the action <ACT> for <JAIL>"],
+["get <JAIL> cinfo <ACT> <KEY>", "gets the value for <KEY> for the action <ACT> for <JAIL>"],
 ]
 
 ##
