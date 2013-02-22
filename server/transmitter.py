@@ -183,6 +183,7 @@ class Transmitter:
 			self.__server.addAction(name, value)
 			return self.__server.getLastAction(name).getName()
 		elif command[1] == "delaction":
+			value = command[2]
 			self.__server.delAction(name, value)
 			return None
 		elif command[1] == "setcinfo":
@@ -265,6 +266,10 @@ class Transmitter:
 		elif command[1] == "actionunban":
 			act = command[2]
 			return self.__server.getActionUnban(name, act)
+		elif command[1] == "cinfo":
+			act = command[2]
+			key = command[3]
+			return self.__server.getCInfo(name, act, key)
 		raise Exception("Invalid command (no get action or not yet implemented)")
 	
 	def status(self, command):

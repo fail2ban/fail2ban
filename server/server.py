@@ -97,12 +97,6 @@ class Server:
 		except OSError, e:
 			logSys.error("Unable to remove PID file: %s" % e)
 		logSys.info("Exiting Fail2ban")
-		# Shutdowns the logging.
-		try:
-			self.__loggingLock.acquire()
-			logging.shutdown()
-		finally:
-			self.__loggingLock.release()
 	
 	def quit(self):
 		# Stop communication first because if jail's unban action
@@ -112,8 +106,17 @@ class Server:
 		# are exiting)
 		# See https://github.com/fail2ban/fail2ban/issues/7
 		self.__asyncServer.stop()
+
 		# Now stop all the jails
 		self.stopAllJail()
+
+		# Only now shutdown the logging.
+		try:
+			self.__loggingLock.acquire()
+			logging.shutdown()
+		finally:
+			self.__loggingLock.release()
+
 	
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend)
@@ -367,11 +370,20 @@ class Server:
 					logSys.error("Unable to log to " + target)
 					logSys.info("Logging to previous target " + self.__logTarget)
 					return False
-			# Removes previous handlers
-			for handler in logging.getLogger("fail2ban").handlers:
-				# Closes the handler.
+			# Removes previous handlers -- in reverse order since removeHandler
+			# alter the list in-place and that can confuses the iterable
+			for handler in logging.getLogger("fail2ban").handlers[::-1]:
+				# Remove the handler.
 				logging.getLogger("fail2ban").removeHandler(handler)
-				handler.close()
+				# And try to close -- it might be closed already
+				try:
+					handler.flush()
+					handler.close()
+				except ValueError:
+					if sys.version_info >= (2,6):
+						raise
+					# is known to be thrown after logging was shutdown once
+					# with older Pythons -- seems to be safe to ignore there
 			# tell the handler to use this format
 			hdlr.setFormatter(formatter)
 			logging.getLogger("fail2ban").addHandler(hdlr)
