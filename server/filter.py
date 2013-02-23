@@ -35,7 +35,7 @@ from datedetector import DateDetector
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
 
-import logging, re, os, fcntl, time
+import logging, re, os, fcntl, time, sys
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -289,22 +289,24 @@ class Filter(JailThread):
 	def processLine(self, line):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
-		try:
-			# Decode line to UTF-8
-			l = line.decode('utf-8')
-		except UnicodeDecodeError:
-			l = line
-		timeMatch = self.dateDetector.matchTime(l)
+		if (sys.version_info >= (3,) and isinstance(line, bytes)) or \
+			(sys.version_info < (3,) and isinstance(line, str)):
+			try:
+				# Decode line to UTF-8
+				line = line.decode('utf-8')
+			except UnicodeDecodeError:
+				line = line
+		timeMatch = self.dateDetector.matchTime(line)
 		if timeMatch:
 			# Lets split into time part and log part of the line
 			timeLine = timeMatch.group()
 			# Lets leave the beginning in as well, so if there is no
 			# anchore at the beginning of the time regexp, we don't
 			# at least allow injection. Should be harmless otherwise
-			logLine  = l[:timeMatch.start()] + l[timeMatch.end():]
+			logLine  = line[:timeMatch.start()] + line[timeMatch.end():]
 		else:
-			timeLine = l
-			logLine = l
+			timeLine = line
+			logLine = line
 		return self.findFailure(timeLine, logLine)
 
 	def processLineAndAdd(self, line):
@@ -520,7 +522,10 @@ class FileContainer:
 		self.__tail = tail
 		self.__handler = None
 		# Try to open the file. Raises an exception if an error occured.
-		handler = open(filename)
+		if sys.version_info >= (3,):
+			handler = open(filename, errors='ignore')
+		else:
+			handler = open(filename)
 		stats = os.fstat(handler.fileno())
 		self.__ino = stats.st_ino
 		try:
