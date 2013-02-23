@@ -289,8 +289,7 @@ class Filter(JailThread):
 	def processLine(self, line):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
-		if (sys.version_info >= (3,) and isinstance(line, bytes)) or \
-			(sys.version_info < (3,) and isinstance(line, str)):
+		if not isinstance(line, unicode):
 			try:
 				# Decode line to UTF-8
 				line = line.decode('utf-8')
@@ -523,7 +522,7 @@ class FileContainer:
 		self.__handler = None
 		# Try to open the file. Raises an exception if an error occured.
 		if sys.version_info >= (3,):
-			handler = open(filename, errors='ignore')
+			handler = open(filename, encoding='utf-8', errors='ignore')
 		else:
 			handler = open(filename)
 		stats = os.fstat(handler.fileno())
@@ -548,7 +547,11 @@ class FileContainer:
 		return self.__filename
 
 	def open(self):
-		self.__handler = open(self.__filename)
+		if sys.version_info >= (3,):
+			self.__handler = open(
+				self.__filename, encoding='utf-8', errors='ignore')
+		else:
+			self.__handler = open(self.__filename)
 		# Set the file descriptor to be FD_CLOEXEC
 		fd = self.__handler.fileno()
 		fcntl.fcntl(fd, fcntl.F_SETFD, fd | fcntl.FD_CLOEXEC)
