@@ -409,7 +409,7 @@ def get_monitor_failures_testcase(Filter_):
 			#return
 			# just for fun let's copy all of them again and see if that results
 			# in a new ban
- 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 
 		def test_rewrite_file(self):
