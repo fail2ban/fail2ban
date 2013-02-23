@@ -194,7 +194,7 @@ class DateDetector:
 		if date == None:
 			return None
 		else:
-			return time.mktime(date)
+			return time.mktime(tuple(date))
 
 	##
 	# Sort the template lists using the hits score. This method is not called
