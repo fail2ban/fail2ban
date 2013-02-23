@@ -282,12 +282,9 @@ class Server:
 	def status(self):
 		try:
 			self.__lock.acquire()
-			jailList = ''
-			for jail in self.__jails.getAll():
-				jailList += jail + ', '
-			length = len(jailList)
-			if not length == 0:
-				jailList = jailList[:length-2]
+			jails = list(self.__jails.getAll())
+			jails.sort()
+			jailList = ", ".join(jails)
 			ret = [("Number of jail", self.__jails.size()), 
 				   ("Jail list", jailList)]
 			return ret
