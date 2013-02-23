@@ -526,7 +526,10 @@ class FileContainer:
 		try:
 			firstLine = handler.readline()
 			# Computes the MD5 of the first line.
-			self.__hash = md5sum(firstLine).digest()
+			if isinstance(firstLine, unicode):
+				self.__hash = md5sum(firstLine.encode('utf-8')).digest()
+			else:
+				self.__hash = md5sum(firstLine).digest()
 			# Start at the beginning of file if tail mode is off.
 			if tail:
 				handler.seek(0, 2)
@@ -546,7 +549,10 @@ class FileContainer:
 		fcntl.fcntl(fd, fcntl.F_SETFD, fd | fcntl.FD_CLOEXEC)
 		firstLine = self.__handler.readline()
 		# Computes the MD5 of the first line.
-		myHash = md5sum(firstLine).digest()
+		if isinstance(firstLine, unicode):
+			myHash = md5sum(firstLine.encode('utf-8')).digest()
+		else:
+			myHash = md5sum(firstLine).digest()
 		stats = os.fstat(self.__handler.fileno())
 		# Compare hash and inode
 		if self.__hash != myHash or self.__ino != stats.st_ino:
