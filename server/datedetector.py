@@ -204,7 +204,7 @@ class DateDetector:
 		self.__lock.acquire()
 		try:
 			logSys.debug("Sorting the template list")
-			self.__templates.sort(lambda x, y: cmp(x.getHits(), y.getHits()), reverse=True)
+			self.__templates.sort(key=lambda x: x.getHits(), reverse=True)
 			t = self.__templates[0]
 			logSys.debug("Winning template: %s with %d hits" % (t.getName(), t.getHits()))
 		finally:
