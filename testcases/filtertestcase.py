@@ -40,7 +40,7 @@ from server.failmanager import FailManagerEmpty
 #
 
 if sys.version_info >= (3,):
-	open_ = functools.partial(open, errors='ignore')
+	open_ = functools.partial(open, encoding='utf-8', errors='ignore')
 else:
 	open_ = open
 
