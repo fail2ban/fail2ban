@@ -1,6 +1,6 @@
 #!/bin/bash
 # Simple helper script to exercise unittests using all available
-# (under /usr/bin and /usr/local/bin python2.*)
+# (under /usr/bin and /usr/local/bin python3.*)
 
 set -eu
 
