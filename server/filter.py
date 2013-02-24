@@ -294,7 +294,7 @@ class Filter(JailThread):
 				# Decode line to UTF-8
 				line = line.decode('utf-8')
 			except UnicodeDecodeError:
-				line = line
+				pass
 		timeMatch = self.dateDetector.matchTime(line)
 		if timeMatch:
 			# Lets split into time part and log part of the line
