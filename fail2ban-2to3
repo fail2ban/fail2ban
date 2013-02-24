@@ -1,0 +1,17 @@
+#!/bin/bash
+# This script carries out conversion of fail2ban to python3
+# A backup of any converted files are created with ".bak"
+# extension
+
+set -eu
+
+nonPyFiles="fail2ban-client fail2ban-server fail2ban-regex fail2ban-testcases"
+
+find . \
+    -name "*.py" \
+    -exec 2to3 -w --no-diffs $nonPyFiles {} + \
+    || echo "Fail!" >&2 && exit 1
+
+echo "Success!" >&2
+
+exit 0
