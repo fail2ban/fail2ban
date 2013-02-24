@@ -164,7 +164,7 @@ class DateStrptime(DateTemplate):
 				# that the log is not from this year but from the year before
 				if time.mktime(tuple(date)) > MyTime.time():
 					logSys.debug(
-						"Correcting deduced year from %d to %d since %f > %f" %
+						u"Correcting deduced year from %d to %d since %f > %f" %
 						(date[0], date[0]-1, time.mktime(tuple(date)), MyTime.time()))
 					date[0] -= 1
 				elif date[1] == 1 and date[2] == 1:
