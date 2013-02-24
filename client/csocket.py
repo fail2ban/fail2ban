@@ -29,11 +29,14 @@ __license__ = "GPL"
 
 #from cPickle import dumps, loads, HIGHEST_PROTOCOL
 from pickle import dumps, loads, HIGHEST_PROTOCOL
-import socket
+import socket, sys
 
 class CSocket:
 	
-	END_STRING = "<F2B_END_COMMAND>"
+	if sys.version_info >= (3,):
+		END_STRING = b"<F2B_END_COMMAND>"
+	else:
+		END_STRING = "<F2B_END_COMMAND>"
 	
 	def __init__(self, sock = "/var/run/fail2ban/fail2ban.sock"):
 		# Create an INET, STREAMing socket
@@ -52,7 +55,10 @@ class CSocket:
 	
 	#@staticmethod
 	def receive(sock):
-		msg = ''
+		if sys.version_info >= (3,):
+			msg = b''
+		else:
+			msg = ''
 		while msg.rfind(CSocket.END_STRING) == -1:
 			chunk = sock.recv(6)
 			if chunk == '':
