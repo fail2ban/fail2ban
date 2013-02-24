@@ -43,7 +43,7 @@ logSys = logging.getLogger("fail2ban.server")
 class RequestHandler(asynchat.async_chat):
 	
 	if sys.version_info >= (3,):
-		END_STRING = b"<F2B_END_COMMAND>"
+		END_STRING = bytes("<F2B_END_COMMAND>", encoding="ascii")
 	else:
 		END_STRING = "<F2B_END_COMMAND>"
 
@@ -66,7 +66,7 @@ class RequestHandler(asynchat.async_chat):
 	def found_terminator(self):
 		# Joins the buffer items.
 		if sys.version_info >= (3,):
-			message = loads(b"".join(self.__buffer))
+			message = loads(bytes("", encoding="ascii").join(self.__buffer))
 		else:
 			message = loads("".join(self.__buffer))
 		# Gives the message to the transmitter.

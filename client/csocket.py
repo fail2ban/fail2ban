@@ -34,7 +34,7 @@ import socket, sys
 class CSocket:
 	
 	if sys.version_info >= (3,):
-		END_STRING = b"<F2B_END_COMMAND>"
+		END_STRING = bytes("<F2B_END_COMMAND>", encoding='ascii')
 	else:
 		END_STRING = "<F2B_END_COMMAND>"
 	
@@ -56,7 +56,7 @@ class CSocket:
 	#@staticmethod
 	def receive(sock):
 		if sys.version_info >= (3,):
-			msg = b''
+			msg = bytes("", encoding='ascii')
 		else:
 			msg = ''
 		while msg.rfind(CSocket.END_STRING) == -1:
