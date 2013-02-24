@@ -27,7 +27,6 @@ import os
 import sys
 import time
 import tempfile
-import functools
 
 from server.jail import Jail
 from server.filterpoll import FilterPoll
@@ -40,7 +39,8 @@ from server.failmanager import FailManagerEmpty
 #
 
 if sys.version_info >= (3,):
-	open_ = functools.partial(open, encoding='utf-8', errors='ignore')
+	def open_(filename, mode):
+		return open(filename, mode, encoding='utf-8', errors='ignore')
 else:
 	open_ = open
 
