@@ -605,7 +605,7 @@ class DNSUtils:
 		"""
 		try:
 			return socket.gethostbyname_ex(dns)[2]
-		except socket.gaierror:
+		except socket.error:
 			logSys.warn("Unable to find a corresponding IP address for %s"
 						% dns)
 			return list()
