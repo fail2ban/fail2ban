@@ -346,7 +346,10 @@ if __name__ == "__main__":
 
 		if fail2banRegex.logIsFile(cmd_log):
 			try:
-				hdlr = open(cmd_log)
+				if sys.version_info >= (3,):
+					hdlr = open(cmd_log, encoding='utf-8', errors='ignore')
+				else:
+					hdlr = open(cmd_log)
 				print "Use log file   : " + cmd_log
 				print
 				for line in hdlr:
