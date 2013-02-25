@@ -289,12 +289,6 @@ class Filter(JailThread):
 	def processLine(self, line):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
-		if not isinstance(line, unicode):
-			try:
-				# Decode line to UTF-8
-				line = line.decode('utf-8')
-			except UnicodeDecodeError:
-				pass
 		timeMatch = self.dateDetector.matchTime(line)
 		if timeMatch:
 			# Lets split into time part and log part of the line
@@ -485,7 +479,7 @@ class FileFilter(Filter):
 
 		while True:
 			line = container.readline()
-			if (line == "") or not self._isActive():
+			if not line or not self._isActive():
 				# The jail reached the bottom or has been stopped
 				break
 			self.processLineAndAdd(line)
@@ -521,19 +515,13 @@ class FileContainer:
 		self.__tail = tail
 		self.__handler = None
 		# Try to open the file. Raises an exception if an error occured.
-		if sys.version_info >= (3,):
-			handler = open(filename, encoding='utf-8', errors='ignore')
-		else:
-			handler = open(filename)
+		handler = open(filename, 'rb')
 		stats = os.fstat(handler.fileno())
 		self.__ino = stats.st_ino
 		try:
 			firstLine = handler.readline()
 			# Computes the MD5 of the first line.
-			if isinstance(firstLine, unicode):
-				self.__hash = md5sum(firstLine.encode('utf-8')).digest()
-			else:
-				self.__hash = md5sum(firstLine).digest()
+			self.__hash = md5sum(firstLine).digest()
 			# Start at the beginning of file if tail mode is off.
 			if tail:
 				handler.seek(0, 2)
@@ -547,20 +535,13 @@ class FileContainer:
 		return self.__filename
 
 	def open(self):
-		if sys.version_info >= (3,):
-			self.__handler = open(
-				self.__filename, encoding='utf-8', errors='ignore')
-		else:
-			self.__handler = open(self.__filename)
+		self.__handler = open(self.__filename, 'rb')
 		# Set the file descriptor to be FD_CLOEXEC
 		fd = self.__handler.fileno()
 		fcntl.fcntl(fd, fcntl.F_SETFD, fd | fcntl.FD_CLOEXEC)
 		firstLine = self.__handler.readline()
 		# Computes the MD5 of the first line.
-		if isinstance(firstLine, unicode):
-			myHash = md5sum(firstLine.encode('utf-8')).digest()
-		else:
-			myHash = md5sum(firstLine).digest()
+		myHash = md5sum(firstLine).digest()
 		stats = os.fstat(self.__handler.fileno())
 		# Compare hash and inode
 		if self.__hash != myHash or self.__ino != stats.st_ino:
@@ -574,7 +555,14 @@ class FileContainer:
 	def readline(self):
 		if self.__handler == None:
 			return ""
-		return self.__handler.readline()
+		line = self.__handler.readline()
+		try:
+			line = line.decode('utf-8', 'strict')
+		except UnicodeDecodeError:
+			logSys.warn("Error decoding line to utf-8: %s" % `line`)
+			if sys.version_info >= (3,): # In python3, must be unicode
+				line = line.decode('utf-8', 'ignore')
+		return line
 
 	def close(self):
 		if not self.__handler == None:
