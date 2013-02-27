@@ -111,7 +111,8 @@ class Fail2banRegex:
 		print "This tools can test regular expressions for \"fail2ban\"."
 		print
 		print "Options:"
-		print "    -e, --encoding          set the file encoding"
+		print "    -e ENCODING, --encoding=ENCODING"
+		print "                            set the file encoding. default:system locale"
 		print "    -h, --help              display this help message"
 		print "    -V, --version           print the version"
 		print "    -v, --verbose           verbose output"
@@ -352,6 +353,7 @@ if __name__ == "__main__":
 			try:
 				hdlr = open(cmd_log, 'rb')
 				print "Use log file   : " + cmd_log
+				print "Use encoding   : " + fail2banRegex.encoding
 				print
 				for line in hdlr:
 					try:
