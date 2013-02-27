@@ -181,6 +181,12 @@ class Server:
 		return [m.getFileName()
 				for m in self.__jails.getFilter(name).getLogPath()]
 	
+	def setLogEncoding(self, name, encoding):
+		return self.__jails.getFilter(name).setLogEncoding(encoding)
+	
+	def getLogEncoding(self, name):
+		return self.__jails.getFilter(name).getLogEncoding()
+	
 	def setFindTime(self, name, value):
 		self.__jails.getFilter(name).setFindTime(value)
 	

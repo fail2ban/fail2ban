@@ -35,7 +35,7 @@ from datedetector import DateDetector
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
 
-import logging, re, os, fcntl, time, sys
+import logging, re, os, fcntl, time, sys, locale, codecs
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -392,6 +392,7 @@ class FileFilter(Filter):
 		Filter.__init__(self, jail, **kwargs)
 		## The log file path.
 		self.__logPath = []
+		self.setLogEncoding("auto")
 
 	##
 	# Add a log file path
@@ -402,7 +403,7 @@ class FileFilter(Filter):
 		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
 		else:
-			container = FileContainer(path, tail)
+			container = FileContainer(path, self.getLogEncoding(), tail)
 			self.__logPath.append(container)
 			logSys.info("Added logfile = %s" % path)
 			self._addLogPath(path)			# backend specific
@@ -450,6 +451,28 @@ class FileFilter(Filter):
 			if log.getFileName() == path:
 				return True
 		return False
+
+	##
+	# Set the log file encoding
+	#
+	# @param encoding the encoding used with log files
+
+	def setLogEncoding(self, encoding):
+		if encoding.lower() == "auto":
+			encoding = locale.getpreferredencoding()
+		codecs.lookup(encoding) # Raise LookupError if invalid codec
+		for log in self.getLogPath():
+			log.setEncoding(encoding)
+		self.__encoding = encoding
+		logSys.info("Set jail log file encoding to %s" % encoding)
+
+	##
+	# Get the log file encoding
+	#
+	# @return log encoding value
+
+	def getLogEncoding(self):
+		return self.__encoding
 
 	def getFileContainer(self, path):
 		for log in self.__logPath:
@@ -510,8 +533,9 @@ except ImportError:
 
 class FileContainer:
 
-	def __init__(self, filename, tail = False):
+	def __init__(self, filename, encoding, tail = False):
 		self.__filename = filename
+		self.setEncoding(encoding)
 		self.__tail = tail
 		self.__handler = None
 		# Try to open the file. Raises an exception if an error occured.
@@ -533,6 +557,13 @@ class FileContainer:
 
 	def getFileName(self):
 		return self.__filename
+
+	def setEncoding(self, encoding):
+		codecs.lookup(encoding) # Raises LookupError if invalid
+		self.__encoding = encoding
+
+	def getEncoding(self):
+		return self.__encoding
 
 	def open(self):
 		self.__handler = open(self.__filename, 'rb')
@@ -557,11 +588,12 @@ class FileContainer:
 			return ""
 		line = self.__handler.readline()
 		try:
-			line = line.decode('utf-8', 'strict')
+			line = line.decode(self.getEncoding(), 'strict')
 		except UnicodeDecodeError:
-			logSys.warn("Error decoding line to utf-8: %s" % `line`)
-			if sys.version_info >= (3,): # In python3, must be unicode
-				line = line.decode('utf-8', 'ignore')
+			logSys.warn("Error decoding line from '%s' with '%s': %s" %
+				(self.getFileName(), self.getEncoding(), `line`))
+			if sys.version_info >= (3,): # In python3, must be decoded
+				line = line.decode(self.getEncoding(), 'ignore')
 		return line
 
 	def close(self):
