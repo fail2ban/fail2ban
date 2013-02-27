@@ -22,7 +22,7 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import getopt, sys, time, logging, os
+import getopt, sys, time, logging, os, locale
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
@@ -77,6 +77,7 @@ class Fail2banRegex:
 		self.__ignoreregex = list()
 		self.__failregex = list()
 		self.__verbose = False
+		self.encoding = locale.getpreferredencoding()
 		# Setup logging
 		logging.getLogger("fail2ban").handlers = []
 		self.__hdlr = logging.StreamHandler(Fail2banRegex.test)
@@ -110,6 +111,7 @@ class Fail2banRegex:
 		print "This tools can test regular expressions for \"fail2ban\"."
 		print
 		print "Options:"
+		print "    -e, --encoding          set the file encoding"
 		print "    -h, --help              display this help message"
 		print "    -V, --version           print the version"
 		print "    -v, --verbose           verbose output"
@@ -141,6 +143,8 @@ class Fail2banRegex:
 				sys.exit(0)
 			elif opt[0] in ["-v", "--verbose"]:
 				self.__verbose = True
+			elif opt[0] in ["-e", "--encoding"]:
+				self.encoding = opt[1]
 
 	#@staticmethod
 	def logIsFile(value):
@@ -318,8 +322,8 @@ if __name__ == "__main__":
 	fail2banRegex = Fail2banRegex()
 	# Reads the command line options.
 	try:
-		cmdOpts = 'hVcv'
-		cmdLongOpts = ['help', 'version', 'verbose']
+		cmdOpts = 'e:hVcv'
+		cmdLongOpts = ['encoding=', 'help', 'version', 'verbose']
 		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
 	except getopt.GetoptError:
 		fail2banRegex.dispUsage()
@@ -346,13 +350,15 @@ if __name__ == "__main__":
 
 		if fail2banRegex.logIsFile(cmd_log):
 			try:
-				if sys.version_info >= (3,):
-					hdlr = open(cmd_log, encoding='utf-8', errors='ignore')
-				else:
-					hdlr = open(cmd_log)
+				hdlr = open(cmd_log, 'rb')
 				print "Use log file   : " + cmd_log
 				print
 				for line in hdlr:
+					try:
+						line = line.decode(fail2banRegex.encoding, 'strict')
+					except UnicodeDecodeError:
+						if sys.version_info >= (3,): # Python 3 must be decoded
+							line = line.decode(fail2banRegex.encoding, 'ignore')
 					fail2banRegex.testIgnoreRegex(line)
 					fail2banRegex.testRegex(line)
 			except IOError, e:
