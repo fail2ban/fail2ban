@@ -22,8 +22,8 @@ __license__ = "GPL"
 import getopt, sys, time, logging, os
 
 try:
-	from server.filterpyjournalctl import FilterPyjournalctl
-	import pyjournalctl
+	from server.filtersystemd import FilterSystemd
+	from systemd import journal
 except:
 	pass
 
@@ -119,7 +119,7 @@ class Fail2banRegex:
 		print "Log:"
 		print "    string                  a string representing a log line"
 		print "    filename                path to a log file (/var/log/auth.log)"
-		print "    \"systemd-journal\"       search systemd journal (pyjournalctl required)"
+		print "    \"systemd-journal\"       search systemd journal (systemd python required)"
 		print
 		print "Regex:"
 		print "    string                  a string representing a 'failregex'"
@@ -367,9 +367,9 @@ if __name__ == "__main__":
 				sys.exit(-1)
 		elif cmd_log == "systemd-journal":
 			try:
-				journal = pyjournalctl.Journalctl()
+				myjournal = journal.Reader()
 			except NameError:
-				print "Error: pyjournalctl not found. Exiting..."
+				print "Error: systemd library not found. Exiting..."
 				sys.exit(-1)
 			journalmatch = ""
 			# Parse journal matches from command line
@@ -383,16 +383,16 @@ if __name__ == "__main__":
 				if journalmatch != "ALL":
 					for element in journalmatch.split():
 						if element == "+":
-							journal.add_disjunction()
+							myjournal.add_disjunction()
 						else:
-							journal.add_match(element)
-			except:
+							myjournal.add_match(element)
+			except ValueError:
 				print "Error: Invalid journal match: %s" % journalmatch
 				print "Exiting..."
 				sys.exit(-1)
 			print "Use systemd journal match: %s" % (journalmatch or "ALL")
-			for entry in journal:
-				line = FilterPyjournalctl.formatJournalEntry(entry)
+			for entry in myjournal:
+				line = FilterSystemd.formatJournalEntry(entry)
 				fail2banRegex.testIgnoreRegex(line)
 				fail2banRegex.testRegex(line)
 		else:

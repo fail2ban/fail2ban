@@ -29,7 +29,7 @@ from mytime import MyTime
 
 import logging, datetime
 
-import pyjournalctl
+from systemd import journal
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -41,7 +41,7 @@ logSys = logging.getLogger("fail2ban.filter")
 # else that matches a given regular expression. This class is instantiated by
 # a Jail object.
 
-class FilterPyjournalctl(JournalFilter):
+class FilterSystemd(JournalFilter):
 	##
 	# Constructor.
 	#
@@ -52,12 +52,12 @@ class FilterPyjournalctl(JournalFilter):
 		JournalFilter.__init__(self, jail, **kwargs)
 		self.__modified = False
 		# Initialise systemd-journal connection
-		self.__journalctl = pyjournalctl.Journalctl()
+		self.__journal = journal.Reader()
 		start_time = datetime.datetime.utcnow() - \
 				datetime.timedelta(seconds=int(self.getFindTime()))
-		self.__journalctl.seek_realtime(start_time)
+		self.__journal.seek_realtime(start_time)
 		self.__matches = []
-		logSys.debug("Created FilterPyjournalctl")
+		logSys.debug("Created FilterSystemd")
 
 	##
 	# Add a journal match filter
@@ -66,13 +66,13 @@ class FilterPyjournalctl(JournalFilter):
 
 	def addJournalMatch(self, match):
 		if self.__matches:
-			self.__journalctl.add_disjunction() # Add OR
+			self.__journal.add_disjunction() # Add OR
 		try:
 			for match_element in match.split():
 				if match_element == "+":
-					self.__journalctl.add_disjunction()
+					self.__journal.add_disjunction()
 				else:
-					self.__journalctl.add_match(match_element)
+					self.__journal.add_match(match_element)
 		except:
 			logSys.error("Error adding journal match for: %s", match)
 			self.resetJournalMatches()
@@ -86,7 +86,7 @@ class FilterPyjournalctl(JournalFilter):
 	# @return None 
 
 	def resetJournalMatches(self):
-		self.__journalctl.flush_matches()
+		self.__journal.flush_matches()
 		logSys.debug("Flushed all journal matches")
 		match_copy = self.__matches[:]
 		self.__matches = []
@@ -137,7 +137,7 @@ class FilterPyjournalctl(JournalFilter):
 			loglines.append("[%12.6f]" % (
 				logentry.get('_SOURCE_MONOTONIC_TIMESTAMP',
 				logentry.get('__MONOTONIC_TIMESTAMP')
-				).total_seconds()))
+				)[0].total_seconds()))
 		if isinstance(logentry.get('MESSAGE',''), list):
 			loglines.append(" ".join(logentry['MESSAGE']))
 		else:
@@ -159,7 +159,7 @@ class FilterPyjournalctl(JournalFilter):
 		while self._isActive():
 			if not self.getIdle():
 				while self._isActive():
-					logentry = self.__journalctl.get_next()
+					logentry = self.__journal.get_next()
 					if logentry:
 						self.processLineAndAdd(
 							self.formatJournalEntry(logentry))
@@ -175,7 +175,7 @@ class FilterPyjournalctl(JournalFilter):
 						self.failManager.cleanup(MyTime.time())
 					self.dateDetector.sortTemplate()
 					self.__modified = False
-			self.__journalctl.wait(self.getSleepTime())
+			self.__journal.wait(self.getSleepTime())
 		logSys.debug((self.jail is not None and self.jail.getName()
                       or "jailless") +" filter terminated")
 		return True
