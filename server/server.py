@@ -29,6 +29,7 @@ __license__ = "GPL"
 
 from threading import Lock, RLock
 from jails import Jails
+from filter import FileFilter, JournalFilter
 from transmitter import Transmitter
 from asyncserver import AsyncServer
 from asyncserver import AsyncServerException
@@ -172,14 +173,41 @@ class Server:
 		return self.__jails.getFilter(name).getIgnoreIP()
 	
 	def addLogPath(self, name, fileName):
-		self.__jails.getFilter(name).addLogPath(fileName)
+		filter_ = self.__jails.getFilter(name)
+		if isinstance(filter_, FileFilter):
+			filter_.addLogPath(fileName)
 	
 	def delLogPath(self, name, fileName):
-		self.__jails.getFilter(name).delLogPath(fileName)
+		filter_ = self.__jails.getFilter(name)
+		if isinstance(filter_, FileFilter):
+			self.__jails.getFilter(name).delLogPath(fileName)
 	
 	def getLogPath(self, name):
-		return [m.getFileName()
-				for m in self.__jails.getFilter(name).getLogPath()]
+		filter_ = self.__jails.getFilter(name)
+		if isinstance(filter_, FileFilter):
+			return [m.getFileName()
+					for m in filter_.getLogPath()]
+		else:
+			logSys.info("Jail %s is not a FileFilter instance" % name)
+			return []
+	
+	def addJournalMatch(self, name, match):
+		filter_ = self.__jails.getFilter(name)
+		if isinstance(filter_, JournalFilter):
+			filter_.addJournalMatch(match)
+	
+	def delJournalMatch(self, name, match):
+		filter_ = self.__jails.getFilter(name)
+		if isinstance(filter_, JournalFilter):
+			filter_.delJournalMatch(match)
+	
+	def getJournalMatch(self, name):
+		filter_ = self.__jails.getFilter(name)
+		if isinstance(filter_, JournalFilter):
+			return filter_.getJournalMatch()
+		else:
+			logSys.info("Jail %s is not a JournalFilter instance" % name)
+			return []
 	
 	def setFindTime(self, name, value):
 		self.__jails.getFilter(name).setFindTime(value)

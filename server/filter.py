@@ -289,22 +289,25 @@ class Filter(JailThread):
 	def processLine(self, line):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
-		try:
-			# Decode line to UTF-8
-			l = line.decode('utf-8')
-		except UnicodeDecodeError:
-			l = line
-		timeMatch = self.dateDetector.matchTime(l)
+		# Line might already be unicode
+		if isinstance(line, str):
+			try:
+				# Decode line from UTF-8
+				line = line.decode('utf-8')
+			except UnicodeDecodeError:
+				# Leave line as string
+				pass
+		timeMatch = self.dateDetector.matchTime(line)
 		if timeMatch:
 			# Lets split into time part and log part of the line
 			timeLine = timeMatch.group()
 			# Lets leave the beginning in as well, so if there is no
 			# anchore at the beginning of the time regexp, we don't
 			# at least allow injection. Should be harmless otherwise
-			logLine  = l[:timeMatch.start()] + l[timeMatch.end():]
+			logLine  = line[:timeMatch.start()] + line[timeMatch.end():]
 		else:
-			timeLine = l
-			logLine = l
+			timeLine = line
+			logLine = line
 		return self.findFailure(timeLine, logLine)
 
 	def processLineAndAdd(self, line):
@@ -571,6 +574,21 @@ class FileContainer:
 			self.__handler = None
 
 
+##
+# JournalFilter class.
+#
+# Base interface class for systemd journal filters
+
+class JournalFilter(Filter):
+
+	def addJournalMatch(self, match):
+		pass
+
+	def delJournalMatch(self, match):
+		pass
+
+	def getJournalMatch(self, match):
+		return []
 
 ##
 # Utils class for DNS and IP handling.

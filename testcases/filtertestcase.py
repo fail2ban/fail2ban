@@ -28,6 +28,11 @@ import sys
 import time
 import tempfile
 
+try:
+	from systemd import journal
+except ImportError:
+	pass
+
 from server.jail import Jail
 from server.filterpoll import FilterPoll
 from server.filter import FileFilter, DNSUtils
@@ -122,6 +127,29 @@ def _copy_lines_between_files(fin, fout, n=None, skip=0, mode='a', terminal_line
 	# to give other threads possibly some time to crunch
 	time.sleep(0.1)
 	return fout
+
+def _copy_lines_to_journal(fin, fields={},n=None, skip=0, terminal_line=""):
+	"""Copy lines from one file to systemd journal
+
+	Returns None
+	"""
+	if isinstance(fin, str):
+		fin = open(fin, 'r')
+	# Required for filtering
+	fields.update({"SYSLOG_IDENTIFIER": "fail2ban-testcases",
+					"PRIORITY": "7",
+					})
+	# Skip
+	for i in xrange(skip):
+		_ = fin.readline()
+	# Read/Write
+	i = 0
+	while n is None or i < n:
+		l = fin.readline()
+		if terminal_line is not None and l == terminal_line:
+			break
+		journal.send(MESSAGE=l.strip(), **fields)
+		i += 1
 
 #
 #  Actual tests
@@ -491,6 +519,129 @@ def get_monitor_failures_testcase(Filter_):
 
 	return MonitorFailures
 
+def get_monitor_failures_journal_testcase(Filter_):
+	"""Generator of TestCase's for journal based filters/backends
+	"""
+
+	class MonitorJournalFailures(unittest.TestCase):
+		def setUp(self):
+			"""Call before every test case."""
+			self.test_file = "testcases/files/testcase-journal.log"
+			self.jail = DummyJail()
+			self.filter = Filter_(self.jail)
+			# UUID used to ensure that only meeages generated
+			# as part of this test are picked up by the filter
+			import uuid
+			self.test_uuid = str(uuid.uuid4())
+			self.name = "monitorjournalfailures-%s" % self.test_uuid
+			self.filter.addJournalMatch(
+				"SYSLOG_IDENTIFIER=fail2ban-testcases "
+				"TEST_FIELD=1 "
+				"TEST_UUID=%s" % str(self.test_uuid))
+			self.filter.addJournalMatch(
+				"SYSLOG_IDENTIFIER=fail2ban-testcases "
+				"TEST_FIELD=2 "
+				"TEST_UUID=%s" % self.test_uuid)
+			self.journal_fields = {
+				'TEST_FIELD': "1", 'TEST_UUID': self.test_uuid}
+			self.filter.setActive(True)
+			self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
+			self.filter.start()
+
+		def tearDown(self):
+			self.filter.stop()
+			self.filter.join()		  # wait for the thread to terminate
+			pass
+
+		def __str__(self):
+			return "MonitorJournalFailures%s(%s)" \
+			  % (Filter_, hasattr(self, 'name') and self.name or 'tempfile')
+
+		def isFilled(self, delay=2.):
+			"""Wait up to `delay` sec to assure that it was modified or not
+			"""
+			time0 = time.time()
+			while time.time() < time0 + delay:
+				if len(self.jail):
+					return True
+				time.sleep(0.1)
+			return False
+
+		def isEmpty(self, delay=0.4):
+			# shorter wait time for not modified status
+			return not self.isFilled(delay)
+
+		def assert_correct_ban(self, test_ip, test_attempts):
+			self.assertTrue(self.isFilled(10)) # give Filter a chance to react
+			ticket = self.jail.getFailTicket()
+
+			attempts = ticket.getAttempt()
+			ip = ticket.getIP()
+			matches = ticket.getMatches()
+
+			self.assertEqual(ip, test_ip)
+			self.assertEqual(attempts, test_attempts)
+
+		def test_grow_file(self):
+			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+
+			# Now let's feed it with entries from the file
+			_copy_lines_to_journal(
+				self.test_file, self.journal_fields, n=2)
+			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+			# and our dummy jail is empty as well
+			self.assertFalse(len(self.jail))
+			# since it should have not been enough
+
+			_copy_lines_to_journal(
+				self.test_file, self.journal_fields, skip=2, n=3)
+			self.assertTrue(self.isFilled(6))
+			# so we sleep for up to 6 sec for it not to become empty,
+			# and meanwhile pass to other thread(s) and filter should
+			# have gathered new failures and passed them into the
+			# DummyJail
+			self.assertEqual(len(self.jail), 1)
+			# and there should be no "stuck" ticket in failManager
+			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+			self.assert_correct_ban("193.168.0.128", 3)
+			self.assertEqual(len(self.jail), 0)
+
+			# Lets read some more to check it bans again
+			_copy_lines_to_journal(
+				self.test_file, self.journal_fields, skip=5, n=4)
+			self.assert_correct_ban("193.168.0.128", 3)
+
+		def test_delJournalMatch(self):
+			# Smoke test for removing of match
+
+			# basic full test
+			_copy_lines_to_journal(
+				self.test_file, self.journal_fields, n=5)
+			self.assert_correct_ban("193.168.0.128", 3)
+
+			# and now remove the JournalMatch
+			self.filter.delJournalMatch(
+				"SYSLOG_IDENTIFIER=fail2ban-testcases "
+				"TEST_FIELD=1 "
+				"TEST_UUID=%s" % str(self.test_uuid))
+
+			_copy_lines_to_journal(
+				self.test_file, self.journal_fields, n=5, skip=5)
+			# so we should get no more failures detected
+			self.assertTrue(self.isEmpty(2))
+
+			# but then if we add it back again
+			self.filter.addJournalMatch(
+				"SYSLOG_IDENTIFIER=fail2ban-testcases "
+				"TEST_FIELD=1 "
+				"TEST_UUID=%s" % str(self.test_uuid))
+			self.assert_correct_ban("193.168.0.128", 4)
+			_copy_lines_to_journal(
+				self.test_file, self.journal_fields, n=6, skip=10)
+			# we should detect the failures
+			self.assertTrue(self.isFilled(6))
+
+	return MonitorJournalFailures
 
 class GetFailures(unittest.TestCase):
 

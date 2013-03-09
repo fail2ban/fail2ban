@@ -196,6 +196,22 @@ finally:
 	if old_TZ:
 		os.environ['TZ'] = old_TZ
 	time.tzset()
+	MyTime.setTime(None)
 
-if not tests_results.wasSuccessful():
+# Journal tests cannot be run in modified TZ and time, so run separately
+try:
+	from server.filtersystemd import FilterSystemd
+	from systemd.journal import Reader
+	print "Please wait..."
+	tests2 = unittest.TestSuite()
+	tests2.addTest(unittest.makeSuite(
+		filtertestcase.get_monitor_failures_journal_testcase(FilterSystemd)))
+except Exception, e:
+	print "I: Skipping systemd backend testing. Got exception '%s'" % e
+	tests2_success = True # Ignore
+else:
+	tests2_results = testRunner.run(tests2)
+	tests2_success = tests2_results.wasSuccessful()
+
+if not tests_results.wasSuccessful() or not tests2_success:
 	sys.exit(1)
