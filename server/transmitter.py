@@ -112,14 +112,18 @@ class Transmitter:
 			return self.__server.getLogLevel()
 		elif name == "logtarget":
 			value = command[1]
-			self.__server.setLogTarget(value)
-			return self.__server.getLogTarget()
+			if self.__server.setLogTarget(value):
+				return self.__server.getLogTarget()
+			else:
+				raise Exception("Failed to change log target")
 		# Jail
 		elif command[1] == "idle":
 			if command[2] == "on":
 				self.__server.setIdleJail(name, True)
 			elif command[2] == "off":
 				self.__server.setIdleJail(name, False)
+			else:
+				raise Exception("Invalid idle option, must be 'yes' or 'no'")
 			return self.__server.getIdleJail(name)
 		# Filter
 		elif command[1] == "addignoreip":
@@ -275,7 +279,7 @@ class Transmitter:
 	def status(self, command):
 		if len(command) == 0:
 			return self.__server.status()
-		else:
+		elif len(command) == 1:
 			name = command[0]
 			return self.__server.statusJail(name)
 		raise Exception("Invalid command (no status)")
