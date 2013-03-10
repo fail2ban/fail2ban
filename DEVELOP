@@ -92,7 +92,7 @@ Documentation
 -------------
 
 Ensure this documentation is up to date after changes. Also ensure that the man
-pages still are accurage. Ensure that there is sufficient documentation for 
+pages still are accurate. Ensure that there is sufficient documentation for
 your new features to be used.
 
 Bugs
@@ -107,7 +107,7 @@ Use the following tags in your commit messages:
 
 'ENH:' for enhancements
 'BF:' for bug fixes
-'DOC:' for documenation fixes
+'DOC:' for documentation fixes
 
 Adding Actions
 --------------
@@ -265,4 +265,4 @@ python -c 'import common.protocol; common.protocol.printWiki()'
 
 email users and development list of release
 
-TODO notifing distributors etc.
+TODO notifying distributors etc.
