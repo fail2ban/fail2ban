@@ -77,10 +77,10 @@ verbosity = {'debug': 3,
 			 'fatal': 0,
 			 None: 1}[opts.log_level]
 
-if opts.log_level is not None:
+if opts.log_level is not None: # pragma: no cover
 	# so we had explicit settings
 	logSys.setLevel(getattr(logging, opts.log_level.upper()))
-else:
+else: # pragma: no cover
 	# suppress the logging but it would leave unittests' progress dots
 	# ticking, unless like with '-l fatal' which would be silent
 	# unless error occurs
@@ -89,9 +89,9 @@ else:
 # Add the default logging handler
 stdout = logging.StreamHandler(sys.stdout)
 # Custom log format for the verbose tests runs
-if verbosity > 1:
+if verbosity > 1: # pragma: no cover
 	stdout.setFormatter(logging.Formatter(' %(asctime)-15s %(thread)s %(message)s'))
-else:
+else: # pragma: no cover
 	# just prefix with the space
 	stdout.setFormatter(logging.Formatter(' %(message)s'))
 logSys.addHandler(stdout)
@@ -99,7 +99,7 @@ logSys.addHandler(stdout)
 #
 # Let know the version
 #
-if not opts.log_level or opts.log_level != 'fatal':
+if not opts.log_level or opts.log_level != 'fatal': # pragma: no cover
 	print "Fail2ban %s test suite. Python %s. Please wait..." \
 	    % (version, str(sys.version).replace('\n', ''))
 
@@ -107,9 +107,9 @@ if not opts.log_level or opts.log_level != 'fatal':
 #
 # Gather the tests
 #
-if not len(regexps):
+if not len(regexps): # pragma: no cover
 	tests = unittest.TestSuite()
-else:
+else: # pragma: no cover
 	import re
 	class FilteredTestSuite(unittest.TestSuite):
 		_regexps = [re.compile(r) for r in regexps]
@@ -159,13 +159,13 @@ filters = [FilterPoll]					  # always available
 try:
 	from server.filtergamin import FilterGamin
 	filters.append(FilterGamin)
-except Exception, e:
+except Exception, e: # pragma: no cover
 	print "I: Skipping gamin backend testing. Got exception '%s'" % e
 
 try:
 	from server.filterpyinotify import FilterPyinotify
 	filters.append(FilterPyinotify)
-except Exception, e:
+except Exception, e: # pragma: no cover
 	print "I: Skipping pyinotify backend testing. Got exception '%s'" % e
 
 for Filter_ in filters:
@@ -189,7 +189,7 @@ try:
 
 	tests_results = testRunner.run(tests)
 
-finally:
+finally: # pragma: no cover
 	# Just for the sake of it reset the TZ
 	# yoh: move all this into setup/teardown methods within tests
 	os.environ.pop('TZ')
@@ -197,5 +197,5 @@ finally:
 		os.environ['TZ'] = old_TZ
 	time.tzset()
 
-if not tests_results.wasSuccessful():
+if not tests_results.wasSuccessful(): # pragma: no cover
 	sys.exit(1)

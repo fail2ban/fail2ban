@@ -3,6 +3,8 @@ ChangeLog
 TODO
 THANKS
 COPYING
+DEVELOP
+doc/run-rootless.txt
 fail2ban-client
 fail2ban-server
 fail2ban-testcases
