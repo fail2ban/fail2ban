@@ -477,8 +477,13 @@ class FileFilter(Filter):
 		# Try to open log file.
 		try:
 			container.open()
-		except Exception, e:
+		# see http://python.org/dev/peps/pep-3151/
+		except IOError, e:
 			logSys.error("Unable to open %s" % filename)
+			logSys.exception(e)
+			return False
+		except OSError, e: # pragma: no cover - requires race condition to tigger this
+			logSys.error("Error opening %s" % filename)
 			logSys.exception(e)
 			return False
 
