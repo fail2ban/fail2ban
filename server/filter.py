@@ -44,7 +44,7 @@ logSys = logging.getLogger("fail2ban.filter")
 # Log reader class.
 #
 # This class reads a log file and detects login failures or anything else
-# that matches a given regular expression. This class is instanciated by
+# that matches a given regular expression. This class is instantiated by
 # a Jail object.
 
 class Filter(JailThread):
@@ -117,7 +117,7 @@ class Filter(JailThread):
 	# Add the regular expression which matches the failure.
 	#
 	# The regular expression can also match any other pattern than failures
-	# and thus can be used for many purporse.
+	# and thus can be used for many purpose.
 	# @param value the regular expression
 
 	def addIgnoreRegex(self, value):
@@ -414,7 +414,7 @@ class FileFilter(Filter):
 
 	def _addLogPath(self, path):
 		# nothing to do by default
-		# to be overriden by backends
+		# to be overridden by backends
 		pass
 
 
@@ -433,7 +433,7 @@ class FileFilter(Filter):
 
 	def _delLogPath(self, path):
 		# nothing to do by default
-		# to be overriden by backends
+		# to be overridden by backends
 		pass
 
 	##

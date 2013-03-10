@@ -297,7 +297,7 @@ class Fail2banClient:
 					delta = -1
 				elif pos < 2:
 					delta = 1
-			# The server has 30 secondes to start.
+			# The server has 30 seconds to start.
 			if cnt >= 300:
 				if self.__conf["verbose"] > 1:
 					sys.stdout.write('\n')
