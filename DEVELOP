@@ -247,6 +247,8 @@ Releasing
 
 Ensure the version is correct in ./common/version.py
 
+Add/finalize the corresponding entry in the ChangeLog
+
 # update man pages
 (cd man ; ./generate-man )
 
