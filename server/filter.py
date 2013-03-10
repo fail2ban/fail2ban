@@ -211,7 +211,7 @@ class Filter(JailThread):
 	# file has been modified and looks for failures.
 	# @return True when the thread exits nicely
 
-	def run(self):
+	def run(self): # pragma: no cover
 		raise Exception("run() is abstract")
 
 	##
@@ -226,7 +226,7 @@ class Filter(JailThread):
 			self.failManager.addFailure(FailTicket(ip, unixTime))
 
 		# Perform the banning of the IP now.
-		try:
+		try: # pragma: no branch - exception is the only way out
 			while True:
 				ticket = self.failManager.toBan()
 				self.jail.putFailTicket(ticket)
@@ -373,7 +373,7 @@ class Filter(JailThread):
 								failList.append([ip, date])
 							# We matched a regex, it is enough to stop.
 							break
-					except RegexException, e:
+					except RegexException, e: # pragma: no cover - unsure if reachable
 						logSys.error(e)
 		return failList
 
@@ -507,7 +507,7 @@ class FileFilter(Filter):
 try:
 	import hashlib
 	md5sum = hashlib.md5
-except ImportError:
+except ImportError: # pragma: no cover
 	# hashlib was introduced in Python 2.5.  For compatibility with those
 	# elderly Pythons, import from md5
 	import md5

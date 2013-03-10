@@ -418,7 +418,7 @@ class Fail2banClient:
 class ServerExecutionException(Exception):
 	pass
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover - can't test main
 	client = Fail2banClient()
 	# Exit with correct return value
 	if client.start(sys.argv):
