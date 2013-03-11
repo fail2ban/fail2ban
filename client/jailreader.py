@@ -40,8 +40,8 @@ class JailReader(ConfigReader):
 	
 	actionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
 	
-	def __init__(self, name):
-		ConfigReader.__init__(self)
+	def __init__(self, name, **kwargs):
+		ConfigReader.__init__(self, **kwargs)
 		self.__name = name
 		self.__filter = None
 		self.__actions = list()
@@ -53,7 +53,7 @@ class JailReader(ConfigReader):
 		return self.__name
 	
 	def read(self):
-		ConfigReader.read(self, "jail")
+		return ConfigReader.read(self, "jail")
 	
 	def isEnabled(self):
 		return self.__opts["enabled"]
@@ -75,7 +75,8 @@ class JailReader(ConfigReader):
 		
 		if self.isEnabled():
 			# Read filter
-			self.__filter = FilterReader(self.__opts["filter"], self.__name)
+			self.__filter = FilterReader(self.__opts["filter"], self.__name,
+										 basedir=self.getBaseDir())
 			ret = self.__filter.read()
 			if ret:
 				self.__filter.getOptions(self.__opts)
@@ -87,7 +88,7 @@ class JailReader(ConfigReader):
 			for act in self.__opts["action"].split('\n'):
 				try:
 					splitAct = JailReader.splitAction(act)
-					action = ActionReader(splitAct, self.__name)
+					action = ActionReader(splitAct, self.__name, basedir=self.getBaseDir())
 					ret = action.read()
 					if ret:
 						action.getOptions(self.__opts)
