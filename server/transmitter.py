@@ -189,7 +189,7 @@ class Transmitter:
 		elif command[1] == "setcinfo":
 			act = command[2]
 			key = command[3]
-			value = command[4]
+			value = " ".join(command[4:])
 			self.__server.setCInfo(name, act, key, value)
 			return self.__server.getCInfo(name, act, key)
 		elif command[1] == "delcinfo":
@@ -199,27 +199,27 @@ class Transmitter:
 			return None
 		elif command[1] == "actionstart":
 			act = command[2]
-			value = command[3]
+			value = " ".join(command[3:])
 			self.__server.setActionStart(name, act, value)
 			return self.__server.getActionStart(name, act)
 		elif command[1] == "actionstop":
 			act = command[2]
-			value = command[3]
+			value = " ".join(command[3:])
 			self.__server.setActionStop(name, act, value)
 			return self.__server.getActionStop(name, act)
 		elif command[1] == "actioncheck":
 			act = command[2]
-			value = command[3]
+			value = " ".join(command[3:])
 			self.__server.setActionCheck(name, act, value)
 			return self.__server.getActionCheck(name, act)
 		elif command[1] == "actionban":
 			act = command[2]
-			value = command[3]
+			value = " ".join(command[3:])
 			self.__server.setActionBan(name, act, value)
 			return self.__server.getActionBan(name, act)
 		elif command[1] == "actionunban":
 			act = command[2]
-			value = command[3]
+			value = " ".join(command[3:])
 			self.__server.setActionUnban(name, act, value)
 			return self.__server.getActionUnban(name, act)
 		raise Exception("Invalid command (no set action or not yet implemented)")
