@@ -36,7 +36,8 @@ missing branches. Also see http://nedbatchelder.com/code/coverage/branch.html
 for more details.
 
 Install the package python-coverage to visualise your test coverage. Run the
-following:
+following (note: on Debian-based systems, the script is called
+`python-coverage`):
 
 coverage run fail2ban-testcases
 coverage html
