@@ -93,6 +93,7 @@ class Filter(JailThread):
 			self.__failRegex.append(regex)
 		except RegexException, e:
 			logSys.error(e)
+			raise e
 
 
 	def delFailRegex(self, index):
@@ -126,6 +127,7 @@ class Filter(JailThread):
 			self.__ignoreRegex.append(regex)
 		except RegexException, e:
 			logSys.error(e)
+			raise e 
 
 	def delIgnoreRegex(self, index):
 		try:

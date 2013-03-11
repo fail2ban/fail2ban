@@ -29,6 +29,7 @@ __license__ = "GPL"
 
 import unittest, socket, time, tempfile, os
 from server.server import Server
+from common.exceptions import UnknownJailException
 
 class StartStop(unittest.TestCase):
 
@@ -141,6 +142,9 @@ class Transmitter(unittest.TestCase):
 				self.__transm.proceed(["get", jail, cmd]),
 				(0, outValues[n+1:]))
 
+	def testStopServer(self):
+		self.assertEqual(self.__transm.proceed(["stop"]), (0, None))
+
 	def testPing(self):
 		self.assertEqual(self.__transm.proceed(["ping"]), (0, "pong"))
 
@@ -162,11 +166,7 @@ class Transmitter(unittest.TestCase):
 
 		# If path is invalid, do not change logtarget
 		value = "/this/path/should/not/exist"
-		self.assertEqual(
-			self.__transm.proceed(["set", "logtarget", value]),
-			(0, logTarget)) #NOTE: Shouldn't this return 1
-		self.assertEqual(
-			self.__transm.proceed(["get", "logtarget"]), (0, logTargets[-1]))
+		self.setGetTestNOK("logtarget", value)
 
 		self.__transm.proceed(["set", "/dev/null"])
 		for logTarget in logTargets:
@@ -196,6 +196,28 @@ class Transmitter(unittest.TestCase):
 		self.assertEqual(
 			self.__transm.proceed(["add", "all", "polling"])[0], 1)
 
+	def testStartStopJail(self):
+		self.assertEqual(
+			self.__transm.proceed(["start", self.jailName]), (0, None))
+		time.sleep(1)
+		self.assertEqual(
+			self.__transm.proceed(["stop", self.jailName]), (0, None))
+		self.assertRaises(
+			UnknownJailException, self.__server.isAlive, self.jailName)
+
+	def testStartStopAllJail(self):
+		self.__server.addJail("TestJail2", "auto")
+		self.assertEqual(
+			self.__transm.proceed(["start", self.jailName]), (0, None))
+		self.assertEqual(
+			self.__transm.proceed(["start", "TestJail2"]), (0, None))
+		self.assertEqual(self.__transm.proceed(["stop", "all"]), (0, None))
+		time.sleep(1)
+		self.assertRaises(
+			UnknownJailException, self.__server.isAlive, self.jailName)
+		self.assertRaises(
+			UnknownJailException, self.__server.isAlive, "TestJail2")
+
 	def testJailIdle(self):
 		self.assertEqual(
 			self.__transm.proceed(["set", self.jailName, "idle", "on"]),
@@ -205,7 +227,7 @@ class Transmitter(unittest.TestCase):
 			(0, False))
 		self.assertEqual(
 			self.__transm.proceed(["set", self.jailName, "idle", "CAT"])[0],
-			0) #NOTE: Should this return 1
+			1)
 
 	def testJailFindTime(self):
 		self.setGetTest("findtime", "120", 120, jail=self.jailName)
@@ -249,8 +271,7 @@ class Transmitter(unittest.TestCase):
 		# Unban IP which isn't banned
 		self.assertEqual(
 			self.__transm.proceed(
-				["set", self.jailName, "unbanip", "192.168.1.1"]),
-			(0, "None")) #NOTE: Should this return 1?
+				["set", self.jailName, "unbanip", "192.168.1.1"])[0],1)
 
 	def testJailMaxRetry(self):
 		self.setGetTest("maxretry", "5", 5, jail=self.jailName)
@@ -335,8 +356,8 @@ class Transmitter(unittest.TestCase):
 
 		self.assertEqual(
 			self.__transm.proceed(
-				["set", self.jailName, "addfailregex", "No host regex"]),
-			(0, [])) #NOTE: Shouldn't this return 1?
+				["set", self.jailName, "addfailregex", "No host regex"])[0],
+			1)
 		self.assertEqual(
 			self.__transm.proceed(
 				["set", self.jailName, "addfailregex", 654])[0],
@@ -357,6 +378,10 @@ class Transmitter(unittest.TestCase):
 			self.jailName
 		)
 
+		self.assertEqual(
+			self.__transm.proceed(
+				["set", self.jailName, "addignoreregex", "Invalid [regex"])[0],
+			1)
 		self.assertEqual(
 			self.__transm.proceed(
 				["set", self.jailName, "addignoreregex", 50])[0],
@@ -409,6 +434,9 @@ class Transmitter(unittest.TestCase):
 		self.assertEqual(
 			self.__transm.proceed(["set", self.jailName, "addaction", action]),
 			(0, action))
+		self.assertEqual(
+			self.__transm.proceed(["get", self.jailName, "addaction", action]),
+			(0, action))
 		for cmd, value in zip(cmdList, cmdValueList):
 			self.assertEqual(
 				self.__transm.proceed(
@@ -439,5 +467,19 @@ class Transmitter(unittest.TestCase):
 			(0, None))
 		self.assertEqual(
 			self.__transm.proceed(
-				["set", self.jailName, "delaction", "Doesn't exist"]),
-			(0, None)) #NOTE: Should this return 1?
+				["set", self.jailName, "delaction", "Doesn't exist"])[0],1)
+
+	def testNOK(self):
+		self.assertEqual(self.__transm.proceed(["INVALID", "COMMAND"])[0],1)
+
+	def testSetNOK(self):
+		self.assertEqual(
+			self.__transm.proceed(["set", "INVALID", "COMMAND"])[0],1)
+
+	def testGetNOK(self):
+		self.assertEqual(
+			self.__transm.proceed(["get", "INVALID", "COMMAND"])[0],1)
+
+	def testStatusNOK(self):
+		self.assertEqual(
+			self.__transm.proceed(["status", "INVALID", "COMMAND"])[0],1)
