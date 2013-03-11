@@ -77,7 +77,8 @@ class Actions(JailThread):
 		for action in self.__actions:
 			if action.getName() == name:
 				self.__actions.remove(action)
-				break
+				return
+		raise KeyError("Invalid Action name: %s" % name)
 	
 	##
 	# Returns an action.
@@ -91,7 +92,7 @@ class Actions(JailThread):
 		for action in self.__actions:
 			if action.getName() == name:
 				return action
-		raise KeyError
+		raise KeyError("Invalid Action name")
 	
 	##
 	# Returns the last defined action.
@@ -131,7 +132,7 @@ class Actions(JailThread):
 			# Unban the IP.
 			self.__unBan(ticket)
 			return ip
-		return 'None'
+		raise ValueError("IP %s is not banned" % ip)
 
 	##
 	# Main loop.
