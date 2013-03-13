@@ -40,6 +40,7 @@ protocol = [
 ["stop", "stops all jails and terminate the server"], 
 ["status", "gets the current status of the server"], 
 ["ping", "tests if the server is alive"], 
+["help", "return this output"], 
 ['', "LOGGING", ""],
 ["set loglevel <LEVEL>", "sets logging level to <LEVEL>. 0 is minimal, 4 is debug"], 
 ["get loglevel", "gets the logging level"], 
@@ -92,6 +93,7 @@ protocol = [
 ["get <JAIL> actioncheck <ACT>", "gets the check command for the action <ACT> for <JAIL>"],
 ["get <JAIL> actionban <ACT>", "gets the ban command for the action <ACT> for <JAIL>"],
 ["get <JAIL> actionunban <ACT>", "gets the unban command for the action <ACT> for <JAIL>"],
+["get <JAIL> cinfo <ACT> <KEY>", "gets the value for <KEY> for the action <ACT> for <JAIL>"],
 ]
 
 ##

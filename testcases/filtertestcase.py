@@ -99,11 +99,11 @@ def _copy_lines_between_files(fin, fout, n=None, skip=0, mode='a', terminal_line
 
 	Returns open fout
 	"""
-	if sys.version_info[:2] <= (2,4):
+	if sys.version_info[:2] <= (2,4): # pragma: no cover
 		# on old Python st_mtime is int, so we should give at least 1 sec so
 		# polling filter could detect the change
 		time.sleep(1)
-	if isinstance(fin, str):
+	if isinstance(fin, str): # pragma: no branch - only used with str in test cases
 		fin = open(fin, 'r')
 	if isinstance(fout, str):
 		fout = open(fout, mode)
@@ -353,7 +353,7 @@ def get_monitor_failures_testcase(Filter_):
 			_killfile(self.file, self.name)
 			pass
 
-		def __str__(self):
+		def __str__(self): # pragma: no cover - will only show up if unexpected exception is thrown
 			return "MonitorFailures%s(%s)" \
 			  % (Filter_, hasattr(self, 'name') and self.name or 'tempfile')
 

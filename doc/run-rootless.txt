@@ -1,7 +1,7 @@
-Fail2ban normally requires root priviledges to insert iptables rules
+Fail2ban normally requires root privileges to insert iptables rules
 through calls to /sbin/iptables and also to read the logfiles.
-Fail2ban can run as an unpriviledged user provided that those two
-capabilites are preserved. The idea is to run fail2ban as a normal
+Fail2ban can run as an unprivileged user provided that those two
+capabilities are preserved. The idea is to run fail2ban as a normal
 user (e.g. fail2ban) who belongs to a group which is allowed to read
 logfiles. The user should also be allowed to write to
 /proc/net/xt_recent/fail2ban-<name> (name is specified in the iptables
@@ -20,14 +20,14 @@ Another way to use xt_recent is by inserting the rules by writing to
 action. Files in /proc/net/xt_recent/ are protected by normal
 filesystem rules, so can be chown'ed and chmod'ed to be writable by a
 certain user. After the necessary iptables rules are inserted (which
-requires root priviledges), blacklisting can be perfomed by an
-unpriviledged user.
+requires root privileges), blacklisting can be performed by an
+unprivileged user.
 
 Using fail2ban with xt_recent allows smarter filtering than normal
 iptables rules with the xt_recent module can provide.
 
 The disadvantage is that fail2ban cannot perform the setup by itself,
-which would require the priviledge to call /sbin/iptables, and it must
+which would require the privilege to call /sbin/iptables, and it must
 be done through other means.
 
 The primary advantage is obvious: it's generally better to run
@@ -46,7 +46,7 @@ some user and thus allow delisting IPs by helper administrators
 without the ability to mess up other iptables rules.
 
 The xt_recent-echo jail can be used under the root user without
-further configuration. To run not as root, futher setup is necessary:
+further configuration. To run not as root, further setup is necessary:
 
 - Create user:
 
