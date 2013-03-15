@@ -112,14 +112,18 @@ class Transmitter:
 			return self.__server.getLogLevel()
 		elif name == "logtarget":
 			value = command[1]
-			self.__server.setLogTarget(value)
-			return self.__server.getLogTarget()
+			if self.__server.setLogTarget(value):
+				return self.__server.getLogTarget()
+			else:
+				raise Exception("Failed to change log target")
 		# Jail
 		elif command[1] == "idle":
 			if command[2] == "on":
 				self.__server.setIdleJail(name, True)
 			elif command[2] == "off":
 				self.__server.setIdleJail(name, False)
+			else:
+				raise Exception("Invalid idle option, must be 'yes' or 'no'")
 			return self.__server.getIdleJail(name)
 		# Filter
 		elif command[1] == "addignoreip":
@@ -183,12 +187,13 @@ class Transmitter:
 			self.__server.addAction(name, value)
 			return self.__server.getLastAction(name).getName()
 		elif command[1] == "delaction":
+			value = command[2]
 			self.__server.delAction(name, value)
 			return None
 		elif command[1] == "setcinfo":
 			act = command[2]
 			key = command[3]
-			value = command[4]
+			value = " ".join(command[4:])
 			self.__server.setCInfo(name, act, key, value)
 			return self.__server.getCInfo(name, act, key)
 		elif command[1] == "delcinfo":
@@ -198,27 +203,27 @@ class Transmitter:
 			return None
 		elif command[1] == "actionstart":
 			act = command[2]
-			value = command[3]
+			value = " ".join(command[3:])
 			self.__server.setActionStart(name, act, value)
 			return self.__server.getActionStart(name, act)
 		elif command[1] == "actionstop":
 			act = command[2]
-			value = command[3]
+			value = " ".join(command[3:])
 			self.__server.setActionStop(name, act, value)
 			return self.__server.getActionStop(name, act)
 		elif command[1] == "actioncheck":
 			act = command[2]
-			value = command[3]
+			value = " ".join(command[3:])
 			self.__server.setActionCheck(name, act, value)
 			return self.__server.getActionCheck(name, act)
 		elif command[1] == "actionban":
 			act = command[2]
-			value = command[3]
+			value = " ".join(command[3:])
 			self.__server.setActionBan(name, act, value)
 			return self.__server.getActionBan(name, act)
 		elif command[1] == "actionunban":
 			act = command[2]
-			value = command[3]
+			value = " ".join(command[3:])
 			self.__server.setActionUnban(name, act, value)
 			return self.__server.getActionUnban(name, act)
 		raise Exception("Invalid command (no set action or not yet implemented)")
@@ -265,12 +270,16 @@ class Transmitter:
 		elif command[1] == "actionunban":
 			act = command[2]
 			return self.__server.getActionUnban(name, act)
+		elif command[1] == "cinfo":
+			act = command[2]
+			key = command[3]
+			return self.__server.getCInfo(name, act, key)
 		raise Exception("Invalid command (no get action or not yet implemented)")
 	
 	def status(self, command):
 		if len(command) == 0:
 			return self.__server.status()
-		else:
+		elif len(command) == 1:
 			name = command[0]
 			return self.__server.statusJail(name)
 		raise Exception("Invalid command (no status)")

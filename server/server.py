@@ -40,8 +40,6 @@ logSys = logging.getLogger("fail2ban.server")
 
 class Server:
 	
-	PID_FILE = "/var/run/fail2ban/fail2ban.pid"
-
 	def __init__(self, daemon = False):
 		self.__loggingLock = Lock()
 		self.__lock = RLock()
@@ -59,7 +57,7 @@ class Server:
 		logSys.debug("Caught signal %d. Exiting" % signum)
 		self.quit()
 	
-	def start(self, sock, force = False):
+	def start(self, sock, pidfile, force = False):
 		logSys.info("Starting Fail2ban v" + version.version)
 		
 		# Install signal handlers
@@ -79,8 +77,8 @@ class Server:
 		
 		# Creates a PID file.
 		try:
-			logSys.debug("Creating PID file %s" % Server.PID_FILE)
-			pidFile = open(Server.PID_FILE, 'w')
+			logSys.debug("Creating PID file %s" % pidfile)
+			pidFile = open(pidfile, 'w')
 			pidFile.write("%s\n" % os.getpid())
 			pidFile.close()
 		except IOError, e:
@@ -94,17 +92,11 @@ class Server:
 			logSys.error("Could not start server: %s", e)
 		# Removes the PID file.
 		try:
-			logSys.debug("Remove PID file %s" % Server.PID_FILE)
-			os.remove(Server.PID_FILE)
+			logSys.debug("Remove PID file %s" % pidfile)
+			os.remove(pidfile)
 		except OSError, e:
 			logSys.error("Unable to remove PID file: %s" % e)
 		logSys.info("Exiting Fail2ban")
-		# Shutdowns the logging.
-		try:
-			self.__loggingLock.acquire()
-			logging.shutdown()
-		finally:
-			self.__loggingLock.release()
 	
 	def quit(self):
 		# Stop communication first because if jail's unban action
@@ -114,8 +106,17 @@ class Server:
 		# are exiting)
 		# See https://github.com/fail2ban/fail2ban/issues/7
 		self.__asyncServer.stop()
+
 		# Now stop all the jails
 		self.stopAllJail()
+
+		# Only now shutdown the logging.
+		try:
+			self.__loggingLock.acquire()
+			logging.shutdown()
+		finally:
+			self.__loggingLock.release()
+
 	
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend)
@@ -369,11 +370,20 @@ class Server:
 					logSys.error("Unable to log to " + target)
 					logSys.info("Logging to previous target " + self.__logTarget)
 					return False
-			# Removes previous handlers
-			for handler in logging.getLogger("fail2ban").handlers:
-				# Closes the handler.
+			# Removes previous handlers -- in reverse order since removeHandler
+			# alter the list in-place and that can confuses the iterable
+			for handler in logging.getLogger("fail2ban").handlers[::-1]:
+				# Remove the handler.
 				logging.getLogger("fail2ban").removeHandler(handler)
-				handler.close()
+				# And try to close -- it might be closed already
+				try:
+					handler.flush()
+					handler.close()
+				except ValueError:
+					if sys.version_info >= (2,6):
+						raise
+					# is known to be thrown after logging was shutdown once
+					# with older Pythons -- seems to be safe to ignore there
 			# tell the handler to use this format
 			hdlr.setFormatter(formatter)
 			logging.getLogger("fail2ban").addHandler(hdlr)

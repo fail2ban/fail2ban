@@ -44,7 +44,7 @@ logSys = logging.getLogger("fail2ban.filter")
 # Log reader class.
 #
 # This class reads a log file and detects login failures or anything else
-# that matches a given regular expression. This class is instanciated by
+# that matches a given regular expression. This class is instantiated by
 # a Jail object.
 
 class Filter(JailThread):
@@ -93,6 +93,7 @@ class Filter(JailThread):
 			self.__failRegex.append(regex)
 		except RegexException, e:
 			logSys.error(e)
+			raise e
 
 
 	def delFailRegex(self, index):
@@ -117,7 +118,7 @@ class Filter(JailThread):
 	# Add the regular expression which matches the failure.
 	#
 	# The regular expression can also match any other pattern than failures
-	# and thus can be used for many purporse.
+	# and thus can be used for many purpose.
 	# @param value the regular expression
 
 	def addIgnoreRegex(self, value):
@@ -126,6 +127,7 @@ class Filter(JailThread):
 			self.__ignoreRegex.append(regex)
 		except RegexException, e:
 			logSys.error(e)
+			raise e 
 
 	def delIgnoreRegex(self, index):
 		try:
@@ -211,7 +213,7 @@ class Filter(JailThread):
 	# file has been modified and looks for failures.
 	# @return True when the thread exits nicely
 
-	def run(self):
+	def run(self): # pragma: no cover
 		raise Exception("run() is abstract")
 
 	##
@@ -226,7 +228,7 @@ class Filter(JailThread):
 			self.failManager.addFailure(FailTicket(ip, unixTime))
 
 		# Perform the banning of the IP now.
-		try:
+		try: # pragma: no branch - exception is the only way out
 			while True:
 				ticket = self.failManager.toBan()
 				self.jail.putFailTicket(ticket)
@@ -373,7 +375,7 @@ class Filter(JailThread):
 								failList.append([ip, date])
 							# We matched a regex, it is enough to stop.
 							break
-					except RegexException, e:
+					except RegexException, e: # pragma: no cover - unsure if reachable
 						logSys.error(e)
 		return failList
 
@@ -414,7 +416,7 @@ class FileFilter(Filter):
 
 	def _addLogPath(self, path):
 		# nothing to do by default
-		# to be overriden by backends
+		# to be overridden by backends
 		pass
 
 
@@ -433,7 +435,7 @@ class FileFilter(Filter):
 
 	def _delLogPath(self, path):
 		# nothing to do by default
-		# to be overriden by backends
+		# to be overridden by backends
 		pass
 
 	##
@@ -477,8 +479,17 @@ class FileFilter(Filter):
 		# Try to open log file.
 		try:
 			container.open()
-		except Exception, e:
+		# see http://python.org/dev/peps/pep-3151/
+		except IOError, e:
 			logSys.error("Unable to open %s" % filename)
+			logSys.exception(e)
+			return False
+		except OSError, e: # pragma: no cover - requires race condition to tigger this
+			logSys.error("Error opening %s" % filename)
+			logSys.exception(e)
+			return False
+		except OSError, e: # pragma: no cover - Requires implemention error in FileContainer to generate
+			logSys.error("Internal errror in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
 			logSys.exception(e)
 			return False
 
@@ -507,7 +518,7 @@ class FileFilter(Filter):
 try:
 	import hashlib
 	md5sum = hashlib.md5
-except ImportError:
+except ImportError: # pragma: no cover
 	# hashlib was introduced in Python 2.5.  For compatibility with those
 	# elderly Pythons, import from md5
 	import md5
@@ -550,7 +561,7 @@ class FileContainer:
 		stats = os.fstat(self.__handler.fileno())
 		# Compare hash and inode
 		if self.__hash != myHash or self.__ino != stats.st_ino:
-			logSys.info("Log rotation detected for %s" % self.__filename)
+			logSys.debug("Log rotation detected for %s" % self.__filename)
 			self.__hash = myHash
 			self.__ino = stats.st_ino
 			self.__pos = 0

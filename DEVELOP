@@ -24,14 +24,97 @@ Request feature. You can find more details on the Fail2Ban wiki
 Testing
 =======
 
-Existing tests can be run by executing `fail2ban-testcases`.
+Existing tests can be run by executing `fail2ban-testcases`. This has options
+like --log-level that will probably be useful. `fail2ban-testcases --help` for
+full options.
 
-Documentation about creating tests (when tests are required and some guidelines
-for creating good tests) will be added soon.
+Test cases should cover all usual cases, all exception cases and all inside
+/ outside boundary conditions.
+
+Test cases should cover all branches. The coverage tool will help identify
+missing branches. Also see http://nedbatchelder.com/code/coverage/branch.html
+for more details.
+
+Install the package python-coverage to visualise your test coverage. Run the
+following (note: on Debian-based systems, the script is called
+`python-coverage`):
+
+coverage run fail2ban-testcases
+coverage html
+
+Then look at htmlcov/index.html and see how much coverage your test cases
+exert over the codebase. Full coverage is a good thing however it may not be
+complete. Try to ensure tests cover as many independant paths through the
+code.
+
+Manual Execution. To run in a development environment do:
+
+./fail2ban-client -c config/ -s /tmp/f2b.sock -i start
+
+some quick commands:
+
+status
+add test pyinotify
+status test
+set test addaction iptables
+set test actionban iptables echo <ip> <cidr> >> /tmp/ban
+set test actionunban iptables echo <ip> <cidr> >> /tmp/unban
+get test actionban iptables
+get test actionunban iptables
+set test banip 192.168.2.2
+status test
+
+
 
 Coding Standards
-================
-Coming Soon.
+================ 
+
+Style
+-----
+
+Please use tabs for now. Keep to 80 columns, at least for readable text.
+
+Tests
+-----
+
+Add tests. They should test all the code you add in a meaning way.
+
+Coverage
+--------
+
+Test coverage should always increase as you add code.
+
+You may use "# pragma: no cover" in the code for branches of code that support
+older versions on python. For all other uses of "pragma: no cover" or
+"pragma: no branch" document the reason why its not covered. "I haven't written
+a test case" isn't a sufficient reason.
+
+Documentation
+-------------
+
+Ensure this documentation is up to date after changes. Also ensure that the man
+pages still are accurate. Ensure that there is sufficient documentation for
+your new features to be used.
+
+Bugs
+----
+
+Remove them and don't add any more.
+
+Git
+---
+
+Use the following tags in your commit messages:
+
+'ENH:' for enhancements
+'BF:' for bug fixes
+'DOC:' for documentation fixes
+
+Adding Actions
+--------------
+
+If you add an action.d/*.conf file also add a example in config/jail.conf
+with enabled=false and maxretry=5 for ssh.
 
 
 Design
@@ -127,11 +210,13 @@ FileContainer
   .__pos
     Keeps the position pointer
 
+
+dnsutils.py
+~~~~~~~~~~~
+
 DNSUtils
 
   Utility class for DNS and IP handling
-
-  RF-Note: convert to functions within a separate submodule
 
 
 filter*.py
@@ -156,3 +241,29 @@ action.py
 ~~~~~~~~~
 
 Takes care about executing start/check/ban/unban/stop commands
+
+
+Releasing
+=========
+
+Ensure the version is correct in ./common/version.py
+
+Add/finalize the corresponding entry in the ChangeLog
+
+# update man pages
+(cd man ; ./generate-man )
+
+git commit -m 'update man pages for release' man/*
+
+python setup.py check
+python setup.py sdist
+python setup.py bdist_rpm
+python setup.py upload
+
+Run the following and update the wiki with output:
+
+python -c 'import common.protocol; common.protocol.printWiki()'
+
+email users and development list of release
+
+TODO notifying distributors etc.

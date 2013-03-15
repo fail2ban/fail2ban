@@ -142,7 +142,7 @@ class AsyncServer(asyncore.dispatcher):
 		if sys.version_info >= (2, 6): # if python 2.6 or greater...
 			logSys.debug("Detected Python 2.6 or greater. asyncore.loop() not using poll")
 			asyncore.loop(use_poll = False) # fixes the "Unexpected communication problem" issue on Python 2.6 and 3.0
-		else:
+		else: # pragma: no cover
 			logSys.debug("NOT Python 2.6/3.* - asyncore.loop() using poll")
 			asyncore.loop(use_poll = True)
 	
