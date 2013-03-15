@@ -1,0 +1,12 @@
+[Unit]
+Description=Fail2ban Service
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/fail2ban-client -x start
+ExecStop=/usr/bin/fail2ban-client stop
+ExecReload=/usr/bin/fail2ban-client reload
+Restart=always
+
+[Install]
+WantedBy=network.target
