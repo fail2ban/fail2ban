@@ -77,7 +77,7 @@ class DateDetectorTest(unittest.TestCase):
 			"23-Jan-2005 21:59:59",
 			"23-01-2005 21:59:59",
 			"01-23-2005 21:59:59.252", # reported on f2b, causes Feb29 fix to break
-			#"@4000000041f41e5f00000000", # TAI64N
+			"@4000000041f4104f00000000", # TAI64N
 			"2005-01-23T21:59:59.252Z", #ISO 8601
 			"2005-01-23T21:59:59-05:00Z", #ISO 8601 with TZ
 			"<01/23/05@21:59:59>",
