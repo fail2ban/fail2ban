@@ -158,6 +158,7 @@ class DateStrptime(DateTemplate):
 							"pattern" % (opattern, e))
 			if date[0] < 2000:
 				# There is probably no year field in the logs
+				# NOTE: Possibly makes week/year day incorrect
 				date[0] = MyTime.gmtime()[0]
 				# Bug fix for #1241756
 				# If the date is greater than the current time, we suppose
@@ -166,10 +167,12 @@ class DateStrptime(DateTemplate):
 					logSys.debug(
 						u"Correcting deduced year from %d to %d since %f > %f" %
 						(date[0], date[0]-1, time.mktime(date), MyTime.time()))
+					# NOTE: Possibly makes week/year day incorrect
 					date[0] -= 1
 				elif date[1] == 1 and date[2] == 1:
 					# If it is Jan 1st, it is either really Jan 1st or there
 					# is neither month nor day in the log.
+					# NOTE: Possibly makes week/year day incorrect
 					date[1] = MyTime.gmtime()[1]
 					date[2] = MyTime.gmtime()[2]
 		return date

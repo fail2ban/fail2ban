@@ -46,35 +46,45 @@ class DateDetectorTest(unittest.TestCase):
 		date = [2006, 1, 23, 21, 59, 59, 0, 23, 0]
 		dateUnix = 1138049999.0
 		
-		self.assertEqual(self.__datedetector.getTime(log), date)
+		self.assertEqual(self.__datedetector.getTime(log)[:6], date[:6])
 		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
 	
 	def testGetTime(self):
 		log = "Jan 23 21:59:59 [sshd] error: PAM: Authentication failure"
-		date = [2005, 1, 23, 21, 59, 59, 1, 23, -1]
+		date = [2005, 1, 23, 21, 59, 59, 6, 23, -1]
 		dateUnix = 1106513999.0
 	
-		self.assertEqual(self.__datedetector.getTime(log), date)
+		self.assertEqual(self.__datedetector.getTime(log)[:6], date[:6])
 		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
 
 	def testVariousTimes(self):
 		"""Test detection of various common date/time formats f2b should understand
 		"""
-		date = [2005, 1, 23, 21, 59, 59, 1, 23, -1]
+		date = [2005, 1, 23, 21, 59, 59, 6, 23, -1]
 		dateUnix = 1106513999.0
 
 		for sdate in (
 			"Jan 23 21:59:59",
+			"Sun Jan 23 21:59:59 2005",
+			"Sun Jan 23 21:59:59",
+			"2005/01/23 21:59:59",
 			"2005.01.23 21:59:59",
 			"23/01/2005 21:59:59",
+			"23/01/05 21:59:59",
+			"23/Jan/2005:21:59:59",
+			"01/23/2005:21:59:59",
+			"2005-01-23 21:59:59",
+			"23-Jan-2005 21:59:59",
+			"23-01-2005 21:59:59",
 			"01-23-2005 21:59:59.252", # reported on f2b, causes Feb29 fix to break
+			#"@4000000041f41e5f00000000", # TAI64N
+			"2005-01-23T21:59:59.252Z", #ISO 8601
+			"2005-01-23T21:59:59-05:00Z", #ISO 8601 with TZ
+			"<01/23/05@21:59:59>",
 			):
 			log = sdate + "[sshd] error: PAM: Authentication failure"
 			# exclude
 
-			# TODO (Yarik is confused): figure out why for above it is
-			#      "1" as day of the week which would be Tue, although it
-			#      was Sun
 			self.assertEqual(self.__datedetector.getTime(log)[:6], date[:6])
 			self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
 
