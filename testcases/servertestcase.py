@@ -27,7 +27,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, socket, time, tempfile, os, socket
+import unittest, socket, time, tempfile, os
 from server.server import Server
 from common.exceptions import UnknownJailException
 
