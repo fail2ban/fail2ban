@@ -27,7 +27,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, socket, time, tempfile, os
+import unittest, socket, time, tempfile, os, socket
 from server.server import Server
 from common.exceptions import UnknownJailException
 
@@ -241,6 +241,11 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["set", self.jailName, "usedns", value]),
 			(0, "no"))
 
+	def testJailIPv6BanPrefix(self):
+		self.setGetTest("ipv6banprefix", "80", 80, jail=self.jailName)
+		self.setGetTestNOK("ipv6banprefix", "Cat", jail=self.jailName)
+		self.setGetTestNOK("ipv6banprefix", "-5", jail=self.jailName)
+
 	def testJailBanIP(self):
 		self.server.startJail(self.jailName) # Jail must be started
 
@@ -336,9 +341,9 @@ class Transmitter(TransmitterBase):
 				"failed attempt from <HOST> again",
 			],
 			[
-				"user john at (?:::f{4,6}:)?(?P<host>[\w\-.^_]+)",
-				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_]+)",
-				"failed attempt from (?:::f{4,6}:)?(?P<host>[\w\-.^_]+) again",
+				"user john at (?:::f{4,6}:)?(?P<host>[\w\-.^_:]+)",
+				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_:]+)",
+				"failed attempt from (?:::f{4,6}:)?(?P<host>[\w\-.^_:]+) again",
 			],
 			self.jailName
 		)
@@ -361,7 +366,7 @@ class Transmitter(TransmitterBase):
 			],
 			[
 				"user john",
-				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_]+)",
+				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_:]+)",
 				"Dont match me!",
 			],
 			self.jailName

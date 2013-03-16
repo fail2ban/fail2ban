@@ -32,12 +32,16 @@ from testcases import banmanagertestcase
 from testcases import clientreadertestcase
 from testcases import failmanagertestcase
 from testcases import filtertestcase
+from testcases import jailtestcase
 from testcases import servertestcase
 from testcases import datedetectortestcase
 from testcases import actiontestcase
 from testcases import sockettestcase
 
 from testcases.utils import FormatterWithTraceBack
+from testcases import actionstestcase
+from testcases import dnsutilstestcase
+#from testcases import clienttestcase
 from server.mytime import MyTime
 
 from optparse import OptionParser, Option
@@ -140,6 +144,8 @@ else: # pragma: no cover
 #tests.addTest(unittest.makeSuite(servertestcase.StartStop))
 tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
 tests.addTest(unittest.makeSuite(actiontestcase.ExecuteAction))
+tests.addTest(unittest.makeSuite(actionstestcase.ActionsManipulation))
+tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
 # FailManager
 tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 # BanManager
@@ -150,16 +156,21 @@ tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
 tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTest))
 # CSocket and AsyncServer
 tests.addTest(unittest.makeSuite(sockettestcase.Socket))
+# Client
+#tests.addTest(unittest.makeSuite(clienttestcase.ClientTests))
 
 # Filter
 if not opts.no_network:
-    tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
+	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
+	tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
+	tests.addTest(unittest.makeSuite(dnsutilstestcase.DNSUtilsTests))
+	tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitorNetwork))
+else: # pragma: no cover
+	tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
+
 tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
-tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
-if not opts.no_network:
-    tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
-    tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
-tests.addTest(unittest.makeSuite(filtertestcase.JailTests))
+tests.addTest(unittest.makeSuite(filtertestcase.BannedIP))
+tests.addTest(unittest.makeSuite(jailtestcase.JailTests))
 
 # DateDetector
 tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))

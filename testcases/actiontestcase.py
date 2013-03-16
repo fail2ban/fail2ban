@@ -28,9 +28,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import unittest, time
-import logging, sys
+import sys
 from server.action import Action
-from StringIO import StringIO
+import logredirect
 
 class ExecuteAction(unittest.TestCase):
 
@@ -40,26 +40,24 @@ class ExecuteAction(unittest.TestCase):
 
 		# For extended testing of what gets output into logging
 		# system, we will redirect it to a string
-		logSys = logging.getLogger("fail2ban")
-
-		# Keep old settings
-		self._old_level = logSys.level
-		self._old_handlers = logSys.handlers
-		# Let's log everything into a string
-		self._log = StringIO()
-		logSys.handlers = [logging.StreamHandler(self._log)]
-		logSys.setLevel(getattr(logging, 'DEBUG'))
+		self.log = logredirect.LogRedirect()
 
 	def tearDown(self):
 		"""Call after every test case."""
-		# print "O: >>%s<<" % self._log.getvalue()
-		logSys = logging.getLogger("fail2ban")
-		logSys.handlers = self._old_handlers
-		logSys.level = self._old_level
+		self.log.restore()
 		self.__action.execActionStop()
 
 	def _is_logged(self, s):
-		return s in self._log.getvalue()
+		return self.log.is_logged(s)
+
+	def testAttributes(self):
+		self.assertEqual(self.__action.getName(),'Test')
+		self.__action.setName('fail2ban super action')
+		self.assertEqual(self.__action.getName(),'fail2ban super action')
+		self.__action.setCInfo('dog','run')
+		self.assertEqual(self.__action.getCInfo('dog'),'run')
+		self.__action.delCInfo('dog')
+		self.assertRaises(KeyError,self.__action.getCInfo,'dog')
 
 	def testReplaceTag(self):
 		aInfo = {
@@ -80,9 +78,15 @@ class ExecuteAction(unittest.TestCase):
 
 	def testExecuteActionBan(self):
 		self.__action.setActionStart("touch /tmp/fail2ban.test")
+		self.assertEqual(self.__action.getActionStart(),"touch /tmp/fail2ban.test")
 		self.__action.setActionStop("rm -f /tmp/fail2ban.test")
+		self.assertEqual(self.__action.getActionStop(),"rm -f /tmp/fail2ban.test")
 		self.__action.setActionBan("echo -n")
+		self.assertEqual(self.__action.getActionBan(),"echo -n")
+		self.__action.setActionUnban("echo")
+		self.assertEqual(self.__action.getActionUnban(),"echo")
 		self.__action.setActionCheck("[ -e /tmp/fail2ban.test ]")
+		self.assertEqual(self.__action.getActionCheck(),"[ -e /tmp/fail2ban.test ]")
 
 		self.assertFalse(self._is_logged('returned'))
 		# no action was actually executed yet

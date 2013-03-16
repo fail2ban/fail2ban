@@ -34,7 +34,7 @@ logSys = logging.getLogger("fail2ban")
 
 class Ticket:
 	
-	def __init__(self, ip, time, matches=None):
+	def __init__(self, ip, family, time, matches=None, prefix=None):
 		"""Ticket constructor
 
 		@param ip the IP address
@@ -43,14 +43,16 @@ class Ticket:
 		"""
 
 		self.setIP(ip)
+		self.__family = family
 		self.__time = time
 		self.__attempt = 0
 		self.__file = None
 		self.__matches = matches or []
+		self.__prefix = prefix
 
 	def __str__(self):
-		return "%s: ip=%s time=%s #attempts=%d" % \
-			   (self.__class__, self.__ip, self.__time, self.__attempt)
+		return "%s: ip=%s family=%s time=%s #attempts=%d" % \
+			   (self.__class__, self.__ip, self.__family, self.__time, self.__attempt)
 	
 
 	def setIP(self, value):
@@ -61,6 +63,9 @@ class Ticket:
 	
 	def getIP(self):
 		return self.__ip
+	
+	def getFamily(self):
+		return self.__family
 	
 	def setFile(self, value):
 		self.__file = value
@@ -73,6 +78,9 @@ class Ticket:
 	
 	def getTime(self):
 		return self.__time
+
+	def getPrefix(self):
+		return self.__prefix
 	
 	def setAttempt(self, value):
 		self.__attempt = value

@@ -31,18 +31,21 @@ from faildata import FailData
 from ticket import FailTicket
 from threading import Lock
 import logging
+import socket
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
 
 class FailManager:
 	
-	def __init__(self):
+	def __init__(self,debugtest=False):
 		self.__lock = Lock()
 		self.__failList = dict()
 		self.__maxRetry = 3
 		self.__maxTime = 600
 		self.__failTotal = 0
+		if debugtest: # pragma: no branch - only True case is used when testing
+			self.delFailure = self.__delFailure
 	
 	def setFailTotal(self, value):
 		try:
@@ -90,10 +93,12 @@ class FailManager:
 		try:
 			self.__lock.acquire()
 			ip = ticket.getIP()
+			family = ticket.getFamily()
+			f_ip = ( family, ip )
 			unixTime = ticket.getTime()
 			matches = ticket.getMatches()
-			if self.__failList.has_key(ip):
-				fData = self.__failList[ip]
+			if self.__failList.has_key( f_ip ):
+				fData = self.__failList[f_ip]
 				if fData.getLastReset() < unixTime - self.__maxTime:
 					fData.setLastReset(unixTime)
 					fData.setRetry(0)
@@ -104,8 +109,9 @@ class FailManager:
 				fData.inc(matches)
 				fData.setLastReset(unixTime)
 				fData.setLastTime(unixTime)
-				self.__failList[ip] = fData
-
+				self.__failList[f_ip] = fData
+				logSys.debug("Currently have failures from %d IPs: %s"
+						 % (len(self.__failList), self.__failList.keys()))
 			self.__failTotal += 1
 
 			if logSys.getEffectiveLevel() <= logging.DEBUG:
@@ -136,19 +142,20 @@ class FailManager:
 		finally:
 			self.__lock.release()
 	
-	def __delFailure(self, ip):
-		if self.__failList.has_key(ip):
-			del self.__failList[ip]
+	def __delFailure(self, fip):
+		if self.__failList.has_key( fip ):
+			del self.__failList[ fip ]
 	
 	def toBan(self):
 		try:
 			self.__lock.acquire()
-			for ip in self.__failList:
-				data = self.__failList[ip]
+			for family, ip in self.__failList:
+				fip = ( family, ip )
+				data = self.__failList[ fip ]
 				if data.getRetry() >= self.__maxRetry:
-					self.__delFailure(ip)
+					self.__delFailure(fip)
 					# Create a FailTicket from BanData
-					failTicket = FailTicket(ip, data.getLastTime(), data.getMatches())
+					failTicket = FailTicket(ip, family, data.getLastTime(), data.getMatches())
 					failTicket.setAttempt(data.getRetry())
 					return failTicket
 			raise FailManagerEmpty

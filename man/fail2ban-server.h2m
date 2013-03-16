@@ -7,3 +7,4 @@ fail2ban-server \- start the server
 [see also]
 .br 
 fail2ban-client(1)
+jail.conf(5)

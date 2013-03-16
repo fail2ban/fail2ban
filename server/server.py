@@ -40,12 +40,15 @@ logSys = logging.getLogger("fail2ban.server")
 
 class Server:
 	
-	def __init__(self, daemon = False):
+	def __init__(self, daemon = False, debugtest=False):
 		self.__loggingLock = Lock()
 		self.__lock = RLock()
 		self.__jails = Jails()
 		self.__daemon = daemon
 		self.__transm = Transmitter(self)
+		if debugtest: # pragma: no branch - only True case is used when testing
+			self.transm = self.__transm
+			self.jails = self.__jails
 		self.__asyncServer = AsyncServer(self.__transm)
 		self.__logLevel = None
 		self.__logTarget = None
@@ -161,6 +164,12 @@ class Server:
 	def getIdleJail(self, name):
 		return self.__jails.get(name).getIdle()
 	
+	def setIPv6BanPrefix(self, name, value):
+		self.__jails.setIPv6BanPrefix(value)
+	
+	def getIPv6BanPrefix(self, name):
+		return self.__jails.getIPv6BanPrefix()
+	
 	# Filter
 	def addIgnoreIP(self, name, ip):
 		self.__jails.getFilter(name).addIgnoreIP(ip)
@@ -210,6 +219,12 @@ class Server:
 	
 	def getUseDns(self, name):
 		return self.__jails.getFilter(name).getUseDns()
+	
+	def setIPv6BanPrefix(self, name, value):
+		self.__jails.setIPv6BanPrefix(name, value)
+	
+	def getIPv6BanPrefix(self, name):
+		return self.__jails.getIPv6BanPrefix(name)
 	
 	def setMaxRetry(self, name, value):
 		self.__jails.getFilter(name).setMaxRetry(value)

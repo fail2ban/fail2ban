@@ -124,8 +124,8 @@ class Jails:
 		try:
 			self.__lock.acquire()
 			if self.__jails.has_key(name):
-				action = self.__jails[name].getFilter()
-				return action
+				f = self.__jails[name].getFilter()
+				return f
 			else:
 				raise UnknownJailException(name)
 		finally:
@@ -140,6 +140,39 @@ class Jails:
 		try:
 			self.__lock.acquire()
 			return self.__jails.copy()
+		finally:
+			self.__lock.release()
+
+	##
+	# Sets the IPv6 ban prefix on a jail
+	#
+	# @param name The name of the jail
+	# @param value The IPv6 prefix to ban
+	
+	def setIPv6BanPrefix(self, name, value):
+		try:
+			self.__lock.acquire()
+			if self.__jails.has_key(name):
+				self.__jails[name].setIPv6BanPrefix(value)
+			else:
+				raise UnknownJailException(name)
+		except Exception, e:
+			raise e
+		finally:
+			self.__lock.release()
+	
+	##
+	# Gets the IPv6 ban prefix on a jail
+	#
+	# @param name The name of the jail
+	
+	def getIPv6BanPrefix(self, name):
+		try:
+			self.__lock.acquire()
+			if self.__jails.has_key(name):
+				return self.__jails[name].getIPv6BanPrefix()
+			else:
+				raise UnknownJailException(name)
 		finally:
 			self.__lock.release()
 	

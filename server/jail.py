@@ -41,6 +41,8 @@ class Jail:
 		self.__name = name
 		self.__queue = Queue.Queue()
 		self.__filter = None
+		self.__ipv6banprefix = 64
+
 		logSys.info("Creating new jail '%s'" % self.__name)
 		self._setBackend(backend)
 
@@ -70,7 +72,7 @@ class Jail:
 								   "%r was requested" % (b, backend))
 				else:
 					logSys.info("Initiated %r backend" % b)
-				self.__action = Actions(self)
+				self.__action = Actions(self, ipv6banprefix = self.__ipv6banprefix)
 				return					# we are done
 			except ImportError, e:
 				logSys.debug(
@@ -85,21 +87,21 @@ class Jail:
 	def _initPolling(self):
 		logSys.info("Jail '%s' uses poller" % self.__name)
 		from filterpoll import FilterPoll
-		self.__filter = FilterPoll(self)
+		self.__filter = FilterPoll(self, ipv6banprefix=self.__ipv6banprefix)
 	
 	def _initGamin(self):
 		# Try to import gamin
 		import gamin
 		logSys.info("Jail '%s' uses Gamin" % self.__name)
 		from filtergamin import FilterGamin
-		self.__filter = FilterGamin(self)
+		self.__filter = FilterGamin(self, ipv6banprefix=self.__ipv6banprefix)
 	
 	def _initPyinotify(self):
 		# Try to import pyinotify
 		import pyinotify
 		logSys.info("Jail '%s' uses pyinotify" % self.__name)
 		from filterpyinotify import FilterPyinotify
-		self.__filter = FilterPyinotify(self)
+		self.__filter = FilterPyinotify(self, ipv6banprefix=self.__ipv6banprefix)
 	
 	def setName(self, name):
 		self.__name = name
@@ -152,3 +154,40 @@ class Jail:
 		ret = [("filter", fStatus), 
 			   ("action", aStatus)]
 		return ret
+
+	##
+	# Set the IPv6 ban Prefix
+	#
+	# @param value the IPv6BanPrefix value
+
+	def setIPv6BanPrefix(self, value):
+		if self.__action.isAlive():
+			logSys.error('Cannot set IPv6BanPrefix while running')
+			return
+		try:
+			value = int(value)
+		except ValueError:
+			logSys.error('IPv6BanPrefix must be numberic')
+			raise ValueError('IPv6BanPrefix must be numberic')
+		if value < 0:
+			logSys.error('IPv6BanPrefix must be 0 or above')
+			raise ValueError('IPv6BanPrefix must be 0 or above')
+		elif value > 128:
+			logSys.error('IPv6BanPrefix must be 128 or below')
+			raise ValueError('IPv6BanPrefix must be 128 or below')
+		else:
+			if value < 64:
+				logSys.warning('setting IPv6BanPrefix less than 64 not recommended')
+			self.__ipv6banprefix = value
+			self.__filter.setIPv6BanPrefix(value)
+			self.__action.setIPv6BanPrefix(value)
+			logSys.info("Set IPv6BanPrefix = %s" % value)
+
+	##
+	# Get the IPv6 ban Prefix
+	#
+	# @return the retry value
+
+	def getIPv6BanPrefix(self):
+		return self.__ipv6banprefix
+

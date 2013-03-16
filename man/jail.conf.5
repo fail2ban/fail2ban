@@ -59,7 +59,8 @@ The following options are applicable to all jails. Their meaning is described in
 \fBbackend\fR
 .TP
 \fBusedns\fR
-
+.TP
+\fBipv6banprefix\fR
 
 .SH "ACTION FILES"
 Action files specify which commands are executed to ban and unban an IP address. They are located under \fI/etc/fail2ban/action.d\fR.
@@ -88,23 +89,44 @@ command(s) that bans the IP address after \fBmaxretry\fR log lines matches withi
 \fBactionunban\fR
 command(s) that unbans the IP address after \fBbantime\fR.
 
-Commands specified in the [Definition] section are executed through a system shell so shell redirection and process control is allowed. The commands should
-return 0, otherwise error would be logged.  Moreover if \fBactioncheck\fR exits with non-0 status, it is taken as indication that firewall status has changed and fail2ban needs to reinitialize itself (i.e. issue \fBactionstop\fR and \fBactionstart\fR commands).
+.PP
+Commands specified in the [Definition] section are executed through a system shell so shell redirection and process control is allowed. The commands should return 0, otherwise error would be logged.  Moreover if \fBactioncheck\fR exits with non-0 status, it is taken as indication that firewall status has changed and fail2ban needs to reinitialize itself (i.e. issue \fBactionstop\fR and \fBactionstart\fR commands).
 
-Tags are enclosed in <>.  All the elements of [Init] are tags that are replaced in all action commands.  Tags can be added by the
-\fBfail2ban-client\fR using the setctag command. \fB<br>\fR is a tag that is always a new line (\\n).
+Tags are enclosed in <>.  All the elements of [Init] are tags that are replaced in all action commands. \fBipv6banprefix\fR is also a tag
+corresponding to the jail.conf settings. Tags can be added by the \fBfail2ban-client\fR using the setctag command. \fB<br>\fR is a tag that is always a new line (\\n).
 
-More than a single command is allowed to be specified. Each command needs to be on a separate line and indented with whitespaces without blank lines. The following example defines
-two commands to be executed.
+More than a single command is allowed to be specified. Each command needs to be on a separate line and indented with whitespaces without blank lines. The following example define three commands to be executed.
 
- actionban = iptables -I fail2ban-<name> --source <ip> -j DROP
+ actionban = iptables -I fail2ban-<name> --source <ip4> -j DROP
+             ip6tables -I fail2ban-<name> --source <ip6> -j DROP
              echo ip=<ip>, match=<match>, time=<time> >> /var/log/fail2ban.log
+
+If a line of an action has at least one tag that isn't defined, like <ip6> when an IPv4 address is banned, then that line is not executed.
+For example in the above command, only the iptables and echo commands are executed if it is an ip4 address to be banned, and only the ip6tables and echo commands are executed if it is an IPv6 address to be banned.
 
 .SS "Action Tags"
 The following tags are substituted in the actionban, actionunban and actioncheck (when called before actionban/actionunban) commands.
 .TP
 \fBip\fR
-An IPv4 ip address to be banned. e.g. 192.168.0.2
+An IPv4 or IPv6 IP address to be banned. e.g. 192.168.0.2, 2600:3d01::003c:910f:fe90:7eb
+.TP
+\fBipv6banprefix\fR
+The ipv6banprefix setting. Is defined even for IPv4 bans. e.g. 64, 128.
+.TP
+\fBipfamily\fR
+inet for IPv4 and inet6 for IPv6.
+.TP
+\fBcidr\fR
+The full ip/prefix. The IPv4 prefix is always /32 and for IPv6 prefix is as per \fBipv6banprefix\fR. e.g. 192.168.0.2/32 , 2600:3d01::003c:910f:fe90:7eb/64
+.TP
+\fBip4\fR
+An IPv4 address only. e.g. 192.168.0.2
+.TP
+\fBip6\fR
+An IPv6 address only. e.g. 2600:3d01::003c:910f:fe90:7eb
+.TP
+\fBip6prefix\fR
+An IPv6 cidr only. e.g. 2600:3d01::003c:910f:fe90:7eb/64
 .TP
 \fBfailures\fR
 The number of times the failure occurred in the log file. e.g. 3
@@ -127,8 +149,7 @@ There are two filter definitions used in the [Definition] section:
 
 .TP
 \fBfailregex\fR
-is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The tag <HOST> is used as part of the regex and is itself a regex
-for IPv4 addresses and hostnames. fail2ban will work out which one of these it actually is.
+is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The tag <HOST> is used as part of the regex and is itself a regex for IPv4 and IPv6 addresses and hostnames. fail2ban will work out which one of these it actually is.
 
 .TP
 \fBignoreregex\fR
