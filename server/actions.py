@@ -184,6 +184,7 @@ class Actions(JailThread):
 				prefix = 128
 			aInfo['ip6prefix'] = '%s/%s' % ( bTicket.getIP(), prefix )
 			aInfo["ipfamily"] = 'inet6'
+		aInfo['prefix'] = str(prefix)
 		aInfo['cidr'] = '%s/%s' % ( bTicket.getIP(), prefix )
 		aInfo["failures"] = bTicket.getAttempt()
 		aInfo["time"] = bTicket.getTime()

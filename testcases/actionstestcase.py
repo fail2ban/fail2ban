@@ -107,8 +107,8 @@ class ExecuteActions(unittest.TestCase):
 
 		self.__actions.addAction('tags')
 		self.__tags = self.__actions.getAction('tags')
-		self.__tags.setActionBan('echo tags ip=<ip> ipfamily=<ipfamily> cidr=<cidr> failures=<failures> time=<time> matches=<matches>  >> "%s"' % self.__tmpfilename )
-		self.__tags.setActionUnban('echo untags ip=<ip> ipfamily=<ipfamily> cidr=<cidr> failures=<failures> time=<time> matches=<matches>  >> "%s"' % self.__tmpfilename )
+		self.__tags.setActionBan('echo tags ip=<ip> ipfamily=<ipfamily> prefix=<prefix> cidr=<cidr> failures=<failures> time=<time> matches=<matches>  >> "%s"' % self.__tmpfilename )
+		self.__tags.setActionUnban('echo untags ip=<ip> ipfamily=<ipfamily> prefix=<prefix> cidr=<cidr> failures=<failures> time=<time> matches=<matches>  >> "%s"' % self.__tmpfilename )
 
 	def testActionOutput(self):
 		with open(self.__tmpfilename) as f:
@@ -118,27 +118,27 @@ class ExecuteActions(unittest.TestCase):
 			# ipv4
 			self.__jail.putFailTicket(FailTicket('193.168.0.128', socket.AF_INET, 1167605999.0, matches="sticks"))
 			time.sleep(1)
-			self.assertEqual(f.read(),"ip check 193.168.0.128\nip ban 193.168.0.128\nip4 ban 193.168.0.128\nboth ban4 193.168.0.128\ntags ip=193.168.0.128 ipfamily=inet cidr=193.168.0.128/32 failures=0 time=1124013600 matches=sticks\n")
+			self.assertEqual(f.read(),"ip check 193.168.0.128\nip ban 193.168.0.128\nip4 ban 193.168.0.128\nboth ban4 193.168.0.128\ntags ip=193.168.0.128 ipfamily=inet prefix=32 cidr=193.168.0.128/32 failures=0 time=1124013600 matches=sticks\n")
 
 			# ipv6 + netmask
 			self.__jail.putFailTicket(FailTicket('2001:500:88:200::10', socket.AF_INET6, 1167605999.0, matches="6sticks",prefix=64))
 			time.sleep(7)
-			self.assertEqual(f.read(),"ip check 2001:500:88:200::10\nip ban 2001:500:88:200::10\nip6 ban 2001:500:88:200::10\nboth ban6 2001:500:88:200::10/64\ntags ip=2001:500:88:200::10 ipfamily=inet6 cidr=2001:500:88:200::10/64 failures=0 time=1124013600 matches=6sticks\n")
+			self.assertEqual(f.read(),"ip check 2001:500:88:200::10\nip ban 2001:500:88:200::10\nip6 ban 2001:500:88:200::10\nboth ban6 2001:500:88:200::10/64\ntags ip=2001:500:88:200::10 ipfamily=inet6 prefix=64 cidr=2001:500:88:200::10/64 failures=0 time=1124013600 matches=6sticks\n")
 
 			# escape matches
 			self.__jail.putFailTicket(FailTicket('193.168.0.129', socket.AF_INET, 1167605999.0, matches="; true"))
 			time.sleep(1)
-			self.assertEqual(f.read(),"ip check 193.168.0.129\nip ban 193.168.0.129\nip4 ban 193.168.0.129\nboth ban4 193.168.0.129\ntags ip=193.168.0.129 ipfamily=inet cidr=193.168.0.129/32 failures=0 time=1124013600 matches=; true\n")
+			self.assertEqual(f.read(),"ip check 193.168.0.129\nip ban 193.168.0.129\nip4 ban 193.168.0.129\nboth ban4 193.168.0.129\ntags ip=193.168.0.129 ipfamily=inet prefix=32 cidr=193.168.0.129/32 failures=0 time=1124013600 matches=; true\n")
 
 			# ipv6
 			self.__jail.putFailTicket(FailTicket('2001:400:88:200::10', socket.AF_INET6, 1167605999.0, matches="6sticks"))
 			time.sleep(2)
-			self.assertEqual(f.read(),"ip check 2001:400:88:200::10\nip ban 2001:400:88:200::10\nip6 ban 2001:400:88:200::10\nboth ban6 2001:400:88:200::10/128\ntags ip=2001:400:88:200::10 ipfamily=inet6 cidr=2001:400:88:200::10/128 failures=0 time=1124013600 matches=6sticks\n")
+			self.assertEqual(f.read(),"ip check 2001:400:88:200::10\nip ban 2001:400:88:200::10\nip6 ban 2001:400:88:200::10\nboth ban6 2001:400:88:200::10/128\ntags ip=2001:400:88:200::10 ipfamily=inet6 prefix=128 cidr=2001:400:88:200::10/128 failures=0 time=1124013600 matches=6sticks\n")
 
 			# removal of banned IP
 			self.__actions.removeBannedIP('2001:500:88:200::10')
 			time.sleep(1)
-			self.assertEqual(f.read(),"ip check 2001:500:88:200::10\nip unban 2001:500:88:200::10\nip6 unban 2001:500:88:200::10\nboth unban6 2001:500:88:200::10/64\nuntags ip=2001:500:88:200::10 ipfamily=inet6 cidr=2001:500:88:200::10/64 failures=0 time=1124013600 matches=6sticks\n")
+			self.assertEqual(f.read(),"ip check 2001:500:88:200::10\nip unban 2001:500:88:200::10\nip6 unban 2001:500:88:200::10\nboth unban6 2001:500:88:200::10/64\nuntags ip=2001:500:88:200::10 ipfamily=inet6 prefix=64 cidr=2001:500:88:200::10/64 failures=0 time=1124013600 matches=6sticks\n")
 
 		self.assertEqual(self.__actions.status(),[("Currently banned", 3 ),
                ("Total banned", 4 ), ("IP list", ['193.168.0.128', '193.168.0.129', '2001:400:88:200::10'] )])
