@@ -27,7 +27,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, socket, time, tempfile, os
+import unittest, socket, time, tempfile, os, stat
 from server.server import Server
 from common.exceptions import UnknownJailException
 
@@ -59,12 +59,12 @@ class Transmitter(unittest.TestCase):
 		self.__transm = self.__server._Server__transm
 		self.__server.setLogTarget("/dev/null")
 		self.__server.setLogLevel(0)
-		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'transmitter')
+		sock_fd, self.__sock_name = tempfile.mkstemp('fail2ban.sock', 'transmitter')
 		os.close(sock_fd)
-		pidfile_fd, pidfile_name = tempfile.mkstemp(
+		pidfile_fd, self.__pidfile_name = tempfile.mkstemp(
 			'fail2ban.pid', 'transmitter')
 		os.close(pidfile_fd)
-		self.__server.start(sock_name, pidfile_name, force=False)
+		self.__server.start(self.__sock_name, self.__pidfile_name, force=False)
 		self.jailName = "TestJail1"
 		self.__server.addJail(self.jailName, "auto")
 
@@ -141,6 +141,22 @@ class Transmitter(unittest.TestCase):
 			self.assertEqual(
 				self.__transm.proceed(["get", jail, cmd]),
 				(0, outValues[n+1:]))
+
+	def testSocket(self):
+		ss = os.stat(self.__sock_name)
+		self.assertIsNot(stat.S_ISSOCK(ss.st_mode), 0)
+
+	# pid removal is done in server.start
+	# unsure if this was intended
+	#def testPid(self):
+	#	pidfile = self.__pidfile_name
+	#	sp = os.stat(pidfile)
+	#	self.assertIsNot(stat.S_ISREG(sp.st_mode), 0)
+	#	self.assertEquals(stat.S_IMODE(sp.st_mode), stat.S_IRUSR | stat.S_IWUSR)
+	#	
+	#	p = open(pidfile,'r')
+	#	self.assertTrue(int(p.read()))
+	#	p.close()
 
 	def testStopServer(self):
 		self.assertEqual(self.__transm.proceed(["stop"]), (0, None))
