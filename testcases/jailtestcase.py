@@ -101,11 +101,11 @@ class JailTests(unittest.TestCase):
 		self.assertTrue(self.jail.getIdle())
 
 	def testIPv6BanPrefix(self):
-		self.jail.setIPv6BanPrefix('big')
+		self.assertRaises(ValueError, self.jail.setIPv6BanPrefix, *['big'])
 		self.assertTrue(self.log.is_logged('IPv6BanPrefix must be numberic'))
-		self.jail.setIPv6BanPrefix(-1)
+		self.assertRaises(ValueError, self.jail.setIPv6BanPrefix,*[-1])
 		self.assertTrue(self.log.is_logged('IPv6BanPrefix must be 0 or above'))
-		self.jail.setIPv6BanPrefix(129)
+		self.assertRaises(ValueError, self.jail.setIPv6BanPrefix,*[129])
 		self.assertTrue(self.log.is_logged('IPv6BanPrefix must be 128 or below'))
 		self.jail.setIPv6BanPrefix(0)
 		self.assertEqual(self.jail.getIPv6BanPrefix(),0)
