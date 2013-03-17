@@ -17,14 +17,14 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
+# Author: Steven Hiscocks
 # 
 # $Revision$
 
-__author__ = "Cyril Jaquier"
+__author__ = "Steven Hiscocks"
 __version__ = "$Revision$"
 __date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 import unittest, time, tempfile, os, threading

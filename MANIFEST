@@ -50,6 +50,7 @@ testcases/__init__.py
 testcases/datedetectortestcase.py
 testcases/actiontestcase.py
 testcases/servertestcase.py
+testcases/sockettestcase.py
 testcases/files/testcase01.log
 testcases/files/testcase02.log
 testcases/files/testcase03.log
