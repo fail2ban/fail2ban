@@ -35,6 +35,7 @@ from testcases import filtertestcase
 from testcases import servertestcase
 from testcases import datedetectortestcase
 from testcases import actiontestcase
+from testcases import sockettestcase
 from server.mytime import MyTime
 
 from optparse import OptionParser, Option
@@ -132,6 +133,8 @@ tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
 # ClientReader
 tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
+# CSocket and AsyncServer
+tests.addTest(unittest.makeSuite(sockettestcase.Socket))
 
 # Filter
 if not opts.no_network:
