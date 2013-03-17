@@ -176,11 +176,11 @@ class Actions(JailThread):
 		if bTicket.getFamily() == socket.AF_INET:
 			aInfo["ip4"] = bTicket.getIP()
 			aInfo["ipfamily"] = 'inet'
-			if not prefix:
+			if prefix is None:
 				prefix = 32
 		else:
 			aInfo["ip6"] = bTicket.getIP()
-			if not prefix:
+			if prefix is None:
 				prefix = 128
 			aInfo['ip6prefix'] = '%s/%s' % ( bTicket.getIP(), prefix )
 			aInfo["ipfamily"] = 'inet6'
