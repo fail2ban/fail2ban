@@ -71,8 +71,8 @@ class DNSUtilsTests(unittest.TestCase):
 			self.assertFalse(DNSUtils.ipFamily(v))
 
 	def testIPTruncateToPrefix(self):
-		self.assertEqual(DNSUtils.truncatetoprefix('2001:620:618:1a6:1:80b2:a60a:2',64,socket.AF_INET6),'2001:620:618:1a6:0:0:0:0/64')
-		self.assertEqual(DNSUtils.truncatetoprefix('2001:620:618:ffff:ffff:80b2:a60a:2',64,socket.AF_INET6),'2001:620:618:ffff:0:0:0:0/64')
-		self.assertEqual(DNSUtils.truncatetoprefix('2001:620:618:ffff:ffff:80b2:a60a:2',65,socket.AF_INET6),'2001:620:618:ffff:8000:0:0:0/65')
-		self.assertEqual(DNSUtils.truncatetoprefix('2001:620:618:ffff:ffff:80b2:a60a:2',63,socket.AF_INET6),'2001:620:618:fffe:0:0:0:0/63')
+		self.assertEqual(DNSUtils.truncatetoprefix('2001:620:618:1a6:1:80b2:a60a:2',64,socket.AF_INET6),'2001:620:618:1a6:0:0:0:0')
+		self.assertEqual(DNSUtils.truncatetoprefix('2001:620:618:ffff:ffff:80b2:a60a:2',64,socket.AF_INET6),'2001:620:618:ffff:0:0:0:0')
+		self.assertEqual(DNSUtils.truncatetoprefix('2001:620:618:ffff:ffff:80b2:a60a:2',65,socket.AF_INET6),'2001:620:618:ffff:8000:0:0:0')
+		self.assertEqual(DNSUtils.truncatetoprefix('2001:620:618:ffff:ffff:80b2:a60a:2',63,socket.AF_INET6),'2001:620:618:fffe:0:0:0:0')
 		self.assertRaises(ValueError, DNSUtils.truncatetoprefix, *['10.255.255.10',16,socket.AF_INET])

@@ -147,7 +147,7 @@ class DNSUtils:
 			hextets = []
 			for x in range(0, 32, 4):
 				hextets.append('%x' % int(hex_str[x:x+4], 16))
-			return ':'.join(hextets) + '/' + str(n)
+			return ':'.join(hextets)
 		else:
 			raise ValueError('have not done IPv4 yet...')
 	truncatetoprefix = staticmethod(truncatetoprefix)
