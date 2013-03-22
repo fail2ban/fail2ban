@@ -12,14 +12,20 @@ Fail2ban has three configuration file types. Action files are the commands for b
 Filter files tell fail2ban how authentication failures occur, and Jail configurations that map the two together.
 
 There are *.conf files that are distributed by fail2ban and *.local file that contain user overwritten files. 
-It is recommend that *.conf files are not changed. *.local files are where users overwrite their default settings.
-For instance if you require the default [ssh-iptables-ipset] jail create a jail.local with The jail.conf file is
- the configuration for the fail2ban server. Only overwride the settings you need to change and the rest come from 
-the default *.conf file.
+It is recommended that *.conf files are not changed. *.local files are where users overwrite their default settings.
+For instance if you require the default [ssh-iptables-ipset] jail create a jail.local to extend jail.conf (
+the configuration for the fail2ban server). The jail.local file will be the following if you only need to enable
+it:
 
+.TP
+\fBjail.local\fR
 [ssh-iptables-ipset]
 
 enabled = true
+.TP
+
+Only overwride the settings you need to change and the rest of the configuration comes from the corresponding
+*.conf file.
 
 .SH DEFAULT
 The following options are applicable to all jails. Their meaning is in the default jail.conf file.
@@ -42,16 +48,16 @@ Action files specify which commands are executed to ban an IP address. They are 
 Like jail.conf files if you desire local changes create a [actionname].local file in the /etc/fail2ban/action.d directory 
 and override the required settings.
 
-The action files are ini files that have two sections, \fBdefination\fR and \fBinit\fR . 
+The action files are ini files that have two sections, \fBDefination\fR and \fBInit\fR . 
 
-The [init] section allows for settings relevant to the action. In jail.conf/jail.local these can be overwritten for a particular jail.
+The [Init] section allows for settings relevant to the action. In jail.conf/jail.local these can be overwritten for a particular jail.
 
-The commands are specified in the [defination] section as below..
+The commands are specified in the [Defination] section as below..
 
 The commands are executed through a system shell so shell redirection and process control is allowed. The commands should
 return 0 to indicate success which will prevent fail2ban attempting to retry (up to \fBmaxretry\fR times to ban the IP again.
 
-The following action parameters are in the [defination] section.
+The following action parameters are in the [Defination] section.
 .TP
 \fBactionstart\fR
 This is the commands that are executed when the jail starts.
@@ -68,7 +74,7 @@ This is the command that bans the IP address.
 \fBactionunban\fR
 This is the command that unbans the IP address after \fBbantime\fR.
 
-Tags are in <>. All the elements of [init] are tags that are replaced in all action commands. Tags can be added by the
+Tags are in <>. All the elements of [Init] are tags that are replaced in all action commands. Tags can be added by the
 \fBfail2ban-client\fR using the setctag command.
 
 More that one command is allowed. Each command needs to be on a new line and indented with whitespace with no blank lines. The following defines
@@ -101,7 +107,7 @@ These are used to identify failed authenicate attempts in logs and to extract th
 
 Like action files, filter files are ini files. The main section is the [Definition] section.
 
-There are two filter definations used in the [defination] section, failregex and ignoreregex.
+There are two filter definations used in the [Defination] section, failregex and ignoreregex.
 Other definations are allowed and can be used to substitue into other definations with %(defnname). For example.
 
 baduseragents = IE|wget
@@ -124,11 +130,11 @@ Filters can also have a section called [INCLUDES]. This is used to read other co
 
 .TP
 \fBbefore\fR
-indicates that this file is read before the [defination] section.
+indicates that this file is read before the [Defination] section.
 
 .TP
 \fBafter\fR
-indicates that this file is read after the [defination] section.
+indicates that this file is read after the [Defination] section.
 
 .SH AUTHOR
 Fail2ban Written by Cyril Jaquier <cyril.jaquier@fail2ban.org> with many contributions by Yaroslav O. Halchenko <debian@onerussian.com>.
