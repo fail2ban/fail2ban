@@ -211,6 +211,10 @@ class Transmitter(unittest.TestCase):
 			self.__transm.proceed(["start", self.jailName]), (0, None))
 		self.assertEqual(
 			self.__transm.proceed(["start", "TestJail2"]), (0, None))
+		# yoh: workaround for gh-146.  I still think that there is some
+		#      race condition and missing locking somewhere, but for now
+		#      giving it a small delay reliably helps to proceed with tests
+		time.sleep(0.1)
 		self.assertEqual(self.__transm.proceed(["stop", "all"]), (0, None))
 		time.sleep(1)
 		self.assertRaises(
