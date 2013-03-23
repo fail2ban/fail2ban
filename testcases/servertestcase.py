@@ -142,22 +142,6 @@ class Transmitter(unittest.TestCase):
 				self.__transm.proceed(["get", jail, cmd]),
 				(0, outValues[n+1:]))
 
-	def testSocket(self):
-		ss = os.stat(self.__sock_name)
-		self.assertIsNot(stat.S_ISSOCK(ss.st_mode), 0)
-
-	# pid removal is done in server.start
-	# unsure if this was intended
-	#def testPid(self):
-	#	pidfile = self.__pidfile_name
-	#	sp = os.stat(pidfile)
-	#	self.assertIsNot(stat.S_ISREG(sp.st_mode), 0)
-	#	self.assertEquals(stat.S_IMODE(sp.st_mode), stat.S_IRUSR | stat.S_IWUSR)
-	#	
-	#	p = open(pidfile,'r')
-	#	self.assertTrue(int(p.read()))
-	#	p.close()
-
 	def testStopServer(self):
 		self.assertEqual(self.__transm.proceed(["stop"]), (0, None))
 
