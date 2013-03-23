@@ -45,15 +45,18 @@ class DateDetectorTest(unittest.TestCase):
 		log = "1138049999 [sshd] error: PAM: Authentication failure"
 		date = [2006, 1, 23, 21, 59, 59, 0, 23, 0]
 		dateUnix = 1138049999.0
-		
-		self.assertEqual(self.__datedetector.getTime(log)[:6], date[:6])
+
+		self.assertEqual(self.__datedetector.getTime(log), date)
 		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
 	
 	def testGetTime(self):
 		log = "Jan 23 21:59:59 [sshd] error: PAM: Authentication failure"
 		date = [2005, 1, 23, 21, 59, 59, 6, 23, -1]
 		dateUnix = 1106513999.0
-	
+		# yoh: testing only up to 6 elements, since the day of the week
+		#      is not correctly determined atm, since year is not present
+		#      in the log entry.  Since this doesn't effect the operation
+		#      of fail2ban -- we just ignore incorrect day of the week
 		self.assertEqual(self.__datedetector.getTime(log)[:6], date[:6])
 		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
 
@@ -85,6 +88,7 @@ class DateDetectorTest(unittest.TestCase):
 			log = sdate + "[sshd] error: PAM: Authentication failure"
 			# exclude
 
+			# yoh: on [:6] see in above test
 			self.assertEqual(self.__datedetector.getTime(log)[:6], date[:6])
 			self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
 
