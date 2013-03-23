@@ -383,7 +383,8 @@ class Server:
 					handler.flush()
 					handler.close()
 				except ValueError:
-					if sys.version_info >= (2,6):
+					if (2,6) <= sys.version_info < (3,) or \
+							(3,2) <= sys.version_info:
 						raise
 					# is known to be thrown after logging was shutdown once
 					# with older Pythons -- seems to be safe to ignore there
