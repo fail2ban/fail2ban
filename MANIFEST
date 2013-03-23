@@ -123,6 +123,7 @@ config/action.d/sendmail-whois-lines.conf
 config/action.d/shorewall.conf
 config/fail2ban.conf
 man/fail2ban-client.1
+man/fail2ban.1
 man/jail.conf.5
 man/fail2ban-client.h2m
 man/fail2ban-server.1
