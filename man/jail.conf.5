@@ -48,16 +48,16 @@ Action files specify which commands are executed to ban an IP address. They are 
 Like jail.conf files if you desire local changes create a [actionname].local file in the /etc/fail2ban/action.d directory 
 and override the required settings.
 
-The action files are ini files that have two sections, \fBDefination\fR and \fBInit\fR . 
+The action files are ini files that have two sections, \fBDefinition\fR and \fBInit\fR . 
 
 The [Init] section allows for settings relevant to the action. In jail.conf/jail.local these can be overwritten for a particular jail.
 
-The commands are specified in the [Defination] section as below..
+The commands are specified in the [Definition] section as below..
 
 The commands are executed through a system shell so shell redirection and process control is allowed. The commands should
 return 0 to indicate success which will prevent fail2ban attempting to retry (up to \fBmaxretry\fR times to ban the IP again.
 
-The following action parameters are in the [Defination] section.
+The following action parameters are in the [Definition] section.
 .TP
 \fBactionstart\fR
 This is the commands that are executed when the jail starts.
@@ -101,14 +101,14 @@ The concatinated string of the log file lines of the matches that generated the 
 
 .SH FILTER FILES
 
-Filter definations are those in /etc/fail2ban/filter.d/*.conf and filter.d/*.local.
+Filter definitions are those in /etc/fail2ban/filter.d/*.conf and filter.d/*.local.
 
 These are used to identify failed authenicate attempts in logs and to extract the host IP address or hostname.
 
 Like action files, filter files are ini files. The main section is the [Definition] section.
 
-There are two filter definations used in the [Defination] section, failregex and ignoreregex.
-Other definations are allowed and can be used to substitue into other definations with %(defnname). For example.
+There are two filter definitions used in the [Definition] section, failregex and ignoreregex.
+Other definitions are allowed and can be used to substitue into other definitions with %(defnname). For example.
 
 baduseragents = IE|wget
 
@@ -130,11 +130,11 @@ Filters can also have a section called [INCLUDES]. This is used to read other co
 
 .TP
 \fBbefore\fR
-indicates that this file is read before the [Defination] section.
+indicates that this file is read before the [Definition] section.
 
 .TP
 \fBafter\fR
-indicates that this file is read after the [Defination] section.
+indicates that this file is read after the [Definition] section.
 
 .SH AUTHOR
 Fail2ban Written by Cyril Jaquier <cyril.jaquier@fail2ban.org> with many contributions by Yaroslav O. Halchenko <debian@onerussian.com>.
