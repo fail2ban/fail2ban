@@ -131,7 +131,7 @@ class JailThread(Thread):
 	def status(self):
 		pass
         
-        def sleep(self, timeout = 0):
+        def sleep(self, timeout = None):
             """\
             Sleep until pipe is readable or we timeout.
             A readable pipe means a signal occurred.
