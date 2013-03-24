@@ -144,9 +144,12 @@ class FilterSystemd(JournalFilter):
 			loglines.append(logentry.get('MESSAGE', ''))
 
 		try:
-			return u" ".join(loglines) + u"\n"
+			logline = u" ".join(loglines) + u"\n"
 		except UnicodeDecodeError:
-			return " ".join([str(logline) for logline in loglines]) + "\n"
+			logline = " ".join([str(logline) for logline in loglines]) + "\n"
+
+		logSys.debug("Read systemd journal entry: %s" % repr(logline))
+		return logline
 
 	##
 	# Main loop.
