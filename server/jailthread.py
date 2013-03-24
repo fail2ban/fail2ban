@@ -54,12 +54,12 @@ class JailThread(Thread):
 		self.__isIdle = False
 		## The time the thread sleeps in the loop.
 		self.__sleepTime = 1
-                
-                # initialize the pipe
-                self.__pipe = os.pipe()
-                for p in self.__pipe:
-                    helpers.setNonBlocking(p)
-                    helpers.closeOnExec(p)
+		
+		# initialize the pipe
+		self.__pipe = os.pipe()
+		for p in self.__pipe:
+			helpers.setNonBlocking(p)
+			helpers.closeOnExec(p)
 	
 	##
 	# Set the time that the thread sleeps.
@@ -88,6 +88,7 @@ class JailThread(Thread):
 	
 	def setIdle(self, value):
 		self.__isIdle = value
+		self.wakeup()
 	
 	##
 	# Get the idle state.
@@ -104,6 +105,7 @@ class JailThread(Thread):
 	
 	def stop(self):
 		self.__isRunning = False
+		self.wakeup()
 	
 	##
 	# Set the isRunning flag.
@@ -130,32 +132,34 @@ class JailThread(Thread):
 	
 	def status(self):
 		pass
-        
-        def sleep(self, timeout = None):
-            """\
-            Sleep until pipe is readable or we timeout.
-            A readable pipe means a signal occurred.
-            """
-        
-            try:
-                ready = select.select([self.__pipe[0]], [], [], timeout)
-                if not ready[0]:
-                    return
-                while os.read(self.__pipe[0], 1):
-                    pass
-            except select.error as e:
-                if e.args[0] not in [errno.EAGAIN, errno.EINTR]:
-                    raise
-            except OSError as e:
-                if e.errno not in [errno.EAGAIN, errno.EINTR]:
-                    raise
-        
-        def wakeup(self):
-            """\
-            Wake up the jail by writing to the pipe
-            """
-            try:
-                os.write(self.__pipe[1], b'.')
-            except IOError as e:
-                if e.errno not in [errno.EAGAIN, errno.EINTR]:
-                    raise
+	
+	def sleep(self, timeout = None):
+		"""\
+		Sleep until pipe is readable or we timeout.
+		A readable pipe means a signal occurred.
+		"""
+		
+		logSys.debug("JailThread sleeping for %s", timeout if timeout else "ever")
+		
+		try:
+			ready = select.select([self.__pipe[0]], [], [], timeout)
+			if not ready[0]:
+				return
+			while os.read(self.__pipe[0], 1):
+				pass
+		except select.error as e:
+			if e.args[0] not in [errno.EAGAIN, errno.EINTR]:
+				raise
+		except OSError as e:
+			if e.errno not in [errno.EAGAIN, errno.EINTR]:
+				raise
+	
+	def wakeup(self):
+		"""\
+		Wake up the jail by writing to the pipe
+		"""
+		try:
+			os.write(self.__pipe[1], b'.')
+		except IOError as e:
+			if e.errno not in [errno.EAGAIN, errno.EINTR]:
+				raise
