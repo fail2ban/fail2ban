@@ -159,7 +159,7 @@ class JailThread(Thread):
 		Wake up the jail by writing to the pipe
 		"""
 		try:
-			os.write(self.__pipe[1], b'.')
+			os.write(self.__pipe[1], '.')
 		except IOError, e:
 			if e.errno not in [errno.EAGAIN, errno.EINTR]:
 				raise
