@@ -53,7 +53,7 @@ class FilterSystemd(JournalFilter):
 		self.__modified = False
 		# Initialise systemd-journal connection
 		self.__journal = journal.Reader()
-		start_time = datetime.datetime.utcnow() - \
+		start_time = datetime.datetime.now() - \
 				datetime.timedelta(seconds=int(self.getFindTime()))
 		self.__journal.seek_realtime(start_time)
 		self.__matches = []
