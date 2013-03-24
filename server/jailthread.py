@@ -141,6 +141,9 @@ class JailThread(Thread):
 		
 		logSys.debug("JailThread sleeping for %s", timeout if timeout else "ever")
 		
+		# For now, the sleep is done by a select, not an threading.Event
+		# because the latter does an active loop when calling wait() with
+		# a timeout, which is precisely what we don't want.
 		try:
 			ready = select.select([self.__pipe[0]], [], [], timeout)
 			if not ready[0]:
