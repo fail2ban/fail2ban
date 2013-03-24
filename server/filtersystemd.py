@@ -56,6 +56,9 @@ class FilterSystemd(JournalFilter):
 		start_time = datetime.datetime.now() - \
 				datetime.timedelta(seconds=int(self.getFindTime()))
 		self.__journal.seek_realtime(start_time)
+		# Move back one entry to ensure do not end up in dead space
+		# if start time beyond end of journal
+		self.__journal.get_previous()
 		self.__matches = []
 		logSys.debug("Created FilterSystemd")
 
