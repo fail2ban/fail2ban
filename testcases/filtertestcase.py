@@ -99,8 +99,10 @@ def _assert_equal_entries(utest, found, output, count=None):
 	if len(output) > 3 and count is None: # match matches
 		# do not check if custom count (e.g. going through them twice)
 		utest.assertEqual(repr(found[3]), repr(output[3]))
+	if len(output) > 4 and count is None: # prefix matches
+		utest.assertEqual(found[4], output[4])
 
-def _assert_correct_last_attempt(utest, filter_, output, count=None):
+def _assert_correct_last_attempt(utest, filter_, output, tobanprefix, count=None):
 	"""Additional helper to wrap most common test case
 
 	Test filter to contain target ticket
@@ -109,13 +111,14 @@ def _assert_correct_last_attempt(utest, filter_, output, count=None):
 		ticket = filter_.getFailTicket()
 	else:
 		# when we are testing without jails
-		ticket = filter_.failManager.toBan()
+		ticket = filter_.failManager.toBan(tobanprefix)
 
 	attempts = ticket.getAttempt()
 	date = ticket.getTime()
 	ip = ticket.getIP()
 	matches = ticket.getMatches()
-	found = (ip, attempts, date, matches)
+	prefix = ticket.getPrefix()
+	found = (ip, attempts, date, matches, prefix)
 
 	_assert_equal_entries(utest, found, output, count)
 
@@ -336,22 +339,22 @@ class LogFileMonitorNetwork(LogFileMonitor):
 		self.filter.addIgnoreIP('193.168.0.128')
 		_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=5)
 		self.filter.getFailures(self.name)
-		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan, *[32])
 
 	def testNewChangeViaGetFailures_simple(self):
 		# suck in lines from this sample log file
 		self.filter.getFailures(self.name)
-		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan, *[32])
 
 		# Now let's feed it with entries from the file
 		_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=5)
 		self.filter.getFailures(self.name)
-		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan, *[32])
 		# and it should have not been enough
 
 		_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=5)
 		self.filter.getFailures(self.name)
-		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
+		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01, 128)
 
 	def testNewChangeViaGetFailures_rewrite(self):
 		#
@@ -359,7 +362,7 @@ class LogFileMonitorNetwork(LogFileMonitor):
 		self.file.close()
 		_copy_lines_between_files(GetFailures.FILENAME_01, self.name)
 		self.filter.getFailures(self.name)
-		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
+		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01, 128)
 
 		# What if file gets overridden
 		# yoh: skip so we skip those 2 identical lines which our
@@ -369,7 +372,7 @@ class LogFileMonitorNetwork(LogFileMonitor):
 											  skip=3, mode='w')
 		self.filter.getFailures(self.name)
 		#self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
-		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
+		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01, 128)
 
 	def testNewChangeViaGetFailures_move(self):
 		#
@@ -377,14 +380,14 @@ class LogFileMonitorNetwork(LogFileMonitor):
 		self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 											  n=14, mode='w')
 		self.filter.getFailures(self.name)
-		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan, *[32])
 		self.assertEqual(self.filter.failManager.getFailTotal(), 2)
 
 		# move aside, but leaving the handle still open...
 		os.rename(self.name, self.name + '.bak')
 		_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14)
 		self.filter.getFailures(self.name)
-		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
+		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01, 128)
 		self.assertEqual(self.filter.failManager.getFailTotal(), 3)
 
 def get_monitor_failures_testcase(Filter_):
@@ -448,18 +451,18 @@ def get_monitor_failures_testcase(Filter_):
 			# shorter wait time for not modified status
 			return not self.isFilled(delay)
 
-		def assert_correct_last_attempt(self, failures, count=None):
+		def assert_correct_last_attempt(self, failures, prefix, count=None):
 			self.assertTrue(self.isFilled(20)) # give Filter a chance to react
-			_assert_correct_last_attempt(self, self.jail, failures, count=count)
+			_assert_correct_last_attempt(self, self.jail, failures, prefix, count=count)
 
 
 		def test_grow_file(self):
 			# suck in lines from this sample log file
-			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan, *[32])
 
 			# Now let's feed it with entries from the file
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=5)
-			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan, *[32])
 			# and our dummy jail is empty as well
 			self.assertFalse(len(self.jail))
 			# since it should have not been enough
@@ -472,21 +475,21 @@ def get_monitor_failures_testcase(Filter_):
 			# DummyJail
 			self.assertEqual(len(self.jail), 1)
 			# and there should be no "stuck" ticket in failManager
-			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan, *[32])
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01, 128)
 			self.assertEqual(len(self.jail), 0)
 
 			#return
 			# just for fun let's copy all of them again and see if that results
 			# in a new ban
  			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01, 128)
 
 		def test_rewrite_file(self):
 			# if we rewrite the file at once
 			self.file.close()
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name)
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01, 128)
 
 			# What if file gets overridden
 			# yoh: skip so we skip those 2 identical lines which our
@@ -494,7 +497,7 @@ def get_monitor_failures_testcase(Filter_):
 			# would not detect "rotation"
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 												  skip=3, mode='w')
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01, 128)
 
 
 		def test_move_file(self):
@@ -503,31 +506,31 @@ def get_monitor_failures_testcase(Filter_):
 												  n=14, mode='w')
 			# Poll might need more time
 			self.assertTrue(self.isEmpty(4 + int(isinstance(self.filter, FilterPoll))*2))
-			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan, *[32])
 			self.assertEqual(self.filter.failManager.getFailTotal(), 2)
 
 			# move aside, but leaving the handle still open...
 			os.rename(self.name, self.name + '.bak')
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, skip=14)
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01, 128)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
 
 			# now remove the moved file
 			_killfile(None, self.name + '.bak')
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01, 128)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
 
 		def test_new_bogus_file(self):
 			# to make sure that watching whole directory does not effect
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01, 128)
 
 			# create a bogus file in the same directory and see if that doesn't affect
 			open(self.name + '.bak2', 'w').write('')
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01, 128)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 			_killfile(None, self.name + '.bak2')
 
@@ -537,7 +540,7 @@ def get_monitor_failures_testcase(Filter_):
 
 			# basic full test
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01, 128)
 
 			# and now remove the LogPath
 			self.filter.delLogPath(self.name)
@@ -552,12 +555,12 @@ def get_monitor_failures_testcase(Filter_):
 			# tail written before, so let's not copy anything yet
 			#_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
 			# we should detect the failures
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01, count=6) # was needed if we write twice above
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01, 128, count=6) # was needed if we write twice above
 
 			# now copy and get even more
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
 			# yoh: not sure why count here is not 9... TODO
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01)#, count=9)
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01, 128)#, count=9)
 
 	MonitorFailures.__name__ = "MonitorFailures<%s>(%s)" \
 			  % (Filter_.__name__, testclass_name) # 'tempfile')
@@ -574,7 +577,28 @@ class GetFailures(unittest.TestCase):
 
 	# so that they could be reused by other tests
 	FAILURES_01 = ('193.168.0.128', 3, 1124013599.0,
-				  ['Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128\n']*3)
+				  ['Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128\n']*3, 32)
+
+	MATCHES_02 = ["Aug 14 11:53:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n",
+				  "Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n",
+				  "Aug 14 11:57:01 i60p295 sshd[12365]: Accepted keyboard-interactive/pam for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n",
+				  "Aug 14 11:57:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n",
+				  "Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n",
+				  "Aug 14 11:59:01 i60p295 sshd[12365]: Accepted keyboard-interactive/pam for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n",
+				  "Aug 14 11:59:01 i60p295 sshd[12365]: Accepted keyboard-interactive/pam for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n",
+				  "Aug 14 11:59:01 i60p295 sshd[12365]: Accepted keyboard-interactive/pam for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n"]
+
+	MATCHES_03 = ["Aug 14 11:53:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.\n",
+				  "Aug 14 11:54:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.\n",
+				  "Aug 14 11:55:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.\n",
+				  "Aou 14 11:56:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.\n",
+				  "Aou 14 11:57:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.\n",
+				  "Aug 14 11:59:04 HOSTNAME courieresmtpd: error,relay=::ffff:203.162.223.135,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.\n"]
+
+	MATCHES_04 = ["2005/08/14 11:57:00 [sshd] Invalid user toto from 212.41.96.186\n",
+				  "2005/08/14 11:58:00 [sshd] Invalid user fuck from 212.41.96.186\n",
+				  "2005/08/14 11:59:00 [sshd] Invalid user toto from 212.41.96.186\n",
+				  "2005/08/14 12:00:00 [sshd] Invalid user fuck from 212.41.96.186\n"]
 
 	def setUp(self):
 		"""Call before every test case."""
@@ -614,30 +638,30 @@ class GetFailures(unittest.TestCase):
 		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 		self.filter.getFailures(GetFailures.FILENAME_01)
 		self.assertEqual(self.filter.status(),[ ("Currently failed", 1), ("Total failed", 3), ("File list",[ GetFailures.FILENAME_01 ] ) ] )
-		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
+		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01, 128)
 
 
 	def testGetFailures02(self):
 		output = ('141.3.81.106', 4, 1124013539.0,
 				  ['Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n'
-				   % m for m in 53, 54, 57, 58])
+				   % m for m in 53, 54, 57, 58], 32)
 
 		self.filter.addLogPath(GetFailures.FILENAME_02)
 		self.filter.addFailRegex("Failed .* from <HOST>")
 		self.filter.getFailures(GetFailures.FILENAME_02)
-		_assert_correct_last_attempt(self, self.filter, output)
+		_assert_correct_last_attempt(self, self.filter, output, 128)
 
 	def testGetFailures03(self):
-		output = ('203.162.223.135', 6, 1124013544.0)
+		output = ('203.162.223.135', 6, 1124013544.0, GetFailures.MATCHES_03, 32)
 
 		self.filter.addLogPath(GetFailures.FILENAME_03)
 		self.filter.addFailRegex("error,relay=<HOST>,.*550 User unknown")
 		self.filter.getFailures(GetFailures.FILENAME_03)
-		_assert_correct_last_attempt(self, self.filter, output)
+		_assert_correct_last_attempt(self, self.filter, output, 128)
 
 	def testGetFailures04(self):
-		output = [('212.41.96.186', 4, 1124013600.0),
-				  ('212.41.96.185', 4, 1124013598.0)]
+		output = [('212.41.96.186', 4, 1124013600.0, GetFailures.MATCHES_04, 32),
+				  ('212.41.96.185', 4, 1124013598.0, GetFailures.MATCHES_04, 32)]
 
 		self.filter.addLogPath(GetFailures.FILENAME_04)
 		self.filter.addFailRegex("Invalid user .* <HOST>")
@@ -645,7 +669,7 @@ class GetFailures(unittest.TestCase):
 
 		try:
 			for i, out in enumerate(output):
-				_assert_correct_last_attempt(self, self.filter, out)
+				_assert_correct_last_attempt(self, self.filter, out, 128)
 		except FailManagerEmpty:
 			pass
 
@@ -653,10 +677,12 @@ class GetFailures(unittest.TestCase):
 		# We should still catch failures with usedns = no ;-)
 		output_yes = ('192.0.43.10', 2, 1124013539.0,
 					  ['Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2\n',
-					   'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:192.0.43.10 port 51332 ssh2\n'])
+					   'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:192.0.43.10 port 51332 ssh2\n'],
+					 32)
 
 		output_no = ('192.0.43.10', 1, 1124013539.0,
-					  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:192.0.43.10 port 51332 ssh2\n'])
+					  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:192.0.43.10 port 51332 ssh2\n'],
+					 32)
 
 		# Actually no exception would be raised -- it will be just set to 'no'
 		#self.assertRaises(ValueError,
@@ -672,7 +698,7 @@ class GetFailures(unittest.TestCase):
 			filter_.addLogPath(GetFailures.FILENAME_USEDNS)
 			filter_.addFailRegex("Failed .* from <HOST>")
 			filter_.getFailures(GetFailures.FILENAME_USEDNS)
-			_assert_correct_last_attempt(self, filter_, output)
+			_assert_correct_last_attempt(self, filter_, output, 128)
 
 	def testClosedContainer(self):
 		self.filter.addLogPath(GetFailures.FILENAME_04)
@@ -713,14 +739,14 @@ class GetFailures(unittest.TestCase):
 		self.assertTrue(self.log.is_logged('Incorrect value'))
 
 	def testGetFailuresMultiRegex(self):
-		output = ('141.3.81.106', 8, 1124013541.0)
+		output = ('141.3.81.106', 8, 1124013541.0, GetFailures.MATCHES_02, 32)
 
 		r = [ "Failed .* from <HOST>", "Accepted .* from <HOST>"]
 		self.filter.addLogPath(GetFailures.FILENAME_02)
 		self.filter.addFailRegex(r[0])
 		self.filter.addFailRegex(r[1])
 		self.filter.getFailures(GetFailures.FILENAME_02)
-		_assert_correct_last_attempt(self, self.filter, output)
+		_assert_correct_last_attempt(self, self.filter, output, 128)
 
 		def rhost(s):
 			# regex from server/failregex.py
@@ -738,7 +764,7 @@ class GetFailures(unittest.TestCase):
 
 		self.filter.getFailures(GetFailures.FILENAME_02)
 
-		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan, *[32])
 
 		self.assertEqual(self.filter.getIgnoreRegex(), ["for roehl"])
 		self.filter.delIgnoreRegex(0)

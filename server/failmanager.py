@@ -146,7 +146,7 @@ class FailManager:
 		if self.__failList.has_key( fip ):
 			del self.__failList[ fip ]
 	
-	def toBan(self):
+	def toBan(self, prefix):
 		try:
 			self.__lock.acquire()
 			for family, ip in self.__failList:
@@ -155,7 +155,10 @@ class FailManager:
 				if data.getRetry() >= self.__maxRetry:
 					self.__delFailure(fip)
 					# Create a FailTicket from BanData
-					failTicket = FailTicket(ip, family, data.getLastTime(), data.getMatches())
+					if family == socket.AF_INET6:
+						failTicket = FailTicket(ip, family, data.getLastTime(), matches=data.getMatches(), prefix=prefix)
+					else:
+						failTicket = FailTicket(ip, family, data.getLastTime(), matches=data.getMatches(), prefix=32)
 					failTicket.setAttempt(data.getRetry())
 					return failTicket
 			raise FailManagerEmpty

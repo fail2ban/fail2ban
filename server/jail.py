@@ -41,7 +41,7 @@ class Jail:
 		self.__name = name
 		self.__queue = Queue.Queue()
 		self.__filter = None
-		self.__ipv6banprefix = 64
+		self._ipv6banprefix = 64
 
 		logSys.info("Creating new jail '%s'" % self.__name)
 		self._setBackend(backend)
@@ -72,7 +72,7 @@ class Jail:
 								   "%r was requested" % (b, backend))
 				else:
 					logSys.info("Initiated %r backend" % b)
-				self.__action = Actions(self, ipv6banprefix = self.__ipv6banprefix)
+				self.__action = Actions(self, ipv6banprefix = self._ipv6banprefix)
 				return					# we are done
 			except ImportError, e:
 				logSys.debug(
@@ -87,21 +87,21 @@ class Jail:
 	def _initPolling(self):
 		logSys.info("Jail '%s' uses poller" % self.__name)
 		from filterpoll import FilterPoll
-		self.__filter = FilterPoll(self, ipv6banprefix=self.__ipv6banprefix)
+		self.__filter = FilterPoll(self, ipv6banprefix=self._ipv6banprefix)
 	
 	def _initGamin(self):
 		# Try to import gamin
 		import gamin
 		logSys.info("Jail '%s' uses Gamin" % self.__name)
 		from filtergamin import FilterGamin
-		self.__filter = FilterGamin(self, ipv6banprefix=self.__ipv6banprefix)
+		self.__filter = FilterGamin(self, ipv6banprefix=self._ipv6banprefix)
 	
 	def _initPyinotify(self):
 		# Try to import pyinotify
 		import pyinotify
 		logSys.info("Jail '%s' uses pyinotify" % self.__name)
 		from filterpyinotify import FilterPyinotify
-		self.__filter = FilterPyinotify(self, ipv6banprefix=self.__ipv6banprefix)
+		self.__filter = FilterPyinotify(self, ipv6banprefix=self._ipv6banprefix)
 	
 	def setName(self, name):
 		self.__name = name
@@ -178,7 +178,7 @@ class Jail:
 		else:
 			if value < 64:
 				logSys.warning('setting IPv6BanPrefix less than 64 not recommended')
-			self.__ipv6banprefix = value
+			self._ipv6banprefix = value
 			self.__filter.setIPv6BanPrefix(value)
 			self.__action.setIPv6BanPrefix(value)
 			logSys.info("Set IPv6BanPrefix = %s" % value)
@@ -189,5 +189,5 @@ class Jail:
 	# @return the retry value
 
 	def getIPv6BanPrefix(self):
-		return self.__ipv6banprefix
+		return self._ipv6banprefix
 

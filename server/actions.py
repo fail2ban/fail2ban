@@ -56,7 +56,7 @@ class Actions(JailThread):
 		## The jail which contains this action.
 		self.jail = jail
 		self.__actions = list()
-		self.__ipv6banprefix = ipv6banprefix
+		self._ipv6banprefix = ipv6banprefix
 		## The ban manager.
 		self.__banManager = BanManager()
 	
@@ -67,7 +67,7 @@ class Actions(JailThread):
 	
 	def addAction(self, name):
 		action = Action(name)
-		action.setCInfo('ipv6banprefix',self.__ipv6banprefix)
+		action.setCInfo('ipv6banprefix',self._ipv6banprefix)
 		self.__actions.append(action)
 	
 	##
@@ -116,7 +116,7 @@ class Actions(JailThread):
 		logSys.info("Set banTime = %s" % value)
 	
 	def setIPv6BanPrefix(self, value):
-		self.__ipv6banprefix = value
+		self._ipv6banprefix = value
 		if not self._isActive():
 			for action in self.__actions:
 				action.setCInfo('ipv6banprefix', value)

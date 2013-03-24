@@ -100,17 +100,18 @@ class AddFailure(unittest.TestCase):
 	def testbanOK(self):
 		self.__failManager.setMaxRetry(5)
 		#ticket = FailTicket('193.168.0.128', None)
-		ticket = self.__failManager.toBan()
+		ticket = self.__failManager.toBan(32)
 		self.assertEqual(ticket.getIP(), "193.168.0.128")
+		self.assertEqual(ticket.getPrefix(), 32)
 		self.assertTrue(isinstance(ticket.getIP(), str))
 
 	def testbanNOK(self):
 		self.__failManager.setMaxRetry(10)
-		self.assertRaises(FailManagerEmpty, self.__failManager.toBan)
+		self.assertRaises(FailManagerEmpty, self.__failManager.toBan, *[32])
 
 	def testWindow(self):
-		ticket = self.__failManager.toBan()
+		ticket = self.__failManager.toBan(32)
 		self.assertNotEqual(ticket.getIP(), "100.100.10.10")
-		ticket = self.__failManager.toBan()
+		ticket = self.__failManager.toBan(32)
 		self.assertNotEqual(ticket.getIP(), "100.100.10.10")
-		self.assertRaises(FailManagerEmpty, self.__failManager.toBan)
+		self.assertRaises(FailManagerEmpty, self.__failManager.toBan, *[32])

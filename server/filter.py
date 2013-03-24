@@ -73,7 +73,7 @@ class Filter(JailThread):
 		## The ignore IP list.
 		self.__ignoreIpList = []
 		## The IPv6 ban prefix
-		self.__ipv6banprefix = ipv6banprefix
+		self._ipv6banprefix = ipv6banprefix
 
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
@@ -215,7 +215,7 @@ class Filter(JailThread):
 	# @param value the retry value
 
 	def setIPv6BanPrefix(self, value):
-		self.__ipv6banprefix = value
+		self._ipv6banprefix = value
 		# logging done in Jail class
 
 	##
@@ -224,7 +224,7 @@ class Filter(JailThread):
 	# @return the retry value
 
 	def getIPv6BanPrefix(self):
-		return self.__ipv6banprefix
+		return self._ipv6banprefix
 
 	##
 	# Main loop.
@@ -241,18 +241,26 @@ class Filter(JailThread):
 	# Arturo 'Buanzo' Busleiman <buanzo@buanzo.com.ar>
 	#
 	# to enable banip fail2ban-client BAN command
-	# TODO: normalise IP address string.
 
 	def addBannedIP(self, ip):
 		unixTime = MyTime.time()
-		family = DNSUtils.ipFamily(ip)
+		s = ip.split('/', 1)
+		family = DNSUtils.ipFamily(s[0])
+		# IP address without CIDR mask
+		if len(s) == 1:
+			if family == socket.AF_INET6:
+				s.insert(1, 128)
+			else:
+				s.insert(1, 32)
+		prefix = s[1]
+
 		for i in xrange(self.failManager.getMaxRetry()):
-			self.failManager.addFailure(FailTicket(ip, family , unixTime))
+			self.failManager.addFailure(FailTicket(s[0], family , unixTime))
 
 		# Perform the banning of the IP now.
 		try: # pragma: no branch - exception is the only way out
 			while True:
-				ticket = self.failManager.toBan()
+				ticket = self.failManager.toBan(prefix)
 				self.jail.putFailTicket(ticket)
 		except FailManagerEmpty:
 			self.failManager.cleanup(MyTime.time())
@@ -370,9 +378,9 @@ class Filter(JailThread):
 			logSys.debug("Found %s" % ip)
 			if family == socket.AF_INET6:
 				self.failManager.addFailure(
-					FailTicket(DNSUtils.truncatetoprefix(ip,self.__ipv6banprefix,family),
+					FailTicket(DNSUtils.truncatetoprefix(ip, self._ipv6banprefix, family),
 								 family, unixTime, matches=[line],
-								 prefix=self.__ipv6banprefix)
+								 prefix=self._ipv6banprefix)
 				)
 			else:
 				self.failManager.addFailure(FailTicket(ip, family, unixTime,  matches=[line]))
