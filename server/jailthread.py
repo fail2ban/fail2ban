@@ -29,6 +29,11 @@ __license__ = "GPL"
 
 from threading import Thread
 import logging
+import os
+import select
+import errno
+
+from common import helpers
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.server")
@@ -49,6 +54,12 @@ class JailThread(Thread):
 		self.__isIdle = False
 		## The time the thread sleeps in the loop.
 		self.__sleepTime = 1
+                
+                # initialize the pipe
+                self.__pipe = os.pipe()
+                for p in self.__pipe:
+                    helpers.setNonBlocking(p)
+                    helpers.closeOnExec(p)
 	
 	##
 	# Set the time that the thread sleeps.
@@ -119,3 +130,32 @@ class JailThread(Thread):
 	
 	def status(self):
 		pass
+        
+        def sleep(self, timeout = 0):
+            """\
+            Sleep until pipe is readable or we timeout.
+            A readable pipe means a signal occurred.
+            """
+        
+            try:
+                ready = select.select([self.__pipe[0]], [], [], timeout)
+                if not ready[0]:
+                    return
+                while os.read(self.__pipe[0], 1):
+                    pass
+            except select.error as e:
+                if e.args[0] not in [errno.EAGAIN, errno.EINTR]:
+                    raise
+            except OSError as e:
+                if e.errno not in [errno.EAGAIN, errno.EINTR]:
+                    raise
+        
+        def wakeup(self):
+            """\
+            Wake up the jail by writing to the pipe
+            """
+            try:
+                os.write(self.__pipe[1], b'.')
+            except IOError as e:
+                if e.errno not in [errno.EAGAIN, errno.EINTR]:
+                    raise

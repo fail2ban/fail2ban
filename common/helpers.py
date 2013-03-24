@@ -28,6 +28,8 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2009 Cyril Jaquier"
 __license__ = "GPL"
 
+import fcntl
+import os
 
 def formatExceptionInfo():
 	""" Author: Arturo 'Buanzo' Busleiman """
@@ -39,3 +41,13 @@ def formatExceptionInfo():
 	except KeyError:
 		excArgs = str(exc)
 	return (excName, excArgs)
+
+def closeOnExec(fd):
+    flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+    flags |= fcntl.FD_CLOEXEC
+    fcntl.fcntl(fd, fcntl.F_SETFD, flags)
+
+
+def setNonBlocking(fd):
+    flags = fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK
+    fcntl.fcntl(fd, fcntl.F_SETFL, flags)
