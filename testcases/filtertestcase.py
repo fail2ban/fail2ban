@@ -432,9 +432,10 @@ def get_monitor_failures_testcase(Filter_):
 			# if we move file into a new location while it has been open already
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 												  n=14, mode='w')
-			self.assertTrue(self.isEmpty(2))
+			# Poll might need more time
+			self.assertTrue(self.isEmpty(2 + int(isinstance(self.filter, FilterPoll))*4))
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
-			self.assertEqual(self.filter.failManager.getFailTotal(), 2) # Fails with Poll from time to time
+			self.assertEqual(self.filter.failManager.getFailTotal(), 2)
 
 			# move aside, but leaving the handle still open...
 			os.rename(self.name, self.name + '.bak')
