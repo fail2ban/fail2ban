@@ -50,8 +50,11 @@ class DateTemplate:
 	def getName(self):
 		return self.__name
 	
-	def setRegex(self, regex):
-		self.__regex = regex.strip()
+	def setRegex(self, regex, wordBegin = True):
+		regex = regex.strip()
+		if (wordBegin and not re.search(r'^\^', regex)):
+			regex = r'\b' + regex
+		self.__regex = regex
 		self.__cRegex = re.compile(regex)
 		
 	def getRegex(self):
