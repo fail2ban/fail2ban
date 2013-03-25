@@ -68,6 +68,7 @@ class DateDetectorTest(unittest.TestCase):
 			"2005.01.23 21:59:59",
 			"23/01/2005 21:59:59",
 			"01-23-2005 21:59:59.252", # reported on f2b, causes Feb29 fix to break
+			"050123 21:59:59", # MySQL
 			):
 			log = sdate + "[sshd] error: PAM: Authentication failure"
 			# exclude
