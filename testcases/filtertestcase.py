@@ -379,7 +379,7 @@ def get_monitor_failures_testcase(Filter_):
 			return not self.isFilled(delay)
 
 		def assert_correct_last_attempt(self, failures, count=None):
-			self.assertTrue(self.isFilled(10)) # give Filter a chance to react
+			self.assertTrue(self.isFilled(20)) # give Filter a chance to react
 			_assert_correct_last_attempt(self, self.jail, failures, count=count)
 
 
