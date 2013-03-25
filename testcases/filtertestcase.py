@@ -324,11 +324,15 @@ def get_monitor_failures_testcase(Filter_):
 	"""Generator of TestCase's for different filters/backends
 	"""
 
+	_, testclass_name = tempfile.mkstemp('fail2ban', 'monitorfailures')
+
 	class MonitorFailures(unittest.TestCase):
+		count = 0
 		def setUp(self):
 			"""Call before every test case."""
 			self.filter = self.name = 'NA'
-			_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
+			self.name = '%s-%d' % (testclass_name, self.count)
+			MonitorFailures.count += 1 # so we have unique filenames across tests
 			self.file = open(self.name, 'a')
 			self.jail = DummyJail()
 			self.filter = Filter_(self.jail)
@@ -351,11 +355,8 @@ def get_monitor_failures_testcase(Filter_):
 			self.filter.join()		  # wait for the thread to terminate
 			#print "D: KILLING THE FILE"
 			_killfile(self.file, self.name)
+			#time.sleep(0.2)			  # Give FS time to ack the removal
 			pass
-
-		def __str__(self): # pragma: no cover - will only show up if unexpected exception is thrown
-			return "MonitorFailures%s(%s)" \
-			  % (Filter_, hasattr(self, 'name') and self.name or 'tempfile')
 
 		def isFilled(self, delay=2.):
 			"""Wait up to `delay` sec to assure that it was modified or not
@@ -488,7 +489,8 @@ def get_monitor_failures_testcase(Filter_):
 			# yoh: not sure why count here is not 9... TODO
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)#, count=9)
 
-
+	MonitorFailures.__name__ = "MonitorFailures<%s>(%s)" \
+			  % (Filter_.__name__, testclass_name) # 'tempfile')
 	return MonitorFailures
 
 
