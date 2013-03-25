@@ -106,15 +106,16 @@ class FailManager:
 				fData.setLastTime(unixTime)
 				self.__failList[ip] = fData
 
+			self.__failTotal += 1
+
 			if logSys.getEffectiveLevel() <= logging.DEBUG:
 				# yoh: Since composing this list might be somewhat time consuming
 				# in case of having many active failures, it should be ran only
 				# if debug level is "low" enough
 				failures_summary = ', '.join(['%s:%d' % (k, v.getRetry())
 											  for k,v in  self.__failList.iteritems()])
-				logSys.debug("Currently have failures from %d IPs (IP:count): %s"
-							 % (len(self.__failList), failures_summary))
-			self.__failTotal += 1
+				logSys.debug("Total # of detected failures: %d. Current failures from %d IPs (IP:count): %s"
+							 % (self.__failTotal, len(self.__failList), failures_summary))
 		finally:
 			self.__lock.release()
 	
