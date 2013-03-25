@@ -50,7 +50,7 @@ class DateTemplate:
 	def getName(self):
 		return self.__name
 	
-	def setRegex(self, regex, wordBegin = True):
+	def setRegex(self, regex, wordBegin=True):
 		regex = regex.strip()
 		if (wordBegin and not re.search(r'^\^', regex)):
 			regex = r'\b' + regex
@@ -186,7 +186,8 @@ class DateTai64n(DateTemplate):
 	def __init__(self):
 		DateTemplate.__init__(self)
 		# We already know the format for TAI64N
-		self.setRegex("@[0-9a-f]{24}")
+		# yoh: we should not add an additional front anchor
+		self.setRegex("@[0-9a-f]{24}", wordBegin=False)
 	
 	def getDate(self, line):
 		date = None

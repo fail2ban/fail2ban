@@ -103,6 +103,27 @@ class DateDetectorTest(unittest.TestCase):
 		self.assertRaises(ValueError, self.__datedetector._appendTemplate,
 						  self.__datedetector.getTemplates()[0])
 
+	def testFullYearMatch_gh130(self):
+		# see https://github.com/fail2ban/fail2ban/pull/130
+		# yoh: unfortunately this test is not really effective to reproduce the
+		#      situation but left in place to assure consistent behavior
+		m1 = [2012, 10, 11, 2, 37, 17]
+		self.assertEqual(
+			self.__datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')[:6],
+			m1)
+		self.__datedetector.sortTemplate()
+		# confuse it with year being at the end
+		for i in xrange(10):
+			self.assertEqual(
+				self.__datedetector.getTime('11/10/2012 02:37:17 [error] 18434#0')[:6],
+				m1)
+		self.__datedetector.sortTemplate()
+		# and now back to the original
+		self.assertEqual(
+			self.__datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')[:6],
+			m1)
+
+
 #	def testDefaultTempate(self):
 #		self.__datedetector.setDefaultRegex("^\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 #		self.__datedetector.setDefaultPattern("%b %d %H:%M:%S")
