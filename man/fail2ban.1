@@ -2,25 +2,33 @@
 .SH NAME
 fail2ban \- a set of server and client programs to limit brute force authentication attempts.
 .SH DESCRIPTION
-Fail2Ban consists of a client, server and some configuration files to achieve limiting 
-brute force of authenitcation attempts.
+Fail2Ban consists of a client, server and configuration files to limit
+brute force authentication attempts.
 
-The server program is \fBfail2ban-server\fR which is configured from the configuration files. The
-fail2ban-server can also be configured using the \fBfail2ban-client\fR. 
+The server program \fBfail2ban-server\fR is responsible for monitoring
+log files and issuing ban/unban commands.  It gets configured through
+a simple protocol by \fBfail2ban-client\fR, which can also read
+configuration files and issue corresponding configuration commands to
+the server.
 
-For details on the configuration of fail2ban see the jail.conf(5) manual page.
+For details on the configuration of fail2ban see the jail.conf(5)
+manual page.  A jail (as specified in jail.conf) couples filters and
+actions definitions for any given list of files to get monitored.
 
-For details on the configuration of fail2ban-server see the fail2ban-server(1) manual page.
+For details on the command-line options of fail2ban-server see the
+fail2ban-server(1) manual page.
 
-For details on the configuration of fail2ban-client see the fail2ban-client(1) manual page.
+For details on the command-line options and commands for configuring
+the server via fail2ban-client see the fail2ban-client(1) manual page.
 
-For testing regular expressions assocated with filter using the fail2ban-regex program may be of
-use and its manual page is fail2ban-regex(1).
+For testing regular expressions specified in a filter using the
+fail2ban-regex program may be of use and its manual page is
+fail2ban-regex(1).
 
 .SH FILES
 \fI/etc/fail2ban/*\fR
 .SH AUTHOR
-Manual page written by Daniel Black
+Manual page written by Daniel Black and Yaroslav Halchenko
 .SH "REPORTING BUGS"
 Report bugs to https://github.com/fail2ban/fail2ban/issues
 .SH COPYRIGHT
@@ -32,5 +40,5 @@ Licensed under the GNU General Public License v2 (GPL).
 .br 
 fail2ban-server(1)
 fail2ban-client(1)
-jail.conf(5)
 fail2ban-regex(1)
+jail.conf(5)

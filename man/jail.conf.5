@@ -8,13 +8,13 @@ jail.conf \- configuration for the fail2ban server
 
 .B filter.d/*.conf filter.d/*.local
 .SH DESCRIPTION
-Fail2ban has three configuration file types. Action files are the commands for banning and unbanning IP address,
-Filter files tell fail2ban how authentication failures occur, and Jail configurations that map the two together.
+Fail2ban has three configuration file types. Action files are the commands for banning and unbanning of IP address,
+Filter files tell fail2ban how to detect authentication failures, and Jail configurations combine filters with actions into jails.
 
-There are *.conf files that are distributed by fail2ban and *.local file that contain user overwritten files. 
-It is recommended that *.conf files are not changed. *.local files are where users overwrite their default settings.
-For instance if you require the default [ssh-iptables-ipset] jail create a jail.local to extend jail.conf (
-the configuration for the fail2ban server). The jail.local file will be the following if you only need to enable
+There are *.conf files that are distributed by fail2ban and *.local file that contain user customizations.
+It is recommended that *.conf files should remain unchanged.  If needed, customizations should be provided in *.local files.
+For instance, if you would like to customize the [ssh-iptables-ipset] jail, create a jail.local to extend jail.conf
+(the configuration for the fail2ban server).  The jail.local file will be the following if you only need to enable
 it:
 
 .TP
@@ -22,13 +22,13 @@ it:
 [ssh-iptables-ipset]
 
 enabled = true
-.TP
 
-Only overwride the settings you need to change and the rest of the configuration comes from the corresponding
+.PP
+Override only the settings you need to change and the rest of the configuration will come from the corresponding
 *.conf file.
 
 .SH DEFAULT
-The following options are applicable to all jails. Their meaning is in the default jail.conf file.
+The following options are applicable to all jails. Their meaning is described in the default jail.conf file.
 .TP
 \fBignoreip\fR 
 .TP
@@ -41,54 +41,52 @@ The following options are applicable to all jails. Their meaning is in the defau
 \fBbackend\fR
 .TP
 \fBusedns\fR
-.TP
-.SH ACTION FILES
-Action files specify which commands are executed to ban an IP address. They are located in /etc/fail2ban/action.d.
 
-Like jail.conf files if you desire local changes create a [actionname].local file in the /etc/fail2ban/action.d directory 
+
+.SH "ACTION FILES"
+Action files specify which commands are executed to ban and unban an IP address. They are located under /etc/fail2ban/action.d.
+
+Like with jail.conf files, if you desire local changes create an [actionname].local file in the /etc/fail2ban/action.d directory
 and override the required settings.
 
-The action files are ini files that have two sections, \fBDefinition\fR and \fBInit\fR . 
+Action files are ini files that have two sections, \fBDefinition\fR and \fBInit\fR . 
 
-The [Init] section allows for settings relevant to the action. In jail.conf/jail.local these can be overwritten for a particular jail.
+The [Init] section allows for action-specific settings. In jail.conf/jail.local these can be overwritten for a particular jail as options to the jail.
 
-The commands are specified in the [Definition] section as below..
-
-The commands are executed through a system shell so shell redirection and process control is allowed. The commands should
-return 0 to indicate success which will prevent fail2ban attempting to retry (up to \fBmaxretry\fR times to ban the IP again.
-
-The following action parameters are in the [Definition] section.
+The following commands can be present in the [Definition] section.
 .TP
 \fBactionstart\fR
-This is the commands that are executed when the jail starts.
+command(s) executed when the jail starts.
 .TP
 \fBactionstop\fR
-This is the commands that are executed when the jail stops.
+command(s) executed when the jail stops.
 .TP
 \fBactioncheck\fR
-This is the command that is before each other action. It checks to see if the environment is ok.
+the command ran before any other action. It aims to verify if the environment is still ok.
 .TP
 \fBactionban\fR
-This is the command that bans the IP address.
+command(s) that bans the IP address after \fBmaxretry\fR log lines matches within last \fBfindtime\fR seconds.
 .TP
 \fBactionunban\fR
-This is the command that unbans the IP address after \fBbantime\fR.
+command(s) that unbans the IP address after \fBbantime\fR.
 
-Tags are in <>. All the elements of [Init] are tags that are replaced in all action commands. Tags can be added by the
+Commands specified in the [Definition] section are executed through a system shell so shell redirection and process control is allowed. The commands should
+return 0, otherwise error would be logged.  Moreover if \fBactioncheck\fR exits with non-0 status, it is taken as indication that firewall status has changed and fail2ban needs to reinitialize itself (i.e. issue \fBactionstop\fR and \fBactionstart\fR commands).
+
+Tags are enclosed in <>.  All the elements of [Init] are tags that are replaced in all action commands.  Tags can be added by the
 \fBfail2ban-client\fR using the setctag command.
 
-More that one command is allowed. Each command needs to be on a new line and indented with whitespace with no blank lines. The following defines
+More than a single command is allowed to be specified. Each command needs to be on a separate line and indented with whitespaces without blank lines. The following example defines
 two commands to be executed.
 
-actionban = iptables -I fail2ban-<name> --source <ip> -j DROP
+ actionban = iptables -I fail2ban-<name> --source <ip> -j DROP
+             echo ip=<ip>, match=<match>, time=<time> >> /var/log/fail2ban.log
 
-    echo ip=<ip>, match=<match>, time=<time> >> /var/log/fail2ban.log
-
-The following tags are also substituted in the actionban, actionunban and actioncheck (when called before actionban/actionunban).
+.SS "Action Tags"
+The following tags are substituted in the actionban, actionunban and actioncheck (when called before actionban/actionunban) commands.
 .TP
 \fBip\fR
 An IPv4 ip address to be banned. e.g. 192.168.0.2
-.TP
 .TP
 \fBfailures\fR
 The number of times the failure occurred in the log file. e.g. 3
@@ -97,33 +95,32 @@ The number of times the failure occurred in the log file. e.g. 3
 The unix time of the ban. e.g. 1357508484
 .TP
 \fBmatches\fR
-The concatinated string of the log file lines of the matches that generated the ban.
+The concatenated string of the log file lines of the matches that generated the ban. Many characters interpreted by shell get escaped.
 
 .SH FILTER FILES
 
 Filter definitions are those in /etc/fail2ban/filter.d/*.conf and filter.d/*.local.
 
-These are used to identify failed authenicate attempts in logs and to extract the host IP address or hostname.
+These are used to identify failed authentication attempts in logs and to extract the host IP address (or hostname if \fBusedns\fR is \fBtrue\fR).
 
 Like action files, filter files are ini files. The main section is the [Definition] section.
 
-There are two filter definitions used in the [Definition] section, failregex and ignoreregex.
-Other definitions are allowed and can be used to substitue into other definitions with %(defnname). For example.
-
-baduseragents = IE|wget
-
-failregex = useragent=%(baduseragents)
-
-The \fBfailregex\fR and \fBignoreregex\fR have the following meanings:
+There are two filter definitions used in the [Definition] section:
 
 .TP
 \fBfailregex\fR
-is the regex that will match failed attempts. The tag <HOST> is used as part of the regex and is itself a regex
+is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The tag <HOST> is used as part of the regex and is itself a regex
 for IPv4 addresses and hostnames. fail2ban will work out which one of these it actually is.
 
 .TP
 \fBignoreregex\fR
-is the regex that will be ignored by fail2ban, even if failregex matches.
+is the regex to identify log entries that should be ignored by fail2ban, even if they match failregex.
+
+
+Using Python "string interpolation" mechanisms, other definitions are allowed and can later be used within other definitions as %(defnname)s. For example.
+
+ baduseragents = IE|wget
+ failregex = useragent=%(baduseragents)s
 
 .PP
 Filters can also have a section called [INCLUDES]. This is used to read other configuration files.
@@ -137,8 +134,10 @@ indicates that this file is read before the [Definition] section.
 indicates that this file is read after the [Definition] section.
 
 .SH AUTHOR
-Fail2ban Written by Cyril Jaquier <cyril.jaquier@fail2ban.org> with many contributions by Yaroslav O. Halchenko <debian@onerussian.com>.
-Manual page written by Daniel Black.
+Fail2ban was originally written by Cyril Jaquier <cyril.jaquier@fail2ban.org>.
+At the moment it is maintained and further developed by Yaroslav O. Halchenko <debian@onerussian.com> and a number of contributors.  See \fBTHANKS\fR file shipped with Fail2Ban for a full list.
+.
+Manual page written by Daniel Black and Yaroslav Halchenko.
 .SH "REPORTING BUGS"
 Report bugs to https://github.com/fail2ban/fail2ban/issues
 .SH COPYRIGHT
@@ -147,5 +146,5 @@ Copyright \(co 2013 Daniel Black
 Copyright of modifications held by their respective authors.
 Licensed under the GNU General Public License v2 (GPL).
 .SH "SEE ALSO"
-.br 
+.br
 fail2ban-server(1)
