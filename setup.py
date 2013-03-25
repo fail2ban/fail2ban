@@ -67,6 +67,9 @@ setup(
 						),
 						('/var/run/fail2ban',
 							''
+						),
+						('/usr/share/doc/fail2ban',
+							['README', 'DEVELOP', 'doc/run-rootless.txt']
 						)
 					]
 )
@@ -82,13 +85,7 @@ elements =	{
 				"/usr/bin/":
 					[
 						"fail2ban.py"
-					],
-				"/usr/lib/fail2ban/firewall/":
-					[
-						"iptables.py",
-						"ipfwadm.py",
-						"ipfw.py"
-					],
+					], 
 				"/usr/lib/fail2ban/":
 					[
 						"version.py",
