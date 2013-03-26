@@ -105,20 +105,23 @@ def _copy_lines_between_files(fin, fout, n=None, skip=0, mode='a', terminal_line
 		time.sleep(1)
 	if isinstance(fin, str): # pragma: no branch - only used with str in test cases
 		fin = open(fin, 'r')
-	if isinstance(fout, str):
-		fout = open(fout, mode)
 	# Skip
 	for i in xrange(skip):
 		_ = fin.readline()
-	# Read/Write
+	# Read
 	i = 0
+	lines = []
 	while n is None or i < n:
 		l = fin.readline()
 		if terminal_line is not None and l == terminal_line:
 			break
-		fout.write(l)
-		fout.flush()
+		lines.append(l)
 		i += 1
+	# Write: all at once and flush
+	if isinstance(fout, str):
+		fout = open(fout, mode)
+	fout.write('\n'.join(lines))
+	fout.flush()
 	# to give other threads possibly some time to crunch
 	time.sleep(0.1)
 	return fout
