@@ -1,105 +1,345 @@
-#!/bin/bash
+#!/usr/bin/perl
+
+#  -------------------------------------------------------
+#             -=- <check_fail2ban_activity> -=-
+#  -------------------------------------------------------
 #
-# Usage: ./check_fail2ban
-###############################################################################################
-# Description: 
-#		This plugin will check the status of Fail2ban.  
+#  Description : This plugin checks if the fail2ban server is running 
+#  and how many IPs are currently banned.
+#  
 #
-# Created:      2008-10-25 (Sebastian Mueller)
+# inspired by the work of Sebastian Mueller - http://www.elchtest.eu
+# 
 #
-# Changes:      2008-10-26 fixed some issues (Sebastian Mueller)
-# Changes:      2009-01-25 add the second check, when server is not replying and the
-#		process is hang-up (Sebastian Mueller)
+#  Version : 0.1
+#  -------------------------------------------------------
+#  In :
+#     - see the How to use section
 #
-# please visit my website http://www.elchtest.eu or my personal WIKI http://wiki.elchtest.eu
+#  Out :
+#     - only print on the standard output 
 #
-################################################################################################
-# if you have any questions, send a mail to linux@krabbe-offline.de 
+#  Features :
+#     - perfdata output
+#     - works with only a specific jail
 #
-# this script is for my personal use. read the script before running/using it!!!
+#  Fix Me/Todo :
+#     - too many things ;) but let me know what do you think about it
 #
+# ####################################################################
+
+# ####################################################################
+# GPL v3
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# ####################################################################
+
+# ####################################################################
+# How to use :
+# ------------
 #
-# YOU HAVE BEEN WARNED. THIS MAY DESTROY YOUR MACHINE. I ACCEPT NO RESPONSIBILITY.
-###############################################################################################
+# Just have to run the following command:
+#       $ ./check_fail2ban_activity --help
+# 
+# If you need to use this script with NRPE you just have to do the 
+# following steps:
+#
+# 1 allow your user to run the script with the sudo rights. Just add
+#   something like that in your /etc/sudoers (use visudo) :
+#     nagios ALL=(ALL) NOPASSWD: /<path-to>/check_fail2ban_activity
+#
+# 2 then just add this kind of line in your NRPE config file :
+#   command[check_fail2ban]=/usr/bin/sudo /<path-to>/check_fail2ban_activity
+#
+# 3 don't forget to restart your NRPE daemon
+#
+#	
+# /!\ be careful to let no one able to update the check_fail2ban_activity ;)
+# ------------------------------------------------------------------------------
+#
+# ####################################################################
+
+# ####################################################################
+# Changelog :
+# -----------
+#
+# --------------------------------------------------------------------
+#   Date:12/03/2013   Version:0.1     Author:Erwan Ben Souiden
+#   >> creation
+# ####################################################################
+
+# ####################################################################
+#            Don't touch anything under this line!
+#        You shall not pass - Gandalf is watching you
+# ####################################################################
+
+use strict;
+use warnings;
+use Getopt::Long qw(:config no_ignore_case);
+
+# Generic variables
+# -----------------
+my $version = '0.1';
+my $author = 'Erwan Labynocle Ben Souiden';
+my $a_mail = 'erwan@aleikoum.net';
+my $script_name = 'check_fail2ban_activity';
+my $verbose_value = 0;
+my $version_value = 0;
+my $more_value = 0;
+my $help_value = 0;
+my $perfdata_value = 0;
+my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
+
+# Plugin default variables
+# ------------------------
+my $display = 'CHECK FAIL2BAN ACTIVITY';
+my ($critical,$warning) = (2,1);
+my $fail2ban_client_path = '/usr/bin/fail2ban-client';
+my $fail2ban_socket = '';
+my $jail_specific = '';
+
+GetOptions (
+    'P=s' => \ $fail2ban_client_path,
+    'path-fail2ban_client=s' => \ $fail2ban_client_path,
+    'j=s' => \ $jail_specific,
+    'jail=s' => \ $jail_specific,
+    'w=i' => \ $warning,
+    'warning=i' => \ $warning,
+    'socket=s' => \ $fail2ban_socket,
+    'S=s' => \ $fail2ban_socket,
+    'c=i' => \ $critical,
+    'critical=i' => \ $critical,
+    'V' => \ $version_value,
+    'version' => \ $version_value,
+    'h' => \ $help_value,
+    'H' => \ $help_value,
+    'help' => \ $help_value,
+    'display=s' => \ $display,
+    'D=s' => \ $display,
+    'perfdata' => \ $perfdata_value,
+    'p' => \ $perfdata_value,
+    'v' => \ $verbose_value,
+    'verbose' => \ $verbose_value
+);
+
+print_usage() if ($help_value);
+print_version() if ($version_value);
 
 
-SECOND_CHECK=0 
-STATE_OK=0
-STATE_CRITICAL=2
+# Syntax check of your specified options
+# --------------------------------------
 
-######################################################################
-# Read the Status from fail2ban-client 
-######################################################################
-check_processes_fail2ban()
-{
-        
-  F2B=`sudo -u root fail2ban-client ping | awk -F " " '{print $3}'`
-  exit_fail2ban=0
-
-  if  [[ $F2B = "pong" ]]; then
-   exit_fail2ban=$STATE_OK
- else
- exit_fail2ban=$STATE_CRITICAL
- fi
-
+print "DEBUG : fail2ban_client_path: $fail2ban_client_path\n" if ($verbose_value);
+if (($fail2ban_client_path eq "")) {
+    print $display.'- one or more following arguments are missing: fail2ban_client_path'."\n";
+    exit $ERRORS{"UNKNOWN"};
 }
-######################################################################
-# first check in the Background, PID will be killed when no response
-# after 10 seconds, might be possible, otherwise the script will be
-# present in your memory all the time
-######################################################################
 
-check_processes_fail2ban &
-pid=$!
+if(! -x $fail2ban_client_path) {
+    print $display.' - '.$fail2ban_client_path.' is not executable by you'."\n";
+    exit $ERRORS{"UNKNOWN"};
+}
+print "DEBUG : $fail2ban_client_path exists and is executable\n" if ($verbose_value);
 
-typeset -i i=0
-while ps $pid >/dev/null
-do
- sleep 1
- i=$i+1
-if [ $i -ge 10 ]
- then
- kill $pid 
-   SECOND_CHECK=1
-   exit_fail2ban=$STATE_CRITICAL
-   break
-fi
-done
+my $fail2ban_cmd = $fail2ban_client_path;
+$fail2ban_cmd .= " -s $fail2ban_socket" if ($fail2ban_socket);
 
-######################################################################
-# when the Server response (does not mean the FAIL2BAN is working)
-# in the first step, then it will run again and test the Service 
-# and provide the real status
-######################################################################
+print "DEBUG : final fail2ban command: $fail2ban_cmd\n" if ($verbose_value);
+
+print "DEBUG : warning threshold : $warning, critical threshold : $critical\n" if ($verbose_value);
+if (($critical < 0) or ($warning < 0) or ($critical < $warning)) {
+    print $display.' - the thresholds must be integers and the critical threshold higher or equal than the warning threshold'."\n";
+    exit $ERRORS{"UNKNOWN"};
+}
+
+# Core script
+# -----------
+my ($how_many_jail,$how_many_banned,$return_print,$plugstate) = (0,0,"","OK");
 
 
-if [ $SECOND_CHECK -eq 0  ]; then
-  check_processes_fail2ban
- elif [ $SECOND_CHECK -eq 1 ]; then
-  exit_fail2ban=$STATE_CRITICAL
-fi
+### Test the connection to the fail2ban server
+my @command_output = `$fail2ban_cmd ping`;
+my $return_code = $?;
+if ($return_code) {
+    print $display.'CRITICAL - non-zero exit code during testing fail2ban-client ping, check if the server is running and if you have the good permissions';
+    exit $ERRORS{"CRITICAL"};
+}
+else {
+    print "DEBUG : it seems the connection with the fail2ban server is ok\n" if ($verbose_value);
+}
 
 
+### Only if you specify one jail
+if ($jail_specific) {
+    my $current_ban_number = currently_ban("$fail2ban_cmd","$jail_specific");
+    if ($current_ban_number == -1) {
+        print $display.' - CRITICAL - impossible to retrieve info about the jail '.$jail_specific;
+        exit $ERRORS{"CRITICAL"};
+    }
+    else {
+        $how_many_banned = int($current_ban_number);
+        $return_print = $how_many_banned.' current banned IP(s) for the specific jail '.$jail_specific;
+    }
+}
+### To analyze all the jail
+else {
+    # Retrieve the jails list
+    my @jail_list = obtain_jail_list("$fail2ban_cmd");
+    if ($jail_list[0] eq "-1") {
+        print $display.' - CRITICAL - impossible to retrieve the jail list'."\n";
+        exit $ERRORS{"CRITICAL"};
+    }
 
-######################################################################
-# Main Menu
-######################################################################
+    foreach (@jail_list) {
+        $how_many_jail ++;
+
+        my $jail_name = $_;
+        $jail_name =~ tr/ //ds;
+
+        my $current_ban_number = currently_ban("$fail2ban_cmd","$jail_name");
+        if ($current_ban_number == -1) {
+            print "DEBUG : problem to parse the current banned IPs for jail $jail_name\n" if ($verbose_value);
+        }
+        else {
+            print "DEBUG : the jail $jail_name has currently $current_ban_number banned IPs\n" if ($verbose_value);
+            $how_many_banned += int($current_ban_number);
+        }
+    }
+    $return_print = $how_many_jail.' detected jails with '.$how_many_banned.' current banned IP(s)';
+}
+
+### Final
+$plugstate = "CRITICAL" if ($how_many_banned >= $critical);
+$plugstate = "WARNING" if (($how_many_banned >= $warning) && ($how_many_banned < $critical));
+
+$return_print = $display." - ".$plugstate." - ".$return_print;
+$return_print .= " | currentBannedIP=$how_many_banned" if ($perfdata_value);
+
+print $return_print;
+exit $ERRORS{"$plugstate"};
 
 
-final_exit=$exit_fail2ban
-if [ $final_exit -eq 0  ]; then
-  echo "SYSTEM OK - Fail2ban is working normally"
-  exitstatus=$STATE_OK
-elif [ $final_exit -ne "0" ]; then
-  echo "SYSTEM WARNING - Fail2Ban is not working"
-######################################################################
-# If don't have a Nagios Server for monitoring, remove the comment and
-# add your Mail Address. You can check it with a Cron Job once an hour.
-# put a txt file on your server and describe how to fix the issue, this 
-# could be attached to the mail.
-######################################################################
-#  mutt -s "FAIL2BAN NOT WORKING" your@example.com < /home/f2ban.txt
+# ####################################################################
+# function 1 : display the help
+# -----------------------------
+sub print_usage {
+    print <<EOT;
+$script_name version $version by $author
 
-  exitstatus=$STATE_CRITICAL
-fi
-exit $exitstatus
+This plugin checks if the fail2ban server is running and how many IPs are currently banned.
+You can use this plugin to monitor all the jails or just a specific jail.
+
+Usage: /<path-to>/$script_name [-p] [-D "$display"] [-v] [-c 2] [-w 1] [-s /<path-to>/socket] [-P /usr/bin/fail2ban-client]
+
+Options:
+ -h, --help
+    Print detailed help screen
+ -V, --version
+    Print version information
+ -D, --display=STRING
+    To modify the output display 
+    default is "CHECK FAIL2BAN ACTIVITY"
+ -P, --path-fail2ban_client=STRING
+    Specify the path to the tw_cli binary
+    default value is /usr/bin/fail2ban-client
+ -c, --critical=INT
+    Specify a critical threshold
+    default is 2
+ -w, --warning=INT
+    Specify a warning threshold
+    default is 1
+ -s, --socket=STRING
+    Specify a socket path
+    default is unset
+ -p, --perfdata
+    If you want to activate the perfdata output
+ -v, --verbose
+    Show details for command-line debugging (Nagios may truncate the output)
+    
+Send email to $a_mail if you have questions
+regarding use of this software. To submit patches or suggest improvements,
+send email to $a_mail
+This plugin has been created by $author
+
+Hope you will enjoy it ;)
+
+Remember :
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+EOT
+    exit $ERRORS{"UNKNOWN"};
+}
+
+# function 2 : display version information
+# ----------------------------------------
+sub print_version {
+    print <<EOT;
+$script_name version $version
+EOT
+    exit $ERRORS{"UNKNOWN"};
+}
+
+# function 3 : return the jail list
+# ---------------------------------
+sub obtain_jail_list {
+    my ($fail2ban_client_path) = @_;
+
+    my @command_output = `$fail2ban_client_path status`;
+    my $return_code = $?;
+    if ($return_code) {
+        return -1;
+    }
+    
+    my @jail_list;
+    foreach (@command_output) {
+        if ($_=~/^.*Jail list:\t+(.*)/) {
+            print "DEBUG : jails list: $1\n" if ($verbose_value);
+            @jail_list = split(/,/, $1);
+        }
+    }
+    
+    return @jail_list;
+}
+
+# function 4 : return how many IP are currently ban for a given jail
+# ------------------------------------------------------------------
+sub currently_ban {
+    my ($fail2ban_client_path,$jail_name) = @_;
+
+    my @command_output = `$fail2ban_client_path status $jail_name`;
+    my $return_code = $?;
+    if ($return_code) {
+        return -1;
+    }
+
+    foreach (@command_output) {
+        if ($_=~/^.*Currently banned:\t+(.*)/) {
+            my $current_count = $1;
+            $current_count =~ tr/ //ds;
+            return $current_count;
+        }
+    }
+    return -1;
+}
