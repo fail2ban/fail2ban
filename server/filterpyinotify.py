@@ -63,16 +63,17 @@ class FilterPyinotify(FileFilter):
 		logSys.debug("Created FilterPyinotify")
 
 
-	def callback(self, event):
+	def callback(self, event, origin=''):
+		logSys.debug("%sCallback for Event: %s", origin, event)
 		path = event.pathname
 		if event.mask & pyinotify.IN_CREATE:
 			# skip directories altogether
 			if event.mask & pyinotify.IN_ISDIR:
-				logSys.debug("Ignoring creation of directory %s" % path)
+				logSys.debug("Ignoring creation of directory %s", path)
 				return
 			# check if that is a file we care about
 			if not path in self.__watches:
-				logSys.debug("Ignoring creation of %s we do not monitor" % path)
+				logSys.debug("Ignoring creation of %s we do not monitor", path)
 				return
 			else:
 				# we need to substitute the watcher with a new one, so first
@@ -104,8 +105,8 @@ class FilterPyinotify(FileFilter):
 	def _addFileWatcher(self, path):
 		wd = self.__monitor.add_watch(path, pyinotify.IN_MODIFY)
 		self.__watches.update(wd)
-		logSys.debug("Added file watcher for %s" % path)
-		# process the file since we did get even 
+		logSys.debug("Added file watcher for %s", path)
+		# process the file since we did get even
 		self._process_file(path)
 
 
@@ -114,7 +115,7 @@ class FilterPyinotify(FileFilter):
 		wd = self.__monitor.rm_watch(wdInt)
 		if wd[wdInt]:
 			del self.__watches[path]
-			logSys.debug("Removed file watcher for %s" % path)
+			logSys.debug("Removed file watcher for %s", path)
 			return True
 		else:
 			return False
@@ -130,7 +131,7 @@ class FilterPyinotify(FileFilter):
 			# we need to watch also  the directory for IN_CREATE
 			self.__watches.update(
 				self.__monitor.add_watch(path_dir, pyinotify.IN_CREATE))
-			logSys.debug("Added monitor for the parent directory %s" % path_dir)
+			logSys.debug("Added monitor for the parent directory %s", path_dir)
 
 		self._addFileWatcher(path)
 
@@ -151,7 +152,7 @@ class FilterPyinotify(FileFilter):
 			# since there is no other monitored file under this directory
 			wdInt = self.__watches.pop(path_dir)
 			_ = self.__monitor.rm_watch(wdInt)
-			logSys.debug("Removed monitor for the parent directory %s" % path_dir)
+			logSys.debug("Removed monitor for the parent directory %s", path_dir)
 
 
 	##
@@ -165,7 +166,7 @@ class FilterPyinotify(FileFilter):
 		self.__notifier = pyinotify.ThreadedNotifier(self.__monitor,
 			ProcessPyinotify(self))
 		self.__notifier.start()
-		logSys.debug("pyinotifier started for %s." % self.jail.getName())
+		logSys.debug("pyinotifier started for %s.", self.jail.getName())
 		# TODO: verify that there is nothing really to be done for
 		#       idle jails
 		return True
@@ -201,5 +202,4 @@ class ProcessPyinotify(pyinotify.ProcessEvent):
 
 	# just need default, since using mask on watch to limit events
 	def process_default(self, event):
-		logSys.debug("Callback for Event: %s" % event)
-		self.__FileFilter.callback(event)
+		self.__FileFilter.callback(event, origin='Default ')
