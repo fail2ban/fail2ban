@@ -17,14 +17,8 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
-
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Cyril Jaquier, Yaroslav Halchenko"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import os, shutil, tempfile, unittest
@@ -130,3 +124,25 @@ class JailsReaderTest(unittest.TestCase):
 		# commands to communicate to the server
 		self.assertEqual(comm_commands, [])
 
+	def testReadStockJailConfForceEnabled(self):
+		# more of a smoke test to make sure that no obvious surprises
+		# on users' systems when enabling shipped jails
+		jails = JailsReader(basedir='config', force_enable=True) # we are running tests from root project dir atm
+		self.assertTrue(jails.read())		  # opens fine
+		self.assertTrue(jails.getOptions())	  # reads fine
+		comm_commands = jails.convert()
+
+		# by default we have lots of jails ;)
+		self.assertTrue(len(comm_commands))
+
+		# and we know even some of them by heart
+		for j in ['ssh-iptables', 'recidive']:
+			# by default we have 'auto' backend ATM
+			self.assertTrue(['add', j, 'auto'] in comm_commands)
+			# and warn on useDNS
+			self.assertTrue(['set', j, 'usedns', 'warn'] in comm_commands)
+			self.assertTrue(['start', j] in comm_commands)
+		# last commands should be the 'start' commands
+		self.assertEqual(comm_commands[-1][0], 'start')
+		# TODO: make sure that all of the jails have actions assigned,
+		#       otherwise it makes little to no sense
