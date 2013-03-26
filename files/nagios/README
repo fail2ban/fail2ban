@@ -7,21 +7,21 @@ You can use this plugin to monitor all the jails or just a specific jail.
 How to use
 ----------
 Just have to run the following command:
-    $ ./check_fail2ban_activity --help
+    $ ./check_fail2ban --help
  
 If you need to use this script with NRPE you just have to do the 
 following steps:
 
 1 allow your user to run the script with the sudo rights. Just add
   something like that in your /etc/sudoers (use visudo) :
-        nagios ALL=(ALL) NOPASSWD: /<path-to>/check_fail2ban_activity
+        nagios ALL=(ALL) NOPASSWD: /<path-to>/check_fail2ban
 
 2 then just add this kind of line in your NRPE config file :
-  command[check_fail2ban]=/usr/bin/sudo /<path-to>/check_fail2ban_activity
+  command[check_fail2ban]=/usr/bin/sudo /<path-to>/check_fail2ban
 
 3 don't forget to restart your NRPE daemon
    
-/!\ be careful to let no one able to update the check_fail2ban_activity ;)
+/!\ be careful to let no one able to update the check_fail2ban ;)
 ------------------------------------------------------------------------------
 
 
@@ -50,7 +50,7 @@ Answer should be "pong"
 Help
 ----
 
-Usage: /<path-to>/check_fail2ban_activity [-p] [-D "CHECK FAIL2BAN ACTIVITY"] [-v] [-c 2] [-w 1] [-s /<path-to>/socket] [-P /usr/bin/fail2ban-client]
+Usage: /<path-to>/check_fail2ban [-p] [-D "CHECK FAIL2BAN ACTIVITY"] [-v] [-c 2] [-w 1] [-s /<path-to>/socket] [-P /usr/bin/fail2ban-client]
 
 Options:
  -h, --help
@@ -82,7 +82,7 @@ Example
 -------
 
 # for a specific jail
-$ ./check_fail2ban_activity --verbose -p -j ssh -w 1 -c 5 -P /usr/bin/fail2ban-client
+$ ./check_fail2ban --verbose -p -j ssh -w 1 -c 5 -P /usr/bin/fail2ban-client
 DEBUG : fail2ban_client_path: /usr/bin/fail2ban-client
 DEBUG : /usr/bin/fail2ban-client exists and is executable
 DEBUG : final fail2ban command: /usr/bin/fail2ban-client
@@ -91,7 +91,7 @@ DEBUG : it seems the connection with the fail2ban server is ok
 CHECK FAIL2BAN ACTIVITY - OK - 0 current banned IP(s) for the specific jail ssh | currentBannedIP=0
 
 # for all the current jails
-$ ./check_fail2ban_activity --verbose -p -w 1 -c 5 -P /usr/bin/fail2ban-client
+$ ./check_fail2ban --verbose -p -w 1 -c 5 -P /usr/bin/fail2ban-client
 DEBUG : fail2ban_client_path: /usr/bin/fail2ban-client
 DEBUG : /usr/bin/fail2ban-client exists and is executable
 DEBUG : final fail2ban command: /usr/bin/fail2ban-client

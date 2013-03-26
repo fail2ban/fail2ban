@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 #  -------------------------------------------------------
-#             -=- <check_fail2ban_activity> -=-
+#             -=- <check_fail2ban> -=-
 #  -------------------------------------------------------
 #
 #  Description : This plugin checks if the fail2ban server is running 
@@ -49,22 +49,22 @@
 # ------------
 #
 # Just have to run the following command:
-#       $ ./check_fail2ban_activity --help
+#       $ ./check_fail2ban --help
 # 
 # If you need to use this script with NRPE you just have to do the 
 # following steps:
 #
 # 1 allow your user to run the script with the sudo rights. Just add
 #   something like that in your /etc/sudoers (use visudo) :
-#     nagios ALL=(ALL) NOPASSWD: /<path-to>/check_fail2ban_activity
+#     nagios ALL=(ALL) NOPASSWD: /<path-to>/check_fail2ban
 #
 # 2 then just add this kind of line in your NRPE config file :
-#   command[check_fail2ban]=/usr/bin/sudo /<path-to>/check_fail2ban_activity
+#   command[check_fail2ban]=/usr/bin/sudo /<path-to>/check_fail2ban
 #
 # 3 don't forget to restart your NRPE daemon
 #
 #	
-# /!\ be careful to let no one able to update the check_fail2ban_activity ;)
+# /!\ be careful to let no one able to update the check_fail2ban ;)
 # ------------------------------------------------------------------------------
 #
 # ####################################################################
@@ -92,7 +92,7 @@ use Getopt::Long qw(:config no_ignore_case);
 my $version = '0.1';
 my $author = 'Erwan Labynocle Ben Souiden';
 my $a_mail = 'erwan@aleikoum.net';
-my $script_name = 'check_fail2ban_activity';
+my $script_name = 'check_fail2ban';
 my $verbose_value = 0;
 my $version_value = 0;
 my $more_value = 0;
