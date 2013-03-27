@@ -1,3 +1,6 @@
+# yoh: Kept original apache log lines as well, just in case they might come useful
+#      for (testing) multiline regular expressions which would further constraint
+#      SOGo log lines
 Mar 24 08:58:32 sogod [26818]: <0x0xb8537990[LDAPSource]> <NSException: 0xb87c3008> NAME:LDAPException REASON:operation bind failed: Invalid credentials (0x31) INFO:{login = "uid=hack0r,ou=users,dc=mail,dc=example,dc=org"; }
 Mar 24 08:58:32 sogod [26818]: SOGoRootPage Login from '173.194.44.31' for user 'hack0r' might not have worked - password policy: 65535  grace: -1  expire: -1  bound: 0
 173.194.44.31 - - [24/Mar/2013:08:58:32 GMT] "POST /SOGo/connect HTTP/1.1" 403 34/38 0.311 - - 2M
@@ -12,4 +15,3 @@ Mar 24 08:58:59 sogod [26818]: SOGoRootPage Login from '173.194.44.31' for user 
 173.194.44.31 - - [24/Mar/2013:08:58:59 GMT] "POST /SOGo/connect HTTP/1.1" 403 34/36 0.007 - - 0
 Mar 24 08:59:04 sogod [26818]: <0x0xb8537990[LDAPSource]> <NSException: 0xb87bc088> NAME:LDAPException REASON:operation bind failed: Invalid credentials (0x31) INFO:{login = "uid=admin,ou=users,dc=mail,dc=example,dc=org"; }
 Mar 24 08:59:04 sogod [26818]: SOGoRootPage Login from '173.194.44.31' for user 'admin' might not have worked - password policy: 65535  grace: -1  expire: -1  bound: 0
-173.194.44.31 - - [24/Mar/2013:08:59:04 GMT] "POST /SOGo/connect HTTP/1.1" 403 34/37 0.007 - - 0
