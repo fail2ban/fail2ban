@@ -1,9 +1,11 @@
-fail2ban (0.8.8-2) UNRELEASED; urgency=low
+fail2ban (0.8.8+git145-g72b0647-1) UNRELEASED; urgency=low
 
+  * New upstream snapshot from 0.8.8-145-g72b0647 at 0.8.8-145-g72b0647
+    - significant improvements in documentation (Closes: #400416)
   * debian/jail.conf:
     - added findtime and documentation on those basic options from jail.conf
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 18 Feb 2013 18:51:00 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 27 Mar 2013 11:20:11 -0400
 
 fail2ban (0.8.8-1+lucid0) UNRELEASED; urgency=low
 
