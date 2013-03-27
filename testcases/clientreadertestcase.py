@@ -25,6 +25,7 @@ import os, shutil, tempfile, unittest
 from client.configreader import ConfigReader
 from client.jailreader import JailReader
 from client.jailsreader import JailsReader
+from client.configurator import Configurator
 
 class ConfigReaderTest(unittest.TestCase):
 
@@ -146,3 +147,21 @@ class JailsReaderTest(unittest.TestCase):
 		self.assertEqual(comm_commands[-1][0], 'start')
 		# TODO: make sure that all of the jails have actions assigned,
 		#       otherwise it makes little to no sense
+
+	def testConfigurator(self):
+		configurator = Configurator()
+		configurator.setBaseDir('config')
+		self.assertEqual(configurator.getBaseDir(), 'config')
+
+		configurator.readEarly()
+		opts = configurator.getEarlyOptions()
+		# our current default settings
+		self.assertEqual(opts['socket'], '/var/run/fail2ban/fail2ban.sock')
+		self.assertEqual(opts['pidfile'], '/var/run/fail2ban/fail2ban.pid')
+
+		# and if we force change configurator's fail2ban's baseDir
+		# there should be an error message (test visually ;) --
+		# otherwise just a code smoke test)
+		configurator._Configurator__jails.setBaseDir('/tmp')
+		self.assertEqual(configurator._Configurator__jails.getBaseDir(), '/tmp')
+		self.assertEqual(configurator.getBaseDir(), 'config')
