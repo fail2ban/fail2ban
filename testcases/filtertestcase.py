@@ -22,6 +22,7 @@
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier; 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
+from __builtin__ import open as fopen
 import unittest
 import os
 import sys
@@ -37,6 +38,20 @@ from server.failmanager import FailManagerEmpty
 #
 # Useful helpers
 #
+
+# yoh: per Steven Hiscocks's insight while troubleshooting
+# https://github.com/fail2ban/fail2ban/issues/103#issuecomment-15542836
+# adding a sufficiently large buffer might help to guarantee that
+# writes happen atomically.
+def open(*args):
+	"""Overload built in open so we could assure sufficiently large buffer
+
+	Explicit .flush would be needed to assure that changes leave the buffer
+	"""
+	if len(args) == 2:
+		# ~50kB buffer should be sufficient for all tests here.
+		args = args + (50000,)
+	return fopen(*args)
 
 def _killfile(f, name):
 	try:
