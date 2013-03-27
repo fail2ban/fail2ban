@@ -1,4 +1,7 @@
 #!/usr/bin/python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: t -*-
+# vi: set ft=python sts=4 ts=4 sw=4 noet :
+#
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -23,13 +26,14 @@ import getopt, sys, time, logging, os
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
-if os.path.abspath(__file__).startswith('/usr/'):
-	# makes sense to use system-wide library iff -regex is also under /usr/
-    sys.path.insert(1, "/usr/share/fail2ban")
+try:
+	from common.version import version
+except ImportError, e:
+	sys.path.insert(1, "/usr/share/fail2ban")
+	from common.version import version
 
 from client.configparserinc import SafeConfigParserWithIncludes
 from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
-from common.version import version
 from server.filter import Filter
 from server.failregex import RegexException
 
@@ -42,6 +46,10 @@ class RegexStat:
 		self.__stats = 0
 		self.__failregex = failregex
 		self.__ipList = list()
+
+	def __str__(self):
+		return "%s(%r) %d failed: %s" \
+		  % (self.__class__, self.__failregex, self.__stats, self.__ipList)
 	
 	def inc(self):
 		self.__stats += 1

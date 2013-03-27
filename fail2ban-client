@@ -27,12 +27,13 @@ import getopt, time, shlex, socket
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
-if os.path.abspath(__file__).startswith('/usr/'):
-	# makes sense to use system-wide library iff -client is also under /usr/
+try:
+	from common.version import version
+except ImportError, e:
 	sys.path.insert(1, "/usr/share/fail2ban")
+	from common.version import version
 
-# Now we can import our modules
-from common.version import version
+# Now we can import the rest of modules
 from common.protocol import printFormatted
 from client.csocket import CSocket
 from client.configurator import Configurator
@@ -61,6 +62,7 @@ class Fail2banClient:
 		self.__conf["verbose"] = 1
 		self.__conf["interactive"] = False
 		self.__conf["socket"] = None
+		self.__conf["pidfile"] = None
 		
 	def dispVersion(self):
 		print "Fail2Ban v" + version
@@ -83,6 +85,7 @@ class Fail2banClient:
 		print "Options:"
 		print "    -c <DIR>                configuration directory"
 		print "    -s <FILE>               socket path"
+		print "    -p <FILE>               pidfile path"
 		print "    -d                      dump configuration. For debugging"
 		print "    -i                      interactive mode"
 		print "    -v                      increase verbosity"
@@ -118,6 +121,8 @@ class Fail2banClient:
 				self.__conf["conf"] = opt[1]
 			elif opt[0] == "-s":
 				self.__conf["socket"] = opt[1]
+			elif opt[0] == "-p":
+				self.__conf["pidfile"] = opt[1]
 			elif opt[0] == "-d":
 				self.__conf["dump"] = True
 			elif opt[0] == "-v":
@@ -129,11 +134,11 @@ class Fail2banClient:
 			elif opt[0] == "-i":
 				self.__conf["interactive"] = True
 			elif opt[0] in ["-h", "--help"]:
-	 			self.dispUsage()
-	 			sys.exit(0)
-	 		elif opt[0] in ["-V", "--version"]:
-	 			self.dispVersion()
-	 			sys.exit(0)
+				self.dispUsage()
+				sys.exit(0)
+			elif opt[0] in ["-V", "--version"]:
+				self.dispVersion()
+				sys.exit(0)
 	
 	def __ping(self):
 		return self.__processCmd([["ping"]], False)
@@ -180,8 +185,21 @@ class Fail2banClient:
 				# Do not continue if configuration is not 100% valid
 				if not ret:
 					return False
+				# verify that directory for the socket file exists
+				socket_dir = os.path.dirname(self.__conf["socket"])
+				if not os.path.exists(socket_dir):
+					logSys.error(
+						"There is no directory %s to contain the socket file %s."
+						% (socket_dir, self.__conf["socket"]))
+					return False
+				if not os.access(socket_dir, os.W_OK | os.X_OK):
+					logSys.error(
+						"Directory %s exists but not accessible for writing"
+						% (socket_dir,))
+					return False
 				# Start the server
 				self.__startServerAsync(self.__conf["socket"],
+										self.__conf["pidfile"],
 										self.__conf["force"])
 				try:
 					# Wait for the server to start
@@ -190,10 +208,10 @@ class Fail2banClient:
 					self.__processCmd(self.__stream, False)
 					return True
 				except ServerExecutionException:
-					logSys.error("Could not start server. Maybe an old " +
-								 "socket file is still present. Try to " +
-								 "remove " + self.__conf["socket"] + ". If " +
-								 "you used fail2ban-client to start the " +
+					logSys.error("Could not start server. Maybe an old "
+								 "socket file is still present. Try to "
+								 "remove " + self.__conf["socket"] + ". If "
+								 "you used fail2ban-client to start the "
 								 "server, adding the -x option will do it")
 					return False
 		elif len(cmd) == 1 and cmd[0] == "reload":
@@ -230,7 +248,7 @@ class Fail2banClient:
 	#
 	# Start the Fail2ban server in daemon mode.
 	
-	def __startServerAsync(self, socket, force = False):
+	def __startServerAsync(self, socket, pidfile, force = False):
 		# Forks the current process.
 		pid = os.fork()
 		if pid == 0:
@@ -241,22 +259,26 @@ class Fail2banClient:
 			# Set the socket path.
 			args.append("-s")
 			args.append(socket)
+			# Set the pidfile
+			args.append("-p")
+			args.append(pidfile)
 			# Force the execution if needed.
 			if force:
 				args.append("-x")
 			try:
 				# Use the current directory.
 				exe = os.path.abspath(os.path.join(sys.path[0], self.SERVER))
+				logSys.debug("Starting %r with args %r" % (exe, args))
 				os.execv(exe, args)
 			except OSError:
 				try:
 					# Use the PATH env.
+					logSys.warning("Initial start attempt failed.  Starting %r with the same args" % (self.SERVER,))
 					os.execvp(self.SERVER, args)
 				except OSError:
-					print "Could not find %s" % self.SERVER
+					logSys.error("Could not start %s" % self.SERVER)
 					os.exit(-1)
-						
-			
+	
 	def __waitOnServer(self):
 		# Wait for the server to start
 		cnt = 0
@@ -275,7 +297,7 @@ class Fail2banClient:
 					delta = -1
 				elif pos < 2:
 					delta = 1
-			# The server has 30 secondes to start.
+			# The server has 30 seconds to start.
 			if cnt >= 300:
 				if self.__conf["verbose"] > 1:
 					sys.stdout.write('\n')
@@ -296,7 +318,7 @@ class Fail2banClient:
 		
 		# Reads the command line options.
 		try:
-			cmdOpts = 'hc:s:xdviqV'
+			cmdOpts = 'hc:s:p:xdviqV'
 			cmdLongOpts = ['help', 'version']
 			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
@@ -327,9 +349,11 @@ class Fail2banClient:
 		
 		# Set socket path
 		self.__configurator.readEarly()
-		socket = self.__configurator.getEarlyOptions()
+		conf = self.__configurator.getEarlyOptions()
 		if self.__conf["socket"] == None:
-			self.__conf["socket"] = socket["socket"]
+			self.__conf["socket"] = conf["socket"]
+		if self.__conf["pidfile"] == None:
+			self.__conf["pidfile"] = conf["pidfile"]
 		logSys.info("Using socket file " + self.__conf["socket"])
 
 		if self.__conf["dump"]:
@@ -356,7 +380,9 @@ class Fail2banClient:
 						if cmd == "exit" or cmd == "quit":
 							# Exit
 							return True
-						if not cmd == "":
+						if cmd == "help":
+							self.dispUsage()
+						elif not cmd == "":
 							self.__processCommand(shlex.split(cmd))
 			except (EOFError, KeyboardInterrupt):
 				print
@@ -394,7 +420,7 @@ class Fail2banClient:
 class ServerExecutionException(Exception):
 	pass
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover - can't test main
 	client = Fail2banClient()
 	# Exit with correct return value
 	if client.start(sys.argv):

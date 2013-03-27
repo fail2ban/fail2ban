@@ -35,14 +35,15 @@ logSys = logging.getLogger("fail2ban.client.config")
 
 class Fail2banReader(ConfigReader):
 	
-	def __init__(self):
-		ConfigReader.__init__(self)
+	def __init__(self, **kwargs):
+		ConfigReader.__init__(self, **kwargs)
 	
 	def read(self):
 		ConfigReader.read(self, "fail2ban")
 	
 	def getEarlyOptions(self):
-		opts = [["string", "socket", "/tmp/fail2ban.sock"]]
+		opts = [["string", "socket", "/tmp/fail2ban.sock"],
+				["string", "pidfile", "/var/run/fail2ban/fail2ban.pid"]]
 		return ConfigReader.getOptions(self, "Definition", opts)
 	
 	def getOptions(self):

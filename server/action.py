@@ -243,7 +243,7 @@ class Action:
 		return Action.executeCmd(stopCmd)
 
 	def escapeTag(tag):
-		for c in '\\#&;`|*?~<>^()[]{}$\n':
+		for c in '\\#&;`|*?~<>^()[]{}$\n\'"':
 			if c in tag:
 				tag = tag.replace(c, '\\' + c)
 		return tag
@@ -277,8 +277,8 @@ class Action:
 	# Executes a command with preliminary checks and substitutions.
 	#
 	# Before executing any commands, executes the "check" command first
-	# in order to check if prerequirements are met. If this check fails,
-	# it tries to restore a sane environnement before executing the real
+	# in order to check if pre-requirements are met. If this check fails,
+	# it tries to restore a sane environment before executing the real
 	# command.
 	# Replaces "aInfo" and "cInfo" in the query too.
 	#

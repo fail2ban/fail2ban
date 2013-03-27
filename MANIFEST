@@ -3,6 +3,8 @@ ChangeLog
 TODO
 THANKS
 COPYING
+DEVELOP
+doc/run-rootless.txt
 fail2ban-client
 fail2ban-server
 fail2ban-testcases
@@ -40,6 +42,7 @@ server/banmanager.py
 server/datetemplate.py
 server/mytime.py
 server/failregex.py
+testcases/files/testcase-usedns.log
 testcases/banmanagertestcase.py
 testcases/failmanagertestcase.py
 testcases/clientreadertestcase.py
@@ -48,6 +51,7 @@ testcases/__init__.py
 testcases/datedetectortestcase.py
 testcases/actiontestcase.py
 testcases/servertestcase.py
+testcases/sockettestcase.py
 testcases/files/testcase01.log
 testcases/files/testcase02.log
 testcases/files/testcase03.log
@@ -55,6 +59,7 @@ testcases/files/testcase04.log
 setup.py
 setup.cfg
 common/__init__.py
+common/exceptions.py
 common/helpers.py
 common/version.py
 common/protocol.py
@@ -86,6 +91,17 @@ config/filter.d/vsftpd.conf
 config/filter.d/webmin-auth.conf
 config/filter.d/wuftpd.conf
 config/filter.d/xinetd-fail.conf
+config/filter.d/asterisk.conf
+config/filter.d/dovecot.conf
+config/filter.d/dropbear.conf
+config/filter.d/lighttpd-auth.conf
+config/filter.d/recidive.conf
+config/filter.d/roundcube-auth.conf
+config/action.d/dummy.conf
+config/action.d/iptables-ipset-proto4.conf
+config/action.d/iptables-ipset-proto6.conf
+config/action.d/iptables-xt_recent-echo.conf
+config/action.d/route.conf
 config/action.d/complain.conf
 config/action.d/dshield.conf
 config/action.d/hostsdeny.conf
@@ -108,6 +124,8 @@ config/action.d/sendmail-whois-lines.conf
 config/action.d/shorewall.conf
 config/fail2ban.conf
 man/fail2ban-client.1
+man/fail2ban.1
+man/jail.conf.5
 man/fail2ban-client.h2m
 man/fail2ban-server.1
 man/fail2ban-server.h2m

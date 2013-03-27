@@ -26,11 +26,12 @@ import getopt, sys, logging, os
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
-if os.path.abspath(__file__).startswith('/usr/'):
-	# makes sense to use system-wide library iff -server is also under /usr/
+try:
+	from common.version import version
+except ImportError, e:
 	sys.path.insert(1, "/usr/share/fail2ban")
+	from common.version import version
 
-from common.version import version
 from server.server import Server
 
 # Gets the instance of the logger.
@@ -53,6 +54,7 @@ class Fail2banServer:
 		self.__conf["background"] = True
 		self.__conf["force"] = False
 		self.__conf["socket"] = "/var/run/fail2ban/fail2ban.sock"
+		self.__conf["pidfile"] = "/var/run/fail2ban/fail2ban.pid"
 	
 	def dispVersion(self):
 		print "Fail2Ban v" + version
@@ -80,6 +82,7 @@ class Fail2banServer:
 		print "    -b                   start in background"
 		print "    -f                   start in foreground"
 		print "    -s <FILE>            socket path"
+		print "    -p <FILE>            pidfile path"
 		print "    -x                   force execution of the server (remove socket file)"
 		print "    -h, --help           display this help message"
 		print "    -V, --version        print the version"
@@ -96,6 +99,8 @@ class Fail2banServer:
 				self.__conf["background"] = False
 			if opt[0] == "-s":
 				self.__conf["socket"] = opt[1]
+			if opt[0] == "-p":
+				self.__conf["pidfile"] = opt[1]
 			if opt[0] == "-x":
 				self.__conf["force"] = True
 			if opt[0] in ["-h", "--help"]:
@@ -111,7 +116,7 @@ class Fail2banServer:
 		
 		# Reads the command line options.
 		try:
-			cmdOpts = 'bfs:xhV'
+			cmdOpts = 'bfs:p:xhV'
 			cmdLongOpts = ['help', 'version']
 			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
@@ -122,7 +127,9 @@ class Fail2banServer:
 		
 		try:
 			self.__server = Server(self.__conf["background"])
-			self.__server.start(self.__conf["socket"], self.__conf["force"])
+			self.__server.start(self.__conf["socket"],
+								self.__conf["pidfile"],
+								self.__conf["force"])
 			return True
 		except Exception, e:
 			logSys.exception(e)
