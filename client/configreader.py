@@ -122,8 +122,8 @@ class ConfigReader(SafeConfigParserWithIncludes):
 				values[option[1]] = option[2]
 			except NoOptionError:
 				if not option[2] == None:
-					logSys.warn("'%s' not defined in '%s'. Using default value"
-								% (option[1], sec))
+					logSys.warn("'%s' not defined in '%s'. Using default one: %r"
+								% (option[1], sec, option[2]))
 					values[option[1]] = option[2]
 			except ValueError:
 				logSys.warn("Wrong value for '" + option[1] + "' in '" + sec +
