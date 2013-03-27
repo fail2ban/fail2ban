@@ -36,9 +36,17 @@ logSys = logging.getLogger("fail2ban.client.config")
 
 class JailsReader(ConfigReader):
 	
-	def __init__(self, **kwargs):
+	def __init__(self, force_enable=False, **kwargs):
+		"""
+		Parameters
+		----------
+		force_enable : bool, optional
+		  Passed to JailReader to force enable the jails.
+		  It is for internal use
+		"""
 		ConfigReader.__init__(self, **kwargs)
 		self.__jails = list()
+		self.__force_enable = force_enable
 	
 	def read(self):
 		return ConfigReader.read(self, "jail")
@@ -49,7 +57,7 @@ class JailsReader(ConfigReader):
 
 		if section:
 			# Get the options of a specific jail.
-			jail = JailReader(section, basedir=self.getBaseDir())
+			jail = JailReader(section, basedir=self.getBaseDir(), force_enable=self.__force_enable)
 			jail.read()
 			ret = jail.getOptions()
 			if ret:
@@ -62,7 +70,7 @@ class JailsReader(ConfigReader):
 		else:
 			# Get the options of all jails.
 			for sec in self.sections():
-				jail = JailReader(sec, basedir=self.getBaseDir())
+				jail = JailReader(sec, basedir=self.getBaseDir(), force_enable=self.__force_enable)
 				jail.read()
 				ret = jail.getOptions()
 				if ret:
