@@ -46,15 +46,15 @@ class ConfigReader(SafeConfigParserWithIncludes):
 	def setBaseDir(self, basedir):
 		if basedir is None:
 			basedir = ConfigReader.DEFAULT_BASEDIR	# stock system location
-		if not (os.path.exists(basedir) and os.access(basedir, os.R_OK | os.X_OK)):
-			raise ValueError("Base configuration directory %s either does not exist "
-							 "or is not accessible" % basedir)
 		self._basedir = basedir.rstrip('/')
 	
 	def getBaseDir(self):
 		return self._basedir
 	
 	def read(self, filename):
+		if not (os.path.exists(self._basedir) and os.access(self._basedir, os.R_OK | os.X_OK)):
+			raise ValueError("Base configuration directory %s either does not exist "
+							 "or is not accessible" % self._basedir)
 		basename = os.path.join(self._basedir, filename)
 		logSys.debug("Reading configs for %s under %s "  % (basename, self._basedir))
 		config_files = [ basename + ".conf",

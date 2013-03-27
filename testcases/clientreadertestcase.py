@@ -114,7 +114,8 @@ class JailsReaderTest(unittest.TestCase):
 
 	def testProvidingBadBasedir(self):
 		if not os.path.exists('/XXX'):
-			self.assertRaises(ValueError, JailsReader, basedir='/XXX')
+			reader = JailsReader(basedir='/XXX')
+			self.assertRaises(ValueError, reader.read)
 
 	def testReadStockJailConf(self):
 		jails = JailsReader(basedir='config') # we are running tests from root project dir atm
