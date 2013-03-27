@@ -72,7 +72,7 @@ binary-indep: install
 	sed -i -e '/^#.*ed by dh_python2/,/# End auto/{H;d};$$G' \
 		debian/fail2ban.prerm.debhelper
 
-	dh_installman man/*.1
+	dh_installman man/*.[15]
 	dh_link
 	dh_compress
 	dh_fixperms
