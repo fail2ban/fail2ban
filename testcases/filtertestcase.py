@@ -63,6 +63,11 @@ def _killfile(f, name):
 	except:
 		pass
 
+	# there might as well be the .bak file
+	if os.path.exists(name + '.bak'):
+		_killfile(None, name + '.bak')
+
+
 def _sleep_4_poll():
 	"""PollFilter relies on file timestamps - so we might need to
 	sleep to guarantee that they differ
@@ -342,7 +347,9 @@ def get_monitor_failures_testcase(Filter_):
 	"""Generator of TestCase's for different filters/backends
 	"""
 
-	_, testclass_name = tempfile.mkstemp('fail2ban', 'monitorfailures')
+	# add Filter_'s name so we could easily identify bad cows
+	testclass_name = tempfile.mktemp(
+		'fail2ban', 'monitorfailures_%s' % (Filter_.__name__,))
 
 	class MonitorFailures(unittest.TestCase):
 		count = 0
