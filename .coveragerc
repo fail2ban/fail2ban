@@ -1,4 +1,4 @@
 
 [run]
 branch = True
-omit = /usr*
+omit = /usr* /home/travis/virtualenv/*
