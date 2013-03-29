@@ -7,8 +7,8 @@ python:
   - "2.7"
 install:
   - pip install pyinotify
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.[6-7] ]]; then pip install coveralls; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.[6-7] ]]; then pip install -q coveralls; fi
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.[6-7] ]]; then coverage python ./fail2ban-testcases; else python ./fail2ban-testcases; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.[6-7] ]]; then coverage run fail2ban-testcases; else python ./fail2ban-testcases; fi
 after_script:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.[6-7] ]]; then coveralls; fi
