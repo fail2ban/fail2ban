@@ -342,7 +342,7 @@ class Action:
 					return True
 				else:
 					msg = _RETCODE_HINTS.get(retcode, None)
- 					logSys.error("%s returned %x" % (realCmd, retcode))
+					logSys.error("%s returned %x" % (realCmd, retcode))
 					if msg:
 						logSys.info("HINT on %x: %s"
 									% (retcode, msg % locals()))

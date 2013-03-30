@@ -143,6 +143,10 @@ class Transmitter:
 			value = command[2]
 			self.__server.delLogPath(name, value)
 			return self.__server.getLogPath(name)
+		elif command[1] == "logencoding":
+			value = command[2]
+			self.__server.setLogEncoding(name, value)
+			return self.__server.getLogEncoding(name)
 		elif command[1] == "addfailregex":
 			value = command[2]
 			self.__server.addFailRegex(name, value)
@@ -238,6 +242,8 @@ class Transmitter:
 		# Filter
 		elif command[1] == "logpath":
 			return self.__server.getLogPath(name)
+		elif command[1] == "logencoding":
+			return self.__server.getLogEncoding(name)
 		elif command[1] == "ignoreip":
 			return self.__server.getIgnoreIP(name)
 		elif command[1] == "failregex":

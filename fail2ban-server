@@ -104,10 +104,10 @@ class Fail2banServer:
 			if opt[0] == "-x":
 				self.__conf["force"] = True
 			if opt[0] in ["-h", "--help"]:
-	 			self.dispUsage()
+				self.dispUsage()
 				sys.exit(0)
 			if opt[0] in ["-V", "--version"]:
-	 			self.dispVersion()
+				self.dispVersion()
 				sys.exit(0)
 
 	def start(self, argv):

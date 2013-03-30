@@ -22,7 +22,6 @@
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier; 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-from __builtin__ import open as fopen
 import unittest
 import os
 import sys
@@ -43,15 +42,13 @@ from server.failmanager import FailManagerEmpty
 # https://github.com/fail2ban/fail2ban/issues/103#issuecomment-15542836
 # adding a sufficiently large buffer might help to guarantee that
 # writes happen atomically.
-def open(*args):
-	"""Overload built in open so we could assure sufficiently large buffer
-
-	Explicit .flush would be needed to assure that changes leave the buffer
-	"""
-	if len(args) == 2:
-		# ~50kB buffer should be sufficient for all tests here.
-		args = args + (50000,)
-	return fopen(*args)
+# Overload also for python3 to use utf-8 encoding by default
+if sys.version_info >= (3,):
+	def open_(filename, mode):
+		return open(filename, mode, 50000, encoding='utf-8', errors='ignore')
+else:
+	def open_(filename, mode):
+		return open(filename, mode, 50000)
 
 def _killfile(f, name):
 	try:
@@ -124,7 +121,7 @@ def _copy_lines_between_files(fin, fout, n=None, skip=0, mode='a', terminal_line
 		# polling filter could detect the change
 		time.sleep(1)
 	if isinstance(fin, str): # pragma: no branch - only used with str in test cases
-		fin = open(fin, 'r')
+		fin = open_(fin, 'r')
 	# Skip
 	for i in xrange(skip):
 		_ = fin.readline()
@@ -139,7 +136,7 @@ def _copy_lines_between_files(fin, fout, n=None, skip=0, mode='a', terminal_line
 		i += 1
 	# Write: all at once and flush
 	if isinstance(fout, str):
-		fout = open(fout, mode)
+		fout = open_(fout, mode)
 	fout.write('\n'.join(lines))
 	fout.flush()
 	# to give other threads possibly some time to crunch
@@ -207,7 +204,7 @@ class LogFileMonitor(unittest.TestCase):
 		"""Call before every test case."""
 		self.filter = self.name = 'NA'
 		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
-		self.file = open(self.name, 'a')
+		self.file = open_(self.name, 'a')
 		self.filter = FilterPoll(None)
 		self.filter.addLogPath(self.name)
 		self.filter.setActive(True)
@@ -249,7 +246,7 @@ class LogFileMonitor(unittest.TestCase):
 		# we are not signaling as modified whenever
 		# it gets away
 		self.assertTrue(self.notModified())
-		f = open(self.name, 'a')
+		f = open_(self.name, 'a')
 		self.assertTrue(self.isModified())
 		self.assertTrue(self.notModified())
 		_sleep_4_poll()
@@ -358,7 +355,7 @@ def get_monitor_failures_testcase(Filter_):
 			self.filter = self.name = 'NA'
 			self.name = '%s-%d' % (testclass_name, self.count)
 			MonitorFailures.count += 1 # so we have unique filenames across tests
-			self.file = open(self.name, 'a')
+			self.file = open_(self.name, 'a')
 			self.jail = DummyJail()
 			self.filter = Filter_(self.jail)
 			self.filter.addLogPath(self.name)
@@ -435,7 +432,7 @@ def get_monitor_failures_testcase(Filter_):
 			#return
 			# just for fun let's copy all of them again and see if that results
 			# in a new ban
- 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 
 		def test_rewrite_file(self):
@@ -481,7 +478,7 @@ def get_monitor_failures_testcase(Filter_):
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 
 			# create a bogus file in the same directory and see if that doesn't affect
-			open(self.name + '.bak2', 'w').write('')
+			open_(self.name + '.bak2', 'w').write('')
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
@@ -530,7 +527,7 @@ class GetFailures(unittest.TestCase):
 
 	# so that they could be reused by other tests
 	FAILURES_01 = ('193.168.0.128', 3, 1124013599.0,
-				  ['Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128\n']*3)
+				  [u'Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128\n']*3)
 
 	def setUp(self):
 		"""Call before every test case."""
@@ -554,7 +551,7 @@ class GetFailures(unittest.TestCase):
 
 	def testGetFailures02(self):
 		output = ('141.3.81.106', 4, 1124013539.0,
-				  ['Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n'
+				  [u'Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n'
 				   % m for m in 53, 54, 57, 58])
 
 		self.filter.addLogPath(GetFailures.FILENAME_02)
@@ -587,11 +584,11 @@ class GetFailures(unittest.TestCase):
 	def testGetFailuresUseDNS(self):
 		# We should still catch failures with usedns = no ;-)
 		output_yes = ('192.0.43.10', 2, 1124013539.0,
-					  ['Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2\n',
-					   'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:192.0.43.10 port 51332 ssh2\n'])
+					  [u'Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2\n',
+					   u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:192.0.43.10 port 51332 ssh2\n'])
 
 		output_no = ('192.0.43.10', 1, 1124013539.0,
-					  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:192.0.43.10 port 51332 ssh2\n'])
+					  [u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:192.0.43.10 port 51332 ssh2\n'])
 
 		# Actually no exception would be raised -- it will be just set to 'no'
 		#self.assertRaises(ValueError,
