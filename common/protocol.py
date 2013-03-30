@@ -40,6 +40,7 @@ protocol = [
 ["stop", "stops all jails and terminate the server"], 
 ["status", "gets the current status of the server"], 
 ["ping", "tests if the server is alive"], 
+["help", "return this output"], 
 ['', "LOGGING", ""],
 ["set loglevel <LEVEL>", "sets logging level to <LEVEL>. 0 is minimal, 4 is debug"], 
 ["get loglevel", "gets the logging level"], 

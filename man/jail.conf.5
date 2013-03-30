@@ -1,0 +1,168 @@
+.TH JAIL.CONF "5" "March 2013" "Fail2Ban" "Fail2Ban Configuration"
+.SH NAME
+jail.conf \- configuration for the fail2ban server
+.SH SYNOPSIS
+.I jail.conf / jail.local
+
+.I action.d/*.conf action.d/*.local
+
+.I filter.d/*.conf filter.d/*.local
+.SH DESCRIPTION
+Fail2ban has three configuration file types. Action files are the commands for banning and unbanning of IP address,
+Filter files tell fail2ban how to detect authentication failures, and Jail configurations combine filters with actions into jails.
+
+There are *.conf files that are distributed by fail2ban and *.local file that contain user customizations.
+It is recommended that *.conf files should remain unchanged.  If needed, customizations should be provided in *.local files.
+For instance, if you would like to customize the [ssh-iptables-ipset] jail, create a jail.local to extend jail.conf
+(the configuration for the fail2ban server).  The jail.local file will be the following if you only need to enable
+it:
+
+.TP
+\fIjail.local\fR
+[ssh-iptables-ipset]
+
+enabled = true
+
+.PP
+Override only the settings you need to change and the rest of the configuration will come from the corresponding
+*.conf file.
+
+\fI*.d/\fR
+.RS
+In addition to .local, for any .conf file there can be a corresponding
+\fI.d/\fR directory to contain additional .conf files that will be read after the
+appropriate .local file.  Last parsed file will take precidence over
+identical entries, parsed alphabetically, e.g.
+
+.RS
+\fIjail.d/01_enable.conf\fR - to enable a specific jail
+.RE
+.RS
+\fIjail.d/02_custom_port.conf\fR - containing specific configuration entry to change the port of the jail specified in the configuration
+.RE
+.RS
+\fIfail2ban.d/01_custom_log.conf\fR - containing specific configuration entry to use a different log path.
+.RE
+.RE
+
+.SH DEFAULT
+The following options are applicable to all jails. Their meaning is described in the default \fIjail.conf\fR file.
+.TP
+\fBignoreip\fR 
+.TP
+\fBbantime\fR
+.TP
+\fBfindtime\fR
+.TP
+\fBmaxretry\fR
+.TP
+\fBbackend\fR
+.TP
+\fBusedns\fR
+
+
+.SH "ACTION FILES"
+Action files specify which commands are executed to ban and unban an IP address. They are located under \fI/etc/fail2ban/action.d\fR.
+
+Like with jail.conf files, if you desire local changes create an \fI[actionname].local\fR file in the \fI/etc/fail2ban/action.d\fR directory
+and override the required settings.
+
+Action files are ini files that have two sections, \fBDefinition\fR and \fBInit\fR . 
+
+The [Init] section allows for action-specific settings. In \fIjail.conf/jail.local\fR these can be overwritten for a particular jail as options to the jail.
+
+The following commands can be present in the [Definition] section.
+.TP
+\fBactionstart\fR
+command(s) executed when the jail starts.
+.TP
+\fBactionstop\fR
+command(s) executed when the jail stops.
+.TP
+\fBactioncheck\fR
+the command ran before any other action. It aims to verify if the environment is still ok.
+.TP
+\fBactionban\fR
+command(s) that bans the IP address after \fBmaxretry\fR log lines matches within last \fBfindtime\fR seconds.
+.TP
+\fBactionunban\fR
+command(s) that unbans the IP address after \fBbantime\fR.
+
+Commands specified in the [Definition] section are executed through a system shell so shell redirection and process control is allowed. The commands should
+return 0, otherwise error would be logged.  Moreover if \fBactioncheck\fR exits with non-0 status, it is taken as indication that firewall status has changed and fail2ban needs to reinitialize itself (i.e. issue \fBactionstop\fR and \fBactionstart\fR commands).
+
+Tags are enclosed in <>.  All the elements of [Init] are tags that are replaced in all action commands.  Tags can be added by the
+\fBfail2ban-client\fR using the setctag command.
+
+More than a single command is allowed to be specified. Each command needs to be on a separate line and indented with whitespaces without blank lines. The following example defines
+two commands to be executed.
+
+ actionban = iptables -I fail2ban-<name> --source <ip> -j DROP
+             echo ip=<ip>, match=<match>, time=<time> >> /var/log/fail2ban.log
+
+.SS "Action Tags"
+The following tags are substituted in the actionban, actionunban and actioncheck (when called before actionban/actionunban) commands.
+.TP
+\fBip\fR
+An IPv4 ip address to be banned. e.g. 192.168.0.2
+.TP
+\fBfailures\fR
+The number of times the failure occurred in the log file. e.g. 3
+.TP
+\fBtime\fR
+The unix time of the ban. e.g. 1357508484
+.TP
+\fBmatches\fR
+The concatenated string of the log file lines of the matches that generated the ban. Many characters interpreted by shell get escaped.
+
+.SH FILTER FILES
+
+Filter definitions are those in \fI/etc/fail2ban/filter.d/*.conf\fR and \fIfilter.d/*.local\fR.
+
+These are used to identify failed authentication attempts in logs and to extract the host IP address (or hostname if \fBusedns\fR is \fBtrue\fR).
+
+Like action files, filter files are ini files. The main section is the [Definition] section.
+
+There are two filter definitions used in the [Definition] section:
+
+.TP
+\fBfailregex\fR
+is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The tag <HOST> is used as part of the regex and is itself a regex
+for IPv4 addresses and hostnames. fail2ban will work out which one of these it actually is.
+
+.TP
+\fBignoreregex\fR
+is the regex to identify log entries that should be ignored by fail2ban, even if they match failregex.
+
+
+Using Python "string interpolation" mechanisms, other definitions are allowed and can later be used within other definitions as %(defnname)s. For example.
+
+ baduseragents = IE|wget
+ failregex = useragent=%(baduseragents)s
+
+.PP
+Filters can also have a section called [INCLUDES]. This is used to read other configuration files.
+
+.TP
+\fBbefore\fR
+indicates that this file is read before the [Definition] section.
+
+.TP
+\fBafter\fR
+indicates that this file is read after the [Definition] section.
+
+.SH AUTHOR
+Fail2ban was originally written by Cyril Jaquier <cyril.jaquier@fail2ban.org>.
+At the moment it is maintained and further developed by Yaroslav O. Halchenko <debian@onerussian.com> and a number of contributors.  See \fBTHANKS\fR file shipped with Fail2Ban for a full list.
+.
+Manual page written by Daniel Black and Yaroslav Halchenko.
+.SH "REPORTING BUGS"
+Report bugs to https://github.com/fail2ban/fail2ban/issues
+.SH COPYRIGHT
+Copyright \(co 2013 Daniel Black
+.br
+Copyright of modifications held by their respective authors.
+Licensed under the GNU General Public License v2 (GPL).
+.SH "SEE ALSO"
+.br
+fail2ban-server(1)

@@ -63,7 +63,7 @@ class Fail2banClient:
 		self.__conf["interactive"] = False
 		self.__conf["socket"] = None
 		self.__conf["pidfile"] = None
-		
+
 	def dispVersion(self):
 		print "Fail2Ban v" + version
 		print
@@ -73,7 +73,7 @@ class Fail2banClient:
 		print
 		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
 		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
-	
+
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
 		"""
@@ -95,17 +95,17 @@ class Fail2banClient:
 		print "    -V, --version           print the version"
 		print
 		print "Command:"
-		
+
 		# Prints the protocol
 		printFormatted()
-		
+
 		print
 		print "Report bugs to https://github.com/fail2ban/fail2ban/issues"
-	
+
 	def dispInteractive(self):
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
 		print "and bans the corresponding IP addresses using firewall rules."
-		print 
+		print
 
 	def __sigTERMhandler(self, signum, frame):
 		# Print a new line because we probably come from wait
@@ -139,10 +139,10 @@ class Fail2banClient:
 			elif opt[0] in ["-V", "--version"]:
 				self.dispVersion()
 				sys.exit(0)
-	
+
 	def __ping(self):
 		return self.__processCmd([["ping"]], False)
-	
+
 	def __processCmd(self, cmd, showRet = True):
 		beautifier = Beautifier()
 		for c in cmd:
@@ -167,7 +167,7 @@ class Fail2banClient:
 					logSys.error(e)
 				return False
 		return True
-		
+
 	##
 	# Process a command line.
 	#
@@ -241,13 +241,13 @@ class Fail2banClient:
 				return False
 		else:
 			return self.__processCmd([cmd])
-	
-	
+
+
 	##
 	# Start Fail2Ban server.
 	#
 	# Start the Fail2ban server in daemon mode.
-	
+
 	def __startServerAsync(self, socket, pidfile, force = False):
 		# Forks the current process.
 		pid = os.fork()
@@ -278,7 +278,7 @@ class Fail2banClient:
 				except OSError:
 					logSys.error("Could not start %s" % self.SERVER)
 					os.exit(-1)
-	
+
 	def __waitOnServer(self):
 		# Wait for the server to start
 		cnt = 0
@@ -297,7 +297,7 @@ class Fail2banClient:
 					delta = -1
 				elif pos < 2:
 					delta = 1
-			# The server has 30 secondes to start.
+			# The server has 30 seconds to start.
 			if cnt >= 300:
 				if self.__conf["verbose"] > 1:
 					sys.stdout.write('\n')
@@ -306,16 +306,16 @@ class Fail2banClient:
 			cnt += 1
 		if self.__conf["verbose"] > 1:
 			sys.stdout.write('\n')
-			
-	
+
+
 	def start(self, argv):
 		# Command line options
 		self.__argv = argv
-		
+
 		# Install signal handlers
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
 		signal.signal(signal.SIGINT, self.__sigTERMhandler)
-		
+
 		# Reads the command line options.
 		try:
 			cmdOpts = 'hc:s:p:xdviqV'
@@ -324,9 +324,9 @@ class Fail2banClient:
 		except getopt.GetoptError:
 			self.dispUsage()
 			return False
-			
+
 		self.__getCmdLineOptions(optList)
-		
+
 		verbose = self.__conf["verbose"]
 		if verbose <= 0:
 			logSys.setLevel(logging.ERROR)
@@ -346,7 +346,7 @@ class Fail2banClient:
 
 		# Set the configuration path
 		self.__configurator.setBaseDir(self.__conf["conf"])
-		
+
 		# Set socket path
 		self.__configurator.readEarly()
 		conf = self.__configurator.getEarlyOptions()
@@ -360,7 +360,7 @@ class Fail2banClient:
 			ret = self.__readConfig()
 			self.dumpConfig(self.__stream)
 			return ret
-		
+
 		# Interactive mode
 		if self.__conf["interactive"]:
 			try:
@@ -380,7 +380,9 @@ class Fail2banClient:
 						if cmd == "exit" or cmd == "quit":
 							# Exit
 							return True
-						if not cmd == "":
+						if cmd == "help":
+							self.dispUsage()
+						elif not cmd == "":
 							self.__processCommand(shlex.split(cmd))
 			except (EOFError, KeyboardInterrupt):
 				print
@@ -399,14 +401,14 @@ class Fail2banClient:
 		self.__configurator.convertToProtocol()
 		self.__stream = self.__configurator.getConfigStream()
 		return ret
-	
+
 	def __readJailConfig(self, jail):
 		self.__configurator.readAll()
 		ret = self.__configurator.getOptions(jail)
 		self.__configurator.convertToProtocol()
 		self.__stream = self.__configurator.getConfigStream()
 		return ret
-	
+
 	#@staticmethod
 	def dumpConfig(cmd):
 		for c in cmd:
@@ -418,7 +420,7 @@ class Fail2banClient:
 class ServerExecutionException(Exception):
 	pass
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover - can't test main
 	client = Fail2banClient()
 	# Exit with correct return value
 	if client.start(sys.argv):

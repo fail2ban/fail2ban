@@ -40,10 +40,11 @@ class JailReader(ConfigReader):
 	
 	actionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
 	
-	def __init__(self, name):
-		ConfigReader.__init__(self)
+	def __init__(self, name, force_enable=False, **kwargs):
+		ConfigReader.__init__(self, **kwargs)
 		self.__name = name
 		self.__filter = None
+		self.__force_enable = force_enable
 		self.__actions = list()
 	
 	def setName(self, value):
@@ -53,10 +54,10 @@ class JailReader(ConfigReader):
 		return self.__name
 	
 	def read(self):
-		ConfigReader.read(self, "jail")
+		return ConfigReader.read(self, "jail")
 	
 	def isEnabled(self):
-		return self.__opts["enabled"]
+		return self.__force_enable or self.__opts["enabled"]
 	
 	def getOptions(self):
 		opts = [["bool", "enabled", "false"],
@@ -76,7 +77,8 @@ class JailReader(ConfigReader):
 		
 		if self.isEnabled():
 			# Read filter
-			self.__filter = FilterReader(self.__opts["filter"], self.__name)
+			self.__filter = FilterReader(self.__opts["filter"], self.__name,
+										 basedir=self.getBaseDir())
 			ret = self.__filter.read()
 			if ret:
 				self.__filter.getOptions(self.__opts)
@@ -87,8 +89,10 @@ class JailReader(ConfigReader):
 			# Read action
 			for act in self.__opts["action"].split('\n'):
 				try:
+					if not act:			  # skip empty actions
+						continue
 					splitAct = JailReader.splitAction(act)
-					action = ActionReader(splitAct, self.__name)
+					action = ActionReader(splitAct, self.__name, basedir=self.getBaseDir())
 					ret = action.read()
 					if ret:
 						action.getOptions(self.__opts)
@@ -97,8 +101,10 @@ class JailReader(ConfigReader):
 						raise AttributeError("Unable to read action")
 				except Exception, e:
 					logSys.error("Error in action definition " + act)
-					logSys.debug(e)
+					logSys.debug("Caught exception: %s" % (e,))
 					return False
+			if not len(self.__actions):
+				logSys.warn("No actions were defined for %s" % self.__name)
 		return True
 	
 	def convert(self):
@@ -145,12 +151,20 @@ class JailReader(ConfigReader):
 	def splitAction(action):
 		m = JailReader.actionCRE.match(action)
 		d = dict()
-		if not m.group(2) == None:
+		mgroups = m.groups()
+		if len(mgroups) == 2:
+			action_name, action_opts = mgroups
+		elif len(mgroups) == 1:
+			action_name, action_opts = mgroups[0], None
+		else:
+			raise ValueError("While reading action %s we should have got up to "
+							 "2 groups. Got: %r" % (action, mgroups))
+		if not action_opts is None:
 			# Huge bad hack :( This method really sucks. TODO Reimplement it.
 			actions = ""
 			escapeChar = None
 			allowComma = False
-			for c in m.group(2):
+			for c in action_opts:
 				if c in ('"', "'") and not allowComma:
 					# Start
 					escapeChar = c
@@ -175,6 +189,6 @@ class JailReader(ConfigReader):
 				try:
 					d[p[0].strip()] = p[1].strip()
 				except IndexError:
-					logSys.error("Invalid argument %s in '%s'" % (p, m.group(2)))
-		return [m.group(1), d]
+					logSys.error("Invalid argument %s in '%s'" % (p, action_opts))
+		return [action_name, d]
 	splitAction = staticmethod(splitAction)

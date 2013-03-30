@@ -8,8 +8,11 @@ python:
   - "3.2"
   - "3.3"
 install:
-  - "pip install pyinotify"
+  - pip install pyinotify
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.[6-7] ]] || [[ $TRAVIS_PYTHON_VERSION == 3.3 ]]; then pip install -q coveralls; fi
 before_script:
     - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then ./fail2ban-2to3; fi
 script:
-    - python ./fail2ban-testcases
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.[6-7] ]] || [[ $TRAVIS_PYTHON_VERSION == 3.3 ]]; then coverage run --rcfile=.travis_coveragerc fail2ban-testcases; else python ./fail2ban-testcases; fi
+after_script:
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.[6-7] ]] || [[ $TRAVIS_PYTHON_VERSION == 3.3 ]]; then coveralls; fi

@@ -382,7 +382,7 @@ class Server:
 				try:
 					handler.flush()
 					handler.close()
-				except ValueError:
+				except (ValueError, KeyError):
 					if (2,6) <= sys.version_info < (3,) or \
 							(3,2) <= sys.version_info:
 						raise
