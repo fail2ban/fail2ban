@@ -134,7 +134,7 @@ class JailThread(Thread):
 		pass
 	
 	def sleep(self, timeout = None):
-		"""\
+		"""
 		Sleep until pipe is readable or we timeout.
 		A readable pipe means a signal occurred.
 		"""
@@ -158,7 +158,7 @@ class JailThread(Thread):
 				raise
 	
 	def wakeup(self):
-		"""\
+		"""
 		Wake up the jail by writing to the pipe
 		"""
 		try:
