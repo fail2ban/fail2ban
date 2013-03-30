@@ -16,9 +16,9 @@ Legend:
 - Run tests though all filters/examples files - (see sshd example file) as unit
   test
 
-- Removed relative imports
+* Removed relative imports
 
-- Cleanup fail2ban-client and fail2ban-server. Move code to server/ and client/
+* Cleanup fail2ban-client and fail2ban-server. Move code to server/ and client/
 
 - Add timeout to external commands (signal alarm, watchdog thread, etc)
 

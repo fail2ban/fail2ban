@@ -1,0 +1,3 @@
+# per https://github.com/fail2ban/fail2ban/issues/125
+# and https://github.com/fail2ban/fail2ban/issues/126
+Feb 21 09:21:54 xxx postfix/smtpd[14398]: NOQUEUE: reject: RCPT from example.com[192.0.43.10]: 450 4.7.1 : Helo command rejected: Host not found; from=<> to=<> proto=ESMTP helo=

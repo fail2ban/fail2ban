@@ -385,7 +385,7 @@ class Server:
 				try:
 					handler.flush()
 					handler.close()
-				except ValueError:
+				except (ValueError, KeyError):
 					if sys.version_info >= (2,6):
 						raise
 					# is known to be thrown after logging was shutdown once

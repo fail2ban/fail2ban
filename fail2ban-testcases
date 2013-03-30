@@ -35,6 +35,9 @@ from testcases import filtertestcase
 from testcases import servertestcase
 from testcases import datedetectortestcase
 from testcases import actiontestcase
+from testcases import sockettestcase
+
+from testcases.utils import FormatterWithTraceBack
 from server.mytime import MyTime
 
 from optparse import OptionParser, Option
@@ -51,12 +54,14 @@ def get_opt_parser():
 			   choices=('debug', 'info', 'warn', 'error', 'fatal'),
 			   default=None,
 			   help="Log level for the logger to use during running tests"),
-		])
-
-	p.add_options([
 		Option('-n', "--no-network", action="store_true",
 			   dest="no_network",
 			   help="Do not run tests that require the network"),
+		Option("-t", "--log-traceback", action='store_true',
+			   help="Enrich log-messages with compressed tracebacks"),
+		Option("--full-traceback", action='store_true',
+			   help="Either to make the tracebacks full, not compressed (as by default)"),
+
 		])
 
 	return p
@@ -88,12 +93,21 @@ else: # pragma: no cover
 
 # Add the default logging handler
 stdout = logging.StreamHandler(sys.stdout)
+
+fmt = ' %(message)s'
+
+if opts.log_traceback:
+	Formatter = FormatterWithTraceBack
+	fmt = (opts.full_traceback and ' %(tb)s' or ' %(tbc)s') + fmt
+else:
+	Formatter = logging.Formatter
+
 # Custom log format for the verbose tests runs
 if verbosity > 1: # pragma: no cover
-	stdout.setFormatter(logging.Formatter(' %(asctime)-15s %(thread)s %(message)s'))
+	stdout.setFormatter(Formatter(' %(asctime)-15s %(thread)s' + fmt))
 else: # pragma: no cover
 	# just prefix with the space
-	stdout.setFormatter(logging.Formatter(' %(message)s'))
+	stdout.setFormatter(Formatter(fmt))
 logSys.addHandler(stdout)
 
 #
@@ -130,9 +144,13 @@ tests.addTest(unittest.makeSuite(actiontestcase.ExecuteAction))
 tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 # BanManager
 tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
-# ClientReader
+# ClientReaders
+tests.addTest(unittest.makeSuite(clientreadertestcase.ConfigReaderTest))
 tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
 tests.addTest(unittest.makeSuite(clientreadertestcase.FilterReaderTest))
+tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTest))
+# CSocket and AsyncServer
+tests.addTest(unittest.makeSuite(sockettestcase.Socket))
 
 # Filter
 if not opts.no_network:
@@ -173,6 +191,9 @@ for Filter_ in filters:
 	tests.addTest(unittest.makeSuite(
 		filtertestcase.get_monitor_failures_testcase(Filter_)))
 
+# Server test for logging elements which break logging used to support
+# testcases analysis
+tests.addTest(unittest.makeSuite(servertestcase.TransmitterLogging))
 
 #
 # Run the tests

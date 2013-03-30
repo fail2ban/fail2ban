@@ -44,7 +44,7 @@ coverage html
 
 Then look at htmlcov/index.html and see how much coverage your test cases
 exert over the codebase. Full coverage is a good thing however it may not be
-complete. Try to ensure tests cover as many independant paths through the
+complete. Try to ensure tests cover as many independent paths through the
 code.
 
 Manual Execution. To run in a development environment do:
@@ -67,7 +67,7 @@ status test
 
 
 Coding Standards
-================ 
+================
 
 Style
 -----
@@ -106,9 +106,12 @@ Git
 
 Use the following tags in your commit messages:
 
-'ENH:' for enhancements
 'BF:' for bug fixes
 'DOC:' for documentation fixes
+'ENH:' for enhancements
+'TST:' for commits concerning tests only (thus not touching the main code-base)
+
+Multiple tags could be joined with +, e.g. "BF+TST:".
 
 Adding Actions
 --------------
@@ -246,24 +249,30 @@ Takes care about executing start/check/ban/unban/stop commands
 Releasing
 =========
 
-Ensure the version is correct in ./common/version.py
+# Ensure the version is correct in ./common/version.py
 
-Add/finalize the corresponding entry in the ChangeLog
+# Add/finalize the corresponding entry in the ChangeLog
 
-# update man pages
-(cd man ; ./generate-man )
+# Update man pages
 
-git commit -m 'update man pages for release' man/*
+  (cd man ; ./generate-man )
+  git commit -m 'update man pages for release' man/*
 
-python setup.py check
-python setup.py sdist
-python setup.py bdist_rpm
-python setup.py upload
+# Make sure the tests pass
 
-Run the following and update the wiki with output:
+  ./fail2ban-testcases-all
 
-python -c 'import common.protocol; common.protocol.printWiki()'
+# Prepare/upload source and rpm binary distributions
 
-email users and development list of release
+  python setup.py check
+  python setup.py sdist
+  python setup.py bdist_rpm
+  python setup.py upload
+
+# Run the following and update the wiki with output:
+
+  python -c 'import common.protocol; common.protocol.printWiki()'
+
+# Email users and development list of release
 
 TODO notifying distributors etc.

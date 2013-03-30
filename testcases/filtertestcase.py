@@ -22,6 +22,7 @@
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier; 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
+from __builtin__ import open as fopen
 import unittest
 import os
 import sys
@@ -38,6 +39,20 @@ from server.failmanager import FailManagerEmpty
 # Useful helpers
 #
 
+# yoh: per Steven Hiscocks's insight while troubleshooting
+# https://github.com/fail2ban/fail2ban/issues/103#issuecomment-15542836
+# adding a sufficiently large buffer might help to guarantee that
+# writes happen atomically.
+def open(*args):
+	"""Overload built in open so we could assure sufficiently large buffer
+
+	Explicit .flush would be needed to assure that changes leave the buffer
+	"""
+	if len(args) == 2:
+		# ~50kB buffer should be sufficient for all tests here.
+		args = args + (50000,)
+	return fopen(*args)
+
 def _killfile(f, name):
 	try:
 		f.close()
@@ -47,6 +62,11 @@ def _killfile(f, name):
 		os.unlink(name)
 	except:
 		pass
+
+	# there might as well be the .bak file
+	if os.path.exists(name + '.bak'):
+		_killfile(None, name + '.bak')
+
 
 def _sleep_4_poll():
 	"""PollFilter relies on file timestamps - so we might need to
@@ -105,20 +125,23 @@ def _copy_lines_between_files(fin, fout, n=None, skip=0, mode='a', terminal_line
 		time.sleep(1)
 	if isinstance(fin, str): # pragma: no branch - only used with str in test cases
 		fin = open(fin, 'r')
-	if isinstance(fout, str):
-		fout = open(fout, mode)
 	# Skip
 	for i in xrange(skip):
 		_ = fin.readline()
-	# Read/Write
+	# Read
 	i = 0
+	lines = []
 	while n is None or i < n:
 		l = fin.readline()
 		if terminal_line is not None and l == terminal_line:
 			break
-		fout.write(l)
-		fout.flush()
+		lines.append(l)
 		i += 1
+	# Write: all at once and flush
+	if isinstance(fout, str):
+		fout = open(fout, mode)
+	fout.write('\n'.join(lines))
+	fout.flush()
 	# to give other threads possibly some time to crunch
 	time.sleep(0.1)
 	return fout
@@ -324,11 +347,17 @@ def get_monitor_failures_testcase(Filter_):
 	"""Generator of TestCase's for different filters/backends
 	"""
 
+	# add Filter_'s name so we could easily identify bad cows
+	testclass_name = tempfile.mktemp(
+		'fail2ban', 'monitorfailures_%s' % (Filter_.__name__,))
+
 	class MonitorFailures(unittest.TestCase):
+		count = 0
 		def setUp(self):
 			"""Call before every test case."""
 			self.filter = self.name = 'NA'
-			_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
+			self.name = '%s-%d' % (testclass_name, self.count)
+			MonitorFailures.count += 1 # so we have unique filenames across tests
 			self.file = open(self.name, 'a')
 			self.jail = DummyJail()
 			self.filter = Filter_(self.jail)
@@ -351,11 +380,8 @@ def get_monitor_failures_testcase(Filter_):
 			self.filter.join()		  # wait for the thread to terminate
 			#print "D: KILLING THE FILE"
 			_killfile(self.file, self.name)
+			#time.sleep(0.2)			  # Give FS time to ack the removal
 			pass
-
-		def __str__(self): # pragma: no cover - will only show up if unexpected exception is thrown
-			return "MonitorFailures%s(%s)" \
-			  % (Filter_, hasattr(self, 'name') and self.name or 'tempfile')
 
 		def isFilled(self, delay=2.):
 			"""Wait up to `delay` sec to assure that it was modified or not
@@ -379,7 +405,7 @@ def get_monitor_failures_testcase(Filter_):
 			return not self.isFilled(delay)
 
 		def assert_correct_last_attempt(self, failures, count=None):
-			self.assertTrue(self.isFilled(10)) # give Filter a chance to react
+			self.assertTrue(self.isFilled(20)) # give Filter a chance to react
 			_assert_correct_last_attempt(self, self.jail, failures, count=count)
 
 
@@ -431,9 +457,10 @@ def get_monitor_failures_testcase(Filter_):
 			# if we move file into a new location while it has been open already
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 												  n=14, mode='w')
-			self.assertTrue(self.isEmpty(2))
+			# Poll might need more time
+			self.assertTrue(self.isEmpty(4 + int(isinstance(self.filter, FilterPoll))*2))
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
-			self.assertEqual(self.filter.failManager.getFailTotal(), 2) # Fails with Poll from time to time
+			self.assertEqual(self.filter.failManager.getFailTotal(), 2)
 
 			# move aside, but leaving the handle still open...
 			os.rename(self.name, self.name + '.bak')
@@ -488,7 +515,8 @@ def get_monitor_failures_testcase(Filter_):
 			# yoh: not sure why count here is not 9... TODO
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)#, count=9)
 
-
+	MonitorFailures.__name__ = "MonitorFailures<%s>(%s)" \
+			  % (Filter_.__name__, testclass_name) # 'tempfile')
 	return MonitorFailures
 
 

@@ -4,3 +4,5 @@ dist
 *.pyc
 htmlcov
 .coverage
+*.orig
+*.rej

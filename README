@@ -51,10 +51,12 @@ call fail2ban-server directly.
 Configuration:
 --------------
 
-You can configure Fail2ban using the files in /etc/fail2ban. It is possible to
-configure the server using commands sent to it by fail2ban-client. The available
-commands are described in the man page of fail2ban-client. Please refer to it or
-to the website: http://www.fail2ban.org
+You can configure Fail2Ban using the files in /etc/fail2ban. It is
+possible to configure the server using commands sent to it by
+fail2ban-client. The available commands are described in the
+fail2ban-client(1) manpage.  Also see fail2ban(1) manpage for further
+references and find even more documentation on the website:
+http://www.fail2ban.org
 
 Contact:
 --------
