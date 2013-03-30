@@ -7,6 +7,7 @@ fail2ban-client
 fail2ban-server
 fail2ban-testcases
 fail2ban-regex
+fail2ban-2to3
 client/configreader.py
 client/configparserinc.py
 client/jailreader.py
