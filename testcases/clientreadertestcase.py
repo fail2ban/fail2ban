@@ -113,13 +113,6 @@ class JailReaderTest(unittest.TestCase):
 		
 class FilterReaderTest(unittest.TestCase):
 
-	def setUp(self):
-		"""Call before every test case."""
-		ConfigReader.setBaseDir("testcases/files/")
-
-	def tearDown(self):
-		"""Call after every test case."""
-
 	def testConvert(self):
 		output = [['set', 'testcase01', 'addfailregex',
 			"^\\s*(?:\\S+ )?(?:kernel: \\[\\d+\\.\\d+\\] )?(?:@vserver_\\S+ )"
@@ -141,6 +134,7 @@ class FilterReaderTest(unittest.TestCase):
 			['set', 'testcase01', 'addignoreregex', 
 			"^.+ john from host 192.168.1.1\\s*$"]]
 		filterReader = FilterReader("testcase01", "testcase01")
+		filterReader.setBaseDir("testcases/files/")
 		filterReader.read()
 		#filterReader.getOptions(["failregex", "ignoreregex"])
 		filterReader.getOptions(None)
