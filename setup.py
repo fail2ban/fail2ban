@@ -23,10 +23,11 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from distutils.core import setup
-from common.version import version
 from os.path import isfile, join, isdir
-from sys import argv
+import sys
 from glob import glob
+
+from fail2ban.version import version
 
 longdesc = '''
 Fail2Ban scans log files like /var/log/pwdfail or
@@ -38,7 +39,7 @@ commands.'''
 setup(
 	name = "fail2ban",
 	version = version,
-	description = "Ban IPs that make too many password failure",
+	description = "Ban IPs that make too many password failures",
 	long_description = longdesc,
 	author = "Cyril Jaquier",
 	author_email = "cyril.jaquier@fail2ban.org",
@@ -51,9 +52,9 @@ setup(
 					'fail2ban-regex'
 				],
 	packages =	[
-					'common',
-					'client',
-					'server'
+					'fail2ban',
+					'fail2ban.client',
+					'fail2ban.server'
 				],
 	data_files =	[
 						('/etc/fail2ban',
@@ -117,7 +118,7 @@ if isdir("/usr/lib/fail2ban"):
 	print
 
 # Update config file
-if argv[1] == "install":
+if sys.argv[1] == "install":
 	print
 	print "Please do not forget to update your configuration files."
 	print "They are in /etc/fail2ban/."

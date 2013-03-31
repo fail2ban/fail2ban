@@ -28,8 +28,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import unittest
-from server.datedetector import DateDetector
-from server.datetemplate import DateTemplate
+
+from fail2ban.server.datedetector import DateDetector
+from fail2ban.server.datetemplate import DateTemplate
 
 class DateDetectorTest(unittest.TestCase):
 

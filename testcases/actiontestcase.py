@@ -29,8 +29,9 @@ __license__ = "GPL"
 
 import unittest, time
 import logging, sys
-from server.action import Action
 from StringIO import StringIO
+
+from fail2ban.server.action import Action
 
 class ExecuteAction(unittest.TestCase):
 

@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2013- Yaroslav Halchenko"
 __license__ = "GPL"
 
-from common.exceptions import DuplicateJailException, UnknownJailException
+from fail2ban.exceptions import DuplicateJailException, UnknownJailException
 
 from jail import Jail
 from threading import Lock

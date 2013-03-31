@@ -22,10 +22,11 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import os, shutil, tempfile, unittest
-from client.configreader import ConfigReader
-from client.jailreader import JailReader
-from client.jailsreader import JailsReader
-from client.configurator import Configurator
+
+from fail2ban.client.configreader import ConfigReader
+from fail2ban.client.jailreader import JailReader
+from fail2ban.client.jailsreader import JailsReader
+from fail2ban.client.configurator import Configurator
 
 class ConfigReaderTest(unittest.TestCase):
 

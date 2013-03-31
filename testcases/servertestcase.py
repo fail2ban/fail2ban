@@ -28,8 +28,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import unittest, socket, time, tempfile, os
-from server.server import Server
-from common.exceptions import UnknownJailException
+
+from fail2ban.server.server import Server
+from fail2ban.exceptions import UnknownJailException
 
 class StartStop(unittest.TestCase):
 

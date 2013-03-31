@@ -28,8 +28,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from pickle import dumps, loads, HIGHEST_PROTOCOL
-from common import helpers
 import asyncore, asynchat, socket, os, logging, sys, traceback
+
+from fail2ban import helpers
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.server")

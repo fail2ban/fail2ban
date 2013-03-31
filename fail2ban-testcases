@@ -27,7 +27,7 @@ __license__ = "GPL"
 
 import unittest, logging, sys, time, os
 
-from common.version import version
+from fail2ban.version import version
 from testcases import banmanagertestcase
 from testcases import clientreadertestcase
 from testcases import failmanagertestcase
@@ -38,7 +38,7 @@ from testcases import actiontestcase
 from testcases import sockettestcase
 
 from testcases.utils import FormatterWithTraceBack
-from server.mytime import MyTime
+from fail2ban.server.mytime import MyTime
 
 from optparse import OptionParser, Option
 
@@ -168,20 +168,20 @@ tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
 # Extensive use-tests of different available filters backends
 #
 
-from server.filterpoll import FilterPoll
+from fail2ban.server.filterpoll import FilterPoll
 filters = [FilterPoll]					  # always available
 
 # Additional filters available only if external modules are available
 # yoh: Since I do not know better way for parametric tests
 #      with good old unittest
 try:
-	from server.filtergamin import FilterGamin
+	from fail2ban.server.filtergamin import FilterGamin
 	filters.append(FilterGamin)
 except Exception, e: # pragma: no cover
 	print "I: Skipping gamin backend testing. Got exception '%s'" % e
 
 try:
-	from server.filterpyinotify import FilterPyinotify
+	from fail2ban.server.filterpyinotify import FilterPyinotify
 	filters.append(FilterPyinotify)
 except Exception, e: # pragma: no cover
 	print "I: Skipping pyinotify backend testing. Got exception '%s'" % e

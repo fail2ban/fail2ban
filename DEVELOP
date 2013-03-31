@@ -249,7 +249,7 @@ Takes care about executing start/check/ban/unban/stop commands
 Releasing
 =========
 
-# Ensure the version is correct in ./common/version.py
+# Ensure the version is correct in ./fail2ban/version.py
 
 # Add/finalize the corresponding entry in the ChangeLog
 
@@ -271,7 +271,7 @@ Releasing
 
 # Run the following and update the wiki with output:
 
-  python -c 'import common.protocol; common.protocol.printWiki()'
+  python -c 'import fail2ban.protocol; fail2ban.protocol.printWiki()'
 
 # Email users and development list of release
 

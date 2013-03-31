@@ -32,7 +32,7 @@ from jails import Jails
 from transmitter import Transmitter
 from asyncserver import AsyncServer
 from asyncserver import AsyncServerException
-from common import version
+from fail2ban import version
 import logging, logging.handlers, sys, os, signal
 
 # Gets the instance of the logger.

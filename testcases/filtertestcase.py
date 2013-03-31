@@ -29,11 +29,11 @@ import sys
 import time
 import tempfile
 
-from server.jail import Jail
-from server.filterpoll import FilterPoll
-from server.filter import FileFilter, DNSUtils
-from server.failmanager import FailManager
-from server.failmanager import FailManagerEmpty
+from fail2ban.server.jail import Jail
+from fail2ban.server.filterpoll import FilterPoll
+from fail2ban.server.filter import FileFilter, DNSUtils
+from fail2ban.server.failmanager import FailManager
+from fail2ban.server.failmanager import FailManagerEmpty
 
 #
 # Useful helpers

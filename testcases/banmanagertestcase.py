@@ -28,8 +28,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import unittest
-from server.banmanager import BanManager
-from server.ticket import BanTicket
+
+from fail2ban.server.banmanager import BanManager
+from fail2ban.server.ticket import BanTicket
 
 class AddFailure(unittest.TestCase):
 
