@@ -49,13 +49,18 @@ setup(
 	scripts =	[
 					'fail2ban-client',
 					'fail2ban-server',
-					'fail2ban-regex'
+					'fail2ban-regex',
+					'fail2ban-testcases',
 				],
 	packages =	[
 					'fail2ban',
 					'fail2ban.client',
-					'fail2ban.server'
+					'fail2ban.server',
+					'fail2ban.tests',
 				],
+	package_data =	{
+						'fail2ban.tests': ['files/*.log'],
+					},
 	data_files =	[
 						('/etc/fail2ban',
 							glob("config/*.conf")

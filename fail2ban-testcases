@@ -28,16 +28,16 @@ __license__ = "GPL"
 import unittest, logging, sys, time, os
 
 from fail2ban.version import version
-from testcases import banmanagertestcase
-from testcases import clientreadertestcase
-from testcases import failmanagertestcase
-from testcases import filtertestcase
-from testcases import servertestcase
-from testcases import datedetectortestcase
-from testcases import actiontestcase
-from testcases import sockettestcase
+from fail2ban.tests import banmanagertestcase
+from fail2ban.tests import clientreadertestcase
+from fail2ban.tests import failmanagertestcase
+from fail2ban.tests import filtertestcase
+from fail2ban.tests import servertestcase
+from fail2ban.tests import datedetectortestcase
+from fail2ban.tests import actiontestcase
+from fail2ban.tests import sockettestcase
 
-from testcases.utils import FormatterWithTraceBack
+from fail2ban.tests.utils import FormatterWithTraceBack
 from fail2ban.server.mytime import MyTime
 
 from optparse import OptionParser, Option

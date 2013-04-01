@@ -32,6 +32,8 @@ import unittest, socket, time, tempfile, os
 from fail2ban.server.server import Server
 from fail2ban.exceptions import UnknownJailException
 
+TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
+
 class StartStop(unittest.TestCase):
 
 	def setUp(self):
@@ -273,14 +275,14 @@ class Transmitter(TransmitterBase):
 		self.jailAddDelTest(
 			"logpath",
 			[
-				"testcases/files/testcase01.log",
-				"testcases/files/testcase02.log",
-				"testcases/files/testcase03.log",
+				os.path.join(TEST_FILES_DIR, "testcase01.log"),
+				os.path.join(TEST_FILES_DIR, "testcase02.log"),
+				os.path.join(TEST_FILES_DIR, "testcase03.log"),
 			],
 			self.jailName
 		)
 		# Try duplicates
-		value = "testcases/files/testcase04.log"
+		value = os.path.join(TEST_FILES_DIR, "testcase04.log")
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "addlogpath", value]),
 			(0, [value]))
