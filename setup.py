@@ -47,10 +47,10 @@ setup(
 	license = "GPL",
 	platforms = "Posix",
 	scripts =	[
-					'fail2ban-client',
-					'fail2ban-server',
-					'fail2ban-regex',
-					'fail2ban-testcases',
+					'bin/fail2ban-client',
+					'bin/fail2ban-server',
+					'bin/fail2ban-regex',
+					'bin/fail2ban-testcases',
 				],
 	packages =	[
 					'fail2ban',

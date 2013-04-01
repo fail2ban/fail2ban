@@ -27,6 +27,11 @@ __license__ = "GPL"
 
 import unittest, logging, sys, time, os
 
+# Check if local fail2ban module exists, and use if it exists by 
+# modifying the path. This is such that tests can be used in dev
+# environment.
+if os.path.exists("fail2ban/__init__.py"):
+	sys.path.insert(0, ".")
 from fail2ban.version import version
 from fail2ban.tests import banmanagertestcase
 from fail2ban.tests import clientreadertestcase

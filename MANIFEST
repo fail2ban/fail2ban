@@ -5,10 +5,10 @@ THANKS
 COPYING
 DEVELOP
 doc/run-rootless.txt
-fail2ban-client
-fail2ban-server
-fail2ban-testcases
-fail2ban-regex
+bin/fail2ban-client
+bin/fail2ban-server
+bin/fail2ban-testcases
+bin/fail2ban-regex
 fail2ban/client/configreader.py
 fail2ban/client/configparserinc.py
 fail2ban/client/jailreader.py
