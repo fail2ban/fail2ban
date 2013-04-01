@@ -28,6 +28,11 @@ from fail2ban.client.jailreader import JailReader
 from fail2ban.client.jailsreader import JailsReader
 from fail2ban.client.configurator import Configurator
 
+if os.path.exists('config/fail2ban.conf'):
+	CONFIG_DIR='config'
+else:
+	CONFIG_DIR='/etc/fail2ban'
+
 class ConfigReaderTest(unittest.TestCase):
 
 	def setUp(self):
@@ -99,7 +104,7 @@ option = %s
 class JailReaderTest(unittest.TestCase):
 
 	def testStockSSHJail(self):
-		jail = JailReader('ssh-iptables', basedir='config') # we are running tests from root project dir atm
+		jail = JailReader('ssh-iptables', basedir=CONFIG_DIR) # we are running tests from root project dir atm
 		self.assertTrue(jail.read())
 		self.assertTrue(jail.getOptions())
 		self.assertFalse(jail.isEnabled())
@@ -119,7 +124,7 @@ class JailsReaderTest(unittest.TestCase):
 			self.assertRaises(ValueError, reader.read)
 
 	def testReadStockJailConf(self):
-		jails = JailsReader(basedir='config') # we are running tests from root project dir atm
+		jails = JailsReader(basedir=CONFIG_DIR) # we are running tests from root project dir atm
 		self.assertTrue(jails.read())		  # opens fine
 		self.assertTrue(jails.getOptions())	  # reads fine
 		comm_commands = jails.convert()
@@ -130,7 +135,7 @@ class JailsReaderTest(unittest.TestCase):
 	def testReadStockJailConfForceEnabled(self):
 		# more of a smoke test to make sure that no obvious surprises
 		# on users' systems when enabling shipped jails
-		jails = JailsReader(basedir='config', force_enable=True) # we are running tests from root project dir atm
+		jails = JailsReader(basedir=CONFIG_DIR, force_enable=True) # we are running tests from root project dir atm
 		self.assertTrue(jails.read())		  # opens fine
 		self.assertTrue(jails.getOptions())	  # reads fine
 		comm_commands = jails.convert()
@@ -152,8 +157,8 @@ class JailsReaderTest(unittest.TestCase):
 
 	def testConfigurator(self):
 		configurator = Configurator()
-		configurator.setBaseDir('config')
-		self.assertEqual(configurator.getBaseDir(), 'config')
+		configurator.setBaseDir(CONFIG_DIR)
+		self.assertEqual(configurator.getBaseDir(), CONFIG_DIR)
 
 		configurator.readEarly()
 		opts = configurator.getEarlyOptions()
@@ -166,4 +171,4 @@ class JailsReaderTest(unittest.TestCase):
 		# otherwise just a code smoke test)
 		configurator._Configurator__jails.setBaseDir('/tmp')
 		self.assertEqual(configurator._Configurator__jails.getBaseDir(), '/tmp')
-		self.assertEqual(configurator.getBaseDir(), 'config')
+		self.assertEqual(configurator.getBaseDir(), CONFIG_DIR)
