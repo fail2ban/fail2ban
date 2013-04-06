@@ -48,10 +48,15 @@ class Regex:
 		# Perform shortcuts expansions.
 		# Replace "<HOST>" with default regular expression for host.
 		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>[\w\-.^_]+)")
+		# Replace "<SKIPLINES>" with regular expression for multiple lines.
+		regexSplit = regex.split("<SKIPLINES>")
+		regex = regexSplit[0]
+		for n, regexLine in enumerate(regexSplit[1:]):
+			regex += "\n(?P<skiplines%i>(?:(.*\n)*?))" % n + regexLine
 		if regex.lstrip() == '':
 			raise RegexException("Cannot add empty regex")
 		try:
-			self._regexObj = re.compile(regex)
+			self._regexObj = re.compile(regex, re.MULTILINE)
 			self._regex = regex
 		except sre_constants.error:
 			raise RegexException("Unable to compile regular expression '%s'" %
@@ -76,6 +81,19 @@ class Regex:
 	
 	def search(self, value):
 		self._matchCache = self._regexObj.search(value)
+		if self.hasMatched():
+			# Find start of the first line where the match was found
+			try:
+				self._matchLineStart = self._matchCache.string.rindex(
+					"\n", 0, self._matchCache.start() +1 ) + 1
+			except ValueError:
+				self._matchLineStart = 0
+			# Find end of the last line where the match was found
+			try:
+				self._matchLineEnd = self._matchCache.string.index(
+					"\n", self._matchCache.end() - 1) + 1
+			except ValueError:
+				self._matchLineEnd = len(self._matchCache.string)
 	
 	##
 	# Checks if the previous call to search() matched.
@@ -88,6 +106,54 @@ class Regex:
 		else:
 			return False
 
+	##
+	# Returns skipped lines.
+	#
+	# This returns skipped lines captured by the <SKIPLINES> tag.
+	# @return list of skipped lines
+	
+	def getSkippedLines(self):
+		if not self._matchCache:
+			return []
+		skippedLines = ""
+		n = 0
+		while True:
+			try:
+				skippedLines += self._matchCache.group("skiplines%i" % n)
+				n += 1
+			except IndexError:
+				break
+		return skippedLines.splitlines(True)
+
+	##
+	# Returns unmatched lines.
+	#
+	# This returns unmatched lines including captured by the <SKIPLINES> tag.
+	# @return list of unmatched lines
+	
+	def getUnmatchedLines(self):
+		if not self.hasMatched():
+			return []
+		unmatchedLines = (
+			self._matchCache.string[:self._matchLineStart].splitlines(True)
+			+ self.getSkippedLines()
+			+ self._matchCache.string[self._matchLineEnd:].splitlines(True))
+		return unmatchedLines
+
+	##
+	# Returns matched lines.
+	#
+	# This returns matched lines by excluding those captured
+	# by the <SKIPLINES> tag.
+	# @return list of matched lines
+	
+	def getMatchedLines(self):
+		if not self.hasMatched():
+			return []
+		matchedLines = self._matchCache.string[
+			self._matchLineStart:self._matchLineEnd].splitlines(True)
+		return [line for line in matchedLines
+			if line not in self.getSkippedLines()]
 
 ##
 # Exception dedicated to the class Regex.

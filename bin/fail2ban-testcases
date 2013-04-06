@@ -152,6 +152,7 @@ tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
 # ClientReaders
 tests.addTest(unittest.makeSuite(clientreadertestcase.ConfigReaderTest))
 tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
+tests.addTest(unittest.makeSuite(clientreadertestcase.FilterReaderTest))
 tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTest))
 # CSocket and AsyncServer
 tests.addTest(unittest.makeSuite(sockettestcase.Socket))

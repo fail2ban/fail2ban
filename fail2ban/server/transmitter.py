@@ -171,6 +171,10 @@ class Transmitter:
 			value = command[2]
 			self.__server.setMaxRetry(name, int(value))
 			return self.__server.getMaxRetry(name)
+		elif command[1] == "maxlines":
+			value = command[2]
+			self.__server.setMaxLines(name, int(value))
+			return self.__server.getMaxLines(name)
 		# command
 		elif command[1] == "bantime":
 			value = command[2]
@@ -250,6 +254,8 @@ class Transmitter:
 			return self.__server.getFindTime(name)
 		elif command[1] == "maxretry":
 			return self.__server.getMaxRetry(name)
+		elif command[1] == "maxlines":
+			return self.__server.getMaxLines(name)
 		# Action
 		elif command[1] == "bantime":
 			return self.__server.getBanTime(name)

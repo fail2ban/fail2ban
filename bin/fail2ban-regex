@@ -106,6 +106,7 @@ class Fail2banRegex:
 		print "    -h, --help              display this help message"
 		print "    -V, --version           print the version"
 		print "    -v, --verbose           verbose output"
+		print "    -l INT, --maxlines=INT  set maxlines for multi-line regex default: 1"
 		print
 		print "Log:"
 		print "    string                  a string representing a log line"
@@ -134,6 +135,14 @@ class Fail2banRegex:
 				sys.exit(0)
 			elif opt[0] in ["-v", "--verbose"]:
 				self.__verbose = True
+			elif opt[0] in ["-l", "--maxlines"]:
+				try:
+					self.__filter.setMaxLines(int(opt[1]))
+				except ValueError:
+					print "Invlaid value for maxlines: %s" % (
+                        opt[1])
+					fail2banRegex.dispUsage()
+					sys.exit(-1)
 
 	#@staticmethod
 	def logIsFile(value):
@@ -311,8 +320,8 @@ if __name__ == "__main__":
 	fail2banRegex = Fail2banRegex()
 	# Reads the command line options.
 	try:
-		cmdOpts = 'hVcv'
-		cmdLongOpts = ['help', 'version', 'verbose']
+		cmdOpts = 'hVcvl:'
+		cmdLongOpts = ['help', 'version', 'verbose', 'maxlines=']
 		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
 	except getopt.GetoptError:
 		fail2banRegex.dispUsage()
