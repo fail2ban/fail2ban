@@ -29,6 +29,7 @@ from fail2ban.client.filterreader import FilterReader
 from fail2ban.client.jailsreader import JailsReader
 from fail2ban.client.configurator import Configurator
 
+TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 if os.path.exists('config/fail2ban.conf'):
 	CONFIG_DIR='config'
 else:
@@ -140,7 +141,7 @@ class FilterReaderTest(unittest.TestCase):
 			['set', 'testcase01', 'addignoreregex', 
 			"^.+ john from host 192.168.1.1\\s*$"]]
 		filterReader = FilterReader("testcase01", "testcase01")
-		filterReader.setBaseDir("testcases/files/")
+		filterReader.setBaseDir(TEST_FILES_DIR)
 		filterReader.read()
 		#filterReader.getOptions(["failregex", "ignoreregex"])
 		filterReader.getOptions(None)
