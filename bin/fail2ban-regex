@@ -23,19 +23,12 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import getopt, sys, time, logging, os
-
-# Inserts our own modules path first in the list
-# fix for bug #343821
-try:
-	from common.version import version
-except ImportError, e:
-	sys.path.insert(1, "/usr/share/fail2ban")
-	from common.version import version
-
-from client.configparserinc import SafeConfigParserWithIncludes
 from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
-from server.filter import Filter
-from server.failregex import RegexException
+
+from fail2ban.version import version
+from fail2ban.client.configparserinc import SafeConfigParserWithIncludes
+from fail2ban.server.filter import Filter
+from fail2ban.server.failregex import RegexException
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.regex")

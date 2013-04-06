@@ -28,8 +28,9 @@ __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 import unittest, time, tempfile, os, threading
-from server.asyncserver import AsyncServer, AsyncServerException
-from client.csocket import CSocket
+
+from fail2ban.server.asyncserver import AsyncServer, AsyncServerException
+from fail2ban.client.csocket import CSocket
 
 class Socket(unittest.TestCase):
 

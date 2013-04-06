@@ -28,8 +28,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import unittest, socket, time, pickle
-from server.failmanager import FailManager, FailManagerEmpty
-from server.ticket import FailTicket
+
+from fail2ban.server.failmanager import FailManager, FailManagerEmpty
+from fail2ban.server.ticket import FailTicket
 
 class AddFailure(unittest.TestCase):
 

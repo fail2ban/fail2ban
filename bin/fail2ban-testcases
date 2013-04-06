@@ -27,18 +27,23 @@ __license__ = "GPL"
 
 import unittest, logging, sys, time, os
 
-from common.version import version
-from testcases import banmanagertestcase
-from testcases import clientreadertestcase
-from testcases import failmanagertestcase
-from testcases import filtertestcase
-from testcases import servertestcase
-from testcases import datedetectortestcase
-from testcases import actiontestcase
-from testcases import sockettestcase
+# Check if local fail2ban module exists, and use if it exists by 
+# modifying the path. This is such that tests can be used in dev
+# environment.
+if os.path.exists("fail2ban/__init__.py"):
+	sys.path.insert(0, ".")
+from fail2ban.version import version
+from fail2ban.tests import banmanagertestcase
+from fail2ban.tests import clientreadertestcase
+from fail2ban.tests import failmanagertestcase
+from fail2ban.tests import filtertestcase
+from fail2ban.tests import servertestcase
+from fail2ban.tests import datedetectortestcase
+from fail2ban.tests import actiontestcase
+from fail2ban.tests import sockettestcase
 
-from testcases.utils import FormatterWithTraceBack
-from server.mytime import MyTime
+from fail2ban.tests.utils import FormatterWithTraceBack
+from fail2ban.server.mytime import MyTime
 
 from optparse import OptionParser, Option
 
@@ -169,20 +174,20 @@ tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
 # Extensive use-tests of different available filters backends
 #
 
-from server.filterpoll import FilterPoll
+from fail2ban.server.filterpoll import FilterPoll
 filters = [FilterPoll]					  # always available
 
 # Additional filters available only if external modules are available
 # yoh: Since I do not know better way for parametric tests
 #      with good old unittest
 try:
-	from server.filtergamin import FilterGamin
+	from fail2ban.server.filtergamin import FilterGamin
 	filters.append(FilterGamin)
 except Exception, e: # pragma: no cover
 	print "I: Skipping gamin backend testing. Got exception '%s'" % e
 
 try:
-	from server.filterpyinotify import FilterPyinotify
+	from fail2ban.server.filterpyinotify import FilterPyinotify
 	filters.append(FilterPyinotify)
 except Exception, e: # pragma: no cover
 	print "I: Skipping pyinotify backend testing. Got exception '%s'" % e
