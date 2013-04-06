@@ -59,7 +59,8 @@ setup(
 					'fail2ban.tests',
 				],
 	package_data =	{
-						'fail2ban.tests': ['files/*.log'],
+						'fail2ban.tests':
+							['files/*.log', 'files/filter.d/*.conf'],
 					},
 	data_files =	[
 						('/etc/fail2ban',
