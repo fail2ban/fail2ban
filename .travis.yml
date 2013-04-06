@@ -9,9 +9,10 @@ before_install:
   - sudo apt-get update -qq
 install:
   - pip install pyinotify
-  - sudo apt-get install -qq python-gamin
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.[6-7] ]]; then pip install -q coveralls; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then sudo apt-get install -qq python-gamin; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then pip install -q coveralls; fi
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.[6-7] ]]; then coverage run --rcfile=.travis_coveragerc fail2ban-testcases; else python ./fail2ban-testcases; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then export PYTHONPATH="$PYTHONPATH:/usr/share/pyshared:/usr/lib/pyshared/python2.7"; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coverage run --rcfile=.travis_coveragerc fail2ban-testcases; else python ./fail2ban-testcases; fi
 after_script:
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.[6-7] ]]; then coveralls; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coveralls; fi
