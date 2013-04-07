@@ -151,7 +151,7 @@ class Actions(JailThread):
 				if not ret:
 				    self.__checkUnBan()
 				    nextUnbanTime = self.__banManager.getNextUnbanTime()
-				    timeout = max(nextUnbanTime - MyTime.time(), self.getSleepTime()) if nextUnbanTime else None
+				    timeout = max(nextUnbanTime - MyTime.time(), 1.0) if nextUnbanTime else None
 				    self.sleep(timeout)
 			else:
 				self.sleep()
