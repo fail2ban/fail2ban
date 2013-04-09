@@ -29,11 +29,13 @@ import sys
 import time
 import tempfile
 
-from server.jail import Jail
-from server.filterpoll import FilterPoll
-from server.filter import FileFilter, DNSUtils
-from server.failmanager import FailManager
-from server.failmanager import FailManagerEmpty
+from fail2ban.server.jail import Jail
+from fail2ban.server.filterpoll import FilterPoll
+from fail2ban.server.filter import FileFilter, DNSUtils
+from fail2ban.server.failmanager import FailManager
+from fail2ban.server.failmanager import FailManagerEmpty
+
+TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
 #
 # Useful helpers
@@ -182,7 +184,7 @@ class IgnoreIP(unittest.TestCase):
 
 class LogFile(unittest.TestCase):
 
-	FILENAME = "testcases/files/testcase01.log"
+	FILENAME = os.path.join(TEST_FILES_DIR, "testcase01.log")
 
 	def setUp(self):
 		"""Call before every test case."""
@@ -522,12 +524,12 @@ def get_monitor_failures_testcase(Filter_):
 
 class GetFailures(unittest.TestCase):
 
-	FILENAME_01 = "testcases/files/testcase01.log"
-	FILENAME_02 = "testcases/files/testcase02.log"
-	FILENAME_03 = "testcases/files/testcase03.log"
-	FILENAME_04 = "testcases/files/testcase04.log"
-	FILENAME_USEDNS = "testcases/files/testcase-usedns.log"
-	FILENAME_MULTILINE = "testcases/files/testcase-multiline.log"
+	FILENAME_01 = os.path.join(TEST_FILES_DIR, "testcase01.log")
+	FILENAME_02 = os.path.join(TEST_FILES_DIR, "testcase02.log")
+	FILENAME_03 = os.path.join(TEST_FILES_DIR, "testcase03.log")
+	FILENAME_04 = os.path.join(TEST_FILES_DIR, "testcase04.log")
+	FILENAME_USEDNS = os.path.join(TEST_FILES_DIR, "testcase-usedns.log")
+	FILENAME_MULTILINE = os.path.join(TEST_FILES_DIR, "testcase-multiline.log")
 
 	# so that they could be reused by other tests
 	FAILURES_01 = ('193.168.0.128', 3, 1124013599.0,
