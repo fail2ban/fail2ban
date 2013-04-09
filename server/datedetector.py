@@ -155,6 +155,12 @@ class DateDetector:
 			template.setRegex("^<\d{2}/\d{2}/\d{2}@\d{2}:\d{2}:\d{2}>")
 			template.setPattern("<%m/%d/%y@%H:%M:%S>")
 			self._appendTemplate(template)
+			# MySQL: 130322 11:46:11
+			template = DateStrptime()
+			template.setName("MonthDayYear Hour:Minute:Second")
+			template.setRegex("^\d{2}\d{2}\d{2} +\d{1,2}:\d{2}:\d{2}")
+			template.setPattern("%y%m%d %H:%M:%S")
+			self._appendTemplate(template)
 		finally:
 			self.__lock.release()
 	

@@ -4,4 +4,3 @@ branch = True
 omit =
     /usr/*
     /home/travis/virtualenv/*
-    server/filtergamin.py
