@@ -38,7 +38,7 @@ if not hasattr(pyinotify, '__version__') \
 from os.path import dirname, sep as pathsep
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.filter")
+logSys = logging.getLogger(__name__)
 
 ##
 # Log reader class.

@@ -33,7 +33,7 @@ from mytime import MyTime
 import iso8601
 
 import logging
-logSys = logging.getLogger("fail2ban.datetemplate")
+logSys = logging.getLogger(__name__)
 
 
 class DateTemplate:

@@ -32,7 +32,7 @@ import threading
 #from subprocess import call
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.actions.action")
+logSys = logging.getLogger(__name__)
 
 # Create a lock for running system commands
 _cmd_lock = threading.Lock()

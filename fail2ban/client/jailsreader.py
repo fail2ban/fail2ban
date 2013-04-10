@@ -32,7 +32,7 @@ from configreader import ConfigReader
 from jailreader import JailReader
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.client.config")
+logSys = logging.getLogger(__name__)
 
 class JailsReader(ConfigReader):
 	

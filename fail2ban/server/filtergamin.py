@@ -30,7 +30,7 @@ from mytime import MyTime
 import time, logging, gamin
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.filter")
+logSys = logging.getLogger(__name__)
 
 ##
 # Log reader class.

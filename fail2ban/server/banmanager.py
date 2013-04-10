@@ -33,7 +33,7 @@ from mytime import MyTime
 import logging
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.action")
+logSys = logging.getLogger(__name__)
 
 ##
 # Banning Manager.

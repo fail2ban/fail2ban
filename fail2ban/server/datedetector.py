@@ -33,7 +33,7 @@ from datetemplate import DateStrptime, DateTai64n, DateEpoch, DateISO8601
 from threading import Lock
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.filter.datedetector")
+logSys = logging.getLogger(__name__)
 
 class DateDetector:
 	
