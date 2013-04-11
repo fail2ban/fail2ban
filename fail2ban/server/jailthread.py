@@ -31,7 +31,7 @@ from threading import Thread
 import logging
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.server")
+logSys = logging.getLogger(__name__)
 
 class JailThread(Thread):
 	

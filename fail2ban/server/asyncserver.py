@@ -33,7 +33,7 @@ import asyncore, asynchat, socket, os, logging, sys, traceback
 from fail2ban import helpers
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.server")
+logSys = logging.getLogger(__name__)
 
 ##
 # Request handler class.

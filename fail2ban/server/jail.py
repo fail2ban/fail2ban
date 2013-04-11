@@ -28,7 +28,7 @@ import Queue, logging
 from actions import Actions
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.jail")
+logSys = logging.getLogger(__name__)
 
 class Jail:
 
