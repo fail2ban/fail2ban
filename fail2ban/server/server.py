@@ -36,7 +36,7 @@ from fail2ban import version
 import logging, logging.handlers, sys, os, signal
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.server")
+logSys = logging.getLogger(__name__)
 
 class Server:
 	
@@ -329,7 +329,7 @@ class Server:
 				logLevel = logging.WARNING
 			elif value == 3:
 				logLevel = logging.INFO
-			logging.getLogger("fail2ban").setLevel(logLevel)
+			logging.getLogger(__name__).parent.parent.setLevel(logLevel)
 		finally:
 			self.__loggingLock.release()
 	
@@ -378,9 +378,10 @@ class Server:
 					return False
 			# Removes previous handlers -- in reverse order since removeHandler
 			# alter the list in-place and that can confuses the iterable
-			for handler in logging.getLogger("fail2ban").handlers[::-1]:
+			logger = logging.getLogger(__name__).parent.parent
+			for handler in logger.handlers[::-1]:
 				# Remove the handler.
-				logging.getLogger("fail2ban").removeHandler(handler)
+				logger.removeHandler(handler)
 				# And try to close -- it might be closed already
 				try:
 					handler.flush()
@@ -392,7 +393,7 @@ class Server:
 					# with older Pythons -- seems to be safe to ignore there
 			# tell the handler to use this format
 			hdlr.setFormatter(formatter)
-			logging.getLogger("fail2ban").addHandler(hdlr)
+			logger.addHandler(hdlr)
 			# Does not display this message at startup.
 			if not self.__logTarget == None:
 				logSys.info("Changed logging target to %s for Fail2ban v%s" %

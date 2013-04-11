@@ -30,7 +30,7 @@ __license__ = "GPL"
 import logging, time
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.comm")
+logSys = logging.getLogger(__name__)
 
 class Transmitter:
 	

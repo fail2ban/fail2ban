@@ -31,7 +31,7 @@ import logging, os
 from ConfigParser import SafeConfigParser
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.client.config")
+logSys = logging.getLogger(__name__)
 
 class SafeConfigParserWithIncludes(SafeConfigParser):
 	"""

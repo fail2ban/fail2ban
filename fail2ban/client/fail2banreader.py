@@ -31,7 +31,7 @@ import logging
 from configreader import ConfigReader
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.client.config")
+logSys = logging.getLogger(__name__)
 
 class Fail2banReader(ConfigReader):
 	

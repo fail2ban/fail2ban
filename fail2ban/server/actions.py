@@ -34,7 +34,7 @@ from mytime import MyTime
 import time, logging
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.actions")
+logSys = logging.getLogger(__name__)
 
 ##
 # Execute commands.

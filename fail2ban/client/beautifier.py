@@ -26,7 +26,7 @@ import logging
 from fail2ban.exceptions import UnknownJailException, DuplicateJailException
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.client.config")
+logSys = logging.getLogger(__name__)
 
 ##
 # Beautify the output of the client.

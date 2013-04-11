@@ -32,7 +32,7 @@ from configparserinc import SafeConfigParserWithIncludes
 from ConfigParser import NoOptionError, NoSectionError
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.client.config")
+logSys = logging.getLogger(__name__)
 
 class ConfigReader(SafeConfigParserWithIncludes):
 

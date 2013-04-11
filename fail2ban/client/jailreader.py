@@ -34,7 +34,7 @@ from filterreader import FilterReader
 from actionreader import ActionReader
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.client.config")
+logSys = logging.getLogger(__name__)
 
 class JailReader(ConfigReader):
 	
