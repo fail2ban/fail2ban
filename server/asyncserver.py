@@ -29,7 +29,7 @@ __license__ = "GPL"
 
 from pickle import dumps, loads, HIGHEST_PROTOCOL
 from common import helpers
-import asyncore, asynchat, socket, os, logging, sys, traceback
+import asyncore, asynchat, socket, os, logging, sys, traceback, fcntl
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.server")
@@ -107,6 +107,7 @@ class AsyncServer(asyncore.dispatcher):
 		except TypeError:
 			logSys.warning("Type error")
 			return
+		AsyncServer.__markCloseOnExec(conn)
 		# Creates an instance of the handler class to handle the
 		# request/response on the incoming connection.
 		RequestHandler(conn, self.__transmitter)
@@ -134,6 +135,7 @@ class AsyncServer(asyncore.dispatcher):
 			self.bind(sock)
 		except Exception:
 			raise AsyncServerException("Unable to bind socket %s" % self.__sock)
+		AsyncServer.__markCloseOnExec(self.socket)
 		self.listen(1)
 		# Sets the init flag.
 		self.__init = True
@@ -159,6 +161,18 @@ class AsyncServer(asyncore.dispatcher):
 			os.remove(self.__sock)
 		logSys.debug("Socket shutdown")
 
+	##
+	# Marks socket as close-on-exec to avoid leaking file descriptors when
+	# running actions involving command execution.
+
+	# @param sock: socket file.
+	
+	#@staticmethod
+	def __markCloseOnExec(sock):
+		fd = sock.fileno()
+		flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+		fcntl.fcntl(fd, fcntl.F_SETFD, flags|fcntl.FD_CLOEXEC)
+	__markCloseOnExec = staticmethod(__markCloseOnExec)
 
 ##
 # AsyncServerException is used to wrap communication exceptions.

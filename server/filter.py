@@ -554,7 +554,8 @@ class FileContainer:
 		self.__handler = open(self.__filename)
 		# Set the file descriptor to be FD_CLOEXEC
 		fd = self.__handler.fileno()
-		fcntl.fcntl(fd, fcntl.F_SETFD, fd | fcntl.FD_CLOEXEC)
+		flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+		fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
 		firstLine = self.__handler.readline()
 		# Computes the MD5 of the first line.
 		myHash = md5sum(firstLine).digest()
