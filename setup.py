@@ -32,10 +32,11 @@ except ImportError:
 	# python 2.x
 	from distutils.command.build_py import build_py
 	from distutils.command.build_scripts import build_scripts
-from common.version import version
 from os.path import isfile, join, isdir
 import sys
 from glob import glob
+
+from fail2ban.version import version
 
 longdesc = '''
 Fail2Ban scans log files like /var/log/pwdfail or
@@ -47,7 +48,7 @@ commands.'''
 setup(
 	name = "fail2ban",
 	version = version,
-	description = "Ban IPs that make too many password failure",
+	description = "Ban IPs that make too many password failures",
 	long_description = longdesc,
 	author = "Cyril Jaquier",
 	author_email = "cyril.jaquier@fail2ban.org",
@@ -56,15 +57,21 @@ setup(
 	platforms = "Posix",
 	cmdclass = {'build_py': build_py, 'build_scripts': build_scripts},
 	scripts =	[
-					'fail2ban-client',
-					'fail2ban-server',
-					'fail2ban-regex'
+					'bin/fail2ban-client',
+					'bin/fail2ban-server',
+					'bin/fail2ban-regex',
+					'bin/fail2ban-testcases',
 				],
 	packages =	[
-					'common',
-					'client',
-					'server'
+					'fail2ban',
+					'fail2ban.client',
+					'fail2ban.server',
+					'fail2ban.tests',
 				],
+	package_data =	{
+						'fail2ban.tests':
+							['files/*.log', 'files/filter.d/*.conf'],
+					},
 	data_files =	[
 						('/etc/fail2ban',
 							glob("config/*.conf")

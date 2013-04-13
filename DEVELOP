@@ -24,9 +24,9 @@ Request feature. You can find more details on the Fail2Ban wiki
 Testing
 =======
 
-Existing tests can be run by executing `fail2ban-testcases`. This has options
-like --log-level that will probably be useful. `fail2ban-testcases --help` for
-full options.
+Existing tests can be run by executing `bin/fail2ban-testcases`. This has
+options like --log-level that will probably be useful.
+`bin/fail2ban-testcases --help` forfull options.
 
 Test cases should cover all usual cases, all exception cases and all inside
 / outside boundary conditions.
@@ -39,7 +39,7 @@ Install the package python-coverage to visualise your test coverage. Run the
 following (note: on Debian-based systems, the script is called
 `python-coverage`):
 
-coverage run fail2ban-testcases
+coverage run bin/fail2ban-testcases
 coverage html
 
 Then look at htmlcov/index.html and see how much coverage your test cases
@@ -249,7 +249,7 @@ Takes care about executing start/check/ban/unban/stop commands
 Releasing
 =========
 
-# Ensure the version is correct in ./common/version.py
+# Ensure the version is correct in ./fail2ban/version.py
 
 # Add/finalize the corresponding entry in the ChangeLog
 
@@ -271,7 +271,7 @@ Releasing
 
 # Run the following and update the wiki with output:
 
-  python -c 'import common.protocol; common.protocol.printWiki()'
+  python -c 'import fail2ban.protocol; fail2ban.protocol.printWiki()'
 
 # Email users and development list of release
 

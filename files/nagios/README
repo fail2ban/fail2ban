@@ -1,0 +1,104 @@
+Description
+-----------
+This plugin checks if the fail2ban server is running and how many IPs are currently banned.
+You can use this plugin to monitor all the jails or just a specific jail.
+
+
+How to use
+----------
+Just have to run the following command:
+    $ ./check_fail2ban --help
+ 
+If you need to use this script with NRPE you just have to do the 
+following steps:
+
+1 allow your user to run the script with the sudo rights. Just add
+  something like that in your /etc/sudoers (use visudo) :
+        nagios ALL=(ALL) NOPASSWD: /<path-to>/check_fail2ban
+
+2 then just add this kind of line in your NRPE config file :
+  command[check_fail2ban]=/usr/bin/sudo /<path-to>/check_fail2ban
+
+3 don't forget to restart your NRPE daemon
+   
+/!\ be careful to let no one able to update the check_fail2ban ;)
+------------------------------------------------------------------------------
+
+
+Notes (from f2ban.txt)
+-----
+It seems that Fail2ban is currently not working, please login and check
+
+HELP:
+
+1.) stop the Service
+/etc/init.d/fail2ban stop
+
+2.) delete the socket if available
+rm /tmp/fail2ban.sock
+
+3.) start the Service 
+/etc/init.d/fail2ban start
+
+4.) check if fail2ban is working
+fail2ban-client ping
+Answer should be "pong"
+
+5.) if the answer is not "pong" run away or  CRY FOR HELP ;-)
+
+
+Help
+----
+
+Usage: /<path-to>/check_fail2ban [-p] [-D "CHECK FAIL2BAN ACTIVITY"] [-v] [-c 2] [-w 1] [-s /<path-to>/socket] [-P /usr/bin/fail2ban-client]
+
+Options:
+ -h, --help
+    Print detailed help screen
+ -V, --version
+    Print version information
+ -D, --display=STRING
+    To modify the output display 
+    default is "CHECK FAIL2BAN ACTIVITY"
+ -P, --path-fail2ban_client=STRING
+    Specify the path to the tw_cli binary
+    default value is /usr/bin/fail2ban-client
+ -c, --critical=INT
+    Specify a critical threshold
+    default is 2
+ -w, --warning=INT
+    Specify a warning threshold
+    default is 1
+ -s, --socket=STRING
+    Specify a socket path
+    default is unset
+ -p, --perfdata
+    If you want to activate the perfdata output
+ -v, --verbose
+    Show details for command-line debugging (Nagios may truncate the output)
+
+
+Example
+-------
+
+# for a specific jail
+$ ./check_fail2ban --verbose -p -j ssh -w 1 -c 5 -P /usr/bin/fail2ban-client
+DEBUG : fail2ban_client_path: /usr/bin/fail2ban-client
+DEBUG : /usr/bin/fail2ban-client exists and is executable
+DEBUG : final fail2ban command: /usr/bin/fail2ban-client
+DEBUG : warning threshold : 1, critical threshold : 5
+DEBUG : it seems the connection with the fail2ban server is ok
+CHECK FAIL2BAN ACTIVITY - OK - 0 current banned IP(s) for the specific jail ssh | currentBannedIP=0
+
+# for all the current jails
+$ ./check_fail2ban --verbose -p -w 1 -c 5 -P /usr/bin/fail2ban-client
+DEBUG : fail2ban_client_path: /usr/bin/fail2ban-client
+DEBUG : /usr/bin/fail2ban-client exists and is executable
+DEBUG : final fail2ban command: /usr/bin/fail2ban-client
+DEBUG : warning threshold : 1, critical threshold : 5
+DEBUG : it seems the connection with the fail2ban server is ok
+DEBUG : jails list: apache, ssh-ddos, ssh
+DEBUG : the jail apache has currently 0 banned IPs
+DEBUG : the jail ssh-ddos has currently 0 banned IPs
+DEBUG : the jail ssh has currently 0 banned IPs
+CHECK FAIL2BAN ACTIVITY - OK - 3 detected jails with 0 current banned IP(s) | currentBannedIP=0
