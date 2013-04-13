@@ -94,22 +94,25 @@ def _assert_equal_entries(utest, found, output, count=None):
 		# do not check if custom count (e.g. going through them twice)
 		utest.assertEqual(repr(found[3]), repr(output[3]))
 
+def _ticket_tuple(ticket):
+	"""Create a tuple for easy comparison from fail ticket
+	"""
+	attempts = ticket.getAttempt()
+	date = ticket.getTime()
+	ip = ticket.getIP()
+	matches = ticket.getMatches()
+	return (ip, attempts, date, matches)
+
 def _assert_correct_last_attempt(utest, filter_, output, count=None):
 	"""Additional helper to wrap most common test case
 
 	Test filter to contain target ticket
 	"""
 	if isinstance(filter_, DummyJail):
-		ticket = filter_.getFailTicket()
+		found = _ticket_tuple(filter_.getFailTicket())
 	else:
 		# when we are testing without jails
-		ticket = filter_.failManager.toBan()
-
-	attempts = ticket.getAttempt()
-	date = ticket.getTime()
-	ip = ticket.getIP()
-	matches = ticket.getMatches()
-	found = (ip, attempts, date, matches)
+		found = _ticket_tuple(filter_.failManager.toBan())
 
 	_assert_equal_entries(utest, found, output, count)
 
@@ -642,10 +645,14 @@ class GetFailures(unittest.TestCase):
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)
 
-		_assert_correct_last_attempt(self, self.filter, output.pop())
-		_assert_correct_last_attempt(self, self.filter, output.pop())
-
-		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+		foundList = []
+		while True:
+			try:
+				foundList.append(
+					_ticket_tuple(self.filter.failManager.toBan())[0:3])
+			except FailManagerEmpty:
+				break
+		self.assertEqual(sorted(foundList), sorted(output))
 
 	def testGetFailuresMultiLineIgnoreRegex(self):
 		output = [("192.0.43.10", 2, 1124013599.0)]
@@ -673,11 +680,14 @@ class GetFailures(unittest.TestCase):
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)
 
-		_assert_correct_last_attempt(self, self.filter, output.pop())
-		_assert_correct_last_attempt(self, self.filter, output.pop())
-		_assert_correct_last_attempt(self, self.filter, output.pop())
-
-		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+		foundList = []
+		while True:
+			try:
+				foundList.append(
+					_ticket_tuple(self.filter.failManager.toBan())[0:3])
+			except FailManagerEmpty:
+				break
+		self.assertEqual(sorted(foundList), sorted(output))
 
 class DNSUtilsTests(unittest.TestCase):
 

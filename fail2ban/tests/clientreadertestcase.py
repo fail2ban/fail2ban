@@ -146,7 +146,9 @@ class FilterReaderTest(unittest.TestCase):
 		#filterReader.getOptions(["failregex", "ignoreregex"])
 		filterReader.getOptions(None)
 
-		self.assertEquals(filterReader.convert(), output)
+		# Add sort as configreader uses dictionary and therefore order
+		# is unreliable
+		self.assertEquals(sorted(filterReader.convert()), sorted(output))
 
 class JailsReaderTest(unittest.TestCase):
 
