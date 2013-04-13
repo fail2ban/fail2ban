@@ -5,13 +5,10 @@
 
 set -eu
 
-nonPyFiles="fail2ban-client fail2ban-server fail2ban-regex fail2ban-testcases"
-
-find . \
-    -name "*.py" \
-    -exec 2to3 -w --no-diffs $nonPyFiles {} + \
-    || (echo "Fail!" >&2 && exit 1)
-
-echo "Success!" >&2
-
-exit 0
+if 2to3 -w --no-diffs bin/* fail2ban;then
+  echo "Success!" >&2
+  exit 0
+else
+  echo "Fail!" >&2
+  exit 1
+fi
