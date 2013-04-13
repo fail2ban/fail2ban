@@ -6,3 +6,4 @@ htmlcov
 .coverage
 *.orig
 *.rej
+*.bak
