@@ -117,26 +117,25 @@ for directory in elements:
 			obsoleteFiles.append(path)
 
 if obsoleteFiles:
-	sys.stdout.write("\n")
-	sys.stdout.write("Obsolete files from previous Fail2Ban versions " \
-		  "were found on your system.\n")
-	sys.stdout.write("Please delete them:\n")
-	sys.stdout.write("\n")
+	print("")
+	print("Obsolete files from previous Fail2Ban versions were found on "
+		  "your system.")
+	print("Please delete them:")
+	print("")
 	for f in obsoleteFiles:
-		sys.stdout.write("\t" + f)
-	sys.stdout.write("\n")
+		print("\t" + f)
+	print("")
 
 if isdir("/usr/lib/fail2ban"):
-	sys.stdout.write("\n")
-	sys.stdout.write("Fail2ban is not installed under /usr/lib anymore. " \
-		  "The new location is under /usr/share. Please remove the " \
-		  "directory /usr/lib/fail2ban and everything under this directory.\n")
-	sys.stdout.write("\n")
+	print("")
+	print("Fail2ban is not installed under /usr/lib anymore. The new "
+		  "location is under /usr/share. Please remove the directory "
+		  "/usr/lib/fail2ban and everything under this directory.")
+	print("")
 
 # Update config file
 if sys.argv[1] == "install":
-	sys.stdout.write("\n")
-	sys.stdout.write("Please do not forget to update your configuration "
-          "files.\n")
-	sys.stdout.write("They are in /etc/fail2ban/.\n")
-	sys.stdout.write("\n")
+	print("")
+	print("Please do not forget to update your configuration files.")
+	print("They are in /etc/fail2ban/.")
+	print("")
