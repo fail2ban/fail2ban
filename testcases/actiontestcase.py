@@ -61,6 +61,23 @@ class ExecuteAction(unittest.TestCase):
 	def _is_logged(self, s):
 		return s in self._log.getvalue()
 
+	def testReplaceTag(self):
+		aInfo = {
+			'HOST': "192.0.2.0",
+			'ABC': "123",
+			'xyz': "890",
+		}
+		self.assertEqual(
+			self.__action.replaceTag("Text <HOST> text", aInfo),
+			"Text 192.0.2.0 text")
+		self.assertEqual(
+			self.__action.replaceTag("Text <xyz> text <ABC> ABC", aInfo),
+			"Text 890 text 123 ABC")
+		self.assertEqual(
+			self.__action.replaceTag("<matches>",
+				{'matches': "some >char< should \< be[ escap}ed&"}),
+			r"some \>char\< should \\\< be\[ escap\}ed\&")
+
 	def testExecuteActionBan(self):
 		self.__action.setActionStart("touch /tmp/fail2ban.test")
 		self.__action.setActionStop("rm -f /tmp/fail2ban.test")
