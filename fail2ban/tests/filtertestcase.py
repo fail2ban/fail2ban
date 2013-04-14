@@ -54,7 +54,7 @@ def open(*args):
 		# ~50kB buffer should be sufficient for all tests here.
 		args = args + (50000,)
 	if sys.version_info >= (3,):
-		return fopen(*args, encoding='utf-8', errors='ignore')
+		return fopen(*args, **{'encoding': 'utf-8', 'errors': 'ignore'})
 	else:
 		return fopen(*args)
 
