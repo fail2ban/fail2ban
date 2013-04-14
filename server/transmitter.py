@@ -123,7 +123,7 @@ class Transmitter:
 			elif command[2] == "off":
 				self.__server.setIdleJail(name, False)
 			else:
-				raise Exception("Invalid idle option, must be 'yes' or 'no'")
+				raise Exception("Invalid idle option, must be 'on' or 'off'")
 			return self.__server.getIdleJail(name)
 		# Filter
 		elif command[1] == "addignoreip":
