@@ -14,5 +14,5 @@ install:
 script:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then export PYTHONPATH="$PYTHONPATH:/usr/share/pyshared:/usr/lib/pyshared/python2.7"; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coverage run --rcfile=.travis_coveragerc fail2ban-testcases; else python ./fail2ban-testcases; fi
-after_script:
+after_success:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coveralls; fi
