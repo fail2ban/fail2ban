@@ -664,9 +664,13 @@ class DNSUtils:
 		"""
 		try:
 			return socket.gethostbyname_ex(dns)[2]
-		except socket.error:
+		except socket.gaierror:
 			logSys.warn("Unable to find a corresponding IP address for %s"
 						% dns)
+			return list()
+		except socket.error, e:
+			logSys.warn("Socket error raised trying to resolve hostname %s: %s"
+						% (dns, e))
 			return list()
 	dnsToIp = staticmethod(dnsToIp)
 
