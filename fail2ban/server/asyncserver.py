@@ -35,6 +35,13 @@ from fail2ban import helpers
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
 
+if sys.version_info >= (3,):
+	# b"" causes SyntaxError in python <= 2.5, so below implements equivalent
+	EMPTY_BYTES = bytes("", encoding="ascii")
+else:
+	# python 2.x, string type is equivalent to bytes.
+	EMPTY_BYTES = ""
+
 ##
 # Request handler class.
 #
@@ -66,10 +73,7 @@ class RequestHandler(asynchat.async_chat):
 
 	def found_terminator(self):
 		# Joins the buffer items.
-		if sys.version_info >= (3,):
-			message = loads(bytes("", encoding="ascii").join(self.__buffer))
-		else:
-			message = loads("".join(self.__buffer))
+		message = loads(EMPTY_BYTES.join(self.__buffer))
 		# Gives the message to the transmitter.
 		message = self.__transmitter.proceed(message)
 		# Serializes the response.

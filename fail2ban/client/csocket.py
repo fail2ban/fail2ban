@@ -31,6 +31,13 @@ __license__ = "GPL"
 from pickle import dumps, loads, HIGHEST_PROTOCOL
 import socket, sys
 
+if sys.version_info >= (3,):
+	# b"" causes SyntaxError in python <= 2.5, so below implements equivalent
+	EMPTY_BYTES = bytes("", encoding="ascii")
+else:
+	# python 2.x, string type is equivalent to bytes.
+	EMPTY_BYTES = ""
+
 class CSocket:
 	
 	if sys.version_info >= (3,):
@@ -55,10 +62,7 @@ class CSocket:
 	
 	#@staticmethod
 	def receive(sock):
-		if sys.version_info >= (3,):
-			msg = bytes("", encoding='ascii')
-		else:
-			msg = ''
+		msg = EMPTY_BYTES
 		while msg.rfind(CSocket.END_STRING) == -1:
 			chunk = sock.recv(6)
 			if chunk == '':
