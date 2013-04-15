@@ -136,7 +136,13 @@ class Fail2banRegex:
 			elif opt[0] in ["-v", "--verbose"]:
 				self.__verbose = True
 			elif opt[0] in ["-l", "--maxlines"]:
-				self.__filter.setMaxLines(opt[1])
+				try:
+					self.__filter.setMaxLines(int(opt[1]))
+				except ValueError:
+					print "Invlaid value for maxlines: %s" % (
+                        opt[1])
+					fail2banRegex.dispUsage()
+					sys.exit(-1)
 
 	#@staticmethod
 	def logIsFile(value):
