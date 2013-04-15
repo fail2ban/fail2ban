@@ -1,3 +1,4 @@
 #authentification failure (mod_auth)
 2011-12-25 17:09:20: (http_auth.c.875) password doesn't match for /gitweb/ username: francois, IP: 4.4.4.4
 2012-09-26 10:24:35: (http_auth.c.1136) digest: auth failed for  xxx : wrong password, IP: 4.4.4.4
+2013-03-18 10:26:11: (http_auth.c.867) get_password failed, IP: 4.4.4.4
