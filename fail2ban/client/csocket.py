@@ -29,11 +29,21 @@ __license__ = "GPL"
 
 #from cPickle import dumps, loads, HIGHEST_PROTOCOL
 from pickle import dumps, loads, HIGHEST_PROTOCOL
-import socket
+import socket, sys
+
+if sys.version_info >= (3,):
+	# b"" causes SyntaxError in python <= 2.5, so below implements equivalent
+	EMPTY_BYTES = bytes("", encoding="ascii")
+else:
+	# python 2.x, string type is equivalent to bytes.
+	EMPTY_BYTES = ""
 
 class CSocket:
 	
-	END_STRING = "<F2B_END_COMMAND>"
+	if sys.version_info >= (3,):
+		END_STRING = bytes("<F2B_END_COMMAND>", encoding='ascii')
+	else:
+		END_STRING = "<F2B_END_COMMAND>"
 	
 	def __init__(self, sock = "/var/run/fail2ban/fail2ban.sock"):
 		# Create an INET, STREAMing socket
@@ -52,7 +62,7 @@ class CSocket:
 	
 	#@staticmethod
 	def receive(sock):
-		msg = ''
+		msg = EMPTY_BYTES
 		while msg.rfind(CSocket.END_STRING) == -1:
 			chunk = sock.recv(6)
 			if chunk == '':

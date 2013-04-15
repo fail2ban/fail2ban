@@ -53,7 +53,10 @@ def open(*args):
 	if len(args) == 2:
 		# ~50kB buffer should be sufficient for all tests here.
 		args = args + (50000,)
-	return fopen(*args)
+	if sys.version_info >= (3,):
+		return fopen(*args, **{'encoding': 'utf-8', 'errors': 'ignore'})
+	else:
+		return fopen(*args)
 
 def _killfile(f, name):
 	try:
@@ -97,22 +100,25 @@ def _assert_equal_entries(utest, found, output, count=None):
 		# do not check if custom count (e.g. going through them twice)
 		utest.assertEqual(repr(found[3]), repr(output[3]))
 
+def _ticket_tuple(ticket):
+	"""Create a tuple for easy comparison from fail ticket
+	"""
+	attempts = ticket.getAttempt()
+	date = ticket.getTime()
+	ip = ticket.getIP()
+	matches = ticket.getMatches()
+	return (ip, attempts, date, matches)
+
 def _assert_correct_last_attempt(utest, filter_, output, count=None):
 	"""Additional helper to wrap most common test case
 
 	Test filter to contain target ticket
 	"""
 	if isinstance(filter_, DummyJail):
-		ticket = filter_.getFailTicket()
+		found = _ticket_tuple(filter_.getFailTicket())
 	else:
 		# when we are testing without jails
-		ticket = filter_.failManager.toBan()
-
-	attempts = ticket.getAttempt()
-	date = ticket.getTime()
-	ip = ticket.getIP()
-	matches = ticket.getMatches()
-	found = (ip, attempts, date, matches)
+		found = _ticket_tuple(filter_.failManager.toBan())
 
 	_assert_equal_entries(utest, found, output, count)
 
@@ -437,7 +443,7 @@ def get_monitor_failures_testcase(Filter_):
 			#return
 			# just for fun let's copy all of them again and see if that results
 			# in a new ban
- 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 
 		def test_rewrite_file(self):
@@ -533,7 +539,7 @@ class GetFailures(unittest.TestCase):
 
 	# so that they could be reused by other tests
 	FAILURES_01 = ('193.168.0.128', 3, 1124013599.0,
-				  ['Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128\n']*3)
+				  [u'Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128\n']*3)
 
 	def setUp(self):
 		"""Call before every test case."""
@@ -557,7 +563,7 @@ class GetFailures(unittest.TestCase):
 
 	def testGetFailures02(self):
 		output = ('141.3.81.106', 4, 1124013539.0,
-				  ['Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n'
+				  [u'Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n'
 				   % m for m in 53, 54, 57, 58])
 
 		self.filter.addLogPath(GetFailures.FILENAME_02)
@@ -590,11 +596,11 @@ class GetFailures(unittest.TestCase):
 	def testGetFailuresUseDNS(self):
 		# We should still catch failures with usedns = no ;-)
 		output_yes = ('192.0.43.10', 2, 1124013539.0,
-					  ['Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2\n',
-					   'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:192.0.43.10 port 51332 ssh2\n'])
+					  [u'Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2\n',
+					   u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:192.0.43.10 port 51332 ssh2\n'])
 
 		output_no = ('192.0.43.10', 1, 1124013539.0,
-					  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:192.0.43.10 port 51332 ssh2\n'])
+					  [u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:192.0.43.10 port 51332 ssh2\n'])
 
 		# Actually no exception would be raised -- it will be just set to 'no'
 		#self.assertRaises(ValueError,
@@ -645,10 +651,14 @@ class GetFailures(unittest.TestCase):
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)
 
-		_assert_correct_last_attempt(self, self.filter, output.pop())
-		_assert_correct_last_attempt(self, self.filter, output.pop())
-
-		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+		foundList = []
+		while True:
+			try:
+				foundList.append(
+					_ticket_tuple(self.filter.failManager.toBan())[0:3])
+			except FailManagerEmpty:
+				break
+		self.assertEqual(sorted(foundList), sorted(output))
 
 	def testGetFailuresMultiLineIgnoreRegex(self):
 		output = [("192.0.43.10", 2, 1124013599.0)]
@@ -676,11 +686,14 @@ class GetFailures(unittest.TestCase):
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)
 
-		_assert_correct_last_attempt(self, self.filter, output.pop())
-		_assert_correct_last_attempt(self, self.filter, output.pop())
-		_assert_correct_last_attempt(self, self.filter, output.pop())
-
-		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+		foundList = []
+		while True:
+			try:
+				foundList.append(
+					_ticket_tuple(self.filter.failManager.toBan())[0:3])
+			except FailManagerEmpty:
+				break
+		self.assertEqual(sorted(foundList), sorted(output))
 
 class DNSUtilsTests(unittest.TestCase):
 

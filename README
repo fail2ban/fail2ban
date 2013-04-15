@@ -19,7 +19,7 @@ Installation:
 -------------
 
 Required:
-   >=python-2.3 (http://www.python.org)
+   >=python-2.3 or >=python-3.0 (http://www.python.org)
 
 Optional:
    pyinotify:

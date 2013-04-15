@@ -27,7 +27,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, socket, time, tempfile, os
+import unittest, socket, time, tempfile, os, locale
 
 from fail2ban.server.server import Server
 from fail2ban.exceptions import UnknownJailException
@@ -270,6 +270,13 @@ class Transmitter(TransmitterBase):
 		self.setGetTest("maxretry", "2", 2, jail=self.jailName)
 		self.setGetTest("maxretry", "-2", -2, jail=self.jailName)
 		self.setGetTestNOK("maxretry", "Duck", jail=self.jailName)
+
+	def testJailLogEncoding(self):
+		self.setGetTest("logencoding", "UTF-8", jail=self.jailName)
+		self.setGetTest("logencoding", "ascii", jail=self.jailName)
+		self.setGetTest("logencoding", "auto", locale.getpreferredencoding(),
+			jail=self.jailName)
+		self.setGetTestNOK("logencoding", "Monkey", jail=self.jailName)
 
 	def testJailLogPath(self):
 		self.jailAddDelTest(

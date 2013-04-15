@@ -110,6 +110,9 @@ class Beautifier:
 					for path in response[:-1]:
 						msg = msg + "|- " + path + "\n"
 					msg = msg + "`- " + response[len(response)-1]
+			elif inC[2] == "logencoding":
+				msg = "Current log encoding is set to:\n"
+				msg = msg + response
 			elif inC[2] in ("ignoreip", "addignoreip", "delignoreip"):
 				if len(response) == 0:
 					msg = "No IP address/network is ignored"

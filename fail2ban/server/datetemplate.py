@@ -166,10 +166,10 @@ class DateStrptime(DateTemplate):
 				# Bug fix for #1241756
 				# If the date is greater than the current time, we suppose
 				# that the log is not from this year but from the year before
-				if time.mktime(date) > MyTime.time():
+				if time.mktime(tuple(date)) > MyTime.time():
 					logSys.debug(
 						u"Correcting deduced year from %d to %d since %f > %f" %
-						(date[0], date[0]-1, time.mktime(date), MyTime.time()))
+						(date[0], date[0]-1, time.mktime(tuple(date)), MyTime.time()))
 					# NOTE: Possibly makes week/year day incorrect
 					date[0] -= 1
 				elif date[1] == 1 and date[2] == 1:
