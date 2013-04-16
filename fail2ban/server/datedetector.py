@@ -161,6 +161,12 @@ class DateDetector:
 			template.setRegex("^\d{2}\d{2}\d{2} +\d{1,2}:\d{2}:\d{2}")
 			template.setPattern("%y%m%d %H:%M:%S")
 			self._appendTemplate(template)
+			# Apache Tomcat
+			template = DateStrptime()
+			template.setName("MONTH Day, Year 12hour:Minute:Second AM/PM")
+			template.setRegex("\S{3}\s{1,2}\d{1,2}, \d{4} \d{1,2}:\d{2}:\d{2} [AP]M")
+			template.setPattern("%b %d, %Y %I:%M:%S %p")
+			self._appendTemplate(template)
 		finally:
 			self.__lock.release()
 	
