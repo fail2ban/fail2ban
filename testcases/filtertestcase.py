@@ -573,6 +573,7 @@ class GetFailures(unittest.TestCase):
 	FILENAME_02 = "testcases/files/testcase02.log"
 	FILENAME_03 = "testcases/files/testcase03.log"
 	FILENAME_04 = "testcases/files/testcase04.log"
+	FILENAME_05 = "testcases/files/testcase05.log"
 	FILENAME_USEDNS = "testcases/files/testcase-usedns.log"
 
 	# so that they could be reused by other tests
@@ -599,6 +600,10 @@ class GetFailures(unittest.TestCase):
 				  "2005/08/14 11:58:00 [sshd] Invalid user fuck from 212.41.96.186\n",
 				  "2005/08/14 11:59:00 [sshd] Invalid user toto from 212.41.96.186\n",
 				  "2005/08/14 12:00:00 [sshd] Invalid user fuck from 212.41.96.186\n"]
+	# TODO times wrong here:
+	FILENAME_05_OUTPUT = [('2601:3c03::f03c:91ff:fe93:a7eb', 5, 1124013539.0, open(FILENAME_05).readlines()[0:5], 64),
+						 [('2602:3c03::003c:91ff:fe93:a722', 2, 1124013539.0, open(FILENAME_05).readlines()[5:9], 64),
+						 [('2602:3c03::3412:31ec:33cd:cd11', 1, 1124013539.0, open(FILENAME_05).readlines()[9:10], 64),
 
 	def setUp(self):
 		"""Call before every test case."""
@@ -699,6 +704,13 @@ class GetFailures(unittest.TestCase):
 			filter_.addFailRegex("Failed .* from <HOST>")
 			filter_.getFailures(GetFailures.FILENAME_USEDNS)
 			_assert_correct_last_attempt(self, filter_, output, 128)
+
+	# TODO currenty broken, A) application code isn't right B) _OUTPUT isn't right.
+	def testIPv6(self):
+		self.filter.addLogPath(GetFailures.FILENAME_05)
+		self.filter.addFailRegex("Invalid user [^ ]* from <HOST>")
+		self.filter.getFailures(GetFailures.FILENAME_05)
+		_assert_correct_last_attempt(self, self.filter, GetFailures.FILENAME_05_OUTPUT, 64)
 
 	def testClosedContainer(self):
 		self.filter.addLogPath(GetFailures.FILENAME_04)
