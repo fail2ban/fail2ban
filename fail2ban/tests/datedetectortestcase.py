@@ -86,6 +86,7 @@ class DateDetectorTest(unittest.TestCase):
 			"2005-01-23T21:59:59-05:00Z", #ISO 8601 with TZ
 			"<01/23/05@21:59:59>",
 			"050123 21:59:59", # MySQL
+			"Jan 23, 2005 9:59:59 PM", # Apache Tomcat
 			):
 			log = sdate + "[sshd] error: PAM: Authentication failure"
 			# exclude
