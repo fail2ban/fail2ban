@@ -1,0 +1,6 @@
+apr 15, 2013 8:34:08 PM org.slf4j.impl.JCLLoggerAdapter warn
+WARNING: Authentication attempt from 192.0.2.0 for user "null" failed.
+apr 16, 2013 8:32:13 AM org.slf4j.impl.JCLLoggerAdapter warn
+WARNING: Authentication attempt from 192.0.2.0 for user "null" failed.
+apr 16, 2013 8:32:28 AM org.slf4j.impl.JCLLoggerAdapter warn
+WARNING: Authentication attempt from 192.0.2.0 for user "pippo" failed.
