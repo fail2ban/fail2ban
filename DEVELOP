@@ -269,6 +269,10 @@ Releasing
 
   git shortlog -sn 0.8.8.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
 
+  Ensure the top of the ChangeLog has the right version and current date.
+
+  Ensure the top entry of the ChangeLog has the right version and current date.
+
 # Update man pages
 
   (cd man ; ./generate-man )
