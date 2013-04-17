@@ -271,6 +271,12 @@ class Transmitter(TransmitterBase):
 		self.setGetTest("maxretry", "-2", -2, jail=self.jailName)
 		self.setGetTestNOK("maxretry", "Duck", jail=self.jailName)
 
+	def testJailMaxLines(self):
+		self.setGetTest("maxlines", "5", 5, jail=self.jailName)
+		self.setGetTest("maxlines", "2", 2, jail=self.jailName)
+		self.setGetTestNOK("maxlines", "-2", jail=self.jailName)
+		self.setGetTestNOK("maxlines", "Duck", jail=self.jailName)
+
 	def testJailLogPath(self):
 		self.jailAddDelTest(
 			"logpath",

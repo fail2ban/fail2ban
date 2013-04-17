@@ -218,8 +218,10 @@ class Filter(JailThread):
 	# @param value the line buffer size
 
 	def setMaxLines(self, value):
-		self.__lineBufferSize = max(1, value)
-		logSys.info("Set maxLines = %i" % self.__lineBufferSize)
+		if int(value) <= 0:
+			raise ValueError("maxlines must be integer greater than zero")
+		self.__lineBufferSize = int(value)
+		logSys.info("Set maxlines = %i" % self.__lineBufferSize)
 
 	##
 	# Get the maximum line buffer size.
