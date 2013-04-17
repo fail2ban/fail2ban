@@ -13,13 +13,13 @@ rules can be defined by the user. Fail2Ban can read multiple log files such as
 sshd or Apache web server ones.
 
 This README is a quick introduction to Fail2ban. More documentation, FAQ, HOWTOs
-are available on the project website: http://www.fail2ban.org
+are available in fail2ban(1) manpage and on the website http://www.fail2ban.org
 
 Installation:
 -------------
 
 Required:
-   >=python-2.3 (http://www.python.org)
+   >=python-2.4 (http://www.python.org)
 
 Optional:
    pyinotify:
@@ -38,42 +38,43 @@ To install, just do:
 This will install Fail2Ban into /usr/share/fail2ban. The executable scripts are
 placed into /usr/bin.
 
-It is possible that Fail2ban is already packaged for your distribution. In this
-case, you should use it.
+It is possible that Fail2ban is already packaged for your distribution.  In
+this case, you should use it.
 
 Fail2Ban should be correctly installed now. Just type:
 
 > fail2ban-client -h
 
-to see if everything is alright. You should always use fail2ban-client and never
-call fail2ban-server directly.
+to see if everything is alright. You should always use fail2ban-client and
+never call fail2ban-server directly.
 
 Configuration:
 --------------
 
-You can configure Fail2Ban using the files in /etc/fail2ban. It is
-possible to configure the server using commands sent to it by
-fail2ban-client. The available commands are described in the
-fail2ban-client(1) manpage.  Also see fail2ban(1) manpage for further
-references and find even more documentation on the website:
-http://www.fail2ban.org
+You can configure Fail2Ban using the files in /etc/fail2ban. It is possible to
+configure the server using commands sent to it by fail2ban-client. The
+available commands are described in the fail2ban-client(1) manpage.  Also see
+fail2ban(1) manpage for further references and find even more documentation on
+the website: http://www.fail2ban.org
 
 Contact:
 --------
 
 Website: http://www.fail2ban.org
 
-You need some new features, you found bugs: visit
-https://github.com/fail2ban/fail2ban/issues
+You need some new features, you found bugs?
+visit https://github.com/fail2ban/fail2ban/issues
 and if your issue is not yet known -- file a bug report.
 
-If you would like to troubleshoot or discuss: join the mailing list
+You would like to troubleshoot or discuss?
+join the mailing list
 https://lists.sourceforge.net/lists/listinfo/fail2ban-users
 
-If you just appreciate this program: send kudos to the original author
-(Cyril Jaquier: <cyril.jaquier@fail2ban.org>) or the mailing list
+You just appreciate this program:
+send kudos to the original author (Cyril Jaquier <cyril.jaquier@fail2ban.org>)
+or better to the mailing list
 https://lists.sourceforge.net/lists/listinfo/fail2ban-users
-
+since Fail2Ban is "community-driven" for years now.
 
 Thanks:
 -------
