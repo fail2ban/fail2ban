@@ -28,6 +28,7 @@ When submitting pull requests on GitHub we ask you to:
 * Clearly describe the problem you're solving;
 * Don't introduce regressions that will make it hard for systems adminstrators 
   to update;
+* If adding a major feature rebase your changes on master and get to a single commit;
 * Include test cases (see below);
 * Include sample logs (if relevant);
 * Include a change to the relevant section of the ChangeLog; and
