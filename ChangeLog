@@ -66,13 +66,14 @@ Nicolas Collignon, Pascal Borreli, blotus:
 	ArndRaphael Brandes
 	* [bba3fd8] Add Sogo filter. Closes gh-117
   Yaroslav Halchenko
-	* [MANY] Lots of improvements to log messages and test cases.
+	* [MANY] Lots of improvements to log messages, man pages and test cases.
 	* [91d5736] Postfix filter improvements - empty helo, from and rcpt to.
 	  Closes gh-126. Bug report by Michael Heuberger.
 	* [40c5a2d] adding more of diagnostic messages into -client while starting
 	  the daemon.
 	Daniel Black
 	* [3aeb1a9] Add jail.conf manual page. close gh-143.
+	* [MANY] man page edits.
 	* [7cd6dab] Added help command to fail2ban-client. close gh-134.
 	* [c8c7b0b,23bbc60] Better logging of log file read errors. close gh-134.
 	* [3665e6d] Added code coverage to development process.
