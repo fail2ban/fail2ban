@@ -5,6 +5,7 @@ THANKS
 COPYING
 DEVELOP
 doc/run-rootless.txt
+fail2ban-2to3
 bin/fail2ban-client
 bin/fail2ban-server
 bin/fail2ban-testcases

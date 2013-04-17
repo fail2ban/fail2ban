@@ -23,6 +23,15 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from distutils.core import setup
+try:
+	# python 3.x
+	from distutils.command.build_py import build_py_2to3 as build_py
+	from distutils.command.build_scripts \
+		import build_scripts_2to3 as build_scripts
+except ImportError:
+	# python 2.x
+	from distutils.command.build_py import build_py
+	from distutils.command.build_scripts import build_scripts
 from os.path import isfile, join, isdir
 import sys
 from glob import glob
@@ -46,6 +55,7 @@ setup(
 	url = "http://www.fail2ban.org",
 	license = "GPL",
 	platforms = "Posix",
+	cmdclass = {'build_py': build_py, 'build_scripts': build_scripts},
 	scripts =	[
 					'bin/fail2ban-client',
 					'bin/fail2ban-server',
@@ -107,25 +117,25 @@ for directory in elements:
 			obsoleteFiles.append(path)
 
 if obsoleteFiles:
-	print
-	print "Obsolete files from previous Fail2Ban versions were found on " \
-		  "your system."
-	print "Please delete them:"
-	print
+	print("")
+	print("Obsolete files from previous Fail2Ban versions were found on "
+		  "your system.")
+	print("Please delete them:")
+	print("")
 	for f in obsoleteFiles:
-		print "\t" + f
-	print
+		print("\t" + f)
+	print("")
 
 if isdir("/usr/lib/fail2ban"):
-	print
-	print "Fail2ban is not installed under /usr/lib anymore. The new " \
-		  "location is under /usr/share. Please remove the directory " \
-		  "/usr/lib/fail2ban and everything under this directory."
-	print
+	print("")
+	print("Fail2ban is not installed under /usr/lib anymore. The new "
+		  "location is under /usr/share. Please remove the directory "
+		  "/usr/lib/fail2ban and everything under this directory.")
+	print("")
 
 # Update config file
 if sys.argv[1] == "install":
-	print
-	print "Please do not forget to update your configuration files."
-	print "They are in /etc/fail2ban/."
-	print
+	print("")
+	print("Please do not forget to update your configuration files.")
+	print("They are in /etc/fail2ban/.")
+	print("")

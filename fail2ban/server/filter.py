@@ -35,7 +35,7 @@ from datedetector import DateDetector
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
 
-import logging, re, os, fcntl, time
+import logging, re, os, fcntl, time, sys, locale, codecs
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -316,12 +316,7 @@ class Filter(JailThread):
 	def processLine(self, line):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
-		try:
-			# Decode line to UTF-8
-			l = line.decode('utf-8')
-		except UnicodeDecodeError:
-			l = line
-		timeMatch = self.dateDetector.matchTime(l)
+		timeMatch = self.dateDetector.matchTime(line)
 		if timeMatch:
 			# Lets split into time part and log part of the line
 			timeLine = timeMatch.group()
@@ -329,10 +324,10 @@ class Filter(JailThread):
 			# Lets leave the beginning in as well, so if there is no
 			# anchore at the beginning of the time regexp, we don't
 			# at least allow injection. Should be harmless otherwise
-			logLine  = l[:timeMatch.start()] + l[timeMatch.end():]
+			logLine  = line[:timeMatch.start()] + line[timeMatch.end():]
 		else:
-			timeLine = self.__lastTimeLine or l
-			logLine = l
+			timeLine = self.__lastTimeLine or line
+			logLine = line
 		self.__lineBuffer = ((self.__lineBuffer +
 				[logLine])[-self.__lineBufferSize:])
 		return self.findFailure(timeLine, "".join(self.__lineBuffer))
@@ -429,6 +424,7 @@ class FileFilter(Filter):
 		Filter.__init__(self, jail, **kwargs)
 		## The log file path.
 		self.__logPath = []
+		self.setLogEncoding("auto")
 
 	##
 	# Add a log file path
@@ -439,7 +435,7 @@ class FileFilter(Filter):
 		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
 		else:
-			container = FileContainer(path, tail)
+			container = FileContainer(path, self.getLogEncoding(), tail)
 			self.__logPath.append(container)
 			logSys.info("Added logfile = %s" % path)
 			self._addLogPath(path)			# backend specific
@@ -488,6 +484,28 @@ class FileFilter(Filter):
 				return True
 		return False
 
+	##
+	# Set the log file encoding
+	#
+	# @param encoding the encoding used with log files
+
+	def setLogEncoding(self, encoding):
+		if encoding.lower() == "auto":
+			encoding = locale.getpreferredencoding()
+		codecs.lookup(encoding) # Raise LookupError if invalid codec
+		for log in self.getLogPath():
+			log.setEncoding(encoding)
+		self.__encoding = encoding
+		logSys.info("Set jail log file encoding to %s" % encoding)
+
+	##
+	# Get the log file encoding
+	#
+	# @return log encoding value
+
+	def getLogEncoding(self):
+		return self.__encoding
+
 	def getFileContainer(self, path):
 		for log in self.__logPath:
 			if log.getFileName() == path:
@@ -525,7 +543,7 @@ class FileFilter(Filter):
 
 		while True:
 			line = container.readline()
-			if (line == "") or not self._isActive():
+			if not line or not self._isActive():
 				# The jail reached the bottom or has been stopped
 				break
 			self.processLineAndAdd(line)
@@ -556,12 +574,13 @@ except ImportError: # pragma: no cover
 
 class FileContainer:
 
-	def __init__(self, filename, tail = False):
+	def __init__(self, filename, encoding, tail = False):
 		self.__filename = filename
+		self.setEncoding(encoding)
 		self.__tail = tail
 		self.__handler = None
 		# Try to open the file. Raises an exception if an error occured.
-		handler = open(filename)
+		handler = open(filename, 'rb')
 		stats = os.fstat(handler.fileno())
 		self.__ino = stats.st_ino
 		try:
@@ -580,8 +599,15 @@ class FileContainer:
 	def getFileName(self):
 		return self.__filename
 
+	def setEncoding(self, encoding):
+		codecs.lookup(encoding) # Raises LookupError if invalid
+		self.__encoding = encoding
+
+	def getEncoding(self):
+		return self.__encoding
+
 	def open(self):
-		self.__handler = open(self.__filename)
+		self.__handler = open(self.__filename, 'rb')
 		# Set the file descriptor to be FD_CLOEXEC
 		fd = self.__handler.fileno()
 		fcntl.fcntl(fd, fcntl.F_SETFD, fd | fcntl.FD_CLOEXEC)
@@ -601,7 +627,15 @@ class FileContainer:
 	def readline(self):
 		if self.__handler == None:
 			return ""
-		return self.__handler.readline()
+		line = self.__handler.readline()
+		try:
+			line = line.decode(self.getEncoding(), 'strict')
+		except UnicodeDecodeError:
+			logSys.warn("Error decoding line from '%s' with '%s': %s" %
+				(self.getFileName(), self.getEncoding(), `line`))
+			if sys.version_info >= (3,): # In python3, must be decoded
+				line = line.decode(self.getEncoding(), 'ignore')
+		return line
 
 	def close(self):
 		if not self.__handler == None:
@@ -635,6 +669,10 @@ class DNSUtils:
 		except socket.gaierror:
 			logSys.warn("Unable to find a corresponding IP address for %s"
 						% dns)
+			return list()
+		except socket.error, e:
+			logSys.warn("Socket error raised trying to resolve hostname %s: %s"
+						% (dns, e))
 			return list()
 	dnsToIp = staticmethod(dnsToIp)
 
