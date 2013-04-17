@@ -21,6 +21,18 @@ would like to add to Fail2Ban, the best way to do so it to use the GitHub Pull
 Request feature. You can find more details on the Fail2Ban wiki
 (http://www.fail2ban.org/wiki/index.php/Get_Involved)
 
+Pull Requests
+=============
+
+When submitting pull requests on GitHub we ask you to:
+* Clearly describe the problem you're solving;
+* Don't introduce regressions that will make it hard for systems adminstrators 
+  to update;
+* Include test cases (see below);
+* Include sample logs (if relevant);
+* Include a change to the relevant section of the ChangeLog; and
+* Include yourself in THANKS if not already there.
+
 Testing
 =======
 
