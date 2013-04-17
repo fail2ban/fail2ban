@@ -1,12 +1,14 @@
 [Unit]
 Description=Fail2ban Service
+After=syslog.target network.target
 
 [Service]
 Type=forking
 ExecStart=/usr/bin/fail2ban-client -x start
 ExecStop=/usr/bin/fail2ban-client stop
 ExecReload=/usr/bin/fail2ban-client reload
+PIDFile=/var/run/fail2ban/fail2ban.pid
 Restart=always
 
 [Install]
-WantedBy=network.target
+WantedBy=multi-user.target
