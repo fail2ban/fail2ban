@@ -17,7 +17,13 @@ Michael Gebetsroither, Orion Poplawski, Artur Penttinen, sebres,
 Nicolas Collignon, Pascal Borreli, blotus:
 
 - Fixes:
+  Yaroslav Halchenko
+	* [6f4dad46] Documentation python-2.4 is the minimium version.
 - New features:
+  Yaroslav Halchenko
+	* [9ba27353] Add support for jail.d/{confilefile} and fail2ban.d/{configfile}
+	  to provide additional flexibility to system adminstrators. Thanks to
+		beilber for the idea. Close gh-114.
 - Enhancements:
 
 Special Kudos also go to Fabian Wenk, Arturo 'Buanzo' Busleiman, Tom
