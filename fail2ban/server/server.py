@@ -66,7 +66,7 @@ class Server:
 		
 		# First set the mask to only allow access to owner
 		os.umask(0077)
-		if self.__daemon:
+		if self.__daemon: # pragma: no cover
 			logSys.info("Starting in daemon mode")
 			ret = self.__createDaemon()
 			if ret:
@@ -389,7 +389,7 @@ class Server:
 				try:
 					handler.flush()
 					handler.close()
-				except (ValueError, KeyError):
+				except (ValueError, KeyError): # pragma: no cover
 					if (2,6) <= sys.version_info < (3,) or \
 							(3,2) <= sys.version_info:
 						raise
@@ -415,7 +415,7 @@ class Server:
 		finally:
 			self.__loggingLock.release()
 	
-	def __createDaemon(self):
+	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the
 			background as a daemon.
 		

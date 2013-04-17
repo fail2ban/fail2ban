@@ -297,10 +297,8 @@ class Action:
 		if not Action.executeCmd(checkCmd):
 			logSys.error("Invariant check failed. Trying to restore a sane" +
 						 " environment")
-			stopCmd = Action.replaceTag(self.__actionStop, self.__cInfo)
-			Action.executeCmd(stopCmd)
-			startCmd = Action.replaceTag(self.__actionStart, self.__cInfo)
-			Action.executeCmd(startCmd)
+			self.execActionStop()
+			self.execActionStart()
 			if not Action.executeCmd(checkCmd):
 				logSys.fatal("Unable to restore environment")
 				return False

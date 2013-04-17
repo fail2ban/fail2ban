@@ -17,6 +17,18 @@ Will carry all fixes in 0.8.x series and new features and enhancements
 - New features:
   Steven Hiscocks
    * Multiline failregex. Close gh-54
+
+ver. 0.8.9 (2013/04/XXX) - wanna-be-stable
+----------
+
+This release incorporates 144 (XXX) non-merge commits from 14
+contributors (sorted by number of commits): Yaroslav Halchenko, Daniel
+Black, Steven Hiscocks, ArndRa, hamilton5, pigsyn, Erwan Ben Souiden,
+Michael Gebetsroither, Orion Poplawski, Artur Penttinen, sebres,
+Nicolas Collignon, Pascal Borreli, blotus:
+
+- Fixes:
+- New features:
 - Enhancements:
 
 ver. 0.8.8 (2012/12/06) - stable

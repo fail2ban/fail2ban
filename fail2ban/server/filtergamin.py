@@ -27,7 +27,7 @@ from failmanager import FailManagerEmpty
 from filter import FileFilter
 from mytime import MyTime
 
-import time, logging, gamin
+import time, logging, gamin, fcntl
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -52,6 +52,9 @@ class FilterGamin(FileFilter):
 		self.__modified = False
 		# Gamin monitor
 		self.monitor = gamin.WatchMonitor()
+		fd = self.monitor.get_fd()
+		flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+		fcntl.fcntl(fd, fcntl.F_SETFD, flags|fcntl.FD_CLOEXEC)
 		logSys.debug("Created FilterGamin")
 
 
