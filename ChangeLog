@@ -48,8 +48,6 @@ Nicolas Collignon, Pascal Borreli, blotus:
 		beilber for the idea. Close gh-114.
 - Enhancements:
   Steven Hiscocks
-  * [c6bd8fc] Add Apache Tomcat date format. Close gh-176.
-  * [4d80fad] Add Guacmole filter. Close gh-176.
 	* [3d6791f] Ensure restart of Actions after a check fails occurs
 	  consistently. Closes gh-172.
   * [MANY] Improvements to test cases, travis, and code coverage (coveralls).
