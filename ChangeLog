@@ -4,7 +4,7 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.8)                                              2012/12/06
+Fail2Ban (version 0.8.9)                                              2013/04/XX
 ================================================================================
 
 ver. 0.8.9 (2013/04/XXX) - wanna-be-stable
@@ -17,8 +17,79 @@ Michael Gebetsroither, Orion Poplawski, Artur Penttinen, sebres,
 Nicolas Collignon, Pascal Borreli, blotus:
 
 - Fixes:
+  Yaroslav Halchenko
+	* [6f4dad46] Documentation python-2.4 is the minimium version.
+	* [1eb23cf8] do not rely on scripts being under /usr -- might differ eg on
+	  Fedora. Closes gh-112. Thanks to Camusensei for the bug report. 
+	* [bf4d4af1] Changes for atomic writes. Thanks to Steven Hiscocks for
+	  insight. Closes gh-103.
+	* [ab044b75] delay check for the existence of config directory until read.
+	* [3b4084d4] fixing up for handling of TAI64N timestamps.
+	* [154aa38e] do not shutdown logging until all jails stop.
+  Orion Poplawski
+	* [e4aedfdc00] pyinotify - use bitwise op on masks and do not try tracking
+	  newly created directories.
+	Nicolas Collignon
+	* [39667ff6] Avoid leaking file descriptors. Closes gh-167.
+	Sergey Brester
+	* [b6bb2f88 and d17b4153] invalid date recognition, irregular because of
+	  sorting template list.
+  Steven Hiscocks
+	* [7a442f07] When changing log target with python2.{4,5} handle KeyError.
+	  Closes gh-147, gh-148.
+	* [b6a68f51] Fix delaction on server side. Close gh-124.
+  Daniel Black
+	* [f0610c01] Allow more that a one word command when changing and Action via
+ 		the fail2ban-client. Closes gh-134.
+  blotus
+	* [96eb8986] ' and " should also be escaped in action tags Closes gh-109
 - New features:
+  Yaroslav Halchenko
+	* [9ba27353] Add support for jail.d/{confilefile} and fail2ban.d/{configfile}
+	  to provide additional flexibility to system adminstrators. Thanks to
+		beilber for the idea. Close gh-114.
+	* [3ce53e87] Add exim filter.
+	Erwan Ben Souiden
+	* [d7d5228] add nagios integration documentation and script to ensure
+	  fail2ban is running. Closes gh-166.
+	Artur Penttinen
+	* [29d0df5] Add mysqld filter. Closes gh-152.
+	ArndRaphael Brandes
+	* [bba3fd8] Add Sogo filter. Closes gh-117
+	Michael Gebetsriother
+	* [f9b78ba] Add action route to block at routing level.
+	Teodor Micu & Yaroslav Halchenko
+	* [5f2d383] Add roundcube auth filter. Close Debian bug #699442.
+  Daniel Black
+	* [be06b1b] Add action for iptables-ipsets. Close gh-102.
+	Soulard Morgan
+	* [f336d9f] Add filter for webmin. Close gh-99
 - Enhancements:
+  Steven Hiscocks
+	* [3d6791f] Ensure restart of Actions after a check fails occurs
+	  consistently. Closes gh-172.
+  * [MANY] Improvements to test cases, travis, and code coverage (coveralls).
+	* [b36835f] Add get cinfo to fail2ban-client. Close gh-124.
+	* [ce3ab34] Added ability to specify PID file.
+	Orion Poplawski
+	* [ddebcab] Enhance fail2ban.service defination dependancies and Pidfile.
+	  Closes gh-142.
+  Yaroslav Halchenko
+	* [MANY] Lots of improvements to log messages, man pages and test cases.
+	* [91d5736] Postfix filter improvements - empty helo, from and rcpt to.
+	  Closes gh-126. Bug report by Michael Heuberger.
+	* [40c5a2d] adding more of diagnostic messages into -client while starting
+	  the daemon.
+	Daniel Black
+	* [3aeb1a9] Add jail.conf manual page. close gh-143.
+	* [MANY] man page edits.
+	* [7cd6dab] Added help command to fail2ban-client. close gh-134.
+	* [c8c7b0b,23bbc60] Better logging of log file read errors. close gh-134.
+	* [3665e6d] Added code coverage to development process.
+	Pascal Borreli
+	* [a2b29b4] Fixed lots of typos in config files and documentation.
+	hamilton5
+	* [7ede1e8] Update dovecot filter config
 
 Special Kudos also go to Fabian Wenk, Arturo 'Buanzo' Busleiman, Tom
 Hendrikx and other TBN heroes supporting users on fail2ban-users
