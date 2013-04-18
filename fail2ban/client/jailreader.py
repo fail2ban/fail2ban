@@ -65,7 +65,6 @@ class JailReader(ConfigReader):
 				["string", "logencoding", "auto"],
 				["string", "backend", "auto"],
 				["int", "maxretry", 3],
-				["int", "maxlines", 1],
 				["int", "findtime", 600],
 				["int", "bantime", 600],
 				["string", "usedns", "warn"],

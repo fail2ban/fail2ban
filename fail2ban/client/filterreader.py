@@ -56,5 +56,8 @@ class FilterReader(OptionConfigReader):
 					# Do not send a command if the rule is empty.
 					if regex != '':
 						stream.append(["set", self._name, "addignoreregex", regex])		
+		if self._initOpts:
+			if 'maxlines' in self._initOpts:
+				stream.append(["set", self._name, "maxlines", self._initOpts["maxlines"]])
 		return stream
 		

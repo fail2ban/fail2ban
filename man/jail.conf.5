@@ -141,6 +141,11 @@ Using Python "string interpolation" mechanisms, other definitions are allowed an
  failregex = useragent=%(baduseragents)s
 
 .PP
+Similar to actions, filters have an [Init] section which can be overridden in \fIjail.conf/jail.local\fR. The filter [Init] section is limited to the following options:
+.TP
+\fBmaxlines\fR
+specifies the maximum number of lines to buffer to match multi-line regexs. For some log formats this will not required to be changed. Other logs may require to increase this value if a particular log file is frequently written to.
+.PP
 Filters can also have a section called [INCLUDES]. This is used to read other configuration files.
 
 .TP
