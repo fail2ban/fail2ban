@@ -112,10 +112,10 @@ class JailReaderTest(unittest.TestCase):
 		self.assertFalse(jail.isEnabled())
 		self.assertEqual(jail.getName(), 'ssh-iptables')
 
-	def testSplitAction(self):
+	def testSplitOption(self):
 		action = "mail-whois[name=SSH]"
 		expected = ['mail-whois', {'name': 'SSH'}]
-		result = JailReader.splitAction(action)
+		result = JailReader.splitOption(action)
 		self.assertEquals(expected, result)
 		
 class FilterReaderTest(unittest.TestCase):
@@ -140,7 +140,7 @@ class FilterReaderTest(unittest.TestCase):
 			"+$<SKIPLINES>^.+ module for .* from <HOST>\\s*$"],
 			['set', 'testcase01', 'addignoreregex', 
 			"^.+ john from host 192.168.1.1\\s*$"]]
-		filterReader = FilterReader("testcase01", "testcase01")
+		filterReader = FilterReader("testcase01", "testcase01", {})
 		filterReader.setBaseDir(TEST_FILES_DIR)
 		filterReader.read()
 		#filterReader.getOptions(["failregex", "ignoreregex"])

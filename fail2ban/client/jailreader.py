@@ -38,7 +38,7 @@ logSys = logging.getLogger(__name__)
 
 class JailReader(ConfigReader):
 	
-	actionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
+	optionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
 	
 	def __init__(self, name, force_enable=False, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
@@ -78,8 +78,10 @@ class JailReader(ConfigReader):
 		
 		if self.isEnabled():
 			# Read filter
-			self.__filter = FilterReader(self.__opts["filter"], self.__name,
-										 basedir=self.getBaseDir())
+			filterName, filterOpt = JailReader.splitOption(
+				self.__opts["filter"])
+			self.__filter = FilterReader(
+				filterName, self.__name, filterOpt, basedir=self.getBaseDir())
 			ret = self.__filter.read()
 			if ret:
 				self.__filter.getOptions(self.__opts)
@@ -92,8 +94,9 @@ class JailReader(ConfigReader):
 				try:
 					if not act:			  # skip empty actions
 						continue
-					splitAct = JailReader.splitAction(act)
-					action = ActionReader(splitAct, self.__name, basedir=self.getBaseDir())
+					actName, actOpt = JailReader.splitOption(act)
+					action = ActionReader(
+						actName, self.__name, actOpt, basedir=self.getBaseDir())
 					ret = action.read()
 					if ret:
 						action.getOptions(self.__opts)
@@ -151,23 +154,23 @@ class JailReader(ConfigReader):
 		return stream
 	
 	#@staticmethod
-	def splitAction(action):
-		m = JailReader.actionCRE.match(action)
+	def splitOption(option):
+		m = JailReader.optionCRE.match(option)
 		d = dict()
 		mgroups = m.groups()
 		if len(mgroups) == 2:
-			action_name, action_opts = mgroups
+			option_name, option_opts = mgroups
 		elif len(mgroups) == 1:
-			action_name, action_opts = mgroups[0], None
+			option_name, option_opts = mgroups[0], None
 		else:
-			raise ValueError("While reading action %s we should have got up to "
-							 "2 groups. Got: %r" % (action, mgroups))
-		if not action_opts is None:
+			raise ValueError("While reading option %s we should have got up to "
+							 "2 groups. Got: %r" % (option, mgroups))
+		if not option_opts is None:
 			# Huge bad hack :( This method really sucks. TODO Reimplement it.
-			actions = ""
+			options = ""
 			escapeChar = None
 			allowComma = False
-			for c in action_opts:
+			for c in option_opts:
 				if c in ('"', "'") and not allowComma:
 					# Start
 					escapeChar = c
@@ -178,20 +181,20 @@ class JailReader(ConfigReader):
 					allowComma = False
 				else:
 					if c == ',' and allowComma:
-						actions += "<COMMA>"
+						options += "<COMMA>"
 					else:
-						actions += c
+						options += c
 			
 			# Split using ,
-			actionsSplit = actions.split(',')
+			optionsSplit = options.split(',')
 			# Replace the tag <COMMA> with ,
-			actionsSplit = [n.replace("<COMMA>", ',') for n in actionsSplit]
+			optionsSplit = [n.replace("<COMMA>", ',') for n in optionsSplit]
 			
-			for param in actionsSplit:
+			for param in optionsSplit:
 				p = param.split('=')
 				try:
 					d[p[0].strip()] = p[1].strip()
 				except IndexError:
-					logSys.error("Invalid argument %s in '%s'" % (p, action_opts))
-		return [action_name, d]
-	splitAction = staticmethod(splitAction)
+					logSys.error("Invalid argument %s in '%s'" % (p, option_opts))
+		return [option_name, d]
+	splitOption = staticmethod(splitOption)
