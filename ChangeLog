@@ -46,6 +46,15 @@ Nicolas Collignon, Pascal Borreli, blotus:
 	* [9ba27353] Add support for jail.d/{confilefile} and fail2ban.d/{configfile}
 	  to provide additional flexibility to system adminstrators. Thanks to
 		beilber for the idea. Close gh-114.
+	Erwan Ben Souiden
+	* [d7d5228] add nagios integration documentation and script to ensure
+	  fail2ban is running. Closes gh-166.
+	Artur Penttinen
+	* [29d0df5] Add mysqld filter. Closes gh-152.
+	ArndRaphael Brandes
+	* [bba3fd8] Add Sogo filter. Closes gh-117
+	Michael Gebetsriother
+	* [f9b78ba] Add action route to block at routing level.
 - Enhancements:
   Steven Hiscocks
 	* [3d6791f] Ensure restart of Actions after a check fails occurs
@@ -56,13 +65,6 @@ Nicolas Collignon, Pascal Borreli, blotus:
 	Orion Poplawski
 	* [ddebcab] Enhance fail2ban.service defination dependancies and Pidfile.
 	  Closes gh-142.
-	Artur Penttinen
-	* [29d0df5] Add mysqld filter. Closes gh-152.
-	Erwan Ben Souiden
-	* [d7d5228] add nagios integration documentation and script to ensure
-	  fail2ban is running. Closes gh-166.
-	ArndRaphael Brandes
-	* [bba3fd8] Add Sogo filter. Closes gh-117
   Yaroslav Halchenko
 	* [MANY] Lots of improvements to log messages, man pages and test cases.
 	* [91d5736] Postfix filter improvements - empty helo, from and rcpt to.
@@ -77,8 +79,6 @@ Nicolas Collignon, Pascal Borreli, blotus:
 	* [3665e6d] Added code coverage to development process.
 	Pascal Borreli
 	* [a2b29b4] Fixed lots of typos in config files and documentation.
-	Michael Gebetsriother
-	* [f9b78ba] Add action route to block at routing level.
 
 Special Kudos also go to Fabian Wenk, Arturo 'Buanzo' Busleiman, Tom
 Hendrikx and other TBN heroes supporting users on fail2ban-users
