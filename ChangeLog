@@ -41,11 +41,14 @@ Nicolas Collignon, Pascal Borreli, blotus:
   Daniel Black
 	* [f0610c01] Allow more that a one word command when changing and Action via
  		the fail2ban-client. Closes gh-134.
+  blotus
+	* [96eb8986] ' and " should also be escaped in action tags Closes gh-109
 - New features:
   Yaroslav Halchenko
 	* [9ba27353] Add support for jail.d/{confilefile} and fail2ban.d/{configfile}
 	  to provide additional flexibility to system adminstrators. Thanks to
 		beilber for the idea. Close gh-114.
+	* [3ce53e87] Add exim filter.
 	Erwan Ben Souiden
 	* [d7d5228] add nagios integration documentation and script to ensure
 	  fail2ban is running. Closes gh-166.
@@ -55,6 +58,12 @@ Nicolas Collignon, Pascal Borreli, blotus:
 	* [bba3fd8] Add Sogo filter. Closes gh-117
 	Michael Gebetsriother
 	* [f9b78ba] Add action route to block at routing level.
+	Teodor Micu & Yaroslav Halchenko
+	* [5f2d383] Add roundcube auth filter. Close Debian bug #699442.
+  Daniel Black
+	* [be06b1b] Add action for iptables-ipsets. Close gh-102.
+	Soulard Morgan
+	* [f336d9f] Add filter for webmin. Close gh-99
 - Enhancements:
   Steven Hiscocks
 	* [3d6791f] Ensure restart of Actions after a check fails occurs
@@ -79,6 +88,8 @@ Nicolas Collignon, Pascal Borreli, blotus:
 	* [3665e6d] Added code coverage to development process.
 	Pascal Borreli
 	* [a2b29b4] Fixed lots of typos in config files and documentation.
+	hamilton5
+	* [7ede1e8] Update dovecot filter config
 
 Special Kudos also go to Fabian Wenk, Arturo 'Buanzo' Busleiman, Tom
 Hendrikx and other TBN heroes supporting users on fail2ban-users
