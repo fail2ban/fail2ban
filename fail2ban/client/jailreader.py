@@ -126,8 +126,6 @@ class JailReader(ConfigReader):
 				backend = self.__opts[opt]
 			elif opt == "maxretry":
 				stream.append(["set", self.__name, "maxretry", self.__opts[opt]])
-			elif opt == "maxlines":
-				stream.append(["set", self.__name, "maxlines", self.__opts[opt]])
 			elif opt == "ignoreip":
 				for ip in self.__opts[opt].split():
 					# Do not send a command if the rule is empty.
