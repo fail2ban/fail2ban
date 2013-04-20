@@ -17,8 +17,26 @@ fi
 
 ENV="/usr/bin/env -i LANG=C PATH=/usr/local/bin:/usr/bin:/bin:/opt/sfw/bin:/usr/sfw/bin"
 
+# get socket/pid conf and check dir exists
+# sock and pid default dirs are currently the same
+# mkdir if it doesn't exist
+SOCK_FILE=$(sed "/^\#/d" "$F2B_CONF" | grep "socket"  | tail -1 | cut -d "=" -f2-)
+SOCK_DIR=$(dirname $SOCK_FILE)
+if [ -n "$SOCK_DIR" ]; then
+	if [ ! -d "$SOCK_DIR" ]; then
+		mkdir "$SOCK_DIR" || exit 1
+	fi
+fi
+
 case $1 in
 	start)
+		# remove any lingering sockets
+		# don't quote the var for the -e test
+		if [ -n "$SOCK_FILE" ]; then
+			if [ -e $SOCK_FILE ]; then
+				rm -f $SOCK_FILE || exit 1
+			fi
+		fi
 		[ -f /etc/fail2ban.conf ] || touch /etc/fail2ban.conf
 		echo "Starting fail2ban-server with $F2B_CONF"
 		eval $ENV /usr/local/bin/fail2ban-client start &
