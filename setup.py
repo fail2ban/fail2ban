@@ -75,9 +75,15 @@ if setuptools:
 else:
 	setup_extra = {}
 
+# Get version number, avoiding importing fail2ban.
+# This is due to tests not functioning for python3 as 2to3 takes place later
+f = open("fail2ban/version.py")
+exec(f.read())
+f.close()
+
 setup(
 	name = "fail2ban",
-	version = "0.9.0a",
+	version = version,
 	description = "Ban IPs that make too many password failures",
 	long_description = longdesc,
 	author = "Cyril Jaquier",
