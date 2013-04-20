@@ -31,16 +31,19 @@ import unittest
 
 from fail2ban.server.datedetector import DateDetector
 from fail2ban.server.datetemplate import DateTemplate
+from fail2ban.tests.utils import setUpMyTime, tearDownMyTime
 
 class DateDetectorTest(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		setUpMyTime()
 		self.__datedetector = DateDetector()
 		self.__datedetector.addDefaultTemplate()
 
 	def tearDown(self):
 		"""Call after every test case."""
+		tearDownMyTime()
 	
 	def testGetEpochTime(self):
 		log = "1138049999 [sshd] error: PAM: Authentication failure"

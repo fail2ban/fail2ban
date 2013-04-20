@@ -22,8 +22,10 @@ __author__ = "Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging, os, re, traceback
+import logging, os, re, traceback, time
 from os.path import basename, dirname
+
+from fail2ban.server.mytime import MyTime
 
 #
 # Following "traceback" functions are adopted from PyMVPA distributed
@@ -99,3 +101,18 @@ class FormatterWithTraceBack(logging.Formatter):
 	def format(self, record):
 		record.tbc = record.tb = self._tb()
 		return logging.Formatter.format(self, record)
+
+old_TZ = os.environ.get('TZ', None)
+def setUpMyTime():
+	# Set the time to a fixed, known value
+	# Sun Aug 14 12:00:00 CEST 2005
+	# yoh: we need to adjust TZ to match the one used by Cyril so all the timestamps match
+	os.environ['TZ'] = 'Europe/Zurich'
+	time.tzset()
+	MyTime.setTime(1124013600)
+
+def tearDownMyTime():
+	os.environ.pop('TZ')
+	if old_TZ:
+		os.environ['TZ'] = old_TZ
+	time.tzset()

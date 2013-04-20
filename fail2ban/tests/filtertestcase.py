@@ -34,6 +34,7 @@ from fail2ban.server.filterpoll import FilterPoll
 from fail2ban.server.filter import FileFilter, DNSUtils
 from fail2ban.server.failmanager import FailManager
 from fail2ban.server.failmanager import FailManagerEmpty
+from fail2ban.tests.utils import setUpMyTime, tearDownMyTime
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
@@ -213,6 +214,7 @@ class LogFileMonitor(unittest.TestCase):
 	"""
 	def setUp(self):
 		"""Call before every test case."""
+		setUpMyTime()
 		self.filter = self.name = 'NA'
 		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
 		self.file = open(self.name, 'a')
@@ -222,6 +224,7 @@ class LogFileMonitor(unittest.TestCase):
 		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 
 	def tearDown(self):
+		tearDownMyTime()
 		_killfile(self.file, self.name)
 		pass
 
@@ -363,6 +366,7 @@ def get_monitor_failures_testcase(Filter_):
 		count = 0
 		def setUp(self):
 			"""Call before every test case."""
+			setUpMyTime()
 			self.filter = self.name = 'NA'
 			self.name = '%s-%d' % (testclass_name, self.count)
 			MonitorFailures.count += 1 # so we have unique filenames across tests
@@ -380,6 +384,7 @@ def get_monitor_failures_testcase(Filter_):
 
 
 		def tearDown(self):
+			tearDownMyTime()
 			#print "D: SLEEPING A BIT"
 			#import time; time.sleep(5)
 			#print "D: TEARING DOWN"
@@ -543,6 +548,7 @@ class GetFailures(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		setUpMyTime()
 		self.filter = FileFilter(None)
 		self.filter.setActive(True)
 		# TODO Test this
@@ -551,6 +557,7 @@ class GetFailures(unittest.TestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
+		tearDownMyTime()
 
 
 
