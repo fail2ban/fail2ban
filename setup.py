@@ -18,8 +18,8 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-__author__ = "Cyril Jaquier"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Cyril Jaquier, Steven Hiscocks, Yaroslav Halchenko"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2008-2013 Fail2Ban Contributors"
 __license__ = "GPL"
 
 try:
@@ -77,7 +77,7 @@ else:
 
 # Get version number, avoiding importing fail2ban.
 # This is due to tests not functioning for python3 as 2to3 takes place later
-f = open("fail2ban/version.py")
+f = open(join("fail2ban", "version.py"))
 exec(f.read())
 f.close()
 
@@ -86,7 +86,7 @@ setup(
 	version = version,
 	description = "Ban IPs that make too many password failures",
 	long_description = longdesc,
-	author = "Cyril Jaquier",
+	author = "Cyril Jaquier & Fail2Ban Contributors",
 	author_email = "cyril.jaquier@fail2ban.org",
 	url = "http://www.fail2ban.org",
 	license = "GPL",
