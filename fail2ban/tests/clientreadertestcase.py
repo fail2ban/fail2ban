@@ -115,7 +115,7 @@ class JailReaderTest(unittest.TestCase):
 	def testSplitOption(self):
 		action = "mail-whois[name=SSH]"
 		expected = ['mail-whois', {'name': 'SSH'}]
-		result = JailReader.splitOption(action)
+		result = JailReader.extractOptions(action)
 		self.assertEquals(expected, result)
 		
 class FilterReaderTest(unittest.TestCase):

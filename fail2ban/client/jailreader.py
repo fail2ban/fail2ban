@@ -77,7 +77,7 @@ class JailReader(ConfigReader):
 		
 		if self.isEnabled():
 			# Read filter
-			filterName, filterOpt = JailReader.splitOption(
+			filterName, filterOpt = JailReader.extractOptions(
 				self.__opts["filter"])
 			self.__filter = FilterReader(
 				filterName, self.__name, filterOpt, basedir=self.getBaseDir())
@@ -93,7 +93,7 @@ class JailReader(ConfigReader):
 				try:
 					if not act:			  # skip empty actions
 						continue
-					actName, actOpt = JailReader.splitOption(act)
+					actName, actOpt = JailReader.extractOptions(act)
 					action = ActionReader(
 						actName, self.__name, actOpt, basedir=self.getBaseDir())
 					ret = action.read()
@@ -151,7 +151,7 @@ class JailReader(ConfigReader):
 		return stream
 	
 	#@staticmethod
-	def splitOption(option):
+	def extractOptions(option):
 		m = JailReader.optionCRE.match(option)
 		d = dict()
 		mgroups = m.groups()
@@ -194,4 +194,4 @@ class JailReader(ConfigReader):
 				except IndexError:
 					logSys.error("Invalid argument %s in '%s'" % (p, option_opts))
 		return [option_name, d]
-	splitOption = staticmethod(splitOption)
+	extractOptions = staticmethod(extractOptions)
