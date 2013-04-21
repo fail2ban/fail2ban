@@ -27,8 +27,12 @@ __date__ = '$Date$'
 __copyright__ = 'Copyright (c) 2007 Yaroslav Halchenko'
 __license__ = 'GPL'
 
-import logging, os
-from ConfigParser import SafeConfigParser
+import logging, os, sys
+if sys.version_info >= (3,2): # pragma: no cover
+	# SafeConfigParser deprecitated from python 3.2 (renamed ConfigParser)
+	from configparser import ConfigParser as SafeConfigParser
+else: # pragma: no cover
+	from ConfigParser import SafeConfigParser
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
