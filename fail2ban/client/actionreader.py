@@ -27,7 +27,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging
+import logging, os
 from configreader import ConfigReader, OptionConfigReader
 
 # Gets the instance of the logger.
@@ -44,7 +44,7 @@ class ActionReader(OptionConfigReader):
 	]
 
 	def read(self):
-		return ConfigReader.read(self, "action.d/" + self._file)
+		return ConfigReader.read(self, os.path.join("action.d", self._file))
 
 	def convert(self):
 		head = ["set", self._name]

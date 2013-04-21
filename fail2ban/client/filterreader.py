@@ -27,7 +27,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging
+import logging, os
 from configreader import ConfigReader, OptionConfigReader
 
 # Gets the instance of the logger.
@@ -41,7 +41,7 @@ class FilterReader(OptionConfigReader):
 	]
 
 	def read(self):
-		return ConfigReader.read(self, "filter.d/" + self._file)
+		return ConfigReader.read(self, os.path.join("filter.d", self._file))
 	
 	def convert(self):
 		stream = list()
