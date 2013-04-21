@@ -118,7 +118,7 @@ class JailReaderTest(unittest.TestCase):
 		action = "mail-whois[name=SSH]"
 		expected = ['mail-whois', {'name': 'SSH'}]
 		result = JailReader.splitAction(action)
-		self.assertEquals(expected, result)
+		self.assertEqual(expected, result)
 		
 class FilterReaderTest(unittest.TestCase):
 
@@ -150,7 +150,7 @@ class FilterReaderTest(unittest.TestCase):
 
 		# Add sort as configreader uses dictionary and therefore order
 		# is unreliable
-		self.assertEquals(sorted(filterReader.convert()), sorted(output))
+		self.assertEqual(sorted(filterReader.convert()), sorted(output))
 
 class JailsReaderTest(unittest.TestCase):
 
