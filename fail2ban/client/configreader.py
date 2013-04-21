@@ -131,7 +131,14 @@ class ConfigReader(SafeConfigParserWithIncludes):
 				values[option[1]] = option[2]
 		return values
 
-class OptionConfigReader(ConfigReader):
+class DefinitionInitConfigReader(ConfigReader):
+	"""Config reader for files with options grouped in [Definition] and
+       [Init] sections.
+
+       Is a base class for readers of filters and actions, where definitions
+       in jails might provide custom values for options defined in [Init]
+       section.
+       """
 
 	_configOpts = []
 	
