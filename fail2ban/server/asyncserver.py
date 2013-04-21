@@ -135,7 +135,7 @@ class AsyncServer(asyncore.dispatcher):
 		if os.path.exists(sock):
 			logSys.error("Fail2ban seems to be already running")
 			if force:
-				logSys.warn("Forcing execution of the server")
+				logSys.warning("Forcing execution of the server")
 				os.remove(sock)
 			else:
 				raise AsyncServerException("Server already running")

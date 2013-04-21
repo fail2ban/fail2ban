@@ -632,7 +632,7 @@ class FileContainer:
 		try:
 			line = line.decode(self.getEncoding(), 'strict')
 		except UnicodeDecodeError:
-			logSys.warn("Error decoding line from '%s' with '%s': %s" %
+			logSys.warning("Error decoding line from '%s' with '%s': %s" %
 				(self.getFileName(), self.getEncoding(), `line`))
 			if sys.version_info >= (3,): # In python3, must be decoded
 				line = line.decode(self.getEncoding(), 'ignore')
@@ -668,11 +668,11 @@ class DNSUtils:
 		try:
 			return socket.gethostbyname_ex(dns)[2]
 		except socket.gaierror:
-			logSys.warn("Unable to find a corresponding IP address for %s"
+			logSys.warning("Unable to find a corresponding IP address for %s"
 						% dns)
 			return list()
 		except socket.error, e:
-			logSys.warn("Socket error raised trying to resolve hostname %s: %s"
+			logSys.warning("Socket error raised trying to resolve hostname %s: %s"
 						% (dns, e))
 			return list()
 	dnsToIp = staticmethod(dnsToIp)

@@ -105,7 +105,7 @@ class JailReader(ConfigReader):
 					logSys.debug("Caught exception: %s" % (e,))
 					return False
 			if not len(self.__actions):
-				logSys.warn("No actions were defined for %s" % self.__name)
+				logSys.warning("No actions were defined for %s" % self.__name)
 		return True
 	
 	def convert(self):

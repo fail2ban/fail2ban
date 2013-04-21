@@ -102,7 +102,7 @@ class Fail2banClient:
 	def __sigTERMhandler(self, signum, frame):
 		# Print a new line because we probably come from wait
 		print
-		logSys.warn("Caught signal %d. Exiting" % signum)
+		logSys.warning("Caught signal %d. Exiting" % signum)
 		sys.exit(-1)
 
 	def __getCmdLineOptions(self, optList):
