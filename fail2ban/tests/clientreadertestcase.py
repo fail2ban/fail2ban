@@ -112,10 +112,10 @@ class JailReaderTest(unittest.TestCase):
 		self.assertFalse(jail.isEnabled())
 		self.assertEqual(jail.getName(), 'ssh-iptables')
 
-	def testSplitAction(self):
+	def testSplitOption(self):
 		action = "mail-whois[name=SSH]"
 		expected = ['mail-whois', {'name': 'SSH'}]
-		result = JailReader.splitAction(action)
+		result = JailReader.extractOptions(action)
 		self.assertEquals(expected, result)
 		
 class FilterReaderTest(unittest.TestCase):
@@ -139,8 +139,9 @@ class FilterReaderTest(unittest.TestCase):
 			"error: PAM: )?User not known to the\\nunderlying authentication."
 			"+$<SKIPLINES>^.+ module for .* from <HOST>\\s*$"],
 			['set', 'testcase01', 'addignoreregex', 
-			"^.+ john from host 192.168.1.1\\s*$"]]
-		filterReader = FilterReader("testcase01", "testcase01")
+			"^.+ john from host 192.168.1.1\\s*$"],
+			['set', 'testcase01', 'maxlines', "1"]]
+		filterReader = FilterReader("testcase01", "testcase01", {})
 		filterReader.setBaseDir(TEST_FILES_DIR)
 		filterReader.read()
 		#filterReader.getOptions(["failregex", "ignoreregex"])
@@ -148,6 +149,15 @@ class FilterReaderTest(unittest.TestCase):
 
 		# Add sort as configreader uses dictionary and therefore order
 		# is unreliable
+		self.assertEquals(sorted(filterReader.convert()), sorted(output))
+
+		filterReader = FilterReader(
+			"testcase01", "testcase01", {'maxlines': "5"})
+		filterReader.setBaseDir(TEST_FILES_DIR)
+		filterReader.read()
+		#filterReader.getOptions(["failregex", "ignoreregex"])
+		filterReader.getOptions(None)
+		output[-1][-1] = "5"
 		self.assertEquals(sorted(filterReader.convert()), sorted(output))
 
 class JailsReaderTest(unittest.TestCase):
