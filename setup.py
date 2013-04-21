@@ -39,7 +39,7 @@ except ImportError:
 	from distutils.command.build_py import build_py
 	from distutils.command.build_scripts import build_scripts
 from os.path import isfile, join, isdir
-import sys
+import sys, warnings
 from glob import glob
 
 if setuptools and "test" in sys.argv:
@@ -51,7 +51,8 @@ if setuptools and "test" in sys.argv:
 	logSys.addHandler(hdlr)
 	if set(["-q", "--quiet"]) & set(sys.argv):
 		logSys.setLevel(logging.FATAL)
-		logging.captureWarnings(True)
+		warnings.simplefilter("ignore")
+		sys.warnoptions.append("ignore")
 	elif set(["-v", "--verbose"]) & set(sys.argv):
 		logSys.setLevel(logging.DEBUG)
 	else:

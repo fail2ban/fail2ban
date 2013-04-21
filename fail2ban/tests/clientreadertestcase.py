@@ -53,10 +53,12 @@ class ConfigReaderTest(unittest.TestCase):
 			d_ = os.path.join(self.d, d)
 			if not os.path.exists(d_):
 				os.makedirs(d_)
-		open("%s/%s" % (self.d, fname), "w").write("""
+		f = open("%s/%s" % (self.d, fname), "w")
+		f.write("""
 [section]
 option = %s
 """ % value)
+		f.close()
 
 	def _remove(self, fname):
 		os.unlink("%s/%s" % (self.d, fname))
@@ -116,7 +118,7 @@ class JailReaderTest(unittest.TestCase):
 		action = "mail-whois[name=SSH]"
 		expected = ['mail-whois', {'name': 'SSH'}]
 		result = JailReader.splitAction(action)
-		self.assertEquals(expected, result)
+		self.assertEqual(expected, result)
 		
 class FilterReaderTest(unittest.TestCase):
 
@@ -148,7 +150,7 @@ class FilterReaderTest(unittest.TestCase):
 
 		# Add sort as configreader uses dictionary and therefore order
 		# is unreliable
-		self.assertEquals(sorted(filterReader.convert()), sorted(output))
+		self.assertEqual(sorted(filterReader.convert()), sorted(output))
 
 class JailsReaderTest(unittest.TestCase):
 
