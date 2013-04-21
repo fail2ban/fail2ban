@@ -53,10 +53,12 @@ class ConfigReaderTest(unittest.TestCase):
 			d_ = os.path.join(self.d, d)
 			if not os.path.exists(d_):
 				os.makedirs(d_)
-		open("%s/%s" % (self.d, fname), "w").write("""
+		f = open("%s/%s" % (self.d, fname), "w")
+		f.write("""
 [section]
 option = %s
 """ % value)
+		f.close()
 
 	def _remove(self, fname):
 		os.unlink("%s/%s" % (self.d, fname))
