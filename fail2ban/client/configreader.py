@@ -130,3 +130,47 @@ class ConfigReader(SafeConfigParserWithIncludes):
 							"'. Using default one: '" + `option[2]` + "'")
 				values[option[1]] = option[2]
 		return values
+
+class DefinitionInitConfigReader(ConfigReader):
+	"""Config reader for files with options grouped in [Definition] and
+       [Init] sections.
+
+       Is a base class for readers of filters and actions, where definitions
+       in jails might provide custom values for options defined in [Init]
+       section.
+       """
+
+	_configOpts = []
+	
+	def __init__(self, file_, jailName, initOpts, **kwargs):
+		ConfigReader.__init__(self, **kwargs)
+		self._file = file_
+		self._name = jailName
+		self._initOpts = initOpts
+	
+	def setFile(self, fileName):
+		self._file = fileName
+	
+	def getFile(self):
+		return self.__file
+	
+	def setName(self, name):
+		self._name = name
+	
+	def getName(self):
+		return self._name
+	
+	def read(self):
+		return ConfigReader.read(self, self._file)
+	
+	def getOptions(self, pOpts):
+		self._opts = ConfigReader.getOptions(
+			self, "Definition", self._configOpts, pOpts)
+		
+		if self.has_section("Init"):
+			for opt in self.options("Init"):
+				if not self._initOpts.has_key(opt):
+					self._initOpts[opt] = self.get("Init", opt)
+	
+	def convert(self):
+		raise NotImplementedError

@@ -27,51 +27,37 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging
-from configreader import ConfigReader
+import logging, os
+from configreader import ConfigReader, DefinitionInitConfigReader
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
 
-class FilterReader(ConfigReader):
-	
-	def __init__(self, fileName, name, **kwargs):
-		ConfigReader.__init__(self, **kwargs)
-		self.__file = fileName
-		self.__name = name
-	
-	def setFile(self, fileName):
-		self.__file = fileName
-	
-	def getFile(self):
-		return self.__file
-	
-	def setName(self, name):
-		self.__name = name
-	
-	def getName(self):
-		return self.__name
-	
+class FilterReader(DefinitionInitConfigReader):
+
+	_configOpts = [
+		["string", "ignoreregex", ""],
+		["string", "failregex", ""],
+	]
+
 	def read(self):
-		return ConfigReader.read(self, "filter.d/" + self.__file)
-	
-	def getOptions(self, pOpts):
-		opts = [["string", "ignoreregex", ""],
-				["string", "failregex", ""]]
-		self.__opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
+		return ConfigReader.read(self, os.path.join("filter.d", self._file))
 	
 	def convert(self):
 		stream = list()
-		for opt in self.__opts:
+		for opt in self._opts:
 			if opt == "failregex":
-				for regex in self.__opts[opt].split('\n'):
+				for regex in self._opts[opt].split('\n'):
 					# Do not send a command if the rule is empty.
 					if regex != '':
-						stream.append(["set", self.__name, "addfailregex", regex])
+						stream.append(["set", self._name, "addfailregex", regex])
 			elif opt == "ignoreregex":
-				for regex in self.__opts[opt].split('\n'):
+				for regex in self._opts[opt].split('\n'):
 					# Do not send a command if the rule is empty.
 					if regex != '':
-						stream.append(["set", self.__name, "addignoreregex", regex])		
+						stream.append(["set", self._name, "addignoreregex", regex])		
+		if self._initOpts:
+			if 'maxlines' in self._initOpts:
+				stream.append(["set", self._name, "maxlines", self._initOpts["maxlines"]])
 		return stream
 		
