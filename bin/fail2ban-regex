@@ -70,6 +70,7 @@ class Fail2banRegex:
 		self.__ignoreregex = list()
 		self.__failregex = list()
 		self.__verbose = False
+		self.__maxlines_set = False		  # so we allow to override maxlines in cmdline
 		self.encoding = locale.getpreferredencoding()
 		# Setup logging
 		logging.getLogger("fail2ban").handlers = []
@@ -126,6 +127,11 @@ class Fail2banRegex:
 		print "Report bugs to https://github.com/fail2ban/fail2ban/issues"
 	dispUsage = staticmethod(dispUsage)
 
+	def setMaxLines(self, v):
+		if not self.__maxlines_set:
+			self.__filter.setMaxLines(int(v))
+			self.__maxlines_set = True
+
 	def getCmdLineOptions(self, optList):
 		""" Gets the command line options
 		"""
@@ -142,7 +148,7 @@ class Fail2banRegex:
 				self.encoding = opt[1]
 			elif opt[0] in ["-l", "--maxlines"]:
 				try:
-					self.__filter.setMaxLines(int(opt[1]))
+					self.setMaxLines(opt[1])
 				except ValueError:
 					print "Invlaid value for maxlines: %s" % (
                         opt[1])
@@ -203,6 +209,20 @@ class Fail2banRegex:
 				print "No section headers in " + value
 				print
 				return False
+
+			# Read out and set possible value of maxlines
+			try:
+				maxlines = reader.get("Init", "maxlines")
+			except NoSectionError, NoOptionError:
+				# No [Init].maxlines found.
+				pass
+			else:
+				try:
+					self.setMaxLines(maxlines)
+				except ValueError:
+					print "ERROR: Invalid value for maxlines (%(maxlines)r) " \
+					      "read from %(value)s" % locals()
+					return False
 		else:
 			if len(value) > 53:
 				stripReg = value[0:50] + "..."
@@ -210,6 +230,8 @@ class Fail2banRegex:
 				stripReg = value
 			print "Use regex line : " + stripReg
 			self.__failregex = [RegexStat(value)]
+
+		print "Use maxlines   : %d" % self.__filter.getMaxLines()
 		return True
 
 	def testIgnoreRegex(self, line):
