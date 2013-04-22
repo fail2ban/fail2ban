@@ -27,67 +27,43 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging
-from configreader import ConfigReader
+import logging, os
+from configreader import ConfigReader, DefinitionInitConfigReader
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
 
-class ActionReader(ConfigReader):
-	
-	def __init__(self, action, name, **kwargs):
-		ConfigReader.__init__(self, **kwargs)
-		self.__file = action[0]
-		self.__cInfo = action[1]
-		self.__name = name
-	
-	def setFile(self, fileName):
-		self.__file = fileName
-	
-	def getFile(self):
-		return self.__file
-	
-	def setName(self, name):
-		self.__name = name
-	
-	def getName(self):
-		return self.__name
-	
+class ActionReader(DefinitionInitConfigReader):
+
+	_configOpts = [
+		["string", "actionstart", ""],
+		["string", "actionstop", ""],
+		["string", "actioncheck", ""],
+		["string", "actionban", ""],
+		["string", "actionunban", ""],
+	]
+
 	def read(self):
-		return ConfigReader.read(self, "action.d/" + self.__file)
-	
-	def getOptions(self, pOpts):
-		opts = [["string", "actionstart", ""],
-				["string", "actionstop", ""],
-				["string", "actioncheck", ""],
-				["string", "actionban", ""],
-				["string", "actionunban", ""]]
-		self.__opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
-		
-		if self.has_section("Init"):
-			for opt in self.options("Init"):
-				if not self.__cInfo.has_key(opt):
-					self.__cInfo[opt] = self.get("Init", opt)
-	
+		return ConfigReader.read(self, os.path.join("action.d", self._file))
+
 	def convert(self):
-		head = ["set", self.__name]
+		head = ["set", self._name]
 		stream = list()
-		stream.append(head + ["addaction", self.__file])
-		for opt in self.__opts:
+		stream.append(head + ["addaction", self._file])
+		for opt in self._opts:
 			if opt == "actionstart":
-				stream.append(head + ["actionstart", self.__file, self.__opts[opt]])
+				stream.append(head + ["actionstart", self._file, self._opts[opt]])
 			elif opt == "actionstop":
-				stream.append(head + ["actionstop", self.__file, self.__opts[opt]])
+				stream.append(head + ["actionstop", self._file, self._opts[opt]])
 			elif opt == "actioncheck":
-				stream.append(head + ["actioncheck", self.__file, self.__opts[opt]])
+				stream.append(head + ["actioncheck", self._file, self._opts[opt]])
 			elif opt == "actionban":
-				stream.append(head + ["actionban", self.__file, self.__opts[opt]])
+				stream.append(head + ["actionban", self._file, self._opts[opt]])
 			elif opt == "actionunban":
-				stream.append(head + ["actionunban", self.__file, self.__opts[opt]])
+				stream.append(head + ["actionunban", self._file, self._opts[opt]])
 		# cInfo
-		if self.__cInfo:
-			for p in self.__cInfo:
-				stream.append(head + ["setcinfo", self.__file, p, self.__cInfo[p]])
+		if self._initOpts:
+			for p in self._initOpts:
+				stream.append(head + ["setcinfo", self._file, p, self._initOpts[p]])
 
 		return stream
-		

@@ -133,7 +133,7 @@ class Beautifier:
 						c += 1
 					msg = msg + "`- [" + str(c) + "]: " + response[len(response)-1]
 		except Exception:
-			logSys.warn("Beautifier error. Please report the error")
+			logSys.warning("Beautifier error. Please report the error")
 			logSys.error("Beautify " + `response` + " with " + `self.__inputCmd` +
 						 " failed")
 			msg = msg + `response`

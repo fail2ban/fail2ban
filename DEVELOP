@@ -21,6 +21,19 @@ would like to add to Fail2Ban, the best way to do so it to use the GitHub Pull
 Request feature. You can find more details on the Fail2Ban wiki
 (http://www.fail2ban.org/wiki/index.php/Get_Involved)
 
+Pull Requests
+=============
+
+When submitting pull requests on GitHub we ask you to:
+* Clearly describe the problem you're solving;
+* Don't introduce regressions that will make it hard for systems adminstrators 
+  to update;
+* If adding a major feature rebase your changes on master and get to a single commit;
+* Include test cases (see below);
+* Include sample logs (if relevant);
+* Include a change to the relevant section of the ChangeLog; and
+* Include yourself in THANKS if not already there.
+
 Testing
 =======
 
@@ -257,6 +270,10 @@ Releasing
 
   git shortlog -sn 0.8.8.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
 
+  Ensure the top of the ChangeLog has the right version and current date.
+
+  Ensure the top entry of the ChangeLog has the right version and current date.
+
 # Update man pages
 
   (cd man ; ./generate-man )
@@ -280,3 +297,13 @@ Releasing
 # Email users and development list of release
 
 TODO notifying distributors etc.
+
+Post Release:
+
+Add the following to the top of the ChangeLog
+
+ver. 0.8.9 (2013/XX/XXX) - wanna-be-stable
+- Fixes
+- New Features
+- Enhancements
+

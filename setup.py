@@ -18,11 +18,17 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-__author__ = "Cyril Jaquier"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Cyril Jaquier, Steven Hiscocks, Yaroslav Halchenko"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2008-2013 Fail2Ban Contributors"
 __license__ = "GPL"
 
-from distutils.core import setup
+try:
+	import setuptools
+	from setuptools import setup
+except ImportError:
+	setuptools = None
+	from distutils.core import setup
+
 try:
 	# python 3.x
 	from distutils.command.build_py import build_py_2to3 as build_py
@@ -33,10 +39,27 @@ except ImportError:
 	from distutils.command.build_py import build_py
 	from distutils.command.build_scripts import build_scripts
 from os.path import isfile, join, isdir
-import sys
+import sys, warnings
 from glob import glob
 
-from fail2ban.version import version
+if setuptools and "test" in sys.argv:
+	import logging
+	logSys = logging.getLogger("fail2ban")
+	hdlr = logging.StreamHandler(sys.stdout)
+	fmt = logging.Formatter("%(asctime)-15s %(message)s")
+	hdlr.setFormatter(fmt)
+	logSys.addHandler(hdlr)
+	if set(["-q", "--quiet"]) & set(sys.argv):
+		logSys.setLevel(logging.FATAL)
+		warnings.simplefilter("ignore")
+		sys.warnoptions.append("ignore")
+	elif set(["-v", "--verbose"]) & set(sys.argv):
+		logSys.setLevel(logging.DEBUG)
+	else:
+		logSys.setLevel(logging.INFO)
+elif "test" in sys.argv:
+	print("python distribute required to execute fail2ban tests")
+	print("")
 
 longdesc = '''
 Fail2Ban scans log files like /var/log/pwdfail or
@@ -45,12 +68,26 @@ too many password failures. It updates firewall rules
 to reject the IP address or executes user defined
 commands.'''
 
+if setuptools:
+	setup_extra = {
+		'test_suite': "fail2ban.tests.utils.gatherTests",
+		'use_2to3': True,
+	}
+else:
+	setup_extra = {}
+
+# Get version number, avoiding importing fail2ban.
+# This is due to tests not functioning for python3 as 2to3 takes place later
+f = open(join("fail2ban", "version.py"))
+exec(f.read())
+f.close()
+
 setup(
 	name = "fail2ban",
 	version = version,
 	description = "Ban IPs that make too many password failures",
 	long_description = longdesc,
-	author = "Cyril Jaquier",
+	author = "Cyril Jaquier & Fail2Ban Contributors",
 	author_email = "cyril.jaquier@fail2ban.org",
 	url = "http://www.fail2ban.org",
 	license = "GPL",
@@ -88,7 +125,8 @@ setup(
 						('/usr/share/doc/fail2ban',
 							['README', 'DEVELOP', 'doc/run-rootless.txt']
 						)
-					]
+					],
+	**setup_extra
 )
 
 # Do some checks after installation
