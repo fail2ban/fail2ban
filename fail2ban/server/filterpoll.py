@@ -131,10 +131,10 @@ class FilterPoll(FileFilter):
 						 % (filename, e))
 			self.__file404Cnt[filename] += 1
 			if self.__file404Cnt[filename] > 2:
-				logSys.warn("Too many errors. Setting the jail idle")
+				logSys.warning("Too many errors. Setting the jail idle")
 				if self.jail:
 					self.jail.setIdle(True)
 				else:
-					logSys.warn("No jail is assigned to %s" % self)
+					logSys.warning("No jail is assigned to %s" % self)
 				self.__file404Cnt[filename] = 0
 			return False

@@ -118,6 +118,7 @@ def tearDownMyTime():
 	if old_TZ:
 		os.environ['TZ'] = old_TZ
 	time.tzset()
+	MyTime.myTime = None
 
 from fail2ban.tests import banmanagertestcase
 from fail2ban.tests import clientreadertestcase

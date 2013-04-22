@@ -70,7 +70,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 				# files must carry .conf suffix as well
 				config_files += sorted(glob.glob('%s/*.conf' % config_dir))
 			else:
-				logSys.warn("%s exists but not a directory or not accessible"
+				logSys.warning("%s exists but not a directory or not accessible"
 							 % config_dir)
 
 		# check if files are accessible, warn if any is not accessible
@@ -80,7 +80,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 			if os.access(f, os.R_OK):
 				config_files_accessible.append(f)
 			else:
-				logSys.warn("%s exists but not accessible - skipping" % f)
+				logSys.warning("%s exists but not accessible - skipping" % f)
 
 		if len(config_files_accessible):
 			# at least one config exists and accessible
@@ -122,11 +122,11 @@ class ConfigReader(SafeConfigParserWithIncludes):
 				values[option[1]] = option[2]
 			except NoOptionError:
 				if not option[2] == None:
-					logSys.warn("'%s' not defined in '%s'. Using default one: %r"
+					logSys.warning("'%s' not defined in '%s'. Using default one: %r"
 								% (option[1], sec, option[2]))
 					values[option[1]] = option[2]
 			except ValueError:
-				logSys.warn("Wrong value for '" + option[1] + "' in '" + sec +
+				logSys.warning("Wrong value for '" + option[1] + "' in '" + sec +
 							"'. Using default one: '" + `option[2]` + "'")
 				values[option[1]] = option[2]
 		return values
