@@ -8,15 +8,27 @@ Fail2Ban (version 0.9.0a)                                             20??/??/??
 ================================================================================
 
 
-ver. 0.9.0 (20??/??/??) - alpha
+ver. 0.9.0 (2013/04/??) - alpha
 ----------
 
-Will carry all fixes in 0.8.x series and new features and enhancements
+Carries all fixes in 0.8.9 and new features and enhancements.  Nearly
+all development is thanks to Steven Hiscocks (THANKS!) with only
+code-review and minor additions from Yaroslav Halchenko.
 
-- Fixes:
+- Refactoring:
+  Steven Hiscocks
+   * [..5aef036] Core functionality moved into fail2ban/ module.
+     Closes gh-26
 - New features:
   Steven Hiscocks
-   * Multiline failregex. Close gh-54
+   * [..c7ae460] Multiline failregex. Close gh-54
+   * [8af32ed] Guacamole filter and support for Apache Tomcat date
+     format
+   * [..4869186] Python3 support
+- Enhancements
+  Steven Hiscocks
+   * Replacing use of deprecated API (.warning, .assertEqual, etc)
+   * [..a648cc2] Filters can have options now too
 
 ver. 0.8.9 (2013/04/XXX) - wanna-be-stable
 ----------
