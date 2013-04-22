@@ -107,6 +107,10 @@ option = %s
 
 class JailReaderTest(unittest.TestCase):
 
+	def testIncorrectJail(self):
+		jail = JailReader('XXXABSENTXXX', basedir=CONFIG_DIR)
+		self.assertRaises(ValueError, jail.read)
+
 	def testStockSSHJail(self):
 		jail = JailReader('ssh-iptables', basedir=CONFIG_DIR) # we are running tests from root project dir atm
 		self.assertTrue(jail.read())
