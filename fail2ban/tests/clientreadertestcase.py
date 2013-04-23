@@ -27,6 +27,7 @@ from fail2ban.client.configreader import ConfigReader
 from fail2ban.client.jailreader import JailReader
 from fail2ban.client.filterreader import FilterReader
 from fail2ban.client.jailsreader import JailsReader
+from fail2ban.client.actionreader import ActionReader
 from fail2ban.client.configurator import Configurator
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
@@ -187,6 +188,59 @@ class JailsReaderTest(unittest.TestCase):
 		self.assertEqual(comm_commands[0], ['add', 'sshd', 'auto'])
 		# and end with
 		self.assertEqual(comm_commands[-1], ['start', 'sshd'])
+
+		allFilters = set()
+
+		# All jails must have filter and action set
+		# TODO: evolve into a parametric test
+		for jail in jails.sections():
+
+			filterName = jails.get(jail, 'filter')
+			allFilters.add(filterName)
+			self.assertTrue(len(filterName))
+			# moreover we must have a file for it
+			# and it must be readable as a Filter
+			filterReader = FilterReader(filterName, jail, {})
+			filterReader.setBaseDir(CONFIG_DIR)
+			self.assertTrue(filterReader.read())		  # opens fine
+			filterReader.getOptions({})	  # reads fine
+
+			#  test if filter has failregex set
+			self.assertTrue(filterReader._opts.get('failregex', '').strip())
+
+			actions = jails.get(jail, 'action')
+			self.assertTrue(len(actions.strip()))
+
+			# somewhat duplicating here what is done in JailsReader if
+			# the jail is enabled
+			for act in actions.split('\n'):
+				actName, actOpt = JailReader.extractOptions(act)
+				self.assertTrue(len(actName))
+				self.assertTrue(isinstance(actOpt, dict))
+				if actName == 'iptables-multiport':
+					self.assertTrue('port' in actOpt)
+
+				actionReader = ActionReader(
+					actName, jail, {}, basedir=CONFIG_DIR)
+				self.assertTrue(actionReader.read())
+				actionReader.getOptions({})	  # populate _opts
+				cmds = actionReader.convert()
+				self.assertTrue(len(cmds))
+
+				# all must have some actionban
+				self.assertTrue(actionReader._opts.get('actionban', '').strip())
+
+		# Verify that all filters found under config/ have a jail
+		def get_all_confs(d):
+			from glob import glob
+			return set(
+				os.path.basename(x.replace('.conf', ''))
+				for x in glob(os.path.join(CONFIG_DIR, d, '*.conf')))
+
+		# TODO: provide jails for some additional filters
+		# ['gssftpd', 'qmail', 'apache-nohome', 'exim', 'dropbear', 'webmin-auth', 'cyrus-imap', 'sieve']
+		# self.assertEqual(get_all_confs('filter.d').difference(allFilters),
+        #                  set(['common']))
 
 	def testReadStockJailConfForceEnabled(self):
 		# more of a smoke test to make sure that no obvious surprises
