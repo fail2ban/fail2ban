@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, shutil, tempfile, unittest
+import os, shutil, sys, tempfile, unittest
 
 from fail2ban.client.configreader import ConfigReader
 from fail2ban.client.jailreader import JailReader
@@ -47,7 +47,7 @@ class ConfigReaderTest(unittest.TestCase):
 		"""Call after every test case."""
 		shutil.rmtree(self.d)
 
-	def _write(self, fname, value):
+	def _write(self, fname, value=None, content=None):
 		# verify if we don't need to create .d directory
 		if os.path.sep in fname:
 			d = os.path.dirname(fname)
@@ -55,10 +55,13 @@ class ConfigReaderTest(unittest.TestCase):
 			if not os.path.exists(d_):
 				os.makedirs(d_)
 		f = open("%s/%s" % (self.d, fname), "w")
-		f.write("""
+		if value is not None:
+			f.write("""
 [section]
 option = %s
-""" % value)
+	""" % value)
+		if content is not None:
+			f.write(content)
 		f.close()
 
 	def _remove(self, fname):
@@ -105,6 +108,28 @@ option = %s
 		self._remove("c.local")
 		self.assertEqual(self._getoption(), 1)
 
+	def testInterpolations(self):
+		self.assertFalse(self.c.read('i'))	# nothing is there yet
+		self._write("i.conf", value=None, content="""
+[DEFAULT]
+b = a
+zz = the%(__name__)s
+
+[section]
+y = 4%(b)s
+e = 5${b}
+z = %(__name__)s
+
+[section2]
+z = 3%(__name__)s
+""")
+		self.assertTrue(self.c.read('i'))
+		self.assertEqual(self.c.sections(), ['section', 'section2'])
+		self.assertEqual(self.c.get('section', 'y'), '4a')	 # basic interpolation works
+		self.assertEqual(self.c.get('section', 'e'), '5${b}') # no extended interpolation
+		self.assertEqual(self.c.get('section', 'z'), 'section') # __name__ works
+		self.assertEqual(self.c.get('section', 'zz'), 'thesection') # __name__ works even 'delayed'
+		self.assertEqual(self.c.get('section2', 'z'), '3section2') # and differs per section ;)
 
 class JailReaderTest(unittest.TestCase):
 
