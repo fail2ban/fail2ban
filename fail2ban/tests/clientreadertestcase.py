@@ -115,7 +115,7 @@ class JailReaderTest(unittest.TestCase):
 		jail = JailReader('sshd', basedir=CONFIG_DIR) # we are running tests from root project dir atm
 		self.assertTrue(jail.read())
 		self.assertTrue(jail.getOptions())
-		self.assertFalse(jail.isEnabled())
+		self.assertTrue(jail.isEnabled())
 		self.assertEqual(jail.getName(), 'sshd')
 
 	def testSplitOption(self):
@@ -181,7 +181,12 @@ class JailsReaderTest(unittest.TestCase):
 		comm_commands = jails.convert()
 		# by default None of the jails is enabled and we get no
 		# commands to communicate to the server
-		self.assertEqual(comm_commands, [])
+		#self.assertEqual(comm_commands, [])
+		# by default now we have sshd jail enabled (only)
+		# so the list of commands should start with
+		self.assertEqual(comm_commands[0], ['add', 'sshd', 'auto'])
+		# and end with
+		self.assertEqual(comm_commands[-1], ['start', 'sshd'])
 
 	def testReadStockJailConfForceEnabled(self):
 		# more of a smoke test to make sure that no obvious surprises
