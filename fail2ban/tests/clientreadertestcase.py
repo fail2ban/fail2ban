@@ -112,11 +112,11 @@ class JailReaderTest(unittest.TestCase):
 		self.assertRaises(ValueError, jail.read)
 
 	def testStockSSHJail(self):
-		jail = JailReader('ssh-iptables', basedir=CONFIG_DIR) # we are running tests from root project dir atm
+		jail = JailReader('sshd', basedir=CONFIG_DIR) # we are running tests from root project dir atm
 		self.assertTrue(jail.read())
 		self.assertTrue(jail.getOptions())
 		self.assertFalse(jail.isEnabled())
-		self.assertEqual(jail.getName(), 'ssh-iptables')
+		self.assertEqual(jail.getName(), 'sshd')
 
 	def testSplitOption(self):
 		action = "mail-whois[name=SSH]"
@@ -195,7 +195,7 @@ class JailsReaderTest(unittest.TestCase):
 		self.assertTrue(len(comm_commands))
 
 		# and we know even some of them by heart
-		for j in ['ssh-iptables', 'recidive']:
+		for j in ['sshd', 'recidive']:
 			# by default we have 'auto' backend ATM
 			self.assertTrue(['add', j, 'auto'] in comm_commands)
 			# and warn on useDNS
