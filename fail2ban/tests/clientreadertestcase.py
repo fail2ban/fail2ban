@@ -21,12 +21,13 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, shutil, tempfile, unittest
+import os, shutil, sys, tempfile, unittest
 
 from fail2ban.client.configreader import ConfigReader
 from fail2ban.client.jailreader import JailReader
 from fail2ban.client.filterreader import FilterReader
 from fail2ban.client.jailsreader import JailsReader
+from fail2ban.client.actionreader import ActionReader
 from fail2ban.client.configurator import Configurator
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
@@ -46,7 +47,7 @@ class ConfigReaderTest(unittest.TestCase):
 		"""Call after every test case."""
 		shutil.rmtree(self.d)
 
-	def _write(self, fname, value):
+	def _write(self, fname, value=None, content=None):
 		# verify if we don't need to create .d directory
 		if os.path.sep in fname:
 			d = os.path.dirname(fname)
@@ -54,10 +55,13 @@ class ConfigReaderTest(unittest.TestCase):
 			if not os.path.exists(d_):
 				os.makedirs(d_)
 		f = open("%s/%s" % (self.d, fname), "w")
-		f.write("""
+		if value is not None:
+			f.write("""
 [section]
 option = %s
-""" % value)
+	""" % value)
+		if content is not None:
+			f.write(content)
 		f.close()
 
 	def _remove(self, fname):
@@ -104,15 +108,41 @@ option = %s
 		self._remove("c.local")
 		self.assertEqual(self._getoption(), 1)
 
+	def testInterpolations(self):
+		self.assertFalse(self.c.read('i'))	# nothing is there yet
+		self._write("i.conf", value=None, content="""
+[DEFAULT]
+b = a
+zz = the%(__name__)s
+
+[section]
+y = 4%(b)s
+e = 5${b}
+z = %(__name__)s
+
+[section2]
+z = 3%(__name__)s
+""")
+		self.assertTrue(self.c.read('i'))
+		self.assertEqual(self.c.sections(), ['section', 'section2'])
+		self.assertEqual(self.c.get('section', 'y'), '4a')	 # basic interpolation works
+		self.assertEqual(self.c.get('section', 'e'), '5${b}') # no extended interpolation
+		self.assertEqual(self.c.get('section', 'z'), 'section') # __name__ works
+		self.assertEqual(self.c.get('section', 'zz'), 'thesection') # __name__ works even 'delayed'
+		self.assertEqual(self.c.get('section2', 'z'), '3section2') # and differs per section ;)
 
 class JailReaderTest(unittest.TestCase):
 
+	def testIncorrectJail(self):
+		jail = JailReader('XXXABSENTXXX', basedir=CONFIG_DIR)
+		self.assertRaises(ValueError, jail.read)
+
 	def testStockSSHJail(self):
-		jail = JailReader('ssh-iptables', basedir=CONFIG_DIR) # we are running tests from root project dir atm
+		jail = JailReader('sshd', basedir=CONFIG_DIR) # we are running tests from root project dir atm
 		self.assertTrue(jail.read())
 		self.assertTrue(jail.getOptions())
 		self.assertFalse(jail.isEnabled())
-		self.assertEqual(jail.getName(), 'ssh-iptables')
+		self.assertEqual(jail.getName(), 'sshd')
 
 	def testSplitOption(self):
 		action = "mail-whois[name=SSH]"
@@ -179,6 +209,59 @@ class JailsReaderTest(unittest.TestCase):
 		# commands to communicate to the server
 		self.assertEqual(comm_commands, [])
 
+		allFilters = set()
+
+		# All jails must have filter and action set
+		# TODO: evolve into a parametric test
+		for jail in jails.sections():
+
+			filterName = jails.get(jail, 'filter')
+			allFilters.add(filterName)
+			self.assertTrue(len(filterName))
+			# moreover we must have a file for it
+			# and it must be readable as a Filter
+			filterReader = FilterReader(filterName, jail, {})
+			filterReader.setBaseDir(CONFIG_DIR)
+			self.assertTrue(filterReader.read())		  # opens fine
+			filterReader.getOptions({})	  # reads fine
+
+			#  test if filter has failregex set
+			self.assertTrue(filterReader._opts.get('failregex', '').strip())
+
+			actions = jails.get(jail, 'action')
+			self.assertTrue(len(actions.strip()))
+
+			# somewhat duplicating here what is done in JailsReader if
+			# the jail is enabled
+			for act in actions.split('\n'):
+				actName, actOpt = JailReader.extractOptions(act)
+				self.assertTrue(len(actName))
+				self.assertTrue(isinstance(actOpt, dict))
+				if actName == 'iptables-multiport':
+					self.assertTrue('port' in actOpt)
+
+				actionReader = ActionReader(
+					actName, jail, {}, basedir=CONFIG_DIR)
+				self.assertTrue(actionReader.read())
+				actionReader.getOptions({})	  # populate _opts
+				cmds = actionReader.convert()
+				self.assertTrue(len(cmds))
+
+				# all must have some actionban
+				self.assertTrue(actionReader._opts.get('actionban', '').strip())
+
+		# Verify that all filters found under config/ have a jail
+		def get_all_confs(d):
+			from glob import glob
+			return set(
+				os.path.basename(x.replace('.conf', ''))
+				for x in glob(os.path.join(CONFIG_DIR, d, '*.conf')))
+
+		# TODO: provide jails for some additional filters
+		# ['gssftpd', 'qmail', 'apache-nohome', 'exim', 'dropbear', 'webmin-auth', 'cyrus-imap', 'sieve']
+		# self.assertEqual(get_all_confs('filter.d').difference(allFilters),
+        #                  set(['common']))
+
 	def testReadStockJailConfForceEnabled(self):
 		# more of a smoke test to make sure that no obvious surprises
 		# on users' systems when enabling shipped jails
@@ -191,7 +274,7 @@ class JailsReaderTest(unittest.TestCase):
 		self.assertTrue(len(comm_commands))
 
 		# and we know even some of them by heart
-		for j in ['ssh-iptables', 'recidive']:
+		for j in ['sshd', 'recidive']:
 			# by default we have 'auto' backend ATM
 			self.assertTrue(['add', j, 'auto'] in comm_commands)
 			# and warn on useDNS
