@@ -28,14 +28,44 @@ __copyright__ = 'Copyright (c) 2007 Yaroslav Halchenko'
 __license__ = 'GPL'
 
 import logging, os, sys
+
 if sys.version_info >= (3,2): # pragma: no cover
-	# SafeConfigParser deprecitated from python 3.2 (renamed ConfigParser)
-	from configparser import ConfigParser as SafeConfigParser
+
+	# SafeConfigParser deprecated from Python 3.2 (renamed to ConfigParser)
+	from configparser import ConfigParser as SafeConfigParser, \
+		BasicInterpolation
+
+	# And interpolation of __name__ was simply removed, thus we need to
+	# decorate default interpolator to handle it
+	class BasicInterpolationWithName(BasicInterpolation):
+		"""Decorator to bring __name__ interpolation back.
+
+		Original handling of __name__ was removed because of
+		functional deficiencies: http://bugs.python.org/issue10489
+
+		commit v3.2a4-105-g61f2761
+		Author: Lukasz Langa <lukasz@langa.pl>
+		Date:	Sun Nov 21 13:41:35 2010 +0000
+
+		Issue #10489: removed broken `__name__` support from configparser
+
+		But should be fine to reincarnate for our use case
+		"""
+		def _interpolate_some(self, parser, option, accum, rest, section, map,
+							  depth):
+			if section and not (__name__ in map):
+				map = map.copy()		  # just to be safe
+				map['__name__'] = section
+			return super(BasicInterpolationWithName, self)._interpolate_some(
+				parser, option, accum, rest, section, map, depth)
+
 else: # pragma: no cover
 	from ConfigParser import SafeConfigParser
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
+
+__all__ = ['SafeConfigParserWithIncludes']
 
 class SafeConfigParserWithIncludes(SafeConfigParser):
 	"""
@@ -67,6 +97,14 @@ after = 1.conf
 	"""
 
 	SECTION_NAME = "INCLUDES"
+
+	if sys.version_info >= (3,2):
+		# overload constructor only for fancy new Python3's
+		def __init__(self, *args, **kwargs):
+			kwargs = kwargs.copy()
+			kwargs['interpolation'] = BasicInterpolationWithName()
+			super(SafeConfigParserWithIncludes, self).__init__(
+				*args, **kwargs)
 
 	#@staticmethod
 	def getIncludes(resource, seen = []):

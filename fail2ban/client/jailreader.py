@@ -54,7 +54,13 @@ class JailReader(ConfigReader):
 		return self.__name
 	
 	def read(self):
-		return ConfigReader.read(self, "jail")
+		out = ConfigReader.read(self, "jail")
+		# Before returning -- verify that requested section
+		# exists at all
+		if not (self.__name in self.sections()):
+			raise ValueError("Jail %r was not found among available"
+							 % self.__name)
+		return out
 	
 	def isEnabled(self):
 		return self.__force_enable or self.__opts["enabled"]
