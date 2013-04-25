@@ -302,3 +302,26 @@ class JailsReaderTest(unittest.TestCase):
 		configurator._Configurator__jails.setBaseDir('/tmp')
 		self.assertEqual(configurator._Configurator__jails.getBaseDir(), '/tmp')
 		self.assertEqual(configurator.getBaseDir(), CONFIG_DIR)
+
+	def testMultipleSameAction(self):
+		basedir = tempfile.mkdtemp("fail2ban_conf")
+		os.mkdir(os.path.join(basedir, "filter.d"))
+		os.mkdir(os.path.join(basedir, "action.d"))
+		open(os.path.join(basedir, "action.d", "testaction1.conf"), 'w').close()
+		open(os.path.join(basedir, "filter.d", "testfilter1.conf"), 'w').close()
+		jailfd = open(os.path.join(basedir, "jail.conf"), 'w')
+		jailfd.write("""
+[testjail1]
+action = testaction1[name=test1]
+         testaction1[name=test2]
+filter = testfilter1
+""")
+		jailfd.close()
+		jails = JailsReader(basedir=basedir)
+		self.assertTrue(jails.read())
+		self.assertTrue(jails.getOptions())
+		comm_commands = jails.convert()
+
+		action_names = [comm[-1] for comm in comm_commands if comm[:3] == ['set', 'testjail1', 'addaction']]
+
+		self.assertNotEqual(len(set(action_names)), 1)
