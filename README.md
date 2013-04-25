@@ -2,10 +2,9 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
+                       v0.8.8                  2012/07/31
 
-================================================================================
-Fail2Ban (version 0.8.8)                                              2012/07/31
-================================================================================
+## Fail2Ban: ban hosts that cause multiple authentication errors 
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP that makes too many
 password failures. It updates firewall rules to reject the IP address. These
@@ -18,32 +17,29 @@ are available in fail2ban(1) manpage and on the website http://www.fail2ban.org
 Installation:
 -------------
 
+**It is possible that Fail2ban is already packaged for your distribution.  In
+this case, you should use it instead.**
+
 Required:
-   >=python-2.4 (http://www.python.org)
+- [Python >= 2.4](http://www.python.org)
 
 Optional:
-   pyinotify:
-      >=linux-2.6.13
-      >=python-2.4
-      >=pyinotify-0.8.3 (https://github.com/seb-m/pyinotify)
-   Gamin:
-      >=gamin-0.0.21 (http://www.gnome.org/~veillard/gamin)
+- [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify)
+  - Linux >= 2.6.13
+- [gamin >= 0.0.21](http://www.gnome.org/~veillard/gamin)
 
 To install, just do:
 
-> tar xvfj fail2ban-0.8.8.tar.bz2
-> cd fail2ban-0.8.8
-> python setup.py install
+    tar xvfj fail2ban-0.8.8.tar.bz2
+    cd fail2ban-0.8.8
+    python setup.py install
 
 This will install Fail2Ban into /usr/share/fail2ban. The executable scripts are
-placed into /usr/bin.
-
-It is possible that Fail2ban is already packaged for your distribution.  In
-this case, you should use it.
+placed into /usr/bin, and configuration under /etc/fail2ban.
 
 Fail2Ban should be correctly installed now. Just type:
 
-> fail2ban-client -h
+    fail2ban-client -h
 
 to see if everything is alright. You should always use fail2ban-client and
 never call fail2ban-server directly.
@@ -57,29 +53,35 @@ available commands are described in the fail2ban-client(1) manpage.  Also see
 fail2ban(1) manpage for further references and find even more documentation on
 the website: http://www.fail2ban.org
 
+Code status:
+------------
+
+* [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png)](https://travis-ci.org/fail2ban/fail2ban) travis-ci.org (master branch)
+
+* [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=master)](https://coveralls.io/r/fail2ban/fail2ban)
+
 Contact:
 --------
 
-Website: http://www.fail2ban.org
-
-You need some new features, you found bugs?
-visit https://github.com/fail2ban/fail2ban/issues
+### You need some new features, you found bugs?
+visit [Issues](https://github.com/fail2ban/fail2ban/issues)
 and if your issue is not yet known -- file a bug report.
 
-You would like to troubleshoot or discuss?
-join the mailing list
-https://lists.sourceforge.net/lists/listinfo/fail2ban-users
+### You would like to troubleshoot or discuss?
+join the [mailing list](https://lists.sourceforge.net/lists/listinfo/fail2ban-users)
 
-You just appreciate this program:
-send kudos to the original author (Cyril Jaquier <cyril.jaquier@fail2ban.org>)
-or better to the mailing list
-https://lists.sourceforge.net/lists/listinfo/fail2ban-users
+### You would like to contribute (new filters/actions/code/documentation)?
+send a pull request
+
+### You just appreciate this program:
+send kudos to the original author ([Cyril Jaquier](mailto: Cyril Jaquier <cyril.jaquier@fail2ban.org>)
+or better to the [mailing list](https://lists.sourceforge.net/lists/listinfo/fail2ban-users)
 since Fail2Ban is "community-driven" for years now.
 
 Thanks:
 -------
 
-See THANKS file.
+See [THANKS](https://github.com/fail2ban/fail2ban/blob/master/THANKS) file.
 
 License:
 --------
