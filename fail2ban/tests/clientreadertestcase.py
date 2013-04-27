@@ -312,8 +312,8 @@ class JailsReaderTest(unittest.TestCase):
 		jailfd = open(os.path.join(basedir, "jail.conf"), 'w')
 		jailfd.write("""
 [testjail1]
-action = testaction1[name=test1]
-         testaction1[name=test2]
+action = testaction1[actname=test1]
+         testaction1[actname=test2]
 filter = testfilter1
 """)
 		jailfd.close()

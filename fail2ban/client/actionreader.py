@@ -44,7 +44,7 @@ class ActionReader(DefinitionInitConfigReader):
 	]
 
 	def __init__(self, file_, jailName, initOpts, **kwargs):
-		self._name = initOpts.pop("name", file_)
+		self._name = initOpts.get("actname", file_)
 		DefinitionInitConfigReader.__init__(
 			self, file_, jailName, initOpts, **kwargs)
 
