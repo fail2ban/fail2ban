@@ -73,6 +73,7 @@ protocol = [
 ["set <JAIL> delaction <ACT>", "removes the action <NAME> from <JAIL>"], 
 ["set <JAIL> setcinfo <ACT> <KEY> <VALUE>", "sets <VALUE> for <KEY> of the action <NAME> for <JAIL>"], 
 ["set <JAIL> delcinfo <ACT> <KEY>", "removes <KEY> for the action <NAME> for <JAIL>"], 
+["set <JAIL> timeout <ACT> <TIMEOUT>", "sets <TIMEOUT> as the command timeout in seconds for the action <ACT> for <JAIL>"],
 ["set <JAIL> actionstart <ACT> <CMD>", "sets the start command <CMD> of the action <ACT> for <JAIL>"], 
 ["set <JAIL> actionstop <ACT> <CMD>", "sets the stop command <CMD> of the action <ACT> for <JAIL>"], 
 ["set <JAIL> actioncheck <ACT> <CMD>", "sets the check command <CMD> of the action <ACT> for <JAIL>"], 
@@ -96,6 +97,7 @@ protocol = [
 ["get <JAIL> actionban <ACT>", "gets the ban command for the action <ACT> for <JAIL>"],
 ["get <JAIL> actionunban <ACT>", "gets the unban command for the action <ACT> for <JAIL>"],
 ["get <JAIL> cinfo <ACT> <KEY>", "gets the value for <KEY> for the action <ACT> for <JAIL>"],
+["get <JAIL> timeout <ACT>", "gets the command timeout in seconds for the action <ACT> for <JAIL>"],
 ]
 
 ##

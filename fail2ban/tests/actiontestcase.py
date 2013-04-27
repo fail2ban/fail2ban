@@ -95,4 +95,11 @@ class ExecuteAction(unittest.TestCase):
 
 	def testExecuteIncorrectCmd(self):
 		Action.executeCmd('/bin/ls >/dev/null\nbogusXXX now 2>/dev/null')
-		self.assertTrue(self._is_logged('HINT on 7f00: "Command not found"'))
+		self.assertTrue(self._is_logged('HINT on 127: "Command not found"'))
+
+	def testExecuteTimeout(self):
+		stime = time.time()
+		Action.executeCmd('sleep 60', timeout=2) # Should take a minute
+		self.assertAlmostEqual(time.time() - stime, 2.1, places=1)
+		self.assertTrue(self._is_logged('sleep 60 timed out after 2 seconds'))
+		self.assertTrue(self._is_logged('sleep 60 killed with SIGTERM'))
