@@ -69,7 +69,7 @@ setup(
 							''
 						),
 						('/usr/share/doc/fail2ban',
-							['README', 'DEVELOP', 'doc/run-rootless.txt']
+							['README.md', 'DEVELOP', 'doc/run-rootless.txt']
 						)
 					]
 )
