@@ -325,3 +325,5 @@ filter = testfilter1
 		action_names = [comm[-1] for comm in comm_commands if comm[:3] == ['set', 'testjail1', 'addaction']]
 
 		self.assertNotEqual(len(set(action_names)), 1)
+
+		shutil.rmtree(basedir)
