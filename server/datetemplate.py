@@ -224,9 +224,18 @@ class DateASSPlike(DateTemplate):
 
 	def __init__(self):
 		DateTemplate.__init__(self)
+		self.__pattern = ""
+
+	def setPattern(self, pattern):
+		self.__pattern = pattern.strip()
+
+	def getPattern(self):
+		return self.__pattern
 
 	def getDate(self, line):
-		# there is no need to parse the date.
-		# ASSP doesn't buffer the log output.
-		return MyTime.gmtime()
+		date = None
+		dateMatch = self.matchDate(line)
+		if dateMatch:
+			date = list(time.strptime(dateMatch.group(), self.getPattern()))
+		return date
 
