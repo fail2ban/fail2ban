@@ -218,3 +218,15 @@ class DateISO8601(DateTemplate):
 			value = dateMatch.group()
 			date = list(iso8601.parse_date(value).timetuple())
 		return date
+
+
+class DateASSPlike(DateTemplate):
+
+	def __init__(self):
+		DateTemplate.__init__(self)
+
+	def getDate(self, line):
+		# there is no need to parse the date.
+		# ASSP doesn't buffer the log output.
+		return MyTime.gmtime()
+
