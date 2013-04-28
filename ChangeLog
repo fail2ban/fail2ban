@@ -93,6 +93,8 @@ Borreli, blotus:
    * [a2b29b4] Fixed lots of typos in config files and documentation.
   hamilton5
    * [7ede1e8] Update dovecot filter config.
+	Romain Riviere
+	 * [0ac8746] Enhance named-refused filter for views.
 
 Special Kudos also go to Fabian Wenk, Arturo 'Buanzo' Busleiman, Tom
 Hendrikx and other TBN heroes supporting users on fail2ban-users
