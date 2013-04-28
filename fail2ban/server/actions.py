@@ -105,6 +105,14 @@ class Actions(JailThread):
 		return action
 	
 	##
+	# Returns the list of actions
+	#
+	# @return list of actions
+	
+	def getActions(self):
+		return self.__actions
+	
+	##
 	# Set the ban time.
 	#
 	# @param value the time

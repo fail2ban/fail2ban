@@ -440,8 +440,12 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["set", self.jailName, "addaction", action]),
 			(0, action))
 		self.assertEqual(
-			self.transm.proceed(["get", self.jailName, "addaction", action]),
+			self.transm.proceed(["get", self.jailName, "addaction"]),
 			(0, action))
+		self.assertEqual(
+			self.transm.proceed(
+				["get", self.jailName, "actions"])[1][0].getName(),
+			action)
 		for cmd, value in zip(cmdList, cmdValueList):
 			self.assertEqual(
 				self.transm.proceed(

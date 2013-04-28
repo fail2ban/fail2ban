@@ -236,6 +236,9 @@ class Server:
 	def getLastAction(self, name):
 		return self.__jails.getAction(name).getLastAction()
 	
+	def getActions(self, name):
+		return self.__jails.getAction(name).getActions()
+	
 	def delAction(self, name, value):
 		self.__jails.getAction(name).delAction(value)
 	
