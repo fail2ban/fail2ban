@@ -65,6 +65,9 @@ class Actions(JailThread):
 	# @param name The action name
 	
 	def addAction(self, name):
+		# Check is action name already exists
+		if name in [action.getName() for action in self.__actions]:
+			raise ValueError("Action %s already exists" % name)
 		action = Action(name)
 		self.__actions.append(action)
 	
