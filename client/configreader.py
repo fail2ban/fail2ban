@@ -72,7 +72,8 @@ class ConfigReader(SafeConfigParserWithIncludes):
 			logSys.debug("Reading config files: " + ', '.join(config_files))
 			config_files_read = SafeConfigParserWithIncludes.read(self, config_files)
 			missed = [ cf for cf in config_files if cf not in config_files_read ]
-			logSys.error("Error reading files: " + ', '.join(missed))
+			if missed:
+				logSys.error("Could not read config files: " + ', '.join(missed))
 			if config_files_read:
 				return True
 			logSys.error("Found no accessible config files for %r under %s" %
