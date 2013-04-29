@@ -44,6 +44,8 @@ Borreli, blotus:
   Daniel Black
    * [f0610c01] Allow more that a one word command when changing and Action via
      the fail2ban-client. Closes gh-134.
+	 * [945ad3d9] Fix dates on email actions to work in different locals. Closes
+	   gh-70. Thanks to iGeorgeX for the idea.
   blotus
    * [96eb8986] ' and " should also be escaped in action tags Closes gh-109
 - New features:
