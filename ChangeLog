@@ -46,6 +46,8 @@ Borreli, blotus:
      the fail2ban-client. Closes gh-134.
   blotus
    * [96eb8986] ' and " should also be escaped in action tags Closes gh-109
+	Christoph Theis, Nick Hilliard, Daniel Black
+	 * [27ec0a09,0bc7ff8a] Make syslog -v and syslog -vv formats work on FreeBSD
 - New features:
   Yaroslav Halchenko
    * [9ba27353] Add support for jail.d/{confilefile} and fail2ban.d/{configfile}
@@ -67,6 +69,15 @@ Borreli, blotus:
    * [be06b1b] Add action for iptables-ipsets. Closes gh-102.
   Soulard Morgan
    * [f336d9f] Add filter for webmin. Closes gh-99.
+	Nick Hillard
+	 * [d82cbb1] Add action for OpenBSD pf
+	Nick Munger, Ken Menzel, Daniel Black, Christoph Theis & Fabian Wenk
+	 * [d61d0d5,2906d16,e54f47] Add and enhance the bsd-ipfw action from FreeBSD
+	   ports.
+	Duncan Crombie & Gutza
+	 * [23a3178] Add sendmail filter from FreeBSD ports.
+	Ken Menzel
+	 * [67fcba3] Add filter for bsdftp from FreeBSD ports. 
 - Enhancements:
   Steven Hiscocks
    * [3d6791f] Ensure restart of Actions after a check fails occurs
