@@ -69,6 +69,27 @@ FAIL2BAN CONFIGURATION
 
 OPT: Create /etc/fail2ban/fail2ban.local containing:
 
+# Fail2Ban main configuration file
+#
+# Comments: use '#' for comment lines and ';' for inline comments
+#
+# Changes:  in most of the cases you should not modify this
+#           file, but provide customizations in fail2ban.local file, e.g.:
+#
+# [Definition]
+# loglevel = 4
+#
+[Definition]
+
+# Option:  logtarget
+# Notes.:  Set the log target. This could be a file, SYSLOG, STDERR or STDOUT.
+#          Only one log target can be specified.
+#          If you change logtarget from the default value and you are
+#          using logrotate -- also adjust or disable rotation in the
+#          corresponding configuration file
+#          (e.g. /etc/logrotate.d/fail2ban on Debian systems)
+# Values:  STDOUT STDERR SYSLOG file  Default:  /var/log/fail2ban.log
+#
 logtarget = /var/adm/fail2ban.log
 
 
