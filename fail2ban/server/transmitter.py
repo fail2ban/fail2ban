@@ -265,6 +265,8 @@ class Transmitter:
 		# Action
 		elif command[1] == "bantime":
 			return self.__server.getBanTime(name)
+		elif command[1] == "actions":
+			return self.__server.getActions(name)
 		elif command[1] == "addaction":
 			return self.__server.getLastAction(name).getName()
 		elif command[1] == "actionstart":

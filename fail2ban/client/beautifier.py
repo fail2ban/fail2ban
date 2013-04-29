@@ -132,6 +132,12 @@ class Beautifier:
 						msg = msg + "|- [" + str(c) + "]: " + ip + "\n"
 						c += 1
 					msg = msg + "`- [" + str(c) + "]: " + response[len(response)-1]
+			elif inC[2] == "actions":
+				if len(response) == 0:
+					msg = "No actions for jail %s" % inC[1]
+				else:
+					msg = "The jail %s has the following actions:\n" % inC[1]
+					msg += ", ".join(action.getName() for action in response)
 		except Exception:
 			logSys.warning("Beautifier error. Please report the error")
 			logSys.error("Beautify " + `response` + " with " + `self.__inputCmd` +

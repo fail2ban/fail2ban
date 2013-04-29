@@ -43,27 +43,38 @@ class ActionReader(DefinitionInitConfigReader):
 		["string", "actionunban", ""],
 	]
 
+	def __init__(self, file_, jailName, initOpts, **kwargs):
+		self._name = initOpts.get("actname", file_)
+		DefinitionInitConfigReader.__init__(
+			self, file_, jailName, initOpts, **kwargs)
+
+	def setName(self, name):
+		self._name = name
+
+	def getName(self):
+		return self._name
+
 	def read(self):
 		return ConfigReader.read(self, os.path.join("action.d", self._file))
 
 	def convert(self):
-		head = ["set", self._name]
+		head = ["set", self._jailName]
 		stream = list()
-		stream.append(head + ["addaction", self._file])
+		stream.append(head + ["addaction", self._name])
 		for opt in self._opts:
 			if opt == "actionstart":
-				stream.append(head + ["actionstart", self._file, self._opts[opt]])
+				stream.append(head + ["actionstart", self._name, self._opts[opt]])
 			elif opt == "actionstop":
-				stream.append(head + ["actionstop", self._file, self._opts[opt]])
+				stream.append(head + ["actionstop", self._name, self._opts[opt]])
 			elif opt == "actioncheck":
-				stream.append(head + ["actioncheck", self._file, self._opts[opt]])
+				stream.append(head + ["actioncheck", self._name, self._opts[opt]])
 			elif opt == "actionban":
-				stream.append(head + ["actionban", self._file, self._opts[opt]])
+				stream.append(head + ["actionban", self._name, self._opts[opt]])
 			elif opt == "actionunban":
-				stream.append(head + ["actionunban", self._file, self._opts[opt]])
+				stream.append(head + ["actionunban", self._name, self._opts[opt]])
 		# cInfo
 		if self._initOpts:
 			for p in self._initOpts:
-				stream.append(head + ["setcinfo", self._file, p, self._initOpts[p]])
+				stream.append(head + ["setcinfo", self._name, p, self._initOpts[p]])
 
 		return stream

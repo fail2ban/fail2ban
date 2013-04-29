@@ -59,7 +59,15 @@ The following options are applicable to all jails. Their meaning is described in
 \fBbackend\fR
 .TP
 \fBusedns\fR
-
+.PP
+Each jail can be configured with only a single filter, but may have multiple actions. By default, the name of a action is the action filename. In the case where multiple of the same action are to be used, the \fBactname\fR option can be assigned to the action to avoid duplicatione.g.:
+.PP
+.nf
+[ssh-iptables-ipset]
+enabled = true
+action = sendmail[name=ssh, dest=john@example.com, actname=mail-john]
+         sendmail[name=ssh, dest=paul@example.com, actname=mail-paul]
+.fi
 
 .SH "ACTION FILES"
 Action files specify which commands are executed to ban and unban an IP address. They are located under \fI/etc/fail2ban/action.d\fR.
