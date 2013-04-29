@@ -145,6 +145,7 @@ class Action:
 	def execActionStart(self):
 		if self.__cInfo:
 			if not Action.substituteRecursiveTags(self.__cInfo):
+				logSys.error("Cinfo/definitions contain self referencing definitions and cannot be resolved")
 				return False
 		startCmd = Action.replaceTag(self.__actionStart, self.__cInfo)
 		return Action.executeCmd(startCmd)
@@ -268,7 +269,9 @@ class Action:
 						value = value[0:m.start()] + tags[m.group(1)] + value[m.end():]
 						m = t.search(value, m.start())
 					else:
-						# TODO missing tag? to abort or not? there is the <STDIN> case maybe
+						# Missing tags are ok so we just continue on searching.
+						# cInfo can contain aInfo elements like <HOST> and valid shell
+						# constructs like <STDIN>.
 						m = t.search(value, m.start() + 1)
 			tags[tag] = value
 		return tags
