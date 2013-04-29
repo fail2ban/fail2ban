@@ -52,9 +52,9 @@ class ConfigReader(SafeConfigParserWithIncludes):
 		return self._basedir
 	
 	def read(self, filename):
-		if not (os.path.exists(self._basedir) and os.access(self._basedir, os.R_OK | os.X_OK)):
-			raise ValueError("Base configuration directory %s either does not exist "
-							 "or is not accessible" % self._basedir)
+		if not os.path.exists(self._basedir):
+			raise ValueError("Base configuration directory %s does not exist "
+							  % self._basedir)
 		basename = os.path.join(self._basedir, filename)
 		logSys.debug("Reading configs for %s under %s "  % (basename, self._basedir))
 		config_files = [ basename + ".conf",
@@ -65,27 +65,19 @@ class ConfigReader(SafeConfigParserWithIncludes):
 
 		# possible further customizations under a .conf.d directory
 		config_dir = basename + '.d'
-		if os.path.exists(config_dir):
-			if os.path.isdir(config_dir) and os.access(config_dir, os.X_OK | os.R_OK):
-				# files must carry .conf suffix as well
-				config_files += sorted(glob.glob('%s/*.conf' % config_dir))
-			else:
-				logSys.warn("%s exists but not a directory or not accessible"
-							 % config_dir)
+		config_files += sorted(glob.glob('%s/*.conf' % config_dir))
 
-		# check if files are accessible, warn if any is not accessible
-		# and remove it from the list
-		config_files_accessible = []
-		for f in config_files:
-			if os.access(f, os.R_OK):
-				config_files_accessible.append(f)
-			else:
-				logSys.warn("%s exists but not accessible - skipping" % f)
-
-		if len(config_files_accessible):
+		if len(config_files):
 			# at least one config exists and accessible
-			SafeConfigParserWithIncludes.read(self, config_files_accessible)
-			return True
+			logSys.debug("Reading config files: " + ', '.join(config_files))
+			config_files_read = SafeConfigParserWithIncludes.read(self, config_files)
+			missed = [ cf for cf in config_files if cf not in config_files_read ]
+			logSys.error("Error reading files: " + ', '.join(missed))
+			if config_files_read:
+				return True
+			logSys.error("Found no accessible config files for %r under %s" %
+						 ( filename, self.getBaseDir() ))
+			return False
 		else:
 			logSys.error("Found no accessible config files for %r " % filename
 						 + (["under %s" % self.getBaseDir(),
