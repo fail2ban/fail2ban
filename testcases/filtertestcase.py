@@ -602,8 +602,8 @@ class GetFailures(unittest.TestCase):
 				  "2005/08/14 12:00:00 [sshd] Invalid user fuck from 212.41.96.186\n"]
 	# TODO times wrong here:
 	FILENAME_05_OUTPUT = [('2601:3c03::f03c:91ff:fe93:a7eb', 5, 1124013539.0, open(FILENAME_05).readlines()[0:5], 64),
-						 [('2602:3c03::003c:91ff:fe93:a722', 2, 1124013539.0, open(FILENAME_05).readlines()[5:9], 64),
-						 [('2602:3c03::3412:31ec:33cd:cd11', 1, 1124013539.0, open(FILENAME_05).readlines()[9:10], 64),
+						 ('2602:3c03::003c:91ff:fe93:a722', 2, 1124013539.0, open(FILENAME_05).readlines()[5:9], 64),
+						 ('2602:3c03::3412:31ec:33cd:cd11', 1, 1124013539.0, open(FILENAME_05).readlines()[9:10], 64)]
 
 	def setUp(self):
 		"""Call before every test case."""
