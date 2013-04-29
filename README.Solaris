@@ -67,10 +67,24 @@ fail2ban.
 
 FAIL2BAN CONFIGURATION
 
-OPT: Edit /etc/fail2ban/fail2ban.conf and change logtarget to /var/adm/fail2ban.log
-REQ: Edit /etc/fail2ban/jail.conf and move down to the [ssh-tcpwrapper] section.
-     Here, set enabled = true and logpath = /var/adm/auth.log. Set the sendmail
-     dest address to something useful or drop the line to stop it spamming you.
+OPT: Create /etc/fail2ban/fail2ban.local containing:
+
+logtarget = /var/adm/fail2ban.log
+
+
+REQ: Create /etc/fail2ban/jail.local containing:
+
+[ssh-tcpwrapper]
+
+enabled     = true
+filter      = sshd
+action      = hostsdeny
+              sendmail-whois[name=SSH, dest=you@example.com]
+ignoreregex = for myuser from
+logpath     = /var/adm/auth.log
+
+Set the sendmail dest address to something useful or drop the line to stop it spamming you.
+Set 'myuser' to your username to avoid banning yourself or drop it.
 
 START (OR RESTART) FAIL2BAN
 
