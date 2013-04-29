@@ -30,6 +30,7 @@ __license__ = "GPL"
 from ticket import BanTicket
 from threading import Lock
 from mytime import MyTime
+from dnsutils import  DNSUtils
 import logging
 
 # Gets the instance of the logger.
@@ -48,7 +49,7 @@ class BanManager:
 	#
 	# Initialize members with default values.
 	
-	def __init__(self):
+	def __init__(self, debugtest=False):
 		## Mutex used to protect the ban list.
 		self.__lock = Lock()
 		## The ban list.
@@ -57,6 +58,8 @@ class BanManager:
 		self.__banTime = 600
 		## Total number of banned IP address
 		self.__banTotal = 0
+		if debugtest: # pragma: no branch - only True case is used when testing
+			self.inBanList = self.__inBanList
 	
 	##
 	# Set the ban time.
@@ -131,9 +134,11 @@ class BanManager:
 	#@staticmethod
 	def createBanTicket(ticket):
 		ip = ticket.getIP()
+		family = ticket.getFamily()
 		#lastTime = ticket.getTime()
 		lastTime = MyTime.time()
-		banTicket = BanTicket(ip, lastTime, ticket.getMatches())
+		banTicket = BanTicket(ip=ip, family=family, time=lastTime, matches=ticket.getMatches(),
+								prefix=ticket.getPrefix())
 		banTicket.setAttempt(ticket.getAttempt())
 		return banTicket
 	createBanTicket = staticmethod(createBanTicket)
@@ -179,7 +184,7 @@ class BanManager:
 	
 	def _inBanList(self, ticket):
 		for i in self.__banList:
-			if ticket.getIP() == i.getIP():
+			if ticket.getIP() == i.getIP() and ticket.getFamily() == i.getFamily():
 				return True
 		return False
 	
@@ -226,6 +231,7 @@ class BanManager:
 
 	##
 	# Gets the ticket for the specified IP.
+	# and removes it from the banlist.
 	#
 	# @return the ticket for the IP or False.
 	def getTicketByIP(self, ip):

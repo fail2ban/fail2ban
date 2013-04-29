@@ -31,7 +31,7 @@ from banmanager import BanManager
 from jailthread import JailThread
 from action import Action
 from mytime import MyTime
-import time, logging
+import time, logging, socket
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.actions")
@@ -51,11 +51,12 @@ class Actions(JailThread):
 	# Initialize the filter object with default values.
 	# @param jail the jail object
 	
-	def __init__(self, jail):
+	def __init__(self, jail, ipv6banprefix=64):
 		JailThread.__init__(self)
 		## The jail which contains this action.
 		self.jail = jail
 		self.__actions = list()
+		self._ipv6banprefix = ipv6banprefix
 		## The ban manager.
 		self.__banManager = BanManager()
 	
@@ -66,6 +67,7 @@ class Actions(JailThread):
 	
 	def addAction(self, name):
 		action = Action(name)
+		action.setCInfo('ipv6banprefix',self._ipv6banprefix)
 		self.__actions.append(action)
 	
 	##
@@ -113,6 +115,11 @@ class Actions(JailThread):
 		self.__banManager.setBanTime(value)
 		logSys.info("Set banTime = %s" % value)
 	
+	def setIPv6BanPrefix(self, value):
+		self._ipv6banprefix = value
+		if not self._isActive():
+			for action in self.__actions:
+				action.setCInfo('ipv6banprefix', value)
 	##
 	# Get the ban time.
 	#
@@ -160,6 +167,31 @@ class Actions(JailThread):
 		logSys.debug(self.jail.getName() + ": action terminated")
 		return True
 
+
+	#@staticmethod
+	def __ainfoFromTicket(bTicket):
+		aInfo = dict()
+		aInfo["ip"] = bTicket.getIP()
+		prefix = bTicket.getPrefix()
+		if bTicket.getFamily() == socket.AF_INET:
+			aInfo["ip4"] = bTicket.getIP()
+			aInfo["ipfamily"] = 'inet'
+			if prefix is None:
+				prefix = 32
+		else:
+			aInfo["ip6"] = bTicket.getIP()
+			if prefix is None:
+				prefix = 128
+			aInfo['ip6prefix'] = '%s/%s' % ( bTicket.getIP(), prefix )
+			aInfo["ipfamily"] = 'inet6'
+		aInfo['prefix'] = str(prefix)
+		aInfo['cidr'] = '%s/%s' % ( bTicket.getIP(), prefix )
+		aInfo["failures"] = bTicket.getAttempt()
+		aInfo["time"] = bTicket.getTime()
+		aInfo["matches"] = "".join(bTicket.getMatches())
+		return aInfo
+	__ainfoFromTicket = staticmethod(__ainfoFromTicket)
+
 	##
 	# Check for IP address to ban.
 	#
@@ -170,13 +202,10 @@ class Actions(JailThread):
 	def __checkBan(self):
 		ticket = self.jail.getFailTicket()
 		if ticket != False:
-			aInfo = dict()
 			bTicket = BanManager.createBanTicket(ticket)
-			aInfo["ip"] = bTicket.getIP()
-			aInfo["failures"] = bTicket.getAttempt()
-			aInfo["time"] = bTicket.getTime()
-			aInfo["matches"] = "".join(bTicket.getMatches())
+
 			if self.__banManager.addBanTicket(bTicket):
+				aInfo = Actions.__ainfoFromTicket(bTicket)
 				logSys.warn("[%s] Ban %s" % (self.jail.getName(), aInfo["ip"]))
 				for action in self.__actions:
 					action.execActionBan(aInfo)
@@ -212,11 +241,7 @@ class Actions(JailThread):
 	# ticket.
 	
 	def __unBan(self, ticket):
-		aInfo = dict()
-		aInfo["ip"] = ticket.getIP()
-		aInfo["failures"] = ticket.getAttempt()
-		aInfo["time"] = ticket.getTime()
-		aInfo["matches"] = "".join(ticket.getMatches())
+		aInfo = Actions.__ainfoFromTicket(ticket)
 		logSys.warn("[%s] Unban %s" % (self.jail.getName(), aInfo["ip"]))
 		for action in self.__actions:
 			action.execActionUnban(aInfo)

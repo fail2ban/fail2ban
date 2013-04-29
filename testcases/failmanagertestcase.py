@@ -49,46 +49,69 @@ class AddFailure(unittest.TestCase):
 					    ['100.100.10.10', 1000001500.0],
 					    ['100.100.10.10', 1000002000.0]]
 		
-		self.__failManager = FailManager()
+		self.__items6 = [[u'2600:3c01::f03c:91f:fe93:a7b', 1167605999.0],
+					    [u'2600:3c01::f03c:91f:fe93:a7b', 1167605999.0],
+					    [u'2600:3d01::003c:910f:fe90:7eb', 1000002000.0]]
+		self.__failManager = FailManager(debugtest=True)
 		for i in self.__items:
-			self.__failManager.addFailure(FailTicket(i[0], i[1]))
+			self.__failManager.addFailure(FailTicket(i[0], socket.AF_INET, i[1]))
+		for i in self.__items6:
+			self.__failManager.addFailure(FailTicket(i[0], socket.AF_INET6, i[1]))
 
 	def tearDown(self):
 		"""Call after every test case."""
-	
+
 	def testAdd(self):
+		self.assertEqual(self.__failManager.size(), 5)
+
+	def testFailmanagerTotal(self):
+		self.__failManager.setFailTotal(4)
+		self.assertEquals(self.__failManager.getFailTotal(),4)
+
+	def testFailmanagerMaxTime(self):
+		self.__failManager.setMaxTime(4)
+		self.assertEquals(self.__failManager.getMaxTime(),4)
+
+	def testDel(self):
+		self.__failManager.delFailure( (socket.AF_INET, '193.168.0.128') )
+		self.assertEqual(self.__failManager.size(), 4)
+		self.__failManager.delFailure( (socket.AF_INET, '111.111.1.111') )
+		self.assertEqual(self.__failManager.size(), 4)
+		self.__failManager.delFailure( (socket.AF_INET6, '2600:3d01::003c:910f:fe90:7eb') )
 		self.assertEqual(self.__failManager.size(), 3)
-	
-	def _testDel(self):
-		self.__failManager.delFailure('193.168.0.128')
-		self.__failManager.delFailure('111.111.1.111')
-		
-		self.assertEqual(self.__failManager.size(), 1)
-		
+
 	def testCleanupOK(self):
 		timestamp = 1167606999.0
 		self.__failManager.cleanup(timestamp)
 		self.assertEqual(self.__failManager.size(), 0)
-		
+
+	def testCleanupUpdateTime(self):
+		# The 100.100.10.10 should of updated to this last time
+		# therefore no deletes
+		timestamp = 1000002000.0
+		self.__failManager.cleanup(timestamp)
+		self.assertEqual(self.__failManager.size(), 5)
+
 	def testCleanupNOK(self):
 		timestamp = 1167605990.0
 		self.__failManager.cleanup(timestamp)
-		self.assertEqual(self.__failManager.size(), 2)
-	
+		self.assertEqual(self.__failManager.size(), 3)
+
 	def testbanOK(self):
 		self.__failManager.setMaxRetry(5)
 		#ticket = FailTicket('193.168.0.128', None)
-		ticket = self.__failManager.toBan()
+		ticket = self.__failManager.toBan(32)
 		self.assertEqual(ticket.getIP(), "193.168.0.128")
+		self.assertEqual(ticket.getPrefix(), 32)
 		self.assertTrue(isinstance(ticket.getIP(), str))
-	
+
 	def testbanNOK(self):
 		self.__failManager.setMaxRetry(10)
-		self.assertRaises(FailManagerEmpty, self.__failManager.toBan)
+		self.assertRaises(FailManagerEmpty, self.__failManager.toBan, *[32])
 
 	def testWindow(self):
-		ticket = self.__failManager.toBan()
+		ticket = self.__failManager.toBan(32)
 		self.assertNotEqual(ticket.getIP(), "100.100.10.10")
-		ticket = self.__failManager.toBan()
+		ticket = self.__failManager.toBan(32)
 		self.assertNotEqual(ticket.getIP(), "100.100.10.10")
-		self.assertRaises(FailManagerEmpty, self.__failManager.toBan)
+		self.assertRaises(FailManagerEmpty, self.__failManager.toBan, *[32])

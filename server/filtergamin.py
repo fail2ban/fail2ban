@@ -47,8 +47,8 @@ class FilterGamin(FileFilter):
 	# Initialize the filter object with default values.
 	# @param jail the jail object
 
-	def __init__(self, jail):
-		FileFilter.__init__(self, jail)
+	def __init__(self, jail, **kwargs):
+		FileFilter.__init__(self, jail, **kwargs)
 		self.__modified = False
 		# Gamin monitor
 		self.monitor = gamin.WatchMonitor()
@@ -76,7 +76,7 @@ class FilterGamin(FileFilter):
 		self.getFailures(path)
 		try:
 			while True:
-				ticket = self.failManager.toBan()
+				ticket = self.failManager.toBan(self._ipv6banprefix)
 				self.jail.putFailTicket(ticket)
 		except FailManagerEmpty:
 			self.failManager.cleanup(MyTime.time())

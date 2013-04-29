@@ -21,6 +21,7 @@ client/__init__.py
 client/configurator.py
 client/csocket.py
 server/asyncserver.py
+server/dnsutils.py
 server/filter.py
 server/filterpyinotify.py
 server/filtergamin.py
@@ -43,6 +44,14 @@ server/datetemplate.py
 server/mytime.py
 server/failregex.py
 testcases/files/testcase-usedns.log
+testcases/actionstestcase.py
+testcases/clienttestcase.py
+testcases/dnsutilstestcase.py
+testcases/dummyjail.py
+testcases/files/logs
+testcases/files/testcase-usedns.log
+testcases/jailtestcase.py
+testcases/logredirect.py
 testcases/banmanagertestcase.py
 testcases/failmanagertestcase.py
 testcases/clientreadertestcase.py

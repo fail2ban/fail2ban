@@ -37,8 +37,9 @@ class FailData:
 	def __init__(self):
 		self.__retry = 0
 		self.__lastTime = 0
-		self.__lastReset = 0
+		self.__family = False
 		self.__matches = []
+		self.__lastReset = 0
 
 	def setRetry(self, value):
 		self.__retry = value

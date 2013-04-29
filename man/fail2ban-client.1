@@ -146,6 +146,10 @@ a host will be banned for <JAIL>
 \fBset <JAIL> usedns <VALUE>\fR
 sets the usedns mode for <JAIL>
 .TP
+\fBset <JAIL> ipv6banprefix <VALUE>\fR
+sets the ban network prefix for
+IPv6 addresses for <JAIL>
+.TP
 \fBset <JAIL> banip <IP>\fR
 manually Ban <IP> for <JAIL>
 .TP
@@ -225,6 +229,10 @@ gets the time a host is banned for
 \fBget <JAIL> usedns\fR
 gets the usedns setting for <JAIL>
 .TP
+\fBget <JAIL> ipv6banprefix\fR
+gets the ban network prefix for
+IPv6 addresses for <JAIL>
+.TP
 \fBget <JAIL> maxretry\fR
 gets the number of failures
 allowed for <JAIL>
@@ -271,3 +279,4 @@ Licensed under the GNU General Public License v2 (GPL).
 .SH "SEE ALSO"
 .br 
 fail2ban-server(1)
+jail(5)

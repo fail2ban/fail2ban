@@ -29,6 +29,7 @@ __license__ = "GPL"
 
 import logging, os
 import threading
+import re
 #from subprocess import call
 
 # Gets the instance of the logger.
@@ -56,6 +57,10 @@ _RETCODE_HINTS = {
 # addresses.
 
 class Action:
+
+	MISSED_TAG = re.compile("(?P<pre>[^\n]*)(?P<tag><[a-z46]+>)(?P<post>[^\n]*)")
+
+	BLANK = re.compile('^\s*$')
 	
 	def __init__(self, name):
 		self.__name = name
@@ -294,6 +299,11 @@ class Action:
 			return True
 		
 		checkCmd = Action.replaceTag(self.__actionCheck, self.__cInfo)
+		if not aInfo == None:
+			checkCmd = Action.replaceTag(checkCmd, aInfo)
+			realCmd = Action.replaceTag(cmd, aInfo)
+		else:
+			realCmd = cmd
 		if not Action.executeCmd(checkCmd):
 			logSys.error("Invariant check failed. Trying to restore a sane" +
 						 " environment")
@@ -303,12 +313,6 @@ class Action:
 				logSys.fatal("Unable to restore environment")
 				return False
 
-		# Replace tags
-		if not aInfo == None:
-			realCmd = Action.replaceTag(cmd, aInfo)
-		else:
-			realCmd = cmd
-		
 		# Replace static fields
 		realCmd = Action.replaceTag(realCmd, self.__cInfo)
 		
@@ -328,6 +332,14 @@ class Action:
 
 	#@staticmethod
 	def executeCmd(realCmd):
+		def remove(match):
+			return ''
+
+		# if a tag is missing, like ip4 ip6 don't execute that line
+		realCmd = Action.MISSED_TAG.sub(remove, realCmd)
+
+		if Action.BLANK.match(realCmd):
+			return True
 		logSys.debug(realCmd)
 		_cmd_lock.acquire()
 		try: # Try wrapped within another try needed for python version < 2.5
