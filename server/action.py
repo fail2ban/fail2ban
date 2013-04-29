@@ -246,13 +246,13 @@ class Action:
 		return Action.executeCmd(stopCmd)
 
 	##
-	# Sort out tag definations within other tags
+	# Sort out tag definitions within other tags
 	#
 	# so:		becomes:
 	# a = 3		a = 3
 	# b = <a>_3	b = 3_3
 	# @param	tags, a dictionary
-	# @returns	tags altered or False if there is a recursive defination
+	# @returns	tags altered or False if there is a recursive definition
 	#@staticmethod
 	def substituteRecursiveTags(tags):
 		t = re.compile(r'<([^ >]+)>')
@@ -261,7 +261,7 @@ class Action:
 			m = t.search(value)
 			while m:
 				if m.group(1) == tag:
-					# recursive definations are bad
+					# recursive definitions are bad
 					return False
 				else:
 					if tags.has_key(m.group(1)):
