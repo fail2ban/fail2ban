@@ -269,6 +269,7 @@ Releasing
   * http://svnweb.freebsd.org/ports/head/security/py-fail2ban/
   * https://build.opensuse.org/package/show?package=fail2ban&project=openSUSE%3AFactory
   * http://sophie.zarb.org/sources/fail2ban (Mageia)
+  * https://trac.macports.org/browser/trunk/dports/security/fail2ban
 
 # Check distribution outstanding bugs
 
@@ -291,6 +292,8 @@ Releasing
             http://sources.gentoo.org/cgi-bin/viewvc.cgi/gentoo-x86/net-analyzer/fail2ban/metadata.xml?view=markup
   * openSUSE: Stephan Kulow <coolo@suse.com>
             https://build.opensuse.org/package/users?package=fail2ban&project=openSUSE%3AFactory
+  * Mac Ports: @Malbrouck on github (gh-49)
+            https://trac.macports.org/browser/trunk/dports/security/fail2ban/Portfile
 
 # Wait for feedback from distributors
 
