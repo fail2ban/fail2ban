@@ -1,0 +1,15 @@
+# From Gentoo:
+# http://sources.gentoo.org/cgi-bin/viewvc.cgi/gentoo-x86/net-analyzer/fail2ban/files/fail2ban-logrotate?view=markup
+#
+# Alternate Fedora view:
+#  http://pkgs.fedoraproject.org/cgit/fail2ban.git/tree/fail2ban-logrotate
+
+/var/log/fail2ban.log {
+    daily
+    rotate 7
+    missingok
+    compress
+    postrotate
+      /usr/bin/fail2ban-client set logtarget /var/log/fail2ban.log 1>/dev/null || true
+    endscript
+}
