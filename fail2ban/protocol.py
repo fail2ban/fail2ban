@@ -90,6 +90,7 @@ protocol = [
 ["get <JAIL> maxretry", "gets the number of failures allowed for <JAIL>"],
 ["get <JAIL> maxlines", "gets the number of lines to buffer for <JAIL>"],
 ["get <JAIL> addaction", "gets the last action which has been added for <JAIL>"],
+["get <JAIL> actions", "gets a list of actions for <JAIL>"],
 ["get <JAIL> actionstart <ACT>", "gets the start command for the action <ACT> for <JAIL>"],
 ["get <JAIL> actionstop <ACT>", "gets the stop command for the action <ACT> for <JAIL>"],
 ["get <JAIL> actioncheck <ACT>", "gets the check command for the action <ACT> for <JAIL>"],

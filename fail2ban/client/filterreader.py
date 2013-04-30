@@ -50,14 +50,14 @@ class FilterReader(DefinitionInitConfigReader):
 				for regex in self._opts[opt].split('\n'):
 					# Do not send a command if the rule is empty.
 					if regex != '':
-						stream.append(["set", self._name, "addfailregex", regex])
+						stream.append(["set", self._jailName, "addfailregex", regex])
 			elif opt == "ignoreregex":
 				for regex in self._opts[opt].split('\n'):
 					# Do not send a command if the rule is empty.
 					if regex != '':
-						stream.append(["set", self._name, "addignoreregex", regex])		
+						stream.append(["set", self._jailName, "addignoreregex", regex])		
 		if self._initOpts:
 			if 'maxlines' in self._initOpts:
-				stream.append(["set", self._name, "maxlines", self._initOpts["maxlines"]])
+				stream.append(["set", self._jailName, "maxlines", self._initOpts["maxlines"]])
 		return stream
 		
