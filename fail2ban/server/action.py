@@ -27,7 +27,7 @@ __date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging, os, subprocess, time, signal
+import logging, os, subprocess, time, signal, tempfile
 import threading
 #from subprocess import call
 
@@ -353,8 +353,11 @@ class Action:
 		logSys.debug(realCmd)
 		_cmd_lock.acquire()
 		try: # Try wrapped within another try needed for python version < 2.5
+			stdout = tempfile.TemporaryFile(suffix=".stdout", prefix="fai2ban_")
+			stderr = tempfile.TemporaryFile(suffix=".stderr", prefix="fai2ban_")
 			try:
-				popen = subprocess.Popen(realCmd, shell=True)
+				popen = subprocess.Popen(
+					realCmd, stdout=stdout, stderr=stderr, shell=True)
 				stime = time.time()
 				retcode = popen.poll()
 				while time.time() - stime <= timeout and retcode is None:
@@ -375,6 +378,15 @@ class Action:
 				return False
 		finally:
 			_cmd_lock.release()
+
+		std_level = retcode == 0 and logging.DEBUG or logging.ERROR
+		if std_level >= logSys.getEffectiveLevel():
+			stdout.seek(0)
+			logSys.log(std_level, "%s stdout: %r" % (realCmd, stdout.read()))
+			stderr.seek(0)
+			logSys.log(std_level, "%s stderr: %r" % (realCmd, stderr.read()))
+		stdout.close()
+		stderr.close()
 
 		if retcode == 0:
 			logSys.debug("%s returned successfully" % realCmd)

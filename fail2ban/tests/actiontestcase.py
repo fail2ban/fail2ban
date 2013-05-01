@@ -103,3 +103,11 @@ class ExecuteAction(unittest.TestCase):
 		self.assertAlmostEqual(time.time() - stime, 2.1, places=1)
 		self.assertTrue(self._is_logged('sleep 60 timed out after 2 seconds'))
 		self.assertTrue(self._is_logged('sleep 60 killed with SIGTERM'))
+
+	def testCaptureStdOutErr(self):
+		Action.executeCmd('echo "How now brown cow"')
+		self.assertTrue(self._is_logged("'How now brown cow\\n'"))
+		Action.executeCmd(
+			'echo "The rain in Spain stays mainly in the plain" 1>&2')
+		self.assertTrue(self._is_logged(
+			"'The rain in Spain stays mainly in the plain\\n'"))
