@@ -219,4 +219,3 @@ class DateISO8601(DateTemplate):
 			date = list(iso8601.parse_date(value).timetuple())
 		return date
 
-
