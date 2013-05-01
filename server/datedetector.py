@@ -29,7 +29,7 @@ __license__ = "GPL"
 
 import time, logging
 
-from datetemplate import DateStrptime, DateTai64n, DateEpoch, DateISO8601, DateASSPlike
+from datetemplate import DateStrptime, DateTai64n, DateEpoch, DateISO8601
 from threading import Lock
 
 # Gets the instance of the logger.
@@ -162,8 +162,8 @@ class DateDetector:
 			template.setPattern("%y%m%d %H:%M:%S")
 			self._appendTemplate(template)
 			# ASSP: Apr-27-13 02:33:06
-			template = DateASSPlike()
-			template.setName("ASSP like date format")
+			template = DateStrptime()
+			template.setName("Month-Day-Year Hour:Minute:Second")
 			template.setRegex("^[a-zA-Z]{3}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%b-%d-%y %H:%M:%S")
 			self._appendTemplate(template)
