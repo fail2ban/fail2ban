@@ -85,7 +85,7 @@ class DateDetectorTest(unittest.TestCase):
 			"2005-01-23T21:59:59-05:00Z", #ISO 8601 with TZ
 			"<01/23/05@21:59:59>",
 			"050123 21:59:59", # MySQL
-			"Apr-27-13 01:27:45", # ASSP like
+			"Jan-23-05 21:59:59", # ASSP like
 			):
 			log = sdate + "[sshd] error: PAM: Authentication failure"
 			# exclude
