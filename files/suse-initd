@@ -2,10 +2,10 @@
 #
 ### BEGIN INIT INFO
 # Provides:          fail2ban
-# Required-Start:    $syslog $remote_fs $local_fs
-# Should-Start:      $time $network iptables
-# Required-Stop:     $syslog $remote_fs $local_fs
-# Should-Stop:       $time $network iptables
+# Required-Start:    $remote_fs $local_fs
+# Should-Start:      $syslog $time $network iptables
+# Required-Stop:     $remote_fs $local_fs
+# Should-Stop:       $syslog $time $network iptables
 # Default-Start:     3 5
 # Default-Stop:      0 1 2 6
 # Pidfile:           /var/run/fail2ban/fail2ban.pid
