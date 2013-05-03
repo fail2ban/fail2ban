@@ -56,10 +56,10 @@ class Beautifier:
 				msg = "Jail started"
 			elif inC[0] == "stop":
 				if len(inC) == 1:
-					if response == None:
+					if response is None:
 						msg = "Shutdown successful"
 				else:
-					if response == None:
+					if response is None:
 						msg = "Jail stopped"
 			elif inC[0] == "add":
 				msg = "Added jail " + response

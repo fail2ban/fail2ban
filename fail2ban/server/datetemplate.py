@@ -65,7 +65,7 @@ class DateTemplate:
 	
 	def matchDate(self, line):
 		dateMatch = self.__cRegex.search(line)
-		if not dateMatch == None:
+		if not dateMatch is None:
 			self.__hits += 1
 		return dateMatch
 	

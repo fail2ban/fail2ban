@@ -100,7 +100,7 @@ Commands specified in the [Definition] section are executed through a system she
 return 0, otherwise error would be logged.  Moreover if \fBactioncheck\fR exits with non-0 status, it is taken as indication that firewall status has changed and fail2ban needs to reinitialize itself (i.e. issue \fBactionstop\fR and \fBactionstart\fR commands).
 
 Tags are enclosed in <>.  All the elements of [Init] are tags that are replaced in all action commands.  Tags can be added by the
-\fBfail2ban-client\fR using the setctag command.
+\fBfail2ban-client\fR using the setctag command. \fB<br>\fR is a tag that is always a new line (\\n).
 
 More than a single command is allowed to be specified. Each command needs to be on a separate line and indented with whitespaces without blank lines. The following example defines
 two commands to be executed.

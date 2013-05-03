@@ -17,13 +17,7 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
-
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
+__author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -203,10 +197,7 @@ class DateDetector:
 
 	def getUnixTime(self, line):
 		date = self.getTime(line)
-		if date == None:
-			return None
-		else:
-			return time.mktime(tuple(date))
+		return date and time.mktime(tuple(date))
 
 	##
 	# Sort the template lists using the hits score. This method is not called

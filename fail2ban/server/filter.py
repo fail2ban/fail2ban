@@ -17,14 +17,8 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-#
-# $Revision$
-
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Cyril Jaquier and Fail2Ban Contributors"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
 from failmanager import FailManagerEmpty
@@ -384,7 +378,7 @@ class Filter(JailThread):
 					continue
 				# The failregex matched.
 				date = self.dateDetector.getUnixTime(timeLine)
-				if date == None:
+				if date is None:
 					logSys.debug("Found a match for %r but no valid date/time "
 								 "found for %r. Please file a detailed issue on"
 								 " https://github.com/fail2ban/fail2ban/issues "
@@ -521,7 +515,7 @@ class FileFilter(Filter):
 
 	def getFailures(self, filename):
 		container = self.getFileContainer(filename)
-		if container == None:
+		if container is None:
 			logSys.error("Unable to get failures in " + filename)
 			return False
 		# Try to open log file.
@@ -626,7 +620,7 @@ class FileContainer:
 		self.__handler.seek(self.__pos)
 
 	def readline(self):
-		if self.__handler == None:
+		if self.__handler is None:
 			return ""
 		line = self.__handler.readline()
 		try:
@@ -639,7 +633,7 @@ class FileContainer:
 		return line
 
 	def close(self):
-		if not self.__handler == None:
+		if not self.__handler is None:
 			# Saves the last position.
 			self.__pos = self.__handler.tell()
 			# Closes the file.
