@@ -21,7 +21,7 @@ code-review and minor additions from Yaroslav Halchenko.
      to how it looked on Debian systems:
      - default action could be configured once for all jails
      - jails definitions only provide customizations (port, logpath)
-	 - no need to specify 'filter' if name matches jail name
+     - no need to specify 'filter' if name matches jail name
   Steven Hiscocks
    * [..5aef036] Core functionality moved into fail2ban/ module.
      Closes gh-26
@@ -31,6 +31,9 @@ code-review and minor additions from Yaroslav Halchenko.
    * [8af32ed] Guacamole filter and support for Apache Tomcat date
      format
    * [..4869186] Python3 support
+   * [..b6059f4] 'timeout' option for actions Close gh-60 and Debian bug
+     #410077.  Also it would now capture and include stdout and stderr
+     into logging messages in case of error or at DEBUG loglevel.
 - Enhancements
   Steven Hiscocks
    * Replacing use of deprecated API (.warning, .assertEqual, etc)
