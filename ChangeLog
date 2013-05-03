@@ -118,6 +118,7 @@ Borreli, blotus:
      Closes gh-126. Bug report by Michael Heuberger.
    * [40c5a2d] adding more of diagnostic messages into -client while starting
      the daemon.
+   * [8e63d4c] Compare against None with 'is' instead of '=='.
   Daniel Black
    * [3aeb1a9] Add jail.conf manual page. Closes gh-143.
    * [MANY] man page edits.
