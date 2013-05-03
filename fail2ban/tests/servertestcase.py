@@ -472,6 +472,14 @@ class Transmitter(TransmitterBase):
 				["set", self.jailName, "delcinfo", action, "KEY"]),
 			(0, None))
 		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "timeout", action, "10"]),
+			(0, 10))
+		self.assertEqual(
+			self.transm.proceed(
+				["get", self.jailName, "timeout", action]),
+			(0, 10))
+		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "delaction", action]),
 			(0, None))
 		self.assertEqual(

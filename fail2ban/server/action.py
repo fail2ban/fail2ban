@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging, os
+import logging, os, subprocess, time, signal, tempfile
 import threading, re
 #from subprocess import call
 
@@ -33,7 +33,7 @@ _cmd_lock = threading.Lock()
 
 # Some hints on common abnormal exit codes
 _RETCODE_HINTS = {
-	0x7f00: '"Command not found".  Make sure that all commands in %(realCmd)r '
+	127: '"Command not found".  Make sure that all commands in %(realCmd)r '
 	        'are in the PATH of fail2ban-server process '
 			'(grep -a PATH= /proc/`pidof -x fail2ban-server`/environ). '
 			'You may want to start '
@@ -41,6 +41,10 @@ _RETCODE_HINTS = {
 			'"fail2ban-client reload" in another shell session and observe if '
 			'additional informative error messages appear in the terminals.'
 	}
+
+# Dictionary to lookup signal name from number
+signame = dict((num, name)
+	for name, num in signal.__dict__.iteritems() if name.startswith("SIG"))
 
 ##
 # Execute commands.
@@ -53,6 +57,7 @@ class Action:
 	
 	def __init__(self, name):
 		self.__name = name
+		self.__timeout = 60
 		self.__cInfo = dict()
 		## Command executed in order to initialize the system.
 		self.__actionStart = ''
@@ -81,6 +86,23 @@ class Action:
 	
 	def getName(self):
 		return self.__name
+	
+	##
+	# Sets the timeout period for commands.
+	#
+	# @param timeout timeout period in seconds
+	
+	def setTimeout(self, timeout):
+		self.__timeout = int(timeout)
+		logSys.debug("Set action %s timeout = %i" % (self.__name, timeout))
+	
+	##
+	# Returns the action timeout period for commands.
+	#
+	# @return the timeout period in seconds
+	
+	def getTimeout(self):
+		return self.__timeout
 	
 	##
 	# Sets a "CInfo".
@@ -142,7 +164,7 @@ class Action:
 				logSys.error("Cinfo/definitions contain self referencing definitions and cannot be resolved")
 				return False
 		startCmd = Action.replaceTag(self.__actionStart, self.__cInfo)
-		return Action.executeCmd(startCmd)
+		return Action.executeCmd(startCmd, self.__timeout)
 	
 	##
 	# Set the "ban" command.
@@ -238,7 +260,7 @@ class Action:
 	
 	def execActionStop(self):
 		stopCmd = Action.replaceTag(self.__actionStop, self.__cInfo)
-		return Action.executeCmd(stopCmd)
+		return Action.executeCmd(stopCmd, self.__timeout)
 
 	##
 	# Sort out tag definitions within other tags
@@ -324,12 +346,12 @@ class Action:
 			return True
 		
 		checkCmd = Action.replaceTag(self.__actionCheck, self.__cInfo)
-		if not Action.executeCmd(checkCmd):
+		if not Action.executeCmd(checkCmd, self.__timeout):
 			logSys.error("Invariant check failed. Trying to restore a sane" +
 						 " environment")
 			self.execActionStop()
 			self.execActionStart()
-			if not Action.executeCmd(checkCmd):
+			if not Action.executeCmd(checkCmd, self.__timeout):
 				logSys.fatal("Unable to restore environment")
 				return False
 
@@ -342,7 +364,7 @@ class Action:
 		# Replace static fields
 		realCmd = Action.replaceTag(realCmd, self.__cInfo)
 		
-		return Action.executeCmd(realCmd)
+		return Action.executeCmd(realCmd, self.__timeout)
 
 	##
 	# Executes a command.
@@ -357,27 +379,59 @@ class Action:
 	# @return True if the command succeeded
 
 	#@staticmethod
-	def executeCmd(realCmd):
+	def executeCmd(realCmd, timeout=60):
 		logSys.debug(realCmd)
 		_cmd_lock.acquire()
 		try: # Try wrapped within another try needed for python version < 2.5
+			stdout = tempfile.TemporaryFile(suffix=".stdout", prefix="fai2ban_")
+			stderr = tempfile.TemporaryFile(suffix=".stderr", prefix="fai2ban_")
 			try:
-				# The following line gives deadlock with multiple jails
-				#retcode = call(realCmd, shell=True)
-				retcode = os.system(realCmd)
-				if retcode == 0:
-					logSys.debug("%s returned successfully" % realCmd)
-					return True
-				else:
-					msg = _RETCODE_HINTS.get(retcode, None)
-					logSys.error("%s returned %x" % (realCmd, retcode))
-					if msg:
-						logSys.info("HINT on %x: %s"
-									% (retcode, msg % locals()))
+				popen = subprocess.Popen(
+					realCmd, stdout=stdout, stderr=stderr, shell=True)
+				stime = time.time()
+				retcode = popen.poll()
+				while time.time() - stime <= timeout and retcode is None:
+					time.sleep(0.1)
+					retcode = popen.poll()
+				if retcode is None:
+					logSys.error("%s timed out after %i seconds." %
+						(realCmd, timeout))
+					os.kill(popen.pid, signal.SIGTERM) # Terminate the process
+					time.sleep(0.1)
+					retcode = popen.poll()
+					if retcode is None: # Still going...
+						os.kill(popen.pid, signal.SIGKILL) # Kill the process
+						time.sleep(0.1)
+						retcode = popen.poll()
 			except OSError, e:
 				logSys.error("%s failed with %s" % (realCmd, e))
+				return False
 		finally:
 			_cmd_lock.release()
+
+		std_level = retcode == 0 and logging.DEBUG or logging.ERROR
+		if std_level >= logSys.getEffectiveLevel():
+			stdout.seek(0)
+			logSys.log(std_level, "%s stdout: %r" % (realCmd, stdout.read()))
+			stderr.seek(0)
+			logSys.log(std_level, "%s stderr: %r" % (realCmd, stderr.read()))
+		stdout.close()
+		stderr.close()
+
+		if retcode == 0:
+			logSys.debug("%s returned successfully" % realCmd)
+			return True
+		elif retcode is None:
+			logSys.error("Unable to kill PID %i: %s" % (popen.pid, realCmd))
+		elif retcode < 0:
+			logSys.error("%s killed with %s" %
+				(realCmd, signame.get(-retcode, "signal %i" % -retcode)))
+		else:
+			msg = _RETCODE_HINTS.get(retcode, None)
+			logSys.error("%s returned %i" % (realCmd, retcode))
+			if msg:
+				logSys.info("HINT on %i: %s"
+							% (retcode, msg % locals()))
 		return False
 	executeCmd = staticmethod(executeCmd)
 	

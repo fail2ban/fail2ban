@@ -234,6 +234,11 @@ class Transmitter:
 			value = " ".join(command[3:])
 			self.__server.setActionUnban(name, act, value)
 			return self.__server.getActionUnban(name, act)
+		elif command[1] == "timeout":
+			act = command[2]
+			value = int(command[3])
+			self.__server.setActionTimeout(name, act, value)
+			return self.__server.getActionTimeout(name, act)
 		raise Exception("Invalid command (no set action or not yet implemented)")
 	
 	def __commandGet(self, command):
@@ -288,6 +293,9 @@ class Transmitter:
 			act = command[2]
 			key = command[3]
 			return self.__server.getCInfo(name, act, key)
+		elif command[1] == "timeout":
+			act = command[2]
+			return self.__server.getActionTimeout(name, act)
 		raise Exception("Invalid command (no get action or not yet implemented)")
 	
 	def status(self, command):

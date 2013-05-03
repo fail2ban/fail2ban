@@ -292,6 +292,12 @@ class Server:
 	
 	def getActionUnban(self, name, action):
 		return self.__jails.getAction(name).getAction(action).getActionUnban()
+	
+	def setActionTimeout(self, name, action, value):
+		self.__jails.getAction(name).getAction(action).setTimeout(value)
+	
+	def getActionTimeout(self, name, action):
+		return self.__jails.getAction(name).getAction(action).getTimeout()
 		
 	# Status
 	def status(self):
