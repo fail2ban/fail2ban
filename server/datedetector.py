@@ -155,6 +155,12 @@ class DateDetector:
 			template.setRegex("^\d{2}\d{2}\d{2} +\d{1,2}:\d{2}:\d{2}")
 			template.setPattern("%y%m%d %H:%M:%S")
 			self._appendTemplate(template)
+			# ASSP: Apr-27-13 02:33:06
+			template = DateStrptime()
+			template.setName("Month-Day-Year Hour:Minute:Second")
+			template.setRegex("^[a-zA-Z]{3}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%b-%d-%y %H:%M:%S")
+			self._appendTemplate(template)
 		finally:
 			self.__lock.release()
 	

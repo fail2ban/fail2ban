@@ -7,7 +7,7 @@
 Fail2Ban (version 0.8.9)                                              2013/04/XX
 ================================================================================
 
-ver. 0.8.9 (2013/04/XXX) - wanna-be-stable
+ver. 0.8.9 (2013/04/XX) - wanna-be-stable
 ----------
 
 Although primarily a bugfix release, it incorporates many new
@@ -72,6 +72,8 @@ Borreli, blotus:
   Soulard Morgan
    * [f336d9f] Add filter for webmin. Closes gh-99.
 - Enhancements:
+  Enrico Labedzki
+   * [1524b07] Added Datew format for ASSP SMTP Proxy.
   Steven Hiscocks
    * [3d6791f] Ensure restart of Actions after a check fails occurs
      consistently. Closes gh-172.
