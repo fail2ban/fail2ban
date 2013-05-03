@@ -29,6 +29,8 @@ code-review and minor additions from Yaroslav Halchenko.
   Steven Hiscocks
    * Replacing use of deprecated API (.warning, .assertEqual, etc)
    * [..a648cc2] Filters can have options now too
+   * [..e019ab7] Multiple instances of the same action are allowed in the
+     same jail -- use actname option to disambiguate.
 
 ver. 0.8.9 (2013/04/XXX) - wanna-be-stable
 ----------
