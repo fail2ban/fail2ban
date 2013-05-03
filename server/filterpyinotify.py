@@ -66,7 +66,7 @@ class FilterPyinotify(FileFilter):
 	def callback(self, event, origin=''):
 		logSys.debug("%sCallback for Event: %s", origin, event)
 		path = event.pathname
-		if event.mask & pyinotify.IN_CREATE:
+		if event.mask & ( pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO ):
 			# skip directories altogether
 			if event.mask & pyinotify.IN_ISDIR:
 				logSys.debug("Ignoring creation of directory %s", path)
@@ -130,7 +130,7 @@ class FilterPyinotify(FileFilter):
 		if not (path_dir in self.__watches):
 			# we need to watch also  the directory for IN_CREATE
 			self.__watches.update(
-				self.__monitor.add_watch(path_dir, pyinotify.IN_CREATE))
+				self.__monitor.add_watch(path_dir, pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO))
 			logSys.debug("Added monitor for the parent directory %s", path_dir)
 
 		self._addFileWatcher(path)

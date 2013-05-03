@@ -29,6 +29,8 @@ Borreli, blotus:
    * [ab044b75] delay check for the existence of config directory until read.
    * [3b4084d4] fixing up for handling of TAI64N timestamps.
    * [154aa38e] do not shutdown logging until all jails stop.
+   * [f2156604] pyinotify -- monitor IN_MOVED_TO events. Closes gh-184.
+     Thanks to Jon Foster for report and troubleshooting.
   Orion Poplawski
    * [e4aedfdc00] pyinotify - use bitwise op on masks and do not try tracking
      newly created directories.
@@ -44,8 +46,8 @@ Borreli, blotus:
   Daniel Black
    * [f0610c01] Allow more that a one word command when changing and Action via
      the fail2ban-client. Closes gh-134.
-	 * [945ad3d9] Fix dates on email actions to work in different locals. Closes
-	   gh-70. Thanks to iGeorgeX for the idea.
+   * [945ad3d9] Fix dates on email actions to work in different locals. Closes
+     gh-70. Thanks to iGeorgeX for the idea.
   blotus
    * [96eb8986] ' and " should also be escaped in action tags Closes gh-109
 - New features:
@@ -98,8 +100,8 @@ Borreli, blotus:
    * [a2b29b4] Fixed lots of typos in config files and documentation.
   hamilton5
    * [7ede1e8] Update dovecot filter config.
-	Romain Riviere
-	 * [0ac8746] Enhance named-refused filter for views.
+  Romain Riviere
+   * [0ac8746] Enhance named-refused filter for views.
 
 Special Kudos also go to Fabian Wenk, Arturo 'Buanzo' Busleiman, Tom
 Hendrikx and other TBN heroes supporting users on fail2ban-users

@@ -475,6 +475,40 @@ def get_monitor_failures_testcase(Filter_):
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
 
+		def _test_move_into_file(self, interim_kill=False):
+			# if we move a new file into the location of an old (monitored) file
+			self.file1 = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+												  n=100)
+			# make sure that it is monitored first
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
+
+			if interim_kill:
+				_killfile(None, self.name)
+				time.sleep(0.2)				  # let them know
+
+			# now create a new one to override old one
+			self.file = _copy_lines_between_files(GetFailures.FILENAME_01,
+												   self.name + '.new', n=100)
+			os.rename(self.name + '.new', self.name)
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
+
+			# and to make sure that it now monitored for changes
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assertEqual(self.filter.failManager.getFailTotal(), 9)
+
+
+		def test_move_into_file(self):
+			self._test_move_into_file(interim_kill=False)
+
+		def test_move_into_file_after_removed(self):
+			# exactly as above test + remove file explicitly
+			# to test against possible drop-out of the file from monitoring
+		    self._test_move_into_file(interim_kill=True)
+
+
 		def test_new_bogus_file(self):
 			# to make sure that watching whole directory does not effect
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
