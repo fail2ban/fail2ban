@@ -113,7 +113,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 					v = self.getint(sec, option[1])
 				else:
 					v = self.get(sec, option[1])
-				if not pOptions == None and option[1] in pOptions:
+				if not pOptions is None and option[1] in pOptions:
 					continue
 				values[option[1]] = v
 			except NoSectionError, e:
@@ -121,7 +121,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 				logSys.error(e)
 				values[option[1]] = option[2]
 			except NoOptionError:
-				if not option[2] == None:
+				if not option[2] is None:
 					logSys.warn("'%s' not defined in '%s'. Using default one: %r"
 								% (option[1], sec, option[2]))
 					values[option[1]] = option[2]

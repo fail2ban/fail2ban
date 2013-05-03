@@ -350,9 +350,9 @@ class Fail2banClient:
 		# Set socket path
 		self.__configurator.readEarly()
 		conf = self.__configurator.getEarlyOptions()
-		if self.__conf["socket"] == None:
+		if self.__conf["socket"] is None:
 			self.__conf["socket"] = conf["socket"]
-		if self.__conf["pidfile"] == None:
+		if self.__conf["pidfile"] is None:
 			self.__conf["pidfile"] = conf["pidfile"]
 		logSys.info("Using socket file " + self.__conf["socket"])
 

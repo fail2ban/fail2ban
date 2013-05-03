@@ -17,14 +17,8 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
-
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Cyril Jaquier and Fail2Ban Contributors"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import logging, os
@@ -304,7 +298,7 @@ class Action:
 				return False
 
 		# Replace tags
-		if not aInfo == None:
+		if not aInfo is None:
 			realCmd = Action.replaceTag(cmd, aInfo)
 		else:
 			realCmd = cmd
