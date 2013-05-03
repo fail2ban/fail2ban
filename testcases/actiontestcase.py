@@ -61,6 +61,27 @@ class ExecuteAction(unittest.TestCase):
 	def _is_logged(self, s):
 		return s in self._log.getvalue()
 
+	def testSubstituteRecursiveTags(self):
+		aInfo = {
+			'HOST': "192.0.2.0",
+			'ABC': "123 <HOST>",
+			'xyz': "890 <ABC>",
+		}
+		# Recursion is bad
+		self.assertFalse(Action.substituteRecursiveTags({'A': '<A>'}))
+		self.assertFalse(Action.substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
+		self.assertFalse(Action.substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
+		# missing tags are ok
+		self.assertEquals(Action.substituteRecursiveTags({'A': '<C>'}), {'A': '<C>'})
+		self.assertEquals(Action.substituteRecursiveTags({'A': '<C> <D> <X>','X':'fun'}), {'A': '<C> <D> fun', 'X':'fun'})
+		self.assertEquals(Action.substituteRecursiveTags({'A': '<C> <B>', 'B': 'cool'}), {'A': '<C> cool', 'B': 'cool'})
+		# rest is just cool
+		self.assertEquals(Action.substituteRecursiveTags(aInfo),
+								{ 'HOST': "192.0.2.0",
+									'ABC': '123 192.0.2.0',
+									'xyz': '890 123 192.0.2.0',
+								})
+
 	def testReplaceTag(self):
 		aInfo = {
 			'HOST': "192.0.2.0",

@@ -22,7 +22,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import logging, os
-import threading
+import threading, re
 #from subprocess import call
 
 # Gets the instance of the logger.
@@ -137,6 +137,10 @@ class Action:
 	# @return True if the command succeeded
 	
 	def execActionStart(self):
+		if self.__cInfo:
+			if not Action.substituteRecursiveTags(self.__cInfo):
+				logSys.error("Cinfo/definitions contain self referencing definitions and cannot be resolved")
+				return False
 		startCmd = Action.replaceTag(self.__actionStart, self.__cInfo)
 		return Action.executeCmd(startCmd)
 	
@@ -236,6 +240,38 @@ class Action:
 		stopCmd = Action.replaceTag(self.__actionStop, self.__cInfo)
 		return Action.executeCmd(stopCmd)
 
+	##
+	# Sort out tag definitions within other tags
+	#
+	# so:		becomes:
+	# a = 3		a = 3
+	# b = <a>_3	b = 3_3
+	# @param	tags, a dictionary
+	# @returns	tags altered or False if there is a recursive definition
+	#@staticmethod
+	def substituteRecursiveTags(tags):
+		t = re.compile(r'<([^ >]+)>')
+		for tag, value in tags.iteritems():
+			value = str(value)
+			m = t.search(value)
+			while m:
+				if m.group(1) == tag:
+					# recursive definitions are bad
+					return False
+				else:
+					if tags.has_key(m.group(1)):
+						value = value[0:m.start()] + tags[m.group(1)] + value[m.end():]
+						m = t.search(value, m.start())
+					else:
+						# Missing tags are ok so we just continue on searching.
+						# cInfo can contain aInfo elements like <HOST> and valid shell
+						# constructs like <STDIN>.
+						m = t.search(value, m.start() + 1)
+			tags[tag] = value
+		return tags
+	substituteRecursiveTags = staticmethod(substituteRecursiveTags)
+
+	#@staticmethod
 	def escapeTag(tag):
 		for c in '\\#&;`|*?~<>^()[]{}$\n\'"':
 			if c in tag:

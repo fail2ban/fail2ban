@@ -94,6 +94,8 @@ Borreli, blotus:
    * [c8c7b0b,23bbc60] Better logging of log file read errors.
    * [3665e6d] Added code coverage to development process.
    * [41b9f7b,32d10e9] More complete ssh filter rules to match openssh source.
+   * [1d9abd1] Action files can have tags in definition that refer to other
+     tags.
   Pascal Borreli
    * [a2b29b4] Fixed lots of typos in config files and documentation.
   hamilton5
