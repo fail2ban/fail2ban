@@ -13,7 +13,6 @@ Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM ::ffff:1.2.3.4
 #4
 Jul 20 14:42:11 localhost sshd[22708]: Invalid user ftp from 211.114.51.213
 
-
 #5 new filter introduced after looking at 44087D8C.9090407@bluewin.ch
 Mar  3 00:17:22 [sshd] User root from 210.188.220.49 not allowed because not listed in AllowUsers
 Feb 25 14:34:11 belka sshd[31607]: User root from ferrari.inescn.pt not allowed because not listed in AllowUsers
@@ -29,15 +28,11 @@ Oct 15 19:51:35 server sshd[7592]: Address 1.2.3.4 maps to 1234.bbbbbb.com, but 
 #8 DenyUsers https://github.com/fail2ban/fail2ban/issues/47
 Apr 16 22:01:15 al-ribat sshd[5154]: User root from 46.45.128.3 not allowed because listed in DenyUsers
 
-#9 http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=648020
-# should this be removed? regex was removed in https://github.com/fail2ban/fail2ban/commit/bb7628591c124309774d5f4787d2a4f07cf6b906
-Nov  8 11:19:38 bar sshd[25427]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=1.2.3.6
-
-#10 OpenSolaris patch - pull https://github.com/fail2ban/fail2ban/pull/182
+#9 OpenSolaris patch - pull https://github.com/fail2ban/fail2ban/pull/182
 Mar 29 05:59:23 dusky sshd[20878]: [ID 800047 auth.info] Failed keyboard-interactive for <invalid username> from 205.186.180.55 port 42742 ssh2
 Mar 29 05:20:09 dusky sshd[19558]: [ID 800047 auth.info] Failed keyboard-interactive for james from 205.186.180.30 port 54520 ssh2
 
-#11 OSX syslog error
+#10 OSX syslog error
 Apr 29 14:53:38 Jamess-iMac.local sshd[47831]: error: PAM: authentication error for james from dusky via 192.168.1.201
 Apr 29 17:16:20 Jamess-iMac.local sshd[62312]: error: PAM: authentication error for james from n29.c07.mtsvc.net via 192.168.1.201
 Apr 29 20:11:08 Jamess-iMac.local sshd[63814]: [ID 800047 auth.info] Failed keyboard-interactive for <invalid username> from 205.186.180.35 port 42742 ssh2
