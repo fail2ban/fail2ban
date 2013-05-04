@@ -29,7 +29,7 @@ __license__ = "GPL"
 
 import time, logging
 
-from datetemplate import DateStrptime, DateTai64n, DateEpoch, DateISO8601
+from datetemplate import DatePatternRegex, DateTai64n, DateEpoch, DateISO8601
 from threading import Lock
 
 # Gets the instance of the logger.
@@ -49,124 +49,63 @@ class DateDetector:
 		self.__known_names.add(name)
 		self.__templates.append(template)
 	
+	def appendTemplate(self, template, **kwargs):
+		if isinstance(template, str):
+			template = DatePatternRegex(template, **kwargs)
+		else:
+			assert not kwargs
+		DateDetector._appendTemplate(self, template)
+
 	def addDefaultTemplate(self):
 		self.__lock.acquire()
 		try:
 			# standard
-			template = DateStrptime()
-			template.setName("MONTH Day Hour:Minute:Second")
-			template.setRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
-			template.setPattern("%b %d %H:%M:%S")
-			self._appendTemplate(template)
+			self.appendTemplate("%b %d %H:%M:%S")
 			# asctime
-			template = DateStrptime()
-			template.setName("WEEKDAY MONTH Day Hour:Minute:Second Year")
-			template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2} \d{4}")
-			template.setPattern("%a %b %d %H:%M:%S %Y")
-			self._appendTemplate(template)
+			self.appendTemplate("%a %b %d %H:%M:%S %Y")
 			# asctime without year
-			template = DateStrptime()
-			template.setName("WEEKDAY MONTH Day Hour:Minute:Second")
-			template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
-			template.setPattern("%a %b %d %H:%M:%S")
-			self._appendTemplate(template)
+			self.appendTemplate("%a %b %d %H:%M:%S")
 			# simple date
-			template = DateStrptime()
-			template.setName("Year/Month/Day Hour:Minute:Second")
-			template.setRegex("\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}")
-			template.setPattern("%Y/%m/%d %H:%M:%S")
-			self._appendTemplate(template)
+			self.appendTemplate("%Y/%m/%d %H:%M:%S")
 			# simple date too (from x11vnc)
-			template = DateStrptime()
-			template.setName("Day/Month/Year Hour:Minute:Second")
-			template.setRegex("\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2}")
-			template.setPattern("%d/%m/%Y %H:%M:%S")
-			self._appendTemplate(template)
+			self.appendTemplate("%d/%m/%Y %H:%M:%S")
 			# previous one but with year given by 2 digits
 			# (See http://bugs.debian.org/537610)
-			template = DateStrptime()
-			template.setName("Day/Month/Year2 Hour:Minute:Second")
-			template.setRegex("\d{2}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}")
-			template.setPattern("%d/%m/%y %H:%M:%S")
-			self._appendTemplate(template)
+			self.appendTemplate("%d/%m/%y %H:%M:%S")
 			# Apache format [31/Oct/2006:09:22:55 -0000]
-			template = DateStrptime()
-			template.setName("Day/MONTH/Year:Hour:Minute:Second")
-			template.setRegex("\d{2}/\S{3}/\d{4}:\d{2}:\d{2}:\d{2}")
-			template.setPattern("%d/%b/%Y:%H:%M:%S")
-			self._appendTemplate(template)
+			self.appendTemplate("%d/%b/%Y:%H:%M:%S")
 			# CPanel 05/20/2008:01:57:39
-			template = DateStrptime()
-			template.setName("Month/Day/Year:Hour:Minute:Second")
-			template.setRegex("\d{2}/\d{2}/\d{4}:\d{2}:\d{2}:\d{2}")
-			template.setPattern("%m/%d/%Y:%H:%M:%S")
-			self._appendTemplate(template)
+			self.appendTemplate("%m/%d/%Y:%H:%M:%S")
 			# Exim 2006-12-21 06:43:20
-			template = DateStrptime()
-			template.setName("Year-Month-Day Hour:Minute:Second")
-			template.setRegex("\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
-			template.setPattern("%Y-%m-%d %H:%M:%S")
-			self._appendTemplate(template)
+			self.appendTemplate("%Y-%m-%d %H:%M:%S")
 			# custom for syslog-ng 2006.12.21 06:43:20
-			template = DateStrptime()
-			template.setName("Year.Month.Day Hour:Minute:Second")
-			template.setRegex("\d{4}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}")
-			template.setPattern("%Y.%m.%d %H:%M:%S")
-			self._appendTemplate(template)
+			self.appendTemplate("%Y.%m.%d %H:%M:%S")
 			# named 26-Jul-2007 15:20:52.252 
-			template = DateStrptime()
-			template.setName("Day-MONTH-Year Hour:Minute:Second[.Millisecond]")
-			template.setRegex("\d{2}-\S{3}-\d{4} \d{2}:\d{2}:\d{2}")
-			template.setPattern("%d-%b-%Y %H:%M:%S")
-			self._appendTemplate(template)
+			self.appendTemplate("%d-%b-%Y %H:%M:%S")
 			# 17-07-2008 17:23:25
-			template = DateStrptime()
-			template.setName("Day-Month-Year Hour:Minute:Second")
-			template.setRegex("\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}")
-			template.setPattern("%d-%m-%Y %H:%M:%S")
-			self._appendTemplate(template)
+			self.appendTemplate("%d-%m-%Y %H:%M:%S")
 			# 01-27-2012 16:22:44.252
-			template = DateStrptime()
-			template.setName("Month-Day-Year Hour:Minute:Second[.Millisecond]")
-			template.setRegex("\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}")
-			template.setPattern("%m-%d-%Y %H:%M:%S")
-			self._appendTemplate(template)
+			self.appendTemplate("%m-%d-%Y %H:%M:%S")
 			# TAI64N
 			template = DateTai64n()
 			template.setName("TAI64N")
-			self._appendTemplate(template)
+			self.appendTemplate(template)
 			# Epoch
 			template = DateEpoch()
 			template.setName("Epoch")
-			self._appendTemplate(template)
+			self.appendTemplate(template)
 			# ISO 8601
 			template = DateISO8601()
 			template.setName("ISO 8601")
-			self._appendTemplate(template)
+			self.appendTemplate(template)
 			# Only time information in the log
-			template = DateStrptime()
-			template.setName("Hour:Minute:Second")
-			template.setRegex("^\d{2}:\d{2}:\d{2}")
-			template.setPattern("%H:%M:%S")
-			self._appendTemplate(template)
+			self.appendTemplate("%H:%M:%S", anchor=True)
 			# <09/16/08@05:03:30>
-			template = DateStrptime()
-			template.setName("<Month/Day/Year@Hour:Minute:Second>")
-			template.setRegex("^<\d{2}/\d{2}/\d{2}@\d{2}:\d{2}:\d{2}>")
-			template.setPattern("<%m/%d/%y@%H:%M:%S>")
-			self._appendTemplate(template)
+			self.appendTemplate("<%m/%d/%y@%H:%M:%S>", anchor=True)
 			# MySQL: 130322 11:46:11
-			template = DateStrptime()
-			template.setName("MonthDayYear Hour:Minute:Second")
-			template.setRegex("^\d{2}\d{2}\d{2} +\d{1,2}:\d{2}:\d{2}")
-			template.setPattern("%y%m%d %H:%M:%S")
-			self._appendTemplate(template)
+			self.appendTemplate("%y%m%d %H:%M:%S", anchor=True)
 			# Apache Tomcat
-			template = DateStrptime()
-			template.setName("MONTH Day, Year 12hour:Minute:Second AM/PM")
-			template.setRegex("\S{3}\s{1,2}\d{1,2}, \d{4} \d{1,2}:\d{2}:\d{2} [AP]M")
-			template.setPattern("%b %d, %Y %I:%M:%S %p")
-			self._appendTemplate(template)
+			self.appendTemplate("%b %d, %Y %I:%M:%S %p")
 		finally:
 			self.__lock.release()
 	

@@ -193,6 +193,12 @@ class Server:
 	def getFindTime(self, name):
 		return self.__jails.getFilter(name).getFindTime()
 
+	def setDatePattern(self, name, pattern):
+		self.__jails.getFilter(name).setDatePattern(pattern)
+
+	def getDatePattern(self, name):
+		return self.__jails.getFilter(name).getDatePattern()
+
 	def addFailRegex(self, name, value):
 		self.__jails.getFilter(name).addFailRegex(value)
 	

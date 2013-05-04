@@ -32,6 +32,7 @@ from failmanager import FailManager
 from ticket import FailTicket
 from jailthread import JailThread
 from datedetector import DateDetector
+from datetemplate import DatePatternRegex
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
 
@@ -194,6 +195,40 @@ class Filter(JailThread):
 
 	def getFindTime(self):
 		return self.__findTime
+
+	##
+	# Set the date detector pattern, removing Defaults
+	#
+	# @param pattern the date template pattern
+
+	def setDatePattern(self, pattern):
+		dateDetector = DateDetector()
+		template = DatePatternRegex()
+		if pattern[0] == "^": # Special extra to enable anchor
+			template.setPattern(pattern[1:], anchor=True)
+		else:
+			template.setPattern(pattern, anchor=False)
+		dateDetector.appendTemplate(template)
+		self.dateDetector = dateDetector
+		logSys.info("Date pattern set to `%r`: `%s`" %
+			(pattern, template.getName()))
+		logSys.debug("Date pattern regex for %r: %s" %
+			(pattern, template.getRegex()))
+
+	##
+	# Get the date detector pattern, or Default Detectors if not changed
+	#
+	# @return pattern of the date template pattern
+
+	def getDatePattern(self):
+		templates = self.dateDetector.getTemplates()
+		if len(templates) > 1:
+			return None # Default Detectors in use
+		elif len(templates) == 1:
+			pattern =  templates[0].getPattern()
+			if templates[0].getRegex()[0] == "^":
+				pattern = "^" + pattern
+			return pattern, templates[0].getName()
 
 	##
 	# Set the maximum retry value.
