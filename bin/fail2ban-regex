@@ -111,6 +111,8 @@ class Fail2banRegex:
 		print "    -V, --version           print the version"
 		print "    -v, --verbose           verbose output"
 		print "    -l INT, --maxlines=INT  set maxlines for multi-line regex default: 1"
+		print "    -d PATTERN --datepattern=PATTERN"
+		print "                            set a custom pattern used to match date/times"
 		print
 		print "Log:"
 		print "    string                  a string representing a log line"
@@ -131,6 +133,9 @@ class Fail2banRegex:
 		if not self.__maxlines_set:
 			self.__filter.setMaxLines(int(v))
 			self.__maxlines_set = True
+
+	def setDatePattern(self, pattern):
+		self.__filter.setDatePattern(pattern)
 
 	def getCmdLineOptions(self, optList):
 		""" Gets the command line options
@@ -154,6 +159,13 @@ class Fail2banRegex:
                         opt[1])
 					fail2banRegex.dispUsage()
 					sys.exit(-1)
+			elif opt[0] in ["-d", "--datepattern"]:
+				try:
+					self.setDatePattern(opt[1])
+				except (TypeError, ValueError), e:
+					print "Invalid date pattern: '%s': %s" % (opt[1], e)
+					fail2banRegex.dispUsage()
+					sys.exit(1)
 
 	#@staticmethod
 	def logIsFile(value):
@@ -165,7 +177,7 @@ class Fail2banRegex:
 			reader = SafeConfigParserWithIncludes(defaults=self.CONFIG_DEFAULTS)
 			try:
 				reader.read(value)
-				print "Use ignoreregex file : " + value
+				print "Use ignoreregex file\t " + value
 				self.__ignoreregex = [RegexStat(m)
 									for m in reader.get("Definition", "ignoreregex").split('\n')]
 			except NoSectionError:
@@ -185,7 +197,7 @@ class Fail2banRegex:
 				stripReg = value[0:50] + "..."
 			else:
 				stripReg = value
-			print "Use ignoreregex line : " + stripReg
+			print "Use ignoreregex line\t: " + stripReg
 			self.__ignoreregex = [RegexStat(value)]
 		return True
 
@@ -194,7 +206,7 @@ class Fail2banRegex:
 			reader = SafeConfigParserWithIncludes(defaults=self.CONFIG_DEFAULTS)
 			try:
 				reader.read(value)
-				print "Use regex file : " + value
+				print "Use regex file\t\t: " + value
 				self.__failregex = [RegexStat(m)
 									for m in reader.get("Definition", "failregex").split('\n')]
 			except NoSectionError:
@@ -228,10 +240,13 @@ class Fail2banRegex:
 				stripReg = value[0:50] + "..."
 			else:
 				stripReg = value
-			print "Use regex line : " + stripReg
+			print "Use regex line\t\t: " + stripReg
 			self.__failregex = [RegexStat(value)]
 
-		print "Use maxlines   : %d" % self.__filter.getMaxLines()
+		print "Use maxlines\t\t: %d" % self.__filter.getMaxLines()
+		datepattern = self.__filter.getDatePattern()
+		if datepattern:
+			print "Use date pattern\t: %s (%s)" % self.__filter.getDatePattern()
 		return True
 
 	def testIgnoreRegex(self, line):
@@ -347,8 +362,9 @@ if __name__ == "__main__":
 	fail2banRegex = Fail2banRegex()
 	# Reads the command line options.
 	try:
-		cmdOpts = 'hVcvl:e:'
-		cmdLongOpts = ['help', 'version', 'verbose', 'maxlines=', 'encoding=']
+		cmdOpts = 'hVcvl:e:d:'
+		cmdLongOpts = ['help', 'version', 'verbose', 'maxlines=', 'encoding=',
+			'datepattern=']
 		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
 	except getopt.GetoptError:
 		fail2banRegex.dispUsage()
@@ -376,8 +392,8 @@ if __name__ == "__main__":
 		if fail2banRegex.logIsFile(cmd_log):
 			try:
 				hdlr = open(cmd_log, 'rb')
-				print "Use log file   : " + cmd_log
-				print "Use encoding   : " + fail2banRegex.encoding
+				print "Use log file\t\t: " + cmd_log
+				print "Use encoding\t\t: " + fail2banRegex.encoding
 				print
 				for line in hdlr:
 					try:
@@ -396,7 +412,7 @@ if __name__ == "__main__":
 				stripLog = cmd_log[0:50] + "..."
 			else:
 				stripLog = cmd_log
-			print "Use single line: " + stripLog
+			print "Use single line\t\t: " + stripLog
 			print
 			fail2banRegex.testIgnoreRegex(cmd_log)
 			fail2banRegex.testRegex(cmd_log)

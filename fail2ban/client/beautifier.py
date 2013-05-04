@@ -113,6 +113,12 @@ class Beautifier:
 			elif inC[2] == "logencoding":
 				msg = "Current log encoding is set to:\n"
 				msg = msg + response
+			elif inC[2] == "datepattern":
+				msg = "Current date pattern set to: "
+				if response is None:
+					msg = msg + "Default Detectors"
+				else:
+					msg = msg + "%s (%s)" % response
 			elif inC[2] in ("ignoreip", "addignoreip", "delignoreip"):
 				if len(response) == 0:
 					msg = "No IP address/network is ignored"
