@@ -233,6 +233,12 @@ class Transmitter(TransmitterBase):
 		self.setGetTest("bantime", "-50", -50, jail=self.jailName)
 		self.setGetTestNOK("bantime", "Cat", jail=self.jailName)
 
+	def testDatePattern(self):
+		self.setGetTest("datepattern", "%%%Y%m%d%H%M%S",
+			("%%%Y%m%d%H%M%S", "%YearMonthDay24hourMinuteSecond"),
+			jail=self.jailName)
+		self.setGetTestNOK("datepattern", "%Cat%a%%%g", jail=self.jailName)
+
 	def testJailUseDNS(self):
 		self.setGetTest("usedns", "yes", jail=self.jailName)
 		self.setGetTest("usedns", "warn", jail=self.jailName)
