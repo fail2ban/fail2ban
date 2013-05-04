@@ -421,7 +421,9 @@ class Filter(JailThread):
 				date = self.dateDetector.getUnixTime(timeLine)
 				if date == None:
 					logSys.debug("Found a match for %r but no valid date/time "
-								 "found for %r. Please file a detailed issue on"
+								 "found for %r. Please try setting a custom "
+								 "date pattern. If format is complex, please "
+								 "file a detailed issue on"
 								 " https://github.com/fail2ban/fail2ban/issues "
 								 "in order to get support for this format."
 								 % (logLine, timeLine))
