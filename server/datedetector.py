@@ -80,7 +80,7 @@ class DateDetector:
 			# (See http://bugs.debian.org/537610)
 			template = DateStrptime()
 			template.setName("Day/Month/Year2 Hour:Minute:Second")
-			template.setRegex("\d{2}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}")
+			template.setRegex("(?<!\d{2})\d{2}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%d/%m/%y %H:%M:%S")
 			self._appendTemplate(template)
 			# Apache format [31/Oct/2006:09:22:55 -0000]
