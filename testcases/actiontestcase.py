@@ -88,6 +88,9 @@ class ExecuteAction(unittest.TestCase):
 			'xyz': "890",
 		}
 		self.assertEqual(
+			self.__action.replaceTag("Text<br>text", aInfo),
+			"Text\ntext")
+		self.assertEqual(
 			self.__action.replaceTag("Text <HOST> text", aInfo),
 			"Text 192.0.2.0 text")
 		self.assertEqual(
