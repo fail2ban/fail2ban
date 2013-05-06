@@ -16,11 +16,8 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-__sudo () {
-    sudo -n "$@" 2>/dev/null || return 0
-}
 __fail2ban_jails () {
-    __sudo "$1" status | awk -F"\t+" '/Jail list/{print $2}' | sed 's/, / /g'
+    "$1" status 2>/dev/null | awk -F"\t+" '/Jail list/{print $2}' | sed 's/, / /g'
 }
 
 _fail2ban () {
@@ -117,7 +114,7 @@ _fail2ban () {
                     ;;
                 dellogpath|delignoreip)
                     COMPREPLY=( $( compgen -W \
-                        "$( __sudo "$1" get "$jail" "${prev/del/}" | awk -F- '{print $2}')" \
+                        "$( "$1" get "$jail" "${prev/del/}" 2>/dev/null | awk -F- '{print $2}')" \
                     -- "$cur" ) )
                     if [[ -z "$COMPREPLY" && "$prev" == "dellogpath" ]];then
                         _filedir
@@ -126,13 +123,13 @@ _fail2ban () {
                     ;;
                 delfailregex|delignoregex)
                     COMPREPLY=( $( compgen -W \
-                        "$( __sudo "$1" get "$jail" "${prev/del/}" | awk -F"[][]" '{print $2}')" \
+                        "$( "$1" get "$jail" "${prev/del/}" 2>/dev/null | awk -F"[][]" '{print $2}')" \
                     -- "$cur" ) )
                     return 0
                     ;;
                 unbanip)
                     COMPREPLY=( $( compgen -W \
-                        "$( __sudo "$1" status "$jail" | awk -F"\t+" '/IP list:/{print $2}')" \
+                        "$( "$1" status "$jail" 2>/dev/null | awk -F"\t+" '/IP list:/{print $2}')" \
                     -- "$cur" ) )
                     return 0
                     ;;
