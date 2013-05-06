@@ -43,6 +43,9 @@ server/datetemplate.py
 server/mytime.py
 server/failregex.py
 testcases/files/testcase-usedns.log
+testcases/files/logs/bsd/syslog-plain.txt
+testcases/files/logs/bsd/syslog-v.txt
+testcases/files/logs/bsd/syslog-vv.txt
 testcases/banmanagertestcase.py
 testcases/failmanagertestcase.py
 testcases/clientreadertestcase.py

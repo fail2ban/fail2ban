@@ -1,0 +1,5 @@
+Mar 19 23:48:18 <auth.info> pancake sshd[55517]: Invalid user r00t from 183.60.159.20
+Mar 19 23:48:20 <auth.info> pancake sshd[55519]: Invalid user r00t from 183.60.159.20
+Mar 19 23:50:03 <auth.info> pancake sshd[55604]: Invalid user http from 183.60.159.20
+Mar 19 23:50:05 <auth.info> pancake sshd[55606]: Invalid user kylix from 183.60.159.20
+Mar 19 23:50:08 <auth.info> pancake sshd[55608]: Invalid user nagios from 183.60.159.20
