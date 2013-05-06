@@ -139,6 +139,7 @@ files/macosx-initd
 files/solaris-fail2ban.xml
 files/solaris-svc-fail2ban
 files/suse-initd
+files/fail2ban-logrotate
 files/cacti/fail2ban_stats.sh
 files/cacti/cacti_host_template_fail2ban.xml
 files/cacti/README
