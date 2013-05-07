@@ -1,12 +1,16 @@
-fail2ban (0.8.8+git147-g4b11f07-1) UNRELEASED; urgency=low
+fail2ban (0.8.8+git276-g5e1d8b0-1) UNRELEASED; urgency=low
 
-  * New upstream snapshot from 0.8.8-145-g72b0647 at 0.8.8-145-g72b0647
+  * New upstream snapshot
     - significant improvements in documentation (Closes: #400416)
+    - roundcube auth filter (Closes: #699442)
+    - enforces C locale for dates (Closes: #686341)
   * debian/jail.conf:
     - added findtime and documentation on those basic options from jail.conf
-  * New upstream snapshot from master at 0.8.8-147-g4b11f07
+      (Closes: #704568)
+  * debian/control:
+    - suggest system-log-daemon (Closes: #691001)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 27 Mar 2013 12:02:45 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 07 May 2013 12:41:17 -0400
 
 fail2ban (0.8.8-1+lucid0) UNRELEASED; urgency=low
 

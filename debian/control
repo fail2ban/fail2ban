@@ -13,7 +13,7 @@ Package: fail2ban
 Architecture: all
 Depends: ${python:Depends}, ${misc:Depends}, lsb-base (>=2.0-7)
 Recommends: iptables, whois, python-pyinotify
-Suggests: python-gamin, mailx
+Suggests: python-gamin, mailx, system-log-daemon
 Description: ban hosts that cause multiple authentication errors
  Fail2ban monitors log files (e.g. /var/log/auth.log,
  /var/log/apache/access.log) and temporarily or persistently bans
