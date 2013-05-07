@@ -144,3 +144,4 @@ files/cacti/cacti_host_template_fail2ban.xml
 files/cacti/README
 files/nagios/check_fail2ban
 files/nagios/f2ban.txt
+files/bash-completion
