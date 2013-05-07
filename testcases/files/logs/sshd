@@ -14,7 +14,8 @@ Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM ::ffff:1.2.3.4
 Jul 20 14:42:11 localhost sshd[22708]: Invalid user ftp from 211.114.51.213
 
 #5 new filter introduced after looking at 44087D8C.9090407@bluewin.ch
-Mar  3 00:17:22 [sshd] User root from 210.188.220.49 not allowed because not listed in AllowUsers
+# yoh: added ':' after [sshd] since the case without is not really common any more
+Mar  3 00:17:22 [sshd]: User root from 211.188.220.49 not allowed because not listed in AllowUsers
 Feb 25 14:34:11 belka sshd[31607]: User root from example.com not allowed because not listed in AllowUsers
 
 #6 ew filter introduced thanks to report Guido Bozzetto <reportbug@G-B.it>
