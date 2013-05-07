@@ -1,6 +1,6 @@
 #1
 Jun 21 16:47:48 digital-mlhhyiqscv sshd[13709]: error: PAM: Authentication failure for myhlj1374 from 192.030.0.6
-May 29 20:56:52 imago sshd[28732]: error: PAM: Authentication failure for stefanor from www.onerussian.com
+May 29 20:56:52 imago sshd[28732]: error: PAM: Authentication failure for stefanor from example.com
 
 #2
 Feb 25 14:34:10 belka sshd[31602]: Failed password for invalid user ROOT from 194.117.26.69 port 50273 ssh2
@@ -15,7 +15,7 @@ Jul 20 14:42:11 localhost sshd[22708]: Invalid user ftp from 211.114.51.213
 
 #5 new filter introduced after looking at 44087D8C.9090407@bluewin.ch
 Mar  3 00:17:22 [sshd] User root from 210.188.220.49 not allowed because not listed in AllowUsers
-Feb 25 14:34:11 belka sshd[31607]: User root from ferrari.inescn.pt not allowed because not listed in AllowUsers
+Feb 25 14:34:11 belka sshd[31607]: User root from example.com not allowed because not listed in AllowUsers
 
 #6 ew filter introduced thanks to report Guido Bozzetto <reportbug@G-B.it>
 Nov 11 23:33:27 Server sshd[5174]: refused connect from _U2FsdGVkX19P3BCJmFBHhjLza8BcMH06WCUVwttMHpE=_@::ffff:218.249.210.161 (::ffff:218.249.210.161)
@@ -33,8 +33,7 @@ Mar 29 05:59:23 dusky sshd[20878]: [ID 800047 auth.info] Failed keyboard-interac
 Mar 29 05:20:09 dusky sshd[19558]: [ID 800047 auth.info] Failed keyboard-interactive for james from 205.186.180.30 port 54520 ssh2
 
 #10 OSX syslog error
-Apr 29 14:53:38 Jamess-iMac.local sshd[47831]: error: PAM: authentication error for james from dusky via 192.168.1.201
-Apr 29 17:16:20 Jamess-iMac.local sshd[62312]: error: PAM: authentication error for james from n29.c07.mtsvc.net via 192.168.1.201
+Apr 29 17:16:20 Jamess-iMac.local sshd[62312]: error: PAM: authentication error for james from example.com via 192.168.1.201
 Apr 29 20:11:08 Jamess-iMac.local sshd[63814]: [ID 800047 auth.info] Failed keyboard-interactive for <invalid username> from 205.186.180.35 port 42742 ssh2
 Apr 29 20:12:08 Jamess-iMac.local sshd[63814]: [ID 800047 auth.info] Failed keyboard-interactive for james from 205.186.180.22 port 54520 ssh2
 Apr 29 20:13:08 Jamess-iMac.local sshd[63814]: Failed keyboard-interactive for james from 205.186.180.42 port 54520 ssh2
