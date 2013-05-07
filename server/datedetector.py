@@ -17,13 +17,7 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
-
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
+__author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -155,6 +149,18 @@ class DateDetector:
 			template.setRegex("^<\d{2}/\d{2}/\d{2}@\d{2}:\d{2}:\d{2}>")
 			template.setPattern("<%m/%d/%y@%H:%M:%S>")
 			self._appendTemplate(template)
+			# MySQL: 130322 11:46:11
+			template = DateStrptime()
+			template.setName("MonthDayYear Hour:Minute:Second")
+			template.setRegex("^\d{2}\d{2}\d{2} +\d{1,2}:\d{2}:\d{2}")
+			template.setPattern("%y%m%d %H:%M:%S")
+			self._appendTemplate(template)
+			# ASSP: Apr-27-13 02:33:06
+			template = DateStrptime()
+			template.setName("Month-Day-Year Hour:Minute:Second")
+			template.setRegex("^[a-zA-Z]{3}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%b-%d-%y %H:%M:%S")
+			self._appendTemplate(template)
 		finally:
 			self.__lock.release()
 	
@@ -191,10 +197,7 @@ class DateDetector:
 
 	def getUnixTime(self, line):
 		date = self.getTime(line)
-		if date == None:
-			return None
-		else:
-			return time.mktime(date)
+		return date and time.mktime(date)
 
 	##
 	# Sort the template lists using the hits score. This method is not called

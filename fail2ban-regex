@@ -50,24 +50,24 @@ class RegexStat:
 	def __str__(self):
 		return "%s(%r) %d failed: %s" \
 		  % (self.__class__, self.__failregex, self.__stats, self.__ipList)
-	
+
 	def inc(self):
 		self.__stats += 1
-	
+
 	def getStats(self):
 		return self.__stats
 
 	def getFailRegex(self):
 		return self.__failregex
-	
+
 	def appendIP(self, value):
 		self.__ipList.extend(value)
-	
+
 	def getIPList(self):
 		return self.__ipList
 
 class Fail2banRegex:
-	
+
 	test = None
 
 	CONFIG_DEFAULTS = {'configpath' : "/etc/fail2ban/"}
@@ -87,7 +87,7 @@ class Fail2banRegex:
 		self.__logging_level = self.__verbose and logging.DEBUG or logging.WARN
 		logging.getLogger("fail2ban").addHandler(self.__hdlr)
 		logging.getLogger("fail2ban").setLevel(logging.ERROR)
-	
+
 	#@staticmethod
 	def dispVersion():
 		print "Fail2Ban v" + version
@@ -99,7 +99,7 @@ class Fail2banRegex:
 		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
 		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
 	dispVersion = staticmethod(dispVersion)
-	
+
 	#@staticmethod
 	def dispUsage():
 		print "Usage: "+sys.argv[0]+" [OPTIONS] <LOG> <REGEX> [IGNOREREGEX]"
@@ -128,7 +128,7 @@ class Fail2banRegex:
 		print
 		print "Report bugs to https://github.com/fail2ban/fail2ban/issues"
 	dispUsage = staticmethod(dispUsage)
-	
+
 	def getCmdLineOptions(self, optList):
 		""" Gets the command line options
 		"""
@@ -204,7 +204,7 @@ class Fail2banRegex:
 			print "Use regex line : " + stripReg
 			self.__failregex = [RegexStat(value)]
 		return True
-	
+
 	def testIgnoreRegex(self, line):
 		found = False
 		for regex in self.__ignoreregex:
@@ -221,7 +221,7 @@ class Fail2banRegex:
 			finally:
 				self.__filter.delIgnoreRegex(0)
 				logging.getLogger("fail2ban").setLevel(self.__logging_level)
-	
+
 	def testRegex(self, line):
 		found = False
 		for regex in self.__ignoreregex:
@@ -251,7 +251,7 @@ class Fail2banRegex:
 				logging.getLogger("fail2ban").setLevel(logging.CRITICAL)
 		for regex in self.__ignoreregex:
 					self.__filter.delIgnoreRegex(0)
-	
+
 	def printStats(self):
 		print
 		print "Results"
@@ -300,20 +300,20 @@ class Fail2banRegex:
 						print "    %s (%s)%s" % (
 							ip[0], timeString, ip[2] and " (already matched)" or "")
 			print
-			
+
 			print "Date template hits:"
 			for template in self.__filter.dateDetector.getTemplates():
 				if self.__verbose or template.getHits():
 					print `template.getHits()` + " hit(s): " + template.getName()
 			print
-			
+
 			print "Success, the total number of match is " + str(total)
 			print
 			print "However, look at the above section 'Running tests' which could contain important"
 			print "information."
 			return True
 
-			
+
 if __name__ == "__main__":
 	fail2banRegex = Fail2banRegex()
 	# Reads the command line options.

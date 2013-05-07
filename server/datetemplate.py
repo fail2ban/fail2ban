@@ -19,11 +19,8 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -65,7 +62,7 @@ class DateTemplate:
 	
 	def matchDate(self, line):
 		dateMatch = self.__cRegex.search(line)
-		if not dateMatch == None:
+		if not dateMatch is None:
 			self.__hits += 1
 		return dateMatch
 	
@@ -218,3 +215,4 @@ class DateISO8601(DateTemplate):
 			value = dateMatch.group()
 			date = list(iso8601.parse_date(value).timetuple())
 		return date
+

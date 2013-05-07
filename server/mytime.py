@@ -17,13 +17,7 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
-
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -61,7 +55,7 @@ class MyTime:
 	
 	#@staticmethod
 	def time():
-		if MyTime.myTime == None:
+		if MyTime.myTime is None:
 			return time.time()
 		else:
 			return MyTime.myTime
@@ -74,14 +68,14 @@ class MyTime:
 	
 	#@staticmethod
 	def gmtime():
-		if MyTime.myTime == None:
+		if MyTime.myTime is None:
 			return time.gmtime()
 		else:
 			return time.gmtime(MyTime.myTime)
 	gmtime = staticmethod(gmtime)
 
 	def localtime(x=None):
-		if MyTime.myTime == None or x is not None:
+		if MyTime.myTime is None or x is not None:
 			return time.localtime(x)
 		else:
 			return time.localtime(MyTime.myTime)

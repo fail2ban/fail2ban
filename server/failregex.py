@@ -17,13 +17,7 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
-
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -125,7 +119,7 @@ class FailRegex(Regex):
 	
 	def getHost(self):
 		host = self._matchCache.group("host")
-		if host == None:
+		if host is None:
 			# Gets a few information.
 			s = self._matchCache.string
 			r = self._matchCache.re

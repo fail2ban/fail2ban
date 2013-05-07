@@ -46,7 +46,7 @@ logSys = logging.getLogger("fail2ban")
 # Its first goal was to protect a SSH server.
 
 class Fail2banServer:
-	
+
 	def __init__(self):
 		self.__server = None
 		self.__argv = None
@@ -55,7 +55,7 @@ class Fail2banServer:
 		self.__conf["force"] = False
 		self.__conf["socket"] = "/var/run/fail2ban/fail2ban.sock"
 		self.__conf["pidfile"] = "/var/run/fail2ban/fail2ban.pid"
-	
+
 	def dispVersion(self):
 		print "Fail2Ban v" + version
 		print
@@ -65,7 +65,7 @@ class Fail2banServer:
 		print
 		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
 		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
-	
+
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
 		"""
@@ -88,7 +88,7 @@ class Fail2banServer:
 		print "    -V, --version        print the version"
 		print
 		print "Report bugs to https://github.com/fail2ban/fail2ban/issues"
-	
+
 	def __getCmdLineOptions(self, optList):
 		""" Gets the command line options
 		"""
@@ -109,11 +109,11 @@ class Fail2banServer:
 			if opt[0] in ["-V", "--version"]:
 	 			self.dispVersion()
 				sys.exit(0)
-		
+
 	def start(self, argv):
 		# Command line options
 		self.__argv = argv
-		
+
 		# Reads the command line options.
 		try:
 			cmdOpts = 'bfs:p:xhV'
@@ -122,9 +122,9 @@ class Fail2banServer:
 		except getopt.GetoptError:
 			self.dispUsage()
 			sys.exit(-1)
-			
+
 		self.__getCmdLineOptions(optList)
-		
+
 		try:
 			self.__server = Server(self.__conf["background"])
 			self.__server.start(self.__conf["socket"],
@@ -135,7 +135,7 @@ class Fail2banServer:
 			logSys.exception(e)
 			self.__server.quit()
 			return False
-		
+
 if __name__ == "__main__":
 	server = Fail2banServer()
 	if server.start(sys.argv):

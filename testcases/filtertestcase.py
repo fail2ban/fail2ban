@@ -22,6 +22,7 @@
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier; 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
+from __builtin__ import open as fopen
 import unittest
 import os
 import sys
@@ -38,6 +39,20 @@ from server.failmanager import FailManagerEmpty
 # Useful helpers
 #
 
+# yoh: per Steven Hiscocks's insight while troubleshooting
+# https://github.com/fail2ban/fail2ban/issues/103#issuecomment-15542836
+# adding a sufficiently large buffer might help to guarantee that
+# writes happen atomically.
+def open(*args):
+	"""Overload built in open so we could assure sufficiently large buffer
+
+	Explicit .flush would be needed to assure that changes leave the buffer
+	"""
+	if len(args) == 2:
+		# ~50kB buffer should be sufficient for all tests here.
+		args = args + (50000,)
+	return fopen(*args)
+
 def _killfile(f, name):
 	try:
 		f.close()
@@ -47,6 +62,11 @@ def _killfile(f, name):
 		os.unlink(name)
 	except:
 		pass
+
+	# there might as well be the .bak file
+	if os.path.exists(name + '.bak'):
+		_killfile(None, name + '.bak')
+
 
 def _sleep_4_poll():
 	"""PollFilter relies on file timestamps - so we might need to
@@ -327,7 +347,9 @@ def get_monitor_failures_testcase(Filter_):
 	"""Generator of TestCase's for different filters/backends
 	"""
 
-	_, testclass_name = tempfile.mkstemp('fail2ban', 'monitorfailures')
+	# add Filter_'s name so we could easily identify bad cows
+	testclass_name = tempfile.mktemp(
+		'fail2ban', 'monitorfailures_%s' % (Filter_.__name__,))
 
 	class MonitorFailures(unittest.TestCase):
 		count = 0
@@ -436,7 +458,7 @@ def get_monitor_failures_testcase(Filter_):
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 												  n=14, mode='w')
 			# Poll might need more time
-			self.assertTrue(self.isEmpty(2 + int(isinstance(self.filter, FilterPoll))*4))
+			self.assertTrue(self.isEmpty(4 + int(isinstance(self.filter, FilterPoll))*2))
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 2)
 
@@ -451,6 +473,40 @@ def get_monitor_failures_testcase(Filter_):
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
+
+
+		def _test_move_into_file(self, interim_kill=False):
+			# if we move a new file into the location of an old (monitored) file
+			self.file1 = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+												  n=100)
+			# make sure that it is monitored first
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
+
+			if interim_kill:
+				_killfile(None, self.name)
+				time.sleep(0.2)				  # let them know
+
+			# now create a new one to override old one
+			self.file = _copy_lines_between_files(GetFailures.FILENAME_01,
+												   self.name + '.new', n=100)
+			os.rename(self.name + '.new', self.name)
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
+
+			# and to make sure that it now monitored for changes
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assertEqual(self.filter.failManager.getFailTotal(), 9)
+
+
+		def test_move_into_file(self):
+			self._test_move_into_file(interim_kill=False)
+
+		def test_move_into_file_after_removed(self):
+			# exactly as above test + remove file explicitly
+			# to test against possible drop-out of the file from monitoring
+		    self._test_move_into_file(interim_kill=True)
 
 
 		def test_new_bogus_file(self):

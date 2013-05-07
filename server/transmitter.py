@@ -19,11 +19,8 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -123,7 +120,7 @@ class Transmitter:
 			elif command[2] == "off":
 				self.__server.setIdleJail(name, False)
 			else:
-				raise Exception("Invalid idle option, must be 'yes' or 'no'")
+				raise Exception("Invalid idle option, must be 'on' or 'off'")
 			return self.__server.getIdleJail(name)
 		# Filter
 		elif command[1] == "addignoreip":

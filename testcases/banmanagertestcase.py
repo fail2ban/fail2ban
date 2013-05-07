@@ -19,7 +19,6 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
 __version__ = "$Revision$"
@@ -49,11 +48,11 @@ class AddFailure(unittest.TestCase):
 		self.assertFalse(self.__banManager.addBanTicket(self.__ticket))
 		self.assertEqual(self.__banManager.size(), 1)
 		
-	def _testInListOK(self):
+	def testInListOK(self):
 		ticket = BanTicket('193.168.0.128', 1167605999.0)
-		self.assertTrue(self.__banManager.inBanList(ticket))
+		self.assertTrue(self.__banManager._inBanList(ticket))
 	
-	def _testInListNOK(self):
+	def testInListNOK(self):
 		ticket = BanTicket('111.111.1.111', 1167605999.0)
-		self.assertFalse(self.__banManager.inBanList(ticket))
+		self.assertFalse(self.__banManager._inBanList(ticket))
 		

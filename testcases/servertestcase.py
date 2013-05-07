@@ -19,7 +19,6 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
 __version__ = "$Revision$"
@@ -504,7 +503,9 @@ class TransmitterLogging(TransmitterBase):
 
 	def testLogLevel(self):
 		self.setGetTest("loglevel", "4", 4)
+		self.setGetTest("loglevel", "3", 3)
 		self.setGetTest("loglevel", "2", 2)
+		self.setGetTest("loglevel", "1", 1)
 		self.setGetTest("loglevel", "-1", -1)
 		self.setGetTest("loglevel", "0", 0)
 		self.setGetTestNOK("loglevel", "Bird")

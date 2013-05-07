@@ -19,7 +19,6 @@
 
 # Author: Cyril Jaquier
 # Modified by: Yaroslav Halchenko (SafeConfigParserWithIncludes)
-# $Revision$
 
 __author__ = "Cyril Jaquier"
 __version__ = "$Revision$"
@@ -46,15 +45,15 @@ class ConfigReader(SafeConfigParserWithIncludes):
 	def setBaseDir(self, basedir):
 		if basedir is None:
 			basedir = ConfigReader.DEFAULT_BASEDIR	# stock system location
-		if not (os.path.exists(basedir) and os.access(basedir, os.R_OK | os.X_OK)):
-			raise ValueError("Base configuration directory %s either does not exist "
-							 "or is not accessible" % basedir)
 		self._basedir = basedir.rstrip('/')
 	
 	def getBaseDir(self):
 		return self._basedir
 	
 	def read(self, filename):
+		if not os.path.exists(self._basedir):
+			raise ValueError("Base configuration directory %s does not exist "
+							  % self._basedir)
 		basename = os.path.join(self._basedir, filename)
 		logSys.debug("Reading configs for %s under %s "  % (basename, self._basedir))
 		config_files = [ basename + ".conf",
@@ -65,27 +64,20 @@ class ConfigReader(SafeConfigParserWithIncludes):
 
 		# possible further customizations under a .conf.d directory
 		config_dir = basename + '.d'
-		if os.path.exists(config_dir):
-			if os.path.isdir(config_dir) and os.access(config_dir, os.X_OK | os.R_OK):
-				# files must carry .conf suffix as well
-				config_files += sorted(glob.glob('%s/*.conf' % config_dir))
-			else:
-				logSys.warn("%s exists but not a directory or not accessible"
-							 % config_dir)
+		config_files += sorted(glob.glob('%s/*.conf' % config_dir))
 
-		# check if files are accessible, warn if any is not accessible
-		# and remove it from the list
-		config_files_accessible = []
-		for f in config_files:
-			if os.access(f, os.R_OK):
-				config_files_accessible.append(f)
-			else:
-				logSys.warn("%s exists but not accessible - skipping" % f)
-
-		if len(config_files_accessible):
+		if len(config_files):
 			# at least one config exists and accessible
-			SafeConfigParserWithIncludes.read(self, config_files_accessible)
-			return True
+			logSys.debug("Reading config files: " + ', '.join(config_files))
+			config_files_read = SafeConfigParserWithIncludes.read(self, config_files)
+			missed = [ cf for cf in config_files if cf not in config_files_read ]
+			if missed:
+				logSys.error("Could not read config files: " + ', '.join(missed))
+			if config_files_read:
+				return True
+			logSys.error("Found no accessible config files for %r under %s" %
+						 ( filename, self.getBaseDir() ))
+			return False
 		else:
 			logSys.error("Found no accessible config files for %r " % filename
 						 + (["under %s" % self.getBaseDir(),
@@ -113,7 +105,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 					v = self.getint(sec, option[1])
 				else:
 					v = self.get(sec, option[1])
-				if not pOptions == None and option[1] in pOptions:
+				if not pOptions is None and option[1] in pOptions:
 					continue
 				values[option[1]] = v
 			except NoSectionError, e:
@@ -121,7 +113,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 				logSys.error(e)
 				values[option[1]] = option[2]
 			except NoOptionError:
-				if not option[2] == None:
+				if not option[2] is None:
 					logSys.warn("'%s' not defined in '%s'. Using default one: %r"
 								% (option[1], sec, option[2]))
 					values[option[1]] = option[2]

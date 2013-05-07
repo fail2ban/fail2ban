@@ -1,6 +1,6 @@
 #1
 Jun 21 16:47:48 digital-mlhhyiqscv sshd[13709]: error: PAM: Authentication failure for myhlj1374 from 192.030.0.6
-May 29 20:56:52 imago sshd[28732]: error: PAM: Authentication failure for stefanor from www.onerussian.com
+May 29 20:56:52 imago sshd[28732]: error: PAM: Authentication failure for stefanor from example.com
 
 #2
 Feb 25 14:34:10 belka sshd[31602]: Failed password for invalid user ROOT from 194.117.26.69 port 50273 ssh2
@@ -13,10 +13,10 @@ Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM ::ffff:1.2.3.4
 #4
 Jul 20 14:42:11 localhost sshd[22708]: Invalid user ftp from 211.114.51.213
 
-
 #5 new filter introduced after looking at 44087D8C.9090407@bluewin.ch
-Mar  3 00:17:22 [sshd] User root from 210.188.220.49 not allowed because not listed in AllowUsers
-Feb 25 14:34:11 belka sshd[31607]: User root from ferrari.inescn.pt not allowed because not listed in AllowUsers
+# yoh: added ':' after [sshd] since the case without is not really common any more
+Mar  3 00:17:22 [sshd]: User root from 211.188.220.49 not allowed because not listed in AllowUsers
+Feb 25 14:34:11 belka sshd[31607]: User root from example.com not allowed because not listed in AllowUsers
 
 #6 ew filter introduced thanks to report Guido Bozzetto <reportbug@G-B.it>
 Nov 11 23:33:27 Server sshd[5174]: refused connect from _U2FsdGVkX19P3BCJmFBHhjLza8BcMH06WCUVwttMHpE=_@::ffff:218.249.210.161 (::ffff:218.249.210.161)
@@ -29,5 +29,20 @@ Oct 15 19:51:35 server sshd[7592]: Address 1.2.3.4 maps to 1234.bbbbbb.com, but 
 #8 DenyUsers https://github.com/fail2ban/fail2ban/issues/47
 Apr 16 22:01:15 al-ribat sshd[5154]: User root from 46.45.128.3 not allowed because listed in DenyUsers
 
-# http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=648020
-Nov  8 11:19:38 bar sshd[25427]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=1.2.3.6
+#9 OpenSolaris patch - pull https://github.com/fail2ban/fail2ban/pull/182
+Mar 29 05:59:23 dusky sshd[20878]: [ID 800047 auth.info] Failed keyboard-interactive for <invalid username> from 205.186.180.55 port 42742 ssh2
+Mar 29 05:20:09 dusky sshd[19558]: [ID 800047 auth.info] Failed keyboard-interactive for james from 205.186.180.30 port 54520 ssh2
+
+#10 OSX syslog error
+Apr 29 17:16:20 Jamess-iMac.local sshd[62312]: error: PAM: authentication error for james from example.com via 192.168.1.201
+Apr 29 20:11:08 Jamess-iMac.local sshd[63814]: [ID 800047 auth.info] Failed keyboard-interactive for <invalid username> from 205.186.180.35 port 42742 ssh2
+Apr 29 20:12:08 Jamess-iMac.local sshd[63814]: [ID 800047 auth.info] Failed keyboard-interactive for james from 205.186.180.22 port 54520 ssh2
+Apr 29 20:13:08 Jamess-iMac.local sshd[63814]: Failed keyboard-interactive for james from 205.186.180.42 port 54520 ssh2
+Apr 29 20:14:08 Jamess-iMac.local sshd[63814]: Failed keyboard-interactive for <invalid username> from 205.186.180.44 port 42742 ssh2
+Apr 30 01:42:12 Jamess-iMac.local sshd[2554]: Failed keyboard-interactive/pam for invalid user jamedds from 205.186.180.77 port 33723 ssh2
+Apr 29 12:53:38 Jamess-iMac.local sshd[47831]: error: PAM: authentication failure for james from 205.186.180.88 via 192.168.1.201
+Apr 29 13:53:38 Jamess-iMac.local sshd[47831]: error: PAM: Authentication failure for james from 205.186.180.99 via 192.168.1.201
+Apr 29 15:53:38 Jamess-iMac.local sshd[47831]: error: PAM: Authentication error for james from 205.186.180.100 via 192.168.1.201
+Apr 29 16:53:38 Jamess-iMac.local sshd[47831]: error: PAM: authentication error for james from 205.186.180.101 via 192.168.1.201
+Apr 29 17:53:38 Jamess-iMac.local sshd[47831]: error: PAM: authentication error for james from 205.186.180.102
+Apr 29 18:53:38 Jamess-iMac.local sshd[47831]: error: PAM: authentication error for james from 205.186.180.103

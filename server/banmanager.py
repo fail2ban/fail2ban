@@ -19,11 +19,8 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -148,7 +145,7 @@ class BanManager:
 	def addBanTicket(self, ticket):
 		try:
 			self.__lock.acquire()
-			if not self.__inBanList(ticket):
+			if not self._inBanList(ticket):
 				self.__banList.append(ticket)
 				self.__banTotal += 1
 				return True
@@ -177,7 +174,7 @@ class BanManager:
 	# @param ticket the ticket
 	# @return True if a ticket already exists
 	
-	def __inBanList(self, ticket):
+	def _inBanList(self, ticket):
 		for i in self.__banList:
 			if ticket.getIP() == i.getIP():
 				return True

@@ -21,6 +21,19 @@ would like to add to Fail2Ban, the best way to do so it to use the GitHub Pull
 Request feature. You can find more details on the Fail2Ban wiki
 (http://www.fail2ban.org/wiki/index.php/Get_Involved)
 
+Pull Requests
+=============
+
+When submitting pull requests on GitHub we ask you to:
+* Clearly describe the problem you're solving;
+* Don't introduce regressions that will make it hard for systems adminstrators 
+  to update;
+* If adding a major feature rebase your changes on master and get to a single commit;
+* Include test cases (see below);
+* Include sample logs (if relevant);
+* Include a change to the relevant section of the ChangeLog; and
+* Include yourself in THANKS if not already there.
+
 Testing
 =======
 
@@ -249,9 +262,52 @@ Takes care about executing start/check/ban/unban/stop commands
 Releasing
 =========
 
+# Check distribution patches and see if they can be included
+
+  * https://apps.fedoraproject.org/packages/fail2ban/sources
+  * http://sources.gentoo.org/cgi-bin/viewvc.cgi/gentoo-x86/net-analyzer/fail2ban/
+  * http://svnweb.freebsd.org/ports/head/security/py-fail2ban/
+  * https://build.opensuse.org/package/show?package=fail2ban&project=openSUSE%3AFactory
+  * http://sophie.zarb.org/sources/fail2ban (Mageia)
+  * https://trac.macports.org/browser/trunk/dports/security/fail2ban
+
+# Check distribution outstanding bugs
+
+  * https://github.com/fail2ban/fail2ban/issues?sort=updated&state=open
+  * http://bugs.debian.org/cgi-bin/pkgreport.cgi?dist=unstable;package=fail2ban
+  * http://bugs.sabayon.org/buglist.cgi?quicksearch=net-analyzer%2Ffail2ban
+  * https://bugs.gentoo.org/buglist.cgi?query_format=advanced&short_desc=fail2ban&bug_status=UNCONFIRMED&bug_status=CONFIRMED&bug_status=IN_PROGRESS&short_desc_type=allwords
+  * https://bugzilla.redhat.com/buglist.cgi?query_format=advanced&bug_status=NEW&bug_status=ASSIGNED&component=fail2ban&classification=Red%20Hat&classification=Fedora
+  * http://www.freebsd.org/cgi/query-pr-summary.cgi?text=fail2ban
+
+# Provide a release sample to distributors
+
+  * Debian: Yaroslav Halchenko <debian@onerussian.com>
+            http://packages.qa.debian.org/f/fail2ban.html
+  * FreeBSD: Christoph Theis theis@gmx.at>, Nick Hilliard <nick@foobar.org>
+            http://svnweb.freebsd.org/ports/head/security/py-fail2ban/Makefile?view=markup
+  * Fedora: Axel Thimm <Axel.Thimm@atrpms.net>
+            https://apps.fedoraproject.org/packages/fail2ban
+  * Gentoo: netmon@gentoo.org
+            http://sources.gentoo.org/cgi-bin/viewvc.cgi/gentoo-x86/net-analyzer/fail2ban/metadata.xml?view=markup
+  * openSUSE: Stephan Kulow <coolo@suse.com>
+            https://build.opensuse.org/package/users?package=fail2ban&project=openSUSE%3AFactory
+  * Mac Ports: @Malbrouck on github (gh-49)
+            https://trac.macports.org/browser/trunk/dports/security/fail2ban/Portfile
+
+# Wait for feedback from distributors
+
 # Ensure the version is correct in ./common/version.py
 
 # Add/finalize the corresponding entry in the ChangeLog
+
+  To generate a list of committers use e.g.
+
+  git shortlog -sn 0.8.8.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
+
+  Ensure the top of the ChangeLog has the right version and current date.
+
+  Ensure the top entry of the ChangeLog has the right version and current date.
 
 # Update man pages
 
@@ -275,4 +331,15 @@ Releasing
 
 # Email users and development list of release
 
-TODO notifying distributors etc.
+# notify distributors
+
+Post Release
+============
+
+Add the following to the top of the ChangeLog
+
+ver. 0.8.9 (2013/XX/XXX) - wanna-be-stable
+- Fixes
+- New Features
+- Enhancements
+
