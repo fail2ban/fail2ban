@@ -120,16 +120,18 @@ def tearDownMyTime():
 	time.tzset()
 	MyTime.myTime = None
 
-from fail2ban.tests import banmanagertestcase
-from fail2ban.tests import clientreadertestcase
-from fail2ban.tests import failmanagertestcase
-from fail2ban.tests import filtertestcase
-from fail2ban.tests import servertestcase
-from fail2ban.tests import datedetectortestcase
-from fail2ban.tests import actiontestcase
-from fail2ban.tests import sockettestcase
-
 def gatherTests(regexps=None, no_network=False):
+	# Import all the test cases here instead of a module level to
+	# avoid circular imports
+	from fail2ban.tests import banmanagertestcase
+	from fail2ban.tests import clientreadertestcase
+	from fail2ban.tests import failmanagertestcase
+	from fail2ban.tests import filtertestcase
+	from fail2ban.tests import servertestcase
+	from fail2ban.tests import datedetectortestcase
+	from fail2ban.tests import actiontestcase
+	from fail2ban.tests import sockettestcase
+
 	if not regexps: # pragma: no cover
 		tests = unittest.TestSuite()
 	else: # pragma: no cover
