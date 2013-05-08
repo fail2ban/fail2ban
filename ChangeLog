@@ -106,6 +106,8 @@ fail2ban-users mailing list and IRC.
      source. Also include BSD changes.
    * [1d9abd1] Action files can have tags in definition that refer to other
      tags.
+   * [10886e7,cec5da2,adb991a] Change actions to response with ICMP port
+     unreachable rather than just a drop of the packet.
   Pascal Borreli
    * [a2b29b4] Fixed lots of typos in config files and documentation.
   hamilton5
