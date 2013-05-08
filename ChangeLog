@@ -75,6 +75,9 @@ fail2ban-users mailing list and IRC.
    * [5f2d383] Add roundcube auth filter. Closes Debian bug #699442.
   Daniel Black
    * [be06b1b] Add action for iptables-ipsets. Closes gh-102.
+  Nick Munger, Ken Menzel, Daniel Black, Christoph Theis & Fabian Wenk
+   * [b6d0e8a] Add and enhance the bsd-ipfw action from
+     FreeBSD ports.
   Soulard Morgan
    * [f336d9f] Add filter for webmin. Closes gh-99.
   Steven Hiscocks
