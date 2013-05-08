@@ -12,7 +12,7 @@ ver. 0.8.9 (2013/05/XX) - wanna-be-stable
 
 Originally targeted as a bugfix release, it incorporated many new
 enhancements, few new features, and more importantly -- quite extended
-tests battery with current 94% coverage.
+tests battery with current 94% coverage (from 56% of 0.8.8).
 
 This release introduces over 200 of non-merge commits from 16
 contributors (sorted by number of commits): Yaroslav Halchenko, Daniel
