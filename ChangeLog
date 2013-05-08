@@ -54,6 +54,8 @@ fail2ban-users mailing list and IRC.
      gh-70. Thanks to iGeorgeX for the idea.
   blotus
    * [96eb8986] ' and " should also be escaped in action tags Closes gh-109
+  Christoph Theis, Nick Hilliard, Daniel Black
+   * [b3bd877d,cde71080] Make syslog -v and syslog -vv formats work on FreeBSD
 - New features:
   Yaroslav Halchenko
    * [9ba27353] Add support for jail.d/{confilefile} and fail2ban.d/{configfile}
