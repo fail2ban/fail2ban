@@ -290,6 +290,7 @@ class Filter(JailThread):
 			l = line.decode('utf-8')
 		except UnicodeDecodeError:
 			l = line
+		l = l.rstrip('\r\n')
 		timeMatch = self.dateDetector.matchTime(l)
 		if timeMatch:
 			# Lets split into time part and log part of the line
