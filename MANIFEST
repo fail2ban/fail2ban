@@ -118,6 +118,7 @@ config/action.d/mail-buffered.conf
 config/action.d/mail-whois.conf
 config/action.d/mail-whois-lines.conf
 config/action.d/mynetwatchman.conf
+config/action.d/pf.conf
 config/action.d/sendmail.conf
 config/action.d/sendmail-buffered.conf
 config/action.d/sendmail-whois.conf

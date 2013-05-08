@@ -77,6 +77,8 @@ fail2ban-users mailing list and IRC.
    * [f336d9f] Add filter for webmin. Closes gh-99.
   Steven Hiscocks
    * [..746c7d9] bash interactive shell completions for fail2ban-*'s
+  Nick Hilliard
+   * [0c5a9c5] Add pf action.
 - Enhancements:
   Enrico Labedzki
    * [24a8d07] Added new date format for ASSP SMTP Proxy.
