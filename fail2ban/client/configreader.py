@@ -21,8 +21,6 @@
 # Modified by: Yaroslav Halchenko (SafeConfigParserWithIncludes)
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 

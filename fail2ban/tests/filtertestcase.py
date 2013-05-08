@@ -497,8 +497,8 @@ def get_monitor_failures_testcase(Filter_):
 
 		def _test_move_into_file(self, interim_kill=False):
 			# if we move a new file into the location of an old (monitored) file
-			self.file1 = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-												  n=100)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+									  n=100).close()
 			# make sure that it is monitored first
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
@@ -508,14 +508,15 @@ def get_monitor_failures_testcase(Filter_):
 				time.sleep(0.2)				  # let them know
 
 			# now create a new one to override old one
-			self.file = _copy_lines_between_files(GetFailures.FILENAME_01,
-												   self.name + '.new', n=100)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name + '.new',
+									  n=100).close()
 			os.rename(self.name + '.new', self.name)
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
 			# and to make sure that it now monitored for changes
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+									  n=100).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 9)
 
