@@ -97,6 +97,7 @@ config/filter.d/dropbear.conf
 config/filter.d/lighttpd-auth.conf
 config/filter.d/recidive.conf
 config/filter.d/roundcube-auth.conf
+config/action.d/bsd-ipfw.conf
 config/action.d/dummy.conf
 config/action.d/iptables-blocktype.conf
 config/action.d/iptables-ipset-proto4.conf
