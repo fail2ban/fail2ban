@@ -7,23 +7,27 @@
 Fail2Ban (version 0.8.9)                                              2013/04/XX
 ================================================================================
 
-ver. 0.8.9 (2013/04/XX) - wanna-be-stable
+ver. 0.8.9 (2013/05/XX) - wanna-be-stable
 ----------
 
-Although primarily a bugfix release, it incorporates many new
-enhancements, few new features, but more importantly -- quite extended
-tests battery with current 94% coverage.  This release incorporates
-more than a 100 of non-merge commits from 14 contributors (sorted by
-number of commits): Yaroslav Halchenko, Daniel Black, Steven Hiscocks,
-ArndRa, hamilton5, pigsyn, Erwan Ben Souiden, Michael Gebetsroither,
-Orion Poplawski, Artur Penttinen, sebres, Nicolas Collignon, Pascal
-Borreli, blotus:
+Originally targeted as a bugfix release, it incorporated many new
+enhancements, few new features, and more importantly -- quite extended
+tests battery with current 94% coverage.
 
-- Fixes:
-  Yaroslav Halchenko
-   * [6f4dad46] Documentation python-2.4 is the minimium version.
-   * [1eb23cf8] do not rely on scripts being under /usr -- might differ eg on
-     Fedora. Closes gh-112. Thanks to Camusensei for the bug report.
+This release introduces over 200 of non-merge commits from 16
+contributors (sorted by number of commits): Yaroslav Halchenko, Daniel
+Black, Steven Hiscocks, James Stout, Orion Poplawski, Enrico Labedzki,
+ArndRa, hamilton5, pigsyn, Erwan Ben Souiden, Michael Gebetsroither,
+Artur Penttinen, blotus, sebres, Nicolas Collignon, Pascal Borreli.
+
+Special Kudos also go to Fabian Wenk, Arturo 'Buanzo' Busleiman, Tom
+Hendrikx, Yehuda Katz and other TBN heroes supporting users on
+fail2ban-users mailing list and IRC.
+
+- Fixes: Yaroslav Halchenko
+   * [6f4dad46] python-2.4 is the minimal version.
+   * [1eb23cf8] do not rely on scripts being under /usr -- might differ e.g.
+     on Fedora. Closes gh-112. Thanks to Camusensei for the bug report.
    * [bf4d4af1] Changes for atomic writes. Thanks to Steven Hiscocks for
      insight. Closes gh-103.
    * [ab044b75] delay check for the existence of config directory until read.
@@ -99,7 +103,7 @@ Borreli, blotus:
    * [c8c7b0b,23bbc60] Better logging of log file read errors.
    * [3665e6d] Added code coverage to development process.
    * [41b9f7b,32d10e9,39750b8] More complete ssh filter rules to match openssh
-	   source. Also include BSD changes.
+     source. Also include BSD changes.
    * [1d9abd1] Action files can have tags in definition that refer to other
      tags.
   Pascal Borreli
@@ -113,10 +117,6 @@ Borreli, blotus:
      - README.Solaris
      - failregex'es tune ups (sshd.conf)
      - hostsdeny: do not rely on support of '-i' in sed
-
-Special Kudos also go to Fabian Wenk, Arturo 'Buanzo' Busleiman, Tom
-Hendrikx and other TBN heroes supporting users on fail2ban-users
-mailing list and IRC.
 
 ver. 0.8.8 (2012/12/06) - stable
 ----------
