@@ -603,11 +603,29 @@ class GetFailures(unittest.TestCase):
 
 
 
-	def testGetFailures01(self):
-		self.filter.addLogPath(GetFailures.FILENAME_01)
-		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
-		self.filter.getFailures(GetFailures.FILENAME_01)
-		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
+	def testGetFailures01(self, filename=None, failures=None):
+		filename = filename or GetFailures.FILENAME_01
+		failures = failures or GetFailures.FAILURES_01
+
+		self.filter.addLogPath(filename)
+		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>$")
+		self.filter.getFailures(filename)
+		_assert_correct_last_attempt(self, self.filter,  failures)
+
+	def testCRLFFailures01(self):
+		# We first adjust logfile/failures to end with CR+LF
+		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='crlf')
+		f = open(fname, 'w')
+		for l in open(GetFailures.FILENAME_01).readlines():
+			f.write('%s\r\n' % l.rstrip('\n'))
+		f.close()
+
+		# now see if we should be getting the "same" failures
+		self.testGetFailures01(filename=fname,
+							   failures=GetFailures.FAILURES_01[:3] +
+							   ([x.rstrip('\n') + '\r\n' for x in
+								 GetFailures.FAILURES_01[-1]],))
+		_killfile(f, fname)
 
 
 	def testGetFailures02(self):

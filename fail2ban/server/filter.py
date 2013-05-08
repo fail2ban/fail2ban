@@ -310,6 +310,7 @@ class Filter(JailThread):
 	def processLine(self, line):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
+		line = line.rstrip('\r\n')
 		timeMatch = self.dateDetector.matchTime(line)
 		if timeMatch:
 			# Lets split into time part and log part of the line

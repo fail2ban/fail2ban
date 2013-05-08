@@ -46,7 +46,7 @@ ver. 0.8.9 (2013/05/XX) - wanna-be-stable
 
 Originally targeted as a bugfix release, it incorporated many new
 enhancements, few new features, and more importantly -- quite extended
-tests battery with current 94% coverage.
+tests battery with current 94% coverage (from 56% of 0.8.8).
 
 This release introduces over 200 of non-merge commits from 16
 contributors (sorted by number of commits): Yaroslav Halchenko, Daniel
@@ -137,6 +137,7 @@ fail2ban-users mailing list and IRC.
    * [40c5a2d] adding more of diagnostic messages into -client while starting
      the daemon.
    * [8e63d4c] Compare against None with 'is' instead of '=='.
+   * [6fef85f] Strip CR and LF while analyzing the log line
   Daniel Black
    * [3aeb1a9] Add jail.conf manual page. Closes gh-143.
    * [MANY] man page edits.
