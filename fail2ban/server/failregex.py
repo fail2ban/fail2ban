@@ -117,7 +117,7 @@ class Regex:
 				n += 1
 			except IndexError:
 				break
-		return skippedLines.splitlines(True)
+		return skippedLines.splitlines(False)
 
 	##
 	# Returns unmatched lines.
@@ -129,9 +129,9 @@ class Regex:
 		if not self.hasMatched():
 			return []
 		unmatchedLines = (
-			self._matchCache.string[:self._matchLineStart].splitlines(True)
+			self._matchCache.string[:self._matchLineStart].splitlines(False)
 			+ self.getSkippedLines()
-			+ self._matchCache.string[self._matchLineEnd:].splitlines(True))
+			+ self._matchCache.string[self._matchLineEnd:].splitlines(False))
 		return unmatchedLines
 
 	##
@@ -145,7 +145,7 @@ class Regex:
 		if not self.hasMatched():
 			return []
 		matchedLines = self._matchCache.string[
-			self._matchLineStart:self._matchLineEnd].splitlines(True)
+			self._matchLineStart:self._matchLineEnd].splitlines(False)
 		return [line for line in matchedLines
 			if line not in self.getSkippedLines()]
 

@@ -325,7 +325,7 @@ class Filter(JailThread):
 			logLine = line
 		self.__lineBuffer = ((self.__lineBuffer +
 				[logLine])[-self.__lineBufferSize:])
-		return self.findFailure(timeLine, "".join(self.__lineBuffer))
+		return self.findFailure(timeLine, "\n".join(self.__lineBuffer) + "\n")
 
 	def processLineAndAdd(self, line):
 		"""Processes the line for failures and populates failManager
@@ -373,7 +373,8 @@ class Filter(JailThread):
 			failRegex.search(logLine)
 			if failRegex.hasMatched():
 				# Checks if we must ignore this match.
-				if self.ignoreLine("".join(failRegex.getMatchedLines())):
+				if self.ignoreLine(
+						"\n".join(failRegex.getMatchedLines()) + "\n"):
 					# The ignoreregex matched. Remove ignored match.
 					self.__lineBuffer = failRegex.getUnmatchedLines()
 					continue
