@@ -21,8 +21,6 @@
 #
 
 __author__ = "Cyril Jaquier, Yaroslav Halchenko"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier; 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 

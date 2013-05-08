@@ -19,7 +19,6 @@
 
 # Author: Cyril Jaquier
 # Modified by: Yaroslav Halchenko (SafeConfigParserWithIncludes)
-# $Revision$
 
 __author__ = "Cyril Jaquier"
 __version__ = "$Revision$"

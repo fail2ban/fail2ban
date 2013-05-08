@@ -17,7 +17,6 @@
 #
 # Author: Sireyessire, Cyril Jaquier
 #
-# $Revision$
 
 extra_started_commands="reload showlog"
 

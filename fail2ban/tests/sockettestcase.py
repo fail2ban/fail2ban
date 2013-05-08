@@ -19,7 +19,6 @@
 
 # Author: Steven Hiscocks
 # 
-# $Revision$
 
 __author__ = "Steven Hiscocks"
 __version__ = "$Revision$"

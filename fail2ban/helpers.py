@@ -20,7 +20,6 @@
 # Author: Cyril Jaquier
 # Author: Arturo 'Buanzo' Busleiman
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
 __version__ = "$Revision$"

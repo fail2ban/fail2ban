@@ -19,7 +19,6 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
 __version__ = "$Revision$"
@@ -89,6 +88,9 @@ class ExecuteAction(unittest.TestCase):
 			'ABC': "123",
 			'xyz': "890",
 		}
+		self.assertEqual(
+			self.__action.replaceTag("Text<br>text", aInfo),
+			"Text\ntext")
 		self.assertEqual(
 			self.__action.replaceTag("Text <HOST> text", aInfo),
 			"Text 192.0.2.0 text")

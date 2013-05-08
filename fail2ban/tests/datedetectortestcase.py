@@ -19,7 +19,6 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
 __version__ = "$Revision$"
@@ -90,6 +89,7 @@ class DateDetectorTest(unittest.TestCase):
 			"<01/23/05@21:59:59>",
 			"050123 21:59:59", # MySQL
 			"Jan 23, 2005 9:59:59 PM", # Apache Tomcat
+			"Jan-23-05 21:59:59", # ASSP like
 			):
 			log = sdate + "[sshd] error: PAM: Authentication failure"
 			# exclude

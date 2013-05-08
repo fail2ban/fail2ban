@@ -19,7 +19,6 @@
 
 # Author: Yaroslav Halchenko
 # Modified: Cyril Jaquier
-# $Revision$
 
 __author__ = 'Yaroslav Halhenko'
 __revision__ = '$Revision$'

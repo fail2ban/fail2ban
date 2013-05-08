@@ -58,6 +58,9 @@ fail2ban/tests/files/testcase02.log
 fail2ban/tests/files/testcase03.log
 fail2ban/tests/files/testcase04.log
 fail2ban/tests/files/testcase-usedns.log
+fail2ban/tests/files/logs/bsd/syslog-plain.txt
+fail2ban/tests/files/logs/bsd/syslog-v.txt
+fail2ban/tests/files/logs/bsd/syslog-vv.txt
 setup.py
 setup.cfg
 fail2ban/__init__.py
@@ -99,7 +102,9 @@ config/filter.d/dropbear.conf
 config/filter.d/lighttpd-auth.conf
 config/filter.d/recidive.conf
 config/filter.d/roundcube-auth.conf
+config/action.d/bsd-ipfw.conf
 config/action.d/dummy.conf
+config/action.d/iptables-blocktype.conf
 config/action.d/iptables-ipset-proto4.conf
 config/action.d/iptables-ipset-proto6.conf
 config/action.d/iptables-xt_recent-echo.conf
@@ -119,6 +124,7 @@ config/action.d/mail-buffered.conf
 config/action.d/mail-whois.conf
 config/action.d/mail-whois-lines.conf
 config/action.d/mynetwatchman.conf
+config/action.d/pf.conf
 config/action.d/sendmail.conf
 config/action.d/sendmail-buffered.conf
 config/action.d/sendmail-whois.conf
@@ -141,8 +147,10 @@ files/macosx-initd
 files/solaris-fail2ban.xml
 files/solaris-svc-fail2ban
 files/suse-initd
+files/fail2ban-logrotate
 files/cacti/fail2ban_stats.sh
 files/cacti/cacti_host_template_fail2ban.xml
 files/cacti/README
 files/nagios/check_fail2ban
 files/nagios/f2ban.txt
+files/bash-completion

@@ -1,0 +1,141 @@
+# vim:tw=80:ft=txt
+
+README FOR SOLARIS INSTALLATIONS
+
+By Roy Sigurd Karlsbakk <roy@karlsbakk.net>
+
+ABOUT
+
+This readme is meant for those wanting to install fail2ban on Solaris 10,
+OpenSolaris, OpenIndiana etc. To some degree it may as well be useful for
+users of older Solaris versions and Nexenta, but don't rely on it.
+
+READ ME FIRST
+
+If I use the term Solaris, I am talking about any Solaris dialect, that is, the
+official Sun/Oracle ones or derivates. If I describe an OS as
+"OpenSolaris-based", it means it's either OpenSolaris, OpenIndiana or one of the
+other, but /not/ the Nexenta family, since this only uses the OpenSolaris/
+IllumOS kernel and not the userland. If I say Solaris 10, I mean Solaris 10 and
+perhaps, if you're lucky and have some good gods on your side, it may also apply
+to Solaris 9 or even 8 and hopefully in the new Solaris 11 whenever that may be
+released. Quoted lines of code, settings et cetera are indented with two spaces.
+This does _not_ mean you should use that indentation, especially in config files
+where they can be harmful. Optional settings are prefixed with OPT: while
+required settings are prefixed with REQ:. If no prefix is found, regard it as a
+required setting.
+
+INSTALLATION ON SOLARIS
+
+The installation is straight forward on Solaris as well as on linux/bsd/etc.
+./setup.py install installs the general packages in /usr/bin on OpenSolaris-
+based distros or (at least on this box) under /usr/sfw/bin on Solaris 10. In
+the files/ directory you will find the file solaris-fail2ban.xml containing the
+Solaris service. To install this, run the following command as root (or with
+sudo):
+
+  svccfg import files/solaris-fail2ban.xml
+
+This should normally without giving an error. If you get an error, deal with it,
+and please post any relevant info (or fixes?) to the fail2ban mailing list.
+Next install the service handler - copy the script in and allow it to be executed:
+
+  cp files/solaris-svc-fail2ban /lib/svc/method/svc-fail2ban
+  chmod +x /lib/svc/method/svc-fail2ban
+
+CONFIGURE SYSLOG
+
+For some reason, a default Solaris installation does not log ssh login attempts,
+and since fail2ban works by monitoring logs, enabling this logging is rather
+important for it to work. To enable this, edit /etc/syslog.conf and add a line
+at the end:
+
+  auth.info					/var/adm/auth.log
+
+Save the file and exit, and run
+
+  touch /var/adm/auth.log
+
+The Solaris system logger will _not_ create a non-existing file. Now, restart
+the system logger.
+
+  svcadm restart system-log
+
+Try to ssh into localhost with ssh asdf@localhost and enter an invalid password.
+Make sure this is logged in the above file. When done, you may configure
+fail2ban.
+
+FAIL2BAN CONFIGURATION
+
+OPT: Create /etc/fail2ban/fail2ban.local containing:
+
+# Fail2Ban main configuration file
+#
+# Comments: use '#' for comment lines and ';' for inline comments
+#
+# Changes:  in most of the cases you should not modify this
+#           file, but provide customizations in fail2ban.local file, e.g.:
+#
+# [Definition]
+# loglevel = 4
+#
+[Definition]
+
+# Option:  logtarget
+# Notes.:  Set the log target. This could be a file, SYSLOG, STDERR or STDOUT.
+#          Only one log target can be specified.
+#          If you change logtarget from the default value and you are
+#          using logrotate -- also adjust or disable rotation in the
+#          corresponding configuration file
+#          (e.g. /etc/logrotate.d/fail2ban on Debian systems)
+# Values:  STDOUT STDERR SYSLOG file  Default:  /var/log/fail2ban.log
+#
+logtarget = /var/adm/fail2ban.log
+
+
+REQ: Create /etc/fail2ban/jail.local containing:
+
+[ssh-tcpwrapper]
+
+enabled     = true
+filter      = sshd
+action      = hostsdeny
+              sendmail-whois[name=SSH, dest=you@example.com]
+ignoreregex = for myuser from
+logpath     = /var/adm/auth.log
+
+Set the sendmail dest address to something useful or drop the line to stop it spamming you.
+Set 'myuser' to your username to avoid banning yourself or drop it.
+
+START (OR RESTART) FAIL2BAN
+
+Enable the fail2ban service with
+
+  svcadm enable fail2ban
+
+When done, check that all services are running well
+
+  svcs -xv
+
+GOTCHAS AND FIXMES
+
+* It seems the installation may be starting fail2ban automatically. If this is
+  done, fail2ban will not start, but no errors will be returned from svcs
+  (above). Check if it's running with 'ps -ef | grep fail2ban' and manually kill
+  the PID if it is. Re-enable fail2ban and try again
+
+    svcadm disable fail2ban
+    svcadm enable fail2ban
+
+* If svcs -xv says that fail2ban failed to start or svcs says it's in maintenance mode
+  chcek /var/svc/log/network-fail2ban:default.log for clues. 
+  Check permissions on /var/adm, /var/adm/auth.log /var/adm/fail2ban.log and /var/run/fail2ban
+  You may need to:
+
+  sudo mkdir /var/run/fail2ban
+
+* Fail2ban adds lines like these to /etc/hosts.deny:
+
+    ALL: 1.2.3.4
+
+  wouldn't it be better to just block sshd?
