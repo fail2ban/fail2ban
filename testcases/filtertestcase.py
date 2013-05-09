@@ -592,17 +592,19 @@ class GetFailures(unittest.TestCase):
 	def testCRLFFailures01(self):
 		# We first adjust logfile/failures to end with CR+LF
 		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='crlf')
-		f = open(fname, 'w')
-		for l in open(GetFailures.FILENAME_01).readlines():
-			f.write('%s\r\n' % l.rstrip('\n'))
-		f.close()
+		# poor man unix2dos:
+		fin, fout = open(GetFailures.FILENAME_01), open(fname, 'w')
+		for l in fin.readlines():
+			fout.write('%s\r\n' % l.rstrip('\n'))
+		fin.close()
+		fout.close()
 
 		# now see if we should be getting the "same" failures
 		self.testGetFailures01(filename=fname,
 							   failures=GetFailures.FAILURES_01[:3] +
 							   ([x.rstrip('\n') + '\r\n' for x in
 								 GetFailures.FAILURES_01[-1]],))
-		_killfile(f, fname)
+		_killfile(fout, fname)
 
 
 	def testGetFailures02(self):
