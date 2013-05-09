@@ -71,7 +71,7 @@ class ActionReader(DefinitionInitConfigReader):
 				stream.append(head + ["actionunban", self._name, self._opts[opt]])
 		if self._initOpts:
 			if "timeout" in self._initOpts:
-				stream.append(head + ["timeout", self._file, self._opts["timeout"]])
+				stream.append(head + ["timeout", self._name, self._opts["timeout"]])
 			# cInfo
 			for p in self._initOpts:
 				stream.append(head + ["setcinfo", self._name, p, self._initOpts[p]])
