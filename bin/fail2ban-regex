@@ -25,6 +25,12 @@ __license__ = "GPL"
 import getopt, sys, time, logging, os, locale
 from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
 
+try:
+	from fail2ban.server.filtersystemd import FilterSystemd
+	from systemd import journal
+except:
+	journal = None
+
 from fail2ban.version import version
 from fail2ban.client.configparserinc import SafeConfigParserWithIncludes
 from fail2ban.server.filter import Filter
@@ -69,6 +75,7 @@ class Fail2banRegex:
 		self.__filter = Filter(None)
 		self.__ignoreregex = list()
 		self.__failregex = list()
+		self.__journalmatch = ""
 		self.__verbose = False
 		self.__maxlines_set = False		  # so we allow to override maxlines in cmdline
 		self.encoding = locale.getpreferredencoding()
@@ -111,10 +118,14 @@ class Fail2banRegex:
 		print "    -V, --version           print the version"
 		print "    -v, --verbose           verbose output"
 		print "    -l INT, --maxlines=INT  set maxlines for multi-line regex default: 1"
+		print "    -m MATCHES, --matches=MATCHES"
+		print "                            journalctl style matches, overriding filter file."
+		print "                            Special value \"ALL\" searches entire journal"
 		print
 		print "Log:"
 		print "    string                  a string representing a log line"
 		print "    filename                path to a log file (/var/log/auth.log)"
+		print "    \"systemd-journal\"       search systemd journal (systemd python required)"
 		print
 		print "Regex:"
 		print "    string                  a string representing a 'failregex'"
@@ -223,6 +234,10 @@ class Fail2banRegex:
 					print "ERROR: Invalid value for maxlines (%(maxlines)r) " \
 					      "read from %(value)s" % locals()
 					return False
+			try:
+				self.__journalmatch = reader.get("Init", "journalmatch")
+			except (NoSectionError, NoOptionError):
+				pass
 		else:
 			if len(value) > 53:
 				stripReg = value[0:50] + "..."
@@ -342,13 +357,16 @@ class Fail2banRegex:
 			print "information."
 			return True
 
+	def getJournalMatch(self):
+		return self.__journalmatch
 
 if __name__ == "__main__":
 	fail2banRegex = Fail2banRegex()
 	# Reads the command line options.
 	try:
-		cmdOpts = 'hVcvl:e:'
-		cmdLongOpts = ['help', 'version', 'verbose', 'maxlines=', 'encoding=']
+		cmdOpts = 'hVcvl:e:m:'
+		cmdLongOpts = ['help', 'version', 'verbose', 'maxlines=', 'encoding=',
+			'matches=']
 		optList, args = getopt.getopt(sys.argv[1:], cmdOpts, cmdLongOpts)
 	except getopt.GetoptError:
 		fail2banRegex.dispUsage()
@@ -391,6 +409,42 @@ if __name__ == "__main__":
 				print e
 				print
 				sys.exit(-1)
+		elif cmd_log == "systemd-journal":
+			if journal is None:
+				print "Error: systemd library not found. Exiting..."
+				sys.exit(-1)
+			myjournal = journal.Reader()
+			journalmatch = ""
+			# Parse journal matches from command line
+			for opt in optList:
+				if opt[0] in ["-m", "--matches"]:
+					journalmatch = opt[1]
+			# If no command line option, take journal match from filter
+			if not journalmatch:
+				journalmatch = fail2banRegex.getJournalMatch()
+			try:
+				if journalmatch != "ALL":
+					for element in journalmatch.split():
+						if element == "+":
+							myjournal.add_disjunction()
+						else:
+							myjournal.add_match(element)
+			except ValueError:
+				print "Error: Invalid journal match: %s" % journalmatch
+				print "Exiting..."
+				sys.exit(-1)
+			print "Use systemd journal match: %s" % (journalmatch or "ALL")
+			while True:
+				try:
+					entry = myjournal.get_next()
+				except OSError:
+					continue
+				else:
+					if not entry:
+						break
+				line = FilterSystemd.formatJournalEntry(entry)
+				fail2banRegex.testIgnoreRegex(line)
+				fail2banRegex.testRegex(line)
 		else:
 			if len(sys.argv[1]) > 53:
 				stripLog = cmd_log[0:50] + "..."

@@ -643,6 +643,21 @@ class FileContainer:
 			self.__handler = None
 
 
+##
+# JournalFilter class.
+#
+# Base interface class for systemd journal filters
+
+class JournalFilter(Filter):
+
+	def addJournalMatch(self, match):
+		pass
+
+	def delJournalMatch(self, match):
+		pass
+
+	def getJournalMatch(self, match):
+		return []
 
 ##
 # Utils class for DNS and IP handling.
