@@ -394,7 +394,7 @@ class Action:
 					time.sleep(0.1)
 					retcode = popen.poll()
 				if retcode is None:
-					logSys.error("%s timed out after %i seconds." %
+					logSys.error("%s -- timed out after %i seconds." %
 						(realCmd, timeout))
 					os.kill(popen.pid, signal.SIGTERM) # Terminate the process
 					time.sleep(0.1)
@@ -404,7 +404,7 @@ class Action:
 						time.sleep(0.1)
 						retcode = popen.poll()
 			except OSError, e:
-				logSys.error("%s failed with %s" % (realCmd, e))
+				logSys.error("%s -- failed with %s" % (realCmd, e))
 				return False
 		finally:
 			_cmd_lock.release()
@@ -412,23 +412,23 @@ class Action:
 		std_level = retcode == 0 and logging.DEBUG or logging.ERROR
 		if std_level >= logSys.getEffectiveLevel():
 			stdout.seek(0)
-			logSys.log(std_level, "%s stdout: %r" % (realCmd, stdout.read()))
+			logSys.log(std_level, "%s -- stdout: %r" % (realCmd, stdout.read()))
 			stderr.seek(0)
-			logSys.log(std_level, "%s stderr: %r" % (realCmd, stderr.read()))
+			logSys.log(std_level, "%s -- stderr: %r" % (realCmd, stderr.read()))
 		stdout.close()
 		stderr.close()
 
 		if retcode == 0:
-			logSys.debug("%s returned successfully" % realCmd)
+			logSys.debug("%s -- returned successfully" % realCmd)
 			return True
 		elif retcode is None:
-			logSys.error("Unable to kill PID %i: %s" % (popen.pid, realCmd))
+			logSys.error("%s -- unable to kill PID %i" % (realCmd, popen.pid))
 		elif retcode < 0:
-			logSys.error("%s killed with %s" %
+			logSys.error("%s -- killed with %s" %
 				(realCmd, signame.get(-retcode, "signal %i" % -retcode)))
 		else:
 			msg = _RETCODE_HINTS.get(retcode, None)
-			logSys.error("%s returned %i" % (realCmd, retcode))
+			logSys.error("%s -- returned %i" % (realCmd, retcode))
 			if msg:
 				logSys.info("HINT on %i: %s"
 							% (retcode, msg % locals()))

@@ -122,8 +122,8 @@ class ExecuteAction(unittest.TestCase):
 		stime = time.time()
 		Action.executeCmd('sleep 60', timeout=2) # Should take a minute
 		self.assertAlmostEqual(time.time() - stime, 2.1, places=1)
-		self.assertTrue(self._is_logged('sleep 60 timed out after 2 seconds'))
-		self.assertTrue(self._is_logged('sleep 60 killed with SIGTERM'))
+		self.assertTrue(self._is_logged('sleep 60 -- timed out after 2 seconds'))
+		self.assertTrue(self._is_logged('sleep 60 -- killed with SIGTERM'))
 
 	def testCaptureStdOutErr(self):
 		Action.executeCmd('echo "How now brown cow"')
