@@ -137,7 +137,7 @@ class FilterSystemd(JournalFilter):
 	@staticmethod
 	def formatJournalEntry(logentry):
 		logelements = [logentry.get('_SOURCE_REALTIME_TIMESTAMP',
-			logentry.get('__REALTIME_TIMESTAMP')).strftime("%b %d %H:%M:%S %Y")]
+			logentry.get('__REALTIME_TIMESTAMP')).isoformat()]
 		if logentry.get('_HOSTNAME'):
 			logelements.append(logentry['_HOSTNAME'])
 		if logentry.get('SYSLOG_IDENTIFIER'):
