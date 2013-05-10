@@ -64,7 +64,8 @@ class SetupTest(unittest.TestCase):
 	def testSetupInstallRoot(self):
 		if not self.setup: return			  # if verbose skip didn't work out
 		tmp = tempfile.mkdtemp()
-		os.system("%s install --root=%s >/dev/null" % (self.setup, tmp))
+		os.system("%s %s install --root=%s >/dev/null"
+				  % (sys.executable, self.setup, tmp))
 
 		def addpath(l):
 			return [os.path.join(tmp, x) for x in l]
