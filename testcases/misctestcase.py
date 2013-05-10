@@ -21,7 +21,12 @@ __author__ = "Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import unittest
+import os, sys, unittest
+import tempfile
+import shutil
+
+from glob import glob
+
 from common.helpers import formatExceptionInfo
 
 class HelpersTest(unittest.TestCase):
@@ -42,3 +47,34 @@ class HelpersTest(unittest.TestCase):
 			self.assertEqual(name, "ValueError")
 			# might be fragile due to ' vs "
 			self.assertEqual(args, "('Very bad', None)")
+
+
+class SetupTest(unittest.TestCase):
+
+	def setUp(self):
+		setup = os.path.join(os.path.dirname(__file__), '..', 'setup.py')
+		self.setup = os.path.exists(setup) and setup or None
+		if not self.setup and sys.version_info >= (2,7): # running not out of the source
+			raise unittest.SkipTest(
+				"Seems to be running not out of source distribution"
+				" -- cannot locate setup.py")
+
+	def testSetupInstallRoot(self):
+		if not self.setup: return			  # if verbose skip didn't work out
+		tmp = tempfile.mkdtemp()
+		os.system("%s install --root=%s >/dev/null" % (self.setup, tmp))
+
+		def addpath(l):
+			return [os.path.join(tmp, x) for x in l]
+
+		self.assertEqual(sorted(glob('%s/*' % tmp)),
+						 addpath(['etc', 'usr', 'var']))
+
+		# Assure presence of some files we expect to see in the installation
+		for f in ('etc/fail2ban/fail2ban.conf',
+				  'etc/fail2ban/jail.conf'):
+			self.assertTrue(os.path.exists(os.path.join(tmp, f)),
+							msg="Can't find %s" % f)
+
+		# clean up
+		shutil.rmtree(tmp)

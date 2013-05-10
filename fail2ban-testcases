@@ -153,6 +153,7 @@ tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTest))
 tests.addTest(unittest.makeSuite(sockettestcase.Socket))
 # Misc helpers
 tests.addTest(unittest.makeSuite(misctestcase.HelpersTest))
+tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
 
 # Filter
 if not opts.no_network:
