@@ -177,7 +177,7 @@ class Server:
 	def delLogPath(self, name, fileName):
 		filter_ = self.__jails.getFilter(name)
 		if isinstance(filter_, FileFilter):
-			self.__jails.getFilter(name).delLogPath(fileName)
+			filter_.delLogPath(fileName)
 	
 	def getLogPath(self, name):
 		filter_ = self.__jails.getFilter(name)
@@ -207,10 +207,14 @@ class Server:
 			return []
 	
 	def setLogEncoding(self, name, encoding):
-		return self.__jails.getFilter(name).setLogEncoding(encoding)
+		filter_ = self.__jails.getFilter(name)
+		if isinstance(filter_, FileFilter):
+			filter_.setLogEncoding(encoding)
 	
 	def getLogEncoding(self, name):
-		return self.__jails.getFilter(name).getLogEncoding()
+		filter_ = self.__jails.getFilter(name)
+		if isinstance(filter_, FileFilter):
+			return filter_.getLogEncoding()
 	
 	def setFindTime(self, name, value):
 		self.__jails.getFilter(name).setFindTime(value)
