@@ -56,7 +56,7 @@ the website: http://www.fail2ban.org
 Code status:
 ------------
 
-* [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png)](https://travis-ci.org/fail2ban/fail2ban) travis-ci.org (master branch)
+* [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=master)](https://travis-ci.org/fail2ban/fail2ban) travis-ci.org (master branch)
 
 * [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=master)](https://coveralls.io/r/fail2ban/fail2ban)
 
