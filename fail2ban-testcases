@@ -36,6 +36,7 @@ from testcases import servertestcase
 from testcases import datedetectortestcase
 from testcases import actiontestcase
 from testcases import sockettestcase
+from testcases import misctestcase
 
 from testcases.utils import FormatterWithTraceBack
 from server.mytime import MyTime
@@ -150,6 +151,8 @@ tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
 tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTest))
 # CSocket and AsyncServer
 tests.addTest(unittest.makeSuite(sockettestcase.Socket))
+# Misc helpers
+tests.addTest(unittest.makeSuite(misctestcase.HelpersTest))
 
 # Filter
 if not opts.no_network:

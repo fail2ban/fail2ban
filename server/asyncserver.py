@@ -70,8 +70,8 @@ class RequestHandler(asynchat.async_chat):
 		self.close_when_done()
 		
 	def handle_error(self):
-		e1,e2 = helpers.formatExceptionInfo()
-		logSys.error("Unexpected communication error: "+e2)
+		e1, e2 = helpers.formatExceptionInfo()
+		logSys.error("Unexpected communication error: %s" % str(e2))
 		logSys.error(traceback.format_exc().splitlines())
 		self.close()
 		
