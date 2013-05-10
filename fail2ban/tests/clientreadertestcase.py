@@ -145,11 +145,35 @@ class JailReaderTest(unittest.TestCase):
 		self.assertEqual(jail.getName(), 'sshd')
 
 	def testSplitOption(self):
-		action = "mail-whois[name=SSH]"
+		# Simple example
+		option = "mail-whois[name=SSH]"
 		expected = ['mail-whois', {'name': 'SSH'}]
-		result = JailReader.extractOptions(action)
-		self.assertEquals(expected, result)
+		result = JailReader.extractOptions(option)
+		self.assertEqual(expected, result)
 
+		# Empty option
+		option = "abc[]"
+		expected = ['abc', {}]
+		result = JailReader.extractOptions(option)
+		self.assertEqual(expected, result)
+
+		# More complex examples
+		option = 'option[opt01=abc,opt02="123",opt03="with=okay?",opt04="andwith,okay...",opt05="how about spaces",opt06="single\'in\'double",opt07=\'double"in"single\',  opt08= leave some space, opt09=one for luck, opt10=, opt11=]'
+		expected = ['option', {
+			'opt01': "abc",
+			'opt02': "123",
+			'opt03': "with=okay?",
+			'opt04': "andwith,okay...",
+			'opt05': "how about spaces",
+			'opt06': "single'in'double",
+			'opt07': "double\"in\"single",
+			'opt08': "leave some space",
+			'opt09': "one for luck",
+			'opt10': "",
+			'opt11': "",
+		}]
+		result = JailReader.extractOptions(option)
+		self.assertEqual(expected, result)
 
 class FilterReaderTest(unittest.TestCase):
 
