@@ -21,12 +21,14 @@ __author__ = "Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
+import logging
 import os, sys, unittest
 import tempfile
 import shutil
 
 from glob import glob
 
+from utils import mbasename, TraceBack, FormatterWithTraceBack
 from common.helpers import formatExceptionInfo
 
 class HelpersTest(unittest.TestCase):
@@ -78,3 +80,55 @@ class SetupTest(unittest.TestCase):
 
 		# clean up
 		shutil.rmtree(tmp)
+
+class TestsUtilsTest(unittest.TestCase):
+
+	def testmbasename(self):
+		self.assertEqual(mbasename("sample.py"), 'sample')
+		self.assertEqual(mbasename("/long/path/sample.py"), 'sample')
+		# this one would include only the directory for the __init__ and base files
+		self.assertEqual(mbasename("/long/path/__init__.py"), 'path.__init__')
+		self.assertEqual(mbasename("/long/path/base.py"), 'path.base')
+		self.assertEqual(mbasename("/long/path/base"), 'path.base')
+
+	def testTraceBack(self):
+		# pretty much just a smoke test since tests runners swallow all the detail
+
+		for compress in True, False:
+			tb = TraceBack(compress=compress)
+
+			def func_raise():
+				raise ValueError()
+
+			def deep_function(i):
+				if i: deep_function(i-1)
+				else: func_raise()
+
+			try:
+				print deep_function(3)
+			except ValueError:
+				s = tb()
+			self.assertTrue('>' in s)
+			self.assertTrue(':' in s)
+
+
+	def testFormatterWithTraceBack(self):
+		from StringIO import StringIO
+		strout = StringIO()
+		Formatter = FormatterWithTraceBack
+
+		# and both types of traceback at once
+		fmt = ' %(tb)s | %(tbc)s : %(message)s'
+		logSys = logging.getLogger("fail2ban_tests")
+		out = logging.StreamHandler(strout)
+		out.setFormatter(Formatter(fmt))
+		logSys.addHandler(out)
+		logSys.error("XXX")
+
+		s = strout.getvalue()
+		self.assertTrue(s.rstrip().endswith(': XXX'))
+		pindex = s.index('|')
+
+		# in this case compressed and not should be the same (?)
+		self.assertTrue(pindex > 10)	  # we should have some traceback
+		self.assertEqual(s[:pindex], s[pindex+1:pindex*2 + 1])
