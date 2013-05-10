@@ -108,7 +108,7 @@ class TestsUtilsTest(unittest.TestCase):
 				print deep_function(3)
 			except ValueError:
 				s = tb()
-			self.assertTrue('>' in s)
+			self.assertFalse('>' in s)  # There is only "fail2ban-testcases" in this case, no true traceback
 			self.assertTrue(':' in s)
 
 
