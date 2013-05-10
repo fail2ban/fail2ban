@@ -104,7 +104,8 @@ class FilterPoll(FileFilter):
 				time.sleep(self.getSleepTime())
 			else:
 				time.sleep(self.getSleepTime())
-		logSys.debug((self.jail and self.jail.getName() or "jailless") +
+		logSys.debug(
+			(self.jail is not None and self.jail.getName() or "jailless") +
 					 " filter terminated")
 		return True
 
@@ -130,7 +131,7 @@ class FilterPoll(FileFilter):
 			self.__file404Cnt[filename] += 1
 			if self.__file404Cnt[filename] > 2:
 				logSys.warn("Too many errors. Setting the jail idle")
-				if self.jail:
+				if self.jail is not None:
 					self.jail.setIdle(True)
 				else:
 					logSys.warn("No jail is assigned to %s" % self)
