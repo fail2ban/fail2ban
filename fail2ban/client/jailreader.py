@@ -36,6 +36,8 @@ logSys = logging.getLogger(__name__)
 class JailReader(ConfigReader):
 	
 	optionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
+	optionExtractRE = re.compile(
+		r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,]*))(?:,|$)')
 	
 	def __init__(self, name, force_enable=False, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
@@ -155,46 +157,13 @@ class JailReader(ConfigReader):
 	
 	#@staticmethod
 	def extractOptions(option):
-		m = JailReader.optionCRE.match(option)
-		d = dict()
-		mgroups = m.groups()
-		if len(mgroups) == 2:
-			option_name, option_opts = mgroups
-		elif len(mgroups) == 1:
-			option_name, option_opts = mgroups[0], None
-		else:
-			raise ValueError("While reading option %s we should have got up to "
-							 "2 groups. Got: %r" % (option, mgroups))
-		if not option_opts is None:
-			# Huge bad hack :( This method really sucks. TODO Reimplement it.
-			options = ""
-			escapeChar = None
-			allowComma = False
-			for c in option_opts:
-				if c in ('"', "'") and not allowComma:
-					# Start
-					escapeChar = c
-					allowComma = True
-				elif c == escapeChar:
-					# End
-					escapeChar = None
-					allowComma = False
-				else:
-					if c == ',' and allowComma:
-						options += "<COMMA>"
-					else:
-						options += c
-			
-			# Split using ,
-			optionsSplit = options.split(',')
-			# Replace the tag <COMMA> with ,
-			optionsSplit = [n.replace("<COMMA>", ',') for n in optionsSplit]
-			
-			for param in optionsSplit:
-				p = param.split('=')
-				try:
-					d[p[0].strip()] = p[1].strip()
-				except IndexError:
-					logSys.error("Invalid argument %s in '%s'" % (p, option_opts))
-		return [option_name, d]
+		option_name, optstr = JailReader.optionCRE.match(option).groups()
+		option_opts = dict()
+		if optstr:
+			for optmatch in JailReader.optionExtractRE.finditer(optstr):
+				opt = optmatch.group(1)
+				value = [
+					val for val in optmatch.group(2,3,4) if val is not None][0]
+				option_opts[opt.strip()] = value.strip()
+		return option_name, option_opts
 	extractOptions = staticmethod(extractOptions)
