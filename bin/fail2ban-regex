@@ -413,7 +413,7 @@ if __name__ == "__main__":
 			if journal is None:
 				print "Error: systemd library not found. Exiting..."
 				sys.exit(-1)
-			myjournal = journal.Reader()
+			myjournal = journal.Reader(converters={'__CURSOR': lambda x: x})
 			journalmatch = ""
 			# Parse journal matches from command line
 			for opt in optList:
