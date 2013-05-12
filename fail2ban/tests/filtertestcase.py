@@ -165,7 +165,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	time.sleep(0.1)
 	return fout
 
-def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""):
+def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # pragma: systemd no cover
 	"""Copy lines from one file to systemd journal
 
 	Returns None
@@ -607,7 +607,7 @@ def get_monitor_failures_testcase(Filter_):
 			  % (Filter_.__name__, testclass_name) # 'tempfile')
 	return MonitorFailures
 
-def get_monitor_failures_journal_testcase(Filter_):
+def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 	"""Generator of TestCase's for journal based filters/backends
 	"""
 

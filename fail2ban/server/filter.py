@@ -648,7 +648,7 @@ class FileContainer:
 #
 # Base interface class for systemd journal filters
 
-class JournalFilter(Filter):
+class JournalFilter(Filter): # pragma: systemd no cover
 
 	def addJournalMatch(self, match):
 		pass

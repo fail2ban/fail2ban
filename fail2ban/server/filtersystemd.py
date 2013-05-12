@@ -45,7 +45,7 @@ logSys = logging.getLogger("fail2ban.filter")
 # else that matches a given regular expression. This class is instantiated by
 # a Jail object.
 
-class FilterSystemd(JournalFilter):
+class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	##
 	# Constructor.
 	#

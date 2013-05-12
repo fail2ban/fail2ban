@@ -201,7 +201,7 @@ def gatherTests(regexps=None, no_network=False):
 	for Filter_ in filters:
 		tests.addTest(unittest.makeSuite(
 			filtertestcase.get_monitor_failures_testcase(Filter_)))
-	try:
+	try: # pragma: systemd no cover
 		from fail2ban.server.filtersystemd import FilterSystemd
 		tests.addTest(unittest.makeSuite(filtertestcase.get_monitor_failures_journal_testcase(FilterSystemd)))
 	except Exception, e: # pragma: no cover

@@ -144,11 +144,11 @@ class Transmitter:
 			value = command[2]
 			self.__server.setLogEncoding(name, value)
 			return self.__server.getLogEncoding(name)
-		elif command[1] == "addjournalmatch":
+		elif command[1] == "addjournalmatch": # pragma: systemd no cover
 			value = ' '.join(command[2:])
 			self.__server.addJournalMatch(name, value)
 			return self.__server.getJournalMatch(name)
-		elif command[1] == "deljournalmatch":
+		elif command[1] == "deljournalmatch": # pragma: systemd no cover
 			value = ' '.join(command[2:])
 			self.__server.delJournalMatch(name, value)
 			return self.__server.getJournalMatch(name)
@@ -258,7 +258,7 @@ class Transmitter:
 			return self.__server.getLogPath(name)
 		elif command[1] == "logencoding":
 			return self.__server.getLogEncoding(name)
-		elif command[1] == "journalmatch":
+		elif command[1] == "journalmatch": # pragma: systemd no cover
 			return self.__server.getJournalMatch(name)
 		elif command[1] == "ignoreip":
 			return self.__server.getIgnoreIP(name)

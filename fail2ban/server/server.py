@@ -184,21 +184,21 @@ class Server:
 		if isinstance(filter_, FileFilter):
 			return [m.getFileName()
 					for m in filter_.getLogPath()]
-		else:
+		else: # pragma: systemd no cover
 			logSys.info("Jail %s is not a FileFilter instance" % name)
 			return []
 	
-	def addJournalMatch(self, name, match):
+	def addJournalMatch(self, name, match): # pragma: systemd no cover
 		filter_ = self.__jails.getFilter(name)
 		if isinstance(filter_, JournalFilter):
 			filter_.addJournalMatch(match)
 	
-	def delJournalMatch(self, name, match):
+	def delJournalMatch(self, name, match): # pragma: systemd no cover
 		filter_ = self.__jails.getFilter(name)
 		if isinstance(filter_, JournalFilter):
 			filter_.delJournalMatch(match)
 	
-	def getJournalMatch(self, name):
+	def getJournalMatch(self, name): # pragma: systemd no cover
 		filter_ = self.__jails.getFilter(name)
 		if isinstance(filter_, JournalFilter):
 			return filter_.getJournalMatch()

@@ -101,7 +101,7 @@ class Jail:
 		from filterpyinotify import FilterPyinotify
 		self.__filter = FilterPyinotify(self)
 	
-	def _initSystemd(self):
+	def _initSystemd(self): # pragma: systemd no cover
 		# Try to import systemd
 		import systemd
 		logSys.info("Jail '%s' uses systemd" % self.__name)
