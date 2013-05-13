@@ -4,7 +4,7 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.9.0a)                                             20??/??/??
+Fail2Ban (version 0.9.0a1)                                            20??/??/??
 ================================================================================
 
 
@@ -40,6 +40,13 @@ code-review and minor additions from Yaroslav Halchenko.
    * [..a648cc2] Filters can have options now too
    * [..e019ab7] Multiple instances of the same action are allowed in the
      same jail -- use actname option to disambiguate.
+
+ver. 0.8.10 (2013/XX/XXX) - NOT-YET-RELEASED
+-----------
+
+- Fixes
+- New Features
+- Enhancements
 
 ver. 0.8.9 (2013/05/13) - wanna-be-stable
 ----------
