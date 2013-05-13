@@ -213,7 +213,7 @@ class Fail2banRegex:
 			# Read out and set possible value of maxlines
 			try:
 				maxlines = reader.get("Init", "maxlines")
-			except NoSectionError, NoOptionError:
+			except (NoSectionError, NoOptionError):
 				# No [Init].maxlines found.
 				pass
 			else:
