@@ -50,6 +50,15 @@ class HelpersTest(unittest.TestCase):
 			# might be fragile due to ' vs "
 			self.assertEqual(args, "('Very bad', None)")
 
+# based on
+# http://stackoverflow.com/questions/2186525/use-a-glob-to-find-files-recursively-in-python
+def recursive_glob(treeroot, pattern):
+	import fnmatch, os
+	results = []
+	for base, dirs, files in os.walk(treeroot):
+		goodfiles = fnmatch.filter(dirs + files, pattern)
+		results.extend(os.path.join(base, f) for f in goodfiles)
+	return results
 
 class SetupTest(unittest.TestCase):
 
@@ -70,8 +79,23 @@ class SetupTest(unittest.TestCase):
 		def addpath(l):
 			return [os.path.join(tmp, x) for x in l]
 
-		self.assertEqual(sorted(glob('%s/*' % tmp)),
-						 addpath(['etc', 'usr', 'var']))
+		def strippath(l):
+			return [x[len(tmp)+1:] for x in l]
+
+		got = strippath(sorted(glob('%s/*' % tmp)))
+		need = ['etc', 'usr', 'var']
+
+		if got != need:
+			files = {}
+			for missing in set(got).difference(need):
+				missing_full = os.path.join(tmp, missing)
+				files[missing] = os.path.exists(missing_full) \
+					and strippath(recursive_glob(missing_full, '*')) or None
+
+			self.assertEqual(
+				got, need,
+				msg="Got: %s Needed: %s under %s. Files under new paths: %s"
+				% (got, need, tmp, files))
 
 		# Assure presence of some files we expect to see in the installation
 		for f in ('etc/fail2ban/fail2ban.conf',
