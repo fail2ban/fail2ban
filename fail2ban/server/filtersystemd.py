@@ -23,7 +23,7 @@ __author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko, Steven Hiscocks"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko, 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import logging, datetime
+import logging, datetime, shlex
 from distutils.version import LooseVersion
 
 from systemd import journal
@@ -68,18 +68,22 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	def addJournalMatch(self, match):
 		if self.__matches:
 			self.__journal.add_disjunction() # Add OR
+		newMatches = [[]]
 		try:
-			for match_element in match.split():
+			for match_element in shlex.split(match):
 				if match_element == "+":
 					self.__journal.add_disjunction()
+					newMatches.append([])
 				else:
 					self.__journal.add_match(match_element)
-		except:
+					newMatches[-1].append(match_element)
+		except ValueError:
 			logSys.error("Error adding journal match for: %s", match)
 			self.resetJournalMatches()
+			raise
 		else:
-			for match_element in match.split('+'):
-				self.__matches.append(match_element.strip())
+			self.__matches.extend(
+				" ".join(newMatch) for newMatch in newMatches)
 			logSys.debug("Adding journal match for: %s", match)
 	##
 	# Reset a journal match filter called on removal or failure
@@ -100,9 +104,12 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	# @param match journalctl syntax matches
 
 	def delJournalMatch(self, match):
+		match = " ".join(shlex.split(match))
 		if match in self.__matches:
 			del self.__matches[self.__matches.index(match)]
 			self.resetJournalMatches()
+		else:
+			raise ValueError("Match not found")
 
 	##
 	# Get current journal match filter
