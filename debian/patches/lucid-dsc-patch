@@ -11,24 +11,20 @@ crafted post 0.8.8-1 release when a user complained about inability to upgrade
  debian/rules   | 12 +++++-------
  2 files changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/debian/control b/debian/control
-index ab39c88..7fa076d 100644
 --- a/debian/control
 +++ b/debian/control
 @@ -3,6 +3,8 @@ Section: net
  Priority: optional
  Maintainer: Yaroslav Halchenko <debian@onerussian.com>
- Build-Depends: debhelper (>= 5.0.37.2), python (>= 2.5.4-1~)
+ Build-Depends: debhelper (>= 5.0.37.2), python (>= 2.5.4-1~), python-pyinotify
 +Build-Depends-Indep: python-central (>= 0.5.6)
 +XS-Python-Version: current, >= 2.4
  Homepage: http://www.fail2ban.org
  Vcs-Git: git://github.com/fail2ban/fail2ban.git
  Vcs-Browser: http://github.com/fail2ban/fail2ban
-diff --git a/debian/rules b/debian/rules
-index 5eccf9f..0aea805 100755
 --- a/debian/rules
 +++ b/debian/rules
-@@ -62,14 +62,12 @@ binary-indep: install
+@@ -72,14 +72,12 @@ binary-indep: install
  	dh_installdocs
  	dh_installexamples config/jail.conf files/ipmasq-*
  	dh_installlogrotate
@@ -47,7 +43,4 @@ index 5eccf9f..0aea805 100755
 +	sed -i -e '/^#.*ed by dh_pycentral/,/# End auto/{H;d};$$G' \
  		debian/fail2ban.prerm.debhelper
  
- 	dh_installman man/*.1
--- 
-1.8.0
-
+ 	dh_installman man/*.[15]
