@@ -50,6 +50,7 @@ install: build
 	# take care about it anyways
 	rm -rf $(DESTDIR)/var/run/fail2ban
 	# Install bash completion
+	install -d $(DESTDIR)/etc/bash_completion.d
 	install -m 644 files/bash-completion $(DESTDIR)/etc/bash_completion.d/fail2ban
 
 #
