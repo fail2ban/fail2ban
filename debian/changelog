@@ -14,13 +14,14 @@ fail2ban (0.8.9-1) unstable; urgency=low
     - suggest system-log-daemon (Closes: #691001)
     - boost policy compliance to 3.9.4
   * debian/rules:
-    - be positive: run fail2ban's unittests at build time.  Only pyinotify
-      was added to build-depends since gamin might still be buggy on older
-      Ubuntus, which would complicate backporting
-      - patch deb_temp_disable_inaccessiblefile_test to allow build with
-        fakeroot
+    - run fail2ban's unittests at build time but ignore the failures
+      (there are still some known issues to fix up to guarantee robust testing
+      in clean chroots etc).
+      Only pyinotify was added to build-depends since gamin might still be
+      buggy on older releases and get stuck, which would complicate
+      backporting
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 13 May 2013 11:45:49 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 13 May 2013 11:58:56 -0400
 
 fail2ban (0.8.8-1+lucid0) UNRELEASED; urgency=low
 

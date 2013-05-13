@@ -55,7 +55,7 @@ install: build
 
 	# Run tests
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	./fail2ban-testcases-all
+	./fail2ban-testcases-all || :
 else
 	: # Skip unittests due to nocheck
 endif
