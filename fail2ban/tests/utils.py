@@ -65,11 +65,12 @@ class TraceBack(object):
 
 	def __call__(self):
 		ftb = traceback.extract_stack(limit=100)[:-2]
-		entries = [[mbasename(x[0]), str(x[1])] for x in ftb]
-		entries = [ e for e in entries
-					if not e[0] in ['unittest', 'logging.__init__' ]]
+		entries = [[mbasename(x[0]), dirname(x[0]), str(x[1])] for x in ftb]
+		entries = [ [e[0], e[2]] for e in entries
+					if not (e[0] in ['unittest', 'logging.__init__']
+							or e[1].endswith('/unittest'))]
 
-		# lets make it more consize
+		# lets make it more concise
 		entries_out = [entries[0]]
 		for entry in entries[1:]:
 			if entry[0] == entries_out[-1][0]:
@@ -131,6 +132,7 @@ def gatherTests(regexps=None, no_network=False):
 	from fail2ban.tests import datedetectortestcase
 	from fail2ban.tests import actiontestcase
 	from fail2ban.tests import sockettestcase
+	from fail2ban.tests import misctestcase
 
 	if not regexps: # pragma: no cover
 		tests = unittest.TestSuite()
@@ -150,6 +152,7 @@ def gatherTests(regexps=None, no_network=False):
 	# Server
 	#tests.addTest(unittest.makeSuite(servertestcase.StartStop))
 	tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
+	tests.addTest(unittest.makeSuite(servertestcase.JailTests))
 	tests.addTest(unittest.makeSuite(actiontestcase.ExecuteAction))
 	# FailManager
 	tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
@@ -162,6 +165,10 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTest))
 	# CSocket and AsyncServer
 	tests.addTest(unittest.makeSuite(sockettestcase.Socket))
+	# Misc helpers
+	tests.addTest(unittest.makeSuite(misctestcase.HelpersTest))
+	tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
+	tests.addTest(unittest.makeSuite(misctestcase.TestsUtilsTest))
 
 	# Filter
 	if not no_network:

@@ -396,11 +396,12 @@ class Server:
 					handler.flush()
 					handler.close()
 				except (ValueError, KeyError): # pragma: no cover
-					if (2,6) <= sys.version_info < (3,) or \
+					# Is known to be thrown after logging was shutdown once
+					# with older Pythons -- seems to be safe to ignore there
+					# At least it was still failing on 2.6.2-0ubuntu1 (jaunty)
+					if (2,6,3) <= sys.version_info < (3,) or \
 							(3,2) <= sys.version_info:
 						raise
-					# is known to be thrown after logging was shutdown once
-					# with older Pythons -- seems to be safe to ignore there
 			# tell the handler to use this format
 			hdlr.setFormatter(formatter)
 			logger.addHandler(hdlr)

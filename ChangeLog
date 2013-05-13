@@ -41,7 +41,7 @@ code-review and minor additions from Yaroslav Halchenko.
    * [..e019ab7] Multiple instances of the same action are allowed in the
      same jail -- use actname option to disambiguate.
 
-ver. 0.8.9 (2013/05/XX) - wanna-be-stable
+ver. 0.8.9 (2013/05/13) - wanna-be-stable
 ----------
 
 Originally targeted as a bugfix release, it incorporated many new

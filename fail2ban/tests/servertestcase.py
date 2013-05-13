@@ -27,6 +27,7 @@ __license__ = "GPL"
 import unittest, socket, time, tempfile, os, locale
 
 from fail2ban.server.server import Server
+from fail2ban.server.jail import Jail
 from fail2ban.exceptions import UnknownJailException
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
@@ -535,3 +536,12 @@ class TransmitterLogging(TransmitterBase):
 		self.setGetTest("loglevel", "-1", -1)
 		self.setGetTest("loglevel", "0", 0)
 		self.setGetTestNOK("loglevel", "Bird")
+
+
+class JailTests(unittest.TestCase):
+
+	def testLongName(self):
+		# Just a smoke test for now
+		longname = "veryveryverylongname"
+		jail = Jail(longname)
+		self.assertEqual(jail.getName(), longname)

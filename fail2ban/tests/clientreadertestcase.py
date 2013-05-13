@@ -296,6 +296,15 @@ class JailsReaderTest(unittest.TestCase):
 		self.assertEqual(opts['socket'], '/var/run/fail2ban/fail2ban.sock')
 		self.assertEqual(opts['pidfile'], '/var/run/fail2ban/fail2ban.pid')
 
+		configurator.getOptions()
+		configurator.convertToProtocol()
+		commands = configurator.getConfigStream()
+		# and there is logging information left to be passed into the
+		# server
+		self.assertEqual(commands,
+						 [['set', 'loglevel', 3],
+						  ['set', 'logtarget', '/var/log/fail2ban.log']])
+
 		# and if we force change configurator's fail2ban's baseDir
 		# there should be an error message (test visually ;) --
 		# otherwise just a code smoke test)
