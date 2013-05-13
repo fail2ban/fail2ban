@@ -53,6 +53,13 @@ install: build
 	install -d $(DESTDIR)/etc/bash_completion.d
 	install -m 644 files/bash-completion $(DESTDIR)/etc/bash_completion.d/fail2ban
 
+	# Run tests
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	./fail2ban-testcases-all
+else
+	: # Skip unittests due to nocheck
+endif
+
 #
 # Just to comply with policy 4.8
 binary-arch:
