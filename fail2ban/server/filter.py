@@ -650,13 +650,13 @@ class FileContainer:
 
 class JournalFilter(Filter): # pragma: systemd no cover
 
-	def addJournalMatch(self, match):
+	def addJournalMatch(self, match): # pragma: no cover - Base class, not used
 		pass
 
-	def delJournalMatch(self, match):
+	def delJournalMatch(self, match): # pragma: no cover - Base class, not used
 		pass
 
-	def getJournalMatch(self, match):
+	def getJournalMatch(self, match): # pragma: no cover - Base class, not used
 		return []
 
 ##
