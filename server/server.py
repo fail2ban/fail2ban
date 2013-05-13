@@ -377,10 +377,11 @@ class Server:
 					handler.flush()
 					handler.close()
 				except (ValueError, KeyError): # pragma: no cover
-					if sys.version_info >= (2,6):
-						raise
-					# is known to be thrown after logging was shutdown once
+					# Is known to be thrown after logging was shutdown once
 					# with older Pythons -- seems to be safe to ignore there
+					# At least it was still failing on 2.6.2-0ubuntu1 (jaunty)
+					if sys.version_info >= (2,6,3):
+						raise
 			# tell the handler to use this format
 			hdlr.setFormatter(formatter)
 			logging.getLogger("fail2ban").addHandler(hdlr)

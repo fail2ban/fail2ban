@@ -4,26 +4,30 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.9)                                              2013/04/XX
+Fail2Ban (version 0.8.9)                                              2013/05/13
 ================================================================================
 
-ver. 0.8.9 (2013/04/XX) - wanna-be-stable
+ver. 0.8.9 (2013/05/13) - wanna-be-stable
 ----------
 
-Although primarily a bugfix release, it incorporates many new
-enhancements, few new features, but more importantly -- quite extended
-tests battery with current 94% coverage.  This release incorporates
-more than a 100 of non-merge commits from 14 contributors (sorted by
-number of commits): Yaroslav Halchenko, Daniel Black, Steven Hiscocks,
-ArndRa, hamilton5, pigsyn, Erwan Ben Souiden, Michael Gebetsroither,
-Orion Poplawski, Artur Penttinen, sebres, Nicolas Collignon, Pascal
-Borreli, blotus:
+Originally targeted as a bugfix release, it incorporated many new
+enhancements, few new features, and more importantly -- quite extended
+tests battery with current 94% coverage (from 56% of 0.8.8).
 
-- Fixes:
-  Yaroslav Halchenko
-   * [6f4dad46] Documentation python-2.4 is the minimium version.
-   * [1eb23cf8] do not rely on scripts being under /usr -- might differ eg on
-     Fedora. Closes gh-112. Thanks to Camusensei for the bug report.
+This release introduces over 200 of non-merge commits from 16
+contributors (sorted by number of commits): Yaroslav Halchenko, Daniel
+Black, Steven Hiscocks, James Stout, Orion Poplawski, Enrico Labedzki,
+ArndRa, hamilton5, pigsyn, Erwan Ben Souiden, Michael Gebetsroither,
+Artur Penttinen, blotus, sebres, Nicolas Collignon, Pascal Borreli.
+
+Special Kudos also go to Fabian Wenk, Arturo 'Buanzo' Busleiman, Tom
+Hendrikx, Yehuda Katz and other TBN heroes supporting users on
+fail2ban-users mailing list and IRC.
+
+- Fixes: Yaroslav Halchenko
+   * [6f4dad46] python-2.4 is the minimal version.
+   * [1eb23cf8] do not rely on scripts being under /usr -- might differ e.g.
+     on Fedora. Closes gh-112. Thanks to Camusensei for the bug report.
    * [bf4d4af1] Changes for atomic writes. Thanks to Steven Hiscocks for
      insight. Closes gh-103.
    * [ab044b75] delay check for the existence of config directory until read.
@@ -50,6 +54,8 @@ Borreli, blotus:
      gh-70. Thanks to iGeorgeX for the idea.
   blotus
    * [96eb8986] ' and " should also be escaped in action tags Closes gh-109
+  Christoph Theis, Nick Hilliard, Daniel Black
+   * [b3bd877d,cde71080] Make syslog -v and syslog -vv formats work on FreeBSD
 - New features:
   Yaroslav Halchenko
    * [9ba27353] Add support for jail.d/{confilefile} and fail2ban.d/{configfile}
@@ -69,8 +75,15 @@ Borreli, blotus:
    * [5f2d383] Add roundcube auth filter. Closes Debian bug #699442.
   Daniel Black
    * [be06b1b] Add action for iptables-ipsets. Closes gh-102.
+  Nick Munger, Ken Menzel, Daniel Black, Christoph Theis & Fabian Wenk
+   * [b6d0e8a] Add and enhance the bsd-ipfw action from
+     FreeBSD ports.
   Soulard Morgan
    * [f336d9f] Add filter for webmin. Closes gh-99.
+  Steven Hiscocks
+   * [..746c7d9] bash interactive shell completions for fail2ban-*'s
+  Nick Hilliard
+   * [0c5a9c5] Add pf action.
 - Enhancements:
   Enrico Labedzki
    * [24a8d07] Added new date format for ASSP SMTP Proxy.
@@ -90,6 +103,7 @@ Borreli, blotus:
    * [40c5a2d] adding more of diagnostic messages into -client while starting
      the daemon.
    * [8e63d4c] Compare against None with 'is' instead of '=='.
+   * [6fef85f] Strip CR and LF while analyzing the log line
   Daniel Black
    * [3aeb1a9] Add jail.conf manual page. Closes gh-143.
    * [MANY] man page edits.
@@ -97,19 +111,22 @@ Borreli, blotus:
    * [c8c7b0b,23bbc60] Better logging of log file read errors.
    * [3665e6d] Added code coverage to development process.
    * [41b9f7b,32d10e9,39750b8] More complete ssh filter rules to match openssh
-	   source. Also include BSD changes.
+     source. Also include BSD changes.
    * [1d9abd1] Action files can have tags in definition that refer to other
      tags.
+   * [10886e7,cec5da2,adb991a] Change actions to response with ICMP port
+     unreachable rather than just a drop of the packet.
   Pascal Borreli
    * [a2b29b4] Fixed lots of typos in config files and documentation.
   hamilton5
    * [7ede1e8] Update dovecot filter config.
   Romain Riviere
    * [0ac8746] Enhance named-refused filter for views.
-
-Special Kudos also go to Fabian Wenk, Arturo 'Buanzo' Busleiman, Tom
-Hendrikx and other TBN heroes supporting users on fail2ban-users
-mailing list and IRC.
+  James Stout
+   * [..2143cdf] Solaris support enhancements:
+     - README.Solaris
+     - failregex'es tune ups (sshd.conf)
+     - hostsdeny: do not rely on support of '-i' in sed
 
 ver. 0.8.8 (2012/12/06) - stable
 ----------

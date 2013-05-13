@@ -2,7 +2,7 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v0.8.8                  2012/07/31
+                       v0.8.9                  2013/05/13
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors 
 
@@ -30,8 +30,8 @@ Optional:
 
 To install, just do:
 
-    tar xvfj fail2ban-0.8.8.tar.bz2
-    cd fail2ban-0.8.8
+    tar xvfj fail2ban-0.8.9.tar.bz2
+    cd fail2ban-0.8.9
     python setup.py install
 
 This will install Fail2Ban into /usr/share/fail2ban. The executable scripts are
@@ -56,7 +56,7 @@ the website: http://www.fail2ban.org
 Code status:
 ------------
 
-* [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png)](https://travis-ci.org/fail2ban/fail2ban) travis-ci.org (master branch)
+* [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=master)](https://travis-ci.org/fail2ban/fail2ban) travis-ci.org (master branch)
 
 * [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=master)](https://coveralls.io/r/fail2ban/fail2ban)
 

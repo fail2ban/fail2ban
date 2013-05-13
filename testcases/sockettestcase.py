@@ -21,8 +21,6 @@
 # 
 
 __author__ = "Steven Hiscocks"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 

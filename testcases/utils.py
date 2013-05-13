@@ -61,11 +61,12 @@ class TraceBack(object):
 
 	def __call__(self):
 		ftb = traceback.extract_stack(limit=100)[:-2]
-		entries = [[mbasename(x[0]), str(x[1])] for x in ftb]
-		entries = [ e for e in entries
-					if not e[0] in ['unittest', 'logging.__init__' ]]
+		entries = [[mbasename(x[0]), dirname(x[0]), str(x[1])] for x in ftb]
+		entries = [ [e[0], e[2]] for e in entries
+					if not (e[0] in ['unittest', 'logging.__init__']
+							or e[1].endswith('/unittest'))]
 
-		# lets make it more consize
+		# lets make it more concise
 		entries_out = [entries[0]]
 		for entry in entries[1:]:
 			if entry[0] == entries_out[-1][0]:

@@ -477,8 +477,8 @@ def get_monitor_failures_testcase(Filter_):
 
 		def _test_move_into_file(self, interim_kill=False):
 			# if we move a new file into the location of an old (monitored) file
-			self.file1 = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-												  n=100)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+									  n=100).close()
 			# make sure that it is monitored first
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
@@ -488,14 +488,15 @@ def get_monitor_failures_testcase(Filter_):
 				time.sleep(0.2)				  # let them know
 
 			# now create a new one to override old one
-			self.file = _copy_lines_between_files(GetFailures.FILENAME_01,
-												   self.name + '.new', n=100)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name + '.new',
+									  n=100).close()
 			os.rename(self.name + '.new', self.name)
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
 			# and to make sure that it now monitored for changes
-			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
+			_copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+									  n=100).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 9)
 
@@ -579,11 +580,31 @@ class GetFailures(unittest.TestCase):
 
 
 
-	def testGetFailures01(self):
-		self.filter.addLogPath(GetFailures.FILENAME_01)
-		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
-		self.filter.getFailures(GetFailures.FILENAME_01)
-		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
+	def testGetFailures01(self, filename=None, failures=None):
+		filename = filename or GetFailures.FILENAME_01
+		failures = failures or GetFailures.FAILURES_01
+
+		self.filter.addLogPath(filename)
+		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>$")
+		self.filter.getFailures(filename)
+		_assert_correct_last_attempt(self, self.filter,  failures)
+
+	def testCRLFFailures01(self):
+		# We first adjust logfile/failures to end with CR+LF
+		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='crlf')
+		# poor man unix2dos:
+		fin, fout = open(GetFailures.FILENAME_01), open(fname, 'w')
+		for l in fin.readlines():
+			fout.write('%s\r\n' % l.rstrip('\n'))
+		fin.close()
+		fout.close()
+
+		# now see if we should be getting the "same" failures
+		self.testGetFailures01(filename=fname,
+							   failures=GetFailures.FAILURES_01[:3] +
+							   ([x.rstrip('\n') + '\r\n' for x in
+								 GetFailures.FAILURES_01[-1]],))
+		_killfile(fout, fname)
 
 
 	def testGetFailures02(self):

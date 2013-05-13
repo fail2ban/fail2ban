@@ -1,4 +1,5 @@
 README.md
+README.Solaris
 ChangeLog
 TODO
 THANKS
@@ -43,6 +44,9 @@ server/datetemplate.py
 server/mytime.py
 server/failregex.py
 testcases/files/testcase-usedns.log
+testcases/files/logs/bsd/syslog-plain.txt
+testcases/files/logs/bsd/syslog-v.txt
+testcases/files/logs/bsd/syslog-vv.txt
 testcases/banmanagertestcase.py
 testcases/failmanagertestcase.py
 testcases/clientreadertestcase.py
@@ -97,7 +101,9 @@ config/filter.d/dropbear.conf
 config/filter.d/lighttpd-auth.conf
 config/filter.d/recidive.conf
 config/filter.d/roundcube-auth.conf
+config/action.d/bsd-ipfw.conf
 config/action.d/dummy.conf
+config/action.d/iptables-blocktype.conf
 config/action.d/iptables-ipset-proto4.conf
 config/action.d/iptables-ipset-proto6.conf
 config/action.d/iptables-xt_recent-echo.conf
@@ -117,6 +123,7 @@ config/action.d/mail-buffered.conf
 config/action.d/mail-whois.conf
 config/action.d/mail-whois-lines.conf
 config/action.d/mynetwatchman.conf
+config/action.d/pf.conf
 config/action.d/sendmail.conf
 config/action.d/sendmail-buffered.conf
 config/action.d/sendmail-whois.conf
@@ -145,3 +152,4 @@ files/cacti/cacti_host_template_fail2ban.xml
 files/cacti/README
 files/nagios/check_fail2ban
 files/nagios/f2ban.txt
+files/bash-completion

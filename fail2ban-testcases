@@ -36,6 +36,7 @@ from testcases import servertestcase
 from testcases import datedetectortestcase
 from testcases import actiontestcase
 from testcases import sockettestcase
+from testcases import misctestcase
 
 from testcases.utils import FormatterWithTraceBack
 from server.mytime import MyTime
@@ -139,6 +140,7 @@ else: # pragma: no cover
 # Server
 #tests.addTest(unittest.makeSuite(servertestcase.StartStop))
 tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
+tests.addTest(unittest.makeSuite(servertestcase.JailTests))
 tests.addTest(unittest.makeSuite(actiontestcase.ExecuteAction))
 # FailManager
 tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
@@ -150,6 +152,10 @@ tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
 tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTest))
 # CSocket and AsyncServer
 tests.addTest(unittest.makeSuite(sockettestcase.Socket))
+# Misc helpers
+tests.addTest(unittest.makeSuite(misctestcase.HelpersTest))
+tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
+tests.addTest(unittest.makeSuite(misctestcase.TestsUtilsTest))
 
 # Filter
 if not opts.no_network:

@@ -1,0 +1,3 @@
+Apr  2 17:52:55 pancake sshd[55657]: Invalid user oracle from 192.0.2.100
+Apr  2 17:53:01 pancake sshd[55657]: error: PAM: authentication error for illegal user oracle from example.com
+Apr  2 17:53:01 pancake sshd[55657]: Failed keyboard-interactive/pam for invalid user oracle from 192.0.2.100 port 48856 ssh2

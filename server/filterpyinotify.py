@@ -23,19 +23,28 @@ __author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
+import time, logging, pyinotify
+
 from distutils.version import LooseVersion
+from os.path import dirname, sep as pathsep
 
 from failmanager import FailManagerEmpty
 from filter import FileFilter
 from mytime import MyTime
 
-import time, logging, pyinotify
 
 if not hasattr(pyinotify, '__version__') \
   or LooseVersion(pyinotify.__version__) < '0.8.3':
   raise ImportError("Fail2Ban requires pyinotify >= 0.8.3")
 
-from os.path import dirname, sep as pathsep
+# Verify that pyinotify is functional on this system
+# Even though imports -- might be dysfunctional, e.g. as on kfreebsd
+try:
+	manager = pyinotify.WatchManager()
+	del manager
+except Exception, e:
+	raise ImportError("Pyinotify is probably not functional on this system: %s"
+					  % str(e))
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
