@@ -4,7 +4,7 @@ Subject: tune ups in upstream manpages to direct users to use reportbug
 
 --- a/man/fail2ban-client.1
 +++ b/man/fail2ban-client.1
-@@ -262,7 +262,7 @@ action <ACT> for <JAIL>
+@@ -265,7 +265,7 @@ action <ACT> for <JAIL>
  Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>.
  Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>.
  .SH "REPORTING BUGS"
