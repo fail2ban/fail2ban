@@ -49,6 +49,8 @@ install: build
 	# just to please lintian since init file will
 	# take care about it anyways
 	rm -rf $(DESTDIR)/var/run/fail2ban
+	# Install bash completion
+	install -m 644 files/bash-completion $(DESTDIR)/etc/bash_completion.d/fail2ban
 
 #
 # Just to comply with policy 4.8

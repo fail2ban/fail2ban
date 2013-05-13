@@ -4,6 +4,7 @@ fail2ban (0.8.9-1) unstable; urgency=low
     - significant improvements in documentation (Closes: #400416)
     - roundcube auth filter (Closes: #699442)
     - enforces C locale for dates (Closes: #686341)
+    - provides bash_completion.d/fail2ban
   * debian/jail.conf:
     - added findtime and documentation on those basic options from jail.conf
       (Closes: #704568)
