@@ -85,7 +85,11 @@ class SetupTest(unittest.TestCase):
 		got = strippath(sorted(glob('%s/*' % tmp)))
 		need = ['etc', 'usr', 'var']
 
-		if got != need:
+		# if anything is missing
+		if set(need).difference(got):
+			#  below code was actually to print out not missing but
+			#  rather files in 'excess'.  Left in place in case we
+			#  decide to revert to such more strict test
 			files = {}
 			for missing in set(got).difference(need):
 				missing_full = os.path.join(tmp, missing)
