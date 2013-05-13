@@ -26,6 +26,7 @@ __license__ = "GPL"
 
 import unittest, socket, time, tempfile, os
 from server.server import Server
+from server.jail import Jail
 from common.exceptions import UnknownJailException
 
 class StartStop(unittest.TestCase):
@@ -507,3 +508,12 @@ class TransmitterLogging(TransmitterBase):
 		self.setGetTest("loglevel", "-1", -1)
 		self.setGetTest("loglevel", "0", 0)
 		self.setGetTestNOK("loglevel", "Bird")
+
+
+class JailTests(unittest.TestCase):
+
+	def testLongName(self):
+		# Just a smoke test for now
+		longname = "veryveryverylongname"
+		jail = Jail(longname)
+		self.assertEqual(jail.getName(), longname)
