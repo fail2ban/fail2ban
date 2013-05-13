@@ -12,6 +12,7 @@ fail2ban (0.8.9-1) unstable; urgency=low
       roundcube-auth, sogo-auth, mysqld-auth
   * debian/control:
     - suggest system-log-daemon (Closes: #691001)
+    - boost policy compliance to 3.9.4
   * debian/rules:
     - be positive: run fail2ban's unittests at build time.  Only pyinotify
       was added to build-depends since gamin might still be buggy on older
