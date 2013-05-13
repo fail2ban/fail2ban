@@ -133,7 +133,13 @@ class TestsUtilsTest(unittest.TestCase):
 				print deep_function(3)
 			except ValueError:
 				s = tb()
-			self.assertFalse('>' in s, msg="'>' present in %r" % s)  # There is only "fail2ban-testcases" in this case, no true traceback
+
+			# if we run it through 'coverage' (e.g. on travis) then we
+			# would get a traceback
+			if 'coverage' in s:
+				self.assertTrue('>' in s, msg="no '>' in %r" % s)
+			else:
+				self.assertFalse('>' in s, msg="'>' present in %r" % s)  # There is only "fail2ban-testcases" in this case, no true traceback
 			self.assertTrue(':' in s, msg="no ':' in %r" % s)
 
 
