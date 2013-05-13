@@ -8,10 +8,12 @@ fail2ban (0.8.9-1) unstable; urgency=low
   * debian/jail.conf:
     - added findtime and documentation on those basic options from jail.conf
       (Closes: #704568)
+    - added new sample jails definitions for ssh-route, ssh-iptables-ipset{4,6},
+      roundcube-auth, sogo-auth, mysqld-auth
   * debian/control:
     - suggest system-log-daemon (Closes: #691001)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 13 May 2013 11:03:44 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 13 May 2013 11:18:20 -0400
 
 fail2ban (0.8.8-1+lucid0) UNRELEASED; urgency=low
 
