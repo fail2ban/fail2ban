@@ -1,6 +1,6 @@
-fail2ban (0.8.8+git276-g5e1d8b0-1) UNRELEASED; urgency=low
+fail2ban (0.8.9-1) unstable; urgency=low
 
-  * New upstream snapshot
+  * New upstream release
     - significant improvements in documentation (Closes: #400416)
     - roundcube auth filter (Closes: #699442)
     - enforces C locale for dates (Closes: #686341)
@@ -10,7 +10,7 @@ fail2ban (0.8.8+git276-g5e1d8b0-1) UNRELEASED; urgency=low
   * debian/control:
     - suggest system-log-daemon (Closes: #691001)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 07 May 2013 12:41:17 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 13 May 2013 11:03:44 -0400
 
 fail2ban (0.8.8-1+lucid0) UNRELEASED; urgency=low
 
