@@ -145,11 +145,11 @@ class Transmitter:
 			self.__server.setLogEncoding(name, value)
 			return self.__server.getLogEncoding(name)
 		elif command[1] == "addjournalmatch": # pragma: systemd no cover
-			value = ' '.join(command[2:])
+			value = command[2:]
 			self.__server.addJournalMatch(name, value)
 			return self.__server.getJournalMatch(name)
 		elif command[1] == "deljournalmatch": # pragma: systemd no cover
-			value = ' '.join(command[2:])
+			value = command[2:]
 			self.__server.delJournalMatch(name, value)
 			return self.__server.getJournalMatch(name)
 		elif command[1] == "addfailregex":

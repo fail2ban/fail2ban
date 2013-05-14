@@ -197,7 +197,12 @@ class FilterReaderTest(unittest.TestCase):
 			"+$<SKIPLINES>^.+ module for .* from <HOST>\\s*$"],
 			['set', 'testcase01', 'addignoreregex', 
 			"^.+ john from host 192.168.1.1\\s*$"],
-			['set', 'testcase01', 'maxlines', "1"]]
+			['set', 'testcase01', 'addjournalmatch',
+				"_COMM=sshd", "+", "_SYSTEMD_UNIT=sshd.service", "_UID=0"],
+			['set', 'testcase01', 'addjournalmatch',
+				"FIELD= with spaces ", "+", "AFIELD= with + char and spaces"],
+			['set', 'testcase01', 'maxlines', "1"], # Last for overide test
+		]
 		filterReader = FilterReader("testcase01", "testcase01", {})
 		filterReader.setBaseDir(TEST_FILES_DIR)
 		filterReader.read()

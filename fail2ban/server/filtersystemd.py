@@ -23,7 +23,7 @@ __author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko, Steven Hiscocks"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko, 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import logging, datetime, shlex
+import logging, datetime
 from distutils.version import LooseVersion
 
 from systemd import journal
@@ -60,31 +60,45 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		self.__matches = []
 		logSys.debug("Created FilterSystemd")
 
+
+	##
+	# Add a journal match filters from list structure
+	#
+	# @param matches list structure with journal matches
+
+	def _addJournalMatches(self, matches):
+		if self.__matches:
+			self.__journal.add_disjunction() # Add OR
+		newMatches = []
+		for match in matches:
+			newMatches.append([])
+			for match_element in match:
+				self.__journal.add_match(match_element)
+				newMatches[-1].append(match_element)
+			self.__journal.add_disjunction()
+		self.__matches.extend(newMatches)
+
 	##
 	# Add a journal match filter
 	#
-	# @param match journalctl syntax matches
+	# @param match journalctl syntax matches in list structure
 
 	def addJournalMatch(self, match):
-		if self.__matches:
-			self.__journal.add_disjunction() # Add OR
 		newMatches = [[]]
+		for match_element in match:
+			if match_element == "+":
+				newMatches.append([])
+			else:
+				newMatches[-1].append(match_element)
 		try:
-			for match_element in shlex.split(match):
-				if match_element == "+":
-					self.__journal.add_disjunction()
-					newMatches.append([])
-				else:
-					self.__journal.add_match(match_element)
-					newMatches[-1].append(match_element)
+			self._addJournalMatches(newMatches)
 		except ValueError:
-			logSys.error("Error adding journal match for: %s", match)
+			logSys.error(
+				"Error adding journal match for: %r", " ".join(match))
 			self.resetJournalMatches()
 			raise
 		else:
-			self.__matches.extend(
-				" ".join(newMatch) for newMatch in newMatches)
-			logSys.debug("Adding journal match for: %s", match)
+			logSys.info("Added journal match for: %r", " ".join(match))
 	##
 	# Reset a journal match filter called on removal or failure
 	#
@@ -95,8 +109,13 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		logSys.debug("Flushed all journal matches")
 		match_copy = self.__matches[:]
 		self.__matches = []
-		for match in match_copy:
-			self.addJournalMatch(match)
+		try:
+			self._addJournalMatches(match_copy)
+		except ValueError:
+			logSys.error("Error restoring journal matches")
+			raise
+		else:
+			logSys.debug("Journal matches restored")
 
 	##
 	# Delete a journal match filter
@@ -104,12 +123,12 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	# @param match journalctl syntax matches
 
 	def delJournalMatch(self, match):
-		match = " ".join(shlex.split(match))
 		if match in self.__matches:
 			del self.__matches[self.__matches.index(match)]
 			self.resetJournalMatches()
 		else:
 			raise ValueError("Match not found")
+		logSys.info("Removed journal match for: %r" % " ".join(match))
 
 	##
 	# Get current journal match filter

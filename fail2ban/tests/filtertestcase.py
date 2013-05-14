@@ -622,14 +622,14 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			import uuid
 			self.test_uuid = str(uuid.uuid4())
 			self.name = "monitorjournalfailures-%s" % self.test_uuid
-			self.filter.addJournalMatch(
-				"SYSLOG_IDENTIFIER=fail2ban-testcases "
-				"TEST_FIELD=1 "
-				"TEST_UUID=%s" % str(self.test_uuid))
-			self.filter.addJournalMatch(
-				"SYSLOG_IDENTIFIER=fail2ban-testcases "
-				"TEST_FIELD=2 "
-				"TEST_UUID=%s" % self.test_uuid)
+			self.filter.addJournalMatch([
+				"SYSLOG_IDENTIFIER=fail2ban-testcases",
+				"TEST_FIELD=1",
+				"TEST_UUID=%s" % self.test_uuid])
+			self.filter.addJournalMatch([
+				"SYSLOG_IDENTIFIER=fail2ban-testcases",
+				"TEST_FIELD=2",
+				"TEST_UUID=%s" % self.test_uuid])
 			self.journal_fields = {
 				'TEST_FIELD': "1", 'TEST_UUID': self.test_uuid}
 			self.filter.setActive(True)
@@ -708,10 +708,10 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.assert_correct_ban("193.168.0.128", 3)
 
 			# and now remove the JournalMatch
-			self.filter.delJournalMatch(
-				"SYSLOG_IDENTIFIER=fail2ban-testcases "
-				"TEST_FIELD=1 "
-				"TEST_UUID=%s" % str(self.test_uuid))
+			self.filter.delJournalMatch([
+				"SYSLOG_IDENTIFIER=fail2ban-testcases",
+				"TEST_FIELD=1",
+				"TEST_UUID=%s" % self.test_uuid])
 
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, n=5, skip=5)
@@ -719,10 +719,10 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.assertTrue(self.isEmpty(2))
 
 			# but then if we add it back again
-			self.filter.addJournalMatch(
-				"SYSLOG_IDENTIFIER=fail2ban-testcases "
-				"TEST_FIELD=1 "
-				"TEST_UUID=%s" % str(self.test_uuid))
+			self.filter.addJournalMatch([
+				"SYSLOG_IDENTIFIER=fail2ban-testcases",
+				"TEST_FIELD=1",
+				"TEST_UUID=%s" % self.test_uuid])
 			self.assert_correct_ban("193.168.0.128", 4)
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, n=6, skip=10)

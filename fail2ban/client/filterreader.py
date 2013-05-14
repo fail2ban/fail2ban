@@ -24,7 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging, os
+import logging, os, shlex
 from configreader import ConfigReader, DefinitionInitConfigReader
 
 # Gets the instance of the logger.
@@ -59,6 +59,8 @@ class FilterReader(DefinitionInitConfigReader):
 			# Do not send a command if the match is empty.
 			if self._initOpts.get("journalmatch", '') != '':
 				for match in self._initOpts["journalmatch"].split("\n"):
-					stream.append(["set", self._jailName, "addjournalmatch", match])
+					stream.append(
+						["set", self._jailName, "addjournalmatch"] +
+                        shlex.split(match))
 		return stream
 		

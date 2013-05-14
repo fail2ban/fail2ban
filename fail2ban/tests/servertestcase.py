@@ -506,68 +506,58 @@ class Transmitter(TransmitterBase):
 		def testJournalMatch(self):
 			jailName = "TestJail2"
 			self.server.addJail(jailName, "systemd")
-			self.jailAddDelTest(
-				"journalmatch",
-				[
-					"_SYSTEMD_UNIT=sshd.service",
-					"TEST_FIELD1=ABC TEST_FIELD2=123",
-					"_HOSTNAME=example.com",
-				],
-				jailName
-			)
 			values = [
-				'"FIELD=Test + Value+ \\\"Test+Value=\'Test"',
-				'FIELD="Test + Value+ \\\"Test+Value=\'Test"',
+				"_SYSTEMD_UNIT=sshd.service",
+				"TEST_FIELD1=ABC",
+				"_HOSTNAME=example.com",
 			]
-
-			# Test shell like escaping for spaces
-			for value in values:
+			for n, value in enumerate(values):
 				self.assertEqual(
 					self.transm.proceed(
 						["set", jailName, "addjournalmatch", value]),
-					(0, ["FIELD=Test + Value+ \"Test+Value='Test"]))
+					(0, [[val] for val in values[:n+1]]))
+			for n, value in enumerate(values):
 				self.assertEqual(
 					self.transm.proceed(
 						["set", jailName, "deljournalmatch", value]),
-					(0, []))
+					(0, [[val] for val in values[n+1:]]))
 
 			# Try duplicates
 			value = "_COMM=sshd"
 			self.assertEqual(
 				self.transm.proceed(
 					["set", jailName, "addjournalmatch", value]),
-				(0, [value]))
+				(0, [[value]]))
 			# Duplicates are accepted, as automatically OR'd, and journalctl
 			# also accepts them without issue.
 			self.assertEqual(
 				self.transm.proceed(
 					["set", jailName, "addjournalmatch", value]),
-				(0, [value, value]))
+				(0, [[value], [value]]))
 			# Remove first instance
 			self.assertEqual(
 				self.transm.proceed(
 					["set", jailName, "deljournalmatch", value]),
-				(0, [value]))
+				(0, [[value]]))
 			# Remove second instance
 			self.assertEqual(
 				self.transm.proceed(
 					["set", jailName, "deljournalmatch", value]),
 				(0, []))
 
-			# Test splitting of OR'd values
-			value1, value2 = "_COMM=sshd", "_SYSTEMD_UNIT=sshd.service"
+			value = [
+				"_COMM=sshd", "+", "_SYSTEMD_UNIT=sshd.service", "_UID=0"]
 			self.assertEqual(
 				self.transm.proceed(
-					["set", jailName, "addjournalmatch",
-					" + ".join([value1, value2])]),
-				(0, [value1, value2]))
+					["set", jailName, "addjournalmatch"] + value),
+				(0, [["_COMM=sshd"], ["_SYSTEMD_UNIT=sshd.service", "_UID=0"]]))
 			self.assertEqual(
 				self.transm.proceed(
-					["set", jailName, "deljournalmatch", value1]),
-				(0, [value2]))
+					["set", jailName, "deljournalmatch"] + value[:1]),
+				(0, [["_SYSTEMD_UNIT=sshd.service", "_UID=0"]]))
 			self.assertEqual(
 				self.transm.proceed(
-					["set", jailName, "deljournalmatch", value2]),
+					["set", jailName, "deljournalmatch"] + value[2:]),
 				(0, []))
 
 			# Invalid match
