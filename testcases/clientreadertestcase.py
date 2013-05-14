@@ -110,6 +110,12 @@ class JailReaderTest(unittest.TestCase):
 		result = JailReader.splitAction(action)
 		self.assertEquals(expected, result)
 
+	def testSplitActionMultiline(self):
+		action = "mail-whois-lines[logpath=/a/b\n/c/d]"
+		expected = ['mail-whois-lines', {'logpath': '/a/b\n/c/d'}]
+		result = JailReader.splitAction(action)
+		self.assertEquals(expected, result)
+
 class JailsReaderTest(unittest.TestCase):
 
 	def testProvidingBadBasedir(self):

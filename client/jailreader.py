@@ -35,7 +35,8 @@ logSys = logging.getLogger("fail2ban.client.config")
 
 class JailReader(ConfigReader):
 	
-	actionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
+	actionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$",
+						   flags=re.MULTILINE|re.DOTALL)
 	
 	def __init__(self, name, force_enable=False, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
