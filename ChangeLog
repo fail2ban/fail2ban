@@ -10,7 +10,10 @@ Fail2Ban (version 0.8.9.dev)                                          2013/??/??
 ver. 0.8.10 (2013/XX/XXX) - NOT-YET-RELEASED
 -----------
 
-- Fixes
+- Fixes:
+  Yaroslav Halchenko
+   * action.d/{route,shorewall}.conf - blocktype must be defined
+     within [Init].  Closes gh-232
 - New Features
 - Enhancements
 
