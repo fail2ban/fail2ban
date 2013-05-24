@@ -16,7 +16,9 @@ ver. 0.8.10 (2013/XX/XXX) - NOT-YET-RELEASED
      within [Init].  Closes gh-232
 - New Features
 - Enhancements
-
+  Yaroslav Halchenko
+   * jail.conf -- assure all jails have actions and remove unused
+     ports specifications
 
 ver. 0.8.9 (2013/05/13) - wanna-be-stable
 ----------
