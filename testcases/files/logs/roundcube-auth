@@ -1,1 +1,2 @@
 [22-Jan-2013 22:28:21 +0200]: FAILED login for user1 from 192.0.43.10
+May 26 07:12:40 hamster roundcube: IMAP Error: Login failed for sales@example.com from 10.1.1.47
