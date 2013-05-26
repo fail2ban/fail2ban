@@ -60,6 +60,26 @@ The following options are applicable to all jails. Their meaning is described in
 .TP
 \fBusedns\fR
 .PP
+.SS Backends
+\fBbackend\fR specifies the backend used to get files modification. This option can be overridden in each jail as well.
+Available options are listed below.
+.TP
+\fIpyinotify\fR
+requires pyinotify (a file alteration monitor) to be installed. If pyinotify is not installed, Fail2ban will use auto.
+.TP
+\fIgamin\fR
+requires Gamin (a file alteration monitor) to be installed. If Gamin is not installed, Fail2ban will use auto.
+.TP
+\fIpolling\fR
+uses a polling algorithm which does not require external libraries.
+.TP
+\fIsystemd\fR
+uses systemd python library to access the systemd journal. Specifying \fBlogpath\fR is not valid for this backend and instead utilises \fBjournalmatch\fR from the jails associated filter config.
+.TP
+\fIauto\fR
+will try to use the following backends, in order: pyinotify, gamin, polling
+.PP
+.SS Actions
 Each jail can be configured with only a single filter, but may have multiple actions. By default, the name of a action is the action filename. In the case where multiple of the same action are to be used, the \fBactname\fR option can be assigned to the action to avoid duplicatione.g.:
 .PP
 .nf
@@ -153,6 +173,9 @@ Similar to actions, filters have an [Init] section which can be overridden in \f
 .TP
 \fBmaxlines\fR
 specifies the maximum number of lines to buffer to match multi-line regexs. For some log formats this will not required to be changed. Other logs may require to increase this value if a particular log file is frequently written to.
+.TP
+\fBjournalmatch\fR
+specifies the systemd journal match used to filter the journal entries. See \fBjournalctl(1)\fR and \fBsystemd.journal-fields(7)\fR for matches syntax and more details on special journal fields. This option is only valid for the \fIsystemd\fR backend.
 .PP
 Filters can also have a section called [INCLUDES]. This is used to read other configuration files.
 

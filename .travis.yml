@@ -17,4 +17,6 @@ script:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then export PYTHONPATH="$PYTHONPATH:/usr/share/pyshared:/usr/lib/pyshared/python2.7"; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coverage run --rcfile=.travis_coveragerc setup.py test; else python setup.py test; fi
 after_success:
+# Coverage config file must be .coveragerc for coveralls
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then cp -v .travis_coveragerc .coveragerc; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coveralls; fi

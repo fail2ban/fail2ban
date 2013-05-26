@@ -145,11 +145,35 @@ class JailReaderTest(unittest.TestCase):
 		self.assertEqual(jail.getName(), 'sshd')
 
 	def testSplitOption(self):
-		action = "mail-whois[name=SSH]"
-		expected = ['mail-whois', {'name': 'SSH'}]
-		result = JailReader.extractOptions(action)
-		self.assertEquals(expected, result)
+		# Simple example
+		option = "mail-whois[name=SSH]"
+		expected = ('mail-whois', {'name': 'SSH'})
+		result = JailReader.extractOptions(option)
+		self.assertEqual(expected, result)
 
+		# Empty option
+		option = "abc[]"
+		expected = ('abc', {})
+		result = JailReader.extractOptions(option)
+		self.assertEqual(expected, result)
+
+		# More complex examples
+		option = 'option[opt01=abc,opt02="123",opt03="with=okay?",opt04="andwith,okay...",opt05="how about spaces",opt06="single\'in\'double",opt07=\'double"in"single\',  opt08= leave some space, opt09=one for luck, opt10=, opt11=]'
+		expected = ('option', {
+			'opt01': "abc",
+			'opt02': "123",
+			'opt03': "with=okay?",
+			'opt04': "andwith,okay...",
+			'opt05': "how about spaces",
+			'opt06': "single'in'double",
+			'opt07': "double\"in\"single",
+			'opt08': "leave some space",
+			'opt09': "one for luck",
+			'opt10': "",
+			'opt11': "",
+		})
+		result = JailReader.extractOptions(option)
+		self.assertEqual(expected, result)
 
 class FilterReaderTest(unittest.TestCase):
 
@@ -173,7 +197,12 @@ class FilterReaderTest(unittest.TestCase):
 			"+$<SKIPLINES>^.+ module for .* from <HOST>\\s*$"],
 			['set', 'testcase01', 'addignoreregex', 
 			"^.+ john from host 192.168.1.1\\s*$"],
-			['set', 'testcase01', 'maxlines', "1"]]
+			['set', 'testcase01', 'addjournalmatch',
+				"_COMM=sshd", "+", "_SYSTEMD_UNIT=sshd.service", "_UID=0"],
+			['set', 'testcase01', 'addjournalmatch',
+				"FIELD= with spaces ", "+", "AFIELD= with + char and spaces"],
+			['set', 'testcase01', 'maxlines', "1"], # Last for overide test
+		]
 		filterReader = FilterReader("testcase01", "testcase01", {})
 		filterReader.setBaseDir(TEST_FILES_DIR)
 		filterReader.read()
