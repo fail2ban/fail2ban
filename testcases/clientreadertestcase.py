@@ -193,7 +193,7 @@ class JailsReaderTest(unittest.TestCase):
 		commands = configurator.getConfigStream()
 		# and there is logging information left to be passed into the
 		# server
-		self.assertEqual(commands,
+		self.assertEqual(sorted(commands),
 						 [['set', 'loglevel', 3],
 						  ['set', 'logtarget', '/var/log/fail2ban.log']])
 
