@@ -277,7 +277,12 @@ class Fail2banRegex:
 					return False
 			finally:
 				self.__filter.delFailRegex(0)
+				try:
+					del self.__filter._Filter__lineBuffer[-1]
+				except IndexError:
+					pass
 				logging.getLogger("fail2ban").setLevel(logging.CRITICAL)
+		self.__filter.processLine(line)
 		for regex in self.__ignoreregex:
 					self.__filter.delIgnoreRegex(0)
 
