@@ -138,9 +138,9 @@ class TestsUtilsTest(unittest.TestCase):
 			except ValueError:
 				s = tb()
 
-			# if we run it through 'coverage' (e.g. on travis) then we
-			# would get a traceback
-			if 'coverage' in s:
+			# if we run it through 'setup' or 'coverage' (e.g. on travis)
+			# then we would get a traceback
+			if 'coverage' in s or 'setup' in s:
 				self.assertTrue('>' in s, msg="no '>' in %r" % s)
 			else:
 				self.assertFalse('>' in s, msg="'>' present in %r" % s)  # There is only "fail2ban-testcases" in this case, no true traceback
