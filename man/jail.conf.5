@@ -135,8 +135,9 @@ There are two filter definitions used in the [Definition] section:
 
 .TP
 \fBfailregex\fR
-is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The tag <HOST> is used as part of the regex and is itself a regex
+is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The tag \fI<HOST>\fR is used as part of the regex and is itself a regex
 for IPv4 addresses and hostnames. fail2ban will work out which one of these it actually is.
+For multiline regexs the tag \fI<SKIPLINES>\fR should be used to separate lines. This allows lines between the matched lines to continue to be searched for other failures. The tag can be used multiple times.
 
 .TP
 \fBignoreregex\fR
