@@ -140,7 +140,9 @@ class TestsUtilsTest(unittest.TestCase):
 
 			# if we run it through 'coverage' (e.g. on travis) then we
 			# would get a traceback
-			if 'coverage' in s:
+			if not ('fail2ban-testcases' in s):
+				# we must be calling it from setup or nosetests but using at least
+				# nose's core etc
 				self.assertTrue('>' in s, msg="no '>' in %r" % s)
 			else:
 				self.assertFalse('>' in s, msg="'>' present in %r" % s)  # There is only "fail2ban-testcases" in this case, no true traceback
