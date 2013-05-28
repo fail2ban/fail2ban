@@ -46,3 +46,11 @@ Apr 29 15:53:38 Jamess-iMac.local sshd[47831]: error: PAM: Authentication error 
 Apr 29 16:53:38 Jamess-iMac.local sshd[47831]: error: PAM: authentication error for james from 205.186.180.101 via 192.168.1.201
 Apr 29 17:53:38 Jamess-iMac.local sshd[47831]: error: PAM: authentication error for james from 205.186.180.102
 Apr 29 18:53:38 Jamess-iMac.local sshd[47831]: error: PAM: authentication error for james from 205.186.180.103
+
+#11
+Apr 24 01:39:19 host sshd[3719]: User root not allowed because account is locked
+Apr 24 01:39:19 host sshd[3719]: input_userauth_request: invalid user root [preauth]
+Apr 24 01:39:19 host sshd[3719]: error: Received disconnect from 198.51.100.34: 11: Bye Bye [preauth]
+May 27 00:16:33 host sshd[2364]: User root not allowed because account is locked
+May 27 00:16:33 host sshd[2364]: input_userauth_request: invalid user root [preauth]
+May 27 00:16:33 host sshd[2364]: Received disconnect from 198.51.100.76: 11: Bye Bye [preauth]
