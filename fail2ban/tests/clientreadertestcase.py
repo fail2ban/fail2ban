@@ -295,13 +295,13 @@ class JailsReaderTest(unittest.TestCase):
 			# Test for presence of blocktype (in relation to gh-232)
 			for action in actions:
 				commands = action.convert()
-				file_ = action.getFile()
+				action_name = action.getName()
 				if '<blocktype>' in str(commands):
 					# Verify that it is among cInfo
-					self.assertTrue('blocktype' in action._ActionReader__cInfo)
+					self.assertTrue('blocktype' in action._initOpts)
 					# Verify that we have a call to set it up
 					blocktype_present = False
-					target_command = [ 'set', jail_name, 'setcinfo', file_, 'blocktype' ]
+					target_command = [ 'set', jail_name, 'setcinfo', action_name, 'blocktype' ]
 					for command in commands:
 						if (len(command) > 5 and
 							command[:5] == target_command):
