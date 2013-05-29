@@ -280,10 +280,38 @@ class JailsReaderTest(unittest.TestCase):
 			# and warn on useDNS
 			self.assertTrue(['set', j, 'usedns', 'warn'] in comm_commands)
 			self.assertTrue(['start', j] in comm_commands)
+
 		# last commands should be the 'start' commands
 		self.assertEqual(comm_commands[-1][0], 'start')
-		# TODO: make sure that all of the jails have actions assigned,
-		#       otherwise it makes little to no sense
+
+		for j in  jails._JailsReader__jails:
+			actions = j._JailReader__actions
+			jail_name = j.getName()
+			# make sure that all of the jails have actions assigned,
+			# otherwise it makes little to no sense
+			self.assertTrue(len(actions),
+							msg="No actions found for jail %s" % jail_name)
+
+			# Test for presence of blocktype (in relation to gh-232)
+			for action in actions:
+				commands = action.convert()
+				file_ = action.getFile()
+				if '<blocktype>' in str(commands):
+					# Verify that it is among cInfo
+					self.assertTrue('blocktype' in action._ActionReader__cInfo)
+					# Verify that we have a call to set it up
+					blocktype_present = False
+					target_command = [ 'set', jail_name, 'setcinfo', file_, 'blocktype' ]
+					for command in commands:
+						if (len(command) > 5 and
+							command[:5] == target_command):
+							blocktype_present = True
+							continue
+					self.assertTrue(
+						blocktype_present,
+						msg="Found no %s command among %s"
+						    % (target_command, str(commands)) )
+
 
 	def testConfigurator(self):
 		configurator = Configurator()
@@ -301,7 +329,7 @@ class JailsReaderTest(unittest.TestCase):
 		commands = configurator.getConfigStream()
 		# and there is logging information left to be passed into the
 		# server
-		self.assertEqual(commands,
+		self.assertEqual(sorted(commands),
 						 [['set', 'loglevel', 3],
 						  ['set', 'logtarget', '/var/log/fail2ban.log']])
 
