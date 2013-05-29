@@ -19,6 +19,8 @@ ver. 0.8.10 (2013/XX/XXX) - NOT-YET-RELEASED
   Yaroslav Halchenko
    * jail.conf -- assure all jails have actions and remove unused
      ports specifications
+  Terence Namusonge
+   * config/filter.d/roundcube-auth.conf -- support roundcube 0.9+
 
 ver. 0.8.9 (2013/05/13) - wanna-be-stable
 ----------
