@@ -142,7 +142,7 @@ class DefinitionInitConfigReader(ConfigReader):
 		self._file = fileName
 	
 	def getFile(self):
-		return self.__file
+		return self._file
 	
 	def setJailName(self, jailName):
 		self._jailName = jailName
