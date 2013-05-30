@@ -34,8 +34,18 @@ When submitting pull requests on GitHub we ask you to:
 * Include a change to the relevant section of the ChangeLog; and
 * Include yourself in THANKS if not already there.
 
-Testing
+Filters
 =======
+
+* Include sample logs with 1.2.3.4 used for IP addresses and 
+  example.com/example.org used for DNS names
+* Ensure ./fail2ban-regex testcases/files/logs/{samplelog} config/filter.d/{filter}.conf
+  has matches for EVERY regex
+* Ensure regexs end with a $ and are restrictive as possible. E.g. not .* if
+ [0-9]+ is sufficient
+
+Code Testing
+============
 
 Existing tests can be run by executing `fail2ban-testcases`. This has options
 like --log-level that will probably be useful. `fail2ban-testcases --help` for
