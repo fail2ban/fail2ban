@@ -23,6 +23,8 @@ ver. 0.8.10 (2013/XX/XXX) - NOT-YET-RELEASED
    * config/filter.d/roundcube-auth.conf -- support roundcube 0.9+
   Daniel Black
    * files/suse-initd -- update to the copy from stock SUSE
+	silviogarbes
+	 * Updates to asterisk filter closes gh-227/gh-230.
 
 ver. 0.8.9 (2013/05/13) - wanna-be-stable
 ----------
