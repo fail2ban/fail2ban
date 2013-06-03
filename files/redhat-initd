@@ -8,11 +8,14 @@
 #
 ### BEGIN INIT INFO
 # Provides: fail2ban
-# Required-Start: $local_fs $remote_fs $network
-# Required-Stop: $local_fs $remote_fs $network
+# Required-Start: $local_fs $remote_fs
+# Required-Stop: $local_fs $remote_fs
+# Should-Start: $time $network $syslog iptables firehol shorewall ferm
+# Should-Stop: $network $syslog iptables firehol shorewall ferm
 # Default-Start: 3 4 5
 # Default-Stop: 0 1 6
-# Short-Description: start and stop fail2ban
+# Short-Description: Start/Stop fail2ban
+# Description: Start/Stop fail2ban, a daemon to ban hosts that cause multiple authentication errors
 ### END INIT INFO
 
 # Source function library.
@@ -30,8 +33,7 @@ RETVAL=0
 
 start() {
     echo -n $"Starting fail2ban: "
-    rm -f ${socket} # in case of unclean shutdown
-    ${FAIL2BAN} start > /dev/null
+    ${FAIL2BAN} -x start > /dev/null
     RETVAL=$?
     if [ $RETVAL = 0 ]; then
         touch ${lockfile}
