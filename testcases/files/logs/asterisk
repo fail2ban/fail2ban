@@ -12,3 +12,4 @@
 [2013-02-05 23:44:42] NOTICE[436][C-00000fa9] chan_sip.c: Call from '' (1.2.3.4:10836) to extension '0972598285108' rejected because extension not found in context 'default'.
 [2013-03-26 15:47:54] NOTICE[1237] chan_sip.c: Registration from '"100"sip:100@1.2.3.4' failed for '1.2.3.4:23930' - No matching peer found
 [2013-05-13 07:10:53] SECURITY[1204] res_security_log.c: SecurityEvent="InvalidAccountID",EventTV="1368439853-500975",Severity="Error",Service="SIP",EventVersion="1",AccountID="00972599580679",SessionID="0x7f8ecc0421f8",LocalAddress="IPV4/UDP/1.2.3.4/5060",RemoteAddress="IPV4/UDP/1.2.3.4/5070"
+[2013-06-10 18:15:03] NOTICE[2723] chan_sip.c: Registration from '"100"<sip:100@192.168.0.2:5060>' failed for '1.2.3.4' - Not a local domain
