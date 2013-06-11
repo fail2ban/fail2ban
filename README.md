@@ -2,9 +2,9 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v0.8.9                  2013/05/13
+                       v0.8.10                  2013/06/11
 
-## Fail2Ban: ban hosts that cause multiple authentication errors 
+## Fail2Ban: ban hosts that cause multiple authentication errors
 
 Fail2Ban scans log files like /var/log/pwdfail and bans IP that makes too many
 password failures. It updates firewall rules to reject the IP address. These
@@ -30,8 +30,8 @@ Optional:
 
 To install, just do:
 
-    tar xvfj fail2ban-0.8.9.tar.bz2
-    cd fail2ban-0.8.9
+    tar xvfj fail2ban-0.8.10.tar.bz2
+    cd fail2ban-0.8.10
     python setup.py install
 
 This will install Fail2Ban into /usr/share/fail2ban. The executable scripts are

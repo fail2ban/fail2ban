@@ -4,17 +4,23 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.9.dev)                                          2013/??/??
+Fail2Ban (version 0.8.10)                                             2013/06/11
 ================================================================================
 
-ver. 0.8.10 (2013/XX/XXX) - NOT-YET-RELEASED
+ver. 0.8.10 (2013/06/11) - wanna-be-secure
 -----------
 
-- Fixes:
-  Yaroslav Halchenko
+Primarily bugfix and enhancements release, triggered by "bugs" in
+apache- filters.  If you are relying on listed below apache- filters,
+upgrade asap and seek your distributions to patch their fail2ban
+distribution with [6ccd5781].
+
+- Fixes: Yaroslav Halchenko
+   * [6ccd5781] filter.d/apache-{auth,nohome,noscript,overflows} - anchor
+     failregex at the beginning (and where applicable at the end).
+     Addresses a possible DoS. Closes gh-248
    * action.d/{route,shorewall}.conf - blocktype must be defined
      within [Init].  Closes gh-232
-- New Features
 - Enhancements
   Yaroslav Halchenko
    * jail.conf -- assure all jails have actions and remove unused
@@ -23,10 +29,10 @@ ver. 0.8.10 (2013/XX/XXX) - NOT-YET-RELEASED
    * config/filter.d/roundcube-auth.conf -- support roundcube 0.9+
   Daniel Black
    * files/suse-initd -- update to the copy from stock SUSE
-	silviogarbes
-	 * Updates to asterisk filter closes gh-227/gh-230.
-	Carlos Alberto Lopez Perez
-	 * Updates to asterisk to include AUTH_UNKNOWN_DOMAIN - gh-244.
+  silviogarbes & Daniel Black
+    * Updates to asterisk filter. Closes gh-227/gh-230.
+  Carlos Alberto Lopez Perez
+    * Updates to asterisk to include AUTH_UNKNOWN_DOMAIN. Closes gh-244.
 
 ver. 0.8.9 (2013/05/13) - wanna-be-stable
 ----------
