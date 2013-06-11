@@ -25,6 +25,8 @@ ver. 0.8.10 (2013/XX/XXX) - NOT-YET-RELEASED
    * files/suse-initd -- update to the copy from stock SUSE
 	silviogarbes
 	 * Updates to asterisk filter closes gh-227/gh-230.
+	Carlos Alberto Lopez Perez
+	 * Updates to asterisk to include AUTH_UNKNOWN_DOMAIN - gh-244.
 
 ver. 0.8.9 (2013/05/13) - wanna-be-stable
 ----------
