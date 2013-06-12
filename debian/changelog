@@ -1,3 +1,10 @@
+fail2ban (0.8.10-1) unstable; urgency=high
+
+  * New upstream release
+    - addresses possible DoS for anyone enabling many of apache- filters
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 12 Jun 2013 13:31:29 -0400
+
 fail2ban (0.8.9-1) unstable; urgency=low
 
   * New upstream release
