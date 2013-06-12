@@ -1,3 +1,11 @@
+fail2ban (0.8.4-3+squeeze2) squeeze-security; urgency=high
+
+  * Anchor apache- filters failregexes to avoid possible DoS on servers
+    which enabled corresponding jails. Fix cherry-picked from upstream
+    0.8.9-29-g6ccd578 . See http://seclists.org/fulldisclosure/2013/Jun/66
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 12 Jun 2013 14:27:07 -0400
+
 fail2ban (0.8.4-3+squeeze1) stable; urgency=low
 
   [ Jonathan Wiltshire ]
