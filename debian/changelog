@@ -1,3 +1,11 @@
+fail2ban (0.8.6-3wheezy2) wheezy-security; urgency=high
+
+  * Anchor apache- filters failregexes to avoid possible DoS on servers
+    which enabled corresponding jails. Fix cherry-picked from upstream
+    0.8.9-29-g6ccd578 . See http://seclists.org/fulldisclosure/2013/Jun/66
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 12 Jun 2013 14:11:15 -0400
+
 fail2ban (0.8.6-3wheezy1) unstable; urgency=high
 
   * CVE-2012-5642: Escape the content of <matches> since its value could
