@@ -8,6 +8,7 @@
 Dec 12 11:19:11 dunnart dovecot: pop3-login: Aborted login (tried to use disabled plaintext auth): rip=190.210.136.21, lip=113.212.99.193
 
 Jun 13 16:30:54 platypus dovecot: imap-login: Disconnected (auth failed, 2 attempts): user=<username.bob>, method=PLAIN, rip=49.176.98.87, lip=113.212.99.194, TLS
+Jun 14 00:48:21 platypus dovecot: imap-login: Disconnected (auth failed, 1 attempts): method=PLAIN, rip=59.167.242.100, lip=113.212.99.194, TLS: Disconnected
 Jun 13 20:48:11 platypus dovecot: pop3-login: Disconnected (no auth attempts): rip=121.44.24.254, lip=113.212.99.194, TLS: Disconnected
 Jun 13 21:48:06 platypus dovecot: pop3-login: Disconnected: Inactivity (no auth attempts): rip=180.200.180.81, lip=113.212.99.194, TLS
 Jun 13 20:20:21 platypus dovecot: imap-login: Disconnected (no auth attempts): rip=180.189.168.166, lip=113.212.99.194, TLS handshaking: Disconnected
