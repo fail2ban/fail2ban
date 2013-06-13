@@ -348,10 +348,15 @@ Post Release
 
 Add the following to the top of the ChangeLog
 
-ver. 0.8.11 (2013/XX/XXX) - wanna-be-stable
-- Fixes
-- New Features
-- Enhancements
+ver. 0.8.12 (2013/XX/XXX) - wanna-be-released
+-----------
+
+- Fixes:
+  
+- New Features:
+  
+- Enhancements:
+  
 
 and adjust common/version.py to carry .dev suffix to signal
 a version under development.
