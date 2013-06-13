@@ -34,12 +34,22 @@ When submitting pull requests on GitHub we ask you to:
 * Include a change to the relevant section of the ChangeLog; and
 * Include yourself in THANKS if not already there.
 
-Testing
+Filters
 =======
 
-Existing tests can be run by executing `bin/fail2ban-testcases`. This has
-options like --log-level that will probably be useful.
-`bin/fail2ban-testcases --help` forfull options.
+* Include sample logs with 1.2.3.4 used for IP addresses and 
+  example.com/example.org used for DNS names
+* Ensure ./fail2ban-regex testcases/files/logs/{samplelog} config/filter.d/{filter}.conf
+  has matches for EVERY regex
+* Ensure regexs end with a $ and are restrictive as possible. E.g. not .* if
+ [0-9]+ is sufficient
+
+Code Testing
+============
+
+Existing tests can be run by executing `bin/fail2ban-testcases`. It has
+options like --log-level that will probably be useful.  Run
+`bin/fail2ban-testcases --help` for the full list of options.
 
 Test cases should cover all usual cases, all exception cases and all inside
 / outside boundary conditions.
@@ -338,10 +348,15 @@ Post Release
 
 Add the following to the top of the ChangeLog
 
-ver. 0.8.11 (2013/XX/XXX) - wanna-be-stable
-- Fixes
-- New Features
-- Enhancements
+ver. 0.8.12 (2013/XX/XXX) - wanna-be-released
+-----------
+
+- Fixes:
+  
+- New Features:
+  
+- Enhancements:
+  
 
 and adjust common/version.py to carry .dev suffix to signal
 a version under development.

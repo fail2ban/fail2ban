@@ -2,7 +2,7 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v0.9.0a0                2013/05/??
+                       v0.9.0a0                2013/??/??
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
@@ -30,8 +30,8 @@ Optional:
 
 To install, just do:
 
-    tar xvfj fail2ban-0.8.9.tar.bz2
-    cd fail2ban-0.8.9
+    tar xvfj fail2ban-0.8.10.tar.bz2
+    cd fail2ban-0.8.10
     python setup.py install
 
 This will install Fail2Ban into /usr/share/fail2ban. The executable scripts are
@@ -63,9 +63,14 @@ Code status:
 Contact:
 --------
 
+### You found a severe security vulnerability in Fail2Ban?
+email details to fail2ban-vulnerabilities at lists dot sourceforge dot net .
+
 ### You need some new features, you found bugs?
 visit [Issues](https://github.com/fail2ban/fail2ban/issues)
-and if your issue is not yet known -- file a bug report.
+and if your issue is not yet known -- file a bug report. See
+[Fail2Ban wiki](http://www.fail2ban.org/wiki/index.php/HOWTO_Seek_Help)
+on further instructions.
 
 ### You would like to troubleshoot or discuss?
 join the [mailing list](https://lists.sourceforge.net/lists/listinfo/fail2ban-users)
