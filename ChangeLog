@@ -15,6 +15,8 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
 - New Features:
   
 - Enhancements:
+  Daniel Black
+   * filter.d/proftpd -- harden and anchor regex and add two testcases
   
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
