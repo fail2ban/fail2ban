@@ -16,7 +16,8 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
   
 - Enhancements:
   Daniel Black
-   * filter.d/{asterisk,assp}.conf -- regex hardening
+   * filter.d/{asterisk,assp,dovecot}.conf -- regex hardening and
+     extra failure examples in sample logs
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
 -----------
