@@ -1,2 +1,6 @@
 # From IRC 2013-01-04
 2013-01-04 17:03:46 login authenticator failed for rrcs-24-106-174-74.se.biz.rr.com ([192.168.2.33]) [24.106.174.74]: 535 Incorrect authentication data (set_id=brian)
+# From IRC 2013-06-13 XATRIX (Georgiy Mernov)
+2013-06-12 03:57:58 login authenticator failed for (ylmf-pc) [120.196.140.45]: 535 Incorrect authentication data: 1 Time(s)
+2013-06-12 13:18:11 login authenticator failed for (USER-KVI9FGS9KP) [101.66.165.86]: 535 Incorrect authentication data
+2013-06-10 10:10:59 H=ufficioestampa.it (srv.ufficioestampa.it) [193.169.56.211] sender verify fail for <user@example.com>: Unrouteable address

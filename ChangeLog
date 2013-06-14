@@ -18,8 +18,9 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
   Daniel Black
    * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
      and extra failure examples in sample logs
-  
->>>>>>> 9940cd1b6b0146c2a088edab611e8d77e1d2984d
+  Daniel Black & Georgiy Mernov
+   * filter.d/exim.conf -- regex hardening and extra failure examples in
+     sample logs
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
 -----------
