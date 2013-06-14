@@ -16,7 +16,7 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
   
 - Enhancements:
   Daniel Black
-   * config/filter.d/asterisk.conf -- more stringent anchoring
+   * filter.d/{asterisk,assp}.conf -- regex hardening
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
 -----------
