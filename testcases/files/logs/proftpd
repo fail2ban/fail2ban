@@ -1,5 +1,9 @@
 Jan 10 00:00:00 myhost proftpd[12345] myhost.domain.com (123.123.123.123[123.123.123.123]): USER username (Login failed): User in /etc/ftpusers
 Feb 1 00:00:00 myhost proftpd[12345] myhost.domain.com (123.123.123.123[123.123.123.123]): USER username: no such user found from 123.123.123.123 [123.123.123.123] to 234.234.234.234:21 
+Jun 09 07:30:58 platypus.ace-hosting.com.au proftpd[11864] platypus.ace-hosting.com.au (mail.bloodymonster.net[::ffff:67.227.224.66]): USER username (Login failed): Incorrect password.
+Jun 09 11:15:43 platypus.ace-hosting.com.au proftpd[17424] platypus.ace-hosting.com.au (::ffff:101.71.143.238[::ffff:101.71.143.238]): USER god: no such user found from ::ffff:101.71.143.238 [::ffff:101.71.143.238] to ::ffff:123.212.99.194:21
+Jun 13 22:07:23 platypus.ace-hosting.com.au proftpd[15719] platypus.ace-hosting.com.au (::ffff:59.167.242.100[::ffff:59.167.242.100]): SECURITY VIOLATION: root login attempted.
+Jun 14 00:09:59 platypus.ace-hosting.com.au proftpd[17839] platypus.ace-hosting.com.au (::ffff:59.167.242.100[::ffff:59.167.242.100]): USER platypus.ace-hosting.com.au proftpd[17424] platypus.ace-hosting.com.au (hihoinjection[1.2.3.44]): no such user found from ::ffff:59.167.242.100 [::ffff:59.167.242.100] to ::ffff:113.212.99.194:21
 
 
 
