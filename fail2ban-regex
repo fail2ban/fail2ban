@@ -40,15 +40,16 @@ except ImportError, e:
 	sys.path.insert(1, "/usr/share/fail2ban")
 	from common.version import version
 
+from optparse import OptionParser, Option
+
 from client.configparserinc import SafeConfigParserWithIncludes
 from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
 from server.filter import Filter
 from server.failregex import RegexException
 
-from optparse import OptionParser, Option
-
+from testcases.utils import FormatterWithTraceBack
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.regex")
+logSys = logging.getLogger("fail2ban")
 
 def shortstr(s, l=53):
 	"""Return shortened string
@@ -88,7 +89,7 @@ IGNOREREGEX:
 	p.add_options([
 		Option('-l', "--log-level", type="choice",
 			   dest="log_level",
-			   choices=('debug', 'info', 'warn', 'error', 'fatal'),
+			   choices=('heavydebug', 'debug', 'info', 'warning', 'error', 'fatal'),
 			   default=None,
 			   help="Log level for the Fail2Ban logger to use"),
 		Option("-v", "--verbose", action='store_true',
@@ -97,6 +98,10 @@ IGNOREREGEX:
 			   help="Either to print all missed lines"),
 		Option("--print-all-ignored", action='store_true',
 			   help="Either to print all ignored lines"),
+		Option("-t", "--log-traceback", action='store_true',
+			   help="Enrich log-messages with compressed tracebacks"),
+		Option("--full-traceback", action='store_true',
+			   help="Either to make the tracebacks full, not compressed (as by default)"),
 
 		])
 
@@ -156,9 +161,6 @@ class LineStats(object):
 
 class Fail2banRegex(object):
 
-	# ???
-	test = None
-
 	CONFIG_DEFAULTS = {'configpath' : "/etc/fail2ban/"}
 
 	def __init__(self, opts):
@@ -170,17 +172,6 @@ class Fail2banRegex(object):
 		self._ignoreregex = list()
 		self._failregex = list()
 		self._line_stats = LineStats()
-
-		# Setup logging
-		logging.getLogger("fail2ban").handlers = []
-		self._hdlr = logging.StreamHandler(Fail2banRegex.test)
-		# set a format which is simpler for console use
-		formatter = logging.Formatter("%(message)s")
-		# tell the handler to use this format
-		self._hdlr.setFormatter(formatter)
-		self._logging_level = self._verbose and logging.DEBUG or logging.WARN
-		logging.getLogger("fail2ban").addHandler(self._hdlr)
-		logging.getLogger("fail2ban").setLevel(logging.ERROR)
 
 
 	def readRegex(self, value, regextype):
@@ -213,7 +204,6 @@ class Fail2banRegex(object):
 	def testIgnoreRegex(self, line):
 		found = False
 		for regex in self._ignoreregex:
-			logging.getLogger("fail2ban").setLevel(self._logging_level)
 			try:
 				self._filter.addIgnoreRegex(regex.getFailRegex())
 				try:
@@ -226,7 +216,6 @@ class Fail2banRegex(object):
 					return False
 			finally:
 				self._filter.delIgnoreRegex(0)
-				logging.getLogger("fail2ban").setLevel(self._logging_level)
 		return found
 
 	def testRegex(self, line):
@@ -234,7 +223,6 @@ class Fail2banRegex(object):
 		for regex in self._ignoreregex:
 			self._filter.addIgnoreRegex(regex.getFailRegex())
 		for regex in self._failregex:
-			# logging.getLogger("fail2ban").setLevel(logging.DEBUG)
 			try:
 				self._filter.addFailRegex(regex.getFailRegex())
 				try:
@@ -255,7 +243,6 @@ class Fail2banRegex(object):
 					return False
 			finally:
 				self._filter.delFailRegex(0)
-				logging.getLogger("fail2ban").setLevel(logging.CRITICAL)
 		for regex in self._ignoreregex:
 			self._filter.delIgnoreRegex(0)
 		return found
@@ -348,6 +335,35 @@ if __name__ == "__main__":
 		sys.stderr.write("ERROR: provide both <LOG> and <REGEX>.\n\n")
 		parser.print_help()
 		sys.exit(-1)
+
+	# TODO: taken from -testcases -- move common functionality somewhere
+	if opts.log_level is not None: # pragma: no cover
+		# so we had explicit settings
+		logSys.setLevel(getattr(logging, opts.log_level.upper()))
+	else: # pragma: no cover
+		# suppress the logging but it would leave unittests' progress dots
+		# ticking, unless like with '-l fatal' which would be silent
+		# unless error occurs
+		logSys.setLevel(getattr(logging, 'FATAL'))
+
+	# Add the default logging handler
+	stdout = logging.StreamHandler(sys.stdout)
+
+	fmt = 'D: %(message)s'
+
+	if opts.log_traceback:
+		Formatter = FormatterWithTraceBack
+		fmt = (opts.full_traceback and ' %(tb)s' or ' %(tbc)s') + fmt
+	else:
+		Formatter = logging.Formatter
+
+	# Custom log format for the verbose tests runs
+	if opts.verbose > 1: # pragma: no cover
+		stdout.setFormatter(Formatter(' %(asctime)-15s %(thread)s' + fmt))
+	else: # pragma: no cover
+		# just prefix with the space
+		stdout.setFormatter(Formatter(fmt))
+	logSys.addHandler(stdout)
 
 	print
 	print "Running tests"
