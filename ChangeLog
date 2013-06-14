@@ -13,7 +13,8 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
 - Fixes:
   
 - New Features:
-  
+  Daniel Black & ykimon
+   * filter.d/3proxy.conf -- filter added
 - Enhancements:
   Daniel Black
    * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
