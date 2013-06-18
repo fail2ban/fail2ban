@@ -311,6 +311,8 @@ class Filter(JailThread):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
 		line = line.rstrip('\r\n')
+		logSys.log(5, "Working on line %r", line)
+
 		timeMatch = self.dateDetector.matchTime(line)
 		if timeMatch:
 			# Lets split into time part and log part of the line
@@ -380,6 +382,8 @@ class Filter(JailThread):
 					continue
 				# The failregex matched.
 				date = self.dateDetector.getUnixTime(timeLine)
+				logSys.log(7, "Date: %r, message: %r",
+							  timeLine, logLine)
 				if date is None:
 					logSys.debug("Found a match for %r but no valid date/time "
 								 "found for %r. Please file a detailed issue on"
