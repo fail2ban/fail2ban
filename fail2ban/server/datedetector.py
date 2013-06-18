@@ -59,12 +59,12 @@ class DateDetector:
 	def addDefaultTemplate(self):
 		self.__lock.acquire()
 		try:
-			# standard
-			self.appendTemplate("%b %d %H:%M:%S")
 			# asctime
 			self.appendTemplate("%a %b %d %H:%M:%S %Y")
 			# asctime without year
 			self.appendTemplate("%a %b %d %H:%M:%S")
+			# standard
+			self.appendTemplate("%b %d %H:%M:%S")
 			# simple date
 			self.appendTemplate("%Y/%m/%d %H:%M:%S")
 			# simple date too (from x11vnc)
@@ -76,8 +76,6 @@ class DateDetector:
 			self.appendTemplate("%d/%b/%Y:%H:%M:%S")
 			# CPanel 05/20/2008:01:57:39
 			self.appendTemplate("%m/%d/%Y:%H:%M:%S")
-			# Exim 2006-12-21 06:43:20
-			self.appendTemplate("%Y-%m-%d %H:%M:%S")
 			# custom for syslog-ng 2006.12.21 06:43:20
 			self.appendTemplate("%Y.%m.%d %H:%M:%S")
 			# named 26-Jul-2007 15:20:52.252 
