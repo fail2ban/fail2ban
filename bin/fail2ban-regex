@@ -250,6 +250,7 @@ class Fail2banRegex(object):
 		found = False
 		for regex in self._ignoreregex:
 			self._filter.addIgnoreRegex(regex.getFailRegex())
+		orgLineBuffer = self._filter._Filter__lineBuffer
 		for regex in self._failregex:
 			try:
 				self._filter.addFailRegex(regex.getFailRegex())
@@ -271,11 +272,9 @@ class Fail2banRegex(object):
 					return False
 			finally:
 				self._filter.delFailRegex(0)
-				try:
-					del self._filter._Filter__lineBuffer[-1]
-				except IndexError:
-					pass
-		self._filter.processLine(line)
+				self._filter._Filter__lineBuffer = orgLineBuffer
+		if not found:
+			self._filter.processLine(line)
 		for regex in self._ignoreregex:
 			self._filter.delIgnoreRegex(0)
 		return found
