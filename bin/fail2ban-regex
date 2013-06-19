@@ -34,7 +34,6 @@ import getopt, sys, time, logging, os, locale
 
 from optparse import OptionParser, Option
 
-from client.configparserinc import SafeConfigParserWithIncludes
 from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
 
 from fail2ban.version import version
