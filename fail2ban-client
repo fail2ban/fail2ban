@@ -336,13 +336,13 @@ class Fail2banClient:
 			logSys.setLevel(logging.INFO)
 		else:
 			logSys.setLevel(logging.DEBUG)
-		# Add the default logging handler
-		stdout = logging.StreamHandler(sys.stdout)
+		# Add the default logging handler to dump to stderr
+		logout = logging.StreamHandler(sys.stderr)
 		# set a format which is simpler for console use
 		formatter = logging.Formatter('%(levelname)-6s %(message)s')
 		# tell the handler to use this format
-		stdout.setFormatter(formatter)
-		logSys.addHandler(stdout)
+		logout.setFormatter(formatter)
+		logSys.addHandler(logout)
 
 		# Set the configuration path
 		self.__configurator.setBaseDir(self.__conf["conf"])
