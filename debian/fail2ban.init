@@ -176,8 +176,10 @@ do_reload() {
 #
 log_end_msg_wrapper()
 {
-	[ $1 -lt $2 ] && value=0 || value=1
-	log_end_msg $value
+	if [ "$3" != "no" ]; then
+		[ $1 -lt $2 ] && value=0 || value=1
+		log_end_msg $value
+	fi
 }
 
 command="$1"
@@ -185,13 +187,13 @@ case "$command" in
 	start|force-start)
 		[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
 		do_start "$command"
-		[ "$VERBOSE" != no ] && log_end_msg_wrapper $? 2
+		log_end_msg_wrapper $? 2 "$VERBOSE"
 		;;
 
 	stop)
 		[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
 		do_stop
-		[ "$VERBOSE" != no ] && log_end_msg_wrapper $? 2
+		log_end_msg_wrapper $? 2 "$VERBOSE"
 		;;
 
 	restart|force-reload)
@@ -200,7 +202,7 @@ case "$command" in
 		case "$?" in
 			0|1)
 				do_start
-				log_end_msg_wrapper $? 1
+				log_end_msg_wrapper $? 1 "always"
 				;;
 			*)
 				# Failed to stop
