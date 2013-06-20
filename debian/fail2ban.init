@@ -132,7 +132,7 @@ do_start()
 #
 do_status()
 {
-	$DAEMON ping > /dev/null
+	$DAEMON ping > /dev/null 2>&1
 	return $?
 }
 
@@ -146,7 +146,7 @@ do_stop()
 	#	1 if daemon was already stopped
 	#	2 if daemon could not be stopped
 	#	other if a failure occurred
-	$DAEMON status > /dev/null || return 1
+	$DAEMON status > /dev/null 2>&1 || return 1
 	$DAEMON stop > /dev/null || return 2
 
 	# now we need actually to wait a bit since it might take time

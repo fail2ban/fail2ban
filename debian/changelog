@@ -2,6 +2,7 @@ fail2ban (0.8.10-2) unstable; urgency=low
 
   * debian/fail2ban.init:
     - fixed handling of the return code from do_start/do_stop
+    - status calls would dump all output to /dev/null
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 19 Jun 2013 21:56:01 -0400
 
