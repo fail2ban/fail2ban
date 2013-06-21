@@ -107,12 +107,17 @@ class JailReader(ConfigReader):
 		stream = []
 		for opt in self.__opts:
 			if opt == "logpath":
+				found_files = 0
 				for path in self.__opts[opt].split("\n"):
 					pathList = glob.glob(path)
 					if len(pathList) == 0:
-						logSys.error("No file found for " + path)
+						logSys.error("No file(s) found for glob %s" % path)
 					for p in pathList:
+						found_files += 1
 						stream.append(["set", self.__name, "addlogpath", p])
+				if not found_files:
+					raise ValueError(
+						"Have not found any log file for %s jail" % self.__name)
 			elif opt == "backend":
 				backend = self.__opts[opt]
 			elif opt == "maxretry":
