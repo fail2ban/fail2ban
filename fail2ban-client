@@ -229,7 +229,7 @@ class Fail2banClient:
 		elif len(cmd) == 2 and cmd[0] == "reload":
 			if self.__ping():
 				jail = cmd[1]
-				ret = self.__readJailConfig(jail)
+				ret = self.__readConfig(jail)
 				# Do not continue if configuration is not 100% valid
 				if not ret:
 					return False
@@ -394,19 +394,18 @@ class Fail2banClient:
 				return False
 			return self.__processCommand(args)
 
-	def __readConfig(self):
+	def __readConfig(self, jail=None):
 		# Read the configuration
-		self.__configurator.readAll()
-		ret = self.__configurator.getOptions()
-		self.__configurator.convertToProtocol()
-		self.__stream = self.__configurator.getConfigStream()
-		return ret
-
-	def __readJailConfig(self, jail):
-		self.__configurator.readAll()
-		ret = self.__configurator.getOptions(jail)
-		self.__configurator.convertToProtocol()
-		self.__stream = self.__configurator.getConfigStream()
+		# TODO: get away from stew of return codes and exception
+		# handling -- handle via exceptions
+		try:
+			self.__configurator.readAll()
+			ret = self.__configurator.getOptions(jail)
+			self.__configurator.convertToProtocol()
+			self.__stream = self.__configurator.getConfigStream()
+		except Exception, e:
+			logSys.error("Failed during configuration: %s" % e)
+			ret = False
 		return ret
 
 	#@staticmethod
