@@ -79,14 +79,23 @@ class JailsReader(ConfigReader):
 					return False
 		return True
 	
-	def convert(self):
+	def convert(self, allow_no_files=False):
+		"""Convert read before __opts and jails to the commands stream
+
+		Parameters
+		----------
+		allow_missing : bool
+		  Either to allow log files to be missing entirely.  Primarily is
+		  used for testing
+		"""
+
 		stream = list()
 		for opt in self.__opts:
 			if opt == "":
 				stream.append([])
 		# Convert jails
 		for jail in self.__jails:
-			stream.extend(jail.convert())
+			stream.extend(jail.convert(allow_no_files=allow_no_files))
 		# Start jails
 		for jail in self.__jails:
 			stream.append(["start", jail.getName()])
