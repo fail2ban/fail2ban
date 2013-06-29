@@ -146,10 +146,10 @@ class JailThread(Thread):
 				return
 			while os.read(self.__pipe[0], 1):
 				pass
-		except select.error as e:
+		except select.error, e:
 			if e.args[0] not in [errno.EAGAIN, errno.EINTR]:
 				raise
-		except OSError as e:
+		except OSError, e:
 			if e.errno not in [errno.EAGAIN, errno.EINTR]:
 				raise
 	
@@ -159,6 +159,6 @@ class JailThread(Thread):
 		"""
 		try:
 			os.write(self.__pipe[1], b'.')
-		except IOError as e:
+		except IOError, e:
 			if e.errno not in [errno.EAGAIN, errno.EINTR]:
 				raise
