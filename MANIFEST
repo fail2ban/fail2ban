@@ -27,6 +27,7 @@ fail2ban/server/filter.py
 fail2ban/server/filterpyinotify.py
 fail2ban/server/filtergamin.py
 fail2ban/server/filterpoll.py
+fail2ban/server/filtersystemd.py
 fail2ban/server/iso8601.py
 fail2ban/server/server.py
 fail2ban/server/actions.py
