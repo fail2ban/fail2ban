@@ -213,8 +213,10 @@ class Fail2banRegex(object):
 				reader.read(value)
 				print "Use %11s file : %s" % (regex, value)
 				# TODO: reuse functionality in client
-				regex_values = [RegexStat(m)
-							    for m in reader.get("Definition", regex).split('\n')]
+				regex_values = [
+					RegexStat(m)
+					for m in reader.get("Definition", regex).split('\n')
+					if m != ""]
 			except NoSectionError:
 				print "No [Definition] section in %s" % value
 				return False

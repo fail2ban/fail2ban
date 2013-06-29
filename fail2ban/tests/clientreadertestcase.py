@@ -220,7 +220,7 @@ class FilterReaderTest(unittest.TestCase):
 		#filterReader.getOptions(["failregex", "ignoreregex"])
 		filterReader.getOptions(None)
 		output[-1][-1] = "5"
-		self.assertEquals(sorted(filterReader.convert()), sorted(output))
+		self.assertEqual(sorted(filterReader.convert()), sorted(output))
 
 class JailsReaderTest(unittest.TestCase):
 
@@ -297,7 +297,7 @@ class JailsReaderTest(unittest.TestCase):
 		jails = JailsReader(basedir=CONFIG_DIR, force_enable=True) # we are running tests from root project dir atm
 		self.assertTrue(jails.read())		  # opens fine
 		self.assertTrue(jails.getOptions())	  # reads fine
-		comm_commands = jails.convert()
+		comm_commands = jails.convert(allow_no_files=True)
 
 		# by default we have lots of jails ;)
 		self.assertTrue(len(comm_commands))

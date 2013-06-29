@@ -45,7 +45,8 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
 -----------
 
 - Fixes:
-  
+  Yaroslav Halchenko
+   * filter.d/common.conf -- make colon after [daemon] optional. Closes gh-267
 - New Features:
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
@@ -53,12 +54,15 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
   Daniel Black
    * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
      and extra failure examples in sample logs
-  Daniel Black & Georgiy Mernov
+  Daniel Black & Georgiy Mernov & ftoppi
    * filter.d/exim.conf -- regex hardening and extra failure examples in
      sample logs
   Yaroslav Halchenko
    * fail2ban-regex -- refactored to provide more details (missing and
-     ignored lines, control over logging, etc) while maintaining look&feel.
+     ignored lines, control over logging, etc) while maintaining look&feel
+   * fail2ban-client -- log to standard error. Closes gh-264
+   * Fail to configure if not a single log file was found for an
+     enabled jail. Closes gh-63
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
 -----------

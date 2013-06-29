@@ -47,7 +47,10 @@ Apr 29 16:53:38 Jamess-iMac.local sshd[47831]: error: PAM: authentication error 
 Apr 29 17:53:38 Jamess-iMac.local sshd[47831]: error: PAM: authentication error for james from 205.186.180.102
 Apr 29 18:53:38 Jamess-iMac.local sshd[47831]: error: PAM: authentication error for james from 205.186.180.103
 
-#11
+#11 https://github.com/fail2ban/fail2ban/issues/267  There might be no colon after [daemon]
+Jun 25 23:53:34 [sshd] User root from 1.2.3.4 not allowed because not listed in AllowUsers
+
+#12
 Apr 24 01:39:19 host sshd[3719]: User root not allowed because account is locked
 Apr 24 01:39:19 host sshd[3719]: input_userauth_request: invalid user root [preauth]
 Apr 24 01:39:19 host sshd[3719]: error: Received disconnect from 198.51.100.34: 11: Bye Bye [preauth]
