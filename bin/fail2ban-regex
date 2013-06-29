@@ -415,7 +415,7 @@ if __name__ == "__main__":
 		Formatter = logging.Formatter
 
 	# Custom log format for the verbose tests runs
-	if opts.verbose > 1: # pragma: no cover
+	if opts.verbose: # pragma: no cover
 		stdout.setFormatter(Formatter(' %(asctime)-15s %(thread)s' + fmt))
 	else: # pragma: no cover
 		# just prefix with the space
