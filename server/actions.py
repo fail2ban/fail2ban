@@ -144,13 +144,14 @@ class Actions(JailThread):
 			action.execActionStart()
 		while self._isActive():
 			if not self.getIdle():
-				#logSys.debug(self.jail.getName() + ": action")
 				ret = self.__checkBan()
 				if not ret:
-					self.__checkUnBan()
-					time.sleep(self.getSleepTime())
+				    self.__checkUnBan()
+				    nextUnbanTime = self.__banManager.getNextUnbanTime()
+				    timeout = max(nextUnbanTime - MyTime.time(), 1.0) if nextUnbanTime else None
+				    self.sleep(timeout)
 			else:
-				time.sleep(self.getSleepTime())
+				self.sleep()
 		self.__flushBan()
 		for action in self.__actions:
 			action.execActionStop()

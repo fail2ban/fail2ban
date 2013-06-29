@@ -238,3 +238,17 @@ class BanManager:
 		finally:
 			self.__lock.release()
 		return None						  # if none found
+
+	def getNextUnbanTime(self):
+		"""
+		Get the next unban time, or None if nothing has to be unbanned.
+		Be careful, the next unban time can be behing now.
+		"""
+		unbanTimes = []
+		try:
+			self.__lock.acquire()
+			# Build unban time list
+			unbanTimes = [ticket.getTime() + self.__banTime for ticket in self.__banList]
+			return min(unbanTimes) if unbanTimes else None
+		finally:
+			self.__lock.release()

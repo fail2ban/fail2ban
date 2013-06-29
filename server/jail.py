@@ -119,6 +119,8 @@ class Jail:
 	
 	def putFailTicket(self, ticket):
 		self.__queue.put(ticket)
+		# We have something for the actions
+		self.__action.wakeup()
 	
 	def getFailTicket(self):
 		try:
