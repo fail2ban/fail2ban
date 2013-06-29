@@ -234,7 +234,8 @@ class Fail2banRegex(object):
 			else:
 				try:
 					self.setMaxLines(maxlines)
-					print "Use maxlines   : %d" % self._filter.getMaxLines()
+					print "Use         maxlines : %d" % (
+						self._filter.getMaxLines(), )
 				except ValueError:
 					print "ERROR: Invalid value for maxlines (%(maxlines)r) " \
 					      "read from %(value)s" % locals()
