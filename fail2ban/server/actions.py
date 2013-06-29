@@ -28,7 +28,7 @@ from banmanager import BanManager
 from jailthread import JailThread
 from action import Action
 from mytime import MyTime
-import time, logging
+import logging
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -154,14 +154,17 @@ class Actions(JailThread):
 		for action in self.__actions:
 			action.execActionStart()
 		while self._isActive():
+			sleepTime = self.getSleepTime()
+			sleepTime = None if sleepTime <= 0 else sleepTime
 			if not self.getIdle():
-				#logSys.debug(self.jail.getName() + ": action")
 				ret = self.__checkBan()
 				if not ret:
 					self.__checkUnBan()
-					time.sleep(self.getSleepTime())
+					nextUnbanTime = self.__banManager.getNextUnbanTime()
+					timeout = nextUnbanTime - MyTime.time() if nextUnbanTime else None
+					self.sleep(sleepTime if sleepTime else timeout)
 			else:
-				time.sleep(self.getSleepTime())
+				self.sleep(sleepTime)
 		self.__flushBan()
 		for action in self.__actions:
 			action.execActionStop()

@@ -181,6 +181,10 @@ class Transmitter:
 			value = command[2]
 			self.__server.setBanTime(name, int(value))
 			return self.__server.getBanTime(name)
+		elif command[1] == "sleeptime":
+			value = command[2]
+			self.__server.setSleepTime(name, int(value))
+			return self.__server.getSleepTime(name)
 		elif command[1] == "banip":
 			value = command[2]
 			return self.__server.setBanIP(name,value)
@@ -267,6 +271,8 @@ class Transmitter:
 		# Action
 		elif command[1] == "bantime":
 			return self.__server.getBanTime(name)
+		elif command[1] == "sleeptime":
+			return self.__server.getSleepTime(name)
 		elif command[1] == "actions":
 			return self.__server.getActions(name)
 		elif command[1] == "addaction":
