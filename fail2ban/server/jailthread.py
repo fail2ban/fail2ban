@@ -29,6 +29,7 @@ import logging
 import os
 import select
 import errno
+import sys
 
 from fail2ban import helpers
 
