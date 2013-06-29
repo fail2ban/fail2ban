@@ -386,7 +386,7 @@ filter = testfilter1
 		jails = JailsReader(basedir=basedir)
 		self.assertTrue(jails.read())
 		self.assertTrue(jails.getOptions())
-		comm_commands = jails.convert()
+		comm_commands = jails.convert(allow_no_files=True)
 
 		action_names = [comm[-1] for comm in comm_commands if comm[:3] == ['set', 'testjail1', 'addaction']]
 
