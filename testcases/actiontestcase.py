@@ -69,11 +69,11 @@ class ExecuteAction(unittest.TestCase):
 		self.assertFalse(Action.substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
 		self.assertFalse(Action.substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
 		# missing tags are ok
-		self.assertEquals(Action.substituteRecursiveTags({'A': '<C>'}), {'A': '<C>'})
-		self.assertEquals(Action.substituteRecursiveTags({'A': '<C> <D> <X>','X':'fun'}), {'A': '<C> <D> fun', 'X':'fun'})
-		self.assertEquals(Action.substituteRecursiveTags({'A': '<C> <B>', 'B': 'cool'}), {'A': '<C> cool', 'B': 'cool'})
+		self.assertEqual(Action.substituteRecursiveTags({'A': '<C>'}), {'A': '<C>'})
+		self.assertEqual(Action.substituteRecursiveTags({'A': '<C> <D> <X>','X':'fun'}), {'A': '<C> <D> fun', 'X':'fun'})
+		self.assertEqual(Action.substituteRecursiveTags({'A': '<C> <B>', 'B': 'cool'}), {'A': '<C> cool', 'B': 'cool'})
 		# rest is just cool
-		self.assertEquals(Action.substituteRecursiveTags(aInfo),
+		self.assertEqual(Action.substituteRecursiveTags(aInfo),
 								{ 'HOST': "192.0.2.0",
 									'ABC': '123 192.0.2.0',
 									'xyz': '890 123 192.0.2.0',

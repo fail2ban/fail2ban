@@ -108,7 +108,7 @@ class JailReaderTest(unittest.TestCase):
 		action = "mail-whois[name=SSH]"
 		expected = ['mail-whois', {'name': 'SSH'}]
 		result = JailReader.splitAction(action)
-		self.assertEquals(expected, result)
+		self.assertEqual(expected, result)
 
 class JailsReaderTest(unittest.TestCase):
 
