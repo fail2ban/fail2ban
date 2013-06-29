@@ -127,7 +127,8 @@ class JailReader(ConfigReader):
 
 		stream = []
 		for opt in self.__opts:
-			if opt == "logpath":
+			if opt == "logpath" and	\
+					self.__opts.get('backend', None) != "systemd":
 				found_files = 0
 				for path in self.__opts[opt].split("\n"):
 					pathList = glob.glob(path)
@@ -136,8 +137,7 @@ class JailReader(ConfigReader):
 					for p in pathList:
 						found_files += 1
 						stream.append(["set", self.__name, "addlogpath", p])
-				if not (found_files or allow_no_files or
-						self.__opts.get('backend', None) == "systemd"):
+				if not (found_files or allow_no_files):
 					raise ValueError(
 						"Have not found any log file for %s jail" % self.__name)
 			elif opt == "logencoding":
