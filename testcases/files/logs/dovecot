@@ -12,4 +12,5 @@ Jun 14 00:48:21 platypus dovecot: imap-login: Disconnected (auth failed, 1 attem
 Jun 13 20:48:11 platypus dovecot: pop3-login: Disconnected (no auth attempts): rip=121.44.24.254, lip=113.212.99.194, TLS: Disconnected
 Jun 13 21:48:06 platypus dovecot: pop3-login: Disconnected: Inactivity (no auth attempts): rip=180.200.180.81, lip=113.212.99.194, TLS
 Jun 13 20:20:21 platypus dovecot: imap-login: Disconnected (no auth attempts): rip=180.189.168.166, lip=113.212.99.194, TLS handshaking: Disconnected
+Jun 23 00:52:43 vhost1-ua dovecot: pop3-login: Disconnected: Inactivity (auth failed, 1 attempts): user=<info>, method=PLAIN, rip=193.95.245.163, lip=176.214.13.210
 
