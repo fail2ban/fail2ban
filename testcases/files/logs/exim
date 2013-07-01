@@ -5,9 +5,9 @@
 2013-06-12 13:18:11 login authenticator failed for (USER-KVI9FGS9KP) [101.66.165.86]: 535 Incorrect authentication data
 2013-06-10 10:10:59 H=ufficioestampa.it (srv.ufficioestampa.it) [193.169.56.211] sender verify fail for <user@example.com>: Unrouteable address
 # http://forum.lissyara.su/viewtopic.php?f=20&t=2985
-2010-11-24 21:48:41 1PLKOW-00046U-EW F=wvhluo@droolindog.com H=93-143-146-237.adsl.net.t-com.hr (droolindog.com) [93.143.146.237] I=[10.10.10.32]:25 P=esmtp temporarily rejected by local_scan(): Temporary local problem
+#2010-11-24 21:48:41 1PLKOW-00046U-EW F=wvhluo@droolindog.com H=93-143-146-237.adsl.net.t-com.hr (droolindog.com) [93.143.146.237] I=[10.10.10.32]:25 P=esmtp temporarily rejected by local_scan(): Temporary local problem
 # http://us.generation-nt.com/answer/exim-spamassassin-2010-0-x64-help-204020461.html
-2011-07-07 15:44:16 1QexIu-0006dj-PX F=XXXXXX@XXXXXXXXXXXX H=localhost (saf.bio.caltech.edu) [127.0.0.1] P=esmtp temporarily rejected by local_scan(): Local configuration error - local_scan() library failure/usr/lib/exim/sa-exim.so: cannot open shared object file: No such file or directory
+#2011-07-07 15:44:16 1QexIu-0006dj-PX F=XXXXXX@XXXXXXXXXXXX H=localhost (saf.bio.caltech.edu) [127.0.0.1] P=esmtp temporarily rejected by local_scan(): Local configuration error - local_scan() library failure/usr/lib/exim/sa-exim.so: cannot open shared object file: No such file or directory
 # http://www.clues.ltd.uk/howto/debian-sa-fprot-HOWTO.html
 2004-01-18 07:15:35 1Ai79e-0000Dq-8i F=uzwltcmwto24@melissacam.biz H=lsanca1-ar3-4-47-028-040.lsanca1.elnk.dsl.genuity.net [4.47.28.40] P=smtp rejected by local_scan(): Rejected: hits=7.5 required=5.0 trigger=5.0
 # https://github.com/fail2ban/fail2ban/pull/251#issuecomment-19493875
