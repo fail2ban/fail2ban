@@ -18,3 +18,9 @@
 2013-06-02 06:54:20 [13314] SMTP protocol synchronization error (input sent without waiting for greeting): rejected connection from H=[211.148.195.192]:25936 I=[1.2.3.4]:25 input="GET / HTTP/1.1\r\n\r\n"
 2013-06-02 09:05:48 [18505] SMTP protocol synchronization error (next input sent too soon: pipelining was not advertised): rejected "RSET" H=ba77.mx83.fr [82.96.160.77]:58302 I=[1.2.3.4]:25 next input="QUIT\r\n"
 2013-06-02 09:22:05 [19591] SMTP call from pc012-6201.spo.scu.edu.tw [163.14.21.161]:3767 I=[1.2.3.4]:25 dropped: too many nonmail commands (last was "RSET")
+2013-06-02 15:06:18 H=(VM-WIN2K3-1562) [46.20.35.114] sender verify fail for <usfh@technological-systems.com>: Unknown user
+2013-06-07 02:02:09 H=treeladders.kiev.ua [91.232.21.92] sender verify fail for <mailer@treeladders.kiev.ua>: all relevant MX records point to non-existent hosts
+2013-06-15 16:34:55 H=mx.tillions.com [182.18.24.93] F=<buh@caladan.ebay.sun.com> rejected RCPT <ruslan@maslovskiy.com.ua>: Sender verify failed
+2013-06-15 16:36:49 H=altmx.marsukov.com [111.67.203.116] F=<kadrofutcheti@mail.ru> rejected RCPT <oksana@birzhatm.ua>: Unknown user
+#2013-06-16 02:50:43 H=dbs.marsukov.com [111.67.203.114] F=<trudofspiori@mail.ru> rejected RCPT <info@nanomedtech.ua>: rejected because 111.67.203.114 is in a black list at dnsbl.sorbs.net\nCurrently Sending Spam See: http://www.sorbs.net/lookup.shtml?111.67.203.114
+

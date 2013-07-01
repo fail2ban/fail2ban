@@ -22,7 +22,7 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
   Daniel Black
    * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
      and extra failure examples in sample logs
-  Daniel Black & Georgiy Mernov & ftoppi
+  Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
    * filter.d/exim.conf -- regex hardening and extra failure examples in
      sample logs
   Yaroslav Halchenko
