@@ -13,6 +13,8 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
 - Fixes:
   Yaroslav Halchenko
    * filter.d/common.conf -- make colon after [daemon] optional. Closes gh-267
+	Daniel Black & Мернов Георгий
+	 * filter.d/dovecot.conf -- Fix when no TLS enabled - line doesn't end in ,
 - New Features:
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
