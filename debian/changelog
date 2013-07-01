@@ -1,3 +1,11 @@
+fail2ban (0.8.10-3) unstable; urgency=low
+
+  * debian/jail.conf
+    - added "submission" (port 587) to all SMTP-related jails (Closes:
+      #714632).  Thanks Tony den Haan for the report
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 01 Jul 2013 14:36:24 -0400
+
 fail2ban (0.8.10-2) unstable; urgency=low
 
   * debian/fail2ban.init:
