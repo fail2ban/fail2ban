@@ -13,3 +13,9 @@
 [2013-03-26 15:47:54] NOTICE[1237] chan_sip.c: Registration from '"100"sip:100@1.2.3.4' failed for '1.2.3.4:23930' - No matching peer found
 [2013-05-13 07:10:53] SECURITY[1204] res_security_log.c: SecurityEvent="InvalidAccountID",EventTV="1368439853-500975",Severity="Error",Service="SIP",EventVersion="1",AccountID="00972599580679",SessionID="0x7f8ecc0421f8",LocalAddress="IPV4/UDP/1.2.3.4/5060",RemoteAddress="IPV4/UDP/1.2.3.4/5070"
 [2013-06-10 18:15:03] NOTICE[2723] chan_sip.c: Registration from '"100"<sip:100@192.168.0.2:5060>' failed for '1.2.3.4' - Not a local domain
+# http://forum.4psa.com/showthread.php?t=6601
+[2009-12-22 16:35:24] NOTICE[6163] chan_sip.c: Sending fake auth rejection for device <sip:0004*001@192.168.2.102>;tag=e3793a95e1acbc69o
+# http://www.freepbx.org/forum/general-help/fake-auth-rejection
+[2009-12-22 16:35:24] NOTICE[1570][C-00000086] chan_sip.c: Sending fake auth rejection for device 1022<sip:1022@192.168.2.102>;tag=5d8b6f92
+# http://www.spinics.net/lists/asterisk/msg127381.html
+[2009-12-22 16:35:24] NOTICE[14916]: chan_sip.c:15644 handle_request_subscribe: Sending fake auth rejection for user <sip:CS@192.168.2.102>;tag=6pwd6erg54
