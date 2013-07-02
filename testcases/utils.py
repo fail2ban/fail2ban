@@ -22,7 +22,7 @@ __author__ = "Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging, os, re, traceback
+import logging, os, re, tempfile, sys, time, traceback
 from os.path import basename, dirname
 
 #
@@ -100,3 +100,51 @@ class FormatterWithTraceBack(logging.Formatter):
 	def format(self, record):
 		record.tbc = record.tb = self._tb()
 		return logging.Formatter.format(self, record)
+
+
+class MTimeSleep(object):
+	"""Sleep minimal duration needed to resolve changes in mtime of files in TMPDIR
+
+	mtime resolution depends on Python version AND underlying filesystem
+	"""
+	def __init__(self):
+		self._sleep = None
+
+	@staticmethod
+	def _get_good_sleep():
+		times = [1., 2., 5., 10.]
+		# we know that older Pythons simply have no ability to resolve
+		# at < sec level.
+		if sys.version_info[:2] > (2, 4):
+			times = [0.01, 0.1] + times
+		ffid, name = tempfile.mkstemp()
+		tfile = os.fdopen(ffid, 'w')
+
+		for stime in times:
+			prev_stat, dt = "", 0.
+			# needs to be done 3 times (not clear why)
+			for i in xrange(3):
+				stat2 = os.stat(name)
+				if prev_stat:
+					dt = (stat2.st_mtime - prev_stat.st_mtime)
+				prev_stat = stat2
+				tfile.write("LOAD\n")
+				tfile.flush()
+				time.sleep(stime)
+			if dt:
+				break
+		if not dt:
+			import logging
+			logSys = logging.getLogger("fail2ban.tests")
+			#from warnings import warn
+			logSys.warn("Could not deduce appropriate sleep time for tests. "
+						"Maximal tested one of %f sec will be used." % stime)
+		os.unlink(name)
+		return stime
+
+	def __call__(self):
+		if self._sleep is None:
+			self._sleep = self._get_good_sleep()
+		time.sleep(self._sleep)
+
+mtimesleep = MTimeSleep()
