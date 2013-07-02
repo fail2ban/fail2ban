@@ -109,10 +109,9 @@ def _copy_lines_between_files(fin, fout, n=None, skip=0, mode='a', terminal_line
 
 	Returns open fout
 	"""
-	if sys.version_info[:2] <= (2,4): # pragma: no cover
-		# on old Python st_mtime is int, so we should give at least 1 sec so
-		# polling filter could detect the change
-		time.sleep(1)
+	# on older Pythons and on some FSs st_mtime is int, so we should
+	# give it some time so polling filter could detect the change
+	mtimesleep()
 	if isinstance(fin, str): # pragma: no branch - only used with str in test cases
 		fin = open(fin, 'r')
 	# Skip
