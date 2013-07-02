@@ -13,6 +13,8 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
 - Fixes:
   Yaroslav Halchenko
    * filter.d/common.conf -- make colon after [daemon] optional. Closes gh-267
+   * filter.d/apache-common.conf -- support apache 2.4 more detailed error
+     log format.  Closes gh-268
 - New Features:
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
