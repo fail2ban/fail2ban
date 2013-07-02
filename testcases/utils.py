@@ -112,11 +112,12 @@ class MTimeSleep(object):
 
 	@staticmethod
 	def _get_good_sleep():
-		times = [1., 2., 5., 10.]
+		logSys = logging.getLogger("fail2ban.tests")
+		times = [1.5, 2., 5., 10.]
 		# we know that older Pythons simply have no ability to resolve
 		# at < sec level.
 		if sys.version_info[:2] > (2, 4):
-			times = [0.01, 0.1] + times
+			times = [0.1] + times
 		ffid, name = tempfile.mkstemp()
 		tfile = os.fdopen(ffid, 'w')
 
@@ -131,14 +132,19 @@ class MTimeSleep(object):
 				tfile.write("LOAD\n")
 				tfile.flush()
 				time.sleep(stime)
-			if dt:
-				break
+
+			# check dt but also verify that we are not getting 'quick'
+			# stime simply by chance of catching second increment
+			if dt and \
+				not (stime < 1 and int(stat2.st_mtime) == stat2.st_mtime):
+					break
 		if not dt:
-			import logging
-			logSys = logging.getLogger("fail2ban.tests")
 			#from warnings import warn
 			logSys.warn("Could not deduce appropriate sleep time for tests. "
 						"Maximal tested one of %f sec will be used." % stime)
+		else:
+			logSys.debug("It was needed a sleep of %f to detect dt=%f mtime change"
+						% (stime, dt))
 		os.unlink(name)
 		return stime
 
