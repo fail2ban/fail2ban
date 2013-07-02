@@ -15,6 +15,8 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
    * filter.d/common.conf -- make colon after [daemon] optional. Closes gh-267
    * filter.d/apache-common.conf -- support apache 2.4 more detailed error
      log format.  Closes gh-268
+  Daniel Black & Мернов Георгий
+   * filter.d/dovecot.conf -- Fix when no TLS enabled - line doesn't end in ,
 - New Features:
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
@@ -26,7 +28,7 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
    * filter.d/exim.conf -- regex hardening and extra failure examples in
      sample logs
   Daniel Black & Sebastian Arcus
-	 * filter.d/asterisk -- more regexes
+   * filter.d/asterisk -- more regexes
   Yaroslav Halchenko
    * fail2ban-regex -- refactored to provide more details (missing and
      ignored lines, control over logging, etc) while maintaining look&feel
