@@ -30,6 +30,11 @@ from mytime import MyTime
 
 import time, logging, os
 
+def _ctime(t):
+	"""Given time in seconds provide string representation with milliseconds
+	"""
+	return "%s%.3f" %(time.strftime("%X", time.localtime(t)), (t-int(t)))
+
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
 
@@ -84,6 +89,9 @@ class FilterPoll(FileFilter):
 	def run(self):
 		self.setActive(True)
 		while self._isActive():
+			if logSys.getEffectiveLevel() <= 6:
+				logSys.log(6, "Woke up idle=%s with %d files monitored",
+						   self.getIdle(), len(self.getLogPath()))
 			if not self.getIdle():
 				# Get file modification
 				for container in self.getLogPath():
@@ -119,6 +127,12 @@ class FilterPoll(FileFilter):
 		try:
 			logStats = os.stat(filename)
 			self.__file404Cnt[filename] = 0
+			if logSys.getEffectiveLevel() <= 7:
+				# we do not want to waste time on strftime etc if not necessary
+				dt = logStats.st_mtime - self.__lastModTime[filename]
+				logSys.log(7, "Checking %s for being modified. Previous/current mtimes: %s / %s. dt: %s",
+				           filename, _ctime(self.__lastModTime[filename]), _ctime(logStats.st_mtime), dt)
+				# os.system("stat %s | grep Modify" % filename)
 			if self.__lastModTime[filename] == logStats.st_mtime:
 				return False
 			else:
