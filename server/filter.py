@@ -21,6 +21,8 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
+import sys
+
 from failmanager import FailManagerEmpty
 from failmanager import FailManager
 from ticket import FailTicket
@@ -322,6 +324,7 @@ class Filter(JailThread):
 				logSys.debug("Ignore %s" % ip)
 				continue
 			logSys.debug("Found %s" % ip)
+			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
 			self.failManager.addFailure(FailTicket(ip, unixTime, [line]))
 
 	##
@@ -477,7 +480,7 @@ class FileFilter(Filter):
 			return False
 		# Try to open log file.
 		try:
-			container.open()
+			has_content = container.open()
 		# see http://python.org/dev/peps/pep-3151/
 		except IOError, e:
 			logSys.error("Unable to open %s" % filename)
@@ -492,7 +495,12 @@ class FileFilter(Filter):
 			logSys.exception(e)
 			return False
 
-		while True:
+		# yoh: has_content is just a bool, so do not expect it to
+		# change -- loop is exited upon break, and is not entered at
+		# all if upon container opening that one was empty.  If we
+		# start reading tested to be empty container -- race condition
+		# might occur leading at least to tests failures.
+		while has_content:
 			line = container.readline()
 			if (line == "") or not self._isActive():
 				# The jail reached the bottom or has been stopped
@@ -555,10 +563,20 @@ class FileContainer:
 		fd = self.__handler.fileno()
 		flags = fcntl.fcntl(fd, fcntl.F_GETFD)
 		fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
+		# Stat the file before even attempting to read it
+		stats = os.fstat(self.__handler.fileno())
+		if not stats.st_size:
+			# yoh: so it is still an empty file -- nothing should be
+			#      read from it yet
+			# print "D: no content -- return"
+			return False
 		firstLine = self.__handler.readline()
 		# Computes the MD5 of the first line.
 		myHash = md5sum(firstLine).digest()
-		stats = os.fstat(self.__handler.fileno())
+		## print "D: fn=%s hashes=%s/%s inos=%s/%s pos=%s rotate=%s" % (
+		## 	self.__filename, self.__hash, myHash, stats.st_ino, self.__ino, self.__pos,
+		## 	self.__hash != myHash or self.__ino != stats.st_ino)
+		## sys.stdout.flush()
 		# Compare hash and inode
 		if self.__hash != myHash or self.__ino != stats.st_ino:
 			logSys.debug("Log rotation detected for %s" % self.__filename)
@@ -567,6 +585,7 @@ class FileContainer:
 			self.__pos = 0
 		# Sets the file pointer to the last position.
 		self.__handler.seek(self.__pos)
+		return True
 
 	def readline(self):
 		if self.__handler is None:
@@ -580,6 +599,8 @@ class FileContainer:
 			# Closes the file.
 			self.__handler.close()
 			self.__handler = None
+		## print "D: Closed %s with pos %d" % (handler, self.__pos)
+		## sys.stdout.flush()
 
 
 
