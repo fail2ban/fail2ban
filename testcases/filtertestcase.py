@@ -447,7 +447,9 @@ def get_monitor_failures_testcase(Filter_):
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 												  n=14, mode='w')
 			# Poll might need more time
-			self.assertTrue(self.isEmpty(4 + int(isinstance(self.filter, FilterPoll))*2))
+			self.assertTrue(self.isEmpty(4 + int(isinstance(self.filter, FilterPoll))*2),
+							"Queue must be empty but it is not: %s."
+							% (', '.join([str(x) for x in self.jail.queue])))
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 2)
 
