@@ -30,11 +30,6 @@ from mytime import MyTime
 
 import time, logging, os
 
-def _ctime(t):
-	"""Given time in seconds provide string representation with milliseconds
-	"""
-	return "%s%.3f" %(time.strftime("%X", time.localtime(t)), (t-int(t)))
-
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
 
