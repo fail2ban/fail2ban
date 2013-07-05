@@ -35,6 +35,9 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
    * fail2ban-client -- log to standard error. Closes gh-264
    * Fail to configure if not a single log file was found for an
      enabled jail. Closes gh-63
+  Alexander Dietrich
+   * action.d/sendmail-common.conf -- added common sendmail settings file
+     and made the sender display name configurable
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
 -----------
