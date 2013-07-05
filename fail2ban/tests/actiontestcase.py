@@ -121,7 +121,7 @@ class ExecuteAction(unittest.TestCase):
 	def testExecuteTimeout(self):
 		stime = time.time()
 		Action.executeCmd('sleep 60', timeout=2) # Should take a minute
-		self.assertAlmostEqual(time.time() - stime, 2.1, places=1)
+		self.assertAlmostEqual(time.time() - stime, 2, places=0)
 		self.assertTrue(self._is_logged('sleep 60 -- timed out after 2 seconds'))
 		self.assertTrue(self._is_logged('sleep 60 -- killed with SIGTERM'))
 
