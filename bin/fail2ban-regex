@@ -199,6 +199,7 @@ class Fail2banRegex(object):
 		if not self._maxlines_set:
 			self._filter.setMaxLines(int(v))
 			self._maxlines_set = True
+			print "Use         maxlines : %d" % self._filter.getMaxLines()
 
 	def setJournalMatch(self, v):
 		if self._journalmatch is None:
@@ -236,8 +237,6 @@ class Fail2banRegex(object):
 			else:
 				try:
 					self.setMaxLines(maxlines)
-					print "Use         maxlines : %d" % (
-						self._filter.getMaxLines(), )
 				except ValueError:
 					print "ERROR: Invalid value for maxlines (%(maxlines)r) " \
 					      "read from %(value)s" % locals()
@@ -432,10 +431,10 @@ if __name__ == "__main__":
 
 	cmd_log, cmd_regex = args[:2]
 
+	fail2banRegex.readRegex(cmd_regex, 'fail') or sys.exit(-1)
+
 	if len(args) == 3:
 		fail2banRegex.readRegex(args[2], 'ignore') or sys.exit(-1)
-
-	fail2banRegex.readRegex(cmd_regex, 'fail') or sys.exit(-1)
 
 	if os.path.isfile(cmd_log):
 		try:
