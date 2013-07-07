@@ -22,7 +22,7 @@ __author__ = "Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging, os, re, traceback
+import logging, os, re, tempfile, sys, time, traceback
 from os.path import basename, dirname
 
 #
@@ -100,3 +100,8 @@ class FormatterWithTraceBack(logging.Formatter):
 	def format(self, record):
 		record.tbc = record.tb = self._tb()
 		return logging.Formatter.format(self, record)
+
+def mtimesleep():
+	# no sleep now should be necessary since polling tracks now not only
+	# mtime but also ino and size
+	pass

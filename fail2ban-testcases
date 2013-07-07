@@ -79,7 +79,7 @@ logSys = logging.getLogger("fail2ban")
 verbosity = {'heavydebug': 4,
 			 'debug': 3,
 			 'info': 2,
-			 'warn': 1,
+			 'warning': 1,
 			 'error': 1,
 			 'fatal': 0,
 			 None: 1}[opts.log_level]
