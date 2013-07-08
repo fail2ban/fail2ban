@@ -26,6 +26,10 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
        accounting for detected log lines multiple times.
   Daniel Black & Мернов Георгий
    * filter.d/dovecot.conf -- Fix when no TLS enabled - line doesn't end in ,
+  Daniel Black
+  * action.d/hostsdeny -- NOTE: new dependancy 'ed'. Switched to use 'ed' across
+    all platforms to ensure permissions are the same before and after a ban -
+		closes gh-266
 - New Features:
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
