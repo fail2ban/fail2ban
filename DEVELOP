@@ -248,6 +248,10 @@ Use the following tags in your commit messages:
 
 Multiple tags could be joined with +, e.g. "BF+TST:".
 
+Use the text "closes #333"/"resolves #333 "/"fixes #333" where 333 represents
+an issue that is closed. Other text and details in link below.
+See: https://help.github.com/articles/closing-issues-via-commit-messages
+
 Adding Actions
 --------------
 
