@@ -3,4 +3,4 @@
 # Site		Directory		Pattern			Version	Script
 version=3
 opts="filenamemangle=s/.*\/(.*).tar.gz/fail2ban_$1\.orig.tar.gz/" \
- http://githubredir.debian.net/github/fail2ban/fail2ban /([0-9].*).tar.gz
+ http://githubredir.debian.net/github/fail2ban/fail2ban /([\.0-9]*).tar.gz
