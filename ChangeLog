@@ -13,11 +13,14 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
 - Fixes:
   Yaroslav Halchenko
    * filter.d/common.conf -- make colon after [daemon] optional. Closes gh-267
-	Daniel Black & Мернов Георгий
-	 * filter.d/dovecot.conf -- Fix when no TLS enabled - line doesn't end in ,
+  Daniel Black & Мернов Георгий
+   * filter.d/dovecot.conf -- Fix when no TLS enabled - line doesn't end in ,
 - New Features:
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
+  Daniel Black
+   * filter.d/exim-spam.conf -- a splitout of exim's spam regexes
+     with additions for greater control over filtering spam.
 - Enhancements:
   Daniel Black
    * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
