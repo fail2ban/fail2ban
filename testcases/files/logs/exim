@@ -4,17 +4,16 @@
 2013-06-12 03:57:58 login authenticator failed for (ylmf-pc) [120.196.140.45]: 535 Incorrect authentication data: 1 Time(s)
 2013-06-12 13:18:11 login authenticator failed for (USER-KVI9FGS9KP) [101.66.165.86]: 535 Incorrect authentication data
 2013-06-10 10:10:59 H=ufficioestampa.it (srv.ufficioestampa.it) [193.169.56.211] sender verify fail for <user@example.com>: Unrouteable address
-# http://forum.lissyara.su/viewtopic.php?f=20&t=2985
-2010-11-24 21:48:41 1PLKOW-00046U-EW F=wvhluo@droolindog.com H=93-143-146-237.adsl.net.t-com.hr (droolindog.com) [93.143.146.237] I=[10.10.10.32]:25 P=esmtp temporarily rejected by local_scan(): Temporary local problem
+# http://forum.lissyara.su/viewtopic.php?f=20&t=29857
+# 2010-11-24 21:48:41 1PLKOW-00046U-EW F=wvhluo@droolindog.com H=93-143-146-237.adsl.net.t-com.hr (droolindog.com) [93.143.146.237] I=[10.10.10.32]:25 P=esmtp temporarily rejected by local_scan(): Temporary local problem
 # http://us.generation-nt.com/answer/exim-spamassassin-2010-0-x64-help-204020461.html
-2011-07-07 15:44:16 1QexIu-0006dj-PX F=XXXXXX@XXXXXXXXXXXX H=localhost (saf.bio.caltech.edu) [127.0.0.1] P=esmtp temporarily rejected by local_scan(): Local configuration error - local_scan() library failure/usr/lib/exim/sa-exim.so: cannot open shared object file: No such file or directory
-# http://www.clues.ltd.uk/howto/debian-sa-fprot-HOWTO.html
-2004-01-18 07:15:35 1Ai79e-0000Dq-8i F=uzwltcmwto24@melissacam.biz H=lsanca1-ar3-4-47-028-040.lsanca1.elnk.dsl.genuity.net [4.47.28.40] P=smtp rejected by local_scan(): Rejected: hits=7.5 required=5.0 trigger=5.0
-# https://github.com/fail2ban/fail2ban/pull/251#issuecomment-19493875
-2013-06-15 11:19:33 [2249] H=([2.181.148.95]) [2.181.148.95]:52391 I=[1.2.3.4]:25 F=fantasizesg4@google.com rejected RCPT some@email.com: rejected found in dnsbl zen.spamhaus.org
+# 2011-07-07 15:44:16 1QexIu-0006dj-PX F=XXXXXX@XXXXXXXXXXXX H=localhost (saf.bio.caltech.edu) [127.0.0.1] P=esmtp temporarily rejected by local_scan(): Local configuration error - local_scan() library failure/usr/lib/exim/sa-exim.so: cannot open shared object file: No such file or directory
 2013-06-10 18:33:32 [10099] H=(yakult.com.tw) [202.132.70.178]:3755 I=[1.2.3.4]:25 F=menacedsj04@listserv.eurasia.org rejected RCPT dir@ml3.ru: relay not permitted
-2013-06-09 10:21:28 [14127] 1UlasQ-0003fr-45 F=mcorporation4@aol.com H=(mail38.fssprus.ru) [46.254.240.82]:43671 I=[1.2.3.4]:25 P=esmtp rejected by local_scan(): Rejected
-2013-06-15 11:20:36 [2516] 1Unmew-0000ea-SE H=egeftech.static.otenet.gr [83.235.177.148]:32706 I=[1.2.3.4]:25 F=auguriesvbd40@google.com rejected after DATA: This message contains a virus (Sanesecurity.Junk.39934.UNOFFICIAL).
 2013-06-02 06:54:20 [13314] SMTP protocol synchronization error (input sent without waiting for greeting): rejected connection from H=[211.148.195.192]:25936 I=[1.2.3.4]:25 input="GET / HTTP/1.1\r\n\r\n"
 2013-06-02 09:05:48 [18505] SMTP protocol synchronization error (next input sent too soon: pipelining was not advertised): rejected "RSET" H=ba77.mx83.fr [82.96.160.77]:58302 I=[1.2.3.4]:25 next input="QUIT\r\n"
 2013-06-02 09:22:05 [19591] SMTP call from pc012-6201.spo.scu.edu.tw [163.14.21.161]:3767 I=[1.2.3.4]:25 dropped: too many nonmail commands (last was "RSET")
+2013-06-02 15:06:18 H=(VM-WIN2K3-1562) [46.20.35.114] sender verify fail for <usfh@technological-systems.com>: Unknown user
+2013-06-07 02:02:09 H=treeladders.kiev.ua [91.232.21.92] sender verify fail for <mailer@treeladders.kiev.ua>: all relevant MX records point to non-existent hosts
+2013-06-15 16:34:55 H=mx.tillions.com [182.18.24.93] F=<buh@caladan.ebay.sun.com> rejected RCPT <ruslan@maslovskiy.com.ua>: Sender verify failed
+2013-06-15 16:36:49 H=altmx.marsukov.com [111.67.203.116] F=<kadrofutcheti@mail.ru> rejected RCPT <oksana@birzhatm.ua>: Unknown user
+
