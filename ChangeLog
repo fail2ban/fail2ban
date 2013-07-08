@@ -16,8 +16,9 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
    * filter.d/apache-common.conf -- support apache 2.4 more detailed error
      log format.  Closes gh-268
   Daniel Black
-	 * action.d/hostsdeny -- Switched to use 'ed' available across all
-	   platforms to ensure permissions are the same before and after a ban - gh-266
+  * action.d/hostsdeny -- NOTE: new dependancy 'ed'. Switched to use 'ed' across
+    all platforms to ensure permissions are the same before and after a ban -
+		closes gh-266
 - New Features:
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
