@@ -50,7 +50,8 @@ class Regex:
 		except sre_constants.error:
 			raise RegexException("Unable to compile regular expression '%s'" %
 								 regex)
-	
+	def __str__(self):
+		return "%s(%r)" % (self.__class__.__name__, self._regex)
 	##
 	# Gets the regular expression.
 	#
