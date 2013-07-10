@@ -21,7 +21,7 @@ Installation:
 this case, you should use it instead.**
 
 Required:
-- [Python >= 2.4, including 3.x](http://www.python.org)
+- [Python2 >= 2.4 or Python3 >= 3.2](http://www.python.org)
 
 Optional:
 - [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify)

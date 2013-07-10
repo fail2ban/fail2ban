@@ -12,6 +12,7 @@ Fail2ban has three configuration file types. Action files are the commands for b
 Filter files tell fail2ban how to detect authentication failures, and Jail configurations combine filters with actions into jails.
 
 There are *.conf files that are distributed by fail2ban and *.local file that contain user customizations.
+All configuration files should be UTF-8 encoded for python3.
 It is recommended that *.conf files should remain unchanged.  If needed, customizations should be provided in *.local files.
 For instance, if you would like to customize the [ssh-iptables-ipset] jail, create a jail.local to extend jail.conf
 (the configuration for the fail2ban server).  The jail.local file will be the following if you only need to enable
