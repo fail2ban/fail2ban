@@ -11,7 +11,8 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
 -----------
 
 - Fixes:
-  
+  Daniel Black & Marcel Dopita
+   * filter.d/apache-auth -- fixed and apache auth samples provide. closes #286
 - New Features:
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added

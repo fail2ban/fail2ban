@@ -2,4 +2,7 @@
 [Sat Jun 01 02:17:42 2013] [error] [client 192.168.33.1] File does not exist: /srv/http/site/[client 192.168.0.1] user root not found
 
 # should match
-[Sat Jun 01 02:17:42 2013] [error] [client 192.168.0.2] user root not found
+# from https://github.com/fail2ban/fail2ban/issues/286
+[Thu Jul 11 01:21:41 2013] [error] [client 194.228.20.113] user  not found: /
+[Thu Jul 11 01:21:43 2013] [error] [client 194.228.20.113] user dsfasdf not found: /
+[Thu Jul 11 01:21:45 2013] [error] [client 194.228.20.113] user dsfasdf not found: /
