@@ -5,4 +5,3 @@
 # from https://github.com/fail2ban/fail2ban/issues/286
 [Thu Jul 11 01:21:41 2013] [error] [client 194.228.20.113] user  not found: /
 [Thu Jul 11 01:21:43 2013] [error] [client 194.228.20.113] user dsfasdf not found: /
-[Thu Jul 11 01:21:45 2013] [error] [client 194.228.20.113] user dsfasdf not found: /
