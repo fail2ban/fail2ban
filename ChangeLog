@@ -20,6 +20,8 @@ ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
   Daniel Black
    * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
      and extra failure examples in sample logs
+	 * filter.d/apache-auth - added expressions for mod_authz, mod_auth and
+     mod_auth_digest failures.
   Daniel Black & Georgiy Mernov
    * filter.d/exim.conf -- regex hardening and extra failure examples in
      sample logs
