@@ -32,6 +32,7 @@ from testcases import banmanagertestcase
 from testcases import clientreadertestcase
 from testcases import failmanagertestcase
 from testcases import filtertestcase
+from testcases import samplestestcase
 from testcases import servertestcase
 from testcases import datedetectortestcase
 from testcases import actiontestcase
@@ -170,6 +171,8 @@ tests.addTest(unittest.makeSuite(filtertestcase.JailTests))
 
 # DateDetector
 tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
+# Filter Regex tests with sample logs
+tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
 
 #
 # Extensive use-tests of different available filters backends
