@@ -183,6 +183,8 @@ tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
 if json:
 	# Filter Regex tests with sample logs
 	tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
+else:
+	print "I: Skipping filter samples testing. No simplejson/json module"
 
 #
 # Extensive use-tests of different available filters backends

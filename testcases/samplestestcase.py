@@ -22,7 +22,7 @@
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import unittest, sys, os, fileinput, re, datetime
+import unittest, sys, os, fileinput, re, datetime, inspect
 
 if sys.version_info >= (2, 6):
 	import json
@@ -46,6 +46,14 @@ class FilterSamplesRegex(unittest.TestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 
+	def testFiltersPresent(self):
+		"""Check to ensure some tests exist"""
+		self.assertTrue(
+			len([test for test in inspect.getmembers(self)
+				if test[0].startswith('testSampleRegexs')])
+			>= 10,
+			"Expected more FilterSampleRegexs tests")
+
 def testSampleRegexsFactory(name):
 	def testFilter(self):
 
@@ -58,8 +66,22 @@ def testSampleRegexsFactory(name):
 			if opt[2] == "addfailregex":
 				self.filter.addFailRegex(opt[3])
 
+		if not self.filter.getFailRegex():
+			# No fail regexs set: likely just common file for includes.
+			return
+
+		# TODO: Remove exception handling once sample logs obtained for all
+		try:
+			self.assertTrue(
+				os.path.isfile(os.path.join(TEST_FILES_DIR, "logs", name)),
+				"No sample log file available for '%s' filter" % name)
+		except AssertionError:
+			print "I: No sample log file available for '%s' filter" % name
+			return
+
 		logFile = fileinput.FileInput(
 			os.path.join(TEST_FILES_DIR, "logs", name))
+
 		for line in logFile:
 			jsonREMatch = re.match("^# ?failJSON:(.+)$", line)
 			if jsonREMatch:
@@ -78,13 +100,13 @@ def testSampleRegexsFactory(name):
 			if not ret:
 				# Check line is flagged as none match
 				self.assertFalse(faildata.get('match', True),
-					 "Line not matched when should have: %s:%i" %
-					(logFile.filename(), logFile.filelineno()))
+					 "Line not matched when should have: %s:%i %r" %
+					(logFile.filename(), logFile.filelineno(), line))
 			elif ret:
 				# Check line is flagged to match
 				self.assertTrue(faildata.get('match', False),
-					"Line matched when shouldn't have: %s:%i" %
-					(logFile.filename(), logFile.filelineno()))
+					"Line matched when shouldn't have: %s:%i %r" %
+					(logFile.filename(), logFile.filelineno(), line))
 				self.assertEqual(len(ret), 1)
 				# Verify timestamp and host as expected
 				host, time = ret[0]
@@ -96,9 +118,9 @@ def testSampleRegexsFactory(name):
 
 	return testFilter
 
-for filter_ in os.listdir(os.path.join(TEST_FILES_DIR, "logs")):
-	if os.path.isfile(os.path.join(TEST_FILES_DIR, "logs", filter_)):
-		setattr(
-			FilterSamplesRegex,
-			"testSampleRegexs%s" % filter_.upper(),
-			testSampleRegexsFactory(filter_))
+for filter_ in os.listdir(os.path.join(CONFIG_DIR, "filter.d")):
+	filterName = filter_.rpartition(".")[0]
+	setattr(
+		FilterSamplesRegex,
+		"testSampleRegexs%s" % filterName.upper(),
+		testSampleRegexsFactory(filterName))
