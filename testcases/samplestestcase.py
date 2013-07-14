@@ -22,7 +22,13 @@
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import unittest, os, fileinput, re, json, datetime
+import unittest, sys, os, fileinput, re, datetime
+
+if sys.version_info >= (2, 6):
+	import json
+else:
+	import simplejson as json
+	next = lambda x: x.next()
 
 from server.filter import Filter
 from client.filterreader import FilterReader
