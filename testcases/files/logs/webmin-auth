@@ -1,7 +1,9 @@
 #Webmin authentication failures from /var/log/auth.log
 
 #1 User exists, bad password
+# failJSON: { "time": "2004-12-13T08:15:18", "match": true , "host": "89.2.49.230" }
 Dec 13 08:15:18 sb1 webmin[25875]: Invalid login as root from 89.2.49.230 
 
 #2 User does not exists
+# failJSON: { "time": "2004-12-12T23:14:19", "match": true , "host": "188.40.105.142" }
 Dec 12 23:14:19 sb1 webmin[22134]: Non-existent login as robert from 188.40.105.142 

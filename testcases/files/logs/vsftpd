@@ -1,7 +1,10 @@
 #1 PAM based
+# failJSON: { "time": "2004-10-11T01:06:47", "match": true , "host": "209.67.1.67" }
 Oct 11 01:06:47 ServerJV vsftpd: (pam_unix) authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=209.67.1.67
+# failJSON: { "time": "2005-02-06T12:02:29", "match": true , "host": "64.168.103.1" }
 Feb 6 12:02:29 server vsftpd(pam_unix)[15522]: authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=64.168.103.1 user=user1
 
 #2 Internal
+# failJSON: { "time": "2005-01-19T12:20:33", "match": true , "host": "64.106.46.98" }
 Fri Jan 19 12:20:33 2007 [pid 27202] [anonymous] FAIL LOGIN: Client "64.106.46.98"
 

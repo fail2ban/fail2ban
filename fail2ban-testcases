@@ -27,6 +27,14 @@ __license__ = "GPL"
 
 import unittest, logging, sys, time, os
 
+if sys.version_info >= (2, 6):
+	import json
+else:
+	try:
+		import simplejson as json
+	except ImportError:
+		json = None
+
 from common.version import version
 from testcases import banmanagertestcase
 from testcases import clientreadertestcase
@@ -37,6 +45,8 @@ from testcases import datedetectortestcase
 from testcases import actiontestcase
 from testcases import sockettestcase
 from testcases import misctestcase
+if json:
+	from testcases import samplestestcase
 
 from testcases.utils import FormatterWithTraceBack
 from server.mytime import MyTime
@@ -170,6 +180,11 @@ tests.addTest(unittest.makeSuite(filtertestcase.JailTests))
 
 # DateDetector
 tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
+if json:
+	# Filter Regex tests with sample logs
+	tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
+else:
+	print "I: Skipping filter samples testing. No simplejson/json module"
 
 #
 # Extensive use-tests of different available filters backends
