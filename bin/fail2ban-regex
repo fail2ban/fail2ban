@@ -161,7 +161,7 @@ class LineStats(object):
 
 	@property
 	def missed(self):
-		return self.tested - (self.ignored + self.matched)
+		return len(self.missed_lines)
 
 	# just for convenient str
 	def __getitem__(self, key):
@@ -278,6 +278,8 @@ class Fail2banRegex(object):
 		for regex in self._ignoreregex:
 			self._filter.addIgnoreRegex(regex.getFailRegex())
 		orgLineBuffer = self._filter._Filter__lineBuffer
+		fullBuffer = len(orgLineBuffer) >= self._filter.getMaxLines()
+		removedLines = []
 		for regex in self._failregex:
 			try:
 				self._filter.addFailRegex(regex.getFailRegex())
@@ -291,6 +293,10 @@ class Fail2banRegex(object):
 							ret[0].append(False)
 						regex.inc()
 						regex.appendIP(ret)
+						removedLines.extend([
+							bufLine
+							for bufLine in orgLineBuffer[int(fullBuffer):]
+							if bufLine not in self._filter._Filter__lineBuffer])
 				except RegexException, e:
 					print e
 					return False
@@ -302,10 +308,29 @@ class Fail2banRegex(object):
 				self._filter._Filter__lineBuffer = orgLineBuffer
 		if not found:
 			self._filter.processLine(line)
+		for removedLine in removedLines:
+			if self.removeMissedLine(removedLine):
+				self._line_stats.matched += 1
+			self._filter._Filter__lineBuffer.remove(removedLine)
 		for regex in self._ignoreregex:
 			self._filter.delIgnoreRegex(0)
 		return found
 
+	def removeMissedLine(self, line):
+		"""Remove `line` from missed lines, by comparing without time match"""
+		for n, missed_line in \
+				enumerate(reversed(self._line_stats.missed_lines)):
+			timeMatch = self._filter.dateDetector.matchTime(missed_line)
+			if timeMatch:
+				logLine = (missed_line[:timeMatch.start()] +
+					missed_line[timeMatch.end():])
+			else:
+				logLine = missed_line
+			if logLine.rstrip("\r\n") == line:
+				self._line_stats.missed_lines.pop(
+					len(self._line_stats.missed_lines) - n - 1)
+				return True
+		return False
 
 	def process(self, test_lines):
 
