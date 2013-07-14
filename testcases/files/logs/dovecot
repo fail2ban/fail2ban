@@ -14,3 +14,5 @@ Jun 13 21:48:06 platypus dovecot: pop3-login: Disconnected: Inactivity (no auth 
 Jun 13 20:20:21 platypus dovecot: imap-login: Disconnected (no auth attempts): rip=180.189.168.166, lip=113.212.99.194, TLS handshaking: Disconnected
 Jun 23 00:52:43 vhost1-ua dovecot: pop3-login: Disconnected: Inactivity (auth failed, 1 attempts): user=<info>, method=PLAIN, rip=193.95.245.163, lip=176.214.13.210
 
+Jul 02 13:49:31 hostname dovecot[442]: pop3-login: Aborted login (auth failed, 1 attempts in 17 secs): user=<test>, method=PLAIN, rip=192.51.100.13, lip=203.0.113.17, session=<YADINsQCDs5BH8Pg>
+Jul 02 13:49:32 hostname dovecot[442]: pop3-login: Disconnected (no auth attempts in 58 secs): user=<>, rip=192.51.100.13, lip=203.0.113.17, session=<LgDINsQCkttVIMPg>
