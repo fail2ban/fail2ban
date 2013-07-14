@@ -1,7 +1,14 @@
+# failJSON: { "time": "2005-02-07T15:10:42", "match": true , "host": "192.168.1.1" }
 Feb  7 15:10:42 example pure-ftpd: (pam_unix) authentication failure; logname= uid=0 euid=0 tty=pure-ftpd ruser=sample-user rhost=192.168.1.1 
+# failJSON: { "time": "2005-05-12T09:47:54", "match": true , "host": "71-13-115-12.static.mdsn.wi.charter.com" }
 May 12 09:47:54 vaio sshd[16004]: (pam_unix) authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=71-13-115-12.static.mdsn.wi.charter.com  user=root
+# failJSON: { "time": "2005-05-12T09:48:03", "match": true , "host": "71-13-115-12.static.mdsn.wi.charter.com" }
 May 12 09:48:03 vaio sshd[16021]: (pam_unix) authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=71-13-115-12.static.mdsn.wi.charter.com
+# failJSON: { "time": "2005-05-15T18:02:12", "match": true , "host": "66.232.129.62" }
 May 15 18:02:12 localhost proftpd: (pam_unix) authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=66.232.129.62  user=mark
+# failJSON: { "time": "2004-11-25T17:12:13", "match": true , "host": "192.168.10.3" }
 Nov 25 17:12:13 webmail pop(pam_unix)[4920]: authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=192.168.10.3 user=mailuser
+# failJSON: { "time": "2005-07-19T18:11:26", "match": true , "host": "www3.google.com" }
 Jul 19 18:11:26 srv2 vsftpd: pam_unix(vsftpd:auth): authentication failure; logname= uid=0 euid=0 tty=ftp ruser=an8767 rhost=www3.google.com
+# failJSON: { "time": "2005-07-19T18:11:26", "match": true , "host": "www3.google.com" }
 Jul 19 18:11:26 srv2 vsftpd: pam_unix: authentication failure; logname= uid=0 euid=0 tty=ftp ruser=an8767 rhost=www3.google.com

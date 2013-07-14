@@ -1,5 +1,7 @@
 # Should not match -- DoS vector https://vndh.net/note:fail2ban-089-denial-service
+# failJSON: { "match": false }
 [Sat Jun 01 02:17:42 2013] [error] [client 192.168.33.1] File does not exist: /srv/http/site/[client 192.168.0.1] user root not found
 
 # should match
+# failJSON: { "time": "2005-06-01T02:17:42", "match": true , "host": "192.168.0.2" }
 [Sat Jun 01 02:17:42 2013] [error] [client 192.168.0.2] user root not found

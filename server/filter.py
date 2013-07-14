@@ -284,7 +284,7 @@ class Filter(JailThread):
 		return False
 
 
-	def processLine(self, line):
+	def processLine(self, line, returnRawHost=False):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
 		try:
@@ -306,7 +306,7 @@ class Filter(JailThread):
 		else:
 			timeLine = l
 			logLine = l
-		return self.findFailure(timeLine, logLine)
+		return self.findFailure(timeLine, logLine, returnRawHost)
 
 	def processLineAndAdd(self, line):
 		"""Processes the line for failures and populates failManager
@@ -348,7 +348,7 @@ class Filter(JailThread):
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, timeLine, logLine):
+	def findFailure(self, timeLine, logLine, returnRawHost=False):
 		failList = list()
 		# Checks if we must ignore this line.
 		if self.ignoreLine(logLine):
@@ -371,6 +371,9 @@ class Filter(JailThread):
 				else:
 					try:
 						host = failRegex.getHost()
+						if returnRawHost:
+							failList.append([host, date])
+							break
 						ipMatch = DNSUtils.textToIp(host, self.__useDns)
 						if ipMatch:
 							for ip in ipMatch:
