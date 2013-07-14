@@ -318,7 +318,8 @@ class Fail2banRegex(object):
 
 	def removeMissedLine(self, line):
 		"""Remove `line` from missed lines, by comparing without time match"""
-		for missed_line in reversed(self._line_stats.missed_lines):
+		for n, missed_line in \
+				enumerate(reversed(self._line_stats.missed_lines)):
 			timeMatch = self._filter.dateDetector.matchTime(missed_line)
 			if timeMatch:
 				logLine = (missed_line[:timeMatch.start()] +
@@ -326,7 +327,8 @@ class Fail2banRegex(object):
 			else:
 				logLine = missed_line
 			if logLine.rstrip("\r\n") == line:
-				self._line_stats.missed_lines.remove(missed_line)
+				self._line_stats.missed_lines.pop(
+					len(self._line_stats.missed_lines) - n - 1)
 				return True
 		return False
 
