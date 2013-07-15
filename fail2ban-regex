@@ -46,6 +46,7 @@ from client.configparserinc import SafeConfigParserWithIncludes
 from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
 from server.filter import Filter
 from server.failregex import RegexException
+from server.datedetector import DateDetector
 
 from testcases.utils import FormatterWithTraceBack
 # Gets the instance of the logger.
@@ -172,6 +173,8 @@ class Fail2banRegex(object):
 		self._ignoreregex = list()
 		self._failregex = list()
 		self._line_stats = LineStats()
+		self._dateDetector = DateDetector()
+		self._dateDetector.addDefaultTemplate()
 
 
 	def readRegex(self, value, regextype):
@@ -256,6 +259,9 @@ class Fail2banRegex(object):
 			if line.startswith('# ') or not line.strip():
 				# skip comment and empty lines
 				continue
+
+			self._dateDetector.matchTime(line)
+
 			is_ignored = fail2banRegex.testIgnoreRegex(line)
 			if is_ignored:
 				self._line_stats.ignored_lines.append(line)
@@ -312,7 +318,7 @@ class Fail2banRegex(object):
 
 		print "\nDate template hits:"
 		out = []
-		for template in self._filter.dateDetector.getTemplates():
+		for template in self._dateDetector.getTemplates():
 			if self._verbose or template.getHits():
 				out.append("[%d] %s" % (template.getHits(), template.getName()))
 		pprint_list(out, "[# of hits] date format")
