@@ -256,7 +256,7 @@ class Fail2banRegex(object):
 	def process(self, test_lines):
 
 		for line in test_lines:
-			if line.startswith('# ') or not line.strip():
+			if line.startswith('#') or not line.strip():
 				# skip comment and empty lines
 				continue
 
