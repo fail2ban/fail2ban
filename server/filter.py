@@ -284,7 +284,7 @@ class Filter(JailThread):
 		return False
 
 
-	def processLine(self, line, returnRawHost=False):
+	def processLine(self, line, returnRawHost=False, checkAllRegex=False):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
 		try:
@@ -306,14 +306,15 @@ class Filter(JailThread):
 		else:
 			timeLine = l
 			logLine = l
-		return self.findFailure(timeLine, logLine, returnRawHost)
+		return self.findFailure(timeLine, logLine, returnRawHost, checkAllRegex)
 
 	def processLineAndAdd(self, line):
 		"""Processes the line for failures and populates failManager
 		"""
 		for element in self.processLine(line):
-			ip = element[0]
-			unixTime = element[1]
+			failregex = element[0]
+			ip = element[1]
+			unixTime = element[2]
 			logSys.debug("Processing line with time:%s and ip:%s"
 						 % (unixTime, ip))
 			if unixTime < MyTime.time() - self.getFindTime():
@@ -335,11 +336,11 @@ class Filter(JailThread):
 	# @return: a boolean
 
 	def ignoreLine(self, line):
-		for ignoreRegex in self.__ignoreRegex:
+		for ignoreRegexIndex, ignoreRegex in enumerate(self.__ignoreRegex):
 			ignoreRegex.search(line)
 			if ignoreRegex.hasMatched():
-				return True
-		return False
+				return ignoreRegexIndex
+		return None
 
 	##
 	# Finds the failure in a line given split into time and log parts.
@@ -348,18 +349,19 @@ class Filter(JailThread):
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, timeLine, logLine, returnRawHost=False):
+	def findFailure(self, timeLine, logLine,
+			returnRawHost=False, checkAllRegex=False):
 		failList = list()
 		# Checks if we must ignore this line.
-		if self.ignoreLine(logLine):
+		if self.ignoreLine(logLine) is not None:
 			# The ignoreregex matched. Return.
 			return failList
+		date = self.dateDetector.getUnixTime(timeLine)
 		# Iterates over all the regular expressions.
-		for failRegex in self.__failRegex:
+		for failRegexIndex, failRegex in enumerate(self.__failRegex):
 			failRegex.search(logLine)
 			if failRegex.hasMatched():
 				# The failregex matched.
-				date = self.dateDetector.getUnixTime(timeLine)
 				logSys.log(7, "Date: %r, message: %r",
 							  timeLine, logLine)
 				if date is None:
@@ -372,14 +374,16 @@ class Filter(JailThread):
 					try:
 						host = failRegex.getHost()
 						if returnRawHost:
-							failList.append([host, date])
-							break
-						ipMatch = DNSUtils.textToIp(host, self.__useDns)
-						if ipMatch:
-							for ip in ipMatch:
-								failList.append([ip, date])
-							# We matched a regex, it is enough to stop.
-							break
+							failList.append([failRegexIndex, host, date])
+							if not checkAllRegex:
+								break
+						else:
+							ipMatch = DNSUtils.textToIp(host, self.__useDns)
+							if ipMatch:
+								for ip in ipMatch:
+									failList.append([failRegexIndex, ip, date])
+								if not checkAllRegex:
+									break
 					except RegexException, e: # pragma: no cover - unsure if reachable
 						logSys.error(e)
 		return failList

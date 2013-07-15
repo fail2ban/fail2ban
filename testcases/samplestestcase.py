@@ -82,6 +82,7 @@ def testSampleRegexsFactory(name):
 		logFile = fileinput.FileInput(
 			os.path.join(TEST_FILES_DIR, "logs", name))
 
+		regexsUsed = set()
 		for line in logFile:
 			jsonREMatch = re.match("^# ?failJSON:(.+)$", line)
 			if jsonREMatch:
@@ -96,7 +97,8 @@ def testSampleRegexsFactory(name):
 			else:
 				faildata = {}
 
-			ret = self.filter.processLine(line, returnRawHost=True)
+			ret = self.filter.processLine(
+				line, returnRawHost=True, checkAllRegex=True)
 			if not ret:
 				# Check line is flagged as none match
 				self.assertFalse(faildata.get('match', True),
@@ -107,14 +109,27 @@ def testSampleRegexsFactory(name):
 				self.assertTrue(faildata.get('match', False),
 					"Line matched when shouldn't have: %s:%i %r" %
 					(logFile.filename(), logFile.filelineno(), line))
-				self.assertEqual(len(ret), 1)
+				self.assertEqual(len(ret), 1, "Multiple regexs matched")
 				# Verify timestamp and host as expected
-				host, time = ret[0]
+				failregex, host, time = ret[0]
 				self.assertEqual(host, faildata.get("host", None))
 				self.assertEqual(
 					datetime.datetime.fromtimestamp(time),
 					datetime.datetime.strptime(
 						faildata.get("time", None), "%Y-%m-%dT%H:%M:%S"))
+
+				regexsUsed.add(failregex)
+
+		# TODO: Remove exception handling once all regexs have samples
+		for failRegexIndex, failRegex in enumerate(self.filter.getFailRegex()):
+			try:
+				self.assertTrue(
+					failRegexIndex in regexsUsed,
+					"Regex for filter '%s' has no samples: %i: %r" %
+						(name, failRegexIndex, failRegex))
+			except AssertionError:
+				print "I: Regex for filter '%s' has no samples: %i: %r" % (
+					name, failRegexIndex, failRegex)
 
 	return testFilter
 
