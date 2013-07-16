@@ -294,7 +294,7 @@ class Filter(JailThread):
 			l = line
 		l = l.rstrip('\r\n')
 
-		logSys.log(5, "Working on line %r", l)
+		logSys.log(7, "Working on line %r", l)
 		timeMatch = self.dateDetector.matchTime(l)
 		if timeMatch:
 			# Lets split into time part and log part of the line
@@ -349,19 +349,20 @@ class Filter(JailThread):
 	# @return a dict with IP and timestamp.
 
 	def findFailure(self, timeLine, logLine, returnRawHost=False):
+		logSys.log(5, "Date: %r, message: %r", timeLine, logLine)
 		failList = list()
 		# Checks if we must ignore this line.
 		if self.ignoreLine(logLine):
 			# The ignoreregex matched. Return.
+			logSys.log(7, "Matched ignoreregex and was ignored")
 			return failList
 		# Iterates over all the regular expressions.
 		for failRegex in self.__failRegex:
 			failRegex.search(logLine)
 			if failRegex.hasMatched():
 				# The failregex matched.
+				logSys.log(7, "Matched %s", failRegex)
 				date = self.dateDetector.getUnixTime(timeLine)
-				logSys.log(7, "Date: %r, message: %r",
-							  timeLine, logLine)
 				if date is None:
 					logSys.debug("Found a match for %r but no valid date/time "
 								 "found for %r. Please file a detailed issue on"

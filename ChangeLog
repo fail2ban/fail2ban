@@ -29,7 +29,7 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
   Daniel Black
   * action.d/hostsdeny -- NOTE: new dependancy 'ed'. Switched to use 'ed' across
     all platforms to ensure permissions are the same before and after a ban -
-		closes gh-266
+    closes gh-266
 - New Features:
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
@@ -51,6 +51,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * fail2ban-client -- log to standard error. Closes gh-264
    * Fail to configure if not a single log file was found for an
      enabled jail. Closes gh-63
+   * <HOST> is now enforced to end with an alphanumeric
+   * filter.d/roundcube-auth.conf -- anchored version
   Alexander Dietrich
    * action.d/sendmail-common.conf -- added common sendmail settings file
      and made the sender display name configurable
