@@ -72,6 +72,8 @@ def testSampleRegexsFactory(name):
 		for opt in filterConf.convert():
 			if opt[2] == "addfailregex":
 				self.filter.addFailRegex(opt[3])
+			elif opt[2] == "maxlines":
+				self.filter.setMaxLines(opt[3])
 
 		if not self.filter.getFailRegex():
 			# No fail regexs set: likely just common file for includes.
