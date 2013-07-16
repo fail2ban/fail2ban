@@ -1,1 +1,2 @@
+# failJSON: { "time": "2005-06-09T07:57:47", "match": true , "host": "192.0.43.10" }
 [Sun Jun 09 07:57:47 2013] [error] [client 192.0.43.10] script '/usr/lib/cgi-bin/gitweb.cgiwp-login.php' not found or unable to stat

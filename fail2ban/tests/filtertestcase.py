@@ -47,6 +47,8 @@ TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 # Useful helpers
 #
 
+from utils import mtimesleep
+
 # yoh: per Steven Hiscocks's insight while troubleshooting
 # https://github.com/fail2ban/fail2ban/issues/103#issuecomment-15542836
 # adding a sufficiently large buffer might help to guarantee that
@@ -78,18 +80,6 @@ def _killfile(f, name):
 	if os.path.exists(name + '.bak'):
 		_killfile(None, name + '.bak')
 
-
-def _sleep_4_poll():
-	"""PollFilter relies on file timestamps - so we might need to
-	sleep to guarantee that they differ
-	"""
-	if sys.version_info[:2] <= (2,4):
-		# on old Python st_mtime is int, so we should give
-		# at least 1 sec so polling filter could detect
-		# the change
-		time.sleep(1.)
-	else:
-		time.sleep(0.1)
 
 def _assert_equal_entries(utest, found, output, count=None):
 	"""Little helper to unify comparisons with the target entries
@@ -133,10 +123,9 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 
 	Returns open fout
 	"""
-	if sys.version_info[:2] <= (2,4): # pragma: no cover
-		# on old Python st_mtime is int, so we should give at least 1 sec so
-		# polling filter could detect the change
-		time.sleep(1)
+	# on old Python st_mtime is int, so we should give at least 1 sec so
+	# polling filter could detect the change
+	mtimesleep()
 	if isinstance(in_, str): # pragma: no branch - only used with str in test cases
 		fin = open(in_, 'r')
 	else:
@@ -286,14 +275,14 @@ class LogFileMonitor(unittest.TestCase):
 		# but not any longer
 		self.assertTrue(self.notModified())
 		self.assertTrue(self.notModified())
-		_sleep_4_poll()				# to guarantee freshier mtime
+		mtimesleep()				# to guarantee freshier mtime
 		for i in range(4):			  # few changes
 			# unless we write into it
 			self.file.write("line%d\n" % i)
 			self.file.flush()
 			self.assertTrue(self.isModified())
 			self.assertTrue(self.notModified())
-			_sleep_4_poll()				# to guarantee freshier mtime
+			mtimesleep()				# to guarantee freshier mtime
 		os.rename(self.name, self.name + '.old')
 		# we are not signaling as modified whenever
 		# it gets away
@@ -301,7 +290,7 @@ class LogFileMonitor(unittest.TestCase):
 		f = open(self.name, 'a')
 		self.assertTrue(self.isModified())
 		self.assertTrue(self.notModified())
-		_sleep_4_poll()
+		mtimesleep()
 		f.write("line%d\n" % i)
 		f.flush()
 		self.assertTrue(self.isModified())
@@ -450,7 +439,7 @@ def get_monitor_failures_testcase(Filter_):
 			# actions might be happening too fast in the tests,
 			# sleep a bit to guarantee reliable time stamps
 			if isinstance(self.filter, FilterPoll):
-				_sleep_4_poll()
+				mtimesleep()
 
 		def isEmpty(self, delay=0.4):
 			# shorter wait time for not modified status
@@ -511,7 +500,9 @@ def get_monitor_failures_testcase(Filter_):
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 												  n=14, mode='w')
 			# Poll might need more time
-			self.assertTrue(self.isEmpty(4 + int(isinstance(self.filter, FilterPoll))*2))
+			self.assertTrue(self.isEmpty(4 + int(isinstance(self.filter, FilterPoll))*2),
+							"Queue must be empty but it is not: %s."
+							% (', '.join([str(x) for x in self.jail.queue])))
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 2)
 

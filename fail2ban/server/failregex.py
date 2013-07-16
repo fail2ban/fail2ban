@@ -41,7 +41,7 @@ class Regex:
 		self._matchCache = None
 		# Perform shortcuts expansions.
 		# Replace "<HOST>" with default regular expression for host.
-		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>[\w\-.^_]+)")
+		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>[\w\-.^_]*\w)")
 		# Replace "<SKIPLINES>" with regular expression for multiple lines.
 		regexSplit = regex.split("<SKIPLINES>")
 		regex = regexSplit[0]
@@ -55,7 +55,8 @@ class Regex:
 		except sre_constants.error:
 			raise RegexException("Unable to compile regular expression '%s'" %
 								 regex)
-	
+	def __str__(self):
+		return "%s(%r)" % (self.__class__.__name__, self._regex)
 	##
 	# Gets the regular expression.
 	#

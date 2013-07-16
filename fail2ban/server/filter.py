@@ -21,6 +21,8 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
+import sys
+
 from failmanager import FailManagerEmpty
 from failmanager import FailManager
 from ticket import FailTicket
@@ -307,11 +309,11 @@ class Filter(JailThread):
 		return False
 
 
-	def processLine(self, line):
+	def processLine(self, line, returnRawHost=False, checkAllRegex=False):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
 		line = line.rstrip('\r\n')
-		logSys.log(5, "Working on line %r", line)
+		logSys.log(7, "Working on line %r", line)
 
 		timeMatch = self.dateDetector.matchTime(line)
 		if timeMatch:
@@ -327,14 +329,16 @@ class Filter(JailThread):
 			logLine = line
 		self.__lineBuffer = ((self.__lineBuffer +
 				[logLine])[-self.__lineBufferSize:])
-		return self.findFailure(timeLine, "\n".join(self.__lineBuffer) + "\n")
+		return self.findFailure(timeLine, "\n".join(self.__lineBuffer) + "\n",
+								returnRawHost, checkAllRegex)
 
 	def processLineAndAdd(self, line):
 		"""Processes the line for failures and populates failManager
 		"""
 		for element in self.processLine(line):
-			ip = element[0]
-			unixTime = element[1]
+			failregex = element[0]
+			ip = element[1]
+			unixTime = element[2]
 			logSys.debug("Processing line with time:%s and ip:%s"
 						 % (unixTime, ip))
 			if unixTime < MyTime.time() - self.getFindTime():
@@ -345,6 +349,7 @@ class Filter(JailThread):
 				logSys.debug("Ignore %s" % ip)
 				continue
 			logSys.debug("Found %s" % ip)
+			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
 			self.failManager.addFailure(FailTicket(ip, unixTime, [line]))
 
 	##
@@ -355,11 +360,11 @@ class Filter(JailThread):
 	# @return: a boolean
 
 	def ignoreLine(self, line):
-		for ignoreRegex in self.__ignoreRegex:
+		for ignoreRegexIndex, ignoreRegex in enumerate(self.__ignoreRegex):
 			ignoreRegex.search(line)
 			if ignoreRegex.hasMatched():
-				return True
-		return False
+				return ignoreRegexIndex
+		return None
 
 	##
 	# Finds the failure in a line given split into time and log parts.
@@ -368,22 +373,25 @@ class Filter(JailThread):
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, timeLine, logLine):
+	def findFailure(self, timeLine, logLine,
+			returnRawHost=False, checkAllRegex=False):
+		logSys.log(5, "Date: %r, message: %r", timeLine, logLine)
 		failList = list()
+		date = self.dateDetector.getUnixTime(timeLine)
 		# Iterates over all the regular expressions.
-		for failRegex in self.__failRegex:
+		for failRegexIndex, failRegex in enumerate(self.__failRegex):
 			failRegex.search(logLine)
 			if failRegex.hasMatched():
 				# Checks if we must ignore this match.
 				if self.ignoreLine(
-						"\n".join(failRegex.getMatchedLines()) + "\n"):
+						"\n".join(failRegex.getMatchedLines()) + "\n") \
+						is not None:
 					# The ignoreregex matched. Remove ignored match.
 					self.__lineBuffer = failRegex.getUnmatchedLines()
+					logSys.log(7, "Matched ignoreregex and was ignored")
 					continue
 				# The failregex matched.
-				date = self.dateDetector.getUnixTime(timeLine)
-				logSys.log(7, "Date: %r, message: %r",
-							  timeLine, logLine)
+				logSys.log(7, "Matched %s", failRegex)
 				if date is None:
 					logSys.debug("Found a match for %r but no valid date/time "
 								 "found for %r. Please file a detailed issue on"
@@ -394,12 +402,17 @@ class Filter(JailThread):
 					self.__lineBuffer = failRegex.getUnmatchedLines()
 					try:
 						host = failRegex.getHost()
-						ipMatch = DNSUtils.textToIp(host, self.__useDns)
-						if ipMatch:
-							for ip in ipMatch:
-								failList.append([ip, date])
-							# We matched a regex, it is enough to stop.
-							break
+						if returnRawHost:
+							failList.append([failRegexIndex, host, date])
+							if not checkAllRegex:
+								break
+						else:
+							ipMatch = DNSUtils.textToIp(host, self.__useDns)
+							if ipMatch:
+								for ip in ipMatch:
+									failList.append([failRegexIndex, ip, date])
+								if not checkAllRegex:
+									break
 					except RegexException, e: # pragma: no cover - unsure if reachable
 						logSys.error(e)
 		return failList
@@ -526,7 +539,7 @@ class FileFilter(Filter):
 			return False
 		# Try to open log file.
 		try:
-			container.open()
+			has_content = container.open()
 		# see http://python.org/dev/peps/pep-3151/
 		except IOError, e:
 			logSys.error("Unable to open %s" % filename)
@@ -541,7 +554,12 @@ class FileFilter(Filter):
 			logSys.exception(e)
 			return False
 
-		while True:
+		# yoh: has_content is just a bool, so do not expect it to
+		# change -- loop is exited upon break, and is not entered at
+		# all if upon container opening that one was empty.  If we
+		# start reading tested to be empty container -- race condition
+		# might occur leading at least to tests failures.
+		while has_content:
 			line = container.readline()
 			if not line or not self._isActive():
 				# The jail reached the bottom or has been stopped
@@ -612,10 +630,20 @@ class FileContainer:
 		fd = self.__handler.fileno()
 		flags = fcntl.fcntl(fd, fcntl.F_GETFD)
 		fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
+		# Stat the file before even attempting to read it
+		stats = os.fstat(self.__handler.fileno())
+		if not stats.st_size:
+			# yoh: so it is still an empty file -- nothing should be
+			#      read from it yet
+			# print "D: no content -- return"
+			return False
 		firstLine = self.__handler.readline()
 		# Computes the MD5 of the first line.
 		myHash = md5sum(firstLine).digest()
-		stats = os.fstat(self.__handler.fileno())
+		## print "D: fn=%s hashes=%s/%s inos=%s/%s pos=%s rotate=%s" % (
+		## 	self.__filename, self.__hash, myHash, stats.st_ino, self.__ino, self.__pos,
+		## 	self.__hash != myHash or self.__ino != stats.st_ino)
+		## sys.stdout.flush()
 		# Compare hash and inode
 		if self.__hash != myHash or self.__ino != stats.st_ino:
 			logSys.debug("Log rotation detected for %s" % self.__filename)
@@ -624,6 +652,7 @@ class FileContainer:
 			self.__pos = 0
 		# Sets the file pointer to the last position.
 		self.__handler.seek(self.__pos)
+		return True
 
 	def readline(self):
 		if self.__handler is None:
@@ -645,6 +674,8 @@ class FileContainer:
 			# Closes the file.
 			self.__handler.close()
 			self.__handler = None
+		## print "D: Closed %s with pos %d" % (handler, self.__pos)
+		## sys.stdout.flush()
 
 
 ##
@@ -682,9 +713,9 @@ class DNSUtils:
 		"""
 		try:
 			return socket.gethostbyname_ex(dns)[2]
-		except socket.gaierror:
-			logSys.warning("Unable to find a corresponding IP address for %s"
-						% dns)
+		except socket.error, e:
+			logSys.warn("Unable to find a corresponding IP address for %s: %s"
+						% (dns, e))
 			return list()
 		except socket.error, e:
 			logSys.warning("Socket error raised trying to resolve hostname %s: %s"

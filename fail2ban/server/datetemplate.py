@@ -59,11 +59,12 @@ class DateTemplate:
 	
 	def getHits(self):
 		return self.__hits
+
+	def incHits(self):
+		self.__hits += 1
 	
 	def matchDate(self, line):
 		dateMatch = self.__cRegex.search(line)
-		if not dateMatch is None:
-			self.__hits += 1
 		return dateMatch
 	
 	def getDate(self, line):

@@ -22,8 +22,16 @@ __author__ = "Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging, os, re, traceback, time, unittest
+import logging, os, re, traceback, time, unittest, sys
 from os.path import basename, dirname
+
+if sys.version_info >= (2, 6):
+	import json
+else:
+	try:
+		import simplejson as json
+	except ImportError:
+		json = None
 
 from fail2ban.server.mytime import MyTime
 
@@ -105,6 +113,11 @@ class FormatterWithTraceBack(logging.Formatter):
 		record.tbc = record.tb = self._tb()
 		return logging.Formatter.format(self, record)
 
+def mtimesleep():
+	# no sleep now should be necessary since polling tracks now not only
+	# mtime but also ino and size
+	pass
+
 old_TZ = os.environ.get('TZ', None)
 def setUpMyTime():
 	# Set the time to a fixed, known value
@@ -133,6 +146,8 @@ def gatherTests(regexps=None, no_network=False):
 	from fail2ban.tests import actiontestcase
 	from fail2ban.tests import sockettestcase
 	from fail2ban.tests import misctestcase
+	if json:
+		from fail2ban.tests import samplestestcase
 
 	if not regexps: # pragma: no cover
 		tests = unittest.TestSuite()
@@ -182,6 +197,11 @@ def gatherTests(regexps=None, no_network=False):
 
 	# DateDetector
 	tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
+	if json:
+		# Filter Regex tests with sample logs
+		tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
+	else:
+		logSys.warning("I: Skipping filter samples testing. No simplejson/json module")
 
 	#
 	# Extensive use-tests of different available filters backends

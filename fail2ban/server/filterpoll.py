@@ -52,7 +52,7 @@ class FilterPoll(FileFilter):
 		FileFilter.__init__(self, jail)
 		self.__modified = False
 		## The time of the last modification of the file.
-		self.__lastModTime = dict()
+		self.__prevStats = dict()
 		self.__file404Cnt = dict()
 		logSys.debug("Created FilterPoll")
 
@@ -62,7 +62,7 @@ class FilterPoll(FileFilter):
 	# @param path log file path
 
 	def _addLogPath(self, path):
-		self.__lastModTime[path] = 0
+		self.__prevStats[path] = (0, None, None)	 # mtime, ino, size
 		self.__file404Cnt[path] = 0
 
 	##
@@ -71,7 +71,7 @@ class FilterPoll(FileFilter):
 	# @param path the log file to delete
 
 	def _delLogPath(self, path):
-		del self.__lastModTime[path]
+		del self.__prevStats[path]
 		del self.__file404Cnt[path]
 
 	##
@@ -84,6 +84,9 @@ class FilterPoll(FileFilter):
 	def run(self):
 		self.setActive(True)
 		while self._isActive():
+			if logSys.getEffectiveLevel() <= 6:
+				logSys.log(6, "Woke up idle=%s with %d files monitored",
+						   self.getIdle(), len(self.getLogPath()))
 			if not self.getIdle():
 				# Get file modification
 				for container in self.getLogPath():
@@ -118,12 +121,20 @@ class FilterPoll(FileFilter):
 	def isModified(self, filename):
 		try:
 			logStats = os.stat(filename)
+			stats = logStats.st_mtime, logStats.st_ino, logStats.st_size
+			pstats = self.__prevStats[filename]
 			self.__file404Cnt[filename] = 0
-			if self.__lastModTime[filename] == logStats.st_mtime:
+			if logSys.getEffectiveLevel() <= 7:
+				# we do not want to waste time on strftime etc if not necessary
+				dt = logStats.st_mtime - pstats[0]
+				logSys.log(7, "Checking %s for being modified. Previous/current stats: %s / %s. dt: %s",
+				           filename, pstats, stats, dt)
+				# os.system("stat %s | grep Modify" % filename)
+			if pstats == stats:
 				return False
 			else:
-				logSys.debug(filename + " has been modified")
-				self.__lastModTime[filename] = logStats.st_mtime
+				logSys.debug("%s has been modified", filename)
+				self.__prevStats[filename] = stats
 				return True
 		except OSError, e:
 			logSys.error("Unable to get stat on %s because of: %s"

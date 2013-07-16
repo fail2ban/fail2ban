@@ -138,7 +138,7 @@ class RegexStat(object):
 		return self._failregex
 
 	def appendIP(self, value):
-		self._ipList.extend(value)
+		self._ipList.append(value)
 
 	def getIPList(self):
 		return self._ipList
@@ -254,63 +254,47 @@ class Fail2banRegex(object):
 			regex_values = [RegexStat(value)]
 
 		setattr(self, "_" + regex, regex_values)
+		for regex in regex_values:
+			getattr(
+				self._filter,
+				'add%sRegex' % regextype.title())(regex.getFailRegex())
 		return True
 
 	def testIgnoreRegex(self, line):
 		found = False
-		for regex in self._ignoreregex:
-			try:
-				self._filter.addIgnoreRegex(regex.getFailRegex())
-				try:
-					ret = self._filter.ignoreLine(line)
-					if ret:
-						found = True
-						regex.inc()
-				except RegexException, e:
-					print e
-					return False
-			finally:
-				self._filter.delIgnoreRegex(0)
+		try:
+			ret = self._filter.ignoreLine(line)
+			if ret is not None:
+				found = True
+				regex = self._ignoreregex[ret].inc()
+		except RegexException, e:
+			print e
+			return False
 		return found
 
 	def testRegex(self, line):
-		found = False
-		for regex in self._ignoreregex:
-			self._filter.addIgnoreRegex(regex.getFailRegex())
-		orgLineBuffer = self._filter._Filter__lineBuffer
-		for regex in self._failregex:
-			try:
-				self._filter.addFailRegex(regex.getFailRegex())
-				try:
-					ret = self._filter.processLine(line)
-					if len(ret):
-						if found == True:
-							ret[0].append(True)
-						else:
-							found = True
-							ret[0].append(False)
-						regex.inc()
-						regex.appendIP(ret)
-				except RegexException, e:
-					print e
-					return False
-				except IndexError:
-					print "Sorry, but no <host> found in regex"
-					return False
-			finally:
-				self._filter.delFailRegex(0)
-				self._filter._Filter__lineBuffer = orgLineBuffer
-		if not found:
-			self._filter.processLine(line)
-		for regex in self._ignoreregex:
-			self._filter.delIgnoreRegex(0)
-		return found
+		try:
+			ret = self._filter.processLine(line, checkAllRegex=True)
+			for match in ret:
+				# Append True/False flag depending if line was matched by
+				# more than one regex
+				match.append(len(ret)>1)
+				regex = self._failregex[match[0]]
+				regex.inc()
+				regex.appendIP(match)
+		except RegexException, e:
+			print e
+			return False
+		except IndexError:
+			print "Sorry, but no <host> found in regex"
+			return False
+		return len(ret) > 0
 
 
 	def process(self, test_lines):
 
 		for line in test_lines:
-			if line.startswith('# ') or not line.strip():
+			if line.startswith('#') or not line.strip():
 				# skip comment and empty lines
 				continue
 			is_ignored = fail2banRegex.testIgnoreRegex(line)
@@ -353,10 +337,13 @@ class Fail2banRegex(object):
 
 				if self._verbose and len(failregex.getIPList()):
 					for ip in failregex.getIPList():
-						timeTuple = time.localtime(ip[1])
+						timeTuple = time.localtime(ip[2])
 						timeString = time.strftime("%a %b %d %H:%M:%S %Y", timeTuple)
-						out.append("    %s  %s%s" % (
-							ip[0], timeString, ip[2] and " (already matched)" or ""))
+						out.append(
+							"    %s  %s%s" % (
+								ip[1],
+								timeString,
+								ip[3] and " (multiple regex matched)" or ""))
 
 			print "\n%s: %d total" % (title, total)
 			pprint_list(out, " #) [# of hits] regular expression")
