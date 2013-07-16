@@ -223,6 +223,8 @@ class Fail2banRegex(object):
 		try:
 			ret = self._filter.processLine(line, checkAllRegex=True)
 			for match in ret:
+				# Append True/False flag depending if line was matched by
+				# more than one regex
 				match.append(len(ret)>1)
 				regex = self._failregex[match[0]]
 				regex.inc()
