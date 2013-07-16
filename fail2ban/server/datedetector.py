@@ -173,14 +173,15 @@ class DateDetector:
 	def getTemplates(self):
 		return self.__templates
 	
-	def matchTime(self, line):
+	def matchTime(self, line, incHits=True):
 		self.__lock.acquire()
 		try:
 			for template in self.__templates:
 				match = template.matchDate(line)
 				if not match is None:
 					logSys.debug("Matched time template %s" % template.getName())
-					template.incHits()
+					if incHits:
+						template.incHits()
 					return match
 			return None
 		finally:
