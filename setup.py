@@ -38,6 +38,7 @@ except ImportError:
 	# python 2.x
 	from distutils.command.build_py import build_py
 	from distutils.command.build_scripts import build_scripts
+import os
 from os.path import isfile, join, isdir
 import sys, warnings
 from glob import glob
@@ -106,8 +107,10 @@ setup(
 					'fail2ban.tests',
 				],
 	package_data =	{
-						'fail2ban.tests':
-							['files/*.log', 'files/filter.d/*.conf'],
+						'fail2ban.tests': 
+							[ join(w[0], f).replace("fail2ban/tests/", "", 1)
+								for w in os.walk('fail2ban/tests/files')
+								for f in w[2]]
 					},
 	data_files =	[
 						('/etc/fail2ban',
