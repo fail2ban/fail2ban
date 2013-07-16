@@ -334,9 +334,9 @@ class Transmitter(TransmitterBase):
 				"failed attempt from <HOST> again",
 			],
 			[
-				"user john at (?:::f{4,6}:)?(?P<host>[\w\-.^_]+)",
-				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_]+)",
-				"failed attempt from (?:::f{4,6}:)?(?P<host>[\w\-.^_]+) again",
+				"user john at (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w)",
+				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w)",
+				"failed attempt from (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w) again",
 			],
 			self.jailName
 		)
@@ -359,7 +359,7 @@ class Transmitter(TransmitterBase):
 			],
 			[
 				"user john",
-				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_]+)",
+				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w)",
 				"Dont match me!",
 			],
 			self.jailName
