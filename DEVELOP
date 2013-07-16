@@ -39,8 +39,9 @@ Filters
 
 * Include sample logs with 1.2.3.4 used for IP addresses and 
   example.com/example.org used for DNS names
-* Ensure ./fail2ban-regex testcases/files/logs/{samplelog} config/filter.d/{filter}.conf
-  has matches for EVERY regex
+* Ensure sample log is provided in testcases/files/logs/ with same name as the
+  filter. Each log line should include match meta data for time & IP above
+  every line (see other sample log files for examples)
 * Ensure regexs start with a ^ and are restrictive as possible. E.g. not .* if
   \d+ is sufficient
 * Use the functionality of regexs http://docs.python.org/2/library/re.html
