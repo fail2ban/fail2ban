@@ -259,6 +259,6 @@ class DateISO8601(DateTemplate):
 		if dateMatch:
 			# Parses the date.
 			value = dateMatch.group()
-			date = list(iso8601.parse_date(value).timetuple())
+			date = list(iso8601.parse_date(value, None).timetuple())
 		return date
 
