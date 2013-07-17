@@ -8,6 +8,15 @@
 
 # The failures below use the configuration described in testcases/conf/apache-auth
 #
+
+# wget  http://localhost/noentry/cant_get_me.html -O /dev/null
+# failJSON: { "time": "2013-07-17T23:20:45", "match": true , "host": "127.0.0.1" } 
+[Wed Jul 17 23:20:45 2013] [error] [client 127.0.0.1] client denied by server configuration: /var/www/html/noentry/cant_get_me.html
+
+# wget --http-user='' --http-password='' http://localhost/basic/file/cant_get_me.html -O /dev/null
+# failJSON: { "time": "2013-07-17T23:14:37", "match": true , "host": "127.0.0.1" }
+[Wed Jul 17 23:14:37 2013] [error] [client 127.0.0.1] user  not found: /basic/anon/cant_get_me.html
+
 # wget --http-user=username --http-password=wrongpass http://localhost/basic/file -O /dev/null
 # failJSON: { "time": "2013-07-17T22:18:52", "match": true , "host": "127.0.0.1" }
 [Wed Jul 17 22:18:52 2013] [error] [client 127.0.0.1] user username: authentication failure for "/basic/file": Password Mismatch
@@ -23,3 +32,4 @@
 # wget --http-user=username --http-password=password http://localhost/basic/authz_owner/cant_get_me.html -O /dev/null
 # failJSON: { "time": "2013-07-17T22:54:32", "match": true , "host": "127.0.0.1" }
 [Wed Jul 17 22:54:32 2013] [error] [client 127.0.0.1] Authorization of user username to access /basic/authz_owner/cant_get_me.html failed, reason: file owner dan does not match.
+
