@@ -1,5 +1,5 @@
 # Apache 2.2
-# failJSON: { "time": "2005-06-01T11:23:08", "match": true , "host": "1.2.3.4" }
+# failJSON: { "time": "2013-06-01T11:23:08", "match": true , "host": "1.2.3.4" }
 [Sat Jun 01 11:23:08 2013] [error] [client 1.2.3.4] File does not exist: /xxx/~
 # Apache 2.4
 # failJSON: { "time": "2005-06-27T11:55:44", "match": true , "host": "192.0.2.12" }
