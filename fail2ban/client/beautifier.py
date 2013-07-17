@@ -119,6 +119,12 @@ class Beautifier:
 				else:
 					msg = "Current match filter:\n"
 					msg += ' + '.join(" ".join(res) for res in response)
+			elif inC[2] == "datepattern":
+				msg = "Current date pattern set to: "
+				if response is None:
+					msg = msg + "Default Detectors"
+				else:
+					msg = msg + "%s (%s)" % response
 			elif inC[2] in ("ignoreip", "addignoreip", "delignoreip"):
 				if len(response) == 0:
 					msg = "No IP address/network is ignored"
