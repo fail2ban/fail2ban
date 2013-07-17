@@ -5,3 +5,18 @@
 # from https://github.com/fail2ban/fail2ban/issues/286
 [Thu Jul 11 01:21:41 2013] [error] [client 194.228.20.113] user  not found: /
 [Thu Jul 11 01:21:43 2013] [error] [client 194.228.20.113] user dsfasdf not found: /
+
+# The failures below use the configuration described in testcases/conf/apache-auth
+#
+# wget --http-user=username --http-password=wrongpass http://localhost/basic/file -O /dev/null
+# failJSON: { "time": "2013-07-17T22:18:52", "match": true , "host": "127.0.0.1" }
+[Wed Jul 17 22:18:52 2013] [error] [client 127.0.0.1] user username: authentication failure for "/basic/file": Password Mismatch
+
+# wget --http-user=wrongusername --http-password=wrongpass http://localhost/basic/file -O /dev/null
+# failJSON: { "time": "2013-07-17T22:32:48", "match": true , "host": "127.0.0.1" }
+[Wed Jul 17 22:32:48 2013] [error] [client 127.0.0.1] user wrongusername not found: /basic/file
+
+# wget --header='Authorization: Digest username="Mufasa",realm="testrealm@host.com",nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093",uri="/dir/index.html",qop=auth,nc=00000001,cnonce="0a4f113b",response="6629fae49393a05397450978507c4ef1",opaque="5ccc069c403ebaf9f0171e9517f40e41"'  http://localhost/basic/file -O /dev/null
+# failJSON: { "time": "2013-07-17T22:39:55", "match": true , "host": "127.0.0.1" }
+[Wed Jul 17 22:39:55 2013] [error] [client 127.0.0.1] client used wrong authentication scheme: /basic/file
+
