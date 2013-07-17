@@ -6,7 +6,7 @@
 [Thu Jul 11 01:21:41 2013] [error] [client 194.228.20.113] user  not found: /
 [Thu Jul 11 01:21:43 2013] [error] [client 194.228.20.113] user dsfasdf not found: /
 
-# The failures below use the configuration described in testcases/conf/apache-auth
+# The failures below use the configuration described in testcases/files/config/apache-auth
 #
 
 # wget  http://localhost/noentry/cant_get_me.html -O /dev/null
