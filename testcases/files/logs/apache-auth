@@ -20,3 +20,6 @@
 # failJSON: { "time": "2013-07-17T22:39:55", "match": true , "host": "127.0.0.1" }
 [Wed Jul 17 22:39:55 2013] [error] [client 127.0.0.1] client used wrong authentication scheme: /basic/file
 
+# wget --http-user=username --http-password=password http://localhost/basic/authz_owner/cant_get_me.html -O /dev/null
+# failJSON: { "time": "2013-07-17T22:54:32", "match": true , "host": "127.0.0.1" }
+[Wed Jul 17 22:54:32 2013] [error] [client 127.0.0.1] Authorization of user username to access /basic/authz_owner/cant_get_me.html failed, reason: file owner dan does not match.
