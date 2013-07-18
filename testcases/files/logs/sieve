@@ -1,0 +1,2 @@
+# failJSON: { "time": "2004-12-01T20:36:56", "match": true , "host": "1.2.3.4" }
+Dec 1 20:36:56 mail sieve[23713]: badlogin: example.com[1.2.3.4] PLAIN authentication failure
