@@ -13,30 +13,56 @@
 # failJSON: { "time": "2013-07-17T23:20:45", "match": true , "host": "127.0.0.1" } 
 [Wed Jul 17 23:20:45 2013] [error] [client 127.0.0.1] client denied by server configuration: /var/www/html/noentry/cant_get_me.html
 
+# failJSON: { "time": "2013-07-20T21:34:49", "match": true , "host": "127.0.0.1" } 
+[Sat Jul 20 21:34:49.453232 2013] [access_compat:error] [pid 17512:tid 140123104306944] [client 127.0.0.1:51380] AH01797: client denied by server configuration: /var/www/html/noentry/cant_get_me.html
+
 # wget --http-user='' --http-password='' http://localhost/basic/file/cant_get_me.html -O /dev/null
 # failJSON: { "time": "2013-07-17T23:14:37", "match": true , "host": "127.0.0.1" }
 [Wed Jul 17 23:14:37 2013] [error] [client 127.0.0.1] user  not found: /basic/anon/cant_get_me.html
+
+# failJSON: { "time": "2013-07-20T21:37:32", "match": true , "host": "127.0.0.1" } 
+[Sat Jul 20 21:37:32.266605 2013] [auth_basic:error] [pid 17512:tid 140123079128832] [client 127.0.0.1:51386] AH01618: user  not found: /basic/file/cant_get_me.html
 
 # wget --http-user=username --http-password=wrongpass http://localhost/basic/file -O /dev/null
 # failJSON: { "time": "2013-07-17T22:18:52", "match": true , "host": "127.0.0.1" }
 [Wed Jul 17 22:18:52 2013] [error] [client 127.0.0.1] user username: authentication failure for "/basic/file": Password Mismatch
 
+# failJSON: { "time": "2013-07-20T21:39:11", "match": true , "host": "127.0.0.1" } 
+[Sat Jul 20 21:39:11.978080 2013] [auth_basic:error] [pid 17512:tid 140123053950720] [client 127.0.0.1:51390] AH01617: user username: authentication failure for "/basic/file": Password Mismatch
+
 # wget --http-user=wrongusername --http-password=wrongpass http://localhost/basic/file -O /dev/null
 # failJSON: { "time": "2013-07-17T22:32:48", "match": true , "host": "127.0.0.1" }
 [Wed Jul 17 22:32:48 2013] [error] [client 127.0.0.1] user wrongusername not found: /basic/file
+
+# failJSON: { "time": "2013-07-20T21:40:33", "match": true , "host": "127.0.0.1" } 
+[Sat Jul 20 21:40:33.803528 2013] [auth_basic:error] [pid 17540:tid 140123095914240] [client 127.0.0.1:51395] AH01618: user wrongusername not found: /basic/file
 
 # wget --header='Authorization: Digest username="Mufasa",realm="testrealm@host.com",nonce="dcd98b7102dd2f0e8b11d0f600bfb0c093",uri="/dir/index.html",qop=auth,nc=00000001,cnonce="0a4f113b",response="6629fae49393a05397450978507c4ef1",opaque="5ccc069c403ebaf9f0171e9517f40e41"'  http://localhost/basic/file -O /dev/null
 # failJSON: { "time": "2013-07-17T22:39:55", "match": true , "host": "127.0.0.1" }
 [Wed Jul 17 22:39:55 2013] [error] [client 127.0.0.1] client used wrong authentication scheme: /basic/file
 
+# failJSON: { "time": "2013-07-20T21:41:52", "match": true , "host": "127.0.0.1" } 
+[Sat Jul 20 21:41:52.523931 2013] [auth_basic:error] [pid 17512:tid 140122964092672] [client 127.0.0.1:51396] AH01614: client used wrong authentication scheme: /basic/file
+
 # wget --http-user=username --http-password=password http://localhost/basic/authz_owner/cant_get_me.html -O /dev/null
 # failJSON: { "time": "2013-07-17T22:54:32", "match": true , "host": "127.0.0.1" }
 [Wed Jul 17 22:54:32 2013] [error] [client 127.0.0.1] Authorization of user username to access /basic/authz_owner/cant_get_me.html failed, reason: file owner dan does not match.
+
+# failJSON: { "time": "2013-07-20T22:11:43", "match": true , "host": "127.0.0.1" } 
+[Sat Jul 20 22:11:43.147674 2013] [authz_owner:error] [pid 17540:tid 140122922129152] [client 127.0.0.1:51548] AH01637: Authorization of user username to access /basic/authz_owner/cant_get_me.html failed, reason: file owner dan does not match
+# failJSON: { "time": "2013-07-20T21:42:44", "match": true , "host": "127.0.0.1" } 
+[Sat Jul 20 21:42:44.304159 2013] [authz_core:error] [pid 17484:tid 140123095914240] [client 127.0.0.1:51397] AH01631: user username: authorization failure for "/basic/authz_owner/cant_get_me.html": 
 
 # wget --http-user='username' --http-password='wrongpassword' http://localhost/digest/cant_get_me.html -O /dev/null
 # failJSON: { "time": "2013-07-17T23:50:37", "match": true , "host": "127.0.0.1" }
 [Wed Jul 17 23:50:37 2013] [error] [client 127.0.0.1] Digest: user username: password mismatch: /digest/cant_get_me.html
 
+# failJSON: { "time": "2013-07-20T21:44:06", "match": true , "host": "127.0.0.1" } 
+[Sat Jul 20 21:44:06.867985 2013] [auth_digest:error] [pid 17540:tid 140123070736128] [client 127.0.0.1:51406] AH01792: user username: password mismatch: /digest/cant_get_me.html
+
 # wget --http-user='username' --http-password='password' http://localhost/digest_wrongrelm/cant_get_me.html -O /dev/null
 # failJSON: { "time": "2013-07-18T00:08:39", "match": true , "host": "127.0.0.1" }
 [Thu Jul 18 00:08:39 2013] [error] [client 127.0.0.1] Digest: user `username' in realm `digest private area' not found: /digest_wrongrelm/cant_get_me.html
+
+# failJSON: { "time": "2013-07-20T21:45:28", "match": true , "host": "127.0.0.1" } 
+[Sat Jul 20 21:45:28.890523 2013] [auth_digest:error] [pid 17540:tid 140122972485376] [client 127.0.0.1:51408] AH01790: user `username' in realm `digest private area' not found: /digest_wrongrelm/cant_get_me.html
