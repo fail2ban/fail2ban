@@ -126,6 +126,13 @@ class JailsReaderTest(unittest.TestCase):
 		# commands to communicate to the server
 		self.assertEqual(comm_commands, [])
 
+		# We should not "read" some bogus jail
+		old_comm_commands = comm_commands[:]   # make a copy
+		self.assertFalse(jails.getOptions("BOGUS"))
+		# and there should be no side-effects
+		self.assertEqual(jails.convert(), old_comm_commands)
+
+
 	def testReadStockJailConfForceEnabled(self):
 		# more of a smoke test to make sure that no obvious surprises
 		# on users' systems when enabling shipped jails
