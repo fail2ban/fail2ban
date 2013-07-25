@@ -56,6 +56,8 @@ class FilterReader(DefinitionInitConfigReader):
 		if self._initOpts:
 			if 'maxlines' in self._initOpts:
 				stream.append(["set", self._jailName, "maxlines", self._initOpts["maxlines"]])
+			if 'datepattern' in self._initOpts:
+				stream.append(["set", self._jailName, "datepattern", self._initOpts["datepattern"]])
 			# Do not send a command if the match is empty.
 			if self._initOpts.get("journalmatch", '') != '':
 				for match in self._initOpts["journalmatch"].split("\n"):

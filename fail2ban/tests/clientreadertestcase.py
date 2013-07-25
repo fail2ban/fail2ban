@@ -201,6 +201,7 @@ class FilterReaderTest(unittest.TestCase):
 				"_COMM=sshd", "+", "_SYSTEMD_UNIT=sshd.service", "_UID=0"],
 			['set', 'testcase01', 'addjournalmatch',
 				"FIELD= with spaces ", "+", "AFIELD= with + char and spaces"],
+			['set', 'testcase01', 'datepattern', "%Y %m %d %H:%M:%S"],
 			['set', 'testcase01', 'maxlines', "1"], # Last for overide test
 		]
 		filterReader = FilterReader("testcase01", "testcase01", {})
