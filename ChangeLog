@@ -59,6 +59,10 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
   Steven Hiscocks
    * filter.d/dovecot - Addition of session, time values and possible blank
      user
+   * filter.d/{courier{login,smtp},proftpd,sieve,wuftpd,xinetd} - General
+     regex impovements
+   * IMPORTANT: 'lighttpd-fastcgi' filter has been renamed to 'suhosin', which
+     will require changing in jail.{conf,local} if using this filter.
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
 -----------
