@@ -176,6 +176,14 @@ Similar to actions, filters have an [Init] section which can be overridden in \f
 \fBmaxlines\fR
 specifies the maximum number of lines to buffer to match multi-line regexs. For some log formats this will not required to be changed. Other logs may require to increase this value if a particular log file is frequently written to.
 .TP
+\fBdatepattern\fR
+specifies a custom date pattern as an alternative to the default date detectors e.g. %Y-%m-%d %H:%M
+.br
+The following are acceptable format fields (see strptime(3) for descriptions):
+.nf
+%% %a %A %b %B %d %H %I %j %m %M %p %S %U %w %W %y %Y
+.fi
+.TP
 \fBjournalmatch\fR
 specifies the systemd journal match used to filter the journal entries. See \fBjournalctl(1)\fR and \fBsystemd.journal-fields(7)\fR for matches syntax and more details on special journal fields. This option is only valid for the \fIsystemd\fR backend.
 .PP
