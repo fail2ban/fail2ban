@@ -52,7 +52,7 @@ class DateTemplate:
 		if (wordBegin and not re.search(r'^\^', regex)):
 			regex = r'\b' + regex
 		self.__regex = regex
-		self.__cRegex = re.compile(regex)
+		self.__cRegex = re.compile(regex, re.UNICODE)
 		
 	def getRegex(self):
 		return self.__regex
@@ -178,6 +178,51 @@ class DateStrptime(DateTemplate):
 					date[2] = MyTime.gmtime()[2]
 		return date
 
+class DatePatternRegex(DateStrptime):
+	_reEscape = r"([\\.^$*+?\(\){}\[\]|])"
+	_patternRE = r"%(%|[aAbBdHIjmMpSUwWyY])"
+	_patternName = {
+		'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
+		'H': "24hour", 'I': "12hour", 'j': "Yearday", 'm': "Month",
+		'M': "Minute", 'p': "AMPM", 'S': "Second", 'U': "Yearweek",
+		'w': "Weekday", 'W': "Yearweek", 'y': 'Year2', 'Y': "Year", '%': "%"}
+	_patternRegex = {
+		'a': r"\w{3}", 'A': r"\w+", 'b': r"\w{3}", 'B': r"\w+",
+		'd': r"(?:3[0-1]|[1-2]\d|[ 0]?\d)", 'H': r"(?:2[0-3]|1\d|[ 0]?\d)",
+		'I': r"(?:1[0-2]|[ 0]?\d)",
+		'j': r"(?:36[0-6]3[0-5]\d|[1-2]\d\d|[ 0]?\d\d|[ 0]{0,2}\d)",
+		'm': r"(?:1[0-2]|[ 0]?[1-9])", 'M': r"[0-5]\d", 'p': r"[AP]M",
+		'S': r"(?:6[01]|[0-5]\d)", 'U': r"(?:5[0-3]|[1-4]\d|[ 0]?\d)",
+		'w': r"[0-6]", 'W': r"(?:5[0-3]|[ 0]?\d)", 'y': r"\d{2}",
+		'Y': r"\d{4}", '%': "%"}
+
+	def __init__(self, pattern=None, **kwargs):
+		DateStrptime.__init__(self)
+		if pattern:
+			self.setPattern(pattern, **kwargs)
+
+	def setPattern(self, pattern, anchor=False, **kwargs):
+		self.__pattern = pattern.strip()
+
+		name = re.sub(self._patternRE, r'%(\1)s', pattern) % self._patternName
+		DateStrptime.setName(self, name)
+
+		# Custom escape as don't want to escape "%"
+		pattern = re.sub(self._reEscape, r'\\\1', pattern)
+		regex = re.sub(
+			self._patternRE, r'%(\1)s', pattern) % self._patternRegex
+		if anchor:
+			regex = r"^" + regex
+		DateStrptime.setRegex(self, regex, **kwargs)
+
+	def getPattern(self):
+		return self.__pattern
+
+	def setRegex(self, line):
+		raise NotImplementedError("Regex derived from pattern")
+
+	def setName(self, line):
+		raise NotImplementedError("Name derived from pattern")
 
 class DateTai64n(DateTemplate):
 	
@@ -214,6 +259,6 @@ class DateISO8601(DateTemplate):
 		if dateMatch:
 			# Parses the date.
 			value = dateMatch.group()
-			date = list(iso8601.parse_date(value).timetuple())
+			date = list(iso8601.parse_date(value, None).timetuple())
 		return date
 

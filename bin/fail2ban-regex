@@ -88,6 +88,8 @@ IGNOREREGEX:
 				version="%prog " + version)
 
 	p.add_options([
+		Option("-d", "--datepattern",
+			   help="set custom pattern used to match date/times"),
 		Option("-e", "--encoding",
 			   help="File encoding. Default: system locale"),
 		Option("-L", "--maxlines", type=int, default=0,
@@ -179,6 +181,9 @@ class Fail2banRegex(object):
 		self._maxlines_set = False		  # so we allow to override maxlines in cmdline
 		self._journalmatch = None
 
+		if opts.datepattern:
+			self.setDatePattern(opts.datepattern)
+
 		if opts.encoding:
 			self.encoding = opts.encoding
 		else:
@@ -194,6 +199,8 @@ class Fail2banRegex(object):
 		if opts.journalmatch is not None:
 			self.setJournalMatch(opts.journalmatch.split())
 
+	def setDatePattern(self, pattern):
+		self._filter.setDatePattern(pattern)
 
 	def setMaxLines(self, v):
 		if not self._maxlines_set:

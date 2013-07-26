@@ -104,7 +104,7 @@ class DateDetectorTest(unittest.TestCase):
 			self.assertEqual(old_name, n.getName()) # "Sort must be stable"
 
 	def testAllUniqueTemplateNames(self):
-		self.assertRaises(ValueError, self.__datedetector._appendTemplate,
+		self.assertRaises(ValueError, self.__datedetector.appendTemplate,
 						  self.__datedetector.getTemplates()[0])
 
 	def testFullYearMatch_gh130(self):
