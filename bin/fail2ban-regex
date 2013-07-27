@@ -67,6 +67,25 @@ def pprint_list(l, header=None):
 		s = ''
 	print s + "|  " + "\n|  ".join(l) + '\n`-'
 
+def file_lines_gen(hdlr):
+	for line in hdlr:
+		try:
+			line = line.decode(fail2banRegex.encoding, 'strict')
+		except UnicodeDecodeError:
+			if sys.version_info >= (3,): # Python 3 must be decoded
+				line = line.decode(fail2banRegex.encoding, 'ignore')
+		yield line
+
+def journal_lines_gen(myjournal):
+	while True:
+		try:
+			entry = myjournal.get_next()
+		except OSError:
+			continue
+		if not entry:
+			break
+		yield FilterSystemd.formatJournalEntry(entry)
+
 def get_opt_parser():
 	# use module docstring for help output
 	p = OptionParser(
@@ -457,14 +476,7 @@ if __name__ == "__main__":
 			hdlr = open(cmd_log, 'rb')
 			print "Use         log file : %s" % cmd_log
 			print "Use         encoding : %s" % fail2banRegex.encoding
-			test_lines = []
-			for line in hdlr:
-				try:
-					line = line.decode(fail2banRegex.encoding, 'strict')
-				except UnicodeDecodeError:
-					if sys.version_info >= (3,): # Python 3 must be decoded
-						line = line.decode(fail2banRegex.encoding, 'ignore')
-				test_lines.append(line)
+			test_lines = file_lines_gen(hdlr)
 		except IOError, e:
 			print e
 			sys.exit(-1)
@@ -485,15 +497,7 @@ if __name__ == "__main__":
 				print "Error: Invalid journalmatch: %s" % shortstr(" ".join(journalmatch))
 				sys.exit(-1)
 		print "Use    journal match : %s" % " ".join(journalmatch)
-		test_lines = []
-		while True:
-			try:
-				entry = myjournal.get_next()
-			except OSError:
-				continue
-			if not entry:
-				break
-			test_lines.append(FilterSystemd.formatJournalEntry(entry))
+		test_lines = journal_lines_gen(myjournal)
 	else:
 		print "Use      single line : %s" % shortstr(cmd_log)
 		test_lines = [ cmd_log ]
