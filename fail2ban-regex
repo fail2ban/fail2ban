@@ -377,7 +377,7 @@ if __name__ == "__main__":
 		try:
 			hdlr = open(cmd_log)
 			print "Use         log file : %s" % cmd_log
-			test_lines = hdlr.readlines()
+			test_lines = hdlr # Iterable
 		except IOError, e:
 			print e
 			sys.exit(-1)
