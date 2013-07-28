@@ -1,0 +1,7 @@
+AuthType Digest
+AuthName "digest private area"
+AuthDigestDomain /digest_time/
+AuthBasicProvider file
+AuthUserFile /var/www/html/digest_time/.htpasswd
+AuthDigestNonceLifetime 1
+Require valid-user
