@@ -1,0 +1,4 @@
+# failJSON: { "time": "2005-03-24T15:25:51", "match": true , "host": "198.51.100.87" }
+Mar 24 15:25:51 buffalo1 dropbear[4092]: bad password attempt for 'root' from 198.51.100.87:5543
+# failJSON: { "time": "2005-02-11T15:23:17", "match": true , "host": "198.51.100.215" }
+Feb 11 15:23:17 dropbear[1252]: login attempt for nonexistent user from ::ffff:198.51.100.215:60495

@@ -65,19 +65,16 @@ def testSampleRegexsFactory(name):
 		for opt in filterConf.convert():
 			if opt[2] == "addfailregex":
 				self.filter.addFailRegex(opt[3])
+			elif opt[2] == "addignoreregex":
+				self.filter.addIgnoreRegex(opt[3])
 
 		if not self.filter.getFailRegex():
 			# No fail regexs set: likely just common file for includes.
 			return
 
-		# TODO: Remove exception handling once sample logs obtained for all
-		try:
-			self.assertTrue(
-				os.path.isfile(os.path.join(TEST_FILES_DIR, "logs", name)),
-				"No sample log file available for '%s' filter" % name)
-		except AssertionError:
-			print "I: No sample log file available for '%s' filter" % name
-			return
+		self.assertTrue(
+			os.path.isfile(os.path.join(TEST_FILES_DIR, "logs", name)),
+			"No sample log file available for '%s' filter" % name)
 
 		logFile = fileinput.FileInput(
 			os.path.join(TEST_FILES_DIR, "logs", name))
@@ -122,14 +119,10 @@ def testSampleRegexsFactory(name):
 
 		# TODO: Remove exception handling once all regexs have samples
 		for failRegexIndex, failRegex in enumerate(self.filter.getFailRegex()):
-			try:
-				self.assertTrue(
-					failRegexIndex in regexsUsed,
-					"Regex for filter '%s' has no samples: %i: %r" %
-						(name, failRegexIndex, failRegex))
-			except AssertionError:
-				print "I: Regex for filter '%s' has no samples: %i: %r" % (
-					name, failRegexIndex, failRegex)
+			self.assertTrue(
+				failRegexIndex in regexsUsed,
+				"Regex for filter '%s' has no samples: %i: %r" %
+					(name, failRegexIndex, failRegex))
 
 	return testFilter
 
