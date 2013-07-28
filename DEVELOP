@@ -253,6 +253,10 @@ Use the text "closes #333"/"resolves #333 "/"fixes #333" where 333 represents
 an issue that is closed. Other text and details in link below.
 See: https://help.github.com/articles/closing-issues-via-commit-messages
 
+If merge resulted in conflicts, clarify what changes were done to
+corresponding files in the 'Conflicts:' section of the merge commit
+message.  See e.g. https://github.com/fail2ban/fail2ban/commit/f5a8a8ac
+
 Adding Actions
 --------------
 

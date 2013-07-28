@@ -63,13 +63,15 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
   Daniel Black
   * action.d/hostsdeny -- NOTE: new dependancy 'ed'. Switched to use 'ed' across
     all platforms to ensure permissions are the same before and after a ban -
-    closes gh-266
+		closes gh-266. hostsdeny supports daemon_list now too.
 - New Features:
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
   Daniel Black
    * filter.d/exim-spam.conf -- a splitout of exim's spam regexes
      with additions for greater control over filtering spam.
+  Christophe Carles & Daniel Black
+   * filter.d/perdition.conf -- filter added
 - Enhancements:
   Daniel Black
    * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening

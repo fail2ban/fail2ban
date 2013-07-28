@@ -341,7 +341,7 @@ class Fail2banRegex(object):
 
 	def process(self, test_lines):
 
-		for line in test_lines:
+		for line_no, line in enumerate(test_lines):
 			if line.startswith('#') or not line.strip():
 				# skip comment and empty lines
 				continue
@@ -356,6 +356,9 @@ class Fail2banRegex(object):
 				if not is_ignored:
 					self._line_stats.missed_lines.append(line)
 			self._line_stats.tested += 1
+
+			if line_no % 10 == 0:
+				self._filter.dateDetector.sortTemplate()
 
 	def printLines(self, ltype):
 		lstats = self._line_stats

@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -32,7 +32,7 @@ from jailreader import JailReader
 logSys = logging.getLogger(__name__)
 
 class JailsReader(ConfigReader):
-	
+
 	def __init__(self, force_enable=False, **kwargs):
 		"""
 		Parameters
@@ -44,17 +44,25 @@ class JailsReader(ConfigReader):
 		ConfigReader.__init__(self, **kwargs)
 		self.__jails = list()
 		self.__force_enable = force_enable
-	
+
 	def read(self):
 		return ConfigReader.read(self, "jail")
-	
-	def getOptions(self, section = None):
+
+	def getOptions(self, section=None):
+		"""Reads configuration for jail(s) and adds enabled jails to __jails
+		"""
 		opts = []
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
 
-		if section:
-			# Get the options of a specific jail.
-			jail = JailReader(section, basedir=self.getBaseDir(), force_enable=self.__force_enable)
+		if section is None:
+			sections = self.sections()
+		else:
+			sections = [ section ]
+
+		# Get the options of all jails.
+		for sec in sections:
+			jail = JailReader(sec, basedir=self.getBaseDir(),
+							  force_enable=self.__force_enable)
 			jail.read()
 			ret = jail.getOptions()
 			if ret:
@@ -62,23 +70,10 @@ class JailsReader(ConfigReader):
 					# We only add enabled jails
 					self.__jails.append(jail)
 			else:
-				logSys.error("Errors in jail '%s'. Skipping..." % section)
+				logSys.error("Errors in jail %r. Skipping..." % sec)
 				return False
-		else:
-			# Get the options of all jails.
-			for sec in self.sections():
-				jail = JailReader(sec, basedir=self.getBaseDir(), force_enable=self.__force_enable)
-				jail.read()
-				ret = jail.getOptions()
-				if ret:
-					if jail.isEnabled():
-						# We only add enabled jails
-						self.__jails.append(jail)
-				else:
-					logSys.error("Errors in jail '" + sec + "'. Skipping...")
-					return False
 		return True
-	
+
 	def convert(self, allow_no_files=False):
 		"""Convert read before __opts and jails to the commands stream
 
@@ -99,6 +94,6 @@ class JailsReader(ConfigReader):
 		# Start jails
 		for jail in self.__jails:
 			stream.append(["start", jail.getName()])
-		
+
 		return stream
-		
+
