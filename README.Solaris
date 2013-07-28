@@ -82,7 +82,7 @@ REQ: Create /etc/fail2ban/jail.local containing:
 
 enabled     = true
 filter      = sshd
-action      = hostsdeny
+action      = hostsdeny[daemon_list=sshd]
               sendmail-whois[name=SSH, dest=you@example.com]
 ignoreregex = for myuser from
 logpath     = /var/adm/auth.log
@@ -119,6 +119,4 @@ GOTCHAS AND FIXMES
 
 * Fail2ban adds lines like these to /etc/hosts.deny:
 
-    ALL: 1.2.3.4
-
-  wouldn't it be better to just block sshd?
+    sshd: 1.2.3.4
