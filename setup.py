@@ -53,7 +53,8 @@ setup(
 	packages =	[
 					'common',
 					'client',
-					'server'
+					'server',
+					'testcases'
 				],
 	data_files =	[
 						('/etc/fail2ban',
