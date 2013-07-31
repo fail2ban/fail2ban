@@ -161,6 +161,12 @@ class DateDetector:
 			template.setRegex("^[a-zA-Z]{3}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%b-%d-%y %H:%M:%S")
 			self._appendTemplate(template)
+			# UTC String (Node.js Express/Connect Logger): Wed, 31 Jul 2013 16:51:25 GMT
+			template = DateStrptime()
+			template.setName("WEEKDAY, Day MONTH Year Hour:Minute:Second")
+			template.setRegex("\S{3}, \d{2} \S{3} \d{4} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%a, %d %b %Y %H:%M:%S")
+			self._appendTemplate(template)
 		finally:
 			self.__lock.release()
 	
