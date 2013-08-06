@@ -14,6 +14,7 @@ def auth(v):
     nonce = v['nonce'][1:-1]
     nc=v.get('nc') or ''
     cnonce = v.get('cnonce') or ''
+    opaque = v.get('opaque') or ''
     qop = v['qop'][1:-1]
     algorithm = v['algorithm']
     response = md5.new(ha1 + ':' + nonce + ':' + nc + ':' + cnonce + ':' + qop + ':' + ha2).hexdigest()
@@ -31,7 +32,8 @@ def auth(v):
         qop=%s,
         response="%s"
     """ % ( username, algorithm, realm, url, nonce, qop, response )
-    
+#        opaque="%s",
+    print p.method, p.url, p.headers
     s =  requests.Session()
     return s.send(p)
 
@@ -43,7 +45,7 @@ def preauth():
 
 
 url='/digest/'
-host = 'http://localhost:802'
+host = 'http://localhost:801'
 
 v = preauth()
 
@@ -111,7 +113,7 @@ print r.status_code,r.headers, r.text
 #       *hash++ = hex[secret[idx] & 0xF];
 #       }
 #       *hash = '\0';
-#       /* remove comment in below for apache-2.4+ */
+#       /* remove comment makings in below for apache-2.4+ */
 #       ap_log_error(APLOG_MARK, APLOG_NOTICE, 0, s, /*  APLOGNO(11759) */ "secret: %s", secbuff);
 #   }
 
@@ -121,7 +123,7 @@ import binascii
 import base64
 import struct
 
-apachesecret = binascii.unhexlify('cc969f83b4029e672115f2e8ff7dd21a976728f9')
+apachesecret = binascii.unhexlify('497d8894adafa5ec7c8c981ddf9c8457da7a90ac')
 s = sha.sha(apachesecret)
 
 v=preauth()
@@ -147,3 +149,11 @@ r = auth(v)
 #[Mon Jul 29 02:12:55.539813 2013] [auth_digest:error] [pid 9647:tid 139895522670336] [client 127.0.0.1:58474] AH01777: invalid nonce 59QJppTiBAA=b08983fd166ade9840407df1b0f75b9e6e07d88d received - user attempted time travel
 print r.status_code,r.headers, r.text
 
+url='/digest_onetime/'
+v=preauth()
+
+# Need opaque header handling in auth
+r = auth(v)
+print r.status_code,r.headers, r.text
+r = auth(v)
+print r.status_code,r.headers, r.text
