@@ -632,12 +632,12 @@ class GetFailures(unittest.TestCase):
 
 	def testGetFailuresUseDNS(self):
 		# We should still catch failures with usedns = no ;-)
-		output_yes = ('192.0.43.10', 2, 1124013539.0,
+		output_yes = ('93.184.216.119', 2, 1124013539.0,
 					  ['Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2\n',
-					   'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:192.0.43.10 port 51332 ssh2\n'])
+					   'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.119 port 51332 ssh2\n'])
 
-		output_no = ('192.0.43.10', 1, 1124013539.0,
-					  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:192.0.43.10 port 51332 ssh2\n'])
+		output_no = ('93.184.216.119', 1, 1124013539.0,
+					  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.119 port 51332 ssh2\n'])
 
 		# Actually no exception would be raised -- it will be just set to 'no'
 		#self.assertRaises(ValueError,
@@ -684,9 +684,9 @@ class DNSUtilsTests(unittest.TestCase):
 		res = DNSUtils.textToIp('www.example.com', 'no')
 		self.assertEqual(res, [])
 		res = DNSUtils.textToIp('www.example.com', 'warn')
-		self.assertEqual(res, ['192.0.43.10'])
+		self.assertEqual(res, ['93.184.216.119'])
 		res = DNSUtils.textToIp('www.example.com', 'yes')
-		self.assertEqual(res, ['192.0.43.10'])
+		self.assertEqual(res, ['93.184.216.119'])
 
 	def testTextToIp(self):
 		# Test hostnames
@@ -698,7 +698,7 @@ class DNSUtilsTests(unittest.TestCase):
 		for s in hostnames:
 			res = DNSUtils.textToIp(s, 'yes')
 			if s == 'www.example.com':
-				self.assertEqual(res, ['192.0.43.10'])
+				self.assertEqual(res, ['93.184.216.119'])
 			else:
 				self.assertEqual(res, [])
 
