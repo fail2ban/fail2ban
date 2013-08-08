@@ -1,4 +1,6 @@
 # Sample log files for asterisk 
+# failJSON: { "time": "2013-07-25T07:26:43", "match": true , "host": "1.2.3.4" }
+[2013-07-25 07:26:43] NOTICE[26015][C-000006b2] chan_sip.c: Failed to authenticate device 101<sip:101@1.2.3.4>;tag=deadbeef
 # failJSON: { "time": "2012-02-13T17:21:54", "match": true , "host": "1.2.3.4" }
 [2012-02-13 17:21:54] NOTICE[1638] chan_sip.c: Registration from '<sip:301@example.com>' failed for '1.2.3.4' - Wrong password
 # failJSON: { "time": "2012-02-13T17:18:22", "match": true , "host": "1.2.3.4" }
