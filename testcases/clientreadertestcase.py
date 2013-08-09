@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, shutil, tempfile, unittest
+import os, tempfile, shutil, unittest
 from client.configreader import ConfigReader
 from client.jailreader import JailReader
 from client.jailsreader import JailsReader
@@ -65,7 +65,12 @@ option = %s
 		self._write('d.conf', 0)
 		self.assertEqual(self._getoption('d'), 0)
 		os.chmod(f, 0)
-		self.assertFalse(self.c.read('d'))	# should not be readable BUT present
+		# fragile test and known to fail e.g. under Cygwin where permissions
+		# seems to be not enforced, thus condition
+		if not os.access('d.conf', os.R_OK):
+			self.assertFalse(self.c.read('d'))	# should not be readable BUT present
+		else:
+			raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform)
 
 
 	def testOptionalDotDDir(self):
