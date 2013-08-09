@@ -67,10 +67,12 @@ option = %s
 		os.chmod(f, 0)
 		# fragile test and known to fail e.g. under Cygwin where permissions
 		# seems to be not enforced, thus condition
-		if not os.access('d.conf', os.R_OK):
+		if not os.access(f, os.R_OK):
 			self.assertFalse(self.c.read('d'))	# should not be readable BUT present
 		else:
-			raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform)
+			# SkipTest introduced only in 2.7 thus can't yet use generally
+			# raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform)
+			pass
 
 
 	def testOptionalDotDDir(self):

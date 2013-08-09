@@ -84,9 +84,8 @@ def _assert_equal_entries(utest, found, output, count=None):
 	if len(output) > 3 and count is None: # match matches
 		# do not check if custom count (e.g. going through them twice)
 		if os.linesep != '\n' or sys.platform.startswith('cygwin'):
-			# on those where text file lines end with '\r\n', override
-			# repr for this test to disregard trailing CR LF
-			srepr = lambda x: repr(str(x).rstrip('\n\r'))
+			# on those where text file lines end with '\r\n', remove '\r'
+			srepr = lambda x: repr(x).replace(r'\r', '')
 		else:
 			srepr = repr
 		utest.assertEqual(srepr(found[3]), srepr(output[3]))
