@@ -61,6 +61,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
   Steven Hiscocks
    * filter.d/dovecot - Addition of session, time values and possible blank
      user
+  Zurd and Daniel Black
+   * filter/named-refused - added refused on zone transfer
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
 -----------
