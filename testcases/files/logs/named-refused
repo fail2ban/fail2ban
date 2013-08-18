@@ -12,6 +12,6 @@ Jul 24 14:23:36 raid5 named[3935]: client 148.160.29.6#33081: query (cache) 'mie
 Jul 24 14:23:36 raid5 named[3935]: client 62.109.4.89#9334: view external: query (cache) './NS/IN' denied
 # failJSON: { "time": "2013-08-11T03:36:11", "match": true , "host": "1.2.3.4" }
 11-Aug-2013 03:36:11.372 error: client 1.2.3.4#52115: zone transfer 'domain.com/AXFR/IN' denied
-# failJSON: { "time": "2005-08-17T08:20:22", "match": true , "host": "223.252.23.219" }
+# failJSON: { "time": "2004-08-17T08:20:22", "match": true , "host": "223.252.23.219" }
 Aug 17 08:20:22 catinthehat named[2954]: client 223.252.23.219#56275: zone transfer 'openquery.eu/AXFR/IN' denied
 
