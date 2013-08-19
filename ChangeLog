@@ -63,6 +63,9 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
      regex impovements
    * IMPORTANT: 'lighttpd-fastcgi' filter has been renamed to 'suhosin', which
      will require changing in jail.{conf,local} if using this filter.
+  Zurd
+   * filter.d/postfix - add filter for VRFY failures. closes gh-322.
+
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
 -----------
