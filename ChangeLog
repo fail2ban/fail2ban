@@ -11,6 +11,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
 -----------
 
 - Fixes:
+  Daniel Black & Marcel Dopita
+   * filter.d/apache-auth -- fixed and apache auth samples provide. closes #286
   Yaroslav Halchenko
    * filter.d/common.conf -- make colon after [daemon] optional. Closes gh-267
    * filter.d/apache-common.conf -- support apache 2.4 more detailed error
@@ -39,12 +41,15 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
   Daniel Black
    * filter.d/exim-spam.conf -- a splitout of exim's spam regexes
      with additions for greater control over filtering spam.
+   * add date expression for apache-2.4 - milliseconds
   Christophe Carles & Daniel Black
    * filter.d/perdition.conf -- filter added
 - Enhancements:
   Daniel Black
    * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
      and extra failure examples in sample logs
+	 * filter.d/apache-auth - added expressions for mod_authz, mod_auth and
+     mod_auth_digest failures.
   Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
    * filter.d/exim.conf -- regex hardening and extra failure examples in
      sample logs
@@ -58,6 +63,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
      enabled jail. Closes gh-63
    * <HOST> is now enforced to end with an alphanumeric
    * filter.d/roundcube-auth.conf -- anchored version
+   * date matching - for standard asctime formats prefer more detailed
+     first (thus use year if available)
   Alexander Dietrich
    * action.d/sendmail-common.conf -- added common sendmail settings file
      and made the sender display name configurable
@@ -66,6 +73,13 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
      user
   Zurd and Daniel Black
    * filter/named-refused - added refused on zone transfer
+   * filter.d/{courier{login,smtp},proftpd,sieve,wuftpd,xinetd} - General
+     regex impovements
+   * IMPORTANT: 'lighttpd-fastcgi' filter has been renamed to 'suhosin', which
+     will require changing in jail.{conf,local} if using this filter.
+  Zurd
+   * filter.d/postfix - add filter for VRFY failures. closes gh-322.
+
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
 -----------

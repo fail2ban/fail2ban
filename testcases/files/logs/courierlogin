@@ -1,0 +1,8 @@
+# failJSON: { "time": "2005-04-23T21:59:01", "match": true , "host": "1.2.3.4" }
+Apr 23 21:59:01 dns2 imapd: LOGIN FAILED, user=sales@example.com, ip=[::ffff:1.2.3.4]
+# failJSON: { "time": "2005-04-23T21:59:38", "match": true , "host": "198.51.100.76" }
+Apr 23 21:59:38 dns2 pop3d: LOGIN FAILED, user=info@example.com, ip=[::ffff:198.51.100.76]
+# failJSON: { "time": "2004-11-13T08:11:53", "match": true , "host": "198.51.100.33" }
+Nov 13 08:11:53 server imapd-ssl: LOGIN FAILED, user=user@domain.tld, ip=[::ffff:198.51.100.33]
+# failJSON: { "time": "2005-04-17T19:17:11", "match": true , "host": "1.2.3.4" }
+Apr 17 19:17:11 SERVER courierpop3login: LOGIN FAILED, user=USER@EXAMPLE.org, ip=[::ffff:1.2.3.4]

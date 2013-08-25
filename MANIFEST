@@ -101,7 +101,7 @@ config/filter.d/couriersmtp.conf
 config/filter.d/cyrus-imap.conf
 config/filter.d/exim.conf
 config/filter.d/gssftpd.conf
-config/filter.d/lighttpd-fastcgi.conf
+config/filter.d/suhosin.conf
 config/filter.d/named-refused.conf
 config/filter.d/postfix.conf
 config/filter.d/proftpd.conf
