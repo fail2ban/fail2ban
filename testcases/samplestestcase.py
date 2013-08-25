@@ -106,8 +106,9 @@ def testSampleRegexsFactory(name):
 				self.assertTrue(faildata.get('match', False),
 					"Line matched when shouldn't have: %s:%i %r" %
 					(logFile.filename(), logFile.filelineno(), line))
-				self.assertEqual(len(ret), 1, "Multiple regexs matched - %s:%i %r " %
-								 (logFile.filename(), logFile.filelineno(), ret))
+				self.assertEqual(len(ret), 1, "Multiple regexs matched %r - %s:%i" %
+								 (map(lambda x: x[0], ret),logFile.filename(), logFile.filelineno()))
+
 				# Verify timestamp and host as expected
 				failregex, host, time = ret[0]
 				self.assertEqual(host, faildata.get("host", None))
