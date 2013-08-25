@@ -57,6 +57,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
      enabled jail. Closes gh-63
    * <HOST> is now enforced to end with an alphanumeric
    * filter.d/roundcube-auth.conf -- anchored version
+   * date matching - for standard asctime formats prefer more detailed
+     first (thus use year if available)
   Alexander Dietrich
    * action.d/sendmail-common.conf -- added common sendmail settings file
      and made the sender display name configurable

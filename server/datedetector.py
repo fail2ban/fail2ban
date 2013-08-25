@@ -46,12 +46,6 @@ class DateDetector:
 	def addDefaultTemplate(self):
 		self.__lock.acquire()
 		try:
-			# standard
-			template = DateStrptime()
-			template.setName("MONTH Day Hour:Minute:Second")
-			template.setRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
-			template.setPattern("%b %d %H:%M:%S")
-			self._appendTemplate(template)
 			# asctime
 			template = DateStrptime()
 			template.setName("WEEKDAY MONTH Day Hour:Minute:Second Year")
@@ -63,6 +57,12 @@ class DateDetector:
 			template.setName("WEEKDAY MONTH Day Hour:Minute:Second")
 			template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%a %b %d %H:%M:%S")
+			self._appendTemplate(template)
+			# standard - most loose from above 3 so by default follows after
+			template = DateStrptime()
+			template.setName("MONTH Day Hour:Minute:Second")
+			template.setRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%b %d %H:%M:%S")
 			self._appendTemplate(template)
 			# simple date
 			template = DateStrptime()
