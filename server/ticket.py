@@ -47,7 +47,7 @@ class Ticket:
 
 	def __str__(self):
 		return "%s: ip=%s time=%s #attempts=%d" % \
-			   (self.__class__, self.__ip, self.__time, self.__attempt)
+			   (self.__class__.__name__.split('.')[-1], self.__ip, self.__time, self.__attempt)
 	
 
 	def setIP(self, value):
@@ -58,12 +58,6 @@ class Ticket:
 	
 	def getIP(self):
 		return self.__ip
-	
-	def setFile(self, value):
-		self.__file = value
-	
-	def getFile(self):
-		return self.__file
 	
 	def setTime(self, value):
 		self.__time = value

@@ -62,6 +62,9 @@ class DateTemplate:
 
 	def incHits(self):
 		self.__hits += 1
+
+	def resetHits(self):
+		self.__hits = 0
 	
 	def matchDate(self, line):
 		dateMatch = self.__cRegex.search(line)

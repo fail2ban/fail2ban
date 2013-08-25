@@ -24,7 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest
+import unittest, calendar, datetime, re, pprint
 from server.datedetector import DateDetector
 from server.datetemplate import DateTemplate
 
@@ -122,6 +122,45 @@ class DateDetectorTest(unittest.TestCase):
 			self.__datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')[:6],
 			m1)
 
+	def testDateDetectorTemplateOverlap(self):
+		patterns = [template.getPattern()
+			for template in self.__datedetector.getTemplates()
+			if hasattr(template, "getPattern")]
+
+		year = 2008 # Leap year, 08 for %y can be confused with both %d and %m
+		def iterDates(year):
+			for month in xrange(1, 13):
+				for day in xrange(2, calendar.monthrange(year, month)[1]+1, 9):
+					for hour in xrange(0, 24, 6):
+						for minute in xrange(0, 60, 15):
+							for second in xrange(0, 60, 15): # Far enough?
+								yield datetime.datetime(
+									year, month, day, hour, minute, second)
+
+		overlapedTemplates = set()
+		for date in iterDates(year):
+			for pattern in patterns:
+				datestr = date.strftime(pattern)
+				datestrs = set([
+					datestr,
+					re.sub(r"(\s)0", r"\1 ", datestr),
+					re.sub(r"(\s)0", r"\1", datestr)])
+				for template in self.__datedetector.getTemplates():
+					template.resetHits()
+					for datestr in datestrs:
+						if template.matchDate(datestr): # or getDate?
+							template.incHits()
+
+				matchedTemplates = [template
+					for template in self.__datedetector.getTemplates()
+					if template.getHits() > 0]
+				assert matchedTemplates != [] # Should match at least one
+				if len(matchedTemplates) > 1:
+					overlapedTemplates.add((pattern, tuple(sorted(template.getName()
+						for template in matchedTemplates))))
+		if overlapedTemplates:
+			print "WARNING: The following date templates overlap:"
+			pprint.pprint(overlapedTemplates)
 
 #	def testDefaultTempate(self):
 #		self.__datedetector.setDefaultRegex("^\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")

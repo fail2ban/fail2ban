@@ -24,7 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, socket, time, tempfile, os
+import unittest, socket, time, tempfile, os, sys
 from server.server import Server
 from server.jail import Jail
 from common.exceptions import UnknownJailException
@@ -498,7 +498,8 @@ class TransmitterLogging(TransmitterBase):
 
 		self.setGetTest("logtarget", "STDOUT")
 		self.setGetTest("logtarget", "STDERR")
-		self.setGetTest("logtarget", "SYSLOG")
+		if sys.platform.lower().startswith('linux'):
+			self.setGetTest("logtarget", "SYSLOG")
 
 	def testLogLevel(self):
 		self.setGetTest("loglevel", "4", 4)

@@ -83,7 +83,12 @@ def _assert_equal_entries(utest, found, output, count=None):
 	utest.assertEqual(found_time, output_time)
 	if len(output) > 3 and count is None: # match matches
 		# do not check if custom count (e.g. going through them twice)
-		utest.assertEqual(repr(found[3]), repr(output[3]))
+		if os.linesep != '\n' or sys.platform.startswith('cygwin'):
+			# on those where text file lines end with '\r\n', remove '\r'
+			srepr = lambda x: repr(x).replace(r'\r', '')
+		else:
+			srepr = repr
+		utest.assertEqual(srepr(found[3]), srepr(output[3]))
 
 def _assert_correct_last_attempt(utest, filter_, output, count=None):
 	"""Additional helper to wrap most common test case

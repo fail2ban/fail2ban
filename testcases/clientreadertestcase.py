@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, shutil, tempfile, unittest
+import os, tempfile, shutil, unittest
 from client.configreader import ConfigReader
 from client.jailreader import JailReader
 from client.jailsreader import JailsReader
@@ -65,7 +65,14 @@ option = %s
 		self._write('d.conf', 0)
 		self.assertEqual(self._getoption('d'), 0)
 		os.chmod(f, 0)
-		self.assertFalse(self.c.read('d'))	# should not be readable BUT present
+		# fragile test and known to fail e.g. under Cygwin where permissions
+		# seems to be not enforced, thus condition
+		if not os.access(f, os.R_OK):
+			self.assertFalse(self.c.read('d'))	# should not be readable BUT present
+		else:
+			# SkipTest introduced only in 2.7 thus can't yet use generally
+			# raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform)
+			pass
 
 
 	def testOptionalDotDDir(self):
@@ -125,6 +132,13 @@ class JailsReaderTest(unittest.TestCase):
 		# by default None of the jails is enabled and we get no
 		# commands to communicate to the server
 		self.assertEqual(comm_commands, [])
+
+		# We should not "read" some bogus jail
+		old_comm_commands = comm_commands[:]   # make a copy
+		self.assertFalse(jails.getOptions("BOGUS"))
+		# and there should be no side-effects
+		self.assertEqual(jails.convert(), old_comm_commands)
+
 
 	def testReadStockJailConfForceEnabled(self):
 		# more of a smoke test to make sure that no obvious surprises
