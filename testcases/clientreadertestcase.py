@@ -108,7 +108,7 @@ class JailReaderTest(unittest.TestCase):
 		action = "mail-whois[name=SSH]"
 		expected = ['mail-whois', {'name': 'SSH'}]
 		result = JailReader.splitAction(action)
-		self.assertEquals(expected, result)
+		self.assertEqual(expected, result)
 
 class JailsReaderTest(unittest.TestCase):
 
@@ -132,7 +132,7 @@ class JailsReaderTest(unittest.TestCase):
 		jails = JailsReader(basedir='config', force_enable=True) # we are running tests from root project dir atm
 		self.assertTrue(jails.read())		  # opens fine
 		self.assertTrue(jails.getOptions())	  # reads fine
-		comm_commands = jails.convert()
+		comm_commands = jails.convert(allow_no_files=True)
 
 		# by default we have lots of jails ;)
 		self.assertTrue(len(comm_commands))

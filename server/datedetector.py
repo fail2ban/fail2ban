@@ -174,6 +174,7 @@ class DateDetector:
 				match = template.matchDate(line)
 				if not match is None:
 					logSys.debug("Matched time template %s" % template.getName())
+					template.incHits()
 					return match
 			return None
 		finally:

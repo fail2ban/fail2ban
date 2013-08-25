@@ -1,4 +1,5 @@
 # Should not match -- DoS vector https://vndh.net/note:fail2ban-089-denial-service
+# failJSON: { "match": false }
 [Sat Jun 01 02:17:42 2013] [error] [client 192.168.33.1] File does not exist: /srv/http/site/[client 192.168.0.1] user root not found
 
 # should match
@@ -105,7 +106,8 @@
 # failJSON: { "time": "2013-07-29T02:15:26", "match": true , "host": "127.0.0.1" }
 [Mon Jul 29 02:15:26 2013] [error] [client 127.0.0.1] Digest: invalid nonce LWEDr5TiBAA=ceddd011628c30e3646f7acda4f1a0ab6b7c5ae6 received - user attempted time travel
 
-
-
 # failJSON: { "time": "2013-07-29T02:12:55", "match": true , "host": "127.0.0.1" }
 [Mon Jul 29 02:12:55.539813 2013] [auth_digest:error] [pid 9647:tid 139895522670336] [client 127.0.0.1:58474] AH01777: invalid nonce 59QJppTiBAA=b08983fd166ade9840407df1b0f75b9e6e07d88d received - user attempted time travel
+
+# failJSON: { "time": "2005-06-01T02:17:42", "match": true , "host": "192.168.0.2" }
+[Sat Jun 01 02:17:42 2013] [error] [client 192.168.0.2] user root not found

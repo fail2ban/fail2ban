@@ -7,24 +7,69 @@
 Fail2Ban (version 0.8.10)                                             2013/06/12
 ================================================================================
 
-ver. 0.8.11 (2013/XX/XXX) - wanna-be-released
+ver. 0.8.11 (2013/XX/XXX) - loves-unittests
 -----------
 
 - Fixes:
   Daniel Black & Marcel Dopita
    * filter.d/apache-auth -- fixed and apache auth samples provide. closes #286
+  Yaroslav Halchenko
+   * filter.d/common.conf -- make colon after [daemon] optional. Closes gh-267
+   * filter.d/apache-common.conf -- support apache 2.4 more detailed error
+     log format.  Closes gh-268
+   * Backends changes detection and parsing. Close gh-223 and gh-103:
+     - Polling backend: detect changes in the files not only based on
+       mtime, but also on the size and inode.  It should allow for
+       better detection of changes and log rotations on busy servers,
+       older python 2.4, and file systems with precision of mtime only
+       up to a second (e.g. ext3).
+     - All backends, possible race condition: do not read from a file
+       initially reported empty.  Originally could have lead to
+       accounting for detected log lines multiple times.
+  Daniel Black & Мернов Георгий
+   * filter.d/dovecot.conf -- Fix when no TLS enabled - line doesn't end in ,
+  Daniel Black
+  * action.d/hostsdeny -- NOTE: new dependancy 'ed'. Switched to use 'ed' across
+    all platforms to ensure permissions are the same before and after a ban -
+    closes gh-266
 - New Features:
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
+  Daniel Black
+   * filter.d/exim-spam.conf -- a splitout of exim's spam regexes
+     with additions for greater control over filtering spam.
 - Enhancements:
   Daniel Black
    * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
      and extra failure examples in sample logs
 	 * filter.d/apache-auth - added expressions for mod_authz, mod_auth and
      mod_auth_digest failures.
-  Daniel Black & Georgiy Mernov
+  Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
    * filter.d/exim.conf -- regex hardening and extra failure examples in
      sample logs
+  Daniel Black & Sebastian Arcus
+   * filter.d/asterisk -- more regexes
+  Yaroslav Halchenko
+   * fail2ban-regex -- refactored to provide more details (missing and
+     ignored lines, control over logging, etc) while maintaining look&feel
+   * fail2ban-client -- log to standard error. Closes gh-264
+   * Fail to configure if not a single log file was found for an
+     enabled jail. Closes gh-63
+   * <HOST> is now enforced to end with an alphanumeric
+   * filter.d/roundcube-auth.conf -- anchored version
+  Alexander Dietrich
+   * action.d/sendmail-common.conf -- added common sendmail settings file
+     and made the sender display name configurable
+  Steven Hiscocks
+   * filter.d/dovecot - Addition of session, time values and possible blank
+     user
+   * filter.d/{courier{login,smtp},proftpd,sieve,wuftpd,xinetd} - General
+     regex impovements
+   * IMPORTANT: 'lighttpd-fastcgi' filter has been renamed to 'suhosin', which
+     will require changing in jail.{conf,local} if using this filter.
+  Zurd
+   * filter.d/postfix - add filter for VRFY failures. closes gh-322.
+
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
 -----------
