@@ -110,10 +110,12 @@ def testSampleRegexsFactory(name):
 				# Verify timestamp and host as expected
 				failregex, host, time = ret[0]
 				self.assertEqual(host, faildata.get("host", None))
-				self.assertEqual(
-					datetime.datetime.fromtimestamp(time),
-					datetime.datetime.strptime(
-						faildata.get("time", None), "%Y-%m-%dT%H:%M:%S"))
+				fail2banTime = datetime.datetime.fromtimestamp(time)
+				jsonTime = datetime.datetime.strptime(
+							faildata.get("time", None), "%Y-%m-%dT%H:%M:%S")
+				
+				self.assertEqual(fail2banTime, jsonTime,
+					"Time mismatch %s != %s on %s:" % ( fail2banTime, jsonTime, line ) )
 
 				regexsUsed.add(failregex)
 
