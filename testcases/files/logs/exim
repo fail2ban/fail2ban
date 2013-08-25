@@ -29,3 +29,9 @@
 # failJSON: { "time": "2013-06-15T16:36:49", "match": true , "host": "111.67.203.116" }
 2013-06-15 16:36:49 H=altmx.marsukov.com [111.67.203.116] F=<kadrofutcheti@mail.ru> rejected RCPT <oksana@birzhatm.ua>: Unknown user
 
+# 'https://github.com/fail2ban/fail2ban/pull/251#issuecomment-23001227' 
+# failJSON: { "time": "2013-08-20T07:48:02", "match": true , "host": "85.25.92.177" }
+2013-08-20 07:48:02 login authenticator failed for static-ip-85-25-92-177.inaddr.ip-pool.com (USER) [85.25.92.177]: 535 Incorrect authentication data: 1 Time(s)
+# failJSON: { "time": "2013-08-20T23:30:05", "match": true , "host": "91.218.72.71" }
+2013-08-20 23:30:05 plain authenticator failed for ([192.168.2.102]) [91.218.72.71]: 535 Incorrect authentication data: 1 Time(s)
+
