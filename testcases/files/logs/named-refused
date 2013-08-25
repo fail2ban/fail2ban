@@ -14,4 +14,8 @@ Jul 24 14:23:36 raid5 named[3935]: client 62.109.4.89#9334: view external: query
 11-Aug-2013 03:36:11.372 error: client 1.2.3.4#52115: zone transfer 'domain.com/AXFR/IN' denied
 # failJSON: { "time": "2004-08-17T08:20:22", "match": true , "host": "223.252.23.219" }
 Aug 17 08:20:22 catinthehat named[2954]: client 223.252.23.219#56275: zone transfer 'openquery.eu/AXFR/IN' denied
+# https://github.com/fail2ban/fail2ban/issues/333
+# BIND9 ver: BIND 9.9.3-rpz2+rl.13208.13-P2-RedHat-9.9.3-4.P2.el6 (Extended Support Version)
+# failJSON: { "time": "2013-08-23T10:32:56", "match": true , "host": "82.207.95.42" }
+23-Aug-2013 10:32:56.621 client 82.207.95.42#40278 (redginseng.com.ua): query (cache) 'redginseng.com.ua/A/IN' denied
 
