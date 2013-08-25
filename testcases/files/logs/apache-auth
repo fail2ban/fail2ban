@@ -4,7 +4,10 @@
 
 # should match
 # from https://github.com/fail2ban/fail2ban/issues/286
+# failJSON: { "time": "2013-07-11T01:21:41", "match": true , "host": "194.228.20.113" } 
 [Thu Jul 11 01:21:41 2013] [error] [client 194.228.20.113] user  not found: /
+
+# failJSON: { "time": "2013-07-11T01:21:43", "match": true , "host": "194.228.20.113" } 
 [Thu Jul 11 01:21:43 2013] [error] [client 194.228.20.113] user dsfasdf not found: /
 
 # The failures below use the configuration described in testcases/files/config/apache-auth
@@ -109,5 +112,5 @@
 # failJSON: { "time": "2013-07-29T02:12:55", "match": true , "host": "127.0.0.1" }
 [Mon Jul 29 02:12:55.539813 2013] [auth_digest:error] [pid 9647:tid 139895522670336] [client 127.0.0.1:58474] AH01777: invalid nonce 59QJppTiBAA=b08983fd166ade9840407df1b0f75b9e6e07d88d received - user attempted time travel
 
-# failJSON: { "time": "2005-06-01T02:17:42", "match": true , "host": "192.168.0.2" }
+# failJSON: { "time": "2013-06-01T02:17:42", "match": true , "host": "192.168.0.2" }
 [Sat Jun 01 02:17:42 2013] [error] [client 192.168.0.2] user root not found
