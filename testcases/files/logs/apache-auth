@@ -83,11 +83,12 @@
 
 
 # ./testcases/files/config/apache-auth/digest.py
-# failJSON: { "time": "2013-07-28T21:16:37", "match": true , "host": "127.0.0.1" }
+# yoh: ATM it should not match because matching failregex is still under "investigation"
+# failJSON: { "time": "2013-07-28T21:16:37", "match": false , "host": "127.0.0.1" }
 [Sun Jul 28 21:16:37 2013] [error] [client 127.0.0.1] Digest: invalid nonce l19lgpDiBAZZZf1ec3d9613f3b3ef43660e3628d78455fd8b937 received - hash is not 6fda8bbcbcf85ff1ebfe7d1c43faba583bc53a02
 
 # ./testcases/files/config/apache-auth/digest.py
-# failJSON: { "time": "2013-07-28T21:18:11", "match": true , "host": "127.0.0.1" }
+# failJSON: { "time": "2013-07-28T21:18:11", "match": false , "host": "127.0.0.1" }
 [Sun Jul 28 21:18:11.769228 2013] [auth_digest:error] [pid 24752:tid 139895505884928] [client 127.0.0.1:56964] AH01776: invalid nonce b9YAiJDiBAZZZ1b1abe02d20063ea3b16b544ea1b0d981c1bafe received - hash is not d42d824dee7aaf50c3ba0a7c6290bd453e3dd35b
 
 # ./testcases/files/config/apache-auth/digest.py
