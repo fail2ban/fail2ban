@@ -115,7 +115,8 @@ def testSampleRegexsFactory(name):
 							faildata.get("time", None), "%Y-%m-%dT%H:%M:%S")
 				
 				self.assertEqual(fail2banTime, jsonTime,
-					"Time mismatch %s != %s on %s:" % ( fail2banTime, jsonTime, line ) )
+					"Time  mismatch %s != %s on: %s:%i %r:" % 
+					(fail2banTime, jsonTime, logFile.filename(), logFile.filelineno(), line ) )
 
 				regexsUsed.add(failregex)
 
