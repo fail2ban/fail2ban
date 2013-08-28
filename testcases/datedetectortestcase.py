@@ -87,11 +87,11 @@ class DateDetectorTest(unittest.TestCase):
 			log = sdate + "[sshd] error: PAM: Authentication failure"
 			# exclude
 
-			#[ yoh: on [:6] see in above test
+			# yoh: on [:6] see in above test
 			logtime = self.__datedetector.getTime(log)
 			self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s" % sdate)
-			self.assertEqual(logtime[:6], date[:6], "getTime comparison failure for %s" % sdate)
-			self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix, "getUnixTime failure for %s" % sdate)
+			self.assertEqual(logtime[:6], date[:6], "getTime comparison failure for %s: \"%s\" is not \"%s\"" % (sdate, logtime[:6], date[:6]))
+			self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix, "getUnixTime failure for %s: \"%s\" is not \"%s\"" % (sdate, logtime[:6], date[:6]))
 
 	def testStableSortTemplate(self):
 		old_names = [x.getName() for x in self.__datedetector.getTemplates()]
