@@ -89,7 +89,7 @@ class DateDetectorTest(unittest.TestCase):
 
 			#[ yoh: on [:6] see in above test
 			logtime = self.__datedetector.getTime(log)
-			self.assertIsNotNone(logtime, "getTime retrieved nothing: failure for %s" % sdate)
+			self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s" % sdate)
 			self.assertEqual(logtime[:6], date[:6], "getTime comparison failure for %s" % sdate)
 			self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix, "getUnixTime failure for %s" % sdate)
 
