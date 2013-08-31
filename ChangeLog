@@ -34,12 +34,15 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
      closes gh-266. hostsdeny supports daemon_list now too.
   * filter.d/roundcube-auth - timezone offset can be positive or negative
   Rolf Fokkens
-   * action.d/dshield.conf and complain.conf -- reorder mailx arguements.
-	   https://bugzilla.redhat.com/show_bug.cgi?id=998020
+   * action.d/dshield.conf and complain.conf -- reorder mailx arguments.
+     https://bugzilla.redhat.com/show_bug.cgi?id=998020
   John Doe (ache)
    * action.d/bsd-ipfw.conf - invert actionstop logic to make exist status 0.
      closes gh-343.
-
+  JP Espinosa (Reviewed by O.Poplawski)
+   * files/redhat-initd - rewritten to use stock init.d functions thus
+     avoiding problems with getpid.  Also $network and iptables moved
+     to Should- rc init fields
 - New Features:
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
@@ -88,7 +91,9 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
      will require changing in jail.{conf,local} if using this filter.
   Zurd
    * filter.d/postfix - add filter for VRFY failures. closes gh-322.
-
+  Orion Poplawski
+   * fail2ban.d/ and jail.d/ directories are added to etc/fail2ban to facilitate
+     their use
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
 -----------
