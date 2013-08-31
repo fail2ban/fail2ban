@@ -41,6 +41,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
      closes gh-343.
 
 - New Features:
+  Anonymous:
+   * action.d/osx-afctl - an action based on afctl for osx
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
   Daniel Black
