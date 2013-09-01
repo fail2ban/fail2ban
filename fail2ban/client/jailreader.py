@@ -70,6 +70,7 @@ class JailReader(ConfigReader):
 				["int", "maxretry", 3],
 				["int", "findtime", 600],
 				["int", "bantime", 600],
+				["bool", "inactivesleep", "false"],
 				["int", "sleeptime", 1],
 				["string", "usedns", "warn"],
 				["string", "failregex", None],
@@ -139,6 +140,8 @@ class JailReader(ConfigReader):
 				stream.append(["set", self.__name, "findtime", self.__opts[opt]])
 			elif opt == "bantime":
 				stream.append(["set", self.__name, "bantime", self.__opts[opt]])
+			elif opt == "inactivesleep":
+				stream.append(["set", self.__name, "inactivesleep", self.__opts[opt]])
 			elif opt == "sleeptime":
 				stream.append(["set", self.__name, "sleeptime", self.__opts[opt]])
 			elif opt == "usedns":

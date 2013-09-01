@@ -30,6 +30,7 @@ import os
 import select
 import errno
 import sys
+import time
 
 from fail2ban import helpers
 
@@ -52,12 +53,41 @@ class JailThread(Thread):
 		self.__isIdle = False
 		## The time the thread sleeps in the loop.
 		self.__sleepTime = 1
-		
-		# initialize the pipe
-		self.__pipe = os.pipe()
-		for p in self.__pipe:
-			helpers.setNonBlocking(p)
-			helpers.closeOnExec(p)
+		## Use inactive sleeps
+		self.__inactiveSleep = False
+		## The pipe is for inactive sleep
+		self.__pipe = None
+	
+	##
+	# Set inactive sleep.
+	#
+	# This will open or close the pipe for sleeping accordingly.
+	# @param value: True or False
+	
+	def setInactiveSleep(self, value):
+		if value and not self.__pipe:
+			# Open pipe
+			self.__pipe = os.pipe()
+			for p in self.__pipe:
+				helpers.setNonBlocking(p)
+				helpers.closeOnExec(p)
+			self.__inactiveSleep = True
+		elif not value and self.__pipe:
+			self.__inactiveSleep = False
+			# Wakeup will works, since it relies on __pipe and not __inactiveSleep
+			# But the thread can't sleep with the pipe, since sleep() relies on __inactiveSleep
+			self.wakeup()
+			# The pipe is closed in sleep()
+		else:
+			logSys.debug("Not changing inactive sleep, the value hasn't changed.")
+			
+	##
+	# Get inactive sleep state.
+	#
+	# @return: True or False
+	
+	def getInactiveSleep(self):
+		return self.__inactiveSleep
 	
 	##
 	# Set the time that the thread sleeps.
@@ -139,26 +169,43 @@ class JailThread(Thread):
 		A readable pipe means a signal occurred.
 		"""
 		
-		logSys.debug("JailThread sleeping for %s", timeout if timeout else "ever")
-		
-		try:
-			ready = select.select([self.__pipe[0]], [], [], timeout)
-			if not ready[0]:
-				return
-			while os.read(self.__pipe[0], 1):
-				pass
-		except select.error, e:
-			if e.args[0] not in [errno.EAGAIN, errno.EINTR]:
-				raise
-		except OSError, e:
-			if e.errno not in [errno.EAGAIN, errno.EINTR]:
-				raise
+		if self.getInactiveSleep():
+			logSys.debug("JailThread sleeping for %s", timeout if timeout else "ever")
+			
+			try:
+				ready = select.select([self.__pipe[0]], [], [], timeout)
+				if not ready[0]:
+					return
+				while self.__pipe and os.read(self.__pipe[0], 1): # The pipe could be closed
+					pass
+			except select.error, e:
+				if e.args[0] not in [errno.EAGAIN, errno.EINTR]:
+					raise
+			except OSError, e:
+				if e.errno not in [errno.EAGAIN, errno.EINTR]:
+					raise
+		else:
+			# Close pipe if inactive sleep has been disabled
+			if self.__pipe:
+				for p in self.__pipe:
+					os.close(p)
+				self.__pipe = None
+			# Avoid mis-configuration, don't try to sleep for 0 second
+			timeout = max(1, timeout) if timeout else 1
+			logSys.debug("Traditional sleep for %d", timeout)
+			time.sleep(timeout)
 	
 	def wakeup(self):
 		"""
 		Wake up the jail by writing to the pipe
 		"""
+		# We can't test with the __inactiveSleep, since it brings a loop problem when
+		# de-activating the inactive sleep
+		if not self.__pipe:
+			logSys.debug("Not waking up, since inactivesleep is not on")
+			return
 		try:
+			logSys.debug("Waking up jail %s", self.getName())
 			if sys.version_info >= (3,):
 				os.write(self.__pipe[1], bytes('.', encoding='ascii'))
 			else:

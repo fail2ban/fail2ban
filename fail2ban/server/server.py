@@ -260,6 +260,12 @@ class Server:
 	def getBanTime(self, name):
 		return self.__jails.getAction(name).getBanTime()
 		
+	def getInactiveSleep(self, name):
+		return self.__jails.getAction(name).getInactiveSleep()
+		
+	def setInactiveSleep(self, name, value):
+		return self.__jails.getAction(name).setInactiveSleep(value)
+		
 	def getSleepTime(self, name):
 		return self.__jails.getAction(name).getSleepTime()
 		

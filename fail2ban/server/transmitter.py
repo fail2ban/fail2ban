@@ -30,6 +30,8 @@ import logging, time
 logSys = logging.getLogger(__name__)
 
 class Transmitter:
+	TRUE_STRING_VALUES = ['1', 'yes', 'true', 'on']
+	FALSE_STRING_VALUES = ['0', 'no', 'false', 'off']
 	
 	##
 	# Constructor.
@@ -181,6 +183,15 @@ class Transmitter:
 			value = command[2]
 			self.__server.setBanTime(name, int(value))
 			return self.__server.getBanTime(name)
+		elif command[1] == "inactivesleep":
+			if command[2].lower() in self.TRUE_STRING_VALUES:
+				self.__server.setInactiveSleep(name, True)
+			elif command[2].lower() in self.FALSE_STRING_VALUES:
+				self.__server.setInactiveSleep(name, False)
+			else:
+				raise Exception("Invalid inactive sleep option, must be %s or %s"
+							% (", ".join(self.TRUE_STRING_VALUES), ", ".join(self.FALSE_STRING_VALUES)))
+			return self.__server.getInactiveSleep(name)
 		elif command[1] == "sleeptime":
 			value = command[2]
 			self.__server.setSleepTime(name, int(value))
@@ -271,6 +282,8 @@ class Transmitter:
 		# Action
 		elif command[1] == "bantime":
 			return self.__server.getBanTime(name)
+		elif command[1] == "inactivesleep":
+			return self.__server.getInactiveSleep(name)
 		elif command[1] == "sleeptime":
 			return self.__server.getSleepTime(name)
 		elif command[1] == "actions":
