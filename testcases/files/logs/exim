@@ -35,3 +35,5 @@
 # failJSON: { "time": "2013-08-20T23:30:05", "match": true , "host": "91.218.72.71" }
 2013-08-20 23:30:05 plain authenticator failed for ([192.168.2.102]) [91.218.72.71]: 535 Incorrect authentication data: 1 Time(s)
 
+# failJSON: { "time": "2013-09-02T09:19:07", "match": true , "host": "118.233.20.68" }
+2013-09-02 09:19:07 login authenticator failed for (gkzwsoju) [118.233.20.68]: 535 Incorrect authentication data
