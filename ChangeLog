@@ -44,6 +44,9 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
      avoiding problems with getpid.  Also $network and iptables moved
      to Should- rc init fields
 - New Features:
+  Andy Fragen and Daniel Black
+	 * filter.d/osx-ipfw.conf - ipfw action for OSX based on random rule
+     numbers.
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
   Daniel Black
