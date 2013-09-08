@@ -66,6 +66,7 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
      and extra failure examples in sample logs
 	 * filter.d/apache-auth - added expressions for mod_authz, mod_auth and
      mod_auth_digest failures.
+   * Support %z (Timezone offset) and %f (sub-seconds) support for datedetector
   Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
    * filter.d/exim.conf -- regex hardening and extra failure examples in
      sample logs

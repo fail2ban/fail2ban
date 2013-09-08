@@ -65,16 +65,18 @@ class DateDetectorTest(unittest.TestCase):
 
 		for sdate in (
 			"Jan 23 21:59:59",
+			"Sun Jan 23 21:59:59.011 2005",
 			"Sun Jan 23 21:59:59 2005",
 			"Sun Jan 23 21:59:59",
 			"2005/01/23 21:59:59",
 			"2005.01.23 21:59:59",
 			"23/01/2005 21:59:59",
 			"23/01/05 21:59:59",
-			"23/Jan/2005:21:59:59",
+			"23/Jan/2005:22:59:59 +0100",
 			"01/23/2005:21:59:59",
 			"2005-01-23 21:59:59",
-			"23-Jan-2005 21:59:59",
+			"23-Jan-2005 21:59:59.02",
+			"23-Jan-2005 22:59:59 +0100",
 			"23-01-2005 21:59:59",
 			"01-23-2005 21:59:59.252", # reported on f2b, causes Feb29 fix to break
 			"@4000000041f4104f00000000", # TAI64N
@@ -129,6 +131,23 @@ class DateDetectorTest(unittest.TestCase):
 			for template in self.__datedetector.getTemplates()
 			if hasattr(template, "getPattern")]
 
+		ZERO = datetime.timedelta(0)
+		HOUR = datetime.timedelta(hours=1)
+
+		# A UTC class. to make %z formats work
+
+		class UTC(datetime.tzinfo):
+		    """UTC"""
+
+		    def utcoffset(self, dt):
+		        return ZERO
+
+		    def tzname(self, dt):
+				return "UTC"
+
+		    def dst(self, dt):
+				return ZERO
+
 		year = 2008 # Leap year, 08 for %y can be confused with both %d and %m
 		def iterDates(year):
 			for month in xrange(1, 13):
@@ -137,7 +156,7 @@ class DateDetectorTest(unittest.TestCase):
 						for minute in xrange(0, 60, 15):
 							for second in xrange(0, 60, 15): # Far enough?
 								yield datetime.datetime(
-									year, month, day, hour, minute, second)
+									year, month, day, hour, minute, second, 300, UTC())
 
 		overlapedTemplates = set()
 		for date in iterDates(year):
@@ -156,12 +175,12 @@ class DateDetectorTest(unittest.TestCase):
 				matchedTemplates = [template
 					for template in self.__datedetector.getTemplates()
 					if template.getHits() > 0]
-				assert matchedTemplates != [] # Should match at least one
+				self.assertNotEqual(matchedTemplates, [], "Date %r should match at least one template" % pattern)
 				if len(matchedTemplates) > 1:
 					overlapedTemplates.add((pattern, tuple(sorted(template.getName()
 						for template in matchedTemplates))))
 		if overlapedTemplates:
-			print "WARNING: The following date templates overlap:"
+			print("WARNING: The following date templates overlap:")
 			pprint.pprint(overlapedTemplates)
 
 #	def testDefaultTempate(self):

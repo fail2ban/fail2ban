@@ -114,9 +114,12 @@ class DateStrptime(DateTemplate):
 	def __init__(self):
 		DateTemplate.__init__(self)
 		self.__pattern = ""
+		self.__unsupportedStrptimeBits = False
 	
 	def setPattern(self, pattern):
-		self.__pattern = pattern.strip()
+		self.__unsupported_f = not DateStrptime._f and re.search('%f', pattern)
+		self.__unsupported_z = not DateStrptime._z and re.search('%z', pattern)
+		self.__pattern = pattern
 		
 	def getPattern(self):
 		return self.__pattern
@@ -135,13 +138,23 @@ class DateStrptime(DateTemplate):
 	def getDate(self, line):
 		date = None
 		dateMatch = self.matchDate(line)
+
 		if dateMatch:
+			datePattern = self.getPattern()
+			if self.__unsupported_f:
+				if dateMatch.group('_f'):
+					datePattern = re.sub(r'%f', dateMatch.group('_f'), datePattern)
+					logSys.debug(u"Replacing %%f with %r now %r" % (dateMatch.group('_f'), datePattern))
+			if self.__unsupported_z:
+				if dateMatch.group('_z'):
+					datePattern = re.sub(r'%z', dateMatch.group('_z'), datePattern)
+					logSys.debug(u"Replacing %%z with %r now %r" % (dateMatch.group('_z'), datePattern))
 			try:
 				# Try first with 'C' locale
-				date = list(time.strptime(dateMatch.group(), self.getPattern()))
+				date = list(time.strptime(dateMatch.group(), datePattern))
 			except ValueError:
 				# Try to convert date string to 'C' locale
-				conv = self.convertLocale(dateMatch.group())
+				conv = self.convertLocale(datePattern)
 				try:
 					date = list(time.strptime(conv, self.getPattern()))
 				except (ValueError, re.error), e:
@@ -179,8 +192,28 @@ class DateStrptime(DateTemplate):
 					# NOTE: Possibly makes week/year day incorrect
 					date[1] = MyTime.gmtime()[1]
 					date[2] = MyTime.gmtime()[2]
+			if self.__unsupported_z:
+				z = dateMatch.group('_z')
+				if z:
+					date_sec = time.mktime(date)
+					date_sec -= (int(z[1:3]) * 60 + int(z[3:])) * int(z[0] + '60')
+					date = list(time.localtime(date_sec))
+					#date[8] = 0 # dst
+					logSys.debug(u"After working with offset date now %r" % date)
+				
 		return date
 
+try:
+	time.strptime("26-Jul-2007 15:20:52.252","%d-%b-%Y %H:%M:%S.%f")
+	DateStrptime._f = True
+except ValueError:
+	DateTemplate._f = False
+
+try:
+	time.strptime("24/Mar/2013:08:58:32 -0500","%d/%b/%Y:%H:%M:%S %z")
+	DateStrptime._z = True
+except ValueError:
+	DateStrptime._z = False
 
 class DateTai64n(DateTemplate):
 	
