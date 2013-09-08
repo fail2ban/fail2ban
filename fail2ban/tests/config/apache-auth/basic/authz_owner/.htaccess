@@ -1,0 +1,5 @@
+AuthType basic
+AuthName "private area"
+AuthBasicProvider file
+AuthUserFile /var/www/html/basic/authz_owner/.htpasswd
+Require file-owner

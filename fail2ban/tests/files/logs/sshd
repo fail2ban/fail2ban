@@ -78,13 +78,21 @@ Apr 29 18:53:38 Jamess-iMac.local sshd[47831]: error: PAM: authentication error 
 # failJSON: { "time": "2005-06-25T23:53:34", "match": true , "host": "1.2.3.4" }
 Jun 25 23:53:34 [sshd] User root from 1.2.3.4 not allowed because not listed in AllowUsers
 
-#12
 # failJSON: { "match": false }
 Apr 24 01:39:19 host sshd[3719]: User root not allowed because account is locked
 # failJSON: { "match": false }
 Apr 24 01:39:19 host sshd[3719]: input_userauth_request: invalid user root [preauth]
 # failJSON: { "time": "2005-04-24T01:39:19", "match": true , "host": "198.51.100.34" }
 Apr 24 01:39:19 host sshd[3719]: error: Received disconnect from 198.51.100.34: 11: Bye Bye [preauth]
+# failJSON: { "time": "2004-12-12T20:04:39", "match": true , "host": "10.215.4.227" }
+Dec 12 20:04:39 aragorn sshd[1328]: error: PAM: User not known to the underlying authentication module for illegal user kernelitshell from 10.215.4.227 
+# failJSON: { "time": "2005-03-26T04:56:27", "match": true , "host": "example.com" }
+Mar 26 04:56:27 angel sshd[9739]: User allena from example.com not allowed because not in any group
+# failJSON: { "time": "2005-02-07T16:01:07", "match": true , "host": "192.51.100.54" }
+Feb 7 16:01:07 linux-m899 sshd[5106]: User root from 192.51.100.54 not allowed because a group is listed in DenyGroups
+# failJSON: { "time": "2005-01-05T11:15:05", "match": true , "host": "10.0.0.40" }
+Jan 5 11:15:05 NAS sshd[1966]: User root from 10.0.0.40 not allowed because none of user's groups are listed in AllowGroups
+
 # failJSON: { "match": false }
 May 27 00:16:33 host sshd[2364]: User root not allowed because account is locked
 # failJSON: { "match": false }
