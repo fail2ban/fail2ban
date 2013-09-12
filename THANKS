@@ -1,8 +1,10 @@
-Fail2Ban is an open source project with many contributions from its
-users community. Below is an alphabetically sorted partial list of the
-contributors to the project.  If you have been left off, please let us
-know (preferably send a pull request on github with the "fix") and you
-will be added
+Fail2Ban is an open source project which was conceived and originally
+developed by Cyril Jaquier until 2010.  Since then Fail2Ban grew into
+a community-driven project with many contributions from its users.
+Below is an alphabetically sorted partial list of the contributors to
+the project.  If you have been left off, please let us know
+(preferably send a pull request on github with the "fix") and you will
+be added
 
 Adrien Clerc
 ache
@@ -17,6 +19,7 @@ Christian Rauch
 Christophe Carles
 Christoph Haas
 Christos Psonis
+Cyril Jaquier
 Daniel B. Cid
 Daniel Black
 David Nutter
