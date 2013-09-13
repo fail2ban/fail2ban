@@ -167,6 +167,7 @@ tests.addTest(unittest.makeSuite(sockettestcase.Socket))
 tests.addTest(unittest.makeSuite(misctestcase.HelpersTest))
 tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
 tests.addTest(unittest.makeSuite(misctestcase.TestsUtilsTest))
+tests.addTest(unittest.makeSuite(misctestcase.CustomDateFormatsTest))
 
 # Filter
 if not opts.no_network:
