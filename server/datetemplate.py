@@ -24,7 +24,10 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import re, time
+import re, time, calendar
+
+from datetime import datetime
+from datetime import timedelta
 
 from mytime import MyTime
 import iso8601
@@ -82,12 +85,11 @@ class DateEpoch(DateTemplate):
 		self.setRegex("^\d{10}(\.\d{6})?")
 	
 	def getDate(self, line):
-		date = None
 		dateMatch = self.matchDate(line)
 		if dateMatch:
 			# extract part of format which represents seconds since epoch
-			date = list(MyTime.localtime(float(dateMatch.group())))
-		return date
+			return (float(dateMatch.group()), dateMatch)
+		return None
 
 
 ##
@@ -136,7 +138,6 @@ class DateStrptime(DateTemplate):
 	convertLocale = staticmethod(convertLocale)
 	
 	def getDate(self, line):
-		date = None
 		dateMatch = self.matchDate(line)
 
 		if dateMatch:
@@ -151,12 +152,12 @@ class DateStrptime(DateTemplate):
 					logSys.debug(u"Replacing %%z with %r now %r" % (dateMatch.group('_z'), datePattern))
 			try:
 				# Try first with 'C' locale
-				date = list(time.strptime(dateMatch.group(), datePattern))
+				date = datetime.strptime(dateMatch.group(), datePattern)
 			except ValueError:
 				# Try to convert date string to 'C' locale
-				conv = self.convertLocale(datePattern)
+				conv = self.convertLocale(dateMatch.group())
 				try:
-					date = list(time.strptime(conv, self.getPattern()))
+					date = datetime.strptime(conv, self.getPattern())
 				except (ValueError, re.error), e:
 					# Try to add the current year to the pattern. Should fix
 					# the "Feb 29" issue.
@@ -165,7 +166,7 @@ class DateStrptime(DateTemplate):
 					if not '%Y' in opattern:
 						pattern = "%s %%Y" % opattern
 						conv += " %s" % MyTime.gmtime()[0]
-						date = list(time.strptime(conv, pattern))
+						date = datetime.strptime(conv, pattern)
 					else:
 						# we are helpless here
 						raise ValueError(
@@ -173,35 +174,48 @@ class DateStrptime(DateTemplate):
 							"exception was %r and Feb 29 workaround could not "
 							"be tested due to already present year mark in the "
 							"pattern" % (opattern, e))
-			if date[0] < 2000:
-				# There is probably no year field in the logs
-				# NOTE: Possibly makes week/year day incorrect
-				date[0] = MyTime.gmtime()[0]
-				# Bug fix for #1241756
-				# If the date is greater than the current time, we suppose
-				# that the log is not from this year but from the year before
-				if time.mktime(date) > MyTime.time():
-					logSys.debug(
-						u"Correcting deduced year from %d to %d since %f > %f" %
-						(date[0], date[0]-1, time.mktime(date), MyTime.time()))
-					# NOTE: Possibly makes week/year day incorrect
-					date[0] -= 1
-				elif date[1] == 1 and date[2] == 1:
-					# If it is Jan 1st, it is either really Jan 1st or there
-					# is neither month nor day in the log.
-					# NOTE: Possibly makes week/year day incorrect
-					date[1] = MyTime.gmtime()[1]
-					date[2] = MyTime.gmtime()[2]
+
 			if self.__unsupported_z:
 				z = dateMatch.group('_z')
 				if z:
-					date_sec = time.mktime(date)
-					date_sec -= (int(z[1:3]) * 60 + int(z[3:])) * int(z[0] + '60')
-					date = list(time.localtime(date_sec))
-					#date[8] = 0 # dst
-					logSys.debug(u"After working with offset date now %r" % date)
+					delta = timedelta(hours=int(z[1:3]),minutes=int(z[3:]))
+					direction = z[0]
+					logSys.debug(u"Altering %r by removing time zone offset (%s)%s" % (date, direction, delta))
+					# here we reverse the effect of the timezone and force it to UTC
+					if direction == '+':
+						date -= delta
+					else:
+						date += delta
+					date = date.replace(tzinfo=iso8601.Utc())
+				else:
+					logSys.warn("No _z group captured and %%z is not supported on current platform"
+								" - timezone ignored and assumed to be localtime. date: %s on line: %s"
+								% (date, line))
+
+			if date.year < 2000:
+				# There is probably no year field in the logs
+				# NOTE: Possibly makes week/year day incorrect
+				date = date.replace(year=MyTime.gmtime()[0])
+				# Bug fix for #1241756
+				# If the date is greater than the current time, we suppose
+				# that the log is not from this year but from the year before
+				if date > MyTime.now():
+					logSys.debug(
+						u"Correcting deduced year by one since %s > now (%s)" %
+						(date, MyTime.time()))
+					date = date.replace(year=date.year-1)
+				elif date.month == 1 and date.day == 1:
+					# If it is Jan 1st, it is either really Jan 1st or there
+					# is neither month nor day in the log.
+					# NOTE: Possibly makes week/year day incorrect
+					date = date.replace(month=MyTime.gmtime()[1], day=1)
+
+			if date.tzinfo:
+				return ( calendar.timegm(date.utctimetuple()), dateMatch )
+			else:
+				return ( time.mktime(date.utctimetuple()), dateMatch )
 				
-		return date
+		return None
 
 try:
 	time.strptime("26-Jul-2007 15:20:52.252","%d-%b-%Y %H:%M:%S.%f")
@@ -224,15 +238,14 @@ class DateTai64n(DateTemplate):
 		self.setRegex("@[0-9a-f]{24}", wordBegin=False)
 	
 	def getDate(self, line):
-		date = None
 		dateMatch = self.matchDate(line)
 		if dateMatch:
 			# extract part of format which represents seconds since epoch
 			value = dateMatch.group()
 			seconds_since_epoch = value[2:17]
 			# convert seconds from HEX into local time stamp
-			date = list(MyTime.localtime(int(seconds_since_epoch, 16)))
-		return date
+			return (int(seconds_since_epoch, 16), dateMatch)
+		return None
 
 
 class DateISO8601(DateTemplate):
@@ -245,11 +258,10 @@ class DateISO8601(DateTemplate):
 		self.setRegex(date_re)
 	
 	def getDate(self, line):
-		date = None
 		dateMatch = self.matchDate(line)
 		if dateMatch:
 			# Parses the date.
 			value = dateMatch.group()
-			date = list(iso8601.parse_date(value).timetuple())
-		return date
+			return (calendar.timegm(iso8601.parse_date(value).utctimetuple()), dateMatch)
+		return None
 

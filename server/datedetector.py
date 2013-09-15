@@ -208,10 +208,6 @@ class DateDetector:
 		finally:
 			self.__lock.release()
 
-	def getUnixTime(self, line):
-		date = self.getTime(line)
-		return date and time.mktime(date)
-
 	##
 	# Sort the template lists using the hits score. This method is not called
 	# in this object and thus should be called from time to time.

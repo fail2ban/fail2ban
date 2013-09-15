@@ -24,9 +24,10 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, calendar, datetime, re, pprint
+import unittest, calendar, time, datetime, re, pprint
 from server.datedetector import DateDetector
 from server.datetemplate import DateTemplate
+from server.iso8601 import Utc
 
 class DateDetectorTest(unittest.TestCase):
 
@@ -40,11 +41,12 @@ class DateDetectorTest(unittest.TestCase):
 	
 	def testGetEpochTime(self):
 		log = "1138049999 [sshd] error: PAM: Authentication failure"
-		date = [2006, 1, 23, 21, 59, 59, 0, 23, 0]
+		#date = [2006, 1, 23, 21, 59, 59, 0, 23, 0]
 		dateUnix = 1138049999.0
 
-		self.assertEqual(self.__datedetector.getTime(log), date)
-		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
+		( datelog, matchlog ) = self.__datedetector.getTime(log)
+		self.assertEqual(datelog, dateUnix)
+		self.assertEqual(matchlog.group(), '1138049999')
 	
 	def testGetTime(self):
 		log = "Jan 23 21:59:59 [sshd] error: PAM: Authentication failure"
@@ -54,8 +56,9 @@ class DateDetectorTest(unittest.TestCase):
 		#      is not correctly determined atm, since year is not present
 		#      in the log entry.  Since this doesn't effect the operation
 		#      of fail2ban -- we just ignore incorrect day of the week
-		self.assertEqual(self.__datedetector.getTime(log)[:6], date[:6])
-		self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
+		( datelog, matchlog ) = self.__datedetector.getTime(log)
+		self.assertEqual(datelog, dateUnix)
+		self.assertEqual(matchlog.group(), 'Jan 23 21:59:59')
 
 	def testVariousTimes(self):
 		"""Test detection of various common date/time formats f2b should understand
@@ -72,16 +75,16 @@ class DateDetectorTest(unittest.TestCase):
 			"2005.01.23 21:59:59",
 			"23/01/2005 21:59:59",
 			"23/01/05 21:59:59",
-			"23/Jan/2005:22:59:59 +0100",
+			"23/Jan/2005:21:59:59 +0100",
 			"01/23/2005:21:59:59",
 			"2005-01-23 21:59:59",
 			"23-Jan-2005 21:59:59.02",
-			"23-Jan-2005 22:59:59 +0100",
+			"23-Jan-2005 21:59:59 +0100",
 			"23-01-2005 21:59:59",
 			"01-23-2005 21:59:59.252", # reported on f2b, causes Feb29 fix to break
 			"@4000000041f4104f00000000", # TAI64N
-			"2005-01-23T21:59:59.252Z", #ISO 8601
-			"2005-01-23T21:59:59-05:00Z", #ISO 8601 with TZ
+			"2005-01-23T20:59:59.252Z", #ISO 8601
+			"2005-01-23T15:59:59-05:00", #ISO 8601 with TZ
 			"<01/23/05@21:59:59>",
 			"050123 21:59:59", # MySQL
 			"Jan-23-05 21:59:59", # ASSP like
@@ -92,8 +95,9 @@ class DateDetectorTest(unittest.TestCase):
 			# yoh: on [:6] see in above test
 			logtime = self.__datedetector.getTime(log)
 			self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s" % sdate)
-			self.assertEqual(logtime[:6], date[:6], "getTime comparison failure for %s: \"%s\" is not \"%s\"" % (sdate, logtime[:6], date[:6]))
-			self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix, "getUnixTime failure for %s: \"%s\" is not \"%s\"" % (sdate, logtime[:6], date[:6]))
+			( logUnix, logMatch ) = logtime
+			self.assertEqual(logUnix, dateUnix, "getTime comparison failure for %s: \"%s\" is not \"%s\"" % (sdate, logUnix, dateUnix))
+			self.assertEqual(logMatch.group(), sdate)
 
 	def testStableSortTemplate(self):
 		old_names = [x.getName() for x in self.__datedetector.getTemplates()]
@@ -110,43 +114,28 @@ class DateDetectorTest(unittest.TestCase):
 		# see https://github.com/fail2ban/fail2ban/pull/130
 		# yoh: unfortunately this test is not really effective to reproduce the
 		#      situation but left in place to assure consistent behavior
-		m1 = [2012, 10, 11, 2, 37, 17]
-		self.assertEqual(
-			self.__datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')[:6],
-			m1)
+		mu = time.mktime(datetime.datetime(2012, 10, 11, 2, 37, 17).utctimetuple())
+		logdate = self.__datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')
+		self.assertNotEqual(logdate, None)
+		( logTime, logMatch ) = logdate
+		self.assertEqual(logTime, mu)
+		self.assertEqual(logMatch.group(), '2012/10/11 02:37:17')
 		self.__datedetector.sortTemplate()
 		# confuse it with year being at the end
 		for i in xrange(10):
-			self.assertEqual(
-				self.__datedetector.getTime('11/10/2012 02:37:17 [error] 18434#0')[:6],
-				m1)
+			( logTime, logMatch ) =	self.__datedetector.getTime('11/10/2012 02:37:17 [error] 18434#0')
+			self.assertEqual(logTime, mu)
+			self.assertEqual(logMatch.group(), '11/10/2012 02:37:17')
 		self.__datedetector.sortTemplate()
 		# and now back to the original
-		self.assertEqual(
-			self.__datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')[:6],
-			m1)
+		( logTime, logMatch ) = self.__datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')
+		self.assertEqual(logTime, mu)
+		self.assertEqual(logMatch.group(), '2012/10/11 02:37:17')
 
 	def testDateDetectorTemplateOverlap(self):
 		patterns = [template.getPattern()
 			for template in self.__datedetector.getTemplates()
 			if hasattr(template, "getPattern")]
-
-		ZERO = datetime.timedelta(0)
-		HOUR = datetime.timedelta(hours=1)
-
-		# A UTC class. to make %z formats work
-
-		class UTC(datetime.tzinfo):
-		    """UTC"""
-
-		    def utcoffset(self, dt):
-		        return ZERO
-
-		    def tzname(self, dt):
-				return "UTC"
-
-		    def dst(self, dt):
-				return ZERO
 
 		year = 2008 # Leap year, 08 for %y can be confused with both %d and %m
 		def iterDates(year):
@@ -156,7 +145,7 @@ class DateDetectorTest(unittest.TestCase):
 						for minute in xrange(0, 60, 15):
 							for second in xrange(0, 60, 15): # Far enough?
 								yield datetime.datetime(
-									year, month, day, hour, minute, second, 300, UTC())
+									year, month, day, hour, minute, second, 300, Utc())
 
 		overlapedTemplates = set()
 		for date in iterDates(year):
