@@ -151,6 +151,7 @@ class DateDetectorTest(unittest.TestCase):
 		for date in iterDates(year):
 			for pattern in patterns:
 				datestr = date.strftime(pattern)
+				datestr = re.sub(r'%f','300', datestr) # for python 2.5 where there is no %f
 				datestrs = set([
 					datestr,
 					re.sub(r"(\s)0", r"\1 ", datestr),
