@@ -48,8 +48,8 @@ class DateDetector:
 		try:
 			# asctime with subsecond
 			template = DateStrptime()
-			template.setName("WEEKDAY MONTH Day Hour:Minute:Second[.subsecond] Year")
-			template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}\.\d+ \d{4}")
+			template.setName("WEEKDAY MONTH Day Hour:Minute:Second.Subsecond Year")
+			template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}\.(?P<_f>\d+) \d{4}")
 			template.setPattern("%a %b %d %H:%M:%S.%f %Y")
 			self._appendTemplate(template)
 			# asctime without no subsecond
@@ -64,7 +64,7 @@ class DateDetector:
 			template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%a %b %d %H:%M:%S")
 			self._appendTemplate(template)
-			# standard - most loose from above 3 so by default follows after
+			# standard - most loose from above so by default follows after
 			template = DateStrptime()
 			template.setName("MONTH Day Hour:Minute:Second")
 			template.setRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
@@ -89,11 +89,11 @@ class DateDetector:
 			template.setRegex("\d{2}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%d/%m/%y %H:%M:%S")
 			self._appendTemplate(template)
-			# Apache format [31/Oct/2006:09:22:55 -0000]
+			# Apache format [31/Oct/2006:09:22:55 -0200]
 			template = DateStrptime()
-			template.setName("Day/MONTH/Year:Hour:Minute:Second")
-			template.setRegex("\d{2}/\S{3}/\d{4}:\d{2}:\d{2}:\d{2}")
-			template.setPattern("%d/%b/%Y:%H:%M:%S")
+			template.setName("Day/MONTH/Year:Hour:Minute:Second ZoneOffset")
+			template.setRegex("\d{2}/\S{3}/\d{4}:\d{2}:\d{2}:\d{2} (?P<_z>[+-]\d{4})")
+			template.setPattern("%d/%b/%Y:%H:%M:%S %z")
 			self._appendTemplate(template)
 			# CPanel 05/20/2008:01:57:39
 			template = DateStrptime()
@@ -115,9 +115,15 @@ class DateDetector:
 			self._appendTemplate(template)
 			# named 26-Jul-2007 15:20:52.252 
 			template = DateStrptime()
-			template.setName("Day-MONTH-Year Hour:Minute:Second[.Millisecond]")
-			template.setRegex("\d{2}-\S{3}-\d{4} \d{2}:\d{2}:\d{2}")
-			template.setPattern("%d-%b-%Y %H:%M:%S")
+			template.setName("Day-MONTH-Year Hour:Minute:Second.Subsecond")
+			template.setRegex("\d{2}-\S{3}-\d{4} \d{2}:\d{2}:\d{2}\.(?P<_f>\d+)")
+			template.setPattern("%d-%b-%Y %H:%M:%S.%f")
+			self._appendTemplate(template)
+			# roundcube 26-Jul-2007 15:20:52 +0200
+			template = DateStrptime()
+			template.setName("Day-MONTH-Year Hour:Minute:Second ZoneOffset")
+			template.setRegex("\d{2}-\S{3}-\d{4} \d{2}:\d{2}:\d{2} (?P<_z>[+-]\d{4})")
+			template.setPattern("%d-%b-%Y %H:%M:%S %z")
 			self._appendTemplate(template)
 			# 17-07-2008 17:23:25
 			template = DateStrptime()
@@ -127,9 +133,9 @@ class DateDetector:
 			self._appendTemplate(template)
 			# 01-27-2012 16:22:44.252
 			template = DateStrptime()
-			template.setName("Month-Day-Year Hour:Minute:Second[.Millisecond]")
-			template.setRegex("\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}")
-			template.setPattern("%m-%d-%Y %H:%M:%S")
+			template.setName("Month-Day-Year Hour:Minute:Second.Subsecond")
+			template.setRegex("\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\.(?P<_f>\d+)")
+			template.setPattern("%m-%d-%Y %H:%M:%S.%f")
 			self._appendTemplate(template)
 			# TAI64N
 			template = DateTai64n()
@@ -201,10 +207,6 @@ class DateDetector:
 			return None
 		finally:
 			self.__lock.release()
-
-	def getUnixTime(self, line):
-		date = self.getTime(line)
-		return date and time.mktime(date)
 
 	##
 	# Sort the template lists using the hits score. This method is not called

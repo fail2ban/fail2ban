@@ -295,18 +295,8 @@ class Filter(JailThread):
 		l = l.rstrip('\r\n')
 
 		logSys.log(7, "Working on line %r", l)
-		timeMatch = self.dateDetector.matchTime(l)
-		if timeMatch:
-			# Lets split into time part and log part of the line
-			timeLine = timeMatch.group()
-			# Lets leave the beginning in as well, so if there is no
-			# anchore at the beginning of the time regexp, we don't
-			# at least allow injection. Should be harmless otherwise
-			logLine  = l[:timeMatch.start()] + l[timeMatch.end():]
-		else:
-			timeLine = l
-			logLine = l
-		return self.findFailure(timeLine, logLine, returnRawHost, checkAllRegex)
+
+		return self.findFailure(l, returnRawHost, checkAllRegex)
 
 	def processLineAndAdd(self, line):
 		"""Processes the line for failures and populates failManager
@@ -349,16 +339,28 @@ class Filter(JailThread):
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, timeLine, logLine,
+	def findFailure(self, logLine,
 			returnRawHost=False, checkAllRegex=False):
-		logSys.log(5, "Date: %r, message: %r", timeLine, logLine)
 		failList = list()
 		# Checks if we must ignore this line.
 		if self.ignoreLine(logLine) is not None:
 			# The ignoreregex matched. Return.
-			logSys.log(7, "Matched ignoreregex and was ignored")
+			logSys.log(7, "Matched ignoreregex and was \"%s\" ignored", logLine)
 			return failList
-		date = self.dateDetector.getUnixTime(timeLine)
+		dd = self.dateDetector.getTime(logLine)
+		
+		if dd is None:
+			return failList
+		date = dd[0]
+		timeMatch = dd[1]
+		if timeMatch:
+			# Lets split into time part and log part of the line
+			timeLine = timeMatch.group()
+			# Lets leave the beginning in as well, so if there is no
+			# anchore at the beginning of the time regexp, we don't
+			# at least allow injection. Should be harmless otherwise
+			logLine  = logLine[:timeMatch.start()] + logLine[timeMatch.end():]
+
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
 			failRegex.search(logLine)
