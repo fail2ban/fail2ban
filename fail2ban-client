@@ -383,7 +383,10 @@ class Fail2banClient:
 						if cmd == "help":
 							self.dispUsage()
 						elif not cmd == "":
-							self.__processCommand(shlex.split(cmd))
+							try:
+								self.__processCommand(shlex.split(cmd))
+							except Exception, e:
+								logSys.error(e)
 			except (EOFError, KeyboardInterrupt):
 				print
 				return True
