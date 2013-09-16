@@ -220,7 +220,7 @@ class DateStrptime(DateTemplate):
 try:
 	time.strptime("26-Jul-2007 15:20:52.252","%d-%b-%Y %H:%M:%S.%f")
 	DateStrptime._f = True
-except ValueError:
+except (ValueError, KeyError):
 	DateTemplate._f = False
 
 try:
