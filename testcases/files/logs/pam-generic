@@ -9,6 +9,6 @@ May 15 18:02:12 localhost proftpd: (pam_unix) authentication failure; logname= u
 # failJSON: { "time": "2004-11-25T17:12:13", "match": true , "host": "192.168.10.3" }
 Nov 25 17:12:13 webmail pop(pam_unix)[4920]: authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=192.168.10.3 user=mailuser
 # failJSON: { "time": "2005-07-19T18:11:26", "match": true , "host": "www3.google.com" }
-Jul 19 18:11:26 srv2 vsftpd: pam_unix(vsftpd:auth): authentication failure; logname= uid=0 euid=0 tty=ftp ruser=an8767 rhost=www3.google.com
+Jul 19 18:11:26 srv2 vsftpd: pam_unix(vsftpd:auth): authentication failure; logname= uid=0 euid=0 tty=ftp ruser=an8767 rhost=www.google.com
 # failJSON: { "time": "2005-07-19T18:11:26", "match": true , "host": "www3.google.com" }
-Jul 19 18:11:26 srv2 vsftpd: pam_unix: authentication failure; logname= uid=0 euid=0 tty=ftp ruser=an8767 rhost=www3.google.com
+Jul 19 18:11:26 srv2 vsftpd: pam_unix: authentication failure; logname= uid=0 euid=0 tty=ftp ruser=an8767 rhost=www.google.com
