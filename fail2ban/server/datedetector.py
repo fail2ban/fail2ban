@@ -53,19 +53,19 @@ class DateDetector:
 	def addDefaultTemplate(self):
 		self.__lock.acquire()
 		try:
-			# asctime with subsecond
+			# asctime with subsecond: Sun Jan 23 21:59:59.011 2005 
 			self.appendTemplate("%a %b %d %H:%M:%S.%f %Y")
-			# asctime
+			# asctime: Sun Jan 23 21:59:59 2005 
 			self.appendTemplate("%a %b %d %H:%M:%S %Y")
-			# asctime without year
+			# asctime without year: Sun Jan 23 21:59:59 
 			self.appendTemplate("%a %b %d %H:%M:%S")
-			# standard
+			# standard: Jan 23 21:59:59 
 			self.appendTemplate("%b %d %H:%M:%S")
-			# simple date
+			# simple date: 2005/01/23 21:59:59 
 			self.appendTemplate("%Y/%m/%d %H:%M:%S")
-			# simple date too (from x11vnc)
+			# simple date too (from x11vnc): 23/01/2005 21:59:59 
 			self.appendTemplate("%d/%m/%Y %H:%M:%S")
-			# previous one but with year given by 2 digits
+			# previous one but with year given by 2 digits: 23/01/05 21:59:59 
 			# (See http://bugs.debian.org/537610)
 			self.appendTemplate("%d/%m/%y %H:%M:%S")
 			# Apache format [31/Oct/2006:09:22:55 -0000]
