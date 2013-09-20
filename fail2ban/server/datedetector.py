@@ -53,6 +53,8 @@ class DateDetector:
 	def addDefaultTemplate(self):
 		self.__lock.acquire()
 		try:
+			# asctime with subsecond
+			self.appendTemplate("%a %b %d %H:%M:%S.%f %Y")
 			# asctime
 			self.appendTemplate("%a %b %d %H:%M:%S %Y")
 			# asctime without year
@@ -67,17 +69,19 @@ class DateDetector:
 			# (See http://bugs.debian.org/537610)
 			self.appendTemplate("%d/%m/%y %H:%M:%S")
 			# Apache format [31/Oct/2006:09:22:55 -0000]
-			self.appendTemplate("%d/%b/%Y:%H:%M:%S")
+			self.appendTemplate("%d/%b/%Y:%H:%M:%S %z")
 			# CPanel 05/20/2008:01:57:39
 			self.appendTemplate("%m/%d/%Y:%H:%M:%S")
 			# custom for syslog-ng 2006.12.21 06:43:20
 			self.appendTemplate("%Y.%m.%d %H:%M:%S")
 			# named 26-Jul-2007 15:20:52.252 
-			self.appendTemplate("%d-%b-%Y %H:%M:%S")
+			self.appendTemplate("%d-%b-%Y %H:%M:%S.%f")
+			# roundcube 26-Jul-2007 15:20:52 +0200
+			self.appendTemplate("%d-%b-%Y %H:%M:%S %z")
 			# 17-07-2008 17:23:25
 			self.appendTemplate("%d-%m-%Y %H:%M:%S")
 			# 01-27-2012 16:22:44.252
-			self.appendTemplate("%m-%d-%Y %H:%M:%S")
+			self.appendTemplate("%m-%d-%Y %H:%M:%S.%f")
 			# TAI64N
 			template = DateTai64n()
 			template.setName("TAI64N")
