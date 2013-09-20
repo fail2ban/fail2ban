@@ -39,6 +39,7 @@ from fail2ban.server.filterpoll import FilterPoll
 from fail2ban.server.filter import FileFilter, DNSUtils
 from fail2ban.server.failmanager import FailManager
 from fail2ban.server.failmanager import FailManagerEmpty
+from fail2ban.server.mytime import MyTime
 from fail2ban.tests.utils import setUpMyTime, tearDownMyTime
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
@@ -48,7 +49,6 @@ TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 #
 
 from utils import mtimesleep
-from server.mytime import MyTime
 
 # yoh: per Steven Hiscocks's insight while troubleshooting
 # https://github.com/fail2ban/fail2ban/issues/103#issuecomment-15542836

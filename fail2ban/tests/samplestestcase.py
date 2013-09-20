@@ -23,8 +23,6 @@ __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 import unittest, sys, os, fileinput, re, time, datetime, inspect
-from server.mytime import MyTime
-
 
 if sys.version_info >= (2, 6):
 	import json
