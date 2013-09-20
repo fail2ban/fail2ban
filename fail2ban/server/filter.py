@@ -350,9 +350,7 @@ class Filter(JailThread):
 		line = line.rstrip('\r\n')
 		logSys.log(7, "Working on line %r", line)
 
-		logSys.log(7, "Working on line %r", l)
-
-		return self.findFailure(l, returnRawHost, checkAllRegex)
+		return self.findFailure(line, returnRawHost, checkAllRegex)
 
 	def processLineAndAdd(self, line):
 		"""Processes the line for failures and populates failManager
