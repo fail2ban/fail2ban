@@ -300,10 +300,7 @@ class DateISO8601(DateTemplate):
 
 	def __init__(self):
 		DateTemplate.__init__(self)
-		date_re = "[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}" \
-		".[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?" \
-		"(Z|(([-+])([0-9]{2}):([0-9]{2})))?"
-		self.setRegex(date_re)
+		self.setRegex(iso8601.ISO8601_REGEX_RAW)
 	
 	def getDate(self, line):
 		dateMatch = self.matchDate(line)
