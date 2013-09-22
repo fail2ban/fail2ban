@@ -41,10 +41,14 @@ Filters are tricky. They need to:
 * work with a variety of the versions of the software that generates the logs;
 * work with the range of logging configuration options available in the
   software;
-* work in multiple operating systems;
-* not make assumptions about the log format in excess of the software;
-* make assumptions as to how future versions of the software will log messages;
-* not be susceptible to DoS vulnerabilities; and
+* work with multiple operating systems;
+* not make assumptions about the log format in excess of the software (don't
+  assume a username doesn't contain spaces and use \S+ unless you've checked
+  the source code);
+* make assumptions as to how future versions of the software will log messages
+  (guess what would happen to the log message if different authentication
+  types are added);
+* not be susceptible to DoS vulnerabilities (see Filter Security below); and
 * match intended log lines only.
 
 Please follow the steps from Filter Test Cases to Developing Filter Regular
@@ -59,14 +63,14 @@ Purpose:
 Start by finding the log messages that the application generates related to 
 some form of authentication failure. If you are adding to an existing filter
 think about whether the log messages are of a similar importance and purpose
-to the existing filter. If you where a user of fail2ban, and did a package
+to the existing filter. If you are a user of fail2ban, and did a package
 update of fail2ban that started matching the new log messages, would anything
 unexpected happen? Would the bantime/findtime for the jail be appropriate for
 the new log messages. If it doesn't perhaps it needs to be in a separate
 filter definition, for example like exim is authentication failures and
 exim-spam contains log messages related to spam.
 
-Even if its a new filter you may consider separating the log messages into 
+Even if it is a new filter you may consider separating the log messages into
 different filters based on purpose.
 
 Cause:
@@ -100,6 +104,12 @@ include this in a comment (line beginning with #) above the failJSON metadata.
 Log samples should include only one, definitely not more than 3, examples of
 log messages of the same form. If log messages are different in different
 versions of the application log messages that show this is encouraged.
+
+Also attempt inject an IP into the application so that fail2ban detects the IP
+from user input rather than the true origin. See the Filter Security section
+and the top example in testcases/files/logs/apache-auth as to how to do this.
+One you have discovered this correct the regex so it doesn't match and provide
+this as a test case with match: false (see failJSON below).
 
 If the mechanism to create the log message isn't obvious provide a
 configuration and/or sample scripts testcases/files/config/{filtername} and
