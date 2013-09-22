@@ -30,7 +30,7 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004-2008 Cyril Jaquier, 2012-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import getopt, sys, time, logging, os, urllib, re
+import getopt, sys, time, logging, os, urllib
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
@@ -52,7 +52,7 @@ from testcases.utils import FormatterWithTraceBack
 logSys = logging.getLogger("fail2ban")
 
 def debuggexURL(sample, regex):
-	q = urllib.urlencode({ 're': re.sub('<HOST>', '(?&.ipv4)', regex),
+	q = urllib.urlencode({ 're': regex.replace('<HOST>', '(?&.ipv4)'),
 							'str': sample,
 							'flavor': 'python' })
 	return 'http://www.debuggex.com/?' + q
