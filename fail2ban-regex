@@ -30,7 +30,7 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004-2008 Cyril Jaquier, 2012-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import getopt, sys, time, logging, os
+import getopt, sys, time, logging, os, urllib, re
 
 # Inserts our own modules path first in the list
 # fix for bug #343821
@@ -50,6 +50,12 @@ from server.failregex import RegexException
 from testcases.utils import FormatterWithTraceBack
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")
+
+def debuggexURL(sample, regex):
+	q = urllib.urlencode({ 're': re.sub('<HOST>', '(?&.ipv4)', regex),
+							'str': sample,
+							'flavor': 'python' })
+	return 'http://www.debuggex.com/?' + q
 
 def shortstr(s, l=53):
 	"""Return shortened string
@@ -94,6 +100,8 @@ IGNOREREGEX:
 			   help="Log level for the Fail2Ban logger to use"),
 		Option("-v", "--verbose", action='store_true',
 			   help="Be verbose in output"),
+		Option("-d", "--debuggex", action='store_true',
+			   help="Produce debuggex.com urls for debugging there"),
 		Option("--print-all-missed", action='store_true',
 			   help="Either to print all missed lines"),
 		Option("--print-all-ignored", action='store_true',
@@ -141,7 +149,9 @@ class LineStats(object):
 	def __init__(self):
 		self.tested = self.matched = 0
 		self.missed_lines = []
+		self.missed_lines_timeextracted = []
 		self.ignored_lines = []
+		self.ignored_lines_timeextracted = []
 
 	def __str__(self):
 		return "%(tested)d lines, %(ignored)d ignored, %(matched)d matched, %(missed)d missed" % self
@@ -165,6 +175,7 @@ class Fail2banRegex(object):
 
 	def __init__(self, opts):
 		self._verbose = opts.verbose
+		self._debuggex = opts.debuggex
 		self._print_all_missed = opts.print_all_missed
 		self._print_all_ignored = opts.print_all_ignored
 
@@ -221,7 +232,7 @@ class Fail2banRegex(object):
 
 	def testRegex(self, line):
 		try:
-			ret = self._filter.processLine(line, checkAllRegex=True)
+			line, ret = self._filter.processLine(line, checkAllRegex=True)
 			for match in ret:
 				# Append True/False flag depending if line was matched by
 				# more than one regex
@@ -233,9 +244,9 @@ class Fail2banRegex(object):
 			print e
 			return False
 		except IndexError:
-			print "Sorry, but no <host> found in regex"
+			print "Sorry, but no <HOST> found in regex"
 			return False
-		return len(ret) > 0
+		return line, ret
 
 
 	def process(self, test_lines):
@@ -245,19 +256,25 @@ class Fail2banRegex(object):
 				# skip comment and empty lines
 				continue
 			is_ignored = fail2banRegex.testIgnoreRegex(line)
+			line_datetimestripped, ret = fail2banRegex.testRegex(line)
+
 			if is_ignored:
 				self._line_stats.ignored_lines.append(line)
+				self._line_stats.ignored_lines_timeextracted.append(line_datetimestripped)
 
-			if fail2banRegex.testRegex(line):
+			if len(ret) > 0:
 				assert(not is_ignored)
 				self._line_stats.matched += 1
 			else:
 				if not is_ignored:
 					self._line_stats.missed_lines.append(line)
+					self._line_stats.missed_lines_timeextracted.append(line_datetimestripped)
 			self._line_stats.tested += 1
 
 			if line_no % 10 == 0:
 				self._filter.dateDetector.sortTemplate()
+
+
 
 	def printLines(self, ltype):
 		lstats = self._line_stats
@@ -265,7 +282,23 @@ class Fail2banRegex(object):
 		l = lstats[ltype + '_lines']
 		if len(l):
 			header = "%s line(s):" % (ltype.capitalize(),)
-			if len(l) < 20 or getattr(self, '_print_all_' + ltype):
+			if self._debuggex:
+				if ltype == 'missed':
+					regexlist = self._failregex
+				else:
+					regexlist = self._ignoreregex
+				l = lstats[ltype + '_lines_timeextracted']
+				lines = len(l)*len(regexlist)
+				if lines > 20 or getattr(self, '_print_all_' + ltype):
+					ans = [[]]
+					for arg in [l, regexlist]:
+					    ans = [ x + [y] for x in ans for y in arg ]
+					b = map(lambda a: a[0] +  ' | ' + a[1].getFailRegex() + ' |  ' + debuggexURL(a[0], a[1].getFailRegex()), ans)
+					pprint_list([x.rstrip() for x in b], header)
+				else:
+					print "%s: too many to print.  Use --print-all-%s " \
+						  "to print all %d lines" % (header, ltype, lines)
+			elif len(l) < 20 or getattr(self, '_print_all_' + ltype):
 				pprint_list([x.rstrip() for x in l], header)
 			else:
 				print "%s: too many to print.  Use --print-all-%s " \
