@@ -77,7 +77,7 @@ class MyTime:
 	#@staticmethod
 	def now():
 		if MyTime.myTime is None:
-			return datetime.now()
+			return datetime.datetime.now()
 		else:
 			return datetime.datetime.fromtimestamp(MyTime.myTime)
 	now = staticmethod(now)
