@@ -57,6 +57,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		# Initialise systemd-journal connection
 		self.__journal = journal.Reader(converters={'__CURSOR': lambda x: x})
 		self.__matches = []
+		self.setDatePattern("ISO8601")
 		logSys.debug("Created FilterSystemd")
 
 

@@ -123,6 +123,8 @@ class Beautifier:
 				msg = "Current date pattern set to: "
 				if response is None:
 					msg = msg + "Default Detectors"
+				elif response[0] is None:
+					msg = msg + "%s" % response[1]
 				else:
 					msg = msg + "%s (%s)" % response
 			elif inC[2] in ("ignoreip", "addignoreip", "delignoreip"):
