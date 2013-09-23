@@ -100,7 +100,7 @@ IGNOREREGEX:
 			   help="Log level for the Fail2Ban logger to use"),
 		Option("-v", "--verbose", action='store_true',
 			   help="Be verbose in output"),
-		Option("-d", "--debuggex", action='store_true',
+		Option("-D", "--debuggex", action='store_true',
 			   help="Produce debuggex.com urls for debugging there"),
 		Option("--print-all-missed", action='store_true',
 			   help="Either to print all missed lines"),
