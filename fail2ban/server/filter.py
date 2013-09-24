@@ -205,7 +205,7 @@ class Filter(JailThread):
 		elif pattern.upper() == "EPOCH":
 			template = DateEpoch()
 			template.setName("Epoch")
-		elif patter.upper() == "TAI64N":
+		elif pattern.upper() == "TAI64N":
 			template = DateTai64n()
 			template.setName("TAI64N")
 		else:
@@ -233,10 +233,10 @@ class Filter(JailThread):
 		elif len(templates) == 1:
 			if hasattr(templates[0], "getPattern"):
 				pattern =  templates[0].getPattern()
+				if templates[0].getRegex()[0] == "^":
+					pattern = "^" + pattern
 			else:
 				pattern = None
-			if templates[0].getRegex()[0] == "^":
-				pattern = "^" + pattern
 			return pattern, templates[0].getName()
 
 	##
