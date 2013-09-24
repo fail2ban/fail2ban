@@ -198,15 +198,8 @@ class Fail2banRegex(object):
 		self._print_all_missed = opts.print_all_missed
 		self._print_all_ignored = opts.print_all_ignored
 		self._maxlines_set = False		  # so we allow to override maxlines in cmdline
+		self._datepattern_set = False
 		self._journalmatch = None
-
-		if opts.datepattern:
-			self.setDatePattern(opts.datepattern)
-
-		if opts.encoding:
-			self.encoding = opts.encoding
-		else:
-			self.encoding = locale.getpreferredencoding()
 
 		self._filter = Filter(None)
 		self._ignoreregex = list()
@@ -217,9 +210,20 @@ class Fail2banRegex(object):
 			self.setMaxLines(opts.maxlines)
 		if opts.journalmatch is not None:
 			self.setJournalMatch(opts.journalmatch.split())
+		if opts.datepattern:
+			self.setDatePattern(opts.datepattern)
+		if opts.encoding:
+			self.encoding = opts.encoding
+		else:
+			self.encoding = locale.getpreferredencoding()
+
+
 
 	def setDatePattern(self, pattern):
-		self._filter.setDatePattern(pattern)
+		if not self._datepattern_set:
+			self._filter.setDatePattern(pattern)
+			self._datepattern_set = True
+			print "Use      datepattern : %s" % self._filter.getDatePattern()[1]
 
 	def setMaxLines(self, v):
 		if not self._maxlines_set:
@@ -425,6 +429,11 @@ if __name__ == "__main__":
 	parser = get_opt_parser()
 	(opts, args) = parser.parse_args()
 
+	print
+	print "Running tests"
+	print "============="
+	print
+
 	fail2banRegex = Fail2banRegex(opts)
 
 	# We need 2 or 3 parameters
@@ -462,11 +471,6 @@ if __name__ == "__main__":
 		stdout.setFormatter(Formatter(fmt))
 	logSys.addHandler(stdout)
 
-	print
-	print "Running tests"
-	print "============="
-	print
-
 	cmd_log, cmd_regex = args[:2]
 
 	fail2banRegex.readRegex(cmd_regex, 'fail') or sys.exit(-1)
@@ -489,6 +493,7 @@ if __name__ == "__main__":
 			sys.exit(-1)
 		myjournal = journal.Reader(converters={'__CURSOR': lambda x: x})
 		journalmatch = fail2banRegex._journalmatch
+		fail2banRegex.setDatePattern("ISO8601")
 		if journalmatch:
 			try:
 				for element in journalmatch:
