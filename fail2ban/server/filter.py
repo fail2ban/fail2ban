@@ -28,7 +28,7 @@ from failmanager import FailManager
 from ticket import FailTicket
 from jailthread import JailThread
 from datedetector import DateDetector
-from datetemplate import DatePatternRegex, DateISO8601
+from datetemplate import DatePatternRegex, DateISO8601, DateEpoch, DateTai64n
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
 
@@ -199,9 +199,15 @@ class Filter(JailThread):
 
 	def setDatePattern(self, pattern):
 		dateDetector = DateDetector()
-		if pattern == "ISO8601":
+		if pattern.upper() == "ISO8601":
 			template = DateISO8601()
 			template.setName("ISO8601")
+		elif pattern.upper() == "EPOCH":
+			template = DateEpoch()
+			template.setName("Epoch")
+		elif patter.upper() == "TAI64N":
+			template = DateTai64n()
+			template.setName("TAI64N")
 		else:
 			template = DatePatternRegex()
 			if pattern[0] == "^": # Special extra to enable anchor

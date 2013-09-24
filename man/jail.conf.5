@@ -183,6 +183,9 @@ The following are acceptable format fields (see strptime(3) for descriptions):
 .nf
 %% %a %A %b %B %d %H %I %j %m %M %p %S %U %w %W %y %Y
 .fi
+.br
+
+Also, special values of \fIEpoch\fR (UNIX Timestamp), \fITAI64N\fR and \fIISO8601\fR can be used.
 .TP
 \fBjournalmatch\fR
 specifies the systemd journal match used to filter the journal entries. See \fBjournalctl(1)\fR and \fBsystemd.journal-fields(7)\fR for matches syntax and more details on special journal fields. This option is only valid for the \fIsystemd\fR backend.
