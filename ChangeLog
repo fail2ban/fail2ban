@@ -106,6 +106,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
   Orion Poplawski
    * fail2ban.d/ and jail.d/ directories are added to etc/fail2ban to facilitate
      their use
+  Mark McKinstry
+   * action.d/apf.conf - add action for Advanced Policy Firewall (apf)
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
 -----------
