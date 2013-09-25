@@ -23,13 +23,28 @@ __author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
+import time, logging, pyinotify
+
+from distutils.version import LooseVersion
+from os.path import dirname, sep as pathsep
+
 from failmanager import FailManagerEmpty
 from filter import FileFilter
 from mytime import MyTime
 
-import time, logging, pyinotify
 
-from os.path import dirname, sep as pathsep
+if not hasattr(pyinotify, '__version__') \
+  or LooseVersion(pyinotify.__version__) < '0.8.3':
+  raise ImportError("Fail2Ban requires pyinotify >= 0.8.3")
+
+# Verify that pyinotify is functional on this system
+# Even though imports -- might be dysfunctional, e.g. as on kfreebsd
+try:
+	manager = pyinotify.WatchManager()
+	del manager
+except Exception, e:
+	raise ImportError("Pyinotify is probably not functional on this system: %s"
+					  % str(e))
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -57,12 +72,17 @@ class FilterPyinotify(FileFilter):
 		logSys.debug("Created FilterPyinotify")
 
 
-	def callback(self, event):
+	def callback(self, event, origin=''):
+		logSys.debug("%sCallback for Event: %s", origin, event)
 		path = event.pathname
-		if event.mask == pyinotify.IN_CREATE:
+		if event.mask & ( pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO ):
+			# skip directories altogether
+			if event.mask & pyinotify.IN_ISDIR:
+				logSys.debug("Ignoring creation of directory %s", path)
+				return
 			# check if that is a file we care about
 			if not path in self.__watches:
-				logSys.debug("Ignoring creation of %s we do not monitor" % path)
+				logSys.debug("Ignoring creation of %s we do not monitor", path)
 				return
 			else:
 				# we need to substitute the watcher with a new one, so first
@@ -94,8 +114,8 @@ class FilterPyinotify(FileFilter):
 	def _addFileWatcher(self, path):
 		wd = self.__monitor.add_watch(path, pyinotify.IN_MODIFY)
 		self.__watches.update(wd)
-		logSys.debug("Added file watcher for %s" % path)
-		# process the file since we did get even 
+		logSys.debug("Added file watcher for %s", path)
+		# process the file since we did get even
 		self._process_file(path)
 
 
@@ -104,7 +124,7 @@ class FilterPyinotify(FileFilter):
 		wd = self.__monitor.rm_watch(wdInt)
 		if wd[wdInt]:
 			del self.__watches[path]
-			logSys.debug("Removed file watcher for %s" % path)
+			logSys.debug("Removed file watcher for %s", path)
 			return True
 		else:
 			return False
@@ -119,8 +139,8 @@ class FilterPyinotify(FileFilter):
 		if not (path_dir in self.__watches):
 			# we need to watch also  the directory for IN_CREATE
 			self.__watches.update(
-				self.__monitor.add_watch(path_dir, pyinotify.IN_CREATE))
-			logSys.debug("Added monitor for the parent directory %s" % path_dir)
+				self.__monitor.add_watch(path_dir, pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO))
+			logSys.debug("Added monitor for the parent directory %s", path_dir)
 
 		self._addFileWatcher(path)
 
@@ -141,7 +161,7 @@ class FilterPyinotify(FileFilter):
 			# since there is no other monitored file under this directory
 			wdInt = self.__watches.pop(path_dir)
 			_ = self.__monitor.rm_watch(wdInt)
-			logSys.debug("Removed monitor for the parent directory %s" % path_dir)
+			logSys.debug("Removed monitor for the parent directory %s", path_dir)
 
 
 	##
@@ -155,7 +175,7 @@ class FilterPyinotify(FileFilter):
 		self.__notifier = pyinotify.ThreadedNotifier(self.__monitor,
 			ProcessPyinotify(self))
 		self.__notifier.start()
-		logSys.debug("pyinotifier started for %s." % self.jail.getName())
+		logSys.debug("pyinotifier started for %s.", self.jail.getName())
 		# TODO: verify that there is nothing really to be done for
 		#       idle jails
 		return True
@@ -191,5 +211,4 @@ class ProcessPyinotify(pyinotify.ProcessEvent):
 
 	# just need default, since using mask on watch to limit events
 	def process_default(self, event):
-		logSys.debug("Callback for Event: %s" % event)
-		self.__FileFilter.callback(event)
+		self.__FileFilter.callback(event, origin='Default ')

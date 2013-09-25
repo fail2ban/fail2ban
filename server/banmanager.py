@@ -19,11 +19,8 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -148,7 +145,7 @@ class BanManager:
 	def addBanTicket(self, ticket):
 		try:
 			self.__lock.acquire()
-			if not self.__inBanList(ticket):
+			if not self._inBanList(ticket):
 				self.__banList.append(ticket)
 				self.__banTotal += 1
 				return True
@@ -177,7 +174,7 @@ class BanManager:
 	# @param ticket the ticket
 	# @return True if a ticket already exists
 	
-	def __inBanList(self, ticket):
+	def _inBanList(self, ticket):
 		for i in self.__banList:
 			if ticket.getIP() == i.getIP():
 				return True
@@ -208,7 +205,7 @@ class BanManager:
 			return unBanList
 		finally:
 			self.__lock.release()
-	
+
 	##
 	# Flush the ban list.
 	#
@@ -223,3 +220,21 @@ class BanManager:
 			return uBList
 		finally:
 			self.__lock.release()
+
+	##
+	# Gets the ticket for the specified IP.
+	#
+	# @return the ticket for the IP or False.
+	def getTicketByIP(self, ip):
+		try:
+			self.__lock.acquire()
+
+			# Find the ticket the IP goes with and return it
+			for i, ticket in enumerate(self.__banList):
+				if ticket.getIP() == ip:
+					# Return the ticket after removing (popping)
+					# if from the ban list.
+					return self.__banList.pop(i)
+		finally:
+			self.__lock.release()
+		return None						  # if none found

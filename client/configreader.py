@@ -19,15 +19,12 @@
 
 # Author: Cyril Jaquier
 # Modified by: Yaroslav Halchenko (SafeConfigParserWithIncludes)
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging, os
+import glob, logging, os
 from configparserinc import SafeConfigParserWithIncludes
 from ConfigParser import NoOptionError, NoSectionError
 
@@ -35,36 +32,57 @@ from ConfigParser import NoOptionError, NoSectionError
 logSys = logging.getLogger("fail2ban.client.config")
 
 class ConfigReader(SafeConfigParserWithIncludes):
+
+	DEFAULT_BASEDIR = '/etc/fail2ban'
 	
-	BASE_DIRECTORY = "/etc/fail2ban/"
-	
-	def __init__(self):
+	def __init__(self, basedir=None):
 		SafeConfigParserWithIncludes.__init__(self)
+		self.setBaseDir(basedir)
 		self.__opts = None
 	
-	#@staticmethod
-	def setBaseDir(folderName):
-		path = folderName.rstrip('/')
-		ConfigReader.BASE_DIRECTORY = path + '/'
-	setBaseDir = staticmethod(setBaseDir)
-		
-	#@staticmethod
-	def getBaseDir():
-		return ConfigReader.BASE_DIRECTORY
-	getBaseDir = staticmethod(getBaseDir)
+	def setBaseDir(self, basedir):
+		if basedir is None:
+			basedir = ConfigReader.DEFAULT_BASEDIR	# stock system location
+		self._basedir = basedir.rstrip('/')
+	
+	def getBaseDir(self):
+		return self._basedir
 	
 	def read(self, filename):
-		basename = ConfigReader.BASE_DIRECTORY + filename
-		logSys.debug("Reading " + basename)
-		bConf = basename + ".conf"
-		bLocal = basename + ".local"
-		if os.path.exists(bConf) or os.path.exists(bLocal):
-			SafeConfigParserWithIncludes.read(self, [bConf, bLocal])
-			return True
-		else:
-			logSys.error(bConf + " and " + bLocal + " do not exist")
+		if not os.path.exists(self._basedir):
+			raise ValueError("Base configuration directory %s does not exist "
+							  % self._basedir)
+		basename = os.path.join(self._basedir, filename)
+		logSys.debug("Reading configs for %s under %s "  % (basename, self._basedir))
+		config_files = [ basename + ".conf",
+						 basename + ".local" ]
+
+		# choose only existing ones
+		config_files = filter(os.path.exists, config_files)
+
+		# possible further customizations under a .conf.d directory
+		config_dir = basename + '.d'
+		config_files += sorted(glob.glob('%s/*.conf' % config_dir))
+
+		if len(config_files):
+			# at least one config exists and accessible
+			logSys.debug("Reading config files: " + ', '.join(config_files))
+			config_files_read = SafeConfigParserWithIncludes.read(self, config_files)
+			missed = [ cf for cf in config_files if cf not in config_files_read ]
+			if missed:
+				logSys.error("Could not read config files: " + ', '.join(missed))
+			if config_files_read:
+				return True
+			logSys.error("Found no accessible config files for %r under %s" %
+						 ( filename, self.getBaseDir() ))
 			return False
-	
+		else:
+			logSys.error("Found no accessible config files for %r " % filename
+						 + (["under %s" % self.getBaseDir(),
+							 "among existing ones: " + ', '.join(config_files)][bool(len(config_files))]))
+
+			return False
+
 	##
 	# Read the options.
 	#
@@ -85,7 +103,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 					v = self.getint(sec, option[1])
 				else:
 					v = self.get(sec, option[1])
-				if not pOptions == None and option[1] in pOptions:
+				if not pOptions is None and option[1] in pOptions:
 					continue
 				values[option[1]] = v
 			except NoSectionError, e:
@@ -93,9 +111,9 @@ class ConfigReader(SafeConfigParserWithIncludes):
 				logSys.error(e)
 				values[option[1]] = option[2]
 			except NoOptionError:
-				if not option[2] == None:
-					logSys.warn("'%s' not defined in '%s'. Using default value"
-								% (option[1], sec))
+				if not option[2] is None:
+					logSys.warn("'%s' not defined in '%s'. Using default one: %r"
+								% (option[1], sec, option[2]))
 					values[option[1]] = option[2]
 			except ValueError:
 				logSys.warn("Wrong value for '" + option[1] + "' in '" + sec +

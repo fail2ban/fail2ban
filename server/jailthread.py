@@ -19,11 +19,8 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -59,7 +56,7 @@ class JailThread(Thread):
 	
 	def setSleepTime(self, value):
 		self.__sleepTime = value
-		logSys.info("Set sleeptime = " + value)
+		logSys.info("Set sleeptime %s" % value)
 	
 	##
 	# Get the time that the thread sleeps.

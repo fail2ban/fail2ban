@@ -19,11 +19,8 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -35,8 +32,8 @@ logSys = logging.getLogger("fail2ban.client.config")
 
 class ActionReader(ConfigReader):
 	
-	def __init__(self, action, name):
-		ConfigReader.__init__(self)
+	def __init__(self, action, name, **kwargs):
+		ConfigReader.__init__(self, **kwargs)
 		self.__file = action[0]
 		self.__cInfo = action[1]
 		self.__name = name

@@ -13,9 +13,14 @@ Legend:
 # partially done
 * done
 
-- Removed relative imports
+- more detailed explaination in DEVELOP for new developers (eg. howto build this HEX numbers in ChangeLog)
 
-- Cleanup fail2ban-client and fail2ban-server. Move code to server/ and client/
+- Run tests though all filters/examples files - (see sshd example file) as unit
+  test
+
+* Removed relative imports
+
+* Cleanup fail2ban-client and fail2ban-server. Move code to server/ and client/
 
 - Add timeout to external commands (signal alarm, watchdog thread, etc)
 

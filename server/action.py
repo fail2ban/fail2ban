@@ -17,18 +17,12 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
-
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Cyril Jaquier and Fail2Ban Contributors"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import logging, os
-import threading
+import threading, re
 #from subprocess import call
 
 # Gets the instance of the logger.
@@ -36,6 +30,17 @@ logSys = logging.getLogger("fail2ban.actions.action")
 
 # Create a lock for running system commands
 _cmd_lock = threading.Lock()
+
+# Some hints on common abnormal exit codes
+_RETCODE_HINTS = {
+	0x7f00: '"Command not found".  Make sure that all commands in %(realCmd)r '
+	        'are in the PATH of fail2ban-server process '
+			'(grep -a PATH= /proc/`pidof -x fail2ban-server`/environ). '
+			'You may want to start '
+			'"fail2ban-server -f" separately, initiate it with '
+			'"fail2ban-client reload" in another shell session and observe if '
+			'additional informative error messages appear in the terminals.'
+	}
 
 ##
 # Execute commands.
@@ -132,6 +137,10 @@ class Action:
 	# @return True if the command succeeded
 	
 	def execActionStart(self):
+		if self.__cInfo:
+			if not Action.substituteRecursiveTags(self.__cInfo):
+				logSys.error("Cinfo/definitions contain self referencing definitions and cannot be resolved")
+				return False
 		startCmd = Action.replaceTag(self.__actionStart, self.__cInfo)
 		return Action.executeCmd(startCmd)
 	
@@ -231,8 +240,40 @@ class Action:
 		stopCmd = Action.replaceTag(self.__actionStop, self.__cInfo)
 		return Action.executeCmd(stopCmd)
 
+	##
+	# Sort out tag definitions within other tags
+	#
+	# so:		becomes:
+	# a = 3		a = 3
+	# b = <a>_3	b = 3_3
+	# @param	tags, a dictionary
+	# @returns	tags altered or False if there is a recursive definition
+	#@staticmethod
+	def substituteRecursiveTags(tags):
+		t = re.compile(r'<([^ >]+)>')
+		for tag, value in tags.iteritems():
+			value = str(value)
+			m = t.search(value)
+			while m:
+				if m.group(1) == tag:
+					# recursive definitions are bad
+					return False
+				else:
+					if tags.has_key(m.group(1)):
+						value = value[0:m.start()] + tags[m.group(1)] + value[m.end():]
+						m = t.search(value, m.start())
+					else:
+						# Missing tags are ok so we just continue on searching.
+						# cInfo can contain aInfo elements like <HOST> and valid shell
+						# constructs like <STDIN>.
+						m = t.search(value, m.start() + 1)
+			tags[tag] = value
+		return tags
+	substituteRecursiveTags = staticmethod(substituteRecursiveTags)
+
+	#@staticmethod
 	def escapeTag(tag):
-		for c in '\\#&;`|*?~<>^()[]{}$\n':
+		for c in '\\#&;`|*?~<>^()[]{}$\n\'"':
 			if c in tag:
 				tag = tag.replace(c, '\\' + c)
 		return tag
@@ -255,7 +296,7 @@ class Action:
 			if tag == 'matches':
 				# That one needs to be escaped since its content is
 				# out of our control
-				value = escapeTag(value)
+				value = Action.escapeTag(value)
 			string = string.replace('<' + tag + '>', value)
 		# New line
 		string = string.replace("<br>", '\n')
@@ -266,8 +307,8 @@ class Action:
 	# Executes a command with preliminary checks and substitutions.
 	#
 	# Before executing any commands, executes the "check" command first
-	# in order to check if prerequirements are met. If this check fails,
-	# it tries to restore a sane environnement before executing the real
+	# in order to check if pre-requirements are met. If this check fails,
+	# it tries to restore a sane environment before executing the real
 	# command.
 	# Replaces "aInfo" and "cInfo" in the query too.
 	#
@@ -286,16 +327,14 @@ class Action:
 		if not Action.executeCmd(checkCmd):
 			logSys.error("Invariant check failed. Trying to restore a sane" +
 						 " environment")
-			stopCmd = Action.replaceTag(self.__actionStop, self.__cInfo)
-			Action.executeCmd(stopCmd)
-			startCmd = Action.replaceTag(self.__actionStart, self.__cInfo)
-			Action.executeCmd(startCmd)
+			self.execActionStop()
+			self.execActionStart()
 			if not Action.executeCmd(checkCmd):
 				logSys.fatal("Unable to restore environment")
 				return False
 
 		# Replace tags
-		if not aInfo == None:
+		if not aInfo is None:
 			realCmd = Action.replaceTag(cmd, aInfo)
 		else:
 			realCmd = cmd
@@ -330,7 +369,11 @@ class Action:
 					logSys.debug("%s returned successfully" % realCmd)
 					return True
 				else:
-					logSys.error("%s returned %x" % (realCmd, retcode))
+					msg = _RETCODE_HINTS.get(retcode, None)
+ 					logSys.error("%s returned %x" % (realCmd, retcode))
+					if msg:
+						logSys.info("HINT on %x: %s"
+									% (retcode, msg % locals()))
 			except OSError, e:
 				logSys.error("%s failed with %s" % (realCmd, e))
 		finally:

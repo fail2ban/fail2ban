@@ -1,0 +1,25 @@
+# failJSON: { "time": "2013-04-07T07:08:36", "match": true , "host": "68.171.223.68" }
+Apr-07-13 07:08:36 [SSL-out] 68.171.223.68 SSL negotiation with client failed: SSL accept attempt failed with unknown errorerror:140760FC:SSL routines:SSL23_GET_CLIENT_HELLO:unknown protocol;
+# failJSON: { "time": "2013-04-07T07:08:36", "match": true , "host": "68.171.223.68" }
+Apr-07-13 07:08:36 [SSL-out] 68.171.223.68 SSL negotiation with client failed: SSL accept attempt failed with unknown errorerror:140760FC:SSL routines:SSL23_GET_CLIENT_HELLO:unknown protocol;
+# failJSON: { "time": "2013-04-07T07:10:37", "match": true , "host": "68.171.223.68" }
+Apr-07-13 07:10:37 [SSL-out] 68.171.223.68 SSL negotiation with client failed: SSL accept attempt failed with unknown errorerror:140760FC:SSL routines:SSL23_GET_CLIENT_HELLO:unknown protocol;
+# failJSON: { "time": "2013-04-07T07:12:37", "match": true , "host": "68.171.223.68" }
+Apr-07-13 07:12:37 [SSL-out] 68.171.223.68 SSL negotiation with client failed: SSL accept attempt failed with unknown errorerror:140760FC:SSL routines:SSL23_GET_CLIENT_HELLO:unknown protocol;
+# failJSON: { "time": "2013-04-07T07:14:36", "match": true , "host": "68.171.223.68" }
+Apr-07-13 07:14:36 [SSL-out] 68.171.223.68 SSL negotiation with client failed: SSL accept attempt failed with unknown errorerror:140760FC:SSL routines:SSL23_GET_CLIENT_HELLO:unknown protocol;
+# failJSON: { "time": "2013-04-27T02:25:09", "match": true , "host": "217.194.197.97" }
+Apr-27-13 02:25:09 Blocking 217.194.197.97 - too much AUTH errors (8);
+# failJSON: { "time": "2013-04-27T02:25:09", "match": true , "host": "217.194.197.97" }
+Apr-27-13 02:25:09 Blocking 217.194.197.97 - too much AUTH errors (9);
+# failJSON: { "time": "2013-04-27T02:25:09", "match": true , "host": "217.194.197.97" }
+Apr-27-13 02:25:09 Blocking 217.194.197.97 - too much AUTH errors (10);
+# failJSON: { "time": "2013-04-27T02:25:10", "match": true , "host": "217.194.197.97" }
+Apr-27-13 02:25:10 [SSL-out] 217.194.197.97 max sender authentication errors (5) exceeded -- dropping connection - after reply: 535 5.7.8 Error: authentication failed: UGFzc3dvcmQ6;
+# failJSON: { "time": "2013-04-27T02:25:10", "match": true , "host": "217.194.197.97" }
+Apr-27-13 02:25:10 [SSL-out] 217.194.197.97 max sender authentication errors (5) exceeded -- dropping connection - after reply: 535 5.7.8 Error: authentication failed: UGFzc3dvcmQ6;
+# failJSON: { "time": "2013-04-27T02:25:10", "match": true , "host": "217.194.197.97" }
+Apr-27-13 02:25:10 [SSL-out] 217.194.197.97 max sender authentication errors (5) exceeded -- dropping connection - after reply: 535 5.7.8 Error: authentication failed: UGFzc3dvcmQ6;
+# failJSON: { "time": "2013-04-27T02:25:11", "match": true , "host": "217.194.197.97" }
+Apr-27-13 02:25:11 [SSL-out] 217.194.197.97 max sender authentication errors (5) exceeded -- dropping connection - after reply: 535 5.7.8 Error: authentication failed: UGFzc3dvcmQ6;
+

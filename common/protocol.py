@@ -19,11 +19,8 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -40,6 +37,7 @@ protocol = [
 ["stop", "stops all jails and terminate the server"], 
 ["status", "gets the current status of the server"], 
 ["ping", "tests if the server is alive"], 
+["help", "return this output"], 
 ['', "LOGGING", ""],
 ["set loglevel <LEVEL>", "sets logging level to <LEVEL>. 0 is minimal, 4 is debug"], 
 ["get loglevel", "gets the logging level"], 
@@ -64,6 +62,7 @@ protocol = [
 ["set <JAIL> bantime <TIME>", "sets the number of seconds <TIME> a host will be banned for <JAIL>"], 
 ["set <JAIL> usedns <VALUE>", "sets the usedns mode for <JAIL>"],
 ["set <JAIL> banip <IP>", "manually Ban <IP> for <JAIL>"], 
+["set <JAIL> unbanip <IP>", "manually Unban <IP> in <JAIL>"], 
 ["set <JAIL> maxretry <RETRY>", "sets the number of failures <RETRY> before banning the host for <JAIL>"], 
 ["set <JAIL> addaction <ACT>", "adds a new action named <NAME> for <JAIL>"], 
 ["set <JAIL> delaction <ACT>", "removes the action <NAME> from <JAIL>"], 
@@ -89,6 +88,7 @@ protocol = [
 ["get <JAIL> actioncheck <ACT>", "gets the check command for the action <ACT> for <JAIL>"],
 ["get <JAIL> actionban <ACT>", "gets the ban command for the action <ACT> for <JAIL>"],
 ["get <JAIL> actionunban <ACT>", "gets the unban command for the action <ACT> for <JAIL>"],
+["get <JAIL> cinfo <ACT> <KEY>", "gets the value for <KEY> for the action <ACT> for <JAIL>"],
 ]
 
 ##

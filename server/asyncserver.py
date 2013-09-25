@@ -19,17 +19,14 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from pickle import dumps, loads, HIGHEST_PROTOCOL
 from common import helpers
-import asyncore, asynchat, socket, os, logging, sys, traceback
+import asyncore, asynchat, socket, os, logging, sys, traceback, fcntl
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.server")
@@ -73,8 +70,8 @@ class RequestHandler(asynchat.async_chat):
 		self.close_when_done()
 		
 	def handle_error(self):
-		e1,e2 = helpers.formatExceptionInfo()
-		logSys.error("Unexpected communication error: "+e2)
+		e1, e2 = helpers.formatExceptionInfo()
+		logSys.error("Unexpected communication error: %s" % str(e2))
 		logSys.error(traceback.format_exc().splitlines())
 		self.close()
 		
@@ -107,6 +104,7 @@ class AsyncServer(asyncore.dispatcher):
 		except TypeError:
 			logSys.warning("Type error")
 			return
+		AsyncServer.__markCloseOnExec(conn)
 		# Creates an instance of the handler class to handle the
 		# request/response on the incoming connection.
 		RequestHandler(conn, self.__transmitter)
@@ -134,6 +132,7 @@ class AsyncServer(asyncore.dispatcher):
 			self.bind(sock)
 		except Exception:
 			raise AsyncServerException("Unable to bind socket %s" % self.__sock)
+		AsyncServer.__markCloseOnExec(self.socket)
 		self.listen(1)
 		# Sets the init flag.
 		self.__init = True
@@ -142,7 +141,7 @@ class AsyncServer(asyncore.dispatcher):
 		if sys.version_info >= (2, 6): # if python 2.6 or greater...
 			logSys.debug("Detected Python 2.6 or greater. asyncore.loop() not using poll")
 			asyncore.loop(use_poll = False) # fixes the "Unexpected communication problem" issue on Python 2.6 and 3.0
-		else:
+		else: # pragma: no cover
 			logSys.debug("NOT Python 2.6/3.* - asyncore.loop() using poll")
 			asyncore.loop(use_poll = True)
 	
@@ -159,6 +158,18 @@ class AsyncServer(asyncore.dispatcher):
 			os.remove(self.__sock)
 		logSys.debug("Socket shutdown")
 
+	##
+	# Marks socket as close-on-exec to avoid leaking file descriptors when
+	# running actions involving command execution.
+
+	# @param sock: socket file.
+	
+	#@staticmethod
+	def __markCloseOnExec(sock):
+		fd = sock.fileno()
+		flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+		fcntl.fcntl(fd, fcntl.F_SETFD, flags|fcntl.FD_CLOEXEC)
+	__markCloseOnExec = staticmethod(__markCloseOnExec)
 
 ##
 # AsyncServerException is used to wrap communication exceptions.

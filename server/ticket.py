@@ -19,11 +19,8 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -42,7 +39,7 @@ class Ticket:
 		@param matches (log) lines caused the ticket
 		"""
 
-		self.__ip = ip
+		self.setIP(ip)
 		self.__time = time
 		self.__attempt = 0
 		self.__file = None
@@ -50,20 +47,17 @@ class Ticket:
 
 	def __str__(self):
 		return "%s: ip=%s time=%s #attempts=%d" % \
-			   (self.__class__, self.__ip, self.__time, self.__attempt)
+			   (self.__class__.__name__.split('.')[-1], self.__ip, self.__time, self.__attempt)
 	
 
 	def setIP(self, value):
+		if isinstance(value, basestring):
+			# guarantee using regular str instead of unicode for the IP
+			value = str(value)
 		self.__ip = value
 	
 	def getIP(self):
 		return self.__ip
-	
-	def setFile(self, value):
-		self.__file = value
-	
-	def getFile(self):
-		return self.__file
 	
 	def setTime(self, value):
 		self.__time = value

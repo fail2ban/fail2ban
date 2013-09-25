@@ -1,0 +1,3 @@
+# http://forums.powervps.com/showthread.php?t=1667
+# failJSON: { "time": "2005-06-07T01:10:56", "match": true , "host": "69.61.56.114" }
+Jun 7 01:10:56 host sshd[5937]: Did not receive identification string from 69.61.56.114

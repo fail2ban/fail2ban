@@ -33,10 +33,12 @@ logSys = logging.getLogger("fail2ban.jail")
 class Jail:
 
 	#Known backends. Each backend should have corresponding __initBackend method
-	_BACKENDS = ('pyinotify', 'gamin', 'polling')
+	# yoh: stored in a list instead of a tuple since only
+	#      list had .index until 2.6
+	_BACKENDS = ['pyinotify', 'gamin', 'polling']
 
 	def __init__(self, name, backend = "auto"):
-		self.__name = name
+		self.setName(name)
 		self.__queue = Queue.Queue()
 		self.__filter = None
 		logSys.info("Creating new jail '%s'" % self.__name)
@@ -100,6 +102,10 @@ class Jail:
 		self.__filter = FilterPyinotify(self)
 	
 	def setName(self, name):
+		if len(name) >= 20:
+			logSys.warning("Jail name %r might be too long and some commands "
+							"might not function correctly. Please shorten"
+							% name)
 		self.__name = name
 	
 	def getName(self):

@@ -17,16 +17,13 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-#
-# $Revision$
-
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Cyril Jaquier and Fail2Ban Contributors"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
+import sys
+
+from failmanager import FailManagerEmpty
 from failmanager import FailManager
 from ticket import FailTicket
 from jailthread import JailThread
@@ -43,7 +40,7 @@ logSys = logging.getLogger("fail2ban.filter")
 # Log reader class.
 #
 # This class reads a log file and detects login failures or anything else
-# that matches a given regular expression. This class is instanciated by
+# that matches a given regular expression. This class is instantiated by
 # a Jail object.
 
 class Filter(JailThread):
@@ -92,6 +89,7 @@ class Filter(JailThread):
 			self.__failRegex.append(regex)
 		except RegexException, e:
 			logSys.error(e)
+			raise e
 
 
 	def delFailRegex(self, index):
@@ -116,7 +114,7 @@ class Filter(JailThread):
 	# Add the regular expression which matches the failure.
 	#
 	# The regular expression can also match any other pattern than failures
-	# and thus can be used for many purporse.
+	# and thus can be used for many purpose.
 	# @param value the regular expression
 
 	def addIgnoreRegex(self, value):
@@ -125,6 +123,7 @@ class Filter(JailThread):
 			self.__ignoreRegex.append(regex)
 		except RegexException, e:
 			logSys.error(e)
+			raise e 
 
 	def delIgnoreRegex(self, index):
 		try:
@@ -210,7 +209,7 @@ class Filter(JailThread):
 	# file has been modified and looks for failures.
 	# @return True when the thread exits nicely
 
-	def run(self):
+	def run(self): # pragma: no cover
 		raise Exception("run() is abstract")
 
 	##
@@ -220,9 +219,17 @@ class Filter(JailThread):
 	# to enable banip fail2ban-client BAN command
 
 	def addBannedIP(self, ip):
-		unixTime = time.time()
+		unixTime = MyTime.time()
 		for i in xrange(self.failManager.getMaxRetry()):
 			self.failManager.addFailure(FailTicket(ip, unixTime))
+
+		# Perform the banning of the IP now.
+		try: # pragma: no branch - exception is the only way out
+			while True:
+				ticket = self.failManager.toBan()
+				self.jail.putFailTicket(ticket)
+		except FailManagerEmpty:
+			self.failManager.cleanup(MyTime.time())
 
 		return ip
 
@@ -277,7 +284,7 @@ class Filter(JailThread):
 		return False
 
 
-	def processLine(self, line):
+	def processLine(self, line, returnRawHost=False, checkAllRegex=False):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
 		try:
@@ -285,6 +292,9 @@ class Filter(JailThread):
 			l = line.decode('utf-8')
 		except UnicodeDecodeError:
 			l = line
+		l = l.rstrip('\r\n')
+
+		logSys.log(7, "Working on line %r", l)
 		timeMatch = self.dateDetector.matchTime(l)
 		if timeMatch:
 			# Lets split into time part and log part of the line
@@ -296,14 +306,15 @@ class Filter(JailThread):
 		else:
 			timeLine = l
 			logLine = l
-		return self.findFailure(timeLine, logLine)
+		return self.findFailure(timeLine, logLine, returnRawHost, checkAllRegex)
 
 	def processLineAndAdd(self, line):
 		"""Processes the line for failures and populates failManager
 		"""
 		for element in self.processLine(line):
-			ip = element[0]
-			unixTime = element[1]
+			failregex = element[0]
+			ip = element[1]
+			unixTime = element[2]
 			logSys.debug("Processing line with time:%s and ip:%s"
 						 % (unixTime, ip))
 			if unixTime < MyTime.time() - self.getFindTime():
@@ -314,6 +325,7 @@ class Filter(JailThread):
 				logSys.debug("Ignore %s" % ip)
 				continue
 			logSys.debug("Found %s" % ip)
+			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
 			self.failManager.addFailure(FailTicket(ip, unixTime, [line]))
 
 	##
@@ -324,11 +336,11 @@ class Filter(JailThread):
 	# @return: a boolean
 
 	def ignoreLine(self, line):
-		for ignoreRegex in self.__ignoreRegex:
+		for ignoreRegexIndex, ignoreRegex in enumerate(self.__ignoreRegex):
 			ignoreRegex.search(line)
 			if ignoreRegex.hasMatched():
-				return True
-		return False
+				return ignoreRegexIndex
+		return None
 
 	##
 	# Finds the failure in a line given split into time and log parts.
@@ -337,19 +349,23 @@ class Filter(JailThread):
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, timeLine, logLine):
+	def findFailure(self, timeLine, logLine,
+			returnRawHost=False, checkAllRegex=False):
+		logSys.log(5, "Date: %r, message: %r", timeLine, logLine)
 		failList = list()
 		# Checks if we must ignore this line.
-		if self.ignoreLine(logLine):
+		if self.ignoreLine(logLine) is not None:
 			# The ignoreregex matched. Return.
+			logSys.log(7, "Matched ignoreregex and was ignored")
 			return failList
+		date = self.dateDetector.getUnixTime(timeLine)
 		# Iterates over all the regular expressions.
-		for failRegex in self.__failRegex:
+		for failRegexIndex, failRegex in enumerate(self.__failRegex):
 			failRegex.search(logLine)
 			if failRegex.hasMatched():
 				# The failregex matched.
-				date = self.dateDetector.getUnixTime(timeLine)
-				if date == None:
+				logSys.log(7, "Matched %s", failRegex)
+				if date is None:
 					logSys.debug("Found a match for %r but no valid date/time "
 								 "found for %r. Please file a detailed issue on"
 								 " https://github.com/fail2ban/fail2ban/issues "
@@ -358,13 +374,18 @@ class Filter(JailThread):
 				else:
 					try:
 						host = failRegex.getHost()
-						ipMatch = DNSUtils.textToIp(host, self.__useDns)
-						if ipMatch:
-							for ip in ipMatch:
-								failList.append([ip, date])
-							# We matched a regex, it is enough to stop.
-							break
-					except RegexException, e:
+						if returnRawHost:
+							failList.append([failRegexIndex, host, date])
+							if not checkAllRegex:
+								break
+						else:
+							ipMatch = DNSUtils.textToIp(host, self.__useDns)
+							if ipMatch:
+								for ip in ipMatch:
+									failList.append([failRegexIndex, ip, date])
+								if not checkAllRegex:
+									break
+					except RegexException, e: # pragma: no cover - unsure if reachable
 						logSys.error(e)
 		return failList
 
@@ -405,7 +426,7 @@ class FileFilter(Filter):
 
 	def _addLogPath(self, path):
 		# nothing to do by default
-		# to be overriden by backends
+		# to be overridden by backends
 		pass
 
 
@@ -424,7 +445,7 @@ class FileFilter(Filter):
 
 	def _delLogPath(self, path):
 		# nothing to do by default
-		# to be overriden by backends
+		# to be overridden by backends
 		pass
 
 	##
@@ -462,18 +483,32 @@ class FileFilter(Filter):
 
 	def getFailures(self, filename):
 		container = self.getFileContainer(filename)
-		if container == None:
+		if container is None:
 			logSys.error("Unable to get failures in " + filename)
 			return False
 		# Try to open log file.
 		try:
-			container.open()
-		except Exception, e:
+			has_content = container.open()
+		# see http://python.org/dev/peps/pep-3151/
+		except IOError, e:
 			logSys.error("Unable to open %s" % filename)
 			logSys.exception(e)
 			return False
+		except OSError, e: # pragma: no cover - requires race condition to tigger this
+			logSys.error("Error opening %s" % filename)
+			logSys.exception(e)
+			return False
+		except OSError, e: # pragma: no cover - Requires implemention error in FileContainer to generate
+			logSys.error("Internal errror in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
+			logSys.exception(e)
+			return False
 
-		while True:
+		# yoh: has_content is just a bool, so do not expect it to
+		# change -- loop is exited upon break, and is not entered at
+		# all if upon container opening that one was empty.  If we
+		# start reading tested to be empty container -- race condition
+		# might occur leading at least to tests failures.
+		while has_content:
 			line = container.readline()
 			if (line == "") or not self._isActive():
 				# The jail reached the bottom or has been stopped
@@ -498,7 +533,7 @@ class FileFilter(Filter):
 try:
 	import hashlib
 	md5sum = hashlib.md5
-except ImportError:
+except ImportError: # pragma: no cover
 	# hashlib was introduced in Python 2.5.  For compatibility with those
 	# elderly Pythons, import from md5
 	import md5
@@ -534,32 +569,46 @@ class FileContainer:
 		self.__handler = open(self.__filename)
 		# Set the file descriptor to be FD_CLOEXEC
 		fd = self.__handler.fileno()
-		fcntl.fcntl(fd, fcntl.F_SETFD, fd | fcntl.FD_CLOEXEC)
+		flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+		fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
+		# Stat the file before even attempting to read it
+		stats = os.fstat(self.__handler.fileno())
+		if not stats.st_size:
+			# yoh: so it is still an empty file -- nothing should be
+			#      read from it yet
+			# print "D: no content -- return"
+			return False
 		firstLine = self.__handler.readline()
 		# Computes the MD5 of the first line.
 		myHash = md5sum(firstLine).digest()
-		stats = os.fstat(self.__handler.fileno())
+		## print "D: fn=%s hashes=%s/%s inos=%s/%s pos=%s rotate=%s" % (
+		## 	self.__filename, self.__hash, myHash, stats.st_ino, self.__ino, self.__pos,
+		## 	self.__hash != myHash or self.__ino != stats.st_ino)
+		## sys.stdout.flush()
 		# Compare hash and inode
 		if self.__hash != myHash or self.__ino != stats.st_ino:
-			logSys.info("Log rotation detected for %s" % self.__filename)
+			logSys.debug("Log rotation detected for %s" % self.__filename)
 			self.__hash = myHash
 			self.__ino = stats.st_ino
 			self.__pos = 0
 		# Sets the file pointer to the last position.
 		self.__handler.seek(self.__pos)
+		return True
 
 	def readline(self):
-		if self.__handler == None:
+		if self.__handler is None:
 			return ""
 		return self.__handler.readline()
 
 	def close(self):
-		if not self.__handler == None:
+		if not self.__handler is None:
 			# Saves the last position.
 			self.__pos = self.__handler.tell()
 			# Closes the file.
 			self.__handler.close()
 			self.__handler = None
+		## print "D: Closed %s with pos %d" % (handler, self.__pos)
+		## sys.stdout.flush()
 
 
 
@@ -582,9 +631,9 @@ class DNSUtils:
 		"""
 		try:
 			return socket.gethostbyname_ex(dns)[2]
-		except socket.gaierror:
-			logSys.warn("Unable to find a corresponding IP address for %s"
-						% dns)
+		except socket.error, e:
+			logSys.warn("Unable to find a corresponding IP address for %s: %s"
+						% (dns, e))
 			return list()
 	dnsToIp = staticmethod(dnsToIp)
 
@@ -630,7 +679,7 @@ class DNSUtils:
 			ip = DNSUtils.dnsToIp(text)
 			ipList.extend(ip)
 			if ip and useDns == "warn":
-				logSys.warning("Determined IP using DNS Reverse Lookup: %s = %s",
+				logSys.warning("Determined IP using DNS Lookup: %s = %s",
 					text, ipList)
 
 		return ipList

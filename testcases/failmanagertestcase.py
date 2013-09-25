@@ -19,11 +19,8 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -35,11 +32,11 @@ class AddFailure(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.__items = [['193.168.0.128', 1167605999.0],
-					    ['193.168.0.128', 1167605999.0],
-					    ['193.168.0.128', 1167605999.0],
-					    ['193.168.0.128', 1167605999.0],
-					    ['193.168.0.128', 1167605999.0],
+		self.__items = [[u'193.168.0.128', 1167605999.0],
+					    [u'193.168.0.128', 1167605999.0],
+					    [u'193.168.0.128', 1167605999.0],
+					    [u'193.168.0.128', 1167605999.0],
+					    [u'193.168.0.128', 1167605999.0],
 					    ['87.142.124.10', 1167605999.0],
 					    ['87.142.124.10', 1167605999.0],
 					    ['87.142.124.10', 1167605999.0],
@@ -80,6 +77,21 @@ class AddFailure(unittest.TestCase):
 		#ticket = FailTicket('193.168.0.128', None)
 		ticket = self.__failManager.toBan()
 		self.assertEqual(ticket.getIP(), "193.168.0.128")
+		self.assertTrue(isinstance(ticket.getIP(), str))
+
+		# finish with rudimentary tests of the ticket
+		# verify consistent str
+		ticket_str = str(ticket)
+		self.assertEqual(
+			ticket_str,
+			'FailTicket: ip=193.168.0.128 time=1167605999.0 #attempts=5')
+		# and some get/set-ers otherwise not tested
+		ticket.setTime(1000002000.0)
+		self.assertEqual(ticket.getTime(), 1000002000.0)
+		# and str() adjusted correspondingly
+		self.assertEqual(
+			str(ticket),
+			'FailTicket: ip=193.168.0.128 time=1000002000.0 #attempts=5')
 	
 	def testbanNOK(self):
 		self.__failManager.setMaxRetry(10)

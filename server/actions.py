@@ -19,11 +19,8 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -77,7 +74,8 @@ class Actions(JailThread):
 		for action in self.__actions:
 			if action.getName() == name:
 				self.__actions.remove(action)
-				break
+				return
+		raise KeyError("Invalid Action name: %s" % name)
 	
 	##
 	# Returns an action.
@@ -91,7 +89,7 @@ class Actions(JailThread):
 		for action in self.__actions:
 			if action.getName() == name:
 				return action
-		raise KeyError
+		raise KeyError("Invalid Action name")
 	
 	##
 	# Returns the last defined action.
@@ -120,6 +118,19 @@ class Actions(JailThread):
 	def getBanTime(self):
 		return self.__banManager.getBanTime()
 	
+	##
+	# Remove a banned IP now, rather than waiting for it to expire, even if set to never expire.
+	#
+	# @return the IP string or 'None' if not unbanned.
+	def removeBannedIP(self, ip):
+		# Find the ticket with the IP.
+		ticket = self.__banManager.getTicketByIP(ip)
+		if ticket is not None:
+			# Unban the IP.
+			self.__unBan(ticket)
+			return ip
+		raise ValueError("IP %s is not banned" % ip)
+
 	##
 	# Main loop.
 	#
@@ -163,13 +174,13 @@ class Actions(JailThread):
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "".join(bTicket.getMatches())
 			if self.__banManager.addBanTicket(bTicket):
-				logSys.warn("[%s] Ban %s" % (self.jail.getName(), str(aInfo["ip"])))
+				logSys.warn("[%s] Ban %s" % (self.jail.getName(), aInfo["ip"]))
 				for action in self.__actions:
 					action.execActionBan(aInfo)
 				return True
 			else:
-				logSys.warn("[%s] %s already banned" % (self.jail.getName(), 
-														str(aInfo["ip"])))
+				logSys.info("[%s] %s already banned" % (self.jail.getName(),
+														aInfo["ip"]))
 		return False
 	
 	##

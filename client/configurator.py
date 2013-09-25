@@ -19,11 +19,8 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -43,15 +40,19 @@ class Configurator:
 		self.__fail2ban = Fail2banReader()
 		self.__jails = JailsReader()
 	
-	#@staticmethod
-	def setBaseDir(folderName):
-		ConfigReader.setBaseDir(folderName)
-	setBaseDir = staticmethod(setBaseDir)
+	def setBaseDir(self, folderName):
+		self.__fail2ban.setBaseDir(folderName)
+		self.__jails.setBaseDir(folderName)
 	
-	#@staticmethod
-	def getBaseDir():
-		return ConfigReader.getBaseDir()
-	getBaseDir = staticmethod(getBaseDir)
+	def getBaseDir(self):
+		fail2ban_basedir = self.__fail2ban.getBaseDir()
+		jails_basedir = self.__jails.getBaseDir()
+		if fail2ban_basedir != jails_basedir:
+			logSys.error("fail2ban.conf and jails.conf readers have differing "
+						 "basedirs: %r and %r. "
+						 "Returning the one for fail2ban.conf"
+						 % (fail2ban_basedir, jails_basedir))
+		return fail2ban_basedir
 	
 	def readEarly(self):
 		self.__fail2ban.read()

@@ -19,11 +19,8 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -40,8 +37,6 @@ logSys = logging.getLogger("fail2ban.server")
 
 class Server:
 	
-	PID_FILE = "/var/run/fail2ban/fail2ban.pid"
-
 	def __init__(self, daemon = False):
 		self.__loggingLock = Lock()
 		self.__lock = RLock()
@@ -59,7 +54,7 @@ class Server:
 		logSys.debug("Caught signal %d. Exiting" % signum)
 		self.quit()
 	
-	def start(self, sock, force = False):
+	def start(self, sock, pidfile, force = False):
 		logSys.info("Starting Fail2ban v" + version.version)
 		
 		# Install signal handlers
@@ -68,7 +63,7 @@ class Server:
 		
 		# First set the mask to only allow access to owner
 		os.umask(0077)
-		if self.__daemon:
+		if self.__daemon: # pragma: no cover
 			logSys.info("Starting in daemon mode")
 			ret = self.__createDaemon()
 			if ret:
@@ -79,8 +74,8 @@ class Server:
 		
 		# Creates a PID file.
 		try:
-			logSys.debug("Creating PID file %s" % Server.PID_FILE)
-			pidFile = open(Server.PID_FILE, 'w')
+			logSys.debug("Creating PID file %s" % pidfile)
+			pidFile = open(pidfile, 'w')
 			pidFile.write("%s\n" % os.getpid())
 			pidFile.close()
 		except IOError, e:
@@ -94,17 +89,11 @@ class Server:
 			logSys.error("Could not start server: %s", e)
 		# Removes the PID file.
 		try:
-			logSys.debug("Remove PID file %s" % Server.PID_FILE)
-			os.remove(Server.PID_FILE)
+			logSys.debug("Remove PID file %s" % pidfile)
+			os.remove(pidfile)
 		except OSError, e:
 			logSys.error("Unable to remove PID file: %s" % e)
 		logSys.info("Exiting Fail2ban")
-		# Shutdowns the logging.
-		try:
-			self.__loggingLock.acquire()
-			logging.shutdown()
-		finally:
-			self.__loggingLock.release()
 	
 	def quit(self):
 		# Stop communication first because if jail's unban action
@@ -114,8 +103,17 @@ class Server:
 		# are exiting)
 		# See https://github.com/fail2ban/fail2ban/issues/7
 		self.__asyncServer.stop()
+
 		# Now stop all the jails
 		self.stopAllJail()
+
+		# Only now shutdown the logging.
+		try:
+			self.__loggingLock.acquire()
+			logging.shutdown()
+		finally:
+			self.__loggingLock.release()
+
 	
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend)
@@ -240,6 +238,9 @@ class Server:
 	
 	def setBanIP(self, name, value):
 		return self.__jails.getFilter(name).addBannedIP(value)
+		
+	def setUnbanIP(self, name, value):
+		return self.__jails.getAction(name).removeBannedIP(value)
 		
 	def getBanTime(self, name):
 		return self.__jails.getAction(name).getBanTime()
@@ -366,16 +367,26 @@ class Server:
 					logSys.error("Unable to log to " + target)
 					logSys.info("Logging to previous target " + self.__logTarget)
 					return False
-			# Removes previous handlers
-			for handler in logging.getLogger("fail2ban").handlers:
-				# Closes the handler.
+			# Removes previous handlers -- in reverse order since removeHandler
+			# alter the list in-place and that can confuses the iterable
+			for handler in logging.getLogger("fail2ban").handlers[::-1]:
+				# Remove the handler.
 				logging.getLogger("fail2ban").removeHandler(handler)
-				handler.close()
+				# And try to close -- it might be closed already
+				try:
+					handler.flush()
+					handler.close()
+				except (ValueError, KeyError): # pragma: no cover
+					# Is known to be thrown after logging was shutdown once
+					# with older Pythons -- seems to be safe to ignore there
+					# At least it was still failing on 2.6.2-0ubuntu1 (jaunty)
+					if sys.version_info >= (2,6,3):
+						raise
 			# tell the handler to use this format
 			hdlr.setFormatter(formatter)
 			logging.getLogger("fail2ban").addHandler(hdlr)
 			# Does not display this message at startup.
-			if not self.__logTarget == None:
+			if not self.__logTarget is None:
 				logSys.info("Changed logging target to %s for Fail2ban v%s" %
 						(target, version.version))
 			# Sets the logging target.
@@ -391,7 +402,7 @@ class Server:
 		finally:
 			self.__loggingLock.release()
 	
-	def __createDaemon(self):
+	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the
 			background as a daemon.
 		

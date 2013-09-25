@@ -18,13 +18,7 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
-
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -42,37 +36,47 @@ to reject the IP address or executes user defined
 commands.'''
 
 setup(
-	name = "fail2ban", 
-	version = version, 
-	description = "Ban IPs that make too many password failure", 
-	long_description = longdesc, 
-	author = "Cyril Jaquier", 
-	author_email = "cyril.jaquier@fail2ban.org", 
-	url = "http://www.fail2ban.org", 
-	license = "GPL", 
-	platforms = "Posix", 
+	name = "fail2ban",
+	version = version,
+	description = "Ban IPs that make too many password failure",
+	long_description = longdesc,
+	author = "Cyril Jaquier",
+	author_email = "cyril.jaquier@fail2ban.org",
+	url = "http://www.fail2ban.org",
+	license = "GPL",
+	platforms = "Posix",
 	scripts =	[
-					'fail2ban-client', 
-					'fail2ban-server', 
+					'fail2ban-client',
+					'fail2ban-server',
 					'fail2ban-regex'
-				], 
+				],
 	packages =	[
-					'common', 
-					'client', 
-					'server'
-				], 
+					'common',
+					'client',
+					'server',
+					'testcases'
+				],
 	data_files =	[
-						('/etc/fail2ban', 
+						('/etc/fail2ban',
 							glob("config/*.conf")
-						), 
-						('/etc/fail2ban/filter.d', 
+						),
+						('/etc/fail2ban/filter.d',
 							glob("config/filter.d/*.conf")
-						), 
-						('/etc/fail2ban/action.d', 
+						),
+						('/etc/fail2ban/action.d',
 							glob("config/action.d/*.conf")
+						),
+						('/etc/fail2ban/fail2ban.d',
+							''
+						),
+						('/etc/fail2ban/jail.d',
+							''
 						),
 						('/var/run/fail2ban',
 							''
+						),
+						('/usr/share/doc/fail2ban',
+							['README.md', 'DEVELOP', 'doc/run-rootless.txt']
 						)
 					]
 )
@@ -84,20 +88,14 @@ elements =	{
 				"/etc/":
 					[
 						"fail2ban.conf"
-					], 
+					],
 				"/usr/bin/":
 					[
 						"fail2ban.py"
 					], 
-				"/usr/lib/fail2ban/firewall/":
-					[
-						"iptables.py", 
-						"ipfwadm.py", 
-						"ipfw.py"
-					],
 				"/usr/lib/fail2ban/":
 					[
-						"version.py", 
+						"version.py",
 						"protocol.py"
 					]
 			}

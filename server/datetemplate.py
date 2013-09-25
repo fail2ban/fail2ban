@@ -19,11 +19,8 @@
 
 # Author: Cyril Jaquier
 # 
-# $Revision$
 
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -50,8 +47,11 @@ class DateTemplate:
 	def getName(self):
 		return self.__name
 	
-	def setRegex(self, regex):
-		self.__regex = regex.strip()
+	def setRegex(self, regex, wordBegin=True):
+		regex = regex.strip()
+		if (wordBegin and not re.search(r'^\^', regex)):
+			regex = r'\b' + regex
+		self.__regex = regex
 		self.__cRegex = re.compile(regex)
 		
 	def getRegex(self):
@@ -59,11 +59,15 @@ class DateTemplate:
 	
 	def getHits(self):
 		return self.__hits
+
+	def incHits(self):
+		self.__hits += 1
+
+	def resetHits(self):
+		self.__hits = 0
 	
 	def matchDate(self, line):
 		dateMatch = self.__cRegex.search(line)
-		if not dateMatch == None:
-			self.__hits += 1
 		return dateMatch
 	
 	def getDate(self, line):
@@ -158,6 +162,7 @@ class DateStrptime(DateTemplate):
 							"pattern" % (opattern, e))
 			if date[0] < 2000:
 				# There is probably no year field in the logs
+				# NOTE: Possibly makes week/year day incorrect
 				date[0] = MyTime.gmtime()[0]
 				# Bug fix for #1241756
 				# If the date is greater than the current time, we suppose
@@ -166,10 +171,12 @@ class DateStrptime(DateTemplate):
 					logSys.debug(
 						u"Correcting deduced year from %d to %d since %f > %f" %
 						(date[0], date[0]-1, time.mktime(date), MyTime.time()))
+					# NOTE: Possibly makes week/year day incorrect
 					date[0] -= 1
 				elif date[1] == 1 and date[2] == 1:
 					# If it is Jan 1st, it is either really Jan 1st or there
 					# is neither month nor day in the log.
+					# NOTE: Possibly makes week/year day incorrect
 					date[1] = MyTime.gmtime()[1]
 					date[2] = MyTime.gmtime()[2]
 		return date
@@ -180,7 +187,8 @@ class DateTai64n(DateTemplate):
 	def __init__(self):
 		DateTemplate.__init__(self)
 		# We already know the format for TAI64N
-		self.setRegex("@[0-9a-f]{24}")
+		# yoh: we should not add an additional front anchor
+		self.setRegex("@[0-9a-f]{24}", wordBegin=False)
 	
 	def getDate(self, line):
 		date = None
@@ -211,3 +219,4 @@ class DateISO8601(DateTemplate):
 			value = dateMatch.group()
 			date = list(iso8601.parse_date(value).timetuple())
 		return date
+

@@ -17,19 +17,13 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
-
-__author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Cyril Jaquier, Yaroslav Halchenko"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2013- Yaroslav Halchenko"
 __license__ = "GPL"
 
-from server.jails import UnknownJailException
-from server.jails import DuplicateJailException
 import logging
+
+from common.exceptions import UnknownJailException, DuplicateJailException
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.client.config")
@@ -62,10 +56,10 @@ class Beautifier:
 				msg = "Jail started"
 			elif inC[0] == "stop":
 				if len(inC) == 1:
-					if response == None:
+					if response is None:
 						msg = "Shutdown successful"
 				else:
-					if response == None:
+					if response is None:
 						msg = "Jail stopped"
 			elif inC[0] == "add":
 				msg = "Added jail " + response

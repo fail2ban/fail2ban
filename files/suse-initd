@@ -1,103 +1,114 @@
 #!/bin/sh
 #
-# /etc/init.d/fail2ban
-#   and its symbolic link
-# /usr/sbin/rcfail2ban
-#
 ### BEGIN INIT INFO
 # Provides:          fail2ban
-# Required-Start:    $syslog $remote_fs sendmail
-# Required-Stop:     $syslog $remote_fs
-# Should-Stop: $time ypbind sendmail
+# Required-Start:    $remote_fs $local_fs
+# Should-Start:      $syslog $time $network iptables
+# Required-Stop:     $remote_fs $local_fs
+# Should-Stop:       $syslog $time $network iptables
 # Default-Start:     3 5
 # Default-Stop:      0 1 2 6
-# Description:       startup Fail2Ban
+# Pidfile:           /var/run/fail2ban/fail2ban.pid
+# Short-Description: Bans IPs with too many authentication failures
+# Description:       Start fail2ban to scan logfiles and ban IP addresses
+#      which make too many logfiles failures, and/or sent e-mails about
 ### END INIT INFO
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/sbin:/usr/sbin:/usr/bin:/bin
-FAIL2BAN_BIN=/usr/local/bin/fail2ban-client
-FAIL2BAN_SERVER=/usr/local/bin/fail2ban-server
-FAIL2BAN_SOCKET=/var/run/fail2ban/fail2ban.sock
-test -x $FAIL2BAN_BIN || { echo "$FAIL2BAN_BIN not installed";
-        if [ "$1" = "stop" ]; then exit 0;
-        else exit 5; fi; }
 
-# Check for existence of needed config file and read it
-FAIL2BAN_CONFIG=/etc/fail2ban/fail2ban.conf
-test -r $FAIL2BAN_CONFIG || { echo "$FAIL2BAN_CONFIG not existing";
-        if [ "$1" = "stop" ]; then exit 0;
-        else exit 6; fi; }
+# Check for missing binaries (stale symlinks should not happen)
+FAIL2BAN_CLI=/usr/bin/fail2ban-client
+test -x $FAIL2BAN_CLI || { echo "$FAIL2BAN_CLI not installed";
+	if [ "$1" = "stop" ]; then exit 0;
+	else exit 5; fi; }
+FAIL2BAN_SRV=/usr/bin/fail2ban-server
+test -x $FAIL2BAN_SRV || { echo "$FAIL2BAN_SRV not installed";
+	if [ "$1" = "stop" ]; then exit 0;
+	else exit 5; fi; }
+
+FAIL2BAN_CONFIG="/etc/sysconfig/fail2ban"
+FAIL2BAN_SOCKET_DIR="/var/run/fail2ban"
+FAIL2BAN_SOCKET="$FAIL2BAN_SOCKET_DIR/fail2ban.sock"
+FAIL2BAN_PID="$FAIL2BAN_SOCKET_DIR/fail2ban.pid"
+
+if [ -e $FAIL2BAN_CONFIG ]; then
+	. $FAIL2BAN_CONFIG
+fi
 
 . /etc/rc.status
-
-# Reset status of this service
 rc_reset
 
 case "$1" in
     start)
-        echo -n "Starting Fail2Ban "
-        # a cleanup workaround, since /etc/init.d/boot.local removes only. 
-        # regular files, and not sockets 
-        if test -e $FAIL2BAN_SOCKET; then
-            if ! lsof -n $FAIL2BAN_SOCKET &>/dev/null; then
-                rm $FAIL2BAN_SOCKET
-            fi
-        fi
-        /sbin/startproc $FAIL2BAN_BIN start &>/dev/null
-        rc_status -v
-        ;;
-    stop)
-        echo -n "Shutting down Fail2ban "
-        /sbin/startproc $FAIL2BAN_BIN -q stop
-        rc_status -v
-        ;;
-    try-restart|condrestart)
-        if test "$1" = "condrestart"; then
-                echo "${attn} Use try-restart ${done}(LSB)${attn} rather than condrestart ${warn}(RH)${norm}"
-        fi
-        $0 status
-        if test $? = 0; then
-                $0 restart
-        else
-                rc_reset        # Not running is not a failure.
-        fi
-        rc_status
-        ;;
-    restart)
-        $0 stop
-        echo -n "-wait a minute "
-        i=60
-        while [ -e $FAIL2BAN_SOCKET ] && [ $i -gt 0 ]; do
-                sleep 1
-                i=$[$i-1]
-                echo -n "."
-        done
-        echo "."
-        $0 start
+	echo -n "Starting fail2ban "
 
-        # Remember status and be quiet
-        rc_status
-        ;;
-    force-reload)
-        echo -n "Reload service Fail2ban "
-        /sbin/startproc $FAIL2BAN_BIN -q reload
-        rc_status -v
-        ;;
-    reload)
-        echo -n "Reload service Fail2ban "
-        /sbin/startproc $FAIL2BAN_BIN -q reload
-        rc_status -v
-        ;;
+	if [ ! -d $FAIL2BAN_SOCKET_DIR ]; then
+		mkdir -p $FAIL2BAN_SOCKET_DIR
+	fi
+
+	if [ -e $FAIL2BAN_SOCKET ]; then
+		if ! lsof -n $FAIL2BAN_SOCKET &>/dev/null; then
+			rm $FAIL2BAN_SOCKET
+		fi
+	fi
+	$FAIL2BAN_CLI -x -q $FAIL2BAN_OPTIONS start &>/dev/null 2>&1
+
+	rc_status -v
+	;;
+    stop)
+	echo -n "Shutting down fail2ban "
+	## Stop daemon with built-in functionality 'stop'
+	/sbin/startproc -w $FAIL2BAN_CLI -q stop > /dev/null 2>&1
+
+	if [ -f $FAIL2BAN_SOCKET ]
+         then
+         echo "$FAIL2BAN_SOCKET  not removed .. removing .." 
+         rm $FAIL2BAN_SOCKET
+        fi
+        if [ -f $FAIL2BAN_PID ]
+         then
+         echo "$FAIL2BAN_PID  not removed .. removing .." 
+         rm $FAIL2BAN_PID
+        fi
+
+
+	rc_status -v
+	;;
+    try-restart|condrestart)
+	$0 status
+	if test $? = 0; then
+		$0 restart
+	else
+		rc_reset	# Not running is not a failure.
+	fi
+	rc_status
+	;;
+    restart)
+	$0 stop
+	i=60
+	while [ -e $FAIL2BAN_SOCKET ] && [ $i -gt 0 ]; do
+		sleep 1
+		i=$[$i-1]
+		echo -n "."
+	done
+	$0 start
+
+	rc_status
+	;;
+    reload|force-reload)
+	echo -n "Reload service Fail2ban "
+	/sbin/startproc $FAIL2BAN_CLI -q reload > /dev/null 2>&1
+
+	rc_status -v
+	;;
     status)
-        echo -n "Checking for service Fail2ban "
-        /sbin/checkproc $FAIL2BAN_SERVER
-        rc_status -v
-        ;;
-    probe)
-        test /etc/fail2ban/fail2ban.conf -nt /var/run/fail2ban.pid && echo reload
-        ;;
+	echo -n "Checking for service fail2ban "
+	/sbin/checkproc $FAIL2BAN_SRV
+
+	rc_status -v
+	;;
     *)
-        echo "Usage: $0 {start|stop|status|try-restart|restart|force-reload|reload|probe}"
-        exit 1
-        ;;
+	echo "Usage: $0 {start|stop|status|try-restart|restart|force-reload|reload|probe}"
+	exit 1
+	;;
 esac
 rc_exit
+

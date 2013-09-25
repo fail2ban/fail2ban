@@ -17,13 +17,7 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Author: Cyril Jaquier
-# 
-# $Revision$
-
 __author__ = "Cyril Jaquier"
-__version__ = "$Revision$"
-__date__ = "$Date$"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
@@ -47,7 +41,7 @@ class Regex:
 		self._matchCache = None
 		# Perform shortcuts expansions.
 		# Replace "<HOST>" with default regular expression for host.
-		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>[\w\-.^_]+)")
+		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>[\w\-.^_]*\w)")
 		if regex.lstrip() == '':
 			raise RegexException("Cannot add empty regex")
 		try:
@@ -56,7 +50,8 @@ class Regex:
 		except sre_constants.error:
 			raise RegexException("Unable to compile regular expression '%s'" %
 								 regex)
-	
+	def __str__(self):
+		return "%s(%r)" % (self.__class__.__name__, self._regex)
 	##
 	# Gets the regular expression.
 	#
@@ -125,9 +120,9 @@ class FailRegex(Regex):
 	
 	def getHost(self):
 		host = self._matchCache.group("host")
-		if host == None:
+		if host is None:
 			# Gets a few information.
 			s = self._matchCache.string
 			r = self._matchCache.re
 			raise RegexException("No 'host' found in '%s' using '%s'" % (s, r))
-		return host
+		return str(host)
