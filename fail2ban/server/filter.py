@@ -74,6 +74,7 @@ class Filter(JailThread):
 		self.__lineBuffer = []
 		## Store last time stamp, applicable for multi-line
 		self.__lastTimeLine = ""
+		self.__lastDate = None
 
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
@@ -402,19 +403,28 @@ class Filter(JailThread):
 			# The ignoreregex matched. Return.
 			logSys.log(7, "Matched ignoreregex and was \"%s\" ignored", logLine)
 			return failList
-		dd = self.dateDetector.getTime(logLine)
-		
-		if dd is None:
-			return failList
-		date = dd[0]
-		timeMatch = dd[1]
-		if timeMatch:
+
+		dateTimeMatch = self.dateDetector.getTime(logLine)
+
+		if dateTimeMatch is not None:
 			# Lets split into time part and log part of the line
+			date = dateTimeMatch[0]
+			timeMatch = dateTimeMatch[1]
+
 			timeLine = timeMatch.group()
+			self.__lastTimeLine = timeLine
+			self.__lastDate = date
 			# Lets leave the beginning in as well, so if there is no
 			# anchore at the beginning of the time regexp, we don't
 			# at least allow injection. Should be harmless otherwise
 			logLine  = logLine[:timeMatch.start()] + logLine[timeMatch.end():]
+		else:
+			timeLine = self.__lastTimeLine or logLine
+			date = self.__lastDate
+
+		self.__lineBuffer = (self.__lineBuffer + [logLine])[-self.__lineBufferSize:]
+
+		logLine = "\n".join(self.__lineBuffer) + "\n"
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
