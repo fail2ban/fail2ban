@@ -24,7 +24,10 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import re, time
+import re, time, calendar
+
+from datetime import datetime
+from datetime import timedelta
 
 from mytime import MyTime
 import iso8601
@@ -48,6 +51,7 @@ class DateTemplate:
 		return self.__name
 	
 	def setRegex(self, regex, wordBegin=True):
+		#logSys.debug(u"setRegex for %s is %r" % (self.__name, regex))
 		regex = regex.strip()
 		if (wordBegin and not re.search(r'^\^', regex)):
 			regex = r'\b' + regex
@@ -82,12 +86,11 @@ class DateEpoch(DateTemplate):
 		self.setRegex("^\d{10}(\.\d{6})?")
 	
 	def getDate(self, line):
-		date = None
 		dateMatch = self.matchDate(line)
 		if dateMatch:
 			# extract part of format which represents seconds since epoch
-			date = list(MyTime.localtime(float(dateMatch.group())))
-		return date
+			return (float(dateMatch.group()), dateMatch)
+		return None
 
 
 ##
@@ -113,13 +116,16 @@ class DateStrptime(DateTemplate):
 	
 	def __init__(self):
 		DateTemplate.__init__(self)
-		self.__pattern = ""
+		self._pattern = ""
+		self._unsupportedStrptimeBits = False
 	
 	def setPattern(self, pattern):
-		self.__pattern = pattern.strip()
+		self._unsupported_f = not DateStrptime._f and re.search('%f', pattern)
+		self._unsupported_z = not DateStrptime._z and re.search('%z', pattern)
+		self._pattern = pattern
 		
 	def getPattern(self):
-		return self.__pattern
+		return self._pattern
 	
 	#@staticmethod
 	def convertLocale(date):
@@ -133,17 +139,26 @@ class DateStrptime(DateTemplate):
 	convertLocale = staticmethod(convertLocale)
 	
 	def getDate(self, line):
-		date = None
 		dateMatch = self.matchDate(line)
+
 		if dateMatch:
+			datePattern = self.getPattern()
+			if self._unsupported_f:
+				if dateMatch.group('_f'):
+					datePattern = re.sub(r'%f', dateMatch.group('_f'), datePattern)
+					logSys.debug(u"Replacing %%f with %r now %r" % (dateMatch.group('_f'), datePattern))
+			if self._unsupported_z:
+				if dateMatch.group('_z'):
+					datePattern = re.sub(r'%z', dateMatch.group('_z'), datePattern)
+					logSys.debug(u"Replacing %%z with %r now %r" % (dateMatch.group('_z'), datePattern))
 			try:
 				# Try first with 'C' locale
-				date = list(time.strptime(dateMatch.group(), self.getPattern()))
+				date = datetime.strptime(dateMatch.group(), datePattern)
 			except ValueError:
 				# Try to convert date string to 'C' locale
 				conv = self.convertLocale(dateMatch.group())
 				try:
-					date = list(time.strptime(conv, self.getPattern()))
+					date = datetime.strptime(conv, self.getPattern())
 				except (ValueError, re.error), e:
 					# Try to add the current year to the pattern. Should fix
 					# the "Feb 29" issue.
@@ -152,7 +167,7 @@ class DateStrptime(DateTemplate):
 					if not '%Y' in opattern:
 						pattern = "%s %%Y" % opattern
 						conv += " %s" % MyTime.gmtime()[0]
-						date = list(time.strptime(conv, pattern))
+						date = datetime.strptime(conv, pattern)
 					else:
 						# we are helpless here
 						raise ValueError(
@@ -160,44 +175,81 @@ class DateStrptime(DateTemplate):
 							"exception was %r and Feb 29 workaround could not "
 							"be tested due to already present year mark in the "
 							"pattern" % (opattern, e))
-			if date[0] < 2000:
+
+			if self._unsupported_z:
+				z = dateMatch.group('_z')
+				if z:
+					delta = timedelta(hours=int(z[1:3]),minutes=int(z[3:]))
+					direction = z[0]
+					logSys.debug(u"Altering %r by removing time zone offset (%s)%s" % (date, direction, delta))
+					# here we reverse the effect of the timezone and force it to UTC
+					if direction == '+':
+						date -= delta
+					else:
+						date += delta
+					date = date.replace(tzinfo=iso8601.Utc())
+				else:
+					logSys.warn("No _z group captured and %%z is not supported on current platform"
+								" - timezone ignored and assumed to be localtime. date: %s on line: %s"
+								% (date, line))
+
+			if date.year < 2000:
 				# There is probably no year field in the logs
 				# NOTE: Possibly makes week/year day incorrect
-				date[0] = MyTime.gmtime()[0]
+				date = date.replace(year=MyTime.gmtime()[0])
 				# Bug fix for #1241756
 				# If the date is greater than the current time, we suppose
 				# that the log is not from this year but from the year before
-				if time.mktime(tuple(date)) > MyTime.time():
+				if date > MyTime.now():
 					logSys.debug(
-						u"Correcting deduced year from %d to %d since %f > %f" %
-						(date[0], date[0]-1, time.mktime(tuple(date)), MyTime.time()))
-					# NOTE: Possibly makes week/year day incorrect
-					date[0] -= 1
-				elif date[1] == 1 and date[2] == 1:
+						u"Correcting deduced year by one since %s > now (%s)" %
+						(date, MyTime.time()))
+					date = date.replace(year=date.year-1)
+				elif date.month == 1 and date.day == 1:
 					# If it is Jan 1st, it is either really Jan 1st or there
 					# is neither month nor day in the log.
 					# NOTE: Possibly makes week/year day incorrect
-					date[1] = MyTime.gmtime()[1]
-					date[2] = MyTime.gmtime()[2]
-		return date
+					date = date.replace(month=MyTime.gmtime()[1], day=1)
+
+			if date.tzinfo:
+				return ( calendar.timegm(date.utctimetuple()), dateMatch )
+			else:
+				return ( time.mktime(date.utctimetuple()), dateMatch )
+				
+		return None
+
+try:
+	time.strptime("26-Jul-2007 15:20:52.252","%d-%b-%Y %H:%M:%S.%f")
+	DateStrptime._f = True
+except (ValueError, KeyError):
+	DateTemplate._f = False
+
+try:
+	time.strptime("24/Mar/2013:08:58:32 -0500","%d/%b/%Y:%H:%M:%S %z")
+	DateStrptime._z = True
+except ValueError:
+	DateStrptime._z = False
 
 class DatePatternRegex(DateStrptime):
 	_reEscape = r"([\\.^$*+?\(\){}\[\]|])"
-	_patternRE = r"%(%|[aAbBdHIjmMpSUwWyY])"
+	_patternRE = r"%(%|[aAbBdfHIjmMpSUwWyYz])"
 	_patternName = {
 		'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
 		'H': "24hour", 'I': "12hour", 'j': "Yearday", 'm': "Month",
 		'M': "Minute", 'p': "AMPM", 'S': "Second", 'U': "Yearweek",
-		'w': "Weekday", 'W': "Yearweek", 'y': 'Year2', 'Y': "Year", '%': "%"}
+		'w': "Weekday", 'W': "Yearweek", 'y': 'Year2', 'Y': "Year", '%': "%",
+		'z': "Zone offset", 'f': "Microseconds" }
 	_patternRegex = {
 		'a': r"\w{3}", 'A': r"\w+", 'b': r"\w{3}", 'B': r"\w+",
-		'd': r"(?:3[0-1]|[1-2]\d|[ 0]?\d)", 'H': r"(?:2[0-3]|1\d|[ 0]?\d)",
+		'd': r"(?:3[0-1]|[1-2]\d|[ 0]?\d)",
+		'f': r"(?P<_f>\d{1,6})", 'H': r"(?:2[0-3]|1\d|[ 0]?\d)",
 		'I': r"(?:1[0-2]|[ 0]?\d)",
 		'j': r"(?:36[0-6]3[0-5]\d|[1-2]\d\d|[ 0]?\d\d|[ 0]{0,2}\d)",
 		'm': r"(?:1[0-2]|[ 0]?[1-9])", 'M': r"[0-5]\d", 'p': r"[AP]M",
 		'S': r"(?:6[01]|[0-5]\d)", 'U': r"(?:5[0-3]|[1-4]\d|[ 0]?\d)",
 		'w': r"[0-6]", 'W': r"(?:5[0-3]|[ 0]?\d)", 'y': r"\d{2}",
-		'Y': r"\d{4}", '%': "%"}
+		'Y': r"\d{4}",
+		'z': r"(?P<_z>[+-]\d{4})", '%': "%"}
 
 	def __init__(self, pattern=None, **kwargs):
 		DateStrptime.__init__(self)
@@ -205,7 +257,7 @@ class DatePatternRegex(DateStrptime):
 			self.setPattern(pattern, **kwargs)
 
 	def setPattern(self, pattern, anchor=False, **kwargs):
-		self.__pattern = pattern.strip()
+		DateStrptime.setPattern(self, pattern.strip())
 
 		name = re.sub(self._patternRE, r'%(\1)s', pattern) % self._patternName
 		DateStrptime.setName(self, name)
@@ -218,14 +270,12 @@ class DatePatternRegex(DateStrptime):
 			regex = r"^" + regex
 		DateStrptime.setRegex(self, regex, **kwargs)
 
-	def getPattern(self):
-		return self.__pattern
-
 	def setRegex(self, line):
 		raise NotImplementedError("Regex derived from pattern")
 
 	def setName(self, line):
 		raise NotImplementedError("Name derived from pattern")
+
 
 class DateTai64n(DateTemplate):
 	
@@ -236,32 +286,27 @@ class DateTai64n(DateTemplate):
 		self.setRegex("@[0-9a-f]{24}", wordBegin=False)
 	
 	def getDate(self, line):
-		date = None
 		dateMatch = self.matchDate(line)
 		if dateMatch:
 			# extract part of format which represents seconds since epoch
 			value = dateMatch.group()
 			seconds_since_epoch = value[2:17]
 			# convert seconds from HEX into local time stamp
-			date = list(MyTime.localtime(int(seconds_since_epoch, 16)))
-		return date
+			return (int(seconds_since_epoch, 16), dateMatch)
+		return None
 
 
 class DateISO8601(DateTemplate):
 
 	def __init__(self):
 		DateTemplate.__init__(self)
-		date_re = "[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}" \
-		".[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?" \
-		"(Z|(([-+])([0-9]{2}):([0-9]{2})))?"
-		self.setRegex(date_re)
+		self.setRegex(iso8601.ISO8601_REGEX_RAW)
 	
 	def getDate(self, line):
-		date = None
 		dateMatch = self.matchDate(line)
 		if dateMatch:
 			# Parses the date.
 			value = dateMatch.group()
-			date = list(iso8601.parse_date(value, None).timetuple())
-		return date
+			return (calendar.timegm(iso8601.parse_date(value).utctimetuple()), dateMatch)
+		return None
 

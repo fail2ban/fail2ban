@@ -39,6 +39,7 @@ from fail2ban.server.filterpoll import FilterPoll
 from fail2ban.server.filter import FileFilter, DNSUtils
 from fail2ban.server.failmanager import FailManager
 from fail2ban.server.failmanager import FailManagerEmpty
+from fail2ban.server.mytime import MyTime
 from fail2ban.tests.utils import setUpMyTime, tearDownMyTime
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
@@ -89,8 +90,8 @@ def _assert_equal_entries(utest, found, output, count=None):
 	utest.assertEqual(found[0], output[0])            # IP
 	utest.assertEqual(found[1], count or output[1])   # count
 	found_time, output_time = \
-				time.localtime(found[2]),\
-				time.localtime(output[2])
+				MyTime.localtime(found[2]),\
+				MyTime.localtime(output[2])
 	utest.assertEqual(found_time, output_time)
 	if len(output) > 3 and count is None: # match matches
 		# do not check if custom count (e.g. going through them twice)
@@ -737,7 +738,7 @@ class GetFailures(unittest.TestCase):
 	FILENAME_MULTILINE = os.path.join(TEST_FILES_DIR, "testcase-multiline.log")
 
 	# so that they could be reused by other tests
-	FAILURES_01 = ('193.168.0.128', 3, 1124013599.0,
+	FAILURES_01 = ('193.168.0.128', 3, 1124017199.0,
 				  [u'Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128\n']*3)
 
 	def setUp(self):
@@ -783,7 +784,7 @@ class GetFailures(unittest.TestCase):
 
 
 	def testGetFailures02(self):
-		output = ('141.3.81.106', 4, 1124013539.0,
+		output = ('141.3.81.106', 4, 1124017139.0,
 				  [u'Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n'
 				   % m for m in 53, 54, 57, 58])
 
@@ -793,7 +794,7 @@ class GetFailures(unittest.TestCase):
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailures03(self):
-		output = ('203.162.223.135', 6, 1124013544.0)
+		output = ('203.162.223.135', 7, 1124017144.0)
 
 		self.filter.addLogPath(GetFailures.FILENAME_03)
 		self.filter.addFailRegex("error,relay=<HOST>,.*550 User unknown")
@@ -801,8 +802,8 @@ class GetFailures(unittest.TestCase):
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailures04(self):
-		output = [('212.41.96.186', 4, 1124013600.0),
-				  ('212.41.96.185', 4, 1124013598.0)]
+		output = [('212.41.96.186', 4, 1124017200.0),
+				  ('212.41.96.185', 4, 1124017198.0)]
 
 		self.filter.addLogPath(GetFailures.FILENAME_04)
 		self.filter.addFailRegex("Invalid user .* <HOST>")
@@ -816,11 +817,11 @@ class GetFailures(unittest.TestCase):
 
 	def testGetFailuresUseDNS(self):
 		# We should still catch failures with usedns = no ;-)
-		output_yes = ('93.184.216.119', 2, 1124013539.0,
+		output_yes = ('93.184.216.119', 2, 1124017139.0,
 					  [u'Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2\n',
 					   u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.119 port 51332 ssh2\n'])
 
-		output_no = ('93.184.216.119', 1, 1124013539.0,
+		output_no = ('93.184.216.119', 1, 1124017139.0,
 					  [u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.119 port 51332 ssh2\n'])
 
 		# Actually no exception would be raised -- it will be just set to 'no'
@@ -842,7 +843,7 @@ class GetFailures(unittest.TestCase):
 
 
 	def testGetFailuresMultiRegex(self):
-		output = ('141.3.81.106', 8, 1124013541.0)
+		output = ('141.3.81.106', 8, 1124017141.0)
 
 		self.filter.addLogPath(GetFailures.FILENAME_02)
 		self.filter.addFailRegex("Failed .* from <HOST>")
@@ -851,7 +852,7 @@ class GetFailures(unittest.TestCase):
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailuresIgnoreRegex(self):
-		output = ('141.3.81.106', 8, 1124013541.0)
+		output = ('141.3.81.106', 8, 1124017141.0)
 
 		self.filter.addLogPath(GetFailures.FILENAME_02)
 		self.filter.addFailRegex("Failed .* from <HOST>")
@@ -863,8 +864,8 @@ class GetFailures(unittest.TestCase):
 		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
 	def testGetFailuresMultiLine(self):
-		output = [("192.0.43.10", 2, 1124013599.0),
-			("192.0.43.11", 1, 1124013598.0)]
+		output = [("192.0.43.10", 2, 1124017199.0),
+			("192.0.43.11", 1, 1124017198.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.setMaxLines(100)
@@ -882,7 +883,7 @@ class GetFailures(unittest.TestCase):
 		self.assertEqual(sorted(foundList), sorted(output))
 
 	def testGetFailuresMultiLineIgnoreRegex(self):
-		output = [("192.0.43.10", 2, 1124013599.0)]
+		output = [("192.0.43.10", 2, 1124017199.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addIgnoreRegex("rsync error: Received SIGINT")
@@ -896,9 +897,9 @@ class GetFailures(unittest.TestCase):
 		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
 	def testGetFailuresMultiLineMultiRegex(self):
-		output = [("192.0.43.10", 2, 1124013599.0),
-			("192.0.43.11", 1, 1124013598.0),
-			("192.0.43.15", 1, 1124013598.0)]
+		output = [("192.0.43.10", 2, 1124017199.0),
+			("192.0.43.11", 1, 1124017198.0),
+			("192.0.43.15", 1, 1124017198.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addFailRegex("^.* sendmail\[.*, msgid=<(?P<msgid>[^>]+).*relay=\[<HOST>\].*$<SKIPLINES>^.+ spamd: result: Y \d+ .*,mid=<(?P=msgid)>(,bayes=[.\d]+)?(,autolearn=\S+)?\s*$")

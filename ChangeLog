@@ -66,7 +66,9 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * action.d/hostsdeny -- NOTE: new dependancy 'ed'. Switched to use 'ed' across
      all platforms to ensure permissions are the same before and after a ban -
      closes gh-266. hostsdeny supports daemon_list now too.
-  * filter.d/roundcube-auth - timezone offset can be positive or negative
+   * filter.d/roundcube-auth - timezone offset can be positive or negative
+   * action.d/bsd-ipfw - action option unsed. Fixed to blocktype for
+     consistency. default to port unreach instead of deny
   Rolf Fokkens
    * action.d/dshield.conf and complain.conf -- reorder mailx arguments.
      https://bugzilla.redhat.com/show_bug.cgi?id=998020
@@ -78,6 +80,9 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
      avoiding problems with getpid.  Also $network and iptables moved
      to Should- rc init fields
 - New Features:
+  Andy Fragen and Daniel Black
+	 * filter.d/osx-ipfw.conf - ipfw action for OSX based on random rule
+     numbers.
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
   Daniel Black
@@ -95,6 +100,7 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
      and extra failure examples in sample logs
 	 * filter.d/apache-auth - added expressions for mod_authz, mod_auth and
      mod_auth_digest failures.
+   * Support %z (Timezone offset) and %f (sub-seconds) support for datedetector
   Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
    * filter.d/exim.conf -- regex hardening and extra failure examples in
      sample logs
