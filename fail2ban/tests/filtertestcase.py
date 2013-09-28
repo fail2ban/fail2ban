@@ -794,7 +794,7 @@ class GetFailures(unittest.TestCase):
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailures03(self):
-		output = ('203.162.223.135', 6, 1124017144.0)
+		output = ('203.162.223.135', 7, 1124017144.0)
 
 		self.filter.addLogPath(GetFailures.FILENAME_03)
 		self.filter.addFailRegex("error,relay=<HOST>,.*550 User unknown")
@@ -864,8 +864,8 @@ class GetFailures(unittest.TestCase):
 		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
 	def testGetFailuresMultiLine(self):
-		output = [("192.0.43.10", 2, 1124013599.0),
-			("192.0.43.11", 1, 1124013598.0)]
+		output = [("192.0.43.10", 2, 1124017199.0),
+			("192.0.43.11", 1, 1124017198.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.setMaxLines(100)
@@ -883,7 +883,7 @@ class GetFailures(unittest.TestCase):
 		self.assertEqual(sorted(foundList), sorted(output))
 
 	def testGetFailuresMultiLineIgnoreRegex(self):
-		output = [("192.0.43.10", 2, 1124013599.0)]
+		output = [("192.0.43.10", 2, 1124017199.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addIgnoreRegex("rsync error: Received SIGINT")
@@ -897,9 +897,9 @@ class GetFailures(unittest.TestCase):
 		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
 	def testGetFailuresMultiLineMultiRegex(self):
-		output = [("192.0.43.10", 2, 1124013599.0),
-			("192.0.43.11", 1, 1124013598.0),
-			("192.0.43.15", 1, 1124013598.0)]
+		output = [("192.0.43.10", 2, 1124017199.0),
+			("192.0.43.11", 1, 1124017198.0),
+			("192.0.43.15", 1, 1124017198.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addFailRegex("^.* sendmail\[.*, msgid=<(?P<msgid>[^>]+).*relay=\[<HOST>\].*$<SKIPLINES>^.+ spamd: result: Y \d+ .*,mid=<(?P=msgid)>(,bayes=[.\d]+)?(,autolearn=\S+)?\s*$")
