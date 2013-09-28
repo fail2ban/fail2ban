@@ -53,31 +53,37 @@ class DateDetector:
 	def addDefaultTemplate(self):
 		self.__lock.acquire()
 		try:
-			# asctime
+			# asctime with subsecond: Sun Jan 23 21:59:59.011 2005 
+			self.appendTemplate("%a %b %d %H:%M:%S.%f %Y")
+			# asctime: Sun Jan 23 21:59:59 2005 
 			self.appendTemplate("%a %b %d %H:%M:%S %Y")
-			# asctime without year
+			# asctime without year: Sun Jan 23 21:59:59 
 			self.appendTemplate("%a %b %d %H:%M:%S")
-			# standard
+			# standard: Jan 23 21:59:59 
 			self.appendTemplate("%b %d %H:%M:%S")
-			# simple date
+			# simple date: 2005-01-23 21:59:59 
+			self.appendTemplate("%Y-%m-%d %H:%M:%S")
+			# simple date: 2005/01/23 21:59:59 
 			self.appendTemplate("%Y/%m/%d %H:%M:%S")
-			# simple date too (from x11vnc)
+			# simple date too (from x11vnc): 23/01/2005 21:59:59 
 			self.appendTemplate("%d/%m/%Y %H:%M:%S")
-			# previous one but with year given by 2 digits
+			# previous one but with year given by 2 digits: 23/01/05 21:59:59 
 			# (See http://bugs.debian.org/537610)
 			self.appendTemplate("%d/%m/%y %H:%M:%S")
 			# Apache format [31/Oct/2006:09:22:55 -0000]
-			self.appendTemplate("%d/%b/%Y:%H:%M:%S")
+			self.appendTemplate("%d/%b/%Y:%H:%M:%S %z")
 			# CPanel 05/20/2008:01:57:39
 			self.appendTemplate("%m/%d/%Y:%H:%M:%S")
 			# custom for syslog-ng 2006.12.21 06:43:20
 			self.appendTemplate("%Y.%m.%d %H:%M:%S")
 			# named 26-Jul-2007 15:20:52.252 
-			self.appendTemplate("%d-%b-%Y %H:%M:%S")
+			self.appendTemplate("%d-%b-%Y %H:%M:%S.%f")
+			# roundcube 26-Jul-2007 15:20:52 +0200
+			self.appendTemplate("%d-%b-%Y %H:%M:%S %z")
 			# 17-07-2008 17:23:25
 			self.appendTemplate("%d-%m-%Y %H:%M:%S")
 			# 01-27-2012 16:22:44.252
-			self.appendTemplate("%m-%d-%Y %H:%M:%S")
+			self.appendTemplate("%m-%d-%Y %H:%M:%S.%f")
 			# TAI64N
 			template = DateTai64n()
 			template.setName("TAI64N")
@@ -128,17 +134,13 @@ class DateDetector:
 					date = template.getDate(line)
 					if date is None:
 						continue
-					logSys.debug("Got time using template %s" % template.getName())
+					logSys.debug("Got time %i for \"%r\" using template %s" % (date[0], date[1].group(), template.getName()))
 					return date
 				except ValueError:
 					pass
 			return None
 		finally:
 			self.__lock.release()
-
-	def getUnixTime(self, line):
-		date = self.getTime(line)
-		return date and time.mktime(tuple(date))
 
 	##
 	# Sort the template lists using the hits score. This method is not called

@@ -22,7 +22,7 @@
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import unittest, sys, os, fileinput, re, datetime, inspect
+import unittest, sys, os, fileinput, re, time, datetime, inspect
 
 if sys.version_info >= (2, 6):
 	import json
@@ -119,15 +119,19 @@ def testSampleRegexsFactory(name):
 								 (map(lambda x: x[0], ret),logFile.filename(), logFile.filelineno()))
 
 				# Verify timestamp and host as expected
-				failregex, host, time = ret[0]
+				failregex, host, fail2banTime = ret[0]
 				self.assertEqual(host, faildata.get("host", None))
-				fail2banTime = datetime.datetime.fromtimestamp(time)
-				jsonTime = datetime.datetime.strptime(
-							faildata.get("time", None), "%Y-%m-%dT%H:%M:%S")
+
+				t = faildata.get("time", None)
+				jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S")
+
+				jsonTime = time.mktime(jsonTimeLocal.utctimetuple())
 				
 				self.assertEqual(fail2banTime, jsonTime,
-					"Time  mismatch %s != %s on: %s:%i %r:" % 
-					(fail2banTime, jsonTime, logFile.filename(), logFile.filelineno(), line ) )
+					"UTC Time  mismatch fail2ban %s (%s) != failJson %s (%s)  (diff %i seconds) on: %s:%i %r:" % 
+					(fail2banTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(fail2banTime)),
+					jsonTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(jsonTime)),
+					fail2banTime - jsonTime, logFile.filename(), logFile.filelineno(), line ) )
 
 				regexsUsed.add(failregex)
 

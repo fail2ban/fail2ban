@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time
+import time, datetime
 
 ##
 # MyTime class.
@@ -73,6 +73,14 @@ class MyTime:
 		else:
 			return time.gmtime(MyTime.myTime)
 	gmtime = staticmethod(gmtime)
+
+	#@staticmethod
+	def now():
+		if MyTime.myTime is None:
+			return datetime.datetime.now()
+		else:
+			return datetime.datetime.fromtimestamp(MyTime.myTime)
+	now = staticmethod(now)
 
 	def localtime(x=None):
 		if MyTime.myTime is None or x is not None:
