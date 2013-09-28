@@ -28,7 +28,7 @@ from failmanager import FailManager
 from ticket import FailTicket
 from jailthread import JailThread
 from datedetector import DateDetector
-from datetemplate import DatePatternRegex
+from datetemplate import DatePatternRegex, DateISO8601, DateEpoch, DateTai64n
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
 
@@ -199,11 +199,21 @@ class Filter(JailThread):
 
 	def setDatePattern(self, pattern):
 		dateDetector = DateDetector()
-		template = DatePatternRegex()
-		if pattern[0] == "^": # Special extra to enable anchor
-			template.setPattern(pattern[1:], anchor=True)
+		if pattern.upper() == "ISO8601":
+			template = DateISO8601()
+			template.setName("ISO8601")
+		elif pattern.upper() == "EPOCH":
+			template = DateEpoch()
+			template.setName("Epoch")
+		elif pattern.upper() == "TAI64N":
+			template = DateTai64n()
+			template.setName("TAI64N")
 		else:
-			template.setPattern(pattern, anchor=False)
+			template = DatePatternRegex()
+			if pattern[0] == "^": # Special extra to enable anchor
+				template.setPattern(pattern[1:], anchor=True)
+			else:
+				template.setPattern(pattern, anchor=False)
 		dateDetector.appendTemplate(template)
 		self.dateDetector = dateDetector
 		logSys.info("Date pattern set to `%r`: `%s`" %
@@ -221,9 +231,12 @@ class Filter(JailThread):
 		if len(templates) > 1:
 			return None # Default Detectors in use
 		elif len(templates) == 1:
-			pattern =  templates[0].getPattern()
-			if templates[0].getRegex()[0] == "^":
-				pattern = "^" + pattern
+			if hasattr(templates[0], "getPattern"):
+				pattern =  templates[0].getPattern()
+				if templates[0].getRegex()[0] == "^":
+					pattern = "^" + pattern
+			else:
+				pattern = None
 			return pattern, templates[0].getName()
 
 	##
