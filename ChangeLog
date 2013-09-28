@@ -47,10 +47,13 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * files/redhat-initd - rewritten to use stock init.d functions thus
      avoiding problems with getpid.  Also $network and iptables moved
      to Should- rc init fields
+
 - New Features:
   Andy Fragen and Daniel Black
    * filter.d/osx-ipfw.conf - ipfw action for OSX based on random rule
      numbers.
+  Anonymous:
+   * action.d/osx-afctl - an action based on afctl for osx
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
   Daniel Black
@@ -59,6 +62,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * add date expression for apache-2.4 - milliseconds
   Christophe Carles & Daniel Black
    * filter.d/perdition.conf -- filter added
+  Mark McKinstry
+   * action.d/apf.conf - add action for Advanced Policy Firewall (apf)
 
 - Enhancements:
   François Boulogne and Frédéric
@@ -106,8 +111,6 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
   Orion Poplawski
    * fail2ban.d/ and jail.d/ directories are added to etc/fail2ban to facilitate
      their use
-  Mark McKinstry
-   * action.d/apf.conf - add action for Advanced Policy Firewall (apf)
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
 -----------
