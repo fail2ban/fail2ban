@@ -108,7 +108,7 @@ stdout = logging.StreamHandler(sys.stdout)
 
 fmt = ' %(message)s'
 
-if opts.log_traceback:
+if opts.log_traceback or opts.full_traceback:
 	Formatter = FormatterWithTraceBack
 	fmt = (opts.full_traceback and ' %(tb)s' or ' %(tbc)s') + fmt
 else:
