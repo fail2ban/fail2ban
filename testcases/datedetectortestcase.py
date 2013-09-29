@@ -164,6 +164,14 @@ class DateDetectorTest(unittest.TestCase):
 			print "WARNING: The following date templates overlap:"
 			pprint.pprint(overlapedTemplates)
 
+	def testDateTemplate(self):
+			t = DateTemplate()
+			t.setRegex('^a{3,5}b?c*$')
+			self.assertEqual(t.getRegex(), '^a{3,5}b?c*$')
+			self.assertRaises(Exception, t.getDate, '')
+			self.assertEqual(t.matchDate('aaaac').group(), 'aaaac')
+
+
 #	def testDefaultTempate(self):
 #		self.__datedetector.setDefaultRegex("^\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 #		self.__datedetector.setDefaultPattern("%b %d %H:%M:%S")
