@@ -29,7 +29,7 @@ import unittest, logging, sys, time, os
 
 if sys.version_info >= (2, 6):
 	import json
-else:
+else: # pragma: no cover
 	try:
 		import simplejson as json
 	except ImportError:
@@ -184,7 +184,7 @@ tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
 if json:
 	# Filter Regex tests with sample logs
 	tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
-else:
+else: # pragma: no cover
 	print "I: Skipping filter samples testing. No simplejson/json module"
 
 #
