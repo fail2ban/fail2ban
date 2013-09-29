@@ -359,7 +359,7 @@ class Action:
 	#@staticmethod
 	def executeCmd(realCmd):
 		logSys.debug(realCmd)
-		if realCmd is None or realCmd == "":
+		if not realCmd:
 			logSys.debug("Nothing to do")
 			return True
 		
