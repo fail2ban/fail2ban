@@ -359,6 +359,10 @@ class Action:
 	#@staticmethod
 	def executeCmd(realCmd):
 		logSys.debug(realCmd)
+		if realCmd is None or realCmd == "":
+			logSys.debug("Nothing to do")
+			return True
+		
 		_cmd_lock.acquire()
 		try: # Try wrapped within another try needed for python version < 2.5
 			try:
