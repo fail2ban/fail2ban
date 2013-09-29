@@ -58,6 +58,11 @@ class ExecuteAction(unittest.TestCase):
 	def _is_logged(self, s):
 		return s in self._log.getvalue()
 
+	def testNameChange(self):
+		self.assertEqual(self.__action.getName(), "Test")
+		self.__action.setName("Tricky Test")
+		self.assertEqual(self.__action.getName(), "Tricky Test")
+		
 	def testSubstituteRecursiveTags(self):
 		aInfo = {
 			'HOST': "192.0.2.0",
@@ -101,9 +106,15 @@ class ExecuteAction(unittest.TestCase):
 
 	def testExecuteActionBan(self):
 		self.__action.setActionStart("touch /tmp/fail2ban.test")
+		self.assertEqual(self.__action.getActionStart(), "touch /tmp/fail2ban.test")
 		self.__action.setActionStop("rm -f /tmp/fail2ban.test")
+		self.assertEqual(self.__action.getActionStop(), 'rm -f /tmp/fail2ban.test')
 		self.__action.setActionBan("echo -n")
+		self.assertEqual(self.__action.getActionBan(), 'echo -n')
 		self.__action.setActionCheck("[ -e /tmp/fail2ban.test ]")
+		self.assertEqual(self.__action.getActionCheck(), '[ -e /tmp/fail2ban.test ]')
+		self.__action.setActionUnban("true")
+		self.assertEqual(self.__action.getActionUnban(), 'true')
 
 		self.assertFalse(self._is_logged('returned'))
 		# no action was actually executed yet
@@ -112,6 +123,45 @@ class ExecuteAction(unittest.TestCase):
 		self.assertTrue(self._is_logged('Invariant check failed'))
 		self.assertTrue(self._is_logged('returned successfully'))
 
+	def testExecuteActionEmptyUnban(self):
+		self.__action.setActionUnban("")
+		self.assertTrue(self.__action.execActionUnban(None))
+		self.assertTrue(self._is_logged('Nothing to do'))
+
+	def testExecuteActionStartCtags(self):
+		self.__action.setCInfo("HOST","192.0.2.0")
+		self.__action.setActionStart("touch /tmp/fail2ban.test.<HOST>")
+		self.__action.setActionStop("rm -f /tmp/fail2ban.test.<HOST>")
+		self.__action.setActionCheck("[ -e /tmp/fail2ban.test.192.0.2.0 ]")
+		self.assertTrue(self.__action.execActionStart())
+
+	def testExecuteActionCheckRestoreEnvironment(self):
+		self.__action.setActionStart("")
+		self.__action.setActionStop("rm -f /tmp/fail2ban.test")
+		self.__action.setActionBan("rm /tmp/fail2ban.test")
+		self.__action.setActionCheck("[ -e /tmp/fail2ban.test ]")
+		self.assertFalse(self.__action.execActionBan(None))
+		self.assertTrue(self._is_logged('Unable to restore environment'))
+
+	def testExecuteActionChangeCtags(self):
+		self.__action.setCInfo("ROST","192.0.2.0")
+		self.assertEqual(self.__action.getCInfo("ROST"),"192.0.2.0")
+		self.__action.delCInfo("ROST")
+		self.assertRaises(KeyError, self.__action.getCInfo, "ROST")
+
+	def testExecuteActionUnbanAinfo(self):
+		aInfo = {
+			'ABC': "123",
+		}
+		self.__action.setActionBan("touch /tmp/fail2ban.test.123")
+		self.__action.setActionUnban("rm /tmp/fail2ban.test.<ABC>")
+		self.assertTrue(self.__action.execActionBan(None))
+		self.assertTrue(self.__action.execActionUnban(aInfo))
+
+	def testExecuteActionStartEmpty(self):
+		self.__action.setActionStart("")
+		self.assertTrue(self.__action.execActionStart())
+		self.assertTrue(self._is_logged('Nothing to do'))
 
 	def testExecuteIncorrectCmd(self):
 		Action.executeCmd('/bin/ls >/dev/null\nbogusXXX now 2>/dev/null')
