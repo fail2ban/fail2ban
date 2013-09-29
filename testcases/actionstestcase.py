@@ -68,9 +68,9 @@ class ExecuteActions(unittest.TestCase):
 	def testActionsOutput(self):
 		self.defaultActions()
 		self.__actions.start()
-		with open(self.__tmpfilename) as f:
-			time.sleep(3)
-			self.assertEqual(f.read(),"ip start 64\n")
+		f = open(self.__tmpfilename)
+		time.sleep(3)
+		self.assertEqual(f.read(),"ip start 64\n")
 
 		self.__actions.stop()
 		self.__actions.join()
