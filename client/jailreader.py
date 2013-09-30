@@ -24,7 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging, re, glob
+import logging, re, glob, os.path
 
 from configreader import ConfigReader
 from filterreader import FilterReader
@@ -55,7 +55,23 @@ class JailReader(ConfigReader):
 	
 	def isEnabled(self):
 		return self.__force_enable or self.__opts["enabled"]
-	
+
+	@staticmethod
+	def _glob(path):
+		"""Given a path for glob return list of files to be passed to server.
+
+		Dangling symlinks are warned about and not returned
+		"""
+		pathList = []
+		for p in glob.glob(path):
+			if not os.path.exists(p):
+				logSys.warning("File %s doesn't even exist, thus cannot be monitored" % p)
+			elif not os.path.lexists(p):
+				logSys.warning("File %s is a dangling link, thus cannot be monitored" % p)
+			else:
+				pathList.append(p)
+		return pathList
+
 	def getOptions(self):
 		opts = [["bool", "enabled", "false"],
 				["string", "logpath", "/var/log/messages"],
@@ -118,7 +134,7 @@ class JailReader(ConfigReader):
 			if opt == "logpath":
 				found_files = 0
 				for path in self.__opts[opt].split("\n"):
-					pathList = glob.glob(path)
+					pathList = JailReader._glob(path)
 					if len(pathList) == 0:
 						logSys.error("No file(s) found for glob %s" % path)
 					for p in pathList:
