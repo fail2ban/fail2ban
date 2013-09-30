@@ -78,6 +78,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
      linux-pam before version 0.99.2.0 (2005)
    * filter.d/gssftpd - anchored regex at start
    * filter.d/mysqld-auth.conf - mysql can use syslog
+   * filter.d/sshd - regex enhancements to support openssh-6.3. Closes Debian
+     bug #722970
   Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
    * filter.d/exim.conf -- regex hardening and extra failure examples in
      sample logs

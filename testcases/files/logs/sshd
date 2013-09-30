@@ -85,3 +85,12 @@ Mar 26 04:56:27 angel sshd[9739]: User allena from example.com not allowed becau
 Feb 7 16:01:07 linux-m899 sshd[5106]: User root from 192.51.100.54 not allowed because a group is listed in DenyGroups
 # failJSON: { "time": "2005-01-05T11:15:05", "match": true , "host": "10.0.0.40" }
 Jan 5 11:15:05 NAS sshd[1966]: User root from 10.0.0.40 not allowed because none of user's groups are listed in AllowGroups
+
+# failJSON: { "time": "2004-09-29T16:28:02", "match": true , "host": "127.0.0.1" }
+Sep 29 16:28:02 spaceman sshd[16699]: Failed password for dan from 127.0.0.1 port 45416 ssh1
+
+# failJSON: { "time": "2004-09-29T17:15:02", "match": true , "host": "127.0.0.1" }
+Sep 29 17:15:02 spaceman sshd[12946]: Failed hostbased for dan from 127.0.0.1 port 45785 ssh2: RSA 8c:e3:aa:0f:64:51:02:f7:14:79:89:3f:65:84:7c:30, client user "dan", client host "localhost.localdomain"
+
+# failJSON: { "time": "2004-09-29T17:15:02", "match": true , "host": "127.0.0.1" }
+Sep 29 17:15:02 spaceman sshd[12946]: Failed hostbased for dan from 127.0.0.1 port 45785 ssh2: DSA 01:c0:79:41:91:31:9a:7d:95:23:91:ac:b1:6d:59:81, client user "dan", client host "localhost.localdomain"
