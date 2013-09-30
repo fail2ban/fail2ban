@@ -83,6 +83,7 @@ class DateDetectorTest(unittest.TestCase):
 			"<01/23/05@21:59:59>",
 			"050123 21:59:59", # MySQL
 			"Jan-23-05 21:59:59", # ASSP like
+			"audit(1106513999.123:987)", # SELinux
 			):
 			log = sdate + "[sshd] error: PAM: Authentication failure"
 			# exclude

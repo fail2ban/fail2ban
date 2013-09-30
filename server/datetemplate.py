@@ -78,8 +78,7 @@ class DateEpoch(DateTemplate):
 	
 	def __init__(self):
 		DateTemplate.__init__(self)
-		# We already know the format for TAI64N
-		self.setRegex("^\d{10}(\.\d{6})?")
+		self.setRegex("(?:^|(?P<selinux>(?<=audit\()))\d{10}(?:\.\d{3,6})?(?(selinux)(?=:\d+\)))")
 	
 	def getDate(self, line):
 		date = None
