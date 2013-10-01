@@ -64,6 +64,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * filter.d/perdition.conf -- filter added
   Mark McKinstry
    * action.d/apf.conf - add action for Advanced Policy Firewall (apf)
+  Steven Hiscocks and Daniel Black
+   * filter.d/selinux  -- add SELinux date and filter
 
 - Enhancements:
   François Boulogne and Frédéric
