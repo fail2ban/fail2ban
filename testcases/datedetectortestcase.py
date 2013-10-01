@@ -63,36 +63,45 @@ class DateDetectorTest(unittest.TestCase):
 		date = [2005, 1, 23, 21, 59, 59, 6, 23, -1]
 		dateUnix = 1106513999.0
 
-		for sdate in (
-			"Jan 23 21:59:59",
-			"Sun Jan 23 21:59:59 2005",
-			"Sun Jan 23 21:59:59",
-			"2005/01/23 21:59:59",
-			"2005.01.23 21:59:59",
-			"23/01/2005 21:59:59",
-			"23/01/05 21:59:59",
-			"23/Jan/2005:21:59:59",
-			"01/23/2005:21:59:59",
-			"2005-01-23 21:59:59",
-			"23-Jan-2005 21:59:59",
-			"23-01-2005 21:59:59",
-			"01-23-2005 21:59:59.252", # reported on f2b, causes Feb29 fix to break
-			"@4000000041f4104f00000000", # TAI64N
-			"2005-01-23T21:59:59.252Z", #ISO 8601
-			"2005-01-23T21:59:59-05:00Z", #ISO 8601 with TZ
-			"<01/23/05@21:59:59>",
-			"050123 21:59:59", # MySQL
-			"Jan-23-05 21:59:59", # ASSP like
-			"audit(1106513999.123:987)", # SELinux
+		for anchored, sdate in (
+			(False, "Jan 23 21:59:59"),
+			(False, "Sun Jan 23 21:59:59 2005"),
+			(False, "Sun Jan 23 21:59:59"),
+			(False, "2005/01/23 21:59:59"),
+			(False, "2005.01.23 21:59:59"),
+			(False, "23/01/2005 21:59:59"),
+			(False, "23/01/05 21:59:59"),
+			(False, "23/Jan/2005:21:59:59"),
+			(False, "01/23/2005:21:59:59"),
+			(False, "2005-01-23 21:59:59"),
+			(False, "23-Jan-2005 21:59:59"),
+			(False, "23-01-2005 21:59:59"),
+			(False, "01-23-2005 21:59:59.252"), # reported on f2b, causes Feb29 fix to break
+			(False, "@4000000041f4104f00000000"), # TAI64N
+			(False, "2005-01-23T21:59:59.252Z"), #ISO 8601
+			(False, "2005-01-23T21:59:59-05:00Z"), #ISO 8601 with TZ
+			(True,  "<01/23/05@21:59:59>"),
+			(True,  "050123 21:59:59"), # MySQL
+			(True,  "Jan-23-05 21:59:59"), # ASSP like
+			(True,  "1106513999"), # Regular epoch
+			(True,  "1106513999.123"), # Regular epoch with millisec
+			(False, "audit(1106513999.123:987)"), # SELinux
 			):
-			log = sdate + "[sshd] error: PAM: Authentication failure"
-			# exclude
+			for should_match, prefix in ((True,     ""),
+										 (not anchored, "bogus-prefix ")):
+				ldate = prefix + sdate	  # logged date
+				log = ldate + "[sshd] error: PAM: Authentication failure"
+				# exclude
 
-			# yoh: on [:6] see in above test
-			logtime = self.__datedetector.getTime(log)
-			self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s" % sdate)
-			self.assertEqual(logtime[:6], date[:6], "getTime comparison failure for %s: \"%s\" is not \"%s\"" % (sdate, logtime[:6], date[:6]))
-			self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix, "getUnixTime failure for %s: \"%s\" is not \"%s\"" % (sdate, logtime[:6], date[:6]))
+				# yoh: on [:6] see in above test
+				logtime = self.__datedetector.getTime(log)
+				if should_match:
+					self.assertNotEqual(logtime, None, "getTime retrieved nothing for %r" % ldate)
+					self.assertEqual(logtime[:6], date[:6], "getTime comparison failure for %r: \"%s\" is not \"%s\"" % (ldate, logtime[:6], date[:6]))
+					self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix, "getUnixTime failure for %r: \"%s\" is not \"%s\"" % (ldate, logtime[:6], date[:6]))
+				else:
+					self.assertEqual(logtime, None, "getTime should have not matched for %r Got: %s" % (ldate, logtime))
+
 
 	def testStableSortTemplate(self):
 		old_names = [x.getName() for x in self.__datedetector.getTemplates()]
