@@ -282,6 +282,9 @@ TIP: Take a look at the source code of the application you are developing
      parts are constrained and different formats depending on configuration or
      less common usages.
 
+TIP: For looking through source code - http://sourcecodebrowser.com/ . It has
+     call graphs and can browse different versions.
+
 TIP: Some applications log spaces at the end. If you are not sure add \s*$ as
      the end part of the regex.
 
