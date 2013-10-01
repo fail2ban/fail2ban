@@ -306,12 +306,12 @@ class Filter(JailThread):
 		else:
 			timeLine = l
 			logLine = l
-		return self.findFailure(timeLine, logLine, returnRawHost, checkAllRegex)
+		return logLine, self.findFailure(timeLine, logLine, returnRawHost, checkAllRegex)
 
 	def processLineAndAdd(self, line):
 		"""Processes the line for failures and populates failManager
 		"""
-		for element in self.processLine(line):
+		for element in self.processLine(line)[1]:
 			failregex = element[0]
 			ip = element[1]
 			unixTime = element[2]

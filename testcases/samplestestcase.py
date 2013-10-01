@@ -95,7 +95,7 @@ def testSampleRegexsFactory(name):
 				faildata = {}
 
 			ret = self.filter.processLine(
-				line, returnRawHost=True, checkAllRegex=True)
+				line, returnRawHost=True, checkAllRegex=True)[1]
 			if not ret:
 				# Check line is flagged as none match
 				self.assertFalse(faildata.get('match', True),
