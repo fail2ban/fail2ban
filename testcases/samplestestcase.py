@@ -23,6 +23,7 @@ __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 import unittest, sys, os, fileinput, re, datetime, inspect
+from ConfigParser import InterpolationMissingOptionError
 
 if sys.version_info >= (2, 6):
 	import json
@@ -60,7 +61,11 @@ def testSampleRegexsFactory(name):
 		# Check filter exists
 		filterConf = FilterReader(name, "jail", basedir=CONFIG_DIR)
 		filterConf.read()
-		filterConf.getOptions({})
+		try:
+			filterConf.getOptions({})
+		except InterpolationMissingOptionError:
+			# some filters like selinux aren't complete
+			return
 
 		for opt in filterConf.convert():
 			if opt[2] == "addfailregex":
