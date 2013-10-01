@@ -22,6 +22,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import os, tempfile, shutil, unittest
+
 from client.configreader import ConfigReader
 from client.jailreader import JailReader
 from client.jailsreader import JailsReader
@@ -116,6 +117,19 @@ class JailReaderTest(unittest.TestCase):
 		expected = ['mail-whois', {'name': 'SSH'}]
 		result = JailReader.splitAction(action)
 		self.assertEqual(expected, result)
+		
+	def testGlob(self):
+		d = tempfile.mkdtemp(prefix="f2b-temp")
+		# Generate few files
+		# regular file
+		open(os.path.join(d, 'f1'), 'w').close()
+		# dangling link
+		os.symlink('nonexisting', os.path.join(d, 'f2'))
+
+		# must be only f1
+		self.assertEqual(JailReader._glob(os.path.join(d, '*')), [os.path.join(d, 'f1')])
+		# since f2 is dangling -- empty list
+		self.assertEqual(JailReader._glob(os.path.join(d, 'f2')), [])
 
 class JailsReaderTest(unittest.TestCase):
 
