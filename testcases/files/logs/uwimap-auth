@@ -12,3 +12,7 @@ Jan 14 20:28:07 grog imapd[19343]: Login excessive login failures user=user auth
 # failJSON: { "time": "2005-04-08T16:32:01", "match": true , "host": "198.52.115.74" }
 Apr 8 16:32:01 abdon imapd[29087]: Login excessive login failures user=brada auth=brada host=xxxxxx [198.52.115.74]
 
+
+# http://www.howtoforge.com/forums/showthread.php?t=3786
+# failJSON: { "time": "2005-04-08T16:32:01", "match": true , "host": "127.0.0.1" }
+Apr 8 16:32:01 abdon imapd[21172]: Login disabled user=test auth=test host=localhost.localdomain [127.0.0.1]
