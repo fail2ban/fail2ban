@@ -16,3 +16,7 @@ Apr 8 16:32:01 abdon imapd[29087]: Login excessive login failures user=brada aut
 # http://www.howtoforge.com/forums/showthread.php?t=3786
 # failJSON: { "time": "2005-04-08T16:32:01", "match": true , "host": "127.0.0.1" }
 Apr 8 16:32:01 abdon imapd[21172]: Login disabled user=test auth=test host=localhost.localdomain [127.0.0.1]
+
+# http://mailman2.u.washington.edu/pipermail/imap-uw/2008-February/001889.html
+# failJSON: { "time": "2005-02-23T12:36:01", "match": true , "host": "127.0.55.22" }
+Feb 23 12:36:01 r2 imapd[3473]: Failed uwmaster override of user=pro1  host=r22.j.de [127.0.55.22] 
