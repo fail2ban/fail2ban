@@ -40,6 +40,12 @@ code-review and minor additions from Yaroslav Halchenko.
    * [..a648cc2] Filters can have options now too
    * [..e019ab7] Multiple instances of the same action are allowed in the
      same jail -- use actname option to disambiguate.
+  Daniel Black
+   * Support %z (Timezone offset) and %f (sub-seconds) support for
+	 datedetector. Enhanced existing date/time have been updated patterns to
+	 support these. ISO8601 now defaults to localtime unless specified otherwise.
+	 Some filters have been change as required to capture these elements in the
+	 right timezone correctly.
 
 ver. 0.8.11 (2013/XX/XXX) - loves-unittests
 -----------
@@ -100,7 +106,6 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
      and extra failure examples in sample logs
 	 * filter.d/apache-auth - added expressions for mod_authz, mod_auth and
      mod_auth_digest failures.
-   * Support %z (Timezone offset) and %f (sub-seconds) support for datedetector
   Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
    * filter.d/exim.conf -- regex hardening and extra failure examples in
      sample logs
