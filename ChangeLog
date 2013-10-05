@@ -84,6 +84,7 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
 	 	 regular expressions with the -D parameter.
    * filter.d/sshd - regex enhancements to support openssh-6.3. Closes Debian
      bug #722970
+   * filter.d/webmin - anchored regex at start
   Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
    * filter.d/exim.conf -- regex hardening and extra failure examples in
      sample logs
