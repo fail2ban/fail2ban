@@ -76,6 +76,7 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * filter.d/apache-auth - added expressions for mod_authz, mod_auth and
      mod_auth_digest failures.
    * filter.d/recidive -- support f2b syslog target and anchor regex at start
+   * filter.d/vsftpd - anchored regex at start. disable old pam format regex
    * filter.d/pam-generic - added syslog prefix. Disabled support for
      linux-pam before version 0.99.2.0 (2005)
    * filter.d/gssftpd - anchored regex at start
