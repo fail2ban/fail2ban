@@ -71,6 +71,7 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
   François Boulogne and Frédéric
    * filter.d/lighttpd - auth regexs for lighttpd-1.4.31
   Daniel Black
+   * filter.d/suhosin - regex anchor at start
    * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
      and extra failure examples in sample logs
    * filter.d/apache-auth - added expressions for mod_authz, mod_auth and
