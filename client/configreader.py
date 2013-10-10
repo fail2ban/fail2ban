@@ -54,15 +54,18 @@ class ConfigReader(SafeConfigParserWithIncludes):
 							  % self._basedir)
 		basename = os.path.join(self._basedir, filename)
 		logSys.debug("Reading configs for %s under %s "  % (basename, self._basedir))
-		config_files = [ basename + ".conf",
-						 basename + ".local" ]
-
-		# choose only existing ones
-		config_files = filter(os.path.exists, config_files)
+		config_files = [ basename + ".conf" ]
 
 		# possible further customizations under a .conf.d directory
 		config_dir = basename + '.d'
 		config_files += sorted(glob.glob('%s/*.conf' % config_dir))
+
+		config_files.append(basename + ".local")
+	
+		config_files += sorted(glob.glob('%s/*.local' % config_dir))
+
+		# choose only existing ones
+		config_files = filter(os.path.exists, config_files)
 
 		if len(config_files):
 			# at least one config exists and accessible
