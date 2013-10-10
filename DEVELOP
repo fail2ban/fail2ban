@@ -688,6 +688,29 @@ Releasing
 
 # Ensure the version is correct in ./common/version.py
 
+# Ensure the MANIFEST is complete
+
+Run:
+
+  python setup.py sdist
+
+Look for errors like:
+ 'testcases/files/logs/mysqld.log' not a regular file -- skipping
+
+Which indicates that testcases/files/logs/mysqld.log has been moved or is a directory
+
+  tar -C /tmp -jxf dist/fail2ban-0.8.10.dev.tar.bz2
+
+# clean up current direcory
+
+  find . -name \*.pyc -exec rm {} \;
+
+  diff -rul . /tmp/fail2ban-0.8.10.dev/
+
+  # Only differences should be files that you don't want distributed.
+
+  cd /tmp/fail2ban-0.8.10.dev/ && ./fail2ban-testcases-all
+
 # Add/finalize the corresponding entry in the ChangeLog
 
   To generate a list of committers use e.g.
