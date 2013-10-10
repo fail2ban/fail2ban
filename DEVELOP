@@ -692,7 +692,7 @@ Releasing
 
   To generate a list of committers use e.g.
 
-  git shortlog -sn 0.8.8.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
+  git shortlog -sn 0.8.10.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
 
   Ensure the top of the ChangeLog has the right version and current date.
 
@@ -736,6 +736,8 @@ ver. 0.8.12 (2013/XX/XXX) - wanna-be-released
 
 - Enhancements:
 
+Alter the git shortlog command in the previous section to refer to the just
+released version.
 
 and adjust common/version.py to carry .dev suffix to signal
 a version under development.
