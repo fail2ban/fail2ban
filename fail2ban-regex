@@ -289,7 +289,7 @@ class Fail2banRegex(object):
 					regexlist = self._ignoreregex
 				l = lstats[ltype + '_lines_timeextracted']
 				lines = len(l)*len(regexlist)
-				if lines > 20 or getattr(self, '_print_all_' + ltype):
+				if lines < 20 or getattr(self, '_print_all_' + ltype):
 					ans = [[]]
 					for arg in [l, regexlist]:
 					    ans = [ x + [y] for x in ans for y in arg ]
