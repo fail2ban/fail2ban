@@ -50,7 +50,7 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
 
 - New Features:
   Edgar Hoch
-	 * action.d/firewall-cmd-direct-new.conf - action for Fedora firewalld
+	 * action.d/firewall-cmd-direct-new.conf - action for firewalld
      from https://bugzilla.redhat.com/show_bug.cgi?id=979622
   Andy Fragen and Daniel Black
    * filter.d/osx-ipfw.conf - ipfw action for OSX based on random rule
