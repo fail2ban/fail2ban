@@ -1,7 +1,10 @@
-.TH JAIL.CONF "5" "March 2013" "Fail2Ban" "Fail2Ban Configuration"
+.TH JAIL.CONF "10" "October 2013" "Fail2Ban" "Fail2Ban Configuration"
 .SH NAME
 jail.conf \- configuration for the fail2ban server
 .SH SYNOPSIS
+
+.I fail2ban.conf fail2ban.d/*.conf fail2ban.d/*.local
+
 .I jail.conf / jail.local
 
 .I action.d/*.conf action.d/*.local
@@ -44,6 +47,15 @@ identical entries, parsed alphabetically, e.g.
 \fIfail2ban.d/01_custom_log.conf\fR - containing specific configuration entry to use a different log path.
 .RE
 .RE
+
+The order \fIjail\fR configuration is parsed is:
+
+jail.conf ,
+jail.d/*.conf (in alphabetical order), 
+jail.local, followed by
+jail.d/*.local (in alphabetical order).
+
+Likewise for fail2ban configuration.
 
 .SH DEFAULT
 The following options are applicable to all jails. Their meaning is described in the default \fIjail.conf\fR file.
