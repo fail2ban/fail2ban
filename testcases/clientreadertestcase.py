@@ -82,8 +82,6 @@ option = %s
 		self.assertEqual(self._getoption(), 1)
 		self._write("c.conf", "2")		# overwrite
 		self.assertEqual(self._getoption(), 2)
-		self._write("c.local", "3")		# add override in .local
-		self.assertEqual(self._getoption(), 3)
 		self._write("c.d/98.conf", "998") # add 1st override in .d/
 		self.assertEqual(self._getoption(), 998)
 		self._write("c.d/90.conf", "990") # add previously sorted override in .d/
@@ -95,10 +93,15 @@ option = %s
 		self._remove("c.d/98.conf")
 		self.assertEqual(self._getoption(), 990)
 		self._remove("c.d/90.conf")
+		self.assertEqual(self._getoption(), 2)
+		self._write("c.local", "3")		# add override in .local
 		self.assertEqual(self._getoption(), 3)
+		self._write("c.d/5.local", "9")		# add override in c.d/*.local
+		self.assertEqual(self._getoption(), 9)
 		self._remove("c.conf")			#  we allow to stay without .conf
-		self.assertEqual(self._getoption(), 3)
+		self.assertEqual(self._getoption(), 9)
 		self._write("c.conf", "1")
+		self._remove("c.d/5.local")
 		self._remove("c.local")
 		self.assertEqual(self._getoption(), 1)
 
