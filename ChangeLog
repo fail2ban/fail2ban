@@ -71,6 +71,9 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
   François Boulogne and Frédéric
    * filter.d/lighttpd - auth regexs for lighttpd-1.4.31
   Daniel Black
+   * jail.conf now has asterisk jail - no need for asterisk-tcp and
+	   asterisk-udp. Users should replace existing jails with asterisk to 
+		 reduce duplicate parsing of the asterisk log file.
    * filter.d/suhosin - regex anchor at start
    * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
      and extra failure examples in sample logs
