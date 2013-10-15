@@ -117,7 +117,12 @@ class AsyncServer(asyncore.dispatcher):
 	
 	def start(self, sock, force):
 		self.__sock = sock
-		# Remove socket
+		# Remove socket:
+		#   we've replaced the logic here from an exists check to just trying
+		#   and handle the exceptions approprately. This eliminates a race condition
+		#   and allows us to fully handle permission denied and other OSErrors
+		#   associated with its forced removal and allowing the "Not Found error"
+		#   to silently be accepted as the default case that a socket didn't exist.
 		if force:
 			try:
 				os.remove(sock)
