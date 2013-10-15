@@ -63,6 +63,7 @@ class Fail2banClient:
 		self.__conf["interactive"] = False
 		self.__conf["socket"] = None
 		self.__conf["pidfile"] = None
+		self.__lasterror = None
 
 	def dispVersion(self):
 		print "Fail2Ban v" + version
@@ -147,6 +148,7 @@ class Fail2banClient:
 		beautifier = Beautifier()
 		for c in cmd:
 			beautifier.setInputCmd(c)
+			self.__lasterror = None
 			try:
 				client = CSocket(self.__conf["socket"])
 				ret = client.send(c)
@@ -158,11 +160,13 @@ class Fail2banClient:
 					logSys.debug("NOK: " + `ret[1].args`)
 					print beautifier.beautifyError(ret[1])
 					return False
-			except socket.error:
+			except socket.error, e:
+				self.__lasterror = "Unable to contact server - %s. Is fail2ban running? check the fail2ban.log" % str(e)
 				if showRet:
-					logSys.error("Unable to contact server. Is it running?")
+					logSys.error(self.__lasterror)
 				return False
 			except Exception, e:
+				self.__lasterror = str(e)
 				if showRet:
 					logSys.error(e)
 				return False
@@ -187,16 +191,19 @@ class Fail2banClient:
 					return False
 				# verify that directory for the socket file exists
 				socket_dir = os.path.dirname(self.__conf["socket"])
-				if not os.path.exists(socket_dir):
-					logSys.error(
-						"There is no directory %s to contain the socket file %s."
-						% (socket_dir, self.__conf["socket"]))
-					return False
-				if not os.access(socket_dir, os.W_OK | os.X_OK):
-					logSys.error(
-						"Directory %s exists but not accessible for writing"
-						% (socket_dir,))
-					return False
+				try:
+					os.mkdir(socket_dir)
+				except OSError, e:
+					if e.errno == 17:
+						# File Exists
+						logSys.debug(
+							"Socket directory %s %s - not unexpected",
+							socket_dir,
+							str(e))
+					else:
+						logSys.error(
+							"While attempting to create directory %s: %s", socket_dir, str(e))
+						return False
 				# Start the server
 				self.__startServerAsync(self.__conf["socket"],
 										self.__conf["pidfile"],
@@ -207,12 +214,13 @@ class Fail2banClient:
 					# Configure the server
 					self.__processCmd(self.__stream, False)
 					return True
-				except ServerExecutionException:
+				except ServerExecutionException, e:
 					logSys.error("Could not start server. Maybe an old "
 								 "socket file is still present. Try to "
 								 "remove " + self.__conf["socket"] + ". If "
 								 "you used fail2ban-client to start the "
-								 "server, adding the -x option will do it")
+								 "server, adding the -x option will do it"
+								 "last error: %s" % self.__lasterror)
 					return False
 		elif len(cmd) == 1 and cmd[0] == "reload":
 			if self.__ping():
@@ -301,7 +309,7 @@ class Fail2banClient:
 			if cnt >= 300:
 				if self.__conf["verbose"] > 1:
 					sys.stdout.write('\n')
-				raise ServerExecutionException("Failed to start server")
+				raise ServerExecutionException("Failed to start server - last error: %s" % self.__lasterror)
 			time.sleep(0.1)
 			cnt += 1
 		if self.__conf["verbose"] > 1:
