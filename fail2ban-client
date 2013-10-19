@@ -197,9 +197,8 @@ class Fail2banClient:
 					if e.errno == 17:
 						# File Exists
 						logSys.debug(
-							"Socket directory %s %s - not unexpected",
-							socket_dir,
-							str(e))
+							"Socket directory %s - already exists",
+							socket_dir)
 					else:
 						logSys.error(
 							"While attempting to create directory %s: %s", socket_dir, str(e))
