@@ -285,7 +285,7 @@ class Filter(JailThread):
 			if self.__ignoreCommand is not False:
 				ignored_ips = os.popen(self.__ignoreCommand).read().split(" ")
 				if ip in ignored_ips:
-					continue
+					return True
 
 			s = i.split('/', 1)
 			# IP address without CIDR mask
