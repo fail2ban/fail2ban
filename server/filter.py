@@ -21,8 +21,7 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import sys
-
+#import sys, os, getopt
 from failmanager import FailManagerEmpty
 from failmanager import FailManager
 from ticket import FailTicket
@@ -42,6 +41,7 @@ logSys = logging.getLogger("fail2ban.filter")
 # This class reads a log file and detects login failures or anything else
 # that matches a given regular expression. This class is instantiated by
 # a Jail object.
+
 
 class Filter(JailThread):
 
@@ -67,11 +67,12 @@ class Filter(JailThread):
 		self.__findTime = 6000
 		## The ignore IP list.
 		self.__ignoreIpList = []
+		## External command
+		self.__ignoreCommand = False
 
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
 		logSys.debug("Created %s" % self)
-
 
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__.__name__, self.jail)
@@ -90,7 +91,6 @@ class Filter(JailThread):
 		except RegexException, e:
 			logSys.error(e)
 			raise e
-
 
 	def delFailRegex(self, index):
 		try:
@@ -123,7 +123,7 @@ class Filter(JailThread):
 			self.__ignoreRegex.append(regex)
 		except RegexException, e:
 			logSys.error(e)
-			raise e 
+			raise e
 
 	def delIgnoreRegex(self, index):
 		try:
@@ -209,8 +209,23 @@ class Filter(JailThread):
 	# file has been modified and looks for failures.
 	# @return True when the thread exits nicely
 
-	def run(self): # pragma: no cover
+	def run(self):  # pragma: no cover
 		raise Exception("run() is abstract")
+
+
+	##
+	# Set external command, for ignoredips
+	# hazg@mail.ru
+	#
+	def setIgnoreCommand(self, command):
+		self.__ignoreCommand = command
+
+	##
+	# Get external command, for ignoredips
+	# hazg@mail.ru
+	#
+	def getIgnoreCommand(self):
+		return self.__ignoreCommand
 
 	##
 	# Ban an IP - http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
@@ -224,7 +239,7 @@ class Filter(JailThread):
 			self.failManager.addFailure(FailTicket(ip, unixTime))
 
 		# Perform the banning of the IP now.
-		try: # pragma: no branch - exception is the only way out
+		try:  # pragma: no branch - exception is the only way out
 			while True:
 				ticket = self.failManager.toBan()
 				self.jail.putFailTicket(ticket)
@@ -249,8 +264,11 @@ class Filter(JailThread):
 		self.__ignoreIpList.remove(ip)
 
 	def getIgnoreIP(self):
-		return self.__ignoreIpList
-
+		#logSys.info(self.jail.opts)
+		if self.__ignoreCommand is not False:
+			return self.__ignoreIpList + os.popen(self.__ignoreCommand).read().split(" ")
+		else:
+			return self.__ignoreIpList
 	##
 	# Check if IP address/DNS is in the ignore list.
 	#
@@ -258,12 +276,17 @@ class Filter(JailThread):
 	# mask in the ignore list.
 	# @param ip IP address
 	# @return True if IP address is in ignore list
-
 	def inIgnoreIPList(self, ip):
 		for i in self.__ignoreIpList:
 			# An empty string is always false
 			if i == "":
 				continue
+			# External command with ips to ignore
+			if self.__ignoreCommand is not False:
+				ignored_ips = os.popen(self.__ignoreCommand).read().split(" ")
+				if ip in ignored_ips:
+					continue
+
 			s = i.split('/', 1)
 			# IP address without CIDR mask
 			if len(s) == 1:

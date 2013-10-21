@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -36,7 +36,7 @@ import logging, logging.handlers, sys, os, signal
 logSys = logging.getLogger("fail2ban.server")
 
 class Server:
-	
+
 	def __init__(self, daemon = False):
 		self.__loggingLock = Lock()
 		self.__lock = RLock()
@@ -49,18 +49,18 @@ class Server:
 		# Set logging level
 		self.setLogLevel(3)
 		self.setLogTarget("STDOUT")
-	
+
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
 		self.quit()
-	
+
 	def start(self, sock, pidfile, force = False):
 		logSys.info("Starting Fail2ban v" + version.version)
-		
+
 		# Install signal handlers
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
 		signal.signal(signal.SIGINT, self.__sigTERMhandler)
-		
+
 		# First set the mask to only allow access to owner
 		os.umask(0077)
 		if self.__daemon: # pragma: no cover
@@ -71,7 +71,7 @@ class Server:
 			else:
 				logSys.error("Could not create daemon")
 				raise ServerInitializationError("Could not create daemon")
-		
+
 		# Creates a PID file.
 		try:
 			logSys.debug("Creating PID file %s" % pidfile)
@@ -80,7 +80,7 @@ class Server:
 			pidFile.close()
 		except IOError, e:
 			logSys.error("Unable to create PID file: %s" % e)
-		
+
 		# Start the communication
 		logSys.debug("Starting communication")
 		try:
@@ -94,7 +94,7 @@ class Server:
 		except OSError, e:
 			logSys.error("Unable to remove PID file: %s" % e)
 		logSys.info("Exiting Fail2ban")
-	
+
 	def quit(self):
 		# Stop communication first because if jail's unban action
 		# tries to communicate via fail2ban-client we get a lockup
@@ -114,13 +114,13 @@ class Server:
 		finally:
 			self.__loggingLock.release()
 
-	
+
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend)
-		
+
 	def delJail(self, name):
 		self.__jails.remove(name)
-	
+
 	def startJail(self, name):
 		try:
 			self.__lock.acquire()
@@ -128,7 +128,7 @@ class Server:
 				self.__jails.get(name).start()
 		finally:
 			self.__lock.release()
-	
+
 	def stopJail(self, name):
 		logSys.debug("Stopping jail %s" % name)
 		try:
@@ -138,7 +138,7 @@ class Server:
 				self.delJail(name)
 		finally:
 			self.__lock.release()
-	
+
 	def stopAllJail(self):
 		logSys.info("Stopping all jails")
 		try:
@@ -147,134 +147,140 @@ class Server:
 				self.stopJail(jail)
 		finally:
 			self.__lock.release()
-	
+
 	def isAlive(self, name):
 		return self.__jails.get(name).isAlive()
-	
+
 	def setIdleJail(self, name, value):
 		self.__jails.get(name).setIdle(value)
 		return True
 
 	def getIdleJail(self, name):
 		return self.__jails.get(name).getIdle()
-	
+
 	# Filter
 	def addIgnoreIP(self, name, ip):
 		self.__jails.getFilter(name).addIgnoreIP(ip)
-	
+
 	def delIgnoreIP(self, name, ip):
 		self.__jails.getFilter(name).delIgnoreIP(ip)
-	
+
 	def getIgnoreIP(self, name):
 		return self.__jails.getFilter(name).getIgnoreIP()
-	
+
 	def addLogPath(self, name, fileName):
 		self.__jails.getFilter(name).addLogPath(fileName)
-	
+
 	def delLogPath(self, name, fileName):
 		self.__jails.getFilter(name).delLogPath(fileName)
-	
+
 	def getLogPath(self, name):
 		return [m.getFileName()
 				for m in self.__jails.getFilter(name).getLogPath()]
-	
+
 	def setFindTime(self, name, value):
 		self.__jails.getFilter(name).setFindTime(value)
-	
+
 	def getFindTime(self, name):
 		return self.__jails.getFilter(name).getFindTime()
 
 	def addFailRegex(self, name, value):
 		self.__jails.getFilter(name).addFailRegex(value)
-	
+
+	def setIgnoreCommand(self, name, value):
+		self.__jails.getFilter(name).setIgnoreCommand(value)
+	def getIgnoreCommand(self, name):
+		self.__jails.getFilter(name).getIgnoreCommand()
+
+
 	def delFailRegex(self, name, index):
 		self.__jails.getFilter(name).delFailRegex(index)
-	
+
 	def getFailRegex(self, name):
 		return self.__jails.getFilter(name).getFailRegex()
-	
+
 	def addIgnoreRegex(self, name, value):
 		self.__jails.getFilter(name).addIgnoreRegex(value)
-	
+
 	def delIgnoreRegex(self, name, index):
 		self.__jails.getFilter(name).delIgnoreRegex(index)
-	
+
 	def getIgnoreRegex(self, name):
 		return self.__jails.getFilter(name).getIgnoreRegex()
-	
+
 	def setUseDns(self, name, value):
 		self.__jails.getFilter(name).setUseDns(value)
-	
+
 	def getUseDns(self, name):
 		return self.__jails.getFilter(name).getUseDns()
-	
+
 	def setMaxRetry(self, name, value):
 		self.__jails.getFilter(name).setMaxRetry(value)
-	
+
 	def getMaxRetry(self, name):
 		return self.__jails.getFilter(name).getMaxRetry()
-	
+
 	# Action
 	def addAction(self, name, value):
 		self.__jails.getAction(name).addAction(value)
-	
+
 	def getLastAction(self, name):
 		return self.__jails.getAction(name).getLastAction()
-	
+
 	def delAction(self, name, value):
 		self.__jails.getAction(name).delAction(value)
-	
+
 	def setCInfo(self, name, action, key, value):
 		self.__jails.getAction(name).getAction(action).setCInfo(key, value)
-	
+
 	def getCInfo(self, name, action, key):
 		return self.__jails.getAction(name).getAction(action).getCInfo(key)
-	
+
 	def delCInfo(self, name, action, key):
 		self.__jails.getAction(name).getAction(action).delCInfo(key)
-	
+
 	def setBanTime(self, name, value):
 		self.__jails.getAction(name).setBanTime(value)
-	
+
 	def setBanIP(self, name, value):
 		return self.__jails.getFilter(name).addBannedIP(value)
-		
+
 	def setUnbanIP(self, name, value):
 		return self.__jails.getAction(name).removeBannedIP(value)
-		
+
 	def getBanTime(self, name):
 		return self.__jails.getAction(name).getBanTime()
-	
+
 	def setActionStart(self, name, action, value):
 		self.__jails.getAction(name).getAction(action).setActionStart(value)
-	
+
 	def getActionStart(self, name, action):
 		return self.__jails.getAction(name).getAction(action).getActionStart()
-		
+
 	def setActionStop(self, name, action, value):
 		self.__jails.getAction(name).getAction(action).setActionStop(value)
-	
+
 	def getActionStop(self, name, action):
 		return self.__jails.getAction(name).getAction(action).getActionStop()
-	
+
 	def setActionCheck(self, name, action, value):
 		self.__jails.getAction(name).getAction(action).setActionCheck(value)
-	
+
 	def getActionCheck(self, name, action):
 		return self.__jails.getAction(name).getAction(action).getActionCheck()
-	
+
 	def setActionBan(self, name, action, value):
 		self.__jails.getAction(name).getAction(action).setActionBan(value)
-	
+
 	def getActionBan(self, name, action):
 		return self.__jails.getAction(name).getAction(action).getActionBan()
-	
+
 	def setActionUnban(self, name, action, value):
 		self.__jails.getAction(name).getAction(action).setActionUnban(value)
-	
+
 	def getActionUnban(self, name, action):
 		return self.__jails.getAction(name).getAction(action).getActionUnban()
-		
+
 	# Status
 	def status(self):
 		try:
@@ -285,17 +291,17 @@ class Server:
 			length = len(jailList)
 			if not length == 0:
 				jailList = jailList[:length-2]
-			ret = [("Number of jail", self.__jails.size()), 
+			ret = [("Number of jail", self.__jails.size()),
 				   ("Jail list", jailList)]
 			return ret
 		finally:
 			self.__lock.release()
-	
+
 	def statusJail(self, name):
 		return self.__jails.get(name).getStatus()
-	
+
 	# Logging
-	
+
 	##
 	# Set the logging level.
 	#
@@ -306,7 +312,7 @@ class Server:
 	# 3 = INFO
 	# 4 = DEBUG
 	# @param value the level
-	
+
 	def setLogLevel(self, value):
 		try:
 			self.__loggingLock.acquire()
@@ -323,26 +329,26 @@ class Server:
 			logging.getLogger("fail2ban").setLevel(logLevel)
 		finally:
 			self.__loggingLock.release()
-	
+
 	##
 	# Get the logging level.
 	#
 	# @see setLogLevel
 	# @return the log level
-	
+
 	def getLogLevel(self):
 		try:
 			self.__loggingLock.acquire()
 			return self.__logLevel
 		finally:
 			self.__loggingLock.release()
-	
+
 	##
 	# Sets the logging target.
 	#
 	# target can be a file, SYSLOG, STDOUT or STDERR.
 	# @param target the logging target
-	
+
 	def setLogTarget(self, target):
 		try:
 			self.__loggingLock.acquire()
@@ -352,7 +358,7 @@ class Server:
 				# Syslog daemons already add date to the message.
 				formatter = logging.Formatter("%(name)-16s: %(levelname)-6s %(message)s")
 				facility = logging.handlers.SysLogHandler.LOG_DAEMON
-				hdlr = logging.handlers.SysLogHandler("/dev/log", 
+				hdlr = logging.handlers.SysLogHandler("/dev/log",
 													  facility = facility)
 			elif target == "STDOUT":
 				hdlr = logging.StreamHandler(sys.stdout)
@@ -394,21 +400,21 @@ class Server:
 			return True
 		finally:
 			self.__loggingLock.release()
-	
+
 	def getLogTarget(self):
 		try:
 			self.__loggingLock.acquire()
 			return self.__logTarget
 		finally:
 			self.__loggingLock.release()
-	
+
 	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the
 			background as a daemon.
-		
+
 			http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/278731
 		"""
-	
+
 		try:
 			# Fork a child process so the parent can exit.  This will return control
 			# to the command line or shell.  This is required so that the new process
@@ -419,9 +425,9 @@ class Server:
 			pid = os.fork()
 		except OSError, e:
 			return((e.errno, e.strerror))	 # ERROR (return a tuple)
-		
+
 		if pid == 0:	   # The first child.
-	
+
 			# Next we call os.setsid() to become the session leader of this new
 			# session.  The process also becomes the process group leader of the
 			# new process group.  Since a controlling terminal is associated with a
@@ -430,11 +436,11 @@ class Server:
 			# fail, since we're guaranteed that the child is not a process group
 			# leader.
 			os.setsid()
-		
+
 			# When the first child terminates, all processes in the second child
 			# are sent a SIGHUP, so it's ignored.
 			signal.signal(signal.SIGHUP, signal.SIG_IGN)
-		
+
 			try:
 				# Fork a second child to prevent zombies.  Since the first child is
 				# a session leader without a controlling terminal, it's possible for
@@ -444,7 +450,7 @@ class Server:
 				pid = os.fork()		# Fork a second child.
 			except OSError, e:
 				return((e.errno, e.strerror))  # ERROR (return a tuple)
-		
+
 			if (pid == 0):	  # The second child.
 				# Ensure that the daemon doesn't keep any directory in use.  Failure
 				# to do this could make a filesystem unmountable.
@@ -453,7 +459,7 @@ class Server:
 				os._exit(0)	  # Exit parent (the first child) of the second child.
 		else:
 			os._exit(0)		 # Exit parent of the first child.
-		
+
 		# Close all open files.  Try the system configuration variable, SC_OPEN_MAX,
 		# for the maximum number of open files to close.  If it doesn't exist, use
 		# the default value (configurable).
@@ -461,13 +467,13 @@ class Server:
 			maxfd = os.sysconf("SC_OPEN_MAX")
 		except (AttributeError, ValueError):
 			maxfd = 256	   # default maximum
-	
+
 		for fd in range(0, maxfd):
 			try:
 				os.close(fd)
 			except OSError:   # ERROR (ignore)
 				pass
-	
+
 		# Redirect the standard file descriptors to /dev/null.
 		os.open("/dev/null", os.O_RDONLY)	# standard input (0)
 		os.open("/dev/null", os.O_RDWR)		# standard output (1)
