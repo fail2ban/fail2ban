@@ -215,15 +215,15 @@ class Filter(JailThread):
 
 	##
 	# Set external command, for ignoredips
-	# hazg@mail.ru
 	#
+
 	def setIgnoreCommand(self, command):
 		self.__ignoreCommand = command
 
 	##
 	# Get external command, for ignoredips
-	# hazg@mail.ru
 	#
+
 	def getIgnoreCommand(self):
 		return self.__ignoreCommand
 
@@ -264,11 +264,11 @@ class Filter(JailThread):
 		self.__ignoreIpList.remove(ip)
 
 	def getIgnoreIP(self):
-		#logSys.info(self.jail.opts)
 		if self.__ignoreCommand is not False:
 			return self.__ignoreIpList + os.popen(self.__ignoreCommand).read().split(" ")
 		else:
 			return self.__ignoreIpList
+
 	##
 	# Check if IP address/DNS is in the ignore list.
 	#
@@ -276,6 +276,7 @@ class Filter(JailThread):
 	# mask in the ignore list.
 	# @param ip IP address
 	# @return True if IP address is in ignore list
+
 	def inIgnoreIPList(self, ip):
 		for i in self.__ignoreIpList:
 			# An empty string is always false
