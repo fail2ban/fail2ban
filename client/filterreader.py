@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-#
+# 
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -31,34 +31,32 @@ from configreader import ConfigReader
 logSys = logging.getLogger("fail2ban.client.config")
 
 class FilterReader(ConfigReader):
-
+	
 	def __init__(self, fileName, name, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
 		self.__file = fileName
 		self.__name = name
-
+	
 	def setFile(self, fileName):
 		self.__file = fileName
-
+	
 	def getFile(self):
 		return self.__file
-
+	
 	def setName(self, name):
 		self.__name = name
-
+	
 	def getName(self):
 		return self.__name
-
+	
 	def read(self):
 		return ConfigReader.read(self, "filter.d/" + self.__file)
-
+	
 	def getOptions(self, pOpts):
 		opts = [["string", "ignoreregex", ""],
-				["string", "failregex", ""],
-				["string", "ignorecommand", ""]
-				]
+				["string", "failregex", ""]]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
-
+	
 	def convert(self):
 		stream = list()
 		for opt in self.__opts:
@@ -71,6 +69,6 @@ class FilterReader(ConfigReader):
 				for regex in self.__opts[opt].split('\n'):
 					# Do not send a command if the rule is empty.
 					if regex != '':
-						stream.append(["set", self.__name, "addignoreregex", regex])
+						stream.append(["set", self.__name, "addignoreregex", regex])		
 		return stream
-
+		

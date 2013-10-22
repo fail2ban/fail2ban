@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-#
+# 
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -30,21 +30,21 @@ import logging, time
 logSys = logging.getLogger("fail2ban.comm")
 
 class Transmitter:
-
+	
 	##
 	# Constructor.
 	#
 	# @param The server reference
-
+	
 	def __init__(self, server):
 		self.__server = server
-
+		
 	##
 	# Proceeds a command.
 	#
 	# Proceeds an incoming command.
 	# @param command The incoming command
-
+	
 	def proceed(self, command):
 		# Deserialize object
 		logSys.debug("Command: " + `command`)
@@ -56,12 +56,12 @@ class Transmitter:
 						% (command, e))
 			ack = 1, e
 		return ack
-
+	
 	##
 	# Handle an command.
 	#
-	#
-
+	# 
+	
 	def __commandHandler(self, command):
 		if command[0] == "ping":
 			return "pong"
@@ -97,9 +97,9 @@ class Transmitter:
 		elif command[0] == "get":
 			return self.__commandGet(command[1:])
 		elif command[0] == "status":
-			return self.status(command[1:])
+			return self.status(command[1:])			
 		raise Exception("Invalid command")
-
+	
 	def __commandSet(self, command):
 		name = command[0]
 		# Logging
@@ -152,10 +152,6 @@ class Transmitter:
 			value = command[2]
 			self.__server.addIgnoreRegex(name, value)
 			return self.__server.getIgnoreRegex(name)
-		elif command[1] == "ignorecommand":
-			value = command[2]
-			self.__server.setIgnoreCommand(name, value)
-			return self.__server.getIgnoreCommand(name)
 		elif command[1] == "delignoreregex":
 			value = int(command[2])
 			self.__server.delIgnoreRegex(name, value)
@@ -228,7 +224,7 @@ class Transmitter:
 			self.__server.setActionUnban(name, act, value)
 			return self.__server.getActionUnban(name, act)
 		raise Exception("Invalid command (no set action or not yet implemented)")
-
+	
 	def __commandGet(self, command):
 		name = command[0]
 		# Logging
@@ -241,8 +237,6 @@ class Transmitter:
 			return self.__server.getLogPath(name)
 		elif command[1] == "ignoreip":
 			return self.__server.getIgnoreIP(name)
-		elif command[1] == "ignorecommand":
-			return self.__server.getIgnoreCommand(name)
 		elif command[1] == "failregex":
 			return self.__server.getFailRegex(name)
 		elif command[1] == "ignoreregex":
@@ -278,7 +272,7 @@ class Transmitter:
 			key = command[3]
 			return self.__server.getCInfo(name, act, key)
 		raise Exception("Invalid command (no get action or not yet implemented)")
-
+	
 	def status(self, command):
 		if len(command) == 0:
 			return self.__server.status()
@@ -286,4 +280,4 @@ class Transmitter:
 			name = command[0]
 			return self.__server.statusJail(name)
 		raise Exception("Invalid command (no status)")
-
+	
