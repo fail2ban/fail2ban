@@ -143,8 +143,6 @@ class AsyncServer(asyncore.dispatcher):
 				raise AsyncServerException("Server already running on socket %s", self.__sock)
 			else:
 				raise AsyncServerException("Unable to create/bind socket %s: %s" % (self.__sock, str(e)))
-		except Exception, e:
-			raise AsyncServerException("Unknown error while trying to create/bind socket %s: %s" % (self.__sock, str(e)))
 
 		AsyncServer.__markCloseOnExec(self.socket)
 		self.listen(1)
