@@ -214,12 +214,11 @@ class Fail2banClient:
 					self.__processCmd(self.__stream, False)
 					return True
 				except ServerExecutionException, e:
-					logSys.error("Could not start server. Maybe an old "
+					logSys.error( str(e) + ". Maybe an old "
 								 "socket file is still present. Try to "
 								 "remove " + self.__conf["socket"] + ". If "
 								 "you used fail2ban-client to start the "
-								 "server, adding the -x option will do it"
-								 "last error: %s" % self.__lasterror)
+								 "server, adding the -x option will do it")
 					return False
 		elif len(cmd) == 1 and cmd[0] == "reload":
 			if self.__ping():
