@@ -37,6 +37,9 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * filter.d/roundcube-auth - timezone offset can be positive or negative
    * action.d/bsd-ipfw - action option unsed. Fixed to blocktype for
      consistency. default to port unreach instead of deny
+   * Remove race condition on removal of existing socket when starting client
+     with -x. Fail2ban now explicitly removes the socket and ignores the ENOENT
+     error.
   Rolf Fokkens
    * action.d/dshield.conf and complain.conf -- reorder mailx arguments.
      https://bugzilla.redhat.com/show_bug.cgi?id=998020
