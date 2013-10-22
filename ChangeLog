@@ -49,6 +49,9 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
      to Should- rc init fields
 
 - New Features:
+  Edgar Hoch
+	 * action.d/firewall-cmd-direct-new.conf - action for firewalld
+     from https://bugzilla.redhat.com/show_bug.cgi?id=979622
   Andy Fragen and Daniel Black
    * filter.d/osx-ipfw.conf - ipfw action for OSX based on random rule
      numbers.
@@ -86,6 +89,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * filter.d/gssftpd - anchored regex at start
    * filter.d/sogo-auth - anchor regex at start
    * filter.d/mysqld-auth.conf - mysql can use syslog
+   * filter.d/postfix-sasl - renamed from sasl, anchor at start and base on
+     syslog
    * fail2ban-regex - now generates http://www.debuggex.com urls for debugging
 	 	 regular expressions with the -D parameter.
    * filter.d/sshd - regex enhancements to support openssh-6.3. Closes Debian
