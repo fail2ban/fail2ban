@@ -703,9 +703,7 @@ Which indicates that testcases/files/logs/mysqld.log has been moved or is a dire
 
 # clean up current direcory
 
-  find . -name \*.pyc -exec rm {} \;
-
-  diff -rul . /tmp/fail2ban-0.8.10.dev/
+  diff -rul --exclude \*.pyc . /tmp/fail2ban-0.8.10.dev/
 
   # Only differences should be files that you don't want distributed.
 
