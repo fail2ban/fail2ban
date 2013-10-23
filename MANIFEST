@@ -181,6 +181,8 @@ config/filter.d/mysqld-auth.conf
 config/filter.d/sogo-auth.conf
 config/action.d/bsd-ipfw.conf
 config/action.d/dummy.conf
+config/action.d/firewall-cmd-direct-new.conf
+config/action.d/iptables-ipset-proto6-allports.conf
 config/action.d/iptables-blocktype.conf
 config/action.d/iptables-ipset-proto4.conf
 config/action.d/iptables-ipset-proto6.conf
