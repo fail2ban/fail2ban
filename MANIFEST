@@ -76,7 +76,7 @@ testcases/files/logs/postfix
 testcases/files/logs/proftpd
 testcases/files/logs/pure-ftpd
 testcases/files/logs/roundcube-auth
-testcases/files/logs/sasl
+testcases/files/logs/postfix-sasl
 testcases/files/logs/sogo-auth
 testcases/files/logs/sshd
 testcases/files/logs/sshd-ddos
@@ -162,7 +162,7 @@ config/filter.d/pure-ftpd.conf
 config/filter.d/qmail.conf
 config/filter.d/pam-generic.conf
 config/filter.d/php-url-fopen.conf
-config/filter.d/sasl.conf
+config/filter.d/postfix-sasl.conf
 config/filter.d/sieve.conf
 config/filter.d/sshd.conf
 config/filter.d/sshd-ddos.conf
