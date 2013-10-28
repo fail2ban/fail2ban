@@ -47,6 +47,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * files/redhat-initd - rewritten to use stock init.d functions thus
      avoiding problems with getpid.  Also $network and iptables moved
      to Should- rc init fields
+  Rick Mellor
+   * filter.d/vsftp - fix capture with tty=ftp
 
 - New Features:
   Edgar Hoch
