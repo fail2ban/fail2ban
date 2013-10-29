@@ -35,3 +35,7 @@ Jul 02 13:49:32 hostname dovecot[442]: dovecot: auth(default): pam(account@MYSER
 
 # failJSON: { "time": "2013-08-11T03:56:40", "match": true , "host": "1.2.3.4" }
 2013-08-11 03:56:40 auth-worker(default): Info: pam(username,1.2.3.4): pam_authenticate() failed: Authentication failure (password mismatch?)
+
+# failJSON: { "time": "2005-04-19T05:22:20", "match": true , "host": "80.255.3.104" }
+Apr 19 05:22:20 vm5 auth: pam_unix(dovecot:auth): authentication failure; logname= uid=0 euid=0 tty=dovecot ruser=informix rhost=80.255.3.104
+
