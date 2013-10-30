@@ -4,11 +4,13 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.10)                                             2013/06/12
+Fail2Ban (version 0.8.11.pre)																					2013/10/30
 ================================================================================
 
-ver. 0.8.11 (2013/XX/XXX) - loves-unittests
+ver. 0.8.11 (2013/11/XXX) - loves-unittests and tight DoS free filter regexes
 -----------
+
+TODO write summary here
 
 - Fixes:
   Daniel Black & Marcel Dopita
