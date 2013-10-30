@@ -37,6 +37,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * filter.d/roundcube-auth - timezone offset can be positive or negative
    * action.d/bsd-ipfw - action option unsed. Fixed to blocktype for
      consistency. default to port unreach instead of deny
+   * filter.d/dropbear - fix regexs to match standard dropbear and the patched
+     http://www.unchartedbackwaters.co.uk/files/dropbear/dropbear-0.52.patch
   Rolf Fokkens
    * action.d/dshield.conf and complain.conf -- reorder mailx arguments.
      https://bugzilla.redhat.com/show_bug.cgi?id=998020
@@ -104,6 +106,7 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * filter.d/webmin - anchored regex at start
    * filter.d/qmail - rewrote regex to anchor at start. Added regex for
      another "in the wild" patch to rblsmtp.
+   * filter.d/dropbear - add PAM is in dropbear-2013.60
   Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
    * filter.d/exim.conf -- regex hardening and extra failure examples in
      sample logs
