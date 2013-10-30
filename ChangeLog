@@ -76,6 +76,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
   François Boulogne and Frédéric
    * filter.d/lighttpd - auth regexs for lighttpd-1.4.31
   Daniel Black
+   * reorder parsing of jail.conf, jail.d/*.conf, jail.local, jail.d/*.local
+     and likewise for fail2ban.{conf|local|d/*.conf|d/*.local}. Closes gh-392
    * jail.conf now has asterisk jail - no need for asterisk-tcp and
 	   asterisk-udp. Users should replace existing jails with asterisk to 
 		 reduce duplicate parsing of the asterisk log file.
