@@ -23,7 +23,6 @@ and bans the corresponding IP addresses using firewall rules.
 
 This tools can test regular expressions for "fail2ban".
 
-Report bugs to https://github.com/fail2ban/fail2ban/issues
 """
 
 __author__ = "Cyril Jaquier, Yaroslav Halchenko"
@@ -73,6 +72,7 @@ def pprint_list(l, header=None):
 		s = ''
 	print s + "|  " + "\n|  ".join(l) + '\n`-'
 
+
 def get_opt_parser():
 	# use module docstring for help output
 	p = OptionParser(
@@ -89,6 +89,15 @@ REGEX:
 IGNOREREGEX:
     string                  a string representing an 'ignoreregex'
     filename                path to a filter file (filter.d/sshd.conf)
+
+Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors
+Copyright of modifications held by their respective authors.
+Licensed under the GNU General Public License v2 (GPL).
+
+Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>.
+Many contributions by Yaroslav O. Halchenko and Steven Hiscocks.
+
+Report bugs to https://github.com/fail2ban/fail2ban/issues
 """,
 				version="%prog " + version)
 
@@ -110,7 +119,6 @@ IGNOREREGEX:
 			   help="Enrich log-messages with compressed tracebacks"),
 		Option("--full-traceback", action='store_true',
 			   help="Either to make the tracebacks full, not compressed (as by default)"),
-
 		])
 
 	return p
