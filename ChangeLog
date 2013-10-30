@@ -30,13 +30,27 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
        mode has failed (e.g. due to incorrect syntax). Closes gh-353
   Daniel Black & Мернов Георгий
    * filter.d/dovecot.conf -- Fix when no TLS enabled - line doesn't end in ,
+  Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
+   * filter.d/exim.conf -- regex hardening and extra failure examples in
+     sample logs
+   * filter.d/named-refused.conf - BIND 9.9.3 regex changes
+  Daniel Black & Sebastian Arcus
+   * filter.d/asterisk -- more regexes
   Daniel Black
    * action.d/hostsdeny -- NOTE: new dependancy 'ed'. Switched to use 'ed' across
      all platforms to ensure permissions are the same before and after a ban -
      closes gh-266. hostsdeny supports daemon_list now too.
+   * action.d/bsd-ipfw - action option unsed. Change blocktype to port unreach
+     instead of deny for consistancy.
    * filter.d/roundcube-auth - timezone offset can be positive or negative
-   * action.d/bsd-ipfw - action option unsed. Fixed to blocktype for
-     consistency. default to port unreach instead of deny
+   * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
+     and extra failure examples in sample logs
+   * filter.d/apache-auth - added expressions for mod_authz, mod_auth and
+     mod_auth_digest failures.
+   * filter.d/recidive -- support f2b syslog target and anchor regex at start
+   * filter.d/mysqld-auth.conf - mysql can use syslog
+   * filter.d/sshd - regex enhancements to support openssh-6.3. Closes Debian
+     bug #722970
   Rolf Fokkens
    * action.d/dshield.conf and complain.conf -- reorder mailx arguments.
      https://bugzilla.redhat.com/show_bug.cgi?id=998020
@@ -61,6 +75,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * action.d/osx-afctl - an action based on afctl for osx
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
+   * fail2ban-regex - now generates http://www.debuggex.com urls for debugging
+	 	 regular expressions with the -D parameter.
   Daniel Black
    * filter.d/exim-spam.conf -- a splitout of exim's spam regexes
      with additions for greater control over filtering spam.
@@ -83,33 +99,15 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * jail.conf now has asterisk jail - no need for asterisk-tcp and
 	   asterisk-udp. Users should replace existing jails with asterisk to 
 		 reduce duplicate parsing of the asterisk log file.
-   * filter.d/suhosin - regex anchor at start
-   * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
-     and extra failure examples in sample logs
-   * filter.d/apache-auth - added expressions for mod_authz, mod_auth and
-     mod_auth_digest failures.
-   * filter.d/recidive -- support f2b syslog target and anchor regex at start
+   * filter.d/{suhosin,pam-generic,gssftpd,sogo-auth,webmin}- regex anchor at
+     start
    * filter.d/vsftpd - anchored regex at start. disable old pam format regex
    * filter.d/pam-generic - added syslog prefix. Disabled support for
      linux-pam before version 0.99.2.0 (2005)
-   * filter.d/gssftpd - anchored regex at start
-   * filter.d/sogo-auth - anchor regex at start
-   * filter.d/mysqld-auth.conf - mysql can use syslog
    * filter.d/postfix-sasl - renamed from sasl, anchor at start and base on
      syslog
-   * fail2ban-regex - now generates http://www.debuggex.com urls for debugging
-	 	 regular expressions with the -D parameter.
-   * filter.d/sshd - regex enhancements to support openssh-6.3. Closes Debian
-     bug #722970
-   * filter.d/webmin - anchored regex at start
    * filter.d/qmail - rewrote regex to anchor at start. Added regex for
      another "in the wild" patch to rblsmtp.
-  Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
-   * filter.d/exim.conf -- regex hardening and extra failure examples in
-     sample logs
-   * filter.d/named-refused.conf - BIND 9.9.3 regex changes
-  Daniel Black & Sebastian Arcus
-   * filter.d/asterisk -- more regexes
   Yaroslav Halchenko
    * fail2ban-regex -- refactored to provide more details (missing and
      ignored lines, control over logging, etc) while maintaining look&feel
