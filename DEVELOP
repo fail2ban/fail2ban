@@ -735,6 +735,10 @@ Which indicates that testcases/files/logs/mysqld.log has been moved or is a dire
   python setup.py bdist_rpm
   python setup.py upload
 
+# Prepare a release notice https://github.com/fail2ban/fail2ban/releases/new
+
+  Update the binaries and tag the release
+
 # Run the following and update the wiki with output:
 
   python -c 'import common.protocol; common.protocol.printWiki()'
