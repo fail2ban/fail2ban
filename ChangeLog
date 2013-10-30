@@ -10,6 +10,8 @@ Fail2Ban (version 0.8.11.pre)																					2013/10/30
 ver. 0.8.11 (2013/11/XXX) - loves-unittests and tight DoS free filter regexes
 -----------
 
+TODO write summary here
+
 - Fixes:
   Daniel Black & Marcel Dopita
    * filter.d/apache-auth -- fixed and apache auth samples provide. closes #286
