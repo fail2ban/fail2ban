@@ -65,7 +65,7 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
   Mark McKinstry
    * action.d/apf.conf - add action for Advanced Policy Firewall (apf)
   Steven Hiscocks and Daniel Black
-   * filter.d/selinux{,-ssh} -- add SELinux date and filter
+   * filter.d/selinux-{common,ssh} -- add SELinux date and ssh filter
 
 - Enhancements:
   François Boulogne and Frédéric

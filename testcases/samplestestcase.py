@@ -61,11 +61,7 @@ def testSampleRegexsFactory(name):
 		# Check filter exists
 		filterConf = FilterReader(name, "jail", basedir=CONFIG_DIR)
 		filterConf.read()
-		try:
-			filterConf.getOptions({})
-		except InterpolationMissingOptionError:
-			# some filters like selinux aren't complete
-			return
+		filterConf.getOptions({})
 
 		for opt in filterConf.convert():
 			if opt[2] == "addfailregex":
@@ -136,7 +132,7 @@ def testSampleRegexsFactory(name):
 
 	return testFilter
 
-for filter_ in os.listdir(os.path.join(CONFIG_DIR, "filter.d")):
+for filter_ in filter(lambda x: not x.endswith('common.conf'), os.listdir(os.path.join(CONFIG_DIR, "filter.d"))):
 	filterName = filter_.rpartition(".")[0]
 	setattr(
 		FilterSamplesRegex,
