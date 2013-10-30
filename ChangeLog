@@ -71,6 +71,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * action.d/apf.conf - add action for Advanced Policy Firewall (apf)
   Amir Caspi and kjohnsonecl
    * filter.d/uwimap-auth - filter for uwimap-auth IMAP/POP server
+  Steven Hiscocks and Daniel Black
+   * filter.d/selinux-{common,ssh} -- add SELinux date and ssh filter
 
 - Enhancements:
   François Boulogne and Frédéric

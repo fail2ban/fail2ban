@@ -23,6 +23,7 @@ __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 import unittest, sys, os, fileinput, re, datetime, inspect
+from ConfigParser import InterpolationMissingOptionError
 
 if sys.version_info >= (2, 6):
 	import json
@@ -131,7 +132,7 @@ def testSampleRegexsFactory(name):
 
 	return testFilter
 
-for filter_ in os.listdir(os.path.join(CONFIG_DIR, "filter.d")):
+for filter_ in filter(lambda x: not x.endswith('common.conf'), os.listdir(os.path.join(CONFIG_DIR, "filter.d"))):
 	filterName = filter_.rpartition(".")[0]
 	setattr(
 		FilterSamplesRegex,
