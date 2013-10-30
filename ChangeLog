@@ -4,16 +4,35 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.10)                                             2013/06/12
+Fail2Ban (version 0.8.11.pre)																					2013/10/30
 ================================================================================
 
-ver. 0.8.11 (2013/XX/XXX) - loves-unittests
+ver. 0.8.11 (2013/11/XXX) - loves-unittests and tight, DoS free, filter regexes
 -----------
 
+In light of CVE-2013-2178 that triggered our last release we have put a
+significant effort into tightening all of the regexs of our filters to avoid
+another similar vulnerability. All filters have been updated and some to
+include more failure regexs supporting previously unbanned failures and
+support for newer application versions too. There are test cases for most log
+cases of failures now.
+
+As usual if you have other examples that demonstrate that a filter is
+insufficient please give us an example log line on the github issue tracker
+http://github.com/fail2ban/fail2ban/issues and NOT on a random blog in some
+obscure corner of the Internet.
+
+During the tightening of the regexs to avoid DoS vulnerabilities there is the
+possibility that we have inadvertently, despite our best intentions,
+incorrectly allowed a failure to continue. We will fix this as quickly as
+humanly possible.
+
+IMPORTANT incompatible changes:
 	Filter name changes:
-   * IMPORTANT: 'lighttpd-fastcgi' filter has been renamed to 'suhosin'
+   *  'lighttpd-fastcgi' filter has been renamed to 'suhosin'
 	 * 'sasl' has been renamed to 'postfix-sasl'
    These will require changing in jail.{conf,local} if using these filters.
+	Exim filter has been split into an spam and a relay/auth filter.
 
 - Fixes:
   Daniel Black & Marcel Dopita
