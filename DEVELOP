@@ -728,16 +728,15 @@ Which indicates that testcases/files/logs/mysqld.log has been moved or is a dire
 
   ./fail2ban-testcases-all
 
-# Prepare/upload source and rpm binary distributions
+# Prepare source and rpm binary distributions
 
-  python setup.py check
   python setup.py sdist
   python setup.py bdist_rpm
   python setup.py upload
 
 # Prepare a release notice https://github.com/fail2ban/fail2ban/releases/new
 
-  Update the binaries and tag the release
+  Upload the source/binaries from the dist directory and tag the release
 
 # Run the following and update the wiki with output:
 
