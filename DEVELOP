@@ -669,6 +669,61 @@ Releasing
   * https://bugzilla.redhat.com/buglist.cgi?query_format=advanced&bug_status=NEW&bug_status=ASSIGNED&component=fail2ban&classification=Red%20Hat&classification=Fedora
   * http://www.freebsd.org/cgi/query-pr-summary.cgi?text=fail2ban
 
+# Make sure the tests pass
+
+  ./fail2ban-testcases-all
+
+# Ensure the version is correct
+
+  in:
+  * ./common/version.py
+  * top of ChangeLog
+  * README.md
+
+# Ensure the MANIFEST is complete
+
+Run:
+
+  python setup.py sdist
+
+Look for errors like:
+ 'testcases/files/logs/mysqld.log' not a regular file -- skipping
+
+Which indicates that testcases/files/logs/mysqld.log has been moved or is a directory
+
+  tar -C /tmp -jxf dist/fail2ban-0.8.11.tar.bz2
+
+# clean up current direcory
+
+  diff -rul --exclude \*.pyc . /tmp/fail2ban-0.8.11/
+
+  # Only differences should be files that you don't want distributed.
+
+# Ensure the tests work from the tarball
+
+  cd /tmp/fail2ban-0.8.11/ && ./fail2ban-testcases-all
+
+# Add/finalize the corresponding entry in the ChangeLog
+
+  To generate a list of committers use e.g.
+
+  git shortlog -sn 0.8.10.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
+
+  Ensure the top of the ChangeLog has the right version and current date.
+
+  Ensure the top entry of the ChangeLog has the right version and current date.
+
+# Update man pages
+
+  (cd man ; ./generate-man )
+  git commit -m 'DOC/ENH: update man pages for release' man/*
+
+# Prepare source and rpm binary distributions
+
+  python setup.py sdist
+  python setup.py bdist_rpm
+  python setup.py upload
+
 # Provide a release sample to distributors
 
   * Debian: Yaroslav Halchenko <debian@onerussian.com>
@@ -683,64 +738,30 @@ Releasing
             https://build.opensuse.org/package/users?package=fail2ban&project=openSUSE%3AFactory
   * Mac Ports: @Malbrouck on github (gh-49)
             https://trac.macports.org/browser/trunk/dports/security/fail2ban/Portfile
+  An potentially to the fail2ban-users directory.
 
 # Wait for feedback from distributors
 
-# Ensure the version is correct in ./common/version.py and at the top of ChangeLog
-
-# Ensure the MANIFEST is complete
-
-Run:
-
-  python setup.py sdist
-
-Look for errors like:
- 'testcases/files/logs/mysqld.log' not a regular file -- skipping
-
-Which indicates that testcases/files/logs/mysqld.log has been moved or is a directory
-
-  tar -C /tmp -jxf dist/fail2ban-0.8.11.dev.tar.bz2
-
-# clean up current direcory
-
-  diff -rul --exclude \*.pyc . /tmp/fail2ban-0.8.11.dev/
-
-  # Only differences should be files that you don't want distributed.
-
-  cd /tmp/fail2ban-0.8.11.dev/ && ./fail2ban-testcases-all
-
-# Add/finalize the corresponding entry in the ChangeLog
-
-  To generate a list of committers use e.g.
-
-  git shortlog -sn 0.8.11.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
-
-  Ensure the top of the ChangeLog has the right version and current date.
-
-  Ensure the top entry of the ChangeLog has the right version and current date.
-
-# Update man pages
-
-  (cd man ; ./generate-man )
-  git commit -m 'update man pages for release' man/*
-
-# Make sure the tests pass
-
-  ./fail2ban-testcases-all
-
-# Prepare source and rpm binary distributions
-
-  python setup.py sdist
-  python setup.py bdist_rpm
-  python setup.py upload
-
 # Prepare a release notice https://github.com/fail2ban/fail2ban/releases/new
 
-  Upload the source/binaries from the dist directory and tag the release
+  Upload the source/binaries from the dist directory and tag the release using the URL
+
+# Upload source/binaries to sourceforge http://sourceforge.net/projects/fail2ban/
 
 # Run the following and update the wiki with output:
-
   python -c 'import common.protocol; common.protocol.printWiki()'
+
+  page: http://www.fail2ban.org/wiki/index.php/Commands
+
+* Update:
+  http://www.fail2ban.org/wiki/index.php/Downloads
+  http://www.fail2ban.org/wiki/index.php/ChangeLog
+  http://www.fail2ban.org/wiki/index.php/Requirements (Check requirement)
+  http://www.fail2ban.org/wiki/index.php/Main_Page (Add to News)
+  http://www.fail2ban.org/wiki/index.php/Features
+
+* See if any filters are upgraded:
+  http://www.fail2ban.org/wiki/index.php/Special:AllPages
 
 # Email users and development list of release
 
