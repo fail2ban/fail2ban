@@ -10,3 +10,4 @@ fail2ban-client \- configure and control the server
 [see also]
 .br 
 fail2ban-server(1)
+jail.conf(5)

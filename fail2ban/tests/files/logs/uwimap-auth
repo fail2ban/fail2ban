@@ -1,0 +1,22 @@
+# failJSON: { "time": "2005-07-03T20:56:53", "match": true , "host": "81.169.154.112" }
+Jul 3 20:56:53 Linux2 imapd[666]: Login failed user=lizdy auth=lizdy host=h2066373.stratoserver.net [81.169.154.112]
+
+# failJSON: { "time": "2005-07-29T18:30:19", "match": true , "host": "198.52.115.74" }
+Jul 29 18:30:19 Linux2 ipop3d[25745]: Login failed user=info auth=info host=74-115-52-198-dedicated.multacom.com [198.52.115.74]
+
+# http://lists.freebsd.org/pipermail/freebsd-questions/2005-January/072073.html
+# failJSON: { "time": "2005-01-14T20:28:07", "match": true , "host": "198.52.115.74" }
+Jan 14 20:28:07 grog imapd[19343]: Login excessive login failures user=user auth=user host=74-115-52-198-dedicated.multacom.com [198.52.115.74]
+
+#http://us.generation-nt.com/answer/uw-imapd-doesnt-authenticate-users-help-194297331.html
+# failJSON: { "time": "2005-04-08T16:32:01", "match": true , "host": "198.52.115.74" }
+Apr 8 16:32:01 abdon imapd[29087]: Login excessive login failures user=brada auth=brada host=xxxxxx [198.52.115.74]
+
+
+# http://www.howtoforge.com/forums/showthread.php?t=3786
+# failJSON: { "time": "2005-04-08T16:32:01", "match": true , "host": "127.0.0.1" }
+Apr 8 16:32:01 abdon imapd[21172]: Login disabled user=test auth=test host=localhost.localdomain [127.0.0.1]
+
+# http://mailman2.u.washington.edu/pipermail/imap-uw/2008-February/001889.html
+# failJSON: { "time": "2005-02-23T12:36:01", "match": true , "host": "127.0.55.22" }
+Feb 23 12:36:01 r2 imapd[3473]: Failed uwmaster override of user=pro1  host=r22.j.de [127.0.55.22] 

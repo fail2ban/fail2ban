@@ -147,8 +147,9 @@ class Fail2banClient:
 					if showRet:
 						print beautifier.beautify(ret[1])
 				else:
-					logSys.debug("NOK: " + `ret[1].args`)
-					print beautifier.beautifyError(ret[1])
+					logSys.error("NOK: " + `ret[1].args`)
+					if showRet:
+						print beautifier.beautifyError(ret[1])
 					return False
 			except socket.error:
 				if showRet:
@@ -375,7 +376,10 @@ class Fail2banClient:
 						if cmd == "help":
 							self.dispUsage()
 						elif not cmd == "":
-							self.__processCommand(shlex.split(cmd))
+							try:
+								self.__processCommand(shlex.split(cmd))
+							except Exception, e:
+								logSys.error(e)
 			except (EOFError, KeyboardInterrupt):
 				print
 				return True

@@ -73,7 +73,7 @@ class Filter(JailThread):
 		## Line buffer
 		self.__lineBuffer = []
 		## Store last time stamp, applicable for multi-line
-		self.__lastTimeLine = ""
+		self.__lastTimeText = ""
 		self.__lastDate = None
 
 		self.dateDetector = DateDetector()
@@ -361,15 +361,27 @@ class Filter(JailThread):
 	def processLine(self, line, returnRawHost=False, checkAllRegex=False):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
-		line = line.rstrip('\r\n')
+		l = line.rstrip('\r\n')
 		logSys.log(7, "Working on line %r", line)
 
-		return self.findFailure(line, returnRawHost, checkAllRegex)
+		timeMatch = self.dateDetector.matchTime(l)
+		if timeMatch:
+			# Lets split into time part and log part of the line
+			timeText = timeMatch.group()
+			# Lets leave the beginning in as well, so if there is no
+			# anchore at the beginning of the time regexp, we don't
+			# at least allow injection. Should be harmless otherwise
+			logLine  = l[:timeMatch.start()] + l[timeMatch.end():]
+		else:
+			timeText = None
+			logLine = l
+
+		return logLine, self.findFailure(timeText, logLine, returnRawHost, checkAllRegex)
 
 	def processLineAndAdd(self, line):
 		"""Processes the line for failures and populates failManager
 		"""
-		for element in self.processLine(line):
+		for element in self.processLine(line)[1]:
 			failregex = element[0]
 			ip = element[1]
 			unixTime = element[2]
@@ -407,7 +419,7 @@ class Filter(JailThread):
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, logLine,
+	def findFailure(self, timeText, logLine,
 			returnRawHost=False, checkAllRegex=False):
 		failList = list()
 
@@ -417,22 +429,24 @@ class Filter(JailThread):
 			logSys.log(7, "Matched ignoreregex and was \"%s\" ignored", logLine)
 			return failList
 
-		dateTimeMatch = self.dateDetector.getTime(logLine)
 
-		if dateTimeMatch is not None:
-			# Lets split into time part and log part of the line
-			date = dateTimeMatch[0]
-			timeMatch = dateTimeMatch[1]
+		if timeText:
 
-			timeLine = timeMatch.group()
-			self.__lastTimeLine = timeLine
-			self.__lastDate = date
-			# Lets leave the beginning in as well, so if there is no
-			# anchore at the beginning of the time regexp, we don't
-			# at least allow injection. Should be harmless otherwise
-			logLine  = logLine[:timeMatch.start()] + logLine[timeMatch.end():]
+			dateTimeMatch = self.dateDetector.getTime(timeText)
+
+			if dateTimeMatch is None:
+				logSys.error("findFailure failed to parse timeText: " + timeText)
+				date = self.__lastDate
+
+			else:
+				# Lets split into time part and log part of the line
+				date = dateTimeMatch[0]
+				timeMatch = dateTimeMatch[1]
+
+				self.__lastTimeText = timeText
+				self.__lastDate = date
 		else:
-			timeLine = self.__lastTimeLine or logLine
+			timeText = self.__lastTimeText or logLine
 			date = self.__lastDate
 
 		self.__lineBuffer = (self.__lineBuffer + [logLine])[-self.__lineBufferSize:]
@@ -461,7 +475,7 @@ class Filter(JailThread):
 								 "file a detailed issue on"
 								 " https://github.com/fail2ban/fail2ban/issues "
 								 "in order to get support for this format."
-								 % (logLine, timeLine))
+								 % (logLine, timeText))
 				else:
 					self.__lineBuffer = failRegex.getUnmatchedLines()
 					try:

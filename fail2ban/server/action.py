@@ -381,6 +381,10 @@ class Action:
 	#@staticmethod
 	def executeCmd(realCmd, timeout=60):
 		logSys.debug(realCmd)
+		if not realCmd:
+			logSys.debug("Nothing to do")
+			return True
+		
 		_cmd_lock.acquire()
 		try: # Try wrapped within another try needed for python version < 2.5
 			stdout = tempfile.TemporaryFile(suffix=".stdout", prefix="fai2ban_")
