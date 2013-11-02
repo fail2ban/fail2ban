@@ -4,11 +4,50 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.11.pre1)																				2013/10/30
+Fail2Ban (version 0.9.0a1)                                            20??/??/??
 ================================================================================
 
+
+ver. 0.9.0 (2013/??/??) - alpha
+----------
+
+Carries all fixes in 0.8.9 and new features and enhancements.  Nearly
+all development is thanks to Steven Hiscocks (THANKS!) with only
+code-review and minor additions from Yaroslav Halchenko.
+
+- Refactoring (IMPORTANT -- Please review your setup and configuration):
+  Yaroslav Halchenko
+   * [..bddbf1e] jail.conf was heavily refactored and now is similar
+     to how it looked on Debian systems:
+     - default action could be configured once for all jails
+     - jails definitions only provide customizations (port, logpath)
+     - no need to specify 'filter' if name matches jail name
+  Steven Hiscocks
+   * [..5aef036] Core functionality moved into fail2ban/ module.
+     Closes gh-26
+- New features:
+  Steven Hiscocks
+   * [..c7ae460] Multiline failregex. Close gh-54
+   * [8af32ed] Guacamole filter and support for Apache Tomcat date
+     format
+   * [..4869186] Python3 support
+   * [..b6059f4] 'timeout' option for actions Close gh-60 and Debian bug
+     #410077.  Also it would now capture and include stdout and stderr
+     into logging messages in case of error or at DEBUG loglevel.
+- Enhancements
+  Steven Hiscocks
+   * Replacing use of deprecated API (.warning, .assertEqual, etc)
+   * [..a648cc2] Filters can have options now too
+   * [..e019ab7] Multiple instances of the same action are allowed in the
+     same jail -- use actname option to disambiguate.
+  Daniel Black
+   * Support %z (Timezone offset) and %f (sub-seconds) support for
+	 datedetector. Enhanced existing date/time have been updated patterns to
+	 support these. ISO8601 now defaults to localtime unless specified otherwise.
+	 Some filters have been change as required to capture these elements in the
+	 right timezone correctly.
+
 ver. 0.8.11 (2013/11/XXX) - loves-unittests and tight, DoS free, filter regexes
------------
 
 In light of CVE-2013-2178 that triggered our last release we have put a
 significant effort into tightening all of the regexs of our filters to avoid

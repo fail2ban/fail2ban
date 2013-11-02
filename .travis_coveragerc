@@ -4,3 +4,4 @@ branch = True
 omit =
     /usr/*
     /home/travis/virtualenv/*
+    fail2ban/server/filtersystemd.py

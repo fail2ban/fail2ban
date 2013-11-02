@@ -2,7 +2,7 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v0.8.11-pre1            2013/10/30
+                       v0.9.0a0                2013/??/??
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
@@ -21,12 +21,13 @@ Installation:
 this case, you should use it instead.**
 
 Required:
-- [Python >= 2.4](http://www.python.org)
+- [Python2 >= 2.4 or Python3 >= 3.2](http://www.python.org)
 
 Optional:
 - [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify)
   - Linux >= 2.6.13
 - [gamin >= 0.0.21](http://www.gnome.org/~veillard/gamin)
+- [systemd >= 204](http://www.freedesktop.org/wiki/Software/systemd)
 
 To install, just do:
 

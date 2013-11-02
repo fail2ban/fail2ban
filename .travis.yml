@@ -5,6 +5,8 @@ python:
   - "2.5"
   - "2.6"
   - "2.7"
+  - "3.2"
+  - "3.3"
 before_install:
   - sudo apt-get update -qq
 install:
@@ -13,6 +15,8 @@ install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then pip install -q coveralls; fi
 script:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then export PYTHONPATH="$PYTHONPATH:/usr/share/pyshared:/usr/lib/pyshared/python2.7"; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coverage run --rcfile=.travis_coveragerc fail2ban-testcases; else python ./fail2ban-testcases; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coverage run --rcfile=.travis_coveragerc setup.py test; else python setup.py test; fi
 after_success:
+# Coverage config file must be .coveragerc for coveralls
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then cp -v .travis_coveragerc .coveragerc; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coveralls; fi

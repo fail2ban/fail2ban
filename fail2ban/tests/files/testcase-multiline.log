@@ -1,0 +1,35 @@
+Aug 14 11:58:58 yyyy rsyncd[9874]: connect from example.com (192.0.43.10)
+Aug 14 11:58:58 yyyy rsyncd[23864]: connect from example.com (192.0.43.10)
+Aug 14 11:59:58 yyyy rsyncd[23864]: rsync on xxx/ from example.com (192.0.43.10)
+Aug 14 11:59:58 yyyy rsyncd[23864]: building file list
+Aug 14 11:59:58 yyyy rsyncd[28101]: connect from irrelevant (192.0.43.11)
+Aug 14 11:59:58 yyyy rsyncd[28101]: rsync on xxx/ from irrelevant (192.0.43.11)
+Aug 14 11:59:58 yyyy rsyncd[28101]: building file list
+Aug 14 11:59:58 yyyy rsyncd[28101]: sent 294382 bytes  received 781 bytes  total size 29221543998
+Aug 14 11:59:58 yyyy rsyncd[18067]: sent 2833586339 bytes  received 65115 bytes  total size 29221543998
+Aug 14 11:59:58 yyyy smartd[2635]: Device: /dev/sdb [SAT], SMART Usage Attribute: 194 Temperature_Celsius changed from 116 to 115
+Aug 14 11:59:58 yyyy rsyncd[1762]: connect from irrelevant (192.0.43.11)
+Aug 14 11:59:58 yyyy rsyncd[1762]: rsync on xxx/ from irrelevant (192.0.43.11)
+
+Aug 14 11:59:58 yyyy rsyncd[1762]: building file list
+Aug 14 11:59:58 yyyy rsyncd[1762]: sent 294382 bytes  received 781 bytes  total size 29221543998
+Aug 14 11:59:58 yyyy sendmail[30222]: r0NNNlC0030222: from=<bounce-25497-9881290652-user=example.com@example.com>, size=6420, class=0, nrcpts=1, msgid=<0.0.9881290652.3772024cf8879cycvau18081.0@example.com>, bodytype=8BITMIME, proto=ESMTP, daemon=MTA, relay=[192.0.43.15] (may be forged)
+Aug 14 11:59:58 yyyy smartd[2635]: Device: /dev/sda [SAT], starting scheduled Short Self-Test.
+Aug 14 11:59:58 yyyy smartd[2635]: Device: /dev/sdb [SAT], SMART Usage Attribute: 194 Temperature_Celsius changed from 115 to 116
+Aug 14 11:59:58 yyyy smartd[2635]: Device: /dev/sdb [SAT], starting scheduled Short Self-Test.
+Aug 14 11:59:58 yyyy smartd[2635]: Device: /dev/sda [SAT], previous self-test completed without error
+Aug 14 11:59:58 yyyy smartd[2635]: Device: /dev/sdb [SAT], previous self-test completed without error
+
+
+Aug 14 11:59:58 yyyy rsyncd[7788]: connect from irrelevant (192.0.43.11)
+Aug 14 11:59:58 yyyy rsyncd[7788]: rsync on xxx/ from irrelevant (192.0.43.11)
+Aug 14 11:59:58 yyyy rsyncd[7788]: building file list
+Aug 14 11:59:58 yyyy rsyncd[21919]: sent 2836906453 bytes  received 6768 bytes  total size 29221543998
+Aug 14 11:59:58 yyyy rsyncd[23864]: rsync error: timeout in data send/receive (code 30) at io.c(137) [sender=3.0.9]
+Aug 14 11:59:58 yyyy spamd[19119]: spamd: result: Y 11 - AWL,BAYES_50,DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HTML_MESSAGE,RCVD_IN_BRBL_LASTEXT,RCVD_IN_PSBL,RCVD_IN_RP_RNBL,RDNS_NONE,URIBL_BLACK,URIBL_DBL_SPAM scantime=1.2,size=6910,user=sa-milt,uid=499,required_score=5.0,rhost=localhost,raddr=127.0.0.1,rport=57429,mid=<0.0.9881290652.3772024cf8879cycvau18081.0@example.com>,bayes=0.536244,autolearn=no
+Aug 14 11:59:58 yyyy rsyncd[5534]: connect from irrelevant (192.0.43.11)
+Aug 14 11:59:58 yyyy rsyncd[5534]: rsync on xxx/ from irrelevant (192.0.43.11)
+Aug 14 11:59:58 yyyy rsyncd[5534]: building file list
+Aug 14 11:59:58 yyyy rsyncd[7788]: rsync error: Received SIGINT
+Aug 14 11:59:58 yyyy rsyncd[5534]: sent 294382 bytes  received 781 bytes  total size 29221543998
+Aug 14 11:59:59 yyyy rsyncd[9874]: rsync error: timeout in data send/receive (code 30) at io.c(137) [sender=3.0.9]
