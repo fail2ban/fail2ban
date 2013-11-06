@@ -66,6 +66,8 @@ IMPORTANT incompatible changes:
      closes gh-266. hostsdeny supports daemon_list now too.
    * action.d/bsd-ipfw - action option unsed. Change blocktype to port unreach
      instead of deny for consistancy.
+   * filter.d/dovecot - added to support different dovecot failure
+     "..disallowed plaintext auth". Closes Debian bug #709324
    * filter.d/roundcube-auth - timezone offset can be positive or negative
    * action.d/bsd-ipfw - action option unsed. Fixed to blocktype for
      consistency. default to port unreach instead of deny
