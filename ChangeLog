@@ -97,6 +97,7 @@ IMPORTANT incompatible changes:
   Edgar Hoch
 	 * action.d/firewall-cmd-direct-new.conf - action for firewalld
      from https://bugzilla.redhat.com/show_bug.cgi?id=979622
+     NOTE: requires firewalld-0.3.8+
   Andy Fragen and Daniel Black
    * filter.d/osx-ipfw.conf - ipfw action for OSX based on random rule
      numbers.
