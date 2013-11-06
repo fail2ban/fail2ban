@@ -7,36 +7,33 @@
 Fail2Ban (version 0.8.11.pre1)                                        2013/10/30
 ================================================================================
 
-ver. 0.8.11 (2013/11/XXX) - loves-unittests and tight, DoS free, filter regexes
+ver. 0.8.11 (2013/11/XXX) - loves-unittests-and-tight-DoS-free-filter-regexes
 -----------
 
-In light of CVE-2013-2178 that triggered our last release we have put a
-significant effort into tightening all of the regexs of our filters to avoid
-another similar vulnerability. All filters have been updated and some to
-include more failure regexs supporting previously unbanned failures and
-support for newer application versions too. There are test cases for most log
+In light of CVE-2013-2178 that triggered our last release we have put
+a significant effort into tightening all of the regexs of our filters
+to avoid another similar vulnerability. All filters have been updated
+and some to catch more login/authentication failures and to support
+for newer application versions. There are test cases for most log
 cases of failures now.
 
-As usual if you have other examples that demonstrate that a filter is
-insufficient please give us an example log line on the github issue tracker
-http://github.com/fail2ban/fail2ban/issues and NOT on a random blog in some
-obscure corner of the Internet.
-
-During the tightening of the regexs to avoid DoS vulnerabilities there is the
-possibility that we have inadvertently, despite our best intentions,
-incorrectly allowed a failure to continue. We will fix this as quickly as
-humanly possible.
+As usual, if you have other examples that demonstrate that a filter is
+insufficient, or if we have inadvertently introduced a regression,
+please provide us with example log lines on the github issue tracker
+http://github.com/fail2ban/fail2ban/issues and NOT on a random blog in
+some obscure corner of the Internet.
 
 - IMPORTANT incompatible changes:
   Filter name changes:
    * 'lighttpd-fastcgi' filter has been renamed to 'suhosin'
    * 'sasl' has been renamed to 'postfix-sasl'
-  These will require changing in jail.{conf,local} if using these filters.
-  Exim filter has been split into an spam and a relay/auth filter.
+   * 'exim' spam catching failregexes was split out into 'exim-spam'
+  These changes will require changing jail.{conf,local} if any of
+  those filters were used.
 
 - Fixes:
   Daniel Black & Marcel Dopita
-   * filter.d/apache-auth -- fixed and apache auth samples provide. closes #286
+   * filter.d/apache-auth -- fixed and apache auth samples provide. Closes gh-286
   Yaroslav Halchenko
    * filter.d/common.conf -- make colon after [daemon] optional. Closes gh-267
    * filter.d/apache-common.conf -- support apache 2.4 more detailed error
@@ -62,8 +59,8 @@ humanly possible.
    * filter.d/asterisk -- more regexes
   Daniel Black
    * action.d/hostsdeny -- NOTE: new dependancy 'ed'. Switched to use 'ed' across
-     all platforms to ensure permissions are the same before and after a ban -
-     closes gh-266. hostsdeny supports daemon_list now too.
+     all platforms to ensure permissions are the same before and after a ban.
+     Closes gh-266. hostsdeny supports daemon_list now too.
    * action.d/bsd-ipfw - action option unsed. Change blocktype to port unreach
      instead of deny for consistancy.
    * filter.d/dovecot - added to support different dovecot failure
@@ -89,7 +86,7 @@ humanly possible.
      https://bugzilla.redhat.com/show_bug.cgi?id=998020
   John Doe (ache)
    * action.d/bsd-ipfw.conf - invert actionstop logic to make exist status 0.
-     closes gh-343.
+     Closes gh-343.
   JP Espinosa (Reviewed by O.Poplawski)
    * files/redhat-initd - rewritten to use stock init.d functions thus
      avoiding problems with getpid.  Also $network and iptables moved
@@ -163,7 +160,7 @@ humanly possible.
    * filter.d/{courier{login,smtp},proftpd,sieve,wuftpd,xinetd} - General
      regex impovements
   Zurd
-   * filter.d/postfix - add filter for VRFY failures. closes gh-322.
+   * filter.d/postfix - add filter for VRFY failures. Closes gh-322.
   Orion Poplawski
    * fail2ban.d/ and jail.d/ directories are added to etc/fail2ban to facilitate
      their use
