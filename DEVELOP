@@ -730,15 +730,20 @@ Which indicates that testcases/files/logs/mysqld.log has been moved or is a dire
             http://packages.qa.debian.org/f/fail2ban.html
   * FreeBSD: Christoph Theis theis@gmx.at>, Nick Hilliard <nick@foobar.org>
             http://svnweb.freebsd.org/ports/head/security/py-fail2ban/Makefile?view=markup
+            http://www.freebsd.org/cgi/query-pr-summary.cgi?text=fail2ban
   * Fedora: Axel Thimm <Axel.Thimm@atrpms.net>
             https://apps.fedoraproject.org/packages/fail2ban
             http://pkgs.fedoraproject.org/cgit/fail2ban.git
+            https://admin.fedoraproject.org/pkgdb/acls/bugs/fail2ban
   * Gentoo: netmon@gentoo.org
             http://sources.gentoo.org/cgi-bin/viewvc.cgi/gentoo-x86/net-analyzer/fail2ban/metadata.xml?view=markup
+            https://bugs.gentoo.org/buglist.cgi?quicksearch=fail2ban
   * openSUSE: Stephan Kulow <coolo@suse.com>
-            https://build.opensuse.org/package/users?package=fail2ban&project=openSUSE%3AFactory
+            https://build.opensuse.org/package/show/openSUSE:Factory/fail2ban
   * Mac Ports: @Malbrouck on github (gh-49)
             https://trac.macports.org/browser/trunk/dports/security/fail2ban/Portfile
+  * Mageia:
+            https://bugs.mageia.org/buglist.cgi?quicksearch=fail2ban
   An potentially to the fail2ban-users directory.
 
 # Wait for feedback from distributors
