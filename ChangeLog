@@ -82,6 +82,8 @@ IMPORTANT incompatible changes:
    * filter.d/mysqld-auth.conf - mysql can use syslog
    * filter.d/sshd - regex enhancements to support openssh-6.3. Closes Debian
      bug #722970
+   * filter.d/wuftpd - regex enhancements to support pam and wuftpd. Closes
+     Debian bug #665925
   Rolf Fokkens
    * action.d/dshield.conf and complain.conf -- reorder mailx arguments.
      https://bugzilla.redhat.com/show_bug.cgi?id=998020
