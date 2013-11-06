@@ -99,11 +99,8 @@ class DateDetectorTest(unittest.TestCase):
 			):
 			for should_match, prefix in ((True,     ""),
 										 (not anchored, "bogus-prefix ")):
-				ldate = prefix + sdate	  # logged date
-				log = ldate + "[sshd] error: PAM: Authentication failure"
-				# exclude
+				log = prefix + sdate + "[sshd] error: PAM: Authentication failure"
 
-				# yoh: on [:6] see in above test
 				logtime = self.__datedetector.getTime(log)
 				if should_match:
 					self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s, anchored: %r, log: %s" % ( sdate, anchored, log))
@@ -111,10 +108,11 @@ class DateDetectorTest(unittest.TestCase):
 					self.assertEqual(logUnix, dateUnix, "getTime comparison failure for %s: \"%s\" is not \"%s\"" % (sdate, logUnix, dateUnix))
 					if sdate.startswith('audit('):
 						# yes, special case, the group only matches the number
-						sdate = '1106513999.000'	
-					self.assertEqual(logMatch.group(), sdate)
+						self.assertEqual(logMatch.group(), '1106513999.000')
+					else:
+						self.assertEqual(logMatch.group(), sdate)
 				else:
-					self.assertEqual(logtime, None, "getTime should have not matched for %r Got: %s" % (ldate, logtime))
+					self.assertEqual(logtime, None, "getTime should have not matched for %r Got: %s" % (sdate, logtime))
 
 	def testStableSortTemplate(self):
 		old_names = [x.getName() for x in self.__datedetector.getTemplates()]
