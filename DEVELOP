@@ -732,6 +732,7 @@ Which indicates that testcases/files/logs/mysqld.log has been moved or is a dire
             http://svnweb.freebsd.org/ports/head/security/py-fail2ban/Makefile?view=markup
   * Fedora: Axel Thimm <Axel.Thimm@atrpms.net>
             https://apps.fedoraproject.org/packages/fail2ban
+            http://pkgs.fedoraproject.org/cgit/fail2ban.git
   * Gentoo: netmon@gentoo.org
             http://sources.gentoo.org/cgi-bin/viewvc.cgi/gentoo-x86/net-analyzer/fail2ban/metadata.xml?view=markup
   * openSUSE: Stephan Kulow <coolo@suse.com>
