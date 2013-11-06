@@ -54,9 +54,19 @@ class AddFailure(unittest.TestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 	
-	def testAdd(self):
+	def testFailManagerAdd(self):
 		self.assertEqual(self.__failManager.size(), 3)
+		self.assertEqual(self.__failManager.getFailTotal(), 13)
+		self.__failManager.setFailTotal(0)
+		self.assertEqual(self.__failManager.getFailTotal(), 0)
+		self.__failManager.setFailTotal(13)
 	
+	def testFailManagerMaxTime(self):
+		self.assertEqual(self.__failManager.getMaxTime(), 600)
+		self.__failManager.setMaxTime(13)
+		self.assertEqual(self.__failManager.getMaxTime(), 13)
+		self.__failManager.setMaxTime(600)
+
 	def _testDel(self):
 		self.__failManager.delFailure('193.168.0.128')
 		self.__failManager.delFailure('111.111.1.111')

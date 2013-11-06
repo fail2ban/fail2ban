@@ -115,7 +115,7 @@ def parse_date(datestring):
     default.
     """
     if not isinstance(datestring, basestring):
-        raise ParseError("Expecting a string %r" % datestring)
+        raise ValueError("Expecting a string %r" % datestring)
     m = ISO8601_REGEX.match(datestring)
     if not m:
         raise ParseError("Unable to parse date string %r" % datestring)
@@ -125,6 +125,11 @@ def parse_date(datestring):
         groups["fraction"] = 0
     else:
         groups["fraction"] = int(float("0.%s" % groups["fraction"]) * 1e6)
-    return datetime(int(groups["year"]), int(groups["month"]), int(groups["day"]),
-        int(groups["hour"]), int(groups["minute"]), int(groups["second"]),
-        int(groups["fraction"]), tz)
+
+    try:
+        return datetime(int(groups["year"]), int(groups["month"]), int(groups["day"]),
+            int(groups["hour"]), int(groups["minute"]), int(groups["second"]),
+            int(groups["fraction"]), tz)
+    except Exception, e:
+        raise ParseError("Failed to create a valid datetime record due to: %s"
+                         % e)

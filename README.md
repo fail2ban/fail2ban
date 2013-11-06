@@ -31,8 +31,8 @@ Optional:
 
 To install, just do:
 
-    tar xvfj fail2ban-0.8.10.tar.bz2
-    cd fail2ban-0.8.10
+    tar xvfj fail2ban-0.8.11.tar.bz2
+    cd fail2ban-0.8.11
     python setup.py install
 
 This will install Fail2Ban into /usr/share/fail2ban. The executable scripts are

@@ -104,7 +104,7 @@ def testSampleRegexsFactory(name):
 				faildata = {}
 
 			ret = self.filter.processLine(
-				line, returnRawHost=True, checkAllRegex=True)
+				line, returnRawHost=True, checkAllRegex=True)[1]
 			if not ret:
 				# Check line is flagged as none match
 				self.assertFalse(faildata.get('match', True),
@@ -123,12 +123,18 @@ def testSampleRegexsFactory(name):
 				self.assertEqual(host, faildata.get("host", None))
 
 				t = faildata.get("time", None)
-				jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S")
+				try:
+					jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S")
+				except ValueError:
+					jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f")
+
 
 				jsonTime = time.mktime(jsonTimeLocal.utctimetuple())
 				
+				jsonTime += jsonTimeLocal.microsecond / 1000000
+
 				self.assertEqual(fail2banTime, jsonTime,
-					"UTC Time  mismatch fail2ban %s (%s) != failJson %s (%s)  (diff %i seconds) on: %s:%i %r:" % 
+					"UTC Time  mismatch fail2ban %s (%s) != failJson %s (%s)  (diff %.3f seconds) on: %s:%i %r:" % 
 					(fail2banTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(fail2banTime)),
 					jsonTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(jsonTime)),
 					fail2banTime - jsonTime, logFile.filename(), logFile.filelineno(), line ) )
@@ -144,7 +150,7 @@ def testSampleRegexsFactory(name):
 
 	return testFilter
 
-for filter_ in os.listdir(os.path.join(CONFIG_DIR, "filter.d")):
+for filter_ in filter(lambda x: not x.endswith('common.conf'), os.listdir(os.path.join(CONFIG_DIR, "filter.d"))):
 	filterName = filter_.rpartition(".")[0]
 	setattr(
 		FilterSamplesRegex,

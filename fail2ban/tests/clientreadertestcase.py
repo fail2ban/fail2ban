@@ -88,25 +88,25 @@ option = %s
 		self.assertEqual(self._getoption(), 1)
 		self._write("c.conf", "2")		# overwrite
 		self.assertEqual(self._getoption(), 2)
-		self._write("c.local", "3")		# add override in .local
-		self.assertEqual(self._getoption(), 3)
 		self._write("c.d/98.conf", "998") # add 1st override in .d/
 		self.assertEqual(self._getoption(), 998)
 		self._write("c.d/90.conf", "990") # add previously sorted override in .d/
 		self.assertEqual(self._getoption(), 998) #  should stay the same
 		self._write("c.d/99.conf", "999") # now override in a way without sorting we possibly get a failure
 		self.assertEqual(self._getoption(), 999)
+		self._write("c.local", "3")		# add override in .local
+		self.assertEqual(self._getoption(), 3)
+		self._write("c.d/1.local", "4")		# add override in .local
+		self.assertEqual(self._getoption(), 4)
+		self._remove("c.d/1.local")
+		self._remove("c.local")
+		self.assertEqual(self._getoption(), 999)
 		self._remove("c.d/99.conf")
 		self.assertEqual(self._getoption(), 998)
 		self._remove("c.d/98.conf")
 		self.assertEqual(self._getoption(), 990)
 		self._remove("c.d/90.conf")
-		self.assertEqual(self._getoption(), 3)
-		self._remove("c.conf")			#  we allow to stay without .conf
-		self.assertEqual(self._getoption(), 3)
-		self._write("c.conf", "1")
-		self._remove("c.local")
-		self.assertEqual(self._getoption(), 1)
+		self.assertEqual(self._getoption(), 2)
 
 	def testInterpolations(self):
 		self.assertFalse(self.c.read('i'))	# nothing is there yet
@@ -252,7 +252,7 @@ class JailsReaderTest(unittest.TestCase):
 			# and it must be readable as a Filter
 			filterReader = FilterReader(filterName, jail, {})
 			filterReader.setBaseDir(CONFIG_DIR)
-			self.assertTrue(filterReader.read())		  # opens fine
+			self.assertTrue(filterReader.read(),"Failed to read filter:" + filterName)		  # opens fine
 			filterReader.getOptions({})	  # reads fine
 
 			#  test if filter has failregex set

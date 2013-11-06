@@ -72,6 +72,8 @@ class DateDetector:
 			self.appendTemplate("%d/%m/%y %H:%M:%S")
 			# Apache format [31/Oct/2006:09:22:55 -0000]
 			self.appendTemplate("%d/%b/%Y:%H:%M:%S %z")
+			# [31/Oct/2006:09:22:55]
+			self.appendTemplate("%d/%b/%Y:%H:%M:%S")
 			# CPanel 05/20/2008:01:57:39
 			self.appendTemplate("%m/%d/%Y:%H:%M:%S")
 			# custom for syslog-ng 2006.12.21 06:43:20
@@ -80,6 +82,8 @@ class DateDetector:
 			self.appendTemplate("%d-%b-%Y %H:%M:%S.%f")
 			# roundcube 26-Jul-2007 15:20:52 +0200
 			self.appendTemplate("%d-%b-%Y %H:%M:%S %z")
+			# 26-Jul-2007 15:20:52
+			self.appendTemplate("%d-%b-%Y %H:%M:%S")
 			# 17-07-2008 17:23:25
 			self.appendTemplate("%d-%m-%Y %H:%M:%S")
 			# 01-27-2012 16:22:44.252
