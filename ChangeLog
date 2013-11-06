@@ -4,7 +4,7 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.11.pre1)																				2013/10/30
+Fail2Ban (version 0.8.11.pre1)                                        2013/10/30
 ================================================================================
 
 ver. 0.8.11 (2013/11/XXX) - loves-unittests and tight, DoS free, filter regexes
@@ -27,12 +27,12 @@ possibility that we have inadvertently, despite our best intentions,
 incorrectly allowed a failure to continue. We will fix this as quickly as
 humanly possible.
 
-IMPORTANT incompatible changes:
-	Filter name changes:
-   *  'lighttpd-fastcgi' filter has been renamed to 'suhosin'
-	 * 'sasl' has been renamed to 'postfix-sasl'
-   These will require changing in jail.{conf,local} if using these filters.
-	Exim filter has been split into an spam and a relay/auth filter.
+- IMPORTANT incompatible changes:
+  Filter name changes:
+   * 'lighttpd-fastcgi' filter has been renamed to 'suhosin'
+   * 'sasl' has been renamed to 'postfix-sasl'
+  These will require changing in jail.{conf,local} if using these filters.
+  Exim filter has been split into an spam and a relay/auth filter.
 
 - Fixes:
   Daniel Black & Marcel Dopita
@@ -110,7 +110,7 @@ IMPORTANT incompatible changes:
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
    * fail2ban-regex - now generates http://www.debuggex.com urls for debugging
-	 	 regular expressions with the -D parameter.
+     regular expressions with the -D parameter.
   Daniel Black
    * filter.d/exim-spam.conf -- a splitout of exim's spam regexes
      with additions for greater control over filtering spam.
@@ -131,8 +131,8 @@ IMPORTANT incompatible changes:
    * reorder parsing of jail.conf, jail.d/*.conf, jail.local, jail.d/*.local
      and likewise for fail2ban.{conf|local|d/*.conf|d/*.local}. Closes gh-392
    * jail.conf now has asterisk jail - no need for asterisk-tcp and
-	   asterisk-udp. Users should replace existing jails with asterisk to 
-		 reduce duplicate parsing of the asterisk log file.
+     asterisk-udp. Users should replace existing jails with asterisk to
+     reduce duplicate parsing of the asterisk log file.
    * filter.d/{suhosin,pam-generic,gssftpd,sogo-auth,webmin}- regex anchor at
      start
    * filter.d/vsftpd - anchored regex at start. disable old pam format regex
