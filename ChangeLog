@@ -34,6 +34,9 @@ code-review and minor additions from Yaroslav Halchenko.
    * [..b6059f4] 'timeout' option for actions Close gh-60 and Debian bug
      #410077.  Also it would now capture and include stdout and stderr
      into logging messages in case of error or at DEBUG loglevel.
+   Daniel Black and TESTOVIK
+   * Multiline filter for sendmail-spam. Close gh-418
+
 - Enhancements
   Steven Hiscocks
    * Replacing use of deprecated API (.warning, .assertEqual, etc)
