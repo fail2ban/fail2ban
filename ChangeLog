@@ -112,6 +112,8 @@ some obscure corner of the Internet.
    * filter.d/exim-spam.conf -- a splitout of exim's spam regexes
      with additions for greater control over filtering spam.
    * add date expression for apache-2.4 - milliseconds
+   * filter.d/nginx-http-auth -- filter added for http basic authentication
+     failures in nginx. Partially forfills gh-405.
   Christophe Carles & Daniel Black
    * filter.d/perdition.conf -- filter added
   Mark McKinstry
