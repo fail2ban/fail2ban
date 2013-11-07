@@ -149,6 +149,9 @@ some obscure corner of the Internet.
    * filter.d/roundcube-auth.conf -- anchored version
    * date matching - for standard asctime formats prefer more detailed
      first (thus use year if available)
+   * files/gen_badbots was added and filter.d/apache-badbots.conf was
+     regenerated to get updated (although now still an old) list of
+     "bad" bots
   Alexander Dietrich
    * action.d/sendmail-common.conf -- added common sendmail settings file
      and made the sender display name configurable
