@@ -96,7 +96,7 @@ some obscure corner of the Internet.
 
 - New Features:
   Edgar Hoch
-	 * action.d/firewall-cmd-direct-new.conf - action for firewalld
+   * action.d/firewall-cmd-direct-new.conf - action for firewalld
      from https://bugzilla.redhat.com/show_bug.cgi?id=979622
      NOTE: requires firewalld-0.3.8+
   Andy Fragen and Daniel Black
@@ -113,7 +113,7 @@ some obscure corner of the Internet.
      with additions for greater control over filtering spam.
    * add date expression for apache-2.4 - milliseconds
    * filter.d/nginx-http-auth -- filter added for http basic authentication
-     failures in nginx. Partially forfills gh-405.
+     failures in nginx. Partially fulfills gh-405.
   Christophe Carles & Daniel Black
    * filter.d/perdition.conf -- filter added
   Mark McKinstry
