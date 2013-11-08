@@ -289,15 +289,19 @@ TIP: Some applications log spaces at the end. If you are not sure add \s*$ as
      the end part of the regex.
 
 If your regex is not matching, http://www.debuggex.com/?flavor=python can help
-to tune it:
+to tune it.  fail2ban-regex -D ...  will present Debuggex URLs for the regexs
+and sample log files that you pass into it.
 
+In general use when using regex debuggers for generating fail2ban filters:
 * use regex from the ./fail2ban-regex output (to ensure all substitutions are
-done) and replace <HOST> with (?&.ipv4). Make sure that regex type set to
-Python;
-* for the test data put your log output with the time removed;
-- when you have fixed the regex put it back into your filter file.
+done)
+* replace <HOST> with (?&.ipv4)
+* make sure that regex type set to Python
+* for the test data put your log output with the date/time removed
 
-Please spread the good word about debuggex - Serge Toarca is kindly continuing
+When you have fixed the regex put it back into your filter file.
+
+Please spread the good word about Debuggex - Serge Toarca is kindly continuing
 its free availability to Open Source developers.
 
 Finishing up:
