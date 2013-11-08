@@ -78,7 +78,7 @@ some obscure corner of the Internet.
    * filter.d/recidive -- support f2b syslog target and anchor regex at start
    * filter.d/mysqld-auth.conf - mysql can use syslog
    * filter.d/sshd - regex enhancements to support openssh-6.3. Closes Debian
-     bug #722970
+     bug #722970. Thanks Colin Watson for the regex analysis.
    * filter.d/wuftpd - regex enhancements to support pam and wuftpd. Closes
      Debian bug #665925
   Rolf Fokkens
