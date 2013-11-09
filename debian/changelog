@@ -1,8 +1,9 @@
-fail2ban (0.8.10-4) UNRELEASED; urgency=low
+fail2ban (0.8.11~pre1+git29-gccd2657-1) unstable; urgency=low
 
+  * Snapshot of the upcoming new release candidate
   * debian/watch
     - restrict version matching only to numbers and period (to exclude
-    alpha releases of 0.9 series)
+      alpha releases of 0.9 series)
 
  --
 
