@@ -24,7 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest
+import unittest, calendar, datetime, re, pprint
 from server.datedetector import DateDetector
 from server.datetemplate import DateTemplate
 
@@ -63,33 +63,45 @@ class DateDetectorTest(unittest.TestCase):
 		date = [2005, 1, 23, 21, 59, 59, 6, 23, -1]
 		dateUnix = 1106513999.0
 
-		for sdate in (
-			"Jan 23 21:59:59",
-			"Sun Jan 23 21:59:59 2005",
-			"Sun Jan 23 21:59:59",
-			"2005/01/23 21:59:59",
-			"2005.01.23 21:59:59",
-			"23/01/2005 21:59:59",
-			"23/01/05 21:59:59",
-			"23/Jan/2005:21:59:59",
-			"01/23/2005:21:59:59",
-			"2005-01-23 21:59:59",
-			"23-Jan-2005 21:59:59",
-			"23-01-2005 21:59:59",
-			"01-23-2005 21:59:59.252", # reported on f2b, causes Feb29 fix to break
-			"@4000000041f4104f00000000", # TAI64N
-			"2005-01-23T21:59:59.252Z", #ISO 8601
-			"2005-01-23T21:59:59-05:00Z", #ISO 8601 with TZ
-			"<01/23/05@21:59:59>",
-			"050123 21:59:59", # MySQL
-			"Jan-23-05 21:59:59", # ASSP like
+		for anchored, sdate in (
+			(False, "Jan 23 21:59:59"),
+			(False, "Sun Jan 23 21:59:59 2005"),
+			(False, "Sun Jan 23 21:59:59"),
+			(False, "2005/01/23 21:59:59"),
+			(False, "2005.01.23 21:59:59"),
+			(False, "23/01/2005 21:59:59"),
+			(False, "23/01/05 21:59:59"),
+			(False, "23/Jan/2005:21:59:59"),
+			(False, "01/23/2005:21:59:59"),
+			(False, "2005-01-23 21:59:59"),
+			(False, "23-Jan-2005 21:59:59"),
+			(False, "23-01-2005 21:59:59"),
+			(False, "01-23-2005 21:59:59.252"), # reported on f2b, causes Feb29 fix to break
+			(False, "@4000000041f4104f00000000"), # TAI64N
+			(False, "2005-01-23T21:59:59.252Z"), #ISO 8601
+			(False, "2005-01-23T21:59:59-05:00Z"), #ISO 8601 with TZ
+			(True,  "<01/23/05@21:59:59>"),
+			(True,  "050123 21:59:59"), # MySQL
+			(True,  "Jan-23-05 21:59:59"), # ASSP like
+			(True,  "1106513999"), # Regular epoch
+			(True,  "1106513999.123"), # Regular epoch with millisec
+			(False, "audit(1106513999.123:987)"), # SELinux
 			):
-			log = sdate + "[sshd] error: PAM: Authentication failure"
-			# exclude
+			for should_match, prefix in ((True,     ""),
+										 (not anchored, "bogus-prefix ")):
+				ldate = prefix + sdate	  # logged date
+				log = ldate + "[sshd] error: PAM: Authentication failure"
+				# exclude
 
-			# yoh: on [:6] see in above test
-			self.assertEqual(self.__datedetector.getTime(log)[:6], date[:6])
-			self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix)
+				# yoh: on [:6] see in above test
+				logtime = self.__datedetector.getTime(log)
+				if should_match:
+					self.assertNotEqual(logtime, None, "getTime retrieved nothing for %r" % ldate)
+					self.assertEqual(logtime[:6], date[:6], "getTime comparison failure for %r: \"%s\" is not \"%s\"" % (ldate, logtime[:6], date[:6]))
+					self.assertEqual(self.__datedetector.getUnixTime(log), dateUnix, "getUnixTime failure for %r: \"%s\" is not \"%s\"" % (ldate, logtime[:6], date[:6]))
+				else:
+					self.assertEqual(logtime, None, "getTime should have not matched for %r Got: %s" % (ldate, logtime))
+
 
 	def testStableSortTemplate(self):
 		old_names = [x.getName() for x in self.__datedetector.getTemplates()]
@@ -121,6 +133,53 @@ class DateDetectorTest(unittest.TestCase):
 		self.assertEqual(
 			self.__datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')[:6],
 			m1)
+
+	def testDateDetectorTemplateOverlap(self):
+		patterns = [template.getPattern()
+			for template in self.__datedetector.getTemplates()
+			if hasattr(template, "getPattern")]
+
+		year = 2008 # Leap year, 08 for %y can be confused with both %d and %m
+		def iterDates(year):
+			for month in xrange(1, 13):
+				for day in xrange(2, calendar.monthrange(year, month)[1]+1, 9):
+					for hour in xrange(0, 24, 6):
+						for minute in xrange(0, 60, 15):
+							for second in xrange(0, 60, 15): # Far enough?
+								yield datetime.datetime(
+									year, month, day, hour, minute, second)
+
+		overlapedTemplates = set()
+		for date in iterDates(year):
+			for pattern in patterns:
+				datestr = date.strftime(pattern)
+				datestrs = set([
+					datestr,
+					re.sub(r"(\s)0", r"\1 ", datestr),
+					re.sub(r"(\s)0", r"\1", datestr)])
+				for template in self.__datedetector.getTemplates():
+					template.resetHits()
+					for datestr in datestrs:
+						if template.matchDate(datestr): # or getDate?
+							template.incHits()
+
+				matchedTemplates = [template
+					for template in self.__datedetector.getTemplates()
+					if template.getHits() > 0]
+				assert matchedTemplates != [] # Should match at least one
+				if len(matchedTemplates) > 1:
+					overlapedTemplates.add((pattern, tuple(sorted(template.getName()
+						for template in matchedTemplates))))
+		if overlapedTemplates:
+			print "WARNING: The following date templates overlap:"
+			pprint.pprint(overlapedTemplates)
+
+	def testDateTemplate(self):
+			t = DateTemplate()
+			t.setRegex('^a{3,5}b?c*$')
+			self.assertEqual(t.getRegex(), '^a{3,5}b?c*$')
+			self.assertRaises(Exception, t.getDate, '')
+			self.assertEqual(t.matchDate('aaaac').group(), 'aaaac')
 
 
 #	def testDefaultTempate(self):

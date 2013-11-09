@@ -167,3 +167,29 @@ class TestsUtilsTest(unittest.TestCase):
 		# in this case compressed and not should be the same (?)
 		self.assertTrue(pindex > 10)	  # we should have some traceback
 		self.assertEqual(s[:pindex], s[pindex+1:pindex*2 + 1])
+
+from server import iso8601
+import datetime
+
+class CustomDateFormatsTest(unittest.TestCase):
+
+	def testIso8601(self):
+		date = iso8601.parse_date("2007-01-25T12:00:00Z")
+		self.assertEqual(
+			date,
+			datetime.datetime(2007, 1, 25, 12, 0, tzinfo=iso8601.Utc()))
+		self.assertRaises(ValueError, iso8601.parse_date, None)
+		self.assertRaises(ValueError, iso8601.parse_date, date)
+
+		self.assertRaises(iso8601.ParseError, iso8601.parse_date, "")
+		self.assertRaises(iso8601.ParseError, iso8601.parse_date, "Z")
+
+		self.assertRaises(iso8601.ParseError,
+						  iso8601.parse_date, "2007-01-01T120:00:00Z")
+		self.assertRaises(iso8601.ParseError,
+						  iso8601.parse_date, "2007-13-01T12:00:00Z")
+
+	def testTimeZone(self):
+		# Just verify consistent operation and improve coverage ;)
+		self.assertEqual(iso8601.parse_timezone(None), iso8601.UTC)
+		self.assertEqual(iso8601.parse_timezone('Z'),  iso8601.UTC)

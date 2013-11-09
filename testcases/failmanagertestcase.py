@@ -53,9 +53,19 @@ class AddFailure(unittest.TestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 	
-	def testAdd(self):
+	def testFailManagerAdd(self):
 		self.assertEqual(self.__failManager.size(), 3)
+		self.assertEqual(self.__failManager.getFailTotal(), 13)
+		self.__failManager.setFailTotal(0)
+		self.assertEqual(self.__failManager.getFailTotal(), 0)
+		self.__failManager.setFailTotal(13)
 	
+	def testFailManagerMaxTime(self):
+		self.assertEqual(self.__failManager.getMaxTime(), 600)
+		self.__failManager.setMaxTime(13)
+		self.assertEqual(self.__failManager.getMaxTime(), 13)
+		self.__failManager.setMaxTime(600)
+
 	def _testDel(self):
 		self.__failManager.delFailure('193.168.0.128')
 		self.__failManager.delFailure('111.111.1.111')
@@ -78,6 +88,20 @@ class AddFailure(unittest.TestCase):
 		ticket = self.__failManager.toBan()
 		self.assertEqual(ticket.getIP(), "193.168.0.128")
 		self.assertTrue(isinstance(ticket.getIP(), str))
+
+		# finish with rudimentary tests of the ticket
+		# verify consistent str
+		ticket_str = str(ticket)
+		self.assertEqual(
+			ticket_str,
+			'FailTicket: ip=193.168.0.128 time=1167605999.0 #attempts=5')
+		# and some get/set-ers otherwise not tested
+		ticket.setTime(1000002000.0)
+		self.assertEqual(ticket.getTime(), 1000002000.0)
+		# and str() adjusted correspondingly
+		self.assertEqual(
+			str(ticket),
+			'FailTicket: ip=193.168.0.128 time=1000002000.0 #attempts=5')
 	
 	def testbanNOK(self):
 		self.__failManager.setMaxRetry(10)

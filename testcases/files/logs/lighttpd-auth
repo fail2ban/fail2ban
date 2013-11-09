@@ -1,0 +1,7 @@
+#authentification failure (mod_auth)
+# failJSON: { "time": "2011-12-25T17:09:20", "match": true , "host": "4.4.4.4" }
+2011-12-25 17:09:20: (http_auth.c.875) password doesn't match for /gitweb/ username: francois, IP: 4.4.4.4
+# failJSON: { "time": "2012-09-26T10:24:35", "match": true , "host": "4.4.4.4" }
+2012-09-26 10:24:35: (http_auth.c.1136) digest: auth failed for  xxx : wrong password, IP: 4.4.4.4
+# failJSON: { "time": "2013-08-25T00:24:55", "match": true , "host": "4.4.4.4" }
+2013-08-25 00:24:55: (http_auth.c.877) get_password failed, IP: 4.4.4.4

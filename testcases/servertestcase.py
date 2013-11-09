@@ -24,7 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, socket, time, tempfile, os
+import unittest, socket, time, tempfile, os, sys
 from server.server import Server
 from server.jail import Jail
 from common.exceptions import UnknownJailException
@@ -292,11 +292,22 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["set", self.jailName, "dellogpath", value]),
 			(0, []))
 
+	def testJailLogPathInvalidFile(self):
 		# Invalid file
 		value = "this_file_shouldn't_exist"
 		result = self.transm.proceed(
 			["set", self.jailName, "addlogpath", value])
 		self.assertTrue(isinstance(result[1], IOError))
+
+	def testJailLogPathBrokenSymlink(self):
+		# Broken symlink
+		name = tempfile.mktemp(prefix='tmp_fail2ban_broken_symlink')
+		sname = name + '.slink'
+		os.symlink(name, sname)
+		result = self.transm.proceed(
+			["set", self.jailName, "addlogpath", sname])
+		self.assertTrue(isinstance(result[1], IOError))
+		os.unlink(sname)
 
 	def testJailIgnoreIP(self):
 		self.jailAddDelTest(
@@ -334,9 +345,9 @@ class Transmitter(TransmitterBase):
 				"failed attempt from <HOST> again",
 			],
 			[
-				"user john at (?:::f{4,6}:)?(?P<host>[\w\-.^_]+)",
-				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_]+)",
-				"failed attempt from (?:::f{4,6}:)?(?P<host>[\w\-.^_]+) again",
+				"user john at (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w)",
+				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w)",
+				"failed attempt from (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w) again",
 			],
 			self.jailName
 		)
@@ -359,7 +370,7 @@ class Transmitter(TransmitterBase):
 			],
 			[
 				"user john",
-				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_]+)",
+				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w)",
 				"Dont match me!",
 			],
 			self.jailName
@@ -498,7 +509,8 @@ class TransmitterLogging(TransmitterBase):
 
 		self.setGetTest("logtarget", "STDOUT")
 		self.setGetTest("logtarget", "STDERR")
-		self.setGetTest("logtarget", "SYSLOG")
+		if sys.platform.lower().startswith('linux'):
+			self.setGetTest("logtarget", "SYSLOG")
 
 	def testLogLevel(self):
 		self.setGetTest("loglevel", "4", 4)

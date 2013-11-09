@@ -46,13 +46,13 @@ class DateDetector:
 	def addDefaultTemplate(self):
 		self.__lock.acquire()
 		try:
-			# standard
+			# asctime with subsecond
 			template = DateStrptime()
-			template.setName("MONTH Day Hour:Minute:Second")
-			template.setRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
-			template.setPattern("%b %d %H:%M:%S")
+			template.setName("WEEKDAY MONTH Day Hour:Minute:Second[.subsecond] Year")
+			template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}\.\d+ \d{4}")
+			template.setPattern("%a %b %d %H:%M:%S.%f %Y")
 			self._appendTemplate(template)
-			# asctime
+			# asctime without no subsecond
 			template = DateStrptime()
 			template.setName("WEEKDAY MONTH Day Hour:Minute:Second Year")
 			template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2} \d{4}")
@@ -63,6 +63,12 @@ class DateDetector:
 			template.setName("WEEKDAY MONTH Day Hour:Minute:Second")
 			template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 			template.setPattern("%a %b %d %H:%M:%S")
+			self._appendTemplate(template)
+			# standard - most loose from above 3 so by default follows after
+			template = DateStrptime()
+			template.setName("MONTH Day Hour:Minute:Second")
+			template.setRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
+			template.setPattern("%b %d %H:%M:%S")
 			self._appendTemplate(template)
 			# simple date
 			template = DateStrptime()
@@ -151,7 +157,7 @@ class DateDetector:
 			self._appendTemplate(template)
 			# MySQL: 130322 11:46:11
 			template = DateStrptime()
-			template.setName("MonthDayYear Hour:Minute:Second")
+			template.setName("YearMonthDay Hour:Minute:Second")
 			template.setRegex("^\d{2}\d{2}\d{2} +\d{1,2}:\d{2}:\d{2}")
 			template.setPattern("%y%m%d %H:%M:%S")
 			self._appendTemplate(template)
@@ -174,6 +180,7 @@ class DateDetector:
 				match = template.matchDate(line)
 				if not match is None:
 					logSys.debug("Matched time template %s" % template.getName())
+					template.incHits()
 					return match
 			return None
 		finally:

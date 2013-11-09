@@ -1,0 +1,10 @@
+# failJSON: { "time": "2004-09-06T07:33:33", "match": true , "host": "198.51.100.77" }
+Sep  6 07:33:33 sd6 qmail: 1157520813.485077 rblsmtpd: 198.51.100.77 pid 19597 sbl-xbl.spamhaus.org: 451 http://www.spamhaus.org/query/bl?ip=198.51.100.77
+# failJSON: { "time": "2004-09-06T07:18:29", "match": true , "host": "198.51.100.54" }
+Sep  6 07:18:29 sd6 qmail: 1157519909.633171 qmail-smtpd: 421 badiprbl: ip 198.51.100.54 rbl: example.com
+
+# http://www.tjsi.com/rblsmtpd/faq/
+# failJSON: { "time": "2005-06-30T15:13:33", "match": true , "host": "193.111.120.47" }
+Jun 30 15:13:33 ns1 rblsmtpd: relays.ordb.org blocked 193.111.120.47 ordb-test.null.dk -
+# failJSON: { "time": "2005-06-30T15:13:55", "match": true , "host": "192.203.178.107" }
+Jun 30 15:13:55 ns1 rblsmtpd: relays.osirusoft.com blocked 192.203.178.107 sbl.crynwr.com -

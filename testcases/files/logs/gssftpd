@@ -1,0 +1,2 @@
+# failJSON: { "time": "2005-01-22T18:09:46", "match": true , "host": "198.51.100.23" }
+Jan 22 18:09:46 host ftpd[132]: repeated login failures from 198.51.100.23 (example.com)

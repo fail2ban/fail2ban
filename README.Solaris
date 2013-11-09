@@ -69,27 +69,10 @@ FAIL2BAN CONFIGURATION
 
 OPT: Create /etc/fail2ban/fail2ban.local containing:
 
-# Fail2Ban main configuration file
-#
-# Comments: use '#' for comment lines and ';' (following a space) for inline comments
-#
-# Changes:  in most of the cases you should not modify this
-#           file, but provide customizations in fail2ban.local file, e.g.:
-#
-# [Definition]
-# loglevel = 4
+# Fail2Ban configuration file for logging fail2ban on Solaris
 #
 [Definition]
 
-# Option:  logtarget
-# Notes.:  Set the log target. This could be a file, SYSLOG, STDERR or STDOUT.
-#          Only one log target can be specified.
-#          If you change logtarget from the default value and you are
-#          using logrotate -- also adjust or disable rotation in the
-#          corresponding configuration file
-#          (e.g. /etc/logrotate.d/fail2ban on Debian systems)
-# Values:  STDOUT STDERR SYSLOG file  Default:  /var/log/fail2ban.log
-#
 logtarget = /var/adm/fail2ban.log
 
 
@@ -99,13 +82,13 @@ REQ: Create /etc/fail2ban/jail.local containing:
 
 enabled     = true
 filter      = sshd
-action      = hostsdeny
+action      = hostsdeny[daemon_list=sshd]
               sendmail-whois[name=SSH, dest=you@example.com]
 ignoreregex = for myuser from
 logpath     = /var/adm/auth.log
 
 Set the sendmail dest address to something useful or drop the line to stop it spamming you.
-Set 'myuser' to your username to avoid banning yourself or drop it.
+Set 'myuser' to your username to avoid banning yourself or remove the line.
 
 START (OR RESTART) FAIL2BAN
 
@@ -128,7 +111,7 @@ GOTCHAS AND FIXMES
     svcadm enable fail2ban
 
 * If svcs -xv says that fail2ban failed to start or svcs says it's in maintenance mode
-  chcek /var/svc/log/network-fail2ban:default.log for clues. 
+  check /var/svc/log/network-fail2ban:default.log for clues. 
   Check permissions on /var/adm, /var/adm/auth.log /var/adm/fail2ban.log and /var/run/fail2ban
   You may need to:
 
@@ -136,6 +119,4 @@ GOTCHAS AND FIXMES
 
 * Fail2ban adds lines like these to /etc/hosts.deny:
 
-    ALL: 1.2.3.4
-
-  wouldn't it be better to just block sshd?
+    sshd: 1.2.3.4

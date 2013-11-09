@@ -24,7 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging, re, glob
+import logging, re, glob, os.path
 
 from configreader import ConfigReader
 from filterreader import FilterReader
@@ -55,7 +55,23 @@ class JailReader(ConfigReader):
 	
 	def isEnabled(self):
 		return self.__force_enable or self.__opts["enabled"]
-	
+
+	@staticmethod
+	def _glob(path):
+		"""Given a path for glob return list of files to be passed to server.
+
+		Dangling symlinks are warned about and not returned
+		"""
+		pathList = []
+		for p in glob.glob(path):
+			if not os.path.exists(p):
+				logSys.warning("File %s doesn't even exist, thus cannot be monitored" % p)
+			elif not os.path.lexists(p):
+				logSys.warning("File %s is a dangling link, thus cannot be monitored" % p)
+			else:
+				pathList.append(p)
+		return pathList
+
 	def getOptions(self):
 		opts = [["bool", "enabled", "false"],
 				["string", "logpath", "/var/log/messages"],
@@ -103,16 +119,30 @@ class JailReader(ConfigReader):
 				logSys.warn("No actions were defined for %s" % self.__name)
 		return True
 	
-	def convert(self):
+	def convert(self, allow_no_files=False):
+		"""Convert read before __opts to the commands stream
+
+		Parameters
+		----------
+		allow_missing : bool
+		  Either to allow log files to be missing entirely.  Primarily is
+		  used for testing
+		 """
+
 		stream = []
 		for opt in self.__opts:
 			if opt == "logpath":
+				found_files = 0
 				for path in self.__opts[opt].split("\n"):
-					pathList = glob.glob(path)
+					pathList = JailReader._glob(path)
 					if len(pathList) == 0:
-						logSys.error("No file found for " + path)
+						logSys.error("No file(s) found for glob %s" % path)
 					for p in pathList:
+						found_files += 1
 						stream.append(["set", self.__name, "addlogpath", p])
+				if not (found_files or allow_no_files):
+					raise ValueError(
+						"Have not found any log file for %s jail" % self.__name)
 			elif opt == "backend":
 				backend = self.__opts[opt]
 			elif opt == "maxretry":

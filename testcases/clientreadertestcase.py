@@ -21,7 +21,8 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, shutil, tempfile, unittest
+import os, tempfile, shutil, unittest
+
 from client.configreader import ConfigReader
 from client.jailreader import JailReader
 from client.jailsreader import JailsReader
@@ -65,7 +66,14 @@ option = %s
 		self._write('d.conf', 0)
 		self.assertEqual(self._getoption('d'), 0)
 		os.chmod(f, 0)
-		self.assertFalse(self.c.read('d'))	# should not be readable BUT present
+		# fragile test and known to fail e.g. under Cygwin where permissions
+		# seems to be not enforced, thus condition
+		if not os.access(f, os.R_OK):
+			self.assertFalse(self.c.read('d'))	# should not be readable BUT present
+		else:
+			# SkipTest introduced only in 2.7 thus can't yet use generally
+			# raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform)
+			pass
 
 
 	def testOptionalDotDDir(self):
@@ -74,8 +82,6 @@ option = %s
 		self.assertEqual(self._getoption(), 1)
 		self._write("c.conf", "2")		# overwrite
 		self.assertEqual(self._getoption(), 2)
-		self._write("c.local", "3")		# add override in .local
-		self.assertEqual(self._getoption(), 3)
 		self._write("c.d/98.conf", "998") # add 1st override in .d/
 		self.assertEqual(self._getoption(), 998)
 		self._write("c.d/90.conf", "990") # add previously sorted override in .d/
@@ -87,10 +93,15 @@ option = %s
 		self._remove("c.d/98.conf")
 		self.assertEqual(self._getoption(), 990)
 		self._remove("c.d/90.conf")
+		self.assertEqual(self._getoption(), 2)
+		self._write("c.local", "3")		# add override in .local
 		self.assertEqual(self._getoption(), 3)
+		self._write("c.d/5.local", "9")		# add override in c.d/*.local
+		self.assertEqual(self._getoption(), 9)
 		self._remove("c.conf")			#  we allow to stay without .conf
-		self.assertEqual(self._getoption(), 3)
+		self.assertEqual(self._getoption(), 9)
 		self._write("c.conf", "1")
+		self._remove("c.d/5.local")
 		self._remove("c.local")
 		self.assertEqual(self._getoption(), 1)
 
@@ -108,7 +119,20 @@ class JailReaderTest(unittest.TestCase):
 		action = "mail-whois[name=SSH]"
 		expected = ['mail-whois', {'name': 'SSH'}]
 		result = JailReader.splitAction(action)
-		self.assertEquals(expected, result)
+		self.assertEqual(expected, result)
+		
+	def testGlob(self):
+		d = tempfile.mkdtemp(prefix="f2b-temp")
+		# Generate few files
+		# regular file
+		open(os.path.join(d, 'f1'), 'w').close()
+		# dangling link
+		os.symlink('nonexisting', os.path.join(d, 'f2'))
+
+		# must be only f1
+		self.assertEqual(JailReader._glob(os.path.join(d, '*')), [os.path.join(d, 'f1')])
+		# since f2 is dangling -- empty list
+		self.assertEqual(JailReader._glob(os.path.join(d, 'f2')), [])
 
 class JailsReaderTest(unittest.TestCase):
 
@@ -126,13 +150,20 @@ class JailsReaderTest(unittest.TestCase):
 		# commands to communicate to the server
 		self.assertEqual(comm_commands, [])
 
+		# We should not "read" some bogus jail
+		old_comm_commands = comm_commands[:]   # make a copy
+		self.assertFalse(jails.getOptions("BOGUS"))
+		# and there should be no side-effects
+		self.assertEqual(jails.convert(), old_comm_commands)
+
+
 	def testReadStockJailConfForceEnabled(self):
 		# more of a smoke test to make sure that no obvious surprises
 		# on users' systems when enabling shipped jails
 		jails = JailsReader(basedir='config', force_enable=True) # we are running tests from root project dir atm
 		self.assertTrue(jails.read())		  # opens fine
 		self.assertTrue(jails.getOptions())	  # reads fine
-		comm_commands = jails.convert()
+		comm_commands = jails.convert(allow_no_files=True)
 
 		# by default we have lots of jails ;)
 		self.assertTrue(len(comm_commands))

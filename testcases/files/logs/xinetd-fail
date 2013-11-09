@@ -1,0 +1,4 @@
+# failJSON: { "time": "2005-05-15T17:38:49", "match": true , "host": "198.51.100.169" }
+May 15 17:38:49 boo xinetd[16256]: FAIL: telnet address from=198.51.100.169
+# failJSON: { "time": "2005-08-03T14:38:49", "match": true , "host": "198.51.100.223" }
+Aug  3 14:38:49 backup xinetd[31234]: FAIL: amanda libwrap from=198.51.100.223

@@ -359,6 +359,10 @@ class Action:
 	#@staticmethod
 	def executeCmd(realCmd):
 		logSys.debug(realCmd)
+		if not realCmd:
+			logSys.debug("Nothing to do")
+			return True
+		
 		_cmd_lock.acquire()
 		try: # Try wrapped within another try needed for python version < 2.5
 			try:

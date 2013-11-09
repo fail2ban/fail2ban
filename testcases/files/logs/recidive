@@ -1,0 +1,10 @@
+# failJSON: { "time": "2006-02-13T15:52:30", "match": true , "host": "1.2.3.4" }
+2006-02-13 15:52:30,388 fail2ban.actions: WARNING [sendmail] Ban 1.2.3.4
+# failJSON: { "match": false }
+2006-02-13 16:07:31,183 fail2ban.actions: WARNING [sendmail] Unban 1.2.3.4
+# failJSON: { "match": false }
+2006-02-13 15:52:30,388 fail2ban.actions: WARNING [recidive] Ban 1.2.3.4
+# syslog example
+# failJSON: { "time": "2004-09-16T00:44:55", "match": true , "host": "10.0.0.7" }
+Sep 16 00:44:55 spaceman fail2ban.actions: WARNING [jail] Ban 10.0.0.7
+

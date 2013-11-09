@@ -59,11 +59,15 @@ class DateTemplate:
 	
 	def getHits(self):
 		return self.__hits
+
+	def incHits(self):
+		self.__hits += 1
+
+	def resetHits(self):
+		self.__hits = 0
 	
 	def matchDate(self, line):
 		dateMatch = self.__cRegex.search(line)
-		if not dateMatch is None:
-			self.__hits += 1
 		return dateMatch
 	
 	def getDate(self, line):
@@ -74,8 +78,7 @@ class DateEpoch(DateTemplate):
 	
 	def __init__(self):
 		DateTemplate.__init__(self)
-		# We already know the format for TAI64N
-		self.setRegex("^\d{10}(\.\d{6})?")
+		self.setRegex("(?:^|(?P<selinux>(?<=audit\()))\d{10}(?:\.\d{3,6})?(?(selinux)(?=:\d+\)))")
 	
 	def getDate(self, line):
 		date = None

@@ -53,7 +53,8 @@ setup(
 	packages =	[
 					'common',
 					'client',
-					'server'
+					'server',
+					'testcases'
 				],
 	data_files =	[
 						('/etc/fail2ban',
@@ -64,6 +65,12 @@ setup(
 						),
 						('/etc/fail2ban/action.d',
 							glob("config/action.d/*.conf")
+						),
+						('/etc/fail2ban/fail2ban.d',
+							''
+						),
+						('/etc/fail2ban/jail.d',
+							''
 						),
 						('/var/run/fail2ban',
 							''
