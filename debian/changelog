@@ -1,6 +1,9 @@
 fail2ban (0.8.11~pre1+git29-gccd2657-1) unstable; urgency=low
 
   * Snapshot of the upcoming new release candidate
+    - improves dovecot (Closes: #709324), wuftpd (Closes: #665925)
+      failregex'es
+    - provides support for OpenSSH 6.3 (Closes: #722970)
   * debian/watch
     - restrict version matching only to numbers and period (to exclude
       alpha releases of 0.9 series)
@@ -9,7 +12,7 @@ fail2ban (0.8.11~pre1+git29-gccd2657-1) unstable; urgency=low
       lighttpd-auth filer name, and postfix-sasl for sasl)
     - added nginx-http-auth.  More jails to be adopted from upsream.
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 10 Nov 2013 00:23:24 -0800
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 10 Nov 2013 12:16:51 -0800
 
 fail2ban (0.8.10-3) unstable; urgency=low
 
