@@ -1,4 +1,4 @@
-# http://osdir.com/ml/debian-bugs-dist/2010-03/msg05840.html
+# http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=574182
 # failJSON: { "time": "2010-03-16T15:39:29", "match": true , "host": "58.179.109.179" }
 [Tue Mar 16 15:39:29 2010] [error] [client 58.179.109.179] Invalid URI in request \xf9h\xa9\xf3\x88\x8cXKj \xbf-l*4\x87n\xe4\xfe\xd4\x1d\x06\x8c\xf8m\\rS\xf6n\xeb\x8
 # failJSON: { "time": "2010-03-15T15:44:47", "match": true , "host": "121.222.2.133" }
