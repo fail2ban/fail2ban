@@ -40,3 +40,6 @@
 [2009-12-22 16:35:24] NOTICE[14916]: chan_sip.c:15644 handle_request_subscribe: Sending fake auth rejection for user <sip:CS@192.168.2.102>;tag=6pwd6erg54
 # failJSON: { "time": "2013-07-06T09:09:25", "match": true , "host": "141.255.164.106" }
 [2013-07-06 09:09:25] SECURITY[3308] res_security_log.c: SecurityEvent="InvalidPassword",EventTV="1373098165-824497",Severity="Error",Service="SIP",EventVersion="2",AccountID="972592891005",SessionID="0x88aab6c",LocalAddress="IPV4/UDP/92.28.73.180/5060",RemoteAddress="IPV4/UDP/141.255.164.106/5084",Challenge="41d26de5",ReceivedChallenge="41d26de5",ReceivedHash="7a6a3a2e95a05260aee612896e1b4a39"
+
+# failJSON: { "time": "2013-11-11T14:33:38", "match": true , "host": "192.168.55.152" }
+[2013-11-11 14:33:38] WARNING[6756][C-0000001d] Ext. s: "Rejecting unknown SIP connection from 192.168.55.152"
