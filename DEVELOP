@@ -770,23 +770,23 @@ Look for errors like:
 
 Which indicates that testcases/files/logs/mysqld.log has been moved or is a directory
 
-  tar -C /tmp -jxf dist/fail2ban-0.8.11.tar.bz2
+  tar -C /tmp -jxf dist/fail2ban-0.8.12.tar.bz2
 
 # clean up current direcory
 
-  diff -rul --exclude \*.pyc . /tmp/fail2ban-0.8.11/
+  diff -rul --exclude \*.pyc . /tmp/fail2ban-0.8.12/
 
   # Only differences should be files that you don't want distributed.
 
 # Ensure the tests work from the tarball
 
-  cd /tmp/fail2ban-0.8.11/ && ./fail2ban-testcases-all
+  cd /tmp/fail2ban-0.8.12/ && ./fail2ban-testcases-all
 
 # Add/finalize the corresponding entry in the ChangeLog
 
   To generate a list of committers use e.g.
 
-  git shortlog -sn 0.8.10.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
+  git shortlog -sn 0.8.11.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
 
   Ensure the top of the ChangeLog has the right version and current date.
 
@@ -857,7 +857,7 @@ Post Release
 
 Add the following to the top of the ChangeLog
 
-ver. 0.8.12 (2013/XX/XXX) - wanna-be-released
+ver. 0.8.13 (2014/XX/XXX) - wanna-be-released
 -----------
 
 - Fixes:
