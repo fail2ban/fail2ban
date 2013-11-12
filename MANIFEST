@@ -106,6 +106,7 @@ config/filter.d/apache-badbots.conf
 config/filter.d/apache-nohome.conf
 config/filter.d/apache-noscript.conf
 config/filter.d/apache-overflows.conf
+config/filter.d/nginx-http-auth.conf
 config/filter.d/courierlogin.conf
 config/filter.d/couriersmtp.conf
 config/filter.d/cyrus-imap.conf
@@ -206,3 +207,4 @@ files/bash-completion
 files/fail2ban-tmpfiles.conf
 files/fail2ban.service
 files/ipmasq-ZZZzzz_fail2ban.rul
+files/gen_badbots

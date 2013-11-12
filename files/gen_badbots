@@ -1,0 +1,75 @@
+#!/bin/bash
+#-------------------------- =+- Shell script -+= --------------------------
+#
+#  Yaroslav Halchenko                                      CS@UNM, CS@NJIT
+#  web:     http://www.onerussian.com                      & PSYCH@RUTGERS
+#  e-mail:  yoh@onerussian.com                              ICQ#: 60653192
+#
+# DESCRIPTION (NOTES):
+#
+# Script to fetch list of agent strings from http://www.user-agents.org
+# which are known to be from mailicious bots, and create apache-badbots.conf
+# filter for fail2ban
+#
+# COPYRIGHT: Yaroslav Halchenko 2007-2013
+#
+# LICENSE:
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the 
+#  Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#
+# On Debian system see /usr/share/common-licenses/GPL for the full license.
+#
+#-----------------\____________________________________/------------------
+
+url=http://www.user-agents.org/index.shtml
+badbots=$(
+for f in "" "?g_m" "?moz" "?n_s" "?t_z"; do
+	wget -q -O- $url$f;
+done \
+| grep -h -B4 '<td class="smallcell" nowrap>S&nbsp;</td>'\
+| sed -e 's/&nbsp;//g' \
+| awk '/^--/{getline; gsub("  ",""); print $0}' \
+| sed -e 's/\([.\:|()]\)/\\\1/g' \
+| uniq \
+| tr '\n' '|' \
+| sed -e 's/|$//g'
+)
+
+echo $badbots >| /tmp/badbots.tmp
+
+cat >| config/filter.d/apache-badbots.conf <<EOF
+# Fail2Ban configuration file
+#
+# Regexp to catch known spambots and software alike. Please verify
+# that it is your intent to block IPs which were driven by
+# above mentioned bots.
+
+
+[Definition]
+
+badbotscustom = EmailCollector|WebEMailExtrac|TrackBack/1\.02|sogou music spider
+badbots = $badbots
+
+failregex = ^<HOST> -.*"(GET|POST).*HTTP.*"(?:%(badbots)s|%(badbotscustom)s)"$
+
+ignoreregex =
+
+# DEV Notes:
+# List of bad bots fetched from http://www.user-agents.org
+# Generated on `date` by $0.
+#
+# Author: Yaroslav Halchenko
+EOF

@@ -4,7 +4,7 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.9.0a1)                                            20??/??/??
+Fail2Ban (version 0.9.0a1)                                            2013/??/??
 ================================================================================
 
 
@@ -50,35 +50,41 @@ code-review and minor additions from Yaroslav Halchenko.
 	 Some filters have been change as required to capture these elements in the
 	 right timezone correctly.
 
-ver. 0.8.11 (2013/11/XXX) - loves-unittests and tight, DoS free, filter regexes
+ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
 
-In light of CVE-2013-2178 that triggered our last release we have put a
-significant effort into tightening all of the regexs of our filters to avoid
-another similar vulnerability. All filters have been updated and some to
-include more failure regexs supporting previously unbanned failures and
-support for newer application versions too. There are test cases for most log
+In light of CVE-2013-2178 that triggered our last release we have put
+a significant effort into tightening all of the regexs of our filters
+to avoid another similar vulnerability. All filters have been updated
+and some to catch more login/authentication failures and to support
+for newer application versions. There are test cases for most log
 cases of failures now.
 
-As usual if you have other examples that demonstrate that a filter is
-insufficient please give us an example log line on the github issue tracker
-http://github.com/fail2ban/fail2ban/issues and NOT on a random blog in some
-obscure corner of the Internet.
+As usual, if you have other examples that demonstrate that a filter is
+insufficient, or if we have inadvertently introduced a regression,
+please provide us with example log lines on the github issue tracker
+http://github.com/fail2ban/fail2ban/issues and NOT on a random blog in
+some obscure corner of the Internet.
 
-During the tightening of the regexs to avoid DoS vulnerabilities there is the
-possibility that we have inadvertently, despite our best intentions,
-incorrectly allowed a failure to continue. We will fix this as quickly as
-humanly possible.
+Many thanks to our contributors for this release Daniel Black, Yaroslav
+Halchenko, Steven Hiscocks, Mark McKinstry, Andy Fragen, Orion Poplawski,
+Alexander Dietrich, JP Espinosa, Jamyn Shanley, Beau Raines, François
+Boulogne and others who have helped on IRC and mailing list, logged issues
+and bug requests.
 
-IMPORTANT incompatible changes:
-	Filter name changes:
-   *  'lighttpd-fastcgi' filter has been renamed to 'suhosin'
-	 * 'sasl' has been renamed to 'postfix-sasl'
-   These will require changing in jail.{conf,local} if using these filters.
-	Exim filter has been split into an spam and a relay/auth filter.
+- IMPORTANT incompatible changes:
+  Filter name changes:
+   * 'lighttpd-fastcgi' filter has been renamed to 'suhosin'
+   * 'sasl' has been renamed to 'postfix-sasl'
+   * 'exim' spam catching failregexes was split out into 'exim-spam'
+  These changes will require changing jail.{conf,local} if any of
+  those filters were used.
 
 - Fixes:
+  Jonathan Lanning
+   * filter.d/asterisk -- identified another regex for blocking. Also channel
+     ID is hex not decimal as noted in sample logs provided.
   Daniel Black & Marcel Dopita
-   * filter.d/apache-auth -- fixed and apache auth samples provide. closes #286
+   * filter.d/apache-auth -- fixed and apache auth samples provide. Closes gh-286
   Yaroslav Halchenko
    * filter.d/common.conf -- make colon after [daemon] optional. Closes gh-267
    * filter.d/apache-common.conf -- support apache 2.4 more detailed error
@@ -104,10 +110,12 @@ IMPORTANT incompatible changes:
    * filter.d/asterisk -- more regexes
   Daniel Black
    * action.d/hostsdeny -- NOTE: new dependancy 'ed'. Switched to use 'ed' across
-     all platforms to ensure permissions are the same before and after a ban -
-     closes gh-266. hostsdeny supports daemon_list now too.
+     all platforms to ensure permissions are the same before and after a ban.
+     Closes gh-266. hostsdeny supports daemon_list now too.
    * action.d/bsd-ipfw - action option unsed. Change blocktype to port unreach
      instead of deny for consistancy.
+   * filter.d/dovecot - added to support different dovecot failure
+     "..disallowed plaintext auth". Closes Debian bug #709324
    * filter.d/roundcube-auth - timezone offset can be positive or negative
    * action.d/bsd-ipfw - action option unsed. Fixed to blocktype for
      consistency. default to port unreach instead of deny
@@ -121,13 +129,15 @@ IMPORTANT incompatible changes:
    * filter.d/recidive -- support f2b syslog target and anchor regex at start
    * filter.d/mysqld-auth.conf - mysql can use syslog
    * filter.d/sshd - regex enhancements to support openssh-6.3. Closes Debian
-     bug #722970
+     bug #722970. Thanks Colin Watson for the regex analysis.
+   * filter.d/wuftpd - regex enhancements to support pam and wuftpd. Closes
+     Debian bug #665925
   Rolf Fokkens
    * action.d/dshield.conf and complain.conf -- reorder mailx arguments.
      https://bugzilla.redhat.com/show_bug.cgi?id=998020
   John Doe (ache)
    * action.d/bsd-ipfw.conf - invert actionstop logic to make exist status 0.
-     closes gh-343.
+     Closes gh-343.
   JP Espinosa (Reviewed by O.Poplawski)
    * files/redhat-initd - rewritten to use stock init.d functions thus
      avoiding problems with getpid.  Also $network and iptables moved
@@ -137,8 +147,9 @@ IMPORTANT incompatible changes:
 
 - New Features:
   Edgar Hoch
-	 * action.d/firewall-cmd-direct-new.conf - action for firewalld
+   * action.d/firewall-cmd-direct-new.conf - action for firewalld
      from https://bugzilla.redhat.com/show_bug.cgi?id=979622
+     NOTE: requires firewalld-0.3.8+
   Andy Fragen and Daniel Black
    * filter.d/osx-ipfw.conf - ipfw action for OSX based on random rule
      numbers.
@@ -147,11 +158,13 @@ IMPORTANT incompatible changes:
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
    * fail2ban-regex - now generates http://www.debuggex.com urls for debugging
-	 	 regular expressions with the -D parameter.
+     regular expressions with the -D parameter.
   Daniel Black
    * filter.d/exim-spam.conf -- a splitout of exim's spam regexes
      with additions for greater control over filtering spam.
    * add date expression for apache-2.4 - milliseconds
+   * filter.d/nginx-http-auth -- filter added for http basic authentication
+     failures in nginx. Partially fulfills gh-405.
   Christophe Carles & Daniel Black
    * filter.d/perdition.conf -- filter added
   Mark McKinstry
@@ -168,8 +181,8 @@ IMPORTANT incompatible changes:
    * reorder parsing of jail.conf, jail.d/*.conf, jail.local, jail.d/*.local
      and likewise for fail2ban.{conf|local|d/*.conf|d/*.local}. Closes gh-392
    * jail.conf now has asterisk jail - no need for asterisk-tcp and
-	   asterisk-udp. Users should replace existing jails with asterisk to 
-		 reduce duplicate parsing of the asterisk log file.
+     asterisk-udp. Users should replace existing jails with asterisk to
+     reduce duplicate parsing of the asterisk log file.
    * filter.d/{suhosin,pam-generic,gssftpd,sogo-auth,webmin}- regex anchor at
      start
    * filter.d/vsftpd - anchored regex at start. disable old pam format regex
@@ -189,6 +202,9 @@ IMPORTANT incompatible changes:
    * filter.d/roundcube-auth.conf -- anchored version
    * date matching - for standard asctime formats prefer more detailed
      first (thus use year if available)
+   * files/gen_badbots was added and filter.d/apache-badbots.conf was
+     regenerated to get updated (although now still an old) list of
+     "bad" bots
   Alexander Dietrich
    * action.d/sendmail-common.conf -- added common sendmail settings file
      and made the sender display name configurable
@@ -200,7 +216,7 @@ IMPORTANT incompatible changes:
    * filter.d/{courier{login,smtp},proftpd,sieve,wuftpd,xinetd} - General
      regex impovements
   Zurd
-   * filter.d/postfix - add filter for VRFY failures. closes gh-322.
+   * filter.d/postfix - add filter for VRFY failures. Closes gh-322.
   Orion Poplawski
    * fail2ban.d/ and jail.d/ directories are added to etc/fail2ban to facilitate
      their use
