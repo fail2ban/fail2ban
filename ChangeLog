@@ -32,6 +32,9 @@ some obscure corner of the Internet.
   those filters were used.
 
 - Fixes:
+  Jonathan Lanning
+   * filter.d/asterisk -- identified another regex for blocking. Also channel
+     ID is hex not decimal as noted in sample logs provided.
   Daniel Black & Marcel Dopita
    * filter.d/apache-auth -- fixed and apache auth samples provide. Closes gh-286
   Yaroslav Halchenko
