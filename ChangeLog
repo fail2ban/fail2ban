@@ -4,10 +4,10 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.11.pre1)                                        2013/10/30
+Fail2Ban (version 0.8.11)                                             2013/11/13
 ================================================================================
 
-ver. 0.8.11 (2013/11/XXX) - loves-unittests-and-tight-DoS-free-filter-regexes
+ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
 -----------
 
 In light of CVE-2013-2178 that triggered our last release we have put
@@ -22,6 +22,12 @@ insufficient, or if we have inadvertently introduced a regression,
 please provide us with example log lines on the github issue tracker
 http://github.com/fail2ban/fail2ban/issues and NOT on a random blog in
 some obscure corner of the Internet.
+
+Many thanks to our contributors for this release Daniel Black, Yaroslav
+Halchenko, Steven Hiscocks, Mark McKinstry, Andy Fragen, Orion Poplawski,
+Alexander Dietrich, JP Espinosa, Jamyn Shanley, Beau Raines, François
+Boulogne and others who have helped on IRC and mailing list, logged issues
+and bug requests.
 
 - IMPORTANT incompatible changes:
   Filter name changes:
