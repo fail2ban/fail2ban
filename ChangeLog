@@ -4,8 +4,20 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.11)                                             2013/11/13
+Fail2Ban (version 0.8.12.dev)                                          2013/11/13
 ================================================================================
+
+ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
+-----------
+
+- IMPORTANT incompatible changes:
+
+- Fixes:
+
+- New Features:
+
+- Enhancements:
+
 
 ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
 -----------
