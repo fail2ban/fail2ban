@@ -13,6 +13,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
 - IMPORTANT incompatible changes:
 
 - Fixes:
+  - allow for ",milliseconds" in the custom date format of proftpd.log
 
 - New Features:
 
