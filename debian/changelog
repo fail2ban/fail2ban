@@ -3,7 +3,7 @@ fail2ban (0.8.11-1) unstable; urgency=low
   * Fresh upstream release
     - this release tightens all shipped filters to preclude
       possible injections leading to targetted DoS attacks.
-    - Omitted entry for ~pre release changelog:
+    - omitted entry for ~pre release changelog:
       - asterisk filter was fixed (Closes: #719662),
       - nginx filter/jail added (Closes: #668064)
       - better detection of log rotation in polling backend (Closes: #696087)
@@ -15,8 +15,12 @@ fail2ban (0.8.11-1) unstable; urgency=low
   * debian/NEWS
     - information for change of default iptables action to REJECT now
       (Closes: #711463)
+  * debian/patches
+    - changeset_d4f6ca4f8531f332bcb7ce3a89102f60afaaa08e.diff
+      post-release change to support native proftpd date format which
+      includes milliseconds (Closes: #648276)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 16 Nov 2013 21:34:54 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 17 Nov 2013 17:29:06 -0500
 
 fail2ban (0.8.11~pre1+git29-gccd2657-1) unstable; urgency=low
 
