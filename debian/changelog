@@ -3,8 +3,11 @@ fail2ban (0.8.11-1) unstable; urgency=low
   * Fresh upstream release
     - this release tightens all shipped filters to preclude
       possible injections leading to targetted DoS attacks.
+  * debian/jail.conf
+    - dropbear jail: use dropbear filter (instead of ssh) and monitor
+      auth.log instead of non-existing /var/log/dropbear (Closes: #620760)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 16 Nov 2013 21:21:37 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 16 Nov 2013 21:34:54 -0500
 
 fail2ban (0.8.11~pre1+git29-gccd2657-1) unstable; urgency=low
 
