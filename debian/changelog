@@ -6,6 +6,9 @@ fail2ban (0.8.11-1) unstable; urgency=low
   * debian/jail.conf
     - dropbear jail: use dropbear filter (instead of ssh) and monitor
       auth.log instead of non-existing /var/log/dropbear (Closes: #620760)
+  * debian/NEWS
+    - information for change of default iptables action to REJECT now
+      (Closes: #711463)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 16 Nov 2013 21:34:54 -0500
 

@@ -1,3 +1,16 @@
+fail2ban (0.8.11-1) unstable; urgency=low
+
+  * retroactive for 0.8.9: by default iptables-* actions do not simply
+    DROP packets from offending IP but rather reject with
+    icmp-port-unreachable.  If DROP behaviour is preferable, provide
+    config/action.d/iptables-blocktype.local with [Init] section defining
+    blocktype = DROP or override action definition to provide
+    blocktype=DROP option in jail.local
+  * Many failregex's were tight-up in this release which could
+    theoretically effect operation in comparison to previous release(s).
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 16 Nov 2013 22:27:50 -0500
+
 fail2ban (0.8.4-3) unstable; urgency=low
 
   * Jail named-refused-udp is unsafe and opens possibility for easy DoS,
