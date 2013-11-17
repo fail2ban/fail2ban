@@ -19,6 +19,8 @@ fail2ban (0.8.11-1) unstable; urgency=low
     - changeset_d4f6ca4f8531f332bcb7ce3a89102f60afaaa08e.diff
       post-release change to support native proftpd date format which
       includes milliseconds (Closes: #648276)
+    - changeset_ac061155f093464fb6cd2329d3d513b15c68e256.diff
+      absorbed upstream
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 17 Nov 2013 17:29:06 -0500
 
