@@ -14,6 +14,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
 
 - Fixes:
   - allow for ",milliseconds" in the custom date format of proftpd.log
+  - recidive jail to block all protocols. Closes gh-440. Thanks Ioan Indreias
 
 - New Features:
 
