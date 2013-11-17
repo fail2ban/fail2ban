@@ -101,6 +101,13 @@ class DateDetector:
 			template.setRegex("\d{2}/\d{2}/\d{4}:\d{2}:\d{2}:\d{2}")
 			template.setPattern("%m/%d/%Y:%H:%M:%S")
 			self._appendTemplate(template)
+			# proftpd 2013-11-16 21:43:03,296
+			# So like Exim below but with ,subsecond
+			template = DateStrptime()
+			template.setName("Year-Month-Day Hour:Minute:Second[,subsecond]")
+			template.setRegex("\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+")
+			template.setPattern("%Y-%m-%d %H:%M:%S,%f")
+			self._appendTemplate(template)
 			# Exim 2006-12-21 06:43:20
 			template = DateStrptime()
 			template.setName("Year-Month-Day Hour:Minute:Second")
