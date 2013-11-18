@@ -14,6 +14,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
 
 - Fixes:
   - allow for ",milliseconds" in the custom date format of proftpd.log
+  - allow for ", referer ..." in apache-* filter for apache error logs.
 
 - New Features:
 
