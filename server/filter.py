@@ -623,6 +623,7 @@ import socket, struct
 class DNSUtils:
 
 	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
+	IP6_CRE = re.compile("^(?:[0-9a-f:])+(/\d+)?$")
 
 	#@staticmethod
 	def dnsToIp(dns):
@@ -642,7 +643,10 @@ class DNSUtils:
 		""" Search if an IP address if directly available and return
 			it.
 		"""
-		match = DNSUtils.IP_CRE.match(text)
+		if DNSUtils.isValidIPv6(text):
+			match = DNSUtils.IP6_CRE.match(text)
+		else:
+			match = DNSUtils.IP_CRE.match(text)
 		if match:
 			return match
 		else:
@@ -662,6 +666,16 @@ class DNSUtils:
 	isValidIP = staticmethod(isValidIP)
 
 	#@staticmethod
+	def isValidIPv6(string):
+		s = string.split('/', 1)
+		try:
+			socket.inet_pton(socket.AF_INET6, s[0])
+			return True
+		except socket.error:
+			return False
+	isValidIPv6 = staticmethod(isValidIPv6)
+
+	#@staticmethod
 	def textToIp(text, useDns):
 		""" Return the IP of DNS found in a given text.
 		"""
@@ -670,7 +684,7 @@ class DNSUtils:
 		plainIP = DNSUtils.searchIP(text)
 		if not plainIP is None:
 			plainIPStr = plainIP.group(0)
-			if DNSUtils.isValidIP(plainIPStr):
+			if DNSUtils.isValidIP(plainIPStr) or DNSUtils.isValidIPv6(plainIPStr):
 				ipList.append(plainIPStr)
 
 		# If we are allowed to resolve -- give it a try if nothing was found
