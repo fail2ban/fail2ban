@@ -805,6 +805,8 @@ Which indicates that testcases/files/logs/mysqld.log has been moved or is a dire
 
 # Provide a release sample to distributors
 
+  * Arch Linux:
+            https://www.archlinux.org/packages/community/any/fail2ban/
   * Debian: Yaroslav Halchenko <debian@onerussian.com>
             http://packages.qa.debian.org/f/fail2ban.html
   * FreeBSD: Christoph Theis theis@gmx.at>, Nick Hilliard <nick@foobar.org>
