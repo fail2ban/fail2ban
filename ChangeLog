@@ -15,6 +15,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
 - Fixes:
   - allow for ",milliseconds" in the custom date format of proftpd.log
   - allow for ", referer ..." in apache-* filter for apache error logs.
+  - allow for spaces at the beginning of kernel messages. Closes gh-448
 
 - New Features:
 
