@@ -114,3 +114,6 @@
 
 # failJSON: { "time": "2013-06-01T02:17:42", "match": true , "host": "192.168.0.2" }
 [Sat Jun 01 02:17:42 2013] [error] [client 192.168.0.2] user root not found
+
+# failJSON: { "time": "2013-11-18T22:39:33", "match": true , "host": "91.49.82.139" }
+[Mon Nov 18 22:39:33 2013] [error] [client 91.49.82.139] user gg not found: /, referer: http://sj.hopto.org/management.html

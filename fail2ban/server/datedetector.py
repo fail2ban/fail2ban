@@ -61,6 +61,8 @@ class DateDetector:
 			self.appendTemplate("%a %b %d %H:%M:%S")
 			# standard: Jan 23 21:59:59 
 			self.appendTemplate("%b %d %H:%M:%S")
+			# proftpd date: 2005-01-23 21:59:59,333
+			self.appendTemplate("%Y-%m-%d %H:%M:%S,%f")
 			# simple date: 2005-01-23 21:59:59 
 			self.appendTemplate("%Y-%m-%d %H:%M:%S")
 			# simple date: 2005/01/23 21:59:59 

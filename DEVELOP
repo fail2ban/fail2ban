@@ -805,6 +805,8 @@ Which indicates that testcases/files/logs/mysqld.log has been moved or is a dire
 
 # Provide a release sample to distributors
 
+  * Arch Linux:
+            https://www.archlinux.org/packages/community/any/fail2ban/
   * Debian: Yaroslav Halchenko <debian@onerussian.com>
             http://packages.qa.debian.org/f/fail2ban.html
   * FreeBSD: Christoph Theis theis@gmx.at>, Nick Hilliard <nick@foobar.org>
@@ -839,10 +841,15 @@ Which indicates that testcases/files/logs/mysqld.log has been moved or is a dire
   page: http://www.fail2ban.org/wiki/index.php/Commands
 
 * Update:
-  http://www.fail2ban.org/wiki/index.php/Downloads
+  http://www.fail2ban.org/wiki/index.php?title=Template:Fail2ban_Versions&action=edit
+
+  http://www.fail2ban.org/wiki/index.php?title=Template:Fail2ban_News&action=edit
+  move old bits to:
+  http://www.fail2ban.org/wiki/index.php?title=Template:Fail2ban_OldNews&action=edit
+
+  http://www.fail2ban.org/wiki/index.php?title=Template:Fail2ban_Versions&action=edit
   http://www.fail2ban.org/wiki/index.php/ChangeLog
   http://www.fail2ban.org/wiki/index.php/Requirements (Check requirement)
-  http://www.fail2ban.org/wiki/index.php/Main_Page (Add to News)
   http://www.fail2ban.org/wiki/index.php/Features
 
 * See if any filters are upgraded:

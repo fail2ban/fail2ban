@@ -32,7 +32,8 @@ datetime.datetime(2007, 1, 25, 12, 0, tzinfo=<iso8601.iso8601.Utc ...>)
 
 """
 
-from datetime import datetime, timedelta, tzinfo, time
+from datetime import datetime, timedelta, tzinfo
+import time
 import re
 
 __all__ = ["parse_date", "ParseError"]
@@ -92,7 +93,7 @@ def parse_timezone(tzstring):
 
     if tzstring is None:
         zone_sec = -time.timezone 
-        return FixedOffset(name=time.tzname[0],hours=(zone_sec / 3600),minutes=(zone_sec % 3600)/60,seconds=zone_sec % 60)
+        return FixedOffset(name=time.tzname[0],offset_hours=(zone_sec / 3600), offset_minutes=(zone_sec % 3600)/60, offset_seconds=zone_sec % 60)
 
     m = TIMEZONE_REGEX.match(tzstring)
     prefix, hours, minutes = m.groups()

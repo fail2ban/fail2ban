@@ -99,6 +99,7 @@ fail2ban/tests/files/logs/proftpd
 fail2ban/tests/files/logs/pure-ftpd
 fail2ban/tests/files/logs/roundcube-auth
 fail2ban/tests/files/logs/sogo-auth
+fail2ban/tests/files/logs/solid-pop3d
 fail2ban/tests/files/logs/sshd
 fail2ban/tests/files/logs/sshd-ddos
 fail2ban/tests/files/logs/vsftpd
@@ -165,6 +166,7 @@ config/filter.d/pam-generic.conf
 config/filter.d/php-url-fopen.conf
 config/filter.d/postfix-sasl.conf
 config/filter.d/sieve.conf
+config/filter.d/solid-pop3d.conf
 config/filter.d/sshd.conf
 config/filter.d/sshd-ddos.conf
 config/filter.d/vsftpd.conf

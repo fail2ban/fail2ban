@@ -50,6 +50,22 @@ code-review and minor additions from Yaroslav Halchenko.
 	 Some filters have been change as required to capture these elements in the
 	 right timezone correctly.
 
+ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
+-----------
+
+- IMPORTANT incompatible changes:
+
+- Fixes:
+  - allow for ",milliseconds" in the custom date format of proftpd.log
+  - allow for ", referer ..." in apache-* filter for apache error logs.
+
+- New Features:
+
+  Daniel Black
+   * filter.d/solid-pop3d -- added thanks to Jacques Lav!gnotte on mailinglist.
+
+- Enhancements:
+
 ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
 
 In light of CVE-2013-2178 that triggered our last release we have put
