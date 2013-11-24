@@ -15,6 +15,8 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
 - Fixes:
   - allow for ",milliseconds" in the custom date format of proftpd.log
   - allow for ", referer ..." in apache-* filter for apache error logs.
+  - remove indentation of name and loglevel while logging to SYSLOG to
+    resolve syslog(-ng) parsing problems. Closes Debian bug #730202.
 
 - New Features:
 
@@ -22,6 +24,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
    * filter.d/solid-pop3d -- added thanks to Jacques Lav!gnotte on mailinglist.
 
 - Enhancements:
+  - loglines now also report "[PID]" after the name portion
 
 
 ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
