@@ -743,10 +743,14 @@ Releasing
 
   * https://github.com/fail2ban/fail2ban/issues?sort=updated&state=open
   * http://bugs.debian.org/cgi-bin/pkgreport.cgi?dist=unstable;package=fail2ban
+  * https://bugs.launchpad.net/ubuntu/+source/fail2ban
   * http://bugs.sabayon.org/buglist.cgi?quicksearch=net-analyzer%2Ffail2ban
+  * https://bugs.archlinux.org/?project=5&cat%5B%5D=33&string=fail2ban
   * https://bugs.gentoo.org/buglist.cgi?query_format=advanced&short_desc=fail2ban&bug_status=UNCONFIRMED&bug_status=CONFIRMED&bug_status=IN_PROGRESS&short_desc_type=allwords
   * https://bugzilla.redhat.com/buglist.cgi?query_format=advanced&bug_status=NEW&bug_status=ASSIGNED&component=fail2ban&classification=Red%20Hat&classification=Fedora
   * http://www.freebsd.org/cgi/query-pr-summary.cgi?text=fail2ban
+  * https://bugs.mageia.org/buglist.cgi?quicksearch=fail2ban
+  * https://build.opensuse.org/package/requests/openSUSE:Factory/fail2ban
 
 # Make sure the tests pass
 
