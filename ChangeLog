@@ -17,6 +17,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - allow for ", referer ..." in apache-* filter for apache error logs.
   - allow for spaces at the beginning of kernel messages. Closes gh-448
   - recidive jail to block all protocols. Closes gh-440. Thanks Ioan Indreias
+  - remove failcheck in firewall-cmd-direct-new action. Thanks Joel (gh-395)
 
 - New Features:
 
