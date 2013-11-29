@@ -81,6 +81,7 @@ class DateDetectorTest(unittest.TestCase):
 			(False, "23/Jan/2005:21:59:59 +0100"),
 			(False, "01/23/2005:21:59:59"),
 			(False, "2005-01-23 21:59:59"),
+		    (False, "2005-01-23 21:59:59,000"),	  # proftpd
 			(False, "23-Jan-2005 21:59:59"),
 			(False, "23-Jan-2005 21:59:59.02"),
 			(False, "23-Jan-2005 21:59:59 +0100"),
