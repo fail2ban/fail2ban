@@ -36,6 +36,9 @@ code-review and minor additions from Yaroslav Halchenko.
      into logging messages in case of error or at DEBUG loglevel.
    Daniel Black and TESTOVIK
    * Multiline filter for sendmail-spam. Close gh-418
+   Daniel Black and John Thoe
+   * Multiline regex for Disconnecting: Too many authentication failures for
+     root [preauth]\nConnection closed by 6X.XXX.XXX.XXX [preauth]
 
 - Enhancements
   Steven Hiscocks
