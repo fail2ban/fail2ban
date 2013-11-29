@@ -124,3 +124,8 @@ Nov 11 08:04:51 redbamboo sshd[2737]: Failed password for invalid user from 10.1
 Nov 23 21:50:19 sshd[8148]: Disconnecting: Too many authentication failures for root [preauth]
 # failJSON: { "time": "2004-11-23T21:50:37", "match": true , "host": "61.0.0.1", "desc": "Multiline match for preauth failures" }
 Nov 23 21:50:37 sshd[8148]: Connection closed by 61.0.0.1 [preauth]
+
+# failJSON: { "match": false }
+Nov 23 21:50:19 sshd[9148]: Disconnecting: Too many authentication failures for root [preauth]
+# failJSON: { "match": false , "desc": "Pids don't match" }
+Nov 23 21:50:37 sshd[7148]: Connection closed by 61.0.0.1 [preauth]
