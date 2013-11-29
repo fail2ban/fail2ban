@@ -25,6 +25,10 @@ code-review and minor additions from Yaroslav Halchenko.
   Steven Hiscocks
    * [..5aef036] Core functionality moved into fail2ban/ module.
      Closes gh-26
+  Daniel Black
+   * Jail names increased to 26 characters and iptables prefix reduced
+     from fail2ban- to f2b- as suggested by buanzo in gh-462.
+
 - New features:
   Steven Hiscocks
    * [..c7ae460] Multiline failregex. Close gh-54

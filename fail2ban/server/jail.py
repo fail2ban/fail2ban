@@ -109,7 +109,7 @@ class Jail:
 		self.__filter = FilterSystemd(self)
 	
 	def setName(self, name):
-		if len(name) >= 20:
+		if len(name) >= 26:
 			logSys.warning("Jail name %r might be too long and some commands "
 							"might not function correctly. Please shorten"
 							% name)
