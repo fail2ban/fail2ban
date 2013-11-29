@@ -21,6 +21,10 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
     465. Thanks Stefan. Closes gh-447
   - mysqld-syslog-iptables rule was too long. Part of gh-447.
 
+- Enhancements:
+  - long names on jails documented based on iptables limit of 30 less
+    len("fail2ban-").
+
 - New Features:
 
   Daniel Black
