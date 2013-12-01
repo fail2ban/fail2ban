@@ -31,7 +31,7 @@ from datedetector import DateDetector
 from datetemplate import DatePatternRegex, DateISO8601, DateEpoch, DateTai64n
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
-from dnsutils import DNSUtils
+from utils import DNSUtils
 
 import logging, os, fcntl, locale, codecs
 

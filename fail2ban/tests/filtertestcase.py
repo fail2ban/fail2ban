@@ -36,7 +36,8 @@ except ImportError:
 
 from fail2ban.server.jail import Jail
 from fail2ban.server.filterpoll import FilterPoll
-from fail2ban.server.filter import FileFilter, DNSUtils
+from fail2ban.server.filter import FileFilter
+from fail2ban.server.utils import DNSUtils
 from fail2ban.server.failmanager import FailManager
 from fail2ban.server.failmanager import FailManagerEmpty
 from fail2ban.server.mytime import MyTime
