@@ -35,22 +35,22 @@ logSys = logging.getLogger(__name__)
 class DNSUtils:
 
 	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
+	IP6_CRE = re.compile("^(?:[0-9a-f:])+(/\d+)?$")
 
 	#@staticmethod
 	def dnsToIp(dns):
-		""" Convert a DNS into an IP address using the Python socket module.
-			Thanks to Kevin Drapel.
+		""" Convert a DNS into an IP(v6) address using the Python socket module.
 		"""
-		try:
-			return socket.gethostbyname_ex(dns)[2]
-		except socket.error, e:
-			logSys.warn("Unable to find a corresponding IP address for %s: %s"
-						% (dns, e))
-			return list()
-		except socket.error, e:
-			logSys.warning("Socket error raised trying to resolve hostname %s: %s"
-						% (dns, e))
-			return list()
+		addresses = []
+		for family in (socket.AF_INET, socket.AF_INET6):
+			try:
+				address = socket.getaddrinfo(dns, None, family)
+				addresses.append(address[0][4][0])
+			except (socket.gaierror, IndexError), e:
+				pass
+		if len(addresses) == 0:
+			logSys.warn("Unable to find a corresponding IP address for %s")
+		return addresses
 	dnsToIp = staticmethod(dnsToIp)
 
 	#@staticmethod
@@ -58,7 +58,10 @@ class DNSUtils:
 		""" Search if an IP address if directly available and return
 			it.
 		"""
-		match = DNSUtils.IP_CRE.match(text)
+		if DNSUtils.isValidIPv6(text):
+			match = DNSUtils.IP6_CRE.match(text)
+		else:
+			match = DNSUtils.IP_CRE.match(text)
 		if match:
 			return match
 		else:
@@ -78,6 +81,18 @@ class DNSUtils:
 	isValidIP = staticmethod(isValidIP)
 
 	#@staticmethod
+	def isValidIPv6(string):
+		""" Return true if str is a valid IPv6 address
+		"""
+		s = string.split('/', 1)
+		try:
+			socket.inet_pton(socket.AF_INET6, s[0])
+			return True
+		except socket.error:
+			return False
+	isValidIPv6 = staticmethod(isValidIPv6)
+
+	#@staticmethod
 	def textToIp(text, useDns):
 		""" Return the IP of DNS found in a given text.
 		"""
@@ -86,7 +101,7 @@ class DNSUtils:
 		plainIP = DNSUtils.searchIP(text)
 		if not plainIP is None:
 			plainIPStr = plainIP.group(0)
-			if DNSUtils.isValidIP(plainIPStr):
+			if DNSUtils.isValidIP(plainIPStr) or DNSUtils.isValidIPv6(plainIPStr):
 				ipList.append(plainIPStr)
 
 		# If we are allowed to resolve -- give it a try if nothing was found
@@ -112,11 +127,29 @@ class DNSUtils:
 	cidr = staticmethod(cidr)
 
 	#@staticmethod
+	def cidr6(i, n):
+		""" Convert an IPv6 address string with a CIDR mask into 128-bit
+			integer.
+		"""
+		# 128-bit IPv6 address mask
+		MASK = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFL
+		return ~(MASK >> n) & MASK & DNSUtils.addr62bin(i)
+	cidr6 = staticmethod(cidr6)
+
+	#@staticmethod
 	def addr2bin(string):
 		""" Convert a string IPv4 address into an unsigned integer.
 		"""
 		return struct.unpack("!L", socket.inet_aton(string))[0]
 	addr2bin = staticmethod(addr2bin)
+
+	#@staticmethod
+	def addr62bin(string):
+		""" Convert a string IPv6 address into an unsigned integer.
+		"""
+		hi, lo = struct.unpack('!QQ', socket.inet_pton(socket.AF_INET6, string))
+		return (hi << 64) | lo
+	addr62bin = staticmethod(addr62bin)
 
 	#@staticmethod
 	def bin2addr(addr):

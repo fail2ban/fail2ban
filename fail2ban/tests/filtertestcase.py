@@ -222,6 +222,20 @@ class IgnoreIP(unittest.TestCase):
 		self.filter.addIgnoreIP("www.epfl.ch")
 		self.assertFalse(self.filter.inIgnoreIPList("127.177.50.10"))
 
+	def testIgnoreIPCIDRMatch(self):
+		ipList = "127.0.0.1/8", "::1/128", "2001::/16", "1.2.3.4"
+		for ip in ipList:
+			self.filter.addIgnoreIP(ip)
+		# IPs that should match
+		self.assertTrue(self.filter.inIgnoreIPList('127.0.0.1'))
+		self.assertTrue(self.filter.inIgnoreIPList('127.1.1.1'))
+		self.assertTrue(self.filter.inIgnoreIPList('::1'))
+		self.assertTrue(self.filter.inIgnoreIPList('2001::1'))
+		self.assertTrue(self.filter.inIgnoreIPList('1.2.3.4'))
+		# IPs that shouldn't match
+		self.assertFalse(self.filter.inIgnoreIPList('128.0.0.1'))
+		self.assertFalse(self.filter.inIgnoreIPList('2002::1'))
+		self.assertFalse(self.filter.inIgnoreIPList('1.2.3.5'))
 
 class LogFile(unittest.TestCase):
 
@@ -895,9 +909,9 @@ class DNSUtilsTests(unittest.TestCase):
 		res = DNSUtils.textToIp('www.example.com', 'no')
 		self.assertEqual(res, [])
 		res = DNSUtils.textToIp('www.example.com', 'warn')
-		self.assertEqual(res, ['93.184.216.119'])
+		self.assertEqual(res, ['93.184.216.119', '2606:2800:220:6d:26bf:1447:1097:aa7'])
 		res = DNSUtils.textToIp('www.example.com', 'yes')
-		self.assertEqual(res, ['93.184.216.119'])
+		self.assertEqual(res, ['93.184.216.119', '2606:2800:220:6d:26bf:1447:1097:aa7'])
 
 	def testTextToIp(self):
 		# Test hostnames
@@ -909,7 +923,7 @@ class DNSUtilsTests(unittest.TestCase):
 		for s in hostnames:
 			res = DNSUtils.textToIp(s, 'yes')
 			if s == 'www.example.com':
-				self.assertEqual(res, ['93.184.216.119'])
+				self.assertEqual(res, ['93.184.216.119', '2606:2800:220:6d:26bf:1447:1097:aa7'])
 			else:
 				self.assertEqual(res, [])
 

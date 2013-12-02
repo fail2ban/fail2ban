@@ -339,14 +339,24 @@ class Filter(JailThread):
 			# An empty string is always false
 			if i == "":
 				continue
+			# Don't bother matching a v6 address to a non-v6 ip
+			if DNSUtils.isValidIPv6(i) and not DNSUtils.isValidIPv6(ip):
+				continue
+			# Don't bother matching a v4 address to a non-v4 ip
+			if DNSUtils.isValidIP(i) and not DNSUtils.isValidIP(ip):
+				continue
+			# Normalize IP addresses without CIDR mask
 			s = i.split('/', 1)
-			# IP address without CIDR mask
 			if len(s) == 1:
-				s.insert(1, '32')
+				s.insert(1, '128' if DNSUtils.isValidIPv6(s[0]) else '32')
 			s[1] = long(s[1])
 			try:
-				a = DNSUtils.cidr(s[0], s[1])
-				b = DNSUtils.cidr(ip, s[1])
+				if DNSUtils.isValidIPv6(ip):
+					a = DNSUtils.cidr6(s[0], s[1])
+					b = DNSUtils.cidr6(ip, s[1])
+				else:
+					a = DNSUtils.cidr(s[0], s[1])
+					b = DNSUtils.cidr(ip, s[1])
 			except Exception:
 				# Check if IP in DNS
 				ips = DNSUtils.dnsToIp(i)
@@ -772,3 +782,4 @@ class JournalFilter(Filter): # pragma: systemd no cover
 
 	def getJournalMatch(self, match): # pragma: no cover - Base class, not used
 		return []
+  
