@@ -428,7 +428,7 @@ class Fail2banRegex(object):
 							"    %s  %s%s" % (
 								ip[1],
 								timeString,
-								ip[3] and " (multiple regex matched)" or ""))
+								ip[-1] and " (multiple regex matched)" or ""))
 
 			print "\n%s: %d total" % (title, total)
 			pprint_list(out, " #) [# of hits] regular expression")
