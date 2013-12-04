@@ -133,7 +133,8 @@ class Regex:
 		n = 0
 		while True:
 			try:
-				skippedLines += self._matchCache.group("skiplines%i" % n)
+				if self._matchCache.group("skiplines%i" % n) is not None:
+					skippedLines += self._matchCache.group("skiplines%i" % n)
 				n += 1
 			except IndexError:
 				break
