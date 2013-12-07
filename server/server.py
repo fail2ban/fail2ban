@@ -361,7 +361,7 @@ class Server:
 				# Target should be a file
 				try:
 					open(target, "a").close()
-					hdlr = logging.FileHandler(target)
+					hdlr = logging.handlers.RotatingFileHandler(target)
 				except IOError:
 					logSys.error("Unable to log to " + target)
 					logSys.info("Logging to previous target " + self.__logTarget)
@@ -401,6 +401,17 @@ class Server:
 		finally:
 			self.__loggingLock.release()
 	
+	def flushLogs(self):
+		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG']:
+			for handler in logging.getLogger("fail2ban").handlers:
+				handler.doRollover()
+			return "rolled over"
+		else:
+			for handler in logging.getLogger("fail2ban").handlers:
+				handler.flush()
+			return "flushed"
+			
+
 	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the
 			background as a daemon.

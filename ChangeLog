@@ -22,6 +22,8 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - smtps not a IANA standard and has been removed from Arch. Replaced with
     465. Thanks Stefan. Closes gh-447
   - mysqld-syslog-iptables rule was too long. Part of gh-447.
+  - add 'flushlogs' command to allow logrotation without clobbering logtarget
+    settings. Closes gh-458, Debian bug #697333, Redhat bug #891798.
 
 - Enhancements:
   - long names on jails documented based on iptables limit of 30 less
