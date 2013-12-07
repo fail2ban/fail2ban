@@ -30,6 +30,7 @@ from filter import FileFilter, JournalFilter
 from transmitter import Transmitter
 from asyncserver import AsyncServer
 from asyncserver import AsyncServerException
+from database import Fail2BanDb
 from fail2ban import version
 import logging, logging.handlers, sys, os, signal
 
@@ -50,6 +51,9 @@ class Server:
 		# Set logging level
 		self.setLogLevel(3)
 		self.setLogTarget("STDOUT")
+
+		# Create database, initially in memory
+		self.setDatabase(":memory:")
 	
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
@@ -117,10 +121,13 @@ class Server:
 
 	
 	def addJail(self, name, backend):
-		self.__jails.add(name, backend)
+		self.__jails.add(self.__db, name, backend)
+		self.__db.addJail(self.__jails.get(name))
 		
-	def delJail(self, name):
+	def delJail(self, name, dbDel=True):
 		self.__jails.remove(name)
+		if dbDel:
+			self.__db.delJailName(name)
 	
 	def startJail(self, name):
 		try:
@@ -130,13 +137,13 @@ class Server:
 		finally:
 			self.__lock.release()
 	
-	def stopJail(self, name):
+	def stopJail(self, name, dbDel=True):
 		logSys.debug("Stopping jail %s" % name)
 		try:
 			self.__lock.acquire()
 			if self.isAlive(name):
 				self.__jails.get(name).stop()
-				self.delJail(name)
+				self.delJail(name, dbDel=dbDel)
 		finally:
 			self.__lock.release()
 	
@@ -145,7 +152,7 @@ class Server:
 		try:
 			self.__lock.acquire()
 			for jail in self.__jails.getAll():
-				self.stopJail(jail)
+				self.stopJail(jail, dbDel=False)
 		finally:
 			self.__lock.release()
 	
@@ -459,6 +466,16 @@ class Server:
 			return self.__logTarget
 		finally:
 			self.__loggingLock.release()
+	
+	def setDatabase(self, filename):
+		if self.__jails.size() == 0:
+			self.__db = Fail2BanDb(filename)
+		else:
+			raise RuntimeError(
+				"Cannot change database when there are jails present")
+	
+	def getDatabase(self):
+		return self.__db
 	
 	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the

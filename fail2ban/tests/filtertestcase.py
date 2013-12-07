@@ -40,6 +40,7 @@ from fail2ban.server.filter import FileFilter, DNSUtils
 from fail2ban.server.failmanager import FailManager
 from fail2ban.server.failmanager import FailManagerEmpty
 from fail2ban.server.mytime import MyTime
+from fail2ban.server.database import Fail2BanDb
 from fail2ban.tests.utils import setUpMyTime, tearDownMyTime
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
@@ -228,7 +229,7 @@ class LogFile(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.filter = FilterPoll(None)
+		self.filter = FilterPoll(DummyJail())
 		self.filter.addLogPath(LogFile.FILENAME)
 
 	def tearDown(self):
@@ -251,7 +252,7 @@ class LogFileMonitor(unittest.TestCase):
 		self.filter = self.name = 'NA'
 		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
 		self.file = open(self.name, 'a')
-		self.filter = FilterPoll(None)
+		self.filter = FilterPoll(DummyJail())
 		self.filter.addLogPath(self.name)
 		self.filter.setActive(True)
 		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
@@ -564,7 +565,7 @@ def get_monitor_failures_testcase(Filter_):
 			# tail written before, so let's not copy anything yet
 			#_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
 			# we should detect the failures
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01, count=6) # was needed if we write twice above
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01, count=3) # was needed if we write twice above
 
 			# now copy and get even more
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
@@ -715,7 +716,8 @@ class GetFailures(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		setUpMyTime()
-		self.filter = FileFilter(None)
+		self.jail = DummyJail()
+		self.filter = FileFilter(self.jail)
 		self.filter.setActive(True)
 		# TODO Test this
 		#self.filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
@@ -802,7 +804,8 @@ class GetFailures(unittest.TestCase):
 		for useDns, output in (('yes',  output_yes),
 							   ('no',   output_no),
 							   ('warn', output_yes)):
-			filter_ = FileFilter(None, useDns=useDns)
+			jail = DummyJail()
+			filter_ = FileFilter(jail, useDns=useDns)
 			filter_.setActive(True)
 			filter_.failManager.setMaxRetry(1)	# we might have just few failures
 
@@ -916,5 +919,6 @@ class JailTests(unittest.TestCase):
 
 	def testSetBackend_gh83(self):
 		# smoke test
-		jail = Jail('test', backend='polling') # Must not fail to initiate
+		# Must not fail to initiate
+		jail = Jail(Fail2BanDb(":memory:"), 'test', backend='polling')
 
