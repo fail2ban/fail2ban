@@ -522,7 +522,7 @@ class TransmitterLogging(TransmitterBase):
 		self.setGetTestNOK("loglevel", "Bird")
 
 	def testFlushLogs(self):
-		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "flushed"))
+		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
 		try:
 			f, fn = tempfile.mkstemp("fail2ban.log")
 			os.close(f)
@@ -534,7 +534,7 @@ class TransmitterLogging(TransmitterBase):
 				os.close(f2)
 				os.rename(fn, fn2)
 				logSys.warn("After file moved")
-				self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "flushed"))
+				self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
 				logSys.warn("After flushlogs")
 				with open(fn2,'r') as f:
 					self.assertTrue(f.next().endswith("Before file moved\n"))
@@ -547,6 +547,8 @@ class TransmitterLogging(TransmitterBase):
 				os.remove(fn2)
 		finally:
 			os.remove(fn)
+		self.assertEqual(self.transm.proceed(["set", "logtarget", "STDERR"]), (0, "STDERR"))
+		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "flushed"))
 
 
 class JailTests(unittest.TestCase):
