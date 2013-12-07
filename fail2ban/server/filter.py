@@ -527,6 +527,9 @@ class FileFilter(Filter):
 			logSys.error(path + " already exists")
 		else:
 			container = FileContainer(path, self.getLogEncoding(), tail)
+			lastpos = self.jail.getDatabase().addLog(self.jail, container)
+			if lastpos and not tail:
+				container.setPos(lastpos)
 			self.__logPath.append(container)
 			logSys.info("Added logfile = %s" % path)
 			self._addLogPath(path)			# backend specific
@@ -546,6 +549,7 @@ class FileFilter(Filter):
 		for log in self.__logPath:
 			if log.getFileName() == path:
 				self.__logPath.remove(log)
+				self.jail.getDatabase().updateLog(self.jail, log)
 				logSys.info("Removed logfile = %s" % path)
 				self._delLogPath(path)
 				return
@@ -644,6 +648,7 @@ class FileFilter(Filter):
 				break
 			self.processLineAndAdd(line)
 		container.close()
+		self.jail.getDatabase().updateLog(self.jail, container)
 		return True
 
 	def status(self):
@@ -682,7 +687,7 @@ class FileContainer:
 		try:
 			firstLine = handler.readline()
 			# Computes the MD5 of the first line.
-			self.__hash = md5sum(firstLine).digest()
+			self.__hash = md5sum(firstLine).hexdigest()
 			# Start at the beginning of file if tail mode is off.
 			if tail:
 				handler.seek(0, 2)
@@ -702,6 +707,15 @@ class FileContainer:
 	def getEncoding(self):
 		return self.__encoding
 
+	def getHash(self):
+		return self.__hash
+
+	def getPos(self):
+		return self.__pos
+
+	def setPos(self, value):
+		self.__pos = value
+
 	def open(self):
 		self.__handler = open(self.__filename, 'rb')
 		# Set the file descriptor to be FD_CLOEXEC
@@ -717,7 +731,7 @@ class FileContainer:
 			return False
 		firstLine = self.__handler.readline()
 		# Computes the MD5 of the first line.
-		myHash = md5sum(firstLine).digest()
+		myHash = md5sum(firstLine).hexdigest()
 		## print "D: fn=%s hashes=%s/%s inos=%s/%s pos=%s rotate=%s" % (
 		## 	self.__filename, self.__hash, myHash, stats.st_ino, self.__ino, self.__pos,
 		## 	self.__hash != myHash or self.__ino != stats.st_ino)
