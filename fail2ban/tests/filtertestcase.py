@@ -212,6 +212,7 @@ class IgnoreIP(unittest.TestCase):
 		self.filter.addIgnoreIP("www.epfl.ch")
 
 		self.assertTrue(self.filter.inIgnoreIPList("128.178.50.12"))
+		self.assertTrue(self.filter.inIgnoreIPList("2001:620:618:1a6:1:80b2:a60a:2"))
 
 	def testIgnoreIPNOK(self):
 		ipList = "", "999.999.999.999", "abcdef", "192.168.0."
@@ -221,6 +222,7 @@ class IgnoreIP(unittest.TestCase):
 		# Test DNS
 		self.filter.addIgnoreIP("www.epfl.ch")
 		self.assertFalse(self.filter.inIgnoreIPList("127.177.50.10"))
+		self.assertFalse(self.filter.inIgnoreIPList("2001:630:618:1a6:1:80b2:a60a:2"))
 
 	def testIgnoreIPCIDRMatch(self):
 		ipList = "127.0.0.1/8", "::1/128", "2001::/16", "1.2.3.4"

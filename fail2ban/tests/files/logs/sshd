@@ -117,3 +117,6 @@ Sep 29 17:15:02 spaceman sshd[12946]: Failed password for user from 127.0.0.1 po
 
 # failJSON: { "time": "2004-11-11T08:04:51", "match": true , "host": "127.0.0.1", "desc": "Injecting on username ssh 'from 10.10.1.1'@localhost" }
 Nov 11 08:04:51 redbamboo sshd[2737]: Failed password for invalid user from 10.10.1.1 from 127.0.0.1 port 58946 ssh2
+
+# failJSON: { "time": "2004-12-08T11:10:05", "match": true, "host": "2001:123:456:123::1", "desc": "IPv6 failed login attempt" }
+Dec  8 11:10:05 flash sshd[66638]: Failed keyboard-interactive/pam for invalid user foobar from 2001:123:456:123::1 port 59770 ssh2

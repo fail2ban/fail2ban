@@ -41,7 +41,7 @@ class Regex:
 		self._matchCache = None
 		# Perform shortcuts expansions.
 		# Replace "<HOST>" with default regular expression for host.
-		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>[\w\-.^_:]*\w)")
+		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>([\d\.]*\d+)|([\w\-.^]*\w)|([a-fA-F0-9\:]*[a-fA-F0-9]))")
 		# Replace "<SKIPLINES>" with regular expression for multiple lines.
 		regexSplit = regex.split("<SKIPLINES>")
 		regex = regexSplit[0]
