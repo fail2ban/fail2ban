@@ -31,9 +31,8 @@ from datedetector import DateDetector
 from datetemplate import DatePatternRegex, DateISO8601, DateEpoch, DateTai64n
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
-from utils import DNSUtils
 
-import logging, os, fcntl, locale, codecs
+import logging, os, fcntl, locale, codecs, dnsutils
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -340,26 +339,26 @@ class Filter(JailThread):
 			if i == "":
 				continue
 			# Don't bother matching a v6 address to a non-v6 ip
-			if DNSUtils.isValidIPv6(i) and not DNSUtils.isValidIPv6(ip):
+			if dnsutils.isValidIPv6(i) and not dnsutils.isValidIPv6(ip):
 				continue
 			# Don't bother matching a v4 address to a non-v4 ip
-			if DNSUtils.isValidIP(i) and not DNSUtils.isValidIP(ip):
+			if dnsutils.isValidIP(i) and not dnsutils.isValidIP(ip):
 				continue
 			# Normalize IP addresses without CIDR mask
 			s = i.split('/', 1)
 			if len(s) == 1:
-				s.insert(1, '128' if DNSUtils.isValidIPv6(s[0]) else '32')
+				s.insert(1, '128' if dnsutils.isValidIPv6(s[0]) else '32')
 			s[1] = long(s[1])
 			try:
-				if DNSUtils.isValidIPv6(ip):
-					a = DNSUtils.cidr6(s[0], s[1])
-					b = DNSUtils.cidr6(ip, s[1])
+				if dnsutils.isValidIPv6(ip):
+					a = dnsutils.cidr6(s[0], s[1])
+					b = dnsutils.cidr6(ip, s[1])
 				else:
-					a = DNSUtils.cidr(s[0], s[1])
-					b = DNSUtils.cidr(ip, s[1])
+					a = dnsutils.cidr(s[0], s[1])
+					b = dnsutils.cidr(ip, s[1])
 			except Exception:
 				# Check if IP in DNS
-				ips = DNSUtils.dnsToIp(i)
+				ips = dnsutils.dnsToIp(i)
 				if ip in ips:
 					return True
 				else:
@@ -496,7 +495,7 @@ class Filter(JailThread):
 							if not checkAllRegex:
 								break
 						else:
-							ipMatch = DNSUtils.textToIp(host, self.__useDns)
+							ipMatch = dnsutils.textToIp(host, self.__useDns)
 							if ipMatch:
 								for ip in ipMatch:
 									failList.append([failRegexIndex, ip, date])

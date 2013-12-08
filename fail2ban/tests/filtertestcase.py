@@ -37,7 +37,7 @@ except ImportError:
 from fail2ban.server.jail import Jail
 from fail2ban.server.filterpoll import FilterPoll
 from fail2ban.server.filter import FileFilter
-from fail2ban.server.utils import DNSUtils
+from fail2ban.server import dnsutils
 from fail2ban.server.failmanager import FailManager
 from fail2ban.server.failmanager import FailManagerEmpty
 from fail2ban.server.mytime import MyTime
@@ -908,11 +908,11 @@ class GetFailures(unittest.TestCase):
 class DNSUtilsTests(unittest.TestCase):
 
 	def testUseDns(self):
-		res = DNSUtils.textToIp('www.example.com', 'no')
+		res = dnsutils.textToIp('www.example.com', 'no')
 		self.assertEqual(res, [])
-		res = DNSUtils.textToIp('www.example.com', 'warn')
+		res = dnsutils.textToIp('www.example.com', 'warn')
 		self.assertEqual(res, ['93.184.216.119', '2606:2800:220:6d:26bf:1447:1097:aa7'])
-		res = DNSUtils.textToIp('www.example.com', 'yes')
+		res = dnsutils.textToIp('www.example.com', 'yes')
 		self.assertEqual(res, ['93.184.216.119', '2606:2800:220:6d:26bf:1447:1097:aa7'])
 
 	def testTextToIp(self):
@@ -923,7 +923,7 @@ class DNSUtilsTests(unittest.TestCase):
 			'1.2.3.4.buga.xxxxx.yyy.invalid',
 			]
 		for s in hostnames:
-			res = DNSUtils.textToIp(s, 'yes')
+			res = dnsutils.textToIp(s, 'yes')
 			if s == 'www.example.com':
 				self.assertEqual(res, ['93.184.216.119', '2606:2800:220:6d:26bf:1447:1097:aa7'])
 			else:

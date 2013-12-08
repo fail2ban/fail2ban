@@ -700,7 +700,7 @@ dnsutils.py
 
 DNSUtils
 
-  Utility class for DNS and IP handling
+  Utility methods for DNS and IP handling
 
 
 filter*.py
