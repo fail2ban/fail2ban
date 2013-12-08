@@ -184,6 +184,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(misctestcase.HelpersTest))
 	tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
 	tests.addTest(unittest.makeSuite(misctestcase.TestsUtilsTest))
+	tests.addTest(unittest.makeSuite(misctestcase.CustomDateFormatsTest))
 
 	# Filter
 	if not no_network:
