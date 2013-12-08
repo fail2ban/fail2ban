@@ -46,8 +46,8 @@ class Fail2banReader(ConfigReader):
 	def getOptions(self):
 		opts = [["int", "loglevel", 1],
 				["string", "logtarget", "STDERR"],
-				["string", "dbfile", "/var/lib/fail2ban/fail2ban.db"],
-				["int", "dbpurgeage", "/var/lib/fail2ban/fail2ban.db"]]
+				["string", "dbfile", "/var/lib/fail2ban/fail2ban.sqlite3"],
+				["int", "dbpurgeage", 86400]]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
 	
 	def convert(self):
