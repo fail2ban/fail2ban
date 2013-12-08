@@ -39,6 +39,9 @@ code-review and minor additions from Yaroslav Halchenko.
    Daniel Black and John Thoe
    * Multiline regex for Disconnecting: Too many authentication failures for
      root [preauth]\nConnection closed by 6X.XXX.XXX.XXX [preauth]
+   Daniel Black
+   * Added action xarf-login-attack to report formatted attack messages
+     according to the XARF standard (v0.2). Close gh-105
 
 - Enhancements
   Steven Hiscocks
