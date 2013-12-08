@@ -169,6 +169,11 @@ class Fail2BanDb(object):
 			"UPDATE jails SET enabled=0 WHERE name=?", (name, ))
 
 	@lockandcommit()
+	def delAllJails(self, cur):
+		# Will be deleted by purge as appropriate
+		cur.execute("UPDATE jails SET enabled=0")
+
+	@lockandcommit()
 	def getJailNames(self, cur):
 		cur.execute("SELECT name FROM jails")
 		return set(row[0] for row in cur.fetchmany())

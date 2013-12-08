@@ -124,10 +124,9 @@ class Server:
 		self.__jails.add(self.__db, name, backend)
 		self.__db.addJail(self.__jails.get(name))
 		
-	def delJail(self, name, dbDel=True):
+	def delJail(self, name):
 		self.__jails.remove(name)
-		if dbDel:
-			self.__db.delJailName(name)
+		self.__db.delJailName(name)
 	
 	def startJail(self, name):
 		try:
@@ -137,13 +136,13 @@ class Server:
 		finally:
 			self.__lock.release()
 	
-	def stopJail(self, name, dbDel=True):
+	def stopJail(self, name):
 		logSys.debug("Stopping jail %s" % name)
 		try:
 			self.__lock.acquire()
 			if self.isAlive(name):
 				self.__jails.get(name).stop()
-				self.delJail(name, dbDel=dbDel)
+				self.delJail(name)
 		finally:
 			self.__lock.release()
 	
@@ -152,7 +151,7 @@ class Server:
 		try:
 			self.__lock.acquire()
 			for jail in self.__jails.getAll():
-				self.stopJail(jail, dbDel=False)
+				self.stopJail(jail)
 		finally:
 			self.__lock.release()
 	
@@ -470,6 +469,7 @@ class Server:
 	def setDatabase(self, filename):
 		if self.__jails.size() == 0:
 			self.__db = Fail2BanDb(filename)
+			self.__db.delAllJails()
 		else:
 			raise RuntimeError(
 				"Cannot change database when there are jails present")
