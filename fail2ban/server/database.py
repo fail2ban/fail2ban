@@ -23,7 +23,6 @@ __license__ = "GPL"
 
 import logging
 import sys
-from threading import Lock
 import sqlite3
 import json
 import locale
@@ -47,19 +46,17 @@ else:
 	sqlite3.register_adapter(dict, json.dumps)
 	sqlite3.register_converter("JSON", json.loads)
 
-def lockandcommit():
+def commitandrollback():
 	def wrap(f):
 		def func(self, *args, **kw):
-			with self._lock: # Threading lock
-				with self._db: # Auto commit and rollback on exception
-					return f(self, self._db.cursor(), *args, **kw)
+			with self._db: # Auto commit and rollback on exception
+				return f(self, self._db.cursor(), *args, **kw)
 		return func
 	return wrap
 
 class Fail2BanDb(object):
 	__version__ = 1
 	def __init__(self, filename, purgeAge=24*60*60):
-		self._lock = Lock()
 		try:
 			self._db = sqlite3.connect(
 				filename, check_same_thread=False,
@@ -100,7 +97,7 @@ class Fail2BanDb(object):
 	def setPurgeAge(self, value):
 		self._purgeAge = int(value)
 
-	@lockandcommit()
+	@commitandrollback()
 	def createDb(self, cur):
 		# Version info
 		cur.execute("CREATE TABLE fail2banDb(version INTEGER)")
@@ -146,14 +143,14 @@ class Fail2BanDb(object):
 		cur.execute("SELECT version FROM fail2banDb LIMIT 1")
 		return cur.fetchone()[0]
 
-	@lockandcommit()
+	@commitandrollback()
 	def updateDb(self, cur, version):
 		raise NotImplementedError(
 			"Only single version of database exists...how did you get here??")
 		cur.execute("SELECT version FROM fail2banDb LIMIT 1")
 		return cur.fetchone()[0]
 
-	@lockandcommit()
+	@commitandrollback()
 	def addJail(self, cur, jail):
 		cur.execute(
 			"INSERT OR REPLACE INTO jails(name, enabled) VALUES(?, 1)",
@@ -162,23 +159,23 @@ class Fail2BanDb(object):
 	def delJail(self, jail):
 		return self.delJailName(jail.getName())
 
-	@lockandcommit()
+	@commitandrollback()
 	def delJailName(self, cur, name):
 		# Will be deleted by purge as appropriate
 		cur.execute(
 			"UPDATE jails SET enabled=0 WHERE name=?", (name, ))
 
-	@lockandcommit()
+	@commitandrollback()
 	def delAllJails(self, cur):
 		# Will be deleted by purge as appropriate
 		cur.execute("UPDATE jails SET enabled=0")
 
-	@lockandcommit()
+	@commitandrollback()
 	def getJailNames(self, cur):
 		cur.execute("SELECT name FROM jails")
 		return set(row[0] for row in cur.fetchmany())
 
-	@lockandcommit()
+	@commitandrollback()
 	def addLog(self, cur, jail, container):
 		lastLinePos = None
 		cur.execute(
@@ -199,7 +196,7 @@ class Fail2BanDb(object):
 				lastLinePos = None
 		return lastLinePos
 
-	@lockandcommit()
+	@commitandrollback()
 	def getLogPaths(self, cur, jail=None):
 		query = "SELECT path FROM logs"
 		queryArgs = []
@@ -209,7 +206,7 @@ class Fail2BanDb(object):
 		cur.execute(query, queryArgs)
 		return set(row[0] for row in cur.fetchmany())
 
-	@lockandcommit()
+	@commitandrollback()
 	def updateLog(self, cur, *args, **kwargs):
 		self._updateLog(cur, *args, **kwargs)
 
@@ -220,7 +217,7 @@ class Fail2BanDb(object):
 			(container.getHash(), container.getPos(),
 				jail.getName(), container.getFileName()))
 
-	@lockandcommit()
+	@commitandrollback()
 	def addBan(self, cur, jail, ticket):
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
@@ -229,7 +226,7 @@ class Fail2BanDb(object):
 				{"matches": ticket.getMatches(),
 					"failures": ticket.getAttempt()}))
 
-	@lockandcommit()
+	@commitandrollback()
 	def getBans(self, cur, jail=None, bantime=None):
 		query = "SELECT ip, timeofban, data FROM bans"
 		queryArgs = []
@@ -248,7 +245,7 @@ class Fail2BanDb(object):
 			tickets[-1].setAttempt(data['failures'])
 		return tickets
 
-	@lockandcommit()
+	@commitandrollback()
 	def purge(self, cur):
 		cur.execute(
 			"DELETE FROM bans WHERE timeofban < ?",
