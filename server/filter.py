@@ -220,7 +220,7 @@ class Filter(JailThread):
 
 	def addBannedIP(self, ip):
 		if self.inIgnoreIPList(ip):
-			logSys.warning('Requested to manually ban an ignored IP ' + ip + '. User knows best. Proceeding to ban it.')
+			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.' % ip)
 
 		unixTime = MyTime.time()
 		for i in xrange(self.failManager.getMaxRetry()):
