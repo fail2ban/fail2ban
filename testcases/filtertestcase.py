@@ -163,6 +163,8 @@ class IgnoreIP(unittest.TestCase):
 		self.filter.addIgnoreIP("www.epfl.ch")
 
 		self.assertTrue(self.filter.inIgnoreIPList("128.178.50.12"))
+		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.11"))
+		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.13"))
 
 	def testIgnoreIPNOK(self):
 		ipList = "", "999.999.999.999", "abcdef", "192.168.0."
