@@ -39,7 +39,7 @@ from server.failmanager import FailManagerEmpty
 # Useful helpers
 #
 
-from utils import mtimesleep
+from utils import mtimesleep, LogCaptureTestCase
 
 # yoh: per Steven Hiscocks's insight while troubleshooting
 # https://github.com/fail2ban/fail2ban/issues/103#issuecomment-15542836
@@ -194,11 +194,12 @@ class LogFile(unittest.TestCase):
 		self.assertTrue(self.filter.isModified(LogFile.FILENAME))
 
 
-class LogFileMonitor(unittest.TestCase):
+class LogFileMonitor(LogCaptureTestCase):
 	"""Few more tests for FilterPoll API
 	"""
 	def setUp(self):
 		"""Call before every test case."""
+		LogCaptureTestCase.setUp(self)
 		self.filter = self.name = 'NA'
 		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
 		self.file = open(self.name, 'a')
@@ -208,6 +209,7 @@ class LogFileMonitor(unittest.TestCase):
 		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 
 	def tearDown(self):
+		LogCaptureTestCase.tearDown(self)
 		_killfile(self.file, self.name)
 		pass
 
