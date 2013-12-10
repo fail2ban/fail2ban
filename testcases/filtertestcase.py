@@ -173,6 +173,15 @@ class IgnoreIP(unittest.TestCase):
 		self.filter.addIgnoreIP("www.epfl.ch")
 		self.assertFalse(self.filter.inIgnoreIPList("127.177.50.10"))
 
+	def testIgnoreIPCIDR(self):
+		self.filter.addIgnoreIP('192.168.1.0/25')
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.0'))
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.1'))
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.127'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.128'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.255'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.0.255'))
+
 
 class LogFile(unittest.TestCase):
 
