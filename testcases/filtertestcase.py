@@ -144,14 +144,12 @@ def _copy_lines_between_files(fin, fout, n=None, skip=0, mode='a', terminal_line
 #  Actual tests
 #
 
-class IgnoreIP(unittest.TestCase):
+class IgnoreIP(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		LogCaptureTestCase.setUp(self)
 		self.filter = FileFilter(None)
-
-	def tearDown(self):
-		"""Call after every test case."""
 
 	def testIgnoreIPOK(self):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
@@ -183,6 +181,12 @@ class IgnoreIP(unittest.TestCase):
 		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.128'))
 		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.255'))
 		self.assertFalse(self.filter.inIgnoreIPList('192.168.0.255'))
+
+	def testIgnoreInProcessLine(self):
+		self.filter.addIgnoreIP('192.168.1.0/25')
+		self.filter.addFailRegex('<HOST>')
+		self.filter.processLineAndAdd('Thu Jul 11 01:21:43 2013 192.168.1.32')
+		self.assertTrue(self._is_logged('Ignore 192.168.1.32'))
 
 
 class LogFile(unittest.TestCase):
