@@ -34,6 +34,7 @@ from server.filterpoll import FilterPoll
 from server.filter import Filter, FileFilter, DNSUtils
 from server.failmanager import FailManager
 from server.failmanager import FailManagerEmpty
+from dummyjail import DummyJail
 
 #
 # Useful helpers
@@ -163,7 +164,8 @@ class IgnoreIP(LogCaptureTestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		LogCaptureTestCase.setUp(self)
-		self.filter = FileFilter(None)
+		self.jail = DummyJail()
+		self.filter = FileFilter(self.jail)
 
 	def testIgnoreIPOK(self):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
@@ -202,6 +204,11 @@ class IgnoreIP(LogCaptureTestCase):
 		self.filter.processLineAndAdd('Thu Jul 11 01:21:43 2013 192.168.1.32')
 		self.assertTrue(self._is_logged('Ignore 192.168.1.32'))
 
+	def testIgnoreAddBannedIP(self):
+		self.filter.addIgnoreIP('192.168.1.0/25')
+		self.filter.addBannedIP('192.168.1.32')
+		self.assertFalse(self._is_logged('Ignore 192.168.1.32'))
+		self.assertTrue(self._is_logged('Requested to manually ban an ignored IP 192.168.1.32. User knows best. Proceeding to ban it.'))
 
 class LogFile(unittest.TestCase):
 
@@ -347,7 +354,6 @@ class LogFileMonitor(LogCaptureTestCase):
 
 
 from threading import Lock
-from dummyjail import DummyJail
 
 def get_monitor_failures_testcase(Filter_):
 	"""Generator of TestCase's for different filters/backends
