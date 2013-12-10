@@ -28,7 +28,6 @@ import unittest, socket, time, tempfile, os, locale, sys
 
 from fail2ban.server.server import Server
 from fail2ban.server.jail import Jail
-from fail2ban.server.database import Fail2BanDb
 from fail2ban.exceptions import UnknownJailException
 try:
 	from fail2ban.server import filtersystemd
@@ -175,8 +174,22 @@ class Transmitter(TransmitterBase):
 		self.setGetTestNOK("dbfile", tmpFilename)
 		self.server.delJail(self.jailName)
 		self.setGetTest("dbfile", tmpFilename)
-		self.setGetTest("dbpurgeage", 600)
+		self.setGetTest("dbpurgeage", "600", 600)
 		self.setGetTestNOK("dbpurgeage", "LIZARD")
+
+		# Disable database
+		self.assertEqual(self.transm.proceed(
+			["set", "dbfile", "None"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["get", "dbfile"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["set", "dbpurgeage", "500"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["get", "dbpurgeage"]),
+			(0, None))
 
 	def testAddJail(self):
 		jail2 = "TestJail2"
@@ -651,5 +664,5 @@ class JailTests(unittest.TestCase):
 	def testLongName(self):
 		# Just a smoke test for now
 		longname = "veryveryverylongname"
-		jail = Jail(Fail2BanDb(":memory:"), longname)
+		jail = Jail(longname)
 		self.assertEqual(jail.getName(), longname)

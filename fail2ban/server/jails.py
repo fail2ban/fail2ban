@@ -50,13 +50,13 @@ class Jails:
 	# @param name The name of the jail
 	# @param backend The backend to use
 	
-	def add(self, db, name, backend):
+	def add(self, name, backend, db=None):
 		try:
 			self.__lock.acquire()
 			if self.__jails.has_key(name):
 				raise DuplicateJailException(name)
 			else:
-				self.__jails[name] = Jail(db, name, backend)
+				self.__jails[name] = Jail(name, backend, db=None)
 		finally:
 			self.__lock.release()
 	

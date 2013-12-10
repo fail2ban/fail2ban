@@ -116,10 +116,18 @@ class Transmitter:
 		#Database
 		elif name == "dbfile":
 			self.__server.setDatabase(command[1])
-			return self.__server.getDatabase().getFilename()
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				return db.getFilename()
 		elif name == "dbpurgeage":
-			self.__server.getDatabase().setPurgeAge(command[1])
-			return self.__server.getDatabase().getPurgeAge()
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				db.setPurgeAge(command[1])
+				return db.getPurgeAge()
 		# Jail
 		elif command[1] == "idle":
 			if command[2] == "on":
@@ -266,9 +274,17 @@ class Transmitter:
 			return self.__server.getLogTarget()
 		#Database
 		elif name == "dbfile":
-			return self.__server.getDatabase().getFilename()
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				return db.getFilename()
 		elif name == "dbpurgeage":
-			return self.__server.getDatabase().getPurgeAge()
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				return db.getPurgeAge()
 		# Filter
 		elif command[1] == "logpath":
 			return self.__server.getLogPath(name)

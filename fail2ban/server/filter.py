@@ -527,9 +527,11 @@ class FileFilter(Filter):
 			logSys.error(path + " already exists")
 		else:
 			container = FileContainer(path, self.getLogEncoding(), tail)
-			lastpos = self.jail.getDatabase().addLog(self.jail, container)
-			if lastpos and not tail:
-				container.setPos(lastpos)
+			db = self.jail.getDatabase()
+			if db is not None:
+				lastpos = db.addLog(self.jail, container)
+				if lastpos and not tail:
+					container.setPos(lastpos)
 			self.__logPath.append(container)
 			logSys.info("Added logfile = %s" % path)
 			self._addLogPath(path)			# backend specific
@@ -549,7 +551,9 @@ class FileFilter(Filter):
 		for log in self.__logPath:
 			if log.getFileName() == path:
 				self.__logPath.remove(log)
-				self.jail.getDatabase().updateLog(self.jail, log)
+				db = self.jail.getDatabase()
+				if db is not None:
+					db.updateLog(self.jail, log)
 				logSys.info("Removed logfile = %s" % path)
 				self._delLogPath(path)
 				return
@@ -648,7 +652,9 @@ class FileFilter(Filter):
 				break
 			self.processLineAndAdd(line)
 		container.close()
-		self.jail.getDatabase().updateLog(self.jail, container)
+		db = self.jail.getDatabase()
+		if db is not None:
+			db.updateLog(self.jail, container)
 		return True
 
 	def status(self):

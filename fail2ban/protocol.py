@@ -44,7 +44,7 @@ protocol = [
 ["set logtarget <TARGET>", "sets logging target to <TARGET>. Can be STDOUT, STDERR, SYSLOG or a file"], 
 ["get logtarget", "gets logging target"], 
 ['', "DATABASE", ""],
-["set dbfile <FILE>", "set the location of fail2ban persistent datastore"], 
+["set dbfile <FILE>", "set the location of fail2ban persistent datastore. Set to \"None\" to disable"], 
 ["get dbfile", "get the location of fail2ban persistent datastore"], 
 ["set dbpurgeage <SECONDS>", "sets the max age in <SECONDS> that history of bans will be kept"], 
 ["get dbpurgeage", "gets the max age in seconds that history of bans will be kept"], 

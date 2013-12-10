@@ -43,6 +43,7 @@ class Server:
 		self.__loggingLock = Lock()
 		self.__lock = RLock()
 		self.__jails = Jails()
+		self.__db = None
 		self.__daemon = daemon
 		self.__transm = Transmitter(self)
 		self.__asyncServer = AsyncServer(self.__transm)
@@ -51,9 +52,6 @@ class Server:
 		# Set logging level
 		self.setLogLevel(3)
 		self.setLogTarget("STDOUT")
-
-		# Create database, initially in memory
-		self.setDatabase(":memory:")
 	
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
@@ -121,12 +119,14 @@ class Server:
 
 	
 	def addJail(self, name, backend):
-		self.__jails.add(self.__db, name, backend)
-		self.__db.addJail(self.__jails.get(name))
+		self.__jails.add(name, backend, self.__db)
+		if self.__db is not None:
+			self.__db.addJail(self.__jails.get(name))
 		
 	def delJail(self, name):
 		self.__jails.remove(name)
-		self.__db.delJailName(name)
+		if self.__db is not None:
+			self.__db.delJailName(name)
 	
 	def startJail(self, name):
 		try:
@@ -468,8 +468,11 @@ class Server:
 	
 	def setDatabase(self, filename):
 		if self.__jails.size() == 0:
-			self.__db = Fail2BanDb(filename)
-			self.__db.delAllJails()
+			if filename.lower() == "none":
+				self.__db = None
+			else:
+				self.__db = Fail2BanDb(filename)
+				self.__db.delAllJails()
 		else:
 			raise RuntimeError(
 				"Cannot change database when there are jails present")

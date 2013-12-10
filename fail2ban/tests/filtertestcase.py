@@ -40,7 +40,6 @@ from fail2ban.server.filter import FileFilter, DNSUtils
 from fail2ban.server.failmanager import FailManager
 from fail2ban.server.failmanager import FailManagerEmpty
 from fail2ban.server.mytime import MyTime
-from fail2ban.server.database import Fail2BanDb
 from fail2ban.tests.utils import setUpMyTime, tearDownMyTime
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
@@ -565,7 +564,7 @@ def get_monitor_failures_testcase(Filter_):
 			# tail written before, so let's not copy anything yet
 			#_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
 			# we should detect the failures
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01, count=3) # was needed if we write twice above
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01, count=6) # was needed if we write twice above
 
 			# now copy and get even more
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
@@ -920,5 +919,5 @@ class JailTests(unittest.TestCase):
 	def testSetBackend_gh83(self):
 		# smoke test
 		# Must not fail to initiate
-		jail = Jail(Fail2BanDb(":memory:"), 'test', backend='polling')
+		jail = Jail('test', backend='polling')
 
