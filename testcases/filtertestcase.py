@@ -227,6 +227,16 @@ class LogFileMonitor(LogCaptureTestCase):
 		# shorter wait time for not modified status
 		return not self.isModified(0.4)
 
+	def testRemovingFailRegex(self):
+		self.filter.delFailRegex(0)
+		self.assertFalse(self._is_logged('Cannot remove regular expression. Index 0 is not valid'))
+		self.filter.delFailRegex(0)
+		self.assertTrue(self._is_logged('Cannot remove regular expression. Index 0 is not valid'))
+
+	def testRemovingIgnoreRegex(self):
+		self.filter.delIgnoreRegex(0)
+		self.assertTrue(self._is_logged('Cannot remove regular expression. Index 0 is not valid'))
+
 	def testNewChangeViaIsModified(self):
 		# it is a brand new one -- so first we think it is modified
 		self.assertTrue(self.isModified())
