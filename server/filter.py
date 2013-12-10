@@ -446,7 +446,7 @@ class FileFilter(Filter):
 				self._delLogPath(path)
 				return
 
-	def _delLogPath(self, path):
+	def _delLogPath(self, path): # pragma: no cover - overwritten function
 		# nothing to do by default
 		# to be overridden by backends
 		pass
