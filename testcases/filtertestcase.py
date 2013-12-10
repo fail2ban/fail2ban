@@ -31,7 +31,7 @@ import tempfile
 
 from server.jail import Jail
 from server.filterpoll import FilterPoll
-from server.filter import FileFilter, DNSUtils
+from server.filter import Filter, FileFilter, DNSUtils
 from server.failmanager import FailManager
 from server.failmanager import FailManagerEmpty
 
@@ -143,6 +143,20 @@ def _copy_lines_between_files(fin, fout, n=None, skip=0, mode='a', terminal_line
 #
 #  Actual tests
 #
+
+class BasicFilter(unittest.TestCase):
+
+	def setUp(self):
+		self.filter = Filter('name')
+
+	def testGetSetUseDNS(self):
+		# default is warn
+		self.assertEqual(self.filter.getUseDns(), 'warn')
+		self.filter.setUseDns(True)
+		self.assertEqual(self.filter.getUseDns(), 'yes')
+		self.filter.setUseDns(False)
+		self.assertEqual(self.filter.getUseDns(), 'no')
+
 
 class IgnoreIP(LogCaptureTestCase):
 
