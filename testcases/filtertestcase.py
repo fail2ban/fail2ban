@@ -173,21 +173,12 @@ class IgnoreIP(LogCaptureTestCase):
 			self.filter.addIgnoreIP(ip)
 
 			self.assertTrue(self.filter.inIgnoreIPList(ip))
-		# Test DNS
-		self.filter.addIgnoreIP("www.epfl.ch")
-
-		self.assertTrue(self.filter.inIgnoreIPList("128.178.50.12"))
-		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.11"))
-		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.13"))
 
 	def testIgnoreIPNOK(self):
 		ipList = "", "999.999.999.999", "abcdef", "192.168.0."
 		for ip in ipList:
 			self.filter.addIgnoreIP(ip)
 			self.assertFalse(self.filter.inIgnoreIPList(ip))
-		# Test DNS
-		self.filter.addIgnoreIP("www.epfl.ch")
-		self.assertFalse(self.filter.inIgnoreIPList("127.177.50.10"))
 
 	def testIgnoreIPCIDR(self):
 		self.filter.addIgnoreIP('192.168.1.0/25')
@@ -209,6 +200,22 @@ class IgnoreIP(LogCaptureTestCase):
 		self.filter.addBannedIP('192.168.1.32')
 		self.assertFalse(self._is_logged('Ignore 192.168.1.32'))
 		self.assertTrue(self._is_logged('Requested to manually ban an ignored IP 192.168.1.32. User knows best. Proceeding to ban it.'))
+
+
+class IgnoreIPDNS(IgnoreIP):
+
+	def testIgnoreIPDNSOK(self):
+		self.filter.addIgnoreIP("www.epfl.ch")
+		self.assertTrue(self.filter.inIgnoreIPList("128.178.50.12"))
+
+	def testIgnoreIPDNSNOK(self):
+		# Test DNS
+		self.filter.addIgnoreIP("www.epfl.ch")
+		print self._log.getvalue()
+		self.assertFalse(self.filter.inIgnoreIPList("127.177.50.10"))
+		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.11"))
+		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.13"))
+
 
 class LogFile(unittest.TestCase):
 
