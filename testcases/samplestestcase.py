@@ -123,7 +123,6 @@ def testSampleRegexsFactory(name):
 
 				regexsUsed.add(failregex)
 
-		# TODO: Remove exception handling once all regexs have samples
 		for failRegexIndex, failRegex in enumerate(self.filter.getFailRegex()):
 			self.assertTrue(
 				failRegexIndex in regexsUsed,

@@ -446,7 +446,7 @@ class FileFilter(Filter):
 				self._delLogPath(path)
 				return
 
-	def _delLogPath(self, path):
+	def _delLogPath(self, path): # pragma: no cover - overwritten function
 		# nothing to do by default
 		# to be overridden by backends
 		pass
@@ -567,6 +567,9 @@ class FileContainer:
 
 	def getFileName(self):
 		return self.__filename
+
+	def getPos(self):
+		return self.__pos
 
 	def open(self):
 		self.__handler = open(self.__filename)
