@@ -603,7 +603,13 @@ class GetFailures(unittest.TestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 
-
+	def testTail(self):
+		self.filter.addLogPath(LogFile.FILENAME, tail=True)
+		self.assertEqual(self.filter.getLogPath()[-1].getPos(), 1653)
+		self.filter.getLogPath()[-1].close()
+		self.assertEqual(self.filter.getLogPath()[-1].readline(), "")
+		self.filter.delLogPath(LogFile.FILENAME)
+		self.assertEqual(self.filter.getLogPath(),[])
 
 	def testGetFailures01(self, filename=None, failures=None):
 		filename = filename or GetFailures.FILENAME_01

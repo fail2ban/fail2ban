@@ -568,6 +568,9 @@ class FileContainer:
 	def getFileName(self):
 		return self.__filename
 
+	def getPos(self):
+		return self.__pos
+
 	def open(self):
 		self.__handler = open(self.__filename)
 		# Set the file descriptor to be FD_CLOEXEC
