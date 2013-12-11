@@ -211,7 +211,6 @@ class IgnoreIPDNS(IgnoreIP):
 	def testIgnoreIPDNSNOK(self):
 		# Test DNS
 		self.filter.addIgnoreIP("www.epfl.ch")
-		print self._log.getvalue()
 		self.assertFalse(self.filter.inIgnoreIPList("127.177.50.10"))
 		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.11"))
 		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.13"))
