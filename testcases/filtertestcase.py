@@ -269,6 +269,11 @@ class LogFileMonitor(LogCaptureTestCase):
 		# shorter wait time for not modified status
 		return not self.isModified(0.4)
 
+	def testNoLogFile(self):
+		os.chmod(self.name, 0)
+		self.filter.getFailures(self.name)
+		self.assertTrue(self._is_logged('Unable to open %s' % self.name))
+
 	def testRemovingFailRegex(self):
 		self.filter.delFailRegex(0)
 		self.assertFalse(self._is_logged('Cannot remove regular expression. Index 0 is not valid'))
