@@ -135,6 +135,10 @@ class JailReaderTest(unittest.TestCase):
 		self.assertEqual(JailReader._glob(os.path.join(d, '*')), [os.path.join(d, 'f1')])
 		# since f2 is dangling -- empty list
 		self.assertEqual(JailReader._glob(os.path.join(d, 'f2')), [])
+		self.assertEqual(JailReader._glob(os.path.join(d, 'nonexisting')), [])
+		os.remove(os.path.join(d, 'f1'))
+		os.remove(os.path.join(d, 'f2'))
+		os.rmdir(d)
 
 class JailsReaderTest(unittest.TestCase):
 
