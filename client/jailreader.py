@@ -35,7 +35,7 @@ logSys = logging.getLogger("fail2ban.client.config")
 
 class JailReader(ConfigReader):
 	
-	actionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
+	actionCRE = re.compile("^([\w_.-]+)(?:\[(.*)\])?$")
 	
 	def __init__(self, name, force_enable=False, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
@@ -173,12 +173,16 @@ class JailReader(ConfigReader):
 	def splitAction(action):
 		m = JailReader.actionCRE.match(action)
 		d = dict()
-		mgroups = m.groups()
+		try:
+			mgroups = m.groups()
+		except AttributeError:
+			raise ValueError("While reading action %s we should have got 1 or "
+							 "2 groups. Got: 0" % action)
 		if len(mgroups) == 2:
 			action_name, action_opts = mgroups
 		elif len(mgroups) == 1:
 			action_name, action_opts = mgroups[0], None
-		else:
+		else: # pragma: nocover - unreachable - regex only can capture 2 groups
 			raise ValueError("While reading action %s we should have got up to "
 							 "2 groups. Got: %r" % (action, mgroups))
 		if not action_opts is None:
