@@ -27,6 +27,7 @@ from client.configreader import ConfigReader
 from client.jailreader import JailReader
 from client.jailsreader import JailsReader
 from client.configurator import Configurator
+from utils import LogCaptureTestCase
 
 class ConfigReaderTest(unittest.TestCase):
 
@@ -106,7 +107,7 @@ option = %s
 		self.assertEqual(self._getoption(), 1)
 
 
-class JailReaderTest(unittest.TestCase):
+class JailReaderTest(LogCaptureTestCase):
 
 	def testStockSSHJail(self):
 		jail = JailReader('ssh-iptables', basedir='config') # we are running tests from root project dir atm
@@ -127,17 +128,21 @@ class JailReaderTest(unittest.TestCase):
 		d = tempfile.mkdtemp(prefix="f2b-temp")
 		# Generate few files
 		# regular file
-		open(os.path.join(d, 'f1'), 'w').close()
+		f1 = os.path.join(d, 'f1')
+		open(f1, 'w').close()
 		# dangling link
-		os.symlink('nonexisting', os.path.join(d, 'f2'))
+		
+		f2 = os.path.join(d, 'f2')
+		os.symlink('nonexisting',f2)
 
 		# must be only f1
-		self.assertEqual(JailReader._glob(os.path.join(d, '*')), [os.path.join(d, 'f1')])
+		self.assertEqual(JailReader._glob(os.path.join(d, '*')), [f1])
 		# since f2 is dangling -- empty list
-		self.assertEqual(JailReader._glob(os.path.join(d, 'f2')), [])
+		self.assertEqual(JailReader._glob(f2), [])
+		self.assertTrue(self._is_logged('File %s is a dangling link, thus cannot be monitored' % f2))
 		self.assertEqual(JailReader._glob(os.path.join(d, 'nonexisting')), [])
-		os.remove(os.path.join(d, 'f1'))
-		os.remove(os.path.join(d, 'f2'))
+		os.remove(f1)
+		os.remove(f2)
 		os.rmdir(d)
 
 class JailsReaderTest(unittest.TestCase):
