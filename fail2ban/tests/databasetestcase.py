@@ -124,12 +124,43 @@ class DatabaseTest(unittest.TestCase):
 
 	def testAddBan(self):
 		self.testAddJail()
-		ticket = FailTicket("127.0.0.1", 0, [])
+		ticket = FailTicket("127.0.0.1", 0, ["abc\n"])
 		self.db.addBan(self.jail, ticket)
 
 		self.assertEquals(len(self.db.getBans(self.jail)), 1)
 		self.assertTrue(
-			isinstance(self.db.getBans(self.jail)[0], FailTicket))
+			isinstance(self.db.getBans(jail=self.jail)[0], FailTicket))
+
+	def testGetBansMerged(self):
+		self.testAddJail()
+
+		jail2 = DummyJail()
+		self.db.addJail(jail2)
+
+		ticket = FailTicket("127.0.0.1", 10, ["abc\n"])
+		ticket.setAttempt(10)
+		self.db.addBan(self.jail, ticket)
+		ticket = FailTicket("127.0.0.1", 20, ["123\n"])
+		ticket.setAttempt(20)
+		self.db.addBan(self.jail, ticket)
+		ticket = FailTicket("127.0.0.2", 30, ["ABC\n"])
+		ticket.setAttempt(30)
+		self.db.addBan(self.jail, ticket)
+		ticket = FailTicket("127.0.0.1", 40, ["ABC\n"])
+		ticket.setAttempt(40)
+		self.db.addBan(jail2, ticket)
+
+		# All for IP 127.0.0.1
+		ticket = self.db.getBansMerged("127.0.0.1")
+		self.assertEqual(ticket.getIP(), "127.0.0.1")
+		self.assertEqual(ticket.getAttempt(), 70)
+		self.assertEqual(ticket.getMatches(), ["abc\n", "123\n", "ABC\n"])
+
+		# All for IP 127.0.0.1 for single jail
+		ticket = self.db.getBansMerged("127.0.0.1", jail=self.jail)
+		self.assertEqual(ticket.getIP(), "127.0.0.1")
+		self.assertEqual(ticket.getAttempt(), 30)
+		self.assertEqual(ticket.getMatches(), ["abc\n", "123\n"])
 
 	def testPurge(self):
 		self.testAddJail() # Add jail
@@ -145,12 +176,13 @@ class DatabaseTest(unittest.TestCase):
 		self.db.delJail(self.jail)
 		self.db.purge() # Purge should remove all bans
 		self.assertEqual(len(self.db.getJailNames()), 0)
-		self.assertEqual(len(self.db.getBans(self.jail)), 0)
+		self.assertEqual(len(self.db.getBans(jail=self.jail)), 0)
 
 		# Should leave jail
 		self.testAddJail()
-		self.db.addBan(self.jail, FailTicket("127.0.0.1", MyTime.time(), []))
+		self.db.addBan(
+			self.jail, FailTicket("127.0.0.1", MyTime.time(), ["abc\n"]))
 		self.db.delJail(self.jail)
 		self.db.purge() # Should leave jail as ban present
 		self.assertEqual(len(self.db.getJailNames()), 1)
-		self.assertEqual(len(self.db.getBans(self.jail)), 1)
+		self.assertEqual(len(self.db.getBans(jail=self.jail)), 1)

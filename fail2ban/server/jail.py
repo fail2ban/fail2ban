@@ -144,7 +144,8 @@ class Jail:
 		self.__action.start()
 		# Restore any previous valid bans from the database
 		if self.__db is not None:
-			for ticket in self.__db.getBans(self, self.__action.getBanTime()):
+			for ticket in self.__db.getBans(
+				jail=self, bantime=self.__action.getBanTime()):
 				self.__queue.put(ticket)
 		logSys.info("Jail '%s' started" % self.__name)
 	

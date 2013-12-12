@@ -227,23 +227,41 @@ class Fail2BanDb(object):
 					"failures": ticket.getAttempt()}))
 
 	@commitandrollback()
-	def getBans(self, cur, jail=None, bantime=None):
-		query = "SELECT ip, timeofban, data FROM bans"
+	def _getBans(self, cur, jail=None, bantime=None, ip=None):
+		query = "SELECT ip, timeofban, data FROM bans WHERE 1"
 		queryArgs = []
 
 		if jail is not None:
-			query += " WHERE jail=?"
+			query += " AND jail=?"
 			queryArgs.append(jail.getName())
 		if bantime is not None:
 			query += " AND timeofban > ?"
 			queryArgs.append(MyTime.time() - bantime)
+		if ip is not None:
+			query += " AND ip=?"
+			queryArgs.append(ip)
+		query += " ORDER BY timeofban"
 
+		return cur.execute(query, queryArgs)
+
+	def getBans(self, *args, **kwargs):
 		tickets = []
-		for ip, timeofban, data in cur.execute(query, queryArgs):
+		for ip, timeofban, data in self._getBans(*args, **kwargs):
 			#TODO: Implement data parts once arbitrary match keys completed
 			tickets.append(FailTicket(ip, timeofban, data['matches']))
 			tickets[-1].setAttempt(data['failures'])
 		return tickets
+
+	def getBansMerged(self, ip, *args, **kwargs):
+		matches = []
+		failures = 0
+		for ip, timeofban, data in self._getBans(*args, ip=ip, **kwargs):
+			#TODO: Implement data parts once arbitrary match keys completed
+			matches.extend(data['matches'])
+			failures += data['failures']
+		ticket = FailTicket(ip, timeofban, matches)
+		ticket.setAttempt(failures)
+		return ticket
 
 	@commitandrollback()
 	def purge(self, cur):
