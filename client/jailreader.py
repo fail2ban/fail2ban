@@ -65,9 +65,10 @@ class JailReader(ConfigReader):
 		pathList = []
 		for p in glob.glob(path):
 			if not os.path.exists(p):
-				logSys.warning("File %s doesn't even exist, thus cannot be monitored" % p)
-			elif not os.path.lexists(p):
-				logSys.warning("File %s is a dangling link, thus cannot be monitored" % p)
+				if os.path.lexists(p):
+					logSys.warning("File %s is a dangling link, thus cannot be monitored" % p)
+				else:
+					logSys.warning("File %s doesn't even exist, thus cannot be monitored" % p)
 			else:
 				pathList.append(p)
 		return pathList
