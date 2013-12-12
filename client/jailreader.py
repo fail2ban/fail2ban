@@ -180,7 +180,7 @@ class JailReader(ConfigReader):
 							 "2 groups. Got: 0" % action)
 		if len(mgroups) == 2:
 			action_name, action_opts = mgroups
-		elif len(mgroups) == 1:
+		elif len(mgroups) == 1: # pragma: nocover - unreachable - .* on second group always matches
 			action_name, action_opts = mgroups[0], None
 		else: # pragma: nocover - unreachable - regex only can capture 2 groups
 			raise ValueError("While reading action %s we should have got up to "

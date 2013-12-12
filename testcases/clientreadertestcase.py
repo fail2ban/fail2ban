@@ -123,7 +123,19 @@ class JailReaderTest(LogCaptureTestCase):
 		expected = ['mail-whois', {'name': 'SSH'}]
 		result = JailReader.splitAction(action)
 		self.assertEqual(expected, result)
+
+		self.assertEqual(['mail.who_is', {}], JailReader.splitAction("mail.who_is"))
+		self.assertEqual(['mail.who_is', {'a':'cat', 'b':'dog'}], JailReader.splitAction("mail.who_is[a=cat,b=dog]"))
+		self.assertEqual(['mail--ho_is', {}], JailReader.splitAction("mail--ho_is"))
+
+		self.assertEqual(['mail--ho_is', {}], JailReader.splitAction("mail--ho_is['s']"))
+		self.assertTrue(self._is_logged("Invalid argument ['s'] in ''s''"))
+
+		self.assertEqual(['mail', {'a': ','}], JailReader.splitAction("mail[a=',']"))
 		
+		self.assertRaises(ValueError, JailReader.splitAction ,'mail-how[')
+
+
 	def testGlob(self):
 		d = tempfile.mkdtemp(prefix="f2b-temp")
 		# Generate few files
