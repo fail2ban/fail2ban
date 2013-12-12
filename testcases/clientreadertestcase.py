@@ -114,6 +114,8 @@ class JailReaderTest(unittest.TestCase):
 		self.assertTrue(jail.getOptions())
 		self.assertFalse(jail.isEnabled())
 		self.assertEqual(jail.getName(), 'ssh-iptables')
+		jail.setName('ssh-funky-blocker')
+		self.assertEqual(jail.getName(), 'ssh-funky-blocker')
 
 	def testSplitAction(self):
 		action = "mail-whois[name=SSH]"
