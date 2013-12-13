@@ -109,6 +109,22 @@ option = %s
 
 class JailReaderTest(LogCaptureTestCase):
 
+	def testJailActionEmpty(self):
+		jail = JailReader('emptyaction', basedir=os.path.join('testcases','config'))
+		self.assertTrue(jail.read())
+		self.assertTrue(jail.getOptions())
+		self.assertTrue(jail.isEnabled())
+		self.assertTrue(self._is_logged('No filter set for jail emptyaction'))
+		self.assertTrue(self._is_logged('No actions were defined for emptyaction'))
+
+	def testJailActionBrokenDef(self):
+		jail = JailReader('brokenactiondef', basedir=os.path.join('testcases','config'))
+		self.assertTrue(jail.read())
+		self.assertFalse(jail.getOptions())
+		self.assertTrue(jail.isEnabled())
+		self.assertTrue(self._is_logged('Error in action definition joho[foo'))
+		self.assertTrue(self._is_logged('Caught exception: While reading action joho[foo we should have got 1 or 2 groups. Got: 0'))
+
 	def testStockSSHJail(self):
 		jail = JailReader('ssh-iptables', basedir='config') # we are running tests from root project dir atm
 		self.assertTrue(jail.read())
@@ -157,7 +173,7 @@ class JailReaderTest(LogCaptureTestCase):
 		os.remove(f2)
 		os.rmdir(d)
 
-class JailsReaderTest(unittest.TestCase):
+class JailsReaderTest(LogCaptureTestCase):
 
 	def testProvidingBadBasedir(self):
 		if not os.path.exists('/XXX'):
@@ -176,6 +192,7 @@ class JailsReaderTest(unittest.TestCase):
 		# We should not "read" some bogus jail
 		old_comm_commands = comm_commands[:]   # make a copy
 		self.assertFalse(jails.getOptions("BOGUS"))
+		self.assertTrue(self._is_logged("No section: 'BOGUS'"))
 		# and there should be no side-effects
 		self.assertEqual(jails.convert(), old_comm_commands)
 
