@@ -188,6 +188,38 @@ class JailsReaderTest(LogCaptureTestCase):
 			reader = JailsReader(basedir='/XXX')
 			self.assertRaises(ValueError, reader.read)
 
+	def testReadTestJailConf(self):
+		jails = JailsReader(basedir=os.path.join('testcases','config'))
+		self.assertTrue(jails.read())		  # opens fine
+		self.assertFalse(jails.getOptions())	  # reads not sof ine
+		self.assertRaises(ValueError, jails.convert)
+		comm_commands = jails.convert(allow_no_files=True)
+		self.maxDiff = None
+		self.assertEqual(comm_commands,
+			[['add', 'emptyaction', 'auto'],
+			 ['set', 'emptyaction', 'usedns', 'warn'],
+			 ['set', 'emptyaction', 'addlogpath', '/var/log/messages'],
+			 ['set', 'emptyaction', 'maxretry', 3],
+			 ['set', 'emptyaction', 'findtime', 600],
+			 ['set', 'emptyaction', 'bantime', 600],
+			 ['add', 'special', 'auto'],
+			 ['set', 'special', 'usedns', 'warn'],
+			 ['set', 'special', 'addlogpath', '/var/log/messages'],
+			 ['set', 'special', 'maxretry', 3],
+			 ['set', 'special', 'addfailregex', '<IP>'],
+			 ['set', 'special', 'findtime', 600],
+			 ['set', 'special', 'bantime', 600],
+			 ['add', 'missinglogfiles', 'auto'],
+			 ['set', 'missinglogfiles', 'usedns', 'warn'],
+			 ['set', 'missinglogfiles', 'maxretry', 3],
+			 ['set', 'missinglogfiles', 'findtime', 600],
+			 ['set', 'missinglogfiles', 'bantime', 600],
+			 ['set', 'missinglogfiles', 'addfailregex', '<IP>'],
+			 ['start', 'emptyaction'],
+			 ['start', 'special'],
+			 ['start', 'missinglogfiles']])
+
+
 	def testReadStockJailConf(self):
 		jails = JailsReader(basedir='config') # we are running tests from root project dir atm
 		self.assertTrue(jails.read())		  # opens fine
