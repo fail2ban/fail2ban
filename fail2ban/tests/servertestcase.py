@@ -526,75 +526,79 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(["status", "INVALID", "COMMAND"])[0],1)
 
-	if filtersystemd: # pragma: systemd no cover
-		def testJournalMatch(self):
-			jailName = "TestJail2"
-			self.server.addJail(jailName, "systemd")
-			values = [
-				"_SYSTEMD_UNIT=sshd.service",
-				"TEST_FIELD1=ABC",
-				"_HOSTNAME=example.com",
-			]
-			for n, value in enumerate(values):
-				self.assertEqual(
-					self.transm.proceed(
-						["set", jailName, "addjournalmatch", value]),
-					(0, [[val] for val in values[:n+1]]))
-			for n, value in enumerate(values):
-				self.assertEqual(
-					self.transm.proceed(
-						["set", jailName, "deljournalmatch", value]),
-					(0, [[val] for val in values[n+1:]]))
-
-			# Try duplicates
-			value = "_COMM=sshd"
+	def testJournalMatch(self):
+		if not filtersystemd:
+			if sys.version_info >= (2, 7):
+				raise unittest.SkipTest(
+					"systemd python interface not avilable")
+			return
+		jailName = "TestJail2"
+		self.server.addJail(jailName, "systemd")
+		values = [
+			"_SYSTEMD_UNIT=sshd.service",
+			"TEST_FIELD1=ABC",
+			"_HOSTNAME=example.com",
+		]
+		for n, value in enumerate(values):
 			self.assertEqual(
 				self.transm.proceed(
 					["set", jailName, "addjournalmatch", value]),
-				(0, [[value]]))
-			# Duplicates are accepted, as automatically OR'd, and journalctl
-			# also accepts them without issue.
-			self.assertEqual(
-				self.transm.proceed(
-					["set", jailName, "addjournalmatch", value]),
-				(0, [[value], [value]]))
-			# Remove first instance
+				(0, [[val] for val in values[:n+1]]))
+		for n, value in enumerate(values):
 			self.assertEqual(
 				self.transm.proceed(
 					["set", jailName, "deljournalmatch", value]),
-				(0, [[value]]))
-			# Remove second instance
-			self.assertEqual(
-				self.transm.proceed(
-					["set", jailName, "deljournalmatch", value]),
-				(0, []))
+				(0, [[val] for val in values[n+1:]]))
 
-			value = [
-				"_COMM=sshd", "+", "_SYSTEMD_UNIT=sshd.service", "_UID=0"]
-			self.assertEqual(
-				self.transm.proceed(
-					["set", jailName, "addjournalmatch"] + value),
-				(0, [["_COMM=sshd"], ["_SYSTEMD_UNIT=sshd.service", "_UID=0"]]))
-			self.assertEqual(
-				self.transm.proceed(
-					["set", jailName, "deljournalmatch"] + value[:1]),
-				(0, [["_SYSTEMD_UNIT=sshd.service", "_UID=0"]]))
-			self.assertEqual(
-				self.transm.proceed(
-					["set", jailName, "deljournalmatch"] + value[2:]),
-				(0, []))
+		# Try duplicates
+		value = "_COMM=sshd"
+		self.assertEqual(
+			self.transm.proceed(
+				["set", jailName, "addjournalmatch", value]),
+			(0, [[value]]))
+		# Duplicates are accepted, as automatically OR'd, and journalctl
+		# also accepts them without issue.
+		self.assertEqual(
+			self.transm.proceed(
+				["set", jailName, "addjournalmatch", value]),
+			(0, [[value], [value]]))
+		# Remove first instance
+		self.assertEqual(
+			self.transm.proceed(
+				["set", jailName, "deljournalmatch", value]),
+			(0, [[value]]))
+		# Remove second instance
+		self.assertEqual(
+			self.transm.proceed(
+				["set", jailName, "deljournalmatch", value]),
+			(0, []))
 
-			# Invalid match
-			value = "This isn't valid!"
-			result = self.transm.proceed(
-				["set", jailName, "addjournalmatch", value])
-			self.assertTrue(isinstance(result[1], ValueError))
+		value = [
+			"_COMM=sshd", "+", "_SYSTEMD_UNIT=sshd.service", "_UID=0"]
+		self.assertEqual(
+			self.transm.proceed(
+				["set", jailName, "addjournalmatch"] + value),
+			(0, [["_COMM=sshd"], ["_SYSTEMD_UNIT=sshd.service", "_UID=0"]]))
+		self.assertEqual(
+			self.transm.proceed(
+				["set", jailName, "deljournalmatch"] + value[:1]),
+			(0, [["_SYSTEMD_UNIT=sshd.service", "_UID=0"]]))
+		self.assertEqual(
+			self.transm.proceed(
+				["set", jailName, "deljournalmatch"] + value[2:]),
+			(0, []))
 
-			# Delete invalid match
-			value = "FIELD=NotPresent"
-			result = self.transm.proceed(
-				["set", jailName, "deljournalmatch", value])
-			self.assertTrue(isinstance(result[1], ValueError))
+		# Invalid match
+		value = "This isn't valid!"
+		result = self.transm.proceed(
+			["set", jailName, "addjournalmatch", value])
+		self.assertTrue(isinstance(result[1], ValueError))
+
+		# Delete invalid match
+		value = "FIELD=NotPresent"
+		result = self.transm.proceed(
+			["set", jailName, "deljournalmatch", value])
+		self.assertTrue(isinstance(result[1], ValueError))
 
 class TransmitterLogging(TransmitterBase):
 
