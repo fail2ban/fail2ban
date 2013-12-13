@@ -131,6 +131,18 @@ z = 3%(__name__)s
 		self.assertEqual(self.c.get('section', 'zz'), 'thesection') # __name__ works even 'delayed'
 		self.assertEqual(self.c.get('section2', 'z'), '3section2') # and differs per section ;)
 
+	def testComments(self):
+		self.assertFalse(self.c.read('g'))	# nothing is there yet
+		self._write("g.conf", value=None, content="""
+[DEFAULT]
+# A comment
+b = a
+c = d ;in line comment
+""")
+		self.assertTrue(self.c.read('g'))
+		self.assertEqual(self.c.get('DEFAULT', 'b'), 'a')
+		self.assertEqual(self.c.get('DEFAULT', 'c'), 'd')
+
 class JailReaderTest(unittest.TestCase):
 
 	def testIncorrectJail(self):
