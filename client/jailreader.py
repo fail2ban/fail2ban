@@ -87,15 +87,18 @@ class JailReader(ConfigReader):
 		
 		if self.isEnabled():
 			# Read filter
-			self.__filter = FilterReader(self.__opts["filter"], self.__name,
-										 basedir=self.getBaseDir())
-			ret = self.__filter.read()
-			if ret:
-				self.__filter.getOptions(self.__opts)
+			if self.__opts["filter"]:
+				self.__filter = FilterReader(self.__opts["filter"], self.__name,
+											 basedir=self.getBaseDir())
+				ret = self.__filter.read()
+				if ret:
+					self.__filter.getOptions(self.__opts)
+				else:
+					logSys.error("Unable to read the filter")
+					return False
 			else:
-				logSys.error("Unable to read the filter")
-				return False
-			
+				logSys.warn("No filter set for jail %s" % self.__name)
+		
 			# Read action
 			for act in self.__opts["action"].split('\n'):
 				try:
