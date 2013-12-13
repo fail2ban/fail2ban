@@ -122,7 +122,6 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertTrue(jail.read())
 		self.assertFalse(jail.getOptions())
 		self.assertTrue(jail.isEnabled())
-		#print self._log.getvalue()
 		self.assertTrue(self._is_logged("Found no accessible config files for 'filter.d/catchallthebadies' under testcases/config"))
 		self.assertTrue(self._is_logged('Unable to read the filter'))
 
