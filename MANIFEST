@@ -46,6 +46,7 @@ fail2ban/server/banmanager.py
 fail2ban/server/datetemplate.py
 fail2ban/server/mytime.py
 fail2ban/server/failregex.py
+fail2ban/server/database.py
 fail2ban/tests/banmanagertestcase.py
 fail2ban/tests/failmanagertestcase.py
 fail2ban/tests/clientreadertestcase.py
@@ -59,6 +60,7 @@ fail2ban/tests/servertestcase.py
 fail2ban/tests/sockettestcase.py
 fail2ban/tests/utils.py
 fail2ban/tests/misctestcase.py
+fail2ban/tests/databasetestcase.py
 fail2ban/tests/config/apache-auth/digest/.htaccess
 fail2ban/tests/config/apache-auth/digest/.htpasswd
 fail2ban/tests/config/apache-auth/digest_time/.htaccess
