@@ -419,6 +419,14 @@ class Server:
 			http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/278731
 		"""
 	
+		# When the first child terminates, all processes in the second child
+		# are sent a SIGHUP, so it's ignored.
+
+		# We need to set this in the parent process, so it gets inherited by the
+		# child process, and this makes sure that it is effect even if the parent
+		# terminates quickly.
+		signal.signal(signal.SIGHUP, signal.SIG_IGN)
+		
 		try:
 			# Fork a child process so the parent can exit.  This will return control
 			# to the command line or shell.  This is required so that the new process
@@ -440,10 +448,6 @@ class Server:
 			# fail, since we're guaranteed that the child is not a process group
 			# leader.
 			os.setsid()
-		
-			# When the first child terminates, all processes in the second child
-			# are sent a SIGHUP, so it's ignored.
-			signal.signal(signal.SIGHUP, signal.SIG_IGN)
 		
 			try:
 				# Fork a second child to prevent zombies.  Since the first child is
