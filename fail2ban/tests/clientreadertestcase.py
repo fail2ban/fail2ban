@@ -360,7 +360,10 @@ class JailsReaderTest(unittest.TestCase):
 		# and there is logging information left to be passed into the
 		# server
 		self.assertEqual(sorted(commands),
-						 [['set', 'loglevel', 3],
+						 [['set', 'dbfile',
+							'/var/lib/fail2ban/fail2ban.sqlite3'],
+						  ['set', 'dbpurgeage', 86400],
+						  ['set', 'loglevel', 3],
 						  ['set', 'logtarget', '/var/log/fail2ban.log']])
 
 		# and if we force change configurator's fail2ban's baseDir

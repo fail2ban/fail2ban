@@ -146,6 +146,7 @@ def gatherTests(regexps=None, no_network=False):
 	from fail2ban.tests import actiontestcase
 	from fail2ban.tests import sockettestcase
 	from fail2ban.tests import misctestcase
+	from fail2ban.tests import databasetestcase
 	if json:
 		from fail2ban.tests import samplestestcase
 
@@ -185,6 +186,8 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
 	tests.addTest(unittest.makeSuite(misctestcase.TestsUtilsTest))
 	tests.addTest(unittest.makeSuite(misctestcase.CustomDateFormatsTest))
+	# Database
+	tests.addTest(unittest.makeSuite(databasetestcase.DatabaseTest))
 
 	# Filter
 	if not no_network:

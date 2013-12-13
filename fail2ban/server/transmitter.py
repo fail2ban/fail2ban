@@ -113,6 +113,21 @@ class Transmitter:
 				return self.__server.getLogTarget()
 			else:
 				raise Exception("Failed to change log target")
+		#Database
+		elif name == "dbfile":
+			self.__server.setDatabase(command[1])
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				return db.getFilename()
+		elif name == "dbpurgeage":
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				db.setPurgeAge(command[1])
+				return db.getPurgeAge()
 		# Jail
 		elif command[1] == "idle":
 			if command[2] == "on":
@@ -257,6 +272,19 @@ class Transmitter:
 			return self.__server.getLogLevel()
 		elif name == "logtarget":
 			return self.__server.getLogTarget()
+		#Database
+		elif name == "dbfile":
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				return db.getFilename()
+		elif name == "dbpurgeage":
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				return db.getPurgeAge()
 		# Filter
 		elif command[1] == "logpath":
 			return self.__server.getLogPath(name)

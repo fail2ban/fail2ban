@@ -30,6 +30,7 @@ from filter import FileFilter, JournalFilter
 from transmitter import Transmitter
 from asyncserver import AsyncServer
 from asyncserver import AsyncServerException
+from database import Fail2BanDb
 from fail2ban import version
 import logging, logging.handlers, sys, os, signal
 
@@ -42,6 +43,7 @@ class Server:
 		self.__loggingLock = Lock()
 		self.__lock = RLock()
 		self.__jails = Jails()
+		self.__db = None
 		self.__daemon = daemon
 		self.__transm = Transmitter(self)
 		self.__asyncServer = AsyncServer(self.__transm)
@@ -117,10 +119,14 @@ class Server:
 
 	
 	def addJail(self, name, backend):
-		self.__jails.add(name, backend)
+		self.__jails.add(name, backend, self.__db)
+		if self.__db is not None:
+			self.__db.addJail(self.__jails.get(name))
 		
 	def delJail(self, name):
 		self.__jails.remove(name)
+		if self.__db is not None:
+			self.__db.delJailName(name)
 	
 	def startJail(self, name):
 		try:
@@ -459,6 +465,20 @@ class Server:
 			return self.__logTarget
 		finally:
 			self.__loggingLock.release()
+	
+	def setDatabase(self, filename):
+		if self.__jails.size() == 0:
+			if filename.lower() == "none":
+				self.__db = None
+			else:
+				self.__db = Fail2BanDb(filename)
+				self.__db.delAllJails()
+		else:
+			raise RuntimeError(
+				"Cannot change database when there are jails present")
+	
+	def getDatabase(self):
+		return self.__db
 	
 	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the

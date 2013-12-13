@@ -168,6 +168,29 @@ class Transmitter(TransmitterBase):
 		# Approx 1 second delay
 		self.assertAlmostEqual(t1 - t0, 1, places=2)
 
+	def testDatabase(self):
+		_, tmpFilename = tempfile.mkstemp(".db", "Fail2Ban_")
+		# Jails present, cant change database
+		self.setGetTestNOK("dbfile", tmpFilename)
+		self.server.delJail(self.jailName)
+		self.setGetTest("dbfile", tmpFilename)
+		self.setGetTest("dbpurgeage", "600", 600)
+		self.setGetTestNOK("dbpurgeage", "LIZARD")
+
+		# Disable database
+		self.assertEqual(self.transm.proceed(
+			["set", "dbfile", "None"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["get", "dbfile"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["set", "dbpurgeage", "500"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["get", "dbpurgeage"]),
+			(0, None))
+
 	def testAddJail(self):
 		jail2 = "TestJail2"
 		jail3 = "TestJail3"

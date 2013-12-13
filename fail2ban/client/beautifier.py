@@ -102,6 +102,18 @@ class Beautifier:
 					msg = msg + "DEBUG"
 				else:
 					msg = msg + `response`
+			elif inC[1] == "dbfile":
+				if response is None:
+					msg = "Database currently disabled"
+				else:
+					msg = "Current database file is:\n"
+					msg = msg + "`- " + response
+			elif inC[1] == "dbpurgeage":
+				if response is None:
+					msg = "Database currently disabled"
+				else:
+					msg = "Current database purge age is:\n"
+					msg = msg + "`- %iseconds" % response
 			elif inC[2] in ("logpath", "addlogpath", "dellogpath"):
 				if len(response) == 0:
 					msg = "No file is currently monitored"
