@@ -56,7 +56,7 @@ class Jails:
 			if self.__jails.has_key(name):
 				raise DuplicateJailException(name)
 			else:
-				self.__jails[name] = Jail(name, backend, db=None)
+				self.__jails[name] = Jail(name, backend, db)
 		finally:
 			self.__lock.release()
 	
