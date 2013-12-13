@@ -309,7 +309,7 @@ class Fail2banRegex(object):
 	def testIgnoreRegex(self, line):
 		found = False
 		try:
-			ret = self._filter.ignoreLine([(line,"","")])
+			ret = self._filter.ignoreLine([(line, "", "")])
 			if ret is not None:
 				found = True
 				regex = self._ignoreregex[ret].inc()

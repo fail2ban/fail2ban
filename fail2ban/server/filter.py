@@ -366,9 +366,12 @@ class Filter(JailThread):
 
 		timeMatch = self.dateDetector.matchTime(l)
 		if timeMatch:
-			tupleLine  = (l[:timeMatch.start()], l[timeMatch.start():timeMatch.end()] , l[timeMatch.end():])
+			tupleLine  = (
+				l[:timeMatch.start()],
+				l[timeMatch.start():timeMatch.end()],
+				l[timeMatch.end():])
 		else:
-			tupleLine = (l,"","")
+			tupleLine = (l, "", "")
 
 		return "".join(tupleLine[::2]), self.findFailure(
 			tupleLine, returnRawHost, checkAllRegex)
