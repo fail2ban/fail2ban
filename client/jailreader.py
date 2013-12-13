@@ -54,7 +54,7 @@ class JailReader(ConfigReader):
 		return ConfigReader.read(self, "jail")
 	
 	def isEnabled(self):
-		return self.__force_enable or self.__opts["enabled"]
+		return self.__force_enable or ( self.__opts and self.__opts["enabled"] )
 
 	@staticmethod
 	def _glob(path):
@@ -84,6 +84,8 @@ class JailReader(ConfigReader):
 				["string", "filter", ""],
 				["string", "action", ""]]
 		self.__opts = ConfigReader.getOptions(self, self.__name, opts)
+		if not self.__opts:
+			return False
 		
 		if self.isEnabled():
 			# Read filter
