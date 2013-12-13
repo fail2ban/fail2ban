@@ -183,7 +183,14 @@ class Actions(JailThread):
 			aInfo["ip"] = bTicket.getIP()
 			aInfo["failures"] = bTicket.getAttempt()
 			aInfo["time"] = bTicket.getTime()
-			aInfo["matches"] = "".join(bTicket.getMatches())
+			aInfo["matches"] = "\n".join(bTicket.getMatches())
+			if self.jail.getDatabase() is not None:
+				aInfo["ipmatches"] = lambda: "\n".join(
+					self.jail.getDatabase().getBansMerged(
+						bTicket.getIP()).getMatches())
+				aInfo["ipjailmatches"] = lambda: "\n".join(
+					self.jail.getDatabase().getBansMerged(
+						bTicket.getIP(), jail=self.jail).getMatches())
 			if self.__banManager.addBanTicket(bTicket):
 				logSys.warning("[%s] Ban %s" % (self.jail.getName(), aInfo["ip"]))
 				for action in self.__actions:
