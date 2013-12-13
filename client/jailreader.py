@@ -99,6 +99,7 @@ class JailReader(ConfigReader):
 					logSys.error("Unable to read the filter")
 					return False
 			else:
+				self.__filter = None
 				logSys.warn("No filter set for jail %s" % self.__name)
 		
 			# Read action
@@ -168,7 +169,8 @@ class JailReader(ConfigReader):
 					# Do not send a command if the rule is empty.
 					if regex != '':
 						stream.append(["set", self.__name, "addignoreregex", regex])
-		stream.extend(self.__filter.convert())
+		if self.__filter:
+			stream.extend(self.__filter.convert())
 		for action in self.__actions:
 			stream.extend(action.convert())
 		stream.insert(0, ["add", self.__name, backend])
