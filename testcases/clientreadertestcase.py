@@ -215,9 +215,37 @@ class JailsReaderTest(LogCaptureTestCase):
 			 ['set', 'missinglogfiles', 'findtime', 600],
 			 ['set', 'missinglogfiles', 'bantime', 600],
 			 ['set', 'missinglogfiles', 'addfailregex', '<IP>'],
+			 ['add', 'brokenaction', 'auto'],
+			 ['set', 'brokenaction', 'usedns', 'warn'],
+			 ['set', 'brokenaction', 'addlogpath', '/var/log/messages'],
+			 ['set', 'brokenaction', 'maxretry', 3],
+			 ['set', 'brokenaction', 'findtime', 600],
+			 ['set', 'brokenaction', 'bantime', 600],
+			 ['set', 'brokenaction', 'addfailregex', '<IP>'],
+			 ['set', 'brokenaction', 'addaction', 'brokenaction'],
+			 ['set',
+			  'brokenaction',
+			  'actionban',
+			  'brokenaction',
+			  'hit with big stick <ip>'],
+			 ['set', 'brokenaction', 'actionstop', 'brokenaction', ''],
+			 ['set', 'brokenaction', 'actionstart', 'brokenaction', ''],
+			 ['set', 'brokenaction', 'actionunban', 'brokenaction', ''],
+			 ['set', 'brokenaction', 'actioncheck', 'brokenaction', ''],
+			 ['add', 'parse_to_end_of_jail.conf', 'auto'],
+			 ['set', 'parse_to_end_of_jail.conf', 'usedns', 'warn'],
+			 ['set', 'parse_to_end_of_jail.conf', 'addlogpath', '/var/log/messages'],
+			 ['set', 'parse_to_end_of_jail.conf', 'maxretry', 3],
+			 ['set', 'parse_to_end_of_jail.conf', 'findtime', 600],
+			 ['set', 'parse_to_end_of_jail.conf', 'bantime', 600],
+			 ['set', 'parse_to_end_of_jail.conf', 'addfailregex', '<IP>'],
 			 ['start', 'emptyaction'],
 			 ['start', 'special'],
-			 ['start', 'missinglogfiles']])
+			 ['start', 'missinglogfiles'],
+			 ['start', 'brokenaction'],
+			 ['start', 'parse_to_end_of_jail.conf'],])
+		self.assertTrue(self._is_logged("Errors in jail 'missingbitsjail'. Skipping..."))
+		self.assertTrue(self._is_logged("No file(s) found for glob /weapons/of/mass/destruction"))
 
 
 	def testReadStockJailConf(self):
