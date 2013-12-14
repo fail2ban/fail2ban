@@ -98,7 +98,7 @@ def get_opt_parser():
 LOG:
     string                  a string representing a log line
     filename                path to a log file (/var/log/auth.log)
-	"systemd-journal"       search systemd journal (systemd-python required)
+    "systemd-journal"       search systemd journal (systemd-python required)
 
 REGEX:
     string                  a string representing a 'failregex'
