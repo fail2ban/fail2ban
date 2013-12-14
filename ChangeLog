@@ -33,6 +33,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - remove indentation of name and loglevel while logging to SYSLOG to
     resolve syslog(-ng) parsing problems. Closes Debian bug #730202.
   - added squid filter. Thanks Roman Gelfand.
+  - added ufw action. Thanks Guilhem Lettron. lp-#701522
 
 - New Features:
 
