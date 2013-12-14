@@ -25,6 +25,14 @@ code-review and minor additions from Yaroslav Halchenko.
   Steven Hiscocks
    * [..5aef036] Core functionality moved into fail2ban/ module.
      Closes gh-26
+   * Added fail2ban persistent database
+     - default location at /var/lib/fail2ban/fail2ban.sqlite3
+     - allows active bans to be reinstated on restart
+     - log files read from last position after restart
+   * Added systemd journal backend
+     - Dependency on python-systemd
+     - New "journalmatch" option added to filter configs files
+     - New "systemd-journal" option added to fail2ban-regex
 - New features:
   Steven Hiscocks
    * [..c7ae460] Multiline failregex. Close gh-54
