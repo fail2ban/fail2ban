@@ -33,12 +33,12 @@ code-review and minor additions from Yaroslav Halchenko.
      - Dependency on python-systemd
      - New "journalmatch" option added to filter configs files
      - New "systemd-journal" option added to fail2ban-regex
+   * Added python3 support
 - New features:
   Steven Hiscocks
    * [..c7ae460] Multiline failregex. Close gh-54
    * [8af32ed] Guacamole filter and support for Apache Tomcat date
      format
-   * [..4869186] Python3 support
    * [..b6059f4] 'timeout' option for actions Close gh-60 and Debian bug
      #410077.  Also it would now capture and include stdout and stderr
      into logging messages in case of error or at DEBUG loglevel.
