@@ -28,6 +28,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
     Closes gh-467
 
 - Enhancements:
+  - added firewallcmd-ipset action
   - long names on jails documented based on iptables limit of 30 less
     len("fail2ban-").
   - remove indentation of name and loglevel while logging to SYSLOG to
