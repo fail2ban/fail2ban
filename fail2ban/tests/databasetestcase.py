@@ -127,7 +127,7 @@ class DatabaseTest(unittest.TestCase):
 		ticket = FailTicket("127.0.0.1", 0, ["abc\n"])
 		self.db.addBan(self.jail, ticket)
 
-		self.assertEquals(len(self.db.getBans(self.jail)), 1)
+		self.assertEquals(len(self.db.getBans(jail=self.jail)), 1)
 		self.assertTrue(
 			isinstance(self.db.getBans(jail=self.jail)[0], FailTicket))
 

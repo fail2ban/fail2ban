@@ -244,18 +244,18 @@ class Fail2BanDb(object):
 
 		return cur.execute(query, queryArgs)
 
-	def getBans(self, *args, **kwargs):
+	def getBans(self, **kwargs):
 		tickets = []
-		for ip, timeofban, data in self._getBans(*args, **kwargs):
+		for ip, timeofban, data in self._getBans(**kwargs):
 			#TODO: Implement data parts once arbitrary match keys completed
 			tickets.append(FailTicket(ip, timeofban, data['matches']))
 			tickets[-1].setAttempt(data['failures'])
 		return tickets
 
-	def getBansMerged(self, ip, *args, **kwargs):
+	def getBansMerged(self, ip, jail=None, **kwargs):
 		matches = []
 		failures = 0
-		for ip, timeofban, data in self._getBans(*args, ip=ip, **kwargs):
+		for ip, timeofban, data in self._getBans(ip=ip, jail=jail, **kwargs):
 			#TODO: Implement data parts once arbitrary match keys completed
 			matches.extend(data['matches'])
 			failures += data['failures']
