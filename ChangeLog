@@ -26,6 +26,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
     settings. Closes gh-458, Debian bug #697333, Redhat bug #891798.
   - complain action - ensure where not matching other IPs in log sample.
     Closes gh-467
+  - Fix firewall-cmd actioncheck - patch from Adam Tkac. Redhat Bug #979622
 
 - Enhancements:
   - long names on jails documented based on iptables limit of 30 less
