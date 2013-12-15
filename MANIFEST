@@ -228,6 +228,7 @@ config/action.d/mynetwatchman.conf
 config/action.d/pf.conf
 config/action.d/sendmail.conf
 config/action.d/sendmail-buffered.conf
+config/action.d/sendmail-whois-ipmatches.conf
 config/action.d/sendmail-whois.conf
 config/action.d/sendmail-whois-lines.conf
 config/action.d/shorewall.conf

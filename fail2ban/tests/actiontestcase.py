@@ -102,8 +102,28 @@ class ExecuteAction(unittest.TestCase):
 			"Text 890 text 123 ABC")
 		self.assertEqual(
 			self.__action.replaceTag("<matches>",
-				{'matches': "some >char< should \< be[ escap}ed&"}),
-			r"some \>char\< should \\\< be\[ escap\}ed\&")
+				{'matches': "some >char< should \< be[ escap}ed&\n"}),
+			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\n")
+		self.assertEqual(
+			self.__action.replaceTag("<ipmatches>",
+				{'ipmatches': "some >char< should \< be[ escap}ed&\n"}),
+			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\n")
+		self.assertEqual(
+			self.__action.replaceTag("<ipjailmatches>",
+				{'ipjailmatches': "some >char< should \< be[ escap}ed&\n"}),
+			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\n")
+
+		# Callable
+		self.assertEqual(
+			self.__action.replaceTag("09 <callable> 11",
+				{'callable': lambda: str(10)}),
+			"09 10 11")
+
+		# As tag not present, therefore callable should not be called
+		# Will raise ValueError if it is
+		self.assertEqual(
+			self.__action.replaceTag("abc",
+				{'callable': lambda: int("a")}), "abc")
 
 	def testExecuteActionBan(self):
 		self.__action.setActionStart("touch /tmp/fail2ban.test")

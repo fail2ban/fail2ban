@@ -127,7 +127,7 @@ class DatabaseTest(unittest.TestCase):
 		ticket = FailTicket("127.0.0.1", 0, ["abc\n"])
 		self.db.addBan(self.jail, ticket)
 
-		self.assertEquals(len(self.db.getBans(self.jail)), 1)
+		self.assertEquals(len(self.db.getBans(jail=self.jail)), 1)
 		self.assertTrue(
 			isinstance(self.db.getBans(jail=self.jail)[0], FailTicket))
 
@@ -161,6 +161,19 @@ class DatabaseTest(unittest.TestCase):
 		self.assertEqual(ticket.getIP(), "127.0.0.1")
 		self.assertEqual(ticket.getAttempt(), 30)
 		self.assertEqual(ticket.getMatches(), ["abc\n", "123\n"])
+
+		# Should cache result if no extra bans added
+		self.assertEqual(
+			id(ticket),
+			id(self.db.getBansMerged("127.0.0.1", jail=self.jail)))
+
+		newTicket = FailTicket("127.0.0.1", 40, ["ABC\n"])
+		ticket.setAttempt(40)
+		self.db.addBan(self.jail, newTicket)
+		# Added ticket, so cache should have been cleared
+		self.assertNotEqual(
+			id(ticket),
+			id(self.db.getBansMerged("127.0.0.1", jail=self.jail)))
 
 	def testPurge(self):
 		self.testAddJail() # Add jail
