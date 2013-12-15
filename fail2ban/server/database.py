@@ -64,6 +64,8 @@ class Fail2BanDb(object):
 			self._dbFilename = filename
 			self._purgeAge = purgeAge
 
+			self._bansMergedCache = {}
+
 			logSys.info(
 				"Connected to fail2ban persistent database '%s'", filename)
 		except sqlite3.OperationalError, e:
@@ -219,6 +221,7 @@ class Fail2BanDb(object):
 
 	@commitandrollback
 	def addBan(self, cur, jail, ticket):
+		self._bansMergedCache = {}
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
@@ -253,6 +256,9 @@ class Fail2BanDb(object):
 		return tickets
 
 	def getBansMerged(self, ip, jail=None, **kwargs):
+		cacheKey = ip if jail is None else "%s|%s" % (ip, jail.getName())
+		if cacheKey in self._bansMergedCache:
+			return self._bansMergedCache[cacheKey]
 		matches = []
 		failures = 0
 		for ip, timeofban, data in self._getBans(ip=ip, jail=jail, **kwargs):
@@ -261,10 +267,12 @@ class Fail2BanDb(object):
 			failures += data['failures']
 		ticket = FailTicket(ip, timeofban, matches)
 		ticket.setAttempt(failures)
+		self._bansMergedCache[cacheKey] = ticket
 		return ticket
 
 	@commitandrollback
 	def purge(self, cur):
+		self._bansMergedCache = {}
 		cur.execute(
 			"DELETE FROM bans WHERE timeofban < ?",
 			(MyTime.time() - self._purgeAge, ))
