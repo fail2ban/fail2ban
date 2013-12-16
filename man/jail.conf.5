@@ -15,6 +15,7 @@ Fail2ban has three configuration file types. Action files are the commands for b
 Filter files tell fail2ban how to detect authentication failures, and Jail configurations combine filters with actions into jails.
 
 There are *.conf files that are distributed by fail2ban and *.local file that contain user customizations.
+All configuration files should be UTF-8 encoded for python3.
 It is recommended that *.conf files should remain unchanged.  If needed, customizations should be provided in *.local files.
 For instance, if you would like to customize the [ssh-iptables-ipset] jail, create a jail.local to extend jail.conf
 (the configuration for the fail2ban server).  The jail.local file will be the following if you only need to enable
@@ -85,6 +86,35 @@ The following options are applicable to all jails. Their meaning is described in
 .TP
 \fBignoreregex\fR
 
+.PP
+.SS Backends
+\fBbackend\fR specifies the backend used to get files modification. This option can be overridden in each jail as well.
+Available options are listed below.
+.TP
+\fIpyinotify\fR
+requires pyinotify (a file alteration monitor) to be installed. If pyinotify is not installed, Fail2ban will use auto.
+.TP
+\fIgamin\fR
+requires Gamin (a file alteration monitor) to be installed. If Gamin is not installed, Fail2ban will use auto.
+.TP
+\fIpolling\fR
+uses a polling algorithm which does not require external libraries.
+.TP
+\fIsystemd\fR
+uses systemd python library to access the systemd journal. Specifying \fBlogpath\fR is not valid for this backend and instead utilises \fBjournalmatch\fR from the jails associated filter config.
+.TP
+\fIauto\fR
+will try to use the following backends, in order: pyinotify, gamin, polling
+.PP
+.SS Actions
+Each jail can be configured with only a single filter, but may have multiple actions. By default, the name of a action is the action filename. In the case where multiple of the same action are to be used, the \fBactname\fR option can be assigned to the action to avoid duplicatione.g.:
+.PP
+.nf
+[ssh-iptables-ipset]
+enabled = true
+action = sendmail[name=ssh, dest=john@example.com, actname=mail-john]
+         sendmail[name=ssh, dest=paul@example.com, actname=mail-paul]
+.fi
 
 .SH "ACTION FILES"
 Action files specify which commands are executed to ban and unban an IP address. They are located under \fI/etc/fail2ban/action.d\fR.
@@ -152,8 +182,9 @@ There are two filter definitions used in the [Definition] section:
 
 .TP
 \fBfailregex\fR
-is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The tag <HOST> is used as part of the regex and is itself a regex
+is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The tag \fI<HOST>\fR is used as part of the regex and is itself a regex
 for IPv4 addresses and hostnames. fail2ban will work out which one of these it actually is.
+For multiline regexs the tag \fI<SKIPLINES>\fR should be used to separate lines. This allows lines between the matched lines to continue to be searched for other failures. The tag can be used multiple times.
 
 .TP
 \fBignoreregex\fR
@@ -165,6 +196,25 @@ Using Python "string interpolation" mechanisms, other definitions are allowed an
  baduseragents = IE|wget
  failregex = useragent=%(baduseragents)s
 
+.PP
+Similar to actions, filters have an [Init] section which can be overridden in \fIjail.conf/jail.local\fR. The filter [Init] section is limited to the following options:
+.TP
+\fBmaxlines\fR
+specifies the maximum number of lines to buffer to match multi-line regexs. For some log formats this will not required to be changed. Other logs may require to increase this value if a particular log file is frequently written to.
+.TP
+\fBdatepattern\fR
+specifies a custom date pattern as an alternative to the default date detectors e.g. %Y-%m-%d %H:%M
+.br
+The following are acceptable format fields (see strptime(3) for descriptions):
+.nf
+%% %a %A %b %B %d %H %I %j %m %M %p %S %U %w %W %y %Y
+.fi
+.br
+
+Also, special values of \fIEpoch\fR (UNIX Timestamp), \fITAI64N\fR and \fIISO8601\fR can be used.
+.TP
+\fBjournalmatch\fR
+specifies the systemd journal match used to filter the journal entries. See \fBjournalctl(1)\fR and \fBsystemd.journal-fields(7)\fR for matches syntax and more details on special journal fields. This option is only valid for the \fIsystemd\fR backend.
 .PP
 Filters can also have a section called [INCLUDES]. This is used to read other configuration files.
 

@@ -497,9 +497,9 @@ messages differently.
 Code Testing
 ============
 
-Existing tests can be run by executing `fail2ban-testcases`. This has options
-like --log-level that will probably be useful. `fail2ban-testcases --help` for
-full options.
+Existing tests can be run by executing `bin/fail2ban-testcases`. It has
+options like --log-level that will probably be useful.  Run
+`bin/fail2ban-testcases --help` for the full list of options.
 
 Test cases should cover all usual cases, all exception cases and all inside
 / outside boundary conditions.
@@ -512,7 +512,7 @@ Install the package python-coverage to visualise your test coverage. Run the
 following (note: on Debian-based systems, the script is called
 `python-coverage`):
 
-coverage run fail2ban-testcases
+coverage run bin/fail2ban-testcases
 coverage html
 
 Then look at htmlcov/index.html and see how much coverage your test cases
@@ -774,17 +774,17 @@ Look for errors like:
 
 Which indicates that testcases/files/logs/mysqld.log has been moved or is a directory
 
-  tar -C /tmp -jxf dist/fail2ban-0.8.12.tar.bz2
+  tar -C /tmp -jxf dist/fail2ban-0.9.0.tar.bz2
 
 # clean up current direcory
 
-  diff -rul --exclude \*.pyc . /tmp/fail2ban-0.8.12/
+  diff -rul --exclude \*.pyc . /tmp/fail2ban-0.9.0/
 
   # Only differences should be files that you don't want distributed.
 
 # Ensure the tests work from the tarball
 
-  cd /tmp/fail2ban-0.8.12/ && ./fail2ban-testcases-all
+  cd /tmp/fail2ban-0.9.0/ && ./fail2ban-testcases-all
 
 # Add/finalize the corresponding entry in the ChangeLog
 
@@ -840,7 +840,7 @@ Which indicates that testcases/files/logs/mysqld.log has been moved or is a dire
 # Upload source/binaries to sourceforge http://sourceforge.net/projects/fail2ban/
 
 # Run the following and update the wiki with output:
-  python -c 'import common.protocol; common.protocol.printWiki()'
+  python -c 'import fail2ban.protocol; fail2ban.protocol.printWiki()'
 
   page: http://www.fail2ban.org/wiki/index.php/Commands
 
@@ -868,7 +868,7 @@ Post Release
 
 Add the following to the top of the ChangeLog
 
-ver. 0.8.13 (2014/XX/XXX) - wanna-be-released
+ver. 0.9.1 (2014/XX/XXX) - wanna-be-released
 -----------
 
 - Fixes:
