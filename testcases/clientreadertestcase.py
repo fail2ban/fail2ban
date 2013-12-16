@@ -190,13 +190,13 @@ class JailsReaderTest(LogCaptureTestCase):
 
 	def testReadTestJailConf(self):
 		jails = JailsReader(basedir=os.path.join('testcases','config'))
-		self.assertTrue(jails.read())		  # opens fine
-		self.assertFalse(jails.getOptions())	  # reads not sof ine
+		self.assertTrue(jails.read())
+		self.assertFalse(jails.getOptions())
 		self.assertRaises(ValueError, jails.convert)
 		comm_commands = jails.convert(allow_no_files=True)
 		self.maxDiff = None
-		self.assertEqual(comm_commands,
-			[['add', 'emptyaction', 'auto'],
+		self.assertEqual(sorted(comm_commands),
+			sorted([['add', 'emptyaction', 'auto'],
 			 ['set', 'emptyaction', 'usedns', 'warn'],
 			 ['set', 'emptyaction', 'maxretry', 3],
 			 ['set', 'emptyaction', 'findtime', 600],
@@ -239,7 +239,7 @@ class JailsReaderTest(LogCaptureTestCase):
 			 ['start', 'special'],
 			 ['start', 'missinglogfiles'],
 			 ['start', 'brokenaction'],
-			 ['start', 'parse_to_end_of_jail.conf'],])
+			 ['start', 'parse_to_end_of_jail.conf'],]))
 		self.assertTrue(self._is_logged("Errors in jail 'missingbitsjail'. Skipping..."))
 		self.assertTrue(self._is_logged("No file(s) found for glob /weapons/of/mass/destruction"))
 
