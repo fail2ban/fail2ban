@@ -150,14 +150,26 @@ The following tags are substituted in the actionban, actionunban and actioncheck
 \fBip\fR
 An IPv4 ip address to be banned. e.g. 192.168.0.2
 .TP
-\fBfailures\fR
-The number of times the failure occurred in the log file. e.g. 3
-.TP
 \fBtime\fR
 The unix time of the ban. e.g. 1357508484
 .TP
+\fBfailures\fR
+The number of times the failure occurred in the log file. e.g. 3
+.TP
+\fBipfailures\fR
+As per \fBfailures\fR, but total of all failures for that ip address across all jails from the fail2ban persistent database. Therefore the database must be set for this tag to function.
+.TP
+\fBipjailfailures\fR
+As per \fBipfailures\fR, but total based on the IPs failures for the current jail.
+.TP
 \fBmatches\fR
-The concatenated string of the log file lines of the matches that generated the ban. Many characters interpreted by shell get escaped.
+The string of the log file lines of the matches that generated the ban. Many characters interpreted by shell get escaped. New lines are maintained, so actions should be careful to enclose the tag in quotes.
+.TP
+\fBipmatches\fR
+As per \fBmatches\fR, but includes all lines for the IP which are contained with the fail2ban persistent database. Therefore the database must be set for this tag to function.
+.TP
+\fBipjailmatches\fR
+As per \fBipmatches\fR, but matches are limited for the IP and for the current jail.
 
 .SH FILTER FILES
 
