@@ -43,6 +43,7 @@ protocol = [
 ["get loglevel", "gets the logging level"], 
 ["set logtarget <TARGET>", "sets logging target to <TARGET>. Can be STDOUT, STDERR, SYSLOG or a file"], 
 ["get logtarget", "gets logging target"], 
+["flushlogs", "flushes the logtarget if a file and reopens it. For log rotation."], 
 ['', "DATABASE", ""],
 ["set dbfile <FILE>", "set the location of fail2ban persistent datastore. Set to \"None\" to disable"], 
 ["get dbfile", "get the location of fail2ban persistent datastore"], 

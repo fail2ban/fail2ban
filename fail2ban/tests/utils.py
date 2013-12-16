@@ -24,6 +24,7 @@ __license__ = "GPL"
 
 import logging, os, re, traceback, time, unittest, sys
 from os.path import basename, dirname
+from StringIO import StringIO
 
 if sys.version_info >= (2, 6):
 	import json
@@ -244,3 +245,32 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(servertestcase.TransmitterLogging))
 
 	return tests
+
+class LogCaptureTestCase(unittest.TestCase):
+
+	def setUp(self):
+
+		# For extended testing of what gets output into logging
+		# system, we will redirect it to a string
+		logSys = logging.getLogger("fail2ban")
+
+		# Keep old settings
+		self._old_level = logSys.level
+		self._old_handlers = logSys.handlers
+		# Let's log everything into a string
+		self._log = StringIO()
+		logSys.handlers = [logging.StreamHandler(self._log)]
+		logSys.setLevel(getattr(logging, 'DEBUG'))
+
+	def tearDown(self):
+		"""Call after every test case."""
+		# print "O: >>%s<<" % self._log.getvalue()
+		logSys = logging.getLogger("fail2ban")
+		logSys.handlers = self._old_handlers
+		logSys.level = self._old_level
+
+	def _is_logged(self, s):
+		return s in self._log.getvalue()
+
+	def printLog(self):
+		print(self._log.getvalue())

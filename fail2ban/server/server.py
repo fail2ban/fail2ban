@@ -409,13 +409,12 @@ class Server:
 		try:
 			self.__loggingLock.acquire()
 			# set a format which is simpler for console use
-			formatter = logging.Formatter("%(asctime)s %(name)-16s: %(levelname)-6s %(message)s")
+			formatter = logging.Formatter("%(asctime)s %(name)-16s[%(process)d]: %(levelname)-7s %(message)s")
 			if target == "SYSLOG":
 				# Syslog daemons already add date to the message.
-				formatter = logging.Formatter("%(name)-16s: %(levelname)-6s %(message)s")
+				formatter = logging.Formatter("%(name)s[%(process)d]: %(levelname)s %(message)s")
 				facility = logging.handlers.SysLogHandler.LOG_DAEMON
-				hdlr = logging.handlers.SysLogHandler("/dev/log", 
-													  facility = facility)
+				hdlr = logging.handlers.SysLogHandler("/dev/log", facility=facility)
 			elif target == "STDOUT":
 				hdlr = logging.StreamHandler(sys.stdout)
 			elif target == "STDERR":
@@ -424,7 +423,7 @@ class Server:
 				# Target should be a file
 				try:
 					open(target, "a").close()
-					hdlr = logging.FileHandler(target)
+					hdlr = logging.handlers.RotatingFileHandler(target)
 				except IOError:
 					logSys.error("Unable to log to " + target)
 					logSys.info("Logging to previous target " + self.__logTarget)
@@ -466,6 +465,19 @@ class Server:
 		finally:
 			self.__loggingLock.release()
 	
+	def flushLogs(self):
+		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG']:
+			for handler in logging.getLogger("fail2ban").handlers:
+				try:
+					handler.doRollover()
+				except AttributeError:
+					handler.flush()
+			return "rolled over"
+		else:
+			for handler in logging.getLogger("fail2ban").handlers:
+				handler.flush()
+			return "flushed"
+			
 	def setDatabase(self, filename):
 		if self.__jails.size() == 0:
 			if filename.lower() == "none":
@@ -480,6 +492,7 @@ class Server:
 	def getDatabase(self):
 		return self.__db
 	
+
 	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the
 			background as a daemon.
@@ -487,6 +500,14 @@ class Server:
 			http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/278731
 		"""
 	
+		# When the first child terminates, all processes in the second child
+		# are sent a SIGHUP, so it's ignored.
+
+		# We need to set this in the parent process, so it gets inherited by the
+		# child process, and this makes sure that it is effect even if the parent
+		# terminates quickly.
+		signal.signal(signal.SIGHUP, signal.SIG_IGN)
+		
 		try:
 			# Fork a child process so the parent can exit.  This will return control
 			# to the command line or shell.  This is required so that the new process
@@ -508,10 +529,6 @@ class Server:
 			# fail, since we're guaranteed that the child is not a process group
 			# leader.
 			os.setsid()
-		
-			# When the first child terminates, all processes in the second child
-			# are sent a SIGHUP, so it's ignored.
-			signal.signal(signal.SIGHUP, signal.SIG_IGN)
 		
 			try:
 				# Fork a second child to prevent zombies.  Since the first child is

@@ -64,6 +64,12 @@ Comments: use '#' for comment lines and ';' (following a space) for inline comme
 .SH DEFAULT
 The following options are applicable to all jails. Their meaning is described in the default \fIjail.conf\fR file.
 .TP
+\fBfilter\fR 
+.TP
+\fBlogpath\fR 
+.TP
+\fBaction\fR 
+.TP
 \fBignoreip\fR 
 .TP
 \fBbantime\fR
@@ -75,6 +81,11 @@ The following options are applicable to all jails. Their meaning is described in
 \fBbackend\fR
 .TP
 \fBusedns\fR
+.TP
+\fBfailregex\fR
+.TP
+\fBignoreregex\fR
+
 .PP
 .SS Backends
 \fBbackend\fR specifies the backend used to get files modification. This option can be overridden in each jail as well.

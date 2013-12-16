@@ -113,6 +113,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 				# No "Definition" section or wrong basedir
 				logSys.error(e)
 				values[option[1]] = option[2]
+				# TODO: validate error handling here.
 			except NoOptionError:
 				if not option[2] is None:
 					logSys.warning("'%s' not defined in '%s'. Using default one: %r"

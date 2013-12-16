@@ -261,3 +261,7 @@ files/fail2ban-tmpfiles.conf
 files/fail2ban.service
 files/ipmasq-ZZZzzz_fail2ban.rul
 files/gen_badbots
+testcases/config/jail.conf
+testcases/config/fail2ban.conf
+testcases/config/filter.d/simple.conf
+testcases/config/action.d/brokenaction.conf
