@@ -467,15 +467,18 @@ class Server:
 	
 	def flushLogs(self):
 		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG']:
-			for handler in logging.getLogger("fail2ban").handlers:
+			for handler in logging.getLogger(__name__).parent.parent.handlers:
 				try:
 					handler.doRollover()
+					logSys.info("rollover performed on %s" % self.__logTarget)
 				except AttributeError:
 					handler.flush()
+					logSys.info("flush performed on %s" % self.__logTarget)
 			return "rolled over"
 		else:
-			for handler in logging.getLogger("fail2ban").handlers:
+			for handler in logging.getLogger(__name__).parent.parent.handlers:
 				handler.flush()
+				logSys.info("flush performed on %s" % self.__logTarget)
 			return "flushed"
 			
 	def setDatabase(self, filename):
