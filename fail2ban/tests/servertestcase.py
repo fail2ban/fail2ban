@@ -24,9 +24,9 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, socket, time, tempfile, os, locale, sys
+import unittest, socket, time, tempfile, os, locale, sys, logging
 
-from fail2ban.server.server import Server, logSys
+from fail2ban.server.server import Server
 from fail2ban.server.jail import Jail
 from fail2ban.exceptions import UnknownJailException
 try:
@@ -644,7 +644,7 @@ class TransmitterLogging(TransmitterBase):
 		value = "/this/path/should/not/exist"
 		self.setGetTestNOK("logtarget", value)
 
-		self.transm.proceed(["set", "/dev/null"])
+		self.transm.proceed(["set", "logtarget", "/dev/null"])
 		for logTarget in logTargets:
 			os.remove(logTarget)
 
@@ -669,17 +669,22 @@ class TransmitterLogging(TransmitterBase):
 			os.close(f)
 			self.server.setLogLevel(2)
 			self.assertEqual(self.transm.proceed(["set", "logtarget", fn]), (0, fn))
-			logSys.warn("Before file moved")
+			l = logging.getLogger('fail2ban.server.server').parent.parent
+			l.warn("Before file moved")
 			try:
 				f2, fn2 = tempfile.mkstemp("fail2ban.log")
 				os.close(f2)
 				os.rename(fn, fn2)
-				logSys.warn("After file moved")
+				l.warn("After file moved")
 				self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
-				logSys.warn("After flushlogs")
+				l.warn("After flushlogs")
 				with open(fn2,'r') as f:
-					self.assertTrue(f.next().endswith("Before file moved\n"))
-					self.assertTrue(f.next().endswith("After file moved\n"))
+					line1 = f.next()
+					#print line1
+					self.assertTrue(line1.endswith("Before file moved\n"))
+					line2 = f.next()
+					#print line2
+					self.assertTrue(line2.endswith("After file moved\n"))
 					self.assertRaises(StopIteration, f.next)
 				with open(fn,'r') as f:
 					self.assertTrue(f.next().endswith("After flushlogs\n"))
