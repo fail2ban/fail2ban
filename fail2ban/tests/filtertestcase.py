@@ -234,10 +234,12 @@ class IgnoreIP(LogCaptureTestCase):
 		self.assertFalse(self.filter.inIgnoreIPList('192.168.0.255'))
 
 	def testIgnoreInProcessLine(self):
+		setUpMyTime()
 		self.filter.addIgnoreIP('192.168.1.0/25')
 		self.filter.addFailRegex('<HOST>')
 		self.filter.processLineAndAdd('1387203300.222 192.168.1.32')
 		self.assertTrue(self._is_logged('Ignore 192.168.1.32'))
+		tearDownMyTime()
 
 	def testIgnoreAddBannedIP(self):
 		self.filter.addIgnoreIP('192.168.1.0/25')
