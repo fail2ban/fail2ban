@@ -680,14 +680,24 @@ class TransmitterLogging(TransmitterBase):
 				l.warn("After flushlogs")
 				with open(fn2,'r') as f:
 					line1 = f.next()
-					#print line1
+					if line1.find('Changed logging target to') >= 0:
+						line1 = f.next()
 					self.assertTrue(line1.endswith("Before file moved\n"))
 					line2 = f.next()
-					#print line2
 					self.assertTrue(line2.endswith("After file moved\n"))
-					self.assertRaises(StopIteration, f.next)
+					try:
+						n = f.next()
+						if n.find("Command: ['flushlogs']") >=0:
+							self.assertRaises(StopIteration, f.next)
+						else:
+							self.fail("Exception StopIteration or Command: ['flushlogs'] expected. Got: %s" % n)
+					except StopIteration:
+						pass # on higher debugging levels this is expected
 				with open(fn,'r') as f:
-					self.assertTrue(f.next().endswith("After flushlogs\n"))
+					line1 = f.next()
+					if line1.find('rollover performed on') >= 0:
+						line1 = f.next()
+					self.assertTrue(line1.endswith("After flushlogs\n"))
 					self.assertRaises(StopIteration, f.next)
 			finally:
 				os.remove(fn2)
