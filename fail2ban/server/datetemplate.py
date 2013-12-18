@@ -208,7 +208,8 @@ class DateStrptime(DateTemplate):
 					# If it is Jan 1st, it is either really Jan 1st or there
 					# is neither month nor day in the log.
 					# NOTE: Possibly makes week/year day incorrect
-					date = date.replace(month=MyTime.gmtime()[1], day=1)
+					date = date.replace(
+						month=MyTime.gmtime()[1], day=MyTime.gmtime()[2])
 
 			if date.tzinfo:
 				return ( calendar.timegm(date.utctimetuple()), dateMatch )
