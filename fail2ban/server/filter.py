@@ -293,6 +293,9 @@ class Filter(JailThread):
 	# to enable banip fail2ban-client BAN command
 
 	def addBannedIP(self, ip):
+		if self.inIgnoreIPList(ip):
+			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.' % ip)
+
 		unixTime = MyTime.time()
 		for i in xrange(self.failManager.getMaxRetry()):
 			self.failManager.addFailure(FailTicket(ip, unixTime))
@@ -561,7 +564,7 @@ class FileFilter(Filter):
 				self._delLogPath(path)
 				return
 
-	def _delLogPath(self, path):
+	def _delLogPath(self, path): # pragma: no cover - overwritten function
 		# nothing to do by default
 		# to be overridden by backends
 		pass

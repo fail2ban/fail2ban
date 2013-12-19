@@ -24,7 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, socket, time, tempfile, os, locale, sys
+import unittest, socket, time, tempfile, os, locale, sys, logging
 
 from fail2ban.server.server import Server
 from fail2ban.server.jail import Jail
@@ -644,7 +644,7 @@ class TransmitterLogging(TransmitterBase):
 		value = "/this/path/should/not/exist"
 		self.setGetTestNOK("logtarget", value)
 
-		self.transm.proceed(["set", "/dev/null"])
+		self.transm.proceed(["set", "logtarget", "/dev/null"])
 		for logTarget in logTargets:
 			os.remove(logTarget)
 
@@ -661,6 +661,53 @@ class TransmitterLogging(TransmitterBase):
 		self.setGetTest("loglevel", "-1", -1)
 		self.setGetTest("loglevel", "0", 0)
 		self.setGetTestNOK("loglevel", "Bird")
+
+	def testFlushLogs(self):
+		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
+		try:
+			f, fn = tempfile.mkstemp("fail2ban.log")
+			os.close(f)
+			self.server.setLogLevel(2)
+			self.assertEqual(self.transm.proceed(["set", "logtarget", fn]), (0, fn))
+			l = logging.getLogger('fail2ban.server.server').parent.parent
+			l.warn("Before file moved")
+			try:
+				f2, fn2 = tempfile.mkstemp("fail2ban.log")
+				os.close(f2)
+				os.rename(fn, fn2)
+				l.warn("After file moved")
+				self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
+				l.warn("After flushlogs")
+				with open(fn2,'r') as f:
+					line1 = f.next()
+					if line1.find('Changed logging target to') >= 0:
+						line1 = f.next()
+					self.assertTrue(line1.endswith("Before file moved\n"))
+					line2 = f.next()
+					self.assertTrue(line2.endswith("After file moved\n"))
+					try:
+						n = f.next()
+						if n.find("Command: ['flushlogs']") >=0:
+							self.assertRaises(StopIteration, f.next)
+						else:
+							self.fail("Exception StopIteration or Command: ['flushlogs'] expected. Got: %s" % n)
+					except StopIteration:
+						pass # on higher debugging levels this is expected
+				with open(fn,'r') as f:
+					line1 = f.next()
+					if line1.find('rollover performed on') >= 0:
+						line1 = f.next()
+					self.assertTrue(line1.endswith("After flushlogs\n"))
+					self.assertRaises(StopIteration, f.next)
+			finally:
+				os.remove(fn2)
+		finally:
+			try:
+				os.remove(fn)
+			except OSError:
+				pass
+		self.assertEqual(self.transm.proceed(["set", "logtarget", "STDERR"]), (0, "STDERR"))
+		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "flushed"))
 
 
 class JailTests(unittest.TestCase):

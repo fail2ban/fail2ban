@@ -62,7 +62,7 @@ class JailReader(ConfigReader):
 		return out
 	
 	def isEnabled(self):
-		return self.__force_enable or self.__opts["enabled"]
+		return self.__force_enable or ( self.__opts and self.__opts["enabled"] )
 
 	@staticmethod
 	def _glob(path):
@@ -72,12 +72,10 @@ class JailReader(ConfigReader):
 		"""
 		pathList = []
 		for p in glob.glob(path):
-			if not os.path.exists(p):
-				logSys.warning("File %s doesn't even exist, thus cannot be monitored" % p)
-			elif not os.path.lexists(p):
-				logSys.warning("File %s is a dangling link, thus cannot be monitored" % p)
-			else:
+			if os.path.exists(p):
 				pathList.append(p)
+			else:
+				logSys.warning("File %s is a dangling link, thus cannot be monitored" % p)
 		return pathList
 
 	def getOptions(self):
@@ -95,20 +93,26 @@ class JailReader(ConfigReader):
 				["string", "filter", ""],
 				["string", "action", ""]]
 		self.__opts = ConfigReader.getOptions(self, self.__name, opts)
+		if not self.__opts:
+			return False
 		
 		if self.isEnabled():
 			# Read filter
-			filterName, filterOpt = JailReader.extractOptions(
-				self.__opts["filter"])
-			self.__filter = FilterReader(
-				filterName, self.__name, filterOpt, basedir=self.getBaseDir())
-			ret = self.__filter.read()
-			if ret:
-				self.__filter.getOptions(self.__opts)
+			if self.__opts["filter"]:
+				filterName, filterOpt = JailReader.extractOptions(
+					self.__opts["filter"])
+				self.__filter = FilterReader(
+					filterName, self.__name, filterOpt, basedir=self.getBaseDir())
+				ret = self.__filter.read()
+				if ret:
+					self.__filter.getOptions(self.__opts)
+				else:
+					logSys.error("Unable to read the filter")
+					return False
 			else:
-				logSys.error("Unable to read the filter")
-				return False
-			
+				self.__filter = None
+				logSys.warn("No filter set for jail %s" % self.__name)
+		
 			# Read action
 			for act in self.__opts["action"].split('\n'):
 				try:
@@ -180,7 +184,8 @@ class JailReader(ConfigReader):
 					# Do not send a command if the rule is empty.
 					if regex != '':
 						stream.append(["set", self.__name, "addignoreregex", regex])
-		stream.extend(self.__filter.convert())
+		if self.__filter:
+			stream.extend(self.__filter.convert())
 		for action in self.__actions:
 			stream.extend(action.convert())
 		stream.insert(0, ["add", self.__name, backend])
@@ -188,7 +193,11 @@ class JailReader(ConfigReader):
 	
 	#@staticmethod
 	def extractOptions(option):
-		option_name, optstr = JailReader.optionCRE.match(option).groups()
+		match = JailReader.optionCRE.match(option)
+		if not match:
+			# TODO propper error handling
+			return None, None
+		option_name, optstr = match.groups()
 		option_opts = dict()
 		if optstr:
 			for optmatch in JailReader.optionExtractRE.finditer(optstr):

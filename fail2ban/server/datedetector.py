@@ -140,7 +140,7 @@ class DateDetector:
 					date = template.getDate(line)
 					if date is None:
 						continue
-					logSys.debug("Got time %i for \"%r\" using template %s" % (date[0], date[1].group(), template.getName()))
+					logSys.debug("Got time %f for \"%r\" using template %s" % (date[0], date[1].group(), template.getName()))
 					return date
 				except ValueError:
 					pass
