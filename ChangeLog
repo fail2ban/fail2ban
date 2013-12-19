@@ -40,6 +40,8 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
 
   Daniel Black
    * filter.d/solid-pop3d -- added thanks to Jacques Lav!gnotte on mailinglist.
+  Bas van den Dikkenberg & Steven Hiscocks
+   * filter.d/nsd.conf -- also amended Unix date template to match nsd format
 
 - Enhancements:
   - loglines now also report "[PID]" after the name portion
