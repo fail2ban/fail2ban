@@ -234,6 +234,7 @@ class LogFile(unittest.TestCase):
 
 	def testIsModified(self):
 		self.assertTrue(self.filter.isModified(LogFile.FILENAME))
+		self.assertFalse(self.filter.isModified(LogFile.FILENAME))
 
 
 class LogFileMonitor(LogCaptureTestCase):
