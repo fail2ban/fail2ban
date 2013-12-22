@@ -618,11 +618,11 @@ class GetFailures(unittest.TestCase):
 		"""Call after every test case."""
 
 	def testTail(self):
-		self.filter.addLogPath(LogFile.FILENAME, tail=True)
+		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)
 		self.assertEqual(self.filter.getLogPath()[-1].getPos(), 1653)
 		self.filter.getLogPath()[-1].close()
 		self.assertEqual(self.filter.getLogPath()[-1].readline(), "")
-		self.filter.delLogPath(LogFile.FILENAME)
+		self.filter.delLogPath(GetFailures.FILENAME_01)
 		self.assertEqual(self.filter.getLogPath(),[])
 
 	def testGetFailures01(self, filename=None, failures=None):
