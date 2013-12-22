@@ -215,15 +215,28 @@ class IgnoreIPDNS(IgnoreIP):
 		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.11"))
 		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.13"))
 
+class LogFile(LogCaptureTestCase):
 
-class LogFile(unittest.TestCase):
+	MISSING = 'testcases/missingLogFile'
+
+	def setUp(self):
+		LogCaptureTestCase.setUp(self)
+
+	def tearDown(self):
+		LogCaptureTestCase.tearDown(self)
+
+	def testMissingLogFiles(self):
+		self.filter = FilterPoll(None)
+		self.assertRaises(IOError, self.filter.addLogPath, LogFile.MISSING)
+
+class LogFileFilterPoll(unittest.TestCase):
 
 	FILENAME = "testcases/files/testcase01.log"
 
 	def setUp(self):
 		"""Call before every test case."""
 		self.filter = FilterPoll(None)
-		self.filter.addLogPath(LogFile.FILENAME)
+		self.filter.addLogPath(LogFileFilterPoll.FILENAME)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -233,8 +246,8 @@ class LogFile(unittest.TestCase):
 	#	self.filter.openLogFile(LogFile.FILENAME)
 
 	def testIsModified(self):
-		self.assertTrue(self.filter.isModified(LogFile.FILENAME))
-		self.assertFalse(self.filter.isModified(LogFile.FILENAME))
+		self.assertTrue(self.filter.isModified(LogFileFilterPoll.FILENAME))
+		self.assertFalse(self.filter.isModified(LogFileFilterPoll.FILENAME))
 
 
 class LogFileMonitor(LogCaptureTestCase):
