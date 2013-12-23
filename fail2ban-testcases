@@ -177,6 +177,7 @@ if not opts.no_network:
 tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
 tests.addTest(unittest.makeSuite(filtertestcase.BasicFilter))
 tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
+tests.addTest(unittest.makeSuite(filtertestcase.LogFileFilterPoll))
 tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
 if not opts.no_network:
     tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
