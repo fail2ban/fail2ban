@@ -60,6 +60,7 @@ testcases/files/logs/exim
 testcases/files/logs/suhosin
 testcases/files/logs/mysqld-auth
 testcases/files/logs/named-refused
+testcases/files/logs/nginx-http-auth
 testcases/files/logs/pam-generic
 testcases/files/logs/postfix
 testcases/files/logs/proftpd
@@ -139,6 +140,7 @@ config/filter.d/apache-badbots.conf
 config/filter.d/apache-nohome.conf
 config/filter.d/apache-noscript.conf
 config/filter.d/apache-overflows.conf
+config/filter.d/nginx-http-auth.conf
 config/filter.d/courierlogin.conf
 config/filter.d/couriersmtp.conf
 config/filter.d/cyrus-imap.conf
@@ -239,3 +241,8 @@ files/bash-completion
 files/fail2ban-tmpfiles.conf
 files/fail2ban.service
 files/ipmasq-ZZZzzz_fail2ban.rul
+files/gen_badbots
+testcases/config/jail.conf
+testcases/config/fail2ban.conf
+testcases/config/filter.d/simple.conf
+testcases/config/action.d/brokenaction.conf

@@ -22,8 +22,9 @@ __author__ = "Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging, os, re, tempfile, sys, time, traceback
+import unittest, logging, os, re, tempfile, sys, time, traceback
 from os.path import basename, dirname
+from StringIO import StringIO
 
 #
 # Following "traceback" functions are adopted from PyMVPA distributed
@@ -105,3 +106,29 @@ def mtimesleep():
 	# no sleep now should be necessary since polling tracks now not only
 	# mtime but also ino and size
 	pass
+
+class LogCaptureTestCase(unittest.TestCase):
+
+	def setUp(self):
+
+		# For extended testing of what gets output into logging
+		# system, we will redirect it to a string
+		logSys = logging.getLogger("fail2ban")
+
+		# Keep old settings
+		self._old_level = logSys.level
+		self._old_handlers = logSys.handlers
+		# Let's log everything into a string
+		self._log = StringIO()
+		logSys.handlers = [logging.StreamHandler(self._log)]
+		logSys.setLevel(getattr(logging, 'DEBUG'))
+
+	def tearDown(self):
+		"""Call after every test case."""
+		# print "O: >>%s<<" % self._log.getvalue()
+		logSys = logging.getLogger("fail2ban")
+		logSys.handlers = self._old_handlers
+		logSys.level = self._old_level
+
+	def _is_logged(self, s):
+		return s in self._log.getvalue()

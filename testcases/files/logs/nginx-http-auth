@@ -1,0 +1,6 @@
+
+# failJSON: { "time": "2012-04-09T11:53:29", "match": true , "host": "192.0.43.10" }
+2012/04/09 11:53:29 [error] 2865#0: *66647 user "xyz" was not found in "/var/www/.htpasswd", client: 192.0.43.10, server: www.myhost.com, request: "GET / HTTP/1.1", host: "www.myhost.com"
+# failJSON: { "time": "2012-04-09T11:53:36", "match": true , "host": "192.0.43.10" }
+2012/04/09 11:53:36 [error] 2865#0: *66647 user "xyz": password mismatch, client: 192.0.43.10, server: www.myhost.com, request: "GET / HTTP/1.1", host: "www.myhost.com"
+

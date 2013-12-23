@@ -35,7 +35,7 @@ logSys = logging.getLogger("fail2ban.client.config")
 
 class JailReader(ConfigReader):
 	
-	actionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
+	actionCRE = re.compile("^([\w_.-]+)(?:\[(.*)\])?$")
 	
 	def __init__(self, name, force_enable=False, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
@@ -54,7 +54,7 @@ class JailReader(ConfigReader):
 		return ConfigReader.read(self, "jail")
 	
 	def isEnabled(self):
-		return self.__force_enable or self.__opts["enabled"]
+		return self.__force_enable or ( self.__opts and self.__opts["enabled"] )
 
 	@staticmethod
 	def _glob(path):
@@ -64,12 +64,10 @@ class JailReader(ConfigReader):
 		"""
 		pathList = []
 		for p in glob.glob(path):
-			if not os.path.exists(p):
-				logSys.warning("File %s doesn't even exist, thus cannot be monitored" % p)
-			elif not os.path.lexists(p):
-				logSys.warning("File %s is a dangling link, thus cannot be monitored" % p)
-			else:
+			if os.path.exists(p):
 				pathList.append(p)
+			else:
+				logSys.warning("File %s is a dangling link, thus cannot be monitored" % p)
 		return pathList
 
 	def getOptions(self):
@@ -86,18 +84,24 @@ class JailReader(ConfigReader):
 				["string", "filter", ""],
 				["string", "action", ""]]
 		self.__opts = ConfigReader.getOptions(self, self.__name, opts)
+		if not self.__opts:
+			return False
 		
 		if self.isEnabled():
 			# Read filter
-			self.__filter = FilterReader(self.__opts["filter"], self.__name,
-										 basedir=self.getBaseDir())
-			ret = self.__filter.read()
-			if ret:
-				self.__filter.getOptions(self.__opts)
+			if self.__opts["filter"]:
+				self.__filter = FilterReader(self.__opts["filter"], self.__name,
+											 basedir=self.getBaseDir())
+				ret = self.__filter.read()
+				if ret:
+					self.__filter.getOptions(self.__opts)
+				else:
+					logSys.error("Unable to read the filter")
+					return False
 			else:
-				logSys.error("Unable to read the filter")
-				return False
-			
+				self.__filter = None
+				logSys.warn("No filter set for jail %s" % self.__name)
+		
 			# Read action
 			for act in self.__opts["action"].split('\n'):
 				try:
@@ -165,7 +169,8 @@ class JailReader(ConfigReader):
 					# Do not send a command if the rule is empty.
 					if regex != '':
 						stream.append(["set", self.__name, "addignoreregex", regex])
-		stream.extend(self.__filter.convert())
+		if self.__filter:
+			stream.extend(self.__filter.convert())
 		for action in self.__actions:
 			stream.extend(action.convert())
 		stream.insert(0, ["add", self.__name, backend])
@@ -175,12 +180,16 @@ class JailReader(ConfigReader):
 	def splitAction(action):
 		m = JailReader.actionCRE.match(action)
 		d = dict()
-		mgroups = m.groups()
+		try:
+			mgroups = m.groups()
+		except AttributeError:
+			raise ValueError("While reading action %s we should have got 1 or "
+							 "2 groups. Got: 0" % action)
 		if len(mgroups) == 2:
 			action_name, action_opts = mgroups
-		elif len(mgroups) == 1:
+		elif len(mgroups) == 1: # pragma: nocover - unreachable - .* on second group always matches
 			action_name, action_opts = mgroups[0], None
-		else:
+		else: # pragma: nocover - unreachable - regex only can capture 2 groups
 			raise ValueError("While reading action %s we should have got up to "
 							 "2 groups. Got: %r" % (action, mgroups))
 		if not action_opts is None:
