@@ -63,6 +63,8 @@ class Beautifier:
 						msg = "Jail stopped"
 			elif inC[0] == "add":
 				msg = "Added jail " + response
+			elif inC[0] == "flushlogs":
+				msg = "logs: " + response
 			elif inC[0:1] == ['status']:
 				if len(inC) > 1:
 					# Create IP list

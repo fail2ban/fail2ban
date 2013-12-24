@@ -4,15 +4,89 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.10)                                             2013/06/12
+Fail2Ban (version 0.8.12.dev)                                          2013/11/13
 ================================================================================
 
-ver. 0.8.11 (2013/XX/XXX) - loves-unittests
+ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
 -----------
 
+- IMPORTANT incompatible changes:
+
 - Fixes:
+  - Rename firewall-cmd-direct-new to firewall-cmd-new to fit within jail name
+    name length. As per gh-395
+  - allow for ",milliseconds" in the custom date format of proftpd.log
+  - allow for ", referer ..." in apache-* filter for apache error logs.
+  - allow for spaces at the beginning of kernel messages. Closes gh-448
+  - recidive jail to block all protocols. Closes gh-440. Thanksg Ioan Indreias
+  - smtps not a IANA standard and has been removed from Arch. Replaced with
+    465. Thanks Stefan. Closes gh-447
+  - mysqld-syslog-iptables rule was too long. Part of gh-447.
+  - add 'flushlogs' command to allow logrotation without clobbering logtarget
+    settings. Closes gh-458, Debian bug #697333, Redhat bug #891798.
+  - complain action - ensure where not matching other IPs in log sample.
+    Closes gh-467
+  - Fix firewall-cmd actioncheck - patch from Adam Tkac. Redhat Bug #979622
+  - Fix apache-common for apache-2.4 log file format. Thanks Mark White.
+    Closes gh-516
+
+- Enhancements:
+  - long names on jails documented based on iptables limit of 30 less
+    len("fail2ban-").
+  - remove indentation of name and loglevel while logging to SYSLOG to
+    resolve syslog(-ng) parsing problems. Closes Debian bug #730202.
+  - added squid filter. Thanks Roman Gelfand.
+  - updated check_fail2ban to return performance data for all jails.
+  - filter apache-noscript now includes php cgi scripts.
+    Thanks dani. Closes gh-503
+
+- New Features:
+
+  Daniel Black
+   * filter.d/solid-pop3d -- added thanks to Jacques Lav!gnotte on mailinglist.
+  Bas van den Dikkenberg & Steven Hiscocks
+   * filter.d/nsd.conf -- also amended Unix date template to match nsd format
+
+- Enhancements:
+  - loglines now also report "[PID]" after the name portion
+
+
+ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
+-----------
+
+In light of CVE-2013-2178 that triggered our last release we have put
+a significant effort into tightening all of the regexs of our filters
+to avoid another similar vulnerability. All filters have been updated
+and some to catch more login/authentication failures and to support
+for newer application versions. There are test cases for most log
+cases of failures now.
+
+As usual, if you have other examples that demonstrate that a filter is
+insufficient, or if we have inadvertently introduced a regression,
+please provide us with example log lines on the github issue tracker
+http://github.com/fail2ban/fail2ban/issues and NOT on a random blog in
+some obscure corner of the Internet.
+
+Many thanks to our contributors for this release Daniel Black, Yaroslav
+Halchenko, Steven Hiscocks, Mark McKinstry, Andy Fragen, Orion Poplawski,
+Alexander Dietrich, JP Espinosa, Jamyn Shanley, Beau Raines, François
+Boulogne and others who have helped on IRC and mailing list, logged issues
+and bug requests.
+
+- IMPORTANT incompatible changes:
+  Filter name changes:
+   * 'lighttpd-fastcgi' filter has been renamed to 'suhosin'
+   * 'sasl' has been renamed to 'postfix-sasl'
+   * 'exim' spam catching failregexes was split out into 'exim-spam'
+  These changes will require changing jail.{conf,local} if any of
+  those filters were used.
+
+- Fixes:
+  Jonathan Lanning
+   * filter.d/asterisk -- identified another regex for blocking. Also channel
+     ID is hex not decimal as noted in sample logs provided.
   Daniel Black & Marcel Dopita
-   * filter.d/apache-auth -- fixed and apache auth samples provide. closes #286
+   * filter.d/apache-auth -- fixed and apache auth samples provide. Closes gh-286
   Yaroslav Halchenko
    * filter.d/common.conf -- make colon after [daemon] optional. Closes gh-267
    * filter.d/apache-common.conf -- support apache 2.4 more detailed error
@@ -30,28 +104,54 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
        mode has failed (e.g. due to incorrect syntax). Closes gh-353
   Daniel Black & Мернов Георгий
    * filter.d/dovecot.conf -- Fix when no TLS enabled - line doesn't end in ,
+  Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
+   * filter.d/exim.conf -- regex hardening and extra failure examples in
+     sample logs
+   * filter.d/named-refused.conf - BIND 9.9.3 regex changes
+  Daniel Black & Sebastian Arcus
+   * filter.d/asterisk -- more regexes
   Daniel Black
    * action.d/hostsdeny -- NOTE: new dependancy 'ed'. Switched to use 'ed' across
-     all platforms to ensure permissions are the same before and after a ban -
-     closes gh-266. hostsdeny supports daemon_list now too.
+     all platforms to ensure permissions are the same before and after a ban.
+     Closes gh-266. hostsdeny supports daemon_list now too.
+   * action.d/bsd-ipfw - action option unsed. Change blocktype to port unreach
+     instead of deny for consistancy.
+   * filter.d/dovecot - added to support different dovecot failure
+     "..disallowed plaintext auth". Closes Debian bug #709324
    * filter.d/roundcube-auth - timezone offset can be positive or negative
    * action.d/bsd-ipfw - action option unsed. Fixed to blocktype for
      consistency. default to port unreach instead of deny
+   * filter.d/dropbear - fix regexs to match standard dropbear and the patched
+     http://www.unchartedbackwaters.co.uk/files/dropbear/dropbear-0.52.patch
+     and add PAM is it in dropbear-2013.60 source code.
+   * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
+     and extra failure examples in sample logs
+   * filter.d/apache-auth - added expressions for mod_authz, mod_auth and
+     mod_auth_digest failures.
+   * filter.d/recidive -- support f2b syslog target and anchor regex at start
+   * filter.d/mysqld-auth.conf - mysql can use syslog
+   * filter.d/sshd - regex enhancements to support openssh-6.3. Closes Debian
+     bug #722970. Thanks Colin Watson for the regex analysis.
+   * filter.d/wuftpd - regex enhancements to support pam and wuftpd. Closes
+     Debian bug #665925
   Rolf Fokkens
    * action.d/dshield.conf and complain.conf -- reorder mailx arguments.
      https://bugzilla.redhat.com/show_bug.cgi?id=998020
   John Doe (ache)
    * action.d/bsd-ipfw.conf - invert actionstop logic to make exist status 0.
-     closes gh-343.
+     Closes gh-343.
   JP Espinosa (Reviewed by O.Poplawski)
    * files/redhat-initd - rewritten to use stock init.d functions thus
      avoiding problems with getpid.  Also $network and iptables moved
      to Should- rc init fields
+  Rick Mellor
+   * filter.d/vsftp - fix capture with tty=ftp
 
 - New Features:
   Edgar Hoch
-	 * action.d/firewall-cmd-direct-new.conf - action for firewalld
+   * action.d/firewall-cmd-direct-new.conf - action for firewalld
      from https://bugzilla.redhat.com/show_bug.cgi?id=979622
+     NOTE: requires firewalld-0.3.8+
   Andy Fragen and Daniel Black
    * filter.d/osx-ipfw.conf - ipfw action for OSX based on random rule
      numbers.
@@ -59,51 +159,41 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * action.d/osx-afctl - an action based on afctl for osx
   Daniel Black & ykimon
    * filter.d/3proxy.conf -- filter added
+   * fail2ban-regex - now generates http://www.debuggex.com urls for debugging
+     regular expressions with the -D parameter.
   Daniel Black
    * filter.d/exim-spam.conf -- a splitout of exim's spam regexes
      with additions for greater control over filtering spam.
    * add date expression for apache-2.4 - milliseconds
+   * filter.d/nginx-http-auth -- filter added for http basic authentication
+     failures in nginx. Partially fulfills gh-405.
   Christophe Carles & Daniel Black
    * filter.d/perdition.conf -- filter added
   Mark McKinstry
    * action.d/apf.conf - add action for Advanced Policy Firewall (apf)
   Amir Caspi and kjohnsonecl
    * filter.d/uwimap-auth - filter for uwimap-auth IMAP/POP server
+  Steven Hiscocks and Daniel Black
+   * filter.d/selinux-{common,ssh} -- add SELinux date and ssh filter
 
 - Enhancements:
   François Boulogne and Frédéric
    * filter.d/lighttpd - auth regexs for lighttpd-1.4.31
   Daniel Black
+   * reorder parsing of jail.conf, jail.d/*.conf, jail.local, jail.d/*.local
+     and likewise for fail2ban.{conf|local|d/*.conf|d/*.local}. Closes gh-392
    * jail.conf now has asterisk jail - no need for asterisk-tcp and
-	   asterisk-udp. Users should replace existing jails with asterisk to 
-		 reduce duplicate parsing of the asterisk log file.
-   * filter.d/suhosin - regex anchor at start
-   * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
-     and extra failure examples in sample logs
-   * filter.d/apache-auth - added expressions for mod_authz, mod_auth and
-     mod_auth_digest failures.
-   * filter.d/recidive -- support f2b syslog target and anchor regex at start
+     asterisk-udp. Users should replace existing jails with asterisk to
+     reduce duplicate parsing of the asterisk log file.
+   * filter.d/{suhosin,pam-generic,gssftpd,sogo-auth,webmin}- regex anchor at
+     start
    * filter.d/vsftpd - anchored regex at start. disable old pam format regex
    * filter.d/pam-generic - added syslog prefix. Disabled support for
      linux-pam before version 0.99.2.0 (2005)
-   * filter.d/gssftpd - anchored regex at start
-   * filter.d/sogo-auth - anchor regex at start
-   * filter.d/mysqld-auth.conf - mysql can use syslog
    * filter.d/postfix-sasl - renamed from sasl, anchor at start and base on
      syslog
-   * fail2ban-regex - now generates http://www.debuggex.com urls for debugging
-	 	 regular expressions with the -D parameter.
-   * filter.d/sshd - regex enhancements to support openssh-6.3. Closes Debian
-     bug #722970
-   * filter.d/webmin - anchored regex at start
    * filter.d/qmail - rewrote regex to anchor at start. Added regex for
      another "in the wild" patch to rblsmtp.
-  Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
-   * filter.d/exim.conf -- regex hardening and extra failure examples in
-     sample logs
-   * filter.d/named-refused.conf - BIND 9.9.3 regex changes
-  Daniel Black & Sebastian Arcus
-   * filter.d/asterisk -- more regexes
   Yaroslav Halchenko
    * fail2ban-regex -- refactored to provide more details (missing and
      ignored lines, control over logging, etc) while maintaining look&feel
@@ -114,6 +204,9 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * filter.d/roundcube-auth.conf -- anchored version
    * date matching - for standard asctime formats prefer more detailed
      first (thus use year if available)
+   * files/gen_badbots was added and filter.d/apache-badbots.conf was
+     regenerated to get updated (although now still an old) list of
+     "bad" bots
   Alexander Dietrich
    * action.d/sendmail-common.conf -- added common sendmail settings file
      and made the sender display name configurable
@@ -124,10 +217,8 @@ ver. 0.8.11 (2013/XX/XXX) - loves-unittests
    * filter/named-refused - added refused on zone transfer
    * filter.d/{courier{login,smtp},proftpd,sieve,wuftpd,xinetd} - General
      regex impovements
-   * IMPORTANT: 'lighttpd-fastcgi' filter has been renamed to 'suhosin', which
-     will require changing in jail.{conf,local} if using this filter.
   Zurd
-   * filter.d/postfix - add filter for VRFY failures. closes gh-322.
+   * filter.d/postfix - add filter for VRFY failures. Closes gh-322.
   Orion Poplawski
    * fail2ban.d/ and jail.d/ directories are added to etc/fail2ban to facilitate
      their use

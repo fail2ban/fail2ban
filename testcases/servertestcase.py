@@ -25,7 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import unittest, socket, time, tempfile, os, sys
-from server.server import Server
+from server.server import Server, logSys
 from server.jail import Jail
 from common.exceptions import UnknownJailException
 
@@ -520,6 +520,35 @@ class TransmitterLogging(TransmitterBase):
 		self.setGetTest("loglevel", "-1", -1)
 		self.setGetTest("loglevel", "0", 0)
 		self.setGetTestNOK("loglevel", "Bird")
+
+	def testFlushLogs(self):
+		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
+		try:
+			f, fn = tempfile.mkstemp("fail2ban.log")
+			os.close(f)
+			self.server.setLogLevel(2)
+			self.assertEqual(self.transm.proceed(["set", "logtarget", fn]), (0, fn))
+			logSys.warn("Before file moved")
+			try:
+				f2, fn2 = tempfile.mkstemp("fail2ban.log")
+				os.close(f2)
+				os.rename(fn, fn2)
+				logSys.warn("After file moved")
+				self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
+				logSys.warn("After flushlogs")
+				with open(fn2,'r') as f:
+					self.assertTrue(f.next().endswith("Before file moved\n"))
+					self.assertTrue(f.next().endswith("After file moved\n"))
+					self.assertRaises(StopIteration, f.next)
+				with open(fn,'r') as f:
+					self.assertTrue(f.next().endswith("After flushlogs\n"))
+					self.assertRaises(StopIteration, f.next)
+			finally:
+				os.remove(fn2)
+		finally:
+			os.remove(fn)
+		self.assertEqual(self.transm.proceed(["set", "logtarget", "STDERR"]), (0, "STDERR"))
+		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "flushed"))
 
 
 class JailTests(unittest.TestCase):

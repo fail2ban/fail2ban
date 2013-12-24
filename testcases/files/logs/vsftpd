@@ -10,3 +10,5 @@ Feb 6 12:02:29 server vsftpd(pam_unix)[15522]: authentication failure; logname= 
 # failJSON: { "time": "2007-01-19T12:20:33", "match": true , "host": "64.106.46.98" }
 Fri Jan 19 12:20:33 2007 [pid 27202] [anonymous] FAIL LOGIN: Client "64.106.46.98"
 
+# failJSON: { "time": "2004-10-23T21:15:42", "match": true , "host": "58.254.172.161" }
+Oct 23 21:15:42 vps vsftpd: pam_unix(vsftpd:auth): authentication failure; logname= uid=0 euid=0 tty=ftp ruser=test rhost=58.254.172.161

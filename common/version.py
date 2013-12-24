@@ -24,4 +24,4 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-version = "0.8.10.dev"
+version = "0.8.11.dev"

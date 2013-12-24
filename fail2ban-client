@@ -155,8 +155,9 @@ class Fail2banClient:
 					if showRet:
 						print beautifier.beautify(ret[1])
 				else:
-					logSys.debug("NOK: " + `ret[1].args`)
-					print beautifier.beautifyError(ret[1])
+					logSys.error("NOK: " + `ret[1].args`)
+					if showRet:
+						print beautifier.beautifyError(ret[1])
 					return False
 			except socket.error:
 				if showRet:

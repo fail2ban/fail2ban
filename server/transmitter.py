@@ -92,6 +92,8 @@ class Transmitter:
 			value = command[1]
 			time.sleep(int(value))
 			return None
+		elif command[0] == "flushlogs":
+			return self.__server.flushLogs()
 		elif command[0] == "set":
 			return self.__commandSet(command[1:])
 		elif command[0] == "get":
