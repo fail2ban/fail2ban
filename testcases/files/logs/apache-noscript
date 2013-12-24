@@ -13,3 +13,6 @@
 [Tue Jul 22 06:48:30 2008] [error] [client 198.51.100.86] script not found or unable to stat: /home/e-smith/files/ibays/Primary/cgi-bin/php.cgi
 # failJSON: { "time": "2008-07-22T06:48:30", "match": true , "host": "198.51.100.86" }
 [Tue Jul 22 06:48:30 2008] [error] [client 198.51.100.86] script not found or unable to stat: /home/e-smith/files/ibays/Primary/cgi-bin/php4
+# apache 2.4
+# failJSON: { "time": "2013-12-23T07:49:01", "match": true , "host": "204.232.202.107" }
+[Mon Dec 23 07:49:01.981912 2013] [:error] [pid 3790] [client 204.232.202.107:46301] script '/var/www/timthumb.php' not found or unable to stat
