@@ -171,7 +171,6 @@ class IgnoreIP(LogCaptureTestCase):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
 		for ip in ipList:
 			self.filter.addIgnoreIP(ip)
-
 			self.assertTrue(self.filter.inIgnoreIPList(ip))
 
 	def testIgnoreIPNOK(self):
@@ -200,6 +199,11 @@ class IgnoreIP(LogCaptureTestCase):
 		self.filter.addBannedIP('192.168.1.32')
 		self.assertFalse(self._is_logged('Ignore 192.168.1.32'))
 		self.assertTrue(self._is_logged('Requested to manually ban an ignored IP 192.168.1.32. User knows best. Proceeding to ban it.'))
+
+	def testIgnoreCommand(self):
+		self.filter.setIgnoreCommand("testcases/files/ignorecommand.py <ip>")
+		self.assertTrue(self.filter.inIgnoreIPList("10.0.0.1"))
+		self.assertFalse(self.filter.inIgnoreIPList("10.0.0.0"))
 
 
 class IgnoreIPDNS(IgnoreIP):

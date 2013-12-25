@@ -337,6 +337,9 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["set", self.jailName, "delignoreip", value]),
 			(0, [value]))
 
+	def testJailIgnoreCommand(self):
+		self.setGetTest("ignorecommand", "bin ", jail=self.jailName)
+
 	def testJailRegex(self):
 		self.jailAddDelRegexTest("failregex",
 			[
