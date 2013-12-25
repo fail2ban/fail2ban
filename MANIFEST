@@ -48,6 +48,7 @@ server/mytime.py
 server/failregex.py
 testcases/actionstestcase.py
 testcases/dummyjail.py
+testcases/files/ignorecommand.py
 testcases/files/testcase-usedns.log
 testcases/files/logs/bsd/syslog-plain.txt
 testcases/files/logs/bsd/syslog-v.txt
