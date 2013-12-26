@@ -93,8 +93,12 @@ class AddFailure(unittest.TestCase):
 		# finish with rudimentary tests of the ticket
 		# verify consistent str
 		ticket_str = str(ticket)
+		ticket_repr = repr(ticket)
 		self.assertEqual(
 			ticket_str,
+			'FailTicket: ip=193.168.0.128 time=1167605999.0 #attempts=5 matches=[]')
+		self.assertEqual(
+			ticket_repr,
 			'FailTicket: ip=193.168.0.128 time=1167605999.0 #attempts=5 matches=[]')
 		# and some get/set-ers otherwise not tested
 		ticket.setTime(1000002000.0)
