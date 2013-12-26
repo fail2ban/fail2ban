@@ -57,7 +57,8 @@ def commitandrollback(f):
 
 class Fail2BanDb(object):
 	__version__ = 2
-	_TABLE_fail2banDb = "CREATE TABLE fail2banDb(version INTEGER)"
+	# Note all _TABLE_* strings must end in ';' for py26 compatibility
+	_TABLE_fail2banDb = "CREATE TABLE fail2banDb(version INTEGER);"
 	_TABLE_jails = "CREATE TABLE jails(" \
 			"name TEXT NOT NULL UNIQUE, " \
 			"enabled INTEGER NOT NULL DEFAULT 1" \
