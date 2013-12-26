@@ -46,7 +46,7 @@ class DatabaseTest(unittest.TestCase):
 		# Cleanup
 		os.remove(self.dbFilename)
 
-	def getFilename(self):
+	def testGetFilename(self):
 		self.assertEqual(self.dbFilename, self.db.getFilename())
 
 	def testCreateInvalidPath(self):
