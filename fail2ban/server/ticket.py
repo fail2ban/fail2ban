@@ -46,9 +46,17 @@ class Ticket:
 		self.__matches = matches or []
 
 	def __str__(self):
-		return "%s: ip=%s time=%s #attempts=%d" % \
-			   (self.__class__.__name__.split('.')[-1], self.__ip, self.__time, self.__attempt)
-	
+		return "%s: ip=%s time=%s #attempts=%d matches=%r" % \
+			   (self.__class__.__name__.split('.')[-1], self.__ip, self.__time, self.__attempt, self.__matches)
+
+	def __repr__(self):
+		return str(self)
+
+	def __eq__(self, other):
+		return self.__ip == other.__ip and \
+				round(self.__time,2) == round(other.__time,2) and \
+				self.__attempt == other.__attempt and \
+				self.__matches == other.__matches
 
 	def setIP(self, value):
 		if isinstance(value, basestring):
