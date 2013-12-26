@@ -142,6 +142,13 @@ class DatabaseTest(unittest.TestCase):
 		self.assertTrue(
 			isinstance(self.db.getBans(jail=self.jail)[0], FailTicket))
 
+	def testGetBansWithTime(self):
+		self.testAddJail()
+		ticket = FailTicket("127.0.0.1", MyTime.time() - 40, ["abc\n"])
+		self.db.addBan(self.jail, ticket)
+		self.assertEquals(len(self.db.getBans(jail=self.jail,bantime=50)), 1)
+		self.assertEquals(len(self.db.getBans(jail=self.jail,bantime=20)), 0)
+
 	def testGetBansMerged(self):
 		self.testAddJail()
 
