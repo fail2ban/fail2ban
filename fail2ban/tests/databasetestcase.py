@@ -26,6 +26,7 @@ import os
 import unittest
 import tempfile
 import sqlite3
+import shutil
 
 from fail2ban.server.database import Fail2BanDb
 from fail2ban.server.filter import FileContainer
@@ -64,8 +65,16 @@ class DatabaseTest(unittest.TestCase):
 			"Jail not retained in Db after disconnect reconnect.")
 
 	def testUpdateDb(self):
-		# TODO: Currently only single version exists
-		pass
+		shutil.copyfile('fail2ban/tests/files/database_v1.db', self.dbFilename)
+		self.db = Fail2BanDb(self.dbFilename)
+		self.assertEqual(self.db.getJailNames(), {'DummyJail #29162448 with 0 tickets'})
+		self.assertEqual(self.db.getLogPaths(), {'/tmp/Fail2BanDb_pUlZJh.log'})
+		ticket = FailTicket("127.0.0.1", 1388009242.26, [u"abc\n"])
+		self.assertEqual(self.db.getBans()[0], ticket)
+
+		self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
+		self.assertRaises(NotImplementedError, self.db.updateDb, Fail2BanDb.__version__ + 1)
+		os.remove(self.db.dbBackupFilename)
 
 	def testAddJail(self):
 		self.jail = DummyJail()
@@ -83,6 +92,7 @@ class DatabaseTest(unittest.TestCase):
 		self.db.addLog(self.jail, self.fileContainer)
 
 		self.assertTrue(filename in self.db.getLogPaths(self.jail))
+		os.remove(filename)
 
 	def testUpdateLog(self):
 		self.testAddLog() # Add log file
@@ -121,6 +131,7 @@ class DatabaseTest(unittest.TestCase):
 		# last position in file
 		self.assertEqual(
 			self.db.addLog(self.jail, self.fileContainer), None)
+		os.remove(filename)
 
 	def testAddBan(self):
 		self.testAddJail()

@@ -77,6 +77,7 @@ fail2ban/tests/config/apache-auth/digest_anon/.htaccess
 fail2ban/tests/config/apache-auth/digest_anon/.htpasswd
 fail2ban/tests/config/apache-auth/README
 fail2ban/tests/config/apache-auth/noentry/.htaccess
+fail2ban/tests/files/database_v1.db
 fail2ban/tests/files/testcase01.log
 fail2ban/tests/files/testcase02.log
 fail2ban/tests/files/testcase03.log
