@@ -29,31 +29,45 @@ import unittest, socket, time, tempfile, os, locale, sys, logging
 from fail2ban.server.server import Server
 from fail2ban.server.jail import Jail
 from fail2ban.exceptions import UnknownJailException
+from fail2ban.tests.utils import LogCaptureTestCase
+#from bin.fail2ban-client import Fail2banClient
 try:
 	from fail2ban.server import filtersystemd
-except ImportError:
+except ImportError: # pragma: no cover
 	filtersystemd = None
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
-class StartStop(unittest.TestCase):
+class StartStop(LogCaptureTestCase):
 
 	def setUp(self):
-		"""Call before every test case."""
-		self.__server = Server()
-		self.__server.setLogLevel(0)
-		self.__server.start(False)
+		self.client = Fail2banClient()
+		LogCaptureTestCase.setUp(self)
+		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'transmitter')
+		os.close(sock_fd)
+		os.remove(sock_name)
+		pidfile_fd, pidfile_name = tempfile.mkstemp(
+			'fail2ban.pid', 'transmitter')
+		os.close(pidfile_fd)
+		os.remove(pidfile_name)
+		self.client.__getCmdLineOptions([
+			('-c', os.path.join('fail2ban', 'tests', 'config')),
+			('-s', sock_name),
+			('-p', pidfile_name)])
+		self.client.__startServerAsync(sock_name, pidfile_name, False)
+		self.client.__waitOnServer()
 
 	def tearDown(self):
-		"""Call after every test case."""
 		self.__server.quit()
+		LogCaptureTestCase.tearDown(self)
 	
 	def testStartStopJail(self):
 		name = "TestCase"
-		self.__server.addJail(name)
+		self.__server.addJail(name, "auto")
 		self.__server.startJail(name)
 		time.sleep(1)
 		self.__server.stopJail(name)
+		self.printLog()
 
 class TestServer(Server):
 	def setLogLevel(self, *args, **kwargs):
@@ -128,9 +142,6 @@ class TransmitterBase(unittest.TestCase):
 	def jailAddDelRegexTest(self, cmd, inValues, outValues, jail):
 		cmdAdd = "add" + cmd
 		cmdDel = "del" + cmd
-
-		if outValues is None:
-			outValues = inValues
 
 		self.assertEqual(
 			self.transm.proceed(["get", jail, cmd]), (0, []))
@@ -550,7 +561,7 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["status", "INVALID", "COMMAND"])[0],1)
 
 	def testJournalMatch(self):
-		if not filtersystemd:
+		if not filtersystemd: # pragma: no cover
 			if sys.version_info >= (2, 7):
 				raise unittest.SkipTest(
 					"systemd python interface not avilable")
@@ -650,8 +661,7 @@ class TransmitterLogging(TransmitterBase):
 
 		self.setGetTest("logtarget", "STDOUT")
 		self.setGetTest("logtarget", "STDERR")
-		if sys.platform.lower().startswith('linux'):
-			self.setGetTest("logtarget", "SYSLOG")
+		self.setGetTest("logtarget", "SYSLOG")
 
 	def testLogLevel(self):
 		self.setGetTest("loglevel", "4", 4)
