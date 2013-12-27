@@ -25,6 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import unittest, socket, time, tempfile, os, sys
+from server.failregex import Regex, FailRegex, RegexException
 from server.server import Server, logSys
 from server.jail import Jail
 from common.exceptions import UnknownJailException
@@ -561,3 +562,30 @@ class JailTests(unittest.TestCase):
 		longname = "veryveryverylongname"
 		jail = Jail(longname)
 		self.assertEqual(jail.getName(), longname)
+
+class RegexTests(unittest.TestCase):
+
+	def testInit(self):
+		# Should raise an Exception upon empty regex
+		self.assertRaises(RegexException, Regex, '')
+		self.assertRaises(RegexException, Regex, ' ')
+		self.assertRaises(RegexException, Regex, '\t')
+
+	def testStr(self):
+		# .replace just to guarantee uniform use of ' or " in the %r
+		self.assertEqual(str(Regex('a')).replace('"', "'"), "Regex('a')")
+		# Class name should be proper
+		self.assertTrue(str(FailRegex('<HOST>')).startswith("FailRegex("))
+
+	def testHost(self):
+		self.assertRaises(RegexException, FailRegex, '')
+		# Testing obscure case when host group might be missing in the matched pattern,
+		# e.g. if we made it optional.
+		fr = FailRegex('%%<HOST>?')
+		self.assertFalse(fr.hasMatched())
+		fr.search("%%")
+		self.assertTrue(fr.hasMatched())
+		self.assertRaises(RegexException, fr.getHost)
+
+
+

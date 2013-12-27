@@ -153,6 +153,7 @@ else: # pragma: no cover
 #tests.addTest(unittest.makeSuite(servertestcase.StartStop))
 tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
 tests.addTest(unittest.makeSuite(servertestcase.JailTests))
+tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
 tests.addTest(unittest.makeSuite(actiontestcase.ExecuteAction))
 tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
 # FailManager
