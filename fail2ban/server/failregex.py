@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import re, sre_constants
+import re, sre_constants, sys
 
 ##
 # Regular expression class.
@@ -136,8 +136,12 @@ class Regex:
 				if self._matchCache.group("skiplines%i" % n) is not None:
 					skippedLines += self._matchCache.group("skiplines%i" % n)
 				n += 1
+			except IndexError:
+				break
 			# KeyError is because of PyPy issue1665 affecting pypy <= 2.2.1 
-			except (IndexError, KeyError):
+			except KeyError:
+				if 'PyPy' not in sys.version: # pragma: no cover - not sure this is even reachable
+					raise
 				break
 		return skippedLines.splitlines(False)
 
