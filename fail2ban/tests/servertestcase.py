@@ -670,14 +670,14 @@ class TransmitterLogging(TransmitterBase):
 			self.server.setLogLevel(2)
 			self.assertEqual(self.transm.proceed(["set", "logtarget", fn]), (0, fn))
 			l = logging.getLogger('fail2ban.server.server').parent.parent
-			l.warn("Before file moved")
+			l.warning("Before file moved")
 			try:
 				f2, fn2 = tempfile.mkstemp("fail2ban.log")
 				os.close(f2)
 				os.rename(fn, fn2)
-				l.warn("After file moved")
+				l.warning("After file moved")
 				self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
-				l.warn("After flushlogs")
+				l.warning("After flushlogs")
 				with open(fn2,'r') as f:
 					line1 = f.next()
 					if line1.find('Changed logging target to') >= 0:

@@ -23,6 +23,7 @@ __license__ = "GPL"
 
 import logging
 import sys
+import shutil, time
 import sqlite3
 import json
 import locale
@@ -55,7 +56,40 @@ def commitandrollback(f):
 	return wrapper
 
 class Fail2BanDb(object):
-	__version__ = 1
+	__version__ = 2
+	# Note all _TABLE_* strings must end in ';' for py26 compatibility
+	_TABLE_fail2banDb = "CREATE TABLE fail2banDb(version INTEGER);"
+	_TABLE_jails = "CREATE TABLE jails(" \
+			"name TEXT NOT NULL UNIQUE, " \
+			"enabled INTEGER NOT NULL DEFAULT 1" \
+			");" \
+			"CREATE INDEX jails_name ON jails(name);"
+	_TABLE_logs = "CREATE TABLE logs(" \
+			"jail TEXT NOT NULL, " \
+			"path TEXT, " \
+			"firstlinemd5 TEXT, " \
+			"lastfilepos INTEGER DEFAULT 0, " \
+			"FOREIGN KEY(jail) REFERENCES jails(name) ON DELETE CASCADE, " \
+			"UNIQUE(jail, path)," \
+			"UNIQUE(jail, path, firstlinemd5)" \
+			");" \
+			"CREATE INDEX logs_path ON logs(path);" \
+			"CREATE INDEX logs_jail_path ON logs(jail, path);"
+			#TODO: systemd journal features \
+			#"journalmatch TEXT, " \
+			#"journlcursor TEXT, " \
+			#"lastfiletime INTEGER DEFAULT 0, " # is this easily available \
+	_TABLE_bans = "CREATE TABLE bans(" \
+			"jail TEXT NOT NULL, " \
+			"ip TEXT, " \
+			"timeofban INTEGER NOT NULL, " \
+			"data JSON, " \
+			"FOREIGN KEY(jail) REFERENCES jails(name) " \
+			");" \
+			"CREATE INDEX bans_jail_timeofban_ip ON bans(jail, timeofban);" \
+			"CREATE INDEX bans_jail_ip ON bans(jail, ip);" \
+			"CREATE INDEX bans_ip ON bans(ip);" \
+
 	def __init__(self, filename, purgeAge=24*60*60):
 		try:
 			self._db = sqlite3.connect(
@@ -85,8 +119,15 @@ class Fail2BanDb(object):
 		else:
 			version = cur.fetchone()[0]
 			if version < Fail2BanDb.__version__:
-				logSys.warning( "Database updated from '%i' to '%i'",
-					version, self.updateDb(version))
+				newversion = self.updateDb(version)
+				if newversion == Fail2BanDb.__version__:
+					logSys.warning( "Database updated from '%i' to '%i'",
+						version, newversion)
+				else:
+					logSys.error( "Database update failed to acheive version '%i'"
+						": updated from '%i' to '%i'",
+						Fail2BanDb.__version__, version, newversion)
+					raise Exception('Failed to fully update')
 		finally:
 			cur.close()
 
@@ -102,53 +143,37 @@ class Fail2BanDb(object):
 	@commitandrollback
 	def createDb(self, cur):
 		# Version info
-		cur.execute("CREATE TABLE fail2banDb(version INTEGER)")
+		cur.executescript(Fail2BanDb._TABLE_fail2banDb)
 		cur.execute("INSERT INTO fail2banDb(version) VALUES(?)",
 			(Fail2BanDb.__version__, ))
-
 		# Jails
-		cur.execute("CREATE TABLE jails("
-			"name TEXT NOT NULL UNIQUE, "
-			"enabled INTEGER NOT NULL DEFAULT 1"
-			")")
-		cur.execute("CREATE INDEX jails_name ON jails(name)")
-
+		cur.executescript(Fail2BanDb._TABLE_jails)
 		# Logs
-		cur.execute("CREATE TABLE logs("
-			"jail TEXT NOT NULL, "
-			"path TEXT, "
-			"firstlinemd5 TEXT, "
-			#TODO: systemd journal features
-			#"journalmatch TEXT, "
-			#"journlcursor TEXT, "
-			"lastfilepos INTEGER DEFAULT 0, "
-			#"lastfiletime INTEGER DEFAULT 0, " # is this easily available
-			"FOREIGN KEY(jail) REFERENCES jails(name) ON DELETE CASCADE, "
-			"UNIQUE(jail, path)"
-			")")
-		cur.execute("CREATE INDEX logs_path ON logs(path)")
-		cur.execute("CREATE INDEX logs_jail_path ON logs(jail, path)")
-
+		cur.executescript(Fail2BanDb._TABLE_logs)
 		# Bans
-		cur.execute("CREATE TABLE bans("
-			"jail TEXT NOT NULL, "
-			"ip TEXT, "
-			"timeofban INTEGER NOT NULL, "
-			"data JSON, "
-			"FOREIGN KEY(jail) REFERENCES jails(name) "
-			")")
-		cur.execute(
-			"CREATE INDEX bans_jail_timeofban_ip ON bans(jail, timeofban)")
-		cur.execute("CREATE INDEX bans_jail_ip ON bans(jail, ip)")
-		cur.execute("CREATE INDEX bans_ip ON bans(ip)")
+		cur.executescript(Fail2BanDb._TABLE_bans)
 
 		cur.execute("SELECT version FROM fail2banDb LIMIT 1")
 		return cur.fetchone()[0]
 
 	@commitandrollback
 	def updateDb(self, cur, version):
-		raise NotImplementedError(
-			"Only single version of database exists...how did you get here??")
+		self.dbBackupFilename = self._dbFilename + '.' + time.strftime('%Y%m%d-%H%M%S', MyTime.gmtime())
+		shutil.copyfile(self._dbFilename, self.dbBackupFilename)
+		if version > Fail2BanDb.__version__:
+			raise NotImplementedError(
+						"Attempt to travel to future version of database ...how did you get here??")
+
+		if version < 2:
+			cur.executescript("BEGIN TRANSACTION;"
+						"CREATE TEMPORARY TABLE logs_temp AS SELECT * FROM logs;"
+						"DROP TABLE logs;"
+						"%s;"
+						"INSERT INTO logs SELECT * from logs_temp;"
+						"DROP TABLE logs_temp;"
+						"UPDATE fail2banDb SET version = 2;"
+						"COMMIT;" % Fail2BanDb._TABLE_logs)
+
 		cur.execute("SELECT version FROM fail2banDb LIMIT 1")
 		return cur.fetchone()[0]
 
@@ -187,15 +212,15 @@ class Fail2BanDb(object):
 		try:
 			firstLineMD5, lastLinePos = cur.fetchone()
 		except TypeError:
-			cur.execute(
-				"INSERT INTO logs(jail, path, firstlinemd5, lastfilepos) "
+			firstLineMD5 = False
+
+		cur.execute(
+				"INSERT OR REPLACE INTO logs(jail, path, firstlinemd5, lastfilepos) "
 					"VALUES(?, ?, ?, ?)",
 				(jail.getName(), container.getFileName(),
 					container.getHash(), container.getPos()))
-		else:
-			if container.getHash() != firstLineMD5:
-				self._updateLog(cur, jail, container)
-				lastLinePos = None
+		if container.getHash() != firstLineMD5:
+			lastLinePos = None
 		return lastLinePos
 
 	@commitandrollback
