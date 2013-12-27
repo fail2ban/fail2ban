@@ -36,7 +36,7 @@ except ImportError:
 
 from fail2ban.server.jail import Jail
 from fail2ban.server.filterpoll import FilterPoll
-from fail2ban.server.filter import FileFilter, DNSUtils
+from fail2ban.server.filter import Filter, FileFilter, DNSUtils
 from fail2ban.server.failmanager import FailManager
 from fail2ban.server.failmanager import FailManagerEmpty
 from fail2ban.server.mytime import MyTime
@@ -202,6 +202,12 @@ class BasicFilter(unittest.TestCase):
 		self.filter.setUseDns(False)
 		self.assertEqual(self.filter.getUseDns(), 'no')
 
+	def testGetSetDatePattern(self):
+		self.assertEqual(self.filter.getDatePattern(), None)
+		self.filter.setDatePattern("^%Y-%m-%d-%H%M%S.%f %z")
+		self.assertEqual(self.filter.getDatePattern(),
+			("^%Y-%m-%d-%H%M%S.%f %z",
+			"Year-Month-Day-24hourMinuteSecond.Microseconds Zone offset"))
 
 class IgnoreIP(LogCaptureTestCase):
 

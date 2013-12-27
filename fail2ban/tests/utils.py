@@ -191,11 +191,12 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(databasetestcase.DatabaseTest))
 
 	# Filter
-	if not no_network:
-		tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
+	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
+	tests.addTest(unittest.makeSuite(filtertestcase.BasicFilter))
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
 	if not no_network:
+		tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIPDNS))
 		tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
 		tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
 	tests.addTest(unittest.makeSuite(filtertestcase.JailTests))
