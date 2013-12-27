@@ -540,13 +540,19 @@ class TransmitterLogging(TransmitterBase):
 				logSys.warn("After file moved")
 				self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
 				logSys.warn("After flushlogs")
-				with open(fn2,'r') as f:
+				# >py2.4: with open(fn2, 'r') as f:
+				f = open(fn2, 'r');
+				if True:
 					self.assertTrue(f.next().endswith("Before file moved\n"))
 					self.assertTrue(f.next().endswith("After file moved\n"))
 					self.assertRaises(StopIteration, f.next)
-				with open(fn,'r') as f:
+					f.close()
+				# >py2.4: with open(fn, 'r') as f:
+				f = open(fn, 'r');
+				if True:
 					self.assertTrue(f.next().endswith("After flushlogs\n"))
 					self.assertRaises(StopIteration, f.next)
+					f.close()
 			finally:
 				os.remove(fn2)
 		finally:
