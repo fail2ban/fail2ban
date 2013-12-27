@@ -136,7 +136,7 @@ class Regex:
 				if self._matchCache.group("skiplines%i" % n) is not None:
 					skippedLines += self._matchCache.group("skiplines%i" % n)
 				n += 1
-			# KeyError is because of PyPy
+			# KeyError is because of PyPy issue1665 affecting pypy <= 2.2.1 
 			except (IndexError, KeyError):
 				break
 		return skippedLines.splitlines(False)
