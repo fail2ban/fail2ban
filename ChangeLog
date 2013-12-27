@@ -63,6 +63,7 @@ code-review and minor additions from Yaroslav Halchenko.
 	 support these. ISO8601 now defaults to localtime unless specified otherwise.
 	 Some filters have been change as required to capture these elements in the
 	 right timezone correctly.
+   * Support PyPy
 
 ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
 -----------
