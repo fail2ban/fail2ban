@@ -109,24 +109,49 @@ class ExecuteAction(LogCaptureTestCase):
 			self.__action.replaceTag("abc",
 				{'callable': lambda: int("a")}), "abc")
 
-	def testExecuteActionBan(self):
+	def setupActionBanTests(self):
+
 		self.__action.setActionStart("touch /tmp/fail2ban.test")
-		self.assertEqual(self.__action.getActionStart(), "touch /tmp/fail2ban.test")
 		self.__action.setActionStop("rm -f /tmp/fail2ban.test")
-		self.assertEqual(self.__action.getActionStop(), 'rm -f /tmp/fail2ban.test')
 		self.__action.setActionBan("echo -n")
-		self.assertEqual(self.__action.getActionBan(), 'echo -n')
 		self.__action.setActionCheck("[ -e /tmp/fail2ban.test ]")
-		self.assertEqual(self.__action.getActionCheck(), '[ -e /tmp/fail2ban.test ]')
 		self.__action.setActionUnban("true")
+
+	def testActionGetSet(self):
+		self.setupActionBanTests()
+		self.assertEqual(self.__action.getActionStart(), "touch /tmp/fail2ban.test")
+		self.assertEqual(self.__action.getActionStop(), 'rm -f /tmp/fail2ban.test')
+		self.assertEqual(self.__action.getActionBan(), 'echo -n')
+		self.assertEqual(self.__action.getActionCheck(), '[ -e /tmp/fail2ban.test ]')
 		self.assertEqual(self.__action.getActionUnban(), 'true')
 
+	def testExecuteActionBanSuccess(self):
+		self.setupActionBanTests()
 		self.assertFalse(self._is_logged('returned'))
-		# no action was actually executed yet
-
+		self.assertTrue(self.__action.execActionStart())
 		self.assertTrue(self.__action.execActionBan(None))
+		self.assertTrue(self.__action.execActionStop())
+		self.assertTrue(self._is_logged('echo -n -- returned successfully'))
+
+	def testExecuteActionBanFailure(self):
+		self.setupActionBanTests()
+		self.__action.setActionBan("false")
+		self.assertFalse(self.__action.execActionBan(None))
+		self.assertTrue(self._is_logged('Command false failed. Running check before we restart'))
 		self.assertTrue(self._is_logged('Invariant check failed'))
-		self.assertTrue(self._is_logged('returned successfully'))
+		self.assertTrue(self._is_logged('rm -f /tmp/fail2ban.test -- returned successfully'))
+		self.assertTrue(self._is_logged('touch /tmp/fail2ban.test -- returned successfully'))
+		self.assertTrue(self._is_logged('Environment restored'))
+
+	def testExecuteActionBanFailureWorksAfterCheck(self):
+		self.setupActionBanTests()
+		self.assertTrue(self.__action.execActionStop())
+		self.__action.setActionBan("[ -e /tmp/fail2ban.test ]")
+		self.__action.setActionCheck("touch /tmp/fail2ban.test")
+		self.assertTrue(self.__action.execActionBan(None))
+		self.assertTrue(self._is_logged('Command [ -e /tmp/fail2ban.test ] failed. Running check before we restart'))
+		self.assertTrue(self._is_logged('Check ran ok, may as well retry once more'))
+		self.assertTrue(self._is_logged('[ -e /tmp/fail2ban.test ] -- returned successfully'))
 
 	def testExecuteActionEmptyUnban(self):
 		self.__action.setActionUnban("")

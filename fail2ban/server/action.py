@@ -348,15 +348,6 @@ class Action:
 			logSys.debug("Nothing to do")
 			return True
 		
-		checkCmd = Action.replaceTag(self.__actionCheck, self.__cInfo)
-		if not Action.executeCmd(checkCmd, self.__timeout):
-			logSys.error("Invariant check failed. Trying to restore a sane" +
-						 " environment")
-			self.execActionStop()
-			self.execActionStart()
-			if not Action.executeCmd(checkCmd, self.__timeout):
-				logSys.fatal("Unable to restore environment")
-				return False
 
 		# Replace tags
 		if not aInfo is None:
@@ -367,7 +358,24 @@ class Action:
 		# Replace static fields
 		realCmd = Action.replaceTag(realCmd, self.__cInfo)
 		
-		return Action.executeCmd(realCmd, self.__timeout)
+		ret = Action.executeCmd(realCmd, self.__timeout)
+		if not ret:
+			logSys.warn('Command %s failed. Running check before we restart' % realCmd)
+			checkCmd = Action.replaceTag(self.__actionCheck, self.__cInfo)
+			if not Action.executeCmd(checkCmd, self.__timeout):
+				logSys.error("Invariant check failed. Trying to restore a sane" +
+							 " environment")
+				self.execActionStop()
+				self.execActionStart()
+				if not Action.executeCmd(checkCmd, self.__timeout):
+					logSys.fatal("Unable to restore environment")
+					return False
+				logSys.warning('Environment restored')
+				ret = Action.executeCmd(realCmd, self.__timeout)
+			else:
+				logSys.warning('Check ran ok, may as well retry once more')
+				ret = Action.executeCmd(realCmd, self.__timeout)
+		return ret
 
 	##
 	# Executes a command.
