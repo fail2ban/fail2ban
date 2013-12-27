@@ -31,7 +31,7 @@ from fail2ban.server.jail import Jail
 from fail2ban.exceptions import UnknownJailException
 try:
 	from fail2ban.server import filtersystemd
-except ImportError:
+except ImportError: # pragma: no cover
 	filtersystemd = None
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
@@ -128,9 +128,6 @@ class TransmitterBase(unittest.TestCase):
 	def jailAddDelRegexTest(self, cmd, inValues, outValues, jail):
 		cmdAdd = "add" + cmd
 		cmdDel = "del" + cmd
-
-		if outValues is None:
-			outValues = inValues
 
 		self.assertEqual(
 			self.transm.proceed(["get", jail, cmd]), (0, []))
@@ -550,7 +547,7 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["status", "INVALID", "COMMAND"])[0],1)
 
 	def testJournalMatch(self):
-		if not filtersystemd:
+		if not filtersystemd: # pragma: no cover
 			if sys.version_info >= (2, 7):
 				raise unittest.SkipTest(
 					"systemd python interface not avilable")
@@ -650,8 +647,7 @@ class TransmitterLogging(TransmitterBase):
 
 		self.setGetTest("logtarget", "STDOUT")
 		self.setGetTest("logtarget", "STDERR")
-		if sys.platform.lower().startswith('linux'):
-			self.setGetTest("logtarget", "SYSLOG")
+		self.setGetTest("logtarget", "SYSLOG")
 
 	def testLogLevel(self):
 		self.setGetTest("loglevel", "4", 4)
