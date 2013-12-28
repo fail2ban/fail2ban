@@ -50,6 +50,7 @@ code-review and minor additions from Yaroslav Halchenko.
    Daniel Black
    * Added action xarf-login-attack to report formatted attack messages
      according to the XARF standard (v0.2). Close gh-105
+   * Add filter for apache-modsecurity
 
 - Enhancements
   Steven Hiscocks
