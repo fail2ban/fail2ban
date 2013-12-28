@@ -199,8 +199,10 @@ class Filter(JailThread):
 	# @param pattern the date template pattern
 
 	def setDatePattern(self, pattern):
-		dateDetector = DateDetector()
-		if pattern.upper() == "ISO8601":
+		if pattern is None:
+			self.dateDetector = None
+			return
+		elif pattern.upper() == "ISO8601":
 			template = DateISO8601()
 			template.setName("ISO8601")
 		elif pattern.upper() == "EPOCH":
@@ -215,8 +217,8 @@ class Filter(JailThread):
 				template.setPattern(pattern[1:], anchor=True)
 			else:
 				template.setPattern(pattern, anchor=False)
-		dateDetector.appendTemplate(template)
-		self.dateDetector = dateDetector
+		self.dateDetector = DateDetector()
+		self.dateDetector.appendTemplate(template)
 		logSys.info("Date pattern set to `%r`: `%s`" %
 			(pattern, template.getName()))
 		logSys.debug("Date pattern regex for %r: %s" %
@@ -228,17 +230,18 @@ class Filter(JailThread):
 	# @return pattern of the date template pattern
 
 	def getDatePattern(self):
-		templates = self.dateDetector.getTemplates()
-		if len(templates) > 1:
-			return None # Default Detectors in use
-		elif len(templates) == 1:
-			if hasattr(templates[0], "getPattern"):
-				pattern =  templates[0].getPattern()
-				if templates[0].getRegex()[0] == "^":
-					pattern = "^" + pattern
-			else:
-				pattern = None
-			return pattern, templates[0].getName()
+		if self.dateDetector is not None:
+			templates = self.dateDetector.getTemplates()
+			if len(templates) > 1:
+				return None, "Default Detectors"
+			elif len(templates) == 1:
+				if hasattr(templates[0], "getPattern"):
+					pattern =  templates[0].getPattern()
+					if templates[0].getRegex()[0] == "^":
+						pattern = "^" + pattern
+				else:
+					pattern = None
+				return pattern, templates[0].getName()
 
 	##
 	# Set the maximum retry value.
@@ -361,28 +364,32 @@ class Filter(JailThread):
 		return False
 
 
-	def processLine(self, line, returnRawHost=False, checkAllRegex=False):
+	def processLine(self, line, date=None, returnRawHost=False,
+		checkAllRegex=False):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
-		l = line.rstrip('\r\n')
-		logSys.log(7, "Working on line %r", line)
-
-		timeMatch = self.dateDetector.matchTime(l)
-		if timeMatch:
-			tupleLine  = (
-				l[:timeMatch.start()],
-				l[timeMatch.start():timeMatch.end()],
-				l[timeMatch.end():])
+		if date:
+			tupleLine = line
 		else:
-			tupleLine = (l, "", "")
+			l = line.rstrip('\r\n')
+			logSys.log(7, "Working on line %r", line)
+
+			timeMatch = self.dateDetector.matchTime(l)
+			if timeMatch:
+				tupleLine  = (
+					l[:timeMatch.start()],
+					l[timeMatch.start():timeMatch.end()],
+					l[timeMatch.end():])
+			else:
+				tupleLine = (l, "", "")
 
 		return "".join(tupleLine[::2]), self.findFailure(
-			tupleLine, returnRawHost, checkAllRegex)
+			tupleLine, date, returnRawHost, checkAllRegex)
 
-	def processLineAndAdd(self, line):
+	def processLineAndAdd(self, line, date=None):
 		"""Processes the line for failures and populates failManager
 		"""
-		for element in self.processLine(line)[1]:
+		for element in self.processLine(line, date)[1]:
 			failregex = element[0]
 			ip = element[1]
 			unixTime = element[2]
@@ -421,7 +428,8 @@ class Filter(JailThread):
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, tupleLine, returnRawHost=False, checkAllRegex=False):
+	def findFailure(self, tupleLine, date=None, returnRawHost=False,
+		checkAllRegex=False):
 		failList = list()
 
 		# Checks if we must ignore this line.
@@ -432,7 +440,10 @@ class Filter(JailThread):
 			return failList
 
 		timeText = tupleLine[1]
-		if timeText:
+		if date:
+			self.__lastTimeText = timeText
+			self.__lastDate = date
+		elif timeText:
 
 			dateTimeMatch = self.dateDetector.getTime(timeText)
 
