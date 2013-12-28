@@ -203,7 +203,8 @@ class BasicFilter(unittest.TestCase):
 		self.assertEqual(self.filter.getUseDns(), 'no')
 
 	def testGetSetDatePattern(self):
-		self.assertEqual(self.filter.getDatePattern(), None)
+		self.assertEqual(self.filter.getDatePattern(),
+			(None, "Default Detectors"))
 		self.filter.setDatePattern("^%Y-%m-%d-%H%M%S.%f %z")
 		self.assertEqual(self.filter.getDatePattern(),
 			("^%Y-%m-%d-%H%M%S.%f %z",
