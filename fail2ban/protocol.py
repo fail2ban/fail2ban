@@ -58,7 +58,7 @@ protocol = [
 ["set <JAIL> idle on|off", "sets the idle state of <JAIL>"], 
 ["set <JAIL> addignoreip <IP>", "adds <IP> to the ignore list of <JAIL>"], 
 ["set <JAIL> delignoreip <IP>", "removes <IP> from the ignore list of <JAIL>"], 
-["set <JAIL> addlogpath <FILE>", "adds <FILE> to the monitoring list of <JAIL>"], 
+["set <JAIL> addlogpath <FILE> ['tail']", "adds <FILE> to the monitoring list of <JAIL>, optionally starting at the 'tail' of the file (default 'head')."], 
 ["set <JAIL> dellogpath <FILE>", "removes <FILE> from the monitoring list of <JAIL>"],
 ["set <JAIL> logencoding <ENCODING>", "sets the <ENCODING> of the log files for <JAIL>"],
 ["set <JAIL> addjournalmatch <MATCH>", "adds <MATCH> to the journal filter of <JAIL>"],

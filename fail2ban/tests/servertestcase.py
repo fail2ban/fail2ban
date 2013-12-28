@@ -357,6 +357,22 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "dellogpath", value]),
 			(0, []))
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "addlogpath", value, "tail"]),
+			(0, [value]))
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "addlogpath", value, "head"]),
+			(0, [value]))
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "addlogpath", value, "badger"])[0],
+			1)
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "addlogpath", value, value, value])[0],
+			1)
 
 	def testJailLogPathInvalidFile(self):
 		# Invalid file

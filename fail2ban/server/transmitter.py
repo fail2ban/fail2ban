@@ -149,9 +149,16 @@ class Transmitter:
 			self.__server.delIgnoreIP(name, value)
 			return self.__server.getIgnoreIP(name)
 		elif command[1] == "addlogpath":
-			value = command[2:]
-			for path in value:
-				self.__server.addLogPath(name, path)
+			value = command[2]
+			tail = False
+			if len(command) == 4:
+				if command[3].lower()  == "tail":
+					tail = True
+				elif command[3].lower() != "head":
+					raise ValueError("File option must be 'head' or 'tail'")
+			elif len(command) > 4:
+				raise ValueError("Only one file can be added at a time")
+			self.__server.addLogPath(name, value, tail)
 			return self.__server.getLogPath(name)
 		elif command[1] == "dellogpath":
 			value = command[2]
