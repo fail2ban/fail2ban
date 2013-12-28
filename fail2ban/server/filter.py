@@ -816,7 +816,7 @@ class DNSUtils:
 			Thanks to Kevin Drapel.
 		"""
 		try:
-			return socket.gethostbyname_ex(dns)[2]
+			return set(socket.gethostbyname_ex(dns)[2])
 		except socket.error, e:
 			logSys.warn("Unable to find a corresponding IP address for %s: %s"
 						% (dns, e))
