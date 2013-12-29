@@ -175,10 +175,10 @@ class Server:
 	def getIgnoreIP(self, name):
 		return self.__jails.getFilter(name).getIgnoreIP()
 	
-	def addLogPath(self, name, fileName):
+	def addLogPath(self, name, fileName, tail=False):
 		filter_ = self.__jails.getFilter(name)
 		if isinstance(filter_, FileFilter):
-			filter_.addLogPath(fileName)
+			filter_.addLogPath(fileName, tail)
 	
 	def delLogPath(self, name, fileName):
 		filter_ = self.__jails.getFilter(name)
