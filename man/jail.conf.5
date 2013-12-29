@@ -71,6 +71,11 @@ The following options are applicable to all jails. Their meaning is described in
 \fBaction\fR 
 .TP
 \fBignoreip\fR 
+A space separated list of IPs not to ban.
+.TP
+\fBignorecommand\fR
+A command that is executed to determine if the current ban's actionban is to be executed. This command will return true if the current ban should be ignored. A false return value will result in the ban's actionban executed.
+Like ACTION FILES, tags like <ip> are can be included in the ignore command value and will be substitued before execution. Currently only <ip> is supported however more will be added later.
 .TP
 \fBbantime\fR
 .TP

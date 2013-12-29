@@ -82,7 +82,7 @@ class DateEpoch(DateTemplate):
 	
 	def __init__(self):
 		DateTemplate.__init__(self)
-		self.setRegex("(?:^|(?P<selinux>(?<=audit\()))\d{10}(?:\.\d{3,6})?(?(selinux)(?=:\d+\)))")
+		self.setRegex("(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=audit\()))\d{10}(?:\.\d{3,6})?(?(selinux)(?=:\d+\))(?(square)(?=\])))")
 	
 	def getDate(self, line):
 		dateMatch = self.matchDate(line)

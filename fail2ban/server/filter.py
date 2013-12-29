@@ -21,8 +21,6 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import sys
-
 from failmanager import FailManagerEmpty
 from failmanager import FailManager
 from ticket import FailTicket
@@ -31,6 +29,7 @@ from datedetector import DateDetector
 from datetemplate import DatePatternRegex, DateISO8601, DateEpoch, DateTai64n
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
+from action import Action
 
 import logging, re, os, fcntl, time, sys, locale, codecs
 
@@ -75,6 +74,8 @@ class Filter(JailThread):
 		## Store last time stamp, applicable for multi-line
 		self.__lastTimeText = ""
 		self.__lastDate = None
+		## External command
+		self.__ignoreCommand = False
 
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
@@ -290,6 +291,20 @@ class Filter(JailThread):
 		raise Exception("run() is abstract")
 
 	##
+	# Set external command, for ignoredips
+	#
+
+	def setIgnoreCommand(self, command):
+		self.__ignoreCommand = command
+
+	##
+	# Get external command, for ignoredips
+	#
+
+	def getIgnoreCommand(self):
+		return self.__ignoreCommand
+
+	##
 	# Ban an IP - http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
 	# Arturo 'Buanzo' Busleiman <buanzo@buanzo.com.ar>
 	#
@@ -361,6 +376,12 @@ class Filter(JailThread):
 					continue
 			if a == b:
 				return True
+
+		if self.__ignoreCommand:
+			command = Action.replaceTag(self.__ignoreCommand, { 'ip': ip } )
+			logSys.debug('ignore command: ' + command)
+			return Action.executeCmd(command)
+
 		return False
 
 

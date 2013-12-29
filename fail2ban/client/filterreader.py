@@ -35,6 +35,7 @@ class FilterReader(DefinitionInitConfigReader):
 	_configOpts = [
 		["string", "ignoreregex", ""],
 		["string", "failregex", ""],
+        ["string", "ignorecommand", ""],
 	]
 
 	def read(self):

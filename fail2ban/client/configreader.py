@@ -138,12 +138,13 @@ class DefinitionInitConfigReader(ConfigReader):
 	
 	def __init__(self, file_, jailName, initOpts, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
-		self._file = file_
-		self._jailName = jailName
+		self.setFile(file_)
+		self.setJailName(jailName)
 		self._initOpts = initOpts
 	
 	def setFile(self, fileName):
 		self._file = fileName
+		self._initOpts = {}
 	
 	def getFile(self):
 		return self._file

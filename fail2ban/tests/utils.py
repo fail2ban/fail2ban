@@ -145,6 +145,7 @@ def gatherTests(regexps=None, no_network=False):
 	from fail2ban.tests import servertestcase
 	from fail2ban.tests import datedetectortestcase
 	from fail2ban.tests import actiontestcase
+	from fail2ban.tests import actionstestcase
 	from fail2ban.tests import sockettestcase
 	from fail2ban.tests import misctestcase
 	from fail2ban.tests import databasetestcase
@@ -170,7 +171,9 @@ def gatherTests(regexps=None, no_network=False):
 	#tests.addTest(unittest.makeSuite(servertestcase.StartStop))
 	tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
 	tests.addTest(unittest.makeSuite(servertestcase.JailTests))
+	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
 	tests.addTest(unittest.makeSuite(actiontestcase.ExecuteAction))
+	tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
 	# FailManager
 	tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 	# BanManager
@@ -195,6 +198,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(filtertestcase.BasicFilter))
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
+	tests.addTest(unittest.makeSuite(filtertestcase.LogFileFilterPoll))
 	if not no_network:
 		tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIPDNS))
 		tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
