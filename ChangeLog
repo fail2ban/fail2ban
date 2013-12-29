@@ -43,6 +43,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - filter apache-noscript now includes php cgi scripts.
     Thanks dani. Closes gh-503
   - added ufw action. Thanks Guilhem Lettron. lp-#701522
+  - exim-spam include spamassassin log entry. Thanks Ivo Truxa. Closes gh-533
 
 - New Features:
 
