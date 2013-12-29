@@ -753,7 +753,7 @@ class RegexTests(unittest.TestCase):
 		# e.g. if we made it optional.
 		fr = FailRegex('%%<HOST>?')
 		self.assertFalse(fr.hasMatched())
-		fr.search(("%%",))
+		fr.search([('%%',"","")])
 		self.assertTrue(fr.hasMatched())
 		self.assertRaises(RegexException, fr.getHost)
 
