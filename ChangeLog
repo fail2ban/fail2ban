@@ -29,6 +29,8 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - Fix firewall-cmd actioncheck - patch from Adam Tkac. Redhat Bug #979622
   - Fix apache-common for apache-2.4 log file format. Thanks Mark White.
     Closes gh-516
+  - Asynchat changed to use push method which verifys whether all data was
+	  send. This ensures that all data is sent before closing the connection.
 
 - Enhancements:
   - added firewallcmd-ipset action
