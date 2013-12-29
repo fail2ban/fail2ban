@@ -59,7 +59,6 @@ class FilterReader(ConfigReader):
 	def getOptions(self, pOpts):
 		opts = [["string", "ignoreregex", ""],
 				["string", "failregex", ""],
-				["string", "ignorecommand", ""]
 				]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
 	
