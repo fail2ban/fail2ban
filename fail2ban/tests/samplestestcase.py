@@ -66,6 +66,7 @@ def testSampleRegexsFactory(name):
 
 		# Check filter exists
 		filterConf = FilterReader(name, "jail", {}, basedir=CONFIG_DIR)
+		self.assertEqual(filterConf.getFile(), name)
 		filterConf.read()
 		filterConf.getOptions({})
 
@@ -76,10 +77,6 @@ def testSampleRegexsFactory(name):
 				self.filter.setMaxLines(opt[3])
 			elif opt[2] == "addignoreregex":
 				self.filter.addIgnoreRegex(opt[3])
-
-		if not self.filter.getFailRegex():
-			# No fail regexs set: likely just common file for includes.
-			return
 
 		self.assertTrue(
 			os.path.isfile(os.path.join(TEST_FILES_DIR, "logs", name)),

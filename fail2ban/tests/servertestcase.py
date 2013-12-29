@@ -26,7 +26,8 @@ __license__ = "GPL"
 
 import unittest, socket, time, tempfile, os, locale, sys, logging
 
-from fail2ban.server.server import Server
+from fail2ban.server.failregex import Regex, FailRegex, RegexException
+from fail2ban.server.server import Server, logSys
 from fail2ban.server.jail import Jail
 from fail2ban.exceptions import UnknownJailException
 from fail2ban.tests.utils import LogCaptureTestCase
@@ -419,6 +420,9 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["set", self.jailName, "delignoreip", value]),
 			(0, [value]))
 
+	def testJailIgnoreCommand(self):
+		self.setGetTest("ignorecommand", "bin ", jail=self.jailName)
+
 	def testJailRegex(self):
 		self.jailAddDelRegexTest("failregex",
 			[
@@ -725,6 +729,7 @@ class TransmitterLogging(TransmitterBase):
 						line1 = f.next()
 					self.assertTrue(line1.endswith("After flushlogs\n"))
 					self.assertRaises(StopIteration, f.next)
+					f.close()
 			finally:
 				os.remove(fn2)
 		finally:
@@ -743,3 +748,30 @@ class JailTests(unittest.TestCase):
 		longname = "veryveryverylongname"
 		jail = Jail(longname)
 		self.assertEqual(jail.getName(), longname)
+
+class RegexTests(unittest.TestCase):
+
+	def testInit(self):
+		# Should raise an Exception upon empty regex
+		self.assertRaises(RegexException, Regex, '')
+		self.assertRaises(RegexException, Regex, ' ')
+		self.assertRaises(RegexException, Regex, '\t')
+
+	def testStr(self):
+		# .replace just to guarantee uniform use of ' or " in the %r
+		self.assertEqual(str(Regex('a')).replace('"', "'"), "Regex('a')")
+		# Class name should be proper
+		self.assertTrue(str(FailRegex('<HOST>')).startswith("FailRegex("))
+
+	def testHost(self):
+		self.assertRaises(RegexException, FailRegex, '')
+		# Testing obscure case when host group might be missing in the matched pattern,
+		# e.g. if we made it optional.
+		fr = FailRegex('%%<HOST>?')
+		self.assertFalse(fr.hasMatched())
+		fr.search([('%%',"","")])
+		self.assertTrue(fr.hasMatched())
+		self.assertRaises(RegexException, fr.getHost)
+
+
+

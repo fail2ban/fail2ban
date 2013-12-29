@@ -7,3 +7,4 @@ htmlcov
 *.orig
 *.rej
 *.bak
+__pycache__

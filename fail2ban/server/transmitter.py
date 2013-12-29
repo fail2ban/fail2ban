@@ -148,6 +148,10 @@ class Transmitter:
 			value = command[2]
 			self.__server.delIgnoreIP(name, value)
 			return self.__server.getIgnoreIP(name)
+		elif command[1] == "ignorecommand":
+			value = command[2]
+			self.__server.setIgnoreCommand(name, value)
+			return self.__server.getIgnoreCommand(name)
 		elif command[1] == "addlogpath":
 			value = command[2]
 			tail = False
@@ -303,6 +307,8 @@ class Transmitter:
 			return self.__server.getJournalMatch(name)
 		elif command[1] == "ignoreip":
 			return self.__server.getIgnoreIP(name)
+		elif command[1] == "ignorecommand":
+			return self.__server.getIgnoreCommand(name)
 		elif command[1] == "failregex":
 			return self.__server.getFailRegex(name)
 		elif command[1] == "ignoreregex":

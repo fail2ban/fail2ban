@@ -86,6 +86,8 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - complain action - ensure where not matching other IPs in log sample.
     Closes gh-467
   - Fix firewall-cmd actioncheck - patch from Adam Tkac. Redhat Bug #979622
+  - Fix apache-common for apache-2.4 log file format. Thanks Mark White.
+    Closes gh-516
 
 - Enhancements:
   - long names on jails documented based on iptables limit of 30 less
@@ -93,11 +95,16 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - remove indentation of name and loglevel while logging to SYSLOG to
     resolve syslog(-ng) parsing problems. Closes Debian bug #730202.
   - added squid filter. Thanks Roman Gelfand.
+  - updated check_fail2ban to return performance data for all jails.
+  - filter apache-noscript now includes php cgi scripts.
+    Thanks dani. Closes gh-503
 
 - New Features:
 
   Daniel Black
    * filter.d/solid-pop3d -- added thanks to Jacques Lav!gnotte on mailinglist.
+  Bas van den Dikkenberg & Steven Hiscocks
+   * filter.d/nsd.conf -- also amended Unix date template to match nsd format
 
 - Enhancements:
   - loglines now also report "[PID]" after the name portion
