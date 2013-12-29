@@ -77,7 +77,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - allow for ",milliseconds" in the custom date format of proftpd.log
   - allow for ", referer ..." in apache-* filter for apache error logs.
   - allow for spaces at the beginning of kernel messages. Closes gh-448
-  - recidive jail to block all protocols. Closes gh-440. Thanksg Ioan Indreias
+  - recidive jail to block all protocols. Closes gh-440. Thanks Ioan Indreias
   - smtps not a IANA standard and has been removed from Arch. Replaced with
     465. Thanks Stefan. Closes gh-447
   - mysqld-syslog-iptables rule was too long. Part of gh-447.
