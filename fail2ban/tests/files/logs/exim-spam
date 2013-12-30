@@ -14,4 +14,12 @@
 2013-06-15 11:20:36 [2516] 1Unmew-0000ea-SE H=egeftech.static.otenet.gr [83.235.177.148]:32706 I=[1.2.3.4]:25 F=auguriesvbd40@google.com rejected after DATA: This message contains a virus (Sanesecurity.Junk.39934.UNOFFICIAL).
 # failJSON: { "time": "2013-06-16T02:50:43", "match": true , "host": "111.67.203.114" }
 2013-06-16 02:50:43 H=dbs.marsukov.com [111.67.203.114] F=<trudofspiori@mail.ru> rejected RCPT <info@nanomedtech.ua>: rejected because 111.67.203.114 is in a black list at dnsbl.sorbs.net\nCurrently Sending Spam See: http://www.sorbs.net/lookup.shtml?111.67.203.114
-
+# https://github.com/fail2ban/fail2ban/issues/533
+# failJSON: { "time": "2013-12-29T15:34:12", "match": true , "host": "188.76.45.72" }
+2013-12-29 15:34:12 1VxHRO-000NiI-Ly SA: Action: silently tossed message: score=31.0 required=5.0 trigger=30.0 (scanned in 6/6 secs | Message-Id: etPan.09bd0c40.c3d5f675.fdf7@server.local). From <Flossiedpd@jazztel.es> (host=72.45.76.188.dynamic.jazztel.es [188.76.45.72]) for me@my.com
+# failJSON: { "time": "2013-12-29T15:39:11", "match": true , "host": "178.123.108.196" }
+2013-12-29 15:39:11 1VxHWD-000NuW-83 SA: Action: silently tossed message: score=35.8 required=5.0 trigger=30.0 (scanned in 6/6 secs | Message-Id: 1VxHWD-000NuW-83). From <> (host=NULL [178.123.108.196]) for me@my.com
+# https://github.com/fail2ban/fail2ban/issues/541
+# failJSON: { "time": "2013-12-30T00:24:50", "match": true , "host": "178.123.108.196" }
+2013-12-30 00:24:50 1VxPit-000MMd-U4 SA: Action: flagged as Spam but accepted: score=8.2 required=5.0 (scanned in 6/6 secs | Message-Id: 008701cf04ed_24497d70_6cdc7850_@xxx.xx). From <spammer@xxx.xx> (host=ip-4.net-3-2-1.rev.xxx.xx [178.123.108.196]) for trap@my.com
+ 
