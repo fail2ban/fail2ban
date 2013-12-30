@@ -63,6 +63,7 @@ testcases/files/logs/suhosin
 testcases/files/logs/mysqld-auth
 testcases/files/logs/named-refused
 testcases/files/logs/nginx-http-auth
+testcases/files/logs/openwebmail
 testcases/files/logs/pam-generic
 testcases/files/logs/postfix
 testcases/files/logs/proftpd
@@ -150,6 +151,7 @@ config/filter.d/exim.conf
 config/filter.d/gssftpd.conf
 config/filter.d/suhosin.conf
 config/filter.d/named-refused.conf
+config/filter.d/openwebmail.conf
 config/filter.d/postfix.conf
 config/filter.d/proftpd.conf
 config/filter.d/pure-ftpd.conf
