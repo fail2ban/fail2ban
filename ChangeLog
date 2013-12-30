@@ -4,25 +4,30 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.9.0a2)                                            2013/??/??
+Fail2Ban (version 0.9.0a2)                                            2014/??/??
 ================================================================================
 
 
-ver. 0.9.0 (2013/??/??) - alpha
+ver. 0.9.0 (2014/??/??) - alpha
 ----------
 
-Carries all fixes in 0.8.9 and new features and enhancements.  Nearly
-all development is thanks to Steven Hiscocks (THANKS!) with only
-code-review and minor additions from Yaroslav Halchenko.
+Carries all fixes, features and enhancements from 0.8.12 with major changes.
+Nearly all development is thanks to Steven Hiscocks (THANKS!), merging,
+testcases and timezone support from Daniel Black, and code-review and minor
+additions from Yaroslav Halchenko.
+
+The minimum supported python version is now 2.6. If you have python-2.4 or 2.5
+you can use the 0.8.12 version of fail2ban.
+
+Major changes have occured since version 0.8.12. Please test your
+configuration before relying on it.
 
 - Refactoring (IMPORTANT -- Please review your setup and configuration):
-  Yaroslav Halchenko
    * [..bddbf1e] jail.conf was heavily refactored and now is similar
      to how it looked on Debian systems:
      - default action could be configured once for all jails
      - jails definitions only provide customizations (port, logpath)
      - no need to specify 'filter' if name matches jail name
-  Steven Hiscocks
    * [..5aef036] Core functionality moved into fail2ban/ module.
      Closes gh-26
    * Added fail2ban persistent database
@@ -34,37 +39,32 @@ code-review and minor additions from Yaroslav Halchenko.
      - New "journalmatch" option added to filter configs files
      - New "systemd-journal" option added to fail2ban-regex
    * Added python3 support
+   * Support %z (Timezone offset) and %f (sub-seconds) support for
+     datedetector. Enhanced existing date/time have been updated patterns to
+     support these. ISO8601 now defaults to localtime unless specified otherwise.
+     Some filters have been change as required to capture these elements in the
+     right timezone correctly.
+
 - New features:
-  Steven Hiscocks
    * [..c7ae460] Multiline failregex. Close gh-54
    * [8af32ed] Guacamole filter and support for Apache Tomcat date
      format
    * [..b6059f4] 'timeout' option for actions Close gh-60 and Debian bug
      #410077.  Also it would now capture and include stdout and stderr
      into logging messages in case of error or at DEBUG loglevel.
-   Daniel Black and TESTOVIK
-   * Multiline filter for sendmail-spam. Close gh-418
-   Daniel Black and John Thoe
-   * Multiline regex for Disconnecting: Too many authentication failures for
-     root [preauth]\nConnection closed by 6X.XXX.XXX.XXX [preauth]
-   Daniel Black
    * Added action xarf-login-attack to report formatted attack messages
      according to the XARF standard (v0.2). Close gh-105
    * Add filter for apache-modsecurity
+   * Support PyPy
 
 - Enhancements
-  Steven Hiscocks
+   * Multiline filter for sendmail-spam. Close gh-418
+   * Multiline regex for Disconnecting: Too many authentication failures for
+     root [preauth]\nConnection closed by 6X.XXX.XXX.XXX [preauth]
    * Replacing use of deprecated API (.warning, .assertEqual, etc)
    * [..a648cc2] Filters can have options now too
    * [..e019ab7] Multiple instances of the same action are allowed in the
      same jail -- use actname option to disambiguate.
-  Daniel Black
-   * Support %z (Timezone offset) and %f (sub-seconds) support for
-	 datedetector. Enhanced existing date/time have been updated patterns to
-	 support these. ISO8601 now defaults to localtime unless specified otherwise.
-	 Some filters have been change as required to capture these elements in the
-	 right timezone correctly.
-   * Support PyPy
 
 ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
 -----------
@@ -101,9 +101,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
 
 - New Features:
 
-  Daniel Black
    * filter.d/solid-pop3d -- added thanks to Jacques Lav!gnotte on mailinglist.
-  Bas van den Dikkenberg & Steven Hiscocks
    * filter.d/nsd.conf -- also amended Unix date template to match nsd format
 
 - Enhancements:
