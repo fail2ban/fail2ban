@@ -23,11 +23,13 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-from failmanager import FailManagerEmpty
-from filter import FileFilter
-from mytime import MyTime
+import time, logging, fcntl
 
-import time, logging, gamin, fcntl
+import gamin
+
+from fail2ban.server.failmanager import FailManagerEmpty
+from fail2ban.server.filter import FileFilter
+from fail2ban.server.mytime import MyTime
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

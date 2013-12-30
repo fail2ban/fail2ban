@@ -24,11 +24,12 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from banmanager import BanManager
-from jailthread import JailThread
-from action import Action
-from mytime import MyTime
 import time, logging
+
+from fail2ban.server.banmanager import BanManager
+from fail2ban.server.jailthread import JailThread
+from fail2ban.server.action import Action
+from fail2ban.server.mytime import MyTime
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

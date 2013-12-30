@@ -22,9 +22,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import sys, time, logging
-
-from datetemplate import DatePatternRegex, DateTai64n, DateEpoch, DateISO8601
 from threading import Lock
+
+from fail2ban.server.datetemplate import DatePatternRegex, DateTai64n, DateEpoch, DateISO8601
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

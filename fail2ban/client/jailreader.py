@@ -26,9 +26,9 @@ __license__ = "GPL"
 
 import logging, re, glob, os.path
 
-from configreader import ConfigReader
-from filterreader import FilterReader
-from actionreader import ActionReader
+from fail2ban.client.configreader import ConfigReader
+from fail2ban.client.filterreader import FilterReader
+from fail2ban.client.actionreader import ActionReader
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
