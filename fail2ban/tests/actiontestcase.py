@@ -58,6 +58,9 @@ class ExecuteAction(LogCaptureTestCase):
 		self.assertFalse(Action.substituteRecursiveTags({'A': '<A>'}))
 		self.assertFalse(Action.substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
 		self.assertFalse(Action.substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
+		# part recursion
+		self.assertFalse(Action.substituteRecursiveTags({'A': 'to=<B> fromip=<IP>', 'C': '<B>', 'B': '<C>', 'D': ''}))
+		self.assertFalse(Action.substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP>', 'sweet': '<honeypot>', 'honeypot': '<sweet>', 'ignoreregex': ''}))
 		# missing tags are ok
 		self.assertEqual(Action.substituteRecursiveTags({'A': '<C>'}), {'A': '<C>'})
 		self.assertEqual(Action.substituteRecursiveTags({'A': '<C> <D> <X>','X':'fun'}), {'A': '<C> <D> fun', 'X':'fun'})
