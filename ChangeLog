@@ -62,7 +62,8 @@ configuration before relying on it.
    * Multiline regex for Disconnecting: Too many authentication failures for
      root [preauth]\nConnection closed by 6X.XXX.XXX.XXX [preauth]
    * Replacing use of deprecated API (.warning, .assertEqual, etc)
-   * [..a648cc2] Filters can have options now too
+   * [..a648cc2] Filters can have options now too which are substituted into
+     failregex / ignoreregex
    * [..e019ab7] Multiple instances of the same action are allowed in the
      same jail -- use actname option to disambiguate.
 
