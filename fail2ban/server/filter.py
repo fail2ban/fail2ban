@@ -31,7 +31,7 @@ from fail2ban.server.datedetector import DateDetector
 from fail2ban.server.datetemplate import DatePatternRegex, DateISO8601, DateEpoch, DateTai64n
 from fail2ban.server.mytime import MyTime
 from fail2ban.server.failregex import FailRegex, Regex, RegexException
-from fail2ban.server.action import Action
+from fail2ban.server.action import CommandAction
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -378,9 +378,9 @@ class Filter(JailThread):
 				return True
 
 		if self.__ignoreCommand:
-			command = Action.replaceTag(self.__ignoreCommand, { 'ip': ip } )
+			command = CommandAction.replaceTag(self.__ignoreCommand, { 'ip': ip } )
 			logSys.debug('ignore command: ' + command)
-			return Action.executeCmd(command)
+			return CommandAction.executeCmd(command)
 
 		return False
 

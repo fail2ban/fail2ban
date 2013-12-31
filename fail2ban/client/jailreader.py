@@ -25,6 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging, re, glob, os.path
+import json
 
 from fail2ban.client.configreader import ConfigReader
 from fail2ban.client.filterreader import FilterReader
@@ -120,14 +121,26 @@ class JailReader(ConfigReader):
 					if not act:			  # skip empty actions
 						continue
 					actName, actOpt = JailReader.extractOptions(act)
-					action = ActionReader(
-						actName, self.__name, actOpt, basedir=self.getBaseDir())
-					ret = action.read()
-					if ret:
-						action.getOptions(self.__opts)
-						self.__actions.append(action)
+					if actName.endswith(".py"):
+						self.__actions.append([
+							"set",
+							self.__name,
+							"addaction",
+							actOpt.get("actname", os.path.splitext(actName)[0]),
+							os.path.join(
+								self.getBaseDir(), "action.d", actName),
+							json.dumps(actOpt),
+							])
 					else:
-						raise AttributeError("Unable to read action")
+						action = ActionReader(
+							actName, self.__name, actOpt,
+							basedir=self.getBaseDir())
+						ret = action.read()
+						if ret:
+							action.getOptions(self.__opts)
+							self.__actions.append(action)
+						else:
+							raise AttributeError("Unable to read action")
 				except Exception, e:
 					logSys.error("Error in action definition " + act)
 					logSys.debug("Caught exception: %s" % (e,))
@@ -193,7 +206,10 @@ class JailReader(ConfigReader):
 		if self.__filter:
 			stream.extend(self.__filter.convert())
 		for action in self.__actions:
-			stream.extend(action.convert())
+			if isinstance(action, ConfigReader):
+				stream.extend(action.convert())
+			else:
+				stream.append(action)
 		stream.insert(0, ["add", self.__name, backend])
 		return stream
 	

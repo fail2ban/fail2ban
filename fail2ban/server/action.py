@@ -23,6 +23,7 @@ __license__ = "GPL"
 
 import logging, os, subprocess, time, signal, tempfile
 import threading, re
+from abc import ABCMeta
 #from subprocess import call
 
 # Gets the instance of the logger.
@@ -53,10 +54,63 @@ signame = dict((num, name)
 # action has to be taken. A BanManager take care of the banned IP
 # addresses.
 
-class Action:
+class ActionBase(object):
+	__metaclass__ = ABCMeta
+
+	@classmethod
+	def __subclasshook__(cls, C):
+		required = (
+			"getName",
+			"execActionStart",
+			"execActionStop",
+			"execActionBan",
+			"execActionUnban",
+			)
+		for method in required:
+			if not callable(getattr(C, method, None)):
+				return False
+		return True
+
+	def __init__(self, jail, name, initOpts=None):
+		self._jail = jail
+		self._name = name
+		self._logSys = logging.getLogger(
+			'%s.%s' % (__name__, self.__class__.__name__))
+
+	@property
+	def jail(self):
+		return self._jail
+
+	@property
+	def logSys(self):
+		return self._logSys
+	
+	##
+	# Returns the action name.
+	#
+	# @return the name of the action
+	
+	def getName(self):
+		return self._name
+
+	name = property(getName)
+	
+	def execActionStart(self):
+		pass
+
+	def execActionBan(self, aInfo):
+		pass
+
+	def execActionUnban(self, aInfo):
+		pass
+
+	def execActionStop(self):
+		pass
+
+class CommandAction(ActionBase):
 	
 	def __init__(self, name):
-		self.__name = name
+		super(CommandAction, self).__init__(None, name)
 		self.__timeout = 60
 		self.__cInfo = dict()
 		## Command executed in order to initialize the system.
@@ -71,22 +125,10 @@ class Action:
 		self.__actionStop = ''
 		logSys.debug("Created Action")
 	
-	##
-	# Sets the action name.
-	#
-	# @param name the name of the action
-	
-	def setName(self, name):
-		self.__name = name
-	
-	##
-	# Returns the action name.
-	#
-	# @return the name of the action
-	
-	def getName(self):
-		return self.__name
-	
+	@classmethod
+	def __subclasshook__(cls, C):
+		return NotImplemented # Standard checks
+			
 	##
 	# Sets the timeout period for commands.
 	#
@@ -94,7 +136,7 @@ class Action:
 	
 	def setTimeout(self, timeout):
 		self.__timeout = int(timeout)
-		logSys.debug("Set action %s timeout = %i" % (self.__name, timeout))
+		logSys.debug("Set action %s timeout = %i" % (self.getName(), timeout))
 	
 	##
 	# Returns the action timeout period for commands.
@@ -160,11 +202,11 @@ class Action:
 	
 	def execActionStart(self):
 		if self.__cInfo:
-			if not Action.substituteRecursiveTags(self.__cInfo):
+			if not self.substituteRecursiveTags(self.__cInfo):
 				logSys.error("Cinfo/definitions contain self referencing definitions and cannot be resolved")
 				return False
-		startCmd = Action.replaceTag(self.__actionStart, self.__cInfo)
-		return Action.executeCmd(startCmd, self.__timeout)
+		startCmd = self.replaceTag(self.__actionStart, self.__cInfo)
+		return self.executeCmd(startCmd, self.__timeout)
 	
 	##
 	# Set the "ban" command.
@@ -259,8 +301,8 @@ class Action:
 	# @return True if the command succeeded
 	
 	def execActionStop(self):
-		stopCmd = Action.replaceTag(self.__actionStop, self.__cInfo)
-		return Action.executeCmd(stopCmd, self.__timeout)
+		stopCmd = self.replaceTag(self.__actionStop, self.__cInfo)
+		return self.executeCmd(stopCmd, self.__timeout)
 
 	##
 	# Sort out tag definitions within other tags
@@ -270,7 +312,7 @@ class Action:
 	# b = <a>_3	b = 3_3
 	# @param	tags, a dictionary
 	# @returns	tags altered or False if there is a recursive definition
-	#@staticmethod
+	@staticmethod
 	def substituteRecursiveTags(tags):
 		t = re.compile(r'<([^ >]+)>')
 		for tag, value in tags.iteritems():
@@ -291,15 +333,13 @@ class Action:
 						m = t.search(value, m.start() + 1)
 			tags[tag] = value
 		return tags
-	substituteRecursiveTags = staticmethod(substituteRecursiveTags)
 
-	#@staticmethod
+	@staticmethod
 	def escapeTag(tag):
 		for c in '\\#&;`|*?~<>^()[]{}$\'"':
 			if c in tag:
 				tag = tag.replace(c, '\\' + c)
 		return tag
-	escapeTag = staticmethod(escapeTag)
 
 	##
 	# Replaces tags in query with property values in aInfo.
@@ -308,8 +348,8 @@ class Action:
 	# @param aInfo the properties
 	# @return a string
 	
-	#@staticmethod
-	def replaceTag(query, aInfo):
+	@classmethod
+	def replaceTag(cls, query, aInfo):
 		""" Replace tags in query
 		"""
 		string = query
@@ -321,12 +361,11 @@ class Action:
 				if tag.endswith('matches'):
 					# That one needs to be escaped since its content is
 					# out of our control
-					value = Action.escapeTag(value)
+					value = cls.escapeTag(value)
 				string = string.replace('<' + tag + '>', value)
 		# New line
 		string = string.replace("<br>", '\n')
 		return string
-	replaceTag = staticmethod(replaceTag)
 	
 	##
 	# Executes a command with preliminary checks and substitutions.
@@ -348,26 +387,26 @@ class Action:
 			logSys.debug("Nothing to do")
 			return True
 		
-		checkCmd = Action.replaceTag(self.__actionCheck, self.__cInfo)
-		if not Action.executeCmd(checkCmd, self.__timeout):
+		checkCmd = self.replaceTag(self.__actionCheck, self.__cInfo)
+		if not self.executeCmd(checkCmd, self.__timeout):
 			logSys.error("Invariant check failed. Trying to restore a sane" +
 						 " environment")
 			self.execActionStop()
 			self.execActionStart()
-			if not Action.executeCmd(checkCmd, self.__timeout):
+			if not self.executeCmd(checkCmd, self.__timeout):
 				logSys.fatal("Unable to restore environment")
 				return False
 
 		# Replace tags
 		if not aInfo is None:
-			realCmd = Action.replaceTag(cmd, aInfo)
+			realCmd = self.replaceTag(cmd, aInfo)
 		else:
 			realCmd = cmd
 		
 		# Replace static fields
-		realCmd = Action.replaceTag(realCmd, self.__cInfo)
+		realCmd = self.replaceTag(realCmd, self.__cInfo)
 		
-		return Action.executeCmd(realCmd, self.__timeout)
+		return self.executeCmd(realCmd, self.__timeout)
 
 	##
 	# Executes a command.
@@ -381,7 +420,7 @@ class Action:
 	# @param realCmd the command to execute
 	# @return True if the command succeeded
 
-	#@staticmethod
+	@staticmethod
 	def executeCmd(realCmd, timeout=60):
 		logSys.debug(realCmd)
 		if not realCmd:
@@ -440,5 +479,4 @@ class Action:
 				logSys.info("HINT on %i: %s"
 							% (retcode, msg % locals()))
 		return False
-	executeCmd = staticmethod(executeCmd)
 	
