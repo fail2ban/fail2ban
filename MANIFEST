@@ -80,6 +80,7 @@ fail2ban/tests/files/config/apache-auth/README
 fail2ban/tests/files/config/apache-auth/noentry/.htaccess
 fail2ban/tests/files/database_v1.db
 fail2ban/tests/files/ignorecommand.py
+fail2ban/tests/files/filter.d/substition.conf
 fail2ban/tests/files/filter.d/testcase-common.conf
 fail2ban/tests/files/filter.d/testcase01.conf
 fail2ban/tests/files/testcase01.log
