@@ -5,7 +5,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.utils import formatdate, formataddr
 
-from fail2ban.server.actions import ActionBase
+from fail2ban.server.actions import ActionBase, CallingMap
 
 messages = {}
 messages['start'] = \
@@ -24,14 +24,32 @@ The jail %(jailname)s has been stopped.
 Regards,
 Fail2Ban"""
 
-messages['ban'] = \
+messages['ban'] = {}
+messages['ban']['head'] = \
 """Hi,
 
 The IP %(ip)s has just been banned for %(bantime)s seconds
 by Fail2Ban after %(failures)i attempts against %(jailname)s.
-
+"""
+messages['ban']['tail'] = \
+"""
 Regards,
 Fail2Ban"""
+messages['ban']['matches'] = \
+"""
+Matches for this ban:
+%(matches)s
+"""
+messages['ban']['ipmatches'] = \
+"""
+Matches for %(ip)s:
+%(ipmatches)s
+"""
+messages['ban']['ipjailmatches'] = \
+"""
+Matches for %(ip)s for jail %(jailname)s:
+%(ipjailmatches)s
+"""
 
 class SMTPAction(ActionBase):
 
@@ -43,13 +61,21 @@ class SMTPAction(ActionBase):
         #TODO: self.ssl = initOpts.get('ssl', "no") == 'yes'
 
         self.user = initOpts.get('user', '')
-        self.password = initOpts.get('password', None)
+        self.password = initOpts.get('password')
 
         self.fromname = initOpts.get('sendername', "Fail2Ban")
         self.fromaddr = initOpts.get('sender', "fail2ban")
         self.toaddr = initOpts.get('dest', "root")
 
         self.smtp = smtplib.SMTP()
+
+        self.matches = initOpts.get('matches')
+
+        self.message_values = CallingMap(
+            jailname = self.jail.getName(), # Doesn't change
+            hostname = socket.gethostname,
+            bantime = self.jail.getAction().getBanTime,
+            )
 
     def _sendMessage(self, subject, text):
         msg = MIMEText(text)
@@ -90,14 +116,6 @@ class SMTPAction(ActionBase):
             except smtplib.SMTPServerDisconnected:
                 pass # Not connected
 
-    @property
-    def message_values(self):
-        return {
-            'jailname': self.jail.getName(),
-            'hostname': socket.gethostname(),
-            'bantime': self.jail.getAction().getBanTime(),
-            }
-
     def execActionStart(self):
         self._sendMessage(
             "[Fail2Ban] %(jailname)s: started on %(hostname)s" %
@@ -111,9 +129,15 @@ class SMTPAction(ActionBase):
             messages['stop'] % self.message_values)
 
     def execActionBan(self, aInfo):
+        aInfo.update(self.message_values)
+        message = "".join([
+            messages['ban']['head'],
+            messages['ban'].get(self.matches, ""),
+            messages['ban']['tail']
+            ])
         self._sendMessage(
             "[Fail2Ban] %(jailname)s: banned %(ip)s from %(hostname)s" %
-                dict(self.message_values, **aInfo),
-            messages['ban'] % dict(self.message_values, **aInfo))
+                aInfo,
+            message % aInfo)
 
 Action = SMTPAction

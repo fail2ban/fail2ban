@@ -30,7 +30,7 @@ import imp
 
 from fail2ban.server.banmanager import BanManager
 from fail2ban.server.jailthread import JailThread
-from fail2ban.server.action import ActionBase, CommandAction
+from fail2ban.server.action import ActionBase, CommandAction, CallingMap
 from fail2ban.server.mytime import MyTime
 
 # Gets the instance of the logger.
@@ -202,7 +202,7 @@ class Actions(JailThread):
 	def __checkBan(self):
 		ticket = self.jail.getFailTicket()
 		if ticket != False:
-			aInfo = dict()
+			aInfo = CallingMap()
 			bTicket = BanManager.createBanTicket(ticket)
 			aInfo["ip"] = bTicket.getIP()
 			aInfo["failures"] = bTicket.getAttempt()

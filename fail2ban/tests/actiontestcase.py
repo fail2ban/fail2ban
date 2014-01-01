@@ -27,7 +27,7 @@ __license__ = "GPL"
 import time
 import logging, sys
 
-from fail2ban.server.action import CommandAction
+from fail2ban.server.action import CommandAction, CallingMap
 
 from fail2ban.tests.utils import LogCaptureTestCase
 
@@ -94,15 +94,15 @@ class ExecuteAction(LogCaptureTestCase):
 
 		# Callable
 		self.assertEqual(
-			self.__action.replaceTag("09 <callable> 11",
-				{'callable': lambda: str(10)}),
+			self.__action.replaceTag("09 <callme> 11",
+				CallingMap(callme=lambda: str(10))),
 			"09 10 11")
 
 		# As tag not present, therefore callable should not be called
 		# Will raise ValueError if it is
 		self.assertEqual(
 			self.__action.replaceTag("abc",
-				{'callable': lambda: int("a")}), "abc")
+				CallingMap(callme=lambda: int("a"))), "abc")
 
 	def testExecuteActionBan(self):
 		self.__action.setActionStart("touch /tmp/fail2ban.test")
@@ -181,3 +181,11 @@ class ExecuteAction(LogCaptureTestCase):
 			'echo "The rain in Spain stays mainly in the plain" 1>&2')
 		self.assertTrue(self._is_logged(
 			"'The rain in Spain stays mainly in the plain\\n'"))
+
+	def testCallingMap(self):
+		mymap = CallingMap(callme=lambda: str(10), error=lambda: int('a'))
+
+		# Should work fine
+		self.assertEqual("%(callme)s okay" % mymap, "10 okay")
+		# Error will now trip, demonstrating delayed call
+		self.assertRaises(ValueError, lambda x: "%(error)i" % x, mymap)

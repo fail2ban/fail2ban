@@ -24,6 +24,7 @@ __license__ = "GPL"
 import logging, os, subprocess, time, signal, tempfile
 import threading, re
 from abc import ABCMeta
+from collections import MutableMapping
 #from subprocess import call
 
 # Gets the instance of the logger.
@@ -46,6 +47,24 @@ _RETCODE_HINTS = {
 # Dictionary to lookup signal name from number
 signame = dict((num, name)
 	for name, num in signal.__dict__.iteritems() if name.startswith("SIG"))
+
+class CallingMap(MutableMapping):
+	def __init__(self, *args, **kwargs):
+		self.data = dict(*args, **kwargs)
+	def __getitem__(self, key):
+		value = self.data[key]
+		if callable(value):
+			return value()
+		else:
+			return value
+	def __setitem__(self, key, value):
+		self.data[key] = value
+	def __delitem__(self, key):
+		del self.data[key]
+	def __iter__(self):
+		return iter(self.data)
+	def __len__(self):
+		return len(self.data)
 
 ##
 # Execute commands.
@@ -353,11 +372,9 @@ class CommandAction(ActionBase):
 		""" Replace tags in query
 		"""
 		string = query
-		for tag, value in aInfo.iteritems():
+		for tag in aInfo:
 			if "<%s>" % tag in query:
-				if callable(value):
-					value = value()
-				value = str(value)			  # assure string
+				value = str(aInfo[tag])			  # assure string
 				if tag.endswith('matches'):
 					# That one needs to be escaped since its content is
 					# out of our control
