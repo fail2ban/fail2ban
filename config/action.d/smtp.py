@@ -87,7 +87,7 @@ class SMTPAction(ActionBase):
         smtp = smtplib.SMTP()
         try:
             self.logSys.debug("Connected to SMTP '%s', response: %i: %s",
-                *smtp.connect(self.host))
+                self.host, *smtp.connect(self.host))
             if self.user and self.password:
                 smtp.login(self.user, self.password)
             failed_recipients = smtp.sendmail(
@@ -113,7 +113,8 @@ class SMTPAction(ActionBase):
             self.logSys.debug("Email '%s' successfully sent", subject)
         finally:
             try:
-                smtp.quit()
+                self.logSys.debug("Disconnected from '%s', response %i: %s",
+                    self.host, *smtp.quit())
             except smtplib.SMTPServerDisconnected:
                 pass # Not connected
 
