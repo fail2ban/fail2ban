@@ -183,9 +183,12 @@ class ExecuteAction(LogCaptureTestCase):
 			"'The rain in Spain stays mainly in the plain\\n'"))
 
 	def testCallingMap(self):
-		mymap = CallingMap(callme=lambda: str(10), error=lambda: int('a'))
+		mymap = CallingMap(callme=lambda: str(10), error=lambda: int('a'),
+			dontcallme= "string", number=17)
 
 		# Should work fine
-		self.assertEqual("%(callme)s okay" % mymap, "10 okay")
+		self.assertEqual(
+			"%(callme)s okay %(dontcallme)s %(number)i" % mymap,
+			"10 okay string 17")
 		# Error will now trip, demonstrating delayed call
 		self.assertRaises(ValueError, lambda x: "%(error)i" % x, mymap)
