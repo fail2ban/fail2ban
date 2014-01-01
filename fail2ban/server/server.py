@@ -25,14 +25,16 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from threading import Lock, RLock
-from jails import Jails
-from filter import FileFilter, JournalFilter
-from transmitter import Transmitter
-from asyncserver import AsyncServer
-from asyncserver import AsyncServerException
-from database import Fail2BanDb
-from fail2ban import version
 import logging, logging.handlers, sys, os, signal
+
+from fail2ban.server.jails import Jails
+from fail2ban.server.filter import FileFilter, JournalFilter
+from fail2ban.server.transmitter import Transmitter
+from fail2ban.server.asyncserver import AsyncServer
+from fail2ban.server.asyncserver import AsyncServerException
+from fail2ban.server.database import Fail2BanDb
+from fail2ban.server.action import CommandAction
+from fail2ban import version
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -277,8 +279,8 @@ class Server:
 		return self.__jails.getFilter(name).getMaxLines()
 	
 	# Action
-	def addAction(self, name, value):
-		self.__jails.getAction(name).addAction(value)
+	def addAction(self, name, value, *args):
+		self.__jails.getAction(name).addAction(value, *args)
 	
 	def getLastAction(self, name):
 		return self.__jails.getAction(name).getLastAction()
@@ -289,14 +291,26 @@ class Server:
 	def delAction(self, name, value):
 		self.__jails.getAction(name).delAction(value)
 	
-	def setCInfo(self, name, action, key, value):
-		self.__jails.getAction(name).getAction(action).setCInfo(key, value)
+	def setCInfo(self, name, actionName, key, value):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			action.setCInfo(key, value)
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 	
-	def getCInfo(self, name, action, key):
-		return self.__jails.getAction(name).getAction(action).getCInfo(key)
+	def getCInfo(self, name, actionName, key):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			return action.getCInfo(key)
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 	
-	def delCInfo(self, name, action, key):
-		self.__jails.getAction(name).getAction(action).delCInfo(key)
+	def delCInfo(self, name, actionName, key):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			action.delCInfo(key)
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 	
 	def setBanTime(self, name, value):
 		self.__jails.getAction(name).setBanTime(value)
@@ -310,41 +324,89 @@ class Server:
 	def getBanTime(self, name):
 		return self.__jails.getAction(name).getBanTime()
 	
-	def setActionStart(self, name, action, value):
-		self.__jails.getAction(name).getAction(action).setActionStart(value)
+	def setActionStart(self, name, actionName, value):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			action.setActionStart(value)
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 	
-	def getActionStart(self, name, action):
-		return self.__jails.getAction(name).getAction(action).getActionStart()
+	def getActionStart(self, name, actionName):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			return action.getActionStart()
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 		
-	def setActionStop(self, name, action, value):
-		self.__jails.getAction(name).getAction(action).setActionStop(value)
+	def setActionStop(self, name, actionName, value):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			action.setActionStop(value)
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 	
-	def getActionStop(self, name, action):
-		return self.__jails.getAction(name).getAction(action).getActionStop()
+	def getActionStop(self, name, actionName):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			return action.getActionStop()
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 	
-	def setActionCheck(self, name, action, value):
-		self.__jails.getAction(name).getAction(action).setActionCheck(value)
+	def setActionCheck(self, name, actionName, value):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			action.setActionCheck(value)
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 	
-	def getActionCheck(self, name, action):
-		return self.__jails.getAction(name).getAction(action).getActionCheck()
+	def getActionCheck(self, name, actionName):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			return action.getActionCheck()
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 	
-	def setActionBan(self, name, action, value):
-		self.__jails.getAction(name).getAction(action).setActionBan(value)
+	def setActionBan(self, name, actionName, value):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			action.setActionBan(value)
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 	
-	def getActionBan(self, name, action):
-		return self.__jails.getAction(name).getAction(action).getActionBan()
+	def getActionBan(self, name, actionName):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			return action.getActionBan()
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 	
-	def setActionUnban(self, name, action, value):
-		self.__jails.getAction(name).getAction(action).setActionUnban(value)
+	def setActionUnban(self, name, actionName, value):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			action.setActionUnban(value)
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 	
-	def getActionUnban(self, name, action):
-		return self.__jails.getAction(name).getAction(action).getActionUnban()
+	def getActionUnban(self, name, actionName):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			return action.getActionUnban()
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 	
-	def setActionTimeout(self, name, action, value):
-		self.__jails.getAction(name).getAction(action).setTimeout(value)
+	def setActionTimeout(self, name, actionName, value):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			action.setTimeout(value)
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 	
-	def getActionTimeout(self, name, action):
-		return self.__jails.getAction(name).getAction(action).getTimeout()
+	def getActionTimeout(self, name, actionName):
+		action = self.__jails.getAction(name).getAction(actionName)
+		if isinstance(action, CommandAction):
+			return action.getTimeout()
+		else:
+			raise TypeError("%s is not a CommandAction" % actionName)
 		
 	# Status
 	def status(self):

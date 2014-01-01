@@ -24,11 +24,14 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from banmanager import BanManager
-from jailthread import JailThread
-from action import Action
-from mytime import MyTime
 import time, logging
+import os
+import imp
+
+from fail2ban.server.banmanager import BanManager
+from fail2ban.server.jailthread import JailThread
+from fail2ban.server.action import ActionBase, CommandAction, CallingMap
+from fail2ban.server.mytime import MyTime
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -61,11 +64,24 @@ class Actions(JailThread):
 	#
 	# @param name The action name
 	
-	def addAction(self, name):
+	def addAction(self, name, pythonModule=None, initOpts=None):
 		# Check is action name already exists
 		if name in [action.getName() for action in self.__actions]:
 			raise ValueError("Action %s already exists" % name)
-		action = Action(name)
+		if pythonModule is None:
+			action = CommandAction(name)
+		else:
+			pythonModuleName = os.path.basename(pythonModule.strip(".py"))
+			customActionModule = imp.load_source(
+				pythonModuleName, pythonModule)
+			if not hasattr(customActionModule, "Action"):
+				raise RuntimeError(
+					"%s module does not have 'Action' class" % pythonModule)
+			elif not issubclass(customActionModule.Action, ActionBase):
+				raise RuntimeError(
+					"%s module %s does not implment required methods" % (
+						pythonModule, customActionModule.Action.__name__))
+			action = customActionModule.Action(self.jail, name, **initOpts)
 		self.__actions.append(action)
 	
 	##
@@ -152,7 +168,11 @@ class Actions(JailThread):
 	def run(self):
 		self.setActive(True)
 		for action in self.__actions:
-			action.execActionStart()
+			try:
+				action.execActionStart()
+			except Exception as e:
+				logSys.error("Failed to start jail '%s' action '%s': %s",
+					self.jail.getName(), action.getName(), e)
 		while self._isActive():
 			if not self.getIdle():
 				#logSys.debug(self.jail.getName() + ": action")
@@ -164,7 +184,11 @@ class Actions(JailThread):
 				time.sleep(self.getSleepTime())
 		self.__flushBan()
 		for action in self.__actions:
-			action.execActionStop()
+			try:
+				action.execActionStop()
+			except Exception as e:
+				logSys.error("Failed to stop jail '%s' action '%s': %s",
+					self.jail.getName(), action.getName(), e)
 		logSys.debug(self.jail.getName() + ": action terminated")
 		return True
 
@@ -178,7 +202,7 @@ class Actions(JailThread):
 	def __checkBan(self):
 		ticket = self.jail.getFailTicket()
 		if ticket != False:
-			aInfo = dict()
+			aInfo = CallingMap()
 			bTicket = BanManager.createBanTicket(ticket)
 			aInfo["ip"] = bTicket.getIP()
 			aInfo["failures"] = bTicket.getAttempt()
@@ -200,7 +224,12 @@ class Actions(JailThread):
 			if self.__banManager.addBanTicket(bTicket):
 				logSys.warning("[%s] Ban %s" % (self.jail.getName(), aInfo["ip"]))
 				for action in self.__actions:
-					action.execActionBan(aInfo)
+					try:
+						action.execActionBan(aInfo)
+					except Exception as e:
+						logSys.error(
+							"Failed to execute ban jail '%s' action '%s': %s",
+							self.jail.getName(), action.getName(), e)
 				return True
 			else:
 				logSys.info("[%s] %s already banned" % (self.jail.getName(),
@@ -240,7 +269,12 @@ class Actions(JailThread):
 		aInfo["matches"] = "".join(ticket.getMatches())
 		logSys.warning("[%s] Unban %s" % (self.jail.getName(), aInfo["ip"]))
 		for action in self.__actions:
-			action.execActionUnban(aInfo)
+			try:
+				action.execActionUnban(aInfo)
+			except Exception as e:
+				logSys.error(
+					"Failed to execute unban jail '%s' action '%s': %s",
+					self.jail.getName(), action.getName(), e)
 			
 	
 	##

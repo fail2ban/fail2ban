@@ -564,6 +564,23 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(
 				["set", self.jailName, "delaction", "Doesn't exist"])[0],1)
+		self.assertEqual(
+			self.transm.proceed(["set", self.jailName, "addaction", action,
+				os.path.join(TEST_FILES_DIR, "action.d", "action.py"),
+				'{"opt1": "value"}']),
+			(0, action))
+		for cmd, value in zip(cmdList, cmdValueList):
+			self.assertTrue(
+				isinstance(self.transm.proceed(
+						["set", self.jailName, cmd, action, value])[1],
+					TypeError),
+				"set %s for python action did not raise TypeError" % cmd)
+		for cmd, value in zip(cmdList, cmdValueList):
+			self.assertTrue(
+				isinstance(self.transm.proceed(
+						["get", self.jailName, cmd, action])[1],
+					TypeError),
+				"get %s for python action did not raise TypeError" % cmd)
 
 	def testNOK(self):
 		self.assertEqual(self.transm.proceed(["INVALID", "COMMAND"])[0],1)

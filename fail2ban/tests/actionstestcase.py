@@ -26,18 +26,24 @@ __license__ = "GPL"
 
 import unittest, time
 import sys, os, tempfile
-from fail2ban.server.actions import Actions
-from dummyjail import DummyJail
 
-class ExecuteActions(unittest.TestCase):
+from fail2ban.server.actions import Actions
+from fail2ban.tests.dummyjail import DummyJail
+from fail2ban.tests.utils import LogCaptureTestCase
+
+TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
+
+class ExecuteActions(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		super(ExecuteActions, self).setUp()
 		self.__jail = DummyJail()
 		self.__actions = Actions(self.__jail)
 		self.__tmpfile, self.__tmpfilename  = tempfile.mkstemp()
 
 	def tearDown(self):
+		super(ExecuteActions, self).tearDown()
 		os.remove(self.__tmpfilename)
 
 	def defaultActions(self):
@@ -77,3 +83,35 @@ class ExecuteActions(unittest.TestCase):
 		self.assertEqual(self.__actions.status(),[("Currently banned", 0 ),
                ("Total banned", 0 ), ("IP list", [] )])
 
+
+	def testAddActionPython(self):
+		self.__actions.addAction(
+			"Action", os.path.join(TEST_FILES_DIR, "action.d/action.py"),
+			{'opt1': 'value'})
+
+		self.assertTrue(self._is_logged("TestAction initialised"))
+
+		self.__actions.start()
+		time.sleep(3)
+		self.assertTrue(self._is_logged("TestAction action start"))
+
+		self.__actions.stop()
+		self.__actions.join()
+		self.assertTrue(self._is_logged("TestAction action stop"))
+
+		self.assertRaises(IOError,
+			self.__actions.addAction, "Action3", "/does/not/exist.py", {})
+
+		# With optional argument
+		self.__actions.addAction(
+			"Action4", os.path.join(TEST_FILES_DIR, "action.d/action.py"),
+			{'opt1': 'value', 'opt2': 'value2'})
+		# With too many arguments
+		self.assertRaises(
+			TypeError, self.__actions.addAction, "Action5",
+			os.path.join(TEST_FILES_DIR, "action.d/action.py"),
+			{'opt1': 'value', 'opt2': 'value2', 'opt3': 'value3'})
+		# Missing required argument
+		self.assertRaises(
+			TypeError, self.__actions.addAction, "Action5",
+			os.path.join(TEST_FILES_DIR, "action.d/action.py"), {})

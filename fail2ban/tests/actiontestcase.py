@@ -27,7 +27,7 @@ __license__ = "GPL"
 import time
 import logging, sys
 
-from fail2ban.server.action import Action
+from fail2ban.server.action import CommandAction, CallingMap
 
 from fail2ban.tests.utils import LogCaptureTestCase
 
@@ -35,7 +35,7 @@ class ExecuteAction(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.__action = Action("Test")
+		self.__action = CommandAction("Test")
 		LogCaptureTestCase.setUp(self)
 
 	def tearDown(self):
@@ -43,11 +43,6 @@ class ExecuteAction(LogCaptureTestCase):
 		LogCaptureTestCase.tearDown(self)
 		self.__action.execActionStop()
 
-	def testNameChange(self):
-		self.assertEqual(self.__action.getName(), "Test")
-		self.__action.setName("Tricky Test")
-		self.assertEqual(self.__action.getName(), "Tricky Test")
-		
 	def testSubstituteRecursiveTags(self):
 		aInfo = {
 			'HOST': "192.0.2.0",
@@ -55,18 +50,18 @@ class ExecuteAction(LogCaptureTestCase):
 			'xyz': "890 <ABC>",
 		}
 		# Recursion is bad
-		self.assertFalse(Action.substituteRecursiveTags({'A': '<A>'}))
-		self.assertFalse(Action.substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
-		self.assertFalse(Action.substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
-		# part recursion
-		self.assertFalse(Action.substituteRecursiveTags({'A': 'to=<B> fromip=<IP>', 'C': '<B>', 'B': '<C>', 'D': ''}))
-		self.assertFalse(Action.substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP>', 'sweet': '<honeypot>', 'honeypot': '<sweet>', 'ignoreregex': ''}))
+		self.assertFalse(CommandAction.substituteRecursiveTags({'A': '<A>'}))
+		self.assertFalse(CommandAction.substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
+		self.assertFalse(CommandAction.substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
+		# Unresolveable substition
+		self.assertFalse(CommandAction.substituteRecursiveTags({'A': 'to=<B> fromip=<IP>', 'C': '<B>', 'B': '<C>', 'D': ''}))
+		self.assertFalse(CommandAction.substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP>', 'sweet': '<honeypot>', 'honeypot': '<sweet>', 'ignoreregex': ''}))
 		# missing tags are ok
-		self.assertEqual(Action.substituteRecursiveTags({'A': '<C>'}), {'A': '<C>'})
-		self.assertEqual(Action.substituteRecursiveTags({'A': '<C> <D> <X>','X':'fun'}), {'A': '<C> <D> fun', 'X':'fun'})
-		self.assertEqual(Action.substituteRecursiveTags({'A': '<C> <B>', 'B': 'cool'}), {'A': '<C> cool', 'B': 'cool'})
+		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<C>'}), {'A': '<C>'})
+		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<C> <D> <X>','X':'fun'}), {'A': '<C> <D> fun', 'X':'fun'})
+		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<C> <B>', 'B': 'cool'}), {'A': '<C> cool', 'B': 'cool'})
 		# rest is just cool
-		self.assertEqual(Action.substituteRecursiveTags(aInfo),
+		self.assertEqual(CommandAction.substituteRecursiveTags(aInfo),
 								{ 'HOST': "192.0.2.0",
 									'ABC': '123 192.0.2.0',
 									'xyz': '890 123 192.0.2.0',
@@ -102,15 +97,15 @@ class ExecuteAction(LogCaptureTestCase):
 
 		# Callable
 		self.assertEqual(
-			self.__action.replaceTag("09 <callable> 11",
-				{'callable': lambda: str(10)}),
+			self.__action.replaceTag("09 <callme> 11",
+				CallingMap(callme=lambda: str(10))),
 			"09 10 11")
 
 		# As tag not present, therefore callable should not be called
 		# Will raise ValueError if it is
 		self.assertEqual(
 			self.__action.replaceTag("abc",
-				{'callable': lambda: int("a")}), "abc")
+				CallingMap(callme=lambda: int("a"))), "abc")
 
 	def testExecuteActionBan(self):
 		self.__action.setActionStart("touch /tmp/fail2ban.test")
@@ -172,20 +167,31 @@ class ExecuteAction(LogCaptureTestCase):
 		self.assertTrue(self._is_logged('Nothing to do'))
 
 	def testExecuteIncorrectCmd(self):
-		Action.executeCmd('/bin/ls >/dev/null\nbogusXXX now 2>/dev/null')
+		CommandAction.executeCmd('/bin/ls >/dev/null\nbogusXXX now 2>/dev/null')
 		self.assertTrue(self._is_logged('HINT on 127: "Command not found"'))
 
 	def testExecuteTimeout(self):
 		stime = time.time()
-		Action.executeCmd('sleep 60', timeout=2) # Should take a minute
+		CommandAction.executeCmd('sleep 60', timeout=2) # Should take a minute
 		self.assertAlmostEqual(time.time() - stime, 2, places=0)
 		self.assertTrue(self._is_logged('sleep 60 -- timed out after 2 seconds'))
 		self.assertTrue(self._is_logged('sleep 60 -- killed with SIGTERM'))
 
 	def testCaptureStdOutErr(self):
-		Action.executeCmd('echo "How now brown cow"')
+		CommandAction.executeCmd('echo "How now brown cow"')
 		self.assertTrue(self._is_logged("'How now brown cow\\n'"))
-		Action.executeCmd(
+		CommandAction.executeCmd(
 			'echo "The rain in Spain stays mainly in the plain" 1>&2')
 		self.assertTrue(self._is_logged(
 			"'The rain in Spain stays mainly in the plain\\n'"))
+
+	def testCallingMap(self):
+		mymap = CallingMap(callme=lambda: str(10), error=lambda: int('a'),
+			dontcallme= "string", number=17)
+
+		# Should work fine
+		self.assertEqual(
+			"%(callme)s okay %(dontcallme)s %(number)i" % mymap,
+			"10 okay string 17")
+		# Error will now trip, demonstrating delayed call
+		self.assertRaises(ValueError, lambda x: "%(error)i" % x, mymap)
