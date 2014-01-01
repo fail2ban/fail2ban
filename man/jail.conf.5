@@ -64,7 +64,19 @@ Comments: use '#' for comment lines and ';' (following a space) for inline comme
 .SH DEFAULT
 The following options are applicable to all jails. Their meaning is described in the default \fIjail.conf\fR file.
 .TP
+\fBfilter\fR 
+.TP
+\fBlogpath\fR 
+Specify one or more log files for monitoring for failures, separated by new lines. Optional space separated option 'tail' can be added to the end of the path to cause the log file to be read from the end, else default 'head' option reads file from the beginning
+.TP
+\fBaction\fR 
+.TP
 \fBignoreip\fR 
+A space separated list of IPs not to ban.
+.TP
+\fBignorecommand\fR
+A command that is executed to determine if the current ban's actionban is to be executed. This command will return true if the current ban should be ignored. A false return value will result in the ban's actionban executed.
+Like ACTION FILES, tags like <ip> are can be included in the ignore command value and will be substitued before execution. Currently only <ip> is supported however more will be added later.
 .TP
 \fBbantime\fR
 .TP
@@ -75,6 +87,11 @@ The following options are applicable to all jails. Their meaning is described in
 \fBbackend\fR
 .TP
 \fBusedns\fR
+.TP
+\fBfailregex\fR
+.TP
+\fBignoreregex\fR
+
 .PP
 .SS Backends
 \fBbackend\fR specifies the backend used to get files modification. This option can be overridden in each jail as well.
@@ -150,14 +167,26 @@ The following tags are substituted in the actionban, actionunban and actioncheck
 \fBip\fR
 An IPv4 ip address to be banned. e.g. 192.168.0.2
 .TP
-\fBfailures\fR
-The number of times the failure occurred in the log file. e.g. 3
-.TP
 \fBtime\fR
 The unix time of the ban. e.g. 1357508484
 .TP
+\fBfailures\fR
+The number of times the failure occurred in the log file. e.g. 3
+.TP
+\fBipfailures\fR
+As per \fBfailures\fR, but total of all failures for that ip address across all jails from the fail2ban persistent database. Therefore the database must be set for this tag to function.
+.TP
+\fBipjailfailures\fR
+As per \fBipfailures\fR, but total based on the IPs failures for the current jail.
+.TP
 \fBmatches\fR
-The concatenated string of the log file lines of the matches that generated the ban. Many characters interpreted by shell get escaped.
+The string of the log file lines of the matches that generated the ban. Many characters interpreted by shell get escaped. New lines are maintained, so actions should be careful to enclose the tag in quotes.
+.TP
+\fBipmatches\fR
+As per \fBmatches\fR, but includes all lines for the IP which are contained with the fail2ban persistent database. Therefore the database must be set for this tag to function.
+.TP
+\fBipjailmatches\fR
+As per \fBipmatches\fR, but matches are limited for the IP and for the current jail.
 
 .SH FILTER FILES
 

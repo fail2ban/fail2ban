@@ -63,6 +63,8 @@ class Beautifier:
 						msg = "Jail stopped"
 			elif inC[0] == "add":
 				msg = "Added jail " + response
+			elif inC[0] == "flushlogs":
+				msg = "logs: " + response
 			elif inC[0:1] == ['status']:
 				if len(inC) > 1:
 					# Create IP list
@@ -102,6 +104,18 @@ class Beautifier:
 					msg = msg + "DEBUG"
 				else:
 					msg = msg + `response`
+			elif inC[1] == "dbfile":
+				if response is None:
+					msg = "Database currently disabled"
+				else:
+					msg = "Current database file is:\n"
+					msg = msg + "`- " + response
+			elif inC[1] == "dbpurgeage":
+				if response is None:
+					msg = "Database currently disabled"
+				else:
+					msg = "Current database purge age is:\n"
+					msg = msg + "`- %iseconds" % response
 			elif inC[2] in ("logpath", "addlogpath", "dellogpath"):
 				if len(response) == 0:
 					msg = "No file is currently monitored"
@@ -122,7 +136,7 @@ class Beautifier:
 			elif inC[2] == "datepattern":
 				msg = "Current date pattern set to: "
 				if response is None:
-					msg = msg + "Default Detectors"
+					msg = msg + "Not set/required"
 				elif response[0] is None:
 					msg = msg + "%s" % response[1]
 				else:

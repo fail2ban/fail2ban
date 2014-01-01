@@ -66,6 +66,8 @@ def testSampleRegexsFactory(name):
 
 		# Check filter exists
 		filterConf = FilterReader(name, "jail", {}, basedir=CONFIG_DIR)
+		self.assertEqual(filterConf.getFile(), name)
+		self.assertEqual(filterConf.getJailName(), "jail")
 		filterConf.read()
 		filterConf.getOptions({})
 
@@ -76,10 +78,6 @@ def testSampleRegexsFactory(name):
 				self.filter.setMaxLines(opt[3])
 			elif opt[2] == "addignoreregex":
 				self.filter.addIgnoreRegex(opt[3])
-
-		if not self.filter.getFailRegex():
-			# No fail regexs set: likely just common file for includes.
-			return
 
 		self.assertTrue(
 			os.path.isfile(os.path.join(TEST_FILES_DIR, "logs", name)),
@@ -119,7 +117,7 @@ def testSampleRegexsFactory(name):
 								 (map(lambda x: x[0], ret),logFile.filename(), logFile.filelineno()))
 
 				# Verify timestamp and host as expected
-				failregex, host, fail2banTime = ret[0]
+				failregex, host, fail2banTime, lines = ret[0]
 				self.assertEqual(host, faildata.get("host", None))
 
 				t = faildata.get("time", None)
@@ -141,7 +139,6 @@ def testSampleRegexsFactory(name):
 
 				regexsUsed.add(failregex)
 
-		# TODO: Remove exception handling once all regexs have samples
 		for failRegexIndex, failRegex in enumerate(self.filter.getFailRegex()):
 			self.assertTrue(
 				failRegexIndex in regexsUsed,

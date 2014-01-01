@@ -98,7 +98,7 @@ def get_opt_parser():
 LOG:
     string                  a string representing a log line
     filename                path to a log file (/var/log/auth.log)
-	"systemd-journal"       search systemd journal (systemd-python required)
+    "systemd-journal"       search systemd journal (systemd-python required)
 
 REGEX:
     string                  a string representing a 'failregex'
@@ -239,7 +239,9 @@ class Fail2banRegex(object):
 		if not self._datepattern_set:
 			self._filter.setDatePattern(pattern)
 			self._datepattern_set = True
-			print "Use      datepattern : %s" % self._filter.getDatePattern()[1]
+			if pattern is not None:
+				print "Use      datepattern : %s" % (
+					self._filter.getDatePattern()[1], )
 
 	def setMaxLines(self, v):
 		if not self._maxlines_set:
@@ -309,7 +311,7 @@ class Fail2banRegex(object):
 	def testIgnoreRegex(self, line):
 		found = False
 		try:
-			ret = self._filter.ignoreLine(line)
+			ret = self._filter.ignoreLine([(line, "", "")])
 			if ret is not None:
 				found = True
 				regex = self._ignoreregex[ret].inc()
@@ -318,11 +320,11 @@ class Fail2banRegex(object):
 			return False
 		return found
 
-	def testRegex(self, line):
+	def testRegex(self, line, date=None):
 		orgLineBuffer = self._filter._Filter__lineBuffer
 		fullBuffer = len(orgLineBuffer) >= self._filter.getMaxLines()
 		try:
-			line, ret = self._filter.processLine(line, checkAllRegex=True)
+			line, ret = self._filter.processLine(line, date, checkAllRegex=True)
 			for match in ret:
 				# Append True/False flag depending if line was matched by
 				# more than one regex
@@ -338,35 +340,32 @@ class Fail2banRegex(object):
 			return False
 		for bufLine in orgLineBuffer[int(fullBuffer):]:
 			if bufLine not in self._filter._Filter__lineBuffer:
-				if self.removeMissedLine(bufLine):
+				try:
+					self._line_stats.missed_lines.pop(
+						self._line_stats.missed_lines.index("".join(bufLine)))
+					self._line_stats.missed_lines_timeextracted.pop(
+						self._line_stats.missed_lines_timeextracted.index(
+							"".join(bufLine[::2])))
+				except ValueError:
+					pass
+				else:
 					self._line_stats.matched += 1
 		return line, ret
-
-	def removeMissedLine(self, line):
-		"""Remove `line` from missed lines, by comparing without time match"""
-		for n, missed_line in \
-				enumerate(reversed(self._line_stats.missed_lines)):
-			timeMatch = self._filter.dateDetector.matchTime(
-				missed_line, incHits=False)
-			if timeMatch:
-				logLine = (missed_line[:timeMatch.start()] +
-					missed_line[timeMatch.end():])
-			else:
-				logLine = missed_line
-			if logLine.rstrip("\r\n") == line:
-				self._line_stats.missed_lines.pop(
-					len(self._line_stats.missed_lines) - n - 1)
-				return True
-		return False
 
 	def process(self, test_lines):
 
 		for line_no, line in enumerate(test_lines):
-			if line.startswith('#') or not line.strip():
-				# skip comment and empty lines
-				continue
-			is_ignored = fail2banRegex.testIgnoreRegex(line)
-			line_datetimestripped, ret = fail2banRegex.testRegex(line)
+			if isinstance(line, tuple):
+				line_datetimestripped, ret = fail2banRegex.testRegex(
+					line[0], line[1])
+				line = "".join(line[0])
+			else:
+				line = line.rstrip('\r\n')
+				if line.startswith('#') or not line:
+					# skip comment and empty lines
+					continue
+				line_datetimestripped, ret = fail2banRegex.testRegex(line)
+			is_ignored = fail2banRegex.testIgnoreRegex(line_datetimestripped)
 
 			if is_ignored:
 				self._line_stats.ignored_lines.append(line)
@@ -381,7 +380,7 @@ class Fail2banRegex(object):
 					self._line_stats.missed_lines_timeextracted.append(line_datetimestripped)
 			self._line_stats.tested += 1
 
-			if line_no % 10 == 0:
+			if line_no % 10 == 0 and self._filter.dateDetector is not None:
 				self._filter.dateDetector.sortTemplate()
 
 
@@ -436,7 +435,7 @@ class Fail2banRegex(object):
 							"    %s  %s%s" % (
 								ip[1],
 								timeString,
-								ip[3] and " (multiple regex matched)" or ""))
+								ip[-1] and " (multiple regex matched)" or ""))
 
 			print "\n%s: %d total" % (title, total)
 			pprint_list(out, " #) [# of hits] regular expression")
@@ -447,12 +446,14 @@ class Fail2banRegex(object):
 		_ = print_failregexes("Ignoreregex", self._ignoreregex)
 
 
-		print "\nDate template hits:"
-		out = []
-		for template in self._filter.dateDetector.getTemplates():
-			if self._verbose or template.getHits():
-				out.append("[%d] %s" % (template.getHits(), template.getName()))
-		pprint_list(out, "[# of hits] date format")
+		if self._filter.dateDetector is not None:
+			print "\nDate template hits:"
+			out = []
+			for template in self._filter.dateDetector.getTemplates():
+				if self._verbose or template.getHits():
+					out.append("[%d] %s" % (
+						template.getHits(), template.getName()))
+			pprint_list(out, "[# of hits] date format")
 
 		print "\nLines: %s" % self._line_stats
 
@@ -531,7 +532,7 @@ if __name__ == "__main__":
 			sys.exit(-1)
 		myjournal = journal.Reader(converters={'__CURSOR': lambda x: x})
 		journalmatch = fail2banRegex._journalmatch
-		fail2banRegex.setDatePattern("ISO8601")
+		fail2banRegex.setDatePattern(None)
 		if journalmatch:
 			try:
 				for element in journalmatch:

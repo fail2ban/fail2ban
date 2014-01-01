@@ -24,6 +24,7 @@ __license__ = "GPL"
 
 import logging, os, re, traceback, time, unittest, sys
 from os.path import basename, dirname
+from StringIO import StringIO
 
 if sys.version_info >= (2, 6):
 	import json
@@ -144,8 +145,10 @@ def gatherTests(regexps=None, no_network=False):
 	from fail2ban.tests import servertestcase
 	from fail2ban.tests import datedetectortestcase
 	from fail2ban.tests import actiontestcase
+	from fail2ban.tests import actionstestcase
 	from fail2ban.tests import sockettestcase
 	from fail2ban.tests import misctestcase
+	from fail2ban.tests import databasetestcase
 	if json:
 		from fail2ban.tests import samplestestcase
 
@@ -168,7 +171,9 @@ def gatherTests(regexps=None, no_network=False):
 	#tests.addTest(unittest.makeSuite(servertestcase.StartStop))
 	tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
 	tests.addTest(unittest.makeSuite(servertestcase.JailTests))
+	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
 	tests.addTest(unittest.makeSuite(actiontestcase.ExecuteAction))
+	tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
 	# FailManager
 	tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 	# BanManager
@@ -184,13 +189,18 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(misctestcase.HelpersTest))
 	tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
 	tests.addTest(unittest.makeSuite(misctestcase.TestsUtilsTest))
+	tests.addTest(unittest.makeSuite(misctestcase.CustomDateFormatsTest))
+	# Database
+	tests.addTest(unittest.makeSuite(databasetestcase.DatabaseTest))
 
 	# Filter
-	if not no_network:
-		tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
+	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
+	tests.addTest(unittest.makeSuite(filtertestcase.BasicFilter))
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
+	tests.addTest(unittest.makeSuite(filtertestcase.LogFileFilterPoll))
 	if not no_network:
+		tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIPDNS))
 		tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
 		tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
 	tests.addTest(unittest.makeSuite(filtertestcase.JailTests))
@@ -240,3 +250,32 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(servertestcase.TransmitterLogging))
 
 	return tests
+
+class LogCaptureTestCase(unittest.TestCase):
+
+	def setUp(self):
+
+		# For extended testing of what gets output into logging
+		# system, we will redirect it to a string
+		logSys = logging.getLogger("fail2ban")
+
+		# Keep old settings
+		self._old_level = logSys.level
+		self._old_handlers = logSys.handlers
+		# Let's log everything into a string
+		self._log = StringIO()
+		logSys.handlers = [logging.StreamHandler(self._log)]
+		logSys.setLevel(getattr(logging, 'DEBUG'))
+
+	def tearDown(self):
+		"""Call after every test case."""
+		# print "O: >>%s<<" % self._log.getvalue()
+		logSys = logging.getLogger("fail2ban")
+		logSys.handlers = self._old_handlers
+		logSys.level = self._old_level
+
+	def _is_logged(self, s):
+		return s in self._log.getvalue()
+
+	def printLog(self):
+		print(self._log.getvalue())

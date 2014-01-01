@@ -21,8 +21,6 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import sys
-
 from failmanager import FailManagerEmpty
 from failmanager import FailManager
 from ticket import FailTicket
@@ -31,6 +29,7 @@ from datedetector import DateDetector
 from datetemplate import DatePatternRegex, DateISO8601, DateEpoch, DateTai64n
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
+from action import Action
 
 import logging, re, os, fcntl, time, sys, locale, codecs
 
@@ -75,6 +74,8 @@ class Filter(JailThread):
 		## Store last time stamp, applicable for multi-line
 		self.__lastTimeText = ""
 		self.__lastDate = None
+		## External command
+		self.__ignoreCommand = False
 
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
@@ -199,8 +200,10 @@ class Filter(JailThread):
 	# @param pattern the date template pattern
 
 	def setDatePattern(self, pattern):
-		dateDetector = DateDetector()
-		if pattern.upper() == "ISO8601":
+		if pattern is None:
+			self.dateDetector = None
+			return
+		elif pattern.upper() == "ISO8601":
 			template = DateISO8601()
 			template.setName("ISO8601")
 		elif pattern.upper() == "EPOCH":
@@ -215,8 +218,8 @@ class Filter(JailThread):
 				template.setPattern(pattern[1:], anchor=True)
 			else:
 				template.setPattern(pattern, anchor=False)
-		dateDetector.appendTemplate(template)
-		self.dateDetector = dateDetector
+		self.dateDetector = DateDetector()
+		self.dateDetector.appendTemplate(template)
 		logSys.info("Date pattern set to `%r`: `%s`" %
 			(pattern, template.getName()))
 		logSys.debug("Date pattern regex for %r: %s" %
@@ -228,17 +231,18 @@ class Filter(JailThread):
 	# @return pattern of the date template pattern
 
 	def getDatePattern(self):
-		templates = self.dateDetector.getTemplates()
-		if len(templates) > 1:
-			return None # Default Detectors in use
-		elif len(templates) == 1:
-			if hasattr(templates[0], "getPattern"):
-				pattern =  templates[0].getPattern()
-				if templates[0].getRegex()[0] == "^":
-					pattern = "^" + pattern
-			else:
-				pattern = None
-			return pattern, templates[0].getName()
+		if self.dateDetector is not None:
+			templates = self.dateDetector.getTemplates()
+			if len(templates) > 1:
+				return None, "Default Detectors"
+			elif len(templates) == 1:
+				if hasattr(templates[0], "getPattern"):
+					pattern =  templates[0].getPattern()
+					if templates[0].getRegex()[0] == "^":
+						pattern = "^" + pattern
+				else:
+					pattern = None
+				return pattern, templates[0].getName()
 
 	##
 	# Set the maximum retry value.
@@ -287,12 +291,29 @@ class Filter(JailThread):
 		raise Exception("run() is abstract")
 
 	##
+	# Set external command, for ignoredips
+	#
+
+	def setIgnoreCommand(self, command):
+		self.__ignoreCommand = command
+
+	##
+	# Get external command, for ignoredips
+	#
+
+	def getIgnoreCommand(self):
+		return self.__ignoreCommand
+
+	##
 	# Ban an IP - http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
 	# Arturo 'Buanzo' Busleiman <buanzo@buanzo.com.ar>
 	#
 	# to enable banip fail2ban-client BAN command
 
 	def addBannedIP(self, ip):
+		if self.inIgnoreIPList(ip):
+			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.' % ip)
+
 		unixTime = MyTime.time()
 		for i in xrange(self.failManager.getMaxRetry()):
 			self.failManager.addFailure(FailTicket(ip, unixTime))
@@ -355,36 +376,45 @@ class Filter(JailThread):
 					continue
 			if a == b:
 				return True
+
+		if self.__ignoreCommand:
+			command = Action.replaceTag(self.__ignoreCommand, { 'ip': ip } )
+			logSys.debug('ignore command: ' + command)
+			return Action.executeCmd(command)
+
 		return False
 
 
-	def processLine(self, line, returnRawHost=False, checkAllRegex=False):
+	def processLine(self, line, date=None, returnRawHost=False,
+		checkAllRegex=False):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
-		l = line.rstrip('\r\n')
-		logSys.log(7, "Working on line %r", line)
-
-		timeMatch = self.dateDetector.matchTime(l)
-		if timeMatch:
-			# Lets split into time part and log part of the line
-			timeText = timeMatch.group()
-			# Lets leave the beginning in as well, so if there is no
-			# anchore at the beginning of the time regexp, we don't
-			# at least allow injection. Should be harmless otherwise
-			logLine  = l[:timeMatch.start()] + l[timeMatch.end():]
+		if date:
+			tupleLine = line
 		else:
-			timeText = None
-			logLine = l
+			l = line.rstrip('\r\n')
+			logSys.log(7, "Working on line %r", line)
 
-		return logLine, self.findFailure(timeText, logLine, returnRawHost, checkAllRegex)
+			timeMatch = self.dateDetector.matchTime(l)
+			if timeMatch:
+				tupleLine  = (
+					l[:timeMatch.start()],
+					l[timeMatch.start():timeMatch.end()],
+					l[timeMatch.end():])
+			else:
+				tupleLine = (l, "", "")
 
-	def processLineAndAdd(self, line):
+		return "".join(tupleLine[::2]), self.findFailure(
+			tupleLine, date, returnRawHost, checkAllRegex)
+
+	def processLineAndAdd(self, line, date=None):
 		"""Processes the line for failures and populates failManager
 		"""
-		for element in self.processLine(line)[1]:
+		for element in self.processLine(line, date)[1]:
 			failregex = element[0]
 			ip = element[1]
 			unixTime = element[2]
+			lines = element[3]
 			logSys.debug("Processing line with time:%s and ip:%s"
 						 % (unixTime, ip))
 			if unixTime < MyTime.time() - self.getFindTime():
@@ -396,7 +426,7 @@ class Filter(JailThread):
 				continue
 			logSys.debug("Found %s" % ip)
 			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
-			self.failManager.addFailure(FailTicket(ip, unixTime, [line]))
+			self.failManager.addFailure(FailTicket(ip, unixTime, lines))
 
 	##
 	# Returns true if the line should be ignored.
@@ -405,9 +435,9 @@ class Filter(JailThread):
 	# @param line: the line
 	# @return: a boolean
 
-	def ignoreLine(self, line):
+	def ignoreLine(self, tupleLines):
 		for ignoreRegexIndex, ignoreRegex in enumerate(self.__ignoreRegex):
-			ignoreRegex.search(line)
+			ignoreRegex.search(tupleLines)
 			if ignoreRegex.hasMatched():
 				return ignoreRegexIndex
 		return None
@@ -419,18 +449,22 @@ class Filter(JailThread):
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, timeText, logLine,
-			returnRawHost=False, checkAllRegex=False):
+	def findFailure(self, tupleLine, date=None, returnRawHost=False,
+		checkAllRegex=False):
 		failList = list()
 
 		# Checks if we must ignore this line.
-		if self.ignoreLine(logLine) is not None:
+		if self.ignoreLine([tupleLine[::2]]) is not None:
 			# The ignoreregex matched. Return.
-			logSys.log(7, "Matched ignoreregex and was \"%s\" ignored", logLine)
+			logSys.log(7, "Matched ignoreregex and was \"%s\" ignored",
+				"".join(tupleLine[::2]))
 			return failList
 
-
-		if timeText:
+		timeText = tupleLine[1]
+		if date:
+			self.__lastTimeText = timeText
+			self.__lastDate = date
+		elif timeText:
 
 			dateTimeMatch = self.dateDetector.getTime(timeText)
 
@@ -446,49 +480,53 @@ class Filter(JailThread):
 				self.__lastTimeText = timeText
 				self.__lastDate = date
 		else:
-			timeText = self.__lastTimeText or logLine
+			timeText = self.__lastTimeText or "".join(tupleLine[::2])
 			date = self.__lastDate
 
-		self.__lineBuffer = (self.__lineBuffer + [logLine])[-self.__lineBufferSize:]
-
-		logLine = "\n".join(self.__lineBuffer) + "\n"
+		self.__lineBuffer = (
+			self.__lineBuffer + [tupleLine])[-self.__lineBufferSize:]
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
-			failRegex.search(logLine)
+			failRegex.search(self.__lineBuffer)
 			if failRegex.hasMatched():
-				# Checks if we must ignore this match.
-				if self.ignoreLine(
-						"\n".join(failRegex.getMatchedLines()) + "\n") \
-						is not None:
-					# The ignoreregex matched. Remove ignored match.
-					self.__lineBuffer = failRegex.getUnmatchedLines()
-					logSys.log(7, "Matched ignoreregex and was ignored")
-					continue
 				# The failregex matched.
 				logSys.log(7, "Matched %s", failRegex)
+				# Checks if we must ignore this match.
+				if self.ignoreLine(failRegex.getMatchedTupleLines()) \
+						is not None:
+					# The ignoreregex matched. Remove ignored match.
+					self.__lineBuffer = failRegex.getUnmatchedTupleLines()
+					logSys.log(7, "Matched ignoreregex and was ignored")
+					if not checkAllRegex:
+						break
+					else:
+						continue
 				if date is None:
-					logSys.debug("Found a match for %r but no valid date/time "
-								 "found for %r. Please try setting a custom "
-								 "date pattern (see man page jail.conf(5)). "
-								 "If format is complex, please "
-								 "file a detailed issue on"
-								 " https://github.com/fail2ban/fail2ban/issues "
-								 "in order to get support for this format."
-								 % (logLine, timeText))
+					logSys.debug(
+						"Found a match for %r but no valid date/time "
+						"found for %r. Please try setting a custom "
+						"date pattern (see man page jail.conf(5)). "
+						"If format is complex, please "
+						"file a detailed issue on"
+						" https://github.com/fail2ban/fail2ban/issues "
+						"in order to get support for this format."
+						 % ("\n".join(failRegex.getMatchedLines()), timeText))
 				else:
-					self.__lineBuffer = failRegex.getUnmatchedLines()
+					self.__lineBuffer = failRegex.getUnmatchedTupleLines()
 					try:
 						host = failRegex.getHost()
 						if returnRawHost:
-							failList.append([failRegexIndex, host, date])
+							failList.append([failRegexIndex, host, date,
+								 failRegex.getMatchedLines()])
 							if not checkAllRegex:
 								break
 						else:
 							ipMatch = DNSUtils.textToIp(host, self.__useDns)
 							if ipMatch:
 								for ip in ipMatch:
-									failList.append([failRegexIndex, ip, date])
+									failList.append([failRegexIndex, ip, date,
+										 failRegex.getMatchedLines()])
 								if not checkAllRegex:
 									break
 					except RegexException, e: # pragma: no cover - unsure if reachable
@@ -527,6 +565,11 @@ class FileFilter(Filter):
 			logSys.error(path + " already exists")
 		else:
 			container = FileContainer(path, self.getLogEncoding(), tail)
+			db = self.jail.getDatabase()
+			if db is not None:
+				lastpos = db.addLog(self.jail, container)
+				if lastpos and not tail:
+					container.setPos(lastpos)
 			self.__logPath.append(container)
 			logSys.info("Added logfile = %s" % path)
 			self._addLogPath(path)			# backend specific
@@ -546,11 +589,14 @@ class FileFilter(Filter):
 		for log in self.__logPath:
 			if log.getFileName() == path:
 				self.__logPath.remove(log)
+				db = self.jail.getDatabase()
+				if db is not None:
+					db.updateLog(self.jail, log)
 				logSys.info("Removed logfile = %s" % path)
 				self._delLogPath(path)
 				return
 
-	def _delLogPath(self, path):
+	def _delLogPath(self, path): # pragma: no cover - overwritten function
 		# nothing to do by default
 		# to be overridden by backends
 		pass
@@ -644,6 +690,9 @@ class FileFilter(Filter):
 				break
 			self.processLineAndAdd(line)
 		container.close()
+		db = self.jail.getDatabase()
+		if db is not None:
+			db.updateLog(self.jail, container)
 		return True
 
 	def status(self):
@@ -682,7 +731,7 @@ class FileContainer:
 		try:
 			firstLine = handler.readline()
 			# Computes the MD5 of the first line.
-			self.__hash = md5sum(firstLine).digest()
+			self.__hash = md5sum(firstLine).hexdigest()
 			# Start at the beginning of file if tail mode is off.
 			if tail:
 				handler.seek(0, 2)
@@ -702,6 +751,15 @@ class FileContainer:
 	def getEncoding(self):
 		return self.__encoding
 
+	def getHash(self):
+		return self.__hash
+
+	def getPos(self):
+		return self.__pos
+
+	def setPos(self, value):
+		self.__pos = value
+
 	def open(self):
 		self.__handler = open(self.__filename, 'rb')
 		# Set the file descriptor to be FD_CLOEXEC
@@ -717,7 +775,7 @@ class FileContainer:
 			return False
 		firstLine = self.__handler.readline()
 		# Computes the MD5 of the first line.
-		myHash = md5sum(firstLine).digest()
+		myHash = md5sum(firstLine).hexdigest()
 		## print "D: fn=%s hashes=%s/%s inos=%s/%s pos=%s rotate=%s" % (
 		## 	self.__filename, self.__hash, myHash, stats.st_ino, self.__ino, self.__pos,
 		## 	self.__hash != myHash or self.__ino != stats.st_ino)
@@ -790,7 +848,7 @@ class DNSUtils:
 			Thanks to Kevin Drapel.
 		"""
 		try:
-			return socket.gethostbyname_ex(dns)[2]
+			return set(socket.gethostbyname_ex(dns)[2])
 		except socket.error, e:
 			logSys.warn("Unable to find a corresponding IP address for %s: %s"
 						% (dns, e))

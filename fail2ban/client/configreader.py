@@ -113,6 +113,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 				# No "Definition" section or wrong basedir
 				logSys.error(e)
 				values[option[1]] = option[2]
+				# TODO: validate error handling here.
 			except NoOptionError:
 				if not option[2] is None:
 					logSys.warning("'%s' not defined in '%s'. Using default one: %r"
@@ -137,12 +138,13 @@ class DefinitionInitConfigReader(ConfigReader):
 	
 	def __init__(self, file_, jailName, initOpts, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
-		self._file = file_
-		self._jailName = jailName
+		self.setFile(file_)
+		self.setJailName(jailName)
 		self._initOpts = initOpts
 	
 	def setFile(self, fileName):
 		self._file = fileName
+		self._initOpts = {}
 	
 	def getFile(self):
 		return self._file

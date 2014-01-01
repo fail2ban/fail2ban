@@ -24,36 +24,51 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, socket, time, tempfile, os, locale, sys
+import unittest, socket, time, tempfile, os, locale, sys, logging
 
-from fail2ban.server.server import Server
+from fail2ban.server.failregex import Regex, FailRegex, RegexException
+from fail2ban.server.server import Server, logSys
 from fail2ban.server.jail import Jail
 from fail2ban.exceptions import UnknownJailException
+from fail2ban.tests.utils import LogCaptureTestCase
+#from bin.fail2ban-client import Fail2banClient
 try:
 	from fail2ban.server import filtersystemd
-except ImportError:
+except ImportError: # pragma: no cover
 	filtersystemd = None
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
-class StartStop(unittest.TestCase):
+class StartStop(LogCaptureTestCase):
 
 	def setUp(self):
-		"""Call before every test case."""
-		self.__server = Server()
-		self.__server.setLogLevel(0)
-		self.__server.start(False)
+		self.client = Fail2banClient()
+		LogCaptureTestCase.setUp(self)
+		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'transmitter')
+		os.close(sock_fd)
+		os.remove(sock_name)
+		pidfile_fd, pidfile_name = tempfile.mkstemp(
+			'fail2ban.pid', 'transmitter')
+		os.close(pidfile_fd)
+		os.remove(pidfile_name)
+		self.client.__getCmdLineOptions([
+			('-c', os.path.join('fail2ban', 'tests', 'config')),
+			('-s', sock_name),
+			('-p', pidfile_name)])
+		self.client.__startServerAsync(sock_name, pidfile_name, False)
+		self.client.__waitOnServer()
 
 	def tearDown(self):
-		"""Call after every test case."""
 		self.__server.quit()
+		LogCaptureTestCase.tearDown(self)
 	
 	def testStartStopJail(self):
 		name = "TestCase"
-		self.__server.addJail(name)
+		self.__server.addJail(name, "auto")
 		self.__server.startJail(name)
 		time.sleep(1)
 		self.__server.stopJail(name)
+		self.printLog()
 
 class TestServer(Server):
 	def setLogLevel(self, *args, **kwargs):
@@ -129,9 +144,6 @@ class TransmitterBase(unittest.TestCase):
 		cmdAdd = "add" + cmd
 		cmdDel = "del" + cmd
 
-		if outValues is None:
-			outValues = inValues
-
 		self.assertEqual(
 			self.transm.proceed(["get", jail, cmd]), (0, []))
 		for n, value in enumerate(inValues):
@@ -167,6 +179,29 @@ class Transmitter(TransmitterBase):
 		t1 = time.time()
 		# Approx 1 second delay
 		self.assertAlmostEqual(t1 - t0, 1, places=2)
+
+	def testDatabase(self):
+		_, tmpFilename = tempfile.mkstemp(".db", "Fail2Ban_")
+		# Jails present, cant change database
+		self.setGetTestNOK("dbfile", tmpFilename)
+		self.server.delJail(self.jailName)
+		self.setGetTest("dbfile", tmpFilename)
+		self.setGetTest("dbpurgeage", "600", 600)
+		self.setGetTestNOK("dbpurgeage", "LIZARD")
+
+		# Disable database
+		self.assertEqual(self.transm.proceed(
+			["set", "dbfile", "None"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["get", "dbfile"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["set", "dbpurgeage", "500"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["get", "dbpurgeage"]),
+			(0, None))
 
 	def testAddJail(self):
 		jail2 = "TestJail2"
@@ -323,6 +358,22 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "dellogpath", value]),
 			(0, []))
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "addlogpath", value, "tail"]),
+			(0, [value]))
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "addlogpath", value, "head"]),
+			(0, [value]))
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "addlogpath", value, "badger"])[0],
+			1)
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "addlogpath", value, value, value])[0],
+			1)
 
 	def testJailLogPathInvalidFile(self):
 		# Invalid file
@@ -368,6 +419,9 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "delignoreip", value]),
 			(0, [value]))
+
+	def testJailIgnoreCommand(self):
+		self.setGetTest("ignorecommand", "bin ", jail=self.jailName)
 
 	def testJailRegex(self):
 		self.jailAddDelRegexTest("failregex",
@@ -526,75 +580,79 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(["status", "INVALID", "COMMAND"])[0],1)
 
-	if filtersystemd: # pragma: systemd no cover
-		def testJournalMatch(self):
-			jailName = "TestJail2"
-			self.server.addJail(jailName, "systemd")
-			values = [
-				"_SYSTEMD_UNIT=sshd.service",
-				"TEST_FIELD1=ABC",
-				"_HOSTNAME=example.com",
-			]
-			for n, value in enumerate(values):
-				self.assertEqual(
-					self.transm.proceed(
-						["set", jailName, "addjournalmatch", value]),
-					(0, [[val] for val in values[:n+1]]))
-			for n, value in enumerate(values):
-				self.assertEqual(
-					self.transm.proceed(
-						["set", jailName, "deljournalmatch", value]),
-					(0, [[val] for val in values[n+1:]]))
-
-			# Try duplicates
-			value = "_COMM=sshd"
+	def testJournalMatch(self):
+		if not filtersystemd: # pragma: no cover
+			if sys.version_info >= (2, 7):
+				raise unittest.SkipTest(
+					"systemd python interface not avilable")
+			return
+		jailName = "TestJail2"
+		self.server.addJail(jailName, "systemd")
+		values = [
+			"_SYSTEMD_UNIT=sshd.service",
+			"TEST_FIELD1=ABC",
+			"_HOSTNAME=example.com",
+		]
+		for n, value in enumerate(values):
 			self.assertEqual(
 				self.transm.proceed(
 					["set", jailName, "addjournalmatch", value]),
-				(0, [[value]]))
-			# Duplicates are accepted, as automatically OR'd, and journalctl
-			# also accepts them without issue.
-			self.assertEqual(
-				self.transm.proceed(
-					["set", jailName, "addjournalmatch", value]),
-				(0, [[value], [value]]))
-			# Remove first instance
+				(0, [[val] for val in values[:n+1]]))
+		for n, value in enumerate(values):
 			self.assertEqual(
 				self.transm.proceed(
 					["set", jailName, "deljournalmatch", value]),
-				(0, [[value]]))
-			# Remove second instance
-			self.assertEqual(
-				self.transm.proceed(
-					["set", jailName, "deljournalmatch", value]),
-				(0, []))
+				(0, [[val] for val in values[n+1:]]))
 
-			value = [
-				"_COMM=sshd", "+", "_SYSTEMD_UNIT=sshd.service", "_UID=0"]
-			self.assertEqual(
-				self.transm.proceed(
-					["set", jailName, "addjournalmatch"] + value),
-				(0, [["_COMM=sshd"], ["_SYSTEMD_UNIT=sshd.service", "_UID=0"]]))
-			self.assertEqual(
-				self.transm.proceed(
-					["set", jailName, "deljournalmatch"] + value[:1]),
-				(0, [["_SYSTEMD_UNIT=sshd.service", "_UID=0"]]))
-			self.assertEqual(
-				self.transm.proceed(
-					["set", jailName, "deljournalmatch"] + value[2:]),
-				(0, []))
+		# Try duplicates
+		value = "_COMM=sshd"
+		self.assertEqual(
+			self.transm.proceed(
+				["set", jailName, "addjournalmatch", value]),
+			(0, [[value]]))
+		# Duplicates are accepted, as automatically OR'd, and journalctl
+		# also accepts them without issue.
+		self.assertEqual(
+			self.transm.proceed(
+				["set", jailName, "addjournalmatch", value]),
+			(0, [[value], [value]]))
+		# Remove first instance
+		self.assertEqual(
+			self.transm.proceed(
+				["set", jailName, "deljournalmatch", value]),
+			(0, [[value]]))
+		# Remove second instance
+		self.assertEqual(
+			self.transm.proceed(
+				["set", jailName, "deljournalmatch", value]),
+			(0, []))
 
-			# Invalid match
-			value = "This isn't valid!"
-			result = self.transm.proceed(
-				["set", jailName, "addjournalmatch", value])
-			self.assertTrue(isinstance(result[1], ValueError))
+		value = [
+			"_COMM=sshd", "+", "_SYSTEMD_UNIT=sshd.service", "_UID=0"]
+		self.assertEqual(
+			self.transm.proceed(
+				["set", jailName, "addjournalmatch"] + value),
+			(0, [["_COMM=sshd"], ["_SYSTEMD_UNIT=sshd.service", "_UID=0"]]))
+		self.assertEqual(
+			self.transm.proceed(
+				["set", jailName, "deljournalmatch"] + value[:1]),
+			(0, [["_SYSTEMD_UNIT=sshd.service", "_UID=0"]]))
+		self.assertEqual(
+			self.transm.proceed(
+				["set", jailName, "deljournalmatch"] + value[2:]),
+			(0, []))
 
-			# Delete invalid match
-			value = "FIELD=NotPresent"
-			result = self.transm.proceed(
-				["set", jailName, "deljournalmatch", value])
-			self.assertTrue(isinstance(result[1], ValueError))
+		# Invalid match
+		value = "This isn't valid!"
+		result = self.transm.proceed(
+			["set", jailName, "addjournalmatch", value])
+		self.assertTrue(isinstance(result[1], ValueError))
+
+		# Delete invalid match
+		value = "FIELD=NotPresent"
+		result = self.transm.proceed(
+			["set", jailName, "deljournalmatch", value])
+		self.assertTrue(isinstance(result[1], ValueError))
 
 class TransmitterLogging(TransmitterBase):
 
@@ -617,14 +675,13 @@ class TransmitterLogging(TransmitterBase):
 		value = "/this/path/should/not/exist"
 		self.setGetTestNOK("logtarget", value)
 
-		self.transm.proceed(["set", "/dev/null"])
+		self.transm.proceed(["set", "logtarget", "/dev/null"])
 		for logTarget in logTargets:
 			os.remove(logTarget)
 
 		self.setGetTest("logtarget", "STDOUT")
 		self.setGetTest("logtarget", "STDERR")
-		if sys.platform.lower().startswith('linux'):
-			self.setGetTest("logtarget", "SYSLOG")
+		self.setGetTest("logtarget", "SYSLOG")
 
 	def testLogLevel(self):
 		self.setGetTest("loglevel", "4", 4)
@@ -635,6 +692,54 @@ class TransmitterLogging(TransmitterBase):
 		self.setGetTest("loglevel", "0", 0)
 		self.setGetTestNOK("loglevel", "Bird")
 
+	def testFlushLogs(self):
+		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
+		try:
+			f, fn = tempfile.mkstemp("fail2ban.log")
+			os.close(f)
+			self.server.setLogLevel(2)
+			self.assertEqual(self.transm.proceed(["set", "logtarget", fn]), (0, fn))
+			l = logging.getLogger('fail2ban.server.server').parent.parent
+			l.warning("Before file moved")
+			try:
+				f2, fn2 = tempfile.mkstemp("fail2ban.log")
+				os.close(f2)
+				os.rename(fn, fn2)
+				l.warning("After file moved")
+				self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
+				l.warning("After flushlogs")
+				with open(fn2,'r') as f:
+					line1 = f.next()
+					if line1.find('Changed logging target to') >= 0:
+						line1 = f.next()
+					self.assertTrue(line1.endswith("Before file moved\n"))
+					line2 = f.next()
+					self.assertTrue(line2.endswith("After file moved\n"))
+					try:
+						n = f.next()
+						if n.find("Command: ['flushlogs']") >=0:
+							self.assertRaises(StopIteration, f.next)
+						else:
+							self.fail("Exception StopIteration or Command: ['flushlogs'] expected. Got: %s" % n)
+					except StopIteration:
+						pass # on higher debugging levels this is expected
+				with open(fn,'r') as f:
+					line1 = f.next()
+					if line1.find('rollover performed on') >= 0:
+						line1 = f.next()
+					self.assertTrue(line1.endswith("After flushlogs\n"))
+					self.assertRaises(StopIteration, f.next)
+					f.close()
+			finally:
+				os.remove(fn2)
+		finally:
+			try:
+				os.remove(fn)
+			except OSError:
+				pass
+		self.assertEqual(self.transm.proceed(["set", "logtarget", "STDERR"]), (0, "STDERR"))
+		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "flushed"))
+
 
 class JailTests(unittest.TestCase):
 
@@ -643,3 +748,30 @@ class JailTests(unittest.TestCase):
 		longname = "veryveryverylongname"
 		jail = Jail(longname)
 		self.assertEqual(jail.getName(), longname)
+
+class RegexTests(unittest.TestCase):
+
+	def testInit(self):
+		# Should raise an Exception upon empty regex
+		self.assertRaises(RegexException, Regex, '')
+		self.assertRaises(RegexException, Regex, ' ')
+		self.assertRaises(RegexException, Regex, '\t')
+
+	def testStr(self):
+		# .replace just to guarantee uniform use of ' or " in the %r
+		self.assertEqual(str(Regex('a')).replace('"', "'"), "Regex('a')")
+		# Class name should be proper
+		self.assertTrue(str(FailRegex('<HOST>')).startswith("FailRegex("))
+
+	def testHost(self):
+		self.assertRaises(RegexException, FailRegex, '')
+		# Testing obscure case when host group might be missing in the matched pattern,
+		# e.g. if we made it optional.
+		fr = FailRegex('%%<HOST>?')
+		self.assertFalse(fr.hasMatched())
+		fr.search([('%%',"","")])
+		self.assertTrue(fr.hasMatched())
+		self.assertRaises(RegexException, fr.getHost)
+
+
+

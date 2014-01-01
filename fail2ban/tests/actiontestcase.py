@@ -24,40 +24,24 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, time
+import time
 import logging, sys
-from StringIO import StringIO
 
 from fail2ban.server.action import Action
 
-class ExecuteAction(unittest.TestCase):
+from fail2ban.tests.utils import LogCaptureTestCase
+
+class ExecuteAction(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
 		self.__action = Action("Test")
-
-		# For extended testing of what gets output into logging
-		# system, we will redirect it to a string
-		logSys = logging.getLogger("fail2ban")
-
-		# Keep old settings
-		self._old_level = logSys.level
-		self._old_handlers = logSys.handlers
-		# Let's log everything into a string
-		self._log = StringIO()
-		logSys.handlers = [logging.StreamHandler(self._log)]
-		logSys.setLevel(getattr(logging, 'DEBUG'))
+		LogCaptureTestCase.setUp(self)
 
 	def tearDown(self):
 		"""Call after every test case."""
-		# print "O: >>%s<<" % self._log.getvalue()
-		logSys = logging.getLogger("fail2ban")
-		logSys.handlers = self._old_handlers
-		logSys.level = self._old_level
+		LogCaptureTestCase.tearDown(self)
 		self.__action.execActionStop()
-
-	def _is_logged(self, s):
-		return s in self._log.getvalue()
 
 	def testNameChange(self):
 		self.assertEqual(self.__action.getName(), "Test")
@@ -102,8 +86,28 @@ class ExecuteAction(unittest.TestCase):
 			"Text 890 text 123 ABC")
 		self.assertEqual(
 			self.__action.replaceTag("<matches>",
-				{'matches': "some >char< should \< be[ escap}ed&"}),
-			r"some \>char\< should \\\< be\[ escap\}ed\&")
+				{'matches': "some >char< should \< be[ escap}ed&\n"}),
+			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\n")
+		self.assertEqual(
+			self.__action.replaceTag("<ipmatches>",
+				{'ipmatches': "some >char< should \< be[ escap}ed&\n"}),
+			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\n")
+		self.assertEqual(
+			self.__action.replaceTag("<ipjailmatches>",
+				{'ipjailmatches': "some >char< should \< be[ escap}ed&\n"}),
+			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\n")
+
+		# Callable
+		self.assertEqual(
+			self.__action.replaceTag("09 <callable> 11",
+				{'callable': lambda: str(10)}),
+			"09 10 11")
+
+		# As tag not present, therefore callable should not be called
+		# Will raise ValueError if it is
+		self.assertEqual(
+			self.__action.replaceTag("abc",
+				{'callable': lambda: int("a")}), "abc")
 
 	def testExecuteActionBan(self):
 		self.__action.setActionStart("touch /tmp/fail2ban.test")

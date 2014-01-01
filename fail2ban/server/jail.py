@@ -37,7 +37,8 @@ class Jail:
 	#      list had .index until 2.6
 	_BACKENDS = ['pyinotify', 'gamin', 'polling', 'systemd']
 
-	def __init__(self, name, backend = "auto"):
+	def __init__(self, name, backend = "auto", db=None):
+		self.__db = db
 		self.setName(name)
 		self.__queue = Queue.Queue()
 		self.__filter = None
@@ -109,14 +110,19 @@ class Jail:
 		self.__filter = FilterSystemd(self)
 	
 	def setName(self, name):
+		# 20 based on iptable chain name limit of 30 less len('fail2ban-')
 		if len(name) >= 20:
-			logSys.warning("Jail name %r might be too long and some commands "
-							"might not function correctly. Please shorten"
+			logSys.warning("Jail name %r might be too long and some commands"
+							" (e.g. iptables) might not function correctly."
+							" Please shorten"
 							% name)
 		self.__name = name
 	
 	def getName(self):
 		return self.__name
+	
+	def getDatabase(self):
+		return self.__db
 	
 	def getFilter(self):
 		return self.__filter
@@ -126,6 +132,8 @@ class Jail:
 	
 	def putFailTicket(self, ticket):
 		self.__queue.put(ticket)
+		if self.__db is not None:
+			self.__db.addBan(self, ticket)
 	
 	def getFailTicket(self):
 		try:
@@ -136,6 +144,11 @@ class Jail:
 	def start(self):
 		self.__filter.start()
 		self.__action.start()
+		# Restore any previous valid bans from the database
+		if self.__db is not None:
+			for ticket in self.__db.getBans(
+				jail=self, bantime=self.__action.getBanTime()):
+				self.__queue.put(ticket)
 		logSys.info("Jail '%s' started" % self.__name)
 	
 	def stop(self):

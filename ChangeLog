@@ -4,51 +4,66 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.9.0a1)                                            2013/??/??
+Fail2Ban (version 0.9.0a2)                                            2014/??/??
 ================================================================================
 
 
-ver. 0.9.0 (2013/??/??) - alpha
+ver. 0.9.0 (2014/??/??) - alpha
 ----------
 
-Carries all fixes in 0.8.9 and new features and enhancements.  Nearly
-all development is thanks to Steven Hiscocks (THANKS!) with only
-code-review and minor additions from Yaroslav Halchenko.
+Carries all fixes, features and enhancements from 0.8.12 with major changes.
+Nearly all development is thanks to Steven Hiscocks (THANKS!), merging,
+testcases and timezone support from Daniel Black, and code-review and minor
+additions from Yaroslav Halchenko.
+
+The minimum supported python version is now 2.6. If you have python-2.4 or 2.5
+you can use the 0.8.12 version of fail2ban.
+
+Major changes have occured since version 0.8.12. Please test your
+configuration before relying on it.
 
 - Refactoring (IMPORTANT -- Please review your setup and configuration):
-  Yaroslav Halchenko
    * [..bddbf1e] jail.conf was heavily refactored and now is similar
      to how it looked on Debian systems:
      - default action could be configured once for all jails
      - jails definitions only provide customizations (port, logpath)
      - no need to specify 'filter' if name matches jail name
-  Steven Hiscocks
    * [..5aef036] Core functionality moved into fail2ban/ module.
      Closes gh-26
+   * Added fail2ban persistent database
+     - default location at /var/lib/fail2ban/fail2ban.sqlite3
+     - allows active bans to be reinstated on restart
+     - log files read from last position after restart
+   * Added systemd journal backend
+     - Dependency on python-systemd
+     - New "journalmatch" option added to filter configs files
+     - New "systemd-journal" option added to fail2ban-regex
+   * Added python3 support
+   * Support %z (Timezone offset) and %f (sub-seconds) support for
+     datedetector. Enhanced existing date/time have been updated patterns to
+     support these. ISO8601 now defaults to localtime unless specified otherwise.
+     Some filters have been change as required to capture these elements in the
+     right timezone correctly.
+
 - New features:
-  Steven Hiscocks
    * [..c7ae460] Multiline failregex. Close gh-54
    * [8af32ed] Guacamole filter and support for Apache Tomcat date
      format
-   * [..4869186] Python3 support
    * [..b6059f4] 'timeout' option for actions Close gh-60 and Debian bug
      #410077.  Also it would now capture and include stdout and stderr
      into logging messages in case of error or at DEBUG loglevel.
-   Daniel Black and TESTOVIK
-   * Multiline filter for sendmail-spam. Close gh-418
+   * Added action xarf-login-attack to report formatted attack messages
+     according to the XARF standard (v0.2). Close gh-105
+   * Support PyPy
 
 - Enhancements
-  Steven Hiscocks
+   * Multiline filter for sendmail-spam. Close gh-418
+   * Multiline regex for Disconnecting: Too many authentication failures for
+     root [preauth]\nConnection closed by 6X.XXX.XXX.XXX [preauth]
    * Replacing use of deprecated API (.warning, .assertEqual, etc)
    * [..a648cc2] Filters can have options now too
    * [..e019ab7] Multiple instances of the same action are allowed in the
      same jail -- use actname option to disambiguate.
-  Daniel Black
-   * Support %z (Timezone offset) and %f (sub-seconds) support for
-	 datedetector. Enhanced existing date/time have been updated patterns to
-	 support these. ISO8601 now defaults to localtime unless specified otherwise.
-	 Some filters have been change as required to capture these elements in the
-	 right timezone correctly.
 
 ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
 -----------
@@ -56,15 +71,46 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
 - IMPORTANT incompatible changes:
 
 - Fixes:
+  - Rename firewall-cmd-direct-new to firewall-cmd-new to fit within jail name
+    name length. As per gh-395
   - allow for ",milliseconds" in the custom date format of proftpd.log
   - allow for ", referer ..." in apache-* filter for apache error logs.
+  - allow for spaces at the beginning of kernel messages. Closes gh-448
+  - recidive jail to block all protocols. Closes gh-440. Thanks Ioan Indreias
+  - smtps not a IANA standard and has been removed from Arch. Replaced with
+    465. Thanks Stefan. Closes gh-447
+  - mysqld-syslog-iptables rule was too long. Part of gh-447.
+  - add 'flushlogs' command to allow logrotation without clobbering logtarget
+    settings. Closes gh-458, Debian bug #697333, Redhat bug #891798.
+  - complain action - ensure where not matching other IPs in log sample.
+    Closes gh-467
+  - Fix firewall-cmd actioncheck - patch from Adam Tkac. Redhat Bug #979622
+  - Fix apache-common for apache-2.4 log file format. Thanks Mark White.
+    Closes gh-516
+  - Asynchat changed to use push method which verifys whether all data was
+    send. This ensures that all data is sent before closing the connection.
+
+- Enhancements:
+  - added firewallcmd-ipset action
+  - long names on jails documented based on iptables limit of 30 less
+    len("fail2ban-").
+  - remove indentation of name and loglevel while logging to SYSLOG to
+    resolve syslog(-ng) parsing problems. Closes Debian bug #730202.
+  - added squid filter. Thanks Roman Gelfand.
+  - updated check_fail2ban to return performance data for all jails.
+  - filter apache-noscript now includes php cgi scripts.
+    Thanks dani. Closes gh-503
+  - added ufw action. Thanks Guilhem Lettron. lp-#701522
+  - exim-spam filter to match spamassassin log entry for option SAdevnull.
+    Thanks Ivo Truxa. Closes gh-533
+  - filter.d/nsd.conf -- also amended Unix date template to match nsd format
+  - loglines now also report "[PID]" after the name portion
 
 - New Features:
 
-  Daniel Black
-   * filter.d/solid-pop3d -- added thanks to Jacques Lav!gnotte on mailinglist.
-
-- Enhancements:
+  - Added filter for solid-pop3d -- thanks to Jacques Lav!gnotte on mailinglist.
+  - Added filter for apache-modsecurity
+  - Added filter for openwebmail thanks Ivo Truxa. Closes gh-543
 
 ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
 
