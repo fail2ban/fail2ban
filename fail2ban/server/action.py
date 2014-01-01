@@ -90,7 +90,7 @@ class ActionBase(object):
 				return False
 		return True
 
-	def __init__(self, jail, name, initOpts=None):
+	def __init__(self, jail, name):
 		self._jail = jail
 		self._name = name
 		self._logSys = logging.getLogger(

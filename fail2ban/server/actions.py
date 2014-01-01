@@ -81,7 +81,7 @@ class Actions(JailThread):
 				raise RuntimeError(
 					"%s module %s does not implment required methods" % (
 						pythonModule, customActionModule.Action.__name__))
-			action = customActionModule.Action(self.jail, name, initOpts)
+			action = customActionModule.Action(self.jail, name, **initOpts)
 		self.__actions.append(action)
 	
 	##

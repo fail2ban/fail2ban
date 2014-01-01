@@ -53,23 +53,23 @@ Matches for %(ip)s for jail %(jailname)s:
 
 class SMTPAction(ActionBase):
 
-    def __init__(self, jail, name, initOpts):
-        super(SMTPAction, self).__init__(jail, name, initOpts)
-        if initOpts is None:
-            initOpts = dict() # We have defaults for everything
-        self.host = initOpts.get('host', "localhost:25")
-        #TODO: self.ssl = initOpts.get('ssl', "no") == 'yes'
+    def __init__(
+        self, jail, name, host="localhost", user=None, password=None,
+        sendername="Fail2Ban", sender="fail2ban", dest="root", matches=None):
 
-        self.user = initOpts.get('user', '')
-        self.password = initOpts.get('password')
+        super(SMTPAction, self).__init__(jail, name)
 
-        self.fromname = initOpts.get('sendername', "Fail2Ban")
-        self.fromaddr = initOpts.get('sender', "fail2ban")
-        self.toaddr = initOpts.get('dest', "root")
+        self.host = host
+        #TODO: self.ssl = ssl
 
-        self.smtp = smtplib.SMTP()
+        self.user = user
+        self.password =password
 
-        self.matches = initOpts.get('matches')
+        self.fromname = sendername
+        self.fromaddr = sender
+        self.toaddr = dest
+
+        self.matches = matches
 
         self.message_values = CallingMap(
             jailname = self.jail.getName(), # Doesn't change
@@ -84,12 +84,13 @@ class SMTPAction(ActionBase):
         msg['To'] = self.toaddr
         msg['Date'] = formatdate()
 
+        smtp = smtplib.SMTP()
         try:
             self.logSys.debug("Connected to SMTP '%s', response: %i: %s",
-                *self.smtp.connect(self.host))
+                *smtp.connect(self.host))
             if self.user and self.password:
                 smtp.login(self.user, self.password)
-            failed_recipients = self.smtp.sendmail(
+            failed_recipients = smtp.sendmail(
                 self.fromaddr, self.toaddr, msg.as_string())
         except smtplib.SMTPConnectError:
             self.logSys.error("Error connecting to host '%s'", self.host)
@@ -112,7 +113,7 @@ class SMTPAction(ActionBase):
             self.logSys.debug("Email '%s' successfully sent", subject)
         finally:
             try:
-                self.smtp.quit()
+                smtp.quit()
             except smtplib.SMTPServerDisconnected:
                 pass # Not connected
 

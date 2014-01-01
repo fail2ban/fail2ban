@@ -86,7 +86,8 @@ class ExecuteActions(LogCaptureTestCase):
 
 	def testAddActionPython(self):
 		self.__actions.addAction(
-			"Action", os.path.join(TEST_FILES_DIR, "action.d/action.py"), {})
+			"Action", os.path.join(TEST_FILES_DIR, "action.d/action.py"),
+			{'opt1': 'value'})
 
 		self.assertTrue(self._is_logged("TestAction initialised"))
 
@@ -100,3 +101,17 @@ class ExecuteActions(LogCaptureTestCase):
 
 		self.assertRaises(IOError,
 			self.__actions.addAction, "Action3", "/does/not/exist.py", {})
+
+		# With optional argument
+		self.__actions.addAction(
+			"Action4", os.path.join(TEST_FILES_DIR, "action.d/action.py"),
+			{'opt1': 'value', 'opt2': 'value2'})
+		# With too many arguments
+		self.assertRaises(
+			TypeError, self.__actions.addAction, "Action5",
+			os.path.join(TEST_FILES_DIR, "action.d/action.py"),
+			{'opt1': 'value', 'opt2': 'value2', 'opt3': 'value3'})
+		# Missing required argument
+		self.assertRaises(
+			TypeError, self.__actions.addAction, "Action5",
+			os.path.join(TEST_FILES_DIR, "action.d/action.py"), {})
