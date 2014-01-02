@@ -32,10 +32,13 @@ from fail2ban.client.configurator import Configurator
 from fail2ban.tests.utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
-if os.path.exists('config/fail2ban.conf'):
+if os.path.exists(os.path.join('config','fail2ban.conf')):
 	CONFIG_DIR='config'
 else:
-	CONFIG_DIR='/etc/fail2ban'
+	CONFIG_DIR=os.path.join('etc','fail2ban')
+
+IMPERFECT_CONFIG = os.path.join('fail2ban', 'tests','config')
+
 
 IMPERFECT_CONFIG = os.path.join('fail2ban', 'tests','config')
 

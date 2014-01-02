@@ -67,6 +67,7 @@ def testSampleRegexsFactory(name):
 		# Check filter exists
 		filterConf = FilterReader(name, "jail", {}, basedir=CONFIG_DIR)
 		self.assertEqual(filterConf.getFile(), name)
+		self.assertEqual(filterConf.getJailName(), "jail")
 		filterConf.read()
 		filterConf.getOptions({})
 
