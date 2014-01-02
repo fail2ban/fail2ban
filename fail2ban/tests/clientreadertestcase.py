@@ -539,6 +539,8 @@ class JailsReaderTest(LogCaptureTestCase):
 [testjail1]
 action = testaction1[actname=test1]
          testaction1[actname=test2]
+         testaction.py
+         testaction.py[actname=test3]
 filter = testfilter1
 """)
 		jailfd.close()
@@ -547,8 +549,12 @@ filter = testfilter1
 		self.assertTrue(jails.getOptions())
 		comm_commands = jails.convert(allow_no_files=True)
 
-		action_names = [comm[-1] for comm in comm_commands if comm[:3] == ['set', 'testjail1', 'addaction']]
+		add_actions = [comm[3:] for comm in comm_commands
+			if comm[:3] == ['set', 'testjail1', 'addaction']]
 
-		self.assertNotEqual(len(set(action_names)), 1)
+		self.assertEqual(len(set(action[0] for action in add_actions)), 4)
+
+		# Python actions should not be passed `actname`
+		self.assertEqual(add_actions[-1][-1], "{}")
 
 		shutil.rmtree(basedir)

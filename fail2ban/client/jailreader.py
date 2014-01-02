@@ -126,7 +126,7 @@ class JailReader(ConfigReader):
 							"set",
 							self.__name,
 							"addaction",
-							actOpt.get("actname", os.path.splitext(actName)[0]),
+							actOpt.pop("actname", os.path.splitext(actName)[0]),
 							os.path.join(
 								self.getBaseDir(), "action.d", actName),
 							json.dumps(actOpt),
