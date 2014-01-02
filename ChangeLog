@@ -111,6 +111,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - Added filter for solid-pop3d -- thanks to Jacques Lav!gnotte on mailinglist.
   - Added filter for apache-modsecurity
   - Added filter for openwebmail thanks Ivo Truxa. Closes gh-543
+  - Added filter for horde
 
 ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
 
