@@ -295,7 +295,7 @@ class Action:
 
 	#@staticmethod
 	def escapeTag(tag):
-		for c in '\\#&;`|*?~<>^()[]{}$\n\'"':
+		for c in '\\#&;`|*?~<>^()[]{}$\'"':
 			if c in tag:
 				tag = tag.replace(c, '\\' + c)
 		return tag
@@ -314,12 +314,15 @@ class Action:
 		"""
 		string = query
 		for tag, value in aInfo.iteritems():
-			value = str(value)			  # assure string
-			if tag == 'matches':
-				# That one needs to be escaped since its content is
-				# out of our control
-				value = Action.escapeTag(value)
-			string = string.replace('<' + tag + '>', value)
+			if "<%s>" % tag in query:
+				if callable(value):
+					value = value()
+				value = str(value)			  # assure string
+				if tag.endswith('matches'):
+					# That one needs to be escaped since its content is
+					# out of our control
+					value = Action.escapeTag(value)
+				string = string.replace('<' + tag + '>', value)
 		# New line
 		string = string.replace("<br>", '\n')
 		return string

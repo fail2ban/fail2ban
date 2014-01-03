@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import re, sre_constants
+import re, sre_constants, sys
 
 ##
 # Regular expression class.
@@ -72,10 +72,11 @@ class Regex:
 	# Sets an internal cache (match object) in order to avoid searching for
 	# the pattern again. This method must be called before calling any other
 	# method of this object.
-	# @param value the line
+	# @param a list of tupples. The tupples are ( prematch, datematch, postdatematch )
 	
-	def search(self, value):
-		self._matchCache = self._regexObj.search(value)
+	def search(self, tupleLines):
+		self._matchCache = self._regexObj.search(
+			"\n".join("".join(value[::2]) for value in tupleLines) + "\n")
 		if self.hasMatched():
 			# Find start of the first line where the match was found
 			try:
@@ -89,8 +90,26 @@ class Regex:
 					"\n", self._matchCache.end() - 1) + 1
 			except ValueError:
 				self._matchLineEnd = len(self._matchCache.string)
-	
-	##
+
+
+			lineCount1 = self._matchCache.string.count(
+				"\n", 0, self._matchLineStart)
+			lineCount2 = self._matchCache.string.count(
+				"\n", 0, self._matchLineEnd)
+			self._matchedTupleLines = tupleLines[lineCount1:lineCount2]
+			self._unmatchedTupleLines = tupleLines[:lineCount1]
+
+			n = 0
+			for skippedLine in self.getSkippedLines():
+				for m, matchedTupleLine in enumerate(
+					self._matchedTupleLines[n:]):
+					if "".join(matchedTupleLine[::2]) == skippedLine:
+						self._unmatchedTupleLines.append(
+							self._matchedTupleLines.pop(n+m))
+						n += m
+						break
+			self._unmatchedTupleLines.extend(tupleLines[lineCount2:])
+
 	# Checks if the previous call to search() matched.
 	#
 	# @return True if a match was found, False otherwise
@@ -114,9 +133,15 @@ class Regex:
 		n = 0
 		while True:
 			try:
-				skippedLines += self._matchCache.group("skiplines%i" % n)
+				if self._matchCache.group("skiplines%i" % n) is not None:
+					skippedLines += self._matchCache.group("skiplines%i" % n)
 				n += 1
 			except IndexError:
+				break
+			# KeyError is because of PyPy issue1665 affecting pypy <= 2.2.1 
+			except KeyError:
+				if 'PyPy' not in sys.version: # pragma: no cover - not sure this is even reachable
+					raise
 				break
 		return skippedLines.splitlines(False)
 
@@ -125,15 +150,18 @@ class Regex:
 	#
 	# This returns unmatched lines including captured by the <SKIPLINES> tag.
 	# @return list of unmatched lines
-	
+
+	def getUnmatchedTupleLines(self):
+		if not self.hasMatched():
+			return []
+		else:
+			return self._unmatchedTupleLines
+
 	def getUnmatchedLines(self):
 		if not self.hasMatched():
 			return []
-		unmatchedLines = (
-			self._matchCache.string[:self._matchLineStart].splitlines(False)
-			+ self.getSkippedLines()
-			+ self._matchCache.string[self._matchLineEnd:].splitlines(False))
-		return unmatchedLines
+		else:
+			return ["".join(line) for line in self._unmatchedTupleLines]
 
 	##
 	# Returns matched lines.
@@ -141,14 +169,18 @@ class Regex:
 	# This returns matched lines by excluding those captured
 	# by the <SKIPLINES> tag.
 	# @return list of matched lines
-	
+
+	def getMatchedTupleLines(self):
+		if not self.hasMatched():
+			return []
+		else:
+			return self._matchedTupleLines
+
 	def getMatchedLines(self):
 		if not self.hasMatched():
 			return []
-		matchedLines = self._matchCache.string[
-			self._matchLineStart:self._matchLineEnd].splitlines(False)
-		return [line for line in matchedLines
-			if line not in self.getSkippedLines()]
+		else:
+			return ["".join(line) for line in self._matchedTupleLines]
 
 ##
 # Exception dedicated to the class Regex.

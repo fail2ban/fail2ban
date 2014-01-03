@@ -172,6 +172,7 @@ class TestsUtilsTest(unittest.TestCase):
 
 from fail2ban.server import iso8601
 import datetime
+import time
 
 class CustomDateFormatsTest(unittest.TestCase):
 
@@ -190,8 +191,25 @@ class CustomDateFormatsTest(unittest.TestCase):
 						  iso8601.parse_date, "2007-01-01T120:00:00Z")
 		self.assertRaises(iso8601.ParseError,
 						  iso8601.parse_date, "2007-13-01T12:00:00Z")
+		date = iso8601.parse_date("2007-01-25T12:00:00+0400")
+		self.assertEqual(
+			date,
+			datetime.datetime(2007, 1, 25, 8, 0, tzinfo=iso8601.Utc()))
+		date = iso8601.parse_date("2007-01-25T12:00:00+04:00")
+		self.assertEqual(
+			date,
+			datetime.datetime(2007, 1, 25, 8, 0, tzinfo=iso8601.Utc()))
+		date = iso8601.parse_date("2007-01-25T12:00:00-0400")
+		self.assertEqual(
+			date,
+			datetime.datetime(2007, 1, 25, 16, 0, tzinfo=iso8601.Utc()))
+		date = iso8601.parse_date("2007-01-25T12:00:00-04")
+		self.assertEqual(
+			date,
+			datetime.datetime(2007, 1, 25, 16, 0, tzinfo=iso8601.Utc()))
 
 	def testTimeZone(self):
 		# Just verify consistent operation and improve coverage ;)
-		self.assertEqual(iso8601.parse_timezone(None), iso8601.UTC)
-		self.assertEqual(iso8601.parse_timezone('Z'),  iso8601.UTC)
+		self.assertEqual((iso8601.parse_timezone(None).tzname(False), iso8601.parse_timezone(None).tzname(True)), time.tzname)
+		self.assertEqual(iso8601.parse_timezone('Z').tzname(True), "UTC")
+		self.assertEqual(iso8601.parse_timezone('Z').dst(True), datetime.timedelta(0))

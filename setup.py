@@ -131,6 +131,9 @@ setup(
 						('/var/run/fail2ban',
 							''
 						),
+						('/var/lib/fail2ban',
+							''
+						),
 						('/usr/share/doc/fail2ban',
 							['README.md', 'DEVELOP', 'doc/run-rootless.txt']
 						)

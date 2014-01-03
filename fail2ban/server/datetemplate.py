@@ -82,7 +82,7 @@ class DateEpoch(DateTemplate):
 	
 	def __init__(self):
 		DateTemplate.__init__(self)
-		self.setRegex("(?:^|(?P<selinux>(?<=audit\()))\d{10}(?:\.\d{3,6})?(?(selinux)(?=:\d+\)))")
+		self.setRegex("(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=audit\()))\d{10}(?:\.\d{3,6})?(?(selinux)(?=:\d+\))(?(square)(?=\])))")
 	
 	def getDate(self, line):
 		dateMatch = self.matchDate(line)
@@ -208,7 +208,8 @@ class DateStrptime(DateTemplate):
 					# If it is Jan 1st, it is either really Jan 1st or there
 					# is neither month nor day in the log.
 					# NOTE: Possibly makes week/year day incorrect
-					date = date.replace(month=MyTime.gmtime()[1], day=1)
+					date = date.replace(
+						month=MyTime.gmtime()[1], day=MyTime.gmtime()[2])
 
 			if date.tzinfo:
 				return ( calendar.timegm(date.utctimetuple()), dateMatch )

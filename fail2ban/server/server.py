@@ -30,6 +30,7 @@ from filter import FileFilter, JournalFilter
 from transmitter import Transmitter
 from asyncserver import AsyncServer
 from asyncserver import AsyncServerException
+from database import Fail2BanDb
 from fail2ban import version
 import logging, logging.handlers, sys, os, signal
 
@@ -42,6 +43,7 @@ class Server:
 		self.__loggingLock = Lock()
 		self.__lock = RLock()
 		self.__jails = Jails()
+		self.__db = None
 		self.__daemon = daemon
 		self.__transm = Transmitter(self)
 		self.__asyncServer = AsyncServer(self.__transm)
@@ -117,10 +119,14 @@ class Server:
 
 	
 	def addJail(self, name, backend):
-		self.__jails.add(name, backend)
+		self.__jails.add(name, backend, self.__db)
+		if self.__db is not None:
+			self.__db.addJail(self.__jails.get(name))
 		
 	def delJail(self, name):
 		self.__jails.remove(name)
+		if self.__db is not None:
+			self.__db.delJailName(name)
 	
 	def startJail(self, name):
 		try:
@@ -169,10 +175,10 @@ class Server:
 	def getIgnoreIP(self, name):
 		return self.__jails.getFilter(name).getIgnoreIP()
 	
-	def addLogPath(self, name, fileName):
+	def addLogPath(self, name, fileName, tail=False):
 		filter_ = self.__jails.getFilter(name)
 		if isinstance(filter_, FileFilter):
-			filter_.addLogPath(fileName)
+			filter_.addLogPath(fileName, tail)
 	
 	def delLogPath(self, name, fileName):
 		filter_ = self.__jails.getFilter(name)
@@ -227,6 +233,12 @@ class Server:
 
 	def getDatePattern(self, name):
 		return self.__jails.getFilter(name).getDatePattern()
+
+	def setIgnoreCommand(self, name, value):
+		self.__jails.getFilter(name).setIgnoreCommand(value)
+
+	def getIgnoreCommand(self, name):
+		return self.__jails.getFilter(name).getIgnoreCommand()
 
 	def addFailRegex(self, name, value):
 		self.__jails.getFilter(name).addFailRegex(value)
@@ -403,13 +415,12 @@ class Server:
 		try:
 			self.__loggingLock.acquire()
 			# set a format which is simpler for console use
-			formatter = logging.Formatter("%(asctime)s %(name)-16s: %(levelname)-6s %(message)s")
+			formatter = logging.Formatter("%(asctime)s %(name)-16s[%(process)d]: %(levelname)-7s %(message)s")
 			if target == "SYSLOG":
 				# Syslog daemons already add date to the message.
-				formatter = logging.Formatter("%(name)-16s: %(levelname)-6s %(message)s")
+				formatter = logging.Formatter("%(name)s[%(process)d]: %(levelname)s %(message)s")
 				facility = logging.handlers.SysLogHandler.LOG_DAEMON
-				hdlr = logging.handlers.SysLogHandler("/dev/log", 
-													  facility = facility)
+				hdlr = logging.handlers.SysLogHandler("/dev/log", facility=facility)
 			elif target == "STDOUT":
 				hdlr = logging.StreamHandler(sys.stdout)
 			elif target == "STDERR":
@@ -418,7 +429,7 @@ class Server:
 				# Target should be a file
 				try:
 					open(target, "a").close()
-					hdlr = logging.FileHandler(target)
+					hdlr = logging.handlers.RotatingFileHandler(target)
 				except IOError:
 					logSys.error("Unable to log to " + target)
 					logSys.info("Logging to previous target " + self.__logTarget)
@@ -460,6 +471,37 @@ class Server:
 		finally:
 			self.__loggingLock.release()
 	
+	def flushLogs(self):
+		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG']:
+			for handler in logging.getLogger(__name__).parent.parent.handlers:
+				try:
+					handler.doRollover()
+					logSys.info("rollover performed on %s" % self.__logTarget)
+				except AttributeError:
+					handler.flush()
+					logSys.info("flush performed on %s" % self.__logTarget)
+			return "rolled over"
+		else:
+			for handler in logging.getLogger(__name__).parent.parent.handlers:
+				handler.flush()
+				logSys.info("flush performed on %s" % self.__logTarget)
+			return "flushed"
+			
+	def setDatabase(self, filename):
+		if self.__jails.size() == 0:
+			if filename.lower() == "none":
+				self.__db = None
+			else:
+				self.__db = Fail2BanDb(filename)
+				self.__db.delAllJails()
+		else:
+			raise RuntimeError(
+				"Cannot change database when there are jails present")
+	
+	def getDatabase(self):
+		return self.__db
+	
+
 	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the
 			background as a daemon.
@@ -467,6 +509,14 @@ class Server:
 			http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/278731
 		"""
 	
+		# When the first child terminates, all processes in the second child
+		# are sent a SIGHUP, so it's ignored.
+
+		# We need to set this in the parent process, so it gets inherited by the
+		# child process, and this makes sure that it is effect even if the parent
+		# terminates quickly.
+		signal.signal(signal.SIGHUP, signal.SIG_IGN)
+		
 		try:
 			# Fork a child process so the parent can exit.  This will return control
 			# to the command line or shell.  This is required so that the new process
@@ -488,10 +538,6 @@ class Server:
 			# fail, since we're guaranteed that the child is not a process group
 			# leader.
 			os.setsid()
-		
-			# When the first child terminates, all processes in the second child
-			# are sent a SIGHUP, so it's ignored.
-			signal.signal(signal.SIGHUP, signal.SIG_IGN)
 		
 			try:
 				# Fork a second child to prevent zombies.  Since the first child is

@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, logging
+import sys, time, logging
 
 from datetemplate import DatePatternRegex, DateTai64n, DateEpoch, DateISO8601
 from threading import Lock
@@ -53,14 +53,18 @@ class DateDetector:
 	def addDefaultTemplate(self):
 		self.__lock.acquire()
 		try:
-			# asctime with subsecond: Sun Jan 23 21:59:59.011 2005 
-			self.appendTemplate("%a %b %d %H:%M:%S.%f %Y")
+			if sys.version_info >= (2, 5): # because of '%.f'
+				# asctime with subsecond: Sun Jan 23 21:59:59.011 2005 
+				self.appendTemplate("%a %b %d %H:%M:%S.%f %Y")
 			# asctime: Sun Jan 23 21:59:59 2005 
 			self.appendTemplate("%a %b %d %H:%M:%S %Y")
 			# asctime without year: Sun Jan 23 21:59:59 
 			self.appendTemplate("%a %b %d %H:%M:%S")
 			# standard: Jan 23 21:59:59 
 			self.appendTemplate("%b %d %H:%M:%S")
+			if sys.version_info >= (2, 5): # because of '%.f'
+				# proftpd date: 2005-01-23 21:59:59,333
+				self.appendTemplate("%Y-%m-%d %H:%M:%S,%f")
 			# simple date: 2005-01-23 21:59:59 
 			self.appendTemplate("%Y-%m-%d %H:%M:%S")
 			# simple date: 2005/01/23 21:59:59 
@@ -78,8 +82,9 @@ class DateDetector:
 			self.appendTemplate("%m/%d/%Y:%H:%M:%S")
 			# custom for syslog-ng 2006.12.21 06:43:20
 			self.appendTemplate("%Y.%m.%d %H:%M:%S")
-			# named 26-Jul-2007 15:20:52.252 
-			self.appendTemplate("%d-%b-%Y %H:%M:%S.%f")
+			if sys.version_info >= (2, 5): # because of '%.f'
+				# named 26-Jul-2007 15:20:52.252 
+				self.appendTemplate("%d-%b-%Y %H:%M:%S.%f")
 			# roundcube 26-Jul-2007 15:20:52 +0200
 			self.appendTemplate("%d-%b-%Y %H:%M:%S %z")
 			# 26-Jul-2007 15:20:52
@@ -138,7 +143,7 @@ class DateDetector:
 					date = template.getDate(line)
 					if date is None:
 						continue
-					logSys.debug("Got time %i for \"%r\" using template %s" % (date[0], date[1].group(), template.getName()))
+					logSys.debug("Got time %f for \"%r\" using template %s" % (date[0], date[1].group(), template.getName()))
 					return date
 				except ValueError:
 					pass

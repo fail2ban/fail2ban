@@ -29,12 +29,19 @@ from fail2ban.client.filterreader import FilterReader
 from fail2ban.client.jailsreader import JailsReader
 from fail2ban.client.actionreader import ActionReader
 from fail2ban.client.configurator import Configurator
+from fail2ban.tests.utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
-if os.path.exists('config/fail2ban.conf'):
+if os.path.exists(os.path.join('config','fail2ban.conf')):
 	CONFIG_DIR='config'
 else:
-	CONFIG_DIR='/etc/fail2ban'
+	CONFIG_DIR=os.path.join('etc','fail2ban')
+
+IMPERFECT_CONFIG = os.path.join('fail2ban', 'tests','config')
+
+
+IMPERFECT_CONFIG = os.path.join('fail2ban', 'tests','config')
+
 
 class ConfigReaderTest(unittest.TestCase):
 
@@ -79,7 +86,14 @@ option = %s
 		self._write('d.conf', 0)
 		self.assertEqual(self._getoption('d'), 0)
 		os.chmod(f, 0)
-		self.assertFalse(self.c.read('d'))	# should not be readable BUT present
+		# fragile test and known to fail e.g. under Cygwin where permissions
+		# seems to be not enforced, thus condition
+		if not os.access(f, os.R_OK):
+			self.assertFalse(self.c.read('d'))	# should not be readable BUT present
+		else:
+			# SkipTest introduced only in 2.7 thus can't yet use generally
+			# raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform)
+			pass
 
 
 	def testOptionalDotDDir(self):
@@ -131,11 +145,49 @@ z = 3%(__name__)s
 		self.assertEqual(self.c.get('section', 'zz'), 'thesection') # __name__ works even 'delayed'
 		self.assertEqual(self.c.get('section2', 'z'), '3section2') # and differs per section ;)
 
-class JailReaderTest(unittest.TestCase):
+	def testComments(self):
+		self.assertFalse(self.c.read('g'))	# nothing is there yet
+		self._write("g.conf", value=None, content="""
+[DEFAULT]
+# A comment
+b = a
+c = d ;in line comment
+""")
+		self.assertTrue(self.c.read('g'))
+		self.assertEqual(self.c.get('DEFAULT', 'b'), 'a')
+		self.assertEqual(self.c.get('DEFAULT', 'c'), 'd')
+
+class JailReaderTest(LogCaptureTestCase):
 
 	def testIncorrectJail(self):
 		jail = JailReader('XXXABSENTXXX', basedir=CONFIG_DIR)
 		self.assertRaises(ValueError, jail.read)
+		
+	def testJailActionEmpty(self):
+		jail = JailReader('emptyaction', basedir=IMPERFECT_CONFIG)
+		self.assertTrue(jail.read())
+		self.assertTrue(jail.getOptions())
+		self.assertTrue(jail.isEnabled())
+		self.assertTrue(self._is_logged('No filter set for jail emptyaction'))
+		self.assertTrue(self._is_logged('No actions were defined for emptyaction'))
+
+	def testJailActionFilterMissing(self):
+		jail = JailReader('missingbitsjail', basedir=IMPERFECT_CONFIG)
+		self.assertTrue(jail.read())
+		self.assertFalse(jail.getOptions())
+		self.assertTrue(jail.isEnabled())
+		self.assertTrue(self._is_logged("Found no accessible config files for 'filter.d/catchallthebadies' under %s" % IMPERFECT_CONFIG))
+		self.assertTrue(self._is_logged('Unable to read the filter'))
+
+	def TODOtestJailActionBrokenDef(self):
+		jail = JailReader('brokenactiondef', basedir=IMPERFECT_CONFIG)
+		self.assertTrue(jail.read())
+		self.assertFalse(jail.getOptions())
+		self.assertTrue(jail.isEnabled())
+		self.printLog()
+		self.assertTrue(self._is_logged('Error in action definition joho[foo'))
+		self.assertTrue(self._is_logged('Caught exception: While reading action joho[foo we should have got 1 or 2 groups. Got: 0'))
+
 
 	def testStockSSHJail(self):
 		jail = JailReader('sshd', basedir=CONFIG_DIR) # we are running tests from root project dir atm
@@ -143,13 +195,28 @@ class JailReaderTest(unittest.TestCase):
 		self.assertTrue(jail.getOptions())
 		self.assertFalse(jail.isEnabled())
 		self.assertEqual(jail.getName(), 'sshd')
-
+		jail.setName('ssh-funky-blocker')
+		self.assertEqual(jail.getName(), 'ssh-funky-blocker')
+		
 	def testSplitOption(self):
 		# Simple example
 		option = "mail-whois[name=SSH]"
 		expected = ('mail-whois', {'name': 'SSH'})
 		result = JailReader.extractOptions(option)
 		self.assertEqual(expected, result)
+
+		self.assertEqual(('mail.who_is', {}), JailReader.extractOptions("mail.who_is"))
+		self.assertEqual(('mail.who_is', {'a':'cat', 'b':'dog'}), JailReader.extractOptions("mail.who_is[a=cat,b=dog]"))
+		self.assertEqual(('mail--ho_is', {}), JailReader.extractOptions("mail--ho_is"))
+
+		self.assertEqual(('mail--ho_is', {}), JailReader.extractOptions("mail--ho_is['s']"))
+		#self.printLog()
+		#self.assertTrue(self._is_logged("Invalid argument ['s'] in ''s''"))
+
+		self.assertEqual(('mail', {'a': ','}), JailReader.extractOptions("mail[a=',']"))
+
+		#self.assertRaises(ValueError, JailReader.extractOptions ,'mail-how[')
+
 
 		# Empty option
 		option = "abc[]"
@@ -175,6 +242,27 @@ class JailReaderTest(unittest.TestCase):
 		result = JailReader.extractOptions(option)
 		self.assertEqual(expected, result)
 
+	def testGlob(self):
+		d = tempfile.mkdtemp(prefix="f2b-temp")
+		# Generate few files
+		# regular file
+		f1 = os.path.join(d, 'f1')
+		open(f1, 'w').close()
+		# dangling link
+		f2 = os.path.join(d, 'f2')
+		os.symlink('nonexisting',f2)
+
+		# must be only f1
+		self.assertEqual(JailReader._glob(os.path.join(d, '*')), [f1])
+		# since f2 is dangling -- empty list
+		self.assertEqual(JailReader._glob(f2), [])
+		self.assertTrue(self._is_logged('File %s is a dangling link, thus cannot be monitored' % f2))
+		self.assertEqual(JailReader._glob(os.path.join(d, 'nonexisting')), [])
+		os.remove(f1)
+		os.remove(f2)
+		os.rmdir(d)
+
+		
 class FilterReaderTest(unittest.TestCase):
 
 	def testConvert(self):
@@ -223,12 +311,73 @@ class FilterReaderTest(unittest.TestCase):
 		output[-1][-1] = "5"
 		self.assertEqual(sorted(filterReader.convert()), sorted(output))
 
-class JailsReaderTest(unittest.TestCase):
+class JailsReaderTest(LogCaptureTestCase):
 
 	def testProvidingBadBasedir(self):
 		if not os.path.exists('/XXX'):
 			reader = JailsReader(basedir='/XXX')
 			self.assertRaises(ValueError, reader.read)
+
+	def testReadTestJailConf(self):
+		jails = JailsReader(basedir=IMPERFECT_CONFIG)
+		self.assertTrue(jails.read())
+		self.assertFalse(jails.getOptions())
+		self.assertRaises(ValueError, jails.convert)
+		comm_commands = jails.convert(allow_no_files=True)
+		self.maxDiff = None
+		self.assertEqual(sorted(comm_commands),
+			sorted([['add', 'emptyaction', 'auto'],
+			 ['set', 'emptyaction', 'usedns', 'warn'],
+			 ['set', 'emptyaction', 'maxretry', 3],
+			 ['set', 'emptyaction', 'findtime', 600],
+			 ['set', 'emptyaction', 'logencoding', 'auto'],
+			 ['set', 'emptyaction', 'bantime', 600],
+			 ['add', 'special', 'auto'],
+			 ['set', 'special', 'usedns', 'warn'],
+			 ['set', 'special', 'maxretry', 3],
+			 ['set', 'special', 'addfailregex', '<IP>'],
+			 ['set', 'special', 'findtime', 600],
+			 ['set', 'special', 'logencoding', 'auto'],
+			 ['set', 'special', 'bantime', 600],
+			 ['add', 'missinglogfiles', 'auto'],
+			 ['set', 'missinglogfiles', 'usedns', 'warn'],
+			 ['set', 'missinglogfiles', 'maxretry', 3],
+			 ['set', 'missinglogfiles', 'findtime', 600],
+			 ['set', 'missinglogfiles', 'logencoding', 'auto'],
+			 ['set', 'missinglogfiles', 'bantime', 600],
+			 ['set', 'missinglogfiles', 'addfailregex', '<IP>'],
+			 ['add', 'brokenaction', 'auto'],
+			 ['set', 'brokenaction', 'usedns', 'warn'],
+			 ['set', 'brokenaction', 'maxretry', 3],
+			 ['set', 'brokenaction', 'findtime', 600],
+			 ['set', 'brokenaction', 'logencoding', 'auto'],
+			 ['set', 'brokenaction', 'bantime', 600],
+			 ['set', 'brokenaction', 'addfailregex', '<IP>'],
+			 ['set', 'brokenaction', 'addaction', 'brokenaction'],
+			 ['set',
+			  'brokenaction',
+			  'actionban',
+			  'brokenaction',
+			  'hit with big stick <ip>'],
+			 ['set', 'brokenaction', 'actionstop', 'brokenaction', ''],
+			 ['set', 'brokenaction', 'actionstart', 'brokenaction', ''],
+			 ['set', 'brokenaction', 'actionunban', 'brokenaction', ''],
+			 ['set', 'brokenaction', 'actioncheck', 'brokenaction', ''],
+			 ['add', 'parse_to_end_of_jail.conf', 'auto'],
+			 ['set', 'parse_to_end_of_jail.conf', 'usedns', 'warn'],
+			 ['set', 'parse_to_end_of_jail.conf', 'maxretry', 3],
+			 ['set', 'parse_to_end_of_jail.conf', 'findtime', 600],
+			 ['set', 'parse_to_end_of_jail.conf', 'logencoding', 'auto'],
+			 ['set', 'parse_to_end_of_jail.conf', 'bantime', 600],
+			 ['set', 'parse_to_end_of_jail.conf', 'addfailregex', '<IP>'],
+			 ['start', 'emptyaction'],
+			 ['start', 'special'],
+			 ['start', 'missinglogfiles'],
+			 ['start', 'brokenaction'],
+			 ['start', 'parse_to_end_of_jail.conf'],]))
+		self.assertTrue(self._is_logged("Errors in jail 'missingbitsjail'. Skipping..."))
+		self.assertTrue(self._is_logged("No file(s) found for glob /weapons/of/mass/destruction"))
+
 
 	def testReadStockJailConf(self):
 		jails = JailsReader(basedir=CONFIG_DIR) # we are running tests from root project dir atm
@@ -238,6 +387,15 @@ class JailsReaderTest(unittest.TestCase):
 		# by default None of the jails is enabled and we get no
 		# commands to communicate to the server
 		self.assertEqual(comm_commands, [])
+
+		# TODO: make sure this is handled well
+		## We should not "read" some bogus jail
+		#old_comm_commands = comm_commands[:]   # make a copy
+		#self.assertRaises(ValueError, jails.getOptions, "BOGUS")
+		#self.printLog()
+		#self.assertTrue(self._is_logged("No section: 'BOGUS'"))
+		## and there should be no side-effects
+		#self.assertEqual(jails.convert(), old_comm_commands)
 
 		allFilters = set()
 
@@ -360,7 +518,10 @@ class JailsReaderTest(unittest.TestCase):
 		# and there is logging information left to be passed into the
 		# server
 		self.assertEqual(sorted(commands),
-						 [['set', 'loglevel', 3],
+						 [['set', 'dbfile',
+							'/var/lib/fail2ban/fail2ban.sqlite3'],
+						  ['set', 'dbpurgeage', 86400],
+						  ['set', 'loglevel', 3],
 						  ['set', 'logtarget', '/var/log/fail2ban.log']])
 
 		# and if we force change configurator's fail2ban's baseDir

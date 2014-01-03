@@ -92,6 +92,8 @@ class Transmitter:
 			value = command[1]
 			time.sleep(int(value))
 			return None
+		elif command[0] == "flushlogs":
+			return self.__server.flushLogs()
 		elif command[0] == "set":
 			return self.__commandSet(command[1:])
 		elif command[0] == "get":
@@ -113,6 +115,21 @@ class Transmitter:
 				return self.__server.getLogTarget()
 			else:
 				raise Exception("Failed to change log target")
+		#Database
+		elif name == "dbfile":
+			self.__server.setDatabase(command[1])
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				return db.getFilename()
+		elif name == "dbpurgeage":
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				db.setPurgeAge(command[1])
+				return db.getPurgeAge()
 		# Jail
 		elif command[1] == "idle":
 			if command[2] == "on":
@@ -131,10 +148,21 @@ class Transmitter:
 			value = command[2]
 			self.__server.delIgnoreIP(name, value)
 			return self.__server.getIgnoreIP(name)
+		elif command[1] == "ignorecommand":
+			value = command[2]
+			self.__server.setIgnoreCommand(name, value)
+			return self.__server.getIgnoreCommand(name)
 		elif command[1] == "addlogpath":
-			value = command[2:]
-			for path in value:
-				self.__server.addLogPath(name, path)
+			value = command[2]
+			tail = False
+			if len(command) == 4:
+				if command[3].lower()  == "tail":
+					tail = True
+				elif command[3].lower() != "head":
+					raise ValueError("File option must be 'head' or 'tail'")
+			elif len(command) > 4:
+				raise ValueError("Only one file can be added at a time")
+			self.__server.addLogPath(name, value, tail)
 			return self.__server.getLogPath(name)
 		elif command[1] == "dellogpath":
 			value = command[2]
@@ -257,6 +285,19 @@ class Transmitter:
 			return self.__server.getLogLevel()
 		elif name == "logtarget":
 			return self.__server.getLogTarget()
+		#Database
+		elif name == "dbfile":
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				return db.getFilename()
+		elif name == "dbpurgeage":
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				return db.getPurgeAge()
 		# Filter
 		elif command[1] == "logpath":
 			return self.__server.getLogPath(name)
@@ -266,6 +307,8 @@ class Transmitter:
 			return self.__server.getJournalMatch(name)
 		elif command[1] == "ignoreip":
 			return self.__server.getIgnoreIP(name)
+		elif command[1] == "ignorecommand":
+			return self.__server.getIgnoreCommand(name)
 		elif command[1] == "failregex":
 			return self.__server.getFailRegex(name)
 		elif command[1] == "ignoreregex":
