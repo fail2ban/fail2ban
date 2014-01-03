@@ -108,6 +108,7 @@ my ($critical,$warning) = (2,1);
 my $fail2ban_client_path = '/usr/bin/fail2ban-client';
 my $fail2ban_socket = '';
 my $jail_specific = '';
+my $jail_name = '';
 
 GetOptions (
     'P=s' => \ $fail2ban_client_path,
