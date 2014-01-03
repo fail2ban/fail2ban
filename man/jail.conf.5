@@ -113,7 +113,7 @@ uses systemd python library to access the systemd journal. Specifying \fBlogpath
 will try to use the following backends, in order: pyinotify, gamin, polling
 .PP
 .SS Actions
-Each jail can be configured with only a single filter, but may have multiple actions. By default, the name of a action is the action filename, and in the case of python actions, the ".py" file extension is stripped. Where multiple of the same action are to be used, the \fBactname\fR option can be assigned to the action to avoid duplication e.g.:
+Each jail can be configured with only a single filter, but may have multiple actions. By default, the name of a action is the action filename, and in the case of Python actions, the ".py" file extension is stripped. Where multiple of the same action are to be used, the \fBactname\fR option can be assigned to the action to avoid duplication e.g.:
 .PP
 .nf
 [ssh-iptables-ipset]
@@ -163,7 +163,7 @@ two commands to be executed.
  actionban = iptables -I fail2ban-<name> --source <ip> -j DROP
              echo ip=<ip>, match=<match>, time=<time> >> /var/log/fail2ban.log
 .TP
-Python based actions can also be used, where the file name must be \fI[actionname].py\fR. The python file must contain a variable \fIAction\fR which points to python class. This class must implement a minimum interface as described by \fIfail2ban.server.action.ActionBase\fR, which can be inherited from to ease implementation.
+Python based actions can also be used, where the file name must be \fI[actionname].py\fR. The Python file must contain a variable \fIAction\fR which points to Python class. This class must implement a minimum interface as described by \fIfail2ban.server.action.ActionBase\fR, which can be inherited from to ease implementation.
 
 .SS "Action Tags"
 The following tags are substituted in the actionban, actionunban and actioncheck (when called before actionban/actionunban) commands.

@@ -523,40 +523,40 @@ class Transmitter(TransmitterBase):
 			(0, action))
 		self.assertEqual(
 			self.transm.proceed(
-				["get", self.jailName, "actions"])[1][0].getName(),
+				["get", self.jailName, "actions"])[1][0],
 			action)
 		for cmd, value in zip(cmdList, cmdValueList):
 			self.assertEqual(
 				self.transm.proceed(
-					["set", self.jailName, cmd, action, value]),
+					["set", self.jailName, "action", action, cmd, value]),
 				(0, value))
 		for cmd, value in zip(cmdList, cmdValueList):
 			self.assertEqual(
-				self.transm.proceed(["get", self.jailName, cmd, action]),
+				self.transm.proceed(["get", self.jailName, "action", action, cmd]),
 				(0, value))
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "setcinfo", action, "KEY", "VALUE"]),
+				["set", self.jailName, "action", action, "KEY", "VALUE"]),
 			(0, "VALUE"))
 		self.assertEqual(
 			self.transm.proceed(
-				["get", self.jailName, "cinfo", action, "KEY"]),
+				["get", self.jailName, "action", action, "KEY"]),
 			(0, "VALUE"))
 		self.assertEqual(
 			self.transm.proceed(
-				["get", self.jailName, "cinfo", action, "InvalidKey"])[0],
+				["get", self.jailName, "action", action, "InvalidKey"])[0],
 			1)
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "delcinfo", action, "KEY"]),
-			(0, None))
+				["get", self.jailName, "action", action, "actionname"]),
+			(0, action))
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "timeout", action, "10"]),
+				["set", self.jailName, "action", action, "timeout", "10"]),
 			(0, 10))
 		self.assertEqual(
 			self.transm.proceed(
-				["get", self.jailName, "timeout", action]),
+				["get", self.jailName, "action", action, "timeout"]),
 			(0, 10))
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "delaction", action]),
@@ -564,23 +564,42 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(
 				["set", self.jailName, "delaction", "Doesn't exist"])[0],1)
+
+	def testPythonActionMethodsAndProperties(self):
+		action = "TestCaseAction"
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "addaction", action,
 				os.path.join(TEST_FILES_DIR, "action.d", "action.py"),
 				'{"opt1": "value"}']),
 			(0, action))
-		for cmd, value in zip(cmdList, cmdValueList):
-			self.assertTrue(
-				isinstance(self.transm.proceed(
-						["set", self.jailName, cmd, action, value])[1],
-					TypeError),
-				"set %s for python action did not raise TypeError" % cmd)
-		for cmd, value in zip(cmdList, cmdValueList):
-			self.assertTrue(
-				isinstance(self.transm.proceed(
-						["get", self.jailName, cmd, action])[1],
-					TypeError),
-				"get %s for python action did not raise TypeError" % cmd)
+		self.assertEqual(
+			sorted(self.transm.proceed(["get", self.jailName,
+				"actionproperties", action])),
+			[0, ['actionname', 'opt1', 'opt2']])
+		self.assertEqual(
+			self.transm.proceed(["get", self.jailName, "action", action,
+				"opt1"]),
+			(0, 'value'))
+		self.assertEqual(
+			self.transm.proceed(["get", self.jailName, "action", action,
+				"opt2"]),
+			(0, None))
+		self.assertEqual(
+			sorted(self.transm.proceed(["get", self.jailName, "actionmethods",
+				action])),
+			[0, ['ban', 'start', 'stop', 'testmethod', 'unban']])
+		self.assertEqual(
+			self.transm.proceed(["set", self.jailName, "action", action,
+				"testmethod", '{"text": "world!"}']),
+			(0, 'Hello world! value'))
+		self.assertEqual(
+			self.transm.proceed(["set", self.jailName, "action", action,
+				"opt1", "another value"]),
+			(0, 'another value'))
+		self.assertEqual(
+			self.transm.proceed(["set", self.jailName, "action", action,
+				"testmethod", '{"text": "world!"}']),
+			(0, 'Hello world! another value'))
 
 	def testNOK(self):
 		self.assertEqual(self.transm.proceed(["INVALID", "COMMAND"])[0],1)

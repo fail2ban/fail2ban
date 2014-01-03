@@ -66,10 +66,10 @@ class Actions(JailThread):
 	
 	def addAction(self, name, pythonModule=None, initOpts=None):
 		# Check is action name already exists
-		if name in [action.getName() for action in self.__actions]:
+		if name in [action.actionname for action in self.__actions]:
 			raise ValueError("Action %s already exists" % name)
 		if pythonModule is None:
-			action = CommandAction(name)
+			action = CommandAction(self.jail, name)
 		else:
 			pythonModuleName = os.path.basename(pythonModule.strip(".py"))
 			customActionModule = imp.load_source(
@@ -91,7 +91,7 @@ class Actions(JailThread):
 	
 	def delAction(self, name):
 		for action in self.__actions:
-			if action.getName() == name:
+			if action.actionname == name:
 				self.__actions.remove(action)
 				return
 		raise KeyError("Invalid Action name: %s" % name)
@@ -106,7 +106,7 @@ class Actions(JailThread):
 	
 	def getAction(self, name):
 		for action in self.__actions:
-			if action.getName() == name:
+			if action.actionname == name:
 				return action
 		raise KeyError("Invalid Action name")
 	
@@ -116,9 +116,7 @@ class Actions(JailThread):
 	# @return The last defined action.
 	
 	def getLastAction(self):
-		action = self.__actions.pop()
-		self.__actions.append(action)
-		return action
+		return self.__actions[-1]
 	
 	##
 	# Returns the list of actions
@@ -169,10 +167,10 @@ class Actions(JailThread):
 		self.setActive(True)
 		for action in self.__actions:
 			try:
-				action.execActionStart()
+				action.start()
 			except Exception as e:
 				logSys.error("Failed to start jail '%s' action '%s': %s",
-					self.jail.getName(), action.getName(), e)
+					self.jail.getName(), action.actionname, e)
 		while self._isActive():
 			if not self.getIdle():
 				#logSys.debug(self.jail.getName() + ": action")
@@ -185,10 +183,10 @@ class Actions(JailThread):
 		self.__flushBan()
 		for action in self.__actions:
 			try:
-				action.execActionStop()
+				action.stop()
 			except Exception as e:
 				logSys.error("Failed to stop jail '%s' action '%s': %s",
-					self.jail.getName(), action.getName(), e)
+					self.jail.getName(), action.actionname, e)
 		logSys.debug(self.jail.getName() + ": action terminated")
 		return True
 
@@ -225,11 +223,11 @@ class Actions(JailThread):
 				logSys.warning("[%s] Ban %s" % (self.jail.getName(), aInfo["ip"]))
 				for action in self.__actions:
 					try:
-						action.execActionBan(aInfo)
+						action.ban(aInfo)
 					except Exception as e:
 						logSys.error(
 							"Failed to execute ban jail '%s' action '%s': %s",
-							self.jail.getName(), action.getName(), e)
+							self.jail.getName(), action.actionname, e)
 				return True
 			else:
 				logSys.info("[%s] %s already banned" % (self.jail.getName(),
@@ -270,11 +268,11 @@ class Actions(JailThread):
 		logSys.warning("[%s] Unban %s" % (self.jail.getName(), aInfo["ip"]))
 		for action in self.__actions:
 			try:
-				action.execActionUnban(aInfo)
+				action.unban(aInfo)
 			except Exception as e:
 				logSys.error(
 					"Failed to execute unban jail '%s' action '%s': %s",
-					self.jail.getName(), action.getName(), e)
+					self.jail.getName(), action.actionname, e)
 			
 	
 	##

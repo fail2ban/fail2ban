@@ -76,16 +76,18 @@ protocol = [
 ["set <JAIL> unbanip <IP>", "manually Unban <IP> in <JAIL>"], 
 ["set <JAIL> maxretry <RETRY>", "sets the number of failures <RETRY> before banning the host for <JAIL>"], 
 ["set <JAIL> maxlines <LINES>", "sets the number of <LINES> to buffer for regex search for <JAIL>"], 
-["set <JAIL> addaction <ACT> [<PYTHONFILE> <JSONOPTS>]", "adds a new action named <NAME> for <JAIL>. Optionally for a python based action, a <PYTHONFILE> and <JSONOPTS> can be specified"], 
-["set <JAIL> delaction <ACT>", "removes the action <NAME> from <JAIL>"], 
-["set <JAIL> setcinfo <ACT> <KEY> <VALUE>", "sets <VALUE> for <KEY> of the action <NAME> for <JAIL>"], 
-["set <JAIL> delcinfo <ACT> <KEY>", "removes <KEY> for the action <NAME> for <JAIL>"], 
-["set <JAIL> timeout <ACT> <TIMEOUT>", "sets <TIMEOUT> as the command timeout in seconds for the action <ACT> for <JAIL>"],
-["set <JAIL> actionstart <ACT> <CMD>", "sets the start command <CMD> of the action <ACT> for <JAIL>"], 
-["set <JAIL> actionstop <ACT> <CMD>", "sets the stop command <CMD> of the action <ACT> for <JAIL>"], 
-["set <JAIL> actioncheck <ACT> <CMD>", "sets the check command <CMD> of the action <ACT> for <JAIL>"], 
-["set <JAIL> actionban <ACT> <CMD>", "sets the ban command <CMD> of the action <ACT> for <JAIL>"],
-["set <JAIL> actionunban <ACT> <CMD>", "sets the unban command <CMD> of the action <ACT> for <JAIL>"], 
+["set <JAIL> addaction <ACT>[ <PYTHONFILE> <JSONKWARGS>]", "adds a new action named <NAME> for <JAIL>. Optionally for a Python based action, a <PYTHONFILE> and <JSONKWARGS> can be specified, else will be a Command Action"], 
+["set <JAIL> delaction <ACT>", "removes the action <ACT> from <JAIL>"], 
+["", "COMMAND ACTION CONFIGURATION", ""],
+["set <JAIL> action <ACT> actionstart <CMD>", "sets the start command <CMD> of the action <ACT> for <JAIL>"], 
+["set <JAIL> action <ACT> actionstop <CMD>", "sets the stop command <CMD> of the action <ACT> for <JAIL>"], 
+["set <JAIL> action <ACT> actioncheck <CMD>", "sets the check command <CMD> of the action <ACT> for <JAIL>"], 
+["set <JAIL> action <ACT> actionban <CMD>", "sets the ban command <CMD> of the action <ACT> for <JAIL>"],
+["set <JAIL> action <ACT> actionunban <CMD>", "sets the unban command <CMD> of the action <ACT> for <JAIL>"], 
+["set <JAIL> action <ACT> timeout <TIMEOUT>", "sets <TIMEOUT> as the command timeout in seconds for the action <ACT> for <JAIL>"],
+["", "GENERAL ACTION CONFIGURATION", ""],
+["set <JAIL> action <ACT> <PROPERTY> <VALUE>", "sets the <VALUE> of <PROPERTY> for the action <ACT> for <JAIL>"],
+["set <JAIL> action <ACT> <METHOD>[ <JSONKWARGS>]", "calls the <METHOD> with <JSONKWARGS> for the action <ACT> for <JAIL>"],
 ['', "JAIL INFORMATION", ""],
 ["get <JAIL> logpath", "gets the list of the monitored files for <JAIL>"],
 ["get <JAIL> logencoding <ENCODING>", "gets the <ENCODING> of the log files for <JAIL>"],
@@ -102,13 +104,17 @@ protocol = [
 ["get <JAIL> maxlines", "gets the number of lines to buffer for <JAIL>"],
 ["get <JAIL> addaction", "gets the last action which has been added for <JAIL>"],
 ["get <JAIL> actions", "gets a list of actions for <JAIL>"],
-["get <JAIL> actionstart <ACT>", "gets the start command for the action <ACT> for <JAIL>"],
-["get <JAIL> actionstop <ACT>", "gets the stop command for the action <ACT> for <JAIL>"],
-["get <JAIL> actioncheck <ACT>", "gets the check command for the action <ACT> for <JAIL>"],
-["get <JAIL> actionban <ACT>", "gets the ban command for the action <ACT> for <JAIL>"],
-["get <JAIL> actionunban <ACT>", "gets the unban command for the action <ACT> for <JAIL>"],
-["get <JAIL> cinfo <ACT> <KEY>", "gets the value for <KEY> for the action <ACT> for <JAIL>"],
-["get <JAIL> timeout <ACT>", "gets the command timeout in seconds for the action <ACT> for <JAIL>"],
+["", "COMMAND ACTION INFORMATION",""],
+["get <JAIL> action <ACT> actionstart", "gets the start command for the action <ACT> for <JAIL>"],
+["get <JAIL> action <ACT> actionstop", "gets the stop command for the action <ACT> for <JAIL>"],
+["get <JAIL> action <ACT> actioncheck", "gets the check command for the action <ACT> for <JAIL>"],
+["get <JAIL> action <ACT> actionban", "gets the ban command for the action <ACT> for <JAIL>"],
+["get <JAIL> action <ACT> actionunban", "gets the unban command for the action <ACT> for <JAIL>"],
+["get <JAIL> action <ACT> timeout", "gets the command timeout in seconds for the action <ACT> for <JAIL>"],
+["", "GENERAL ACTION INFORMATION", ""],
+["get <JAIL> actionproperties <ACT>", "gets a list of properties for the action <ACT> for <JAIL>"],
+["get <JAIL> actionmethods <ACT>", "gets a list of methods for the action <ACT> for <JAIL>"],
+["get <JAIL> action <ACT> <PROPERTY>", "gets the value of <PROPERTY> for the action <ACT> for <JAIL>"],
 ]
 
 ##
@@ -125,15 +131,15 @@ def printFormatted():
 			print
 		firstHeading = True
 		first = True
-		if len(m[0]) > MARGIN+INDENT:
+		if len(m[0]) >= MARGIN:
 			m[1] = ' ' * WIDTH + m[1]
 		for n in textwrap.wrap(m[1], WIDTH, drop_whitespace=False):
 			if first:
-				line = ' ' * INDENT + m[0] + ' ' * (MARGIN - len(m[0])) + n
+				line = ' ' * INDENT + m[0] + ' ' * (MARGIN - len(m[0])) + n.strip()
 				first = False
 			else:
-				line = ' ' * (INDENT + MARGIN) + n
-			print line.rstrip()
+				line = ' ' * (INDENT + MARGIN) + n.strip()
+			print line
 
 ##
 # Prints the protocol in a "mediawiki" format.

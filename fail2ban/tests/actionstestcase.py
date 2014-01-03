@@ -49,11 +49,11 @@ class ExecuteActions(LogCaptureTestCase):
 	def defaultActions(self):
 		self.__actions.addAction('ip')
 		self.__ip = self.__actions.getAction('ip')
-		self.__ip.setActionStart('echo ip start 64 >> "%s"' % self.__tmpfilename )
-		self.__ip.setActionBan('echo ip ban <ip> >> "%s"' % self.__tmpfilename )
-		self.__ip.setActionUnban('echo ip unban <ip> >> "%s"' % self.__tmpfilename )
-		self.__ip.setActionCheck('echo ip check <ip> >> "%s"' % self.__tmpfilename )
-		self.__ip.setActionStop('echo ip stop >> "%s"' % self.__tmpfilename )
+		self.__ip.actionstart = 'echo ip start 64 >> "%s"' % self.__tmpfilename
+		self.__ip.actionban = 'echo ip ban <ip> >> "%s"' % self.__tmpfilename
+		self.__ip.actionunban = 'echo ip unban <ip> >> "%s"' % self.__tmpfilename
+		self.__ip.actioncheck = 'echo ip check <ip> >> "%s"' % self.__tmpfilename
+		self.__ip.actionstop = 'echo ip stop >> "%s"' % self.__tmpfilename
 
 	def testActionsManipulation(self):
 		self.__actions.addAction('test')

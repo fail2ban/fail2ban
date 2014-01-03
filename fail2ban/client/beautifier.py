@@ -165,7 +165,23 @@ class Beautifier:
 					msg = "No actions for jail %s" % inC[1]
 				else:
 					msg = "The jail %s has the following actions:\n" % inC[1]
-					msg += ", ".join(action.getName() for action in response)
+					msg += ", ".join(response)
+			elif inC[2] == "actionproperties":
+				if len(response) == 0:
+					msg = "No properties for jail %s action %s" % (
+						inC[1], inC[3])
+				else:
+					msg = "The jail %s action %s has the following " \
+						"properties:\n" % (inC[1], inC[3])
+					msg += ", ".join(response)
+			elif inC[2] == "actionmethods":
+				if len(response) == 0:
+					msg = "No methods for jail %s action %s" % (
+						inC[1], inC[3])
+				else:
+					msg = "The jail %s action %s has the following " \
+						"methods:\n" % (inC[1], inC[3])
+					msg += ", ".join(response)
 		except Exception:
 			logSys.warning("Beautifier error. Please report the error")
 			logSys.error("Beautify " + `response` + " with " + `self.__inputCmd` +

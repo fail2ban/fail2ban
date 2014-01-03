@@ -353,13 +353,18 @@ class JailsReaderTest(LogCaptureTestCase):
 			 ['set', 'brokenaction', 'addaction', 'brokenaction'],
 			 ['set',
 			  'brokenaction',
-			  'actionban',
+			  'action',
 			  'brokenaction',
+			  'actionban',
 			  'hit with big stick <ip>'],
-			 ['set', 'brokenaction', 'actionstop', 'brokenaction', ''],
-			 ['set', 'brokenaction', 'actionstart', 'brokenaction', ''],
-			 ['set', 'brokenaction', 'actionunban', 'brokenaction', ''],
-			 ['set', 'brokenaction', 'actioncheck', 'brokenaction', ''],
+			 ['set', 'brokenaction', 'action', 'brokenaction',
+				'actionstop', ''],
+			 ['set', 'brokenaction', 'action', 'brokenaction',
+				'actionstart', ''],
+			 ['set', 'brokenaction', 'action', 'brokenaction',
+				'actionunban', ''],
+			 ['set', 'brokenaction', 'action', 'brokenaction',
+				'actioncheck', ''],
 			 ['add', 'parse_to_end_of_jail.conf', 'auto'],
 			 ['set', 'parse_to_end_of_jail.conf', 'usedns', 'warn'],
 			 ['set', 'parse_to_end_of_jail.conf', 'maxretry', 3],
@@ -486,7 +491,7 @@ class JailsReaderTest(LogCaptureTestCase):
 					self.assertTrue('blocktype' in action._initOpts)
 					# Verify that we have a call to set it up
 					blocktype_present = False
-					target_command = [ 'set', jail_name, 'setcinfo', action_name, 'blocktype' ]
+					target_command = ['set', jail_name, 'action', action_name, 'blocktype']
 					for command in commands:
 						if (len(command) > 5 and
 							command[:5] == target_command):

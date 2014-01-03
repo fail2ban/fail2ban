@@ -31,17 +31,17 @@ from fail2ban.server.action import CommandAction, CallingMap
 
 from fail2ban.tests.utils import LogCaptureTestCase
 
-class ExecuteAction(LogCaptureTestCase):
+class CommandActionTest(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.__action = CommandAction("Test")
+		self.__action = CommandAction(None, "Test")
 		LogCaptureTestCase.setUp(self)
 
 	def tearDown(self):
 		"""Call after every test case."""
 		LogCaptureTestCase.tearDown(self)
-		self.__action.execActionStop()
+		self.__action.stop()
 
 	def testSubstituteRecursiveTags(self):
 		aInfo = {
@@ -105,62 +105,61 @@ class ExecuteAction(LogCaptureTestCase):
 				CallingMap(callme=lambda: int("a"))), "abc")
 
 	def testExecuteActionBan(self):
-		self.__action.setActionStart("touch /tmp/fail2ban.test")
-		self.assertEqual(self.__action.getActionStart(), "touch /tmp/fail2ban.test")
-		self.__action.setActionStop("rm -f /tmp/fail2ban.test")
-		self.assertEqual(self.__action.getActionStop(), 'rm -f /tmp/fail2ban.test')
-		self.__action.setActionBan("echo -n")
-		self.assertEqual(self.__action.getActionBan(), 'echo -n')
-		self.__action.setActionCheck("[ -e /tmp/fail2ban.test ]")
-		self.assertEqual(self.__action.getActionCheck(), '[ -e /tmp/fail2ban.test ]')
-		self.__action.setActionUnban("true")
-		self.assertEqual(self.__action.getActionUnban(), 'true')
+		self.__action.actionstart = "touch /tmp/fail2ban.test"
+		self.assertEqual(self.__action.actionstart, "touch /tmp/fail2ban.test")
+		self.__action.actionstop = "rm -f /tmp/fail2ban.test"
+		self.assertEqual(self.__action.actionstop, 'rm -f /tmp/fail2ban.test')
+		self.__action.actionban = "echo -n"
+		self.assertEqual(self.__action.actionban, 'echo -n')
+		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
+		self.assertEqual(self.__action.actioncheck, '[ -e /tmp/fail2ban.test ]')
+		self.__action.actionunban = "true"
+		self.assertEqual(self.__action.actionunban, 'true')
 
 		self.assertFalse(self._is_logged('returned'))
 		# no action was actually executed yet
 
-		self.assertTrue(self.__action.execActionBan(None))
+		self.__action.ban({'ip': None})
 		self.assertTrue(self._is_logged('Invariant check failed'))
 		self.assertTrue(self._is_logged('returned successfully'))
 
 	def testExecuteActionEmptyUnban(self):
-		self.__action.setActionUnban("")
-		self.assertTrue(self.__action.execActionUnban(None))
+		self.__action.actionunban = ""
+		self.__action.unban({})
 		self.assertTrue(self._is_logged('Nothing to do'))
 
 	def testExecuteActionStartCtags(self):
-		self.__action.setCInfo("HOST","192.0.2.0")
-		self.__action.setActionStart("touch /tmp/fail2ban.test.<HOST>")
-		self.__action.setActionStop("rm -f /tmp/fail2ban.test.<HOST>")
-		self.__action.setActionCheck("[ -e /tmp/fail2ban.test.192.0.2.0 ]")
-		self.assertTrue(self.__action.execActionStart())
+		self.__action.HOST = "192.0.2.0"
+		self.__action.actionstart = "touch /tmp/fail2ban.test.<HOST>"
+		self.__action.actionstop = "rm -f /tmp/fail2ban.test.<HOST>"
+		self.__action.actioncheck = "[ -e /tmp/fail2ban.test.192.0.2.0 ]"
+		self.__action.start()
 
 	def testExecuteActionCheckRestoreEnvironment(self):
-		self.__action.setActionStart("")
-		self.__action.setActionStop("rm -f /tmp/fail2ban.test")
-		self.__action.setActionBan("rm /tmp/fail2ban.test")
-		self.__action.setActionCheck("[ -e /tmp/fail2ban.test ]")
-		self.assertFalse(self.__action.execActionBan(None))
+		self.__action.actionstart = ""
+		self.__action.actionstop = "rm -f /tmp/fail2ban.test"
+		self.__action.actionban = "rm /tmp/fail2ban.test"
+		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
+		self.assertRaises(RuntimeError, self.__action.ban, {'ip': None})
 		self.assertTrue(self._is_logged('Unable to restore environment'))
 
 	def testExecuteActionChangeCtags(self):
-		self.__action.setCInfo("ROST","192.0.2.0")
-		self.assertEqual(self.__action.getCInfo("ROST"),"192.0.2.0")
-		self.__action.delCInfo("ROST")
-		self.assertRaises(KeyError, self.__action.getCInfo, "ROST")
+		self.assertRaises(AttributeError, getattr, self.__action, "ROST")
+		self.__action.ROST = "192.0.2.0"
+		self.assertEqual(self.__action.ROST,"192.0.2.0")
 
 	def testExecuteActionUnbanAinfo(self):
 		aInfo = {
 			'ABC': "123",
 		}
-		self.__action.setActionBan("touch /tmp/fail2ban.test.123")
-		self.__action.setActionUnban("rm /tmp/fail2ban.test.<ABC>")
-		self.assertTrue(self.__action.execActionBan(None))
-		self.assertTrue(self.__action.execActionUnban(aInfo))
+		self.__action.actionban = "touch /tmp/fail2ban.test.123"
+		self.__action.actionunban = "rm /tmp/fail2ban.test.<ABC>"
+		self.__action.ban(aInfo)
+		self.__action.unban(aInfo)
 
 	def testExecuteActionStartEmpty(self):
-		self.__action.setActionStart("")
-		self.assertTrue(self.__action.execActionStart())
+		self.__action.actionstart = ""
+		self.__action.start()
 		self.assertTrue(self._is_logged('Nothing to do'))
 
 	def testExecuteIncorrectCmd(self):
@@ -169,7 +168,9 @@ class ExecuteAction(LogCaptureTestCase):
 
 	def testExecuteTimeout(self):
 		stime = time.time()
-		CommandAction.executeCmd('sleep 60', timeout=2) # Should take a minute
+		# Should take a minute
+		self.assertRaises(
+			RuntimeError, CommandAction.executeCmd, 'sleep 60', timeout=2)
 		self.assertAlmostEqual(time.time() - stime, 2, places=0)
 		self.assertTrue(self._is_logged('sleep 60 -- timed out after 2 seconds'))
 		self.assertTrue(self._is_logged('sleep 60 -- killed with SIGTERM'))
