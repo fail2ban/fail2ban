@@ -58,6 +58,8 @@ configuration before relying on it.
    * Filter for stunnel
 
 - Enhancements
+   * Jail names increased to 26 characters and iptables prefix reduced
+     from fail2ban- to f2b- as suggested by buanzo in gh-462.
    * Multiline filter for sendmail-spam. Close gh-418
    * Multiline regex for Disconnecting: Too many authentication failures for
      root [preauth]\nConnection closed by 6X.XXX.XXX.XXX [preauth]

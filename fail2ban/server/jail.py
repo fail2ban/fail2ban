@@ -110,11 +110,10 @@ class Jail:
 		self.__filter = FilterSystemd(self)
 	
 	def setName(self, name):
-		# 20 based on iptable chain name limit of 30 less len('fail2ban-')
-		if len(name) >= 20:
-			logSys.warning("Jail name %r might be too long and some commands"
-							" (e.g. iptables) might not function correctly."
-							" Please shorten"
+		# 26 based on iptable chain name limit of 30 less len('f2b-')
+		if len(name) >= 26:
+			logSys.warning("Jail name %r might be too long and some commands "
+							"might not function correctly. Please shorten"
 							% name)
 		self.__name = name
 	
