@@ -574,8 +574,8 @@ class Transmitter(TransmitterBase):
 			(0, action))
 		self.assertEqual(
 			sorted(self.transm.proceed(["get", self.jailName,
-				"actionproperties", action])),
-			[0, ['actionname', 'opt1', 'opt2']])
+				"actionproperties", action])[1]),
+			['actionname', 'opt1', 'opt2'])
 		self.assertEqual(
 			self.transm.proceed(["get", self.jailName, "action", action,
 				"opt1"]),
@@ -586,8 +586,8 @@ class Transmitter(TransmitterBase):
 			(0, None))
 		self.assertEqual(
 			sorted(self.transm.proceed(["get", self.jailName, "actionmethods",
-				action])),
-			[0, ['ban', 'start', 'stop', 'testmethod', 'unban']])
+				action])[1]),
+			['ban', 'start', 'stop', 'testmethod', 'unban'])
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "action", action,
 				"testmethod", '{"text": "world!"}']),
