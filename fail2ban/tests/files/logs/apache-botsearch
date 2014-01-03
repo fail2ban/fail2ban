@@ -1,0 +1,2 @@
+# failJSON: { "time": "2008-07-22T06:48:30", "match": true , "host": "198.51.100.86" }
+[Tue Jul 22 06:48:30 2008] [error] [client 198.51.100.86] script not found or unable to stat: /var/www/wp-login.php
