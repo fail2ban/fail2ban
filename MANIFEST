@@ -136,6 +136,7 @@ fail2ban/tests/files/logs/selinux-ssh
 fail2ban/tests/files/logs/sendmail-spam
 fail2ban/tests/files/logs/sieve
 fail2ban/tests/files/logs/squid
+fail2ban/tests/files/logs/stunnel
 fail2ban/tests/files/logs/suhosin
 fail2ban/tests/files/logs/sogo-auth
 fail2ban/tests/files/logs/solid-pop3d
@@ -191,6 +192,7 @@ config/filter.d/sieve.conf
 config/filter.d/solid-pop3d.conf
 config/filter.d/sshd.conf
 config/filter.d/sshd-ddos.conf
+config/filter.d/stunnel.conf
 config/filter.d/vsftpd.conf
 config/filter.d/webmin-auth.conf
 config/filter.d/wuftpd.conf

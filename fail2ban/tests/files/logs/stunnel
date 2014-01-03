@@ -1,0 +1,2 @@
+# failJSON: { "time": "2011-11-21T14:29:16", "match": true, "host": "10.7.41.61" }
+2011.11.21 14:29:16 LOG3[28228:140093368055552]: SSL_accept from 10.7.41.61:33454 : 140890C7: error:140890C7:SSL routines:SSL3_GET_CLIENT_CERTIFICATE:peer did not return a certificate
