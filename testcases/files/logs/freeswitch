@@ -1,0 +1,2 @@
+# failJSON: { "time": "2013-12-31T17:39:54", "match": true, "host": "81.94.202.251" }
+2013-12-31 17:39:54.767815 [WARNING] sofia_reg.c:1533 SIP auth challenge (INVITE) on sofia profile 'internal' for [011448708752617@192.168.2.51] from ip 81.94.202.251
