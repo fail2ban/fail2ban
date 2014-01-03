@@ -76,7 +76,7 @@ class RequestHandler(asynchat.async_chat):
 		# Serializes the response.
 		message = dumps(message, HIGHEST_PROTOCOL)
 		# Sends the response to the client.
-		self.send(message + RequestHandler.END_STRING)
+		self.push(message + RequestHandler.END_STRING)
 		# Closes the channel.
 		self.close_when_done()
 		
