@@ -55,6 +55,10 @@ class ExecuteActions(LogCaptureTestCase):
 		self.__ip.actioncheck = 'echo ip check <ip> >> "%s"' % self.__tmpfilename
 		self.__ip.actionstop = 'echo ip stop >> "%s"' % self.__tmpfilename
 
+	def testActionsAddDuplicateName(self):
+		self.__actions.add('test')
+		self.assertRaises(ValueError, self.__actions.add, 'test')
+
 	def testActionsManipulation(self):
 		self.__actions.add('test')
 		self.assertTrue(self.__actions['test'])
@@ -115,3 +119,23 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertRaises(
 			TypeError, self.__actions.add, "Action5",
 			os.path.join(TEST_FILES_DIR, "action.d/action.py"), {})
+
+	def testAddPythonActionNOK(self):
+		self.assertRaises(RuntimeError, self.__actions.add,
+			"Action", os.path.join(TEST_FILES_DIR,
+				"action.d/action_noAction.py"),
+			{})
+		self.assertRaises(RuntimeError, self.__actions.add,
+			"Action", os.path.join(TEST_FILES_DIR,
+				"action.d/action_nomethod.py"),
+			{})
+		self.__actions.add(
+			"Action", os.path.join(TEST_FILES_DIR,
+				"action.d/action_errors.py"),
+			{})
+		self.__actions.start()
+		time.sleep(3)
+		self.assertTrue(self._is_logged("Failed to start"))
+		self.__actions.stop()
+		self.__actions.join()
+		self.assertTrue(self._is_logged("Failed to stop"))
