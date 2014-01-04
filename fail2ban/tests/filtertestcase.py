@@ -34,18 +34,15 @@ try:
 except ImportError:
 	journal = None
 
-from fail2ban.server.jail import Jail
-from fail2ban.server.filterpoll import FilterPoll
-from fail2ban.server.filter import Filter, FileFilter, DNSUtils
-from fail2ban.server.failmanager import FailManager
-from fail2ban.server.failmanager import FailManagerEmpty
-from fail2ban.server.mytime import MyTime
-from fail2ban.tests.utils import setUpMyTime, tearDownMyTime
-from fail2ban.tests.utils import mtimesleep, LogCaptureTestCase
+from ..server.jail import Jail
+from ..server.filterpoll import FilterPoll
+from ..server.filter import Filter, FileFilter, DNSUtils
+from ..server.failmanager import FailManager, FailManagerEmpty
+from ..server.mytime import MyTime
+from .utils import setUpMyTime, tearDownMyTime, mtimesleep, LogCaptureTestCase
+from .dummyjail import DummyJail
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
-
-from fail2ban.tests.dummyjail import DummyJail
 
 # yoh: per Steven Hiscocks's insight while troubleshooting
 # https://github.com/fail2ban/fail2ban/issues/103#issuecomment-15542836

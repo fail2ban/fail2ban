@@ -23,8 +23,8 @@ __license__ = "GPL"
 
 from threading import Lock
 
-from fail2ban.exceptions import DuplicateJailException, UnknownJailException
-from fail2ban.server.jail import Jail
+from ..exceptions import DuplicateJailException, UnknownJailException
+from .jail import Jail
 
 ##
 # Handles the jails.

@@ -23,15 +23,14 @@ __license__ = "GPL"
 
 import logging, re, os, fcntl, time, sys, locale, codecs
 
-from fail2ban.server.failmanager import FailManagerEmpty
-from fail2ban.server.failmanager import FailManager
-from fail2ban.server.ticket import FailTicket
-from fail2ban.server.jailthread import JailThread
-from fail2ban.server.datedetector import DateDetector
-from fail2ban.server.datetemplate import DatePatternRegex, DateISO8601, DateEpoch, DateTai64n
-from fail2ban.server.mytime import MyTime
-from fail2ban.server.failregex import FailRegex, Regex, RegexException
-from fail2ban.server.action import CommandAction
+from .failmanager import FailManagerEmpty, FailManager
+from .ticket import FailTicket
+from .jailthread import JailThread
+from .datedetector import DateDetector
+from .datetemplate import DatePatternRegex, DateISO8601, DateEpoch, DateTai64n
+from .mytime import MyTime
+from .failregex import FailRegex, Regex, RegexException
+from .action import CommandAction
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

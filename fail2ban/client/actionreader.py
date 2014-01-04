@@ -26,7 +26,7 @@ __license__ = "GPL"
 
 import logging, os
 
-from fail2ban.client.configreader import ConfigReader, DefinitionInitConfigReader
+from .configreader import ConfigReader, DefinitionInitConfigReader
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

@@ -23,13 +23,13 @@ __license__ = "GPL"
 
 import os, shutil, sys, tempfile, unittest
 
-from fail2ban.client.configreader import ConfigReader
-from fail2ban.client.jailreader import JailReader
-from fail2ban.client.filterreader import FilterReader
-from fail2ban.client.jailsreader import JailsReader
-from fail2ban.client.actionreader import ActionReader
-from fail2ban.client.configurator import Configurator
-from fail2ban.tests.utils import LogCaptureTestCase
+from ..client.configreader import ConfigReader
+from ..client.jailreader import JailReader
+from ..client.filterreader import FilterReader
+from ..client.jailsreader import JailsReader
+from ..client.actionreader import ActionReader
+from ..client.configurator import Configurator
+from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 if os.path.exists('config/fail2ban.conf'):

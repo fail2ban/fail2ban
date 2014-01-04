@@ -26,11 +26,11 @@ __license__ = "GPL"
 
 import unittest, socket, time, tempfile, os, locale, sys, logging
 
-from fail2ban.server.failregex import Regex, FailRegex, RegexException
-from fail2ban.server.server import Server, logSys
-from fail2ban.server.jail import Jail
-from fail2ban.exceptions import UnknownJailException
-from fail2ban.tests.utils import LogCaptureTestCase
+from ..server.failregex import Regex, FailRegex, RegexException
+from ..server.server import Server, logSys
+from ..server.jail import Jail
+from ..exceptions import UnknownJailException
+from .utils import LogCaptureTestCase
 #from bin.fail2ban-client import Fail2banClient
 try:
 	from fail2ban.server import filtersystemd

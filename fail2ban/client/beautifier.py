@@ -23,7 +23,7 @@ __license__ = "GPL"
 
 import logging
 
-from fail2ban.exceptions import UnknownJailException, DuplicateJailException
+from ..exceptions import UnknownJailException, DuplicateJailException
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

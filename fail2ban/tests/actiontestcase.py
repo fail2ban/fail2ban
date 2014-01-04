@@ -27,9 +27,9 @@ __license__ = "GPL"
 import time
 import logging, sys
 
-from fail2ban.server.action import CommandAction, CallingMap
+from ..server.action import CommandAction, CallingMap
 
-from fail2ban.tests.utils import LogCaptureTestCase
+from .utils import LogCaptureTestCase
 
 class CommandActionTest(LogCaptureTestCase):
 

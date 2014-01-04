@@ -27,9 +27,9 @@ __license__ = "GPL"
 import unittest, time
 import sys, os, tempfile
 
-from fail2ban.server.actions import Actions
-from fail2ban.tests.dummyjail import DummyJail
-from fail2ban.tests.utils import LogCaptureTestCase
+from ..server.actions import Actions
+from .dummyjail import DummyJail
+from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 

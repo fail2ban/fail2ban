@@ -28,10 +28,10 @@ import time, logging
 import os
 import imp
 
-from fail2ban.server.banmanager import BanManager
-from fail2ban.server.jailthread import JailThread
-from fail2ban.server.action import ActionBase, CommandAction, CallingMap
-from fail2ban.server.mytime import MyTime
+from .banmanager import BanManager
+from .jailthread import JailThread
+from .action import ActionBase, CommandAction, CallingMap
+from .mytime import MyTime
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

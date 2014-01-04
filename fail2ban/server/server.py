@@ -27,14 +27,13 @@ __license__ = "GPL"
 from threading import Lock, RLock
 import logging, logging.handlers, sys, os, signal
 
-from fail2ban.server.jails import Jails
-from fail2ban.server.filter import FileFilter, JournalFilter
-from fail2ban.server.transmitter import Transmitter
-from fail2ban.server.asyncserver import AsyncServer
-from fail2ban.server.asyncserver import AsyncServerException
-from fail2ban.server.database import Fail2BanDb
-from fail2ban.server.action import CommandAction
-from fail2ban import version
+from .jails import Jails
+from .filter import FileFilter, JournalFilter
+from .transmitter import Transmitter
+from .asyncserver import AsyncServer, AsyncServerException
+from .database import Fail2BanDb
+from .action import CommandAction
+from .. import version
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
