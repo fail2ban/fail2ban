@@ -79,12 +79,11 @@ class ActionBase(object):
 	place to create a python based action for fail2ban. This class can
 	be inherited from to ease implementation, but is not required as
 	long as the following required methods/properties are implemented:
-		- __init__(jail, actionname)
+		- __init__(jail, name)
 		- start()
 		- stop()
 		- ban(aInfo)
 		- unban(aInfo)
-		- actionname
 	"""
 	__metaclass__ = ABCMeta
 
@@ -101,22 +100,16 @@ class ActionBase(object):
 				return False
 		return True
 
-	def __init__(self, jail, actionname):
+	def __init__(self, jail, name):
 		"""Should initialise the action class with `jail` being the Jail
-		object the action belongs to, `actionname` being the name assigned
+		object the action belongs to, `name` being the name assigned
 		to the action, and `kwargs` being all other args that have been
 		specified with jail.conf or on the fail2ban-client.
 		"""
 		self._jail = jail
-		self._actionname = actionname
+		self._name = name
 		self._logSys = logging.getLogger(
 			'%s.%s' % (__name__, self.__class__.__name__))
-
-	@property
-	def actionname(self):
-		"""The name of the action, which should not change in the
-		lifetime of the action."""
-		return self._actionname
 
 	def start(self):
 		"""Executed when the jail/action starts."""
@@ -144,8 +137,8 @@ class CommandAction(ActionBase):
 	Fail2Ban uses.
 	"""
 	
-	def __init__(self, jail, actionname):
-		super(CommandAction, self).__init__(jail, actionname)
+	def __init__(self, jail, name):
+		super(CommandAction, self).__init__(jail, name)
 		self.timeout = 60
 		## Command executed in order to initialize the system.
 		self.actionstart = ''
@@ -172,7 +165,7 @@ class CommandAction(ActionBase):
 	def timeout(self, timeout):
 		self._timeout = int(timeout)
 		self._logSys.debug("Set action %s timeout = %i" %
-			(self.actionname, self.timeout))
+			(self._name, self.timeout))
 
 	@property
 	def _properties(self):

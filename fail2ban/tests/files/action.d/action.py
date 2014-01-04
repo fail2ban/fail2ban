@@ -3,8 +3,8 @@ from fail2ban.server.action import ActionBase
 
 class TestAction(ActionBase):
 
-    def __init__(self, jail, actionname, opt1, opt2=None):
-        super(TestAction, self).__init__(jail, actionname)
+    def __init__(self, jail, name, opt1, opt2=None):
+        super(TestAction, self).__init__(jail, name)
         self._logSys.debug("%s initialised" % self.__class__.__name__)
         self.opt1 = opt1
         self.opt2 = opt2

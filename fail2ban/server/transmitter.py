@@ -227,13 +227,14 @@ class Transmitter:
 			return self.__server.setBanIP(name,value)
 		elif command[1] == "unbanip":
 			value = command[2]
-			return self.__server.setUnbanIP(name,value)
+			self.__server.setUnbanIP(name, value)
+			return value
 		elif command[1] == "addaction":
 			args = [command[2]]
 			if len(command) > 3:
 				args.extend([command[3], json.loads(command[4])])
 			self.__server.addAction(name, *args)
-			return self.__server.getLastAction(name).actionname
+			return args[0]
 		elif command[1] == "delaction":
 			value = command[2]
 			self.__server.delAction(name, value)
@@ -300,10 +301,7 @@ class Transmitter:
 		elif command[1] == "bantime":
 			return self.__server.getBanTime(name)
 		elif command[1] == "actions":
-			return [action.actionname
-				for action in self.__server.getActions(name)]
-		elif command[1] == "addaction":
-			return self.__server.getLastAction(name).actionname
+			return self.__server.getActions(name).keys()
 		elif command[1] == "action":
 			actionname = command[2]
 			actionvalue = command[3]

@@ -103,7 +103,7 @@ class SMTPAction(ActionBase):
 		self.message_values = CallingMap(
 			jailname = self._jail.getName(), # Doesn't change
 			hostname = socket.gethostname,
-			bantime = self._jail.getAction().getBanTime,
+			bantime = self._jail.actions.getBanTime,
 			)
 
 	def _sendMessage(self, subject, text):

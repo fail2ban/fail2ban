@@ -47,8 +47,8 @@ class ExecuteActions(LogCaptureTestCase):
 		os.remove(self.__tmpfilename)
 
 	def defaultActions(self):
-		self.__actions.addAction('ip')
-		self.__ip = self.__actions.getAction('ip')
+		self.__actions.add('ip')
+		self.__ip = self.__actions['ip']
 		self.__ip.actionstart = 'echo ip start 64 >> "%s"' % self.__tmpfilename
 		self.__ip.actionban = 'echo ip ban <ip> >> "%s"' % self.__tmpfilename
 		self.__ip.actionunban = 'echo ip unban <ip> >> "%s"' % self.__tmpfilename
@@ -56,15 +56,15 @@ class ExecuteActions(LogCaptureTestCase):
 		self.__ip.actionstop = 'echo ip stop >> "%s"' % self.__tmpfilename
 
 	def testActionsManipulation(self):
-		self.__actions.addAction('test')
-		self.assertTrue(self.__actions.getAction('test'))
-		self.assertTrue(self.__actions.getLastAction())
-		self.assertRaises(KeyError,self.__actions.getAction,*['nonexistant action'])
-		self.__actions.addAction('test1')
-		self.__actions.delAction('test')
-		self.__actions.delAction('test1')
-		self.assertRaises(KeyError, self.__actions.getAction, *['test'])
-		self.assertRaises(IndexError,self.__actions.getLastAction)
+		self.__actions.add('test')
+		self.assertTrue(self.__actions['test'])
+		self.assertTrue('test' in self.__actions)
+		self.assertFalse('nonexistant action' in self.__actions)
+		self.__actions.add('test1')
+		del self.__actions['test']
+		del self.__actions['test1']
+		self.assertFalse('test' in self.__actions)
+		self.assertEqual(len(self.__actions), 0)
 
 		self.__actions.setBanTime(127)
 		self.assertEqual(self.__actions.getBanTime(),127)
@@ -85,7 +85,7 @@ class ExecuteActions(LogCaptureTestCase):
 
 
 	def testAddActionPython(self):
-		self.__actions.addAction(
+		self.__actions.add(
 			"Action", os.path.join(TEST_FILES_DIR, "action.d/action.py"),
 			{'opt1': 'value'})
 
@@ -100,18 +100,18 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertTrue(self._is_logged("TestAction action stop"))
 
 		self.assertRaises(IOError,
-			self.__actions.addAction, "Action3", "/does/not/exist.py", {})
+			self.__actions.add, "Action3", "/does/not/exist.py", {})
 
 		# With optional argument
-		self.__actions.addAction(
+		self.__actions.add(
 			"Action4", os.path.join(TEST_FILES_DIR, "action.d/action.py"),
 			{'opt1': 'value', 'opt2': 'value2'})
 		# With too many arguments
 		self.assertRaises(
-			TypeError, self.__actions.addAction, "Action5",
+			TypeError, self.__actions.add, "Action5",
 			os.path.join(TEST_FILES_DIR, "action.d/action.py"),
 			{'opt1': 'value', 'opt2': 'value2', 'opt3': 'value3'})
 		# Missing required argument
 		self.assertRaises(
-			TypeError, self.__actions.addAction, "Action5",
+			TypeError, self.__actions.add, "Action5",
 			os.path.join(TEST_FILES_DIR, "action.d/action.py"), {})

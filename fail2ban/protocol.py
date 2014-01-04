@@ -102,7 +102,6 @@ protocol = [
 ["get <JAIL> usedns", "gets the usedns setting for <JAIL>"],
 ["get <JAIL> maxretry", "gets the number of failures allowed for <JAIL>"],
 ["get <JAIL> maxlines", "gets the number of lines to buffer for <JAIL>"],
-["get <JAIL> addaction", "gets the last action which has been added for <JAIL>"],
 ["get <JAIL> actions", "gets a list of actions for <JAIL>"],
 ["", "COMMAND ACTION INFORMATION",""],
 ["get <JAIL> action <ACT> actionstart", "gets the start command for the action <ACT> for <JAIL>"],

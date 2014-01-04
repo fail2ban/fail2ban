@@ -519,9 +519,6 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["set", self.jailName, "addaction", action]),
 			(0, action))
 		self.assertEqual(
-			self.transm.proceed(["get", self.jailName, "addaction"]),
-			(0, action))
-		self.assertEqual(
 			self.transm.proceed(
 				["get", self.jailName, "actions"])[1][0],
 			action)
@@ -548,10 +545,6 @@ class Transmitter(TransmitterBase):
 			1)
 		self.assertEqual(
 			self.transm.proceed(
-				["get", self.jailName, "action", action, "actionname"]),
-			(0, action))
-		self.assertEqual(
-			self.transm.proceed(
 				["set", self.jailName, "action", action, "timeout", "10"]),
 			(0, 10))
 		self.assertEqual(
@@ -575,7 +568,7 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			sorted(self.transm.proceed(["get", self.jailName,
 				"actionproperties", action])[1]),
-			['actionname', 'opt1', 'opt2'])
+			['opt1', 'opt2'])
 		self.assertEqual(
 			self.transm.proceed(["get", self.jailName, "action", action,
 				"opt1"]),
