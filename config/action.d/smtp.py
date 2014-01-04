@@ -75,18 +75,38 @@ class SMTPAction(ActionBase):
 	"""
 
 	def __init__(
-		self, jail, actionname, host="localhost", user=None, password=None,
+		self, jail, name, host="localhost", user=None, password=None,
 		sendername="Fail2Ban", sender="fail2ban", dest="root", matches=None):
-		"""SMTPAction is initiliased with a Fail2Ban `jail` instance, and
-		an `actionname`. `host` is the SMTP host, which can include port
-		number in "host:port" format. `user` and `password` can be specified
-		for SMTP authentication. `sendername` and `sender` is the email
-		address and readable name. `dest` is the email address of intended
-		recipient(s) in comma delimited format. `matches` can be one of
-		`matches`, `ipmatches` and `ipjailmatches` (see man jail.conf.5).
+		"""Initialise action.
+
+		Parameters
+		----------
+		jail : Jail
+			The jail which the action belongs to.
+		name : str
+			Named assigned to the action.
+		host : str, optional
+			SMTP host, of host:port format. Default host "localhost" and
+			port "25"
+		user : str, optional
+			Username used for authentication with SMTP server.
+		password : str, optional
+			Password used for authentication with SMTP server.
+		sendername : str, optional
+			Name to use for from address in email. Default "Fail2Ban".
+		sender : str, optional
+			Email address to use for from address in email.
+			Default "fail2ban".
+		dest : str, optional
+			Email addresses of intended recipient(s) in comma delimited
+			format. Default "root".
+		matches : str, optional
+			Type of matches to be included from ban in email. Can be one
+			of "matches", "ipmatches" or "ipjailmatches". Default None
+			(see man jail.conf.5).
 		"""
 
-		super(SMTPAction, self).__init__(jail, actionname)
+		super(SMTPAction, self).__init__(jail, name)
 
 		self.host = host
 		#TODO: self.ssl = ssl
@@ -107,6 +127,25 @@ class SMTPAction(ActionBase):
 			)
 
 	def _sendMessage(self, subject, text):
+		"""Sends message based on arguments and instance's properties.
+
+		Parameters
+		----------
+		subject : str
+			Subject of the email.
+		text : str
+			Body of the email.
+
+		Raises
+		------
+		SMTPConnectionError
+			Error on connecting to host.
+		SMTPAuthenticationError
+			Error authenticating with SMTP server.
+		SMTPException
+			See Python `smtplib` for full list of other possible
+			exceptions.
+		"""
 		msg = MIMEText(text)
 		msg['Subject'] = subject
 		msg['From'] = formataddr((self.fromname, self.fromaddr))
@@ -164,8 +203,13 @@ class SMTPAction(ActionBase):
 			messages['stop'] % self.message_values)
 
 	def ban(self, aInfo):
-		"""Sends email to recipients informing that ban has occurred and
-		has associated information about the ban.
+		"""Sends email to recipients informing that ban has occurred.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
 		"""
 		aInfo.update(self.message_values)
 		message = "".join([

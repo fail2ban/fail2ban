@@ -72,11 +72,12 @@ class Actions(JailThread, Mapping):
 		----------
 		name : str
 			The name of the action.
-		pythonModule : str
+		pythonModule : str, optional
 			Path to Python file which must contain `Action` class.
-		initOpts : dict
+			Default None, which means `CommandAction` is used.
+		initOpts : dict, optional
 			Options for Python Action, used as keyword arguments for
-			initialisation.
+			initialisation. Default None.
 
 		Raises
 		------
