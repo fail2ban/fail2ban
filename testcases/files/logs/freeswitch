@@ -1,0 +1,11 @@
+# failJSON: { "time": "2013-12-31T17:39:54", "match": true, "host": "81.94.202.251" }
+2013-12-31 17:39:54.767815 [WARNING] sofia_reg.c:1533 SIP auth challenge (INVITE) on sofia profile 'internal' for [011448708752617@192.168.2.51] from ip 81.94.202.251
+# failJSON: { "time": "2013-12-31T17:39:54", "match": true, "host": "5.11.47.236" }
+2013-12-31 17:39:54.767815 [WARNING] sofia_reg.c:1478 SIP auth failure (INVITE) on sofia profile 'internal' for [000972543480510@192.168.2.51] from ip 5.11.47.236
+# failJSON: { "time": "2013-12-31T17:39:54", "match": false }
+2013-12-31 17:39:54.767815 [DEBUG] sofia.c:7954 IP 185.24.234.141 Rejected by acl "domains". Falling back to Digest auth.
+
+# failJSON: { "time": "2013-12-31T17:39:54", "match": true, "host": "5.11.47.236" }
+2013-12-31 17:39:54.767815 [WARNING] sofia_reg.c:2531 Can't find user [1001@192.168.2.51] from 5.11.47.236
+# failJSON: { "time": "2013-12-31T17:39:54", "match": true, "host": "185.24.234.141" }
+2013-12-31 17:39:54.767815 [WARNING] sofia_reg.c:2531 Can't find user [100@192.168.2.51] from 185.24.234.141

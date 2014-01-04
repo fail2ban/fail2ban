@@ -54,6 +54,8 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - filter.d/nsd.conf -- also amended Unix date template to match nsd format
   - Added filter.d/openwebmail filter thanks Ivo Truxa. Closes gh-543
   - Added filter.d/horde
+  - Added filter for freeswitch. Thanks Jim and editors and authors of 
+    http://wiki.freeswitch.org/wiki/Fail2ban
 
 - Enhancements:
   - loglines now also report "[PID]" after the name portion
