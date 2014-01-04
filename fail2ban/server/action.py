@@ -36,7 +36,7 @@ _cmd_lock = threading.Lock()
 # Some hints on common abnormal exit codes
 _RETCODE_HINTS = {
 	127: '"Command not found".  Make sure that all commands in %(realCmd)r '
-	        'are in the PATH of fail2ban-server process '
+			'are in the PATH of fail2ban-server process '
 			'(grep -a PATH= /proc/`pidof -x fail2ban-server`/environ). '
 			'You may want to start '
 			'"fail2ban-server -f" separately, initiate it with '
@@ -49,41 +49,58 @@ signame = dict((num, name)
 	for name, num in signal.__dict__.iteritems() if name.startswith("SIG"))
 
 class CallingMap(MutableMapping):
-	"""Calling Map behaves similar to a standard python dictionary,
+	"""A Mapping type which returns the result of callable values.
+
+	`CallingMap` behaves similar to a standard python dictionary,
 	with the exception that any values which are callable, are called
-	and the result of the callable is returned.
+	and the result is returned as the value.
 	No error handling is in place, such that any errors raised in the
 	callable will raised as usual.
 	Actual dictionary is stored in property `data`, and can be accessed
 	to obtain original callable values.
+
+	Attributes
+	----------
+	data : dict
+		The dictionary data which can be accessed to obtain items
+		without callable values being called.
+
 	"""
+
 	def __init__(self, *args, **kwargs):
 		self.data = dict(*args, **kwargs)
+
 	def __getitem__(self, key):
 		value = self.data[key]
 		if callable(value):
 			return value()
 		else:
 			return value
+
 	def __setitem__(self, key, value):
 		self.data[key] = value
+
 	def __delitem__(self, key):
 		del self.data[key]
+
 	def __iter__(self):
 		return iter(self.data)
+
 	def __len__(self):
 		return len(self.data)
 
 class ActionBase(object):
-	"""Action Base is a base definition of what methods need to be in
-	place to create a python based action for fail2ban. This class can
-	be inherited from to ease implementation, but is not required as
-	long as the following required methods/properties are implemented:
-		- __init__(jail, name)
-		- start()
-		- stop()
-		- ban(aInfo)
-		- unban(aInfo)
+	"""An abstract base class for actions in Fail2Ban.
+
+	Action Base is a base definition of what methods need to be in
+	place to create a Python based action for Fail2Ban. This class can
+	be inherited from to ease implementation.
+	Required methods:
+	 - __init__(jail, name)
+	 - start()
+	 - stop()
+	 - ban(aInfo)
+	 - unban(aInfo)
 	"""
 	__metaclass__ = ABCMeta
 
@@ -101,10 +118,23 @@ class ActionBase(object):
 		return True
 
 	def __init__(self, jail, name):
-		"""Should initialise the action class with `jail` being the Jail
-		object the action belongs to, `name` being the name assigned
-		to the action, and `kwargs` being all other args that have been
-		specified with jail.conf or on the fail2ban-client.
+		"""Initialise action.
+
+		Called when action is created, but before the jail/actions is
+		started. This should carry out necessary methods to initialise
+		the action but not "start" the action.
+
+		Parameters
+		----------
+		jail : Jail
+			The jail in which the action belongs to.
+		name : str
+			Name assigned to the action.
+
+		Notes
+		-----
+		Any additional arguments specified in `jail.conf` or passed
+		via `fail2ban-client` will be passed as keyword arguments.
 		"""
 		self._jail = jail
 		self._name = name
@@ -112,32 +142,57 @@ class ActionBase(object):
 			'%s.%s' % (__name__, self.__class__.__name__))
 
 	def start(self):
-		"""Executed when the jail/action starts."""
+		"""Executed when the jail/action is started.
+		"""
 		pass
 
 	def stop(self):
-		"""Executed when the jail/action stops or action is deleted.
+		"""Executed when the jail/action is stopped.
 		"""
 		pass
 
 	def ban(self, aInfo):
-		"""Executed when a ban occurs. `aInfo` is a dictionary which
-		includes information in relation to the ban.
+		"""Executed when a ban occurs.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
 		"""
 		pass
 
 	def unban(self, aInfo):
-		"""Executed when a ban expires. `aInfo` as per execActionBan.
+		"""Executed when a ban expires.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
 		"""
 		pass
 
 class CommandAction(ActionBase):
-	"""A Fail2Ban action which executes commands with Python's
-	subprocess module. This is the default type of action which
-	Fail2Ban uses.
+	"""A action which executes OS shell commands.
+
+	This is the default type of action which Fail2Ban uses.
 	"""
-	
+
 	def __init__(self, jail, name):
+		"""Initialise action.
+
+		Default sets all commands for actions as empty string, such
+		no command is executed.
+
+		Parameters
+		----------
+		jail : Jail
+			The jail in which the action belongs to.
+		name : str
+			Name assigned to the action.
+		"""
+
 		super(CommandAction, self).__init__(jail, name)
 		self.timeout = 60
 		## Command executed in order to initialize the system.
@@ -151,16 +206,17 @@ class CommandAction(ActionBase):
 		## Command executed in order to stop the system.
 		self.actionstop = ''
 		self._logSys.debug("Created %s" % self.__class__)
-	
+
 	@classmethod
 	def __subclasshook__(cls, C):
 		return NotImplemented # Standard checks
 
 	@property
 	def timeout(self):
-		"""Timeout period in seconds for execution of commands
+		"""Time out period in seconds for execution of commands.
 		"""
 		return self._timeout
+
 	@timeout.setter
 	def timeout(self, timeout):
 		self._timeout = int(timeout)
@@ -169,6 +225,10 @@ class CommandAction(ActionBase):
 
 	@property
 	def _properties(self):
+		"""A dictionary of the actions properties.
+
+		This is used to subsitute "tags" in the commands.
+		"""
 		return dict(
 			(key, getattr(self, key))
 			for key in dir(self)
@@ -179,6 +239,7 @@ class CommandAction(ActionBase):
 		"""The command executed on start of the jail/action.
 		"""
 		return self._actionstart
+
 	@actionstart.setter
 	def actionstart(self, value):
 		self._actionstart = value
@@ -186,6 +247,7 @@ class CommandAction(ActionBase):
 
 	def start(self):
 		"""Executes the "actionstart" command.
+
 		Replace the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
@@ -204,6 +266,7 @@ class CommandAction(ActionBase):
 		"""The command used when a ban occurs.
 		"""
 		return self._actionban
+
 	@actionban.setter
 	def actionban(self, value):
 		self._actionban = value
@@ -211,8 +274,15 @@ class CommandAction(ActionBase):
 
 	def ban(self, aInfo):
 		"""Executes the "actionban" command.
-		Replace the tags in the action command with actions properties
+
+		Replaces the tags in the action command with actions properties
 		and ban information, and executes the resulting command.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
 		"""
 		if not self._processCmd(self.actionban, aInfo):
 			raise RuntimeError("Error banning %(ip)s" % aInfo)
@@ -222,6 +292,7 @@ class CommandAction(ActionBase):
 		"""The command used when an unban occurs.
 		"""
 		return self._actionunban
+
 	@actionunban.setter
 	def actionunban(self, value):
 		self._actionunban = value
@@ -229,18 +300,29 @@ class CommandAction(ActionBase):
 
 	def unban(self, aInfo):
 		"""Executes the "actionunban" command.
-		Replace the tags in the action command with actions properties
+
+		Replaces the tags in the action command with actions properties
 		and ban information, and executes the resulting command.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
 		"""
 		if not self._processCmd(self.actionunban, aInfo):
 			raise RuntimeError("Error unbanning %(ip)s" % aInfo)
 
 	@property
 	def actioncheck(self):
-		"""The command used to check correct environment in place for
-		ban action to take place.
+		"""The command used to check the environment.
+
+		This is used prior to a ban taking place to ensure the
+		environment is appropriate. If this check fails, `stop` and
+		`start` is executed prior to the check being called again.
 		"""
 		return self._actioncheck
+
 	@actioncheck.setter
 	def actioncheck(self, value):
 		self._actioncheck = value
@@ -251,6 +333,7 @@ class CommandAction(ActionBase):
 		"""The command executed when the jail/actions stops.
 		"""
 		return self._actionstop
+
 	@actionstop.setter
 	def actionstop(self, value):
 		self._actionstop = value
@@ -258,23 +341,33 @@ class CommandAction(ActionBase):
 
 	def stop(self):
 		"""Executes the "actionstop" command.
-		Replace the tags in the action command with actions properties
+
+		Replaces the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
 		stopCmd = self.replaceTag(self.actionstop, self._properties)
 		if not self.executeCmd(stopCmd, self.timeout):
 			raise RuntimeError("Error stopping action")
 
-	##
-	# Sort out tag definitions within other tags
-	#
-	# so:		becomes:
-	# a = 3		a = 3
-	# b = <a>_3	b = 3_3
-	# @param	tags, a dictionary
-	# @returns	tags altered or False if there is a recursive definition
 	@staticmethod
 	def substituteRecursiveTags(tags):
+		"""Sort out tag definitions within other tags.
+
+		so:		becomes:
+		a = 3		a = 3
+		b = <a>_3	b = 3_3
+
+		Parameters
+		----------
+		tags : dict
+			Dictionary of tags(keys) and their values.
+
+		Returns
+		-------
+		dict
+			Dictionary of tags(keys) and their values, with tags
+			within the values recursively replaced.
+		"""
 		t = re.compile(r'<([^ >]+)>')
 		for tag, value in tags.iteritems():
 			value = str(value)
@@ -296,22 +389,46 @@ class CommandAction(ActionBase):
 		return tags
 
 	@staticmethod
-	def escapeTag(tag):
-		for c in '\\#&;`|*?~<>^()[]{}$\'"':
-			if c in tag:
-				tag = tag.replace(c, '\\' + c)
-		return tag
+	def escapeTag(value):
+		"""Escape characters which may be used for command injection.
 
-	##
-	# Replaces tags in query with property values in aInfo.
-	#
-	# @param query the query string with tags
-	# @param aInfo the properties
-	# @return a string
-	
+		Parameters
+		----------
+		value : str
+			A string of which characters will be escaped.
+
+		Returns
+		-------
+		str
+			`value` with certain characters escaped.
+
+		Notes
+		-----
+		The following characters are escaped::
+
+			\\#&;`|*?~<>^()[]{}$'"
+
+		"""
+		for c in '\\#&;`|*?~<>^()[]{}$\'"':
+			if c in value:
+				value = value.replace(c, '\\' + c)
+		return value
+
 	@classmethod
 	def replaceTag(cls, query, aInfo):
-		""" Replace tags in query
+		"""Replaces tags in `query` with property values.
+
+		Parameters
+		----------
+		query : str
+			String with tags.
+		aInfo : dict
+			Tags(keys) and associated values for substitution in query.
+
+		Returns
+		-------
+		str
+			`query` string with tags replaced.
 		"""
 		string = query
 		for tag in aInfo:
@@ -325,27 +442,31 @@ class CommandAction(ActionBase):
 		# New line
 		string = string.replace("<br>", '\n')
 		return string
-	
-	##
-	# Executes a command with preliminary checks and substitutions.
-	#
-	# Before executing any commands, executes the "check" command first
-	# in order to check if pre-requirements are met. If this check fails,
-	# it tries to restore a sane environment before executing the real
-	# command.
-	# Replaces "aInfo" and "cInfo" in the query too.
-	#
-	# @param cmd The command to execute
-	# @param aInfo Dynamic properties
-	# @return True if the command succeeded
-	
+
 	def _processCmd(self, cmd, aInfo = None):
-		""" Executes an OS command.
+		"""Executes a command with preliminary checks and substitutions.
+
+		Before executing any commands, executes the "check" command first
+		in order to check if pre-requirements are met. If this check fails,
+		it tries to restore a sane environment before executing the real
+		command.
+
+		Parameters
+		----------
+		cmd : str
+			The command to execute.
+		aInfo : dictionary
+			Dynamic properties.
+
+		Returns
+		-------
+		bool
+			True if the command succeeded.
 		"""
 		if cmd == "":
 			self._logSys.debug("Nothing to do")
 			return True
-		
+
 		checkCmd = self.replaceTag(self.actioncheck, self._properties)
 		if not self.executeCmd(checkCmd, self.timeout):
 			self._logSys.error(
@@ -367,20 +488,29 @@ class CommandAction(ActionBase):
 		
 		return self.executeCmd(realCmd, self.timeout)
 
-	##
-	# Executes a command.
-	#
-	# We need a shell here because commands are mainly shell script. They
-	# contain pipe, redirection, etc.
-	# 
-	# @todo Force the use of bash!?
-	# @todo Kill the command after a given timeout
-	#
-	# @param realCmd the command to execute
-	# @return True if the command succeeded
-
 	@staticmethod
 	def executeCmd(realCmd, timeout=60):
+		"""Executes a command.
+
+		Parameters
+		----------
+		realCmd : str
+			The command to execute.
+		timeout : int
+			The time out in seconds for the command.
+
+		Returns
+		-------
+		bool
+			True if the command succeeded.
+
+		Raises
+		------
+		OSError
+			If command fails to be executed.
+		RuntimeError
+			If command execution times out.
+		"""
 		logSys.debug(realCmd)
 		if not realCmd:
 			logSys.debug("Nothing to do")
@@ -410,7 +540,6 @@ class CommandAction(ActionBase):
 						retcode = popen.poll()
 			except OSError, e:
 				logSys.error("%s -- failed with %s" % (realCmd, e))
-				return False
 		finally:
 			_cmd_lock.release()
 
