@@ -153,7 +153,7 @@ class JailReader(ConfigReader):
 				found_files = 0
 				for path in self.__opts[opt].split("\n"):
 					path = path.rsplit(" ", 1)
-					path, tail = path if len(path) > 1 else (path[0], "false")
+					path, tail = path if len(path) > 1 else (path[0], "head")
 					pathList = JailReader._glob(path)
 					if len(pathList) == 0:
 						logSys.error("No file(s) found for glob %s" % path)
