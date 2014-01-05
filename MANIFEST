@@ -117,6 +117,7 @@ fail2ban/tests/files/logs/exim
 fail2ban/tests/files/logs/exim-spam
 fail2ban/tests/files/logs/gssftpd
 fail2ban/tests/files/logs/guacamole
+fail2ban/tests/files/logs/kerio
 fail2ban/tests/files/logs/lighttpd-auth
 fail2ban/tests/files/logs/mysqld-auth
 fail2ban/tests/files/logs/nsd
@@ -175,6 +176,7 @@ config/filter.d/courier-smtp.conf
 config/filter.d/cyrus-imap.conf
 config/filter.d/exim.conf
 config/filter.d/gssftpd.conf
+config/filter.d/kerio.conf
 config/filter.d/suhosin.conf
 config/filter.d/named-refused.conf
 config/filter.d/openwebmail.conf
