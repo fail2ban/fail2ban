@@ -76,7 +76,7 @@ protocol = [
 ["set <JAIL> unbanip <IP>", "manually Unban <IP> in <JAIL>"], 
 ["set <JAIL> maxretry <RETRY>", "sets the number of failures <RETRY> before banning the host for <JAIL>"], 
 ["set <JAIL> maxlines <LINES>", "sets the number of <LINES> to buffer for regex search for <JAIL>"], 
-["set <JAIL> addaction <ACT>", "adds a new action named <NAME> for <JAIL>"], 
+["set <JAIL> addaction <ACT> [<PYTHONFILE> <JSONOPTS>]", "adds a new action named <NAME> for <JAIL>. Optionally for a python based action, a <PYTHONFILE> and <JSONOPTS> can be specified"], 
 ["set <JAIL> delaction <ACT>", "removes the action <NAME> from <JAIL>"], 
 ["set <JAIL> setcinfo <ACT> <KEY> <VALUE>", "sets <VALUE> for <KEY> of the action <NAME> for <JAIL>"], 
 ["set <JAIL> delcinfo <ACT> <KEY>", "removes <KEY> for the action <NAME> for <JAIL>"], 
@@ -125,13 +125,15 @@ def printFormatted():
 			print
 		firstHeading = True
 		first = True
-		for n in textwrap.wrap(m[1], WIDTH):
+		if len(m[0]) > MARGIN+INDENT:
+			m[1] = ' ' * WIDTH + m[1]
+		for n in textwrap.wrap(m[1], WIDTH, drop_whitespace=False):
 			if first:
 				line = ' ' * INDENT + m[0] + ' ' * (MARGIN - len(m[0])) + n
 				first = False
 			else:
 				line = ' ' * (INDENT + MARGIN) + n
-			print line
+			print line.rstrip()
 
 ##
 # Prints the protocol in a "mediawiki" format.

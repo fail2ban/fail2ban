@@ -25,9 +25,10 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging
-from configreader import ConfigReader
-from fail2banreader import Fail2banReader
-from jailsreader import JailsReader
+
+from fail2ban.client.configreader import ConfigReader
+from fail2ban.client.fail2banreader import Fail2banReader
+from fail2ban.client.jailsreader import JailsReader
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

@@ -25,7 +25,7 @@ __license__ = "GPL"
 
 import Queue, logging
 
-from actions import Actions
+from fail2ban.server.actions import Actions
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

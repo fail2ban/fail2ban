@@ -25,6 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging, time
+import json
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -228,8 +229,10 @@ class Transmitter:
 			value = command[2]
 			return self.__server.setUnbanIP(name,value)
 		elif command[1] == "addaction":
-			value = command[2]
-			self.__server.addAction(name, value)
+			args = [command[2]]
+			if len(command) > 3:
+				args.extend([command[3], json.loads(command[4])])
+			self.__server.addAction(name, *args)
 			return self.__server.getLastAction(name).getName()
 		elif command[1] == "delaction":
 			value = command[2]

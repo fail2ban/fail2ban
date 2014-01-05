@@ -25,7 +25,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging, os, shlex
-from configreader import ConfigReader, DefinitionInitConfigReader
+
+from fail2ban.client.configreader import ConfigReader, DefinitionInitConfigReader
+from fail2ban.server.action import CommandAction
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -42,14 +44,18 @@ class FilterReader(DefinitionInitConfigReader):
 	
 	def convert(self):
 		stream = list()
-		for opt in self._opts:
+		combinedopts = dict(list(self._opts.items()) + list(self._initOpts.items()))
+		opts = CommandAction.substituteRecursiveTags(combinedopts)
+		if not opts:
+			raise ValueError('recursive tag definitions unable to be resolved')
+		for opt, value in opts.iteritems():
 			if opt == "failregex":
-				for regex in self._opts[opt].split('\n'):
+				for regex in value.split('\n'):
 					# Do not send a command if the rule is empty.
 					if regex != '':
 						stream.append(["set", self._jailName, "addfailregex", regex])
 			elif opt == "ignoreregex":
-				for regex in self._opts[opt].split('\n'):
+				for regex in value.split('\n'):
 					# Do not send a command if the rule is empty.
 					if regex != '':
 						stream.append(["set", self._jailName, "addignoreregex", regex])		
