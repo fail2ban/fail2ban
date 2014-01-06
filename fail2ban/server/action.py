@@ -372,19 +372,27 @@ class CommandAction(ActionBase):
 		for tag, value in tags.iteritems():
 			value = str(value)
 			m = t.search(value)
+			done = []
+			#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
 			while m:
-				if m.group(1) == tag:
+				found_tag = m.group(1)
+				#logSys.log(5, 'found: %s' % found_tag)
+				if found_tag == tag or found_tag in done:
 					# recursive definitions are bad
+					#logSys.log(5, 'recursion fail')
 					return False
 				else:
-					if tags.has_key(m.group(1)):
-						value = value[0:m.start()] + tags[m.group(1)] + value[m.end():]
+					if tags.has_key(found_tag):
+						value = value[0:m.start()] + tags[found_tag] + value[m.end():]
+						#logSys.log(5, 'value now: %s' % value)
+						done.append(found_tag)
 						m = t.search(value, m.start())
 					else:
 						# Missing tags are ok so we just continue on searching.
 						# cInfo can contain aInfo elements like <HOST> and valid shell
 						# constructs like <STDIN>.
 						m = t.search(value, m.start() + 1)
+			#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
 			tags[tag] = value
 		return tags
 

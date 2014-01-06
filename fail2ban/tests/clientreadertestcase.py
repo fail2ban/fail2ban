@@ -311,6 +311,34 @@ class FilterReaderTest(unittest.TestCase):
 		output[-1][-1] = "5"
 		self.assertEqual(sorted(filterReader.convert()), sorted(output))
 
+
+	def testFilterReaderSubstitionDefault(self):
+		output = [['set', 'jailname', 'addfailregex', 'to=sweet@example.com fromip=<IP>']]
+		filterReader = FilterReader('substition', "jailname", {})
+		filterReader.setBaseDir(TEST_FILES_DIR)
+		filterReader.read()
+		filterReader.getOptions(None)
+		c = filterReader.convert()
+		self.assertEqual(sorted(c), sorted(output))
+
+	def testFilterReaderSubstitionSet(self):
+		output = [['set', 'jailname', 'addfailregex', 'to=sour@example.com fromip=<IP>']]
+		filterReader = FilterReader('substition', "jailname", {'honeypot': 'sour@example.com'})
+		filterReader.setBaseDir(TEST_FILES_DIR)
+		filterReader.read()
+		filterReader.getOptions(None)
+		c = filterReader.convert()
+		self.assertEqual(sorted(c), sorted(output))
+
+	def testFilterReaderSubstitionFail(self):
+		output = [['set', 'jailname', 'addfailregex', 'to=sour@example.com fromip=<IP>']]
+		filterReader = FilterReader('substition', "jailname", {'honeypot': '<sweet>', 'sweet': '<honeypot>'})
+		filterReader.setBaseDir(TEST_FILES_DIR)
+		filterReader.read()
+		filterReader.getOptions(None)
+		self.assertRaises(ValueError, FilterReader.convert, filterReader)
+
+
 class JailsReaderTest(LogCaptureTestCase):
 
 	def testProvidingBadBasedir(self):
