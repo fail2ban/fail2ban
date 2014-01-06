@@ -482,6 +482,21 @@ class JailsReaderTest(LogCaptureTestCase):
 		# ['gssftpd', 'qmail', 'apache-nohome', 'exim', 'dropbear', 'webmin-auth', 'cyrus-imap', 'sieve']
 		# self.assertEqual(get_all_confs('filter.d').difference(allFilters),
         #                  set(['common']))
+	
+		def testReadSockJailConfComplete(self):
+			jails = JailsReader(basedir=CONFIG_DIR, force_enable=True)
+			self.assertTrue(jails.read())             # opens fine
+			self.assertTrue(jails.getOptions())       # reads fine
+			# grab all filter names
+			filters = set(os.path.splitext(os.path.split(a)[1])[0]
+				for a in glob.glob(os.path.join('config', 'filter.d', '*.conf'))
+					if not a.endswith('common.conf'))
+			filters_jail = set(jail.options['filter'] for jail in jails.jails)
+			self.maxDiff = None
+			self.assertTrue(filters.issubset(filters_jail),
+					"More filters exists than are referenced in stock jail.conf %r" % filters.difference(filters_jail))
+			self.assertTrue(filters_jail.issubset(filters),
+					"Stock jail.conf references non-existent filters %r" % filters_jail.difference(filters))
 
 	def testReadStockJailConfForceEnabled(self):
 		# more of a smoke test to make sure that no obvious surprises
