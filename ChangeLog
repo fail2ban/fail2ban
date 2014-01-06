@@ -31,6 +31,8 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
     Closes gh-516
   - Asynchat changed to use push method which verifys whether all data was
 	  send. This ensures that all data is sent before closing the connection.
+  - Removed unnecessary reference to as yet undeclared $jail_name when checking
+    a specific jail.
 
 - Enhancements:
   - added firewallcmd-ipset action
