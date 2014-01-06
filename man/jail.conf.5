@@ -32,7 +32,12 @@ enabled = true
 Override only the settings you need to change and the rest of the configuration will come from the corresponding
 *.conf file.
 
-\fI*.d/\fR
+\fIfilter.d/\fR and \fIaction.d/\fR
+These directories contains \fI*.conf\fR and \fI*.local\fR files that contain filter and action configurations.
+\fI.local\fR files are read first and only need to set the directives that are different from the \fI.conf\fR file.
+Directives not overwritten are read from the \fI.conf\fR file.
+.RS
+\fIjail.d/\fR and \fIfail2ban.d/\fR
 .RS
 In addition to .local, for any jail.conf or fail2ban.conf file there can be a corresponding
 \fI.d/\fR directory to contain additional .conf files that will be read after the
@@ -88,13 +93,13 @@ Set the PID file. This is used to store the process ID of the fail2ban server.
 The following options are applicable to all jails. They appear in a section specifing the jail name or in the \fI[DEFAULT]\fR section which is used if individual sections don't have a value specified.
 .TP
 \fBfilter\fR 
-This maps to the filename of the filter in /etc/fail2ban/filter.d/ without the .conf/.local extension. Only one filter can be specified.
+The filename of the filter in /etc/fail2ban/filter.d/ without the .conf/.local extension. Only one filter can be specified.
 .TP
 \fBlogpath\fR 
 This is the log filename(s). Globs, like paths containing * and ? or [0-9], can be used however only the files that exist at startup matching this glob pattern will be read.
 .TP
 \fBaction\fR 
-This maps to the action(s) from \fI/etc/fail2ban/action.d/\fR without the \fI.conf\fR/\fI.local\fR extension. Arguements can be passed to actions to override the default values from the [Init] section. Arguements are specified by [name=value,name2=value]. Values can also be quoted. More that one action can be specified.
+action(s) from \fI/etc/fail2ban/action.d/\fR without the \fI.conf\fR/\fI.local\fR extension. Arguements can be passed to actions to override the default values from the [Init] section. Arguements are specified by [name=value,name2=value]. Values can also be quoted. More that one action can be specified.
 .TP
 \fBignoreip\fR 
 A list of IPs not to ban. These can include a CIDR mask too.
@@ -104,13 +109,13 @@ A command that is executed to determine if the current ban's actionban is to be 
 Like ACTION FILES, tags like <ip> are can be included in the ignore command value and will be substitued before execution. Currently only <ip> is supported however more will be added later.
 .TP
 \fBbantime\fR
-When a ban occurs the ban stays in effect for this long (measured in seconds) after which the actionunban command in the action(s) are called.
+effective ban duration (measured in seconds).
 .TP
 \fBfindtime\fR
-Specifies the time interval in seconds before the current time where failures will count towards a ban.
+time interval (in seconds) before the current time where failures will count towards a ban.
 .TP
 \fBmaxretry\fR
-This is the number of failures that can occur in the last findtime seconds before a ban of that IP will result.
+number of failures that can occur in the last \fBfindtime\fR seconds before a ban of that IP will result.
 .TP
 \fBbackend\fR
 This is the backend used to detect changes in the logpath. It defaults to "auto" which will try "pyinotify", "gamin" before "polling". Any of these can be specified. "pyinotify" is only valid on Linux systems with the "pyinotify" Python libraries. "gamin" requires the "gamin" libraries.
