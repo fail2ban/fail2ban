@@ -59,6 +59,7 @@ testcases/files/logs/assp
 testcases/files/logs/asterisk
 testcases/files/logs/dovecot
 testcases/files/logs/exim
+testcases/files/logs/groupoffice
 testcases/files/logs/suhosin
 testcases/files/logs/mysqld-auth
 testcases/files/logs/named-refused
@@ -181,6 +182,7 @@ config/filter.d/3proxy.conf
 config/filter.d/apache-common.conf
 config/filter.d/exim-common.conf
 config/filter.d/exim-spam.conf
+config/filter.d/groupoffice.conf
 config/filter.d/perdition.conf
 config/filter.d/uwimap-auth.conf
 config/action.d/apf.conf
