@@ -190,7 +190,7 @@ if ($jail_specific) {
     else {
         $how_many_banned = int($current_ban_number);
         $return_print = $how_many_banned.' current banned IP(s) for the specific jail '.$jail_specific;
-        $perf_print .= "$jail_name.currentBannedIP=$current_ban_number " if ($perfdata_value);
+        $perf_print .= "$current_ban_number " if ($perfdata_value);
     }
 }
 ### To analyze all the jail
