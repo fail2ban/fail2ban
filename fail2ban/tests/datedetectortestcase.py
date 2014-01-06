@@ -25,10 +25,10 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import unittest, calendar, time, datetime, re, pprint
-from fail2ban.server.datedetector import DateDetector
-from fail2ban.server.datetemplate import DateTemplate
-from fail2ban.server.iso8601 import Utc
-from fail2ban.tests.utils import setUpMyTime, tearDownMyTime
+from ..server.datedetector import DateDetector
+from ..server.datetemplate import DateTemplate
+from ..server.iso8601 import Utc
+from .utils import setUpMyTime, tearDownMyTime
 
 class DateDetectorTest(unittest.TestCase):
 

@@ -28,8 +28,8 @@ import shutil
 
 from glob import glob
 
-from utils import mbasename, TraceBack, FormatterWithTraceBack
-from fail2ban.helpers import formatExceptionInfo
+from .utils import mbasename, TraceBack, FormatterWithTraceBack
+from ..helpers import formatExceptionInfo
 
 class HelpersTest(unittest.TestCase):
 

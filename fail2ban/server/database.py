@@ -29,8 +29,8 @@ import json
 import locale
 from functools import wraps
 
-from fail2ban.server.mytime import MyTime
-from fail2ban.server.ticket import FailTicket
+from .mytime import MyTime
+from .ticket import FailTicket
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

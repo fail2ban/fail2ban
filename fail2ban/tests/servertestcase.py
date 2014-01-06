@@ -26,11 +26,11 @@ __license__ = "GPL"
 
 import unittest, socket, time, tempfile, os, locale, sys, logging
 
-from fail2ban.server.failregex import Regex, FailRegex, RegexException
-from fail2ban.server.server import Server, logSys
-from fail2ban.server.jail import Jail
-from fail2ban.exceptions import UnknownJailException
-from fail2ban.tests.utils import LogCaptureTestCase
+from ..server.failregex import Regex, FailRegex, RegexException
+from ..server.server import Server, logSys
+from ..server.jail import Jail
+from ..exceptions import UnknownJailException
+from .utils import LogCaptureTestCase
 #from bin.fail2ban-client import Fail2banClient
 try:
 	from fail2ban.server import filtersystemd
@@ -519,44 +519,37 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["set", self.jailName, "addaction", action]),
 			(0, action))
 		self.assertEqual(
-			self.transm.proceed(["get", self.jailName, "addaction"]),
-			(0, action))
-		self.assertEqual(
 			self.transm.proceed(
-				["get", self.jailName, "actions"])[1][0].getName(),
+				["get", self.jailName, "actions"])[1][0],
 			action)
 		for cmd, value in zip(cmdList, cmdValueList):
 			self.assertEqual(
 				self.transm.proceed(
-					["set", self.jailName, cmd, action, value]),
+					["set", self.jailName, "action", action, cmd, value]),
 				(0, value))
 		for cmd, value in zip(cmdList, cmdValueList):
 			self.assertEqual(
-				self.transm.proceed(["get", self.jailName, cmd, action]),
+				self.transm.proceed(["get", self.jailName, "action", action, cmd]),
 				(0, value))
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "setcinfo", action, "KEY", "VALUE"]),
+				["set", self.jailName, "action", action, "KEY", "VALUE"]),
 			(0, "VALUE"))
 		self.assertEqual(
 			self.transm.proceed(
-				["get", self.jailName, "cinfo", action, "KEY"]),
+				["get", self.jailName, "action", action, "KEY"]),
 			(0, "VALUE"))
 		self.assertEqual(
 			self.transm.proceed(
-				["get", self.jailName, "cinfo", action, "InvalidKey"])[0],
+				["get", self.jailName, "action", action, "InvalidKey"])[0],
 			1)
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "delcinfo", action, "KEY"]),
-			(0, None))
-		self.assertEqual(
-			self.transm.proceed(
-				["set", self.jailName, "timeout", action, "10"]),
+				["set", self.jailName, "action", action, "timeout", "10"]),
 			(0, 10))
 		self.assertEqual(
 			self.transm.proceed(
-				["get", self.jailName, "timeout", action]),
+				["get", self.jailName, "action", action, "timeout"]),
 			(0, 10))
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "delaction", action]),
@@ -564,6 +557,42 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(
 				["set", self.jailName, "delaction", "Doesn't exist"])[0],1)
+
+	def testPythonActionMethodsAndProperties(self):
+		action = "TestCaseAction"
+		self.assertEqual(
+			self.transm.proceed(["set", self.jailName, "addaction", action,
+				os.path.join(TEST_FILES_DIR, "action.d", "action.py"),
+				'{"opt1": "value"}']),
+			(0, action))
+		self.assertEqual(
+			sorted(self.transm.proceed(["get", self.jailName,
+				"actionproperties", action])[1]),
+			['opt1', 'opt2'])
+		self.assertEqual(
+			self.transm.proceed(["get", self.jailName, "action", action,
+				"opt1"]),
+			(0, 'value'))
+		self.assertEqual(
+			self.transm.proceed(["get", self.jailName, "action", action,
+				"opt2"]),
+			(0, None))
+		self.assertEqual(
+			sorted(self.transm.proceed(["get", self.jailName, "actionmethods",
+				action])[1]),
+			['ban', 'start', 'stop', 'testmethod', 'unban'])
+		self.assertEqual(
+			self.transm.proceed(["set", self.jailName, "action", action,
+				"testmethod", '{"text": "world!"}']),
+			(0, 'Hello world! value'))
+		self.assertEqual(
+			self.transm.proceed(["set", self.jailName, "action", action,
+				"opt1", "another value"]),
+			(0, 'another value'))
+		self.assertEqual(
+			self.transm.proceed(["set", self.jailName, "action", action,
+				"testmethod", '{"text": "world!"}']),
+			(0, 'Hello world! another value'))
 
 	def testNOK(self):
 		self.assertEqual(self.transm.proceed(["INVALID", "COMMAND"])[0],1)

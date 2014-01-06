@@ -26,8 +26,8 @@ __license__ = "GPL"
 
 import unittest
 
-from fail2ban.server.banmanager import BanManager
-from fail2ban.server.ticket import BanTicket
+from ..server.banmanager import BanManager
+from ..server.ticket import BanTicket
 
 class AddFailure(unittest.TestCase):
 

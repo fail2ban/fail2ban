@@ -24,13 +24,12 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Y
 __license__ = "GPL"
 
 import time, logging, pyinotify
-
 from distutils.version import LooseVersion
 from os.path import dirname, sep as pathsep
 
-from failmanager import FailManagerEmpty
-from filter import FileFilter
-from mytime import MyTime
+from .failmanager import FailManagerEmpty
+from .filter import FileFilter
+from .mytime import MyTime
 
 
 if not hasattr(pyinotify, '__version__') \

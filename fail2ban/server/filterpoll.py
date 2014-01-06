@@ -24,11 +24,11 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier; 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-from failmanager import FailManagerEmpty
-from filter import FileFilter
-from mytime import MyTime
-
 import time, logging, os
+
+from .failmanager import FailManagerEmpty
+from .filter import FileFilter
+from .mytime import MyTime
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

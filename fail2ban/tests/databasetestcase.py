@@ -28,11 +28,11 @@ import tempfile
 import sqlite3
 import shutil
 
-from fail2ban.server.database import Fail2BanDb
-from fail2ban.server.filter import FileContainer
-from fail2ban.server.mytime import MyTime
-from fail2ban.server.ticket import FailTicket
-from fail2ban.tests.dummyjail import DummyJail
+from ..server.database import Fail2BanDb
+from ..server.filter import FileContainer
+from ..server.mytime import MyTime
+from ..server.ticket import FailTicket
+from .dummyjail import DummyJail
 
 class DatabaseTest(unittest.TestCase):
 
