@@ -90,7 +90,7 @@ protocol = [
 ["set <JAIL> action <ACT> <METHOD>[ <JSONKWARGS>]", "calls the <METHOD> with <JSONKWARGS> for the action <ACT> for <JAIL>"],
 ['', "JAIL INFORMATION", ""],
 ["get <JAIL> logpath", "gets the list of the monitored files for <JAIL>"],
-["get <JAIL> logencoding <ENCODING>", "gets the <ENCODING> of the log files for <JAIL>"],
+["get <JAIL> logencoding", "gets the encoding of the log files for <JAIL>"],
 ["get <JAIL> journalmatch", "gets the journal filter match for <JAIL>"],
 ["get <JAIL> ignoreip", "gets the list of ignored IP addresses for <JAIL>"],
 ["get <JAIL> ignorecommand", "gets ignorecommand of <JAIL>"],
