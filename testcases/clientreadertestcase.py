@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, tempfile, shutil, unittest
+import os, glob, tempfile, shutil, unittest
 
 from client.configreader import ConfigReader
 from client.jailreader import JailReader
@@ -251,6 +251,7 @@ class JailsReaderTest(LogCaptureTestCase):
 		comm_commands = jails.convert()
 		# by default None of the jails is enabled and we get no
 		# commands to communicate to the server
+		self.maxDiff = None
 		self.assertEqual(comm_commands, [])
 
 		# We should not "read" some bogus jail
@@ -260,6 +261,20 @@ class JailsReaderTest(LogCaptureTestCase):
 		# and there should be no side-effects
 		self.assertEqual(jails.convert(), old_comm_commands)
 
+	def testReadSockJailConfComplete(self):
+		jails = JailsReader(basedir='config', force_enable=True)
+		self.assertTrue(jails.read())		  # opens fine
+		self.assertTrue(jails.getOptions())	  # reads fine
+		# grab all filter names
+		filters = set(os.path.splitext(os.path.split(a)[1])[0]
+			for a in glob.glob(os.path.join('config', 'filter.d', '*.conf'))
+				if not a.endswith('common.conf'))
+		filters_jail = set(jail.getRawOptions()['filter'] for jail in jails.getJails())
+		self.maxDiff = None
+		self.assertTrue(filters.issubset(filters_jail),
+			"More filters exists than are referenced in stock jail.conf %r" % filters.difference(filters_jail))
+		self.assertTrue(filters_jail.issubset(filters),
+			"Stock jail.conf references non-existent filters %r" % filters_jail.difference(filters))
 
 	def testReadStockJailConfForceEnabled(self):
 		# more of a smoke test to make sure that no obvious surprises
