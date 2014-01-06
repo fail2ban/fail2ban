@@ -27,6 +27,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - complain action - ensure where not matching other IPs in log sample.
     Closes gh-467
   - Fix firewall-cmd actioncheck - patch from Adam Tkac. Redhat Bug #979622
+  - Removed unnecessary reference to as yet undeclared $jail_name when checking a specific jail.
 
 - Enhancements:
   - long names on jails documented based on iptables limit of 30 less
