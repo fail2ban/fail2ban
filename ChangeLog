@@ -46,6 +46,8 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - exim-spam filter to match spamassassin log entry for option SAdevnull.
     Thanks Ivo Truxa. Closes gh-533
   - Added filter.d/openwebmail filter thanks Ivo Truxa. Closes gh-543
+  - Added filter.d/groupoffice filter thanks to logs from Merijn Schering.
+    Closes gh-566
   - Added to sshd filter expression for "Received disconnect from <HOST>: 3:
     ...: Auth fail". Thanks Marcel Dopita. Closes gh-289
 
