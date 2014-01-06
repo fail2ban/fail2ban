@@ -92,7 +92,9 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - Fix apache-common for apache-2.4 log file format. Thanks Mark White.
     Closes gh-516
   - Asynchat changed to use push method which verifys whether all data was
-    send. This ensures that all data is sent before closing the connection.
+	  send. This ensures that all data is sent before closing the connection.
+  - Removed unnecessary reference to as yet undeclared $jail_name when checking
+    a specific jail in nagios script.
 
 - Enhancements:
   - added firewallcmd-ipset action
@@ -108,13 +110,20 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - exim-spam filter to match spamassassin log entry for option SAdevnull.
     Thanks Ivo Truxa. Closes gh-533
   - filter.d/nsd.conf -- also amended Unix date template to match nsd format
+  - Added to sshd filter expression for "Received disconnect from <HOST>: 3:
+    ...: Auth fail". Thanks Marcel Dopita. Closes gh-289
   - loglines now also report "[PID]" after the name portion
 
 - New Features:
 
-  - Added filter for solid-pop3d -- thanks to Jacques Lav!gnotte on mailinglist.
-  - Added filter for apache-modsecurity
-  - Added filter for openwebmail thanks Ivo Truxa. Closes gh-543
+  - filter.d/solid-pop3d -- added thanks to Jacques Lav!gnotte on mailinglist.
+  - Add filter for apache-modsecurity
+  - filter.d/nsd.conf -- also amended Unix date template to match nsd format
+  - Added openwebmail filter thanks Ivo Truxa. Closes gh-543
+  - Added filter for freeswitch. Thanks Jim and editors and authors of 
+    http://wiki.freeswitch.org/wiki/Fail2ban
+  - Added groupoffice filter thanks to logs from Merijn Schering.
+    Closes gh-566
   - Added filter for horde
 
 ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes

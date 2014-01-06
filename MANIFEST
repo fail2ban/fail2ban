@@ -116,6 +116,8 @@ fail2ban/tests/files/logs/dropbear
 fail2ban/tests/files/logs/ejabberd-auth
 fail2ban/tests/files/logs/exim
 fail2ban/tests/files/logs/exim-spam
+fail2ban/tests/files/logs/freeswitch
+fail2ban/tests/files/logs/groupoffice
 fail2ban/tests/files/logs/gssftpd
 fail2ban/tests/files/logs/guacamole
 fail2ban/tests/files/logs/lighttpd-auth
@@ -213,6 +215,8 @@ config/filter.d/3proxy.conf
 config/filter.d/apache-common.conf
 config/filter.d/exim-common.conf
 config/filter.d/exim-spam.conf
+config/filter.d/freeswitch.conf
+config/filter.d/groupoffice.conf
 config/filter.d/perdition.conf
 config/filter.d/uwimap-auth.conf
 config/filter.d/courier-auth.conf
