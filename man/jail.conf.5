@@ -132,8 +132,6 @@ and override the required settings.
 
 Action files are ini files that have two sections, \fBDefinition\fR and \fBInit\fR . 
 
-The [Init] section allows for action-specific settings. In \fIjail.conf/jail.local\fR these can be overwritten for a particular jail as options to the jail.
-
 The following commands can be present in the [Definition] section.
 .TP
 \fBactionstart\fR
@@ -150,20 +148,22 @@ command(s) that bans the IP address after \fBmaxretry\fR log lines matches withi
 .TP
 \fBactionunban\fR
 command(s) that unbans the IP address after \fBbantime\fR.
-
+.PP
+The [Init] section allows for action-specific settings. In \fIjail.conf/jail.local\fR these can be overwritten for a particular jail as options to the jail. The following are special tags which can be set in the [Init] section:
+.TP
+\fBtimeout\fR
+The maximum period of time in seconds that a command can executed, before being killed.
+.PP
 Commands specified in the [Definition] section are executed through a system shell so shell redirection and process control is allowed. The commands should
-return 0, otherwise error would be logged.  Moreover if \fBactioncheck\fR exits with non-0 status, it is taken as indication that firewall status has changed and fail2ban needs to reinitialize itself (i.e. issue \fBactionstop\fR and \fBactionstart\fR commands).
-
+return 0, otherwise error would be logged.  Moreover if \fBactioncheck\fR exits with non-0 status, it is taken as indication that firewall status has changed and fail2ban needs to reinitialize itself (i.e. issue \fBactionstop\fR and \fBactionstart\fR commands).  
 Tags are enclosed in <>.  All the elements of [Init] are tags that are replaced in all action commands.  Tags can be added by the
-\fBfail2ban-client\fR using the setctag command. \fB<br>\fR is a tag that is always a new line (\\n).
+\fBfail2ban-client\fR using the "set <JAIL> action <ACT>" command. \fB<br>\fR is a tag that is always a new line (\\n).
 
 More than a single command is allowed to be specified. Each command needs to be on a separate line and indented with whitespaces without blank lines. The following example defines
 two commands to be executed.
 
  actionban = iptables -I fail2ban-<name> --source <ip> -j DROP
              echo ip=<ip>, match=<match>, time=<time> >> /var/log/fail2ban.log
-.TP
-Python based actions can also be used, where the file name must be \fI[actionname].py\fR. The Python file must contain a variable \fIAction\fR which points to Python class. This class must implement a minimum interface as described by \fIfail2ban.server.action.ActionBase\fR, which can be inherited from to ease implementation.
 
 .SS "Action Tags"
 The following tags are substituted in the actionban, actionunban and actioncheck (when called before actionban/actionunban) commands.
@@ -192,6 +192,8 @@ As per \fBmatches\fR, but includes all lines for the IP which are contained with
 \fBipjailmatches\fR
 As per \fBipmatches\fR, but matches are limited for the IP and for the current jail.
 
+.SH "PYTHON ACTION FILES"
+Python based actions can also be used, where the file name must be \fI[actionname].py\fR. The Python file must contain a variable \fIAction\fR which points to Python class. This class must implement a minimum interface as described by \fIfail2ban.server.action.ActionBase\fR, which can be inherited from to ease implementation.
 .SH FILTER FILES
 
 Filter definitions are those in \fI/etc/fail2ban/filter.d/*.conf\fR and \fIfilter.d/*.local\fR.
