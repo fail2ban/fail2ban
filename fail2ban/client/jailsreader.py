@@ -25,8 +25,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging
-from configreader import ConfigReader
-from jailreader import JailReader
+
+from .configreader import ConfigReader
+from .jailreader import JailReader
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

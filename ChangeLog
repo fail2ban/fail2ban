@@ -54,10 +54,12 @@ configuration before relying on it.
      into logging messages in case of error or at DEBUG loglevel.
    * Added action xarf-login-attack to report formatted attack messages
      according to the XARF standard (v0.2). Close gh-105
-   * Add filter for apache-modsecurity
    * Support PyPy
+   * Filter for stunnel
 
 - Enhancements
+   * Jail names increased to 26 characters and iptables prefix reduced
+     from fail2ban- to f2b- as suggested by buanzo in gh-462.
    * Multiline filter for sendmail-spam. Close gh-418
    * Multiline regex for Disconnecting: Too many authentication failures for
      root [preauth]\nConnection closed by 6X.XXX.XXX.XXX [preauth]
@@ -90,8 +92,11 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - Fix firewall-cmd actioncheck - patch from Adam Tkac. Redhat Bug #979622
   - Fix apache-common for apache-2.4 log file format. Thanks Mark White.
     Closes gh-516
+  - Asynchat changed to use push method which verifys whether all data was
+    send. This ensures that all data is sent before closing the connection.
 
 - Enhancements:
+  - added firewallcmd-ipset action
   - long names on jails documented based on iptables limit of 30 less
     len("fail2ban-").
   - remove indentation of name and loglevel while logging to SYSLOG to
@@ -100,14 +105,18 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - updated check_fail2ban to return performance data for all jails.
   - filter apache-noscript now includes php cgi scripts.
     Thanks dani. Closes gh-503
+  - added ufw action. Thanks Guilhem Lettron. lp-#701522
+  - exim-spam filter to match spamassassin log entry for option SAdevnull.
+    Thanks Ivo Truxa. Closes gh-533
+  - filter.d/nsd.conf -- also amended Unix date template to match nsd format
+  - loglines now also report "[PID]" after the name portion
 
 - New Features:
 
-   * filter.d/solid-pop3d -- added thanks to Jacques Lav!gnotte on mailinglist.
-   * filter.d/nsd.conf -- also amended Unix date template to match nsd format
-
-- Enhancements:
-  - loglines now also report "[PID]" after the name portion
+  - Added filter for solid-pop3d -- thanks to Jacques Lav!gnotte on mailinglist.
+  - Added filter for apache-modsecurity
+  - Added filter for openwebmail thanks Ivo Truxa. Closes gh-543
+  - Added filter for horde
 
 ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
 

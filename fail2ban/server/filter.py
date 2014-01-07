@@ -21,17 +21,16 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-from failmanager import FailManagerEmpty
-from failmanager import FailManager
-from ticket import FailTicket
-from jailthread import JailThread
-from datedetector import DateDetector
-from datetemplate import DatePatternRegex, DateISO8601, DateEpoch, DateTai64n
-from mytime import MyTime
-from failregex import FailRegex, Regex, RegexException
-from action import Action
-
 import logging, re, os, fcntl, time, sys, locale, codecs
+
+from .failmanager import FailManagerEmpty, FailManager
+from .ticket import FailTicket
+from .jailthread import JailThread
+from .datedetector import DateDetector
+from .datetemplate import DatePatternRegex, DateISO8601, DateEpoch, DateTai64n
+from .mytime import MyTime
+from .failregex import FailRegex, Regex, RegexException
+from .action import CommandAction
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -378,9 +377,9 @@ class Filter(JailThread):
 				return True
 
 		if self.__ignoreCommand:
-			command = Action.replaceTag(self.__ignoreCommand, { 'ip': ip } )
+			command = CommandAction.replaceTag(self.__ignoreCommand, { 'ip': ip } )
 			logSys.debug('ignore command: ' + command)
-			return Action.executeCmd(command)
+			return CommandAction.executeCmd(command)
 
 		return False
 

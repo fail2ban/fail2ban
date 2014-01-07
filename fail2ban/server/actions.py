@@ -24,94 +24,113 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from banmanager import BanManager
-from jailthread import JailThread
-from action import Action
-from mytime import MyTime
 import time, logging
+import os
+import imp
+from collections import Mapping
+
+from .banmanager import BanManager
+from .jailthread import JailThread
+from .action import ActionBase, CommandAction, CallingMap
+from .mytime import MyTime
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
 
-##
-# Execute commands.
-#
-# This class reads the failures from the Jail queue and decide if an
-# action has to be taken. A BanManager take care of the banned IP
-# addresses.
+class Actions(JailThread, Mapping):
+	"""Handles jail actions.
 
-class Actions(JailThread):
-	
-	##
-	# Constructor.
-	#
-	# Initialize the filter object with default values.
-	# @param jail the jail object
-	
+	This class handles the actions of the jail. Creation, deletion or to
+	actions must be done through this class. This class is based on the
+	Mapping type, and the `add` method must be used to add new actions.
+	This class also starts and stops the actions, and fetches bans from
+	the jail executing these bans via the actions.
+	"""
+
 	def __init__(self, jail):
+		"""Initialise an empty Actions instance.
+
+		Parameters
+		----------
+		jail: Jail
+			The jail of which the actions belongs to.
+		"""
 		JailThread.__init__(self)
 		## The jail which contains this action.
-		self.jail = jail
-		self.__actions = list()
+		self._jail = jail
+		self._actions = dict()
 		## The ban manager.
 		self.__banManager = BanManager()
-	
-	##
-	# Adds an action.
-	#
-	# @param name The action name
-	
-	def addAction(self, name):
+
+	def add(self, name, pythonModule=None, initOpts=None):
+		"""Adds a new action.
+
+		Add a new action if not already present, defaulting to standard
+		`CommandAction`, or specified Python module.
+
+		Parameters
+		----------
+		name : str
+			The name of the action.
+		pythonModule : str, optional
+			Path to Python file which must contain `Action` class.
+			Default None, which means `CommandAction` is used.
+		initOpts : dict, optional
+			Options for Python Action, used as keyword arguments for
+			initialisation. Default None.
+
+		Raises
+		------
+		ValueError
+			If action name already exists.
+		RuntimeError
+			If external Python module does not have `Action` class
+			or does not implement necessary methods as per `ActionBase`
+			abstract class.
+		"""
 		# Check is action name already exists
-		if name in [action.getName() for action in self.__actions]:
+		if name in self._actions:
 			raise ValueError("Action %s already exists" % name)
-		action = Action(name)
-		self.__actions.append(action)
-	
-	##
-	# Removes an action.
-	#
-	# @param name The action name
-	
-	def delAction(self, name):
-		for action in self.__actions:
-			if action.getName() == name:
-				self.__actions.remove(action)
-				return
-		raise KeyError("Invalid Action name: %s" % name)
-	
-	##
-	# Returns an action.
-	#
-	# Raises a KeyError exception if the action does not exist.
-	#
-	# @param name the action name
-	# @return the action
-	
-	def getAction(self, name):
-		for action in self.__actions:
-			if action.getName() == name:
-				return action
-		raise KeyError("Invalid Action name")
-	
-	##
-	# Returns the last defined action.
-	#
-	# @return The last defined action.
-	
-	def getLastAction(self):
-		action = self.__actions.pop()
-		self.__actions.append(action)
-		return action
-	
-	##
-	# Returns the list of actions
-	#
-	# @return list of actions
-	
-	def getActions(self):
-		return self.__actions
-	
+		if pythonModule is None:
+			action = CommandAction(self._jail, name)
+		else:
+			pythonModuleName = os.path.basename(pythonModule.strip(".py"))
+			customActionModule = imp.load_source(
+				pythonModuleName, pythonModule)
+			if not hasattr(customActionModule, "Action"):
+				raise RuntimeError(
+					"%s module does not have 'Action' class" % pythonModule)
+			elif not issubclass(customActionModule.Action, ActionBase):
+				raise RuntimeError(
+					"%s module %s does not implement required methods" % (
+						pythonModule, customActionModule.Action.__name__))
+			action = customActionModule.Action(self._jail, name, **initOpts)
+		self._actions[name] = action
+
+	def __getitem__(self, name):
+		try:
+			return self._actions[name]
+		except KeyError:
+			raise KeyError("Invalid Action name: %s" % name)
+
+	def __delitem__(self, name):
+		try:
+			del self._actions[name]
+		except KeyError:
+			raise KeyError("Invalid Action name: %s" % name)
+
+	def __iter__(self):
+		return iter(self._actions)
+
+	def __len__(self):
+		return len(self._actions)
+
+	def __eq__(self, other): # Required for Threading
+		return False
+
+	def __hash__(self): # Required for Threading
+		return id(self)
+
 	##
 	# Set the ban time.
 	#
@@ -128,34 +147,52 @@ class Actions(JailThread):
 	
 	def getBanTime(self):
 		return self.__banManager.getBanTime()
-	
-	##
-	# Remove a banned IP now, rather than waiting for it to expire, even if set to never expire.
-	#
-	# @return the IP string or 'None' if not unbanned.
+
 	def removeBannedIP(self, ip):
+		"""Removes banned IP calling actions' unban method
+
+		Remove a banned IP now, rather than waiting for it to expire,
+		even if set to never expire.
+
+		Parameters
+		----------
+		ip : str
+			The IP address to unban
+
+		Raises
+		------
+		ValueError
+			If `ip` is not banned
+		"""
 		# Find the ticket with the IP.
 		ticket = self.__banManager.getTicketByIP(ip)
 		if ticket is not None:
 			# Unban the IP.
 			self.__unBan(ticket)
-			return ip
-		raise ValueError("IP %s is not banned" % ip)
+		else:
+			raise ValueError("IP %s is not banned" % ip)
 
-	##
-	# Main loop.
-	#
-	# This function is the main loop of the thread. It checks the Jail
-	# queue and executes commands when an IP address is banned.
-	# @return True when the thread exits nicely
-	
 	def run(self):
+		"""Main loop for Threading.
+
+		This function is the main loop of the thread. It checks the jail
+		queue and executes commands when an IP address is banned.
+
+		Returns
+		-------
+		bool
+			True when the thread exits nicely.
+		"""
 		self.setActive(True)
-		for action in self.__actions:
-			action.execActionStart()
+		for name, action in self._actions.iteritems():
+			try:
+				action.start()
+			except Exception as e:
+				logSys.error("Failed to start jail '%s' action '%s': %s",
+					self._jail.getName(), name, e)
 		while self._isActive():
 			if not self.getIdle():
-				#logSys.debug(self.jail.getName() + ": action")
+				#logSys.debug(self._jail.getName() + ": action")
 				ret = self.__checkBan()
 				if not ret:
 					self.__checkUnBan()
@@ -163,94 +200,116 @@ class Actions(JailThread):
 			else:
 				time.sleep(self.getSleepTime())
 		self.__flushBan()
-		for action in self.__actions:
-			action.execActionStop()
-		logSys.debug(self.jail.getName() + ": action terminated")
+		for name, action in self._actions.iteritems():
+			try:
+				action.stop()
+			except Exception as e:
+				logSys.error("Failed to stop jail '%s' action '%s': %s",
+					self._jail.getName(), name, e)
+		logSys.debug(self._jail.getName() + ": action terminated")
 		return True
 
-	##
-	# Check for IP address to ban.
-	#
-	# Look in the Jail queue for FailTicket. If a ticket is available,
-	# it executes the "ban" command and add a ticket to the BanManager.
-	# @return True if an IP address get banned
-	
 	def __checkBan(self):
-		ticket = self.jail.getFailTicket()
+		"""Check for IP address to ban.
+
+		Look in the jail queue for FailTicket. If a ticket is available,
+		it executes the "ban" command and adds a ticket to the BanManager.
+
+		Returns
+		-------
+		bool
+			True if an IP address get banned.
+		"""
+		ticket = self._jail.getFailTicket()
 		if ticket != False:
-			aInfo = dict()
+			aInfo = CallingMap()
 			bTicket = BanManager.createBanTicket(ticket)
 			aInfo["ip"] = bTicket.getIP()
 			aInfo["failures"] = bTicket.getAttempt()
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "\n".join(bTicket.getMatches())
-			if self.jail.getDatabase() is not None:
+			if self._jail.getDatabase() is not None:
 				aInfo["ipmatches"] = lambda: "\n".join(
-					self.jail.getDatabase().getBansMerged(
+					self._jail.getDatabase().getBansMerged(
 						ip=bTicket.getIP()).getMatches())
 				aInfo["ipjailmatches"] = lambda: "\n".join(
-					self.jail.getDatabase().getBansMerged(
-						ip=bTicket.getIP(), jail=self.jail).getMatches())
+					self._jail.getDatabase().getBansMerged(
+						ip=bTicket.getIP(), jail=self._jail).getMatches())
 				aInfo["ipfailures"] = lambda: "\n".join(
-					self.jail.getDatabase().getBansMerged(
+					self._jail.getDatabase().getBansMerged(
 						ip=bTicket.getIP()).getAttempt())
 				aInfo["ipjailfailures"] = lambda: "\n".join(
-					self.jail.getDatabase().getBansMerged(
-						ip=bTicket.getIP(), jail=self.jail).getAttempt())
+					self._jail.getDatabase().getBansMerged(
+						ip=bTicket.getIP(), jail=self._jail).getAttempt())
 			if self.__banManager.addBanTicket(bTicket):
-				logSys.warning("[%s] Ban %s" % (self.jail.getName(), aInfo["ip"]))
-				for action in self.__actions:
-					action.execActionBan(aInfo)
+				logSys.warning("[%s] Ban %s" % (self._jail.getName(), aInfo["ip"]))
+				for name, action in self._actions.iteritems():
+					try:
+						action.ban(aInfo)
+					except Exception as e:
+						logSys.error(
+							"Failed to execute ban jail '%s' action '%s': %s",
+							self._jail.getName(), name, e)
 				return True
 			else:
-				logSys.info("[%s] %s already banned" % (self.jail.getName(),
+				logSys.info("[%s] %s already banned" % (self._jail.getName(),
 														aInfo["ip"]))
 		return False
-	
-	##
-	# Check for IP address to unban.
-	#
-	# Unban IP address which are outdated.
-	
+
 	def __checkUnBan(self):
+		"""Check for IP address to unban.
+
+		Unban IP addresses which are outdated.
+		"""
 		for ticket in self.__banManager.unBanList(MyTime.time()):
 			self.__unBan(ticket)
-	
-	##
-	# Flush the ban list.
-	#
-	# Unban all IP address which are still in the banning list.
-	
+
 	def __flushBan(self):
+		"""Flush the ban list.
+
+		Unban all IP address which are still in the banning list.
+		"""
 		logSys.debug("Flush ban list")
 		for ticket in self.__banManager.flushBanList():
 			self.__unBan(ticket)
-	
-	##
-	# Unbans host corresponding to the ticket.
-	#
-	# Executes the actions in order to unban the host given in the
-	# ticket.
-	
+
 	def __unBan(self, ticket):
+		"""Unbans host corresponding to the ticket.
+
+		Executes the actions in order to unban the host given in the
+		ticket.
+
+		Parameters
+		----------
+		ticket : FailTicket
+			Ticket of failures of which to unban
+		"""
 		aInfo = dict()
 		aInfo["ip"] = ticket.getIP()
 		aInfo["failures"] = ticket.getAttempt()
 		aInfo["time"] = ticket.getTime()
 		aInfo["matches"] = "".join(ticket.getMatches())
-		logSys.warning("[%s] Unban %s" % (self.jail.getName(), aInfo["ip"]))
-		for action in self.__actions:
-			action.execActionUnban(aInfo)
-			
-	
-	##
-	# Get the status of the filter.
-	#
-	# Get some informations about the filter state such as the total
-	# number of failures.
-	# @return a list with tuple
-	
+		logSys.warning("[%s] Unban %s" % (self._jail.getName(), aInfo["ip"]))
+		for name, action in self._actions.iteritems():
+			try:
+				action.unban(aInfo)
+			except Exception as e:
+				logSys.error(
+					"Failed to execute unban jail '%s' action '%s': %s",
+					self._jail.getName(), name, e)
+
 	def status(self):
+		"""Get the status of the filter.
+
+		Get some informations about the filter state such as the total
+		number of failures.
+
+		Returns
+		-------
+		list
+			List of tuple pairs, each containing a description and value
+			for general status information.
+		"""
 		ret = [("Currently banned", self.__banManager.size()), 
 			   ("Total banned", self.__banManager.getBanTotal()),
 			   ("IP list", self.__banManager.getBanList())]

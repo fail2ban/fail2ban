@@ -29,9 +29,9 @@ from systemd import journal
 if LooseVersion(getattr(journal, '__version__', "0")) < '204':
 	raise ImportError("Fail2Ban requires systemd >= 204")
 
-from failmanager import FailManagerEmpty
-from filter import JournalFilter
-from mytime import MyTime
+from .failmanager import FailManagerEmpty
+from .filter import JournalFilter
+from .mytime import MyTime
 
 
 # Gets the instance of the logger.

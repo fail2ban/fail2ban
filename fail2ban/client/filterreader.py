@@ -25,8 +25,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging, os, shlex
-from configreader import ConfigReader, DefinitionInitConfigReader
-from fail2ban.server.action import Action
+
+from .configreader import ConfigReader, DefinitionInitConfigReader
+from ..server.action import CommandAction
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ class FilterReader(DefinitionInitConfigReader):
 	def convert(self):
 		stream = list()
 		combinedopts = dict(list(self._opts.items()) + list(self._initOpts.items()))
-		opts = Action.substituteRecursiveTags(combinedopts)
+		opts = CommandAction.substituteRecursiveTags(combinedopts)
 		if not opts:
 			raise ValueError('recursive tag definitions unable to be resolved')
 		for opt, value in opts.iteritems():
