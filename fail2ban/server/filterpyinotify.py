@@ -27,9 +27,9 @@ import time, logging, pyinotify
 from distutils.version import LooseVersion
 from os.path import dirname, sep as pathsep
 
-from fail2ban.server.failmanager import FailManagerEmpty
-from fail2ban.server.filter import FileFilter
-from fail2ban.server.mytime import MyTime
+from .failmanager import FailManagerEmpty
+from .filter import FileFilter
+from .mytime import MyTime
 
 
 if not hasattr(pyinotify, '__version__') \

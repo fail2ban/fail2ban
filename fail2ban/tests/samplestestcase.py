@@ -30,9 +30,9 @@ else:
 	import simplejson as json
 	next = lambda x: x.next()
 
-from fail2ban.server.filter import Filter
-from fail2ban.client.filterreader import FilterReader
-from fail2ban.tests.utils import setUpMyTime, tearDownMyTime
+from ..server.filter import Filter
+from ..client.filterreader import FilterReader
+from .utils import setUpMyTime, tearDownMyTime
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 if os.path.exists('config/fail2ban.conf'):
@@ -67,6 +67,7 @@ def testSampleRegexsFactory(name):
 		# Check filter exists
 		filterConf = FilterReader(name, "jail", {}, basedir=CONFIG_DIR)
 		self.assertEqual(filterConf.getFile(), name)
+		self.assertEqual(filterConf.getJailName(), "jail")
 		filterConf.read()
 		filterConf.getOptions({})
 

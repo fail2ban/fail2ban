@@ -24,7 +24,7 @@ __license__ = "GPL"
 import sys, time, logging
 from threading import Lock
 
-from fail2ban.server.datetemplate import DatePatternRegex, DateTai64n, DateEpoch, DateISO8601
+from .datetemplate import DatePatternRegex, DateTai64n, DateEpoch, DateISO8601
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

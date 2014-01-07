@@ -27,14 +27,13 @@ __license__ = "GPL"
 from threading import Lock, RLock
 import logging, logging.handlers, sys, os, signal
 
-from fail2ban.server.jails import Jails
-from fail2ban.server.filter import FileFilter, JournalFilter
-from fail2ban.server.transmitter import Transmitter
-from fail2ban.server.asyncserver import AsyncServer
-from fail2ban.server.asyncserver import AsyncServerException
-from fail2ban.server.database import Fail2BanDb
-from fail2ban.server.action import CommandAction
-from fail2ban import version
+from .jails import Jails
+from .filter import FileFilter, JournalFilter
+from .transmitter import Transmitter
+from .asyncserver import AsyncServer, AsyncServerException
+from .database import Fail2BanDb
+from .action import CommandAction
+from .. import version
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -123,10 +122,10 @@ class Server:
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend, self.__db)
 		if self.__db is not None:
-			self.__db.addJail(self.__jails.get(name))
+			self.__db.addJail(self.__jails[name])
 		
 	def delJail(self, name):
-		self.__jails.remove(name)
+		del self.__jails[name]
 		if self.__db is not None:
 			self.__db.delJailName(name)
 	
@@ -134,7 +133,7 @@ class Server:
 		try:
 			self.__lock.acquire()
 			if not self.isAlive(name):
-				self.__jails.get(name).start()
+				self.__jails[name].start()
 		finally:
 			self.__lock.release()
 	
@@ -143,7 +142,7 @@ class Server:
 		try:
 			self.__lock.acquire()
 			if self.isAlive(name):
-				self.__jails.get(name).stop()
+				self.__jails[name].stop()
 				self.delJail(name)
 		finally:
 			self.__lock.release()
@@ -152,43 +151,43 @@ class Server:
 		logSys.info("Stopping all jails")
 		try:
 			self.__lock.acquire()
-			for jail in self.__jails.getAll():
+			for jail in self.__jails.keys():
 				self.stopJail(jail)
 		finally:
 			self.__lock.release()
 	
 	def isAlive(self, name):
-		return self.__jails.get(name).isAlive()
+		return self.__jails[name].isAlive()
 	
 	def setIdleJail(self, name, value):
-		self.__jails.get(name).setIdle(value)
+		self.__jails[name].setIdle(value)
 		return True
 
 	def getIdleJail(self, name):
-		return self.__jails.get(name).getIdle()
+		return self.__jails[name].getIdle()
 	
 	# Filter
 	def addIgnoreIP(self, name, ip):
-		self.__jails.getFilter(name).addIgnoreIP(ip)
+		self.__jails[name].filter.addIgnoreIP(ip)
 	
 	def delIgnoreIP(self, name, ip):
-		self.__jails.getFilter(name).delIgnoreIP(ip)
+		self.__jails[name].filter.delIgnoreIP(ip)
 	
 	def getIgnoreIP(self, name):
-		return self.__jails.getFilter(name).getIgnoreIP()
+		return self.__jails[name].filter.getIgnoreIP()
 	
 	def addLogPath(self, name, fileName, tail=False):
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, FileFilter):
 			filter_.addLogPath(fileName, tail)
 	
 	def delLogPath(self, name, fileName):
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, FileFilter):
 			filter_.delLogPath(fileName)
 	
 	def getLogPath(self, name):
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, FileFilter):
 			return [m.getFileName()
 					for m in filter_.getLogPath()]
@@ -197,17 +196,17 @@ class Server:
 			return []
 	
 	def addJournalMatch(self, name, match): # pragma: systemd no cover
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, JournalFilter):
 			filter_.addJournalMatch(match)
 	
 	def delJournalMatch(self, name, match): # pragma: systemd no cover
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, JournalFilter):
 			filter_.delJournalMatch(match)
 	
 	def getJournalMatch(self, name): # pragma: systemd no cover
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, JournalFilter):
 			return filter_.getJournalMatch()
 		else:
@@ -215,214 +214,109 @@ class Server:
 			return []
 	
 	def setLogEncoding(self, name, encoding):
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, FileFilter):
 			filter_.setLogEncoding(encoding)
 	
 	def getLogEncoding(self, name):
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, FileFilter):
 			return filter_.getLogEncoding()
 	
 	def setFindTime(self, name, value):
-		self.__jails.getFilter(name).setFindTime(value)
+		self.__jails[name].filter.setFindTime(value)
 	
 	def getFindTime(self, name):
-		return self.__jails.getFilter(name).getFindTime()
+		return self.__jails[name].filter.getFindTime()
 
 	def setDatePattern(self, name, pattern):
-		self.__jails.getFilter(name).setDatePattern(pattern)
+		self.__jails[name].filter.setDatePattern(pattern)
 
 	def getDatePattern(self, name):
-		return self.__jails.getFilter(name).getDatePattern()
+		return self.__jails[name].filter.getDatePattern()
 
 	def setIgnoreCommand(self, name, value):
-		self.__jails.getFilter(name).setIgnoreCommand(value)
+		self.__jails[name].filter.setIgnoreCommand(value)
 
 	def getIgnoreCommand(self, name):
-		return self.__jails.getFilter(name).getIgnoreCommand()
+		return self.__jails[name].filter.getIgnoreCommand()
 
 	def addFailRegex(self, name, value):
-		self.__jails.getFilter(name).addFailRegex(value)
+		self.__jails[name].filter.addFailRegex(value)
 	
 	def delFailRegex(self, name, index):
-		self.__jails.getFilter(name).delFailRegex(index)
+		self.__jails[name].filter.delFailRegex(index)
 	
 	def getFailRegex(self, name):
-		return self.__jails.getFilter(name).getFailRegex()
+		return self.__jails[name].filter.getFailRegex()
 	
 	def addIgnoreRegex(self, name, value):
-		self.__jails.getFilter(name).addIgnoreRegex(value)
+		self.__jails[name].filter.addIgnoreRegex(value)
 	
 	def delIgnoreRegex(self, name, index):
-		self.__jails.getFilter(name).delIgnoreRegex(index)
+		self.__jails[name].filter.delIgnoreRegex(index)
 	
 	def getIgnoreRegex(self, name):
-		return self.__jails.getFilter(name).getIgnoreRegex()
+		return self.__jails[name].filter.getIgnoreRegex()
 	
 	def setUseDns(self, name, value):
-		self.__jails.getFilter(name).setUseDns(value)
+		self.__jails[name].filter.setUseDns(value)
 	
 	def getUseDns(self, name):
-		return self.__jails.getFilter(name).getUseDns()
+		return self.__jails[name].filter.getUseDns()
 	
 	def setMaxRetry(self, name, value):
-		self.__jails.getFilter(name).setMaxRetry(value)
+		self.__jails[name].filter.setMaxRetry(value)
 	
 	def getMaxRetry(self, name):
-		return self.__jails.getFilter(name).getMaxRetry()
+		return self.__jails[name].filter.getMaxRetry()
 	
 	def setMaxLines(self, name, value):
-		self.__jails.getFilter(name).setMaxLines(value)
+		self.__jails[name].filter.setMaxLines(value)
 	
 	def getMaxLines(self, name):
-		return self.__jails.getFilter(name).getMaxLines()
+		return self.__jails[name].filter.getMaxLines()
 	
 	# Action
 	def addAction(self, name, value, *args):
-		self.__jails.getAction(name).addAction(value, *args)
-	
-	def getLastAction(self, name):
-		return self.__jails.getAction(name).getLastAction()
+		self.__jails[name].actions.add(value, *args)
 	
 	def getActions(self, name):
-		return self.__jails.getAction(name).getActions()
+		return self.__jails[name].actions
 	
 	def delAction(self, name, value):
-		self.__jails.getAction(name).delAction(value)
+		del self.__jails[name].actions[value]
 	
-	def setCInfo(self, name, actionName, key, value):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			action.setCInfo(key, value)
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
-	
-	def getCInfo(self, name, actionName, key):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			return action.getCInfo(key)
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
-	
-	def delCInfo(self, name, actionName, key):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			action.delCInfo(key)
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
+	def getAction(self, name, value):
+		return self.__jails[name].actions[value]
 	
 	def setBanTime(self, name, value):
-		self.__jails.getAction(name).setBanTime(value)
+		self.__jails[name].actions.setBanTime(value)
 	
 	def setBanIP(self, name, value):
-		return self.__jails.getFilter(name).addBannedIP(value)
+		return self.__jails[name].filter.addBannedIP(value)
 		
 	def setUnbanIP(self, name, value):
-		return self.__jails.getAction(name).removeBannedIP(value)
+		self.__jails[name].actions.removeBannedIP(value)
 		
 	def getBanTime(self, name):
-		return self.__jails.getAction(name).getBanTime()
+		return self.__jails[name].actions.getBanTime()
 	
-	def setActionStart(self, name, actionName, value):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			action.setActionStart(value)
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
-	
-	def getActionStart(self, name, actionName):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			return action.getActionStart()
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
-		
-	def setActionStop(self, name, actionName, value):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			action.setActionStop(value)
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
-	
-	def getActionStop(self, name, actionName):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			return action.getActionStop()
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
-	
-	def setActionCheck(self, name, actionName, value):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			action.setActionCheck(value)
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
-	
-	def getActionCheck(self, name, actionName):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			return action.getActionCheck()
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
-	
-	def setActionBan(self, name, actionName, value):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			action.setActionBan(value)
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
-	
-	def getActionBan(self, name, actionName):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			return action.getActionBan()
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
-	
-	def setActionUnban(self, name, actionName, value):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			action.setActionUnban(value)
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
-	
-	def getActionUnban(self, name, actionName):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			return action.getActionUnban()
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
-	
-	def setActionTimeout(self, name, actionName, value):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			action.setTimeout(value)
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
-	
-	def getActionTimeout(self, name, actionName):
-		action = self.__jails.getAction(name).getAction(actionName)
-		if isinstance(action, CommandAction):
-			return action.getTimeout()
-		else:
-			raise TypeError("%s is not a CommandAction" % actionName)
-		
 	# Status
 	def status(self):
 		try:
 			self.__lock.acquire()
-			jails = list(self.__jails.getAll())
+			jails = list(self.__jails)
 			jails.sort()
 			jailList = ", ".join(jails)
-			ret = [("Number of jail", self.__jails.size()), 
+			ret = [("Number of jail", len(self.__jails)),
 				   ("Jail list", jailList)]
 			return ret
 		finally:
 			self.__lock.release()
 	
 	def statusJail(self, name):
-		return self.__jails.get(name).getStatus()
+		return self.__jails[name].getStatus()
 	
 	# Logging
 	
@@ -550,7 +444,7 @@ class Server:
 			return "flushed"
 			
 	def setDatabase(self, filename):
-		if self.__jails.size() == 0:
+		if len(self.__jails) == 0:
 			if filename.lower() == "none":
 				self.__db = None
 			else:

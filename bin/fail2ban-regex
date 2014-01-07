@@ -280,6 +280,9 @@ class Fail2banRegex(object):
 					elif command[2] == 'addjournalmatch':
 						journalmatch = command[3]
 						self.setJournalMatch(shlex.split(journalmatch))
+					elif command[2] == 'datepattern':
+						datepattern = command[3]
+						self.setDatePattern(datepattern)
 			else:
 				print "ERROR: failed to read %s" % value
 				return False

@@ -27,9 +27,9 @@ __license__ = "GPL"
 import logging, re, glob, os.path
 import json
 
-from fail2ban.client.configreader import ConfigReader
-from fail2ban.client.filterreader import FilterReader
-from fail2ban.client.actionreader import ActionReader
+from .configreader import ConfigReader
+from .filterreader import FilterReader
+from .actionreader import ActionReader
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -126,7 +126,7 @@ class JailReader(ConfigReader):
 							"set",
 							self.__name,
 							"addaction",
-							actOpt.get("actname", os.path.splitext(actName)[0]),
+							actOpt.pop("actname", os.path.splitext(actName)[0]),
 							os.path.join(
 								self.getBaseDir(), "action.d", actName),
 							json.dumps(actOpt),
@@ -166,7 +166,7 @@ class JailReader(ConfigReader):
 				found_files = 0
 				for path in self.__opts[opt].split("\n"):
 					path = path.rsplit(" ", 1)
-					path, tail = path if len(path) > 1 else (path[0], "false")
+					path, tail = path if len(path) > 1 else (path[0], "head")
 					pathList = JailReader._glob(path)
 					if len(pathList) == 0:
 						logSys.error("No file(s) found for glob %s" % path)

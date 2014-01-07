@@ -36,7 +36,7 @@ _cmd_lock = threading.Lock()
 # Some hints on common abnormal exit codes
 _RETCODE_HINTS = {
 	127: '"Command not found".  Make sure that all commands in %(realCmd)r '
-	        'are in the PATH of fail2ban-server process '
+			'are in the PATH of fail2ban-server process '
 			'(grep -a PATH= /proc/`pidof -x fail2ban-server`/environ). '
 			'You may want to start '
 			'"fail2ban-server -f" separately, initiate it with '
@@ -49,41 +49,68 @@ signame = dict((num, name)
 	for name, num in signal.__dict__.iteritems() if name.startswith("SIG"))
 
 class CallingMap(MutableMapping):
+	"""A Mapping type which returns the result of callable values.
+
+	`CallingMap` behaves similar to a standard python dictionary,
+	with the exception that any values which are callable, are called
+	and the result is returned as the value.
+	No error handling is in place, such that any errors raised in the
+	callable will raised as usual.
+	Actual dictionary is stored in property `data`, and can be accessed
+	to obtain original callable values.
+
+	Attributes
+	----------
+	data : dict
+		The dictionary data which can be accessed to obtain items
+		without callable values being called.
+
+	"""
+
 	def __init__(self, *args, **kwargs):
 		self.data = dict(*args, **kwargs)
+
 	def __getitem__(self, key):
 		value = self.data[key]
 		if callable(value):
 			return value()
 		else:
 			return value
+
 	def __setitem__(self, key, value):
 		self.data[key] = value
+
 	def __delitem__(self, key):
 		del self.data[key]
+
 	def __iter__(self):
 		return iter(self.data)
+
 	def __len__(self):
 		return len(self.data)
 
-##
-# Execute commands.
-#
-# This class reads the failures from the Jail queue and decide if an
-# action has to be taken. A BanManager take care of the banned IP
-# addresses.
-
 class ActionBase(object):
+	"""An abstract base class for actions in Fail2Ban.
+
+	Action Base is a base definition of what methods need to be in
+	place to create a Python based action for Fail2Ban. This class can
+	be inherited from to ease implementation.
+	Required methods:
+	 - __init__(jail, name)
+	 - start()
+	 - stop()
+	 - ban(aInfo)
+	 - unban(aInfo)
+	"""
 	__metaclass__ = ABCMeta
 
 	@classmethod
 	def __subclasshook__(cls, C):
 		required = (
-			"getName",
-			"execActionStart",
-			"execActionStop",
-			"execActionBan",
-			"execActionUnban",
+			"start",
+			"stop",
+			"ban",
+			"unban",
 			)
 		for method in required:
 			if not callable(getattr(C, method, None)):
@@ -91,248 +118,256 @@ class ActionBase(object):
 		return True
 
 	def __init__(self, jail, name):
+		"""Initialise action.
+
+		Called when action is created, but before the jail/actions is
+		started. This should carry out necessary methods to initialise
+		the action but not "start" the action.
+
+		Parameters
+		----------
+		jail : Jail
+			The jail in which the action belongs to.
+		name : str
+			Name assigned to the action.
+
+		Notes
+		-----
+		Any additional arguments specified in `jail.conf` or passed
+		via `fail2ban-client` will be passed as keyword arguments.
+		"""
 		self._jail = jail
 		self._name = name
 		self._logSys = logging.getLogger(
 			'%s.%s' % (__name__, self.__class__.__name__))
 
-	@property
-	def jail(self):
-		return self._jail
-
-	@property
-	def logSys(self):
-		return self._logSys
-	
-	##
-	# Returns the action name.
-	#
-	# @return the name of the action
-	
-	def getName(self):
-		return self._name
-
-	name = property(getName)
-	
-	def execActionStart(self):
+	def start(self):
+		"""Executed when the jail/action is started.
+		"""
 		pass
 
-	def execActionBan(self, aInfo):
+	def stop(self):
+		"""Executed when the jail/action is stopped.
+		"""
 		pass
 
-	def execActionUnban(self, aInfo):
+	def ban(self, aInfo):
+		"""Executed when a ban occurs.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
+		"""
 		pass
 
-	def execActionStop(self):
+	def unban(self, aInfo):
+		"""Executed when a ban expires.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
+		"""
 		pass
 
 class CommandAction(ActionBase):
-	
-	def __init__(self, name):
-		super(CommandAction, self).__init__(None, name)
-		self.__timeout = 60
-		self.__cInfo = dict()
+	"""A action which executes OS shell commands.
+
+	This is the default type of action which Fail2Ban uses.
+	"""
+
+	def __init__(self, jail, name):
+		"""Initialise action.
+
+		Default sets all commands for actions as empty string, such
+		no command is executed.
+
+		Parameters
+		----------
+		jail : Jail
+			The jail in which the action belongs to.
+		name : str
+			Name assigned to the action.
+		"""
+
+		super(CommandAction, self).__init__(jail, name)
+		self.timeout = 60
 		## Command executed in order to initialize the system.
-		self.__actionStart = ''
+		self.actionstart = ''
 		## Command executed when an IP address gets banned.
-		self.__actionBan = ''
+		self.actionban = ''
 		## Command executed when an IP address gets removed.
-		self.__actionUnban = ''
+		self.actionunban = ''
 		## Command executed in order to check requirements.
-		self.__actionCheck = ''
+		self.actioncheck = ''
 		## Command executed in order to stop the system.
-		self.__actionStop = ''
-		logSys.debug("Created Action")
-	
+		self.actionstop = ''
+		self._logSys.debug("Created %s" % self.__class__)
+
 	@classmethod
 	def __subclasshook__(cls, C):
 		return NotImplemented # Standard checks
-			
-	##
-	# Sets the timeout period for commands.
-	#
-	# @param timeout timeout period in seconds
-	
-	def setTimeout(self, timeout):
-		self.__timeout = int(timeout)
-		logSys.debug("Set action %s timeout = %i" % (self.getName(), timeout))
-	
-	##
-	# Returns the action timeout period for commands.
-	#
-	# @return the timeout period in seconds
-	
-	def getTimeout(self):
-		return self.__timeout
-	
-	##
-	# Sets a "CInfo".
-	#
-	# CInfo are statically defined properties. They can be definied by
-	# the user and are used to set e-mail addresses, port, host or
-	# anything that should not change during the life of the server.
-	#
-	# @param key the property name
-	# @param value the property value
-	
-	def setCInfo(self, key, value):
-		self.__cInfo[key] = value
-	
-	##
-	# Returns a "CInfo".
-	#
-	# @param key the property name
-	
-	def getCInfo(self, key):
-		return self.__cInfo[key]
-	
-	##
-	# Removes a "CInfo".
-	#
-	# @param key the property name
-	
-	def delCInfo(self, key):
-		del self.__cInfo[key]
-	
-	##
-	# Set the "start" command.
-	#
-	# @param value the command
-		
-	def setActionStart(self, value):
-		self.__actionStart = value
-		logSys.debug("Set actionStart = %s" % value)
-	
-	##
-	# Get the "start" command.
-	#
-	# @return the command
-	
-	def getActionStart(self):
-		return self.__actionStart
-	
-	##
-	# Executes the action "start" command.
-	#
-	# Replaces the tags in the action command with value of "cInfo"
-	# and executes the resulting command.
-	#
-	# @return True if the command succeeded
-	
-	def execActionStart(self):
-		if self.__cInfo:
-			if not self.substituteRecursiveTags(self.__cInfo):
-				logSys.error("Cinfo/definitions contain self referencing definitions and cannot be resolved")
-				return False
-		startCmd = self.replaceTag(self.__actionStart, self.__cInfo)
-		return self.executeCmd(startCmd, self.__timeout)
-	
-	##
-	# Set the "ban" command.
-	#
-	# @param value the command
-	
-	def setActionBan(self, value):
-		self.__actionBan = value
-		logSys.debug("Set actionBan = %s" % value)
-	
-	##
-	# Get the "ban" command.
-	#
-	# @return the command
-	
-	def getActionBan(self):
-		return self.__actionBan
-	
-	##
-	# Executes the action "ban" command.
-	#
-	# @return True if the command succeeded
-	
-	def execActionBan(self, aInfo):
-		return self.__processCmd(self.__actionBan, aInfo)
-	
-	##
-	# Set the "unban" command.
-	#
-	# @param value the command
-	
-	def setActionUnban(self, value):
-		self.__actionUnban = value
-		logSys.debug("Set actionUnban = %s" % value)
-	
-	##
-	# Get the "unban" command.
-	#
-	# @return the command
-	
-	def getActionUnban(self):
-		return self.__actionUnban
-	
-	##
-	# Executes the action "unban" command.
-	#
-	# @return True if the command succeeded
-	
-	def execActionUnban(self, aInfo):
-		return self.__processCmd(self.__actionUnban, aInfo)
-	
-	##
-	# Set the "check" command.
-	#
-	# @param value the command
-	
-	def setActionCheck(self, value):
-		self.__actionCheck = value
-		logSys.debug("Set actionCheck = %s" % value)
-	
-	##
-	# Get the "check" command.
-	#
-	# @return the command
-	
-	def getActionCheck(self):
-		return self.__actionCheck
-	
-	##
-	# Set the "stop" command.
-	#
-	# @param value the command
-	
-	def setActionStop(self, value):
-		self.__actionStop = value
-		logSys.debug("Set actionStop = %s" % value)
-	
-	##
-	# Get the "stop" command.
-	#
-	# @return the command
-	
-	def getActionStop(self):
-		return self.__actionStop
-	
-	##
-	# Executes the action "stop" command.
-	#
-	# Replaces the tags in the action command with value of "cInfo"
-	# and executes the resulting command.
-	#
-	# @return True if the command succeeded
-	
-	def execActionStop(self):
-		stopCmd = self.replaceTag(self.__actionStop, self.__cInfo)
-		return self.executeCmd(stopCmd, self.__timeout)
 
-	##
-	# Sort out tag definitions within other tags
-	#
-	# so:		becomes:
-	# a = 3		a = 3
-	# b = <a>_3	b = 3_3
-	# @param	tags, a dictionary
-	# @returns	tags altered or False if there is a recursive definition
+	@property
+	def timeout(self):
+		"""Time out period in seconds for execution of commands.
+		"""
+		return self._timeout
+
+	@timeout.setter
+	def timeout(self, timeout):
+		self._timeout = int(timeout)
+		self._logSys.debug("Set action %s timeout = %i" %
+			(self._name, self.timeout))
+
+	@property
+	def _properties(self):
+		"""A dictionary of the actions properties.
+
+		This is used to subsitute "tags" in the commands.
+		"""
+		return dict(
+			(key, getattr(self, key))
+			for key in dir(self)
+			if not key.startswith("_") and not callable(getattr(self, key)))
+
+	@property
+	def actionstart(self):
+		"""The command executed on start of the jail/action.
+		"""
+		return self._actionstart
+
+	@actionstart.setter
+	def actionstart(self, value):
+		self._actionstart = value
+		self._logSys.debug("Set actionstart = %s" % value)
+
+	def start(self):
+		"""Executes the "actionstart" command.
+
+		Replace the tags in the action command with actions properties
+		and executes the resulting command.
+		"""
+		if (self._properties and
+			not self.substituteRecursiveTags(self._properties)):
+			self._logSys.error(
+				"properties contain self referencing definitions "
+				"and cannot be resolved")
+			raise RuntimeError("Error starting action")
+		startCmd = self.replaceTag(self.actionstart, self._properties)
+		if not self.executeCmd(startCmd, self.timeout):
+			raise RuntimeError("Error starting action")
+
+	@property
+	def actionban(self):
+		"""The command used when a ban occurs.
+		"""
+		return self._actionban
+
+	@actionban.setter
+	def actionban(self, value):
+		self._actionban = value
+		self._logSys.debug("Set actionban = %s" % value)
+
+	def ban(self, aInfo):
+		"""Executes the "actionban" command.
+
+		Replaces the tags in the action command with actions properties
+		and ban information, and executes the resulting command.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
+		"""
+		if not self._processCmd(self.actionban, aInfo):
+			raise RuntimeError("Error banning %(ip)s" % aInfo)
+
+	@property
+	def actionunban(self):
+		"""The command used when an unban occurs.
+		"""
+		return self._actionunban
+
+	@actionunban.setter
+	def actionunban(self, value):
+		self._actionunban = value
+		self._logSys.debug("Set actionunban = %s" % value)
+
+	def unban(self, aInfo):
+		"""Executes the "actionunban" command.
+
+		Replaces the tags in the action command with actions properties
+		and ban information, and executes the resulting command.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
+		"""
+		if not self._processCmd(self.actionunban, aInfo):
+			raise RuntimeError("Error unbanning %(ip)s" % aInfo)
+
+	@property
+	def actioncheck(self):
+		"""The command used to check the environment.
+
+		This is used prior to a ban taking place to ensure the
+		environment is appropriate. If this check fails, `stop` and
+		`start` is executed prior to the check being called again.
+		"""
+		return self._actioncheck
+
+	@actioncheck.setter
+	def actioncheck(self, value):
+		self._actioncheck = value
+		self._logSys.debug("Set actioncheck = %s" % value)
+
+	@property
+	def actionstop(self):
+		"""The command executed when the jail/actions stops.
+		"""
+		return self._actionstop
+
+	@actionstop.setter
+	def actionstop(self, value):
+		self._actionstop = value
+		self._logSys.debug("Set actionstop = %s" % value)
+
+	def stop(self):
+		"""Executes the "actionstop" command.
+
+		Replaces the tags in the action command with actions properties
+		and executes the resulting command.
+		"""
+		stopCmd = self.replaceTag(self.actionstop, self._properties)
+		if not self.executeCmd(stopCmd, self.timeout):
+			raise RuntimeError("Error stopping action")
+
 	@staticmethod
 	def substituteRecursiveTags(tags):
+		"""Sort out tag definitions within other tags.
+
+		so:		becomes:
+		a = 3		a = 3
+		b = <a>_3	b = 3_3
+
+		Parameters
+		----------
+		tags : dict
+			Dictionary of tags(keys) and their values.
+
+		Returns
+		-------
+		dict
+			Dictionary of tags(keys) and their values, with tags
+			within the values recursively replaced.
+		"""
 		t = re.compile(r'<([^ >]+)>')
 		for tag, value in tags.iteritems():
 			value = str(value)
@@ -362,22 +397,46 @@ class CommandAction(ActionBase):
 		return tags
 
 	@staticmethod
-	def escapeTag(tag):
-		for c in '\\#&;`|*?~<>^()[]{}$\'"':
-			if c in tag:
-				tag = tag.replace(c, '\\' + c)
-		return tag
+	def escapeTag(value):
+		"""Escape characters which may be used for command injection.
 
-	##
-	# Replaces tags in query with property values in aInfo.
-	#
-	# @param query the query string with tags
-	# @param aInfo the properties
-	# @return a string
-	
+		Parameters
+		----------
+		value : str
+			A string of which characters will be escaped.
+
+		Returns
+		-------
+		str
+			`value` with certain characters escaped.
+
+		Notes
+		-----
+		The following characters are escaped::
+
+			\\#&;`|*?~<>^()[]{}$'"
+
+		"""
+		for c in '\\#&;`|*?~<>^()[]{}$\'"':
+			if c in value:
+				value = value.replace(c, '\\' + c)
+		return value
+
 	@classmethod
 	def replaceTag(cls, query, aInfo):
-		""" Replace tags in query
+		"""Replaces tags in `query` with property values.
+
+		Parameters
+		----------
+		query : str
+			String with tags.
+		aInfo : dict
+			Tags(keys) and associated values for substitution in query.
+
+		Returns
+		-------
+		str
+			`query` string with tags replaced.
 		"""
 		string = query
 		for tag in aInfo:
@@ -391,35 +450,39 @@ class CommandAction(ActionBase):
 		# New line
 		string = string.replace("<br>", '\n')
 		return string
-	
-	##
-	# Executes a command with preliminary checks and substitutions.
-	#
-	# Before executing any commands, executes the "check" command first
-	# in order to check if pre-requirements are met. If this check fails,
-	# it tries to restore a sane environment before executing the real
-	# command.
-	# Replaces "aInfo" and "cInfo" in the query too.
-	#
-	# @param cmd The command to execute
-	# @param aInfo Dynamic properties
-	# @return True if the command succeeded
-	
-	def __processCmd(self, cmd, aInfo = None):
-		""" Executes an OS command.
+
+	def _processCmd(self, cmd, aInfo = None):
+		"""Executes a command with preliminary checks and substitutions.
+
+		Before executing any commands, executes the "check" command first
+		in order to check if pre-requirements are met. If this check fails,
+		it tries to restore a sane environment before executing the real
+		command.
+
+		Parameters
+		----------
+		cmd : str
+			The command to execute.
+		aInfo : dictionary
+			Dynamic properties.
+
+		Returns
+		-------
+		bool
+			True if the command succeeded.
 		"""
 		if cmd == "":
-			logSys.debug("Nothing to do")
+			self._logSys.debug("Nothing to do")
 			return True
-		
-		checkCmd = self.replaceTag(self.__actionCheck, self.__cInfo)
-		if not self.executeCmd(checkCmd, self.__timeout):
-			logSys.error("Invariant check failed. Trying to restore a sane" +
-						 " environment")
-			self.execActionStop()
-			self.execActionStart()
-			if not self.executeCmd(checkCmd, self.__timeout):
-				logSys.fatal("Unable to restore environment")
+
+		checkCmd = self.replaceTag(self.actioncheck, self._properties)
+		if not self.executeCmd(checkCmd, self.timeout):
+			self._logSys.error(
+				"Invariant check failed. Trying to restore a sane environment")
+			self.stop()
+			self.start()
+			if not self.executeCmd(checkCmd, self.timeout):
+				self._logSys.fatal("Unable to restore environment")
 				return False
 
 		# Replace tags
@@ -429,24 +492,33 @@ class CommandAction(ActionBase):
 			realCmd = cmd
 		
 		# Replace static fields
-		realCmd = self.replaceTag(realCmd, self.__cInfo)
+		realCmd = self.replaceTag(realCmd, self._properties)
 		
-		return self.executeCmd(realCmd, self.__timeout)
-
-	##
-	# Executes a command.
-	#
-	# We need a shell here because commands are mainly shell script. They
-	# contain pipe, redirection, etc.
-	# 
-	# @todo Force the use of bash!?
-	# @todo Kill the command after a given timeout
-	#
-	# @param realCmd the command to execute
-	# @return True if the command succeeded
+		return self.executeCmd(realCmd, self.timeout)
 
 	@staticmethod
 	def executeCmd(realCmd, timeout=60):
+		"""Executes a command.
+
+		Parameters
+		----------
+		realCmd : str
+			The command to execute.
+		timeout : int
+			The time out in seconds for the command.
+
+		Returns
+		-------
+		bool
+			True if the command succeeded.
+
+		Raises
+		------
+		OSError
+			If command fails to be executed.
+		RuntimeError
+			If command execution times out.
+		"""
 		logSys.debug(realCmd)
 		if not realCmd:
 			logSys.debug("Nothing to do")
@@ -476,7 +548,6 @@ class CommandAction(ActionBase):
 						retcode = popen.poll()
 			except OSError, e:
 				logSys.error("%s -- failed with %s" % (realCmd, e))
-				return False
 		finally:
 			_cmd_lock.release()
 
@@ -503,5 +574,6 @@ class CommandAction(ActionBase):
 			if msg:
 				logSys.info("HINT on %i: %s"
 							% (retcode, msg % locals()))
-		return False
+			return False
+		raise RuntimeError("Command execution failed: %s" % realCmd)
 	

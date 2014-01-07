@@ -27,7 +27,7 @@ __license__ = "GPL"
 import glob, logging, os
 from ConfigParser import NoOptionError, NoSectionError
 
-from fail2ban.client.configparserinc import SafeConfigParserWithIncludes
+from .configparserinc import SafeConfigParserWithIncludes
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

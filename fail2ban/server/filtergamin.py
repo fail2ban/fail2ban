@@ -27,9 +27,9 @@ import time, logging, fcntl
 
 import gamin
 
-from fail2ban.server.failmanager import FailManagerEmpty
-from fail2ban.server.filter import FileFilter
-from fail2ban.server.mytime import MyTime
+from .failmanager import FailManagerEmpty
+from .filter import FileFilter
+from .mytime import MyTime
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

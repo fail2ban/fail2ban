@@ -29,8 +29,8 @@ import logging
 from datetime import datetime
 from datetime import timedelta
 
-from fail2ban.server.mytime import MyTime
-from fail2ban.server import iso8601
+from .mytime import MyTime
+from . import iso8601
 
 logSys = logging.getLogger(__name__)
 

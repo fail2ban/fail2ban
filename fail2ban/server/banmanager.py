@@ -27,8 +27,8 @@ __license__ = "GPL"
 import logging
 from threading import Lock
 
-from fail2ban.server.ticket import BanTicket
-from fail2ban.server.mytime import MyTime
+from .ticket import BanTicket
+from .mytime import MyTime
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

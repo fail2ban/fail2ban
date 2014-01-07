@@ -25,16 +25,9 @@ __license__ = "GPL"
 import logging, os, re, traceback, time, unittest, sys
 from os.path import basename, dirname
 from StringIO import StringIO
+import json
 
-if sys.version_info >= (2, 6):
-	import json
-else:
-	try:
-		import simplejson as json
-	except ImportError:
-		json = None
-
-from fail2ban.server.mytime import MyTime
+from ..server.mytime import MyTime
 
 logSys = logging.getLogger(__name__)
 
@@ -138,19 +131,18 @@ def tearDownMyTime():
 def gatherTests(regexps=None, no_network=False):
 	# Import all the test cases here instead of a module level to
 	# avoid circular imports
-	from fail2ban.tests import banmanagertestcase
-	from fail2ban.tests import clientreadertestcase
-	from fail2ban.tests import failmanagertestcase
-	from fail2ban.tests import filtertestcase
-	from fail2ban.tests import servertestcase
-	from fail2ban.tests import datedetectortestcase
-	from fail2ban.tests import actiontestcase
-	from fail2ban.tests import actionstestcase
-	from fail2ban.tests import sockettestcase
-	from fail2ban.tests import misctestcase
-	from fail2ban.tests import databasetestcase
-	if json:
-		from fail2ban.tests import samplestestcase
+	from . import banmanagertestcase
+	from . import clientreadertestcase
+	from . import failmanagertestcase
+	from . import filtertestcase
+	from . import servertestcase
+	from . import datedetectortestcase
+	from . import actiontestcase
+	from . import actionstestcase
+	from . import sockettestcase
+	from . import misctestcase
+	from . import databasetestcase
+	from . import samplestestcase
 
 	if not regexps: # pragma: no cover
 		tests = unittest.TestSuite()
@@ -172,7 +164,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
 	tests.addTest(unittest.makeSuite(servertestcase.JailTests))
 	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
-	tests.addTest(unittest.makeSuite(actiontestcase.ExecuteAction))
+	tests.addTest(unittest.makeSuite(actiontestcase.CommandActionTest))
 	tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
 	# FailManager
 	tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
@@ -207,30 +199,27 @@ def gatherTests(regexps=None, no_network=False):
 
 	# DateDetector
 	tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
-	if json:
-		# Filter Regex tests with sample logs
-		tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
-	else:
-		logSys.warning("I: Skipping filter samples testing. No simplejson/json module")
+	# Filter Regex tests with sample logs
+	tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
 
 	#
 	# Extensive use-tests of different available filters backends
 	#
 
-	from fail2ban.server.filterpoll import FilterPoll
+	from ..server.filterpoll import FilterPoll
 	filters = [FilterPoll]					  # always available
 
 	# Additional filters available only if external modules are available
 	# yoh: Since I do not know better way for parametric tests
 	#      with good old unittest
 	try:
-		from fail2ban.server.filtergamin import FilterGamin
+		from ..server.filtergamin import FilterGamin
 		filters.append(FilterGamin)
 	except Exception, e: # pragma: no cover
 		logSys.warning("Skipping gamin backend testing. Got exception '%s'" % e)
 
 	try:
-		from fail2ban.server.filterpyinotify import FilterPyinotify
+		from ..server.filterpyinotify import FilterPyinotify
 		filters.append(FilterPyinotify)
 	except Exception, e: # pragma: no cover
 		logSys.warning("I: Skipping pyinotify backend testing. Got exception '%s'" % e)
@@ -239,7 +228,7 @@ def gatherTests(regexps=None, no_network=False):
 		tests.addTest(unittest.makeSuite(
 			filtertestcase.get_monitor_failures_testcase(Filter_)))
 	try: # pragma: systemd no cover
-		from fail2ban.server.filtersystemd import FilterSystemd
+		from ..server.filtersystemd import FilterSystemd
 		tests.addTest(unittest.makeSuite(filtertestcase.get_monitor_failures_journal_testcase(FilterSystemd)))
 	except Exception, e: # pragma: no cover
 		logSys.warning("I: Skipping systemd backend testing. Got exception '%s'" % e)

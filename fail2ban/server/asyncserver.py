@@ -27,7 +27,7 @@ __license__ = "GPL"
 from pickle import dumps, loads, HIGHEST_PROTOCOL
 import asyncore, asynchat, socket, os, logging, sys, traceback, fcntl
 
-from fail2ban import helpers
+from .. import helpers
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ class RequestHandler(asynchat.async_chat):
 		# Serializes the response.
 		message = dumps(message, HIGHEST_PROTOCOL)
 		# Sends the response to the client.
-		self.send(message + RequestHandler.END_STRING)
+		self.push(message + RequestHandler.END_STRING)
 		# Closes the channel.
 		self.close_when_done()
 		

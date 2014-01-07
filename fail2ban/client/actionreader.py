@@ -26,7 +26,7 @@ __license__ = "GPL"
 
 import logging, os
 
-from fail2ban.client.configreader import ConfigReader, DefinitionInitConfigReader
+from .configreader import ConfigReader, DefinitionInitConfigReader
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -59,22 +59,20 @@ class ActionReader(DefinitionInitConfigReader):
 		head = ["set", self._jailName]
 		stream = list()
 		stream.append(head + ["addaction", self._name])
+		head.extend(["action", self._name])
 		for opt in self._opts:
 			if opt == "actionstart":
-				stream.append(head + ["actionstart", self._name, self._opts[opt]])
+				stream.append(head + ["actionstart", self._opts[opt]])
 			elif opt == "actionstop":
-				stream.append(head + ["actionstop", self._name, self._opts[opt]])
+				stream.append(head + ["actionstop", self._opts[opt]])
 			elif opt == "actioncheck":
-				stream.append(head + ["actioncheck", self._name, self._opts[opt]])
+				stream.append(head + ["actioncheck", self._opts[opt]])
 			elif opt == "actionban":
-				stream.append(head + ["actionban", self._name, self._opts[opt]])
+				stream.append(head + ["actionban", self._opts[opt]])
 			elif opt == "actionunban":
-				stream.append(head + ["actionunban", self._name, self._opts[opt]])
+				stream.append(head + ["actionunban", self._opts[opt]])
 		if self._initOpts:
-			if "timeout" in self._initOpts:
-				stream.append(head + ["timeout", self._name, self._opts["timeout"]])
-			# cInfo
 			for p in self._initOpts:
-				stream.append(head + ["setcinfo", self._name, p, self._initOpts[p]])
+				stream.append(head + [p, self._initOpts[p]])
 
 		return stream
