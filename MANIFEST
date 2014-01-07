@@ -108,6 +108,7 @@ fail2ban/tests/files/logs/apache-noscript
 fail2ban/tests/files/logs/apache-overflows
 fail2ban/tests/files/logs/assp
 fail2ban/tests/files/logs/asterisk
+fail2ban/tests/files/logs/counter-strike
 fail2ban/tests/files/logs/courier-auth
 fail2ban/tests/files/logs/courier-smtp
 fail2ban/tests/files/logs/cyrus-imap
@@ -173,6 +174,7 @@ config/filter.d/apache-nohome.conf
 config/filter.d/apache-noscript.conf
 config/filter.d/apache-overflows.conf
 config/filter.d/nginx-http-auth.conf
+config/filter.d/counter-strike.conf
 config/filter.d/courier-auth.conf
 config/filter.d/courier-smtp.conf
 config/filter.d/cyrus-imap.conf

@@ -1,0 +1,4 @@
+# failJSON: { "time": "2014-01-01T01:25:17", "match": true, "host": "31.29.29.89" }
+L 01/01/2014 - 01:25:17: Bad Rcon: "rcon 1146003691 "284"  sv_contact "HLBrute 1.10"" from "31.29.29.89:57370"
+# failJSON: { "time": "2014-01-01T04:17:01", "match": true, "host": "105.158.241.147" }
+L 01/01/2014 - 04:17:01: Bad Rcon: "rcon 260639614 "admin"  sv_contact "HLBrute 1.10"" from "105.158.241.147:53772"
