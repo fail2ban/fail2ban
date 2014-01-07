@@ -472,18 +472,7 @@ class JailsReaderTest(LogCaptureTestCase):
 				self.assertTrue(actionReader._opts.get('actionban', '').strip())
 
 		# Verify that all filters found under config/ have a jail
-		def get_all_confs(d):
-			from glob import glob
-			return set(
-				os.path.basename(x.replace('.conf', ''))
-				for x in glob(os.path.join(CONFIG_DIR, d, '*.conf')))
-
-		# TODO: provide jails for some additional filters
-		# ['gssftpd', 'qmail', 'apache-nohome', 'exim', 'dropbear', 'webmin-auth', 'cyrus-imap', 'sieve']
-		# self.assertEqual(get_all_confs('filter.d').difference(allFilters),
-        #                  set(['common']))
-	
-		def testReadSockJailConfComplete(self):
+		def testReadStockJailFilterComplete(self):
 			jails = JailsReader(basedir=CONFIG_DIR, force_enable=True)
 			self.assertTrue(jails.read())             # opens fine
 			self.assertTrue(jails.getOptions())       # reads fine
