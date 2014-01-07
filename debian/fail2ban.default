@@ -34,6 +34,6 @@ FAIL2BAN_OPTS=""
 # Another manual step that needs to be taken is to allow write access
 # for fail2ban user to fail2ban log files. The /etc/init.d/fail2ban
 # script will change the ownership when starting fail2ban. Logrotate
-# needs to be configured seperately, see /etc/logrotate.d/fail2ban.
+# needs to be configured separately, see /etc/logrotate.d/fail2ban.
 #
 # FAIL2BAN_USER="fail2ban"
