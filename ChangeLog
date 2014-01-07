@@ -56,7 +56,7 @@ configuration before relying on it.
      according to the XARF standard (v0.2). Close gh-105
    * Support PyPy
    * Filter for stunnel
-   * Filter for Counter Strik 1.6. Thanks to onorua for logs.
+   * Filter for Counter Strike 1.6. Thanks to onorua for logs.
      Close gh-347
 
 - Enhancements
