@@ -46,6 +46,10 @@ class JailsReader(ConfigReader):
 		self.__jails = list()
 		self.__force_enable = force_enable
 
+	@property
+	def jails(self):
+		return self.__jails
+
 	def read(self):
 		return ConfigReader.read(self, "jail")
 

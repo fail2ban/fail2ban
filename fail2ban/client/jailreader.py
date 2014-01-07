@@ -46,7 +46,12 @@ class JailReader(ConfigReader):
 		self.__filter = None
 		self.__force_enable = force_enable
 		self.__actions = list()
+		self.__opts = None
 	
+	@property
+	def options(self):
+		return self.__opts
+
 	def setName(self, value):
 		self.__name = value
 	
