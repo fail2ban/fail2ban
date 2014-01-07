@@ -99,7 +99,7 @@ failregex = useragent=%(baduseragents)s
 
 Comments: use '#' for comment lines and '; ' (space is important) for inline comments. When using Python2.X '; ' can only be used on the first line due to an Python library bug.
 
-.SH "FAIL2BAN CONFIGURATION FILE(S) (\fIfail2ban.conf\fR)"
+.SH "FAIL2BAN CONFIGURATION FILE(S) (\fIfail2ban.conf\fB)"
 
 These files have one section, [Definition].
 
@@ -121,7 +121,7 @@ This is used for communication with the fail2ban server daemon. Do not remove th
 PID filename.  Default: /var/run/fail2ban/fail2ban.pid.
 This is used to store the process ID of the fail2ban server.
 
-.SH "JAIL CONFIGURATION FILE(S) (\fIjail.conf\fR)"
+.SH "JAIL CONFIGURATION FILE(S) (\fIjail.conf\fB)"
 The following options are applicable to any jail. They appear in a section specifying the jail name or in the \fI[DEFAULT]\fR section which defines default values to be used if not specified in the individual section.
 .TP
 .B filter
@@ -162,7 +162,7 @@ regex (Python \fBreg\fRular \fBex\fRpression) to be added to the filter's failre
 regex which, if the log line matches, would cause Fail2Ban not consider that line.  This line will be ignored even if it matches a failregex of the jail or any of its filters.
 
 
-.SH "ACTION CONFIGURATION FILES (\fIaction.d/*.conf\fR)"
+.SH "ACTION CONFIGURATION FILES (\fIaction.d/*.conf\fB)"
 Action files specify which commands are executed to ban and unban an IP address.
 
 Like with jail.conf files, if you desire local changes create an \fI[actionname].local\fR file in the \fI/etc/fail2ban/action.d\fR directory
@@ -217,7 +217,7 @@ UNIX (epoch) time of the ban. e.g. 1357508484
 .B matches
 concatenated string of the log file lines of the matches that generated the ban. Many characters interpreted by shell get escaped to prevent injection, nevertheless use with caution.
 
-.SH FILTER FILES (\fIfilter.d/*.conf\fR)
+.SH "FILTER FILES (\fIfilter.d/*.conf\fB)"
 
 Filter definitions are those in \fI/etc/fail2ban/filter.d/*.conf\fR and \fIfilter.d/*.local\fR.
 
