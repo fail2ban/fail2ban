@@ -38,39 +38,39 @@ logSys = logging.getLogger(__name__)
 class DateTemplate:
 	
 	def __init__(self):
-		self.__name = ""
-		self.__regex = ""
-		self.__cRegex = None
-		self.__hits = 0
+		self._name = ""
+		self._regex = ""
+		self._cRegex = None
+		self._hits = 0
 	
 	def setName(self, name):
-		self.__name = name
+		self._name = name
 		
 	def getName(self):
-		return self.__name
+		return self._name
 	
 	def setRegex(self, regex, wordBegin=True):
-		#logSys.debug(u"setRegex for %s is %r" % (self.__name, regex))
+		#logSys.debug(u"setRegex for %s is %r" % (self._name, regex))
 		regex = regex.strip()
 		if (wordBegin and not re.search(r'^\^', regex)):
 			regex = r'\b' + regex
-		self.__regex = regex
-		self.__cRegex = re.compile(regex, re.UNICODE)
+		self._regex = regex
+		self._cRegex = re.compile(regex, re.UNICODE)
 		
 	def getRegex(self):
-		return self.__regex
+		return self._regex
 	
 	def getHits(self):
-		return self.__hits
+		return self._hits
 
 	def incHits(self):
-		self.__hits += 1
+		self._hits += 1
 
 	def resetHits(self):
-		self.__hits = 0
+		self._hits = 0
 	
 	def matchDate(self, line):
-		dateMatch = self.__cRegex.search(line)
+		dateMatch = self._cRegex.search(line)
 		return dateMatch
 	
 	def getDate(self, line):
@@ -138,9 +138,13 @@ class DateStrptime(DateTemplate):
 	
 	def getDate(self, line):
 		dateMatch = self.matchDate(line)
-
 		if dateMatch:
-			datePattern = self.getPattern()
+			return self._getDateStrptime(dateMatch, self._pattern), dateMatch
+		else:
+			return None
+
+	def _getDateStrptime(self, dateMatch, datePattern):
+		if dateMatch and datePattern:
 			if self._unsupported_f:
 				if dateMatch.group('_f'):
 					datePattern = re.sub(r'%f', dateMatch.group('_f'), datePattern)
@@ -156,11 +160,11 @@ class DateStrptime(DateTemplate):
 				# Try to convert date string to 'C' locale
 				conv = self.convertLocale(dateMatch.group())
 				try:
-					date = datetime.strptime(conv, self.getPattern())
+					date = datetime.strptime(conv, datePattern)
 				except (ValueError, re.error), e:
 					# Try to add the current year to the pattern. Should fix
 					# the "Feb 29" issue.
-					opattern = self.getPattern()
+					opattern = datePattern
 					# makes sense only if %Y is not in already:
 					if not '%Y' in opattern:
 						pattern = "%s %%Y" % opattern
@@ -211,9 +215,9 @@ class DateStrptime(DateTemplate):
 						month=MyTime.gmtime()[1], day=MyTime.gmtime()[2])
 
 			if date.tzinfo:
-				return ( calendar.timegm(date.utctimetuple()), dateMatch )
+				return calendar.timegm(date.utctimetuple())
 			else:
-				return ( time.mktime(date.utctimetuple()), dateMatch )
+				return time.mktime(date.utctimetuple())
 				
 		return None
 
@@ -230,7 +234,6 @@ except ValueError:
 	DateStrptime._z = False
 
 class DatePatternRegex(DateStrptime):
-	_reEscape = r"([\\.^$*+?\(\){}\[\]|])"
 	_patternRE = r"%(%|[aAbBdfHIjmMpSUwWyYz])"
 	_patternName = {
 		'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
@@ -239,35 +242,60 @@ class DatePatternRegex(DateStrptime):
 		'w': "Weekday", 'W': "Yearweek", 'y': 'Year2', 'Y': "Year", '%': "%",
 		'z': "Zone offset", 'f': "Microseconds" }
 	_patternRegex = {
-		'a': r"\w{3}", 'A': r"\w+", 'b': r"\w{3}", 'B': r"\w+",
-		'd': r"(?:3[0-1]|[1-2]\d|[ 0]?\d)",
-		'f': r"(?P<_f>\d{1,6})", 'H': r"(?:2[0-3]|1\d|[ 0]?\d)",
-		'I': r"(?:1[0-2]|[ 0]?\d)",
-		'j': r"(?:36[0-6]3[0-5]\d|[1-2]\d\d|[ 0]?\d\d|[ 0]{0,2}\d)",
-		'm': r"(?:1[0-2]|[ 0]?[1-9])", 'M': r"[0-5]\d", 'p': r"[AP]M",
-		'S': r"(?:6[01]|[0-5]\d)", 'U': r"(?:5[0-3]|[1-4]\d|[ 0]?\d)",
-		'w': r"[0-6]", 'W': r"(?:5[0-3]|[ 0]?\d)", 'y': r"\d{2}",
-		'Y': r"\d{4}",
+		'a': r"(?P<_a>\w{3})", 'A': r"(?P<_A>\w+)", 'b': r"(?P<_b>\w{3})",
+		'B': r"?(P<_B>\w+)", 'd': r"(?P<_d>3[0-1]|[1-2]\d|[ 0]?\d)",
+		'f': r"(?P<_f>\d{1,6})", 'H': r"(?P<_H>2[0-3]|1\d|[ 0]?\d)",
+		'I': r"(?P<_I>1[0-2]|[ 0]?\d)",
+		'j': r"(?P<_j>36[0-6]3[0-5]\d|[1-2]\d\d|[ 0]?\d\d|[ 0]{0,2}\d)",
+		'm': r"(?P<_m>1[0-2]|[ 0]?[1-9])", 'M': r"(?P<_M>[0-5]\d)",
+		'p': r"(?P<_p>[AP]M)", 'S': r"(?P<_S>6[01]|[0-5]\d)",
+		'U': r"(?P<_U>5[0-3]|[1-4]\d|[ 0]?\d)", 'w': r"(?P<_r>[0-6])",
+		'W': r"(?P<_W>5[0-3]|[ 0]?\d)", 'y': r"(?P<_y>\d{2})",
+		'Y': r"(?P<_Y>\d{4})",
 		'z': r"(?P<_z>[+-]\d{4})", '%': "%"}
 
 	def __init__(self, pattern=None, **kwargs):
-		DateStrptime.__init__(self)
+		super(DatePatternRegex, self).__init__()
 		if pattern:
-			self.setPattern(pattern, **kwargs)
+			self.setPattern(pattern)
 
-	def setPattern(self, pattern, anchor=False, **kwargs):
-		DateStrptime.setPattern(self, pattern.strip())
+	def setPattern(self, pattern):
+		super(DatePatternRegex, self).setPattern(pattern)
 
-		name = re.sub(self._patternRE, r'%(\1)s', pattern) % self._patternName
-		DateStrptime.setName(self, name)
+		self._name = re.sub(
+			self._patternRE, r'%(\1)s', pattern) % self._patternName
 
-		# Custom escape as don't want to escape "%"
-		pattern = re.sub(self._reEscape, r'\\\1', pattern)
 		regex = re.sub(
 			self._patternRE, r'%(\1)s', pattern) % self._patternRegex
-		if anchor:
-			regex = r"^" + regex
-		DateStrptime.setRegex(self, regex, **kwargs)
+		self._regex = regex
+		self._cRegex = re.compile(regex, re.UNICODE)
+
+	def matchDate(self, line, incDateMatch=False):
+		dateMatch = self._cRegex.search(line)
+		if not dateMatch:
+			return None
+		else:
+			pattern = " ".join(
+				key.replace("_", "%")
+				for key, value in dateMatch.groupdict().iteritems()
+				if value is not None)
+			newMatch = re.search("^.+$",
+				" ".join(value
+				for key, value in dateMatch.groupdict().iteritems()
+				if value is not None))
+			if incDateMatch:
+				return dateMatch, newMatch, pattern
+			else:
+				return dateMatch
+
+	def getDate(self, line):
+		dateMatch = self.matchDate(line, incDateMatch=True)
+		if dateMatch:
+			date = super(DatePatternRegex, self)._getDateStrptime(
+				dateMatch[1], dateMatch[2])
+			if date:
+				return date, dateMatch[0]
+		return None
 
 	def setRegex(self, line):
 		raise NotImplementedError("Regex derived from pattern")

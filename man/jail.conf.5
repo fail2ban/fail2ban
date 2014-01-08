@@ -268,7 +268,7 @@ Similar to actions, filters have an [Init] section which can be overridden in \f
 specifies the maximum number of lines to buffer to match multi-line regexs. For some log formats this will not required to be changed. Other logs may require to increase this value if a particular log file is frequently written to.
 .TP
 \fBdatepattern\fR
-specifies a custom date pattern as an alternative to the default date detectors e.g. %Y-%m-%d %H:%M
+specifies a custom date pattern/regex as an alternative to the default date detectors e.g. %Y-%m-%d %H:%M(?:%S)?
 .br
 The following are acceptable format fields (see strptime(3) for descriptions):
 .nf
