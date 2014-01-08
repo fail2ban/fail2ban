@@ -139,26 +139,29 @@ class DateStrptime(DateTemplate):
 	def getDate(self, line):
 		dateMatch = self.matchDate(line)
 		if dateMatch:
-			return self._getDateStrptime(dateMatch, self._pattern), dateMatch
+			return self._getDateStrptime(
+				dateMatch, self._pattern, dateMatch.groupdict().get("_f"),
+				dateMatch.groupdict().get("_z")), dateMatch
 		else:
 			return None
 
-	def _getDateStrptime(self, dateMatch, datePattern):
-		if dateMatch and datePattern:
+	def _getDateStrptime(self, dateLine, datePattern, fMatch=None,
+			zMatch=None):
+		if dateLine and datePattern:
 			if self._unsupported_f:
-				if dateMatch.groupdict().get('_f'):
-					datePattern = re.sub(r'%f', dateMatch.group('_f'), datePattern)
-					logSys.debug(u"Replacing %%f with %r now %r" % (dateMatch.group('_f'), datePattern))
+				if fMatch:
+					datePattern = re.sub(r'%f', fMatch, datePattern)
+					logSys.debug(u"Replacing %%f with %r now %r" % (fMatch, datePattern))
 			if self._unsupported_z:
-				if dateMatch.groupdict().get('_z'):
-					datePattern = re.sub(r'%z', dateMatch.group('_z'), datePattern)
-					logSys.debug(u"Replacing %%z with %r now %r" % (dateMatch.group('_z'), datePattern))
+				if zMatch:
+					datePattern = re.sub(r'%z', zMatch, datePattern)
+					logSys.debug(u"Replacing %%z with %r now %r" % (zMatch, datePattern))
 			try:
 				# Try first with 'C' locale
-				date = datetime.strptime(dateMatch.group(), datePattern)
+				date = datetime.strptime(dateLine, datePattern)
 			except ValueError:
 				# Try to convert date string to 'C' locale
-				conv = self.convertLocale(dateMatch.group())
+				conv = self.convertLocale(dateLine)
 				try:
 					date = datetime.strptime(conv, datePattern)
 				except (ValueError, re.error), e:
@@ -179,10 +182,10 @@ class DateStrptime(DateTemplate):
 							"pattern" % (opattern, e))
 
 			if self._unsupported_z:
-				z = dateMatch.groupdict().get('_z')
-				if z:
-					delta = timedelta(hours=int(z[1:3]),minutes=int(z[3:]))
-					direction = z[0]
+				if zMatch:
+					delta = timedelta(
+						hours=int(zMatch[1:3]),minutes=int(zMatch[3:]))
+					direction = zMatch[0]
 					logSys.debug(u"Altering %r by removing time zone offset (%s)%s" % (date, direction, delta))
 					# here we reverse the effect of the timezone and force it to UTC
 					if direction == '+':
@@ -277,14 +280,12 @@ class DatePatternRegex(DateStrptime):
 				key.replace("_", "%")
 				for key, value in dateMatch.groupdict().iteritems()
 				if value is not None)
-			newMatch = re.search(
-				re.sub(
-					self._patternRE, r'%(\1)s', pattern) % self._patternRegex,
-				" ".join(value
+			newLine = " ".join(value
 				for key, value in dateMatch.groupdict().iteritems()
-				if value is not None))
+				if value is not None)
 			date = super(DatePatternRegex, self)._getDateStrptime(
-				newMatch, pattern)
+				newLine, pattern, dateMatch.groupdict().get("_f"),
+				dateMatch.groupdict().get("_z"))
 			if date:
 				return date, dateMatch
 		return None
