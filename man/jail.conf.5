@@ -28,7 +28,7 @@ Actions defining the commands for banning and unbanning of IP address
 Jails defining combinations of Filters with Actions.
 
 
-.SH "CONFIGUATION FILES FORMAT"
+.SH "CONFIGURATION FILES FORMAT"
 
 \fI*.conf\fR files are distributed by Fail2Ban.  It is recommended that *.conf files should remain unchanged to ease upgrades.  If needed, customizations should be provided in \fI*.local\fR files.  For example, if you would like to enable the [ssh-iptables-ipset] jail specified in jail.conf, create jail.local containing
 
@@ -45,7 +45,7 @@ In .local files specify only the settings you would like to change and the rest 
 \fIjail.d/\fR and \fIfail2ban.d/\fR
 
 In addition to .local, for jail.conf or fail2ban.conf file there can
-be a corresponding \fI.d/\fR directory containining additional .conf
+be a corresponding \fI.d/\fR directory containing additional .conf
 files. The order e.g. for \fIjail\fR configuration would be:
 
 .RS
@@ -128,7 +128,7 @@ The following options are applicable to any jail. They appear in a section speci
 name of the filter -- filename of the filter in /etc/fail2ban/filter.d/ without the .conf/.local extension. Only one filter can be specified.
 .TP
 .B logpath
-filename(s) of the log files to be monitored. Globs -- paths containing * and ? or [0-9] -- can be used however only the files that exist at startup matching this glob pattern will be considered.
+filename(s) of the log files to be monitored. Globs -- paths containing * and ? or [0-9] -- can be used however only the files that exist at start up matching this glob pattern will be considered.
 .TP
 .B action
 action(s) from \fI/etc/fail2ban/action.d/\fR without the \fI.conf\fR/\fI.local\fR extension. Arguments can be passed to actions to override the default values from the [Init] section in the action file. Arguments are specified by [name=value,name2=value]. Values can also be quoted. More that one action can be specified (in separate lines).
@@ -242,10 +242,13 @@ Manual page written by Daniel Black and Yaroslav Halchenko.
 .SH "REPORTING BUGS"
 Report bugs to https://github.com/fail2ban/fail2ban/issues
 .SH COPYRIGHT
-Copyright \(co 2013 Daniel Black and the Fail2Ban Team
+Copyright \(co 2013 the Fail2Ban Team
 .br
 Copyright of modifications held by their respective authors.
-Licensed under the GNU General Public License v2 (GPL).
+.br
+Licensed under the GNU General Public License v2 (GPL) or
+(at your option) any later version.
+.
 .SH "SEE ALSO"
 .br
 fail2ban-server(1)
