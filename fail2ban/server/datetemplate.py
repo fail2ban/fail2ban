@@ -35,7 +35,7 @@ from . import iso8601
 logSys = logging.getLogger(__name__)
 
 
-class DateTemplate:
+class DateTemplate(object):
 	
 	def __init__(self):
 		self._name = ""
@@ -146,11 +146,11 @@ class DateStrptime(DateTemplate):
 	def _getDateStrptime(self, dateMatch, datePattern):
 		if dateMatch and datePattern:
 			if self._unsupported_f:
-				if dateMatch.group('_f'):
+				if dateMatch.groupdict().get('_f'):
 					datePattern = re.sub(r'%f', dateMatch.group('_f'), datePattern)
 					logSys.debug(u"Replacing %%f with %r now %r" % (dateMatch.group('_f'), datePattern))
 			if self._unsupported_z:
-				if dateMatch.group('_z'):
+				if dateMatch.groupdict().get('_z'):
 					datePattern = re.sub(r'%z', dateMatch.group('_z'), datePattern)
 					logSys.debug(u"Replacing %%z with %r now %r" % (dateMatch.group('_z'), datePattern))
 			try:
@@ -179,7 +179,7 @@ class DateStrptime(DateTemplate):
 							"pattern" % (opattern, e))
 
 			if self._unsupported_z:
-				z = dateMatch.group('_z')
+				z = dateMatch.groupdict().get('_z')
 				if z:
 					delta = timedelta(hours=int(z[1:3]),minutes=int(z[3:]))
 					direction = z[0]
@@ -270,31 +270,23 @@ class DatePatternRegex(DateStrptime):
 		self._regex = regex
 		self._cRegex = re.compile(regex, re.UNICODE)
 
-	def matchDate(self, line, incDateMatch=False):
-		dateMatch = self._cRegex.search(line)
-		if not dateMatch:
-			return None
-		else:
+	def getDate(self, line):
+		dateMatch = self.matchDate(line)
+		if dateMatch:
 			pattern = " ".join(
 				key.replace("_", "%")
 				for key, value in dateMatch.groupdict().iteritems()
 				if value is not None)
-			newMatch = re.search("^.+$",
+			newMatch = re.search(
+				re.sub(
+					self._patternRE, r'%(\1)s', pattern) % self._patternRegex,
 				" ".join(value
 				for key, value in dateMatch.groupdict().iteritems()
 				if value is not None))
-			if incDateMatch:
-				return dateMatch, newMatch, pattern
-			else:
-				return dateMatch
-
-	def getDate(self, line):
-		dateMatch = self.matchDate(line, incDateMatch=True)
-		if dateMatch:
 			date = super(DatePatternRegex, self)._getDateStrptime(
-				dateMatch[1], dateMatch[2])
+				newMatch, pattern)
 			if date:
-				return date, dateMatch[0]
+				return date, dateMatch
 		return None
 
 	def setRegex(self, line):
