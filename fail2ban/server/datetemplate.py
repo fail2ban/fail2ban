@@ -283,7 +283,10 @@ class DatePatternRegex(DateStrptime):
 					pattern.append(key.replace("_", "%", 1))
 					newLine.append(value)
 			pattern = " ".join(pattern)
-			newLine = " ".join(newLine)
+			newLine = " ".join(newLine).strip()
+			logSys.debug(
+				"Attempting date match with pattern '%s', date string '%s'",
+				pattern, newLine)
 			date = super(DatePatternRegex, self)._getDateStrptime(
 				newLine, pattern, dateMatch.groupdict().get("_f"),
 				dateMatch.groupdict().get("_z"))
