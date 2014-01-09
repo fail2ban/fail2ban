@@ -151,7 +151,8 @@ def testSampleRegexsFactory(name):
 
 for filter_ in filter(lambda x: not x.endswith('common.conf'), os.listdir(os.path.join(CONFIG_DIR, "filter.d"))):
 	filterName = filter_.rpartition(".")[0]
-	setattr(
-		FilterSamplesRegex,
-		"testSampleRegexs%s" % filterName.upper(),
-		testSampleRegexsFactory(filterName))
+	if not filterName.startswith('.'):
+		setattr(
+			FilterSamplesRegex,
+			"testSampleRegexs%s" % filterName.upper(),
+			testSampleRegexsFactory(filterName))
