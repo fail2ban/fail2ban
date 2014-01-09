@@ -276,13 +276,14 @@ class DatePatternRegex(DateStrptime):
 	def getDate(self, line):
 		dateMatch = self.matchDate(line)
 		if dateMatch:
-			pattern = " ".join(
-				key.replace("_", "%")
-				for key, value in dateMatch.groupdict().iteritems()
-				if value is not None)
-			newLine = " ".join(value
-				for key, value in dateMatch.groupdict().iteritems()
-				if value is not None)
+			pattern = []
+			newLine = []
+			for key, value in dateMatch.groupdict().iteritems():
+				if value is not None and key.lstrip("_") in self._patternName:
+					pattern.append(key.replace("_", "%", 1))
+					newLine.append(value)
+			pattern = " ".join(pattern)
+			newLine = " ".join(newLine)
 			date = super(DatePatternRegex, self)._getDateStrptime(
 				newLine, pattern, dateMatch.groupdict().get("_f"),
 				dateMatch.groupdict().get("_z"))
