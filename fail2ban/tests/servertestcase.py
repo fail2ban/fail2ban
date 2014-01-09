@@ -33,7 +33,7 @@ from ..exceptions import UnknownJailException
 from .utils import LogCaptureTestCase
 #from bin.fail2ban-client import Fail2banClient
 try:
-	from fail2ban.server import filtersystemd
+	from ..server import filtersystemd
 except ImportError: # pragma: no cover
 	filtersystemd = None
 
