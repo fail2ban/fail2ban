@@ -379,11 +379,11 @@ class CommandAction(ActionBase):
 				#logSys.log(5, 'found: %s' % found_tag)
 				if found_tag == tag or found_tag in done:
 					# recursive definitions are bad
-					#logSys.log(5, 'recursion fail')
+					#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 					return False
 				else:
 					if tags.has_key(found_tag):
-						value = value[0:m.start()] + tags[found_tag] + value[m.end():]
+						value = value.replace('<%s>' % found_tag , tags[found_tag])
 						#logSys.log(5, 'value now: %s' % value)
 						done.append(found_tag)
 						m = t.search(value, m.start())

@@ -102,6 +102,7 @@ fail2ban/tests/files/logs/bsd/syslog-vv.txt
 fail2ban/tests/files/logs/3proxy
 fail2ban/tests/files/logs/apache-auth
 fail2ban/tests/files/logs/apache-badbots
+fail2ban/tests/files/logs/apache-botscripts
 fail2ban/tests/files/logs/apache-modsecurity
 fail2ban/tests/files/logs/apache-nohome
 fail2ban/tests/files/logs/apache-noscript
@@ -170,6 +171,7 @@ config/fail2ban.conf
 config/filter.d/common.conf
 config/filter.d/apache-auth.conf
 config/filter.d/apache-badbots.conf
+config/filter.d/apache-botsearch.conf
 config/filter.d/apache-nohome.conf
 config/filter.d/apache-noscript.conf
 config/filter.d/apache-overflows.conf
