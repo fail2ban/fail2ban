@@ -52,6 +52,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
     Closes gh-566
   - Added to sshd filter expression for "Received disconnect from <HOST>: 3:
     ...: Auth fail". Thanks Marcel Dopita. Closes gh-289
+  - Added filter.d/ejabberd-auth
 
 - New Features:
 
