@@ -27,7 +27,7 @@ from .mytime import MyTime
 locale_time = LocaleTime()
 timeRE = TimeRE()
 if 'z' not in timeRE: # python2.6 not present
-	timeRE['z'] = r"(?P<z>[+-]\d{2}[-5]\d)"
+	timeRE['z'] = r"(?P<z>[+-]\d{2}[0-5]\d)"
 
 def reGroupDictStrptime(found_dict):
 	"""This is tweaked from python built-in _strptime"""
