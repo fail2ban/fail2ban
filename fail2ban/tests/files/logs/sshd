@@ -99,3 +99,36 @@ May 27 00:16:33 host sshd[2364]: User root not allowed because account is locked
 May 27 00:16:33 host sshd[2364]: input_userauth_request: invalid user root [preauth]
 # failJSON: { "time": "2005-05-27T00:16:33", "match": true , "host": "198.51.100.76" }
 May 27 00:16:33 host sshd[2364]: Received disconnect from 198.51.100.76: 11: Bye Bye [preauth]
+
+# failJSON: { "time": "2004-09-29T16:28:02", "match": true , "host": "127.0.0.1" }
+Sep 29 16:28:02 spaceman sshd[16699]: Failed password for dan from 127.0.0.1 port 45416 ssh1
+
+# failJSON: { "time": "2004-09-29T17:15:02", "match": true , "host": "127.0.0.1" }
+Sep 29 17:15:02 spaceman sshd[12946]: Failed hostbased for dan from 127.0.0.1 port 45785 ssh2: RSA 8c:e3:aa:0f:64:51:02:f7:14:79:89:3f:65:84:7c:30, client user "dan", client host "localhost.localdomain"
+
+# failJSON: { "time": "2004-09-29T17:15:02", "match": true , "host": "127.0.0.1" }
+Sep 29 17:15:02 spaceman sshd[12946]: Failed hostbased for dan from 127.0.0.1 port 45785 ssh2: DSA 01:c0:79:41:91:31:9a:7d:95:23:91:ac:b1:6d:59:81, client user "dan", client host "localhost.localdomain"
+
+# failJSON: { "time": "2004-09-29T17:15:02", "match": true , "host": "127.0.0.1", "desc": "Injecting into rhost for the format of OpenSSH >=6.3" }
+Sep 29 17:15:02 spaceman sshd[12946]: Failed password for user from 127.0.0.1 port 20000 ssh1: ruser from 1.2.3.4
+
+# failJSON: { "time": "2004-09-29T17:15:02", "match": true , "host": "127.0.0.1", "desc": "Injecting while exhausting initially present {0,100} match length limits set for ruser etc" }
+Sep 29 17:15:02 spaceman sshd[12946]: Failed password for user from 127.0.0.1 port 20000 ssh1: ruser XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX from 1.2.3.4
+
+# failJSON: { "time": "2004-11-11T08:04:51", "match": true , "host": "127.0.0.1", "desc": "Injecting on username ssh 'from 10.10.1.1'@localhost" }
+Nov 11 08:04:51 redbamboo sshd[2737]: Failed password for invalid user from 10.10.1.1 from 127.0.0.1 port 58946 ssh2
+
+
+# failJSON: { "match": false }
+Nov 23 21:50:19 sshd[8148]: Disconnecting: Too many authentication failures for root [preauth]
+# failJSON: { "time": "2004-11-23T21:50:37", "match": true , "host": "61.0.0.1", "desc": "Multiline match for preauth failures" }
+Nov 23 21:50:37 sshd[8148]: Connection closed by 61.0.0.1 [preauth]
+
+# failJSON: { "match": false }
+Nov 23 21:50:19 sshd[9148]: Disconnecting: Too many authentication failures for root [preauth]
+# failJSON: { "match": false , "desc": "Pids don't match" }
+Nov 23 21:50:37 sshd[7148]: Connection closed by 61.0.0.1 [preauth]
+
+# failJSON: { "time": "2005-07-13T18:44:28", "match": true , "host": "89.24.13.192", "desc": "from gh-289" }
+Jul 13 18:44:28 mdop sshd[4931]: Received disconnect from 89.24.13.192: 3: com.jcraft.jsch.JSchException: Auth fail
+

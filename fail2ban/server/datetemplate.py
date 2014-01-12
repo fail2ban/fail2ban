@@ -25,14 +25,13 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import re, time, calendar
-
+import logging
 from datetime import datetime
 from datetime import timedelta
 
-from mytime import MyTime
-import iso8601
+from .mytime import MyTime
+from . import iso8601
 
-import logging
 logSys = logging.getLogger(__name__)
 
 
@@ -82,8 +81,7 @@ class DateEpoch(DateTemplate):
 	
 	def __init__(self):
 		DateTemplate.__init__(self)
-		# We already know the format for TAI64N
-		self.setRegex("^\d{10}(\.\d{6})?")
+		self.setRegex("(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=audit\()))\d{10}(?:\.\d{3,6})?(?(selinux)(?=:\d+\))(?(square)(?=\])))")
 	
 	def getDate(self, line):
 		dateMatch = self.matchDate(line)
@@ -209,7 +207,8 @@ class DateStrptime(DateTemplate):
 					# If it is Jan 1st, it is either really Jan 1st or there
 					# is neither month nor day in the log.
 					# NOTE: Possibly makes week/year day incorrect
-					date = date.replace(month=MyTime.gmtime()[1], day=1)
+					date = date.replace(
+						month=MyTime.gmtime()[1], day=MyTime.gmtime()[2])
 
 			if date.tzinfo:
 				return ( calendar.timegm(date.utctimetuple()), dateMatch )

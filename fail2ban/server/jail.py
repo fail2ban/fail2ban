@@ -25,7 +25,7 @@ __license__ = "GPL"
 
 import Queue, logging
 
-from actions import Actions
+from .actions import Actions
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -37,7 +37,8 @@ class Jail:
 	#      list had .index until 2.6
 	_BACKENDS = ['pyinotify', 'gamin', 'polling', 'systemd']
 
-	def __init__(self, name, backend = "auto"):
+	def __init__(self, name, backend = "auto", db=None):
+		self.__db = db
 		self.setName(name)
 		self.__queue = Queue.Queue()
 		self.__filter = None
@@ -70,7 +71,7 @@ class Jail:
 								   "%r was requested" % (b, backend))
 				else:
 					logSys.info("Initiated %r backend" % b)
-				self.__action = Actions(self)
+				self.__actions = Actions(self)
 				return					# we are done
 			except ImportError, e:
 				logSys.debug(
@@ -109,7 +110,8 @@ class Jail:
 		self.__filter = FilterSystemd(self)
 	
 	def setName(self, name):
-		if len(name) >= 20:
+		# 26 based on iptable chain name limit of 30 less len('f2b-')
+		if len(name) >= 26:
 			logSys.warning("Jail name %r might be too long and some commands "
 							"might not function correctly. Please shorten"
 							% name)
@@ -118,14 +120,25 @@ class Jail:
 	def getName(self):
 		return self.__name
 	
-	def getFilter(self):
-		return self.__filter
+	def getDatabase(self):
+		return self.__db
 	
-	def getAction(self):
-		return self.__action
+	@property
+	def filter(self):
+		"""The filter which the jail is using to monitor log files.
+		"""
+		return self.__filter
+
+	@property
+	def actions(self):
+		"""Actions object used to manage actions for jail.
+		"""
+		return self.__actions
 	
 	def putFailTicket(self, ticket):
 		self.__queue.put(ticket)
+		if self.__db is not None:
+			self.__db.addBan(self, ticket)
 	
 	def getFailTicket(self):
 		try:
@@ -135,31 +148,36 @@ class Jail:
 	
 	def start(self):
 		self.__filter.start()
-		self.__action.start()
+		self.__actions.start()
+		# Restore any previous valid bans from the database
+		if self.__db is not None:
+			for ticket in self.__db.getBans(
+				jail=self, bantime=self.__actions.getBanTime()):
+				self.__queue.put(ticket)
 		logSys.info("Jail '%s' started" % self.__name)
 	
 	def stop(self):
 		self.__filter.stop()
-		self.__action.stop()
+		self.__actions.stop()
 		self.__filter.join()
-		self.__action.join()
+		self.__actions.join()
 		logSys.info("Jail '%s' stopped" % self.__name)
 	
 	def isAlive(self):
 		isAlive0 = self.__filter.isAlive()
-		isAlive1 = self.__action.isAlive()
+		isAlive1 = self.__actions.isAlive()
 		return isAlive0 or isAlive1
 	
 	def setIdle(self, value):
 		self.__filter.setIdle(value)
-		self.__action.setIdle(value)
+		self.__actions.setIdle(value)
 	
 	def getIdle(self):
-		return self.__filter.getIdle() or self.__action.getIdle()
+		return self.__filter.getIdle() or self.__actions.getIdle()
 	
 	def getStatus(self):
 		fStatus = self.__filter.status()
-		aStatus = self.__action.status()
+		aStatus = self.__actions.status()
 		ret = [("filter", fStatus), 
 			   ("action", aStatus)]
 		return ret

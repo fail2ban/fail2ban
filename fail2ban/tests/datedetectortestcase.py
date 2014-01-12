@@ -25,10 +25,10 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import unittest, calendar, time, datetime, re, pprint
-from fail2ban.server.datedetector import DateDetector
-from fail2ban.server.datetemplate import DateTemplate
-from fail2ban.server.iso8601 import Utc
-from fail2ban.tests.utils import setUpMyTime, tearDownMyTime
+from ..server.datedetector import DateDetector
+from ..server.datetemplate import DateTemplate
+from ..server.iso8601 import Utc
+from .utils import setUpMyTime, tearDownMyTime
 
 class DateDetectorTest(unittest.TestCase):
 
@@ -69,39 +69,51 @@ class DateDetectorTest(unittest.TestCase):
 		date = [2005, 1, 23, 21, 59, 59, 6, 23, -1]
 		dateUnix = 1106513999.0
 
-		for sdate in (
-			"Jan 23 21:59:59",
-			"Sun Jan 23 21:59:59.011 2005",
-			"Sun Jan 23 21:59:59 2005",
-			"Sun Jan 23 21:59:59",
-			"2005/01/23 21:59:59",
-			"2005.01.23 21:59:59",
-			"23/01/2005 21:59:59",
-			"23/01/05 21:59:59",
-			"23/Jan/2005:21:59:59 +0100",
-			"01/23/2005:21:59:59",
-			"2005-01-23 21:59:59",
-			"23-Jan-2005 21:59:59.02",
-			"23-Jan-2005 21:59:59 +0100",
-			"23-01-2005 21:59:59",
-			"01-23-2005 21:59:59.252", # reported on f2b, causes Feb29 fix to break
-			"@4000000041f4104f00000000", # TAI64N
-			"2005-01-23T20:59:59.252Z", #ISO 8601
-			"2005-01-23T15:59:59-05:00", #ISO 8601 with TZ
-			"<01/23/05@21:59:59>",
-			"050123 21:59:59", # MySQL
-			"Jan 23, 2005 9:59:59 PM", # Apache Tomcat
-			"Jan-23-05 21:59:59", # ASSP like
+		for anchored, sdate in (
+			(False, "Jan 23 21:59:59"),
+			(False, "Sun Jan 23 21:59:59 2005"),
+			(False, "Sun Jan 23 21:59:59"),
+			(False, "2005/01/23 21:59:59"),
+			(False, "2005.01.23 21:59:59"),
+			(False, "23/01/2005 21:59:59"),
+			(False, "23/01/05 21:59:59"),
+			(False, "23/Jan/2005:21:59:59"),
+			(False, "23/Jan/2005:21:59:59 +0100"),
+			(False, "01/23/2005:21:59:59"),
+			(False, "2005-01-23 21:59:59"),
+		    (False, "2005-01-23 21:59:59,000"),	  # proftpd
+			(False, "23-Jan-2005 21:59:59"),
+			(False, "23-Jan-2005 21:59:59.02"),
+			(False, "23-Jan-2005 21:59:59 +0100"),
+			(False, "23-01-2005 21:59:59"),
+			(False, "01-23-2005 21:59:59.252"), # reported on f2b, causes Feb29 fix to break
+			(False, "@4000000041f4104f00000000"), # TAI64N
+			(False, "2005-01-23T20:59:59.252Z"), #ISO 8601
+			(False, "2005-01-23T15:59:59-05:00"), #ISO 8601 with TZ
+			(True,  "<01/23/05@21:59:59>"),
+			(True,  "050123 21:59:59"), # MySQL
+			(True,  "Jan-23-05 21:59:59"), # ASSP like
+			(False, "Jan 23, 2005 9:59:59 PM"), # Apache Tomcat
+			(True,  "1106513999"), # Regular epoch
+			(True,  "1106513999.000"), # Regular epoch with millisec
+			(False, "audit(1106513999.000:987)"), # SELinux
 			):
-			log = sdate + "[sshd] error: PAM: Authentication failure"
-			# exclude
+			for should_match, prefix in ((True,     ""),
+										 (not anchored, "bogus-prefix ")):
+				log = prefix + sdate + "[sshd] error: PAM: Authentication failure"
 
-			# yoh: on [:6] see in above test
-			logtime = self.__datedetector.getTime(log)
-			self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s" % sdate)
-			( logUnix, logMatch ) = logtime
-			self.assertEqual(logUnix, dateUnix, "getTime comparison failure for %s: \"%s\" is not \"%s\"" % (sdate, logUnix, dateUnix))
-			self.assertEqual(logMatch.group(), sdate)
+				logtime = self.__datedetector.getTime(log)
+				if should_match:
+					self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s, anchored: %r, log: %s" % ( sdate, anchored, log))
+					( logUnix, logMatch ) = logtime
+					self.assertEqual(logUnix, dateUnix, "getTime comparison failure for %s: \"%s\" is not \"%s\"" % (sdate, logUnix, dateUnix))
+					if sdate.startswith('audit('):
+						# yes, special case, the group only matches the number
+						self.assertEqual(logMatch.group(), '1106513999.000')
+					else:
+						self.assertEqual(logMatch.group(), sdate)
+				else:
+					self.assertEqual(logtime, None, "getTime should have not matched for %r Got: %s" % (sdate, logtime))
 
 	def testStableSortTemplate(self):
 		old_names = [x.getName() for x in self.__datedetector.getTemplates()]
@@ -176,6 +188,14 @@ class DateDetectorTest(unittest.TestCase):
 		if overlapedTemplates:
 			print("WARNING: The following date templates overlap:")
 			pprint.pprint(overlapedTemplates)
+
+	def testDateTemplate(self):
+			t = DateTemplate()
+			t.setRegex('^a{3,5}b?c*$')
+			self.assertEqual(t.getRegex(), '^a{3,5}b?c*$')
+			self.assertRaises(Exception, t.getDate, '')
+			self.assertEqual(t.matchDate('aaaac').group(), 'aaaac')
+
 
 #	def testDefaultTempate(self):
 #		self.__datedetector.setDefaultRegex("^\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")

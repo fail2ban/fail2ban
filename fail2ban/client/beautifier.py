@@ -23,7 +23,7 @@ __license__ = "GPL"
 
 import logging
 
-from fail2ban.exceptions import UnknownJailException, DuplicateJailException
+from ..exceptions import UnknownJailException, DuplicateJailException
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -63,6 +63,8 @@ class Beautifier:
 						msg = "Jail stopped"
 			elif inC[0] == "add":
 				msg = "Added jail " + response
+			elif inC[0] == "flushlogs":
+				msg = "logs: " + response
 			elif inC[0:1] == ['status']:
 				if len(inC) > 1:
 					# Create IP list
@@ -102,6 +104,18 @@ class Beautifier:
 					msg = msg + "DEBUG"
 				else:
 					msg = msg + `response`
+			elif inC[1] == "dbfile":
+				if response is None:
+					msg = "Database currently disabled"
+				else:
+					msg = "Current database file is:\n"
+					msg = msg + "`- " + response
+			elif inC[1] == "dbpurgeage":
+				if response is None:
+					msg = "Database currently disabled"
+				else:
+					msg = "Current database purge age is:\n"
+					msg = msg + "`- %iseconds" % response
 			elif inC[2] in ("logpath", "addlogpath", "dellogpath"):
 				if len(response) == 0:
 					msg = "No file is currently monitored"
@@ -122,7 +136,7 @@ class Beautifier:
 			elif inC[2] == "datepattern":
 				msg = "Current date pattern set to: "
 				if response is None:
-					msg = msg + "Default Detectors"
+					msg = msg + "Not set/required"
 				elif response[0] is None:
 					msg = msg + "%s" % response[1]
 				else:
@@ -151,7 +165,23 @@ class Beautifier:
 					msg = "No actions for jail %s" % inC[1]
 				else:
 					msg = "The jail %s has the following actions:\n" % inC[1]
-					msg += ", ".join(action.getName() for action in response)
+					msg += ", ".join(response)
+			elif inC[2] == "actionproperties":
+				if len(response) == 0:
+					msg = "No properties for jail %s action %s" % (
+						inC[1], inC[3])
+				else:
+					msg = "The jail %s action %s has the following " \
+						"properties:\n" % (inC[1], inC[3])
+					msg += ", ".join(response)
+			elif inC[2] == "actionmethods":
+				if len(response) == 0:
+					msg = "No methods for jail %s action %s" % (
+						inC[1], inC[3])
+				else:
+					msg = "The jail %s action %s has the following " \
+						"methods:\n" % (inC[1], inC[3])
+					msg += ", ".join(response)
 		except Exception:
 			logSys.warning("Beautifier error. Please report the error")
 			logSys.error("Beautify " + `response` + " with " + `self.__inputCmd` +

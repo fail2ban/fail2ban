@@ -25,6 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging, time
+import json
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -92,6 +93,8 @@ class Transmitter:
 			value = command[1]
 			time.sleep(int(value))
 			return None
+		elif command[0] == "flushlogs":
+			return self.__server.flushLogs()
 		elif command[0] == "set":
 			return self.__commandSet(command[1:])
 		elif command[0] == "get":
@@ -113,6 +116,21 @@ class Transmitter:
 				return self.__server.getLogTarget()
 			else:
 				raise Exception("Failed to change log target")
+		#Database
+		elif name == "dbfile":
+			self.__server.setDatabase(command[1])
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				return db.getFilename()
+		elif name == "dbpurgeage":
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				db.setPurgeAge(command[1])
+				return db.getPurgeAge()
 		# Jail
 		elif command[1] == "idle":
 			if command[2] == "on":
@@ -131,10 +149,21 @@ class Transmitter:
 			value = command[2]
 			self.__server.delIgnoreIP(name, value)
 			return self.__server.getIgnoreIP(name)
+		elif command[1] == "ignorecommand":
+			value = command[2]
+			self.__server.setIgnoreCommand(name, value)
+			return self.__server.getIgnoreCommand(name)
 		elif command[1] == "addlogpath":
-			value = command[2:]
-			for path in value:
-				self.__server.addLogPath(name, path)
+			value = command[2]
+			tail = False
+			if len(command) == 4:
+				if command[3].lower()  == "tail":
+					tail = True
+				elif command[3].lower() != "head":
+					raise ValueError("File option must be 'head' or 'tail'")
+			elif len(command) > 4:
+				raise ValueError("Only one file can be added at a time")
+			self.__server.addLogPath(name, value, tail)
 			return self.__server.getLogPath(name)
 		elif command[1] == "dellogpath":
 			value = command[2]
@@ -198,56 +227,29 @@ class Transmitter:
 			return self.__server.setBanIP(name,value)
 		elif command[1] == "unbanip":
 			value = command[2]
-			return self.__server.setUnbanIP(name,value)
+			self.__server.setUnbanIP(name, value)
+			return value
 		elif command[1] == "addaction":
-			value = command[2]
-			self.__server.addAction(name, value)
-			return self.__server.getLastAction(name).getName()
+			args = [command[2]]
+			if len(command) > 3:
+				args.extend([command[3], json.loads(command[4])])
+			self.__server.addAction(name, *args)
+			return args[0]
 		elif command[1] == "delaction":
 			value = command[2]
 			self.__server.delAction(name, value)
 			return None
-		elif command[1] == "setcinfo":
-			act = command[2]
-			key = command[3]
-			value = " ".join(command[4:])
-			self.__server.setCInfo(name, act, key, value)
-			return self.__server.getCInfo(name, act, key)
-		elif command[1] == "delcinfo":
-			act = command[2]
-			key = command[3]
-			self.__server.delCInfo(name, act, key)
-			return None
-		elif command[1] == "actionstart":
-			act = command[2]
-			value = " ".join(command[3:])
-			self.__server.setActionStart(name, act, value)
-			return self.__server.getActionStart(name, act)
-		elif command[1] == "actionstop":
-			act = command[2]
-			value = " ".join(command[3:])
-			self.__server.setActionStop(name, act, value)
-			return self.__server.getActionStop(name, act)
-		elif command[1] == "actioncheck":
-			act = command[2]
-			value = " ".join(command[3:])
-			self.__server.setActionCheck(name, act, value)
-			return self.__server.getActionCheck(name, act)
-		elif command[1] == "actionban":
-			act = command[2]
-			value = " ".join(command[3:])
-			self.__server.setActionBan(name, act, value)
-			return self.__server.getActionBan(name, act)
-		elif command[1] == "actionunban":
-			act = command[2]
-			value = " ".join(command[3:])
-			self.__server.setActionUnban(name, act, value)
-			return self.__server.getActionUnban(name, act)
-		elif command[1] == "timeout":
-			act = command[2]
-			value = int(command[3])
-			self.__server.setActionTimeout(name, act, value)
-			return self.__server.getActionTimeout(name, act)
+		elif command[1] == "action":
+			actionname = command[2]
+			actionkey = command[3]
+			action = self.__server.getAction(name, actionname)
+			if callable(getattr(action, actionkey, None)):
+				actionvalue = json.loads(command[4]) if len(command)>4 else {}
+				return getattr(action, actionkey)(**actionvalue)
+			else:
+				actionvalue = command[4]
+				setattr(action, actionkey, actionvalue)
+				return getattr(action, actionkey)
 		raise Exception("Invalid command (no set action or not yet implemented)")
 	
 	def __commandGet(self, command):
@@ -257,6 +259,19 @@ class Transmitter:
 			return self.__server.getLogLevel()
 		elif name == "logtarget":
 			return self.__server.getLogTarget()
+		#Database
+		elif name == "dbfile":
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				return db.getFilename()
+		elif name == "dbpurgeage":
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				return db.getPurgeAge()
 		# Filter
 		elif command[1] == "logpath":
 			return self.__server.getLogPath(name)
@@ -266,6 +281,8 @@ class Transmitter:
 			return self.__server.getJournalMatch(name)
 		elif command[1] == "ignoreip":
 			return self.__server.getIgnoreIP(name)
+		elif command[1] == "ignorecommand":
+			return self.__server.getIgnoreCommand(name)
 		elif command[1] == "failregex":
 			return self.__server.getFailRegex(name)
 		elif command[1] == "ignoreregex":
@@ -284,31 +301,25 @@ class Transmitter:
 		elif command[1] == "bantime":
 			return self.__server.getBanTime(name)
 		elif command[1] == "actions":
-			return self.__server.getActions(name)
-		elif command[1] == "addaction":
-			return self.__server.getLastAction(name).getName()
-		elif command[1] == "actionstart":
-			act = command[2]
-			return self.__server.getActionStart(name, act)
-		elif command[1] == "actionstop":
-			act = command[2]
-			return self.__server.getActionStop(name, act)
-		elif command[1] == "actioncheck":
-			act = command[2]
-			return self.__server.getActionCheck(name, act)
-		elif command[1] == "actionban":
-			act = command[2]
-			return self.__server.getActionBan(name, act)
-		elif command[1] == "actionunban":
-			act = command[2]
-			return self.__server.getActionUnban(name, act)
-		elif command[1] == "cinfo":
-			act = command[2]
-			key = command[3]
-			return self.__server.getCInfo(name, act, key)
-		elif command[1] == "timeout":
-			act = command[2]
-			return self.__server.getActionTimeout(name, act)
+			return self.__server.getActions(name).keys()
+		elif command[1] == "action":
+			actionname = command[2]
+			actionvalue = command[3]
+			action = self.__server.getAction(name, actionname)
+			return getattr(action, actionvalue)
+		elif command[1] == "actionproperties":
+			actionname = command[2]
+			action = self.__server.getAction(name, actionname)
+			return [
+				key for key in dir(action)
+				if not key.startswith("_") and
+					not callable(getattr(action, key))]
+		elif command[1] == "actionmethods":
+			actionname = command[2]
+			action = self.__server.getAction(name, actionname)
+			return [
+				key for key in dir(action)
+				if not key.startswith("_") and callable(getattr(action, key))]
 		raise Exception("Invalid command (no get action or not yet implemented)")
 	
 	def status(self, command):

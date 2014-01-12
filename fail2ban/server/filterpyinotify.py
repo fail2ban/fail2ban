@@ -24,13 +24,12 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Y
 __license__ = "GPL"
 
 import time, logging, pyinotify
-
 from distutils.version import LooseVersion
 from os.path import dirname, sep as pathsep
 
-from failmanager import FailManagerEmpty
-from filter import FileFilter
-from mytime import MyTime
+from .failmanager import FailManagerEmpty
+from .filter import FileFilter
+from .mytime import MyTime
 
 
 if not hasattr(pyinotify, '__version__') \
@@ -115,9 +114,6 @@ class FilterPyinotify(FileFilter):
 		wd = self.__monitor.add_watch(path, pyinotify.IN_MODIFY)
 		self.__watches.update(wd)
 		logSys.debug("Added file watcher for %s", path)
-		# process the file since we did get even
-		self._process_file(path)
-
 
 	def _delFileWatcher(self, path):
 		wdInt = self.__watches[path]
@@ -143,6 +139,7 @@ class FilterPyinotify(FileFilter):
 			logSys.debug("Added monitor for the parent directory %s", path_dir)
 
 		self._addFileWatcher(path)
+		self._process_file(path)
 
 
     ##

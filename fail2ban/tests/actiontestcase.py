@@ -24,40 +24,24 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, time
+import time
 import logging, sys
-from StringIO import StringIO
 
-from fail2ban.server.action import Action
+from ..server.action import CommandAction, CallingMap
 
-class ExecuteAction(unittest.TestCase):
+from .utils import LogCaptureTestCase
+
+class CommandActionTest(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.__action = Action("Test")
-
-		# For extended testing of what gets output into logging
-		# system, we will redirect it to a string
-		logSys = logging.getLogger("fail2ban")
-
-		# Keep old settings
-		self._old_level = logSys.level
-		self._old_handlers = logSys.handlers
-		# Let's log everything into a string
-		self._log = StringIO()
-		logSys.handlers = [logging.StreamHandler(self._log)]
-		logSys.setLevel(getattr(logging, 'DEBUG'))
+		self.__action = CommandAction(None, "Test")
+		LogCaptureTestCase.setUp(self)
 
 	def tearDown(self):
 		"""Call after every test case."""
-		# print "O: >>%s<<" % self._log.getvalue()
-		logSys = logging.getLogger("fail2ban")
-		logSys.handlers = self._old_handlers
-		logSys.level = self._old_level
-		self.__action.execActionStop()
-
-	def _is_logged(self, s):
-		return s in self._log.getvalue()
+		LogCaptureTestCase.tearDown(self)
+		self.__action.stop()
 
 	def testSubstituteRecursiveTags(self):
 		aInfo = {
@@ -66,15 +50,24 @@ class ExecuteAction(unittest.TestCase):
 			'xyz': "890 <ABC>",
 		}
 		# Recursion is bad
-		self.assertFalse(Action.substituteRecursiveTags({'A': '<A>'}))
-		self.assertFalse(Action.substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
-		self.assertFalse(Action.substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
+		self.assertFalse(CommandAction.substituteRecursiveTags({'A': '<A>'}))
+		self.assertFalse(CommandAction.substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
+		self.assertFalse(CommandAction.substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
+		# Unresolveable substition
+		self.assertFalse(CommandAction.substituteRecursiveTags({'A': 'to=<B> fromip=<IP>', 'C': '<B>', 'B': '<C>', 'D': ''}))
+		self.assertFalse(CommandAction.substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP>', 'sweet': '<honeypot>', 'honeypot': '<sweet>', 'ignoreregex': ''}))
 		# missing tags are ok
-		self.assertEqual(Action.substituteRecursiveTags({'A': '<C>'}), {'A': '<C>'})
-		self.assertEqual(Action.substituteRecursiveTags({'A': '<C> <D> <X>','X':'fun'}), {'A': '<C> <D> fun', 'X':'fun'})
-		self.assertEqual(Action.substituteRecursiveTags({'A': '<C> <B>', 'B': 'cool'}), {'A': '<C> cool', 'B': 'cool'})
+		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<C>'}), {'A': '<C>'})
+		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<C> <D> <X>','X':'fun'}), {'A': '<C> <D> fun', 'X':'fun'})
+		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<C> <B>', 'B': 'cool'}), {'A': '<C> cool', 'B': 'cool'})
+		# Multiple stuff on same line is ok
+		self.assertEqual(CommandAction.substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP> evilperson=<honeypot>', 'honeypot': 'pokie', 'ignoreregex': ''}),
+								{ 'failregex': "to=pokie fromip=<IP> evilperson=pokie",
+									'honeypot': 'pokie',
+									'ignoreregex': '',
+								})
 		# rest is just cool
-		self.assertEqual(Action.substituteRecursiveTags(aInfo),
+		self.assertEqual(CommandAction.substituteRecursiveTags(aInfo),
 								{ 'HOST': "192.0.2.0",
 									'ABC': '123 192.0.2.0',
 									'xyz': '890 123 192.0.2.0',
@@ -97,38 +90,115 @@ class ExecuteAction(unittest.TestCase):
 			"Text 890 text 123 ABC")
 		self.assertEqual(
 			self.__action.replaceTag("<matches>",
-				{'matches': "some >char< should \< be[ escap}ed&"}),
-			r"some \>char\< should \\\< be\[ escap\}ed\&")
+				{'matches': "some >char< should \< be[ escap}ed&\n"}),
+			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\n")
+		self.assertEqual(
+			self.__action.replaceTag("<ipmatches>",
+				{'ipmatches': "some >char< should \< be[ escap}ed&\n"}),
+			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\n")
+		self.assertEqual(
+			self.__action.replaceTag("<ipjailmatches>",
+				{'ipjailmatches': "some >char< should \< be[ escap}ed&\n"}),
+			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\n")
+
+		# Callable
+		self.assertEqual(
+			self.__action.replaceTag("09 <callme> 11",
+				CallingMap(callme=lambda: str(10))),
+			"09 10 11")
+
+		# As tag not present, therefore callable should not be called
+		# Will raise ValueError if it is
+		self.assertEqual(
+			self.__action.replaceTag("abc",
+				CallingMap(callme=lambda: int("a"))), "abc")
 
 	def testExecuteActionBan(self):
-		self.__action.setActionStart("touch /tmp/fail2ban.test")
-		self.__action.setActionStop("rm -f /tmp/fail2ban.test")
-		self.__action.setActionBan("echo -n")
-		self.__action.setActionCheck("[ -e /tmp/fail2ban.test ]")
+		self.__action.actionstart = "touch /tmp/fail2ban.test"
+		self.assertEqual(self.__action.actionstart, "touch /tmp/fail2ban.test")
+		self.__action.actionstop = "rm -f /tmp/fail2ban.test"
+		self.assertEqual(self.__action.actionstop, 'rm -f /tmp/fail2ban.test')
+		self.__action.actionban = "echo -n"
+		self.assertEqual(self.__action.actionban, 'echo -n')
+		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
+		self.assertEqual(self.__action.actioncheck, '[ -e /tmp/fail2ban.test ]')
+		self.__action.actionunban = "true"
+		self.assertEqual(self.__action.actionunban, 'true')
 
 		self.assertFalse(self._is_logged('returned'))
 		# no action was actually executed yet
 
-		self.assertTrue(self.__action.execActionBan(None))
+		self.__action.ban({'ip': None})
 		self.assertTrue(self._is_logged('Invariant check failed'))
 		self.assertTrue(self._is_logged('returned successfully'))
 
+	def testExecuteActionEmptyUnban(self):
+		self.__action.actionunban = ""
+		self.__action.unban({})
+		self.assertTrue(self._is_logged('Nothing to do'))
+
+	def testExecuteActionStartCtags(self):
+		self.__action.HOST = "192.0.2.0"
+		self.__action.actionstart = "touch /tmp/fail2ban.test.<HOST>"
+		self.__action.actionstop = "rm -f /tmp/fail2ban.test.<HOST>"
+		self.__action.actioncheck = "[ -e /tmp/fail2ban.test.192.0.2.0 ]"
+		self.__action.start()
+
+	def testExecuteActionCheckRestoreEnvironment(self):
+		self.__action.actionstart = ""
+		self.__action.actionstop = "rm -f /tmp/fail2ban.test"
+		self.__action.actionban = "rm /tmp/fail2ban.test"
+		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
+		self.assertRaises(RuntimeError, self.__action.ban, {'ip': None})
+		self.assertTrue(self._is_logged('Unable to restore environment'))
+
+	def testExecuteActionChangeCtags(self):
+		self.assertRaises(AttributeError, getattr, self.__action, "ROST")
+		self.__action.ROST = "192.0.2.0"
+		self.assertEqual(self.__action.ROST,"192.0.2.0")
+
+	def testExecuteActionUnbanAinfo(self):
+		aInfo = {
+			'ABC': "123",
+		}
+		self.__action.actionban = "touch /tmp/fail2ban.test.123"
+		self.__action.actionunban = "rm /tmp/fail2ban.test.<ABC>"
+		self.__action.ban(aInfo)
+		self.__action.unban(aInfo)
+
+	def testExecuteActionStartEmpty(self):
+		self.__action.actionstart = ""
+		self.__action.start()
+		self.assertTrue(self._is_logged('Nothing to do'))
 
 	def testExecuteIncorrectCmd(self):
-		Action.executeCmd('/bin/ls >/dev/null\nbogusXXX now 2>/dev/null')
+		CommandAction.executeCmd('/bin/ls >/dev/null\nbogusXXX now 2>/dev/null')
 		self.assertTrue(self._is_logged('HINT on 127: "Command not found"'))
 
 	def testExecuteTimeout(self):
 		stime = time.time()
-		Action.executeCmd('sleep 60', timeout=2) # Should take a minute
+		# Should take a minute
+		self.assertRaises(
+			RuntimeError, CommandAction.executeCmd, 'sleep 60', timeout=2)
 		self.assertAlmostEqual(time.time() - stime, 2, places=0)
 		self.assertTrue(self._is_logged('sleep 60 -- timed out after 2 seconds'))
 		self.assertTrue(self._is_logged('sleep 60 -- killed with SIGTERM'))
 
 	def testCaptureStdOutErr(self):
-		Action.executeCmd('echo "How now brown cow"')
+		CommandAction.executeCmd('echo "How now brown cow"')
 		self.assertTrue(self._is_logged("'How now brown cow\\n'"))
-		Action.executeCmd(
+		CommandAction.executeCmd(
 			'echo "The rain in Spain stays mainly in the plain" 1>&2')
 		self.assertTrue(self._is_logged(
 			"'The rain in Spain stays mainly in the plain\\n'"))
+
+	def testCallingMap(self):
+		mymap = CallingMap(callme=lambda: str(10), error=lambda: int('a'),
+			dontcallme= "string", number=17)
+
+		# Should work fine
+		self.assertEqual(
+			"%(callme)s okay %(dontcallme)s %(number)i" % mymap,
+			"10 okay string 17")
+		# Error will now trip, demonstrating delayed call
+		self.assertRaises(ValueError, lambda x: "%(error)i" % x, mymap)

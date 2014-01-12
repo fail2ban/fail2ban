@@ -25,8 +25,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging
-from configreader import ConfigReader
-from jailreader import JailReader
+
+from .configreader import ConfigReader
+from .jailreader import JailReader
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -45,6 +46,10 @@ class JailsReader(ConfigReader):
 		self.__jails = list()
 		self.__force_enable = force_enable
 
+	@property
+	def jails(self):
+		return self.__jails
+
 	def read(self):
 		return ConfigReader.read(self, "jail")
 
@@ -60,6 +65,7 @@ class JailsReader(ConfigReader):
 			sections = [ section ]
 
 		# Get the options of all jails.
+		parse_status = True
 		for sec in sections:
 			jail = JailReader(sec, basedir=self.getBaseDir(),
 							  force_enable=self.__force_enable)
@@ -71,8 +77,8 @@ class JailsReader(ConfigReader):
 					self.__jails.append(jail)
 			else:
 				logSys.error("Errors in jail %r. Skipping..." % sec)
-				return False
-		return True
+				parse_status = False
+		return parse_status
 
 	def convert(self, allow_no_files=False):
 		"""Convert read before __opts and jails to the commands stream

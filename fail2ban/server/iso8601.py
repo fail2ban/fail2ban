@@ -32,7 +32,8 @@ datetime.datetime(2007, 1, 25, 12, 0, tzinfo=<iso8601.iso8601.Utc ...>)
 
 """
 
-from datetime import datetime, timedelta, tzinfo, time
+from datetime import datetime, timedelta, tzinfo
+import time
 import re
 
 __all__ = ["parse_date", "ParseError"]
@@ -40,7 +41,7 @@ __all__ = ["parse_date", "ParseError"]
 # Adapted from http://delete.me.uk/2005/03/iso8601.html
 ISO8601_REGEX_RAW = "(?P<year>[0-9]{4})-(?P<month>[0-9]{1,2})-(?P<day>[0-9]{1,2})" \
     "T(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2})(:(?P<second>[0-9]{2})(\.(?P<fraction>[0-9]+))?)?" \
-    "(?P<timezone>Z|(([-+])([0-9]{2}):([0-9]{2})))?"
+    "(?P<timezone>Z|[-+][0-9]{2}(:?[0-9]{2})?)?"
 ISO8601_REGEX = re.compile(ISO8601_REGEX_RAW)
 TIMEZONE_REGEX = re.compile("(?P<prefix>[+-])(?P<hours>[0-9]{2}):?(?P<minutes>[0-9]{2})?")
 
@@ -92,7 +93,7 @@ def parse_timezone(tzstring):
 
     if tzstring is None:
         zone_sec = -time.timezone 
-        return FixedOffset(name=time.tzname[0],hours=(zone_sec / 3600),minutes=(zone_sec % 3600)/60,seconds=zone_sec % 60)
+        return FixedOffset(name=time.tzname[0],offset_hours=(zone_sec / 3600), offset_minutes=(zone_sec % 3600)/60, offset_seconds=zone_sec % 60)
 
     m = TIMEZONE_REGEX.match(tzstring)
     prefix, hours, minutes = m.groups()
@@ -115,7 +116,7 @@ def parse_date(datestring):
     default.
     """
     if not isinstance(datestring, basestring):
-        raise ParseError("Expecting a string %r" % datestring)
+        raise ValueError("Expecting a string %r" % datestring)
     m = ISO8601_REGEX.match(datestring)
     if not m:
         raise ParseError("Unable to parse date string %r" % datestring)
@@ -125,6 +126,11 @@ def parse_date(datestring):
         groups["fraction"] = 0
     else:
         groups["fraction"] = int(float("0.%s" % groups["fraction"]) * 1e6)
-    return datetime(int(groups["year"]), int(groups["month"]), int(groups["day"]),
-        int(groups["hour"]), int(groups["minute"]), int(groups["second"]),
-        int(groups["fraction"]), tz)
+
+    try:
+        return datetime(int(groups["year"]), int(groups["month"]), int(groups["day"]),
+            int(groups["hour"]), int(groups["minute"]), int(groups["second"]),
+            int(groups["fraction"]), tz)
+    except Exception, e:
+        raise ParseError("Failed to create a valid datetime record due to: %s"
+                         % e)

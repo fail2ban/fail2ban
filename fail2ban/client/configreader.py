@@ -25,8 +25,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import glob, logging, os
-from configparserinc import SafeConfigParserWithIncludes
 from ConfigParser import NoOptionError, NoSectionError
+
+from .configparserinc import SafeConfigParserWithIncludes
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -54,15 +55,18 @@ class ConfigReader(SafeConfigParserWithIncludes):
 							  % self._basedir)
 		basename = os.path.join(self._basedir, filename)
 		logSys.debug("Reading configs for %s under %s "  % (basename, self._basedir))
-		config_files = [ basename + ".conf",
-						 basename + ".local" ]
-
-		# choose only existing ones
-		config_files = filter(os.path.exists, config_files)
+		config_files = [ basename + ".conf" ]
 
 		# possible further customizations under a .conf.d directory
 		config_dir = basename + '.d'
 		config_files += sorted(glob.glob('%s/*.conf' % config_dir))
+
+		config_files.append(basename + ".local")
+	
+		config_files += sorted(glob.glob('%s/*.local' % config_dir))
+
+		# choose only existing ones
+		config_files = filter(os.path.exists, config_files)
 
 		if len(config_files):
 			# at least one config exists and accessible
@@ -110,6 +114,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 				# No "Definition" section or wrong basedir
 				logSys.error(e)
 				values[option[1]] = option[2]
+				# TODO: validate error handling here.
 			except NoOptionError:
 				if not option[2] is None:
 					logSys.warning("'%s' not defined in '%s'. Using default one: %r"
@@ -134,12 +139,13 @@ class DefinitionInitConfigReader(ConfigReader):
 	
 	def __init__(self, file_, jailName, initOpts, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
-		self._file = file_
-		self._jailName = jailName
+		self.setFile(file_)
+		self.setJailName(jailName)
 		self._initOpts = initOpts
 	
 	def setFile(self, fileName):
 		self._file = fileName
+		self._initOpts = {}
 	
 	def getFile(self):
 		return self._file
@@ -152,6 +158,10 @@ class DefinitionInitConfigReader(ConfigReader):
 	
 	def read(self):
 		return ConfigReader.read(self, self._file)
+
+	# needed for fail2ban-regex that doesn't need fancy directories
+	def readexplicit(self):
+		return SafeConfigParserWithIncludes.read(self, self._file)
 	
 	def getOptions(self, pOpts):
 		self._opts = ConfigReader.getOptions(

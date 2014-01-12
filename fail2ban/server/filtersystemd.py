@@ -22,16 +22,16 @@ __author__ = "Steven Hiscocks"
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import logging, datetime
+import logging, datetime, time
 from distutils.version import LooseVersion
 
 from systemd import journal
 if LooseVersion(getattr(journal, '__version__', "0")) < '204':
 	raise ImportError("Fail2Ban requires systemd >= 204")
 
-from failmanager import FailManagerEmpty
-from filter import JournalFilter
-from mytime import MyTime
+from .failmanager import FailManagerEmpty
+from .filter import JournalFilter
+from .mytime import MyTime
 
 
 # Gets the instance of the logger.
@@ -57,7 +57,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		# Initialise systemd-journal connection
 		self.__journal = journal.Reader(converters={'__CURSOR': lambda x: x})
 		self.__matches = []
-		self.setDatePattern("ISO8601")
+		self.setDatePattern(None)
 		logSys.debug("Created FilterSystemd")
 
 
@@ -162,8 +162,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 	@staticmethod
 	def formatJournalEntry(logentry):
-		logelements = [logentry.get('_SOURCE_REALTIME_TIMESTAMP',
-			logentry.get('__REALTIME_TIMESTAMP')).isoformat()]
+		logelements = [""]
 		if logentry.get('_HOSTNAME'):
 			logelements.append(logentry['_HOSTNAME'])
 		if logentry.get('SYSLOG_IDENTIFIER'):
@@ -188,18 +187,22 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			logelements.append(logentry.get('MESSAGE', ''))
 
 		try:
-			logline = u" ".join(logelements) + u"\n"
+			logline = u" ".join(logelements)
 		except UnicodeDecodeError:
 			# Python 2, so treat as string
-			logline = " ".join([str(logline) for logline in logelements]) + "\n"
+			logline = " ".join([str(logline) for logline in logelements])
 		except TypeError:
 			# Python 3, one or more elements bytes
 			logSys.warning("Error decoding log elements from journal: %s" %
 				repr(logelements))
-			logline =  self._joinStrAndBytes(logelements) + "\n"
+			logline =  self._joinStrAndBytes(logelements)
 
-		logSys.debug("Read systemd journal entry: %s" % repr(logline))
-		return logline
+		date = logentry.get('_SOURCE_REALTIME_TIMESTAMP',
+				logentry.get('__REALTIME_TIMESTAMP'))
+		logSys.debug("Read systemd journal entry: %r" %
+			"".join([date.isoformat(), logline]))
+		return (('', date.isoformat(), logline),
+			time.mktime(date.timetuple()) + date.microsecond/1.0E6)
 
 	##
 	# Main loop.
@@ -232,7 +235,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 						continue
 					if logentry:
 						self.processLineAndAdd(
-							self.formatJournalEntry(logentry))
+							*self.formatJournalEntry(logentry))
 						self.__modified = True
 					else:
 						break
@@ -243,7 +246,6 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 							self.jail.putFailTicket(ticket)
 					except FailManagerEmpty:
 						self.failManager.cleanup(MyTime.time())
-					self.dateDetector.sortTemplate()
 					self.__modified = False
 			self.__journal.wait(self.getSleepTime())
 		logSys.debug((self.jail is not None and self.jail.getName()

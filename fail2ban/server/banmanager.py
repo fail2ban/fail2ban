@@ -24,10 +24,11 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from ticket import BanTicket
-from threading import Lock
-from mytime import MyTime
 import logging
+from threading import Lock
+
+from .ticket import BanTicket
+from .mytime import MyTime
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)

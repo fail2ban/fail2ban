@@ -25,7 +25,8 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging
-from configreader import ConfigReader
+
+from .configreader import ConfigReader
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -45,7 +46,9 @@ class Fail2banReader(ConfigReader):
 	
 	def getOptions(self):
 		opts = [["int", "loglevel", 1],
-				["string", "logtarget", "STDERR"]]
+				["string", "logtarget", "STDERR"],
+				["string", "dbfile", "/var/lib/fail2ban/fail2ban.sqlite3"],
+				["int", "dbpurgeage", 86400]]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
 	
 	def convert(self):
@@ -55,5 +58,9 @@ class Fail2banReader(ConfigReader):
 				stream.append(["set", "loglevel", self.__opts[opt]])
 			elif opt == "logtarget":
 				stream.append(["set", "logtarget", self.__opts[opt]])
+			elif opt == "dbfile":
+				stream.append(["set", "dbfile", self.__opts[opt]])
+			elif opt == "dbpurgeage":
+				stream.append(["set", "dbpurgeage", self.__opts[opt]])
 		return stream
 	

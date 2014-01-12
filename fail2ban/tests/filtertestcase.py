@@ -34,21 +34,15 @@ try:
 except ImportError:
 	journal = None
 
-from fail2ban.server.jail import Jail
-from fail2ban.server.filterpoll import FilterPoll
-from fail2ban.server.filter import FileFilter, DNSUtils
-from fail2ban.server.failmanager import FailManager
-from fail2ban.server.failmanager import FailManagerEmpty
-from fail2ban.server.mytime import MyTime
-from fail2ban.tests.utils import setUpMyTime, tearDownMyTime
+from ..server.jail import Jail
+from ..server.filterpoll import FilterPoll
+from ..server.filter import Filter, FileFilter, DNSUtils
+from ..server.failmanager import FailManager, FailManagerEmpty
+from ..server.mytime import MyTime
+from .utils import setUpMyTime, tearDownMyTime, mtimesleep, LogCaptureTestCase
+from .dummyjail import DummyJail
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
-
-#
-# Useful helpers
-#
-
-from utils import mtimesleep
 
 # yoh: per Steven Hiscocks's insight while troubleshooting
 # https://github.com/fail2ban/fail2ban/issues/103#issuecomment-15542836
@@ -192,44 +186,111 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 #  Actual tests
 #
 
-class IgnoreIP(unittest.TestCase):
+class BasicFilter(unittest.TestCase):
+
+	def setUp(self):
+		self.filter = Filter('name')
+
+	def testGetSetUseDNS(self):
+		# default is warn
+		self.assertEqual(self.filter.getUseDns(), 'warn')
+		self.filter.setUseDns(True)
+		self.assertEqual(self.filter.getUseDns(), 'yes')
+		self.filter.setUseDns(False)
+		self.assertEqual(self.filter.getUseDns(), 'no')
+
+	def testGetSetDatePattern(self):
+		self.assertEqual(self.filter.getDatePattern(),
+			(None, "Default Detectors"))
+		self.filter.setDatePattern("^%Y-%m-%d-%H%M%S.%f %z")
+		self.assertEqual(self.filter.getDatePattern(),
+			("^%Y-%m-%d-%H%M%S.%f %z",
+			"Year-Month-Day-24hourMinuteSecond.Microseconds Zone offset"))
+
+class IgnoreIP(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.filter = FileFilter(None)
-
-	def tearDown(self):
-		"""Call after every test case."""
+		LogCaptureTestCase.setUp(self)
+		self.jail = DummyJail()
+		self.filter = FileFilter(self.jail)
 
 	def testIgnoreIPOK(self):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
 		for ip in ipList:
 			self.filter.addIgnoreIP(ip)
-
 			self.assertTrue(self.filter.inIgnoreIPList(ip))
-		# Test DNS
-		self.filter.addIgnoreIP("www.epfl.ch")
-
-		self.assertTrue(self.filter.inIgnoreIPList("128.178.50.12"))
 
 	def testIgnoreIPNOK(self):
 		ipList = "", "999.999.999.999", "abcdef", "192.168.0."
 		for ip in ipList:
 			self.filter.addIgnoreIP(ip)
 			self.assertFalse(self.filter.inIgnoreIPList(ip))
+
+	def testIgnoreIPCIDR(self):
+		self.filter.addIgnoreIP('192.168.1.0/25')
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.0'))
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.1'))
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.127'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.128'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.255'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.0.255'))
+
+	def testIgnoreInProcessLine(self):
+		setUpMyTime()
+		self.filter.addIgnoreIP('192.168.1.0/25')
+		self.filter.addFailRegex('<HOST>')
+		self.filter.processLineAndAdd('1387203300.222 192.168.1.32')
+		self.assertTrue(self._is_logged('Ignore 192.168.1.32'))
+		tearDownMyTime()
+
+	def testIgnoreAddBannedIP(self):
+		self.filter.addIgnoreIP('192.168.1.0/25')
+		self.filter.addBannedIP('192.168.1.32')
+		self.assertFalse(self._is_logged('Ignore 192.168.1.32'))
+		self.assertTrue(self._is_logged('Requested to manually ban an ignored IP 192.168.1.32. User knows best. Proceeding to ban it.'))
+
+	def testIgnoreCommand(self):
+		self.filter.setIgnoreCommand("fail2ban/tests/files/ignorecommand.py <ip>")
+		self.assertTrue(self.filter.inIgnoreIPList("10.0.0.1"))
+		self.assertFalse(self.filter.inIgnoreIPList("10.0.0.0"))
+
+
+class IgnoreIPDNS(IgnoreIP):
+
+	def testIgnoreIPDNSOK(self):
+		self.filter.addIgnoreIP("www.epfl.ch")
+		self.assertTrue(self.filter.inIgnoreIPList("128.178.50.12"))
+
+	def testIgnoreIPDNSNOK(self):
 		# Test DNS
 		self.filter.addIgnoreIP("www.epfl.ch")
 		self.assertFalse(self.filter.inIgnoreIPList("127.177.50.10"))
+		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.11"))
+		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.13"))
 
+class LogFile(LogCaptureTestCase):
 
-class LogFile(unittest.TestCase):
+	MISSING = 'testcases/missingLogFile'
+
+	def setUp(self):
+		LogCaptureTestCase.setUp(self)
+
+	def tearDown(self):
+		LogCaptureTestCase.tearDown(self)
+
+	def testMissingLogFiles(self):
+		self.filter = FilterPoll(None)
+		self.assertRaises(IOError, self.filter.addLogPath, LogFile.MISSING)
+
+class LogFileFilterPoll(unittest.TestCase):
 
 	FILENAME = os.path.join(TEST_FILES_DIR, "testcase01.log")
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.filter = FilterPoll(None)
-		self.filter.addLogPath(LogFile.FILENAME)
+		self.filter = FilterPoll(DummyJail())
+		self.filter.addLogPath(LogFileFilterPoll.FILENAME)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -239,25 +300,28 @@ class LogFile(unittest.TestCase):
 	#	self.filter.openLogFile(LogFile.FILENAME)
 
 	def testIsModified(self):
-		self.assertTrue(self.filter.isModified(LogFile.FILENAME))
+		self.assertTrue(self.filter.isModified(LogFileFilterPoll.FILENAME))
+		self.assertFalse(self.filter.isModified(LogFileFilterPoll.FILENAME))
 
 
-class LogFileMonitor(unittest.TestCase):
+class LogFileMonitor(LogCaptureTestCase):
 	"""Few more tests for FilterPoll API
 	"""
 	def setUp(self):
 		"""Call before every test case."""
 		setUpMyTime()
+		LogCaptureTestCase.setUp(self)
 		self.filter = self.name = 'NA'
 		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
 		self.file = open(self.name, 'a')
-		self.filter = FilterPoll(None)
+		self.filter = FilterPoll(DummyJail())
 		self.filter.addLogPath(self.name)
 		self.filter.setActive(True)
 		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 
 	def tearDown(self):
 		tearDownMyTime()
+		LogCaptureTestCase.tearDown(self)
 		_killfile(self.file, self.name)
 		pass
 
@@ -274,6 +338,21 @@ class LogFileMonitor(unittest.TestCase):
 	def notModified(self):
 		# shorter wait time for not modified status
 		return not self.isModified(0.4)
+
+	def testNoLogFile(self):
+		os.chmod(self.name, 0)
+		self.filter.getFailures(self.name)
+		self.assertTrue(self._is_logged('Unable to open %s' % self.name))
+
+	def testRemovingFailRegex(self):
+		self.filter.delFailRegex(0)
+		self.assertFalse(self._is_logged('Cannot remove regular expression. Index 0 is not valid'))
+		self.filter.delFailRegex(0)
+		self.assertTrue(self._is_logged('Cannot remove regular expression. Index 0 is not valid'))
+
+	def testRemovingIgnoreRegex(self):
+		self.filter.delIgnoreRegex(0)
+		self.assertTrue(self._is_logged('Cannot remove regular expression. Index 0 is not valid'))
 
 	def testNewChangeViaIsModified(self):
 		# it is a brand new one -- so first we think it is modified
@@ -357,36 +436,6 @@ class LogFileMonitor(unittest.TestCase):
 
 
 from threading import Lock
-class DummyJail(object):
-	"""A simple 'jail' to suck in all the tickets generated by Filter's
-	"""
-	def __init__(self):
-		self.lock = Lock()
-		self.queue = []
-
-	def __len__(self):
-		try:
-			self.lock.acquire()
-			return len(self.queue)
-		finally:
-			self.lock.release()
-
-	def putFailTicket(self, ticket):
-		try:
-			self.lock.acquire()
-			self.queue.append(ticket)
-		finally:
-			self.lock.release()
-
-	def getFailTicket(self):
-		try:
-			self.lock.acquire()
-			return self.queue.pop()
-		finally:
-			self.lock.release()
-
-	def getName(self):
-		return "DummyJail #%s with %d tickets" % (id(self), len(self))
 
 def get_monitor_failures_testcase(Filter_):
 	"""Generator of TestCase's for different filters/backends
@@ -739,12 +788,13 @@ class GetFailures(unittest.TestCase):
 
 	# so that they could be reused by other tests
 	FAILURES_01 = ('193.168.0.128', 3, 1124017199.0,
-				  [u'Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128\n']*3)
+				  [u'Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128']*3)
 
 	def setUp(self):
 		"""Call before every test case."""
 		setUpMyTime()
-		self.filter = FileFilter(None)
+		self.jail = DummyJail()
+		self.filter = FileFilter(self.jail)
 		self.filter.setActive(True)
 		# TODO Test this
 		#self.filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
@@ -754,7 +804,13 @@ class GetFailures(unittest.TestCase):
 		"""Call after every test case."""
 		tearDownMyTime()
 
-
+	def testTail(self):
+		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)
+		self.assertEqual(self.filter.getLogPath()[-1].getPos(), 1653)
+		self.filter.getLogPath()[-1].close()
+		self.assertEqual(self.filter.getLogPath()[-1].readline(), "")
+		self.filter.delLogPath(GetFailures.FILENAME_01)
+		self.assertEqual(self.filter.getLogPath(),[])
 
 	def testGetFailures01(self, filename=None, failures=None):
 		filename = filename or GetFailures.FILENAME_01
@@ -776,16 +832,13 @@ class GetFailures(unittest.TestCase):
 		fout.close()
 
 		# now see if we should be getting the "same" failures
-		self.testGetFailures01(filename=fname,
-							   failures=GetFailures.FAILURES_01[:3] +
-							   ([x.rstrip('\n') + '\r\n' for x in
-								 GetFailures.FAILURES_01[-1]],))
+		self.testGetFailures01(filename=fname)
 		_killfile(fout, fname)
 
 
 	def testGetFailures02(self):
 		output = ('141.3.81.106', 4, 1124017139.0,
-				  [u'Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2\n'
+				  [u'Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2'
 				   % m for m in 53, 54, 57, 58])
 
 		self.filter.addLogPath(GetFailures.FILENAME_02)
@@ -818,11 +871,11 @@ class GetFailures(unittest.TestCase):
 	def testGetFailuresUseDNS(self):
 		# We should still catch failures with usedns = no ;-)
 		output_yes = ('93.184.216.119', 2, 1124017139.0,
-					  [u'Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2\n',
-					   u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.119 port 51332 ssh2\n'])
+					  [u'Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2',
+					   u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.119 port 51332 ssh2'])
 
 		output_no = ('93.184.216.119', 1, 1124017139.0,
-					  [u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.119 port 51332 ssh2\n'])
+					  [u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.119 port 51332 ssh2'])
 
 		# Actually no exception would be raised -- it will be just set to 'no'
 		#self.assertRaises(ValueError,
@@ -831,7 +884,8 @@ class GetFailures(unittest.TestCase):
 		for useDns, output in (('yes',  output_yes),
 							   ('no',   output_no),
 							   ('warn', output_yes)):
-			filter_ = FileFilter(None, useDns=useDns)
+			jail = DummyJail()
+			filter_ = FileFilter(jail, useDns=useDns)
 			filter_.setActive(True)
 			filter_.failManager.setMaxRetry(1)	# we might have just few failures
 
@@ -945,5 +999,6 @@ class JailTests(unittest.TestCase):
 
 	def testSetBackend_gh83(self):
 		# smoke test
-		jail = Jail('test', backend='polling') # Must not fail to initiate
+		# Must not fail to initiate
+		jail = Jail('test', backend='polling')
 

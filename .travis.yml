@@ -2,11 +2,11 @@
 # travis-ci.org definition for Fail2Ban build
 language: python
 python:
-  - "2.5"
   - "2.6"
   - "2.7"
   - "3.2"
   - "3.3"
+  - "pypy"
 before_install:
   - sudo apt-get update -qq
 install:

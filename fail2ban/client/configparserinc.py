@@ -100,6 +100,7 @@ after = 1.conf
 		def __init__(self, *args, **kwargs):
 			kwargs = kwargs.copy()
 			kwargs['interpolation'] = BasicInterpolationWithName()
+			kwargs['inline_comment_prefixes'] = ";"
 			super(SafeConfigParserWithIncludes, self).__init__(
 				*args, **kwargs)
 

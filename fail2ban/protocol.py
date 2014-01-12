@@ -43,6 +43,12 @@ protocol = [
 ["get loglevel", "gets the logging level"], 
 ["set logtarget <TARGET>", "sets logging target to <TARGET>. Can be STDOUT, STDERR, SYSLOG or a file"], 
 ["get logtarget", "gets logging target"], 
+["flushlogs", "flushes the logtarget if a file and reopens it. For log rotation."], 
+['', "DATABASE", ""],
+["set dbfile <FILE>", "set the location of fail2ban persistent datastore. Set to \"None\" to disable"], 
+["get dbfile", "get the location of fail2ban persistent datastore"], 
+["set dbpurgeage <SECONDS>", "sets the max age in <SECONDS> that history of bans will be kept"], 
+["get dbpurgeage", "gets the max age in seconds that history of bans will be kept"], 
 ['', "JAIL CONTROL", ""],
 ["add <JAIL> <BACKEND>", "creates <JAIL> using <BACKEND>"], 
 ["start <JAIL>", "starts the jail <JAIL>"], 
@@ -52,13 +58,14 @@ protocol = [
 ["set <JAIL> idle on|off", "sets the idle state of <JAIL>"], 
 ["set <JAIL> addignoreip <IP>", "adds <IP> to the ignore list of <JAIL>"], 
 ["set <JAIL> delignoreip <IP>", "removes <IP> from the ignore list of <JAIL>"], 
-["set <JAIL> addlogpath <FILE>", "adds <FILE> to the monitoring list of <JAIL>"], 
+["set <JAIL> addlogpath <FILE> ['tail']", "adds <FILE> to the monitoring list of <JAIL>, optionally starting at the 'tail' of the file (default 'head')."], 
 ["set <JAIL> dellogpath <FILE>", "removes <FILE> from the monitoring list of <JAIL>"],
 ["set <JAIL> logencoding <ENCODING>", "sets the <ENCODING> of the log files for <JAIL>"],
 ["set <JAIL> addjournalmatch <MATCH>", "adds <MATCH> to the journal filter of <JAIL>"],
 ["set <JAIL> deljournalmatch <MATCH>", "removes <MATCH> from the journal filter of <JAIL>"],
 ["set <JAIL> addfailregex <REGEX>", "adds the regular expression <REGEX> which must match failures for <JAIL>"], 
 ["set <JAIL> delfailregex <INDEX>", "removes the regular expression at <INDEX> for failregex"], 
+["set <JAIL> ignorecommand <VALUE>", "sets ignorecommand of <JAIL>"],
 ["set <JAIL> addignoreregex <REGEX>", "adds the regular expression <REGEX> which should match pattern to exclude for <JAIL>"],
 ["set <JAIL> delignoreregex <INDEX>", "removes the regular expression at <INDEX> for ignoreregex"], 
 ["set <JAIL> findtime <TIME>", "sets the number of seconds <TIME> for which the filter will look back for <JAIL>"], 
@@ -69,21 +76,24 @@ protocol = [
 ["set <JAIL> unbanip <IP>", "manually Unban <IP> in <JAIL>"], 
 ["set <JAIL> maxretry <RETRY>", "sets the number of failures <RETRY> before banning the host for <JAIL>"], 
 ["set <JAIL> maxlines <LINES>", "sets the number of <LINES> to buffer for regex search for <JAIL>"], 
-["set <JAIL> addaction <ACT>", "adds a new action named <NAME> for <JAIL>"], 
-["set <JAIL> delaction <ACT>", "removes the action <NAME> from <JAIL>"], 
-["set <JAIL> setcinfo <ACT> <KEY> <VALUE>", "sets <VALUE> for <KEY> of the action <NAME> for <JAIL>"], 
-["set <JAIL> delcinfo <ACT> <KEY>", "removes <KEY> for the action <NAME> for <JAIL>"], 
-["set <JAIL> timeout <ACT> <TIMEOUT>", "sets <TIMEOUT> as the command timeout in seconds for the action <ACT> for <JAIL>"],
-["set <JAIL> actionstart <ACT> <CMD>", "sets the start command <CMD> of the action <ACT> for <JAIL>"], 
-["set <JAIL> actionstop <ACT> <CMD>", "sets the stop command <CMD> of the action <ACT> for <JAIL>"], 
-["set <JAIL> actioncheck <ACT> <CMD>", "sets the check command <CMD> of the action <ACT> for <JAIL>"], 
-["set <JAIL> actionban <ACT> <CMD>", "sets the ban command <CMD> of the action <ACT> for <JAIL>"],
-["set <JAIL> actionunban <ACT> <CMD>", "sets the unban command <CMD> of the action <ACT> for <JAIL>"], 
+["set <JAIL> addaction <ACT>[ <PYTHONFILE> <JSONKWARGS>]", "adds a new action named <NAME> for <JAIL>. Optionally for a Python based action, a <PYTHONFILE> and <JSONKWARGS> can be specified, else will be a Command Action"], 
+["set <JAIL> delaction <ACT>", "removes the action <ACT> from <JAIL>"], 
+["", "COMMAND ACTION CONFIGURATION", ""],
+["set <JAIL> action <ACT> actionstart <CMD>", "sets the start command <CMD> of the action <ACT> for <JAIL>"], 
+["set <JAIL> action <ACT> actionstop <CMD>", "sets the stop command <CMD> of the action <ACT> for <JAIL>"], 
+["set <JAIL> action <ACT> actioncheck <CMD>", "sets the check command <CMD> of the action <ACT> for <JAIL>"], 
+["set <JAIL> action <ACT> actionban <CMD>", "sets the ban command <CMD> of the action <ACT> for <JAIL>"],
+["set <JAIL> action <ACT> actionunban <CMD>", "sets the unban command <CMD> of the action <ACT> for <JAIL>"], 
+["set <JAIL> action <ACT> timeout <TIMEOUT>", "sets <TIMEOUT> as the command timeout in seconds for the action <ACT> for <JAIL>"],
+["", "GENERAL ACTION CONFIGURATION", ""],
+["set <JAIL> action <ACT> <PROPERTY> <VALUE>", "sets the <VALUE> of <PROPERTY> for the action <ACT> for <JAIL>"],
+["set <JAIL> action <ACT> <METHOD>[ <JSONKWARGS>]", "calls the <METHOD> with <JSONKWARGS> for the action <ACT> for <JAIL>"],
 ['', "JAIL INFORMATION", ""],
 ["get <JAIL> logpath", "gets the list of the monitored files for <JAIL>"],
-["get <JAIL> logencoding <ENCODING>", "gets the <ENCODING> of the log files for <JAIL>"],
+["get <JAIL> logencoding", "gets the encoding of the log files for <JAIL>"],
 ["get <JAIL> journalmatch", "gets the journal filter match for <JAIL>"],
 ["get <JAIL> ignoreip", "gets the list of ignored IP addresses for <JAIL>"],
+["get <JAIL> ignorecommand", "gets ignorecommand of <JAIL>"],
 ["get <JAIL> failregex", "gets the list of regular expressions which matches the failures for <JAIL>"],
 ["get <JAIL> ignoreregex", "gets the list of regular expressions which matches patterns to ignore for <JAIL>"],
 ["get <JAIL> findtime", "gets the time for which the filter will look back for failures for <JAIL>"],
@@ -92,15 +102,18 @@ protocol = [
 ["get <JAIL> usedns", "gets the usedns setting for <JAIL>"],
 ["get <JAIL> maxretry", "gets the number of failures allowed for <JAIL>"],
 ["get <JAIL> maxlines", "gets the number of lines to buffer for <JAIL>"],
-["get <JAIL> addaction", "gets the last action which has been added for <JAIL>"],
 ["get <JAIL> actions", "gets a list of actions for <JAIL>"],
-["get <JAIL> actionstart <ACT>", "gets the start command for the action <ACT> for <JAIL>"],
-["get <JAIL> actionstop <ACT>", "gets the stop command for the action <ACT> for <JAIL>"],
-["get <JAIL> actioncheck <ACT>", "gets the check command for the action <ACT> for <JAIL>"],
-["get <JAIL> actionban <ACT>", "gets the ban command for the action <ACT> for <JAIL>"],
-["get <JAIL> actionunban <ACT>", "gets the unban command for the action <ACT> for <JAIL>"],
-["get <JAIL> cinfo <ACT> <KEY>", "gets the value for <KEY> for the action <ACT> for <JAIL>"],
-["get <JAIL> timeout <ACT>", "gets the command timeout in seconds for the action <ACT> for <JAIL>"],
+["", "COMMAND ACTION INFORMATION",""],
+["get <JAIL> action <ACT> actionstart", "gets the start command for the action <ACT> for <JAIL>"],
+["get <JAIL> action <ACT> actionstop", "gets the stop command for the action <ACT> for <JAIL>"],
+["get <JAIL> action <ACT> actioncheck", "gets the check command for the action <ACT> for <JAIL>"],
+["get <JAIL> action <ACT> actionban", "gets the ban command for the action <ACT> for <JAIL>"],
+["get <JAIL> action <ACT> actionunban", "gets the unban command for the action <ACT> for <JAIL>"],
+["get <JAIL> action <ACT> timeout", "gets the command timeout in seconds for the action <ACT> for <JAIL>"],
+["", "GENERAL ACTION INFORMATION", ""],
+["get <JAIL> actionproperties <ACT>", "gets a list of properties for the action <ACT> for <JAIL>"],
+["get <JAIL> actionmethods <ACT>", "gets a list of methods for the action <ACT> for <JAIL>"],
+["get <JAIL> action <ACT> <PROPERTY>", "gets the value of <PROPERTY> for the action <ACT> for <JAIL>"],
 ]
 
 ##
@@ -117,12 +130,14 @@ def printFormatted():
 			print
 		firstHeading = True
 		first = True
-		for n in textwrap.wrap(m[1], WIDTH):
+		if len(m[0]) >= MARGIN:
+			m[1] = ' ' * WIDTH + m[1]
+		for n in textwrap.wrap(m[1], WIDTH, drop_whitespace=False):
 			if first:
-				line = ' ' * INDENT + m[0] + ' ' * (MARGIN - len(m[0])) + n
+				line = ' ' * INDENT + m[0] + ' ' * (MARGIN - len(m[0])) + n.strip()
 				first = False
 			else:
-				line = ' ' * (INDENT + MARGIN) + n
+				line = ' ' * (INDENT + MARGIN) + n.strip()
 			print line
 
 ##

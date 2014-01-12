@@ -30,9 +30,9 @@ else:
 	import simplejson as json
 	next = lambda x: x.next()
 
-from fail2ban.server.filter import Filter
-from fail2ban.client.filterreader import FilterReader
-from fail2ban.tests.utils import setUpMyTime, tearDownMyTime
+from ..server.filter import Filter
+from ..client.filterreader import FilterReader
+from .utils import setUpMyTime, tearDownMyTime
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 if os.path.exists('config/fail2ban.conf'):
@@ -66,6 +66,8 @@ def testSampleRegexsFactory(name):
 
 		# Check filter exists
 		filterConf = FilterReader(name, "jail", {}, basedir=CONFIG_DIR)
+		self.assertEqual(filterConf.getFile(), name)
+		self.assertEqual(filterConf.getJailName(), "jail")
 		filterConf.read()
 		filterConf.getOptions({})
 
@@ -76,10 +78,8 @@ def testSampleRegexsFactory(name):
 				self.filter.setMaxLines(opt[3])
 			elif opt[2] == "addignoreregex":
 				self.filter.addIgnoreRegex(opt[3])
-
-		if not self.filter.getFailRegex():
-			# No fail regexs set: likely just common file for includes.
-			return
+			elif opt[2] == "datepattern":
+				self.filter.setDatePattern(opt[3])
 
 		self.assertTrue(
 			os.path.isfile(os.path.join(TEST_FILES_DIR, "logs", name)),
@@ -104,7 +104,7 @@ def testSampleRegexsFactory(name):
 				faildata = {}
 
 			ret = self.filter.processLine(
-				line, returnRawHost=True, checkAllRegex=True)
+				line, returnRawHost=True, checkAllRegex=True)[1]
 			if not ret:
 				# Check line is flagged as none match
 				self.assertFalse(faildata.get('match', True),
@@ -119,23 +119,28 @@ def testSampleRegexsFactory(name):
 								 (map(lambda x: x[0], ret),logFile.filename(), logFile.filelineno()))
 
 				# Verify timestamp and host as expected
-				failregex, host, fail2banTime = ret[0]
+				failregex, host, fail2banTime, lines = ret[0]
 				self.assertEqual(host, faildata.get("host", None))
 
 				t = faildata.get("time", None)
-				jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S")
+				try:
+					jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S")
+				except ValueError:
+					jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f")
+
 
 				jsonTime = time.mktime(jsonTimeLocal.utctimetuple())
 				
+				jsonTime += jsonTimeLocal.microsecond / 1000000
+
 				self.assertEqual(fail2banTime, jsonTime,
-					"UTC Time  mismatch fail2ban %s (%s) != failJson %s (%s)  (diff %i seconds) on: %s:%i %r:" % 
+					"UTC Time  mismatch fail2ban %s (%s) != failJson %s (%s)  (diff %.3f seconds) on: %s:%i %r:" % 
 					(fail2banTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(fail2banTime)),
 					jsonTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(jsonTime)),
 					fail2banTime - jsonTime, logFile.filename(), logFile.filelineno(), line ) )
 
 				regexsUsed.add(failregex)
 
-		# TODO: Remove exception handling once all regexs have samples
 		for failRegexIndex, failRegex in enumerate(self.filter.getFailRegex()):
 			self.assertTrue(
 				failRegexIndex in regexsUsed,
@@ -144,9 +149,10 @@ def testSampleRegexsFactory(name):
 
 	return testFilter
 
-for filter_ in os.listdir(os.path.join(CONFIG_DIR, "filter.d")):
+for filter_ in filter(lambda x: not x.endswith('common.conf'), os.listdir(os.path.join(CONFIG_DIR, "filter.d"))):
 	filterName = filter_.rpartition(".")[0]
-	setattr(
-		FilterSamplesRegex,
-		"testSampleRegexs%s" % filterName.upper(),
-		testSampleRegexsFactory(filterName))
+	if not filterName.startswith('.'):
+		setattr(
+			FilterSamplesRegex,
+			"testSampleRegexs%s" % filterName.upper(),
+			testSampleRegexsFactory(filterName))

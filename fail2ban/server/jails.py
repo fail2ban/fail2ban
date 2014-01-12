@@ -21,137 +21,84 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2013- Yaroslav Halchenko"
 __license__ = "GPL"
 
-from fail2ban.exceptions import DuplicateJailException, UnknownJailException
-
-from jail import Jail
 from threading import Lock
+from collections import Mapping
 
-##
-# Handles the jails.
-#
-# This class handles the jails. Creation, deletion or access to a jail must be
-# done through this class. This class is thread-safe which is not the case of
-# the jail itself, including filter and actions.
+from ..exceptions import DuplicateJailException, UnknownJailException
+from .jail import Jail
 
-class Jails:
-	
-	##
-	# Constructor.
-	
+
+class Jails(Mapping):
+	"""Handles the jails.
+
+	This class handles the jails. Creation, deletion or access to a jail
+	must be done through this class. This class is thread-safe which is
+	not the case of the jail itself, including filter and actions. This
+	class is based on Mapping type, and the `add` method must be used to
+	add additional jails.
+	"""
+
 	def __init__(self):
+		"""Initialise an empty Jails instance.
+		"""
 		self.__lock = Lock()
-		self.__jails = dict()
-	
-	##
-	# Adds a jail.
-	#
-	# Adds a new jail which should use the given backend. Raises a
-	# <code>DuplicateJailException</code> if the jail is already defined.
-	# @param name The name of the jail
-	# @param backend The backend to use
-	
-	def add(self, name, backend):
+		self._jails = dict()
+
+	def add(self, name, backend, db=None):
+		"""Adds a jail.
+
+		Adds a new jail if not already present which should use the
+		given backend.
+
+		Parameters
+		----------
+		name : str
+			The name of the jail.
+		backend : str
+			The backend to use.
+
+		Raises
+		------
+		DuplicateJailException
+			If jail name is already present.
+		"""
 		try:
 			self.__lock.acquire()
-			if self.__jails.has_key(name):
+			if name in self._jails:
 				raise DuplicateJailException(name)
 			else:
-				self.__jails[name] = Jail(name, backend)
-		finally:
-			self.__lock.release()
-	
-	##
-	# Removes a jail.
-	#
-	# Removes the jail <code>name</code>. Raise an <code>UnknownJailException</code>
-	# if the jail does not exist.
-	# @param name The name of the jail
-	
-	def remove(self, name):
-		try:
-			self.__lock.acquire()
-			if self.__jails.has_key(name):
-				del self.__jails[name]
-			else:
-				raise UnknownJailException(name)
-		finally:
-			self.__lock.release()
-	
-	##
-	# Returns a jail.
-	#
-	# Returns the jail <code>name</code>. Raise an <code>UnknownJailException</code>
-	# if the jail does not exist.
-	# @param name The name of the jail
-	
-	def get(self, name):
-		try:
-			self.__lock.acquire()
-			if self.__jails.has_key(name):
-				jail = self.__jails[name]
-				return jail
-			else:
-				raise UnknownJailException(name)
-		finally:
-			self.__lock.release()
-	
-	##
-	# Returns an action class instance.
-	#
-	# Returns the action object of the jail <code>name</code>. Raise an
-	# <code>UnknownJailException</code> if the jail does not exist.
-	# @param name The name of the jail
-	
-	def getAction(self, name):
-		try:
-			self.__lock.acquire()
-			if self.__jails.has_key(name):
-				action = self.__jails[name].getAction()
-				return action
-			else:
-				raise UnknownJailException(name)
-		finally:
-			self.__lock.release()
-	
-	##
-	# Returns a filter class instance.
-	#
-	# Returns the filter object of the jail <code>name</code>. Raise an
-	# <code>UnknownJailException</code> if the jail does not exist.
-	# @param name The name of the jail
-	
-	def getFilter(self, name):
-		try:
-			self.__lock.acquire()
-			if self.__jails.has_key(name):
-				action = self.__jails[name].getFilter()
-				return action
-			else:
-				raise UnknownJailException(name)
-		finally:
-			self.__lock.release()
-	
-	##
-	# Returns the jails.
-	#
-	# Returns a copy of the jails list.
-	
-	def getAll(self):
-		try:
-			self.__lock.acquire()
-			return self.__jails.copy()
-		finally:
-			self.__lock.release()
-	
-	##
-	# Returns the size of the jails.
-	#
-	# Returns the number of jails.
-	
-	def size(self):
-		try:
-			self.__lock.acquire()
-			return len(self.__jails)
+				self._jails[name] = Jail(name, backend, db)
 		finally:
 			self.__lock.release()
 
+	def __getitem__(self, name):
+		try:
+			self.__lock.acquire()
+			return self._jails[name]
+		except KeyError:
+			raise UnknownJailException(name)
+		finally:
+			self.__lock.release()
+
+	def __delitem__(self, name):
+		try:
+			self.__lock.acquire()
+			del self._jails[name]
+		except KeyError:
+			raise UnknownJailException(name)
+		finally:
+			self.__lock.release()
+
+	def __len__(self):
+		try:
+			self.__lock.acquire()
+			return len(self._jails)
+		finally:
+			self.__lock.release()
+
+	def __iter__(self):
+		try:
+			self.__lock.acquire()
+			return iter(self._jails)
+		finally:
+			self.__lock.release()

@@ -24,11 +24,12 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging, re, glob
+import logging, re, glob, os.path
+import json
 
-from configreader import ConfigReader
-from filterreader import FilterReader
-from actionreader import ActionReader
+from .configreader import ConfigReader
+from .filterreader import FilterReader
+from .actionreader import ActionReader
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -45,7 +46,12 @@ class JailReader(ConfigReader):
 		self.__filter = None
 		self.__force_enable = force_enable
 		self.__actions = list()
+		self.__opts = None
 	
+	@property
+	def options(self):
+		return self.__opts
+
 	def setName(self, value):
 		self.__name = value
 	
@@ -62,8 +68,22 @@ class JailReader(ConfigReader):
 		return out
 	
 	def isEnabled(self):
-		return self.__force_enable or self.__opts["enabled"]
-	
+		return self.__force_enable or ( self.__opts and self.__opts["enabled"] )
+
+	@staticmethod
+	def _glob(path):
+		"""Given a path for glob return list of files to be passed to server.
+
+		Dangling symlinks are warned about and not returned
+		"""
+		pathList = []
+		for p in glob.glob(path):
+			if os.path.exists(p):
+				pathList.append(p)
+			else:
+				logSys.warning("File %s is a dangling link, thus cannot be monitored" % p)
+		return pathList
+
 	def getOptions(self):
 		opts = [["bool", "enabled", "false"],
 				["string", "logpath", "/var/log/messages"],
@@ -75,38 +95,57 @@ class JailReader(ConfigReader):
 				["string", "usedns", "warn"],
 				["string", "failregex", None],
 				["string", "ignoreregex", None],
+				["string", "ignorecommand", None],
 				["string", "ignoreip", None],
 				["string", "filter", ""],
 				["string", "action", ""]]
 		self.__opts = ConfigReader.getOptions(self, self.__name, opts)
+		if not self.__opts:
+			return False
 		
 		if self.isEnabled():
 			# Read filter
-			filterName, filterOpt = JailReader.extractOptions(
-				self.__opts["filter"])
-			self.__filter = FilterReader(
-				filterName, self.__name, filterOpt, basedir=self.getBaseDir())
-			ret = self.__filter.read()
-			if ret:
-				self.__filter.getOptions(self.__opts)
+			if self.__opts["filter"]:
+				filterName, filterOpt = JailReader.extractOptions(
+					self.__opts["filter"])
+				self.__filter = FilterReader(
+					filterName, self.__name, filterOpt, basedir=self.getBaseDir())
+				ret = self.__filter.read()
+				if ret:
+					self.__filter.getOptions(self.__opts)
+				else:
+					logSys.error("Unable to read the filter")
+					return False
 			else:
-				logSys.error("Unable to read the filter")
-				return False
-			
+				self.__filter = None
+				logSys.warn("No filter set for jail %s" % self.__name)
+		
 			# Read action
 			for act in self.__opts["action"].split('\n'):
 				try:
 					if not act:			  # skip empty actions
 						continue
 					actName, actOpt = JailReader.extractOptions(act)
-					action = ActionReader(
-						actName, self.__name, actOpt, basedir=self.getBaseDir())
-					ret = action.read()
-					if ret:
-						action.getOptions(self.__opts)
-						self.__actions.append(action)
+					if actName.endswith(".py"):
+						self.__actions.append([
+							"set",
+							self.__name,
+							"addaction",
+							actOpt.pop("actname", os.path.splitext(actName)[0]),
+							os.path.join(
+								self.getBaseDir(), "action.d", actName),
+							json.dumps(actOpt),
+							])
 					else:
-						raise AttributeError("Unable to read action")
+						action = ActionReader(
+							actName, self.__name, actOpt,
+							basedir=self.getBaseDir())
+						ret = action.read()
+						if ret:
+							action.getOptions(self.__opts)
+							self.__actions.append(action)
+						else:
+							raise AttributeError("Unable to read action")
 				except Exception, e:
 					logSys.error("Error in action definition " + act)
 					logSys.debug("Caught exception: %s" % (e,))
@@ -131,12 +170,15 @@ class JailReader(ConfigReader):
 					self.__opts.get('backend', None) != "systemd":
 				found_files = 0
 				for path in self.__opts[opt].split("\n"):
-					pathList = glob.glob(path)
+					path = path.rsplit(" ", 1)
+					path, tail = path if len(path) > 1 else (path[0], "head")
+					pathList = JailReader._glob(path)
 					if len(pathList) == 0:
 						logSys.error("No file(s) found for glob %s" % path)
 					for p in pathList:
 						found_files += 1
-						stream.append(["set", self.__name, "addlogpath", p])
+						stream.append(
+							["set", self.__name, "addlogpath", p, tail])
 				if not (found_files or allow_no_files):
 					raise ValueError(
 						"Have not found any log file for %s jail" % self.__name)
@@ -159,20 +201,30 @@ class JailReader(ConfigReader):
 				stream.append(["set", self.__name, "usedns", self.__opts[opt]])
 			elif opt == "failregex":
 				stream.append(["set", self.__name, "addfailregex", self.__opts[opt]])
+			elif opt == "ignorecommand":
+				stream.append(["set", self.__name, "ignorecommand", self.__opts[opt]])
 			elif opt == "ignoreregex":
 				for regex in self.__opts[opt].split('\n'):
 					# Do not send a command if the rule is empty.
 					if regex != '':
 						stream.append(["set", self.__name, "addignoreregex", regex])
-		stream.extend(self.__filter.convert())
+		if self.__filter:
+			stream.extend(self.__filter.convert())
 		for action in self.__actions:
-			stream.extend(action.convert())
+			if isinstance(action, ConfigReader):
+				stream.extend(action.convert())
+			else:
+				stream.append(action)
 		stream.insert(0, ["add", self.__name, backend])
 		return stream
 	
 	#@staticmethod
 	def extractOptions(option):
-		option_name, optstr = JailReader.optionCRE.match(option).groups()
+		match = JailReader.optionCRE.match(option)
+		if not match:
+			# TODO propper error handling
+			return None, None
+		option_name, optstr = match.groups()
 		option_opts = dict()
 		if optstr:
 			for optmatch in JailReader.optionExtractRE.finditer(optstr):

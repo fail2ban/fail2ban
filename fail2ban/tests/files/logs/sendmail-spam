@@ -1,0 +1,19 @@
+
+# failJSON: { "match": false }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <arhipov@domain.com>... No such user here
+# failJSON: { "match": false }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <anatoliy@domain.com>... No such user here
+# failJSON: { "match": false }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <artem@domain.com>... No such user here
+# failJSON: { "match": false }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <anto@domain.com>... No such user here
+# failJSON: { "match": false }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <anton@domain.com>... No such user here
+# failJSON: { "time": "2004-11-03T11:35:30", "match": true , "host": "95.32.23.163" }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: from=<davaojk25@domain.com>, size=0, class=0, nrcpts=0, bodytype=8BITMIME, proto=ESMTP, daemon=MTA, relay=163.23.32.95.dsl-dynamic.vsi.ru [95.32.23.163]
+
+# failJSON: { "match": false }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <anton@domain.com>... No such user here
+# Different mail ID shouldn't match
+# failJSON: { "match": false }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026255: from=<davaojk25@domain.com>, size=0, class=0, nrcpts=0, bodytype=8BITMIME, proto=ESMTP, daemon=MTA, relay=163.23.32.95.dsl-dynamic.vsi.ru [95.32.23.163]

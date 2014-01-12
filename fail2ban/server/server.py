@@ -25,13 +25,15 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from threading import Lock, RLock
-from jails import Jails
-from filter import FileFilter, JournalFilter
-from transmitter import Transmitter
-from asyncserver import AsyncServer
-from asyncserver import AsyncServerException
-from fail2ban import version
 import logging, logging.handlers, sys, os, signal
+
+from .jails import Jails
+from .filter import FileFilter, JournalFilter
+from .transmitter import Transmitter
+from .asyncserver import AsyncServer, AsyncServerException
+from .database import Fail2BanDb
+from .action import CommandAction
+from .. import version
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -42,6 +44,7 @@ class Server:
 		self.__loggingLock = Lock()
 		self.__lock = RLock()
 		self.__jails = Jails()
+		self.__db = None
 		self.__daemon = daemon
 		self.__transm = Transmitter(self)
 		self.__asyncServer = AsyncServer(self.__transm)
@@ -117,16 +120,20 @@ class Server:
 
 	
 	def addJail(self, name, backend):
-		self.__jails.add(name, backend)
+		self.__jails.add(name, backend, self.__db)
+		if self.__db is not None:
+			self.__db.addJail(self.__jails[name])
 		
 	def delJail(self, name):
-		self.__jails.remove(name)
+		del self.__jails[name]
+		if self.__db is not None:
+			self.__db.delJailName(name)
 	
 	def startJail(self, name):
 		try:
 			self.__lock.acquire()
 			if not self.isAlive(name):
-				self.__jails.get(name).start()
+				self.__jails[name].start()
 		finally:
 			self.__lock.release()
 	
@@ -135,7 +142,7 @@ class Server:
 		try:
 			self.__lock.acquire()
 			if self.isAlive(name):
-				self.__jails.get(name).stop()
+				self.__jails[name].stop()
 				self.delJail(name)
 		finally:
 			self.__lock.release()
@@ -144,43 +151,43 @@ class Server:
 		logSys.info("Stopping all jails")
 		try:
 			self.__lock.acquire()
-			for jail in self.__jails.getAll():
+			for jail in self.__jails.keys():
 				self.stopJail(jail)
 		finally:
 			self.__lock.release()
 	
 	def isAlive(self, name):
-		return self.__jails.get(name).isAlive()
+		return self.__jails[name].isAlive()
 	
 	def setIdleJail(self, name, value):
-		self.__jails.get(name).setIdle(value)
+		self.__jails[name].setIdle(value)
 		return True
 
 	def getIdleJail(self, name):
-		return self.__jails.get(name).getIdle()
+		return self.__jails[name].getIdle()
 	
 	# Filter
 	def addIgnoreIP(self, name, ip):
-		self.__jails.getFilter(name).addIgnoreIP(ip)
+		self.__jails[name].filter.addIgnoreIP(ip)
 	
 	def delIgnoreIP(self, name, ip):
-		self.__jails.getFilter(name).delIgnoreIP(ip)
+		self.__jails[name].filter.delIgnoreIP(ip)
 	
 	def getIgnoreIP(self, name):
-		return self.__jails.getFilter(name).getIgnoreIP()
+		return self.__jails[name].filter.getIgnoreIP()
 	
-	def addLogPath(self, name, fileName):
-		filter_ = self.__jails.getFilter(name)
+	def addLogPath(self, name, fileName, tail=False):
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, FileFilter):
-			filter_.addLogPath(fileName)
+			filter_.addLogPath(fileName, tail)
 	
 	def delLogPath(self, name, fileName):
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, FileFilter):
 			filter_.delLogPath(fileName)
 	
 	def getLogPath(self, name):
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, FileFilter):
 			return [m.getFileName()
 					for m in filter_.getLogPath()]
@@ -189,17 +196,17 @@ class Server:
 			return []
 	
 	def addJournalMatch(self, name, match): # pragma: systemd no cover
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, JournalFilter):
 			filter_.addJournalMatch(match)
 	
 	def delJournalMatch(self, name, match): # pragma: systemd no cover
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, JournalFilter):
 			filter_.delJournalMatch(match)
 	
 	def getJournalMatch(self, name): # pragma: systemd no cover
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, JournalFilter):
 			return filter_.getJournalMatch()
 		else:
@@ -207,148 +214,109 @@ class Server:
 			return []
 	
 	def setLogEncoding(self, name, encoding):
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, FileFilter):
 			filter_.setLogEncoding(encoding)
 	
 	def getLogEncoding(self, name):
-		filter_ = self.__jails.getFilter(name)
+		filter_ = self.__jails[name].filter
 		if isinstance(filter_, FileFilter):
 			return filter_.getLogEncoding()
 	
 	def setFindTime(self, name, value):
-		self.__jails.getFilter(name).setFindTime(value)
+		self.__jails[name].filter.setFindTime(value)
 	
 	def getFindTime(self, name):
-		return self.__jails.getFilter(name).getFindTime()
+		return self.__jails[name].filter.getFindTime()
 
 	def setDatePattern(self, name, pattern):
-		self.__jails.getFilter(name).setDatePattern(pattern)
+		self.__jails[name].filter.setDatePattern(pattern)
 
 	def getDatePattern(self, name):
-		return self.__jails.getFilter(name).getDatePattern()
+		return self.__jails[name].filter.getDatePattern()
+
+	def setIgnoreCommand(self, name, value):
+		self.__jails[name].filter.setIgnoreCommand(value)
+
+	def getIgnoreCommand(self, name):
+		return self.__jails[name].filter.getIgnoreCommand()
 
 	def addFailRegex(self, name, value):
-		self.__jails.getFilter(name).addFailRegex(value)
+		self.__jails[name].filter.addFailRegex(value)
 	
 	def delFailRegex(self, name, index):
-		self.__jails.getFilter(name).delFailRegex(index)
+		self.__jails[name].filter.delFailRegex(index)
 	
 	def getFailRegex(self, name):
-		return self.__jails.getFilter(name).getFailRegex()
+		return self.__jails[name].filter.getFailRegex()
 	
 	def addIgnoreRegex(self, name, value):
-		self.__jails.getFilter(name).addIgnoreRegex(value)
+		self.__jails[name].filter.addIgnoreRegex(value)
 	
 	def delIgnoreRegex(self, name, index):
-		self.__jails.getFilter(name).delIgnoreRegex(index)
+		self.__jails[name].filter.delIgnoreRegex(index)
 	
 	def getIgnoreRegex(self, name):
-		return self.__jails.getFilter(name).getIgnoreRegex()
+		return self.__jails[name].filter.getIgnoreRegex()
 	
 	def setUseDns(self, name, value):
-		self.__jails.getFilter(name).setUseDns(value)
+		self.__jails[name].filter.setUseDns(value)
 	
 	def getUseDns(self, name):
-		return self.__jails.getFilter(name).getUseDns()
+		return self.__jails[name].filter.getUseDns()
 	
 	def setMaxRetry(self, name, value):
-		self.__jails.getFilter(name).setMaxRetry(value)
+		self.__jails[name].filter.setMaxRetry(value)
 	
 	def getMaxRetry(self, name):
-		return self.__jails.getFilter(name).getMaxRetry()
+		return self.__jails[name].filter.getMaxRetry()
 	
 	def setMaxLines(self, name, value):
-		self.__jails.getFilter(name).setMaxLines(value)
+		self.__jails[name].filter.setMaxLines(value)
 	
 	def getMaxLines(self, name):
-		return self.__jails.getFilter(name).getMaxLines()
+		return self.__jails[name].filter.getMaxLines()
 	
 	# Action
-	def addAction(self, name, value):
-		self.__jails.getAction(name).addAction(value)
-	
-	def getLastAction(self, name):
-		return self.__jails.getAction(name).getLastAction()
+	def addAction(self, name, value, *args):
+		self.__jails[name].actions.add(value, *args)
 	
 	def getActions(self, name):
-		return self.__jails.getAction(name).getActions()
+		return self.__jails[name].actions
 	
 	def delAction(self, name, value):
-		self.__jails.getAction(name).delAction(value)
+		del self.__jails[name].actions[value]
 	
-	def setCInfo(self, name, action, key, value):
-		self.__jails.getAction(name).getAction(action).setCInfo(key, value)
-	
-	def getCInfo(self, name, action, key):
-		return self.__jails.getAction(name).getAction(action).getCInfo(key)
-	
-	def delCInfo(self, name, action, key):
-		self.__jails.getAction(name).getAction(action).delCInfo(key)
+	def getAction(self, name, value):
+		return self.__jails[name].actions[value]
 	
 	def setBanTime(self, name, value):
-		self.__jails.getAction(name).setBanTime(value)
+		self.__jails[name].actions.setBanTime(value)
 	
 	def setBanIP(self, name, value):
-		return self.__jails.getFilter(name).addBannedIP(value)
+		return self.__jails[name].filter.addBannedIP(value)
 		
 	def setUnbanIP(self, name, value):
-		return self.__jails.getAction(name).removeBannedIP(value)
+		self.__jails[name].actions.removeBannedIP(value)
 		
 	def getBanTime(self, name):
-		return self.__jails.getAction(name).getBanTime()
+		return self.__jails[name].actions.getBanTime()
 	
-	def setActionStart(self, name, action, value):
-		self.__jails.getAction(name).getAction(action).setActionStart(value)
-	
-	def getActionStart(self, name, action):
-		return self.__jails.getAction(name).getAction(action).getActionStart()
-		
-	def setActionStop(self, name, action, value):
-		self.__jails.getAction(name).getAction(action).setActionStop(value)
-	
-	def getActionStop(self, name, action):
-		return self.__jails.getAction(name).getAction(action).getActionStop()
-	
-	def setActionCheck(self, name, action, value):
-		self.__jails.getAction(name).getAction(action).setActionCheck(value)
-	
-	def getActionCheck(self, name, action):
-		return self.__jails.getAction(name).getAction(action).getActionCheck()
-	
-	def setActionBan(self, name, action, value):
-		self.__jails.getAction(name).getAction(action).setActionBan(value)
-	
-	def getActionBan(self, name, action):
-		return self.__jails.getAction(name).getAction(action).getActionBan()
-	
-	def setActionUnban(self, name, action, value):
-		self.__jails.getAction(name).getAction(action).setActionUnban(value)
-	
-	def getActionUnban(self, name, action):
-		return self.__jails.getAction(name).getAction(action).getActionUnban()
-	
-	def setActionTimeout(self, name, action, value):
-		self.__jails.getAction(name).getAction(action).setTimeout(value)
-	
-	def getActionTimeout(self, name, action):
-		return self.__jails.getAction(name).getAction(action).getTimeout()
-		
 	# Status
 	def status(self):
 		try:
 			self.__lock.acquire()
-			jails = list(self.__jails.getAll())
+			jails = list(self.__jails)
 			jails.sort()
 			jailList = ", ".join(jails)
-			ret = [("Number of jail", self.__jails.size()), 
+			ret = [("Number of jail", len(self.__jails)),
 				   ("Jail list", jailList)]
 			return ret
 		finally:
 			self.__lock.release()
 	
 	def statusJail(self, name):
-		return self.__jails.get(name).getStatus()
+		return self.__jails[name].getStatus()
 	
 	# Logging
 	
@@ -403,13 +371,12 @@ class Server:
 		try:
 			self.__loggingLock.acquire()
 			# set a format which is simpler for console use
-			formatter = logging.Formatter("%(asctime)s %(name)-16s: %(levelname)-6s %(message)s")
+			formatter = logging.Formatter("%(asctime)s %(name)-16s[%(process)d]: %(levelname)-7s %(message)s")
 			if target == "SYSLOG":
 				# Syslog daemons already add date to the message.
-				formatter = logging.Formatter("%(name)-16s: %(levelname)-6s %(message)s")
+				formatter = logging.Formatter("%(name)s[%(process)d]: %(levelname)s %(message)s")
 				facility = logging.handlers.SysLogHandler.LOG_DAEMON
-				hdlr = logging.handlers.SysLogHandler("/dev/log", 
-													  facility = facility)
+				hdlr = logging.handlers.SysLogHandler("/dev/log", facility=facility)
 			elif target == "STDOUT":
 				hdlr = logging.StreamHandler(sys.stdout)
 			elif target == "STDERR":
@@ -418,7 +385,7 @@ class Server:
 				# Target should be a file
 				try:
 					open(target, "a").close()
-					hdlr = logging.FileHandler(target)
+					hdlr = logging.handlers.RotatingFileHandler(target)
 				except IOError:
 					logSys.error("Unable to log to " + target)
 					logSys.info("Logging to previous target " + self.__logTarget)
@@ -460,6 +427,37 @@ class Server:
 		finally:
 			self.__loggingLock.release()
 	
+	def flushLogs(self):
+		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG']:
+			for handler in logging.getLogger(__name__).parent.parent.handlers:
+				try:
+					handler.doRollover()
+					logSys.info("rollover performed on %s" % self.__logTarget)
+				except AttributeError:
+					handler.flush()
+					logSys.info("flush performed on %s" % self.__logTarget)
+			return "rolled over"
+		else:
+			for handler in logging.getLogger(__name__).parent.parent.handlers:
+				handler.flush()
+				logSys.info("flush performed on %s" % self.__logTarget)
+			return "flushed"
+			
+	def setDatabase(self, filename):
+		if len(self.__jails) == 0:
+			if filename.lower() == "none":
+				self.__db = None
+			else:
+				self.__db = Fail2BanDb(filename)
+				self.__db.delAllJails()
+		else:
+			raise RuntimeError(
+				"Cannot change database when there are jails present")
+	
+	def getDatabase(self):
+		return self.__db
+	
+
 	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the
 			background as a daemon.
@@ -467,6 +465,14 @@ class Server:
 			http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/278731
 		"""
 	
+		# When the first child terminates, all processes in the second child
+		# are sent a SIGHUP, so it's ignored.
+
+		# We need to set this in the parent process, so it gets inherited by the
+		# child process, and this makes sure that it is effect even if the parent
+		# terminates quickly.
+		signal.signal(signal.SIGHUP, signal.SIG_IGN)
+		
 		try:
 			# Fork a child process so the parent can exit.  This will return control
 			# to the command line or shell.  This is required so that the new process
@@ -488,10 +494,6 @@ class Server:
 			# fail, since we're guaranteed that the child is not a process group
 			# leader.
 			os.setsid()
-		
-			# When the first child terminates, all processes in the second child
-			# are sent a SIGHUP, so it's ignored.
-			signal.signal(signal.SIGHUP, signal.SIG_IGN)
 		
 			try:
 				# Fork a second child to prevent zombies.  Since the first child is
