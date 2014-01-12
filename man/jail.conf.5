@@ -162,6 +162,30 @@ regex (Python \fBreg\fRular \fBex\fRpression) to be added to the filter's failre
 .B ignoreregex
 regex which, if the log line matches, would cause Fail2Ban not consider that line.  This line will be ignored even if it matches a failregex of the jail or any of its filters.
 
+.SS Backends
+Available options are listed below.
+.TP
+.B pyinotify
+requires pyinotify (a file alteration monitor) to be installed. If pyinotify is not installed, Fail2ban will use auto.
+.TP
+.B gamin
+requires Gamin (a file alteration monitor) to be installed. If Gamin is not installed, Fail2ban will use auto.
+.TP
+.B polling
+uses a polling algorithm which does not require external libraries.
+.TP
+.B systemd
+uses systemd python library to access the systemd journal. Specifying \fBlogpath\fR is not valid for this backend and instead utilises \fBjournalmatch\fR from the jails associated filter config.
+
+.SS Actions
+Each jail can be configured with only a single filter, but may have multiple actions. By default, the name of a action is the action filename, and in the case of Python actions, the ".py" file extension is stripped. Where multiple of the same action are to be used, the \fBactname\fR option can be assigned to the action to avoid duplication e.g.:
+.PP
+.nf
+[ssh-iptables-ipset]
+enabled = true
+action = smtp.py[dest=chris@example.com, actname=smtp-chris]
+         smtp.py[dest=sally@example.com, actname=smtp-sally]
+.fi
 
 .SH "ACTION CONFIGURATION FILES (\fIaction.d/*.conf\fB)"
 Action files specify which commands are executed to ban and unban an IP address.
