@@ -31,11 +31,12 @@ from datetime import timedelta
 
 from .mytime import MyTime
 from . import iso8601
+from .strptime import reGroupDictStrptime, timeRE
 
 logSys = logging.getLogger(__name__)
 
 
-class DateTemplate:
+class DateTemplate(object):
 	
 	def __init__(self):
 		self.__name = ""
@@ -55,7 +56,7 @@ class DateTemplate:
 		if (wordBegin and not re.search(r'^\^', regex)):
 			regex = r'\b' + regex
 		self.__regex = regex
-		self.__cRegex = re.compile(regex, re.UNICODE)
+		self.__cRegex = re.compile(regex, re.UNICODE | re.IGNORECASE)
 		
 	def getRegex(self):
 		return self.__regex
@@ -230,44 +231,32 @@ except ValueError:
 	DateStrptime._z = False
 
 class DatePatternRegex(DateStrptime):
-	_reEscape = r"([\\.^$*+?\(\){}\[\]|])"
-	_patternRE = r"%(%|[aAbBdfHIjmMpSUwWyYz])"
+	_patternRE = r"%%(%%|[%s])" % "".join(timeRE.keys())
 	_patternName = {
 		'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
 		'H': "24hour", 'I': "12hour", 'j': "Yearday", 'm': "Month",
 		'M': "Minute", 'p': "AMPM", 'S': "Second", 'U': "Yearweek",
 		'w': "Weekday", 'W': "Yearweek", 'y': 'Year2', 'Y': "Year", '%': "%",
-		'z': "Zone offset", 'f': "Microseconds" }
-	_patternRegex = {
-		'a': r"\w{3}", 'A': r"\w+", 'b': r"\w{3}", 'B': r"\w+",
-		'd': r"(?:3[0-1]|[1-2]\d|[ 0]?\d)",
-		'f': r"(?P<_f>\d{1,6})", 'H': r"(?:2[0-3]|1\d|[ 0]?\d)",
-		'I': r"(?:1[0-2]|[ 0]?\d)",
-		'j': r"(?:36[0-6]3[0-5]\d|[1-2]\d\d|[ 0]?\d\d|[ 0]{0,2}\d)",
-		'm': r"(?:1[0-2]|[ 0]?[1-9])", 'M': r"[0-5]\d", 'p': r"[AP]M",
-		'S': r"(?:6[01]|[0-5]\d)", 'U': r"(?:5[0-3]|[1-4]\d|[ 0]?\d)",
-		'w': r"[0-6]", 'W': r"(?:5[0-3]|[ 0]?\d)", 'y': r"\d{2}",
-		'Y': r"\d{4}",
-		'z': r"(?P<_z>[+-]\d{4})", '%': "%"}
+		'z': "Zone offset", 'f': "Microseconds", 'Z': "Zone name"}
+	for key in set(timeRE) - set(_patternName): # may not have them all...
+		_patternName[key] = "%%%s" % key
 
 	def __init__(self, pattern=None, **kwargs):
-		DateStrptime.__init__(self)
+		super(DatePatternRegex, self).__init__()
 		if pattern:
 			self.setPattern(pattern, **kwargs)
 
-	def setPattern(self, pattern, anchor=False, **kwargs):
-		DateStrptime.setPattern(self, pattern.strip())
+	def setPattern(self, pattern):
+		super(DatePatternRegex, self).setPattern(pattern)
+		super(DatePatternRegex, self).setName(
+			re.sub(self._patternRE, r'%(\1)s', pattern) % self._patternName)
+		super(DatePatternRegex, self).setRegex(
+			re.sub(self._patternRE, r'%(\1)s', pattern) % timeRE)
 
-		name = re.sub(self._patternRE, r'%(\1)s', pattern) % self._patternName
-		DateStrptime.setName(self, name)
-
-		# Custom escape as don't want to escape "%"
-		pattern = re.sub(self._reEscape, r'\\\1', pattern)
-		regex = re.sub(
-			self._patternRE, r'%(\1)s', pattern) % self._patternRegex
-		if anchor:
-			regex = r"^" + regex
-		DateStrptime.setRegex(self, regex, **kwargs)
+	def getDate(self, line):
+		dateMatch = self.matchDate(line)
+		if dateMatch:
+			return reGroupDictStrptime(dateMatch.groupdict()), dateMatch
 
 	def setRegex(self, line):
 		raise NotImplementedError("Regex derived from pattern")

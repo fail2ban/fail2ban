@@ -43,28 +43,24 @@ class DateDetector:
 		self.__known_names.add(name)
 		self.__templates.append(template)
 	
-	def appendTemplate(self, template, **kwargs):
+	def appendTemplate(self, template):
 		if isinstance(template, str):
-			template = DatePatternRegex(template, **kwargs)
-		else:
-			assert not kwargs
+			template = DatePatternRegex(template)
 		DateDetector._appendTemplate(self, template)
 
 	def addDefaultTemplate(self):
 		self.__lock.acquire()
 		try:
-			if sys.version_info >= (2, 5): # because of '%.f'
-				# asctime with subsecond: Sun Jan 23 21:59:59.011 2005 
-				self.appendTemplate("%a %b %d %H:%M:%S.%f %Y")
+			# asctime with subsecond: Sun Jan 23 21:59:59.011 2005 
+			self.appendTemplate("%a %b %d %H:%M:%S\.%f %Y")
 			# asctime: Sun Jan 23 21:59:59 2005 
 			self.appendTemplate("%a %b %d %H:%M:%S %Y")
 			# asctime without year: Sun Jan 23 21:59:59 
 			self.appendTemplate("%a %b %d %H:%M:%S")
 			# standard: Jan 23 21:59:59 
 			self.appendTemplate("%b %d %H:%M:%S")
-			if sys.version_info >= (2, 5): # because of '%.f'
-				# proftpd date: 2005-01-23 21:59:59,333
-				self.appendTemplate("%Y-%m-%d %H:%M:%S,%f")
+			# proftpd date: 2005-01-23 21:59:59,333
+			self.appendTemplate("%Y-%m-%d %H:%M:%S,%f")
 			# simple date: 2005-01-23 21:59:59 
 			self.appendTemplate("%Y-%m-%d %H:%M:%S")
 			# simple date: 2005/01/23 21:59:59 
@@ -81,10 +77,9 @@ class DateDetector:
 			# CPanel 05/20/2008:01:57:39
 			self.appendTemplate("%m/%d/%Y:%H:%M:%S")
 			# custom for syslog-ng 2006.12.21 06:43:20
-			self.appendTemplate("%Y.%m.%d %H:%M:%S")
-			if sys.version_info >= (2, 5): # because of '%.f'
-				# named 26-Jul-2007 15:20:52.252 
-				self.appendTemplate("%d-%b-%Y %H:%M:%S.%f")
+			self.appendTemplate("%Y\.%m\.%d %H:%M:%S")
+			# named 26-Jul-2007 15:20:52.252 
+			self.appendTemplate("%d-%b-%Y %H:%M:%S\.%f")
 			# roundcube 26-Jul-2007 15:20:52 +0200
 			self.appendTemplate("%d-%b-%Y %H:%M:%S %z")
 			# 26-Jul-2007 15:20:52
@@ -92,7 +87,7 @@ class DateDetector:
 			# 17-07-2008 17:23:25
 			self.appendTemplate("%d-%m-%Y %H:%M:%S")
 			# 01-27-2012 16:22:44.252
-			self.appendTemplate("%m-%d-%Y %H:%M:%S.%f")
+			self.appendTemplate("%m-%d-%Y %H:%M:%S\.%f")
 			# TAI64N
 			template = DateTai64n()
 			template.setName("TAI64N")
@@ -106,15 +101,15 @@ class DateDetector:
 			template.setName("ISO 8601")
 			self.appendTemplate(template)
 			# Only time information in the log
-			self.appendTemplate("%H:%M:%S", anchor=True)
+			self.appendTemplate("^%H:%M:%S")
 			# <09/16/08@05:03:30>
-			self.appendTemplate("<%m/%d/%y@%H:%M:%S>", anchor=True)
+			self.appendTemplate("^<%m/%d/%y@%H:%M:%S>")
 			# MySQL: 130322 11:46:11
-			self.appendTemplate("%y%m%d %H:%M:%S", anchor=True)
+			self.appendTemplate("^%y%m%d  ?%H:%M:%S")
 			# Apache Tomcat
 			self.appendTemplate("%b %d, %Y %I:%M:%S %p")
 			# ASSP: Apr-27-13 02:33:06
-			self.appendTemplate("%b-%d-%y %H:%M:%S", anchor=True)
+			self.appendTemplate("^%b-%d-%y %H:%M:%S")
 		finally:
 			self.__lock.release()
 	
