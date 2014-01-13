@@ -37,3 +37,6 @@
 
 # failJSON: { "time": "2013-09-02T09:19:07", "match": true , "host": "118.233.20.68" }
 2013-09-02 09:19:07 login authenticator failed for (gkzwsoju) [118.233.20.68]: 535 Incorrect authentication data
+
+# failJSON: { "time": "2014-01-12T02:07:48", "match": true , "host": "85.214.85.40" }
+2014-01-12 02:07:48 dovecot_login authenticator failed for h1832461.stratoserver.net (User) [85.214.85.40]: 535 Incorrect authentication data (set_id=scanner)
