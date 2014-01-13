@@ -21,15 +21,15 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, shutil, sys, tempfile, unittest
+import os, glob, shutil, sys, tempfile, unittest
 
-from fail2ban.client.configreader import ConfigReader
-from fail2ban.client.jailreader import JailReader
-from fail2ban.client.filterreader import FilterReader
-from fail2ban.client.jailsreader import JailsReader
-from fail2ban.client.actionreader import ActionReader
-from fail2ban.client.configurator import Configurator
-from fail2ban.tests.utils import LogCaptureTestCase
+from ..client.configreader import ConfigReader
+from ..client.jailreader import JailReader
+from ..client.filterreader import FilterReader
+from ..client.jailsreader import JailsReader
+from ..client.actionreader import ActionReader
+from ..client.configurator import Configurator
+from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 if os.path.exists(os.path.join('config','fail2ban.conf')):
@@ -311,6 +311,34 @@ class FilterReaderTest(unittest.TestCase):
 		output[-1][-1] = "5"
 		self.assertEqual(sorted(filterReader.convert()), sorted(output))
 
+
+	def testFilterReaderSubstitionDefault(self):
+		output = [['set', 'jailname', 'addfailregex', 'to=sweet@example.com fromip=<IP>']]
+		filterReader = FilterReader('substition', "jailname", {})
+		filterReader.setBaseDir(TEST_FILES_DIR)
+		filterReader.read()
+		filterReader.getOptions(None)
+		c = filterReader.convert()
+		self.assertEqual(sorted(c), sorted(output))
+
+	def testFilterReaderSubstitionSet(self):
+		output = [['set', 'jailname', 'addfailregex', 'to=sour@example.com fromip=<IP>']]
+		filterReader = FilterReader('substition', "jailname", {'honeypot': 'sour@example.com'})
+		filterReader.setBaseDir(TEST_FILES_DIR)
+		filterReader.read()
+		filterReader.getOptions(None)
+		c = filterReader.convert()
+		self.assertEqual(sorted(c), sorted(output))
+
+	def testFilterReaderSubstitionFail(self):
+		output = [['set', 'jailname', 'addfailregex', 'to=sour@example.com fromip=<IP>']]
+		filterReader = FilterReader('substition', "jailname", {'honeypot': '<sweet>', 'sweet': '<honeypot>'})
+		filterReader.setBaseDir(TEST_FILES_DIR)
+		filterReader.read()
+		filterReader.getOptions(None)
+		self.assertRaises(ValueError, FilterReader.convert, filterReader)
+
+
 class JailsReaderTest(LogCaptureTestCase):
 
 	def testProvidingBadBasedir(self):
@@ -356,13 +384,18 @@ class JailsReaderTest(LogCaptureTestCase):
 			 ['set', 'brokenaction', 'addaction', 'brokenaction'],
 			 ['set',
 			  'brokenaction',
-			  'actionban',
+			  'action',
 			  'brokenaction',
+			  'actionban',
 			  'hit with big stick <ip>'],
-			 ['set', 'brokenaction', 'actionstop', 'brokenaction', ''],
-			 ['set', 'brokenaction', 'actionstart', 'brokenaction', ''],
-			 ['set', 'brokenaction', 'actionunban', 'brokenaction', ''],
-			 ['set', 'brokenaction', 'actioncheck', 'brokenaction', ''],
+			 ['set', 'brokenaction', 'action', 'brokenaction',
+				'actionstop', ''],
+			 ['set', 'brokenaction', 'action', 'brokenaction',
+				'actionstart', ''],
+			 ['set', 'brokenaction', 'action', 'brokenaction',
+				'actionunban', ''],
+			 ['set', 'brokenaction', 'action', 'brokenaction',
+				'actioncheck', ''],
 			 ['add', 'parse_to_end_of_jail.conf', 'auto'],
 			 ['set', 'parse_to_end_of_jail.conf', 'usedns', 'warn'],
 			 ['set', 'parse_to_end_of_jail.conf', 'maxretry', 3],
@@ -438,17 +471,21 @@ class JailsReaderTest(LogCaptureTestCase):
 				# all must have some actionban
 				self.assertTrue(actionReader._opts.get('actionban', '').strip())
 
-		# Verify that all filters found under config/ have a jail
-		def get_all_confs(d):
-			from glob import glob
-			return set(
-				os.path.basename(x.replace('.conf', ''))
-				for x in glob(os.path.join(CONFIG_DIR, d, '*.conf')))
-
-		# TODO: provide jails for some additional filters
-		# ['gssftpd', 'qmail', 'apache-nohome', 'exim', 'dropbear', 'webmin-auth', 'cyrus-imap', 'sieve']
-		# self.assertEqual(get_all_confs('filter.d').difference(allFilters),
-        #                  set(['common']))
+	# Verify that all filters found under config/ have a jail
+	def testReadStockJailFilterComplete(self):
+		jails = JailsReader(basedir=CONFIG_DIR, force_enable=True)
+		self.assertTrue(jails.read())             # opens fine
+		self.assertTrue(jails.getOptions())       # reads fine
+		# grab all filter names
+		filters = set(os.path.splitext(os.path.split(a)[1])[0]
+			for a in glob.glob(os.path.join('config', 'filter.d', '*.conf'))
+				if not a.endswith('common.conf'))
+		filters_jail = set(jail.options['filter'] for jail in jails.jails)
+		self.maxDiff = None
+		self.assertTrue(filters.issubset(filters_jail),
+				"More filters exists than are referenced in stock jail.conf %r" % filters.difference(filters_jail))
+		self.assertTrue(filters_jail.issubset(filters),
+				"Stock jail.conf references non-existent filters %r" % filters_jail.difference(filters))
 
 	def testReadStockJailConfForceEnabled(self):
 		# more of a smoke test to make sure that no obvious surprises
@@ -489,7 +526,7 @@ class JailsReaderTest(LogCaptureTestCase):
 					self.assertTrue('blocktype' in action._initOpts)
 					# Verify that we have a call to set it up
 					blocktype_present = False
-					target_command = [ 'set', jail_name, 'setcinfo', action_name, 'blocktype' ]
+					target_command = ['set', jail_name, 'action', action_name, 'blocktype']
 					for command in commands:
 						if (len(command) > 5 and
 							command[:5] == target_command):
@@ -542,6 +579,8 @@ class JailsReaderTest(LogCaptureTestCase):
 [testjail1]
 action = testaction1[actname=test1]
          testaction1[actname=test2]
+         testaction.py
+         testaction.py[actname=test3]
 filter = testfilter1
 """)
 		jailfd.close()
@@ -550,8 +589,12 @@ filter = testfilter1
 		self.assertTrue(jails.getOptions())
 		comm_commands = jails.convert(allow_no_files=True)
 
-		action_names = [comm[-1] for comm in comm_commands if comm[:3] == ['set', 'testjail1', 'addaction']]
+		add_actions = [comm[3:] for comm in comm_commands
+			if comm[:3] == ['set', 'testjail1', 'addaction']]
 
-		self.assertNotEqual(len(set(action_names)), 1)
+		self.assertEqual(len(set(action[0] for action in add_actions)), 4)
+
+		# Python actions should not be passed `actname`
+		self.assertEqual(add_actions[-1][-1], "{}")
 
 		shutil.rmtree(basedir)

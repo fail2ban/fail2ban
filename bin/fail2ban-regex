@@ -41,7 +41,7 @@ except ImportError:
 	journal = None
 
 from fail2ban.version import version
-from fail2ban.client.configparserinc import SafeConfigParserWithIncludes
+from fail2ban.client.filterreader import FilterReader
 from fail2ban.server.filter import Filter
 from fail2ban.server.failregex import RegexException
 
@@ -206,8 +206,6 @@ class LineStats(object):
 
 class Fail2banRegex(object):
 
-	CONFIG_DEFAULTS = {'configpath' : "/etc/fail2ban/"}
-
 	def __init__(self, opts):
 		self._verbose = opts.verbose
 		self._debuggex = opts.debuggex
@@ -257,44 +255,34 @@ class Fail2banRegex(object):
 		assert(regextype in ('fail', 'ignore'))
 		regex = regextype + 'regex'
 		if os.path.isfile(value):
-			reader = SafeConfigParserWithIncludes(defaults=self.CONFIG_DEFAULTS)
-			try:
-				reader.read(value)
-				print "Use %11s file : %s" % (regex, value)
-				# TODO: reuse functionality in client
-				regex_values = [
-					RegexStat(m)
-					for m in reader.get("Definition", regex).split('\n')
-					if m != ""]
-			except NoSectionError:
-				print "No [Definition] section in %s" % value
-				return False
-			except NoOptionError:
-				print "No %s option in %s" % (regex, value)
-				return False
-			except MissingSectionHeaderError:
-				print "No section headers in %s" % value
-				return False
+			print "Use %11s file : %s" % (regex, value)
+			reader = FilterReader(value, 'fail2ban-regex-jail', {})
+			reader.setBaseDir(None)
 
-			# Read out and set possible value of maxlines
-			try:
-				maxlines = reader.get("Init", "maxlines")
-			except (NoSectionError, NoOptionError):
-				# No [Init].maxlines found.
-				pass
-			else:
-				try:
-					self.setMaxLines(maxlines)
-				except ValueError:
-					print "ERROR: Invalid value for maxlines (%(maxlines)r) " \
-					      "read from %(value)s" % locals()
-					return False
-			# Read out and set possible value for journalmatch
-			try:
-				journalmatch = reader.get("Init", "journalmatch")
-			except (NoSectionError, NoOptionError):
-				# No [Init].journalmatch found.
-				pass
+			if reader.readexplicit():
+				reader.getOptions(None)
+				readercommands = reader.convert()
+				regex_values = [
+					RegexStat(m[3])
+					for m in filter(
+						lambda x: x[0] == 'set' and x[2] == "add%sregex" % regextype,
+						readercommands)]
+				# Read out and set possible value of maxlines
+				for command in readercommands:
+					if command[2] == "maxlines":
+						maxlines = int(command[3])
+						try:
+							self.setMaxLines(maxlines)
+						except ValueError:
+							print "ERROR: Invalid value for maxlines (%(maxlines)r) " \
+								  "read from %(value)s" % locals()
+							return False
+					elif command[2] == 'addjournalmatch':
+						journalmatch = command[3]
+						self.setJournalMatch(shlex.split(journalmatch))
+					elif command[2] == 'datepattern':
+						datepattern = command[3]
+						self.setDatePattern(datepattern)
 			else:
 				self.setJournalMatch(shlex.split(journalmatch))
 			# Read out and set possible value for journalmatch

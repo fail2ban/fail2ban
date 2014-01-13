@@ -26,8 +26,8 @@ __license__ = "GPL"
 
 import unittest, socket, time, pickle
 
-from fail2ban.server.failmanager import FailManager, FailManagerEmpty
-from fail2ban.server.ticket import FailTicket
+from ..server.failmanager import FailManager, FailManagerEmpty
+from ..server.ticket import FailTicket
 
 class AddFailure(unittest.TestCase):
 

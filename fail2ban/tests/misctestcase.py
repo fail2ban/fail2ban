@@ -28,8 +28,8 @@ import shutil
 
 from glob import glob
 
-from utils import mbasename, TraceBack, FormatterWithTraceBack
-from fail2ban.helpers import formatExceptionInfo
+from .utils import mbasename, TraceBack, FormatterWithTraceBack
+from ..helpers import formatExceptionInfo
 
 class HelpersTest(unittest.TestCase):
 
@@ -170,7 +170,7 @@ class TestsUtilsTest(unittest.TestCase):
 		self.assertTrue(pindex > 10)	  # we should have some traceback
 		self.assertEqual(s[:pindex], s[pindex+1:pindex*2 + 1])
 
-from fail2ban.server import iso8601
+from ..server import iso8601
 import datetime
 import time
 

@@ -120,7 +120,8 @@ setup(
 							glob("config/filter.d/*.conf")
 						),
 						('/etc/fail2ban/action.d',
-							glob("config/action.d/*.conf")
+							glob("config/action.d/*.conf") +
+							glob("config/action.d/*.py")
 						),
 						('/etc/fail2ban/fail2ban.d',
 							''

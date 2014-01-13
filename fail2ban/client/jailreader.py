@@ -25,10 +25,11 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging, re, glob, os.path
+import json
 
-from configreader import ConfigReader
-from filterreader import FilterReader
-from actionreader import ActionReader
+from .configreader import ConfigReader
+from .filterreader import FilterReader
+from .actionreader import ActionReader
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -45,7 +46,12 @@ class JailReader(ConfigReader):
 		self.__filter = None
 		self.__force_enable = force_enable
 		self.__actions = list()
+		self.__opts = None
 	
+	@property
+	def options(self):
+		return self.__opts
+
 	def setName(self, value):
 		self.__name = value
 	
@@ -120,14 +126,26 @@ class JailReader(ConfigReader):
 					if not act:			  # skip empty actions
 						continue
 					actName, actOpt = JailReader.extractOptions(act)
-					action = ActionReader(
-						actName, self.__name, actOpt, basedir=self.getBaseDir())
-					ret = action.read()
-					if ret:
-						action.getOptions(self.__opts)
-						self.__actions.append(action)
+					if actName.endswith(".py"):
+						self.__actions.append([
+							"set",
+							self.__name,
+							"addaction",
+							actOpt.pop("actname", os.path.splitext(actName)[0]),
+							os.path.join(
+								self.getBaseDir(), "action.d", actName),
+							json.dumps(actOpt),
+							])
 					else:
-						raise AttributeError("Unable to read action")
+						action = ActionReader(
+							actName, self.__name, actOpt,
+							basedir=self.getBaseDir())
+						ret = action.read()
+						if ret:
+							action.getOptions(self.__opts)
+							self.__actions.append(action)
+						else:
+							raise AttributeError("Unable to read action")
 				except Exception, e:
 					logSys.error("Error in action definition " + act)
 					logSys.debug("Caught exception: %s" % (e,))
@@ -193,7 +211,10 @@ class JailReader(ConfigReader):
 		if self.__filter:
 			stream.extend(self.__filter.convert())
 		for action in self.__actions:
-			stream.extend(action.convert())
+			if isinstance(action, ConfigReader):
+				stream.extend(action.convert())
+			else:
+				stream.append(action)
 		stream.insert(0, ["add", self.__name, backend])
 		return stream
 	

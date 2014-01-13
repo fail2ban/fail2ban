@@ -29,7 +29,7 @@ __license__ = "GPL"
 class DuplicateJailException(Exception):
 	pass
 
-class UnknownJailException(Exception):
+class UnknownJailException(KeyError):
 	pass
 
 

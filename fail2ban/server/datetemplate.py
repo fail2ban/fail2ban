@@ -25,14 +25,13 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import re, time, calendar
-
+import logging
 from datetime import datetime
 from datetime import timedelta
 
-from mytime import MyTime
-import iso8601
+from .mytime import MyTime
+from . import iso8601
 
-import logging
 logSys = logging.getLogger(__name__)
 
 

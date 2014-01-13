@@ -55,7 +55,11 @@ configuration before relying on it.
    * Added action xarf-login-attack to report formatted attack messages
      according to the XARF standard (v0.2). Close gh-105
    * Support PyPy
+   * Add filter for apache-botsearch
    * Filter for stunnel
+   * Filter for Counter Strike 1.6. Thanks to onorua for logs.
+     Close gh-347
+   * Filter for squirrelmail. Close gh-261
 
 - Enhancements
    * Jail names increased to 26 characters and iptables prefix reduced
@@ -64,9 +68,11 @@ configuration before relying on it.
    * Multiline regex for Disconnecting: Too many authentication failures for
      root [preauth]\nConnection closed by 6X.XXX.XXX.XXX [preauth]
    * Replacing use of deprecated API (.warning, .assertEqual, etc)
-   * [..a648cc2] Filters can have options now too
+   * [..a648cc2] Filters can have options now too which are substituted into
+     failregex / ignoreregex
    * [..e019ab7] Multiple instances of the same action are allowed in the
      same jail -- use actname option to disambiguate.
+   * Add honeypot email address to exim-spam filter as argument
 
 ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
 -----------
@@ -91,7 +97,9 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - Fix apache-common for apache-2.4 log file format. Thanks Mark White.
     Closes gh-516
   - Asynchat changed to use push method which verifys whether all data was
-    send. This ensures that all data is sent before closing the connection.
+	  send. This ensures that all data is sent before closing the connection.
+  - Removed unnecessary reference to as yet undeclared $jail_name when checking
+    a specific jail in nagios script.
 
 - Enhancements:
   - added firewallcmd-ipset action
@@ -107,14 +115,26 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - exim-spam filter to match spamassassin log entry for option SAdevnull.
     Thanks Ivo Truxa. Closes gh-533
   - filter.d/nsd.conf -- also amended Unix date template to match nsd format
+  - Added to sshd filter expression for "Received disconnect from <HOST>: 3:
+    ...: Auth fail". Thanks Marcel Dopita. Closes gh-289
   - loglines now also report "[PID]" after the name portion
+  - Added filter.d/ejabberd-auth
+  - Improved ACL-handling for Asterisk
+  - loglines now also report "[PID]" after the name portion
+  - Added improper command pipelining to postfix filter.
 
 - New Features:
 
-  - Added filter for solid-pop3d -- thanks to Jacques Lav!gnotte on mailinglist.
-  - Added filter for apache-modsecurity
-  - Added filter for openwebmail thanks Ivo Truxa. Closes gh-543
+  - filter.d/solid-pop3d -- added thanks to Jacques Lav!gnotte on mailinglist.
+  - Add filter for apache-modsecurity
+  - filter.d/nsd.conf -- also amended Unix date template to match nsd format
+  - Added openwebmail filter thanks Ivo Truxa. Closes gh-543
+  - Added filter for freeswitch. Thanks Jim and editors and authors of 
+    http://wiki.freeswitch.org/wiki/Fail2ban
+  - Added groupoffice filter thanks to logs from Merijn Schering.
+    Closes gh-566
   - Added filter for horde
+
 
 ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
 

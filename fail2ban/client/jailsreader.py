@@ -25,8 +25,9 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging
-from configreader import ConfigReader
-from jailreader import JailReader
+
+from .configreader import ConfigReader
+from .jailreader import JailReader
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -44,6 +45,10 @@ class JailsReader(ConfigReader):
 		ConfigReader.__init__(self, **kwargs)
 		self.__jails = list()
 		self.__force_enable = force_enable
+
+	@property
+	def jails(self):
+		return self.__jails
 
 	def read(self):
 		return ConfigReader.read(self, "jail")

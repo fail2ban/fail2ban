@@ -119,7 +119,6 @@ Sep 29 17:15:02 spaceman sshd[12946]: Failed password for user from 127.0.0.1 po
 Nov 11 08:04:51 redbamboo sshd[2737]: Failed password for invalid user from 10.10.1.1 from 127.0.0.1 port 58946 ssh2
 
 
-
 # failJSON: { "match": false }
 Nov 23 21:50:19 sshd[8148]: Disconnecting: Too many authentication failures for root [preauth]
 # failJSON: { "time": "2004-11-23T21:50:37", "match": true , "host": "61.0.0.1", "desc": "Multiline match for preauth failures" }
@@ -129,3 +128,7 @@ Nov 23 21:50:37 sshd[8148]: Connection closed by 61.0.0.1 [preauth]
 Nov 23 21:50:19 sshd[9148]: Disconnecting: Too many authentication failures for root [preauth]
 # failJSON: { "match": false , "desc": "Pids don't match" }
 Nov 23 21:50:37 sshd[7148]: Connection closed by 61.0.0.1 [preauth]
+
+# failJSON: { "time": "2005-07-13T18:44:28", "match": true , "host": "89.24.13.192", "desc": "from gh-289" }
+Jul 13 18:44:28 mdop sshd[4931]: Received disconnect from 89.24.13.192: 3: com.jcraft.jsch.JSchException: Auth fail
+

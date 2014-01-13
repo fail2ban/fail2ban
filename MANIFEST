@@ -86,6 +86,7 @@ fail2ban/tests/files/config/apache-auth/README
 fail2ban/tests/files/config/apache-auth/noentry/.htaccess
 fail2ban/tests/files/database_v1.db
 fail2ban/tests/files/ignorecommand.py
+fail2ban/tests/files/filter.d/substition.conf
 fail2ban/tests/files/filter.d/testcase-common.conf
 fail2ban/tests/files/filter.d/testcase01.conf
 fail2ban/tests/files/testcase01.log
@@ -101,12 +102,14 @@ fail2ban/tests/files/logs/bsd/syslog-vv.txt
 fail2ban/tests/files/logs/3proxy
 fail2ban/tests/files/logs/apache-auth
 fail2ban/tests/files/logs/apache-badbots
+fail2ban/tests/files/logs/apache-botscripts
 fail2ban/tests/files/logs/apache-modsecurity
 fail2ban/tests/files/logs/apache-nohome
 fail2ban/tests/files/logs/apache-noscript
 fail2ban/tests/files/logs/apache-overflows
 fail2ban/tests/files/logs/assp
 fail2ban/tests/files/logs/asterisk
+fail2ban/tests/files/logs/counter-strike
 fail2ban/tests/files/logs/courier-auth
 fail2ban/tests/files/logs/courier-smtp
 fail2ban/tests/files/logs/cyrus-imap
@@ -115,6 +118,8 @@ fail2ban/tests/files/logs/dropbear
 fail2ban/tests/files/logs/ejabberd-auth
 fail2ban/tests/files/logs/exim
 fail2ban/tests/files/logs/exim-spam
+fail2ban/tests/files/logs/freeswitch
+fail2ban/tests/files/logs/groupoffice
 fail2ban/tests/files/logs/gssftpd
 fail2ban/tests/files/logs/guacamole
 fail2ban/tests/files/logs/kerio
@@ -167,10 +172,12 @@ config/fail2ban.conf
 config/filter.d/common.conf
 config/filter.d/apache-auth.conf
 config/filter.d/apache-badbots.conf
+config/filter.d/apache-botsearch.conf
 config/filter.d/apache-nohome.conf
 config/filter.d/apache-noscript.conf
 config/filter.d/apache-overflows.conf
 config/filter.d/nginx-http-auth.conf
+config/filter.d/counter-strike.conf
 config/filter.d/courier-auth.conf
 config/filter.d/courier-smtp.conf
 config/filter.d/cyrus-imap.conf
@@ -214,6 +221,8 @@ config/filter.d/3proxy.conf
 config/filter.d/apache-common.conf
 config/filter.d/exim-common.conf
 config/filter.d/exim-spam.conf
+config/filter.d/freeswitch.conf
+config/filter.d/groupoffice.conf
 config/filter.d/perdition.conf
 config/filter.d/uwimap-auth.conf
 config/filter.d/courier-auth.conf
