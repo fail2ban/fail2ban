@@ -118,6 +118,10 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - Added to sshd filter expression for "Received disconnect from <HOST>: 3:
     ...: Auth fail". Thanks Marcel Dopita. Closes gh-289
   - loglines now also report "[PID]" after the name portion
+  - Added filter.d/ejabberd-auth
+  - Improved ACL-handling for Asterisk
+  - loglines now also report "[PID]" after the name portion
+  - Added improper command pipelining to postfix filter.
 
 - New Features:
 
@@ -130,6 +134,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - Added groupoffice filter thanks to logs from Merijn Schering.
     Closes gh-566
   - Added filter for horde
+
 
 ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
 
