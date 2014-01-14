@@ -66,6 +66,7 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
   - Added filter.d/horde
   - Added filter for freeswitch. Thanks Jim and editors and authors of 
     http://wiki.freeswitch.org/wiki/Fail2ban
+  - Added action.d/badips. Thanks to Amy for making a nice API.
 
 
 ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
