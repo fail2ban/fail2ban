@@ -171,7 +171,6 @@ class IgnoreIP(LogCaptureTestCase):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
 		for ip in ipList:
 			self.filter.addIgnoreIP(ip)
-
 			self.assertTrue(self.filter.inIgnoreIPList(ip))
 
 	def testIgnoreIPNOK(self):
@@ -201,6 +200,11 @@ class IgnoreIP(LogCaptureTestCase):
 		self.assertFalse(self._is_logged('Ignore 192.168.1.32'))
 		self.assertTrue(self._is_logged('Requested to manually ban an ignored IP 192.168.1.32. User knows best. Proceeding to ban it.'))
 
+	def testIgnoreCommand(self):
+		self.filter.setIgnoreCommand("testcases/files/ignorecommand.py <ip>")
+		self.assertTrue(self.filter.inIgnoreIPList("10.0.0.1"))
+		self.assertFalse(self.filter.inIgnoreIPList("10.0.0.0"))
+
 
 class IgnoreIPDNS(IgnoreIP):
 
@@ -215,15 +219,28 @@ class IgnoreIPDNS(IgnoreIP):
 		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.11"))
 		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.13"))
 
+class LogFile(LogCaptureTestCase):
 
-class LogFile(unittest.TestCase):
+	MISSING = 'testcases/missingLogFile'
+
+	def setUp(self):
+		LogCaptureTestCase.setUp(self)
+
+	def tearDown(self):
+		LogCaptureTestCase.tearDown(self)
+
+	def testMissingLogFiles(self):
+		self.filter = FilterPoll(None)
+		self.assertRaises(IOError, self.filter.addLogPath, LogFile.MISSING)
+
+class LogFileFilterPoll(unittest.TestCase):
 
 	FILENAME = "testcases/files/testcase01.log"
 
 	def setUp(self):
 		"""Call before every test case."""
 		self.filter = FilterPoll(None)
-		self.filter.addLogPath(LogFile.FILENAME)
+		self.filter.addLogPath(LogFileFilterPoll.FILENAME)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -233,7 +250,8 @@ class LogFile(unittest.TestCase):
 	#	self.filter.openLogFile(LogFile.FILENAME)
 
 	def testIsModified(self):
-		self.assertTrue(self.filter.isModified(LogFile.FILENAME))
+		self.assertTrue(self.filter.isModified(LogFileFilterPoll.FILENAME))
+		self.assertFalse(self.filter.isModified(LogFileFilterPoll.FILENAME))
 
 
 class LogFileMonitor(LogCaptureTestCase):
@@ -604,11 +622,11 @@ class GetFailures(unittest.TestCase):
 		"""Call after every test case."""
 
 	def testTail(self):
-		self.filter.addLogPath(LogFile.FILENAME, tail=True)
+		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)
 		self.assertEqual(self.filter.getLogPath()[-1].getPos(), 1653)
 		self.filter.getLogPath()[-1].close()
 		self.assertEqual(self.filter.getLogPath()[-1].readline(), "")
-		self.filter.delLogPath(LogFile.FILENAME)
+		self.filter.delLogPath(GetFailures.FILENAME_01)
 		self.assertEqual(self.filter.getLogPath(),[])
 
 	def testGetFailures01(self, filename=None, failures=None):

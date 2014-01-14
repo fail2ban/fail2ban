@@ -108,6 +108,7 @@ my ($critical,$warning) = (2,1);
 my $fail2ban_client_path = '/usr/bin/fail2ban-client';
 my $fail2ban_socket = '';
 my $jail_specific = '';
+my $jail_name = '';
 
 GetOptions (
     'P=s' => \ $fail2ban_client_path,
@@ -165,7 +166,7 @@ if (($critical < 0) or ($warning < 0) or ($critical < $warning)) {
 
 # Core script
 # -----------
-my ($how_many_jail,$how_many_banned,$return_print,$plugstate) = (0,0,"","OK");
+my ($how_many_jail,$how_many_banned,$return_print,$perf_print,$plugstate) = (0,0,"","","OK");
 
 
 ### Test the connection to the fail2ban server
@@ -190,6 +191,7 @@ if ($jail_specific) {
     else {
         $how_many_banned = int($current_ban_number);
         $return_print = $how_many_banned.' current banned IP(s) for the specific jail '.$jail_specific;
+        $perf_print .= "$current_ban_number " if ($perfdata_value);
     }
 }
 ### To analyze all the jail
@@ -214,6 +216,7 @@ else {
         else {
             print "DEBUG : the jail $jail_name has currently $current_ban_number banned IPs\n" if ($verbose_value);
             $how_many_banned += int($current_ban_number);
+            $perf_print .= "$jail_name.currentBannedIP=$current_ban_number " if ($perfdata_value);
         }
     }
     $return_print = $how_many_jail.' detected jails with '.$how_many_banned.' current banned IP(s)';
@@ -224,7 +227,7 @@ $plugstate = "CRITICAL" if ($how_many_banned >= $critical);
 $plugstate = "WARNING" if (($how_many_banned >= $warning) && ($how_many_banned < $critical));
 
 $return_print = $display." - ".$plugstate." - ".$return_print;
-$return_print .= " | currentBannedIP=$how_many_banned" if ($perfdata_value);
+$return_print .= " | $perf_print" if ($perfdata_value);
 
 print $return_print;
 exit $ERRORS{"$plugstate"};

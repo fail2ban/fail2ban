@@ -1,0 +1,2 @@
+# failJSON: { "time": "2014-01-07T18:09:08", "match": true , "host": "1.2.3.4" }
+2014-01-07 18:09:08.512 [info] <0.22741.1>@ejabberd_c2s:wait_for_feature_request:662 ({socket_state,p1_tls,{tlssock,#Port<0.24718>,#Port<0.24720>},<0.22740.1>}) Failed authentication for test@example.com from IP 1.2.3.4
