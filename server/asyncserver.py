@@ -117,21 +117,33 @@ class AsyncServer(asyncore.dispatcher):
 	
 	def start(self, sock, force):
 		self.__sock = sock
-		# Remove socket
-		if os.path.exists(sock):
-			logSys.error("Fail2ban seems to be already running")
-			if force:
-				logSys.warn("Forcing execution of the server")
+		# Remove socket:
+		#   we've replaced the logic here from an exists check to just trying
+		#   and handle the exceptions approprately. This eliminates a race condition
+		#   and allows us to fully handle permission denied and other OSErrors
+		#   associated with its forced removal and allowing the "Not Found error"
+		#   to silently be accepted as the default case that a socket didn't exist.
+		if force:
+			try:
 				os.remove(sock)
-			else:
-				raise AsyncServerException("Server already running")
+				logSys.warn("Forced execution of the server by removing socket %s" % sock)
+			except OSError, e:
+				if e.errno == 2:
+					# not found
+					pass
+				else:
+					raise AsyncServerException("Unable to remove socket %s: %s" % self.__sock, e)
 		# Creates the socket.
-		self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
-		self.set_reuse_addr()
 		try:
+			self.create_socket(socket.AF_UNIX, socket.SOCK_STREAM)
+			self.set_reuse_addr()
 			self.bind(sock)
-		except Exception:
-			raise AsyncServerException("Unable to bind socket %s" % self.__sock)
+		except socket.error, e:
+			if e.errno == 98:
+				# Address already in use
+				raise AsyncServerException("Server already running on socket %s", self.__sock)
+			else:
+				raise AsyncServerException("Unable to create/bind socket %s: %s" % self.__sock, e)
 		AsyncServer.__markCloseOnExec(self.socket)
 		self.listen(1)
 		# Sets the init flag.
