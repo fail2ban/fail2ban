@@ -284,15 +284,8 @@ class Fail2banRegex(object):
 						datepattern = command[3]
 						self.setDatePattern(datepattern)
 			else:
-				self.setJournalMatch(shlex.split(journalmatch))
-			# Read out and set possible value for journalmatch
-			try:
-				datepattern = reader.get("Init", "datepattern")
-			except (NoSectionError, NoOptionError):
-				# No [Init].datepattern found.
-				pass
-			else:
-				self.setDatePattern(datepattern)
+				print "ERROR: failed to read %s" % value
+				return False
 		else:
 			print "Use %11s line : %s" % (regex, shortstr(value))
 			regex_values = [RegexStat(value)]
