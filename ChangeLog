@@ -56,6 +56,8 @@ configuration before relying on it.
      according to the XARF standard (v0.2). Close gh-105
    * Support PyPy
    * Add filter for apache-botsearch
+   * Add filter for kerio. Thanks Tony Lawrence for blog of regexs and
+     providing samples. Close gh-120
    * Filter for stunnel
    * Filter for Counter Strike 1.6. Thanks to onorua for logs.
      Close gh-347
