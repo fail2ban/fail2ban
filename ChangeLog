@@ -33,6 +33,8 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
 	  send. This ensures that all data is sent before closing the connection.
   - Removed unnecessary reference to as yet undeclared $jail_name when checking
     a specific jail.
+  - Filter dovecot reordered session and TLS items in regex with wider scope
+    for session characters. Thanks Ivo Truxa. Closes gh-586
 
 - Enhancements:
   - added firewallcmd-ipset action
