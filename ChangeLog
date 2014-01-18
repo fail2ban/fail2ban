@@ -36,6 +36,8 @@ ver. 0.8.12 (2013/12/XX) - things-can-only-get-better
     a specific jail.
   - Filter dovecot reordered session and TLS items in regex with wider scope
     for session characters. Thanks Ivo Truxa. Closes gh-586
+  - A single bad failregex or command syntax in configuration files won't stop
+    fail2ban from starting. Thanks Tomasz Ciolek. Closes gh-585.
 
 - Enhancements:
   - long names on jails documented based on iptables limit of 30 less
