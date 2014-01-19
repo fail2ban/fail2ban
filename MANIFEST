@@ -173,6 +173,7 @@ config/filter.d/common.conf
 config/filter.d/apache-auth.conf
 config/filter.d/apache-badbots.conf
 config/filter.d/apache-botsearch.conf
+config/filter.d/apache-modsecurity.conf
 config/filter.d/apache-nohome.conf
 config/filter.d/apache-noscript.conf
 config/filter.d/apache-overflows.conf
@@ -181,11 +182,15 @@ config/filter.d/counter-strike.conf
 config/filter.d/courier-auth.conf
 config/filter.d/courier-smtp.conf
 config/filter.d/cyrus-imap.conf
+config/filter.d/ejabberd-auth.conf
 config/filter.d/exim.conf
+config/filter.d/freeswitch.conf
 config/filter.d/gssftpd.conf
 config/filter.d/kerio.conf
+config/filter.d/horde.conf
 config/filter.d/suhosin.conf
 config/filter.d/named-refused.conf
+config/filter.d/nsd.conf
 config/filter.d/openwebmail.conf
 config/filter.d/pam-generic.conf
 config/filter.d/php-url-fopen.conf
@@ -199,6 +204,7 @@ config/filter.d/pure-ftpd.conf
 config/filter.d/qmail.conf
 config/filter.d/sieve.conf
 config/filter.d/solid-pop3d.conf
+config/filter.d/squid.conf
 config/filter.d/sshd.conf
 config/filter.d/sshd-ddos.conf
 config/filter.d/stunnel.conf
@@ -231,9 +237,11 @@ config/filter.d/ejabberd-auth.conf
 config/filter.d/guacamole.conf
 config/filter.d/sendmail-spam.conf
 config/action.d/apf.conf
+config/action.d/blocklist_de.conf
 config/action.d/osx-afctl.conf
 config/action.d/osx-ipfw.conf
 config/action.d/sendmail-common.conf
+config/action.d/badips.conf
 config/action.d/bsd-ipfw.conf
 config/action.d/dummy.conf
 config/action.d/firewallcmd-new.conf
@@ -268,6 +276,7 @@ config/action.d/sendmail-whois-lines.conf
 config/action.d/shorewall.conf
 config/action.d/xarf-login-attack.conf
 config/action.d/ufw.conf
+config/fail2ban.conf
 doc/run-rootless.txt
 man/fail2ban-client.1
 man/fail2ban.1
