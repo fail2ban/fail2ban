@@ -205,7 +205,7 @@ class BasicFilter(unittest.TestCase):
 		self.filter.setDatePattern("^%Y-%m-%d-%H%M%S.%f %z")
 		self.assertEqual(self.filter.getDatePattern(),
 			("^%Y-%m-%d-%H%M%S.%f %z",
-			"Year-Month-Day-24hourMinuteSecond.Microseconds Zone offset"))
+			"^Year-Month-Day-24hourMinuteSecond.Microseconds Zone offset"))
 
 class IgnoreIP(LogCaptureTestCase):
 

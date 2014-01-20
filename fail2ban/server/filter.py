@@ -213,10 +213,7 @@ class Filter(JailThread):
 			template.setName("TAI64N")
 		else:
 			template = DatePatternRegex()
-			if pattern[0] == "^": # Special extra to enable anchor
-				template.setPattern(pattern[1:], anchor=True)
-			else:
-				template.setPattern(pattern, anchor=False)
+			template.setPattern(pattern)
 		self.dateDetector = DateDetector()
 		self.dateDetector.appendTemplate(template)
 		logSys.info("Date pattern set to `%r`: `%s`" %
@@ -237,8 +234,6 @@ class Filter(JailThread):
 			elif len(templates) == 1:
 				if hasattr(templates[0], "getPattern"):
 					pattern =  templates[0].getPattern()
-					if templates[0].getRegex()[0] == "^":
-						pattern = "^" + pattern
 				else:
 					pattern = None
 				return pattern, templates[0].getName()
