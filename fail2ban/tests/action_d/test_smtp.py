@@ -22,7 +22,11 @@ import smtpd
 import asyncore
 import threading
 import unittest
-import imp
+import sys
+if sys.version_info >= (3, 3):
+	import importlib
+else:
+	import imp
 
 from ..dummyjail import DummyJail
 
@@ -46,7 +50,12 @@ class SMTPActionTest(unittest.TestCase):
 		self.jail = DummyJail()
 		pythonModule = os.path.join(CONFIG_DIR, "action.d", "smtp.py")
 		pythonModuleName = os.path.basename(pythonModule.rstrip(".py"))
-		customActionModule = imp.load_source(pythonModuleName, pythonModule)
+		if sys.version_info >= (3, 3):
+			customActionModule = importlib.machinery.SourceFileLoader(
+				pythonModuleName, pythonModule).load_module()
+		else:
+			customActionModule = imp.load_source(
+				pythonModuleName, pythonModule)
 
 		self.smtpd = TestSMTPServer(("localhost", 0), None)
 		port = self.smtpd.socket.getsockname()[1]
@@ -94,23 +103,19 @@ class SMTPActionTest(unittest.TestCase):
 		self.assertTrue(
 			"Subject: [Fail2Ban] %s: banned %s" %
 				(self.jail.getName(), aInfo['ip']) in self.smtpd.data)
+		self.assertTrue(
+			"%i attempts" % aInfo['failures'] in self.smtpd.data)
 
 		self.action.matches = "matches"
 		self.action.ban(aInfo)
-		self.assertTrue(
-			"%i attempts" % aInfo['failures'] in self.smtpd.data)
 		self.assertTrue(aInfo['matches'] in self.smtpd.data)
 
 		self.action.matches = "ipjailmatches"
 		self.action.ban(aInfo)
-		self.assertTrue(
-			"%i attempts" % aInfo['failures'] in self.smtpd.data)
 		self.assertTrue(aInfo['ipjailmatches'] in self.smtpd.data)
 
 		self.action.matches = "ipmatches"
 		self.action.ban(aInfo)
-		self.assertTrue(
-			"%i attempts" % aInfo['failures'] in self.smtpd.data)
 		self.assertTrue(aInfo['ipmatches'] in self.smtpd.data)
 
 	def testOptions(self):
