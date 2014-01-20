@@ -26,7 +26,11 @@ __license__ = "GPL"
 
 import time, logging
 import os
-import imp
+import sys
+if sys.version_info >= (3, 3):
+	import importlib
+else:
+	import imp
 from collections import Mapping
 
 from .banmanager import BanManager
@@ -95,8 +99,12 @@ class Actions(JailThread, Mapping):
 			action = CommandAction(self._jail, name)
 		else:
 			pythonModuleName = os.path.basename(pythonModule.strip(".py"))
-			customActionModule = imp.load_source(
-				pythonModuleName, pythonModule)
+			if sys.version_info >= (3, 3):
+				customActionModule = importlib.machinery.SourceFileLoader(
+					pythonModuleName, pythonModule).load_module()
+			else:
+				customActionModule = imp.load_source(
+					pythonModuleName, pythonModule)
 			if not hasattr(customActionModule, "Action"):
 				raise RuntimeError(
 					"%s module does not have 'Action' class" % pythonModule)

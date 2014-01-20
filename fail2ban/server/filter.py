@@ -849,7 +849,7 @@ class DNSUtils:
 		try:
 			return set(socket.gethostbyname_ex(dns)[2])
 		except socket.error, e:
-			logSys.warn("Unable to find a corresponding IP address for %s: %s"
+			logSys.warning("Unable to find a corresponding IP address for %s: %s"
 						% (dns, e))
 			return list()
 		except socket.error, e:

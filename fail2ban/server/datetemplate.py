@@ -187,7 +187,7 @@ class DateStrptime(DateTemplate):
 						date += delta
 					date = date.replace(tzinfo=iso8601.Utc())
 				else:
-					logSys.warn("No _z group captured and %%z is not supported on current platform"
+					logSys.warning("No _z group captured and %%z is not supported on current platform"
 								" - timezone ignored and assumed to be localtime. date: %s on line: %s"
 								% (date, line))
 

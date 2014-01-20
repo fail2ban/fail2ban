@@ -118,7 +118,7 @@ class JailReader(ConfigReader):
 					return False
 			else:
 				self.__filter = None
-				logSys.warn("No filter set for jail %s" % self.__name)
+				logSys.warning("No filter set for jail %s" % self.__name)
 		
 			# Read action
 			for act in self.__opts["action"].split('\n'):
