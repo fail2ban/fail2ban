@@ -105,6 +105,7 @@ setup(
 					'fail2ban.client',
 					'fail2ban.server',
 					'fail2ban.tests',
+					'fail2ban.tests.action_d',
 				],
 	package_data =	{
 						'fail2ban.tests': 

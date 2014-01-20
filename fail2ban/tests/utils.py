@@ -203,6 +203,17 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
 
 	#
+	# Python action testcases
+	#
+	testloader = unittest.TestLoader()
+	from . import action_d
+	for file_ in os.listdir(
+		os.path.abspath(os.path.dirname(action_d.__file__))):
+		if file_.startswith("test_") and file_.endswith(".py"):
+			tests.addTest(testloader.loadTestsFromName(
+				"%s.%s" % (action_d.__name__, os.path.splitext(file_)[0])))
+
+	#
 	# Extensive use-tests of different available filters backends
 	#
 

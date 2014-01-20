@@ -98,8 +98,8 @@ class SMTPAction(ActionBase):
 			Email address to use for from address in email.
 			Default "fail2ban".
 		dest : str, optional
-			Email addresses of intended recipient(s) in comma delimited
-			format. Default "root".
+			Email addresses of intended recipient(s) in comma space ", "
+			delimited format. Default "root".
 		matches : str, optional
 			Type of matches to be included from ban in email. Can be one
 			of "matches", "ipmatches" or "ipjailmatches". Default None
@@ -159,7 +159,7 @@ class SMTPAction(ActionBase):
 			if self.user and self.password:
 				smtp.login(self.user, self.password)
 			failed_recipients = smtp.sendmail(
-				self.fromaddr, self.toaddr, msg.as_string())
+				self.fromaddr, self.toaddr.split(", "), msg.as_string())
 		except smtplib.SMTPConnectError:
 			self._logSys.error("Error connecting to host '%s'", self.host)
 			raise

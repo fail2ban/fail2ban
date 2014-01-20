@@ -98,7 +98,8 @@ class Actions(JailThread, Mapping):
 		if pythonModule is None:
 			action = CommandAction(self._jail, name)
 		else:
-			pythonModuleName = os.path.basename(pythonModule.strip(".py"))
+			pythonModuleName = os.path.splitext(
+				os.path.basename(pythonModule))[0]
 			if sys.version_info >= (3, 3):
 				customActionModule = importlib.machinery.SourceFileLoader(
 					pythonModuleName, pythonModule).load_module()
