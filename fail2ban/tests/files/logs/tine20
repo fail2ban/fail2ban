@@ -1,0 +1,7 @@
+# Wrong username (-1) error
+# failJSON: { "time": "2014-01-13T06:02:22", "match": true, "host": "127.0.0.1" }
+78017 00cff -- none -- - 2014-01-13T05:02:22+00:00 WARN (4): Tinebase_Controller::login::106 Login with username sdfsadf from 127.0.0.1 failed (-1)!
+
+# Wrong password (-3) error
+# failJSON: { "time": "2014-01-21T05:38:14", "match": true, "host": "127.0.0.1" }
+8e035 ffff3 -- none -- - 2014-01-21T04:38:14+00:00 WARN (4): Tinebase_Controller::login::106 Login with username testuser from 127.0.0.1 failed (-3)!
