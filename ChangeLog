@@ -75,7 +75,20 @@ configuration before relying on it.
      same jail -- use actname option to disambiguate.
    * Add honeypot email address to exim-spam filter as argument
 
-ver. 0.8.12 (2014/01/XX) - things-can-only-get-better
+
+ver. 0.8.13 (2014/XX/XXX) - maintaince-only-from-now-on
+----------
+
+- Fixes:
+  - action firewallcmd-ipset had non-working actioncheck. Removed.
+    redhat bug #1046816.
+
+- New Features:
+
+- Enhancements:
+
+ver. 0.8.12 (2014/01/22) - things-can-only-get-better
+----------
 
 - IMPORTANT incompatible changes:
   - Rename firewall-cmd-direct-new to firewallcmd-new to fit within jail name
@@ -148,6 +161,7 @@ ver. 0.8.12 (2014/01/XX) - things-can-only-get-better
 
 
 ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
+----------
 
 In light of CVE-2013-2178 that triggered our last release we have put
 a significant effort into tightening all of the regexs of our filters
