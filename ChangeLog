@@ -11,6 +11,8 @@ ver. 0.8.13 (2014/XX/XXX) - maintaince-only-from-now-on
 -----------
 
 - Fixes:
+  - action firewallcmd-ipset had non-working actioncheck. Removed.
+    redhat bug #1046816.
 
 - New Features:
 
