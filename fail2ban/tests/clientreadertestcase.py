@@ -435,7 +435,8 @@ class JailsReaderTest(LogCaptureTestCase):
 		# All jails must have filter and action set
 		# TODO: evolve into a parametric test
 		for jail in jails.sections():
-
+			if jail == 'INCLUDES':
+				continue
 			filterName = jails.get(jail, 'filter')
 			allFilters.add(filterName)
 			self.assertTrue(len(filterName))
