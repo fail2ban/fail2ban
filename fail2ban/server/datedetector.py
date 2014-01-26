@@ -77,9 +77,9 @@ class DateDetector(object):
 			self.appendTemplate("(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %Y)?")
 			# simple date, optional subsecond (proftpd):
 			# 2005-01-23 21:59:59 
-			self.appendTemplate("%Y-%m-%d %H:%M:%S(?:,%f)?")
 			# simple date: 2005/01/23 21:59:59 
-			self.appendTemplate("%Y/%m/%d %H:%M:%S")
+			# custom for syslog-ng 2006.12.21 06:43:20
+			self.appendTemplate("%Y(?P<_sep>[-/.])%m(?P=_sep)%d %H:%M:%S(?:,%f)?")
 			# simple date too (from x11vnc): 23/01/2005 21:59:59 
 			# and with optional year given by 2 digits: 23/01/05 21:59:59 
 			# (See http://bugs.debian.org/537610)
@@ -89,13 +89,10 @@ class DateDetector(object):
 			self.appendTemplate("%d/%b/%Y:%H:%M:%S(?: %z)?")
 			# CPanel 05/20/2008:01:57:39
 			self.appendTemplate("%m/%d/%Y:%H:%M:%S")
-			# custom for syslog-ng 2006.12.21 06:43:20
-			self.appendTemplate("%Y\.%m\.%d %H:%M:%S")
 			# named 26-Jul-2007 15:20:52.252 
 			# roundcube 26-Jul-2007 15:20:52 +0200
-			self.appendTemplate("%d-%b-%Y %H:%M:%S(?:\.%f)?(?: %z)?")
 			# 26-Jul-2007 15:20:52
-			self.appendTemplate("%d-%b-%Y %H:%M:%S")
+			self.appendTemplate("%d-%b-%Y %H:%M:%S(?:\.%f)?(?: %z)?")
 			# 17-07-2008 17:23:25
 			self.appendTemplate("%d-%m-%Y %H:%M:%S")
 			# 01-27-2012 16:22:44.252
