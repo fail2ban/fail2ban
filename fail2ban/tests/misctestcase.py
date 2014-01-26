@@ -180,7 +180,7 @@ iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
 class CustomDateFormatsTest(unittest.TestCase):
 
 	def testIso8601(self):
-		date = datetime.datetime.fromtimestamp(
+		date = datetime.datetime.utcfromtimestamp(
 			iso8601.getDate("2007-01-25T12:00:00Z")[0])
 		self.assertEqual(
 			date,
@@ -193,22 +193,22 @@ class CustomDateFormatsTest(unittest.TestCase):
 
 		self.assertEqual(iso8601.getDate("2007-01-01T120:00:00Z"), None)
 		self.assertEqual(iso8601.getDate("2007-13-01T12:00:00Z"), None)
-		date = datetime.datetime.fromtimestamp(
+		date = datetime.datetime.utcfromtimestamp(
 			iso8601.getDate("2007-01-25T12:00:00+0400")[0])
 		self.assertEqual(
 			date,
 			datetime.datetime(2007, 1, 25, 8, 0))
-		date = datetime.datetime.fromtimestamp(
+		date = datetime.datetime.utcfromtimestamp(
 			iso8601.getDate("2007-01-25T12:00:00+04:00")[0])
 		self.assertEqual(
 			date,
 			datetime.datetime(2007, 1, 25, 8, 0))
-		date = datetime.datetime.fromtimestamp(
+		date = datetime.datetime.utcfromtimestamp(
 			iso8601.getDate("2007-01-25T12:00:00-0400")[0])
 		self.assertEqual(
 			date,
 			datetime.datetime(2007, 1, 25, 16, 0))
-		date = datetime.datetime.fromtimestamp(
+		date = datetime.datetime.utcfromtimestamp(
 			iso8601.getDate("2007-01-25T12:00:00-04")[0])
 		self.assertEqual(
 			date,
