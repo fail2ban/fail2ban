@@ -83,18 +83,16 @@ class DateDetector(object):
 			# simple date too (from x11vnc): 23/01/2005 21:59:59 
 			# and with optional year given by 2 digits: 23/01/05 21:59:59 
 			# (See http://bugs.debian.org/537610)
-			self.appendTemplate("%d/%m/(?:%Y|%y) %H:%M:%S")
+			# 17-07-2008 17:23:25
+			self.appendTemplate("%d(?P<_sep>[-/])%m(?P=_sep)(?:%Y|%y) %H:%M:%S")
 			# Apache format optional time zone:
 			# [31/Oct/2006:09:22:55 -0000]
-			self.appendTemplate("%d/%b/%Y:%H:%M:%S(?: %z)?")
+			# 26-Jul-2007 15:20:52
+			self.appendTemplate("%d(?P<_sep>[-/])%b(?P=_sep)%Y[ :]?%H:%M:%S(?:\.%f)?(?: %z)?")
 			# CPanel 05/20/2008:01:57:39
 			self.appendTemplate("%m/%d/%Y:%H:%M:%S")
 			# named 26-Jul-2007 15:20:52.252 
 			# roundcube 26-Jul-2007 15:20:52 +0200
-			# 26-Jul-2007 15:20:52
-			self.appendTemplate("%d-%b-%Y %H:%M:%S(?:\.%f)?(?: %z)?")
-			# 17-07-2008 17:23:25
-			self.appendTemplate("%d-%m-%Y %H:%M:%S")
 			# 01-27-2012 16:22:44.252
 			# subseconds explicit to avoid possible %m<->%d confusion
 			# with previous
