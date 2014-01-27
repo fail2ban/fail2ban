@@ -13,10 +13,13 @@ ver. 0.8.13 (2014/XX/XXX) - maintaince-only-from-now-on
 - Fixes:
   - action firewallcmd-ipset had non-working actioncheck. Removed.
     redhat bug #1046816.
+  - filter pureftpd - added _daemon which got removed. Added
 
 - New Features:
 
 - Enhancements:
+  - filter pureftpd - added all translations of "Authentication failed for
+    user"
 
 ver. 0.8.12 (2014/01/22) - things-can-only-get-better
 -----------
