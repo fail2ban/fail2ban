@@ -26,11 +26,24 @@ from .mytime import MyTime
 
 locale_time = LocaleTime()
 timeRE = TimeRE()
-if 'z' not in timeRE: # python2.6 not present
-	timeRE['z'] = r"(?P<z>[+-]\d{2}[0-5]\d)"
+timeRE['z'] = r"(?P<z>Z|[+-]\d{2}(?::?[0-5]\d)?)"
 
 def reGroupDictStrptime(found_dict):
-	"""This is tweaked from python built-in _strptime"""
+	"""Return time from dictionary of strptime fields
+
+	This is tweaked from python built-in _strptime.
+
+	Parameters
+	----------
+	found_dict : dict
+		Dictionary where keys represent the strptime fields, and values the
+		respective value.
+
+	Returns
+	-------
+	float
+		Unix time stamp.
+	"""
 
 	now = MyTime.now()
 	year = month = day = hour = minute = None
@@ -119,9 +132,14 @@ def reGroupDictStrptime(found_dict):
 				week_of_year_start = 0
 		elif group_key == 'z':
 			z = found_dict['z']
-			tzoffset = int(z[1:3]) * 60 + int(z[3:5])
-			if z.startswith("-"):
-				tzoffset = -tzoffset
+			if z == "Z":
+				tzoffset = 0
+			else:
+				tzoffset = int(z[1:3]) * 60 # Hours...
+				if len(z)>3:
+					tzoffset += int(z[-2:]) # ...and minutes
+				if z.startswith("-"):
+					tzoffset = -tzoffset
 		elif group_key == 'Z':
 			# Since -1 is default value only need to worry about setting tz if
 			# it can be something other than -1.
@@ -158,7 +176,6 @@ def reGroupDictStrptime(found_dict):
 		month = datetime_result.month
 		day = datetime_result.day
 	# Add timezone info
-	tzname = found_dict.get("Z")
 	if tzoffset is not None:
 		gmtoff = tzoffset * 60
 	else:

@@ -27,7 +27,7 @@ from .failmanager import FailManagerEmpty, FailManager
 from .ticket import FailTicket
 from .jailthread import JailThread
 from .datedetector import DateDetector
-from .datetemplate import DatePatternRegex, DateISO8601, DateEpoch, DateTai64n
+from .datetemplate import DatePatternRegex, DateEpoch, DateTai64n
 from .mytime import MyTime
 from .failregex import FailRegex, Regex, RegexException
 from .action import CommandAction
@@ -202,24 +202,20 @@ class Filter(JailThread):
 		if pattern is None:
 			self.dateDetector = None
 			return
-		elif pattern.upper() == "ISO8601":
-			template = DateISO8601()
-			template.setName("ISO8601")
 		elif pattern.upper() == "EPOCH":
 			template = DateEpoch()
-			template.setName("Epoch")
+			template.name = "Epoch"
 		elif pattern.upper() == "TAI64N":
 			template = DateTai64n()
-			template.setName("TAI64N")
+			template.name = "TAI64N"
 		else:
-			template = DatePatternRegex()
-			template.setPattern(pattern)
+			template = DatePatternRegex(pattern)
 		self.dateDetector = DateDetector()
 		self.dateDetector.appendTemplate(template)
 		logSys.info("Date pattern set to `%r`: `%s`" %
-			(pattern, template.getName()))
+			(pattern, template.name))
 		logSys.debug("Date pattern regex for %r: %s" %
-			(pattern, template.getRegex()))
+			(pattern, template.regex))
 
 	##
 	# Get the date detector pattern, or Default Detectors if not changed
@@ -228,15 +224,15 @@ class Filter(JailThread):
 
 	def getDatePattern(self):
 		if self.dateDetector is not None:
-			templates = self.dateDetector.getTemplates()
+			templates = self.dateDetector.templates
 			if len(templates) > 1:
 				return None, "Default Detectors"
 			elif len(templates) == 1:
-				if hasattr(templates[0], "getPattern"):
-					pattern =  templates[0].getPattern()
+				if hasattr(templates[0], "pattern"):
+					pattern =  templates[0].pattern
 				else:
 					pattern = None
-				return pattern, templates[0].getName()
+				return pattern, templates[0].name
 
 	##
 	# Set the maximum retry value.
