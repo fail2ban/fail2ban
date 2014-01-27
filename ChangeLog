@@ -61,6 +61,7 @@ configuration before relying on it.
    * Filter for Counter Strike 1.6. Thanks to onorua for logs.
      Close gh-347
    * Filter for squirrelmail. Close gh-261
+   * Filter for tine20. Close gh-583
 
 - Enhancements
    * Jail names increased to 26 characters and iptables prefix reduced
