@@ -48,3 +48,16 @@ Jan 13 20:51:05 valhalla dovecot: pop3-login: Disconnected: Inactivity (auth fai
 # failJSON: { "time": "2005-01-14T15:54:30", "match": true , "host": "1.2.3.4" }
 Jan 14 15:54:30 valhalla dovecot: pop3-login: Disconnected (auth failed, 1 attempts in 2 secs): user=<ivo>, method=PLAIN, rip=1.2.3.4, lip=1.1.2.2, TLS: Disconnected, session=<q454Xu/vMwBZApgg>
 
+
+# failJSON: { "time": "2005-01-29T09:33:58", "match": true , "host": "212.9.180.3" }
+Jan 29 09:33:58 pop3-login: Info: Aborted login (auth failed, 1 attempts in 2 secs): user=<grace>, method=PLAIN, rip=212.9.180.3
+
+# failJSON: { "time": "2005-01-29T09:34:17", "match": true , "host": "1.2.3.4" }
+Jan 29 09:34:17 pop3-login: Info: Aborted login (auth failed, 1 attempts in 62 secs): user=<carl.matx@sxxxxxxx.net>, method=PLAIN, rip=1.2.3.4, TLS
+
+# failJSON: { "time": "2005-01-29T09:38:03", "match": true , "host": "117.218.51.80" }
+Jan 29 09:38:03 pop3-login: Info: Disconnected: Inactivity (auth failed, 1 attempts in 178 secs): user=<suzanne>, method=PLAIN, rip=117.218.51.80
+
+# failJSON: { "time": "2005-01-29T09:38:46", "match": true , "host": "176.61.137.100" }
+Jan 29 09:38:46 pop3-login: Info: Disconnected (no auth attempts in 10 secs): user=<>, rip=176.61.137.100, TLS handshaking: SSL_accept() failed: error:140760FC:SSL routines:SSL23_GET_CLIENT_HELLO:unknown protocol
+
