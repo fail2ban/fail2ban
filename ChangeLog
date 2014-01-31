@@ -20,6 +20,8 @@ ver. 0.8.13 (2014/XX/XXX) - maintaince-only-from-now-on
 - Enhancements:
   - filter pureftpd - added all translations of "Authentication failed for
     user"
+  - filter dovecot - lip= was optional and extended TLS errors can occur.
+    Thanks Noel Butler.
 
 ver. 0.8.12 (2014/01/22) - things-can-only-get-better
 -----------

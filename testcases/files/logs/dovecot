@@ -19,19 +19,11 @@ Dec 12 11:19:11 dunnart dovecot: pop3-login: Aborted login (tried to use disallo
 Jun 13 16:30:54 platypus dovecot: imap-login: Disconnected (auth failed, 2 attempts): user=<username.bob>, method=PLAIN, rip=49.176.98.87, lip=113.212.99.194, TLS
 # failJSON: { "time": "2005-06-14T00:48:21", "match": true , "host": "59.167.242.100" }
 Jun 14 00:48:21 platypus dovecot: imap-login: Disconnected (auth failed, 1 attempts): method=PLAIN, rip=59.167.242.100, lip=113.212.99.194, TLS: Disconnected
-# failJSON: { "time": "2005-06-13T20:48:11", "match": true , "host": "121.44.24.254" }
-Jun 13 20:48:11 platypus dovecot: pop3-login: Disconnected (no auth attempts): rip=121.44.24.254, lip=113.212.99.194, TLS: Disconnected
-# failJSON: { "time": "2005-06-13T21:48:06", "match": true , "host": "180.200.180.81" }
-Jun 13 21:48:06 platypus dovecot: pop3-login: Disconnected: Inactivity (no auth attempts): rip=180.200.180.81, lip=113.212.99.194, TLS
-# failJSON: { "time": "2005-06-13T20:20:21", "match": true , "host": "180.189.168.166" }
-Jun 13 20:20:21 platypus dovecot: imap-login: Disconnected (no auth attempts): rip=180.189.168.166, lip=113.212.99.194, TLS handshaking: Disconnected
 # failJSON: { "time": "2005-06-23T00:52:43", "match": true , "host": "193.95.245.163" }
 Jun 23 00:52:43 vhost1-ua dovecot: pop3-login: Disconnected: Inactivity (auth failed, 1 attempts): user=<info>, method=PLAIN, rip=193.95.245.163, lip=176.214.13.210
 
 # failJSON: { "time": "2005-07-02T13:49:31", "match": true , "host": "192.51.100.13" }
 Jul 02 13:49:31 hostname dovecot[442]: pop3-login: Aborted login (auth failed, 1 attempts in 17 secs): user=<test>, method=PLAIN, rip=192.51.100.13, lip=203.0.113.17, session=<YADINsQCDs5BH8Pg>
-# failJSON: { "time": "2005-07-02T13:49:32", "match": true , "host": "192.51.100.13" }
-Jul 02 13:49:32 hostname dovecot[442]: pop3-login: Disconnected (no auth attempts in 58 secs): user=<>, rip=192.51.100.13, lip=203.0.113.17, session=<LgDINsQCkttVIMPg>
 
 # failJSON: { "time": "2005-07-02T13:49:32", "match": true , "host": "200.76.17.206" }
 Jul 02 13:49:32 hostname dovecot[442]: dovecot: auth(default): pam(account@MYSERVERNAME.com,200.76.17.206): pam_authenticate() failed: User not known to the underlying authentication module: 2 Time(s)
@@ -48,3 +40,24 @@ Jan 13 20:51:05 valhalla dovecot: pop3-login: Disconnected: Inactivity (auth fai
 # failJSON: { "time": "2005-01-14T15:54:30", "match": true , "host": "1.2.3.4" }
 Jan 14 15:54:30 valhalla dovecot: pop3-login: Disconnected (auth failed, 1 attempts in 2 secs): user=<ivo>, method=PLAIN, rip=1.2.3.4, lip=1.1.2.2, TLS: Disconnected, session=<q454Xu/vMwBZApgg>
 
+
+# failJSON: { "time": "2005-01-29T09:33:58", "match": true , "host": "212.9.180.3" }
+Jan 29 09:33:58 pop3-login: Info: Aborted login (auth failed, 1 attempts in 2 secs): user=<grace>, method=PLAIN, rip=212.9.180.3
+
+# failJSON: { "time": "2005-01-29T09:34:17", "match": true , "host": "1.2.3.4" }
+Jan 29 09:34:17 pop3-login: Info: Aborted login (auth failed, 1 attempts in 62 secs): user=<carl.matx@sxxxxxxx.net>, method=PLAIN, rip=1.2.3.4, TLS
+
+# failJSON: { "time": "2005-01-29T09:38:03", "match": true , "host": "117.218.51.80" }
+Jan 29 09:38:03 pop3-login: Info: Disconnected: Inactivity (auth failed, 1 attempts in 178 secs): user=<suzanne>, method=PLAIN, rip=117.218.51.80
+
+# failJSON: { "time": "2005-01-29T09:38:46", "match": false , "host": "176.61.137.100" }
+Jan 29 09:38:46 pop3-login: Info: Disconnected (no auth attempts in 10 secs): user=<>, rip=176.61.137.100, TLS handshaking: SSL_accept() failed: error:140760FC:SSL routines:SSL23_GET_CLIENT_HELLO:unknown protocol
+
+# failJSON: { "time": "2005-06-13T20:48:11", "match": false , "host": "121.44.24.254" }
+Jun 13 20:48:11 platypus dovecot: pop3-login: Disconnected (no auth attempts): rip=121.44.24.254, lip=113.212.99.194, TLS: Disconnected
+# failJSON: { "time": "2005-06-13T21:48:06", "match": false , "host": "180.200.180.81" }
+Jun 13 21:48:06 platypus dovecot: pop3-login: Disconnected: Inactivity (no auth attempts): rip=180.200.180.81, lip=113.212.99.194, TLS
+# failJSON: { "time": "2005-06-13T20:20:21", "match": false , "host": "180.189.168.166" }
+Jun 13 20:20:21 platypus dovecot: imap-login: Disconnected (no auth attempts): rip=180.189.168.166, lip=113.212.99.194, TLS handshaking: Disconnected
+# failJSON: { "time": "2005-07-02T13:49:32", "match": false , "host": "192.51.100.13" }
+Jul 02 13:49:32 hostname dovecot[442]: pop3-login: Disconnected (no auth attempts in 58 secs): user=<>, rip=192.51.100.13, lip=203.0.113.17, session=<LgDINsQCkttVIMPg>
