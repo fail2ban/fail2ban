@@ -16,6 +16,7 @@ ver. 0.8.13 (2014/XX/XXX) - maintaince-only-from-now-on
   - filter pureftpd - added _daemon which got removed. Added
 
 - New Features:
+  - filter nagios - detects unauthorized access to the nrpe daemon (Ivo Truxa)
 
 - Enhancements:
   - filter pureftpd - added all translations of "Authentication failed for
