@@ -33,7 +33,7 @@
 	<exec_method
 		type='method'
 		name='start'
-		exec='/lib/svc/method/svc-fail2ban start'
+		exec='/var/svc/method/svc-fail2ban start'
 		timeout_seconds='-1'>
 		<method_context>
 			<method_credential user='root' group='root' />
@@ -43,21 +43,21 @@
 	<exec_method
 		type='method'
 		name='stop'
-		exec='/lib/svc/method/svc-fail2ban stop'
+		exec='/var/svc/method/svc-fail2ban stop'
 		timeout_seconds='-1'>
 	</exec_method>
 
         <exec_method
                 type='method'
                 name='reload'
-                exec='/lib/svc/method/svc-fail2ban reload'
+                exec='/var/svc/method/svc-fail2ban reload'
                 timeout_seconds='-1'>
         </exec_method>
 
        <exec_method
                 type='method'
                 name='refresh'
-                exec='/lib/svc/method/svc-fail2ban refresh'
+                exec='/var/svc/method/svc-fail2ban refresh'
                 timeout_seconds='-1'>
         </exec_method>
 
@@ -65,7 +65,7 @@
 	<exec_method
 		type='method'
 		name='restart'
-		exec='/lib/svc/method/svc-fail2ban restart'
+		exec='/var/svc/method/svc-fail2ban restart'
 		timeout_seconds='-1'>
 	</exec_method>
 

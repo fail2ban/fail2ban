@@ -75,7 +75,7 @@ setup(
 						('/var/run/fail2ban',
 							''
 						),
-						('/usr/share/doc/fail2ban',
+						('/usr/local/share/doc/fail2ban',
 							['README.md', 'DEVELOP', 'doc/run-rootless.txt']
 						)
 					]
@@ -89,11 +89,11 @@ elements =	{
 					[
 						"fail2ban.conf"
 					],
-				"/usr/bin/":
+				"/usr/local/bin/":
 					[
 						"fail2ban.py"
 					], 
-				"/usr/lib/fail2ban/":
+				"/usr/local/lib/fail2ban/":
 					[
 						"version.py",
 						"protocol.py"
@@ -116,11 +116,11 @@ if obsoleteFiles:
 		print "\t" + f
 	print
 
-if isdir("/usr/lib/fail2ban"):
+if isdir("/usr/local/lib/fail2ban"):
 	print
-	print "Fail2ban is not installed under /usr/lib anymore. The new " \
-		  "location is under /usr/share. Please remove the directory " \
-		  "/usr/lib/fail2ban and everything under this directory."
+	print "Fail2ban is not installed under /usr/local/lib anymore. The new " \
+		  "location is under /usr/local/share. Please remove the directory " \
+		  "/usr/local/lib/fail2ban and everything under this directory."
 	print
 
 # Update config file

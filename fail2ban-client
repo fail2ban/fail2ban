@@ -30,7 +30,7 @@ import getopt, time, shlex, socket
 try:
 	from common.version import version
 except ImportError, e:
-	sys.path.insert(1, "/usr/share/fail2ban")
+	sys.path.insert(1, "/usr/local/share/fail2ban")
 	from common.version import version
 
 # Now we can import the rest of modules

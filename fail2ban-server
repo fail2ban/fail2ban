@@ -29,7 +29,7 @@ import getopt, sys, logging, os
 try:
 	from common.version import version
 except ImportError, e:
-	sys.path.insert(1, "/usr/share/fail2ban")
+	sys.path.insert(1, "/usr/local/share/fail2ban")
 	from common.version import version
 
 from server.server import Server
