@@ -24,6 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import os
 import logging
 from configreader import ConfigReader
 
@@ -34,27 +35,31 @@ class FilterReader(ConfigReader):
 	
 	def __init__(self, fileName, name, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
-		self.__file = fileName
-		self.__name = name
+		# Defer initialization to the set Methods
+		self.__file = self.__name = self.__opts = None
+		self.setFile(fileName)
+		self.setName(name)
 	
 	def setFile(self, fileName):
 		self.__file = fileName
+		self.__opts = None
 	
 	def getFile(self):
 		return self.__file
 	
 	def setName(self, name):
 		self.__name = name
-	
+
 	def getName(self):
 		return self.__name
 	
 	def read(self):
-		return ConfigReader.read(self, "filter.d/" + self.__file)
+		return ConfigReader.read(self, os.path.join("filter.d", self.__file))
 	
 	def getOptions(self, pOpts):
 		opts = [["string", "ignoreregex", ""],
-				["string", "failregex", ""]]
+				["string", "failregex", ""],
+				]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts, pOpts)
 	
 	def convert(self):

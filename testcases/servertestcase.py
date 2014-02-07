@@ -25,7 +25,8 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import unittest, socket, time, tempfile, os, sys
-from server.server import Server
+from server.failregex import Regex, FailRegex, RegexException
+from server.server import Server, logSys
 from server.jail import Jail
 from common.exceptions import UnknownJailException
 
@@ -337,6 +338,9 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["set", self.jailName, "delignoreip", value]),
 			(0, [value]))
 
+	def testJailIgnoreCommand(self):
+		self.setGetTest("ignorecommand", "bin ", jail=self.jailName)
+
 	def testJailRegex(self):
 		self.jailAddDelRegexTest("failregex",
 			[
@@ -521,6 +525,41 @@ class TransmitterLogging(TransmitterBase):
 		self.setGetTest("loglevel", "0", 0)
 		self.setGetTestNOK("loglevel", "Bird")
 
+	def testFlushLogs(self):
+		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
+		try:
+			f, fn = tempfile.mkstemp("fail2ban.log")
+			os.close(f)
+			self.server.setLogLevel(2)
+			self.assertEqual(self.transm.proceed(["set", "logtarget", fn]), (0, fn))
+			logSys.warn("Before file moved")
+			try:
+				f2, fn2 = tempfile.mkstemp("fail2ban.log")
+				os.close(f2)
+				os.rename(fn, fn2)
+				logSys.warn("After file moved")
+				self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
+				logSys.warn("After flushlogs")
+				# >py2.4: with open(fn2, 'r') as f:
+				f = open(fn2, 'r');
+				if True:
+					self.assertTrue(f.next().endswith("Before file moved\n"))
+					self.assertTrue(f.next().endswith("After file moved\n"))
+					self.assertRaises(StopIteration, f.next)
+					f.close()
+				# >py2.4: with open(fn, 'r') as f:
+				f = open(fn, 'r');
+				if True:
+					self.assertTrue(f.next().endswith("After flushlogs\n"))
+					self.assertRaises(StopIteration, f.next)
+					f.close()
+			finally:
+				os.remove(fn2)
+		finally:
+			os.remove(fn)
+		self.assertEqual(self.transm.proceed(["set", "logtarget", "STDERR"]), (0, "STDERR"))
+		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "flushed"))
+
 
 class JailTests(unittest.TestCase):
 
@@ -529,3 +568,30 @@ class JailTests(unittest.TestCase):
 		longname = "veryveryverylongname"
 		jail = Jail(longname)
 		self.assertEqual(jail.getName(), longname)
+
+class RegexTests(unittest.TestCase):
+
+	def testInit(self):
+		# Should raise an Exception upon empty regex
+		self.assertRaises(RegexException, Regex, '')
+		self.assertRaises(RegexException, Regex, ' ')
+		self.assertRaises(RegexException, Regex, '\t')
+
+	def testStr(self):
+		# .replace just to guarantee uniform use of ' or " in the %r
+		self.assertEqual(str(Regex('a')).replace('"', "'"), "Regex('a')")
+		# Class name should be proper
+		self.assertTrue(str(FailRegex('<HOST>')).startswith("FailRegex("))
+
+	def testHost(self):
+		self.assertRaises(RegexException, FailRegex, '')
+		# Testing obscure case when host group might be missing in the matched pattern,
+		# e.g. if we made it optional.
+		fr = FailRegex('%%<HOST>?')
+		self.assertFalse(fr.hasMatched())
+		fr.search("%%")
+		self.assertTrue(fr.hasMatched())
+		self.assertRaises(RegexException, fr.getHost)
+
+
+

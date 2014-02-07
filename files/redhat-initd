@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# chkconfig: 345 92 08
+# chkconfig: - 92 08
 # processname: fail2ban-server
 # config: /etc/fail2ban/fail2ban.conf
 # pidfile: /var/run/fail2ban/fail2ban.pid

@@ -4,8 +4,76 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.11)                                             2013/11/13
+Fail2Ban (version 0.8.12)                                             2014/01/22
 ================================================================================
+
+ver. 0.8.12 (2014/01/22) - things-can-only-get-better
+-----------
+
+- IMPORTANT incompatible changes:
+  - Rename firewall-cmd-direct-new to firewallcmd-new to fit within jail name
+    name length. As per gh-395
+  - mysqld-syslog-iptables jailname was too long. Renamed to mysqld-syslog.
+	  Part of gh-447.
+
+- Fixes:
+  - allow for ",milliseconds" in the custom date format of proftpd.log
+  - allow for ", referer ..." in apache-* filter for apache error logs.
+  - allow for spaces at the beginning of kernel messages. Closes gh-448
+  - recidive jail to block all protocols. Closes gh-440. Thanksg Ioan Indreias
+  - smtps not a IANA standard and has been removed from Arch. Replaced with
+    465. Thanks Stefan. Closes gh-447
+  - add 'flushlogs' command to allow logrotation without clobbering logtarget
+    settings. Closes gh-458, Debian bug #697333, Redhat bug #891798.
+  - complain action - ensure where not matching other IPs in log sample.
+    Closes gh-467
+  - Fix firewall-cmd actioncheck - patch from Adam Tkac. Redhat Bug #979622
+  - Fix apache-common for apache-2.4 log file format. Thanks Mark White.
+    Closes gh-516
+  - Asynchat changed to use push method which verifys whether all data was
+	  send. This ensures that all data is sent before closing the connection.
+  - Removed unnecessary reference to as yet undeclared $jail_name when checking
+    a specific jail.
+  - Filter dovecot reordered session and TLS items in regex with wider scope
+    for session characters. Thanks Ivo Truxa. Closes gh-586
+  - A single bad failregex or command syntax in configuration files won't stop
+    fail2ban from starting. Thanks Tomasz Ciolek. Closes gh-585.
+
+- Enhancements:
+  - long names on jails documented based on iptables limit of 30 less
+    len("fail2ban-").
+  - remove indentation of name and loglevel while logging to SYSLOG to
+    resolve syslog(-ng) parsing problems. Closes Debian bug #730202.
+  - updated check_fail2ban to return performance data for all jails.
+  - filter apache-noscript now includes php cgi scripts.
+    Thanks dani. Closes gh-503
+  - exim-spam filter to match spamassassin log entry for option SAdevnull.
+    Thanks Ivo Truxa. Closes gh-533
+  - Added to sshd filter expression for "Received disconnect from <HOST>: 3:
+    ...: Auth fail". Thanks Marcel Dopita. Closes gh-289
+  - Improved ACL-handling for Asterisk
+  - loglines now also report "[PID]" after the name portion
+  - Added improper command pipelining to postfix filter.
+
+- New Features:
+
+  - filter.d/solid-pop3d -- added thanks to Jacques Lav!gnotte on mailinglist.
+  - Add filter for apache-modsecurity.
+  - filter.d/nsd.conf -- also amended Unix date template to match nsd format
+  - Added filter.d/openwebmail filter thanks Ivo Truxa. Closes gh-543
+  - Added filter.d/horde.
+  - Added filter for freeswitch. Thanks Jim and editors and authors of 
+    http://wiki.freeswitch.org/wiki/Fail2ban.
+  - Added filter for squid. Thanks Roman Gelfand.
+  - Added filter for ejabberd-auth.
+  - Added filter.d/openwebmail filter thanks Ivo Truxa. Closes gh-543
+  - Added filter.d/groupoffice filter thanks to logs from Merijn Schering.
+    Closes gh-566
+  - Added action.d/badips. Thanks to Amy for making a nice API.
+  - Added firewallcmd-ipset action.
+  - Added ufw action. Thanks Guilhem Lettron. lp-#701522
+  - Added blocklist_de action.
+
 
 ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
 -----------

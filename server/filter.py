@@ -30,8 +30,9 @@ from jailthread import JailThread
 from datedetector import DateDetector
 from mytime import MyTime
 from failregex import FailRegex, Regex, RegexException
+from action import Action
 
-import logging, re, os, fcntl, time
+import logging, re, os, fcntl, time, shlex, subprocess
 
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
@@ -67,6 +68,8 @@ class Filter(JailThread):
 		self.__findTime = 6000
 		## The ignore IP list.
 		self.__ignoreIpList = []
+		## External command
+		self.__ignoreCommand = False
 
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
@@ -213,12 +216,29 @@ class Filter(JailThread):
 		raise Exception("run() is abstract")
 
 	##
+	# Set external command, for ignoredips
+	#
+
+	def setIgnoreCommand(self, command):
+		self.__ignoreCommand = command
+
+	##
+	# Get external command, for ignoredips
+	#
+
+	def getIgnoreCommand(self):
+		return self.__ignoreCommand
+
+	##
 	# Ban an IP - http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
 	# Arturo 'Buanzo' Busleiman <buanzo@buanzo.com.ar>
 	#
 	# to enable banip fail2ban-client BAN command
 
 	def addBannedIP(self, ip):
+		if self.inIgnoreIPList(ip):
+			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.' % ip)
+
 		unixTime = MyTime.time()
 		for i in xrange(self.failManager.getMaxRetry()):
 			self.failManager.addFailure(FailTicket(ip, unixTime))
@@ -281,6 +301,12 @@ class Filter(JailThread):
 					continue
 			if a == b:
 				return True
+
+		if self.__ignoreCommand:
+			command = Action.replaceTag(self.__ignoreCommand, { 'ip': ip } )
+			logSys.debug('ignore command: ' + command)
+			return Action.executeCmd(command)
+
 		return False
 
 
@@ -443,7 +469,7 @@ class FileFilter(Filter):
 				self._delLogPath(path)
 				return
 
-	def _delLogPath(self, path):
+	def _delLogPath(self, path): # pragma: no cover - overwritten function
 		# nothing to do by default
 		# to be overridden by backends
 		pass
@@ -564,6 +590,9 @@ class FileContainer:
 
 	def getFileName(self):
 		return self.__filename
+
+	def getPos(self):
+		return self.__pos
 
 	def open(self):
 		self.__handler = open(self.__filename)

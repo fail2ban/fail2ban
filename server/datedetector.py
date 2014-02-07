@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, logging
+import sys, time, logging
 
 from datetemplate import DateStrptime, DateTai64n, DateEpoch, DateISO8601
 from threading import Lock
@@ -46,12 +46,13 @@ class DateDetector:
 	def addDefaultTemplate(self):
 		self.__lock.acquire()
 		try:
-			# asctime with subsecond
-			template = DateStrptime()
-			template.setName("WEEKDAY MONTH Day Hour:Minute:Second[.subsecond] Year")
-			template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}\.\d+ \d{4}")
-			template.setPattern("%a %b %d %H:%M:%S.%f %Y")
-			self._appendTemplate(template)
+			if sys.version_info >= (2, 5): # because of '%.f'
+				# asctime with subsecond
+				template = DateStrptime()
+				template.setName("WEEKDAY MONTH Day Hour:Minute:Second[.subsecond] Year")
+				template.setRegex("\S{3} \S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}\.\d+ \d{4}")
+				template.setPattern("%a %b %d %H:%M:%S.%f %Y")
+				self._appendTemplate(template)
 			# asctime without no subsecond
 			template = DateStrptime()
 			template.setName("WEEKDAY MONTH Day Hour:Minute:Second Year")
@@ -101,6 +102,14 @@ class DateDetector:
 			template.setRegex("\d{2}/\d{2}/\d{4}:\d{2}:\d{2}:\d{2}")
 			template.setPattern("%m/%d/%Y:%H:%M:%S")
 			self._appendTemplate(template)
+			if sys.version_info >= (2, 5): # because of '%.f'
+				# proftpd 2013-11-16 21:43:03,296
+				# So like Exim below but with ,subsecond
+				template = DateStrptime()
+				template.setName("Year-Month-Day Hour:Minute:Second[,subsecond]")
+				template.setRegex("\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+")
+				template.setPattern("%Y-%m-%d %H:%M:%S,%f")
+				self._appendTemplate(template)
 			# Exim 2006-12-21 06:43:20
 			template = DateStrptime()
 			template.setName("Year-Month-Day Hour:Minute:Second")

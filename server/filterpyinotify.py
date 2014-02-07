@@ -115,9 +115,6 @@ class FilterPyinotify(FileFilter):
 		wd = self.__monitor.add_watch(path, pyinotify.IN_MODIFY)
 		self.__watches.update(wd)
 		logSys.debug("Added file watcher for %s", path)
-		# process the file since we did get even
-		self._process_file(path)
-
 
 	def _delFileWatcher(self, path):
 		wdInt = self.__watches[path]
@@ -143,6 +140,7 @@ class FilterPyinotify(FileFilter):
 			logSys.debug("Added monitor for the parent directory %s", path_dir)
 
 		self._addFileWatcher(path)
+		self._process_file(path)
 
 
     ##
