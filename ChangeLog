@@ -31,7 +31,7 @@ ver. 0.8.12 (2014/01/22) - things-can-only-get-better
   - Rename firewall-cmd-direct-new to firewallcmd-new to fit within jail name
     name length. As per gh-395
   - mysqld-syslog-iptables jailname was too long. Renamed to mysqld-syslog.
-	  Part of gh-447.
+    Part of gh-447.
 
 - Fixes:
   - allow for ",milliseconds" in the custom date format of proftpd.log
@@ -48,7 +48,7 @@ ver. 0.8.12 (2014/01/22) - things-can-only-get-better
   - Fix apache-common for apache-2.4 log file format. Thanks Mark White.
     Closes gh-516
   - Asynchat changed to use push method which verifys whether all data was
-	  send. This ensures that all data is sent before closing the connection.
+    send. This ensures that all data is sent before closing the connection.
   - Removed unnecessary reference to as yet undeclared $jail_name when checking
     a specific jail.
   - Filter dovecot reordered session and TLS items in regex with wider scope
@@ -890,7 +890,7 @@ ver. 0.5.4 (2005/09/13) - beta
   * Fixed errata in config/gentoo-confd
   * Introduced findtime configuration variable to control the lifetime of caught
     "failed" log entries
-	
+
 ver. 0.5.3 (2005/09/08) - beta
 ----------
 - Fixed a bug when overriding "maxfailures" or "bantime". Thanks to Yaroslav
