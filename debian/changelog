@@ -1,9 +1,14 @@
-fail2ban (0.8.11-2) UNRELEASED; urgency=low
+fail2ban (0.8.12-1) unstable; urgency=low
 
-  * /etc/default/fail2ban -- minor typo. Thanks Vincent Lefevre for report (the
-    rest will be reflected in the next upstream release) (Closes: #734421)
+  * New upstream release
+    - provides "fail2ban-client flushlogs" command, debian/fail2ban.logrotate
+      was adjusted to use it.  Helps to mitigate #697333
+    - removes indentation of name and loglevel while logging to SYSLOG
+      (Closes: #730202)
+  * /etc/default/fail2ban -- minor typo. Thanks Vincent Lefevre for report
+    (Closes: #734421)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 06 Jan 2014 23:39:33 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 07 Feb 2014 00:45:38 -0500
 
 fail2ban (0.8.11-1) unstable; urgency=low
 
