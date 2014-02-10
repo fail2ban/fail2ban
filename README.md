@@ -11,6 +11,11 @@ password failures. It updates firewall rules to reject the IP address. These
 rules can be defined by the user. Fail2Ban can read multiple log files such as
 sshd or Apache web server ones.
 
+Fail2Ban is able to reduce the rate of incorrect authentications attempts
+however it cannot eliminate the risk that weak authentication presents.
+Configure services to use only two factor or public/private authentication
+mechanisms if you really want to protect services.
+
 This README is a quick introduction to Fail2ban. More documentation, FAQ, HOWTOs
 are available in fail2ban(1) manpage and on the website http://www.fail2ban.org
 
