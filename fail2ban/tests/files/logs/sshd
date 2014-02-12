@@ -132,3 +132,7 @@ Nov 23 21:50:37 sshd[7148]: Connection closed by 61.0.0.1 [preauth]
 # failJSON: { "time": "2005-07-13T18:44:28", "match": true , "host": "89.24.13.192", "desc": "from gh-289" }
 Jul 13 18:44:28 mdop sshd[4931]: Received disconnect from 89.24.13.192: 3: com.jcraft.jsch.JSchException: Auth fail
 
+# failJSON: { "match": false }
+Feb 12 04:09:18 localhost sshd[26713]: Connection from 115.249.163.77 port 51353
+# failJSON: { "time": "2005-02-12T04:09:21", "match": true , "host": "115.249.163.77", "desc": "from gh-457" }
+Feb 12 04:09:21 localhost sshd[26713]: Disconnecting: Too many authentication failures for root [preauth]
