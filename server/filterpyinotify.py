@@ -212,4 +212,5 @@ class ProcessPyinotify(pyinotify.ProcessEvent):
 		try:
 			self.__FileFilter.callback(event, origin='Default ')
 		except Exception as e:
-			logSys.error("Error in FilterPyinotify callback: %s", e)
+			logSys.error("Error in FilterPyinotify callback: %s",
+				e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
