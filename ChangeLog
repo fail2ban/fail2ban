@@ -69,6 +69,9 @@ configuration before relying on it.
    * Multiline filter for sendmail-spam. Close gh-418
    * Multiline regex for Disconnecting: Too many authentication failures for
      root [preauth]\nConnection closed by 6X.XXX.XXX.XXX [preauth]
+   * Multiline regex for Disconnecting: Connection from 61.XX.XX.XX port
+     51353\nToo many authentication failures for root [preauth]. Thanks
+     Helmut Grohne. Close gh-457
    * Replacing use of deprecated API (.warning, .assertEqual, etc)
    * [..a648cc2] Filters can have options now too which are substituted into
      failregex / ignoreregex
