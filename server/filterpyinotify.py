@@ -209,4 +209,7 @@ class ProcessPyinotify(pyinotify.ProcessEvent):
 
 	# just need default, since using mask on watch to limit events
 	def process_default(self, event):
-		self.__FileFilter.callback(event, origin='Default ')
+		try:
+			self.__FileFilter.callback(event, origin='Default ')
+		except Exception as e:
+			logSys.error("Error in FilterPyinotify callback: %s", e)
