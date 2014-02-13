@@ -137,7 +137,7 @@ class Fail2banClient:
 
 	def __processCmd(self, cmd, showRet = True):
 		beautifier = Beautifier()
-		ret = True
+		streamRet = True
 		for c in cmd:
 			beautifier.setInputCmd(c)
 			try:
@@ -148,10 +148,10 @@ class Fail2banClient:
 					if showRet:
 						print beautifier.beautify(ret[1])
 				else:
-					ret = False
 					logSys.error("NOK: " + `ret[1].args`)
 					if showRet:
 						print beautifier.beautifyError(ret[1])
+					streamRet = False
 			except socket.error:
 				if showRet:
 					logSys.error("Unable to contact server. Is it running?")
@@ -160,7 +160,7 @@ class Fail2banClient:
 				if showRet:
 					logSys.error(e)
 				return False
-		return ret
+		return streamRet
 
 	##
 	# Process a command line.
