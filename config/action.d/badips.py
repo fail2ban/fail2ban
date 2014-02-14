@@ -20,6 +20,7 @@
 import json
 from functools import partial
 import threading
+import logging
 import sys
 if sys.version_info >= (3, ):
 	from urllib.request import Request, urlopen
@@ -207,42 +208,52 @@ class BadIPsAction(ActionBase):
 
 	def _banIPs(self, ips):
 		for ip in ips:
-			self._jail.actions[self.banaction].ban({
-				'ip': ip,
-				'failures': 0,
-				'matches': "",
-				'ipmatches': "",
-				'ipjailmatches': "",
-			})
-			self._bannedips.add(ip)
-			self._logSys.info(
-				"Banned IP %s for jail '%s' with action '%s'",
-				ip, self._jail.getName(), self.banaction)
+			try:
+				self._jail.actions[self.banaction].ban({
+					'ip': ip,
+					'failures': 0,
+					'matches': "",
+					'ipmatches': "",
+					'ipjailmatches': "",
+				})
+			except Exception as e:
+				self._logSys.error(
+					"Error banning IP %s for jail '%s' with action '%s': %s",
+					ip, self._jail.getName(), self.banaction, e,
+					exc_info=self._logSys.getEffectiveLevel<=logging.DEBUG)
+			else:
+				self._bannedips.add(ip)
+				self._logSys.info(
+					"Banned IP %s for jail '%s' with action '%s'",
+					ip, self._jail.getName(), self.banaction)
 
 	def _unbanIPs(self, ips):
 		for ip in ips:
-			self._jail.actions[self.banaction].unban({
-				'ip': ip,
-				'failures': 0,
-				'matches': "",
-				'ipmatches': "",
-				'ipjailmatches': "",
-			})
-			self._bannedips.remove(ip)
-			self._logSys.info(
-				"Unbanned IP %s for jail '%s' with action '%s'",
-				ip, self._jail.getName(), self.banaction)
+			try:
+				self._jail.actions[self.banaction].unban({
+					'ip': ip,
+					'failures': 0,
+					'matches': "",
+					'ipmatches': "",
+					'ipjailmatches': "",
+				})
+			except Exception as e:
+				self._logSys.info(
+					"Error unbanning IP %s for jail '%s' with action '%s': %s",
+					ip, self._jail.getName(), self.banaction, e,
+					exc_info=self._logSys.getEffectiveLevel<=logging.DEBUG)
+			else:
+				self._logSys.info(
+					"Unbanned IP %s for jail '%s' with action '%s'",
+					ip, self._jail.getName(), self.banaction)
+			finally:
+				self._bannedips.remove(ip)
 
 	def start(self):
 		"""If `banaction` set, blacklists bad IPs.
 		"""
 		if self.banaction is not None:
-			self._banIPs(self.getList(self.category, self.score, self.age))
-			self._timer = threading.Timer(self.updateperiod, self.update)
-			self._timer.start()
-			self._logSys.info(
-				"Banned IPs for jail '%s'. Update in %i seconds",
-				self._jail.getName(), self.updateperiod)
+			self.update()
 
 	def update(self):
 		"""If `banaction` set, updates blacklisted IPs.
@@ -256,17 +267,19 @@ class BadIPsAction(ActionBase):
 				self._timer.cancel()
 				self._timer = None
 
-			ips = self.getList(self.category, self.score, self.age)
-			# Remove old IPs no longer listed
-			self._unbanIPs(self._bannedips - ips)
-			# Add new IPs which are now listed
-			self._banIPs(ips - self._bannedips)
+			try:
+				ips = self.getList(self.category, self.score, self.age)
+				# Remove old IPs no longer listed
+				self._unbanIPs(self._bannedips - ips)
+				# Add new IPs which are now listed
+				self._banIPs(ips - self._bannedips)
 
-			self._timer = threading.Timer(self.updateperiod, self.update)
-			self._timer.start()
-			self._logSys.info(
-				"Updated IPs for jail '%s'. Update again in %i seconds",
-				self._jail.getName(), self.updateperiod)
+				self._logSys.info(
+					"Updated IPs for jail '%s'. Update again in %i seconds",
+					self._jail.getName(), self.updateperiod)
+			finally:
+				self._timer = threading.Timer(self.updateperiod, self.update)
+				self._timer.start()
 
 	def stop(self):
 		"""If `banaction` set, clears blacklisted IPs.
