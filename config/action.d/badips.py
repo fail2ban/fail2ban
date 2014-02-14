@@ -43,7 +43,7 @@ class BadIPsAction(ActionBase):
 		Request, headers={'User-Agent': "Fail2Ban %s" % f2bVersion})
 
 	def __init__(self, jail, name, category, score=5, age="24h",
-		banaction=None, updateperiod=900):
+		banaction=None, bancategory=None, updateperiod=900):
 		"""Initialise action.
 
 		Parameters
@@ -53,7 +53,7 @@ class BadIPsAction(ActionBase):
 		name : str
 			Name assigned to the action.
 		category : str
-			Valid badips.com category.
+			Valid badips.com category for reporting failures.
 		score : int, optional
 			Minimum score for bad IPs. Default 5.
 		age : str, optional
@@ -63,6 +63,11 @@ class BadIPsAction(ActionBase):
 			Name of banaction to use for blacklisting bad IPs. If `None`,
 			no blacklist of IPs will take place.
 			Default `None`.
+		bancategory : str, optional
+			Name of category to use for blacklisting, which can differ
+			from category used for reporting. e.g. may want to report
+			"postfix", but want to use whole "mail" category for blacklist.
+			Default `category`.
 		updateperiod : int, optional
 			Time in seconds between updating bad IPs blacklist.
 			Default 900 (15 minutes)
@@ -78,6 +83,7 @@ class BadIPsAction(ActionBase):
 		self.score = score
 		self.age = age
 		self.banaction = banaction
+		self.bancategory = bancategory or category
 		self.updateperiod = updateperiod
 
 		self._bannedips = set()
@@ -85,7 +91,7 @@ class BadIPsAction(ActionBase):
 		self._timer = None
 
 	@classmethod
-	def getCategories(cls):
+	def getCategories(cls, incParents=False):
 		"""Get badips.com categories.
 
 		Returns
@@ -111,6 +117,10 @@ class BadIPsAction(ActionBase):
 			categories = json.loads(response.read().decode('utf-8'))['categories']
 			categories_names = set(
 				value['Name'] for value in categories)
+			if incParents:
+				categories_names.update(set(
+					value['Parent'] for value in categories
+					if "Parent" in value))
 			return categories_names
 
 	@classmethod
@@ -151,7 +161,7 @@ class BadIPsAction(ActionBase):
 
 	@property
 	def category(self):
-		"""badips.com category for fetching/reporting IPs.
+		"""badips.com category for reporting IPs.
 		"""
 		return self._category
 
@@ -163,6 +173,21 @@ class BadIPsAction(ActionBase):
 				category)
 			raise ValueError("Invalid category: %s" % category)
 		self._category = category
+
+	@property
+	def bancategory(self):
+		"""badips.com bancategory for fetching IPs.
+		"""
+		return self._bancategory
+
+	@bancategory.setter
+	def bancategory(self, bancategory):
+		if bancategory not in self.getCategories(incParents=True):
+			self._logSys.error("Category name '%s' not valid. "
+				"see badips.com for list of valid categories",
+				bancategory)
+			raise ValueError("Invalid bancategory: %s" % bancategory)
+		self._bancategory = bancategory
 
 	@property
 	def score(self):
@@ -268,7 +293,7 @@ class BadIPsAction(ActionBase):
 				self._timer = None
 
 			try:
-				ips = self.getList(self.category, self.score, self.age)
+				ips = self.getList(self.bancategory, self.score, self.age)
 				# Remove old IPs no longer listed
 				self._unbanIPs(self._bannedips - ips)
 				# Add new IPs which are now listed

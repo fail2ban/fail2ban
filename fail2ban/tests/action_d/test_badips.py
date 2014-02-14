@@ -61,6 +61,12 @@ class BadIPsActionTest(unittest.TestCase):
 		self.assertRaises(
 			ValueError, setattr, self.action, "category", "invalid-category")
 
+		# Not valid for reporting category...
+		self.assertRaises(
+			ValueError, setattr, self.action, "category", "mail")
+		# but valid for blacklisting.
+		self.action.bancategory = "mail"
+
 	def testScore(self):
 		self.assertRaises(ValueError, setattr, self.action, "score", -5)
 		self.action.score = 5
