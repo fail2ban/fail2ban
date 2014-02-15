@@ -8,13 +8,12 @@ python:
   - "3.3"
   - "pypy"
 before_install:
-  - sudo apt-get update -qq
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then sudo apt-get update -qq; fi
 install:
   - pip install pyinotify
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then sudo apt-get install -qq python-gamin; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then sudo apt-get install -qq python-gamin; cp /usr/share/pyshared/gamin.py /usr/lib/pyshared/python2.7/_gamin.so $VIRTUAL_ENV/lib/python2.7/site-packages/; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then pip install -q coveralls; fi
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then export PYTHONPATH="$PYTHONPATH:/usr/share/pyshared:/usr/lib/pyshared/python2.7"; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coverage run --rcfile=.travis_coveragerc setup.py test; else python setup.py test; fi
 after_success:
 # Coverage config file must be .coveragerc for coveralls
