@@ -224,6 +224,11 @@ class Transmitter:
 			value = " ".join(command[3:])
 			self.__server.setActionBan(name, act, value)
 			return self.__server.getActionBan(name, act)
+		elif command[1] == "actionreban":
+			act = command[2]
+			value = command[3]
+			self.__server.setActionReban(name, act, value)
+			return self.__server.getActionReban(name, act)
 		elif command[1] == "actionunban":
 			act = command[2]
 			value = " ".join(command[3:])
@@ -272,6 +277,9 @@ class Transmitter:
 		elif command[1] == "actionban":
 			act = command[2]
 			return self.__server.getActionBan(name, act)
+		elif command[1] == "actionreban":
+			act = command[2]
+			return self.__server.getActionReban(name, act)
 		elif command[1] == "actionunban":
 			act = command[2]
 			return self.__server.getActionUnban(name, act)

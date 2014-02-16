@@ -58,6 +58,8 @@ class Action:
 		self.__actionStart = ''
 		## Command executed when an IP address gets banned.
 		self.__actionBan = ''
+		## Command executed when an IP address gets re-banned.
+		self.__actionReban = ''
 		## Command executed when an IP address gets removed.
 		self.__actionUnban = ''
 		## Command executed in order to check requirements.
@@ -169,6 +171,31 @@ class Action:
 	def execActionBan(self, aInfo):
 		return self.__processCmd(self.__actionBan, aInfo)
 	
+	##
+	# Set the "reban" command.
+	#
+	# @param value the command
+
+	def setActionReban(self, value):
+		self.__actionReban = value
+		logSys.debug("Set actionReban = %s" % value)
+
+	##
+	# Get the "reban" command.
+	#
+	# @return the command
+
+	def getActionReban(self):
+		return self.__actionReban
+
+	##
+	# Executes the action "reban" command.
+	#
+	# @return True if the command succeeded
+
+	def execActionReban(self, aInfo):
+		return self.__processCmd(self.__actionReban, aInfo)
+
 	##
 	# Set the "unban" command.
 	#

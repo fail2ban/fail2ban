@@ -155,6 +155,26 @@ class BanManager:
 	
 	
 	##
+	# Update a ban ticket.
+	#
+	# Update lastTime of a BanTicket into the ban list.
+	# @param ticket the ticket
+	# @return True if the IP address is in the ban list
+
+	def updateBanTicket(self, ticket):
+		try:
+			self.__lock.acquire()
+			for i in self.__banList:
+				if i.getIP() == ticket.getIP():
+					i.setTime(ticket.getTime())
+					i.setMatches(ticket.getMatches())
+					return True
+			return False
+		finally:
+			self.__lock.release()
+	
+	
+	##
 	# Get the size of the ban list.
 	#
 	# @return the size

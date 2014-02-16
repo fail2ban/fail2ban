@@ -178,6 +178,11 @@ class Actions(JailThread):
 				for action in self.__actions:
 					action.execActionBan(aInfo)
 				return True
+			elif self.__banManager.updateBanTicket(bTicket):
+				logSys.warn("[%s] Reban %s" % (self.jail.getName(), str(aInfo["ip"])))
+				for action in self.__actions:
+					action.execActionReban(aInfo)
+				return True
 			else:
 				logSys.info("[%s] %s already banned" % (self.jail.getName(),
 														aInfo["ip"]))
