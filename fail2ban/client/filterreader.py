@@ -61,7 +61,9 @@ class FilterReader(DefinitionInitConfigReader):
 						stream.append(["set", self._jailName, "addignoreregex", regex])		
 		if self._initOpts:
 			if 'maxlines' in self._initOpts:
-				stream.append(["set", self._jailName, "maxlines", self._initOpts["maxlines"]])
+				# We warn when multiline regex is used without maxlines > 1
+				# therefore keep sure we set this option first.
+				stream.insert(0, ["set", self._jailName, "maxlines", self._initOpts["maxlines"]])
 			if 'datepattern' in self._initOpts:
 				stream.append(["set", self._jailName, "datepattern", self._initOpts["datepattern"]])
 			# Do not send a command if the match is empty.

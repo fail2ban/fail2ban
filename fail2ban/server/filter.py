@@ -95,6 +95,10 @@ class Filter(JailThread):
 		try:
 			regex = FailRegex(value)
 			self.__failRegex.append(regex)
+			if "\n" in regex.getRegex() and not self.getMaxLines() > 1:
+				logSys.warning(
+					"Mutliline regex set for jail '%s' "
+					"but maxlines not greater than 1")
 		except RegexException, e:
 			logSys.error(e)
 			raise e
