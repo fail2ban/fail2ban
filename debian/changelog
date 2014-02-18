@@ -5,6 +5,7 @@ fail2ban (0.8.12-1) unstable; urgency=low
       was adjusted to use it.  Helps to mitigate #697333
     - removes indentation of name and loglevel while logging to SYSLOG
       (Closes: #730202)
+    - fixes apache-common.conf (Closes: #739364)
   * /etc/default/fail2ban -- minor typo. Thanks Vincent Lefevre for report
     (Closes: #734421)
 
