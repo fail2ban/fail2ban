@@ -25,6 +25,17 @@ For testing regular expressions specified in a filter using the
 fail2ban-regex program may be of use and its manual page is
 fail2ban-regex(1).
 
+.SH LIMITATION
+
+Fail2Ban is able to reduce the rate of incorrect authentications attempts
+however it cannot eliminate the risk that weak authentication presents. 
+Configure services to use only two factor or public/private authentication
+mechanisms if you really want to protect services.
+
+A local user is able to inject messages into syslog and using a Fail2Ban
+jail that reads from syslog, they can effectively trigger a DoS attack against
+any IP. Know this risk and configure Fail2Ban/grant shell access acordingly.
+
 .SH FILES
 \fI/etc/fail2ban/*\fR
 .SH AUTHOR

@@ -28,6 +28,7 @@ import sqlite3
 import json
 import locale
 from functools import wraps
+from threading import Lock
 
 from .mytime import MyTime
 from .ticket import FailTicket
@@ -51,8 +52,9 @@ else:
 def commitandrollback(f):
 	@wraps(f)
 	def wrapper(self, *args, **kwargs):
-		with self._db: # Auto commit and rollback on exception
-			return f(self, self._db.cursor(), *args, **kwargs)
+		with self._lock: # Threading lock
+			with self._db: # Auto commit and rollback on exception
+				return f(self, self._db.cursor(), *args, **kwargs)
 	return wrapper
 
 class Fail2BanDb(object):
@@ -92,6 +94,7 @@ class Fail2BanDb(object):
 
 	def __init__(self, filename, purgeAge=24*60*60):
 		try:
+			self._lock = Lock()
 			self._db = sqlite3.connect(
 				filename, check_same_thread=False,
 				detect_types=sqlite3.PARSE_DECLTYPES)

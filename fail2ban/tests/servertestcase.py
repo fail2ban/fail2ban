@@ -278,8 +278,6 @@ class Transmitter(TransmitterBase):
 			"datepattern", "Epoch", (None, "Epoch"), jail=self.jailName)
 		self.setGetTest(
 			"datepattern", "TAI64N", (None, "TAI64N"), jail=self.jailName)
-		self.setGetTest(
-			"datepattern", "ISO8601", (None, "ISO8601"), jail=self.jailName)
 		self.setGetTestNOK("datepattern", "%Cat%a%%%g", jail=self.jailName)
 
 	def testJailUseDNS(self):

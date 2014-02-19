@@ -28,7 +28,7 @@ import time, logging
 import os
 import sys
 if sys.version_info >= (3, 3):
-	import importlib
+	import importlib.machinery
 else:
 	import imp
 from collections import Mapping

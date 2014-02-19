@@ -27,7 +27,6 @@ __license__ = "GPL"
 import unittest, calendar, time, datetime, re, pprint
 from ..server.datedetector import DateDetector
 from ..server.datetemplate import DateTemplate
-from ..server.iso8601 import Utc
 from .utils import setUpMyTime, tearDownMyTime
 
 class DateDetectorTest(unittest.TestCase):
@@ -88,8 +87,9 @@ class DateDetectorTest(unittest.TestCase):
 			(False, "23-01-2005 21:59:59"),
 			(False, "01-23-2005 21:59:59.252"), # reported on f2b, causes Feb29 fix to break
 			(False, "@4000000041f4104f00000000"), # TAI64N
-			(False, "2005-01-23T20:59:59.252Z"), #ISO 8601
+			(False, "2005-01-23T20:59:59.252Z"), #ISO 8601 (UTC)
 			(False, "2005-01-23T15:59:59-05:00"), #ISO 8601 with TZ
+			(False, "2005-01-23T21:59:59"), #ISO 8601 no TZ, assume local
 			(True,  "<01/23/05@21:59:59>"),
 			(True,  "050123 21:59:59"), # MySQL
 			(True,  "Jan-23-05 21:59:59"), # ASSP like
@@ -116,15 +116,15 @@ class DateDetectorTest(unittest.TestCase):
 					self.assertEqual(logtime, None, "getTime should have not matched for %r Got: %s" % (sdate, logtime))
 
 	def testStableSortTemplate(self):
-		old_names = [x.getName() for x in self.__datedetector.getTemplates()]
+		old_names = [x.name for x in self.__datedetector.templates]
 		self.__datedetector.sortTemplate()
 		# If there were no hits -- sorting should not change the order
-		for old_name, n in zip(old_names, self.__datedetector.getTemplates()):
-			self.assertEqual(old_name, n.getName()) # "Sort must be stable"
+		for old_name, n in zip(old_names, self.__datedetector.templates):
+			self.assertEqual(old_name, n.name) # "Sort must be stable"
 
 	def testAllUniqueTemplateNames(self):
 		self.assertRaises(ValueError, self.__datedetector.appendTemplate,
-						  self.__datedetector.getTemplates()[0])
+						  self.__datedetector.templates[0])
 
 	def testFullYearMatch_gh130(self):
 		# see https://github.com/fail2ban/fail2ban/pull/130

@@ -62,5 +62,6 @@ class Fail2banReader(ConfigReader):
 				stream.append(["set", "dbfile", self.__opts[opt]])
 			elif opt == "dbpurgeage":
 				stream.append(["set", "dbpurgeage", self.__opts[opt]])
-		return stream
+		# Ensure logtarget/level set first so any db errors are captured
+		return sorted(stream, reverse=True)
 	
