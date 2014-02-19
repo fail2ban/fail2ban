@@ -188,6 +188,15 @@ class IgnoreIP(LogCaptureTestCase):
 		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.255'))
 		self.assertFalse(self.filter.inIgnoreIPList('192.168.0.255'))
 
+	def testIgnoreIPMask(self):
+		self.filter.addIgnoreIP('192.168.1.0/255.255.255.128')
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.0'))
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.1'))
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.127'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.128'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.255'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.0.255'))
+
 	def testIgnoreInProcessLine(self):
 		self.filter.addIgnoreIP('192.168.1.0/25')
 		self.filter.addFailRegex('<HOST>')
