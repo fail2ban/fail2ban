@@ -357,6 +357,9 @@ class Filter(JailThread):
 			# IP address without CIDR mask
 			if len(s) == 1:
 				s.insert(1, '32')
+			elif "." in s[1]: # 255.255.255.0 style mask
+				s[1] = len(re.search(
+					"(?<=b)1+", bin(DNSUtils.addr2bin(s[1]))).group())
 			s[1] = long(s[1])
 			try:
 				a = DNSUtils.cidr(s[0], s[1])
