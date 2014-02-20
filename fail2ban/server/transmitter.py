@@ -107,7 +107,7 @@ class Transmitter:
 		name = command[0]
 		# Logging
 		if name == "loglevel":
-			value = int(command[1])
+			value = command[1]
 			self.__server.setLogLevel(value)
 			return self.__server.getLogLevel()
 		elif name == "logtarget":

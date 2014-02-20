@@ -71,7 +71,7 @@ _fail2ban () {
                 ;;
             *)
                 if [[ "${words[$cword-2]}" == "add" ]];then
-                    COMPREPLY=( $( compgen -W "auto polling gamin pyinotify" -- "$cur" ) )
+                    COMPREPLY=( $( compgen -W "auto polling gamin pyinotify systemd" -- "$cur" ) )
                     return 0
                 elif [[ "${words[$cword-2]}" == "set" ||  "${words[$cword-2]}" == "get" ]];then
                     cmd="${words[cword-2]}"
@@ -88,7 +88,7 @@ _fail2ban () {
             case $prev in
                 loglevel)
                     if [[ "$cmd" == "set" ]];then
-                        COMPREPLY=( $( compgen -W "0 1 2 3 4" -- "$cur" ) )
+                        COMPREPLY=( $( compgen -W "CRITICAL ERROR WARNING NOTICE INFO DEBUG" -- "$cur" ) )
                     fi
                     return 0
                     ;;

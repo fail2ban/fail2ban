@@ -482,7 +482,7 @@ class CommandAction(ActionBase):
 			self.stop()
 			self.start()
 			if not self.executeCmd(checkCmd, self.timeout):
-				self._logSys.fatal("Unable to restore environment")
+				self._logSys.critical("Unable to restore environment")
 				return False
 
 		# Replace tags
