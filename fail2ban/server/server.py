@@ -336,6 +336,9 @@ class Server:
 			self.__loggingLock.acquire()
 			logging.getLogger(__name__).parent.parent.setLevel(
 				getattr(logging, value.upper()))
+		except AttributeError:
+			raise ValueError("Invalid log level")
+		else:
 			self.__logLevel = value.upper()
 		finally:
 			self.__loggingLock.release()
