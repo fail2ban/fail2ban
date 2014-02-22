@@ -686,7 +686,7 @@ class TransmitterLogging(TransmitterBase):
 	def setUp(self):
 		self.server = Server()
 		self.server.setLogTarget("/dev/null")
-		self.server.setLogLevel(0)
+		self.server.setLogLevel("CRITICAL")
 		super(TransmitterLogging, self).setUp()
 
 	def testLogTarget(self):
@@ -711,12 +711,14 @@ class TransmitterLogging(TransmitterBase):
 		self.setGetTest("logtarget", "SYSLOG")
 
 	def testLogLevel(self):
-		self.setGetTest("loglevel", "4", 4)
-		self.setGetTest("loglevel", "3", 3)
-		self.setGetTest("loglevel", "2", 2)
-		self.setGetTest("loglevel", "1", 1)
-		self.setGetTest("loglevel", "-1", -1)
-		self.setGetTest("loglevel", "0", 0)
+		self.setGetTest("loglevel", "HEAVYDEBUG")
+		self.setGetTest("loglevel", "DEBUG")
+		self.setGetTest("loglevel", "INFO")
+		self.setGetTest("loglevel", "NOTICE")
+		self.setGetTest("loglevel", "WARNING")
+		self.setGetTest("loglevel", "ERROR")
+		self.setGetTest("loglevel", "CRITICAL")
+		self.setGetTest("loglevel", "cRiTiCaL", "CRITICAL")
 		self.setGetTestNOK("loglevel", "Bird")
 
 	def testFlushLogs(self):
@@ -724,7 +726,7 @@ class TransmitterLogging(TransmitterBase):
 		try:
 			f, fn = tempfile.mkstemp("fail2ban.log")
 			os.close(f)
-			self.server.setLogLevel(2)
+			self.server.setLogLevel("WARNING")
 			self.assertEqual(self.transm.proceed(["set", "logtarget", fn]), (0, fn))
 			l = logging.getLogger('fail2ban.server.server').parent.parent
 			l.warning("Before file moved")

@@ -54,7 +54,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 			raise ValueError("Base configuration directory %s does not exist "
 							  % self._basedir)
 		basename = os.path.join(self._basedir, filename)
-		logSys.debug("Reading configs for %s under %s "  % (basename, self._basedir))
+		logSys.info("Reading configs for %s under %s "  % (basename, self._basedir))
 		config_files = [ basename + ".conf" ]
 
 		# possible further customizations under a .conf.d directory

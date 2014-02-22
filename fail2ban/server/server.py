@@ -51,7 +51,7 @@ class Server:
 		self.__logLevel = None
 		self.__logTarget = None
 		# Set logging level
-		self.setLogLevel(3)
+		self.setLogLevel("INFO")
 		self.setLogTarget("STDOUT")
 	
 	def __sigTERMhandler(self, signum, frame):
@@ -323,28 +323,23 @@ class Server:
 	##
 	# Set the logging level.
 	#
-	# Incrementing the value gives more messages.
-	# 0 = FATAL
-	# 1 = ERROR
-	# 2 = WARNING
-	# 3 = INFO
-	# 4 = DEBUG
+	# CRITICAL
+	# ERROR
+	# WARNING
+	# NOTICE
+	# INFO
+	# DEBUG
 	# @param value the level
 	
 	def setLogLevel(self, value):
 		try:
 			self.__loggingLock.acquire()
-			self.__logLevel = value
-			logLevel = logging.DEBUG
-			if value == 0:
-				logLevel = logging.FATAL
-			elif value == 1:
-				logLevel = logging.ERROR
-			elif value == 2:
-				logLevel = logging.WARNING
-			elif value == 3:
-				logLevel = logging.INFO
-			logging.getLogger(__name__).parent.parent.setLevel(logLevel)
+			logging.getLogger(__name__).parent.parent.setLevel(
+				getattr(logging, value.upper()))
+		except AttributeError:
+			raise ValueError("Invalid log level")
+		else:
+			self.__logLevel = value.upper()
 		finally:
 			self.__loggingLock.release()
 	

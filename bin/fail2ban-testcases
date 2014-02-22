@@ -48,7 +48,7 @@ def get_opt_parser():
 	p.add_options([
 		Option('-l', "--log-level", type="choice",
 			   dest="log_level",
-			   choices=('heavydebug', 'debug', 'info', 'warning', 'error', 'fatal'),
+			   choices=('heavydebug', 'debug', 'info', 'notice', 'warning', 'error', 'critical'),
 			   default=None,
 			   help="Log level for the logger to use during running tests"),
 		Option('-n', "--no-network", action="store_true",
@@ -75,9 +75,10 @@ logSys = logging.getLogger("fail2ban")
 verbosity = {'heavydebug': 4,
 			 'debug': 3,
 			 'info': 2,
+			 'notice': 2,
 			 'warning': 1,
 			 'error': 1,
-			 'fatal': 0,
+			 'critical': 0,
 			 None: 1}[opts.log_level]
 
 if opts.log_level is not None: # pragma: no cover
@@ -85,9 +86,9 @@ if opts.log_level is not None: # pragma: no cover
 	logSys.setLevel(getattr(logging, opts.log_level.upper()))
 else: # pragma: no cover
 	# suppress the logging but it would leave unittests' progress dots
-	# ticking, unless like with '-l fatal' which would be silent
+	# ticking, unless like with '-l critical' which would be silent
 	# unless error occurs
-	logSys.setLevel(getattr(logging, 'FATAL'))
+	logSys.setLevel(getattr(logging, 'CRITICAL'))
 
 # Add the default logging handler
 stdout = logging.StreamHandler(sys.stdout)
@@ -111,7 +112,7 @@ logSys.addHandler(stdout)
 #
 # Let know the version
 #
-if not opts.log_level or opts.log_level != 'fatal': # pragma: no cover
+if not opts.log_level or opts.log_level != 'critical': # pragma: no cover
 	print("Fail2ban %s test suite. Python %s. Please wait..." \
 	    % (version, str(sys.version).replace('\n', '')))
 

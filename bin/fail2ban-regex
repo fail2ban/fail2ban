@@ -131,7 +131,7 @@ Report bugs to https://github.com/fail2ban/fail2ban/issues
 			   "\"systemd-journal\" only"),
 		Option('-l', "--log-level", type="choice",
 			   dest="log_level",
-			   choices=('heavydebug', 'debug', 'info', 'warning', 'error', 'fatal'),
+			   choices=('heavydebug', 'debug', 'info', 'notice', 'warning', 'error', 'critical'),
 			   default=None,
 			   help="Log level for the Fail2Ban logger to use"),
 		Option("-v", "--verbose", action='store_true',
@@ -476,9 +476,9 @@ if __name__ == "__main__":
 		logSys.setLevel(getattr(logging, opts.log_level.upper()))
 	else: # pragma: no cover
 		# suppress the logging but it would leave unittests' progress dots
-		# ticking, unless like with '-l fatal' which would be silent
+		# ticking, unless like with '-l critical' which would be silent
 		# unless error occurs
-		logSys.setLevel(getattr(logging, 'FATAL'))
+		logSys.setLevel(getattr(logging, 'CRITICAL'))
 
 	# Add the default logging handler
 	stdout = logging.StreamHandler(sys.stdout)
