@@ -211,7 +211,6 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	# handover to FailManager
 
 	def run(self):
-		self.setActive(True)
 
 		# Seek to now - findtime in journal
 		start_time = datetime.datetime.now() - \
@@ -224,9 +223,9 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		except OSError:
 			pass # Reading failure, so safe to ignore
 
-		while self._isActive():
-			if not self.getIdle():
-				while self._isActive():
+		while self.active:
+			if not self.idle:
+				while self.active:
 					try:
 						logentry = self.__journal.get_next()
 					except OSError:
@@ -247,20 +246,14 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 					except FailManagerEmpty:
 						self.failManager.cleanup(MyTime.time())
 					self.__modified = False
-			self.__journal.wait(self.getSleepTime())
-		logSys.debug((self.jail is not None and self.jail.getName()
+			self.__journal.wait(self.sleeptime)
+		logSys.debug((self.jail is not None and self.jail.name
                       or "jailless") +" filter terminated")
 		return True
 
-    ##
-    # Get the status of the filter.
-    #           
-    # Get some informations about the filter state such as the total
-    # number of failures.
-    # @return a list with tuple
-
+	@property
 	def status(self):
-		ret = JournalFilter.status(self)
+		ret = super(FilterSystemd, self).status
 		ret.append(("Journal matches",
 			[" + ".join(" ".join(match) for match in self.__matches)]))
 		return ret

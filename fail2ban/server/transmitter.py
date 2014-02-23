@@ -123,14 +123,14 @@ class Transmitter:
 			if db is None:
 				return None
 			else:
-				return db.getFilename()
+				return db.filename
 		elif name == "dbpurgeage":
 			db = self.__server.getDatabase()
 			if db is None:
 				return None
 			else:
-				db.setPurgeAge(command[1])
-				return db.getPurgeAge()
+				db.purgeage = command[1]
+				return db.purgeage
 		# Jail
 		elif command[1] == "idle":
 			if command[2] == "on":
@@ -265,13 +265,13 @@ class Transmitter:
 			if db is None:
 				return None
 			else:
-				return db.getFilename()
+				return db.filename
 		elif name == "dbpurgeage":
 			db = self.__server.getDatabase()
 			if db is None:
 				return None
 			else:
-				return db.getPurgeAge()
+				return db.purgeage
 		# Filter
 		elif command[1] == "logpath":
 			return self.__server.getLogPath(name)

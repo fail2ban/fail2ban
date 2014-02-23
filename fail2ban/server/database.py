@@ -58,6 +58,11 @@ def commitandrollback(f):
 	return wrapper
 
 class Fail2BanDb(object):
+	"""Fail2Ban database for storing persistent data.
+
+	This allows after Fail2Ban is restarted to reinstated bans and
+	to continue monitoring logs from the same point.
+	"""
 	__version__ = 2
 	# Note all _TABLE_* strings must end in ';' for py26 compatibility
 	_TABLE_fail2banDb = "CREATE TABLE fail2banDb(version INTEGER);"
@@ -93,6 +98,27 @@ class Fail2BanDb(object):
 			"CREATE INDEX bans_ip ON bans(ip);" \
 
 	def __init__(self, filename, purgeAge=24*60*60):
+		"""Initialise the database by connecting/creating SQLite3 file.
+
+		This will either create a new Fail2Ban database, connect to an
+		existing, and if applicable upgrade the schema in the process.
+
+		Parameters
+		----------
+		filename : str
+			File name for SQLite3 database, which will be created if
+			doesn't already exist.
+		purgeAge : int
+			Purge age in seconds, used to remove old bans from
+			database during purge.
+
+		Raises
+		------
+		sqlite3.OperationalError
+			Error connecting/creating a SQLite3 database.
+		RuntimeError
+			If exisiting database fails to update to new schema.
+		"""
 		try:
 			self._lock = Lock()
 			self._db = sqlite3.connect(
@@ -130,21 +156,30 @@ class Fail2BanDb(object):
 					logSys.error( "Database update failed to acheive version '%i'"
 						": updated from '%i' to '%i'",
 						Fail2BanDb.__version__, version, newversion)
-					raise Exception('Failed to fully update')
+					raise RuntimeError('Failed to fully update')
 		finally:
 			cur.close()
 
-	def getFilename(self):
+	@property
+	def filename(self):
+		"""File name of SQLite3 database file.
+		"""
 		return self._dbFilename
 
-	def getPurgeAge(self):
+	@property
+	def purgeage(self):
+		"""Purge age in seconds.
+		"""
 		return self._purgeAge
 
-	def setPurgeAge(self, value):
+	@purgeage.setter
+	def purgeage(self, value):
 		self._purgeAge = int(value)
 
 	@commitandrollback
 	def createDb(self, cur):
+		"""Creates a new database, called during initialisation.
+		"""
 		# Version info
 		cur.executescript(Fail2BanDb._TABLE_fail2banDb)
 		cur.execute("INSERT INTO fail2banDb(version) VALUES(?)",
@@ -161,8 +196,13 @@ class Fail2BanDb(object):
 
 	@commitandrollback
 	def updateDb(self, cur, version):
-		self.dbBackupFilename = self._dbFilename + '.' + time.strftime('%Y%m%d-%H%M%S', MyTime.gmtime())
-		shutil.copyfile(self._dbFilename, self.dbBackupFilename)
+		"""Update an existing database, called during initialisation.
+
+		A timestamped backup is also created prior to attempting the update.
+		"""
+		self._dbBackupFilename = self.filename + '.' + time.strftime('%Y%m%d-%H%M%S', MyTime.gmtime())
+		shutil.copyfile(self.filename, self._dbBackupFilename)
+		logSys.info("Database backup created: %s", self._dbBackupFilename)
 		if version > Fail2BanDb.__version__:
 			raise NotImplementedError(
 						"Attempt to travel to future version of database ...how did you get here??")
@@ -182,36 +222,73 @@ class Fail2BanDb(object):
 
 	@commitandrollback
 	def addJail(self, cur, jail):
+		"""Adds a jail to the database.
+
+		Parameters
+		----------
+		jail : Jail
+			Jail to be added to the database.
+		"""
 		cur.execute(
 			"INSERT OR REPLACE INTO jails(name, enabled) VALUES(?, 1)",
-			(jail.getName(),))
-
-	def delJail(self, jail):
-		return self.delJailName(jail.getName())
+			(jail.name,))
 
 	@commitandrollback
-	def delJailName(self, cur, name):
+	def delJail(self, cur, jail):
+		"""Deletes a jail from the database.
+
+		Parameters
+		----------
+		jail : Jail
+			Jail to be removed from the database.
+		"""
 		# Will be deleted by purge as appropriate
 		cur.execute(
-			"UPDATE jails SET enabled=0 WHERE name=?", (name, ))
+			"UPDATE jails SET enabled=0 WHERE name=?", (jail.name, ))
 
 	@commitandrollback
 	def delAllJails(self, cur):
+		"""Deletes all jails from the database.
+		"""
 		# Will be deleted by purge as appropriate
 		cur.execute("UPDATE jails SET enabled=0")
 
 	@commitandrollback
 	def getJailNames(self, cur):
+		"""Get name of jails in database.
+
+		Currently only used for testing purposes.
+
+		Returns
+		-------
+		set
+			Set of jail names.
+		"""
 		cur.execute("SELECT name FROM jails")
 		return set(row[0] for row in cur.fetchmany())
 
 	@commitandrollback
 	def addLog(self, cur, jail, container):
+		"""Adds a log to the database.
+
+		Parameters
+		----------
+		jail : Jail
+			Jail that log is being monitored by.
+		container : FileContainer
+			File container of the log file being added.
+
+		Returns
+		-------
+		int
+			If log was already present in database, value of last position
+			in the log file; else `None`
+		"""
 		lastLinePos = None
 		cur.execute(
 			"SELECT firstlinemd5, lastfilepos FROM logs "
 				"WHERE jail=? AND path=?",
-			(jail.getName(), container.getFileName()))
+			(jail.name, container.getFileName()))
 		try:
 			firstLineMD5, lastLinePos = cur.fetchone()
 		except TypeError:
@@ -220,7 +297,7 @@ class Fail2BanDb(object):
 		cur.execute(
 				"INSERT OR REPLACE INTO logs(jail, path, firstlinemd5, lastfilepos) "
 					"VALUES(?, ?, ?, ?)",
-				(jail.getName(), container.getFileName(),
+				(jail.name, container.getFileName(),
 					container.getHash(), container.getPos()))
 		if container.getHash() != firstLineMD5:
 			lastLinePos = None
@@ -228,16 +305,39 @@ class Fail2BanDb(object):
 
 	@commitandrollback
 	def getLogPaths(self, cur, jail=None):
+		"""Gets all the log paths from the database.
+
+		Currently only for testing purposes.
+
+		Parameters
+		----------
+		jail : Jail
+			If specified, will only reutrn logs belonging to the jail.
+
+		Returns
+		-------
+		set
+			Set of log paths.
+		"""
 		query = "SELECT path FROM logs"
 		queryArgs = []
 		if jail is not None:
 			query += " WHERE jail=?"
-			queryArgs.append(jail.getName())
+			queryArgs.append(jail.name)
 		cur.execute(query, queryArgs)
 		return set(row[0] for row in cur.fetchmany())
 
 	@commitandrollback
 	def updateLog(self, cur, *args, **kwargs):
+		"""Updates hash and last position in log file.
+
+		Parameters
+		----------
+		jail : Jail
+			Jail of which the log file belongs to.
+		container : FileContainer
+			File container of the log file being updated.
+		"""
 		self._updateLog(cur, *args, **kwargs)
 
 	def _updateLog(self, cur, jail, container):
@@ -245,15 +345,24 @@ class Fail2BanDb(object):
 			"UPDATE logs SET firstlinemd5=?, lastfilepos=? "
 				"WHERE jail=? AND path=?",
 			(container.getHash(), container.getPos(),
-				jail.getName(), container.getFileName()))
+				jail.name, container.getFileName()))
 
 	@commitandrollback
 	def addBan(self, cur, jail, ticket):
+		"""Add a ban to the database.
+
+		Parameters
+		----------
+		jail : Jail
+			Jail in which the ban has occured.
+		ticket : BanTicket
+			Ticket of the ban to be added.
+		"""
 		self._bansMergedCache = {}
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
-			(jail.getName(), ticket.getIP(), ticket.getTime(),
+			(jail.name, ticket.getIP(), ticket.getTime(),
 				{"matches": ticket.getMatches(),
 					"failures": ticket.getAttempt()}))
 
@@ -264,7 +373,7 @@ class Fail2BanDb(object):
 
 		if jail is not None:
 			query += " AND jail=?"
-			queryArgs.append(jail.getName())
+			queryArgs.append(jail.name)
 		if bantime is not None:
 			query += " AND timeofban > ?"
 			queryArgs.append(MyTime.time() - bantime)
@@ -276,6 +385,23 @@ class Fail2BanDb(object):
 		return cur.execute(query, queryArgs)
 
 	def getBans(self, **kwargs):
+		"""Get bans from the database.
+
+		Parameters
+		----------
+		jail : Jail
+			Jail that the ban belongs to. Default `None`; all jails.
+		bantime : int
+			Ban time in seconds, such that bans returned would still be
+			valid now. Default `None`; no limit.
+		ip : str
+			IP Address to filter bans by. Default `None`; all IPs.
+
+		Returns
+		-------
+		list
+			List of `Ticket`s for bans stored in database.
+		"""
 		tickets = []
 		for ip, timeofban, data in self._getBans(**kwargs):
 			#TODO: Implement data parts once arbitrary match keys completed
@@ -284,7 +410,27 @@ class Fail2BanDb(object):
 		return tickets
 
 	def getBansMerged(self, ip, jail=None, **kwargs):
-		cacheKey = ip if jail is None else "%s|%s" % (ip, jail.getName())
+		"""Get bans from the database, merged into single ticket.
+
+		This is the same as `getBans`, but bans merged into single
+		ticket.
+
+		Parameters
+		----------
+		jail : Jail
+			Jail that the ban belongs to. Default `None`; all jails.
+		bantime : int
+			Ban time in seconds, such that bans returned would still be
+			valid now. Default `None`; no limit.
+		ip : str
+			IP Address to filter bans by. Default `None`; all IPs.
+
+		Returns
+		-------
+		Ticket
+			Single ticket representing bans stored in database.
+		"""
+		cacheKey = ip if jail is None else "%s|%s" % (ip, jail.name)
 		if cacheKey in self._bansMergedCache:
 			return self._bansMergedCache[cacheKey]
 		matches = []
@@ -300,6 +446,8 @@ class Fail2BanDb(object):
 
 	@commitandrollback
 	def purge(self, cur):
+		"""Purge old bans, jails and log files from database.
+		"""
 		self._bansMergedCache = {}
 		cur.execute(
 			"DELETE FROM bans WHERE timeofban < ?",

@@ -168,11 +168,10 @@ class FilterPyinotify(FileFilter):
 	# loop is necessary
 
 	def run(self):
-		self.setActive(True)
 		self.__notifier = pyinotify.ThreadedNotifier(self.__monitor,
 			ProcessPyinotify(self))
 		self.__notifier.start()
-		logSys.debug("pyinotifier started for %s.", self.jail.getName())
+		logSys.debug("pyinotifier started for %s.", self.jail.name)
 		# TODO: verify that there is nothing really to be done for
 		#       idle jails
 		return True

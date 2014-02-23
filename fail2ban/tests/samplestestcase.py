@@ -45,7 +45,7 @@ class FilterSamplesRegex(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		self.filter = Filter(None)
-		self.filter.setActive(True)
+		self.filter.active = True
 
 		setUpMyTime()
 

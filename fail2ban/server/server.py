@@ -125,14 +125,14 @@ class Server:
 			self.__db.addJail(self.__jails[name])
 		
 	def delJail(self, name):
-		del self.__jails[name]
 		if self.__db is not None:
-			self.__db.delJailName(name)
-	
+			self.__db.delJail(self.__jails[name])
+		del self.__jails[name]
+
 	def startJail(self, name):
 		try:
 			self.__lock.acquire()
-			if not self.isAlive(name):
+			if not self.__jails[name].is_alive():
 				self.__jails[name].start()
 		finally:
 			self.__lock.release()
@@ -141,7 +141,7 @@ class Server:
 		logSys.debug("Stopping jail %s" % name)
 		try:
 			self.__lock.acquire()
-			if self.isAlive(name):
+			if self.__jails[name].is_alive():
 				self.__jails[name].stop()
 				self.delJail(name)
 		finally:
@@ -155,16 +155,13 @@ class Server:
 				self.stopJail(jail)
 		finally:
 			self.__lock.release()
-	
-	def isAlive(self, name):
-		return self.__jails[name].isAlive()
-	
+
 	def setIdleJail(self, name, value):
-		self.__jails[name].setIdle(value)
+		self.__jails[name].idle = value
 		return True
 
 	def getIdleJail(self, name):
-		return self.__jails[name].getIdle()
+		return self.__jails[name].idle
 	
 	# Filter
 	def addIgnoreIP(self, name, ip):
@@ -316,7 +313,7 @@ class Server:
 			self.__lock.release()
 	
 	def statusJail(self, name):
-		return self.__jails[name].getStatus()
+		return self.__jails[name].status
 	
 	# Logging
 	

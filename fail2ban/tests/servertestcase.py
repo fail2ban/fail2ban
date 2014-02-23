@@ -227,8 +227,7 @@ class Transmitter(TransmitterBase):
 		time.sleep(1)
 		self.assertEqual(
 			self.transm.proceed(["stop", self.jailName]), (0, None))
-		self.assertRaises(
-			UnknownJailException, self.server.isAlive, self.jailName)
+		self.assertTrue(self.jailName not in self.server._Server__jails)
 
 	def testStartStopAllJail(self):
 		self.server.addJail("TestJail2", "auto")
@@ -242,10 +241,8 @@ class Transmitter(TransmitterBase):
 		time.sleep(0.1)
 		self.assertEqual(self.transm.proceed(["stop", "all"]), (0, None))
 		time.sleep(1)
-		self.assertRaises(
-			UnknownJailException, self.server.isAlive, self.jailName)
-		self.assertRaises(
-			UnknownJailException, self.server.isAlive, "TestJail2")
+		self.assertTrue(self.jailName not in self.server._Server__jails)
+		self.assertTrue("TestJail2" not in self.server._Server__jails)
 
 	def testJailIdle(self):
 		self.assertEqual(
@@ -482,15 +479,15 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(self.transm.proceed(["status", self.jailName]),
 			(0,
 				[
-					('filter', [
+					('Filter', [
 						('Currently failed', 0),
 						('Total failed', 0),
 						('File list', [])]
 					),
-					('action', [
+					('Actions', [
 						('Currently banned', 0),
 						('Total banned', 0),
-						('IP list', [])]
+						('Banned IP list', [])]
 					)
 				]
 			)
@@ -774,7 +771,7 @@ class JailTests(unittest.TestCase):
 		# Just a smoke test for now
 		longname = "veryveryverylongname"
 		jail = Jail(longname)
-		self.assertEqual(jail.getName(), longname)
+		self.assertEqual(jail.name, longname)
 
 class RegexTests(unittest.TestCase):
 
