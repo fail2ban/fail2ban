@@ -125,10 +125,10 @@ class Server:
 			self.__db.addJail(self.__jails[name])
 		
 	def delJail(self, name):
-		del self.__jails[name]
 		if self.__db is not None:
-			self.__db.delJailName(name)
-	
+			self.__db.delJail(self.__jails[name])
+		del self.__jails[name]
+
 	def startJail(self, name):
 		try:
 			self.__lock.acquire()
