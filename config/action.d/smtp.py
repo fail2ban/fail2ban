@@ -121,7 +121,7 @@ class SMTPAction(ActionBase):
 		self.matches = matches
 
 		self.message_values = CallingMap(
-			jailname = self._jail.getName(), # Doesn't change
+			jailname = self._jail.name,
 			hostname = socket.gethostname,
 			bantime = self._jail.actions.getBanTime,
 			)

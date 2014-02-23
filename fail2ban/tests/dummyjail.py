@@ -32,6 +32,8 @@ class DummyJail(object):
 	def __init__(self):
 		self.lock = Lock()
 		self.queue = []
+		self.idle = False
+		self.database = None
 		self.actions = Actions(self)
 
 	def __len__(self):
@@ -58,15 +60,6 @@ class DummyJail(object):
 		finally:
 			self.lock.release()
 
-	def setIdle(self, value):
-		pass
-
-	def getIdle(self):
-		pass
-
-	def getName(self):
+	@property
+	def name(self):
 		return "DummyJail #%s with %d tickets" % (id(self), len(self))
-
-	def getDatabase(self):
-		return None
-

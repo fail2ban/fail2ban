@@ -77,7 +77,7 @@ class SMTPActionTest(unittest.TestCase):
 		self.assertEqual(self.smtpd.mailfrom, "fail2ban")
 		self.assertEqual(self.smtpd.rcpttos, ["root"])
 		self.assertTrue(
-			"Subject: [Fail2Ban] %s: started" % self.jail.getName()
+			"Subject: [Fail2Ban] %s: started" % self.jail.name
 			in self.smtpd.data)
 
 	def testStop(self):
@@ -86,7 +86,7 @@ class SMTPActionTest(unittest.TestCase):
 		self.assertEqual(self.smtpd.rcpttos, ["root"])
 		self.assertTrue(
 			"Subject: [Fail2Ban] %s: stopped" %
-				self.jail.getName() in self.smtpd.data)
+				self.jail.name in self.smtpd.data)
 
 	def testBan(self):
 		aInfo = {
@@ -102,7 +102,7 @@ class SMTPActionTest(unittest.TestCase):
 		self.assertEqual(self.smtpd.rcpttos, ["root"])
 		self.assertTrue(
 			"Subject: [Fail2Ban] %s: banned %s" %
-				(self.jail.getName(), aInfo['ip']) in self.smtpd.data)
+				(self.jail.name, aInfo['ip']) in self.smtpd.data)
 		self.assertTrue(
 			"%i attempts" % aInfo['failures'] in self.smtpd.data)
 

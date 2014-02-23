@@ -61,7 +61,7 @@ class DatabaseTest(unittest.TestCase):
 		self.db = Fail2BanDb(self.dbFilename)
 		# and check jail of same name still present
 		self.assertTrue(
-			self.jail.getName() in self.db.getJailNames(),
+			self.jail.name in self.db.getJailNames(),
 			"Jail not retained in Db after disconnect reconnect.")
 
 	def testUpdateDb(self):
@@ -80,7 +80,7 @@ class DatabaseTest(unittest.TestCase):
 		self.jail = DummyJail()
 		self.db.addJail(self.jail)
 		self.assertTrue(
-			self.jail.getName() in self.db.getJailNames(),
+			self.jail.name in self.db.getJailNames(),
 			"Jail not added to database")
 
 	def testAddLog(self):

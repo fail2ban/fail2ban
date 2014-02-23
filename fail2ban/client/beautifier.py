@@ -67,28 +67,23 @@ class Beautifier:
 				msg = "logs: " + response
 			elif inC[0:1] == ['status']:
 				if len(inC) > 1:
-					# Create IP list
-					ipList = ""
-					for ip in response[1][1][2][1]:
-						ipList += ip + " "
-					# Creates file list.
-					fileList = ""
-					for f in response[0][1][2][1]:
-						fileList += f + " "
 					# Display information
-					msg = "Status for the jail: " + inC[1] + "\n"
-					msg = msg + "|- " + response[0][0] + "\n"
-					msg = msg + "|  |- " + response[0][1][2][0] + ":\t" + fileList + "\n"
-					msg = msg + "|  |- " + response[0][1][0][0] + ":\t" + `response[0][1][0][1]` + "\n"
-					msg = msg + "|  `- " + response[0][1][1][0] + ":\t" + `response[0][1][1][1]` + "\n"
-					msg = msg + "`- " + response[1][0] + "\n"
-					msg = msg + "   |- " + response[1][1][0][0] + ":\t" + `response[1][1][0][1]` + "\n"
-					msg = msg + "   |  `- " + response[1][1][2][0] + ":\t" + ipList + "\n"
-					msg = msg + "   `- " + response[1][1][1][0] + ":\t" + `response[1][1][1][1]`
+					msg = ["Status for the jail: %s" % inC[1]]
+					for n, res1 in enumerate(response):
+						prefix1 = "`-" if n == len(response) - 1 else "|-"
+						msg.append("%s %s" % (prefix1, res1[0]))
+						prefix1 = "   " if n == len(response) - 1 else "|  "
+						for m, res2 in enumerate(res1[1]):
+							prefix2 = prefix1 + ("`-" if m == len(res1[1]) - 1 else "|-")
+							val = " ".join(res2[1]) if isinstance(res2[1], list) else res2[1]
+							msg.append("%s %s:\t%s" % (prefix2, res2[0], val))
 				else:
-					msg = "Status\n"
-					msg = msg + "|- " + response[0][0] + ":\t" + `response[0][1]` + "\n"
-					msg = msg + "`- " + response[1][0] + ":\t\t" + response[1][1]
+					msg = ["Status"]
+					for n, res1 in enumerate(response):
+						prefix1 = "`-" if n == len(response) - 1 else "|-"
+						val = " ".join(res1[1]) if isinstance(res1[1], list) else res1[1]
+						msg.append("%s %s:\t%s" % (prefix1, res1[0], val))
+				msg = "\n".join(msg)
 			elif inC[1] == "logtarget":
 				msg = "Current logging target is:\n"
 				msg = msg + "`- " + response

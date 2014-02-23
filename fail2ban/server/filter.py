@@ -530,15 +530,10 @@ class Filter(JailThread):
 						logSys.error(e)
 		return failList
 
-
-	##
-	# Get the status of the filter.
-	#
-	# Get some informations about the filter state such as the total
-	# number of failures.
-	# @return a list with tuple
-
+	@property
 	def status(self):
+		"""Status of failures detected by filter.
+		"""
 		ret = [("Currently failed", self.failManager.size()),
 		       ("Total failed", self.failManager.getFailTotal())]
 		return ret
@@ -562,7 +557,7 @@ class FileFilter(Filter):
 			logSys.error(path + " already exists")
 		else:
 			container = FileContainer(path, self.getLogEncoding(), tail)
-			db = self.jail.getDatabase()
+			db = self.jail.database
 			if db is not None:
 				lastpos = db.addLog(self.jail, container)
 				if lastpos and not tail:
@@ -586,7 +581,7 @@ class FileFilter(Filter):
 		for log in self.__logPath:
 			if log.getFileName() == path:
 				self.__logPath.remove(log)
-				db = self.jail.getDatabase()
+				db = self.jail.database
 				if db is not None:
 					db.updateLog(self.jail, log)
 				logSys.info("Removed logfile = %s" % path)
@@ -682,18 +677,21 @@ class FileFilter(Filter):
 		# might occur leading at least to tests failures.
 		while has_content:
 			line = container.readline()
-			if not line or not self._isActive():
+			if not line or not self.active:
 				# The jail reached the bottom or has been stopped
 				break
 			self.processLineAndAdd(line)
 		container.close()
-		db = self.jail.getDatabase()
+		db = self.jail.database
 		if db is not None:
 			db.updateLog(self.jail, container)
 		return True
 
+	@property
 	def status(self):
-		ret = Filter.status(self)
+		"""Status of Filter plus files being monitored.
+		"""
+		ret = super(FileFilter, self).status
 		path = [m.getFileName() for m in self.getLogPath()]
 		ret.append(("File list", path))
 		return ret

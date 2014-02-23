@@ -31,6 +31,12 @@ from .actions import Actions
 logSys = logging.getLogger(__name__)
 
 class Jail:
+	"""Fail2Ban jail, which manages a filter and associated actions.
+
+	The class handles the initialisation of a filter, and actions. It's
+	role is then to act as an interface between the filter and actions,
+	passing bans detected by the filter, for the actions to then act upon.
+	"""
 
 	#Known backends. Each backend should have corresponding __initBackend method
 	# yoh: stored in a list instead of a tuple since only
@@ -38,15 +44,32 @@ class Jail:
 	_BACKENDS = ['pyinotify', 'gamin', 'polling', 'systemd']
 
 	def __init__(self, name, backend = "auto", db=None):
+		"""Initialise a jail, by initalises filter and actions.
+
+		Parameters
+		----------
+		name : str
+			Name assigned to the jail.
+		backend : str
+			Backend to be used for filter. "auto" will attempt to pick
+			the most preferred backend method. Default: "auto"
+		db : Fail2BanDb
+			Fail2Ban persistent database instance. Default: `None`
+		"""
 		self.__db = db
-		self.setName(name)
+		# 26 based on iptable chain name limit of 30 less len('f2b-')
+		if len(name) >= 26:
+			logSys.warning("Jail name %r might be too long and some commands "
+							"might not function correctly. Please shorten"
+							% name)
+		self.__name = name
 		self.__queue = Queue.Queue()
 		self.__filter = None
-		logSys.info("Creating new jail '%s'" % self.__name)
+		logSys.info("Creating new jail '%s'" % self.name)
 		self._setBackend(backend)
 
 	def __repr__(self):
-		return "%s(%r)" % (self.__class__.__name__, self.__name)
+		return "%s(%r)" % (self.__class__.__name__, self.name)
 
 	def _setBackend(self, backend):
 		backend = backend.lower()		# to assure consistent matching
@@ -78,51 +101,49 @@ class Jail:
 					"Backend %r failed to initialize due to %s" % (b, e))
 		# log error since runtime error message isn't printed, INVALID COMMAND
 		logSys.error(
-			"Failed to initialize any backend for Jail %r" % self.__name)
+			"Failed to initialize any backend for Jail %r" % self.name)
 		raise RuntimeError(
-			"Failed to initialize any backend for Jail %r" % self.__name)
+			"Failed to initialize any backend for Jail %r" % self.name)
 
 
 	def _initPolling(self):
-		logSys.info("Jail '%s' uses poller" % self.__name)
+		logSys.info("Jail '%s' uses poller" % self.name)
 		from filterpoll import FilterPoll
 		self.__filter = FilterPoll(self)
 	
 	def _initGamin(self):
 		# Try to import gamin
 		import gamin
-		logSys.info("Jail '%s' uses Gamin" % self.__name)
+		logSys.info("Jail '%s' uses Gamin" % self.name)
 		from filtergamin import FilterGamin
 		self.__filter = FilterGamin(self)
 	
 	def _initPyinotify(self):
 		# Try to import pyinotify
 		import pyinotify
-		logSys.info("Jail '%s' uses pyinotify" % self.__name)
+		logSys.info("Jail '%s' uses pyinotify" % self.name)
 		from filterpyinotify import FilterPyinotify
 		self.__filter = FilterPyinotify(self)
 	
 	def _initSystemd(self): # pragma: systemd no cover
 		# Try to import systemd
 		import systemd
-		logSys.info("Jail '%s' uses systemd" % self.__name)
+		logSys.info("Jail '%s' uses systemd" % self.name)
 		from filtersystemd import FilterSystemd
 		self.__filter = FilterSystemd(self)
-	
-	def setName(self, name):
-		# 26 based on iptable chain name limit of 30 less len('f2b-')
-		if len(name) >= 26:
-			logSys.warning("Jail name %r might be too long and some commands "
-							"might not function correctly. Please shorten"
-							% name)
-		self.__name = name
-	
-	def getName(self):
+
+	@property
+	def name(self):
+		"""Name of jail.
+		"""
 		return self.__name
-	
-	def getDatabase(self):
+
+	@property
+	def database(self):
+		"""The database used to store persistent data for the jail.
+		"""
 		return self.__db
-	
+
 	@property
 	def filter(self):
 		"""The filter which the jail is using to monitor log files.
@@ -134,50 +155,71 @@ class Jail:
 		"""Actions object used to manage actions for jail.
 		"""
 		return self.__actions
-	
+
+	@property
+	def idle(self):
+		"""A boolean indicating whether jail is idle.
+		"""
+		return self.filter.idle or self.actions.idle
+
+	@idle.setter
+	def idle(self, value):
+		self.filter.idle = value
+		self.actions.idle = value
+
+	@property
+	def status(self):
+		"""The status of the jail.
+		"""
+		return [
+			("Filter", self.filter.status),
+			("Actions", self.actions.status),
+			]
+
 	def putFailTicket(self, ticket):
+		"""Add a fail ticket to the jail.
+
+		Used by filter to add a failure for banning.
+		"""
 		self.__queue.put(ticket)
-		if self.__db is not None:
-			self.__db.addBan(self, ticket)
-	
+		if self.database is not None:
+			self.database.addBan(self, ticket)
+
 	def getFailTicket(self):
+		"""Get a fail ticket from the jail.
+
+		Used by actions to get a failure for banning.
+		"""
 		try:
 			return self.__queue.get(False)
 		except Queue.Empty:
 			return False
-	
+
 	def start(self):
-		self.__filter.start()
-		self.__actions.start()
+		"""Start the jail, by starting filter and actions threads.
+
+		Once stated, also queries the persistent database to reinstate
+		any valid bans.
+		"""
+		self.filter.start()
+		self.actions.start()
 		# Restore any previous valid bans from the database
-		if self.__db is not None:
-			for ticket in self.__db.getBans(
-				jail=self, bantime=self.__actions.getBanTime()):
+		if self.database is not None:
+			for ticket in self.database.getBans(
+				jail=self, bantime=self.actions.getBanTime()):
 				self.__queue.put(ticket)
-		logSys.info("Jail '%s' started" % self.__name)
-	
+		logSys.info("Jail '%s' started" % self.name)
+
 	def stop(self):
-		self.__filter.stop()
-		self.__actions.stop()
-		self.__filter.join()
-		self.__actions.join()
-		logSys.info("Jail '%s' stopped" % self.__name)
-	
-	def isAlive(self):
-		isAlive0 = self.__filter.isAlive()
-		isAlive1 = self.__actions.isAlive()
-		return isAlive0 or isAlive1
-	
-	def setIdle(self, value):
-		self.__filter.setIdle(value)
-		self.__actions.setIdle(value)
-	
-	def getIdle(self):
-		return self.__filter.getIdle() or self.__actions.getIdle()
-	
-	def getStatus(self):
-		fStatus = self.__filter.status()
-		aStatus = self.__actions.status()
-		ret = [("filter", fStatus), 
-			   ("action", aStatus)]
-		return ret
+		"""Stop the jail, by stopping filter and actions threads.
+		"""
+		self.filter.stop()
+		self.actions.stop()
+		self.filter.join()
+		self.actions.join()
+		logSys.info("Jail '%s' stopped" % self.name)
+
+	def is_alive(self):
+		"""Check jail "is_alive" by checking filter and actions threads.
+		"""
+		return self.filter.is_alive() or self.actions.is_alive()

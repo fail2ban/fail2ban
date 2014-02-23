@@ -184,10 +184,10 @@ class Fail2BanDb(object):
 	def addJail(self, cur, jail):
 		cur.execute(
 			"INSERT OR REPLACE INTO jails(name, enabled) VALUES(?, 1)",
-			(jail.getName(),))
+			(jail.name,))
 
 	def delJail(self, jail):
-		return self.delJailName(jail.getName())
+		return self.delJailName(jail.name)
 
 	@commitandrollback
 	def delJailName(self, cur, name):
@@ -211,7 +211,7 @@ class Fail2BanDb(object):
 		cur.execute(
 			"SELECT firstlinemd5, lastfilepos FROM logs "
 				"WHERE jail=? AND path=?",
-			(jail.getName(), container.getFileName()))
+			(jail.name, container.getFileName()))
 		try:
 			firstLineMD5, lastLinePos = cur.fetchone()
 		except TypeError:
@@ -220,7 +220,7 @@ class Fail2BanDb(object):
 		cur.execute(
 				"INSERT OR REPLACE INTO logs(jail, path, firstlinemd5, lastfilepos) "
 					"VALUES(?, ?, ?, ?)",
-				(jail.getName(), container.getFileName(),
+				(jail.name, container.getFileName(),
 					container.getHash(), container.getPos()))
 		if container.getHash() != firstLineMD5:
 			lastLinePos = None
@@ -232,7 +232,7 @@ class Fail2BanDb(object):
 		queryArgs = []
 		if jail is not None:
 			query += " WHERE jail=?"
-			queryArgs.append(jail.getName())
+			queryArgs.append(jail.name)
 		cur.execute(query, queryArgs)
 		return set(row[0] for row in cur.fetchmany())
 
@@ -245,7 +245,7 @@ class Fail2BanDb(object):
 			"UPDATE logs SET firstlinemd5=?, lastfilepos=? "
 				"WHERE jail=? AND path=?",
 			(container.getHash(), container.getPos(),
-				jail.getName(), container.getFileName()))
+				jail.name, container.getFileName()))
 
 	@commitandrollback
 	def addBan(self, cur, jail, ticket):
@@ -253,7 +253,7 @@ class Fail2BanDb(object):
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
-			(jail.getName(), ticket.getIP(), ticket.getTime(),
+			(jail.name, ticket.getIP(), ticket.getTime(),
 				{"matches": ticket.getMatches(),
 					"failures": ticket.getAttempt()}))
 
@@ -264,7 +264,7 @@ class Fail2BanDb(object):
 
 		if jail is not None:
 			query += " AND jail=?"
-			queryArgs.append(jail.getName())
+			queryArgs.append(jail.name)
 		if bantime is not None:
 			query += " AND timeofban > ?"
 			queryArgs.append(MyTime.time() - bantime)
@@ -284,7 +284,7 @@ class Fail2BanDb(object):
 		return tickets
 
 	def getBansMerged(self, ip, jail=None, **kwargs):
-		cacheKey = ip if jail is None else "%s|%s" % (ip, jail.getName())
+		cacheKey = ip if jail is None else "%s|%s" % (ip, jail.name)
 		if cacheKey in self._bansMergedCache:
 			return self._bansMergedCache[cacheKey]
 		matches = []

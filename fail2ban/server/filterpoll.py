@@ -82,12 +82,11 @@ class FilterPoll(FileFilter):
 	# @return True when the thread exits nicely
 
 	def run(self):
-		self.setActive(True)
-		while self._isActive():
+		while self.active:
 			if logSys.getEffectiveLevel() <= 6:
 				logSys.log(6, "Woke up idle=%s with %d files monitored",
-						   self.getIdle(), len(self.getLogPath()))
-			if not self.getIdle():
+						   self.idle, len(self.getLogPath()))
+			if not self.idle:
 				# Get file modification
 				for container in self.getLogPath():
 					filename = container.getFileName()
@@ -104,11 +103,11 @@ class FilterPoll(FileFilter):
 						self.failManager.cleanup(MyTime.time())
 					self.dateDetector.sortTemplate()
 					self.__modified = False
-				time.sleep(self.getSleepTime())
+				time.sleep(self.sleeptime)
 			else:
-				time.sleep(self.getSleepTime())
+				time.sleep(self.sleeptime)
 		logSys.debug(
-			(self.jail is not None and self.jail.getName() or "jailless") +
+			(self.jail is not None and self.jail.name or "jailless") +
 					 " filter terminated")
 		return True
 
@@ -143,7 +142,7 @@ class FilterPoll(FileFilter):
 			if self.__file404Cnt[filename] > 2:
 				logSys.warning("Too many errors. Setting the jail idle")
 				if self.jail is not None:
-					self.jail.setIdle(True)
+					self.jail.idle = True
 				else:
 					logSys.warning("No jail is assigned to %s" % self)
 				self.__file404Cnt[filename] = 0
