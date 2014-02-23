@@ -250,7 +250,7 @@ class Actions(JailThread, Mapping):
 					self._jail.database.getBansMerged(
 						ip=bTicket.getIP(), jail=self._jail).getAttempt())
 			if self.__banManager.addBanTicket(bTicket):
-				logSys.warning("[%s] Ban %s" % (self._jail.name, aInfo["ip"]))
+				logSys.notice("[%s] Ban %s" % (self._jail.name, aInfo["ip"]))
 				for name, action in self._actions.iteritems():
 					try:
 						action.ban(aInfo)
@@ -260,7 +260,7 @@ class Actions(JailThread, Mapping):
 							self._jail.name, name, e)
 				return True
 			else:
-				logSys.info("[%s] %s already banned" % (self._jail.name,
+				logSys.notice("[%s] %s already banned" % (self._jail.name,
 														aInfo["ip"]))
 		return False
 
@@ -297,7 +297,7 @@ class Actions(JailThread, Mapping):
 		aInfo["failures"] = ticket.getAttempt()
 		aInfo["time"] = ticket.getTime()
 		aInfo["matches"] = "".join(ticket.getMatches())
-		logSys.warning("[%s] Unban %s" % (self._jail.name, aInfo["ip"]))
+		logSys.notice("[%s] Unban %s" % (self._jail.name, aInfo["ip"]))
 		for name, action in self._actions.iteritems():
 			try:
 				action.unban(aInfo)

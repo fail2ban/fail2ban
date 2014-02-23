@@ -419,9 +419,9 @@ class Filter(JailThread):
 							 % (unixTime, MyTime.time(), self.getFindTime()))
 				break
 			if self.inIgnoreIPList(ip):
-				logSys.debug("Ignore %s" % ip)
+				logSys.notice("[%s] Ignore %s" % (self.jail.name, ip))
 				continue
-			logSys.debug("Found %s" % ip)
+			logSys.notice("[%s] Found %s" % (self.jail.name, ip))
 			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
 			self.failManager.addFailure(FailTicket(ip, unixTime, lines))
 
@@ -500,7 +500,7 @@ class Filter(JailThread):
 					else:
 						continue
 				if date is None:
-					logSys.debug(
+					logSys.warning(
 						"Found a match for %r but no valid date/time "
 						"found for %r. Please try setting a custom "
 						"date pattern (see man page jail.conf(5)). "
@@ -777,7 +777,7 @@ class FileContainer:
 		## sys.stdout.flush()
 		# Compare hash and inode
 		if self.__hash != myHash or self.__ino != stats.st_ino:
-			logSys.debug("Log rotation detected for %s" % self.__filename)
+			logSys.info("Log rotation detected for %s" % self.__filename)
 			self.__hash = myHash
 			self.__ino = stats.st_ino
 			self.__pos = 0
