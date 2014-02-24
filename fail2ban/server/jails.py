@@ -56,6 +56,8 @@ class Jails(Mapping):
 			The name of the jail.
 		backend : str
 			The backend to use.
+		db : Fail2BanDb
+			Fail2Ban's persistent database instance.
 
 		Raises
 		------
