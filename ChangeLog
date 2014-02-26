@@ -17,6 +17,7 @@ ver. 0.8.13 (2014/XX/XXX) - maintenance-only-from-now-on
 
 - New Features:
   - filter nagios - detects unauthorized access to the nrpe daemon (Ivo Truxa)
+  - filter sendmail-{auth,spam} (jserrachinha and cepheid666).
 
 - Enhancements:
   - filter pureftpd - added all translations of "Authentication failed for
