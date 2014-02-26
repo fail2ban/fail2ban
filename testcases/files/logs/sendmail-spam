@@ -19,6 +19,16 @@ Feb 24 05:07:40 petermurray sm-mta[716]: s1O57c6H000716: ruleset=check_rcpt, arg
 # failJSON: { "time": "2005-02-23T07:00:08", "match": true , "host": "151.232.63.226" }
 Feb 23 07:00:08 petermurray sm-mta[3992]: s1N706jo003992: ruleset=check_rcpt, arg1=, relay=[151.232.63.226], reject=550 5.7.1 ... Rejected: 151.232.63.226 listed at sbl-xbl.spamhaus.org
 
+# failJSON: { "time": "2005-02-23T04:36:21", "match": true , "host": "74.137.127.206" }
+Feb 23 04:36:21 kismet sm-acceptingconnections[12603]: s1N9aKAw012603: ruleset=check_rcpt, arg1=, relay=74-137-127-206.dhcp.insightbb.com [74.137.127.206], reject=550 5.7.1 ... Rejected: IP in SpamCop blacklist, see: http://spamcop.net/bl.shtml?74.137.127.206
+
+# failJSON: { "time": "2005-02-23T04:38:57", "match": true , "host": "203.229.186.250" }
+Feb 23 04:38:57 kismet sm-acceptingconnections[16772]: s1N9csSZ016772: ruleset=check_rcpt, arg1=, relay=[203.229.186.250], reject=550 5.7.1 ... Rejected: IP in Barracuda RBL, see: http://www.barracudacentral.org/reputation?ip=203.229.186.250
+
+# failJSON: { "time": "2005-02-23T06:06:04", "match": true , "host": "186.54.117.93" }
+Feb 23 06:06:04 kismet sm-acceptingconnections[18622]: s1NB63Bp018622: ruleset=check_rcpt, arg1=, relay=r186-54-117-93.dialup.adsl.anteldata.net.uy [186.54.117.93], reject=550 5.7.1 ... Rejected: IP in SpamHaus PBL, see http://www.spamhaus.org/query/bl?ip=186.54.117.93
+
 # failJSON: { "time": "2005-02-24T01:46:44", "match": true , "host": "217.21.54.82" }
 Feb 24 01:46:44 petermurray sm-mta[24422]: ruleset=check_relay, arg1=leased-line-54-82.telecom.by, arg2=217.21.54.82, relay=leased-line-54-82.telecom.by [217.21.54.82], reject=421 4.3.2 Connection rate limit exceeded.
+
 
