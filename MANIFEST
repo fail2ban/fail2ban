@@ -172,6 +172,8 @@ config/filter.d/qmail.conf
 config/filter.d/pam-generic.conf
 config/filter.d/php-url-fopen.conf
 config/filter.d/postfix-sasl.conf
+config/filter.d/sendmail-auth.conf
+config/filter.d/sendmail-spam.conf
 config/filter.d/sieve.conf
 config/filter.d/solid-pop3d.conf
 config/filter.d/squid.conf
