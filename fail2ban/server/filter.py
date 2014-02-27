@@ -419,9 +419,9 @@ class Filter(JailThread):
 							 % (unixTime, MyTime.time(), self.getFindTime()))
 				break
 			if self.inIgnoreIPList(ip):
-				logSys.notice("[%s] Ignore %s" % (self.jail.name, ip))
+				logSys.info("[%s] Ignore %s" % (self.jail.name, ip))
 				continue
-			logSys.notice("[%s] Found %s" % (self.jail.name, ip))
+			logSys.info("[%s] Found %s" % (self.jail.name, ip))
 			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
 			self.failManager.addFailure(FailTicket(ip, unixTime, lines))
 
