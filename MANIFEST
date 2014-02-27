@@ -103,6 +103,8 @@ testcases/files/logs/qmail
 testcases/files/logs/recidive
 testcases/files/logs/sieve
 testcases/files/logs/selinux-ssh
+testcases/files/logs/sendmail-auth
+testcases/files/logs/sendmail-reject
 testcases/files/logs/suhosin
 testcases/files/logs/uwimap-auth
 testcases/files/logs/wuftpd
@@ -173,7 +175,7 @@ config/filter.d/pam-generic.conf
 config/filter.d/php-url-fopen.conf
 config/filter.d/postfix-sasl.conf
 config/filter.d/sendmail-auth.conf
-config/filter.d/sendmail-spam.conf
+config/filter.d/sendmail-reject.conf
 config/filter.d/sieve.conf
 config/filter.d/solid-pop3d.conf
 config/filter.d/squid.conf
