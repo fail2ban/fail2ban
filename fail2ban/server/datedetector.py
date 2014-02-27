@@ -31,11 +31,13 @@ logSys = logging.getLogger(__name__)
 
 class DateDetector(object):
 	"""Manages one or more date templates to find a date within a log line.
+
+	Attributes
+	----------
+	templates
 	"""
 
 	def __init__(self):
-		"""Initialise the date detector.
-		"""
 		self.__lock = Lock()
 		self.__templates = list()
 		self.__known_names = set()

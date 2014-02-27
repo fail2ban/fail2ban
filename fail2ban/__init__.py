@@ -39,7 +39,7 @@ logging.addLevelName(logging.NOTICE, 'NOTICE')
 
 # define a new logger function for notice
 # this is exactly like existing info, critical, debug...etc
-def Logger_notice(self, msg, *args, **kwargs):
+def _Logger_notice(self, msg, *args, **kwargs):
 	"""
 	Log 'msg % args' with severity 'NOTICE'.
 
@@ -51,11 +51,11 @@ def Logger_notice(self, msg, *args, **kwargs):
 	if self.isEnabledFor(logging.NOTICE):
 		self._log(logging.NOTICE, msg, args, **kwargs)
 
-logging.Logger.notice = Logger_notice
+logging.Logger.notice = _Logger_notice
 
 # define a new root level notice function
 # this is exactly like existing info, critical, debug...etc
-def root_notice(msg, *args, **kwargs):
+def _root_notice(msg, *args, **kwargs):
 	"""
 	Log a message with severity 'NOTICE' on the root logger.
 	"""
@@ -64,7 +64,7 @@ def root_notice(msg, *args, **kwargs):
 	logging.root.notice(msg, *args, **kwargs)
 
 # make the notice root level function known
-logging.notice = root_notice
+logging.notice = _root_notice
 
 # add NOTICE to the priority map of all the levels
 logging.handlers.SysLogHandler.priority_map['NOTICE'] = 'notice'

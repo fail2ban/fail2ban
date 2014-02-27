@@ -49,16 +49,27 @@ class Actions(JailThread, Mapping):
 	Mapping type, and the `add` method must be used to add new actions.
 	This class also starts and stops the actions, and fetches bans from
 	the jail executing these bans via the actions.
+
+	Parameters
+	----------
+	jail: Jail
+		The jail of which the actions belongs to.
+
+	Attributes
+	----------
+	daemon
+	ident
+	name
+	status
+	active : bool
+		Control the state of the thread.
+	idle : bool
+		Control the idle state of the thread.
+	sleeptime : int
+		The time the thread sleeps for in the loop.
 	"""
 
 	def __init__(self, jail):
-		"""Initialise an empty Actions instance.
-
-		Parameters
-		----------
-		jail: Jail
-			The jail of which the actions belongs to.
-		"""
 		JailThread.__init__(self)
 		## The jail which contains this action.
 		self._jail = jail

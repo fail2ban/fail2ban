@@ -39,8 +39,6 @@ class Jails(Mapping):
 	"""
 
 	def __init__(self):
-		"""Initialise an empty Jails instance.
-		"""
 		self.__lock = Lock()
 		self._jails = dict()
 

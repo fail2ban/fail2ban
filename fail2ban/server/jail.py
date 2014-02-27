@@ -36,6 +36,25 @@ class Jail:
 	The class handles the initialisation of a filter, and actions. It's
 	role is then to act as an interface between the filter and actions,
 	passing bans detected by the filter, for the actions to then act upon.
+
+	Parameters
+	----------
+	name : str
+		Name assigned to the jail.
+	backend : str
+		Backend to be used for filter. "auto" will attempt to pick
+		the most preferred backend method. Default: "auto"
+	db : Fail2BanDb
+		Fail2Ban persistent database instance. Default: `None`
+
+	Attributes
+	----------
+	name
+	database
+	filter
+	actions
+	idle
+	status
 	"""
 
 	#Known backends. Each backend should have corresponding __initBackend method
@@ -44,18 +63,6 @@ class Jail:
 	_BACKENDS = ['pyinotify', 'gamin', 'polling', 'systemd']
 
 	def __init__(self, name, backend = "auto", db=None):
-		"""Initialise a jail, by initalises filter and actions.
-
-		Parameters
-		----------
-		name : str
-			Name assigned to the jail.
-		backend : str
-			Backend to be used for filter. "auto" will attempt to pick
-			the most preferred backend method. Default: "auto"
-		db : Fail2BanDb
-			Fail2Ban persistent database instance. Default: `None`
-		"""
 		self.__db = db
 		# 26 based on iptable chain name limit of 30 less len('f2b-')
 		if len(name) >= 26:

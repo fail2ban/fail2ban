@@ -96,11 +96,28 @@ class ActionBase(object):
 	place to create a Python based action for Fail2Ban. This class can
 	be inherited from to ease implementation.
 	Required methods:
-	 - __init__(jail, name)
-	 - start()
-	 - stop()
-	 - ban(aInfo)
-	 - unban(aInfo)
+
+	- __init__(jail, name)
+	- start()
+	- stop()
+	- ban(aInfo)
+	- unban(aInfo)
+
+	Called when action is created, but before the jail/actions is
+	started. This should carry out necessary methods to initialise
+	the action but not "start" the action.
+
+	Parameters
+	----------
+	jail : Jail
+		The jail in which the action belongs to.
+	name : str
+		Name assigned to the action.
+
+	Notes
+	-----
+	Any additional arguments specified in `jail.conf` or passed
+	via `fail2ban-client` will be passed as keyword arguments.
 	"""
 	__metaclass__ = ABCMeta
 
@@ -118,24 +135,6 @@ class ActionBase(object):
 		return True
 
 	def __init__(self, jail, name):
-		"""Initialise action.
-
-		Called when action is created, but before the jail/actions is
-		started. This should carry out necessary methods to initialise
-		the action but not "start" the action.
-
-		Parameters
-		----------
-		jail : Jail
-			The jail in which the action belongs to.
-		name : str
-			Name assigned to the action.
-
-		Notes
-		-----
-		Any additional arguments specified in `jail.conf` or passed
-		via `fail2ban-client` will be passed as keyword arguments.
-		"""
 		self._jail = jail
 		self._name = name
 		self._logSys = logging.getLogger(
@@ -177,22 +176,27 @@ class CommandAction(ActionBase):
 	"""A action which executes OS shell commands.
 
 	This is the default type of action which Fail2Ban uses.
+
+	Default sets all commands for actions as empty string, such
+	no command is executed.
+
+	Parameters
+	----------
+	jail : Jail
+		The jail in which the action belongs to.
+	name : str
+		Name assigned to the action.
+
+	Attributes
+	----------
+	actionban
+	actionstart
+	actionstop
+	actionunban
+	timeout
 	"""
 
 	def __init__(self, jail, name):
-		"""Initialise action.
-
-		Default sets all commands for actions as empty string, such
-		no command is executed.
-
-		Parameters
-		----------
-		jail : Jail
-			The jail in which the action belongs to.
-		name : str
-			Name assigned to the action.
-		"""
-
 		super(CommandAction, self).__init__(jail, name)
 		self.timeout = 60
 		## Command executed in order to initialize the system.

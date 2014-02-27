@@ -29,11 +29,22 @@ from abc import abstractproperty, abstractmethod
 
 class JailThread(Thread):
 	"""Abstract class for threading elements in Fail2Ban.
+
+	Attributes
+	----------
+	daemon
+	ident
+	name
+	status
+	active : bool
+		Control the state of the thread.
+	idle : bool
+		Control the idle state of the thread.
+	sleeptime : int
+		The time the thread sleeps for in the loop.
 	"""
 
 	def __init__(self):
-		"""Initialise a JailThread instance.
-		"""
 		super(JailThread, self).__init__()
 		## Control the state of the thread.
 		self.active = False

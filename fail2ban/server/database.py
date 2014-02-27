@@ -62,6 +62,30 @@ class Fail2BanDb(object):
 
 	This allows after Fail2Ban is restarted to reinstated bans and
 	to continue monitoring logs from the same point.
+
+	This will either create a new Fail2Ban database, connect to an
+	existing, and if applicable upgrade the schema in the process.
+
+	Parameters
+	----------
+	filename : str
+		File name for SQLite3 database, which will be created if
+		doesn't already exist.
+	purgeAge : int
+		Purge age in seconds, used to remove old bans from
+		database during purge.
+
+	Raises
+	------
+	sqlite3.OperationalError
+		Error connecting/creating a SQLite3 database.
+	RuntimeError
+		If exisiting database fails to update to new schema.
+
+	Attributes
+	----------
+	filename
+	purgeage
 	"""
 	__version__ = 2
 	# Note all _TABLE_* strings must end in ';' for py26 compatibility
@@ -98,27 +122,6 @@ class Fail2BanDb(object):
 			"CREATE INDEX bans_ip ON bans(ip);" \
 
 	def __init__(self, filename, purgeAge=24*60*60):
-		"""Initialise the database by connecting/creating SQLite3 file.
-
-		This will either create a new Fail2Ban database, connect to an
-		existing, and if applicable upgrade the schema in the process.
-
-		Parameters
-		----------
-		filename : str
-			File name for SQLite3 database, which will be created if
-			doesn't already exist.
-		purgeAge : int
-			Purge age in seconds, used to remove old bans from
-			database during purge.
-
-		Raises
-		------
-		sqlite3.OperationalError
-			Error connecting/creating a SQLite3 database.
-		RuntimeError
-			If exisiting database fails to update to new schema.
-		"""
 		try:
 			self._lock = Lock()
 			self._db = sqlite3.connect(
