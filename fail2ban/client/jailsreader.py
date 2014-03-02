@@ -67,6 +67,8 @@ class JailsReader(ConfigReader):
 		# Get the options of all jails.
 		parse_status = True
 		for sec in sections:
+			if sec == 'INCLUDES':
+				continue
 			jail = JailReader(sec, basedir=self.getBaseDir(),
 							  force_enable=self.__force_enable)
 			jail.read()
