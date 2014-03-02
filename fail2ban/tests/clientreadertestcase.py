@@ -559,7 +559,7 @@ class JailsReaderTest(LogCaptureTestCase):
 						 [['set', 'dbfile',
 							'/var/lib/fail2ban/fail2ban.sqlite3'],
 						  ['set', 'dbpurgeage', 86400],
-						  ['set', 'loglevel', 3],
+						  ['set', 'loglevel', "INFO"],
 						  ['set', 'logtarget', '/var/log/fail2ban.log']])
 
 		# and if we force change configurator's fail2ban's baseDir

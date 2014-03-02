@@ -39,8 +39,6 @@ class Jails(Mapping):
 	"""
 
 	def __init__(self):
-		"""Initialise an empty Jails instance.
-		"""
 		self.__lock = Lock()
 		self._jails = dict()
 
@@ -56,6 +54,8 @@ class Jails(Mapping):
 			The name of the jail.
 		backend : str
 			The backend to use.
+		db : Fail2BanDb
+			Fail2Ban's persistent database instance.
 
 		Raises
 		------

@@ -41,11 +41,14 @@ class DateTemplate(object):
 
 	This is an not functional abstract class which other templates should
 	inherit from.
+
+	Attributes
+	----------
+	name
+	regex
 	"""
 
 	def __init__(self):
-		"""Initialise the date template.
-		"""
 		self._name = ""
 		self._regex = ""
 		self._cRegex = None
@@ -123,11 +126,14 @@ class DateEpoch(DateTemplate):
 
 	This includes Unix timestamps which appear at start of a line, optionally
 	within square braces (nsd), or on SELinux audit log lines.
+
+	Attributes
+	----------
+	name
+	regex
 	"""
 
 	def __init__(self):
-		"""Initialise the date template.
-		"""
 		DateTemplate.__init__(self)
 		self.regex = "(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=audit\()))\d{10}(?:\.\d{3,6})?(?(selinux)(?=:\d+\))(?(square)(?=\])))"
 
@@ -152,6 +158,19 @@ class DateEpoch(DateTemplate):
 		return None
 
 class DatePatternRegex(DateTemplate):
+	"""Date template, with regex/pattern
+
+	Parameters
+	----------
+	pattern : str
+		Sets the date templates pattern.
+
+	Attributes
+	----------
+	name
+	regex
+	pattern
+	"""
 	_patternRE = r"%%(%%|[%s])" % "".join(timeRE.keys())
 	_patternName = {
 		'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
@@ -159,17 +178,10 @@ class DatePatternRegex(DateTemplate):
 		'M': "Minute", 'p': "AMPM", 'S': "Second", 'U': "Yearweek",
 		'w': "Weekday", 'W': "Yearweek", 'y': 'Year2', 'Y': "Year", '%': "%",
 		'z': "Zone offset", 'f': "Microseconds", 'Z': "Zone name"}
-	for key in set(timeRE) - set(_patternName): # may not have them all...
-		_patternName[key] = "%%%s" % key
+	for _key in set(timeRE) - set(_patternName): # may not have them all...
+		_patternName[_key] = "%%%s" % _key
 
 	def __init__(self, pattern=None):
-		"""Initialise date template, with optional regex/pattern
-
-		Parameters
-		----------
-		pattern : str
-			Sets the date templates pattern.
-		"""
 		super(DatePatternRegex, self).__init__()
 		self._pattern = None
 		if pattern is not None:
@@ -229,11 +241,14 @@ class DatePatternRegex(DateTemplate):
 
 class DateTai64n(DateTemplate):
 	"""A date template which matches TAI64N formate timestamps.
+
+	Attributes
+	----------
+	name
+	regex
 	"""
 
 	def __init__(self):
-		"""Initialise the date template.
-		"""
 		DateTemplate.__init__(self)
 		# We already know the format for TAI64N
 		# yoh: we should not add an additional front anchor

@@ -227,8 +227,7 @@ class Transmitter(TransmitterBase):
 		time.sleep(1)
 		self.assertEqual(
 			self.transm.proceed(["stop", self.jailName]), (0, None))
-		self.assertRaises(
-			UnknownJailException, self.server.isAlive, self.jailName)
+		self.assertTrue(self.jailName not in self.server._Server__jails)
 
 	def testStartStopAllJail(self):
 		self.server.addJail("TestJail2", "auto")
@@ -242,10 +241,8 @@ class Transmitter(TransmitterBase):
 		time.sleep(0.1)
 		self.assertEqual(self.transm.proceed(["stop", "all"]), (0, None))
 		time.sleep(1)
-		self.assertRaises(
-			UnknownJailException, self.server.isAlive, self.jailName)
-		self.assertRaises(
-			UnknownJailException, self.server.isAlive, "TestJail2")
+		self.assertTrue(self.jailName not in self.server._Server__jails)
+		self.assertTrue("TestJail2" not in self.server._Server__jails)
 
 	def testJailIdle(self):
 		self.assertEqual(
@@ -482,15 +479,15 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(self.transm.proceed(["status", self.jailName]),
 			(0,
 				[
-					('filter', [
+					('Filter', [
 						('Currently failed', 0),
 						('Total failed', 0),
 						('File list', [])]
 					),
-					('action', [
+					('Actions', [
 						('Currently banned', 0),
 						('Total banned', 0),
-						('IP list', [])]
+						('Banned IP list', [])]
 					)
 				]
 			)
@@ -686,7 +683,7 @@ class TransmitterLogging(TransmitterBase):
 	def setUp(self):
 		self.server = Server()
 		self.server.setLogTarget("/dev/null")
-		self.server.setLogLevel(0)
+		self.server.setLogLevel("CRITICAL")
 		super(TransmitterLogging, self).setUp()
 
 	def testLogTarget(self):
@@ -711,12 +708,14 @@ class TransmitterLogging(TransmitterBase):
 		self.setGetTest("logtarget", "SYSLOG")
 
 	def testLogLevel(self):
-		self.setGetTest("loglevel", "4", 4)
-		self.setGetTest("loglevel", "3", 3)
-		self.setGetTest("loglevel", "2", 2)
-		self.setGetTest("loglevel", "1", 1)
-		self.setGetTest("loglevel", "-1", -1)
-		self.setGetTest("loglevel", "0", 0)
+		self.setGetTest("loglevel", "HEAVYDEBUG")
+		self.setGetTest("loglevel", "DEBUG")
+		self.setGetTest("loglevel", "INFO")
+		self.setGetTest("loglevel", "NOTICE")
+		self.setGetTest("loglevel", "WARNING")
+		self.setGetTest("loglevel", "ERROR")
+		self.setGetTest("loglevel", "CRITICAL")
+		self.setGetTest("loglevel", "cRiTiCaL", "CRITICAL")
 		self.setGetTestNOK("loglevel", "Bird")
 
 	def testFlushLogs(self):
@@ -724,7 +723,7 @@ class TransmitterLogging(TransmitterBase):
 		try:
 			f, fn = tempfile.mkstemp("fail2ban.log")
 			os.close(f)
-			self.server.setLogLevel(2)
+			self.server.setLogLevel("WARNING")
 			self.assertEqual(self.transm.proceed(["set", "logtarget", fn]), (0, fn))
 			l = logging.getLogger('fail2ban.server.server').parent.parent
 			l.warning("Before file moved")
@@ -774,7 +773,7 @@ class JailTests(unittest.TestCase):
 		# Just a smoke test for now
 		longname = "veryveryverylongname"
 		jail = Jail(longname)
-		self.assertEqual(jail.getName(), longname)
+		self.assertEqual(jail.name, longname)
 
 class RegexTests(unittest.TestCase):
 

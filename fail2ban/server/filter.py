@@ -357,6 +357,9 @@ class Filter(JailThread):
 			# IP address without CIDR mask
 			if len(s) == 1:
 				s.insert(1, '32')
+			elif "." in s[1]: # 255.255.255.0 style mask
+				s[1] = len(re.search(
+					"(?<=b)1+", bin(DNSUtils.addr2bin(s[1]))).group())
 			s[1] = long(s[1])
 			try:
 				a = DNSUtils.cidr(s[0], s[1])
@@ -416,9 +419,9 @@ class Filter(JailThread):
 							 % (unixTime, MyTime.time(), self.getFindTime()))
 				break
 			if self.inIgnoreIPList(ip):
-				logSys.debug("Ignore %s" % ip)
+				logSys.info("[%s] Ignore %s" % (self.jail.name, ip))
 				continue
-			logSys.debug("Found %s" % ip)
+			logSys.info("[%s] Found %s" % (self.jail.name, ip))
 			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
 			self.failManager.addFailure(FailTicket(ip, unixTime, lines))
 
@@ -497,7 +500,7 @@ class Filter(JailThread):
 					else:
 						continue
 				if date is None:
-					logSys.debug(
+					logSys.warning(
 						"Found a match for %r but no valid date/time "
 						"found for %r. Please try setting a custom "
 						"date pattern (see man page jail.conf(5)). "
@@ -527,15 +530,10 @@ class Filter(JailThread):
 						logSys.error(e)
 		return failList
 
-
-	##
-	# Get the status of the filter.
-	#
-	# Get some informations about the filter state such as the total
-	# number of failures.
-	# @return a list with tuple
-
+	@property
 	def status(self):
+		"""Status of failures detected by filter.
+		"""
 		ret = [("Currently failed", self.failManager.size()),
 		       ("Total failed", self.failManager.getFailTotal())]
 		return ret
@@ -559,7 +557,7 @@ class FileFilter(Filter):
 			logSys.error(path + " already exists")
 		else:
 			container = FileContainer(path, self.getLogEncoding(), tail)
-			db = self.jail.getDatabase()
+			db = self.jail.database
 			if db is not None:
 				lastpos = db.addLog(self.jail, container)
 				if lastpos and not tail:
@@ -583,7 +581,7 @@ class FileFilter(Filter):
 		for log in self.__logPath:
 			if log.getFileName() == path:
 				self.__logPath.remove(log)
-				db = self.jail.getDatabase()
+				db = self.jail.database
 				if db is not None:
 					db.updateLog(self.jail, log)
 				logSys.info("Removed logfile = %s" % path)
@@ -679,18 +677,21 @@ class FileFilter(Filter):
 		# might occur leading at least to tests failures.
 		while has_content:
 			line = container.readline()
-			if not line or not self._isActive():
+			if not line or not self.active:
 				# The jail reached the bottom or has been stopped
 				break
 			self.processLineAndAdd(line)
 		container.close()
-		db = self.jail.getDatabase()
+		db = self.jail.database
 		if db is not None:
 			db.updateLog(self.jail, container)
 		return True
 
+	@property
 	def status(self):
-		ret = Filter.status(self)
+		"""Status of Filter plus files being monitored.
+		"""
+		ret = super(FileFilter, self).status
 		path = [m.getFileName() for m in self.getLogPath()]
 		ret.append(("File list", path))
 		return ret
@@ -776,7 +777,7 @@ class FileContainer:
 		## sys.stdout.flush()
 		# Compare hash and inode
 		if self.__hash != myHash or self.__ino != stats.st_ino:
-			logSys.debug("Log rotation detected for %s" % self.__filename)
+			logSys.info("Log rotation detected for %s" % self.__filename)
 			self.__hash = myHash
 			self.__ino = stats.st_ino
 			self.__pos = 0

@@ -39,7 +39,7 @@ protocol = [
 ["ping", "tests if the server is alive"], 
 ["help", "return this output"], 
 ['', "LOGGING", ""],
-["set loglevel <LEVEL>", "sets logging level to <LEVEL>. 0 is minimal, 4 is debug"], 
+["set loglevel <LEVEL>", "sets logging level to <LEVEL>. Levels: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG"], 
 ["get loglevel", "gets the logging level"], 
 ["set logtarget <TARGET>", "sets logging target to <TARGET>. Can be STDOUT, STDERR, SYSLOG or a file"], 
 ["get logtarget", "gets logging target"], 

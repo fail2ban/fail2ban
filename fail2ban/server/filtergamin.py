@@ -109,16 +109,15 @@ class FilterGamin(FileFilter):
 	# @return True when the thread exits nicely
 
 	def run(self):
-		self.setActive(True)
 		# Gamin needs a loop to collect and dispatch events
-		while self._isActive():
-			if not self.getIdle():
+		while self.active:
+			if not self.idle:
 				# We cannot block here because we want to be able to
 				# exit.
 				if self.monitor.event_pending():
 					self.monitor.handle_events()
-			time.sleep(self.getSleepTime())
-		logSys.debug(self.jail.getName() + ": filter terminated")
+			time.sleep(self.sleeptime)
+		logSys.debug(self.jail.name + ": filter terminated")
 		return True
 
 

@@ -236,6 +236,15 @@ class IgnoreIP(LogCaptureTestCase):
 		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.255'))
 		self.assertFalse(self.filter.inIgnoreIPList('192.168.0.255'))
 
+	def testIgnoreIPMask(self):
+		self.filter.addIgnoreIP('192.168.1.0/255.255.255.128')
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.0'))
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.1'))
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.127'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.128'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.255'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.0.255'))
+
 	def testIgnoreInProcessLine(self):
 		setUpMyTime()
 		self.filter.addIgnoreIP('192.168.1.0/25')
@@ -316,7 +325,7 @@ class LogFileMonitor(LogCaptureTestCase):
 		self.file = open(self.name, 'a')
 		self.filter = FilterPoll(DummyJail())
 		self.filter.addLogPath(self.name)
-		self.filter.setActive(True)
+		self.filter.active = True
 		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 
 	def tearDown(self):
@@ -457,7 +466,7 @@ def get_monitor_failures_testcase(Filter_):
 			self.jail = DummyJail()
 			self.filter = Filter_(self.jail)
 			self.filter.addLogPath(self.name)
-			self.filter.setActive(True)
+			self.filter.active = True
 			self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 			self.filter.start()
 			# If filter is polling it would sleep a bit to guarantee that
@@ -678,7 +687,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				"TEST_UUID=%s" % self.test_uuid])
 			self.journal_fields = {
 				'TEST_FIELD': "1", 'TEST_UUID': self.test_uuid}
-			self.filter.setActive(True)
+			self.filter.active = True
 			self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 			self.filter.start()
 
@@ -795,7 +804,7 @@ class GetFailures(unittest.TestCase):
 		setUpMyTime()
 		self.jail = DummyJail()
 		self.filter = FileFilter(self.jail)
-		self.filter.setActive(True)
+		self.filter.active = True
 		# TODO Test this
 		#self.filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 		#self.filter.setTimePattern("%b %d %H:%M:%S")
@@ -886,7 +895,7 @@ class GetFailures(unittest.TestCase):
 							   ('warn', output_yes)):
 			jail = DummyJail()
 			filter_ = FileFilter(jail, useDns=useDns)
-			filter_.setActive(True)
+			filter_.active = True
 			filter_.failManager.setMaxRetry(1)	# we might have just few failures
 
 			filter_.addLogPath(GetFailures.FILENAME_USEDNS)

@@ -49,16 +49,27 @@ class Actions(JailThread, Mapping):
 	Mapping type, and the `add` method must be used to add new actions.
 	This class also starts and stops the actions, and fetches bans from
 	the jail executing these bans via the actions.
+
+	Parameters
+	----------
+	jail: Jail
+		The jail of which the actions belongs to.
+
+	Attributes
+	----------
+	daemon
+	ident
+	name
+	status
+	active : bool
+		Control the state of the thread.
+	idle : bool
+		Control the idle state of the thread.
+	sleeptime : int
+		The time the thread sleeps for in the loop.
 	"""
 
 	def __init__(self, jail):
-		"""Initialise an empty Actions instance.
-
-		Parameters
-		----------
-		jail: Jail
-			The jail of which the actions belongs to.
-		"""
 		JailThread.__init__(self)
 		## The jail which contains this action.
 		self._jail = jail
@@ -192,30 +203,29 @@ class Actions(JailThread, Mapping):
 		bool
 			True when the thread exits nicely.
 		"""
-		self.setActive(True)
 		for name, action in self._actions.iteritems():
 			try:
 				action.start()
 			except Exception as e:
 				logSys.error("Failed to start jail '%s' action '%s': %s",
-					self._jail.getName(), name, e)
-		while self._isActive():
-			if not self.getIdle():
-				#logSys.debug(self._jail.getName() + ": action")
+					self._jail.name, name, e)
+		while self.active:
+			if not self.idle:
+				#logSys.debug(self._jail.name + ": action")
 				ret = self.__checkBan()
 				if not ret:
 					self.__checkUnBan()
-					time.sleep(self.getSleepTime())
+					time.sleep(self.sleeptime)
 			else:
-				time.sleep(self.getSleepTime())
+				time.sleep(self.sleeptime)
 		self.__flushBan()
 		for name, action in self._actions.iteritems():
 			try:
 				action.stop()
 			except Exception as e:
 				logSys.error("Failed to stop jail '%s' action '%s': %s",
-					self._jail.getName(), name, e)
-		logSys.debug(self._jail.getName() + ": action terminated")
+					self._jail.name, name, e)
+		logSys.debug(self._jail.name + ": action terminated")
 		return True
 
 	def __checkBan(self):
@@ -237,31 +247,31 @@ class Actions(JailThread, Mapping):
 			aInfo["failures"] = bTicket.getAttempt()
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "\n".join(bTicket.getMatches())
-			if self._jail.getDatabase() is not None:
+			if self._jail.database is not None:
 				aInfo["ipmatches"] = lambda: "\n".join(
-					self._jail.getDatabase().getBansMerged(
+					self._jail.database.getBansMerged(
 						ip=bTicket.getIP()).getMatches())
 				aInfo["ipjailmatches"] = lambda: "\n".join(
-					self._jail.getDatabase().getBansMerged(
+					self._jail.database.getBansMerged(
 						ip=bTicket.getIP(), jail=self._jail).getMatches())
 				aInfo["ipfailures"] = lambda: "\n".join(
-					self._jail.getDatabase().getBansMerged(
+					self._jail.database.getBansMerged(
 						ip=bTicket.getIP()).getAttempt())
 				aInfo["ipjailfailures"] = lambda: "\n".join(
-					self._jail.getDatabase().getBansMerged(
+					self._jail.database.getBansMerged(
 						ip=bTicket.getIP(), jail=self._jail).getAttempt())
 			if self.__banManager.addBanTicket(bTicket):
-				logSys.warning("[%s] Ban %s" % (self._jail.getName(), aInfo["ip"]))
+				logSys.notice("[%s] Ban %s" % (self._jail.name, aInfo["ip"]))
 				for name, action in self._actions.iteritems():
 					try:
 						action.ban(aInfo)
 					except Exception as e:
 						logSys.error(
 							"Failed to execute ban jail '%s' action '%s': %s",
-							self._jail.getName(), name, e)
+							self._jail.name, name, e)
 				return True
 			else:
-				logSys.info("[%s] %s already banned" % (self._jail.getName(),
+				logSys.notice("[%s] %s already banned" % (self._jail.name,
 														aInfo["ip"]))
 		return False
 
@@ -298,28 +308,20 @@ class Actions(JailThread, Mapping):
 		aInfo["failures"] = ticket.getAttempt()
 		aInfo["time"] = ticket.getTime()
 		aInfo["matches"] = "".join(ticket.getMatches())
-		logSys.warning("[%s] Unban %s" % (self._jail.getName(), aInfo["ip"]))
+		logSys.notice("[%s] Unban %s" % (self._jail.name, aInfo["ip"]))
 		for name, action in self._actions.iteritems():
 			try:
 				action.unban(aInfo)
 			except Exception as e:
 				logSys.error(
 					"Failed to execute unban jail '%s' action '%s': %s",
-					self._jail.getName(), name, e)
+					self._jail.name, name, e)
 
+	@property
 	def status(self):
-		"""Get the status of the filter.
-
-		Get some informations about the filter state such as the total
-		number of failures.
-
-		Returns
-		-------
-		list
-			List of tuple pairs, each containing a description and value
-			for general status information.
+		"""Status of active bans, and total ban counts.
 		"""
 		ret = [("Currently banned", self.__banManager.size()), 
 			   ("Total banned", self.__banManager.getBanTotal()),
-			   ("IP list", self.__banManager.getBanList())]
+			   ("Banned IP list", self.__banManager.getBanList())]
 		return ret

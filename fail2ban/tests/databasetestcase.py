@@ -47,7 +47,7 @@ class DatabaseTest(unittest.TestCase):
 		os.remove(self.dbFilename)
 
 	def testGetFilename(self):
-		self.assertEqual(self.dbFilename, self.db.getFilename())
+		self.assertEqual(self.dbFilename, self.db.filename)
 
 	def testCreateInvalidPath(self):
 		self.assertRaises(
@@ -61,7 +61,7 @@ class DatabaseTest(unittest.TestCase):
 		self.db = Fail2BanDb(self.dbFilename)
 		# and check jail of same name still present
 		self.assertTrue(
-			self.jail.getName() in self.db.getJailNames(),
+			self.jail.name in self.db.getJailNames(),
 			"Jail not retained in Db after disconnect reconnect.")
 
 	def testUpdateDb(self):
@@ -74,13 +74,13 @@ class DatabaseTest(unittest.TestCase):
 
 		self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
 		self.assertRaises(NotImplementedError, self.db.updateDb, Fail2BanDb.__version__ + 1)
-		os.remove(self.db.dbBackupFilename)
+		os.remove(self.db._dbBackupFilename)
 
 	def testAddJail(self):
 		self.jail = DummyJail()
 		self.db.addJail(self.jail)
 		self.assertTrue(
-			self.jail.getName() in self.db.getJailNames(),
+			self.jail.name in self.db.getJailNames(),
 			"Jail not added to database")
 
 	def testAddLog(self):

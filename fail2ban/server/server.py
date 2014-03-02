@@ -51,7 +51,7 @@ class Server:
 		self.__logLevel = None
 		self.__logTarget = None
 		# Set logging level
-		self.setLogLevel(3)
+		self.setLogLevel("INFO")
 		self.setLogTarget("STDOUT")
 	
 	def __sigTERMhandler(self, signum, frame):
@@ -125,14 +125,14 @@ class Server:
 			self.__db.addJail(self.__jails[name])
 		
 	def delJail(self, name):
-		del self.__jails[name]
 		if self.__db is not None:
-			self.__db.delJailName(name)
-	
+			self.__db.delJail(self.__jails[name])
+		del self.__jails[name]
+
 	def startJail(self, name):
 		try:
 			self.__lock.acquire()
-			if not self.isAlive(name):
+			if not self.__jails[name].is_alive():
 				self.__jails[name].start()
 		finally:
 			self.__lock.release()
@@ -141,7 +141,7 @@ class Server:
 		logSys.debug("Stopping jail %s" % name)
 		try:
 			self.__lock.acquire()
-			if self.isAlive(name):
+			if self.__jails[name].is_alive():
 				self.__jails[name].stop()
 				self.delJail(name)
 		finally:
@@ -155,16 +155,13 @@ class Server:
 				self.stopJail(jail)
 		finally:
 			self.__lock.release()
-	
-	def isAlive(self, name):
-		return self.__jails[name].isAlive()
-	
+
 	def setIdleJail(self, name, value):
-		self.__jails[name].setIdle(value)
+		self.__jails[name].idle = value
 		return True
 
 	def getIdleJail(self, name):
-		return self.__jails[name].getIdle()
+		return self.__jails[name].idle
 	
 	# Filter
 	def addIgnoreIP(self, name, ip):
@@ -316,35 +313,30 @@ class Server:
 			self.__lock.release()
 	
 	def statusJail(self, name):
-		return self.__jails[name].getStatus()
+		return self.__jails[name].status
 	
 	# Logging
 	
 	##
 	# Set the logging level.
 	#
-	# Incrementing the value gives more messages.
-	# 0 = FATAL
-	# 1 = ERROR
-	# 2 = WARNING
-	# 3 = INFO
-	# 4 = DEBUG
+	# CRITICAL
+	# ERROR
+	# WARNING
+	# NOTICE
+	# INFO
+	# DEBUG
 	# @param value the level
 	
 	def setLogLevel(self, value):
 		try:
 			self.__loggingLock.acquire()
-			self.__logLevel = value
-			logLevel = logging.DEBUG
-			if value == 0:
-				logLevel = logging.FATAL
-			elif value == 1:
-				logLevel = logging.ERROR
-			elif value == 2:
-				logLevel = logging.WARNING
-			elif value == 3:
-				logLevel = logging.INFO
-			logging.getLogger(__name__).parent.parent.setLevel(logLevel)
+			logging.getLogger(__name__).parent.parent.setLevel(
+				getattr(logging, value.upper()))
+		except AttributeError:
+			raise ValueError("Invalid log level")
+		else:
+			self.__logLevel = value.upper()
 		finally:
 			self.__loggingLock.release()
 	

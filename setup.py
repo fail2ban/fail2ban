@@ -51,7 +51,7 @@ if setuptools and "test" in sys.argv:
 	hdlr.setFormatter(fmt)
 	logSys.addHandler(hdlr)
 	if set(["-q", "--quiet"]) & set(sys.argv):
-		logSys.setLevel(logging.FATAL)
+		logSys.setLevel(logging.CRITICAL)
 		warnings.simplefilter("ignore")
 		sys.warnoptions.append("ignore")
 	elif set(["-v", "--verbose"]) & set(sys.argv):

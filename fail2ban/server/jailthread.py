@@ -25,94 +25,53 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from threading import Thread
-import logging
-
-# Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+from abc import abstractproperty, abstractmethod
 
 class JailThread(Thread):
-	
-	##
-	# Constructor.
-	#
-	# Initialize the filter object with default values.
-	# @param jail the jail object
-	
+	"""Abstract class for threading elements in Fail2Ban.
+
+	Attributes
+	----------
+	daemon
+	ident
+	name
+	status
+	active : bool
+		Control the state of the thread.
+	idle : bool
+		Control the idle state of the thread.
+	sleeptime : int
+		The time the thread sleeps for in the loop.
+	"""
+
 	def __init__(self):
-		Thread.__init__(self)
+		super(JailThread, self).__init__()
 		## Control the state of the thread.
-		self.__isRunning = False
+		self.active = False
 		## Control the idle state of the thread.
-		self.__isIdle = False
+		self.idle = False
 		## The time the thread sleeps in the loop.
-		self.__sleepTime = 1
-	
-	##
-	# Set the time that the thread sleeps.
-	#
-	# This value could also be called "polling time". A value of 1 is a
-	# good one. This unit is "second"
-	# @param value the polling time (second)
-	
-	def setSleepTime(self, value):
-		self.__sleepTime = value
-		logSys.info("Set sleeptime %s" % value)
-	
-	##
-	# Get the time that the thread sleeps.
-	#
-	# @return the polling time
-	
-	def getSleepTime(self):
-		return self.__sleepTime
-	
-	##
-	# Set the idle flag.
-	#
-	# This flag stops the check of the log file.
-	# @param value boolean value
-	
-	def setIdle(self, value):
-		self.__isIdle = value
-	
-	##
-	# Get the idle state.
-	#
-	# @return the idle state
-	
-	def getIdle(self):
-		return self.__isIdle
-	
-	##
-	# Stop the thread.
-	#
-	# Stop the exection of the thread and quit.
-	
+		self.sleeptime = 1
+
+	@abstractproperty
+	def status(self): # pragma: no cover - abstract
+		"""Abstract - Should provide status information.
+		"""
+		pass
+
+	def start(self):
+		"""Sets active flag and starts thread.
+		"""
+		self.active = True
+		super(JailThread, self).start()
+
 	def stop(self):
-		self.__isRunning = False
-	
-	##
-	# Set the isRunning flag.
-	#
-	# @param value True if the thread is running
-	
-	def setActive(self, value):
-		self.__isRunning = value
-	
-	##
-	# Check if the thread is active.
-	#
-	# Check if the filter thread is running.
-	# @return True if the thread is running
-	
-	def _isActive(self):
-		return self.__isRunning
-	
-	##
-	# Get the status of the thread
-	#
-	# Get some informations about the thread. This is an abstract method.
-	# @return a list with tuple
-	
-	def status(self):
+		"""Sets `active` property to False, to flag run method to return.
+		"""
+		self.active = False
+
+	@abstractmethod
+	def run(self): # pragma: no cover - absract
+		"""Abstract - Called when thread starts, thread stops when returns.
+		"""
 		pass

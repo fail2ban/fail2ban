@@ -325,7 +325,7 @@ class Fail2banClient:
 		if verbose <= 0:
 			logSys.setLevel(logging.ERROR)
 		elif verbose == 1:
-			logSys.setLevel(logging.WARN)
+			logSys.setLevel(logging.WARNING)
 		elif verbose == 2:
 			logSys.setLevel(logging.INFO)
 		else:
