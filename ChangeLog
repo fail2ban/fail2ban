@@ -29,6 +29,7 @@ configuration before relying on it.
      - no need to specify 'filter' if name matches jail name
    * [..5aef036] Core functionality moved into fail2ban/ module.
      Closes gh-26
+     - tests included in module to aid testing and debugging
    * Added fail2ban persistent database
      - default location at /var/lib/fail2ban/fail2ban.sqlite3
      - allows active bans to be reinstated on restart
@@ -69,6 +70,8 @@ configuration before relying on it.
    * Filter for squirrelmail. Close gh-261
    * Filter for tine20. Close gh-583
    * Custom date formats (strptime) can now be set in filters and jail.conf
+   * Python based actions can now be created.
+     - SMTP action for sending emails on jail start, stop and ban.
 
 - Enhancements
    * Jail names increased to 26 characters and iptables prefix reduced
@@ -85,6 +88,8 @@ configuration before relying on it.
    * [..e019ab7] Multiple instances of the same action are allowed in the
      same jail -- use actname option to disambiguate.
    * Add honeypot email address to exim-spam filter as argument
+   * Properties and methods of actions accessible from fail2ban-client
+     - Use of properties replaces command actions "cinfo" interface
 
 
 ver. 0.8.13 (2014/XX/XXX) - maintenance-only-from-now-on
