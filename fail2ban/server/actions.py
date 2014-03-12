@@ -31,7 +31,11 @@ if sys.version_info >= (3, 3):
 	import importlib.machinery
 else:
 	import imp
-from collections import Mapping, OrderedDict
+from collections import Mapping
+try:
+	from collections import OrderedDict
+except ImportError:
+	OrderedDict = None
 
 from .banmanager import BanManager
 from .jailthread import JailThread
@@ -62,7 +66,10 @@ class Actions(JailThread, Mapping):
 		JailThread.__init__(self)
 		## The jail which contains this action.
 		self._jail = jail
-		self._actions = OrderedDict()
+		if OrderedDict is not None:
+			self._actions = OrderedDict()
+		else:
+			self._actions = dict()
 		## The ban manager.
 		self.__banManager = BanManager()
 

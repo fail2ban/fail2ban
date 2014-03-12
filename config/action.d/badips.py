@@ -17,11 +17,13 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import sys
+if sys.version_info < (2, 7):
+	raise ImportError("badips.py action requires Python >= 2.7")
 import json
 from functools import partial
 import threading
 import logging
-import sys
 if sys.version_info >= (3, ):
 	from urllib.request import Request, urlopen
 	from urllib.parse import urlencode
