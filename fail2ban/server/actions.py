@@ -32,6 +32,10 @@ if sys.version_info >= (3, 3):
 else:
 	import imp
 from collections import Mapping
+try:
+	from collections import OrderedDict
+except ImportError:
+	OrderedDict = None
 
 from .banmanager import BanManager
 from .jailthread import JailThread
@@ -73,7 +77,10 @@ class Actions(JailThread, Mapping):
 		JailThread.__init__(self)
 		## The jail which contains this action.
 		self._jail = jail
-		self._actions = dict()
+		if OrderedDict is not None:
+			self._actions = OrderedDict()
+		else:
+			self._actions = dict()
 		## The ban manager.
 		self.__banManager = BanManager()
 
@@ -219,7 +226,10 @@ class Actions(JailThread, Mapping):
 			else:
 				time.sleep(self.sleeptime)
 		self.__flushBan()
-		for name, action in self._actions.iteritems():
+
+		actions = self._actions.items()
+		actions.reverse()
+		for name, action in actions:
 			try:
 				action.stop()
 			except Exception as e:
