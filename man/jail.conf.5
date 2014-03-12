@@ -129,7 +129,9 @@ The following options are applicable to any jail. They appear in a section speci
 name of the filter -- filename of the filter in /etc/fail2ban/filter.d/ without the .conf/.local extension. Only one filter can be specified.
 .TP
 .B logpath
-filename(s) of the log files to be monitored. Globs -- paths containing * and ? or [0-9] -- can be used however only the files that exist at start up matching this glob pattern will be considered.
+filename(s) of the log files to be monitored, seperate by new lines. Globs -- paths containing * and ? or [0-9] -- can be used however only the files that exist at start up matching this glob pattern will be considered.
+
+Optional space separated option 'tail' can be added to the end of the path to cause the log file to be read from the end, else default 'head' option reads file from the beginning
 
 Ensure syslog or the program that generates the log file isn't configured to compress repeated log messages to "\fI*last message repeated 5 time*s\fR" otherwise it will fail to detect. This is called \fIRepeatedMsgReduction\fR in rsyslog and should be \fIOff\fR.
 .TP

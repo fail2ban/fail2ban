@@ -43,6 +43,10 @@ configuration before relying on it.
      support these. ISO8601 now defaults to localtime unless specified otherwise.
      Some filters have been change as required to capture these elements in the
      right timezone correctly.
+   * Log levels are now set by Syslog style strings e.g. DEBUG, ERROR.
+     - Log level INFO is now more verbose
+   * Optionally can read log files starting from "head" or "tail".
+     - See "logpath" option in jail.conf(5) man page.
 
 - New features:
    * [..c7ae460] Multiline failregex. Close gh-54
@@ -62,6 +66,7 @@ configuration before relying on it.
      Close gh-347
    * Filter for squirrelmail. Close gh-261
    * Filter for tine20. Close gh-583
+   * Custom date formats (strptime) can now be set in filters and jail.conf
 
 - Enhancements
    * Jail names increased to 26 characters and iptables prefix reduced
