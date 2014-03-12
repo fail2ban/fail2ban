@@ -47,6 +47,8 @@ configuration before relying on it.
      - Log level INFO is now more verbose
    * Optionally can read log files starting from "head" or "tail".
      - See "logpath" option in jail.conf(5) man page.
+   * Can now set log encoding for files per jail.
+     - Default uses systemd locale.
 
 - New features:
    * [..c7ae460] Multiline failregex. Close gh-54

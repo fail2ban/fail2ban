@@ -135,6 +135,9 @@ Optional space separated option 'tail' can be added to the end of the path to ca
 
 Ensure syslog or the program that generates the log file isn't configured to compress repeated log messages to "\fI*last message repeated 5 time*s\fR" otherwise it will fail to detect. This is called \fIRepeatedMsgReduction\fR in rsyslog and should be \fIOff\fR.
 .TP
+.B logencoding
+encoding of log files used for decoding. Default value of "auto" uses current system locale.
+.TP
 .B action
 action(s) from \fI/etc/fail2ban/action.d/\fR without the \fI.conf\fR/\fI.local\fR extension. Arguments can be passed to actions to override the default values from the [Init] section in the action file. Arguments are specified by:
 .RS
