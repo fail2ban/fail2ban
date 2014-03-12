@@ -66,6 +66,10 @@ fail2ban/tests/misctestcase.py
 fail2ban/tests/databasetestcase.py
 fail2ban/tests/config/jail.conf
 fail2ban/tests/config/fail2ban.conf
+fail2ban/tests/config/paths-common.conf
+fail2ban/tests/config/paths-freebsd.conf
+fail2ban/tests/config/paths-osx.conf
+fail2ban/tests/config/paths-debian.conf
 fail2ban/tests/config/filter.d/simple.conf
 fail2ban/tests/config/action.d/brokenaction.conf
 fail2ban/tests/files/config/apache-auth/digest/.htaccess
