@@ -62,6 +62,8 @@ configuration before relying on it.
      Close gh-347
    * Filter for squirrelmail. Close gh-261
    * Filter for tine20. Close gh-583
+   * Added action to use badips.com reporting and blacklist
+     - Requires Python 2.7+
 
 - Enhancements
    * Jail names increased to 26 characters and iptables prefix reduced

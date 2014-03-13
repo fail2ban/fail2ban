@@ -39,46 +39,45 @@ class BadIPsAction(ActionBase):
 	"""Fail2Ban action which resports bans to badips.com, and also
 	blacklist bad IPs listed on badips.com by using another action's
 	ban method.
+
+	Parameters
+	----------
+	jail : Jail
+		The jail which the action belongs to.
+	name : str
+		Name assigned to the action.
+	category : str
+		Valid badips.com category for reporting failures.
+	score : int, optional
+		Minimum score for bad IPs. Default 5.
+	age : str, optional
+		Age of last report for bad IPs, per badips.com syntax.
+		Default "24h" (24 hours)
+	banaction : str, optional
+		Name of banaction to use for blacklisting bad IPs. If `None`,
+		no blacklist of IPs will take place.
+		Default `None`.
+	bancategory : str, optional
+		Name of category to use for blacklisting, which can differ
+		from category used for reporting. e.g. may want to report
+		"postfix", but want to use whole "mail" category for blacklist.
+		Default `category`.
+	updateperiod : int, optional
+		Time in seconds between updating bad IPs blacklist.
+		Default 900 (15 minutes)
+
+	Raises
+	------
+	ValueError
+		If invalid `category`, `score`, `banaction` or `updateperiod`.
 	"""
-	badips = "http://www.badips.com"
-	Request = partial(
+
+	_badips = "http://www.badips.com"
+	_Request = partial(
 		Request, headers={'User-Agent': "Fail2Ban %s" % f2bVersion})
 
 	def __init__(self, jail, name, category, score=5, age="24h",
 		banaction=None, bancategory=None, updateperiod=900):
-		"""Initialise action.
-
-		Parameters
-		----------
-		jail : Jail
-			The jail which the action belongs to.
-		name : str
-			Name assigned to the action.
-		category : str
-			Valid badips.com category for reporting failures.
-		score : int, optional
-			Minimum score for bad IPs. Default 5.
-		age : str, optional
-			Age of last report for bad IPs, per badips.com syntax.
-			Default "24h" (24 hours)
-		banaction : str, optional
-			Name of banaction to use for blacklisting bad IPs. If `None`,
-			no blacklist of IPs will take place.
-			Default `None`.
-		bancategory : str, optional
-			Name of category to use for blacklisting, which can differ
-			from category used for reporting. e.g. may want to report
-			"postfix", but want to use whole "mail" category for blacklist.
-			Default `category`.
-		updateperiod : int, optional
-			Time in seconds between updating bad IPs blacklist.
-			Default 900 (15 minutes)
-
-		Raises
-		------
-		ValueError
-			If invalid `category`, `score`, `banaction` or `updateperiod`.
-		"""
 		super(BadIPsAction, self).__init__(jail, name)
 
 		self.category = category
@@ -108,7 +107,7 @@ class BadIPsAction(ActionBase):
 		"""
 		try:
 			response = urlopen(
-				cls.Request("/".join([cls.badips, "get", "categories"])))
+				cls._Request("/".join([cls._badips, "get", "categories"])))
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
 			self._logSys.error(
@@ -149,8 +148,8 @@ class BadIPsAction(ActionBase):
 			Any issues with badips.com request.
 		"""
 		try:
-			response = urlopen(cls.Request("?".join([
-				"/".join([cls.badips, "get", "list", category, str(score)]),
+			response = urlopen(cls._Request("?".join([
+				"/".join([cls._badips, "get", "list", category, str(score)]),
 				urlencode({'age': age})])))
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
@@ -332,8 +331,8 @@ class BadIPsAction(ActionBase):
 			Any issues with badips.com request.
 		"""
 		try:
-			response = urlopen(self.Request(
-			"/".join([self.badips, "add", self.category, aInfo['ip']])))
+			response = urlopen(self._Request(
+			"/".join([self._badips, "add", self.category, aInfo['ip']])))
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
 			self._logSys.error(
