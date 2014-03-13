@@ -20,6 +20,7 @@ ver. 0.8.13 (2014/XX/XXX) - maintenance-only-from-now-on
   - filter sendmail-{auth,reject} (jserrachinha and cepheid666 and fab23).
 
 - Enhancements:
+  - filter asterisk now supports syslog format
   - filter pureftpd - added all translations of "Authentication failed for
     user"
   - filter dovecot - lip= was optional and extended TLS errors can occur.
