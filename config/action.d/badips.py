@@ -53,6 +53,9 @@ class BadIPsAction(ActionBase):
 	age : str, optional
 		Age of last report for bad IPs, per badips.com syntax.
 		Default "24h" (24 hours)
+    key : str, optional
+		Key issued by badips.com to report bans, for later retrieval
+		of personalised content.
 	banaction : str, optional
 		Name of banaction to use for blacklisting bad IPs. If `None`,
 		no blacklist of IPs will take place.
@@ -62,6 +65,9 @@ class BadIPsAction(ActionBase):
 		from category used for reporting. e.g. may want to report
 		"postfix", but want to use whole "mail" category for blacklist.
 		Default `category`.
+    bankey : str, optional
+		Key issued by badips.com to blacklist IPs reported with the
+		associated key.
 	updateperiod : int, optional
 		Time in seconds between updating bad IPs blacklist.
 		Default 900 (15 minutes)
@@ -76,15 +82,17 @@ class BadIPsAction(ActionBase):
 	_Request = partial(
 		Request, headers={'User-Agent': "Fail2Ban %s" % f2bVersion})
 
-	def __init__(self, jail, name, category, score=3, age="24h",
-		banaction=None, bancategory=None, updateperiod=900):
+	def __init__(self, jail, name, category, score=3, age="24h", key=None,
+		banaction=None, bancategory=None, bankey=None, updateperiod=900):
 		super(BadIPsAction, self).__init__(jail, name)
 
 		self.category = category
 		self.score = score
 		self.age = age
+		self.key = key
 		self.banaction = banaction
 		self.bancategory = bancategory or category
+		self.bankey = bankey
 		self.updateperiod = updateperiod
 
 		self._bannedips = set()
@@ -125,7 +133,7 @@ class BadIPsAction(ActionBase):
 			return categories_names
 
 	@classmethod
-	def getList(cls, category, score, age):
+	def getList(cls, category, score, age, key=None):
 		"""Get badips.com list of bad IPs.
 
 		Parameters
@@ -136,6 +144,9 @@ class BadIPsAction(ActionBase):
 			Minimum score for bad IPs.
 		age : str
 			Age of last report for bad IPs, per badips.com syntax.
+		key : str, optional
+			Key issued by badips.com to fetch IPs reported with the
+			associated key.
 
 		Returns
 		-------
@@ -148,9 +159,12 @@ class BadIPsAction(ActionBase):
 			Any issues with badips.com request.
 		"""
 		try:
-			response = urlopen(cls._Request("?".join([
+			url = "?".join([
 				"/".join([cls._badips, "get", "list", category, str(score)]),
-				urlencode({'age': age})])))
+				urlencode({'age': age})])
+			if key:
+				url = "&".join([url, urlencode({"key", key})])
+			response = urlopen(cls._Request(url))
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
 			self._logSys.error(
@@ -294,7 +308,8 @@ class BadIPsAction(ActionBase):
 				self._timer = None
 
 			try:
-				ips = self.getList(self.bancategory, self.score, self.age)
+				ips = self.getList(
+					self.bancategory, self.score, self.age, self.bankey)
 				# Remove old IPs no longer listed
 				self._unbanIPs(self._bannedips - ips)
 				# Add new IPs which are now listed
@@ -331,8 +346,10 @@ class BadIPsAction(ActionBase):
 			Any issues with badips.com request.
 		"""
 		try:
-			response = urlopen(self._Request(
-			"/".join([self._badips, "add", self.category, aInfo['ip']])))
+			url = "/".join([self._badips, "add", self.category, aInfo['ip']])
+			if self.key:
+				url = "?".join([url, urlencode({"key", self.key})])
+			response = urlopen(self._Request(url))
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
 			self._logSys.error(
