@@ -49,7 +49,7 @@ class BadIPsAction(ActionBase):
 	category : str
 		Valid badips.com category for reporting failures.
 	score : int, optional
-		Minimum score for bad IPs. Default 5.
+		Minimum score for bad IPs. Default 3.
 	age : str, optional
 		Age of last report for bad IPs, per badips.com syntax.
 		Default "24h" (24 hours)
@@ -76,7 +76,7 @@ class BadIPsAction(ActionBase):
 	_Request = partial(
 		Request, headers={'User-Agent': "Fail2Ban %s" % f2bVersion})
 
-	def __init__(self, jail, name, category, score=5, age="24h",
+	def __init__(self, jail, name, category, score=3, age="24h",
 		banaction=None, bancategory=None, updateperiod=900):
 		super(BadIPsAction, self).__init__(jail, name)
 
