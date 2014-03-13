@@ -72,6 +72,8 @@ configuration before relying on it.
    * Custom date formats (strptime) can now be set in filters and jail.conf
    * Python based actions can now be created.
      - SMTP action for sending emails on jail start, stop and ban.
+   * Added action to use badips.com reporting and blacklist
+     - Requires Python 2.7+
 
 - Enhancements
    * Jail names increased to 26 characters and iptables prefix reduced
