@@ -27,9 +27,6 @@ Legend:
 
 - Add gettext support (I18N)
 
-- Improve execution of action. Why does subprocess.call deadlock with
-  multi-jails?
-
 # improve documentation and website for user
 
 # better return values in function
