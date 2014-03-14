@@ -301,7 +301,7 @@ Releasing
 # Ensure the version is correct
 
   in:
-  * ./common/version.py
+  * ./fail2ban/version.py
   * top of ChangeLog
   * README.md
 

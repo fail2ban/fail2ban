@@ -2,7 +2,7 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v0.9.0a2                2014/??/??
+                       v0.9.0                  2014/03/14
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
@@ -26,7 +26,7 @@ Installation:
 this case, you should use it instead.**
 
 Required:
-- [Python2 >= 2.6 or Python3 >= 3.2](http://www.python.org) or [PyPy](http://pypy.org)
+- [Python2 >= 2.6 or Python >= 3.2](http://www.python.org) or [PyPy](http://pypy.org)
 
 Optional:
 - [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify)
@@ -40,8 +40,8 @@ To install, just do:
     cd fail2ban-0.9.0
     python setup.py install
 
-This will install Fail2Ban into /usr/share/fail2ban. The executable scripts are
-placed into /usr/bin, and configuration under /etc/fail2ban.
+This will install Fail2Ban into the python library directory. The executable
+scripts are placed into /usr/bin, and configuration under /etc/fail2ban.
 
 Fail2Ban should be correctly installed now. Just type:
 
@@ -56,8 +56,7 @@ Configuration:
 You can configure Fail2Ban using the files in /etc/fail2ban. It is possible to
 configure the server using commands sent to it by fail2ban-client. The
 available commands are described in the fail2ban-client(1) manpage.  Also see
-fail2ban(1) manpage for further references and find even more documentation on
-the website: http://www.fail2ban.org
+fail2ban(1) and jail.conf(5)  manpages for further references.
 
 Code status:
 ------------
