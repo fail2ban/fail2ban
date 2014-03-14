@@ -354,8 +354,10 @@ class Fail2banRegex(object):
 
 		print "\nLines: %s" % self._line_stats
 
-		self.printLines('ignored')
-		self.printLines('missed')
+		if self._print_all_ignored:
+			self.printLines('ignored')
+		if self._print_all_missed:
+			self.printLines('missed')
 
 		return True
 
