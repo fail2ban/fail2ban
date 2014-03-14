@@ -2,7 +2,7 @@
 
 # fail2ban-client
 echo -n "Generating fail2ban-client "
-help2man --section=1 --no-info --include=fail2ban-client.h2m --output fail2ban-client.1 ../fail2ban-client
+help2man --section=1 --no-info --include=fail2ban-client.h2m --output fail2ban-client.1 ../bin/fail2ban-client
 echo "[done]"
 echo -n "Patching fail2ban-client   "
 # Changes the title.
@@ -33,12 +33,12 @@ echo "[done]"
 
 # fail2ban-server
 echo -n "Generating fail2ban-server "
-help2man --section=1 --no-info --include=fail2ban-server.h2m --output fail2ban-server.1 ../fail2ban-server
+help2man --section=1 --no-info --include=fail2ban-server.h2m --output fail2ban-server.1 ../bin/fail2ban-server
 echo "[done]"
 
 # fail2ban-regex
 echo -n "Generating fail2ban-regex  "
-help2man --section=1 --no-info --include=fail2ban-regex.h2m --output fail2ban-regex.1 ../fail2ban-regex
+help2man --section=1 --no-info --include=fail2ban-regex.h2m --output fail2ban-regex.1 ../bin/fail2ban-regex
 echo "[done]"
 echo -n "Patching fail2ban-regex    "
 # Changes the title.
