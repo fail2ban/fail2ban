@@ -137,7 +137,8 @@ setup(
 							''
 						),
 						('/usr/share/doc/fail2ban',
-							['README.md', 'DEVELOP', 'doc/run-rootless.txt']
+							['README.md', 'README.Solaris', 'DEVELOP', 'FILTERS',
+							 'doc/run-rootless.txt']
 						)
 					],
 	**setup_extra
