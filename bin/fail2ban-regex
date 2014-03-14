@@ -138,10 +138,14 @@ Report bugs to https://github.com/fail2ban/fail2ban/issues
 			   help="Be verbose in output"),
 		Option("-D", "--debuggex", action='store_true',
 			   help="Produce debuggex.com urls for debugging there"),
+		Option("--print-no-missed", action='store_true',
+			   help="Do not print any missed lines"),
+		Option("--print-no-ignored", action='store_true',
+			   help="Do not print any ignored lines"),
 		Option("--print-all-missed", action='store_true',
-			   help="Either to print all missed lines"),
+			   help="Print all missed lines, no matter how many"),
 		Option("--print-all-ignored", action='store_true',
-			   help="Either to print all ignored lines"),
+			   help="Print all ignored lines, no matter how many"),
 		Option("-t", "--log-traceback", action='store_true',
 			   help="Enrich log-messages with compressed tracebacks"),
 		Option("--full-traceback", action='store_true',
@@ -183,21 +187,15 @@ class LineStats(object):
 	"""
 	def __init__(self):
 		self.tested = self.matched = 0
+		self.missed = 0
 		self.missed_lines = []
 		self.missed_lines_timeextracted = []
+		self.ignored = 0
 		self.ignored_lines = []
 		self.ignored_lines_timeextracted = []
 
 	def __str__(self):
 		return "%(tested)d lines, %(ignored)d ignored, %(matched)d matched, %(missed)d missed" % self
-
-	@property
-	def ignored(self):
-		return len(self.ignored_lines)
-
-	@property
-	def missed(self):
-		return len(self.missed_lines)
 
 	# just for convenient str
 	def __getitem__(self, key):
@@ -209,6 +207,9 @@ class Fail2banRegex(object):
 	def __init__(self, opts):
 		self._verbose = opts.verbose
 		self._debuggex = opts.debuggex
+		self._maxlines = 20
+		self._print_no_missed = opts.print_no_missed
+		self._print_no_ignored = opts.print_no_ignored
 		self._print_all_missed = opts.print_all_missed
 		self._print_all_ignored = opts.print_all_ignored
 		self._maxlines_set = False		  # so we allow to override maxlines in cmdline
@@ -357,16 +358,20 @@ class Fail2banRegex(object):
 			is_ignored = fail2banRegex.testIgnoreRegex(line_datetimestripped)
 
 			if is_ignored:
-				self._line_stats.ignored_lines.append(line)
-				self._line_stats.ignored_lines_timeextracted.append(line_datetimestripped)
+				self._line_stats.ignored += 1
+				if not self._print_no_ignored and (self._print_all_ignored or self._line_stats.ignored <= self._maxlines + 1):
+					self._line_stats.ignored_lines.append(line)
+					self._line_stats.ignored_lines_timeextracted.append(line_datetimestripped)
 
 			if len(ret) > 0:
 				assert(not is_ignored)
 				self._line_stats.matched += 1
 			else:
 				if not is_ignored:
-					self._line_stats.missed_lines.append(line)
-					self._line_stats.missed_lines_timeextracted.append(line_datetimestripped)
+					self._line_stats.missed += 1
+					if not self._print_no_missed and (self._print_all_missed or self._line_stats.missed <= self._maxlines + 1):
+						self._line_stats.missed_lines.append(line)
+						self._line_stats.missed_lines_timeextracted.append(line_datetimestripped)
 			self._line_stats.tested += 1
 
 			if line_no % 10 == 0 and self._filter.dateDetector is not None:
@@ -376,9 +381,10 @@ class Fail2banRegex(object):
 
 	def printLines(self, ltype):
 		lstats = self._line_stats
-		assert(len(lstats.missed_lines) == lstats.tested - (lstats.matched + lstats.ignored))
+		assert(self._line_stats.missed == lstats.tested - (lstats.matched + lstats.ignored))
+		lines = lstats[ltype]
 		l = lstats[ltype + '_lines']
-		if len(l):
+		if lines:
 			header = "%s line(s):" % (ltype.capitalize(),)
 			if self._debuggex:
 				if ltype == 'missed':
@@ -386,21 +392,20 @@ class Fail2banRegex(object):
 				else:
 					regexlist = self._ignoreregex
 				l = lstats[ltype + '_lines_timeextracted']
-				lines = len(l)*len(regexlist)
-				if lines < 20 or getattr(self, '_print_all_' + ltype):
+				if lines < self._maxlines or getattr(self, '_print_all_' + ltype):
 					ans = [[]]
 					for arg in [l, regexlist]:
 					    ans = [ x + [y] for x in ans for y in arg ]
 					b = map(lambda a: a[0] +  ' | ' + a[1].getFailRegex() + ' |  ' + debuggexURL(a[0], a[1].getFailRegex()), ans)
 					pprint_list([x.rstrip() for x in b], header)
 				else:
-					print "%s: too many to print.  Use --print-all-%s " \
+					print "%s too many to print.  Use --print-all-%s " \
 						  "to print all %d lines" % (header, ltype, lines)
-			elif len(l) < 20 or getattr(self, '_print_all_' + ltype):
+			elif lines < self._maxlines or getattr(self, '_print_all_' + ltype):
 				pprint_list([x.rstrip() for x in l], header)
 			else:
-				print "%s: too many to print.  Use --print-all-%s " \
-					  "to print all %d lines" % (header, ltype, len(l))
+				print "%s too many to print.  Use --print-all-%s " \
+					  "to print all %d lines" % (header, ltype, lines)
 
 	def printStats(self):
 		print
@@ -446,8 +451,10 @@ class Fail2banRegex(object):
 
 		print "\nLines: %s" % self._line_stats
 
-		self.printLines('ignored')
-		self.printLines('missed')
+		if not self._print_no_ignored:
+			self.printLines('ignored')
+		if not self._print_no_missed:
+			self.printLines('missed')
 
 		return True
 
@@ -456,6 +463,14 @@ if __name__ == "__main__":
 
 	parser = get_opt_parser()
 	(opts, args) = parser.parse_args()
+	if opts.print_no_missed and opts.print_all_missed:
+		sys.stderr.write("ERROR: --print-no-missed and --print-all-missed are mutually exclusive.\n\n")
+		parser.print_help()
+	        sys.exit(-1)
+	if opts.print_no_ignored and opts.print_all_ignored:
+		sys.stderr.write("ERROR: --print-no-ignored and --print-all-ignored are mutually exclusive.\n\n")
+		parser.print_help()
+	        sys.exit(-1)
 
 	print
 	print "Running tests"

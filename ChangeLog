@@ -76,6 +76,8 @@ configuration before relying on it.
      - Requires Python 2.7+
 
 - Enhancements
+   * Fail2ban-regex - don't accumulate lines if not printing them.
+     add options to suppress output of missed/ignored lines. Close gh-644
    * Asterisk now supports syslog format
    * Jail names increased to 26 characters and iptables prefix reduced
      from fail2ban- to f2b- as suggested by buanzo in gh-462.
