@@ -182,7 +182,7 @@ class Fail2banRegex(object):
 	def __init__(self, opts):
 		self._verbose = opts.verbose
 		self._debuggex = opts.debuggex
-                self._maxlines = 20
+		self._maxlines = 20
 		self._print_no_missed = opts.print_no_missed
 		self._print_no_ignored = opts.print_no_ignored
 		self._print_all_missed = opts.print_all_missed
@@ -371,6 +371,14 @@ if __name__ == "__main__":
 
 	parser = get_opt_parser()
 	(opts, args) = parser.parse_args()
+	if opts.print_no_missed and opts.print_all_missed:
+		sys.stderr.write("ERROR: --print-no-missed and --print-all-missed are mutually exclusive.\n\n")
+		parser.print_help()
+	        sys.exit(-1)
+	if opts.print_no_ignored and opts.print_all_ignored:
+		sys.stderr.write("ERROR: --print-no-ignored and --print-all-ignored are mutually exclusive.\n\n")
+		parser.print_help()
+	        sys.exit(-1)
 
 	fail2banRegex = Fail2banRegex(opts)
 
