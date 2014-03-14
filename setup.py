@@ -111,6 +111,12 @@ setup(
 						'fail2ban.tests': 
 							[ join(w[0], f).replace("fail2ban/tests/", "", 1)
 								for w in os.walk('fail2ban/tests/files')
+								for f in w[2]] +
+							[ join(w[0], f).replace("fail2ban/tests/", "", 1)
+								for w in os.walk('fail2ban/tests/config')
+								for f in w[2]] +
+							[ join(w[0], f).replace("fail2ban/tests/", "", 1)
+								for w in os.walk('fail2ban/tests/action_d')
 								for f in w[2]]
 					},
 	data_files =	[
