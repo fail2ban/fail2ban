@@ -332,7 +332,7 @@ Which indicates that testcases/files/logs/mysqld.log has been moved or is a dire
 
   To generate a list of committers use e.g.
 
-  git shortlog -sn 0.8.11.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
+  git shortlog -sn 0.8.12.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
 
   Ensure the top of the ChangeLog has the right version and current date.
 
@@ -342,6 +342,8 @@ Which indicates that testcases/files/logs/mysqld.log has been moved or is a dire
 
   (cd man ; ./generate-man )
   git commit -m 'DOC/ENH: update man pages for release' man/*
+
+# Cleanout TODO file with the finished stuff
 
 # Prepare source and rpm binary distributions
 
