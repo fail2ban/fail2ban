@@ -260,7 +260,7 @@ class IgnoreIP(LogCaptureTestCase):
 		self.assertTrue(self._is_logged('Requested to manually ban an ignored IP 192.168.1.32. User knows best. Proceeding to ban it.'))
 
 	def testIgnoreCommand(self):
-		self.filter.setIgnoreCommand("fail2ban/tests/files/ignorecommand.py <ip>")
+		self.filter.setIgnoreCommand(sys.exectuable + ' ' + os.path.join(TEST_FILES_DIR, "ignorecommand.py <ip>"))
 		self.assertTrue(self.filter.inIgnoreIPList("10.0.0.1"))
 		self.assertFalse(self.filter.inIgnoreIPList("10.0.0.0"))
 
