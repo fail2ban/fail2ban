@@ -74,12 +74,6 @@ further configuration. To run not as root, further setup is necessary:
 
     with <name> suitably replaced.
 
-  - suppress actionstart for iptables-xt_recent-echo action by creating an override file
-    iptables-xt_recent-echo.local to accompany iptables-xt_recent-echo.conf with
-
-     [Definition]
-     actionstart =
-
 - Permissions:
 
   make sure that configuration files under /etc/fail2ban are readable by

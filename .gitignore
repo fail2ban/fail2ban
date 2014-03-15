@@ -6,3 +6,5 @@ htmlcov
 .coverage
 *.orig
 *.rej
+*.bak
+__pycache__

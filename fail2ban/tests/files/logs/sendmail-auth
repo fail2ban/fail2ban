@@ -1,0 +1,12 @@
+
+# failJSON: { "time": "2005-02-16T23:33:20", "match": true , "host": "190.5.230.178" }
+Feb 16 23:33:20 smtp1 sm-mta[5133]: s1GNXHYB005133: [190.5.230.178]: possible SMTP attack: command=AUTH, count=5
+
+# failJSON: { "time": "2005-02-16T23:40:36", "match": true , "host": "75.176.164.191" }
+Feb 16 23:40:36 smtp1 sm-mta[5178]: s1GNeNqe005178: cpe-075-176-164-191.sc.res.rr.com [75.176.164.191]: possible SMTP attack: command=AUTH, count=5
+
+# failJSON: { "time": "2005-02-24T12:10:15", "match": true , "host": "211.75.6.133" }
+Feb 24 12:10:15 kismet sm-acceptingconnections[32053]: s1OHA28u032053: 211-75-6-133.HINET-IP.hinet.net [211.75.6.133]: possible SMTP attack: command=AUTH, count=6
+
+# failJSON: { "time": "2005-02-24T13:00:17", "match": true , "host": "95.70.241.192" }
+Feb 24 13:00:17 kismet sm-acceptingconnections[1499]: s1OHxxSn001499: 192.241.70.95.dsl.static.turk.net [95.70.241.192] (may be forged): possible SMTP attack: command=AUTH, count=6

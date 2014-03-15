@@ -1,0 +1,6 @@
+# failJSON: { "time": "2004-11-11T18:57:57", "match": true , "host": "203.16.208.190" }
+Nov 11 18:57:57 HORDE [error] [horde] FAILED LOGIN for graham [203.16.208.190] to Horde [on line 116 of "/home/ace-hosting/public_html/horde/login.php"]
+
+# failJSON: { "time": "2004-12-15T08:59:59", "match": true , "host": "1.2.3.4" }
+Dec 15 08:59:59 HORDE [error] [imp] FAILED LOGIN for emai.user@somedomain.com [1.2.3.4] to {mx.somedomain.com:993 [imap/ssl/novalidate-cert]} [pid 68394 on line 139 of /usr/local/www/www.somedomain.com/public_html/horde/imp/lib/Auth/imp.php"]
+
