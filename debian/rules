@@ -9,87 +9,40 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+%:
+	dh $@ --with python2
+
 DESTDIR=$(CURDIR)/debian/fail2ban
 
-configure: configure-stamp
-configure-stamp:
-	dh_testdir
-	touch configure-stamp
-
-build:
-
-build-arch:
-
-build-indep:
-
-clean: clean-inits
-	dh_testdir
-	dh_testroot
-	rm -f  build-stamp configure-stamp
-	rm -rf build
-	# Does not hurt to ask distutils to do their duty
-	python setup.py clean
-	# Enforce removal of *.pyc files. Apparently dh_clean does
-	# not perform find on provided filename patterns.
-	find . -name \*.pyc -exec rm -f {} \;
+override_dh_clean:
+	rm -rf fail2ban.egg-info
 	dh_clean
 
-install: build
-	dh_testdir
-	dh_testroot
-	dh_clean -k
-	dh_installdirs
-
-	# Install the package into debian/fail2ban.
-	python setup.py install --root=$(DESTDIR) --no-compile --install-layout=deb
+override_dh_install:
+	rm -f $(DESTDIR)/usr/share/doc/fail2ban/README.Solaris
 	# Install Debian shipped jail file in 1 piece (instead of patching
 	# the shipped one since there are too many changes)
 	install -m 644 debian/jail.conf $(DESTDIR)/etc/fail2ban
 	# Remove explicitely created /var/run/fail2ban
 	# just to please lintian since init file will
 	# take care about it anyways
-	rm -rf $(DESTDIR)/var/run/fail2ban
+	rm -rf $(DESTDIR)/var/run/
 	# Install bash completion
 	install -d $(DESTDIR)/etc/bash_completion.d
 	install -m 644 files/bash-completion $(DESTDIR)/etc/bash_completion.d/fail2ban
+	
+	dh_install
 
-	# Run tests
+override_dh_auto_test:
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	./fail2ban-testcases-all || :
-else
-	: # Skip unittests due to nocheck
 endif
 
-#
-# Just to comply with policy 4.8
-binary-arch:
-
-# Build architecture-independent files here.
-binary-indep: install
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs ChangeLog
-	dh_installdocs
+override_dh_installexamples:
 	dh_installexamples config/jail.conf files/ipmasq-*
-	dh_installlogrotate
-	dh_python2 /usr/share/fail2ban
+
+override_dh_installinit:
 	dh_installinit -- defaults 99
 
-	# perform swap of order of calls to init and pycentral (or even
-	# bleedingly new dh_python2) in prerm to close #422655 --
-	# python-cleanup section is cut and placed at the end of the file
-	# since .init script would trigger their compilation again
-	sed -i -e '/^#.*ed by dh_python2/,/# End auto/{H;d};$$G' \
-		debian/fail2ban.prerm.debhelper
-
+override_dh_installman:
 	dh_installman man/*.[15]
-	dh_link
-	dh_compress
-	dh_fixperms
-	dh_installdeb
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-binary: binary-indep
-.PHONY: build clean binary-indep binary-arch binary install configure copy-inits clean-inits
