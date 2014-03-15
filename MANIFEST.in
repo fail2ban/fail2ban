@@ -1,0 +1,4 @@
+include ChangeLog COPYING DEVELOP FILTERS README.* THANKS TODO
+graft doc
+graft files
+recursive-include config *.conf *.py

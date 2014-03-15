@@ -1,0 +1,167 @@
+                         __      _ _ ___ _
+                        / _|__ _(_) |_  ) |__  __ _ _ _
+                       |  _/ _` | | |/ /| '_ \/ _` | ' \
+                       |_| \__,_|_|_/___|_.__/\__,_|_||_|
+
+================================================================================
+How to do a release for Fail2Ban
+================================================================================
+
+# Check distribution patches and see if they can be included
+
+  * https://apps.fedoraproject.org/packages/fail2ban/sources
+  * http://sources.gentoo.org/cgi-bin/viewvc.cgi/gentoo-x86/net-analyzer/fail2ban/
+  * http://svnweb.freebsd.org/ports/head/security/py-fail2ban/
+  * https://build.opensuse.org/package/show?package=fail2ban&project=openSUSE%3AFactory
+  * http://sophie.zarb.org/sources/fail2ban (Mageia)
+  * https://trac.macports.org/browser/trunk/dports/security/fail2ban
+
+# Check distribution outstanding bugs
+
+  * https://github.com/fail2ban/fail2ban/issues?sort=updated&state=open
+  * http://bugs.debian.org/cgi-bin/pkgreport.cgi?dist=unstable;package=fail2ban
+  * https://bugs.launchpad.net/ubuntu/+source/fail2ban
+  * http://bugs.sabayon.org/buglist.cgi?quicksearch=net-analyzer%2Ffail2ban
+  * https://bugs.archlinux.org/?project=5&cat%5B%5D=33&string=fail2ban
+  * https://bugs.gentoo.org/buglist.cgi?query_format=advanced&short_desc=fail2ban&bug_status=UNCONFIRMED&bug_status=CONFIRMED&bug_status=IN_PROGRESS&short_desc_type=allwords
+  * https://bugzilla.redhat.com/buglist.cgi?query_format=advanced&bug_status=NEW&bug_status=ASSIGNED&component=fail2ban&classification=Red%20Hat&classification=Fedora
+  * http://www.freebsd.org/cgi/query-pr-summary.cgi?text=fail2ban
+  * https://bugs.mageia.org/buglist.cgi?quicksearch=fail2ban
+  * https://build.opensuse.org/package/requests/openSUSE:Factory/fail2ban
+
+# Make sure the tests pass
+
+  ./fail2ban-testcases-all
+
+# Ensure the version is correct
+
+  in:
+  * ./fail2ban/version.py
+  * top of ChangeLog
+  * README.md
+
+# Ensure the MANIFEST is complete
+
+Run:
+
+  python setup.py sdist
+
+Look for errors like:
+ 'testcases/files/logs/mysqld.log' not a regular file -- skipping
+
+Which indicates that testcases/files/logs/mysqld.log has been moved or is a directory
+
+  tar -C /tmp -jxf dist/fail2ban-0.9.0.tar.bz2
+
+# clean up current direcory
+
+  diff -rul --exclude \*.pyc . /tmp/fail2ban-0.9.0/
+
+  # Only differences should be files that you don't want distributed.
+
+# Ensure the tests work from the tarball
+
+  cd /tmp/fail2ban-0.9.0/ && export PYTHONPATH=`pwd` && bin/fail2ban-testcases
+
+# Add/finalize the corresponding entry in the ChangeLog
+
+  To generate a list of committers use e.g.
+
+  git shortlog -sn 0.8.12.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
+
+  Ensure the top of the ChangeLog has the right version and current date.
+
+  Ensure the top entry of the ChangeLog has the right version and current date.
+
+# Update man pages
+
+  (cd man ; ./generate-man )
+  git commit -m 'DOC/ENH: update man pages for release' man/*
+
+# Cleanout TODO file with the finished stuff
+
+# Prepare source and rpm binary distributions
+
+  python setup.py sdist
+
+
+Broken for now:  python setup.py bdist_rpm
+Broken for now:  python setup.py upload
+
+# Prerelease (option)
+
+# Provide a release sample to distributors
+
+  * Arch Linux:
+            https://www.archlinux.org/packages/community/any/fail2ban/
+  * Debian: Yaroslav Halchenko <debian@onerussian.com>
+            http://packages.qa.debian.org/f/fail2ban.html
+  * FreeBSD: Christoph Theis theis@gmx.at>, Nick Hilliard <nick@foobar.org>
+            http://svnweb.freebsd.org/ports/head/security/py-fail2ban/Makefile?view=markup
+            http://www.freebsd.org/cgi/query-pr-summary.cgi?text=fail2ban
+  * Fedora: Axel Thimm <Axel.Thimm@atrpms.net>
+            https://apps.fedoraproject.org/packages/fail2ban
+            http://pkgs.fedoraproject.org/cgit/fail2ban.git
+            https://admin.fedoraproject.org/pkgdb/acls/bugs/fail2ban
+  * Gentoo: netmon@gentoo.org
+            http://sources.gentoo.org/cgi-bin/viewvc.cgi/gentoo-x86/net-analyzer/fail2ban/metadata.xml?view=markup
+            https://bugs.gentoo.org/buglist.cgi?quicksearch=fail2ban
+  * openSUSE: Stephan Kulow <coolo@suse.com>
+            https://build.opensuse.org/package/show/openSUSE:Factory/fail2ban
+  * Mac Ports: @Malbrouck on github (gh-49)
+            https://trac.macports.org/browser/trunk/dports/security/fail2ban/Portfile
+  * Mageia:
+            https://bugs.mageia.org/buglist.cgi?quicksearch=fail2ban
+
+  An potentially to the fail2ban-users email list.
+
+# Wait for feedback from distributors
+
+# Prepare a release notice https://github.com/fail2ban/fail2ban/releases/new
+
+  Upload the source/binaries from the dist directory and tag the release using the URL
+
+# Upload source/binaries to sourceforge http://sourceforge.net/projects/fail2ban/
+
+# Run the following and update the wiki with output:
+  python -c 'import fail2ban.protocol; fail2ban.protocol.printWiki()'
+
+  page: http://www.fail2ban.org/wiki/index.php/Commands
+
+* Update:
+  http://www.fail2ban.org/wiki/index.php?title=Template:Fail2ban_Versions&action=edit
+
+  http://www.fail2ban.org/wiki/index.php?title=Template:Fail2ban_News&action=edit
+  move old bits to:
+  http://www.fail2ban.org/wiki/index.php?title=Template:Fail2ban_OldNews&action=edit
+
+  http://www.fail2ban.org/wiki/index.php/ChangeLog
+  http://www.fail2ban.org/wiki/index.php/Requirements (Check requirement)
+  http://www.fail2ban.org/wiki/index.php/Features
+
+* See if any filters are upgraded:
+  http://www.fail2ban.org/wiki/index.php/Special:AllPages
+
+# Email users and development list of release
+
+# notify distributors
+
+Post Release
+============
+
+Add the following to the top of the ChangeLog
+
+ver. 0.9.1 (2014/XX/XXX) - wanna-be-released
+-----------
+
+- Fixes:
+
+- New Features:
+
+- Enhancements:
+
+Alter the git shortlog command in the previous section to refer to the just
+released version.
+
+and adjust common/version.py to carry .dev suffix to signal
+a version under development.
