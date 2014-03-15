@@ -26,6 +26,8 @@ case "$1" in
 		# Remove logs
 		rm -f /var/log/fail2ban*
 		
+		# Remove sqlite db
+		rm -f /var/lib/fail2ban/fail2ban.sqlite3
 		;;
        remove|upgrade|failed-upgrade|abort-install|abort-upgrade)
 		# nothing
