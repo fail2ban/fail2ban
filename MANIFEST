@@ -67,6 +67,7 @@ testcases/files/logs/horde
 testcases/files/logs/suhosin
 testcases/files/logs/mysqld-auth
 testcases/files/logs/named-refused
+testcases/files/logs/nagios
 testcases/files/logs/nginx-http-auth
 testcases/files/logs/nsd
 testcases/files/logs/openwebmail
@@ -164,6 +165,7 @@ config/filter.d/freeswitch.conf
 config/filter.d/gssftpd.conf
 config/filter.d/horde.conf
 config/filter.d/suhosin.conf
+config/filter.d/nagios.conf
 config/filter.d/named-refused.conf
 config/filter.d/nsd.conf
 config/filter.d/openwebmail.conf
