@@ -1,0 +1,86 @@
+# failJSON: { "time": "2005-02-25T03:01:10", "match": true , "host": "128.68.136.133" }
+Feb 25 03:01:10 kismet sm-acceptingconnections[27713]: s1P819mk027713: ruleset=check_rcpt, arg1=<asservnew@freemailhost.ru>, relay=128-68-136-133.broadband.corbina.ru [128.68.136.133], reject=550 5.7.1 <asservnew@freemailhost.ru>... Relaying denied. Proper authentication required.
+
+# failJSON: { "time": "2005-02-23T21:36:14", "match": true , "host": "80.253.155.119" }
+Feb 23 21:36:14 petermurray sm-mta[22248]: s1NLaDQT022248: ruleset=check_rcpt, arg1=<dautareuk2@hotmail.it>, relay=int0.client.access.azadnet.net [80.253.155.119] (may be forged), reject=550 5.7.1 <dautareuk2@hotmail.it>... Relaying denied. IP name possibly forged [80.253.155.119]
+
+# failJSON: { "time": "2005-02-24T07:33:59", "match": true , "host": "118.161.66.57" }
+Feb 24 07:33:59 petermurray sm-mta[21134]: s1O7XtZJ021134: ruleset=check_rcpt, arg1=<sanjinn232@yahoo.com.tw>, relay=118-161-66-57.dynamic.hinet.net [118.161.66.57], reject=550 5.7.1 <sanjinn232@yahoo.com.tw>... Relaying denied. Proper authentication required.
+
+# failJSON: { "time": "2005-02-23T07:57:28", "match": true , "host": "2.180.185.27" }
+Feb 23 07:57:28 petermurray sm-mta[6519]: s1N7vR47006519: ruleset=check_rcpt, arg1=<camila.pinto@camilopinto.pt>, relay=[2.180.185.27], reject=553 5.1.8 <camila.pinto@camilopinto.pt>... Domain of sender address camila.pinto@andrewweitzman.com does not exist
+
+# failJSON: { "time": "2005-02-23T14:13:08", "match": true , "host": "85.60.238.161" }
+Feb 23 14:13:08 petermurray sm-mta[17126]: s1NED81M017126: ruleset=check_rcpt, arg1=<anabelaalvesd@camilopinto.pt>, relay=161.pool85-60-238.dynamic.orange.es [85.60.238.161], reject=553 5.1.8 <anabelaalvesd@camilopinto.pt>... Domain of sender address anabelaalvesd@dsldevice.lan does not exist
+
+# failJSON: { "time": "2005-02-24T05:07:40", "match": true , "host": "202.53.73.138" }
+Feb 24 05:07:40 petermurray sm-mta[716]: s1O57c6H000716: ruleset=check_rcpt, arg1=<camilo_pinto@camilopinto.pt>, relay=202.53.73.138.nettlinx.com [202.53.73.138] (may be forged), reject=553 5.1.8 <camilo_pinto@camilopinto.pt>... Domain of sender address root@srv.montserv.com does not exist
+
+# failJSON: { "time": "2005-02-23T07:00:08", "match": true , "host": "151.232.63.226" }
+Feb 23 07:00:08 petermurray sm-mta[3992]: s1N706jo003992: ruleset=check_rcpt, arg1=<joaofr@camilopinto.pt>, relay=[151.232.63.226], reject=550 5.7.1 <joaofr@camilopinto.pt>... Rejected: 151.232.63.226 listed at sbl-xbl.spamhaus.org
+
+# failJSON: { "time": "2005-02-23T04:36:21", "match": true , "host": "74.137.127.206" }
+Feb 23 04:36:21 kismet sm-acceptingconnections[12603]: s1N9aKAw012603: ruleset=check_rcpt, arg1=<user@host.com>, relay=74-137-127-206.dhcp.insightbb.com [74.137.127.206], reject=550 5.7.1 <user@host.com>... Rejected: IP in SpamCop blacklist, see: http://spamcop.net/bl.shtml?74.137.127.206
+
+# failJSON: { "time": "2005-02-23T04:38:57", "match": true , "host": "203.229.186.250" }
+Feb 23 04:38:57 kismet sm-acceptingconnections[16772]: s1N9csSZ016772: ruleset=check_rcpt, arg1=<user@host.com>, relay=[203.229.186.250], reject=550 5.7.1 <user@host.com>... Rejected: IP in Barracuda RBL, see: http://www.barracudacentral.org/reputation?ip=203.229.186.250
+
+# failJSON: { "time": "2005-02-23T06:06:04", "match": true , "host": "186.54.117.93" }
+Feb 23 06:06:04 kismet sm-acceptingconnections[18622]: s1NB63Bp018622: ruleset=check_rcpt, arg1=<user@host.com>, relay=r186-54-117-93.dialup.adsl.anteldata.net.uy [186.54.117.93], reject=550 5.7.1 <user@host.com>... Rejected: IP in SpamHaus PBL, see http://www.spamhaus.org/query/bl?ip=186.54.117.93
+
+# failJSON: { "time": "2005-02-24T01:46:44", "match": true , "host": "217.21.54.82" }
+Feb 24 01:46:44 petermurray sm-mta[24422]: ruleset=check_relay, arg1=leased-line-54-82.telecom.by, arg2=217.21.54.82, relay=leased-line-54-82.telecom.by [217.21.54.82], reject=421 4.3.2 Connection rate limit exceeded.
+
+
+# failJSON: { "time": "2005-02-27T15:49:07", "match": true , "host": "189.30.205.74" }
+Feb 27 15:49:07 batman sm-mta[88390]: ruleset=check_relay, arg1=189-30-205-74.paebv701.dsl.brasiltelecom.net.br, arg2=189.30.205.74, relay=189-30-205-74.paebv701.dsl.brasiltelecom.net.br [189.30.205.74], reject=421 4.3.2 Too many open connections.
+
+# failJSON: { "time": "2005-02-19T18:01:50", "match": true , "host": "196.213.73.146" }
+Feb 19 18:01:50 batman sm-mta[78152]: ruleset=check_relay, arg1=[196.213.73.146], arg2=196.213.73.146, relay=[196.213.73.146], reject=421 4.3.2 Connection rate limit exceeded.
+
+# failJSON: { "time": "2005-02-27T10:53:06", "match": true , "host": "209.15.212.253" }
+Feb 27 10:53:06 batman sm-mta[44307]: s1R9r60D044307: rejecting commands from  [209.15.212.253] due to pre-greeting traffic after 0 seconds
+
+# failJSON: { "time": "2005-02-27T15:44:18", "match": true , "host": "41.204.78.137" }
+Feb 27 15:44:18 batman sm-mta[87838]: s1REiHdq087838: ruleset=check_rcpt, arg1=<gert-jan@t-online.ch>, relay=[41.204.78.137], reject=550 5.7.1 <gert-jan@t-online.ch>... Relaying denied. IP name lookup failed [41.204.78.137]
+
+# failJSON: { "time": "2005-02-27T15:49:02", "match": true , "host": "189.30.205.74" }
+Feb 27 15:49:02 batman sm-mta[88377]: s1REn1un088377: ruleset=check_rcpt, arg1=<non-existing-user@example.com>, relay=189-30-205-74.paebv701.dsl.brasiltelecom.net.br [189.30.205.74], reject=550 5.1.1 <non-existing-user@example.com>... User unknown
+
+# failJSON: { "time": "2005-02-27T22:44:42", "match": true , "host": "123.69.106.50" }
+Feb 27 22:44:42 batman sm-mta[30972]: s1RLieRP030972: ruleset=check_rcpt, arg1=<existing-user@example.com>, relay=[123.69.106.50], reject=553 5.1.8 <existing-user@example.com>... Domain of sender address lf@ibuv.net does not exist
+
+# failJSON: { "time": "2005-02-23T21:18:47", "match": true , "host": "76.72.174.70" }
+Feb 23 21:18:47 batman sm-mta[93301]: s1NKIkZa093301: [76.72.174.70]: EXPN root [rejected]
+
+# failJSON: { "time": "2005-02-13T01:16:50", "match": true , "host": "217.193.142.180" }
+Feb 13 01:16:50 batman sm-mta[25815]: s1D0GoSs025815: [217.193.142.180]: expn info [rejected]
+
+# failJSON: { "time": "2005-02-22T14:02:44", "match": true , "host": "24.73.201.194" }
+Feb 22 14:02:44 batman sm-mta[4030]: s1MD2hsd004030: rrcs-24-73-201-194.se.biz.rr.com [24.73.201.194]: EXPN root [rejected]
+
+# failJSON: { "time": "2005-02-13T01:16:50", "match": true , "host": "217.193.142.180" }
+Feb 13 01:16:50 batman sm-mta[25815]: s1D0GoSs025815: [217.193.142.180]: vrfy info [rejected]
+
+# failJSON: { "time": "2005-02-22T14:02:44", "match": true , "host": "24.73.201.194" }
+Feb 22 14:02:44 batman sm-mta[4030]: s1MD2hsd004030: rrcs-24-73-201-194.se.biz.rr.com [24.73.201.194]: VRFY root [rejected]
+
+
+# failJSON: { "match": false }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <arhipov@domain.com>... No such user here
+# failJSON: { "match": false }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <anatoliy@domain.com>... No such user here
+# failJSON: { "match": false }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <artem@domain.com>... No such user here
+# failJSON: { "match": false }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <anto@domain.com>... No such user here
+# failJSON: { "match": false }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <anton@domain.com>... No such user here
+# failJSON: { "time": "2004-11-03T11:35:30", "match": true , "host": "95.32.23.163" }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: from=<davaojk25@domain.com>, size=0, class=0, nrcpts=0, bodytype=8BITMIME, proto=ESMTP, daemon=MTA, relay=163.23.32.95.dsl-dynamic.vsi.ru [95.32.23.163]
+
+# failJSON: { "match": false }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <anton@domain.com>... No such user here
+# Different mail ID shouldn't match
+# failJSON: { "match": false }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026255: from=<davaojk25@domain.com>, size=0, class=0, nrcpts=0, bodytype=8BITMIME, proto=ESMTP, daemon=MTA, relay=163.23.32.95.dsl-dynamic.vsi.ru [95.32.23.163]

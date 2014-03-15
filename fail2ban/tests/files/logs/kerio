@@ -1,0 +1,29 @@
+# failJSON: { "time": "2011-06-17T17:00:45", "match": true, "host": "200.90.149.178" }
+[17/Jun/2011 17:00:45] Attempt to deliver to unknown recipient <advertise@aplawrence.com>, from <bekytnabvnvyx@aapug.org>, IP address 200.90.149.178
+
+# failJSON: { "time": "2014-01-18T06:41:25", "match": true, "host": "202.169.236.195" }
+[18/Jan/2014 06:41:25] SMTP Spam attack detected from 202.169.236.195, client closed connection before SMTP greeting
+
+# failJSON: { "time": "2014-01-18T06:42:12", "match": true, "host": "115.147.104.13" }
+[18/Jan/2014 06:42:12] SMTP Spam attack detected from 115.147.104.13, client sent data before SMTP greeting
+
+# failJSON: { "time": "2014-01-18T05:47:17", "match": true, "host": "112.140.49.130" }
+[18/Jan/2014 05:47:17] IP address 112.140.49.130 found in DNS blacklist UCEProtect1, mail from <infootransac@yahoo.com.hk> to <advertise@aplawrence.com>
+
+# failJSON: { "time": "2014-01-18T06:39:44", "match": true, "host": "91.232.105.66" }
+[18/Jan/2014 06:39:44] IP address 91.232.105.66 found in DNS blacklist BarracudaCentral, mail from <postmaster@ponetn.us> to <advertise@aplawrence.com>
+
+# failJSON: { "time": "2013-12-30T05:27:59", "match": true, "host": "64.31.59.75" }
+[30/Dec/2013 05:27:59] Relay attempt from IP address 64.31.59.75, mail from <smtp2001soho@yahoo.com> to <reply-abuse@bol.com.br> rejected
+
+# failJSON: { "time": "2013-12-30T19:24:28", "match": true, "host": "74.63.193.116" }
+[30/Dec/2013 19:24:28] Relay attempt from IP address 74.63.193.116, mail from <smtp2001soho@yahoo.com> to <reply-abuse@bol.com.br> rejected
+
+# failJSON: { "time": "2013-12-13T00:22:45", "match": true, "host": "23.108.148.156" }
+[13/Dec/2013 00:22:45] Attempt to deliver to unknown recipient <suzanne@aplawrence.com>, from <info@kaimingjx.com>, IP address 23.108.148.156
+
+# failJSON: { "time": "2013-12-13T01:11:04", "match": true, "host": "218.85.253.185" }
+[13/Dec/2013 01:11:04] Attempt to deliver to unknown recipient <marge@aplawrence.com>, from <yu@rrd.com>, IP address 218.85.253.185
+
+
+
