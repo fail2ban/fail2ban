@@ -34,6 +34,8 @@ from ..server.mytime import MyTime
 from ..server.ticket import FailTicket
 from .dummyjail import DummyJail
 
+TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
+
 class DatabaseTest(unittest.TestCase):
 
 	def setUp(self):
@@ -65,7 +67,8 @@ class DatabaseTest(unittest.TestCase):
 			"Jail not retained in Db after disconnect reconnect.")
 
 	def testUpdateDb(self):
-		shutil.copyfile('fail2ban/tests/files/database_v1.db', self.dbFilename)
+		shutil.copyfile(
+			os.path.join(TEST_FILES_DIR, 'database_v1.db'), self.dbFilename)
 		self.db = Fail2BanDb(self.dbFilename)
 		self.assertEqual(self.db.getJailNames(), set(['DummyJail #29162448 with 0 tickets']))
 		self.assertEqual(self.db.getLogPaths(), set(['/tmp/Fail2BanDb_pUlZJh.log']))

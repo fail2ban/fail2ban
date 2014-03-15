@@ -35,13 +35,9 @@ TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 if os.path.exists(os.path.join('config','fail2ban.conf')):
 	CONFIG_DIR='config'
 else:
-	CONFIG_DIR=os.path.join('etc','fail2ban')
+	CONFIG_DIR='/etc/fail2ban'
 
-IMPERFECT_CONFIG = os.path.join('fail2ban', 'tests','config')
-
-
-IMPERFECT_CONFIG = os.path.join('fail2ban', 'tests','config')
-
+IMPERFECT_CONFIG = os.path.join(os.path.dirname(__file__), 'config')
 
 class ConfigReaderTest(unittest.TestCase):
 
