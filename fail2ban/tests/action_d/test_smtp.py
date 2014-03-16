@@ -23,7 +23,6 @@ import asyncore
 import threading
 import unittest
 import sys
-from textwrap import wrap
 if sys.version_info >= (3, 3):
 	import importlib
 else:
