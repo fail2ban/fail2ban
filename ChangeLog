@@ -10,6 +10,10 @@ Fail2Ban (version 0.9.0.dev)                                          2014/xx/xx
 ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
 ----------
 
+- Fixes:
+   * systemd backend error on bad utf-8 in python3
+   * badips.py action error when logging HTTP error raised with badips request
+   * fail2ban-regex failed to work in python3 due to space/tab mix
 
 ver. 0.9.0 (2014/03/14 - beta
 ----------
