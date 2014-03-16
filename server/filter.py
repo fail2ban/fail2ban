@@ -37,6 +37,42 @@ import logging, re, os, fcntl, time, shlex, subprocess
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban.filter")
 
+
+# For compatibility with elderly Pythons, left defined regardless of
+# the version for testing against stock version
+
+hexDict = {
+	'0':'0000', '1':'0001', '2':'0010', '3':'0011', '4':'0100', '5':'0101',
+	'6':'0110', '7':'0111', '8':'1000', '9':'1001', 'a':'1010', 'b':'1011',
+	'c':'1100', 'd':'1101', 'e':'1110', 'f':'1111', 'l':''}
+
+def _bin(n):
+	"""
+	A foolishly simple look-up method of getting binary string from an integer
+	This happens to be faster than all other ways!!!
+
+	Copyright: 2009, Vishal Sapre
+	License: MIT
+	Origin:	 http://code.activestate.com/recipes/576847/
+	"""
+	# =========================================================
+	# create hex of int, remove '0x'. now for each hex char,
+	# look up binary string, append in list and join at the end.
+	# =========================================================
+	# yoh: added 0b prefix and .lower() for when converting from long
+	# We know how to deal only with positives here
+	assert(n >= 0)
+	nbin = ''.join([hexDict[hstr] for hstr in hex(n)[2:].lower()])
+	# to unify appearance with stock bin()
+	nbin = nbin.lstrip('0')
+	if not nbin:						  # got empty
+		nbin = '0'
+	return '0b' + nbin
+
+if sys.version_info < (2, 6):
+	bin = _bin
+
+
 ##
 # Log reader class.
 #

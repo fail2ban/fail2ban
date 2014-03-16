@@ -158,6 +158,20 @@ class BasicFilter(unittest.TestCase):
 		self.filter.setUseDns(False)
 		self.assertEqual(self.filter.getUseDns(), 'no')
 
+	def testBin(self):
+		# compare custom _bin against stock bin
+		from server.filter import _bin
+		if sys.version_info >= (2, 6):
+			from __builtin__ import bin
+			for n in (0, 1, 10, long(1), long(4294967168)):
+				self.assertEqual(_bin(n), bin(n))
+		else:
+			from server.filter import bin
+		self.assertEqual(bin(1), '0b1')
+		self.assertEqual(bin(0), '0b0')
+		self.assertEqual(bin(long(10)), '0b1010')
+
+
 
 class IgnoreIP(LogCaptureTestCase):
 
