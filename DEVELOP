@@ -104,6 +104,15 @@ older versions on python. For all other uses of "pragma: no cover" or
 "pragma: no branch" document the reason why its not covered. "I haven't written
 a test case" isn't a sufficient reason.
 
+pyflakes
+--------
+
+pyflakes can be used to find unused imports, and unused, undefined and
+redefined variables. pyflakes should be run in any python code, including
+python based actions::
+
+  pyflakes bin/ config/ fail2ban/
+
 Documentation
 -------------
 
