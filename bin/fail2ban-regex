@@ -395,7 +395,7 @@ class Fail2banRegex(object):
 				if lines < self._maxlines or getattr(self, '_print_all_' + ltype):
 					ans = [[]]
 					for arg in [l, regexlist]:
-					    ans = [ x + [y] for x in ans for y in arg ]
+						ans = [ x + [y] for x in ans for y in arg ]
 					b = map(lambda a: a[0] +  ' | ' + a[1].getFailRegex() + ' |  ' + debuggexURL(a[0], a[1].getFailRegex()), ans)
 					pprint_list([x.rstrip() for x in b], header)
 				else:
@@ -466,11 +466,11 @@ if __name__ == "__main__":
 	if opts.print_no_missed and opts.print_all_missed:
 		sys.stderr.write("ERROR: --print-no-missed and --print-all-missed are mutually exclusive.\n\n")
 		parser.print_help()
-	        sys.exit(-1)
+		sys.exit(-1)
 	if opts.print_no_ignored and opts.print_all_ignored:
 		sys.stderr.write("ERROR: --print-no-ignored and --print-all-ignored are mutually exclusive.\n\n")
 		parser.print_help()
-	        sys.exit(-1)
+		sys.exit(-1)
 
 	print
 	print "Running tests"
