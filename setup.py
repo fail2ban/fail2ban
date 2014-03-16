@@ -136,9 +136,6 @@ setup(
 						('/etc/fail2ban/jail.d',
 							''
 						),
-						('/var/run/fail2ban',
-							''
-						),
 						('/var/lib/fail2ban',
 							''
 						),
