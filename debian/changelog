@@ -1,4 +1,10 @@
-fail2ban (0.8.12-1) unstable; urgency=low
+fail2ban (0.8.13-1) unstable; urgency=low
+
+  * New upstream bug-fix release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 16 Mar 2014 10:27:40 -0400
+
+fail2ban (0.8.12-1) UNRELEASED; urgency=low
 
   * New upstream release
     - provides "fail2ban-client flushlogs" command, debian/fail2ban.logrotate
@@ -8,6 +14,8 @@ fail2ban (0.8.12-1) unstable; urgency=low
     - fixes apache-common.conf (Closes: #739364)
   * /etc/default/fail2ban -- minor typo. Thanks Vincent Lefevre for report
     (Closes: #734421)
+  * debian/patches:
+    - dropping cherry-picked changeset*
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 07 Feb 2014 00:45:38 -0500
 
