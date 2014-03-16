@@ -14,6 +14,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * systemd backend error on bad utf-8 in python3
    * badips.py action error when logging HTTP error raised with badips request
    * fail2ban-regex failed to work in python3 due to space/tab mix
+   * journalmatch for recidive incorrect PRIORITY
 
 ver. 0.9.0 (2014/03/14 - beta
 ----------
