@@ -99,8 +99,7 @@ class BadIPsAction(ActionBase):
 		# Used later for threading.Timer for updating badips
 		self._timer = None
 
-	@classmethod
-	def getCategories(cls, incParents=False):
+	def getCategories(self, incParents=False):
 		"""Get badips.com categories.
 
 		Returns
@@ -115,7 +114,7 @@ class BadIPsAction(ActionBase):
 		"""
 		try:
 			response = urlopen(
-				cls._Request("/".join([cls._badips, "get", "categories"])))
+				self._Request("/".join([self._badips, "get", "categories"])))
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
 			self._logSys.error(
@@ -132,8 +131,7 @@ class BadIPsAction(ActionBase):
 					if "Parent" in value))
 			return categories_names
 
-	@classmethod
-	def getList(cls, category, score, age, key=None):
+	def getList(self, category, score, age, key=None):
 		"""Get badips.com list of bad IPs.
 
 		Parameters
@@ -160,11 +158,11 @@ class BadIPsAction(ActionBase):
 		"""
 		try:
 			url = "?".join([
-				"/".join([cls._badips, "get", "list", category, str(score)]),
+				"/".join([self._badips, "get", "list", category, str(score)]),
 				urlencode({'age': age})])
 			if key:
 				url = "&".join([url, urlencode({"key", key})])
-			response = urlopen(cls._Request(url))
+			response = urlopen(self._Request(url))
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
 			self._logSys.error(
