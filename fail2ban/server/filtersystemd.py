@@ -160,8 +160,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	# @param entry systemd journal entry dict
 	# @return format log line
 
-	@staticmethod
-	def formatJournalEntry(logentry):
+	@classmethod
+	def formatJournalEntry(cls, logentry):
 		logelements = [""]
 		if logentry.get('_HOSTNAME'):
 			logelements.append(logentry['_HOSTNAME'])
@@ -195,7 +195,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			# Python 3, one or more elements bytes
 			logSys.warning("Error decoding log elements from journal: %s" %
 				repr(logelements))
-			logline =  self._joinStrAndBytes(logelements)
+			logline =  cls._joinStrAndBytes(logelements)
 
 		date = logentry.get('_SOURCE_REALTIME_TIMESTAMP',
 				logentry.get('__REALTIME_TIMESTAMP'))
