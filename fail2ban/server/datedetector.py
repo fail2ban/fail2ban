@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import sys, time, logging
+import logging
 from threading import Lock
 
 from .datetemplate import DatePatternRegex, DateTai64n, DateEpoch

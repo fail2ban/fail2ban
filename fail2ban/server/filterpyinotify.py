@@ -23,9 +23,11 @@ __author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import time, logging, pyinotify
+import logging
 from distutils.version import LooseVersion
 from os.path import dirname, sep as pathsep
+
+import pyinotify
 
 from .failmanager import FailManagerEmpty
 from .filter import FileFilter
@@ -157,7 +159,7 @@ class FilterPyinotify(FileFilter):
 			# Remove watches for the directory
 			# since there is no other monitored file under this directory
 			wdInt = self.__watches.pop(path_dir)
-			_ = self.__monitor.rm_watch(wdInt)
+			self.__monitor.rm_watch(wdInt)
 			logSys.debug("Removed monitor for the parent directory %s", path_dir)
 
 

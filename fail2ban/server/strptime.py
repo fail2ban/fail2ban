@@ -49,7 +49,6 @@ def reGroupDictStrptime(found_dict):
 	year = month = day = hour = minute = None
 	hour = minute = None
 	second = fraction = 0
-	tz = -1
 	tzoffset = None
 	# Default to -1 to signify that values not known; not critical to have,
 	# though
@@ -140,21 +139,6 @@ def reGroupDictStrptime(found_dict):
 					tzoffset += int(z[-2:]) # ...and minutes
 				if z.startswith("-"):
 					tzoffset = -tzoffset
-		elif group_key == 'Z':
-			# Since -1 is default value only need to worry about setting tz if
-			# it can be something other than -1.
-			found_zone = found_dict['Z'].lower()
-			for value, tz_values in enumerate(locale_time.timezone):
-				if found_zone in tz_values:
-					# Deal with bad locale setup where timezone names are the
-					# same and yet time.daylight is true; too ambiguous to
-					# be able to tell what timezone has daylight savings
-					if (time.tzname[0] == time.tzname[1] and
-					   time.daylight and found_zone not in ("utc", "gmt")):
-						break
-					else:
-						tz = value
-						break
 
 	# Fail2Ban will assume it's this year
 	assume_year = False

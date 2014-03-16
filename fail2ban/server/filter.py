@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging, re, os, fcntl, time, sys, locale, codecs
+import logging, re, os, fcntl, sys, locale, codecs
 
 from .failmanager import FailManagerEmpty, FailManager
 from .ticket import FailTicket
@@ -408,7 +408,6 @@ class Filter(JailThread):
 		"""Processes the line for failures and populates failManager
 		"""
 		for element in self.processLine(line, date)[1]:
-			failregex = element[0]
 			ip = element[1]
 			unixTime = element[2]
 			lines = element[3]
@@ -470,9 +469,8 @@ class Filter(JailThread):
 				date = self.__lastDate
 
 			else:
-				# Lets split into time part and log part of the line
+				# Lets get the time part
 				date = dateTimeMatch[0]
-				timeMatch = dateTimeMatch[1]
 
 				self.__lastTimeText = timeText
 				self.__lastDate = date

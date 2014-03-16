@@ -22,10 +22,9 @@ __author__ = "Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging, os, re, traceback, time, unittest, sys
+import logging, os, re, traceback, time, unittest
 from os.path import basename, dirname
 from StringIO import StringIO
-import json
 
 from ..server.mytime import MyTime
 

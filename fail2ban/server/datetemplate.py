@@ -24,13 +24,10 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import re, time, calendar
+import re
 import logging
 from abc import abstractmethod
-from datetime import datetime
-from datetime import timedelta
 
-from .mytime import MyTime
 from .strptime import reGroupDictStrptime, timeRE
 
 logSys = logging.getLogger(__name__)

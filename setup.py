@@ -79,9 +79,7 @@ else:
 
 # Get version number, avoiding importing fail2ban.
 # This is due to tests not functioning for python3 as 2to3 takes place later
-f = open(join("fail2ban", "version.py"))
-exec(f.read())
-f.close()
+exec(open(join("fail2ban", "version.py")).read())
 
 setup(
 	name = "fail2ban",

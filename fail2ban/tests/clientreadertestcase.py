@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, glob, shutil, sys, tempfile, unittest
+import os, glob, shutil, tempfile, unittest
 
 from ..client.configreader import ConfigReader
 from ..client.jailreader import JailReader
@@ -326,7 +326,6 @@ class FilterReaderTest(unittest.TestCase):
 		self.assertEqual(sorted(c), sorted(output))
 
 	def testFilterReaderSubstitionFail(self):
-		output = [['set', 'jailname', 'addfailregex', 'to=sour@example.com fromip=<IP>']]
 		filterReader = FilterReader('substition', "jailname", {'honeypot': '<sweet>', 'sweet': '<honeypot>'})
 		filterReader.setBaseDir(TEST_FILES_DIR)
 		filterReader.read()

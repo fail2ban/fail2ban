@@ -25,7 +25,6 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import time
-import logging, sys
 
 from ..server.action import CommandAction, CallingMap
 

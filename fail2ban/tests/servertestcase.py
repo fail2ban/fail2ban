@@ -24,51 +24,24 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, socket, time, tempfile, os, locale, sys, logging
+import unittest
+import time
+import tempfile
+import os
+import locale
+import sys
+import logging
 
 from ..server.failregex import Regex, FailRegex, RegexException
-from ..server.server import Server, logSys
+from ..server.server import Server
 from ..server.jail import Jail
-from ..exceptions import UnknownJailException
-from .utils import LogCaptureTestCase
-#from bin.fail2ban-client import Fail2banClient
+
 try:
 	from ..server import filtersystemd
 except ImportError: # pragma: no cover
 	filtersystemd = None
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
-
-class StartStop(LogCaptureTestCase):
-
-	def setUp(self):
-		self.client = Fail2banClient()
-		LogCaptureTestCase.setUp(self)
-		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'transmitter')
-		os.close(sock_fd)
-		os.remove(sock_name)
-		pidfile_fd, pidfile_name = tempfile.mkstemp(
-			'fail2ban.pid', 'transmitter')
-		os.close(pidfile_fd)
-		os.remove(pidfile_name)
-		self.client.__getCmdLineOptions([
-			('-c', os.path.join('fail2ban', 'tests', 'config')),
-			('-s', sock_name),
-			('-p', pidfile_name)])
-		self.client.__startServerAsync(sock_name, pidfile_name, False)
-		self.client.__waitOnServer()
-
-	def tearDown(self):
-		self.__server.quit()
-		LogCaptureTestCase.tearDown(self)
-	
-	def testStartStopJail(self):
-		name = "TestCase"
-		self.__server.addJail(name, "auto")
-		self.__server.startJail(name)
-		time.sleep(1)
-		self.__server.stopJail(name)
-		self.printLog()
 
 class TestServer(Server):
 	def setLogLevel(self, *args, **kwargs):

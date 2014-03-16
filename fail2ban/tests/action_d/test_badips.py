@@ -20,10 +20,6 @@
 import os
 import unittest
 import sys
-if sys.version_info >= (3, 3):
-	import importlib
-else:
-	import imp
 
 from ..dummyjail import DummyJail
 

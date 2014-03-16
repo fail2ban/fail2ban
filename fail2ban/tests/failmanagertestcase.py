@@ -24,7 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, socket, time, pickle
+import unittest
 
 from ..server.failmanager import FailManager, FailManagerEmpty
 from ..server.ticket import FailTicket

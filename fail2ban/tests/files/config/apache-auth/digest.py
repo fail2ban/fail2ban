@@ -14,7 +14,7 @@ def auth(v):
     nonce = v['nonce'][1:-1]
     nc=v.get('nc') or ''
     cnonce = v.get('cnonce') or ''
-    opaque = v.get('opaque') or ''
+    #opaque = v.get('opaque') or ''
     qop = v['qop'][1:-1]
     algorithm = v['algorithm']
     response = md5.new(ha1 + ':' + nonce + ':' + nc + ':' + cnonce + ':' + qop + ':' + ha2).hexdigest()

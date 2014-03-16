@@ -32,7 +32,6 @@ from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .database import Fail2BanDb
-from .action import CommandAction
 from .. import version
 
 # Gets the instance of the logger.

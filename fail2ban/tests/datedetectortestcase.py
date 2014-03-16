@@ -24,7 +24,10 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import unittest, calendar, time, datetime, re, pprint
+import unittest
+import time
+import datetime
+
 from ..server.datedetector import DateDetector
 from ..server.datetemplate import DateTemplate
 from .utils import setUpMyTime, tearDownMyTime
@@ -52,7 +55,6 @@ class DateDetectorTest(unittest.TestCase):
 	
 	def testGetTime(self):
 		log = "Jan 23 21:59:59 [sshd] error: PAM: Authentication failure"
-		date = [2005, 1, 23, 21, 59, 59, 6, 23, -1]
 		dateUnix = 1106513999.0
 		# yoh: testing only up to 6 elements, since the day of the week
 		#      is not correctly determined atm, since year is not present
@@ -65,7 +67,6 @@ class DateDetectorTest(unittest.TestCase):
 	def testVariousTimes(self):
 		"""Test detection of various common date/time formats f2b should understand
 		"""
-		date = [2005, 1, 23, 21, 59, 59, 6, 23, -1]
 		dateUnix = 1106513999.0
 
 		for anchored, sdate in (

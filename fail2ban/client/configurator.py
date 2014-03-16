@@ -26,7 +26,6 @@ __license__ = "GPL"
 
 import logging
 
-from .configreader import ConfigReader
 from .fail2banreader import Fail2banReader
 from .jailsreader import JailsReader
 

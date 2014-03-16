@@ -17,7 +17,6 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import sys
 import socket
 import smtplib
 from email.mime.text import MIMEText

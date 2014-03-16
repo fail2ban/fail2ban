@@ -22,14 +22,20 @@ __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import logging
-import os, sys, unittest
+import os
+import sys
+import unittest
 import tempfile
 import shutil
-
+import fnmatch
+import datetime
 from glob import glob
+from StringIO import StringIO
 
 from .utils import mbasename, TraceBack, FormatterWithTraceBack
 from ..helpers import formatExceptionInfo
+from ..server.datetemplate import DatePatternRegex
+
 
 class HelpersTest(unittest.TestCase):
 
@@ -53,7 +59,6 @@ class HelpersTest(unittest.TestCase):
 # based on
 # http://stackoverflow.com/questions/2186525/use-a-glob-to-find-files-recursively-in-python
 def recursive_glob(treeroot, pattern):
-	import fnmatch, os
 	results = []
 	for base, dirs, files in os.walk(treeroot):
 		goodfiles = fnmatch.filter(dirs + files, pattern)
@@ -150,7 +155,6 @@ class TestsUtilsTest(unittest.TestCase):
 
 
 	def testFormatterWithTraceBack(self):
-		from StringIO import StringIO
 		strout = StringIO()
 		Formatter = FormatterWithTraceBack
 
@@ -169,11 +173,6 @@ class TestsUtilsTest(unittest.TestCase):
 		# in this case compressed and not should be the same (?)
 		self.assertTrue(pindex > 10)	  # we should have some traceback
 		self.assertEqual(s[:pindex], s[pindex+1:pindex*2 + 1])
-
-import datetime
-import time
-
-from ..server.datetemplate import DatePatternRegex
 
 iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
 

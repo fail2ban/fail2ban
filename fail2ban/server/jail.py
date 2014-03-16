@@ -114,29 +114,26 @@ class Jail:
 
 
 	def _initPolling(self):
-		logSys.info("Jail '%s' uses poller" % self.name)
 		from filterpoll import FilterPoll
+		logSys.info("Jail '%s' uses poller" % self.name)
 		self.__filter = FilterPoll(self)
-	
+
 	def _initGamin(self):
 		# Try to import gamin
-		import gamin
-		logSys.info("Jail '%s' uses Gamin" % self.name)
 		from filtergamin import FilterGamin
+		logSys.info("Jail '%s' uses Gamin" % self.name)
 		self.__filter = FilterGamin(self)
-	
+
 	def _initPyinotify(self):
 		# Try to import pyinotify
-		import pyinotify
-		logSys.info("Jail '%s' uses pyinotify" % self.name)
 		from filterpyinotify import FilterPyinotify
+		logSys.info("Jail '%s' uses pyinotify" % self.name)
 		self.__filter = FilterPyinotify(self)
-	
+
 	def _initSystemd(self): # pragma: systemd no cover
 		# Try to import systemd
-		import systemd
-		logSys.info("Jail '%s' uses systemd" % self.name)
 		from filtersystemd import FilterSystemd
+		logSys.info("Jail '%s' uses systemd" % self.name)
 		self.__filter = FilterSystemd(self)
 
 	@property

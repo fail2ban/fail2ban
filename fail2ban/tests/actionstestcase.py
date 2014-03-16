@@ -24,8 +24,9 @@ __author__ = "Daniel Black"
 __copyright__ = "Copyright (c) 2013 Daniel Black"
 __license__ = "GPL"
 
-import unittest, time
-import sys, os, tempfile
+import time
+import os
+import tempfile
 
 from ..server.actions import Actions
 from .dummyjail import DummyJail

@@ -28,6 +28,7 @@ import os
 import sys
 import time
 import tempfile
+import uuid
 
 try:
 	from systemd import journal
@@ -37,7 +38,7 @@ except ImportError:
 from ..server.jail import Jail
 from ..server.filterpoll import FilterPoll
 from ..server.filter import Filter, FileFilter, DNSUtils
-from ..server.failmanager import FailManager, FailManagerEmpty
+from ..server.failmanager import FailManagerEmpty
 from ..server.mytime import MyTime
 from .utils import setUpMyTime, tearDownMyTime, mtimesleep, LogCaptureTestCase
 from .dummyjail import DummyJail
@@ -132,7 +133,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 		fin = in_
 	# Skip
 	for i in xrange(skip):
-		_ = fin.readline()
+		fin.readline()
 	# Read
 	i = 0
 	lines = []
@@ -169,7 +170,7 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 					})
 	# Skip
 	for i in xrange(skip):
-		_ = fin.readline()
+		fin.readline()
 	# Read/Write
 	i = 0
 	while n is None or i < n:
@@ -444,8 +445,6 @@ class LogFileMonitor(LogCaptureTestCase):
 		self.assertEqual(self.filter.failManager.getFailTotal(), 3)
 
 
-from threading import Lock
-
 def get_monitor_failures_testcase(Filter_):
 	"""Generator of TestCase's for different filters/backends
 	"""
@@ -674,7 +673,6 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.filter = Filter_(self.jail)
 			# UUID used to ensure that only meeages generated
 			# as part of this test are picked up by the filter
-			import uuid
 			self.test_uuid = str(uuid.uuid4())
 			self.name = "monitorjournalfailures-%s" % self.test_uuid
 			self.filter.addJournalMatch([
@@ -720,7 +718,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 
 			attempts = ticket.getAttempt()
 			ip = ticket.getIP()
-			matches = ticket.getMatches()
+			ticket.getMatches()
 
 			self.assertEqual(ip, test_ip)
 			self.assertEqual(attempts, test_attempts)
@@ -915,8 +913,6 @@ class GetFailures(unittest.TestCase):
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailuresIgnoreRegex(self):
-		output = ('141.3.81.106', 8, 1124017141.0)
-
 		self.filter.addLogPath(GetFailures.FILENAME_02)
 		self.filter.addFailRegex("Failed .* from <HOST>")
 		self.filter.addFailRegex("Accepted .* from <HOST>")
@@ -1009,5 +1005,5 @@ class JailTests(unittest.TestCase):
 	def testSetBackend_gh83(self):
 		# smoke test
 		# Must not fail to initiate
-		jail = Jail('test', backend='polling')
+		Jail('test', backend='polling')
 
