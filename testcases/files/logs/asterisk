@@ -45,3 +45,7 @@
 
 # failJSON: { "time": "2013-11-11T14:33:38", "match": true , "host": "192.168.55.152" }
 [2013-11-11 14:33:38] WARNING[6756][C-0000001d] Ext. s: "Rejecting unknown SIP connection from 192.168.55.152"
+
+
+# failJSON: { "time": "2004-11-04T18:30:40", "match": true , "host": "192.168.200.100" }
+Nov 4 18:30:40 localhost asterisk[32229]: NOTICE[32257]: chan_sip.c:23417 in handle_request_register: Registration from '<sip:301@example.com>' failed for '192.168.200.100:36998' - Wrong password

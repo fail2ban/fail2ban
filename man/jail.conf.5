@@ -133,7 +133,15 @@ filename(s) of the log files to be monitored. Globs -- paths containing * and ? 
 Ensure syslog or the program that generates the log file isn't configured to compress repeated log messages to "\fI*last message repeated 5 time*s\fR" otherwise it will fail to detect. This is called \fIRepeatedMsgReduction\fR in rsyslog and should be \fIOff\fR.
 .TP
 .B action
-action(s) from \fI/etc/fail2ban/action.d/\fR without the \fI.conf\fR/\fI.local\fR extension. Arguments can be passed to actions to override the default values from the [Init] section in the action file. Arguments are specified by [name=value,name2=value]. Values can also be quoted. More that one action can be specified (in separate lines).
+action(s) from \fI/etc/fail2ban/action.d/\fR without the \fI.conf\fR/\fI.local\fR extension. Arguments can be passed to actions to override the default values from the [Init] section in the action file. Arguments are specified by:
+.RS
+.RS
+
+[name=value,name2=value,name3="values,values"]
+
+.RE
+Values can also be quoted (required when value includes a ","). More that one action can be specified (in separate lines).
+.RE
 .TP
 .B ignoreip
 list of IPs not to ban. They can include a CIDR mask too.

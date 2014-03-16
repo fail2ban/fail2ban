@@ -67,6 +67,7 @@ testcases/files/logs/horde
 testcases/files/logs/suhosin
 testcases/files/logs/mysqld-auth
 testcases/files/logs/named-refused
+testcases/files/logs/nagios
 testcases/files/logs/nginx-http-auth
 testcases/files/logs/nsd
 testcases/files/logs/openwebmail
@@ -103,6 +104,8 @@ testcases/files/logs/qmail
 testcases/files/logs/recidive
 testcases/files/logs/sieve
 testcases/files/logs/selinux-ssh
+testcases/files/logs/sendmail-auth
+testcases/files/logs/sendmail-reject
 testcases/files/logs/suhosin
 testcases/files/logs/uwimap-auth
 testcases/files/logs/wuftpd
@@ -162,6 +165,7 @@ config/filter.d/freeswitch.conf
 config/filter.d/gssftpd.conf
 config/filter.d/horde.conf
 config/filter.d/suhosin.conf
+config/filter.d/nagios.conf
 config/filter.d/named-refused.conf
 config/filter.d/nsd.conf
 config/filter.d/openwebmail.conf
@@ -172,6 +176,8 @@ config/filter.d/qmail.conf
 config/filter.d/pam-generic.conf
 config/filter.d/php-url-fopen.conf
 config/filter.d/postfix-sasl.conf
+config/filter.d/sendmail-auth.conf
+config/filter.d/sendmail-reject.conf
 config/filter.d/sieve.conf
 config/filter.d/solid-pop3d.conf
 config/filter.d/squid.conf
