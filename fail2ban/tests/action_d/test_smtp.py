@@ -101,11 +101,9 @@ class SMTPActionTest(unittest.TestCase):
 		self.action.ban(aInfo)
 		self.assertEqual(self.smtpd.mailfrom, "fail2ban")
 		self.assertEqual(self.smtpd.rcpttos, ["root"])
-		subject = "\n".join(wrap(
-			"Subject: [Fail2Ban] %s: banned %s" %
-				(self.jail.name, aInfo['ip']),
-			78, subsequent_indent=" "))
-		self.assertTrue(subject in self.smtpd.data)
+		subject = "Subject: [Fail2Ban] %s: banned %s" % (
+			self.jail.name, aInfo['ip'])
+		self.assertTrue(subject in self.smtpd.data.replace("\n", ""))
 		self.assertTrue(
 			"%i attempts" % aInfo['failures'] in self.smtpd.data)
 
