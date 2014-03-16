@@ -1,1 +1,2 @@
 deb_manpages_reportbug
+remove-syslog.target-reference.patch

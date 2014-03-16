@@ -10,7 +10,7 @@
 #export DH_VERBOSE=1
 
 %:
-	dh $@ --with python2
+	dh $@ --with python2,systemd
 
 DESTDIR=$(CURDIR)/debian/fail2ban
 
@@ -30,6 +30,11 @@ override_dh_install:
 	# Install bash completion
 	install -d $(DESTDIR)/etc/bash_completion.d
 	install -m 644 files/bash-completion $(DESTDIR)/etc/bash_completion.d/fail2ban
+	# Install systemd files
+	install -d $(DESTDIR)/lib/systemd/system
+	install -d $(DESTDIR)/usr/lib/tmpfiles.d
+	install -m 644 files/fail2ban.service $(DESTDIR)/lib/systemd/system
+	install -m 644 files/fail2ban-tmpfiles.conf $(DESTDIR)/usr/lib/tmpfiles.d
 	
 	dh_install
 
