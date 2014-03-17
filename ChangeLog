@@ -16,6 +16,12 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * fail2ban-regex failed to work in python3 due to space/tab mix
    * journalmatch for recidive incorrect PRIORITY
 
+- New features:
+
+
+- Enhancements
+   * Fail2ban-regex - add print-all-matched option. Closes gh-652
+
 ver. 0.9.0 (2014/03/14 - beta
 ----------
 
