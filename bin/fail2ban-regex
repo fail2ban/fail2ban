@@ -142,6 +142,8 @@ Report bugs to https://github.com/fail2ban/fail2ban/issues
 			   help="Do not print any missed lines"),
 		Option("--print-no-ignored", action='store_true',
 			   help="Do not print any ignored lines"),
+		Option("--print-all-matched", action='store_true',
+			   help="Print all matched lines"),
 		Option("--print-all-missed", action='store_true',
 			   help="Print all missed lines, no matter how many"),
 		Option("--print-all-ignored", action='store_true',
@@ -187,6 +189,7 @@ class LineStats(object):
 	"""
 	def __init__(self):
 		self.tested = self.matched = 0
+		self.matched_lines = []
 		self.missed = 0
 		self.missed_lines = []
 		self.missed_lines_timeextracted = []
@@ -210,6 +213,7 @@ class Fail2banRegex(object):
 		self._maxlines = 20
 		self._print_no_missed = opts.print_no_missed
 		self._print_no_ignored = opts.print_no_ignored
+		self._print_all_matched = opts.print_all_matched
 		self._print_all_missed = opts.print_all_missed
 		self._print_all_ignored = opts.print_all_ignored
 		self._maxlines_set = False		  # so we allow to override maxlines in cmdline
@@ -366,6 +370,8 @@ class Fail2banRegex(object):
 			if len(ret) > 0:
 				assert(not is_ignored)
 				self._line_stats.matched += 1
+				if self._print_all_matched:
+					self._line_stats.matched_lines.append(line)
 			else:
 				if not is_ignored:
 					self._line_stats.missed += 1
@@ -387,7 +393,7 @@ class Fail2banRegex(object):
 		if lines:
 			header = "%s line(s):" % (ltype.capitalize(),)
 			if self._debuggex:
-				if ltype == 'missed':
+				if ltype == 'missed' or ltype == 'matched':
 					regexlist = self._failregex
 				else:
 					regexlist = self._ignoreregex
@@ -451,6 +457,8 @@ class Fail2banRegex(object):
 
 		print "\nLines: %s" % self._line_stats
 
+		if self._print_all_matched:
+			self.printLines('matched')
 		if not self._print_no_ignored:
 			self.printLines('ignored')
 		if not self._print_no_missed:
