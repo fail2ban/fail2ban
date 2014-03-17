@@ -129,6 +129,7 @@ fail2ban/tests/files/logs/guacamole
 fail2ban/tests/files/logs/kerio
 fail2ban/tests/files/logs/lighttpd-auth
 fail2ban/tests/files/logs/mysqld-auth
+fail2ban/tests/files/logs/nagios
 fail2ban/tests/files/logs/nsd
 fail2ban/tests/files/logs/perdition
 fail2ban/tests/files/logs/php-url-fopen
@@ -193,6 +194,7 @@ config/filter.d/gssftpd.conf
 config/filter.d/kerio.conf
 config/filter.d/horde.conf
 config/filter.d/suhosin.conf
+config/filter.d/nagios.conf
 config/filter.d/named-refused.conf
 config/filter.d/nsd.conf
 config/filter.d/openwebmail.conf

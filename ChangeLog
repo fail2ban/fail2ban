@@ -109,8 +109,7 @@ additions from Yaroslav Halchenko.
    * Properties and methods of actions accessible from fail2ban-client
      - Use of properties replaces command actions "cinfo" interface
 
-
-ver. 0.8.13 (2014/XX/XXX) - maintenance-only-from-now-on
+ver. 0.8.13 (2014/03/15) - maintenance-only-from-now-on
 -----------
 
 - Fixes:
