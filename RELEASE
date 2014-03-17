@@ -88,6 +88,11 @@ Which indicates that testcases/files/logs/mysqld.log has been moved or is a dire
 Broken for now:  python setup.py bdist_rpm
 Broken for now:  python setup.py upload
 
+# Tag the release by using a signed (and annotated) tag.  Cut/paste
+  release ChangeLog entry as tag annotation
+
+  git tag -s 0.9.1
+
 # Prerelease (option)
 
 # Provide a release sample to distributors
