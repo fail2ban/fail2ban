@@ -1,3 +1,10 @@
+fail2ban (0.9.0-1) experimental; urgency=low
+
+  From this version on log paths are defined in distro specific files.
+  for Debian this is in /etc/fail2ban/paths-debian.conf  
+
+ -- Daniel Schaal <farbing@web.de>  Sun, 16 Mar 2014 16:51:06 +0100
+
 fail2ban (0.8.11-1) unstable; urgency=low
 
   * retroactive for 0.8.9: by default iptables-* actions do not simply

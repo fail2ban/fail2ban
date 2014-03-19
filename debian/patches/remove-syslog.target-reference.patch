@@ -1,0 +1,14 @@
+Description: Don't mention obsolete syslog.target in systemd service file
+Author: Daniel Schaal <farbing@web.de>
+Last-Update: 2014-03-15
+
+--- fail2ban-0.9.0.orig/files/fail2ban.service
++++ fail2ban-0.9.0/files/fail2ban.service
+@@ -1,6 +1,6 @@
+ [Unit]
+ Description=Fail2ban Service
+-After=syslog.target network.target
++After=network.target
+ 
+ [Service]
+ Type=forking
