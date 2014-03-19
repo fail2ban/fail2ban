@@ -1,8 +1,13 @@
 fail2ban (0.8.13-1) unstable; urgency=low
 
-  * New upstream bug-fix release
+  * New upstream bug-fix release: but consider 0.9.0 (to be uploaded to
+    experimental)
+  * debian/jail:
+    - new jail definitions: apache-modsecurity, apache-nohome, freeswitch,
+      ejabberd-auth, ssh-blocklist, nagios
+    - new configuration option: ignorecommand
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 16 Mar 2014 10:27:40 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 18 Mar 2014 23:13:35 -0400
 
 fail2ban (0.8.12-1) UNRELEASED; urgency=low
 
