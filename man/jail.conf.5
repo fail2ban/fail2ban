@@ -7,7 +7,7 @@ jail.conf \- configuration for the fail2ban server
 
 .I jail.conf jail.d/*.conf jail.local jail.d/*.local
 
-.I action.d/*.conf action.d/*.local
+.I action.d/*.conf action.d/*.local action.d/*.py
 
 .I filter.d/*.conf filter.d/*.local
 
@@ -74,6 +74,7 @@ parsed files.  Files are ordered alphabetically, e.g.
 \fIjail.d/02_custom_port.conf\fR - to change the port(s) of a jail.
 .RE
 .RE
+.RE
 
 Configuration files have sections, those specified with [section name], and name = value pairs. For those name items that can accept multiple values, specify the values separated by spaces, or in separate lines space indented at the beginning of the line before the second value.
 
@@ -106,7 +107,7 @@ These files have one section, [Definition].
 The items that can be set are:
 .TP
 .B loglevel
-verbosity level of log output: 1 = ERROR, 2 = WARN, 3 = INFO, 4 = DEBUG. Default: 1
+verbosity level of log output: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG. Default: ERROR
 .TP
 .B logtarget
 log target: filename, SYSLOG, STDERR or STDOUT. Default: STDERR . Only a single log target can be specified.
@@ -128,9 +129,14 @@ The following options are applicable to any jail. They appear in a section speci
 name of the filter -- filename of the filter in /etc/fail2ban/filter.d/ without the .conf/.local extension. Only one filter can be specified.
 .TP
 .B logpath
-filename(s) of the log files to be monitored. Globs -- paths containing * and ? or [0-9] -- can be used however only the files that exist at start up matching this glob pattern will be considered.
+filename(s) of the log files to be monitored, seperate by new lines. Globs -- paths containing * and ? or [0-9] -- can be used however only the files that exist at start up matching this glob pattern will be considered.
+
+Optional space separated option 'tail' can be added to the end of the path to cause the log file to be read from the end, else default 'head' option reads file from the beginning
 
 Ensure syslog or the program that generates the log file isn't configured to compress repeated log messages to "\fI*last message repeated 5 time*s\fR" otherwise it will fail to detect. This is called \fIRepeatedMsgReduction\fR in rsyslog and should be \fIOff\fR.
+.TP
+.B logencoding
+encoding of log files used for decoding. Default value of "auto" uses current system locale.
 .TP
 .B action
 action(s) from \fI/etc/fail2ban/action.d/\fR without the \fI.conf\fR/\fI.local\fR extension. Arguments can be passed to actions to override the default values from the [Init] section in the action file. Arguments are specified by:
@@ -160,7 +166,7 @@ time interval (in seconds) before the current time where failures will count tow
 number of failures that have to occur in the last \fBfindtime\fR seconds to ban then IP.
 .TP
 .B backend
-backend to be used to detect changes in the logpath. It defaults to "auto" which will try "pyinotify", "gamin" before "polling". Any of these can be specified. "pyinotify" is only valid on Linux systems with the "pyinotify" Python libraries. "gamin" requires the "gamin" libraries.
+backend to be used to detect changes in the logpath. It defaults to "auto" which will try "pyinotify", "gamin", "systemd" before "polling". Any of these can be specified. "pyinotify" is only valid on Linux systems with the "pyinotify" Python libraries. "gamin" requires the "gamin" libraries.
 .TP
 .B usedns
 use DNS to resolve HOST names that appear in the logs. By default it is "warn" which will resolve hostnames to IPs however it will also log a warning. If you are using DNS here you could be blocking the wrong IPs due to the asymmetric nature of reverse DNS (that the application used to write the domain name to log) compared to forward DNS that fail2ban uses to resolve this back to an IP (but not necessarily the same one). Ideally you should configure your applications to log a real IP. This can be set to "yes" to prevent warnings in the log or "no" to disable DNS resolution altogether (thus ignoring entries where hostname, not an IP is logged)..
@@ -171,6 +177,30 @@ regex (Python \fBreg\fRular \fBex\fRpression) to be added to the filter's failre
 .B ignoreregex
 regex which, if the log line matches, would cause Fail2Ban not consider that line.  This line will be ignored even if it matches a failregex of the jail or any of its filters.
 
+.SS Backends
+Available options are listed below.
+.TP
+.B pyinotify
+requires pyinotify (a file alteration monitor) to be installed. If pyinotify is not installed, Fail2ban will use auto.
+.TP
+.B gamin
+requires Gamin (a file alteration monitor) to be installed. If Gamin is not installed, Fail2ban will use auto.
+.TP
+.B polling
+uses a polling algorithm which does not require external libraries.
+.TP
+.B systemd
+uses systemd python library to access the systemd journal. Specifying \fBlogpath\fR is not valid for this backend and instead utilises \fBjournalmatch\fR from the jails associated filter config.
+
+.SS Actions
+Each jail can be configured with only a single filter, but may have multiple actions. By default, the name of a action is the action filename, and in the case of Python actions, the ".py" file extension is stripped. Where multiple of the same action are to be used, the \fBactname\fR option can be assigned to the action to avoid duplication e.g.:
+.PP
+.nf
+[ssh-iptables-ipset]
+enabled = true
+action = smtp.py[dest=chris@example.com, actname=smtp-chris]
+         smtp.py[dest=sally@example.com, actname=smtp-sally]
+.fi
 
 .SH "ACTION CONFIGURATION FILES (\fIaction.d/*.conf\fB)"
 Action files specify which commands are executed to ban and unban an IP address.
@@ -198,13 +228,18 @@ command(s) that bans the IP address after \fBmaxretry\fR log lines matches withi
 .TP
 .B actionunban
 command(s) that unbans the IP address after \fBbantime\fR.
+.PP
+The [Init] section allows for action-specific settings. In \fIjail.conf/jail.local\fR these can be overwritten for a particular jail as options to the jail. The following are special tags which can be set in the [Init] section:
+.TP
+\fBtimeout\fR
+The maximum period of time in seconds that a command can executed, before being killed.
+.PP
 .RE
 
 Commands specified in the [Definition] section are executed through a system shell so shell redirection and process control is allowed. The commands should
-return 0, otherwise error would be logged.  Moreover if \fBactioncheck\fR exits with non-0 status, it is taken as indication that firewall status has changed and fail2ban needs to reinitialize itself (i.e. issue \fBactionstop\fR and \fBactionstart\fR commands).
-
+return 0, otherwise error would be logged.  Moreover if \fBactioncheck\fR exits with non-0 status, it is taken as indication that firewall status has changed and fail2ban needs to reinitialize itself (i.e. issue \fBactionstop\fR and \fBactionstart\fR commands).  
 Tags are enclosed in <>.  All the elements of [Init] are tags that are replaced in all action commands.  Tags can be added by the
-\fBfail2ban-client\fR using the setctag command. \fB<br>\fR is a tag that is always a new line (\\n).
+\fBfail2ban-client\fR using the "set <JAIL> action <ACT>" command. \fB<br>\fR is a tag that is always a new line (\\n).
 
 More than a single command is allowed to be specified. Each command needs to be on a separate line and indented with whitespace(s) without blank lines. The following example defines
 two commands to be executed.
@@ -221,11 +256,26 @@ IPv4 IP address to be banned. e.g. 192.168.0.2
 .B failures
 number of times the failure occurred in the log file. e.g. 3
 .TP
+.B ipfailures
+As per \fBfailures\fR, but total of all failures for that ip address across all jails from the fail2ban persistent database. Therefore the database must be set for this tag to function.
+.TP
+.B ipjailfailures
+As per \fBipfailures\fR, but total based on the IPs failures for the current jail.
+.TP
 .B time
 UNIX (epoch) time of the ban. e.g. 1357508484
 .TP
 .B matches
 concatenated string of the log file lines of the matches that generated the ban. Many characters interpreted by shell get escaped to prevent injection, nevertheless use with caution.
+.TP
+.B ipmatches
+As per \fBmatches\fR, but includes all lines for the IP which are contained with the fail2ban persistent database. Therefore the database must be set for this tag to function.
+.TP
+.B ipjailmatches\
+As per \fBipmatches\fR, but matches are limited for the IP and for the current jail.
+
+.SH "PYTHON ACTION FILES"
+Python based actions can also be used, where the file name must be \fI[actionname].py\fR. The Python file must contain a variable \fIAction\fR which points to Python class. This class must implement a minimum interface as described by \fIfail2ban.server.action.ActionBase\fR, which can be inherited from to ease implementation.
 
 .SH "FILTER FILES (\fIfilter.d/*.conf\fB)"
 
@@ -237,6 +287,42 @@ Like action files, filter files are ini files. The main section is the [Definiti
 
 There are two filter definitions used in the [Definition] section:
 .TP
+.B failregex
+is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The tag \fI<HOST>\fR is used as part of the regex and is itself a regex
+for IPv4 addresses and hostnames. fail2ban will work out which one of these it actually is.
+For multiline regexs the tag \fI<SKIPLINES>\fR should be used to separate lines. This allows lines between the matched lines to continue to be searched for other failures. The tag can be used multiple times.
+
+.TP
+.B ignoreregex
+is the regex to identify log entries that should be ignored by fail2ban, even if they match failregex.
+
+
+.PP
+Similar to actions, filters have an [Init] section which can be overridden in \fIjail.conf/jail.local\fR. The filter [Init] section is limited to the following options:
+.TP
+\fBmaxlines\fR
+specifies the maximum number of lines to buffer to match multi-line regexs. For some log formats this will not required to be changed. Other logs may require to increase this value if a particular log file is frequently written to.
+.TP
+\fBdatepattern\fR
+specifies a custom date pattern/regex as an alternative to the default date detectors e.g. %Y-%m-%d %H:%M(?::%S)?. For a list of valid format directives, see Python library documentation for strptime behaviour.
+.br
+Also, special values of \fIEpoch\fR (UNIX Timestamp), \fITAI64N\fR and \fIISO8601\fR can be used.
+.br
+\fBNOTE:\fR due to config file string substitution, that %'s must be escaped by an % in config files.
+.TP
+\fBjournalmatch\fR
+specifies the systemd journal match used to filter the journal entries. See \fBjournalctl(1)\fR and \fBsystemd.journal-fields(7)\fR for matches syntax and more details on special journal fields. This option is only valid for the \fIsystemd\fR backend.
+.PP
+Filters can also have a section called [INCLUDES]. This is used to read other configuration files.
+
+.TP
+\fBbefore\fR
+indicates that this file is read before the [Definition] section.
+
+.TP
+\fBafter\fR
+indicates that this file is read after the [Definition] section.
+
 .B failregex
 regex  that will match failed attempts. The tag <HOST> is used as part of the regex and is itself a regex
 for IPv4 addresses (and hostnames if \fBusedns\fR). Fail2Ban will work out which one of these it actually is.

@@ -4,8 +4,116 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.13)                                             2014/03/15
+Fail2Ban (version 0.9.0.dev)                                          2014/xx/xx
 ================================================================================
+
+ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
+----------
+
+- Fixes:
+   * systemd backend error on bad utf-8 in python3
+   * badips.py action error when logging HTTP error raised with badips request
+   * fail2ban-regex failed to work in python3 due to space/tab mix
+   * journalmatch for recidive incorrect PRIORITY
+
+- New features:
+
+
+- Enhancements
+   * Fail2ban-regex - add print-all-matched option. Closes gh-652
+
+ver. 0.9.0 (2014/03/14 - beta
+----------
+
+Carries all fixes, features and enhancements from 0.8.13 (unreleased) with
+major changes.
+
+The minimum supported python version is now 2.6. If you have python-2.4 or 2.5
+you can use the 0.8.12 version of fail2ban.
+
+Please take note of release notes:
+https://github.com/fail2ban/fail2ban/releases/tag/0.9.0
+
+Please test your configuration before relying on it.
+
+Nearly all development is thanks to Steven Hiscocks (THANKS!), merging,
+testcases and timezone support from Daniel Black, and code-review and minor
+additions from Yaroslav Halchenko.
+
+- Refactoring (IMPORTANT -- Please review your setup and configuration):
+   * [..bddbf1e] jail.conf was heavily refactored and now is similar
+     to how it looked on Debian systems:
+     - default action could be configured once for all jails
+     - jails definitions only provide customizations (port, logpath)
+     - no need to specify 'filter' if name matches jail name
+   * [..5aef036] Core functionality moved into fail2ban/ module.
+     Closes gh-26
+     - tests included in module to aid testing and debugging
+   * Added fail2ban persistent database
+     - default location at /var/lib/fail2ban/fail2ban.sqlite3
+     - allows active bans to be reinstated on restart
+     - log files read from last position after restart
+   * Added systemd journal backend
+     - Dependency on python-systemd
+     - New "journalmatch" option added to filter configs files
+     - New "systemd-journal" option added to fail2ban-regex
+   * Added python3 support
+   * Support %z (Timezone offset) and %f (sub-seconds) support for
+     datedetector. Enhanced existing date/time have been updated patterns to
+     support these. ISO8601 now defaults to localtime unless specified otherwise.
+     Some filters have been change as required to capture these elements in the
+     right timezone correctly.
+   * Log levels are now set by Syslog style strings e.g. DEBUG, ERROR.
+     - Log level INFO is now more verbose
+   * Optionally can read log files starting from "head" or "tail".
+     - See "logpath" option in jail.conf(5) man page.
+   * Can now set log encoding for files per jail.
+     - Default uses systemd locale.
+
+- New features:
+   * [..c7ae460] Multiline failregex. Close gh-54
+   * [8af32ed] Guacamole filter and support for Apache Tomcat date
+     format
+   * [..b6059f4] 'timeout' option for actions Close gh-60 and Debian bug
+     #410077.  Also it would now capture and include stdout and stderr
+     into logging messages in case of error or at DEBUG loglevel.
+   * Added action xarf-login-attack to report formatted attack messages
+     according to the XARF standard (v0.2). Close gh-105
+   * Support PyPy
+   * Add filter for apache-botsearch
+   * Add filter for kerio. Thanks Tony Lawrence for blog of regexs and
+     providing samples. Close gh-120
+   * Filter for stunnel
+   * Filter for Counter Strike 1.6. Thanks to onorua for logs.
+     Close gh-347
+   * Filter for squirrelmail. Close gh-261
+   * Filter for tine20. Close gh-583
+   * Custom date formats (strptime) can now be set in filters and jail.conf
+   * Python based actions can now be created.
+     - SMTP action for sending emails on jail start, stop and ban.
+   * Added action to use badips.com reporting and blacklist
+     - Requires Python 2.7+
+
+- Enhancements
+   * Fail2ban-regex - don't accumulate lines if not printing them.
+     add options to suppress output of missed/ignored lines. Close gh-644
+   * Asterisk now supports syslog format
+   * Jail names increased to 26 characters and iptables prefix reduced
+     from fail2ban- to f2b- as suggested by buanzo in gh-462.
+   * Multiline filter for sendmail-spam. Close gh-418
+   * Multiline regex for Disconnecting: Too many authentication failures for
+     root [preauth]\nConnection closed by 6X.XXX.XXX.XXX [preauth]
+   * Multiline regex for Disconnecting: Connection from 61.XX.XX.XX port
+     51353\nToo many authentication failures for root [preauth]. Thanks
+     Helmut Grohne. Close gh-457
+   * Replacing use of deprecated API (.warning, .assertEqual, etc)
+   * [..a648cc2] Filters can have options now too which are substituted into
+     failregex / ignoreregex
+   * [..e019ab7] Multiple instances of the same action are allowed in the
+     same jail -- use actname option to disambiguate.
+   * Add honeypot email address to exim-spam filter as argument
+   * Properties and methods of actions accessible from fail2ban-client
+     - Use of properties replaces command actions "cinfo" interface
 
 ver. 0.8.13 (2014/03/15) - maintenance-only-from-now-on
 -----------
@@ -27,7 +135,7 @@ ver. 0.8.13 (2014/03/15) - maintenance-only-from-now-on
     Thanks Noel Butler.
 
 ver. 0.8.12 (2014/01/22) - things-can-only-get-better
------------
+----------
 
 - IMPORTANT incompatible changes:
   - Rename firewall-cmd-direct-new to firewallcmd-new to fit within jail name
@@ -39,7 +147,7 @@ ver. 0.8.12 (2014/01/22) - things-can-only-get-better
   - allow for ",milliseconds" in the custom date format of proftpd.log
   - allow for ", referer ..." in apache-* filter for apache error logs.
   - allow for spaces at the beginning of kernel messages. Closes gh-448
-  - recidive jail to block all protocols. Closes gh-440. Thanksg Ioan Indreias
+  - recidive jail to block all protocols. Closes gh-440. Thanks Ioan Indreias
   - smtps not a IANA standard and has been removed from Arch. Replaced with
     465. Thanks Stefan. Closes gh-447
   - add 'flushlogs' command to allow logrotation without clobbering logtarget
@@ -52,7 +160,7 @@ ver. 0.8.12 (2014/01/22) - things-can-only-get-better
   - Asynchat changed to use push method which verifys whether all data was
     send. This ensures that all data is sent before closing the connection.
   - Removed unnecessary reference to as yet undeclared $jail_name when checking
-    a specific jail.
+    a specific jail in nagios script.
   - Filter dovecot reordered session and TLS items in regex with wider scope
     for session characters. Thanks Ivo Truxa. Closes gh-586
   - A single bad failregex or command syntax in configuration files won't stop
@@ -68,8 +176,11 @@ ver. 0.8.12 (2014/01/22) - things-can-only-get-better
     Thanks dani. Closes gh-503
   - exim-spam filter to match spamassassin log entry for option SAdevnull.
     Thanks Ivo Truxa. Closes gh-533
+  - filter.d/nsd.conf -- also amended Unix date template to match nsd format
   - Added to sshd filter expression for "Received disconnect from <HOST>: 3:
     ...: Auth fail". Thanks Marcel Dopita. Closes gh-289
+  - loglines now also report "[PID]" after the name portion
+  - Added filter.d/ejabberd-auth
   - Improved ACL-handling for Asterisk
   - loglines now also report "[PID]" after the name portion
   - Added improper command pipelining to postfix filter.
@@ -79,10 +190,12 @@ ver. 0.8.12 (2014/01/22) - things-can-only-get-better
   - filter.d/solid-pop3d -- added thanks to Jacques Lav!gnotte on mailinglist.
   - Add filter for apache-modsecurity.
   - filter.d/nsd.conf -- also amended Unix date template to match nsd format
-  - Added filter.d/openwebmail filter thanks Ivo Truxa. Closes gh-543
-  - Added filter.d/horde.
+  - Added openwebmail filter thanks Ivo Truxa. Closes gh-543
   - Added filter for freeswitch. Thanks Jim and editors and authors of 
-    http://wiki.freeswitch.org/wiki/Fail2ban.
+    http://wiki.freeswitch.org/wiki/Fail2ban
+  - Added groupoffice filter thanks to logs from Merijn Schering.
+    Closes gh-566
+  - Added filter for horde
   - Added filter for squid. Thanks Roman Gelfand.
   - Added filter for ejabberd-auth.
   - Added filter.d/openwebmail filter thanks Ivo Truxa. Closes gh-543
@@ -95,7 +208,7 @@ ver. 0.8.12 (2014/01/22) - things-can-only-get-better
 
 
 ver. 0.8.11 (2013/11/13) - loves-unittests-and-tight-DoS-free-filter-regexes
------------
+----------
 
 In light of CVE-2013-2178 that triggered our last release we have put
 a significant effort into tightening all of the regexs of our filters

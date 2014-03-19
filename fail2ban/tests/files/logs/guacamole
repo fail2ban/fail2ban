@@ -1,0 +1,12 @@
+# failJSON: { "match": false }
+apr 15, 2013 8:34:08 PM org.slf4j.impl.JCLLoggerAdapter warn
+# failJSON: { "time": "2013-04-15T20:34:08", "match": true , "host": "192.0.2.0" }
+WARNING: Authentication attempt from 192.0.2.0 for user "null" failed.
+# failJSON: { "match": false }
+apr 16, 2013 8:32:13 AM org.slf4j.impl.JCLLoggerAdapter warn
+# failJSON: { "time": "2013-04-16T08:32:13", "match": true , "host": "192.0.2.0" }
+WARNING: Authentication attempt from 192.0.2.0 for user "null" failed.
+# failJSON: { "match": false }
+apr 16, 2013 8:32:28 AM org.slf4j.impl.JCLLoggerAdapter warn
+# failJSON: { "time": "2013-04-16T08:32:28", "match": true , "host": "192.0.2.0" }
+WARNING: Authentication attempt from 192.0.2.0 for user "pippo" failed.

@@ -1,0 +1,11 @@
+# failJSON: { "match": false }
+=INFO REPORT==== 2013-07-14 17:53:40 ===
+# failJSON: { "match": false }
+I(<0.370.0>:ejabberd_listener:281) : (#Port<0.6910>) Accepted connection {{192,0,2,4},12716} -> {{198,51,100,2},5222}
+
+# failJSON: { "match": false }
+=INFO REPORT==== 2013-07-14 17:53:40 ===
+# failJSON: { "time": "2013-07-14T17:53:40", "match": true , "host": "192.0.2.4" }
+I(<0.1440.0>:ejabberd_c2s:813) : ({socket_state,tls,{tlssock,#Port<0.6910>,#Port<0.6912>},<0.1439.0>}) Failed authentication for user@example.com from IP 192.0.2.4 ({{192,0,2,4},12716})
+# failJSON: { "time": "2014-01-07T18:09:08", "match": true , "host": "1.2.3.4" }
+2014-01-07 18:09:08.512 [info] <0.22741.1>@ejabberd_c2s:wait_for_feature_request:662 ({socket_state,p1_tls,{tlssock,#Port<0.24718>,#Port<0.24720>},<0.22740.1>}) Failed authentication for test@example.com from IP 1.2.3.4

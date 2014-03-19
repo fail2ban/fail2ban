@@ -13,20 +13,6 @@ Legend:
 # partially done
 * done
 
-- more detailed explaination in DEVELOP for new developers (eg. howto build this HEX numbers in ChangeLog)
-
-- Run tests though all filters/examples files - (see sshd example file) as unit
-  test
-
-* Removed relative imports
-
-* Cleanup fail2ban-client and fail2ban-server. Move code to server/ and client/
-
-- Add timeout to external commands (signal alarm, watchdog thread, etc)
-
-- Uniformize filters and actions name. Use the software name (openssh, postfix,
-  proftp) and possible qualifier (e.g. auth) after a '-'
-
 - Added <USER> tag for failregex. Add features using this information. Maybe add
   more tags
 
@@ -37,23 +23,10 @@ Legend:
 - Auto-enable function (search for log files), check modification date to see if
   service is still in use
 
-- Improve parsing of the action parameters in jailreader.py
-
 - Better handling of the protocol in transmitter.py
 
 - Add gettext support (I18N)
 
-- Multiline log reading
-
-- Improve execution of action. Why does subprocess.call deadlock with
-  multi-jails?
-
-# see Feature Request Tracking System at SourceForge.net
-
 # improve documentation and website for user
 
 # better return values in function
-
-# refactoring in server.py, actions.py, filter.py
-
-* New backend: pyinotify

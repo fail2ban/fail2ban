@@ -9,7 +9,7 @@ for python in /usr/{,local/}bin/python2.[0-9]{,.*}{,-dbg}
 do
 	[ -e "$python" ] || continue
 	echo "Testing using $python"
-	$python ./fail2ban-testcases "$@" || failed+=" $python"
+	$python bin/fail2ban-testcases "$@" || failed+=" $python"
 done
 
 if [ ! -z "$failed" ]; then

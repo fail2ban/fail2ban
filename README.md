@@ -2,7 +2,7 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v0.8.12                 2014/01/22
+                       v0.9.0                  2014/03/14
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
@@ -10,6 +10,11 @@ Fail2Ban scans log files like /var/log/pwdfail and bans IP that makes too many
 password failures. It updates firewall rules to reject the IP address. These
 rules can be defined by the user. Fail2Ban can read multiple log files such as
 sshd or Apache web server ones.
+
+Fail2Ban is able to reduce the rate of incorrect authentications attempts
+however it cannot eliminate the risk that weak authentication presents.
+Configure services to use only two factor or public/private authentication
+mechanisms if you really want to protect services.
 
 This README is a quick introduction to Fail2ban. More documentation, FAQ, HOWTOs
 are available in fail2ban(1) manpage and on the website http://www.fail2ban.org
@@ -21,21 +26,22 @@ Installation:
 this case, you should use it instead.**
 
 Required:
-- [Python >= 2.4](http://www.python.org)
+- [Python2 >= 2.6 or Python >= 3.2](http://www.python.org) or [PyPy](http://pypy.org)
 
 Optional:
 - [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify)
   - Linux >= 2.6.13
 - [gamin >= 0.0.21](http://www.gnome.org/~veillard/gamin)
+- [systemd >= 204](http://www.freedesktop.org/wiki/Software/systemd)
 
 To install, just do:
 
-    tar xvfj fail2ban-0.8.12.tar.bz2
-    cd fail2ban-0.8.12
+    tar xvfj fail2ban-0.9.0.tar.bz2
+    cd fail2ban-0.9.0
     python setup.py install
 
-This will install Fail2Ban into /usr/share/fail2ban. The executable scripts are
-placed into /usr/bin, and configuration under /etc/fail2ban.
+This will install Fail2Ban into the python library directory. The executable
+scripts are placed into /usr/bin, and configuration under /etc/fail2ban.
 
 Fail2Ban should be correctly installed now. Just type:
 
@@ -50,8 +56,7 @@ Configuration:
 You can configure Fail2Ban using the files in /etc/fail2ban. It is possible to
 configure the server using commands sent to it by fail2ban-client. The
 available commands are described in the fail2ban-client(1) manpage.  Also see
-fail2ban(1) manpage for further references and find even more documentation on
-the website: http://www.fail2ban.org
+fail2ban(1) and jail.conf(5)  manpages for further references.
 
 Code status:
 ------------
