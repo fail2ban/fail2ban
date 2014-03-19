@@ -513,8 +513,13 @@ class TransmitterLogging(TransmitterBase):
 
 		self.setGetTest("logtarget", "STDOUT")
 		self.setGetTest("logtarget", "STDERR")
-		if sys.platform.lower().startswith('linux'):
-			self.setGetTest("logtarget", "SYSLOG")
+
+	def testLogTargetSYSLOG(self):
+		if not os.path.exists("/dev/log") and sys.version_info >= (2, 7):
+			raise unittest.SkipTest("'/dev/log' not present")
+		elif not os.path.exists("/dev/log"):
+			return
+		self.setGetTest("logtarget", "SYSLOG")
 
 	def testLogLevel(self):
 		self.setGetTest("loglevel", "4", 4)
