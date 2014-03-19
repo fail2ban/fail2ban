@@ -31,11 +31,16 @@ from .jails import Jails
 from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
-from .database import Fail2BanDb
 from .. import version
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
+
+try:
+	from .database import Fail2BanDb
+except ImportError:
+	# Dont print error here, as database may not even be used
+	Fail2BanDb = None
 
 class Server:
 	
@@ -439,8 +444,13 @@ class Server:
 			if filename.lower() == "none":
 				self.__db = None
 			else:
-				self.__db = Fail2BanDb(filename)
-				self.__db.delAllJails()
+				if Fail2BanDb is not None:
+					self.__db = Fail2BanDb(filename)
+					self.__db.delAllJails()
+				else:
+					logSys.error(
+						"Unable to import fail2ban database module as sqlite "
+						"is not available.")
 		else:
 			raise RuntimeError(
 				"Cannot change database when there are jails present")
