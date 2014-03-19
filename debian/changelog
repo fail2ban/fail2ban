@@ -7,9 +7,11 @@ fail2ban (0.8.13-1) unstable; urgency=low
       ejabberd-auth, ssh-blocklist, nagios
     - new configuration option: ignorecommand
   * debian/post{inst,rm},preinst:
-    - [thanks to Daniel Schaal]: take care about renaming
+    - [thanks to Daniel Schaal]: take care about renaming config files
       - firewall-cmd-direct-new.conf to firewallcmd-new.conf which happened
         in 0.8.11-29-g56b6bf7
+      - lighttpd-fastcgi.conf to suhosin.conf and
+        sasl.conf to postfix-sasl.conf in the past 0.8.11 release
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 18 Mar 2014 23:13:35 -0400
 
