@@ -1,18 +1,16 @@
 fail2ban (0.9.0+git37-gdeb5924-1) experimental; urgency=medium
 
   [ Daniel Schaal ]
-
   * debian/ updated for 0.9 release
     0.9 release introduced big changes in internal organization (Python
     module now), and new features, and stock jail.conf now follows
     Debian's style, thus custom Debian jail.conf was deprecated.  See NEWS
     file and upstream ChangeLog for further details.
 
-  [ Yaroslav Halchenko]
-
+  [ Yaroslav Halchenko ]
   * Post 0.9 release snapshot.
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 19 Mar 2014 10:49:42 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 20 Mar 2014 21:29:25 -0400
 
 fail2ban (0.8.13-1) unstable; urgency=low
 
