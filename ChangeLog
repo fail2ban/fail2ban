@@ -16,6 +16,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * fail2ban-regex failed to work in python3 due to space/tab mix
    * journalmatch for recidive incorrect PRIORITY
    * loglevel couldn't be changed in fail2ban.conf
+   * Handle case when no sqlite library is available for persistent database
 
 - New features:
 
