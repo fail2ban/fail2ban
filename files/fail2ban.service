@@ -1,6 +1,6 @@
 [Unit]
-Description=Fail2ban Service
-After=syslog.target network.target
+Description=Fail2Ban Service
+After=network.target iptables.service firewalld.service
 
 [Service]
 Type=forking
