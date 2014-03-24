@@ -222,7 +222,7 @@ class JailReader(ConfigReader):
 	def extractOptions(option):
 		match = JailReader.optionCRE.match(option)
 		if not match:
-			# TODO propper error handling
+			# TODO proper error handling
 			return None, None
 		option_name, optstr = match.groups()
 		option_opts = dict()

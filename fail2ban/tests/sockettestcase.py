@@ -68,7 +68,7 @@ class Socket(unittest.TestCase):
 		self.assertRaises(
 			AsyncServerException, self.server.start, self.sock_name, False)
 
-		# Try agin with force set
+		# Try again with force set
 		serverThread = threading.Thread(
 			target=self.server.start, args=(self.sock_name, True))
 		serverThread.daemon = True
