@@ -269,15 +269,15 @@ and bug requests.
   Daniel Black & Sebastian Arcus
    * filter.d/asterisk -- more regexes
   Daniel Black
-   * action.d/hostsdeny -- NOTE: new dependancy 'ed'. Switched to use 'ed' across
+   * action.d/hostsdeny -- NOTE: new dependency 'ed'. Switched to use 'ed' across
      all platforms to ensure permissions are the same before and after a ban.
      Closes gh-266. hostsdeny supports daemon_list now too.
-   * action.d/bsd-ipfw - action option unsed. Change blocktype to port unreach
+   * action.d/bsd-ipfw - action option unused. Change blocktype to port unreach
      instead of deny for consistancy.
    * filter.d/dovecot - added to support different dovecot failure
      "..disallowed plaintext auth". Closes Debian bug #709324
    * filter.d/roundcube-auth - timezone offset can be positive or negative
-   * action.d/bsd-ipfw - action option unsed. Fixed to blocktype for
+   * action.d/bsd-ipfw - action option unused. Fixed to blocktype for
      consistency. default to port unreach instead of deny
    * filter.d/dropbear - fix regexs to match standard dropbear and the patched
      http://www.unchartedbackwaters.co.uk/files/dropbear/dropbear-0.52.patch

@@ -156,7 +156,7 @@ class Fail2BanDb(object):
 					logSys.warning( "Database updated from '%i' to '%i'",
 						version, newversion)
 				else:
-					logSys.error( "Database update failed to acheive version '%i'"
+					logSys.error( "Database update failed to achieve version '%i'"
 						": updated from '%i' to '%i'",
 						Fail2BanDb.__version__, version, newversion)
 					raise RuntimeError('Failed to fully update')
@@ -357,7 +357,7 @@ class Fail2BanDb(object):
 		Parameters
 		----------
 		jail : Jail
-			Jail in which the ban has occured.
+			Jail in which the ban has occurred.
 		ticket : BanTicket
 			Ticket of the ban to be added.
 		"""
