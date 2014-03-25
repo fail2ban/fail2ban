@@ -9,6 +9,9 @@ fail2ban (0.9.0+git48-gabcab00-1) experimental; urgency=medium
 
   [ Yaroslav Halchenko ]
   * Post 0.9 release snapshot.
+  * debian/rules
+    - do not ignore tests failures
+    - nagios and cacti examples get installed
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 25 Mar 2014 00:43:46 -0400
 

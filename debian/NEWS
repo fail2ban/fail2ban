@@ -1,9 +1,21 @@
-fail2ban (0.9.0+git37-gdeb5924-1) experimental; urgency=low
+fail2ban (0.9.0+git48-gabcab00-1) experimental; urgency=low
 
-  From this version on log paths are defined in distro specific files.
-  for Debian this is in /etc/fail2ban/paths-debian.conf
+  [ Yaroslav Halchenko ]
+  * This version went through big refactoring which allowed to gain new
+    features such as multiline matching (see upstream's changelog for more
+    information).
+  * Although .local files are still supported, customizations are advised
+    to be provided under corresponding .d/ directories.  E.g. see
+    /etc/fail2ban/jail.d/defaults-debian.conf which is where now sshd
+    jail is enabled by default to match previous behavior of Fail2Ban in
+    Debian.
 
- -- Daniel Schaal <farbing@web.de>  Sun, 16 Mar 2014 16:51:06 +0100
+  [ Daniel Schaal ]
+  * All jails definitions were rewritten to become more concise and uniform.
+    From this version on log paths are defined in distro specific files,
+    for Debian this is in /etc/fail2ban/paths-debian.conf.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 25 Mar 2014 08:38:31 -0400
 
 fail2ban (0.8.11-1) unstable; urgency=low
 
