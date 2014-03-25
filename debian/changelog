@@ -1,4 +1,4 @@
-fail2ban (0.9.0+git37-gdeb5924-1) experimental; urgency=medium
+fail2ban (0.9.0+git48-gabcab00-1) experimental; urgency=medium
 
   [ Daniel Schaal ]
   * debian/ updated for 0.9 release
@@ -10,7 +10,7 @@ fail2ban (0.9.0+git37-gdeb5924-1) experimental; urgency=medium
   [ Yaroslav Halchenko ]
   * Post 0.9 release snapshot.
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 20 Mar 2014 21:29:25 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 25 Mar 2014 00:43:46 -0400
 
 fail2ban (0.8.13-1) unstable; urgency=low
 
