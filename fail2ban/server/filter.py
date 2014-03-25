@@ -717,7 +717,7 @@ class FileContainer:
 		self.setEncoding(encoding)
 		self.__tail = tail
 		self.__handler = None
-		# Try to open the file. Raises an exception if an error occured.
+		# Try to open the file. Raises an exception if an error occurred.
 		handler = open(filename, 'rb')
 		stats = os.fstat(handler.fileno())
 		self.__ino = stats.st_ino

@@ -155,7 +155,7 @@ class Transmitter(TransmitterBase):
 
 	def testDatabase(self):
 		_, tmpFilename = tempfile.mkstemp(".db", "Fail2Ban_")
-		# Jails present, cant change database
+		# Jails present, can't change database
 		self.setGetTestNOK("dbfile", tmpFilename)
 		self.server.delJail(self.jailName)
 		self.setGetTest("dbfile", tmpFilename)
@@ -581,7 +581,7 @@ class Transmitter(TransmitterBase):
 		if not filtersystemd: # pragma: no cover
 			if sys.version_info >= (2, 7):
 				raise unittest.SkipTest(
-					"systemd python interface not avilable")
+					"systemd python interface not available")
 			return
 		jailName = "TestJail2"
 		self.server.addJail(jailName, "systemd")
@@ -678,6 +678,12 @@ class TransmitterLogging(TransmitterBase):
 
 		self.setGetTest("logtarget", "STDOUT")
 		self.setGetTest("logtarget", "STDERR")
+
+	def testLogTargetSYSLOG(self):
+		if not os.path.exists("/dev/log") and sys.version_info >= (2, 7):
+			raise unittest.SkipTest("'/dev/log' not present")
+		elif not os.path.exists("/dev/log"):
+			return
 		self.setGetTest("logtarget", "SYSLOG")
 
 	def testLogLevel(self):

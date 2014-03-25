@@ -121,6 +121,14 @@ This is used for communication with the fail2ban server daemon. Do not remove th
 .B pidfile
 PID filename.  Default: /var/run/fail2ban/fail2ban.pid.
 This is used to store the process ID of the fail2ban server.
+.TP
+.B dbfile
+Database filename. Default: /var/lib/fail2ban/fail2ban.sqlite3
+This defines where the persistent data for fail2ban is stored. This persistent data allows bans to be reinstated and continue reading log files from the last read position when fail2ban is restarted. A value of \fINone\fR disables this feature.
+.TP
+.B dbpurgeage
+Database purge age in seconds. Default: 86400 (24hours)
+This sets the age at which bans should be purged from the database.
 
 .SH "JAIL CONFIGURATION FILE(S) (\fIjail.conf\fB)"
 The following options are applicable to any jail. They appear in a section specifying the jail name or in the \fI[DEFAULT]\fR section which defines default values to be used if not specified in the individual section.
@@ -129,7 +137,7 @@ The following options are applicable to any jail. They appear in a section speci
 name of the filter -- filename of the filter in /etc/fail2ban/filter.d/ without the .conf/.local extension. Only one filter can be specified.
 .TP
 .B logpath
-filename(s) of the log files to be monitored, seperate by new lines. Globs -- paths containing * and ? or [0-9] -- can be used however only the files that exist at start up matching this glob pattern will be considered.
+filename(s) of the log files to be monitored, separated by new lines. Globs -- paths containing * and ? or [0-9] -- can be used however only the files that exist at start up matching this glob pattern will be considered.
 
 Optional space separated option 'tail' can be added to the end of the path to cause the log file to be read from the end, else default 'head' option reads file from the beginning
 

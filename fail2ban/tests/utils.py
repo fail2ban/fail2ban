@@ -209,6 +209,9 @@ def gatherTests(regexps=None, no_network=False):
 	for file_ in os.listdir(
 		os.path.abspath(os.path.dirname(action_d.__file__))):
 		if file_.startswith("test_") and file_.endswith(".py"):
+			if no_network and file_ in ['test_badips.py']: #pragma: no cover
+				# Test required network
+				continue
 			tests.addTest(testloader.loadTestsFromName(
 				"%s.%s" % (action_d.__name__, os.path.splitext(file_)[0])))
 

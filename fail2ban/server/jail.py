@@ -211,7 +211,8 @@ class Jail:
 		if self.database is not None:
 			for ticket in self.database.getBans(
 				jail=self, bantime=self.actions.getBanTime()):
-				self.__queue.put(ticket)
+				if not self.filter.inIgnoreIPList(ticket.getIP()):
+					self.__queue.put(ticket)
 		logSys.info("Jail '%s' started" % self.name)
 
 	def stop(self):
