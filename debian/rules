@@ -20,20 +20,20 @@ override_dh_clean:
 
 override_dh_install:
 	rm -f $(DESTDIR)/usr/share/doc/fail2ban/README.Solaris
-	:# Remove explicitely created /var/run/fail2ban
-	:# just to please lintian since init file will
-	:# take care about it anyways
+	: # Remove explicitely created /var/run/fail2ban
+	: # just to please lintian since init file will
+	: # take care about it anyways
 	rm -rf $(DESTDIR)/var/run/
-	:# Install bash completion
+	: # Install bash completion
 	install -d $(DESTDIR)/etc/bash_completion.d
 	install -m 644 files/bash-completion $(DESTDIR)/etc/bash_completion.d/fail2ban
-	:# Install systemd files
+	: # Install systemd files
 	install -d $(DESTDIR)/lib/systemd/system
 	install -d $(DESTDIR)/usr/lib/tmpfiles.d
 	install -m 644 files/fail2ban.service $(DESTDIR)/lib/systemd/system
 	install -m 644 files/fail2ban-tmpfiles.conf $(DESTDIR)/usr/lib/tmpfiles.d
 	install -d $(DESTDIR)/lib/systemd/system
-	:# Install default jail enabler
+	: # Install default jail enabler
 	install -m 644 debian/source/jail.d_defaults-debian.conf $(DESTDIR)/etc/fail2ban/jail.d/defaults-debian.conf
 	dh_install
 
