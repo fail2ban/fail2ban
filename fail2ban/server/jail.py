@@ -209,7 +209,7 @@ class Jail:
 		self.actions.start()
 		# Restore any previous valid bans from the database
 		if self.database is not None:
-			for ticket in self.database.getBans(
+			for ticket in self.database.getBansMerged(
 				jail=self, bantime=self.actions.getBanTime()):
 				if not self.filter.inIgnoreIPList(ticket.getIP()):
 					self.__queue.put(ticket)

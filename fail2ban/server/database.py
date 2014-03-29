@@ -361,7 +361,10 @@ class Fail2BanDb(object):
 		ticket : BanTicket
 			Ticket of the ban to be added.
 		"""
-		self._bansMergedCache = {}
+		try:
+			del self._bansMergedCache[(ticket.getIP(), jail)]
+		except KeyError:
+			pass
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
@@ -383,7 +386,7 @@ class Fail2BanDb(object):
 		if ip is not None:
 			query += " AND ip=?"
 			queryArgs.append(ip)
-		query += " ORDER BY timeofban"
+		query += " ORDER BY ip, timeofban"
 
 		return cur.execute(query, queryArgs)
 
@@ -412,7 +415,7 @@ class Fail2BanDb(object):
 			tickets[-1].setAttempt(data['failures'])
 		return tickets
 
-	def getBansMerged(self, ip, jail=None, **kwargs):
+	def getBansMerged(self, ip=None, jail=None, bantime=None):
 		"""Get bans from the database, merged into single ticket.
 
 		This is the same as `getBans`, but bans merged into single
@@ -430,22 +433,44 @@ class Fail2BanDb(object):
 
 		Returns
 		-------
-		Ticket
-			Single ticket representing bans stored in database.
+		list or Ticket
+			Single ticket representing bans stored in database per IP
+			in a list. When `ip` argument passed, a single `Ticket` is
+			returned.
 		"""
-		cacheKey = ip if jail is None else "%s|%s" % (ip, jail.name)
-		if cacheKey in self._bansMergedCache:
-			return self._bansMergedCache[cacheKey]
-		matches = []
-		failures = 0
-		for ip, timeofban, data in self._getBans(ip=ip, jail=jail, **kwargs):
-			#TODO: Implement data parts once arbitrary match keys completed
-			matches.extend(data['matches'])
-			failures += data['failures']
-		ticket = FailTicket(ip, timeofban, matches)
-		ticket.setAttempt(failures)
-		self._bansMergedCache[cacheKey] = ticket
-		return ticket
+		if bantime is None:
+			cacheKey = (ip, jail)
+			if cacheKey in self._bansMergedCache:
+				return self._bansMergedCache[cacheKey]
+
+		tickets = []
+		ticket = None
+
+		results = list(self._getBans(ip=ip, jail=jail, bantime=bantime))
+		if results:
+			prev_banip = results[0][0]
+			matches = []
+			failures = 0
+			for banip, timeofban, data in results:
+				#TODO: Implement data parts once arbitrary match keys completed
+				if banip != prev_banip:
+					ticket = FailTicket(prev_banip, prev_timeofban, matches)
+					ticket.setAttempt(failures)
+					tickets.append(ticket)
+					# Reset variables
+					prev_banip = banip
+					matches = []
+					failures = 0
+				matches.extend(data['matches'])
+				failures += data['failures']
+				prev_timeofban = timeofban
+			ticket = FailTicket(banip, prev_timeofban, matches)
+			ticket.setAttempt(failures)
+			tickets.append(ticket)
+
+		if bantime is None:
+			self._bansMergedCache[cacheKey] = tickets if ip is None else ticket
+		return tickets if ip is None else ticket
 
 	@commitandrollback
 	def purge(self, cur):
