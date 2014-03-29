@@ -62,9 +62,7 @@ class CallingMap(MutableMapping):
 	Attributes
 	----------
 	data : dict
-		The dictionary data which can be accessed to obtain items
-		without callable values being called.
-
+		The dictionary data which can be accessed to obtain items uncalled
 	"""
 
 	def __init__(self, *args, **kwargs):
