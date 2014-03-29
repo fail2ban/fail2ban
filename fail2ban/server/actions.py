@@ -77,6 +77,7 @@ class Actions(JailThread, Mapping):
 		JailThread.__init__(self)
 		## The jail which contains this action.
 		self._jail = jail
+		self.name = "%s-actions" % jail.name
 		if OrderedDict is not None:
 			self._actions = OrderedDict()
 		else:
