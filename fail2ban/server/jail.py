@@ -104,7 +104,9 @@ class Jail:
 				self.__actions = Actions(self)
 				return					# we are done
 			except ImportError, e:
-				logSys.debug(
+				# Log debug if auto, but error if specific
+				logSys.log(
+					logging.DEBUG if backend == "auto" else logging.ERROR,
 					"Backend %r failed to initialize due to %s" % (b, e))
 		# log error since runtime error message isn't printed, INVALID COMMAND
 		logSys.error(
