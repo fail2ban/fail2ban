@@ -17,6 +17,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * journalmatch for recidive incorrect PRIORITY
    * loglevel couldn't be changed in fail2ban.conf
    * Handle case when no sqlite library is available for persistent database
+   * Only reban once per IP from database on fail2ban restart
 
 - New features:
 
