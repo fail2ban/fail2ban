@@ -550,7 +550,7 @@ def get_monitor_failures_testcase(Filter_):
 			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
 
 			if interim_kill:
-				_killfile(None, self.name)
+				_killfile(self.file, self.name)
 				time.sleep(0.2)				  # let them know
 
 			# now create a new one to override old one
