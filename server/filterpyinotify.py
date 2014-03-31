@@ -90,6 +90,9 @@ class FilterPyinotify(FileFilter):
 				self._delFileWatcher(path)
 				# place a new one
 				self._addFileWatcher(path)
+		elif event.mask & pyinotify.IN_IGNORED:
+			# Caused when watch removed, either by rm_watch or file deletion
+			return
 
 		self._process_file(path)
 
@@ -118,9 +121,11 @@ class FilterPyinotify(FileFilter):
 
 	def _delFileWatcher(self, path):
 		wdInt = self.__watches[path]
-		wd = self.__monitor.rm_watch(wdInt)
-		if wd[wdInt]:
-			del self.__watches[path]
+		if wdInt is None:
+			return False
+		elif self.__monitor.get_path(wdInt) is None or \
+			self.__monitor.rm_watch(wdInt)[wdInt]:
+			self.__watches[path] = None
 			logSys.debug("Removed file watcher for %s", path)
 			return True
 		else:
@@ -151,6 +156,7 @@ class FilterPyinotify(FileFilter):
 	def _delLogPath(self, path):
 		if not self._delFileWatcher(path):
 			logSys.error("Failed to remove watch on path: %s", path)
+		del self.__watches[path]
 
 		path_dir = dirname(path)
 		if not len([k for k in self.__watches
