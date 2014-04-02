@@ -120,6 +120,10 @@ class ConfigReader(SafeConfigParserWithIncludes):
 					logSys.warning("'%s' not defined in '%s'. Using default one: %r"
 								% (option[1], sec, option[2]))
 					values[option[1]] = option[2]
+				else:
+					logSys.debug(
+						"Non essential option '%s' not defined in '%s'.",
+						option[1], sec)
 			except ValueError:
 				logSys.warning("Wrong value for '" + option[1] + "' in '" + sec +
 							"'. Using default one: '" + `option[2]` + "'")

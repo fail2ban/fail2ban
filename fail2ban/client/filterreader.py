@@ -35,7 +35,7 @@ logSys = logging.getLogger(__name__)
 class FilterReader(DefinitionInitConfigReader):
 
 	_configOpts = [
-		["string", "ignoreregex", ""],
+		["string", "ignoreregex", None],
 		["string", "failregex", ""],
 	]
 
