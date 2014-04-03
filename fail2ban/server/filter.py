@@ -63,7 +63,7 @@ class Filter(JailThread):
 		## Use DNS setting
 		self.setUseDns(useDns)
 		## The amount of time to look back.
-		self.__findTime = 6000
+		self.__findTime = 600
 		## The ignore IP list.
 		self.__ignoreIpList = []
 		## Size of line buffer

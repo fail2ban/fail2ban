@@ -34,11 +34,11 @@ logSys = logging.getLogger(__name__)
 class ActionReader(DefinitionInitConfigReader):
 
 	_configOpts = [
-		["string", "actionstart", ""],
-		["string", "actionstop", ""],
-		["string", "actioncheck", ""],
-		["string", "actionban", ""],
-		["string", "actionunban", ""],
+		["string", "actionstart", None],
+		["string", "actionstop", None],
+		["string", "actioncheck", None],
+		["string", "actionban", None],
+		["string", "actionunban", None],
 	]
 
 	def __init__(self, file_, jailName, initOpts, **kwargs):
