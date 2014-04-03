@@ -4,7 +4,7 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.8.13.dev)                                         2014/??/??
+Fail2Ban (version 0.8.14.dev)                                         2014/??/??
 ================================================================================
 
 ver. 0.8.14 (2014/??/??) - take-care-of-the-elderly
@@ -12,6 +12,8 @@ ver. 0.8.14 (2014/??/??) - take-care-of-the-elderly
 
 - Fixes:
   - minor fixes for claimed Python 2.4 and 2.5 compatibility
+  - Handle case when inotify watch is auto deleted on file deletion to stop
+    error messages
 
 
 ver. 0.8.13 (2014/03/15) - maintenance-only-from-now-on
