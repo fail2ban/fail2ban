@@ -68,7 +68,8 @@ class JailReader(ConfigReader):
 		return out
 	
 	def isEnabled(self):
-		return self.__force_enable or ( self.__opts and self.__opts["enabled"] )
+		return self.__force_enable or (
+			self.__opts and self.__opts.get("enabled", False))
 
 	@staticmethod
 	def _glob(path):
@@ -85,16 +86,14 @@ class JailReader(ConfigReader):
 		return pathList
 
 	def getOptions(self):
-		opts = [["bool", "enabled", "false"],
-				["string", "logpath", "/var/log/messages"],
-				["string", "logencoding", "auto"],
+		opts = [["bool", "enabled", False],
+				["string", "logpath", None],
+				["string", "logencoding", None],
 				["string", "backend", "auto"],
-				["int", "maxretry", 3],
-				["int", "findtime", 600],
-				["int", "bantime", 600],
-				["string", "usedns", "warn"],
-				["string", "failregex", None],
-				["string", "ignoreregex", None],
+				["int", "maxretry", None],
+				["int", "findtime", None],
+				["int", "bantime", None],
+				["string", "usedns", None],
 				["string", "ignorecommand", None],
 				["string", "ignoreip", None],
 				["string", "filter", ""],
@@ -199,15 +198,8 @@ class JailReader(ConfigReader):
 				stream.append(["set", self.__name, "bantime", self.__opts[opt]])
 			elif opt == "usedns":
 				stream.append(["set", self.__name, "usedns", self.__opts[opt]])
-			elif opt == "failregex":
-				stream.append(["set", self.__name, "addfailregex", self.__opts[opt]])
 			elif opt == "ignorecommand":
 				stream.append(["set", self.__name, "ignorecommand", self.__opts[opt]])
-			elif opt == "ignoreregex":
-				for regex in self.__opts[opt].split('\n'):
-					# Do not send a command if the rule is empty.
-					if regex != '':
-						stream.append(["set", self.__name, "addignoreregex", regex])
 		if self.__filter:
 			stream.extend(self.__filter.convert())
 		for action in self.__actions:
