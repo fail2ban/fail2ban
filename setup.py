@@ -92,77 +92,77 @@ setup(
 	license = "GPL",
 	platforms = "Posix",
 	cmdclass = {'build_py': build_py, 'build_scripts': build_scripts},
-	scripts =	[
-					'bin/fail2ban-client',
-					'bin/fail2ban-server',
-					'bin/fail2ban-regex',
-					'bin/fail2ban-testcases',
-				],
-	packages =	[
-					'fail2ban',
-					'fail2ban.client',
-					'fail2ban.server',
-					'fail2ban.tests',
-					'fail2ban.tests.action_d',
-				],
-	package_data =	{
-						'fail2ban.tests': 
-							[ join(w[0], f).replace("fail2ban/tests/", "", 1)
-								for w in os.walk('fail2ban/tests/files')
-								for f in w[2]] +
-							[ join(w[0], f).replace("fail2ban/tests/", "", 1)
-								for w in os.walk('fail2ban/tests/config')
-								for f in w[2]] +
-							[ join(w[0], f).replace("fail2ban/tests/", "", 1)
-								for w in os.walk('fail2ban/tests/action_d')
-								for f in w[2]]
-					},
-	data_files =	[
-						('/etc/fail2ban',
-							glob("config/*.conf")
-						),
-						('/etc/fail2ban/filter.d',
-							glob("config/filter.d/*.conf")
-						),
-						('/etc/fail2ban/action.d',
-							glob("config/action.d/*.conf") +
-							glob("config/action.d/*.py")
-						),
-						('/etc/fail2ban/fail2ban.d',
-							''
-						),
-						('/etc/fail2ban/jail.d',
-							''
-						),
-						('/var/lib/fail2ban',
-							''
-						),
-						('/usr/share/doc/fail2ban',
-							['README.md', 'README.Solaris', 'DEVELOP', 'FILTERS',
-							 'doc/run-rootless.txt']
-						)
-					],
+	scripts = [
+		'bin/fail2ban-client',
+		'bin/fail2ban-server',
+		'bin/fail2ban-regex',
+		'bin/fail2ban-testcases',
+	],
+	packages = [
+		'fail2ban',
+		'fail2ban.client',
+		'fail2ban.server',
+		'fail2ban.tests',
+		'fail2ban.tests.action_d',
+	],
+	package_data = {
+		'fail2ban.tests':
+			[ join(w[0], f).replace("fail2ban/tests/", "", 1)
+				for w in os.walk('fail2ban/tests/files')
+				for f in w[2]] +
+			[ join(w[0], f).replace("fail2ban/tests/", "", 1)
+				for w in os.walk('fail2ban/tests/config')
+				for f in w[2]] +
+			[ join(w[0], f).replace("fail2ban/tests/", "", 1)
+				for w in os.walk('fail2ban/tests/action_d')
+				for f in w[2]]
+	},
+	data_files = [
+		('/etc/fail2ban',
+			glob("config/*.conf")
+		),
+		('/etc/fail2ban/filter.d',
+			glob("config/filter.d/*.conf")
+		),
+		('/etc/fail2ban/action.d',
+			glob("config/action.d/*.conf") +
+			glob("config/action.d/*.py")
+		),
+		('/etc/fail2ban/fail2ban.d',
+			''
+		),
+		('/etc/fail2ban/jail.d',
+			''
+		),
+		('/var/lib/fail2ban',
+			''
+		),
+		('/usr/share/doc/fail2ban',
+			['README.md', 'README.Solaris', 'DEVELOP', 'FILTERS',
+			 'doc/run-rootless.txt']
+		)
+	],
 	**setup_extra
 )
 
 # Do some checks after installation
 # Search for obsolete files.
 obsoleteFiles = []
-elements =	{
-				"/etc/":
-					[
-						"fail2ban.conf"
-					],
-				"/usr/bin/":
-					[
-						"fail2ban.py"
-					], 
-				"/usr/lib/fail2ban/":
-					[
-						"version.py",
-						"protocol.py"
-					]
-			}
+elements = {
+	"/etc/":
+		[
+			"fail2ban.conf"
+		],
+	"/usr/bin/":
+		[
+			"fail2ban.py"
+		],
+	"/usr/lib/fail2ban/":
+		[
+			"version.py",
+			"protocol.py"
+		]
+}
 
 for directory in elements:
 	for f in elements[directory]:
