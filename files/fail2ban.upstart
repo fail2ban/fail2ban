@@ -1,0 +1,13 @@
+description "fail2ban - ban hosts that cause multiple authentication errors"
+
+start on filesystem and started networking
+stop on deconfiguring-networking
+
+expect fork
+respawn
+
+exec /usr/bin/fail2ban-client -x -b start
+
+pre-stop exec /usr/bin/fail2ban-client stop
+
+post-stop exec rm -f /var/run/fail2ban/fail2ban.pid
