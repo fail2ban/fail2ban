@@ -258,7 +258,7 @@ class BadIPsAction(ActionBase):
 				self._logSys.error(
 					"Error banning IP %s for jail '%s' with action '%s': %s",
 					ip, self._jail.name, self.banaction, e,
-					exc_info=self._logSys.getEffectiveLevel<=logging.DEBUG)
+					exc_info=self._logSys.getEffectiveLevel()<=logging.DEBUG)
 			else:
 				self._bannedips.add(ip)
 				self._logSys.info(
@@ -279,7 +279,7 @@ class BadIPsAction(ActionBase):
 				self._logSys.info(
 					"Error unbanning IP %s for jail '%s' with action '%s': %s",
 					ip, self._jail.name, self.banaction, e,
-					exc_info=self._logSys.getEffectiveLevel<=logging.DEBUG)
+					exc_info=self._logSys.getEffectiveLevel()<=logging.DEBUG)
 			else:
 				self._logSys.info(
 					"Unbanned IP %s for jail '%s' with action '%s'",
