@@ -3,9 +3,5 @@ description "fail2ban - ban hosts that cause multiple authentication errors"
 start on filesystem and started networking
 stop on deconfiguring-networking
 
-expect daemon
-respawn
-
-exec /usr/bin/fail2ban-server -x -b
-
-post-stop exec rm -f /var/run/fail2ban/fail2ban.pid
+pre-start exec /usr/bin/fail2ban-client -x start
+post-stop exec /usr/bin/fail2ban-client stop
