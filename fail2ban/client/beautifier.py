@@ -188,9 +188,9 @@ class Beautifier:
 		logSys.debug("Beautify (error) " + `response` + " with " + `self.__inputCmd`)
 		msg = response
 		if isinstance(response, UnknownJailException):
-			msg = "Sorry but the jail '" + response[0] + "' does not exist"
+			msg = "Sorry but the jail '" + response.args[0] + "' does not exist"
 		elif isinstance(response, IndexError):
 			msg = "Sorry but the command is invalid"
 		elif isinstance(response, DuplicateJailException):
-			msg = "The jail '" + response[0] + "' already exists"
+			msg = "The jail '" + response.args[0] + "' already exists"
 		return msg

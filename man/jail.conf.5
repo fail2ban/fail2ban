@@ -297,12 +297,12 @@ There are two filter definitions used in the [Definition] section:
 .TP
 .B failregex
 is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The tag \fI<HOST>\fR is used as part of the regex and is itself a regex
-for IPv4 addresses and hostnames. fail2ban will work out which one of these it actually is.
+for IPv4 addresses (and hostnames if \fBusedns\fR). Fail2Ban will work out which one of these it actually is.
 For multiline regexs the tag \fI<SKIPLINES>\fR should be used to separate lines. This allows lines between the matched lines to continue to be searched for other failures. The tag can be used multiple times.
 
 .TP
 .B ignoreregex
-is the regex to identify log entries that should be ignored by fail2ban, even if they match failregex.
+is the regex to identify log entries that should be ignored by Fail2Ban, even if they match failregex.
 
 
 .PP
@@ -330,13 +330,6 @@ indicates that this file is read before the [Definition] section.
 .TP
 \fBafter\fR
 indicates that this file is read after the [Definition] section.
-
-.B failregex
-regex  that will match failed attempts. The tag <HOST> is used as part of the regex and is itself a regex
-for IPv4 addresses (and hostnames if \fBusedns\fR). Fail2Ban will work out which one of these it actually is.
-.TP
-.B ignoreregex
-regex to identify log entries that should be ignored by Fail2Ban, even if they match failregex.
 
 .SH AUTHOR
 Fail2ban was originally written by Cyril Jaquier <cyril.jaquier@fail2ban.org>.
