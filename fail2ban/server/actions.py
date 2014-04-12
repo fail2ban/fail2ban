@@ -215,7 +215,8 @@ class Actions(JailThread, Mapping):
 				action.start()
 			except Exception as e:
 				logSys.error("Failed to start jail '%s' action '%s': %s",
-					self._jail.name, name, e)
+					self._jail.name, name, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 		while self.active:
 			if not self.idle:
 				#logSys.debug(self._jail.name + ": action")
@@ -234,7 +235,8 @@ class Actions(JailThread, Mapping):
 				action.stop()
 			except Exception as e:
 				logSys.error("Failed to stop jail '%s' action '%s': %s",
-					self._jail.name, name, e)
+					self._jail.name, name, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 		logSys.debug(self._jail.name + ": action terminated")
 		return True
 
@@ -278,7 +280,8 @@ class Actions(JailThread, Mapping):
 					except Exception as e:
 						logSys.error(
 							"Failed to execute ban jail '%s' action '%s': %s",
-							self._jail.name, name, e)
+							self._jail.name, name, e,
+							exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 				return True
 			else:
 				logSys.notice("[%s] %s already banned" % (self._jail.name,
@@ -325,7 +328,8 @@ class Actions(JailThread, Mapping):
 			except Exception as e:
 				logSys.error(
 					"Failed to execute unban jail '%s' action '%s': %s",
-					self._jail.name, name, e)
+					self._jail.name, name, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
 	@property
 	def status(self):
