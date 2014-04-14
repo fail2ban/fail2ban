@@ -11,22 +11,24 @@
   colorlinks,citecolor=blue,linkcolor=green,urlcolor=blue}
 
 % reuse the style but we need
-\input{../sty/beamer-debian.tex}
+%\input{../sty/beamer-debian.tex}
 \setbeamertemplate{blocks}[default]
 
 \let\Tiny\tiny% http://tex.stackexchange.com/q/58087/5764
 \usepackage{fancyvrb}% http://ctan.org/pkg/fancyvrb
 
-\input{s-common}
+% pretty code printing
+\usepackage{fancyvrb}
+\usepackage{color}
+\graphicspath{
+ {../../images/}
+}
 
 \title[Fail2Ban]{Fail2Ban -- keep your boxes skiddie-free}
-% PyMVPA and NeuroDebian}
 \author[yoh AKA Yarik]{Yaroslav O. Halchenko
   \href{mailto: yoh@debian.org}{yoh@debian.org}}
 \institute[Dartmouth, (Neuro)Debian]{\href{http://www.dartmouth.edu}{Dartmouth College},
 \href{http://www.debian.org}{Debian Project}
-%\href{http://neuro.debian.net}{NeuroDebian},
-%\href{http://www.pymvpa.org}{PyMVPA}
 }
 \date[PyCon 2014]{PyCon 2014, Montreal, Canada}
 
@@ -36,16 +38,11 @@
 
 \begin{document}
 
-{%\PYMVPABIG
- % TODO: create NDBG image
- \NDPYMVPABG
- %\SWIRLBG
- %\NDBG
- \frame{\titlepage}}
+\frame{\titlepage}
 
 \begin{frame}{}
 \begin{center}
-\includegraphics[width=0.6\textwidth]{pics/logo.pdf}
+\includegraphics[width=0.6\textwidth]{logo.pdf}
 \\
 \href{http://fail2ban.org}{fail2ban.org}
 \end{center}
@@ -315,17 +312,6 @@ iptables-blocktype osx-ipfw
 \begin{center}
 \Large Thanks!
 \end{center}
-%  \begin{center}
-%    \vfill
-%    %{\LARGE Thanks!}
-%    \vfill
-%    Dr. Yaroslav O. Halchenko \\
-%    Dartmouth College, NH, USA \\
-%    \textbf{\url{yoh@onerussian.com}} \\
-%%    \url{http://haxbylab.dartmouth.edu/ppl/yarik.html}
-%%    \url{http://www.onerussian.com}
-%  \end{center}
-%
 \end{frame}
 
 \appendix
@@ -353,7 +339,6 @@ iptables-blocktype osx-ipfw
 108 THANKS             # subtract 8 for the header ;)
 \end{Verbatim}
 \end{frame}
-
 
 \end{document}
 
