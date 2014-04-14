@@ -12,6 +12,8 @@ ver. 0.8.14 (2014/??/??) - take-care-of-the-elderly
 
 - Fixes:
   - minor fixes for claimed Python 2.4 and 2.5 compatibility
+  - grep in mail*-whois-lines.conf now also matches end of line to work
+    with the recidive filter
 
 
 ver. 0.8.13 (2014/03/15) - maintenance-only-from-now-on
