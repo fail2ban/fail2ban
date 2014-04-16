@@ -559,7 +559,7 @@ def get_monitor_failures_testcase(Filter_):
 
 			# now create a new one to override old one
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name + '.new',
-									  n=100).close()
+									  n=100, skip=3).close()
 			os.rename(self.name + '.new', self.name)
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
