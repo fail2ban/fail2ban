@@ -78,7 +78,7 @@ def _check_is_inode_reused():
 	Seems happening with /tmp on ext3 under good old 2.6.32-5-sparc64-smp
 
 	"""
-	_, name = tempfile.mkstemp('fail2ban', 'monitorfailures')
+	_, name = tempfile.mkstemp('fail2ban', 'checkinode')
 	for i in xrange(10):  # Test few times to make sure
 		f = open(name, 'w')
 		f.write('test')
@@ -599,15 +599,15 @@ def get_monitor_failures_testcase(Filter_):
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01) # FAIL
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
-			if delayed_close:
-				# make sure now that we close the original opened file
-				# and release the handle
-				_killfile(self.file, self.name)
 			# and to make sure that it now monitored for changes
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 									  n=100).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 9)
+			if delayed_close:
+				# make sure now that we close the original opened file
+				# and release the handle
+				_killfile(self.file, self.name)
 
 
 		def test_move_into_file(self):
@@ -617,9 +617,11 @@ def get_monitor_failures_testcase(Filter_):
 			# exactly as above test + remove file explicitly
 			# to test against possible drop-out of the file from monitoring
 			if _is_inode_reused:
-				raise unittest.SkipTest("I-node might get reused right away on this FS"
-										" can't check log-rotation on this FS with our test")
-			self._test_move_into_file(interim_kill=True, delayed_close=False)
+				if sys.version_info >= (2,7):
+					raise unittest.SkipTest("I-node might get reused right away on this FS"
+											" can't check log-rotation on this FS with our test")
+			else:
+				self._test_move_into_file(interim_kill=True, delayed_close=False)
 
 		def test_move_into_file_after_removed_delay_close(self):
 			# specificly for testing on older systems where inode might get
