@@ -35,9 +35,10 @@ class ExecuteActions(unittest.TestCase):
 		"""Call before every test case."""
 		self.__jail = DummyJail()
 		self.__actions = Actions(self.__jail)
-		self.__tmpfile, self.__tmpfilename  = tempfile.mkstemp()
+		self.__tmpfile, self.__tmpfilename  = tempfile.mkstemp('fail2ban', 'executeactions')
 
 	def tearDown(self):
+		os.close(self.__tmpfile)
 		os.remove(self.__tmpfilename)
 
 	def defaultActions(self):
