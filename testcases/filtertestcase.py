@@ -280,11 +280,15 @@ class LogFileFilterPoll(unittest.TestCase):
 class LogFileMonitor(LogCaptureTestCase):
 	"""Few more tests for FilterPoll API
 	"""
+
+	_setup_idx = 0  # to ease tracking of dangling opened files
+
 	def setUp(self):
 		"""Call before every test case."""
 		LogCaptureTestCase.setUp(self)
 		self.filter = self.name = 'NA'
-		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
+		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures-%d-' % LogFileMonitor._setup_idx)
+		LogFileMonitor._setup_idx += 1
 		self.file = open(self.name, 'a')
 		self.filter = FilterPoll(None)
 		self.filter.addLogPath(self.name)
