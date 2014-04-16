@@ -4,6 +4,9 @@ language: python
 python:
   - "2.6"
   - "2.7"
+env:
+  - LOG_LEVEL=error
+  - LOG_LEVEL=heavydebug
 before_install:
   - sudo apt-get update -qq
 install:
@@ -12,6 +15,6 @@ install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then cd ..; pip install -q coveralls; cd -; fi
 script:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then export PYTHONPATH="$PYTHONPATH:/usr/share/pyshared:/usr/lib/pyshared/python2.7"; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coverage run --rcfile=.travis_coveragerc fail2ban-testcases; else python ./fail2ban-testcases; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]] && [ $LOG_LEVEL == heavydebug ]; then coverage run --rcfile=.travis_coveragerc fail2ban-testcases -l $LOG_LEVEL; else python ./fail2ban-testcases -l $LOG_LEVEL; fi
 after_success:
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coveralls; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]] && [ $LOG_LEVEL == heavydebug ]; then coveralls; fi
