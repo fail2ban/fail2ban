@@ -69,6 +69,7 @@ class FilterPyinotify(FileFilter):
 		# Pyinotify watch manager
 		self.__monitor = pyinotify.WatchManager()
 		self.__watches = dict()
+		self.__notifier = None
 		logSys.debug("Created FilterPyinotify")
 
 
@@ -190,9 +191,10 @@ class FilterPyinotify(FileFilter):
 	def stop(self):
 		super(FilterPyinotify, self).stop()
 
-		# Stop the notifier thread
-		self.__notifier.stop()
-		self.__notifier.join()			# to not exit before notifier does
+		# Stop the notifier thread if it was ran and notifier was created
+		if self.__notifier is not None:
+			self.__notifier.stop()
+			self.__notifier.join()			# to not exit before notifier does
 		self.__cleanup()				# for pedantic ones
 
 	##
