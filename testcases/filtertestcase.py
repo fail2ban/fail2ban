@@ -56,6 +56,7 @@ def open(*args):
 		args = args + (50000,)
 	return fopen(*args)
 
+
 def _killfile(f, name):
 	try:
 		f.close()
@@ -69,6 +70,28 @@ def _killfile(f, name):
 	# there might as well be the .bak file
 	if os.path.exists(name + '.bak'):
 		_killfile(None, name + '.bak')
+
+
+def _check_is_inode_reused():
+	"""Test the underlying FS if inode gets reused if file closed/removed
+
+	Seems happening with /tmp on ext3 under good old 2.6.32-5-sparc64-smp
+
+	"""
+	_, name = tempfile.mkstemp('fail2ban', 'monitorfailures')
+	for i in xrange(10):  # Test few times to make sure
+		f = open(name, 'w')
+		f.write('test')
+		stat1 = os.stat(name)
+		_killfile(f, name)
+		name += '2'
+		f = open(name, 'w')
+		stat2 = os.stat(name)
+		_killfile(f, name)
+		if stat1.st_ino == stat2.st_ino:
+			return True
+	return False
+_is_inode_reused = _check_is_inode_reused()
 
 
 def _assert_equal_entries(utest, found, output, count=None):
@@ -541,7 +564,20 @@ def get_monitor_failures_testcase(Filter_):
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
 
-		def _test_move_into_file(self, interim_kill=False):
+		def _test_move_into_file(self, interim_kill=False, delayed_close=False):
+			"""
+			Parameters
+			----------
+			interim_kill : bool
+	          Kill the file before moving into it
+			delayed_close : bool
+			  Simulate the situation whenever file gets closed AFTER it was
+			  removed.  In some cases, seems on older kernels, with this
+			  particular test since it reuses the same test file content, we
+			  should avoid running it without delayed_close -- then new file
+			  would acquire inode of the old one and detection of the log
+			  rotation would fail which would lead to the failure of the test.
+			"""
 			# if we move a new file into the location of an old (monitored) file
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 									  n=100).close()
@@ -550,16 +586,23 @@ def get_monitor_failures_testcase(Filter_):
 			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
 
 			if interim_kill:
-				_killfile(self.file, self.name)
+				_killfile({False: self.file, True: None}[delayed_close], self.name)
 				time.sleep(0.2)				  # let them know
 
 			# now create a new one to override old one
+			# NOTE: we are reusing the same content, so the first line's
+			# digest might match, and if inode was reused -- log rotation
+			# would not be detected -- see doc above for delayed_close
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name + '.new',
 									  n=100).close()
 			os.rename(self.name + '.new', self.name)
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01) # FAIL
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
+			if delayed_close:
+				# make sure now that we close the original opened file
+				# and release the handle
+				_killfile(self.file, self.name)
 			# and to make sure that it now monitored for changes
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 									  n=100).close()
@@ -573,7 +616,15 @@ def get_monitor_failures_testcase(Filter_):
 		def test_move_into_file_after_removed(self):
 			# exactly as above test + remove file explicitly
 			# to test against possible drop-out of the file from monitoring
-		    self._test_move_into_file(interim_kill=True)
+			if _is_inode_reused:
+				raise unittest.SkipTest("I-node might get reused right away on this FS"
+										" can't check log-rotation on this FS with our test")
+			self._test_move_into_file(interim_kill=True, delayed_close=False)
+
+		def test_move_into_file_after_removed_delay_close(self):
+			# specificly for testing on older systems where inode might get
+			# reused right away
+		    self._test_move_into_file(interim_kill=True, delayed_close=True)
 
 
 		def test_new_bogus_file(self):
