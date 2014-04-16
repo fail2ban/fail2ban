@@ -78,12 +78,14 @@ def _check_is_inode_reused():
 	Seems happening with /tmp on ext3 under good old 2.6.32-5-sparc64-smp
 
 	"""
-	_, name = tempfile.mkstemp('fail2ban', 'checkinode')
+	fid, name = tempfile.mkstemp('fail2ban', 'checkinode')
+	os.close(fid)
 	for i in xrange(10):  # Test few times to make sure
 		f = open(name, 'w')
 		f.write('test')
 		stat1 = os.stat(name)
 		_killfile(f, name)
+
 		name += '2'
 		f = open(name, 'w')
 		stat2 = os.stat(name)
@@ -303,11 +305,15 @@ class LogFileFilterPoll(unittest.TestCase):
 class LogFileMonitor(LogCaptureTestCase):
 	"""Few more tests for FilterPoll API
 	"""
+
+	_setup_idx = 0  # to ease tracking of dangling opened files
+
 	def setUp(self):
 		"""Call before every test case."""
 		LogCaptureTestCase.setUp(self)
 		self.filter = self.name = 'NA'
-		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
+		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures-%d-' % LogFileMonitor._setup_idx)
+		LogFileMonitor._setup_idx += 1
 		self.file = open(self.name, 'a')
 		self.filter = FilterPoll(None)
 		self.filter.addLogPath(self.name)
