@@ -6,20 +6,20 @@ By Roy Sigurd Karlsbakk <roy@karlsbakk.net>
 
 ABOUT
 
-This readme is meant for those wanting to install fail2ban on Solaris 10,
+This README is meant for those wanting to install fail2ban on Solaris 10,
 OpenSolaris, OpenIndiana etc. To some degree it may as well be useful for
 users of older Solaris versions and Nexenta, but don't rely on it.
 
 READ ME FIRST
 
 If I use the term Solaris, I am talking about any Solaris dialect, that is, the
-official Sun/Oracle ones or derivates. If I describe an OS as
+official Sun/Oracle ones or derivatives. If I describe an OS as
 "OpenSolaris-based", it means it's either OpenSolaris, OpenIndiana or one of the
 other, but /not/ the Nexenta family, since this only uses the OpenSolaris/
 IllumOS kernel and not the userland. If I say Solaris 10, I mean Solaris 10 and
 perhaps, if you're lucky and have some good gods on your side, it may also apply
 to Solaris 9 or even 8 and hopefully in the new Solaris 11 whenever that may be
-released. Quoted lines of code, settings et cetera are indented with two spaces.
+released. Quoted lines of code, settings etc. are indented with two spaces.
 This does _not_ mean you should use that indentation, especially in config files
 where they can be harmful. Optional settings are prefixed with OPT: while
 required settings are prefixed with REQ:. If no prefix is found, regard it as a
@@ -111,7 +111,7 @@ GOTCHAS AND FIXMES
     svcadm enable fail2ban
 
 * If svcs -xv says that fail2ban failed to start or svcs says it's in maintenance mode
-  check /var/svc/log/network-fail2ban:default.log for clues. 
+  check /var/svc/log/network-fail2ban:default.log for clues.
   Check permissions on /var/adm, /var/adm/auth.log /var/adm/fail2ban.log and /var/run/fail2ban
   You may need to:
 
