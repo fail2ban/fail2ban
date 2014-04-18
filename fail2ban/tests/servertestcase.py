@@ -530,11 +530,27 @@ class Transmitter(TransmitterBase):
 
 	def testPythonActionMethodsAndProperties(self):
 		action = "TestCaseAction"
-		self.assertEqual(
-			self.transm.proceed(["set", self.jailName, "addaction", action,
-				os.path.join(TEST_FILES_DIR, "action.d", "action.py"),
-				'{"opt1": "value"}']),
-			(0, action))
+		try:
+			out = self.transm.proceed(
+				["set", self.jailName, "addaction", action,
+				 os.path.join(TEST_FILES_DIR, "action.d", "action.py"),
+				'{"opt1": "value"}'])
+			self.assertEqual(out, (0, action))
+		except AssertionError:
+			if ((2, 6) <= sys.version_info < (2, 6, 5)) \
+				and '__init__() keywords must be strings' in out[1]:
+				# known issue http://bugs.python.org/issue2646 in 2.6 series
+				# since general Fail2Ban warnings are suppressed in normal
+				# operation -- let's issue Python's native warning here
+				import warnings
+				warnings.warn(
+					"Your version of Python %s seems to experience a known "
+					"issue forbidding correct operation of Fail2Ban: "
+					"http://bugs.python.org/issue2646  Upgrade your Python and "
+					"meanwhile other intestPythonActionMethodsAndProperties will "
+					"be skipped" % (sys.version))
+				return
+			raise
 		self.assertEqual(
 			sorted(self.transm.proceed(["get", self.jailName,
 				"actionproperties", action])[1]),
