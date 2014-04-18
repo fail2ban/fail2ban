@@ -34,7 +34,8 @@ if os.path.exists("fail2ban/__init__.py"):
 	sys.path.insert(0, ".")
 from fail2ban.version import version
 
-from fail2ban.tests.utils import FormatterWithTraceBack, gatherTests
+from fail2ban.tests.utils import gatherTests
+from fail2ban.helpers import FormatterWithTraceBack
 from fail2ban.server.mytime import MyTime
 
 from optparse import OptionParser, Option

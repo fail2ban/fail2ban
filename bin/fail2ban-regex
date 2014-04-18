@@ -45,7 +45,7 @@ from fail2ban.client.filterreader import FilterReader
 from fail2ban.server.filter import Filter
 from fail2ban.server.failregex import RegexException
 
-from fail2ban.tests.utils import FormatterWithTraceBack
+from fail2ban.helpers import FormatterWithTraceBack
 # Gets the instance of the logger.
 logSys = logging.getLogger("fail2ban")
 
