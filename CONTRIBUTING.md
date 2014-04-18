@@ -14,4 +14,4 @@ on further instructions.
 join the [mailing list](https://lists.sourceforge.net/lists/listinfo/fail2ban-users)
 
 ### You would like to contribute (new filters/actions/code/documentation)?
-send a pull request
+send a [pull request](https://github.com/fail2ban/fail2ban/pulls)
