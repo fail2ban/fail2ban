@@ -16,6 +16,8 @@ ver. 0.8.14 (2014/??/??) - take-care-of-the-elderly
     error messages
   - tests - fixed few "leaky" file descriptors when files were not closed while
     being removed physically
+  - grep in mail*-whois-lines.conf now also matches end of line to work
+    with the recidive filter
 
 
 ver. 0.8.13 (2014/03/15) - maintenance-only-from-now-on
