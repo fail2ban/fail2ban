@@ -12,4 +12,6 @@ end script
 
 exec /usr/bin/fail2ban-client -x start
 
-post-stop exec /usr/bin/fail2ban-client stop
+pre-stop exec /usr/bin/fail2ban-client stop
+
+post-stop exec rm -f /var/run/fail2ban/fail2ban.pid
