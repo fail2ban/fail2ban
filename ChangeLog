@@ -21,6 +21,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * Nginx filter to support missing server_name. Closes gh-676
 
 - New features:
+   - Added monit filter thanks Jason H Martin.
 
 
 - Enhancements
