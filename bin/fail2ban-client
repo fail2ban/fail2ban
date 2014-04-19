@@ -243,35 +243,32 @@ class Fail2banClient:
 	# Start the Fail2ban server in daemon mode.
 
 	def __startServerAsync(self, socket, pidfile, force = False):
-		# Forks the current process.
-		pid = os.fork()
-		if pid == 0:
-			args = list()
-			args.append(self.SERVER)
-			# Start in background mode.
-			args.append("-b")
-			# Set the socket path.
-			args.append("-s")
-			args.append(socket)
-			# Set the pidfile
-			args.append("-p")
-			args.append(pidfile)
-			# Force the execution if needed.
-			if force:
-				args.append("-x")
+		args = list()
+		args.append(self.SERVER)
+		# Start in background mode.
+		args.append("-b")
+		# Set the socket path.
+		args.append("-s")
+		args.append(socket)
+		# Set the pidfile
+		args.append("-p")
+		args.append(pidfile)
+		# Force the execution if needed.
+		if force:
+			args.append("-x")
+		try:
+			# Use the current directory.
+			exe = os.path.abspath(os.path.join(sys.path[0], self.SERVER))
+			logSys.debug("Starting %r with args %r" % (exe, args))
+			os.execv(exe, args)
+		except OSError:
 			try:
-				# Use the current directory.
-				exe = os.path.abspath(os.path.join(sys.path[0], self.SERVER))
-				logSys.debug("Starting %r with args %r" % (exe, args))
-				os.execv(exe, args)
+				# Use the PATH env.
+				logSys.warning("Initial start attempt failed.  Starting %r with the same args" % (self.SERVER,))
+				os.execvp(self.SERVER, args)
 			except OSError:
-				try:
-					# Use the PATH env.
-					logSys.warning("Initial start attempt failed.  Starting %r with the same args" % (self.SERVER,))
-					os.execvp(self.SERVER, args)
-				except OSError:
-					logSys.error("Could not start %s" % self.SERVER)
-					os.exit(-1)
+				logSys.error("Could not start %s" % self.SERVER)
+				os.exit(-1)
 
 	def __waitOnServer(self):
 		# Wait for the server to start
