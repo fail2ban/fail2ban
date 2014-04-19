@@ -27,7 +27,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * Fail2ban-regex - add print-all-matched option. Closes gh-652
    * Suppress fail2ban-client warnings for non-critical config options
 
-ver. 0.9.0 (2014/03/14 - beta
+ver. 0.9.0 (2014/03/14) - beta
 ----------
 
 Carries all fixes, features and enhancements from 0.8.13 (unreleased) with
