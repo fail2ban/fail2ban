@@ -6,7 +6,6 @@ python:
   - "2.7"
   - "3.2"
   - "3.3"
-  - "3.4"
   - "pypy"
 before_install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then sudo apt-get update -qq; fi
