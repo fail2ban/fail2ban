@@ -324,7 +324,7 @@ class Fail2banClient:
 
 		# Reads the command line options.
 		try:
-			cmdOpts = 'hc:s:p:xdviqV'
+			cmdOpts = 'hc:s:p:xfbdviqV'
 			cmdLongOpts = ['help', 'version']
 			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
