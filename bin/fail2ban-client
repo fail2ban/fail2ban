@@ -51,6 +51,7 @@ class Fail2banClient:
 		self.__conf["conf"] = "/etc/fail2ban"
 		self.__conf["dump"] = False
 		self.__conf["force"] = False
+		self.__conf["background"] = True
 		self.__conf["verbose"] = 1
 		self.__conf["interactive"] = False
 		self.__conf["socket"] = None
@@ -83,6 +84,8 @@ class Fail2banClient:
 		print "    -v                      increase verbosity"
 		print "    -q                      decrease verbosity"
 		print "    -x                      force execution of the server (remove socket file)"
+		print "    -b                      start server in background (default)"
+		print "    -f                      start server in foreground"
 		print "    -h, --help              display this help message"
 		print "    -V, --version           print the version"
 		print
@@ -125,6 +128,10 @@ class Fail2banClient:
 				self.__conf["force"] = True
 			elif opt[0] == "-i":
 				self.__conf["interactive"] = True
+			elif opt[0] == "-b":
+				self.__conf["background"] = True
+			elif opt[0] == "-f":
+				self.__conf["background"] = False
 			elif opt[0] in ["-h", "--help"]:
 				self.dispUsage()
 				sys.exit(0)
@@ -194,7 +201,8 @@ class Fail2banClient:
 				# Start the server
 				self.__startServerAsync(self.__conf["socket"],
 										self.__conf["pidfile"],
-										self.__conf["force"])
+										self.__conf["force"],
+										self.__conf["background"])
 				try:
 					# Wait for the server to start
 					self.__waitOnServer()
@@ -242,14 +250,12 @@ class Fail2banClient:
 	#
 	# Start the Fail2ban server in daemon mode.
 
-	def __startServerAsync(self, socket, pidfile, force = False):
+	def __startServerAsync(self, socket, pidfile, force = False, background = True):
 		# Forks the current process.
 		pid = os.fork()
 		if pid == 0:
 			args = list()
 			args.append(self.SERVER)
-			# Start in background mode.
-			args.append("-b")
 			# Set the socket path.
 			args.append("-s")
 			args.append(socket)
@@ -259,6 +265,12 @@ class Fail2banClient:
 			# Force the execution if needed.
 			if force:
 				args.append("-x")
+			# Start in foreground mode if requested.
+			if background:
+				args.append("-b")
+			else:
+				args.append("-f")
+			
 			try:
 				# Use the current directory.
 				exe = os.path.abspath(os.path.join(sys.path[0], self.SERVER))
