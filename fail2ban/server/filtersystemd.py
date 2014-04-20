@@ -213,6 +213,12 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 	def run(self):
 
+		if not self.getJournalMatch():
+			logSys.notice(
+				"Jail started without 'journalmatch' set. "
+				"Jail regexs will be checked against all journal entries, "
+				"which is not advised for performance reasons.")
+
 		# Seek to now - findtime in journal
 		start_time = datetime.datetime.now() - \
 				datetime.timedelta(seconds=int(self.getFindTime()))
