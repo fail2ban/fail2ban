@@ -85,7 +85,7 @@ class Fail2banClient:
 		print "    -q                      decrease verbosity"
 		print "    -x                      force execution of the server (remove socket file)"
 		print "    -b                      start server in background (default)"
-		print "    -f                      start server in foreground"
+		print "    -f                      start server in foreground (note that the client forks once itself)"
 		print "    -h, --help              display this help message"
 		print "    -V, --version           print the version"
 		print
