@@ -36,7 +36,7 @@ from fail2ban.server.actions import ActionBase
 from fail2ban.version import version as f2bVersion
 
 class BadIPsAction(ActionBase):
-	"""Fail2Ban action which resports bans to badips.com, and also
+	"""Fail2Ban action which reports bans to badips.com, and also
 	blacklist bad IPs listed on badips.com by using another action's
 	ban method.
 
@@ -53,7 +53,7 @@ class BadIPsAction(ActionBase):
 	age : str, optional
 		Age of last report for bad IPs, per badips.com syntax.
 		Default "24h" (24 hours)
-    key : str, optional
+	key : str, optional
 		Key issued by badips.com to report bans, for later retrieval
 		of personalised content.
 	banaction : str, optional
@@ -65,7 +65,7 @@ class BadIPsAction(ActionBase):
 		from category used for reporting. e.g. may want to report
 		"postfix", but want to use whole "mail" category for blacklist.
 		Default `category`.
-    bankey : str, optional
+	bankey : str, optional
 		Key issued by badips.com to blacklist IPs reported with the
 		associated key.
 	updateperiod : int, optional
