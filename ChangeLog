@@ -20,6 +20,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * Handle case when no sqlite library is available for persistent database
    * Only reban once per IP from database on fail2ban restart
    * Nginx filter to support missing server_name. Closes gh-676
+   * Database now returns persistent bans on restart (bantime < 0)
 
 - New features:
 
