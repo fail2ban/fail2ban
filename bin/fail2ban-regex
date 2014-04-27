@@ -344,6 +344,7 @@ class Fail2banRegex(object):
 					pass
 				else:
 					self._line_stats.matched += 1
+					self._line_stats.missed -= 1
 		return line, ret
 
 	def process(self, test_lines):
