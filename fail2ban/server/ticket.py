@@ -40,14 +40,17 @@ class Ticket:
 		"""
 
 		self.setIP(ip)
+		self.__restored = False;
+		self.__banCount = 0;
+		self.__banTime = None;
 		self.__time = time
 		self.__attempt = 0
 		self.__file = None
 		self.__matches = matches or []
 
 	def __str__(self):
-		return "%s: ip=%s time=%s #attempts=%d matches=%r" % \
-			   (self.__class__.__name__.split('.')[-1], self.__ip, self.__time, self.__attempt, self.__matches)
+		return "%s: ip=%s time=%s bantime=%s bancount=%s #attempts=%d matches=%r" % \
+			   (self.__class__.__name__.split('.')[-1], self.__ip, self.__time, self.__banTime, self.__banCount, self.__attempt, self.__matches)
 
 	def __repr__(self):
 		return str(self)
@@ -75,7 +78,19 @@ class Ticket:
 	
 	def getTime(self):
 		return self.__time
-	
+
+	def setBanTime(self, value):
+		self.__banTime = value;
+
+	def getBanTime(self, defaultBT = None):
+		return (self.__banTime if not self.__banTime is None else defaultBT);
+
+	def setBanCount(self, value):
+		self.__banCount = value;
+
+	def getBanCount(self):
+		return self.__banCount;
+
 	def setAttempt(self, value):
 		self.__attempt = value
 	
@@ -84,6 +99,12 @@ class Ticket:
 
 	def getMatches(self):
 		return self.__matches
+
+	def setRestored(self, value):
+		self.__restored = value
+	
+	def getRestored(self):
+		return self.__restored
 
 
 class FailTicket(Ticket):

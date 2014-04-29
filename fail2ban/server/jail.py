@@ -188,8 +188,8 @@ class Jail:
 		Used by filter to add a failure for banning.
 		"""
 		self.__queue.put(ticket)
-		if self.database is not None:
-			self.database.addBan(self, ticket)
+		# add ban to database moved to actions (should previously check not already banned 
+		# and increase ticket time if "bantimeextra.enabled" set)
 
 	def getFailTicket(self):
 		"""Get a fail ticket from the jail.
@@ -210,11 +210,23 @@ class Jail:
 		self.filter.start()
 		self.actions.start()
 		# Restore any previous valid bans from the database
-		if self.database is not None:
-			for ticket in self.database.getBansMerged(
-				jail=self, bantime=self.actions.getBanTime()):
-				if not self.filter.inIgnoreIPList(ticket.getIP()):
-					self.__queue.put(ticket)
+		try:
+			if self.database is not None:
+				forbantime = None;
+				if self.actions.getBanTimeExtra('enabled'):
+				  forbantime = self.actions.getBanTimeExtra('findtime')
+				if forbantime is None:
+					forbantime = self.actions.getBanTime()
+				for ticket in self.database.getCurrentBans(jail=self, forbantime=forbantime):
+					#logSys.debug('restored ticket: %s', ticket)
+					if not self.filter.inIgnoreIPList(ticket.getIP()):
+						# mark ticked was restored from database - does not put it again into db:
+						ticket.setRestored(True)
+						self.__queue.put(ticket)
+		except Exception as e:
+			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+			#logSys.error('%s', e, exc_info=True)
+
 		logSys.info("Jail '%s' started" % self.name)
 
 	def stop(self):
