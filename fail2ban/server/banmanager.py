@@ -129,8 +129,11 @@ class BanManager:
 	#@staticmethod
 	def createBanTicket(ticket):
 		ip = ticket.getIP()
-		#lastTime = ticket.getTime()
-		lastTime = MyTime.time()
+		# if ticked was restored from database - set time of original restored ticket:
+		if ticket.getRestored():
+			lastTime = ticket.getTime()
+		else:
+			lastTime = MyTime.time()
 		banTicket = BanTicket(ip, lastTime, ticket.getMatches())
 		banTicket.setAttempt(ticket.getAttempt())
 		return banTicket
@@ -197,7 +200,7 @@ class BanManager:
 
 			# Gets the list of ticket to remove.
 			unBanList = [ticket for ticket in self.__banList
-						 if ticket.getTime() < time - self.__banTime]
+						 if ticket.getTime() < time - ticket.getBanTime(self.__banTime)]
 			
 			# Removes tickets.
 			self.__banList = [ticket for ticket in self.__banList

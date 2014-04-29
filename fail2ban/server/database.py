@@ -87,7 +87,7 @@ class Fail2BanDb(object):
 	filename
 	purgeage
 	"""
-	__version__ = 2
+	__version__ = 3
 	# Note all _TABLE_* strings must end in ';' for py26 compatibility
 	_TABLE_fail2banDb = "CREATE TABLE fail2banDb(version INTEGER);"
 	_TABLE_jails = "CREATE TABLE jails(" \
@@ -114,12 +114,17 @@ class Fail2BanDb(object):
 			"jail TEXT NOT NULL, " \
 			"ip TEXT, " \
 			"timeofban INTEGER NOT NULL, " \
+			"bantime INTEGER NOT NULL, " \
+			"bancount INTEGER NOT NULL, " \
 			"data JSON, " \
 			"FOREIGN KEY(jail) REFERENCES jails(name) " \
 			");" \
 			"CREATE INDEX bans_jail_timeofban_ip ON bans(jail, timeofban);" \
 			"CREATE INDEX bans_jail_ip ON bans(jail, ip);" \
 			"CREATE INDEX bans_ip ON bans(ip);" \
+
+  # todo: for performance reasons create a table with currently banned unique jails-ips only (with last ban of time and bantime).
+  #       check possible view performance instead of new table;
 
 	def __init__(self, filename, purgeAge=24*60*60):
 		try:
@@ -219,6 +224,16 @@ class Fail2BanDb(object):
 						"DROP TABLE logs_temp;"
 						"UPDATE fail2banDb SET version = 2;"
 						"COMMIT;" % Fail2BanDb._TABLE_logs)
+
+		if version < 3:
+			cur.executescript("BEGIN TRANSACTION;"
+						"CREATE TEMPORARY TABLE bans_temp AS SELECT jail, ip, timeofban, 600 as bantime, 1 as bancount, data FROM bans;"
+						"DROP TABLE bans;"
+						"%s;"
+						"INSERT INTO bans SELECT * from bans_temp;"
+						"DROP TABLE bans_temp;"
+						"UPDATE fail2banDb SET version = 3;"
+						"COMMIT;" % Fail2BanDb._TABLE_bans)
 
 		cur.execute("SELECT version FROM fail2banDb LIMIT 1")
 		return cur.fetchone()[0]
@@ -367,8 +382,8 @@ class Fail2BanDb(object):
 			pass
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
-			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
-			(jail.name, ticket.getIP(), ticket.getTime(),
+			"INSERT INTO bans(jail, ip, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
+			(jail.name, ticket.getIP(), ticket.getTime(), ticket.getBanTime(), ticket.getBanCount() + 1,
 				{"matches": ticket.getMatches(),
 					"failures": ticket.getAttempt()}))
 
@@ -469,6 +484,75 @@ class Fail2BanDb(object):
 			tickets.append(ticket)
 
 		if bantime is None:
+			self._bansMergedCache[cacheKey] = tickets if ip is None else ticket
+		return tickets if ip is None else ticket
+
+	def getBan(self, ip, jail=None, forbantime=None, overalljails=None):
+		#query = "SELECT count(ip), max(timeofban) FROM bans WHERE ip = ?"
+		if overalljails is None or not overalljails:
+			query = "SELECT bancount, max(timeofban), bantime FROM bans"
+		else:
+			query = "SELECT max(bancount), max(timeofban), bantime FROM bans"
+		query += " WHERE ip = ?"
+		queryArgs = [ip]
+		if (overalljails is None or not overalljails) and jail is not None:
+			query += " AND jail=?"
+			queryArgs.append(jail.name)
+		if forbantime is not None:
+			query += " AND timeofban > ?"
+			queryArgs.append(MyTime.time() - forbantime)
+		query += " GROUP BY ip ORDER BY timeofban DESC LIMIT 1"
+		cur = self._db.cursor()
+		return cur.execute(query, queryArgs)
+
+	def _getCurrentBans(self, jail = None, ip = None, forbantime=None):
+		#query = "SELECT count(ip), max(timeofban) FROM bans WHERE ip = ?"
+		query = "SELECT ip, max(timeofban), bantime, bancount, data FROM bans WHERE 1"
+		queryArgs = []
+		if jail is not None:
+			query += " AND jail=?"
+			queryArgs.append(jail.name)
+		if ip is not None:
+			query += " AND ip=?"
+			queryArgs.append(ip)
+		query += " AND timeofban + bantime > ?"
+		queryArgs.append(MyTime.time())
+		if forbantime is not None:
+			query += " AND timeofban > ?"
+			queryArgs.append(MyTime.time() - forbantime)
+		query += " GROUP BY ip ORDER BY ip, timeofban DESC"
+		cur = self._db.cursor()
+		#logSys.debug((query, queryArgs));
+		return cur.execute(query, queryArgs)
+
+	def getCurrentBans(self, jail = None, ip = None, forbantime=None):
+		if forbantime is None:
+			cacheKey = (ip, jail)
+			if cacheKey in self._bansMergedCache:
+				return self._bansMergedCache[cacheKey]
+
+		tickets = []
+		ticket = None
+
+		results = list(self._getCurrentBans(jail=jail, ip=ip, forbantime=forbantime))
+
+		if results:
+			matches = []
+			failures = 0
+			for banip, timeofban, bantime, bancount, data in results:
+				#TODO: Implement data parts once arbitrary match keys completed
+				ticket = FailTicket(banip, timeofban, matches)
+				ticket.setAttempt(failures)
+				ticket.setBanTime(bantime)
+				ticket.setBanCount(bancount)
+				matches = []
+				failures = 0
+				matches.extend(data['matches'])
+				failures += data['failures']
+				ticket.setAttempt(failures)
+				tickets.append(ticket)
+
+		if forbantime is None:
 			self._bansMergedCache[cacheKey] = tickets if ip is None else ticket
 		return tickets if ip is None else ticket
 
