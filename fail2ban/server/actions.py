@@ -350,7 +350,7 @@ class Actions(JailThread, Mapping):
 						btime = self.incrBanTime(bTicket, ip)
 					bTicket.setBanTime(btime);
 				except Exception as e:
-			    logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+					logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 					#logSys.error('%s', e, exc_info=True)
 
 			if self.__banManager.addBanTicket(bTicket):
