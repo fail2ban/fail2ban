@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging, re, os, fcntl, sys, locale, codecs
+import logging, re, os, fcntl, sys, locale, codecs, datetime
 
 from .failmanager import FailManagerEmpty, FailManager
 from .ticket import FailTicket
@@ -420,7 +420,7 @@ class Filter(JailThread):
 			if self.inIgnoreIPList(ip):
 				logSys.info("[%s] Ignore %s" % (self.jail.name, ip))
 				continue
-			logSys.info("[%s] Found %s" % (self.jail.name, ip))
+			logSys.info("[%s] Found %s - %s" % (self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")))
 			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
 			self.failManager.addFailure(FailTicket(ip, unixTime, lines))
 

@@ -25,7 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import time, logging
-import os
+import os, datetime, math, json, random
 import sys
 if sys.version_info >= (3, 3):
 	import importlib.machinery
@@ -83,6 +83,8 @@ class Actions(JailThread, Mapping):
 			self._actions = dict()
 		## The ban manager.
 		self.__banManager = BanManager()
+		## Extra parameters for increase ban time
+		self._banExtra = {'maxtime': 24*60*60};
 
 	def add(self, name, pythonModule=None, initOpts=None):
 		"""Adds a new action.
@@ -240,6 +242,71 @@ class Actions(JailThread, Mapping):
 		logSys.debug(self._jail.name + ": action terminated")
 		return True
 
+	def setBanTimeExtra(self, opt, value):
+		# merge previous extra with new option:
+		be = self._banExtra;
+		be[opt] = value;
+		logSys.info('Set banTimeExtra.%s = %s', opt, value)
+		if opt == 'enabled':
+			be[opt] = bool(value)
+			if bool(value) and self._jail.database is None:
+				logSys.warning("banTimeExtra is not available as long jail database is not set")
+		if opt in ['findtime', 'maxtime', 'rndtime']:
+			if not value is None:
+				be[opt] = eval(value)
+		if opt == 'factor' or be.get('factor', None) is None:
+			be['factor'] = eval(be.get('factor', "2.0 / 2.885385"));
+		# prepare formula :
+		if opt in ['formula', 'maxtime', 'rndtime'] or be.get('evformula', None) is None:
+			be['formula'] = be.get('formula', 'banTime * math.exp(float(banCount)*banFactor)/math.exp(1*banFactor)')
+			evformula = be['formula'];
+			evformula = ('max(banTime, %s)' % evformula)
+			if not be.get('maxtime', None) is None:
+				evformula = ('min(%s, %s)' % (evformula, be['maxtime']))
+			# mix with random time (to prevent botnet calc exact time IP can be unbanned):
+			if not be.get('rndtime', None) is None:
+				evformula = ('(%s + random.random() * %s)' % (evformula, be['rndtime']))
+			# set to extra dict:
+			be['evformula'] = evformula
+		#logSys.info('banTimeExtra : %s' % json.dumps(be))
+
+	def getBanTimeExtra(self, opt):
+		return self._banExtra.get(opt, None)
+
+	def incrBanTime(self, bTicket, ip):
+		"""Check for IP address to increment ban time (if was already banned).
+
+		Returns
+		-------
+		float
+			new ban time.
+		"""
+		orgBanTime = self.__banManager.getBanTime()
+		banTime = orgBanTime
+		# check ip was already banned (increment time of ban):
+		try:
+			be = self._banExtra;
+			if banTime > 0 and be.get('enabled', False):
+				banFactor = be['factor'];
+				# search IP in database and increase time if found:
+				for banCount, timeOfBan, lastBanTime in \
+				  self._jail.database.getBan(ip, self._jail, be.get('findtime', None), be.get('overalljails', False) \
+				):
+					#logSys.debug('IP %s was already banned: %s #, %s' % (ip, banCount, timeOfBan));
+					bTicket.setBanCount(banCount);
+					# calculate new ban time
+					banTime = eval(be['evformula'])
+					bTicket.setBanTime(banTime);
+					logSys.info('[%s] %s was already banned: %s # at last %s - increase time %s to %s' % (self._jail.name, ip, banCount, 
+						datetime.datetime.fromtimestamp(timeOfBan).strftime("%Y-%m-%d %H:%M:%S"), 
+						datetime.timedelta(seconds=int(orgBanTime)), datetime.timedelta(seconds=int(banTime))));
+					break
+		except Exception as e:
+			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+			#logSys.error('%s', e, exc_info=True)
+
+		return banTime
+
 	def __checkBan(self):
 		"""Check for IP address to ban.
 
@@ -255,25 +322,46 @@ class Actions(JailThread, Mapping):
 		if ticket != False:
 			aInfo = CallingMap()
 			bTicket = BanManager.createBanTicket(ticket)
-			aInfo["ip"] = bTicket.getIP()
+			if ticket.getBanTime() is not None:
+				bTicket.setBanTime(ticket.getBanTime())
+				bTicket.setBanCount(ticket.getBanCount())
+			ip = bTicket.getIP()
+			aInfo["ip"] = ip
 			aInfo["failures"] = bTicket.getAttempt()
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "\n".join(bTicket.getMatches())
+			btime = bTicket.getBanTime(self.__banManager.getBanTime());
 			if self._jail.database is not None:
 				aInfo["ipmatches"] = lambda: "\n".join(
 					self._jail.database.getBansMerged(
-						ip=bTicket.getIP()).getMatches())
+						ip=ip).getMatches())
 				aInfo["ipjailmatches"] = lambda: "\n".join(
 					self._jail.database.getBansMerged(
-						ip=bTicket.getIP(), jail=self._jail).getMatches())
+						ip=ip, jail=self._jail).getMatches())
 				aInfo["ipfailures"] = lambda: "\n".join(
 					self._jail.database.getBansMerged(
-						ip=bTicket.getIP()).getAttempt())
+						ip=ip).getAttempt())
 				aInfo["ipjailfailures"] = lambda: "\n".join(
 					self._jail.database.getBansMerged(
-						ip=bTicket.getIP(), jail=self._jail).getAttempt())
+						ip=ip, jail=self._jail).getAttempt())
+				try:
+					# if ban time was not set:
+					if bTicket.getBanTime() is None:
+						btime = self.incrBanTime(bTicket, ip)
+					bTicket.setBanTime(btime);
+				except Exception as e:
+					logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+					#logSys.error('%s', e, exc_info=True)
+
 			if self.__banManager.addBanTicket(bTicket):
-				logSys.notice("[%s] Ban %s" % (self._jail.name, aInfo["ip"]))
+				if self._jail.database is not None:
+					# add to database always only after ban time was calculated an not yet already banned:
+					# if ticked was not restored from database - put it into database:
+					if not ticket.getRestored():
+						self._jail.database.addBan(self._jail, bTicket)
+				logSys.notice("[%s] %sBan %s (%d # %s -> %s)" % (self._jail.name, ('Resore ' if ticket.getRestored() else ''),
+					aInfo["ip"], bTicket.getBanCount(), datetime.timedelta(seconds=int(btime)),
+					datetime.datetime.fromtimestamp(aInfo["time"] + btime).strftime("%Y-%m-%d %H:%M:%S")))
 				for name, action in self._actions.iteritems():
 					try:
 						action.ban(aInfo)

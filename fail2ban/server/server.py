@@ -302,6 +302,12 @@ class Server:
 		
 	def getBanTime(self, name):
 		return self.__jails[name].actions.getBanTime()
+
+	def setBanTimeExtra(self, name, opt, value):
+		self.__jails[name].actions.setBanTimeExtra(opt, value)
+
+	def getBanTimeExtra(self, name, opt):
+		return self.__jails[name].actions.getBanTimeExtra(opt)
 	
 	# Status
 	def status(self):
