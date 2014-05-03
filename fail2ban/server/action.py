@@ -371,8 +371,11 @@ class CommandAction(ActionBase):
 			within the values recursively replaced.
 		"""
 		t = re.compile(r'<([^ >]+)>')
-		for tag, value in tags.iteritems():
-			value = str(value)
+		for tag in tags.iterkeys():
+			if tag.endswith('matches'):
+				# Escapped so wont match
+				continue
+			value = str(tags[tag])
 			m = t.search(value)
 			done = []
 			#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
@@ -383,6 +386,9 @@ class CommandAction(ActionBase):
 					# recursive definitions are bad
 					#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 					return False
+				elif found_tag.endswith('matches'):
+					# Escapped so wont match
+					continue
 				else:
 					if tags.has_key(found_tag):
 						value = value.replace('<%s>' % found_tag , tags[found_tag])
@@ -441,6 +447,7 @@ class CommandAction(ActionBase):
 			`query` string with tags replaced.
 		"""
 		string = query
+		aInfo = cls.substituteRecursiveTags(aInfo)
 		for tag in aInfo:
 			if "<%s>" % tag in query:
 				value = str(aInfo[tag])			  # assure string
