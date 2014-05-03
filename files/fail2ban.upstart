@@ -1,13 +1,20 @@
 description "fail2ban - ban hosts that cause multiple authentication errors"
 
-start on filesystem and started networking
-stop on deconfiguring-networking
+start on filesystem and static-network-up
+stop on runlevel [016]
 
 expect fork
 respawn
 
-exec /usr/bin/fail2ban-client -x -b start
+env RUNDIR=/var/run/fail2ban
+
+pre-start script
+    test -d $RUNDIR || mkdir -p $RUNDIR
+    test ! -e $RUNDIR/fail2ban.sock || rm -f $RUNDIR/fail2ban.sock
+end script
+
+exec /usr/bin/fail2ban-client -f -x start
 
 pre-stop exec /usr/bin/fail2ban-client stop
 
-post-stop exec rm -f /var/run/fail2ban/fail2ban.pid
+post-stop exec rm -f $RUNDIR/fail2ban.pid
