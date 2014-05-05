@@ -115,7 +115,7 @@ class Fail2BanDb(object):
 			"ip TEXT, " \
 			"timeofban INTEGER NOT NULL, " \
 			"bantime INTEGER NOT NULL, " \
-			"bancount INTEGER NOT NULL, " \
+			"bancount INTEGER NOT NULL default 1, " \
 			"data JSON, " \
 			"FOREIGN KEY(jail) REFERENCES jails(name) " \
 			");" \
@@ -383,7 +383,7 @@ class Fail2BanDb(object):
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
-			(jail.name, ticket.getIP(), ticket.getTime(), ticket.getBanTime(), ticket.getBanCount() + 1,
+			(jail.name, ticket.getIP(), ticket.getTime(), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount() + 1,
 				{"matches": ticket.getMatches(),
 					"failures": ticket.getAttempt()}))
 

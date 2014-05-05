@@ -96,10 +96,10 @@ class AddFailure(unittest.TestCase):
 		ticket_repr = repr(ticket)
 		self.assertEqual(
 			ticket_str,
-			'FailTicket: ip=193.168.0.128 time=1167605999.0 #attempts=5 matches=[]')
+			'FailTicket: ip=193.168.0.128 time=1167605999.0 bantime=None bancount=0 #attempts=5 matches=[]')
 		self.assertEqual(
 			ticket_repr,
-			'FailTicket: ip=193.168.0.128 time=1167605999.0 #attempts=5 matches=[]')
+			'FailTicket: ip=193.168.0.128 time=1167605999.0 bantime=None bancount=0 #attempts=5 matches=[]')
 		self.assertFalse(ticket == False)
 		# and some get/set-ers otherwise not tested
 		ticket.setTime(1000002000.0)
@@ -107,7 +107,7 @@ class AddFailure(unittest.TestCase):
 		# and str() adjusted correspondingly
 		self.assertEqual(
 			str(ticket),
-			'FailTicket: ip=193.168.0.128 time=1000002000.0 #attempts=5 matches=[]')
+			'FailTicket: ip=193.168.0.128 time=1000002000.0 bantime=None bancount=0 #attempts=5 matches=[]')
 	
 	def testbanNOK(self):
 		self.__failManager.setMaxRetry(10)
