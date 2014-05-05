@@ -93,7 +93,7 @@ class JailReader(ConfigReader):
 				["int", "maxretry", None],
 				["int", "findtime", None],
 				["int", "bantime", None],
-				["bool",   "bantimeextra.enabled", False],
+				["bool",   "bantimeextra.enabled", None],
 				["string", "bantimeextra.findtime", None],
 				["string", "bantimeextra.factor", None],
 				["string", "bantimeextra.formula", None],

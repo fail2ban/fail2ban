@@ -248,8 +248,9 @@ class Actions(JailThread, Mapping):
 		be[opt] = value;
 		logSys.info('Set banTimeExtra.%s = %s', opt, value)
 		if opt == 'enabled':
-			be[opt] = bool(value)
-			if bool(value) and self._jail.database is None:
+			if isinstance(value, str):
+				be[opt] = value.lower() in ("yes", "true", "ok", "1")
+			if be[opt] and self._jail.database is None:
 				logSys.warning("banTimeExtra is not available as long jail database is not set")
 		if opt in ['findtime', 'maxtime', 'rndtime']:
 			if not value is None:
@@ -346,7 +347,7 @@ class Actions(JailThread, Mapping):
 						ip=ip, jail=self._jail).getAttempt())
 				try:
 					# if ban time was not set:
-					if bTicket.getBanTime() is None:
+					if not ticket.getRestored() and bTicket.getBanTime() is None:
 						btime = self.incrBanTime(bTicket, ip)
 					bTicket.setBanTime(btime);
 				except Exception as e:
