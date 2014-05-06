@@ -278,3 +278,131 @@ class DatabaseTest(unittest.TestCase):
 		self.db.purge() # Should leave jail as ban present
 		self.assertEqual(len(self.db.getJailNames()), 1)
 		self.assertEqual(len(self.db.getBans(jail=self.jail)), 1)
+
+
+# Author: Serg G. Brester (sebres)
+# 
+
+__author__ = "Serg Brester"
+__copyright__ = "Copyright (c) 2014 Serg G. Brester"
+
+class BanTimeIncr(unittest.TestCase):
+
+	def setUp(self):
+		"""Call before every test case."""
+		if Fail2BanDb is None and sys.version_info >= (2,7): # pragma: no cover
+			raise unittest.SkipTest(
+				"Unable to import fail2ban database module as sqlite is not "
+				"available.")
+		elif Fail2BanDb is None:
+			return
+		_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
+		self.db = Fail2BanDb(self.dbFilename)
+
+	def tearDown(self):
+		"""Call after every test case."""
+		if Fail2BanDb is None: # pragma: no cover
+			return
+		# Cleanup
+		os.remove(self.dbFilename)
+
+	def testBanTimeIncr(self):
+		if Fail2BanDb is None: # pragma: no cover
+			return
+		jail = DummyJail()
+		jail.database = self.db
+		self.db.addJail(jail)
+		a = jail.actions
+		# we tests with initial ban time = 10 seconds:
+		a.setBanTime(10)
+		a.setBanTimeExtra('enabled', 'true')
+		a.setBanTimeExtra('multipliers', '1 2 4 8 16 32 64 128 256 512 1024 2048')
+		ip = "127.0.0.2"
+		# used as start and fromtime (like now but time independence, cause test case can run slow):
+		stime = int(MyTime.time())
+		ticket = FailTicket(ip, stime, [])
+		# test ticket not yet found
+		self.assertEqual(
+		  [a.incrBanTime(ticket) for i in xrange(3)], 
+		  [10, 10, 10]
+		)
+		# add a ticket banned
+		self.db.addBan(jail, ticket)
+		# get a ticket already banned in this jail:
+		self.assertEqual(
+			[(banCount, timeOfBan, lastBanTime) for banCount, timeOfBan, lastBanTime in self.db.getBan(ip, jail, None, False)],
+			[(1, stime, 10)]
+		)
+		# incr time and ban a ticket again :
+		ticket.setTime(stime + 15)
+		self.assertEqual(a.incrBanTime(ticket), 20)
+		self.db.addBan(jail, ticket)
+		# get a ticket already banned in this jail:
+		self.assertEqual(
+			[(banCount, timeOfBan, lastBanTime) for banCount, timeOfBan, lastBanTime in self.db.getBan(ip, jail, None, False)],
+			[(2, stime + 15, 20)]
+		)
+		# get a ticket already banned in all jails:
+		self.assertEqual(
+			[(banCount, timeOfBan, lastBanTime) for banCount, timeOfBan, lastBanTime in self.db.getBan(ip, '', None, True)],
+			[(2, stime + 15, 20)]
+		)
+    # search currently banned and 1 day later (nothing should be found):
+		self.assertEqual(
+			self.db.getCurrentBans(forbantime=-24*60*60, fromtime=stime),
+			[]
+		)
+		# search currently banned anywhere:
+		restored_tickets = self.db.getCurrentBans(fromtime=stime)
+		self.assertEqual(
+			str(restored_tickets),
+			('[FailTicket: ip=%s time=%s bantime=20 bancount=2 #attempts=0 matches=[]]' % (ip, stime + 15))
+		)
+		# search currently banned:
+		restored_tickets = self.db.getCurrentBans(jail=jail, fromtime=stime)
+		self.assertEqual(
+			str(restored_tickets), 
+			('[FailTicket: ip=%s time=%s bantime=20 bancount=2 #attempts=0 matches=[]]' % (ip, stime + 15))
+		)
+		restored_tickets[0].setRestored(True)
+		self.assertTrue(restored_tickets[0].getRestored())
+		# increase ban multiple times:
+		for i in xrange(10):
+			ticket.setTime(stime + lastBanTime + 5)
+			banTime = a.incrBanTime(ticket)
+			self.assertEqual(banTime, lastBanTime * 2)
+			self.db.addBan(jail, ticket)
+			lastBanTime = banTime
+		# increase again, but the last multiplier reached (time not increased):
+		ticket.setTime(stime + lastBanTime + 5)
+		banTime = a.incrBanTime(ticket)
+		self.assertNotEqual(banTime, lastBanTime * 2)
+		self.assertEqual(banTime, lastBanTime)
+		self.db.addBan(jail, ticket)
+		lastBanTime = banTime
+		# add two tickets from yesterday: one unbanned (bantime already out-dated):
+		ticket2 = FailTicket(ip+'2', stime-24*60*60, [])
+		ticket2.setBanTime(12*60*60)
+		self.db.addBan(jail, ticket2)
+		# and one from yesterday also, but still currently banned :
+		ticket2 = FailTicket(ip+'1', stime-24*60*60, [])
+		ticket2.setBanTime(36*60*60)
+		self.db.addBan(jail, ticket2)
+		# search currently banned:
+		restored_tickets = self.db.getCurrentBans(fromtime=stime)
+		self.assertEqual(len(restored_tickets), 2)
+		self.assertEqual(
+			str(restored_tickets[0]),
+			'FailTicket: ip=%s time=%s bantime=%s bancount=13 #attempts=0 matches=[]' % (ip, stime + lastBanTime + 5, lastBanTime)
+		)
+		self.assertEqual(
+			str(restored_tickets[1]),
+			'FailTicket: ip=%s time=%s bantime=%s bancount=1 #attempts=0 matches=[]' % (ip+'1', stime-24*60*60, 36*60*60)
+		)
+		# search out-dated (give another fromtime now is -18 hours):
+		restored_tickets = self.db.getCurrentBans(fromtime=stime-18*60*60)
+		self.assertEqual(len(restored_tickets), 3)
+		self.assertEqual(
+			str(restored_tickets[2]),
+			'FailTicket: ip=%s time=%s bantime=%s bancount=1 #attempts=0 matches=[]' % (ip+'2', stime-24*60*60, 12*60*60)
+		)

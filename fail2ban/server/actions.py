@@ -300,7 +300,7 @@ class Actions(JailThread, Mapping):
 	def calcBanTime(self, banTime, banCount):
 		return self._banExtra['evformula'](self.BanTimeIncr(banTime, banCount))
 
-	def incrBanTime(self, bTicket, ip):
+	def incrBanTime(self, bTicket):
 		"""Check for IP address to increment ban time (if was already banned).
 
 		Returns
@@ -308,6 +308,7 @@ class Actions(JailThread, Mapping):
 		float
 			new ban time.
 		"""
+		ip = bTicket.getIP()
 		orgBanTime = self.__banManager.getBanTime()
 		banTime = orgBanTime
 		# check ip was already banned (increment time of ban):
@@ -374,7 +375,7 @@ class Actions(JailThread, Mapping):
 				try:
 					# if ban time was not set:
 					if not ticket.getRestored() and bTicket.getBanTime() is None:
-						btime = self.incrBanTime(bTicket, ip)
+						btime = self.incrBanTime(bTicket)
 					bTicket.setBanTime(btime);
 				except Exception as e:
 					logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)

@@ -505,7 +505,9 @@ class Fail2BanDb(object):
 		cur = self._db.cursor()
 		return cur.execute(query, queryArgs)
 
-	def _getCurrentBans(self, jail = None, ip = None, forbantime=None):
+	def _getCurrentBans(self, jail = None, ip = None, forbantime=None, fromtime=None):
+		if fromtime is None:
+			fromtime = MyTime.time()
 		#query = "SELECT count(ip), max(timeofban) FROM bans WHERE ip = ?"
 		query = "SELECT ip, max(timeofban), bantime, bancount, data FROM bans WHERE 1"
 		queryArgs = []
@@ -516,17 +518,17 @@ class Fail2BanDb(object):
 			query += " AND ip=?"
 			queryArgs.append(ip)
 		query += " AND timeofban + bantime > ?"
-		queryArgs.append(MyTime.time())
+		queryArgs.append(fromtime)
 		if forbantime is not None:
 			query += " AND timeofban > ?"
-			queryArgs.append(MyTime.time() - forbantime)
+			queryArgs.append(fromtime - forbantime)
 		query += " GROUP BY ip ORDER BY ip, timeofban DESC"
 		cur = self._db.cursor()
 		#logSys.debug((query, queryArgs));
 		return cur.execute(query, queryArgs)
 
-	def getCurrentBans(self, jail = None, ip = None, forbantime=None):
-		if forbantime is None:
+	def getCurrentBans(self, jail = None, ip = None, forbantime=None, fromtime=None):
+		if forbantime is None and jail is not None:
 			cacheKey = (ip, jail)
 			if cacheKey in self._bansMergedCache:
 				return self._bansMergedCache[cacheKey]
@@ -534,7 +536,7 @@ class Fail2BanDb(object):
 		tickets = []
 		ticket = None
 
-		results = list(self._getCurrentBans(jail=jail, ip=ip, forbantime=forbantime))
+		results = list(self._getCurrentBans(jail=jail, ip=ip, forbantime=forbantime, fromtime=fromtime))
 
 		if results:
 			matches = []
@@ -552,7 +554,7 @@ class Fail2BanDb(object):
 				ticket.setAttempt(failures)
 				tickets.append(ticket)
 
-		if forbantime is None:
+		if forbantime is None and jail is not None:
 			self._bansMergedCache[cacheKey] = tickets if ip is None else ticket
 		return tickets if ip is None else ticket
 

@@ -184,6 +184,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(misctestcase.CustomDateFormatsTest))
 	# Database
 	tests.addTest(unittest.makeSuite(databasetestcase.DatabaseTest))
+	tests.addTest(unittest.makeSuite(databasetestcase.BanTimeIncr))
 
 	# Filter
 	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
