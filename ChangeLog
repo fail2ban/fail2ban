@@ -24,6 +24,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
      multiline regex
    * Fix actions failing to execute for Python 3.4.0. Workaround for
      http://bugs.python.org/issue21207
+   * Database now returns persistent bans on restart (bantime < 0)
 
 - New features:
 

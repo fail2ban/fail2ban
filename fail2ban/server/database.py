@@ -380,7 +380,7 @@ class Fail2BanDb(object):
 		if jail is not None:
 			query += " AND jail=?"
 			queryArgs.append(jail.name)
-		if bantime is not None:
+		if bantime is not None and bantime >= 0:
 			query += " AND timeofban > ?"
 			queryArgs.append(MyTime.time() - bantime)
 		if ip is not None:
@@ -399,7 +399,8 @@ class Fail2BanDb(object):
 			Jail that the ban belongs to. Default `None`; all jails.
 		bantime : int
 			Ban time in seconds, such that bans returned would still be
-			valid now. Default `None`; no limit.
+			valid now.  Negative values are equivalent to `None`.
+			Default `None`; no limit.
 		ip : str
 			IP Address to filter bans by. Default `None`; all IPs.
 
@@ -427,7 +428,8 @@ class Fail2BanDb(object):
 			Jail that the ban belongs to. Default `None`; all jails.
 		bantime : int
 			Ban time in seconds, such that bans returned would still be
-			valid now. Default `None`; no limit.
+			valid now. Negative values are equivalent to `None`.
+			Default `None`; no limit.
 		ip : str
 			IP Address to filter bans by. Default `None`; all IPs.
 
@@ -438,7 +440,8 @@ class Fail2BanDb(object):
 			in a list. When `ip` argument passed, a single `Ticket` is
 			returned.
 		"""
-		if bantime is None:
+		cacheKey = None
+		if bantime is None or bantime < 0:
 			cacheKey = (ip, jail)
 			if cacheKey in self._bansMergedCache:
 				return self._bansMergedCache[cacheKey]
@@ -468,7 +471,7 @@ class Fail2BanDb(object):
 			ticket.setAttempt(failures)
 			tickets.append(ticket)
 
-		if bantime is None:
+		if cacheKey:
 			self._bansMergedCache[cacheKey] = tickets if ip is None else ticket
 		return tickets if ip is None else ticket
 
