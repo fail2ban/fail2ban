@@ -165,6 +165,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
 	tests.addTest(unittest.makeSuite(actiontestcase.CommandActionTest))
 	tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
+	tests.addTest(unittest.makeSuite(actionstestcase.BanTimeIncr))
 	# FailManager
 	tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 	# BanManager

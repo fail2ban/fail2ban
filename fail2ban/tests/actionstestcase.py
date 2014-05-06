@@ -140,3 +140,117 @@ class ExecuteActions(LogCaptureTestCase):
 		self.__actions.stop()
 		self.__actions.join()
 		self.assertTrue(self._is_logged("Failed to stop"))
+
+
+# Author: Serg G. Brester (sebres)
+# 
+
+__author__ = "Serg Brester"
+__copyright__ = "Copyright (c) 2014 Serg G. Brester"
+
+class BanTimeIncr(LogCaptureTestCase):
+
+	def setUp(self):
+		"""Call before every test case."""
+		super(BanTimeIncr, self).setUp()
+		self.__jail = DummyJail()
+		self.__actions = Actions(self.__jail)
+		self.__tmpfile, self.__tmpfilename  = tempfile.mkstemp()
+
+	def tearDown(self):
+		super(BanTimeIncr, self).tearDown()
+		os.remove(self.__tmpfilename)
+
+	def testMultipliers(self):
+		a = self.__actions;
+		a.setBanTimeExtra('maxtime', '24*60*60')
+		a.setBanTimeExtra('rndtime', None)
+		a.setBanTimeExtra('factor', None)
+		a.setBanTimeExtra('multipliers', '1 2 4 8 16 32 64 128 256')
+		self.assertEqual(
+			[a.calcBanTime(600, i) for i in xrange(1, 11)],
+			[1200, 2400, 4800, 9600, 19200, 38400, 76800, 86400, 86400, 86400]
+		)
+		# with extra large max time (30 days):
+		a.setBanTimeExtra('maxtime', '30*24*60*60')
+		self.assertEqual(
+			[a.calcBanTime(600, i) for i in xrange(1, 11)],
+			[1200, 2400, 4800, 9600, 19200, 38400, 76800, 153600, 153600, 153600]
+		)
+		a.setBanTimeExtra('maxtime', '24*60*60')
+		# change factor :
+		a.setBanTimeExtra('factor', '2');
+		self.assertEqual(
+			[a.calcBanTime(600, i) for i in xrange(1, 11)],
+			[2400, 4800, 9600, 19200, 38400, 76800, 86400, 86400, 86400, 86400]
+		)
+		a.setBanTimeExtra('factor', None);
+		# change max time :
+		a.setBanTimeExtra('maxtime', '12*60*60')
+		self.assertEqual(
+			[a.calcBanTime(600, i) for i in xrange(1, 11)],
+			[1200, 2400, 4800, 9600, 19200, 38400, 43200, 43200, 43200, 43200]
+		)
+		a.setBanTimeExtra('maxtime', '24*60*60')
+		## test randomization - not possibe all 10 times we have random = 0:
+		a.setBanTimeExtra('rndtime', '5*60')
+		self.assertTrue(
+			False in [1200 in [a.calcBanTime(600, 1) for i in xrange(10)] for c in xrange(10)]
+		)
+		a.setBanTimeExtra('rndtime', None)
+		self.assertFalse(
+			False in [1200 in [a.calcBanTime(600, 1) for i in xrange(10)] for c in xrange(10)]
+		)
+		# restore default:
+		a.setBanTimeExtra('multipliers', None)
+		a.setBanTimeExtra('factor', None);
+		a.setBanTimeExtra('maxtime', '24*60*60')
+		a.setBanTimeExtra('rndtime', None)
+
+	def testFormula(self):
+		a = self.__actions;
+		a.setBanTimeExtra('maxtime', '24*60*60')
+		a.setBanTimeExtra('rndtime', None)
+		a.setBanTimeExtra('factor', None)
+		## use default formula:
+		a.setBanTimeExtra('multipliers', None)
+		self.assertEqual(
+			[int(a.calcBanTime(600, i)) for i in xrange(1, 11)],
+			[1200, 2400, 4800, 9600, 19200, 38400, 76800, 86400, 86400, 86400]
+		)
+		# with extra large max time (30 days):
+		a.setBanTimeExtra('maxtime', '30*24*60*60')
+		self.assertEqual(
+			[int(a.calcBanTime(600, i)) for i in xrange(1, 11)],
+			[1200, 2400, 4800, 9600, 19200, 38400, 76800, 153601, 307203, 614407]
+		)
+		a.setBanTimeExtra('maxtime', '24*60*60')
+		# change factor :
+		a.setBanTimeExtra('factor', '1');
+		self.assertEqual(
+			[int(a.calcBanTime(600, i)) for i in xrange(1, 11)],
+			[1630, 4433, 12051, 32758, 86400, 86400, 86400, 86400, 86400, 86400]
+		)
+		a.setBanTimeExtra('factor', None);
+		# change max time :
+		a.setBanTimeExtra('maxtime', '12*60*60')
+		self.assertEqual(
+			[int(a.calcBanTime(600, i)) for i in xrange(1, 11)],
+			[1200, 2400, 4800, 9600, 19200, 38400, 43200, 43200, 43200, 43200]
+		)
+		a.setBanTimeExtra('maxtime', '24*60*60')
+		## test randomization - not possibe all 10 times we have random = 0:
+		a.setBanTimeExtra('rndtime', '5*60')
+		self.assertTrue(
+			False in [1200 in [int(a.calcBanTime(600, 1)) for i in xrange(10)] for c in xrange(10)]
+		)
+		a.setBanTimeExtra('rndtime', None)
+		self.assertFalse(
+			False in [1200 in [int(a.calcBanTime(600, 1)) for i in xrange(10)] for c in xrange(10)]
+		)
+		# restore default:
+		a.setBanTimeExtra('multipliers', None)
+		a.setBanTimeExtra('factor', None);
+		a.setBanTimeExtra('maxtime', '24*60*60')
+		a.setBanTimeExtra('rndtime', None)
+

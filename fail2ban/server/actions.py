@@ -250,9 +250,11 @@ class Actions(JailThread, Mapping):
 	def setBanTimeExtra(self, opt, value):
 		# merge previous extra with new option:
 		be = self._banExtra;
+		if value == '':
+			value = None
 		if value is not None:
 			be[opt] = value;
-		else:
+		elif opt in be:
 			del be[opt]
 		logSys.info('Set banTimeExtra.%s = %s', opt, value)
 		if opt == 'enabled':
