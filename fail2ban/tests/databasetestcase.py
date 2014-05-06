@@ -323,8 +323,8 @@ class BanTimeIncr(unittest.TestCase):
 		ticket = FailTicket(ip, stime, [])
 		# test ticket not yet found
 		self.assertEqual(
-		  [a.incrBanTime(ticket) for i in xrange(3)], 
-		  [10, 10, 10]
+			[a.incrBanTime(ticket) for i in xrange(3)], 
+			[10, 10, 10]
 		)
 		# add a ticket banned
 		self.db.addBan(jail, ticket)
@@ -347,7 +347,7 @@ class BanTimeIncr(unittest.TestCase):
 			[(banCount, timeOfBan, lastBanTime) for banCount, timeOfBan, lastBanTime in self.db.getBan(ip, '', None, True)],
 			[(2, stime + 15, 20)]
 		)
-    # search currently banned and 1 day later (nothing should be found):
+		# search currently banned and 1 day later (nothing should be found):
 		self.assertEqual(
 			self.db.getCurrentBans(forbantime=-24*60*60, fromtime=stime),
 			[]
