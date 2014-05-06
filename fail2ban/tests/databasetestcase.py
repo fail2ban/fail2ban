@@ -367,6 +367,7 @@ class BanTimeIncr(unittest.TestCase):
 		restored_tickets[0].setRestored(True)
 		self.assertTrue(restored_tickets[0].getRestored())
 		# increase ban multiple times:
+		lastBanTime = 20
 		for i in xrange(10):
 			ticket.setTime(stime + lastBanTime + 5)
 			banTime = a.incrBanTime(ticket)
