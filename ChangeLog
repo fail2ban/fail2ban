@@ -22,6 +22,8 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * Nginx filter to support missing server_name. Closes gh-676
    * fail2ban-regex assertion error caused by miscount missed lines with
      multiline regex
+   * Fix actions failing to execute for Python 3.4.0. Work around for
+     http://bugs.python.org/issue21207
 
 - New features:
 
