@@ -242,10 +242,18 @@ class Actions(JailThread, Mapping):
 		logSys.debug(self._jail.name + ": action terminated")
 		return True
 
+	class BanTimeIncr:
+		def __init__(self, banTime, banCount):
+			self.Time = banTime
+			self.Count = banCount
+
 	def setBanTimeExtra(self, opt, value):
 		# merge previous extra with new option:
 		be = self._banExtra;
-		be[opt] = value;
+		if value is not None:
+			be[opt] = value;
+		else:
+			del be[opt]
 		logSys.info('Set banTimeExtra.%s = %s', opt, value)
 		if opt == 'enabled':
 			if isinstance(value, str):
@@ -255,24 +263,40 @@ class Actions(JailThread, Mapping):
 		if opt in ['findtime', 'maxtime', 'rndtime']:
 			if not value is None:
 				be[opt] = eval(value)
-		if opt == 'factor' or be.get('factor', None) is None:
-			be['factor'] = eval(be.get('factor', "2.0 / 2.885385"));
-		# prepare formula :
-		if opt in ['formula', 'maxtime', 'rndtime'] or be.get('evformula', None) is None:
-			be['formula'] = be.get('formula', 'banTime * math.exp(float(banCount)*banFactor)/math.exp(1*banFactor)')
-			evformula = be['formula'];
-			evformula = ('max(banTime, %s)' % evformula)
+		# prepare formula lambda:
+		if opt in ['formula', 'factor', 'maxtime', 'rndtime', 'multipliers'] or be.get('evformula', None) is None:
+			# split multifiers to an array begins with 0 (or empty if not set):
+			if opt == 'multipliers':
+				be['evmultipliers'] = [int(i) for i in (value.split(' ') if value is not None and value != '' else [])]
+			# if we have multifiers - use it in lambda, otherwise compile and use formula within lambda
+			multipliers = be.get('evmultipliers', [])
+			if len(multipliers):
+				banFactor = eval(be.get('factor', "1"))
+				evformula = lambda ban, banFactor=banFactor: (
+					ban.Time * banFactor * multipliers[ban.Count if ban.Count < len(multipliers) else -1]
+				)
+			else:
+				banFactor = eval(be.get('factor', "2.0 / 2.885385"))
+				formula = be.get('formula', 'ban.Time * math.exp(float(ban.Count+1)*banFactor)/math.exp(1*banFactor)')
+				formula = compile(formula, '~inline-conf-expr~', 'eval')
+				evformula = lambda ban, banFactor=banFactor, formula=formula: max(ban.Time, eval(formula))
+			# extend lambda with max time :
 			if not be.get('maxtime', None) is None:
-				evformula = ('min(%s, %s)' % (evformula, be['maxtime']))
-			# mix with random time (to prevent botnet calc exact time IP can be unbanned):
+				maxtime = be['maxtime']
+				evformula = lambda ban, evformula=evformula: min(evformula(ban), maxtime)
+			# mix lambda with random time (to prevent bot-nets to calculate exact time IP can be unbanned):
 			if not be.get('rndtime', None) is None:
-				evformula = ('(%s + random.random() * %s)' % (evformula, be['rndtime']))
+				rndtime = be['rndtime']
+				evformula = lambda ban, evformula=evformula: (evformula(ban) + random.random() * rndtime)
 			# set to extra dict:
 			be['evformula'] = evformula
 		#logSys.info('banTimeExtra : %s' % json.dumps(be))
 
 	def getBanTimeExtra(self, opt):
 		return self._banExtra.get(opt, None)
+
+	def calcBanTime(self, banTime, banCount):
+		return self._banExtra['evformula'](self.BanTimeIncr(banTime, banCount))
 
 	def incrBanTime(self, bTicket, ip):
 		"""Check for IP address to increment ban time (if was already banned).
@@ -288,7 +312,6 @@ class Actions(JailThread, Mapping):
 		try:
 			be = self._banExtra;
 			if banTime > 0 and be.get('enabled', False):
-				banFactor = be['factor'];
 				# search IP in database and increase time if found:
 				for banCount, timeOfBan, lastBanTime in \
 				  self._jail.database.getBan(ip, self._jail, be.get('findtime', None), be.get('overalljails', False) \
@@ -296,7 +319,8 @@ class Actions(JailThread, Mapping):
 					#logSys.debug('IP %s was already banned: %s #, %s' % (ip, banCount, timeOfBan));
 					bTicket.setBanCount(banCount);
 					# calculate new ban time
-					banTime = eval(be['evformula'])
+					if banCount > 0:
+						banTime = be['evformula'](self.BanTimeIncr(banTime, banCount))
 					bTicket.setBanTime(banTime);
 					logSys.info('[%s] %s was already banned: %s # at last %s - increase time %s to %s' % (self._jail.name, ip, banCount, 
 						datetime.datetime.fromtimestamp(timeOfBan).strftime("%Y-%m-%d %H:%M:%S"), 
