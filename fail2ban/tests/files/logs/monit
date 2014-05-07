@@ -1,0 +1,6 @@
+# failJSON: { "time": "2005-04-16T21:05:29", "match": true , "host": "69.93.127.111" }
+[PDT Apr 16 21:05:29] error    : Warning: Client '69.93.127.111' supplied unknown user 'foo' accessing monit httpd
+
+# failJSON: { "time": "2005-04-16T20:59:33", "match": true , "host": "97.113.189.111" }
+[PDT Apr 16 20:59:33] error    : Warning: Client '97.113.189.111' supplied wrong password for user 'admin' accessing monit httpd
+

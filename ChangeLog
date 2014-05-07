@@ -26,6 +26,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
      http://bugs.python.org/issue21207
 
 - New features:
+   - Added monit filter thanks Jason H Martin.
 
 
 - Enhancements
