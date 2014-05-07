@@ -161,21 +161,29 @@ class BanTimeIncr(LogCaptureTestCase):
 		super(BanTimeIncr, self).tearDown()
 		os.remove(self.__tmpfilename)
 
-	def testMultipliers(self):
+	def testDefault(self, multipliers = None):
 		a = self.__actions;
 		a.setBanTimeExtra('maxtime', '24*60*60')
 		a.setBanTimeExtra('rndtime', None)
 		a.setBanTimeExtra('factor', None)
-		a.setBanTimeExtra('multipliers', '1 2 4 8 16 32 64 128 256')
+		# tests formulat or multipliers:
+		a.setBanTimeExtra('multipliers', multipliers)
+		# test algorithm and max time 24 hours :
 		self.assertEqual(
 			[a.calcBanTime(600, i) for i in xrange(1, 11)],
 			[1200, 2400, 4800, 9600, 19200, 38400, 76800, 86400, 86400, 86400]
 		)
 		# with extra large max time (30 days):
 		a.setBanTimeExtra('maxtime', '30*24*60*60')
+		# using formula the ban time grows always, but using multipliers the growing will stops with last one:
+		arr = [1200, 2400, 4800, 9600, 19200, 38400, 76800, 153600, 307200, 614400]
+		if multipliers is not None:
+			multcnt = len(multipliers.split(' '))
+			if multcnt < 11:
+				arr = arr[0:multcnt-1] + ([arr[multcnt-2]] * (11-multcnt))
 		self.assertEqual(
 			[a.calcBanTime(600, i) for i in xrange(1, 11)],
-			[1200, 2400, 4800, 9600, 19200, 38400, 76800, 153600, 153600, 153600]
+		  arr
 		)
 		a.setBanTimeExtra('maxtime', '24*60*60')
 		# change factor :
@@ -183,6 +191,12 @@ class BanTimeIncr(LogCaptureTestCase):
 		self.assertEqual(
 			[a.calcBanTime(600, i) for i in xrange(1, 11)],
 			[2400, 4800, 9600, 19200, 38400, 76800, 86400, 86400, 86400, 86400]
+		)
+		# factor is float :
+		a.setBanTimeExtra('factor', '1.33');
+		self.assertEqual(
+			[int(a.calcBanTime(600, i)) for i in xrange(1, 11)],
+			[1596, 3192, 6384, 12768, 25536, 51072, 86400, 86400, 86400, 86400]
 		)
 		a.setBanTimeExtra('factor', None);
 		# change max time :
@@ -207,13 +221,21 @@ class BanTimeIncr(LogCaptureTestCase):
 		a.setBanTimeExtra('maxtime', '24*60*60')
 		a.setBanTimeExtra('rndtime', None)
 
+	def testMultipliers(self):
+		# this multipliers has the same values as default formula, we test stop growing after count 9:
+		self.testDefault('1 2 4 8 16 32 64 128 256')
+		# this multipliers has exactly the same values as default formula, test endless growing (stops by count 31 only):
+		self.testDefault(' '.join([str(1<<i) for i in xrange(31)]))
+
 	def testFormula(self):
 		a = self.__actions;
 		a.setBanTimeExtra('maxtime', '24*60*60')
 		a.setBanTimeExtra('rndtime', None)
-		a.setBanTimeExtra('factor', None)
-		## use default formula:
+		## use another formula:
+		a.setBanTimeExtra('formula', 'ban.Time * math.exp(float(ban.Count+1)*banFactor)/math.exp(1*banFactor)')
+		a.setBanTimeExtra('factor', '2.0 / 2.885385')
 		a.setBanTimeExtra('multipliers', None)
+		# test algorithm and max time 24 hours :
 		self.assertEqual(
 			[int(a.calcBanTime(600, i)) for i in xrange(1, 11)],
 			[1200, 2400, 4800, 9600, 19200, 38400, 76800, 86400, 86400, 86400]
@@ -231,7 +253,7 @@ class BanTimeIncr(LogCaptureTestCase):
 			[int(a.calcBanTime(600, i)) for i in xrange(1, 11)],
 			[1630, 4433, 12051, 32758, 86400, 86400, 86400, 86400, 86400, 86400]
 		)
-		a.setBanTimeExtra('factor', None);
+		a.setBanTimeExtra('factor', '2.0 / 2.885385')
 		# change max time :
 		a.setBanTimeExtra('maxtime', '12*60*60')
 		self.assertEqual(
@@ -249,6 +271,7 @@ class BanTimeIncr(LogCaptureTestCase):
 			False in [1200 in [int(a.calcBanTime(600, 1)) for i in xrange(10)] for c in xrange(10)]
 		)
 		# restore default:
+		a.setBanTimeExtra('factor', None);
 		a.setBanTimeExtra('multipliers', None)
 		a.setBanTimeExtra('factor', None);
 		a.setBanTimeExtra('maxtime', '24*60*60')

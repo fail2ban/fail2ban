@@ -272,14 +272,13 @@ class Actions(JailThread, Mapping):
 				be['evmultipliers'] = [int(i) for i in (value.split(' ') if value is not None and value != '' else [])]
 			# if we have multifiers - use it in lambda, otherwise compile and use formula within lambda
 			multipliers = be.get('evmultipliers', [])
+			banFactor = eval(be.get('factor', "1"))
 			if len(multipliers):
-				banFactor = eval(be.get('factor', "1"))
 				evformula = lambda ban, banFactor=banFactor: (
 					ban.Time * banFactor * multipliers[ban.Count if ban.Count < len(multipliers) else -1]
 				)
 			else:
-				banFactor = eval(be.get('factor', "2.0 / 2.885385"))
-				formula = be.get('formula', 'ban.Time * math.exp(float(ban.Count+1)*banFactor)/math.exp(1*banFactor)')
+				formula = be.get('formula', 'ban.Time * (1<<(ban.Count if ban.Count<20 else 20)) * banFactor')
 				formula = compile(formula, '~inline-conf-expr~', 'eval')
 				evformula = lambda ban, banFactor=banFactor, formula=formula: max(ban.Time, eval(formula))
 			# extend lambda with max time :
