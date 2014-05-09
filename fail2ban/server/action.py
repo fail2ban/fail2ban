@@ -373,7 +373,7 @@ class CommandAction(ActionBase):
 		t = re.compile(r'<([^ >]+)>')
 		for tag in tags.iterkeys():
 			if tag.endswith('matches'):
-				# Escapped so wont match
+				# Escapped so won't match
 				continue
 			value = str(tags[tag])
 			m = t.search(value)
@@ -387,7 +387,7 @@ class CommandAction(ActionBase):
 					#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 					return False
 				elif found_tag.endswith('matches'):
-					# Escapped so wont match
+					# Escapped so won't match
 					continue
 				else:
 					if tags.has_key(found_tag):
