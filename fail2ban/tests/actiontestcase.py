@@ -100,17 +100,24 @@ class CommandActionTest(LogCaptureTestCase):
 				{'ipjailmatches': "some >char< should \< be[ escap}ed&\n"}),
 			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\n")
 
+
+		# Recursive
+		aInfo["ABC"] = "<xyz>"
+		self.assertEqual(
+			self.__action.replaceTag("Text <xyz> text <ABC> ABC", aInfo),
+			"Text 890 text 890 ABC")
+
 		# Callable
 		self.assertEqual(
-			self.__action.replaceTag("09 <callme> 11",
-				CallingMap(callme=lambda: str(10))),
+			self.__action.replaceTag("09 <matches> 11",
+				CallingMap(matches=lambda: str(10))),
 			"09 10 11")
 
 		# As tag not present, therefore callable should not be called
 		# Will raise ValueError if it is
 		self.assertEqual(
 			self.__action.replaceTag("abc",
-				CallingMap(callme=lambda: int("a"))), "abc")
+				CallingMap(matches=lambda: int("a"))), "abc")
 
 	def testExecuteActionBan(self):
 		self.__action.actionstart = "touch /tmp/fail2ban.test"
