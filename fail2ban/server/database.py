@@ -602,18 +602,14 @@ class Fail2BanDb(object):
 			"DELETE FROM bips WHERE timeofban < ? and bantime != -1 and (timeofban + (bantime * ?)) < ?",
 			(int(MyTime.time()) - self._purgeAge, self._outDatedFactor, int(MyTime.time()) - self._purgeAge))
 
-	#@commitandrollback
-	def purge(self):
+	@commitandrollback
+	def purge(self, cur):
 		"""Purge old bans, jails and log files from database.
 		"""
-		cur = self._db.cursor()
 		self._bansMergedCache = {}
 		cur.execute(
 			"DELETE FROM bans WHERE timeofban < ?",
 			(MyTime.time() - self._purgeAge, ))
-		affected = cur.rowcount
 		self._purge_bips(cur)
-		affected += cur.rowcount
-		if affected:
-			self._cleanjails(cur)
+		self._cleanjails(cur)
 
