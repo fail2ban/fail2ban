@@ -264,7 +264,7 @@ class Actions(JailThread, Mapping):
 				logSys.warning("banTimeExtra is not available as long jail database is not set")
 		if opt in ['findtime', 'maxtime', 'rndtime']:
 			if not value is None:
-				be[opt] = eval(value)
+				be[opt] = MyTime.str2seconds(value)
 		# prepare formula lambda:
 		if opt in ['formula', 'factor', 'maxtime', 'rndtime', 'multipliers'] or be.get('evformula', None) is None:
 			# split multifiers to an array begins with 0 (or empty if not set):
