@@ -420,9 +420,26 @@ class Filter(JailThread):
 			if self.inIgnoreIPList(ip):
 				logSys.info("[%s] Ignore %s" % (self.jail.name, ip))
 				continue
-			logSys.info("[%s] Found %s" % (self.jail.name, ip))
-			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
-			self.failManager.addFailure(FailTicket(ip, unixTime, lines))
+			# increase retry count for known (bad) ip, corresponding banCount of it (one try will count than 2, 3, 5, 9 ...)  :
+			banCount = 0
+			retryCount = 1
+			db = self.jail.database
+			if db is not None:
+				try:
+					for banCount, timeOfBan, lastBanTime in db.getBan(ip, self.jail):
+						retryCount = ((1 << (banCount if banCount < 20 else 20))/2 + 1)
+						# if lastBanTime == -1 or timeOfBan + lastBanTime * 2 > MyTime.time():
+						# 	retryCount = self.failManager.getMaxRetry()
+						break
+					retryCount = min(retryCount, self.failManager.getMaxRetry())
+				except Exception as e:
+					#logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+					logSys.error('%s', e, exc_info=True)
+			if banCount == 1 and retryCount == 1:
+				logSys.info("[%s] Found %s" % (self.jail.name, ip))
+			else:
+				logSys.info("[%s] Found %s, %s # -> %s" % (self.jail.name, ip, banCount, retryCount))
+			self.failManager.addFailure(FailTicket(ip, unixTime, lines), retryCount)
 
 	##
 	# Returns true if the line should be ignored.

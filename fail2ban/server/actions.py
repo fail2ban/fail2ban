@@ -324,9 +324,13 @@ class Actions(JailThread, Mapping):
 					if banCount > 0:
 						banTime = be['evformula'](self.BanTimeIncr(banTime, banCount))
 					bTicket.setBanTime(banTime);
-					logSys.info('[%s] %s was already banned: %s # at last %s - increase time %s to %s' % (self._jail.name, ip, banCount, 
-						datetime.datetime.fromtimestamp(timeOfBan).strftime("%Y-%m-%d %H:%M:%S"), 
-						datetime.timedelta(seconds=int(orgBanTime)), datetime.timedelta(seconds=int(banTime))));
+					# check current ticket time to prevent increasing for twice read tickets (restored from log file besides database after restart)
+					if bTicket.getTime() > timeOfBan:
+						logSys.info('[%s] %s was already banned: %s # at last %s - increase time %s to %s' % (self._jail.name, ip, banCount, 
+							datetime.datetime.fromtimestamp(timeOfBan).strftime("%Y-%m-%d %H:%M:%S"), 
+							datetime.timedelta(seconds=int(orgBanTime)), datetime.timedelta(seconds=int(banTime))));
+					else:
+						bTicket.setRestored(True)
 					break
 		except Exception as e:
 			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
@@ -372,23 +376,27 @@ class Actions(JailThread, Mapping):
 					self._jail.database.getBansMerged(
 						ip=ip, jail=self._jail).getAttempt())
 				try:
-					# if ban time was not set:
-					if not ticket.getRestored() and bTicket.getBanTime() is None:
+					# if not permanent, not restored and ban time was not set:
+					if btime != -1 and not ticket.getRestored() and bTicket.getBanTime() is None:
 						btime = self.incrBanTime(bTicket)
-					bTicket.setBanTime(btime);
+						bTicket.setBanTime(btime);
 				except Exception as e:
 					logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 					#logSys.error('%s', e, exc_info=True)
 
+			if btime != -1:
+				logtime = (datetime.timedelta(seconds=int(btime)),
+					datetime.datetime.fromtimestamp(aInfo["time"] + btime).strftime("%Y-%m-%d %H:%M:%S"))
+			else:
+				logtime = ('permanent', 'infinite')
 			if self.__banManager.addBanTicket(bTicket):
 				if self._jail.database is not None:
 					# add to database always only after ban time was calculated an not yet already banned:
 					# if ticked was not restored from database - put it into database:
-					if not ticket.getRestored():
+					if not ticket.getRestored() and not bTicket.getRestored():
 						self._jail.database.addBan(self._jail, bTicket)
-				logSys.notice("[%s] %sBan %s (%d # %s -> %s)" % (self._jail.name, ('Resore ' if ticket.getRestored() else ''),
-					aInfo["ip"], bTicket.getBanCount(), datetime.timedelta(seconds=int(btime)),
-					datetime.datetime.fromtimestamp(aInfo["time"] + btime).strftime("%Y-%m-%d %H:%M:%S")))
+				logSys.notice("[%s] %sBan %s (%d # %s -> %s)" % ((self._jail.name, ('Resore ' if ticket.getRestored() else ''),
+					aInfo["ip"], bTicket.getBanCount()) + logtime))
 				for name, action in self._actions.iteritems():
 					try:
 						action.ban(aInfo)
@@ -399,8 +407,8 @@ class Actions(JailThread, Mapping):
 							exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 				return True
 			else:
-				logSys.notice("[%s] %s already banned" % (self._jail.name,
-														aInfo["ip"]))
+				logSys.notice("[%s] %s already banned (%d # %s -> %s)" % ((self._jail.name,
+					aInfo["ip"], bTicket.getBanCount()) + logtime))
 		return False
 
 	def __checkUnBan(self):

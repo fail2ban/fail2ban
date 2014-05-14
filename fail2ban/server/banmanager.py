@@ -130,10 +130,11 @@ class BanManager:
 	def createBanTicket(ticket):
 		ip = ticket.getIP()
 		# if ticked was restored from database - set time of original restored ticket:
-		if ticket.getRestored():
-			lastTime = ticket.getTime()
-		else:
-			lastTime = MyTime.time()
+		# we should always use correct time to calculate correct end time (ban time is variable now, 
+		# + possible double banning by restore from database and from log file)
+		lastTime = ticket.getTime()
+		# if not ticket.getRestored():
+		# 	lastTime = MyTime.time()
 		banTicket = BanTicket(ip, lastTime, ticket.getMatches())
 		banTicket.setAttempt(ticket.getAttempt())
 		return banTicket
@@ -149,11 +150,25 @@ class BanManager:
 	def addBanTicket(self, ticket):
 		try:
 			self.__lock.acquire()
-			if not self._inBanList(ticket):
-				self.__banList.append(ticket)
-				self.__banTotal += 1
-				return True
-			return False
+			# check already banned
+			for i in self.__banList:
+				if ticket.getIP() == i.getIP():
+					# if already permanent
+					btorg, torg = i.getBanTime(self.__banTime), i.getTime()
+					if btorg == -1:
+						return False
+					# if given time is less than already banned time
+					btnew, tnew = ticket.getBanTime(self.__banTime), ticket.getTime()
+					if btnew != -1 and tnew + btnew <= torg + btorg:
+						return False
+					# we have longest ban - set new (increment) ban time
+					i.setTime(tnew)
+					i.setBanTime(btnew)
+					return False
+			# not yet banned - add new
+			self.__banList.append(ticket)
+			self.__banTotal += 1
+			return True
 		finally:
 			self.__lock.release()
 	
@@ -199,8 +214,7 @@ class BanManager:
 				return list()
 
 			# Gets the list of ticket to remove.
-			unBanList = [ticket for ticket in self.__banList
-						 if ticket.getTime() < time - ticket.getBanTime(self.__banTime)]
+			unBanList = [ticket for ticket in self.__banList if ticket.isTimedOut(time, self.__banTime)]
 			
 			# Removes tickets.
 			self.__banList = [ticket for ticket in self.__banList

@@ -84,7 +84,7 @@ class FailManager:
 		finally:
 			self.__lock.release()
 
-	def addFailure(self, ticket):
+	def addFailure(self, ticket, count=1):
 		try:
 			self.__lock.acquire()
 			ip = ticket.getIP()
@@ -95,11 +95,11 @@ class FailManager:
 				if fData.getLastReset() < unixTime - self.__maxTime:
 					fData.setLastReset(unixTime)
 					fData.setRetry(0)
-				fData.inc(matches)
+				fData.inc(matches, count)
 				fData.setLastTime(unixTime)
 			else:
 				fData = FailData()
-				fData.inc(matches)
+				fData.inc(matches, count)
 				fData.setLastReset(unixTime)
 				fData.setLastTime(unixTime)
 				self.__failList[ip] = fData

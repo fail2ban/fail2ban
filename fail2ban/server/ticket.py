@@ -91,6 +91,14 @@ class Ticket:
 	def getBanCount(self):
 		return self.__banCount;
 
+	def isTimedOut(self, time, defaultBT = None):
+		bantime = (self.__banTime if not self.__banTime is None else defaultBT);
+		# permanent
+		if bantime == -1:
+			return False
+		# timed out
+		return (time > self.__time + bantime)
+
 	def setAttempt(self, value):
 		self.__attempt = value
 	

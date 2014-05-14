@@ -407,3 +407,95 @@ class BanTimeIncr(unittest.TestCase):
 			str(restored_tickets[2]),
 			'FailTicket: ip=%s time=%s bantime=%s bancount=1 #attempts=0 matches=[]' % (ip+'2', stime-24*60*60, 12*60*60)
 		)
+		# should be still banned
+		self.assertFalse(restored_tickets[1].isTimedOut(stime))
+		self.assertFalse(restored_tickets[1].isTimedOut(stime))
+		# the last should be timed out now
+		self.assertTrue(restored_tickets[2].isTimedOut(stime))
+		self.assertFalse(restored_tickets[2].isTimedOut(stime-18*60*60))
+
+		# test permanent, create timed out:
+		ticket=FailTicket(ip+'3', stime-36*60*60, [])
+		self.assertTrue(ticket.isTimedOut(stime, 600))
+		# not timed out - permanent jail:
+		self.assertFalse(ticket.isTimedOut(stime, -1))
+		# not timed out - permanent ticket:
+		ticket.setBanTime(-1)
+		self.assertFalse(ticket.isTimedOut(stime, 600))
+		self.assertFalse(ticket.isTimedOut(stime, -1))
+		# timed out - permanent jail but ticket time (not really used behavior)
+		ticket.setBanTime(600)
+		self.assertTrue(ticket.isTimedOut(stime, -1))
+
+		# get currently banned pis with permanent one:
+		ticket.setBanTime(-1)
+		self.db.addBan(jail, ticket)
+		restored_tickets = self.db.getCurrentBans(fromtime=stime)
+		self.assertEqual(len(restored_tickets), 3)
+		self.assertEqual(
+			str(restored_tickets[2]),
+			'FailTicket: ip=%s time=%s bantime=%s bancount=1 #attempts=0 matches=[]' % (ip+'3', stime-36*60*60, -1)
+		)
+		# purge (nothing should be changed):
+		self.db.purge()
+		restored_tickets = self.db.getCurrentBans(fromtime=stime)
+		self.assertEqual(len(restored_tickets), 3)
+		# set short time and purge again:
+		ticket.setBanTime(600)
+		self.db.addBan(jail, ticket)
+		self.db.purge()
+		# this old ticket should be removed now:
+		restored_tickets = self.db.getCurrentBans(fromtime=stime)
+		self.assertEqual(len(restored_tickets), 2)
+		self.assertEqual(restored_tickets[0].getIP(), ip)
+
+    # purge remove 1st ip
+		self.db._purgeAge = -48*60*60
+		self.db.purge()
+		restored_tickets = self.db.getCurrentBans(fromtime=stime)
+		self.assertEqual(len(restored_tickets), 1)
+		self.assertEqual(restored_tickets[0].getIP(), ip+'1')
+
+    # this should purge all bans, bips and logs - nothing should be found now
+		self.db._purgeAge = -240*60*60
+		self.db.purge()
+		restored_tickets = self.db.getCurrentBans(fromtime=stime)
+		self.assertEqual(restored_tickets, [])
+
+    # two separate jails :
+		jail1 = DummyJail()
+		jail1.database = self.db
+		self.db.addJail(jail1)
+		jail2 = DummyJail()
+		jail2.database = self.db
+		self.db.addJail(jail2)
+		ticket1 = FailTicket(ip, stime, [])
+		ticket1.setBanTime(6000)
+		self.db.addBan(jail1, ticket1)
+		ticket2 = FailTicket(ip, stime-6000, [])
+		ticket2.setBanTime(12000)
+		ticket2.setBanCount(1)
+		self.db.addBan(jail2, ticket2)
+		restored_tickets = self.db.getCurrentBans(jail=jail1, fromtime=stime)
+		self.assertEqual(len(restored_tickets), 1)
+		self.assertEqual(
+			str(restored_tickets[0]),
+			'FailTicket: ip=%s time=%s bantime=%s bancount=1 #attempts=0 matches=[]' % (ip, stime, 6000)
+		)
+		restored_tickets = self.db.getCurrentBans(jail=jail2, fromtime=stime)
+		self.assertEqual(len(restored_tickets), 1)
+		self.assertEqual(
+			str(restored_tickets[0]),
+			'FailTicket: ip=%s time=%s bantime=%s bancount=2 #attempts=0 matches=[]' % (ip, stime-6000, 12000)
+		)
+    # get last ban values for this ip separately for each jail:
+		for row in self.db.getBan(ip, jail1):
+			self.assertEqual(row, (1, stime, 6000))
+			break
+		for row in self.db.getBan(ip, jail2):
+			self.assertEqual(row, (2, stime-6000, 12000))
+			break
+    # get max values for this ip (over all jails):
+		for row in self.db.getBan(ip, overalljails=True):
+			self.assertEqual(row, (2, stime, 12000))
+			break

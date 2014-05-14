@@ -52,8 +52,8 @@ class FailData:
 	def getMatches(self):
 		return self.__matches
 
-	def inc(self, matches=None):
-		self.__retry += 1
+	def inc(self, matches=None, count=1):
+		self.__retry += count
 		self.__matches += matches or []
 
 	def setLastTime(self, value):
