@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging, re, os, fcntl, sys, locale, codecs
+import logging, re, os, fcntl, sys, locale, codecs, datetime
 
 from .failmanager import FailManagerEmpty, FailManager
 from .ticket import FailTicket
@@ -309,8 +309,7 @@ class Filter(JailThread):
 			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.' % ip)
 
 		unixTime = MyTime.time()
-		for i in xrange(self.failManager.getMaxRetry()):
-			self.failManager.addFailure(FailTicket(ip, unixTime))
+		self.failManager.addFailure(FailTicket(ip, unixTime), self.failManager.getMaxRetry())
 
 		# Perform the banning of the IP now.
 		try: # pragma: no branch - exception is the only way out
@@ -433,12 +432,15 @@ class Filter(JailThread):
 						break
 					retryCount = min(retryCount, self.failManager.getMaxRetry())
 				except Exception as e:
-					#logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-					logSys.error('%s', e, exc_info=True)
-			if banCount == 1 and retryCount == 1:
-				logSys.info("[%s] Found %s" % (self.jail.name, ip))
-			else:
-				logSys.info("[%s] Found %s, %s # -> %s" % (self.jail.name, ip, banCount, retryCount))
+					logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+					#logSys.error('%s', e, exc_info=True)
+			try:
+				logSys.info(
+					("[%s] Found %s - %s" % (self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")))
+					+ ((", %s # -> %s" % (banCount, retryCount)) if banCount != 1 or retryCount != 1 else '')
+				)
+			except Exception as e:
+				logSys.error('%s', e, exc_info=True)
 			self.failManager.addFailure(FailTicket(ip, unixTime, lines), retryCount)
 
 	##
