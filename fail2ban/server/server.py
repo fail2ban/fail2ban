@@ -367,7 +367,7 @@ class Server:
 		try:
 			self.__loggingLock.acquire()
 			# set a format which is simpler for console use
-			formatter = logging.Formatter("%(asctime)s %(name)-16s[%(process)d]: %(levelname)-7s %(message)s")
+			formatter = logging.Formatter("%(asctime)s %(name)-16s[%(process)d]{%(threadName)s}: %(levelname)-7s %(message)s")
 			if target == "SYSLOG":
 				# Syslog daemons already add date to the message.
 				formatter = logging.Formatter("%(name)s[%(process)d]: %(levelname)s %(message)s")

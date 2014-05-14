@@ -190,7 +190,7 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 class BasicFilter(unittest.TestCase):
 
 	def setUp(self):
-		self.filter = Filter('name')
+		self.filter = Filter(DummyJail())
 
 	def testGetSetUseDNS(self):
 		# default is warn
@@ -290,7 +290,7 @@ class LogFile(LogCaptureTestCase):
 		LogCaptureTestCase.tearDown(self)
 
 	def testMissingLogFiles(self):
-		self.filter = FilterPoll(None)
+		self.filter = FilterPoll(DummyJail())
 		self.assertRaises(IOError, self.filter.addLogPath, LogFile.MISSING)
 
 class LogFileFilterPoll(unittest.TestCase):

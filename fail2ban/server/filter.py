@@ -54,6 +54,7 @@ class Filter(JailThread):
 		JailThread.__init__(self)
 		## The jail which contains this filter.
 		self.jail = jail
+		self.name = "%s-filter" % jail.name
 		## The failures manager.
 		self.failManager = FailManager()
 		## The regular expression list matching the failures.
