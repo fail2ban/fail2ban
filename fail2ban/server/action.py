@@ -194,6 +194,8 @@ class CommandAction(ActionBase):
 	timeout
 	"""
 
+	_escapedTags = set(('matches', 'ipmatches', 'ipjailmatches'))
+
 	def __init__(self, jail, name):
 		super(CommandAction, self).__init__(jail, name)
 		self.timeout = 60
@@ -351,8 +353,8 @@ class CommandAction(ActionBase):
 		if not self.executeCmd(stopCmd, self.timeout):
 			raise RuntimeError("Error stopping action")
 
-	@staticmethod
-	def substituteRecursiveTags(tags):
+	@classmethod
+	def substituteRecursiveTags(cls, tags):
 		"""Sort out tag definitions within other tags.
 
 		so:		becomes:
@@ -371,8 +373,11 @@ class CommandAction(ActionBase):
 			within the values recursively replaced.
 		"""
 		t = re.compile(r'<([^ >]+)>')
-		for tag, value in tags.iteritems():
-			value = str(value)
+		for tag in tags.iterkeys():
+			if tag in cls._escapedTags:
+				# Escaped so won't match
+				continue
+			value = str(tags[tag])
 			m = t.search(value)
 			done = []
 			#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
@@ -383,6 +388,9 @@ class CommandAction(ActionBase):
 					# recursive definitions are bad
 					#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 					return False
+				elif found_tag in cls._escapedTags:
+					# Escaped so won't match
+					continue
 				else:
 					if tags.has_key(found_tag):
 						value = value.replace('<%s>' % found_tag , tags[found_tag])
@@ -441,10 +449,11 @@ class CommandAction(ActionBase):
 			`query` string with tags replaced.
 		"""
 		string = query
+		aInfo = cls.substituteRecursiveTags(aInfo)
 		for tag in aInfo:
 			if "<%s>" % tag in query:
 				value = str(aInfo[tag])			  # assure string
-				if tag.endswith('matches'):
+				if tag in cls._escapedTags:
 					# That one needs to be escaped since its content is
 					# out of our control
 					value = cls.escapeTag(value)

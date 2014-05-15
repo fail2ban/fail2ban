@@ -529,11 +529,19 @@ class Server:
 		except (AttributeError, ValueError):
 			maxfd = 256	   # default maximum
 	
-		for fd in range(0, maxfd):
-			try:
-				os.close(fd)
-			except OSError:   # ERROR (ignore)
-				pass
+		# urandom should not be closed in Python 3.4.0. Fixed in 3.4.1
+		# http://bugs.python.org/issue21207
+		if sys.version_info[0:3] == (3, 4, 0): # pragma: no cover
+			urandom_fd = os.open("/dev/urandom", os.O_RDONLY)
+			for fd in range(0, maxfd):
+				try:
+					if not os.path.sameopenfile(urandom_fd, fd):
+						os.close(fd)
+				except OSError:   # ERROR (ignore)
+					pass
+			os.close(urandom_fd)
+		else:
+			os.closerange(0, maxfd)
 	
 		# Redirect the standard file descriptors to /dev/null.
 		os.open("/dev/null", os.O_RDONLY)	# standard input (0)

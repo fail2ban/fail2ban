@@ -131,7 +131,7 @@ class DateDetectorTest(unittest.TestCase):
 		# see https://github.com/fail2ban/fail2ban/pull/130
 		# yoh: unfortunately this test is not really effective to reproduce the
 		#      situation but left in place to assure consistent behavior
-		mu = time.mktime(datetime.datetime(2012, 10, 11, 2, 37, 17).utctimetuple())
+		mu = time.mktime(datetime.datetime(2012, 10, 11, 2, 37, 17).timetuple())
 		logdate = self.__datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')
 		self.assertNotEqual(logdate, None)
 		( logTime, logMatch ) = logdate

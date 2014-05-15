@@ -22,13 +22,21 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * Nginx filter to support missing server_name. Closes gh-676
    * fail2ban-regex assertion error caused by miscount missed lines with
      multiline regex
+   * Fix actions failing to execute for Python 3.4.0. Workaround for
+     http://bugs.python.org/issue21207
+   * Database now returns persistent bans on restart (bantime < 0)
+   * Recursive action tags now fully processed. Fixes issue with bsd-ipfw
+     action
+   * Correct times for non-timezone date times formats - Thanks sebres
 
 - New features:
+   - Added monit filter thanks Jason H Martin.
 
 
 - Enhancements
    * Fail2ban-regex - add print-all-matched option. Closes gh-652
    * Suppress fail2ban-client warnings for non-critical config options
+   * Match non "Bye Bye" disconnect messages for sshd locked account regex
 
 ver. 0.9.0 (2014/03/14) - beta
 ----------
