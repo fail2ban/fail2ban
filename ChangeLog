@@ -27,7 +27,8 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * Database now returns persistent bans on restart (bantime < 0)
    * Recursive action tags now fully processed. Fixes issue with bsd-ipfw
      action
-   * Correct times for non-timezone date times formats - Thanks sebres
+   * Correct times for non-timezone date times formats during DST.
+     Thanks Serg G. Brester
 
 - New features:
    - Added monit filter thanks Jason H Martin.
