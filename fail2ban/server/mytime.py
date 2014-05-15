@@ -116,3 +116,4 @@ class MyTime:
 			val = re.sub(r"(?i)(?<=[\d\s])(%s)\b" % rexp, "*"+str(rpl), val)
 		val = re.sub(r"(\d)\s+(\d)", r"\1+\2", val);
 		return eval(val)
+	str2seconds = staticmethod(str2seconds)
