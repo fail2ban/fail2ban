@@ -255,23 +255,20 @@ class Actions(JailThread, Mapping):
 		if ticket != False:
 			aInfo = CallingMap()
 			bTicket = BanManager.createBanTicket(ticket)
-			aInfo["ip"] = bTicket.getIP()
+			ip = bTicket.getIP()
+			aInfo["ip"] = ip
 			aInfo["failures"] = bTicket.getAttempt()
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "\n".join(bTicket.getMatches())
 			if self._jail.database is not None:
-				aInfo["ipmatches"] = lambda: "\n".join(
-					self._jail.database.getBansMerged(
-						ip=bTicket.getIP()).getMatches())
-				aInfo["ipjailmatches"] = lambda: "\n".join(
-					self._jail.database.getBansMerged(
-						ip=bTicket.getIP(), jail=self._jail).getMatches())
-				aInfo["ipfailures"] = lambda: "\n".join(
-					self._jail.database.getBansMerged(
-						ip=bTicket.getIP()).getAttempt())
-				aInfo["ipjailfailures"] = lambda: "\n".join(
-					self._jail.database.getBansMerged(
-						ip=bTicket.getIP(), jail=self._jail).getAttempt())
+				aInfo["ipmatches"] = lambda jail=self._jail: "\n".join(
+					jail.database.getBansMerged(ip=ip).getMatches())
+				aInfo["ipjailmatches"] = lambda jail=self._jail: "\n".join(
+					jail.database.getBansMerged(ip=ip, jail=jail).getMatches())
+				aInfo["ipfailures"] = lambda jail=self._jail: \
+					jail.database.getBansMerged(ip=ip).getAttempt()
+				aInfo["ipjailfailures"] = lambda jail=self._jail: \
+					jail.database.getBansMerged(ip=ip, jail=jail).getAttempt()
 			if self.__banManager.addBanTicket(bTicket):
 				logSys.notice("[%s] Ban %s" % (self._jail.name, aInfo["ip"]))
 				for name, action in self._actions.iteritems():
