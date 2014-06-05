@@ -361,25 +361,25 @@ class Actions(JailThread, Mapping):
 			aInfo["failures"] = bTicket.getAttempt()
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "\n".join(bTicket.getMatches())
-			btime = bTicket.getBanTime(self.__banManager.getBanTime());
+			btime = bTicket.getBanTime(self.__banManager.getBanTime())
 			if self._jail.database is not None:
-				aInfo["ipmatches"] = lambda: "\n".join(
-					self._jail.database.getBansMerged(
-						ip=ip).getMatches())
-				aInfo["ipjailmatches"] = lambda: "\n".join(
-					self._jail.database.getBansMerged(
-						ip=ip, jail=self._jail).getMatches())
-				aInfo["ipfailures"] = lambda: "\n".join(
-					self._jail.database.getBansMerged(
-						ip=ip).getAttempt())
-				aInfo["ipjailfailures"] = lambda: "\n".join(
-					self._jail.database.getBansMerged(
-						ip=ip, jail=self._jail).getAttempt())
+				aInfo["ipmatches"] = lambda jail=self._jail: "\n".join(
+					jail.database.getBansMerged(ip=ip).getMatches()
+				)
+				aInfo["ipjailmatches"] = lambda jail=self._jail: "\n".join(
+					jail.database.getBansMerged(ip=ip, jail=jail).getMatches()
+				)
+				aInfo["ipfailures"] = lambda jail=self._jail: \
+					jail.database.getBansMerged(ip=ip).getAttempt()
+				aInfo["ipjailfailures"] = lambda jail=self._jail: \
+					jail.database.getBansMerged(ip=ip, jail=jail).getAttempt()
 				try:
 					# if not permanent, not restored and ban time was not set:
 					if btime != -1 and not ticket.getRestored() and bTicket.getBanTime() is None:
 						btime = self.incrBanTime(bTicket)
-						bTicket.setBanTime(btime);
+						bTicket.setBanTime(btime)
+						if bTicket.getRestored():
+							ticket.setRestored(True)
 				except Exception as e:
 					logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 					#logSys.error('%s', e, exc_info=True)
@@ -393,10 +393,10 @@ class Actions(JailThread, Mapping):
 				if self._jail.database is not None:
 					# add to database always only after ban time was calculated an not yet already banned:
 					# if ticked was not restored from database - put it into database:
-					if not ticket.getRestored() and not bTicket.getRestored():
+					if not ticket.getRestored():
 						self._jail.database.addBan(self._jail, bTicket)
 				logSys.notice("[%s] %sBan %s (%d # %s -> %s)" % ((self._jail.name, ('Resore ' if ticket.getRestored() else ''),
-					aInfo["ip"], bTicket.getBanCount()) + logtime))
+					aInfo["ip"], bTicket.getBanCount()+1) + logtime))
 				for name, action in self._actions.iteritems():
 					try:
 						action.ban(aInfo)

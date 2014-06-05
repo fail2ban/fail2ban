@@ -516,7 +516,7 @@ class Fail2BanDb(object):
 		if not overalljails:
 			query = "SELECT bancount, timeofban, bantime FROM bips"
 		else:
-			query = "SELECT max(bancount), max(timeofban), max(bantime) FROM bips"
+			query = "SELECT sum(bancount), max(timeofban), sum(bantime) FROM bips"
 		query += " WHERE ip = ?"
 		queryArgs = [ip]
 		if not overalljails and jail is not None:

@@ -506,5 +506,5 @@ class BanTimeIncr(unittest.TestCase):
 			break
     # get max values for this ip (over all jails):
 		for row in self.db.getBan(ip, overalljails=True):
-			self.assertEqual(row, (2, stime, 12000))
+			self.assertEqual(row, (3, stime, 18000))
 			break

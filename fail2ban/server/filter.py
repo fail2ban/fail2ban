@@ -422,6 +422,7 @@ class Filter(JailThread):
 			# increase retry count for known (bad) ip, corresponding banCount of it (one try will count than 2, 3, 5, 9 ...)  :
 			banCount = 0
 			retryCount = 1
+			timeOfBan = None
 			db = self.jail.database
 			if db is not None:
 				try:
@@ -434,13 +435,15 @@ class Filter(JailThread):
 				except Exception as e:
 					logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 					#logSys.error('%s', e, exc_info=True)
-			try:
-				logSys.info(
-					("[%s] Found %s - %s" % (self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")))
-					+ ((", %s # -> %s" % (banCount, retryCount)) if banCount != 1 or retryCount != 1 else '')
-				)
-			except Exception as e:
-				logSys.error('%s', e, exc_info=True)
+				# check this ticket already known (line was already processed and in the database and will be restored from there):
+				if timeOfBan is not None and unixTime <= timeOfBan:
+					logSys.debug("Ignore line for %s before last ban %s < %s"
+								 % (ip, unixTime, timeOfBan))
+					continue
+			logSys.info(
+				("[%s] Found %s - %s" % (self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")))
+				+ ((", %s # -> %s" % (banCount, retryCount)) if banCount != 1 or retryCount != 1 else '')
+			)
 			self.failManager.addFailure(FailTicket(ip, unixTime, lines), retryCount)
 
 	##
