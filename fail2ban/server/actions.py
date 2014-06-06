@@ -271,11 +271,9 @@ class Actions(JailThread, Mapping):
 			# [todo] move merging to observer - here we could read already merged info from database (faster);
 			if self._jail.database is not None:
 				aInfo["ipmatches"] = lambda jail=self._jail: "\n".join(
-					jail.database.getBansMerged(ip=ip).getMatches()
-				)
+					jail.database.getBansMerged(ip=ip).getMatches())
 				aInfo["ipjailmatches"] = lambda jail=self._jail: "\n".join(
-					jail.database.getBansMerged(ip=ip, jail=jail).getMatches()
-				)
+					jail.database.getBansMerged(ip=ip, jail=jail).getMatches())
 				aInfo["ipfailures"] = lambda jail=self._jail: \
 					jail.database.getBansMerged(ip=ip).getAttempt()
 				aInfo["ipjailfailures"] = lambda jail=self._jail: \
