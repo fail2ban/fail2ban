@@ -33,7 +33,6 @@ if sys.version_info >= (3, 3):
 	import importlib.machinery
 else:
 	import imp
-from .jailthread import JailThread
 from .mytime import MyTime
 
 # Gets the instance of the logger.
