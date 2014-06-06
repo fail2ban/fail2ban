@@ -27,6 +27,7 @@ __license__ = "GPL"
 from threading import Lock, RLock
 import logging, logging.handlers, sys, os, signal
 
+from .observer import Observers, ObserverThread
 from .jails import Jails
 from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
@@ -101,6 +102,10 @@ class Server:
 			os.remove(pidfile)
 		except OSError, e:
 			logSys.error("Unable to remove PID file: %s" % e)
+		# Stop observer and exit
+		if Observers.Main is not None:
+			Observers.Main.stop()
+			Observers.Main = None
 		logSys.info("Exiting Fail2ban")
 	
 	def quit(self):
@@ -124,10 +129,16 @@ class Server:
 
 	
 	def addJail(self, name, backend):
+		# Create an observer if not yet created and start it:
+		if Observers.Main is None:
+			Observers.Main = ObserverThread()
+			Observers.Main.start()
+		# Add jail hereafter:
 		self.__jails.add(name, backend, self.__db)
 		if self.__db is not None:
 			self.__db.addJail(self.__jails[name])
-		
+			Observers.Main.db_set(self.__db)
+
 	def delJail(self, name):
 		if self.__db is not None:
 			self.__db.delJail(self.__jails[name])
@@ -304,10 +315,10 @@ class Server:
 		return self.__jails[name].actions.getBanTime()
 
 	def setBanTimeExtra(self, name, opt, value):
-		self.__jails[name].actions.setBanTimeExtra(opt, value)
+		self.__jails[name].setBanTimeExtra(opt, value)
 
 	def getBanTimeExtra(self, name, opt):
-		return self.__jails[name].actions.getBanTimeExtra(opt)
+		return self.__jails[name].getBanTimeExtra(opt)
 	
 	# Status
 	def status(self):

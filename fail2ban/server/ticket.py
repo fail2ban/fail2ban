@@ -105,6 +105,9 @@ class Ticket:
 	def getAttempt(self):
 		return self.__attempt
 
+	def setMatches(self, matches):
+		self.__matches = matches
+
 	def getMatches(self):
 		return self.__matches
 

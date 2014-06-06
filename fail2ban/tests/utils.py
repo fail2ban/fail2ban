@@ -68,6 +68,7 @@ def gatherTests(regexps=None, no_network=False):
 	from . import sockettestcase
 	from . import misctestcase
 	from . import databasetestcase
+	from . import observertestcase
 	from . import samplestestcase
 
 	if not regexps: # pragma: no cover
@@ -91,7 +92,6 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
 	tests.addTest(unittest.makeSuite(actiontestcase.CommandActionTest))
 	tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
-	tests.addTest(unittest.makeSuite(actionstestcase.BanTimeIncr))
 	# FailManager
 	tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 	# BanManager
@@ -110,7 +110,10 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(misctestcase.CustomDateFormatsTest))
 	# Database
 	tests.addTest(unittest.makeSuite(databasetestcase.DatabaseTest))
-	tests.addTest(unittest.makeSuite(databasetestcase.BanTimeIncr))
+	# Observer
+	tests.addTest(unittest.makeSuite(observertestcase.ObserverTest))
+	tests.addTest(unittest.makeSuite(observertestcase.BanTimeIncr))
+	tests.addTest(unittest.makeSuite(observertestcase.BanTimeIncrDB))
 
 	# Filter
 	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))

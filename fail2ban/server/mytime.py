@@ -94,7 +94,7 @@ class MyTime:
 	# The string expression will be evaluated as mathematical expression, spaces between each groups 
 	#   will be wrapped to "+" operand (only if any operand does not specified between).
 	# Because of case insensitivity and overwriting with minutes ("m" or "mm"), the short replacement for month
-	#   are "mo" or "mon" (like %b by date formating).
+	#   are "mo" or "mon".
 	# Ex: 1hour+30min = 5400
 	#     0d 1h 30m   = 5400
 	#     1year-6mo   = 15778800
@@ -109,8 +109,11 @@ class MyTime:
 
 	#@staticmethod
 	def str2seconds(val):
+		if isinstance(val, (int, long, float, complex)):
+			return val
 		for rexp, rpl in (
-			(r"days?|da|dd?", 24*60*60), (r"week?|wee?|ww?", 7*24*60*60), (r"months?|mon?", (365*3+366)*24*60*60/4/12), (r"years?|yea?|yy?", (365*3+366)*24*60*60/4), 
+			(r"days?|da|dd?", 24*60*60), (r"week?|wee?|ww?", 7*24*60*60), (r"months?|mon?", (365*3+366)*24*60*60/4/12), 
+			(r"years?|yea?|yy?", (365*3+366)*24*60*60/4), 
 			(r"seconds?|sec?|ss?", 1), (r"minutes?|min?|mm?", 60), (r"hours?|ho|hh?", 60*60),
 		):
 			val = re.sub(r"(?i)(?<=[\d\s])(%s)\b" % rexp, "*"+str(rpl), val)

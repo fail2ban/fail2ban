@@ -23,9 +23,10 @@ __author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import Queue, logging
+import Queue, logging, math, random
 
 from .actions import Actions
+from .mytime import MyTime
 
 # Gets the instance of the logger.
 logSys = logging.getLogger(__name__)
@@ -72,8 +73,11 @@ class Jail:
 		self.__name = name
 		self.__queue = Queue.Queue()
 		self.__filter = None
+		# Extra parameters for increase ban time
+		self._banExtra = {};
 		logSys.info("Creating new jail '%s'" % self.name)
-		self._setBackend(backend)
+		if backend is not None:
+			self._setBackend(backend)
 
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__.__name__, self.name)
@@ -189,7 +193,7 @@ class Jail:
 		"""
 		self.__queue.put(ticket)
 		# add ban to database moved to actions (should previously check not already banned 
-		# and increase ticket time if "bantimeextra.enabled" set)
+		# and increase ticket time if "bantime.increment" set)
 
 	def getFailTicket(self):
 		"""Get a fail ticket from the jail.
@@ -200,6 +204,57 @@ class Jail:
 			return self.__queue.get(False)
 		except Queue.Empty:
 			return False
+
+	def setBanTimeExtra(self, opt, value):
+		# merge previous extra with new option:
+		be = self._banExtra;
+		if value == '':
+			value = None
+		if value is not None:
+			be[opt] = value;
+		elif opt in be:
+			del be[opt]
+		logSys.info('Set banTime.%s = %s', opt, value)
+		if opt == 'increment':
+			if isinstance(value, str):
+				be[opt] = value.lower() in ("yes", "true", "ok", "1")
+			if be[opt] and self.database is None:
+				logSys.warning("ban time increment is not available as long jail database is not set")
+		if opt in ['maxtime', 'rndtime']:
+			if not value is None:
+				be[opt] = MyTime.str2seconds(value)
+		# prepare formula lambda:
+		if opt in ['formula', 'factor', 'maxtime', 'rndtime', 'multipliers'] or be.get('evformula', None) is None:
+			# split multifiers to an array begins with 0 (or empty if not set):
+			if opt == 'multipliers':
+				be['evmultipliers'] = [int(i) for i in (value.split(' ') if value is not None and value != '' else [])]
+			# if we have multifiers - use it in lambda, otherwise compile and use formula within lambda
+			multipliers = be.get('evmultipliers', [])
+			banFactor = eval(be.get('factor', "1"))
+			if len(multipliers):
+				evformula = lambda ban, banFactor=banFactor: (
+					ban.Time * banFactor * multipliers[ban.Count if ban.Count < len(multipliers) else -1]
+				)
+			else:
+				formula = be.get('formula', 'ban.Time * (1<<(ban.Count if ban.Count<20 else 20)) * banFactor')
+				formula = compile(formula, '~inline-conf-expr~', 'eval')
+				evformula = lambda ban, banFactor=banFactor, formula=formula: max(ban.Time, eval(formula))
+			# extend lambda with max time :
+			if not be.get('maxtime', None) is None:
+				maxtime = be['maxtime']
+				evformula = lambda ban, evformula=evformula: min(evformula(ban), maxtime)
+			# mix lambda with random time (to prevent bot-nets to calculate exact time IP can be unbanned):
+			if not be.get('rndtime', None) is None:
+				rndtime = be['rndtime']
+				evformula = lambda ban, evformula=evformula: (evformula(ban) + random.random() * rndtime)
+			# set to extra dict:
+			be['evformula'] = evformula
+		#logSys.info('banTimeExtra : %s' % json.dumps(be))
+
+	def getBanTimeExtra(self, opt=None):
+		if opt is not None:
+			return self._banExtra.get(opt, None)
+		return self._banExtra
 
 	def start(self):
 		"""Start the jail, by starting filter and actions threads.
@@ -213,9 +268,8 @@ class Jail:
 		try:
 			if self.database is not None:
 				forbantime = None;
-				if self.actions.getBanTimeExtra('enabled'):
-				  forbantime = self.actions.getBanTimeExtra('findtime')
-				if forbantime is None:
+				# use ban time as search time if we have not enabled a increasing:
+				if not self.getBanTimeExtra('increment'):
 					forbantime = self.actions.getBanTime()
 				for ticket in self.database.getCurrentBans(jail=self, forbantime=forbantime):
 					#logSys.debug('restored ticket: %s', ticket)

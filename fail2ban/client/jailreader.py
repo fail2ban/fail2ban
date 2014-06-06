@@ -90,17 +90,17 @@ class JailReader(ConfigReader):
 				["string", "logpath", None],
 				["string", "logencoding", None],
 				["string", "backend", "auto"],
-				["int", "maxretry", None],
-				["int", "findtime", None],
-				["int", "bantime", None],
-				["bool",   "bantimeextra.enabled", None],
-				["string", "bantimeextra.findtime", None],
-				["string", "bantimeextra.factor", None],
-				["string", "bantimeextra.formula", None],
-				["string", "bantimeextra.multipliers", None],
-				["string", "bantimeextra.maxtime", None],
-				["string", "bantimeextra.rndtime", None],
-				["bool",   "bantimeextra.overalljails", None],
+				["int",    "maxretry", None],
+				["string", "findtime", None],
+				["string", "bantime", None],
+				["bool",   "bantime.increment", None],
+				["string", "bantime.findtime", None],
+				["string", "bantime.factor", None],
+				["string", "bantime.formula", None],
+				["string", "bantime.multipliers", None],
+				["string", "bantime.maxtime", None],
+				["string", "bantime.rndtime", None],
+				["bool",   "bantime.overalljails", None],
 				["string", "usedns", None],
 				["string", "failregex", None],
 				["string", "ignoreregex", None],
@@ -206,7 +206,7 @@ class JailReader(ConfigReader):
 				stream.append(["set", self.__name, "findtime", self.__opts[opt]])
 			elif opt == "bantime":
 				stream.append(["set", self.__name, "bantime", self.__opts[opt]])
-			elif opt.startswith("bantimeextra."):
+			elif opt.startswith("bantime."):
 				stream.append(["set", self.__name, opt, self.__opts[opt]])
 			elif opt == "usedns":
 				stream.append(["set", self.__name, "usedns", self.__opts[opt]])

@@ -24,6 +24,7 @@ __license__ = "GPL"
 import logging, re, os, fcntl, sys, locale, codecs, datetime
 
 from .failmanager import FailManagerEmpty, FailManager
+from .observer import Observers
 from .ticket import FailTicket
 from .jailthread import JailThread
 from .datedetector import DateDetector
@@ -185,6 +186,7 @@ class Filter(JailThread):
 	# @param value the time
 
 	def setFindTime(self, value):
+		value = MyTime.str2seconds(value)
 		self.__findTime = value
 		self.failManager.setMaxTime(value)
 		logSys.info("Set findtime = %s" % value)
@@ -314,7 +316,7 @@ class Filter(JailThread):
 		# Perform the banning of the IP now.
 		try: # pragma: no branch - exception is the only way out
 			while True:
-				ticket = self.failManager.toBan()
+				ticket = self.failManager.toBan(ip)
 				self.jail.putFailTicket(ticket)
 		except FailManagerEmpty:
 			self.failManager.cleanup(MyTime.time())
@@ -419,32 +421,13 @@ class Filter(JailThread):
 			if self.inIgnoreIPList(ip):
 				logSys.info("[%s] Ignore %s" % (self.jail.name, ip))
 				continue
-			# increase retry count for known (bad) ip, corresponding banCount of it (one try will count than 2, 3, 5, 9 ...)  :
-			banCount = 0
-			retryCount = 1
-			timeOfBan = None
-			db = self.jail.database
-			if db is not None:
-				try:
-					for banCount, timeOfBan, lastBanTime in db.getBan(ip, self.jail):
-						retryCount = ((1 << (banCount if banCount < 20 else 20))/2 + 1)
-						# if lastBanTime == -1 or timeOfBan + lastBanTime * 2 > MyTime.time():
-						# 	retryCount = self.failManager.getMaxRetry()
-						break
-					retryCount = min(retryCount, self.failManager.getMaxRetry())
-				except Exception as e:
-					logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-					#logSys.error('%s', e, exc_info=True)
-				# check this ticket already known (line was already processed and in the database and will be restored from there):
-				if timeOfBan is not None and unixTime <= timeOfBan:
-					logSys.debug("Ignore line for %s before last ban %s < %s"
-								 % (ip, unixTime, timeOfBan))
-					continue
 			logSys.info(
-				("[%s] Found %s - %s" % (self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")))
-				+ ((", %s # -> %s" % (banCount, retryCount)) if banCount != 1 or retryCount != 1 else '')
+				"[%s] Found %s - %s", self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
 			)
-			self.failManager.addFailure(FailTicket(ip, unixTime, lines), retryCount)
+			tick = FailTicket(ip, unixTime, lines)
+			self.failManager.addFailure(tick)
+			# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
+			Observers.Main.add('failureFound', self.failManager, self.jail, tick)
 
 	##
 	# Returns true if the line should be ignored.
