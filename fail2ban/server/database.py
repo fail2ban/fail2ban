@@ -400,12 +400,12 @@ class Fail2BanDb(object):
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
-			(jail.name, ticket.getIP(), ticket.getTime(), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount() + 1,
+			(jail.name, ticket.getIP(), ticket.getTime(), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
 				{"matches": ticket.getMatches(),
 					"failures": ticket.getAttempt()}))
 		cur.execute(
 			"INSERT OR REPLACE INTO bips(ip, jail, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
-			(ticket.getIP(), jail.name, ticket.getTime(), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount() + 1,
+			(ticket.getIP(), jail.name, ticket.getTime(), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
 				{"matches": ticket.getMatches(),
 					"failures": ticket.getAttempt()}))
 
@@ -558,11 +558,6 @@ class Fail2BanDb(object):
 		return cur.execute(query, queryArgs)
 
 	def getCurrentBans(self, jail = None, ip = None, forbantime=None, fromtime=None):
-		if forbantime is None and jail is not None:
-			cacheKey = (ip, jail)
-			if cacheKey in self._bansMergedCache:
-				return self._bansMergedCache[cacheKey]
-
 		tickets = []
 		ticket = None
 
@@ -584,8 +579,6 @@ class Fail2BanDb(object):
 				ticket.setAttempt(failures)
 				tickets.append(ticket)
 
-		if forbantime is None and jail is not None:
-			self._bansMergedCache[cacheKey] = tickets if ip is None else ticket
 		return tickets if ip is None else ticket
 
 	def _cleanjails(self, cur):

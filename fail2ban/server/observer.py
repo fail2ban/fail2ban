@@ -70,7 +70,6 @@ class ObserverThread(threading.Thread):
 		## but so we can later do some service "events" occurred infrequently directly in main loop of observer (not using queue)
 		self.sleeptime = 60
 		#
-		self._started = False
 		self._timers = {}
 		self._paused = False
 		self.__db = None
@@ -124,11 +123,11 @@ class ObserverThread(threading.Thread):
 		t.start()
 
 	def pulse_notify(self):
-		"""Notify wakeup (sets and resets notify event)
+		"""Notify wakeup (sets /and resets/ notify event)
 		"""
 		if not self._paused and self._notify:
 			self._notify.set()
-			self._notify.clear()
+			#self._notify.clear()
 
 	def add(self, *event):
 		"""Add a event to queue and notify thread to wake up.
@@ -137,6 +136,13 @@ class ObserverThread(threading.Thread):
 		with self._queue_lock:
 			self._queue.append(event)
 		self.pulse_notify()
+
+	def add_wn(self, *event):
+		"""Add a event to queue withouth notifying thread to wake up.
+		"""
+		## lock and add new event to queue:
+		with self._queue_lock:
+			self._queue.append(event)
 
 	def call_lambda(self, l, *args):
 		l(*args)
@@ -168,6 +174,7 @@ class ObserverThread(threading.Thread):
 			'is_active': self.is_active,
 			'start': self.start,
 			'stop': self.stop,
+			'nop': lambda:(),
 			'shutdown': lambda:()
 		}
 		try:
@@ -177,13 +184,13 @@ class ObserverThread(threading.Thread):
 			while self.active:
 				## going sleep, wait for events (in queue)
 				self.idle = True
-				self._notify.wait(self.sleeptime)
-				# does not clear notify event here - we use pulse (and clear it inside) ...
-				# ## wake up - reset signal now (we don't need it so long as we reed from queue)
-				# if self._notify:
-				#  	self._notify.clear()
-				if self._paused:
-					continue
+				n = self._notify
+				if n:
+					n.wait(self.sleeptime)
+					## wake up - reset signal now (we don't need it so long as we reed from queue)
+					n.clear()
+					if self._paused:
+						continue
 				self.idle = False
 				## check events available and execute all events from queue
 				while not self._paused:
@@ -203,13 +210,14 @@ class ObserverThread(threading.Thread):
 						#logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 						logSys.error('%s', e, exc_info=True)
 				## end of main loop - exit
+			logSys.info("Observer stopped, %s events remaining.", len(self._queue))
+			#print("Observer stopped, %s events remaining." % len(self._queue))
 		except Exception as e:
 			logSys.error('Observer stopped after error: %s', e, exc_info=True)
 			#print("Observer stopped with error: %s" % str(e))
-			self.idle = True
-			return True
-		logSys.info("Observer stopped, %s events remaining.", len(self._queue))
-		#print("Observer stopped, %s events remaining." % len(self._queue))
+		# clear all events - exit, for possible calls of wait_empty:
+		with self._queue_lock:
+			self._queue = []
 		self.idle = True
 		return True
 
@@ -230,16 +238,22 @@ class ObserverThread(threading.Thread):
 				super(ObserverThread, self).start()
 
 	def stop(self):
-		logSys.info("Observer stop ...")
-		#print("Observer stop ....")
-		self.active = False
-		if self._notify:
+		if self.active and self._notify:
+			wtime = 5
+			logSys.info("Observer stop ... try to end queue %s seconds", wtime)
+			#print("Observer stop ....")
 			# just add shutdown job to make possible wait later until full (events remaining)
-			self.add('shutdown')
-			self.pulse_notify()
+			self.add_wn('shutdown')
+			#don't pulse - just set, because we will delete it hereafter (sometimes not wakeup)
+			n = self._notify
+			self._notify.set()
+			#self.pulse_notify()
 			self._notify = None
-			# wait max 5 seconds until full (events remaining)
-			self.wait_empty(5)
+			self.active = False
+			# wait max wtime seconds until full (events remaining)
+			self.wait_empty(wtime)
+			n.clear()
+			self.wait_idle(0.5)
 
 	@property
 	def is_full(self):
@@ -249,14 +263,16 @@ class ObserverThread(threading.Thread):
 	def wait_empty(self, sleeptime=None):
 		"""Wait observer is running and returns if observer has no more events (queue is empty)
 		"""
-		if not self.is_full:
-			return True
+		# block queue with not operation to be sure all really jobs are executed if nop goes from queue :
+		self._queue.append(('nop',))
 		if sleeptime is not None:
 			e = MyTime.time() + sleeptime
 		while self.is_full:
 			if sleeptime is not None and MyTime.time() > e:
 				break
-			time.sleep(0.1)
+			time.sleep(0.01)
+		# wait idle to be sure the last queue element is processed (because pop event before processing it) :
+		self.wait_idle(0.01)
 		return not self.is_full
 
 
@@ -271,7 +287,7 @@ class ObserverThread(threading.Thread):
 		while not self.idle:
 			if sleeptime is not None and MyTime.time() > e:
 				break
-			time.sleep(0.1)
+			time.sleep(0.01)
 		return self.idle
 
 	@property
@@ -443,6 +459,8 @@ class ObserverThread(threading.Thread):
 					return False
 			else:
 				logtime = ('permanent', 'infinite')
+			# increment count:
+			ticket.incrBanCount()
 			# if ban time was prolonged - log again with new ban time:
 			if btime != oldbtime:
 				logSys.notice("[%s] Increase Ban %s (%d # %s -> %s)", jail.name, 

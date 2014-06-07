@@ -32,6 +32,7 @@ import time
 
 from ..server.mytime import MyTime
 from ..server.ticket import FailTicket
+from ..server.failmanager import FailManager
 from ..server.observer import Observers, ObserverThread
 from .utils import LogCaptureTestCase
 from .dummyjail import DummyJail
@@ -174,7 +175,8 @@ class BanTimeIncr(LogCaptureTestCase):
 		a.setBanTimeExtra('rndtime', None)
 
 
-class BanTimeIncrDB(LogCaptureTestCase):
+class BanTimeIncrDB(unittest.TestCase):
+#class BanTimeIncrDB(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
@@ -187,8 +189,10 @@ class BanTimeIncrDB(LogCaptureTestCase):
 			return
 		_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
 		self.db = Fail2BanDb(self.dbFilename)
-		self.jail = None
+		self.jail = DummyJail()
+		self.jail.database = self.db
 		self.Observer = ObserverThread()
+		Observers.Main = self.Observer
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -196,6 +200,8 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		if Fail2BanDb is None: # pragma: no cover
 			return
 		# Cleanup
+		self.Observer.stop()
+		Observers.Main = None
 		os.remove(self.dbFilename)
 
 	def incrBanTime(self, ticket, banTime=None):
@@ -211,9 +217,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 	def testBanTimeIncr(self):
 		if Fail2BanDb is None: # pragma: no cover
 			return
-		jail = DummyJail()
-		self.jail = jail
-		jail.database = self.db
+		jail = self.jail
 		self.db.addJail(jail)
 		# we tests with initial ban time = 10 seconds:
 		jail.actions.setBanTime(10)
@@ -229,6 +233,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 			[10, 10, 10]
 		)
 		# add a ticket banned
+		ticket.incrBanCount()
 		self.db.addBan(jail, ticket)
 		# get a ticket already banned in this jail:
 		self.assertEqual(
@@ -238,6 +243,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		# incr time and ban a ticket again :
 		ticket.setTime(stime + 15)
 		self.assertEqual(self.incrBanTime(ticket, 10), 20)
+		ticket.incrBanCount()
 		self.db.addBan(jail, ticket)
 		# get a ticket already banned in this jail:
 		self.assertEqual(
@@ -274,6 +280,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 			ticket.setTime(stime + lastBanTime + 5)
 			banTime = self.incrBanTime(ticket, 10)
 			self.assertEqual(banTime, lastBanTime * 2)
+			ticket.incrBanCount()
 			self.db.addBan(jail, ticket)
 			lastBanTime = banTime
 		# increase again, but the last multiplier reached (time not increased):
@@ -281,15 +288,18 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		banTime = self.incrBanTime(ticket, 10)
 		self.assertNotEqual(banTime, lastBanTime * 2)
 		self.assertEqual(banTime, lastBanTime)
+		ticket.incrBanCount()
 		self.db.addBan(jail, ticket)
 		lastBanTime = banTime
 		# add two tickets from yesterday: one unbanned (bantime already out-dated):
 		ticket2 = FailTicket(ip+'2', stime-24*60*60, [])
 		ticket2.setBanTime(12*60*60)
+		ticket2.incrBanCount()
 		self.db.addBan(jail, ticket2)
 		# and one from yesterday also, but still currently banned :
 		ticket2 = FailTicket(ip+'1', stime-24*60*60, [])
 		ticket2.setBanTime(36*60*60)
+		ticket2.incrBanCount()
 		self.db.addBan(jail, ticket2)
 		# search currently banned:
 		restored_tickets = self.db.getCurrentBans(fromtime=stime)
@@ -331,6 +341,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 
 		# get currently banned pis with permanent one:
 		ticket.setBanTime(-1)
+		ticket.incrBanCount()
 		self.db.addBan(jail, ticket)
 		restored_tickets = self.db.getCurrentBans(fromtime=stime)
 		self.assertEqual(len(restored_tickets), 3)
@@ -344,6 +355,7 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		self.assertEqual(len(restored_tickets), 3)
 		# set short time and purge again:
 		ticket.setBanTime(600)
+		ticket.incrBanCount()
 		self.db.addBan(jail, ticket)
 		self.db.purge()
 		# this old ticket should be removed now:
@@ -373,10 +385,12 @@ class BanTimeIncrDB(LogCaptureTestCase):
 		self.db.addJail(jail2)
 		ticket1 = FailTicket(ip, stime, [])
 		ticket1.setBanTime(6000)
+		ticket1.incrBanCount()
 		self.db.addBan(jail1, ticket1)
 		ticket2 = FailTicket(ip, stime-6000, [])
 		ticket2.setBanTime(12000)
 		ticket2.setBanCount(1)
+		ticket2.incrBanCount()
 		self.db.addBan(jail2, ticket2)
 		restored_tickets = self.db.getCurrentBans(jail=jail1, fromtime=stime)
 		self.assertEqual(len(restored_tickets), 1)
@@ -402,6 +416,86 @@ class BanTimeIncrDB(LogCaptureTestCase):
 			self.assertEqual(row, (3, stime, 18000))
 			break
 
+	def testObserver(self):
+		if Fail2BanDb is None: # pragma: no cover
+			return
+		jail = self.jail
+		self.db.addJail(jail)
+		# we tests with initial ban time = 10 seconds:
+		jail.actions.setBanTime(10)
+		jail.setBanTimeExtra('increment', 'true')
+		# observer / database features:
+		obs = Observers.Main
+		obs.start()
+		obs.db_set(self.db)
+		# wait for start ready
+		obs.add('nop')
+		obs.wait_empty(5)
+		# purge database right now, but using timer, to test it also:
+		self.db._purgeAge = -240*60*60
+		obs.add_named_timer('DB_PURGE', 0.001, 'db_purge')
+		# wait for timer ready
+		time.sleep(0.025)
+		# wait for ready
+		obs.add('nop')
+		obs.wait_empty(5)
+
+		stime = int(MyTime.time())
+		# completelly empty ?
+		tickets = self.db.getBans()
+		self.assertEqual(tickets, [])
+
+		# add failure:
+		ip = "127.0.0.2"
+		ticket = FailTicket(ip, stime-120, [])
+		failManager = FailManager()
+		failManager.setMaxRetry(3)
+		for i in xrange(3):
+			failManager.addFailure(ticket)
+			obs.add('failureFound', failManager, jail, ticket)
+		obs.wait_empty(5)
+		self.assertEqual(ticket.getBanCount(), 0)
+    # check still not ban :
+		self.assertTrue(not jail.getFailTicket())
+		# add manually 4th times banned (added to bips - make ip bad):
+		ticket.setBanCount(4)
+		self.db.addBan(self.jail, ticket)
+		restored_tickets = self.db.getCurrentBans(jail=jail, fromtime=stime-120)
+		self.assertEqual(len(restored_tickets), 1)
+		# check again, new ticket, new failmanager:
+		ticket = FailTicket(ip, stime, [])
+		failManager = FailManager()
+		failManager.setMaxRetry(3)
+		# add once only - but bad - should be banned:
+		failManager.addFailure(ticket)
+		obs.add('failureFound', failManager, self.jail, ticket)
+		obs.wait_empty(5)
+		# wait until ticket transfered from failmanager into jail:
+		i = 50
+		while True:
+			ticket2 = jail.getFailTicket()
+			if ticket2:
+				break
+			time.sleep(0.1)
+		# check ticket and failure count:
+		self.assertFalse(not ticket2)
+		self.assertEqual(ticket2.getAttempt(), failManager.getMaxRetry())
+
+		# add this ticket to ban (use observer only without ban manager):
+		obs.add('banFound', ticket2, jail, 10)
+		obs.wait_empty(5)
+		# increased?
+		self.assertEqual(ticket2.getBanTime(), 160)
+		self.assertEqual(ticket2.getBanCount(), 5)
+
+    # check prolonged in database also :
+		restored_tickets = self.db.getCurrentBans(jail=jail, fromtime=stime)
+		self.assertEqual(len(restored_tickets), 1)
+		self.assertEqual(restored_tickets[0].getBanTime(), 160)
+		self.assertEqual(restored_tickets[0].getBanCount(), 5)
+
+		# stop observer
+		obs.stop()
 
 class ObserverTest(unittest.TestCase):
 
@@ -419,16 +513,17 @@ class ObserverTest(unittest.TestCase):
 		obs.start()
 		# wait for idle
 		obs.wait_idle(0.1)
-		# observer will sleep 0.5 second (in busy state):
+		# observer will replace test set:
 		o = set(['test'])
 		obs.add('call', o.clear)
 		obs.add('call', o.add, 'test2')
+		# wait for observer ready:
 		obs.wait_empty(1)
 		self.assertFalse(obs.is_full)
 		self.assertEqual(o, set(['test2']))
 		# observer makes pause
 		obs.paused = True
-		# observer will sleep 0.5 second after pause ends:
+		# observer will replace test set, but first after pause ends:
 		obs.add('call', o.clear)
 		obs.add('call', o.add, 'test3')
 		obs.wait_empty(0.25)

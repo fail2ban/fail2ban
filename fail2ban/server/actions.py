@@ -292,7 +292,7 @@ class Actions(JailThread, Mapping):
 
 			if self.__banManager.addBanTicket(bTicket):
 				# report ticket to observer, to check time should be increased and hereafter observer writes ban to database (asynchronous)
-				if not bTicket.getRestored():
+				if Observers.Main and not bTicket.getRestored():
 					Observers.Main.add('banFound', bTicket, self._jail, btime)
 				logSys.notice("[%s] %sBan %s (%d # %s -> %s)", self._jail.name, ('' if not bTicket.getRestored() else 'Restore '),
 					aInfo["ip"], bTicket.getBanCount()+(1 if not bTicket.getRestored() else 0), *logtime)

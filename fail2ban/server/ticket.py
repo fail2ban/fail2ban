@@ -88,6 +88,9 @@ class Ticket:
 	def setBanCount(self, value):
 		self.__banCount = value;
 
+	def incrBanCount(self, value = 1):
+		self.__banCount += value;
+
 	def getBanCount(self):
 		return self.__banCount;
 
