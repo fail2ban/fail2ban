@@ -161,7 +161,7 @@ class BadIPsAction(ActionBase):
 				"/".join([self._badips, "get", "list", category, str(score)]),
 				urlencode({'age': age})])
 			if key:
-				url = "&".join([url, urlencode({"key", key})])
+				url = "&".join([url, urlencode({'key': key})])
 			response = urlopen(self._Request(url))
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
@@ -346,7 +346,7 @@ class BadIPsAction(ActionBase):
 		try:
 			url = "/".join([self._badips, "add", self.category, aInfo['ip']])
 			if self.key:
-				url = "?".join([url, urlencode({"key", self.key})])
+				url = "?".join([url, urlencode({'key': self.key})])
 			response = urlopen(self._Request(url))
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
