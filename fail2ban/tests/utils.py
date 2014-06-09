@@ -30,8 +30,9 @@ import unittest
 from StringIO import StringIO
 
 from ..server.mytime import MyTime
+from ..helpers import getF2BLogger
 
-logSys = logging.getLogger(__name__)
+logSys = getF2BLogger(__name__)
 
 def mtimesleep():
 	# no sleep now should be necessary since polling tracks now not only
@@ -89,6 +90,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
 	tests.addTest(unittest.makeSuite(servertestcase.JailTests))
 	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
+	tests.addTest(unittest.makeSuite(servertestcase.LoggingTests))
 	tests.addTest(unittest.makeSuite(actiontestcase.CommandActionTest))
 	tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
 	# FailManager

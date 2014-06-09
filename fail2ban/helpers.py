@@ -107,3 +107,8 @@ class FormatterWithTraceBack(logging.Formatter):
 	def format(self, record):
 		record.tbc = record.tb = self._tb()
 		return logging.Formatter.format(self, record)
+
+def getF2BLogger(name):
+	"""Get logging.Logger instance with Fail2Ban logger name convention
+	"""
+	return logging.getLogger("fail2ban.%s" % name.rpartition(".")[-1])

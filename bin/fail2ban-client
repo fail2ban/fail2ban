@@ -32,7 +32,7 @@ from fail2ban.client.configurator import Configurator
 from fail2ban.client.beautifier import Beautifier
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.client")
+logSys = logging.getLogger("fail2ban")
 
 ##
 #

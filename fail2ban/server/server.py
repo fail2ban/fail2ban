@@ -32,9 +32,10 @@ from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
+from ..helpers import getF2BLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getF2BLogger(__name__)
 
 try:
 	from .database import Fail2BanDb
@@ -335,7 +336,7 @@ class Server:
 	def setLogLevel(self, value):
 		try:
 			self.__loggingLock.acquire()
-			logging.getLogger(__name__).parent.parent.setLevel(
+			logging.getLogger("fail2ban").setLevel(
 				getattr(logging, value.upper()))
 		except AttributeError:
 			raise ValueError("Invalid log level")
@@ -367,7 +368,7 @@ class Server:
 		try:
 			self.__loggingLock.acquire()
 			# set a format which is simpler for console use
-			formatter = logging.Formatter("%(asctime)s %(name)-16s[%(process)d]: %(levelname)-7s %(message)s")
+			formatter = logging.Formatter("%(asctime)s %(name)-24s[%(process)d]: %(levelname)-7s %(message)s")
 			if target == "SYSLOG":
 				# Syslog daemons already add date to the message.
 				formatter = logging.Formatter("%(name)s[%(process)d]: %(levelname)s %(message)s")
@@ -388,7 +389,7 @@ class Server:
 					return False
 			# Removes previous handlers -- in reverse order since removeHandler
 			# alter the list in-place and that can confuses the iterable
-			logger = logging.getLogger(__name__).parent.parent
+			logger = logging.getLogger("fail2ban")
 			for handler in logger.handlers[::-1]:
 				# Remove the handler.
 				logger.removeHandler(handler)
@@ -425,7 +426,7 @@ class Server:
 	
 	def flushLogs(self):
 		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG']:
-			for handler in logging.getLogger(__name__).parent.parent.handlers:
+			for handler in logging.getLogger("fail2ban").handlers:
 				try:
 					handler.doRollover()
 					logSys.info("rollover performed on %s" % self.__logTarget)
@@ -434,7 +435,7 @@ class Server:
 					logSys.info("flush performed on %s" % self.__logTarget)
 			return "rolled over"
 		else:
-			for handler in logging.getLogger(__name__).parent.parent.handlers:
+			for handler in logging.getLogger("fail2ban").handlers:
 				handler.flush()
 				logSys.info("flush performed on %s" % self.__logTarget)
 			return "flushed"

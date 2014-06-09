@@ -32,6 +32,7 @@ import pyinotify
 from .failmanager import FailManagerEmpty
 from .filter import FileFilter
 from .mytime import MyTime
+from ..helpers import getF2BLogger
 
 
 if not hasattr(pyinotify, '__version__') \
@@ -48,7 +49,7 @@ except Exception, e:
 					  % str(e))
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getF2BLogger(__name__)
 
 ##
 # Log reader class.

@@ -25,10 +25,11 @@ import logging, os, subprocess, time, signal, tempfile
 import threading, re
 from abc import ABCMeta
 from collections import MutableMapping
-#from subprocess import call
+
+from ..helpers import getF2BLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getF2BLogger(__name__)
 
 # Create a lock for running system commands
 _cmd_lock = threading.Lock()
@@ -136,7 +137,7 @@ class ActionBase(object):
 		self._jail = jail
 		self._name = name
 		self._logSys = logging.getLogger(
-			'%s.%s' % (__name__, self.__class__.__name__))
+			"fail2ban.%s" % self.__class__.__name__)
 
 	def start(self):
 		"""Executed when the jail/action is started.

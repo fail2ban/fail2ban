@@ -21,12 +21,11 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2013- Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging
-
 from ..exceptions import UnknownJailException, DuplicateJailException
+from ..helpers import getF2BLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getF2BLogger(__name__)
 
 ##
 # Beautify the output of the client.

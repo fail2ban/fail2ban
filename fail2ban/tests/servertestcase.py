@@ -35,6 +35,7 @@ import logging
 from ..server.failregex import Regex, FailRegex, RegexException
 from ..server.server import Server
 from ..server.jail import Jail
+from ..helpers import getF2BLogger
 
 try:
 	from ..server import filtersystemd
@@ -722,7 +723,7 @@ class TransmitterLogging(TransmitterBase):
 			os.close(f)
 			self.server.setLogLevel("WARNING")
 			self.assertEqual(self.transm.proceed(["set", "logtarget", fn]), (0, fn))
-			l = logging.getLogger('fail2ban.server.server').parent.parent
+			l = logging.getLogger('fail2ban')
 			l.warning("Before file moved")
 			try:
 				f2, fn2 = tempfile.mkstemp("fail2ban.log")
@@ -796,5 +797,10 @@ class RegexTests(unittest.TestCase):
 		self.assertTrue(fr.hasMatched())
 		self.assertRaises(RegexException, fr.getHost)
 
+class LoggingTests(unittest.TestCase):
 
+	def testGetF2BLogger(self):
+		testLogSys = getF2BLogger("fail2ban.some.string.with.name")
+		self.assertEqual(testLogSys.parent.name, "fail2ban")
+		self.assertEqual(testLogSys.name, "fail2ban.name")
 

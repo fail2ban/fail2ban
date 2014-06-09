@@ -23,16 +23,17 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import time, logging, fcntl
+import time, fcntl
 
 import gamin
 
 from .failmanager import FailManagerEmpty
 from .filter import FileFilter
 from .mytime import MyTime
+from ..helpers import getF2BLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getF2BLogger(__name__)
 
 ##
 # Log reader class.

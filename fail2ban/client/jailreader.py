@@ -24,15 +24,16 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging, re, glob, os.path
+import re, glob, os.path
 import json
 
 from .configreader import ConfigReader
 from .filterreader import FilterReader
 from .actionreader import ActionReader
+from ..helpers import getF2BLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getF2BLogger(__name__)
 
 class JailReader(ConfigReader):
 	

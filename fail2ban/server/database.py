@@ -21,7 +21,6 @@ __author__ = "Steven Hiscocks"
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import logging
 import sys
 import shutil, time
 import sqlite3
@@ -32,9 +31,10 @@ from threading import Lock
 
 from .mytime import MyTime
 from .ticket import FailTicket
+from ..helpers import getF2BLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getF2BLogger(__name__)
 
 if sys.version_info >= (3,):
 	sqlite3.register_adapter(

@@ -22,7 +22,7 @@ __author__ = "Steven Hiscocks"
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import logging, datetime, time
+import datetime, time
 from distutils.version import LooseVersion
 
 from systemd import journal
@@ -32,10 +32,10 @@ if LooseVersion(getattr(journal, '__version__', "0")) < '204':
 from .failmanager import FailManagerEmpty
 from .filter import JournalFilter
 from .mytime import MyTime
-
+from ..helpers import getF2BLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.filter")
+logSys = getF2BLogger(__name__)
 
 ##
 # Journal reader class.
