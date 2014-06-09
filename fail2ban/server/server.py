@@ -32,7 +32,7 @@ from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
-from ..helpers import getF2BLogger
+from ..helpers import getF2BLogger, fail2ban_excepthook
 
 # Gets the instance of the logger.
 logSys = getF2BLogger(__name__)
@@ -70,6 +70,9 @@ class Server:
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
 		signal.signal(signal.SIGINT, self.__sigTERMhandler)
 		
+		# Ensure unhandled exceptions are logged
+		sys.excepthook = fail2ban_excepthook
+
 		# First set the mask to only allow access to owner
 		os.umask(0077)
 		if self.__daemon: # pragma: no cover

@@ -35,6 +35,8 @@ import logging
 from ..server.failregex import Regex, FailRegex, RegexException
 from ..server.server import Server
 from ..server.jail import Jail
+from ..server.jailthread import JailThread
+from .utils import LogCaptureTestCase
 from ..helpers import getF2BLogger
 
 try:
@@ -797,10 +799,19 @@ class RegexTests(unittest.TestCase):
 		self.assertTrue(fr.hasMatched())
 		self.assertRaises(RegexException, fr.getHost)
 
-class LoggingTests(unittest.TestCase):
+class _BadThread(JailThread):
+	def run(self):
+		int("cat")
+
+class LoggingTests(LogCaptureTestCase):
 
 	def testGetF2BLogger(self):
 		testLogSys = getF2BLogger("fail2ban.some.string.with.name")
 		self.assertEqual(testLogSys.parent.name, "fail2ban")
 		self.assertEqual(testLogSys.name, "fail2ban.name")
 
+	def testFail2BanExceptHook(self):
+		badThread = _BadThread()
+		badThread.start()
+		badThread.join()
+		self.assertTrue(self._is_logged("Unhandled exception"))

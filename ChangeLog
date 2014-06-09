@@ -40,6 +40,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * Match non "Bye Bye" disconnect messages for sshd locked account regex
    * Realign fail2ban log output with white space to improve readability. Does
      not affect SYSLOG output.
+   * Log unhandled exceptions
 
 ver. 0.9.0 (2014/03/14) - beta
 ----------

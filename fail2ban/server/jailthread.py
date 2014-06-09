@@ -24,8 +24,11 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import sys
 from threading import Thread
 from abc import abstractproperty, abstractmethod
+
+from ..helpers import fail2ban_excepthook
 
 class JailThread(Thread):
 	"""Abstract class for threading elements in Fail2Ban.
@@ -52,6 +55,16 @@ class JailThread(Thread):
 		self.idle = False
 		## The time the thread sleeps in the loop.
 		self.sleeptime = 1
+
+		# excepthook workaround for threads, derived from:
+		# http://bugs.python.org/issue1230540#msg91244
+		run = self.run
+		def run_with_except_hook(*args, **kwargs):
+			try:
+				run(*args, **kwargs)
+			except:
+				fail2ban_excepthook(*sys.exc_info())
+		self.run = run_with_except_hook
 
 	@abstractproperty
 	def status(self): # pragma: no cover - abstract
