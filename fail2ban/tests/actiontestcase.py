@@ -186,8 +186,10 @@ class CommandActionTest(LogCaptureTestCase):
 		# Should take a minute
 		self.assertRaises(
 			RuntimeError, CommandAction.executeCmd, 'sleep 60', timeout=2)
-		self.assertAlmostEqual(time.time() - stime, 2, places=0)
-		self.assertTrue(self._is_logged('sleep 60 -- timed out after 2 seconds'))
+		# give a test still 1 second, because system could be too busy
+		self.assertTrue(time.time() >= stime + 2 and time.time() <= stime + 3)
+		self.assertTrue(self._is_logged('sleep 60 -- timed out after 2 seconds') 
+			or self._is_logged('sleep 60 -- timed out after 3 seconds'))
 		self.assertTrue(self._is_logged('sleep 60 -- killed with SIGTERM'))
 
 	def testCaptureStdOutErr(self):
