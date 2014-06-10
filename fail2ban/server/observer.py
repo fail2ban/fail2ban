@@ -343,14 +343,15 @@ class ObserverThread(threading.Thread):
 		retryCount = 1
 		timeOfBan = None
 		try:
+			maxRetry = failManager.getMaxRetry()
 			db = jail.database
 			if db is not None:
 				for banCount, timeOfBan, lastBanTime in db.getBan(ip, jail):
 					retryCount = ((1 << (banCount if banCount < 20 else 20))/2 + 1)
 					# if lastBanTime == -1 or timeOfBan + lastBanTime * 2 > MyTime.time():
-					# 	retryCount = failManager.getMaxRetry()
+					# 	retryCount = maxRetry
 					break
-				retryCount = min(retryCount, failManager.getMaxRetry())
+				retryCount = min(retryCount, maxRetry)
 				# check this ticket already known (line was already processed and in the database and will be restored from there):
 				if timeOfBan is not None and unixTime <= timeOfBan:
 					logSys.info("[%s] Ignore failure %s before last ban %s < %s, restored"
@@ -360,15 +361,16 @@ class ObserverThread(threading.Thread):
 			if retryCount <= 1:
 				return
 			# retry counter was increased - add it again:
-			logSys.info("[%s] Found %s, bad - %s, %s # -> %s, ban", jail.name, ip, 
-				datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S"), banCount, retryCount)
+			logSys.info("[%s] Found %s, bad - %s, %s # -> %s%s", jail.name, ip, 
+				datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S"), banCount, retryCount,
+				(', Ban' if retryCount >= maxRetry else ''))
 			# remove matches from this ticket, because a ticket was already added by filter self
 			ticket.setMatches(None)
 			# retryCount-1, because a ticket was already once incremented by filter self
 			failManager.addFailure(ticket, retryCount - 1, True)
 
 			# after observe we have increased count >= maxretry ...
-			if retryCount >= failManager.getMaxRetry():
+			if retryCount >= maxRetry:
 				# perform the banning of the IP now (again)
 				# [todo]: this code part will be used multiple times - optimize it later.
 				try: # pragma: no branch - exception is the only way out
@@ -464,7 +466,7 @@ class ObserverThread(threading.Thread):
 			# if ban time was prolonged - log again with new ban time:
 			if btime != oldbtime:
 				logSys.notice("[%s] Increase Ban %s (%d # %s -> %s)", jail.name, 
-					ip, ticket.getBanCount()+1, *logtime)
+					ip, ticket.getBanCount(), *logtime)
 			# add ticket to database, but only if was not restored (not already read from database):
 			if jail.database is not None and not ticket.getRestored():
 				# add to database always only after ban time was calculated an not yet already banned:

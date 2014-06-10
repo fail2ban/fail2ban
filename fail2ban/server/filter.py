@@ -427,7 +427,7 @@ class Filter(JailThread):
 			tick = FailTicket(ip, unixTime, lines)
 			self.failManager.addFailure(tick)
 			# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
-			if Observers.Main:
+			if Observers.Main is not None:
 				Observers.Main.add('failureFound', self.failManager, self.jail, tick)
 
 	##
