@@ -32,7 +32,7 @@ from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
-from ..helpers import getLogger, fail2ban_excepthook
+from ..helpers import getLogger, excepthook
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -71,7 +71,7 @@ class Server:
 		signal.signal(signal.SIGINT, self.__sigTERMhandler)
 		
 		# Ensure unhandled exceptions are logged
-		sys.excepthook = fail2ban_excepthook
+		sys.excepthook = excepthook
 
 		# First set the mask to only allow access to owner
 		os.umask(0077)

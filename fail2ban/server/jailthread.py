@@ -28,7 +28,7 @@ import sys
 from threading import Thread
 from abc import abstractproperty, abstractmethod
 
-from ..helpers import fail2ban_excepthook
+from ..helpers import excepthook
 
 class JailThread(Thread):
 	"""Abstract class for threading elements in Fail2Ban.
@@ -63,7 +63,7 @@ class JailThread(Thread):
 			try:
 				run(*args, **kwargs)
 			except:
-				fail2ban_excepthook(*sys.exc_info())
+				excepthook(*sys.exc_info())
 		self.run = run_with_except_hook
 
 	@abstractproperty
