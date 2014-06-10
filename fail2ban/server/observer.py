@@ -263,10 +263,15 @@ class ObserverThread(threading.Thread):
 	def wait_empty(self, sleeptime=None):
 		"""Wait observer is running and returns if observer has no more events (queue is empty)
 		"""
-		# block queue with not operation to be sure all really jobs are executed if nop goes from queue :
-		self._queue.append(('nop',))
+		time.sleep(0.001)
+		if not self.is_full:
+			return not self.is_full
 		if sleeptime is not None:
 			e = MyTime.time() + sleeptime
+		# block queue with not operation to be sure all really jobs are executed if nop goes from queue :
+		self.add_wn('nop')
+		if self.is_full and self.idle:
+			self.pulse_notify()
 		while self.is_full:
 			if sleeptime is not None and MyTime.time() > e:
 				break

@@ -35,6 +35,7 @@ from ..server.ticket import FailTicket
 from ..server.failmanager import FailManager
 from ..server.observer import Observers, ObserverThread
 from .utils import LogCaptureTestCase
+from ..server.filter import Filter
 from .dummyjail import DummyJail
 try:
 	from ..server.database import Fail2BanDb
@@ -60,7 +61,9 @@ class BanTimeIncr(LogCaptureTestCase):
 	def testDefault(self, multipliers = None):
 		a = self.__jail;
 		a.setBanTimeExtra('increment', 'true')
+		self.assertEqual(a.getBanTimeExtra('increment'), True)
 		a.setBanTimeExtra('maxtime', '1d')
+		self.assertEqual(a.getBanTimeExtra('maxtime'), 24*60*60)
 		a.setBanTimeExtra('rndtime', None)
 		a.setBanTimeExtra('factor', None)
 		# tests formulat or multipliers:
@@ -377,10 +380,10 @@ class BanTimeIncrDB(unittest.TestCase):
 		self.assertEqual(restored_tickets, [])
 
     # two separate jails :
-		jail1 = DummyJail()
+		jail1 = DummyJail(backend='polling')
 		jail1.database = self.db
 		self.db.addJail(jail1)
-		jail2 = DummyJail()
+		jail2 = DummyJail(backend='polling')
 		jail2.database = self.db
 		self.db.addJail(jail2)
 		ticket1 = FailTicket(ip, stime, [])
@@ -415,6 +418,14 @@ class BanTimeIncrDB(unittest.TestCase):
 		for row in self.db.getBan(ip, overalljails=True):
 			self.assertEqual(row, (3, stime, 18000))
 			break
+		# test restoring bans from database:
+		jail1.restoreCurrentBans()
+		self.assertEqual(str(jail1.getFailTicket()), 
+			'FailTicket: ip=%s time=%s bantime=%s bancount=1 #attempts=0 matches=[]' % (ip, stime, 6000)
+		)
+		# jail2 does not restore any bans (because all ban tickets should be already expired: stime-6000):
+		jail2.restoreCurrentBans()
+		self.assertEqual(jail2.getFailTicket(), False)
 
 	def testObserver(self):
 		if Fail2BanDb is None: # pragma: no cover
