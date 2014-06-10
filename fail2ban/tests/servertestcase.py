@@ -30,14 +30,13 @@ import tempfile
 import os
 import locale
 import sys
-import logging
 
 from ..server.failregex import Regex, FailRegex, RegexException
 from ..server.server import Server
 from ..server.jail import Jail
 from ..server.jailthread import JailThread
 from .utils import LogCaptureTestCase
-from ..helpers import getF2BLogger
+from ..helpers import getLogger
 
 try:
 	from ..server import filtersystemd
@@ -725,7 +724,7 @@ class TransmitterLogging(TransmitterBase):
 			os.close(f)
 			self.server.setLogLevel("WARNING")
 			self.assertEqual(self.transm.proceed(["set", "logtarget", fn]), (0, fn))
-			l = logging.getLogger('fail2ban')
+			l = getLogger('fail2ban')
 			l.warning("Before file moved")
 			try:
 				f2, fn2 = tempfile.mkstemp("fail2ban.log")
@@ -806,7 +805,7 @@ class _BadThread(JailThread):
 class LoggingTests(LogCaptureTestCase):
 
 	def testGetF2BLogger(self):
-		testLogSys = getF2BLogger("fail2ban.some.string.with.name")
+		testLogSys = getLogger("fail2ban.some.string.with.name")
 		self.assertEqual(testLogSys.parent.name, "fail2ban")
 		self.assertEqual(testLogSys.name, "fail2ban.name")
 

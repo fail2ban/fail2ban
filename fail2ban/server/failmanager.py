@@ -29,10 +29,10 @@ import logging
 
 from .faildata import FailData
 from .ticket import FailTicket
-from ..helpers import getF2BLogger
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = getF2BLogger(__name__)
+logSys = getLogger(__name__)
 
 class FailManager:
 	

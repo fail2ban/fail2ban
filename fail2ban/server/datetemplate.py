@@ -28,9 +28,9 @@ import re
 from abc import abstractmethod
 
 from .strptime import reGroupDictStrptime, timeRE
-from ..helpers import getF2BLogger
+from ..helpers import getLogger
 
-logSys = getF2BLogger(__name__)
+logSys = getLogger(__name__)
 
 
 class DateTemplate(object):

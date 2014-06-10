@@ -27,10 +27,10 @@ __license__ = "GPL"
 from pickle import dumps, loads, HIGHEST_PROTOCOL
 import asyncore, asynchat, socket, os, sys, traceback, fcntl
 
-from ..helpers import getF2BLogger,formatExceptionInfo
+from ..helpers import getLogger,formatExceptionInfo
 
 # Gets the instance of the logger.
-logSys = getF2BLogger(__name__)
+logSys = getLogger(__name__)
 
 if sys.version_info >= (3,):
 	# b"" causes SyntaxError in python <= 2.5, so below implements equivalent

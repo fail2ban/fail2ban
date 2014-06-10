@@ -32,10 +32,10 @@ from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
-from ..helpers import getF2BLogger, fail2ban_excepthook
+from ..helpers import getLogger, fail2ban_excepthook
 
 # Gets the instance of the logger.
-logSys = getF2BLogger(__name__)
+logSys = getLogger(__name__)
 
 try:
 	from .database import Fail2BanDb
@@ -339,7 +339,7 @@ class Server:
 	def setLogLevel(self, value):
 		try:
 			self.__loggingLock.acquire()
-			logging.getLogger("fail2ban").setLevel(
+			getLogger("fail2ban").setLevel(
 				getattr(logging, value.upper()))
 		except AttributeError:
 			raise ValueError("Invalid log level")
@@ -392,7 +392,7 @@ class Server:
 					return False
 			# Removes previous handlers -- in reverse order since removeHandler
 			# alter the list in-place and that can confuses the iterable
-			logger = logging.getLogger("fail2ban")
+			logger = getLogger("fail2ban")
 			for handler in logger.handlers[::-1]:
 				# Remove the handler.
 				logger.removeHandler(handler)
@@ -429,7 +429,7 @@ class Server:
 	
 	def flushLogs(self):
 		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG']:
-			for handler in logging.getLogger("fail2ban").handlers:
+			for handler in getLogger("fail2ban").handlers:
 				try:
 					handler.doRollover()
 					logSys.info("rollover performed on %s" % self.__logTarget)
@@ -438,7 +438,7 @@ class Server:
 					logSys.info("flush performed on %s" % self.__logTarget)
 			return "rolled over"
 		else:
-			for handler in logging.getLogger("fail2ban").handlers:
+			for handler in getLogger("fail2ban").handlers:
 				handler.flush()
 				logSys.info("flush performed on %s" % self.__logTarget)
 			return "flushed"

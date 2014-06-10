@@ -22,13 +22,14 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import getopt, sys, logging, os
+import getopt, sys, os
 
 from fail2ban.version import version
 from fail2ban.server.server import Server
+from fail2ban.helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban")
+logSys = getLogger("fail2ban")
 
 ##
 # \mainpage Fail2Ban

@@ -24,10 +24,10 @@ __license__ = "GPL"
 from threading import Lock
 
 from .datetemplate import DatePatternRegex, DateTai64n, DateEpoch
-from ..helpers import getF2BLogger
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = getF2BLogger(__name__)
+logSys = getLogger(__name__)
 
 class DateDetector(object):
 	"""Manages one or more date templates to find a date within a log line.

@@ -28,10 +28,10 @@ import os, shlex
 
 from .configreader import ConfigReader, DefinitionInitConfigReader
 from ..server.action import CommandAction
-from ..helpers import getF2BLogger
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = getF2BLogger(__name__)
+logSys = getLogger(__name__)
 
 class FilterReader(DefinitionInitConfigReader):
 

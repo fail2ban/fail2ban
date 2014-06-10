@@ -26,10 +26,10 @@ __license__ = "GPL"
 
 from .fail2banreader import Fail2banReader
 from .jailsreader import JailsReader
-from ..helpers import getF2BLogger
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = getF2BLogger(__name__)
+logSys = getLogger(__name__)
 
 class Configurator:
 	

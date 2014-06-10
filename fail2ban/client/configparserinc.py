@@ -25,7 +25,7 @@ __copyright__ = 'Copyright (c) 2007 Yaroslav Halchenko'
 __license__ = 'GPL'
 
 import os, sys
-from ..helpers import getF2BLogger
+from ..helpers import getLogger
 
 if sys.version_info >= (3,2): # pragma: no cover
 
@@ -61,7 +61,7 @@ else: # pragma: no cover
 	from ConfigParser import SafeConfigParser
 
 # Gets the instance of the logger.
-logSys = getF2BLogger(__name__)
+logSys = getLogger(__name__)
 
 __all__ = ['SafeConfigParserWithIncludes']
 

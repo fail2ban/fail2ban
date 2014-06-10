@@ -25,7 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2012- Yaroslav Halchenko"
 __license__ = "GPL"
 
 
-import unittest, logging, sys, time, os
+import unittest, sys, time, os
 
 # Check if local fail2ban module exists, and use if it exists by 
 # modifying the path. This is such that tests can be used in dev
@@ -35,7 +35,7 @@ if os.path.exists("fail2ban/__init__.py"):
 from fail2ban.version import version
 
 from fail2ban.tests.utils import gatherTests
-from fail2ban.helpers import FormatterWithTraceBack
+from fail2ban.helpers import FormatterWithTraceBack, getLogger
 from fail2ban.server.mytime import MyTime
 
 from optparse import OptionParser, Option
@@ -70,7 +70,7 @@ parser = get_opt_parser()
 #
 # Logging
 #
-logSys = logging.getLogger("fail2ban")
+logSys = getLogger("fail2ban")
 
 # Numerical level of verbosity corresponding to a log "level"
 verbosity = {'heavydebug': 4,

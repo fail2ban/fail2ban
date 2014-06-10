@@ -30,10 +30,10 @@ import json
 from .configreader import ConfigReader
 from .filterreader import FilterReader
 from .actionreader import ActionReader
-from ..helpers import getF2BLogger
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = getF2BLogger(__name__)
+logSys = getLogger(__name__)
 
 class JailReader(ConfigReader):
 	
