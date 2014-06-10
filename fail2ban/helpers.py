@@ -111,7 +111,9 @@ class FormatterWithTraceBack(logging.Formatter):
 def getLogger(name):
 	"""Get logging.Logger instance with Fail2Ban logger name convention
 	"""
-	return logging.getLogger("fail2ban.%s" % name.rpartition(".")[-1])
+	if "." in name:
+		name = "fail2ban.%s" % name.rpartition(".")[-1]
+	return logging.getLogger(name)
 
 def excepthook(exctype, value, traceback):
 	"""Except hook used to log unhandled exceptions to Fail2Ban log
