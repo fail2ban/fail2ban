@@ -794,7 +794,7 @@ class GetFailures(unittest.TestCase):
 	FILENAME_MULTILINE = os.path.join(TEST_FILES_DIR, "testcase-multiline.log")
 
 	# so that they could be reused by other tests
-	FAILURES_01 = ('193.168.0.128', 3, 1124017199.0,
+	FAILURES_01 = ('193.168.0.128', 3, 1124013599.0,
 				  [u'Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128']*3)
 
 	def setUp(self):
@@ -844,7 +844,7 @@ class GetFailures(unittest.TestCase):
 
 
 	def testGetFailures02(self):
-		output = ('141.3.81.106', 4, 1124017139.0,
+		output = ('141.3.81.106', 4, 1124013539.0,
 				  [u'Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2'
 				   % m for m in 53, 54, 57, 58])
 
@@ -854,7 +854,7 @@ class GetFailures(unittest.TestCase):
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailures03(self):
-		output = ('203.162.223.135', 7, 1124017144.0)
+		output = ('203.162.223.135', 7, 1124013544.0)
 
 		self.filter.addLogPath(GetFailures.FILENAME_03)
 		self.filter.addFailRegex("error,relay=<HOST>,.*550 User unknown")
@@ -862,7 +862,7 @@ class GetFailures(unittest.TestCase):
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailures04(self):
-		output = [('212.41.96.186', 4, 1124017200.0),
+		output = [('212.41.96.186', 4, 1124013600.0),
 				  ('212.41.96.185', 4, 1124017198.0)]
 
 		self.filter.addLogPath(GetFailures.FILENAME_04)
@@ -877,11 +877,11 @@ class GetFailures(unittest.TestCase):
 
 	def testGetFailuresUseDNS(self):
 		# We should still catch failures with usedns = no ;-)
-		output_yes = ('93.184.216.119', 2, 1124017139.0,
+		output_yes = ('93.184.216.119', 2, 1124013539.0,
 					  [u'Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2',
 					   u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.119 port 51332 ssh2'])
 
-		output_no = ('93.184.216.119', 1, 1124017139.0,
+		output_no = ('93.184.216.119', 1, 1124013539.0,
 					  [u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.119 port 51332 ssh2'])
 
 		# Actually no exception would be raised -- it will be just set to 'no'
@@ -904,7 +904,7 @@ class GetFailures(unittest.TestCase):
 
 
 	def testGetFailuresMultiRegex(self):
-		output = ('141.3.81.106', 8, 1124017141.0)
+		output = ('141.3.81.106', 8, 1124013541.0)
 
 		self.filter.addLogPath(GetFailures.FILENAME_02)
 		self.filter.addFailRegex("Failed .* from <HOST>")
@@ -923,8 +923,8 @@ class GetFailures(unittest.TestCase):
 		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
 	def testGetFailuresMultiLine(self):
-		output = [("192.0.43.10", 2, 1124017199.0),
-			("192.0.43.11", 1, 1124017198.0)]
+		output = [("192.0.43.10", 2, 1124013599.0),
+			("192.0.43.11", 1, 1124013598.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.setMaxLines(100)
@@ -942,7 +942,7 @@ class GetFailures(unittest.TestCase):
 		self.assertEqual(sorted(foundList), sorted(output))
 
 	def testGetFailuresMultiLineIgnoreRegex(self):
-		output = [("192.0.43.10", 2, 1124017199.0)]
+		output = [("192.0.43.10", 2, 1124013599.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addIgnoreRegex("rsync error: Received SIGINT")
@@ -956,9 +956,9 @@ class GetFailures(unittest.TestCase):
 		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
 	def testGetFailuresMultiLineMultiRegex(self):
-		output = [("192.0.43.10", 2, 1124017199.0),
-			("192.0.43.11", 1, 1124017198.0),
-			("192.0.43.15", 1, 1124017198.0)]
+		output = [("192.0.43.10", 2, 1124013599.0),
+			("192.0.43.11", 1, 1124013598.0),
+			("192.0.43.15", 1, 1124013598.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addFailRegex("^.* sendmail\[.*, msgid=<(?P<msgid>[^>]+).*relay=\[<HOST>\].*$<SKIPLINES>^.+ spamd: result: Y \d+ .*,mid=<(?P=msgid)>(,bayes=[.\d]+)?(,autolearn=\S+)?\s*$")

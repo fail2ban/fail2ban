@@ -129,7 +129,7 @@ def testSampleRegexsFactory(name):
 					jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f")
 
 
-				jsonTime = time.mktime(jsonTimeLocal.utctimetuple())
+				jsonTime = time.mktime(jsonTimeLocal.timetuple())
 				
 				jsonTime += jsonTimeLocal.microsecond / 1000000
 
