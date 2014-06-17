@@ -138,6 +138,11 @@ Feb 12 04:09:18 localhost sshd[26713]: Connection from 115.249.163.77 port 51353
 Feb 12 04:09:21 localhost sshd[26713]: Disconnecting: Too many authentication failures for root [preauth]
 
 # failJSON: { "match": false }
+Feb 12 04:09:18 localhost sshd[26713]: Connection from 115.249.163.77 port 51353 on 127.0.0.1 port 22
+# failJSON: { "time": "2005-02-12T04:09:21", "match": true , "host": "115.249.163.77", "desc": "Multiline match with interface address" }
+Feb 12 04:09:21 localhost sshd[26713]: Disconnecting: Too many authentication failures for root [preauth]
+
+# failJSON: { "match": false }
 Apr 27 13:02:04 host sshd[29116]: User root not allowed because account is locked
 # failJSON: { "match": false }
 Apr 27 13:02:04 host sshd[29116]: input_userauth_request: invalid user root [preauth]
