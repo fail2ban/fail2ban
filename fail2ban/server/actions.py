@@ -273,11 +273,12 @@ class Actions(JailThread, Mapping):
 				logSys.notice("[%s] Ban %s" % (self._jail.name, aInfo["ip"]))
 				for name, action in self._actions.iteritems():
 					try:
-						action.ban(aInfo)
+						action.ban(aInfo.copy())
 					except Exception as e:
 						logSys.error(
-							"Failed to execute ban jail '%s' action '%s': %s",
-							self._jail.name, name, e,
+							"Failed to execute ban jail '%s' action '%s' "
+							"info '%r': %s",
+							self._jail.name, name, aInfo, e,
 							exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 				return True
 			else:
@@ -321,11 +322,12 @@ class Actions(JailThread, Mapping):
 		logSys.notice("[%s] Unban %s" % (self._jail.name, aInfo["ip"]))
 		for name, action in self._actions.iteritems():
 			try:
-				action.unban(aInfo)
+				action.unban(aInfo.copy())
 			except Exception as e:
 				logSys.error(
-					"Failed to execute unban jail '%s' action '%s': %s",
-					self._jail.name, name, e,
+					"Failed to execute unban jail '%s' action '%s' "
+					"info '%r': %s",
+					self._jail.name, name, aInfo, e,
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
 	@property

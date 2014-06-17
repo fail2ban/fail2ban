@@ -45,7 +45,7 @@ messages['ban'] = {}
 messages['ban']['head'] = \
 """Hi,
 
-The IP %(ip)s has just been banned for %(bantime)s seconds
+The IP %(ip)s has just been banned for %(bantime)i seconds
 by Fail2Ban after %(failures)i attempts against %(jailname)s.
 """
 messages['ban']['tail'] = \
