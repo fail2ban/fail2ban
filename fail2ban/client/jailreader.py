@@ -94,7 +94,6 @@ class JailReader(ConfigReader):
 				["string", "findtime", None],
 				["string", "bantime", None],
 				["bool",   "bantime.increment", None],
-				["string", "bantime.findtime", None],
 				["string", "bantime.factor", None],
 				["string", "bantime.formula", None],
 				["string", "bantime.multipliers", None],
