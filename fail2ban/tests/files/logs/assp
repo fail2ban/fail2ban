@@ -1,4 +1,4 @@
 # failJSON: { "time": "2014-06-18T11:20:33", "match": true , "host": "0.0.0.0" }
-18-06-2014 11:20:33 [RelayAttempt] 0.0.0.0 <user@example.com> relay attempt blocked for: user@example.org 
+18-06-2014 11:20:33 [RelayAttempt] 0.0.0.0 <user@example.com> relay attempt blocked for: user@example.org
 # failJSON: { "time": "2014-06-18T11:20:34", "match": true , "host": "0.0.0.0" }
-18-06-2014 11:20:34 0.0.0.0 [SMTP Error] 535 5.7.8 Error: authentication failed: authentication failure 
+18-06-2014 11:20:34 0.0.0.0 [SMTP Error] 535 5.7.8 Error: authentication failed: authentication failure
