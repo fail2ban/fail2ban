@@ -84,7 +84,7 @@ class FailManager:
 		finally:
 			self.__lock.release()
 
-	def addFailure(self, ticket, count=1, observed = False):
+	def addFailure(self, ticket, count=1, observed=False):
 		try:
 			self.__lock.acquire()
 			ip = ticket.getIP()
@@ -141,7 +141,7 @@ class FailManager:
 		if self.__failList.has_key(ip):
 			del self.__failList[ip]
 	
-	def toBan(self, ip = None):
+	def toBan(self, ip=None):
 		try:
 			self.__lock.acquire()
 			for ip in ([ip] if ip != None and ip in self.__failList else self.__failList):

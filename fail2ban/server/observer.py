@@ -29,10 +29,6 @@ import time, logging
 import threading
 import os, datetime, math, json, random
 import sys
-if sys.version_info >= (3, 3):
-	import importlib.machinery
-else:
-	import imp
 from .mytime import MyTime
 
 # Gets the instance of the logger.

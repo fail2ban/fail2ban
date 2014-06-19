@@ -154,7 +154,7 @@ _fail2ban () {
                     fi
                     return 0
                     ;;
-                delfailregex|delignoregex)
+                delfailregex|delignoreregex)
                     COMPREPLY=( $( compgen -W \
                         "$( "$1" get "$jail" "${prev/del/}" 2>/dev/null | awk -F"[][]" '{print $2}')" \
                     -- "$cur" ) )
