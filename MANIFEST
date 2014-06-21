@@ -258,7 +258,7 @@ config/action.d/dummy.conf
 config/action.d/firewallcmd-new.conf
 config/action.d/firewallcmd-ipset.conf
 config/action.d/iptables-ipset-proto6-allports.conf
-config/action.d/iptables-blocktype.conf
+config/action.d/iptables-common.conf
 config/action.d/iptables-ipset-proto4.conf
 config/action.d/iptables-ipset-proto6.conf
 config/action.d/iptables-xt_recent-echo.conf
