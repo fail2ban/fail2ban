@@ -10,6 +10,7 @@ fail2ban (0.8.6-3wheezy3) wheezy-security; urgency=high
     - couriersmtp.conf - anchored on both sides
     - exim.conf - front-anchored versions picked up from exim.conf
       and exim-spam.conf
+    - lighttpd-fastcgi.conf - front-anchored picked up from suhosin.conf
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 22 Jun 2014 11:56:54 -0400
 
