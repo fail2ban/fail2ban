@@ -24,7 +24,8 @@ __author__ = 'Yaroslav Halhenko'
 __copyright__ = 'Copyright (c) 2007 Yaroslav Halchenko'
 __license__ = 'GPL'
 
-import logging, os, sys
+import os, sys
+from ..helpers import getLogger
 
 if sys.version_info >= (3,2): # pragma: no cover
 
@@ -60,7 +61,7 @@ else: # pragma: no cover
 	from ConfigParser import SafeConfigParser
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 __all__ = ['SafeConfigParserWithIncludes']
 

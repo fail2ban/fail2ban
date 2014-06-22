@@ -30,8 +30,9 @@ import unittest
 from StringIO import StringIO
 
 from ..server.mytime import MyTime
+from ..helpers import getLogger
 
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 def mtimesleep():
 	# no sleep now should be necessary since polling tracks now not only
@@ -89,6 +90,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
 	tests.addTest(unittest.makeSuite(servertestcase.JailTests))
 	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
+	tests.addTest(unittest.makeSuite(servertestcase.LoggingTests))
 	tests.addTest(unittest.makeSuite(actiontestcase.CommandActionTest))
 	tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
 	# FailManager
@@ -185,7 +187,7 @@ class LogCaptureTestCase(unittest.TestCase):
 
 		# For extended testing of what gets output into logging
 		# system, we will redirect it to a string
-		logSys = logging.getLogger("fail2ban")
+		logSys = getLogger("fail2ban")
 
 		# Keep old settings
 		self._old_level = logSys.level
@@ -198,7 +200,7 @@ class LogCaptureTestCase(unittest.TestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 		# print "O: >>%s<<" % self._log.getvalue()
-		logSys = logging.getLogger("fail2ban")
+		logSys = getLogger("fail2ban")
 		logSys.handlers = self._old_handlers
 		logSys.level = self._old_level
 

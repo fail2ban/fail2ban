@@ -107,3 +107,17 @@ class FormatterWithTraceBack(logging.Formatter):
 	def format(self, record):
 		record.tbc = record.tb = self._tb()
 		return logging.Formatter.format(self, record)
+
+def getLogger(name):
+	"""Get logging.Logger instance with Fail2Ban logger name convention
+	"""
+	if "." in name:
+		name = "fail2ban.%s" % name.rpartition(".")[-1]
+	return logging.getLogger(name)
+
+def excepthook(exctype, value, traceback):
+	"""Except hook used to log unhandled exceptions to Fail2Ban log
+	"""
+	getLogger("fail2ban").critical(
+		"Unhandled exception in Fail2Ban:", exc_info=True)
+	return sys.__excepthook__(exctype, value, traceback)

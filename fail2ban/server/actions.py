@@ -41,9 +41,10 @@ from .banmanager import BanManager
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 class Actions(JailThread, Mapping):
 	"""Handles jail actions.
