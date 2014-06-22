@@ -5,7 +5,10 @@ class TestAction(ActionBase):
 
     def ban(self, aInfo):
         del aInfo['ip']
+        self._logSys.info("%s ban deleted aInfo IP", self._name)
 
-    unban = ban
+    def unban(self, aInfo):
+        del aInfo['ip']
+        self._logSys.info("%s unban deleted aInfo IP", self._name)
 
 Action = TestAction

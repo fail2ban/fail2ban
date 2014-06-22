@@ -157,8 +157,12 @@ class ExecuteActions(LogCaptureTestCase):
 		# Will fail if modification of aInfo from first action propagates
 		# to second action, as both delete same key
 		self.assertFalse(self._is_logged("Failed to execute ban"))
+		self.assertTrue(self._is_logged("action1 ban deleted aInfo IP"))
+		self.assertTrue(self._is_logged("action2 ban deleted aInfo IP"))
 
 		self.__actions._Actions__flushBan()
 		# Will fail if modification of aInfo from first action propagates
 		# to second action, as both delete same key
 		self.assertFalse(self._is_logged("Failed to execute unban"))
+		self.assertTrue(self._is_logged("action1 unban deleted aInfo IP"))
+		self.assertTrue(self._is_logged("action2 unban deleted aInfo IP"))
