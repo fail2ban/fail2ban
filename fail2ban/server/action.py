@@ -69,6 +69,9 @@ class CallingMap(MutableMapping):
 	def __init__(self, *args, **kwargs):
 		self.data = dict(*args, **kwargs)
 
+	def __repr__(self):
+		return "%s(%r)" % (self.__class__.__name__, self.data)
+
 	def __getitem__(self, key):
 		value = self.data[key]
 		if callable(value):
@@ -87,6 +90,9 @@ class CallingMap(MutableMapping):
 
 	def __len__(self):
 		return len(self.data)
+
+	def copy(self):
+		return self.__class__(self.data.copy())
 
 class ActionBase(object):
 	"""An abstract base class for actions in Fail2Ban.
