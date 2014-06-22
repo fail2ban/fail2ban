@@ -29,6 +29,7 @@ import os
 import tempfile
 
 from ..server.actions import Actions
+from ..server.ticket import FailTicket
 from .dummyjail import DummyJail
 from .utils import LogCaptureTestCase
 
@@ -140,3 +141,24 @@ class ExecuteActions(LogCaptureTestCase):
 		self.__actions.stop()
 		self.__actions.join()
 		self.assertTrue(self._is_logged("Failed to stop"))
+
+	def testBanActionsAInfo(self):
+		# Action which deletes IP address from aInfo
+		self.__actions.add(
+			"action1",
+			os.path.join(TEST_FILES_DIR, "action.d/action_modifyainfo.py"),
+			{})
+		self.__actions.add(
+			"action2",
+			os.path.join(TEST_FILES_DIR, "action.d/action_modifyainfo.py"),
+			{})
+		self.__jail.putFailTicket(FailTicket("1.2.3.4", 0))
+		self.__actions._Actions__checkBan()
+		# Will fail if modification of aInfo from first action propagates
+		# to second action, as both delete same key
+		self.assertFalse(self._is_logged("Failed to execute ban"))
+
+		self.__actions._Actions__flushBan()
+		# Will fail if modification of aInfo from first action propagates
+		# to second action, as both delete same key
+		self.assertFalse(self._is_logged("Failed to execute unban"))
