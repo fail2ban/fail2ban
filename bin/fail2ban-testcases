@@ -24,7 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2012- Yaroslav Halchenko"
 __license__ = "GPL"
 
-
+import logging
 import unittest, sys, time, os
 
 # Check if local fail2ban module exists, and use if it exists by 
