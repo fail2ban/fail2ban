@@ -8,6 +8,8 @@ fail2ban (0.8.6-3wheezy3) wheezy-security; urgency=high
     - CVE-2013-7177: cyrus-imap.conf - anchored on the front, and
       refactored to have a single failregex
     - couriersmtp.conf - anchored on both sides
+    - exim.conf - front-anchored versions picked up from exim.conf
+      and exim-spam.conf
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 22 Jun 2014 11:56:54 -0400
 
