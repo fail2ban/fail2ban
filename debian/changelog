@@ -1,3 +1,11 @@
+fail2ban (0.8.6-3wheezy3) wheezy-security; urgency=high
+
+  * Use anchored failregex for filters to avoid possible DoS
+    - CVE-2013-7176: postfix.conf - anchored on the front, expects
+      "postfix/smtpd" prefix in the log line
+
+ --
+
 fail2ban (0.8.6-3wheezy2) wheezy-security; urgency=high
 
   * Anchor apache- filters failregexes to avoid possible DoS on servers
