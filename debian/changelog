@@ -1,10 +1,14 @@
 fail2ban (0.8.6-3wheezy3) wheezy-security; urgency=high
 
-  * Use anchored failregex for filters to avoid possible DoS
+  * Use anchored failregex for filters to avoid possible DoS.  Manually
+    picked up from the current status of 0.8 branch (as of
+    0.8.13-29-g09b2016):
     - CVE-2013-7176: postfix.conf - anchored on the front, expects
       "postfix/smtpd" prefix in the log line
+    - CVE-2013-7177: cyrus-imap.conf - anchored on the front, and
+      refactored to have a single failregex
 
- --
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 22 Jun 2014 11:56:54 -0400
 
 fail2ban (0.8.6-3wheezy2) wheezy-security; urgency=high
 
