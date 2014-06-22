@@ -34,7 +34,8 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
      action
    * Fixed TypeError with "ipfailures" and "ipjailfailures" action tags.
      Thanks Serg G. Brester
-   * Correct times for non-timezone date times formats during DST.
+   * Correct times for non-timezone date times formats during DST
+   * Pass a copy of, not original, aInfo into actions to avoid side-effects
 
 - New features:
    - Added monit filter thanks Jason H Martin.
