@@ -258,10 +258,21 @@ class BanTimeIncrDB(unittest.TestCase):
 			[(banCount, timeOfBan, lastBanTime) for banCount, timeOfBan, lastBanTime in self.db.getBan(ip, '', None, True)],
 			[(2, stime + 15, 20)]
 		)
+		# check other optional parameters of getBan:
+		self.assertEqual(
+			[(banCount, timeOfBan, lastBanTime) for banCount, timeOfBan, lastBanTime in self.db.getBan(ip, forbantime=stime, fromtime=stime)],
+			[(2, stime + 15, 20)]
+		)
 		# search currently banned and 1 day later (nothing should be found):
 		self.assertEqual(
 			self.db.getCurrentBans(forbantime=-24*60*60, fromtime=stime),
 			[]
+		)
+		# search currently banned one ticket for ip:
+		restored_tickets = self.db.getCurrentBans(ip=ip)
+		self.assertEqual(
+			str(restored_tickets), 
+			('FailTicket: ip=%s time=%s bantime=20 bancount=2 #attempts=0 matches=[]' % (ip, stime + 15))
 		)
 		# search currently banned anywhere:
 		restored_tickets = self.db.getCurrentBans(fromtime=stime)
@@ -482,7 +493,6 @@ class BanTimeIncrDB(unittest.TestCase):
 		obs.add('failureFound', failManager, self.jail, ticket)
 		obs.wait_empty(5)
 		# wait until ticket transfered from failmanager into jail:
-		i = 50
 		while True:
 			ticket2 = jail.getFailTicket()
 			if ticket2:
@@ -504,6 +514,39 @@ class BanTimeIncrDB(unittest.TestCase):
 		self.assertEqual(len(restored_tickets), 1)
 		self.assertEqual(restored_tickets[0].getBanTime(), 160)
 		self.assertEqual(restored_tickets[0].getBanCount(), 5)
+
+		# now using jail/actions:
+		ticket = FailTicket(ip, stime-60, ['test-expired-ban-time'])
+		jail.putFailTicket(ticket)
+		self.assertFalse(jail.actions.checkBan())
+
+		ticket = FailTicket(ip, MyTime.time(), ['test-actions'])
+		jail.putFailTicket(ticket)
+		self.assertTrue(jail.actions.checkBan())
+
+		obs.wait_empty(5)
+		restored_tickets = self.db.getCurrentBans(jail=jail, fromtime=stime)
+		self.assertEqual(len(restored_tickets), 1)
+		self.assertEqual(restored_tickets[0].getBanTime(), 320)
+		self.assertEqual(restored_tickets[0].getBanCount(), 6)
+
+		# and permanent:
+		ticket = FailTicket(ip+'1', MyTime.time(), ['test-permanent'])
+		ticket.setBanTime(-1)
+		jail.putFailTicket(ticket)
+		self.assertTrue(jail.actions.checkBan())
+
+		obs.wait_empty(5)
+		ticket = FailTicket(ip+'1', MyTime.time(), ['test-permanent'])
+		ticket.setBanTime(600)
+		jail.putFailTicket(ticket)
+		self.assertFalse(jail.actions.checkBan())
+
+		obs.wait_empty(5)
+		restored_tickets = self.db.getCurrentBans(jail=jail, fromtime=stime)
+		self.assertEqual(len(restored_tickets), 2)
+		self.assertEqual(restored_tickets[1].getBanTime(), -1)
+		self.assertEqual(restored_tickets[1].getBanCount(), 1)
 
 		# stop observer
 		obs.stop()

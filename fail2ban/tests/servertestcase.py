@@ -763,6 +763,14 @@ class TransmitterLogging(TransmitterBase):
 		self.assertEqual(self.transm.proceed(["set", "logtarget", "STDERR"]), (0, "STDERR"))
 		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "flushed"))
 
+	def testBanTimeIncr(self):
+		self.setGetTest("bantime.increment", "true", True, jail=self.jailName)
+		self.setGetTest("bantime.rndtime", "30min", 30*60, jail=self.jailName)
+		self.setGetTest("bantime.maxtime", "1000 days", 1000*24*60*60, jail=self.jailName)
+		self.setGetTest("bantime.factor", "2", "2", jail=self.jailName)
+		self.setGetTest("bantime.formula", "ban.Time * math.exp(float(ban.Count+1)*banFactor)/math.exp(1*banFactor)", jail=self.jailName)
+		self.setGetTest("bantime.multipliers", "1 5 30 60 300 720 1440 2880", "1 5 30 60 300 720 1440 2880", jail=self.jailName)
+		self.setGetTest("bantime.overalljails", "true", "true", jail=self.jailName)
 
 class JailTests(unittest.TestCase):
 

@@ -42,6 +42,9 @@ class AddFailure(unittest.TestCase):
 	
 	def testAdd(self):
 		self.assertEqual(self.__banManager.size(), 1)
+		self.assertEqual(self.__banManager.getBanTotal(), 1)
+		self.__banManager.setBanTotal(0)
+		self.assertEqual(self.__banManager.getBanTotal(), 0)
 	
 	def testAddDuplicate(self):
 		self.assertFalse(self.__banManager.addBanTicket(self.__ticket))
@@ -55,3 +58,21 @@ class AddFailure(unittest.TestCase):
 		ticket = BanTicket('111.111.1.111', 1167605999.0)
 		self.assertFalse(self.__banManager._inBanList(ticket))
 		
+	def testBanTimeIncr(self):
+		ticket = BanTicket(self.__ticket.getIP(), self.__ticket.getTime())
+		## increase twice and at end permanent:
+		for i in (1000, 2000, -1):
+			self.__banManager.addBanTicket(self.__ticket)
+			ticket.setBanTime(i)
+			self.assertFalse(self.__banManager.addBanTicket(ticket))
+			self.assertEqual(str(self.__banManager.getTicketByIP(ticket.getIP())), 
+				"BanTicket: ip=%s time=%s bantime=%s bancount=0 #attempts=0 matches=[]" % (ticket.getIP(), ticket.getTime(), i))
+		## after permanent, it should remain permanent ban time (-1):
+		self.__banManager.addBanTicket(self.__ticket)
+		ticket.setBanTime(-1)
+		self.assertFalse(self.__banManager.addBanTicket(ticket))
+		ticket.setBanTime(1000)
+		self.assertFalse(self.__banManager.addBanTicket(ticket))
+		self.assertEqual(str(self.__banManager.getTicketByIP(ticket.getIP())), 
+			"BanTicket: ip=%s time=%s bantime=%s bancount=0 #attempts=0 matches=[]" % (ticket.getIP(), ticket.getTime(), -1))
+
