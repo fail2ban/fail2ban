@@ -10,6 +10,11 @@ Fail2Ban (version 0.9.0.dev)                                          2014/xx/xx
 ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
 ----------
 
+- Refactoring (IMPORTANT -- Please review your setup and configuration):
+   * iptables-common.conf replaced iptables-blocktype.conf
+     (iptables-blocktype.local should still be read) and now also
+     provides defaults for the chain, port, protocol and name tags
+
 - Fixes:
    * systemd backend error on bad utf-8 in python3
    * badips.py action error when logging HTTP error raised with badips request
@@ -27,18 +32,23 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * Database now returns persistent bans on restart (bantime < 0)
    * Recursive action tags now fully processed. Fixes issue with bsd-ipfw
      action
-   * Correct times for non-timezone date times formats during DST.
    * Fixed TypeError with "ipfailures" and "ipjailfailures" action tags.
      Thanks Serg G. Brester (sebres)
+   * Correct times for non-timezone date times formats during DST
+     Thanks Serg G. Brester (sebres)
+   * Pass a copy of, not original, aInfo into actions to avoid side-effects
 
 - New features:
    - Added monit filter thanks Jason H Martin.
-
 
 - Enhancements
    * Fail2ban-regex - add print-all-matched option. Closes gh-652
    * Suppress fail2ban-client warnings for non-critical config options
    * Match non "Bye Bye" disconnect messages for sshd locked account regex
+   * Add <chain> tag to iptables-ipsets
+   * Realign fail2ban log output with white space to improve readability. Does
+     not affect SYSLOG output
+   * Log unhandled exceptions
 
 ver. 0.9.0 (2014/03/14) - beta
 ----------

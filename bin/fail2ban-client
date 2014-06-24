@@ -30,9 +30,10 @@ from fail2ban.protocol import printFormatted
 from fail2ban.client.csocket import CSocket
 from fail2ban.client.configurator import Configurator
 from fail2ban.client.beautifier import Beautifier
+from fail2ban.helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.client")
+logSys = getLogger("fail2ban")
 
 ##
 #

@@ -42,9 +42,10 @@ from .observer import Observers
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 class Actions(JailThread, Mapping):
 	"""Handles jail actions.
@@ -299,11 +300,12 @@ class Actions(JailThread, Mapping):
 				# do actions :
 				for name, action in self._actions.iteritems():
 					try:
-						action.ban(aInfo)
+						action.ban(aInfo.copy())
 					except Exception as e:
 						logSys.error(
-							"Failed to execute ban jail '%s' action '%s': %s",
-							self._jail.name, name, e,
+							"Failed to execute ban jail '%s' action '%s' "
+							"info '%r': %s",
+							self._jail.name, name, aInfo, e,
 							exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 				return True
 			else:
@@ -347,11 +349,12 @@ class Actions(JailThread, Mapping):
 		logSys.notice("[%s] Unban %s" % (self._jail.name, aInfo["ip"]))
 		for name, action in self._actions.iteritems():
 			try:
-				action.unban(aInfo)
+				action.unban(aInfo.copy())
 			except Exception as e:
 				logSys.error(
-					"Failed to execute unban jail '%s' action '%s': %s",
-					self._jail.name, name, e,
+					"Failed to execute unban jail '%s' action '%s' "
+					"info '%r': %s",
+					self._jail.name, name, aInfo, e,
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
 	@property

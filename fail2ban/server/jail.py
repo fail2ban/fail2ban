@@ -26,10 +26,11 @@ __license__ = "GPL"
 import Queue, logging, math, random
 
 from .actions import Actions
+from ..helpers import getLogger
 from .mytime import MyTime
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 class Jail:
 	"""Fail2Ban jail, which manages a filter and associated actions.

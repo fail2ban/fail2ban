@@ -24,14 +24,15 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging
+from ..helpers import getLogger
+from .mytime import MyTime
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 class Ticket:
 	
-	def __init__(self, ip, time, matches=None):
+	def __init__(self, ip, time=None, matches=None):
 		"""Ticket constructor
 
 		@param ip the IP address
@@ -43,7 +44,7 @@ class Ticket:
 		self.__restored = False;
 		self.__banCount = 0;
 		self.__banTime = None;
-		self.__time = time
+		self.__time = time if time is not None else MyTime.time()
 		self.__attempt = 0
 		self.__file = None
 		self.__matches = matches or []

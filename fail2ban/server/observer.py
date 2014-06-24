@@ -25,14 +25,14 @@ __author__ = "Serg G. Brester (sebres)"
 __copyright__ = "Copyright (c) 2014 Serg G. Brester"
 __license__ = "GPL"
 
-import time, logging
 import threading
-import os, datetime, math, json, random
+import os, time, datetime, math, json, random
 import sys
+from ..helpers import getLogger
 from .mytime import MyTime
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 class ObserverThread(threading.Thread):
 	"""Handles observing a database, managing bad ips and ban increment.

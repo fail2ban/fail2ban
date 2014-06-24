@@ -25,10 +25,11 @@ import logging, os, subprocess, time, signal, tempfile
 import threading, re
 from abc import ABCMeta
 from collections import MutableMapping
-#from subprocess import call
+
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 # Create a lock for running system commands
 _cmd_lock = threading.Lock()
@@ -68,6 +69,9 @@ class CallingMap(MutableMapping):
 	def __init__(self, *args, **kwargs):
 		self.data = dict(*args, **kwargs)
 
+	def __repr__(self):
+		return "%s(%r)" % (self.__class__.__name__, self.data)
+
 	def __getitem__(self, key):
 		value = self.data[key]
 		if callable(value):
@@ -86,6 +90,9 @@ class CallingMap(MutableMapping):
 
 	def __len__(self):
 		return len(self.data)
+
+	def copy(self):
+		return self.__class__(self.data.copy())
 
 class ActionBase(object):
 	"""An abstract base class for actions in Fail2Ban.
@@ -135,8 +142,7 @@ class ActionBase(object):
 	def __init__(self, jail, name):
 		self._jail = jail
 		self._name = name
-		self._logSys = logging.getLogger(
-			'%s.%s' % (__name__, self.__class__.__name__))
+		self._logSys = getLogger("fail2ban.%s" % self.__class__.__name__)
 
 	def start(self):
 		"""Executed when the jail/action is started.
