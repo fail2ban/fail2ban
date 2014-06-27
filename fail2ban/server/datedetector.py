@@ -99,7 +99,7 @@ class DateDetector(object):
 			# subseconds explicit to avoid possible %m<->%d confusion
 			# with previous
 			self.appendTemplate("%m-%d-%Y %H:%M:%S\.%f")
-			# 17-Jul-08 17:23:25
+			# Opentftpd-sp format: 17-Jul-08 17:23:25
 			self.appendTemplate("%d-%b-%y %H:%M:%S")
 			# TAI64N
 			template = DateTai64n()
