@@ -24,7 +24,10 @@ __license__ = "GPL"
 
 import unittest, sys, os, fileinput, re, time, datetime, inspect
 
-if sys.version_info >= (2, 6):
+from distutils.version import LooseVersion
+python_version = LooseVersion(sys.version)
+
+if python_version >= "2.6":
 	import json
 else:
 	import simplejson as json
@@ -118,6 +121,10 @@ def testSampleRegexsFactory(name):
 				self.assertEqual(len(ret), 1, "Multiple regexs matched %r - %s:%i" %
 								 (map(lambda x: x[0], ret),logFile.filename(), logFile.filelineno()))
 
+				# Some dates matching might not be supported on by a given Python
+				if python_version < str(faildata.get("minimal_python", "2")):
+					print "Skipped testing the date for line #%s" % (line,)
+					continue # skipping this test
 				# Verify timestamp and host as expected
 				failregex, host, fail2banTime, lines = ret[0]
 				self.assertEqual(host, faildata.get("host", None))

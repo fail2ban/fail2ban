@@ -480,5 +480,3 @@ log message with a <USER> of 123.1.1.1.
 
 Here there's nothing to do except request/change the application so it logs
 messages differently.
-
-
