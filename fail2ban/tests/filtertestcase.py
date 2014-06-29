@@ -317,12 +317,16 @@ class LogFileFilterPoll(unittest.TestCase):
 class LogFileMonitor(LogCaptureTestCase):
 	"""Few more tests for FilterPoll API
 	"""
+
+	_setup_idx = 0  # to ease tracking of dangling opened files
+
 	def setUp(self):
 		"""Call before every test case."""
 		setUpMyTime()
 		LogCaptureTestCase.setUp(self)
 		self.filter = self.name = 'NA'
-		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
+		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures-%d-' % LogFileMonitor._setup_idx)
+		LogFileMonitor._setup_idx += 1
 		self.file = open(self.name, 'a')
 		self.filter = FilterPoll(DummyJail())
 		self.filter.addLogPath(self.name)
@@ -591,12 +595,12 @@ def get_monitor_failures_testcase(Filter_):
 			self.assertEqual(self.filter.failManager.getFailTotal(), 3)
 
 			if interim_kill:
-				_killfile(None, self.name)
+				_killfile(self.file, self.name)
 				time.sleep(0.2)				  # let them know
 
 			# now create a new one to override old one
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name + '.new',
-									  n=100).close()
+									  n=100, skip=3).close()
 			os.rename(self.name + '.new', self.name)
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)

@@ -36,6 +36,13 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
      Thanks Serg G. Brester
    * Correct times for non-timezone date times formats during DST
    * Pass a copy of, not original, aInfo into actions to avoid side-effects
+   * minor fixes for claimed Python 2.4 and 2.5 compatibility
+   * Handle case when inotify watch is auto deleted on file deletion to stop
+     error messages
+   * tests - fixed few "leaky" file descriptors when files were not closed while
+     being removed physically
+   * grep in mail*-whois-lines.conf now also matches end of line to work
+     with the recidive filter
 
 - New features:
    - Added monit filter thanks Jason H Martin.

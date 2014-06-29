@@ -7,6 +7,11 @@
 ToDo
 ================================================================================
 
+See https://github.com/fail2ban/fail2ban/issues?state=open for the list of
+current outstanding issues and wishlists.  They should also be sorted among
+milestones and tagged for filtering.  This file reflects possibly outdated
+plans but is kept for someone to move them into github's issues.
+
 Legend:
 - not yet done
 ? maybe

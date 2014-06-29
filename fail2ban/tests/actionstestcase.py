@@ -42,10 +42,11 @@ class ExecuteActions(LogCaptureTestCase):
 		super(ExecuteActions, self).setUp()
 		self.__jail = DummyJail()
 		self.__actions = Actions(self.__jail)
-		self.__tmpfile, self.__tmpfilename  = tempfile.mkstemp()
+		self.__tmpfile, self.__tmpfilename  = tempfile.mkstemp('fail2ban', 'executeactions')
 
 	def tearDown(self):
 		super(ExecuteActions, self).tearDown()
+		os.close(self.__tmpfile)
 		os.remove(self.__tmpfilename)
 
 	def defaultActions(self):
