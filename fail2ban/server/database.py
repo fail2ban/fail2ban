@@ -512,7 +512,8 @@ class Fail2BanDb(object):
 			self._bansMergedCache[cacheKey] = tickets if ip is None else ticket
 		return tickets if ip is None else ticket
 
-	def getBan(self, ip, jail=None, forbantime=None, overalljails=None, fromtime=None):
+	@commitandrollback
+	def getBan(self, cur, ip, jail=None, forbantime=None, overalljails=None, fromtime=None):
 		if not overalljails:
 			query = "SELECT bancount, timeofban, bantime FROM bips"
 		else:
@@ -531,10 +532,10 @@ class Fail2BanDb(object):
 		if overalljails or jail is None:
 			query += " GROUP BY ip ORDER BY timeofban DESC LIMIT 1"
 		cur = self._db.cursor()
-		#logSys.debug((query, queryArgs));
 		return cur.execute(query, queryArgs)
 
-	def _getCurrentBans(self, jail = None, ip = None, forbantime=None, fromtime=None):
+	@commitandrollback
+	def _getCurrentBans(self, cur, jail = None, ip = None, forbantime=None, fromtime=None):
 		if fromtime is None:
 			fromtime = MyTime.time()
 		queryArgs = []
@@ -554,7 +555,6 @@ class Fail2BanDb(object):
 		if ip is None:
 			query += " GROUP BY ip ORDER BY ip, timeofban DESC"
 		cur = self._db.cursor()
-		#logSys.debug((query, queryArgs));
 		return cur.execute(query, queryArgs)
 
 	def getCurrentBans(self, jail = None, ip = None, forbantime=None, fromtime=None):

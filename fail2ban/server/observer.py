@@ -26,7 +26,7 @@ __copyright__ = "Copyright (c) 2014 Serg G. Brester"
 __license__ = "GPL"
 
 import threading
-import os, time, datetime, math, json, random
+import os, logging, time, datetime, math, json, random
 import sys
 from ..helpers import getLogger
 from .mytime import MyTime
