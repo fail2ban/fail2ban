@@ -551,16 +551,15 @@ class BanTimeIncrDB(unittest.TestCase):
 		# stop observer
 		obs.stop()
 
-class ObserverTest(unittest.TestCase):
+class ObserverTest(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		#super(ObserverTest, self).setUp()
-		pass
+		super(ObserverTest, self).setUp()
 
 	def tearDown(self):
-		#super(ObserverTest, self).tearDown()
-		pass
+		"""Call after every test case."""
+		super(ObserverTest, self).tearDown()
 
 	def testObserverBanTimeIncr(self):
 		obs = ObserverThread()
@@ -592,3 +591,24 @@ class ObserverTest(unittest.TestCase):
 		self.assertTrue(obs.is_alive())
 		obs.stop()
 		obs = None
+
+	class _BadObserver(ObserverThread):
+		def run(self):
+			raise RuntimeError('run bad thread exception')
+
+	def testObserverBadRun(self):
+		obs = ObserverTest._BadObserver()
+		# don't wait for empty by stop
+		obs.wait_empty = lambda v:()
+		# save previous hook, prevent write stderr and check hereafter __excepthook__ was executed
+		prev_exchook = sys.__excepthook__
+		x = []
+		sys.__excepthook__ = lambda *args: x.append(args)
+		obs.start()
+		obs.stop()
+		obs = None
+		self.assertTrue(self._is_logged("Unhandled exception"))
+		sys.__excepthook__ = prev_exchook
+		self.assertEqual(len(x), 1)
+		self.assertEqual(x[0][0], RuntimeError)
+		self.assertEqual(str(x[0][1]), 'run bad thread exception')

@@ -26,6 +26,7 @@ __copyright__ = "Copyright (c) 2014 Serg G. Brester"
 __license__ = "GPL"
 
 import threading
+from .jailthread import JailThread
 import os, logging, time, datetime, math, json, random
 import sys
 from ..helpers import getLogger
@@ -34,7 +35,7 @@ from .mytime import MyTime
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
-class ObserverThread(threading.Thread):
+class ObserverThread(JailThread):
 	"""Handles observing a database, managing bad ips and ban increment.
 
 	Parameters
@@ -236,7 +237,6 @@ class ObserverThread(threading.Thread):
 	def start(self):
 		with self._queue_lock:
 			if not self.active:
-				self.active = True
 				super(ObserverThread, self).start()
 
 	def stop(self):

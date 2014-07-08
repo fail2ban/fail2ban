@@ -47,8 +47,8 @@ class JailThread(Thread):
 		The time the thread sleeps for in the loop.
 	"""
 
-	def __init__(self):
-		super(JailThread, self).__init__()
+	def __init__(self, name=None):
+		super(JailThread, self).__init__(name=name)
 		## Control the state of the thread.
 		self.active = False
 		## Control the idle state of the thread.
