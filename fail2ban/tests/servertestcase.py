@@ -37,6 +37,7 @@ from ..server.jail import Jail
 from ..server.jailthread import JailThread
 from .utils import LogCaptureTestCase
 from ..helpers import getLogger
+from .. import version
 
 try:
 	from ..server import filtersystemd
@@ -147,6 +148,9 @@ class Transmitter(TransmitterBase):
 
 	def testPing(self):
 		self.assertEqual(self.transm.proceed(["ping"]), (0, "pong"))
+
+	def testVersion(self):
+		self.assertEqual(self.transm.proceed(["version"]), (0, version.version))
 
 	def testSleep(self):
 		t0 = time.time()

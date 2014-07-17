@@ -39,6 +39,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
 
 - New features:
    - Added monit filter thanks Jason H Martin.
+   - fail2ban-client can fetch the running server version
 
 - Enhancements
    * Fail2ban-regex - add print-all-matched option. Closes gh-652
