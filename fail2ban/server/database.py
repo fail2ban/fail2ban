@@ -368,7 +368,7 @@ class Fail2BanDb(object):
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
-			(jail.name, ticket.getIP(), ticket.getTime(),
+			(jail.name, ticket.getIP(), round(ticket.getTime()),
 				{"matches": ticket.getMatches(),
 					"failures": ticket.getAttempt()}))
 
