@@ -35,124 +35,124 @@ from ..helpers import getLogger
 logSys = getLogger(__name__)
 
 class FailManager:
-	
-	def __init__(self):
-		self.__lock = Lock()
-		self.__failList = dict()
-		self.__maxRetry = 3
-		self.__maxTime = 600
-		self.__failTotal = 0
-	
-	def setFailTotal(self, value):
-		try:
-			self.__lock.acquire()
-			self.__failTotal = value
-		finally:
-			self.__lock.release()
-		
-	def getFailTotal(self):
-		try:
-			self.__lock.acquire()
-			return self.__failTotal
-		finally:
-			self.__lock.release()
-	
-	def setMaxRetry(self, value):
-		try:
-			self.__lock.acquire()
-			self.__maxRetry = value
-		finally:
-			self.__lock.release()
-	
-	def getMaxRetry(self):
-		try:
-			self.__lock.acquire()
-			return self.__maxRetry
-		finally:
-			self.__lock.release()
-	
-	def setMaxTime(self, value):
-		try:
-			self.__lock.acquire()
-			self.__maxTime = value
-		finally:
-			self.__lock.release()
-	
-	def getMaxTime(self):
-		try:
-			self.__lock.acquire()
-			return self.__maxTime
-		finally:
-			self.__lock.release()
 
-	def addFailure(self, ticket):
-		try:
-			self.__lock.acquire()
-			ip = ticket.getIP()
-			unixTime = ticket.getTime()
-			matches = ticket.getMatches()
-			if self.__failList.has_key(ip):
-				fData = self.__failList[ip]
-				if fData.getLastReset() < unixTime - self.__maxTime:
-					fData.setLastReset(unixTime)
-					fData.setRetry(0)
-				fData.inc(matches)
-				fData.setLastTime(unixTime)
-			else:
-				fData = FailData()
-				fData.inc(matches)
-				fData.setLastReset(unixTime)
-				fData.setLastTime(unixTime)
-				self.__failList[ip] = fData
+    def __init__(self):
+        self.__lock = Lock()
+        self.__failList = dict()
+        self.__maxRetry = 3
+        self.__maxTime = 600
+        self.__failTotal = 0
 
-			self.__failTotal += 1
+    def setFailTotal(self, value):
+        try:
+            self.__lock.acquire()
+            self.__failTotal = value
+        finally:
+            self.__lock.release()
 
-			if logSys.getEffectiveLevel() <= logging.DEBUG:
-				# yoh: Since composing this list might be somewhat time consuming
-				# in case of having many active failures, it should be ran only
-				# if debug level is "low" enough
-				failures_summary = ', '.join(['%s:%d' % (k, v.getRetry())
-											  for k,v in  self.__failList.iteritems()])
-				logSys.debug("Total # of detected failures: %d. Current failures from %d IPs (IP:count): %s"
-							 % (self.__failTotal, len(self.__failList), failures_summary))
-		finally:
-			self.__lock.release()
-	
-	def size(self):
-		try:
-			self.__lock.acquire()
-			return len(self.__failList)
-		finally:
-			self.__lock.release()
-	
-	def cleanup(self, time):
-		try:
-			self.__lock.acquire()
-			tmp = self.__failList.copy()
-			for item in tmp:
-				if tmp[item].getLastTime() < time - self.__maxTime:
-					self.__delFailure(item)
-		finally:
-			self.__lock.release()
-	
-	def __delFailure(self, ip):
-		if self.__failList.has_key(ip):
-			del self.__failList[ip]
-	
-	def toBan(self):
-		try:
-			self.__lock.acquire()
-			for ip in self.__failList:
-				data = self.__failList[ip]
-				if data.getRetry() >= self.__maxRetry:
-					self.__delFailure(ip)
-					# Create a FailTicket from BanData
-					failTicket = FailTicket(ip, data.getLastTime(), data.getMatches())
-					failTicket.setAttempt(data.getRetry())
-					return failTicket
-			raise FailManagerEmpty
-		finally:
-			self.__lock.release()
+    def getFailTotal(self):
+        try:
+            self.__lock.acquire()
+            return self.__failTotal
+        finally:
+            self.__lock.release()
+
+    def setMaxRetry(self, value):
+        try:
+            self.__lock.acquire()
+            self.__maxRetry = value
+        finally:
+            self.__lock.release()
+
+    def getMaxRetry(self):
+        try:
+            self.__lock.acquire()
+            return self.__maxRetry
+        finally:
+            self.__lock.release()
+
+    def setMaxTime(self, value):
+        try:
+            self.__lock.acquire()
+            self.__maxTime = value
+        finally:
+            self.__lock.release()
+
+    def getMaxTime(self):
+        try:
+            self.__lock.acquire()
+            return self.__maxTime
+        finally:
+            self.__lock.release()
+
+    def addFailure(self, ticket):
+        try:
+            self.__lock.acquire()
+            ip = ticket.getIP()
+            unixTime = ticket.getTime()
+            matches = ticket.getMatches()
+            if self.__failList.has_key(ip):
+                fData = self.__failList[ip]
+                if fData.getLastReset() < unixTime - self.__maxTime:
+                    fData.setLastReset(unixTime)
+                    fData.setRetry(0)
+                fData.inc(matches)
+                fData.setLastTime(unixTime)
+            else:
+                fData = FailData()
+                fData.inc(matches)
+                fData.setLastReset(unixTime)
+                fData.setLastTime(unixTime)
+                self.__failList[ip] = fData
+
+            self.__failTotal += 1
+
+            if logSys.getEffectiveLevel() <= logging.DEBUG:
+                # yoh: Since composing this list might be somewhat time consuming
+                # in case of having many active failures, it should be ran only
+                # if debug level is "low" enough
+                failures_summary = ', '.join(['%s:%d' % (k, v.getRetry())
+                                              for k,v in  self.__failList.iteritems()])
+                logSys.debug("Total # of detected failures: %d. Current failures from %d IPs (IP:count): %s"
+                             % (self.__failTotal, len(self.__failList), failures_summary))
+        finally:
+            self.__lock.release()
+
+    def size(self):
+        try:
+            self.__lock.acquire()
+            return len(self.__failList)
+        finally:
+            self.__lock.release()
+
+    def cleanup(self, time):
+        try:
+            self.__lock.acquire()
+            tmp = self.__failList.copy()
+            for item in tmp:
+                if tmp[item].getLastTime() < time - self.__maxTime:
+                    self.__delFailure(item)
+        finally:
+            self.__lock.release()
+
+    def __delFailure(self, ip):
+        if self.__failList.has_key(ip):
+            del self.__failList[ip]
+
+    def toBan(self):
+        try:
+            self.__lock.acquire()
+            for ip in self.__failList:
+                data = self.__failList[ip]
+                if data.getRetry() >= self.__maxRetry:
+                    self.__delFailure(ip)
+                    # Create a FailTicket from BanData
+                    failTicket = FailTicket(ip, data.getLastTime(), data.getMatches())
+                    failTicket.setAttempt(data.getRetry())
+                    return failTicket
+            raise FailManagerEmpty
+        finally:
+            self.__lock.release()
 
 class FailManagerEmpty(Exception):
-	pass
+    pass

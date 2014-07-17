@@ -36,203 +36,203 @@ from ..helpers import getLogger
 logSys = getLogger(__name__)
 
 class JailReader(ConfigReader):
-	
-	optionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
-	optionExtractRE = re.compile(
-		r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,]*))(?:,|$)')
-	
-	def __init__(self, name, force_enable=False, **kwargs):
-		ConfigReader.__init__(self, **kwargs)
-		self.__name = name
-		self.__filter = None
-		self.__force_enable = force_enable
-		self.__actions = list()
-		self.__opts = None
-	
-	@property
-	def options(self):
-		return self.__opts
 
-	def setName(self, value):
-		self.__name = value
-	
-	def getName(self):
-		return self.__name
-	
-	def read(self):
-		out = ConfigReader.read(self, "jail")
-		# Before returning -- verify that requested section
-		# exists at all
-		if not (self.__name in self.sections()):
-			raise ValueError("Jail %r was not found among available"
-							 % self.__name)
-		return out
-	
-	def isEnabled(self):
-		return self.__force_enable or (
-			self.__opts and self.__opts.get("enabled", False))
+    optionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
+    optionExtractRE = re.compile(
+        r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,]*))(?:,|$)')
 
-	@staticmethod
-	def _glob(path):
-		"""Given a path for glob return list of files to be passed to server.
+    def __init__(self, name, force_enable=False, **kwargs):
+        ConfigReader.__init__(self, **kwargs)
+        self.__name = name
+        self.__filter = None
+        self.__force_enable = force_enable
+        self.__actions = list()
+        self.__opts = None
 
-		Dangling symlinks are warned about and not returned
-		"""
-		pathList = []
-		for p in glob.glob(path):
-			if os.path.exists(p):
-				pathList.append(p)
-			else:
-				logSys.warning("File %s is a dangling link, thus cannot be monitored" % p)
-		return pathList
+    @property
+    def options(self):
+        return self.__opts
 
-	def getOptions(self):
-		opts = [["bool", "enabled", False],
-				["string", "logpath", None],
-				["string", "logencoding", None],
-				["string", "backend", "auto"],
-				["int", "maxretry", None],
-				["int", "findtime", None],
-				["int", "bantime", None],
-				["string", "usedns", None],
-				["string", "failregex", None],
-				["string", "ignoreregex", None],
-				["string", "ignorecommand", None],
-				["string", "ignoreip", None],
-				["string", "filter", ""],
-				["string", "action", ""]]
-		self.__opts = ConfigReader.getOptions(self, self.__name, opts)
-		if not self.__opts:
-			return False
-		
-		if self.isEnabled():
-			# Read filter
-			if self.__opts["filter"]:
-				filterName, filterOpt = JailReader.extractOptions(
-					self.__opts["filter"])
-				self.__filter = FilterReader(
-					filterName, self.__name, filterOpt, basedir=self.getBaseDir())
-				ret = self.__filter.read()
-				if ret:
-					self.__filter.getOptions(self.__opts)
-				else:
-					logSys.error("Unable to read the filter")
-					return False
-			else:
-				self.__filter = None
-				logSys.warning("No filter set for jail %s" % self.__name)
-		
-			# Read action
-			for act in self.__opts["action"].split('\n'):
-				try:
-					if not act:			  # skip empty actions
-						continue
-					actName, actOpt = JailReader.extractOptions(act)
-					if actName.endswith(".py"):
-						self.__actions.append([
-							"set",
-							self.__name,
-							"addaction",
-							actOpt.pop("actname", os.path.splitext(actName)[0]),
-							os.path.join(
-								self.getBaseDir(), "action.d", actName),
-							json.dumps(actOpt),
-							])
-					else:
-						action = ActionReader(
-							actName, self.__name, actOpt,
-							basedir=self.getBaseDir())
-						ret = action.read()
-						if ret:
-							action.getOptions(self.__opts)
-							self.__actions.append(action)
-						else:
-							raise AttributeError("Unable to read action")
-				except Exception, e:
-					logSys.error("Error in action definition " + act)
-					logSys.debug("Caught exception: %s" % (e,))
-					return False
-			if not len(self.__actions):
-				logSys.warning("No actions were defined for %s" % self.__name)
-		return True
-	
-	def convert(self, allow_no_files=False):
-		"""Convert read before __opts to the commands stream
+    def setName(self, value):
+        self.__name = value
 
-		Parameters
-		----------
-		allow_missing : bool
-		  Either to allow log files to be missing entirely.  Primarily is
-		  used for testing
-		 """
+    def getName(self):
+        return self.__name
 
-		stream = []
-		for opt in self.__opts:
-			if opt == "logpath" and	\
-					self.__opts.get('backend', None) != "systemd":
-				found_files = 0
-				for path in self.__opts[opt].split("\n"):
-					path = path.rsplit(" ", 1)
-					path, tail = path if len(path) > 1 else (path[0], "head")
-					pathList = JailReader._glob(path)
-					if len(pathList) == 0:
-						logSys.error("No file(s) found for glob %s" % path)
-					for p in pathList:
-						found_files += 1
-						stream.append(
-							["set", self.__name, "addlogpath", p, tail])
-				if not (found_files or allow_no_files):
-					raise ValueError(
-						"Have not found any log file for %s jail" % self.__name)
-			elif opt == "logencoding":
-				stream.append(["set", self.__name, "logencoding", self.__opts[opt]])
-			elif opt == "backend":
-				backend = self.__opts[opt]
-			elif opt == "maxretry":
-				stream.append(["set", self.__name, "maxretry", self.__opts[opt]])
-			elif opt == "ignoreip":
-				for ip in self.__opts[opt].split():
-					# Do not send a command if the rule is empty.
-					if ip != '':
-						stream.append(["set", self.__name, "addignoreip", ip])
-			elif opt == "findtime":
-				stream.append(["set", self.__name, "findtime", self.__opts[opt]])
-			elif opt == "bantime":
-				stream.append(["set", self.__name, "bantime", self.__opts[opt]])
-			elif opt == "usedns":
-				stream.append(["set", self.__name, "usedns", self.__opts[opt]])
-			elif opt == "failregex":
-				stream.append(["set", self.__name, "addfailregex", self.__opts[opt]])
-			elif opt == "ignorecommand":
-				stream.append(["set", self.__name, "ignorecommand", self.__opts[opt]])
-			elif opt == "ignoreregex":
-				for regex in self.__opts[opt].split('\n'):
-					# Do not send a command if the rule is empty.
-					if regex != '':
-						stream.append(["set", self.__name, "addignoreregex", regex])
-		if self.__filter:
-			stream.extend(self.__filter.convert())
-		for action in self.__actions:
-			if isinstance(action, ConfigReader):
-				stream.extend(action.convert())
-			else:
-				stream.append(action)
-		stream.insert(0, ["add", self.__name, backend])
-		return stream
-	
-	#@staticmethod
-	def extractOptions(option):
-		match = JailReader.optionCRE.match(option)
-		if not match:
-			# TODO proper error handling
-			return None, None
-		option_name, optstr = match.groups()
-		option_opts = dict()
-		if optstr:
-			for optmatch in JailReader.optionExtractRE.finditer(optstr):
-				opt = optmatch.group(1)
-				value = [
-					val for val in optmatch.group(2,3,4) if val is not None][0]
-				option_opts[opt.strip()] = value.strip()
-		return option_name, option_opts
-	extractOptions = staticmethod(extractOptions)
+    def read(self):
+        out = ConfigReader.read(self, "jail")
+        # Before returning -- verify that requested section
+        # exists at all
+        if not (self.__name in self.sections()):
+            raise ValueError("Jail %r was not found among available"
+                             % self.__name)
+        return out
+
+    def isEnabled(self):
+        return self.__force_enable or (
+            self.__opts and self.__opts.get("enabled", False))
+
+    @staticmethod
+    def _glob(path):
+        """Given a path for glob return list of files to be passed to server.
+
+        Dangling symlinks are warned about and not returned
+        """
+        pathList = []
+        for p in glob.glob(path):
+            if os.path.exists(p):
+                pathList.append(p)
+            else:
+                logSys.warning("File %s is a dangling link, thus cannot be monitored" % p)
+        return pathList
+
+    def getOptions(self):
+        opts = [["bool", "enabled", False],
+                ["string", "logpath", None],
+                ["string", "logencoding", None],
+                ["string", "backend", "auto"],
+                ["int", "maxretry", None],
+                ["int", "findtime", None],
+                ["int", "bantime", None],
+                ["string", "usedns", None],
+                ["string", "failregex", None],
+                ["string", "ignoreregex", None],
+                ["string", "ignorecommand", None],
+                ["string", "ignoreip", None],
+                ["string", "filter", ""],
+                ["string", "action", ""]]
+        self.__opts = ConfigReader.getOptions(self, self.__name, opts)
+        if not self.__opts:
+            return False
+
+        if self.isEnabled():
+            # Read filter
+            if self.__opts["filter"]:
+                filterName, filterOpt = JailReader.extractOptions(
+                    self.__opts["filter"])
+                self.__filter = FilterReader(
+                    filterName, self.__name, filterOpt, basedir=self.getBaseDir())
+                ret = self.__filter.read()
+                if ret:
+                    self.__filter.getOptions(self.__opts)
+                else:
+                    logSys.error("Unable to read the filter")
+                    return False
+            else:
+                self.__filter = None
+                logSys.warning("No filter set for jail %s" % self.__name)
+
+            # Read action
+            for act in self.__opts["action"].split('\n'):
+                try:
+                    if not act:			  # skip empty actions
+                        continue
+                    actName, actOpt = JailReader.extractOptions(act)
+                    if actName.endswith(".py"):
+                        self.__actions.append([
+                            "set",
+                            self.__name,
+                            "addaction",
+                            actOpt.pop("actname", os.path.splitext(actName)[0]),
+                            os.path.join(
+                                self.getBaseDir(), "action.d", actName),
+                            json.dumps(actOpt),
+                            ])
+                    else:
+                        action = ActionReader(
+                            actName, self.__name, actOpt,
+                            basedir=self.getBaseDir())
+                        ret = action.read()
+                        if ret:
+                            action.getOptions(self.__opts)
+                            self.__actions.append(action)
+                        else:
+                            raise AttributeError("Unable to read action")
+                except Exception, e:
+                    logSys.error("Error in action definition " + act)
+                    logSys.debug("Caught exception: %s" % (e,))
+                    return False
+            if not len(self.__actions):
+                logSys.warning("No actions were defined for %s" % self.__name)
+        return True
+
+    def convert(self, allow_no_files=False):
+        """Convert read before __opts to the commands stream
+
+        Parameters
+        ----------
+        allow_missing : bool
+          Either to allow log files to be missing entirely.  Primarily is
+          used for testing
+         """
+
+        stream = []
+        for opt in self.__opts:
+            if opt == "logpath" and	\
+                    self.__opts.get('backend', None) != "systemd":
+                found_files = 0
+                for path in self.__opts[opt].split("\n"):
+                    path = path.rsplit(" ", 1)
+                    path, tail = path if len(path) > 1 else (path[0], "head")
+                    pathList = JailReader._glob(path)
+                    if len(pathList) == 0:
+                        logSys.error("No file(s) found for glob %s" % path)
+                    for p in pathList:
+                        found_files += 1
+                        stream.append(
+                            ["set", self.__name, "addlogpath", p, tail])
+                if not (found_files or allow_no_files):
+                    raise ValueError(
+                        "Have not found any log file for %s jail" % self.__name)
+            elif opt == "logencoding":
+                stream.append(["set", self.__name, "logencoding", self.__opts[opt]])
+            elif opt == "backend":
+                backend = self.__opts[opt]
+            elif opt == "maxretry":
+                stream.append(["set", self.__name, "maxretry", self.__opts[opt]])
+            elif opt == "ignoreip":
+                for ip in self.__opts[opt].split():
+                    # Do not send a command if the rule is empty.
+                    if ip != '':
+                        stream.append(["set", self.__name, "addignoreip", ip])
+            elif opt == "findtime":
+                stream.append(["set", self.__name, "findtime", self.__opts[opt]])
+            elif opt == "bantime":
+                stream.append(["set", self.__name, "bantime", self.__opts[opt]])
+            elif opt == "usedns":
+                stream.append(["set", self.__name, "usedns", self.__opts[opt]])
+            elif opt == "failregex":
+                stream.append(["set", self.__name, "addfailregex", self.__opts[opt]])
+            elif opt == "ignorecommand":
+                stream.append(["set", self.__name, "ignorecommand", self.__opts[opt]])
+            elif opt == "ignoreregex":
+                for regex in self.__opts[opt].split('\n'):
+                    # Do not send a command if the rule is empty.
+                    if regex != '':
+                        stream.append(["set", self.__name, "addignoreregex", regex])
+        if self.__filter:
+            stream.extend(self.__filter.convert())
+        for action in self.__actions:
+            if isinstance(action, ConfigReader):
+                stream.extend(action.convert())
+            else:
+                stream.append(action)
+        stream.insert(0, ["add", self.__name, backend])
+        return stream
+
+    #@staticmethod
+    def extractOptions(option):
+        match = JailReader.optionCRE.match(option)
+        if not match:
+            # TODO proper error handling
+            return None, None
+        option_name, optstr = match.groups()
+        option_opts = dict()
+        if optstr:
+            for optmatch in JailReader.optionExtractRE.finditer(optstr):
+                opt = optmatch.group(1)
+                value = [
+                    val for val in optmatch.group(2,3,4) if val is not None][0]
+                option_opts[opt.strip()] = value.strip()
+        return option_name, option_opts
+    extractOptions = staticmethod(extractOptions)

@@ -44,92 +44,92 @@ logSys = getLogger(__name__)
 
 class FilterGamin(FileFilter):
 
-	##
-	# Constructor.
-	#
-	# Initialize the filter object with default values.
-	# @param jail the jail object
+    ##
+    # Constructor.
+    #
+    # Initialize the filter object with default values.
+    # @param jail the jail object
 
-	def __init__(self, jail):
-		FileFilter.__init__(self, jail)
-		self.__modified = False
-		# Gamin monitor
-		self.monitor = gamin.WatchMonitor()
-		fd = self.monitor.get_fd()
-		flags = fcntl.fcntl(fd, fcntl.F_GETFD)
-		fcntl.fcntl(fd, fcntl.F_SETFD, flags|fcntl.FD_CLOEXEC)
-		logSys.debug("Created FilterGamin")
-
-
-	def callback(self, path, event):
-		logSys.debug("Got event: " + `event` + " for " + path)
-		if event in (gamin.GAMCreated, gamin.GAMChanged, gamin.GAMExists):
-			logSys.debug("File changed: " + path)
-			self.__modified = True
-
-		self._process_file(path)
+    def __init__(self, jail):
+        FileFilter.__init__(self, jail)
+        self.__modified = False
+        # Gamin monitor
+        self.monitor = gamin.WatchMonitor()
+        fd = self.monitor.get_fd()
+        flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+        fcntl.fcntl(fd, fcntl.F_SETFD, flags|fcntl.FD_CLOEXEC)
+        logSys.debug("Created FilterGamin")
 
 
-	def _process_file(self, path):
-		"""Process a given file
+    def callback(self, path, event):
+        logSys.debug("Got event: " + `event` + " for " + path)
+        if event in (gamin.GAMCreated, gamin.GAMChanged, gamin.GAMExists):
+            logSys.debug("File changed: " + path)
+            self.__modified = True
 
-		TODO -- RF:
-		this is a common logic and must be shared/provided by FileFilter
-		"""
-		self.getFailures(path)
-		try:
-			while True:
-				ticket = self.failManager.toBan()
-				self.jail.putFailTicket(ticket)
-		except FailManagerEmpty:
-			self.failManager.cleanup(MyTime.time())
-		self.dateDetector.sortTemplate()
-		self.__modified = False
-
-	##
-	# Add a log file path
-	#
-	# @param path log file path
-
-	def _addLogPath(self, path):
-		self.monitor.watch_file(path, self.callback)
-
-	##
-	# Delete a log path
-	#
-	# @param path the log file to delete
-
-	def _delLogPath(self, path):
-		self.monitor.stop_watch(path)
-
-	##
-	# Main loop.
-	#
-	# This function is the main loop of the thread. It checks if the
-	# file has been modified and looks for failures.
-	# @return True when the thread exits nicely
-
-	def run(self):
-		# Gamin needs a loop to collect and dispatch events
-		while self.active:
-			if not self.idle:
-				# We cannot block here because we want to be able to
-				# exit.
-				if self.monitor.event_pending():
-					self.monitor.handle_events()
-			time.sleep(self.sleeptime)
-		logSys.debug(self.jail.name + ": filter terminated")
-		return True
+        self._process_file(path)
 
 
-	def stop(self):
-		super(FilterGamin, self).stop()
-		self.__cleanup()
+    def _process_file(self, path):
+        """Process a given file
 
-	##
-	# Desallocates the resources used by Gamin.
+        TODO -- RF:
+        this is a common logic and must be shared/provided by FileFilter
+        """
+        self.getFailures(path)
+        try:
+            while True:
+                ticket = self.failManager.toBan()
+                self.jail.putFailTicket(ticket)
+        except FailManagerEmpty:
+            self.failManager.cleanup(MyTime.time())
+        self.dateDetector.sortTemplate()
+        self.__modified = False
 
-	def __cleanup(self):
-		for path in self.getLogPath():
-			self.monitor.stop_watch(path.getFileName())
-		del self.monitor
+    ##
+    # Add a log file path
+    #
+    # @param path log file path
+
+    def _addLogPath(self, path):
+        self.monitor.watch_file(path, self.callback)
+
+    ##
+    # Delete a log path
+    #
+    # @param path the log file to delete
+
+    def _delLogPath(self, path):
+        self.monitor.stop_watch(path)
+
+    ##
+    # Main loop.
+    #
+    # This function is the main loop of the thread. It checks if the
+    # file has been modified and looks for failures.
+    # @return True when the thread exits nicely
+
+    def run(self):
+        # Gamin needs a loop to collect and dispatch events
+        while self.active:
+            if not self.idle:
+                # We cannot block here because we want to be able to
+                # exit.
+                if self.monitor.event_pending():
+                    self.monitor.handle_events()
+            time.sleep(self.sleeptime)
+        logSys.debug(self.jail.name + ": filter terminated")
+        return True
+
+
+    def stop(self):
+        super(FilterGamin, self).stop()
+        self.__cleanup()
+
+    ##
+    # Desallocates the resources used by Gamin.
+
+    def __cleanup(self):
+        for path in self.getLogPath():
+            self.monitor.stop_watch(path.getFileName())
+        del self.monitor

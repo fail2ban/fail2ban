@@ -32,50 +32,50 @@ from ..helpers import getLogger
 logSys = getLogger(__name__)
 
 class Configurator:
-	
-	def __init__(self):
-		self.__settings = dict()
-		self.__streams = dict()
-		self.__fail2ban = Fail2banReader()
-		self.__jails = JailsReader()
-	
-	def setBaseDir(self, folderName):
-		self.__fail2ban.setBaseDir(folderName)
-		self.__jails.setBaseDir(folderName)
-	
-	def getBaseDir(self):
-		fail2ban_basedir = self.__fail2ban.getBaseDir()
-		jails_basedir = self.__jails.getBaseDir()
-		if fail2ban_basedir != jails_basedir:
-			logSys.error("fail2ban.conf and jails.conf readers have differing "
-						 "basedirs: %r and %r. "
-						 "Returning the one for fail2ban.conf"
-						 % (fail2ban_basedir, jails_basedir))
-		return fail2ban_basedir
-	
-	def readEarly(self):
-		self.__fail2ban.read()
-	
-	def readAll(self):
-		self.readEarly()
-		self.__jails.read()
-	
-	def getEarlyOptions(self):
-		return self.__fail2ban.getEarlyOptions()
 
-	def getOptions(self, jail = None):
-		self.__fail2ban.getOptions()
-		return self.__jails.getOptions(jail)
-		
-	def convertToProtocol(self):
-		self.__streams["general"] = self.__fail2ban.convert()
-		self.__streams["jails"] = self.__jails.convert()
-	
-	def getConfigStream(self):
-		cmds = list()
-		for opt in self.__streams["general"]:
-			cmds.append(opt)
-		for opt in self.__streams["jails"]:
-			cmds.append(opt)
-		return cmds
-	
+    def __init__(self):
+        self.__settings = dict()
+        self.__streams = dict()
+        self.__fail2ban = Fail2banReader()
+        self.__jails = JailsReader()
+
+    def setBaseDir(self, folderName):
+        self.__fail2ban.setBaseDir(folderName)
+        self.__jails.setBaseDir(folderName)
+
+    def getBaseDir(self):
+        fail2ban_basedir = self.__fail2ban.getBaseDir()
+        jails_basedir = self.__jails.getBaseDir()
+        if fail2ban_basedir != jails_basedir:
+            logSys.error("fail2ban.conf and jails.conf readers have differing "
+                         "basedirs: %r and %r. "
+                         "Returning the one for fail2ban.conf"
+                         % (fail2ban_basedir, jails_basedir))
+        return fail2ban_basedir
+
+    def readEarly(self):
+        self.__fail2ban.read()
+
+    def readAll(self):
+        self.readEarly()
+        self.__jails.read()
+
+    def getEarlyOptions(self):
+        return self.__fail2ban.getEarlyOptions()
+
+    def getOptions(self, jail = None):
+        self.__fail2ban.getOptions()
+        return self.__jails.getOptions(jail)
+
+    def convertToProtocol(self):
+        self.__streams["general"] = self.__fail2ban.convert()
+        self.__streams["jails"] = self.__jails.convert()
+
+    def getConfigStream(self):
+        cmds = list()
+        for opt in self.__streams["general"]:
+            cmds.append(opt)
+        for opt in self.__streams["jails"]:
+            cmds.append(opt)
+        return cmds
+

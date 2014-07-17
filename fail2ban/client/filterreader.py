@@ -35,43 +35,43 @@ logSys = getLogger(__name__)
 
 class FilterReader(DefinitionInitConfigReader):
 
-	_configOpts = [
-		["string", "ignoreregex", None],
-		["string", "failregex", ""],
-	]
+    _configOpts = [
+        ["string", "ignoreregex", None],
+        ["string", "failregex", ""],
+    ]
 
-	def read(self):
-		return ConfigReader.read(self, os.path.join("filter.d", self._file))
-	
-	def convert(self):
-		stream = list()
-		combinedopts = dict(list(self._opts.items()) + list(self._initOpts.items()))
-		opts = CommandAction.substituteRecursiveTags(combinedopts)
-		if not opts:
-			raise ValueError('recursive tag definitions unable to be resolved')
-		for opt, value in opts.iteritems():
-			if opt == "failregex":
-				for regex in value.split('\n'):
-					# Do not send a command if the rule is empty.
-					if regex != '':
-						stream.append(["set", self._jailName, "addfailregex", regex])
-			elif opt == "ignoreregex":
-				for regex in value.split('\n'):
-					# Do not send a command if the rule is empty.
-					if regex != '':
-						stream.append(["set", self._jailName, "addignoreregex", regex])		
-		if self._initOpts:
-			if 'maxlines' in self._initOpts:
-				# We warn when multiline regex is used without maxlines > 1
-				# therefore keep sure we set this option first.
-				stream.insert(0, ["set", self._jailName, "maxlines", self._initOpts["maxlines"]])
-			if 'datepattern' in self._initOpts:
-				stream.append(["set", self._jailName, "datepattern", self._initOpts["datepattern"]])
-			# Do not send a command if the match is empty.
-			if self._initOpts.get("journalmatch", '') != '':
-				for match in self._initOpts["journalmatch"].split("\n"):
-					stream.append(
-						["set", self._jailName, "addjournalmatch"] +
+    def read(self):
+        return ConfigReader.read(self, os.path.join("filter.d", self._file))
+
+    def convert(self):
+        stream = list()
+        combinedopts = dict(list(self._opts.items()) + list(self._initOpts.items()))
+        opts = CommandAction.substituteRecursiveTags(combinedopts)
+        if not opts:
+            raise ValueError('recursive tag definitions unable to be resolved')
+        for opt, value in opts.iteritems():
+            if opt == "failregex":
+                for regex in value.split('\n'):
+                    # Do not send a command if the rule is empty.
+                    if regex != '':
+                        stream.append(["set", self._jailName, "addfailregex", regex])
+            elif opt == "ignoreregex":
+                for regex in value.split('\n'):
+                    # Do not send a command if the rule is empty.
+                    if regex != '':
+                        stream.append(["set", self._jailName, "addignoreregex", regex])
+        if self._initOpts:
+            if 'maxlines' in self._initOpts:
+                # We warn when multiline regex is used without maxlines > 1
+                # therefore keep sure we set this option first.
+                stream.insert(0, ["set", self._jailName, "maxlines", self._initOpts["maxlines"]])
+            if 'datepattern' in self._initOpts:
+                stream.append(["set", self._jailName, "datepattern", self._initOpts["datepattern"]])
+            # Do not send a command if the match is empty.
+            if self._initOpts.get("journalmatch", '') != '':
+                for match in self._initOpts["journalmatch"].split("\n"):
+                    stream.append(
+                        ["set", self._jailName, "addjournalmatch"] +
                         shlex.split(match))
-		return stream
-		
+        return stream
+

@@ -34,242 +34,242 @@ logSys = getLogger(__name__)
 
 
 class DateTemplate(object):
-	"""A template which searches for and returns a date from a log line.
+    """A template which searches for and returns a date from a log line.
 
-	This is an not functional abstract class which other templates should
-	inherit from.
+    This is an not functional abstract class which other templates should
+    inherit from.
 
-	Attributes
-	----------
-	name
-	regex
-	"""
+    Attributes
+    ----------
+    name
+    regex
+    """
 
-	def __init__(self):
-		self._name = ""
-		self._regex = ""
-		self._cRegex = None
-		self.hits = 0
+    def __init__(self):
+        self._name = ""
+        self._regex = ""
+        self._cRegex = None
+        self.hits = 0
 
-	@property
-	def name(self):
-		"""Name assigned to template.
-		"""
-		return self._name
+    @property
+    def name(self):
+        """Name assigned to template.
+        """
+        return self._name
 
-	@name.setter
-	def name(self, name):
-		self._name = name
+    @name.setter
+    def name(self, name):
+        self._name = name
 
-	def getRegex(self):
-		return self._regex
+    def getRegex(self):
+        return self._regex
 
-	def setRegex(self, regex, wordBegin=True):
-		"""Sets regex to use for searching for date in log line.
+    def setRegex(self, regex, wordBegin=True):
+        """Sets regex to use for searching for date in log line.
 
-		Parameters
-		----------
-		regex : str
-			The regex the template will use for searching for a date.
-		wordBegin : bool
-			Defines whether the regex should be modified to search at
-			beginning of a word, by adding "\\b" to start of regex.
-			Default True.
+        Parameters
+        ----------
+        regex : str
+            The regex the template will use for searching for a date.
+        wordBegin : bool
+            Defines whether the regex should be modified to search at
+            beginning of a word, by adding "\\b" to start of regex.
+            Default True.
 
-		Raises
-		------
-		re.error
-			If regular expression fails to compile
-		"""
-		regex = regex.strip()
-		if (wordBegin and not re.search(r'^\^', regex)):
-			regex = r'\b' + regex
-		self._regex = regex
-		self._cRegex = re.compile(regex, re.UNICODE | re.IGNORECASE)
+        Raises
+        ------
+        re.error
+            If regular expression fails to compile
+        """
+        regex = regex.strip()
+        if (wordBegin and not re.search(r'^\^', regex)):
+            regex = r'\b' + regex
+        self._regex = regex
+        self._cRegex = re.compile(regex, re.UNICODE | re.IGNORECASE)
 
-	regex = property(getRegex, setRegex, doc=
-		"""Regex used to search for date.
-		""")
+    regex = property(getRegex, setRegex, doc=
+        """Regex used to search for date.
+        """)
 
-	def matchDate(self, line):
-		"""Check if regex for date matches on a log line.
-		"""
-		dateMatch = self._cRegex.search(line)
-		return dateMatch
+    def matchDate(self, line):
+        """Check if regex for date matches on a log line.
+        """
+        dateMatch = self._cRegex.search(line)
+        return dateMatch
 
-	@abstractmethod
-	def getDate(self, line):
-		"""Abstract method, which should return the date for a log line
+    @abstractmethod
+    def getDate(self, line):
+        """Abstract method, which should return the date for a log line
 
-		This should return the date for a log line, typically taking the
-		date from the part of the line which matched the templates regex.
-		This requires abstraction, therefore just raises exception.
+        This should return the date for a log line, typically taking the
+        date from the part of the line which matched the templates regex.
+        This requires abstraction, therefore just raises exception.
 
-		Parameters
-		----------
-		line : str
-			Log line, of which the date should be extracted from.
+        Parameters
+        ----------
+        line : str
+            Log line, of which the date should be extracted from.
 
-		Raises
-		------
-		NotImplementedError
-			Abstract method, therefore always returns this.
-		"""
-		raise NotImplementedError("getDate() is abstract")
+        Raises
+        ------
+        NotImplementedError
+            Abstract method, therefore always returns this.
+        """
+        raise NotImplementedError("getDate() is abstract")
 
 
 class DateEpoch(DateTemplate):
-	"""A date template which searches for Unix timestamps.
+    """A date template which searches for Unix timestamps.
 
-	This includes Unix timestamps which appear at start of a line, optionally
-	within square braces (nsd), or on SELinux audit log lines.
+    This includes Unix timestamps which appear at start of a line, optionally
+    within square braces (nsd), or on SELinux audit log lines.
 
-	Attributes
-	----------
-	name
-	regex
-	"""
+    Attributes
+    ----------
+    name
+    regex
+    """
 
-	def __init__(self):
-		DateTemplate.__init__(self)
-		self.regex = "(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=audit\()))\d{10}(?:\.\d{3,6})?(?(selinux)(?=:\d+\))(?(square)(?=\])))"
+    def __init__(self):
+        DateTemplate.__init__(self)
+        self.regex = "(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=audit\()))\d{10}(?:\.\d{3,6})?(?(selinux)(?=:\d+\))(?(square)(?=\])))"
 
-	def getDate(self, line):
-		"""Method to return the date for a log line.
+    def getDate(self, line):
+        """Method to return the date for a log line.
 
-		Parameters
-		----------
-		line : str
-			Log line, of which the date should be extracted from.
+        Parameters
+        ----------
+        line : str
+            Log line, of which the date should be extracted from.
 
-		Returns
-		-------
-		(float, str)
-			Tuple containing a Unix timestamp, and the string of the date
-			which was matched and in turned used to calculated the timestamp.
-		"""
-		dateMatch = self.matchDate(line)
-		if dateMatch:
-			# extract part of format which represents seconds since epoch
-			return (float(dateMatch.group()), dateMatch)
-		return None
+        Returns
+        -------
+        (float, str)
+            Tuple containing a Unix timestamp, and the string of the date
+            which was matched and in turned used to calculated the timestamp.
+        """
+        dateMatch = self.matchDate(line)
+        if dateMatch:
+            # extract part of format which represents seconds since epoch
+            return (float(dateMatch.group()), dateMatch)
+        return None
 
 class DatePatternRegex(DateTemplate):
-	"""Date template, with regex/pattern
+    """Date template, with regex/pattern
 
-	Parameters
-	----------
-	pattern : str
-		Sets the date templates pattern.
+    Parameters
+    ----------
+    pattern : str
+        Sets the date templates pattern.
 
-	Attributes
-	----------
-	name
-	regex
-	pattern
-	"""
-	_patternRE = r"%%(%%|[%s])" % "".join(timeRE.keys())
-	_patternName = {
-		'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
-		'H': "24hour", 'I': "12hour", 'j': "Yearday", 'm': "Month",
-		'M': "Minute", 'p': "AMPM", 'S': "Second", 'U': "Yearweek",
-		'w': "Weekday", 'W': "Yearweek", 'y': 'Year2', 'Y': "Year", '%': "%",
-		'z': "Zone offset", 'f': "Microseconds", 'Z': "Zone name"}
-	for _key in set(timeRE) - set(_patternName): # may not have them all...
-		_patternName[_key] = "%%%s" % _key
+    Attributes
+    ----------
+    name
+    regex
+    pattern
+    """
+    _patternRE = r"%%(%%|[%s])" % "".join(timeRE.keys())
+    _patternName = {
+        'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
+        'H': "24hour", 'I': "12hour", 'j': "Yearday", 'm': "Month",
+        'M': "Minute", 'p': "AMPM", 'S': "Second", 'U': "Yearweek",
+        'w': "Weekday", 'W': "Yearweek", 'y': 'Year2', 'Y': "Year", '%': "%",
+        'z': "Zone offset", 'f': "Microseconds", 'Z': "Zone name"}
+    for _key in set(timeRE) - set(_patternName): # may not have them all...
+        _patternName[_key] = "%%%s" % _key
 
-	def __init__(self, pattern=None):
-		super(DatePatternRegex, self).__init__()
-		self._pattern = None
-		if pattern is not None:
-			self.pattern = pattern
+    def __init__(self, pattern=None):
+        super(DatePatternRegex, self).__init__()
+        self._pattern = None
+        if pattern is not None:
+            self.pattern = pattern
 
-	@property
-	def pattern(self):
-		"""The pattern used for regex with strptime "%" time fields.
+    @property
+    def pattern(self):
+        """The pattern used for regex with strptime "%" time fields.
 
-		This should be a valid regular expression, of which matching string
-		will be extracted from the log line. strptime style "%" fields will
-		be replaced by appropriate regular expressions, or custom regex
-		groups with names as per the strptime fields can also be used
-		instead.
-		"""
-		return self._pattern
+        This should be a valid regular expression, of which matching string
+        will be extracted from the log line. strptime style "%" fields will
+        be replaced by appropriate regular expressions, or custom regex
+        groups with names as per the strptime fields can also be used
+        instead.
+        """
+        return self._pattern
 
-	@pattern.setter
-	def pattern(self, pattern):
-		self._pattern = pattern
-		self._name = re.sub(
-			self._patternRE, r'%(\1)s', pattern) % self._patternName
-		super(DatePatternRegex, self).setRegex(
-			re.sub(self._patternRE, r'%(\1)s', pattern) % timeRE)
+    @pattern.setter
+    def pattern(self, pattern):
+        self._pattern = pattern
+        self._name = re.sub(
+            self._patternRE, r'%(\1)s', pattern) % self._patternName
+        super(DatePatternRegex, self).setRegex(
+            re.sub(self._patternRE, r'%(\1)s', pattern) % timeRE)
 
-	def setRegex(self, value):
-		raise NotImplementedError("Regex derived from pattern")
+    def setRegex(self, value):
+        raise NotImplementedError("Regex derived from pattern")
 
-	@DateTemplate.name.setter
-	def name(self, value):
-		raise NotImplementedError("Name derived from pattern")
+    @DateTemplate.name.setter
+    def name(self, value):
+        raise NotImplementedError("Name derived from pattern")
 
-	def getDate(self, line):
-		"""Method to return the date for a log line.
+    def getDate(self, line):
+        """Method to return the date for a log line.
 
-		This uses a custom version of strptime, using the named groups
-		from the instances `pattern` property.
+        This uses a custom version of strptime, using the named groups
+        from the instances `pattern` property.
 
-		Parameters
-		----------
-		line : str
-			Log line, of which the date should be extracted from.
+        Parameters
+        ----------
+        line : str
+            Log line, of which the date should be extracted from.
 
-		Returns
-		-------
-		(float, str)
-			Tuple containing a Unix timestamp, and the string of the date
-			which was matched and in turned used to calculated the timestamp.
-		"""
-		dateMatch = self.matchDate(line)
-		if dateMatch:
-			groupdict = dict(
-				(key, value)
-				for key, value in dateMatch.groupdict().iteritems()
-				if value is not None)
-			return reGroupDictStrptime(groupdict), dateMatch
+        Returns
+        -------
+        (float, str)
+            Tuple containing a Unix timestamp, and the string of the date
+            which was matched and in turned used to calculated the timestamp.
+        """
+        dateMatch = self.matchDate(line)
+        if dateMatch:
+            groupdict = dict(
+                (key, value)
+                for key, value in dateMatch.groupdict().iteritems()
+                if value is not None)
+            return reGroupDictStrptime(groupdict), dateMatch
 
 class DateTai64n(DateTemplate):
-	"""A date template which matches TAI64N formate timestamps.
+    """A date template which matches TAI64N formate timestamps.
 
-	Attributes
-	----------
-	name
-	regex
-	"""
+    Attributes
+    ----------
+    name
+    regex
+    """
 
-	def __init__(self):
-		DateTemplate.__init__(self)
-		# We already know the format for TAI64N
-		# yoh: we should not add an additional front anchor
-		self.setRegex("@[0-9a-f]{24}", wordBegin=False)
+    def __init__(self):
+        DateTemplate.__init__(self)
+        # We already know the format for TAI64N
+        # yoh: we should not add an additional front anchor
+        self.setRegex("@[0-9a-f]{24}", wordBegin=False)
 
-	def getDate(self, line):
-		"""Method to return the date for a log line.
+    def getDate(self, line):
+        """Method to return the date for a log line.
 
-		Parameters
-		----------
-		line : str
-			Log line, of which the date should be extracted from.
+        Parameters
+        ----------
+        line : str
+            Log line, of which the date should be extracted from.
 
-		Returns
-		-------
-		(float, str)
-			Tuple containing a Unix timestamp, and the string of the date
-			which was matched and in turned used to calculated the timestamp.
-		"""
-		dateMatch = self.matchDate(line)
-		if dateMatch:
-			# extract part of format which represents seconds since epoch
-			value = dateMatch.group()
-			seconds_since_epoch = value[2:17]
-			# convert seconds from HEX into local time stamp
-			return (int(seconds_since_epoch, 16), dateMatch)
-		return None
+        Returns
+        -------
+        (float, str)
+            Tuple containing a Unix timestamp, and the string of the date
+            which was matched and in turned used to calculated the timestamp.
+        """
+        dateMatch = self.matchDate(line)
+        if dateMatch:
+            # extract part of format which represents seconds since epoch
+            value = dateMatch.group()
+            seconds_since_epoch = value[2:17]
+            # convert seconds from HEX into local time stamp
+            return (int(seconds_since_epoch, 16), dateMatch)
+        return None

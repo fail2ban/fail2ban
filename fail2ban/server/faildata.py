@@ -30,41 +30,41 @@ from ..helpers import getLogger
 logSys = getLogger(__name__)
 
 class FailData:
-	
-	def __init__(self):
-		self.__retry = 0
-		self.__lastTime = 0
-		self.__lastReset = 0
-		self.__matches = []
 
-	def setRetry(self, value):
-		self.__retry = value
-		# keep only the last matches or reset entirely
-		# Explicit if/else for compatibility with Python 2.4
-		if value:
-			self.__matches = self.__matches[-min(len(self.__matches, value)):]
-		else:
-			self.__matches = []
+    def __init__(self):
+        self.__retry = 0
+        self.__lastTime = 0
+        self.__lastReset = 0
+        self.__matches = []
 
-	def getRetry(self):
-		return self.__retry
+    def setRetry(self, value):
+        self.__retry = value
+        # keep only the last matches or reset entirely
+        # Explicit if/else for compatibility with Python 2.4
+        if value:
+            self.__matches = self.__matches[-min(len(self.__matches, value)):]
+        else:
+            self.__matches = []
 
-	def getMatches(self):
-		return self.__matches
+    def getRetry(self):
+        return self.__retry
 
-	def inc(self, matches=None):
-		self.__retry += 1
-		self.__matches += matches or []
+    def getMatches(self):
+        return self.__matches
 
-	def setLastTime(self, value):
-		if value > self.__lastTime:
-			self.__lastTime = value
-	
-	def getLastTime(self):
-		return self.__lastTime
+    def inc(self, matches=None):
+        self.__retry += 1
+        self.__matches += matches or []
 
-	def getLastReset(self):
-		return self.__lastReset
+    def setLastTime(self, value):
+        if value > self.__lastTime:
+            self.__lastTime = value
 
-	def setLastReset(self, value):
-		self.__lastReset = value
+    def getLastTime(self):
+        return self.__lastTime
+
+    def getLastReset(self):
+        return self.__lastReset
+
+    def setLastReset(self, value):
+        self.__lastReset = value

@@ -34,46 +34,46 @@ logSys = getLogger(__name__)
 
 class ActionReader(DefinitionInitConfigReader):
 
-	_configOpts = [
-		["string", "actionstart", None],
-		["string", "actionstop", None],
-		["string", "actioncheck", None],
-		["string", "actionban", None],
-		["string", "actionunban", None],
-	]
+    _configOpts = [
+        ["string", "actionstart", None],
+        ["string", "actionstop", None],
+        ["string", "actioncheck", None],
+        ["string", "actionban", None],
+        ["string", "actionunban", None],
+    ]
 
-	def __init__(self, file_, jailName, initOpts, **kwargs):
-		self._name = initOpts.get("actname", file_)
-		DefinitionInitConfigReader.__init__(
-			self, file_, jailName, initOpts, **kwargs)
+    def __init__(self, file_, jailName, initOpts, **kwargs):
+        self._name = initOpts.get("actname", file_)
+        DefinitionInitConfigReader.__init__(
+            self, file_, jailName, initOpts, **kwargs)
 
-	def setName(self, name):
-		self._name = name
+    def setName(self, name):
+        self._name = name
 
-	def getName(self):
-		return self._name
+    def getName(self):
+        return self._name
 
-	def read(self):
-		return ConfigReader.read(self, os.path.join("action.d", self._file))
+    def read(self):
+        return ConfigReader.read(self, os.path.join("action.d", self._file))
 
-	def convert(self):
-		head = ["set", self._jailName]
-		stream = list()
-		stream.append(head + ["addaction", self._name])
-		head.extend(["action", self._name])
-		for opt in self._opts:
-			if opt == "actionstart":
-				stream.append(head + ["actionstart", self._opts[opt]])
-			elif opt == "actionstop":
-				stream.append(head + ["actionstop", self._opts[opt]])
-			elif opt == "actioncheck":
-				stream.append(head + ["actioncheck", self._opts[opt]])
-			elif opt == "actionban":
-				stream.append(head + ["actionban", self._opts[opt]])
-			elif opt == "actionunban":
-				stream.append(head + ["actionunban", self._opts[opt]])
-		if self._initOpts:
-			for p in self._initOpts:
-				stream.append(head + [p, self._initOpts[p]])
+    def convert(self):
+        head = ["set", self._jailName]
+        stream = list()
+        stream.append(head + ["addaction", self._name])
+        head.extend(["action", self._name])
+        for opt in self._opts:
+            if opt == "actionstart":
+                stream.append(head + ["actionstart", self._opts[opt]])
+            elif opt == "actionstop":
+                stream.append(head + ["actionstop", self._opts[opt]])
+            elif opt == "actioncheck":
+                stream.append(head + ["actioncheck", self._opts[opt]])
+            elif opt == "actionban":
+                stream.append(head + ["actionban", self._opts[opt]])
+            elif opt == "actionunban":
+                stream.append(head + ["actionunban", self._opts[opt]])
+        if self._initOpts:
+            for p in self._initOpts:
+                stream.append(head + [p, self._initOpts[p]])
 
-		return stream
+        return stream

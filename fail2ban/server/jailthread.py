@@ -31,60 +31,60 @@ from abc import abstractproperty, abstractmethod
 from ..helpers import excepthook
 
 class JailThread(Thread):
-	"""Abstract class for threading elements in Fail2Ban.
+    """Abstract class for threading elements in Fail2Ban.
 
-	Attributes
-	----------
-	daemon
-	ident
-	name
-	status
-	active : bool
-		Control the state of the thread.
-	idle : bool
-		Control the idle state of the thread.
-	sleeptime : int
-		The time the thread sleeps for in the loop.
-	"""
+    Attributes
+    ----------
+    daemon
+    ident
+    name
+    status
+    active : bool
+        Control the state of the thread.
+    idle : bool
+        Control the idle state of the thread.
+    sleeptime : int
+        The time the thread sleeps for in the loop.
+    """
 
-	def __init__(self):
-		super(JailThread, self).__init__()
-		## Control the state of the thread.
-		self.active = False
-		## Control the idle state of the thread.
-		self.idle = False
-		## The time the thread sleeps in the loop.
-		self.sleeptime = 1
+    def __init__(self):
+        super(JailThread, self).__init__()
+        ## Control the state of the thread.
+        self.active = False
+        ## Control the idle state of the thread.
+        self.idle = False
+        ## The time the thread sleeps in the loop.
+        self.sleeptime = 1
 
-		# excepthook workaround for threads, derived from:
-		# http://bugs.python.org/issue1230540#msg91244
-		run = self.run
-		def run_with_except_hook(*args, **kwargs):
-			try:
-				run(*args, **kwargs)
-			except:
-				excepthook(*sys.exc_info())
-		self.run = run_with_except_hook
+        # excepthook workaround for threads, derived from:
+        # http://bugs.python.org/issue1230540#msg91244
+        run = self.run
+        def run_with_except_hook(*args, **kwargs):
+            try:
+                run(*args, **kwargs)
+            except:
+                excepthook(*sys.exc_info())
+        self.run = run_with_except_hook
 
-	@abstractproperty
-	def status(self): # pragma: no cover - abstract
-		"""Abstract - Should provide status information.
-		"""
-		pass
+    @abstractproperty
+    def status(self): # pragma: no cover - abstract
+        """Abstract - Should provide status information.
+        """
+        pass
 
-	def start(self):
-		"""Sets active flag and starts thread.
-		"""
-		self.active = True
-		super(JailThread, self).start()
+    def start(self):
+        """Sets active flag and starts thread.
+        """
+        self.active = True
+        super(JailThread, self).start()
 
-	def stop(self):
-		"""Sets `active` property to False, to flag run method to return.
-		"""
-		self.active = False
+    def stop(self):
+        """Sets `active` property to False, to flag run method to return.
+        """
+        self.active = False
 
-	@abstractmethod
-	def run(self): # pragma: no cover - absract
-		"""Abstract - Called when thread starts, thread stops when returns.
-		"""
-		pass
+    @abstractmethod
+    def run(self): # pragma: no cover - absract
+        """Abstract - Called when thread starts, thread stops when returns.
+        """
+        pass

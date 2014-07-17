@@ -69,156 +69,156 @@ Matches for %(ip)s for jail %(jailname)s:
 """
 
 class SMTPAction(ActionBase):
-	"""Fail2Ban action which sends emails to inform on jail starting,
-	stopping and bans.
-	"""
+    """Fail2Ban action which sends emails to inform on jail starting,
+    stopping and bans.
+    """
 
-	def __init__(
-		self, jail, name, host="localhost", user=None, password=None,
-		sendername="Fail2Ban", sender="fail2ban", dest="root", matches=None):
-		"""Initialise action.
+    def __init__(
+        self, jail, name, host="localhost", user=None, password=None,
+        sendername="Fail2Ban", sender="fail2ban", dest="root", matches=None):
+        """Initialise action.
 
-		Parameters
-		----------
-		jail : Jail
-			The jail which the action belongs to.
-		name : str
-			Named assigned to the action.
-		host : str, optional
-			SMTP host, of host:port format. Default host "localhost" and
-			port "25"
-		user : str, optional
-			Username used for authentication with SMTP server.
-		password : str, optional
-			Password used for authentication with SMTP server.
-		sendername : str, optional
-			Name to use for from address in email. Default "Fail2Ban".
-		sender : str, optional
-			Email address to use for from address in email.
-			Default "fail2ban".
-		dest : str, optional
-			Email addresses of intended recipient(s) in comma space ", "
-			delimited format. Default "root".
-		matches : str, optional
-			Type of matches to be included from ban in email. Can be one
-			of "matches", "ipmatches" or "ipjailmatches". Default None
-			(see man jail.conf.5).
-		"""
+        Parameters
+        ----------
+        jail : Jail
+            The jail which the action belongs to.
+        name : str
+            Named assigned to the action.
+        host : str, optional
+            SMTP host, of host:port format. Default host "localhost" and
+            port "25"
+        user : str, optional
+            Username used for authentication with SMTP server.
+        password : str, optional
+            Password used for authentication with SMTP server.
+        sendername : str, optional
+            Name to use for from address in email. Default "Fail2Ban".
+        sender : str, optional
+            Email address to use for from address in email.
+            Default "fail2ban".
+        dest : str, optional
+            Email addresses of intended recipient(s) in comma space ", "
+            delimited format. Default "root".
+        matches : str, optional
+            Type of matches to be included from ban in email. Can be one
+            of "matches", "ipmatches" or "ipjailmatches". Default None
+            (see man jail.conf.5).
+        """
 
-		super(SMTPAction, self).__init__(jail, name)
+        super(SMTPAction, self).__init__(jail, name)
 
-		self.host = host
-		#TODO: self.ssl = ssl
+        self.host = host
+        #TODO: self.ssl = ssl
 
-		self.user = user
-		self.password =password
+        self.user = user
+        self.password =password
 
-		self.fromname = sendername
-		self.fromaddr = sender
-		self.toaddr = dest
+        self.fromname = sendername
+        self.fromaddr = sender
+        self.toaddr = dest
 
-		self.matches = matches
+        self.matches = matches
 
-		self.message_values = CallingMap(
-			jailname = self._jail.name,
-			hostname = socket.gethostname,
-			bantime = self._jail.actions.getBanTime,
-			)
+        self.message_values = CallingMap(
+            jailname = self._jail.name,
+            hostname = socket.gethostname,
+            bantime = self._jail.actions.getBanTime,
+            )
 
-	def _sendMessage(self, subject, text):
-		"""Sends message based on arguments and instance's properties.
+    def _sendMessage(self, subject, text):
+        """Sends message based on arguments and instance's properties.
 
-		Parameters
-		----------
-		subject : str
-			Subject of the email.
-		text : str
-			Body of the email.
+        Parameters
+        ----------
+        subject : str
+            Subject of the email.
+        text : str
+            Body of the email.
 
-		Raises
-		------
-		SMTPConnectionError
-			Error on connecting to host.
-		SMTPAuthenticationError
-			Error authenticating with SMTP server.
-		SMTPException
-			See Python `smtplib` for full list of other possible
-			exceptions.
-		"""
-		msg = MIMEText(text)
-		msg['Subject'] = subject
-		msg['From'] = formataddr((self.fromname, self.fromaddr))
-		msg['To'] = self.toaddr
-		msg['Date'] = formatdate()
+        Raises
+        ------
+        SMTPConnectionError
+            Error on connecting to host.
+        SMTPAuthenticationError
+            Error authenticating with SMTP server.
+        SMTPException
+            See Python `smtplib` for full list of other possible
+            exceptions.
+        """
+        msg = MIMEText(text)
+        msg['Subject'] = subject
+        msg['From'] = formataddr((self.fromname, self.fromaddr))
+        msg['To'] = self.toaddr
+        msg['Date'] = formatdate()
 
-		smtp = smtplib.SMTP()
-		try:
-			self._logSys.debug("Connected to SMTP '%s', response: %i: %s",
-				self.host, *smtp.connect(self.host))
-			if self.user and self.password:
-				smtp.login(self.user, self.password)
-			failed_recipients = smtp.sendmail(
-				self.fromaddr, self.toaddr.split(", "), msg.as_string())
-		except smtplib.SMTPConnectError:
-			self._logSys.error("Error connecting to host '%s'", self.host)
-			raise
-		except smtplib.SMTPAuthenticationError:
-			self._logSys.error(
-				"Failed to authenticate with host '%s' user '%s'",
-				self.host, self.user)
-			raise
-		except smtplib.SMTPException:
-			self._logSys.error(
-				"Error sending mail to host '%s' from '%s' to '%s'",
-				self.host, self.fromaddr, self.toaddr)
-			raise
-		else:
-			if failed_recipients:
-				self._logSys.warning(
-					"Email to '%s' failed to following recipients: %r",
-					self.toaddr, failed_recipients)
-			self._logSys.debug("Email '%s' successfully sent", subject)
-		finally:
-			try:
-				self._logSys.debug("Disconnected from '%s', response %i: %s",
-					self.host, *smtp.quit())
-			except smtplib.SMTPServerDisconnected:
-				pass # Not connected
+        smtp = smtplib.SMTP()
+        try:
+            self._logSys.debug("Connected to SMTP '%s', response: %i: %s",
+                self.host, *smtp.connect(self.host))
+            if self.user and self.password:
+                smtp.login(self.user, self.password)
+            failed_recipients = smtp.sendmail(
+                self.fromaddr, self.toaddr.split(", "), msg.as_string())
+        except smtplib.SMTPConnectError:
+            self._logSys.error("Error connecting to host '%s'", self.host)
+            raise
+        except smtplib.SMTPAuthenticationError:
+            self._logSys.error(
+                "Failed to authenticate with host '%s' user '%s'",
+                self.host, self.user)
+            raise
+        except smtplib.SMTPException:
+            self._logSys.error(
+                "Error sending mail to host '%s' from '%s' to '%s'",
+                self.host, self.fromaddr, self.toaddr)
+            raise
+        else:
+            if failed_recipients:
+                self._logSys.warning(
+                    "Email to '%s' failed to following recipients: %r",
+                    self.toaddr, failed_recipients)
+            self._logSys.debug("Email '%s' successfully sent", subject)
+        finally:
+            try:
+                self._logSys.debug("Disconnected from '%s', response %i: %s",
+                    self.host, *smtp.quit())
+            except smtplib.SMTPServerDisconnected:
+                pass # Not connected
 
-	def start(self):
-		"""Sends email to recipients informing that the jail has started.
-		"""
-		self._sendMessage(
-			"[Fail2Ban] %(jailname)s: started on %(hostname)s" %
-				self.message_values,
-			messages['start'] % self.message_values)
+    def start(self):
+        """Sends email to recipients informing that the jail has started.
+        """
+        self._sendMessage(
+            "[Fail2Ban] %(jailname)s: started on %(hostname)s" %
+                self.message_values,
+            messages['start'] % self.message_values)
 
-	def stop(self):
-		"""Sends email to recipients informing that the jail has stopped.
-		"""
-		self._sendMessage(
-			"[Fail2Ban] %(jailname)s: stopped on %(hostname)s" %
-				self.message_values,
-			messages['stop'] % self.message_values)
+    def stop(self):
+        """Sends email to recipients informing that the jail has stopped.
+        """
+        self._sendMessage(
+            "[Fail2Ban] %(jailname)s: stopped on %(hostname)s" %
+                self.message_values,
+            messages['stop'] % self.message_values)
 
-	def ban(self, aInfo):
-		"""Sends email to recipients informing that ban has occurred.
+    def ban(self, aInfo):
+        """Sends email to recipients informing that ban has occurred.
 
-		Parameters
-		----------
-		aInfo : dict
-			Dictionary which includes information in relation to
-			the ban.
-		"""
-		aInfo.update(self.message_values)
-		message = "".join([
-			messages['ban']['head'],
-			messages['ban'].get(self.matches, ""),
-			messages['ban']['tail']
-			])
-		self._sendMessage(
-			"[Fail2Ban] %(jailname)s: banned %(ip)s from %(hostname)s" %
-				aInfo,
-			message % aInfo)
+        Parameters
+        ----------
+        aInfo : dict
+            Dictionary which includes information in relation to
+            the ban.
+        """
+        aInfo.update(self.message_values)
+        message = "".join([
+            messages['ban']['head'],
+            messages['ban'].get(self.matches, ""),
+            messages['ban']['tail']
+            ])
+        self._sendMessage(
+            "[Fail2Ban] %(jailname)s: banned %(ip)s from %(hostname)s" %
+                aInfo,
+            message % aInfo)
 
 Action = SMTPAction

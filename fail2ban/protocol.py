@@ -121,46 +121,46 @@ protocol = [
 # "-h" output of fail2ban-client.
 
 def printFormatted():
-	INDENT=4
-	MARGIN=41
-	WIDTH=34
-	firstHeading = False
-	for m in protocol:
-		if m[0] == '' and firstHeading:
-			print
-		firstHeading = True
-		first = True
-		if len(m[0]) >= MARGIN:
-			m[1] = ' ' * WIDTH + m[1]
-		for n in textwrap.wrap(m[1], WIDTH, drop_whitespace=False):
-			if first:
-				line = ' ' * INDENT + m[0] + ' ' * (MARGIN - len(m[0])) + n.strip()
-				first = False
-			else:
-				line = ' ' * (INDENT + MARGIN) + n.strip()
-			print line
+    INDENT=4
+    MARGIN=41
+    WIDTH=34
+    firstHeading = False
+    for m in protocol:
+        if m[0] == '' and firstHeading:
+            print
+        firstHeading = True
+        first = True
+        if len(m[0]) >= MARGIN:
+            m[1] = ' ' * WIDTH + m[1]
+        for n in textwrap.wrap(m[1], WIDTH, drop_whitespace=False):
+            if first:
+                line = ' ' * INDENT + m[0] + ' ' * (MARGIN - len(m[0])) + n.strip()
+                first = False
+            else:
+                line = ' ' * (INDENT + MARGIN) + n.strip()
+            print line
 
 ##
 # Prints the protocol in a "mediawiki" format.
 
 def printWiki():
-	firstHeading = False
-	for m in protocol:
-		if m[0] == '':
-			if firstHeading:
-				print "|}"
-			__printWikiHeader(m[1], m[2])
-			firstHeading = True
-		else:
-			print "|-"
-			print "| <span style=\"white-space:nowrap;\"><tt>" + m[0] + "</tt></span> || || " + m[1]
-	print "|}"
+    firstHeading = False
+    for m in protocol:
+        if m[0] == '':
+            if firstHeading:
+                print "|}"
+            __printWikiHeader(m[1], m[2])
+            firstHeading = True
+        else:
+            print "|-"
+            print "| <span style=\"white-space:nowrap;\"><tt>" + m[0] + "</tt></span> || || " + m[1]
+    print "|}"
 
 def __printWikiHeader(section, desc):
-	print
-	print "=== " + section + " ==="
-	print
-	print desc
-	print
-	print "{|"
-	print "| '''Command''' || || '''Description'''"
+    print
+    print "=== " + section + " ==="
+    print
+    print desc
+    print
+    print "{|"
+    print "| '''Command''' || || '''Description'''"

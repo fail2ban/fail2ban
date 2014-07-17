@@ -31,50 +31,50 @@ from ..client.csocket import CSocket
 
 class Socket(unittest.TestCase):
 
-	def setUp(self):
-		"""Call before every test case."""
-		self.server = AsyncServer(self)
-		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'socket')
-		os.close(sock_fd)
-		os.remove(sock_name)
-		self.sock_name = sock_name
+    def setUp(self):
+        """Call before every test case."""
+        self.server = AsyncServer(self)
+        sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'socket')
+        os.close(sock_fd)
+        os.remove(sock_name)
+        self.sock_name = sock_name
 
-	def tearDown(self):
-		"""Call after every test case."""
+    def tearDown(self):
+        """Call after every test case."""
 
-	@staticmethod
-	def proceed(message):
-		"""Test transmitter proceed method which just returns first arg"""
-		return message
+    @staticmethod
+    def proceed(message):
+        """Test transmitter proceed method which just returns first arg"""
+        return message
 
-	def testSocket(self):
-		serverThread = threading.Thread(
-			target=self.server.start, args=(self.sock_name, False))
-		serverThread.daemon = True
-		serverThread.start()
-		time.sleep(1)
+    def testSocket(self):
+        serverThread = threading.Thread(
+            target=self.server.start, args=(self.sock_name, False))
+        serverThread.daemon = True
+        serverThread.start()
+        time.sleep(1)
 
-		client = CSocket(self.sock_name)
-		testMessage = ["A", "test", "message"]
-		self.assertEqual(client.send(testMessage), testMessage)
+        client = CSocket(self.sock_name)
+        testMessage = ["A", "test", "message"]
+        self.assertEqual(client.send(testMessage), testMessage)
 
-		self.server.stop()
-		serverThread.join(1)
-		self.assertFalse(os.path.exists(self.sock_name))
+        self.server.stop()
+        serverThread.join(1)
+        self.assertFalse(os.path.exists(self.sock_name))
 
-	def testSocketForce(self):
-		open(self.sock_name, 'w').close() # Create sock file
-		# Try to start without force
-		self.assertRaises(
-			AsyncServerException, self.server.start, self.sock_name, False)
+    def testSocketForce(self):
+        open(self.sock_name, 'w').close() # Create sock file
+        # Try to start without force
+        self.assertRaises(
+            AsyncServerException, self.server.start, self.sock_name, False)
 
-		# Try again with force set
-		serverThread = threading.Thread(
-			target=self.server.start, args=(self.sock_name, True))
-		serverThread.daemon = True
-		serverThread.start()
-		time.sleep(1)
+        # Try again with force set
+        serverThread = threading.Thread(
+            target=self.server.start, args=(self.sock_name, True))
+        serverThread.daemon = True
+        serverThread.start()
+        time.sleep(1)
 
-		self.server.stop()
-		serverThread.join(1)
-		self.assertFalse(os.path.exists(self.sock_name))
+        self.server.stop()
+        serverThread.join(1)
+        self.assertFalse(os.path.exists(self.sock_name))

@@ -42,11 +42,11 @@ if not hasattr(pyinotify, '__version__') \
 # Verify that pyinotify is functional on this system
 # Even though imports -- might be dysfunctional, e.g. as on kfreebsd
 try:
-	manager = pyinotify.WatchManager()
-	del manager
+    manager = pyinotify.WatchManager()
+    del manager
 except Exception, e:
-	raise ImportError("Pyinotify is probably not functional on this system: %s"
-					  % str(e))
+    raise ImportError("Pyinotify is probably not functional on this system: %s"
+                      % str(e))
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -59,159 +59,159 @@ logSys = getLogger(__name__)
 # a Jail object.
 
 class FilterPyinotify(FileFilter):
-	##
-	# Constructor.
-	#
-	# Initialize the filter object with default values.
-	# @param jail the jail object
+    ##
+    # Constructor.
+    #
+    # Initialize the filter object with default values.
+    # @param jail the jail object
 
-	def __init__(self, jail):
-		FileFilter.__init__(self, jail)
-		self.__modified = False
-		# Pyinotify watch manager
-		self.__monitor = pyinotify.WatchManager()
-		self.__watches = dict()
-		logSys.debug("Created FilterPyinotify")
-
-
-	def callback(self, event, origin=''):
-		logSys.debug("%sCallback for Event: %s", origin, event)
-		path = event.pathname
-		if event.mask & ( pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO ):
-			# skip directories altogether
-			if event.mask & pyinotify.IN_ISDIR:
-				logSys.debug("Ignoring creation of directory %s", path)
-				return
-			# check if that is a file we care about
-			if not path in self.__watches:
-				logSys.debug("Ignoring creation of %s we do not monitor", path)
-				return
-			else:
-				# we need to substitute the watcher with a new one, so first
-				# remove old one
-				self._delFileWatcher(path)
-				# place a new one
-				self._addFileWatcher(path)
-
-		self._process_file(path)
+    def __init__(self, jail):
+        FileFilter.__init__(self, jail)
+        self.__modified = False
+        # Pyinotify watch manager
+        self.__monitor = pyinotify.WatchManager()
+        self.__watches = dict()
+        logSys.debug("Created FilterPyinotify")
 
 
-	def _process_file(self, path):
-		"""Process a given file
+    def callback(self, event, origin=''):
+        logSys.debug("%sCallback for Event: %s", origin, event)
+        path = event.pathname
+        if event.mask & ( pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO ):
+            # skip directories altogether
+            if event.mask & pyinotify.IN_ISDIR:
+                logSys.debug("Ignoring creation of directory %s", path)
+                return
+            # check if that is a file we care about
+            if not path in self.__watches:
+                logSys.debug("Ignoring creation of %s we do not monitor", path)
+                return
+            else:
+                # we need to substitute the watcher with a new one, so first
+                # remove old one
+                self._delFileWatcher(path)
+                # place a new one
+                self._addFileWatcher(path)
 
-		TODO -- RF:
-		this is a common logic and must be shared/provided by FileFilter
-		"""
-		self.getFailures(path)
-		try:
-			while True:
-				ticket = self.failManager.toBan()
-				self.jail.putFailTicket(ticket)
-		except FailManagerEmpty:
-			self.failManager.cleanup(MyTime.time())
-		self.dateDetector.sortTemplate()
-		self.__modified = False
+        self._process_file(path)
 
 
-	def _addFileWatcher(self, path):
-		wd = self.__monitor.add_watch(path, pyinotify.IN_MODIFY)
-		self.__watches.update(wd)
-		logSys.debug("Added file watcher for %s", path)
+    def _process_file(self, path):
+        """Process a given file
 
-	def _delFileWatcher(self, path):
-		wdInt = self.__watches[path]
-		wd = self.__monitor.rm_watch(wdInt)
-		if wd[wdInt]:
-			del self.__watches[path]
-			logSys.debug("Removed file watcher for %s", path)
-			return True
-		else:
-			return False
+        TODO -- RF:
+        this is a common logic and must be shared/provided by FileFilter
+        """
+        self.getFailures(path)
+        try:
+            while True:
+                ticket = self.failManager.toBan()
+                self.jail.putFailTicket(ticket)
+        except FailManagerEmpty:
+            self.failManager.cleanup(MyTime.time())
+        self.dateDetector.sortTemplate()
+        self.__modified = False
 
-	##
-	# Add a log file path
-	#
-	# @param path log file path
 
-	def _addLogPath(self, path):
-		path_dir = dirname(path)
-		if not (path_dir in self.__watches):
-			# we need to watch also  the directory for IN_CREATE
-			self.__watches.update(
-				self.__monitor.add_watch(path_dir, pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO))
-			logSys.debug("Added monitor for the parent directory %s", path_dir)
+    def _addFileWatcher(self, path):
+        wd = self.__monitor.add_watch(path, pyinotify.IN_MODIFY)
+        self.__watches.update(wd)
+        logSys.debug("Added file watcher for %s", path)
 
-		self._addFileWatcher(path)
-		self._process_file(path)
+    def _delFileWatcher(self, path):
+        wdInt = self.__watches[path]
+        wd = self.__monitor.rm_watch(wdInt)
+        if wd[wdInt]:
+            del self.__watches[path]
+            logSys.debug("Removed file watcher for %s", path)
+            return True
+        else:
+            return False
+
+    ##
+    # Add a log file path
+    #
+    # @param path log file path
+
+    def _addLogPath(self, path):
+        path_dir = dirname(path)
+        if not (path_dir in self.__watches):
+            # we need to watch also  the directory for IN_CREATE
+            self.__watches.update(
+                self.__monitor.add_watch(path_dir, pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO))
+            logSys.debug("Added monitor for the parent directory %s", path_dir)
+
+        self._addFileWatcher(path)
+        self._process_file(path)
 
 
     ##
-	# Delete a log path
-	#
-	# @param path the log file to delete
+    # Delete a log path
+    #
+    # @param path the log file to delete
 
-	def _delLogPath(self, path):
-		if not self._delFileWatcher(path):
-			logSys.error("Failed to remove watch on path: %s", path)
+    def _delLogPath(self, path):
+        if not self._delFileWatcher(path):
+            logSys.error("Failed to remove watch on path: %s", path)
 
-		path_dir = dirname(path)
-		if not len([k for k in self.__watches
-					if k.startswith(path_dir + pathsep)]):
-			# Remove watches for the directory
-			# since there is no other monitored file under this directory
-			wdInt = self.__watches.pop(path_dir)
-			self.__monitor.rm_watch(wdInt)
-			logSys.debug("Removed monitor for the parent directory %s", path_dir)
+        path_dir = dirname(path)
+        if not len([k for k in self.__watches
+                    if k.startswith(path_dir + pathsep)]):
+            # Remove watches for the directory
+            # since there is no other monitored file under this directory
+            wdInt = self.__watches.pop(path_dir)
+            self.__monitor.rm_watch(wdInt)
+            logSys.debug("Removed monitor for the parent directory %s", path_dir)
 
 
-	##
-	# Main loop.
-	#
-	# Since all detection is offloaded to pyinotifier -- no manual
-	# loop is necessary
+    ##
+    # Main loop.
+    #
+    # Since all detection is offloaded to pyinotifier -- no manual
+    # loop is necessary
 
-	def run(self):
-		self.__notifier = pyinotify.ThreadedNotifier(self.__monitor,
-			ProcessPyinotify(self))
-		self.__notifier.start()
-		logSys.debug("pyinotifier started for %s.", self.jail.name)
-		# TODO: verify that there is nothing really to be done for
-		#       idle jails
-		return True
+    def run(self):
+        self.__notifier = pyinotify.ThreadedNotifier(self.__monitor,
+            ProcessPyinotify(self))
+        self.__notifier.start()
+        logSys.debug("pyinotifier started for %s.", self.jail.name)
+        # TODO: verify that there is nothing really to be done for
+        #       idle jails
+        return True
 
-	##
-	# Call super.stop() and then stop the 'Notifier'
+    ##
+    # Call super.stop() and then stop the 'Notifier'
 
-	def stop(self):
-		super(FilterPyinotify, self).stop()
+    def stop(self):
+        super(FilterPyinotify, self).stop()
 
-		# Stop the notifier thread
-		self.__notifier.stop()
-		self.__notifier.join()			# to not exit before notifier does
-		self.__cleanup()				# for pedantic ones
+        # Stop the notifier thread
+        self.__notifier.stop()
+        self.__notifier.join()			# to not exit before notifier does
+        self.__cleanup()				# for pedantic ones
 
-	##
-	# Deallocates the resources used by pyinotify.
+    ##
+    # Deallocates the resources used by pyinotify.
 
-	def __cleanup(self):
-		self.__notifier = None
-		self.__monitor = None
+    def __cleanup(self):
+        self.__notifier = None
+        self.__monitor = None
 
 
 class ProcessPyinotify(pyinotify.ProcessEvent):
-	def __init__(self, FileFilter, **kargs):
-		#super(ProcessPyinotify, self).__init__(**kargs)
-		# for some reason root class _ProcessEvent is old-style (is
-		# not derived from object), so to play safe let's avoid super
-		# for now, and call superclass directly
-		pyinotify.ProcessEvent.__init__(self, **kargs)
-		self.__FileFilter = FileFilter
-		pass
+    def __init__(self, FileFilter, **kargs):
+        #super(ProcessPyinotify, self).__init__(**kargs)
+        # for some reason root class _ProcessEvent is old-style (is
+        # not derived from object), so to play safe let's avoid super
+        # for now, and call superclass directly
+        pyinotify.ProcessEvent.__init__(self, **kargs)
+        self.__FileFilter = FileFilter
+        pass
 
-	# just need default, since using mask on watch to limit events
-	def process_default(self, event):
-		try:
-			self.__FileFilter.callback(event, origin='Default ')
-		except Exception as e:
-			logSys.error("Error in FilterPyinotify callback: %s",
-				e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
+    # just need default, since using mask on watch to limit events
+    def process_default(self, event):
+        try:
+            self.__FileFilter.callback(event, origin='Default ')
+        except Exception as e:
+            logSys.error("Error in FilterPyinotify callback: %s",
+                e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)

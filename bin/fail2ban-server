@@ -41,98 +41,98 @@ logSys = getLogger("fail2ban")
 
 class Fail2banServer:
 
-	def __init__(self):
-		self.__server = None
-		self.__argv = None
-		self.__conf = dict()
-		self.__conf["background"] = True
-		self.__conf["force"] = False
-		self.__conf["socket"] = "/var/run/fail2ban/fail2ban.sock"
-		self.__conf["pidfile"] = "/var/run/fail2ban/fail2ban.pid"
+    def __init__(self):
+        self.__server = None
+        self.__argv = None
+        self.__conf = dict()
+        self.__conf["background"] = True
+        self.__conf["force"] = False
+        self.__conf["socket"] = "/var/run/fail2ban/fail2ban.sock"
+        self.__conf["pidfile"] = "/var/run/fail2ban/fail2ban.pid"
 
-	def dispVersion(self):
-		print "Fail2Ban v" + version
-		print
-		print "Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors"
-		print "Copyright of modifications held by their respective authors."
-		print "Licensed under the GNU General Public License v2 (GPL)."
-		print
-		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
-		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
+    def dispVersion(self):
+        print "Fail2Ban v" + version
+        print
+        print "Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors"
+        print "Copyright of modifications held by their respective authors."
+        print "Licensed under the GNU General Public License v2 (GPL)."
+        print
+        print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
+        print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
 
-	def dispUsage(self):
-		""" Prints Fail2Ban command line options and exits
-		"""
-		print "Usage: "+self.__argv[0]+" [OPTIONS]"
-		print
-		print "Fail2Ban v" + version + " reads log file that contains password failure report"
-		print "and bans the corresponding IP addresses using firewall rules."
-		print
-		print "Only use this command for debugging purpose. Start the server with"
-		print "fail2ban-client instead. The default behaviour is to start the server"
-		print "in background."
-		print
-		print "Options:"
-		print "    -b                   start in background"
-		print "    -f                   start in foreground"
-		print "    -s <FILE>            socket path"
-		print "    -p <FILE>            pidfile path"
-		print "    -x                   force execution of the server (remove socket file)"
-		print "    -h, --help           display this help message"
-		print "    -V, --version        print the version"
-		print
-		print "Report bugs to https://github.com/fail2ban/fail2ban/issues"
+    def dispUsage(self):
+        """ Prints Fail2Ban command line options and exits
+        """
+        print "Usage: "+self.__argv[0]+" [OPTIONS]"
+        print
+        print "Fail2Ban v" + version + " reads log file that contains password failure report"
+        print "and bans the corresponding IP addresses using firewall rules."
+        print
+        print "Only use this command for debugging purpose. Start the server with"
+        print "fail2ban-client instead. The default behaviour is to start the server"
+        print "in background."
+        print
+        print "Options:"
+        print "    -b                   start in background"
+        print "    -f                   start in foreground"
+        print "    -s <FILE>            socket path"
+        print "    -p <FILE>            pidfile path"
+        print "    -x                   force execution of the server (remove socket file)"
+        print "    -h, --help           display this help message"
+        print "    -V, --version        print the version"
+        print
+        print "Report bugs to https://github.com/fail2ban/fail2ban/issues"
 
-	def __getCmdLineOptions(self, optList):
-		""" Gets the command line options
-		"""
-		for opt in optList:
-			if opt[0] == "-b":
-				self.__conf["background"] = True
-			if opt[0] == "-f":
-				self.__conf["background"] = False
-			if opt[0] == "-s":
-				self.__conf["socket"] = opt[1]
-			if opt[0] == "-p":
-				self.__conf["pidfile"] = opt[1]
-			if opt[0] == "-x":
-				self.__conf["force"] = True
-			if opt[0] in ["-h", "--help"]:
-				self.dispUsage()
-				sys.exit(0)
-			if opt[0] in ["-V", "--version"]:
-				self.dispVersion()
-				sys.exit(0)
+    def __getCmdLineOptions(self, optList):
+        """ Gets the command line options
+        """
+        for opt in optList:
+            if opt[0] == "-b":
+                self.__conf["background"] = True
+            if opt[0] == "-f":
+                self.__conf["background"] = False
+            if opt[0] == "-s":
+                self.__conf["socket"] = opt[1]
+            if opt[0] == "-p":
+                self.__conf["pidfile"] = opt[1]
+            if opt[0] == "-x":
+                self.__conf["force"] = True
+            if opt[0] in ["-h", "--help"]:
+                self.dispUsage()
+                sys.exit(0)
+            if opt[0] in ["-V", "--version"]:
+                self.dispVersion()
+                sys.exit(0)
 
-	def start(self, argv):
-		# Command line options
-		self.__argv = argv
+    def start(self, argv):
+        # Command line options
+        self.__argv = argv
 
-		# Reads the command line options.
-		try:
-			cmdOpts = 'bfs:p:xhV'
-			cmdLongOpts = ['help', 'version']
-			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
-		except getopt.GetoptError:
-			self.dispUsage()
-			sys.exit(-1)
+        # Reads the command line options.
+        try:
+            cmdOpts = 'bfs:p:xhV'
+            cmdLongOpts = ['help', 'version']
+            optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
+        except getopt.GetoptError:
+            self.dispUsage()
+            sys.exit(-1)
 
-		self.__getCmdLineOptions(optList)
+        self.__getCmdLineOptions(optList)
 
-		try:
-			self.__server = Server(self.__conf["background"])
-			self.__server.start(self.__conf["socket"],
-								self.__conf["pidfile"],
-								self.__conf["force"])
-			return True
-		except Exception, e:
-			logSys.exception(e)
-			self.__server.quit()
-			return False
+        try:
+            self.__server = Server(self.__conf["background"])
+            self.__server.start(self.__conf["socket"],
+                                self.__conf["pidfile"],
+                                self.__conf["force"])
+            return True
+        except Exception, e:
+            logSys.exception(e)
+            self.__server.quit()
+            return False
 
 if __name__ == "__main__":
-	server = Fail2banServer()
-	if server.start(sys.argv):
-		sys.exit(0)
-	else:
-		sys.exit(-1)
+    server = Fail2banServer()
+    if server.start(sys.argv):
+        sys.exit(0)
+    else:
+        sys.exit(-1)

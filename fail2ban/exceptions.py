@@ -27,10 +27,10 @@ __license__ = "GPL"
 # Jails
 #
 class DuplicateJailException(Exception):
-	pass
+    pass
 
 class UnknownJailException(KeyError):
-	pass
+    pass
 
 
 

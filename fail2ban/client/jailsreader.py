@@ -33,74 +33,74 @@ logSys = getLogger(__name__)
 
 class JailsReader(ConfigReader):
 
-	def __init__(self, force_enable=False, **kwargs):
-		"""
-		Parameters
-		----------
-		force_enable : bool, optional
-		  Passed to JailReader to force enable the jails.
-		  It is for internal use
-		"""
-		ConfigReader.__init__(self, **kwargs)
-		self.__jails = list()
-		self.__force_enable = force_enable
+    def __init__(self, force_enable=False, **kwargs):
+        """
+        Parameters
+        ----------
+        force_enable : bool, optional
+          Passed to JailReader to force enable the jails.
+          It is for internal use
+        """
+        ConfigReader.__init__(self, **kwargs)
+        self.__jails = list()
+        self.__force_enable = force_enable
 
-	@property
-	def jails(self):
-		return self.__jails
+    @property
+    def jails(self):
+        return self.__jails
 
-	def read(self):
-		return ConfigReader.read(self, "jail")
+    def read(self):
+        return ConfigReader.read(self, "jail")
 
-	def getOptions(self, section=None):
-		"""Reads configuration for jail(s) and adds enabled jails to __jails
-		"""
-		opts = []
-		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
+    def getOptions(self, section=None):
+        """Reads configuration for jail(s) and adds enabled jails to __jails
+        """
+        opts = []
+        self.__opts = ConfigReader.getOptions(self, "Definition", opts)
 
-		if section is None:
-			sections = self.sections()
-		else:
-			sections = [ section ]
+        if section is None:
+            sections = self.sections()
+        else:
+            sections = [ section ]
 
-		# Get the options of all jails.
-		parse_status = True
-		for sec in sections:
-			if sec == 'INCLUDES':
-				continue
-			jail = JailReader(sec, basedir=self.getBaseDir(),
-							  force_enable=self.__force_enable)
-			jail.read()
-			ret = jail.getOptions()
-			if ret:
-				if jail.isEnabled():
-					# We only add enabled jails
-					self.__jails.append(jail)
-			else:
-				logSys.error("Errors in jail %r. Skipping..." % sec)
-				parse_status = False
-		return parse_status
+        # Get the options of all jails.
+        parse_status = True
+        for sec in sections:
+            if sec == 'INCLUDES':
+                continue
+            jail = JailReader(sec, basedir=self.getBaseDir(),
+                              force_enable=self.__force_enable)
+            jail.read()
+            ret = jail.getOptions()
+            if ret:
+                if jail.isEnabled():
+                    # We only add enabled jails
+                    self.__jails.append(jail)
+            else:
+                logSys.error("Errors in jail %r. Skipping..." % sec)
+                parse_status = False
+        return parse_status
 
-	def convert(self, allow_no_files=False):
-		"""Convert read before __opts and jails to the commands stream
+    def convert(self, allow_no_files=False):
+        """Convert read before __opts and jails to the commands stream
 
-		Parameters
-		----------
-		allow_missing : bool
-		  Either to allow log files to be missing entirely.  Primarily is
-		  used for testing
-		"""
+        Parameters
+        ----------
+        allow_missing : bool
+          Either to allow log files to be missing entirely.  Primarily is
+          used for testing
+        """
 
-		stream = list()
-		for opt in self.__opts:
-			if opt == "":
-				stream.append([])
-		# Convert jails
-		for jail in self.__jails:
-			stream.extend(jail.convert(allow_no_files=allow_no_files))
-		# Start jails
-		for jail in self.__jails:
-			stream.append(["start", jail.getName()])
+        stream = list()
+        for opt in self.__opts:
+            if opt == "":
+                stream.append([])
+        # Convert jails
+        for jail in self.__jails:
+            stream.extend(jail.convert(allow_no_files=allow_no_files))
+        # Start jails
+        for jail in self.__jails:
+            stream.append(["start", jail.getName()])
 
-		return stream
+        return stream
 

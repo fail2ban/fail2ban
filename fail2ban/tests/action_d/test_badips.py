@@ -24,71 +24,71 @@ import sys
 from ..dummyjail import DummyJail
 
 if os.path.exists('config/fail2ban.conf'):
-	CONFIG_DIR = "config"
+    CONFIG_DIR = "config"
 else:
-	CONFIG_DIR='/etc/fail2ban'
+    CONFIG_DIR='/etc/fail2ban'
 
 if sys.version_info >= (2,7):
-	class BadIPsActionTest(unittest.TestCase):
+    class BadIPsActionTest(unittest.TestCase):
 
-		def setUp(self):
-			"""Call before every test case."""
-			self.jail = DummyJail()
+        def setUp(self):
+            """Call before every test case."""
+            self.jail = DummyJail()
 
-			self.jail.actions.add("test")
+            self.jail.actions.add("test")
 
-			pythonModule = os.path.join(CONFIG_DIR, "action.d", "badips.py")
-			self.jail.actions.add("badips", pythonModule, initOpts={
-				'category': "ssh",
-				'banaction': "test",
-				})
-			self.action = self.jail.actions["badips"]
+            pythonModule = os.path.join(CONFIG_DIR, "action.d", "badips.py")
+            self.jail.actions.add("badips", pythonModule, initOpts={
+                'category': "ssh",
+                'banaction': "test",
+                })
+            self.action = self.jail.actions["badips"]
 
-		def tearDown(self):
-			"""Call after every test case."""
-			# Must cancel timer!
-			if self.action._timer:
-				self.action._timer.cancel()
+        def tearDown(self):
+            """Call after every test case."""
+            # Must cancel timer!
+            if self.action._timer:
+                self.action._timer.cancel()
 
-		def testCategory(self):
-			categories = self.action.getCategories()
-			self.assertTrue("ssh" in categories)
-			self.assertTrue(len(categories) >= 10)
+        def testCategory(self):
+            categories = self.action.getCategories()
+            self.assertTrue("ssh" in categories)
+            self.assertTrue(len(categories) >= 10)
 
-			self.assertRaises(
-				ValueError, setattr, self.action, "category",
-				"invalid-category")
+            self.assertRaises(
+                ValueError, setattr, self.action, "category",
+                "invalid-category")
 
-			# Not valid for reporting category...
-			self.assertRaises(
-				ValueError, setattr, self.action, "category", "mail")
-			# but valid for blacklisting.
-			self.action.bancategory = "mail"
+            # Not valid for reporting category...
+            self.assertRaises(
+                ValueError, setattr, self.action, "category", "mail")
+            # but valid for blacklisting.
+            self.action.bancategory = "mail"
 
-		def testScore(self):
-			self.assertRaises(ValueError, setattr, self.action, "score", -5)
-			self.action.score = 5
-			self.action.score = "5"
+        def testScore(self):
+            self.assertRaises(ValueError, setattr, self.action, "score", -5)
+            self.action.score = 5
+            self.action.score = "5"
 
-		def testBanaction(self):
-			self.assertRaises(
-				ValueError, setattr, self.action, "banaction",
-				"invalid-action")
-			self.action.banaction = "test"
+        def testBanaction(self):
+            self.assertRaises(
+                ValueError, setattr, self.action, "banaction",
+                "invalid-action")
+            self.action.banaction = "test"
 
-		def testUpdateperiod(self):
-			self.assertRaises(
-				ValueError, setattr, self.action, "updateperiod", -50)
-			self.assertRaises(
-				ValueError, setattr, self.action, "updateperiod", 0)
-			self.action.updateperiod = 900
-			self.action.updateperiod = "900"
+        def testUpdateperiod(self):
+            self.assertRaises(
+                ValueError, setattr, self.action, "updateperiod", -50)
+            self.assertRaises(
+                ValueError, setattr, self.action, "updateperiod", 0)
+            self.action.updateperiod = 900
+            self.action.updateperiod = "900"
 
-		def testStart(self):
-			self.action.start()
-			self.assertTrue(len(self.action._bannedips) > 10)
+        def testStart(self):
+            self.action.start()
+            self.assertTrue(len(self.action._bannedips) > 10)
 
-		def testStop(self):
-			self.testStart()
-			self.action.stop()
-			self.assertTrue(len(self.action._bannedips) == 0)
+        def testStop(self):
+            self.testStart()
+            self.action.stop()
+            self.assertTrue(len(self.action._bannedips) == 0)

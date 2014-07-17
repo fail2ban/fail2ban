@@ -29,76 +29,76 @@ from .jail import Jail
 
 
 class Jails(Mapping):
-	"""Handles the jails.
+    """Handles the jails.
 
-	This class handles the jails. Creation, deletion or access to a jail
-	must be done through this class. This class is thread-safe which is
-	not the case of the jail itself, including filter and actions. This
-	class is based on Mapping type, and the `add` method must be used to
-	add additional jails.
-	"""
+    This class handles the jails. Creation, deletion or access to a jail
+    must be done through this class. This class is thread-safe which is
+    not the case of the jail itself, including filter and actions. This
+    class is based on Mapping type, and the `add` method must be used to
+    add additional jails.
+    """
 
-	def __init__(self):
-		self.__lock = Lock()
-		self._jails = dict()
+    def __init__(self):
+        self.__lock = Lock()
+        self._jails = dict()
 
-	def add(self, name, backend, db=None):
-		"""Adds a jail.
+    def add(self, name, backend, db=None):
+        """Adds a jail.
 
-		Adds a new jail if not already present which should use the
-		given backend.
+        Adds a new jail if not already present which should use the
+        given backend.
 
-		Parameters
-		----------
-		name : str
-			The name of the jail.
-		backend : str
-			The backend to use.
-		db : Fail2BanDb
-			Fail2Ban's persistent database instance.
+        Parameters
+        ----------
+        name : str
+            The name of the jail.
+        backend : str
+            The backend to use.
+        db : Fail2BanDb
+            Fail2Ban's persistent database instance.
 
-		Raises
-		------
-		DuplicateJailException
-			If jail name is already present.
-		"""
-		try:
-			self.__lock.acquire()
-			if name in self._jails:
-				raise DuplicateJailException(name)
-			else:
-				self._jails[name] = Jail(name, backend, db)
-		finally:
-			self.__lock.release()
+        Raises
+        ------
+        DuplicateJailException
+            If jail name is already present.
+        """
+        try:
+            self.__lock.acquire()
+            if name in self._jails:
+                raise DuplicateJailException(name)
+            else:
+                self._jails[name] = Jail(name, backend, db)
+        finally:
+            self.__lock.release()
 
-	def __getitem__(self, name):
-		try:
-			self.__lock.acquire()
-			return self._jails[name]
-		except KeyError:
-			raise UnknownJailException(name)
-		finally:
-			self.__lock.release()
+    def __getitem__(self, name):
+        try:
+            self.__lock.acquire()
+            return self._jails[name]
+        except KeyError:
+            raise UnknownJailException(name)
+        finally:
+            self.__lock.release()
 
-	def __delitem__(self, name):
-		try:
-			self.__lock.acquire()
-			del self._jails[name]
-		except KeyError:
-			raise UnknownJailException(name)
-		finally:
-			self.__lock.release()
+    def __delitem__(self, name):
+        try:
+            self.__lock.acquire()
+            del self._jails[name]
+        except KeyError:
+            raise UnknownJailException(name)
+        finally:
+            self.__lock.release()
 
-	def __len__(self):
-		try:
-			self.__lock.acquire()
-			return len(self._jails)
-		finally:
-			self.__lock.release()
+    def __len__(self):
+        try:
+            self.__lock.acquire()
+            return len(self._jails)
+        finally:
+            self.__lock.release()
 
-	def __iter__(self):
-		try:
-			self.__lock.acquire()
-			return iter(self._jails)
-		finally:
-			self.__lock.release()
+    def __iter__(self):
+        try:
+            self.__lock.acquire()
+            return iter(self._jails)
+        finally:
+            self.__lock.release()

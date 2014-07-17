@@ -19,345 +19,345 @@
 
 import sys
 if sys.version_info < (2, 7):
-	raise ImportError("badips.py action requires Python >= 2.7")
+    raise ImportError("badips.py action requires Python >= 2.7")
 import json
 from functools import partial
 import threading
 import logging
 if sys.version_info >= (3, ):
-	from urllib.request import Request, urlopen
-	from urllib.parse import urlencode
-	from urllib.error import HTTPError
+    from urllib.request import Request, urlopen
+    from urllib.parse import urlencode
+    from urllib.error import HTTPError
 else:
-	from urllib2 import Request, urlopen, HTTPError
-	from urllib import urlencode
+    from urllib2 import Request, urlopen, HTTPError
+    from urllib import urlencode
 
 from fail2ban.server.actions import ActionBase
 from fail2ban.version import version as f2bVersion
 
 class BadIPsAction(ActionBase):
-	"""Fail2Ban action which reports bans to badips.com, and also
-	blacklist bad IPs listed on badips.com by using another action's
-	ban method.
+    """Fail2Ban action which reports bans to badips.com, and also
+    blacklist bad IPs listed on badips.com by using another action's
+    ban method.
 
-	Parameters
-	----------
-	jail : Jail
-		The jail which the action belongs to.
-	name : str
-		Name assigned to the action.
-	category : str
-		Valid badips.com category for reporting failures.
-	score : int, optional
-		Minimum score for bad IPs. Default 3.
-	age : str, optional
-		Age of last report for bad IPs, per badips.com syntax.
-		Default "24h" (24 hours)
-	key : str, optional
-		Key issued by badips.com to report bans, for later retrieval
-		of personalised content.
-	banaction : str, optional
-		Name of banaction to use for blacklisting bad IPs. If `None`,
-		no blacklist of IPs will take place.
-		Default `None`.
-	bancategory : str, optional
-		Name of category to use for blacklisting, which can differ
-		from category used for reporting. e.g. may want to report
-		"postfix", but want to use whole "mail" category for blacklist.
-		Default `category`.
-	bankey : str, optional
-		Key issued by badips.com to blacklist IPs reported with the
-		associated key.
-	updateperiod : int, optional
-		Time in seconds between updating bad IPs blacklist.
-		Default 900 (15 minutes)
+    Parameters
+    ----------
+    jail : Jail
+        The jail which the action belongs to.
+    name : str
+        Name assigned to the action.
+    category : str
+        Valid badips.com category for reporting failures.
+    score : int, optional
+        Minimum score for bad IPs. Default 3.
+    age : str, optional
+        Age of last report for bad IPs, per badips.com syntax.
+        Default "24h" (24 hours)
+    key : str, optional
+        Key issued by badips.com to report bans, for later retrieval
+        of personalised content.
+    banaction : str, optional
+        Name of banaction to use for blacklisting bad IPs. If `None`,
+        no blacklist of IPs will take place.
+        Default `None`.
+    bancategory : str, optional
+        Name of category to use for blacklisting, which can differ
+        from category used for reporting. e.g. may want to report
+        "postfix", but want to use whole "mail" category for blacklist.
+        Default `category`.
+    bankey : str, optional
+        Key issued by badips.com to blacklist IPs reported with the
+        associated key.
+    updateperiod : int, optional
+        Time in seconds between updating bad IPs blacklist.
+        Default 900 (15 minutes)
 
-	Raises
-	------
-	ValueError
-		If invalid `category`, `score`, `banaction` or `updateperiod`.
-	"""
+    Raises
+    ------
+    ValueError
+        If invalid `category`, `score`, `banaction` or `updateperiod`.
+    """
 
-	_badips = "http://www.badips.com"
-	_Request = partial(
-		Request, headers={'User-Agent': "Fail2Ban %s" % f2bVersion})
+    _badips = "http://www.badips.com"
+    _Request = partial(
+        Request, headers={'User-Agent': "Fail2Ban %s" % f2bVersion})
 
-	def __init__(self, jail, name, category, score=3, age="24h", key=None,
-		banaction=None, bancategory=None, bankey=None, updateperiod=900):
-		super(BadIPsAction, self).__init__(jail, name)
+    def __init__(self, jail, name, category, score=3, age="24h", key=None,
+        banaction=None, bancategory=None, bankey=None, updateperiod=900):
+        super(BadIPsAction, self).__init__(jail, name)
 
-		self.category = category
-		self.score = score
-		self.age = age
-		self.key = key
-		self.banaction = banaction
-		self.bancategory = bancategory or category
-		self.bankey = bankey
-		self.updateperiod = updateperiod
+        self.category = category
+        self.score = score
+        self.age = age
+        self.key = key
+        self.banaction = banaction
+        self.bancategory = bancategory or category
+        self.bankey = bankey
+        self.updateperiod = updateperiod
 
-		self._bannedips = set()
-		# Used later for threading.Timer for updating badips
-		self._timer = None
+        self._bannedips = set()
+        # Used later for threading.Timer for updating badips
+        self._timer = None
 
-	def getCategories(self, incParents=False):
-		"""Get badips.com categories.
+    def getCategories(self, incParents=False):
+        """Get badips.com categories.
 
-		Returns
-		-------
-		set
-			Set of categories.
+        Returns
+        -------
+        set
+            Set of categories.
 
-		Raises
-		------
-		HTTPError
-			Any issues with badips.com request.
-		"""
-		try:
-			response = urlopen(
-				self._Request("/".join([self._badips, "get", "categories"])))
-		except HTTPError as response:
-			messages = json.loads(response.read().decode('utf-8'))
-			self._logSys.error(
-				"Failed to fetch categories. badips.com response: '%s'",
-				messages['err'])
-			raise
-		else:
-			categories = json.loads(response.read().decode('utf-8'))['categories']
-			categories_names = set(
-				value['Name'] for value in categories)
-			if incParents:
-				categories_names.update(set(
-					value['Parent'] for value in categories
-					if "Parent" in value))
-			return categories_names
+        Raises
+        ------
+        HTTPError
+            Any issues with badips.com request.
+        """
+        try:
+            response = urlopen(
+                self._Request("/".join([self._badips, "get", "categories"])))
+        except HTTPError as response:
+            messages = json.loads(response.read().decode('utf-8'))
+            self._logSys.error(
+                "Failed to fetch categories. badips.com response: '%s'",
+                messages['err'])
+            raise
+        else:
+            categories = json.loads(response.read().decode('utf-8'))['categories']
+            categories_names = set(
+                value['Name'] for value in categories)
+            if incParents:
+                categories_names.update(set(
+                    value['Parent'] for value in categories
+                    if "Parent" in value))
+            return categories_names
 
-	def getList(self, category, score, age, key=None):
-		"""Get badips.com list of bad IPs.
+    def getList(self, category, score, age, key=None):
+        """Get badips.com list of bad IPs.
 
-		Parameters
-		----------
-		category : str
-			Valid badips.com category.
-		score : int
-			Minimum score for bad IPs.
-		age : str
-			Age of last report for bad IPs, per badips.com syntax.
-		key : str, optional
-			Key issued by badips.com to fetch IPs reported with the
-			associated key.
+        Parameters
+        ----------
+        category : str
+            Valid badips.com category.
+        score : int
+            Minimum score for bad IPs.
+        age : str
+            Age of last report for bad IPs, per badips.com syntax.
+        key : str, optional
+            Key issued by badips.com to fetch IPs reported with the
+            associated key.
 
-		Returns
-		-------
-		set
-			Set of bad IPs.
+        Returns
+        -------
+        set
+            Set of bad IPs.
 
-		Raises
-		------
-		HTTPError
-			Any issues with badips.com request.
-		"""
-		try:
-			url = "?".join([
-				"/".join([self._badips, "get", "list", category, str(score)]),
-				urlencode({'age': age})])
-			if key:
-				url = "&".join([url, urlencode({'key': key})])
-			response = urlopen(self._Request(url))
-		except HTTPError as response:
-			messages = json.loads(response.read().decode('utf-8'))
-			self._logSys.error(
-				"Failed to fetch bad IP list. badips.com response: '%s'",
-				messages['err'])
-			raise
-		else:
-			return set(response.read().decode('utf-8').split())
+        Raises
+        ------
+        HTTPError
+            Any issues with badips.com request.
+        """
+        try:
+            url = "?".join([
+                "/".join([self._badips, "get", "list", category, str(score)]),
+                urlencode({'age': age})])
+            if key:
+                url = "&".join([url, urlencode({'key': key})])
+            response = urlopen(self._Request(url))
+        except HTTPError as response:
+            messages = json.loads(response.read().decode('utf-8'))
+            self._logSys.error(
+                "Failed to fetch bad IP list. badips.com response: '%s'",
+                messages['err'])
+            raise
+        else:
+            return set(response.read().decode('utf-8').split())
 
-	@property
-	def category(self):
-		"""badips.com category for reporting IPs.
-		"""
-		return self._category
+    @property
+    def category(self):
+        """badips.com category for reporting IPs.
+        """
+        return self._category
 
-	@category.setter
-	def category(self, category):
-		if category not in self.getCategories():
-			self._logSys.error("Category name '%s' not valid. "
-				"see badips.com for list of valid categories",
-				category)
-			raise ValueError("Invalid category: %s" % category)
-		self._category = category
+    @category.setter
+    def category(self, category):
+        if category not in self.getCategories():
+            self._logSys.error("Category name '%s' not valid. "
+                "see badips.com for list of valid categories",
+                category)
+            raise ValueError("Invalid category: %s" % category)
+        self._category = category
 
-	@property
-	def bancategory(self):
-		"""badips.com bancategory for fetching IPs.
-		"""
-		return self._bancategory
+    @property
+    def bancategory(self):
+        """badips.com bancategory for fetching IPs.
+        """
+        return self._bancategory
 
-	@bancategory.setter
-	def bancategory(self, bancategory):
-		if bancategory not in self.getCategories(incParents=True):
-			self._logSys.error("Category name '%s' not valid. "
-				"see badips.com for list of valid categories",
-				bancategory)
-			raise ValueError("Invalid bancategory: %s" % bancategory)
-		self._bancategory = bancategory
+    @bancategory.setter
+    def bancategory(self, bancategory):
+        if bancategory not in self.getCategories(incParents=True):
+            self._logSys.error("Category name '%s' not valid. "
+                "see badips.com for list of valid categories",
+                bancategory)
+            raise ValueError("Invalid bancategory: %s" % bancategory)
+        self._bancategory = bancategory
 
-	@property
-	def score(self):
-		"""badips.com minimum score for fetching IPs.
-		"""
-		return self._score
+    @property
+    def score(self):
+        """badips.com minimum score for fetching IPs.
+        """
+        return self._score
 
-	@score.setter
-	def score(self, score):
-		score = int(score)
-		if 0 <= score <= 5:
-			self._score = score
-		else:
-			raise ValueError("Score must be 0-5")
+    @score.setter
+    def score(self, score):
+        score = int(score)
+        if 0 <= score <= 5:
+            self._score = score
+        else:
+            raise ValueError("Score must be 0-5")
 
-	@property
-	def banaction(self):
-		"""Jail action to use for banning/unbanning.
-		"""
-		return self._banaction
+    @property
+    def banaction(self):
+        """Jail action to use for banning/unbanning.
+        """
+        return self._banaction
 
-	@banaction.setter
-	def banaction(self, banaction):
-		if banaction is not None and banaction not in self._jail.actions:
-			self._logSys.error("Action name '%s' not in jail '%s'",
-				banaction, self._jail.name)
-			raise ValueError("Invalid banaction")
-		self._banaction = banaction
+    @banaction.setter
+    def banaction(self, banaction):
+        if banaction is not None and banaction not in self._jail.actions:
+            self._logSys.error("Action name '%s' not in jail '%s'",
+                banaction, self._jail.name)
+            raise ValueError("Invalid banaction")
+        self._banaction = banaction
 
-	@property
-	def updateperiod(self):
-		"""Period in seconds between banned bad IPs will be updated.
-		"""
-		return self._updateperiod
+    @property
+    def updateperiod(self):
+        """Period in seconds between banned bad IPs will be updated.
+        """
+        return self._updateperiod
 
-	@updateperiod.setter
-	def updateperiod(self, updateperiod):
-		updateperiod = int(updateperiod)
-		if updateperiod > 0:
-			self._updateperiod = updateperiod
-		else:
-			raise ValueError("Update period must be integer greater than 0")
+    @updateperiod.setter
+    def updateperiod(self, updateperiod):
+        updateperiod = int(updateperiod)
+        if updateperiod > 0:
+            self._updateperiod = updateperiod
+        else:
+            raise ValueError("Update period must be integer greater than 0")
 
-	def _banIPs(self, ips):
-		for ip in ips:
-			try:
-				self._jail.actions[self.banaction].ban({
-					'ip': ip,
-					'failures': 0,
-					'matches': "",
-					'ipmatches': "",
-					'ipjailmatches': "",
-				})
-			except Exception as e:
-				self._logSys.error(
-					"Error banning IP %s for jail '%s' with action '%s': %s",
-					ip, self._jail.name, self.banaction, e,
-					exc_info=self._logSys.getEffectiveLevel()<=logging.DEBUG)
-			else:
-				self._bannedips.add(ip)
-				self._logSys.info(
-					"Banned IP %s for jail '%s' with action '%s'",
-					ip, self._jail.name, self.banaction)
+    def _banIPs(self, ips):
+        for ip in ips:
+            try:
+                self._jail.actions[self.banaction].ban({
+                    'ip': ip,
+                    'failures': 0,
+                    'matches': "",
+                    'ipmatches': "",
+                    'ipjailmatches': "",
+                })
+            except Exception as e:
+                self._logSys.error(
+                    "Error banning IP %s for jail '%s' with action '%s': %s",
+                    ip, self._jail.name, self.banaction, e,
+                    exc_info=self._logSys.getEffectiveLevel()<=logging.DEBUG)
+            else:
+                self._bannedips.add(ip)
+                self._logSys.info(
+                    "Banned IP %s for jail '%s' with action '%s'",
+                    ip, self._jail.name, self.banaction)
 
-	def _unbanIPs(self, ips):
-		for ip in ips:
-			try:
-				self._jail.actions[self.banaction].unban({
-					'ip': ip,
-					'failures': 0,
-					'matches': "",
-					'ipmatches': "",
-					'ipjailmatches': "",
-				})
-			except Exception as e:
-				self._logSys.info(
-					"Error unbanning IP %s for jail '%s' with action '%s': %s",
-					ip, self._jail.name, self.banaction, e,
-					exc_info=self._logSys.getEffectiveLevel()<=logging.DEBUG)
-			else:
-				self._logSys.info(
-					"Unbanned IP %s for jail '%s' with action '%s'",
-					ip, self._jail.name, self.banaction)
-			finally:
-				self._bannedips.remove(ip)
+    def _unbanIPs(self, ips):
+        for ip in ips:
+            try:
+                self._jail.actions[self.banaction].unban({
+                    'ip': ip,
+                    'failures': 0,
+                    'matches': "",
+                    'ipmatches': "",
+                    'ipjailmatches': "",
+                })
+            except Exception as e:
+                self._logSys.info(
+                    "Error unbanning IP %s for jail '%s' with action '%s': %s",
+                    ip, self._jail.name, self.banaction, e,
+                    exc_info=self._logSys.getEffectiveLevel()<=logging.DEBUG)
+            else:
+                self._logSys.info(
+                    "Unbanned IP %s for jail '%s' with action '%s'",
+                    ip, self._jail.name, self.banaction)
+            finally:
+                self._bannedips.remove(ip)
 
-	def start(self):
-		"""If `banaction` set, blacklists bad IPs.
-		"""
-		if self.banaction is not None:
-			self.update()
+    def start(self):
+        """If `banaction` set, blacklists bad IPs.
+        """
+        if self.banaction is not None:
+            self.update()
 
-	def update(self):
-		"""If `banaction` set, updates blacklisted IPs.
+    def update(self):
+        """If `banaction` set, updates blacklisted IPs.
 
-		Queries badips.com for list of bad IPs, removing IPs from the
-		blacklist if no longer present, and adds new bad IPs to the
-		blacklist.
-		"""
-		if self.banaction is not None:
-			if self._timer:
-				self._timer.cancel()
-				self._timer = None
+        Queries badips.com for list of bad IPs, removing IPs from the
+        blacklist if no longer present, and adds new bad IPs to the
+        blacklist.
+        """
+        if self.banaction is not None:
+            if self._timer:
+                self._timer.cancel()
+                self._timer = None
 
-			try:
-				ips = self.getList(
-					self.bancategory, self.score, self.age, self.bankey)
-				# Remove old IPs no longer listed
-				self._unbanIPs(self._bannedips - ips)
-				# Add new IPs which are now listed
-				self._banIPs(ips - self._bannedips)
+            try:
+                ips = self.getList(
+                    self.bancategory, self.score, self.age, self.bankey)
+                # Remove old IPs no longer listed
+                self._unbanIPs(self._bannedips - ips)
+                # Add new IPs which are now listed
+                self._banIPs(ips - self._bannedips)
 
-				self._logSys.info(
-					"Updated IPs for jail '%s'. Update again in %i seconds",
-					self._jail.name, self.updateperiod)
-			finally:
-				self._timer = threading.Timer(self.updateperiod, self.update)
-				self._timer.start()
+                self._logSys.info(
+                    "Updated IPs for jail '%s'. Update again in %i seconds",
+                    self._jail.name, self.updateperiod)
+            finally:
+                self._timer = threading.Timer(self.updateperiod, self.update)
+                self._timer.start()
 
-	def stop(self):
-		"""If `banaction` set, clears blacklisted IPs.
-		"""
-		if self.banaction is not None:
-			if self._timer:
-				self._timer.cancel()
-				self._timer = None
-			self._unbanIPs(self._bannedips.copy())
+    def stop(self):
+        """If `banaction` set, clears blacklisted IPs.
+        """
+        if self.banaction is not None:
+            if self._timer:
+                self._timer.cancel()
+                self._timer = None
+            self._unbanIPs(self._bannedips.copy())
 
-	def ban(self, aInfo):
-		"""Reports banned IP to badips.com.
+    def ban(self, aInfo):
+        """Reports banned IP to badips.com.
 
-		Parameters
-		----------
-		aInfo : dict
-			Dictionary which includes information in relation to
-			the ban.
+        Parameters
+        ----------
+        aInfo : dict
+            Dictionary which includes information in relation to
+            the ban.
 
-		Raises
-		------
-		HTTPError
-			Any issues with badips.com request.
-		"""
-		try:
-			url = "/".join([self._badips, "add", self.category, aInfo['ip']])
-			if self.key:
-				url = "?".join([url, urlencode({'key': self.key})])
-			response = urlopen(self._Request(url))
-		except HTTPError as response:
-			messages = json.loads(response.read().decode('utf-8'))
-			self._logSys.error(
-				"Response from badips.com report: '%s'",
-				messages['err'])
-			raise
-		else:
-			messages = json.loads(response.read().decode('utf-8'))
-			self._logSys.info(
-				"Response from badips.com report: '%s'",
-				messages['suc'])
+        Raises
+        ------
+        HTTPError
+            Any issues with badips.com request.
+        """
+        try:
+            url = "/".join([self._badips, "add", self.category, aInfo['ip']])
+            if self.key:
+                url = "?".join([url, urlencode({'key': self.key})])
+            response = urlopen(self._Request(url))
+        except HTTPError as response:
+            messages = json.loads(response.read().decode('utf-8'))
+            self._logSys.error(
+                "Response from badips.com report: '%s'",
+                messages['err'])
+            raise
+        else:
+            messages = json.loads(response.read().decode('utf-8'))
+            self._logSys.info(
+                "Response from badips.com report: '%s'",
+                messages['suc'])
 
 Action = BadIPsAction

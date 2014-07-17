@@ -33,58 +33,58 @@ import time, datetime
 # This wrapper should be called instead. The API are equivalent.
 
 class MyTime:
-	
-	myTime = None
-	
-	##
-	# Sets the current time.
-	#
-	# Use None in order to always get the real current time.
-	#
-	# @param t the time to set or None
-	
-	#@staticmethod
-	def setTime(t):
-		MyTime.myTime = t
-	setTime = staticmethod(setTime)
-	
-	##
-	# Equivalent to time.time()
-	#
-	# @return time.time() if setTime was called with None
-	
-	#@staticmethod
-	def time():
-		if MyTime.myTime is None:
-			return time.time()
-		else:
-			return MyTime.myTime
-	time = staticmethod(time)
-	
-	##
-	# Equivalent to time.gmtime()
-	#
-	# @return time.gmtime() if setTime was called with None
-	
-	#@staticmethod
-	def gmtime():
-		if MyTime.myTime is None:
-			return time.gmtime()
-		else:
-			return time.gmtime(MyTime.myTime)
-	gmtime = staticmethod(gmtime)
 
-	#@staticmethod
-	def now():
-		if MyTime.myTime is None:
-			return datetime.datetime.now()
-		else:
-			return datetime.datetime.fromtimestamp(MyTime.myTime)
-	now = staticmethod(now)
+    myTime = None
 
-	def localtime(x=None):
-		if MyTime.myTime is None or x is not None:
-			return time.localtime(x)
-		else:
-			return time.localtime(MyTime.myTime)
-	localtime = staticmethod(localtime)
+    ##
+    # Sets the current time.
+    #
+    # Use None in order to always get the real current time.
+    #
+    # @param t the time to set or None
+
+    #@staticmethod
+    def setTime(t):
+        MyTime.myTime = t
+    setTime = staticmethod(setTime)
+
+    ##
+    # Equivalent to time.time()
+    #
+    # @return time.time() if setTime was called with None
+
+    #@staticmethod
+    def time():
+        if MyTime.myTime is None:
+            return time.time()
+        else:
+            return MyTime.myTime
+    time = staticmethod(time)
+
+    ##
+    # Equivalent to time.gmtime()
+    #
+    # @return time.gmtime() if setTime was called with None
+
+    #@staticmethod
+    def gmtime():
+        if MyTime.myTime is None:
+            return time.gmtime()
+        else:
+            return time.gmtime(MyTime.myTime)
+    gmtime = staticmethod(gmtime)
+
+    #@staticmethod
+    def now():
+        if MyTime.myTime is None:
+            return datetime.datetime.now()
+        else:
+            return datetime.datetime.fromtimestamp(MyTime.myTime)
+    now = staticmethod(now)
+
+    def localtime(x=None):
+        if MyTime.myTime is None or x is not None:
+            return time.localtime(x)
+        else:
+            return time.localtime(MyTime.myTime)
+    localtime = staticmethod(localtime)
