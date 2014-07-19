@@ -37,6 +37,8 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * Correct times for non-timezone date times formats during DST
    * Pass a copy of, not original, aInfo into actions to avoid side-effects
    * Per-distribution paths to the exim's main log
+   * Ignored IPs are no longer banned when being restored from persistent
+     database
 
 - New features:
    - Added monit filter thanks Jason H Martin.
