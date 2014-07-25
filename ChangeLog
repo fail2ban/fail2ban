@@ -39,6 +39,9 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * Per-distribution paths to the exim's main log
    * Ignored IPs are no longer banned when being restored from persistent
      database
+   * Catch also failed logins via secured (imaps/pop3s) for cyrus-imap.
+     Regression was introduced while strengthening failregex in 0.8.11 (bd175f)
+     Debian bug #755173
 
 - New features:
    - Added monit filter thanks Jason H Martin.

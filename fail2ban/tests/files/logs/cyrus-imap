@@ -1,5 +1,7 @@
 # failJSON: { "time": "2005-01-04T21:51:05", "match": true , "host": "127.0.0.1" }
 Jan 4 21:51:05 hostname cyrus/imap[5355]: badlogin: localhost.localdomain [127.0.0.1] plaintext cyrus@localdomain SASL(-13): authentication failure: checkpass failed
+# failJSON: { "time": "2005-01-04T21:51:05", "match": true , "host": "127.0.0.1", "desc": "For secure imaps" }
+Jan 4 21:51:05 hostname cyrus/imaps[5355]: badlogin: localhost.localdomain [127.0.0.1] plaintext cyrus@localdomain SASL(-13): authentication failure: checkpass failed
 # failJSON: { "time": "2005-02-20T17:23:32", "match": true , "host": "198.51.100.23" }
 Feb 20 17:23:32 domain cyrus/pop3[18635]: badlogin: localhost [198.51.100.23] plaintext administrator SASL(-13): authentication failure: checkpass failed
 # failJSON: { "time": "2005-02-20T17:23:32", "match": true , "host": "1.2.3.4" }
