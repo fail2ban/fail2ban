@@ -12,4 +12,7 @@ Jun 8 18:11:13 lampserver imap[4480]: badlogin: example.com [198.51.100.45] DIGE
 Dec 21 10:01:57 hostname imapd[18454]: badlogin: example.com [198.51.100.57] CRAM-MD5 [SASL(-13): authentication failure: incorrect digest response]
 # failJSON: { "time": "2004-12-30T16:03:27", "match": true , "host": "1.2.3.4" }
 Dec 30 16:03:27 somehost imapd[2517]: badlogin: local-somehost[1.2.3.4] OTP [SASL(-13): authentication failure: External SSF not good enough]
-
+# failJSON: { "time": "2005-07-17T22:55:56", "match": true , "host": "1.2.3.4" }
+Jul 17 22:55:56 derry cyrus/imaps[7568]: badlogin: serafinat.xxxxxx [1.2.3.4] plain [SASL(-13): user not found: user: pressy@derry property: cmusaslsecretPLAIN not found in sasldb]
+# failJSON: { "time": "2005-07-18T16:46:42", "match": true , "host": "1.2.3.4" }
+Jul 18 16:46:42 derry cyrus/imaps[27449]: badlogin: serafinat.xxxxxx [1.2.3.4] PLAIN [SASL(-13): user not found: Password verification failed]
