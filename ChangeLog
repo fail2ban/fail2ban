@@ -41,6 +41,8 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
      database
    * Manually unbanned IPs are now removed from persistent database, such they
      wont be banned again when Fail2Ban is restarted
+   * Pass "bantime" parameter to the actions in default jail's action
+     definition(s)
 
 - New features:
    - Added
@@ -52,6 +54,9 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * Fail2ban-regex - add print-all-matched option. Closes gh-652
    * Suppress fail2ban-client warnings for non-critical config options
    * Match non "Bye Bye" disconnect messages for sshd locked account regex
+   * courier-smtp filter:
+     - match lines with user names
+     - match lines containing "535 Authentication failed" attempts
    * Add <chain> tag to iptables-ipsets
    * Realign fail2ban log output with white space to improve readability. Does
      not affect SYSLOG output
