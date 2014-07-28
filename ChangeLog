@@ -43,6 +43,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
      wont be banned again when Fail2Ban is restarted
    * Pass "bantime" parameter to the actions in default jail's action
      definition(s)
+   * filters.d/sieve.conf - fixed typo in _daemon.  Thanks Jisoo Park
 
 - New features:
    - Added
