@@ -1,3 +1,24 @@
+fail2ban (0.8.4-3+squeeze3) squeeze-lts; urgency=high
+
+  * Use anchored failregex for filters to avoid possible DoS.  Manually
+    picked up from the current status of 0.8 branch (as of
+    0.8.13-29-g09b2016):
+    - CVE-2013-7176: postfix.conf - anchored on the front, expects
+      "postfix/smtpd" prefix in the log line
+    - CVE-2013-7177: cyrus-imap.conf - anchored on the front, and
+      refactored to have a single failregex
+    - couriersmtp.conf - anchored on both sides
+    - exim.conf - front-anchored versions picked up from exim.conf
+      and exim-spam.conf
+    - lighttpd-fastcgi.conf - front-anchored picked up from suhosin.conf
+    (copied from the Wheezy version)
+  * Catch also failed logins via secured (imaps/pop3s) for cyrus-imap.
+    Regression was introduced while strengthening failregex in 0.8.11 (bd175f)
+    Debian bug #755173
+  * cyrus-imap: catch "user not found" attempts
+
+ -- Thorsten Alteholz <debian@alteholz.de>  Sat, 26 Jul 2014 10:00:00 +0200
+
 fail2ban (0.8.4-3+squeeze2) squeeze-security; urgency=high
 
   * Anchor apache- filters failregexes to avoid possible DoS on servers
