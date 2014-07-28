@@ -18,6 +18,7 @@ ver. 0.8.14 (2014/??/??) - take-care-of-the-elderly
     being removed physically
   - grep in mail*-whois-lines.conf now also matches end of line to work
     with the recidive filter
+  - filters.d/sieve.conf - fixed typo in _daemon.  Thanks Jisoo Park
 
 
 ver. 0.8.13 (2014/03/15) - maintenance-only-from-now-on
