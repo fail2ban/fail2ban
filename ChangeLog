@@ -39,6 +39,8 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * Per-distribution paths to the exim's main log
    * Ignored IPs are no longer banned when being restored from persistent
      database
+   * Manually unbanned IPs are now removed from persistent database, such they
+     wont be banned again when Fail2Ban is restarted
 
 - New features:
    - Added
