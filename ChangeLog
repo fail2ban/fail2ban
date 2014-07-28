@@ -41,7 +41,9 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
      database
 
 - New features:
-   - Added monit filter thanks Jason H Martin.
+   - Added
+     - monit filter. Thanks Jason H Martin
+     - directadmin filter. Thanks niorg
    - fail2ban-client can fetch the running server version
 
 - Enhancements
