@@ -50,6 +50,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
      - monit filter. Thanks Jason H Martin
      - directadmin filter. Thanks niorg
    - fail2ban-client can fetch the running server version
+   - Added Cloudflare API action
 
 - Enhancements
    * Fail2ban-regex - add print-all-matched option. Closes gh-652
