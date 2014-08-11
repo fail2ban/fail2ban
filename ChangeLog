@@ -44,6 +44,9 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * Pass "bantime" parameter to the actions in default jail's action
      definition(s)
    * filters.d/sieve.conf - fixed typo in _daemon.  Thanks Jisoo Park
+   * cyrus-imap -- also catch also failed logins via secured (imaps/pop3s).
+     Regression was introduced while strengthening failregex in 0.8.11 (bd175f)
+     Debian bug #755173
 
 - New features:
    - Added
@@ -63,6 +66,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * Realign fail2ban log output with white space to improve readability. Does
      not affect SYSLOG output
    * Log unhandled exceptions
+   * cyrus-imap: catch "user not found" attempts
 
 ver. 0.9.0 (2014/03/14) - beta
 ----------
