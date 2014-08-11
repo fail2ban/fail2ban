@@ -3,6 +3,12 @@
 # $Id: fail2ban 150 2013-06-18 22:19:38Z mtremaine $
 ##########################################################################
 # $Log: fail2ban,v $
+#
+# Revision 1.6  2014/08/11 16:07:46  yoh
+# Patches from Yaroslav Halchenko to match adjusted in 0.9.x lines.
+# Also reports now total number of hits (matches) along with Ban:Unban
+# and relaxed regular expressions for matching any log level
+#
 # Revision 1.5  2008/08/18 16:07:46  mike
 # Patches from Paul Gear <paul at libertysys.com> -mgt
 #
@@ -46,8 +52,8 @@ my $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'} || 0;
 my $IgnoreHost = $ENV{'sshd_ignore_host'} || "";
 my $DebugCounter = 0;
 my $ReInitializations = 0;
-my @IptablesErrors = ();
-my @ActionErrors = ();
+my @ActionsErrors = ();
+my @CommandsErrors = ();
 my $NotValidIP = 0;		# reported invalid IPs number
 my @OtherList = ();
 
@@ -66,40 +72,55 @@ while (defined(my $ThisLine = <STDIN>)) {
     chomp($ThisLine);
     if ( ($ThisLine =~ /..,... DEBUG: /) or
 	 ($ThisLine =~ /..,... \S*\s*: DEBUG /) or # syntax of 0.7.? fail2ban
-	 ($ThisLine =~ /..,... INFO: (Fail2Ban v.* is running|Exiting|Enabled sections:)/) or
-	 ($ThisLine =~ /INFO\s+Log rotation detected for/) or
-	 ($ThisLine =~ /INFO\s+Jail.+(?:stopped|started|uses poller)/) or
-	 ($ThisLine =~ /INFO\s+Changed logging target to/) or
-	 ($ThisLine =~ /INFO\s+Creating new jail/) or
+	 ($ThisLine =~ /..,... \S+: (Fail2Ban v.* is running|Exiting|Enabled sections:)/) or
+	 ($ThisLine =~ /\S+\s+rollover performed on/) or
+	 ($ThisLine =~ /\S+\s+Connected to .* persistent database/) or
+	 ($ThisLine =~ /\S+\s+Jail '.*' uses .*/) or
+	 ($ThisLine =~ /\S+\s+Initiated '.*' backend/) or
+	 ($ThisLine =~ /\S+\s+Jail .* is not a JournalFilter instance/) or
+	 ($ThisLine =~ /\S+\s+Log rotation detected for/) or
+	 ($ThisLine =~ /\S+\s+Jail.+(?:stopped|started|uses poller)/) or
+	 ($ThisLine =~ /\S+\s+Changed logging target to/) or
+	 ($ThisLine =~ /\S+\s+Creating new jail/) or
 	 ($ThisLine =~ /..,... \S+\s*: INFO\s+(Set |Socket|Exiting|Gamin|Created|Added|Using)/) or # syntax of 0.7.? fail2ban
-	 ($ThisLine =~ /..,... WARNING: Verbose level is /) or
-	 ($ThisLine =~ /..,... WARNING: Restoring firewall rules/)
+	 ($ThisLine =~ /..,... \S+: Verbose level is /) or
+	 ($ThisLine =~ /..,... \S+: Restoring firewall rules/)
        )
     {
 	if ( $Debug >= 6 ) {
 	    print STDERR "DEBUG($DebugCounter): line ignored\n";
 	}
-    } elsif ( my ($Service,$Action,$Host) = ($ThisLine =~ m/WARNING:?\s\[?(.*?)[]:]?\s(Ban|Unban)[^\.]* (\S+)/)) {
+    } elsif ( my ($LogLevel,$Service,$Action,$Host) = ($ThisLine =~ m/(WARNING|NOTICE):?\s+\[?(.*?)[]:]?\s(Ban|Unban)[^\.]* (\S+)/)) {
 	if ( $Debug >= 6 ) {
 	    print STDERR "DEBUG($DebugCounter): Found $Action for $Service from $Host\n";
 	}
 	$ServicesBans{$Service}{$Host}{$Action}++;
 	$ServicesBans{$Service}{"(all)"}{$Action}++;
-    } elsif ( my ($Service,$Host,$NumFailures) = ($ThisLine =~ m/INFO: (\S+): (.+) has (\d+) login failure\(s\). Banned./)) {
+    } elsif ( my ($LogLevel,$Service,$Host) = ($ThisLine =~ m/(INFO|WARNING|NOTICE):?\s+\[?(.*?)[]:]?\sFound[^\.]* (\S+)/)) {
+	if ( $Debug >= 6 ) {
+	    print STDERR "DEBUG($DebugCounter): Found hit for $Service from $Host\n";
+	}
+	$ServicesBans{$Service}{$Host}{"Hit"}++;
+	$ServicesBans{$Service}{"(all)"}{"Hit"}++;
+    } elsif ( my ($Service,$Host,$NumFailures) = ($ThisLine =~ m/\S+:\s+(\S+): (.+) has (\d+) login failure\(s\). Banned./)) {
 	if ($Debug >= 4) {
 	    print STDERR "DEBUG: Found host $Host trying to access $Service - failed $NumFailures times\n";
 	}
 	push @{$ServicesBans{$Service}{$Host}{'Failures'}}, $NumFailures;
-    } elsif ( my ($Service,$Host) = ($ThisLine =~ m/ ERROR:\s(.*):\s(\S+)\salready in ban list/)) {
-   	 $ServicesBans{$Service}{$Host}{'AlreadyInTheList'}++;
-    } elsif ( my ($Service,$Host) = ($ThisLine =~ m/WARNING\s*\[(.*)\]\s*(\S+)\s*already banned/)) {
+    } elsif ( my ($Service,$Host) = ($ThisLine =~ m/ \S+:\s(.*):\s(\S+)\salready in ban list/)) {
+	 $ServicesBans{$Service}{$Host}{'AlreadyInTheList'}++;
+    } elsif ( my ($Service,$Host) = ($ThisLine =~ m/\S+\s*\[(.*)\]\s*(\S+)\s*already banned/)) {
        $ServicesBans{$Service}{$Host}{'AlreadyInTheList'}++;
-    } elsif ( my ($Service,$Host) = ($ThisLine =~ m/ WARNING:\s(.*):\sReBan (\S+)/)) {
+    } elsif ( my ($Service,$Host) = ($ThisLine =~ m/ \S+:\s(.*):\sReBan (\S+)/)) {
 	    $ServicesBans{$Service}{$Host}{'ReBan'}++;
     } elsif ($ThisLine =~ / ERROR:?\s*(Execution of command )?\'?iptables/) {
-	    push @IptablesErrors, "$ThisLine\n";
+	    push @ActionsErrors, "$ThisLine\n";
+    } elsif ($ThisLine =~ / ERROR\s*Failed to execute.*action/) {
+	    push @ActionsErrors, "$ThisLine\n";
+    } elsif ($ThisLine =~ / WARNING Command \[.*\] has failed. Received/) {
+	    push @CommandsErrors, "$ThisLine\n";
     } elsif ($ThisLine =~ /ERROR.*returned \d+$/) {
-       push @ActionErrors, "$ThisLine\n";
+	    push @ActionsErrors, "$ThisLine\n";
     } elsif (($ThisLine =~ /..,... WARNING: \#\S+ reinitialization of firewalls/) or
 	    ($ThisLine =~ / ERROR\s*Invariant check failed. Trying to restore a sane environment/)) {
 	    $ReInitializations++;
@@ -117,20 +138,22 @@ while (defined(my $ThisLine = <STDIN>)) {
 
 
 if (keys %ServicesBans) {
-    printf("\nBanned services with Fail2Ban:				 Bans:Unbans\n");
+    printf("\nBanned services with Fail2Ban:				 Bans:Unbans:Hits\n");
     foreach my $service (sort {$a cmp $b} keys %ServicesBans) {
-	printf("   %-55s [%3d:%-3d]\n", "$service:",
+	printf("   %-55s [%3d:%d:%-3d]\n", "$service:",
 	       $ServicesBans{$service}{'(all)'}{'Ban'},
-	       $ServicesBans{$service}{'(all)'}{'Unban'});
+	       $ServicesBans{$service}{'(all)'}{'Unban'},
+	       $ServicesBans{$service}{'(all)'}{'Hit'});
 	delete $ServicesBans{$service}{'(all)'};
 	my $totalSort = TotalCountOrder(%{$ServicesBans{$service}}, \&SortIP);
 	if ($Detail >= 5) {
 	    foreach my $ip (sort $totalSort keys %{$ServicesBans{$service}}) {
 		   my $name = LookupIP($ip);
-		   printf("      %-53s %3d:%-3d\n",
+		   printf("      %-53s %3d:%d:%-3d\n",
 		       $name,
 		       $ServicesBans{$service}{$ip}{'Ban'},
-		       $ServicesBans{$service}{$ip}{'Unban'});
+		       $ServicesBans{$service}{$ip}{'Unban'},
+		       $ServicesBans{$service}{$ip}{'Hit'});
 		   if (($Detail >= 10) and ($ServicesBans{$service}{$ip}{'Failures'}>0)) {
 		      print "	   Failed ";
 		      foreach my $fails (@{$ServicesBans{$service}{$ip}{'Failures'}}) {
@@ -146,21 +169,20 @@ if (keys %ServicesBans) {
     }
 }
 
-
 if ($Detail>0) {
-    if ($#IptablesErrors > 0) {
-	   printf("\n%d faulty iptables invocation(s)", $#IptablesErrors);
+    if ($#ActionsErrors >= 0) {
+	   printf("\n%d faulty action invocation(s)", $#ActionsErrors+1);
 	   if ($Detail > 5) {
 	    print ":\n";
-	    print @IptablesErrors ;
+	    print @ActionsErrors ;
 	   }
     }
-    if ($#ActionErrors > 0) {
-       printf("\n%d error(s) returned from actions", $#ActionErrors);
-       if ($Detail > 5) {
-           print ":\n";
-           print @ActionErrors ;
-       }
+    if ($#CommandsErrors >= 0) {
+	   printf("\n%d faulty command invocation(s) from client(s)", $#CommandsErrors+1);
+	   if ($Detail > 5) {
+	    print ":\n";
+	    print @CommandsErrors ;
+	   }
     }
     if ($ReInitializations > 0) {
 	   printf("\n%d fail2ban rules reinitialization(s)", $ReInitializations);
