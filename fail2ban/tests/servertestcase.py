@@ -804,7 +804,7 @@ class RegexTests(unittest.TestCase):
 
 class _BadThread(JailThread):
 	def run(self):
-		int("cat")
+		int("ignore this exception -- raised for testing")
 
 class LoggingTests(LogCaptureTestCase):
 
