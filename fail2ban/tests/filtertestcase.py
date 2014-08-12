@@ -24,6 +24,7 @@ __license__ = "GPL"
 
 from __builtin__ import open as fopen
 import unittest
+import getpass
 import os
 import sys
 import time
@@ -349,10 +350,20 @@ class LogFileMonitor(LogCaptureTestCase):
 		# shorter wait time for not modified status
 		return not self.isModified(0.4)
 
-	def testNoLogFile(self):
+	def testUnaccessibleLogFile(self):
 		os.chmod(self.name, 0)
 		self.filter.getFailures(self.name)
-		self.assertTrue(self._is_logged('Unable to open %s' % self.name))
+		failure_was_logged = self._is_logged('Unable to open %s' % self.name)
+		is_root = getpass.getuser() == 'root'
+		# If ran as root, those restrictive permissions would not
+		# forbid log to be read.
+		self.assertTrue(failure_was_logged != is_root)
+
+	def testNoLogFile(self):
+		_killfile(self.file, self.name)
+		self.filter.getFailures(self.name)
+		failure_was_logged = self._is_logged('Unable to open %s' % self.name)
+		self.assertTrue(failure_was_logged)
 
 	def testRemovingFailRegex(self):
 		self.filter.delFailRegex(0)
