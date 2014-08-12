@@ -47,6 +47,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * cyrus-imap -- also catch also failed logins via secured (imaps/pop3s).
      Regression was introduced while strengthening failregex in 0.8.11 (bd175f)
      Debian bug #755173
+   * postfix-sasl -- added journalmatch.  Thanks Luc Maisonobe
 
 - New features:
    - Added
