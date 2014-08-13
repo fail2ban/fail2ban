@@ -80,7 +80,17 @@ some quick commands::
   set test banip 192.168.2.2
   status test
 
+Testing with vagrant
+--------------------
+Testing can now be done inside a vagrant vm.
 
+Therefore are two VMs:
+
+VM "secure" can be used for testing fail2ban code.
+VM "attacker" can be used to perform attack against our "secure" VM.
++
+Both VMs are sharing the 192.168.200/24 network. If you are using this network
+take a look into the Vagrantfile and change the IP.
 
 Coding Standards
 ================
