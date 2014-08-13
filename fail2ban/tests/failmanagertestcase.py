@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -46,21 +46,21 @@ class AddFailure(unittest.TestCase):
 					    ['100.100.10.10', 1000001000.0],
 					    ['100.100.10.10', 1000001500.0],
 					    ['100.100.10.10', 1000002000.0]]
-		
+
 		self.__failManager = FailManager()
 		for i in self.__items:
 			self.__failManager.addFailure(FailTicket(i[0], i[1]))
 
 	def tearDown(self):
 		"""Call after every test case."""
-	
+
 	def testFailManagerAdd(self):
 		self.assertEqual(self.__failManager.size(), 3)
 		self.assertEqual(self.__failManager.getFailTotal(), 13)
 		self.__failManager.setFailTotal(0)
 		self.assertEqual(self.__failManager.getFailTotal(), 0)
 		self.__failManager.setFailTotal(13)
-	
+
 	def testFailManagerMaxTime(self):
 		self.assertEqual(self.__failManager.getMaxTime(), 600)
 		self.__failManager.setMaxTime(13)
@@ -70,19 +70,19 @@ class AddFailure(unittest.TestCase):
 	def _testDel(self):
 		self.__failManager.delFailure('193.168.0.128')
 		self.__failManager.delFailure('111.111.1.111')
-		
+
 		self.assertEqual(self.__failManager.size(), 1)
-		
+
 	def testCleanupOK(self):
 		timestamp = 1167606999.0
 		self.__failManager.cleanup(timestamp)
 		self.assertEqual(self.__failManager.size(), 0)
-		
+
 	def testCleanupNOK(self):
 		timestamp = 1167605990.0
 		self.__failManager.cleanup(timestamp)
 		self.assertEqual(self.__failManager.size(), 2)
-	
+
 	def testbanOK(self):
 		self.__failManager.setMaxRetry(5)
 		#ticket = FailTicket('193.168.0.128', None)
@@ -100,7 +100,7 @@ class AddFailure(unittest.TestCase):
 		self.assertEqual(
 			ticket_repr,
 			'FailTicket: ip=193.168.0.128 time=1167605999.0 #attempts=5 matches=[]')
-		self.assertFalse(ticket == False)
+		self.assertIsNot(ticket, None)
 		# and some get/set-ers otherwise not tested
 		ticket.setTime(1000002000.0)
 		self.assertEqual(ticket.getTime(), 1000002000.0)
@@ -108,7 +108,7 @@ class AddFailure(unittest.TestCase):
 		self.assertEqual(
 			str(ticket),
 			'FailTicket: ip=193.168.0.128 time=1000002000.0 #attempts=5 matches=[]')
-	
+
 	def testbanNOK(self):
 		self.__failManager.setMaxRetry(10)
 		self.assertRaises(FailManagerEmpty, self.__failManager.toBan)
