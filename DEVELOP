@@ -1,7 +1,7 @@
 ..                       __      _ _ ___ _
                         / _|__ _(_) |_  ) |__  __ _ _ _
-                        |  _/ _` | | |/ /| '_ \/ _` | ' \
-                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
+                       |  _/ _` | | |/ /| '_ \/ _` | ' \
+                       |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
 How to develop for Fail2Ban
@@ -55,7 +55,8 @@ Install the package python-coverage to visualise your test coverage. Run the
 following (note: on Debian-based systems, the script is called
 `python-coverage`)::
 
-  coverage run bin/fail2ban-testcases coverage html
+  coverage run bin/fail2ban-testcases
+  coverage html
 
 Then look at htmlcov/index.html and see how much coverage your test cases exert
 over the code base. Full coverage is a good thing however it may not be
@@ -107,7 +108,7 @@ Coverage
 Test coverage should always increase as you add code.
 
 You may use "# pragma: no cover" in the code for branches of code that support
-older versions on python. For all other uses of "pragma: no cover" or "pragma:
+older versions of python. For all other uses of "pragma: no cover" or "pragma:
 no branch" document the reason why its not covered. "I haven't written a test
 case" isn't a sufficient reason.
 
@@ -141,7 +142,7 @@ Use the following tags in your commit messages:
 * 'DOC:' for documentation fixes
 * 'ENH:' for enhancements
 * 'TST:' for commits concerning tests only (thus not touching the main
-code-base)
+         code-base)
 
 Multiple tags could be joined with +, e.g. "BF+TST:".
 
@@ -266,7 +267,7 @@ provide an implementation of `run` and usually override `addLogPath`,
 		try:
 		    while True:
 		    	ticket = self.failManager.toBan()
-		        self.jail.putFailTicket(ticket)
+		    	self.jail.putFailTicket(ticket)
 		except FailManagerEmpty:
 		    self.failManager.cleanup(MyTime.time())
 
