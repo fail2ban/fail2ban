@@ -29,9 +29,9 @@ When submitting pull requests on GitHub we ask you to:
 * Clearly describe the problem you're solving;
 * Don't introduce regressions that will make it hard for systems administrators
   to update;
-* If adding a major feature rebase your changes on master and get to a single
-  commit;
-* Include test cases (see below); Include sample logs (if relevant);
+* If adding a major feature rebase your changes on master and get to a single commit;
+* Include test cases (see below);
+* Include sample logs (if relevant);
 * Include a change to the relevant section of the ChangeLog; and
 * Include yourself in THANKS if not already there.
 
@@ -40,12 +40,12 @@ If you are developing filters see the FILTERS file for documentation.
 Code Testing
 ============
 
-Existing tests can be run by executing `bin/fail2ban-testcases`. It has options
-like --log-level that will probably be useful.  Run `bin/fail2ban-testcases
---help` for the full list of options.
+Existing tests can be run by executing `bin/fail2ban-testcases`. It has
+options like --log-level that will probably be useful.  Run
+`bin/fail2ban-testcases --help` for the full list of options.
 
-Test cases should cover all usual cases, all exception cases and all inside /
-outside boundary conditions.
+Test cases should cover all usual cases, all exception cases and all inside
+/ outside boundary conditions.
 
 Test cases should cover all branches. The coverage tool will help identify
 missing branches. Also see http://nedbatchelder.com/code/coverage/branch.html
@@ -58,9 +58,10 @@ following (note: on Debian-based systems, the script is called
   coverage run bin/fail2ban-testcases
   coverage html
 
-Then look at htmlcov/index.html and see how much coverage your test cases exert
-over the code base. Full coverage is a good thing however it may not be
-complete. Try to ensure tests cover as many independent paths through the code.
+Then look at htmlcov/index.html and see how much coverage your test cases
+exert over the code base. Full coverage is a good thing however it may not be
+complete. Try to ensure tests cover as many independent paths through the
+code.
 
 Manual Execution. To run in a development environment do::
 
@@ -79,15 +80,7 @@ some quick commands::
   set test banip 192.168.2.2
   status test
 
-Testing with vagrant
---------------------
-Testing can now be done inside a vagrant vm.
 
-Therefore are two VMs: VM "secure" can be used for testing fail2ban code. VM
-"attacker" can be used to perform attack against our "secure" VM.
-
-Both VMs are sharing the 192.168.200/24 network. If you are using this network
-take a look into the Vagrantfile and change the IP.
 
 Coding Standards
 ================
@@ -108,16 +101,16 @@ Coverage
 Test coverage should always increase as you add code.
 
 You may use "# pragma: no cover" in the code for branches of code that support
-older versions of python. For all other uses of "pragma: no cover" or "pragma:
-no branch" document the reason why its not covered. "I haven't written a test
-case" isn't a sufficient reason.
+older versions on python. For all other uses of "pragma: no cover" or
+"pragma: no branch" document the reason why its not covered. "I haven't written
+a test case" isn't a sufficient reason.
 
 pyflakes
 --------
 
-pyflakes can be used to find unused imports, and unused, undefined and redefined
-variables. pyflakes should be run in any python code, including python based
-actions::
+pyflakes can be used to find unused imports, and unused, undefined and
+redefined variables. pyflakes should be run in any python code, including
+python based actions::
 
   pyflakes bin/ config/ fail2ban/
 
@@ -125,8 +118,8 @@ Documentation
 -------------
 
 Ensure this documentation is up to date after changes. Also ensure that the man
-pages still are accurate. Ensure that there is sufficient documentation for your
-new features to be used.
+pages still are accurate. Ensure that there is sufficient documentation for
+your new features to be used.
 
 Bugs
 ----
@@ -141,42 +134,44 @@ Use the following tags in your commit messages:
 * 'BF:' for bug fixes
 * 'DOC:' for documentation fixes
 * 'ENH:' for enhancements
-* 'TST:' for commits concerning tests only (thus not touching the main
-         code-base)
+* 'TST:' for commits concerning tests only (thus not touching the main code-base)
 
 Multiple tags could be joined with +, e.g. "BF+TST:".
 
-Use the text "closes #333"/"resolves #333 "/"fixes #333" where 333 represents an
-issue that is closed. Other text and details in link below. See:
-https://help.github.com/articles/closing-issues-via-commit-messages
+Use the text "closes #333"/"resolves #333 "/"fixes #333" where 333 represents
+an issue that is closed. Other text and details in link below.
+See: https://help.github.com/articles/closing-issues-via-commit-messages
 
-If merge resulted in conflicts, clarify what changes were done to corresponding
-files in the 'Conflicts:' section of the merge commit message.  See e.g.
-https://github.com/fail2ban/fail2ban/commit/f5a8a8ac
+If merge resulted in conflicts, clarify what changes were done to
+corresponding files in the 'Conflicts:' section of the merge commit
+message.  See e.g. https://github.com/fail2ban/fail2ban/commit/f5a8a8ac
 
 Adding Actions
 --------------
 
-If you add an action.d/*.conf file also add a example in config/jail.conf with
-enabled=false and maxretry=5 for ssh.
+If you add an action.d/*.conf file also add a example in config/jail.conf
+with enabled=false and maxretry=5 for ssh.
 
 
 Design
 ======
 
-Fail2Ban was initially developed with Python 2.3 (IIRC). It should still be
-compatible with Python 2.4 and such compatibility assurance makes code ...
-old-fashioned in many places (RF-Note).  In 0.7 the design went through major
-re-factoring into client/server, a-thread-per-jail design which made it a bit
-difficult to follow. Below you can find a sketchy description of the main
-components of the system to orient yourself better.
+Fail2Ban was initially developed with Python 2.3 (IIRC). It should
+still be compatible with Python 2.4 and such compatibility assurance
+makes code ... old-fashioned in many places (RF-Note).  In 0.7 the
+design went through major re-factoring into client/server,
+a-thread-per-jail design which made it a bit difficult to follow.
+Below you can find a sketchy description of the main components of the
+system to orient yourself better.
 
 server/
 ------
 
-Core classes hierarchy (feel welcome to draw a better/more complete one)::
+Core classes hierarchy (feel welcome to draw a better/more complete
+one)::
 
- ->   inheritance +    delegation
+ ->   inheritance
+ +    delegation
  *    storage of multiple instances
 
  RF-Note   just a note which might be useful to address while doing RF
@@ -185,9 +180,8 @@ Core classes hierarchy (feel welcome to draw a better/more complete one)::
                |         * FileContainer
                + FailManager
                + DateDetector
-                           + Jail (provided in __init__)
- which contains this Filter (used for passing tickets from FailManager to Jail's
- __queue)
+			   + Jail (provided in __init__) which contains this Filter
+                 (used for passing tickets from FailManager to Jail's __queue)
  Server
    + Jails
       * Jail
@@ -203,13 +197,13 @@ failmanager.py
 
 FailManager
 
-  Keeps track of failures, recorded as 'tickets'.  All operations are done via
-  acquiring a lock
+  Keeps track of failures, recorded as 'tickets'.  All operations are
+  done via acquiring a lock
 
 FailManagerEmpty(Exception)
 
-  raised by FailManager.toBan after reaching the list of tickets (RF-Note: asks
-  to become a generator ;) )
+  raised by FailManager.toBan after reaching the list of tickets
+  (RF-Note: asks to become a generator ;) )
 
 
 filter.py
@@ -217,15 +211,16 @@ filter.py
 
 Filter(JailThread)
 
-  Wraps (non-threaded) FailManager (and proxies to it quite a bit), and provides
-  all primary logic for processing new lines, what IPs to ignore, etc
+  Wraps (non-threaded) FailManager (and proxies to it quite a bit),
+  and provides all primary logic for processing new lines, what IPs to
+  ignore, etc
 
-  .failManager   [FailManager]
-  .dateDetector  [DateDetector]
-  .__failRegex   [list]
+  .failManager  [FailManager]
+  .dateDetector [DateDetector]
+  .__failRegex  [list]
   .__ignoreRegex [list]
     Contains regular expressions for failures and ignores
-  .__findTime    [numeric]
+  .__findTime   [numeric]
     Used in `processLineAndAdd` to skip old lines
 
 FileFilter(Filter):
@@ -233,12 +228,14 @@ FileFilter(Filter):
   Files-aware Filter
 
   .__logPath [list]
-    keeps the tracked files (added 1-by-1 using addLogPath) stored as
-    FileContainer's
+    keeps the tracked files (added 1-by-1 using addLogPath)
+    stored as FileContainer's
   .getFailures
-    actually just returns True if managed to open and get lines
-    (until empty) False if failed to open or absent container matching the
-    filename
+    actually just returns
+    True
+      if managed to open and get lines (until empty)
+    False
+      if failed to open or absent container matching the filename
 
 FileContainer
 
@@ -246,7 +243,8 @@ FileContainer
 
   .open,.close,.readline
      RF-Note: readline returns "" with handler absent... shouldn't it be None?
-  .__pos Keeps the position pointer
+  .__pos
+    Keeps the position pointer
 
 
 dnsutils.py
@@ -260,18 +258,20 @@ DNSUtils
 filter*.py
 ~~~~~~~~~~
 
-Implementations of FileFilter's for specific backends.  Derived classes should
-provide an implementation of `run` and usually override `addLogPath`,
-`delLogPath` methods.  In run() method they all one way or another provide
+Implementations of FileFilter's for specific backends.  Derived
+classes should provide an implementation of `run` and usually
+override `addLogPath`, `delLogPath` methods.  In run() method they all
+one way or another provide
 
 		try:
-		    while True:
-		    	ticket = self.failManager.toBan()
-		    	self.jail.putFailTicket(ticket)
+			while True:
+				ticket = self.failManager.toBan()
+				self.jail.putFailTicket(ticket)
 		except FailManagerEmpty:
-		    self.failManager.cleanup(MyTime.time())
+			self.failManager.cleanup(MyTime.time())
 
-thus channelling "ban tickets" from their failManager to the corresponding jail.
+thus channelling "ban tickets" from their failManager to the
+corresponding jail.
 
 action.py
 ~~~~~~~~~
