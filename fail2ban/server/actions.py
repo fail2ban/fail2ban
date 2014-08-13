@@ -197,6 +197,8 @@ class Actions(JailThread, Mapping):
 		if ticket is not None:
 			# Unban the IP.
 			self.__unBan(ticket)
+			if self._jail.database is not None:
+				self._jail.database.delBan(self._jail, ticket)
 		else:
 			raise ValueError("IP %s is not banned" % ip)
 

@@ -368,9 +368,24 @@ class Fail2BanDb(object):
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
-			(jail.name, ticket.getIP(), ticket.getTime(),
+			(jail.name, ticket.getIP(), int(round(ticket.getTime())),
 				{"matches": ticket.getMatches(),
 					"failures": ticket.getAttempt()}))
+
+	@commitandrollback
+	def delBan(self, cur, jail, ticket):
+		"""Delete a ban from the database.
+
+		Parameters
+		----------
+		jail : Jail
+			Jail in which the ban has occurred.
+		ticket : BanTicket
+			Ticket of the ban to be removed.
+		"""
+		cur.execute(
+			"DELETE FROM bans WHERE jail = ? AND ip = ? AND timeofban = ?",
+			(jail.name, ticket.getIP(), int(round(ticket.getTime()))))
 
 	@commitandrollback
 	def _getBans(self, cur, jail=None, bantime=None, ip=None):

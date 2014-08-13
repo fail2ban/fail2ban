@@ -51,6 +51,8 @@ class Beautifier:
 		try:
 			if inC[0] == "ping":
 				msg = "Server replied: " + response
+			elif inC[0] == "version":
+				msg = response
 			elif inC[0] == "start":
 				msg = "Jail started"
 			elif inC[0] == "stop":
