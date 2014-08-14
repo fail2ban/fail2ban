@@ -143,7 +143,7 @@ while (defined(my $ThisLine = <STDIN>)) {
 if (keys %ServicesBans) {
     printf("\nBanned services with Fail2Ban:				 Bans:Unbans:Hits\n");
     foreach my $service (sort {$a cmp $b} keys %ServicesBans) {
-        printf("   %-55s [%3d:%d:%-3d]\n", "$service:",
+        printf("  %-55s [%3d:%d:%-3d]\n", "$service:",
                $ServicesBans{$service}{'(all)'}{'Ban'},
                $ServicesBans{$service}{'(all)'}{'Unban'},
                $ServicesBans{$service}{'(all)'}{'Hit'});
@@ -152,7 +152,7 @@ if (keys %ServicesBans) {
         if ($Detail >= 5) {
             foreach my $ip (sort $totalSort keys %{$ServicesBans{$service}}) {
                my $name = LookupIP($ip);
-               printf("      %-53s %3d:%d:%-3d\n",
+               printf("    %-53s %3d:%d:%-3d\n",
                       $name,
                       $ServicesBans{$service}{$ip}{'Ban'},
                       $ServicesBans{$service}{$ip}{'Unban'},
@@ -162,10 +162,13 @@ if (keys %ServicesBans) {
                   foreach my $fails (@{$ServicesBans{$service}{$ip}{'Failures'}}) {
                      print " $fails";
                   }
-                  print " times";
-                  printf("\n     %d Duplicate Ban attempts", $ServicesBans{$service}{$ip}{'AlreadyInTheList'}) ;
-                  printf("\n     %d ReBans due to rules reinitilizations", $ServicesBans{$service}{$ip}{'ReBan'}) ;
-                  print "\n";
+                  print " times\n";
+               }
+               if ($ServicesBans{$service}{$ip}{'AlreadyInTheList'}>0) {
+                  printf("      %d Duplicate Ban attempt(s)\n", $ServicesBans{$service}{$ip}{'AlreadyInTheList'}) ;
+               }
+               if ($ServicesBans{$service}{$ip}{'ReBan'}>0) {
+                  printf("      %d ReBan(s) due to rules reinitilizations\n", $ServicesBans{$service}{$ip}{'ReBan'}) ;
                }
             }
         }
