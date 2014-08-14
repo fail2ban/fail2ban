@@ -108,11 +108,14 @@ while (defined(my $ThisLine = <STDIN>)) {
 	}
 	push @{$ServicesBans{$Service}{$Host}{'Failures'}}, $NumFailures;
     } elsif ( my ($Service,$Host) = ($ThisLine =~ m/ \S+:\s(.*):\s(\S+)\salready in ban list/)) {
-	 $ServicesBans{$Service}{$Host}{'AlreadyInTheList'}++;
-    } elsif ( my ($Service,$Host) = ($ThisLine =~ m/\S+\s*\[(.*)\]\s*(\S+)\s*already banned/)) {
-       $ServicesBans{$Service}{$Host}{'AlreadyInTheList'}++;
+	$ServicesBans{$Service}{$Host}{'AlreadyInTheList'}++;
+    } elsif ( my ($Service,$Host) = ($ThisLine =~ m/\S+:?\s+\[?([^[]*?)[]:]?\s+(\S+)\salready banned/)) {
+	if ( $Debug >= 6 ) {
+	    print STDERR "DEBUG($DebugCounter): Found hit for already banned $Host against $Service\n";
+	}
+	$ServicesBans{$Service}{$Host}{'AlreadyInTheList'}++;
     } elsif ( my ($Service,$Host) = ($ThisLine =~ m/ \S+:\s(.*):\sReBan (\S+)/)) {
-	    $ServicesBans{$Service}{$Host}{'ReBan'}++;
+	$ServicesBans{$Service}{$Host}{'ReBan'}++;
     } elsif ($ThisLine =~ / ERROR:?\s*(Execution of command )?\'?iptables/) {
 	    push @ActionsErrors, "$ThisLine\n";
     } elsif ($ThisLine =~ / ERROR\s*Failed to execute.*action/) {
