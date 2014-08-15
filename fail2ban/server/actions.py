@@ -194,6 +194,9 @@ class Actions(JailThread, Mapping):
 		ValueError
 			If `ip` is not banned
 		"""
+		# Always delete ip from database (also if currently not banned)
+		if self._jail.database is not None:
+			self._jail.database.delBan(self._jail, ip)
 		# Find the ticket with the IP.
 		ticket = self.__banManager.getTicketByIP(ip)
 		if ticket is not None:

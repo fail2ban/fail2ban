@@ -173,6 +173,12 @@ class DatabaseTest(unittest.TestCase):
 		self.assertTrue(
 			isinstance(self.db.getBans(jail=self.jail)[0], FailTicket))
 
+	def testDelBan(self):
+		self.testAddBan()
+		ticket = self.db.getBans(jail=self.jail)[0]
+		self.db.delBan(self.jail, ticket.getIP())
+		self.assertEqual(len(self.db.getBans(jail=self.jail)), 0)
+
 	def testGetBansWithTime(self):
 		if Fail2BanDb is None: # pragma: no cover
 			return

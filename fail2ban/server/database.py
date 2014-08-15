@@ -400,14 +400,33 @@ class Fail2BanDb(object):
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
-			(jail.name, ticket.getIP(), ticket.getTime(), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
+			(jail.name, ticket.getIP(), int(round(ticket.getTime())), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
 				{"matches": ticket.getMatches(),
 					"failures": ticket.getAttempt()}))
 		cur.execute(
 			"INSERT OR REPLACE INTO bips(ip, jail, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
-			(ticket.getIP(), jail.name, ticket.getTime(), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
+			(ticket.getIP(), jail.name, int(round(ticket.getTime())), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
 				{"matches": ticket.getMatches(),
 					"failures": ticket.getAttempt()}))
+
+	@commitandrollback
+	def delBan(self, cur, jail, ip):
+		"""Delete a ban from the database.
+
+		Parameters
+		----------
+		jail : Jail
+			Jail in which the ban has occurred.
+		ticket : BanTicket
+			Ticket of the ban to be removed.
+		"""
+		queryArgs = (jail.name, ip);
+		cur.execute(
+			"DELETE FROM bips WHERE jail = ? AND ip = ?", 
+			queryArgs)
+		cur.execute(
+			"DELETE FROM bans WHERE jail = ? AND ip = ?", 
+			queryArgs);
 
 	@commitandrollback
 	def _getBans(self, cur, jail=None, bantime=None, ip=None):
