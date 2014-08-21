@@ -50,9 +50,11 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * postfix-sasl -- added journalmatch.  Thanks Luc Maisonobe
 
 - New features:
-   - Added
-     - monit filter. Thanks Jason H Martin
-     - directadmin filter. Thanks niorg
+   - New filters:
+     - monit  Thanks Jason H Martin
+     - directadmin  Thanks niorg
+   - New actions:
+     - symbiosis-blacklist-allports  for Bytemark symbiosis firewall
    - fail2ban-client can fetch the running server version
    - Added Cloudflare API action
 
