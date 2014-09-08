@@ -16,6 +16,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
      provides defaults for the chain, port, protocol and name tags
 
 - Fixes:
+   * UTF-8 fixes in pure-ftp thanks to Johannes Weberhofer. Closes gh-806.
    * systemd backend error on bad utf-8 in python3
    * badips.py action error when logging HTTP error raised with badips request
    * fail2ban-regex failed to work in python3 due to space/tab mix
