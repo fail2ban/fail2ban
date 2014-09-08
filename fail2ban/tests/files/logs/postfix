@@ -20,3 +20,9 @@ Dec 25 02:35:54 platypus postfix/smtpd[9144]: improper command pipelining after 
 
 # failJSON: { "time": "2004-12-18T02:05:46", "match": true , "host": "216.245.198.245" }
 Dec 18 02:05:46 platypus postfix/smtpd[16349]: improper command pipelining after NOOP from unknown[216.245.198.245]
+
+# failJSON: { "time": "2004-09-07T08:24:30", "match": true , "host": "83.110.98.15" }
+Sep  7 08:24:30 umkc postfix/smtpd[2282]: lost connection after AUTH from bba453913.alshamil.net.ae[83.110.98.15]
+
+# failJSON: { "time": "2004-09-05T12:45:53", "match": true , "host": "213.123.185.20" }
+Sep  5 12:45:53 umkc postfix/smtpd[20286]: warning: Connection concurrency limit exceeded: 6 from mail.baileysbodybuilders.co.uk[213.123.185.20] for service smtp
