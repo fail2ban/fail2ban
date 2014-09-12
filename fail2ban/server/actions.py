@@ -41,9 +41,10 @@ from .banmanager import BanManager
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 class Actions(JailThread, Mapping):
 	"""Handles jail actions.
@@ -196,6 +197,8 @@ class Actions(JailThread, Mapping):
 		if ticket is not None:
 			# Unban the IP.
 			self.__unBan(ticket)
+			if self._jail.database is not None:
+				self._jail.database.delBan(self._jail, ticket)
 		else:
 			raise ValueError("IP %s is not banned" % ip)
 
@@ -215,7 +218,8 @@ class Actions(JailThread, Mapping):
 				action.start()
 			except Exception as e:
 				logSys.error("Failed to start jail '%s' action '%s': %s",
-					self._jail.name, name, e)
+					self._jail.name, name, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 		while self.active:
 			if not self.idle:
 				#logSys.debug(self._jail.name + ": action")
@@ -234,7 +238,8 @@ class Actions(JailThread, Mapping):
 				action.stop()
 			except Exception as e:
 				logSys.error("Failed to stop jail '%s' action '%s': %s",
-					self._jail.name, name, e)
+					self._jail.name, name, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 		logSys.debug(self._jail.name + ": action terminated")
 		return True
 
@@ -253,32 +258,31 @@ class Actions(JailThread, Mapping):
 		if ticket != False:
 			aInfo = CallingMap()
 			bTicket = BanManager.createBanTicket(ticket)
-			aInfo["ip"] = bTicket.getIP()
+			ip = bTicket.getIP()
+			aInfo["ip"] = ip
 			aInfo["failures"] = bTicket.getAttempt()
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "\n".join(bTicket.getMatches())
 			if self._jail.database is not None:
-				aInfo["ipmatches"] = lambda: "\n".join(
-					self._jail.database.getBansMerged(
-						ip=bTicket.getIP()).getMatches())
-				aInfo["ipjailmatches"] = lambda: "\n".join(
-					self._jail.database.getBansMerged(
-						ip=bTicket.getIP(), jail=self._jail).getMatches())
-				aInfo["ipfailures"] = lambda: "\n".join(
-					self._jail.database.getBansMerged(
-						ip=bTicket.getIP()).getAttempt())
-				aInfo["ipjailfailures"] = lambda: "\n".join(
-					self._jail.database.getBansMerged(
-						ip=bTicket.getIP(), jail=self._jail).getAttempt())
+				aInfo["ipmatches"] = lambda jail=self._jail: "\n".join(
+					jail.database.getBansMerged(ip=ip).getMatches())
+				aInfo["ipjailmatches"] = lambda jail=self._jail: "\n".join(
+					jail.database.getBansMerged(ip=ip, jail=jail).getMatches())
+				aInfo["ipfailures"] = lambda jail=self._jail: \
+					jail.database.getBansMerged(ip=ip).getAttempt()
+				aInfo["ipjailfailures"] = lambda jail=self._jail: \
+					jail.database.getBansMerged(ip=ip, jail=jail).getAttempt()
 			if self.__banManager.addBanTicket(bTicket):
 				logSys.notice("[%s] Ban %s" % (self._jail.name, aInfo["ip"]))
 				for name, action in self._actions.iteritems():
 					try:
-						action.ban(aInfo)
+						action.ban(aInfo.copy())
 					except Exception as e:
 						logSys.error(
-							"Failed to execute ban jail '%s' action '%s': %s",
-							self._jail.name, name, e)
+							"Failed to execute ban jail '%s' action '%s' "
+							"info '%r': %s",
+							self._jail.name, name, aInfo, e,
+							exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 				return True
 			else:
 				logSys.notice("[%s] %s already banned" % (self._jail.name,
@@ -321,11 +325,13 @@ class Actions(JailThread, Mapping):
 		logSys.notice("[%s] Unban %s" % (self._jail.name, aInfo["ip"]))
 		for name, action in self._actions.iteritems():
 			try:
-				action.unban(aInfo)
+				action.unban(aInfo.copy())
 			except Exception as e:
 				logSys.error(
-					"Failed to execute unban jail '%s' action '%s': %s",
-					self._jail.name, name, e)
+					"Failed to execute unban jail '%s' action '%s' "
+					"info '%r': %s",
+					self._jail.name, name, aInfo, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
 	@property
 	def status(self):

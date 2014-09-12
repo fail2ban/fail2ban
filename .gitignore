@@ -8,3 +8,4 @@ htmlcov
 *.rej
 *.bak
 __pycache__
+.vagrant/

@@ -173,14 +173,25 @@ class DatabaseTest(unittest.TestCase):
 		self.assertTrue(
 			isinstance(self.db.getBans(jail=self.jail)[0], FailTicket))
 
+	def testDelBan(self):
+		self.testAddBan()
+		ticket = self.db.getBans(jail=self.jail)[0]
+		self.db.delBan(self.jail, ticket)
+		self.assertEqual(len(self.db.getBans(jail=self.jail)), 0)
+
 	def testGetBansWithTime(self):
 		if Fail2BanDb is None: # pragma: no cover
 			return
 		self.testAddJail()
-		ticket = FailTicket("127.0.0.1", MyTime.time() - 40, ["abc\n"])
-		self.db.addBan(self.jail, ticket)
+		self.db.addBan(
+			self.jail, FailTicket("127.0.0.1", MyTime.time() - 60, ["abc\n"]))
+		self.db.addBan(
+			self.jail, FailTicket("127.0.0.1", MyTime.time() - 40, ["abc\n"]))
 		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=50)), 1)
 		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=20)), 0)
+		# Negative values are for persistent bans, and such all bans should
+		# be returned
+		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=-1)), 2)
 
 	def testGetBansMerged(self):
 		if Fail2BanDb is None: # pragma: no cover
@@ -251,6 +262,10 @@ class DatabaseTest(unittest.TestCase):
 		self.assertEqual(len(tickets), 1)
 		tickets = self.db.getBansMerged(bantime=5)
 		self.assertEqual(len(tickets), 0)
+		# Negative values are for persistent bans, and such all bans should
+		# be returned
+		tickets = self.db.getBansMerged(bantime=-1)
+		self.assertEqual(len(tickets), 2)
 
 	def testPurge(self):
 		if Fail2BanDb is None: # pragma: no cover

@@ -30,11 +30,14 @@ import tempfile
 import os
 import locale
 import sys
-import logging
 
 from ..server.failregex import Regex, FailRegex, RegexException
 from ..server.server import Server
 from ..server.jail import Jail
+from ..server.jailthread import JailThread
+from .utils import LogCaptureTestCase
+from ..helpers import getLogger
+from .. import version
 
 try:
 	from ..server import filtersystemd
@@ -146,15 +149,18 @@ class Transmitter(TransmitterBase):
 	def testPing(self):
 		self.assertEqual(self.transm.proceed(["ping"]), (0, "pong"))
 
+	def testVersion(self):
+		self.assertEqual(self.transm.proceed(["version"]), (0, version.version))
+
 	def testSleep(self):
 		t0 = time.time()
 		self.assertEqual(self.transm.proceed(["sleep", "1"]), (0, None))
 		t1 = time.time()
 		# Approx 1 second delay
-		self.assertAlmostEqual(t1 - t0, 1, places=2)
+		self.assertAlmostEqual(t1 - t0, 1, places=1)
 
 	def testDatabase(self):
-		_, tmpFilename = tempfile.mkstemp(".db", "Fail2Ban_")
+		tmp, tmpFilename = tempfile.mkstemp(".db", "fail2ban_")
 		# Jails present, can't change database
 		self.setGetTestNOK("dbfile", tmpFilename)
 		self.server.delJail(self.jailName)
@@ -175,6 +181,8 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(self.transm.proceed(
 			["get", "dbpurgeage"]),
 			(0, None))
+		os.close(tmp)
+		os.unlink(tmpFilename)
 
 	def testAddJail(self):
 		jail2 = "TestJail2"
@@ -528,11 +536,27 @@ class Transmitter(TransmitterBase):
 
 	def testPythonActionMethodsAndProperties(self):
 		action = "TestCaseAction"
-		self.assertEqual(
-			self.transm.proceed(["set", self.jailName, "addaction", action,
-				os.path.join(TEST_FILES_DIR, "action.d", "action.py"),
-				'{"opt1": "value"}']),
-			(0, action))
+		try:
+			out = self.transm.proceed(
+				["set", self.jailName, "addaction", action,
+				 os.path.join(TEST_FILES_DIR, "action.d", "action.py"),
+				'{"opt1": "value"}'])
+			self.assertEqual(out, (0, action))
+		except AssertionError:
+			if ((2, 6) <= sys.version_info < (2, 6, 5)) \
+				and '__init__() keywords must be strings' in out[1]:
+				# known issue http://bugs.python.org/issue2646 in 2.6 series
+				# since general Fail2Ban warnings are suppressed in normal
+				# operation -- let's issue Python's native warning here
+				import warnings
+				warnings.warn(
+					"Your version of Python %s seems to experience a known "
+					"issue forbidding correct operation of Fail2Ban: "
+					"http://bugs.python.org/issue2646  Upgrade your Python and "
+					"meanwhile other intestPythonActionMethodsAndProperties will "
+					"be skipped" % (sys.version))
+				return
+			raise
 		self.assertEqual(
 			sorted(self.transm.proceed(["get", self.jailName,
 				"actionproperties", action])[1]),
@@ -704,7 +728,7 @@ class TransmitterLogging(TransmitterBase):
 			os.close(f)
 			self.server.setLogLevel("WARNING")
 			self.assertEqual(self.transm.proceed(["set", "logtarget", fn]), (0, fn))
-			l = logging.getLogger('fail2ban.server.server').parent.parent
+			l = getLogger('fail2ban')
 			l.warning("Before file moved")
 			try:
 				f2, fn2 = tempfile.mkstemp("fail2ban.log")
@@ -778,5 +802,19 @@ class RegexTests(unittest.TestCase):
 		self.assertTrue(fr.hasMatched())
 		self.assertRaises(RegexException, fr.getHost)
 
+class _BadThread(JailThread):
+	def run(self):
+		int("ignore this exception -- raised for testing")
 
+class LoggingTests(LogCaptureTestCase):
 
+	def testGetF2BLogger(self):
+		testLogSys = getLogger("fail2ban.some.string.with.name")
+		self.assertEqual(testLogSys.parent.name, "fail2ban")
+		self.assertEqual(testLogSys.name, "fail2ban.name")
+
+	def testFail2BanExceptHook(self):
+		badThread = _BadThread()
+		badThread.start()
+		badThread.join()
+		self.assertTrue(self._is_logged("Unhandled exception"))

@@ -24,13 +24,12 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging
-
 from .fail2banreader import Fail2banReader
 from .jailsreader import JailsReader
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 class Configurator:
 	

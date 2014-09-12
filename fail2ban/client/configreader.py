@@ -24,13 +24,14 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import glob, logging, os
+import glob, os
 from ConfigParser import NoOptionError, NoSectionError
 
 from .configparserinc import SafeConfigParserWithIncludes
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 class ConfigReader(SafeConfigParserWithIncludes):
 

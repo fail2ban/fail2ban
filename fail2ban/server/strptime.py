@@ -190,5 +190,5 @@ def reGroupDictStrptime(found_dict):
 	if gmtoff is not None:
 		return calendar.timegm(date_result.utctimetuple())
 	else:
-		return time.mktime(date_result.utctimetuple())
+		return time.mktime(date_result.timetuple())
 

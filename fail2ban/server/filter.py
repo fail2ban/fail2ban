@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging, re, os, fcntl, sys, locale, codecs
+import re, os, fcntl, sys, locale, codecs
 
 from .failmanager import FailManagerEmpty, FailManager
 from .ticket import FailTicket
@@ -31,9 +31,10 @@ from .datetemplate import DatePatternRegex, DateEpoch, DateTai64n
 from .mytime import MyTime
 from .failregex import FailRegex, Regex, RegexException
 from .action import CommandAction
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 ##
 # Log reader class.
@@ -790,8 +791,10 @@ class FileContainer:
 		try:
 			line = line.decode(self.getEncoding(), 'strict')
 		except UnicodeDecodeError:
-			logSys.warning("Error decoding line from '%s' with '%s': %s" %
-				(self.getFileName(), self.getEncoding(), `line`))
+			logSys.warning(
+				"Error decoding line from '%s' with '%s'. Continuing "
+				" to process line ignoring invalid characters: %r" %
+				(self.getFileName(), self.getEncoding(), line))
 			if sys.version_info >= (3,): # In python3, must be decoded
 				line = line.decode(self.getEncoding(), 'ignore')
 		return line

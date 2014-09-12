@@ -32,8 +32,7 @@ import datetime
 from glob import glob
 from StringIO import StringIO
 
-from .utils import mbasename, TraceBack, FormatterWithTraceBack
-from ..helpers import formatExceptionInfo
+from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger
 from ..server.datetemplate import DatePatternRegex
 
 
@@ -160,7 +159,7 @@ class TestsUtilsTest(unittest.TestCase):
 
 		# and both types of traceback at once
 		fmt = ' %(tb)s | %(tbc)s : %(message)s'
-		logSys = logging.getLogger("fail2ban_tests")
+		logSys = getLogger("fail2ban_tests")
 		out = logging.StreamHandler(strout)
 		out.setFormatter(Formatter(fmt))
 		logSys.addHandler(out)

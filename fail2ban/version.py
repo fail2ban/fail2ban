@@ -24,4 +24,4 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko, Steven Hiscocks, Daniel Black"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2014 Yaroslav Halchenko, 2013-2013 Steven Hiscocks, Daniel Black"
 __license__ = "GPL-v2+"
 
-version = "0.9.0"
+version = "0.9.0.dev"

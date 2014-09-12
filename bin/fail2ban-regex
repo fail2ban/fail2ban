@@ -25,11 +25,11 @@ This tools can test regular expressions for "fail2ban".
 
 """
 
-__author__ = "Cyril Jaquier, Yaroslav Halchenko"
-__copyright__ = "Copyright (c) 2004-2008 Cyril Jaquier, 2012-2013 Yaroslav Halchenko"
+__author__ = "Fail2Ban Developers"
+__copyright__ = "Copyright (c) 2004-2008 Cyril Jaquier, 2012-2014 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import getopt, sys, time, logging, os, locale, shlex, urllib
+import getopt, sys, time, logging, os, locale, shlex, time, urllib
 from optparse import OptionParser, Option
 
 from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
@@ -45,9 +45,9 @@ from fail2ban.client.filterreader import FilterReader
 from fail2ban.server.filter import Filter
 from fail2ban.server.failregex import RegexException
 
-from fail2ban.tests.utils import FormatterWithTraceBack
+from fail2ban.helpers import FormatterWithTraceBack, getLogger
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban")
+logSys = getLogger("fail2ban")
 
 def debuggexURL(sample, regex):
 	q = urllib.urlencode({ 're': regex.replace('<HOST>', '(?&.ipv4)'),
@@ -223,6 +223,7 @@ class Fail2banRegex(object):
 		self._filter = Filter(None)
 		self._ignoreregex = list()
 		self._failregex = list()
+		self._time_elapsed = None
 		self._line_stats = LineStats()
 
 		if opts.maxlines:
@@ -344,10 +345,11 @@ class Fail2banRegex(object):
 					pass
 				else:
 					self._line_stats.matched += 1
+					self._line_stats.missed -= 1
 		return line, ret
 
 	def process(self, test_lines):
-
+		t0 = time.time()
 		for line_no, line in enumerate(test_lines):
 			if isinstance(line, tuple):
 				line_datetimestripped, ret = fail2banRegex.testRegex(
@@ -382,6 +384,7 @@ class Fail2banRegex(object):
 
 			if line_no % 10 == 0 and self._filter.dateDetector is not None:
 				self._filter.dateDetector.sortTemplate()
+		self._time_elapsed = time.time() - t0
 
 
 
@@ -455,7 +458,10 @@ class Fail2banRegex(object):
 						template.hits, template.name))
 			pprint_list(out, "[# of hits] date format")
 
-		print "\nLines: %s" % self._line_stats
+		print "\nLines: %s" % self._line_stats,
+		if self._time_elapsed is not None:
+			print "[processed in %.2f sec]" % self._time_elapsed,
+		print
 
 		if self._print_all_matched:
 			self.printLines('matched')

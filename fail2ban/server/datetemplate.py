@@ -25,12 +25,12 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import re
-import logging
 from abc import abstractmethod
 
 from .strptime import reGroupDictStrptime, timeRE
+from ..helpers import getLogger
 
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 
 class DateTemplate(object):

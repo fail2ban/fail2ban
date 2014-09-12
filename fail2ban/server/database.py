@@ -21,7 +21,6 @@ __author__ = "Steven Hiscocks"
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import logging
 import sys
 import shutil, time
 import sqlite3
@@ -32,9 +31,10 @@ from threading import Lock
 
 from .mytime import MyTime
 from .ticket import FailTicket
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 if sys.version_info >= (3,):
 	sqlite3.register_adapter(
@@ -368,9 +368,24 @@ class Fail2BanDb(object):
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
-			(jail.name, ticket.getIP(), ticket.getTime(),
+			(jail.name, ticket.getIP(), int(round(ticket.getTime())),
 				{"matches": ticket.getMatches(),
 					"failures": ticket.getAttempt()}))
+
+	@commitandrollback
+	def delBan(self, cur, jail, ticket):
+		"""Delete a ban from the database.
+
+		Parameters
+		----------
+		jail : Jail
+			Jail in which the ban has occurred.
+		ticket : BanTicket
+			Ticket of the ban to be removed.
+		"""
+		cur.execute(
+			"DELETE FROM bans WHERE jail = ? AND ip = ? AND timeofban = ?",
+			(jail.name, ticket.getIP(), int(round(ticket.getTime()))))
 
 	@commitandrollback
 	def _getBans(self, cur, jail=None, bantime=None, ip=None):
@@ -380,7 +395,7 @@ class Fail2BanDb(object):
 		if jail is not None:
 			query += " AND jail=?"
 			queryArgs.append(jail.name)
-		if bantime is not None:
+		if bantime is not None and bantime >= 0:
 			query += " AND timeofban > ?"
 			queryArgs.append(MyTime.time() - bantime)
 		if ip is not None:
@@ -399,7 +414,8 @@ class Fail2BanDb(object):
 			Jail that the ban belongs to. Default `None`; all jails.
 		bantime : int
 			Ban time in seconds, such that bans returned would still be
-			valid now. Default `None`; no limit.
+			valid now.  Negative values are equivalent to `None`.
+			Default `None`; no limit.
 		ip : str
 			IP Address to filter bans by. Default `None`; all IPs.
 
@@ -427,7 +443,8 @@ class Fail2BanDb(object):
 			Jail that the ban belongs to. Default `None`; all jails.
 		bantime : int
 			Ban time in seconds, such that bans returned would still be
-			valid now. Default `None`; no limit.
+			valid now. Negative values are equivalent to `None`.
+			Default `None`; no limit.
 		ip : str
 			IP Address to filter bans by. Default `None`; all IPs.
 
@@ -438,7 +455,8 @@ class Fail2BanDb(object):
 			in a list. When `ip` argument passed, a single `Ticket` is
 			returned.
 		"""
-		if bantime is None:
+		cacheKey = None
+		if bantime is None or bantime < 0:
 			cacheKey = (ip, jail)
 			if cacheKey in self._bansMergedCache:
 				return self._bansMergedCache[cacheKey]
@@ -468,7 +486,7 @@ class Fail2BanDb(object):
 			ticket.setAttempt(failures)
 			tickets.append(ticket)
 
-		if bantime is None:
+		if cacheKey:
 			self._bansMergedCache[cacheKey] = tickets if ip is None else ticket
 		return tickets if ip is None else ticket
 
