@@ -1,0 +1,1170 @@
+fail2ban (0.9.0+git48-gabcab00-1) experimental; urgency=medium
+
+  [ Daniel Schaal ]
+  * debian/ updated for 0.9 release
+    0.9 release introduced big changes in internal organization (Python
+    module now), and new features, and stock jail.conf now follows
+    Debian's style, thus custom Debian jail.conf was deprecated.  See NEWS
+    file and upstream ChangeLog for further details.
+
+  [ Yaroslav Halchenko ]
+  * Post 0.9 release snapshot.
+  * debian/rules
+    - do not ignore tests failures
+    - run only tests not requiring network access
+    - nagios and cacti examples get installed
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 25 Mar 2014 00:43:46 -0400
+
+fail2ban (0.8.13-1) unstable; urgency=low
+
+  * New upstream bug-fix release: but consider 0.9.0 (to be uploaded to
+    experimental)
+  * debian/jail:
+    - new jail definitions: apache-modsecurity, apache-nohome, freeswitch,
+      ejabberd-auth, ssh-blocklist, nagios
+    - new configuration option: ignorecommand
+  * debian/post{inst,rm},preinst:
+    - [thanks to Daniel Schaal]: take care about renaming config files
+      - firewall-cmd-direct-new.conf to firewallcmd-new.conf which happened
+        in 0.8.11-29-g56b6bf7
+      - lighttpd-fastcgi.conf to suhosin.conf and
+        sasl.conf to postfix-sasl.conf in the past 0.8.11 release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 18 Mar 2014 23:13:35 -0400
+
+fail2ban (0.8.12-1) UNRELEASED; urgency=low
+
+  * New upstream release
+    - provides "fail2ban-client flushlogs" command, debian/fail2ban.logrotate
+      was adjusted to use it.  Helps to mitigate #697333
+    - removes indentation of name and loglevel while logging to SYSLOG
+      (Closes: #730202)
+    - fixes apache-common.conf (Closes: #739364)
+  * /etc/default/fail2ban -- minor typo. Thanks Vincent Lefevre for report
+    (Closes: #734421)
+  * debian/patches:
+    - dropping cherry-picked changeset*
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 07 Feb 2014 00:45:38 -0500
+
+fail2ban (0.8.11-1) unstable; urgency=low
+
+  * Fresh upstream release
+    - this release tightens all shipped filters to preclude
+      possible injections leading to targetted DoS attacks.
+    - omitted entry for ~pre release changelog:
+      - asterisk filter was fixed (Closes: #719662),
+      - nginx filter/jail added (Closes: #668064)
+      - better detection of log rotation in polling backend (Closes: #696087)
+      - includes sever name (uname -n) into subject of sendmail actions
+        (Closes: #709196)
+  * debian/jail.conf
+    - dropbear jail: use dropbear filter (instead of ssh) and monitor
+      auth.log instead of non-existing /var/log/dropbear (Closes: #620760)
+  * debian/NEWS
+    - information for change of default iptables action to REJECT now
+      (Closes: #711463)
+  * debian/patches
+    - changeset_d4f6ca4f8531f332bcb7ce3a89102f60afaaa08e.diff
+      post-release change to support native proftpd date format which
+      includes milliseconds (Closes: #648276)
+    - changeset_ac061155f093464fb6cd2329d3d513b15c68e256.diff
+      absorbed upstream
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 17 Nov 2013 17:29:06 -0500
+
+fail2ban (0.8.11~pre1+git29-gccd2657-1) unstable; urgency=low
+
+  * Snapshot of the upcoming new release candidate
+    - improves dovecot (Closes: #709324), wuftpd (Closes: #665925)
+      failregex'es
+    - provides support for OpenSSH 6.3 (Closes: #722970)
+  * debian/watch
+    - restrict version matching only to numbers and period (to exclude
+      alpha releases of 0.9 series)
+  * debian/jail.conf
+    - slightly adjusted for changes in master (suhosin replaced
+      lighttpd-auth filer name, and postfix-sasl for sasl)
+    - added nginx-http-auth.  More jails to be adopted from upsream.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 10 Nov 2013 12:16:51 -0800
+
+fail2ban (0.8.10-3) unstable; urgency=low
+
+  * debian/jail.conf
+    - added "submission" (port 587) to all SMTP-related jails (Closes:
+      #714632).  Thanks Tony den Haan for the report
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 01 Jul 2013 14:36:24 -0400
+
+fail2ban (0.8.10-2) unstable; urgency=low
+
+  * debian/fail2ban.init:
+    - fixed handling of the return code from do_start/do_stop
+    - status calls would dump all output to /dev/null
+  * debian/jail.conf:
+    - pure-ftpd jail should monitor syslog not auth.log. Thanks Laurent
+      Léonard for the report
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 21 Jun 2013 10:47:56 -0400
+
+fail2ban (0.8.10-1) unstable; urgency=high
+
+  * New upstream release
+    - addresses possible DoS for anyone enabling many of apache- filters
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 12 Jun 2013 13:31:29 -0400
+
+fail2ban (0.8.9-1) unstable; urgency=low
+
+  * New upstream release
+    - significant improvements in documentation (Closes: #400416)
+    - roundcube auth filter (Closes: #699442)
+    - enforces C locale for dates (Closes: #686341)
+    - provides bash_completion.d/fail2ban
+  * debian/jail.conf:
+    - added findtime and documentation on those basic options from jail.conf
+      (Closes: #704568)
+    - added new sample jails definitions for ssh-route, ssh-iptables-ipset{4,6},
+      roundcube-auth, sogo-auth, mysqld-auth
+  * debian/control:
+    - suggest system-log-daemon (Closes: #691001)
+    - boost policy compliance to 3.9.4
+  * debian/rules:
+    - run fail2ban's unittests at build time but ignore the failures
+      (there are still some known issues to fix up to guarantee robust testing
+      in clean chroots etc).
+      Only pyinotify was added to build-depends since gamin might still be
+      buggy on older releases and get stuck, which would complicate
+      backporting
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 13 May 2013 11:58:56 -0400
+
+fail2ban (0.8.8-1+lucid0) UNRELEASED; urgency=low
+
+  * Added lucid-dsc-patch to use pycentral on systems without dh_python2
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 06 Dec 2012 12:52:30 -0500
+
+fail2ban (0.8.8-1) experimental; urgency=low
+
+  * Primarily a bugfix upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 05 Dec 2012 22:53:15 -0500
+
+fail2ban (0.8.7.1-1) experimental; urgency=low
+
+  * Minor upstream bugfix release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 31 Jul 2012 21:46:19 -0400
+
+fail2ban (0.8.7-1) experimental; urgency=low
+
+  * New upstream release:
+    - inotify backend is supported (and the default if pyinotify is present).
+      It should bring number of wakeups to minimum (Closes: #481265)
+    - usedns jail.conf parameter to disable reverse DNS mapping to
+      avoid of DoS (see #588431, #514239 for related discussions)
+    - enforces non-unicode logging (Closes: #657286)
+    - new jail "recidive" to ban repeated offenders (Closes: #333557)
+    - catch failed ssh logins due to being listed in DenyUsers (Closes: #669063)
+    - document in config/*.conf on how to inline comments (Closes: #676146)
+    - match possibly present "pam_unix(sshd:auth):" portion for sshd
+      (Closes: #648020)
+    - wu-ftpd: added failregex for use against syslog. Switch to monitor syslog
+      (instead of auth.log) by default (Closes: #514239)
+    - anchor chain name in actioncheck's for iptables actions (Closes: #672228)
+  * debian/jail.conf:
+    - adopted few jails from "upstreams" jail.conf: asterisk, recidive,
+      lighttpd, php-url-open
+    - provide instructions in jail.conf on how to comment (Closes: #676146)
+      Thanks Stefano Forli for a report
+  * debian/fail2ban.init:
+    - Should-(start|stop): iptables-persistent (Closes: #598109),
+      ferm (Closes: #604843)
+    - 'status' exits with code 3 if fail2ban is not running (Closes: #653074)
+      Thanks Glenn Aaldering for the patch
+  * debian/source:
+    - switch to 3.0 (quilt) format
+  * debian/control,rules:
+    - switch to use dh_python2 (Closes: #616803)
+    - boost policy compliance to 3.9.3
+    - recommend python-pyinotify and only suggest python-gamin
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 31 Jul 2012 16:51:40 -0400
+
+fail2ban (0.8.6-3) unstable; urgency=low
+
+  * Added dovecot section to Debian's jail.conf.  Thanks to Laurent
+    Léonard (Closes: #655182)
+  * init.d script now returns non-0 exit codes upon status command
+    with not running / failed to connect server.  Thanks to
+    Glenn Aaldering for the patch
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 08 Jan 2012 21:46:24 -0500
+
+fail2ban (0.8.6-2) unstable; urgency=low
+
+  * Added pure-ftpd section to Debian's jail.conf.  Thanks to Laurent
+    Léonard (Closes: #654412)
+  * Enhancement: action to use /proc/net/xt_recent and run f2b as a normal
+    user. Many many thanks to Zbyszek Szmek (Closes: #602016)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 03 Jan 2012 10:36:24 -0500
+
+fail2ban (0.8.6-1) unstable; urgency=low
+
+  * [1efe1bc] Fresh upstream release (Closes: #648324)
+  * Boosted policy compliance to 3.9.2 -- no changes
+  * Adjusted debian/watch to fetch tarballs from github
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 28 Nov 2011 22:27:18 -0500
+
+fail2ban (0.8.5-2) unstable; urgency=low
+
+  * [5242e73] BF: (cherry-picked from upstream, DEP-3 yet TODO) Lock
+    server's executeCmd to prevent racing among iptables calls (Closes:
+    #554162) Many kudos go to Michael Saavedra for the patch
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 23 Sep 2011 22:12:08 -0400
+
+fail2ban (0.8.5-1) unstable; urgency=low
+
+  * [de95777] Fresh upstream release FAIL2BAN-0_8_5:
+    - [00e1827] BF: use addfailregex instead of failregex while processing
+      per-jail "failregex" parameter (Closes: #635830) (LP: #635036)
+      Thanks Marat Khayrullin for the patch and Daniel T Chen for forwarding to
+      Debian.
+  * [1cbdafc] Set backend to auto and recommends python-gamin (Closes: #524425)
+  * [ef449f4] Added a note on diverting logrotate configuration for custom
+    logtarget=SYSLOG (Closes: #631917).  Thanks Kenyon Ralph for report
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 28 Jul 2011 23:20:55 -0400
+
+fail2ban (0.8.4+svn20110323-1) unstable; urgency=low
+
+  * Fresh upstream snapshot which absorbed some of the patches from Debian
+    and
+    - [c6d64e9] debug entry for lines ignored due to falling below
+      findtime (v2)
+    - [fc20f12] Tai64N stores time in GMT, we need to convert to
+      local time before returning
+    - [b0331bb] default ignoreip to ignore entire loopback zone (/8)
+      (Closes: #598200)
+    - [b9f15f6] ENH: dovecot filter
+    - [69165b1] ENH: add <chain> to action.d/iptables*. Thanks
+      Matthijs Kooijman
+    - [8330a20] ENH: make filter.d/apache-overflows.conf catch more
+      (Closes: #574182)
+    - [66cc6cb] BF: allow space in the trailing of failregex for sasl.conf
+      (Closes: #573314)
+    - [2714019] ENH: dropbear filter (Closes: #546913)
+    - [ea7d352] BF: Use /var/run/fail2ban instead of /tmp for temp files in
+      actions (Closes: #544232)
+  * debian/jail.conf:
+    - [bc8e22d] spellcheck (Closes: #598206). Thanks Christoph Anton Mitterer
+    - [d7f3e23] adjusted description for sasl jail (Closes: #615952)
+    - [92fb484] debian/jail.conf: closing " for protocol specification
+    - [f828c31] debian/jail.conf: got 'chain' parameter to be specified for
+      iptables actions (Closes: #515599)
+  * debian/control:
+    - [858af30] slight rewordings of the long description (Closes: #588176)
+    - [167dfd4] Boosted policy compliance version to 3.9.1 (no changes seems
+      to be due)
+  * [4e1e845] debian/copyright: updated copyright years
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 23 Mar 2011 17:04:56 -0400
+
+fail2ban (0.8.4-3) unstable; urgency=low
+
+  * Commenting out named-refused-udp jail and providing even fatter
+    WARNING against using it (Closes: #583364)
+  * Merging upstream's commit for fixing missing import
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 28 Jun 2010 21:50:20 -0400
+
+fail2ban (0.8.4-2) unstable; urgency=low
+
+  * Merged few upstream patches (svn rev ) which fixed:
+    - Patch to make log file descriptors cloexec to stop leaking file
+      descriptors on fork/exec.
+  * debian/rules,control: -install-layout=deb for setup.py +  python (>=
+    2.5.4-1~) to fix install with python2.6 (Closes: #571213).
+  * Boosted policy to 3.8.4 (no changes seems to be due).
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 25 Feb 2010 00:17:07 -0500
+
+fail2ban (0.8.4-1) unstable; urgency=low
+
+  * New upstream release. Fixes compatibility issue with python2.6
+  * Yet only in Debian fixes:
+   - escaping () in pure-ftpd. Thanks Teodor (Closes: #544744)
+   - use "set logtarget" instead of "reload" while logrotate. Thanks
+     J.M.Roth (Closes: #537773)
+   - be able to detect time for VNC recording only 2 letters of year
+     (Closes: #537610)
+   - proftpd filter: count all failed logins regardless of the reason
+  * Debian-specific changes:
+   - adjusted README.Debian - multiport is default (closes: #545971)
+   - Boosted policy to 3.8.3 (no changes seems to be due)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 10 Sep 2009 11:16:51 -0400
+
+fail2ban (0.8.3-6) unstable; urgency=low
+
+  * Time to shake the ground with upload to unstable.
+  * Merged upstream's development as of SVN revision 732:
+     - Fixed maxretry/findtime rate. Many thanks to Christos Psonis.
+       Tracker #2019714.
+     - Made the named-refused regex a bit less restrictive in order to match
+       logs with "view". Thanks to Stephen Gildea.
+     - Use timetuple instead of utctimetuple for ISO 8601. Maybe not a 100%
+       correct fix but seems to work. Tracker #2500276.
+     - Changed <HOST> template to be more restrictive (closes: #514163).
+     - Added cyrus-imap and sieve filters. Thanks to Jan Wagner.  (closes:
+       #513953).
+     - Pull a commit from Yaroslav git repo. BF: addressing added bang to ssh
+       log (closes: #512193).
+     - Added missing semi-colon in the bind9 example. Thanks to Yaroslav
+       Halchenko.
+     - Added NetBSD ipfilter (ipf command) action. Thanks to Ed Ravin. Tracker
+       #2484115.
+     - Improved SASL filter. Thanks to Loic Pefferkorn. Tracker #2310410.
+       (closes: #507990)
+     - Added CPanel date format. Thanks to David Collins. Tracker #1967610.
+     - Added nagios script. Thanks to Sebastian Mueller.
+     - Removed print.
+     - Removed begin-line anchor for "standard" timestamp (closes: #500824)
+     - Remove socket file on startup is fail2ban crashed. Thanks to Detlef
+       Reichelt.
+  * Added a comment into Debian-shipped jail.conf about sasl logpath -- it
+    might preferable to monitor warn.log in case of postfix (To complete react
+    to #507990) (git branch up/fixes). Also added sasl example log file (git
+    branch up/log_examples).
+  * Removing minor bashism in ipmasq example file (closes: #530078).
+    Thanks Raphael Geissert (git branch up/ipmasq)
+  * Allow for trailing spaces in proftpd logs (closes: #507986)
+    (git branch up/fixes).
+  * Removed duplicate entry for DataCha0s/2\.0 in badbots (closes: #519557)
+    (git branch up/fixes).
+  * Adjusted Git-vcs field to point to git:// .
+  * Thanks lintian fixes:
+    - Boosted policy to 3.8.2 (no changes are due).
+    - Boosted debhelper compatibility to 5.
+    - Misspell in README.Debian
+    - Removing stale /var/run/fail2ban from dirs -- should be created by 
+      init script
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 09 Jul 2009 01:08:40 -0400
+
+fail2ban (0.8.3-5) experimental; urgency=low
+
+  * BF: anchoring regex for IP with " *$" at the end + adjust regexp for
+    <HOST> (closes: #514163)
+  * NF: adding unittests for previous BF
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 05 Feb 2009 09:51:45 -0500
+
+fail2ban (0.8.3-4) experimental; urgency=low
+
+  * BF: added missing semicolon in a logging template for bind within
+    jail.conf (thanks to anonymous on www.debian-administration.org)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 02 Feb 2009 23:02:56 -0500
+
+fail2ban (0.8.3-3) experimental; urgency=low
+
+  * BF: addressed added bang to ssh log (closes: #512193).
+    Thanks Silvestre Zabala.
+  * Adjusted description of bantime/findtime in README.Debian (closes:
+    #507771)
+  * Synced current debian revision to FAIL2BAN-0_8@717 of upstream,
+    since it includes fixes to some forwarded bugs. Total list of 
+    functional changes
+    - Added actions to report abuse to ISP, DShield and myNetWatchman.
+      Thanks to Russell Odom.
+    - Added apache-nohome.conf. Thanks to Yaroslav Halchenko.
+    - Added new time format. No idea from where it comes...
+    - Added new regex. Thanks to Tobias Offermann.
+    - Try to match the regex even if the line does not contain a valid
+      date/time. Described in Debian #491253. Thanks to Yaroslav
+      Halchenko.
+    - Removed "timeregex" and "timepattern" stuff that is not needed
+      anymore.
+    - Added date template for Day-Month-Year Hour:Minute:Second 
+      (closes: #491253)
+    - Added date pattern for Hour:Minute:Second. Thanks to Andreas
+      Itzchak Rehberg.
+    - Use current day and month instead of Jan 1st if both are not
+      available in the log. Thanks to Andreas Itzchak Rehberg.
+    - Improved pattern. Thanks to Yaroslav Halchenko.
+    - Merged patches from Debian package. Thanks to Yaroslav Halchenko.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 18 Jan 2009 11:31:01 -0500
+
+fail2ban (0.8.3-2) unstable; urgency=low
+
+  * BF in apache-noscript.conf - regexp matched in referer (Closes: #492319).
+    Thanks Bernd Zeimetz.
+  * BF: extended apache-noscript with additional regexp
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 25 Jul 2008 13:33:56 -0400
+
+fail2ban (0.8.3-1) unstable; urgency=low
+
+  * Fresh upstream release
+  * Boosted policy compliance to 3.8.0 (no changes needed)
+  * Specify explicitely facilities in "Failed .. for". Thanks Dean
+    Gaudet. (closes: #481760)
+  * Added failregex for "User not known" in sshd.conf. thanks Alexander
+    Gerasiov (closes: #479966)
+
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 21 Jul 2008 10:27:12 -0400
+
+fail2ban (0.8.2-3) unstable; urgency=low
+
+  * Changes propagated from upstream trunk (future 0.8.3):
+    - Fixed "fail2ban-client get <jail> logpath". Bug #1916986.
+    - Changed some log level.
+    - Added "Day/Month/Year Hour:Minute:Second" date template. Thanks to
+      Dennis Winter.
+    - Fixed PID file while started in daemon mode. Thanks to Christian
+      Jobic who submitted a similar patch (closes: #479703)
+    - Added gssftpd filter. Thanks to Kevin Zembower.
+    - Process failtickets as long as failmanager is not empty.
+  * Assure that /var/run/fail2ban exists upon start (LP: #222804, #223706)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 06 May 2008 10:49:34 -0400
+
+fail2ban (0.8.2-2) unstable; urgency=low
+
+  * BF: Recommends whois, which is used in some actions (LP: #213227)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 07 Apr 2008 10:25:52 -0400
+
+fail2ban (0.8.2-1) unstable; urgency=low
+
+  * New upstream release! Divergence from Debian version descreased
+    considerably, Major changes:
+     - "full line failregex"
+     - Moved socket to /var/run/fail2ban.
+     - Removed Python 2.4. Minimum required version is now Python 2.3.
+     - New log rotation detection algorithm.
+     - Some wishlists got accepted (closes: #456567, #468477, #462060,
+     #461426)
+     - Leap year issue (closes: #468452)
+  * debian/watch: switched to git-import-orig
+  * 2 new jails: xinetd-fail, apache-overflows added to jails.conf
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 05 Mar 2008 23:30:56 -0500
+
+fail2ban (0.8.1-5) unstable; urgency=low
+
+  * manually "cherry picked" f6639981:  Fixed "Feb 29" bug. Thanks to
+    James Andrewartha who pointed this out. Thanks to Yaroslav Halchenko
+    for the fix (closes: #468382)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 28 Feb 2008 19:51:53 -0500
+
+fail2ban (0.8.1-4) unstable; urgency=low
+
+  * Debian packaging switched from git+dpatch into pure git way via
+    feature-branches. That revealed the true amount of accumulated patching
+    done of top of vanilla upstream, thus this is the last Debian release
+    prior 0.8.2 upstream release which will hopefully absorb most of the
+    patches
+  * vsftp filter anchoring
+  * Fix/extension of proftpd failrexes (Closes: #461412). Thanks Guido
+    Bozzetto
+  * Added ipmasq rule file (in the examples) to restart fail2ban when
+    iptables are wiped out (closes: #461417). Thanks Guido Bozzetto
+  * Extended apache-noscript filter with more file extensions and to
+    react to "script not found or unable to stat" log message (closes:
+    #456565). Thanks Tim Connors
+  * Fixed == bashism (Closes: #464647). Thanks Raphael Geisser
+  * Confirms to policy 3.7.3 (no changes)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 09 Feb 2008 22:08:55 -0500
+
+fail2ban (0.8.1-3) unstable; urgency=low
+
+  * Added Vcs- fields, moved Homepage into source header's field
+  * Propagated patch from 0.9 upstream branch: "Replaced ssocket.py with
+    asyncore/asynchat implementation.  Correct fix for bug #1769616. That is
+    supposed to resolve spontaneous 100% CPU utilization by fail2ban-server."
+  * BF: removed sftp from ssh jails (closes: #436053)
+  * NF: new filter for 'refused connect' (closes: #451093). Thanks Guido
+    Bozzetto
+  * Moved iptables into recommends since fail2ban can work without iptables
+    using some other action (e.g hosts.deny)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 23 Nov 2007 11:42:24 -0500
+
+fail2ban (0.8.1-2) unstable; urgency=low
+
+  * Fixed named-refused filter.
+  * Added force-start action to init script, so it could be forced
+    to start if previous run crashed and left a socket file. Must to be
+    used with caution.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 18 Oct 2007 18:31:58 -0400
+
+fail2ban (0.8.1-1) unstable; urgency=low
+
+  * New upstream release.
+     Patches absorbed upstream:
+      00_daemon_pids.dpatch
+      00_iptables_allports.dpatch
+      00_vsftp_filter_spaces.dpatch
+      00_resolve_all_names.dpatch
+      00_HOST_ignoreregex.dpatch
+     Patches which needed some tune-up:
+      00_ssh_strong_re.dpatch
+      00_mail-whois-lines.dpatch
+      00_named_refused.dpatch
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 14 Aug 2007 23:15:21 -0400
+
+fail2ban (0.8.0-5~pre1) UNRELEASED; urgency=low
+
+  * Added optional spaces at the end of failregex for vsftpd.
+  * Resolve all "names" which became a part of <HOST>. Previousely only fqdn's
+    were resolved
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 05 Aug 2007 21:38:44 -0400
+
+fail2ban (0.8.0-4) unstable; urgency=low
+
+  * Moved <HOST> expansion into regex.py (closes: #429263). Thanks James
+    Andrewartha.
+  * Added optional regexp entry for process PID in some entries (closes:
+    #426050). Thanks Roderick Schertler.
+  * Added a filter pam_generic to catch any login errors.
+  * Added iptables-allports.
+  * Use /var/run to keep socket file (closes: #425746)
+  * Added a filter for named to catch refused/denied queries
+  * Added new time template matching named log entries
+  * jail.conf has specification of protocol (default to tcp) to be provided to
+    banaction
+  * Adjusted failregex for sshd filter:
+    - anchored properly at the end of line, and source code has .examples
+      files to perform testing of the rules.
+    - added new explicit rule for users not in the AllowUsers lists
+
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 19 Jun 2007 23:04:02 -0400
+
+fail2ban (0.8.0-2) unstable; urgency=low
+
+  * Manually changing the order of debhelper inserted scripts in prerm
+    (Closes: #422655)
+  * Removed obsolete hack to have /bin/env invocation of python for
+    fail2ban-* scripts
+  * Applied changes submitted by Bernd Zeimetz (thanks Bernd):
+    - Removed obsolete Build-Depends-Indep on help2man, python-dev
+    - Explicit removal of *.pyc files compiled during build
+    - Invoke 'python setup.py clean' in clean target, which required also
+      to move python into Build-Depends
+  * Minor clean up of debian/rules
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 16 May 2007 14:13:57 -0400
+
+fail2ban (0.8.0-1) unstable; urgency=low
+
+  * New stable upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 05 May 2007 12:35:02 -0400
+
+fail2ban (0.7.9-1) unstable; urgency=low
+
+  * New upstream release
+  * Updated copyright to include current year
+  * Removed patches absorbed upstream
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 19 Apr 2007 21:44:28 -0400
+
+fail2ban (0.7.8-1) unstable; urgency=low
+
+  * New upstream release
+  * Applied post-release upstream changes to resolve issues with
+   - Fix to close opened handlers to log file
+   - Tentative incomplete gamin fix
+   - Fix to "reload" bug
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 26 Mar 2007 17:52:23 -0400
+
+fail2ban (0.7.7-1) unstable; urgency=low
+
+  * New upstream release (included most of the debian-provided patches -- new
+    filters and actions)
+  * Refreshed and made verbatim homepage in description
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  8 Feb 2007 22:20:49 -0500
+
+fail2ban (0.7.6-3) unstable; urgency=low
+
+  * Synchronized action.d/iptables-* rules from upstream SVN (closes:
+    #407561)
+  * Minor: options renames in the comments to be in sync with upstream
+  * Use /usr/bin/python interpreter instead of wrapped call to python by
+    /usr/bin/env
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 19 Jan 2007 10:43:59 -0500
+
+fail2ban (0.7.6-2) unstable; urgency=low
+
+  * iptables-multiport is default action to take since Debian kernel arrives
+    with multiport module. That is to address the fact that most services
+    listen on multiple port (for encrypted and non-encrypted connections)
+  * Added [courierauth] jail (First 2 items are to partially address #407404
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 18 Jan 2007 10:35:36 -0500
+
+fail2ban (0.7.6-1) unstable; urgency=low
+
+  * New upstream release, which incorporates fixes introduced in 3~pre
+    non-released versions (which were suggested to the users to overcome
+    problems reported in bug reports). In particular attention should be paid
+    to upstream changelog entries
+    - Several "failregex" and "ignoreregex" are now accepted.
+      Creation of rules should be easier now.
+      This is an alternative solution to 'multiple <HOST>' entries fix,
+      which is not applied to this shipped version - pay caution if upgrading
+      from 0.7.5-3~pre?
+    - Allow comma in action options. The value of the option must
+      be escaped with " or '.
+      That allowed to implement requested ability to ban multiple ports
+      at once (See 373592). README.Debian and jail.conf adjusted to reflect
+      possible use of iptables-mport
+    - Now Fail2ban goes in /usr/share/fail2ban instead of
+      /usr/lib/fail2ban. This is more compliant with FHS.
+      Patch 00_share_insteadof_lib no longer applied
+  * Refactored installed by debian package jail.conf:
+    - Added option banaction which is to incorporate banning agent
+      (usually some flavor of iptables rule), which can then be easily
+      overriden globally or per section
+    - Multiple actions are defined as action_* to serve as shortcuts
+  * Initd script was modified to inform about present socket file which
+    would forbid fail2ban-server from starting
+  * Adjusted default log file for postfix to be /var/log/mail.log
+    (Closes: #404921)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  4 Jan 2007 15:24:52 -0500
+
+fail2ban (0.7.5-3~pre6) unstable; urgency=low
+
+  * Fail2ban now bans vsftpd logins (corrected logfile path and failregex)
+    (Closes: #404060)
+  * Made fail2ban-server tollerate multiple <HOST> entries in failregex
+  * Moved call to dh_pycentral before dh_installinit
+  * Removed unnecessary call of dh_shlibdeps
+  * Added filter ssh-ddos to fight DDOS attacks. Must be used with caution
+    if there is a possibility of valid clients accessing through
+    unreliable connection or faulty firewall (Closes: #404487)
+  * Not applying patch any more for rigid python2.4 - it is default now in
+    sid/etch
+  * Moving waiting loop for fail2ban-server to stop under do_stop
+    function, so it gets invoked by both 'restart' and 'stop' commands
+  * do_status action of init script is now using 'fail2ban-client ping'
+    instead of '... status' since we don't really use returned status
+    information, besides the return error code
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 26 Dec 2006 21:56:58 -0500
+
+fail2ban (0.7.5-2) unstable; urgency=low
+
+  * NEWS.Debian confusions - the latest NEWS entry and postinst message were
+    rephrased (Closes: #402350)
+  * Added mail-whois-lines action, which emails log lines containing abuser
+    IP. Those lines are often required for proper abuse reports sent to the
+    Internet providers.  Forwarding of such received emails to the email
+    addresses of abuse departments present in the output of whois is a
+    tentative solution for semi-automatic abuse reporting (Closes: #358810)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 10 Dec 2006 18:55:37 -0500
+
+fail2ban (0.7.5-1) unstable; urgency=low
+
+  * New upstream release which fixes next issues
+   + Socket parameter not work with other path (Closes: #400162)
+   + fail2ban does not start with /etc/init.d/fail2ban start but
+     with fail2ban-client start (Closes: #400278)
+  * Removed obsolete patches left from 0.6
+  * Adjusted wsftpd patch to use <HOST> tag to be in line with the other
+    filter definitions
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  7 Dec 2006 20:19:09 -0500
+
+fail2ban (0.7.4-5) unstable; urgency=low
+
+  * Added Suggests on mailx and relevant comments in README.Debian about
+    invoking mail actions (closes: #396668)
+  * Removed obsolete entries in TODO and README
+  * README.Debian describes the use of interpolations vs parameters passed
+    from jail.{conf,local} into an action definitions (closes:
+    #398739)
+  * Initial version of postfix filter has been present in 0.7 (closes:
+    #377711)
+  * Removed Uploaded field from control since I am a DD now. Big thanks to
+    Barak Pearlmutter for being the sponsor of my packages for few years.
+
+ -- Yaroslav O. Halchenko <debian@onerussian.com>  Wed,  6 Dec 2006 22:14:26 -0500
+
+fail2ban (0.7.4-4) unstable; urgency=low
+
+  * Added debian/backports to contain patches necessary for backporting. It
+    gets used by pbuilder-ssh to create package for backports.org
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  4 Dec 2006 08:55:48 -0500
+
+fail2ban (0.7.4-3) unstable; urgency=low
+
+  * Reincarnated logrotate configuration (Closes: #397878)
+  * Only block new connects by using a new action iptables-new instead of
+    iptables (Closes: #350746)
+  * Updated README.Debian to reflect transition over to 0.7 branch and to
+    comment on 350746
+  * "Clean" target removes generated .pyc files now (Closes: #398146)
+  * Cleaned up debian/rules a bit
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 11 Nov 2006 21:00:18 -0500
+
+fail2ban (0.7.4-2) unstable; urgency=low
+
+  * Added reload/force-reload actions to init script
+  * Adjusted jail.conf a bit
+  * Warning NEWS entry for 0.7.1 was not shown during installation on test
+    boxes, thus postinst was adjusted accordingly to inform the user about the
+    changes in the configuration files since 0.6.
+  * no logrotation anymore? (Closes: #397878)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 10 Nov 2006 10:53:23 -0500
+
+fail2ban (0.7.4-1) experimental; urgency=low
+
+  * New upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed,  1 Nov 2006 20:54:14 -0500
+
+fail2ban (0.7.4~pre20061023.2-3) experimental; urgency=low
+
+  * Corrected init.d script to properly perform restart due to server delay to
+    react to client command to stop. Handling of status was adjusted as well
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 29 Oct 2006 22:29:27 -0500
+
+fail2ban (0.7.4~pre20061023.2-2) experimental; urgency=low
+
+  * Added apache-noscript to jail.conf
+  * Default action does not send emails to be inline with previous (0.6.x)
+    behavior
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 26 Oct 2006 13:27:20 -0400
+
+fail2ban (0.7.4~pre20061023.2-1) experimental; urgency=low
+
+  * Fresh upstream: fixed a bug with not handling error producing
+    actioncheck call
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 23 Oct 2006 17:00:03 -0400
+
+fail2ban (0.7.4~pre2006102-1) experimental; urgency=low
+
+  * Currrent snapshot of trunk
+  * Removed outdated (applied in 0.7.4 or specific for 0.6.?) patches
+    from debian/patches
+  * Adjusted rule to install man pages -- only .1 files since there are also
+    h2m sources
+  * debian/{rules,control} adjusted to conform all points in recent python
+    policy changes
+  * install under /usr/share instead of /usr/lib
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 23 Oct 2006 00:17:55 -0400
+
+fail2ban (0.7.3-2) experimental; urgency=low
+
+  * Added wuftpd section
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 18 Oct 2006 01:15:00 -0400
+
+fail2ban (0.7.3-1) experimental; urgency=low
+
+  * New upstream release
+  * Debian shipped jail.conf
+  * Refreshen init.d script
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 28 Sep 2006 22:17:16 -0400
+
+fail2ban (0.7.1-0.2) experimental; urgency=low
+
+  * New upstream release (closes: #370095,#366307)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue,  5 Sep 2006 00:26:08 -0400
+
+fail2ban (0.6.1-11) unstable; urgency=low
+
+  * Adjusted manpage for fail2ban.conf to point to shipped examples of
+    configuration files as the source of details about available configuration
+    options (closes: #382403)
+  * Changes in man/fail2ban.conf.5 are managed via dpatch now
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 16 Aug 2006 00:18:59 +0300
+
+fail2ban (0.6.1-10) unstable; urgency=low
+
+  * Adjusted to comply with recent changes in debian python policy and use
+    pycentral to byte compile modules
+  * Filtered out empty entries for ignoreip to reduce confusing WARNING log
+    message
+  * Added configuration parameter "locale" to specify LC_TIME for time
+    pattern matching (closes: #367990,363391)
+  * Verbosity is chosen to be max between cmdline parameters and config file
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  6 Jul 2006 20:19:54 -0400
+
+fail2ban (0.6.1-9) unstable; urgency=low
+
+  * Adjusted rm commands in init script to don't use -r for removal of
+    the pidfile (thanks Stephen Gran)
+  * Added clarification about multiport banning to README.Debian
+    (closes: #373592)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 14 Jun 2006 12:05:44 -0400
+
+fail2ban (0.6.1-8) unstable; urgency=low
+
+  * Removed bashism (arrays) from init.d script to make it POSIX shell
+    complient (closes: #368218)
+  * Added new proftpd section
+  * Added new saslauthd section. Thanks to martin f krafft
+    <madduck@debian.org> (closes: #369483)
+  * Mentioned apache2 log file in Other. comment field for FILE in 
+    apache section.  Nothing has to be changed besides the logfile path to
+    work with apache2 (closes: #342144)
+    
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 22 May 2006 15:37:17 -0400
+
+fail2ban (0.6.1-5) unstable; urgency=low
+
+  * Further fixed debian packaging: to comply with policy empty target
+    binary-arch was provided
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 16 May 2006 16:43:37 -0400
+
+fail2ban (0.6.1-4) unstable; urgency=low
+
+  * Adjusted debian packaging:
+    - Clean up of debian/rules: removed commented out dh_ scripts which
+      definetly will never be used
+    - debhelper and dpatch moved to Build-Depends
+    - added --no-compile for python setup.py install, and removed explicit
+      cleaning of .pyc's
+    - fixed separation binary-indep and binary-arch in debian/rules
+    - restricted depends on python >= 2.3
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 16 May 2006 15:53:06 -0400
+
+fail2ban (0.6.1-3) unstable; urgency=low
+
+  * Fixed vsftpd failregexp (closes: #366687)
+  * Started to use dpatch
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 10 May 2006 11:45:57 -0400
+
+fail2ban (0.6.1-2) unstable; urgency=low
+
+  * Assigned maxreinits to 1000 to be reasonable since otherwise logfile grows
+    indefinetly if there is a real problem on the system (closes: #359218)
+  * Adjusted debian/{copyright,watch}
+  * New version of init.d script (Thanks to Aaron Isotton) (closes: #364278)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 27 Mar 2006 12:55:39 -0500
+
+fail2ban (0.6.1-1) unstable; urgency=low
+
+  * New upstream release
+  * In config file added fwchain to ease switching to another input chain
+    (closes: #357164)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 18 Mar 2006 23:11:53 -0500
+
+fail2ban (0.6.0-8) unstable; urgency=low
+
+  * Minor adjustments to reduce the deviation from the upstream code
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 11 Mar 2006 00:48:14 -0500
+
+fail2ban (0.6.0-7) unstable; urgency=low
+
+  * Fixed a typo in failregex for SSH section (closes: #356112)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  9 Mar 2006 15:13:48 -0500
+
+fail2ban (0.6.0-6) unstable; urgency=low
+
+  * Updated README.Debian with information about some cases with
+    not-as-shipped configurations of sshd on the boxes running older versions
+    of openssh server
+  * Included regexps for SSH in case iff authentication as root using keys was
+    attempted whenever PermitRootLogin is set to something else than "yes" and
+    key authentication fails
+  * Included postrm script to remove log files during purge to comply with
+    policy 10.8 (closes: #355443)
+ 
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri,  3 Mar 2006 16:32:38 -0500
+
+fail2ban (0.6.0-5) unstable; urgency=low
+
+  * Fixed Apache section: changed filepath to point at error.log, thus I had
+    to revert timeregex and timepattern to user RFC 2822 format (closes:
+    #354346)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 25 Feb 2006 19:56:46 -0500
+
+fail2ban (0.6.0-4) unstable; urgency=low
+
+  * Modifications in README.Debian to reflect a "finding" on
+    not-AllowedUsers banning which requires default Debian configuration
+    of "ChallengeResponseAuthentication no" and "PasswordAuthentication
+    yes"
+  * Fixed Apache timeregex and timepattern to confirm
+    the fomat of time stamp used in Debian's acccess.log (error.log uses
+    RFC 2822 format)
+  * Added section ApacheAttacks to specify some common patterns of attacks on
+    a webserver (awstats.pl as a try). This section stays split from Apache
+    since it is of different nature and might be not appropriate for some
+    users
+  * Forced owner/permissions of log file to be root:adm/640 in postinst and
+    logrotate (closes: #352053)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 16 Jan 2006 04:05:19 -0500
+
+fail2ban (0.6.0-3) unstable; urgency=low
+
+  * ignoreip is now empty by default (closes: #347766)
+  * increased verbosity in verbose=2 mode: now prints options accepted
+    from the config file
+  * to make fail2ban.conf more compact, thus to improve its readability,
+    fail2ban.conf was converted to use "interpolations" provided by
+    ConfigParser class. fw{start,end,{,un}ban} options were moved into
+    DEFAULT section and required options (port, protocol) were added
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 12 Jan 2006 18:32:14 -0500
+
+fail2ban (0.6.0-2) unstable; urgency=low
+
+  * fail2ban path is inserted first in the list to avoid a conflict with
+    existing elsewhere modules with the same names. (Thanks for report and
+    patch to Nick Craig-Wood) (closes: #343821) 
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 19 Dec 2005 17:44:58 +0200
+
+fail2ban (0.6.0-1) unstable; urgency=low
+
+  * Merged with the latest stable upstream release. That incure some
+    changes for the Debian configuration of the package to be more
+    upstream-like. Visible one is: subject in the sent email includes
+    section outside of "[Fail2Ban]"
+  * Updated README.Debian to answer possible question regarding effective
+    bantime starting moment
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 20 Nov 2005 14:56:41 -0500
+
+fail2ban (0.5.4-10) unstable; urgency=low
+
+  * Fixed the order of ssh and apache rules to avoid possible race
+    condition (Thanks to Jefferson Cowart for the bug report) (closes:
+    #339133)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 14 Nov 2005 23:44:45 -0500
+
+fail2ban (0.5.4-9) unstable; urgency=low
+
+  * Fixed init.d script so it doesn't return non-0 status if fail2ban is not
+    running. That fixes issues with purging the package and leaving garbage in
+    /usr/share/fail2ban (Thanx to Justin Pryzby for the insight)
+    (closes: #337223)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu,  3 Nov 2005 17:05:20 -0500
+
+fail2ban (0.5.4-8) unstable; urgency=low
+
+  * Added config option MAIL.localtime (closes: #336449)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 31 Oct 2005 16:53:19 -0500
+
+fail2ban (0.5.4-7) unstable; urgency=low
+
+  * Adjusted init.d script so it is resistant to delayed shutdowns of
+    fail2ban and in general more stable
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 20 Oct 2005 21:22:03 -0400
+
+fail2ban (0.5.4-6.2) unstable; urgency=low
+
+  * Fixed typos (thanx to Ross Boylan).
+  * Robust startup: if iptables module gets fully initialized after
+    startup of fail2ban, fail2ban will do "maxreinit" attempts to
+    initialize its own firewall. It will sleep between attempts for
+    "polltime" number of seconds (closes: #334272).
+  * To overcome possible conflict with other firewall solutions and as a
+    secondary solution for the bug 334272, fail2ban startup is moved
+    during bootup to the latest (S99) sequenece position. That should not
+    cause any discomfort I believe.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 18 Oct 2005 15:54:38 -0400
+
+fail2ban (0.5.4-5.14) unstable; urgency=low
+
+  * Added a notification regarding the importance of 0.5.4-5 change of
+    failregex in the config file.
+  * Adjusted address to FSF.
+  * Adjusted failregex for SSH so it bans "Illegal user" entries as well, and
+    restricted full failregex more to include ":" at the beginning, because
+    otherwise it might not be sufficient and would revive bug 330827 (closes:
+    #333056).
+  * Adjusted failregex for SSH to accommodate recent changes in logging of
+    SSH: Illegal -> Invalid. Should match both now.
+  * Fixed a problem of raise AttributeError exception reported as a side
+    effect of crash during parsing of the config file.
+  * Introduced fwcheck option to verify consistency of the
+    chains. Implemented automatic restart of fail2ban main function in
+    case check of fwban or fwunban command failed (closes: #329163, #331695).
+    (Introduced patch was further adjusted by upstream author).
+  * Added -f command line parameter for [findtime].
+  * Fixed the issue of not respecting command line parameters for parameters
+    within sections.
+  * Added -e command line parameter to provide enabled sections from command
+    line.
+  * Added a cleanup of firewall rules on emergency shutdown when unknown
+    exception is catched.
+  * Fail2ban should not crash now if a wrong file name is specified in
+    config.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon,  3 Oct 2005 22:26:28 -1000
+
+fail2ban (0.5.4-5) unstable; urgency=low
+
+  * Made failregex'es more specific to don't allow usernames to be used as a
+    tool for denial of service attacks. Config files (or at least
+    failregex'es) must be updated from this package, otherwise the security
+    breach would remain open and only warning gets issued (closes: #330827)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat,  1 Oct 2005 02:42:23 -1000
+
+fail2ban (0.5.4-4) unstable; urgency=low
+
+  * On a request from Calum Mackay added reporting of the enabled sections
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 29 Sep 2005 11:20:43 -1000
+
+fail2ban (0.5.4-3) unstable; urgency=low
+
+  * Resolved the mystery of debug mode in which commands are not really
+    executed: added verbose option to config file, removed -v from
+    /etc/default/fail2ban, reordered code a bit so that log targets are
+    setup right after background and then only loglevel (verbose,debug) is
+    processed, so the warning could be seen in the logs
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 29 Sep 2005 00:20:43 -1000
+
+fail2ban (0.5.4-2) unstable; urgency=low
+
+  * Now exporting PATH explicitely in init.d/fail2ban script, to avoid
+    problems finding iptables in the cases when PATH was not exported outside
+    (cfengine, broken shell environment) (closes: #329304)
+  * Removed -b from start-stop-daemon because fail2ban detahes on its own
+  * Added @localhost to MAIL:from and MAIL:to in fail2ban.conf and placed
+    a note to README.Debian regarding necessity to specify full email
+    address in MAIL:from (closes: #329722)
+  * Added a keyword <section> in parsing of the subject and the body of an
+    email sent out by fail2ban (closes: #330311)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 27 Sep 2005 08:09:06 -0400
+
+fail2ban (0.5.4-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 20 Sep 2005 12:19:19 -0400
+
+fail2ban (0.5.3-2) unstable; urgency=low
+
+  * Refined comments in README.Debian
+  * Reindented init.d script
+  P.S. Was not released
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 11 Sep 2005 15:19:44 -0400
+
+fail2ban (0.5.3-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri,  9 Sep 2005 16:55:00 -0400
+
+fail2ban (0.5.2-5) unstable; urgency=low
+
+  * Included a patch from Stephen Gildea to provide "status" report by
+    init.d script
+  * Included a note in README.Debian regarding the fail2ban iptable's
+    chains
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri,  9 Sep 2005 14:52:24 -0400
+
+fail2ban (0.5.2-4) unstable; urgency=low
+
+  * Format of SYSLOG entries is up to the standard now
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 19 Aug 2005 00:06:44 -1000
+
+fail2ban (0.5.2-3) unstable; urgency=low
+
+  * Fixed errata in /etc/default/fail2ban (closes: #323451)
+  * Fixed handling of SYSLOG logging target. Now it can log to any syslog
+    target and facility as directed by the config (revisions 160:166 patch
+    from syslog branch) (closes: #323543)
+  * Included upstream README and TODO
+  * Mentioned in README.Debian that apache section is disabled by default
+  * Adjusted man pages to cross-reference each other
+  * Moved fail2ban man page under section 8 as in upstream
+  * Introduced findtime configuration variable to control the lifetime
+    of caught "failed" log entries (closes: #323840)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 16 Aug 2005 11:23:28 -1000
+
+fail2ban (0.5.2-2) unstable; urgency=low
+
+  * Updated description to reflect flexibility in application of fail2ban
+  * Included logrotate (Thanks to Baruch Even)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 13 Aug 2005 04:51:57 -0400
+
+fail2ban (0.5.2-1) unstable; urgency=low
+
+  * New upstream release
+  * No log4py any more
+  * removed -i eth0 from config
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat,  6 Aug 2005 09:21:07 -1000
+
+fail2ban (0.5.1-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 23 Jul 2005 08:50:00 -1000
+
+fail2ban (0.5.0-1) unstable; urgency=low
+
+  * New upstream release
+  * Libraries placed under /usr/share/fail2ban instead of /usr/lib/fail2ban
+  * Corrections to the description of the package
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 12 Jul 2005 23:33:20 -1000
+
+fail2ban (0.4.1-1) unstable; urgency=low
+
+  * First upstream release of a Debian package
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 04 Jul 2005 11:47:23 +0300
