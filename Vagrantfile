@@ -1,5 +1,10 @@
 Vagrant.configure("2") do |config|
 
+  config.vm.define "builder" do |builder|
+    builder.vm.box = "vm144"
+    builder.vm.provision "shell", path: "provision.sh"
+  end
+
     config.vm.define "secure" do |secure|
         secure.vm.box = "ubuntu/trusty64"
         secure.vm.hostname = "secure.dev.fail2ban.org"
