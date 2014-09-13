@@ -10,7 +10,7 @@
 #export DH_VERBOSE=1
 
 %:
-	dh $@ --with python2,systemd
+	dh $@ --with python3,systemd --buildsystem pybuild
 
 DESTDIR=$(CURDIR)/debian/fail2ban
 
@@ -39,7 +39,8 @@ override_dh_install:
 
 override_dh_auto_test:
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	./fail2ban-testcases-all --no-network
+	cd build && PYTHONPATH=../.pybuild/pythonX.Y_3.4/build/ scripts-*/fail2ban-testcases --no-network
+
 endif
 
 override_dh_installexamples:
