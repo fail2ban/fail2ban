@@ -35,10 +35,17 @@ from ..client.filterreader import FilterReader
 from .utils import setUpMyTime, tearDownMyTime
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
-if os.path.exists('config/fail2ban.conf'):
-	CONFIG_DIR = "config"
-else:
-	CONFIG_DIR='/etc/fail2ban'
+
+# Use this variable to point to configuration files during
+# testing.
+CONFIG_DIR = os.environ.get('FAIL2BAN_CONFIG_DIR', None)
+
+if not CONFIG_DIR:
+	# Use heuristic to figure out where configuration files are
+	if os.path.exists('config/fail2ban.conf'):
+		CONFIG_DIR = "config"
+	else:
+		CONFIG_DIR='/etc/fail2ban'
 
 class FilterSamplesRegex(unittest.TestCase):
 
