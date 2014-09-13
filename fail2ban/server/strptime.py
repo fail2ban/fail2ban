@@ -57,7 +57,7 @@ def reGroupDictStrptime(found_dict):
 	# weekday and julian defaulted to -1 so as to signal need to calculate
 	# values
 	weekday = julian = -1
-	for group_key in found_dict.keys():
+	for group_key in list(found_dict.keys()):
 		# Directives not explicitly handled below:
 		#   c, x, X
 		#	  handled by making out of other directives

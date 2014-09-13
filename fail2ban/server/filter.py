@@ -100,7 +100,7 @@ class Filter(JailThread):
 				logSys.warning(
 					"Mutliline regex set for jail '%s' "
 					"but maxlines not greater than 1")
-		except RegexException, e:
+		except RegexException as e:
 			logSys.error(e)
 			raise e
 
@@ -134,7 +134,7 @@ class Filter(JailThread):
 		try:
 			regex = Regex(value)
 			self.__ignoreRegex.append(regex)
-		except RegexException, e:
+		except RegexException as e:
 			logSys.error(e)
 			raise e 
 
@@ -310,7 +310,7 @@ class Filter(JailThread):
 			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.' % ip)
 
 		unixTime = MyTime.time()
-		for i in xrange(self.failManager.getMaxRetry()):
+		for i in range(self.failManager.getMaxRetry()):
 			self.failManager.addFailure(FailTicket(ip, unixTime))
 
 		# Perform the banning of the IP now.
@@ -361,7 +361,7 @@ class Filter(JailThread):
 			elif "." in s[1]: # 255.255.255.0 style mask
 				s[1] = len(re.search(
 					"(?<=b)1+", bin(DNSUtils.addr2bin(s[1]))).group())
-			s[1] = long(s[1])
+			s[1] = int(s[1])
 			try:
 				a = DNSUtils.cidr(s[0], s[1])
 				b = DNSUtils.cidr(ip, s[1])
@@ -525,7 +525,7 @@ class Filter(JailThread):
 										 failRegex.getMatchedLines()])
 								if not checkAllRegex:
 									break
-					except RegexException, e: # pragma: no cover - unsure if reachable
+					except RegexException as e: # pragma: no cover - unsure if reachable
 						logSys.error(e)
 		return failList
 
@@ -656,15 +656,15 @@ class FileFilter(Filter):
 		try:
 			has_content = container.open()
 		# see http://python.org/dev/peps/pep-3151/
-		except IOError, e:
+		except IOError as e:
 			logSys.error("Unable to open %s" % filename)
 			logSys.exception(e)
 			return False
-		except OSError, e: # pragma: no cover - requires race condition to tigger this
+		except OSError as e: # pragma: no cover - requires race condition to tigger this
 			logSys.error("Error opening %s" % filename)
 			logSys.exception(e)
 			return False
-		except OSError, e: # pragma: no cover - Requires implemention error in FileContainer to generate
+		except OSError as e: # pragma: no cover - Requires implemention error in FileContainer to generate
 			logSys.error("Internal errror in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
 			logSys.exception(e)
 			return False
@@ -845,11 +845,11 @@ class DNSUtils:
 		"""
 		try:
 			return set(socket.gethostbyname_ex(dns)[2])
-		except socket.error, e:
+		except socket.error as e:
 			logSys.warning("Unable to find a corresponding IP address for %s: %s"
 						% (dns, e))
 			return list()
-		except socket.error, e:
+		except socket.error as e:
 			logSys.warning("Socket error raised trying to resolve hostname %s: %s"
 						% (dns, e))
 			return list()
@@ -909,7 +909,7 @@ class DNSUtils:
 			integer.
 		"""
 		# 32-bit IPv4 address mask
-		MASK = 0xFFFFFFFFL
+		MASK = 0xFFFFFFFF
 		return ~(MASK >> n) & MASK & DNSUtils.addr2bin(i)
 	cidr = staticmethod(cidr)
 

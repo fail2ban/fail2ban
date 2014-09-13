@@ -59,53 +59,53 @@ class Fail2banClient:
 		self.__conf["pidfile"] = None
 
 	def dispVersion(self):
-		print "Fail2Ban v" + version
-		print
-		print "Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors"
-		print "Copyright of modifications held by their respective authors."
-		print "Licensed under the GNU General Public License v2 (GPL)."
-		print
-		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
-		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
+		print("Fail2Ban v" + version)
+		print()
+		print("Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors")
+		print("Copyright of modifications held by their respective authors.")
+		print("Licensed under the GNU General Public License v2 (GPL).")
+		print()
+		print("Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>.")
+		print("Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>.")
 
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
 		"""
-		print "Usage: "+self.__argv[0]+" [OPTIONS] <COMMAND>"
-		print
-		print "Fail2Ban v" + version + " reads log file that contains password failure report"
-		print "and bans the corresponding IP addresses using firewall rules."
-		print
-		print "Options:"
-		print "    -c <DIR>                configuration directory"
-		print "    -s <FILE>               socket path"
-		print "    -p <FILE>               pidfile path"
-		print "    -d                      dump configuration. For debugging"
-		print "    -i                      interactive mode"
-		print "    -v                      increase verbosity"
-		print "    -q                      decrease verbosity"
-		print "    -x                      force execution of the server (remove socket file)"
-		print "    -b                      start server in background (default)"
-		print "    -f                      start server in foreground (note that the client forks once itself)"
-		print "    -h, --help              display this help message"
-		print "    -V, --version           print the version"
-		print
-		print "Command:"
+		print("Usage: "+self.__argv[0]+" [OPTIONS] <COMMAND>")
+		print()
+		print("Fail2Ban v" + version + " reads log file that contains password failure report")
+		print("and bans the corresponding IP addresses using firewall rules.")
+		print()
+		print("Options:")
+		print("    -c <DIR>                configuration directory")
+		print("    -s <FILE>               socket path")
+		print("    -p <FILE>               pidfile path")
+		print("    -d                      dump configuration. For debugging")
+		print("    -i                      interactive mode")
+		print("    -v                      increase verbosity")
+		print("    -q                      decrease verbosity")
+		print("    -x                      force execution of the server (remove socket file)")
+		print("    -b                      start server in background (default)")
+		print("    -f                      start server in foreground (note that the client forks once itself)")
+		print("    -h, --help              display this help message")
+		print("    -V, --version           print the version")
+		print()
+		print("Command:")
 
 		# Prints the protocol
 		printFormatted()
 
-		print
-		print "Report bugs to https://github.com/fail2ban/fail2ban/issues"
+		print()
+		print("Report bugs to https://github.com/fail2ban/fail2ban/issues")
 
 	def dispInteractive(self):
-		print "Fail2Ban v" + version + " reads log file that contains password failure report"
-		print "and bans the corresponding IP addresses using firewall rules."
-		print
+		print("Fail2Ban v" + version + " reads log file that contains password failure report")
+		print("and bans the corresponding IP addresses using firewall rules.")
+		print()
 
 	def __sigTERMhandler(self, signum, frame):
 		# Print a new line because we probably come from wait
-		print
+		print()
 		logSys.warning("Caught signal %d. Exiting" % signum)
 		sys.exit(-1)
 
@@ -152,19 +152,19 @@ class Fail2banClient:
 				client = CSocket(self.__conf["socket"])
 				ret = client.send(c)
 				if ret[0] == 0:
-					logSys.debug("OK : " + `ret[1]`)
+					logSys.debug("OK : " + repr(ret[1]))
 					if showRet:
-						print beautifier.beautify(ret[1])
+						print(beautifier.beautify(ret[1]))
 				else:
-					logSys.error("NOK: " + `ret[1].args`)
+					logSys.error("NOK: " + repr(ret[1].args))
 					if showRet:
-						print beautifier.beautifyError(ret[1])
+						print(beautifier.beautifyError(ret[1]))
 					streamRet = False
 			except socket.error:
 				if showRet:
 					logSys.error("Unable to contact server. Is it running?")
 				return False
-			except Exception, e:
+			except Exception as e:
 				if showRet:
 					logSys.error(e)
 				return False
@@ -383,7 +383,7 @@ class Fail2banClient:
 					readline.parse_and_bind("tab: complete")
 					self.dispInteractive()
 					while True:
-						cmd = raw_input(self.PROMPT)
+						cmd = input(self.PROMPT)
 						if cmd == "exit" or cmd == "quit":
 							# Exit
 							return True
@@ -392,10 +392,10 @@ class Fail2banClient:
 						elif not cmd == "":
 							try:
 								self.__processCommand(shlex.split(cmd))
-							except Exception, e:
+							except Exception as e:
 								logSys.error(e)
 			except (EOFError, KeyboardInterrupt):
-				print
+				print()
 				return True
 		# Single command mode
 		else:
@@ -413,7 +413,7 @@ class Fail2banClient:
 			ret = self.__configurator.getOptions(jail)
 			self.__configurator.convertToProtocol()
 			self.__stream = self.__configurator.getConfigStream()
-		except Exception, e:
+		except Exception as e:
 			logSys.error("Failed during configuration: %s" % e)
 			ret = False
 		return ret
@@ -421,7 +421,7 @@ class Fail2banClient:
 	#@staticmethod
 	def dumpConfig(cmd):
 		for c in cmd:
-			print c
+			print(c)
 		return True
 	dumpConfig = staticmethod(dumpConfig)
 

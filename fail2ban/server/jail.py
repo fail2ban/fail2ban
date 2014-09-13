@@ -23,7 +23,7 @@ __author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import Queue, logging
+import queue, logging
 
 from .actions import Actions
 from ..helpers import getLogger
@@ -71,7 +71,7 @@ class Jail:
 							"might not function correctly. Please shorten"
 							% name)
 		self.__name = name
-		self.__queue = Queue.Queue()
+		self.__queue = queue.Queue()
 		self.__filter = None
 		logSys.info("Creating new jail '%s'" % self.name)
 		self._setBackend(backend)
@@ -104,7 +104,7 @@ class Jail:
 					logSys.info("Initiated %r backend" % b)
 				self.__actions = Actions(self)
 				return					# we are done
-			except ImportError, e:
+			except ImportError as e:
 				# Log debug if auto, but error if specific
 				logSys.log(
 					logging.DEBUG if backend == "auto" else logging.ERROR,
@@ -117,25 +117,25 @@ class Jail:
 
 
 	def _initPolling(self):
-		from filterpoll import FilterPoll
+		from .filterpoll import FilterPoll
 		logSys.info("Jail '%s' uses poller" % self.name)
 		self.__filter = FilterPoll(self)
 
 	def _initGamin(self):
 		# Try to import gamin
-		from filtergamin import FilterGamin
+		from .filtergamin import FilterGamin
 		logSys.info("Jail '%s' uses Gamin" % self.name)
 		self.__filter = FilterGamin(self)
 
 	def _initPyinotify(self):
 		# Try to import pyinotify
-		from filterpyinotify import FilterPyinotify
+		from .filterpyinotify import FilterPyinotify
 		logSys.info("Jail '%s' uses pyinotify" % self.name)
 		self.__filter = FilterPyinotify(self)
 
 	def _initSystemd(self): # pragma: systemd no cover
 		# Try to import systemd
-		from filtersystemd import FilterSystemd
+		from .filtersystemd import FilterSystemd
 		logSys.info("Jail '%s' uses systemd" % self.name)
 		self.__filter = FilterSystemd(self)
 
@@ -199,7 +199,7 @@ class Jail:
 		"""
 		try:
 			return self.__queue.get(False)
-		except Queue.Empty:
+		except queue.Empty:
 			return False
 
 	def start(self):

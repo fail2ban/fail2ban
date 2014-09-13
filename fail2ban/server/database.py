@@ -134,7 +134,7 @@ class Fail2BanDb(object):
 
 			logSys.info(
 				"Connected to fail2ban persistent database '%s'", filename)
-		except sqlite3.OperationalError, e:
+		except sqlite3.OperationalError as e:
 			logSys.error(
 				"Error connecting to fail2ban persistent database '%s': %s",
 				filename, e.args[0])

@@ -139,7 +139,7 @@ class DateDetectorTest(unittest.TestCase):
 		self.assertEqual(logMatch.group(), '2012/10/11 02:37:17')
 		self.__datedetector.sortTemplate()
 		# confuse it with year being at the end
-		for i in xrange(10):
+		for i in range(10):
 			( logTime, logMatch ) =	self.__datedetector.getTime('11/10/2012 02:37:17 [error] 18434#0')
 			self.assertEqual(logTime, mu)
 			self.assertEqual(logMatch.group(), '11/10/2012 02:37:17')

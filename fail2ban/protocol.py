@@ -128,7 +128,7 @@ def printFormatted():
 	firstHeading = False
 	for m in protocol:
 		if m[0] == '' and firstHeading:
-			print
+			print()
 		firstHeading = True
 		first = True
 		if len(m[0]) >= MARGIN:
@@ -139,7 +139,7 @@ def printFormatted():
 				first = False
 			else:
 				line = ' ' * (INDENT + MARGIN) + n.strip()
-			print line
+			print(line)
 
 ##
 # Prints the protocol in a "mediawiki" format.
@@ -149,19 +149,19 @@ def printWiki():
 	for m in protocol:
 		if m[0] == '':
 			if firstHeading:
-				print "|}"
+				print("|}")
 			__printWikiHeader(m[1], m[2])
 			firstHeading = True
 		else:
-			print "|-"
-			print "| <span style=\"white-space:nowrap;\"><tt>" + m[0] + "</tt></span> || || " + m[1]
-	print "|}"
+			print("|-")
+			print("| <span style=\"white-space:nowrap;\"><tt>" + m[0] + "</tt></span> || || " + m[1])
+	print("|}")
 
 def __printWikiHeader(section, desc):
-	print
-	print "=== " + section + " ==="
-	print
-	print desc
-	print
-	print "{|"
-	print "| '''Command''' || || '''Description'''"
+	print()
+	print("=== " + section + " ===")
+	print()
+	print(desc)
+	print()
+	print("{|")
+	print("| '''Command''' || || '''Description'''")

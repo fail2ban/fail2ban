@@ -92,7 +92,7 @@ class DatabaseTest(unittest.TestCase):
 		self.db = Fail2BanDb(self.dbFilename)
 		self.assertEqual(self.db.getJailNames(), set(['DummyJail #29162448 with 0 tickets']))
 		self.assertEqual(self.db.getLogPaths(), set(['/tmp/Fail2BanDb_pUlZJh.log']))
-		ticket = FailTicket("127.0.0.1", 1388009242.26, [u"abc\n"])
+		ticket = FailTicket("127.0.0.1", 1388009242.26, ["abc\n"])
 		self.assertEqual(self.db.getBans()[0], ticket)
 
 		self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)

@@ -25,7 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import glob, os
-from ConfigParser import NoOptionError, NoSectionError
+from configparser import NoOptionError, NoSectionError
 
 from .configparserinc import SafeConfigParserWithIncludes
 from ..helpers import getLogger
@@ -67,7 +67,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 		config_files += sorted(glob.glob('%s/*.local' % config_dir))
 
 		# choose only existing ones
-		config_files = filter(os.path.exists, config_files)
+		config_files = list(filter(os.path.exists, config_files))
 
 		if len(config_files):
 			# at least one config exists and accessible
@@ -111,7 +111,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 				if not pOptions is None and option[1] in pOptions:
 					continue
 				values[option[1]] = v
-			except NoSectionError, e:
+			except NoSectionError as e:
 				# No "Definition" section or wrong basedir
 				logSys.error(e)
 				values[option[1]] = option[2]
@@ -127,7 +127,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 						option[1], sec)
 			except ValueError:
 				logSys.warning("Wrong value for '" + option[1] + "' in '" + sec +
-							"'. Using default one: '" + `option[2]` + "'")
+							"'. Using default one: '" + repr(option[2]) + "'")
 				values[option[1]] = option[2]
 		return values
 
@@ -174,7 +174,7 @@ class DefinitionInitConfigReader(ConfigReader):
 		
 		if self.has_section("Init"):
 			for opt in self.options("Init"):
-				if not self._initOpts.has_key(opt):
+				if opt not in self._initOpts:
 					self._initOpts[opt] = self.get("Init", opt)
 	
 	def convert(self):

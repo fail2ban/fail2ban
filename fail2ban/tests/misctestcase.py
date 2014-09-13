@@ -30,7 +30,7 @@ import shutil
 import fnmatch
 import datetime
 from glob import glob
-from StringIO import StringIO
+from io import StringIO
 
 from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger
 from ..server.datetemplate import DatePatternRegex
@@ -138,7 +138,7 @@ class TestsUtilsTest(unittest.TestCase):
 				else: func_raise()
 
 			try:
-				print deep_function(3)
+				print(deep_function(3))
 			except ValueError:
 				s = tb()
 

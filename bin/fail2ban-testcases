@@ -114,8 +114,8 @@ logSys.addHandler(stdout)
 # Let know the version
 #
 if not opts.log_level or opts.log_level != 'critical': # pragma: no cover
-	print("Fail2ban %s test suite. Python %s. Please wait..." \
-	    % (version, str(sys.version).replace('\n', '')))
+	print(("Fail2ban %s test suite. Python %s. Please wait..." \
+	    % (version, str(sys.version).replace('\n', ''))))
 
 tests = gatherTests(regexps, opts.no_network)
 #

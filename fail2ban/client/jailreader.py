@@ -148,7 +148,7 @@ class JailReader(ConfigReader):
 							self.__actions.append(action)
 						else:
 							raise AttributeError("Unable to read action")
-				except Exception, e:
+				except Exception as e:
 					logSys.error("Error in action definition " + act)
 					logSys.debug("Caught exception: %s" % (e,))
 					return False

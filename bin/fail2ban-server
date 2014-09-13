@@ -51,37 +51,37 @@ class Fail2banServer:
 		self.__conf["pidfile"] = "/var/run/fail2ban/fail2ban.pid"
 
 	def dispVersion(self):
-		print "Fail2Ban v" + version
-		print
-		print "Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors"
-		print "Copyright of modifications held by their respective authors."
-		print "Licensed under the GNU General Public License v2 (GPL)."
-		print
-		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
-		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
+		print("Fail2Ban v" + version)
+		print()
+		print("Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors")
+		print("Copyright of modifications held by their respective authors.")
+		print("Licensed under the GNU General Public License v2 (GPL).")
+		print()
+		print("Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>.")
+		print("Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>.")
 
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
 		"""
-		print "Usage: "+self.__argv[0]+" [OPTIONS]"
-		print
-		print "Fail2Ban v" + version + " reads log file that contains password failure report"
-		print "and bans the corresponding IP addresses using firewall rules."
-		print
-		print "Only use this command for debugging purpose. Start the server with"
-		print "fail2ban-client instead. The default behaviour is to start the server"
-		print "in background."
-		print
-		print "Options:"
-		print "    -b                   start in background"
-		print "    -f                   start in foreground"
-		print "    -s <FILE>            socket path"
-		print "    -p <FILE>            pidfile path"
-		print "    -x                   force execution of the server (remove socket file)"
-		print "    -h, --help           display this help message"
-		print "    -V, --version        print the version"
-		print
-		print "Report bugs to https://github.com/fail2ban/fail2ban/issues"
+		print("Usage: "+self.__argv[0]+" [OPTIONS]")
+		print()
+		print("Fail2Ban v" + version + " reads log file that contains password failure report")
+		print("and bans the corresponding IP addresses using firewall rules.")
+		print()
+		print("Only use this command for debugging purpose. Start the server with")
+		print("fail2ban-client instead. The default behaviour is to start the server")
+		print("in background.")
+		print()
+		print("Options:")
+		print("    -b                   start in background")
+		print("    -f                   start in foreground")
+		print("    -s <FILE>            socket path")
+		print("    -p <FILE>            pidfile path")
+		print("    -x                   force execution of the server (remove socket file)")
+		print("    -h, --help           display this help message")
+		print("    -V, --version        print the version")
+		print()
+		print("Report bugs to https://github.com/fail2ban/fail2ban/issues")
 
 	def __getCmdLineOptions(self, optList):
 		""" Gets the command line options
@@ -125,7 +125,7 @@ class Fail2banServer:
 								self.__conf["pidfile"],
 								self.__conf["force"])
 			return True
-		except Exception, e:
+		except Exception as e:
 			logSys.exception(e)
 			self.__server.quit()
 			return False

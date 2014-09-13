@@ -188,7 +188,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			logelements.append(logentry.get('MESSAGE', ''))
 
 		try:
-			logline = u" ".join(logelements)
+			logline = " ".join(logelements)
 		except UnicodeDecodeError:
 			# Python 2, so treat as string
 			logline = " ".join([str(logline) for logline in logelements])

@@ -63,7 +63,7 @@ class CSocket:
 		while msg.rfind(CSocket.END_STRING) == -1:
 			chunk = sock.recv(6)
 			if chunk == '':
-				raise RuntimeError, "socket connection broken"
+				raise RuntimeError("socket connection broken")
 			msg = msg + chunk
 		return loads(msg)
 	receive = staticmethod(receive)

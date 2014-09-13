@@ -62,7 +62,7 @@ class Ticket:
 			return False
 
 	def setIP(self, value):
-		if isinstance(value, basestring):
+		if isinstance(value, str):
 			# guarantee using regular str instead of unicode for the IP
 			value = str(value)
 		self.__ip = value

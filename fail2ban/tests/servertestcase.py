@@ -685,7 +685,7 @@ class TransmitterLogging(TransmitterBase):
 
 	def testLogTarget(self):
 		logTargets = []
-		for _ in xrange(3):
+		for _ in range(3):
 			tmpFile = tempfile.mkstemp("fail2ban", "transmitter")
 			logTargets.append(tmpFile[1])
 			os.close(tmpFile[0])
@@ -738,26 +738,26 @@ class TransmitterLogging(TransmitterBase):
 				self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
 				l.warning("After flushlogs")
 				with open(fn2,'r') as f:
-					line1 = f.next()
+					line1 = next(f)
 					if line1.find('Changed logging target to') >= 0:
-						line1 = f.next()
+						line1 = next(f)
 					self.assertTrue(line1.endswith("Before file moved\n"))
-					line2 = f.next()
+					line2 = next(f)
 					self.assertTrue(line2.endswith("After file moved\n"))
 					try:
-						n = f.next()
+						n = next(f)
 						if n.find("Command: ['flushlogs']") >=0:
-							self.assertRaises(StopIteration, f.next)
+							self.assertRaises(StopIteration, f.__next__)
 						else:
 							self.fail("Exception StopIteration or Command: ['flushlogs'] expected. Got: %s" % n)
 					except StopIteration:
 						pass # on higher debugging levels this is expected
 				with open(fn,'r') as f:
-					line1 = f.next()
+					line1 = next(f)
 					if line1.find('rollover performed on') >= 0:
-						line1 = f.next()
+						line1 = next(f)
 					self.assertTrue(line1.endswith("After flushlogs\n"))
-					self.assertRaises(StopIteration, f.next)
+					self.assertRaises(StopIteration, f.__next__)
 					f.close()
 			finally:
 				os.remove(fn2)

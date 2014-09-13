@@ -29,6 +29,7 @@ import json
 
 from ..helpers import getLogger
 from .. import version
+import collections
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -51,11 +52,11 @@ class Transmitter:
 	
 	def proceed(self, command):
 		# Deserialize object
-		logSys.debug("Command: " + `command`)
+		logSys.debug("Command: " + repr(command))
 		try:
 			ret = self.__commandHandler(command)
 			ack = 0, ret
-		except Exception, e:
+		except Exception as e:
 			logSys.warning("Command %r has failed. Received %r"
 						% (command, e))
 			ack = 1, e
@@ -248,7 +249,7 @@ class Transmitter:
 			actionname = command[2]
 			actionkey = command[3]
 			action = self.__server.getAction(name, actionname)
-			if callable(getattr(action, actionkey, None)):
+			if isinstance(getattr(action, actionkey, None), collections.Callable):
 				actionvalue = json.loads(command[4]) if len(command)>4 else {}
 				return getattr(action, actionkey)(**actionvalue)
 			else:
@@ -306,7 +307,7 @@ class Transmitter:
 		elif command[1] == "bantime":
 			return self.__server.getBanTime(name)
 		elif command[1] == "actions":
-			return self.__server.getActions(name).keys()
+			return list(self.__server.getActions(name).keys())
 		elif command[1] == "action":
 			actionname = command[2]
 			actionvalue = command[3]
@@ -318,13 +319,13 @@ class Transmitter:
 			return [
 				key for key in dir(action)
 				if not key.startswith("_") and
-					not callable(getattr(action, key))]
+					not isinstance(getattr(action, key), collections.Callable)]
 		elif command[1] == "actionmethods":
 			actionname = command[2]
 			action = self.__server.getAction(name, actionname)
 			return [
 				key for key in dir(action)
-				if not key.startswith("_") and callable(getattr(action, key))]
+				if not key.startswith("_") and isinstance(getattr(action, key), collections.Callable)]
 		raise Exception("Invalid command (no get action or not yet implemented)")
 	
 	def status(self, command):

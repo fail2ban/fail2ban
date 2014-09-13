@@ -168,7 +168,7 @@ class DatePatternRegex(DateTemplate):
 	regex
 	pattern
 	"""
-	_patternRE = r"%%(%%|[%s])" % "".join(timeRE.keys())
+	_patternRE = r"%%(%%|[%s])" % "".join(list(timeRE.keys()))
 	_patternName = {
 		'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
 		'H': "24hour", 'I': "12hour", 'j': "Yearday", 'm': "Month",
@@ -232,7 +232,7 @@ class DatePatternRegex(DateTemplate):
 		if dateMatch:
 			groupdict = dict(
 				(key, value)
-				for key, value in dateMatch.groupdict().iteritems()
+				for key, value in dateMatch.groupdict().items()
 				if value is not None)
 			return reGroupDictStrptime(groupdict), dateMatch
 

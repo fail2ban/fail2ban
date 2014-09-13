@@ -49,7 +49,7 @@ class FilterReader(DefinitionInitConfigReader):
 		opts = CommandAction.substituteRecursiveTags(combinedopts)
 		if not opts:
 			raise ValueError('recursive tag definitions unable to be resolved')
-		for opt, value in opts.iteritems():
+		for opt, value in opts.items():
 			if opt == "failregex":
 				for regex in value.split('\n'):
 					# Do not send a command if the rule is empty.

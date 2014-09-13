@@ -28,7 +28,7 @@ if sys.version_info >= (2, 6):
 	import json
 else:
 	import simplejson as json
-	next = lambda x: x.next()
+	next = lambda x: x.__next__()
 
 from ..server.filter import Filter
 from ..client.filterreader import FilterReader
@@ -94,7 +94,7 @@ def testSampleRegexsFactory(name):
 			if jsonREMatch:
 				try:
 					faildata = json.loads(jsonREMatch.group(1))
-				except ValueError, e:
+				except ValueError as e:
 					raise ValueError("%s: %s:%i" %
 						(e, logFile.filename(), logFile.filelineno()))
 				line = next(logFile)
@@ -116,7 +116,7 @@ def testSampleRegexsFactory(name):
 					"Line matched when shouldn't have: %s:%i %r" %
 					(logFile.filename(), logFile.filelineno(), line))
 				self.assertEqual(len(ret), 1, "Multiple regexs matched %r - %s:%i" %
-								 (map(lambda x: x[0], ret),logFile.filename(), logFile.filelineno()))
+								 ([x[0] for x in ret],logFile.filename(), logFile.filelineno()))
 
 				# Verify timestamp and host as expected
 				failregex, host, fail2banTime, lines = ret[0]
@@ -149,7 +149,7 @@ def testSampleRegexsFactory(name):
 
 	return testFilter
 
-for filter_ in filter(lambda x: not x.endswith('common.conf'), os.listdir(os.path.join(CONFIG_DIR, "filter.d"))):
+for filter_ in [x for x in os.listdir(os.path.join(CONFIG_DIR, "filter.d")) if not x.endswith('common.conf')]:
 	filterName = filter_.rpartition(".")[0]
 	if not filterName.startswith('.'):
 		setattr(

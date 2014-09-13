@@ -27,7 +27,7 @@ import os
 import re
 import time
 import unittest
-from StringIO import StringIO
+from io import StringIO
 
 from ..server.mytime import MyTime
 from ..helpers import getLogger
@@ -156,13 +156,13 @@ def gatherTests(regexps=None, no_network=False):
 	try:
 		from ..server.filtergamin import FilterGamin
 		filters.append(FilterGamin)
-	except Exception, e: # pragma: no cover
+	except Exception as e: # pragma: no cover
 		logSys.warning("Skipping gamin backend testing. Got exception '%s'" % e)
 
 	try:
 		from ..server.filterpyinotify import FilterPyinotify
 		filters.append(FilterPyinotify)
-	except Exception, e: # pragma: no cover
+	except Exception as e: # pragma: no cover
 		logSys.warning("I: Skipping pyinotify backend testing. Got exception '%s'" % e)
 
 	for Filter_ in filters:
@@ -171,7 +171,7 @@ def gatherTests(regexps=None, no_network=False):
 	try: # pragma: systemd no cover
 		from ..server.filtersystemd import FilterSystemd
 		tests.addTest(unittest.makeSuite(filtertestcase.get_monitor_failures_journal_testcase(FilterSystemd)))
-	except Exception, e: # pragma: no cover
+	except Exception as e: # pragma: no cover
 		logSys.warning("I: Skipping systemd backend testing. Got exception '%s'" % e)
 
 
@@ -208,4 +208,4 @@ class LogCaptureTestCase(unittest.TestCase):
 		return s in self._log.getvalue()
 
 	def printLog(self):
-		print(self._log.getvalue())
+		print((self._log.getvalue()))

@@ -213,7 +213,7 @@ class Actions(JailThread, Mapping):
 		bool
 			True when the thread exits nicely.
 		"""
-		for name, action in self._actions.iteritems():
+		for name, action in self._actions.items():
 			try:
 				action.start()
 			except Exception as e:
@@ -231,7 +231,7 @@ class Actions(JailThread, Mapping):
 				time.sleep(self.sleeptime)
 		self.__flushBan()
 
-		actions = self._actions.items()
+		actions = list(self._actions.items())
 		actions.reverse()
 		for name, action in actions:
 			try:
@@ -274,7 +274,7 @@ class Actions(JailThread, Mapping):
 					jail.database.getBansMerged(ip=ip, jail=jail).getAttempt()
 			if self.__banManager.addBanTicket(bTicket):
 				logSys.notice("[%s] Ban %s" % (self._jail.name, aInfo["ip"]))
-				for name, action in self._actions.iteritems():
+				for name, action in self._actions.items():
 					try:
 						action.ban(aInfo.copy())
 					except Exception as e:
@@ -323,7 +323,7 @@ class Actions(JailThread, Mapping):
 		aInfo["time"] = ticket.getTime()
 		aInfo["matches"] = "".join(ticket.getMatches())
 		logSys.notice("[%s] Unban %s" % (self._jail.name, aInfo["ip"]))
-		for name, action in self._actions.iteritems():
+		for name, action in self._actions.items():
 			try:
 				action.unban(aInfo.copy())
 			except Exception as e:

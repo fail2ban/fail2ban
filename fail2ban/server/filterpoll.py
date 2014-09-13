@@ -136,7 +136,7 @@ class FilterPoll(FileFilter):
 				logSys.debug("%s has been modified", filename)
 				self.__prevStats[filename] = stats
 				return True
-		except OSError, e:
+		except OSError as e:
 			logSys.error("Unable to get stat on %s because of: %s"
 						 % (filename, e))
 			self.__file404Cnt[filename] += 1

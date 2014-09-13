@@ -22,7 +22,7 @@
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier; 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-from __builtin__ import open as fopen
+from builtins import open as fopen
 import unittest
 import getpass
 import os
@@ -133,7 +133,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	else:
 		fin = in_
 	# Skip
-	for i in xrange(skip):
+	for i in range(skip):
 		fin.readline()
 	# Read
 	i = 0
@@ -170,7 +170,7 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 					"PRIORITY": "7",
 					})
 	# Skip
-	for i in xrange(skip):
+	for i in range(skip):
 		fin.readline()
 	# Read/Write
 	i = 0
@@ -806,7 +806,7 @@ class GetFailures(unittest.TestCase):
 
 	# so that they could be reused by other tests
 	FAILURES_01 = ('193.168.0.128', 3, 1124013599.0,
-				  [u'Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128']*3)
+				  ['Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128']*3)
 
 	def setUp(self):
 		"""Call before every test case."""
@@ -856,8 +856,8 @@ class GetFailures(unittest.TestCase):
 
 	def testGetFailures02(self):
 		output = ('141.3.81.106', 4, 1124013539.0,
-				  [u'Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2'
-				   % m for m in 53, 54, 57, 58])
+				  ['Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2'
+				   % m for m in (53, 54, 57, 58)])
 
 		self.filter.addLogPath(GetFailures.FILENAME_02)
 		self.filter.addFailRegex("Failed .* from <HOST>")
@@ -889,11 +889,11 @@ class GetFailures(unittest.TestCase):
 	def testGetFailuresUseDNS(self):
 		# We should still catch failures with usedns = no ;-)
 		output_yes = ('93.184.216.119', 2, 1124013539.0,
-					  [u'Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2',
-					   u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.119 port 51332 ssh2'])
+					  ['Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2',
+					   'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.119 port 51332 ssh2'])
 
 		output_no = ('93.184.216.119', 1, 1124013539.0,
-					  [u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.119 port 51332 ssh2'])
+					  ['Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.119 port 51332 ssh2'])
 
 		# Actually no exception would be raised -- it will be just set to 'no'
 		#self.assertRaises(ValueError,

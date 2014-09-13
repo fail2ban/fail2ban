@@ -91,7 +91,7 @@ class FailManager:
 			ip = ticket.getIP()
 			unixTime = ticket.getTime()
 			matches = ticket.getMatches()
-			if self.__failList.has_key(ip):
+			if ip in self.__failList:
 				fData = self.__failList[ip]
 				if fData.getLastReset() < unixTime - self.__maxTime:
 					fData.setLastReset(unixTime)
@@ -112,7 +112,7 @@ class FailManager:
 				# in case of having many active failures, it should be ran only
 				# if debug level is "low" enough
 				failures_summary = ', '.join(['%s:%d' % (k, v.getRetry())
-											  for k,v in  self.__failList.iteritems()])
+											  for k,v in  self.__failList.items()])
 				logSys.debug("Total # of detected failures: %d. Current failures from %d IPs (IP:count): %s"
 							 % (self.__failTotal, len(self.__failList), failures_summary))
 		finally:
@@ -136,7 +136,7 @@ class FailManager:
 			self.__lock.release()
 	
 	def __delFailure(self, ip):
-		if self.__failList.has_key(ip):
+		if ip in self.__failList:
 			del self.__failList[ip]
 	
 	def toBan(self):

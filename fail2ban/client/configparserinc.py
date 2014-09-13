@@ -58,7 +58,7 @@ if sys.version_info >= (3,2): # pragma: no cover
 				parser, option, accum, rest, section, map, depth)
 
 else: # pragma: no cover
-	from ConfigParser import SafeConfigParser
+	from configparser import SafeConfigParser
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -122,7 +122,7 @@ after = 1.conf
 				parser.read(resource, encoding='utf-8')
 			else:
 				parser.read(resource)
-		except UnicodeDecodeError, e:
+		except UnicodeDecodeError as e:
 			logSys.error("Error decoding config file '%s': %s" % (resource, e))
 			return []
 		

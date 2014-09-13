@@ -27,6 +27,7 @@ from abc import ABCMeta
 from collections import MutableMapping
 
 from ..helpers import getLogger
+import collections
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -47,7 +48,7 @@ _RETCODE_HINTS = {
 
 # Dictionary to lookup signal name from number
 signame = dict((num, name)
-	for name, num in signal.__dict__.iteritems() if name.startswith("SIG"))
+	for name, num in signal.__dict__.items() if name.startswith("SIG"))
 
 class CallingMap(MutableMapping):
 	"""A Mapping type which returns the result of callable values.
@@ -74,7 +75,7 @@ class CallingMap(MutableMapping):
 
 	def __getitem__(self, key):
 		value = self.data[key]
-		if callable(value):
+		if isinstance(value, collections.Callable):
 			return value()
 		else:
 			return value
@@ -94,7 +95,7 @@ class CallingMap(MutableMapping):
 	def copy(self):
 		return self.__class__(self.data.copy())
 
-class ActionBase(object):
+class ActionBase(object, metaclass=ABCMeta):
 	"""An abstract base class for actions in Fail2Ban.
 
 	Action Base is a base definition of what methods need to be in
@@ -124,7 +125,6 @@ class ActionBase(object):
 	Any additional arguments specified in `jail.conf` or passed
 	via `fail2ban-client` will be passed as keyword arguments.
 	"""
-	__metaclass__ = ABCMeta
 
 	@classmethod
 	def __subclasshook__(cls, C):
@@ -135,7 +135,7 @@ class ActionBase(object):
 			"unban",
 			)
 		for method in required:
-			if not callable(getattr(C, method, None)):
+			if not isinstance(getattr(C, method, None), collections.Callable):
 				return False
 		return True
 
@@ -242,7 +242,7 @@ class CommandAction(ActionBase):
 		return dict(
 			(key, getattr(self, key))
 			for key in dir(self)
-			if not key.startswith("_") and not callable(getattr(self, key)))
+			if not key.startswith("_") and not isinstance(getattr(self, key), collections.Callable))
 
 	@property
 	def actionstart(self):
@@ -379,7 +379,7 @@ class CommandAction(ActionBase):
 			within the values recursively replaced.
 		"""
 		t = re.compile(r'<([^ >]+)>')
-		for tag in tags.iterkeys():
+		for tag in tags.keys():
 			if tag in cls._escapedTags:
 				# Escaped so won't match
 				continue
@@ -398,7 +398,7 @@ class CommandAction(ActionBase):
 					# Escaped so won't match
 					continue
 				else:
-					if tags.has_key(found_tag):
+					if found_tag in tags:
 						value = value.replace('<%s>' % found_tag , tags[found_tag])
 						#logSys.log(5, 'value now: %s' % value)
 						done.append(found_tag)
@@ -563,7 +563,7 @@ class CommandAction(ActionBase):
 						os.kill(popen.pid, signal.SIGKILL) # Kill the process
 						time.sleep(0.1)
 						retcode = popen.poll()
-			except OSError, e:
+			except OSError as e:
 				logSys.error("%s -- failed with %s" % (realCmd, e))
 		finally:
 			_cmd_lock.release()
