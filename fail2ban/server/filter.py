@@ -748,8 +748,6 @@ class FileFilter(Filter):
 			if not dateTimeMatch:
 				break
 			unixTime = dateTimeMatch[0]
-			if int(unixTime) == int(date):
-				break
 			if unixTime >= date:
 				maxp = i
 			else:
