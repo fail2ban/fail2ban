@@ -717,7 +717,7 @@ class FileFilter(Filter):
 		lasti = 0
 		movecntr = 3
 		while maxp > minp:
-			i = minp + (maxp - minp) / 2
+			i = round(minp + (maxp - minp) / 2)
 			pos = container.seek(i)
 			cntr += 1
 			# within next 5 lines try to find any legal datetime:
