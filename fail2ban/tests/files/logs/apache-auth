@@ -19,6 +19,9 @@
 # failJSON: { "time": "2013-07-20T21:34:49", "match": true , "host": "127.0.0.1" } 
 [Sat Jul 20 21:34:49.453232 2013] [access_compat:error] [pid 17512:tid 140123104306944] [client 127.0.0.1:51380] AH01797: client denied by server configuration: /var/www/html/noentry/cant_get_me.html
 
+# failJSON: { "time": "2014-09-14T21:44:43", "match": true , "host": "192.3.9.178" } 
+[Sun Sep 14 21:44:43.008606 2014] [authz_core:error] [pid 10691] [client 192.3.9.178:44271] AH01630: client denied by server configuration: /var/www/html/noentry/cant_get_me.html
+
 # wget --http-user='' --http-password='' http://localhost/basic/file/cant_get_me.html -O /dev/null
 # failJSON: { "time": "2013-07-17T23:14:37", "match": true , "host": "127.0.0.1" }
 [Wed Jul 17 23:14:37 2013] [error] [client 127.0.0.1] user  not found: /basic/anon/cant_get_me.html

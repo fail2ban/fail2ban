@@ -29,6 +29,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
      provides defaults for the chain, port, protocol and name tags
 
 - Fixes:
+   * UTF-8 fixes in pure-ftp thanks to Johannes Weberhofer. Closes gh-806.
    * systemd backend error on bad utf-8 in python3
    * badips.py action error when logging HTTP error raised with badips request
    * fail2ban-regex failed to work in python3 due to space/tab mix
@@ -61,12 +62,17 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    * cyrus-imap -- also catch also failed logins via secured (imaps/pop3s).
      Regression was introduced while strengthening failregex in 0.8.11 (bd175f)
      Debian bug #755173
-   * postfix-sasl -- added journalmatch.  Thanks Luc Maisonobe
+   * postfix-sasl - added journalmatch.  Thanks Luc Maisonobe
+   * postfix* - match with a new daemon string (postfix/submission/smtpd).
+     Closes gh-804 .  Thanks Paul Traina
+   * apache - added filter for AH01630 client denied by server configuration.
 
 - New features:
-   - Added
-     - monit filter. Thanks Jason H Martin
-     - directadmin filter. Thanks niorg
+   - New filters:
+     - monit  Thanks Jason H Martin
+     - directadmin  Thanks niorg
+   - New actions:
+     - symbiosis-blacklist-allports  for Bytemark symbiosis firewall
    - fail2ban-client can fetch the running server version
    - Added Cloudflare API action
 
