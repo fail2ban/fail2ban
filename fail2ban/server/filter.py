@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import re, os, fcntl, sys, locale, codecs, datetime
+import re, os, fcntl, sys, locale, codecs, datetime, logging
 
 from .failmanager import FailManagerEmpty, FailManager
 from .observer import Observers
@@ -653,7 +653,7 @@ class FileFilter(Filter):
 	# MyTime.time()-self.findTime. When a failure is detected, a FailTicket
 	# is created and is added to the FailManager.
 
-	def getFailures(self, filename):
+	def getFailures(self, filename, startTime = None):
 		container = self.getFileContainer(filename)
 		if container is None:
 			logSys.error("Unable to get failures in " + filename)
@@ -675,6 +675,11 @@ class FileFilter(Filter):
 			logSys.exception(e)
 			return False
 
+		# prevent completely read of big files first time (after start of service), initial seek to start time using half-interval search algorithm:
+		if container.getPos() == 0 and startTime is not None:
+			# startTime = MyTime.time() - self.getFindTime()
+			self.seekToTime(container, startTime)
+
 		# yoh: has_content is just a bool, so do not expect it to
 		# change -- loop is exited upon break, and is not entered at
 		# all if upon container opening that one was empty.  If we
@@ -692,6 +697,76 @@ class FileFilter(Filter):
 			db.updateLog(self.jail, container)
 		return True
 
+	##
+	# Seeks to line with date (search using half-interval search algorithm), to start polling from it
+	#
+
+	def seekToTime(self, container, date):
+		fs = container.getFileSize()
+		if logSys.getEffectiveLevel() <= logging.DEBUG:
+			logSys.debug("Seek to find time %s (%s), file size %s", date, 
+				datetime.datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S"), fs)
+		date -= 0.009
+		minp = 0
+		maxp = fs
+		lastpos = 0
+		lastFew = 0
+		lastTime = None
+		cntr = 0
+		unixTime = None
+		lasti = 0
+		movecntr = 3
+		while maxp > minp:
+			i = minp + (maxp - minp) / 2
+			pos = container.seek(i)
+			cntr += 1
+			# within next 5 lines try to find any legal datetime:
+			lncntr = 5;
+			dateTimeMatch = None
+			llen = 0
+			i = pos
+			while True:
+				line = container.readline()
+				if not line:
+					break
+				llen += len(line)
+				l = line.rstrip('\r\n')
+				timeMatch = self.dateDetector.matchTime(l)
+				if timeMatch:
+					dateTimeMatch = self.dateDetector.getTime(l[timeMatch.start():timeMatch.end()])
+				if not dateTimeMatch and lncntr:
+					lncntr -= 1
+					continue
+				break
+			# if we can't move (position not changed)
+			if i + llen == lasti:
+				movecntr -= 1
+				if movecntr <= 0:
+		 			break
+			lasti = i + llen;
+		 	# not found at this step - stop searching
+			if not dateTimeMatch:
+				break
+			unixTime = dateTimeMatch[0]
+			if round(unixTime) == round(date):
+				break
+			if unixTime >= date:
+				maxp = i
+			else:
+				minp = i + llen
+				lastFew = pos;
+				lastTime = unixTime
+			lastpos = pos
+		# if found position have a time greater as given - use smallest time we have found
+		if unixTime is None or unixTime > date:
+			unixTime = lastTime
+			lastpos = container.seek(lastFew, False)
+		else:
+			lastpos = container.seek(lastpos, False)
+		if logSys.getEffectiveLevel() <= logging.DEBUG:
+			logSys.debug("Position %s from %s, found time %s (%s) within %s seeks", lastpos, fs, unixTime, 
+				(datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S") if unixTime is not None else ''), cntr)
+		
 	@property
 	def status(self):
 		"""Status of Filter plus files being monitored.
@@ -744,6 +819,9 @@ class FileContainer:
 	def getFileName(self):
 		return self.__filename
 
+	def getFileSize(self):
+		return os.path.getsize(self.__filename);
+
 	def setEncoding(self, encoding):
 		codecs.lookup(encoding) # Raises LookupError if invalid
 		self.__encoding = encoding
@@ -789,6 +867,16 @@ class FileContainer:
 		# Sets the file pointer to the last position.
 		self.__handler.seek(self.__pos)
 		return True
+
+	def seek(self, offs, endLine = True):
+		h = self.__handler
+		# seek to given position
+		h.seek(offs, 0)
+		# goto end of next line
+		if endLine:
+			h.readline()
+		# get current real position
+		return h.tell()
 
 	def readline(self):
 		if self.__handler is None:

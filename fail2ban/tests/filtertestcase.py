@@ -872,6 +872,15 @@ class GetFailures(unittest.TestCase):
 		self.filter.getFailures(GetFailures.FILENAME_03)
 		_assert_correct_last_attempt(self, self.filter, output)
 
+	def testGetFailures03_seek(self):
+		# same test as above but with seek to 'Aug 14 11:55:04' - so other output ...
+		output = ('203.162.223.135', 5, 1124013544.0)
+
+		self.filter.addLogPath(GetFailures.FILENAME_03)
+		self.filter.addFailRegex("error,relay=<HOST>,.*550 User unknown")
+		self.filter.getFailures(GetFailures.FILENAME_03, output[2] - 4*60 + 1)
+		_assert_correct_last_attempt(self, self.filter, output)
+
 	def testGetFailures04(self):
 		output = [('212.41.96.186', 4, 1124013600.0),
 				  ('212.41.96.185', 4, 1124017198.0)]

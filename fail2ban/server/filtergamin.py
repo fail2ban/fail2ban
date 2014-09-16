@@ -76,7 +76,7 @@ class FilterGamin(FileFilter):
 		TODO -- RF:
 		this is a common logic and must be shared/provided by FileFilter
 		"""
-		self.getFailures(path)
+		self.getFailures(path, MyTime.time() - self.getFindTime())
 		try:
 			while True:
 				ticket = self.failManager.toBan()

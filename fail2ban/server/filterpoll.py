@@ -83,6 +83,7 @@ class FilterPoll(FileFilter):
 	# @return True when the thread exits nicely
 
 	def run(self):
+		cntr = 0
 		while self.active:
 			if logSys.getEffectiveLevel() <= 6:
 				logSys.log(6, "Woke up idle=%s with %d files monitored",
@@ -92,7 +93,8 @@ class FilterPoll(FileFilter):
 				for container in self.getLogPath():
 					filename = container.getFileName()
 					if self.isModified(filename):
-						self.getFailures(filename)
+						self.getFailures(filename, (MyTime.time() - self.getFindTime()) if not cntr else None)
+						cntr += 1
 						self.__modified = True
 
 				if self.__modified:
