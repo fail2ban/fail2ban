@@ -27,7 +27,7 @@ import sqlite3
 import json
 import locale
 from functools import wraps
-from threading import Lock
+from threading import RLock
 
 from .mytime import MyTime
 from .ticket import FailTicket
@@ -138,7 +138,7 @@ class Fail2BanDb(object):
 
 	def __init__(self, filename, purgeAge=24*60*60, outDatedFactor=3):
 		try:
-			self._lock = Lock()
+			self._lock = RLock()
 			self._db = sqlite3.connect(
 				filename, check_same_thread=False,
 				detect_types=sqlite3.PARSE_DECLTYPES)
@@ -397,6 +397,10 @@ class Fail2BanDb(object):
 			del self._bansMergedCache[(ticket.getIP(), jail)]
 		except KeyError:
 			pass
+		try:
+			del self._bansMergedCache[(ticket.getIP(), None)]
+		except KeyError:
+			pass
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
@@ -496,40 +500,41 @@ class Fail2BanDb(object):
 			in a list. When `ip` argument passed, a single `Ticket` is
 			returned.
 		"""
-		cacheKey = None
-		if bantime is None or bantime < 0:
-			cacheKey = (ip, jail)
-			if cacheKey in self._bansMergedCache:
-				return self._bansMergedCache[cacheKey]
+		with self._lock:
+			cacheKey = None
+			if bantime is None or bantime < 0:
+				cacheKey = (ip, jail)
+				if cacheKey in self._bansMergedCache:
+					return self._bansMergedCache[cacheKey]
 
-		tickets = []
-		ticket = None
+			tickets = []
+			ticket = None
 
-		results = list(self._getBans(ip=ip, jail=jail, bantime=bantime))
-		if results:
-			prev_banip = results[0][0]
-			matches = []
-			failures = 0
-			for banip, timeofban, data in results:
-				#TODO: Implement data parts once arbitrary match keys completed
-				if banip != prev_banip:
-					ticket = FailTicket(prev_banip, prev_timeofban, matches)
-					ticket.setAttempt(failures)
-					tickets.append(ticket)
-					# Reset variables
-					prev_banip = banip
-					matches = []
-					failures = 0
-				matches.extend(data['matches'])
-				failures += data['failures']
-				prev_timeofban = timeofban
-			ticket = FailTicket(banip, prev_timeofban, matches)
-			ticket.setAttempt(failures)
-			tickets.append(ticket)
+			results = list(self._getBans(ip=ip, jail=jail, bantime=bantime))
+			if results:
+				prev_banip = results[0][0]
+				matches = []
+				failures = 0
+				for banip, timeofban, data in results:
+					#TODO: Implement data parts once arbitrary match keys completed
+					if banip != prev_banip:
+						ticket = FailTicket(prev_banip, prev_timeofban, matches)
+						ticket.setAttempt(failures)
+						tickets.append(ticket)
+						# Reset variables
+						prev_banip = banip
+						matches = []
+						failures = 0
+					matches.extend(data['matches'])
+					failures += data['failures']
+					prev_timeofban = timeofban
+				ticket = FailTicket(banip, prev_timeofban, matches)
+				ticket.setAttempt(failures)
+				tickets.append(ticket)
 
-		if cacheKey:
-			self._bansMergedCache[cacheKey] = tickets if ip is None else ticket
-		return tickets if ip is None else ticket
+			if cacheKey:
+				self._bansMergedCache[cacheKey] = tickets if ip is None else ticket
+			return tickets if ip is None else ticket
 
 	@commitandrollback
 	def getBan(self, cur, ip, jail=None, forbantime=None, overalljails=None, fromtime=None):

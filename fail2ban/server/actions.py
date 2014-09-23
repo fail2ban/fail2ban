@@ -246,6 +246,44 @@ class Actions(JailThread, Mapping):
 		logSys.debug(self._jail.name + ": action terminated")
 		return True
 
+	def __getBansMerged(self, mi, idx):
+		"""Helper for lamda to get bans merged once
+
+		This function never returns None for ainfo lambdas - always a ticket (merged or single one)
+		and prevents any errors through merging (to guarantee ban actions will be executed).
+		[TODO] move merging to observer - here we could wait for merge and read already merged info from a database
+
+		Parameters
+		----------
+		mi : dict
+			initial for lambda should contains {ip, ticket}
+		idx : str
+			key to get a merged bans :
+			'all' - bans merged for all jails
+			'jail' - bans merged for current jail only
+
+		Returns
+		-------
+		BanTicket 
+			merged or self ticket only
+		"""
+		if idx in mi:
+			return mi[idx] if mi[idx] is not None else mi['ticket']
+		try:
+			jail=self._jail
+			ip=mi['ip']
+			mi[idx] = None
+			if idx == 'all':
+				mi[idx] = jail.database.getBansMerged(ip=ip)
+			elif idx == 'jail':
+				mi[idx] = jail.database.getBansMerged(ip=ip, jail=jail)
+		except Exception as e:
+			logSys.error(
+				"Failed to get %s bans merged, jail '%s': %s",
+				idx, jail.name, e,
+				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+		return mi[idx] if mi[idx] is not None else mi['ticket']
+
 	def __checkBan(self):
 		"""Check for IP address to ban.
 
@@ -272,16 +310,13 @@ class Actions(JailThread, Mapping):
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "\n".join(bTicket.getMatches())
 			btime = bTicket.getBanTime(self.__banManager.getBanTime())
-			# [todo] move merging to observer - here we could read already merged info from database (faster);
+			# retarded merge info via twice lambdas : once for merge, once for matches/failures:
 			if self._jail.database is not None:
-				aInfo["ipmatches"] = lambda jail=self._jail: "\n".join(
-					jail.database.getBansMerged(ip=ip).getMatches())
-				aInfo["ipjailmatches"] = lambda jail=self._jail: "\n".join(
-					jail.database.getBansMerged(ip=ip, jail=jail).getMatches())
-				aInfo["ipfailures"] = lambda jail=self._jail: \
-					jail.database.getBansMerged(ip=ip).getAttempt()
-				aInfo["ipjailfailures"] = lambda jail=self._jail: \
-					jail.database.getBansMerged(ip=ip, jail=jail).getAttempt()
+				mi4ip = lambda idx, self=self, mi={'ip':ip, 'ticket':bTicket}: self.__getBansMerged(mi, idx)
+				aInfo["ipmatches"]      = lambda: "\n".join(mi4ip('all').getMatches())
+				aInfo["ipjailmatches"]  = lambda: "\n".join(mi4ip('jail').getMatches())
+				aInfo["ipfailures"]     = lambda: mi4ip('all').getAttempt()
+				aInfo["ipjailfailures"] = lambda: mi4ip('jail').getAttempt()
 
 			if btime != -1:
 				bendtime = aInfo["time"] + btime

@@ -32,18 +32,21 @@ import shutil
 from ..server.filter import FileContainer
 from ..server.mytime import MyTime
 from ..server.ticket import FailTicket
+from ..server.actions import Actions
 from .dummyjail import DummyJail
 try:
 	from ..server.database import Fail2BanDb
 except ImportError:
 	Fail2BanDb = None
+from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
-class DatabaseTest(unittest.TestCase):
+class DatabaseTest(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		super(DatabaseTest, self).setUp()
 		if Fail2BanDb is None and sys.version_info >= (2,7): # pragma: no cover
 			raise unittest.SkipTest(
 				"Unable to import fail2ban database module as sqlite is not "
@@ -55,6 +58,7 @@ class DatabaseTest(unittest.TestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
+		super(DatabaseTest, self).tearDown()
 		if Fail2BanDb is None: # pragma: no cover
 			return
 		# Cleanup
@@ -266,6 +270,23 @@ class DatabaseTest(unittest.TestCase):
 		# be returned
 		tickets = self.db.getBansMerged(bantime=-1)
 		self.assertEqual(len(tickets), 2)
+
+	def testActionWithDB(self):
+		# test action together with database functionality
+		self.testAddJail() # Jail required
+		self.jail.database = self.db;
+		actions = Actions(self.jail)
+		actions.add(
+			"action_checkainfo",
+			os.path.join(TEST_FILES_DIR, "action.d/action_checkainfo.py"),
+			{})
+		ticket = FailTicket("1.2.3.4")
+		ticket.setAttempt(5)
+		ticket.setMatches(['test', 'test'])
+		self.jail.putFailTicket(ticket)
+		actions._Actions__checkBan()
+		self.assertTrue(self._is_logged("ban ainfo %s, %s, %s, %s" % (True, True, True, True)))
+
 
 	def testPurge(self):
 		if Fail2BanDb is None: # pragma: no cover
