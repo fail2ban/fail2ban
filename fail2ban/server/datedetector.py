@@ -29,6 +29,8 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+logLevel = 6
+
 class DateDetector(object):
 	"""Manages one or more date templates to find a date within a log line.
 
@@ -142,7 +144,7 @@ class DateDetector(object):
 
 		Returns
 		-------
-		re.MatchObject
+		re.MatchObject, DateTemplate
 			The regex match returned from the first successfully matched
 			template.
 		"""
@@ -151,10 +153,11 @@ class DateDetector(object):
 			for template in self.__templates:
 				match = template.matchDate(line)
 				if not match is None:
-					logSys.debug("Matched time template %s" % template.name)
+					if logSys.getEffectiveLevel() <= logLevel:
+						logSys.log(logLevel, "Matched time template %s", template.name)
 					template.hits += 1
-					return match
-			return None
+					return (match, template)
+			return (None, None)
 		finally:
 			self.__lock.release()
 
@@ -173,7 +176,7 @@ class DateDetector(object):
 		-------
 		float
 			The Unix timestamp returned from the first successfully matched
-			template.
+			template or None if not found.
 		"""
 		self.__lock.acquire()
 		try:
@@ -182,14 +185,47 @@ class DateDetector(object):
 					date = template.getDate(line)
 					if date is None:
 						continue
-					logSys.debug("Got time %f for \"%r\" using template %s" %
-						(date[0], date[1].group(), template.name))
+					if logSys.getEffectiveLevel() <= logLevel:
+						logSys.log(logLevel, "Got time %f for \"%r\" using template %s", 
+							date[0], date[1].group(), template.name)
 					return date
 				except ValueError:
 					pass
 			return None
 		finally:
 			self.__lock.release()
+
+	def getTime2(self, line, timeMatch = None):
+		"""Attempts to return the date on a log line using given template.
+
+		This uses the templates' `getDate` method in an attempt to find
+		a date.
+		Method 'getTime2' is a little bit faster as 'getTime' if template was specified (cause works without locking and without cycle)
+
+		Parameters
+		----------
+		line : str
+			Line which is searched by the date templates.
+		timeMatch (timeMatch, template) : (Match, DateTemplate)
+			Time match and template previously returned from matchTime
+
+		Returns
+		-------
+		float
+			The Unix timestamp returned from the first successfully matched
+			template or None if not found.
+		"""
+		date = None
+		if timeMatch:
+			template = timeMatch[1]
+			if template is not None:
+				date = template.getDate(line, timeMatch[0])
+		if date is not None:
+			if logSys.getEffectiveLevel() <= logLevel:
+				logSys.log(logLevel, "Got time(2) %f for \"%r\" using template %s",
+					date[0], date[1].group(), template.name)
+			return date
+		return self.getTime(line)
 
 	def sortTemplate(self):
 		"""Sort the date templates by number of hits
@@ -201,9 +237,11 @@ class DateDetector(object):
 		"""
 		self.__lock.acquire()
 		try:
-			logSys.debug("Sorting the template list")
+			if logSys.getEffectiveLevel() <= logLevel:
+				logSys.log(logLevel, "Sorting the template list")
 			self.__templates.sort(key=lambda x: x.hits, reverse=True)
 			t = self.__templates[0]
-			logSys.debug("Winning template: %s with %d hits" % (t.name, t.hits))
+			if logSys.getEffectiveLevel() <= logLevel:
+				logSys.log(logLevel, "Winning template: %s with %d hits", t.name, t.hits)
 		finally:
 			self.__lock.release()

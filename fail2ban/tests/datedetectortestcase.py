@@ -103,7 +103,22 @@ class DateDetectorTest(unittest.TestCase):
 										 (not anchored, "bogus-prefix ")):
 				log = prefix + sdate + "[sshd] error: PAM: Authentication failure"
 
+				# with getTime:
 				logtime = self.__datedetector.getTime(log)
+				if should_match:
+					self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s, anchored: %r, log: %s" % ( sdate, anchored, log))
+					( logUnix, logMatch ) = logtime
+					self.assertEqual(logUnix, dateUnix, "getTime comparison failure for %s: \"%s\" is not \"%s\"" % (sdate, logUnix, dateUnix))
+					if sdate.startswith('audit('):
+						# yes, special case, the group only matches the number
+						self.assertEqual(logMatch.group(), '1106513999.000')
+					else:
+						self.assertEqual(logMatch.group(), sdate)
+				else:
+					self.assertEqual(logtime, None, "getTime should have not matched for %r Got: %s" % (sdate, logtime))
+				# with matchTime and getTime2 (this combination used in filter) :
+				matchTime = self.__datedetector.matchTime(log)
+				logtime = self.__datedetector.getTime2(log, matchTime)
 				if should_match:
 					self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s, anchored: %r, log: %s" % ( sdate, anchored, log))
 					( logUnix, logMatch ) = logtime

@@ -65,7 +65,7 @@ class Server:
 		self.quit()
 	
 	def start(self, sock, pidfile, force = False):
-		logSys.info("Starting Fail2ban v" + version.version)
+		logSys.info("Starting Fail2ban v%s", version.version)
 		
 		# Install signal handlers
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
@@ -429,8 +429,8 @@ class Server:
 			logger.addHandler(hdlr)
 			# Does not display this message at startup.
 			if not self.__logTarget is None:
-				logSys.info("Changed logging target to %s for Fail2ban v%s" %
-						(target, version.version))
+				logSys.info("Start Fail2ban v%s", version.version)
+				logSys.info("Changed logging target to %s", target)
 			# Sets the logging target.
 			self.__logTarget = target
 			return True

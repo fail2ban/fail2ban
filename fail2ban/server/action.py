@@ -570,10 +570,12 @@ class CommandAction(ActionBase):
 
 		std_level = retcode == 0 and logging.DEBUG or logging.ERROR
 		if std_level >= logSys.getEffectiveLevel():
-			stdout.seek(0)
-			logSys.log(std_level, "%s -- stdout: %r" % (realCmd, stdout.read()))
-			stderr.seek(0)
-			logSys.log(std_level, "%s -- stderr: %r" % (realCmd, stderr.read()))
+			stdout.seek(0); msg = stdout.read()
+			if msg != '':
+				logSys.log(std_level, "%s -- stdout: %r", realCmd, msg)
+			stderr.seek(0); msg = stderr.read()
+			if msg != '':
+				logSys.log(std_level, "%s -- stderr: %r", realCmd, msg)
 		stdout.close()
 		stderr.close()
 
