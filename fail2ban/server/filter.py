@@ -406,14 +406,16 @@ class Filter(JailThread):
 			l = line.rstrip('\r\n')
 			logSys.log(7, "Working on line %r", line)
 
-			timeMatch = self.dateDetector.matchTime(l)
+			(timeMatch, template) = self.dateDetector.matchTime(l)
 			if timeMatch:
 				tupleLine  = (
 					l[:timeMatch.start()],
 					l[timeMatch.start():timeMatch.end()],
-					l[timeMatch.end():])
+					l[timeMatch.end():],
+					(timeMatch, template)
+				)
 			else:
-				tupleLine = (l, "", "")
+				tupleLine = (l, "", "", None)
 
 		return "".join(tupleLine[::2]), self.findFailure(
 			tupleLine, date, returnRawHost, checkAllRegex)
@@ -475,7 +477,7 @@ class Filter(JailThread):
 			self.__lastDate = date
 		elif timeText:
 
-			dateTimeMatch = self.dateDetector.getTime(timeText)
+			dateTimeMatch = self.dateDetector.getTime2(timeText, tupleLine[3])
 
 			if dateTimeMatch is None:
 				logSys.error("findFailure failed to parse timeText: " + timeText)
@@ -492,7 +494,7 @@ class Filter(JailThread):
 			date = self.__lastDate
 
 		self.__lineBuffer = (
-			self.__lineBuffer + [tupleLine])[-self.__lineBufferSize:]
+			self.__lineBuffer + [tupleLine[:3]])[-self.__lineBufferSize:]
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
@@ -735,9 +737,9 @@ class FileFilter(Filter):
 					break
 				llen += len(line)
 				l = line.rstrip('\r\n')
-				timeMatch = self.dateDetector.matchTime(l)
+				(timeMatch, template) = self.dateDetector.matchTime(l)
 				if timeMatch:
-					dateTimeMatch = self.dateDetector.getTime(l[timeMatch.start():timeMatch.end()])
+					dateTimeMatch = self.dateDetector.getTime2(l[timeMatch.start():timeMatch.end()], (timeMatch, template))
 				if not dateTimeMatch and lncntr:
 					lncntr -= 1
 					continue
