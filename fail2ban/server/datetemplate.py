@@ -98,7 +98,7 @@ class DateTemplate(object):
 		return dateMatch
 
 	@abstractmethod
-	def getDate(self, line):
+	def getDate(self, line, dateMatch=None):
 		"""Abstract method, which should return the date for a log line
 
 		This should return the date for a log line, typically taking the
@@ -134,7 +134,7 @@ class DateEpoch(DateTemplate):
 		DateTemplate.__init__(self)
 		self.regex = "(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=audit\()))\d{10}(?:\.\d{3,6})?(?(selinux)(?=:\d+\))(?(square)(?=\])))"
 
-	def getDate(self, line):
+	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.
 
 		Parameters
@@ -148,7 +148,8 @@ class DateEpoch(DateTemplate):
 			Tuple containing a Unix timestamp, and the string of the date
 			which was matched and in turned used to calculated the timestamp.
 		"""
-		dateMatch = self.matchDate(line)
+		if not dateMatch:
+			dateMatch = self.matchDate(line)
 		if dateMatch:
 			# extract part of format which represents seconds since epoch
 			return (float(dateMatch.group()), dateMatch)
@@ -212,7 +213,7 @@ class DatePatternRegex(DateTemplate):
 	def name(self, value):
 		raise NotImplementedError("Name derived from pattern")
 
-	def getDate(self, line):
+	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.
 
 		This uses a custom version of strptime, using the named groups
@@ -229,7 +230,8 @@ class DatePatternRegex(DateTemplate):
 			Tuple containing a Unix timestamp, and the string of the date
 			which was matched and in turned used to calculated the timestamp.
 		"""
-		dateMatch = self.matchDate(line)
+		if not dateMatch:
+			dateMatch = self.matchDate(line)
 		if dateMatch:
 			groupdict = dict(
 				(key, value)
@@ -253,7 +255,7 @@ class DateTai64n(DateTemplate):
 		# yoh: we should not add an additional front anchor
 		self.setRegex("@[0-9a-f]{24}", wordBegin=False)
 
-	def getDate(self, line):
+	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.
 
 		Parameters
@@ -267,7 +269,8 @@ class DateTai64n(DateTemplate):
 			Tuple containing a Unix timestamp, and the string of the date
 			which was matched and in turned used to calculated the timestamp.
 		"""
-		dateMatch = self.matchDate(line)
+		if not dateMatch:
+			dateMatch = self.matchDate(line)
 		if dateMatch:
 			# extract part of format which represents seconds since epoch
 			value = dateMatch.group()
