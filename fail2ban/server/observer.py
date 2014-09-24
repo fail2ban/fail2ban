@@ -342,7 +342,7 @@ class ObserverThread(JailThread):
 			return
 		ip = ticket.getIP()
 		unixTime = ticket.getTime()
-		logSys.info("[%s] Observer: failure found %s", jail.name, ip)
+		logSys.debug("[%s] Observer: failure found %s", jail.name, ip)
 		# increase retry count for known (bad) ip, corresponding banCount of it (one try will count than 2, 3, 5, 9 ...)  :
 		banCount = 0
 		retryCount = 1
@@ -359,8 +359,8 @@ class ObserverThread(JailThread):
 				retryCount = min(retryCount, maxRetry)
 				# check this ticket already known (line was already processed and in the database and will be restored from there):
 				if timeOfBan is not None and unixTime <= timeOfBan:
-					logSys.info("[%s] Ignore failure %s before last ban %s < %s, restored"
-								 % (jail.name, ip, unixTime, timeOfBan))
+					logSys.debug("[%s] Ignore failure %s before last ban %s < %s, restored",
+								jail.name, ip, unixTime, timeOfBan)
 					return
 			# for not increased failures observer should not add it to fail manager, because was already added by filter self
 			if retryCount <= 1:
@@ -420,7 +420,7 @@ class ObserverThread(JailThread):
 				for banCount, timeOfBan, lastBanTime in \
 					jail.database.getBan(ip, jail, overalljails=be.get('overalljails', False)) \
 				:
-					logSys.debug('IP %s was already banned: %s #, %s' % (ip, banCount, timeOfBan));
+					logSys.debug('IP %s was already banned: %s #, %s', ip, banCount, timeOfBan);
 					ticket.setBanCount(banCount);
 					# calculate new ban time
 					if banCount > 0:
@@ -447,7 +447,7 @@ class ObserverThread(JailThread):
 		"""
 		oldbtime = btime
 		ip = ticket.getIP()
-		logSys.info("[%s] Observer: ban found %s, %s", jail.name, ip, btime)
+		logSys.debug("[%s] Observer: ban found %s, %s", jail.name, ip, btime)
 		try:
 			# if not permanent, not restored and ban time was not set - check time should be increased:
 			if btime != -1 and not ticket.getRestored() and ticket.getBanTime() is None:
@@ -462,7 +462,7 @@ class ObserverThread(JailThread):
 					datetime.datetime.fromtimestamp(bendtime).strftime("%Y-%m-%d %H:%M:%S"))
 				# check ban is not too old :
 				if bendtime < MyTime.time():
-					logSys.info('Ignore old bantime %s', logtime[1])
+					logSys.debug('Ignore old bantime %s', logtime[1])
 					return False
 			else:
 				logtime = ('permanent', 'infinite')
