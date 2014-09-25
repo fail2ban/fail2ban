@@ -265,8 +265,12 @@ class Fail2BanDb(object):
 			Jail to be added to the database.
 		"""
 		cur.execute(
-			"INSERT OR REPLACE INTO jails(name, enabled) VALUES(?, 1)",
+			"INSERT OR IGNORE INTO jails(name, enabled) VALUES(?, 1)",
 			(jail.name,))
+		if cur.rowcount <= 0:
+			cur.execute(
+				"UPDATE jails SET enabled = 1 WHERE name = ? AND enabled != 1",
+				(jail.name,))
 
 	@commitandrollback
 	def delJail(self, cur, jail):

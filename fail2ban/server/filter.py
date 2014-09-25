@@ -570,7 +570,7 @@ class FileFilter(Filter):
 				if lastpos and not tail:
 					container.setPos(lastpos)
 			self.__logPath.append(container)
-			logSys.info("Added logfile = %s" % path)
+			logSys.info("Added logfile = %s (pos = %s, hash = %s)" , path, container.getPos(), container.getHash())
 			self._addLogPath(path)			# backend specific
 
 	def _addLogPath(self, path):
