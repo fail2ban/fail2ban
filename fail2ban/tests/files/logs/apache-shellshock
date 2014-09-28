@@ -1,0 +1,4 @@
+# failJSON: { "time": "2014-09-25T09:27:18", "match": true , "host": "89.207.132.76" }
+[Thu Sep 25 09:27:18.813902 2014] [cgi:error] [pid 16860] [client 89.207.132.76:59635] AH01215: /bin/bash: warning: HTTP_TEST: ignoring function definition attempt
+# failJSON: { "time": "2014-09-25T09:29:56", "match": true , "host": "162.247.73.206" }
+[Thu Sep 25 09:29:56.141832 2014] [cgi:error] [pid 16864] [client 162.247.73.206:41273] AH01215: /bin/bash: error importing function definition for `HTTP_TEST'
