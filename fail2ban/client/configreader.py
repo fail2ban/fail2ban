@@ -55,7 +55,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 			raise ValueError("Base configuration directory %s does not exist "
 							  % self._basedir)
 		basename = os.path.join(self._basedir, filename)
-		logSys.info("Reading configs for %s under %s "  % (basename, self._basedir))
+		logSys.debug("Reading configs for %s under %s " , filename, self._basedir)
 		config_files = [ basename + ".conf" ]
 
 		# possible further customizations under a .conf.d directory
@@ -71,14 +71,15 @@ class ConfigReader(SafeConfigParserWithIncludes):
 
 		if len(config_files):
 			# at least one config exists and accessible
-			logSys.debug("Reading config files: " + ', '.join(config_files))
-			config_files_read = SafeConfigParserWithIncludes.read(self, config_files)
+			logSys.debug("Reading config files: %s", ', '.join(config_files))
+			config_files_read = SafeConfigParserWithIncludes.read(self, config_files,
+				log_info=("Cache configs for %s under %s " , filename, self._basedir))
 			missed = [ cf for cf in config_files if cf not in config_files_read ]
 			if missed:
-				logSys.error("Could not read config files: " + ', '.join(missed))
+				logSys.error("Could not read config files: %s", ', '.join(missed))
 			if config_files_read:
 				return True
-			logSys.error("Found no accessible config files for %r under %s" %
+			logSys.error("Found no accessible config files for %r under %s",
 						 ( filename, self.getBaseDir() ))
 			return False
 		else:
@@ -133,12 +134,12 @@ class ConfigReader(SafeConfigParserWithIncludes):
 
 class DefinitionInitConfigReader(ConfigReader):
 	"""Config reader for files with options grouped in [Definition] and
-       [Init] sections.
+			 [Init] sections.
 
-       Is a base class for readers of filters and actions, where definitions
-       in jails might provide custom values for options defined in [Init]
-       section.
-       """
+			 Is a base class for readers of filters and actions, where definitions
+			 in jails might provide custom values for options defined in [Init]
+			 section.
+			 """
 
 	_configOpts = []
 	

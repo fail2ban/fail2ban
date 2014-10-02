@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, glob, shutil, tempfile, unittest
+import os, glob, shutil, tempfile, unittest, time
 
 from ..client.configreader import ConfigReader
 from ..client.jailreader import JailReader
@@ -38,6 +38,8 @@ from .utils import CONFIG_DIR
 STOCK = os.path.exists(os.path.join('config','fail2ban.conf'))
 
 IMPERFECT_CONFIG = os.path.join(os.path.dirname(__file__), 'config')
+
+LAST_WRITE_TIME = 0
 
 class ConfigReaderTest(unittest.TestCase):
 
@@ -57,7 +59,8 @@ class ConfigReaderTest(unittest.TestCase):
 			d_ = os.path.join(self.d, d)
 			if not os.path.exists(d_):
 				os.makedirs(d_)
-		f = open("%s/%s" % (self.d, fname), "w")
+		fname = "%s/%s" % (self.d, fname)
+		f = open(fname, "w")
 		if value is not None:
 			f.write("""
 [section]
@@ -66,6 +69,14 @@ option = %s
 		if content is not None:
 			f.write(content)
 		f.close()
+		# set modification time to another second to revalidate cache (if milliseconds not supported) :
+		global LAST_WRITE_TIME
+		mtime = os.path.getmtime(fname)
+		if LAST_WRITE_TIME == mtime:
+			mtime += 1
+			os.utime(fname, (mtime, mtime))
+		LAST_WRITE_TIME = mtime
+		
 
 	def _remove(self, fname):
 		os.unlink("%s/%s" % (self.d, fname))
@@ -90,7 +101,6 @@ option = %s
 			# SkipTest introduced only in 2.7 thus can't yet use generally
 			# raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform)
 			pass
-
 
 	def testOptionalDotDDir(self):
 		self.assertFalse(self.c.read('c'))	# nothing is there yet
