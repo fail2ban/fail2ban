@@ -22,11 +22,7 @@ import unittest
 import sys
 
 from ..dummyjail import DummyJail
-
-if os.path.exists('config/fail2ban.conf'):
-	CONFIG_DIR = "config"
-else:
-	CONFIG_DIR='/etc/fail2ban'
+from ..utils import CONFIG_DIR
 
 if sys.version_info >= (2,7):
 	class BadIPsActionTest(unittest.TestCase):

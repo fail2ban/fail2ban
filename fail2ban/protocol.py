@@ -38,6 +38,7 @@ protocol = [
 ["status", "gets the current status of the server"], 
 ["ping", "tests if the server is alive"], 
 ["help", "return this output"], 
+["version", "return the server version"],
 ['', "LOGGING", ""],
 ["set loglevel <LEVEL>", "sets logging level to <LEVEL>. Levels: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG"], 
 ["get loglevel", "gets the logging level"], 

@@ -1,0 +1,14 @@
+# failJSON: { "time": "2014-07-02T00:17:45", "match": true , "host": "3.2.1.4" }
+2014:07:02-00:17:45: '3.2.1.4' 2 failed login attempts. Account 'test'
+
+# failJSON: { "time": "2014-07-02T13:07:40", "match": true , "host": "40.40.123.231" }
+2014:07:02-13:07:40: '40.40.123.231' 13 failed login attempts. Account 'admin'
+
+# failJSON: { "time": "2014-07-02T13:07:50", "match": true , "host": "40.40.123.231" }
+2014:07:02-13:07:50: '40.40.123.231' 5 failed login attempt. Invalid account 'user%2Ename'
+
+# failJSON: { "time": "2014-07-02T13:28:39", "match": false , "host": "12.12.123.231" }
+2014:07:02-13:28:39: '12.12.123.231' successful login to 'nobody' after 1 attempts
+
+# failJSON: { "time": "2014-07-02T13:29:38", "match": true , "host": "1.2.3.4" }
+2014:07:02-13:29:38: '1.2.3.4' 2 failed login attempts. Account 'user' via 'admin'

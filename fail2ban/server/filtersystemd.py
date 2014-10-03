@@ -22,7 +22,7 @@ __author__ = "Steven Hiscocks"
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import logging, datetime, time
+import datetime, time
 from distutils.version import LooseVersion
 
 from systemd import journal
@@ -32,10 +32,10 @@ if LooseVersion(getattr(journal, '__version__', "0")) < '204':
 from .failmanager import FailManagerEmpty
 from .filter import JournalFilter
 from .mytime import MyTime
-
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger("fail2ban.filter")
+logSys = getLogger(__name__)
 
 ##
 # Journal reader class.
@@ -167,8 +167,9 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			logelements.append(logentry['_HOSTNAME'])
 		if logentry.get('SYSLOG_IDENTIFIER'):
 			logelements.append(logentry['SYSLOG_IDENTIFIER'])
-			if logentry.get('_PID'):
-				logelements[-1] += ("[%i]" % logentry['_PID'])
+			if logentry.get('SYSLOG_PID') or logentry.get('_PID'):
+				logelements[-1] += ("[%i]" % logentry.get(
+					'SYSLOG_PID', logentry['_PID']))
 			logelements[-1] += ":"
 		elif logentry.get('_COMM'):
 			logelements.append(logentry['_COMM'])
@@ -211,6 +212,12 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	# handover to FailManager
 
 	def run(self):
+
+		if not self.getJournalMatch():
+			logSys.notice(
+				"Jail started without 'journalmatch' set. "
+				"Jail regexs will be checked against all journal entries, "
+				"which is not advised for performance reasons.")
 
 		# Seek to now - findtime in journal
 		start_time = datetime.datetime.now() - \

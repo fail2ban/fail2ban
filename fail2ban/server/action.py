@@ -25,10 +25,11 @@ import logging, os, subprocess, time, signal, tempfile
 import threading, re
 from abc import ABCMeta
 from collections import MutableMapping
-#from subprocess import call
+
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 # Create a lock for running system commands
 _cmd_lock = threading.Lock()
@@ -62,13 +63,14 @@ class CallingMap(MutableMapping):
 	Attributes
 	----------
 	data : dict
-		The dictionary data which can be accessed to obtain items
-		without callable values being called.
-
+		The dictionary data which can be accessed to obtain items uncalled
 	"""
 
 	def __init__(self, *args, **kwargs):
 		self.data = dict(*args, **kwargs)
+
+	def __repr__(self):
+		return "%s(%r)" % (self.__class__.__name__, self.data)
 
 	def __getitem__(self, key):
 		value = self.data[key]
@@ -88,6 +90,9 @@ class CallingMap(MutableMapping):
 
 	def __len__(self):
 		return len(self.data)
+
+	def copy(self):
+		return self.__class__(self.data.copy())
 
 class ActionBase(object):
 	"""An abstract base class for actions in Fail2Ban.
@@ -137,8 +142,7 @@ class ActionBase(object):
 	def __init__(self, jail, name):
 		self._jail = jail
 		self._name = name
-		self._logSys = logging.getLogger(
-			'%s.%s' % (__name__, self.__class__.__name__))
+		self._logSys = getLogger("fail2ban.%s" % self.__class__.__name__)
 
 	def start(self):
 		"""Executed when the jail/action is started.
@@ -195,6 +199,8 @@ class CommandAction(ActionBase):
 	actionunban
 	timeout
 	"""
+
+	_escapedTags = set(('matches', 'ipmatches', 'ipjailmatches'))
 
 	def __init__(self, jail, name):
 		super(CommandAction, self).__init__(jail, name)
@@ -353,8 +359,8 @@ class CommandAction(ActionBase):
 		if not self.executeCmd(stopCmd, self.timeout):
 			raise RuntimeError("Error stopping action")
 
-	@staticmethod
-	def substituteRecursiveTags(tags):
+	@classmethod
+	def substituteRecursiveTags(cls, tags):
 		"""Sort out tag definitions within other tags.
 
 		so:		becomes:
@@ -373,8 +379,11 @@ class CommandAction(ActionBase):
 			within the values recursively replaced.
 		"""
 		t = re.compile(r'<([^ >]+)>')
-		for tag, value in tags.iteritems():
-			value = str(value)
+		for tag in tags.iterkeys():
+			if tag in cls._escapedTags:
+				# Escaped so won't match
+				continue
+			value = str(tags[tag])
 			m = t.search(value)
 			done = []
 			#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
@@ -385,6 +394,9 @@ class CommandAction(ActionBase):
 					# recursive definitions are bad
 					#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 					return False
+				elif found_tag in cls._escapedTags:
+					# Escaped so won't match
+					continue
 				else:
 					if tags.has_key(found_tag):
 						value = value.replace('<%s>' % found_tag , tags[found_tag])
@@ -443,10 +455,11 @@ class CommandAction(ActionBase):
 			`query` string with tags replaced.
 		"""
 		string = query
+		aInfo = cls.substituteRecursiveTags(aInfo)
 		for tag in aInfo:
 			if "<%s>" % tag in query:
 				value = str(aInfo[tag])			  # assure string
-				if tag.endswith('matches'):
+				if tag in cls._escapedTags:
 					# That one needs to be escaped since its content is
 					# out of our control
 					value = cls.escapeTag(value)

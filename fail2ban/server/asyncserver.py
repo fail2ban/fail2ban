@@ -25,12 +25,12 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from pickle import dumps, loads, HIGHEST_PROTOCOL
-import asyncore, asynchat, socket, os, logging, sys, traceback, fcntl
+import asyncore, asynchat, socket, os, sys, traceback, fcntl
 
-from .. import helpers
+from ..helpers import getLogger,formatExceptionInfo
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 if sys.version_info >= (3,):
 	# b"" causes SyntaxError in python <= 2.5, so below implements equivalent
@@ -81,7 +81,7 @@ class RequestHandler(asynchat.async_chat):
 		self.close_when_done()
 		
 	def handle_error(self):
-		e1, e2 = helpers.formatExceptionInfo()
+		e1, e2 = formatExceptionInfo()
 		logSys.error("Unexpected communication error: %s" % str(e2))
 		logSys.error(traceback.format_exc().splitlines())
 		self.close()

@@ -24,13 +24,14 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import glob, logging, os
+import glob, os
 from ConfigParser import NoOptionError, NoSectionError
 
 from .configparserinc import SafeConfigParserWithIncludes
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 class ConfigReader(SafeConfigParserWithIncludes):
 
@@ -120,6 +121,10 @@ class ConfigReader(SafeConfigParserWithIncludes):
 					logSys.warning("'%s' not defined in '%s'. Using default one: %r"
 								% (option[1], sec, option[2]))
 					values[option[1]] = option[2]
+				else:
+					logSys.debug(
+						"Non essential option '%s' not defined in '%s'.",
+						option[1], sec)
 			except ValueError:
 				logSys.warning("Wrong value for '" + option[1] + "' in '" + sec +
 							"'. Using default one: '" + `option[2]` + "'")

@@ -24,15 +24,16 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging, re, glob, os.path
+import re, glob, os.path
 import json
 
 from .configreader import ConfigReader
 from .filterreader import FilterReader
 from .actionreader import ActionReader
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 class JailReader(ConfigReader):
 	
@@ -68,7 +69,8 @@ class JailReader(ConfigReader):
 		return out
 	
 	def isEnabled(self):
-		return self.__force_enable or ( self.__opts and self.__opts["enabled"] )
+		return self.__force_enable or (
+			self.__opts and self.__opts.get("enabled", False))
 
 	@staticmethod
 	def _glob(path):
@@ -85,14 +87,14 @@ class JailReader(ConfigReader):
 		return pathList
 
 	def getOptions(self):
-		opts = [["bool", "enabled", "false"],
-				["string", "logpath", "/var/log/messages"],
-				["string", "logencoding", "auto"],
+		opts = [["bool", "enabled", False],
+				["string", "logpath", None],
+				["string", "logencoding", None],
 				["string", "backend", "auto"],
-				["int", "maxretry", 3],
-				["int", "findtime", 600],
-				["int", "bantime", 600],
-				["string", "usedns", "warn"],
+				["int", "maxretry", None],
+				["int", "findtime", None],
+				["int", "bantime", None],
+				["string", "usedns", None],
 				["string", "failregex", None],
 				["string", "ignoreregex", None],
 				["string", "ignorecommand", None],

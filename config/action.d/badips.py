@@ -36,7 +36,7 @@ from fail2ban.server.actions import ActionBase
 from fail2ban.version import version as f2bVersion
 
 class BadIPsAction(ActionBase):
-	"""Fail2Ban action which resports bans to badips.com, and also
+	"""Fail2Ban action which reports bans to badips.com, and also
 	blacklist bad IPs listed on badips.com by using another action's
 	ban method.
 
@@ -53,7 +53,7 @@ class BadIPsAction(ActionBase):
 	age : str, optional
 		Age of last report for bad IPs, per badips.com syntax.
 		Default "24h" (24 hours)
-    key : str, optional
+	key : str, optional
 		Key issued by badips.com to report bans, for later retrieval
 		of personalised content.
 	banaction : str, optional
@@ -65,7 +65,7 @@ class BadIPsAction(ActionBase):
 		from category used for reporting. e.g. may want to report
 		"postfix", but want to use whole "mail" category for blacklist.
 		Default `category`.
-    bankey : str, optional
+	bankey : str, optional
 		Key issued by badips.com to blacklist IPs reported with the
 		associated key.
 	updateperiod : int, optional
@@ -161,7 +161,7 @@ class BadIPsAction(ActionBase):
 				"/".join([self._badips, "get", "list", category, str(score)]),
 				urlencode({'age': age})])
 			if key:
-				url = "&".join([url, urlencode({"key", key})])
+				url = "&".join([url, urlencode({'key': key})])
 			response = urlopen(self._Request(url))
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
@@ -258,7 +258,7 @@ class BadIPsAction(ActionBase):
 				self._logSys.error(
 					"Error banning IP %s for jail '%s' with action '%s': %s",
 					ip, self._jail.name, self.banaction, e,
-					exc_info=self._logSys.getEffectiveLevel<=logging.DEBUG)
+					exc_info=self._logSys.getEffectiveLevel()<=logging.DEBUG)
 			else:
 				self._bannedips.add(ip)
 				self._logSys.info(
@@ -279,7 +279,7 @@ class BadIPsAction(ActionBase):
 				self._logSys.info(
 					"Error unbanning IP %s for jail '%s' with action '%s': %s",
 					ip, self._jail.name, self.banaction, e,
-					exc_info=self._logSys.getEffectiveLevel<=logging.DEBUG)
+					exc_info=self._logSys.getEffectiveLevel()<=logging.DEBUG)
 			else:
 				self._logSys.info(
 					"Unbanned IP %s for jail '%s' with action '%s'",
@@ -346,7 +346,7 @@ class BadIPsAction(ActionBase):
 		try:
 			url = "/".join([self._badips, "add", self.category, aInfo['ip']])
 			if self.key:
-				url = "?".join([url, urlencode({"key", self.key})])
+				url = "?".join([url, urlencode({'key': self.key})])
 			response = urlopen(self._Request(url))
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))

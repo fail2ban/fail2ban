@@ -24,11 +24,14 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging, time
+import time
 import json
 
+from ..helpers import getLogger
+from .. import version
+
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 class Transmitter:
 	
@@ -100,7 +103,9 @@ class Transmitter:
 		elif command[0] == "get":
 			return self.__commandGet(command[1:])
 		elif command[0] == "status":
-			return self.status(command[1:])			
+			return self.status(command[1:])
+		elif command[0] == "version":
+			return version.version
 		raise Exception("Invalid command")
 	
 	def __commandSet(self, command):

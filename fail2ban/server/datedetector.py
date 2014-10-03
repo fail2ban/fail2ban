@@ -21,13 +21,13 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging
 from threading import Lock
 
 from .datetemplate import DatePatternRegex, DateTai64n, DateEpoch
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 class DateDetector(object):
 	"""Manages one or more date templates to find a date within a log line.

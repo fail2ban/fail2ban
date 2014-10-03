@@ -24,21 +24,22 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import logging, os
+import os
 
 from .configreader import ConfigReader, DefinitionInitConfigReader
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 class ActionReader(DefinitionInitConfigReader):
 
 	_configOpts = [
-		["string", "actionstart", ""],
-		["string", "actionstop", ""],
-		["string", "actioncheck", ""],
-		["string", "actionban", ""],
-		["string", "actionunban", ""],
+		["string", "actionstart", None],
+		["string", "actionstop", None],
+		["string", "actioncheck", None],
+		["string", "actionban", None],
+		["string", "actionunban", None],
 	]
 
 	def __init__(self, file_, jailName, initOpts, **kwargs):

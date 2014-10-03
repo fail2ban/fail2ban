@@ -21,12 +21,11 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2013- Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging
-
 from ..exceptions import UnknownJailException, DuplicateJailException
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 ##
 # Beautify the output of the client.
@@ -52,6 +51,8 @@ class Beautifier:
 		try:
 			if inC[0] == "ping":
 				msg = "Server replied: " + response
+			elif inC[0] == "version":
+				msg = response
 			elif inC[0] == "start":
 				msg = "Jail started"
 			elif inC[0] == "stop":
@@ -188,9 +189,9 @@ class Beautifier:
 		logSys.debug("Beautify (error) " + `response` + " with " + `self.__inputCmd`)
 		msg = response
 		if isinstance(response, UnknownJailException):
-			msg = "Sorry but the jail '" + response[0] + "' does not exist"
+			msg = "Sorry but the jail '" + response.args[0] + "' does not exist"
 		elif isinstance(response, IndexError):
 			msg = "Sorry but the command is invalid"
 		elif isinstance(response, DuplicateJailException):
-			msg = "The jail '" + response[0] + "' already exists"
+			msg = "The jail '" + response.args[0] + "' already exists"
 		return msg

@@ -26,9 +26,10 @@ __license__ = "GPL"
 import Queue, logging
 
 from .actions import Actions
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
-logSys = logging.getLogger(__name__)
+logSys = getLogger(__name__)
 
 class Jail:
 	"""Fail2Ban jail, which manages a filter and associated actions.
@@ -104,7 +105,9 @@ class Jail:
 				self.__actions = Actions(self)
 				return					# we are done
 			except ImportError, e:
-				logSys.debug(
+				# Log debug if auto, but error if specific
+				logSys.log(
+					logging.DEBUG if backend == "auto" else logging.ERROR,
 					"Backend %r failed to initialize due to %s" % (b, e))
 		# log error since runtime error message isn't printed, INVALID COMMAND
 		logSys.error(
@@ -209,7 +212,7 @@ class Jail:
 		self.actions.start()
 		# Restore any previous valid bans from the database
 		if self.database is not None:
-			for ticket in self.database.getBans(
+			for ticket in self.database.getBansMerged(
 				jail=self, bantime=self.actions.getBanTime()):
 				if not self.filter.inIgnoreIPList(ticket.getIP()):
 					self.__queue.put(ticket)

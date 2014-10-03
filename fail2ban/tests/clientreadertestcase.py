@@ -32,8 +32,10 @@ from ..client.configurator import Configurator
 from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
+
+from .utils import CONFIG_DIR
+
 STOCK = os.path.exists(os.path.join('config','fail2ban.conf'))
-CONFIG_DIR='config' if STOCK else '/etc/fail2ban'
 
 IMPERFECT_CONFIG = os.path.join(os.path.dirname(__file__), 'config')
 
@@ -349,31 +351,9 @@ class JailsReaderTest(LogCaptureTestCase):
 		self.maxDiff = None
 		self.assertEqual(sorted(comm_commands),
 			sorted([['add', 'emptyaction', 'auto'],
-			 ['set', 'emptyaction', 'usedns', 'warn'],
-			 ['set', 'emptyaction', 'maxretry', 3],
-			 ['set', 'emptyaction', 'findtime', 600],
-			 ['set', 'emptyaction', 'logencoding', 'auto'],
-			 ['set', 'emptyaction', 'bantime', 600],
-			 ['add', 'special', 'auto'],
-			 ['set', 'special', 'usedns', 'warn'],
-			 ['set', 'special', 'maxretry', 3],
-			 ['set', 'special', 'addfailregex', '<IP>'],
-			 ['set', 'special', 'findtime', 600],
-			 ['set', 'special', 'logencoding', 'auto'],
-			 ['set', 'special', 'bantime', 600],
 			 ['add', 'missinglogfiles', 'auto'],
-			 ['set', 'missinglogfiles', 'usedns', 'warn'],
-			 ['set', 'missinglogfiles', 'maxretry', 3],
-			 ['set', 'missinglogfiles', 'findtime', 600],
-			 ['set', 'missinglogfiles', 'logencoding', 'auto'],
-			 ['set', 'missinglogfiles', 'bantime', 600],
 			 ['set', 'missinglogfiles', 'addfailregex', '<IP>'],
 			 ['add', 'brokenaction', 'auto'],
-			 ['set', 'brokenaction', 'usedns', 'warn'],
-			 ['set', 'brokenaction', 'maxretry', 3],
-			 ['set', 'brokenaction', 'findtime', 600],
-			 ['set', 'brokenaction', 'logencoding', 'auto'],
-			 ['set', 'brokenaction', 'bantime', 600],
 			 ['set', 'brokenaction', 'addfailregex', '<IP>'],
 			 ['set', 'brokenaction', 'addaction', 'brokenaction'],
 			 ['set',
@@ -382,23 +362,9 @@ class JailsReaderTest(LogCaptureTestCase):
 			  'brokenaction',
 			  'actionban',
 			  'hit with big stick <ip>'],
-			 ['set', 'brokenaction', 'action', 'brokenaction',
-				'actionstop', ''],
-			 ['set', 'brokenaction', 'action', 'brokenaction',
-				'actionstart', ''],
-			 ['set', 'brokenaction', 'action', 'brokenaction',
-				'actionunban', ''],
-			 ['set', 'brokenaction', 'action', 'brokenaction',
-				'actioncheck', ''],
 			 ['add', 'parse_to_end_of_jail.conf', 'auto'],
-			 ['set', 'parse_to_end_of_jail.conf', 'usedns', 'warn'],
-			 ['set', 'parse_to_end_of_jail.conf', 'maxretry', 3],
-			 ['set', 'parse_to_end_of_jail.conf', 'findtime', 600],
-			 ['set', 'parse_to_end_of_jail.conf', 'logencoding', 'auto'],
-			 ['set', 'parse_to_end_of_jail.conf', 'bantime', 600],
 			 ['set', 'parse_to_end_of_jail.conf', 'addfailregex', '<IP>'],
 			 ['start', 'emptyaction'],
-			 ['start', 'special'],
 			 ['start', 'missinglogfiles'],
 			 ['start', 'brokenaction'],
 			 ['start', 'parse_to_end_of_jail.conf'],]))
@@ -572,6 +538,7 @@ class JailsReaderTest(LogCaptureTestCase):
 		jailfd = open(os.path.join(basedir, "jail.conf"), 'w')
 		jailfd.write("""
 [testjail1]
+enabled = true
 action = testaction1[actname=test1]
          testaction1[actname=test2]
          testaction.py

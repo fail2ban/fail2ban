@@ -173,14 +173,25 @@ class DatabaseTest(unittest.TestCase):
 		self.assertTrue(
 			isinstance(self.db.getBans(jail=self.jail)[0], FailTicket))
 
+	def testDelBan(self):
+		self.testAddBan()
+		ticket = self.db.getBans(jail=self.jail)[0]
+		self.db.delBan(self.jail, ticket)
+		self.assertEqual(len(self.db.getBans(jail=self.jail)), 0)
+
 	def testGetBansWithTime(self):
 		if Fail2BanDb is None: # pragma: no cover
 			return
 		self.testAddJail()
-		ticket = FailTicket("127.0.0.1", MyTime.time() - 40, ["abc\n"])
-		self.db.addBan(self.jail, ticket)
+		self.db.addBan(
+			self.jail, FailTicket("127.0.0.1", MyTime.time() - 60, ["abc\n"]))
+		self.db.addBan(
+			self.jail, FailTicket("127.0.0.1", MyTime.time() - 40, ["abc\n"]))
 		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=50)), 1)
 		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=20)), 0)
+		# Negative values are for persistent bans, and such all bans should
+		# be returned
+		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=-1)), 2)
 
 	def testGetBansMerged(self):
 		if Fail2BanDb is None: # pragma: no cover
@@ -190,16 +201,16 @@ class DatabaseTest(unittest.TestCase):
 		jail2 = DummyJail()
 		self.db.addJail(jail2)
 
-		ticket = FailTicket("127.0.0.1", 10, ["abc\n"])
+		ticket = FailTicket("127.0.0.1", MyTime.time() - 40, ["abc\n"])
 		ticket.setAttempt(10)
 		self.db.addBan(self.jail, ticket)
-		ticket = FailTicket("127.0.0.1", 20, ["123\n"])
+		ticket = FailTicket("127.0.0.1", MyTime.time() - 30, ["123\n"])
 		ticket.setAttempt(20)
 		self.db.addBan(self.jail, ticket)
-		ticket = FailTicket("127.0.0.2", 30, ["ABC\n"])
+		ticket = FailTicket("127.0.0.2", MyTime.time() - 20, ["ABC\n"])
 		ticket.setAttempt(30)
 		self.db.addBan(self.jail, ticket)
-		ticket = FailTicket("127.0.0.1", 40, ["ABC\n"])
+		ticket = FailTicket("127.0.0.1", MyTime.time() - 10, ["ABC\n"])
 		ticket.setAttempt(40)
 		self.db.addBan(jail2, ticket)
 
@@ -220,13 +231,41 @@ class DatabaseTest(unittest.TestCase):
 			id(ticket),
 			id(self.db.getBansMerged("127.0.0.1", jail=self.jail)))
 
-		newTicket = FailTicket("127.0.0.1", 40, ["ABC\n"])
+		newTicket = FailTicket("127.0.0.2", MyTime.time() - 20, ["ABC\n"])
+		ticket.setAttempt(40)
+		# Add ticket, but not for same IP, so cache still valid
+		self.db.addBan(self.jail, newTicket)
+		self.assertEqual(
+			id(ticket),
+			id(self.db.getBansMerged("127.0.0.1", jail=self.jail)))
+
+		newTicket = FailTicket("127.0.0.1", MyTime.time() - 10, ["ABC\n"])
 		ticket.setAttempt(40)
 		self.db.addBan(self.jail, newTicket)
 		# Added ticket, so cache should have been cleared
 		self.assertNotEqual(
 			id(ticket),
 			id(self.db.getBansMerged("127.0.0.1", jail=self.jail)))
+
+		tickets = self.db.getBansMerged()
+		self.assertEqual(len(tickets), 2)
+		self.assertEqual(
+			sorted(list(set(ticket.getIP() for ticket in tickets))),
+			sorted([ticket.getIP() for ticket in tickets]))
+
+		tickets = self.db.getBansMerged(jail=jail2)
+		self.assertEqual(len(tickets), 1)
+
+		tickets = self.db.getBansMerged(bantime=25)
+		self.assertEqual(len(tickets), 2)
+		tickets = self.db.getBansMerged(bantime=15)
+		self.assertEqual(len(tickets), 1)
+		tickets = self.db.getBansMerged(bantime=5)
+		self.assertEqual(len(tickets), 0)
+		# Negative values are for persistent bans, and such all bans should
+		# be returned
+		tickets = self.db.getBansMerged(bantime=-1)
+		self.assertEqual(len(tickets), 2)
 
 	def testPurge(self):
 		if Fail2BanDb is None: # pragma: no cover

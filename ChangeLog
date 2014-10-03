@@ -10,21 +10,73 @@ Fail2Ban (version 0.9.0.dev)                                          2014/xx/xx
 ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
 ----------
 
+- Refactoring (IMPORTANT -- Please review your setup and configuration):
+   * iptables-common.conf replaced iptables-blocktype.conf
+     (iptables-blocktype.local should still be read) and now also
+     provides defaults for the chain, port, protocol and name tags
+
 - Fixes:
+   * UTF-8 fixes in pure-ftp thanks to Johannes Weberhofer. Closes gh-806.
    * systemd backend error on bad utf-8 in python3
    * badips.py action error when logging HTTP error raised with badips request
    * fail2ban-regex failed to work in python3 due to space/tab mix
+   * recidive regex samples incorrect log level
    * journalmatch for recidive incorrect PRIORITY
    * loglevel couldn't be changed in fail2ban.conf
    * Handle case when no sqlite library is available for persistent database
+   * Only reban once per IP from database on fail2ban restart
+   * Nginx filter to support missing server_name. Closes gh-676
+   * fail2ban-regex assertion error caused by miscount missed lines with
+     multiline regex
+   * Fix actions failing to execute for Python 3.4.0. Workaround for
+     http://bugs.python.org/issue21207
+   * Database now returns persistent bans on restart (bantime < 0)
+   * Recursive action tags now fully processed. Fixes issue with bsd-ipfw
+     action
+   * Fixed TypeError with "ipfailures" and "ipjailfailures" action tags.
+     Thanks Serg G. Brester
+   * Correct times for non-timezone date times formats during DST
+   * Pass a copy of, not original, aInfo into actions to avoid side-effects
+   * Per-distribution paths to the exim's main log
+   * Ignored IPs are no longer banned when being restored from persistent
+     database
+   * Manually unbanned IPs are now removed from persistent database, such they
+     wont be banned again when Fail2Ban is restarted
+   * Pass "bantime" parameter to the actions in default jail's action
+     definition(s)
+   * filters.d/sieve.conf - fixed typo in _daemon.  Thanks Jisoo Park
+   * cyrus-imap -- also catch also failed logins via secured (imaps/pop3s).
+     Regression was introduced while strengthening failregex in 0.8.11 (bd175f)
+     Debian bug #755173
+   * postfix-sasl - added journalmatch.  Thanks Luc Maisonobe
+   * postfix* - match with a new daemon string (postfix/submission/smtpd).
+     Closes gh-804 .  Thanks Paul Traina
+   * apache - added filter for AH01630 client denied by server configuration.
 
 - New features:
-
+   - New filters:
+     - monit  Thanks Jason H Martin
+     - directadmin  Thanks niorg
+     - apache-shellshock  Thanks Eugene Hopkinson (SlowRiot)
+   - New actions:
+     - symbiosis-blacklist-allports  for Bytemark symbiosis firewall
+   - fail2ban-client can fetch the running server version
+   - Added Cloudflare API action
 
 - Enhancements
    * Fail2ban-regex - add print-all-matched option. Closes gh-652
+   * Suppress fail2ban-client warnings for non-critical config options
+   * Match non "Bye Bye" disconnect messages for sshd locked account regex
+   * courier-smtp filter:
+     - match lines with user names
+     - match lines containing "535 Authentication failed" attempts
+   * Add <chain> tag to iptables-ipsets
+   * Realign fail2ban log output with white space to improve readability. Does
+     not affect SYSLOG output
+   * Log unhandled exceptions
+   * cyrus-imap: catch "user not found" attempts
 
-ver. 0.9.0 (2014/03/14 - beta
+ver. 0.9.0 (2014/03/14) - beta
 ----------
 
 Carries all fixes, features and enhancements from 0.8.13 (unreleased) with
