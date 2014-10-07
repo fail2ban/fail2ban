@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, glob, shutil, tempfile, unittest, time
+import os, glob, shutil, tempfile, unittest, time, re
 
 from ..client.configreader import ConfigReader
 from ..client.jailreader import JailReader
@@ -341,6 +341,36 @@ class FilterReaderTest(unittest.TestCase):
 		filterReader.read()
 		filterReader.getOptions(None)
 		self.assertRaises(ValueError, FilterReader.convert, filterReader)
+
+
+class JailsReaderTestCache(LogCaptureTestCase):
+
+	def testTestJailConfCache(self):
+		basedir = tempfile.mkdtemp("fail2ban_conf")
+		try:
+			shutil.rmtree(basedir)
+			shutil.copytree(CONFIG_DIR, basedir)
+			shutil.copy(CONFIG_DIR + '/jail.conf', basedir + '/jail.local')
+			shutil.copy(CONFIG_DIR + '/fail2ban.conf', basedir + '/fail2ban.local')
+
+			# read whole configuration like a file2ban-client ...
+			configurator = Configurator()
+			configurator.setBaseDir(basedir)
+			configurator.readEarly()
+			configurator.getEarlyOptions()
+			configurator.readAll()
+			# from here we test a cache :
+			self.assertTrue(configurator.getOptions(None))
+			cnt = 0
+			for s in self.getLog().rsplit('\n'):
+				if re.match(r"^Reading files: .*jail.local", s):
+					cnt += 1
+			# if cnt > 2:
+			# 	self.printLog()
+			self.assertFalse(cnt > 2, "Too many times reading of config files, cnt = %s" % cnt)
+			self.assertFalse(cnt <= 0)
+		finally:
+			shutil.rmtree(basedir)
 
 
 class JailsReaderTest(LogCaptureTestCase):
