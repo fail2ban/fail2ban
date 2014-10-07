@@ -111,6 +111,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
 	tests.addTest(unittest.makeSuite(clientreadertestcase.FilterReaderTest))
 	tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTest))
+	tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTestCache))
 	# CSocket and AsyncServer
 	tests.addTest(unittest.makeSuite(sockettestcase.Socket))
 	# Misc helpers
@@ -215,6 +216,9 @@ class LogCaptureTestCase(unittest.TestCase):
 
 	def _is_logged(self, s):
 		return s in self._log.getvalue()
+
+	def getLog(self):
+		return self._log.getvalue()
 
 	def printLog(self):
 		print(self._log.getvalue())
