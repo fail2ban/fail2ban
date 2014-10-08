@@ -124,7 +124,7 @@ class SafeConfigParserWithIncludes(object):
 		else:
 			fileNamesFull = resource
 		# check cache
-		hashv = '///'.join(fileNamesFull)
+		hashv = '\x01'.join(fileNamesFull)
 		cr, ret, mtime = SCPWI.CFG_CACHE.get(hashv, (None, False, 0))
 		curmt = SCPWI._resource_mtime(fileNamesFull)
 		if cr is not None and mtime == curmt:
@@ -167,7 +167,7 @@ class SafeConfigParserWithIncludes(object):
 		parser = SCPWI()
 		try:
 			# read without includes
-			parser.read(resource, get_includes = False)
+			parser.read(resource, get_includes=False)
 		except UnicodeDecodeError, e:
 			logSys.error("Error decoding config file '%s': %s" % (resource, e))
 			return []
@@ -232,11 +232,45 @@ after = 1.conf
 			super(_SafeConfigParserWithIncludes, self).__init__(
 				*args, **kwargs)
 
+	def get_defaults(self):
+		return self._defaults
+
+	def get_sections(self):
+		return self._sections
 
 	def read(self, filenames):
 		if not isinstance(filenames, list):
 			filenames = [ filenames ]
-		logSys.debug("Reading files: %s", filenames)
+		if len(filenames) > 1:
+			# read multiple configs:
+			ret = []
+			alld = self.get_defaults()
+			alls = self.get_sections()
+			for filename in filenames:
+				# read single one, add to return list:
+				cfg = SafeConfigParserWithIncludes()
+				i = cfg.read(filename, get_includes=False)
+				if i:
+					ret += i
+					# merge defaults and all sections to self:
+					for (n, v) in cfg.get_defaults().items():
+						alld[n] = v
+					for (n, s) in cfg.get_sections().items():
+						if isinstance(s, dict):
+							s2 = alls.get(n)
+							if s2 is not None:
+								for (n, v) in s.items():
+									s2[n] = v
+							else:
+								s2 = s.copy()
+								alls[n] = s2
+						else:
+							alls[n] = s
+
+			return ret
+
+		# read one config :
+		logSys.debug("Reading file: %s", filenames[0])
 		if sys.version_info >= (3,2): # pragma: no cover
 			return SafeConfigParser.read(self, filenames, encoding='utf-8')
 		else:

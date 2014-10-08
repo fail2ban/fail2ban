@@ -365,11 +365,11 @@ class JailsReaderTestCache(LogCaptureTestCase):
 			self.assertTrue(configurator.getOptions(None))
 			cnt = 0
 			for s in self.getLog().rsplit('\n'):
-				if re.match(r"^Reading files: .*jail.local", s):
+				if re.match(r"^Reading files?: .*jail.local", s):
 					cnt += 1
-			# if cnt > 2:
+			# if cnt > 1:
 			# 	self.printLog()
-			self.assertFalse(cnt > 2, "Too many times reading of config files, cnt = %s" % cnt)
+			self.assertFalse(cnt > 1, "Too many times reading of config files, cnt = %s" % cnt)
 			self.assertFalse(cnt <= 0)
 		finally:
 			shutil.rmtree(basedir)
