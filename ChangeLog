@@ -71,6 +71,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
    - New filters:
      - monit  Thanks Jason H Martin
      - directadmin  Thanks niorg
+     - apache-shellshock  Thanks Eugene Hopkinson (SlowRiot)
    - New actions:
      - symbiosis-blacklist-allports  for Bytemark symbiosis firewall
    - fail2ban-client can fetch the running server version

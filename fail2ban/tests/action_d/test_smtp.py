@@ -30,10 +30,7 @@ else:
 
 from ..dummyjail import DummyJail
 
-if os.path.exists('config/fail2ban.conf'):
-	CONFIG_DIR = "config"
-else:
-	CONFIG_DIR='/etc/fail2ban'
+from ..utils import CONFIG_DIR
 
 class TestSMTPServer(smtpd.SMTPServer):
 

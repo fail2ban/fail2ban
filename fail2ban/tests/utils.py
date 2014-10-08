@@ -34,6 +34,15 @@ from ..helpers import getLogger
 
 logSys = getLogger(__name__)
 
+CONFIG_DIR = os.environ.get('FAIL2BAN_CONFIG_DIR', None)
+
+if not CONFIG_DIR:
+# Use heuristic to figure out where configuration files are
+	if os.path.exists(os.path.join('config','fail2ban.conf')):
+		CONFIG_DIR = 'config'
+	else:
+		CONFIG_DIR = '/etc/fail2ban'
+
 def mtimesleep():
 	# no sleep now should be necessary since polling tracks now not only
 	# mtime but also ino and size

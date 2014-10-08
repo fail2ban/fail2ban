@@ -32,8 +32,10 @@ from ..client.configurator import Configurator
 from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
+
+from .utils import CONFIG_DIR
+
 STOCK = os.path.exists(os.path.join('config','fail2ban.conf'))
-CONFIG_DIR='config' if STOCK else '/etc/fail2ban'
 
 IMPERFECT_CONFIG = os.path.join(os.path.dirname(__file__), 'config')
 
@@ -363,12 +365,22 @@ class JailsReaderTestCache(LogCaptureTestCase):
 			self.assertTrue(configurator.getOptions(None))
 			cnt = 0
 			for s in self.getLog().rsplit('\n'):
-				if re.match(r"^Reading files: .*jail.local", s):
+				if re.match(r"^Reading files?: .*jail.local", s):
 					cnt += 1
-			# if cnt > 2:
+			# if cnt > 1:
 			# 	self.printLog()
-			self.assertFalse(cnt > 2, "Too many times reading of config files, cnt = %s" % cnt)
-			self.assertFalse(cnt <= 0)
+			self.assertFalse(cnt > 1, "Too many times reading of config files, cnt = %s" % cnt)
+			self.assertFalse(cnt == 0)
+
+			# read whole configuration like a file2ban-client again ...
+			configurator = Configurator()
+			configurator.setBaseDir(basedir)
+			configurator.readEarly()
+			configurator.getEarlyOptions()
+			configurator.readAll()
+			self.assertTrue(configurator.getOptions(None))
+			self.assertFalse(cnt == 0)
+
 		finally:
 			shutil.rmtree(basedir)
 
