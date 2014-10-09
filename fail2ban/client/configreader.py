@@ -35,9 +35,9 @@ logSys = getLogger(__name__)
 _logLevel = 6
 
 class ConfigReader():
-	"""Config reader class (previously ConfigWrapper).
+	"""Generic config reader class.
 
-	Automatically shares or use already shared instance of ConfigReaderUnshared.
+  A caching adapter which automatically reuses already shared configuration.
 			 """
 
 	def __init__(self, use_config=None, share_config=None, **kwargs):
@@ -200,12 +200,12 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 
 class DefinitionInitConfigReader(ConfigReader):
 	"""Config reader for files with options grouped in [Definition] and
-			 [Init] sections.
+       [Init] sections.
 
-			 Is a base class for readers of filters and actions, where definitions
-			 in jails might provide custom values for options defined in [Init]
-			 section.
-			 """
+       Is a base class for readers of filters and actions, where definitions
+       in jails might provide custom values for options defined in [Init]
+       section.
+       """
 
 	_configOpts = []
 	
