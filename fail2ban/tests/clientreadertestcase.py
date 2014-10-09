@@ -347,6 +347,23 @@ class FilterReaderTest(unittest.TestCase):
 
 class JailsReaderTestCache(LogCaptureTestCase):
 
+	def _readWholeConf(self, basedir, force_enable=False):
+		# read whole configuration like a file2ban-client ...
+		configurator = Configurator(force_enable=force_enable)
+		configurator.setBaseDir(basedir)
+		configurator.readEarly()
+		configurator.getEarlyOptions()
+		configurator.readAll()
+		# from here we test a cache with all includes / before / after :
+		self.assertTrue(configurator.getOptions(None))
+
+	def _getLoggedReadCount(self, filematch):
+		cnt = 0
+		for s in self.getLog().rsplit('\n'):
+			if re.match(r"^Reading files?: .*/"+filematch, s):
+				cnt += 1
+		return cnt
+
 	def testTestJailConfCache(self):
 		basedir = tempfile.mkdtemp("fail2ban_conf")
 		try:
@@ -356,31 +373,27 @@ class JailsReaderTestCache(LogCaptureTestCase):
 			shutil.copy(CONFIG_DIR + '/fail2ban.conf', basedir + '/fail2ban.local')
 
 			# read whole configuration like a file2ban-client ...
-			configurator = Configurator()
-			configurator.setBaseDir(basedir)
-			configurator.readEarly()
-			configurator.getEarlyOptions()
-			configurator.readAll()
-			# from here we test a cache :
-			self.assertTrue(configurator.getOptions(None))
-			cnt = 0
-			for s in self.getLog().rsplit('\n'):
-				if re.match(r"^Reading files?: .*jail.local", s):
-					cnt += 1
+			self._readWholeConf(basedir)
+			# how many times jail.local was read:
+			cnt = self._getLoggedReadCount('jail.local')
 			# if cnt > 1:
 			# 	self.printLog()
-			self.assertFalse(cnt > 1, "Too many times reading of config files, cnt = %s" % cnt)
-			self.assertFalse(cnt == 0)
+			self.assertFalse(cnt > 1, "Too many times reading of jail files, cnt = %s" % cnt)
+			self.assertNotEqual(cnt, 0)
 
-			# read whole configuration like a file2ban-client again ...
-			configurator = Configurator()
-			configurator.setBaseDir(basedir)
-			configurator.readEarly()
-			configurator.getEarlyOptions()
-			configurator.readAll()
-			self.assertTrue(configurator.getOptions(None))
-			self.assertFalse(cnt == 0)
+			# read whole configuration like a file2ban-client, again ...
+			# but this time force enable all jails, to check filter and action cached also:
+			self._readWholeConf(basedir, force_enable=True)
+			cnt = self._getLoggedReadCount(r'jail\.local')
+			# still one (no more reads):
+			self.assertFalse(cnt > 1, "Too many times second reading of jail files, cnt = %s" % cnt)
 
+			# same with filter:
+			cnt = self._getLoggedReadCount(r'filter\.d/common\.conf')
+			self.assertFalse(cnt > 1, "Too many times reading of filter files, cnt = %s" % cnt)
+			# same with action:
+			cnt = self._getLoggedReadCount(r'action\.d/iptables-common\.conf')
+			self.assertFalse(cnt > 1, "Too many times reading of action files, cnt = %s" % cnt)
 		finally:
 			shutil.rmtree(basedir)
 
