@@ -21,7 +21,7 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, glob, shutil, tempfile, unittest, re
+import os, glob, shutil, tempfile, unittest, time, re
 
 from ..client.configreader import ConfigReader
 from ..client.jailreader import JailReader
@@ -38,6 +38,8 @@ from .utils import CONFIG_DIR
 STOCK = os.path.exists(os.path.join('config','fail2ban.conf'))
 
 IMPERFECT_CONFIG = os.path.join(os.path.dirname(__file__), 'config')
+
+LAST_WRITE_TIME = 0
 
 class ConfigReaderTest(unittest.TestCase):
 
@@ -57,7 +59,8 @@ class ConfigReaderTest(unittest.TestCase):
 			d_ = os.path.join(self.d, d)
 			if not os.path.exists(d_):
 				os.makedirs(d_)
-		f = open("%s/%s" % (self.d, fname), "w")
+		fname = "%s/%s" % (self.d, fname)
+		f = open(fname, "w")
 		if value is not None:
 			f.write("""
 [section]
@@ -66,6 +69,14 @@ option = %s
 		if content is not None:
 			f.write(content)
 		f.close()
+		# set modification time to another second to revalidate cache (if milliseconds not supported) :
+		global LAST_WRITE_TIME
+		mtime = os.path.getmtime(fname)
+		if LAST_WRITE_TIME == mtime:
+			mtime += 1
+			os.utime(fname, (mtime, mtime))
+		LAST_WRITE_TIME = mtime
+		
 
 	def _remove(self, fname):
 		os.unlink("%s/%s" % (self.d, fname))
@@ -90,7 +101,6 @@ option = %s
 			# SkipTest introduced only in 2.7 thus can't yet use generally
 			# raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform)
 			pass
-
 
 	def testOptionalDotDDir(self):
 		self.assertFalse(self.c.read('c'))	# nothing is there yet
@@ -337,6 +347,23 @@ class FilterReaderTest(unittest.TestCase):
 
 class JailsReaderTestCache(LogCaptureTestCase):
 
+	def _readWholeConf(self, basedir, force_enable=False):
+		# read whole configuration like a file2ban-client ...
+		configurator = Configurator(force_enable=force_enable)
+		configurator.setBaseDir(basedir)
+		configurator.readEarly()
+		configurator.getEarlyOptions()
+		configurator.readAll()
+		# from here we test a cache with all includes / before / after :
+		self.assertTrue(configurator.getOptions(None))
+
+	def _getLoggedReadCount(self, filematch):
+		cnt = 0
+		for s in self.getLog().rsplit('\n'):
+			if re.match(r"^Reading files?: .*/"+filematch, s):
+				cnt += 1
+		return cnt
+
 	def testTestJailConfCache(self):
 		basedir = tempfile.mkdtemp("fail2ban_conf")
 		try:
@@ -346,21 +373,26 @@ class JailsReaderTestCache(LogCaptureTestCase):
 			shutil.copy(CONFIG_DIR + '/fail2ban.conf', basedir + '/fail2ban.local')
 
 			# read whole configuration like a file2ban-client ...
-			configurator = Configurator()
-			configurator.setBaseDir(basedir)
-			configurator.readEarly()
-			configurator.getEarlyOptions()
-			configurator.readAll()
-			# from here we test a cache :
-			self.assertTrue(configurator.getOptions(None))
-			cnt = 0
-			for s in self.getLog().rsplit('\n'):
-				if re.match(r"^Reading files: .*jail.local", s):
-					cnt += 1
-			# if cnt > 2:
+			self._readWholeConf(basedir)
+			# how many times jail.local was read:
+			cnt = self._getLoggedReadCount('jail.local')
+			# if cnt > 1:
 			# 	self.printLog()
-			self.assertFalse(cnt > 2, "Too many times reading of config files, cnt = %s" % cnt)
-			self.assertFalse(cnt <= 0)
+			self.assertTrue(cnt == 1, "Unexpected count by reading of jail files, cnt = %s" % cnt)
+
+			# read whole configuration like a file2ban-client, again ...
+			# but this time force enable all jails, to check filter and action cached also:
+			self._readWholeConf(basedir, force_enable=True)
+			cnt = self._getLoggedReadCount(r'jail\.local')
+			# still one (no more reads):
+			self.assertTrue(cnt == 1, "Unexpected count by second reading of jail files, cnt = %s" % cnt)
+
+			# same with filter:
+			cnt = self._getLoggedReadCount(r'filter\.d/common\.conf')
+			self.assertTrue(cnt == 1, "Unexpected count by reading of filter files, cnt = %s" % cnt)
+			# same with action:
+			cnt = self._getLoggedReadCount(r'action\.d/iptables-common\.conf')
+			self.assertTrue(cnt == 1, "Unexpected count by reading of action files, cnt = %s" % cnt)
 		finally:
 			shutil.rmtree(basedir)
 
