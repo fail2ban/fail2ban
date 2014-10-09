@@ -21,9 +21,9 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, glob, shutil, tempfile, unittest, time, re
+import os, glob, shutil, tempfile, unittest, re
 
-from ..client.configreader import ConfigReader
+from ..client.configreader import ConfigReaderUnshared
 from ..client.jailreader import JailReader
 from ..client.filterreader import FilterReader
 from ..client.jailsreader import JailsReader
@@ -46,7 +46,7 @@ class ConfigReaderTest(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		self.d = tempfile.mkdtemp(prefix="f2b-temp")
-		self.c = ConfigReader(basedir=self.d)
+		self.c = ConfigReaderUnshared(basedir=self.d)
 
 	def tearDown(self):
 		"""Call after every test case."""

@@ -92,7 +92,7 @@ class SafeConfigParserWithIncludes(object):
 		return orig_attr
 
 	@staticmethod
-	def _resource_mtime(resource):
+	def _get_resource_fingerprint(resource):
 		mt = []
 		dirnames = []
 		for filename in resource:
@@ -126,7 +126,7 @@ class SafeConfigParserWithIncludes(object):
 		# check cache
 		hashv = '\x01'.join(fileNamesFull)
 		cr, ret, mtime = SCPWI.CFG_CACHE.get(hashv, (None, False, 0))
-		curmt = SCPWI._resource_mtime(fileNamesFull)
+		curmt = SCPWI._get_resource_fingerprint(fileNamesFull)
 		if cr is not None and mtime == curmt:
 			self.__cr = cr
 			logSys.debug("Cached config files: %s", resource)
@@ -160,7 +160,7 @@ class SafeConfigParserWithIncludes(object):
 		# check cache
 		hashv = '///'.join(resources)
 		cinc, mtime = SCPWI.CFG_INC_CACHE.get(hashv, (None, 0))
-		curmt = SCPWI._resource_mtime(resources)
+		curmt = SCPWI._get_resource_fingerprint(resources)
 		if cinc is not None and mtime == curmt:
 			return cinc
 		

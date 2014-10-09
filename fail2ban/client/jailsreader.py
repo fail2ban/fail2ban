@@ -24,14 +24,14 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from .configreader import ConfigReader, ConfigWrapper
+from .configreader import ConfigReader
 from .jailreader import JailReader
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
-class JailsReader(ConfigWrapper):
+class JailsReader(ConfigReader):
 
 	def __init__(self, force_enable=False, **kwargs):
 		"""
@@ -42,7 +42,7 @@ class JailsReader(ConfigWrapper):
 		  It is for internal use
 		"""
 		# use shared config if possible:
-		ConfigWrapper.__init__(self, **kwargs)
+		ConfigReader.__init__(self, **kwargs)
 		self.__cfg_share = dict()
 		self.__jails = list()
 		self.__force_enable = force_enable
@@ -52,13 +52,13 @@ class JailsReader(ConfigWrapper):
 		return self.__jails
 
 	def read(self):
-		return ConfigWrapper.read(self, "jail")
+		return ConfigReader.read(self, "jail")
 
 	def getOptions(self, section=None):
 		"""Reads configuration for jail(s) and adds enabled jails to __jails
 		"""
 		opts = []
-		self.__opts = ConfigWrapper.getOptions(self, "Definition", opts)
+		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
 
 		if section is None:
 			sections = self.sections()
