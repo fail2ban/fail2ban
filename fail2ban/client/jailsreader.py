@@ -24,14 +24,14 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from .configreader import ConfigReader
+from .configreader import ConfigReader, ConfigWrapper
 from .jailreader import JailReader
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
-class JailsReader(ConfigReader):
+class JailsReader(ConfigWrapper):
 
 	def __init__(self, force_enable=False, **kwargs):
 		"""
@@ -41,7 +41,9 @@ class JailsReader(ConfigReader):
 		  Passed to JailReader to force enable the jails.
 		  It is for internal use
 		"""
-		ConfigReader.__init__(self, **kwargs)
+		# use shared config if possible:
+		ConfigWrapper.__init__(self, **kwargs)
+		self.__cfg_share = dict()
 		self.__jails = list()
 		self.__force_enable = force_enable
 
@@ -50,13 +52,13 @@ class JailsReader(ConfigReader):
 		return self.__jails
 
 	def read(self):
-		return ConfigReader.read(self, "jail")
+		return ConfigWrapper.read(self, "jail")
 
 	def getOptions(self, section=None):
 		"""Reads configuration for jail(s) and adds enabled jails to __jails
 		"""
 		opts = []
-		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
+		self.__opts = ConfigWrapper.getOptions(self, "Definition", opts)
 
 		if section is None:
 			sections = self.sections()
@@ -68,9 +70,10 @@ class JailsReader(ConfigReader):
 		for sec in sections:
 			if sec == 'INCLUDES':
 				continue
-			jail = JailReader(sec, basedir=self.getBaseDir(),
-							  force_enable=self.__force_enable)
-			jail.read()
+			# use the cfg_share for filter/action caching and the same config for all 
+			# jails (use_config=...), therefore don't read it here:
+			jail = JailReader(sec, force_enable=self.__force_enable, 
+				cfg_share=self.__cfg_share, use_config=self._cfg)
 			ret = jail.getOptions()
 			if ret:
 				if jail.isEnabled():
