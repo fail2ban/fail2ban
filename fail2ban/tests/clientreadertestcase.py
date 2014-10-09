@@ -378,22 +378,21 @@ class JailsReaderTestCache(LogCaptureTestCase):
 			cnt = self._getLoggedReadCount('jail.local')
 			# if cnt > 1:
 			# 	self.printLog()
-			self.assertFalse(cnt > 1, "Too many times reading of jail files, cnt = %s" % cnt)
-			self.assertNotEqual(cnt, 0)
+			self.assertTrue(cnt == 1, "Unexpected count by reading of jail files, cnt = %s" % cnt)
 
 			# read whole configuration like a file2ban-client, again ...
 			# but this time force enable all jails, to check filter and action cached also:
 			self._readWholeConf(basedir, force_enable=True)
 			cnt = self._getLoggedReadCount(r'jail\.local')
 			# still one (no more reads):
-			self.assertFalse(cnt > 1, "Too many times second reading of jail files, cnt = %s" % cnt)
+			self.assertTrue(cnt == 1, "Unexpected count by second reading of jail files, cnt = %s" % cnt)
 
 			# same with filter:
 			cnt = self._getLoggedReadCount(r'filter\.d/common\.conf')
-			self.assertFalse(cnt > 1, "Too many times reading of filter files, cnt = %s" % cnt)
+			self.assertTrue(cnt == 1, "Unexpected count by reading of filter files, cnt = %s" % cnt)
 			# same with action:
 			cnt = self._getLoggedReadCount(r'action\.d/iptables-common\.conf')
-			self.assertFalse(cnt > 1, "Too many times reading of action files, cnt = %s" % cnt)
+			self.assertTrue(cnt == 1, "Unexpected count by reading of action files, cnt = %s" % cnt)
 		finally:
 			shutil.rmtree(basedir)
 
