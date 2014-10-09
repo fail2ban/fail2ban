@@ -32,6 +32,65 @@ from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
+logLevel = 6
+
+class ConfigWrapper():
+
+	def __init__(self, use_config=None, share_config=None, **kwargs):
+		# use given shared config if possible (see read):
+		self._cfg_share = None
+		self._cfg = None
+		if use_config is not None:
+			self._cfg = use_config
+		else:
+			# share config if possible:
+			if share_config is not None:
+				self._cfg_share = share_config
+				self._cfg_share_kwargs = kwargs
+			else:
+				self._cfg = ConfigReader(**kwargs)
+
+	def setBaseDir(self, basedir):
+		self._cfg.setBaseDir(basedir)
+
+	def getBaseDir(self):
+		return self._cfg.getBaseDir()
+
+	def read(self, name, once=True):
+		# shared ?
+		if not self._cfg and self._cfg_share is not None:
+			self._cfg = self._cfg_share.get(name)
+			if not self._cfg:
+				self._cfg = ConfigReader(**self._cfg_share_kwargs)
+				self._cfg_share[name] = self._cfg
+		# performance feature - read once if using shared config reader:
+		rc = self._cfg.read_cfg_files
+		if once and rc.get(name) is not None:
+			return rc.get(name)
+
+		# read:
+		ret = self._cfg.read(name)
+
+		# save already read:
+		if once:
+			rc[name] = ret
+		return ret
+
+	def sections(self):
+		return self._cfg.sections()
+
+	def has_section(self, sec):
+		return self._cfg.has_section(sec)
+
+	def options(self, *args):
+		return self._cfg.options(*args)
+
+	def get(self, sec, opt):
+		return self._cfg.get(sec, opt)
+
+	def getOptions(self, *args, **kwargs):
+		return self._cfg.getOptions(*args, **kwargs)
+
 
 class ConfigReader(SafeConfigParserWithIncludes):
 
@@ -39,8 +98,8 @@ class ConfigReader(SafeConfigParserWithIncludes):
 	
 	def __init__(self, basedir=None):
 		SafeConfigParserWithIncludes.__init__(self)
+		self.read_cfg_files = dict()
 		self.setBaseDir(basedir)
-		self.__opts = None
 	
 	def setBaseDir(self, basedir):
 		if basedir is None:
@@ -122,17 +181,15 @@ class ConfigReader(SafeConfigParserWithIncludes):
 					logSys.warning("'%s' not defined in '%s'. Using default one: %r"
 								% (option[1], sec, option[2]))
 					values[option[1]] = option[2]
-				else:
-					logSys.debug(
-						"Non essential option '%s' not defined in '%s'.",
-						option[1], sec)
+				elif logSys.getEffectiveLevel() <= logLevel:
+					logSys.log(logLevel, "Non essential option '%s' not defined in '%s'.", option[1], sec)
 			except ValueError:
 				logSys.warning("Wrong value for '" + option[1] + "' in '" + sec +
 							"'. Using default one: '" + `option[2]` + "'")
 				values[option[1]] = option[2]
 		return values
 
-class DefinitionInitConfigReader(ConfigReader):
+class DefinitionInitConfigReader(ConfigWrapper):
 	"""Config reader for files with options grouped in [Definition] and
 			 [Init] sections.
 
@@ -144,7 +201,7 @@ class DefinitionInitConfigReader(ConfigReader):
 	_configOpts = []
 	
 	def __init__(self, file_, jailName, initOpts, **kwargs):
-		ConfigReader.__init__(self, **kwargs)
+		ConfigWrapper.__init__(self, **kwargs)
 		self.setFile(file_)
 		self.setJailName(jailName)
 		self._initOpts = initOpts
@@ -163,14 +220,14 @@ class DefinitionInitConfigReader(ConfigReader):
 		return self._jailName
 	
 	def read(self):
-		return ConfigReader.read(self, self._file)
+		return ConfigWrapper.read(self, self._file)
 
 	# needed for fail2ban-regex that doesn't need fancy directories
 	def readexplicit(self):
 		return SafeConfigParserWithIncludes.read(self, self._file)
 	
 	def getOptions(self, pOpts):
-		self._opts = ConfigReader.getOptions(
+		self._opts = ConfigWrapper.getOptions(
 			self, "Definition", self._configOpts, pOpts)
 		
 		if self.has_section("Init"):

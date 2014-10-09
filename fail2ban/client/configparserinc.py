@@ -253,17 +253,14 @@ after = 1.conf
 				if i:
 					ret += i
 					# merge defaults and all sections to self:
-					for (n, v) in cfg.get_defaults().items():
-						alld[n] = v
-					for (n, s) in cfg.get_sections().items():
+					alld.update(cfg.get_defaults())
+					for n, s in cfg.get_sections().iteritems():
 						if isinstance(s, dict):
 							s2 = alls.get(n)
-							if s2 is not None:
-								for (n, v) in s.items():
-									s2[n] = v
+							if isinstance(s2, dict):
+								s2.update(s)
 							else:
-								s2 = s.copy()
-								alls[n] = s2
+								alls[n] = s.copy()
 						else:
 							alls[n] = s
 
