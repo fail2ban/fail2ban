@@ -39,9 +39,14 @@ class Configurator:
 		# always share all config readers:
 		if share_config is None:
 			share_config = dict()
+		self.__share_config = share_config
 		self.__fail2ban = Fail2banReader(share_config=share_config)
 		self.__jails = JailsReader(force_enable=force_enable, share_config=share_config)
-	
+
+	def Reload(self):
+		# clear all shared handlers:
+		self.__share_config.clear()
+
 	def setBaseDir(self, folderName):
 		self.__fail2ban.setBaseDir(folderName)
 		self.__jails.setBaseDir(folderName)
