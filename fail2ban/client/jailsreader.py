@@ -41,7 +41,6 @@ class JailsReader(ConfigReader):
 		  Passed to JailReader to force enable the jails.
 		  It is for internal use
 		"""
-		# use shared config if possible:
 		ConfigReader.__init__(self, **kwargs)
 		self.__jails = list()
 		self.__force_enable = force_enable

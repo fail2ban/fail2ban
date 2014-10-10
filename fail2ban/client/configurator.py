@@ -36,6 +36,9 @@ class Configurator:
 	def __init__(self, force_enable=False, share_config=None):
 		self.__settings = dict()
 		self.__streams = dict()
+		# always share all config readers:
+		if share_config is None:
+			share_config = dict()
 		self.__fail2ban = Fail2banReader(share_config=share_config)
 		self.__jails = JailsReader(force_enable=force_enable, share_config=share_config)
 	

@@ -21,9 +21,9 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, glob, shutil, tempfile, unittest, re
-
+import os, glob, shutil, tempfile, unittest, re, logging
 from ..client.configreader import ConfigReaderUnshared
+from ..client import configparserinc
 from ..client.jailreader import JailReader
 from ..client.filterreader import FilterReader
 from ..client.jailsreader import JailsReader
@@ -355,6 +355,8 @@ class JailsReaderTestCache(LogCaptureTestCase):
 		return cnt
 
 	def testTestJailConfCache(self):
+		saved_ll = configparserinc.logLevel
+		configparserinc.logLevel = logging.DEBUG
 		basedir = tempfile.mkdtemp("fail2ban_conf")
 		try:
 			shutil.rmtree(basedir)
@@ -388,6 +390,7 @@ class JailsReaderTestCache(LogCaptureTestCase):
 			self.assertTrue(cnt == 1, "Unexpected count by reading of action files, cnt = %s" % cnt)
 		finally:
 			shutil.rmtree(basedir)
+			configparserinc.logLevel = saved_ll
 
 
 class JailsReaderTest(LogCaptureTestCase):

@@ -27,12 +27,11 @@ __license__ = "GPL"
 import glob, os
 from ConfigParser import NoOptionError, NoSectionError
 
-from .configparserinc import SafeConfigParserWithIncludes
+from .configparserinc import SafeConfigParserWithIncludes, logLevel
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
-_logLevel = 6
 
 class ConfigReader():
 	"""Generic config reader class.
@@ -72,6 +71,22 @@ class ConfigReader():
 
 	def read(self, name, once=True):
 		# shared ?
+		if not self._cfg:
+			self.touch(name)
+		# performance feature - read once if using shared config reader:
+		if once and self._cfg.read_cfg_files is not None:
+			return self._cfg.read_cfg_files
+
+		# read:
+		if self._cfg_share is not None:
+			logSys.info("Sharing configs for %s under %s ", name, self._cfg.getBaseDir())
+		ret = self._cfg.read(name)
+
+		# save already read and return:
+		self._cfg.read_cfg_files = ret
+		return ret
+
+	def touch(self, name = ''):
 		if not self._cfg and self._cfg_share is not None:
 			self._cfg = self._cfg_share.get(name)
 			if not self._cfg:
@@ -79,36 +94,33 @@ class ConfigReader():
 				if self._cfg_share_basedir is not None:
 					self._cfg.setBaseDir(self._cfg_share_basedir)
 				self._cfg_share[name] = self._cfg
-		# performance feature - read once if using shared config reader:
-		rc = self._cfg.read_cfg_files
-		if once and rc.get(name) is not None:
-			return rc.get(name)
-
-		# read:
-		if self._cfg_share is not None:
-			logSys.info("Sharing configs for %s under %s ", name, self._cfg.getBaseDir())
-		ret = self._cfg.read(name)
-
-		# save already read:
-		if once:
-			rc[name] = ret
-		return ret
+		else:
+			self._cfg = ConfigReaderUnshared(**self._cfg_share_kwargs)
 
 	def sections(self):
-		return self._cfg.sections()
+		if self._cfg is not None:
+			return self._cfg.sections()
+		return []
 
 	def has_section(self, sec):
-		return self._cfg.has_section(sec)
+		if self._cfg is not None:
+			return self._cfg.has_section(sec)
+		return False
 
 	def options(self, *args):
-		return self._cfg.options(*args)
+		if self._cfg is not None:
+			return self._cfg.options(*args)
+		return {}
 
 	def get(self, sec, opt):
-		return self._cfg.get(sec, opt)
+		if self._cfg is not None:
+			return self._cfg.get(sec, opt)
+		return None
 
 	def getOptions(self, *args, **kwargs):
-		return self._cfg.getOptions(*args, **kwargs)
-
+		if self._cfg is not None:
+			return self._cfg.getOptions(*args, **kwargs)
+		return {}
 
 class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	"""Unshared config reader (previously ConfigReader).
@@ -121,7 +133,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	
 	def __init__(self, basedir=None, *args, **kwargs):
 		SafeConfigParserWithIncludes.__init__(self, *args, **kwargs)
-		self.read_cfg_files = dict()
+		self.read_cfg_files = None
 		self.setBaseDir(basedir)
 	
 	def setBaseDir(self, basedir):
@@ -137,7 +149,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 			raise ValueError("Base configuration directory %s does not exist "
 							  % self._basedir)
 		basename = os.path.join(self._basedir, filename)
-		logSys.info("Reading configs for %s under %s " , filename, self._basedir)
+		logSys.debug("Reading configs for %s under %s " , filename, self._basedir)
 		config_files = [ basename + ".conf" ]
 
 		# possible further customizations under a .conf.d directory
@@ -203,8 +215,8 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 					logSys.warning("'%s' not defined in '%s'. Using default one: %r"
 								% (option[1], sec, option[2]))
 					values[option[1]] = option[2]
-				elif logSys.getEffectiveLevel() <= _logLevel:
-					logSys.log(_logLevel, "Non essential option '%s' not defined in '%s'.", option[1], sec)
+				elif logSys.getEffectiveLevel() <= logLevel:
+					logSys.log(logLevel, "Non essential option '%s' not defined in '%s'.", option[1], sec)
 			except ValueError:
 				logSys.warning("Wrong value for '" + option[1] + "' in '" + sec +
 							"'. Using default one: '" + `option[2]` + "'")

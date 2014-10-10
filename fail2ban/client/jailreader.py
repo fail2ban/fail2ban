@@ -42,7 +42,6 @@ class JailReader(ConfigReader):
 		r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,]*))(?:,|$)')
 	
 	def __init__(self, name, force_enable=False, **kwargs):
-		# use shared config if possible:
 		ConfigReader.__init__(self, **kwargs)
 		self.__name = name
 		self.__filter = None

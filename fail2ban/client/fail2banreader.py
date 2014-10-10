@@ -33,7 +33,6 @@ logSys = getLogger(__name__)
 class Fail2banReader(ConfigReader):
 	
 	def __init__(self, **kwargs):
-		self.__opts = None
 		ConfigReader.__init__(self, **kwargs)
 	
 	def read(self):

@@ -62,6 +62,7 @@ else: # pragma: no cover
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
+logLevel = 7
 
 __all__ = ['SafeConfigParserWithIncludes']
 
@@ -126,8 +127,8 @@ after = 1.conf
 				cfg = SCPWI(share_config=self._cfg_share)
 				i = cfg.read(filename, get_includes=False)
 				self._cfg_share[hashv] = (cfg, i)
-			else:
-				logSys.debug("    Shared file: %s", filename)
+			elif logSys.getEffectiveLevel() <= logLevel:
+				logSys.log(logLevel, "    Shared file: %s", filename)
 		else:
 			# don't have sharing:
 			cfg = SCPWI()
@@ -207,10 +208,9 @@ after = 1.conf
 		if not fileNamesFull:
 			return []
 
-		if self._cfg_share is not None:
-			logSys.debug("  Sharing files: %s", fileNamesFull)
-		else:
-			logSys.debug("  Reading files: %s", fileNamesFull)
+		if logSys.getEffectiveLevel() <= logLevel:
+			logSys.log(logLevel, ("  Sharing files: %s" if self._cfg_share is not None else \
+			                       "  Reading files: %s"), fileNamesFull)
 
 		if len(fileNamesFull) > 1:
 			# read multiple configs:
@@ -237,10 +237,10 @@ after = 1.conf
 			return ret
 
 		# read one config :
-		logSys.debug("  Reading file: %s", fileNamesFull[0])
+		if logSys.getEffectiveLevel() <= logLevel:
+			logSys.log(logLevel, "  Reading file: %s", fileNamesFull[0])
 		# read file(s) :
 		if sys.version_info >= (3,2): # pragma: no cover
 			return SafeConfigParser.read(self, fileNamesFull, encoding='utf-8')
 		else:
 			return SafeConfigParser.read(self, fileNamesFull)
-
