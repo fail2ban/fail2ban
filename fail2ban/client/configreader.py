@@ -36,8 +36,8 @@ logSys = getLogger(__name__)
 class ConfigReader():
 	"""Generic config reader class.
 
-  A caching adapter which automatically reuses already shared configuration.
-			 """
+	A caching adapter which automatically reuses already shared configuration.
+	"""
 
 	def __init__(self, use_config=None, share_config=None, **kwargs):
 		# use given shared config if possible (see read):
@@ -126,7 +126,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 
 	Does not use this class (internal not shared/cached represenation).
 	Use ConfigReader instead.
-			 """
+	"""
 
 	DEFAULT_BASEDIR = '/etc/fail2ban'
 	
@@ -224,12 +224,12 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 
 class DefinitionInitConfigReader(ConfigReader):
 	"""Config reader for files with options grouped in [Definition] and
-       [Init] sections.
+	[Init] sections.
 
-       Is a base class for readers of filters and actions, where definitions
-       in jails might provide custom values for options defined in [Init]
-       section.
-       """
+	Is a base class for readers of filters and actions, where definitions
+	in jails might provide custom values for options defined in [Init]
+	section.
+	"""
 
 	_configOpts = []
 	
