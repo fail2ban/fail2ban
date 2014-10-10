@@ -70,7 +70,12 @@ class ConfigReader():
 		return self._cfg_share
 
 	def read(self, name, once=True):
-		# shared ?
+		""" Overloads a default (not shared) read of config reader.
+
+	  To prevent mutiple reads of config files with it includes, reads into 
+	  the config reader, if it was not yet cached/shared by 'name'.
+	  """
+		# already shared ?
 		if not self._cfg:
 			self.touch(name)
 		# performance feature - read once if using shared config reader:
@@ -85,7 +90,12 @@ class ConfigReader():
 		self._cfg.read_cfg_files = ret
 		return ret
 
-	def touch(self, name = ''):
+	def touch(self, name=''):
+		""" Allocates and share a config file by it name.
+
+	  Automatically allocates unshared or reuses shared handle by given 'name' and 
+	  init arguments inside a given shared storage.
+	  """
 		if not self._cfg and self._cfg_share is not None:
 			self._cfg = self._cfg_share.get(name)
 			if not self._cfg:
@@ -124,7 +134,7 @@ class ConfigReader():
 class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	"""Unshared config reader (previously ConfigReader).
 
-	Does not use this class (internal not shared/cached represenation).
+	Do not use this class (internal not shared/cached represenation).
 	Use ConfigReader instead.
 	"""
 
@@ -191,7 +201,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	# 1 -> the name of the option
 	# 2 -> the default value for the option
 	
-	def getOptions(self, sec, options, pOptions = None):
+	def getOptions(self, sec, options, pOptions=None):
 		values = dict()
 		for option in options:
 			try:
