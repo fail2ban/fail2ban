@@ -39,8 +39,6 @@ STOCK = os.path.exists(os.path.join('config','fail2ban.conf'))
 
 IMPERFECT_CONFIG = os.path.join(os.path.dirname(__file__), 'config')
 
-LAST_WRITE_TIME = 0
-
 class ConfigReaderTest(unittest.TestCase):
 
 	def setUp(self):
@@ -59,8 +57,7 @@ class ConfigReaderTest(unittest.TestCase):
 			d_ = os.path.join(self.d, d)
 			if not os.path.exists(d_):
 				os.makedirs(d_)
-		fname = "%s/%s" % (self.d, fname)
-		f = open(fname, "w")
+		f = open("%s/%s" % (self.d, fname), "w")
 		if value is not None:
 			f.write("""
 [section]
@@ -69,14 +66,6 @@ option = %s
 		if content is not None:
 			f.write(content)
 		f.close()
-		# set modification time to another second to revalidate cache (if milliseconds not supported) :
-		global LAST_WRITE_TIME
-		mtime = os.path.getmtime(fname)
-		if LAST_WRITE_TIME == mtime:
-			mtime += 1
-			os.utime(fname, (mtime, mtime))
-		LAST_WRITE_TIME = mtime
-		
 
 	def _remove(self, fname):
 		os.unlink("%s/%s" % (self.d, fname))
@@ -101,6 +90,7 @@ option = %s
 			# SkipTest introduced only in 2.7 thus can't yet use generally
 			# raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform)
 			pass
+
 
 	def testOptionalDotDDir(self):
 		self.assertFalse(self.c.read('c'))	# nothing is there yet
@@ -347,9 +337,9 @@ class FilterReaderTest(unittest.TestCase):
 
 class JailsReaderTestCache(LogCaptureTestCase):
 
-	def _readWholeConf(self, basedir, force_enable=False):
+	def _readWholeConf(self, basedir, force_enable=False, share_config=None):
 		# read whole configuration like a file2ban-client ...
-		configurator = Configurator(force_enable=force_enable)
+		configurator = Configurator(force_enable=force_enable, share_config=share_config)
 		configurator.setBaseDir(basedir)
 		configurator.readEarly()
 		configurator.getEarlyOptions()
@@ -360,7 +350,7 @@ class JailsReaderTestCache(LogCaptureTestCase):
 	def _getLoggedReadCount(self, filematch):
 		cnt = 0
 		for s in self.getLog().rsplit('\n'):
-			if re.match(r"^Reading files?: .*/"+filematch, s):
+			if re.match(r"^\s*Reading files?: .*/"+filematch, s):
 				cnt += 1
 		return cnt
 
@@ -372,8 +362,11 @@ class JailsReaderTestCache(LogCaptureTestCase):
 			shutil.copy(CONFIG_DIR + '/jail.conf', basedir + '/jail.local')
 			shutil.copy(CONFIG_DIR + '/fail2ban.conf', basedir + '/fail2ban.local')
 
+			# common sharing handle for this test:
+			share_cfg = dict()
+
 			# read whole configuration like a file2ban-client ...
-			self._readWholeConf(basedir)
+			self._readWholeConf(basedir, share_config=share_cfg)
 			# how many times jail.local was read:
 			cnt = self._getLoggedReadCount('jail.local')
 			# if cnt > 1:
@@ -382,7 +375,7 @@ class JailsReaderTestCache(LogCaptureTestCase):
 
 			# read whole configuration like a file2ban-client, again ...
 			# but this time force enable all jails, to check filter and action cached also:
-			self._readWholeConf(basedir, force_enable=True)
+			self._readWholeConf(basedir, force_enable=True, share_config=share_cfg)
 			cnt = self._getLoggedReadCount(r'jail\.local')
 			# still one (no more reads):
 			self.assertTrue(cnt == 1, "Unexpected count by second reading of jail files, cnt = %s" % cnt)

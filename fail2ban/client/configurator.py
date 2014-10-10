@@ -33,11 +33,11 @@ logSys = getLogger(__name__)
 
 class Configurator:
 	
-	def __init__(self, force_enable=False):
+	def __init__(self, force_enable=False, share_config=None):
 		self.__settings = dict()
 		self.__streams = dict()
-		self.__fail2ban = Fail2banReader()
-		self.__jails = JailsReader(force_enable=force_enable)
+		self.__fail2ban = Fail2banReader(share_config=share_config)
+		self.__jails = JailsReader(force_enable=force_enable, share_config=share_config)
 	
 	def setBaseDir(self, folderName):
 		self.__fail2ban.setBaseDir(folderName)

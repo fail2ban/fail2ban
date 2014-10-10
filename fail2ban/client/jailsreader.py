@@ -43,7 +43,6 @@ class JailsReader(ConfigReader):
 		"""
 		# use shared config if possible:
 		ConfigReader.__init__(self, **kwargs)
-		self.__cfg_share = dict()
 		self.__jails = list()
 		self.__force_enable = force_enable
 
@@ -73,7 +72,7 @@ class JailsReader(ConfigReader):
 			# use the cfg_share for filter/action caching and the same config for all 
 			# jails (use_config=...), therefore don't read it here:
 			jail = JailReader(sec, force_enable=self.__force_enable, 
-				cfg_share=self.__cfg_share, use_config=self._cfg)
+				share_config=self.share_config, use_config=self._cfg)
 			ret = jail.getOptions()
 			if ret:
 				if jail.isEnabled():

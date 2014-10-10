@@ -46,26 +46,38 @@ class ConfigReader():
 		self._cfg = None
 		if use_config is not None:
 			self._cfg = use_config
-		else:
-			# share config if possible:
-			if share_config is not None:
-				self._cfg_share = share_config
-				self._cfg_share_kwargs = kwargs
-			else:
-				self._cfg = ConfigReaderUnshared(**kwargs)
+		# share config if possible:
+		if share_config is not None:
+			self._cfg_share = share_config
+			self._cfg_share_kwargs = kwargs
+			self._cfg_share_basedir = None
+		elif self._cfg is None:
+			self._cfg = ConfigReaderUnshared(**kwargs)
 
 	def setBaseDir(self, basedir):
-		self._cfg.setBaseDir(basedir)
+		if self._cfg:
+			self._cfg.setBaseDir(basedir)
+		else:
+			self._cfg_share_basedir = basedir
 
 	def getBaseDir(self):
-		return self._cfg.getBaseDir()
+		if self._cfg:
+			return self._cfg.getBaseDir()
+		else:
+			return self._cfg_share_basedir
+
+	@property
+	def share_config(self):
+		return self._cfg_share
 
 	def read(self, name, once=True):
 		# shared ?
 		if not self._cfg and self._cfg_share is not None:
 			self._cfg = self._cfg_share.get(name)
 			if not self._cfg:
-				self._cfg = ConfigReaderUnshared(**self._cfg_share_kwargs)
+				self._cfg = ConfigReaderUnshared(share_config=self._cfg_share, **self._cfg_share_kwargs)
+				if self._cfg_share_basedir is not None:
+					self._cfg.setBaseDir(self._cfg_share_basedir)
 				self._cfg_share[name] = self._cfg
 		# performance feature - read once if using shared config reader:
 		rc = self._cfg.read_cfg_files
@@ -73,6 +85,8 @@ class ConfigReader():
 			return rc.get(name)
 
 		# read:
+		if self._cfg_share is not None:
+			logSys.info("Sharing configs for %s under %s ", name, self._cfg.getBaseDir())
 		ret = self._cfg.read(name)
 
 		# save already read:
@@ -105,8 +119,8 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 
 	DEFAULT_BASEDIR = '/etc/fail2ban'
 	
-	def __init__(self, basedir=None):
-		SafeConfigParserWithIncludes.__init__(self)
+	def __init__(self, basedir=None, *args, **kwargs):
+		SafeConfigParserWithIncludes.__init__(self, *args, **kwargs)
 		self.read_cfg_files = dict()
 		self.setBaseDir(basedir)
 	
@@ -123,7 +137,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 			raise ValueError("Base configuration directory %s does not exist "
 							  % self._basedir)
 		basename = os.path.join(self._basedir, filename)
-		logSys.debug("Reading configs for %s under %s " , filename, self._basedir)
+		logSys.info("Reading configs for %s under %s " , filename, self._basedir)
 		config_files = [ basename + ".conf" ]
 
 		# possible further customizations under a .conf.d directory
@@ -140,8 +154,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 		if len(config_files):
 			# at least one config exists and accessible
 			logSys.debug("Reading config files: %s", ', '.join(config_files))
-			config_files_read = SafeConfigParserWithIncludes.read(self, config_files,
-				log_info=("Cache configs for %s under %s " , filename, self._basedir))
+			config_files_read = SafeConfigParserWithIncludes.read(self, config_files)
 			missed = [ cf for cf in config_files if cf not in config_files_read ]
 			if missed:
 				logSys.error("Could not read config files: %s", ', '.join(missed))
