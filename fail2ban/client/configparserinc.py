@@ -204,39 +204,40 @@ after = 1.conf
 		else:
 			fileNamesFull = filenames
 
+		if not fileNamesFull:
+			return []
+
 		if self._cfg_share is not None:
 			logSys.debug("  Sharing files: %s", fileNamesFull)
-
-			if len(fileNamesFull) > 1:
-				# read multiple configs:
-				ret = []
-				alld = self.get_defaults()
-				alls = self.get_sections()
-				for filename in fileNamesFull:
-					# read single one, add to return list, use sharing if possible:
-					cfg, i = self._getSharedSCPWI(filename)
-					if i:
-						ret += i
-						# merge defaults and all sections to self:
-						alld.update(cfg.get_defaults())
-						for n, s in cfg.get_sections().iteritems():
-							if isinstance(s, dict):
-								s2 = alls.get(n)
-								if isinstance(s2, dict):
-									s2.update(s)
-								else:
-									alls[n] = s.copy()
-							else:
-								alls[n] = s
-
-				return ret
-
-			# read one config :
-			logSys.debug("  Reading file: %s", fileNamesFull[0])
 		else:
-			# don't have sharing - read one or multiple at once:
 			logSys.debug("  Reading files: %s", fileNamesFull)
 
+		if len(fileNamesFull) > 1:
+			# read multiple configs:
+			ret = []
+			alld = self.get_defaults()
+			alls = self.get_sections()
+			for filename in fileNamesFull:
+				# read single one, add to return list, use sharing if possible:
+				cfg, i = self._getSharedSCPWI(filename)
+				if i:
+					ret += i
+					# merge defaults and all sections to self:
+					alld.update(cfg.get_defaults())
+					for n, s in cfg.get_sections().iteritems():
+						if isinstance(s, dict):
+							s2 = alls.get(n)
+							if isinstance(s2, dict):
+								s2.update(s)
+							else:
+								alls[n] = s.copy()
+						else:
+							alls[n] = s
+
+			return ret
+
+		# read one config :
+		logSys.debug("  Reading file: %s", fileNamesFull[0])
 		# read file(s) :
 		if sys.version_info >= (3,2): # pragma: no cover
 			return SafeConfigParser.read(self, fileNamesFull, encoding='utf-8')
