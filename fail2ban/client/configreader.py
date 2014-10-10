@@ -77,9 +77,8 @@ class ConfigReader():
 		if once and self._cfg.read_cfg_files is not None:
 			return self._cfg.read_cfg_files
 
-		# read:
-		if self._cfg_share is not None:
-			logSys.info("Sharing configs for %s under %s ", name, self._cfg.getBaseDir())
+		# load:
+		logSys.info("Loading configs for %s under %s ", name, self._cfg.getBaseDir())
 		ret = self._cfg.read(name)
 
 		# save already read and return:

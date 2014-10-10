@@ -195,7 +195,7 @@ after = 1.conf
 	def get_sections(self):
 		return self._sections
 
-	def read(self, filenames, get_includes=True, log_info=None):
+	def read(self, filenames, get_includes=True):
 		if not isinstance(filenames, list):
 			filenames = [ filenames ]
 		# retrieve (and cache) includes:
@@ -208,11 +208,9 @@ after = 1.conf
 		if not fileNamesFull:
 			return []
 
-		if logSys.getEffectiveLevel() <= logLevel:
-			logSys.log(logLevel, ("  Sharing files: %s" if self._cfg_share is not None else \
-			                       "  Reading files: %s"), fileNamesFull)
+		logSys.info("  Loading files: %s", fileNamesFull)
 
-		if len(fileNamesFull) > 1:
+		if get_includes or len(fileNamesFull) > 1:
 			# read multiple configs:
 			ret = []
 			alld = self.get_defaults()
@@ -238,7 +236,7 @@ after = 1.conf
 
 		# read one config :
 		if logSys.getEffectiveLevel() <= logLevel:
-			logSys.log(logLevel, "  Reading file: %s", fileNamesFull[0])
+			logSys.log(logLevel, "    Reading file: %s", fileNamesFull[0])
 		# read file(s) :
 		if sys.version_info >= (3,2): # pragma: no cover
 			return SafeConfigParser.read(self, fileNamesFull, encoding='utf-8')
