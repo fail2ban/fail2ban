@@ -21,9 +21,9 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, glob, shutil, tempfile, unittest, re
-
-from ..client.configreader import ConfigReader
+import os, glob, shutil, tempfile, unittest, re, logging
+from ..client.configreader import ConfigReaderUnshared
+from ..client import configparserinc
 from ..client.jailreader import JailReader
 from ..client.filterreader import FilterReader
 from ..client.jailsreader import JailsReader
@@ -44,7 +44,7 @@ class ConfigReaderTest(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		self.d = tempfile.mkdtemp(prefix="f2b-temp")
-		self.c = ConfigReader(basedir=self.d)
+		self.c = ConfigReaderUnshared(basedir=self.d)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -337,7 +337,26 @@ class FilterReaderTest(unittest.TestCase):
 
 class JailsReaderTestCache(LogCaptureTestCase):
 
+	def _readWholeConf(self, basedir, force_enable=False, share_config=None):
+		# read whole configuration like a file2ban-client ...
+		configurator = Configurator(force_enable=force_enable, share_config=share_config)
+		configurator.setBaseDir(basedir)
+		configurator.readEarly()
+		configurator.getEarlyOptions()
+		configurator.readAll()
+		# from here we test a cache with all includes / before / after :
+		self.assertTrue(configurator.getOptions(None))
+
+	def _getLoggedReadCount(self, filematch):
+		cnt = 0
+		for s in self.getLog().rsplit('\n'):
+			if re.match(r"^\s*Reading files?: .*/"+filematch, s):
+				cnt += 1
+		return cnt
+
 	def testTestJailConfCache(self):
+		saved_ll = configparserinc.logLevel
+		configparserinc.logLevel = logging.DEBUG
 		basedir = tempfile.mkdtemp("fail2ban_conf")
 		try:
 			shutil.rmtree(basedir)
@@ -345,24 +364,33 @@ class JailsReaderTestCache(LogCaptureTestCase):
 			shutil.copy(CONFIG_DIR + '/jail.conf', basedir + '/jail.local')
 			shutil.copy(CONFIG_DIR + '/fail2ban.conf', basedir + '/fail2ban.local')
 
+			# common sharing handle for this test:
+			share_cfg = dict()
+
 			# read whole configuration like a file2ban-client ...
-			configurator = Configurator()
-			configurator.setBaseDir(basedir)
-			configurator.readEarly()
-			configurator.getEarlyOptions()
-			configurator.readAll()
-			# from here we test a cache :
-			self.assertTrue(configurator.getOptions(None))
-			cnt = 0
-			for s in self.getLog().rsplit('\n'):
-				if re.match(r"^Reading files: .*jail.local", s):
-					cnt += 1
-			# if cnt > 2:
+			self._readWholeConf(basedir, share_config=share_cfg)
+			# how many times jail.local was read:
+			cnt = self._getLoggedReadCount('jail.local')
+			# if cnt > 1:
 			# 	self.printLog()
-			self.assertFalse(cnt > 2, "Too many times reading of config files, cnt = %s" % cnt)
-			self.assertFalse(cnt <= 0)
+			self.assertTrue(cnt == 1, "Unexpected count by reading of jail files, cnt = %s" % cnt)
+
+			# read whole configuration like a file2ban-client, again ...
+			# but this time force enable all jails, to check filter and action cached also:
+			self._readWholeConf(basedir, force_enable=True, share_config=share_cfg)
+			cnt = self._getLoggedReadCount(r'jail\.local')
+			# still one (no more reads):
+			self.assertTrue(cnt == 1, "Unexpected count by second reading of jail files, cnt = %s" % cnt)
+
+			# same with filter:
+			cnt = self._getLoggedReadCount(r'filter\.d/common\.conf')
+			self.assertTrue(cnt == 1, "Unexpected count by reading of filter files, cnt = %s" % cnt)
+			# same with action:
+			cnt = self._getLoggedReadCount(r'action\.d/iptables-common\.conf')
+			self.assertTrue(cnt == 1, "Unexpected count by reading of action files, cnt = %s" % cnt)
 		finally:
 			shutil.rmtree(basedir)
+			configparserinc.logLevel = saved_ll
 
 
 class JailsReaderTest(LogCaptureTestCase):

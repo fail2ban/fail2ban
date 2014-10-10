@@ -27,24 +27,127 @@ __license__ = "GPL"
 import glob, os
 from ConfigParser import NoOptionError, NoSectionError
 
-from .configparserinc import SafeConfigParserWithIncludes
+from .configparserinc import SafeConfigParserWithIncludes, logLevel
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
-class ConfigReader(SafeConfigParserWithIncludes):
+class ConfigReader():
+	"""Generic config reader class.
+
+	A caching adapter which automatically reuses already shared configuration.
+	"""
+
+	def __init__(self, use_config=None, share_config=None, **kwargs):
+		# use given shared config if possible (see read):
+		self._cfg_share = None
+		self._cfg = None
+		if use_config is not None:
+			self._cfg = use_config
+		# share config if possible:
+		if share_config is not None:
+			self._cfg_share = share_config
+			self._cfg_share_kwargs = kwargs
+			self._cfg_share_basedir = None
+		elif self._cfg is None:
+			self._cfg = ConfigReaderUnshared(**kwargs)
+
+	def setBaseDir(self, basedir):
+		if self._cfg:
+			self._cfg.setBaseDir(basedir)
+		else:
+			self._cfg_share_basedir = basedir
+
+	def getBaseDir(self):
+		if self._cfg:
+			return self._cfg.getBaseDir()
+		else:
+			return self._cfg_share_basedir
+
+	@property
+	def share_config(self):
+		return self._cfg_share
+
+	def read(self, name, once=True):
+		""" Overloads a default (not shared) read of config reader.
+
+	  To prevent mutiple reads of config files with it includes, reads into 
+	  the config reader, if it was not yet cached/shared by 'name'.
+	  """
+		# already shared ?
+		if not self._cfg:
+			self.touch(name)
+		# performance feature - read once if using shared config reader:
+		if once and self._cfg.read_cfg_files is not None:
+			return self._cfg.read_cfg_files
+
+		# load:
+		logSys.info("Loading configs for %s under %s ", name, self._cfg.getBaseDir())
+		ret = self._cfg.read(name)
+
+		# save already read and return:
+		self._cfg.read_cfg_files = ret
+		return ret
+
+	def touch(self, name=''):
+		""" Allocates and share a config file by it name.
+
+	  Automatically allocates unshared or reuses shared handle by given 'name' and 
+	  init arguments inside a given shared storage.
+	  """
+		if not self._cfg and self._cfg_share is not None:
+			self._cfg = self._cfg_share.get(name)
+			if not self._cfg:
+				self._cfg = ConfigReaderUnshared(share_config=self._cfg_share, **self._cfg_share_kwargs)
+				if self._cfg_share_basedir is not None:
+					self._cfg.setBaseDir(self._cfg_share_basedir)
+				self._cfg_share[name] = self._cfg
+		else:
+			self._cfg = ConfigReaderUnshared(**self._cfg_share_kwargs)
+
+	def sections(self):
+		if self._cfg is not None:
+			return self._cfg.sections()
+		return []
+
+	def has_section(self, sec):
+		if self._cfg is not None:
+			return self._cfg.has_section(sec)
+		return False
+
+	def options(self, *args):
+		if self._cfg is not None:
+			return self._cfg.options(*args)
+		return {}
+
+	def get(self, sec, opt):
+		if self._cfg is not None:
+			return self._cfg.get(sec, opt)
+		return None
+
+	def getOptions(self, *args, **kwargs):
+		if self._cfg is not None:
+			return self._cfg.getOptions(*args, **kwargs)
+		return {}
+
+class ConfigReaderUnshared(SafeConfigParserWithIncludes):
+	"""Unshared config reader (previously ConfigReader).
+
+	Do not use this class (internal not shared/cached represenation).
+	Use ConfigReader instead.
+	"""
 
 	DEFAULT_BASEDIR = '/etc/fail2ban'
 	
-	def __init__(self, basedir=None):
-		SafeConfigParserWithIncludes.__init__(self)
+	def __init__(self, basedir=None, *args, **kwargs):
+		SafeConfigParserWithIncludes.__init__(self, *args, **kwargs)
+		self.read_cfg_files = None
 		self.setBaseDir(basedir)
-		self.__opts = None
 	
 	def setBaseDir(self, basedir):
 		if basedir is None:
-			basedir = ConfigReader.DEFAULT_BASEDIR	# stock system location
+			basedir = ConfigReaderUnshared.DEFAULT_BASEDIR	# stock system location
 		self._basedir = basedir.rstrip('/')
 	
 	def getBaseDir(self):
@@ -55,7 +158,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 			raise ValueError("Base configuration directory %s does not exist "
 							  % self._basedir)
 		basename = os.path.join(self._basedir, filename)
-		logSys.info("Reading configs for %s under %s "  % (basename, self._basedir))
+		logSys.debug("Reading configs for %s under %s " , filename, self._basedir)
 		config_files = [ basename + ".conf" ]
 
 		# possible further customizations under a .conf.d directory
@@ -71,14 +174,14 @@ class ConfigReader(SafeConfigParserWithIncludes):
 
 		if len(config_files):
 			# at least one config exists and accessible
-			logSys.debug("Reading config files: " + ', '.join(config_files))
+			logSys.debug("Reading config files: %s", ', '.join(config_files))
 			config_files_read = SafeConfigParserWithIncludes.read(self, config_files)
 			missed = [ cf for cf in config_files if cf not in config_files_read ]
 			if missed:
-				logSys.error("Could not read config files: " + ', '.join(missed))
+				logSys.error("Could not read config files: %s", ', '.join(missed))
 			if config_files_read:
 				return True
-			logSys.error("Found no accessible config files for %r under %s" %
+			logSys.error("Found no accessible config files for %r under %s",
 						 ( filename, self.getBaseDir() ))
 			return False
 		else:
@@ -98,7 +201,7 @@ class ConfigReader(SafeConfigParserWithIncludes):
 	# 1 -> the name of the option
 	# 2 -> the default value for the option
 	
-	def getOptions(self, sec, options, pOptions = None):
+	def getOptions(self, sec, options, pOptions=None):
 		values = dict()
 		for option in options:
 			try:
@@ -121,10 +224,8 @@ class ConfigReader(SafeConfigParserWithIncludes):
 					logSys.warning("'%s' not defined in '%s'. Using default one: %r"
 								% (option[1], sec, option[2]))
 					values[option[1]] = option[2]
-				else:
-					logSys.debug(
-						"Non essential option '%s' not defined in '%s'.",
-						option[1], sec)
+				elif logSys.getEffectiveLevel() <= logLevel:
+					logSys.log(logLevel, "Non essential option '%s' not defined in '%s'.", option[1], sec)
 			except ValueError:
 				logSys.warning("Wrong value for '" + option[1] + "' in '" + sec +
 							"'. Using default one: '" + `option[2]` + "'")
@@ -133,12 +234,12 @@ class ConfigReader(SafeConfigParserWithIncludes):
 
 class DefinitionInitConfigReader(ConfigReader):
 	"""Config reader for files with options grouped in [Definition] and
-       [Init] sections.
+	[Init] sections.
 
-       Is a base class for readers of filters and actions, where definitions
-       in jails might provide custom values for options defined in [Init]
-       section.
-       """
+	Is a base class for readers of filters and actions, where definitions
+	in jails might provide custom values for options defined in [Init]
+	section.
+	"""
 
 	_configOpts = []
 	

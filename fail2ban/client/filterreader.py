@@ -26,7 +26,7 @@ __license__ = "GPL"
 
 import os, shlex
 
-from .configreader import ConfigReader, DefinitionInitConfigReader
+from .configreader import DefinitionInitConfigReader
 from ..server.action import CommandAction
 from ..helpers import getLogger
 
@@ -40,8 +40,12 @@ class FilterReader(DefinitionInitConfigReader):
 		["string", "failregex", ""],
 	]
 
-	def read(self):
-		return ConfigReader.read(self, os.path.join("filter.d", self._file))
+	def setFile(self, fileName):
+		self.__file = fileName
+		DefinitionInitConfigReader.setFile(self, os.path.join("filter.d", fileName))
+	
+	def getFile(self):
+		return self.__file
 	
 	def convert(self):
 		stream = list()

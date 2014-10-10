@@ -68,9 +68,10 @@ class JailsReader(ConfigReader):
 		for sec in sections:
 			if sec == 'INCLUDES':
 				continue
-			jail = JailReader(sec, basedir=self.getBaseDir(),
-							  force_enable=self.__force_enable)
-			jail.read()
+			# use the cfg_share for filter/action caching and the same config for all 
+			# jails (use_config=...), therefore don't read it here:
+			jail = JailReader(sec, force_enable=self.__force_enable, 
+				share_config=self.share_config, use_config=self._cfg)
 			ret = jail.getOptions()
 			if ret:
 				if jail.isEnabled():
