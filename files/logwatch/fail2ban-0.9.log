@@ -1,0 +1,52 @@
+2014-08-08 14:59:35,013 fail2ban.server.server[31122]: INFO    Exiting Fail2ban
+2014-08-08 14:59:36,041 fail2ban.server.server[21667]: INFO    Changed logging target to /var/log/fail2ban.log for Fail2ban v0.9.0
+2014-08-08 14:59:36,043 fail2ban.server.database[21667]: INFO    Connected to fail2ban persistent database '/var/lib/fail2ban/fail2ban.sqlite3'
+2014-08-08 14:59:36,072 fail2ban.server.jail[21667]: INFO    Creating new jail 'exim'
+2014-08-08 14:59:36,137 fail2ban.server.jail[21667]: INFO    Jail 'exim' uses pyinotify
+2014-08-08 14:59:36,172 fail2ban.server.filter[21667]: INFO    Set jail log file encoding to UTF-8
+2014-08-08 14:59:36,172 fail2ban.server.jail[21667]: INFO    Initiated 'pyinotify' backend
+2014-08-08 14:59:36,233 fail2ban.server.filter[21667]: INFO    Added logfile = /var/log/exim4/mainlog
+2014-08-08 14:59:36,249 fail2ban.server.filter[21667]: INFO    Set maxRetry = 5
+2014-08-08 14:59:36,251 fail2ban.server.filter[21667]: INFO    Set jail log file encoding to UTF-8
+2014-08-08 14:59:36,252 fail2ban.server.actions[21667]: INFO    Set banTime = 600
+2014-08-08 14:59:36,254 fail2ban.server.filter[21667]: INFO    Set findtime = 600
+2014-08-08 14:59:36,284 fail2ban.server.jail[21667]: INFO    Creating new jail 'sshd'
+2014-08-08 14:59:36,284 fail2ban.server.jail[21667]: INFO    Jail 'sshd' uses pyinotify
+2014-08-08 14:59:36,286 fail2ban.server.filter[21667]: INFO    Set jail log file encoding to UTF-8
+2014-08-08 14:59:36,286 fail2ban.server.jail[21667]: INFO    Initiated 'pyinotify' backend
+2014-08-08 14:59:36,499 fail2ban.server.filter[21667]: INFO    Added logfile = /var/log/auth.log
+2014-08-08 14:59:36,510 fail2ban.server.filter[21667]: INFO    Set maxRetry = 5
+2014-08-08 14:59:36,512 fail2ban.server.filter[21667]: INFO    Set jail log file encoding to UTF-8
+2014-08-08 14:59:36,513 fail2ban.server.actions[21667]: INFO    Set banTime = 600
+2014-08-08 14:59:36,514 fail2ban.server.filter[21667]: INFO    Set findtime = 600
+2014-08-08 14:59:36,515 fail2ban.server.filter[21667]: INFO    Set maxlines = 10
+2014-08-08 14:59:36,788 fail2ban.server.server[21667]: INFO    Jail sshd is not a JournalFilter instance
+2014-08-08 14:59:36,798 fail2ban.server.jail[21667]: INFO    Jail 'exim' started
+2014-08-08 14:59:36,802 fail2ban.server.jail[21667]: INFO    Jail 'sshd' started
+2014-08-08 15:01:30,120 fail2ban.server.transmitter[21667]: WARNING Command ['status', 'ssh'] has failed. Received UnknownJailException('ssh',)
+2014-08-08 15:09:36,978 fail2ban.server.actions[21667]: NOTICE  [sshd] Unban 116.10.191.199
+2014-08-08 15:09:37,187 fail2ban.server.action[21667]: ERROR   rm -f /etc/symbiosis/firewall/blacklist.d/116.10.191.199.auto
+iptables -D INPUT -s 116.10.191.199 -j DROP -- stdout: ''
+2014-08-08 15:09:37,188 fail2ban.server.action[21667]: ERROR   rm -f /etc/symbiosis/firewall/blacklist.d/116.10.191.199.auto
+iptables -D INPUT -s 116.10.191.199 -j DROP -- stderr: 'iptables: Bad rule (does a matching rule exist in that chain?).\n'
+2014-08-08 15:09:37,188 fail2ban.server.action[21667]: ERROR   rm -f /etc/symbiosis/firewall/blacklist.d/116.10.191.199.auto
+iptables -D INPUT -s 116.10.191.199 -j DROP -- returned 1
+2014-08-08 15:09:37,188 fail2ban.server.actions[21667]: ERROR   Failed to execute unban jail 'sshd' action 'symbiosis-blacklist': Error unbanning 116.10.191.199
+2014-08-10 02:27:27,235 fail2ban.server.server[21667]: INFO    rollover performed on /var/log/fail2ban.log
+2014-08-10 02:27:28,109 fail2ban.server.filter[21667]: INFO    Log rotation detected for /var/log/exim4/mainlog
+2014-08-10 02:28:01,747 fail2ban.server.filter[21667]: INFO    Log rotation detected for /var/log/auth.log
+2014-08-10 02:33:29,500 fail2ban.server.filter[21667]: INFO    [sshd] Found 86.101.234.57
+2014-08-10 02:46:06,846 fail2ban.server.filter[21667]: INFO    [sshd] Found 220.130.163.247
+2014-08-10 03:10:43,794 fail2ban.server.filter[21667]: INFO    [sshd] Found 220.130.163.247
+2014-08-10 06:49:27,446 fail2ban.server.actions[21667]: NOTICE  [sshd] Ban 116.10.191.181
+2014-08-10 06:59:28,375 fail2ban.server.actions[21667]: NOTICE  [sshd] Unban 116.10.191.181
+2014-08-10 20:06:41,576 fail2ban.server.actions[21667]: NOTICE  [sshd] Unban 50.30.34.7
+2014-08-13 17:55:50,401 fail2ban.server.actions[17436]: NOTICE  [sshd] 144.0.0.25 already banned
+2014-08-10 20:06:41,785 fail2ban.server.action[21667]: ERROR   rm -f /etc/symbiosis/firewall/blacklist.d/50.30.34.7.auto
+iptables -D INPUT -s 50.30.34.7 -j DROP -- stdout: ''
+2014-08-10 20:06:41,785 fail2ban.server.action[21667]: ERROR   rm -f /etc/symbiosis/firewall/blacklist.d/50.30.34.7.auto
+iptables -D INPUT -s 50.30.34.7 -j DROP -- stderr: 'iptables: Bad rule (does a matching rule exist in that chain?).\n'
+2014-08-10 20:06:41,786 fail2ban.server.action[21667]: ERROR   rm -f /etc/symbiosis/firewall/blacklist.d/50.30.34.7.auto
+iptables -D INPUT -s 50.30.34.7 -j DROP -- returned 1
+2014-08-10 20:06:41,786 fail2ban.server.actions[21667]: ERROR   Failed to execute unban jail 'sshd' action 'symbiosis-blacklist': Error unbanning 50.30.34.7
+2014-08-11 02:27:35,433 fail2ban.server.filter[21667]: INFO    Log rotation detected for /var/log/exim4/mainlog
