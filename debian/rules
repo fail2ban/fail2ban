@@ -9,10 +9,13 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+export PYBUILD_DISABLE_python2=1
+
 %:
-	dh $@ --with python2,systemd
+	dh $@ --with python3,systemd --buildsystem pybuild
 
 DESTDIR=$(CURDIR)/debian/fail2ban
+PYVERSION=$(shell py3versions -dv)
 
 override_dh_clean:
 	rm -rf fail2ban.egg-info
@@ -39,7 +42,7 @@ override_dh_install:
 
 override_dh_auto_test:
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	./fail2ban-testcases-all --no-network
+	cd build && FAIL2BAN_CONFIG_DIR="$(CURDIR)/config" PYTHONPATH="$(CURDIR)/.pybuild/pythonX.Y_$(PYVERSION)/build/" scripts-*/fail2ban-testcases --no-network
 endif
 
 override_dh_installexamples:
