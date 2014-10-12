@@ -1,4 +1,4 @@
-fail2ban (0.9.0+git814-g98dc084-1) experimental; urgency=medium
+fail2ban (0.9.0+git252-g47441d1-1) experimental; urgency=medium
 
   [ Yaroslav Halchenko ]
   * New upstream snapshot from 0.9.0a2-814-g98dc084.
@@ -8,7 +8,7 @@ fail2ban (0.9.0+git814-g98dc084-1) experimental; urgency=medium
     - switching to python3 as the interpreter for Fail2Ban so we could use
       python3-systemd which is N/A for Python2 any longer
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 12 Oct 2014 10:28:35 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 12 Oct 2014 16:45:36 -0400
 
 fail2ban (0.9.0+git48-gabcab00-1) experimental; urgency=medium
 
