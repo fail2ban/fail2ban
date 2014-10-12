@@ -16,6 +16,8 @@ install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then cd ..; pip install -q coveralls; cd -; fi
 script:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coverage run --rcfile=.travis_coveragerc setup.py test; else python setup.py test; fi
+# test installation
+  - sudo python setup.py install
 after_success:
 # Coverage config file must be .coveragerc for coveralls
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then cp -v .travis_coveragerc .coveragerc; fi
