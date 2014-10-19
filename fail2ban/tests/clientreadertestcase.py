@@ -632,10 +632,11 @@ class JailsReaderTest(LogCaptureTestCase):
 								 % (option, commands))
 
 			# Set up of logging should come first
-			self.assertEqual(find_set('logtarget'), 1)
-			self.assertEqual(find_set('loglevel'), 2)
+			self.assertEqual(find_set('syslogsocket'), 0)
+			self.assertEqual(find_set('loglevel'), 1)
+			self.assertEqual(find_set('logtarget'), 2)
 			# then dbfile should be before dbpurgeage
-			self.assertGreater(find_set('dbpurgeage'), find_set('dbfile'))
+			self.assertTrue(find_set('dbpurgeage') > find_set('dbfile'))
 
 			# and there is logging information left to be passed into the
 			# server

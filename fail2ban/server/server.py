@@ -67,10 +67,10 @@ class Server:
 			'FreeBSD': '/var/run/log',
 			'Linux': '/dev/log',
 		}
+		self.setSyslogSocket("auto")
 		# Set logging level
 		self.setLogLevel("INFO")
 		self.setLogTarget("STDOUT")
-		self.setSyslogSocket("auto")
 
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
