@@ -52,16 +52,12 @@ class Fail2banReader(ConfigWrapper):
 		self.__opts = ConfigWrapper.getOptions(self, "Definition", opts)
 	
 	def convert(self):
+		order = {"loglevel":0, "logtarget":1, "dbfile":2, "dbpurgeage":3}
 		stream = list()
 		for opt in self.__opts:
-			if opt == "loglevel":
-				stream.append(["set", "loglevel", self.__opts[opt]])
-			elif opt == "logtarget":
-				stream.append(["set", "logtarget", self.__opts[opt]])
-			elif opt == "dbfile":
-				stream.append(["set", "dbfile", self.__opts[opt]])
-			elif opt == "dbpurgeage":
-				stream.append(["set", "dbpurgeage", self.__opts[opt]])
+			if opt in order:
+				stream.append((order[opt], ["set", opt, self.__opts[opt]]))
 		# Ensure logtarget/level set first so any db errors are captured
-		return sorted(stream, reverse=True)
+		# and dbfile set before all other database options
+		return [opt[1] for opt in sorted(stream)]
 	
