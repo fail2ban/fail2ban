@@ -27,7 +27,7 @@ __license__ = "GPL"
 import re, glob, os.path
 import json
 
-from .configreader import ConfigReader, ConfigWrapper
+from .configreader import ConfigReaderUnshared, ConfigReader
 from .filterreader import FilterReader
 from .actionreader import ActionReader
 from ..helpers import getLogger
@@ -35,19 +35,17 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
-class JailReader(ConfigWrapper):
+class JailReader(ConfigReader):
 	
 	optionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
 	optionExtractRE = re.compile(
 		r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,]*))(?:,|$)')
 	
-	def __init__(self, name, force_enable=False, cfg_share=None, **kwargs):
-		# use shared config if possible:
-		ConfigWrapper.__init__(self, **kwargs)
+	def __init__(self, name, force_enable=False, **kwargs):
+		ConfigReader.__init__(self, **kwargs)
 		self.__name = name
 		self.__filter = None
 		self.__force_enable = force_enable
-		self.__cfg_share = cfg_share
 		self.__actions = list()
 		self.__opts = None
 	
@@ -62,7 +60,7 @@ class JailReader(ConfigWrapper):
 		return self.__name
 	
 	def read(self):
-		out = ConfigWrapper.read(self, "jail")
+		out = ConfigReader.read(self, "jail")
 		# Before returning -- verify that requested section
 		# exists at all
 		if not (self.__name in self.sections()):
@@ -110,7 +108,7 @@ class JailReader(ConfigWrapper):
 				["string", "ignoreip", None],
 				["string", "filter", ""],
 				["string", "action", ""]]
-		self.__opts = ConfigWrapper.getOptions(self, self.__name, opts)
+		self.__opts = ConfigReader.getOptions(self, self.__name, opts)
 		if not self.__opts:
 			return False
 		
@@ -120,7 +118,7 @@ class JailReader(ConfigWrapper):
 				filterName, filterOpt = JailReader.extractOptions(
 					self.__opts["filter"])
 				self.__filter = FilterReader(
-					filterName, self.__name, filterOpt, share_config=self.__cfg_share, basedir=self.getBaseDir())
+					filterName, self.__name, filterOpt, share_config=self.share_config, basedir=self.getBaseDir())
 				ret = self.__filter.read()
 				if ret:
 					self.__filter.getOptions(self.__opts)
@@ -150,7 +148,7 @@ class JailReader(ConfigWrapper):
 					else:
 						action = ActionReader(
 							actName, self.__name, actOpt,
-							share_config=self.__cfg_share, basedir=self.getBaseDir())
+							share_config=self.share_config, basedir=self.getBaseDir())
 						ret = action.read()
 						if ret:
 							action.getOptions(self.__opts)
@@ -224,7 +222,7 @@ class JailReader(ConfigWrapper):
 		if self.__filter:
 			stream.extend(self.__filter.convert())
 		for action in self.__actions:
-			if isinstance(action, (ConfigReader, ConfigWrapper)):
+			if isinstance(action, (ConfigReaderUnshared, ConfigReader)):
 				stream.extend(action.convert())
 			else:
 				stream.append(action)

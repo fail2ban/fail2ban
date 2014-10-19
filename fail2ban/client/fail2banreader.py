@@ -24,32 +24,31 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from .configreader import ConfigWrapper
+from .configreader import ConfigReader
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
-class Fail2banReader(ConfigWrapper):
+class Fail2banReader(ConfigReader):
 	
 	def __init__(self, **kwargs):
-		self.__opts = None
-		ConfigWrapper.__init__(self, **kwargs)
+		ConfigReader.__init__(self, **kwargs)
 	
 	def read(self):
-		ConfigWrapper.read(self, "fail2ban")
+		ConfigReader.read(self, "fail2ban")
 	
 	def getEarlyOptions(self):
 		opts = [["string", "socket", "/var/run/fail2ban/fail2ban.sock"],
 				["string", "pidfile", "/var/run/fail2ban/fail2ban.pid"]]
-		return ConfigWrapper.getOptions(self, "Definition", opts)
+		return ConfigReader.getOptions(self, "Definition", opts)
 	
 	def getOptions(self):
 		opts = [["string", "loglevel", "INFO" ],
 				["string", "logtarget", "STDERR"],
 				["string", "dbfile", "/var/lib/fail2ban/fail2ban.sqlite3"],
 				["int", "dbpurgeage", 86400]]
-		self.__opts = ConfigWrapper.getOptions(self, "Definition", opts)
+		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
 	
 	def convert(self):
 		order = {"loglevel":0, "logtarget":1, "dbfile":2, "dbpurgeage":3}

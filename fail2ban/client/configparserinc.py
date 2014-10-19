@@ -62,139 +62,11 @@ else: # pragma: no cover
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
+logLevel = 7
 
 __all__ = ['SafeConfigParserWithIncludes']
 
-class SafeConfigParserWithIncludes(object):
-
-	SECTION_NAME = "INCLUDES"
-	CFG_CACHE = {}
-	CFG_INC_CACHE = {}
-	CFG_EMPY_CFG = None
-
-	def __init__(self):
-		self.__cr = None
-
-	def __check_read(self, attr):
-		if self.__cr is None:
-			# raise RuntimeError("Access to wrapped attribute \"%s\" before read call" % attr)
-			if SafeConfigParserWithIncludes.CFG_EMPY_CFG is None: 
-				SafeConfigParserWithIncludes.CFG_EMPY_CFG = _SafeConfigParserWithIncludes()
-			self.__cr = SafeConfigParserWithIncludes.CFG_EMPY_CFG
-
-	def __getattr__(self,attr):
-		# check we access local implementation
-		try:
-			orig_attr = self.__getattribute__(attr)
-		except AttributeError:
-			self.__check_read(attr)
-			orig_attr = self.__cr.__getattribute__(attr)
-		return orig_attr
-
-	@staticmethod
-	def _resource_mtime(resource):
-		mt = []
-		dirnames = []
-		for filename in resource:
-			if os.path.exists(filename):
-				s = os.stat(filename)
-				mt.append(s.st_mtime)
-				mt.append(s.st_mode)
-				mt.append(s.st_size)
-				dirname = os.path.dirname(filename)
-				if dirname not in dirnames:
-					dirnames.append(dirname)
-		for dirname in dirnames:
-			if os.path.exists(dirname):
-				s = os.stat(dirname)
-				mt.append(s.st_mtime)
-				mt.append(s.st_mode)
-				mt.append(s.st_size)
-		return mt
-
-	def read(self, resource, get_includes=True, log_info=None):
-		SCPWI = SafeConfigParserWithIncludes
-		# check includes :
-		fileNamesFull = []
-		if not isinstance(resource, list):
-			resource = [ resource ]
-		if get_includes:
-			for filename in resource:
-				fileNamesFull += SCPWI.getIncludes(filename)
-		else:
-			fileNamesFull = resource
-		# check cache
-		hashv = '\x01'.join(fileNamesFull)
-		cr, ret, mtime = SCPWI.CFG_CACHE.get(hashv, (None, False, 0))
-		curmt = SCPWI._resource_mtime(fileNamesFull)
-		if cr is not None and mtime == curmt:
-			self.__cr = cr
-			logSys.debug("Cached config files: %s", resource)
-			#logSys.debug("Cached config files: %s", fileNamesFull)
-			return ret
-		# not yet in cache - create/read and add to cache:
-		if log_info is not None:
-			logSys.info(*log_info)
-		cr = _SafeConfigParserWithIncludes()
-		ret = cr.read(fileNamesFull)
-		SCPWI.CFG_CACHE[hashv] = (cr, ret, curmt)
-		self.__cr = cr
-		return ret
-
-	def getOptions(self, *args, **kwargs):
-		self.__check_read('getOptions')
-		return self.__cr.getOptions(*args, **kwargs)
-
-	@staticmethod
-	def getIncludes(resource, seen = []):
-		"""
-		Given 1 config resource returns list of included files
-		(recursively) with the original one as well
-		Simple loops are taken care about
-		"""
-		
-		# Use a short class name ;)
-		SCPWI = SafeConfigParserWithIncludes
-
-		resources = seen + [resource]
-		# check cache
-		hashv = '///'.join(resources)
-		cinc, mtime = SCPWI.CFG_INC_CACHE.get(hashv, (None, 0))
-		curmt = SCPWI._resource_mtime(resources)
-		if cinc is not None and mtime == curmt:
-			return cinc
-		
-		parser = SCPWI()
-		try:
-			# read without includes
-			parser.read(resource, get_includes=False)
-		except UnicodeDecodeError, e:
-			logSys.error("Error decoding config file '%s': %s" % (resource, e))
-			return []
-		
-		resourceDir = os.path.dirname(resource)
-
-		newFiles = [ ('before', []), ('after', []) ]
-		if SCPWI.SECTION_NAME in parser.sections():
-			for option_name, option_list in newFiles:
-				if option_name in parser.options(SCPWI.SECTION_NAME):
-					newResources = parser.get(SCPWI.SECTION_NAME, option_name)
-					for newResource in newResources.split('\n'):
-						if os.path.isabs(newResource):
-							r = newResource
-						else:
-							r = os.path.join(resourceDir, newResource)
-						if r in seen:
-							continue
-						option_list += SCPWI.getIncludes(r, resources)
-		# combine lists
-		cinc = newFiles[0][1] + [resource] + newFiles[1][1]
-		# cache and return :
-		SCPWI.CFG_INC_CACHE[hashv] = (cinc, curmt)
-		return cinc
-		#print "Includes list for " + resource + " is " + `resources`
-
-class _SafeConfigParserWithIncludes(SafeConfigParser, object):
+class SafeConfigParserWithIncludes(SafeConfigParser):
 	"""
 	Class adds functionality to SafeConfigParser to handle included
 	other configuration files (or may be urls, whatever in the future)
@@ -223,14 +95,99 @@ after = 1.conf
 
 	"""
 
+	SECTION_NAME = "INCLUDES"
+
 	if sys.version_info >= (3,2):
 		# overload constructor only for fancy new Python3's
-		def __init__(self, *args, **kwargs):
+		def __init__(self, share_config=None, *args, **kwargs):
 			kwargs = kwargs.copy()
 			kwargs['interpolation'] = BasicInterpolationWithName()
 			kwargs['inline_comment_prefixes'] = ";"
-			super(_SafeConfigParserWithIncludes, self).__init__(
+			super(SafeConfigParserWithIncludes, self).__init__(
 				*args, **kwargs)
+			self._cfg_share = share_config
+
+	else:
+		def __init__(self, share_config=None, *args, **kwargs):
+			SafeConfigParser.__init__(self, *args, **kwargs)
+			self._cfg_share = share_config
+
+	@property
+	def share_config(self):
+		return self._cfg_share
+
+	def _getSharedSCPWI(self, filename):
+		SCPWI = SafeConfigParserWithIncludes
+		# read single one, add to return list, use sharing if possible:
+		if self._cfg_share:
+			# cache/share each file as include (ex: filter.d/common could be included in each filter config):
+			hashv = 'inc:'+(filename if not isinstance(filename, list) else '\x01'.join(filename))
+			cfg, i = self._cfg_share.get(hashv, (None, None))
+			if cfg is None:
+				cfg = SCPWI(share_config=self._cfg_share)
+				i = cfg.read(filename, get_includes=False)
+				self._cfg_share[hashv] = (cfg, i)
+			elif logSys.getEffectiveLevel() <= logLevel:
+				logSys.log(logLevel, "    Shared file: %s", filename)
+		else:
+			# don't have sharing:
+			cfg = SCPWI()
+			i = cfg.read(filename, get_includes=False)
+		return (cfg, i)
+
+	def _getIncludes(self, filenames, seen=[]):
+		if not isinstance(filenames, list):
+			filenames = [ filenames ]
+		# retrieve or cache include paths:
+		if self._cfg_share:
+			# cache/share include list:
+			hashv = 'inc-path:'+('\x01'.join(filenames))
+			fileNamesFull = self._cfg_share.get(hashv)
+			if fileNamesFull is None:
+				fileNamesFull = []
+				for filename in filenames:
+					fileNamesFull += self.__getIncludesUncached(filename, seen)
+				self._cfg_share[hashv] = fileNamesFull
+			return fileNamesFull
+		# don't have sharing:
+		fileNamesFull = []
+		for filename in filenames:
+			fileNamesFull += self.__getIncludesUncached(filename, seen)
+		return fileNamesFull
+
+	def __getIncludesUncached(self, resource, seen=[]):
+		"""
+		Given 1 config resource returns list of included files
+		(recursively) with the original one as well
+		Simple loops are taken care about
+		"""
+		SCPWI = SafeConfigParserWithIncludes
+		try:
+			parser, i = self._getSharedSCPWI(resource)
+			if not i:
+				return []
+		except UnicodeDecodeError, e:
+			logSys.error("Error decoding config file '%s': %s" % (resource, e))
+			return []
+		
+		resourceDir = os.path.dirname(resource)
+
+		newFiles = [ ('before', []), ('after', []) ]
+		if SCPWI.SECTION_NAME in parser.sections():
+			for option_name, option_list in newFiles:
+				if option_name in parser.options(SCPWI.SECTION_NAME):
+					newResources = parser.get(SCPWI.SECTION_NAME, option_name)
+					for newResource in newResources.split('\n'):
+						if os.path.isabs(newResource):
+							r = newResource
+						else:
+							r = os.path.join(resourceDir, newResource)
+						if r in seen:
+							continue
+						s = seen + [resource]
+						option_list += self._getIncludes(r, s)
+		# combine lists
+		return newFiles[0][1] + [resource] + newFiles[1][1]
 
 	def get_defaults(self):
 		return self._defaults
@@ -238,18 +195,29 @@ after = 1.conf
 	def get_sections(self):
 		return self._sections
 
-	def read(self, filenames):
+	def read(self, filenames, get_includes=True):
 		if not isinstance(filenames, list):
 			filenames = [ filenames ]
-		if len(filenames) > 1:
+		# retrieve (and cache) includes:
+		fileNamesFull = []
+		if get_includes:
+			fileNamesFull += self._getIncludes(filenames)
+		else:
+			fileNamesFull = filenames
+
+		if not fileNamesFull:
+			return []
+
+		logSys.info("  Loading files: %s", fileNamesFull)
+
+		if get_includes or len(fileNamesFull) > 1:
 			# read multiple configs:
 			ret = []
 			alld = self.get_defaults()
 			alls = self.get_sections()
-			for filename in filenames:
-				# read single one, add to return list:
-				cfg = SafeConfigParserWithIncludes()
-				i = cfg.read(filename, get_includes=False)
+			for filename in fileNamesFull:
+				# read single one, add to return list, use sharing if possible:
+				cfg, i = self._getSharedSCPWI(filename)
 				if i:
 					ret += i
 					# merge defaults and all sections to self:
@@ -267,9 +235,10 @@ after = 1.conf
 			return ret
 
 		# read one config :
-		logSys.debug("Reading file: %s", filenames[0])
+		if logSys.getEffectiveLevel() <= logLevel:
+			logSys.log(logLevel, "    Reading file: %s", fileNamesFull[0])
+		# read file(s) :
 		if sys.version_info >= (3,2): # pragma: no cover
-			return SafeConfigParser.read(self, filenames, encoding='utf-8')
+			return SafeConfigParser.read(self, fileNamesFull, encoding='utf-8')
 		else:
-			return SafeConfigParser.read(self, filenames)
-
+			return SafeConfigParser.read(self, fileNamesFull)

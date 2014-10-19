@@ -25,6 +25,7 @@ __license__ = "GPL"
 import logging
 import os
 import re
+import sys
 import time
 import unittest
 from StringIO import StringIO
@@ -210,6 +211,8 @@ class LogCaptureTestCase(unittest.TestCase):
 		# Let's log everything into a string
 		self._log = StringIO()
 		logSys.handlers = [logging.StreamHandler(self._log)]
+		if self._old_level < logging.DEBUG: # so if HEAVYDEBUG etc -- show them!
+			logSys.handlers += self._old_handlers
 		logSys.setLevel(getattr(logging, 'DEBUG'))
 
 	def tearDown(self):
