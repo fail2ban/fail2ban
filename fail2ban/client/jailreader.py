@@ -27,7 +27,7 @@ __license__ = "GPL"
 import re, glob, os.path
 import json
 
-from .configreader import ConfigReader
+from .configreader import ConfigReaderUnshared, ConfigReader
 from .filterreader import FilterReader
 from .actionreader import ActionReader
 from ..helpers import getLogger
@@ -111,7 +111,7 @@ class JailReader(ConfigReader):
 				filterName, filterOpt = JailReader.extractOptions(
 					self.__opts["filter"])
 				self.__filter = FilterReader(
-					filterName, self.__name, filterOpt, basedir=self.getBaseDir())
+					filterName, self.__name, filterOpt, share_config=self.share_config, basedir=self.getBaseDir())
 				ret = self.__filter.read()
 				if ret:
 					self.__filter.getOptions(self.__opts)
@@ -141,7 +141,7 @@ class JailReader(ConfigReader):
 					else:
 						action = ActionReader(
 							actName, self.__name, actOpt,
-							basedir=self.getBaseDir())
+							share_config=self.share_config, basedir=self.getBaseDir())
 						ret = action.read()
 						if ret:
 							action.getOptions(self.__opts)
@@ -213,7 +213,7 @@ class JailReader(ConfigReader):
 		if self.__filter:
 			stream.extend(self.__filter.convert())
 		for action in self.__actions:
-			if isinstance(action, ConfigReader):
+			if isinstance(action, (ConfigReaderUnshared, ConfigReader)):
 				stream.extend(action.convert())
 			else:
 				stream.append(action)
