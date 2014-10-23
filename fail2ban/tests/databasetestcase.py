@@ -69,6 +69,15 @@ class DatabaseTest(LogCaptureTestCase):
 			return
 		self.assertEqual(self.dbFilename, self.db.filename)
 
+	def testPurgeAge(self):
+		if Fail2BanDb is None: # pragma: no cover
+			return
+		self.assertEqual(self.db.purgeage, 86400)
+		self.db.purgeage = '1y6mon15d5h30m'
+		self.assertEqual(self.db.purgeage, 48652200)
+		self.db.purgeage = '2y 12mon 30d 10h 60m'
+		self.assertEqual(self.db.purgeage, 48652200*2)
+
 	def testCreateInvalidPath(self):
 		if Fail2BanDb is None: # pragma: no cover
 			return

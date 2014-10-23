@@ -193,7 +193,7 @@ class Fail2BanDb(object):
 
 	@purgeage.setter
 	def purgeage(self, value):
-		self._purgeAge = int(value)
+		self._purgeAge = MyTime.str2seconds(value)
 
 	@commitandrollback
 	def createDb(self, cur):

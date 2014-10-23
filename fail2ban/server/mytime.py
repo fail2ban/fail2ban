@@ -111,6 +111,9 @@ class MyTime:
 	def str2seconds(val):
 		if isinstance(val, (int, long, float, complex)):
 			return val
+		# replace together standing abbreviations, example '1d12h' -> '1d 12h':
+		val = re.sub(r"(?i)(?<=[a-z])(\d)", r" \1", val)
+		# replace abbreviation with expression:
 		for rexp, rpl in (
 			(r"days?|da|dd?", 24*60*60), (r"week?|wee?|ww?", 7*24*60*60), (r"months?|mon?", (365*3+366)*24*60*60/4/12), 
 			(r"years?|yea?|yy?", (365*3+366)*24*60*60/4), 

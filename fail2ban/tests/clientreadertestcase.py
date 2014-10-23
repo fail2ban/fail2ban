@@ -576,7 +576,7 @@ class JailsReaderTest(LogCaptureTestCase):
 			self.assertEqual(sorted(commands),
 							 [['set', 'dbfile',
 								'/var/lib/fail2ban/fail2ban.sqlite3'],
-							  ['set', 'dbpurgeage', 86400],
+							  ['set', 'dbpurgeage', '1d'],
 							  ['set', 'loglevel', "INFO"],
 							  ['set', 'logtarget', '/var/log/fail2ban.log']])
 
