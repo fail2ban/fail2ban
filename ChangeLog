@@ -29,8 +29,8 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
      provides defaults for the chain, port, protocol and name tags
 
 - Fixes:
-   * start of file2ban aborted (on slow hosts, systemd considers the server has been 
-     timed out and kills him), see gh-824
+   * start of file2ban aborted (on slow hosts, systemd considers the server has
+     been timed out and kills him), see gh-824
    * UTF-8 fixes in pure-ftp thanks to Johannes Weberhofer. Closes gh-806.
    * systemd backend error on bad utf-8 in python3
    * badips.py action error when logging HTTP error raised with badips request
@@ -81,8 +81,8 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
 
 - Enhancements
    * Start performance of fail2ban-client (and tests) increased, start time
-     and cpu usage rapidly reduced. Introduced a shared storage logic, to bypass
-     reading lots of config files (see gh-824).
+     and cpu usage rapidly reduced. Introduced a shared storage logic, to
+     bypass reading lots of config files (see gh-824).
      Thanks to Joost Molenaar for good catch (reported gh-820).
    * Fail2ban-regex - add print-all-matched option. Closes gh-652
    * Suppress fail2ban-client warnings for non-critical config options

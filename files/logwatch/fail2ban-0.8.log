@@ -1,0 +1,2 @@
+2014-08-04 03:06:26,161 fail2ban.actions[4822]: WARNING [apache-badbots] Ban 37.152.91.34
+2014-08-05 03:06:26,448 fail2ban.actions[4822]: WARNING [apache-badbots] Unban 37.152.91.34
