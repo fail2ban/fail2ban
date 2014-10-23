@@ -263,6 +263,7 @@ class Transmitter(TransmitterBase):
 	def testJailFindTime(self):
 		self.setGetTest("findtime", "120", 120, jail=self.jailName)
 		self.setGetTest("findtime", "60", 60, jail=self.jailName)
+		self.setGetTest("findtime", "30m", 30*60, jail=self.jailName)
 		self.setGetTest("findtime", "-60", -60, jail=self.jailName)
 		self.setGetTestNOK("findtime", "Dog", jail=self.jailName)
 
@@ -270,6 +271,7 @@ class Transmitter(TransmitterBase):
 		self.setGetTest("bantime", "600", 600, jail=self.jailName)
 		self.setGetTest("bantime", "50", 50, jail=self.jailName)
 		self.setGetTest("bantime", "-50", -50, jail=self.jailName)
+		self.setGetTest("bantime", "15d 5h 30m", 1315800, jail=self.jailName)
 		self.setGetTestNOK("bantime", "Cat", jail=self.jailName)
 
 	def testDatePattern(self):
