@@ -116,8 +116,11 @@ class MyTime:
 	#
 	# @returns number (calculated seconds from expression "val")
 
-	#@staticmethod
+	@staticmethod
 	def str2seconds(val):
+		# replace together standing abbreviations, example '1d12h' -> '1d 12h':
+		val = re.sub(r"(?i)(?<=[a-z])(\d)", r" \1", val)
+		# replace abbreviation with expression:
 		for rexp, rpl in (
 			(r"days?|da|dd?", 24*60*60), (r"week?|wee?|ww?", 7*24*60*60), (r"months?|mon?", (365*3+366)*24*60*60/4/12), (r"years?|yea?|yy?", (365*3+366)*24*60*60/4), 
 			(r"seconds?|sec?|ss?", 1), (r"minutes?|min?|mm?", 60), (r"hours?|ho|hh?", 60*60),
@@ -125,4 +128,3 @@ class MyTime:
 			val = re.sub(r"(?i)(?<=[\d\s])(%s)\b" % rexp, "*"+str(rpl), val)
 		val = re.sub(r"(\d)\s+(\d)", r"\1+\2", val);
 		return eval(val)
-	str2seconds = staticmethod(str2seconds)
