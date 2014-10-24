@@ -348,7 +348,7 @@ class FilterReaderTest(unittest.TestCase):
 			# from testcase01
 			filterReader.get('Definition', 'failregex')
 			filterReader.get('Definition', 'ignoreregex')
-		except Exception, e:
+		except Exception, e: # pragma: no cover - failed if reachable
 			self.fail('unexpected options after readexplicit: %s' % (e))
 
 class JailsReaderTestCache(LogCaptureTestCase):
