@@ -267,7 +267,9 @@ class DefinitionInitConfigReader(ConfigReader):
 
 	# needed for fail2ban-regex that doesn't need fancy directories
 	def readexplicit(self):
-		return SafeConfigParserWithIncludes.read(self, self._file)
+		if not self._cfg:
+			self.touch(self._file)
+		return SafeConfigParserWithIncludes.read(self._cfg, self._file)
 	
 	def getOptions(self, pOpts):
 		self._opts = ConfigReader.getOptions(
