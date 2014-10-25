@@ -419,12 +419,11 @@ class Fail2banClient:
 			ret = False
 		return ret
 
-	#@staticmethod
+	@staticmethod
 	def dumpConfig(cmd):
 		for c in cmd:
 			print c
 		return True
-	dumpConfig = staticmethod(dumpConfig)
 
 
 class ServerExecutionException(Exception):
