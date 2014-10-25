@@ -334,6 +334,22 @@ class FilterReaderTest(unittest.TestCase):
 		filterReader.getOptions(None)
 		self.assertRaises(ValueError, FilterReader.convert, filterReader)
 
+	def testFilterReaderExplicit(self):
+		# read explicit uses absolute path:
+		path_ = os.path.abspath(os.path.join(TEST_FILES_DIR, "filter.d"))
+		filterReader = FilterReader(os.path.join(path_, "testcase01.conf"), "testcase01", {})
+		self.assertEqual(filterReader.readexplicit(), 
+			[os.path.join(path_, "testcase-common.conf"), os.path.join(path_, "testcase01.conf")]
+		)
+		try:
+			filterReader.getOptions(None)
+			# from included common
+			filterReader.get('Definition', '__prefix_line')
+			# from testcase01
+			filterReader.get('Definition', 'failregex')
+			filterReader.get('Definition', 'ignoreregex')
+		except Exception, e: # pragma: no cover - failed if reachable
+			self.fail('unexpected options after readexplicit: %s' % (e))
 
 class JailsReaderTestCache(LogCaptureTestCase):
 
