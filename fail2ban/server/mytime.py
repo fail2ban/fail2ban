@@ -26,89 +26,95 @@ import time, datetime, re
 ##
 # MyTime class.
 #
-# This class is a wrapper around time.time()  and time.gmtime(). When
-# performing unit test, it is very useful to get a fixed value from these
-# functions.
-# Thus, time.time() and time.gmtime() should never be called directly.
-# This wrapper should be called instead. The API are equivalent.
 
 class MyTime:
-	
+	"""A wrapper around time module primarily for testing purposes
+
+	This class is a wrapper around time.time()  and time.gmtime(). When
+	performing unit test, it is very useful to get a fixed value from
+	these functions.  Thus, time.time() and time.gmtime() should never
+	be called directly.  This wrapper should be called instead. The API
+	are equivalent.
+	"""
+
 	myTime = None
-	
-	##
-	# Sets the current time.
-	#
-	# Use None in order to always get the real current time.
-	#
-	# @param t the time to set or None
-	
-	#@staticmethod
+
+	@staticmethod
 	def setTime(t):
+		"""Set current time.
+
+		Use None in order to always get the real current time.
+
+		@param t the time to set or None
+		"""
+
 		MyTime.myTime = t
-	setTime = staticmethod(setTime)
-	
-	##
-	# Equivalent to time.time()
-	#
-	# @return time.time() if setTime was called with None
-	
-	#@staticmethod
+
+	@staticmethod
 	def time():
+		"""Decorate time.time() for the purpose of testing mocking
+
+		@return time.time() if setTime was called with None
+		"""
+
 		if MyTime.myTime is None:
 			return time.time()
 		else:
 			return MyTime.myTime
-	time = staticmethod(time)
-	
-	##
-	# Equivalent to time.gmtime()
-	#
-	# @return time.gmtime() if setTime was called with None
-	
-	#@staticmethod
+
+	@staticmethod
 	def gmtime():
+		"""Decorate time.gmtime() for the purpose of testing mocking
+
+		@return time.gmtime() if setTime was called with None
+		"""
 		if MyTime.myTime is None:
 			return time.gmtime()
 		else:
 			return time.gmtime(MyTime.myTime)
-	gmtime = staticmethod(gmtime)
 
-	#@staticmethod
+	@staticmethod
 	def now():
+		"""Decorate datetime.now() for the purpose of testing mocking
+
+		@return datetime.now() if setTime was called with None
+		"""
 		if MyTime.myTime is None:
 			return datetime.datetime.now()
 		else:
 			return datetime.datetime.fromtimestamp(MyTime.myTime)
-	now = staticmethod(now)
 
+	@staticmethod
 	def localtime(x=None):
+		"""Decorate time.localtime() for the purpose of testing mocking
+
+		@return time.localtime() if setTime was called with None
+		"""
 		if MyTime.myTime is None or x is not None:
 			return time.localtime(x)
 		else:
 			return time.localtime(MyTime.myTime)
-	localtime = staticmethod(localtime)
 
-	## 
-	# Wraps string expression like "1h 2m 3s" into number contains seconds (3723).
-	# The string expression will be evaluated as mathematical expression, spaces between each groups 
-	#   will be wrapped to "+" operand (only if any operand does not specified between).
-	# Because of case insensitivity and overwriting with minutes ("m" or "mm"), the short replacement for month
-	#   are "mo" or "mon".
-	# Ex: 1hour+30min = 5400
-	#     0d 1h 30m   = 5400
-	#     1year-6mo   = 15778800
-	#     6 months    = 15778800
-	# warn: month is not 30 days, it is a year in seconds / 12, the leap years will be respected also:
-	#       >>>> float(Test.str2seconds("1month")) / 60 / 60 / 24
-	#       30.4375
-	#       >>>> float(Test.str2seconds("1year")) / 60 / 60 / 24
-	#       365.25	
-	#
-	# @returns number (calculated seconds from expression "val")
 
-	#@staticmethod
+	@staticmethod
 	def str2seconds(val):
+		"""Wraps string expression like "1h 2m 3s" into number contains seconds (3723).
+		The string expression will be evaluated as mathematical expression, spaces between each groups 
+		  will be wrapped to "+" operand (only if any operand does not specified between).
+		Because of case insensitivity and overwriting with minutes ("m" or "mm"), the short replacement for month
+		  are "mo" or "mon".
+		Ex: 1hour+30min = 5400
+		    0d 1h 30m   = 5400
+		    1year-6mo   = 15778800
+		    6 months    = 15778800
+		warn: month is not 30 days, it is a year in seconds / 12, the leap years will be respected also:
+		      >>>> float(Test.str2seconds("1month")) / 60 / 60 / 24
+		      30.4375
+		      >>>> float(Test.str2seconds("1year")) / 60 / 60 / 24
+		      365.25	
+		
+		@returns number (calculated seconds from expression "val")
+		"""
 		if isinstance(val, (int, long, float, complex)):
 			return val
 		# replace together standing abbreviations, example '1d12h' -> '1d 12h':
@@ -122,4 +128,3 @@ class MyTime:
 			val = re.sub(r"(?i)(?<=[\d\s])(%s)\b" % rexp, "*"+str(rpl), val)
 		val = re.sub(r"(\d)\s+(\d)", r"\1+\2", val);
 		return eval(val)
-	str2seconds = staticmethod(str2seconds)

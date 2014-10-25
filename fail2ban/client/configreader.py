@@ -77,7 +77,7 @@ class ConfigReader():
 	  """
 		# already shared ?
 		if not self._cfg:
-			self.touch(name)
+			self._create_unshared(name)
 		# performance feature - read once if using shared config reader:
 		if once and self._cfg.read_cfg_files is not None:
 			return self._cfg.read_cfg_files
@@ -90,7 +90,7 @@ class ConfigReader():
 		self._cfg.read_cfg_files = ret
 		return ret
 
-	def touch(self, name=''):
+	def _create_unshared(self, name=''):
 		""" Allocates and share a config file by it name.
 
 	  Automatically allocates unshared or reuses shared handle by given 'name' and 
@@ -268,7 +268,7 @@ class DefinitionInitConfigReader(ConfigReader):
 	# needed for fail2ban-regex that doesn't need fancy directories
 	def readexplicit(self):
 		if not self._cfg:
-			self.touch(self._file)
+			self._create_unshared(self._file)
 		return SafeConfigParserWithIncludes.read(self._cfg, self._file)
 	
 	def getOptions(self, pOpts):

@@ -86,6 +86,7 @@ class DateDetectorTest(unittest.TestCase):
 			(False, "23-Jan-2005 21:59:59.02"),
 			(False, "23-Jan-2005 21:59:59 +0100"),
 			(False, "23-01-2005 21:59:59"),
+			(True, "1106513999"), # Portsetry
 			(False, "01-23-2005 21:59:59.252"), # reported on f2b, causes Feb29 fix to break
 			(False, "@4000000041f4104f00000000"), # TAI64N
 			(False, "2005-01-23T20:59:59.252Z"), #ISO 8601 (UTC)

@@ -126,7 +126,7 @@ class BanManager:
 	# @param ticket the FailTicket
 	# @return a BanTicket
 	
-	#@staticmethod
+	@staticmethod
 	def createBanTicket(ticket):
 		ip = ticket.getIP()
 		# if ticked was restored from database - set time of original restored ticket:
@@ -138,7 +138,6 @@ class BanManager:
 		banTicket = BanTicket(ip, lastTime, ticket.getMatches())
 		banTicket.setAttempt(ticket.getAttempt())
 		return banTicket
-	createBanTicket = staticmethod(createBanTicket)
 	
 	##
 	# Add a ban ticket.

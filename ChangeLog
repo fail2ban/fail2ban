@@ -95,6 +95,7 @@ ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
      not affect SYSLOG output
    * Log unhandled exceptions
    * cyrus-imap: catch "user not found" attempts
+   * Add support for Portsentry
 
 ver. 0.9.0 (2014/03/14) - beta
 ----------
