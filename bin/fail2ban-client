@@ -409,6 +409,7 @@ class Fail2banClient:
 		# TODO: get away from stew of return codes and exception
 		# handling -- handle via exceptions
 		try:
+			self.__configurator.Reload()
 			self.__configurator.readAll()
 			ret = self.__configurator.getOptions(jail)
 			self.__configurator.convertToProtocol()
@@ -418,12 +419,11 @@ class Fail2banClient:
 			ret = False
 		return ret
 
-	#@staticmethod
+	@staticmethod
 	def dumpConfig(cmd):
 		for c in cmd:
 			print c
 		return True
-	dumpConfig = staticmethod(dumpConfig)
 
 
 class ServerExecutionException(Exception):

@@ -25,6 +25,7 @@ __license__ = "GPL"
 import logging
 import os
 import re
+import sys
 import time
 import unittest
 from StringIO import StringIO
@@ -33,6 +34,15 @@ from ..server.mytime import MyTime
 from ..helpers import getLogger
 
 logSys = getLogger(__name__)
+
+CONFIG_DIR = os.environ.get('FAIL2BAN_CONFIG_DIR', None)
+
+if not CONFIG_DIR:
+# Use heuristic to figure out where configuration files are
+	if os.path.exists(os.path.join('config','fail2ban.conf')):
+		CONFIG_DIR = 'config'
+	else:
+		CONFIG_DIR = '/etc/fail2ban'
 
 def mtimesleep():
 	# no sleep now should be necessary since polling tracks now not only
@@ -102,6 +112,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
 	tests.addTest(unittest.makeSuite(clientreadertestcase.FilterReaderTest))
 	tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTest))
+	tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTestCache))
 	# CSocket and AsyncServer
 	tests.addTest(unittest.makeSuite(sockettestcase.Socket))
 	# Misc helpers
@@ -195,6 +206,8 @@ class LogCaptureTestCase(unittest.TestCase):
 		# Let's log everything into a string
 		self._log = StringIO()
 		logSys.handlers = [logging.StreamHandler(self._log)]
+		if self._old_level < logging.DEBUG: # so if HEAVYDEBUG etc -- show them!
+			logSys.handlers += self._old_handlers
 		logSys.setLevel(getattr(logging, 'DEBUG'))
 
 	def tearDown(self):
@@ -206,6 +219,9 @@ class LogCaptureTestCase(unittest.TestCase):
 
 	def _is_logged(self, s):
 		return s in self._log.getvalue()
+
+	def getLog(self):
+		return self._log.getvalue()
 
 	def printLog(self):
 		print(self._log.getvalue())

@@ -26,7 +26,7 @@ __license__ = "GPL"
 
 import os
 
-from .configreader import ConfigReader, DefinitionInitConfigReader
+from .configreader import DefinitionInitConfigReader
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
@@ -47,14 +47,18 @@ class ActionReader(DefinitionInitConfigReader):
 		DefinitionInitConfigReader.__init__(
 			self, file_, jailName, initOpts, **kwargs)
 
+	def setFile(self, fileName):
+		self.__file = fileName
+		DefinitionInitConfigReader.setFile(self, os.path.join("action.d", fileName))
+	
+	def getFile(self):
+		return self.__file
+
 	def setName(self, name):
 		self._name = name
 
 	def getName(self):
 		return self._name
-
-	def read(self):
-		return ConfigReader.read(self, os.path.join("action.d", self._file))
 
 	def convert(self):
 		head = ["set", self._jailName]

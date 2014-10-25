@@ -24,21 +24,13 @@ __license__ = "GPL"
 
 import unittest, sys, os, fileinput, re, time, datetime, inspect
 
-if sys.version_info >= (2, 6):
-	import json
-else:
-	import simplejson as json
-	next = lambda x: x.next()
+import json
 
 from ..server.filter import Filter
 from ..client.filterreader import FilterReader
-from .utils import setUpMyTime, tearDownMyTime
+from .utils import setUpMyTime, tearDownMyTime, CONFIG_DIR
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
-if os.path.exists('config/fail2ban.conf'):
-	CONFIG_DIR = "config"
-else:
-	CONFIG_DIR='/etc/fail2ban'
 
 class FilterSamplesRegex(unittest.TestCase):
 
