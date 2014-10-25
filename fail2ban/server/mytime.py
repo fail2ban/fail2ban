@@ -26,46 +26,48 @@ import time, datetime
 ##
 # MyTime class.
 #
-# This class is a wrapper around time.time()  and time.gmtime(). When
-# performing unit test, it is very useful to get a fixed value from these
-# functions.
-# Thus, time.time() and time.gmtime() should never be called directly.
-# This wrapper should be called instead. The API are equivalent.
 
 class MyTime:
-	
+	"""A wrapper around time module primarily for testing purposes
+
+	This class is a wrapper around time.time()  and time.gmtime(). When
+	performing unit test, it is very useful to get a fixed value from
+	these functions.  Thus, time.time() and time.gmtime() should never
+	be called directly.  This wrapper should be called instead. The API
+	are equivalent.
+	"""
+
 	myTime = None
-	
-	##
-	# Sets the current time.
-	#
-	# Use None in order to always get the real current time.
-	#
-	# @param t the time to set or None
-	
+
 	@staticmethod
 	def setTime(t):
+		"""Set current time.
+
+		Use None in order to always get the real current time.
+
+		@param t the time to set or None
+		"""
+
 		MyTime.myTime = t
-	
-	##
-	# Equivalent to time.time()
-	#
-	# @return time.time() if setTime was called with None
-	
+
 	@staticmethod
 	def time():
+		"""Decorate time.time() for the purpose of testing mocking
+
+		@return time.time() if setTime was called with None
+		"""
+
 		if MyTime.myTime is None:
 			return time.time()
 		else:
 			return MyTime.myTime
-	
-	##
-	# Equivalent to time.gmtime()
-	#
-	# @return time.gmtime() if setTime was called with None
-	
+
 	@staticmethod
 	def gmtime():
+		"""Decorate time.gmtime() for the purpose of testing mocking
+
+		@return time.gmtime() if setTime was called with None
+		"""
 		if MyTime.myTime is None:
 			return time.gmtime()
 		else:
@@ -73,6 +75,10 @@ class MyTime:
 
 	@staticmethod
 	def now():
+		"""Decorate datetime.now() for the purpose of testing mocking
+
+		@return datetime.now() if setTime was called with None
+		"""
 		if MyTime.myTime is None:
 			return datetime.datetime.now()
 		else:
@@ -80,6 +86,10 @@ class MyTime:
 
 	@staticmethod
 	def localtime(x=None):
+		"""Decorate time.localtime() for the purpose of testing mocking
+
+		@return time.localtime() if setTime was called with None
+		"""
 		if MyTime.myTime is None or x is not None:
 			return time.localtime(x)
 		else:
