@@ -81,6 +81,18 @@ some quick commands::
   status test
 
 
+Testing with vagrant
+--------------------
+
+Testing can now be done inside a vagrant VM.  Vagrantfile provided in
+source code repository established two VMs:
+
+- VM "secure" which can be used for testing fail2ban code.
+- VM "attacker" which hcan be used to perform attack against our "secure" VM.
+
+Both VMs are sharing the 192.168.200/24 network. If you are using this network
+take a look into the Vagrantfile and change the IP.
+
 
 Coding Standards
 ================
