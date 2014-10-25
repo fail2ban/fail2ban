@@ -171,12 +171,11 @@ class AsyncServer(asyncore.dispatcher):
 
 	# @param sock: socket file.
 	
-	#@staticmethod
+	@staticmethod
 	def __markCloseOnExec(sock):
 		fd = sock.fileno()
 		flags = fcntl.fcntl(fd, fcntl.F_GETFD)
 		fcntl.fcntl(fd, fcntl.F_SETFD, flags|fcntl.FD_CLOEXEC)
-	__markCloseOnExec = staticmethod(__markCloseOnExec)
 
 ##
 # AsyncServerException is used to wrap communication exceptions.

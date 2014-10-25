@@ -220,7 +220,7 @@ class JailReader(ConfigReader):
 		stream.insert(0, ["add", self.__name, backend])
 		return stream
 	
-	#@staticmethod
+	@staticmethod
 	def extractOptions(option):
 		match = JailReader.optionCRE.match(option)
 		if not match:
@@ -235,4 +235,3 @@ class JailReader(ConfigReader):
 					val for val in optmatch.group(2,3,4) if val is not None][0]
 				option_opts[opt.strip()] = value.strip()
 		return option_name, option_opts
-	extractOptions = staticmethod(extractOptions)
