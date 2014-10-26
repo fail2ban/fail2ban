@@ -324,7 +324,7 @@ class Actions(JailThread, Mapping):
 					datetime.datetime.fromtimestamp(bendtime).strftime("%Y-%m-%d %H:%M:%S"))
 				# check ban is not too old :
 				if bendtime < MyTime.time():
-					logSys.info('[%s] Ignore %s, expiered bantime - %s', self._jail.name, ip, logtime[1])
+					logSys.info('[%s] Ignore %s, expired bantime - %s', self._jail.name, ip, logtime[1])
 					return False
 			else:
 				logtime = ('permanent', 'infinite')

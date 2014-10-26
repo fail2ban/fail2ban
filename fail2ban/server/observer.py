@@ -245,12 +245,13 @@ class ObserverThread(JailThread):
 			logSys.info("Observer stop ... try to end queue %s seconds", wtime)
 			#print("Observer stop ....")
 			# just add shutdown job to make possible wait later until full (events remaining)
-			self.add_wn('shutdown')
-			#don't pulse - just set, because we will delete it hereafter (sometimes not wakeup)
-			n = self._notify
-			self._notify.set()
-			#self.pulse_notify()
-			self._notify = None
+			with self._queue_lock:
+				self.add_wn('shutdown')
+				#don't pulse - just set, because we will delete it hereafter (sometimes not wakeup)
+				n = self._notify
+				self._notify.set()
+				#self.pulse_notify()
+				self._notify = None
 			# wait max wtime seconds until full (events remaining)
 			self.wait_empty(wtime)
 			n.clear()
@@ -269,9 +270,10 @@ class ObserverThread(JailThread):
 		if sleeptime is not None:
 			e = MyTime.time() + sleeptime
 		# block queue with not operation to be sure all really jobs are executed if nop goes from queue :
-		self.add_wn('nop')
-		if self.is_full and self.idle:
-			self.pulse_notify()
+		if self._notify is not None:
+			self.add_wn('nop')
+			if self.is_full and self.idle:
+				self.pulse_notify()
 		while self.is_full:
 			if sleeptime is not None and MyTime.time() > e:
 				break
