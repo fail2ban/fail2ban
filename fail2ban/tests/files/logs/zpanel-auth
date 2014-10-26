@@ -1,0 +1,18 @@
+#zpanel-auth
+
+# apache combined log format
+# failJSON: { "time": "2014-10-24T18:20:42", "match": true , "host": "1.2.3.4" }
+1.2.3.4 - - [24/Oct/2014:16:20:42 -0000] "GET /?invalidlogin HTTP/1.1" 200 7078 "http://4.3.2.1/?invalidlogin" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36"
+
+# POST instead of GET
+# failJSON: { "time": "2014-10-24T18:20:42", "match": false , "host": "5.6.7.8" }
+5.6.7.8 - - [24/Oct/2014:16:20:42 -0000] "POST /?invalidlogin HTTP/1.1" 200 7078 "http://4.3.2.1/?invalidlogin" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36"
+
+# apache combined log format with vhost:port prefixed
+# failJSON: { "time": "2014-10-24T18:20:42", "match": true , "host": "1.2.3.4" }
+falcon:80 1.2.3.4 - - [24/Oct/2014:16:20:42 -0000] "GET /?invalidlogin HTTP/1.1" 200 7078 "http://4.3.2.1/?invalidlogin" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36"
+
+# invalidlogin in referrer instead of request
+# failJSON: { "time": "2014-10-24T18:20:42", "match": false , "host": "5.6.7.8" }
+falcon:80 5.6.7.8 - - [24/Oct/2014:16:20:42 -0000] "GET /etc/styles/zpanelx/images/my_account/assets/icon.png HTTP/1.1" 200 1877 "http://4.3.2.1/?invalidlogin" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36"
+
