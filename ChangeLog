@@ -4,10 +4,10 @@
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 ================================================================================
-Fail2Ban (version 0.9.0.dev)                                          2014/xx/xx
+Fail2Ban (version 0.9.1)                                              2014/10/29
 ================================================================================
 
-ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
+ver. 0.9.1 (2014/10/29) - better, faster, stronger
 ----------
 
 - Refactoring (IMPORTANT -- Please review your setup and configuration):
