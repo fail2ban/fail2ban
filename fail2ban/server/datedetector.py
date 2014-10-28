@@ -194,7 +194,7 @@ class DateDetector(object):
 						logSys.log(logLevel, "Got time %f for \"%r\" using template %s", 
 							date[0], date[1].group(), template.name)
 					return date
-				except ValueError:
+				except ValueError: # pragma: no cover
 					pass
 			return None
 		finally:
