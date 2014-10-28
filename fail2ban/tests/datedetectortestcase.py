@@ -29,19 +29,28 @@ import time
 import datetime
 
 from ..server.datedetector import DateDetector
+from ..server import datedetector
 from ..server.datetemplate import DateTemplate
-from .utils import setUpMyTime, tearDownMyTime
+from .utils import setUpMyTime, tearDownMyTime, LogCaptureTestCase
+from ..helpers import getLogger
 
-class DateDetectorTest(unittest.TestCase):
+logSys = getLogger("fail2ban")
+
+class DateDetectorTest(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		LogCaptureTestCase.setUp(self)
+		self.__old_eff_level = datedetector.logLevel
+		datedetector.logLevel = logSys.getEffectiveLevel()
 		setUpMyTime()
 		self.__datedetector = DateDetector()
 		self.__datedetector.addDefaultTemplate()
 
 	def tearDown(self):
 		"""Call after every test case."""
+		LogCaptureTestCase.tearDown(self)
+		datedetector.logLevel = self.__old_eff_level
 		tearDownMyTime()
 	
 	def testGetEpochTime(self):
