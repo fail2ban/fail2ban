@@ -1,0 +1,51 @@
+--- a/debian/control
++++ b/debian/control
+@@ -2,7 +2,7 @@ Source: fail2ban
+ Section: net
+ Priority: optional
+ Maintainer: Yaroslav Halchenko <debian@onerussian.com>
+-Build-Depends: debhelper (>= 9), python3, python3-pyinotify, dh-systemd
++Build-Depends: debhelper (>= 9), python (>= 2.6.6-3~), python-pyinotify, dh-python
+ Homepage: http://www.fail2ban.org
+ Vcs-Git: git://github.com/fail2ban/fail2ban.git
+ Vcs-Browser: http://github.com/fail2ban/fail2ban
+@@ -12,8 +12,8 @@ Standards-Version: 3.9.6
+ Package: fail2ban
+ Architecture: all
+ Depends: ${python3:Depends}, ${misc:Depends}, lsb-base (>=2.0-7)
+-Recommends: iptables, whois, python3-pyinotify
+-Suggests: mailx, system-log-daemon, python3-systemd
++Recommends: iptables, whois, python-pyinotify
++Suggests: mailx, system-log-daemon, python-systemd
+ Description: ban hosts that cause multiple authentication errors
+  Fail2ban monitors log files (e.g. /var/log/auth.log,
+  /var/log/apache/access.log) and temporarily or persistently bans
+--- a/debian/rules
++++ b/debian/rules
+@@ -9,13 +9,13 @@
+ # Uncomment this to turn on verbose mode.
+ #export DH_VERBOSE=1
+ 
+-export PYBUILD_DISABLE_python2=1
++export PYBUILD_DISABLE_python3=1
+ 
+ %:
+-	dh $@ --with python3,systemd --buildsystem pybuild
++	dh $@ --with python2 --buildsystem pybuild
+ 
+ DESTDIR=$(CURDIR)/debian/fail2ban
+-PYVERSION=$(shell py3versions -dv)
++PYVERSION=$(shell pyversions -dv)
+ 
+ override_dh_clean:
+ 	rm -rf fail2ban.egg-info
+@@ -30,7 +30,8 @@ override_dh_install:
+ 	: # Install bash completion
+ 	install -d $(DESTDIR)/etc/bash_completion.d
+ 	install -m 644 files/bash-completion $(DESTDIR)/etc/bash_completion.d/fail2ban
+-	: # Install systemd files
++	: # Install systemd files, even in backport version just in case even though
++	: # other systemd preparation activities are not carried out
+ 	install -d $(DESTDIR)/lib/systemd/system
+ 	install -d $(DESTDIR)/usr/lib/tmpfiles.d
+ 	install -m 644 files/fail2ban.service $(DESTDIR)/lib/systemd/system
