@@ -20,7 +20,7 @@ ver. 0.9.2 (2014/xx/xx) - increment ban time
    - restoring currently banned ip after service restart fixed 
      (now < timeofban + bantime), ignore old log failures (already banned)
 
-ver. 0.9.1 (2014/xx/xx) - better, faster, stronger
+ver. 0.9.1 (2014/10/29) - better, faster, stronger
 ----------
 
 - Refactoring (IMPORTANT -- Please review your setup and configuration):

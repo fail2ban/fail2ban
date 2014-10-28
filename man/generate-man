@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -eu
+
+export PYTHONPATH=..
+
 # fail2ban-client
 echo -n "Generating fail2ban-client "
 help2man --section=1 --no-info --include=fail2ban-client.h2m --output fail2ban-client.1 ../bin/fail2ban-client
