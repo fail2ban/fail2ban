@@ -36,8 +36,8 @@ Optional:
 
 To install, just do:
 
-    tar xvfj fail2ban-0.9.0.tar.bz2
-    cd fail2ban-0.9.0
+    tar xvfj fail2ban-0.9.1.tar.bz2
+    cd fail2ban-0.9.1
     python setup.py install
 
 This will install Fail2Ban into the python library directory. The executable

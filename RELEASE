@@ -61,24 +61,24 @@ Preparation
 
   * Which indicates that testcases/files/logs/mysqld.log has been moved or is a directory::
 
-      tar -C /tmp -jxf dist/fail2ban-0.9.0.tar.bz2
+      tar -C /tmp -jxf dist/fail2ban-0.9.1.tar.bz2
 
 * clean up current direcory::
 
-    diff -rul --exclude \*.pyc . /tmp/fail2ban-0.9.0/
+    diff -rul --exclude \*.pyc . /tmp/fail2ban-0.9.1/
 
   * Only differences should be files that you don't want distributed.
 
 
 * Ensure the tests work from the tarball::
 
-    cd /tmp/fail2ban-0.9.0/ && export PYTHONPATH=`pwd` && bin/fail2ban-testcases
+    cd /tmp/fail2ban-0.9.1/ && export PYTHONPATH=`pwd` && bin/fail2ban-testcases
 
 * Add/finalize the corresponding entry in the ChangeLog
 
   * To generate a list of committers use e.g.::
 
-      git shortlog -sn 0.8.12.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
+      git shortlog -sn 0.9.1.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
 
   * Ensure the top of the ChangeLog has the right version and current date.
   * Ensure the top entry of the ChangeLog has the right version and current date.
