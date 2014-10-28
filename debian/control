@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 9), python3, python3-pyinotify, dh-systemd
 Homepage: http://www.fail2ban.org
 Vcs-Git: git://github.com/fail2ban/fail2ban.git
 Vcs-Browser: http://github.com/fail2ban/fail2ban
-Standards-Version: 3.9.4
+Standards-Version: 3.9.6
 
 
 Package: fail2ban

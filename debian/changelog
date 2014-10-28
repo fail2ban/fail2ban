@@ -1,3 +1,14 @@
+fail2ban (0.9.1-1) unstable; urgency=medium
+
+  * To become fresh upstream release (Closes: #742976)
+    - 0.9 series is quite a big leap in development, especially since 0.8.6
+      which made it to previous Debian stable wheezy.  Please consult upstream
+      ChangeLog about changes
+  * debian/control
+    - boost policy to 3.9.6
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 27 Oct 2014 21:52:56 -0400
+
 fail2ban (0.9.0+git252-g47441d1-1) experimental; urgency=medium
 
   [ Yaroslav Halchenko ]
