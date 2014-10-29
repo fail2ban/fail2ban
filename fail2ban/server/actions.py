@@ -243,7 +243,7 @@ class Actions(JailThread, Mapping):
 		logSys.debug(self._jail.name + ": action terminated")
 		return True
 
-	def __getBansMerged(self, mi, idx):
+	def __getBansMerged(self, mi, overalljails=False):
 		"""Gets bans merged once, a helper for lambda(s), prevents stop of executing action by any exception inside.
 
 		This function never returns None for ainfo lambdas - always a ticket (merged or single one)
@@ -253,29 +253,28 @@ class Actions(JailThread, Mapping):
 		Parameters
 		----------
 		mi : dict
-			initial for lambda should contains {ip, ticket}
-		idx : str
-			key to get a merged bans :
-			'all' - bans merged for all jails
-			'jail' - bans merged for current jail only
+			merge info, initial for lambda should contains {ip, ticket}
+		overalljails : bool
+			switch to get a merged bans :
+			False - (default) bans merged for current jail only
+			True - bans merged for all jails of current ip address
 
 		Returns
 		-------
 		BanTicket 
 			merged or self ticket only
 		"""
+		idx = 'all' if overalljails else 'jail'
 		if idx in mi:
 			return mi[idx] if mi[idx] is not None else mi['ticket']
 		try:
 			jail=self._jail
 			ip=mi['ip']
 			mi[idx] = None
-			if idx == 'all':
+			if overalljails:
 				mi[idx] = jail.database.getBansMerged(ip=ip)
-			elif idx == 'jail':
+			else:
 				mi[idx] = jail.database.getBansMerged(ip=ip, jail=jail)
-			else: # pragma: no cover
-				raise ValueError("Unknown value %r for idx" % (idx,))
 		except Exception as e:
 			logSys.error(
 				"Failed to get %s bans merged, jail '%s': %s",
@@ -304,11 +303,12 @@ class Actions(JailThread, Mapping):
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "\n".join(bTicket.getMatches())
 			if self._jail.database is not None:
-				mi4ip = lambda idx, self=self, mi={'ip':ip, 'ticket':bTicket}: self.__getBansMerged(mi, idx)
-				aInfo["ipmatches"]      = lambda: "\n".join(mi4ip('all').getMatches())
-				aInfo["ipjailmatches"]  = lambda: "\n".join(mi4ip('jail').getMatches())
-				aInfo["ipfailures"]     = lambda: mi4ip('all').getAttempt()
-				aInfo["ipjailfailures"] = lambda: mi4ip('jail').getAttempt()
+				mi4ip = lambda overalljails=False, self=self, \
+					mi={'ip':ip, 'ticket':bTicket}: self.__getBansMerged(mi, overalljails)
+				aInfo["ipmatches"]      = lambda: "\n".join(mi4ip(True).getMatches())
+				aInfo["ipjailmatches"]  = lambda: "\n".join(mi4ip().getMatches())
+				aInfo["ipfailures"]     = lambda: mi4ip(True).getAttempt()
+				aInfo["ipjailfailures"] = lambda: mi4ip().getAttempt()
 			if self.__banManager.addBanTicket(bTicket):
 				logSys.notice("[%s] Ban %s" % (self._jail.name, aInfo["ip"]))
 				for name, action in self._actions.iteritems():
