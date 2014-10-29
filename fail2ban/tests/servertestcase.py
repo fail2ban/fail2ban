@@ -804,7 +804,7 @@ class RegexTests(unittest.TestCase):
 
 class _BadThread(JailThread):
 	def run(self):
-		int("ignore this exception -- raised for testing")
+		raise RuntimeError('run bad thread exception')
 
 class LoggingTests(LogCaptureTestCase):
 
@@ -814,7 +814,13 @@ class LoggingTests(LogCaptureTestCase):
 		self.assertEqual(testLogSys.name, "fail2ban.name")
 
 	def testFail2BanExceptHook(self):
+		prev_exchook = sys.__excepthook__
+		x = []
+		sys.__excepthook__ = lambda *args: x.append(args)
 		badThread = _BadThread()
 		badThread.start()
 		badThread.join()
 		self.assertTrue(self._is_logged("Unhandled exception"))
+		sys.__excepthook__ = prev_exchook
+		self.assertEqual(len(x), 1)
+		self.assertEqual(x[0][0], RuntimeError)
