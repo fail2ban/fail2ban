@@ -244,7 +244,7 @@ class Actions(JailThread, Mapping):
 		return True
 
 	def __getBansMerged(self, mi, idx):
-		"""Helper for lamda to get bans merged once
+		"""Gets bans merged once, a helper for lambda(s), prevents stop of executing action by any exception inside.
 
 		This function never returns None for ainfo lambdas - always a ticket (merged or single one)
 		and prevents any errors through merging (to guarantee ban actions will be executed).
@@ -274,6 +274,8 @@ class Actions(JailThread, Mapping):
 				mi[idx] = jail.database.getBansMerged(ip=ip)
 			elif idx == 'jail':
 				mi[idx] = jail.database.getBansMerged(ip=ip, jail=jail)
+			else: # pragma: no cover
+				raise ValueError("Unknown value %r for idx" % (idx,))
 		except Exception as e:
 			logSys.error(
 				"Failed to get %s bans merged, jail '%s': %s",
