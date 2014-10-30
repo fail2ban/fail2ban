@@ -16,6 +16,7 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
 - New Features:
 
 - Enhancements:
+   * Enable multiport for firewallcmd-new action.  Closes gh-834
 
 
 ver. 0.9.1 (2014/10/29) - better, faster, stronger
