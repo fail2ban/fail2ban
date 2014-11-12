@@ -1,3 +1,15 @@
+fail2ban (0.9.1-1.1) UNRELEASED; urgency=medium
+
+  [ Christoph Anton Mitterer ]
+  * Do not install the following configuration files which are not used within
+    the Debian package of fail2ban:
+    /etc/fail2ban/paths-fedora.conf
+    /etc/fail2ban/paths-freebsd.conf
+    /etc/fail2ban/paths-osx.conf
+    Closes: #767123
+
+ -- Christoph Anton Mitterer <mail@christoph.anton.mitterer.name>  Wed, 12 Nov 2014 05:20:20 +0100
+
 fail2ban (0.9.1-1) unstable; urgency=medium
 
   * To become fresh upstream release (Closes: #742976)

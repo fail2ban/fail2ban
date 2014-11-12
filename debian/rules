@@ -23,6 +23,9 @@ override_dh_clean:
 
 override_dh_install:
 	rm -f $(DESTDIR)/usr/share/doc/fail2ban/README.Solaris
+	rm -f $(DESTDIR)/etc/fail2ban/paths-fedora.conf
+	rm -f $(DESTDIR)/etc/fail2ban/paths-freebsd.conf
+	rm -f $(DESTDIR)/etc/fail2ban/paths-osx.conf
 	: # Remove explicitely created /var/run/fail2ban
 	: # just to please lintian since init file will
 	: # take care about it anyways
