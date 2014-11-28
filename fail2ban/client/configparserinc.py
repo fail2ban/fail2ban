@@ -226,6 +226,11 @@ after = 1.conf
 						if isinstance(s, dict):
 							s2 = alls.get(n)
 							if isinstance(s2, dict):
+								# save previous known values, for possible using in local interpolations later:
+								for k, v in s2.iteritems():
+									if not k.startswith('known/'):
+										s2['known/'+k] = v
+								# merge section
 								s2.update(s)
 							else:
 								alls[n] = s.copy()
