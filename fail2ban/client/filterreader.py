@@ -50,6 +50,8 @@ class FilterReader(DefinitionInitConfigReader):
 	def convert(self):
 		stream = list()
 		combinedopts = dict(list(self._opts.items()) + list(self._initOpts.items()))
+		if not len(combinedopts):
+			return stream;
 		opts = CommandAction.substituteRecursiveTags(combinedopts)
 		if not opts:
 			raise ValueError('recursive tag definitions unable to be resolved')
