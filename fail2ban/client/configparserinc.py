@@ -249,3 +249,12 @@ after = 1.conf
 			return SafeConfigParser.read(self, fileNamesFull, encoding='utf-8')
 		else:
 			return SafeConfigParser.read(self, fileNamesFull)
+
+	def merge_section(self, section, options, pref='known/'):
+		alls = self.get_sections()
+		sk = {}
+		for k, v in options.iteritems():
+			if pref == '' or not k.startswith(pref):
+				sk[pref+k] = v
+		alls[section].update(sk)
+

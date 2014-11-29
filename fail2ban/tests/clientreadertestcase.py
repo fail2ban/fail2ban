@@ -155,12 +155,16 @@ c = d ;in line comment
 
 class JailReaderTest(LogCaptureTestCase):
 
+	def __init__(self, *args, **kwargs):
+		super(JailReaderTest, self).__init__(*args, **kwargs)
+		self.__share_cfg = {}
+
 	def testIncorrectJail(self):
-		jail = JailReader('XXXABSENTXXX', basedir=CONFIG_DIR)
+		jail = JailReader('XXXABSENTXXX', basedir=CONFIG_DIR, share_config = self.__share_cfg)
 		self.assertRaises(ValueError, jail.read)
 		
 	def testJailActionEmpty(self):
-		jail = JailReader('emptyaction', basedir=IMPERFECT_CONFIG)
+		jail = JailReader('emptyaction', basedir=IMPERFECT_CONFIG, share_config = self.__share_cfg)
 		self.assertTrue(jail.read())
 		self.assertTrue(jail.getOptions())
 		self.assertTrue(jail.isEnabled())
@@ -168,7 +172,7 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertTrue(self._is_logged('No actions were defined for emptyaction'))
 
 	def testJailActionFilterMissing(self):
-		jail = JailReader('missingbitsjail', basedir=IMPERFECT_CONFIG)
+		jail = JailReader('missingbitsjail', basedir=IMPERFECT_CONFIG, share_config = self.__share_cfg)
 		self.assertTrue(jail.read())
 		self.assertFalse(jail.getOptions())
 		self.assertTrue(jail.isEnabled())
@@ -176,7 +180,7 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertTrue(self._is_logged('Unable to read the filter'))
 
 	def TODOtestJailActionBrokenDef(self):
-		jail = JailReader('brokenactiondef', basedir=IMPERFECT_CONFIG)
+		jail = JailReader('brokenactiondef', basedir=IMPERFECT_CONFIG, share_config = self.__share_cfg)
 		self.assertTrue(jail.read())
 		self.assertFalse(jail.getOptions())
 		self.assertTrue(jail.isEnabled())
@@ -187,7 +191,7 @@ class JailReaderTest(LogCaptureTestCase):
 
 	if STOCK:
 		def testStockSSHJail(self):
-			jail = JailReader('sshd', basedir=CONFIG_DIR) # we are running tests from root project dir atm
+			jail = JailReader('sshd', basedir=CONFIG_DIR, share_config = self.__share_cfg) # we are running tests from root project dir atm
 			self.assertTrue(jail.read())
 			self.assertTrue(jail.getOptions())
 			self.assertFalse(jail.isEnabled())
@@ -411,13 +415,17 @@ class JailsReaderTestCache(LogCaptureTestCase):
 
 class JailsReaderTest(LogCaptureTestCase):
 
+	def __init__(self, *args, **kwargs):
+		super(JailsReaderTest, self).__init__(*args, **kwargs)
+		self.__share_cfg = {}
+
 	def testProvidingBadBasedir(self):
 		if not os.path.exists('/XXX'):
 			reader = JailsReader(basedir='/XXX')
 			self.assertRaises(ValueError, reader.read)
 
 	def testReadTestJailConf(self):
-		jails = JailsReader(basedir=IMPERFECT_CONFIG)
+		jails = JailsReader(basedir=IMPERFECT_CONFIG, share_config=self.__share_cfg)
 		self.assertTrue(jails.read())
 		self.assertFalse(jails.getOptions())
 		self.assertRaises(ValueError, jails.convert)
@@ -425,22 +433,11 @@ class JailsReaderTest(LogCaptureTestCase):
 		self.maxDiff = None
 		self.assertEqual(sorted(comm_commands),
 			sorted([['add', 'emptyaction', 'auto'],
-			 ['add', 'test1addfailregex', 'auto'], 
-			 ['set', 'test1addfailregex', 'addfailregex', 'failure 1 <HOST>'], 
-			 ['set', 'test1addfailregex', 'addfailregex', 'failure 2 <HOST>'], 
-			 ['set', 'test1addfailregex', 'addignoreregex', 'ignore 1 <HOST>'], 
-			 ['set', 'test1addfailregex', 'addignoreregex', 'ignore 2 <HOST>'], 
-			 ['set', 'test1addfailregex', 'addfailregex', '<IP>'],
-			 ['start', 'test1addfailregex'],
-			 ['add', 'test2failregex', 'auto'], 
-			 ['set', 'test2failregex', 'addfailregex', 'failure 1 <IP>'], 
-			 ['set', 'test2failregex', 'addfailregex', 'failure 2 <IP>'],
-			 ['start', 'test2failregex'],
-			 ['add', 'test3known-interp', 'auto'],
-			 ['set', 'test3known-interp', 'addfailregex', 'failure test 1 (filter.d/test.conf) <HOST>'],
-			 ['set', 'test3known-interp', 'addfailregex', 'failure test 2 (filter.d/test.local) <HOST>'],
-			 ['set', 'test3known-interp', 'addfailregex', 'failure test 3 (jail.local) <HOST>'],
-			 ['start', 'test3known-interp'],
+			 ['add', 'test-known-interp', 'auto'],
+			 ['set', 'test-known-interp', 'addfailregex', 'failure test 1 (filter.d/test.conf) <HOST>'],
+			 ['set', 'test-known-interp', 'addfailregex', 'failure test 2 (filter.d/test.local) <HOST>'],
+			 ['set', 'test-known-interp', 'addfailregex', 'failure test 3 (jail.local) <HOST>'],
+			 ['start', 'test-known-interp'],
 			 ['add', 'missinglogfiles', 'auto'],
 			 ['set', 'missinglogfiles', 'addfailregex', '<IP>'],
 			 ['add', 'brokenaction', 'auto'],
@@ -463,7 +460,7 @@ class JailsReaderTest(LogCaptureTestCase):
 
 	if STOCK:
 		def testReadStockJailConf(self):
-			jails = JailsReader(basedir=CONFIG_DIR) # we are running tests from root project dir atm
+			jails = JailsReader(basedir=CONFIG_DIR, share_config=self.__share_cfg) # we are running tests from root project dir atm
 			self.assertTrue(jails.read())		  # opens fine
 			self.assertTrue(jails.getOptions())	  # reads fine
 			comm_commands = jails.convert()
@@ -524,7 +521,7 @@ class JailsReaderTest(LogCaptureTestCase):
 
 		# Verify that all filters found under config/ have a jail
 		def testReadStockJailFilterComplete(self):
-			jails = JailsReader(basedir=CONFIG_DIR, force_enable=True)
+			jails = JailsReader(basedir=CONFIG_DIR, force_enable=True, share_config=self.__share_cfg)
 			self.assertTrue(jails.read())             # opens fine
 			self.assertTrue(jails.getOptions())       # reads fine
 			# grab all filter names
@@ -541,7 +538,7 @@ class JailsReaderTest(LogCaptureTestCase):
 		def testReadStockJailConfForceEnabled(self):
 			# more of a smoke test to make sure that no obvious surprises
 			# on users' systems when enabling shipped jails
-			jails = JailsReader(basedir=CONFIG_DIR, force_enable=True) # we are running tests from root project dir atm
+			jails = JailsReader(basedir=CONFIG_DIR, force_enable=True, share_config=self.__share_cfg) # we are running tests from root project dir atm
 			self.assertTrue(jails.read())		  # opens fine
 			self.assertTrue(jails.getOptions())	  # reads fine
 			comm_commands = jails.convert(allow_no_files=True)
@@ -636,7 +633,7 @@ action = testaction1[actname=test1]
 filter = testfilter1
 """)
 		jailfd.close()
-		jails = JailsReader(basedir=basedir)
+		jails = JailsReader(basedir=basedir, share_config=self.__share_cfg)
 		self.assertTrue(jails.read())
 		self.assertTrue(jails.getOptions())
 		comm_commands = jails.convert(allow_no_files=True)

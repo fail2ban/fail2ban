@@ -87,6 +87,8 @@ class JailReader(ConfigReader):
 		return pathList
 
 	def getOptions(self):
+		opts1st = [["bool", "enabled", False],
+				["string", "filter", ""]]
 		opts = [["bool", "enabled", False],
 				["string", "logpath", None],
 				["string", "logencoding", None],
@@ -97,13 +99,13 @@ class JailReader(ConfigReader):
 				["string", "usedns", None],
 				["string", "failregex", None],
 				["string", "ignoreregex", None],
-				["string", "addfailregex", None],
-				["string", "addignoreregex", None],
 				["string", "ignorecommand", None],
 				["string", "ignoreip", None],
 				["string", "filter", ""],
 				["string", "action", ""]]
-		self.__opts = ConfigReader.getOptions(self, self.__name, opts)
+
+		# Read first options only needed for merge defaults ('known/...' from filter):
+		self.__opts = ConfigReader.getOptions(self, self.__name, opts1st)
 		if not self.__opts:
 			return False
 		
@@ -115,14 +117,24 @@ class JailReader(ConfigReader):
 				self.__filter = FilterReader(
 					filterName, self.__name, filterOpt, share_config=self.share_config, basedir=self.getBaseDir())
 				ret = self.__filter.read()
-				if ret:
-					self.__filter.getOptions(self.__opts)
-				else:
+				# merge options from filter as 'known/...':
+				self.__filter.getOptions(self.__opts)
+				ConfigReader.merge_section(self, self.__name, self.__filter.getCombined(), 'known/')
+				if not ret:
 					logSys.error("Unable to read the filter")
 					return False
 			else:
 				self.__filter = None
 				logSys.warning("No filter set for jail %s" % self.__name)
+
+			# Read second all options (so variables like %(known/param) can be interpolated):
+			self.__opts = ConfigReader.getOptions(self, self.__name, opts)
+			if not self.__opts:
+				return False
+		
+			# cumulate filter options again (ignore given in jail):
+			if self.__filter:
+				self.__filter.getOptions(self.__opts)
 		
 			# Read action
 			for act in self.__opts["action"].split('\n'):
@@ -203,14 +215,14 @@ class JailReader(ConfigReader):
 				stream.append(["set", self.__name, "bantime", self.__opts[opt]])
 			elif opt == "usedns":
 				stream.append(["set", self.__name, "usedns", self.__opts[opt]])
-			elif opt in ("failregex", "addfailregex"):
+			elif opt == "failregex":
 				for regex in self.__opts[opt].split('\n'):
 					# Do not send a command if the rule is empty.
 					if regex != '':
 						stream.append(["set", self.__name, "addfailregex", regex])
 			elif opt == "ignorecommand":
 				stream.append(["set", self.__name, "ignorecommand", self.__opts[opt]])
-			elif opt in ("ignoreregex", "addignoreregex"):
+			elif opt == "ignoreregex":
 				for regex in self.__opts[opt].split('\n'):
 					# Do not send a command if the rule is empty.
 					if regex != '':
