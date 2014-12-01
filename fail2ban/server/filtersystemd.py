@@ -167,9 +167,10 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			logelements.append(logentry['_HOSTNAME'])
 		if logentry.get('SYSLOG_IDENTIFIER'):
 			logelements.append(logentry['SYSLOG_IDENTIFIER'])
-			if logentry.get('SYSLOG_PID') or logentry.get('_PID'):
-				logelements[-1] += ("[%i]" % logentry.get(
-					'SYSLOG_PID', logentry['_PID']))
+			if logentry.get('SYSLOG_PID'):
+				logelements[-1] += ("[%i]" % logentry['SYSLOG_PID'])
+			elif logentry.get('_PID'):
+				logelements[-1] += ("[%i]" % logentry['_PID'])
 			logelements[-1] += ":"
 		elif logentry.get('_COMM'):
 			logelements.append(logentry['_COMM'])

@@ -323,5 +323,3 @@ class DatabaseTest(LogCaptureTestCase):
 		self.db.purge() # Should leave jail as ban present
 		self.assertEqual(len(self.db.getJailNames()), 1)
 		self.assertEqual(len(self.db.getBans(jail=self.jail)), 1)
-
-

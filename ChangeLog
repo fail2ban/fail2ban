@@ -10,15 +10,23 @@ Fail2Ban (version 0.9.2.dev)                                          2014/xx/xx
 ver. 0.9.2 (2014/xx/xx) - increment ban time
 ----------
 
-- New features:
-   - increment ban time (+ observer) functionality introduced.
+- Fixes:
+   * $ typo in jail.conf. Thanks Skibbi. Debian bug #767255
+   * grep'ing for IP in *mail-whois-lines.conf should now match also
+     at the begginning and EOL.  Thanks Dean Lee
+   * jail.conf
+     - php-url-fopen: separate logpath entries by newline
+   * purge database will be executed now (within observer).
+   * database functionality extended with bad ips.
+   * restoring currently banned ip after service restart fixed 
+     (now < timeofban + bantime), ignore old log failures (already banned)
+
+- New Features:
+   * increment ban time (+ observer) functionality introduced.
      Thanks Serg G. Brester (sebres)
 
-- Fixes:
-   - purge database will be executed now (within observer).
-   - database functionality extended with bad ips.
-   - restoring currently banned ip after service restart fixed 
-     (now < timeofban + bantime), ignore old log failures (already banned)
+- Enhancements:
+   * Enable multiport for firewallcmd-new action.  Closes gh-834
 
 ver. 0.9.1 (2014/10/29) - better, faster, stronger
 ----------

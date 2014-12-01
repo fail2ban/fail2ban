@@ -816,14 +816,6 @@ class _BadThread(JailThread):
 
 class LoggingTests(LogCaptureTestCase):
 
-	def setUp(self):
-		"""Call before every test case."""
-		LogCaptureTestCase.setUp(self)
-
-	def tearDown(self):
-		"""Call after every test case."""
-		LogCaptureTestCase.tearDown(self)
-
 	def testGetF2BLogger(self):
 		testLogSys = getLogger("fail2ban.some.string.with.name")
 		self.assertEqual(testLogSys.parent.name, "fail2ban")
@@ -833,10 +825,12 @@ class LoggingTests(LogCaptureTestCase):
 		prev_exchook = sys.__excepthook__
 		x = []
 		sys.__excepthook__ = lambda *args: x.append(args)
-		badThread = _BadThread()
-		badThread.start()
-		badThread.join()
-		self.assertTrue(self._is_logged("Unhandled exception"))
-		sys.__excepthook__ = prev_exchook
+		try:
+			badThread = _BadThread()
+			badThread.start()
+			badThread.join()
+			self.assertTrue(self._is_logged("Unhandled exception"))
+		finally:
+			sys.__excepthook__ = prev_exchook
 		self.assertEqual(len(x), 1)
 		self.assertEqual(x[0][0], RuntimeError)
