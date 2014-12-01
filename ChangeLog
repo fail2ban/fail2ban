@@ -14,9 +14,10 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
    * $ typo in jail.conf. Thanks Skibbi. Debian bug #767255
    * grep'ing for IP in *mail-whois-lines.conf should now match also
      at the begginning and EOL.  Thanks Dean Lee
+   * jail.conf
+     - php-url-fopen: separate logpath entries by newline
    * failregex declared direct in jail was joined to single line (specifying of
      multiple expressions was not possible).
-
 
 - New Features:
    - New interpolation feature for config readers - `%(known/parameter)s`.
