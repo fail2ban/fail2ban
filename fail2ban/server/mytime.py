@@ -108,9 +108,9 @@ class MyTime:
 		    1year-6mo   = 15778800
 		    6 months    = 15778800
 		warn: month is not 30 days, it is a year in seconds / 12, the leap years will be respected also:
-		      >>>> float(Test.str2seconds("1month")) / 60 / 60 / 24
+		      >>>> float(str2seconds("1month")) / 60 / 60 / 24
 		      30.4375
-		      >>>> float(Test.str2seconds("1year")) / 60 / 60 / 24
+		      >>>> float(str2seconds("1year")) / 60 / 60 / 24
 		      365.25	
 		
 		@returns number (calculated seconds from expression "val")
@@ -121,9 +121,9 @@ class MyTime:
 		val = re.sub(r"(?i)(?<=[a-z])(\d)", r" \1", val)
 		# replace abbreviation with expression:
 		for rexp, rpl in (
-			(r"days?|da|dd?", 24*60*60), (r"week?|wee?|ww?", 7*24*60*60), (r"months?|mon?", (365*3+366)*24*60*60/4/12), 
+			(r"days?|da|dd?", 24*60*60), (r"weeks?|wee?|ww?", 7*24*60*60), (r"months?|mon?", (365*3+366)*24*60*60/4/12), 
 			(r"years?|yea?|yy?", (365*3+366)*24*60*60/4), 
-			(r"seconds?|sec?|ss?", 1), (r"minutes?|min?|mm?", 60), (r"hours?|ho|hh?", 60*60),
+			(r"seconds?|sec?|ss?", 1), (r"minutes?|min?|mm?", 60), (r"hours?|hou?|hh?", 60*60),
 		):
 			val = re.sub(r"(?i)(?<=[\d\s])(%s)\b" % rexp, "*"+str(rpl), val)
 		val = re.sub(r"(\d)\s+(\d)", r"\1+\2", val);

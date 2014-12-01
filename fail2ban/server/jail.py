@@ -275,7 +275,6 @@ class Jail:
 						self.putFailTicket(ticket)
 		except Exception as e: # pragma: no cover
 			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-			#logSys.error('%s', e, exc_info=True)
 
 	def start(self):
 		"""Start the jail, by starting filter and actions threads.

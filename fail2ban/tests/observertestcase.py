@@ -83,7 +83,7 @@ class BanTimeIncr(LogCaptureTestCase):
 				arr = arr[0:multcnt-1] + ([arr[multcnt-2]] * (11-multcnt))
 		self.assertEqual(
 			[a.calcBanTime(600, i) for i in xrange(1, 11)],
-		  arr
+			arr
 		)
 		a.setBanTimeExtra('maxtime', '1d')
 		# change factor :
@@ -377,20 +377,20 @@ class BanTimeIncrDB(unittest.TestCase):
 		self.assertEqual(len(restored_tickets), 2)
 		self.assertEqual(restored_tickets[0].getIP(), ip)
 
-    # purge remove 1st ip
+		# purge remove 1st ip
 		self.db._purgeAge = -48*60*60
 		self.db.purge()
 		restored_tickets = self.db.getCurrentBans(fromtime=stime)
 		self.assertEqual(len(restored_tickets), 1)
 		self.assertEqual(restored_tickets[0].getIP(), ip+'1')
 
-    # this should purge all bans, bips and logs - nothing should be found now
+		# this should purge all bans, bips and logs - nothing should be found now
 		self.db._purgeAge = -240*60*60
 		self.db.purge()
 		restored_tickets = self.db.getCurrentBans(fromtime=stime)
 		self.assertEqual(restored_tickets, [])
 
-    # two separate jails :
+		# two separate jails :
 		jail1 = DummyJail(backend='polling')
 		jail1.database = self.db
 		self.db.addJail(jail1)
@@ -418,14 +418,14 @@ class BanTimeIncrDB(unittest.TestCase):
 			str(restored_tickets[0]),
 			'FailTicket: ip=%s time=%s bantime=%s bancount=2 #attempts=0 matches=[]' % (ip, stime-6000, 12000)
 		)
-    # get last ban values for this ip separately for each jail:
+		# get last ban values for this ip separately for each jail:
 		for row in self.db.getBan(ip, jail1):
 			self.assertEqual(row, (1, stime, 6000))
 			break
 		for row in self.db.getBan(ip, jail2):
 			self.assertEqual(row, (2, stime-6000, 12000))
 			break
-    # get max values for this ip (over all jails):
+		# get max values for this ip (over all jails):
 		for row in self.db.getBan(ip, overalljails=True):
 			self.assertEqual(row, (3, stime, 18000))
 			break
@@ -477,7 +477,7 @@ class BanTimeIncrDB(unittest.TestCase):
 			obs.add('failureFound', failManager, jail, ticket)
 		obs.wait_empty(5)
 		self.assertEqual(ticket.getBanCount(), 0)
-    # check still not ban :
+		# check still not ban :
 		self.assertTrue(not jail.getFailTicket())
 		# add manually 4th times banned (added to bips - make ip bad):
 		ticket.setBanCount(4)
@@ -493,11 +493,14 @@ class BanTimeIncrDB(unittest.TestCase):
 		obs.add('failureFound', failManager, self.jail, ticket)
 		obs.wait_empty(5)
 		# wait until ticket transfered from failmanager into jail:
+		to = int(MyTime.time())+30
 		while True:
 			ticket2 = jail.getFailTicket()
 			if ticket2:
 				break
 			time.sleep(0.1)
+			if MyTime.time() > to: # pragma: no cover
+				raise RuntimeError('unexpected timeout: wait 30 seconds instead of few ms.')
 		# check ticket and failure count:
 		self.assertFalse(not ticket2)
 		self.assertEqual(ticket2.getAttempt(), failManager.getMaxRetry())
@@ -509,7 +512,7 @@ class BanTimeIncrDB(unittest.TestCase):
 		self.assertEqual(ticket2.getBanTime(), 160)
 		self.assertEqual(ticket2.getBanCount(), 5)
 
-    # check prolonged in database also :
+		# check prolonged in database also :
 		restored_tickets = self.db.getCurrentBans(jail=jail, fromtime=stime)
 		self.assertEqual(len(restored_tickets), 1)
 		self.assertEqual(restored_tickets[0].getBanTime(), 160)

@@ -389,7 +389,6 @@ class ObserverThread(JailThread):
 
 		except Exception as e:
 			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-			#logSys.error('%s', e, exc_info=True)
 
 
 	class BanTimeIncr:
@@ -438,7 +437,6 @@ class ObserverThread(JailThread):
 					break
 		except Exception as e:
 			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-			#logSys.error('%s', e, exc_info=True)
 		return banTime
 
 	def banFound(self, ticket, jail, btime):
@@ -480,7 +478,6 @@ class ObserverThread(JailThread):
 				jail.database.addBan(jail, ticket)
 		except Exception as e:
 			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-			#logSys.error('%s', e, exc_info=True)
 
 # Global observer initial created in server (could be later rewriten via singleton)
 class _Observers:

@@ -98,7 +98,7 @@ class DateTemplate(object):
 		return dateMatch
 
 	@abstractmethod
-	def getDate(self, line, dateMatch = None):
+	def getDate(self, line, dateMatch=None):
 		"""Abstract method, which should return the date for a log line
 
 		This should return the date for a log line, typically taking the
@@ -134,7 +134,7 @@ class DateEpoch(DateTemplate):
 		DateTemplate.__init__(self)
 		self.regex = "(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=audit\()))\d{10}(?:\.\d{3,6})?(?(selinux)(?=:\d+\))(?(square)(?=\])))"
 
-	def getDate(self, line, dateMatch = None):
+	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.
 
 		Parameters
@@ -212,7 +212,7 @@ class DatePatternRegex(DateTemplate):
 	def name(self, value):
 		raise NotImplementedError("Name derived from pattern")
 
-	def getDate(self, line, dateMatch = None):
+	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.
 
 		This uses a custom version of strptime, using the named groups
@@ -253,7 +253,7 @@ class DateTai64n(DateTemplate):
 		# yoh: we should not add an additional front anchor
 		self.setRegex("@[0-9a-f]{24}", wordBegin=False)
 
-	def getDate(self, line, dateMatch = None):
+	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.
 
 		Parameters

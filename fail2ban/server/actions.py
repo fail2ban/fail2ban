@@ -25,7 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import time, logging
-import os, datetime
+import os
 import sys
 if sys.version_info >= (3, 3):
 	import importlib.machinery
@@ -322,21 +322,16 @@ class Actions(JailThread, Mapping):
 
 			if btime != -1:
 				bendtime = aInfo["time"] + btime
-				logtime = (datetime.timedelta(seconds=int(btime)),
-					datetime.datetime.fromtimestamp(bendtime).strftime("%Y-%m-%d %H:%M:%S"))
 				# check ban is not too old :
 				if bendtime < MyTime.time():
-					logSys.info('[%s] Ignore %s, expired bantime - %s', self._jail.name, ip, logtime[1])
+					logSys.info('[%s] Ignore %s, expired bantime', self._jail.name, ip)
 					return False
-			else:
-				logtime = ('permanent', 'infinite')
 
 			if self.__banManager.addBanTicket(bTicket):
 				# report ticket to observer, to check time should be increased and hereafter observer writes ban to database (asynchronous)
 				if Observers.Main is not None and not bTicket.getRestored():
 					Observers.Main.add('banFound', bTicket, self._jail, btime)
-				logSys.notice("[%s] %sBan %s (%s # %s -> %s)", self._jail.name, ('' if not bTicket.getRestored() else 'Restore '),
-					aInfo["ip"], (bTicket.getBanCount() if bTicket.getRestored() else '_'), *logtime)
+				logSys.notice("[%s] %sBan %s", self._jail.name, ('' if not bTicket.getRestored() else 'Restore '), aInfo["ip"])
 				# do actions :
 				for name, action in self._actions.iteritems():
 					try:
@@ -349,8 +344,7 @@ class Actions(JailThread, Mapping):
 							exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 				return True
 			else:
-				logSys.notice("[%s] %s already banned (%d # %s -> %s)" % ((self._jail.name,
-					aInfo["ip"], bTicket.getBanCount()) + logtime))
+				logSys.notice("[%s] %s already banned" % (self._jail.name, aInfo["ip"]))
 		return False
 
 	def __checkUnBan(self):
