@@ -132,6 +132,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
 	tests.addTest(unittest.makeSuite(misctestcase.TestsUtilsTest))
 	tests.addTest(unittest.makeSuite(misctestcase.CustomDateFormatsTest))
+	tests.addTest(unittest.makeSuite(misctestcase.MyTimeTest))
 	# Database
 	tests.addTest(unittest.makeSuite(databasetestcase.DatabaseTest))
 

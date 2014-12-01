@@ -35,6 +35,7 @@ from StringIO import StringIO
 from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger
 from ..helpers import splitcommaspace
 from ..server.datetemplate import DatePatternRegex
+from ..server.mytime import MyTime
 
 
 class HelpersTest(unittest.TestCase):
@@ -229,3 +230,20 @@ class CustomDateFormatsTest(unittest.TestCase):
 		self.assertEqual(
 			date,
 			datetime.datetime(2007, 1, 25, 16, 0))
+
+class MyTimeTest(unittest.TestCase):
+
+	def testStr2Seconds(self):
+		# several formats / write styles:
+		str2sec = MyTime.str2seconds
+		self.assertEqual(str2sec('1y6mo30w15d12h35m25s'), 66821725)
+		self.assertEqual(str2sec('2yy 3mo 4ww 10dd 5hh 30mm 20ss'), 74307620)
+		self.assertEqual(str2sec('2 years 3 months 4 weeks 10 days 5 hours 30 minutes 20 seconds'), 74307620)
+		self.assertEqual(str2sec('1 year + 1 month - 1 week + 1 day'), 33669000)
+		self.assertEqual(str2sec('2 * 0.5 yea + 1*1 mon - 3*1/3 wee + 2/2 day - (2*12 hou 3*20 min 80 sec) '), 33578920.0)
+		self.assertEqual(str2sec('2*.5y+1*1mo-3*1/3w+2/2d-(2*12h3*20m80s) '), 33578920.0)
+		self.assertEqual(str2sec('1ye -2mo -3we -4da -5ho -6mi -7se'), 24119633)
+		# month and year in days :
+		self.assertEqual(float(str2sec("1 month")) / 60 / 60 / 24, 30.4375)
+		self.assertEqual(float(str2sec("1 year")) / 60 / 60 / 24, 365.25)
+
