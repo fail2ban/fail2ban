@@ -116,6 +116,10 @@ class ConfigReader():
 			return self._cfg.has_section(sec)
 		return False
 
+	def merge_section(self, *args, **kwargs):
+		if self._cfg is not None:
+			return self._cfg.merge_section(*args, **kwargs)
+
 	def options(self, *args):
 		if self._cfg is not None:
 			return self._cfg.options(*args)

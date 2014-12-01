@@ -1,0 +1,7 @@
+#[INCLUDES]
+#before = common.conf
+
+[Definition]
+failregex = %(known/failregex)s
+            failure test 2 (filter.d/test.local) <HOST>
+
