@@ -11,19 +11,26 @@ ver. 0.9.2 (2014/xx/xx) - increment ban time
 ----------
 
 - Fixes:
+   * purge database will be executed now (within observer).
+   * database functionality extended with bad ips.
+   * restoring currently banned ip after service restart fixed 
+     (now < timeofban + bantime), ignore old log failures (already banned)
    * $ typo in jail.conf. Thanks Skibbi. Debian bug #767255
    * grep'ing for IP in *mail-whois-lines.conf should now match also
      at the begginning and EOL.  Thanks Dean Lee
    * jail.conf
      - php-url-fopen: separate logpath entries by newline
-   * purge database will be executed now (within observer).
-   * database functionality extended with bad ips.
-   * restoring currently banned ip after service restart fixed 
-     (now < timeofban + bantime), ignore old log failures (already banned)
+   * failregex declared direct in jail was joined to single line (specifying of
+     multiple expressions was not possible).
 
 - New Features:
    * increment ban time (+ observer) functionality introduced.
      Thanks Serg G. Brester (sebres)
+   * New interpolation feature for config readers - `%(known/parameter)s`.
+     (means last known option with name `parameter`). This interpolation makes
+     possible to extend a stock filter or jail regexp in .local file
+     (opposite to simply set failregex/ignoreregex that overwrites it),
+     see gh-867.
 
 - Enhancements:
    * Enable multiport for firewallcmd-new action.  Closes gh-834

@@ -46,13 +46,21 @@ class FilterReader(DefinitionInitConfigReader):
 	
 	def getFile(self):
 		return self.__file
-	
-	def convert(self):
-		stream = list()
+
+	def getCombined(self):
 		combinedopts = dict(list(self._opts.items()) + list(self._initOpts.items()))
+		if not len(combinedopts):
+			return {};
 		opts = CommandAction.substituteRecursiveTags(combinedopts)
 		if not opts:
 			raise ValueError('recursive tag definitions unable to be resolved')
+		return opts;
+	
+	def convert(self):
+		stream = list()
+		opts = self.getCombined()
+		if not len(opts):
+			return stream;
 		for opt, value in opts.iteritems():
 			if opt == "failregex":
 				for regex in value.split('\n'):
