@@ -27,7 +27,7 @@ import unittest
 import getpass
 import os
 import sys
-import time
+import time, datetime
 import tempfile
 import uuid
 
@@ -38,7 +38,7 @@ except ImportError:
 
 from ..server.jail import Jail
 from ..server.filterpoll import FilterPoll
-from ..server.filter import Filter, FileFilter, DNSUtils
+from ..server.filter import Filter, FileFilter, FileContainer, DNSUtils
 from ..server.failmanager import FailManagerEmpty
 from ..server.mytime import MyTime
 from .utils import setUpMyTime, tearDownMyTime, mtimesleep, LogCaptureTestCase
@@ -334,6 +334,60 @@ class LogFileFilterPoll(unittest.TestCase):
 		self.assertTrue(self.filter.isModified(LogFileFilterPoll.FILENAME))
 		self.assertFalse(self.filter.isModified(LogFileFilterPoll.FILENAME))
 
+	def testSeekToTime(self):
+		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='.log')
+		tm = lambda time: datetime.datetime.fromtimestamp(time).strftime("%Y-%m-%d %H:%M:%S")
+		time = 1417512352
+		f = open(fname, 'w')
+		fc = FileContainer(fname, self.filter.getLogEncoding())
+		fc.open()
+		fc.setPos(0); self.filter.seekToTime(fc, time)
+		try:
+			f.flush()
+			# empty :
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 0)
+			# one entry with exact time:
+			f.write("%s [sshd] error: PAM: failure len 1\n" % tm(time))
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			# one entry with smaller time:
+			f.seek(0)
+			f.write("%s [sshd] error: PAM: failure len 1\n" % tm(time - 10))
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 0)
+			f.write("%s [sshd] error: PAM: failure len 3 2 1\n" % tm(time - 9))
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 0)
+			# add exact time between:
+			f.write("%s [sshd] error: PAM: failure\n" % tm(time - 1))
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 110)
+			# stil one exact line:
+			f.write("%s [sshd] error: PAM: Authentication failure\n" % tm(time))
+			f.write("%s [sshd] error: PAM: failure len 1\n" % tm(time))
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 110)
+			# add something hereafter:
+			f.write("%s [sshd] error: PAM: failure len 3 2 1\n" % tm(time + 2))
+			f.write("%s [sshd] error: PAM: Authentication failure\n" % tm(time + 3))
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 110)
+			# add something hereafter:
+			f.write("%s [sshd] error: PAM: failure\n" % tm(time + 9))
+			f.write("%s [sshd] error: PAM: failure len 3 2 1\n" % tm(time + 9))
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 110)
+
+		finally:
+			fc.close()
+			_killfile(f, fname)
 
 class LogFileMonitor(LogCaptureTestCase):
 	"""Few more tests for FilterPoll API
