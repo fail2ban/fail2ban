@@ -564,7 +564,7 @@ class FileFilter(Filter):
 	#
 	# @param path log file path
 
-	def addLogPath(self, path, tail = False):
+	def addLogPath(self, path, tail=False):
 		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
 		else:
@@ -677,14 +677,19 @@ class FileFilter(Filter):
 			logSys.exception(e)
 			return False
 		except OSError, e: # pragma: no cover - Requires implemention error in FileContainer to generate
-			logSys.error("Internal errror in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
+			logSys.error("Internal error in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
 			logSys.exception(e)
 			return False
 
 		# prevent completely read of big files first time (after start of service), initial seek to start time using half-interval search algorithm:
 		if container.getPos() == 0 and startTime is not None:
-			# startTime = MyTime.time() - self.getFindTime()
-			self.seekToTime(container, startTime)
+			try:
+				# startTime = MyTime.time() - self.getFindTime()
+				self.seekToTime(container, startTime)
+			except Exception, e: # pragma: no cover
+				logSys.error("Error during seek to start time in \"%s\"", filename)
+				logSys.exception(e)
+				return False
 
 		# yoh: has_content is just a bool, so do not expect it to
 		# change -- loop is exited upon break, and is not entered at
@@ -721,7 +726,7 @@ class FileFilter(Filter):
 		cntr = 0
 		unixTime = None
 		lasti = 0
-		movecntr = 3
+		movecntr = 1
 		while maxp > minp:
 			i = int(minp + (maxp - minp) / 2)
 			pos = container.seek(i)
@@ -730,7 +735,8 @@ class FileFilter(Filter):
 			lncntr = 5;
 			dateTimeMatch = None
 			llen = 0
-			i = pos
+			if lastpos == pos:
+				i = pos
 			while True:
 				line = container.readline()
 				if not line:
@@ -767,6 +773,7 @@ class FileFilter(Filter):
 			lastpos = container.seek(lastFew, False)
 		else:
 			lastpos = container.seek(lastpos, False)
+		container.setPos(lastpos)
 		if logSys.getEffectiveLevel() <= logging.DEBUG:
 			logSys.debug("Position %s from %s, found time %s (%s) within %s seeks", lastpos, fs, unixTime, 
 				(datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S") if unixTime is not None else ''), cntr)
@@ -952,10 +959,6 @@ class DNSUtils:
 			logSys.warning("Unable to find a corresponding IP address for %s: %s"
 						% (dns, e))
 			return list()
-		except socket.error, e:
-			logSys.warning("Socket error raised trying to resolve hostname %s: %s"
-						% (dns, e))
-			return list()
 
 	@staticmethod
 	def ipToName(ip):
@@ -984,7 +987,7 @@ class DNSUtils:
 		try:
 			socket.inet_aton(s[0])
 			return True
-		except socket.error:
+		except socket.error: # pragma: no cover
 			return False
 
 	@staticmethod
