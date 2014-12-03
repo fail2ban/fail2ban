@@ -55,21 +55,12 @@ class HelpersTest(unittest.TestCase):
 			# might be fragile due to ' vs "
 			self.assertEqual(args, "('Very bad', None)")
 
-# based on
-# http://stackoverflow.com/questions/2186525/use-a-glob-to-find-files-recursively-in-python
-def recursive_glob(treeroot, pattern):
-	results = []
-	for base, dirs, files in os.walk(treeroot):
-		goodfiles = fnmatch.filter(dirs + files, pattern)
-		results.extend(os.path.join(base, f) for f in goodfiles)
-	return results
-
 class SetupTest(unittest.TestCase):
 
 	def setUp(self):
 		setup = os.path.join(os.path.dirname(__file__), '..', '..', 'setup.py')
 		self.setup = os.path.exists(setup) and setup or None
-		if not self.setup and sys.version_info >= (2,7): # running not out of the source
+		if not self.setup and sys.version_info >= (2,7): # pragma: no cover - running not out of the source
 			raise unittest.SkipTest(
 				"Seems to be running not out of source distribution"
 				" -- cannot locate setup.py")
@@ -80,9 +71,6 @@ class SetupTest(unittest.TestCase):
 		os.system("%s %s install --root=%s >/dev/null"
 				  % (sys.executable, self.setup, tmp))
 
-		def addpath(l):
-			return [os.path.join(tmp, x) for x in l]
-
 		def strippath(l):
 			return [x[len(tmp)+1:] for x in l]
 
@@ -90,10 +78,20 @@ class SetupTest(unittest.TestCase):
 		need = ['etc', 'usr', 'var']
 
 		# if anything is missing
-		if set(need).difference(got):
+		if set(need).difference(got): # pragma: no cover
 			#  below code was actually to print out not missing but
 			#  rather files in 'excess'.  Left in place in case we
 			#  decide to revert to such more strict test
+
+			# based on
+			# http://stackoverflow.com/questions/2186525/use-a-glob-to-find-files-recursively-in-python
+			def recursive_glob(treeroot, pattern):
+				results = []
+				for base, dirs, files in os.walk(treeroot):
+					goodfiles = fnmatch.filter(dirs + files, pattern)
+					results.extend(os.path.join(base, f) for f in goodfiles)
+				return results
+
 			files = {}
 			for missing in set(got).difference(need):
 				missing_full = os.path.join(tmp, missing)
