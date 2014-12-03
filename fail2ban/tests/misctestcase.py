@@ -67,7 +67,7 @@ def recursive_glob(treeroot, pattern):
 class SetupTest(unittest.TestCase):
 
 	def setUp(self):
-		setup = os.path.join(os.path.dirname(__file__), '..', 'setup.py')
+		setup = os.path.join(os.path.dirname(__file__), '..', '..', 'setup.py')
 		self.setup = os.path.exists(setup) and setup or None
 		if not self.setup and sys.version_info >= (2,7): # running not out of the source
 			raise unittest.SkipTest(
