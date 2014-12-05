@@ -68,49 +68,53 @@ class SetupTest(unittest.TestCase):
 	def testSetupInstallRoot(self):
 		if not self.setup: return			  # if verbose skip didn't work out
 		tmp = tempfile.mkdtemp()
-		os.system("%s %s install --root=%s >/dev/null"
-				  % (sys.executable, self.setup, tmp))
+		try:
+			os.system("%s %s install --root=%s >/dev/null"
+					  % (sys.executable, self.setup, tmp))
 
-		def strippath(l):
-			return [x[len(tmp)+1:] for x in l]
+			def strippath(l):
+				return [x[len(tmp)+1:] for x in l]
 
-		got = strippath(sorted(glob('%s/*' % tmp)))
-		need = ['etc', 'usr', 'var']
+			got = strippath(sorted(glob('%s/*' % tmp)))
+			need = ['etc', 'usr', 'var']
 
-		# if anything is missing
-		if set(need).difference(got): # pragma: no cover
-			#  below code was actually to print out not missing but
-			#  rather files in 'excess'.  Left in place in case we
-			#  decide to revert to such more strict test
+			# if anything is missing
+			if set(need).difference(got): # pragma: no cover
+				#  below code was actually to print out not missing but
+				#  rather files in 'excess'.  Left in place in case we
+				#  decide to revert to such more strict test
 
-			# based on
-			# http://stackoverflow.com/questions/2186525/use-a-glob-to-find-files-recursively-in-python
-			def recursive_glob(treeroot, pattern):
-				results = []
-				for base, dirs, files in os.walk(treeroot):
-					goodfiles = fnmatch.filter(dirs + files, pattern)
-					results.extend(os.path.join(base, f) for f in goodfiles)
-				return results
+				# based on
+				# http://stackoverflow.com/questions/2186525/use-a-glob-to-find-files-recursively-in-python
+				def recursive_glob(treeroot, pattern):
+					results = []
+					for base, dirs, files in os.walk(treeroot):
+						goodfiles = fnmatch.filter(dirs + files, pattern)
+						results.extend(os.path.join(base, f) for f in goodfiles)
+					return results
 
-			files = {}
-			for missing in set(got).difference(need):
-				missing_full = os.path.join(tmp, missing)
-				files[missing] = os.path.exists(missing_full) \
-					and strippath(recursive_glob(missing_full, '*')) or None
+				files = {}
+				for missing in set(got).difference(need):
+					missing_full = os.path.join(tmp, missing)
+					files[missing] = os.path.exists(missing_full) \
+						and strippath(recursive_glob(missing_full, '*')) or None
 
-			self.assertEqual(
-				got, need,
-				msg="Got: %s Needed: %s under %s. Files under new paths: %s"
-				% (got, need, tmp, files))
+				self.assertEqual(
+					got, need,
+					msg="Got: %s Needed: %s under %s. Files under new paths: %s"
+					% (got, need, tmp, files))
 
-		# Assure presence of some files we expect to see in the installation
-		for f in ('etc/fail2ban/fail2ban.conf',
-				  'etc/fail2ban/jail.conf'):
-			self.assertTrue(os.path.exists(os.path.join(tmp, f)),
-							msg="Can't find %s" % f)
-
-		# clean up
-		shutil.rmtree(tmp)
+			# Assure presence of some files we expect to see in the installation
+			for f in ('etc/fail2ban/fail2ban.conf',
+					  'etc/fail2ban/jail.conf'):
+				self.assertTrue(os.path.exists(os.path.join(tmp, f)),
+								msg="Can't find %s" % f)
+		finally:
+			# clean up
+			shutil.rmtree(tmp)
+			# remove build directory
+			os.system("%s %s clean --all >/dev/null"
+					  % (sys.executable, self.setup))
 
 class TestsUtilsTest(unittest.TestCase):
 
