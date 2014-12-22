@@ -20,6 +20,7 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
      multiple expressions was not possible).
    * filters.d/exim.conf - cover different settings of exim logs
      details. Thanks bes.internal
+   * postfix jail to block IPs based on RBL blocks
 
 - New Features:
    - New interpolation feature for config readers - `%(known/parameter)s`.
