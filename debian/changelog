@@ -1,4 +1,4 @@
-fail2ban (0.9.1-1.1) UNRELEASED; urgency=medium
+fail2ban (0.9.1+git44-gd65c4f8-1) experimental; urgency=medium
 
   [ Christoph Anton Mitterer ]
   * Do not install the following configuration files which are not used within
@@ -8,7 +8,13 @@ fail2ban (0.9.1-1.1) UNRELEASED; urgency=medium
     /etc/fail2ban/paths-osx.conf
     Closes: #767123
 
- -- Christoph Anton Mitterer <mail@christoph.anton.mitterer.name>  Wed, 12 Nov 2014 05:20:20 +0100
+  [ Yaroslav Halchenko ]
+  * New upstream snapshot from 0.9.1-44-gd65c4f8 
+    - carries a lot of fixes and improvements. Consult upstream ChangeLog
+    - debian's init file is now maintained in upstream codebase (for manual
+      deployments)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 30 Dec 2014 16:46:26 -0500
 
 fail2ban (0.9.1-1) unstable; urgency=medium
 

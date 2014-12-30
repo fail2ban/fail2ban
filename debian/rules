@@ -19,6 +19,7 @@ PYVERSION=$(shell py3versions -dv)
 
 override_dh_clean:
 	rm -rf fail2ban.egg-info
+	-rm debian/fail2ban.init
 	dh_clean
 
 override_dh_install:
@@ -52,6 +53,7 @@ override_dh_installexamples:
 	dh_installexamples files/ipmasq-* files/nagios files/cacti
 
 override_dh_installinit:
+	cp -p files/debian-initd debian/fail2ban.init
 	dh_installinit -- defaults 99
 
 override_dh_installman:

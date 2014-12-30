@@ -1,0 +1,11 @@
+--- a/files/debian-initd
++++ b/files/debian-initd
+@@ -28,7 +28,7 @@ NAME=fail2ban
+ 
+ # fail2ban-client is not a daemon itself but starts a daemon and
+ # loads its with configuration
+-DAEMON=/usr/local/bin/$NAME-client
++DAEMON=/usr/bin/$NAME-client
+ SCRIPTNAME=/etc/init.d/$NAME
+ 
+ # Ad-hoc way to parse out socket file name
