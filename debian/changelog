@@ -13,8 +13,11 @@ fail2ban (0.9.1+git44-gd65c4f8-1) experimental; urgency=medium
     - carries a lot of fixes and improvements. Consult upstream ChangeLog
     - debian's init file is now maintained in upstream codebase (for manual
       deployments)
+    - provides monit (now Suggest'ed) file which is now gets installed
+      but not enabled by default:  ln -s /etc/monit/{monitrc,conf}.d/fail2ban
+      to assure that fail2ban process is running
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 30 Dec 2014 16:46:26 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 30 Dec 2014 18:32:16 -0500
 
 fail2ban (0.9.1-1) unstable; urgency=medium
 

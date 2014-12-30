@@ -14,9 +14,9 @@
  Architecture: all
  Depends: ${python3:Depends}, ${misc:Depends}, lsb-base (>=2.0-7)
 -Recommends: iptables, whois, python3-pyinotify
--Suggests: mailx, system-log-daemon, python3-systemd
+-Suggests: mailx, system-log-daemon, python3-systemd, monit
 +Recommends: iptables, whois, python-pyinotify
-+Suggests: mailx, system-log-daemon, python-systemd
++Suggests: mailx, system-log-daemon, python-systemd, monit
  Description: ban hosts that cause multiple authentication errors
   Fail2ban monitors log files (e.g. /var/log/auth.log,
   /var/log/apache/access.log) and temporarily or persistently bans
