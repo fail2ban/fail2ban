@@ -8,3 +8,7 @@ Mar 10 13:33:30 gandalf postfix/smtpd[3937]: warning: HOSTNAME[1.1.1.1]: SASL LO
 #3 Example from postfix post-debian changes to rename to add "submission" to syslog name
 # failJSON: { "time": "2004-09-06T00:44:56", "match": true , "host": "82.221.106.233" }
 Sep  6 00:44:56 trianon postfix/submission/smtpd[11538]: warning: unknown[82.221.106.233]: SASL LOGIN authentication failed: UGFzc3dvcmQ6
+
+#4 Example from postfix post-debian changes to rename to add "submission" to syslog name + downcase
+# failJSON: { "time": "2004-09-06T00:44:57", "match": true , "host": "82.221.106.233" }
+Sep  6 00:44:57 trianon postfix/submission/smtpd[11538]: warning: unknown[82.221.106.233]: SASL login authentication failed: UGFzc3dvcmQ6
