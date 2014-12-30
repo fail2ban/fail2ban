@@ -9,3 +9,4 @@ htmlcov
 *.bak
 __pycache__
 .vagrant/
+.idea
