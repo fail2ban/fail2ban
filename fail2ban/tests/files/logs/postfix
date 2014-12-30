@@ -20,3 +20,6 @@ Dec 25 02:35:54 platypus postfix/smtpd[9144]: improper command pipelining after 
 
 # failJSON: { "time": "2004-12-18T02:05:46", "match": true , "host": "216.245.198.245" }
 Dec 18 02:05:46 platypus postfix/smtpd[16349]: improper command pipelining after NOOP from unknown[216.245.198.245]
+
+# failJSON: { "time": "2014-12-21T21:17:29", "match": true , "host": "93.184.216.34" }
+Dec 21 21:17:29 xxx postfix/smtpd[7150]: NOQUEUE: reject: RCPT from badserver.example.com[93.184.216.34]: 450 4.7.1 Client host rejected: cannot find your hostname, [93.184.216.34]; from=<badactor@example.com> to=<goodguy@example.com> proto=ESMTP helo=<badserver.example.com>
