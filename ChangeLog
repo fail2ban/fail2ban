@@ -315,7 +315,7 @@ some obscure corner of the Internet.
 Many thanks to our contributors for this release Daniel Black, Yaroslav
 Halchenko, Steven Hiscocks, Mark McKinstry, Andy Fragen, Orion Poplawski,
 Alexander Dietrich, JP Espinosa, Jamyn Shanley, Beau Raines, François
-Boulogne and others who have helped on IRC and mailing list, logged issues
+Boulogne, Donald Yandt and others who have helped on IRC and mailing list, logged issues
 and bug requests.
 
 - IMPORTANT incompatible changes:
@@ -391,7 +391,8 @@ and bug requests.
      to Should- rc init fields
   Rick Mellor
    * filter.d/vsftp - fix capture with tty=ftp
-
+  Donald Yandt 
+   *action.d/firewallcmd-allports.conf and firewallcmd-multiport.conf - Added two new actions
 - New Features:
   Edgar Hoch
    * action.d/firewall-cmd-direct-new.conf - action for firewalld
