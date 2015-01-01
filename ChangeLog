@@ -317,7 +317,7 @@ some obscure corner of the Internet.
 Many thanks to our contributors for this release Daniel Black, Yaroslav
 Halchenko, Steven Hiscocks, Mark McKinstry, Andy Fragen, Orion Poplawski,
 Alexander Dietrich, JP Espinosa, Jamyn Shanley, Beau Raines, François
-Boulogne and others who have helped on IRC and mailing list, logged issues
+Boulogne, Donald Yandt and others who have helped on IRC and mailing list, logged issues
 and bug requests.
 
 - IMPORTANT incompatible changes:
@@ -422,7 +422,8 @@ and bug requests.
    * filter.d/uwimap-auth - filter for uwimap-auth IMAP/POP server
   Steven Hiscocks and Daniel Black
    * filter.d/selinux-{common,ssh} -- add SELinux date and ssh filter
-
+  Donald Yandt 
+   * action.d/firewallcmd-{multiport,allports}.conf --added two new actions
 - Enhancements:
   François Boulogne and Frédéric
    * filter.d/lighttpd - auth regexs for lighttpd-1.4.31
