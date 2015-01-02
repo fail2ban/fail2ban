@@ -430,6 +430,9 @@ class ServerExecutionException(Exception):
 	pass
 
 if __name__ == "__main__": # pragma: no cover - can't test main
+	from time import strptime
+	# strptime thread safety hack-around - http://bugs.python.org/issue7980
+	strptime("2012", "%Y")
 	client = Fail2banClient()
 	# Exit with correct return value
 	if client.start(sys.argv):
