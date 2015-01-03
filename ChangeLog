@@ -21,7 +21,11 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
    * filters.d/exim.conf - cover different settings of exim logs
      details. Thanks bes.internal
    * filter.d/postfix-sasl.conf - failregex is now case insensitive
+<<<<<<< HEAD
    * fail2ban/__init__.py - Added strptime thread safety hack-around
+=======
+   * filters.d/postfix.conf - add 'Client host rejected error message' failregex
+>>>>>>> 8fc32bb33f6f8c43fa107f1a6fc3a71bf000a767
 
 - New Features:
    - New interpolation feature for config readers - `%(known/parameter)s`.
@@ -33,6 +37,8 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
 
 - Enhancements:
    * Enable multiport for firewallcmd-new action.  Closes gh-834
+   * files/debian-initd migrated from the debian branch and should be
+     suitable for manual installations now (thanks Juan Karlo de Guzman)
 
 
 ver. 0.9.1 (2014/10/29) - better, faster, stronger
