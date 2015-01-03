@@ -68,3 +68,7 @@ logging.notice = _root_notice
 
 # add NOTICE to the priority map of all the levels
 logging.handlers.SysLogHandler.priority_map['NOTICE'] = 'notice'
+
+from time import strptime
+# strptime thread safety hack-around - http://bugs.python.org/issue7980
+strptime("2012", "%Y")

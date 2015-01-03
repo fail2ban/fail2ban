@@ -474,9 +474,6 @@ class Fail2banRegex(object):
 
 
 if __name__ == "__main__":
-	from time import strptime
-	# strptime thread safety hack-around - http://bugs.python.org/issue7980
-	strptime("2012", "%Y")
 
 	parser = get_opt_parser()
 	(opts, args) = parser.parse_args()
