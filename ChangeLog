@@ -24,6 +24,8 @@ ver. 0.9.2 (2014/xx/xx) - increment ban time
      multiple expressions was not possible).
    * filters.d/exim.conf - cover different settings of exim logs
      details. Thanks bes.internal
+   * filter.d/postfix-sasl.conf - failregex is now case insensitive
+   * filters.d/postfix.conf - add 'Client host rejected error message' failregex
 
 - New Features:
    * increment ban time (+ observer) functionality introduced.
@@ -33,9 +35,14 @@ ver. 0.9.2 (2014/xx/xx) - increment ban time
      possible to extend a stock filter or jail regexp in .local file
      (opposite to simply set failregex/ignoreregex that overwrites it),
      see gh-867.
-
+   - Monit config for fail2ban in /files/monit
+   - New actions:
+     - action.d/firewallcmd-multiport and action.d/firewallcmd-allports Thanks Donald Yandt
+     
 - Enhancements:
    * Enable multiport for firewallcmd-new action.  Closes gh-834
+   * files/debian-initd migrated from the debian branch and should be
+     suitable for manual installations now (thanks Juan Karlo de Guzman)
 
 ver. 0.9.1 (2014/10/29) - better, faster, stronger
 ----------
