@@ -459,6 +459,22 @@ class JailsReaderTest(LogCaptureTestCase):
 		self.assertTrue(self._is_logged("No file(s) found for glob /weapons/of/mass/destruction"))
 
 	if STOCK:
+		def testReadStockActionConf(self):
+			for actionConfig in glob.glob(os.path.join(CONFIG_DIR, 'action.d', '*.conf')):
+				actionName = os.path.basename(actionConfig).replace('.conf', '')
+				actionReader = ActionReader(actionName, "TEST", {}, basedir=CONFIG_DIR)
+				self.assertTrue(actionReader.read())
+				actionReader.getOptions({})	  # populate _opts
+				if not actionName.endswith('-common'):
+					self.assertTrue('Definition' in actionReader.sections(),
+						msg="Action file %r is lacking [Definition] section" % actionConfig)
+					# all must have some actionban defined
+					self.assertTrue(actionReader._opts.get('actionban', '').strip(),
+						msg="Action file %r is lacking actionban" % actionConfig)
+				self.assertTrue('Init' in actionReader.sections(),
+						msg="Action file %r is lacking [Init] section" % actionConfig)
+
+
 		def testReadStockJailConf(self):
 			jails = JailsReader(basedir=CONFIG_DIR, share_config=self.__share_cfg) # we are running tests from root project dir atm
 			self.assertTrue(jails.read())		  # opens fine
