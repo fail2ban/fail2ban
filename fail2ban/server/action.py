@@ -407,9 +407,11 @@ class CommandAction(ActionBase):
 					done.append(found_tag)
 					m = t.search(value, m.start())
 				#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
-				# if was substituted, check again later:
+				# was substituted?
 				if tags[tag] != value:
-					repFlag = True
+					# check again later if embedded-recursive substitution:
+					if value.startswith('<') and value.endswith('>'):
+						repFlag = True
 					tags[tag] = value
 			if not repFlag:
 				break
