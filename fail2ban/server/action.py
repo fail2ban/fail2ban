@@ -394,20 +394,16 @@ class CommandAction(ActionBase):
 					# recursive definitions are bad
 					#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 					return False
-				elif found_tag in cls._escapedTags:
-					# Escaped so won't match
+				if found_tag in cls._escapedTags or not tags.has_key(found_tag):
+					# Escaped or missing tags - just continue on searching after end of match
+					# Missing tags are ok - cInfo can contain aInfo elements like <HOST> and valid shell
+					# constructs like <STDIN>.
+					m = t.search(value, m.end())
 					continue
-				else:
-					if tags.has_key(found_tag):
-						value = value.replace('<%s>' % found_tag , tags[found_tag])
-						#logSys.log(5, 'value now: %s' % value)
-						done.append(found_tag)
-						m = t.search(value, m.start())
-					else:
-						# Missing tags are ok so we just continue on searching.
-						# cInfo can contain aInfo elements like <HOST> and valid shell
-						# constructs like <STDIN>.
-						m = t.search(value, m.start() + 1)
+				value = value.replace('<%s>' % found_tag , tags[found_tag])
+				#logSys.log(5, 'value now: %s' % value)
+				done.append(found_tag)
+				m = t.search(value, m.start())
 			#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
 			tags[tag] = value
 		return tags
