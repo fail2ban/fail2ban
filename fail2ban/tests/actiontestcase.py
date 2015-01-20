@@ -73,6 +73,11 @@ class CommandActionTest(LogCaptureTestCase):
 									'ABC': '123 192.0.2.0',
 									'xyz': '890 123 192.0.2.0',
 								})
+		# obscure embedded case
+		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<<PREF>HOST>', 'PREF': 'IPV4'}),
+						 {'A': '<IPV4HOST>', 'PREF': 'IPV4'})
+		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<<PREF>HOST>', 'PREF': 'IPV4', 'IPV4HOST': '1.2.3.4'}),
+						 {'A': '1.2.3.4', 'PREF': 'IPV4', 'IPV4HOST': '1.2.3.4'})
 
 	def testReplaceTag(self):
 		aInfo = {

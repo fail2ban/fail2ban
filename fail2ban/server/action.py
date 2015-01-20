@@ -378,34 +378,41 @@ class CommandAction(ActionBase):
 			Dictionary of tags(keys) and their values, with tags
 			within the values recursively replaced.
 		"""
-		t = re.compile(r'<([^ >]+)>')
-		for tag in tags.iterkeys():
-			if tag in cls._escapedTags:
-				# Escaped so won't match
-				continue
-			value = str(tags[tag])
-			m = t.search(value)
-			done = []
-			#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
-			while m:
-				found_tag = m.group(1)
-				#logSys.log(5, 'found: %s' % found_tag)
-				if found_tag == tag or found_tag in done:
-					# recursive definitions are bad
-					#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
-					return False
-				if found_tag in cls._escapedTags or not tags.has_key(found_tag):
-					# Escaped or missing tags - just continue on searching after end of match
-					# Missing tags are ok - cInfo can contain aInfo elements like <HOST> and valid shell
-					# constructs like <STDIN>.
-					m = t.search(value, m.end())
+		t = re.compile(r'<([^ <>]+)>')
+		while True:
+			repFlag = False
+			for tag in tags.iterkeys():
+				if tag in cls._escapedTags:
+					# Escaped so won't match
 					continue
-				value = value.replace('<%s>' % found_tag , tags[found_tag])
-				#logSys.log(5, 'value now: %s' % value)
-				done.append(found_tag)
-				m = t.search(value, m.start())
-			#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
-			tags[tag] = value
+				value = str(tags[tag])
+				m = t.search(value)
+				done = []
+				#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
+				while m:
+					found_tag = m.group(1)
+					#logSys.log(5, 'found: %s' % found_tag)
+					if found_tag == tag or found_tag in done:
+						# recursive definitions are bad
+						#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
+						return False
+					if found_tag in cls._escapedTags or not tags.has_key(found_tag):
+						# Escaped or missing tags - just continue on searching after end of match
+						# Missing tags are ok - cInfo can contain aInfo elements like <HOST> and valid shell
+						# constructs like <STDIN>.
+						m = t.search(value, m.end())
+						continue
+					value = value.replace('<%s>' % found_tag , tags[found_tag])
+					#logSys.log(5, 'value now: %s' % value)
+					done.append(found_tag)
+					m = t.search(value, m.start())
+				#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
+				# if was substituted, check again later:
+				if tags[tag] != value:
+					repFlag = True
+					tags[tag] = value
+			if not repFlag:
+				break
 		return tags
 
 	@staticmethod
