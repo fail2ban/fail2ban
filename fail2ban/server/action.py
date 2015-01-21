@@ -362,6 +362,7 @@ class CommandAction(ActionBase):
 	@classmethod
 	def substituteRecursiveTags(cls, tags):
 		"""Sort out tag definitions within other tags.
+		Since v.0.9.2 supports embedded interpolation (see test cases for examples).
 
 		so:		becomes:
 		a = 3		a = 3
@@ -379,13 +380,16 @@ class CommandAction(ActionBase):
 			within the values recursively replaced.
 		"""
 		t = re.compile(r'<([^ <>]+)>')
+		# repeat substitution while embedded-recursive (repFlag is True)
 		while True:
 			repFlag = False
+			# substitute each value:
 			for tag in tags.iterkeys():
 				if tag in cls._escapedTags:
 					# Escaped so won't match
 					continue
 				value = str(tags[tag])
+				# search and replace all tags within value, that can be interpolated using other tags:
 				m = t.search(value)
 				done = []
 				#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
@@ -409,8 +413,8 @@ class CommandAction(ActionBase):
 				#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
 				# was substituted?
 				if tags[tag] != value:
-					# check again later if embedded-recursive substitution:
-					if value.startswith('<') and value.endswith('>'):
+					# check still contains any tag - should be repeated (possible embedded-recursive substitution):
+					if t.search(value):
 						repFlag = True
 					tags[tag] = value
 			if not repFlag:
