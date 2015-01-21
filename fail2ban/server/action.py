@@ -362,6 +362,7 @@ class CommandAction(ActionBase):
 	@classmethod
 	def substituteRecursiveTags(cls, tags):
 		"""Sort out tag definitions within other tags.
+		Since v.0.9.2 supports embedded interpolation (see test cases for examples).
 
 		so:		becomes:
 		a = 3		a = 3
@@ -378,38 +379,46 @@ class CommandAction(ActionBase):
 			Dictionary of tags(keys) and their values, with tags
 			within the values recursively replaced.
 		"""
-		t = re.compile(r'<([^ >]+)>')
-		for tag in tags.iterkeys():
-			if tag in cls._escapedTags:
-				# Escaped so won't match
-				continue
-			value = str(tags[tag])
-			m = t.search(value)
-			done = []
-			#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
-			while m:
-				found_tag = m.group(1)
-				#logSys.log(5, 'found: %s' % found_tag)
-				if found_tag == tag or found_tag in done:
-					# recursive definitions are bad
-					#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
-					return False
-				elif found_tag in cls._escapedTags:
+		t = re.compile(r'<([^ <>]+)>')
+		# repeat substitution while embedded-recursive (repFlag is True)
+		while True:
+			repFlag = False
+			# substitute each value:
+			for tag in tags.iterkeys():
+				if tag in cls._escapedTags:
 					# Escaped so won't match
 					continue
-				else:
-					if tags.has_key(found_tag):
-						value = value.replace('<%s>' % found_tag , tags[found_tag])
-						#logSys.log(5, 'value now: %s' % value)
-						done.append(found_tag)
-						m = t.search(value, m.start())
-					else:
-						# Missing tags are ok so we just continue on searching.
-						# cInfo can contain aInfo elements like <HOST> and valid shell
+				value = str(tags[tag])
+				# search and replace all tags within value, that can be interpolated using other tags:
+				m = t.search(value)
+				done = []
+				#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
+				while m:
+					found_tag = m.group(1)
+					#logSys.log(5, 'found: %s' % found_tag)
+					if found_tag == tag or found_tag in done:
+						# recursive definitions are bad
+						#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
+						return False
+					if found_tag in cls._escapedTags or not tags.has_key(found_tag):
+						# Escaped or missing tags - just continue on searching after end of match
+						# Missing tags are ok - cInfo can contain aInfo elements like <HOST> and valid shell
 						# constructs like <STDIN>.
-						m = t.search(value, m.start() + 1)
-			#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
-			tags[tag] = value
+						m = t.search(value, m.end())
+						continue
+					value = value.replace('<%s>' % found_tag , tags[found_tag])
+					#logSys.log(5, 'value now: %s' % value)
+					done.append(found_tag)
+					m = t.search(value, m.start())
+				#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
+				# was substituted?
+				if tags[tag] != value:
+					# check still contains any tag - should be repeated (possible embedded-recursive substitution):
+					if t.search(value):
+						repFlag = True
+					tags[tag] = value
+			if not repFlag:
+				break
 		return tags
 
 	@staticmethod
