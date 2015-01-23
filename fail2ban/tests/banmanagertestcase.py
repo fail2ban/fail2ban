@@ -54,4 +54,19 @@ class AddFailure(unittest.TestCase):
 	def testInListNOK(self):
 		ticket = BanTicket('111.111.1.111', 1167605999.0)
 		self.assertFalse(self.__banManager._inBanList(ticket))
-		
+
+
+class StatusExtendedCymruInfo(unittest.TestCase):
+
+	def setUp(self):
+		"""Call before every test case."""
+		self.__ticket = BanTicket('93.184.216.34', 1167605999.0)
+		self.__banManager = BanManager()
+		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
+
+	def tearDown(self):
+		"""Call after every test case."""
+
+	def testCymruInfo(self):
+		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
+		self.assertDictEqual(cymru_info, {"asn": ["15133"], "country": ["EU"], "rir": ["ripencc"]})
