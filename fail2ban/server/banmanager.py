@@ -26,9 +26,6 @@ __license__ = "GPL"
 
 from threading import Lock
 
-import dns.exception
-import dns.resolver
-
 from .ticket import BanTicket
 from .mytime import MyTime
 from ..helpers import getLogger
@@ -139,8 +136,17 @@ class BanManager:
 	# @return {"asn": [], "country": [], "rir": []} dict for self.__banList IPs
 
 	def getBanListExtendedCymruInfo(self):
-		self.__lock.acquire()
 		return_dict = {"asn": [], "country": [], "rir": []}
+		try:
+			import dns.exception
+			import dns.resolver
+		except ImportError:
+			logSys.error("dnspython package is required but could not be imported")
+			return_dict["asn"].append("error")
+			return_dict["country"].append("error")
+			return_dict["rir"].append("error")
+			return return_dict
+		self.__lock.acquire()
 		try:
 			for banData in self.__banList:
 				ip = banData.getIP()
