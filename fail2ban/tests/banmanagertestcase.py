@@ -38,6 +38,7 @@ class AddFailure(unittest.TestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
+		pass
 
 	def testAdd(self):
 		self.assertEqual(self.__banManager.size(), 1)
@@ -68,6 +69,7 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
+		pass
 
 	def testCymruInfo(self):
 		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
