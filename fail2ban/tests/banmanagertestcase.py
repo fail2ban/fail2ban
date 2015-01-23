@@ -58,7 +58,11 @@ class AddFailure(unittest.TestCase):
 class StatusExtendedCymruInfo(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
-		self.__ticket = BanTicket('93.184.216.34', 1167605999.0)
+		self.__ban_ip = "93.184.216.34"
+		self.__asn = "15133"
+		self.__country = "EU"
+		self.__rir = "ripencc"
+		self.__ticket = BanTicket(self.__ban_ip, 1167605999.0)
 		self.__banManager = BanManager()
 		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
 
@@ -68,24 +72,24 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 	def testCymruInfo(self):
 		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
 		if "assertDictEqual" in dir(self):
-			self.assertDictEqual(cymru_info, {"asn": ["15133"], "country": ["EU"], "rir": ["ripencc"]})
+			self.assertDictEqual(cymru_info, {"asn": [self.__asn], "country": [self.__country], "rir": [self.__rir]})
 		else:
 			# Python 2.6 does not support assertDictEqual()
-			self.assertEqual(cymru_info["asn"], ["15133"])
-			self.assertEqual(cymru_info["country"], ["EU"])
-			self.assertEqual(cymru_info["rir"], ["ripencc"])
+			self.assertEqual(cymru_info["asn"], [self.__asn])
+			self.assertEqual(cymru_info["country"], [self.__country])
+			self.assertEqual(cymru_info["rir"], [self.__rir])
 
 	def testCymruInfoASN(self):
 		self.assertEqual(
 			self.__banManager.geBanListExtendedASN(self.__banManager.getBanListExtendedCymruInfo()),
-			["15133"])
+			[self.__asn])
 
 	def testCymruInfoCountry(self):
 		self.assertEqual(
 			self.__banManager.geBanListExtendedCountry(self.__banManager.getBanListExtendedCymruInfo()),
-			["EU"])
+			[self.__country])
 
 	def testCymruInfoRIR(self):
 		self.assertEqual(
 			self.__banManager.geBanListExtendedRIR(self.__banManager.getBanListExtendedCymruInfo()),
-			["ripencc"])
+			[self.__rir])
