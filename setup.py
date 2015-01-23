@@ -142,6 +142,7 @@ setup(
 			 'doc/run-rootless.txt']
 		)
 	],
+	requires=['dnspython'],
 	**setup_extra
 )
 
