@@ -623,7 +623,8 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["status", "INVALID", "COMMAND"])[0],1)
 
 	def testStatusJailExtendedNOK(self):
-		self.assertRaises(Exception, self.transm.proceed(["status", self.jailName, "INVALID"])[0],1)
+		self.assertRaisesRegexp(Exception, "Invalid command (invalid status extension)",
+								self.transm.proceed(["status", self.jailName, "INVALID"])[0],1)
 
 	def testJournalMatch(self):
 		if not filtersystemd: # pragma: no cover
