@@ -141,7 +141,7 @@ setup(
 			['README.md', 'README.Solaris', 'DEVELOP', 'FILTERS',
 			 'doc/run-rootless.txt']
 		)
-	]
+	],
 	**setup_extra
 )
 
