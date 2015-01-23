@@ -385,7 +385,7 @@ class Actions(JailThread, Mapping):
 		"""
 		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
 		ret = self.status +\
-			  [("Banned ASN list", " ".join(self.__banManager.geBanListExtendedASN(cymru_info))),
-			   ("Banned Country list", " ".join(self.__banManager.geBanListExtendedCountry(cymru_info))),
-			   ("Banned RIR list", " ".join(self.__banManager.geBanListExtendedRIR(cymru_info)))]
+			  [("Banned ASN list", self.__banManager.geBanListExtendedASN(cymru_info)),
+			   ("Banned Country list", self.__banManager.geBanListExtendedCountry(cymru_info)),
+			   ("Banned RIR list", self.__banManager.geBanListExtendedRIR(cymru_info))]
 		return ret
