@@ -8,12 +8,13 @@ python:
   - "3.3"
   - "3.4"
   - "pypy"
+  - "pypy3"
 before_install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then sudo apt-get update -qq; fi
 install:
   - pip install pyinotify
   - if [[ $TRAVIS_PYTHON_VERSION == 2* || $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then pip install dnspython; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then pip install dnspython3; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 3* || $TRAVIS_PYTHON_VERSION == 'pypy3' ]]; then pip install dnspython3; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then sudo apt-get install -qq python-gamin; cp /usr/share/pyshared/gamin.py /usr/lib/pyshared/python2.7/_gamin.so $VIRTUAL_ENV/lib/python2.7/site-packages/; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then cd ..; pip install -q coveralls; cd -; fi
 script:
