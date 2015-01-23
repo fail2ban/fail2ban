@@ -107,7 +107,11 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 	# BanManager
 	tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
-	tests.addTest(unittest.makeSuite(banmanagertestcase.StatusExtendedCymruInfo))
+	try:
+		import dns
+		tests.addTest(unittest.makeSuite(banmanagertestcase.StatusExtendedCymruInfo))
+	except ImportError:
+		pass
 	# ClientReaders
 	tests.addTest(unittest.makeSuite(clientreadertestcase.ConfigReaderTest))
 	tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
