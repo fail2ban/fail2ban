@@ -72,6 +72,12 @@ class JailThread(Thread):
 		"""
 		pass
 
+	@abstractproperty
+	def statusExtended(self): # pragma: no cover - abstract
+		"""Abstract - Should provide extended status information.
+		"""
+		pass
+
 	def start(self):
 		"""Sets active flag and starts thread.
 		"""
