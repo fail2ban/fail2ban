@@ -43,11 +43,6 @@ from os.path import isfile, join, isdir
 import sys, warnings
 from glob import glob
 
-if sys.version_info[0] == 2:
-	dnspython = "dnspython"
-elif sys.version_info[0] == 3:
-	dnspython = "dnspython3"
-
 if setuptools and "test" in sys.argv:
 	import logging
 	logSys = logging.getLogger("fail2ban")
@@ -146,8 +141,7 @@ setup(
 			['README.md', 'README.Solaris', 'DEVELOP', 'FILTERS',
 			 'doc/run-rootless.txt']
 		)
-	],
-	requires=[dnspython],
+	]
 	**setup_extra
 )
 
