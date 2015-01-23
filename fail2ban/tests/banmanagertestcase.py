@@ -63,9 +63,9 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		self.__asn = "15133"
 		self.__country = "EU"
 		self.__rir = "ripencc"
-		self.__ticket = BanTicket(self.__ban_ip, 1167605999.0)
+		ticket = BanTicket(self.__ban_ip, 1167605999.0)
 		self.__banManager = BanManager()
-		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
+		self.assertTrue(self.__banManager.addBanTicket(ticket))
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -74,7 +74,9 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 	def testCymruInfo(self):
 		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
 		if "assertDictEqual" in dir(self):
-			self.assertDictEqual(cymru_info, {"asn": [self.__asn], "country": [self.__country], "rir": [self.__rir]})
+			self.assertDictEqual(cymru_info, {"asn": [self.__asn],
+											  "country": [self.__country],
+											  "rir": [self.__rir]})
 		else:
 			# Python 2.6 does not support assertDictEqual()
 			self.assertEqual(cymru_info["asn"], [self.__asn])
@@ -95,3 +97,18 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		self.assertEqual(
 			self.__banManager.geBanListExtendedRIR(self.__banManager.getBanListExtendedCymruInfo()),
 			[self.__rir])
+
+	def testCymruInfoNxdomain(self):
+		ticket = BanTicket("10.0.0.0", 1167605999.0)
+		self.__banManager = BanManager()
+		self.assertTrue(self.__banManager.addBanTicket(ticket))
+		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
+		if "assertDictEqual" in dir(self):
+			self.assertDictEqual(cymru_info, {"asn": [self.__asn, "nxdomain"],
+											  "country": [self.__country, "nxdomain"],
+											  "rir": [self.__rir, "nxdomain"]})
+		else:
+			# Python 2.6 does not support assertDictEqual()
+			self.assertEqual(cymru_info["asn"], [self.__asn, "nxdomain"])
+			self.assertEqual(cymru_info["country"], [self.__country, "nxdomain"])
+			self.assertEqual(cymru_info["rir"], [self.__rir, "nxdomain"])
