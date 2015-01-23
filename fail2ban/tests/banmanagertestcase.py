@@ -104,11 +104,11 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		self.assertTrue(self.__banManager.addBanTicket(ticket))
 		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
 		if "assertDictEqual" in dir(self):
-			self.assertDictEqual(cymru_info, {"asn": [self.__asn, "nxdomain"],
-											  "country": [self.__country, "nxdomain"],
-											  "rir": [self.__rir, "nxdomain"]})
+			self.assertDictEqual(cymru_info, {"asn": ["nxdomain"],
+											  "country": ["nxdomain"],
+											  "rir": ["nxdomain"]})
 		else:
 			# Python 2.6 does not support assertDictEqual()
-			self.assertEqual(cymru_info["asn"], [self.__asn, "nxdomain"])
-			self.assertEqual(cymru_info["country"], [self.__country, "nxdomain"])
-			self.assertEqual(cymru_info["rir"], [self.__rir, "nxdomain"])
+			self.assertEqual(cymru_info["asn"], ["nxdomain"])
+			self.assertEqual(cymru_info["country"], ["nxdomain"])
+			self.assertEqual(cymru_info["rir"], ["nxdomain"])
