@@ -55,6 +55,7 @@ protocol = [
 ["start <JAIL>", "starts the jail <JAIL>"], 
 ["stop <JAIL>", "stops the jail <JAIL>. The jail is removed"], 
 ["status <JAIL>", "gets the current status of <JAIL>"],
+["status <JAIL> extended", "gets the current status of <JAIL> with extended info"],
 ['', "JAIL CONFIGURATION", ""],
 ["set <JAIL> idle on|off", "sets the idle state of <JAIL>"], 
 ["set <JAIL> addignoreip <IP>", "adds <IP> to the ignore list of <JAIL>"], 

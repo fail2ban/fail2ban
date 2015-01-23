@@ -322,7 +322,10 @@ class Server:
 	
 	def statusJail(self, name):
 		return self.__jails[name].status
-	
+
+	def statusJailExtended(self, name):
+		return self.__jails[name].statusExtended
+
 	# Logging
 	
 	##
