@@ -372,9 +372,20 @@ class Actions(JailThread, Mapping):
 
 	@property
 	def status(self):
-		"""Status of active bans, and total ban counts.
+		"""Status of current and total ban counts and current banned IP list.
 		"""
 		ret = [("Currently banned", self.__banManager.size()), 
 			   ("Total banned", self.__banManager.getBanTotal()),
 			   ("Banned IP list", self.__banManager.getBanList())]
+		return ret
+
+	@property
+	def statusExtended(self):
+		"""Jail status plus banned IPs' ASN, Country and RIR
+		"""
+		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
+		ret = self.status +\
+			  [("Banned ASN list", self.__banManager.geBanListExtendedASN(cymru_info)),
+			   ("Banned Country list", self.__banManager.geBanListExtendedCountry(cymru_info)),
+			   ("Banned RIR list", self.__banManager.geBanListExtendedRIR(cymru_info))]
 		return ret

@@ -183,6 +183,15 @@ class Jail:
 			("Actions", self.actions.status),
 			]
 
+	@property
+	def statusExtended(self):
+		"""The extended status of the jail.
+		"""
+		return [
+			("Filter", self.filter.status),
+			("Actions", self.actions.statusExtended),
+			]
+
 	def putFailTicket(self, ticket):
 		"""Add a fail ticket to the jail.
 
