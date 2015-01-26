@@ -41,6 +41,7 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
    - Monit config for fail2ban in /files/monit
    - New actions:
      - action.d/firewallcmd-multiport and action.d/firewallcmd-allports Thanks Donald Yandt
+     - action.d/nsupdate Thanks Andrew St. Jean
      
 - Enhancements:
    * Enable multiport for firewallcmd-new action.  Closes gh-834
