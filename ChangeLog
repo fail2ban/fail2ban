@@ -26,6 +26,9 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
    * filter.d/postfix-sasl.conf - failregex is now case insensitive
    * filters.d/postfix.conf - add 'Client host rejected error message' failregex
    * fail2ban/__init__.py - add strptime thread safety hack-around
+   * recidive uses iptables-allports banaction by default now.
+     Avoids problems with iptables versions not understanding 'all' for
+     protocols and ports
 
 - New Features:
    - New filter:
