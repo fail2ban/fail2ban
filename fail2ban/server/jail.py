@@ -174,22 +174,12 @@ class Jail:
 		self.filter.idle = value
 		self.actions.idle = value
 
-	@property
-	def status(self):
+	def status(self, flavor="basic"):
 		"""The status of the jail.
 		"""
 		return [
-			("Filter", self.filter.status),
-			("Actions", self.actions.status),
-			]
-
-	@property
-	def statusExtended(self):
-		"""The extended status of the jail.
-		"""
-		return [
-			("Filter", self.filter.status),
-			("Actions", self.actions.statusExtended),
+			("Filter", self.filter.status(flavor=flavor)),
+			("Actions", self.actions.status(flavor=flavor)),
 			]
 
 	def putFailTicket(self, ticket):

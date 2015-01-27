@@ -474,8 +474,44 @@ class Transmitter(TransmitterBase):
 			)
 		)
 
-	def testJailStatusExtended(self):
-		self.assertEqual(self.transm.proceed(["status", self.jailName, "extended"]),
+	def testJailStatusBasic(self):
+		self.assertEqual(self.transm.proceed(["status", self.jailName, "basic"]),
+			(0,
+				[
+					('Filter', [
+						('Currently failed', 0),
+						('Total failed', 0),
+						('File list', [])]
+					),
+					('Actions', [
+						('Currently banned', 0),
+						('Total banned', 0),
+						('Banned IP list', [])]
+					)
+				]
+			)
+		)
+
+	def testJailStatusBasicKwarg(self):
+		self.assertEqual(self.transm.proceed(["status", self.jailName, "INVALID"]),
+			(0,
+				[
+					('Filter', [
+						('Currently failed', 0),
+						('Total failed', 0),
+						('File list', [])]
+					),
+					('Actions', [
+						('Currently banned', 0),
+						('Total banned', 0),
+						('Banned IP list', [])]
+					)
+				]
+			)
+		)
+
+	def testJailStatusCymru(self):
+		self.assertEqual(self.transm.proceed(["status", self.jailName, "cymru"]),
 			(0,
 				[
 					('Filter', [
@@ -494,6 +530,7 @@ class Transmitter(TransmitterBase):
 				]
 			)
 		)
+
 
 	def testAction(self):
 		action = "TestCaseAction"
@@ -621,10 +658,6 @@ class Transmitter(TransmitterBase):
 	def testStatusNOK(self):
 		self.assertEqual(
 			self.transm.proceed(["status", "INVALID", "COMMAND"])[0],1)
-
-	def testStatusJailExtendedNOK(self):
-		self.assertEqual(
-			self.transm.proceed(["status", self.jailName, "INVALID_COMMAND"])[0],1)
 
 	def testJournalMatch(self):
 		if not filtersystemd: # pragma: no cover
