@@ -529,8 +529,7 @@ class Filter(JailThread):
 						logSys.error(e)
 		return failList
 
-	@property
-	def status(self):
+	def status(self, flavor="basic"):
 		"""Status of failures detected by filter.
 		"""
 		ret = [("Currently failed", self.failManager.size()),
@@ -686,11 +685,10 @@ class FileFilter(Filter):
 			db.updateLog(self.jail, container)
 		return True
 
-	@property
-	def status(self):
+	def status(self, flavor="basic"):
 		"""Status of Filter plus files being monitored.
 		"""
-		ret = super(FileFilter, self).status
+		ret = super(FileFilter, self).status(flavor=flavor)
 		path = [m.getFileName() for m in self.getLogPath()]
 		ret.append(("File list", path))
 		return ret

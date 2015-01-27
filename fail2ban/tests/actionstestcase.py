@@ -86,7 +86,7 @@ class ExecuteActions(LogCaptureTestCase):
 
 		self.__actions.stop()
 		self.__actions.join()
-		self.assertEqual(self.__actions.status,[("Currently banned", 0 ),
+		self.assertEqual(self.__actions.status(),[("Currently banned", 0 ),
                ("Total banned", 0 ), ("Banned IP list", [] )])
 
 

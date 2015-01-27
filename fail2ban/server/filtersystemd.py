@@ -259,9 +259,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
                       or "jailless") +" filter terminated")
 		return True
 
-	@property
-	def status(self):
-		ret = super(FilterSystemd, self).status
+	def status(self, flavor="basic"):
+		ret = super(FilterSystemd, self).status(flavor=flavor)
 		ret.append(("Journal matches",
 			[" + ".join(" ".join(match) for match in self.__matches)]))
 		return ret

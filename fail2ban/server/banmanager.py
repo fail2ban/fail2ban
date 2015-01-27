@@ -119,6 +119,124 @@ class BanManager:
 			self.__lock.release()
 
 	##
+	# Returns normalized value
+	#
+	# @return value or "unknown" if value is None or empty string
+
+	@staticmethod
+	def handleBlankResult(value):
+		if value is None or len(value) == 0:
+			return "unknown"
+		else:
+			return value
+
+	##
+	# Returns Cymru DNS query information
+	#
+	# @return {"asn": [], "country": [], "rir": []} dict for self.__banList IPs
+
+	def getBanListExtendedCymruInfo(self):
+		return_dict = {"asn": [], "country": [], "rir": []}
+		try:
+			import dns.exception
+			import dns.resolver
+		except ImportError:
+			logSys.error("dnspython package is required but could not be imported")
+			return_dict["asn"].append("error")
+			return_dict["country"].append("error")
+			return_dict["rir"].append("error")
+			return return_dict
+		self.__lock.acquire()
+		try:
+			for banData in self.__banList:
+				ip = banData.getIP()
+				# Reference: http://www.team-cymru.org/Services/ip-to-asn.html#dns
+				# TODO: IPv6 compatibility
+				reversed_ip = ".".join(reversed(ip.split(".")))
+				question = "%s.origin.asn.cymru.com" % reversed_ip
+				try:
+					answers = dns.resolver.query(question, "TXT")
+					for rdata in answers:
+						asn, net, country, rir, changed =\
+							[answer.strip("'\" ") for answer in rdata.to_text().split("|")]
+						asn = self.handleBlankResult(asn)
+						country = self.handleBlankResult(country)
+						rir = self.handleBlankResult(rir)
+						return_dict["asn"].append(self.handleBlankResult(asn))
+						return_dict["country"].append(self.handleBlankResult(country))
+						return_dict["rir"].append(self.handleBlankResult(rir))
+				except dns.resolver.NXDOMAIN:
+					return_dict["asn"].append("nxdomain")
+					return_dict["country"].append("nxdomain")
+					return_dict["rir"].append("nxdomain")
+				except dns.exception.DNSException as dnse:
+					logSys.error("Unhandled DNSException querying Cymru for %s TXT" % question)
+					logSys.exception(dnse)
+				except Exception as e:
+					logSys.error("Unhandled Exception querying Cymru for %s TXT" % question)
+					logSys.exception(e)
+		except Exception as e:
+			logSys.error("Failure looking up extended Cymru info")
+			logSys.exception(e)
+		finally:
+			self.__lock.release()
+		return return_dict
+
+	##
+	# Returns list of Banned ASNs from Cymru info
+	#
+	# Use getBanListExtendedCymruInfo() to provide cymru_info
+	#
+	# @return list of Banned ASNs
+
+	def geBanListExtendedASN(self, cymru_info):
+		self.__lock.acquire()
+		try:
+			return [asn for asn in cymru_info["asn"]]
+		except Exception as e:
+			logSys.error("Failed to lookup ASN")
+			logSys.exception(e)
+			return []
+		finally:
+			self.__lock.release()
+
+	##
+	# Returns list of Banned Countries from Cymru info
+	#
+	# Use getBanListExtendedCymruInfo() to provide cymru_info
+	#
+	# @return list of Banned Countries
+
+	def geBanListExtendedCountry(self, cymru_info):
+		self.__lock.acquire()
+		try:
+			return [country for country in cymru_info["country"]]
+		except Exception as e:
+			logSys.error("Failed to lookup Country")
+			logSys.exception(e)
+			return []
+		finally:
+			self.__lock.release()
+
+	##
+	# Returns list of Banned RIRs from Cymru info
+	#
+	# Use getBanListExtendedCymruInfo() to provide cymru_info
+	#
+	# @return list of Banned RIRs
+
+	def geBanListExtendedRIR(self, cymru_info):
+		self.__lock.acquire()
+		try:
+			return [rir for rir in cymru_info["rir"]]
+		except Exception as e:
+			logSys.error("Failed to lookup RIR")
+			logSys.exception(e)
+			return []
+		finally:
+			self.__lock.release()
+
+	##
 	# Create a ban ticket.
 	#
 	# Create a BanTicket from a FailTicket. The timestamp of the BanTicket

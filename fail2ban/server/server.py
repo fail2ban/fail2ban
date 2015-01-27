@@ -320,9 +320,9 @@ class Server:
 		finally:
 			self.__lock.release()
 	
-	def statusJail(self, name):
-		return self.__jails[name].status
-	
+	def statusJail(self, name, flavor="basic"):
+		return self.__jails[name].status(flavor=flavor)
+
 	# Logging
 	
 	##

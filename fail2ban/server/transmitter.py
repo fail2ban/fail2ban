@@ -333,5 +333,8 @@ class Transmitter:
 		elif len(command) == 1:
 			name = command[0]
 			return self.__server.statusJail(name)
+		elif len(command) == 2:
+			name = command[0]
+			flavor = command[1]
+			return self.__server.statusJail(name, flavor=flavor)
 		raise Exception("Invalid command (no status)")
-	
