@@ -340,7 +340,7 @@ class Filter(JailThread):
 
 	def logIgnoreIp(self, ip, log_ignore, ignore_source="unknown source"):
 		if log_ignore:
-			logSys.info("[%s] Ignore %s due to %s" % (self.jail.name, ip, ignore_source))
+			logSys.info("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source))
 
 	def getIgnoreIP(self):
 		return self.__ignoreIpList
@@ -373,19 +373,19 @@ class Filter(JailThread):
 				# Check if IP in DNS
 				ips = DNSUtils.dnsToIp(i)
 				if ip in ips:
-					self.logIgnoreIp(ip, log_ignore, ignore_source="ignoreip by dns")
+					self.logIgnoreIp(ip, log_ignore, ignore_source="dns")
 					return True
 				else:
 					continue
 			if a == b:
-				self.logIgnoreIp(ip, log_ignore, ignore_source="ignoreip by addr")
+				self.logIgnoreIp(ip, log_ignore, ignore_source="ip")
 				return True
 
 		if self.__ignoreCommand:
 			command = CommandAction.replaceTag(self.__ignoreCommand, { 'ip': ip } )
 			logSys.debug('ignore command: ' + command)
 			ret_ignore = CommandAction.executeCmd(command)
-			self.logIgnoreIp(ip, log_ignore and ret_ignore, ignore_source="ignorecommand")
+			self.logIgnoreIp(ip, log_ignore and ret_ignore, ignore_source="command")
 			return ret_ignore
 
 		return False
