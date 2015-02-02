@@ -996,6 +996,8 @@ class DNSUtilsTests(unittest.TestCase):
 		self.assertEqual(res, ['93.184.216.34'])
 		res = DNSUtils.textToIp('www.example.com', 'yes')
 		self.assertEqual(res, ['93.184.216.34'])
+		res = DNSUtils.ipToName('66.249.66.1')
+		self.assertEqual(res, 'crawl-66-249-66-1.googlebot.com')
 
 	def testTextToIp(self):
 		# Test hostnames
