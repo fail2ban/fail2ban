@@ -1,0 +1,5 @@
+# Apache 2.2
+# failJSON: { "time": "2015-01-31T14:29:44", "match": true, "host": "66.249.66.1" }
+66.249.66.1 - - - [31/Jan/2015:14:29:44 ] example.com "GET / HTTP/1.1" 200 814 "-" "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" + 293 1149 546
+# failJSON: { "time": "2015-01-31T14:29:44", "match": false, "host": "93.184.216.34" }
+93.184.216.34 - - - [31/Jan/2015:14:29:44 ] example.com "GET / HTTP/1.1" 200 814 "-" "NOT A __GOOGLE_BOT__" + 293 1149 546

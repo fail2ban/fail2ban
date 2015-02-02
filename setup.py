@@ -96,7 +96,7 @@ setup(
 		'bin/fail2ban-client',
 		'bin/fail2ban-server',
 		'bin/fail2ban-regex',
-		'bin/fail2ban-testcases',
+		'bin/fail2ban-testcases'
 	],
 	packages = [
 		'fail2ban',
@@ -123,6 +123,9 @@ setup(
 		),
 		('/etc/fail2ban/filter.d',
 			glob("config/filter.d/*.conf")
+		),
+		('/etc/fail2ban/filter.d/ignorecommands',
+			glob("config/filter.d/ignorecommands/*")
 		),
 		('/etc/fail2ban/action.d',
 			glob("config/action.d/*.conf") +
