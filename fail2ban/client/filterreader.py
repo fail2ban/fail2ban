@@ -36,6 +36,7 @@ logSys = getLogger(__name__)
 class FilterReader(DefinitionInitConfigReader):
 
 	_configOpts = [
+		["string", "ignorecommand", None],
 		["string", "ignoreregex", None],
 		["string", "failregex", ""],
 	]
