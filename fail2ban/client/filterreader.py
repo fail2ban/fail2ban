@@ -36,7 +36,6 @@ logSys = getLogger(__name__)
 class FilterReader(DefinitionInitConfigReader):
 
 	_configOpts = [
-		["string", "ignorecommand", None],
 		["string", "ignoreregex", None],
 		["string", "failregex", ""],
 	]
@@ -73,11 +72,6 @@ class FilterReader(DefinitionInitConfigReader):
 					# Do not send a command if the rule is empty.
 					if regex != '':
 						stream.append(["set", self._jailName, "addignoreregex", regex])
-			elif opt == "ignorecommand":
-				for regex in value.split('\n'):
-					# Do not send a command if the rule is empty.
-					if regex != '':
-						stream.append(["set", self._jailName, "addignorecommand", regex])
 		if self._initOpts:
 			if 'maxlines' in self._initOpts:
 				# We warn when multiline regex is used without maxlines > 1
