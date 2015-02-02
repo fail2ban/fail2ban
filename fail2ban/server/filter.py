@@ -360,11 +360,11 @@ class Filter(JailThread):
 				s.insert(1, '32')
 			elif "." in s[1]: # 255.255.255.0 style mask
 				s[1] = len(re.search(
-					"(?<=b)1+", bin(DNSUtils.addr2bin(s[1]))).group())
+					"(?<=b)1+", bin(DNSUtils.addr2dec(s[1]))).group())
 			s[1] = long(s[1])
 			try:
-				a = DNSUtils.cidr(s[0], s[1])
-				b = DNSUtils.cidr(ip, s[1])
+				a = DNSUtils.netAddr2Dec(s[0], s[1])
+				b = DNSUtils.netAddr2Dec(ip, s[1])
 			except Exception:
 				# Check if IP in DNS
 				ips = DNSUtils.dnsToIp(i)
@@ -898,22 +898,22 @@ class DNSUtils:
 		return ipList
 
 	@staticmethod
-	def cidr(i, n):
-		""" Convert an IP address string with a CIDR mask into a 32-bit
-			integer.
+	def netAddr2Dec(ipstring, cidr):
+		""" Convert a string IPv4 address with CIDR
+		to decimal IP address of first address in block (network address).
 		"""
 		# 32-bit IPv4 address mask
 		MASK = 0xFFFFFFFFL
-		return ~(MASK >> n) & MASK & DNSUtils.addr2bin(i)
+		return ~(MASK >> cidr) & MASK & DNSUtils.addr2dec(ipstring)
 
 	@staticmethod
-	def addr2bin(string):
-		""" Convert a string IPv4 address into an unsigned integer.
+	def addr2dec(ipstring):
+		""" Convert a string IPv4 address into decimal form.
 		"""
-		return struct.unpack("!L", socket.inet_aton(string))[0]
+		return struct.unpack("!L", socket.inet_aton(ipstring))[0]
 
 	@staticmethod
-	def bin2addr(addr):
-		""" Convert a numeric IPv4 address into string n.n.n.n form.
+	def dec2addr(ipdec):
+		""" Convert a decimal IPv4 address into string n.n.n.n form.
 		"""
-		return socket.inet_ntoa(struct.pack("!L", addr))
+		return socket.inet_ntoa(struct.pack("!L", ipdec))
