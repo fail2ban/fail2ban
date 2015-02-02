@@ -1014,6 +1014,7 @@ class DNSUtilsTests(unittest.TestCase):
 	def testIpToName(self):
 		res = DNSUtils.ipToName('66.249.66.1')
 		self.assertEqual(res, 'crawl-66-249-66-1.googlebot.com')
+		self.assertRaises(Exception, DNSUtils.ipToName, ['10.0.0.0'])
 
 class JailTests(unittest.TestCase):
 
