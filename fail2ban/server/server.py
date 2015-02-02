@@ -71,12 +71,17 @@ class Server:
 		logSys.debug("Caught signal %d. Exiting" % signum)
 		self.quit()
 	
+	def __sigUSR1Handler(self, signum, fname):
+		logSys.debug("Caught signal %d. Flushing logs" % signum)
+		self.flushLogs()
+
 	def start(self, sock, pidfile, force = False):
 		logSys.info("Starting Fail2ban v" + version.version)
 		
 		# Install signal handlers
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
 		signal.signal(signal.SIGINT, self.__sigTERMhandler)
+		signal.signal(signal.SIGUSR1, self.__sigUSR1handler)
 		
 		# Ensure unhandled exceptions are logged
 		sys.excepthook = excepthook
