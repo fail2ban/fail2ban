@@ -71,7 +71,6 @@ def testSampleRegexsFactory(name):
 			elif opt[2] == "addignoreregex":
 				self.filter.addIgnoreRegex(opt[3])
 			elif opt[2] == "addignorecommand":
-				print("TESTING ONLY - addignorecommand: %s" % opt[3])
 				self.filter.addIgnoreCommand(opt[3])
 			elif opt[2] == "datepattern":
 				self.filter.setDatePattern(opt[3])
