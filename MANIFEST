@@ -266,6 +266,8 @@ config/filter.d/groupoffice.conf
 config/filter.d/gssftpd.conf
 config/filter.d/guacamole.conf
 config/filter.d/horde.conf
+config/filter.d/ignorecommands
+config/filter.d/ignorecommands/apache-fakegooglebot
 config/filter.d/kerio.conf
 config/filter.d/lighttpd-auth.conf
 config/filter.d/monit.conf
