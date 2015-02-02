@@ -50,8 +50,6 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
        - empty or "basic" works as-is
        - "cymru" additionally prints (ASN, Country RIR) per banned IP
        - Requires dnspython or dnspython3
-   - New ignorecommand:
-     - apache-fakegooglebot.sh  Thanks Lee Clemens
 
 - Enhancements:
    * Enable multiport for firewallcmd-new action.  Closes gh-834
