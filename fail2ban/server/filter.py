@@ -903,10 +903,10 @@ class DNSUtils:
 		If cidr is supplied, return the network address for the given block
 		"""
 		if cidr is None:
+			return struct.unpack("!L", socket.inet_aton(ipstring))[0]
+		else:
 			MASK = 0xFFFFFFFFL
 			return ~(MASK >> cidr) & MASK & DNSUtils.addr2dec(ipstring)
-		else:
-			return struct.unpack("!L", socket.inet_aton(ipstring))[0]
 
 	@staticmethod
 	def dec2addr(ipdec):
