@@ -360,11 +360,11 @@ class Filter(JailThread):
 				s.insert(1, '32')
 			elif "." in s[1]: # 255.255.255.0 style mask
 				s[1] = len(re.search(
-					"(?<=b)1+", bin(DNSUtils.addr2dec(s[1]))).group())
+					"(?<=b)1+", bin(DNSUtils.addr2bin(s[1]))).group())
 			s[1] = long(s[1])
 			try:
-				a = DNSUtils.addr2dec(s[0], cidr=s[1])
-				b = DNSUtils.addr2dec(ip, cidr=s[1])
+				a = DNSUtils.addr2bin(s[0], cidr=s[1])
+				b = DNSUtils.addr2bin(ip, cidr=s[1])
 			except Exception:
 				# Check if IP in DNS
 				ips = DNSUtils.dnsToIp(i)
@@ -898,7 +898,7 @@ class DNSUtils:
 		return ipList
 
 	@staticmethod
-	def addr2dec(ipstring, cidr=None):
+	def addr2bin(ipstring, cidr=None):
 		""" Convert a string IPv4 address into decimal form.
 		If cidr is supplied, return the network address for the given block
 		"""
@@ -906,7 +906,7 @@ class DNSUtils:
 			return struct.unpack("!L", socket.inet_aton(ipstring))[0]
 		else:
 			MASK = 0xFFFFFFFFL
-			return ~(MASK >> cidr) & MASK & DNSUtils.addr2dec(ipstring)
+			return ~(MASK >> cidr) & MASK & DNSUtils.addr2bin(ipstring)
 
 	@staticmethod
 	def dec2addr(ipdec):

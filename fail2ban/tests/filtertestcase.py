@@ -1011,16 +1011,16 @@ class DNSUtilsTests(unittest.TestCase):
 			else:
 				self.assertEqual(res, [])
 
-	def testAddr2dec(self):
-		res = DNSUtils.addr2dec('10.0.0.0')
+	def testAddr2bin(self):
+		res = DNSUtils.addr2bin('10.0.0.0')
 		self.assertEqual(res, 167772160L)
-		res = DNSUtils.addr2dec('10.0.0.0', cidr=None)
+		res = DNSUtils.addr2bin('10.0.0.0', cidr=None)
 		self.assertEqual(res, 167772160L)
-		res = DNSUtils.addr2dec('10.0.0.0', cidr=32L)
+		res = DNSUtils.addr2bin('10.0.0.0', cidr=32L)
 		self.assertEqual(res, 167772160L)
-		res = DNSUtils.addr2dec('10.0.0.1', cidr=32L)
+		res = DNSUtils.addr2bin('10.0.0.1', cidr=32L)
 		self.assertEqual(res, 167772161L)
-		res = DNSUtils.addr2dec('10.0.0.1', cidr=31L)
+		res = DNSUtils.addr2bin('10.0.0.1', cidr=31L)
 		self.assertEqual(res, 167772160L)
 
 	def testDec2addr(self):
