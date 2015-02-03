@@ -36,6 +36,7 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
 - New Features:
    - New filter:
      - postfix-rbl  Thanks Lee Clemens
+     - apache-fakegooglebot.conf  Thanks Lee Clemens
    - New recursive embedded substitution feature added:
      - `<<PREF>HOST>` becomes `<IPV4HOST>` for PREF=`IPV4`;
      - `<<PREF>HOST>` becomes `1.2.3.4` for PREF=`IPV4` and IPV4HOST=`1.2.3.4`;

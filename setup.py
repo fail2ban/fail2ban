@@ -124,6 +124,9 @@ setup(
 		('/etc/fail2ban/filter.d',
 			glob("config/filter.d/*.conf")
 		),
+		('/etc/fail2ban/filter.d/ignorecommands',
+			glob("config/filter.d/ignorecommands/*")
+		),
 		('/etc/fail2ban/action.d',
 			glob("config/action.d/*.conf") +
 			glob("config/action.d/*.py")
