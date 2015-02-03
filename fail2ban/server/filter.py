@@ -899,7 +899,7 @@ class DNSUtils:
 
 	@staticmethod
 	def addr2bin(ipstring, cidr=None):
-		""" Convert a string IPv4 address into decimal form.
+		""" Convert a string IPv4 address into binary form.
 		If cidr is supplied, return the network address for the given block
 		"""
 		if cidr is None:
