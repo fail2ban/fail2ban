@@ -1011,6 +1011,23 @@ class DNSUtilsTests(unittest.TestCase):
 			else:
 				self.assertEqual(res, [])
 
+	def testAddr2bin(self):
+		res = DNSUtils.addr2bin('10.0.0.0')
+		self.assertEqual(res, 167772160L)
+		res = DNSUtils.addr2bin('10.0.0.0', cidr=None)
+		self.assertEqual(res, 167772160L)
+		res = DNSUtils.addr2bin('10.0.0.0', cidr=32L)
+		self.assertEqual(res, 167772160L)
+		res = DNSUtils.addr2bin('10.0.0.1', cidr=32L)
+		self.assertEqual(res, 167772161L)
+		res = DNSUtils.addr2bin('10.0.0.1', cidr=31L)
+		self.assertEqual(res, 167772160L)
+
+	def testDec2addr(self):
+		res = DNSUtils.dec2addr(167772160L)
+		self.assertEqual(res, '10.0.0.0')
+
+
 class JailTests(unittest.TestCase):
 
 	def testSetBackend_gh83(self):
