@@ -17,7 +17,7 @@ Sep  6 00:44:57 trianon postfix/submission/smtpd[11538]: warning: unknown[82.221
 # failJSON: { "time": "2005-01-29T08:11:45", "match": true , "host": "1.1.1.1" }
 Jan 29 08:11:45 mail postfix/smtpd[10752]: warning: unknown[1.1.1.1]: SASL LOGIN authentication failed: Password:
 
-#6 Example to ignore
+#6 Example to ignore because due to a failed attempt to connect to authentication service - no malicious activities whatsoever
 # failJSON: { "time": "2005-02-03T08:29:28", "match": false , "host": "1.1.1.1" }
 Feb  3 08:29:28 mail postfix/smtpd[21022]: warning: unknown[1.1.1.1]: SASL LOGIN authentication failed: Connection lost to authentication server
 
