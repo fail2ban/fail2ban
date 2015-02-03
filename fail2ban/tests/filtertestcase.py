@@ -1027,6 +1027,11 @@ class DNSUtilsTests(unittest.TestCase):
 		res = DNSUtils.dec2addr(167772160L)
 		self.assertEqual(res, '10.0.0.0')
 
+	def testIpToName(self):
+		res = DNSUtils.ipToName('66.249.66.1')
+		self.assertEqual(res, 'crawl-66-249-66-1.googlebot.com')
+		res = DNSUtils.ipToName('10.0.0.0')
+		self.assertEqual(res, None)
 
 class JailTests(unittest.TestCase):
 

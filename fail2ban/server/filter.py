@@ -853,6 +853,14 @@ class DNSUtils:
 			return list()
 
 	@staticmethod
+	def ipToName(ip):
+		try:
+			return socket.gethostbyaddr(ip)[0]
+		except socket.error, e:
+			logSys.debug("Unable to find a name for the IP %s: %s" % (ip, e))
+			return None
+
+	@staticmethod
 	def searchIP(text):
 		""" Search if an IP address if directly available and return
 			it.
