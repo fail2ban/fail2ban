@@ -48,9 +48,8 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
 - Enhancements:
    * Enable multiport for firewallcmd-new action.  Closes gh-834
    * files/debian-initd migrated from the debian branch and should be
-     suitable for manual installations now (thanks Juan Karlo de
-	 Guzman)
-   * action.d/{sendmail-*,xarg-login-attack}.conf - report local
+     suitable for manual installations now (thanks Juan Karlo de Guzman)
+   * action.d/{sendmail-*,xarf-login-attack}.conf - report local
      timezone not UTC time/zone. Closes gh-911
 
 
