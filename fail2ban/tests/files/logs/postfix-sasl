@@ -12,3 +12,12 @@ Sep  6 00:44:56 trianon postfix/submission/smtpd[11538]: warning: unknown[82.221
 #4 Example from postfix post-debian changes to rename to add "submission" to syslog name + downcase
 # failJSON: { "time": "2004-09-06T00:44:57", "match": true , "host": "82.221.106.233" }
 Sep  6 00:44:57 trianon postfix/submission/smtpd[11538]: warning: unknown[82.221.106.233]: SASL login authentication failed: UGFzc3dvcmQ6
+
+#5 Example to add :
+# failJSON: { "time": "2005-01-29T08:11:45", "match": true , "host": "1.1.1.1" }
+Jan 29 08:11:45 mail postfix/smtpd[10752]: warning: unknown[1.1.1.1]: SASL LOGIN authentication failed: Password:
+
+#6 Example to ignore
+# failJSON: { "time": "2005-02-03T08:29:28", "match": false , "host": "1.1.1.1" }
+Feb  3 08:29:28 mail postfix/smtpd[21022]: warning: unknown[1.1.1.1]: SASL LOGIN authentication failed: Connection lost to authentication server
+
