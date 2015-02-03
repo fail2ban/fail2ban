@@ -363,8 +363,8 @@ class Filter(JailThread):
 					"(?<=b)1+", bin(DNSUtils.addr2dec(s[1]))).group())
 			s[1] = long(s[1])
 			try:
-				a = DNSUtils.netAddr2Dec(s[0], s[1])
-				b = DNSUtils.netAddr2Dec(ip, s[1])
+				a = DNSUtils.addr2dec(s[0], cidr=s[1])
+				b = DNSUtils.addr2dec(ip, cidr=s[1])
 			except Exception:
 				# Check if IP in DNS
 				ips = DNSUtils.dnsToIp(i)
@@ -898,19 +898,15 @@ class DNSUtils:
 		return ipList
 
 	@staticmethod
-	def netAddr2Dec(ipstring, cidr):
-		""" Convert a string IPv4 address with CIDR
-		to decimal IP address of first address in block (network address).
-		"""
-		# 32-bit IPv4 address mask
-		MASK = 0xFFFFFFFFL
-		return ~(MASK >> cidr) & MASK & DNSUtils.addr2dec(ipstring)
-
-	@staticmethod
-	def addr2dec(ipstring):
+	def addr2dec(ipstring, cidr=None):
 		""" Convert a string IPv4 address into decimal form.
+		If cidr is supplied, return the network address for the given block
 		"""
-		return struct.unpack("!L", socket.inet_aton(ipstring))[0]
+		if cidr is None:
+			MASK = 0xFFFFFFFFL
+			return ~(MASK >> cidr) & MASK & DNSUtils.addr2dec(ipstring)
+		else:
+			return struct.unpack("!L", socket.inet_aton(ipstring))[0]
 
 	@staticmethod
 	def dec2addr(ipdec):
