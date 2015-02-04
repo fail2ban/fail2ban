@@ -367,8 +367,8 @@ class Filter(JailThread):
 					"(?<=b)1+", bin(DNSUtils.addr2bin(s[1]))).group())
 			s[1] = long(s[1])
 			try:
-				a = DNSUtils.cidr(s[0], s[1])
-				b = DNSUtils.cidr(ip, s[1])
+				a = DNSUtils.addr2bin(s[0], cidr=s[1])
+				b = DNSUtils.addr2bin(ip, cidr=s[1])
 			except Exception:
 				# Check if IP in DNS
 				ips = DNSUtils.dnsToIp(i)
@@ -913,22 +913,18 @@ class DNSUtils:
 		return ipList
 
 	@staticmethod
-	def cidr(i, n):
-		""" Convert an IP address string with a CIDR mask into a 32-bit
-			integer.
+	def addr2bin(ipstring, cidr=None):
+		""" Convert a string IPv4 address into binary form.
+		If cidr is supplied, return the network address for the given block
 		"""
-		# 32-bit IPv4 address mask
-		MASK = 0xFFFFFFFFL
-		return ~(MASK >> n) & MASK & DNSUtils.addr2bin(i)
+		if cidr is None:
+			return struct.unpack("!L", socket.inet_aton(ipstring))[0]
+		else:
+			MASK = 0xFFFFFFFFL
+			return ~(MASK >> cidr) & MASK & DNSUtils.addr2bin(ipstring)
 
 	@staticmethod
-	def addr2bin(string):
-		""" Convert a string IPv4 address into an unsigned integer.
+	def bin2addr(ipbin):
+		""" Convert a binary IPv4 address into string n.n.n.n form.
 		"""
-		return struct.unpack("!L", socket.inet_aton(string))[0]
-
-	@staticmethod
-	def bin2addr(addr):
-		""" Convert a numeric IPv4 address into string n.n.n.n form.
-		"""
-		return socket.inet_ntoa(struct.pack("!L", addr))
+		return socket.inet_ntoa(struct.pack("!L", ipbin))
