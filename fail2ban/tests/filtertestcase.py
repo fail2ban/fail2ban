@@ -266,6 +266,15 @@ class IgnoreIP(LogCaptureTestCase):
 		self.assertTrue(self.filter.inIgnoreIPList("10.0.0.1"))
 		self.assertFalse(self.filter.inIgnoreIPList("10.0.0.0"))
 
+	def testIgnoreCauseOK(self):
+		ip = "93.184.216.34"
+		for ignore_source in ["dns", "ip", "command"]:
+			self.filter.logIgnoreIp(ip, True, ignore_source=ignore_source)
+			self.assertTrue(self._is_logged("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source)))
+
+	def testIgnoreCauseNOK(self):
+		self.filter.logIgnoreIp("example.com", False, ignore_source="NOT_LOGGED")
+		self.assertFalse(self._is_logged("[%s] Ignore %s by %s" % (self.jail.name, "example.com", "NOT_LOGGED")))
 
 class IgnoreIPDNS(IgnoreIP):
 

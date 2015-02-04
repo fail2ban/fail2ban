@@ -338,6 +338,10 @@ class Filter(JailThread):
 		logSys.debug("Remove " + ip + " from ignore list")
 		self.__ignoreIpList.remove(ip)
 
+	def logIgnoreIp(self, ip, log_ignore, ignore_source="unknown source"):
+		if log_ignore:
+			logSys.info("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source))
+
 	def getIgnoreIP(self):
 		return self.__ignoreIpList
 
@@ -349,7 +353,7 @@ class Filter(JailThread):
 	# @param ip IP address
 	# @return True if IP address is in ignore list
 
-	def inIgnoreIPList(self, ip):
+	def inIgnoreIPList(self, ip, log_ignore=False):
 		for i in self.__ignoreIpList:
 			# An empty string is always false
 			if i == "":
@@ -369,16 +373,20 @@ class Filter(JailThread):
 				# Check if IP in DNS
 				ips = DNSUtils.dnsToIp(i)
 				if ip in ips:
+					self.logIgnoreIp(ip, log_ignore, ignore_source="dns")
 					return True
 				else:
 					continue
 			if a == b:
+				self.logIgnoreIp(ip, log_ignore, ignore_source="ip")
 				return True
 
 		if self.__ignoreCommand:
 			command = CommandAction.replaceTag(self.__ignoreCommand, { 'ip': ip } )
 			logSys.debug('ignore command: ' + command)
-			return CommandAction.executeCmd(command)
+			ret_ignore = CommandAction.executeCmd(command)
+			self.logIgnoreIp(ip, log_ignore and ret_ignore, ignore_source="command")
+			return ret_ignore
 
 		return False
 
@@ -418,8 +426,7 @@ class Filter(JailThread):
 				logSys.debug("Ignore line since time %s < %s - %s"
 							 % (unixTime, MyTime.time(), self.getFindTime()))
 				break
-			if self.inIgnoreIPList(ip):
-				logSys.info("[%s] Ignore %s" % (self.jail.name, ip))
+			if self.inIgnoreIPList(ip, log_ignore=True):
 				continue
 			logSys.info("[%s] Found %s" % (self.jail.name, ip))
 			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
