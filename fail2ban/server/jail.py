@@ -213,7 +213,7 @@ class Jail:
 		if self.database is not None:
 			for ticket in self.database.getBansMerged(
 				jail=self, bantime=self.actions.getBanTime()):
-				if not self.filter.inIgnoreIPList(ticket.getIP()):
+				if not self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True):
 					self.__queue.put(ticket)
 		logSys.info("Jail '%s' started" % self.name)
 
