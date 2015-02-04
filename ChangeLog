@@ -66,6 +66,7 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
      warnings (gh-934)
    * action.d/{sendmail-*,xarf-login-attack}.conf - report local
      timezone not UTC time/zone. Closes gh-911
+   * Renamed some DNSUtils functions in filter.py, added unittests
 
 
 ver. 0.9.1 (2014/10/29) - better, faster, stronger
