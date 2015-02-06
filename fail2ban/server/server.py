@@ -25,7 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from threading import Lock, RLock
-import logging, logging.handlers, sys, os, signal
+import logging, logging.handlers, sys, os, signal, stat
 
 from .jails import Jails
 from .filter import FileFilter, JournalFilter
@@ -55,10 +55,12 @@ class Server:
 		self.__asyncServer = AsyncServer(self.__transm)
 		self.__logLevel = None
 		self.__logTarget = None
+		self.__syslogSocket = None
 		# Set logging level
 		self.setLogLevel("INFO")
 		self.setLogTarget("STDOUT")
-	
+		self.setSyslogSocket("/dev/log")
+
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
 		self.quit()
@@ -376,7 +378,16 @@ class Server:
 				# Syslog daemons already add date to the message.
 				formatter = logging.Formatter("%(name)s[%(process)d]: %(levelname)s %(message)s")
 				facility = logging.handlers.SysLogHandler.LOG_DAEMON
-				hdlr = logging.handlers.SysLogHandler("/dev/log", facility=facility)
+				if os.path.exists(self.__syslogSocket)\
+						and stat.S_ISSOCK(os.stat(
+								self.__syslogSocket).st_mode):
+					hdlr = logging.handlers.SysLogHandler(
+						self.__syslogSocket, facility=facility)
+				else:
+					logSys.error(
+						"Syslog socket file: %s does not exists"
+						" or is not a socket" % self.__syslogSocket)
+					return False
 			elif target == "STDOUT":
 				hdlr = logging.StreamHandler(sys.stdout)
 			elif target == "STDERR":
@@ -412,21 +423,44 @@ class Server:
 			logger.addHandler(hdlr)
 			# Does not display this message at startup.
 			if not self.__logTarget is None:
-				logSys.info("Changed logging target to %s for Fail2ban v%s" %
-						(target, version.version))
+				logSys.info(
+					"Changed logging target to %s for Fail2ban v%s"
+					% ((target
+						if target != "SYSLOG"
+						else "%s (%s)"
+							 % (target, self.__syslogSocket)),
+					   version.version))
 			# Sets the logging target.
 			self.__logTarget = target
 			return True
 		finally:
 			self.__loggingLock.release()
-	
+
+	##
+	# Sets the syslog socket.
+	#
+	# syslogsocket is the full path to the syslog socket
+	# @param syslogsocket the syslog socket path
+	def setSyslogSocket(self, syslogsocket):
+		self.__syslogSocket = syslogsocket
+		# Conditionally reload, logtarget depends on socket path when SYSLOG
+		return self.__logTarget != "SYSLOG"\
+			   or self.setLogTarget(self.__logTarget)
+
 	def getLogTarget(self):
 		try:
 			self.__loggingLock.acquire()
 			return self.__logTarget
 		finally:
 			self.__loggingLock.release()
-	
+
+	def getSyslogSocket(self):
+		try:
+			self.__loggingLock.acquire()
+			return self.__syslogSocket
+		finally:
+			self.__loggingLock.release()
+
 	def flushLogs(self):
 		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG']:
 			for handler in getLogger("fail2ban").handlers:
