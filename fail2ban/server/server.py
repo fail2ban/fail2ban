@@ -56,10 +56,16 @@ class Server:
 		self.__logLevel = None
 		self.__logTarget = None
 		self.__syslogSocket = None
+		self.__autoSyslogSocketPaths = {
+			'Darwin':  '/var/run/syslog',
+			'FreeBSD': '/var/run/log',
+			'Linux': '/dev/log',
+		}
 		# Set logging level
 		self.setLogLevel("INFO")
 		self.setLogTarget("STDOUT")
-		self.setSyslogSocket("/dev/log")
+		self.setSyslogSocket("auto")
+
 
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
@@ -362,7 +368,7 @@ class Server:
 			return self.__logLevel
 		finally:
 			self.__loggingLock.release()
-	
+
 	##
 	# Sets the logging target.
 	#
@@ -378,7 +384,12 @@ class Server:
 				# Syslog daemons already add date to the message.
 				formatter = logging.Formatter("%(name)s[%(process)d]: %(levelname)s %(message)s")
 				facility = logging.handlers.SysLogHandler.LOG_DAEMON
-				if os.path.exists(self.__syslogSocket)\
+				if self.__syslogSocket == "auto":
+					import platform
+					self.__syslogSocket = self.__autoSyslogSocketPaths.get(
+						platform.system())
+				if self.__syslogSocket is not None\
+						and os.path.exists(self.__syslogSocket)\
 						and stat.S_ISSOCK(os.stat(
 								self.__syslogSocket).st_mode):
 					hdlr = logging.handlers.SysLogHandler(

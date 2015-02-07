@@ -624,7 +624,7 @@ class JailsReaderTest(LogCaptureTestCase):
 							  ['set', 'dbpurgeage', 86400],
 							  ['set', 'loglevel', "INFO"],
 							  ['set', 'logtarget', '/var/log/fail2ban.log'],
-							  ['set', 'syslogsocket', '/dev/log']])
+							  ['set', 'syslogsocket', 'auto']])
 
 			# and if we force change configurator's fail2ban's baseDir
 			# there should be an error message (test visually ;) --

@@ -44,7 +44,7 @@ protocol = [
 ["get loglevel", "gets the logging level"], 
 ["set logtarget <TARGET>", "sets logging target to <TARGET>. Can be STDOUT, STDERR, SYSLOG or a file"], 
 ["get logtarget", "gets logging target"], 
-["set syslogsocket <SOCKET>", "sets the syslog socket path to <SOCKET>. Only used if logtarget is SYSLOG"],
+["set syslogsocket auto|<SOCKET>", "sets the syslog socket path to auto or <SOCKET>. Only used if logtarget is SYSLOG"],
 ["get syslogsocket", "gets syslog socket path"],
 ["flushlogs", "flushes the logtarget if a file and reopens it. For log rotation."], 
 ['', "DATABASE", ""],
