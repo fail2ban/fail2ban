@@ -739,6 +739,7 @@ class TransmitterLogging(TransmitterBase):
 		self.server = Server()
 		self.server.setLogTarget("/dev/null")
 		self.server.setLogLevel("CRITICAL")
+		self.server.setSyslogSocket("auto")
 		super(TransmitterLogging, self).setUp()
 
 	def testLogTarget(self):
@@ -766,6 +767,18 @@ class TransmitterLogging(TransmitterBase):
 			raise unittest.SkipTest("'/dev/log' not present")
 		elif not os.path.exists("/dev/log"):
 			return
+		self.assertTrue(self.server.getSyslogSocket(), "auto")
+		self.setGetTest("logtarget", "SYSLOG")
+		self.assertTrue(self.server.getSyslogSocket(), "/dev/log")
+
+	def testSyslogSocket(self):
+		self.setGetTest("syslogsocket", "/dev/log/NEW/PATH")
+
+	def testSyslogSocketNOK(self):
+		self.setGetTest("syslogsocket", "/this/path/should/not/exist")
+		self.setGetTestNOK("logtarget", "SYSLOG")
+		# set back for other tests
+		self.setGetTest("syslogsocket", "/dev/log")
 		self.setGetTest("logtarget", "SYSLOG")
 
 	def testLogLevel(self):

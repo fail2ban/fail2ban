@@ -70,6 +70,7 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
      timezone not UTC time/zone. Closes gh-911
    * Conditionally log Ignore IP with reason (dns, ip, command). Closes gh-916
    * Absorbed DNSUtils.cidr into addr2bin in filter.py, added unittests
+   * Added syslogsocket configuration to fail2ban.conf
 
 
 ver. 0.9.1 (2014/10/29) - better, faster, stronger

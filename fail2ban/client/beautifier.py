@@ -85,6 +85,9 @@ class Beautifier:
 						val = " ".join(res1[1]) if isinstance(res1[1], list) else res1[1]
 						msg.append("%s %s:\t%s" % (prefix1, res1[0], val))
 				msg = "\n".join(msg)
+			elif inC[1] == "syslogsocket":
+				msg = "Current syslog socket is:\n"
+				msg = msg + "`- " + response
 			elif inC[1] == "logtarget":
 				msg = "Current logging target is:\n"
 				msg = msg + "`- " + response
