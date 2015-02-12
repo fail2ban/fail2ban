@@ -21,10 +21,13 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
+[ -f /etc/default/fail2ban ] && source /etc/default/fail2ban
+[ "$PYTHON_VENV" ] && [ -f ${PYTHON_VENV}/bin/activate ] && source ${PYTHON_VENV}/bin/activate
+
 # Check that the config file exists
 [ -f /etc/fail2ban/fail2ban.conf ] || exit 0
 
-FAIL2BAN="/usr/bin/fail2ban-client"
+FAIL2BAN=$(which fail2ban-client)
 prog=fail2ban-server
 lockfile=${LOCKFILE-/var/lock/subsys/fail2ban}
 socket=${SOCKET-/var/run/fail2ban/fail2ban.sock}
