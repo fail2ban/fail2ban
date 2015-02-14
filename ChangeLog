@@ -38,7 +38,7 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
      system authentication issues
 
 - New Features:
-   - New filter:
+   - New filters:
      - postfix-rbl  Thanks Lee Clemens
      - apache-fakegooglebot.conf  Thanks Lee Clemens
      - nginx-botsearch  Thanks Frantisek Sumsal
@@ -50,17 +50,17 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
      possible to extend a stock filter or jail regexp in .local file
      (opposite to simply set failregex/ignoreregex that overwrites it),
      see gh-867.
-   - Monit config for fail2ban in /files/monit
+   - Monit config for fail2ban in files/monit/
    - New actions:
      - action.d/firewallcmd-multiport and action.d/firewallcmd-allports Thanks Donald Yandt
      - action.d/sendmail-geoip-lines.conf
      - action.d/nsupdate to update DNSBL. Thanks Andrew St. Jean
-   - New status argument, flavor:
-     - fail2ban-client status <jail> [flavor]
-       - empty or "basic" works as-is
-       - "cymru" additionally prints (ASN, Country RIR) per banned IP
-       - Requires dnspython or dnspython3
-     
+   - New status argument for fail2ban-client -- flavor:
+     fail2ban-client status <jail> [flavor]
+     - empty or "basic" works as-is
+     - "cymru" additionally prints (ASN, Country RIR) per banned IP
+       (requires dnspython or dnspython3)
+
 - Enhancements:
    * Enable multiport for firewallcmd-new action.  Closes gh-834
    * files/debian-initd migrated from the debian branch and should be
