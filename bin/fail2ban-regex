@@ -220,6 +220,7 @@ class Fail2banRegex(object):
 		self._datepattern_set = False
 		self._journalmatch = None
 
+		self.share_config=dict()
 		self._filter = Filter(None)
 		self._ignoreregex = list()
 		self._failregex = list()
@@ -260,38 +261,47 @@ class Fail2banRegex(object):
 	def readRegex(self, value, regextype):
 		assert(regextype in ('fail', 'ignore'))
 		regex = regextype + 'regex'
-		if os.path.isfile(value):
-			print "Use %11s file : %s" % (regex, value)
-			reader = FilterReader(value, 'fail2ban-regex-jail', {})
-			reader.setBaseDir(None)
-
-			if reader.readexplicit():
-				reader.getOptions(None)
-				readercommands = reader.convert()
-				regex_values = [
-					RegexStat(m[3])
-					for m in filter(
-						lambda x: x[0] == 'set' and x[2] == "add%sregex" % regextype,
-						readercommands)]
-				# Read out and set possible value of maxlines
-				for command in readercommands:
-					if command[2] == "maxlines":
-						maxlines = int(command[3])
-						try:
-							self.setMaxLines(maxlines)
-						except ValueError:
-							print "ERROR: Invalid value for maxlines (%(maxlines)r) " \
-								  "read from %(value)s" % locals()
-							return False
-					elif command[2] == 'addjournalmatch':
-						journalmatch = command[3]
-						self.setJournalMatch(shlex.split(journalmatch))
-					elif command[2] == 'datepattern':
-						datepattern = command[3]
-						self.setDatePattern(datepattern)
+		if os.path.isfile(value) or os.path.isfile(value + '.conf'):
+			if os.path.basename(os.path.dirname(value)) == 'filter.d':
+				## within filter.d folder - use standard loading algorithm to load filter completely (with .local etc.):
+				basedir = os.path.dirname(os.path.dirname(value))
+				value = os.path.splitext(os.path.basename(value))[0]
+				print "Use %11s filter file : %s, basedir: %s" % (regex, value, basedir)
+				reader = FilterReader(value, 'fail2ban-regex-jail', {}, share_config=self.share_config, basedir=basedir)
+				if not reader.read():
+					print "ERROR: failed to load filter %s" % value
+					return False
 			else:
-				print "ERROR: failed to read %s" % value
-				return False
+				## foreign file - readexplicit this file and includes if possible:
+				print "Use %11s file : %s" % (regex, value)
+				reader = FilterReader(value, 'fail2ban-regex-jail', {}, share_config=self.share_config)
+				reader.setBaseDir(None)
+				if not reader.readexplicit():
+					print "ERROR: failed to read %s" % value
+					return False
+			reader.getOptions(None)
+			readercommands = reader.convert()
+			regex_values = [
+				RegexStat(m[3])
+				for m in filter(
+					lambda x: x[0] == 'set' and x[2] == "add%sregex" % regextype,
+					readercommands)]
+			# Read out and set possible value of maxlines
+			for command in readercommands:
+				if command[2] == "maxlines":
+					maxlines = int(command[3])
+					try:
+						self.setMaxLines(maxlines)
+					except ValueError:
+						print "ERROR: Invalid value for maxlines (%(maxlines)r) " \
+							  "read from %(value)s" % locals()
+						return False
+				elif command[2] == 'addjournalmatch':
+					journalmatch = command[3]
+					self.setJournalMatch(shlex.split(journalmatch))
+				elif command[2] == 'datepattern':
+					datepattern = command[3]
+					self.setDatePattern(datepattern)
 		else:
 			print "Use %11s line : %s" % (regex, shortstr(value))
 			regex_values = [RegexStat(value)]
