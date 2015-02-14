@@ -37,6 +37,7 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
    * filter.d/postfix-sasl.conf - tweak failregex and add ignoreregex to ignore
      system authentication issues
    * fail2ban-regex reads filter file(s) completely, incl. '.local' file etc. (gh-954)
+   * firewallcmd-* actions: split output into separate lines for grepping (gh-908)
 
 - New Features:
    - New filters:
