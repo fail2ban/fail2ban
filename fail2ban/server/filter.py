@@ -797,7 +797,9 @@ class FileContainer:
 			line = line.decode(self.getEncoding(), 'strict')
 		except UnicodeDecodeError:
 			logSys.warning(
-				"Error decoding line from '%s' with '%s'. Continuing "
+				"Error decoding line from '%s' with '%s'."
+				" Consider setting logencoding=utf-8 (or another appropriate"
+				" encoding) for this jail. Continuing"
 				" to process line ignoring invalid characters: %r" %
 				(self.getFileName(), self.getEncoding(), line))
 			if sys.version_info >= (3,): # In python3, must be decoded
