@@ -54,12 +54,13 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
    - New actions:
      - action.d/firewallcmd-multiport and action.d/firewallcmd-allports Thanks Donald Yandt
      - action.d/sendmail-geoip-lines.conf
+     - action.d/nsupdate to update DNSBL. Thanks Andrew St. Jean
    - New status argument, flavor:
      - fail2ban-client status <jail> [flavor]
        - empty or "basic" works as-is
        - "cymru" additionally prints (ASN, Country RIR) per banned IP
        - Requires dnspython or dnspython3
-
+     
 - Enhancements:
    * Enable multiport for firewallcmd-new action.  Closes gh-834
    * files/debian-initd migrated from the debian branch and should be
