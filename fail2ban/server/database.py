@@ -45,24 +45,38 @@ if sys.version_info >= (3,):
 			logSys.error('json dumps failed: %s', e)
 			x = '{}'
 		return x
+	def _json_loads_safe(x):
+		try:
+			x = json.loads(x.decode(locale.getpreferredencoding(), 'replace'))
+		except Exception, e: # pragma: no cover
+			logSys.error('json loads failed: %s', e)
+			x = {}
+		return x
 else:
+	def _normalize(x):
+		if isinstance(x, dict):
+			return dict((_normalize(k), _normalize(v)) for k, v in x.iteritems())
+		elif isinstance(x, list):
+			return [_normalize(element) for element in x]
+		elif isinstance(x, unicode):
+			return x.encode(locale.getpreferredencoding())
+		else:
+			return x
 	def _json_dumps_safe(x):
 		try:
-			x = json.dumps(x, ensure_ascii=False).decode(
+			x = json.dumps(_normalize(x), ensure_ascii=False).decode(
 				locale.getpreferredencoding(), 'replace')
 		except Exception, e: # pragma: no cover
 			logSys.error('json dumps failed: %s', e)
 			x = '{}'
 		return x
-
-def _json_loads_safe(x):
-	try:
-		x = json.loads(x.decode(
-			locale.getpreferredencoding(), 'replace'))
-	except Exception, e: # pragma: no cover
-		logSys.error('json loads failed: %s', e)
-		x = {}
-	return x
+	def _json_loads_safe(x):
+		try:
+			x = _normalize(json.loads(x.decode(locale.getpreferredencoding(), 'replace')))
+		except Exception, e: # pragma: no cover
+			logSys.error('json loads failed: %s', e)
+			x = {}
+		return x
 
 sqlite3.register_adapter(dict, _json_dumps_safe)
 sqlite3.register_converter("JSON", _json_loads_safe)
@@ -449,8 +463,8 @@ class Fail2BanDb(object):
 		tickets = []
 		for ip, timeofban, data in self._getBans(**kwargs):
 			#TODO: Implement data parts once arbitrary match keys completed
-			tickets.append(FailTicket(ip, timeofban, data['matches']))
-			tickets[-1].setAttempt(data['failures'])
+			tickets.append(FailTicket(ip, timeofban, data.get('matches')))
+			tickets[-1].setAttempt(data.get('failures', 1))
 		return tickets
 
 	def getBansMerged(self, ip=None, jail=None, bantime=None):
@@ -502,8 +516,8 @@ class Fail2BanDb(object):
 						prev_banip = banip
 						matches = []
 						failures = 0
-					matches.extend(data['matches'])
-					failures += data['failures']
+					matches.extend(data.get('matches', []))
+					failures += data.get('failures', 1)
 					prev_timeofban = timeofban
 				ticket = FailTicket(banip, prev_timeofban, matches)
 				ticket.setAttempt(failures)

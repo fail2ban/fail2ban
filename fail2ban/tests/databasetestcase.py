@@ -181,15 +181,31 @@ class DatabaseTest(LogCaptureTestCase):
 		if Fail2BanDb is None: # pragma: no cover
 			return
 		self.testAddJail()
-		ticket = FailTicket("127.0.0.1", 0, ['... user "\xd1\xe2\xe5\xf2\xe0"  ...'])
-		self.db.addBan(self.jail, ticket)
+		# invalid + valid, invalid + valid unicode, invalid + valid dual converted (like in filter:readline by fallback) ...
+		tickets = [
+		  FailTicket("127.0.0.1", 0, ['user "\xd1\xe2\xe5\xf2\xe0"', 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
+		  FailTicket("127.0.0.2", 0, ['user "\xd1\xe2\xe5\xf2\xe0"', u'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
+		  FailTicket("127.0.0.3", 0, ['user "\xd1\xe2\xe5\xf2\xe0"', b'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'.decode('utf-8', 'replace')])
+		]
+		self.db.addBan(self.jail, tickets[0])
+		self.db.addBan(self.jail, tickets[1])
+		self.db.addBan(self.jail, tickets[2])
 
-		self.assertEqual(len(self.db.getBans(jail=self.jail)), 1)
-		readticket = self.db.getBans(jail=self.jail)[0]
+		readtickets = self.db.getBans(jail=self.jail)
+		self.assertEqual(len(readtickets), 3)
 		## python 2 or 3 :
+		invstr = u'user "\ufffd\ufffd\ufffd\ufffd\ufffd"'.encode('utf-8', 'replace')
 		self.assertTrue(
-			   readticket == FailTicket("127.0.0.1", 0, [u'... user "\ufffd\ufffd\ufffd\ufffd\ufffd"  ...'])
-			or readticket == ticket
+			   readtickets[0] == FailTicket("127.0.0.1", 0, [invstr, 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'])
+			or readtickets[0] == tickets[0]
+		)
+		self.assertTrue(
+			   readtickets[1] == FailTicket("127.0.0.2", 0, [invstr, u'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'.encode('utf-8', 'replace')])
+			or readtickets[1] == tickets[1]
+		)
+		self.assertTrue(
+			   readtickets[2] == FailTicket("127.0.0.3", 0, [invstr, 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'])
+			or readtickets[2] == tickets[2]
 		)
 
 	def testDelBan(self):
