@@ -181,12 +181,16 @@ class DatabaseTest(LogCaptureTestCase):
 		if Fail2BanDb is None: # pragma: no cover
 			return
 		self.testAddJail()
-		ticket = FailTicket("127.0.0.1", 0, {'m': ['... user "\xd1\xe2\xe5\xf2\xe0"  ...'], 'a': 1})
+		ticket = FailTicket("127.0.0.1", 0, ['... user "\xd1\xe2\xe5\xf2\xe0"  ...'])
 		self.db.addBan(self.jail, ticket)
 
 		self.assertEqual(len(self.db.getBans(jail=self.jail)), 1)
+		readticket = self.db.getBans(jail=self.jail)[0]
+		## python 2 or 3 :
 		self.assertTrue(
-			isinstance(self.db.getBans(jail=self.jail)[0], FailTicket))
+			   readticket == FailTicket("127.0.0.1", 0, [u'... user "\ufffd\ufffd\ufffd\ufffd\ufffd"  ...'])
+			or readticket == ticket
+		)
 
 	def testDelBan(self):
 		self.testAddBan()
