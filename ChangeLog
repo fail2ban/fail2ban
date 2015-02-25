@@ -38,6 +38,8 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
      system authentication issues
    * fail2ban-regex reads filter file(s) completely, incl. '.local' file etc. (gh-954)
    * firewallcmd-* actions: split output into separate lines for grepping (gh-908)
+   * binding parameter error (unsupported type) by writing json with invalid encoded
+     lines into sqlite database (gh-973), thanks to kot for issue reporting;
 
 - New Features:
    - New filters:

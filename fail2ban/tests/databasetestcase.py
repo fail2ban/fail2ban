@@ -177,6 +177,17 @@ class DatabaseTest(LogCaptureTestCase):
 		self.assertTrue(
 			isinstance(self.db.getBans(jail=self.jail)[0], FailTicket))
 
+	def testAddBanInvalidEncoded(self):
+		if Fail2BanDb is None: # pragma: no cover
+			return
+		self.testAddJail()
+		ticket = FailTicket("127.0.0.1", 0, {'m': ['... user "\xd1\xe2\xe5\xf2\xe0"  ...'], 'a': 1})
+		self.db.addBan(self.jail, ticket)
+
+		self.assertEqual(len(self.db.getBans(jail=self.jail)), 1)
+		self.assertTrue(
+			isinstance(self.db.getBans(jail=self.jail)[0], FailTicket))
+
 	def testDelBan(self):
 		self.testAddBan()
 		ticket = self.db.getBans(jail=self.jail)[0]

@@ -37,17 +37,35 @@ from ..helpers import getLogger
 logSys = getLogger(__name__)
 
 if sys.version_info >= (3,):
-	sqlite3.register_adapter(
-		dict,
-		lambda x: json.dumps(x, ensure_ascii=False).encode(
-			locale.getpreferredencoding(), 'replace'))
-	sqlite3.register_converter(
-		"JSON",
-		lambda x: json.loads(x.decode(
-			locale.getpreferredencoding(), 'replace')))
+	def _json_dumps_safe(x):
+		try:
+			x = json.dumps(x, ensure_ascii=False).encode(
+				locale.getpreferredencoding(), 'replace')
+		except Exception, e: # pragma: no cover
+			logSys.error('json dumps failed: %s', e)
+			x = '{}'
+		return x
 else:
-	sqlite3.register_adapter(dict, json.dumps)
-	sqlite3.register_converter("JSON", json.loads)
+	def _json_dumps_safe(x):
+		try:
+			x = json.dumps(x, ensure_ascii=False).decode(
+				locale.getpreferredencoding(), 'replace')
+		except Exception, e: # pragma: no cover
+			logSys.error('json dumps failed: %s', e)
+			x = '{}'
+		return x
+
+def _json_loads_safe(x):
+	try:
+		x = json.loads(x.decode(
+			locale.getpreferredencoding(), 'replace'))
+	except Exception, e: # pragma: no cover
+		logSys.error('json loads failed: %s', e)
+		x = {}
+	return x
+
+sqlite3.register_adapter(dict, _json_dumps_safe)
+sqlite3.register_converter("JSON", _json_loads_safe)
 
 def commitandrollback(f):
 	@wraps(f)
