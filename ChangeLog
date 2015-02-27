@@ -62,6 +62,7 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
      - empty or "basic" works as-is
      - "cymru" additionally prints (ASN, Country RIR) per banned IP
        (requires dnspython or dnspython3)
+   - Flush log at USR1 signal
 
 - Enhancements:
    * Enable multiport for firewallcmd-new action.  Closes gh-834
