@@ -71,7 +71,7 @@ class Server:
 		logSys.debug("Caught signal %d. Exiting" % signum)
 		self.quit()
 	
-	def __sigUSR1Handler(self, signum, fname):
+	def __sigUSR1handler(self, signum, fname):
 		logSys.debug("Caught signal %d. Flushing logs" % signum)
 		self.flushLogs()
 
