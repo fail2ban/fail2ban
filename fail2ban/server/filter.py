@@ -802,8 +802,8 @@ class FileContainer:
 				" encoding) for this jail. Continuing"
 				" to process line ignoring invalid characters: %r" %
 				(self.getFileName(), self.getEncoding(), line))
-			if sys.version_info >= (3,): # In python3, must be decoded
-				line = line.decode(self.getEncoding(), 'ignore')
+			# decode with replacing error chars:
+			line = line.decode(self.getEncoding(), 'replace')
 		return line
 
 	def close(self):
