@@ -511,6 +511,14 @@ class Transmitter(TransmitterBase):
 		)
 
 	def testJailStatusCymru(self):
+		try:
+			import dns.exception
+			import dns.resolver
+		except ImportError:
+			value = ['error']
+		else:
+			value = []
+
 		self.assertEqual(self.transm.proceed(["status", self.jailName, "cymru"]),
 			(0,
 				[
@@ -523,9 +531,9 @@ class Transmitter(TransmitterBase):
 						('Currently banned', 0),
 						('Total banned', 0),
 						('Banned IP list', []),
-						('Banned ASN list', []),
-						('Banned Country list', []),
-						('Banned RIR list', [])]
+						('Banned ASN list', value),
+						('Banned Country list', value),
+						('Banned RIR list', value)]
 					)
 				]
 			)
