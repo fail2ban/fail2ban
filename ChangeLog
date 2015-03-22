@@ -77,6 +77,7 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
    * Conditionally log Ignore IP with reason (dns, ip, command). Closes gh-916
    * Absorbed DNSUtils.cidr into addr2bin in filter.py, added unittests
    * Added syslogsocket configuration to fail2ban.conf
+   * Note in the jail.conf for the recidive jail to increase dbpurgeage (gh-964)
 
 
 ver. 0.9.1 (2014/10/29) - better, faster, stronger
