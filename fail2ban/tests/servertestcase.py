@@ -30,6 +30,7 @@ import tempfile
 import os
 import locale
 import sys
+import platform
 
 from ..server.failregex import Regex, FailRegex, RegexException
 from ..server.server import Server
@@ -70,7 +71,7 @@ class TransmitterBase(unittest.TestCase):
 		"""Call after every test case."""
 		self.server.quit()
 
-	def setGetTest(self, cmd, inValue, outValue=None, jail=None):
+	def setGetTest(self, cmd, inValue, outValue=None, outCode=0, jail=None):
 		setCmd = ["set", cmd, inValue]
 		getCmd = ["get", cmd]
 		if jail is not None:
@@ -79,8 +80,10 @@ class TransmitterBase(unittest.TestCase):
 		if outValue is None:
 			outValue = inValue
 
-		self.assertEqual(self.transm.proceed(setCmd), (0, outValue))
-		self.assertEqual(self.transm.proceed(getCmd), (0, outValue))
+		self.assertEqual(self.transm.proceed(setCmd), (outCode, outValue))
+		if not outCode:
+			# if we expected to get it set without problem, check new value
+			self.assertEqual(self.transm.proceed(getCmd), (0, outValue))
 
 	def setGetTestNOK(self, cmd, inValue, jail=None):
 		setCmd = ["set", cmd, inValue]
@@ -787,7 +790,12 @@ class TransmitterLogging(TransmitterBase):
 		self.setGetTestNOK("logtarget", "SYSLOG")
 		# set back for other tests
 		self.setGetTest("syslogsocket", "/dev/log")
-		self.setGetTest("logtarget", "SYSLOG")
+		self.setGetTest("logtarget", "SYSLOG",
+			**{True: {},    # should work on Linux
+			   False: dict( # expect to fail otherwise
+				   outCode=1,
+				   outValue=Exception('Failed to change log target'))}
+				[platform.system() in ('Linux',)])
 
 	def testLogLevel(self):
 		self.setGetTest("loglevel", "HEAVYDEBUG")
