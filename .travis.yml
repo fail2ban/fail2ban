@@ -13,13 +13,12 @@ before_install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then travis_retry sudo apt-get update -qq; fi
 install:
   - travis_retry pip install pyinotify
-  - echo "$TRAVIS_PYTHON_VERSION"
   - if [[ $TRAVIS_PYTHON_VERSION == 2* || $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then travis_retry pip install dnspython; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 3* || $TRAVIS_PYTHON_VERSION == 'pypy3' ]]; then travis_retry pip install dnspython3; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then travis_retry sudo apt-get install -qq python-gamin; cp /usr/share/pyshared/gamin.py /usr/lib/pyshared/python2.7/_gamin.so $VIRTUAL_ENV/lib/python2.7/site-packages/; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then cd ..; travis_retry pip install -q coveralls; cd -; fi
   # overcome buggy pypy
-  - if [[ $TRAVIS_PYTHON_VERSION == pypy ]] ; then dpkg --compare-versions $(pypy --version 2>&1 | awk '/PyPy/{print $2;}') ge 2.4.1 || { cd /tmp; wget http://buildbot.pypy.org/nightly/trunk/pypy-c-jit-latest-linux64.tar.bz2; tar -xjvf pypy*bz2; cd pypy-*/bin/; export PATH=$PWD:$PATH; cd -; } ; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == pypy ]] ; then dpkg --compare-versions $(pypy --version 2>&1 | awk '/PyPy/{print $2;}') ge 2.5.1 || { cd /tmp; wget http://buildbot.pypy.org/nightly/trunk/pypy-c-jit-latest-linux64.tar.bz2; tar -xjvf pypy*bz2; cd pypy-*/bin/; export PATH=$PWD:$PATH; cd -; } ; fi
 script:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coverage run --rcfile=.travis_coveragerc setup.py test; else python setup.py test; fi
 # test installation
