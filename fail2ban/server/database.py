@@ -47,7 +47,8 @@ if sys.version_info >= (3,):
 		return x
 	def _json_loads_safe(x):
 		try:
-			x = json.loads(x.decode(locale.getpreferredencoding(), 'replace'))
+			x = json.loads(x.decode(
+				locale.getpreferredencoding(), 'replace'))
 		except Exception, e: # pragma: no cover
 			logSys.error('json loads failed: %s', e)
 			x = {}
@@ -72,7 +73,8 @@ else:
 		return x
 	def _json_loads_safe(x):
 		try:
-			x = _normalize(json.loads(x.decode(locale.getpreferredencoding(), 'replace')))
+			x = _normalize(json.loads(x.decode(
+				locale.getpreferredencoding(), 'replace')))
 		except Exception, e: # pragma: no cover
 			logSys.error('json loads failed: %s', e)
 			x = {}
@@ -406,7 +408,7 @@ class Fail2BanDb(object):
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
 			(jail.name, ticket.getIP(), int(round(ticket.getTime())),
 				{"matches": ticket.getMatches(),
-					"failures": ticket.getAttempt()}))
+				 "failures": ticket.getAttempt()}))
 
 	@commitandrollback
 	def delBan(self, cur, jail, ticket):
