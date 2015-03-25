@@ -1023,7 +1023,8 @@ class DNSUtilsTests(unittest.TestCase):
 	def testIpToName(self):
 		res = DNSUtils.ipToName('66.249.66.1')
 		self.assertEqual(res, 'crawl-66-249-66-1.googlebot.com')
-		res = DNSUtils.ipToName('10.0.0.0')
+		# invalid ip (TEST-NET-1 according to RFC 5737)
+		res = DNSUtils.ipToName('192.0.2.0')
 		self.assertEqual(res, None)
 
 	def testAddr2bin(self):
