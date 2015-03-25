@@ -71,19 +71,24 @@ class TransmitterBase(unittest.TestCase):
 		"""Call after every test case."""
 		self.server.quit()
 
-	def setGetTest(self, cmd, inValue, outValue=None, outCode=0, jail=None):
+	def setGetTest(self, cmd, inValue, outValue=None, outCode=0, jail=None, repr_=False):
 		setCmd = ["set", cmd, inValue]
 		getCmd = ["get", cmd]
 		if jail is not None:
 			setCmd.insert(1, jail)
 			getCmd.insert(1, jail)
+
 		if outValue is None:
 			outValue = inValue
 
-		self.assertEqual(self.transm.proceed(setCmd), (outCode, outValue))
+		def v(x):
+			"""Prepare value for comparison"""
+			return (repr(x) if repr_ else x)
+
+		self.assertEqual(v(self.transm.proceed(setCmd)), v((outCode, outValue)))
 		if not outCode:
 			# if we expected to get it set without problem, check new value
-			self.assertEqual(self.transm.proceed(getCmd), (0, outValue))
+			self.assertEqual(v(self.transm.proceed(getCmd)), v((0, outValue)))
 
 	def setGetTestNOK(self, cmd, inValue, jail=None):
 		setCmd = ["set", cmd, inValue]
@@ -794,8 +799,11 @@ class TransmitterLogging(TransmitterBase):
 			**{True: {},    # should work on Linux
 			   False: dict( # expect to fail otherwise
 				   outCode=1,
-				   outValue=Exception('Failed to change log target'))}
-				[platform.system() in ('Linux',)])
+				   outValue=Exception('Failed to change log target'),
+				   repr_=True # Exceptions are not comparable apparently
+                                  )
+			  }[platform.system() in ('Linux',)]
+		)
 
 	def testLogLevel(self):
 		self.setGetTest("loglevel", "HEAVYDEBUG")
