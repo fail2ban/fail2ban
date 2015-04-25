@@ -11,6 +11,7 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
 -----------
 
 - Fixes:
+   * Fix ufw action commands
    * infinite busy loop on _escapedTags match in substituteRecursiveTags gh-907.
      Thanks TonyThompson
    * port[s] typo in jail.conf/nginx-http-auth gh-913. Thanks Frederik Wagner (fnerdwq)
