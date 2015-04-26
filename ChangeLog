@@ -40,7 +40,10 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
    * firewallcmd-* actions: split output into separate lines for grepping (gh-908)
    * Guard unicode encode/decode issues while storing records in the database.
      Fixes "binding parameter error (unsupported type)" (gh-973), thanks to kot for reporting
-   * filter.d/asterisk.conf - Match hacking attempt IP instead of asterisk server IP
+   * filter.d/sshd added regex for matching openSUSE ssh authentication failure 
+   * filter.d/asterisk.conf - Dropped "Sending fake auth rejection" failregex since it incorrectly targets the asterisk server itself
+   * filter.d/asterisk.conf - Added matching "hacking attempt detected" logs
+
 
 - New Features:
    - New filters:

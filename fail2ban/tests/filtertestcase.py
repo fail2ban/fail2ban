@@ -224,7 +224,7 @@ class IgnoreIP(LogCaptureTestCase):
 			self.assertTrue(self.filter.inIgnoreIPList(ip))
 
 	def testIgnoreIPNOK(self):
-		ipList = "", "999.999.999.999", "abcdef", "192.168.0."
+		ipList = "", "999.999.999.999", "abcdef.abcdef", "192.168.0."
 		for ip in ipList:
 			self.filter.addIgnoreIP(ip)
 			self.assertFalse(self.filter.inIgnoreIPList(ip))
@@ -1023,7 +1023,8 @@ class DNSUtilsTests(unittest.TestCase):
 	def testIpToName(self):
 		res = DNSUtils.ipToName('66.249.66.1')
 		self.assertEqual(res, 'crawl-66-249-66-1.googlebot.com')
-		res = DNSUtils.ipToName('10.0.0.0')
+		# invalid ip (TEST-NET-1 according to RFC 5737)
+		res = DNSUtils.ipToName('192.0.2.0')
 		self.assertEqual(res, None)
 
 	def testAddr2bin(self):
