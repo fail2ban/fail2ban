@@ -1,3 +1,11 @@
+fail2ban (0.9.1+git44-gd65c4f8-2) UNRELEASED; urgency=medium
+
+  * Moved python3-systemd to Recommends from Suggests given that systemd is
+    the default init system now.  Should help people upgrading on Ubuntu 15.04
+    as well
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 26 Apr 2015 13:15:56 -0400
+
 fail2ban (0.9.1+git44-gd65c4f8-1) experimental; urgency=medium
 
   [ Christoph Anton Mitterer ]
