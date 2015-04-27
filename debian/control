@@ -12,7 +12,7 @@ Standards-Version: 3.9.6
 Package: fail2ban
 Architecture: all
 Depends: ${python3:Depends}, ${misc:Depends}, lsb-base (>=2.0-7)
-Recommends: iptables, whois, python3-pyinotify, python3-systemd
+Recommends: python, iptables, whois, python3-pyinotify, python3-systemd
 Suggests: mailx, system-log-daemon, monit
 Description: ban hosts that cause multiple authentication errors
  Fail2ban monitors log files (e.g. /var/log/auth.log,

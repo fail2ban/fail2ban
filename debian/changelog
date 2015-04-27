@@ -4,6 +4,7 @@ fail2ban (0.9.2-1) unstable; urgency=medium
   * Moved python3-systemd to Recommends from Suggests given that systemd is
     the default init system now.  Should help people upgrading on Ubuntu 15.04
     as well
+  * Added regular python to Recommends since apache-fakegooglebot still python2
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 26 Apr 2015 13:15:56 -0400
 
