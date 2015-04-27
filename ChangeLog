@@ -3,20 +3,20 @@
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
-================================================================================
-Fail2Ban (version 0.9.1.dev)                                          2014/10/29
-================================================================================
+Fail2Ban: Changelog
+===================
 
-ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
------------
+ver. 0.9.2 (2015/04/26) - better-quick-now-than-later
+----------
 
 - Fixes:
    * infinite busy loop on _escapedTags match in substituteRecursiveTags gh-907.
      Thanks TonyThompson
-   * port[s] typo in jail.conf/nginx-http-auth gh-913. Thanks Frederik Wagner (fnerdwq)
+   * port[s] typo in jail.conf/nginx-http-auth gh-913. Thanks Frederik Wagner
+     (fnerdwq)
    * $ typo in jail.conf. Thanks Skibbi. Debian bug #767255
    * grep'ing for IP in *mail-whois-lines.conf should now match also
-     at the begginning and EOL.  Thanks Dean Lee
+     at the beginning and EOL.  Thanks Dean Lee
    * jail.conf
      - php-url-fopen: separate logpath entries by newline
    * failregex declared direct in jail was joined to single line (specifying of
@@ -36,14 +36,17 @@ ver. 0.9.2 (2014/XX/XXX) - wanna-be-released
      descriptor" msgs issue (gh-161)
    * filter.d/postfix-sasl.conf - tweak failregex and add ignoreregex to ignore
      system authentication issues
-   * fail2ban-regex reads filter file(s) completely, incl. '.local' file etc. (gh-954)
+   * fail2ban-regex reads filter file(s) completely, incl. '.local' file etc.
+     (gh-954)
    * firewallcmd-* actions: split output into separate lines for grepping (gh-908)
    * Guard unicode encode/decode issues while storing records in the database.
-     Fixes "binding parameter error (unsupported type)" (gh-973), thanks to kot for reporting
-   * filter.d/sshd added regex for matching openSUSE ssh authentication failure 
-   * filter.d/asterisk.conf - Dropped "Sending fake auth rejection" failregex since it incorrectly targets the asterisk server itself
-   * filter.d/asterisk.conf - Added matching "hacking attempt detected" logs
-
+     Fixes "binding parameter error (unsupported type)" (gh-973), thanks to kot
+	 for reporting
+   * filter.d/sshd added regex for matching openSUSE ssh authentication failure
+   * filter.d/asterisk.conf:
+     - Dropped "Sending fake auth rejection" failregex since it incorrectly
+	   targets the asterisk server itself
+     - match "hacking attempt detected" logs
 
 - New Features:
    - New filters:
