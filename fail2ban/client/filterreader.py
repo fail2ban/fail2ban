@@ -50,17 +50,17 @@ class FilterReader(DefinitionInitConfigReader):
 	def getCombined(self):
 		combinedopts = dict(list(self._opts.items()) + list(self._initOpts.items()))
 		if not len(combinedopts):
-			return {};
+			return {}
 		opts = CommandAction.substituteRecursiveTags(combinedopts)
 		if not opts:
 			raise ValueError('recursive tag definitions unable to be resolved')
-		return opts;
+		return opts
 	
 	def convert(self):
 		stream = list()
 		opts = self.getCombined()
 		if not len(opts):
-			return stream;
+			return stream
 		for opt, value in opts.iteritems():
 			if opt == "failregex":
 				for regex in value.split('\n'):
@@ -71,7 +71,7 @@ class FilterReader(DefinitionInitConfigReader):
 				for regex in value.split('\n'):
 					# Do not send a command if the rule is empty.
 					if regex != '':
-						stream.append(["set", self._jailName, "addignoreregex", regex])		
+						stream.append(["set", self._jailName, "addignoreregex", regex])
 		if self._initOpts:
 			if 'maxlines' in self._initOpts:
 				# We warn when multiline regex is used without maxlines > 1

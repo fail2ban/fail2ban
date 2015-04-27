@@ -30,6 +30,7 @@ import tempfile
 import os
 import locale
 import sys
+import platform
 
 from ..server.failregex import Regex, FailRegex, RegexException
 from ..server.server import Server
@@ -70,17 +71,24 @@ class TransmitterBase(unittest.TestCase):
 		"""Call after every test case."""
 		self.server.quit()
 
-	def setGetTest(self, cmd, inValue, outValue=None, jail=None):
+	def setGetTest(self, cmd, inValue, outValue=None, outCode=0, jail=None, repr_=False):
 		setCmd = ["set", cmd, inValue]
 		getCmd = ["get", cmd]
 		if jail is not None:
 			setCmd.insert(1, jail)
 			getCmd.insert(1, jail)
+
 		if outValue is None:
 			outValue = inValue
 
-		self.assertEqual(self.transm.proceed(setCmd), (0, outValue))
-		self.assertEqual(self.transm.proceed(getCmd), (0, outValue))
+		def v(x):
+			"""Prepare value for comparison"""
+			return (repr(x) if repr_ else x)
+
+		self.assertEqual(v(self.transm.proceed(setCmd)), v((outCode, outValue)))
+		if not outCode:
+			# if we expected to get it set without problem, check new value
+			self.assertEqual(v(self.transm.proceed(getCmd)), v((0, outValue)))
 
 	def setGetTestNOK(self, cmd, inValue, jail=None):
 		setCmd = ["set", cmd, inValue]
@@ -474,6 +482,72 @@ class Transmitter(TransmitterBase):
 			)
 		)
 
+	def testJailStatusBasic(self):
+		self.assertEqual(self.transm.proceed(["status", self.jailName, "basic"]),
+			(0,
+				[
+					('Filter', [
+						('Currently failed', 0),
+						('Total failed', 0),
+						('File list', [])]
+					),
+					('Actions', [
+						('Currently banned', 0),
+						('Total banned', 0),
+						('Banned IP list', [])]
+					)
+				]
+			)
+		)
+
+	def testJailStatusBasicKwarg(self):
+		self.assertEqual(self.transm.proceed(["status", self.jailName, "INVALID"]),
+			(0,
+				[
+					('Filter', [
+						('Currently failed', 0),
+						('Total failed', 0),
+						('File list', [])]
+					),
+					('Actions', [
+						('Currently banned', 0),
+						('Total banned', 0),
+						('Banned IP list', [])]
+					)
+				]
+			)
+		)
+
+	def testJailStatusCymru(self):
+		try:
+			import dns.exception
+			import dns.resolver
+		except ImportError:
+			value = ['error']
+		else:
+			value = []
+
+		self.assertEqual(self.transm.proceed(["status", self.jailName, "cymru"]),
+			(0,
+				[
+					('Filter', [
+						('Currently failed', 0),
+						('Total failed', 0),
+						('File list', [])]
+					),
+					('Actions', [
+						('Currently banned', 0),
+						('Total banned', 0),
+						('Banned IP list', []),
+						('Banned ASN list', value),
+						('Banned Country list', value),
+						('Banned RIR list', value)]
+					)
+				]
+			)
+		)
+
+
 	def testAction(self):
 		action = "TestCaseAction"
 		cmdList = [
@@ -681,6 +755,7 @@ class TransmitterLogging(TransmitterBase):
 		self.server = Server()
 		self.server.setLogTarget("/dev/null")
 		self.server.setLogLevel("CRITICAL")
+		self.server.setSyslogSocket("auto")
 		super(TransmitterLogging, self).setUp()
 
 	def testLogTarget(self):
@@ -708,7 +783,27 @@ class TransmitterLogging(TransmitterBase):
 			raise unittest.SkipTest("'/dev/log' not present")
 		elif not os.path.exists("/dev/log"):
 			return
+		self.assertTrue(self.server.getSyslogSocket(), "auto")
 		self.setGetTest("logtarget", "SYSLOG")
+		self.assertTrue(self.server.getSyslogSocket(), "/dev/log")
+
+	def testSyslogSocket(self):
+		self.setGetTest("syslogsocket", "/dev/log/NEW/PATH")
+
+	def testSyslogSocketNOK(self):
+		self.setGetTest("syslogsocket", "/this/path/should/not/exist")
+		self.setGetTestNOK("logtarget", "SYSLOG")
+		# set back for other tests
+		self.setGetTest("syslogsocket", "/dev/log")
+		self.setGetTest("logtarget", "SYSLOG",
+			**{True: {},    # should work on Linux
+			   False: dict( # expect to fail otherwise
+				   outCode=1,
+				   outValue=Exception('Failed to change log target'),
+				   repr_=True # Exceptions are not comparable apparently
+                                  )
+			  }[platform.system() in ('Linux',)]
+		)
 
 	def testLogLevel(self):
 		self.setGetTest("loglevel", "HEAVYDEBUG")

@@ -370,11 +370,21 @@ class Actions(JailThread, Mapping):
 					self._jail.name, name, aInfo, e,
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
-	@property
-	def status(self):
-		"""Status of active bans, and total ban counts.
+	def status(self, flavor="basic"):
+		"""Status of current and total ban counts and current banned IP list.
 		"""
-		ret = [("Currently banned", self.__banManager.size()), 
+		# TODO: Allow this list to be printed as 'status' output
+		supported_flavors = ["basic", "cymru"]
+		if flavor is None or flavor not in supported_flavors:
+			logSys.warning("Unsupported extended jail status flavor %r. Supported: %s" % (flavor, supported_flavors))
+		# Always print this information (basic)
+		ret = [("Currently banned", self.__banManager.size()),
 			   ("Total banned", self.__banManager.getBanTotal()),
 			   ("Banned IP list", self.__banManager.getBanList())]
+		if flavor == "cymru":
+			cymru_info = self.__banManager.getBanListExtendedCymruInfo()
+			ret += \
+				[("Banned ASN list", self.__banManager.geBanListExtendedASN(cymru_info)),
+				 ("Banned Country list", self.__banManager.geBanListExtendedCountry(cymru_info)),
+				 ("Banned RIR list", self.__banManager.geBanListExtendedRIR(cymru_info))]
 		return ret

@@ -338,6 +338,10 @@ class Filter(JailThread):
 		logSys.debug("Remove " + ip + " from ignore list")
 		self.__ignoreIpList.remove(ip)
 
+	def logIgnoreIp(self, ip, log_ignore, ignore_source="unknown source"):
+		if log_ignore:
+			logSys.info("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source))
+
 	def getIgnoreIP(self):
 		return self.__ignoreIpList
 
@@ -349,7 +353,7 @@ class Filter(JailThread):
 	# @param ip IP address
 	# @return True if IP address is in ignore list
 
-	def inIgnoreIPList(self, ip):
+	def inIgnoreIPList(self, ip, log_ignore=False):
 		for i in self.__ignoreIpList:
 			# An empty string is always false
 			if i == "":
@@ -363,22 +367,26 @@ class Filter(JailThread):
 					"(?<=b)1+", bin(DNSUtils.addr2bin(s[1]))).group())
 			s[1] = long(s[1])
 			try:
-				a = DNSUtils.cidr(s[0], s[1])
-				b = DNSUtils.cidr(ip, s[1])
+				a = DNSUtils.addr2bin(s[0], cidr=s[1])
+				b = DNSUtils.addr2bin(ip, cidr=s[1])
 			except Exception:
 				# Check if IP in DNS
 				ips = DNSUtils.dnsToIp(i)
 				if ip in ips:
+					self.logIgnoreIp(ip, log_ignore, ignore_source="dns")
 					return True
 				else:
 					continue
 			if a == b:
+				self.logIgnoreIp(ip, log_ignore, ignore_source="ip")
 				return True
 
 		if self.__ignoreCommand:
 			command = CommandAction.replaceTag(self.__ignoreCommand, { 'ip': ip } )
 			logSys.debug('ignore command: ' + command)
-			return CommandAction.executeCmd(command)
+			ret_ignore = CommandAction.executeCmd(command)
+			self.logIgnoreIp(ip, log_ignore and ret_ignore, ignore_source="command")
+			return ret_ignore
 
 		return False
 
@@ -418,8 +426,7 @@ class Filter(JailThread):
 				logSys.debug("Ignore line since time %s < %s - %s"
 							 % (unixTime, MyTime.time(), self.getFindTime()))
 				break
-			if self.inIgnoreIPList(ip):
-				logSys.info("[%s] Ignore %s" % (self.jail.name, ip))
+			if self.inIgnoreIPList(ip, log_ignore=True):
 				continue
 			logSys.info("[%s] Found %s" % (self.jail.name, ip))
 			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
@@ -529,8 +536,7 @@ class Filter(JailThread):
 						logSys.error(e)
 		return failList
 
-	@property
-	def status(self):
+	def status(self, flavor="basic"):
 		"""Status of failures detected by filter.
 		"""
 		ret = [("Currently failed", self.failManager.size()),
@@ -686,11 +692,10 @@ class FileFilter(Filter):
 			db.updateLog(self.jail, container)
 		return True
 
-	@property
-	def status(self):
+	def status(self, flavor="basic"):
 		"""Status of Filter plus files being monitored.
 		"""
-		ret = super(FileFilter, self).status
+		ret = super(FileFilter, self).status(flavor=flavor)
 		path = [m.getFileName() for m in self.getLogPath()]
 		ret.append(("File list", path))
 		return ret
@@ -792,11 +797,13 @@ class FileContainer:
 			line = line.decode(self.getEncoding(), 'strict')
 		except UnicodeDecodeError:
 			logSys.warning(
-				"Error decoding line from '%s' with '%s'. Continuing "
+				"Error decoding line from '%s' with '%s'."
+				" Consider setting logencoding=utf-8 (or another appropriate"
+				" encoding) for this jail. Continuing"
 				" to process line ignoring invalid characters: %r" %
 				(self.getFileName(), self.getEncoding(), line))
-			if sys.version_info >= (3,): # In python3, must be decoded
-				line = line.decode(self.getEncoding(), 'ignore')
+			# decode with replacing error chars:
+			line = line.decode(self.getEncoding(), 'replace')
 		return line
 
 	def close(self):
@@ -855,6 +862,14 @@ class DNSUtils:
 			return list()
 
 	@staticmethod
+	def ipToName(ip):
+		try:
+			return socket.gethostbyaddr(ip)[0]
+		except socket.error, e:
+			logSys.debug("Unable to find a name for the IP %s: %s" % (ip, e))
+			return None
+
+	@staticmethod
 	def searchIP(text):
 		""" Search if an IP address if directly available and return
 			it.
@@ -900,22 +915,18 @@ class DNSUtils:
 		return ipList
 
 	@staticmethod
-	def cidr(i, n):
-		""" Convert an IP address string with a CIDR mask into a 32-bit
-			integer.
+	def addr2bin(ipstring, cidr=None):
+		""" Convert a string IPv4 address into binary form.
+		If cidr is supplied, return the network address for the given block
 		"""
-		# 32-bit IPv4 address mask
-		MASK = 0xFFFFFFFFL
-		return ~(MASK >> n) & MASK & DNSUtils.addr2bin(i)
+		if cidr is None:
+			return struct.unpack("!L", socket.inet_aton(ipstring))[0]
+		else:
+			MASK = 0xFFFFFFFFL
+			return ~(MASK >> cidr) & MASK & DNSUtils.addr2bin(ipstring)
 
 	@staticmethod
-	def addr2bin(string):
-		""" Convert a string IPv4 address into an unsigned integer.
+	def bin2addr(ipbin):
+		""" Convert a binary IPv4 address into string n.n.n.n form.
 		"""
-		return struct.unpack("!L", socket.inet_aton(string))[0]
-
-	@staticmethod
-	def bin2addr(addr):
-		""" Convert a numeric IPv4 address into string n.n.n.n form.
-		"""
-		return socket.inet_ntoa(struct.pack("!L", addr))
+		return socket.inet_ntoa(struct.pack("!L", ipbin))

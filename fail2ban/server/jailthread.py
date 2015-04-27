@@ -26,7 +26,7 @@ __license__ = "GPL"
 
 import sys
 from threading import Thread
-from abc import abstractproperty, abstractmethod
+from abc import abstractmethod
 
 from ..helpers import excepthook
 
@@ -66,8 +66,8 @@ class JailThread(Thread):
 				excepthook(*sys.exc_info())
 		self.run = run_with_except_hook
 
-	@abstractproperty
-	def status(self): # pragma: no cover - abstract
+	@abstractmethod
+	def status(self, flavor="basic"): # pragma: no cover - abstract
 		"""Abstract - Should provide status information.
 		"""
 		pass

@@ -224,7 +224,7 @@ class IgnoreIP(LogCaptureTestCase):
 			self.assertTrue(self.filter.inIgnoreIPList(ip))
 
 	def testIgnoreIPNOK(self):
-		ipList = "", "999.999.999.999", "abcdef", "192.168.0."
+		ipList = "", "999.999.999.999", "abcdef.abcdef", "192.168.0."
 		for ip in ipList:
 			self.filter.addIgnoreIP(ip)
 			self.assertFalse(self.filter.inIgnoreIPList(ip))
@@ -266,6 +266,15 @@ class IgnoreIP(LogCaptureTestCase):
 		self.assertTrue(self.filter.inIgnoreIPList("10.0.0.1"))
 		self.assertFalse(self.filter.inIgnoreIPList("10.0.0.0"))
 
+	def testIgnoreCauseOK(self):
+		ip = "93.184.216.34"
+		for ignore_source in ["dns", "ip", "command"]:
+			self.filter.logIgnoreIp(ip, True, ignore_source=ignore_source)
+			self.assertTrue(self._is_logged("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source)))
+
+	def testIgnoreCauseNOK(self):
+		self.filter.logIgnoreIp("example.com", False, ignore_source="NOT_LOGGED")
+		self.assertFalse(self._is_logged("[%s] Ignore %s by %s" % (self.jail.name, "example.com", "NOT_LOGGED")))
 
 class IgnoreIPDNS(IgnoreIP):
 
@@ -1010,6 +1019,29 @@ class DNSUtilsTests(unittest.TestCase):
 				self.assertEqual(res, ['93.184.216.34'])
 			else:
 				self.assertEqual(res, [])
+
+	def testIpToName(self):
+		res = DNSUtils.ipToName('66.249.66.1')
+		self.assertEqual(res, 'crawl-66-249-66-1.googlebot.com')
+		# invalid ip (TEST-NET-1 according to RFC 5737)
+		res = DNSUtils.ipToName('192.0.2.0')
+		self.assertEqual(res, None)
+
+	def testAddr2bin(self):
+		res = DNSUtils.addr2bin('10.0.0.0')
+		self.assertEqual(res, 167772160L)
+		res = DNSUtils.addr2bin('10.0.0.0', cidr=None)
+		self.assertEqual(res, 167772160L)
+		res = DNSUtils.addr2bin('10.0.0.0', cidr=32L)
+		self.assertEqual(res, 167772160L)
+		res = DNSUtils.addr2bin('10.0.0.1', cidr=32L)
+		self.assertEqual(res, 167772161L)
+		res = DNSUtils.addr2bin('10.0.0.1', cidr=31L)
+		self.assertEqual(res, 167772160L)
+
+	def testBin2addr(self):
+		res = DNSUtils.bin2addr(167772160L)
+		self.assertEqual(res, '10.0.0.0')
 
 class JailTests(unittest.TestCase):
 

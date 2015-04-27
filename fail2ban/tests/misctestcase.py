@@ -113,7 +113,7 @@ class SetupTest(unittest.TestCase):
 			# clean up
 			shutil.rmtree(tmp)
 			# remove build directory
-			os.system("%s %s clean --all >/dev/null"
+			os.system("%s %s clean --all >/dev/null 2>&1"
 					  % (sys.executable, self.setup))
 
 class TestsUtilsTest(unittest.TestCase):
