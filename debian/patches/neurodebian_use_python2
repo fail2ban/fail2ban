@@ -9,14 +9,16 @@
  Homepage: http://www.fail2ban.org
  Vcs-Git: git://github.com/fail2ban/fail2ban.git
  Vcs-Browser: http://github.com/fail2ban/fail2ban
-@@ -12,8 +12,8 @@ Standards-Version: 3.9.6
+@@ -11,9 +11,9 @@ Standards-Version: 3.9.6
+ 
  Package: fail2ban
  Architecture: all
- Depends: ${python3:Depends}, ${misc:Depends}, lsb-base (>=2.0-7)
--Recommends: iptables, whois, python3-pyinotify
--Suggests: mailx, system-log-daemon, python3-systemd, monit
+-Depends: ${python3:Depends}, ${misc:Depends}, lsb-base (>=2.0-7)
+-Recommends: python, iptables, whois, python3-pyinotify, python3-systemd
+-Suggests: mailx, system-log-daemon, monit
++Depends: ${python:Depends}, ${misc:Depends}, lsb-base (>=2.0-7)
 +Recommends: iptables, whois, python-pyinotify
-+Suggests: mailx, system-log-daemon, python-systemd, monit
++Suggests: mailx, system-log-daemon, monit, python-systemd
  Description: ban hosts that cause multiple authentication errors
   Fail2ban monitors log files (e.g. /var/log/auth.log,
   /var/log/apache/access.log) and temporarily or persistently bans
@@ -39,7 +41,7 @@
  
  override_dh_clean:
  	rm -rf fail2ban.egg-info
-@@ -30,7 +30,8 @@ override_dh_install:
+@@ -37,7 +37,8 @@ override_dh_install:
  	: # Install bash completion
  	install -d $(DESTDIR)/etc/bash_completion.d
  	install -m 644 files/bash-completion $(DESTDIR)/etc/bash_completion.d/fail2ban
