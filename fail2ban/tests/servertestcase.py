@@ -802,7 +802,7 @@ class TransmitterLogging(TransmitterBase):
 				   outValue=Exception('Failed to change log target'),
 				   repr_=True # Exceptions are not comparable apparently
                                   )
-			  }[platform.system() in ('Linux',)]
+			  }[platform.system() in ('Linux',) and os.path.exists('/dev/log')]
 		)
 
 	def testLogLevel(self):
