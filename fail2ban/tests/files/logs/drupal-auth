@@ -1,0 +1,7 @@
+# failJSON: { "time": "2005-04-26T13:15:25", "match": true , "host": "1.2.3.4" }
+Apr 26 13:15:25 webserver example.com: https://example.com|1430068525|user|1.2.3.4|https://example.com/?q=user|https://example.com/?q=user|0||Login attempt failed for drupaladmin.
+# failJSON: { "time": "2005-04-26T13:15:25", "match": true , "host": "1.2.3.4" }
+Apr 26 13:15:25 webserver example.com: https://example.com/subdir|1430068525|user|1.2.3.4|https://example.com/subdir/user|https://example.com/subdir/user|0||Login attempt failed for drupaladmin.
+
+# failJSON: { "time": "2005-04-26T13:19:08", "match": false , "host": "1.2.3.4" }
+Apr 26 13:19:08 webserver example.com: https://example.com|1430068748|user|1.2.3.4|https://example.com/user|https://example.com/user|1||Session opened for drupaladmin.
