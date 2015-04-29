@@ -49,7 +49,7 @@ override_dh_install:
 
 override_dh_auto_test:
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
-	cd build && FAIL2BAN_CONFIG_DIR="$(CURDIR)/config" PYTHONPATH="$(CURDIR)/.pybuild/pythonX.Y_$(PYVERSION)/build/" scripts-*/fail2ban-testcases --no-network
+	cd build && LC_ALL=C.UTF-8 FAIL2BAN_CONFIG_DIR="$(CURDIR)/config" PYTHONPATH="$(CURDIR)/.pybuild/pythonX.Y_$(PYVERSION)/build/" scripts-*/fail2ban-testcases --no-network
 endif
 
 override_dh_installexamples:
