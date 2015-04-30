@@ -10,6 +10,8 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
 -----------
 
 - Fixes:
+   * filter.d/dovecot.conf - also match unknown user in passwd-file.
+     Thanks Anton Shestakov
 
 - New Features:
 
