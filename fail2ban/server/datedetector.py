@@ -119,6 +119,8 @@ class DateDetector(object):
 			self.appendTemplate("%b %d, %Y %I:%M:%S %p")
 			# ASSP: Apr-27-13 02:33:06
 			self.appendTemplate("^%b-%d-%y %H:%M:%S")
+			# Shadowsocks(github:shadowsocks/shadowsocks): 2015-05-02 06:11:40
+			self.appendTemplate("^%Y-%m-%d %H:%M:%S")
 		finally:
 			self.__lock.release()
 
