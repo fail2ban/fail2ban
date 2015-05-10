@@ -622,6 +622,21 @@ class JailsReaderTest(LogCaptureTestCase):
 			configurator.getOptions()
 			configurator.convertToProtocol()
 			commands = configurator.getConfigStream()
+
+			# verify that dbfile comes before dbpurgeage
+			def find_set(option):
+				for i, e in enumerate(commands):
+					if e[0] == 'set' and e[1] == option:
+						return i
+				raise ValueError("Did not find command 'set %s' among commands %s"
+								 % (option, commands))
+
+			# Set up of logging should come first
+			self.assertEqual(find_set('logtarget'), 1)
+			self.assertEqual(find_set('loglevel'), 2)
+			# then dbfile should be before dbpurgeage
+			self.assertGreater(find_set('dbpurgeage'), find_set('dbfile'))
+
 			# and there is logging information left to be passed into the
 			# server
 			self.assertEqual(sorted(commands),
