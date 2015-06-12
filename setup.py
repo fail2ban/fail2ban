@@ -77,6 +77,12 @@ if setuptools:
 else:
 	setup_extra = {}
 
+data_files_extra = []
+if os.path.exists('/var/run'):
+	# if we are on the system with /var/run -- we are to use it for having fail2ban/
+	# directory there for socket file etc
+	data_files_extra += [('/var/run/fail2ban', '')]
+
 # Get version number, avoiding importing fail2ban.
 # This is due to tests not functioning for python3 as 2to3 takes place later
 exec(open(join("fail2ban", "version.py")).read())
@@ -144,7 +150,7 @@ setup(
 			['README.md', 'README.Solaris', 'DEVELOP', 'FILTERS',
 			 'doc/run-rootless.txt']
 		)
-	],
+	] + data_files_extra,
 	**setup_extra
 )
 
