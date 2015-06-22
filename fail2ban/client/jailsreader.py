@@ -50,6 +50,7 @@ class JailsReader(ConfigReader):
 		return self.__jails
 
 	def read(self):
+		self.__jails = list()
 		return ConfigReader.read(self, "jail")
 
 	def getOptions(self, section=None):

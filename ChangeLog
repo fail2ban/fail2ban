@@ -10,6 +10,7 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
 -----------
 
 - Fixes:
+   * reload in interactive mode appends all the jails twice (gh-825)
    * reload server/jail failed if database used (but was not changed) and
      some jail active (gh-1072)
    * filter.d/dovecot.conf - also match unknown user in passwd-file.
