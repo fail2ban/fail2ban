@@ -173,8 +173,14 @@ class Transmitter(TransmitterBase):
 		self.setGetTestNOK("dbfile", tmpFilename)
 		self.server.delJail(self.jailName)
 		self.setGetTest("dbfile", tmpFilename)
+		# the same file name (again no jails / not changed):
+		self.setGetTest("dbfile", tmpFilename)
 		self.setGetTest("dbpurgeage", "600", 600)
 		self.setGetTestNOK("dbpurgeage", "LIZARD")
+		# the same file name (again with jails / not changed):
+		self.server.addJail(self.jailName, "auto")
+		self.setGetTest("dbfile", tmpFilename)
+		self.server.delJail(self.jailName)
 
 		# Disable database
 		self.assertEqual(self.transm.proceed(
@@ -188,6 +194,11 @@ class Transmitter(TransmitterBase):
 			(0, None))
 		self.assertEqual(self.transm.proceed(
 			["get", "dbpurgeage"]),
+			(0, None))
+		# the same (again with jails / not changed):
+		self.server.addJail(self.jailName, "auto")
+		self.assertEqual(self.transm.proceed(
+			["set", "dbfile", "None"]),
 			(0, None))
 		os.close(tmp)
 		os.unlink(tmpFilename)
