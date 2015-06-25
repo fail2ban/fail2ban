@@ -233,7 +233,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 					logSys.log(logLevel, "Non essential option '%s' not defined in '%s'.", option[1], sec)
 			except ValueError:
 				logSys.warning("Wrong value for '" + option[1] + "' in '" + sec +
-							"'. Using default one: '" + `option[2]` + "'")
+							"'. Using default one: '" + repr(option[2]) + "'")
 				values[option[1]] = option[2]
 		return values
 
