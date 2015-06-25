@@ -282,7 +282,7 @@ class DefinitionInitConfigReader(ConfigReader):
 		
 		if self.has_section("Init"):
 			for opt in self.options("Init"):
-				if not self._initOpts.has_key(opt):
+				if not opt in self._initOpts:
 					self._initOpts[opt] = self.get("Init", opt)
 	
 	def convert(self):
