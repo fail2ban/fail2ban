@@ -295,7 +295,7 @@ class Actions(JailThread, Mapping):
 			True if an IP address get banned.
 		"""
 		ticket = self._jail.getFailTicket()
-		if ticket != False:
+		if ticket:
 			aInfo = CallingMap()
 			bTicket = BanManager.createBanTicket(ticket)
 			ip = bTicket.getIP()
