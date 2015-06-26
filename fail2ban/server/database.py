@@ -21,11 +21,12 @@ __author__ = "Steven Hiscocks"
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import sys
-import shutil, time
-import sqlite3
 import json
 import locale
+import shutil
+import sqlite3
+import sys
+import time
 from functools import wraps
 from threading import RLock
 

@@ -24,7 +24,8 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import os, shlex
+import os
+import shlex
 
 from .configreader import DefinitionInitConfigReader
 from ..server.action import CommandAction

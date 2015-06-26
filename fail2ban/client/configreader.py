@@ -24,7 +24,8 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import glob, os
+import glob
+import os
 from ConfigParser import NoOptionError, NoSectionError
 
 from .configparserinc import SafeConfigParserWithIncludes, logLevel

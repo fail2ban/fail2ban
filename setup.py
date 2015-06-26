@@ -40,7 +40,8 @@ except ImportError:
 	from distutils.command.build_scripts import build_scripts
 import os
 from os.path import isfile, join, isdir
-import sys, warnings
+import sys
+import warnings
 from glob import glob
 
 if setuptools and "test" in sys.argv:

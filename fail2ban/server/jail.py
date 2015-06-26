@@ -23,7 +23,8 @@ __author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import Queue, logging
+import logging
+import Queue
 
 from .actions import Actions
 from ..helpers import getLogger
