@@ -66,7 +66,8 @@ class SetupTest(unittest.TestCase):
 				" -- cannot locate setup.py")
 
 	def testSetupInstallRoot(self):
-		if not self.setup: return			  # if verbose skip didn't work out
+		if not self.setup:
+			return			  # if verbose skip didn't work out
 		tmp = tempfile.mkdtemp()
 		try:
 			os.system("%s %s install --root=%s >/dev/null"
@@ -136,8 +137,10 @@ class TestsUtilsTest(unittest.TestCase):
 				raise ValueError()
 
 			def deep_function(i):
-				if i: deep_function(i-1)
-				else: func_raise()
+				if i:
+					deep_function(i-1)
+				else:
+					func_raise()
 
 			try:
 				print deep_function(3)
