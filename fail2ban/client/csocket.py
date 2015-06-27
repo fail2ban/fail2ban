@@ -26,7 +26,8 @@ __license__ = "GPL"
 
 #from cPickle import dumps, loads, HIGHEST_PROTOCOL
 from pickle import dumps, loads, HIGHEST_PROTOCOL
-import socket, sys
+import socket
+import sys
 
 if sys.version_info >= (3,):
 	# b"" causes SyntaxError in python <= 2.5, so below implements equivalent

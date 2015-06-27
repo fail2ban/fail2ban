@@ -22,7 +22,8 @@ __author__ = "Steven Hiscocks"
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import datetime, time
+import datetime
+import time
 from distutils.version import LooseVersion
 
 from systemd import journal

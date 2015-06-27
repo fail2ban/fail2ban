@@ -25,7 +25,12 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from threading import Lock, RLock
-import logging, logging.handlers, sys, os, signal, stat
+import logging
+import logging.handlers
+import os
+import signal
+import stat
+import sys
 
 from .jails import Jails
 from .filter import FileFilter, JournalFilter
