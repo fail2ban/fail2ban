@@ -24,9 +24,10 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, logging
+import logging
 import os
 import sys
+import time
 if sys.version_info >= (3, 3):
 	import importlib.machinery
 else:

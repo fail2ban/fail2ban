@@ -24,7 +24,11 @@ __author__ = "Steven Hiscocks"
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import unittest, time, tempfile, os, threading
+import os
+import tempfile
+import threading
+import time
+import unittest
 
 from ..server.asyncserver import AsyncServer, AsyncServerException
 from ..client.csocket import CSocket

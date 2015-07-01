@@ -21,8 +21,14 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging, os, subprocess, time, signal, tempfile
-import threading, re
+import logging
+import os
+import re
+import signal
+import subprocess
+import tempfile
+import threading
+import time
 from abc import ABCMeta
 from collections import MutableMapping
 
@@ -516,10 +522,10 @@ class CommandAction(ActionBase):
 			realCmd = self.replaceTag(cmd, aInfo)
 		else:
 			realCmd = cmd
-		
+
 		# Replace static fields
 		realCmd = self.replaceTag(realCmd, self._properties)
-		
+
 		return self.executeCmd(realCmd, self.timeout)
 
 	@staticmethod
@@ -549,7 +555,7 @@ class CommandAction(ActionBase):
 		if not realCmd:
 			logSys.debug("Nothing to do")
 			return True
-		
+
 		_cmd_lock.acquire()
 		try: # Try wrapped within another try needed for python version < 2.5
 			stdout = tempfile.TemporaryFile(suffix=".stdout", prefix="fai2ban_")
@@ -602,4 +608,4 @@ class CommandAction(ActionBase):
 							% (retcode, msg % locals()))
 			return False
 		raise RuntimeError("Command execution failed: %s" % realCmd)
-	
+

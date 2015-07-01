@@ -21,7 +21,13 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, glob, shutil, tempfile, unittest, re, logging
+import glob
+import logging
+import os
+import re
+import shutil
+import tempfile
+import unittest
 from ..client.configreader import ConfigReaderUnshared
 from ..client import configparserinc
 from ..client.jailreader import JailReader

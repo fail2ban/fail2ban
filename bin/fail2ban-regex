@@ -297,8 +297,8 @@ class Fail2banRegex(object):
 							  "read from %(value)s" % locals()
 						return False
 				elif command[2] == 'addjournalmatch':
-					journalmatch = command[3]
-					self.setJournalMatch(shlex.split(journalmatch))
+					journalmatch = command[3:]
+					self.setJournalMatch(journalmatch)
 				elif command[2] == 'datepattern':
 					datepattern = command[3]
 					self.setDatePattern(datepattern)

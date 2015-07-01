@@ -21,7 +21,12 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import re, os, fcntl, sys, locale, codecs
+import codecs
+import fcntl
+import locale
+import os
+import re
+import sys
 
 from .failmanager import FailManagerEmpty, FailManager
 from .ticket import FailTicket

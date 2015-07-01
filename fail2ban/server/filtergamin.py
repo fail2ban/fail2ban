@@ -23,7 +23,8 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import time, fcntl
+import fcntl
+import time
 
 import gamin
 

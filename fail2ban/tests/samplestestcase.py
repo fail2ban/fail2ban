@@ -22,10 +22,15 @@
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import unittest, sys, os, fileinput, re, time, datetime, inspect
-
+import datetime
+import fileinput
+import inspect
 import json
-
+import os
+import re
+import sys
+import time
+import unittest
 from ..server.filter import Filter
 from ..client.filterreader import FilterReader
 from .utils import setUpMyTime, tearDownMyTime, CONFIG_DIR
