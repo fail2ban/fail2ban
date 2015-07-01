@@ -309,6 +309,14 @@ class Transmitter(TransmitterBase):
 		self.setGetTest("maxlines", "2", 2, jail=self.jailName)
 		self.setGetTestNOK("maxlines", "-2", jail=self.jailName)
 		self.setGetTestNOK("maxlines", "Duck", jail=self.jailName)
+		
+	def testSubnetMask(self):
+		self.setGetTest("subnetmask", "24", 24, jail=self.jailName)
+		self.setGetTest("subnetmask", "255.255.255.0", 24, jail=self.jailName)
+		self.setGetTestNOK("subnetmask", "Duck.Duck", jail=self.jailName)
+		self.setGetTestNOK("subnetmask", "-12", jail=self.jailName)
+		self.setGetTestNOK("subnetmask", "-42", jail=self.jailName)
+		self.setGetTestNOK("subnetmask", "255.255.300.0", jail=self.jailName)
 
 	def testJailLogEncoding(self):
 		self.setGetTest("logencoding", "UTF-8", jail=self.jailName)

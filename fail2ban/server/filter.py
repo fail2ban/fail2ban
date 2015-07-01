@@ -32,6 +32,7 @@ from .mytime import MyTime
 from .failregex import FailRegex, Regex, RegexException
 from .action import CommandAction
 from ..helpers import getLogger
+from .dnsutils import DNSUtils
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -255,6 +256,23 @@ class Filter(JailThread):
 
 	def getMaxRetry(self):
 		return self.failManager.getMaxRetry()
+	
+	##
+	# Set the subnet mask to detect.
+	#
+	# @param value the CIDR subnet mask value 
+	
+	def setSubnetMask(self, value):
+		self.failManager.setSubnetMask(value)
+		logSys.info("Set subnetMask = %s" % value)
+		
+	##
+	# Get the CIDR subnet mask value.
+	#
+	# @return the CIDR subnet mask value
+	
+	def getSubnetMask(self):
+		return self.failManager.getSubnetMask()
 
 	##
 	# Set the maximum line buffer size.
@@ -353,7 +371,7 @@ class Filter(JailThread):
 	# @param ip IP address
 	# @return True if IP address is in ignore list
 
-	def inIgnoreIPList(self, ip, log_ignore=False):
+	def inIgnoreIPList(self, ip, subnetmask=None, log_ignore=False):
 		for i in self.__ignoreIpList:
 			# An empty string is always false
 			if i == "":
@@ -365,10 +383,12 @@ class Filter(JailThread):
 			elif "." in s[1]: # 255.255.255.0 style mask
 				s[1] = len(re.search(
 					"(?<=b)1+", bin(DNSUtils.addr2bin(s[1]))).group())
-			s[1] = long(s[1])
+			mask = long(s[1])
+			if mask is not None and subnetmask is not None:
+				mask = max(mask, long(subnetmask))
 			try:
-				a = DNSUtils.addr2bin(s[0], cidr=s[1])
-				b = DNSUtils.addr2bin(ip, cidr=s[1])
+				a = DNSUtils.addr2bin(s[0], cidr=mask)
+				b = DNSUtils.addr2bin(ip, cidr=mask)
 			except Exception:
 				# Check if IP in DNS
 				ips = DNSUtils.dnsToIp(i)
@@ -426,7 +446,7 @@ class Filter(JailThread):
 				logSys.debug("Ignore line since time %s < %s - %s"
 							 % (unixTime, MyTime.time(), self.getFindTime()))
 				break
-			if self.inIgnoreIPList(ip, log_ignore=True):
+			if self.inIgnoreIPList(ip, self.getSubnetMask(), log_ignore=True):
 				continue
 			logSys.info("[%s] Found %s" % (self.jail.name, ip))
 			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
@@ -832,101 +852,3 @@ class JournalFilter(Filter): # pragma: systemd no cover
 
 	def getJournalMatch(self, match): # pragma: no cover - Base class, not used
 		return []
-
-##
-# Utils class for DNS and IP handling.
-#
-# This class contains only static methods used to handle DNS and IP
-# addresses.
-
-import socket, struct
-
-class DNSUtils:
-
-	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
-
-	@staticmethod
-	def dnsToIp(dns):
-		""" Convert a DNS into an IP address using the Python socket module.
-			Thanks to Kevin Drapel.
-		"""
-		try:
-			return set(socket.gethostbyname_ex(dns)[2])
-		except socket.error, e:
-			logSys.warning("Unable to find a corresponding IP address for %s: %s"
-						% (dns, e))
-			return list()
-		except socket.error, e:
-			logSys.warning("Socket error raised trying to resolve hostname %s: %s"
-						% (dns, e))
-			return list()
-
-	@staticmethod
-	def ipToName(ip):
-		try:
-			return socket.gethostbyaddr(ip)[0]
-		except socket.error, e:
-			logSys.debug("Unable to find a name for the IP %s: %s" % (ip, e))
-			return None
-
-	@staticmethod
-	def searchIP(text):
-		""" Search if an IP address if directly available and return
-			it.
-		"""
-		match = DNSUtils.IP_CRE.match(text)
-		if match:
-			return match
-		else:
-			return None
-
-	@staticmethod
-	def isValidIP(string):
-		""" Return true if str is a valid IP
-		"""
-		s = string.split('/', 1)
-		try:
-			socket.inet_aton(s[0])
-			return True
-		except socket.error:
-			return False
-
-	@staticmethod
-	def textToIp(text, useDns):
-		""" Return the IP of DNS found in a given text.
-		"""
-		ipList = list()
-		# Search for plain IP
-		plainIP = DNSUtils.searchIP(text)
-		if not plainIP is None:
-			plainIPStr = plainIP.group(0)
-			if DNSUtils.isValidIP(plainIPStr):
-				ipList.append(plainIPStr)
-
-		# If we are allowed to resolve -- give it a try if nothing was found
-		if useDns in ("yes", "warn") and not ipList:
-			# Try to get IP from possible DNS
-			ip = DNSUtils.dnsToIp(text)
-			ipList.extend(ip)
-			if ip and useDns == "warn":
-				logSys.warning("Determined IP using DNS Lookup: %s = %s",
-					text, ipList)
-
-		return ipList
-
-	@staticmethod
-	def addr2bin(ipstring, cidr=None):
-		""" Convert a string IPv4 address into binary form.
-		If cidr is supplied, return the network address for the given block
-		"""
-		if cidr is None:
-			return struct.unpack("!L", socket.inet_aton(ipstring))[0]
-		else:
-			MASK = 0xFFFFFFFFL
-			return ~(MASK >> cidr) & MASK & DNSUtils.addr2bin(ipstring)
-
-	@staticmethod
-	def bin2addr(ipbin):
-		""" Convert a binary IPv4 address into string n.n.n.n form.
-		"""
-		return socket.inet_ntoa(struct.pack("!L", ipbin))
