@@ -406,7 +406,7 @@ class CommandAction(ActionBase):
 						# recursive definitions are bad
 						#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 						return False
-					if found_tag in cls._escapedTags or not tags.has_key(found_tag):
+					if found_tag in cls._escapedTags or not found_tag in tags:
 						# Escaped or missing tags - just continue on searching after end of match
 						# Missing tags are ok - cInfo can contain aInfo elements like <HOST> and valid shell
 						# constructs like <STDIN>.

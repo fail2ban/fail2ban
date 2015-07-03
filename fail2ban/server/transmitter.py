@@ -51,7 +51,7 @@ class Transmitter:
 	
 	def proceed(self, command):
 		# Deserialize object
-		logSys.debug("Command: " + `command`)
+		logSys.debug("Command: " + repr(command))
 		try:
 			ret = self.__commandHandler(command)
 			ack = 0, ret

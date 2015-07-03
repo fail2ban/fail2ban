@@ -63,7 +63,7 @@ class FilterGamin(FileFilter):
 
 
 	def callback(self, path, event):
-		logSys.debug("Got event: " + `event` + " for " + path)
+		logSys.debug("Got event: " + repr(event) + " for " + path)
 		if event in (gamin.GAMCreated, gamin.GAMChanged, gamin.GAMExists):
 			logSys.debug("File changed: " + path)
 			self.__modified = True
