@@ -7,7 +7,7 @@ python:
   - "3.2"
   - "3.3"
   - "3.4"
-  - "pypy"
+#  - "pypy" # disabled for now due to frequent unreproducable failures # gh-1089
   - "pypy3"
 before_install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then travis_retry sudo apt-get update -qq; fi
