@@ -17,14 +17,15 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
      Thanks Anton Shestakov
    * Fix fail2ban-regex not parsing journalmatch correctly from filter config
    * filter.d/asterisk.conf - fix security log support for Asterisk 12+
-   * action.d/cloudflare.conf - allow multiple CF accounts by storing
-     authentication data in your jail
 
 - New Features:
    - New filters:
      - froxlor-auth  Thanks Joern Muehlencord
 
 - Enhancements:
+   * action.d/cloudflare.conf - improved documentation on how to allow
+     multiple CF accounts, and jail.conf got new compound action
+     definition action_cf_mwl to submit cloudflare report.
 
 
 ver. 0.9.2 (2015/04/29) - better-quick-now-than-later
@@ -63,7 +64,7 @@ ver. 0.9.2 (2015/04/29) - better-quick-now-than-later
    * firewallcmd-* actions: split output into separate lines for grepping (gh-908)
    * Guard unicode encode/decode issues while storing records in the database.
      Fixes "binding parameter error (unsupported type)" (gh-973), thanks to kot
-	 for reporting
+     for reporting
    * filter.d/sshd added regex for matching openSUSE ssh authentication failure
    * filter.d/asterisk.conf:
      - Dropped "Sending fake auth rejection" failregex since it incorrectly
