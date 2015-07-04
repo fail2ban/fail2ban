@@ -559,7 +559,6 @@ class Transmitter(TransmitterBase):
 			)
 		)
 
-
 	def testAction(self):
 		action = "TestCaseAction"
 		cmdList = [

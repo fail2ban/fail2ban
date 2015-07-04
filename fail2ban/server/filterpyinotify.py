@@ -73,7 +73,6 @@ class FilterPyinotify(FileFilter):
 		self.__watches = dict()
 		logSys.debug("Created FilterPyinotify")
 
-
 	def callback(self, event, origin=''):
 		logSys.debug("%sCallback for Event: %s", origin, event)
 		path = event.pathname
@@ -95,7 +94,6 @@ class FilterPyinotify(FileFilter):
 
 		self._process_file(path)
 
-
 	def _process_file(self, path):
 		"""Process a given file
 
@@ -111,7 +109,6 @@ class FilterPyinotify(FileFilter):
 			self.failManager.cleanup(MyTime.time())
 		self.dateDetector.sortTemplate()
 		self.__modified = False
-
 
 	def _addFileWatcher(self, path):
 		wd = self.__monitor.add_watch(path, pyinotify.IN_MODIFY)
@@ -144,7 +141,6 @@ class FilterPyinotify(FileFilter):
 		self._addFileWatcher(path)
 		self._process_file(path)
 
-
     ##
 	# Delete a log path
 	#
@@ -162,7 +158,6 @@ class FilterPyinotify(FileFilter):
 			wdInt = self.__watches.pop(path_dir)
 			self.__monitor.rm_watch(wdInt)
 			logSys.debug("Removed monitor for the parent directory %s", path_dir)
-
 
 	##
 	# Main loop.

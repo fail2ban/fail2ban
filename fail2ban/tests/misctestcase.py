@@ -154,7 +154,6 @@ class TestsUtilsTest(unittest.TestCase):
 				self.assertFalse('>' in s, msg="'>' present in %r" % s)  # There is only "fail2ban-testcases" in this case, no true traceback
 			self.assertTrue(':' in s, msg="no ':' in %r" % s)
 
-
 	def testFormatterWithTraceBack(self):
 		strout = StringIO()
 		Formatter = FormatterWithTraceBack

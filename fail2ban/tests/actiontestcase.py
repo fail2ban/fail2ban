@@ -110,7 +110,6 @@ class CommandActionTest(LogCaptureTestCase):
 				{'ipjailmatches': "some >char< should \< be[ escap}ed&\n"}),
 			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\n")
 
-
 		# Recursive
 		aInfo["ABC"] = "<xyz>"
 		self.assertEqual(

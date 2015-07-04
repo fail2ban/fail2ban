@@ -317,7 +317,6 @@ class DatabaseTest(LogCaptureTestCase):
 		actions._Actions__checkBan()
 		self.assertTrue(self._is_logged("ban ainfo %s, %s, %s, %s" % (True, True, True, True)))
 
-
 	def testPurge(self):
 		if Fail2BanDb is None: # pragma: no cover
 			return

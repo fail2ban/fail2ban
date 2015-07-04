@@ -270,20 +270,19 @@ class BanManager:
 			return False
 		finally:
 			self.__lock.release()
-	
-	
+
 	##
 	# Get the size of the ban list.
 	#
 	# @return the size
-	
+
 	def size(self):
 		try:
 			self.__lock.acquire()
 			return len(self.__banList)
 		finally:
 			self.__lock.release()
-	
+
 	##
 	# Check if a ticket is in the list.
 	#

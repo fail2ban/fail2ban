@@ -494,7 +494,6 @@ def get_monitor_failures_testcase(Filter_):
 			self._sleep_4_poll()
 			#print "D: started filter %s" % self.filter
 
-
 		def tearDown(self):
 			tearDownMyTime()
 			#print "D: SLEEPING A BIT"
@@ -532,7 +531,6 @@ def get_monitor_failures_testcase(Filter_):
 		def assert_correct_last_attempt(self, failures, count=None):
 			self.assertTrue(self.isFilled(20)) # give Filter a chance to react
 			_assert_correct_last_attempt(self, self.jail, failures, count=count)
-
 
 		def test_grow_file(self):
 			# suck in lines from this sample log file
@@ -577,7 +575,6 @@ def get_monitor_failures_testcase(Filter_):
 												  skip=3, mode='w')
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 
-
 		def test_move_file(self):
 			# if we move file into a new location while it has been open already
 			self.file.close()
@@ -601,7 +598,6 @@ def get_monitor_failures_testcase(Filter_):
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
-
 
 		def _test_move_into_file(self, interim_kill=False):
 			# if we move a new file into the location of an old (monitored) file
@@ -628,7 +624,6 @@ def get_monitor_failures_testcase(Filter_):
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 9)
 
-
 		def test_move_into_file(self):
 			self._test_move_into_file(interim_kill=False)
 
@@ -636,7 +631,6 @@ def get_monitor_failures_testcase(Filter_):
 			# exactly as above test + remove file explicitly
 			# to test against possible drop-out of the file from monitoring
 		    self._test_move_into_file(interim_kill=True)
-
 
 		def test_new_bogus_file(self):
 			# to make sure that watching whole directory does not effect
@@ -649,7 +643,6 @@ def get_monitor_failures_testcase(Filter_):
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 			_killfile(None, self.name + '.bak2')
-
 
 		def test_delLogPath(self):
 			# Smoke test for removing of the path from being watched
@@ -863,7 +856,6 @@ class GetFailures(unittest.TestCase):
 		self.testGetFailures01(filename=fname)
 		_killfile(fout, fname)
 
-
 	def testGetFailures02(self):
 		output = ('141.3.81.106', 4, 1124013539.0,
 				  [u'Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2'
@@ -921,8 +913,6 @@ class GetFailures(unittest.TestCase):
 			filter_.addFailRegex("Failed .* from <HOST>")
 			filter_.getFailures(GetFailures.FILENAME_USEDNS)
 			_assert_correct_last_attempt(self, filter_, output)
-
-
 
 	def testGetFailuresMultiRegex(self):
 		output = ('141.3.81.106', 8, 1124013541.0)

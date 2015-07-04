@@ -191,7 +191,6 @@ def gatherTests(regexps=None, no_network=False):
 	except Exception, e: # pragma: no cover
 		logSys.warning("I: Skipping systemd backend testing. Got exception '%s'" % e)
 
-
 	# Server test for logging elements which break logging used to support
 	# testcases analysis
 	tests.addTest(unittest.makeSuite(servertestcase.TransmitterLogging))

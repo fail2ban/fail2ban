@@ -71,7 +71,6 @@ class Server:
 		self.setLogTarget("STDOUT")
 		self.setSyslogSocket("auto")
 
-
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
 		self.quit()
@@ -144,7 +143,6 @@ class Server:
 		finally:
 			self.__loggingLock.release()
 
-	
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend, self.__db)
 		if self.__db is not None:
@@ -520,7 +518,6 @@ class Server:
 	
 	def getDatabase(self):
 		return self.__db
-	
 
 	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the

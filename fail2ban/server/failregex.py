@@ -94,7 +94,6 @@ class Regex:
 			except ValueError:
 				self._matchLineEnd = len(self._matchCache.string)
 
-
 			lineCount1 = self._matchCache.string.count(
 				"\n", 0, self._matchLineStart)
 			lineCount2 = self._matchCache.string.count(

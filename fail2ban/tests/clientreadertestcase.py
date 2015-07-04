@@ -77,11 +77,9 @@ option = %s
 		os.unlink("%s/%s" % (self.d, fname))
 		self.assertTrue(self.c.read('c'))	# we still should have some
 
-
 	def _getoption(self, f='c'):
 		self.assertTrue(self.c.read(f))	# we got some now
 		return self.c.getOptions('section', [("int", 'option')])['option']
-
 
 	def testInaccessibleFile(self):
 		f = os.path.join(self.d, "d.conf")  # inaccessible file
@@ -96,7 +94,6 @@ option = %s
 			# SkipTest introduced only in 2.7 thus can't yet use generally
 			# raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform)
 			pass
-
 
 	def testOptionalDotDDir(self):
 		self.assertFalse(self.c.read('c'))	# nothing is there yet
@@ -194,7 +191,6 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertTrue(self._is_logged('Error in action definition joho[foo'))
 		self.assertTrue(self._is_logged('Caught exception: While reading action joho[foo we should have got 1 or 2 groups. Got: 0'))
 
-
 	if STOCK:
 		def testStockSSHJail(self):
 			jail = JailReader('sshd', basedir=CONFIG_DIR, share_config = self.__share_cfg) # we are running tests from root project dir atm
@@ -223,7 +219,6 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertEqual(('mail', {'a': ','}), JailReader.extractOptions("mail[a=',']"))
 
 		#self.assertRaises(ValueError, JailReader.extractOptions ,'mail-how[')
-
 
 		# Empty option
 		option = "abc[]"
@@ -317,7 +312,6 @@ class FilterReaderTest(unittest.TestCase):
 		filterReader.getOptions(None)
 		output[-1][-1] = "5"
 		self.assertEqual(sorted(filterReader.convert()), sorted(output))
-
 
 	def testFilterReaderSubstitionDefault(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sweet@example.com fromip=<IP>']]
@@ -480,7 +474,6 @@ class JailsReaderTest(LogCaptureTestCase):
 				self.assertTrue('Init' in actionReader.sections(),
 						msg="Action file %r is lacking [Init] section" % actionConfig)
 
-
 		def testReadStockJailConf(self):
 			jails = JailsReader(basedir=CONFIG_DIR, share_config=self.__share_cfg) # we are running tests from root project dir atm
 			self.assertTrue(jails.read())		  # opens fine
@@ -606,7 +599,6 @@ class JailsReaderTest(LogCaptureTestCase):
 							blocktype_present,
 							msg="Found no %s command among %s"
 								% (target_command, str(commands)) )
-
 
 		def testStockConfigurator(self):
 			configurator = Configurator()

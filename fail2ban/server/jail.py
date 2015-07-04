@@ -116,7 +116,6 @@ class Jail:
 		raise RuntimeError(
 			"Failed to initialize any backend for Jail %r" % self.name)
 
-
 	def _initPolling(self):
 		from filterpoll import FilterPoll
 		logSys.info("Jail '%s' uses poller" % self.name)
