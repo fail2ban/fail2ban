@@ -22,8 +22,17 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import sys, string, os, pickle, re, logging, signal
-import getopt, time, shlex, socket
+import getopt
+import logging
+import os
+import pickle
+import re
+import shlex
+import signal
+import socket
+import string
+import sys
+import time
 
 from fail2ban.version import version
 from fail2ban.protocol import printFormatted
