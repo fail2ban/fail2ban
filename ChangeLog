@@ -17,6 +17,8 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
      Thanks Anton Shestakov
    * Fix fail2ban-regex not parsing journalmatch correctly from filter config
    * filter.d/asterisk.conf - fix security log support for Asterisk 12+
+   * action.d/cloudflare.conf - allow multiple CF accounts by storing
+     authentication data in your jail
 
 - New Features:
    - New filters:
