@@ -154,6 +154,7 @@ class DateEpoch(DateTemplate):
 			return (float(dateMatch.group()), dateMatch)
 		return None
 
+
 class DatePatternRegex(DateTemplate):
 	"""Date template, with regex/pattern
 
@@ -235,6 +236,7 @@ class DatePatternRegex(DateTemplate):
 				for key, value in dateMatch.groupdict().iteritems()
 				if value is not None)
 			return reGroupDictStrptime(groupdict), dateMatch
+
 
 class DateTai64n(DateTemplate):
 	"""A date template which matches TAI64N formate timestamps.

@@ -10,6 +10,7 @@ except ImportError: # pragma: no cover
     import md5
     md5sum = md5.new
 
+
 def auth(v):
 
     ha1 = md5sum(username + ':' + realm + ':' + password).hexdigest()
@@ -43,6 +44,7 @@ def auth(v):
     print(p.method, p.url, p.headers)
     s =  requests.Session()
     return s.send(p)
+
 
 def preauth():
     r = requests.get(host + url)

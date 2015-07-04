@@ -29,6 +29,7 @@ import unittest
 from ..server.failmanager import FailManager, FailManagerEmpty
 from ..server.ticket import FailTicket
 
+
 class AddFailure(unittest.TestCase):
 
 	def setUp(self):

@@ -51,6 +51,7 @@ except Exception, e:
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 ##
 # Log reader class.
 #

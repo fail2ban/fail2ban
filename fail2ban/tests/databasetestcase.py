@@ -42,6 +42,7 @@ from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
+
 class DatabaseTest(LogCaptureTestCase):
 
 	def setUp(self):

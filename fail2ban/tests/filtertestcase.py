@@ -46,6 +46,7 @@ from .dummyjail import DummyJail
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
+
 # yoh: per Steven Hiscocks's insight while troubleshooting
 # https://github.com/fail2ban/fail2ban/issues/103#issuecomment-15542836
 # adding a sufficiently large buffer might help to guarantee that
@@ -62,6 +63,7 @@ def open(*args):
 		return fopen(*args, **{'encoding': 'utf-8', 'errors': 'ignore'})
 	else:
 		return fopen(*args)
+
 
 def _killfile(f, name):
 	try:
@@ -98,6 +100,7 @@ def _assert_equal_entries(utest, found, output, count=None):
 			srepr = repr
 		utest.assertEqual(srepr(found[3]), srepr(output[3]))
 
+
 def _ticket_tuple(ticket):
 	"""Create a tuple for easy comparison from fail ticket
 	"""
@@ -106,6 +109,7 @@ def _ticket_tuple(ticket):
 	ip = ticket.getIP()
 	matches = ticket.getMatches()
 	return (ip, attempts, date, matches)
+
 
 def _assert_correct_last_attempt(utest, filter_, output, count=None):
 	"""Additional helper to wrap most common test case
@@ -119,6 +123,7 @@ def _assert_correct_last_attempt(utest, filter_, output, count=None):
 		found = _ticket_tuple(filter_.failManager.toBan())
 
 	_assert_equal_entries(utest, found, output, count)
+
 
 def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line=""):
 	"""Copy lines from one file to another (which might be already open)
@@ -156,6 +161,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	time.sleep(0.1)
 	return fout
 
+
 def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # pragma: systemd no cover
 	"""Copy lines from one file to systemd journal
 
@@ -184,6 +190,7 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 		# Opened earlier, therefore must close it
 		fin.close()
 
+
 #
 #  Actual tests
 #
@@ -208,6 +215,7 @@ class BasicFilter(unittest.TestCase):
 		self.assertEqual(self.filter.getDatePattern(),
 			("^%Y-%m-%d-%H%M%S.%f %z",
 			"^Year-Month-Day-24hourMinuteSecond.Microseconds Zone offset"))
+
 
 class IgnoreIP(LogCaptureTestCase):
 
@@ -276,6 +284,7 @@ class IgnoreIP(LogCaptureTestCase):
 		self.filter.logIgnoreIp("example.com", False, ignore_source="NOT_LOGGED")
 		self.assertFalse(self._is_logged("[%s] Ignore %s by %s" % (self.jail.name, "example.com", "NOT_LOGGED")))
 
+
 class IgnoreIPDNS(IgnoreIP):
 
 	def testIgnoreIPDNSOK(self):
@@ -288,6 +297,7 @@ class IgnoreIPDNS(IgnoreIP):
 		self.assertFalse(self.filter.inIgnoreIPList("127.177.50.10"))
 		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.11"))
 		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.13"))
+
 
 class LogFile(LogCaptureTestCase):
 
@@ -302,6 +312,7 @@ class LogFile(LogCaptureTestCase):
 	def testMissingLogFiles(self):
 		self.filter = FilterPoll(None)
 		self.assertRaises(IOError, self.filter.addLogPath, LogFile.MISSING)
+
 
 class LogFileFilterPoll(unittest.TestCase):
 
@@ -675,6 +686,7 @@ def get_monitor_failures_testcase(Filter_):
 			  % (Filter_.__name__, testclass_name) # 'tempfile')
 	return MonitorFailures
 
+
 def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 	"""Generator of TestCase's for journal based filters/backends
 	"""
@@ -797,6 +809,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.assertTrue(self.isFilled(6))
 
 	return MonitorJournalFailures
+
 
 class GetFailures(unittest.TestCase):
 
@@ -987,6 +1000,7 @@ class GetFailures(unittest.TestCase):
 				break
 		self.assertEqual(sorted(foundList), sorted(output))
 
+
 class DNSUtilsTests(unittest.TestCase):
 
 	def testUseDns(self):
@@ -1033,6 +1047,7 @@ class DNSUtilsTests(unittest.TestCase):
 	def testBin2addr(self):
 		res = DNSUtils.bin2addr(167772160L)
 		self.assertEqual(res, '10.0.0.0')
+
 
 class JailTests(unittest.TestCase):
 

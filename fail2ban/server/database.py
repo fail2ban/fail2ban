@@ -87,6 +87,7 @@ else:
 sqlite3.register_adapter(dict, _json_dumps_safe)
 sqlite3.register_converter("JSON", _json_loads_safe)
 
+
 def commitandrollback(f):
 	@wraps(f)
 	def wrapper(self, *args, **kwargs):
@@ -94,6 +95,7 @@ def commitandrollback(f):
 			with self._db: # Auto commit and rollback on exception
 				return f(self, self._db.cursor(), *args, **kwargs)
 	return wrapper
+
 
 class Fail2BanDb(object):
 	"""Fail2Ban database for storing persistent data.

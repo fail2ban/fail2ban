@@ -32,6 +32,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class ActionReader(DefinitionInitConfigReader):
 
 	_configOpts = [

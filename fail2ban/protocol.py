@@ -119,6 +119,7 @@ protocol = [
 ["get <JAIL> action <ACT> <PROPERTY>", "gets the value of <PROPERTY> for the action <ACT> for <JAIL>"],
 ]
 
+
 ##
 # Prints the protocol in a "man" format. This is used for the
 # "-h" output of fail2ban-client.
@@ -143,6 +144,7 @@ def printFormatted():
 				line = ' ' * (INDENT + MARGIN) + n.strip()
 			print line
 
+
 ##
 # Prints the protocol in a "mediawiki" format.
 
@@ -158,6 +160,7 @@ def printWiki():
 			print "|-"
 			print "| <span style=\"white-space:nowrap;\"><tt>" + m[0] + "</tt></span> || || " + m[1]
 	print "|}"
+
 
 def __printWikiHeader(section, desc):
 	print

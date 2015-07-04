@@ -38,6 +38,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 ##
 # Journal reader class.
 #

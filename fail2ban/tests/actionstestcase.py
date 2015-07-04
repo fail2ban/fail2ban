@@ -35,6 +35,7 @@ from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
+
 class ExecuteActions(LogCaptureTestCase):
 
 	def setUp(self):

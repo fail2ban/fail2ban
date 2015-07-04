@@ -48,6 +48,7 @@ except ImportError:
 	# Dont print error here, as database may not even be used
 	Fail2BanDb = None
 
+
 class Server:
 	
 	def __init__(self, daemon = False):

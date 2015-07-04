@@ -34,6 +34,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class ConfigReader():
 	"""Generic config reader class.
 
@@ -136,6 +137,7 @@ class ConfigReader():
 			return self._cfg.getOptions(*args, **kwargs)
 		return {}
 
+
 class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	"""Unshared config reader (previously ConfigReader).
 
@@ -236,6 +238,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 							"'. Using default one: '" + repr(option[2]) + "'")
 				values[option[1]] = option[2]
 		return values
+
 
 class DefinitionInitConfigReader(ConfigReader):
 	"""Config reader for files with options grouped in [Definition] and

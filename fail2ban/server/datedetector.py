@@ -29,6 +29,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class DateDetector(object):
 	"""Manages one or more date templates to find a date within a log line.
 

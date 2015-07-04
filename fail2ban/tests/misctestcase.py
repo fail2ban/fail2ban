@@ -55,6 +55,7 @@ class HelpersTest(unittest.TestCase):
 			# might be fragile due to ' vs "
 			self.assertEqual(args, "('Very bad', None)")
 
+
 class SetupTest(unittest.TestCase):
 
 	def setUp(self):
@@ -116,6 +117,7 @@ class SetupTest(unittest.TestCase):
 			os.system("%s %s clean --all >/dev/null 2>&1"
 					  % (sys.executable, self.setup))
 
+
 class TestsUtilsTest(unittest.TestCase):
 
 	def testmbasename(self):
@@ -175,6 +177,7 @@ class TestsUtilsTest(unittest.TestCase):
 		self.assertEqual(s[:pindex], s[pindex+1:pindex*2 + 1])
 
 iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
+
 
 class CustomDateFormatsTest(unittest.TestCase):
 

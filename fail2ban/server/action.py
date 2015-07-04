@@ -55,6 +55,7 @@ _RETCODE_HINTS = {
 signame = dict((num, name)
 	for name, num in signal.__dict__.iteritems() if name.startswith("SIG"))
 
+
 class CallingMap(MutableMapping):
 	"""A Mapping type which returns the result of callable values.
 
@@ -99,6 +100,7 @@ class CallingMap(MutableMapping):
 
 	def copy(self):
 		return self.__class__(self.data.copy())
+
 
 class ActionBase(object):
 	"""An abstract base class for actions in Fail2Ban.
@@ -181,6 +183,7 @@ class ActionBase(object):
 			the ban.
 		"""
 		pass
+
 
 class CommandAction(ActionBase):
 	"""A action which executes OS shell commands.

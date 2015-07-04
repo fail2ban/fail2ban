@@ -30,6 +30,7 @@ from ..server.action import CommandAction, CallingMap
 
 from .utils import LogCaptureTestCase
 
+
 class CommandActionTest(LogCaptureTestCase):
 
 	def setUp(self):

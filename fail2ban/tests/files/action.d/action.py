@@ -1,6 +1,7 @@
 
 from fail2ban.server.action import ActionBase
 
+
 class TestAction(ActionBase):
 
     def __init__(self, jail, name, opt1, opt2=None):

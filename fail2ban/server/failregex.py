@@ -25,6 +25,7 @@ import re
 import sre_constants
 import sys
 
+
 ##
 # Regular expression class.
 #
@@ -183,6 +184,7 @@ class Regex:
 			return []
 		else:
 			return ["".join(line) for line in self._matchedTupleLines]
+
 
 ##
 # Exception dedicated to the class Regex.

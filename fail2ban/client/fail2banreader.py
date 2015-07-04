@@ -30,6 +30,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class Fail2banReader(ConfigReader):
 	
 	def __init__(self, **kwargs):

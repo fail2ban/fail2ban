@@ -44,12 +44,15 @@ if not CONFIG_DIR:
 	else:
 		CONFIG_DIR = '/etc/fail2ban'
 
+
 def mtimesleep():
 	# no sleep now should be necessary since polling tracks now not only
 	# mtime but also ino and size
 	pass
 
 old_TZ = os.environ.get('TZ', None)
+
+
 def setUpMyTime():
 	# Set the time to a fixed, known value
 	# Sun Aug 14 12:00:00 CEST 2005
@@ -58,12 +61,14 @@ def setUpMyTime():
 	time.tzset()
 	MyTime.setTime(1124013600)
 
+
 def tearDownMyTime():
 	os.environ.pop('TZ')
 	if old_TZ:
 		os.environ['TZ'] = old_TZ
 	time.tzset()
 	MyTime.myTime = None
+
 
 def gatherTests(regexps=None, no_network=False):
 	# Import all the test cases here instead of a module level to
@@ -196,6 +201,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(servertestcase.TransmitterLogging))
 
 	return tests
+
 
 class LogCaptureTestCase(unittest.TestCase):
 

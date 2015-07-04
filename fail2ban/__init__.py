@@ -37,6 +37,7 @@ Below derived from:
 logging.NOTICE = logging.INFO + 5
 logging.addLevelName(logging.NOTICE, 'NOTICE')
 
+
 # define a new logger function for notice
 # this is exactly like existing info, critical, debug...etc
 def _Logger_notice(self, msg, *args, **kwargs):
@@ -52,6 +53,7 @@ def _Logger_notice(self, msg, *args, **kwargs):
 		self._log(logging.NOTICE, msg, args, **kwargs)
 
 logging.Logger.notice = _Logger_notice
+
 
 # define a new root level notice function
 # this is exactly like existing info, critical, debug...etc

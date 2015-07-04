@@ -45,6 +45,7 @@ STOCK = os.path.exists(os.path.join('config','fail2ban.conf'))
 
 IMPERFECT_CONFIG = os.path.join(os.path.dirname(__file__), 'config')
 
+
 class ConfigReaderTest(unittest.TestCase):
 
 	def setUp(self):
@@ -155,6 +156,7 @@ c = d ;in line comment
 		self.assertTrue(self.c.read('g'))
 		self.assertEqual(self.c.get('DEFAULT', 'b'), 'a')
 		self.assertEqual(self.c.get('DEFAULT', 'c'), 'd')
+
 
 class JailReaderTest(LogCaptureTestCase):
 
@@ -354,6 +356,7 @@ class FilterReaderTest(unittest.TestCase):
 			filterReader.get('Definition', 'ignoreregex')
 		except Exception, e: # pragma: no cover - failed if reachable
 			self.fail('unexpected options after readexplicit: %s' % (e))
+
 
 class JailsReaderTestCache(LogCaptureTestCase):
 

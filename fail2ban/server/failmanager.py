@@ -34,6 +34,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class FailManager:
 	
 	def __init__(self):
@@ -153,6 +154,7 @@ class FailManager:
 			raise FailManagerEmpty
 		finally:
 			self.__lock.release()
+
 
 class FailManagerEmpty(Exception):
 	pass

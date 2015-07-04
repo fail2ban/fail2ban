@@ -48,6 +48,7 @@ logSys = getLogger(__name__)
 # that matches a given regular expression. This class is instantiated by
 # a Jail object.
 
+
 class Filter(JailThread):
 
 	##
@@ -717,6 +718,7 @@ except ImportError: # pragma: no cover
 	import md5
 	md5sum = md5.new
 
+
 class FileContainer:
 
 	def __init__(self, filename, encoding, tail = False):
@@ -842,6 +844,7 @@ class JournalFilter(Filter): # pragma: systemd no cover
 
 import socket
 import struct
+
 
 class DNSUtils:
 

@@ -32,6 +32,7 @@ from ..server.datedetector import DateDetector
 from ..server.datetemplate import DateTemplate
 from .utils import setUpMyTime, tearDownMyTime
 
+
 class DateDetectorTest(unittest.TestCase):
 
 	def setUp(self):

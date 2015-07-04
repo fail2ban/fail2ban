@@ -31,6 +31,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class Configurator:
 	
 	def __init__(self, force_enable=False, share_config=None):

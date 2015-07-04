@@ -30,6 +30,7 @@ from abc import abstractmethod
 
 from ..helpers import excepthook
 
+
 class JailThread(Thread):
 	"""Abstract class for threading elements in Fail2Ban.
 
