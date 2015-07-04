@@ -475,6 +475,7 @@ def get_monitor_failures_testcase(Filter_):
 
 	class MonitorFailures(unittest.TestCase):
 		count = 0
+
 		def setUp(self):
 			"""Call before every test case."""
 			setUpMyTime()

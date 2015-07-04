@@ -86,6 +86,7 @@ def gatherTests(regexps=None, no_network=False):
 	else: # pragma: no cover
 		class FilteredTestSuite(unittest.TestSuite):
 			_regexps = [re.compile(r) for r in regexps]
+
 			def addTest(self, suite):
 				suite_str = str(suite)
 				for r in self._regexps:

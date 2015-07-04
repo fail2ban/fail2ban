@@ -59,6 +59,7 @@ class JailThread(Thread):
 		# excepthook workaround for threads, derived from:
 		# http://bugs.python.org/issue1230540#msg91244
 		run = self.run
+
 		def run_with_except_hook(*args, **kwargs):
 			try:
 				run(*args, **kwargs)

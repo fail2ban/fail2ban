@@ -50,6 +50,7 @@ TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 class TestServer(Server):
 	def setLogLevel(self, *args, **kwargs):
 		pass
+
 	def setLogTarget(self, *args, **kwargs):
 		pass
 
