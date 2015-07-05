@@ -189,7 +189,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 			if config_files_read:
 				return True
 			logSys.error("Found no accessible config files for %r under %s",
-						 ( filename, self.getBaseDir() ))
+						 filename, self.getBaseDir())
 			return False
 		else:
 			logSys.error("Found no accessible config files for %r " % filename
