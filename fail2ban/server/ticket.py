@@ -29,6 +29,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class Ticket:
 	
 	def __init__(self, ip, time, matches=None):

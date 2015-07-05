@@ -46,6 +46,7 @@ if sys.version_info >= (3,):
 			logSys.error('json dumps failed: %s', e)
 			x = '{}'
 		return x
+
 	def _json_loads_safe(x):
 		try:
 			x = json.loads(x.decode(
@@ -64,6 +65,7 @@ else:
 			return x.encode(locale.getpreferredencoding())
 		else:
 			return x
+
 	def _json_dumps_safe(x):
 		try:
 			x = json.dumps(_normalize(x), ensure_ascii=False).decode(
@@ -72,6 +74,7 @@ else:
 			logSys.error('json dumps failed: %s', e)
 			x = '{}'
 		return x
+
 	def _json_loads_safe(x):
 		try:
 			x = _normalize(json.loads(x.decode(
@@ -84,6 +87,7 @@ else:
 sqlite3.register_adapter(dict, _json_dumps_safe)
 sqlite3.register_converter("JSON", _json_loads_safe)
 
+
 def commitandrollback(f):
 	@wraps(f)
 	def wrapper(self, *args, **kwargs):
@@ -91,6 +95,7 @@ def commitandrollback(f):
 			with self._db: # Auto commit and rollback on exception
 				return f(self, self._db.cursor(), *args, **kwargs)
 	return wrapper
+
 
 class Fail2BanDb(object):
 	"""Fail2Ban database for storing persistent data.
@@ -155,6 +160,7 @@ class Fail2BanDb(object):
 			"CREATE INDEX bans_jail_timeofban_ip ON bans(jail, timeofban);" \
 			"CREATE INDEX bans_jail_ip ON bans(jail, ip);" \
 			"CREATE INDEX bans_ip ON bans(ip);" \
+
 
 	def __init__(self, filename, purgeAge=24*60*60):
 		try:

@@ -36,6 +36,7 @@ else:
 	# python 2.x, string type is equivalent to bytes.
 	EMPTY_BYTES = ""
 
+
 class CSocket:
 	
 	if sys.version_info >= (3,):

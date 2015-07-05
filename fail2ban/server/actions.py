@@ -47,6 +47,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class Actions(JailThread, Mapping):
 	"""Handles jail actions.
 

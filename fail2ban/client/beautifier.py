@@ -27,6 +27,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 ##
 # Beautify the output of the client.
 #

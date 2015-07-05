@@ -46,6 +46,7 @@ from .dummyjail import DummyJail
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
+
 # yoh: per Steven Hiscocks's insight while troubleshooting
 # https://github.com/fail2ban/fail2ban/issues/103#issuecomment-15542836
 # adding a sufficiently large buffer might help to guarantee that
@@ -62,6 +63,7 @@ def open(*args):
 		return fopen(*args, **{'encoding': 'utf-8', 'errors': 'ignore'})
 	else:
 		return fopen(*args)
+
 
 def _killfile(f, name):
 	try:
@@ -98,6 +100,7 @@ def _assert_equal_entries(utest, found, output, count=None):
 			srepr = repr
 		utest.assertEqual(srepr(found[3]), srepr(output[3]))
 
+
 def _ticket_tuple(ticket):
 	"""Create a tuple for easy comparison from fail ticket
 	"""
@@ -106,6 +109,7 @@ def _ticket_tuple(ticket):
 	ip = ticket.getIP()
 	matches = ticket.getMatches()
 	return (ip, attempts, date, matches)
+
 
 def _assert_correct_last_attempt(utest, filter_, output, count=None):
 	"""Additional helper to wrap most common test case
@@ -119,6 +123,7 @@ def _assert_correct_last_attempt(utest, filter_, output, count=None):
 		found = _ticket_tuple(filter_.failManager.toBan())
 
 	_assert_equal_entries(utest, found, output, count)
+
 
 def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line=""):
 	"""Copy lines from one file to another (which might be already open)
@@ -156,6 +161,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	time.sleep(0.1)
 	return fout
 
+
 def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # pragma: systemd no cover
 	"""Copy lines from one file to systemd journal
 
@@ -184,6 +190,7 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 		# Opened earlier, therefore must close it
 		fin.close()
 
+
 #
 #  Actual tests
 #
@@ -208,6 +215,7 @@ class BasicFilter(unittest.TestCase):
 		self.assertEqual(self.filter.getDatePattern(),
 			("^%Y-%m-%d-%H%M%S.%f %z",
 			"^Year-Month-Day-24hourMinuteSecond.Microseconds Zone offset"))
+
 
 class IgnoreIP(LogCaptureTestCase):
 
@@ -276,6 +284,7 @@ class IgnoreIP(LogCaptureTestCase):
 		self.filter.logIgnoreIp("example.com", False, ignore_source="NOT_LOGGED")
 		self.assertFalse(self._is_logged("[%s] Ignore %s by %s" % (self.jail.name, "example.com", "NOT_LOGGED")))
 
+
 class IgnoreIPDNS(IgnoreIP):
 
 	def testIgnoreIPDNSOK(self):
@@ -288,6 +297,7 @@ class IgnoreIPDNS(IgnoreIP):
 		self.assertFalse(self.filter.inIgnoreIPList("127.177.50.10"))
 		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.11"))
 		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.13"))
+
 
 class LogFile(LogCaptureTestCase):
 
@@ -302,6 +312,7 @@ class LogFile(LogCaptureTestCase):
 	def testMissingLogFiles(self):
 		self.filter = FilterPoll(None)
 		self.assertRaises(IOError, self.filter.addLogPath, LogFile.MISSING)
+
 
 class LogFileFilterPoll(unittest.TestCase):
 
@@ -475,6 +486,7 @@ def get_monitor_failures_testcase(Filter_):
 
 	class MonitorFailures(unittest.TestCase):
 		count = 0
+
 		def setUp(self):
 			"""Call before every test case."""
 			setUpMyTime()
@@ -492,7 +504,6 @@ def get_monitor_failures_testcase(Filter_):
 			# we have initial time-stamp difference to trigger "actions"
 			self._sleep_4_poll()
 			#print "D: started filter %s" % self.filter
-
 
 		def tearDown(self):
 			tearDownMyTime()
@@ -531,7 +542,6 @@ def get_monitor_failures_testcase(Filter_):
 		def assert_correct_last_attempt(self, failures, count=None):
 			self.assertTrue(self.isFilled(20)) # give Filter a chance to react
 			_assert_correct_last_attempt(self, self.jail, failures, count=count)
-
 
 		def test_grow_file(self):
 			# suck in lines from this sample log file
@@ -576,7 +586,6 @@ def get_monitor_failures_testcase(Filter_):
 												  skip=3, mode='w')
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 
-
 		def test_move_file(self):
 			# if we move file into a new location while it has been open already
 			self.file.close()
@@ -600,7 +609,6 @@ def get_monitor_failures_testcase(Filter_):
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
-
 
 		def _test_move_into_file(self, interim_kill=False):
 			# if we move a new file into the location of an old (monitored) file
@@ -627,7 +635,6 @@ def get_monitor_failures_testcase(Filter_):
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 9)
 
-
 		def test_move_into_file(self):
 			self._test_move_into_file(interim_kill=False)
 
@@ -635,7 +642,6 @@ def get_monitor_failures_testcase(Filter_):
 			# exactly as above test + remove file explicitly
 			# to test against possible drop-out of the file from monitoring
 		    self._test_move_into_file(interim_kill=True)
-
 
 		def test_new_bogus_file(self):
 			# to make sure that watching whole directory does not effect
@@ -648,7 +654,6 @@ def get_monitor_failures_testcase(Filter_):
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 			_killfile(None, self.name + '.bak2')
-
 
 		def test_delLogPath(self):
 			# Smoke test for removing of the path from being watched
@@ -680,6 +685,7 @@ def get_monitor_failures_testcase(Filter_):
 	MonitorFailures.__name__ = "MonitorFailures<%s>(%s)" \
 			  % (Filter_.__name__, testclass_name) # 'tempfile')
 	return MonitorFailures
+
 
 def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 	"""Generator of TestCase's for journal based filters/backends
@@ -804,6 +810,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 
 	return MonitorJournalFailures
 
+
 class GetFailures(unittest.TestCase):
 
 	FILENAME_01 = os.path.join(TEST_FILES_DIR, "testcase01.log")
@@ -862,7 +869,6 @@ class GetFailures(unittest.TestCase):
 		self.testGetFailures01(filename=fname)
 		_killfile(fout, fname)
 
-
 	def testGetFailures02(self):
 		output = ('141.3.81.106', 4, 1124013539.0,
 				  [u'Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2'
@@ -920,8 +926,6 @@ class GetFailures(unittest.TestCase):
 			filter_.addFailRegex("Failed .* from <HOST>")
 			filter_.getFailures(GetFailures.FILENAME_USEDNS)
 			_assert_correct_last_attempt(self, filter_, output)
-
-
 
 	def testGetFailuresMultiRegex(self):
 		output = ('141.3.81.106', 8, 1124013541.0)
@@ -996,6 +1000,7 @@ class GetFailures(unittest.TestCase):
 				break
 		self.assertEqual(sorted(foundList), sorted(output))
 
+
 class DNSUtilsTests(unittest.TestCase):
 
 	def testUseDns(self):
@@ -1042,6 +1047,7 @@ class DNSUtilsTests(unittest.TestCase):
 	def testBin2addr(self):
 		res = DNSUtils.bin2addr(167772160L)
 		self.assertEqual(res, '10.0.0.0')
+
 
 class JailTests(unittest.TestCase):
 

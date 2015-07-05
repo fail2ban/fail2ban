@@ -33,6 +33,7 @@ from .. import version
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class Transmitter:
 	
 	##

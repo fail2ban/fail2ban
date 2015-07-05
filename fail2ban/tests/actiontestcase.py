@@ -30,6 +30,7 @@ from ..server.action import CommandAction, CallingMap
 
 from .utils import LogCaptureTestCase
 
+
 class CommandActionTest(LogCaptureTestCase):
 
 	def setUp(self):
@@ -109,7 +110,6 @@ class CommandActionTest(LogCaptureTestCase):
 			self.__action.replaceTag("<ipjailmatches>",
 				{'ipjailmatches': "some >char< should \< be[ escap}ed&\n"}),
 			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\n")
-
 
 		# Recursive
 		aInfo["ABC"] = "<xyz>"

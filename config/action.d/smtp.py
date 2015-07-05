@@ -68,6 +68,7 @@ Matches for %(ip)s for jail %(jailname)s:
 %(ipjailmatches)s
 """
 
+
 class SMTPAction(ActionBase):
 	"""Fail2Ban action which sends emails to inform on jail starting,
 	stopping and bans.

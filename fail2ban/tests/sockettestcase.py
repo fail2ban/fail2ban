@@ -33,6 +33,7 @@ import unittest
 from ..server.asyncserver import AsyncServer, AsyncServerException
 from ..client.csocket import CSocket
 
+
 class Socket(unittest.TestCase):
 
 	def setUp(self):

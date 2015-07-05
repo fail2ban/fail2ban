@@ -45,6 +45,7 @@ else:
 	# python 2.x, string type is equivalent to bytes.
 	EMPTY_BYTES = ""
 
+
 ##
 # Request handler class.
 #
@@ -92,6 +93,7 @@ class RequestHandler(asynchat.async_chat):
 		logSys.error(traceback.format_exc().splitlines())
 		self.close()
 		
+
 ##
 # Asynchronous server class.
 #
@@ -186,6 +188,7 @@ class AsyncServer(asyncore.dispatcher):
 		fd = sock.fileno()
 		flags = fcntl.fcntl(fd, fcntl.F_GETFD)
 		fcntl.fcntl(fd, fcntl.F_SETFD, flags|fcntl.FD_CLOEXEC)
+
 
 ##
 # AsyncServerException is used to wrap communication exceptions.

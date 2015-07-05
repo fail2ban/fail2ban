@@ -32,6 +32,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class Jail:
 	"""Fail2Ban jail, which manages a filter and associated actions.
 
@@ -115,7 +116,6 @@ class Jail:
 			"Failed to initialize any backend for Jail %r" % self.name)
 		raise RuntimeError(
 			"Failed to initialize any backend for Jail %r" % self.name)
-
 
 	def _initPolling(self):
 		from filterpoll import FilterPoll

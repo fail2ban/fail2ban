@@ -42,6 +42,7 @@ from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
+
 class DatabaseTest(LogCaptureTestCase):
 
 	def setUp(self):
@@ -316,7 +317,6 @@ class DatabaseTest(LogCaptureTestCase):
 		self.jail.putFailTicket(ticket)
 		actions._Actions__checkBan()
 		self.assertTrue(self._is_logged("ban ainfo %s, %s, %s, %s" % (True, True, True, True)))
-
 
 	def testPurge(self):
 		if Fail2BanDb is None: # pragma: no cover

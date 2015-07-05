@@ -38,6 +38,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 ##
 # Journal reader class.
 #
@@ -60,7 +61,6 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		self.__matches = []
 		self.setDatePattern(None)
 		logSys.debug("Created FilterSystemd")
-
 
 	##
 	# Add a journal match filters from list structure

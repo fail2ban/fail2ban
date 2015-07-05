@@ -67,6 +67,7 @@ logLevel = 7
 
 __all__ = ['SafeConfigParserWithIncludes']
 
+
 class SafeConfigParserWithIncludes(SafeConfigParser):
 	"""
 	Class adds functionality to SafeConfigParser to handle included
