@@ -1,29 +1,47 @@
 # vim ft=yaml
 # travis-ci.org definition for Fail2Ban build
+# https://travis-ci.org/fail2ban/fail2ban/
 language: python
 python:
-  - "2.6"
-  - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
-#  - "pypy" # disabled for now due to frequent unreproducable failures # gh-1089
-  - "pypy3"
+  - 2.6
+  - 2.7
+  - pypy
+  - 3.2
+  - 3.3
+  - 3.4
+  - pypy3
 before_install:
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then travis_retry sudo apt-get update -qq; fi
+  - travis_retry sudo apt-get update -qq
 install:
-  - travis_retry pip install pyinotify
+  # Install Python packages we'll use later
+  #   coverage
+  - travis_retry pip install coverage
+  #   coveralls
+  - travis_retry pip install coveralls
+  #   dnspython or dnspython3
   - if [[ $TRAVIS_PYTHON_VERSION == 2* || $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then travis_retry pip install dnspython; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 3* || $TRAVIS_PYTHON_VERSION == 'pypy3' ]]; then travis_retry pip install dnspython3; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then travis_retry sudo apt-get install -qq python-gamin; cp /usr/share/pyshared/gamin.py /usr/lib/pyshared/python2.7/_gamin.so $VIRTUAL_ENV/lib/python2.7/site-packages/; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then cd ..; travis_retry pip install -q coveralls; cd -; fi
-  # overcome buggy pypy
-  - if [[ $TRAVIS_PYTHON_VERSION == pypy ]] ; then dpkg --compare-versions $(pypy --version 2>&1 | awk '/PyPy/{print $2;}') ge 2.5.1 || { d=$PWD; cd /tmp; wget --no-check-certificate https://bitbucket.org/pypy/pypy/downloads/pypy-2.5.1-linux64.tar.bz2; tar -xjvf pypy*bz2; cd pypy-*/bin/; export PATH=$PWD:$PATH; cd $d; } ; fi
+  #   pyinotify
+  - travis_retry pip install pyinotify
+  # Install gamin manually (not in PyPI) - travis-ci system Python is 2.7
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then travis_retry sudo apt-get install -qq python-gamin && cp /usr/share/pyshared/gamin.py /usr/lib/pyshared/python2.7/_gamin.so $VIRTUAL_ENV/lib/python2.7/site-packages/; fi
+before_script:
+  # TODO: Rename .travis_coveragerc to .coveragerc in repo?
+  - cp -v .travis_coveragerc .coveragerc
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coverage run --rcfile=.travis_coveragerc setup.py test; else python setup.py test; fi
-# test installation
+  - coverage run setup.py test
   - sudo python setup.py install
 after_success:
-# Coverage config file must be .coveragerc for coveralls
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then cp -v .travis_coveragerc .coveragerc; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coveralls; fi
+  - coveralls
+matrix:
+  fast_finish: true
+# Might be worth looking into
+#notifications:
+#  email: true
+#  irc:
+#    channels: "irc.freenode.org#fail2ban"
+#    template:
+#      - "%{repository}@%{branch}: %{message} (%{build_url})"
+#    on_success: change
+#    on_failure: change
+#    skip_join: true
