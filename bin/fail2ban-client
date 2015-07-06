@@ -171,13 +171,33 @@ class Fail2banClient:
 					streamRet = False
 			except socket.error:
 				if showRet:
-					logSys.error("Unable to contact server. Is it running?")
+					self.__logSocketError()
 				return False
 			except Exception, e:
 				if showRet:
 					logSys.error(e)
 				return False
 		return streamRet
+
+	def __logSocketError(self):
+		try:
+			if os.access(self.__conf["socket"], os.F_OK):
+				# This doesn't check if path is a socket,
+				#  but socket.error should be raised
+				if os.access(self.__conf["socket"], os.W_OK):
+					# Permissions look good, but socket.error was raised
+					logSys.error("Unable to contact server. Is it running?")
+				else:
+					logSys.error("Permission denied to socket: %s,"
+								 " (you must be root)", self.__conf["socket"])
+			else:
+				logSys.error("Failed to access socket path: %s."
+							 " Is fail2ban running?",
+							 self.__conf["socket"])
+		except Exception as e:
+			logSys.error("Exception while checking socket access: %s",
+						 self.__conf["socket"])
+			logSys.error(e)
 
 	##
 	# Process a command line.
