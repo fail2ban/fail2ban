@@ -36,6 +36,7 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
      multiple CF accounts, and jail.conf got new compound action
      definition action_cf_mwl to submit cloudflare report.
    * Check access to socket for more detailed logging on error (gh-595)
+   * fail2ban-testcases man page
 
 
 ver. 0.9.2 (2015/04/29) - better-quick-now-than-later
