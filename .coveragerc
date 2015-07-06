@@ -5,6 +5,4 @@ source =
     config
     fail2ban
 omit =
-    /usr/*
-    /home/travis/virtualenv/*
     fail2ban/server/filtersystemd.py
