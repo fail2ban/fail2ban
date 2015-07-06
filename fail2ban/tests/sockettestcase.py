@@ -25,11 +25,13 @@ __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 import os
+import sys
 import tempfile
 import threading
 import time
 import unittest
 
+from .. import protocol
 from ..server.asyncserver import AsyncServer, AsyncServerException
 from ..client.csocket import CSocket
 
@@ -88,3 +90,17 @@ class Socket(unittest.TestCase):
 		self.server.stop()
 		serverThread.join(1)
 		self.assertFalse(os.path.exists(self.sock_name))
+
+
+class ClientMisc(unittest.TestCase):
+
+	def testPrintFormattedAndWiki(self):
+		# redirect stdout to devnull
+		saved_stdout = sys.stdout
+		sys.stdout = open(os.devnull, 'w')
+		try:
+			protocol.printFormatted()
+			protocol.printWiki()
+		finally:
+			# restore stdout
+			sys.stdout = saved_stdout
