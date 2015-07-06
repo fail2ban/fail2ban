@@ -153,30 +153,36 @@ class Fail2banClient:
 		return self.__processCmd([["ping"]], False)
 
 	def __processCmd(self, cmd, showRet = True):
-		beautifier = Beautifier()
-		streamRet = True
-		for c in cmd:
-			beautifier.setInputCmd(c)
-			try:
-				client = CSocket(self.__conf["socket"])
-				ret = client.send(c)
-				if ret[0] == 0:
-					logSys.debug("OK : " + `ret[1]`)
+		client = None
+		try:
+			beautifier = Beautifier()
+			streamRet = True
+			for c in cmd:
+				beautifier.setInputCmd(c)
+				try:
+					if not client:
+						client = CSocket(self.__conf["socket"])
+					ret = client.send(c)
+					if ret[0] == 0:
+						logSys.debug("OK : " + `ret[1]`)
+						if showRet:
+							print beautifier.beautify(ret[1])
+					else:
+						logSys.error("NOK: " + `ret[1].args`)
+						if showRet:
+							print beautifier.beautifyError(ret[1])
+						streamRet = False
+				except socket.error:
 					if showRet:
-						print beautifier.beautify(ret[1])
-				else:
-					logSys.error("NOK: " + `ret[1].args`)
+						self.__logSocketError()
+					return False
+				except Exception, e:
 					if showRet:
-						print beautifier.beautifyError(ret[1])
-					streamRet = False
-			except socket.error:
-				if showRet:
-					self.__logSocketError()
-				return False
-			except Exception, e:
-				if showRet:
-					logSys.error(e)
-				return False
+						logSys.error(e)
+					return False
+		finally:
+			if client:
+				client.close()
 		return streamRet
 
 	def __logSocketError(self):

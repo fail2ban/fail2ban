@@ -38,14 +38,6 @@ from ..helpers import getLogger,formatExceptionInfo
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
-if sys.version_info >= (3,):
-	# b"" causes SyntaxError in python <= 2.5, so below implements equivalent
-	EMPTY_BYTES = bytes("", encoding="ascii")
-else:
-	# python 2.x, string type is equivalent to bytes.
-	EMPTY_BYTES = ""
-
-
 ##
 # Request handler class.
 #
@@ -54,10 +46,15 @@ else:
 
 class RequestHandler(asynchat.async_chat):
 	
+	# python 2.x, string type is equivalent to bytes.
+	EMPTY_BYTES = ""
+	END_STRING = "<F2B_END_COMMAND>"
+	CLOSE_STRING = "<F2B_CLOSE_COMMAND>"
 	if sys.version_info >= (3,):
-		END_STRING = bytes("<F2B_END_COMMAND>", encoding="ascii")
-	else:
-		END_STRING = "<F2B_END_COMMAND>"
+		# b"" causes SyntaxError in python <= 2.5, so below implements equivalent
+		EMPTY_BYTES = bytes(EMPTY_BYTES, encoding="ascii")
+		END_STRING = bytes(END_STRING, encoding="ascii")
+		CLOSE_STRING = bytes(CLOSE_STRING, encoding='ascii')
 
 	def __init__(self, conn, transmitter):
 		asynchat.async_chat.__init__(self, conn)
@@ -76,16 +73,22 @@ class RequestHandler(asynchat.async_chat):
 	# This method is called once we have a complete request.
 
 	def found_terminator(self):
+		# Pop whole buffer
+		buf = self.__buffer
+		self.__buffer = []		
 		# Joins the buffer items.
-		message = loads(EMPTY_BYTES.join(self.__buffer))
+		message = loads(RequestHandler.EMPTY_BYTES.join(buf))
+		# Close if close received
+		if message == RequestHandler.CLOSE_STRING:
+			# Closes the channel.
+			self.close_when_done()
+			return
 		# Gives the message to the transmitter.
 		message = self.__transmitter.proceed(message)
 		# Serializes the response.
 		message = dumps(message, HIGHEST_PROTOCOL)
 		# Sends the response to the client.
 		self.push(message + RequestHandler.END_STRING)
-		# Closes the channel.
-		self.close_when_done()
 		
 	def handle_error(self):
 		e1, e2 = formatExceptionInfo()

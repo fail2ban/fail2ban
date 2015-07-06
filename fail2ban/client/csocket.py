@@ -29,39 +29,45 @@ from pickle import dumps, loads, HIGHEST_PROTOCOL
 import socket
 import sys
 
-if sys.version_info >= (3,):
-	# b"" causes SyntaxError in python <= 2.5, so below implements equivalent
-	EMPTY_BYTES = bytes("", encoding="ascii")
-else:
-	# python 2.x, string type is equivalent to bytes.
-	EMPTY_BYTES = ""
-
-
 class CSocket:
 	
+	EMPTY_BYTES = ""
+	END_STRING = "<F2B_END_COMMAND>"
+	CLOSE_STRING = "<F2B_CLOSE_COMMAND>"
+	# python 2.x, string type is equivalent to bytes.
 	if sys.version_info >= (3,):
-		END_STRING = bytes("<F2B_END_COMMAND>", encoding='ascii')
-	else:
-		END_STRING = "<F2B_END_COMMAND>"
+		# b"" causes SyntaxError in python <= 2.5, so below implements equivalent
+		EMPTY_BYTES = bytes(EMPTY_BYTES, encoding="ascii")
+		END_STRING = bytes(END_STRING, encoding='ascii')
+		CLOSE_STRING = bytes(CLOSE_STRING, encoding='ascii')
 	
-	def __init__(self, sock = "/var/run/fail2ban/fail2ban.sock"):
+	def __init__(self, sock="/var/run/fail2ban/fail2ban.sock"):
 		# Create an INET, STREAMing socket
 		#self.csock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.__csock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 		#self.csock.connect(("localhost", 2222))
 		self.__csock.connect(sock)
+
+	def __del__(self):
+		self.close(False)
 	
 	def send(self, msg):
 		# Convert every list member to string
 		obj = dumps([str(m) for m in msg], HIGHEST_PROTOCOL)
 		self.__csock.send(obj + CSocket.END_STRING)
-		ret = self.receive(self.__csock)
+		return self.receive(self.__csock)
+
+	def close(self, sendEnd=True):
+		if not self.__csock:
+			return
+		if sendEnd:
+			self.__csock.sendall(CSocket.CLOSE_STRING + CSocket.END_STRING)
 		self.__csock.close()
-		return ret
+		self.__csock = None
 	
 	@staticmethod
 	def receive(sock):
-		msg = EMPTY_BYTES
+		msg = CSocket.EMPTY_BYTES
 		while msg.rfind(CSocket.END_STRING) == -1:
 			chunk = sock.recv(6)
 			if chunk == '':
