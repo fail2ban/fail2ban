@@ -29,6 +29,16 @@ import textwrap
 ##
 # Describes the protocol used to communicate with the server.
 
+class dotdict(dict):
+	def __getattr__(self, name):
+		return self[name]
+
+CSPROTO = dotdict({
+	"EMPTY":  b"",
+	"END":    b"<F2B_END_COMMAND>",
+	"CLOSE":  b"<F2B_CLOSE_COMMAND>"
+})
+
 protocol = [
 ['', "BASIC", ""],
 ["start", "starts the server and the jails"], 
