@@ -4,5 +4,8 @@ branch = True
 source =
     config
     fail2ban
-omit =
-    fail2ban/server/filtersystemd.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    pragma: systemd no cover
