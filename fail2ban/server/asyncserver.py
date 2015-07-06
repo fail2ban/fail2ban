@@ -33,6 +33,7 @@ import socket
 import sys
 import traceback
 
+from ..protocol import CSPROTO
 from ..helpers import getLogger,formatExceptionInfo
 
 # Gets the instance of the logger.
@@ -46,17 +47,12 @@ logSys = getLogger(__name__)
 
 class RequestHandler(asynchat.async_chat):
 	
-	# python 2.x, string type is equivalent to bytes.
-	EMPTY_BYTES = b""
-	END_STRING = b"<F2B_END_COMMAND>"
-	CLOSE_STRING = b"<F2B_CLOSE_COMMAND>"
-
 	def __init__(self, conn, transmitter):
 		asynchat.async_chat.__init__(self, conn)
 		self.__transmitter = transmitter
 		self.__buffer = []
 		# Sets the terminator.
-		self.set_terminator(RequestHandler.END_STRING)
+		self.set_terminator(CSPROTO.END)
 
 	def collect_incoming_data(self, data):
 		#logSys.debug("Received raw data: " + str(data))
@@ -72,9 +68,9 @@ class RequestHandler(asynchat.async_chat):
 		buf = self.__buffer
 		self.__buffer = []		
 		# Joins the buffer items.
-		message = loads(RequestHandler.EMPTY_BYTES.join(buf))
+		message = loads(CSPROTO.EMPTY.join(buf))
 		# Closes the channel if close was received
-		if message == RequestHandler.CLOSE_STRING:
+		if message == CSPROTO.CLOSE:
 			self.close_when_done()
 			return
 		# Gives the message to the transmitter.
@@ -82,7 +78,7 @@ class RequestHandler(asynchat.async_chat):
 		# Serializes the response.
 		message = dumps(message, HIGHEST_PROTOCOL)
 		# Sends the response to the client.
-		self.push(message + RequestHandler.END_STRING)
+		self.push(message + CSPROTO.END)
 		
 	def handle_error(self):
 		e1, e2 = formatExceptionInfo()

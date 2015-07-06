@@ -26,14 +26,11 @@ __license__ = "GPL"
 
 #from cPickle import dumps, loads, HIGHEST_PROTOCOL
 from pickle import dumps, loads, HIGHEST_PROTOCOL
+from ..protocol import CSPROTO
 import socket
 import sys
 
 class CSocket:
-	
-	EMPTY_BYTES = b""
-	END_STRING = b"<F2B_END_COMMAND>"
-	CLOSE_STRING = b"<F2B_CLOSE_COMMAND>"
 	
 	def __init__(self, sock="/var/run/fail2ban/fail2ban.sock"):
 		# Create an INET, STREAMing socket
@@ -48,21 +45,21 @@ class CSocket:
 	def send(self, msg):
 		# Convert every list member to string
 		obj = dumps([str(m) for m in msg], HIGHEST_PROTOCOL)
-		self.__csock.send(obj + CSocket.END_STRING)
+		self.__csock.send(obj + CSPROTO.END)
 		return self.receive(self.__csock)
 
 	def close(self, sendEnd=True):
 		if not self.__csock:
 			return
 		if sendEnd:
-			self.__csock.sendall(CSocket.CLOSE_STRING + CSocket.END_STRING)
+			self.__csock.sendall(CSPROTO.CLOSE + CSPROTO.END)
 		self.__csock.close()
 		self.__csock = None
 	
 	@staticmethod
 	def receive(sock):
-		msg = CSocket.EMPTY_BYTES
-		while msg.rfind(CSocket.END_STRING) == -1:
+		msg = CSPROTO.EMPTY
+		while msg.rfind(CSPROTO.END) == -1:
 			chunk = sock.recv(6)
 			if chunk == '':
 				raise RuntimeError("socket connection broken")
