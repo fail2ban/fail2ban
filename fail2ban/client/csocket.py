@@ -31,15 +31,9 @@ import sys
 
 class CSocket:
 	
-	EMPTY_BYTES = ""
-	END_STRING = "<F2B_END_COMMAND>"
-	CLOSE_STRING = "<F2B_CLOSE_COMMAND>"
-	# python 2.x, string type is equivalent to bytes.
-	if sys.version_info >= (3,):
-		# b"" causes SyntaxError in python <= 2.5, so below implements equivalent
-		EMPTY_BYTES = bytes(EMPTY_BYTES, encoding="ascii")
-		END_STRING = bytes(END_STRING, encoding='ascii')
-		CLOSE_STRING = bytes(CLOSE_STRING, encoding='ascii')
+	EMPTY_BYTES = b""
+	END_STRING = b"<F2B_END_COMMAND>"
+	CLOSE_STRING = b"<F2B_CLOSE_COMMAND>"
 	
 	def __init__(self, sock="/var/run/fail2ban/fail2ban.sock"):
 		# Create an INET, STREAMing socket

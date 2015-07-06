@@ -47,14 +47,9 @@ logSys = getLogger(__name__)
 class RequestHandler(asynchat.async_chat):
 	
 	# python 2.x, string type is equivalent to bytes.
-	EMPTY_BYTES = ""
-	END_STRING = "<F2B_END_COMMAND>"
-	CLOSE_STRING = "<F2B_CLOSE_COMMAND>"
-	if sys.version_info >= (3,):
-		# b"" causes SyntaxError in python <= 2.5, so below implements equivalent
-		EMPTY_BYTES = bytes(EMPTY_BYTES, encoding="ascii")
-		END_STRING = bytes(END_STRING, encoding="ascii")
-		CLOSE_STRING = bytes(CLOSE_STRING, encoding='ascii')
+	EMPTY_BYTES = b""
+	END_STRING = b"<F2B_END_COMMAND>"
+	CLOSE_STRING = b"<F2B_CLOSE_COMMAND>"
 
 	def __init__(self, conn, transmitter):
 		asynchat.async_chat.__init__(self, conn)
@@ -78,9 +73,8 @@ class RequestHandler(asynchat.async_chat):
 		self.__buffer = []		
 		# Joins the buffer items.
 		message = loads(RequestHandler.EMPTY_BYTES.join(buf))
-		# Close if close received
+		# Closes the channel if close was received
 		if message == RequestHandler.CLOSE_STRING:
-			# Closes the channel.
 			self.close_when_done()
 			return
 		# Gives the message to the transmitter.

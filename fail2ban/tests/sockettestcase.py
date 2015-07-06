@@ -63,6 +63,11 @@ class Socket(unittest.TestCase):
 		testMessage = ["A", "test", "message"]
 		self.assertEqual(client.send(testMessage), testMessage)
 
+		# test close message
+		client.close()
+		# 2nd close does nothing
+		client.close()
+
 		self.server.stop()
 		serverThread.join(1)
 		self.assertFalse(os.path.exists(self.sock_name))
