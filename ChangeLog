@@ -9,6 +9,10 @@ Fail2Ban: Changelog
 ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
 -----------
 
+- IMPORTANT incompatible changes:
+   * filter.d/roundcube-auth.conf
+     - Changed logpath to 'errors' log (was 'userlogins')
+
 - Fixes:
    * reload in interactive mode appends all the jails twice (gh-825)
    * reload server/jail failed if database used (but was not changed) and
@@ -17,6 +21,10 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
      Thanks Anton Shestakov
    * Fix fail2ban-regex not parsing journalmatch correctly from filter config
    * filter.d/asterisk.conf - fix security log support for Asterisk 12+
+   * filter.d/roundcube-auth.conf
+     - Updated regex to work with 'errors' log (1.0.5 and 1.1.1)
+     - Added regex to work with 'userlogins' log
+   * jail.conf: Changed default logpath for roundcube-auth
 
 - New Features:
    - New filters:
