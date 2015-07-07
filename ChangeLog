@@ -12,8 +12,6 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
 - IMPORTANT incompatible changes:
    * filter.d/roundcube-auth.conf
      - Changed logpath to 'errors' log (was 'userlogins')
-   * filter.d/apache-badbots.conf, filter.d/nginx-botsearch.conf - add
-     HEAD method verb
 
 - Fixes:
    * reload in interactive mode appends all the jails twice (gh-825)
@@ -41,6 +39,8 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
      definition action_cf_mwl to submit cloudflare report.
    * Check access to socket for more detailed logging on error (gh-595)
    * fail2ban-testcases man page
+   * filter.d/apache-badbots.conf, filter.d/nginx-botsearch.conf - add
+     HEAD method verb
 
 
 ver. 0.9.2 (2015/04/29) - better-quick-now-than-later
