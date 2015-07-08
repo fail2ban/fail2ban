@@ -65,14 +65,16 @@ class RequestHandler(asynchat.async_chat):
 
 	def found_terminator(self):
 		# Pop whole buffer
-		buf = self.__buffer
+		message = self.__buffer
 		self.__buffer = []		
 		# Joins the buffer items.
-		message = loads(CSPROTO.EMPTY.join(buf))
+		message = CSPROTO.EMPTY.join(message)
 		# Closes the channel if close was received
 		if message == CSPROTO.CLOSE:
 			self.close_when_done()
 			return
+		# Deserialize
+		message = loads(message)
 		# Gives the message to the transmitter.
 		message = self.__transmitter.proceed(message)
 		# Serializes the response.
