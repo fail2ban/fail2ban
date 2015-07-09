@@ -155,8 +155,10 @@ class TestsUtilsTest(unittest.TestCase):
 				# we must be calling it from setup or nosetests but using at least
 				# nose's core etc
 				self.assertTrue('>' in s, msg="no '>' in %r" % s)
-			else:
-				self.assertFalse('>' in s, msg="'>' present in %r" % s)  # There is only "fail2ban-testcases" in this case, no true traceback
+			elif not ('coverage' in s):
+				# There is only "fail2ban-testcases" in this case, no true traceback
+				self.assertFalse('>' in s, msg="'>' present in %r" % s)
+
 			self.assertTrue(':' in s, msg="no ':' in %r" % s)
 
 	def testFormatterWithTraceBack(self):
