@@ -16,7 +16,7 @@ before_install:
   - travis_retry sudo apt-get update -qq
   # Set this so sudo executes the correct python binary
   #   Anything not using sudo will already have the correct environment
-  - export PYTHON_CMD="$VIRTUAL_ENV/bin/python" && echo "PYTHON_CMD set to $PYTHON_CMD"
+  - export VENV_BIN="$VIRTUAL_ENV/bin" && echo "VENV_BIN set to $VENV_BIN"
 install:
   # Install Python packages / dependencies
   #   coverage
@@ -38,8 +38,8 @@ script:
   - if [[ "$F2B_PY_2" ]]; then coverage run setup.py test; fi
   # Coverage doesn't pick up setup.py test with python3, so run it directly
   - if [[ "$F2B_PY_3" ]]; then coverage run bin/fail2ban-testcases; fi
-  # Use $PYTHON_CMD (not python) or else sudo will always run the system's python (2.7)
-  - sudo $PYTHON_CMD setup.py install
+  # Use $VENV_BIN (not python) or else sudo will always run the system's python (2.7)
+  - sudo $VENV_BIN/pip install .
 after_success:
   - coveralls
 matrix:
