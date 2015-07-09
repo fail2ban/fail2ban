@@ -197,5 +197,5 @@ Add the following to the top of the ChangeLog::
 Alter the git shortlog command in the previous section to refer to the just
 released version.
 
-and adjust fail2ban/version.py to carry .dev suffix to signal
+and adjust fail2ban/version.py to carry .dev0 suffix to signal
 a version under development.
