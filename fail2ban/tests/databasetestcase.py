@@ -212,7 +212,7 @@ class DatabaseTest(LogCaptureTestCase):
 	def testDelBan(self):
 		self.testAddBan()
 		ticket = self.db.getBans(jail=self.jail)[0]
-		self.db.delBan(self.jail, ticket)
+		self.db.delBan(self.jail, ticket.getIP())
 		self.assertEqual(len(self.db.getBans(jail=self.jail)), 0)
 
 	def testGetBansWithTime(self):

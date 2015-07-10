@@ -418,19 +418,20 @@ class Fail2BanDb(object):
 				 "failures": ticket.getAttempt()}))
 
 	@commitandrollback
-	def delBan(self, cur, jail, ticket):
+	def delBan(self, cur, jail, ip):
 		"""Delete a ban from the database.
 
 		Parameters
 		----------
 		jail : Jail
 			Jail in which the ban has occurred.
-		ticket : BanTicket
-			Ticket of the ban to be removed.
+		ip : str
+			IP to be removed.
 		"""
+		queryArgs = (jail.name, ip);
 		cur.execute(
-			"DELETE FROM bans WHERE jail = ? AND ip = ? AND timeofban = ?",
-			(jail.name, ticket.getIP(), int(round(ticket.getTime()))))
+			"DELETE FROM bans WHERE jail = ? AND ip = ?", 
+			queryArgs);
 
 	@commitandrollback
 	def _getBans(self, cur, jail=None, bantime=None, ip=None):
