@@ -34,6 +34,9 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
 - New Features:
    * New filters:
      - froxlor-auth  Thanks Joern Muehlencord
+   * New type of operation:
+     - pass2allow: use fail2ban for "knocking", opening a closed port
+       (apache-pass filter, allow-iptables-multiport action)
 
 - Enhancements:
    * action.d/cloudflare.conf - improved documentation on how to allow
