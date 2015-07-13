@@ -26,9 +26,10 @@ __license__ = "GPL"
 
 import sys
 from threading import Thread
-from abc import abstractproperty, abstractmethod
+from abc import abstractmethod
 
 from ..helpers import excepthook
+
 
 class JailThread(Thread):
 	"""Abstract class for threading elements in Fail2Ban.
@@ -59,6 +60,7 @@ class JailThread(Thread):
 		# excepthook workaround for threads, derived from:
 		# http://bugs.python.org/issue1230540#msg91244
 		run = self.run
+
 		def run_with_except_hook(*args, **kwargs):
 			try:
 				run(*args, **kwargs)
@@ -66,8 +68,8 @@ class JailThread(Thread):
 				excepthook(*sys.exc_info())
 		self.run = run_with_except_hook
 
-	@abstractproperty
-	def status(self): # pragma: no cover - abstract
+	@abstractmethod
+	def status(self, flavor="basic"): # pragma: no cover - abstract
 		"""Abstract - Should provide status information.
 		"""
 		pass

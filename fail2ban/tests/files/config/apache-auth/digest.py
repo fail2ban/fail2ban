@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/python
 import requests
 
 try:
@@ -9,6 +9,7 @@ except ImportError: # pragma: no cover
     # elderly Pythons, import from md5
     import md5
     md5sum = md5.new
+
 
 def auth(v):
 
@@ -43,6 +44,7 @@ def auth(v):
     print(p.method, p.url, p.headers)
     s =  requests.Session()
     return s.send(p)
+
 
 def preauth():
     r = requests.get(host + url)

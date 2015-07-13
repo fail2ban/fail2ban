@@ -1,0 +1,2 @@
+# failJSON: { "time": "2004-12-30T18:19:15", "match": true , "host": "93.184.216.34" }
+Dec 30 18:19:15 xxx postfix/smtpd[1574]: NOQUEUE: reject: RCPT from badguy.example.com[93.184.216.34]: 454 4.7.1 Service unavailable; Client host [93.184.216.34] blocked using rbl.example.com; http://www.example.com/query?ip=93.184.216.34; from=<spammer@example.com> to=<goodguy@example.com> proto=ESMTP helo=<badguy.example.com>

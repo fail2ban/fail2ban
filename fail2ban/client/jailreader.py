@@ -24,8 +24,10 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import re, glob, os.path
+import glob
 import json
+import os.path
+import re
 
 from .configreader import ConfigReaderUnshared, ConfigReader
 from .filterreader import FilterReader
@@ -34,6 +36,7 @@ from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
+
 
 class JailReader(ConfigReader):
 	

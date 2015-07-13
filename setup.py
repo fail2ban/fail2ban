@@ -40,7 +40,8 @@ except ImportError:
 	from distutils.command.build_scripts import build_scripts
 import os
 from os.path import isfile, join, isdir
-import sys, warnings
+import sys
+import warnings
 from glob import glob
 
 if setuptools and "test" in sys.argv:
@@ -76,6 +77,12 @@ if setuptools:
 	}
 else:
 	setup_extra = {}
+
+data_files_extra = []
+if os.path.exists('/var/run'):
+	# if we are on the system with /var/run -- we are to use it for having fail2ban/
+	# directory there for socket file etc
+	data_files_extra += [('/var/run/fail2ban', '')]
 
 # Get version number, avoiding importing fail2ban.
 # This is due to tests not functioning for python3 as 2to3 takes place later
@@ -124,6 +131,9 @@ setup(
 		('/etc/fail2ban/filter.d',
 			glob("config/filter.d/*.conf")
 		),
+		('/etc/fail2ban/filter.d/ignorecommands',
+			glob("config/filter.d/ignorecommands/*")
+		),
 		('/etc/fail2ban/action.d',
 			glob("config/action.d/*.conf") +
 			glob("config/action.d/*.py")
@@ -141,7 +151,7 @@ setup(
 			['README.md', 'README.Solaris', 'DEVELOP', 'FILTERS',
 			 'doc/run-rootless.txt']
 		)
-	],
+	] + data_files_extra,
 	**setup_extra
 )
 

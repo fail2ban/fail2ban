@@ -31,6 +31,7 @@ logSys = getLogger(__name__)
 
 logLevel = 6
 
+
 class DateDetector(object):
 	"""Manages one or more date templates to find a date within a log line.
 

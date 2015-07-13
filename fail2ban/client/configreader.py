@@ -24,7 +24,8 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import glob, os
+import glob
+import os
 from ConfigParser import NoOptionError, NoSectionError
 
 from .configparserinc import SafeConfigParserWithIncludes, logLevel
@@ -32,6 +33,7 @@ from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
+
 
 class ConfigReader():
 	"""Generic config reader class.
@@ -135,6 +137,7 @@ class ConfigReader():
 			return self._cfg.getOptions(*args, **kwargs)
 		return {}
 
+
 class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	"""Unshared config reader (previously ConfigReader).
 
@@ -186,7 +189,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 			if config_files_read:
 				return True
 			logSys.error("Found no accessible config files for %r under %s",
-						 ( filename, self.getBaseDir() ))
+						 filename, self.getBaseDir())
 			return False
 		else:
 			logSys.error("Found no accessible config files for %r " % filename
@@ -232,9 +235,10 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 					logSys.log(logLevel, "Non essential option '%s' not defined in '%s'.", option[1], sec)
 			except ValueError:
 				logSys.warning("Wrong value for '" + option[1] + "' in '" + sec +
-							"'. Using default one: '" + `option[2]` + "'")
+							"'. Using default one: '" + repr(option[2]) + "'")
 				values[option[1]] = option[2]
 		return values
+
 
 class DefinitionInitConfigReader(ConfigReader):
 	"""Config reader for files with options grouped in [Definition] and
@@ -281,7 +285,7 @@ class DefinitionInitConfigReader(ConfigReader):
 		
 		if self.has_section("Init"):
 			for opt in self.options("Init"):
-				if not self._initOpts.has_key(opt):
+				if not opt in self._initOpts:
 					self._initOpts[opt] = self.get("Init", opt)
 	
 	def convert(self):

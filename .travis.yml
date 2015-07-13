@@ -1,24 +1,56 @@
 # vim ft=yaml
 # travis-ci.org definition for Fail2Ban build
+# https://travis-ci.org/fail2ban/fail2ban/
 language: python
 python:
-  - "2.6"
-  - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
-  - "pypy"
+  - 2.6
+  - 2.7
+  - pypy
+  - 3.2
+  - 3.3
+  - 3.4
+  - pypy3
 before_install:
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then sudo apt-get update -qq; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2* || $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then export F2B_PY_2=true && echo "Set F2B_PY_2"; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 3* || $TRAVIS_PYTHON_VERSION == 'pypy3' ]]; then export F2B_PY_3=true && echo "Set F2B_PY_3"; fi
+  - travis_retry sudo apt-get update -qq
+  # Set this so sudo executes the correct python binary
+  #   Anything not using sudo will already have the correct environment
+  - export VENV_BIN="$VIRTUAL_ENV/bin" && echo "VENV_BIN set to $VENV_BIN"
 install:
-  - pip install pyinotify
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then sudo apt-get install -qq python-gamin; cp /usr/share/pyshared/gamin.py /usr/lib/pyshared/python2.7/_gamin.so $VIRTUAL_ENV/lib/python2.7/site-packages/; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then cd ..; pip install -q coveralls; cd -; fi
+  # Install Python packages / dependencies
+  #   coverage
+  - travis_retry pip install coverage
+  #   coveralls
+  - travis_retry pip install coveralls
+  #   dnspython or dnspython3
+  - if [[ "$F2B_PY_2" ]]; then travis_retry pip install dnspython; fi
+  - if [[ "$F2B_PY_3" ]]; then travis_retry pip install dnspython3; fi
+  #   gamin - install manually (not in PyPI) - travis-ci system Python is 2.7
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then travis_retry sudo apt-get install -qq python-gamin && cp /usr/share/pyshared/gamin.py /usr/lib/pyshared/python2.7/_gamin.so $VIRTUAL_ENV/lib/python2.7/site-packages/; fi
+  #   pyinotify
+  - travis_retry pip install pyinotify
+before_script:
+  # Manually execute 2to3 for now
+  - if [[ "$F2B_PY_3" ]]; then ./fail2ban-2to3; fi
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coverage run --rcfile=.travis_coveragerc setup.py test; else python setup.py test; fi
-# test installation
-  - sudo python setup.py install
+  # Keep the legacy setup.py test approach of checking coverage for python2
+  - if [[ "$F2B_PY_2" ]]; then coverage run setup.py test; fi
+  # Coverage doesn't pick up setup.py test with python3, so run it directly
+  - if [[ "$F2B_PY_3" ]]; then coverage run bin/fail2ban-testcases; fi
+  # Use $VENV_BIN (not python) or else sudo will always run the system's python (2.7)
+  - sudo $VENV_BIN/pip install .
 after_success:
-# Coverage config file must be .coveragerc for coveralls
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then cp -v .travis_coveragerc .coveragerc; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then coveralls; fi
+  - coveralls
+matrix:
+  fast_finish: true
+# Might be worth looking into
+#notifications:
+#  email: true
+#  irc:
+#    channels: "irc.freenode.org#fail2ban"
+#    template:
+#      - "%{repository}@%{branch}: %{message} (%{build_url})"
+#    on_success: change
+#    on_failure: change
+#    skip_join: true

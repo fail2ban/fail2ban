@@ -37,6 +37,7 @@ Below derived from:
 logging.NOTICE = logging.INFO + 5
 logging.addLevelName(logging.NOTICE, 'NOTICE')
 
+
 # define a new logger function for notice
 # this is exactly like existing info, critical, debug...etc
 def _Logger_notice(self, msg, *args, **kwargs):
@@ -53,6 +54,7 @@ def _Logger_notice(self, msg, *args, **kwargs):
 
 logging.Logger.notice = _Logger_notice
 
+
 # define a new root level notice function
 # this is exactly like existing info, critical, debug...etc
 def _root_notice(msg, *args, **kwargs):
@@ -68,3 +70,7 @@ logging.notice = _root_notice
 
 # add NOTICE to the priority map of all the levels
 logging.handlers.SysLogHandler.priority_map['NOTICE'] = 'notice'
+
+from time import strptime
+# strptime thread safety hack-around - http://bugs.python.org/issue7980
+strptime("2012", "%Y")

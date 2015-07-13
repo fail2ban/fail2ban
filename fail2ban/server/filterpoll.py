@@ -24,7 +24,8 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier; 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import time, os
+import os
+import time
 
 from .failmanager import FailManagerEmpty
 from .filter import FileFilter
@@ -33,6 +34,7 @@ from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
+
 
 ##
 # Log reader class.

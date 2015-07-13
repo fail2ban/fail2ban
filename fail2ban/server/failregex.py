@@ -21,7 +21,10 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import re, sre_constants, sys
+import re
+import sre_constants
+import sys
+
 
 ##
 # Regular expression class.
@@ -55,6 +58,7 @@ class Regex:
 		except sre_constants.error:
 			raise RegexException("Unable to compile regular expression '%s'" %
 								 regex)
+
 	def __str__(self):
 		return "%s(%r)" % (self.__class__.__name__, self._regex)
 	##
@@ -90,7 +94,6 @@ class Regex:
 					"\n", self._matchCache.end() - 1) + 1
 			except ValueError:
 				self._matchLineEnd = len(self._matchCache.string)
-
 
 			lineCount1 = self._matchCache.string.count(
 				"\n", 0, self._matchLineStart)
@@ -181,6 +184,7 @@ class Regex:
 			return []
 		else:
 			return ["".join(line) for line in self._matchedTupleLines]
+
 
 ##
 # Exception dedicated to the class Regex.

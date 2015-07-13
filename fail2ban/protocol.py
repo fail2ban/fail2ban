@@ -29,6 +29,16 @@ import textwrap
 ##
 # Describes the protocol used to communicate with the server.
 
+class dotdict(dict):
+	def __getattr__(self, name):
+		return self[name]
+
+CSPROTO = dotdict({
+	"EMPTY":  b"",
+	"END":    b"<F2B_END_COMMAND>",
+	"CLOSE":  b"<F2B_CLOSE_COMMAND>"
+})
+
 protocol = [
 ['', "BASIC", ""],
 ["start", "starts the server and the jails"], 
@@ -44,6 +54,8 @@ protocol = [
 ["get loglevel", "gets the logging level"], 
 ["set logtarget <TARGET>", "sets logging target to <TARGET>. Can be STDOUT, STDERR, SYSLOG or a file"], 
 ["get logtarget", "gets logging target"], 
+["set syslogsocket auto|<SOCKET>", "sets the syslog socket path to auto or <SOCKET>. Only used if logtarget is SYSLOG"],
+["get syslogsocket", "gets syslog socket path"],
 ["flushlogs", "flushes the logtarget if a file and reopens it. For log rotation."], 
 ['', "DATABASE", ""],
 ["set dbfile <FILE>", "set the location of fail2ban persistent datastore. Set to \"None\" to disable"], 
@@ -54,7 +66,7 @@ protocol = [
 ["add <JAIL> <BACKEND>", "creates <JAIL> using <BACKEND>"], 
 ["start <JAIL>", "starts the jail <JAIL>"], 
 ["stop <JAIL>", "stops the jail <JAIL>. The jail is removed"], 
-["status <JAIL>", "gets the current status of <JAIL>"],
+["status <JAIL> [FLAVOR]", "gets the current status of <JAIL>, with optional flavor or extended info"],
 ['', "JAIL CONFIGURATION", ""],
 ["set <JAIL> idle on|off", "sets the idle state of <JAIL>"], 
 ["set <JAIL> addignoreip <IP>", "adds <IP> to the ignore list of <JAIL>"], 
@@ -117,6 +129,7 @@ protocol = [
 ["get <JAIL> action <ACT> <PROPERTY>", "gets the value of <PROPERTY> for the action <ACT> for <JAIL>"],
 ]
 
+
 ##
 # Prints the protocol in a "man" format. This is used for the
 # "-h" output of fail2ban-client.
@@ -141,6 +154,7 @@ def printFormatted():
 				line = ' ' * (INDENT + MARGIN) + n.strip()
 			print line
 
+
 ##
 # Prints the protocol in a "mediawiki" format.
 
@@ -156,6 +170,7 @@ def printWiki():
 			print "|-"
 			print "| <span style=\"white-space:nowrap;\"><tt>" + m[0] + "</tt></span> || || " + m[1]
 	print "|}"
+
 
 def __printWikiHeader(section, desc):
 	print

@@ -35,6 +35,7 @@ else:
 from fail2ban.server.actions import ActionBase
 from fail2ban.version import version as f2bVersion
 
+
 class BadIPsAction(ActionBase):
 	"""Fail2Ban action which reports bans to badips.com, and also
 	blacklist bad IPs listed on badips.com by using another action's
@@ -111,6 +112,8 @@ class BadIPsAction(ActionBase):
 		------
 		HTTPError
 			Any issues with badips.com request.
+		ValueError
+			If badips.com response didn't contain necessary information
 		"""
 		try:
 			response = urlopen(
@@ -122,7 +125,13 @@ class BadIPsAction(ActionBase):
 				messages['err'])
 			raise
 		else:
-			categories = json.loads(response.read().decode('utf-8'))['categories']
+			response_json = json.loads(response.read().decode('utf-8'))
+			if not 'categories' in response_json:
+				err = "badips.com response lacked categories specification. Response was: %s" \
+				  % (response_json,)
+				self._logSys.error(err)
+				raise ValueError(err)
+			categories = response_json['categories']
 			categories_names = set(
 				value['Name'] for value in categories)
 			if incParents:

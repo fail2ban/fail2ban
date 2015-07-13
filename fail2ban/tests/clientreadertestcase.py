@@ -21,7 +21,13 @@ __author__ = "Cyril Jaquier, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import os, glob, shutil, tempfile, unittest, re, logging
+import glob
+import logging
+import os
+import re
+import shutil
+import tempfile
+import unittest
 from ..client.configreader import ConfigReaderUnshared
 from ..client import configparserinc
 from ..client.jailreader import JailReader
@@ -38,6 +44,7 @@ from .utils import CONFIG_DIR
 STOCK = os.path.exists(os.path.join('config','fail2ban.conf'))
 
 IMPERFECT_CONFIG = os.path.join(os.path.dirname(__file__), 'config')
+
 
 class ConfigReaderTest(unittest.TestCase):
 
@@ -71,11 +78,9 @@ option = %s
 		os.unlink("%s/%s" % (self.d, fname))
 		self.assertTrue(self.c.read('c'))	# we still should have some
 
-
 	def _getoption(self, f='c'):
 		self.assertTrue(self.c.read(f))	# we got some now
 		return self.c.getOptions('section', [("int", 'option')])['option']
-
 
 	def testInaccessibleFile(self):
 		f = os.path.join(self.d, "d.conf")  # inaccessible file
@@ -90,7 +95,6 @@ option = %s
 			# SkipTest introduced only in 2.7 thus can't yet use generally
 			# raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform)
 			pass
-
 
 	def testOptionalDotDDir(self):
 		self.assertFalse(self.c.read('c'))	# nothing is there yet
@@ -153,6 +157,7 @@ c = d ;in line comment
 		self.assertEqual(self.c.get('DEFAULT', 'b'), 'a')
 		self.assertEqual(self.c.get('DEFAULT', 'c'), 'd')
 
+
 class JailReaderTest(LogCaptureTestCase):
 
 	def __init__(self, *args, **kwargs):
@@ -188,7 +193,6 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertTrue(self._is_logged('Error in action definition joho[foo'))
 		self.assertTrue(self._is_logged('Caught exception: While reading action joho[foo we should have got 1 or 2 groups. Got: 0'))
 
-
 	if STOCK:
 		def testStockSSHJail(self):
 			jail = JailReader('sshd', basedir=CONFIG_DIR, share_config = self.__share_cfg) # we are running tests from root project dir atm
@@ -217,7 +221,6 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertEqual(('mail', {'a': ','}), JailReader.extractOptions("mail[a=',']"))
 
 		#self.assertRaises(ValueError, JailReader.extractOptions ,'mail-how[')
-
 
 		# Empty option
 		option = "abc[]"
@@ -312,7 +315,6 @@ class FilterReaderTest(unittest.TestCase):
 		output[-1][-1] = "5"
 		self.assertEqual(sorted(filterReader.convert()), sorted(output))
 
-
 	def testFilterReaderSubstitionDefault(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sweet@example.com fromip=<IP>']]
 		filterReader = FilterReader('substition', "jailname", {})
@@ -354,6 +356,7 @@ class FilterReaderTest(unittest.TestCase):
 			filterReader.get('Definition', 'ignoreregex')
 		except Exception, e: # pragma: no cover - failed if reachable
 			self.fail('unexpected options after readexplicit: %s' % (e))
+
 
 class JailsReaderTestCache(LogCaptureTestCase):
 
@@ -459,6 +462,21 @@ class JailsReaderTest(LogCaptureTestCase):
 		self.assertTrue(self._is_logged("No file(s) found for glob /weapons/of/mass/destruction"))
 
 	if STOCK:
+		def testReadStockActionConf(self):
+			for actionConfig in glob.glob(os.path.join(CONFIG_DIR, 'action.d', '*.conf')):
+				actionName = os.path.basename(actionConfig).replace('.conf', '')
+				actionReader = ActionReader(actionName, "TEST", {}, basedir=CONFIG_DIR)
+				self.assertTrue(actionReader.read())
+				actionReader.getOptions({})	  # populate _opts
+				if not actionName.endswith('-common'):
+					self.assertTrue('Definition' in actionReader.sections(),
+						msg="Action file %r is lacking [Definition] section" % actionConfig)
+					# all must have some actionban defined
+					self.assertTrue(actionReader._opts.get('actionban', '').strip(),
+						msg="Action file %r is lacking actionban" % actionConfig)
+				self.assertTrue('Init' in actionReader.sections(),
+						msg="Action file %r is lacking [Init] section" % actionConfig)
+
 		def testReadStockJailConf(self):
 			jails = JailsReader(basedir=CONFIG_DIR, share_config=self.__share_cfg) # we are running tests from root project dir atm
 			self.assertTrue(jails.read())		  # opens fine
@@ -585,7 +603,6 @@ class JailsReaderTest(LogCaptureTestCase):
 							msg="Found no %s command among %s"
 								% (target_command, str(commands)) )
 
-
 		def testStockConfigurator(self):
 			configurator = Configurator()
 			configurator.setBaseDir(CONFIG_DIR)
@@ -607,7 +624,8 @@ class JailsReaderTest(LogCaptureTestCase):
 								'/var/lib/fail2ban/fail2ban.sqlite3'],
 							  ['set', 'dbpurgeage', '1d'],
 							  ['set', 'loglevel', "INFO"],
-							  ['set', 'logtarget', '/var/log/fail2ban.log']])
+							  ['set', 'logtarget', '/var/log/fail2ban.log'],
+							  ['set', 'syslogsocket', 'auto']])
 
 			# and if we force change configurator's fail2ban's baseDir
 			# there should be an error message (test visually ;) --

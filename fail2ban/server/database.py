@@ -21,11 +21,12 @@ __author__ = "Steven Hiscocks"
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import sys
-import shutil, time
-import sqlite3
 import json
 import locale
+import shutil
+import sqlite3
+import sys
+import time
 from functools import wraps
 from threading import RLock
 
@@ -37,17 +38,55 @@ from ..helpers import getLogger
 logSys = getLogger(__name__)
 
 if sys.version_info >= (3,):
-	sqlite3.register_adapter(
-		dict,
-		lambda x: json.dumps(x, ensure_ascii=False).encode(
-			locale.getpreferredencoding(), 'replace'))
-	sqlite3.register_converter(
-		"JSON",
-		lambda x: json.loads(x.decode(
-			locale.getpreferredencoding(), 'replace')))
+	def _json_dumps_safe(x):
+		try:
+			x = json.dumps(x, ensure_ascii=False).encode(
+				locale.getpreferredencoding(), 'replace')
+		except Exception, e: # pragma: no cover
+			logSys.error('json dumps failed: %s', e)
+			x = '{}'
+		return x
+
+	def _json_loads_safe(x):
+		try:
+			x = json.loads(x.decode(
+				locale.getpreferredencoding(), 'replace'))
+		except Exception, e: # pragma: no cover
+			logSys.error('json loads failed: %s', e)
+			x = {}
+		return x
 else:
-	sqlite3.register_adapter(dict, json.dumps)
-	sqlite3.register_converter("JSON", json.loads)
+	def _normalize(x):
+		if isinstance(x, dict):
+			return dict((_normalize(k), _normalize(v)) for k, v in x.iteritems())
+		elif isinstance(x, list):
+			return [_normalize(element) for element in x]
+		elif isinstance(x, unicode):
+			return x.encode(locale.getpreferredencoding())
+		else:
+			return x
+
+	def _json_dumps_safe(x):
+		try:
+			x = json.dumps(_normalize(x), ensure_ascii=False).decode(
+				locale.getpreferredencoding(), 'replace')
+		except Exception, e: # pragma: no cover
+			logSys.error('json dumps failed: %s', e)
+			x = '{}'
+		return x
+
+	def _json_loads_safe(x):
+		try:
+			x = _normalize(json.loads(x.decode(
+				locale.getpreferredencoding(), 'replace')))
+		except Exception, e: # pragma: no cover
+			logSys.error('json loads failed: %s', e)
+			x = {}
+		return x
+
+sqlite3.register_adapter(dict, _json_dumps_safe)
+sqlite3.register_converter("JSON", _json_loads_safe)
+
 
 def commitandrollback(f):
 	@wraps(f)
@@ -56,6 +95,7 @@ def commitandrollback(f):
 			with self._db: # Auto commit and rollback on exception
 				return f(self, self._db.cursor(), *args, **kwargs)
 	return wrapper
+
 
 class Fail2BanDb(object):
 	"""Fail2Ban database for storing persistent data.
@@ -135,6 +175,7 @@ class Fail2BanDb(object):
 			");" \
 			"CREATE INDEX bips_timeofban ON bips(timeofban);" \
 			"CREATE INDEX bips_ip ON bips(ip);" \
+
 
 	def __init__(self, filename, purgeAge=24*60*60, outDatedFactor=3):
 		try:
@@ -410,7 +451,7 @@ class Fail2BanDb(object):
 			"INSERT INTO bans(jail, ip, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
 			(jail.name, ticket.getIP(), int(round(ticket.getTime())), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
 				{"matches": ticket.getMatches(),
-					"failures": ticket.getAttempt()}))
+				 "failures": ticket.getAttempt()}))
 		cur.execute(
 			"INSERT OR REPLACE INTO bips(ip, jail, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
 			(ticket.getIP(), jail.name, int(round(ticket.getTime())), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
@@ -425,8 +466,8 @@ class Fail2BanDb(object):
 		----------
 		jail : Jail
 			Jail in which the ban has occurred.
-		ticket : BanTicket
-			Ticket of the ban to be removed.
+		ip : str
+			IP to be removed.
 		"""
 		queryArgs = (jail.name, ip);
 		cur.execute(
@@ -476,8 +517,8 @@ class Fail2BanDb(object):
 		tickets = []
 		for ip, timeofban, data in self._getBans(**kwargs):
 			#TODO: Implement data parts once arbitrary match keys completed
-			tickets.append(FailTicket(ip, timeofban, data['matches']))
-			tickets[-1].setAttempt(data['failures'])
+			tickets.append(FailTicket(ip, timeofban, data.get('matches')))
+			tickets[-1].setAttempt(data.get('failures', 1))
 		return tickets
 
 	def getBansMerged(self, ip=None, jail=None, bantime=None):
@@ -529,8 +570,8 @@ class Fail2BanDb(object):
 						prev_banip = banip
 						matches = []
 						failures = 0
-					matches.extend(data['matches'])
-					failures += data['failures']
+					matches.extend(data.get('matches', []))
+					failures += data.get('failures', 1)
 					prev_timeofban = timeofban
 				ticket = FailTicket(banip, prev_timeofban, matches)
 				ticket.setAttempt(failures)

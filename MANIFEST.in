@@ -2,3 +2,4 @@ include ChangeLog COPYING DEVELOP FILTERS README.* THANKS TODO CONTRIBUTING* Vag
 graft doc
 graft files
 recursive-include config *.conf *.py
+recursive-include config/filter.d/ignorecommands *

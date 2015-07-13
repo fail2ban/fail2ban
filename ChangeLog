@@ -3,21 +3,67 @@
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
-================================================================================
-Fail2Ban (version 0.9.2.dev)                                          2014/xx/xx
-================================================================================
+Fail2Ban: Changelog
+===================
 
-ver. 0.9.2 (2014/xx/xx) - increment ban time
-----------
+ver. 0.9.3 (2015/XX/XXX) - increment ban time
+-----------
+
+- IMPORTANT incompatible changes:
+   * filter.d/roundcube-auth.conf
+     - Changed logpath to 'errors' log (was 'userlogins')
 
 - Fixes:
    * purge database will be executed now (within observer).
    * database functionality extended with bad ips.
    * restoring currently banned ip after service restart fixed 
      (now < timeofban + bantime), ignore old log failures (already banned)
+   * reload in interactive mode appends all the jails twice (gh-825)
+   * reload server/jail failed if database used (but was not changed) and
+     some jail active (gh-1072)
+   * filter.d/dovecot.conf - also match unknown user in passwd-file.
+     Thanks Anton Shestakov
+   * Fix fail2ban-regex not parsing journalmatch correctly from filter config
+   * filter.d/asterisk.conf - fix security log support for Asterisk 12+
+   * filter.d/roundcube-auth.conf
+     - Updated regex to work with 'errors' log (1.0.5 and 1.1.1)
+     - Added regex to work with 'userlogins' log
+   * action.d/sendmail*.conf - use LC_ALL (superseeding LC_TIME) to override 
+     locale on systems with customized LC_ALL
+   * performance fix: minimizes connection overhead, close socket only at
+     communication end (gh-1099)
+   * unbanip always deletes ip from database (independent of bantime, also if
+     currently not banned or persistent)
+
+- New Features:
+   * increment ban time (+ observer) functionality introduced.
+     Thanks Serg G. Brester (sebres)
+   * New filters:
+     - froxlor-auth  Thanks Joern Muehlencord
+
+- Enhancements:
+   * action.d/cloudflare.conf - improved documentation on how to allow
+     multiple CF accounts, and jail.conf got new compound action
+     definition action_cf_mwl to submit cloudflare report.
+   * Check access to socket for more detailed logging on error (gh-595)
+   * fail2ban-testcases man page
+   * filter.d/apache-badbots.conf, filter.d/nginx-botsearch.conf - add
+     HEAD method verb
+   * Revamp of Travis and coverage automated testing
+
+
+ver. 0.9.2 (2015/04/29) - better-quick-now-than-later
+----------
+
+- Fixes:
+   * Fix ufw action commands
+   * infinite busy loop on _escapedTags match in substituteRecursiveTags gh-907.
+     Thanks TonyThompson
+   * port[s] typo in jail.conf/nginx-http-auth gh-913. Thanks Frederik Wagner
+     (fnerdwq)
    * $ typo in jail.conf. Thanks Skibbi. Debian bug #767255
    * grep'ing for IP in *mail-whois-lines.conf should now match also
-     at the begginning and EOL.  Thanks Dean Lee
+     at the beginning and EOL.  Thanks Dean Lee
    * jail.conf
      - php-url-fopen: separate logpath entries by newline
    * failregex declared direct in jail was joined to single line (specifying of
@@ -26,23 +72,67 @@ ver. 0.9.2 (2014/xx/xx) - increment ban time
      details. Thanks bes.internal
    * filter.d/postfix-sasl.conf - failregex is now case insensitive
    * filters.d/postfix.conf - add 'Client host rejected error message' failregex
+   * fail2ban/__init__.py - add strptime thread safety hack-around
+   * recidive uses iptables-allports banaction by default now.
+     Avoids problems with iptables versions not understanding 'all' for
+     protocols and ports
+   * filter.d/dovecot.conf
+     - match pam_authenticate line from EL7
+     - match unknown user line from EL7
+   * Use use_poll=True for Python 2.7 and >=3.4 to overcome "Bad file
+     descriptor" msgs issue (gh-161)
+   * filter.d/postfix-sasl.conf - tweak failregex and add ignoreregex to ignore
+     system authentication issues
+   * fail2ban-regex reads filter file(s) completely, incl. '.local' file etc.
+     (gh-954)
+   * firewallcmd-* actions: split output into separate lines for grepping (gh-908)
+   * Guard unicode encode/decode issues while storing records in the database.
+     Fixes "binding parameter error (unsupported type)" (gh-973), thanks to kot
+     for reporting
+   * filter.d/sshd added regex for matching openSUSE ssh authentication failure
+   * filter.d/asterisk.conf:
+     - Dropped "Sending fake auth rejection" failregex since it incorrectly
+	   targets the asterisk server itself
+     - match "hacking attempt detected" logs
 
 - New Features:
-   * increment ban time (+ observer) functionality introduced.
-     Thanks Serg G. Brester (sebres)
-   * New interpolation feature for config readers - `%(known/parameter)s`.
+   - New filters:
+     - postfix-rbl  Thanks Lee Clemens
+     - apache-fakegooglebot.conf  Thanks Lee Clemens
+     - nginx-botsearch  Thanks Frantisek Sumsal
+     - drupal-auth  Thanks Lee Clemens
+   - New recursive embedded substitution feature added:
+     - `<<PREF>HOST>` becomes `<IPV4HOST>` for PREF=`IPV4`;
+     - `<<PREF>HOST>` becomes `1.2.3.4` for PREF=`IPV4` and IPV4HOST=`1.2.3.4`;
+   - New interpolation feature for config readers - `%(known/parameter)s`.
      (means last known option with name `parameter`). This interpolation makes
      possible to extend a stock filter or jail regexp in .local file
      (opposite to simply set failregex/ignoreregex that overwrites it),
      see gh-867.
-   - Monit config for fail2ban in /files/monit
+   - Monit config for fail2ban in files/monit/
    - New actions:
      - action.d/firewallcmd-multiport and action.d/firewallcmd-allports Thanks Donald Yandt
-     
+     - action.d/sendmail-geoip-lines.conf
+     - action.d/nsupdate to update DNSBL. Thanks Andrew St. Jean
+   - New status argument for fail2ban-client -- flavor:
+     fail2ban-client status <jail> [flavor]
+     - empty or "basic" works as-is
+     - "cymru" additionally prints (ASN, Country RIR) per banned IP
+       (requires dnspython or dnspython3)
+   - Flush log at USR1 signal
+
 - Enhancements:
    * Enable multiport for firewallcmd-new action.  Closes gh-834
    * files/debian-initd migrated from the debian branch and should be
      suitable for manual installations now (thanks Juan Karlo de Guzman)
+   * Define empty ignoreregex in filters which didn't have it to avoid
+     warnings (gh-934)
+   * action.d/{sendmail-*,xarf-login-attack}.conf - report local
+     timezone not UTC time/zone. Closes gh-911
+   * Conditionally log Ignore IP with reason (dns, ip, command). Closes gh-916
+   * Absorbed DNSUtils.cidr into addr2bin in filter.py, added unittests
+   * Added syslogsocket configuration to fail2ban.conf
+   * Note in the jail.conf for the recidive jail to increase dbpurgeage (gh-964)
 
 ver. 0.9.1 (2014/10/29) - better, faster, stronger
 ----------

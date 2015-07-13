@@ -44,12 +44,15 @@ if not CONFIG_DIR:
 	else:
 		CONFIG_DIR = '/etc/fail2ban'
 
+
 def mtimesleep():
 	# no sleep now should be necessary since polling tracks now not only
 	# mtime but also ino and size
 	pass
 
 old_TZ = os.environ.get('TZ', None)
+
+
 def setUpMyTime():
 	# Set the time to a fixed, known value
 	# Sun Aug 14 12:00:00 CEST 2005
@@ -58,12 +61,14 @@ def setUpMyTime():
 	time.tzset()
 	MyTime.setTime(1124013600)
 
+
 def tearDownMyTime():
 	os.environ.pop('TZ')
 	if old_TZ:
 		os.environ['TZ'] = old_TZ
 	time.tzset()
 	MyTime.myTime = None
+
 
 def gatherTests(regexps=None, no_network=False):
 	# Import all the test cases here instead of a module level to
@@ -87,6 +92,7 @@ def gatherTests(regexps=None, no_network=False):
 	else: # pragma: no cover
 		class FilteredTestSuite(unittest.TestSuite):
 			_regexps = [re.compile(r) for r in regexps]
+
 			def addTest(self, suite):
 				suite_str = str(suite)
 				for r in self._regexps:
@@ -108,6 +114,11 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 	# BanManager
 	tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
+	try:
+		import dns
+		tests.addTest(unittest.makeSuite(banmanagertestcase.StatusExtendedCymruInfo))
+	except ImportError:
+		pass
 	# ClientReaders
 	tests.addTest(unittest.makeSuite(clientreadertestcase.ConfigReaderTest))
 	tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
@@ -116,6 +127,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTestCache))
 	# CSocket and AsyncServer
 	tests.addTest(unittest.makeSuite(sockettestcase.Socket))
+	tests.addTest(unittest.makeSuite(sockettestcase.ClientMisc))
 	# Misc helpers
 	tests.addTest(unittest.makeSuite(misctestcase.HelpersTest))
 	tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
@@ -154,7 +166,7 @@ def gatherTests(regexps=None, no_network=False):
 	for file_ in os.listdir(
 		os.path.abspath(os.path.dirname(action_d.__file__))):
 		if file_.startswith("test_") and file_.endswith(".py"):
-			if no_network and file_ in ['test_badips.py']: #pragma: no cover
+			if no_network and file_ in ['test_badips.py','test_smtp.py']: #pragma: no cover
 				# Test required network
 				continue
 			tests.addTest(testloader.loadTestsFromName(
@@ -191,12 +203,12 @@ def gatherTests(regexps=None, no_network=False):
 	except Exception, e: # pragma: no cover
 		logSys.warning("I: Skipping systemd backend testing. Got exception '%s'" % e)
 
-
 	# Server test for logging elements which break logging used to support
 	# testcases analysis
 	tests.addTest(unittest.makeSuite(servertestcase.TransmitterLogging))
 
 	return tests
+
 
 class LogCaptureTestCase(unittest.TestCase):
 

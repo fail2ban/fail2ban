@@ -32,6 +32,7 @@ from ..dummyjail import DummyJail
 
 from ..utils import CONFIG_DIR
 
+
 class TestSMTPServer(smtpd.SMTPServer):
 
 	def process_message(self, peer, mailfrom, rcpttos, data):
@@ -39,6 +40,7 @@ class TestSMTPServer(smtpd.SMTPServer):
 		self.mailfrom = mailfrom
 		self.rcpttos = rcpttos
 		self.data = data
+
 
 class SMTPActionTest(unittest.TestCase):
 

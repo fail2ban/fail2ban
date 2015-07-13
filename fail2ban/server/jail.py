@@ -23,7 +23,10 @@ __author__ = "Cyril Jaquier, Lee Clemens, Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import Queue, logging, math, random
+import logging
+import math
+import random
+import Queue
 
 from .actions import Actions
 from ..helpers import getLogger
@@ -31,6 +34,7 @@ from .mytime import MyTime
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
+
 
 class Jail:
 	"""Fail2Ban jail, which manages a filter and associated actions.
@@ -120,7 +124,6 @@ class Jail:
 		raise RuntimeError(
 			"Failed to initialize any backend for Jail %r" % self.name)
 
-
 	def _initPolling(self):
 		from filterpoll import FilterPoll
 		logSys.info("Jail '%s' uses poller" % self.name)
@@ -179,13 +182,12 @@ class Jail:
 		self.filter.idle = value
 		self.actions.idle = value
 
-	@property
-	def status(self):
+	def status(self, flavor="basic"):
 		"""The status of the jail.
 		"""
 		return [
-			("Filter", self.filter.status),
-			("Actions", self.actions.status),
+			("Filter", self.filter.status(flavor=flavor)),
+			("Actions", self.actions.status(flavor=flavor)),
 			]
 
 	def putFailTicket(self, ticket):
@@ -269,7 +271,7 @@ class Jail:
 					forbantime = self.actions.getBanTime()
 				for ticket in self.database.getCurrentBans(jail=self, forbantime=forbantime):
 					#logSys.debug('restored ticket: %s', ticket)
-					if not self.filter.inIgnoreIPList(ticket.getIP()):
+					if not self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True):
 						# mark ticked was restored from database - does not put it again into db:
 						ticket.setRestored(True)
 						self.putFailTicket(ticket)

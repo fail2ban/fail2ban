@@ -21,7 +21,10 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, datetime, re
+import datetime
+import re
+import time
+
 
 ##
 # MyTime class.

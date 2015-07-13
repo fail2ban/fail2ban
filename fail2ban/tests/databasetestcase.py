@@ -42,6 +42,7 @@ from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
+
 class DatabaseTest(LogCaptureTestCase):
 
 	def setUp(self):
@@ -213,6 +214,37 @@ class DatabaseTest(LogCaptureTestCase):
 		self.assertTrue(
 			isinstance(self.db.getBans(jail=self.jail)[0], FailTicket))
 
+	def testAddBanInvalidEncoded(self):
+		if Fail2BanDb is None: # pragma: no cover
+			return
+		self.testAddJail()
+		# invalid + valid, invalid + valid unicode, invalid + valid dual converted (like in filter:readline by fallback) ...
+		tickets = [
+		  FailTicket("127.0.0.1", 0, ['user "\xd1\xe2\xe5\xf2\xe0"', 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
+		  FailTicket("127.0.0.2", 0, ['user "\xd1\xe2\xe5\xf2\xe0"', u'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
+		  FailTicket("127.0.0.3", 0, ['user "\xd1\xe2\xe5\xf2\xe0"', b'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'.decode('utf-8', 'replace')])
+		]
+		self.db.addBan(self.jail, tickets[0])
+		self.db.addBan(self.jail, tickets[1])
+		self.db.addBan(self.jail, tickets[2])
+
+		readtickets = self.db.getBans(jail=self.jail)
+		self.assertEqual(len(readtickets), 3)
+		## python 2 or 3 :
+		invstr = u'user "\ufffd\ufffd\ufffd\ufffd\ufffd"'.encode('utf-8', 'replace')
+		self.assertTrue(
+			   readtickets[0] == FailTicket("127.0.0.1", 0, [invstr, 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'])
+			or readtickets[0] == tickets[0]
+		)
+		self.assertTrue(
+			   readtickets[1] == FailTicket("127.0.0.2", 0, [invstr, u'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'.encode('utf-8', 'replace')])
+			or readtickets[1] == tickets[1]
+		)
+		self.assertTrue(
+			   readtickets[2] == FailTicket("127.0.0.3", 0, [invstr, 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'])
+			or readtickets[2] == tickets[2]
+		)
+
 	def testDelBan(self):
 		self.testAddBan()
 		ticket = self.db.getBans(jail=self.jail)[0]
@@ -310,7 +342,7 @@ class DatabaseTest(LogCaptureTestCase):
 	def testActionWithDB(self):
 		# test action together with database functionality
 		self.testAddJail() # Jail required
-		self.jail.database = self.db;
+		self.jail.database = self.db
 		actions = Actions(self.jail)
 		actions.add(
 			"action_checkainfo",
@@ -322,7 +354,6 @@ class DatabaseTest(LogCaptureTestCase):
 		self.jail.putFailTicket(ticket)
 		actions._Actions__checkBan()
 		self.assertTrue(self._is_logged("ban ainfo %s, %s, %s, %s" % (True, True, True, True)))
-
 
 	def testPurge(self):
 		if Fail2BanDb is None: # pragma: no cover

@@ -30,6 +30,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class Fail2banReader(ConfigReader):
 	
 	def __init__(self, **kwargs):
@@ -46,12 +47,13 @@ class Fail2banReader(ConfigReader):
 	def getOptions(self):
 		opts = [["string", "loglevel", "INFO" ],
 				["string", "logtarget", "STDERR"],
+				["string", "syslogsocket", "auto"],
 				["string", "dbfile", "/var/lib/fail2ban/fail2ban.sqlite3"],
 				["string", "dbpurgeage", "1d"]]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
 	
 	def convert(self):
-		order = {"loglevel":0, "logtarget":1, "dbfile":2, "dbpurgeage":3}
+		order = {"loglevel":0, "logtarget":1, "syslogsocket":2, "dbfile":50, "dbpurgeage":51}
 		stream = list()
 		for opt in self.__opts:
 			if opt in order:

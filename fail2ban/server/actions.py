@@ -24,9 +24,10 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, logging
+import logging
 import os
 import sys
+import time
 if sys.version_info >= (3, 3):
 	import importlib.machinery
 else:
@@ -46,6 +47,7 @@ from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
+
 
 class Actions(JailThread, Mapping):
 	"""Handles jail actions.
@@ -297,7 +299,7 @@ class Actions(JailThread, Mapping):
 			True if an IP address get banned.
 		"""
 		ticket = self._jail.getFailTicket()
-		if ticket != False:
+		if ticket:
 			aInfo = CallingMap()
 			bTicket = BanManager.createBanTicket(ticket)
 			if ticket.getBanTime() is not None:
@@ -391,11 +393,21 @@ class Actions(JailThread, Mapping):
 					self._jail.name, name, aInfo, e,
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
-	@property
-	def status(self):
-		"""Status of active bans, and total ban counts.
+	def status(self, flavor="basic"):
+		"""Status of current and total ban counts and current banned IP list.
 		"""
-		ret = [("Currently banned", self.__banManager.size()), 
+		# TODO: Allow this list to be printed as 'status' output
+		supported_flavors = ["basic", "cymru"]
+		if flavor is None or flavor not in supported_flavors:
+			logSys.warning("Unsupported extended jail status flavor %r. Supported: %s" % (flavor, supported_flavors))
+		# Always print this information (basic)
+		ret = [("Currently banned", self.__banManager.size()),
 			   ("Total banned", self.__banManager.getBanTotal()),
 			   ("Banned IP list", self.__banManager.getBanList())]
+		if flavor == "cymru":
+			cymru_info = self.__banManager.getBanListExtendedCymruInfo()
+			ret += \
+				[("Banned ASN list", self.__banManager.geBanListExtendedASN(cymru_info)),
+				 ("Banned Country list", self.__banManager.geBanListExtendedCountry(cymru_info)),
+				 ("Banned RIR list", self.__banManager.geBanListExtendedRIR(cymru_info))]
 		return ret

@@ -29,15 +29,9 @@
 [2013-05-13 07:10:53] SECURITY[1204] res_security_log.c: SecurityEvent="InvalidAccountID",EventTV="1368439853-500975",Severity="Error",Service="SIP",EventVersion="1",AccountID="00972599580679",SessionID="0x7f8ecc0421f8",LocalAddress="IPV4/UDP/1.2.3.4/5060",RemoteAddress="IPV4/UDP/1.2.3.4/5070"
 # failJSON: { "time": "2013-06-10T18:15:03", "match": true , "host": "1.2.3.4" }
 [2013-06-10 18:15:03] NOTICE[2723] chan_sip.c: Registration from '"100"<sip:100@192.168.0.2:5060>' failed for '1.2.3.4' - Not a local domain
-# http://forum.4psa.com/showthread.php?t=6601
-# failJSON: { "time": "2009-12-22T16:35:24", "match": true , "host": "192.168.2.102" }
-[2009-12-22 16:35:24] NOTICE[6163] chan_sip.c: Sending fake auth rejection for device <sip:0004*001@192.168.2.102>;tag=e3793a95e1acbc69o
-# http://www.freepbx.org/forum/general-help/fake-auth-rejection
-# failJSON: { "time": "2009-12-22T16:35:24", "match": true , "host": "192.168.2.102" }
-[2009-12-22 16:35:24] NOTICE[1570][C-00000086] chan_sip.c: Sending fake auth rejection for device 1022<sip:1022@192.168.2.102>;tag=5d8b6f92
-# http://www.spinics.net/lists/asterisk/msg127381.html
-# failJSON: { "time": "2009-12-22T16:35:24", "match": true , "host": "192.168.2.102" }
-[2009-12-22 16:35:24] NOTICE[14916]: chan_sip.c:15644 handle_request_subscribe: Sending fake auth rejection for user <sip:CS@192.168.2.102>;tag=6pwd6erg54
+# http://sourceforge.net/p/fail2ban/mailman/message/33603322/
+# failJSON: { "time": "2015-03-16T18:46:34", "match": true , "host": "192.168.2.102" }
+[2015-03-16 18:46:34] NOTICE[3453] chan_sip.c: hacking attempt detected '192.168.2.102'
 # failJSON: { "time": "2013-07-06T09:09:25", "match": true , "host": "141.255.164.106" }
 [2013-07-06 09:09:25] SECURITY[3308] res_security_log.c: SecurityEvent="InvalidPassword",EventTV="1373098165-824497",Severity="Error",Service="SIP",EventVersion="2",AccountID="972592891005",SessionID="0x88aab6c",LocalAddress="IPV4/UDP/92.28.73.180/5060",RemoteAddress="IPV4/UDP/141.255.164.106/5084",Challenge="41d26de5",ReceivedChallenge="41d26de5",ReceivedHash="7a6a3a2e95a05260aee612896e1b4a39"
 # failJSON: { "time": "2014-01-10T16:39:06", "match": true , "host": "50.30.42.14" }
@@ -49,3 +43,19 @@
 
 # failJSON: { "time": "2004-11-04T18:30:40", "match": true , "host": "192.168.200.100" }
 Nov 4 18:30:40 localhost asterisk[32229]: NOTICE[32257]: chan_sip.c:23417 in handle_request_register: Registration from '<sip:301@example.com>' failed for '192.168.200.100:36998' - Wrong password
+
+# failed authentication attempt on INVITE using PJSIP
+# failJSON: { "time": "2015-05-24T08:42:16", "match": true, "host": "10.250.251.252" }
+[2015-05-24 08:42:16] SECURITY[4583] res_security_log.c: SecurityEvent="ChallengeResponseFailed",EventTV="2015-05-24T08:42:16.296+0300",Severity="Error",Service="PJSIP",EventVersion="1",AccountID="<unknown>",SessionID="17a483d-eb8cc0-556164ab@1.2.3.4",LocalAddress="IPV4/UDP/1.2.3.4/5060",RemoteAddress="IPV4/UDP/10.250.251.252/5060",Challenge="1432446136/6d16ccf29ff59d423c6d548af00bf9b4",Response="849dfcf133d8156f77ef11a9194119df",ExpectedResponse=""
+
+# SessionID may contain any special characters and spaces
+# failJSON: { "time": "2015-05-25T07:19:19", "match": true, "host": "10.250.251.252" }
+[2015-05-25 07:19:19] SECURITY[6988] res_security_log.c: SecurityEvent="InvalidAccountID",EventTV="2015-05-25T07:19:19.015+0300",Severity="Error",Service="PJSIP",EventVersion="1",AccountID="70000180",SessionID="!@#$%^&   *(}((')[ -+"++",LocalAddress="IPV4/UDP/1.2.3.4/5060",RemoteAddress="IPV4/UDP/10.250.251.252/5061"
+
+# SessionID here start with '",LocalAddress' and ends with '5.6.7.8/1111"'
+# failJSON: { "time": "2015-05-25T07:21:48", "match": true, "host": "10.250.251.252" }
+[2015-05-25 07:21:48] SECURITY[6988] res_security_log.c: SecurityEvent="InvalidAccountID",EventTV="2015-05-25T07:21:48.275+0300",Severity="Error",Service="PJSIP",EventVersion="1",AccountID="70000180",SessionID="",LocalAddress="IPV4/UDP/127.0.0.1/5060",RemoteAddress="IPV4/UDP/5.6.7.8/1111"",LocalAddress="IPV4/UDP/1.2.3.4/5060",RemoteAddress="IPV4/UDP/10.250.251.252/5061"
+
+# match UTF-8 in SessionID
+# failJSON: { "time": "2015-05-25T07:52:36", "match": true, "host": "10.250.251.252" }
+[2015-05-25 07:52:36] SECURITY[6988] res_security_log.c: SecurityEvent="InvalidAccountID",EventTV="2015-05-25T07:52:36.888+0300",Severity="Error",Service="PJSIP",EventVersion="1",AccountID="70000180",SessionID="Негодяй",LocalAddress="IPV4/UDP/1.2.3.4/5060",RemoteAddress="IPV4/UDP/10.250.251.252/5061"

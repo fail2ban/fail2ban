@@ -21,8 +21,14 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging, os, subprocess, time, signal, tempfile
-import threading, re
+import logging
+import os
+import re
+import signal
+import subprocess
+import tempfile
+import threading
+import time
 from abc import ABCMeta
 from collections import MutableMapping
 
@@ -48,6 +54,7 @@ _RETCODE_HINTS = {
 # Dictionary to lookup signal name from number
 signame = dict((num, name)
 	for name, num in signal.__dict__.iteritems() if name.startswith("SIG"))
+
 
 class CallingMap(MutableMapping):
 	"""A Mapping type which returns the result of callable values.
@@ -93,6 +100,7 @@ class CallingMap(MutableMapping):
 
 	def copy(self):
 		return self.__class__(self.data.copy())
+
 
 class ActionBase(object):
 	"""An abstract base class for actions in Fail2Ban.
@@ -175,6 +183,7 @@ class ActionBase(object):
 			the ban.
 		"""
 		pass
+
 
 class CommandAction(ActionBase):
 	"""A action which executes OS shell commands.
@@ -362,6 +371,7 @@ class CommandAction(ActionBase):
 	@classmethod
 	def substituteRecursiveTags(cls, tags):
 		"""Sort out tag definitions within other tags.
+		Since v.0.9.2 supports embedded interpolation (see test cases for examples).
 
 		so:		becomes:
 		a = 3		a = 3
@@ -378,38 +388,46 @@ class CommandAction(ActionBase):
 			Dictionary of tags(keys) and their values, with tags
 			within the values recursively replaced.
 		"""
-		t = re.compile(r'<([^ >]+)>')
-		for tag in tags.iterkeys():
-			if tag in cls._escapedTags:
-				# Escaped so won't match
-				continue
-			value = str(tags[tag])
-			m = t.search(value)
-			done = []
-			#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
-			while m:
-				found_tag = m.group(1)
-				#logSys.log(5, 'found: %s' % found_tag)
-				if found_tag == tag or found_tag in done:
-					# recursive definitions are bad
-					#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
-					return False
-				elif found_tag in cls._escapedTags:
+		t = re.compile(r'<([^ <>]+)>')
+		# repeat substitution while embedded-recursive (repFlag is True)
+		while True:
+			repFlag = False
+			# substitute each value:
+			for tag in tags.iterkeys():
+				if tag in cls._escapedTags:
 					# Escaped so won't match
 					continue
-				else:
-					if tags.has_key(found_tag):
-						value = value.replace('<%s>' % found_tag , tags[found_tag])
-						#logSys.log(5, 'value now: %s' % value)
-						done.append(found_tag)
-						m = t.search(value, m.start())
-					else:
-						# Missing tags are ok so we just continue on searching.
-						# cInfo can contain aInfo elements like <HOST> and valid shell
+				value = str(tags[tag])
+				# search and replace all tags within value, that can be interpolated using other tags:
+				m = t.search(value)
+				done = []
+				#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
+				while m:
+					found_tag = m.group(1)
+					#logSys.log(5, 'found: %s' % found_tag)
+					if found_tag == tag or found_tag in done:
+						# recursive definitions are bad
+						#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
+						return False
+					if found_tag in cls._escapedTags or not found_tag in tags:
+						# Escaped or missing tags - just continue on searching after end of match
+						# Missing tags are ok - cInfo can contain aInfo elements like <HOST> and valid shell
 						# constructs like <STDIN>.
-						m = t.search(value, m.start() + 1)
-			#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
-			tags[tag] = value
+						m = t.search(value, m.end())
+						continue
+					value = value.replace('<%s>' % found_tag , tags[found_tag])
+					#logSys.log(5, 'value now: %s' % value)
+					done.append(found_tag)
+					m = t.search(value, m.start())
+				#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
+				# was substituted?
+				if tags[tag] != value:
+					# check still contains any tag - should be repeated (possible embedded-recursive substitution):
+					if t.search(value):
+						repFlag = True
+					tags[tag] = value
+			if not repFlag:
+				break
 		return tags
 
 	@staticmethod
@@ -507,10 +525,10 @@ class CommandAction(ActionBase):
 			realCmd = self.replaceTag(cmd, aInfo)
 		else:
 			realCmd = cmd
-		
+
 		# Replace static fields
 		realCmd = self.replaceTag(realCmd, self._properties)
-		
+
 		return self.executeCmd(realCmd, self.timeout)
 
 	@staticmethod
@@ -540,7 +558,7 @@ class CommandAction(ActionBase):
 		if not realCmd:
 			logSys.debug("Nothing to do")
 			return True
-		
+
 		_cmd_lock.acquire()
 		try: # Try wrapped within another try needed for python version < 2.5
 			stdout = tempfile.TemporaryFile(suffix=".stdout", prefix="fai2ban_")
@@ -595,4 +613,4 @@ class CommandAction(ActionBase):
 							% (retcode, msg % locals()))
 			return False
 		raise RuntimeError("Command execution failed: %s" % realCmd)
-	
+

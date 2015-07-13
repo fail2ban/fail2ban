@@ -28,6 +28,7 @@ locale_time = LocaleTime()
 timeRE = TimeRE()
 timeRE['z'] = r"(?P<z>Z|[+-]\d{2}(?::?[0-5]\d)?)"
 
+
 def reGroupDictStrptime(found_dict):
 	"""Return time from dictionary of strptime fields
 

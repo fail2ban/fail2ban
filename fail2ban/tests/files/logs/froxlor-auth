@@ -1,0 +1,5 @@
+# failJSON: { "time": "2005-05-21T00:56:27", "match": true , "host": "1.2.3.4" }
+May 21 00:56:27 jomu Froxlor: [Login Action 1.2.3.4] Unknown user 'user' tried to login.
+# failJSON: { "time": "2005-05-21T00:57:38", "match": true , "host": "1.2.3.4" }
+May 21 00:57:38 jomu Froxlor: [Login Action 1.2.3.4] User 'admin' tried to login with wrong password.
+

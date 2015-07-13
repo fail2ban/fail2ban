@@ -33,6 +33,7 @@ from .. import version
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class Transmitter:
 	
 	##
@@ -51,7 +52,7 @@ class Transmitter:
 	
 	def proceed(self, command):
 		# Deserialize object
-		logSys.debug("Command: " + `command`)
+		logSys.debug("Command: " + repr(command))
 		try:
 			ret = self.__commandHandler(command)
 			ack = 0, ret
@@ -121,6 +122,12 @@ class Transmitter:
 				return self.__server.getLogTarget()
 			else:
 				raise Exception("Failed to change log target")
+		elif name == "syslogsocket":
+			value = command[1]
+			if self.__server.setSyslogSocket(value):
+				return self.__server.getSyslogSocket()
+			else:
+				raise Exception("Failed to change syslog socket")
 		#Database
 		elif name == "dbfile":
 			self.__server.setDatabase(command[1])
@@ -269,6 +276,8 @@ class Transmitter:
 			return self.__server.getLogLevel()
 		elif name == "logtarget":
 			return self.__server.getLogTarget()
+		elif name == "syslogsocket":
+			return self.__server.getSyslogSocket()
 		#Database
 		elif name == "dbfile":
 			db = self.__server.getDatabase()
@@ -341,5 +350,8 @@ class Transmitter:
 		elif len(command) == 1:
 			name = command[0]
 			return self.__server.statusJail(name)
+		elif len(command) == 2:
+			name = command[0]
+			flavor = command[1]
+			return self.__server.statusJail(name, flavor=flavor)
 		raise Exception("Invalid command (no status)")
-	

@@ -30,6 +30,7 @@ from .mytime import MyTime
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class Ticket:
 	
 	def __init__(self, ip, time=None, matches=None):
@@ -59,7 +60,7 @@ class Ticket:
 	def __eq__(self, other):
 		try:
 			return self.__ip == other.__ip and \
-				round(self.__time,2) == round(other.__time,2) and \
+				round(self.__time, 2) == round(other.__time, 2) and \
 				self.__attempt == other.__attempt and \
 				self.__matches == other.__matches
 		except AttributeError:
