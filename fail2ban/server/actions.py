@@ -42,6 +42,7 @@ from .banmanager import BanManager
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
+from .utils import Utils
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
@@ -167,6 +168,7 @@ class Actions(JailThread, Mapping):
 	# @param value the time
 	
 	def setBanTime(self, value):
+		value = MyTime.str2seconds(value)
 		self.__banManager.setBanTime(value)
 		logSys.info("Set banTime = %s" % value)
 	
@@ -224,14 +226,11 @@ class Actions(JailThread, Mapping):
 					self._jail.name, name, e,
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 		while self.active:
-			if not self.idle:
-				#logSys.debug(self._jail.name + ": action")
-				ret = self.__checkBan()
-				if not ret:
-					self.__checkUnBan()
-					time.sleep(self.sleeptime)
-			else:
+			if self.idle:
 				time.sleep(self.sleeptime)
+				continue
+			if not Utils.wait_for(self.__checkBan, self.sleeptime):
+				self.__checkUnBan()
 		self.__flushBan()
 
 		actions = self._actions.items()

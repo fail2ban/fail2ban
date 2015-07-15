@@ -22,8 +22,10 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import codecs
+import datetime
 import fcntl
 import locale
+import logging
 import os
 import re
 import sys
@@ -190,6 +192,7 @@ class Filter(JailThread):
 	# @param value the time
 
 	def setFindTime(self, value):
+		value = MyTime.str2seconds(value)
 		self.__findTime = value
 		self.failManager.setMaxTime(value)
 		logSys.info("Set findtime = %s" % value)
@@ -314,13 +317,12 @@ class Filter(JailThread):
 			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.' % ip)
 
 		unixTime = MyTime.time()
-		for i in xrange(self.failManager.getMaxRetry()):
-			self.failManager.addFailure(FailTicket(ip, unixTime))
+		self.failManager.addFailure(FailTicket(ip, unixTime), self.failManager.getMaxRetry())
 
 		# Perform the banning of the IP now.
 		try: # pragma: no branch - exception is the only way out
 			while True:
-				ticket = self.failManager.toBan()
+				ticket = self.failManager.toBan(ip)
 				self.jail.putFailTicket(ticket)
 		except FailManagerEmpty:
 			self.failManager.cleanup(MyTime.time())
@@ -404,14 +406,16 @@ class Filter(JailThread):
 			l = line.rstrip('\r\n')
 			logSys.log(7, "Working on line %r", line)
 
-			timeMatch = self.dateDetector.matchTime(l)
+			(timeMatch, template) = self.dateDetector.matchTime(l)
 			if timeMatch:
 				tupleLine  = (
 					l[:timeMatch.start()],
 					l[timeMatch.start():timeMatch.end()],
-					l[timeMatch.end():])
+					l[timeMatch.end():],
+					(timeMatch, template)
+				)
 			else:
-				tupleLine = (l, "", "")
+				tupleLine = (l, "", "", None)
 
 		return "".join(tupleLine[::2]), self.findFailure(
 			tupleLine, date, returnRawHost, checkAllRegex)
@@ -423,17 +427,19 @@ class Filter(JailThread):
 			ip = element[1]
 			unixTime = element[2]
 			lines = element[3]
-			logSys.debug("Processing line with time:%s and ip:%s"
-						 % (unixTime, ip))
+			logSys.debug("Processing line with time:%s and ip:%s", 
+					unixTime, ip)
 			if unixTime < MyTime.time() - self.getFindTime():
-				logSys.debug("Ignore line since time %s < %s - %s"
-							 % (unixTime, MyTime.time(), self.getFindTime()))
+				logSys.debug("Ignore line since time %s < %s - %s", 
+					unixTime, MyTime.time(), self.getFindTime())
 				break
 			if self.inIgnoreIPList(ip, log_ignore=True):
 				continue
-			logSys.info("[%s] Found %s" % (self.jail.name, ip))
-			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
-			self.failManager.addFailure(FailTicket(ip, unixTime, lines))
+			logSys.info(
+				"[%s] Found %s - %s", self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
+			)
+			tick = FailTicket(ip, unixTime, lines)
+			self.failManager.addFailure(tick)
 
 	##
 	# Returns true if the line should be ignored.
@@ -473,7 +479,7 @@ class Filter(JailThread):
 			self.__lastDate = date
 		elif timeText:
 
-			dateTimeMatch = self.dateDetector.getTime(timeText)
+			dateTimeMatch = self.dateDetector.getTime2(timeText, tupleLine[3])
 
 			if dateTimeMatch is None:
 				logSys.error("findFailure failed to parse timeText: " + timeText)
@@ -490,7 +496,7 @@ class Filter(JailThread):
 			date = self.__lastDate
 
 		self.__lineBuffer = (
-			self.__lineBuffer + [tupleLine])[-self.__lineBufferSize:]
+			self.__lineBuffer + [tupleLine[:3]])[-self.__lineBufferSize:]
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
@@ -560,7 +566,7 @@ class FileFilter(Filter):
 	#
 	# @param path log file path
 
-	def addLogPath(self, path, tail = False):
+	def addLogPath(self, path, tail=False):
 		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
 		else:
@@ -571,7 +577,7 @@ class FileFilter(Filter):
 				if lastpos and not tail:
 					container.setPos(lastpos)
 			self.__logPath.append(container)
-			logSys.info("Added logfile = %s" % path)
+			logSys.info("Added logfile = %s (pos = %s, hash = %s)" , path, container.getPos(), container.getHash())
 			self._addLogPath(path)			# backend specific
 
 	def _addLogPath(self, path):
@@ -655,7 +661,7 @@ class FileFilter(Filter):
 	# MyTime.time()-self.findTime. When a failure is detected, a FailTicket
 	# is created and is added to the FailManager.
 
-	def getFailures(self, filename):
+	def getFailures(self, filename, startTime=None):
 		container = self.getFileContainer(filename)
 		if container is None:
 			logSys.error("Unable to get failures in " + filename)
@@ -673,9 +679,19 @@ class FileFilter(Filter):
 			logSys.exception(e)
 			return False
 		except OSError, e: # pragma: no cover - Requires implemention error in FileContainer to generate
-			logSys.error("Internal errror in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
+			logSys.error("Internal error in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
 			logSys.exception(e)
 			return False
+
+		# prevent completely read of big files first time (after start of service), initial seek to start time using half-interval search algorithm:
+		if container.getPos() == 0 and startTime is not None:
+			try:
+				# startTime = MyTime.time() - self.getFindTime()
+				self.seekToTime(container, startTime)
+			except Exception, e: # pragma: no cover
+				logSys.error("Error during seek to start time in \"%s\"", filename)
+				logSys.exception(e)
+				return False
 
 		# yoh: has_content is just a bool, so do not expect it to
 		# change -- loop is exited upon break, and is not entered at
@@ -694,6 +710,76 @@ class FileFilter(Filter):
 			db.updateLog(self.jail, container)
 		return True
 
+	##
+	# Seeks to line with date (search using half-interval search algorithm), to start polling from it
+	#
+
+	def seekToTime(self, container, date):
+		fs = container.getFileSize()
+		if logSys.getEffectiveLevel() <= logging.DEBUG:
+			logSys.debug("Seek to find time %s (%s), file size %s", date, 
+				datetime.datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S"), fs)
+		date -= 0.009
+		minp = 0
+		maxp = fs
+		lastpos = 0
+		lastFew = 0
+		lastTime = None
+		cntr = 0
+		unixTime = None
+		lasti = 0
+		movecntr = 1
+		while maxp > minp:
+			i = int(minp + (maxp - minp) / 2)
+			pos = container.seek(i)
+			cntr += 1
+			# within next 5 lines try to find any legal datetime:
+			lncntr = 5;
+			dateTimeMatch = None
+			llen = 0
+			if lastpos == pos:
+				i = pos
+			while True:
+				line = container.readline()
+				if not line:
+					break
+				llen += len(line)
+				l = line.rstrip('\r\n')
+				(timeMatch, template) = self.dateDetector.matchTime(l)
+				if timeMatch:
+					dateTimeMatch = self.dateDetector.getTime2(l[timeMatch.start():timeMatch.end()], (timeMatch, template))
+				if not dateTimeMatch and lncntr:
+					lncntr -= 1
+					continue
+				break
+			# if we can't move (position not changed)
+			if i + llen == lasti:
+				movecntr -= 1
+				if movecntr <= 0:
+		 			break
+			lasti = i + llen;
+		 	# not found at this step - stop searching
+			if not dateTimeMatch:
+				break
+			unixTime = dateTimeMatch[0]
+			if unixTime >= date:
+				maxp = i
+			else:
+				minp = i + llen
+				lastFew = pos;
+				lastTime = unixTime
+			lastpos = pos
+		# if found position have a time greater as given - use smallest time we have found
+		if unixTime is None or unixTime > date:
+			unixTime = lastTime
+			lastpos = container.seek(lastFew, False)
+		else:
+			lastpos = container.seek(lastpos, False)
+		container.setPos(lastpos)
+		if logSys.getEffectiveLevel() <= logging.DEBUG:
+			logSys.debug("Position %s from %s, found time %s (%s) within %s seeks", lastpos, fs, unixTime, 
+				(datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S") if unixTime is not None else ''), cntr)
+		
 	def status(self, flavor="basic"):
 		"""Status of Filter plus files being monitored.
 		"""
@@ -746,6 +832,9 @@ class FileContainer:
 	def getFileName(self):
 		return self.__filename
 
+	def getFileSize(self):
+		return os.path.getsize(self.__filename);
+
 	def setEncoding(self, encoding):
 		codecs.lookup(encoding) # Raises LookupError if invalid
 		self.__encoding = encoding
@@ -791,6 +880,16 @@ class FileContainer:
 		# Sets the file pointer to the last position.
 		self.__handler.seek(self.__pos)
 		return True
+
+	def seek(self, offs, endLine=True):
+		h = self.__handler
+		# seek to given position
+		h.seek(offs, 0)
+		# goto end of next line
+		if endLine:
+			h.readline()
+		# get current real position
+		return h.tell()
 
 	def readline(self):
 		if self.__handler is None:
@@ -844,35 +943,50 @@ class JournalFilter(Filter): # pragma: systemd no cover
 
 import socket
 import struct
+from .utils import Utils
 
 
 class DNSUtils:
 
 	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
 
+	# todo: make configurable the expired time and max count of cache entries:
+	CACHE_dnsToIp = Utils.Cache(maxCount=1000, maxTime=60*60)
+	CACHE_ipToName = Utils.Cache(maxCount=1000, maxTime=60*60)
+
 	@staticmethod
 	def dnsToIp(dns):
 		""" Convert a DNS into an IP address using the Python socket module.
 			Thanks to Kevin Drapel.
 		"""
+		# cache, also prevent long wait during retrieving of ip for wrong dns or lazy dns-system:
+		v = DNSUtils.CACHE_dnsToIp.get(dns)
+		if v is not None: 
+			return v
+		# retrieve ip
 		try:
-			return set(socket.gethostbyname_ex(dns)[2])
+			v = set(socket.gethostbyname_ex(dns)[2])
 		except socket.error, e:
-			logSys.warning("Unable to find a corresponding IP address for %s: %s"
-						% (dns, e))
-			return list()
-		except socket.error, e:
-			logSys.warning("Socket error raised trying to resolve hostname %s: %s"
-						% (dns, e))
-			return list()
+			# todo: make configurable the expired time of cache entry:
+			logSys.warning("Unable to find a corresponding IP address for %s: %s", dns, e)
+			v = list()
+		DNSUtils.CACHE_dnsToIp.set(dns, v)
+		return v
 
 	@staticmethod
 	def ipToName(ip):
+		# cache, also prevent long wait during retrieving of name for wrong addresses, lazy dns:
+		v = DNSUtils.CACHE_ipToName.get(ip)
+		if v is not None: 
+			return v
+		# retrieve name
 		try:
-			return socket.gethostbyaddr(ip)[0]
+			v = socket.gethostbyaddr(ip)[0]
 		except socket.error, e:
-			logSys.debug("Unable to find a name for the IP %s: %s" % (ip, e))
-			return None
+			logSys.debug("Unable to find a name for the IP %s: %s", ip, e)
+			v = None
+		DNSUtils.CACHE_ipToName.set(ip, v)
+		return v
 
 	@staticmethod
 	def searchIP(text):
@@ -893,7 +1007,7 @@ class DNSUtils:
 		try:
 			socket.inet_aton(s[0])
 			return True
-		except socket.error:
+		except socket.error: # pragma: no cover
 			return False
 
 	@staticmethod

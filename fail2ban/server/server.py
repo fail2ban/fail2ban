@@ -81,7 +81,7 @@ class Server:
 		self.flushLogs()
 
 	def start(self, sock, pidfile, force = False):
-		logSys.info("Starting Fail2ban v" + version.version)
+		logSys.info("Starting Fail2ban v%s", version.version)
 		
 		# Install signal handlers
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
@@ -324,6 +324,15 @@ class Server:
 	def getBanTime(self, name):
 		return self.__jails[name].actions.getBanTime()
 	
+	def is_alive(self, jailnum=None):
+		if jailnum is not None and len(self.__jails) != jailnum:
+			return 0
+		for j in self.__jails:
+			j = self.__jails[j]
+			if not j.is_alive():
+				return 0
+		return 1
+
 	# Status
 	def status(self):
 		try:
@@ -443,6 +452,7 @@ class Server:
 			logger.addHandler(hdlr)
 			# Does not display this message at startup.
 			if not self.__logTarget is None:
+				logSys.info("Start Fail2ban v%s", version.version)
 				logSys.info(
 					"Changed logging target to %s for Fail2ban v%s"
 					% ((target

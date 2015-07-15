@@ -25,8 +25,10 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import time
+import unittest
 
 from ..server.action import CommandAction, CallingMap
+from ..server.utils import Utils
 
 from .utils import LogCaptureTestCase
 
@@ -192,15 +194,16 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertTrue(self._is_logged('HINT on 127: "Command not found"'))
 
 	def testExecuteTimeout(self):
+		unittest.F2B.SkipIfFast()
 		stime = time.time()
 		# Should take a minute
 		self.assertRaises(
-			RuntimeError, CommandAction.executeCmd, 'sleep 60', timeout=2)
+			RuntimeError, CommandAction.executeCmd, 'sleep 30', timeout=1)
 		# give a test still 1 second, because system could be too busy
-		self.assertTrue(time.time() >= stime + 2 and time.time() <= stime + 3)
-		self.assertTrue(self._is_logged('sleep 60 -- timed out after 2 seconds') 
-			or self._is_logged('sleep 60 -- timed out after 3 seconds'))
-		self.assertTrue(self._is_logged('sleep 60 -- killed with SIGTERM'))
+		self.assertTrue(time.time() >= stime + 1 and time.time() <= stime + 2)
+		self.assertTrue(self._is_logged('sleep 30 -- timed out after 1 seconds') 
+			or self._is_logged('sleep 30 -- timed out after 2 seconds'))
+		self.assertTrue(self._is_logged('sleep 30 -- killed with SIGTERM'))
 
 	def testCaptureStdOutErr(self):
 		CommandAction.executeCmd('echo "How now brown cow"')
