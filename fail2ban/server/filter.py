@@ -22,6 +22,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import codecs
+import datetime
 import fcntl
 import locale
 import logging
@@ -316,13 +317,12 @@ class Filter(JailThread):
 			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.' % ip)
 
 		unixTime = MyTime.time()
-		for i in xrange(self.failManager.getMaxRetry()):
-			self.failManager.addFailure(FailTicket(ip, unixTime))
+		self.failManager.addFailure(FailTicket(ip, unixTime), self.failManager.getMaxRetry())
 
 		# Perform the banning of the IP now.
 		try: # pragma: no branch - exception is the only way out
 			while True:
-				ticket = self.failManager.toBan()
+				ticket = self.failManager.toBan(ip)
 				self.jail.putFailTicket(ticket)
 		except FailManagerEmpty:
 			self.failManager.cleanup(MyTime.time())
@@ -427,17 +427,19 @@ class Filter(JailThread):
 			ip = element[1]
 			unixTime = element[2]
 			lines = element[3]
-			logSys.debug("Processing line with time:%s and ip:%s"
-						 % (unixTime, ip))
+			logSys.debug("Processing line with time:%s and ip:%s", 
+					unixTime, ip)
 			if unixTime < MyTime.time() - self.getFindTime():
-				logSys.debug("Ignore line since time %s < %s - %s"
-							 % (unixTime, MyTime.time(), self.getFindTime()))
+				logSys.debug("Ignore line since time %s < %s - %s", 
+					unixTime, MyTime.time(), self.getFindTime())
 				break
 			if self.inIgnoreIPList(ip, log_ignore=True):
 				continue
-			logSys.info("[%s] Found %s" % (self.jail.name, ip))
-			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
-			self.failManager.addFailure(FailTicket(ip, unixTime, lines))
+			logSys.info(
+				"[%s] Found %s - %s", self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
+			)
+			tick = FailTicket(ip, unixTime, lines)
+			self.failManager.addFailure(tick)
 
 	##
 	# Returns true if the line should be ignored.
@@ -941,32 +943,50 @@ class JournalFilter(Filter): # pragma: systemd no cover
 
 import socket
 import struct
+from .utils import Utils
 
 
 class DNSUtils:
 
 	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
 
+	# todo: make configurable the expired time and max count of cache entries:
+	CACHE_dnsToIp = Utils.Cache(maxCount=1000, maxTime=60*60)
+	CACHE_ipToName = Utils.Cache(maxCount=1000, maxTime=60*60)
+
 	@staticmethod
 	def dnsToIp(dns):
 		""" Convert a DNS into an IP address using the Python socket module.
 			Thanks to Kevin Drapel.
 		"""
+		# cache, also prevent long wait during retrieving of ip for wrong dns or lazy dns-system:
+		v = DNSUtils.CACHE_dnsToIp.get(dns)
+		if v is not None: 
+			return v
 		# retrieve ip (todo: use AF_INET6 for IPv6)
 		try:
-			return set([i[4][0] for i in socket.getaddrinfo(dns, None, socket.AF_INET, 0, socket.IPPROTO_TCP)])
+			v = set([i[4][0] for i in socket.getaddrinfo(dns, None, socket.AF_INET, 0, socket.IPPROTO_TCP)])
 		except socket.error, e:
-			logSys.warning("Unable to find a corresponding IP address for %s: %s"
-						% (dns, e))
-			return list()
+			# todo: make configurable the expired time of cache entry:
+			logSys.warning("Unable to find a corresponding IP address for %s: %s", dns, e)
+			v = list()
+		DNSUtils.CACHE_dnsToIp.set(dns, v)
+		return v
 
 	@staticmethod
 	def ipToName(ip):
+		# cache, also prevent long wait during retrieving of name for wrong addresses, lazy dns:
+		v = DNSUtils.CACHE_ipToName.get(ip)
+		if v is not None: 
+			return v
+		# retrieve name
 		try:
-			return socket.gethostbyaddr(ip)[0]
+			v = socket.gethostbyaddr(ip)[0]
 		except socket.error, e:
-			logSys.debug("Unable to find a name for the IP %s: %s" % (ip, e))
-			return None
+			logSys.debug("Unable to find a name for the IP %s: %s", ip, e)
+			v = None
+		DNSUtils.CACHE_ipToName.set(ip, v)
+		return v
 
 	@staticmethod
 	def searchIP(text):

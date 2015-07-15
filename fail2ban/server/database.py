@@ -418,8 +418,7 @@ class Fail2BanDb(object):
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
 			(jail.name, ticket.getIP(), int(round(ticket.getTime())),
-				{"matches": ticket.getMatches(),
-				 "failures": ticket.getAttempt()}))
+				ticket.getData()))
 
 	@commitandrollback
 	def delBan(self, cur, jail, ip):
@@ -477,8 +476,8 @@ class Fail2BanDb(object):
 		tickets = []
 		for ip, timeofban, data in self._getBans(**kwargs):
 			#TODO: Implement data parts once arbitrary match keys completed
-			tickets.append(FailTicket(ip, timeofban, data.get('matches')))
-			tickets[-1].setAttempt(data.get('failures', 1))
+			tickets.append(FailTicket(ip, timeofban))
+			tickets[-1].setData(data)
 		return tickets
 
 	def getBansMerged(self, ip=None, jail=None, bantime=None):
@@ -520,6 +519,7 @@ class Fail2BanDb(object):
 				prev_banip = results[0][0]
 				matches = []
 				failures = 0
+				tickdata = {}
 				for banip, timeofban, data in results:
 					#TODO: Implement data parts once arbitrary match keys completed
 					if banip != prev_banip:
@@ -530,11 +530,14 @@ class Fail2BanDb(object):
 						prev_banip = banip
 						matches = []
 						failures = 0
-					matches.extend(data.get('matches', []))
+						tickdata = {}
+					matches.extend(data.get('matches', ()))
 					failures += data.get('failures', 1)
+					tickdata.update(data.get('data', {}))
 					prev_timeofban = timeofban
 				ticket = FailTicket(banip, prev_timeofban, matches)
 				ticket.setAttempt(failures)
+				ticket.setData(**tickdata)
 				tickets.append(ticket)
 
 			if cacheKey:

@@ -33,6 +33,7 @@ import unittest
 
 from .. import protocol
 from ..server.asyncserver import AsyncServer, AsyncServerException
+from ..server.utils import Utils
 from ..client.csocket import CSocket
 
 
@@ -54,14 +55,20 @@ class Socket(unittest.TestCase):
 		"""Test transmitter proceed method which just returns first arg"""
 		return message
 
+	def _serverSocket(self):
+		try:
+			return CSocket(self.sock_name)
+		except Exception as e:
+			return None
+
 	def testSocket(self):
 		serverThread = threading.Thread(
 			target=self.server.start, args=(self.sock_name, False))
 		serverThread.daemon = True
 		serverThread.start()
-		time.sleep(1)
+		time.sleep(Utils.DEFAULT_SLEEP_TIME)
 
-		client = CSocket(self.sock_name)
+		client = Utils.wait_for(self._serverSocket, 2)
 		testMessage = ["A", "test", "message"]
 		self.assertEqual(client.send(testMessage), testMessage)
 
@@ -71,7 +78,7 @@ class Socket(unittest.TestCase):
 		client.close()
 
 		self.server.stop()
-		serverThread.join(1)
+		serverThread.join(Utils.DEFAULT_SLEEP_TIME)
 		self.assertFalse(os.path.exists(self.sock_name))
 
 	def testSocketForce(self):
@@ -85,10 +92,10 @@ class Socket(unittest.TestCase):
 			target=self.server.start, args=(self.sock_name, True))
 		serverThread.daemon = True
 		serverThread.start()
-		time.sleep(1)
+		time.sleep(Utils.DEFAULT_SLEEP_TIME)
 
 		self.server.stop()
-		serverThread.join(1)
+		serverThread.join(Utils.DEFAULT_SLEEP_TIME)
 		self.assertFalse(os.path.exists(self.sock_name))
 
 

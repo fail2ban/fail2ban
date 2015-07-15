@@ -36,6 +36,7 @@ from ..server.failregex import Regex, FailRegex, RegexException
 from ..server.server import Server
 from ..server.jail import Jail
 from ..server.jailthread import JailThread
+from ..server.utils import Utils
 from .utils import LogCaptureTestCase
 from ..helpers import getLogger
 from .. import version
@@ -74,14 +75,14 @@ class TransmitterBase(unittest.TestCase):
 		"""Call after every test case."""
 		self.server.quit()
 
-	def setGetTest(self, cmd, inValue, outValue=None, outCode=0, jail=None, repr_=False):
+	def setGetTest(self, cmd, inValue, outValue=(None,), outCode=0, jail=None, repr_=False):
 		setCmd = ["set", cmd, inValue]
 		getCmd = ["get", cmd]
 		if jail is not None:
 			setCmd.insert(1, jail)
 			getCmd.insert(1, jail)
 
-		if outValue is None:
+		if outValue == (None,):
 			outValue = inValue
 
 		def v(x):
@@ -165,15 +166,21 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(self.transm.proceed(["version"]), (0, version.version))
 
 	def testSleep(self):
-		t0 = time.time()
-		self.assertEqual(self.transm.proceed(["sleep", "1"]), (0, None))
-		t1 = time.time()
-		# Approx 1 second delay but not faster
-		dt = t1 - t0
-		self.assertTrue(0.99 < dt < 1.1, msg="Sleep was %g sec" % dt)
+		if not unittest.F2B.fast:
+			t0 = time.time()
+			self.assertEqual(self.transm.proceed(["sleep", "0.1"]), (0, None))
+			t1 = time.time()
+			# Approx 0.1 second delay but not faster
+			dt = t1 - t0
+			self.assertTrue(0.09 < dt < 0.2, msg="Sleep was %g sec" % dt)
+		else: # pragma: no cover
+			self.assertEqual(self.transm.proceed(["sleep", "0.0001"]), (0, None))
 
 	def testDatabase(self):
-		tmp, tmpFilename = tempfile.mkstemp(".db", "fail2ban_")
+		if not unittest.F2B.fast:
+			tmp, tmpFilename = tempfile.mkstemp(".db", "fail2ban_")
+		else: # pragma: no cover
+			tmpFilename = ':memory:'
 		# Jails present, can't change database
 		self.setGetTestNOK("dbfile", tmpFilename)
 		self.server.delJail(self.jailName)
@@ -205,8 +212,9 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(self.transm.proceed(
 			["set", "dbfile", "None"]),
 			(0, None))
-		os.close(tmp)
-		os.unlink(tmpFilename)
+		if not unittest.F2B.fast:
+			os.close(tmp)
+			os.unlink(tmpFilename)
 
 	def testAddJail(self):
 		jail2 = "TestJail2"
@@ -229,7 +237,11 @@ class Transmitter(TransmitterBase):
 	def testStartStopJail(self):
 		self.assertEqual(
 			self.transm.proceed(["start", self.jailName]), (0, None))
-		time.sleep(1)
+		time.sleep(Utils.DEFAULT_SLEEP_TIME)
+		# wait until not started (3 seconds as long as any RuntimeError, ex.: RuntimeError('cannot join thread before it is started',)):
+		self.assertTrue( Utils.wait_for(
+			lambda: self.server.is_alive(1) and not isinstance(self.transm.proceed(["status", self.jailName]), RuntimeError), 
+			3) )
 		self.assertEqual(
 			self.transm.proceed(["stop", self.jailName]), (0, None))
 		self.assertTrue(self.jailName not in self.server._Server__jails)
@@ -243,9 +255,12 @@ class Transmitter(TransmitterBase):
 		# yoh: workaround for gh-146.  I still think that there is some
 		#      race condition and missing locking somewhere, but for now
 		#      giving it a small delay reliably helps to proceed with tests
-		time.sleep(0.1)
+		time.sleep(Utils.DEFAULT_SLEEP_TIME)
+		self.assertTrue( Utils.wait_for(
+			lambda: self.server.is_alive(2) and not isinstance(self.transm.proceed(["status", self.jailName]), RuntimeError), 
+			3) )
 		self.assertEqual(self.transm.proceed(["stop", "all"]), (0, None))
-		time.sleep(1)
+		self.assertTrue( Utils.wait_for( lambda: not len(self.server._Server__jails), 3) )
 		self.assertTrue(self.jailName not in self.server._Server__jails)
 		self.assertTrue("TestJail2" not in self.server._Server__jails)
 
@@ -301,11 +316,11 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "banip", "127.0.0.1"]),
 			(0, "127.0.0.1"))
-		time.sleep(1) # Give chance to ban
+		time.sleep(Utils.DEFAULT_SLEEP_TIME) # Give chance to ban
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "banip", "Badger"]),
 			(0, "Badger")) #NOTE: Is IP address validated? Is DNS Lookup done?
-		time.sleep(1) # Give chance to ban
+		time.sleep(Utils.DEFAULT_SLEEP_TIME) # Give chance to ban
 		# Unban IP
 		self.assertEqual(
 			self.transm.proceed(

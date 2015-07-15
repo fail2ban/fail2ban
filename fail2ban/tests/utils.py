@@ -30,8 +30,10 @@ import time
 import unittest
 from StringIO import StringIO
 
-from ..server.mytime import MyTime
 from ..helpers import getLogger
+from ..server.filter import DNSUtils
+from ..server.mytime import MyTime
+from ..server.utils import Utils
 
 logSys = getLogger(__name__)
 
@@ -44,6 +46,43 @@ if not CONFIG_DIR:
 	else:
 		CONFIG_DIR = '/etc/fail2ban'
 
+
+class F2B():
+	def __init__(self, fast=False, no_network=False):
+		self.fast=fast
+		self.no_network=no_network
+	def SkipIfFast(self):
+		pass
+	def SkipIfNoNetwork(self):
+		pass
+
+
+def initTests(opts):
+	if opts: # pragma: no cover
+		unittest.F2B = F2B(opts.fast, opts.no_network)
+	else:
+		unittest.F2B = F2B()
+	# --fast :
+	if unittest.F2B.fast: # pragma: no cover
+		# prevent long sleeping during test cases...
+		Utils.DEFAULT_SLEEP_TIME = 0.0025
+		Utils.DEFAULT_SLEEP_INTERVAL = 0.0005
+		def F2B_SkipIfFast():
+			raise unittest.SkipTest('Skip test because of "--fast"')
+		unittest.F2B.SkipIfFast = F2B_SkipIfFast
+	else:
+		# sleep intervals are large - use replacement for sleep to check time to sleep:
+		_org_sleep = time.sleep
+		def _new_sleep(v):
+			if (v > Utils.DEFAULT_SLEEP_TIME):
+				raise ValueError('[BAD-CODE] To long sleep interval: %s, try to use conditional Utils.wait_for instead' % v)
+			_org_sleep(min(v, Utils.DEFAULT_SLEEP_TIME))
+		time.sleep = _new_sleep
+	# --no-network :
+	if unittest.F2B.no_network: # pragma: no cover
+		def F2B_SkipIfNoNetwork():
+			raise unittest.SkipTest('Skip test because of "--no-network"')
+		unittest.F2B.SkipIfNoNetwork = F2B_SkipIfNoNetwork
 
 def mtimesleep():
 	# no sleep now should be necessary since polling tracks now not only
@@ -70,7 +109,8 @@ def tearDownMyTime():
 	MyTime.myTime = None
 
 
-def gatherTests(regexps=None, no_network=False):
+def gatherTests(regexps=None, opts=None):
+	initTests(opts)
 	# Import all the test cases here instead of a module level to
 	# avoid circular imports
 	from . import banmanagertestcase
@@ -142,10 +182,10 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFileFilterPoll))
-	if not no_network:
-		tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIPDNS))
-		tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
-		tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
+	# each test case class self will check no network, and skip it (we see it in log)
+	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIPDNS))
+	tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
+	tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
 	tests.addTest(unittest.makeSuite(filtertestcase.JailTests))
 
 	# DateDetector
@@ -161,9 +201,6 @@ def gatherTests(regexps=None, no_network=False):
 	for file_ in os.listdir(
 		os.path.abspath(os.path.dirname(action_d.__file__))):
 		if file_.startswith("test_") and file_.endswith(".py"):
-			if no_network and file_ in ['test_badips.py','test_smtp.py']: #pragma: no cover
-				# Test required network
-				continue
 			tests.addTest(testloader.loadTestsFromName(
 				"%s.%s" % (action_d.__name__, os.path.splitext(file_)[0])))
 
@@ -178,6 +215,9 @@ def gatherTests(regexps=None, no_network=False):
 	# yoh: Since I do not know better way for parametric tests
 	#      with good old unittest
 	try:
+		# because gamin can be very slow on some platforms (and can produce many failures 
+		# with fast sleep interval) - skip it by fast run:
+		unittest.F2B.SkipIfFast()
 		from ..server.filtergamin import FilterGamin
 		filters.append(FilterGamin)
 	except Exception, e: # pragma: no cover
@@ -272,29 +312,4 @@ class LogCaptureTestCase(unittest.TestCase):
 	def printLog(self):
 		print(self._log.getvalue())
 
-# Solution from http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid
-# under cc by-sa 3.0
-if os.name == 'posix':
-	def pid_exists(pid):
-		"""Check whether pid exists in the current process table."""
-		import errno
-		if pid < 0:
-			return False
-		try:
-			os.kill(pid, 0)
-		except OSError as e:
-			return e.errno == errno.EPERM
-		else:
-			return True
-else:
-	def pid_exists(pid):
-		import ctypes
-		kernel32 = ctypes.windll.kernel32
-		SYNCHRONIZE = 0x100000
-
-		process = kernel32.OpenProcess(SYNCHRONIZE, 0, pid)
-		if process != 0:
-			kernel32.CloseHandle(process)
-			return True
-		else:
-			return False
+pid_exists = Utils.pid_exists

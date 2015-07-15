@@ -25,10 +25,12 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import os
-import time
 import tempfile
+import time
+import unittest
 
 from ..server.action import CommandAction, CallingMap
+from ..server.utils import Utils
 
 from .utils import LogCaptureTestCase
 from .utils import pid_exists
@@ -194,16 +196,17 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertLogged('HINT on 127: "Command not found"')
 
 	def testExecuteTimeout(self):
+		unittest.F2B.SkipIfFast()
 		stime = time.time()
 		# Should take a minute
-		self.assertFalse(CommandAction.executeCmd('sleep 60', timeout=2))
+		self.assertFalse(CommandAction.executeCmd('sleep 30', timeout=1))
 		# give a test still 1 second, because system could be too busy
-		self.assertTrue(time.time() >= stime + 2 and time.time() <= stime + 3)
+		self.assertTrue(time.time() >= stime + 1 and time.time() <= stime + 2)
 		self.assertLogged(
-			'sleep 60 -- timed out after 2 seconds',
-			'sleep 60 -- timed out after 3 seconds'
+			'sleep 30 -- timed out after 1 seconds',
+			'sleep 30 -- timed out after 2 seconds'
 		)
-		self.assertLogged('sleep 60 -- killed with SIGTERM')
+		self.assertLogged('sleep 30 -- killed with SIGTERM')
 
 	def testExecuteTimeoutWithNastyChildren(self):
 		# temporary file for a nasty kid shell script
@@ -215,29 +218,53 @@ class CommandActionTest(LogCaptureTestCase):
 
 		echo "$$" > %s.pid
 		echo "my pid $$ . sleeping lo-o-o-ong"
-		sleep 10000
+		sleep 30
 		""" % tmpFilename)
+		stime = 0
+
+		# timeout as long as pid-file was not created, but max 5 seconds
+		def getnasty_tout():
+			return (
+				getnastypid() is None
+				and time.time() - stime <= 5
+			)
 
 		def getnastypid():
-			with open(tmpFilename + '.pid') as f:
-				return int(f.read())
+			cpid = None
+			if os.path.isfile(tmpFilename + '.pid'):
+				with open(tmpFilename + '.pid') as f:
+					try:
+						cpid = int(f.read())
+					except ValueError:
+						pass
+			return cpid
 
 		# First test if can kill the bastard
+		stime = time.time()
 		self.assertFalse(CommandAction.executeCmd(
-		                 'bash %s' % tmpFilename, timeout=.1))
+			'bash %s' % tmpFilename, timeout=getnasty_tout))
+		# Wait up to 3 seconds, the child got killed
+		cpid = getnastypid()
 		# Verify that the process itself got killed
-		self.assertFalse(pid_exists(getnastypid()))  # process should have been killed
+		self.assertTrue(Utils.wait_for(lambda: not pid_exists(cpid), 3))  # process should have been killed
+		self.assertLogged('my pid ')
 		self.assertLogged('timed out')
-		self.assertLogged('killed with SIGTERM')
+		self.assertLogged('killed with SIGTERM', 
+		                  'killed with SIGKILL')
+		os.unlink(tmpFilename + '.pid')
 
 		# A bit evolved case even though, previous test already tests killing children processes
+		stime = time.time()
 		self.assertFalse(CommandAction.executeCmd(
-			'out=`bash %s`; echo ALRIGHT' % tmpFilename, timeout=.2))
+			'out=`bash %s`; echo ALRIGHT' % tmpFilename, timeout=getnasty_tout))
+		# Wait up to 3 seconds, the child got killed
+		cpid = getnastypid()
 		# Verify that the process itself got killed
-		self.assertFalse(pid_exists(getnastypid()))
+		self.assertTrue(Utils.wait_for(lambda: not pid_exists(cpid), 3))
+		self.assertLogged('my pid ')
 		self.assertLogged('timed out')
-		self.assertLogged('killed with SIGTERM')
-
+		self.assertLogged('killed with SIGTERM', 
+		                  'killed with SIGKILL')
 		os.unlink(tmpFilename)
 		os.unlink(tmpFilename + '.pid')
 
