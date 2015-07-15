@@ -10,7 +10,6 @@ fail2ban.server package
    fail2ban.server.database
    fail2ban.server.datedetector
    fail2ban.server.datetemplate
-   fail2ban.server.faildata
    fail2ban.server.failmanager
    fail2ban.server.failregex
    fail2ban.server.filter
@@ -26,3 +25,4 @@ fail2ban.server package
    fail2ban.server.strptime
    fail2ban.server.ticket
    fail2ban.server.transmitter
+   fail2ban.server.utils

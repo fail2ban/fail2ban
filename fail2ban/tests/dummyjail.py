@@ -39,28 +39,27 @@ class DummyJail(Jail, object):
 		self.__actions = Actions(self)
 
 	def __len__(self):
-		try:
-			self.lock.acquire()
+		with self.lock:
 			return len(self.queue)
-		finally:
-			self.lock.release()
+
+	def isEmpty(self):
+		with self.lock:
+			return not self.queue
+
+	def isFilled(self):
+		with self.lock:
+			return bool(self.queue)
 
 	def putFailTicket(self, ticket):
-		try:
-			self.lock.acquire()
+		with self.lock:
 			self.queue.append(ticket)
-		finally:
-			self.lock.release()
 
 	def getFailTicket(self):
-		try:
-			self.lock.acquire()
+		with self.lock:
 			try:
 				return self.queue.pop()
 			except IndexError:
 				return False
-		finally:
-			self.lock.release()
 
 	@property
 	def name(self):

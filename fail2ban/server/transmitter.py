@@ -95,7 +95,7 @@ class Transmitter:
 			return None
 		elif command[0] == "sleep":
 			value = command[1]
-			time.sleep(int(value))
+			time.sleep(float(value))
 			return None
 		elif command[0] == "flushlogs":
 			return self.__server.flushLogs()

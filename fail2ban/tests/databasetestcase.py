@@ -35,7 +35,12 @@ from ..server.ticket import FailTicket
 from ..server.actions import Actions
 from .dummyjail import DummyJail
 try:
-	from ..server.database import Fail2BanDb
+	from ..server.database import Fail2BanDb as Fail2BanDb
+	# because of tests performance use memory instead of file:
+	def TestFail2BanDb(filename):
+		if unittest.F2B.fast:
+			return Fail2BanDb(':memory:')
+		return Fail2BanDb(filename)
 except ImportError:
 	Fail2BanDb = None
 from .utils import LogCaptureTestCase
@@ -55,7 +60,7 @@ class DatabaseTest(LogCaptureTestCase):
 		elif Fail2BanDb is None:
 			return
 		_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
-		self.db = Fail2BanDb(self.dbFilename)
+		self.db = TestFail2BanDb(self.dbFilename)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -66,7 +71,7 @@ class DatabaseTest(LogCaptureTestCase):
 		os.remove(self.dbFilename)
 
 	def testGetFilename(self):
-		if Fail2BanDb is None: # pragma: no cover
+		if Fail2BanDb is None or self.db.filename == ':memory:': # pragma: no cover
 			return
 		self.assertEqual(self.dbFilename, self.db.filename)
 
@@ -88,7 +93,7 @@ class DatabaseTest(LogCaptureTestCase):
 			"/this/path/should/not/exist")
 
 	def testCreateAndReconnect(self):
-		if Fail2BanDb is None: # pragma: no cover
+		if Fail2BanDb is None or self.db.filename == ':memory:': # pragma: no cover
 			return
 		self.testAddJail()
 		# Reconnect...

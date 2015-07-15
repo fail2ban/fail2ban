@@ -33,6 +33,7 @@ import unittest
 
 from .. import protocol
 from ..server.asyncserver import AsyncServer, AsyncServerException
+from ..server.utils import Utils
 from ..client.csocket import CSocket
 
 
@@ -59,7 +60,7 @@ class Socket(unittest.TestCase):
 			target=self.server.start, args=(self.sock_name, False))
 		serverThread.daemon = True
 		serverThread.start()
-		time.sleep(1)
+		time.sleep(Utils.DEFAULT_SLEEP_TIME)
 
 		client = CSocket(self.sock_name)
 		testMessage = ["A", "test", "message"]
@@ -71,7 +72,7 @@ class Socket(unittest.TestCase):
 		client.close()
 
 		self.server.stop()
-		serverThread.join(1)
+		serverThread.join(Utils.DEFAULT_SLEEP_TIME)
 		self.assertFalse(os.path.exists(self.sock_name))
 
 	def testSocketForce(self):
@@ -85,10 +86,10 @@ class Socket(unittest.TestCase):
 			target=self.server.start, args=(self.sock_name, True))
 		serverThread.daemon = True
 		serverThread.start()
-		time.sleep(1)
+		time.sleep(Utils.DEFAULT_SLEEP_TIME)
 
 		self.server.stop()
-		serverThread.join(1)
+		serverThread.join(Utils.DEFAULT_SLEEP_TIME)
 		self.assertFalse(os.path.exists(self.sock_name))
 
 

@@ -46,6 +46,8 @@ class SMTPActionTest(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		unittest.F2B.SkipIfNoNetwork()
+
 		self.jail = DummyJail()
 		pythonModule = os.path.join(CONFIG_DIR, "action.d", "smtp.py")
 		pythonModuleName = os.path.basename(pythonModule.rstrip(".py"))

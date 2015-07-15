@@ -60,6 +60,7 @@ class AddFailure(unittest.TestCase):
 class StatusExtendedCymruInfo(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
+		unittest.F2B.SkipIfNoNetwork()
 		self.__ban_ip = "93.184.216.34"
 		self.__asn = "15133"
 		self.__country = "EU"
