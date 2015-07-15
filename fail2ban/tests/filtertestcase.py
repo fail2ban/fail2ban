@@ -41,6 +41,7 @@ from ..server.filterpoll import FilterPoll
 from ..server.filter import Filter, FileFilter, FileContainer, DNSUtils
 from ..server.failmanager import FailManagerEmpty
 from ..server.mytime import MyTime
+from ..server.utils import Utils
 from .utils import setUpMyTime, tearDownMyTime, mtimesleep, LogCaptureTestCase
 from .dummyjail import DummyJail
 
@@ -162,7 +163,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 		# Opened earlier, therefore must close it
 		fin.close()
 	# to give other threads possibly some time to crunch
-	time.sleep(0.1)
+	time.sleep(Utils.DEFAULT_SLEEP_INTERVAL)
 	return fout
 
 
@@ -299,6 +300,11 @@ class IgnoreIP(LogCaptureTestCase):
 
 class IgnoreIPDNS(IgnoreIP):
 
+	def setUp(self):
+		"""Call before every test case."""
+		unittest.F2B.SkipIfNoNetwork()
+		IgnoreIP.setUp(self)
+
 	def testIgnoreIPDNSOK(self):
 		self.filter.addIgnoreIP("www.epfl.ch")
 		self.assertTrue(self.filter.inIgnoreIPList("128.178.50.12"))
@@ -425,16 +431,11 @@ class LogFileMonitor(LogCaptureTestCase):
 	def isModified(self, delay=2.):
 		"""Wait up to `delay` sec to assure that it was modified or not
 		"""
-		time0 = time.time()
-		while time.time() < time0 + delay:
-			if self.filter.isModified(self.name):
-				return True
-			time.sleep(0.1)
-		return False
+		return Utils.wait_for(lambda: self.filter.isModified(self.name), delay)
 
 	def notModified(self):
 		# shorter wait time for not modified status
-		return not self.isModified(0.4)
+		return not self.isModified(4*Utils.DEFAULT_SLEEP_TIME)
 
 	def testUnaccessibleLogFile(self):
 		os.chmod(self.name, 0)
@@ -583,26 +584,21 @@ def get_monitor_failures_testcase(Filter_):
 			#time.sleep(0.2)			  # Give FS time to ack the removal
 			pass
 
-		def isFilled(self, delay=2.):
+		def isFilled(self, delay=1.):
 			"""Wait up to `delay` sec to assure that it was modified or not
 			"""
-			time0 = time.time()
-			while time.time() < time0 + delay:
-				if len(self.jail):
-					return True
-				time.sleep(0.1)
-			return False
+			return Utils.wait_for(lambda: self.jail.isFilled(), delay)
 
 		def _sleep_4_poll(self):
 			# Since FilterPoll relies on time stamps and some
 			# actions might be happening too fast in the tests,
 			# sleep a bit to guarantee reliable time stamps
 			if isinstance(self.filter, FilterPoll):
-				mtimesleep()
+				Utils.wait_for(lambda: self.filter.is_alive(), 4*Utils.DEFAULT_SLEEP_TIME)
 
-		def isEmpty(self, delay=0.4):
+		def isEmpty(self, delay=4*Utils.DEFAULT_SLEEP_TIME):
 			# shorter wait time for not modified status
-			return not self.isFilled(delay)
+			return Utils.wait_for(lambda: self.jail.isEmpty(), delay)
 
 		def assert_correct_last_attempt(self, failures, count=None):
 			self.assertTrue(self.isFilled(20)) # give Filter a chance to react
@@ -657,10 +653,11 @@ def get_monitor_failures_testcase(Filter_):
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 												  n=14, mode='w')
 			# Poll might need more time
-			self.assertTrue(self.isEmpty(4 + int(isinstance(self.filter, FilterPoll))*2),
+			self.assertTrue(self.isEmpty(min(4, 100 * Utils.DEFAULT_SLEEP_TIME)),
 							"Queue must be empty but it is not: %s."
 							% (', '.join([str(x) for x in self.jail.queue])))
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+			Utils.wait_for(lambda: self.filter.failManager.getFailTotal() == 2, 50 * Utils.DEFAULT_SLEEP_TIME)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 2)
 
 			# move aside, but leaving the handle still open...
@@ -685,7 +682,7 @@ def get_monitor_failures_testcase(Filter_):
 
 			if interim_kill:
 				_killfile(None, self.name)
-				time.sleep(0.2)				  # let them know
+				time.sleep(Utils.DEFAULT_SLEEP_TIME)				  # let them know
 
 			# now create a new one to override old one
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name + '.new',
@@ -732,7 +729,7 @@ def get_monitor_failures_testcase(Filter_):
 
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
 			# so we should get no more failures detected
-			self.assertTrue(self.isEmpty(2))
+			self.assertTrue(self.isEmpty(200 * Utils.DEFAULT_SLEEP_TIME))
 
 			# but then if we add it back again
 			self.filter.addLogPath(self.name)
@@ -789,19 +786,14 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			return "MonitorJournalFailures%s(%s)" \
 			  % (Filter_, hasattr(self, 'name') and self.name or 'tempfile')
 
-		def isFilled(self, delay=2.):
+		def isFilled(self, delay=1.):
 			"""Wait up to `delay` sec to assure that it was modified or not
 			"""
-			time0 = time.time()
-			while time.time() < time0 + delay:
-				if len(self.jail):
-					return True
-				time.sleep(0.1)
-			return False
+			return Utils.wait_for(lambda: self.jail.isFilled(), delay)
 
-		def isEmpty(self, delay=0.4):
+		def isEmpty(self, delay=4*Utils.DEFAULT_SLEEP_TIME):
 			# shorter wait time for not modified status
-			return not self.isFilled(delay)
+			return Utils.wait_for(lambda: self.jail.isEmpty(), delay)
 
 		def assert_correct_ban(self, test_ip, test_attempts):
 			self.assertTrue(self.isFilled(10)) # give Filter a chance to react
@@ -860,7 +852,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, n=5, skip=5)
 			# so we should get no more failures detected
-			self.assertTrue(self.isEmpty(2))
+			self.assertTrue(self.isEmpty(200 * Utils.DEFAULT_SLEEP_TIME))
 
 			# but then if we add it back again
 			self.filter.addJournalMatch([
@@ -904,6 +896,16 @@ class GetFailures(LogCaptureTestCase):
 		"""Call after every test case."""
 		tearDownMyTime()
 		LogCaptureTestCase.tearDown(self)
+
+	def testFilterAPI(self):
+		self.assertEqual(self.filter.getLogs(), [])
+		self.assertEqual(self.filter.getLogCount(), 0)
+		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)
+		self.assertEqual(self.filter.getLogCount(), 1)
+		self.assertEqual(self.filter.getLogPaths(), [GetFailures.FILENAME_01])
+		self.filter.addLogPath(GetFailures.FILENAME_02, tail=True)
+		self.assertEqual(self.filter.getLogCount(), 2)
+		self.assertEqual(sorted(self.filter.getLogPaths()), sorted([GetFailures.FILENAME_01, GetFailures.FILENAME_02]))
 
 	def testTail(self):
 		# There must be no containters registered, otherwise [-1] indexing would be wrong
@@ -1025,6 +1027,7 @@ class GetFailures(LogCaptureTestCase):
 			_killfile(fout, fname)
 
 	def testGetFailuresUseDNS(self):
+		unittest.F2B.SkipIfNoNetwork()
 		# We should still catch failures with usedns = no ;-)
 		output_yes = ('93.184.216.34', 2, 1124013539.0,
 					  [u'Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2',
@@ -1126,6 +1129,10 @@ class GetFailures(LogCaptureTestCase):
 
 class DNSUtilsTests(unittest.TestCase):
 
+	def setUp(self):
+		"""Call before every test case."""
+		unittest.F2B.SkipIfNoNetwork()
+
 	def testUseDns(self):
 		res = DNSUtils.textToIp('www.example.com', 'no')
 		self.assertEqual(res, [])
@@ -1151,6 +1158,7 @@ class DNSUtilsTests(unittest.TestCase):
 	def testIpToName(self):
 		res = DNSUtils.ipToName('8.8.4.4')
 		self.assertEqual(res, 'google-public-dns-b.google.com')
+		unittest.F2B.SkipIfNoNetwork()
 		# invalid ip (TEST-NET-1 according to RFC 5737)
 		res = DNSUtils.ipToName('192.0.2.0')
 		self.assertEqual(res, None)

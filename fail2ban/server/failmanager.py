@@ -27,7 +27,6 @@ __license__ = "GPL"
 from threading import Lock
 import logging
 
-from .faildata import FailData
 from .ticket import FailTicket
 from ..helpers import getLogger
 
@@ -86,26 +85,35 @@ class FailManager:
 		finally:
 			self.__lock.release()
 
-	def addFailure(self, ticket):
+	def addFailure(self, ticket, count=1):
+		attempts = 1
 		try:
 			self.__lock.acquire()
 			ip = ticket.getIP()
-			unixTime = ticket.getTime()
-			matches = ticket.getMatches()
 			if ip in self.__failList:
 				fData = self.__failList[ip]
+				# if the same object:
+				if fData is ticket:
+					matches = None
+				else:
+					matches = ticket.getMatches()
+				unixTime = ticket.getTime()
 				if fData.getLastReset() < unixTime - self.__maxTime:
 					fData.setLastReset(unixTime)
 					fData.setRetry(0)
-				fData.inc(matches)
+				fData.inc(matches, 1, count)
 				fData.setLastTime(unixTime)
 			else:
-				fData = FailData()
-				fData.inc(matches)
-				fData.setLastReset(unixTime)
-				fData.setLastTime(unixTime)
+				# if already FailTicket - add it direct, otherwise create (using copy all ticket data):
+				if isinstance(ticket, FailTicket):
+					fData = ticket;
+				else:
+					fData = FailTicket(ticket=ticket)
+				if count > ticket.getAttempt():
+					fData.setRetry(count)
 				self.__failList[ip] = fData
 
+			attempts = fData.getRetry()
 			self.__failTotal += 1
 
 			if logSys.getEffectiveLevel() <= logging.DEBUG:
@@ -118,6 +126,7 @@ class FailManager:
 							 % (self.__failTotal, len(self.__failList), failures_summary))
 		finally:
 			self.__lock.release()
+		return attempts
 	
 	def size(self):
 		try:
@@ -140,17 +149,14 @@ class FailManager:
 		if ip in self.__failList:
 			del self.__failList[ip]
 	
-	def toBan(self):
+	def toBan(self, ip=None):
 		try:
 			self.__lock.acquire()
-			for ip in self.__failList:
+			for ip in ([ip] if ip != None and ip in self.__failList else self.__failList):
 				data = self.__failList[ip]
 				if data.getRetry() >= self.__maxRetry:
-					self.__delFailure(ip)
-					# Create a FailTicket from BanData
-					failTicket = FailTicket(ip, data.getLastTime(), data.getMatches())
-					failTicket.setAttempt(data.getRetry())
-					return failTicket
+					del self.__failList[ip]
+					return data
 			raise FailManagerEmpty
 		finally:
 			self.__lock.release()

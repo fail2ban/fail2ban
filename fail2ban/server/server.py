@@ -211,8 +211,7 @@ class Server:
 	def getLogPath(self, name):
 		filter_ = self.__jails[name].filter
 		if isinstance(filter_, FileFilter):
-			return [m.getFileName()
-					for m in filter_.getLogs()]
+			return filter_.getLogPaths()
 		else: # pragma: systemd no cover
 			logSys.info("Jail %s is not a FileFilter instance" % name)
 			return []
@@ -324,6 +323,15 @@ class Server:
 	def getBanTime(self, name):
 		return self.__jails[name].actions.getBanTime()
 	
+	def is_alive(self, jailnum=None):
+		if jailnum is not None and len(self.__jails) != jailnum:
+			return 0
+		for j in self.__jails:
+			j = self.__jails[j]
+			if not j.is_alive():
+				return 0
+		return 1
+
 	# Status
 	def status(self):
 		try:
