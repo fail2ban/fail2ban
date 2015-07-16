@@ -85,5 +85,5 @@ class DummyJail(Jail, object):
 	def actions(self):
 		return self.__actions;
 
-	def is_alive(self):
+	def isAlive(self):
 		return True;

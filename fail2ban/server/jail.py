@@ -229,7 +229,7 @@ class Jail:
 		self.actions.join()
 		logSys.info("Jail '%s' stopped" % self.name)
 
-	def is_alive(self):
-		"""Check jail "is_alive" by checking filter and actions threads.
+	def isAlive(self):
+		"""Check jail "isAlive" by checking filter and actions threads.
 		"""
-		return self.filter.is_alive() or self.actions.is_alive()
+		return self.filter.isAlive() or self.actions.isAlive()
