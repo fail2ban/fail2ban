@@ -263,19 +263,19 @@ class BanManager:
 		try:
 			self.__lock.acquire()
 			# check already banned
-			for i in self.__banList:
-				if ticket.getIP() == i.getIP():
+			for oldticket in self.__banList:
+				if ticket.getIP() == oldticket.getIP():
 					# if already permanent
-					btorg, torg = i.getBanTime(self.__banTime), i.getTime()
-					if btorg == -1:
+					btold, told = oldticket.getBanTime(self.__banTime), oldticket.getTime()
+					if btold == -1:
 						return False
 					# if given time is less than already banned time
 					btnew, tnew = ticket.getBanTime(self.__banTime), ticket.getTime()
-					if btnew != -1 and tnew + btnew <= torg + btorg:
+					if btnew != -1 and tnew + btnew <= told + btold:
 						return False
 					# we have longest ban - set new (increment) ban time
-					i.setTime(tnew)
-					i.setBanTime(btnew)
+					oldticket.setTime(tnew)
+					oldticket.setBanTime(btnew)
 					return False
 			# not yet banned - add new
 			self.__banList.append(ticket)
