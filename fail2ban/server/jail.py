@@ -33,7 +33,7 @@ from ..helpers import getLogger
 logSys = getLogger(__name__)
 
 
-class Jail:
+class Jail(object):
 	"""Fail2Ban jail, which manages a filter and associated actions.
 
 	The class handles the initialisation of a filter, and actions. It's
