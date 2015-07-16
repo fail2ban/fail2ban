@@ -32,6 +32,7 @@ import signal
 import stat
 import sys
 
+from .observer import Observers, ObserverThread
 from .jails import Jails
 from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
@@ -81,7 +82,7 @@ class Server:
 		self.flushLogs()
 
 	def start(self, sock, pidfile, force = False):
-		logSys.info("Starting Fail2ban v" + version.version)
+		logSys.info("Starting Fail2ban v%s", version.version)
 		
 		# Install signal handlers
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
@@ -123,6 +124,10 @@ class Server:
 			os.remove(pidfile)
 		except OSError, e:
 			logSys.error("Unable to remove PID file: %s" % e)
+		# Stop observer and exit
+		if Observers.Main is not None:
+			Observers.Main.stop()
+			Observers.Main = None
 		logSys.info("Exiting Fail2ban")
 	
 	def quit(self):
@@ -145,10 +150,16 @@ class Server:
 			self.__loggingLock.release()
 
 	def addJail(self, name, backend):
+		# Create an observer if not yet created and start it:
+		if Observers.Main is None:
+			Observers.Main = ObserverThread()
+			Observers.Main.start()
+		# Add jail hereafter:
 		self.__jails.add(name, backend, self.__db)
 		if self.__db is not None:
 			self.__db.addJail(self.__jails[name])
-		
+			Observers.Main.db_set(self.__db)
+
 	def delJail(self, name):
 		if self.__db is not None:
 			self.__db.delJail(self.__jails[name])
@@ -323,6 +334,12 @@ class Server:
 		
 	def getBanTime(self, name):
 		return self.__jails[name].actions.getBanTime()
+
+	def setBanTimeExtra(self, name, opt, value):
+		self.__jails[name].setBanTimeExtra(opt, value)
+
+	def getBanTimeExtra(self, name, opt):
+		return self.__jails[name].getBanTimeExtra(opt)
 	
 	# Status
 	def status(self):
@@ -443,6 +460,7 @@ class Server:
 			logger.addHandler(hdlr)
 			# Does not display this message at startup.
 			if not self.__logTarget is None:
+				logSys.info("Start Fail2ban v%s", version.version)
 				logSys.info(
 					"Changed logging target to %s for Fail2ban v%s"
 					% ((target

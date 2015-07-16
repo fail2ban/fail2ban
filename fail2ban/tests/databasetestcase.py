@@ -70,6 +70,15 @@ class DatabaseTest(LogCaptureTestCase):
 			return
 		self.assertEqual(self.dbFilename, self.db.filename)
 
+	def testPurgeAge(self):
+		if Fail2BanDb is None: # pragma: no cover
+			return
+		self.assertEqual(self.db.purgeage, 86400)
+		self.db.purgeage = '1y6mon15d5h30m'
+		self.assertEqual(self.db.purgeage, 48652200)
+		self.db.purgeage = '2y 12mon 30d 10h 60m'
+		self.assertEqual(self.db.purgeage, 48652200*2)
+
 	def testCreateInvalidPath(self):
 		if Fail2BanDb is None: # pragma: no cover
 			return
@@ -102,6 +111,33 @@ class DatabaseTest(LogCaptureTestCase):
 
 		self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
 		self.assertRaises(NotImplementedError, self.db.updateDb, Fail2BanDb.__version__ + 1)
+		os.remove(self.db._dbBackupFilename)
+
+	def testUpdateDb2(self):
+		if Fail2BanDb is None: # pragma: no cover
+			return
+		shutil.copyfile(
+			os.path.join(TEST_FILES_DIR, 'database_v2.db'), self.dbFilename)
+		self.db = Fail2BanDb(self.dbFilename)
+		self.assertEqual(self.db.getJailNames(), set(['pam-generic']))
+		self.assertEqual(self.db.getLogPaths(), set(['/var/log/auth.log']))
+		bans = self.db.getBans()
+		self.assertEqual(len(bans), 2)
+		# compare first ticket completely:
+		ticket = FailTicket("1.2.3.7", 1417595494, [
+			u'Dec  3 09:31:08 f2btest test:auth[27658]: pam_unix(test:auth): authentication failure; logname= uid=0 euid=0 tty=test ruser= rhost=1.2.3.7',
+			u'Dec  3 09:31:32 f2btest test:auth[27671]: pam_unix(test:auth): authentication failure; logname= uid=0 euid=0 tty=test ruser= rhost=1.2.3.7',
+			u'Dec  3 09:31:34 f2btest test:auth[27673]: pam_unix(test:auth): authentication failure; logname= uid=0 euid=0 tty=test ruser= rhost=1.2.3.7'
+		])
+		ticket.setAttempt(3)
+		self.assertEqual(bans[0], ticket)
+		# second ban found also:
+		self.assertEqual(bans[1].getIP(), "1.2.3.8")
+		# updated ?
+		self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
+		# further update should fail:
+		self.assertRaises(NotImplementedError, self.db.updateDb, Fail2BanDb.__version__ + 1)
+		# clean:
 		os.remove(self.db._dbBackupFilename)
 
 	def testAddJail(self):
@@ -312,8 +348,9 @@ class DatabaseTest(LogCaptureTestCase):
 			"action_checkainfo",
 			os.path.join(TEST_FILES_DIR, "action.d/action_checkainfo.py"),
 			{})
-		ticket = FailTicket("1.2.3.4", MyTime.time(), ['test', 'test'])
+		ticket = FailTicket("1.2.3.4")
 		ticket.setAttempt(5)
+		ticket.setMatches(['test', 'test'])
 		self.jail.putFailTicket(ticket)
 		actions._Actions__checkBan()
 		self.assertTrue(self._is_logged("ban ainfo %s, %s, %s, %s" % (True, True, True, True)))

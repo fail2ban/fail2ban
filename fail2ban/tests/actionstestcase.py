@@ -151,7 +151,7 @@ class ExecuteActions(LogCaptureTestCase):
 			"action2",
 			os.path.join(TEST_FILES_DIR, "action.d/action_modifyainfo.py"),
 			{})
-		self.__jail.putFailTicket(FailTicket("1.2.3.4", 0))
+		self.__jail.putFailTicket(FailTicket("1.2.3.4"))
 		self.__actions._Actions__checkBan()
 		# Will fail if modification of aInfo from first action propagates
 		# to second action, as both delete same key

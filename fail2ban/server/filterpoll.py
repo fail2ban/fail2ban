@@ -57,6 +57,7 @@ class FilterPoll(FileFilter):
 		## The time of the last modification of the file.
 		self.__prevStats = dict()
 		self.__file404Cnt = dict()
+		self.__initial = dict()
 		logSys.debug("Created FilterPoll")
 
 	##
@@ -94,7 +95,11 @@ class FilterPoll(FileFilter):
 				for container in self.getLogPath():
 					filename = container.getFileName()
 					if self.isModified(filename):
-						self.getFailures(filename)
+						# set start time as now - find time for first usage only (prevent performance bug with polling of big files)
+						self.getFailures(filename, 
+							(MyTime.time() - self.getFindTime()) if not self.__initial.get(filename) else None
+						)
+						self.__initial[filename] = True
 						self.__modified = True
 
 				if self.__modified:

@@ -49,22 +49,16 @@ class Fail2banReader(ConfigReader):
 				["string", "logtarget", "STDERR"],
 				["string", "syslogsocket", "auto"],
 				["string", "dbfile", "/var/lib/fail2ban/fail2ban.sqlite3"],
-				["int", "dbpurgeage", 86400]]
+				["string", "dbpurgeage", "1d"]]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
 	
 	def convert(self):
+		order = {"loglevel":0, "logtarget":1, "syslogsocket":2, "dbfile":50, "dbpurgeage":51}
 		stream = list()
 		for opt in self.__opts:
-			if opt == "loglevel":
-				stream.append(["set", "loglevel", self.__opts[opt]])
-			elif opt == "logtarget":
-				stream.append(["set", "logtarget", self.__opts[opt]])
-			elif opt == "syslogsocket":
-				stream.append(["set", "syslogsocket", self.__opts[opt]])
-			elif opt == "dbfile":
-				stream.append(["set", "dbfile", self.__opts[opt]])
-			elif opt == "dbpurgeage":
-				stream.append(["set", "dbpurgeage", self.__opts[opt]])
+			if opt in order:
+				stream.append((order[opt], ["set", opt, self.__opts[opt]]))
 		# Ensure logtarget/level set first so any db errors are captured
-		return sorted(stream, reverse=True)
+		# and dbfile set before all other database options
+		return [opt[1] for opt in sorted(stream)]
 	

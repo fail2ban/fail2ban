@@ -25,6 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from ..helpers import getLogger
+from .mytime import MyTime
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -32,7 +33,7 @@ logSys = getLogger(__name__)
 
 class Ticket:
 	
-	def __init__(self, ip, time, matches=None):
+	def __init__(self, ip, time=None, matches=None):
 		"""Ticket constructor
 
 		@param ip the IP address
@@ -41,14 +42,17 @@ class Ticket:
 		"""
 
 		self.setIP(ip)
-		self.__time = time
+		self.__restored = False;
+		self.__banCount = 0;
+		self.__banTime = None;
+		self.__time = time if time is not None else MyTime.time()
 		self.__attempt = 0
 		self.__file = None
 		self.__matches = matches or []
 
 	def __str__(self):
-		return "%s: ip=%s time=%s #attempts=%d matches=%r" % \
-			   (self.__class__.__name__.split('.')[-1], self.__ip, self.__time, self.__attempt, self.__matches)
+		return "%s: ip=%s time=%s bantime=%s bancount=%s #attempts=%d matches=%r" % \
+			   (self.__class__.__name__.split('.')[-1], self.__ip, self.__time, self.__banTime, self.__banCount, self.__attempt, self.__matches)
 
 	def __repr__(self):
 		return str(self)
@@ -76,15 +80,47 @@ class Ticket:
 	
 	def getTime(self):
 		return self.__time
-	
+
+	def setBanTime(self, value):
+		self.__banTime = value;
+
+	def getBanTime(self, defaultBT = None):
+		return (self.__banTime if not self.__banTime is None else defaultBT);
+
+	def setBanCount(self, value):
+		self.__banCount = value;
+
+	def incrBanCount(self, value = 1):
+		self.__banCount += value;
+
+	def getBanCount(self):
+		return self.__banCount;
+
+	def isTimedOut(self, time, defaultBT = None):
+		bantime = (self.__banTime if not self.__banTime is None else defaultBT);
+		# permanent
+		if bantime == -1:
+			return False
+		# timed out
+		return (time > self.__time + bantime)
+
 	def setAttempt(self, value):
 		self.__attempt = value
 	
 	def getAttempt(self):
 		return self.__attempt
 
+	def setMatches(self, matches):
+		self.__matches = matches
+
 	def getMatches(self):
 		return self.__matches
+
+	def setRestored(self, value):
+		self.__restored = value
+	
+	def getRestored(self):
+		return self.__restored
 
 
 class FailTicket(Ticket):
