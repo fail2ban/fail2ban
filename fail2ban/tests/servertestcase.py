@@ -240,7 +240,7 @@ class Transmitter(TransmitterBase):
 		time.sleep(Utils.DEFAULT_SLEEP_TIME)
 		# wait until not started (3 seconds as long as any RuntimeError, ex.: RuntimeError('cannot join thread before it is started',)):
 		self.assertTrue( Utils.wait_for(
-			lambda: self.server.is_alive(1) and not isinstance(self.transm.proceed(["status", self.jailName]), RuntimeError), 
+			lambda: self.server.isAlive(1) and not isinstance(self.transm.proceed(["status", self.jailName]), RuntimeError),
 			3) )
 		self.assertEqual(
 			self.transm.proceed(["stop", self.jailName]), (0, None))
@@ -257,7 +257,7 @@ class Transmitter(TransmitterBase):
 		#      giving it a small delay reliably helps to proceed with tests
 		time.sleep(Utils.DEFAULT_SLEEP_TIME)
 		self.assertTrue( Utils.wait_for(
-			lambda: self.server.is_alive(2) and not isinstance(self.transm.proceed(["status", self.jailName]), RuntimeError), 
+			lambda: self.server.isAlive(2) and not isinstance(self.transm.proceed(["status", self.jailName]), RuntimeError),
 			3) )
 		self.assertEqual(self.transm.proceed(["stop", "all"]), (0, None))
 		self.assertTrue( Utils.wait_for( lambda: not len(self.server._Server__jails), 3) )

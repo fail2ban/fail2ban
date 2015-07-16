@@ -157,7 +157,7 @@ class Server:
 	def startJail(self, name):
 		try:
 			self.__lock.acquire()
-			if not self.__jails[name].is_alive():
+			if not self.__jails[name].isAlive():
 				self.__jails[name].start()
 		finally:
 			self.__lock.release()
@@ -166,7 +166,7 @@ class Server:
 		logSys.debug("Stopping jail %s" % name)
 		try:
 			self.__lock.acquire()
-			if self.__jails[name].is_alive():
+			if self.__jails[name].isAlive():
 				self.__jails[name].stop()
 				self.delJail(name)
 		finally:
@@ -324,12 +324,12 @@ class Server:
 	def getBanTime(self, name):
 		return self.__jails[name].actions.getBanTime()
 	
-	def is_alive(self, jailnum=None):
+	def isAlive(self, jailnum=None):
 		if jailnum is not None and len(self.__jails) != jailnum:
 			return 0
 		for j in self.__jails:
 			j = self.__jails[j]
-			if not j.is_alive():
+			if not j.isAlive():
 				return 0
 		return 1
 

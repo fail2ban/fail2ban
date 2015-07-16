@@ -582,7 +582,7 @@ def get_monitor_failures_testcase(Filter_):
 			# actions might be happening too fast in the tests,
 			# sleep a bit to guarantee reliable time stamps
 			if isinstance(self.filter, FilterPoll):
-				Utils.wait_for(lambda: self.filter.is_alive(), 4*Utils.DEFAULT_SLEEP_TIME)
+				Utils.wait_for(lambda: self.filter.isAlive(), 4*Utils.DEFAULT_SLEEP_TIME)
 
 		def isEmpty(self, delay=4*Utils.DEFAULT_SLEEP_TIME):
 			# shorter wait time for not modified status
