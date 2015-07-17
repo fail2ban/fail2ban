@@ -575,18 +575,18 @@ def get_monitor_failures_testcase(Filter_):
 		def isFilled(self, delay=1.):
 			"""Wait up to `delay` sec to assure that it was modified or not
 			"""
-			return Utils.wait_for(lambda: self.jail.isFilled(), delay)
+			return Utils.wait_for(self.jail.isFilled, delay)
 
 		def _sleep_4_poll(self):
 			# Since FilterPoll relies on time stamps and some
 			# actions might be happening too fast in the tests,
 			# sleep a bit to guarantee reliable time stamps
 			if isinstance(self.filter, FilterPoll):
-				Utils.wait_for(lambda: self.filter.isAlive(), 4*Utils.DEFAULT_SLEEP_TIME)
+				Utils.wait_for(self.filter.isAlive, 4*Utils.DEFAULT_SLEEP_TIME)
 
 		def isEmpty(self, delay=4*Utils.DEFAULT_SLEEP_TIME):
 			# shorter wait time for not modified status
-			return Utils.wait_for(lambda: self.jail.isEmpty(), delay)
+			return Utils.wait_for(self.jail.isEmpty, delay)
 
 		def assert_correct_last_attempt(self, failures, count=None):
 			self.assertTrue(self.isFilled(20)) # give Filter a chance to react
@@ -777,11 +777,11 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		def isFilled(self, delay=1.):
 			"""Wait up to `delay` sec to assure that it was modified or not
 			"""
-			return Utils.wait_for(lambda: self.jail.isFilled(), delay)
+			return Utils.wait_for(self.jail.isFilled, delay)
 
 		def isEmpty(self, delay=4*Utils.DEFAULT_SLEEP_TIME):
 			# shorter wait time for not modified status
-			return Utils.wait_for(lambda: self.jail.isEmpty(), delay)
+			return Utils.wait_for(self.jail.isEmpty, delay)
 
 		def assert_correct_ban(self, test_ip, test_attempts):
 			self.assertTrue(self.isFilled(10)) # give Filter a chance to react
@@ -1057,6 +1057,52 @@ class GetFailures(unittest.TestCase):
 
 
 class DNSUtilsTests(unittest.TestCase):
+
+	def testCache(self):
+		c = Utils.Cache(maxCount=5, maxTime=60)
+		# not available :
+		self.assertTrue(c.get('a') is None)
+		self.assertEqual(c.get('a', 'test'), 'test')
+		# exact 5 elements :
+		for i in xrange(5):
+			c.set(i, i)
+		for i in xrange(5):
+			self.assertEqual(c.get(i), i)
+
+	def testCacheMaxSize(self):
+		c = Utils.Cache(maxCount=5, maxTime=60)
+		# exact 5 elements :
+		for i in xrange(5):
+			c.set(i, i)
+		self.assertEqual([c.get(i) for i in xrange(5)], [i for i in xrange(5)])
+		self.assertFalse(-1 in [c.get(i, -1) for i in xrange(5)])
+		# add one - too many:
+		c.set(10, i)
+		# one element should be removed :
+		self.assertTrue(-1 in [c.get(i, -1) for i in xrange(5)])
+		# test max size (not expired):
+		for i in xrange(10):
+			c.set(i, 1)
+		self.assertEqual(len(c), 5)
+
+	def testCacheMaxTime(self):
+		# test max time (expired, timeout reached) :
+		c = Utils.Cache(maxCount=5, maxTime=0.0005)
+		for i in xrange(10):
+			c.set(i, 1)
+		st = time.time()
+		self.assertTrue(Utils.wait_for(lambda: time.time() >= st + 0.0005, 1))
+		# we have still 5 elements (or fewer if too slow test mashine):
+		self.assertTrue(len(c) <= 5)
+		# but all that are expiered also:
+		for i in xrange(10):
+			self.assertTrue(c.get(i) is None)
+		# here the whole cache should be empty:
+		self.assertEqual(len(c), 0)
+		
+
+
+class DNSUtilsNetworkTests(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""

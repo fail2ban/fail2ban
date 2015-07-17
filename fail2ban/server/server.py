@@ -44,7 +44,7 @@ logSys = getLogger(__name__)
 
 try:
 	from .database import Fail2BanDb
-except ImportError:
+except ImportError: # pragma: no cover
 	# Dont print error here, as database may not even be used
 	Fail2BanDb = None
 

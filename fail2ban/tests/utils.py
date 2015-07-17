@@ -115,6 +115,7 @@ def gatherTests(regexps=None, opts=None):
 	# avoid circular imports
 	from . import banmanagertestcase
 	from . import clientreadertestcase
+	from . import tickettestcase
 	from . import failmanagertestcase
 	from . import filtertestcase
 	from . import servertestcase
@@ -149,6 +150,8 @@ def gatherTests(regexps=None, opts=None):
 	tests.addTest(unittest.makeSuite(servertestcase.LoggingTests))
 	tests.addTest(unittest.makeSuite(actiontestcase.CommandActionTest))
 	tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
+	# Ticket, BanTicket, FailTicket
+	tests.addTest(unittest.makeSuite(tickettestcase.TicketTests))
 	# FailManager
 	tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
 	# BanManager
@@ -186,6 +189,7 @@ def gatherTests(regexps=None, opts=None):
 	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIPDNS))
 	tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
 	tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
+	tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsNetworkTests))
 	tests.addTest(unittest.makeSuite(filtertestcase.JailTests))
 
 	# DateDetector

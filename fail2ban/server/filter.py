@@ -951,8 +951,8 @@ class DNSUtils:
 	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
 
 	# todo: make configurable the expired time and max count of cache entries:
-	CACHE_dnsToIp = Utils.Cache(maxCount=1000, maxTime=60*60)
-	CACHE_ipToName = Utils.Cache(maxCount=1000, maxTime=60*60)
+	CACHE_dnsToIp = Utils.Cache(maxCount=1000, maxTime=5*60)
+	CACHE_ipToName = Utils.Cache(maxCount=1000, maxTime=5*60)
 
 	@staticmethod
 	def dnsToIp(dns):

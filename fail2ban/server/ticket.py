@@ -146,16 +146,17 @@ class Ticket:
 		# return default if not exists:
 		if not self._data:
 			return default
-		# return filtered by lambda/function:
-		if callable(key):
-			# todo: if support >= 2.7 only:
-			# return {k:v for k,v in self._data.iteritems() if key(k)}
-			return dict([(k,v) for k,v in self._data.iteritems() if key(k)])
-		# return filtered by keys:
-		if hasattr(key, '__iter__'):
-			# todo: if support >= 2.7 only:
-			# return {k:v for k,v in self._data.iteritems() if k in key}
-			return dict([(k,v) for k,v in self._data.iteritems() if k in key])
+		if not isinstance(key,(str,unicode,type(None),int,float,bool,complex)):
+			# return filtered by lambda/function:
+			if callable(key):
+				# todo: if support >= 2.7 only:
+				# return {k:v for k,v in self._data.iteritems() if key(k)}
+				return dict([(k,v) for k,v in self._data.iteritems() if key(k)])
+			# return filtered by keys:
+			if hasattr(key, '__iter__'):
+				# todo: if support >= 2.7 only:
+				# return {k:v for k,v in self._data.iteritems() if k in key}
+				return dict([(k,v) for k,v in self._data.iteritems() if k in key])
 		# return single value of data:
 		return self._data.get(key, default)
 
