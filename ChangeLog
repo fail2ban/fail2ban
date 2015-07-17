@@ -32,8 +32,14 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
      currently not banned or persistent)
 
 - New Features:
+   * RETURN iptables target is now a variable: <returntype>
+   * New type of operation: pass2allow, use fail2ban for "knocking",
+     opening a closed port by swapping blocktype and returntype
    * New filters:
      - froxlor-auth  Thanks Joern Muehlencord
+     - apache-pass - filter Apache access log for successfull authentication
+   * New jails:
+     - pass2allow-ftp - allows FTP traffic after successful HTTP authentication
 
 - Enhancements:
    * action.d/cloudflare.conf - improved documentation on how to allow
