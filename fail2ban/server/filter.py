@@ -560,6 +560,7 @@ class FileFilter(Filter):
 		Filter.__init__(self, jail, **kwargs)
 		## The log file path.
 		self.__logs = dict()
+		self.__autoSeek = dict()
 		self.setLogEncoding("auto")
 
 	##
@@ -567,7 +568,7 @@ class FileFilter(Filter):
 	#
 	# @param path log file path
 
-	def addLogPath(self, path, tail=False):
+	def addLogPath(self, path, tail=False, autoSeek=True):
 		if path in self.__logs:
 			logSys.error(path + " already exists")
 		else:
@@ -579,6 +580,11 @@ class FileFilter(Filter):
 					log.setPos(lastpos)
 			self.__logs[path] = log
 			logSys.info("Added logfile = %s (pos = %s, hash = %s)" , path, log.getPos(), log.getHash())
+			if autoSeek:
+				# if default, seek to "current time" - "find time":
+				if isinstance(autoSeek, bool):
+					autoSeek = MyTime.time() - self.getFindTime()
+				self.__autoSeek[path] = autoSeek
 			self._addLogPath(path)			# backend specific
 
 	def _addLogPath(self, path):
@@ -673,7 +679,7 @@ class FileFilter(Filter):
 	# MyTime.time()-self.findTime. When a failure is detected, a FailTicket
 	# is created and is added to the FailManager.
 
-	def getFailures(self, filename, startTime=None):
+	def getFailures(self, filename):
 		log = self.getLog(filename)
 		if log is None:
 			logSys.error("Unable to get failures in " + filename)
@@ -695,13 +701,17 @@ class FileFilter(Filter):
 			logSys.exception(e)
 			return False
 
-		# prevent completely read of big files first time (after start of service), initial seek to start time using half-interval search algorithm:
-		if log.getPos() == 0 and startTime is not None:
+		# seek to find time for first usage only (prevent performance decline with polling of big files)
+		if self.__autoSeek.get(filename):
+			startTime = self.__autoSeek[filename]
+			del self.__autoSeek[filename]
+			# prevent completely read of big files first time (after start of service), 
+			# initial seek to start time using half-interval search algorithm:
 			try:
-				# startTime = MyTime.time() - self.getFindTime()
 				self.seekToTime(log, startTime)
 			except Exception, e: # pragma: no cover
 				logSys.error("Error during seek to start time in \"%s\"", filename)
+				raise
 				logSys.exception(e)
 				return False
 
@@ -726,71 +736,88 @@ class FileFilter(Filter):
 	# Seeks to line with date (search using half-interval search algorithm), to start polling from it
 	#
 
-	def seekToTime(self, container, date):
+	def seekToTime(self, container, date, accuracy=3):
 		fs = container.getFileSize()
 		if logSys.getEffectiveLevel() <= logging.DEBUG:
 			logSys.debug("Seek to find time %s (%s), file size %s", date, 
 				datetime.datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S"), fs)
-		date -= 0.009
-		minp = 0
+		minp = container.getPos()
 		maxp = fs
-		lastpos = 0
-		lastFew = 0
-		lastTime = None
+		tryPos = minp
+		lastPos = -1
+		foundPos = 0
+		foundTime = None
 		cntr = 0
 		unixTime = None
-		lasti = 0
-		movecntr = 1
+		movecntr = accuracy
 		while maxp > minp:
-			i = int(minp + (maxp - minp) / 2)
-			pos = container.seek(i)
+			if tryPos is None:
+				pos = int(minp + (maxp - minp) / 2)
+			else:
+				pos, tryPos = tryPos, None
+			# because container seek will go to start of next line (minus CRLF):
+			pos = max(0, pos-2)
+			seekpos = pos = container.seek(pos)
 			cntr += 1
 			# within next 5 lines try to find any legal datetime:
 			lncntr = 5;
 			dateTimeMatch = None
-			llen = 0
-			if lastpos == pos:
-				i = pos
+			nextp = None
 			while True:
 				line = container.readline()
 				if not line:
 					break
-				llen += len(line)
-				l = line.rstrip('\r\n')
-				(timeMatch, template) = self.dateDetector.matchTime(l)
+				(timeMatch, template) = self.dateDetector.matchTime(line)
 				if timeMatch:
-					dateTimeMatch = self.dateDetector.getTime2(l[timeMatch.start():timeMatch.end()], (timeMatch, template))
+					dateTimeMatch = self.dateDetector.getTime2(line[timeMatch.start():timeMatch.end()], (timeMatch, template))
+				else:
+					nextp = container.tell()
+					if nextp > maxp:
+						pos = seekpos
+						break
+					pos = nextp
 				if not dateTimeMatch and lncntr:
 					lncntr -= 1
 					continue
 				break
+		 	# not found at this step - stop searching
+			if dateTimeMatch:
+				unixTime = dateTimeMatch[0]
+				if unixTime >= date:
+					if foundTime is None or unixTime <= foundTime:
+						foundPos = pos
+						foundTime = unixTime
+					if pos == maxp:
+						pos = seekpos
+					if pos < maxp:
+						maxp = pos
+				else:
+					if foundTime is None or unixTime >= foundTime:
+						foundPos = pos
+						foundTime = unixTime
+					if nextp is None:
+						nextp = container.tell()
+					pos = nextp
+					if pos > minp:
+						minp = pos
 			# if we can't move (position not changed)
-			if i + llen == lasti:
+			if pos == lastPos:
 				movecntr -= 1
 				if movecntr <= 0:
 		 			break
-			lasti = i + llen;
-		 	# not found at this step - stop searching
-			if not dateTimeMatch:
+				# we have found large area without any date mached 
+				# or end of search - try min position (because can be end of previous line):
+				if minp != lastPos:
+					lastPos = tryPos = minp
+					continue
 				break
-			unixTime = dateTimeMatch[0]
-			if unixTime >= date:
-				maxp = i
-			else:
-				minp = i + llen
-				lastFew = pos;
-				lastTime = unixTime
-			lastpos = pos
-		# if found position have a time greater as given - use smallest time we have found
-		if unixTime is None or unixTime > date:
-			unixTime = lastTime
-			lastpos = container.seek(lastFew, False)
-		else:
-			lastpos = container.seek(lastpos, False)
-		container.setPos(lastpos)
+			lastPos = pos
+		# always use smallest pos, that could be found:
+		foundPos = container.seek(minp, False)
+		container.setPos(foundPos)
 		if logSys.getEffectiveLevel() <= logging.DEBUG:
-			logSys.debug("Position %s from %s, found time %s (%s) within %s seeks", lastpos, fs, unixTime, 
-				(datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S") if unixTime is not None else ''), cntr)
+			logSys.debug("Position %s from %s, found time %s (%s) within %s seeks", lastPos, fs, foundTime, 
+				(datetime.datetime.fromtimestamp(foundTime).strftime("%Y-%m-%d %H:%M:%S") if foundTime is not None else ''), cntr)
 		
 	def status(self, flavor="basic"):
 		"""Status of Filter plus files being monitored.
@@ -898,10 +925,14 @@ class FileContainer:
 		# seek to given position
 		h.seek(offs, 0)
 		# goto end of next line
-		if endLine:
+		if offs and endLine:
 			h.readline()
 		# get current real position
 		return h.tell()
+
+	def tell(self):
+		# get current real position
+		return self.__handler.tell()
 
 	@staticmethod
 	def decode_line(filename, enc, line):
