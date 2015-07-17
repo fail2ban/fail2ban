@@ -331,6 +331,7 @@ fail2ban/tests/misctestcase.py
 fail2ban/tests/samplestestcase.py
 fail2ban/tests/servertestcase.py
 fail2ban/tests/sockettestcase.py
+fail2ban/tests/tickettestcase.py
 fail2ban/tests/utils.py
 fail2ban/version.py
 files/bash-completion

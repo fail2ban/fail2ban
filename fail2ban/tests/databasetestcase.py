@@ -124,7 +124,7 @@ class DatabaseTest(LogCaptureTestCase):
 		self.jail = DummyJail()
 		self.db.addJail(self.jail)
 		self.assertTrue(
-			self.jail.name in self.db.getJailNames(),
+			self.jail.name in self.db.getJailNames(True),
 			"Jail not added to database")
 
 	def testAddLog(self):
@@ -331,6 +331,25 @@ class DatabaseTest(LogCaptureTestCase):
 		self.jail.putFailTicket(ticket)
 		actions._Actions__checkBan()
 		self.assertLogged("ban ainfo %s, %s, %s, %s" % (True, True, True, True))
+
+	def testDelAndAddJail(self):
+		self.testAddJail() # Add jail
+		# Delete jail (just disabled it):
+		self.db.delJail(self.jail)
+		jails = self.db.getJailNames()
+		self.assertTrue(len(jails) == 1 and self.jail.name in jails)
+		jails = self.db.getJailNames(enabled=False)
+		self.assertTrue(len(jails) == 1 and self.jail.name in jails)
+		jails = self.db.getJailNames(enabled=True)
+		self.assertTrue(len(jails) == 0)
+		# Add it again - should just enable it:
+		self.db.addJail(self.jail)
+		jails = self.db.getJailNames()
+		self.assertTrue(len(jails) == 1 and self.jail.name in jails)
+		jails = self.db.getJailNames(enabled=True)
+		self.assertTrue(len(jails) == 1 and self.jail.name in jails)
+		jails = self.db.getJailNames(enabled=False)
+		self.assertTrue(len(jails) == 0)
 
 	def testPurge(self):
 		if Fail2BanDb is None: # pragma: no cover
