@@ -23,6 +23,7 @@ __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import logging
+import optparse
 import os
 import re
 import sys
@@ -34,6 +35,7 @@ from ..helpers import getLogger
 from ..server.filter import DNSUtils
 from ..server.mytime import MyTime
 from ..server.utils import Utils
+
 
 logSys = getLogger(__name__)
 
@@ -47,10 +49,14 @@ if not CONFIG_DIR:
 		CONFIG_DIR = '/etc/fail2ban'
 
 
-class F2B():
-	def __init__(self, fast=False, no_network=False):
-		self.fast=fast
-		self.no_network=no_network
+class F2B(optparse.Values):
+	def __init__(self, opts={}):
+		self.__dict__ = opts.__dict__ if opts else {
+			'fast': False, 'memory_db':False, 'no_gamin': False, 'no_network': False, 
+		}
+		if self.fast:
+			self.memory_db = True
+			self.no_gamin = True
 	def SkipIfFast(self):
 		pass
 	def SkipIfNoNetwork(self):
@@ -58,13 +64,11 @@ class F2B():
 
 
 def initTests(opts):
-	if opts: # pragma: no cover
-		unittest.F2B = F2B(opts.fast, opts.no_network)
-	else:
-		unittest.F2B = F2B()
+	unittest.F2B = F2B(opts)
 	# --fast :
 	if unittest.F2B.fast: # pragma: no cover
-		# prevent long sleeping during test cases...
+		# racy decrease default sleep intervals to test it faster 
+		# (prevent long sleeping during test cases ... less time goes to sleep):
 		Utils.DEFAULT_SLEEP_TIME = 0.0025
 		Utils.DEFAULT_SLEEP_INTERVAL = 0.0005
 		def F2B_SkipIfFast():
@@ -74,7 +78,7 @@ def initTests(opts):
 		# sleep intervals are large - use replacement for sleep to check time to sleep:
 		_org_sleep = time.sleep
 		def _new_sleep(v):
-			if (v > Utils.DEFAULT_SLEEP_TIME):
+			if (v > Utils.DEFAULT_SLEEP_TIME): # pragma: no cover
 				raise ValueError('[BAD-CODE] To long sleep interval: %s, try to use conditional Utils.wait_for instead' % v)
 			_org_sleep(min(v, Utils.DEFAULT_SLEEP_TIME))
 		time.sleep = _new_sleep
@@ -103,7 +107,7 @@ def setUpMyTime():
 
 def tearDownMyTime():
 	os.environ.pop('TZ')
-	if old_TZ:
+	if old_TZ: # pragma: no cover
 		os.environ['TZ'] = old_TZ
 	time.tzset()
 	MyTime.myTime = None
@@ -134,11 +138,15 @@ def gatherTests(regexps=None, opts=None):
 			_regexps = [re.compile(r) for r in regexps]
 
 			def addTest(self, suite):
-				suite_str = str(suite)
-				for r in self._regexps:
-					if r.search(suite_str):
-						super(FilteredTestSuite, self).addTest(suite)
-						return
+				matched = []
+				for test in suite:
+					s = str(test)
+					for r in self._regexps:
+						if r.search(s):
+							matched.append(test)
+							break
+				for test in matched:
+					super(FilteredTestSuite, self).addTest(test)
 
 		tests = FilteredTestSuite()
 
@@ -159,7 +167,7 @@ def gatherTests(regexps=None, opts=None):
 	try:
 		import dns
 		tests.addTest(unittest.makeSuite(banmanagertestcase.StatusExtendedCymruInfo))
-	except ImportError:
+	except ImportError: # pragma: no cover
 		pass
 	# ClientReaders
 	tests.addTest(unittest.makeSuite(clientreadertestcase.ConfigReaderTest))
@@ -221,7 +229,8 @@ def gatherTests(regexps=None, opts=None):
 	try:
 		# because gamin can be very slow on some platforms (and can produce many failures 
 		# with fast sleep interval) - skip it by fast run:
-		unittest.F2B.SkipIfFast()
+		if unittest.F2B.fast or unittest.F2B.no_gamin: # pragma: no cover
+			raise Exception('Skip, fast: %s, no_gamin: %s' % (unittest.F2B.fast, unittest.F2B.no_gamin))
 		from ..server.filtergamin import FilterGamin
 		filters.append(FilterGamin)
 	except Exception, e: # pragma: no cover

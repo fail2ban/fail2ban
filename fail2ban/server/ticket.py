@@ -176,6 +176,9 @@ class FailTicket(Ticket):
 			self.__retry = self._data['failures'];
 
 	def setRetry(self, value):
+		""" Set artificial retry count, normally equal failures / attempt,
+		used in incremental features (BanTimeIncr) to increase retry count for bad IPs
+		"""
 		self.__retry = value
 		if not self._data['failures']:
 			self._data['failures'] = 1
@@ -184,6 +187,9 @@ class FailTicket(Ticket):
 			self._data['matches'] = []
 
 	def getRetry(self):
+		""" Returns failures / attempt count or
+		artificial retry count increased for bad IPs
+		"""
 		return max(self.__retry, self._data['failures'])
 
 	def inc(self, matches=None, attempt=1, count=1):

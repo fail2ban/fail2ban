@@ -76,12 +76,15 @@ class TransmitterBase(unittest.TestCase):
 		self.server.quit()
 
 	def setGetTest(self, cmd, inValue, outValue=(None,), outCode=0, jail=None, repr_=False):
+		"""Process set/get commands and compare both return values 
+		with outValue if it was given otherwise with inValue"""
 		setCmd = ["set", cmd, inValue]
 		getCmd = ["get", cmd]
 		if jail is not None:
 			setCmd.insert(1, jail)
 			getCmd.insert(1, jail)
 
+		# if outValue was not given (now None is allowed return/compare value also)
 		if outValue == (None,):
 			outValue = inValue
 
@@ -177,7 +180,7 @@ class Transmitter(TransmitterBase):
 			self.assertEqual(self.transm.proceed(["sleep", "0.0001"]), (0, None))
 
 	def testDatabase(self):
-		if not unittest.F2B.fast:
+		if not unittest.F2B.memory_db:
 			tmp, tmpFilename = tempfile.mkstemp(".db", "fail2ban_")
 		else: # pragma: no cover
 			tmpFilename = ':memory:'
@@ -212,7 +215,7 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(self.transm.proceed(
 			["set", "dbfile", "None"]),
 			(0, None))
-		if not unittest.F2B.fast:
+		if not unittest.F2B.memory_db:
 			os.close(tmp)
 			os.unlink(tmpFilename)
 
