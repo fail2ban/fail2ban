@@ -58,7 +58,6 @@ class FilterPoll(FileFilter):
 		## The time of the last modification of the file.
 		self.__prevStats = dict()
 		self.__file404Cnt = dict()
-		self.__initial = dict()
 		logSys.debug("Created FilterPoll")
 
 	##
@@ -108,11 +107,7 @@ class FilterPoll(FileFilter):
 			modlst = []
 			Utils.wait_for(lambda: self.getModified(modlst), self.sleeptime)
 			for filename in modlst:
-				# set start time as now - find time for first usage only (prevent performance bug with polling of big files)
-				self.getFailures(filename, 
-					(MyTime.time() - self.getFindTime()) if not self.__initial.get(filename) else None
-				)
-				self.__initial[filename] = True
+				self.getFailures(filename)
 				self.__modified = True
 
 			if self.__modified:
