@@ -52,7 +52,10 @@ class Utils():
 
 	class Cache(dict):
 
-		def __init__(self, maxCount=1000, maxTime=60*60):
+		def __init__(self, *args, **kwargs):
+			self.setOptions(*args, **kwargs)
+
+		def setOptions(self, maxCount=1000, maxTime=60):
 			self.maxCount = maxCount
 			self.maxTime = maxTime
 
