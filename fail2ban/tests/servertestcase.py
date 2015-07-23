@@ -62,11 +62,14 @@ class TransmitterBase(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		self.transm = self.server._Server__transm
+		self.tmp_files = []
 		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'transmitter')
 		os.close(sock_fd)
+		self.tmp_files.append(sock_name)
 		pidfile_fd, pidfile_name = tempfile.mkstemp(
 			'fail2ban.pid', 'transmitter')
 		os.close(pidfile_fd)
+		self.tmp_files.append(pidfile_name)
 		self.server.start(sock_name, pidfile_name, force=False)
 		self.jailName = "TestJail1"
 		self.server.addJail(self.jailName, "auto")
@@ -74,6 +77,9 @@ class TransmitterBase(unittest.TestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 		self.server.quit()
+		for f in self.tmp_files:
+			if os.path.exists(f):
+				os.remove(f)
 
 	def setGetTest(self, cmd, inValue, outValue=(None,), outCode=0, jail=None, repr_=False):
 		"""Process set/get commands and compare both return values 
