@@ -19,7 +19,6 @@
 
 import os
 import smtpd
-import asyncore
 import threading
 import unittest
 import sys
@@ -30,7 +29,7 @@ else:
 
 from ..dummyjail import DummyJail
 
-from ..utils import CONFIG_DIR
+from ..utils import CONFIG_DIR, asyncserver
 
 
 class TestSMTPServer(smtpd.SMTPServer):
@@ -46,8 +45,6 @@ class SMTPActionTest(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		unittest.F2B.SkipIfNoNetwork()
-
 		self.jail = DummyJail()
 		pythonModule = os.path.join(CONFIG_DIR, "action.d", "smtp.py")
 		pythonModuleName = os.path.basename(pythonModule.rstrip(".py"))
@@ -64,13 +61,16 @@ class SMTPActionTest(unittest.TestCase):
 		self.action = customActionModule.Action(
 			self.jail, "test", host="127.0.0.1:%i" % port)
 
+		## because of bug in loop (see loop in asyncserver.py) use it's loop instead of asyncore.loop:
+		self._active = True
 		self._loop_thread = threading.Thread(
-			target=asyncore.loop, kwargs={'timeout': 1})
+			target=asyncserver.loop, kwargs={'active': lambda: self._active})
 		self._loop_thread.start()
 
 	def tearDown(self):
 		"""Call after every test case."""
 		self.smtpd.close()
+		self._active = False
 		self._loop_thread.join()
 
 	def testStart(self):
