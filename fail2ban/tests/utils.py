@@ -35,6 +35,8 @@ from ..helpers import getLogger
 from ..server.filter import DNSUtils
 from ..server.mytime import MyTime
 from ..server.utils import Utils
+# for action_d.test_smtp :
+from ..server import asyncserver
 
 
 logSys = getLogger(__name__)
@@ -61,6 +63,10 @@ class F2B(optparse.Values):
 		pass
 	def SkipIfNoNetwork(self):
 		pass
+	def maxWaitTime(self,wtime):
+		if self.fast:
+			wtime = float(wtime) / 10
+		return wtime
 
 
 def initTests(opts):
@@ -87,6 +93,13 @@ def initTests(opts):
 		def F2B_SkipIfNoNetwork():
 			raise unittest.SkipTest('Skip test because of "--no-network"')
 		unittest.F2B.SkipIfNoNetwork = F2B_SkipIfNoNetwork
+	# precache all invalid ip's (TEST-NET-1, ..., TEST-NET-3 according to RFC 5737):
+	c = DNSUtils.CACHE_ipToName
+	for i in xrange(255):
+		c.set('192.0.2.%s' % i, None)
+		c.set('198.51.100.%s' % i, None)
+		c.set('203.0.113.%s' % i, None)
+
 
 def mtimesleep():
 	# no sleep now should be necessary since polling tracks now not only

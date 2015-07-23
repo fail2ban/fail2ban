@@ -1007,8 +1007,8 @@ class DNSUtils:
 	@staticmethod
 	def ipToName(ip):
 		# cache, also prevent long wait during retrieving of name for wrong addresses, lazy dns:
-		v = DNSUtils.CACHE_ipToName.get(ip)
-		if v is not None: 
+		v = DNSUtils.CACHE_ipToName.get(ip, ())
+		if v != ():
 			return v
 		# retrieve name
 		try:
