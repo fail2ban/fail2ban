@@ -190,7 +190,6 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertTrue(jail.read())
 		self.assertFalse(jail.getOptions())
 		self.assertTrue(jail.isEnabled())
-		self.printLog()
 		self.assertTrue(self._is_logged('Error in action definition joho[foo'))
 		# This unittest has been deactivated for some time...
 		# self.assertTrue(self._is_logged(
