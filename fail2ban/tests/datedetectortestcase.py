@@ -29,20 +29,29 @@ import time
 import datetime
 
 from ..server.datedetector import DateDetector
+from ..server import datedetector
 from ..server.datetemplate import DateTemplate
-from .utils import setUpMyTime, tearDownMyTime
+from .utils import setUpMyTime, tearDownMyTime, LogCaptureTestCase
+from ..helpers import getLogger
+
+logSys = getLogger("fail2ban")
 
 
-class DateDetectorTest(unittest.TestCase):
+class DateDetectorTest(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		LogCaptureTestCase.setUp(self)
+		self.__old_eff_level = datedetector.logLevel
+		datedetector.logLevel = logSys.getEffectiveLevel()
 		setUpMyTime()
 		self.__datedetector = DateDetector()
 		self.__datedetector.addDefaultTemplate()
 
 	def tearDown(self):
 		"""Call after every test case."""
+		LogCaptureTestCase.tearDown(self)
+		datedetector.logLevel = self.__old_eff_level
 		tearDownMyTime()
 	
 	def testGetEpochTime(self):
@@ -105,7 +114,22 @@ class DateDetectorTest(unittest.TestCase):
 										 (not anchored, "bogus-prefix ")):
 				log = prefix + sdate + "[sshd] error: PAM: Authentication failure"
 
+				# with getTime:
 				logtime = self.__datedetector.getTime(log)
+				if should_match:
+					self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s, anchored: %r, log: %s" % ( sdate, anchored, log))
+					( logUnix, logMatch ) = logtime
+					self.assertEqual(logUnix, dateUnix, "getTime comparison failure for %s: \"%s\" is not \"%s\"" % (sdate, logUnix, dateUnix))
+					if sdate.startswith('audit('):
+						# yes, special case, the group only matches the number
+						self.assertEqual(logMatch.group(), '1106513999.000')
+					else:
+						self.assertEqual(logMatch.group(), sdate)
+				else:
+					self.assertEqual(logtime, None, "getTime should have not matched for %r Got: %s" % (sdate, logtime))
+				# with matchTime and getTime2 (this combination used in filter) :
+				matchTime = self.__datedetector.matchTime(log)
+				logtime = self.__datedetector.getTime2(log, matchTime)
 				if should_match:
 					self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s, anchored: %r, log: %s" % ( sdate, anchored, log))
 					( logUnix, logMatch ) = logtime

@@ -35,12 +35,19 @@ from ..server.ticket import FailTicket
 from ..server.actions import Actions
 from .dummyjail import DummyJail
 try:
-	from ..server.database import Fail2BanDb
-except ImportError:
+	from ..server.database import Fail2BanDb as Fail2BanDb
+except ImportError: # pragma: no cover
 	Fail2BanDb = None
 from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
+
+
+# because of tests performance use memory instead of file:
+def getFail2BanDb(filename):
+	if unittest.F2B.memory_db: # pragma: no cover
+		return Fail2BanDb(':memory:')
+	return Fail2BanDb(filename)
 
 
 class DatabaseTest(LogCaptureTestCase):
@@ -54,8 +61,10 @@ class DatabaseTest(LogCaptureTestCase):
 				"available.")
 		elif Fail2BanDb is None:
 			return
-		_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
-		self.db = Fail2BanDb(self.dbFilename)
+		self.dbFilename = None
+		if not unittest.F2B.memory_db:
+			_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
+		self.db = getFail2BanDb(self.dbFilename)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -63,12 +72,22 @@ class DatabaseTest(LogCaptureTestCase):
 		if Fail2BanDb is None: # pragma: no cover
 			return
 		# Cleanup
-		os.remove(self.dbFilename)
+		if self.dbFilename is not None:
+			os.remove(self.dbFilename)
 
 	def testGetFilename(self):
-		if Fail2BanDb is None: # pragma: no cover
+		if Fail2BanDb is None or self.db.filename == ':memory:': # pragma: no cover
 			return
 		self.assertEqual(self.dbFilename, self.db.filename)
+
+	def testPurgeAge(self):
+		if Fail2BanDb is None: # pragma: no cover
+			return
+		self.assertEqual(self.db.purgeage, 86400)
+		self.db.purgeage = '1y6mon15d5h30m'
+		self.assertEqual(self.db.purgeage, 48652200)
+		self.db.purgeage = '2y 12mon 30d 10h 60m'
+		self.assertEqual(self.db.purgeage, 48652200*2)
 
 	def testCreateInvalidPath(self):
 		if Fail2BanDb is None: # pragma: no cover
@@ -79,7 +98,7 @@ class DatabaseTest(LogCaptureTestCase):
 			"/this/path/should/not/exist")
 
 	def testCreateAndReconnect(self):
-		if Fail2BanDb is None: # pragma: no cover
+		if Fail2BanDb is None or self.db.filename == ':memory:': # pragma: no cover
 			return
 		self.testAddJail()
 		# Reconnect...
@@ -92,6 +111,9 @@ class DatabaseTest(LogCaptureTestCase):
 	def testUpdateDb(self):
 		if Fail2BanDb is None: # pragma: no cover
 			return
+		self.db = None
+		if self.dbFilename is None: # pragma: no cover
+			_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
 		shutil.copyfile(
 			os.path.join(TEST_FILES_DIR, 'database_v1.db'), self.dbFilename)
 		self.db = Fail2BanDb(self.dbFilename)
@@ -110,7 +132,7 @@ class DatabaseTest(LogCaptureTestCase):
 		self.jail = DummyJail()
 		self.db.addJail(self.jail)
 		self.assertTrue(
-			self.jail.name in self.db.getJailNames(),
+			self.jail.name in self.db.getJailNames(True),
 			"Jail not added to database")
 
 	def testAddLog(self):
@@ -317,6 +339,25 @@ class DatabaseTest(LogCaptureTestCase):
 		self.jail.putFailTicket(ticket)
 		actions._Actions__checkBan()
 		self.assertTrue(self._is_logged("ban ainfo %s, %s, %s, %s" % (True, True, True, True)))
+
+	def testDelAndAddJail(self):
+		self.testAddJail() # Add jail
+		# Delete jail (just disabled it):
+		self.db.delJail(self.jail)
+		jails = self.db.getJailNames()
+		self.assertTrue(len(jails) == 1 and self.jail.name in jails)
+		jails = self.db.getJailNames(enabled=False)
+		self.assertTrue(len(jails) == 1 and self.jail.name in jails)
+		jails = self.db.getJailNames(enabled=True)
+		self.assertTrue(len(jails) == 0)
+		# Add it again - should just enable it:
+		self.db.addJail(self.jail)
+		jails = self.db.getJailNames()
+		self.assertTrue(len(jails) == 1 and self.jail.name in jails)
+		jails = self.db.getJailNames(enabled=True)
+		self.assertTrue(len(jails) == 1 and self.jail.name in jails)
+		jails = self.db.getJailNames(enabled=False)
+		self.assertTrue(len(jails) == 0)
 
 	def testPurge(self):
 		if Fail2BanDb is None: # pragma: no cover

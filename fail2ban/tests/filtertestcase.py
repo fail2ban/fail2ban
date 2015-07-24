@@ -27,7 +27,7 @@ import unittest
 import getpass
 import os
 import sys
-import time
+import time, datetime
 import tempfile
 import uuid
 
@@ -38,9 +38,10 @@ except ImportError:
 
 from ..server.jail import Jail
 from ..server.filterpoll import FilterPoll
-from ..server.filter import Filter, FileFilter, DNSUtils
+from ..server.filter import Filter, FileFilter, FileContainer, DNSUtils
 from ..server.failmanager import FailManagerEmpty
 from ..server.mytime import MyTime
+from ..server.utils import Utils
 from .utils import setUpMyTime, tearDownMyTime, mtimesleep, LogCaptureTestCase
 from .dummyjail import DummyJail
 
@@ -80,6 +81,16 @@ def _killfile(f, name):
 		_killfile(None, name + '.bak')
 
 
+def _maxWaitTime(wtime):
+	if unittest.F2B.fast:
+		wtime /= 10
+	return wtime
+
+
+def _tm(time):
+	return datetime.datetime.fromtimestamp(time).strftime("%Y-%m-%d %H:%M:%S")
+
+
 def _assert_equal_entries(utest, found, output, count=None):
 	"""Little helper to unify comparisons with the target entries
 
@@ -117,9 +128,15 @@ def _assert_correct_last_attempt(utest, filter_, output, count=None):
 	Test filter to contain target ticket
 	"""
 	if isinstance(filter_, DummyJail):
+		# get fail ticket from jail
 		found = _ticket_tuple(filter_.getFailTicket())
 	else:
 		# when we are testing without jails
+		# wait for failures (up to max time)
+		Utils.wait_for(
+			lambda: filter_.failManager.getFailTotal() >= (count if count else output[1]),
+			_maxWaitTime(10))
+		# get fail ticket from filter
 		found = _ticket_tuple(filter_.failManager.toBan())
 
 	_assert_equal_entries(utest, found, output, count)
@@ -158,7 +175,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 		# Opened earlier, therefore must close it
 		fin.close()
 	# to give other threads possibly some time to crunch
-	time.sleep(0.1)
+	time.sleep(Utils.DEFAULT_SLEEP_INTERVAL)
 	return fout
 
 
@@ -287,6 +304,11 @@ class IgnoreIP(LogCaptureTestCase):
 
 class IgnoreIPDNS(IgnoreIP):
 
+	def setUp(self):
+		"""Call before every test case."""
+		unittest.F2B.SkipIfNoNetwork()
+		IgnoreIP.setUp(self)
+
 	def testIgnoreIPDNSOK(self):
 		self.filter.addIgnoreIP("www.epfl.ch")
 		self.assertTrue(self.filter.inIgnoreIPList("128.178.50.12"))
@@ -334,6 +356,133 @@ class LogFileFilterPoll(unittest.TestCase):
 		self.assertTrue(self.filter.isModified(LogFileFilterPoll.FILENAME))
 		self.assertFalse(self.filter.isModified(LogFileFilterPoll.FILENAME))
 
+	def testSeekToTimeSmallFile(self):
+		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='.log')
+		time = 1417512352
+		f = open(fname, 'w')
+		fc = None
+		try:
+			fc = FileContainer(fname, self.filter.getLogEncoding())
+			fc.open()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			f.flush()
+			# empty :
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 0)
+			# one entry with exact time:
+			f.write("%s [sshd] error: PAM: failure len 1\n" % _tm(time))
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+
+			# rewrite :
+			f.seek(0)
+			f.truncate()
+			fc.close()
+			fc = FileContainer(fname, self.filter.getLogEncoding())
+			fc.open()
+			# no time - nothing should be found :
+			for i in xrange(10):
+				f.write("[sshd] error: PAM: failure len 1\n")
+				f.flush()
+				fc.setPos(0); self.filter.seekToTime(fc, time)
+
+			# rewrite
+			f.seek(0)
+			f.truncate()
+			fc.close()
+			fc = FileContainer(fname, self.filter.getLogEncoding())
+			fc.open()
+			# one entry with smaller time:
+			f.write("%s [sshd] error: PAM: failure len 2\n" % _tm(time - 10))
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 53)
+			# two entries with smaller time:
+			f.write("%s [sshd] error: PAM: failure len 3 2 1\n" % _tm(time - 9))
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 110)
+			# check move after end (all of time smaller):
+			f.write("%s [sshd] error: PAM: failure\n" % _tm(time - 1))
+			f.flush()
+			self.assertEqual(fc.getFileSize(), 157)
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 157)
+
+			# stil one exact line:
+			f.write("%s [sshd] error: PAM: Authentication failure\n" % _tm(time))
+			f.write("%s [sshd] error: PAM: failure len 1\n" % _tm(time))
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 157)
+
+			# add something hereafter:
+			f.write("%s [sshd] error: PAM: failure len 3 2 1\n" % _tm(time + 2))
+			f.write("%s [sshd] error: PAM: Authentication failure\n" % _tm(time + 3))
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 157)
+			# add something hereafter:
+			f.write("%s [sshd] error: PAM: failure\n" % _tm(time + 9))
+			f.write("%s [sshd] error: PAM: failure len 4 3 2\n" % _tm(time + 9))
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 157)
+			# start search from current pos :
+			fc.setPos(157); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 157)
+			# start search from current pos :
+			fc.setPos(110); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 157)
+
+		finally:
+			if fc:
+				fc.close()
+			_killfile(f, fname)
+
+	def testSeekToTimeLargeFile(self):
+		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='.log')
+		time = 1417512352
+		f = open(fname, 'w')
+		fc = None
+		count = 1000 if unittest.F2B.fast else 10000
+		try:
+			fc = FileContainer(fname, self.filter.getLogEncoding())
+			fc.open()
+			f.seek(0)
+			# variable length of file (ca 45K or 450K before and hereafter):
+			# write lines with smaller as search time:
+			t = time - count - 1
+			for i in xrange(count):
+				f.write("%s [sshd] error: PAM: failure\n" % _tm(t))
+				t += 1
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 47*count)
+			# write lines with exact search time:
+			for i in xrange(10):
+				f.write("%s [sshd] error: PAM: failure\n" % _tm(time))
+			f.flush()
+			fc.setPos(0); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 47*count)
+			fc.setPos(4*count); self.filter.seekToTime(fc, time)
+			self.assertEqual(fc.getPos(), 47*count)
+			# write lines with greater as search time:
+			t = time+1
+			for i in xrange(count//500):
+				for j in xrange(500):
+					f.write("%s [sshd] error: PAM: failure\n" % _tm(t))
+					t += 1
+				f.flush()
+				fc.setPos(0); self.filter.seekToTime(fc, time)
+				self.assertEqual(fc.getPos(), 47*count)
+				fc.setPos(53); self.filter.seekToTime(fc, time)
+				self.assertEqual(fc.getPos(), 47*count)
+		
+		finally:
+			if fc:
+				fc.close()
+			_killfile(f, fname)
 
 class LogFileMonitor(LogCaptureTestCase):
 	"""Few more tests for FilterPoll API
@@ -346,7 +495,7 @@ class LogFileMonitor(LogCaptureTestCase):
 		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
 		self.file = open(self.name, 'a')
 		self.filter = FilterPoll(DummyJail())
-		self.filter.addLogPath(self.name)
+		self.filter.addLogPath(self.name, autoSeek=False)
 		self.filter.active = True
 		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 
@@ -359,16 +508,12 @@ class LogFileMonitor(LogCaptureTestCase):
 	def isModified(self, delay=2.):
 		"""Wait up to `delay` sec to assure that it was modified or not
 		"""
-		time0 = time.time()
-		while time.time() < time0 + delay:
-			if self.filter.isModified(self.name):
-				return True
-			time.sleep(0.1)
-		return False
+		return Utils.wait_for(lambda: self.filter.isModified(self.name), _maxWaitTime(delay))
 
-	def notModified(self):
-		# shorter wait time for not modified status
-		return not self.isModified(0.4)
+	def notModified(self, delay=2.):
+		"""Wait up to `delay` sec as long as it was not modified
+		"""
+		return Utils.wait_for(lambda: not self.filter.isModified(self.name), _maxWaitTime(delay))
 
 	def testUnaccessibleLogFile(self):
 		os.chmod(self.name, 0)
@@ -412,7 +557,7 @@ class LogFileMonitor(LogCaptureTestCase):
 		os.rename(self.name, self.name + '.old')
 		# we are not signaling as modified whenever
 		# it gets away
-		self.assertTrue(self.notModified())
+		self.assertTrue(self.notModified(1))
 		f = open(self.name, 'a')
 		self.assertTrue(self.isModified())
 		self.assertTrue(self.notModified())
@@ -496,7 +641,7 @@ def get_monitor_failures_testcase(Filter_):
 			self.file = open(self.name, 'a')
 			self.jail = DummyJail()
 			self.filter = Filter_(self.jail)
-			self.filter.addLogPath(self.name)
+			self.filter.addLogPath(self.name, autoSeek=False)
 			self.filter.active = True
 			self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 			self.filter.start()
@@ -518,29 +663,24 @@ def get_monitor_failures_testcase(Filter_):
 			#time.sleep(0.2)			  # Give FS time to ack the removal
 			pass
 
-		def isFilled(self, delay=2.):
+		def isFilled(self, delay=1.):
 			"""Wait up to `delay` sec to assure that it was modified or not
 			"""
-			time0 = time.time()
-			while time.time() < time0 + delay:
-				if len(self.jail):
-					return True
-				time.sleep(0.1)
-			return False
+			return Utils.wait_for(self.jail.isFilled, _maxWaitTime(delay))
 
 		def _sleep_4_poll(self):
 			# Since FilterPoll relies on time stamps and some
 			# actions might be happening too fast in the tests,
 			# sleep a bit to guarantee reliable time stamps
 			if isinstance(self.filter, FilterPoll):
-				mtimesleep()
+				Utils.wait_for(self.filter.isAlive, _maxWaitTime(5))
 
-		def isEmpty(self, delay=0.4):
+		def isEmpty(self, delay=_maxWaitTime(5)):
 			# shorter wait time for not modified status
-			return not self.isFilled(delay)
+			return Utils.wait_for(self.jail.isEmpty, _maxWaitTime(delay))
 
 		def assert_correct_last_attempt(self, failures, count=None):
-			self.assertTrue(self.isFilled(20)) # give Filter a chance to react
+			self.assertTrue(self.isFilled(10)) # give Filter a chance to react
 			_assert_correct_last_attempt(self, self.jail, failures, count=count)
 
 		def test_grow_file(self):
@@ -555,7 +695,7 @@ def get_monitor_failures_testcase(Filter_):
 			# since it should have not been enough
 
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=5)
-			self.assertTrue(self.isFilled(6))
+			self.assertTrue(self.isFilled(10))
 			# so we sleep for up to 2 sec for it not to become empty,
 			# and meanwhile pass to other thread(s) and filter should
 			# have gathered new failures and passed them into the
@@ -592,10 +732,11 @@ def get_monitor_failures_testcase(Filter_):
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 												  n=14, mode='w')
 			# Poll might need more time
-			self.assertTrue(self.isEmpty(4 + int(isinstance(self.filter, FilterPoll))*2),
+			self.assertTrue(self.isEmpty(_maxWaitTime(5)),
 							"Queue must be empty but it is not: %s."
 							% (', '.join([str(x) for x in self.jail.queue])))
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+			Utils.wait_for(lambda: self.filter.failManager.getFailTotal() == 2, _maxWaitTime(10))
 			self.assertEqual(self.filter.failManager.getFailTotal(), 2)
 
 			# move aside, but leaving the handle still open...
@@ -620,7 +761,7 @@ def get_monitor_failures_testcase(Filter_):
 
 			if interim_kill:
 				_killfile(None, self.name)
-				time.sleep(0.2)				  # let them know
+				time.sleep(Utils.DEFAULT_SLEEP_INTERVAL)				  # let them know
 
 			# now create a new one to override old one
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name + '.new',
@@ -667,10 +808,10 @@ def get_monitor_failures_testcase(Filter_):
 
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
 			# so we should get no more failures detected
-			self.assertTrue(self.isEmpty(2))
+			self.assertTrue(self.isEmpty(_maxWaitTime(10)))
 
-			# but then if we add it back again
-			self.filter.addLogPath(self.name)
+			# but then if we add it back again (no seek to time in FileFilter's, because in file used the same time)
+			self.filter.addLogPath(self.name, autoSeek=False)
 			# Tricky catch here is that it should get them from the
 			# tail written before, so let's not copy anything yet
 			#_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
@@ -724,22 +865,17 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			return "MonitorJournalFailures%s(%s)" \
 			  % (Filter_, hasattr(self, 'name') and self.name or 'tempfile')
 
-		def isFilled(self, delay=2.):
+		def isFilled(self, delay=1.):
 			"""Wait up to `delay` sec to assure that it was modified or not
 			"""
-			time0 = time.time()
-			while time.time() < time0 + delay:
-				if len(self.jail):
-					return True
-				time.sleep(0.1)
-			return False
+			return Utils.wait_for(self.jail.isFilled, _maxWaitTime(delay))
 
-		def isEmpty(self, delay=0.4):
+		def isEmpty(self, delay=_maxWaitTime(5)):
 			# shorter wait time for not modified status
-			return not self.isFilled(delay)
+			return Utils.wait_for(self.jail.isEmpty, _maxWaitTime(delay))
 
 		def assert_correct_ban(self, test_ip, test_attempts):
-			self.assertTrue(self.isFilled(10)) # give Filter a chance to react
+			self.assertTrue(self.isFilled(_maxWaitTime(10))) # give Filter a chance to react
 			ticket = self.jail.getFailTicket()
 
 			attempts = ticket.getAttempt()
@@ -762,7 +898,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, skip=2, n=3)
-			self.assertTrue(self.isFilled(6))
+			self.assertTrue(self.isFilled(10))
 			# so we sleep for up to 6 sec for it not to become empty,
 			# and meanwhile pass to other thread(s) and filter should
 			# have gathered new failures and passed them into the
@@ -795,7 +931,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, n=5, skip=5)
 			# so we should get no more failures detected
-			self.assertTrue(self.isEmpty(2))
+			self.assertTrue(self.isEmpty(_maxWaitTime(10)))
 
 			# but then if we add it back again
 			self.filter.addJournalMatch([
@@ -806,7 +942,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, n=6, skip=10)
 			# we should detect the failures
-			self.assertTrue(self.isFilled(6))
+			self.assertTrue(self.isFilled(10))
 
 	return MonitorJournalFailures
 
@@ -850,7 +986,7 @@ class GetFailures(unittest.TestCase):
 		filename = filename or GetFailures.FILENAME_01
 		failures = failures or GetFailures.FAILURES_01
 
-		self.filter.addLogPath(filename)
+		self.filter.addLogPath(filename, autoSeek=0)
 		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>$")
 		self.filter.getFailures(filename)
 		_assert_correct_last_attempt(self, self.filter,  failures)
@@ -874,7 +1010,7 @@ class GetFailures(unittest.TestCase):
 				  [u'Aug 14 11:%d:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:141.3.81.106 port 51332 ssh2'
 				   % m for m in 53, 54, 57, 58])
 
-		self.filter.addLogPath(GetFailures.FILENAME_02)
+		self.filter.addLogPath(GetFailures.FILENAME_02, autoSeek=0)
 		self.filter.addFailRegex("Failed .* from <HOST>")
 		self.filter.getFailures(GetFailures.FILENAME_02)
 		_assert_correct_last_attempt(self, self.filter, output)
@@ -882,7 +1018,26 @@ class GetFailures(unittest.TestCase):
 	def testGetFailures03(self):
 		output = ('203.162.223.135', 7, 1124013544.0)
 
-		self.filter.addLogPath(GetFailures.FILENAME_03)
+		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=0)
+		self.filter.addFailRegex("error,relay=<HOST>,.*550 User unknown")
+		self.filter.getFailures(GetFailures.FILENAME_03)
+		_assert_correct_last_attempt(self, self.filter, output)
+
+	def testGetFailures03_Seek1(self):
+		# same test as above but with seek to 'Aug 14 11:55:04' - so other output ...
+		output = ('203.162.223.135', 5, 1124013544.0)
+
+		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=output[2] - 4*60)
+		self.filter.addFailRegex("error,relay=<HOST>,.*550 User unknown")
+		self.filter.getFailures(GetFailures.FILENAME_03)
+		_assert_correct_last_attempt(self, self.filter, output)
+
+	def testGetFailures03_Seek2(self):
+		# same test as above but with seek to 'Aug 14 11:59:04' - so other output ...
+		output = ('203.162.223.135', 1, 1124013544.0)
+		self.filter.setMaxRetry(1)
+
+		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=output[2])
 		self.filter.addFailRegex("error,relay=<HOST>,.*550 User unknown")
 		self.filter.getFailures(GetFailures.FILENAME_03)
 		_assert_correct_last_attempt(self, self.filter, output)
@@ -891,7 +1046,7 @@ class GetFailures(unittest.TestCase):
 		output = [('212.41.96.186', 4, 1124013600.0),
 				  ('212.41.96.185', 4, 1124017198.0)]
 
-		self.filter.addLogPath(GetFailures.FILENAME_04)
+		self.filter.addLogPath(GetFailures.FILENAME_04, autoSeek=0)
 		self.filter.addFailRegex("Invalid user .* <HOST>")
 		self.filter.getFailures(GetFailures.FILENAME_04)
 
@@ -902,6 +1057,7 @@ class GetFailures(unittest.TestCase):
 			pass
 
 	def testGetFailuresUseDNS(self):
+		unittest.F2B.SkipIfNoNetwork()
 		# We should still catch failures with usedns = no ;-)
 		output_yes = ('93.184.216.34', 2, 1124013539.0,
 					  [u'Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2',
@@ -922,7 +1078,7 @@ class GetFailures(unittest.TestCase):
 			filter_.active = True
 			filter_.failManager.setMaxRetry(1)	# we might have just few failures
 
-			filter_.addLogPath(GetFailures.FILENAME_USEDNS)
+			filter_.addLogPath(GetFailures.FILENAME_USEDNS, autoSeek=False)
 			filter_.addFailRegex("Failed .* from <HOST>")
 			filter_.getFailures(GetFailures.FILENAME_USEDNS)
 			_assert_correct_last_attempt(self, filter_, output)
@@ -930,14 +1086,14 @@ class GetFailures(unittest.TestCase):
 	def testGetFailuresMultiRegex(self):
 		output = ('141.3.81.106', 8, 1124013541.0)
 
-		self.filter.addLogPath(GetFailures.FILENAME_02)
+		self.filter.addLogPath(GetFailures.FILENAME_02, autoSeek=False)
 		self.filter.addFailRegex("Failed .* from <HOST>")
 		self.filter.addFailRegex("Accepted .* from <HOST>")
 		self.filter.getFailures(GetFailures.FILENAME_02)
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailuresIgnoreRegex(self):
-		self.filter.addLogPath(GetFailures.FILENAME_02)
+		self.filter.addLogPath(GetFailures.FILENAME_02, autoSeek=False)
 		self.filter.addFailRegex("Failed .* from <HOST>")
 		self.filter.addFailRegex("Accepted .* from <HOST>")
 		self.filter.addIgnoreRegex("for roehl")
@@ -949,7 +1105,7 @@ class GetFailures(unittest.TestCase):
 	def testGetFailuresMultiLine(self):
 		output = [("192.0.43.10", 2, 1124013599.0),
 			("192.0.43.11", 1, 1124013598.0)]
-		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
+		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.setMaxLines(100)
 		self.filter.setMaxRetry(1)
@@ -967,7 +1123,7 @@ class GetFailures(unittest.TestCase):
 
 	def testGetFailuresMultiLineIgnoreRegex(self):
 		output = [("192.0.43.10", 2, 1124013599.0)]
-		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
+		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addIgnoreRegex("rsync error: Received SIGINT")
 		self.filter.setMaxLines(100)
@@ -983,7 +1139,7 @@ class GetFailures(unittest.TestCase):
 		output = [("192.0.43.10", 2, 1124013599.0),
 			("192.0.43.11", 1, 1124013598.0),
 			("192.0.43.15", 1, 1124013598.0)]
-		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE)
+		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addFailRegex("^.* sendmail\[.*, msgid=<(?P<msgid>[^>]+).*relay=\[<HOST>\].*$<SKIPLINES>^.+ spamd: result: Y \d+ .*,mid=<(?P=msgid)>(,bayes=[.\d]+)?(,autolearn=\S+)?\s*$")
 		self.filter.setMaxLines(100)
@@ -1002,6 +1158,56 @@ class GetFailures(unittest.TestCase):
 
 
 class DNSUtilsTests(unittest.TestCase):
+
+	def testCache(self):
+		c = Utils.Cache(maxCount=5, maxTime=60)
+		# not available :
+		self.assertTrue(c.get('a') is None)
+		self.assertEqual(c.get('a', 'test'), 'test')
+		# exact 5 elements :
+		for i in xrange(5):
+			c.set(i, i)
+		for i in xrange(5):
+			self.assertEqual(c.get(i), i)
+
+	def testCacheMaxSize(self):
+		c = Utils.Cache(maxCount=5, maxTime=60)
+		# exact 5 elements :
+		for i in xrange(5):
+			c.set(i, i)
+		self.assertEqual([c.get(i) for i in xrange(5)], [i for i in xrange(5)])
+		self.assertFalse(-1 in [c.get(i, -1) for i in xrange(5)])
+		# add one - too many:
+		c.set(10, i)
+		# one element should be removed :
+		self.assertTrue(-1 in [c.get(i, -1) for i in xrange(5)])
+		# test max size (not expired):
+		for i in xrange(10):
+			c.set(i, 1)
+		self.assertEqual(len(c), 5)
+
+	def testCacheMaxTime(self):
+		# test max time (expired, timeout reached) :
+		c = Utils.Cache(maxCount=5, maxTime=0.0005)
+		for i in xrange(10):
+			c.set(i, 1)
+		st = time.time()
+		self.assertTrue(Utils.wait_for(lambda: time.time() >= st + 0.0005, 1))
+		# we have still 5 elements (or fewer if too slow test mashine):
+		self.assertTrue(len(c) <= 5)
+		# but all that are expiered also:
+		for i in xrange(10):
+			self.assertTrue(c.get(i) is None)
+		# here the whole cache should be empty:
+		self.assertEqual(len(c), 0)
+		
+
+
+class DNSUtilsNetworkTests(unittest.TestCase):
+
+	def setUp(self):
+		"""Call before every test case."""
+		unittest.F2B.SkipIfNoNetwork()
 
 	def testUseDns(self):
 		res = DNSUtils.textToIp('www.example.com', 'no')
@@ -1028,6 +1234,7 @@ class DNSUtilsTests(unittest.TestCase):
 	def testIpToName(self):
 		res = DNSUtils.ipToName('66.249.66.1')
 		self.assertEqual(res, 'crawl-66-249-66-1.googlebot.com')
+		unittest.F2B.SkipIfNoNetwork()
 		# invalid ip (TEST-NET-1 according to RFC 5737)
 		res = DNSUtils.ipToName('192.0.2.0')
 		self.assertEqual(res, None)

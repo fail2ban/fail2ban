@@ -44,7 +44,7 @@ logSys = getLogger(__name__)
 
 try:
 	from .database import Fail2BanDb
-except ImportError:
+except ImportError: # pragma: no cover
 	# Dont print error here, as database may not even be used
 	Fail2BanDb = None
 
@@ -81,7 +81,7 @@ class Server:
 		self.flushLogs()
 
 	def start(self, sock, pidfile, force = False):
-		logSys.info("Starting Fail2ban v" + version.version)
+		logSys.info("Starting Fail2ban v%s", version.version)
 		
 		# Install signal handlers
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
@@ -157,7 +157,7 @@ class Server:
 	def startJail(self, name):
 		try:
 			self.__lock.acquire()
-			if not self.__jails[name].is_alive():
+			if not self.__jails[name].isAlive():
 				self.__jails[name].start()
 		finally:
 			self.__lock.release()
@@ -166,7 +166,7 @@ class Server:
 		logSys.debug("Stopping jail %s" % name)
 		try:
 			self.__lock.acquire()
-			if self.__jails[name].is_alive():
+			if self.__jails[name].isAlive():
 				self.__jails[name].stop()
 				self.delJail(name)
 		finally:
@@ -324,6 +324,14 @@ class Server:
 	def getBanTime(self, name):
 		return self.__jails[name].actions.getBanTime()
 	
+	def isAlive(self, jailnum=None):
+		if jailnum is not None and len(self.__jails) != jailnum:
+			return 0
+		for jail in self.__jails.values():
+			if not jail.isAlive():
+				return 0
+		return 1
+
 	# Status
 	def status(self):
 		try:
@@ -443,6 +451,7 @@ class Server:
 			logger.addHandler(hdlr)
 			# Does not display this message at startup.
 			if not self.__logTarget is None:
+				logSys.info("Start Fail2ban v%s", version.version)
 				logSys.info(
 					"Changed logging target to %s for Fail2ban v%s"
 					% ((target
