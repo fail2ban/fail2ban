@@ -327,9 +327,8 @@ class Server:
 	def isAlive(self, jailnum=None):
 		if jailnum is not None and len(self.__jails) != jailnum:
 			return 0
-		for j in self.__jails:
-			j = self.__jails[j]
-			if not j.isAlive():
+		for jail in self.__jails.values():
+			if not jail.isAlive():
 				return 0
 		return 1
 
