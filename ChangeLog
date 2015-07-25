@@ -133,6 +133,12 @@ ver. 0.9.2 (2015/04/29) - better-quick-now-than-later
    * Absorbed DNSUtils.cidr into addr2bin in filter.py, added unittests
    * Added syslogsocket configuration to fail2ban.conf
    * Note in the jail.conf for the recidive jail to increase dbpurgeage (gh-964)
+   * Character detection heuristics for whois output via optional setting in mail-whois*.conf. Thanks Thomas Mayer
+     When set by user,
+     - detects character set of whois output (which is undefined by RFC 3912) via heuristics of the file command
+     - converts whois data to UTF-8 character set with iconv
+     - sends the whois output in UTF-8 character set to mail program
+     - avoids that heirloom mailx creates binary attachment for input with unknown character set
 
 
 ver. 0.9.1 (2014/10/29) - better, faster, stronger
