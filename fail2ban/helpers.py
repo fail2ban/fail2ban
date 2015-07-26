@@ -25,6 +25,9 @@ import os
 import traceback
 import re
 import logging
+import psutil
+import signal
+import time
 
 
 def formatExceptionInfo():
@@ -127,3 +130,49 @@ def excepthook(exctype, value, traceback):
 	getLogger("fail2ban").critical(
 		"Unhandled exception in Fail2Ban:", exc_info=True)
 	return sys.__excepthook__(exctype, value, traceback)
+
+logSys = getLogger(__name__)
+
+def isProcessDead(pid, timeout=0.1):
+	"""Return True if process is dead, if not, check after timeout again and only then report
+	"""
+	for i in xrange(2):
+		try:
+			psutil.Process(pid)
+		except psutil.NoSuchProcess:
+			return True
+		time.sleep(timeout)
+	return False
+
+def killProcess(pid, kill_children=True, sigs=(signal.SIGTERM,)):
+	"""A helper to kill a process and its (traceable) children
+
+	Parameters
+	----------
+	kill_children:
+	"""
+	pids_to_kill = [pid]
+
+	if kill_children:
+		try:
+			parent = psutil.Process(pid)
+			pids_to_kill.extend(p.pid for p in parent.get_children(recursive=True))
+		except psutil.NoSuchProcess:
+			return  # we are too late
+
+	for pid_ in pids_to_kill:
+		logSys.debug("Killing pid %s" % pid_)
+		dead = False
+		for sig in sigs:
+			try:
+				os.kill(pid_, sig)
+			except OSError as e:
+				logSys.info("Failure while trying to kill process %s using signal %s: %s"
+							% (pid_, sig, e))
+			# verify that pid_ is properly dead, if not, switch to the next sig if available
+			if isProcessDead(pid_):
+				dead = True
+				break
+		if not dead:
+			logSys.error("Failed to kill pid %d" % pid_)
+
