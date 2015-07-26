@@ -33,6 +33,7 @@ from abc import ABCMeta
 from collections import MutableMapping
 
 from ..helpers import getLogger
+from ..helpers import killProcess
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -574,13 +575,8 @@ class CommandAction(ActionBase):
 				if retcode is None:
 					logSys.error("%s -- timed out after %i seconds." %
 						(realCmd, timeout))
-					os.kill(popen.pid, signal.SIGTERM) # Terminate the process
-					time.sleep(0.1)
+					killProcess(popen.pid, True, (signal.SIGTERM, signal.SIGKILL)) # Terminate the process
 					retcode = popen.poll()
-					if retcode is None: # Still going...
-						os.kill(popen.pid, signal.SIGKILL) # Kill the process
-						time.sleep(0.1)
-						retcode = popen.poll()
 			except OSError, e:
 				logSys.error("%s -- failed with %s" % (realCmd, e))
 		finally:
