@@ -139,6 +139,7 @@ class Transmitter:
 		elif name == "dbpurgeage":
 			db = self.__server.getDatabase()
 			if db is None:
+				logSys.warning("dbpurgeage setting was not in effect since no db yet")
 				return None
 			else:
 				db.purgeage = command[1]

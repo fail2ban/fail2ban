@@ -54,17 +54,19 @@ class Fail2banReader(ConfigReader):
 	
 	def convert(self):
 		stream = list()
+		# Ensure logtarget/level set first so any db errors are captured
+		# Also dbfile should be set before dbpurgeage.
+		# So adding order indices into items, to be stripped after sorting, upon return
 		for opt in self.__opts:
 			if opt == "loglevel":
-				stream.append(["set", "loglevel", self.__opts[opt]])
+				stream.append((3, ["set", "loglevel", self.__opts[opt]]))
 			elif opt == "logtarget":
-				stream.append(["set", "logtarget", self.__opts[opt]])
+				stream.append((2, ["set", "logtarget", self.__opts[opt]]))
 			elif opt == "syslogsocket":
-				stream.append(["set", "syslogsocket", self.__opts[opt]])
+				stream.append((1, ["set", "syslogsocket", self.__opts[opt]]))
 			elif opt == "dbfile":
-				stream.append(["set", "dbfile", self.__opts[opt]])
+				stream.append((4, ["set", "dbfile", self.__opts[opt]]))
 			elif opt == "dbpurgeage":
-				stream.append(["set", "dbpurgeage", self.__opts[opt]])
-		# Ensure logtarget/level set first so any db errors are captured
-		return sorted(stream, reverse=True)
-	
+				stream.append((5, ["set", "dbpurgeage", self.__opts[opt]]))
+		return [e[1] for e in sorted(stream)]
+
