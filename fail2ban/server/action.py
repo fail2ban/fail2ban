@@ -565,7 +565,9 @@ class CommandAction(ActionBase):
 			stderr = tempfile.TemporaryFile(suffix=".stderr", prefix="fai2ban_")
 			try:
 				popen = subprocess.Popen(
-					realCmd, stdout=stdout, stderr=stderr, shell=True)
+					realCmd, stdout=stdout, stderr=stderr, shell=True,
+					preexec_fn=os.setsid  # so that killpg does not kill our process
+				)
 				stime = time.time()
 				retcode = popen.poll()
 				while time.time() - stime <= timeout and retcode is None:
@@ -574,11 +576,12 @@ class CommandAction(ActionBase):
 				if retcode is None:
 					logSys.error("%s -- timed out after %i seconds." %
 						(realCmd, timeout))
-					os.kill(popen.pid, signal.SIGTERM) # Terminate the process
+					pgid = os.getpgid(popen.pid)
+					os.killpg(pgid, signal.SIGTERM)  # Terminate the process
 					time.sleep(0.1)
 					retcode = popen.poll()
 					if retcode is None: # Still going...
-						os.kill(popen.pid, signal.SIGKILL) # Kill the process
+						os.killpg(pgid, signal.SIGKILL)  # Kill the process
 						time.sleep(0.1)
 						retcode = popen.poll()
 			except OSError, e:
