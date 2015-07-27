@@ -50,6 +50,8 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
    * filter.d/apache-badbots.conf, filter.d/nginx-botsearch.conf - add
      HEAD method verb
    * Revamp of Travis and coverage automated testing
+   * Added a space between IP address and the following colon
+     in notification emails for easier text selection
    * Character detection heuristics for whois output via optional setting
      in mail-whois*.conf. Thanks Thomas Mayer.
      Not enabled by default, if _whois_command is set to be
