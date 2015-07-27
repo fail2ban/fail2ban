@@ -30,6 +30,8 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
      communication end (gh-1099)
    * unbanip always deletes ip from database (independent of bantime, also if
      currently not banned or persistent)
+   * guarantee order of dbfile to be before dbpurgeage (gh-1048)
+   * always set 'dbfile' before other database options (gh-1050)
 
 - New Features:
    * RETURN iptables target is now a variable: <returntype>
