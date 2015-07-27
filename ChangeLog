@@ -12,6 +12,8 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
 - IMPORTANT incompatible changes:
    * filter.d/roundcube-auth.conf
      - Changed logpath to 'errors' log (was 'userlogins')
+   * mail-whois-lines, sendmail-geoip-lines and sendmail-whois-lines
+     actions include only the first 1000 log lines in the email
 
 - Fixes:
    * reload in interactive mode appends all the jails twice (gh-825)
