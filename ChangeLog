@@ -50,6 +50,8 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
    * filter.d/apache-badbots.conf, filter.d/nginx-botsearch.conf - add
      HEAD method verb
    * Revamp of Travis and coverage automated testing
+   * Added a space between IP address and the following colon
+     in notification emails for easier text selection
 
 
 ver. 0.9.2 (2015/04/29) - better-quick-now-than-later
