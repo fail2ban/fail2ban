@@ -37,7 +37,10 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
      opening a closed port by swapping blocktype and returntype
    * New filters:
      - froxlor-auth  Thanks Joern Muehlencord
-     - apache-pass - filter Apache access log for successfull authentication
+     - apache-pass - filter Apache access log for successful authentication
+   * New actions:
+     - shorewall-ipset-proto6 - using proto feature of the Shorewall. Still requires
+	   manual pre-configuration of the shorewall. See the action file for detail.
    * New jails:
      - pass2allow-ftp - allows FTP traffic after successful HTTP authentication
 
