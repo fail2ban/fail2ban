@@ -19,6 +19,9 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
        useful under heavy load to avoid contesting on iptables calls.
        If you need to disable, define 'action.d/iptables-common.local'
        with empty value for 'lockingopt' in `[Init]` section.
+   * mail-whois-lines, sendmail-geoip-lines and sendmail-whois-lines
+     actions now include by default only the first 1000 log lines in
+	 the emails.  Adjust <grepopts> to augment the behavior.
 
 - Fixes:
    * reload in interactive mode appends all the jails twice (gh-825)
