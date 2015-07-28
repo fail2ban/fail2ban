@@ -31,7 +31,7 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
    * filter.d/roundcube-auth.conf
      - Updated regex to work with 'errors' log (1.0.5 and 1.1.1)
      - Added regex to work with 'userlogins' log
-   * action.d/sendmail*.conf - use LC_ALL (superseeding LC_TIME) to override 
+   * action.d/sendmail*.conf - use LC_ALL (superseeding LC_TIME) to override
      locale on systems with customized LC_ALL
    * performance fix: minimizes connection overhead, close socket only at
      communication end (gh-1099)
@@ -39,6 +39,9 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
      currently not banned or persistent)
    * guarantee order of dbfile to be before dbpurgeage (gh-1048)
    * always set 'dbfile' before other database options (gh-1050)
+   * kill the entire process group of the child process upon timeout (gh-1129).
+     Otherwise could lead to resource exhaustion due to hanging whois
+     processes.
 
 - New Features:
    * RETURN iptables target is now a variable: <returntype>
