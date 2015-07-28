@@ -12,6 +12,13 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
 - IMPORTANT incompatible changes:
    * filter.d/roundcube-auth.conf
      - Changed logpath to 'errors' log (was 'userlogins')
+   * action.d/iptables-common.conf
+     - All calls to iptables command now use -w switch introduced in
+       iptables 1.4.20 (some distribution could have patched their
+       earlier base version as well) to provide this locking mechanism
+       useful under heavy load to avoid contesting on iptables calls.
+       If you need to disable, define 'action.d/iptables-common.local'
+       with empty value for 'lockingopt' in `[Init]` section.
 
 - Fixes:
    * reload in interactive mode appends all the jails twice (gh-825)
