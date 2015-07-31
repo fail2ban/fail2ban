@@ -112,7 +112,7 @@ class SMTPAction(ActionBase):
 		#TODO: self.ssl = ssl
 
 		self.user = user
-		self.password =password
+		self.password = password
 
 		self.fromname = sendername
 		self.fromaddr = sender
@@ -121,9 +121,9 @@ class SMTPAction(ActionBase):
 		self.matches = matches
 
 		self.message_values = CallingMap(
-			jailname = self._jail.name,
-			hostname = socket.gethostname,
-			bantime = self._jail.actions.getBanTime,
+			jailname=self._jail.name,
+			hostname=socket.gethostname,
+			bantime=self._jail.actions.getBanTime,
 			)
 
 	def _sendMessage(self, subject, text):

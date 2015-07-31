@@ -25,7 +25,6 @@ __license__ = "GPL"
 import logging
 import os
 import re
-import sys
 import time
 import unittest
 from StringIO import StringIO
@@ -39,7 +38,7 @@ CONFIG_DIR = os.environ.get('FAIL2BAN_CONFIG_DIR', None)
 
 if not CONFIG_DIR:
 # Use heuristic to figure out where configuration files are
-	if os.path.exists(os.path.join('config','fail2ban.conf')):
+	if os.path.exists(os.path.join('config', 'fail2ban.conf')):
 		CONFIG_DIR = 'config'
 	else:
 		CONFIG_DIR = '/etc/fail2ban'
@@ -160,7 +159,7 @@ def gatherTests(regexps=None, no_network=False):
 	for file_ in os.listdir(
 		os.path.abspath(os.path.dirname(action_d.__file__))):
 		if file_.startswith("test_") and file_.endswith(".py"):
-			if no_network and file_ in ['test_badips.py','test_smtp.py']: #pragma: no cover
+			if no_network and file_ in ['test_badips.py', 'test_smtp.py']: #pragma: no cover
 				# Test required network
 				continue
 			tests.addTest(testloader.loadTestsFromName(

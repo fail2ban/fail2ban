@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -39,11 +39,11 @@ logSys = getLogger(__name__)
 
 
 class JailReader(ConfigReader):
-	
+
 	optionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
 	optionExtractRE = re.compile(
 		r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,]*))(?:,|$)')
-	
+
 	def __init__(self, name, force_enable=False, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
 		self.__name = name
@@ -51,17 +51,17 @@ class JailReader(ConfigReader):
 		self.__force_enable = force_enable
 		self.__actions = list()
 		self.__opts = None
-	
+
 	@property
 	def options(self):
 		return self.__opts
 
 	def setName(self, value):
 		self.__name = value
-	
+
 	def getName(self):
 		return self.__name
-	
+
 	def read(self):
 		out = ConfigReader.read(self, "jail")
 		# Before returning -- verify that requested section
@@ -70,7 +70,7 @@ class JailReader(ConfigReader):
 			raise ValueError("Jail %r was not found among available"
 							 % self.__name)
 		return out
-	
+
 	def isEnabled(self):
 		return self.__force_enable or (
 			self.__opts and self.__opts.get("enabled", False))
@@ -111,7 +111,7 @@ class JailReader(ConfigReader):
 		self.__opts = ConfigReader.getOptions(self, self.__name, opts1st)
 		if not self.__opts:
 			return False
-		
+
 		if self.isEnabled():
 			# Read filter
 			if self.__opts["filter"]:
@@ -134,11 +134,11 @@ class JailReader(ConfigReader):
 			self.__opts = ConfigReader.getOptions(self, self.__name, opts)
 			if not self.__opts:
 				return False
-		
+
 			# cumulate filter options again (ignore given in jail):
 			if self.__filter:
 				self.__filter.getOptions(self.__opts)
-		
+
 			# Read action
 			for act in self.__opts["action"].split('\n'):
 				try:
@@ -172,7 +172,7 @@ class JailReader(ConfigReader):
 			if not len(self.__actions):
 				logSys.warning("No actions were defined for %s" % self.__name)
 		return True
-	
+
 	def convert(self, allow_no_files=False):
 		"""Convert read before __opts to the commands stream
 
@@ -239,7 +239,7 @@ class JailReader(ConfigReader):
 				stream.append(action)
 		stream.insert(0, ["add", self.__name, backend])
 		return stream
-	
+
 	@staticmethod
 	def extractOptions(option):
 		match = JailReader.optionCRE.match(option)
@@ -252,6 +252,6 @@ class JailReader(ConfigReader):
 			for optmatch in JailReader.optionExtractRE.finditer(optstr):
 				opt = optmatch.group(1)
 				value = [
-					val for val in optmatch.group(2,3,4) if val is not None][0]
+					val for val in optmatch.group(2, 3, 4) if val is not None][0]
 				option_opts[opt.strip()] = value.strip()
 		return option_name, option_opts

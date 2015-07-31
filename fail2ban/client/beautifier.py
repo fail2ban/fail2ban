@@ -36,7 +36,7 @@ logSys = getLogger(__name__)
 
 class Beautifier:
 
-	def __init__(self, cmd = None):
+	def __init__(self, cmd=None):
 		self.__inputCmd = cmd
 
 	def setInputCmd(self, cmd):
@@ -96,15 +96,15 @@ class Beautifier:
 			elif inC[1:2] == ['loglevel']:
 				msg = "Current logging level is "
 				if response == 1:
-					msg = msg + "ERROR"
+					msg += "ERROR"
 				elif response == 2:
-					msg = msg + "WARN"
+					msg += "WARN"
 				elif response == 3:
-					msg = msg + "INFO"
+					msg += "INFO"
 				elif response == 4:
-					msg = msg + "DEBUG"
+					msg += "DEBUG"
 				else:
-					msg = msg + repr(response)
+					msg += repr(response)
 			elif inC[1] == "dbfile":
 				if response is None:
 					msg = "Database currently disabled"
@@ -116,7 +116,7 @@ class Beautifier:
 					msg = "Database currently disabled"
 				else:
 					msg = "Current database purge age is:\n"
-					msg = msg + "`- %iseconds" % response
+					msg += "`- %iseconds" % response
 			elif inC[2] in ("logpath", "addlogpath", "dellogpath"):
 				if len(response) == 0:
 					msg = "No file is currently monitored"
@@ -124,7 +124,7 @@ class Beautifier:
 					msg = "Current monitored log file(s):\n"
 					for path in response[:-1]:
 						msg = msg + "|- " + path + "\n"
-					msg = msg + "`- " + response[len(response)-1]
+					msg = msg + "`- " + response[len(response) - 1]
 			elif inC[2] == "logencoding":
 				msg = "Current log encoding is set to:\n"
 				msg = msg + response
@@ -137,11 +137,11 @@ class Beautifier:
 			elif inC[2] == "datepattern":
 				msg = "Current date pattern set to: "
 				if response is None:
-					msg = msg + "Not set/required"
+					msg += "Not set/required"
 				elif response[0] is None:
-					msg = msg + "%s" % response[1]
+					msg += "%s" % response[1]
 				else:
-					msg = msg + "%s (%s)" % response
+					msg += "%s (%s)" % response
 			elif inC[2] in ("ignoreip", "addignoreip", "delignoreip"):
 				if len(response) == 0:
 					msg = "No IP address/network is ignored"
@@ -149,7 +149,7 @@ class Beautifier:
 					msg = "These IP addresses/networks are ignored:\n"
 					for ip in response[:-1]:
 						msg = msg + "|- " + ip + "\n"
-					msg = msg + "`- " + response[len(response)-1]
+					msg = msg + "`- " + response[len(response) - 1]
 			elif inC[2] in ("failregex", "addfailregex", "delfailregex",
 							"ignoreregex", "addignoreregex", "delignoreregex"):
 				if len(response) == 0:
@@ -160,7 +160,7 @@ class Beautifier:
 					for ip in response[:-1]:
 						msg = msg + "|- [" + str(c) + "]: " + ip + "\n"
 						c += 1
-					msg = msg + "`- [" + str(c) + "]: " + response[len(response)-1]
+					msg = msg + "`- [" + str(c) + "]: " + response[len(response) - 1]
 			elif inC[2] == "actions":
 				if len(response) == 0:
 					msg = "No actions for jail %s" % inC[1]
@@ -187,7 +187,7 @@ class Beautifier:
 			logSys.warning("Beautifier error. Please report the error")
 			logSys.error("Beautify " + repr(response) + " with "
 				+ repr(self.__inputCmd) + " failed")
-			msg = msg + repr(response)
+			msg += repr(response)
 		return msg
 
 	def beautifyError(self, response):

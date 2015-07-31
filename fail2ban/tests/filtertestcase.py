@@ -108,7 +108,7 @@ def _ticket_tuple(ticket):
 	date = ticket.getTime()
 	ip = ticket.getIP()
 	matches = ticket.getMatches()
-	return (ip, attempts, date, matches)
+	return ip, attempts, date, matches
 
 
 def _assert_correct_last_attempt(utest, filter_, output, count=None):
@@ -162,7 +162,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	return fout
 
 
-def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # pragma: systemd no cover
+def _copy_lines_to_journal(in_, fields={}, n=None, skip=0, terminal_line=""): # pragma: systemd no cover
 	"""Copy lines from one file to systemd journal
 
 	Returns None
@@ -592,7 +592,7 @@ def get_monitor_failures_testcase(Filter_):
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 												  n=14, mode='w')
 			# Poll might need more time
-			self.assertTrue(self.isEmpty(4 + int(isinstance(self.filter, FilterPoll))*2),
+			self.assertTrue(self.isEmpty(4 + int(isinstance(self.filter, FilterPoll)) * 2),
 							"Queue must be empty but it is not: %s."
 							% (', '.join([str(x) for x in self.jail.queue])))
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
@@ -822,7 +822,7 @@ class GetFailures(unittest.TestCase):
 
 	# so that they could be reused by other tests
 	FAILURES_01 = ('193.168.0.128', 3, 1124013599.0,
-				  [u'Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128']*3)
+				  [u'Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128'] * 3)
 
 	def setUp(self):
 		"""Call before every test case."""
@@ -844,7 +844,7 @@ class GetFailures(unittest.TestCase):
 		self.filter.getLogPath()[-1].close()
 		self.assertEqual(self.filter.getLogPath()[-1].readline(), "")
 		self.filter.delLogPath(GetFailures.FILENAME_01)
-		self.assertEqual(self.filter.getLogPath(),[])
+		self.assertEqual(self.filter.getLogPath(), [])
 
 	def testGetFailures01(self, filename=None, failures=None):
 		filename = filename or GetFailures.FILENAME_01
@@ -853,7 +853,7 @@ class GetFailures(unittest.TestCase):
 		self.filter.addLogPath(filename)
 		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>$")
 		self.filter.getFailures(filename)
-		_assert_correct_last_attempt(self, self.filter,  failures)
+		_assert_correct_last_attempt(self, self.filter, failures)
 
 	def testCRLFFailures01(self):
 		# We first adjust logfile/failures to end with CR+LF
@@ -914,8 +914,8 @@ class GetFailures(unittest.TestCase):
 		#self.assertRaises(ValueError,
 		#				  FileFilter, None, useDns='wrong_value_for_useDns')
 
-		for useDns, output in (('yes',  output_yes),
-							   ('no',   output_no),
+		for useDns, output in (('yes', output_yes),
+							   ('no', output_no),
 							   ('warn', output_yes)):
 			jail = DummyJail()
 			filter_ = FileFilter(jail, useDns=useDns)
@@ -1055,4 +1055,3 @@ class JailTests(unittest.TestCase):
 		# smoke test
 		# Must not fail to initiate
 		Jail('test', backend='polling')
-

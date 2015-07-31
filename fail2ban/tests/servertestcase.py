@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -57,7 +57,7 @@ class TestServer(Server):
 
 
 class TransmitterBase(unittest.TestCase):
-	
+
 	def setUp(self):
 		"""Call before every test case."""
 		self.transm = self.server._Server__transm
@@ -86,7 +86,7 @@ class TransmitterBase(unittest.TestCase):
 
 		def v(x):
 			"""Prepare value for comparison"""
-			return (repr(x) if repr_ else x)
+			return repr(x) if repr_ else x
 
 		self.assertEqual(v(self.transm.proceed(setCmd)), v((outCode, outValue)))
 		if not outCode:
@@ -115,17 +115,17 @@ class TransmitterBase(unittest.TestCase):
 		for n, value in enumerate(values):
 			self.assertEqual(
 				self.transm.proceed(["set", jail, cmdAdd, value]),
-				(0, values[:n+1]))
+				(0, values[:n + 1]))
 			self.assertEqual(
 				self.transm.proceed(["get", jail, cmd]),
-				(0, values[:n+1]))
+				(0, values[:n + 1]))
 		for n, value in enumerate(values):
 			self.assertEqual(
 				self.transm.proceed(["set", jail, cmdDel, value]),
-				(0, values[n+1:]))
+				(0, values[n + 1:]))
 			self.assertEqual(
 				self.transm.proceed(["get", jail, cmd]),
-				(0, values[n+1:]))
+				(0, values[n + 1:]))
 
 	def jailAddDelRegexTest(self, cmd, inValues, outValues, jail):
 		cmdAdd = "add" + cmd
@@ -136,17 +136,17 @@ class TransmitterBase(unittest.TestCase):
 		for n, value in enumerate(inValues):
 			self.assertEqual(
 				self.transm.proceed(["set", jail, cmdAdd, value]),
-				(0, outValues[:n+1]))
+				(0, outValues[:n + 1]))
 			self.assertEqual(
 				self.transm.proceed(["get", jail, cmd]),
-				(0, outValues[:n+1]))
+				(0, outValues[:n + 1]))
 		for n, value in enumerate(inValues):
 			self.assertEqual(
 				self.transm.proceed(["set", jail, cmdDel, 0]), # First item
-				(0, outValues[n+1:]))
+				(0, outValues[n + 1:]))
 			self.assertEqual(
 				self.transm.proceed(["get", jail, cmd]),
-				(0, outValues[n+1:]))
+				(0, outValues[n + 1:]))
 
 
 class Transmitter(TransmitterBase):
@@ -311,7 +311,7 @@ class Transmitter(TransmitterBase):
 		# Unban IP which isn't banned
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "unbanip", "192.168.1.1"])[0],1)
+				["set", self.jailName, "unbanip", "192.168.1.1"])[0], 1)
 
 	def testJailMaxRetry(self):
 		self.setGetTest("maxretry", "5", 5, jail=self.jailName)
@@ -542,6 +542,7 @@ class Transmitter(TransmitterBase):
 		else:
 			value = []
 
+		# noinspection PyPep8
 		self.assertEqual(self.transm.proceed(["status", self.jailName, "cymru"]),
 			(0,
 				[
@@ -620,7 +621,7 @@ class Transmitter(TransmitterBase):
 			(0, None))
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "delaction", "Doesn't exist"])[0],1)
+				["set", self.jailName, "delaction", "Doesn't exist"])[0], 1)
 
 	def testPythonActionMethodsAndProperties(self):
 		action = "TestCaseAction"
@@ -642,7 +643,7 @@ class Transmitter(TransmitterBase):
 					"issue forbidding correct operation of Fail2Ban: "
 					"http://bugs.python.org/issue2646  Upgrade your Python and "
 					"meanwhile other intestPythonActionMethodsAndProperties will "
-					"be skipped" % (sys.version))
+					"be skipped" % sys.version)
 				return
 			raise
 		self.assertEqual(
@@ -675,19 +676,19 @@ class Transmitter(TransmitterBase):
 			(0, 'Hello world! another value'))
 
 	def testNOK(self):
-		self.assertEqual(self.transm.proceed(["INVALID", "COMMAND"])[0],1)
+		self.assertEqual(self.transm.proceed(["INVALID", "COMMAND"])[0], 1)
 
 	def testSetNOK(self):
 		self.assertEqual(
-			self.transm.proceed(["set", "INVALID", "COMMAND"])[0],1)
+			self.transm.proceed(["set", "INVALID", "COMMAND"])[0], 1)
 
 	def testGetNOK(self):
 		self.assertEqual(
-			self.transm.proceed(["get", "INVALID", "COMMAND"])[0],1)
+			self.transm.proceed(["get", "INVALID", "COMMAND"])[0], 1)
 
 	def testStatusNOK(self):
 		self.assertEqual(
-			self.transm.proceed(["status", "INVALID", "COMMAND"])[0],1)
+			self.transm.proceed(["status", "INVALID", "COMMAND"])[0], 1)
 
 	def testJournalMatch(self):
 		if not filtersystemd: # pragma: no cover
@@ -706,12 +707,12 @@ class Transmitter(TransmitterBase):
 			self.assertEqual(
 				self.transm.proceed(
 					["set", jailName, "addjournalmatch", value]),
-				(0, [[val] for val in values[:n+1]]))
+				(0, [[val] for val in values[:n + 1]]))
 		for n, value in enumerate(values):
 			self.assertEqual(
 				self.transm.proceed(
 					["set", jailName, "deljournalmatch", value]),
-				(0, [[val] for val in values[n+1:]]))
+				(0, [[val] for val in values[n + 1:]]))
 
 		# Try duplicates
 		value = "_COMM=sshd"
@@ -847,7 +848,7 @@ class TransmitterLogging(TransmitterBase):
 				l.warning("After file moved")
 				self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "rolled over"))
 				l.warning("After flushlogs")
-				with open(fn2,'r') as f:
+				with open(fn2, 'r') as f:
 					line1 = f.next()
 					if line1.find('Changed logging target to') >= 0:
 						line1 = f.next()
@@ -856,13 +857,13 @@ class TransmitterLogging(TransmitterBase):
 					self.assertTrue(line2.endswith("After file moved\n"))
 					try:
 						n = f.next()
-						if n.find("Command: ['flushlogs']") >=0:
+						if n.find("Command: ['flushlogs']") >= 0:
 							self.assertRaises(StopIteration, f.next)
 						else:
 							self.fail("Exception StopIteration or Command: ['flushlogs'] expected. Got: %s" % n)
 					except StopIteration:
 						pass # on higher debugging levels this is expected
-				with open(fn,'r') as f:
+				with open(fn, 'r') as f:
 					line1 = f.next()
 					if line1.find('rollover performed on') >= 0:
 						line1 = f.next()
@@ -909,7 +910,7 @@ class RegexTests(unittest.TestCase):
 		# e.g. if we made it optional.
 		fr = FailRegex('%%<HOST>?')
 		self.assertFalse(fr.hasMatched())
-		fr.search([('%%',"","")])
+		fr.search([('%%', "", "")])
 		self.assertTrue(fr.hasMatched())
 		self.assertRaises(RegexException, fr.getHost)
 

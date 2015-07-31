@@ -77,13 +77,13 @@ class FilterPyinotify(FileFilter):
 	def callback(self, event, origin=''):
 		logSys.debug("%sCallback for Event: %s", origin, event)
 		path = event.pathname
-		if event.mask & ( pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO ):
+		if event.mask & (pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO):
 			# skip directories altogether
 			if event.mask & pyinotify.IN_ISDIR:
 				logSys.debug("Ignoring creation of directory %s", path)
 				return
 			# check if that is a file we care about
-			if not path in self.__watches:
+			if path not in self.__watches:
 				logSys.debug("Ignoring creation of %s we do not monitor", path)
 				return
 			else:
@@ -142,7 +142,7 @@ class FilterPyinotify(FileFilter):
 		self._addFileWatcher(path)
 		self._process_file(path)
 
-    ##
+	##
 	# Delete a log path
 	#
 	# @param path the log file to delete

@@ -33,6 +33,3 @@ class DuplicateJailException(Exception):
 
 class UnknownJailException(KeyError):
 	pass
-
-
-

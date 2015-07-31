@@ -25,12 +25,9 @@ __license__ = "GPL"
 import getopt
 import logging
 import os
-import pickle
-import re
 import shlex
 import signal
 import socket
-import string
 import sys
 import time
 
@@ -47,6 +44,7 @@ logSys = getLogger("fail2ban")
 ##
 #
 # @todo This class needs cleanup.
+
 
 class Fail2banClient:
 
@@ -80,7 +78,7 @@ class Fail2banClient:
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
 		"""
-		print "Usage: "+self.__argv[0]+" [OPTIONS] <COMMAND>"
+		print "Usage: " + self.__argv[0] + " [OPTIONS] <COMMAND>"
 		print
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
 		print "and bans the corresponding IP addresses using firewall rules."
@@ -131,9 +129,9 @@ class Fail2banClient:
 			elif opt[0] == "-d":
 				self.__conf["dump"] = True
 			elif opt[0] == "-v":
-				self.__conf["verbose"] = self.__conf["verbose"] + 1
+				self.__conf["verbose"] += 1
 			elif opt[0] == "-q":
-				self.__conf["verbose"] = self.__conf["verbose"] - 1
+				self.__conf["verbose"] -= 1
 			elif opt[0] == "-x":
 				self.__conf["force"] = True
 			elif opt[0] == "-i":
@@ -152,7 +150,7 @@ class Fail2banClient:
 	def __ping(self):
 		return self.__processCmd([["ping"]], False)
 
-	def __processCmd(self, cmd, showRet = True):
+	def __processCmd(self, cmd, showRet=True):
 		client = None
 		try:
 			beautifier = Beautifier()
@@ -164,11 +162,11 @@ class Fail2banClient:
 						client = CSocket(self.__conf["socket"])
 					ret = client.send(c)
 					if ret[0] == 0:
-						logSys.debug("OK : " + `ret[1]`)
+						logSys.debug("OK : " + repr(ret[1]))
 						if showRet:
 							print beautifier.beautify(ret[1])
 					else:
-						logSys.error("NOK: " + `ret[1].args`)
+						logSys.error("NOK: " + repr(ret[1].args))
 						if showRet:
 							print beautifier.beautifyError(ret[1])
 						streamRet = False
@@ -280,13 +278,12 @@ class Fail2banClient:
 		else:
 			return self.__processCmd([cmd])
 
-
 	##
 	# Start Fail2Ban server.
 	#
 	# Start the Fail2ban server in daemon mode.
 
-	def __startServerAsync(self, socket, pidfile, force = False, background = True):
+	def __startServerAsync(self, socket, pidfile, force=False, background=True):
 		# Forks the current process.
 		pid = os.fork()
 		if pid == 0:
@@ -306,7 +303,7 @@ class Fail2banClient:
 				args.append("-b")
 			else:
 				args.append("-f")
-			
+
 			try:
 				# Use the current directory.
 				exe = os.path.abspath(os.path.join(sys.path[0], self.SERVER))
@@ -332,10 +329,10 @@ class Fail2banClient:
 			# Wonderful visual :)
 			if self.__conf["verbose"] > 1:
 				pos += delta
-				sys.stdout.write("\rINFO   " + mask[:pos] + '#' + mask[pos+1:] +
+				sys.stdout.write("\rINFO   " + mask[:pos] + '#' + mask[pos + 1:] +
 								 " Waiting on the server...")
 				sys.stdout.flush()
-				if pos > len(mask)-3:
+				if pos > len(mask) - 3:
 					delta = -1
 				elif pos < 2:
 					delta = 1
@@ -348,7 +345,6 @@ class Fail2banClient:
 			cnt += 1
 		if self.__conf["verbose"] > 1:
 			sys.stdout.write('\n')
-
 
 	def start(self, argv):
 		# Command line options

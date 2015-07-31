@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -165,16 +165,16 @@ class Actions(JailThread, Mapping):
 	# Set the ban time.
 	#
 	# @param value the time
-	
+
 	def setBanTime(self, value):
 		self.__banManager.setBanTime(value)
 		logSys.info("Set banTime = %s" % value)
-	
+
 	##
 	# Get the ban time.
 	#
 	# @return the time
-	
+
 	def getBanTime(self):
 		return self.__banManager.getBanTime()
 
@@ -222,7 +222,7 @@ class Actions(JailThread, Mapping):
 			except Exception as e:
 				logSys.error("Failed to start jail '%s' action '%s': %s",
 					self._jail.name, name, e,
-					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+					exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
 		while self.active:
 			if not self.idle:
 				#logSys.debug(self._jail.name + ": action")
@@ -242,7 +242,7 @@ class Actions(JailThread, Mapping):
 			except Exception as e:
 				logSys.error("Failed to stop jail '%s' action '%s': %s",
 					self._jail.name, name, e,
-					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+					exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
 		logSys.debug(self._jail.name + ": action terminated")
 		return True
 
@@ -264,15 +264,15 @@ class Actions(JailThread, Mapping):
 
 		Returns
 		-------
-		BanTicket 
+		BanTicket
 			merged or self ticket only
 		"""
 		idx = 'all' if overalljails else 'jail'
 		if idx in mi:
 			return mi[idx] if mi[idx] is not None else mi['ticket']
 		try:
-			jail=self._jail
-			ip=mi['ip']
+			jail = self._jail
+			ip = mi['ip']
 			mi[idx] = None
 			if overalljails:
 				mi[idx] = jail.database.getBansMerged(ip=ip)
@@ -282,7 +282,7 @@ class Actions(JailThread, Mapping):
 			logSys.error(
 				"Failed to get %s bans merged, jail '%s': %s",
 				idx, jail.name, e,
-				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+				exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
 		return mi[idx] if mi[idx] is not None else mi['ticket']
 
 	def __checkBan(self):
@@ -307,10 +307,10 @@ class Actions(JailThread, Mapping):
 			aInfo["matches"] = "\n".join(bTicket.getMatches())
 			if self._jail.database is not None:
 				mi4ip = lambda overalljails=False, self=self, \
-					mi={'ip':ip, 'ticket':bTicket}: self.__getBansMerged(mi, overalljails)
-				aInfo["ipmatches"]      = lambda: "\n".join(mi4ip(True).getMatches())
-				aInfo["ipjailmatches"]  = lambda: "\n".join(mi4ip().getMatches())
-				aInfo["ipfailures"]     = lambda: mi4ip(True).getAttempt()
+					mi={'ip': ip, 'ticket': bTicket}: self.__getBansMerged(mi, overalljails)
+				aInfo["ipmatches"] = lambda: "\n".join(mi4ip(True).getMatches())
+				aInfo["ipjailmatches"] = lambda: "\n".join(mi4ip().getMatches())
+				aInfo["ipfailures"] = lambda: mi4ip(True).getAttempt()
 				aInfo["ipjailfailures"] = lambda: mi4ip().getAttempt()
 			if self.__banManager.addBanTicket(bTicket):
 				logSys.notice("[%s] Ban %s" % (self._jail.name, aInfo["ip"]))
@@ -322,7 +322,7 @@ class Actions(JailThread, Mapping):
 							"Failed to execute ban jail '%s' action '%s' "
 							"info '%r': %s",
 							self._jail.name, name, aInfo, e,
-							exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+							exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
 				return True
 			else:
 				logSys.notice("[%s] %s already banned" % (self._jail.name,
@@ -371,7 +371,7 @@ class Actions(JailThread, Mapping):
 					"Failed to execute unban jail '%s' action '%s' "
 					"info '%r': %s",
 					self._jail.name, name, aInfo, e,
-					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+					exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
 
 	def status(self, flavor="basic"):
 		"""Status of current and total ban counts and current banned IP list.

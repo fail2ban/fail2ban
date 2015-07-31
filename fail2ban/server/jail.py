@@ -65,7 +65,7 @@ class Jail:
 	#      list had .index until 2.6
 	_BACKENDS = ['pyinotify', 'gamin', 'polling', 'systemd']
 
-	def __init__(self, name, backend = "auto", db=None):
+	def __init__(self, name, backend="auto", db=None):
 		self.__db = db
 		# 26 based on iptable chain name limit of 30 less len('f2b-')
 		if len(name) >= 26:

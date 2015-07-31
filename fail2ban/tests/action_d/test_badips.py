@@ -24,7 +24,7 @@ import sys
 from ..dummyjail import DummyJail
 from ..utils import CONFIG_DIR
 
-if sys.version_info >= (2,7):
+if sys.version_info >= (2, 7):
 	class BadIPsActionTest(unittest.TestCase):
 
 		def setUp(self):

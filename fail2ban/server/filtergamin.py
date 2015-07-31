@@ -59,7 +59,7 @@ class FilterGamin(FileFilter):
 		self.monitor = gamin.WatchMonitor()
 		fd = self.monitor.get_fd()
 		flags = fcntl.fcntl(fd, fcntl.F_GETFD)
-		fcntl.fcntl(fd, fcntl.F_SETFD, flags|fcntl.FD_CLOEXEC)
+		fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
 		logSys.debug("Created FilterGamin")
 
 	def callback(self, path, event):

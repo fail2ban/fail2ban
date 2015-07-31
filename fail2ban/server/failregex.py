@@ -39,7 +39,7 @@ class Regex:
 	# Creates a new object. This method can throw RegexException in order to
 	# avoid construction of invalid object.
 	# @param value the regular expression
-	
+
 	def __init__(self, regex):
 		self._matchCache = None
 		# Perform shortcuts expansions.
@@ -66,10 +66,10 @@ class Regex:
 	#
 	# The effective regular expression used is returned.
 	# @return the regular expression
-	
+
 	def getRegex(self):
 		return self._regex
-	
+
 	##
 	# Searches the regular expression.
 	#
@@ -77,7 +77,7 @@ class Regex:
 	# the pattern again. This method must be called before calling any other
 	# method of this object.
 	# @param a list of tupples. The tupples are ( prematch, datematch, postdatematch )
-	
+
 	def search(self, tupleLines):
 		self._matchCache = self._regexObj.search(
 			"\n".join("".join(value[::2]) for value in tupleLines) + "\n")
@@ -85,7 +85,7 @@ class Regex:
 			# Find start of the first line where the match was found
 			try:
 				self._matchLineStart = self._matchCache.string.rindex(
-					"\n", 0, self._matchCache.start() +1 ) + 1
+					"\n", 0, self._matchCache.start() + 1) + 1
 			except ValueError:
 				self._matchLineStart = 0
 			# Find end of the last line where the match was found
@@ -108,7 +108,7 @@ class Regex:
 					self._matchedTupleLines[n:]):
 					if "".join(matchedTupleLine[::2]) == skippedLine:
 						self._unmatchedTupleLines.append(
-							self._matchedTupleLines.pop(n+m))
+							self._matchedTupleLines.pop(n + m))
 						n += m
 						break
 			self._unmatchedTupleLines.extend(tupleLines[lineCount2:])
@@ -116,7 +116,7 @@ class Regex:
 	# Checks if the previous call to search() matched.
 	#
 	# @return True if a match was found, False otherwise
-	
+
 	def hasMatched(self):
 		if self._matchCache:
 			return True
@@ -128,7 +128,7 @@ class Regex:
 	#
 	# This returns skipped lines captured by the <SKIPLINES> tag.
 	# @return list of skipped lines
-	
+
 	def getSkippedLines(self):
 		if not self._matchCache:
 			return []
@@ -141,7 +141,7 @@ class Regex:
 				n += 1
 			except IndexError:
 				break
-			# KeyError is because of PyPy issue1665 affecting pypy <= 2.2.1 
+			# KeyError is because of PyPy issue1665 affecting pypy <= 2.2.1
 			except KeyError:
 				if 'PyPy' not in sys.version: # pragma: no cover - not sure this is even reachable
 					raise
@@ -206,20 +206,20 @@ class FailRegex(Regex):
 	# Creates a new object. This method can throw RegexException in order to
 	# avoid construction of invalid object.
 	# @param value the regular expression
-	
+
 	def __init__(self, regex):
 		# Initializes the parent.
 		Regex.__init__(self, regex)
 		# Check for group "host"
 		if "host" not in self._regexObj.groupindex:
 			raise RegexException("No 'host' group in '%s'" % self._regex)
-	
+
 	##
 	# Returns the matched host.
 	#
 	# This corresponds to the pattern matched by the named group "host".
 	# @return the matched host
-	
+
 	def getHost(self):
 		host = self._matchCache.group("host")
 		if host is None:

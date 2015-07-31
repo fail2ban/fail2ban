@@ -126,7 +126,7 @@ class BadIPsAction(ActionBase):
 			raise
 		else:
 			response_json = json.loads(response.read().decode('utf-8'))
-			if not 'categories' in response_json:
+			if 'categories' not in response_json:
 				err = "badips.com response lacked categories specification. Response was: %s" \
 				  % (response_json,)
 				self._logSys.error(err)
@@ -267,7 +267,7 @@ class BadIPsAction(ActionBase):
 				self._logSys.error(
 					"Error banning IP %s for jail '%s' with action '%s': %s",
 					ip, self._jail.name, self.banaction, e,
-					exc_info=self._logSys.getEffectiveLevel()<=logging.DEBUG)
+					exc_info=self._logSys.getEffectiveLevel() <= logging.DEBUG)
 			else:
 				self._bannedips.add(ip)
 				self._logSys.info(
@@ -288,7 +288,7 @@ class BadIPsAction(ActionBase):
 				self._logSys.info(
 					"Error unbanning IP %s for jail '%s' with action '%s': %s",
 					ip, self._jail.name, self.banaction, e,
-					exc_info=self._logSys.getEffectiveLevel()<=logging.DEBUG)
+					exc_info=self._logSys.getEffectiveLevel() <= logging.DEBUG)
 			else:
 				self._logSys.info(
 					"Unbanned IP %s for jail '%s' with action '%s'",

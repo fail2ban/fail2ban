@@ -162,7 +162,7 @@ class Fail2BanDb(object):
 			"CREATE INDEX bans_ip ON bans(ip);" \
 
 
-	def __init__(self, filename, purgeAge=24*60*60):
+	def __init__(self, filename, purgeAge=24 * 60 * 60):
 		try:
 			self._lock = RLock()
 			self._db = sqlite3.connect(
@@ -194,10 +194,10 @@ class Fail2BanDb(object):
 			if version < Fail2BanDb.__version__:
 				newversion = self.updateDb(version)
 				if newversion == Fail2BanDb.__version__:
-					logSys.warning( "Database updated from '%i' to '%i'",
+					logSys.warning("Database updated from '%i' to '%i'",
 						version, newversion)
 				else:
-					logSys.error( "Database update failed to achieve version '%i'"
+					logSys.error("Database update failed to achieve version '%i'"
 						": updated from '%i' to '%i'",
 						Fail2BanDb.__version__, version, newversion)
 					raise RuntimeError('Failed to fully update')
@@ -428,10 +428,10 @@ class Fail2BanDb(object):
 		ip : str
 			IP to be removed.
 		"""
-		queryArgs = (jail.name, ip);
+		queryArgs = (jail.name, ip)
 		cur.execute(
-			"DELETE FROM bans WHERE jail = ? AND ip = ?", 
-			queryArgs);
+			"DELETE FROM bans WHERE jail = ? AND ip = ?",
+			queryArgs)
 
 	@commitandrollback
 	def _getBans(self, cur, jail=None, bantime=None, ip=None):
@@ -548,4 +548,3 @@ class Fail2BanDb(object):
 		cur.execute(
 			"DELETE FROM jails WHERE enabled = 0 "
 				"AND NOT EXISTS(SELECT * FROM bans WHERE jail = jails.name)")
-

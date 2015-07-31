@@ -61,7 +61,7 @@ class SetupTest(unittest.TestCase):
 	def setUp(self):
 		setup = os.path.join(os.path.dirname(__file__), '..', '..', 'setup.py')
 		self.setup = os.path.exists(setup) and setup or None
-		if not self.setup and sys.version_info >= (2,7): # pragma: no cover - running not out of the source
+		if not self.setup and sys.version_info >= (2, 7): # pragma: no cover - running not out of the source
 			raise unittest.SkipTest(
 				"Seems to be running not out of source distribution"
 				" -- cannot locate setup.py")
@@ -75,7 +75,7 @@ class SetupTest(unittest.TestCase):
 					  % (sys.executable, self.setup, tmp))
 
 			def strippath(l):
-				return [x[len(tmp)+1:] for x in l]
+				return [x[len(tmp) + 1:] for x in l]
 
 			got = strippath(sorted(glob('%s/*' % tmp)))
 			need = ['etc', 'usr', 'var']
@@ -140,7 +140,7 @@ class TestsUtilsTest(unittest.TestCase):
 
 			def deep_function(i):
 				if i:
-					deep_function(i-1)
+					deep_function(i - 1)
 				else:
 					func_raise()
 
@@ -179,7 +179,7 @@ class TestsUtilsTest(unittest.TestCase):
 
 		# in this case compressed and not should be the same (?)
 		self.assertTrue(pindex > 10)	  # we should have some traceback
-		self.assertEqual(s[:pindex], s[pindex+1:pindex*2 + 1])
+		self.assertEqual(s[:pindex], s[pindex + 1:pindex * 2 + 1])
 
 iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
 

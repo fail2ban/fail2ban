@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -41,12 +41,12 @@ logSys = getLogger(__name__)
 # This class is mainly used by the Action class.
 
 class BanManager:
-	
+
 	##
 	# Constructor.
 	#
 	# Initialize members with default values.
-	
+
 	def __init__(self):
 		## Mutex used to protect the ban list.
 		self.__lock = Lock()
@@ -56,50 +56,50 @@ class BanManager:
 		self.__banTime = 600
 		## Total number of banned IP address
 		self.__banTotal = 0
-	
+
 	##
 	# Set the ban time.
 	#
 	# Set the amount of time an IP address get banned.
 	# @param value the time
-	
+
 	def setBanTime(self, value):
 		try:
 			self.__lock.acquire()
 			self.__banTime = int(value)
 		finally:
 			self.__lock.release()
-	
+
 	##
 	# Get the ban time.
 	#
 	# Get the amount of time an IP address get banned.
 	# @return the time
-	
+
 	def getBanTime(self):
 		try:
 			self.__lock.acquire()
 			return self.__banTime
 		finally:
 			self.__lock.release()
-	
+
 	##
 	# Set the total number of banned address.
 	#
 	# @param value total number
-	
+
 	def setBanTotal(self, value):
 		try:
 			self.__lock.acquire()
 			self.__banTotal = value
 		finally:
 			self.__lock.release()
-	
+
 	##
 	# Get the total number of banned address.
 	#
 	# @return the total number
-	
+
 	def getBanTotal(self):
 		try:
 			self.__lock.acquire()
@@ -111,7 +111,7 @@ class BanManager:
 	# Returns a copy of the IP list.
 	#
 	# @return IP list
-	
+
 	def getBanList(self):
 		try:
 			self.__lock.acquire()
@@ -244,7 +244,7 @@ class BanManager:
 	# is the current time. This is a static method.
 	# @param ticket the FailTicket
 	# @return a BanTicket
-	
+
 	@staticmethod
 	def createBanTicket(ticket):
 		ip = ticket.getIP()
@@ -253,14 +253,14 @@ class BanManager:
 		banTicket = BanTicket(ip, lastTime, ticket.getMatches())
 		banTicket.setAttempt(ticket.getAttempt())
 		return banTicket
-	
+
 	##
 	# Add a ban ticket.
 	#
 	# Add a BanTicket instance into the ban list.
 	# @param ticket the ticket
 	# @return True if the IP address is not in the ban list
-	
+
 	def addBanTicket(self, ticket):
 		try:
 			self.__lock.acquire()
@@ -291,20 +291,20 @@ class BanManager:
 	# ban list.
 	# @param ticket the ticket
 	# @return True if a ticket already exists
-	
+
 	def _inBanList(self, ticket):
 		for i in self.__banList:
 			if ticket.getIP() == i.getIP():
 				return True
 		return False
-	
+
 	##
 	# Get the list of IP address to unban.
 	#
 	# Return a list of BanTicket which need to be unbanned.
 	# @param time the time
 	# @return the list of ticket to unban
-	
+
 	def unBanList(self, time):
 		try:
 			self.__lock.acquire()
@@ -315,11 +315,11 @@ class BanManager:
 			# Gets the list of ticket to remove.
 			unBanList = [ticket for ticket in self.__banList
 						 if ticket.getTime() < time - self.__banTime]
-			
+
 			# Removes tickets.
 			self.__banList = [ticket for ticket in self.__banList
 							  if ticket not in unBanList]
-						
+
 			return unBanList
 		finally:
 			self.__lock.release()
@@ -329,7 +329,7 @@ class BanManager:
 	#
 	# Get the ban list and initialize it with an empty one.
 	# @return the complete ban list
-	
+
 	def flushBanList(self):
 		try:
 			self.__lock.acquire()

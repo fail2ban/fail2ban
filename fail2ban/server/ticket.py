@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -31,7 +31,7 @@ logSys = getLogger(__name__)
 
 
 class Ticket:
-	
+
 	def __init__(self, ip, time, matches=None):
 		"""Ticket constructor
 
@@ -67,19 +67,19 @@ class Ticket:
 			# guarantee using regular str instead of unicode for the IP
 			value = str(value)
 		self.__ip = value
-	
+
 	def getIP(self):
 		return self.__ip
-	
+
 	def setTime(self, value):
 		self.__time = value
-	
+
 	def getTime(self):
 		return self.__time
-	
+
 	def setAttempt(self, value):
 		self.__attempt = value
-	
+
 	def getAttempt(self):
 		return self.__attempt
 

@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -31,7 +31,7 @@ logSys = getLogger(__name__)
 
 
 class FailData:
-	
+
 	def __init__(self):
 		self.__retry = 0
 		self.__lastTime = 0
@@ -60,7 +60,7 @@ class FailData:
 	def setLastTime(self, value):
 		if value > self.__lastTime:
 			self.__lastTime = value
-	
+
 	def getLastTime(self):
 		return self.__lastTime
 

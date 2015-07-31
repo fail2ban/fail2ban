@@ -28,7 +28,7 @@ import os
 import sys
 from ..helpers import getLogger
 
-if sys.version_info >= (3,2): # pragma: no cover
+if sys.version_info >= (3, 2): # pragma: no cover
 
 	# SafeConfigParser deprecated from Python 3.2 (renamed to ConfigParser)
 	from configparser import ConfigParser as SafeConfigParser, \
@@ -99,7 +99,7 @@ after = 1.conf
 
 	SECTION_NAME = "INCLUDES"
 
-	if sys.version_info >= (3,2):
+	if sys.version_info >= (3, 2):
 		# overload constructor only for fancy new Python3's
 		def __init__(self, share_config=None, *args, **kwargs):
 			kwargs = kwargs.copy()
@@ -123,7 +123,7 @@ after = 1.conf
 		# read single one, add to return list, use sharing if possible:
 		if self._cfg_share:
 			# cache/share each file as include (ex: filter.d/common could be included in each filter config):
-			hashv = 'inc:'+(filename if not isinstance(filename, list) else '\x01'.join(filename))
+			hashv = 'inc:' + (filename if not isinstance(filename, list) else '\x01'.join(filename))
 			cfg, i = self._cfg_share.get(hashv, (None, None))
 			if cfg is None:
 				cfg = SCPWI(share_config=self._cfg_share)
@@ -135,15 +135,15 @@ after = 1.conf
 			# don't have sharing:
 			cfg = SCPWI()
 			i = cfg.read(filename, get_includes=False)
-		return (cfg, i)
+		return cfg, i
 
 	def _getIncludes(self, filenames, seen=[]):
 		if not isinstance(filenames, list):
-			filenames = [ filenames ]
+			filenames = [filenames]
 		# retrieve or cache include paths:
 		if self._cfg_share:
 			# cache/share include list:
-			hashv = 'inc-path:'+('\x01'.join(filenames))
+			hashv = 'inc-path:' + ('\x01'.join(filenames))
 			fileNamesFull = self._cfg_share.get(hashv)
 			if fileNamesFull is None:
 				fileNamesFull = []
@@ -171,10 +171,10 @@ after = 1.conf
 		except UnicodeDecodeError, e:
 			logSys.error("Error decoding config file '%s': %s" % (resource, e))
 			return []
-		
+
 		resourceDir = os.path.dirname(resource)
 
-		newFiles = [ ('before', []), ('after', []) ]
+		newFiles = [('before', []), ('after', [])]
 		if SCPWI.SECTION_NAME in parser.sections():
 			for option_name, option_list in newFiles:
 				if option_name in parser.options(SCPWI.SECTION_NAME):
@@ -199,7 +199,7 @@ after = 1.conf
 
 	def read(self, filenames, get_includes=True):
 		if not isinstance(filenames, list):
-			filenames = [ filenames ]
+			filenames = [filenames]
 		# retrieve (and cache) includes:
 		fileNamesFull = []
 		if get_includes:
@@ -232,7 +232,7 @@ after = 1.conf
 								sk = {}
 								for k, v in s2.iteritems():
 									if not k.startswith('known/'):
-										sk['known/'+k] = v
+										sk['known/' + k] = v
 								s2.update(sk)
 								# merge section
 								s2.update(s)
@@ -247,7 +247,7 @@ after = 1.conf
 		if logSys.getEffectiveLevel() <= logLevel:
 			logSys.log(logLevel, "    Reading file: %s", fileNamesFull[0])
 		# read file(s) :
-		if sys.version_info >= (3,2): # pragma: no cover
+		if sys.version_info >= (3, 2): # pragma: no cover
 			return SafeConfigParser.read(self, fileNamesFull, encoding='utf-8')
 		else:
 			return SafeConfigParser.read(self, fileNamesFull)
@@ -257,6 +257,5 @@ after = 1.conf
 		sk = {}
 		for k, v in options.iteritems():
 			if pref == '' or not k.startswith(pref):
-				sk[pref+k] = v
+				sk[pref + k] = v
 		alls[section].update(sk)
-
