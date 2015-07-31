@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -35,21 +35,21 @@ logSys = getLogger(__name__)
 
 
 class Transmitter:
-	
+
 	##
 	# Constructor.
 	#
 	# @param The server reference
-	
+
 	def __init__(self, server):
 		self.__server = server
-		
+
 	##
 	# Proceeds a command.
 	#
 	# Proceeds an incoming command.
 	# @param command The incoming command
-	
+
 	def proceed(self, command):
 		# Deserialize object
 		logSys.debug("Command: " + repr(command))
@@ -61,12 +61,12 @@ class Transmitter:
 						% (command, e))
 			ack = 1, e
 		return ack
-	
+
 	##
 	# Handle an command.
 	#
-	# 
-	
+	#
+
 	def __commandHandler(self, command):
 		if command[0] == "ping":
 			return "pong"
@@ -108,7 +108,7 @@ class Transmitter:
 		elif command[0] == "version":
 			return version.version
 		raise Exception("Invalid command")
-	
+
 	def __commandSet(self, command):
 		name = command[0]
 		# Logging
@@ -170,7 +170,7 @@ class Transmitter:
 			value = command[2]
 			tail = False
 			if len(command) == 4:
-				if command[3].lower()  == "tail":
+				if command[3].lower() == "tail":
 					tail = True
 				elif command[3].lower() != "head":
 					raise ValueError("File option must be 'head' or 'tail'")
@@ -237,7 +237,7 @@ class Transmitter:
 			return self.__server.getBanTime(name)
 		elif command[1] == "banip":
 			value = command[2]
-			return self.__server.setBanIP(name,value)
+			return self.__server.setBanIP(name, value)
 		elif command[1] == "unbanip":
 			value = command[2]
 			self.__server.setUnbanIP(name, value)
@@ -257,14 +257,14 @@ class Transmitter:
 			actionkey = command[3]
 			action = self.__server.getAction(name, actionname)
 			if callable(getattr(action, actionkey, None)):
-				actionvalue = json.loads(command[4]) if len(command)>4 else {}
+				actionvalue = json.loads(command[4]) if len(command) > 4 else {}
 				return getattr(action, actionkey)(**actionvalue)
 			else:
 				actionvalue = command[4]
 				setattr(action, actionkey, actionvalue)
 				return getattr(action, actionkey)
 		raise Exception("Invalid command (no set action or not yet implemented)")
-	
+
 	def __commandGet(self, command):
 		name = command[0]
 		# Logging
@@ -336,7 +336,7 @@ class Transmitter:
 				key for key in dir(action)
 				if not key.startswith("_") and callable(getattr(action, key))]
 		raise Exception("Invalid command (no get action or not yet implemented)")
-	
+
 	def status(self, command):
 		if len(command) == 0:
 			return self.__server.status()

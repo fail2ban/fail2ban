@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -36,49 +36,49 @@ logSys = getLogger(__name__)
 
 
 class FailManager:
-	
+
 	def __init__(self):
 		self.__lock = Lock()
 		self.__failList = dict()
 		self.__maxRetry = 3
 		self.__maxTime = 600
 		self.__failTotal = 0
-	
+
 	def setFailTotal(self, value):
 		try:
 			self.__lock.acquire()
 			self.__failTotal = value
 		finally:
 			self.__lock.release()
-		
+
 	def getFailTotal(self):
 		try:
 			self.__lock.acquire()
 			return self.__failTotal
 		finally:
 			self.__lock.release()
-	
+
 	def setMaxRetry(self, value):
 		try:
 			self.__lock.acquire()
 			self.__maxRetry = value
 		finally:
 			self.__lock.release()
-	
+
 	def getMaxRetry(self):
 		try:
 			self.__lock.acquire()
 			return self.__maxRetry
 		finally:
 			self.__lock.release()
-	
+
 	def setMaxTime(self, value):
 		try:
 			self.__lock.acquire()
 			self.__maxTime = value
 		finally:
 			self.__lock.release()
-	
+
 	def getMaxTime(self):
 		try:
 			self.__lock.acquire()
@@ -113,19 +113,19 @@ class FailManager:
 				# in case of having many active failures, it should be ran only
 				# if debug level is "low" enough
 				failures_summary = ', '.join(['%s:%d' % (k, v.getRetry())
-											  for k,v in  self.__failList.iteritems()])
+											  for k, v in self.__failList.iteritems()])
 				logSys.debug("Total # of detected failures: %d. Current failures from %d IPs (IP:count): %s"
 							 % (self.__failTotal, len(self.__failList), failures_summary))
 		finally:
 			self.__lock.release()
-	
+
 	def size(self):
 		try:
 			self.__lock.acquire()
 			return len(self.__failList)
 		finally:
 			self.__lock.release()
-	
+
 	def cleanup(self, time):
 		try:
 			self.__lock.acquire()
@@ -135,11 +135,11 @@ class FailManager:
 					self.__delFailure(item)
 		finally:
 			self.__lock.release()
-	
+
 	def __delFailure(self, ip):
 		if ip in self.__failList:
 			del self.__failList[ip]
-	
+
 	def toBan(self):
 		try:
 			self.__lock.acquire()

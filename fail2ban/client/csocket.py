@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -28,20 +28,20 @@ __license__ = "GPL"
 from pickle import dumps, loads, HIGHEST_PROTOCOL
 from ..protocol import CSPROTO
 import socket
-import sys
+
 
 class CSocket:
-	
+
 	def __init__(self, sock="/var/run/fail2ban/fail2ban.sock"):
 		# Create an INET, STREAMing socket
 		#self.csock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.__csock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-		#self.csock.connect(("localhost", 2222))
+		#self.csock.connect(("localho", 2222))
 		self.__csock.connect(sock)
 
 	def __del__(self):
 		self.close(False)
-	
+
 	def send(self, msg):
 		# Convert every list member to string
 		obj = dumps([str(m) for m in msg], HIGHEST_PROTOCOL)
@@ -55,7 +55,7 @@ class CSocket:
 			self.__csock.sendall(CSPROTO.CLOSE + CSPROTO.END)
 		self.__csock.close()
 		self.__csock = None
-	
+
 	@staticmethod
 	def receive(sock):
 		msg = CSPROTO.EMPTY

@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -32,35 +32,34 @@ logSys = getLogger(__name__)
 
 
 class Fail2banReader(ConfigReader):
-	
+
 	def __init__(self, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
-	
+
 	def read(self):
 		ConfigReader.read(self, "fail2ban")
-	
+
 	def getEarlyOptions(self):
 		opts = [["string", "socket", "/var/run/fail2ban/fail2ban.sock"],
 				["string", "pidfile", "/var/run/fail2ban/fail2ban.pid"]]
 		return ConfigReader.getOptions(self, "Definition", opts)
-	
+
 	def getOptions(self):
-		opts = [["string", "loglevel", "INFO" ],
+		opts = [["string", "loglevel", "INFO"],
 				["string", "logtarget", "STDERR"],
 				["string", "syslogsocket", "auto"],
 				["string", "dbfile", "/var/lib/fail2ban/fail2ban.sqlite3"],
 				["int", "dbpurgeage", 86400]]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
-	
+
 	def convert(self):
 		# Ensure logtarget/level set first so any db errors are captured
 		# Also dbfile should be set before all other database options.
 		# So adding order indices into items, to be stripped after sorting, upon return
-		order = {"syslogsocket":0, "loglevel":1, "logtarget":2,
-			"dbfile":50, "dbpurgeage":51}
+		order = {"syslogsocket": 0, "loglevel": 1, "logtarget": 2,
+			"dbfile": 50, "dbpurgeage": 51}
 		stream = list()
 		for opt in self.__opts:
 			if opt in order:
 				stream.append((order[opt], ["set", opt, self.__opts[opt]]))
 		return [opt[1] for opt in sorted(stream)]
-	

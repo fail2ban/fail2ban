@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -45,7 +45,7 @@ class FilterReader(DefinitionInitConfigReader):
 	def setFile(self, fileName):
 		self.__file = fileName
 		DefinitionInitConfigReader.setFile(self, os.path.join("filter.d", fileName))
-	
+
 	def getFile(self):
 		return self.__file
 
@@ -57,7 +57,7 @@ class FilterReader(DefinitionInitConfigReader):
 		if not opts:
 			raise ValueError('recursive tag definitions unable to be resolved')
 		return opts
-	
+
 	def convert(self):
 		stream = list()
 		opts = self.getCombined()
@@ -88,4 +88,3 @@ class FilterReader(DefinitionInitConfigReader):
 						["set", self._jailName, "addjournalmatch"] +
                         shlex.split(match))
 		return stream
-		

@@ -89,42 +89,42 @@ if os.path.exists('/var/run'):
 exec(open(join("fail2ban", "version.py")).read())
 
 setup(
-	name = "fail2ban",
-	version = version,
-	description = "Ban IPs that make too many password failures",
-	long_description = longdesc,
-	author = "Cyril Jaquier & Fail2Ban Contributors",
-	author_email = "cyril.jaquier@fail2ban.org",
-	url = "http://www.fail2ban.org",
-	license = "GPL",
-	platforms = "Posix",
-	cmdclass = {'build_py': build_py, 'build_scripts': build_scripts},
-	scripts = [
+	name="fail2ban",
+	version=version,
+	description="Ban IPs that make too many password failures",
+	long_description=longdesc,
+	author="Cyril Jaquier & Fail2Ban Contributors",
+	author_email="cyril.jaquier@fail2ban.org",
+	url="http://www.fail2ban.org",
+	license="GPL",
+	platforms="Posix",
+	cmdclass={'build_py': build_py, 'build_scripts': build_scripts},
+	scripts=[
 		'bin/fail2ban-client',
 		'bin/fail2ban-server',
 		'bin/fail2ban-regex',
 		'bin/fail2ban-testcases',
 	],
-	packages = [
+	packages=[
 		'fail2ban',
 		'fail2ban.client',
 		'fail2ban.server',
 		'fail2ban.tests',
 		'fail2ban.tests.action_d',
 	],
-	package_data = {
+	package_data={
 		'fail2ban.tests':
-			[ join(w[0], f).replace("fail2ban/tests/", "", 1)
+			[join(w[0], f).replace("fail2ban/tests/", "", 1)
 				for w in os.walk('fail2ban/tests/files')
 				for f in w[2]] +
-			[ join(w[0], f).replace("fail2ban/tests/", "", 1)
+			[join(w[0], f).replace("fail2ban/tests/", "", 1)
 				for w in os.walk('fail2ban/tests/config')
 				for f in w[2]] +
-			[ join(w[0], f).replace("fail2ban/tests/", "", 1)
+			[join(w[0], f).replace("fail2ban/tests/", "", 1)
 				for w in os.walk('fail2ban/tests/action_d')
 				for f in w[2]]
 	},
-	data_files = [
+	data_files=[
 		('/etc/fail2ban',
 			glob("config/*.conf")
 		),

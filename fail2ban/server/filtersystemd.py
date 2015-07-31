@@ -103,7 +103,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	##
 	# Reset a journal match filter called on removal or failure
 	#
-	# @return None 
+	# @return None
 
 	def resetJournalMatches(self):
 		self.__journal.flush_matches()
@@ -139,11 +139,11 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	def getJournalMatch(self):
 		return self.__matches
 
-    ##
-    # Join group of log elements which may be a mix of bytes and strings
-    #
-    # @param elements list of strings and bytes
-    # @return elements joined as string
+	##
+	# Join group of log elements which may be a mix of bytes and strings
+	#
+	# @param elements list of strings and bytes
+	# @return elements joined as string
 
 	@staticmethod
 	def _joinStrAndBytes(elements):
@@ -184,7 +184,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			else:
 				monotonic = logentry.get('__MONOTONIC_TIMESTAMP')[0]
 			logelements.append("[%12.6f]" % monotonic.total_seconds())
-		if isinstance(logentry.get('MESSAGE',''), list):
+		if isinstance(logentry.get('MESSAGE', ''), list):
 			logelements.append(" ".join(logentry['MESSAGE']))
 		else:
 			logelements.append(logentry.get('MESSAGE', ''))
@@ -198,14 +198,14 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			# Python 3, one or more elements bytes
 			logSys.warning("Error decoding log elements from journal: %s" %
 				repr(logelements))
-			logline =  cls._joinStrAndBytes(logelements)
+			logline = cls._joinStrAndBytes(logelements)
 
 		date = logentry.get('_SOURCE_REALTIME_TIMESTAMP',
 				logentry.get('__REALTIME_TIMESTAMP'))
 		logSys.debug("Read systemd journal entry: %r" %
 			"".join([date.isoformat(), logline]))
 		return (('', date.isoformat(), logline),
-			time.mktime(date.timetuple()) + date.microsecond/1.0E6)
+			time.mktime(date.timetuple()) + date.microsecond / 1.0E6)
 
 	##
 	# Main loop.
@@ -257,7 +257,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 					self.__modified = False
 			self.__journal.wait(self.sleeptime)
 		logSys.debug((self.jail is not None and self.jail.name
-                      or "jailless") +" filter terminated")
+                      or "jailless") + " filter terminated")
 		return True
 
 	def status(self, flavor="basic"):

@@ -136,7 +136,7 @@ def reGroupDictStrptime(found_dict):
 				tzoffset = 0
 			else:
 				tzoffset = int(z[1:3]) * 60 # Hours...
-				if len(z)>3:
+				if len(z) > 3:
 					tzoffset += int(z[-2:]) # ...and minutes
 				if z.startswith("-"):
 					tzoffset = -tzoffset
@@ -174,7 +174,7 @@ def reGroupDictStrptime(found_dict):
 		assume_today = True
 
 	# Actully create date
-	date_result =  datetime.datetime(
+	date_result = datetime.datetime(
 		year, month, day, hour, minute, second, fraction)
 	if gmtoff:
 		date_result = date_result - datetime.timedelta(seconds=gmtoff)
@@ -186,10 +186,9 @@ def reGroupDictStrptime(found_dict):
 		# Could be last year?
 		# also reset month and day as it's not yesterday...
 		date_result = date_result.replace(
-			year=year-1, month=month, day=day)
+			year=year - 1, month=month, day=day)
 
 	if gmtoff is not None:
 		return calendar.timegm(date_result.utctimetuple())
 	else:
 		return time.mktime(date_result.timetuple())
-

@@ -48,7 +48,7 @@ class DatabaseTest(LogCaptureTestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		super(DatabaseTest, self).setUp()
-		if Fail2BanDb is None and sys.version_info >= (2,7): # pragma: no cover
+		if Fail2BanDb is None and sys.version_info >= (2, 7): # pragma: no cover
 			raise unittest.SkipTest(
 				"Unable to import fail2ban database module as sqlite is not "
 				"available.")
@@ -223,11 +223,11 @@ class DatabaseTest(LogCaptureTestCase):
 			self.jail, FailTicket("127.0.0.1", MyTime.time() - 60, ["abc\n"]))
 		self.db.addBan(
 			self.jail, FailTicket("127.0.0.1", MyTime.time() - 40, ["abc\n"]))
-		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=50)), 1)
-		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=20)), 0)
+		self.assertEqual(len(self.db.getBans(jail=self.jail, bantime=50)), 1)
+		self.assertEqual(len(self.db.getBans(jail=self.jail, bantime=20)), 0)
 		# Negative values are for persistent bans, and such all bans should
 		# be returned
-		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=-1)), 2)
+		self.assertEqual(len(self.db.getBans(jail=self.jail, bantime=-1)), 2)
 
 	def testGetBansMerged(self):
 		if Fail2BanDb is None: # pragma: no cover

@@ -26,7 +26,6 @@ import fcntl
 import locale
 import os
 import re
-import sys
 
 from .failmanager import FailManagerEmpty, FailManager
 from .ticket import FailTicket
@@ -140,7 +139,7 @@ class Filter(JailThread):
 			self.__ignoreRegex.append(regex)
 		except RegexException, e:
 			logSys.error(e)
-			raise e 
+			raise e
 
 	def delIgnoreRegex(self, index):
 		try:
@@ -238,7 +237,7 @@ class Filter(JailThread):
 				return None, "Default Detectors"
 			elif len(templates) == 1:
 				if hasattr(templates[0], "pattern"):
-					pattern =  templates[0].pattern
+					pattern = templates[0].pattern
 				else:
 					pattern = None
 				return pattern, templates[0].name
@@ -386,7 +385,7 @@ class Filter(JailThread):
 				return True
 
 		if self.__ignoreCommand:
-			command = CommandAction.replaceTag(self.__ignoreCommand, { 'ip': ip } )
+			command = CommandAction.replaceTag(self.__ignoreCommand, {'ip': ip})
 			logSys.debug('ignore command: ' + command)
 			ret_ignore = CommandAction.executeCmd(command)
 			self.logIgnoreIp(ip, log_ignore and ret_ignore, ignore_source="command")
@@ -406,7 +405,7 @@ class Filter(JailThread):
 
 			timeMatch = self.dateDetector.matchTime(l)
 			if timeMatch:
-				tupleLine  = (
+				tupleLine = (
 					l[:timeMatch.start()],
 					l[timeMatch.start():timeMatch.end()],
 					l[timeMatch.end():])
@@ -560,7 +559,7 @@ class FileFilter(Filter):
 	#
 	# @param path log file path
 
-	def addLogPath(self, path, tail = False):
+	def addLogPath(self, path, tail=False):
 		if self.containsLogPath(path):
 			logSys.error(path + " already exists")
 		else:
@@ -721,7 +720,7 @@ except ImportError: # pragma: no cover
 
 class FileContainer:
 
-	def __init__(self, filename, encoding, tail = False):
+	def __init__(self, filename, encoding, tail=False):
 		self.__filename = filename
 		self.setEncoding(encoding)
 		self.__tail = tail
@@ -810,7 +809,7 @@ class FileContainer:
 		return line
 
 	def close(self):
-		if not self.__handler is None:
+		if self.__handler is not None:
 			# Saves the last position.
 			self.__pos = self.__handler.tell()
 			# Closes the file.
@@ -903,7 +902,7 @@ class DNSUtils:
 		ipList = list()
 		# Search for plain IP
 		plainIP = DNSUtils.searchIP(text)
-		if not plainIP is None:
+		if plainIP is not None:
 			plainIPStr = plainIP.group(0)
 			if DNSUtils.isValidIP(plainIPStr):
 				ipList.append(plainIPStr)

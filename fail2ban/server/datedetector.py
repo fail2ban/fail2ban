@@ -76,15 +76,15 @@ class DateDetector(object):
 		self.__lock.acquire()
 		try:
 			# asctime with optional day, subsecond and/or year:
-			# Sun Jan 23 21:59:59.011 2005 
+			# Sun Jan 23 21:59:59.011 2005
 			self.appendTemplate("(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %Y)?")
 			# simple date, optional subsecond (proftpd):
-			# 2005-01-23 21:59:59 
-			# simple date: 2005/01/23 21:59:59 
+			# 2005-01-23 21:59:59
+			# simple date: 2005/01/23 21:59:59
 			# custom for syslog-ng 2006.12.21 06:43:20
 			self.appendTemplate("%Y(?P<_sep>[-/.])%m(?P=_sep)%d %H:%M:%S(?:,%f)?")
-			# simple date too (from x11vnc): 23/01/2005 21:59:59 
-			# and with optional year given by 2 digits: 23/01/05 21:59:59 
+			# simple date too (from x11vnc): 23/01/2005 21:59:59
+			# and with optional year given by 2 digits: 23/01/05 21:59:59
 			# (See http://bugs.debian.org/537610)
 			# 17-07-2008 17:23:25
 			self.appendTemplate("%d(?P<_sep>[-/])%m(?P=_sep)(?:%Y|%y) %H:%M:%S")
@@ -94,7 +94,7 @@ class DateDetector(object):
 			self.appendTemplate("%d(?P<_sep>[-/])%b(?P=_sep)%Y[ :]?%H:%M:%S(?:\.%f)?(?: %z)?")
 			# CPanel 05/20/2008:01:57:39
 			self.appendTemplate("%m/%d/%Y:%H:%M:%S")
-			# named 26-Jul-2007 15:20:52.252 
+			# named 26-Jul-2007 15:20:52.252
 			# roundcube 26-Jul-2007 15:20:52 +0200
 			# 01-27-2012 16:22:44.252
 			# subseconds explicit to avoid possible %m<->%d confusion
@@ -151,7 +151,7 @@ class DateDetector(object):
 		try:
 			for template in self.__templates:
 				match = template.matchDate(line)
-				if not match is None:
+				if match not is None:
 					logSys.debug("Matched time template %s" % template.name)
 					template.hits += 1
 					return match

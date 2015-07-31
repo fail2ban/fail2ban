@@ -30,7 +30,7 @@ import logging
 def formatExceptionInfo():
 	""" Consistently format exception information """
 	cla, exc = sys.exc_info()[:2]
-	return (cla.__name__, str(exc))
+	return cla.__name__, str(exc)
 
 
 #
@@ -72,7 +72,7 @@ class TraceBack(object):
 		ftb = traceback.extract_stack(limit=100)[:-2]
 		entries = [
 			[mbasename(x[0]), os.path.dirname(x[0]), str(x[1])] for x in ftb]
-		entries = [ [e[0], e[2]] for e in entries
+		entries = [[e[0], e[2]] for e in entries
 					if not (e[0] in ['unittest', 'logging.__init__']
 							or e[1].endswith('/unittest'))]
 

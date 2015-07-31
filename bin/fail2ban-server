@@ -23,7 +23,6 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import getopt
-import os
 import sys
 
 from fail2ban.version import version
@@ -40,6 +39,7 @@ logSys = getLogger("fail2ban")
 #
 # Fail2ban is designed to protect your server against brute force attacks.
 # Its first goal was to protect a SSH server.
+
 
 class Fail2banServer:
 
@@ -65,7 +65,7 @@ class Fail2banServer:
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
 		"""
-		print "Usage: "+self.__argv[0]+" [OPTIONS]"
+		print "Usage: " + self.__argv[0] + " [OPTIONS]"
 		print
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
 		print "and bans the corresponding IP addresses using firewall rules."

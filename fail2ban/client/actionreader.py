@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -51,7 +51,7 @@ class ActionReader(DefinitionInitConfigReader):
 	def setFile(self, fileName):
 		self.__file = fileName
 		DefinitionInitConfigReader.setFile(self, os.path.join("action.d", fileName))
-	
+
 	def getFile(self):
 		return self.__file
 

@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Daniel Black
-# 
+#
 
 __author__ = "Daniel Black"
 __copyright__ = "Copyright (c) 2013 Daniel Black"
@@ -43,7 +43,7 @@ class ExecuteActions(LogCaptureTestCase):
 		super(ExecuteActions, self).setUp()
 		self.__jail = DummyJail()
 		self.__actions = Actions(self.__jail)
-		self.__tmpfile, self.__tmpfilename  = tempfile.mkstemp()
+		self.__tmpfile, self.__tmpfilename = tempfile.mkstemp()
 
 	def tearDown(self):
 		super(ExecuteActions, self).tearDown()
@@ -74,7 +74,7 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertEqual(len(self.__actions), 0)
 
 		self.__actions.setBanTime(127)
-		self.assertEqual(self.__actions.getBanTime(),127)
+		self.assertEqual(self.__actions.getBanTime(), 127)
 		self.assertRaises(ValueError, self.__actions.removeBannedIP, '127.0.0.1')
 
 	def testActionsOutput(self):
@@ -82,12 +82,12 @@ class ExecuteActions(LogCaptureTestCase):
 		self.__actions.start()
 		with open(self.__tmpfilename) as f:
 			time.sleep(3)
-			self.assertEqual(f.read(),"ip start 64\n")
+			self.assertEqual(f.read(), "ip start 64\n")
 
 		self.__actions.stop()
 		self.__actions.join()
-		self.assertEqual(self.__actions.status(),[("Currently banned", 0 ),
-               ("Total banned", 0 ), ("Banned IP list", [] )])
+		self.assertEqual(self.__actions.status(), [("Currently banned", 0),
+               ("Total banned", 0), ("Banned IP list", [])])
 
 	def testAddActionPython(self):
 		self.__actions.add(

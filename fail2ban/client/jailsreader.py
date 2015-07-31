@@ -63,16 +63,16 @@ class JailsReader(ConfigReader):
 		if section is None:
 			sections = self.sections()
 		else:
-			sections = [ section ]
+			sections = [section]
 
 		# Get the options of all jails.
 		parse_status = True
 		for sec in sections:
 			if sec == 'INCLUDES':
 				continue
-			# use the cfg_share for filter/action caching and the same config for all 
+			# use the cfg_share for filter/action caching and the same config for all
 			# jails (use_config=...), therefore don't read it here:
-			jail = JailReader(sec, force_enable=self.__force_enable, 
+			jail = JailReader(sec, force_enable=self.__force_enable,
 				share_config=self.share_config, use_config=self._cfg)
 			ret = jail.getOptions()
 			if ret:
@@ -106,4 +106,3 @@ class JailsReader(ConfigReader):
 			stream.append(["start", jail.getName()])
 
 		return stream
-

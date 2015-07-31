@@ -1,5 +1,5 @@
 
-class TestAction():
+class TestAction:
 
     def __init__(self, jail, name):
         pass

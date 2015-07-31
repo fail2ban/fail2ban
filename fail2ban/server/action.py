@@ -409,13 +409,13 @@ class CommandAction(ActionBase):
 						# recursive definitions are bad
 						#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 						return False
-					if found_tag in cls._escapedTags or not found_tag in tags:
+					if found_tag in cls._escapedTags or found_tag not in tags:
 						# Escaped or missing tags - just continue on searching after end of match
 						# Missing tags are ok - cInfo can contain aInfo elements like <HOST> and valid shell
 						# constructs like <STDIN>.
 						m = t.search(value, m.end())
 						continue
-					value = value.replace('<%s>' % found_tag , tags[found_tag])
+					value = value.replace('<%s>' % found_tag, tags[found_tag])
 					#logSys.log(5, 'value now: %s' % value)
 					done.append(found_tag)
 					m = t.search(value, m.start())
@@ -486,7 +486,7 @@ class CommandAction(ActionBase):
 		string = string.replace("<br>", '\n')
 		return string
 
-	def _processCmd(self, cmd, aInfo = None):
+	def _processCmd(self, cmd, aInfo=None):
 		"""Executes a command with preliminary checks and substitutions.
 
 		Before executing any commands, executes the "check" command first
@@ -521,7 +521,7 @@ class CommandAction(ActionBase):
 				return False
 
 		# Replace tags
-		if not aInfo is None:
+		if aInfo is not None:
 			realCmd = self.replaceTag(cmd, aInfo)
 		else:
 			realCmd = cmd
@@ -614,4 +614,3 @@ class CommandAction(ActionBase):
 							% (retcode, msg % locals()))
 			return False
 		raise RuntimeError("Command execution failed: %s" % realCmd)
-
