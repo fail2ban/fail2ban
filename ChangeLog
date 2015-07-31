@@ -45,6 +45,8 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
    * kill the entire process group of the child process upon timeout (gh-1129).
      Otherwise could lead to resource exhaustion due to hanging whois
      processes.
+   * resolve /var/run/fail2ban path in setup.py to help installation
+     on platforms with /var/run -> /run symlink (gh-1142)
 
 - New Features:
    * RETURN iptables target is now a variable: <returntype>

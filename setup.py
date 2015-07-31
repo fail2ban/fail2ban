@@ -39,7 +39,7 @@ except ImportError:
 	from distutils.command.build_py import build_py
 	from distutils.command.build_scripts import build_scripts
 import os
-from os.path import isfile, join, isdir
+from os.path import isfile, join, isdir, realpath
 import sys
 import warnings
 from glob import glob
@@ -81,8 +81,9 @@ else:
 data_files_extra = []
 if os.path.exists('/var/run'):
 	# if we are on the system with /var/run -- we are to use it for having fail2ban/
-	# directory there for socket file etc
-	data_files_extra += [('/var/run/fail2ban', '')]
+	# directory there for socket file etc.
+	# realpath is used to possibly resolve /var/run -> /run symlink
+	data_files_extra += [(realpath('/var/run/fail2ban'), '')]
 
 # Get version number, avoiding importing fail2ban.
 # This is due to tests not functioning for python3 as 2to3 takes place later
