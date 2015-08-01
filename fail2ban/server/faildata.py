@@ -29,6 +29,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class FailData:
 	
 	def __init__(self):

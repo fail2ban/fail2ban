@@ -29,6 +29,7 @@ import unittest
 from ..server.banmanager import BanManager
 from ..server.ticket import BanTicket
 
+
 class AddFailure(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""

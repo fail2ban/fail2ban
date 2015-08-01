@@ -34,6 +34,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class FailManager:
 	
 	def __init__(self):
@@ -91,7 +92,7 @@ class FailManager:
 			ip = ticket.getIP()
 			unixTime = ticket.getTime()
 			matches = ticket.getMatches()
-			if self.__failList.has_key(ip):
+			if ip in self.__failList:
 				fData = self.__failList[ip]
 				if fData.getLastReset() < unixTime - self.__maxTime:
 					fData.setLastReset(unixTime)
@@ -136,7 +137,7 @@ class FailManager:
 			self.__lock.release()
 	
 	def __delFailure(self, ip):
-		if self.__failList.has_key(ip):
+		if ip in self.__failList:
 			del self.__failList[ip]
 	
 	def toBan(self):
@@ -153,6 +154,7 @@ class FailManager:
 			raise FailManagerEmpty
 		finally:
 			self.__lock.release()
+
 
 class FailManagerEmpty(Exception):
 	pass

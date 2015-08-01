@@ -21,8 +21,14 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import logging, os, subprocess, time, signal, tempfile
-import threading, re
+import logging
+import os
+import re
+import signal
+import subprocess
+import tempfile
+import threading
+import time
 from abc import ABCMeta
 from collections import MutableMapping
 
@@ -48,6 +54,7 @@ _RETCODE_HINTS = {
 # Dictionary to lookup signal name from number
 signame = dict((num, name)
 	for name, num in signal.__dict__.iteritems() if name.startswith("SIG"))
+
 
 class CallingMap(MutableMapping):
 	"""A Mapping type which returns the result of callable values.
@@ -93,6 +100,7 @@ class CallingMap(MutableMapping):
 
 	def copy(self):
 		return self.__class__(self.data.copy())
+
 
 class ActionBase(object):
 	"""An abstract base class for actions in Fail2Ban.
@@ -175,6 +183,7 @@ class ActionBase(object):
 			the ban.
 		"""
 		pass
+
 
 class CommandAction(ActionBase):
 	"""A action which executes OS shell commands.
@@ -400,7 +409,7 @@ class CommandAction(ActionBase):
 						# recursive definitions are bad
 						#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 						return False
-					if found_tag in cls._escapedTags or not tags.has_key(found_tag):
+					if found_tag in cls._escapedTags or not found_tag in tags:
 						# Escaped or missing tags - just continue on searching after end of match
 						# Missing tags are ok - cInfo can contain aInfo elements like <HOST> and valid shell
 						# constructs like <STDIN>.
@@ -516,10 +525,10 @@ class CommandAction(ActionBase):
 			realCmd = self.replaceTag(cmd, aInfo)
 		else:
 			realCmd = cmd
-		
+
 		# Replace static fields
 		realCmd = self.replaceTag(realCmd, self._properties)
-		
+
 		return self.executeCmd(realCmd, self.timeout)
 
 	@staticmethod
@@ -549,14 +558,16 @@ class CommandAction(ActionBase):
 		if not realCmd:
 			logSys.debug("Nothing to do")
 			return True
-		
+
 		_cmd_lock.acquire()
 		try: # Try wrapped within another try needed for python version < 2.5
 			stdout = tempfile.TemporaryFile(suffix=".stdout", prefix="fai2ban_")
 			stderr = tempfile.TemporaryFile(suffix=".stderr", prefix="fai2ban_")
 			try:
 				popen = subprocess.Popen(
-					realCmd, stdout=stdout, stderr=stderr, shell=True)
+					realCmd, stdout=stdout, stderr=stderr, shell=True,
+					preexec_fn=os.setsid  # so that killpg does not kill our process
+				)
 				stime = time.time()
 				retcode = popen.poll()
 				while time.time() - stime <= timeout and retcode is None:
@@ -565,11 +576,12 @@ class CommandAction(ActionBase):
 				if retcode is None:
 					logSys.error("%s -- timed out after %i seconds." %
 						(realCmd, timeout))
-					os.kill(popen.pid, signal.SIGTERM) # Terminate the process
+					pgid = os.getpgid(popen.pid)
+					os.killpg(pgid, signal.SIGTERM)  # Terminate the process
 					time.sleep(0.1)
 					retcode = popen.poll()
 					if retcode is None: # Still going...
-						os.kill(popen.pid, signal.SIGKILL) # Kill the process
+						os.killpg(pgid, signal.SIGKILL)  # Kill the process
 						time.sleep(0.1)
 						retcode = popen.poll()
 			except OSError, e:
@@ -602,4 +614,4 @@ class CommandAction(ActionBase):
 							% (retcode, msg % locals()))
 			return False
 		raise RuntimeError("Command execution failed: %s" % realCmd)
-	
+

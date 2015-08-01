@@ -47,11 +47,14 @@ except ImportError: # pragma: no cover
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
+
 class TestServer(Server):
 	def setLogLevel(self, *args, **kwargs):
 		pass
+
 	def setLogTarget(self, *args, **kwargs):
 		pass
+
 
 class TransmitterBase(unittest.TestCase):
 	
@@ -145,6 +148,7 @@ class TransmitterBase(unittest.TestCase):
 				self.transm.proceed(["get", jail, cmd]),
 				(0, outValues[n+1:]))
 
+
 class Transmitter(TransmitterBase):
 
 	def setUp(self):
@@ -173,8 +177,14 @@ class Transmitter(TransmitterBase):
 		self.setGetTestNOK("dbfile", tmpFilename)
 		self.server.delJail(self.jailName)
 		self.setGetTest("dbfile", tmpFilename)
+		# the same file name (again no jails / not changed):
+		self.setGetTest("dbfile", tmpFilename)
 		self.setGetTest("dbpurgeage", "600", 600)
 		self.setGetTestNOK("dbpurgeage", "LIZARD")
+		# the same file name (again with jails / not changed):
+		self.server.addJail(self.jailName, "auto")
+		self.setGetTest("dbfile", tmpFilename)
+		self.server.delJail(self.jailName)
 
 		# Disable database
 		self.assertEqual(self.transm.proceed(
@@ -188,6 +198,11 @@ class Transmitter(TransmitterBase):
 			(0, None))
 		self.assertEqual(self.transm.proceed(
 			["get", "dbpurgeage"]),
+			(0, None))
+		# the same (again with jails / not changed):
+		self.server.addJail(self.jailName, "auto")
+		self.assertEqual(self.transm.proceed(
+			["set", "dbfile", "None"]),
 			(0, None))
 		os.close(tmp)
 		os.unlink(tmpFilename)
@@ -547,7 +562,6 @@ class Transmitter(TransmitterBase):
 			)
 		)
 
-
 	def testAction(self):
 		action = "TestCaseAction"
 		cmdList = [
@@ -749,6 +763,7 @@ class Transmitter(TransmitterBase):
 			["set", jailName, "deljournalmatch", value])
 		self.assertTrue(isinstance(result[1], ValueError))
 
+
 class TransmitterLogging(TransmitterBase):
 
 	def setUp(self):
@@ -873,6 +888,7 @@ class JailTests(unittest.TestCase):
 		jail = Jail(longname)
 		self.assertEqual(jail.name, longname)
 
+
 class RegexTests(unittest.TestCase):
 
 	def testInit(self):
@@ -897,9 +913,11 @@ class RegexTests(unittest.TestCase):
 		self.assertTrue(fr.hasMatched())
 		self.assertRaises(RegexException, fr.getHost)
 
+
 class _BadThread(JailThread):
 	def run(self):
 		raise RuntimeError('run bad thread exception')
+
 
 class LoggingTests(LogCaptureTestCase):
 

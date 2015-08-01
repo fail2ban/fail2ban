@@ -33,6 +33,7 @@ from .. import version
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class Transmitter:
 	
 	##
@@ -51,7 +52,7 @@ class Transmitter:
 	
 	def proceed(self, command):
 		# Deserialize object
-		logSys.debug("Command: " + `command`)
+		logSys.debug("Command: " + repr(command))
 		try:
 			ret = self.__commandHandler(command)
 			ack = 0, ret
@@ -138,6 +139,7 @@ class Transmitter:
 		elif name == "dbpurgeage":
 			db = self.__server.getDatabase()
 			if db is None:
+				logSys.warning("dbpurgeage setting was not in effect since no db yet")
 				return None
 			else:
 				db.purgeage = command[1]

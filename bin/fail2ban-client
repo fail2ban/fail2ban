@@ -22,8 +22,17 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import sys, string, os, pickle, re, logging, signal
-import getopt, time, shlex, socket
+import getopt
+import logging
+import os
+import pickle
+import re
+import shlex
+import signal
+import socket
+import string
+import sys
+import time
 
 from fail2ban.version import version
 from fail2ban.protocol import printFormatted
@@ -144,31 +153,57 @@ class Fail2banClient:
 		return self.__processCmd([["ping"]], False)
 
 	def __processCmd(self, cmd, showRet = True):
-		beautifier = Beautifier()
-		streamRet = True
-		for c in cmd:
-			beautifier.setInputCmd(c)
-			try:
-				client = CSocket(self.__conf["socket"])
-				ret = client.send(c)
-				if ret[0] == 0:
-					logSys.debug("OK : " + `ret[1]`)
+		client = None
+		try:
+			beautifier = Beautifier()
+			streamRet = True
+			for c in cmd:
+				beautifier.setInputCmd(c)
+				try:
+					if not client:
+						client = CSocket(self.__conf["socket"])
+					ret = client.send(c)
+					if ret[0] == 0:
+						logSys.debug("OK : " + `ret[1]`)
+						if showRet:
+							print beautifier.beautify(ret[1])
+					else:
+						logSys.error("NOK: " + `ret[1].args`)
+						if showRet:
+							print beautifier.beautifyError(ret[1])
+						streamRet = False
+				except socket.error:
 					if showRet:
-						print beautifier.beautify(ret[1])
-				else:
-					logSys.error("NOK: " + `ret[1].args`)
+						self.__logSocketError()
+					return False
+				except Exception, e:
 					if showRet:
-						print beautifier.beautifyError(ret[1])
-					streamRet = False
-			except socket.error:
-				if showRet:
-					logSys.error("Unable to contact server. Is it running?")
-				return False
-			except Exception, e:
-				if showRet:
-					logSys.error(e)
-				return False
+						logSys.error(e)
+					return False
+		finally:
+			if client:
+				client.close()
 		return streamRet
+
+	def __logSocketError(self):
+		try:
+			if os.access(self.__conf["socket"], os.F_OK):
+				# This doesn't check if path is a socket,
+				#  but socket.error should be raised
+				if os.access(self.__conf["socket"], os.W_OK):
+					# Permissions look good, but socket.error was raised
+					logSys.error("Unable to contact server. Is it running?")
+				else:
+					logSys.error("Permission denied to socket: %s,"
+								 " (you must be root)", self.__conf["socket"])
+			else:
+				logSys.error("Failed to access socket path: %s."
+							 " Is fail2ban running?",
+							 self.__conf["socket"])
+		except Exception as e:
+			logSys.error("Exception while checking socket access: %s",
+						 self.__conf["socket"])
+			logSys.error(e)
 
 	##
 	# Process a command line.

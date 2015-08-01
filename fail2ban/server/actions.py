@@ -24,9 +24,10 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import time, logging
+import logging
 import os
 import sys
+import time
 if sys.version_info >= (3, 3):
 	import importlib.machinery
 else:
@@ -45,6 +46,7 @@ from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
+
 
 class Actions(JailThread, Mapping):
 	"""Handles jail actions.
@@ -192,13 +194,14 @@ class Actions(JailThread, Mapping):
 		ValueError
 			If `ip` is not banned
 		"""
+		# Always delete ip from database (also if currently not banned)
+		if self._jail.database is not None:
+			self._jail.database.delBan(self._jail, ip)
 		# Find the ticket with the IP.
 		ticket = self.__banManager.getTicketByIP(ip)
 		if ticket is not None:
 			# Unban the IP.
 			self.__unBan(ticket)
-			if self._jail.database is not None:
-				self._jail.database.delBan(self._jail, ticket)
 		else:
 			raise ValueError("IP %s is not banned" % ip)
 
@@ -294,7 +297,7 @@ class Actions(JailThread, Mapping):
 			True if an IP address get banned.
 		"""
 		ticket = self._jail.getFailTicket()
-		if ticket != False:
+		if ticket:
 			aInfo = CallingMap()
 			bTicket = BanManager.createBanTicket(ticket)
 			ip = bTicket.getIP()

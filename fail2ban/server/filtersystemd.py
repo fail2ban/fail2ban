@@ -22,7 +22,8 @@ __author__ = "Steven Hiscocks"
 __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
-import datetime, time
+import datetime
+import time
 from distutils.version import LooseVersion
 
 from systemd import journal
@@ -36,6 +37,7 @@ from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
+
 
 ##
 # Journal reader class.
@@ -59,7 +61,6 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		self.__matches = []
 		self.setDatePattern(None)
 		logSys.debug("Created FilterSystemd")
-
 
 	##
 	# Add a journal match filters from list structure

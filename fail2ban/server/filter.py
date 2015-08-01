@@ -21,7 +21,12 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import re, os, fcntl, sys, locale, codecs
+import codecs
+import fcntl
+import locale
+import os
+import re
+import sys
 
 from .failmanager import FailManagerEmpty, FailManager
 from .ticket import FailTicket
@@ -42,6 +47,7 @@ logSys = getLogger(__name__)
 # This class reads a log file and detects login failures or anything else
 # that matches a given regular expression. This class is instantiated by
 # a Jail object.
+
 
 class Filter(JailThread):
 
@@ -81,7 +87,6 @@ class Filter(JailThread):
 		self.dateDetector.addDefaultTemplate()
 		logSys.debug("Created %s" % self)
 
-
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__.__name__, self.jail)
 
@@ -103,7 +108,6 @@ class Filter(JailThread):
 		except RegexException, e:
 			logSys.error(e)
 			raise e
-
 
 	def delFailRegex(self, index):
 		try:
@@ -390,7 +394,6 @@ class Filter(JailThread):
 
 		return False
 
-
 	def processLine(self, line, date=None, returnRawHost=False,
 		checkAllRegex=False):
 		"""Split the time portion from log msg and return findFailures on them
@@ -576,7 +579,6 @@ class FileFilter(Filter):
 		# to be overridden by backends
 		pass
 
-
 	##
 	# Delete a log path
 	#
@@ -716,6 +718,7 @@ except ImportError: # pragma: no cover
 	import md5
 	md5sum = md5.new
 
+
 class FileContainer:
 
 	def __init__(self, filename, encoding, tail = False):
@@ -839,7 +842,9 @@ class JournalFilter(Filter): # pragma: systemd no cover
 # This class contains only static methods used to handle DNS and IP
 # addresses.
 
-import socket, struct
+import socket
+import struct
+
 
 class DNSUtils:
 

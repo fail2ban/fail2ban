@@ -24,11 +24,14 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import os
 import time
+import tempfile
 
 from ..server.action import CommandAction, CallingMap
 
 from .utils import LogCaptureTestCase
+from .utils import pid_exists
 
 class CommandActionTest(LogCaptureTestCase):
 
@@ -109,7 +112,6 @@ class CommandActionTest(LogCaptureTestCase):
 			self.__action.replaceTag("<ipjailmatches>",
 				{'ipjailmatches': "some >char< should \< be[ escap}ed&\n"}),
 			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\n")
-
 
 		# Recursive
 		aInfo["ABC"] = "<xyz>"
@@ -201,6 +203,44 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertTrue(self._is_logged('sleep 60 -- timed out after 2 seconds') 
 			or self._is_logged('sleep 60 -- timed out after 3 seconds'))
 		self.assertTrue(self._is_logged('sleep 60 -- killed with SIGTERM'))
+
+	def testExecuteTimeoutWithNastyChildren(self):
+		# temporary file for a nasty kid shell script
+		tmpFilename = tempfile.mktemp(".sh", "fail2ban_")
+		# Create a nasty script which would hang there for a while
+		with open(tmpFilename, 'w') as f:
+			f.write("""#!/bin/bash
+		trap : HUP EXIT TERM
+
+		echo "$$" > %s.pid
+		echo "my pid $$ . sleeping lo-o-o-ong"
+		sleep 10000
+		""" % tmpFilename)
+
+		def getnastypid():
+			with open(tmpFilename + '.pid') as f:
+				return int(f.read())
+
+		# First test if can kill the bastard
+		self.assertRaises(
+			RuntimeError, CommandAction.executeCmd, 'bash %s' % tmpFilename, timeout=.1)
+		# Verify that the proccess itself got killed
+		self.assertFalse(pid_exists(getnastypid()))  # process should have been killed
+		self.assertTrue(self._is_logged('timed out'))
+		self.assertTrue(self._is_logged('killed with SIGTERM'))
+
+		# A bit evolved case even though, previous test already tests killing children processes
+		self.assertRaises(
+			RuntimeError, CommandAction.executeCmd, 'out=`bash %s`; echo ALRIGHT' % tmpFilename,
+			timeout=.2)
+		# Verify that the proccess itself got killed
+		self.assertFalse(pid_exists(getnastypid()))
+		self.assertTrue(self._is_logged('timed out'))
+		self.assertTrue(self._is_logged('killed with SIGTERM'))
+
+		os.unlink(tmpFilename)
+		os.unlink(tmpFilename + '.pid')
+
 
 	def testCaptureStdOutErr(self):
 		CommandAction.executeCmd('echo "How now brown cow"')

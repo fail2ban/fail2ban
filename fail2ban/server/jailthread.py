@@ -30,6 +30,7 @@ from abc import abstractmethod
 
 from ..helpers import excepthook
 
+
 class JailThread(Thread):
 	"""Abstract class for threading elements in Fail2Ban.
 
@@ -59,6 +60,7 @@ class JailThread(Thread):
 		# excepthook workaround for threads, derived from:
 		# http://bugs.python.org/issue1230540#msg91244
 		run = self.run
+
 		def run_with_except_hook(*args, **kwargs):
 			try:
 				run(*args, **kwargs)

@@ -35,6 +35,7 @@ else:
 from fail2ban.server.actions import ActionBase
 from fail2ban.version import version as f2bVersion
 
+
 class BadIPsAction(ActionBase):
 	"""Fail2Ban action which reports bans to badips.com, and also
 	blacklist bad IPs listed on badips.com by using another action's

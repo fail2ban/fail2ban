@@ -25,7 +25,12 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from threading import Lock, RLock
-import logging, logging.handlers, sys, os, signal, stat
+import logging
+import logging.handlers
+import os
+import signal
+import stat
+import sys
 
 from .jails import Jails
 from .filter import FileFilter, JournalFilter
@@ -42,6 +47,7 @@ try:
 except ImportError:
 	# Dont print error here, as database may not even be used
 	Fail2BanDb = None
+
 
 class Server:
 	
@@ -61,11 +67,10 @@ class Server:
 			'FreeBSD': '/var/run/log',
 			'Linux': '/dev/log',
 		}
+		self.setSyslogSocket("auto")
 		# Set logging level
 		self.setLogLevel("INFO")
 		self.setLogTarget("STDOUT")
-		self.setSyslogSocket("auto")
-
 
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
@@ -139,7 +144,6 @@ class Server:
 		finally:
 			self.__loggingLock.release()
 
-	
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend, self.__db)
 		if self.__db is not None:
@@ -494,24 +498,27 @@ class Server:
 			return "flushed"
 			
 	def setDatabase(self, filename):
-		if len(self.__jails) == 0:
-			if filename.lower() == "none":
-				self.__db = None
-			else:
-				if Fail2BanDb is not None:
-					self.__db = Fail2BanDb(filename)
-					self.__db.delAllJails()
-				else:
-					logSys.error(
-						"Unable to import fail2ban database module as sqlite "
-						"is not available.")
-		else:
+		# if not changed - nothing to do
+		if self.__db and self.__db.filename == filename:
+			return
+		if not self.__db and filename.lower() == 'none':
+			return
+		if len(self.__jails) != 0:
 			raise RuntimeError(
 				"Cannot change database when there are jails present")
+		if filename.lower() == "none":
+			self.__db = None
+		else:
+			if Fail2BanDb is not None:
+				self.__db = Fail2BanDb(filename)
+				self.__db.delAllJails()
+			else:
+				logSys.error(
+					"Unable to import fail2ban database module as sqlite "
+					"is not available.")
 	
 	def getDatabase(self):
 		return self.__db
-	
 
 	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the

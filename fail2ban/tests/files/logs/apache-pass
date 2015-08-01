@@ -1,0 +1,2 @@
+# failJSON: { "time": "2013-06-27T11:55:44", "match": true , "host": "192.0.2.12" }
+192.0.2.12 - user1 [27/Jun/2013:11:55:44] "GET /knocking/ HTTP/1.1" 200 266 "http://domain.net/hello-world/" "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:40.0) Gecko/20100101 Firefox/40.0"

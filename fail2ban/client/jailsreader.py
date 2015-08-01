@@ -31,6 +31,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class JailsReader(ConfigReader):
 
 	def __init__(self, force_enable=False, **kwargs):
@@ -50,6 +51,7 @@ class JailsReader(ConfigReader):
 		return self.__jails
 
 	def read(self):
+		self.__jails = list()
 		return ConfigReader.read(self, "jail")
 
 	def getOptions(self, section=None):

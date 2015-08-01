@@ -27,6 +27,7 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 ##
 # Beautify the output of the client.
 #
@@ -34,18 +35,19 @@ logSys = getLogger(__name__)
 # converted into user readable messages.
 
 class Beautifier:
-	
+
 	def __init__(self, cmd = None):
 		self.__inputCmd = cmd
 
 	def setInputCmd(self, cmd):
 		self.__inputCmd = cmd
-		
+
 	def getInputCmd(self):
 		return self.__inputCmd
-		
+
 	def beautify(self, response):
-		logSys.debug("Beautify " + `response` + " with " + `self.__inputCmd`)
+		logSys.debug(
+			"Beautify " + repr(response) + " with " + repr(self.__inputCmd))
 		inC = self.__inputCmd
 		msg = response
 		try:
@@ -102,7 +104,7 @@ class Beautifier:
 				elif response == 4:
 					msg = msg + "DEBUG"
 				else:
-					msg = msg + `response`
+					msg = msg + repr(response)
 			elif inC[1] == "dbfile":
 				if response is None:
 					msg = "Database currently disabled"
@@ -183,13 +185,14 @@ class Beautifier:
 					msg += ", ".join(response)
 		except Exception:
 			logSys.warning("Beautifier error. Please report the error")
-			logSys.error("Beautify " + `response` + " with " + `self.__inputCmd` +
-						 " failed")
-			msg = msg + `response`
+			logSys.error("Beautify " + repr(response) + " with "
+				+ repr(self.__inputCmd) + " failed")
+			msg = msg + repr(response)
 		return msg
 
 	def beautifyError(self, response):
-		logSys.debug("Beautify (error) " + `response` + " with " + `self.__inputCmd`)
+		logSys.debug("Beautify (error) " + repr(response) + " with "
+					 + repr(self.__inputCmd))
 		msg = response
 		if isinstance(response, UnknownJailException):
 			msg = "Sorry but the jail '" + response.args[0] + "' does not exist"

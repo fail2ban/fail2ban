@@ -25,19 +25,19 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from pickle import dumps, loads, HIGHEST_PROTOCOL
-import asyncore, asynchat, socket, os, sys, traceback, fcntl
+import asynchat
+import asyncore
+import fcntl
+import os
+import socket
+import sys
+import traceback
 
+from ..protocol import CSPROTO
 from ..helpers import getLogger,formatExceptionInfo
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
-
-if sys.version_info >= (3,):
-	# b"" causes SyntaxError in python <= 2.5, so below implements equivalent
-	EMPTY_BYTES = bytes("", encoding="ascii")
-else:
-	# python 2.x, string type is equivalent to bytes.
-	EMPTY_BYTES = ""
 
 ##
 # Request handler class.
@@ -47,17 +47,12 @@ else:
 
 class RequestHandler(asynchat.async_chat):
 	
-	if sys.version_info >= (3,):
-		END_STRING = bytes("<F2B_END_COMMAND>", encoding="ascii")
-	else:
-		END_STRING = "<F2B_END_COMMAND>"
-
 	def __init__(self, conn, transmitter):
 		asynchat.async_chat.__init__(self, conn)
 		self.__transmitter = transmitter
 		self.__buffer = []
 		# Sets the terminator.
-		self.set_terminator(RequestHandler.END_STRING)
+		self.set_terminator(CSPROTO.END)
 
 	def collect_incoming_data(self, data):
 		#logSys.debug("Received raw data: " + str(data))
@@ -69,16 +64,23 @@ class RequestHandler(asynchat.async_chat):
 	# This method is called once we have a complete request.
 
 	def found_terminator(self):
+		# Pop whole buffer
+		message = self.__buffer
+		self.__buffer = []		
 		# Joins the buffer items.
-		message = loads(EMPTY_BYTES.join(self.__buffer))
+		message = CSPROTO.EMPTY.join(message)
+		# Closes the channel if close was received
+		if message == CSPROTO.CLOSE:
+			self.close_when_done()
+			return
+		# Deserialize
+		message = loads(message)
 		# Gives the message to the transmitter.
 		message = self.__transmitter.proceed(message)
 		# Serializes the response.
 		message = dumps(message, HIGHEST_PROTOCOL)
 		# Sends the response to the client.
-		self.push(message + RequestHandler.END_STRING)
-		# Closes the channel.
-		self.close_when_done()
+		self.push(message + CSPROTO.END)
 		
 	def handle_error(self):
 		e1, e2 = formatExceptionInfo()
@@ -86,6 +88,7 @@ class RequestHandler(asynchat.async_chat):
 		logSys.error(traceback.format_exc().splitlines())
 		self.close()
 		
+
 ##
 # Asynchronous server class.
 #
@@ -180,6 +183,7 @@ class AsyncServer(asyncore.dispatcher):
 		fd = sock.fileno()
 		flags = fcntl.fcntl(fd, fcntl.F_GETFD)
 		fcntl.fcntl(fd, fcntl.F_SETFD, flags|fcntl.FD_CLOEXEC)
+
 
 ##
 # AsyncServerException is used to wrap communication exceptions.

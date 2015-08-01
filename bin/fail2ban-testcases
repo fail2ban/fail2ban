@@ -25,7 +25,10 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2012- Yaroslav Halchenko"
 __license__ = "GPL"
 
 import logging
-import unittest, sys, time, os
+import os
+import sys
+import time
+import unittest
 
 # Check if local fail2ban module exists, and use if it exists by 
 # modifying the path. This is such that tests can be used in dev

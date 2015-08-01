@@ -42,6 +42,7 @@ from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
+
 class DatabaseTest(LogCaptureTestCase):
 
 	def setUp(self):
@@ -211,7 +212,7 @@ class DatabaseTest(LogCaptureTestCase):
 	def testDelBan(self):
 		self.testAddBan()
 		ticket = self.db.getBans(jail=self.jail)[0]
-		self.db.delBan(self.jail, ticket)
+		self.db.delBan(self.jail, ticket.getIP())
 		self.assertEqual(len(self.db.getBans(jail=self.jail)), 0)
 
 	def testGetBansWithTime(self):
@@ -305,7 +306,7 @@ class DatabaseTest(LogCaptureTestCase):
 	def testActionWithDB(self):
 		# test action together with database functionality
 		self.testAddJail() # Jail required
-		self.jail.database = self.db;
+		self.jail.database = self.db
 		actions = Actions(self.jail)
 		actions.add(
 			"action_checkainfo",
@@ -316,7 +317,6 @@ class DatabaseTest(LogCaptureTestCase):
 		self.jail.putFailTicket(ticket)
 		actions._Actions__checkBan()
 		self.assertTrue(self._is_logged("ban ainfo %s, %s, %s, %s" % (True, True, True, True)))
-
 
 	def testPurge(self):
 		if Fail2BanDb is None: # pragma: no cover

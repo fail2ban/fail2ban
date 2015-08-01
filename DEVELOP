@@ -56,9 +56,12 @@ following (note: on Debian-based systems, the script is called
 `python-coverage`)::
 
   coverage run bin/fail2ban-testcases
+  coverage report
+
+Optionally:
   coverage html
 
-Then look at htmlcov/index.html and see how much coverage your test cases
+And then browse htmlcov/index.html and see how much coverage your test cases
 exert over the code base. Full coverage is a good thing however it may not be
 complete. Try to ensure tests cover as many independent paths through the
 code.
@@ -88,7 +91,7 @@ Testing can now be done inside a vagrant VM.  Vagrantfile provided in
 source code repository established two VMs:
 
 - VM "secure" which can be used for testing fail2ban code.
-- VM "attacker" which hcan be used to perform attack against our "secure" VM.
+- VM "attacker" which can be used to perform attack against our "secure" VM.
 
 Both VMs are sharing the 192.168.200/24 network. If you are using this network
 take a look into the Vagrantfile and change the IP.

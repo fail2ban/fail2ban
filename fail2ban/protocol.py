@@ -29,6 +29,16 @@ import textwrap
 ##
 # Describes the protocol used to communicate with the server.
 
+class dotdict(dict):
+	def __getattr__(self, name):
+		return self[name]
+
+CSPROTO = dotdict({
+	"EMPTY":  b"",
+	"END":    b"<F2B_END_COMMAND>",
+	"CLOSE":  b"<F2B_CLOSE_COMMAND>"
+})
+
 protocol = [
 ['', "BASIC", ""],
 ["start", "starts the server and the jails"], 
@@ -119,6 +129,7 @@ protocol = [
 ["get <JAIL> action <ACT> <PROPERTY>", "gets the value of <PROPERTY> for the action <ACT> for <JAIL>"],
 ]
 
+
 ##
 # Prints the protocol in a "man" format. This is used for the
 # "-h" output of fail2ban-client.
@@ -143,6 +154,7 @@ def printFormatted():
 				line = ' ' * (INDENT + MARGIN) + n.strip()
 			print line
 
+
 ##
 # Prints the protocol in a "mediawiki" format.
 
@@ -158,6 +170,7 @@ def printWiki():
 			print "|-"
 			print "| <span style=\"white-space:nowrap;\"><tt>" + m[0] + "</tt></span> || || " + m[1]
 	print "|}"
+
 
 def __printWikiHeader(section, desc):
 	print

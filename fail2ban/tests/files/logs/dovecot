@@ -37,6 +37,9 @@ Jan 29 05:32:50 mail dovecot: auth-worker(304): pam(username,1.2.3.4): pam_authe
 # failJSON: { "time": "2005-01-29T05:13:40", "match": true , "host": "1.2.3.4" }
 Jan 29 05:13:40 mail dovecot: auth-worker(31326): pam(username,1.2.3.4): unknown user
 
+# failJSON: { "time": "2005-01-29T05:13:50", "match": true , "host": "1.2.3.4" }
+Jan 29 05:13:50 mail dovecot: auth: passwd-file(username,1.2.3.4): unknown user
+
 # failJSON: { "time": "2005-04-19T05:22:20", "match": true , "host": "80.255.3.104" }
 Apr 19 05:22:20 vm5 auth: pam_unix(dovecot:auth): authentication failure; logname= uid=0 euid=0 tty=dovecot ruser=informix rhost=80.255.3.104
 
