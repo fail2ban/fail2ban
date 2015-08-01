@@ -6,8 +6,8 @@
 Fail2Ban: Changelog
 ===================
 
-ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
------------
+ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
+----------
 
 - IMPORTANT incompatible changes:
    * filter.d/roundcube-auth.conf
@@ -21,7 +21,7 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
        with empty value for 'lockingopt' in `[Init]` section.
    * mail-whois-lines, sendmail-geoip-lines and sendmail-whois-lines
      actions now include by default only the first 1000 log lines in
-	 the emails.  Adjust <grepopts> to augment the behavior.
+     the emails.  Adjust <grepopts> to augment the behavior.
 
 - Fixes:
    * reload in interactive mode appends all the jails twice (gh-825)
@@ -53,7 +53,7 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
    * New type of operation: pass2allow, use fail2ban for "knocking",
      opening a closed port by swapping blocktype and returntype
    * New filters:
-     - froxlor-auth  Thanks Joern Muehlencord
+     - froxlor-auth - Thanks Joern Muehlencord
      - apache-pass - filter Apache access log for successful authentication
    * New actions:
      - shorewall-ipset-proto6 - using proto feature of the Shorewall. Still requires
