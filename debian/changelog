@@ -1,3 +1,11 @@
+fail2ban (0.9.3-1) unstable; urgency=medium
+
+  * Fresh upstream release
+  * debian/control -- adjusted description to mention what Recommends
+    and Suggests are good for (Closes: #767114)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 31 Jul 2015 21:34:10 -0400
+
 fail2ban (0.9.2-1) unstable; urgency=medium
 
   * Fresh release to celebrate jessie release and upload to unstable
