@@ -30,7 +30,7 @@ override_dh_install:
 	: # Remove explicitely created /var/run/fail2ban
 	: # just to please lintian since init file will
 	: # take care about it anyways
-	rm -rf $(DESTDIR)/var/run/
+	rm -rf $(DESTDIR)/var/run/ $(DESTDIR)/run/
 	: # Install monit configuration
 	install -d $(DESTDIR)/etc/monit/monitrc.d
 	install -m 644 files/monit/fail2ban $(DESTDIR)/etc/monit/monitrc.d/fail2ban
