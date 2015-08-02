@@ -89,7 +89,7 @@ protocol = [
 ["set <JAIL> unbanip <IP>", "manually Unban <IP> in <JAIL>"], 
 ["set <JAIL> maxretry <RETRY>", "sets the number of failures <RETRY> before banning the host for <JAIL>"], 
 ["set <JAIL> maxlines <LINES>", "sets the number of <LINES> to buffer for regex search for <JAIL>"], 
-["set <JAIL> addaction <ACT>[ <PYTHONFILE> <JSONKWARGS>]", "adds a new action named <NAME> for <JAIL>. Optionally for a Python based action, a <PYTHONFILE> and <JSONKWARGS> can be specified, else will be a Command Action"], 
+["set <JAIL> addaction <ACT>[ <PYTHONFILE> <JSONKWARGS>]", "adds a new action named <ACT> for <JAIL>. Optionally for a Python based action, a <PYTHONFILE> and <JSONKWARGS> can be specified, else will be a Command Action"], 
 ["set <JAIL> delaction <ACT>", "removes the action <ACT> from <JAIL>"], 
 ["", "COMMAND ACTION CONFIGURATION", ""],
 ["set <JAIL> action <ACT> actionstart <CMD>", "sets the start command <CMD> of the action <ACT> for <JAIL>"], 
