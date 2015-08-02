@@ -63,7 +63,7 @@ protocol = [
 ["set dbpurgeage <SECONDS>", "sets the max age in <SECONDS> that history of bans will be kept"], 
 ["get dbpurgeage", "gets the max age in seconds that history of bans will be kept"], 
 ['', "JAIL CONTROL", ""],
-["add <JAIL> <BACKEND>", "creates <JAIL> using <BACKEND>"], 
+["add <JAIL> <BACKEND>", "creates <JAIL> using <BACKEND>. <BACKEND> can be auto, gamin, polling or pyinotify"], 
 ["start <JAIL>", "starts the jail <JAIL>"], 
 ["stop <JAIL>", "stops the jail <JAIL>. The jail is removed"], 
 ["status <JAIL> [FLAVOR]", "gets the current status of <JAIL>, with optional flavor or extended info"],
