@@ -84,7 +84,7 @@ protocol = [
 ["set <JAIL> findtime <TIME>", "sets the number of seconds <TIME> for which the filter will look back for <JAIL>"], 
 ["set <JAIL> bantime <TIME>", "sets the number of seconds <TIME> a host will be banned for <JAIL>"], 
 ["set <JAIL> datepattern <PATTERN>", "sets the <PATTERN> used to match date/times for <JAIL>"],
-["set <JAIL> usedns <VALUE>", "sets the usedns mode for <JAIL>"],
+["set <JAIL> usedns <VALUE>", "sets the usedns mode for <JAIL>. Can be yes, no or warn"],
 ["set <JAIL> banip <IP>", "manually Ban <IP> for <JAIL>"], 
 ["set <JAIL> unbanip <IP>", "manually Unban <IP> in <JAIL>"], 
 ["set <JAIL> maxretry <RETRY>", "sets the number of failures <RETRY> before banning the host for <JAIL>"], 
