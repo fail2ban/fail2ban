@@ -49,6 +49,7 @@ logSys = getLogger(__name__)
 # that matches a given regular expression. This class is instantiated by
 # a Jail object.
 
+
 class Filter(JailThread):
 
 	##
@@ -87,7 +88,6 @@ class Filter(JailThread):
 		self.dateDetector.addDefaultTemplate()
 		logSys.debug("Created %s" % self)
 
-
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__.__name__, self.jail)
 
@@ -109,7 +109,6 @@ class Filter(JailThread):
 		except RegexException, e:
 			logSys.error(e)
 			raise e
-
 
 	def delFailRegex(self, index):
 		try:
@@ -415,7 +414,6 @@ class Filter(JailThread):
 
 		return False
 
-
 	def processLine(self, line, date=None, returnRawHost=False,
 		checkAllRegex=False):
 		"""Split the time portion from log msg and return findFailures on them
@@ -601,7 +599,6 @@ class FileFilter(Filter):
 		# to be overridden by backends
 		pass
 
-
 	##
 	# Delete a log path
 	#
@@ -740,6 +737,7 @@ except ImportError: # pragma: no cover
 	# elderly Pythons, import from md5
 	import md5
 	md5sum = md5.new
+
 
 class FileContainer:
 

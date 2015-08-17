@@ -1,0 +1,11 @@
+Include file for help2man man page
+$Id:  $
+
+[name]
+fail2ban-testcases \- run Fail2Ban unit-tests
+
+[see also]
+.br 
+fail2ban-client(1)
+fail2ban-server(1)
+fail2ban-regex(1)

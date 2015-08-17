@@ -55,6 +55,7 @@ class HelpersTest(unittest.TestCase):
 			# might be fragile due to ' vs "
 			self.assertEqual(args, "('Very bad', None)")
 
+
 class SetupTest(unittest.TestCase):
 
 	def setUp(self):
@@ -66,7 +67,8 @@ class SetupTest(unittest.TestCase):
 				" -- cannot locate setup.py")
 
 	def testSetupInstallRoot(self):
-		if not self.setup: return			  # if verbose skip didn't work out
+		if not self.setup:
+			return			  # if verbose skip didn't work out
 		tmp = tempfile.mkdtemp()
 		try:
 			os.system("%s %s install --root=%s >/dev/null"
@@ -116,6 +118,7 @@ class SetupTest(unittest.TestCase):
 			os.system("%s %s clean --all >/dev/null 2>&1"
 					  % (sys.executable, self.setup))
 
+
 class TestsUtilsTest(unittest.TestCase):
 
 	def testmbasename(self):
@@ -136,8 +139,10 @@ class TestsUtilsTest(unittest.TestCase):
 				raise ValueError()
 
 			def deep_function(i):
-				if i: deep_function(i-1)
-				else: func_raise()
+				if i:
+					deep_function(i-1)
+				else:
+					func_raise()
 
 			try:
 				print deep_function(3)
@@ -150,10 +155,11 @@ class TestsUtilsTest(unittest.TestCase):
 				# we must be calling it from setup or nosetests but using at least
 				# nose's core etc
 				self.assertTrue('>' in s, msg="no '>' in %r" % s)
-			else:
-				self.assertFalse('>' in s, msg="'>' present in %r" % s)  # There is only "fail2ban-testcases" in this case, no true traceback
-			self.assertTrue(':' in s, msg="no ':' in %r" % s)
+			elif not ('coverage' in s):
+				# There is only "fail2ban-testcases" in this case, no true traceback
+				self.assertFalse('>' in s, msg="'>' present in %r" % s)
 
+			self.assertTrue(':' in s, msg="no ':' in %r" % s)
 
 	def testFormatterWithTraceBack(self):
 		strout = StringIO()
@@ -176,6 +182,7 @@ class TestsUtilsTest(unittest.TestCase):
 		self.assertEqual(s[:pindex], s[pindex+1:pindex*2 + 1])
 
 iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
+
 
 class CustomDateFormatsTest(unittest.TestCase):
 

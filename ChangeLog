@@ -6,8 +6,31 @@
 Fail2Ban: Changelog
 ===================
 
-ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
+ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
 -----------
+
+- Fixes:
+
+- New Features:
+
+- Enhancements:
+
+ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
+----------
+
+- IMPORTANT incompatible changes:
+   * filter.d/roundcube-auth.conf
+     - Changed logpath to 'errors' log (was 'userlogins')
+   * action.d/iptables-common.conf
+     - All calls to iptables command now use -w switch introduced in
+       iptables 1.4.20 (some distribution could have patched their
+       earlier base version as well) to provide this locking mechanism
+       useful under heavy load to avoid contesting on iptables calls.
+       If you need to disable, define 'action.d/iptables-common.local'
+       with empty value for 'lockingopt' in `[Init]` section.
+   * mail-whois-lines, sendmail-geoip-lines and sendmail-whois-lines
+     actions now include by default only the first 1000 log lines in
+     the emails.  Adjust <grepopts> to augment the behavior.
 
 - Fixes:
    * reload in interactive mode appends all the jails twice (gh-825)
@@ -17,12 +40,58 @@ ver. 0.9.3 (2015/XX/XXX) - wanna-be-released
      Thanks Anton Shestakov
    * Fix fail2ban-regex not parsing journalmatch correctly from filter config
    * filter.d/asterisk.conf - fix security log support for Asterisk 12+
+   * filter.d/roundcube-auth.conf
+     - Updated regex to work with 'errors' log (1.0.5 and 1.1.1)
+     - Added regex to work with 'userlogins' log
+   * action.d/sendmail*.conf - use LC_ALL (superseeding LC_TIME) to override
+     locale on systems with customized LC_ALL
+   * performance fix: minimizes connection overhead, close socket only at
+     communication end (gh-1099)
+   * unbanip always deletes ip from database (independent of bantime, also if
+     currently not banned or persistent)
+   * guarantee order of dbfile to be before dbpurgeage (gh-1048)
+   * always set 'dbfile' before other database options (gh-1050)
+   * kill the entire process group of the child process upon timeout (gh-1129).
+     Otherwise could lead to resource exhaustion due to hanging whois
+     processes.
+   * resolve /var/run/fail2ban path in setup.py to help installation
+     on platforms with /var/run -> /run symlink (gh-1142)
 
 - New Features:
-   - New filters:
-     - froxlor-auth  Thanks Joern Muehlencord
+   * RETURN iptables target is now a variable: <returntype>
+   * New type of operation: pass2allow, use fail2ban for "knocking",
+     opening a closed port by swapping blocktype and returntype
+   * New filters:
+     - froxlor-auth - Thanks Joern Muehlencord
+     - apache-pass - filter Apache access log for successful authentication
+   * New actions:
+     - shorewall-ipset-proto6 - using proto feature of the Shorewall. Still requires
+	   manual pre-configuration of the shorewall. See the action file for detail.
+   * New jails:
+     - pass2allow-ftp - allows FTP traffic after successful HTTP authentication
 
 - Enhancements:
+   * action.d/cloudflare.conf - improved documentation on how to allow
+     multiple CF accounts, and jail.conf got new compound action
+     definition action_cf_mwl to submit cloudflare report.
+   * Check access to socket for more detailed logging on error (gh-595)
+   * fail2ban-testcases man page
+   * filter.d/apache-badbots.conf, filter.d/nginx-botsearch.conf - add
+     HEAD method verb
+   * Revamp of Travis and coverage automated testing
+   * Added a space between IP address and the following colon
+     in notification emails for easier text selection
+   * Character detection heuristics for whois output via optional setting
+     in mail-whois*.conf. Thanks Thomas Mayer.
+     Not enabled by default, if _whois_command is set to be
+     %(_whois_convert_charset)s (e.g. in action.d/mail-whois-common.local),
+     it
+     - detects character set of whois output (which is undefined by
+       RFC 3912) via heuristics of the file command
+     - converts whois data to UTF-8 character set with iconv
+     - sends the whois output in UTF-8 character set to mail program
+     - avoids that heirloom mailx creates binary attachment for input with
+       unknown character set
 
 
 ver. 0.9.2 (2015/04/29) - better-quick-now-than-later
@@ -61,7 +130,7 @@ ver. 0.9.2 (2015/04/29) - better-quick-now-than-later
    * firewallcmd-* actions: split output into separate lines for grepping (gh-908)
    * Guard unicode encode/decode issues while storing records in the database.
      Fixes "binding parameter error (unsupported type)" (gh-973), thanks to kot
-	 for reporting
+     for reporting
    * filter.d/sshd added regex for matching openSUSE ssh authentication failure
    * filter.d/asterisk.conf:
      - Dropped "Sending fake auth rejection" failregex since it incorrectly

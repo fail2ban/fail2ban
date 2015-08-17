@@ -29,6 +29,16 @@ import textwrap
 ##
 # Describes the protocol used to communicate with the server.
 
+class dotdict(dict):
+	def __getattr__(self, name):
+		return self[name]
+
+CSPROTO = dotdict({
+	"EMPTY":  b"",
+	"END":    b"<F2B_END_COMMAND>",
+	"CLOSE":  b"<F2B_CLOSE_COMMAND>"
+})
+
 protocol = [
 ['', "BASIC", ""],
 ["start", "starts the server and the jails"], 
@@ -79,7 +89,7 @@ protocol = [
 ["set <JAIL> unbanip <IP>", "manually Unban <IP> in <JAIL>"], 
 ["set <JAIL> maxretry <RETRY>", "sets the number of failures <RETRY> before banning the host for <JAIL>"], 
 ["set <JAIL> maxlines <LINES>", "sets the number of <LINES> to buffer for regex search for <JAIL>"], 
-["set <JAIL> addaction <ACT>[ <PYTHONFILE> <JSONKWARGS>]", "adds a new action named <NAME> for <JAIL>. Optionally for a Python based action, a <PYTHONFILE> and <JSONKWARGS> can be specified, else will be a Command Action"], 
+["set <JAIL> addaction <ACT>[ <PYTHONFILE> <JSONKWARGS>]", "adds a new action named <ACT> for <JAIL>. Optionally for a Python based action, a <PYTHONFILE> and <JSONKWARGS> can be specified, else will be a Command Action"], 
 ["set <JAIL> delaction <ACT>", "removes the action <ACT> from <JAIL>"], 
 ["", "COMMAND ACTION CONFIGURATION", ""],
 ["set <JAIL> action <ACT> actionstart <CMD>", "sets the start command <CMD> of the action <ACT> for <JAIL>"], 
@@ -119,6 +129,7 @@ protocol = [
 ["get <JAIL> action <ACT> <PROPERTY>", "gets the value of <PROPERTY> for the action <ACT> for <JAIL>"],
 ]
 
+
 ##
 # Prints the protocol in a "man" format. This is used for the
 # "-h" output of fail2ban-client.
@@ -143,6 +154,7 @@ def printFormatted():
 				line = ' ' * (INDENT + MARGIN) + n.strip()
 			print line
 
+
 ##
 # Prints the protocol in a "mediawiki" format.
 
@@ -158,6 +170,7 @@ def printWiki():
 			print "|-"
 			print "| <span style=\"white-space:nowrap;\"><tt>" + m[0] + "</tt></span> || || " + m[1]
 	print "|}"
+
 
 def __printWikiHeader(section, desc):
 	print

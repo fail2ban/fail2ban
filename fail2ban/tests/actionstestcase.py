@@ -35,6 +35,7 @@ from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
+
 class ExecuteActions(LogCaptureTestCase):
 
 	def setUp(self):
@@ -76,7 +77,6 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertEqual(self.__actions.getBanTime(),127)
 		self.assertRaises(ValueError, self.__actions.removeBannedIP, '127.0.0.1')
 
-
 	def testActionsOutput(self):
 		self.defaultActions()
 		self.__actions.start()
@@ -88,7 +88,6 @@ class ExecuteActions(LogCaptureTestCase):
 		self.__actions.join()
 		self.assertEqual(self.__actions.status(),[("Currently banned", 0 ),
                ("Total banned", 0 ), ("Banned IP list", [] )])
-
 
 	def testAddActionPython(self):
 		self.__actions.add(

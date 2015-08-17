@@ -48,6 +48,7 @@ except ImportError:
 	# Dont print error here, as database may not even be used
 	Fail2BanDb = None
 
+
 class Server:
 	
 	def __init__(self, daemon = False):
@@ -66,11 +67,10 @@ class Server:
 			'FreeBSD': '/var/run/log',
 			'Linux': '/dev/log',
 		}
+		self.setSyslogSocket("auto")
 		# Set logging level
 		self.setLogLevel("INFO")
 		self.setLogTarget("STDOUT")
-		self.setSyslogSocket("auto")
-
 
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
@@ -144,7 +144,6 @@ class Server:
 		finally:
 			self.__loggingLock.release()
 
-	
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend, self.__db)
 		if self.__db is not None:
@@ -526,7 +525,6 @@ class Server:
 	
 	def getDatabase(self):
 		return self.__db
-	
 
 	def __createDaemon(self): # pragma: no cover
 		""" Detach a process from the controlling terminal and run it in the

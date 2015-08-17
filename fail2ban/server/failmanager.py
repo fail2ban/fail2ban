@@ -35,6 +35,7 @@ from .dnsutils import DNSUtils
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+
 class FailManager:
 	
 	def __init__(self):
@@ -121,7 +122,7 @@ class FailManager:
 			matches = ticket.getMatches()
 			if self.__subnetMask is not None:
 				ip = DNSUtils.bin2addr(DNSUtils.addr2bin(ip, self.__subnetMask)) + "/" + str(self.__subnetMask)
-			if self.__failList.has_key(ip):
+			if ip in self.__failList:
 				fData = self.__failList[ip]
 				if fData.getLastReset() < unixTime - self.__maxTime:
 					fData.setLastReset(unixTime)
@@ -166,7 +167,7 @@ class FailManager:
 			self.__lock.release()
 	
 	def __delFailure(self, ip):
-		if self.__failList.has_key(ip):
+		if ip in self.__failList:
 			del self.__failList[ip]
 	
 	def toBan(self):
@@ -183,6 +184,7 @@ class FailManager:
 			raise FailManagerEmpty
 		finally:
 			self.__lock.release()
+
 
 class FailManagerEmpty(Exception):
 	pass

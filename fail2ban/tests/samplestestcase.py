@@ -37,6 +37,7 @@ from .utils import setUpMyTime, tearDownMyTime, CONFIG_DIR
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
+
 class FilterSamplesRegex(unittest.TestCase):
 
 	def setUp(self):
@@ -57,6 +58,7 @@ class FilterSamplesRegex(unittest.TestCase):
 				if test[0].startswith('testSampleRegexs')])
 			>= 10,
 			"Expected more FilterSampleRegexs tests")
+
 
 def testSampleRegexsFactory(name):
 	def testFilter(self):
@@ -124,7 +126,6 @@ def testSampleRegexsFactory(name):
 					jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S")
 				except ValueError:
 					jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f")
-
 
 				jsonTime = time.mktime(jsonTimeLocal.timetuple())
 				

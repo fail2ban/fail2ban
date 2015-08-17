@@ -44,12 +44,15 @@ if not CONFIG_DIR:
 	else:
 		CONFIG_DIR = '/etc/fail2ban'
 
+
 def mtimesleep():
 	# no sleep now should be necessary since polling tracks now not only
 	# mtime but also ino and size
 	pass
 
 old_TZ = os.environ.get('TZ', None)
+
+
 def setUpMyTime():
 	# Set the time to a fixed, known value
 	# Sun Aug 14 12:00:00 CEST 2005
@@ -58,12 +61,14 @@ def setUpMyTime():
 	time.tzset()
 	MyTime.setTime(1124013600)
 
+
 def tearDownMyTime():
 	os.environ.pop('TZ')
 	if old_TZ:
 		os.environ['TZ'] = old_TZ
 	time.tzset()
 	MyTime.myTime = None
+
 
 def gatherTests(regexps=None, no_network=False):
 	# Import all the test cases here instead of a module level to
@@ -86,6 +91,7 @@ def gatherTests(regexps=None, no_network=False):
 	else: # pragma: no cover
 		class FilteredTestSuite(unittest.TestSuite):
 			_regexps = [re.compile(r) for r in regexps]
+
 			def addTest(self, suite):
 				suite_str = str(suite)
 				for r in self._regexps:
@@ -120,6 +126,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(clientreadertestcase.JailsReaderTestCache))
 	# CSocket and AsyncServer
 	tests.addTest(unittest.makeSuite(sockettestcase.Socket))
+	tests.addTest(unittest.makeSuite(sockettestcase.ClientMisc))
 	# Misc helpers
 	tests.addTest(unittest.makeSuite(misctestcase.HelpersTest))
 	tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
@@ -190,12 +197,12 @@ def gatherTests(regexps=None, no_network=False):
 	except Exception, e: # pragma: no cover
 		logSys.warning("I: Skipping systemd backend testing. Got exception '%s'" % e)
 
-
 	# Server test for logging elements which break logging used to support
 	# testcases analysis
 	tests.addTest(unittest.makeSuite(servertestcase.TransmitterLogging))
 
 	return tests
+
 
 class LogCaptureTestCase(unittest.TestCase):
 
@@ -230,3 +237,30 @@ class LogCaptureTestCase(unittest.TestCase):
 
 	def printLog(self):
 		print(self._log.getvalue())
+
+# Solution from http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid
+# under cc by-sa 3.0
+if os.name == 'posix':
+	def pid_exists(pid):
+		"""Check whether pid exists in the current process table."""
+		import errno
+		if pid < 0:
+			return False
+		try:
+			os.kill(pid, 0)
+		except OSError as e:
+			return e.errno == errno.EPERM
+		else:
+			return True
+else:
+	def pid_exists(pid):
+		import ctypes
+		kernel32 = ctypes.windll.kernel32
+		SYNCHRONIZE = 0x100000
+
+		process = kernel32.OpenProcess(SYNCHRONIZE, 0, pid)
+		if process != 0:
+			kernel32.CloseHandle(process)
+			return True
+		else:
+			return False

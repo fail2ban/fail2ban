@@ -22,7 +22,9 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import getopt, sys, os
+import getopt
+import os
+import sys
 
 from fail2ban.version import version
 from fail2ban.server.server import Server

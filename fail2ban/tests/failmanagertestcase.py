@@ -29,6 +29,7 @@ import unittest
 from ..server.failmanager import FailManager, FailManagerEmpty
 from ..server.ticket import FailTicket
 
+
 class AddFailure(unittest.TestCase):
 
 	def setUp(self):
@@ -100,7 +101,7 @@ class AddFailure(unittest.TestCase):
 		self.assertEqual(
 			ticket_repr,
 			'FailTicket: ip=193.168.0.128 time=1167605999.0 #attempts=5 matches=[]')
-		self.assertFalse(ticket == False)
+		self.assertFalse(not ticket)
 		# and some get/set-ers otherwise not tested
 		ticket.setTime(1000002000.0)
 		self.assertEqual(ticket.getTime(), 1000002000.0)
