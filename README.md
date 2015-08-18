@@ -62,9 +62,9 @@ fail2ban(1) and jail.conf(5)  manpages for further references.
 Code status:
 ------------
 
-* [![Build Status](https://travis-ci.org/Eaque/fail2ban.svg?branch=detect_ban_subnetmask)](https://travis-ci.org/Eaque/fail2ban) travis-ci.org (detect_ban_subnetmask branch)
+* [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=master)](https://travis-ci.org/fail2ban/fail2ban) travis-ci.org (master branch)
 
-* [![Coverage Status](https://coveralls.io/repos/Eaque/fail2ban/badge.svg?branch=detect_ban_subnetmask)](https://coveralls.io/r/Eaque/fail2ban)
+* [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=master)](https://coveralls.io/r/fail2ban/fail2ban)
 
 Contact:
 --------
