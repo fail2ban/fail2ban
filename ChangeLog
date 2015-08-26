@@ -10,6 +10,7 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
 -----------
 
 - Fixes:
+   * roundcube-auth jail typo for logpath
 
 - New Features:
 
