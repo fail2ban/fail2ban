@@ -97,18 +97,18 @@ class DateEpoch(DateTemplate):
 class DateStrptime(DateTemplate):
 
 	TABLE = dict()
-	TABLE["Jan"] = ["Sty"]
-	TABLE["Feb"] = [u"Fév", "Lut"]
-	TABLE["Mar"] = [u"Mär", "Mar"]
-	TABLE["Apr"] = ["Avr", "Kwi"]
-	TABLE["May"] = ["Mai", "Maj"]
-	TABLE["Jun"] = ["Lip"]
-	TABLE["Jul"] = ["Sie"]
-	TABLE["Aug"] = ["Aou", "Wrz"]
-	TABLE["Sep"] = ["Sie"]
-	TABLE["Oct"] = [u"Paź"]
-	TABLE["Nov"] = ["Lis"]
-	TABLE["Dec"] = [u"Déc", "Dez", "Gru"]
+	TABLE["Jan"] = ["Sty", "ene"]
+	TABLE["Feb"] = [u"Fév", "Lut", "feb"]
+	TABLE["Mar"] = [u"Mär", "Mar", "mar"]
+	TABLE["Apr"] = ["Avr", "Kwi", "abr"]
+	TABLE["May"] = ["Mai", "Maj", "may"]
+	TABLE["Jun"] = ["Lip", "jun"]
+	TABLE["Jul"] = ["Sie", "jul"]
+	TABLE["Aug"] = ["Aou", "Wrz", "ago"]
+	TABLE["Sep"] = ["Sie", "sep"]
+	TABLE["Oct"] = [u"Paź", "oct"]
+	TABLE["Nov"] = ["Lis", "nov"]
+	TABLE["Dec"] = [u"Déc", "Dez", "Gru", "dic"]
 	
 	def __init__(self):
 		DateTemplate.__init__(self)
