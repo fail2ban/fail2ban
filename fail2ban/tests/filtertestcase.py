@@ -1231,9 +1231,9 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 				self.assertEqual(res, [])
 
 	def testIpToName(self):
+		unittest.F2B.SkipIfNoNetwork()
 		res = DNSUtils.ipToName('8.8.4.4')
 		self.assertEqual(res, 'google-public-dns-b.google.com')
-		unittest.F2B.SkipIfNoNetwork()
 		# invalid ip (TEST-NET-1 according to RFC 5737)
 		res = DNSUtils.ipToName('192.0.2.0')
 		self.assertEqual(res, None)
