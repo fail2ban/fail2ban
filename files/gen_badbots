@@ -42,7 +42,7 @@ done \
 | grep -h -B4 '<td class="smallcell" nowrap>S&nbsp;</td>'\
 | sed -e 's/&nbsp;//g' \
 | awk '/^--/{getline; gsub("  ",""); print $0}' \
-| sed -e 's/\([.\:|()]\)/\\\1/g' \
+| sed -e 's/\([.\:|()+]\)/\\\1/g' \
 | uniq \
 | tr '\n' '|' \
 | sed -e 's/|$//g'
