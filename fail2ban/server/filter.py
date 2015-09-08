@@ -855,8 +855,9 @@ class DNSUtils:
 		""" Convert a DNS into an IP address using the Python socket module.
 			Thanks to Kevin Drapel.
 		"""
+		# retrieve ip (todo: use AF_INET6 for IPv6)
 		try:
-			return set(socket.gethostbyname_ex(dns)[2])
+			return set([i[4][0] for i in socket.getaddrinfo(dns, None, socket.AF_INET, 0, socket.IPPROTO_TCP)])
 		except socket.error, e:
 			logSys.warning("Unable to find a corresponding IP address for %s: %s"
 						% (dns, e))
