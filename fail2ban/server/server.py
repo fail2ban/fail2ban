@@ -293,6 +293,12 @@ class Server:
 	def getMaxRetry(self, name):
 		return self.__jails[name].filter.getMaxRetry()
 	
+	def setSubnetMask(self, name, value):
+		self.__jails[name].filter.setSubnetMask(value)
+	
+	def getSubnetMask(self, name):
+		return self.__jails[name].filter.getSubnetMask()
+	
 	def setMaxLines(self, name, value):
 		self.__jails[name].filter.setMaxLines(value)
 	

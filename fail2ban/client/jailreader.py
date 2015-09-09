@@ -105,6 +105,7 @@ class JailReader(ConfigReader):
 				["string", "ignorecommand", None],
 				["string", "ignoreip", None],
 				["string", "filter", ""],
+				["string", "subnetmask", None],
 				["string", "action", ""]]
 
 		# Read first options only needed for merge defaults ('known/...' from filter):
@@ -207,6 +208,8 @@ class JailReader(ConfigReader):
 				backend = self.__opts[opt]
 			elif opt == "maxretry":
 				stream.append(["set", self.__name, "maxretry", self.__opts[opt]])
+			elif opt == "subnetmask":
+				stream.append(["set", self.__name, "subnetmask", self.__opts[opt]])
 			elif opt == "ignoreip":
 				for ip in self.__opts[opt].split():
 					# Do not send a command if the rule is empty.

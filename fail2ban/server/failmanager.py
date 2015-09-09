@@ -25,11 +25,12 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from threading import Lock
-import logging
+import logging, re
 
 from .faildata import FailData
 from .ticket import FailTicket
 from ..helpers import getLogger
+from .dnsutils import DNSUtils
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -43,6 +44,33 @@ class FailManager:
 		self.__maxRetry = 3
 		self.__maxTime = 600
 		self.__failTotal = 0
+		self.__subnetMask = None
+		
+	def setSubnetMask(self, value):
+		try:
+			self.__lock.acquire()
+			if "." in value: # 255.255.255.0 style mask
+				maskparts = value.split(".")
+				if len(maskparts) != 4:
+					raise ValueError("subnetmask must be valid")
+				for part in maskparts:
+					if int(part) < 0 or int(part) > 255:
+						raise ValueError("subnetmask must be valid")
+				self.__subnetMask = len(re.search("(?<=b)1+", bin(DNSUtils.addr2bin(value))).group())
+			else:
+				intValue = int(value)
+				if intValue < 1 or intValue > 32:
+					raise ValueError("subnetmask must be an integer between 1 and 32")
+				self.__subnetMask = intValue
+		finally:
+			self.__lock.release()
+	
+	def getSubnetMask(self):
+		try:
+			self.__lock.acquire()
+			return self.__subnetMask
+		finally:
+			self.__lock.release()
 	
 	def setFailTotal(self, value):
 		try:
@@ -92,6 +120,8 @@ class FailManager:
 			ip = ticket.getIP()
 			unixTime = ticket.getTime()
 			matches = ticket.getMatches()
+			if self.__subnetMask is not None:
+				ip = DNSUtils.bin2addr(DNSUtils.addr2bin(ip, self.__subnetMask)) + "/" + str(self.__subnetMask)
 			if ip in self.__failList:
 				fData = self.__failList[ip]
 				if fData.getLastReset() < unixTime - self.__maxTime:

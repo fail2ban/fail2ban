@@ -230,6 +230,10 @@ class Transmitter:
 			value = command[2]
 			self.__server.setMaxLines(name, int(value))
 			return self.__server.getMaxLines(name)
+		elif command[1] == "subnetmask":
+			value = command[2]
+			self.__server.setSubnetMask(name, value)
+			return self.__server.getSubnetMask(name)
 		# command
 		elif command[1] == "bantime":
 			value = command[2]
@@ -312,6 +316,8 @@ class Transmitter:
 			return self.__server.getMaxRetry(name)
 		elif command[1] == "maxlines":
 			return self.__server.getMaxLines(name)
+		elif command[1] == "subnetmask":
+			return self.__server.getSubnetMask(name)
 		# Action
 		elif command[1] == "bantime":
 			return self.__server.getBanTime(name)
