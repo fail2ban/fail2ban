@@ -11,6 +11,7 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
 
 - Fixes:
    * roundcube-auth jail typo for logpath
+   * Fix dnsToIp resolver for fqdn with large list of IPs (gh-1164)
 
 - New Features:
 
