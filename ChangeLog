@@ -12,6 +12,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
 - Fixes:
    * roundcube-auth jail typo for logpath
    * Fix dnsToIp resolver for fqdn with large list of IPs (gh-1164)
+   * filter.d/apache-badbots.conf
+     - Updated useragent string regex adding escape for `+`
 
 - New Features:
 
@@ -45,8 +47,6 @@ ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
    * filter.d/roundcube-auth.conf
      - Updated regex to work with 'errors' log (1.0.5 and 1.1.1)
      - Added regex to work with 'userlogins' log
-   * filter.d/apache-badbots.conf
-     - Updated useragent string regex
    * action.d/sendmail*.conf - use LC_ALL (superseeding LC_TIME) to override
      locale on systems with customized LC_ALL
    * performance fix: minimizes connection overhead, close socket only at
