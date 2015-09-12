@@ -934,7 +934,7 @@ class LoggingTests(LogCaptureTestCase):
 			badThread = _BadThread()
 			badThread.start()
 			badThread.join()
-			self.assertTrue(self._is_logged("Unhandled exception"))
+			self.assertLogged("Unhandled exception")
 		finally:
 			sys.__excepthook__ = prev_exchook
 		self.assertEqual(len(x), 1)

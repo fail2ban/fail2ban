@@ -232,6 +232,42 @@ class LogCaptureTestCase(unittest.TestCase):
 	def _is_logged(self, s):
 		return s in self._log.getvalue()
 
+	def assertLogged(self, s):
+		"""Assert that a string was logged
+
+		Preferable to assertTrue(self._is_logged(..)))
+		since provides message with the actual log.
+
+		Parameters
+		----------
+		s : string or list/set/tuple of strings
+		  Test should succeed if string (or any of the listed) is present in the log
+		"""
+		logged = self._log.getvalue()
+
+		s_iter = s if isinstance(s, (tuple, list, set)) else [s]
+		for s_ in s_iter:
+			if s_ in logged:
+				return
+		raise AssertionError("%r was not found in the log: %r" % (s, logged))
+
+	def assertNotLogged(self, s):
+		"""Assert that a string was not logged
+
+		Parameters
+		----------
+		s : string or list/set/tuple of strings
+		  Test should succeed if the string (or at least one of the listed) is not present in the log
+		"""
+		logged = self._log.getvalue()
+
+		s_iter = s if isinstance(s, (tuple, list, set)) else [s]
+		for s_ in s_iter:
+			if s_ not in logged:
+				return
+		raise AssertionError("%r was found present in the log: %r" % (s, logged))
+
+
 	def getLog(self):
 		return self._log.getvalue()
 
