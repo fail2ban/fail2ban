@@ -196,11 +196,10 @@ class CommandActionTest(LogCaptureTestCase):
 	def testExecuteTimeout(self):
 		stime = time.time()
 		# Should take a minute
-		self.assertRaises(
-			RuntimeError, CommandAction.executeCmd, 'sleep 60', timeout=2)
+		self.assertFalse(CommandAction.executeCmd('sleep 60', timeout=2))
 		# give a test still 1 second, because system could be too busy
 		self.assertTrue(time.time() >= stime + 2 and time.time() <= stime + 3)
-		self.assertTrue(self._is_logged('sleep 60 -- timed out after 2 seconds') 
+		self.assertTrue(self._is_logged('sleep 60 -- timed out after 2 seconds')
 			or self._is_logged('sleep 60 -- timed out after 3 seconds'))
 		self.assertTrue(self._is_logged('sleep 60 -- killed with SIGTERM'))
 
@@ -222,17 +221,16 @@ class CommandActionTest(LogCaptureTestCase):
 				return int(f.read())
 
 		# First test if can kill the bastard
-		self.assertRaises(
-			RuntimeError, CommandAction.executeCmd, 'bash %s' % tmpFilename, timeout=.1)
+		self.assertFalse(CommandAction.executeCmd(
+		                 'bash %s' % tmpFilename, timeout=.1))
 		# Verify that the proccess itself got killed
 		self.assertFalse(pid_exists(getnastypid()))  # process should have been killed
 		self.assertTrue(self._is_logged('timed out'))
 		self.assertTrue(self._is_logged('killed with SIGTERM'))
 
 		# A bit evolved case even though, previous test already tests killing children processes
-		self.assertRaises(
-			RuntimeError, CommandAction.executeCmd, 'out=`bash %s`; echo ALRIGHT' % tmpFilename,
-			timeout=.2)
+		self.assertFalse(CommandAction.executeCmd(
+			'out=`bash %s`; echo ALRIGHT' % tmpFilename, timeout=.2))
 		# Verify that the proccess itself got killed
 		self.assertFalse(pid_exists(getnastypid()))
 		self.assertTrue(self._is_logged('timed out'))

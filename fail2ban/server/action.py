@@ -561,6 +561,7 @@ class CommandAction(ActionBase):
 
 		_cmd_lock.acquire()
 		try:
+			retcode = None  # to guarantee being defined upon early except
 			stdout = tempfile.TemporaryFile(suffix=".stdout", prefix="fai2ban_")
 			stderr = tempfile.TemporaryFile(suffix=".stderr", prefix="fai2ban_")
 
@@ -603,15 +604,16 @@ class CommandAction(ActionBase):
 			return True
 		elif retcode is None:
 			logSys.error("%s -- unable to kill PID %i" % (realCmd, popen.pid))
-		elif retcode < 0:
-			logSys.error("%s -- killed with %s" %
-				(realCmd, signame.get(-retcode, "signal %i" % -retcode)))
+		elif retcode < 0 or retcode > 128:
+			# dash would return negative while bash 128 + n
+			sigcode = -retcode if retcode < 0 else retcode - 128
+			logSys.error("%s -- killed with %s (return code: %s)" %
+				(realCmd, signame.get(sigcode, "signal %i" % sigcode), retcode))
 		else:
 			msg = _RETCODE_HINTS.get(retcode, None)
 			logSys.error("%s -- returned %i" % (realCmd, retcode))
 			if msg:
 				logSys.info("HINT on %i: %s"
 							% (retcode, msg % locals()))
-			return False
-		raise RuntimeError("Command execution failed: %s" % realCmd)
+		return False
 
