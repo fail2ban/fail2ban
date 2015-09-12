@@ -560,32 +560,32 @@ class CommandAction(ActionBase):
 			return True
 
 		_cmd_lock.acquire()
-		try: # Try wrapped within another try needed for python version < 2.5
+		try:
 			stdout = tempfile.TemporaryFile(suffix=".stdout", prefix="fai2ban_")
 			stderr = tempfile.TemporaryFile(suffix=".stderr", prefix="fai2ban_")
-			try:
-				popen = subprocess.Popen(
-					realCmd, stdout=stdout, stderr=stderr, shell=True,
-					preexec_fn=os.setsid  # so that killpg does not kill our process
-				)
-				stime = time.time()
+
+			popen = subprocess.Popen(
+				realCmd, stdout=stdout, stderr=stderr, shell=True,
+				preexec_fn=os.setsid  # so that killpg does not kill our process
+			)
+			stime = time.time()
+			retcode = popen.poll()
+			while time.time() - stime <= timeout and retcode is None:
+				time.sleep(0.1)
 				retcode = popen.poll()
-				while time.time() - stime <= timeout and retcode is None:
+			if retcode is None:
+				logSys.error("%s -- timed out after %i seconds." %
+				    (realCmd, timeout))
+				pgid = os.getpgid(popen.pid)
+				os.killpg(pgid, signal.SIGTERM)  # Terminate the process
+				time.sleep(0.1)
+				retcode = popen.poll()
+				if retcode is None:  # Still going...
+					os.killpg(pgid, signal.SIGKILL)  # Kill the process
 					time.sleep(0.1)
 					retcode = popen.poll()
-				if retcode is None:
-					logSys.error("%s -- timed out after %i seconds." %
-						(realCmd, timeout))
-					pgid = os.getpgid(popen.pid)
-					os.killpg(pgid, signal.SIGTERM)  # Terminate the process
-					time.sleep(0.1)
-					retcode = popen.poll()
-					if retcode is None: # Still going...
-						os.killpg(pgid, signal.SIGKILL)  # Kill the process
-						time.sleep(0.1)
-						retcode = popen.poll()
-			except OSError, e:
-				logSys.error("%s -- failed with %s" % (realCmd, e))
+		except OSError as e:
+			logSys.error("%s -- failed with %s" % (realCmd, e))
 		finally:
 			_cmd_lock.release()
 
