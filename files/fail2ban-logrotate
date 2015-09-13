@@ -8,6 +8,7 @@
 /var/log/fail2ban.log {
     rotate 7
     missingok
+    notifempty
     compress
     postrotate
       /usr/bin/fail2ban-client flushlogs  1>/dev/null || true
