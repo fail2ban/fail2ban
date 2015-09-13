@@ -223,7 +223,7 @@ class CommandActionTest(LogCaptureTestCase):
 		# First test if can kill the bastard
 		self.assertFalse(CommandAction.executeCmd(
 		                 'bash %s' % tmpFilename, timeout=.1))
-		# Verify that the proccess itself got killed
+		# Verify that the process itself got killed
 		self.assertFalse(pid_exists(getnastypid()))  # process should have been killed
 		self.assertTrue(self._is_logged('timed out'))
 		self.assertTrue(self._is_logged('killed with SIGTERM'))
@@ -231,7 +231,7 @@ class CommandActionTest(LogCaptureTestCase):
 		# A bit evolved case even though, previous test already tests killing children processes
 		self.assertFalse(CommandAction.executeCmd(
 			'out=`bash %s`; echo ALRIGHT' % tmpFilename, timeout=.2))
-		# Verify that the proccess itself got killed
+		# Verify that the process itself got killed
 		self.assertFalse(pid_exists(getnastypid()))
 		self.assertTrue(self._is_logged('timed out'))
 		self.assertTrue(self._is_logged('killed with SIGTERM'))
