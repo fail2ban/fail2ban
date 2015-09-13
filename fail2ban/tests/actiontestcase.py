@@ -200,10 +200,10 @@ class CommandActionTest(LogCaptureTestCase):
 			RuntimeError, CommandAction.executeCmd, 'sleep 60', timeout=2)
 		# give a test still 1 second, because system could be too busy
 		self.assertTrue(time.time() >= stime + 2 and time.time() <= stime + 3)
-		self.assertLogged({
+		self.assertLogged(
 			'sleep 60 -- timed out after 2 seconds',
 			'sleep 60 -- timed out after 3 seconds'
-		})
+		)
 		self.assertLogged('sleep 60 -- killed with SIGTERM')
 
 	def testExecuteTimeoutWithNastyChildren(self):
