@@ -260,14 +260,14 @@ class IgnoreIP(LogCaptureTestCase):
 		self.filter.addIgnoreIP('192.168.1.0/25')
 		self.filter.addFailRegex('<HOST>')
 		self.filter.processLineAndAdd('1387203300.222 192.168.1.32')
-		self.assertTrue(self._is_logged('Ignore 192.168.1.32'))
+		self.assertLogged('Ignore 192.168.1.32')
 		tearDownMyTime()
 
 	def testIgnoreAddBannedIP(self):
 		self.filter.addIgnoreIP('192.168.1.0/25')
 		self.filter.addBannedIP('192.168.1.32')
-		self.assertFalse(self._is_logged('Ignore 192.168.1.32'))
-		self.assertTrue(self._is_logged('Requested to manually ban an ignored IP 192.168.1.32. User knows best. Proceeding to ban it.'))
+		self.assertNotLogged('Ignore 192.168.1.32')
+		self.assertLogged('Requested to manually ban an ignored IP 192.168.1.32. User knows best. Proceeding to ban it.')
 
 	def testIgnoreCommand(self):
 		self.filter.setIgnoreCommand(sys.executable + ' ' + os.path.join(TEST_FILES_DIR, "ignorecommand.py <ip>"))
@@ -278,11 +278,11 @@ class IgnoreIP(LogCaptureTestCase):
 		ip = "93.184.216.34"
 		for ignore_source in ["dns", "ip", "command"]:
 			self.filter.logIgnoreIp(ip, True, ignore_source=ignore_source)
-			self.assertTrue(self._is_logged("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source)))
+			self.assertLogged("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source))
 
 	def testIgnoreCauseNOK(self):
 		self.filter.logIgnoreIp("example.com", False, ignore_source="NOT_LOGGED")
-		self.assertFalse(self._is_logged("[%s] Ignore %s by %s" % (self.jail.name, "example.com", "NOT_LOGGED")))
+		self.assertNotLogged("[%s] Ignore %s by %s" % (self.jail.name, "example.com", "NOT_LOGGED"))
 
 
 class IgnoreIPDNS(IgnoreIP):
@@ -382,18 +382,17 @@ class LogFileMonitor(LogCaptureTestCase):
 	def testNoLogFile(self):
 		_killfile(self.file, self.name)
 		self.filter.getFailures(self.name)
-		failure_was_logged = self._is_logged('Unable to open %s' % self.name)
-		self.assertTrue(failure_was_logged)
+		self.assertLogged('Unable to open %s' % self.name)
 
 	def testRemovingFailRegex(self):
 		self.filter.delFailRegex(0)
-		self.assertFalse(self._is_logged('Cannot remove regular expression. Index 0 is not valid'))
+		self.assertNotLogged('Cannot remove regular expression. Index 0 is not valid')
 		self.filter.delFailRegex(0)
-		self.assertTrue(self._is_logged('Cannot remove regular expression. Index 0 is not valid'))
+		self.assertLogged('Cannot remove regular expression. Index 0 is not valid')
 
 	def testRemovingIgnoreRegex(self):
 		self.filter.delIgnoreRegex(0)
-		self.assertTrue(self._is_logged('Cannot remove regular expression. Index 0 is not valid'))
+		self.assertLogged('Cannot remove regular expression. Index 0 is not valid')
 
 	def testNewChangeViaIsModified(self):
 		# it is a brand new one -- so first we think it is modified

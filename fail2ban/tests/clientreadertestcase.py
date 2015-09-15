@@ -173,16 +173,16 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertTrue(jail.read())
 		self.assertTrue(jail.getOptions())
 		self.assertTrue(jail.isEnabled())
-		self.assertTrue(self._is_logged('No filter set for jail emptyaction'))
-		self.assertTrue(self._is_logged('No actions were defined for emptyaction'))
+		self.assertLogged('No filter set for jail emptyaction')
+		self.assertLogged('No actions were defined for emptyaction')
 
 	def testJailActionFilterMissing(self):
 		jail = JailReader('missingbitsjail', basedir=IMPERFECT_CONFIG, share_config = self.__share_cfg)
 		self.assertTrue(jail.read())
 		self.assertFalse(jail.getOptions())
 		self.assertTrue(jail.isEnabled())
-		self.assertTrue(self._is_logged("Found no accessible config files for 'filter.d/catchallthebadies' under %s" % IMPERFECT_CONFIG))
-		self.assertTrue(self._is_logged('Unable to read the filter'))
+		self.assertLogged("Found no accessible config files for 'filter.d/catchallthebadies' under %s" % IMPERFECT_CONFIG)
+		self.assertLogged('Unable to read the filter')
 
 	def testJailActionBrokenDef(self):
 		jail = JailReader('brokenactiondef', basedir=IMPERFECT_CONFIG,
@@ -190,13 +190,13 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertTrue(jail.read())
 		self.assertFalse(jail.getOptions())
 		self.assertTrue(jail.isEnabled())
-		self.assertTrue(self._is_logged('Error in action definition joho[foo'))
+		self.assertLogged('Error in action definition joho[foo')
 		# This unittest has been deactivated for some time...
-		# self.assertTrue(self._is_logged(
-		#     'Caught exception: While reading action joho[foo we should have got 1 or 2 groups. Got: 0'))
+		# self.assertLogged(
+		#     'Caught exception: While reading action joho[foo we should have got 1 or 2 groups. Got: 0')
 		#   let's test for what is actually logged and handle changes in the future
-		self.assertTrue(self._is_logged(
-			"Caught exception: 'NoneType' object has no attribute 'endswith'"))
+		self.assertLogged(
+			"Caught exception: 'NoneType' object has no attribute 'endswith'")
 
 	if STOCK:
 		def testStockSSHJail(self):
@@ -221,7 +221,7 @@ class JailReaderTest(LogCaptureTestCase):
 
 		self.assertEqual(('mail--ho_is', {}), JailReader.extractOptions("mail--ho_is['s']"))
 		#self.printLog()
-		#self.assertTrue(self._is_logged("Invalid argument ['s'] in ''s''"))
+		#self.assertLogged("Invalid argument ['s'] in ''s''")
 
 		self.assertEqual(('mail', {'a': ','}), JailReader.extractOptions("mail[a=',']"))
 
@@ -265,7 +265,7 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertEqual(JailReader._glob(os.path.join(d, '*')), [f1])
 		# since f2 is dangling -- empty list
 		self.assertEqual(JailReader._glob(f2), [])
-		self.assertTrue(self._is_logged('File %s is a dangling link, thus cannot be monitored' % f2))
+		self.assertLogged('File %s is a dangling link, thus cannot be monitored' % f2)
 		self.assertEqual(JailReader._glob(os.path.join(d, 'nonexisting')), [])
 		os.remove(f1)
 		os.remove(f2)
@@ -463,8 +463,8 @@ class JailsReaderTest(LogCaptureTestCase):
 			 ['start', 'missinglogfiles'],
 			 ['start', 'brokenaction'],
 			 ['start', 'parse_to_end_of_jail.conf'],]))
-		self.assertTrue(self._is_logged("Errors in jail 'missingbitsjail'. Skipping..."))
-		self.assertTrue(self._is_logged("No file(s) found for glob /weapons/of/mass/destruction"))
+		self.assertLogged("Errors in jail 'missingbitsjail'. Skipping...")
+		self.assertLogged("No file(s) found for glob /weapons/of/mass/destruction")
 
 	if STOCK:
 		def testReadStockActionConf(self):
@@ -496,7 +496,7 @@ class JailsReaderTest(LogCaptureTestCase):
 			#old_comm_commands = comm_commands[:]   # make a copy
 			#self.assertRaises(ValueError, jails.getOptions, "BOGUS")
 			#self.printLog()
-			#self.assertTrue(self._is_logged("No section: 'BOGUS'"))
+			#self.assertLogged("No section: 'BOGUS'")
 			## and there should be no side-effects
 			#self.assertEqual(jails.convert(), old_comm_commands)
 
