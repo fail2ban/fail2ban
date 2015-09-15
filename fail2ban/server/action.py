@@ -560,32 +560,33 @@ class CommandAction(ActionBase):
 			return True
 
 		_cmd_lock.acquire()
-		try: # Try wrapped within another try needed for python version < 2.5
+		try:
+			retcode = None  # to guarantee being defined upon early except
 			stdout = tempfile.TemporaryFile(suffix=".stdout", prefix="fai2ban_")
 			stderr = tempfile.TemporaryFile(suffix=".stderr", prefix="fai2ban_")
-			try:
-				popen = subprocess.Popen(
-					realCmd, stdout=stdout, stderr=stderr, shell=True,
-					preexec_fn=os.setsid  # so that killpg does not kill our process
-				)
-				stime = time.time()
+
+			popen = subprocess.Popen(
+				realCmd, stdout=stdout, stderr=stderr, shell=True,
+				preexec_fn=os.setsid  # so that killpg does not kill our process
+			)
+			stime = time.time()
+			retcode = popen.poll()
+			while time.time() - stime <= timeout and retcode is None:
+				time.sleep(0.1)
 				retcode = popen.poll()
-				while time.time() - stime <= timeout and retcode is None:
+			if retcode is None:
+				logSys.error("%s -- timed out after %i seconds." %
+				    (realCmd, timeout))
+				pgid = os.getpgid(popen.pid)
+				os.killpg(pgid, signal.SIGTERM)  # Terminate the process
+				time.sleep(0.1)
+				retcode = popen.poll()
+				if retcode is None:  # Still going...
+					os.killpg(pgid, signal.SIGKILL)  # Kill the process
 					time.sleep(0.1)
 					retcode = popen.poll()
-				if retcode is None:
-					logSys.error("%s -- timed out after %i seconds." %
-						(realCmd, timeout))
-					pgid = os.getpgid(popen.pid)
-					os.killpg(pgid, signal.SIGTERM)  # Terminate the process
-					time.sleep(0.1)
-					retcode = popen.poll()
-					if retcode is None: # Still going...
-						os.killpg(pgid, signal.SIGKILL)  # Kill the process
-						time.sleep(0.1)
-						retcode = popen.poll()
-			except OSError, e:
-				logSys.error("%s -- failed with %s" % (realCmd, e))
+		except OSError as e:
+			logSys.error("%s -- failed with %s" % (realCmd, e))
 		finally:
 			_cmd_lock.release()
 
@@ -603,15 +604,16 @@ class CommandAction(ActionBase):
 			return True
 		elif retcode is None:
 			logSys.error("%s -- unable to kill PID %i" % (realCmd, popen.pid))
-		elif retcode < 0:
-			logSys.error("%s -- killed with %s" %
-				(realCmd, signame.get(-retcode, "signal %i" % -retcode)))
+		elif retcode < 0 or retcode > 128:
+			# dash would return negative while bash 128 + n
+			sigcode = -retcode if retcode < 0 else retcode - 128
+			logSys.error("%s -- killed with %s (return code: %s)" %
+				(realCmd, signame.get(sigcode, "signal %i" % sigcode), retcode))
 		else:
 			msg = _RETCODE_HINTS.get(retcode, None)
 			logSys.error("%s -- returned %i" % (realCmd, retcode))
 			if msg:
 				logSys.info("HINT on %i: %s"
 							% (retcode, msg % locals()))
-			return False
-		raise RuntimeError("Command execution failed: %s" % realCmd)
+		return False
 
