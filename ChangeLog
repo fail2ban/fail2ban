@@ -22,6 +22,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
 
 - Enhancements:
    * Do not rotate empty log files
+   * Added new date pattern with year after day (e.g. Sun Jan 23 2005 21:59:59)
+     http://bugs.debian.org/798923
 
 ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
 ----------

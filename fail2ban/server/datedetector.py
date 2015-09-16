@@ -78,6 +78,10 @@ class DateDetector(object):
 			# asctime with optional day, subsecond and/or year:
 			# Sun Jan 23 21:59:59.011 2005 
 			self.appendTemplate("(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %Y)?")
+			# asctime with optional day, subsecond and/or year coming after day
+			# http://bugs.debian.org/798923
+			# Sun Jan 23 2005 21:59:59.011
+			self.appendTemplate("(?:%a )?%b %d %Y %H:%M:%S(?:\.%f)?")
 			# simple date, optional subsecond (proftpd):
 			# 2005-01-23 21:59:59 
 			# simple date: 2005/01/23 21:59:59 

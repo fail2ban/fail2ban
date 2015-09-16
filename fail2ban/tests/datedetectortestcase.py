@@ -74,6 +74,7 @@ class DateDetectorTest(unittest.TestCase):
 			(False, "Jan 23 21:59:59"),
 			(False, "Sun Jan 23 21:59:59 2005"),
 			(False, "Sun Jan 23 21:59:59"),
+			(False, "Sun Jan 23 2005 21:59:59"),
 			(False, "2005/01/23 21:59:59"),
 			(False, "2005.01.23 21:59:59"),
 			(False, "23/01/2005 21:59:59"),
