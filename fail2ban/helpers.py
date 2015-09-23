@@ -127,3 +127,13 @@ def excepthook(exctype, value, traceback):
 	getLogger("fail2ban").critical(
 		"Unhandled exception in Fail2Ban:", exc_info=True)
 	return sys.__excepthook__(exctype, value, traceback)
+
+def splitcommaspace(s):
+	"""Helper to split on any comma or space
+
+	Returns empty list if input is empty (or None) and filters
+	out empty entries
+	"""
+	if not s:
+		return []
+	return filter(bool, re.split('[ ,]', s))
