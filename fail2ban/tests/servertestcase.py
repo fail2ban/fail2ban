@@ -168,8 +168,9 @@ class Transmitter(TransmitterBase):
 		t0 = time.time()
 		self.assertEqual(self.transm.proceed(["sleep", "1"]), (0, None))
 		t1 = time.time()
-		# Approx 1 second delay
-		self.assertAlmostEqual(t1 - t0, 1, places=1)
+		# Approx 1 second delay but not faster
+		dt = t1 - t0
+		self.assertTrue(0.99 < dt < 1.1, msg="Sleep was %g sec" % dt)
 
 	def testDatabase(self):
 		tmp, tmpFilename = tempfile.mkstemp(".db", "fail2ban_")
