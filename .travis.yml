@@ -6,7 +6,8 @@ python:
   - 2.6
   - 2.7
   - pypy
-  - 3.2
+  # disabled until coverage module fixes up compatibility issue
+  # - 3.2
   - 3.3
   - 3.4
   - pypy3
