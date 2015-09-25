@@ -55,7 +55,8 @@ never call fail2ban-server directly.
 
 Please note that the system init/service script is not automatically installed.
 To enable fail2ban as an automatic service, simply copy the script for your
-distro from the `files` directory to `/etc/init.d`. Example:
+distro from the `files` directory to `/etc/init.d`. Example (on a Debian-based
+system):
 
     cp files/debian-initd /etc/init.d/fail2ban
     update-rc.d fail2ban defaults
