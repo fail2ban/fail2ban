@@ -6,13 +6,15 @@
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
-Fail2Ban scans log files like /var/log/pwdfail and bans IP that makes too many
-password failures. It updates firewall rules to reject the IP address. These
-rules can be defined by the user. Fail2Ban can read multiple log files such as
-sshd or Apache web server ones.
+Fail2Ban scans log files like `/var/log/auth.log` and bans IP addresses having
+too many failed login attempts. It does this by updating system firewall rules
+to reject new connections from those IP addresses, for a configurable amount
+of time. Fail2Ban comes out-of-the-box ready to read many standard log files,
+such as those for sshd and Apache, and is easy to configure to read any log
+file you choose, for any error you choose.
 
-Fail2Ban is able to reduce the rate of incorrect authentications attempts
-however it cannot eliminate the risk that weak authentication presents.
+Though Fail2Ban is able to reduce the rate of incorrect authentications
+attempts, it cannot eliminate the risk that weak authentication presents.
 Configure services to use only two factor or public/private authentication
 mechanisms if you really want to protect services.
 
@@ -42,7 +44,7 @@ To install, just do:
     python setup.py install
 
 This will install Fail2Ban into the python library directory. The executable
-scripts are placed into /usr/bin, and configuration under /etc/fail2ban.
+scripts are placed into `/usr/bin`, and configuration under `/etc/fail2ban`.
 
 Fail2Ban should be correctly installed now. Just type:
 
@@ -51,11 +53,20 @@ Fail2Ban should be correctly installed now. Just type:
 to see if everything is alright. You should always use fail2ban-client and
 never call fail2ban-server directly.
 
+Please note that the system init/service script is not automatically installed.
+To enable fail2ban as an automatic service, simply copy the script for your
+distro from the `files` directory to `/etc/init.d`. Example (on a Debian-based
+system):
+
+    cp files/debian-initd /etc/init.d/fail2ban
+    update-rc.d fail2ban defaults
+    service fail2ban start
+
 Configuration:
 --------------
 
-You can configure Fail2Ban using the files in /etc/fail2ban. It is possible to
-configure the server using commands sent to it by fail2ban-client. The
+You can configure Fail2Ban using the files in `/etc/fail2ban`. It is possible to
+configure the server using commands sent to it by `fail2ban-client`. The
 available commands are described in the fail2ban-client(1) manpage.  Also see
 fail2ban(1) and jail.conf(5)  manpages for further references.
 
