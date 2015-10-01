@@ -31,7 +31,12 @@ __fail2ban_jail_action_methods () {
 
 _fail2ban () {
     local cur prev words cword
-    _init_completion || return 
+    _init_completion || return
+
+    if [[ "$1" == *"fail2ban-regex" ]] && [[ "$cur" == "-"* ]];then
+        COMPREPLY=($(compgen -W "$(_parse_help "$1" --help 2>/dev/null)" -- "$cur"))
+        return 0
+    fi
 
     case $prev in
         -V|--version|-h|--help)
@@ -55,10 +60,7 @@ _fail2ban () {
             ;;
     esac
 
-    if [[ "$1" == *"fail2ban-regex" ]];then
-        _filedir
-        return 0
-    elif [[ "$1" == *"fail2ban-client" ]];then
+    if [[ "$1" == *"fail2ban-client" ]];then
         local cmd jail action
         case $prev in
             "$1")
