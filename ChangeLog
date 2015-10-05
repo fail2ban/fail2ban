@@ -14,6 +14,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
    * Fix dnsToIp resolver for fqdn with large list of IPs (gh-1164)
    * filter.d/apache-badbots.conf
      - Updated useragent string regex adding escape for `+`
+   * filter.d/sshd.conf
+     - Updated "Auth fail" regex for OpenSSH 5.9 and later
    * Treat failed and killed execution of commands identically (only
      different log messages), which addresses different behavior on different
      exit codes of dash and bash (gh-1155)
