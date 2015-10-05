@@ -71,6 +71,15 @@ ver. 0.9.6 (2016/12/10) - stretch-is-coming
     - optimized failregex to match all of "Failed any-method for ... from <HOST>" (gh-1479)
     - eliminated possible complex injections (on user-name resp. auth-info, see gh-1479)
     - optional port part after host (see gh-1533, gh-1581)
+    - new aggressive rules (gh-864):
+      - Connection reset by peer (multi-line rule during authorization process)
+      - No supported authentication methods available
+    - single line and multi-line expression optimized, added optional prefixes
+      and suffix (logged from several ssh versions), according to gh-1206;
+* filter.d/suhosin.conf
+    - greedy catch-all before `<HOST>` fixed (potential vulnerability)
+* Filter tests extended with check of all config-regexp, that contains greedy catch-all
+  before `<HOST>`, that is hard-anchored at end or precise  sub expression after `<HOST>`
 
 ### New Features
 * New Actions:
