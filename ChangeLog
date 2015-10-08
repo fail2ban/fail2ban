@@ -34,6 +34,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
      (Thanks M. Maraun)
    * Added check against atacker's Googlebot PTR fake records
      (Thanks Pablo Rodriguez Fernandez)
+   * Add *_backend options for services to allow distros to set the default
+     backend per service, set default to systemd for Fedora as appropriate
 
 ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
 ----------
