@@ -1,0 +1,74 @@
+# Fail2Ban configuration file
+#
+# Author: Cyril Jaquier
+# Modified by Yaroslav Halchenko for multiport banning
+# Copied and modified from iptables-multiport.conf by Mike Moller for subnet banning
+#
+
+[INCLUDES]
+
+before = iptables-blocktype.conf
+
+[Definition]
+
+# Option:  actionstart
+# Notes.:  command executed once at the start of Fail2Ban.
+# Values:  CMD
+#
+actionstart = iptables -N fail2ban-<name>
+              iptables -A fail2ban-<name> -j RETURN
+              iptables -I <chain> -p <protocol> -m multiport --dports <port> -j fail2ban-<name>
+
+# Option:  actionstop
+# Notes.:  command executed once at the end of Fail2Ban
+# Values:  CMD
+#
+actionstop = iptables -D <chain> -p <protocol> -m multiport --dports <port> -j fail2ban-<name>
+             iptables -F fail2ban-<name>
+             iptables -X fail2ban-<name>
+
+# Option:  actioncheck
+# Notes.:  command executed once before each actionban command
+# Values:  CMD
+#
+actioncheck = iptables -n -L <chain> | grep -q 'fail2ban-<name>[ \t]'
+
+# Option:  actionban
+# Notes.:  command executed when banning an IP. Take care that the
+#          command is executed with Fail2Ban user rights.
+# Tags:    See jail.conf(5) man page
+# Values:  CMD
+#
+actionban = iptables -I fail2ban-<name> 1 -s <ip>/24 -j <blocktype>
+
+# Option:  actionunban
+# Notes.:  command executed when unbanning an IP. Take care that the
+#          command is executed with Fail2Ban user rights.
+# Tags:    See jail.conf(5) man page
+# Values:  CMD
+#
+actionunban = iptables -D fail2ban-<name> -s <ip>/24 -j <blocktype>
+
+[Init]
+
+# Default name of the chain
+#
+name = default
+
+# Option:  port
+# Notes.:  specifies port to monitor
+# Values:  [ NUM | STRING ]  Default:
+#
+port = ssh
+
+# Option:  protocol
+# Notes.:  internally used by config reader for interpolations.
+# Values:  [ tcp | udp | icmp | all ] Default: tcp
+#
+protocol = tcp
+
+# Option:  chain
+# Notes    specifies the iptables chain to which the fail2ban rules should be
+#          added
+# Values:  STRING  Default: INPUT
+chain = INPUT
