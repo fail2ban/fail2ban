@@ -1,0 +1,598 @@
+# This file is part of Fail2Ban.
+#
+# Fail2Ban is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Fail2Ban is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Fail2Ban; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# Copyright (c) 2004 Cyril Jaquier
+#
+# Contributed by:
+# Donald Yandt <sales@riverrockmedia.ca>, 2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: fail 2ban\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-10-09 20:36-0400\n"
+"PO-Revision-Date: 2015-10-09 20:56-0400\n"
+"Last-Translator: don <sales@riverrockmedia.ca>\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: bin/fail2ban-client:72
+msgid "Fail2Ban v%s"
+msgstr "Fail2Ban v%s"
+
+#: bin/fail2ban-client:74
+msgid "Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors"
+msgstr "Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors"
+
+#: bin/fail2ban-client:75
+msgid "Copyright of modifications held by their respective authors."
+msgstr "Copyright of modifications held by their respective authors."
+
+#: bin/fail2ban-client:76
+msgid "Licensed under the GNU General Public License v2 (GPL)."
+msgstr "Licensed under the GNU General Public License v2 (GPL)."
+
+#: bin/fail2ban-client:78
+msgid "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
+msgstr "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
+
+#: bin/fail2ban-client:79
+msgid "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
+msgstr "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
+
+#: bin/fail2ban-client:84
+msgid "Usage: %s [OPTIONS] <COMMAND>"
+msgstr "Usage: %s [OPTIONS] <COMMAND>"
+
+#: bin/fail2ban-client:86 bin/fail2ban-client:112
+msgid "Fail2Ban v%s reads log file that contains password failure report"
+msgstr "Fail2Ban v%s reads log file that contains password failure report"
+
+#: bin/fail2ban-client:87 bin/fail2ban-client:113
+msgid "and bans the corresponding IP addresses using firewall rules."
+msgstr "and bans the corresponding IP addresses using firewall rules."
+
+#: bin/fail2ban-client:89
+msgid "Options:"
+msgstr "Options:"
+
+#: bin/fail2ban-client:90
+msgid "configuration directory"
+msgstr "configuration directory"
+
+#: bin/fail2ban-client:91
+msgid "socket path"
+msgstr "socket path"
+
+#: bin/fail2ban-client:92
+msgid "pidfile path"
+msgstr "pidfile path"
+
+#: bin/fail2ban-client:93
+msgid "dump configuration. For debugging"
+msgstr "dump configuration. For debugging"
+
+#: bin/fail2ban-client:94
+msgid "interactive mode"
+msgstr "interactive mode"
+
+#: bin/fail2ban-client:95
+msgid "increase verbosity"
+msgstr "increase verbosity"
+
+#: bin/fail2ban-client:96
+msgid "decrease verbosity"
+msgstr "decrease verbosity"
+
+#: bin/fail2ban-client:97
+msgid "force execution of the server (remove socket file)"
+msgstr "force execution of the server (remove socket file)"
+
+#: bin/fail2ban-client:98
+msgid "start server in background (default)"
+msgstr "start server in background (default)"
+
+#: bin/fail2ban-client:99
+msgid "start server in foreground (note that the client forks once itself)"
+msgstr "start server in foreground (note that the client forks once itself)"
+
+#: bin/fail2ban-client:100
+msgid "display this help message"
+msgstr "display this help message"
+
+#: bin/fail2ban-client:101
+msgid "print the version"
+msgstr "print the version"
+
+#: bin/fail2ban-client:103
+msgid "Command:"
+msgstr "Command:"
+
+#: bin/fail2ban-client:109
+msgid "Report bugs to https://github.com/fail2ban/fail2ban/issues"
+msgstr "Report bugs to https://github.com/fail2ban/fail2ban/issues"
+
+#: bin/fail2ban-client:119
+msgid "Caught signal %d. Exiting"
+msgstr "Caught signal %d. Exiting"
+
+#: bin/fail2ban-client:196
+msgid "Unable to contact server. Is it running?"
+msgstr "Unable to contact server. Is it running?"
+
+#: bin/fail2ban-client:198
+msgid "Permission denied to socket: %s, (you must be root)"
+msgstr "Permission denied to socket: %s, (you must be root)"
+
+#: bin/fail2ban-client:200
+msgid "Failed to access socket path: %s. Is fail2ban running?"
+msgstr "Failed to access socket path: %s. Is fail2ban running?"
+
+#: bin/fail2ban-client:202
+msgid "Exception while checking socket access: %s"
+msgstr "Exception while checking socket access: %s"
+
+#: bin/fail2ban-client:215
+msgid "Server already running"
+msgstr "Server already running"
+
+#: bin/fail2ban-client:227
+msgid "There is no directory %s to contain the socket file %s."
+msgstr "There is no directory %s to contain the socket file %s."
+
+#: bin/fail2ban-client:232
+msgid "Directory %s exists but not accessible for writing"
+msgstr "Directory %s exists but not accessible for writing"
+
+#: bin/fail2ban-client:247
+msgid ""
+"Could not start server. Maybe an old socket file is still present. Try to "
+"remove %s. If you used fail2ban-client to start the server, adding the -x "
+"option will do it"
+msgstr ""
+"Could not start server. Maybe an old socket file is still present. Try to "
+"remove %s. If you used fail2ban-client to start the server, adding the -x "
+"option will do it"
+
+#: bin/fail2ban-client:263 bin/fail2ban-client:276
+msgid "Could not find server"
+msgstr "Could not find server"
+
+#: bin/fail2ban-client:311
+msgid "Starting %r with args %r"
+msgstr "Starting %r with args %r"
+
+#: bin/fail2ban-client:316
+msgid "Initial start attempt failed.  Starting %r with the same args"
+msgstr "Initial start attempt failed.  Starting %r with the same args"
+
+#: bin/fail2ban-client:319
+msgid "Could not start %s"
+msgstr "Could not start %s"
+
+#: bin/fail2ban-client:334
+msgid " Waiting on the server..."
+msgstr " Waiting on the server..."
+
+#: bin/fail2ban-client:344
+msgid "Failed to start server"
+msgstr "Failed to start server"
+
+#: bin/fail2ban-client:409
+msgid "Readline not available"
+msgstr "Readline not available"
+
+#: bin/fail2ban-client:451
+msgid "Failed during configuration: %s"
+msgstr "Failed during configuration: %s"
+
+#: fail2ban/protocol.py:44
+msgid "BASIC"
+msgstr "BASIC"
+
+#: fail2ban/protocol.py:45
+msgid "starts the server and the jails"
+msgstr "starts the server and the jails"
+
+#: fail2ban/protocol.py:46
+msgid "reloads the configuration"
+msgstr "reloads the configuration"
+
+#: fail2ban/protocol.py:47
+msgid "reloads the jail <JAIL>"
+msgstr "reloads the jail <JAIL>"
+
+#: fail2ban/protocol.py:48
+msgid "stops all jails and terminate the server"
+msgstr "stops all jails and terminate the server"
+
+#: fail2ban/protocol.py:49
+msgid "gets the current status of the server"
+msgstr "gets the current status of the server"
+
+#: fail2ban/protocol.py:50
+msgid "tests if the server is alive"
+msgstr "tests if the server is alive"
+
+#: fail2ban/protocol.py:51
+msgid "return this output"
+msgstr "return this output"
+
+#: fail2ban/protocol.py:52
+msgid "return the server version"
+msgstr "return the server version"
+
+#: fail2ban/protocol.py:53
+msgid "LOGGING"
+msgstr "LOGGING"
+
+#: fail2ban/protocol.py:54
+msgid ""
+"sets logging level to <LEVEL>. Levels: CRITICAL, ERROR, WARNING, NOTICE, "
+"INFO, DEBUG"
+msgstr ""
+"sets logging level to <LEVEL>. Levels: CRITICAL, ERROR, WARNING, NOTICE, "
+"INFO, DEBUG"
+
+#: fail2ban/protocol.py:55
+msgid "gets the logging level"
+msgstr "gets the logging level"
+
+#: fail2ban/protocol.py:56
+msgid ""
+"sets logging target to <TARGET>. Can be STDOUT, STDERR, SYSLOG or a file"
+msgstr ""
+"sets logging target to <TARGET>. Can be STDOUT, STDERR, SYSLOG or a file"
+
+#: fail2ban/protocol.py:57
+msgid "gets logging target"
+msgstr "gets logging target"
+
+#: fail2ban/protocol.py:58
+msgid ""
+"sets the syslog socket path to auto or <SOCKET>. Only used if logtarget is "
+"SYSLOG"
+msgstr ""
+"sets the syslog socket path to auto or <SOCKET>. Only used if logtarget is "
+"SYSLOG"
+
+#: fail2ban/protocol.py:59
+msgid "gets syslog socket path"
+msgstr "gets syslog socket path"
+
+#: fail2ban/protocol.py:60
+msgid "flushes the logtarget if a file and reopens it. For log rotation."
+msgstr "flushes the logtarget if a file and reopens it. For log rotation."
+
+#: fail2ban/protocol.py:61
+msgid "DATABASE"
+msgstr "DATABASE"
+
+#: fail2ban/protocol.py:62
+msgid ""
+"set the location of fail2ban persistent datastore. Set to \"None\" to disable"
+msgstr ""
+"set the location of fail2ban persistent datastore. Set to \"None\" to disable"
+
+#: fail2ban/protocol.py:63
+msgid "get the location of fail2ban persistent datastore"
+msgstr "get the location of fail2ban persistent datastore"
+
+#: fail2ban/protocol.py:64
+msgid "sets the max age in <SECONDS> that history of bans will be kept"
+msgstr "sets the max age in <SECONDS> that history of bans will be kept"
+
+#: fail2ban/protocol.py:65
+msgid "gets the max age in seconds that history of bans will be kept"
+msgstr "gets the max age in seconds that history of bans will be kept"
+
+#: fail2ban/protocol.py:66
+msgid "JAIL CONTROL"
+msgstr "JAIL CONTROL"
+
+#: fail2ban/protocol.py:67
+msgid "creates <JAIL> using <BACKEND>"
+msgstr "creates <JAIL> using <BACKEND>"
+
+#: fail2ban/protocol.py:68
+msgid "starts the jail <JAIL>"
+msgstr "starts the jail <JAIL>"
+
+#: fail2ban/protocol.py:69
+msgid "stops the jail <JAIL>. The jail is removed"
+msgstr "stops the jail <JAIL>. The jail is removed"
+
+#: fail2ban/protocol.py:70
+msgid ""
+"gets the current status of <JAIL>, with optional flavor or extended info"
+msgstr ""
+"gets the current status of <JAIL>, with optional flavor or extended info"
+
+#: fail2ban/protocol.py:71
+msgid "JAIL CONFIGURATION"
+msgstr "JAIL CONFIGURATION"
+
+#: fail2ban/protocol.py:72
+msgid "sets the idle state of <JAIL>"
+msgstr "sets the idle state of <JAIL>"
+
+#: fail2ban/protocol.py:73
+msgid "adds <IP> to the ignore list of <JAIL>"
+msgstr "adds <IP> to the ignore list of <JAIL>"
+
+#: fail2ban/protocol.py:74
+msgid "removes <IP> from the ignore list of <JAIL>"
+msgstr "removes <IP> from the ignore list of <JAIL>"
+
+#: fail2ban/protocol.py:75
+msgid ""
+"adds <FILE> to the monitoring list of <JAIL>, optionally starting at the "
+"'tail' of the file (default 'head')."
+msgstr ""
+"adds <FILE> to the monitoring list of <JAIL>, optionally starting at the "
+"'tail' of the file (default 'head')."
+
+#: fail2ban/protocol.py:76
+msgid "removes <FILE> from the monitoring list of <JAIL>"
+msgstr "removes <FILE> from the monitoring list of <JAIL>"
+
+#: fail2ban/protocol.py:77
+msgid "sets the <ENCODING> of the log files for <JAIL>"
+msgstr "sets the <ENCODING> of the log files for <JAIL>"
+
+#: fail2ban/protocol.py:78
+msgid "adds <MATCH> to the journal filter of <JAIL>"
+msgstr "adds <MATCH> to the journal filter of <JAIL>"
+
+#: fail2ban/protocol.py:79
+msgid "removes <MATCH> from the journal filter of <JAIL>"
+msgstr "removes <MATCH> from the journal filter of <JAIL>"
+
+#: fail2ban/protocol.py:80
+msgid ""
+"adds the regular expression <REGEX> which must match failures for <JAIL>"
+msgstr ""
+"adds the regular expression <REGEX> which must match failures for <JAIL>"
+
+#: fail2ban/protocol.py:81
+msgid "removes the regular expression at <INDEX> for failregex"
+msgstr "removes the regular expression at <INDEX> for failregex"
+
+#: fail2ban/protocol.py:82
+msgid "sets ignorecommand of <JAIL>"
+msgstr "sets ignorecommand of <JAIL>"
+
+#: fail2ban/protocol.py:83
+msgid ""
+"adds the regular expression <REGEX> which should match pattern to exclude "
+"for <JAIL>"
+msgstr ""
+"adds the regular expression <REGEX> which should match pattern to exclude "
+"for <JAIL>"
+
+#: fail2ban/protocol.py:84
+msgid "removes the regular expression at <INDEX> for ignoreregex"
+msgstr "removes the regular expression at <INDEX> for ignoreregex"
+
+#: fail2ban/protocol.py:85
+msgid ""
+"sets the number of seconds <TIME> for which the filter will look back for "
+"<JAIL>"
+msgstr ""
+"sets the number of seconds <TIME> for which the filter will look back for "
+"<JAIL>"
+
+#: fail2ban/protocol.py:86
+msgid "sets the number of seconds <TIME> a host will be banned for <JAIL>"
+msgstr "sets the number of seconds <TIME> a host will be banned for <JAIL>"
+
+#: fail2ban/protocol.py:87
+msgid "sets the <PATTERN> used to match date/times for <JAIL>"
+msgstr "sets the <PATTERN> used to match date/times for <JAIL>"
+
+#: fail2ban/protocol.py:88
+msgid "sets the usedns mode for <JAIL>"
+msgstr "sets the usedns mode for <JAIL>"
+
+#: fail2ban/protocol.py:89
+msgid "manually Ban <IP> for <JAIL>"
+msgstr "manually Ban <IP> for <JAIL>"
+
+#: fail2ban/protocol.py:90
+msgid "manually Unban <IP> in <JAIL>"
+msgstr "manually Unban <IP> in <JAIL>"
+
+#: fail2ban/protocol.py:91
+msgid "sets the number of failures <RETRY> before banning the host for <JAIL>"
+msgstr "sets the number of failures <RETRY> before banning the host for <JAIL>"
+
+#: fail2ban/protocol.py:92
+msgid "sets the number of <LINES> to buffer for regex search for <JAIL>"
+msgstr "sets the number of <LINES> to buffer for regex search for <JAIL>"
+
+#: fail2ban/protocol.py:93
+msgid ""
+"adds a new action named <ACT> for <JAIL>. Optionally for a Python based "
+"action, a <PYTHONFILE> and <JSONKWARGS> can be specified, else will be a "
+"Command Action"
+msgstr ""
+"adds a new action named <ACT> for <JAIL>. Optionally for a Python based "
+"action, a <PYTHONFILE> and <JSONKWARGS> can be specified, else will be a "
+"Command Action"
+
+#: fail2ban/protocol.py:94
+msgid "removes the action <ACT> from <JAIL>"
+msgstr "removes the action <ACT> from <JAIL>"
+
+#: fail2ban/protocol.py:95
+msgid "COMMAND ACTION CONFIGURATION"
+msgstr "COMMAND ACTION CONFIGURATION"
+
+#: fail2ban/protocol.py:96
+msgid "sets the start command <CMD> of the action <ACT> for <JAIL>"
+msgstr "sets the start command <CMD> of the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:97
+msgid "sets the stop command <CMD> of the action <ACT> for <JAIL>"
+msgstr "sets the stop command <CMD> of the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:98
+msgid "sets the check command <CMD> of the action <ACT> for <JAIL>"
+msgstr "sets the check command <CMD> of the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:99
+msgid "sets the ban command <CMD> of the action <ACT> for <JAIL>"
+msgstr "sets the ban command <CMD> of the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:100
+msgid "sets the unban command <CMD> of the action <ACT> for <JAIL>"
+msgstr "sets the unban command <CMD> of the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:101
+msgid ""
+"sets <TIMEOUT> as the command timeout in seconds for the action <ACT> for "
+"<JAIL>"
+msgstr ""
+"sets <TIMEOUT> as the command timeout in seconds for the action <ACT> for "
+"<JAIL>"
+
+#: fail2ban/protocol.py:102
+msgid "GENERAL ACTION CONFIGURATION"
+msgstr "GENERAL ACTION CONFIGURATION"
+
+#: fail2ban/protocol.py:103
+msgid "sets the <VALUE> of <PROPERTY> for the action <ACT> for <JAIL>"
+msgstr "sets the <VALUE> of <PROPERTY> for the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:104
+msgid "calls the <METHOD> with <JSONKWARGS> for the action <ACT> for <JAIL>"
+msgstr "calls the <METHOD> with <JSONKWARGS> for the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:105
+msgid "JAIL INFORMATION"
+msgstr "JAIL INFORMATION"
+
+#: fail2ban/protocol.py:106
+msgid "gets the list of the monitored files for <JAIL>"
+msgstr "gets the list of the monitored files for <JAIL>"
+
+#: fail2ban/protocol.py:107
+msgid "gets the encoding of the log files for <JAIL>"
+msgstr "gets the encoding of the log files for <JAIL>"
+
+#: fail2ban/protocol.py:108
+msgid "gets the journal filter match for <JAIL>"
+msgstr "gets the journal filter match for <JAIL>"
+
+#: fail2ban/protocol.py:109
+msgid "gets the list of ignored IP addresses for <JAIL>"
+msgstr "gets the list of ignored IP addresses for <JAIL>"
+
+#: fail2ban/protocol.py:110
+msgid "gets ignorecommand of <JAIL>"
+msgstr "gets ignorecommand of <JAIL>"
+
+#: fail2ban/protocol.py:111
+msgid ""
+"gets the list of regular expressions which matches the failures for <JAIL>"
+msgstr ""
+"gets the list of regular expressions which matches the failures for <JAIL>"
+
+#: fail2ban/protocol.py:112
+msgid ""
+"gets the list of regular expressions which matches patterns to ignore for "
+"<JAIL>"
+msgstr ""
+"gets the list of regular expressions which matches patterns to ignore for "
+"<JAIL>"
+
+#: fail2ban/protocol.py:113
+msgid ""
+"gets the time for which the filter will look back for failures for <JAIL>"
+msgstr ""
+"gets the time for which the filter will look back for failures for <JAIL>"
+
+#: fail2ban/protocol.py:114
+msgid "gets the time a host is banned for <JAIL>"
+msgstr "gets the time a host is banned for <JAIL>"
+
+#: fail2ban/protocol.py:115
+msgid "gets the patern used to match date/times for <JAIL>"
+msgstr "gets the patern used to match date/times for <JAIL>"
+
+#: fail2ban/protocol.py:116
+msgid "gets the usedns setting for <JAIL>"
+msgstr "gets the usedns setting for <JAIL>"
+
+#: fail2ban/protocol.py:117
+msgid "gets the number of failures allowed for <JAIL>"
+msgstr "gets the number of failures allowed for <JAIL>"
+
+#: fail2ban/protocol.py:118
+msgid "gets the number of lines to buffer for <JAIL>"
+msgstr "gets the number of lines to buffer for <JAIL>"
+
+#: fail2ban/protocol.py:119
+msgid "gets a list of actions for <JAIL>"
+msgstr "gets a list of actions for <JAIL>"
+
+#: fail2ban/protocol.py:120
+msgid "COMMAND ACTION INFORMATION"
+msgstr "COMMAND ACTION INFORMATION"
+
+#: fail2ban/protocol.py:121
+msgid "gets the start command for the action <ACT> for <JAIL>"
+msgstr "gets the start command for the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:122
+msgid "gets the stop command for the action <ACT> for <JAIL>"
+msgstr "gets the stop command for the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:123
+msgid "gets the check command for the action <ACT> for <JAIL>"
+msgstr "gets the check command for the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:124
+msgid "gets the ban command for the action <ACT> for <JAIL>"
+msgstr "gets the ban command for the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:125
+msgid "gets the unban command for the action <ACT> for <JAIL>"
+msgstr "gets the unban command for the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:126
+msgid "gets the command timeout in seconds for the action <ACT> for <JAIL>"
+msgstr "gets the command timeout in seconds for the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:127
+msgid "GENERAL ACTION INFORMATION"
+msgstr "GENERAL ACTION INFORMATION"
+
+#: fail2ban/protocol.py:128
+msgid "gets a list of properties for the action <ACT> for <JAIL>"
+msgstr "gets a list of properties for the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:129
+msgid "gets a list of methods for the action <ACT> for <JAIL>"
+msgstr "gets a list of methods for the action <ACT> for <JAIL>"
+
+#: fail2ban/protocol.py:130
+msgid "gets the value of <PROPERTY> for the action <ACT> for <JAIL>"
+msgstr "gets the value of <PROPERTY> for the action <ACT> for <JAIL>"
