@@ -385,6 +385,17 @@ class Filter(JailThread):
 				self.logIgnoreIp(ip, log_ignore, ignore_source="ip")
 				return True
 
+		return False
+
+	##
+	# Check if IP has to be ignored accordingly to ignorecommand
+	#
+	# Check if the given IP address has to be ignored accordingly to
+	# ignorecommand.
+	# @param ip IP address
+	# @return True if IP address is ignored
+
+	def ignoredIPByCommand(self, ip, log_ignore=False):
 		if self.__ignoreCommand:
 			command = CommandAction.replaceTag(self.__ignoreCommand, { 'ip': ip } )
 			logSys.debug('ignore command: ' + command)

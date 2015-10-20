@@ -271,8 +271,8 @@ class IgnoreIP(LogCaptureTestCase):
 
 	def testIgnoreCommand(self):
 		self.filter.setIgnoreCommand(sys.executable + ' ' + os.path.join(TEST_FILES_DIR, "ignorecommand.py <ip>"))
-		self.assertTrue(self.filter.inIgnoreIPList("10.0.0.1"))
-		self.assertFalse(self.filter.inIgnoreIPList("10.0.0.0"))
+		self.assertTrue(self.filter.ignoredIPByCommand("10.0.0.1"))
+		self.assertFalse(self.filter.ignoredIPByCommand("10.0.0.0"))
 
 	def testIgnoreCauseOK(self):
 		ip = "93.184.216.34"
