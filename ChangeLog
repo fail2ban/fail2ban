@@ -21,6 +21,7 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
    * Treat failed and killed execution of commands identically (only
      different log messages), which addresses different behavior on different
      exit codes of dash and bash (gh-1155)
+   * Fix jail.conf.5 man's section (gh-1226)
 
 - New Features:
 
@@ -34,6 +35,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
      (Thanks M. Maraun)
    * Added check against atacker's Googlebot PTR fake records
      (Thanks Pablo Rodriguez Fernandez)
+   * Enhance filter against atacker's Googlebot PTR fake records
+     (gh-1226)
 
 ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
 ----------
