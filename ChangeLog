@@ -21,6 +21,7 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
    * Treat failed and killed execution of commands identically (only
      different log messages), which addresses different behavior on different
      exit codes of dash and bash (gh-1155)
+   * Use postfix_log logpath for postfix-rbl jail
 
 - New Features:
 
