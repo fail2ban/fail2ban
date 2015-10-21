@@ -399,7 +399,7 @@ class Filter(JailThread):
 		if self.__ignoreCommand:
 			command = CommandAction.replaceTag(self.__ignoreCommand, { 'ip': ip } )
 			logSys.debug('ignore command: ' + command)
-			ret_ignore = CommandAction.executeCmd(command)
+			ret_ignore = CommandAction.executeCmd(command, 30, True)
 			self.logIgnoreIp(ip, log_ignore and ret_ignore, ignore_source="command")
 			return ret_ignore
 
