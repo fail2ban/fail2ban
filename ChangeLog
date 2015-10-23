@@ -24,6 +24,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
    * Fix jail.conf.5 man's section (gh-1226)
 
 - New Features:
+   * New filters:
+     - htaccess - Thanks to Denis Pitzalis
 
 - Enhancements:
    * Do not rotate empty log files
