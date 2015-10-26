@@ -29,6 +29,7 @@ import os
 import tempfile
 
 from ..server.actions import Actions
+from ..server.mytime import MyTime
 from ..server.ticket import FailTicket
 from .dummyjail import DummyJail
 from .utils import LogCaptureTestCase
@@ -165,3 +166,10 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertNotLogged("Failed to execute unban")
 		self.assertLogged("action1 unban deleted aInfo IP")
 		self.assertLogged("action2 unban deleted aInfo IP")
+
+	def testCheckBanWithIgnoredIP(self):
+		self.__jail.filter.setIgnoreCommand(
+			os.path.join(TEST_FILES_DIR, "ignorecommand.py <ip>"))
+		ticket = FailTicket("10.0.0.1", MyTime.time(), ['test', 'test'])
+		self.__jail.putFailTicket(ticket)
+		self.assertFalse(self.__actions._Actions__checkBan())

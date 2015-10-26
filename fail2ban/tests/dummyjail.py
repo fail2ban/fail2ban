@@ -25,6 +25,7 @@ __license__ = "GPL"
 from threading import Lock
 
 from ..server.actions import Actions
+from ..server.filter import Filter
 
 
 class DummyJail(object):
@@ -36,6 +37,7 @@ class DummyJail(object):
 		self.idle = False
 		self.database = None
 		self.actions = Actions(self)
+		self.filter = Filter(self)
 
 	def __len__(self):
 		try:

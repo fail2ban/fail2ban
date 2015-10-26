@@ -312,6 +312,15 @@ class Actions(JailThread, Mapping):
 				aInfo["ipjailmatches"]  = lambda: "\n".join(mi4ip().getMatches())
 				aInfo["ipfailures"]     = lambda: mi4ip(True).getAttempt()
 				aInfo["ipjailfailures"] = lambda: mi4ip().getAttempt()
+
+			try:
+				if self._jail.filter.ignoredIPByCommand(ip, True):
+					return False
+			except AttributeError as e: # pragma: no cover
+				logSys.error(
+					"Failed to execute ignorecommand: jail '%s' has not "
+					"filter" % self._jail.name)
+
 			if self.__banManager.addBanTicket(bTicket):
 				logSys.notice("[%s] Ban %s" % (self._jail.name, aInfo["ip"]))
 				for name, action in self._actions.iteritems():

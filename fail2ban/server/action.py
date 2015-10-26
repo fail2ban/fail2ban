@@ -532,7 +532,7 @@ class CommandAction(ActionBase):
 		return self.executeCmd(realCmd, self.timeout)
 
 	@staticmethod
-	def executeCmd(realCmd, timeout=60):
+	def executeCmd(realCmd, timeout=60, testCmd=False):
 		"""Executes a command.
 
 		Parameters
@@ -541,6 +541,8 @@ class CommandAction(ActionBase):
 			The command to execute.
 		timeout : int
 			The time out in seconds for the command.
+		testCmd : bool
+			If the command is used as a test; return nonzero is not an error.
 
 		Returns
 		-------
@@ -591,7 +593,7 @@ class CommandAction(ActionBase):
 			_cmd_lock.release()
 
 		std_level = retcode == 0 and logging.DEBUG or logging.ERROR
-		if std_level >= logSys.getEffectiveLevel():
+		if std_level >= logSys.getEffectiveLevel() and not testCmd:
 			stdout.seek(0)
 			logSys.log(std_level, "%s -- stdout: %r" % (realCmd, stdout.read()))
 			stderr.seek(0)
@@ -611,7 +613,8 @@ class CommandAction(ActionBase):
 				(realCmd, signame.get(sigcode, "signal %i" % sigcode), retcode))
 		else:
 			msg = _RETCODE_HINTS.get(retcode, None)
-			logSys.error("%s -- returned %i" % (realCmd, retcode))
+			std_level = logging.INFO if testCmd else logging.ERROR
+			logSys.log(std_level, "%s -- returned %i" % (realCmd, retcode))
 			if msg:
 				logSys.info("HINT on %i: %s"
 							% (retcode, msg % locals()))
