@@ -1,0 +1,5 @@
+Oct 27 09:24:46 test1.beezwax.net screensharingd[1170]: Authentication: SUCCEEDED :: User Name: simon :: Viewer Address: 192.168.5.247 :: Type: DH
+Oct 27 09:25:41 test1.beezwax.net screensharingd[1170]: Authentication: FAILED :: User Name: sdfsdfs () mro :: Viewer Address: 192.168.5.247 :: Type: DH
+Oct 27 09:25:49 test1.beezwax.net screensharingd[1170]: Authentication: FAILED :: User Name: sdfsdfs :: :: Viewer Address: 192.168.5.247 :: Type: DH
+Oct 27 09:25:58 test1.beezwax.net screensharingd[1170]: Authentication: FAILED :: User Name: sdfsdfs _+ :: Viewer Address: 192.168.5.247 :: Type: DH
+Oct 27 09:26:09 test1.beezwax.net screensharingd[1170]: Authentication: FAILED :: User Name: sdfsdfs @! s:: :: Viewer Address: 192.168.5.247 :: Type: DH
