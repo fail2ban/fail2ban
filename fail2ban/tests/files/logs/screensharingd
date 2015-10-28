@@ -1,5 +1,5 @@
-# NOTE: dates here include years -- this is NOT the typical configuration for the system.log
-# file on Mac OS. However, matches will not pass unless year is included.
+# NOTE: dates here include years -- this is not the typical configuration for the system.log
+# file on Mac OS. However, without it the test routines will use 2004 as the year and matches will not pass.
 #
 # failJSON: { "match": false }
 Oct 27 2015 09:24:46 test1.beezwax.net screensharingd[1170]: Authentication: SUCCEEDED :: User Name: simon :: Viewer Address: 192.168.5.247 :: Type: DH
