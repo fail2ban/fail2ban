@@ -39,6 +39,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
      (gh-1226)
    * Added filter for openhab domotic software authentication failure with the
      rest api and web interface (gh-1223)
+   * Added filter for Mac OS screen sharing (VNC) daemon
+
 
 ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
 ----------
