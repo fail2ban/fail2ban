@@ -26,7 +26,7 @@ def is_googlebot(ip):
     from fail2ban.server.filter import DNSUtils
 
     host = DNSUtils.ipToName(ip)
-    if not host or not re.match('crawl-.*\.googlebot\.com', host):
+    if not host or not re.match('.*\.google(bot)?\.com$', host):
        sys.exit(1)
     host_ips = DNSUtils.dnsToIp(host)
     sys.exit(0 if ip in host_ips else 1)

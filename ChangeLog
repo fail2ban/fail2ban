@@ -21,6 +21,7 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
    * Treat failed and killed execution of commands identically (only
      different log messages), which addresses different behavior on different
      exit codes of dash and bash (gh-1155)
+   * Fix jail.conf.5 man's section (gh-1226)
    * Use postfix_log logpath for postfix-rbl jail
 
 - New Features:
@@ -35,6 +36,10 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
      (Thanks M. Maraun)
    * Added check against atacker's Googlebot PTR fake records
      (Thanks Pablo Rodriguez Fernandez)
+   * Enhance filter against atacker's Googlebot PTR fake records
+     (gh-1226)
+   * Added filter for openhab domotic software authentication failure with the
+     rest api and web interface (gh-1223)
    * Add *_backend options for services to allow distros to set the default
      backend per service, set default to systemd for Fedora as appropriate
 
