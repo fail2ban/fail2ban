@@ -42,6 +42,7 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
      (Thanks Pablo Rodriguez Fernandez)
    * Enhance filter against atacker's Googlebot PTR fake records
      (gh-1226)
+   * Nginx log paths extended (prefixed with "*" wildcard) (gh-1237)
 
 ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
 ----------
