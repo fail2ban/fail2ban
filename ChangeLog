@@ -22,6 +22,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
      different log messages), which addresses different behavior on different
      exit codes of dash and bash (gh-1155)
    * Fix jail.conf.5 man's section (gh-1226)
+   * Fixed default banaction for allports jails like pam-generic, recidive, etc
+     with new default variable `banaction_allports` (gh-1216)
 
 - New Features:
    * New filters:
