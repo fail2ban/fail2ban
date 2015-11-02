@@ -285,8 +285,10 @@ class DefinitionInitConfigReader(ConfigReader):
 		
 		if self.has_section("Init"):
 			for opt in self.options("Init"):
+				v = self.get("Init", opt)
+				self._initOpts['known/'+opt] = v
 				if not opt in self._initOpts:
-					self._initOpts[opt] = self.get("Init", opt)
+					self._initOpts[opt] = v
 	
 	def convert(self):
 		raise NotImplementedError

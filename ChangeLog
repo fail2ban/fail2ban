@@ -26,6 +26,13 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
      with new default variable `banaction_allports` (gh-1216)
 
 - New Features:
+   * New interpolation feature for definition config readers - `<known/parameter>`
+     (means last known init definition of filters or actions with name `parameter`).
+     This interpolation makes possible to extend a parameters of stock filter or 
+     action directly in jail inside jail.local file, without creating a separately
+     filter.d/*.local file.
+     As extension to interpolation `%(known/parameter)s`, that does not works for
+     filter and action init parameters
    * New filters:
      - openhab - domotic software authentication failure with the
        rest api and web interface (gh-1223)
