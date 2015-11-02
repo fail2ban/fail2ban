@@ -98,8 +98,11 @@ class FailManager:
 				fData = self.__failList[ip]
 				fData.setLastReset(unixTime)
 				fData.setRetry(0)
-				fData.inc(matches)
 				fData.setLastTime(unixTime)
+				if logSys.getEffectiveLevel() <= logging.DEBUG:
+					logSys.debug("Reset for (IP:count): (%s:%d)"
+								 % (ip, fData.getRetry()))
+
 		finally:
 			self.__lock.release()
 		return found
