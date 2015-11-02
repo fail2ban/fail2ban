@@ -3,12 +3,6 @@
 #
 # failJSON: { "match": false }
 Oct 27 2015 09:24:46 test1.beezwax.net screensharingd[1170]: Authentication: SUCCEEDED :: User Name: simon :: Viewer Address: 192.168.5.247 :: Type: DH
-# failJSON: { "match": false }
-Oct 27 2015 09:23:20 test1 com.apple.xpc.launchd[1] (com.apple.xpc.launchd.domain.pid.SecurityAgent.1156): Path not allowed in target domain: type = uid, path = /System/Library/Frameworks/AppKit.framework/Versions/C/XPCServices/SandboxedServiceRunner.xpc/Contents/MacOS/SandboxedServiceRunner error = 1: Operation not permitted, origin = /System/Library/Frameworks/Security.framework/Versions/A/XPCServices/SecurityAgent.xpc
-# failJSON: { "match": false }
-Oct 27 2015 09:23:20 test1.beezwax.net ManagedClient[1155]: MCXCCacheMCXRecordAndGraph(): vproc_swap_integer(NULL, VPROC_GSK_PERUSER_SUSPEND, &(uid=1027), NULL) failed
-# failJSON: { "match": false }
-Oct 27 2015 12:26:44 test1.beezwax.net digest-service[3828]: digest-request: kdc failed with 36150275 proto=unknown
 #
 # failJSON: { "time": "2015-10-27T12:35:40", "match": true , "host": "192.168.5.247" }
 Oct 27 2015 12:35:40 test1.beezwax.net screensharingd[1170]: Authentication: FAILED :: User Name: sdfsdfs () mro :: Viewer Address: 192.168.5.247 :: Type: DH
