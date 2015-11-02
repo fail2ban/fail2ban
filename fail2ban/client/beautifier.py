@@ -151,7 +151,8 @@ class Beautifier:
 						msg = msg + "|- " + ip + "\n"
 					msg = msg + "`- " + response[len(response)-1]
 			elif inC[2] in ("failregex", "addfailregex", "delfailregex",
-							"ignoreregex", "addignoreregex", "delignoreregex"):
+							"ignoreregex", "addignoreregex", "delignoreregex",
+							"resetregex", "addresetregex", "delresetregex"):
 				if len(response) == 0:
 					msg = "No regular expression is defined"
 				else:

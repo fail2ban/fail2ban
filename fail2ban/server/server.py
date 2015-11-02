@@ -280,7 +280,16 @@ class Server:
 	
 	def getIgnoreRegex(self, name):
 		return self.__jails[name].filter.getIgnoreRegex()
+
+	def addResetRegex(self, name, value):
+		self.__jails[name].filter.addResetRegex(value)
 	
+	def delResetRegex(self, name, index):
+		self.__jails[name].filter.delResetRegex(index)
+	
+	def getResetRegex(self, name):
+		return self.__jails[name].filter.getResetRegex()
+
 	def setUseDns(self, name, value):
 		self.__jails[name].filter.setUseDns(value)
 	

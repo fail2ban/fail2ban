@@ -86,6 +86,24 @@ class FailManager:
 		finally:
 			self.__lock.release()
 
+	def resetIp(self, ticket):
+		found = False
+		try:
+			self.__lock.acquire()
+			ip = ticket.getIP()
+			unixTime = ticket.getTime()
+			matches = ticket.getMatches()
+			if ip in self.__failList:
+				found = True
+				fData = self.__failList[ip]
+				fData.setLastReset(unixTime)
+				fData.setRetry(0)
+				fData.inc(matches)
+				fData.setLastTime(unixTime)
+		finally:
+			self.__lock.release()
+		return found
+
 	def addFailure(self, ticket):
 		try:
 			self.__lock.acquire()
