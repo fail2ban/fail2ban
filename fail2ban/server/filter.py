@@ -535,13 +535,22 @@ class Filter(JailThread):
 		for resetRegexIndex, resetRegex in enumerate(self.__resetRegex):
 			resetRegex.search(self.__lineBuffer)
 			if resetRegex.hasMatched():
-				logSys.log(7, "Matched %s", resetRegex)
+				logSys.log(7, "Matched reset %s", resetRegex)
 				host = resetRegex.getHost()
-				ipMatch = DNSUtils.textToIp(host, self.__useDns)
-				if ipMatch:
-					for ip in ipMatch:
-						self.failManager.resetIp(FailTicket(ip, date,
+				if returnRawHost:
+					self.failManager.resetIp(FailTicket(host, date,
 										  resetRegex.getMatchedLines()))
+					if not checkAllRegex:
+						break
+				else:
+					ipMatch = DNSUtils.textToIp(host, self.__useDns)
+					if ipMatch:
+						for ip in ipMatch:
+							self.failManager.resetIp(FailTicket(ip, date,
+											  resetRegex.getMatchedLines()))
+
+						if not checkAllRegex:
+							break
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
