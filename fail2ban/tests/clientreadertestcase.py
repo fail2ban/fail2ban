@@ -294,6 +294,8 @@ class FilterReaderTest(unittest.TestCase):
 			"+$<SKIPLINES>^.+ module for .* from <HOST>\\s*$"],
 			['set', 'testcase01', 'addignoreregex', 
 			"^.+ john from host 192.168.1.1\\s*$"],
+			['set', 'testcase01', 'addresetregex', 
+			"^.+ john from host 192.168.1.1\\s*$"],
 			['set', 'testcase01', 'addjournalmatch',
 				"_COMM=sshd", "+", "_SYSTEMD_UNIT=sshd.service", "_UID=0"],
 			['set', 'testcase01', 'addjournalmatch',
@@ -359,6 +361,7 @@ class FilterReaderTest(unittest.TestCase):
 			# from testcase01
 			filterReader.get('Definition', 'failregex')
 			filterReader.get('Definition', 'ignoreregex')
+			filterReader.get('Definition', 'resetregex')
 		except Exception, e: # pragma: no cover - failed if reachable
 			self.fail('unexpected options after readexplicit: %s' % (e))
 

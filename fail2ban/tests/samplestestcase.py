@@ -77,6 +77,8 @@ def testSampleRegexsFactory(name):
 				self.filter.setMaxLines(opt[3])
 			elif opt[2] == "addignoreregex":
 				self.filter.addIgnoreRegex(opt[3])
+			elif opt[2] == "addresetregex":
+				self.filter.addResetRegex(opt[3])
 			elif opt[2] == "datepattern":
 				self.filter.setDatePattern(opt[3])
 

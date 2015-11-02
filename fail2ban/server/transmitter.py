@@ -216,6 +216,8 @@ class Transmitter:
 			return self.__server.getResetRegex(name)
 		elif command[1] == "delresetregex":
 			value = int(command[2])
+			self.__server.delResetRegex(name, value)
+			return self.__server.getResetRegex(name)
 		elif command[1] == "usedns":
 			value = command[2]
 			self.__server.setUseDns(name, value)
