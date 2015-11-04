@@ -229,37 +229,10 @@ class FailRegex(Regex):
 			raise RegexException("No 'host' found in '%s' using '%s'" % (s, r))
 		return str(host)
 ##
-# Regular expression class.
+# Another regular expression - just in case it needs to be different to above.
 #
 # This class represents a regular expression with its compiled version.
 
-class ResetRegex(Regex):
+class ResetRegex(FailRegex):
+	pass
 
-	##
-	# Constructor.
-	#
-	# Creates a new object. This method can throw RegexException in order to
-	# avoid construction of invalid object.
-	# @param value the regular expression
-	
-	def __init__(self, regex):
-		# Initializes the parent.
-		Regex.__init__(self, regex)
-		# Check for group "host"
-		if "host" not in self._regexObj.groupindex:
-			raise RegexException("No 'host' group in '%s'" % self._regex)
-	
-	##
-	# Returns the matched host.
-	#
-	# This corresponds to the pattern matched by the named group "host".
-	# @return the matched host
-	
-	def getHost(self):
-		host = self._matchCache.group("host")
-		if host is None:
-			# Gets a few information.
-			s = self._matchCache.string
-			r = self._matchCache.re
-			raise RegexException("No 'host' found in '%s' using '%s'" % (s, r))
-		return str(host)

@@ -175,7 +175,7 @@ class Filter(JailThread):
 			self.__resetRegex.append(regex)
 			if "\n" in regex.getRegex() and not self.getMaxLines() > 1:
 				logSys.warning(
-					"Mutliline regex set for jail '%s' "
+					"Multiline regex set for jail '%s' "
 					"but maxlines not greater than 1")
 		except RegexException, e:
 			logSys.error(e)
