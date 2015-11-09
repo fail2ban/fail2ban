@@ -24,6 +24,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
    * Fix jail.conf.5 man's section (gh-1226)
    * Fixed default banaction for allports jails like pam-generic, recidive, etc
      with new default variable `banaction_allports` (gh-1216)
+   * Fixed `fail2ban-regex` stops working on invalid (wrong encoded) character
+     for python version < 3.x (gh-1248)
 
 - New Features:
    * New filters:

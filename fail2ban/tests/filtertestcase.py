@@ -822,7 +822,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 	return MonitorJournalFailures
 
 
-class GetFailures(unittest.TestCase):
+class GetFailures(LogCaptureTestCase):
 
 	FILENAME_01 = os.path.join(TEST_FILES_DIR, "testcase01.log")
 	FILENAME_02 = os.path.join(TEST_FILES_DIR, "testcase02.log")
@@ -837,6 +837,7 @@ class GetFailures(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		LogCaptureTestCase.setUp(self)
 		setUpMyTime()
 		self.jail = DummyJail()
 		self.filter = FileFilter(self.jail)
@@ -848,6 +849,7 @@ class GetFailures(unittest.TestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 		tearDownMyTime()
+		LogCaptureTestCase.tearDown(self)
 
 	def testTail(self):
 		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)
@@ -929,20 +931,20 @@ class GetFailures(unittest.TestCase):
 			output = ('192.0.2.0', 3, 1421262060.0)
 			failregex = "^\s*user \"[^\"]*\" from \"<HOST>\"\s*$"
 
-			# encoding - auto
-			self.filter.addLogPath(fname)
-			self.filter.addFailRegex(failregex)
-			self.filter.getFailures(fname)
-			_assert_correct_last_attempt(self, self.filter, output)
-
-			# test direct set of encoding:
-			for enc in ('utf-8', 'ascii'):
-				self.tearDown();self.setUp();
-				self.filter.setLogEncoding('utf-8');
+			# test encoding auto or direct set of encoding:
+			for enc in (None, 'utf-8', 'ascii'):
+				if enc is not None:
+					self.tearDown();self.setUp();
+					self.filter.setLogEncoding(enc);
+				self.assertNotLogged('Error decoding line');
 				self.filter.addLogPath(fname)
 				self.filter.addFailRegex(failregex)
 				self.filter.getFailures(fname)
 				_assert_correct_last_attempt(self, self.filter, output)
+				
+				self.assertLogged('Error decoding line');
+				self.assertLogged('Continuing to process line ignoring invalid characters:', '2015-01-14 20:00:58 user ');
+				self.assertLogged('Continuing to process line ignoring invalid characters:', '2015-01-14 20:00:59 user ');
 
 		finally:
 			_killfile(fout, fname)
