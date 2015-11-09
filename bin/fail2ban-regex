@@ -84,8 +84,14 @@ def file_lines_gen(hdlr):
 		try:
 			line = line.decode(fail2banRegex.encoding, 'strict')
 		except UnicodeDecodeError:
-			if sys.version_info >= (3,): # Python 3 must be decoded
-				line = line.decode(fail2banRegex.encoding, 'ignore')
+			logSys.warning(
+				"Error decoding line from '%s' with '%s'."
+				" Consider setting logencoding=utf-8 (or another appropriate"
+				" encoding) for this jail. Continuing"
+				" to process line ignoring invalid characters: %r" %
+				('<LOG>', fail2banRegex.encoding, line))
+			# decode with replacing error chars:
+			line = line.decode(fail2banRegex.encoding, 'replace')
 		yield line
 
 def journal_lines_gen(myjournal):

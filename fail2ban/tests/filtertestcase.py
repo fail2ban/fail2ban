@@ -90,7 +90,11 @@ def _assert_equal_entries(utest, found, output, count=None):
 	found_time, output_time = \
 				MyTime.localtime(found[2]),\
 				MyTime.localtime(output[2])
-	utest.assertEqual(found_time, output_time)
+	try:
+		utest.assertEqual(found_time, output_time)
+	except AssertionError as e:
+		# assert more structured:
+		utest.assertEqual((float(found[2]), found_time), (float(output[2]), output_time))
 	if len(output) > 3 and count is None: # match matches
 		# do not check if custom count (e.g. going through them twice)
 		if os.linesep != '\n' or sys.platform.startswith('cygwin'):
@@ -215,6 +219,14 @@ class BasicFilter(unittest.TestCase):
 		self.assertEqual(self.filter.getDatePattern(),
 			("^%Y-%m-%d-%H%M%S.%f %z",
 			"^Year-Month-Day-24hourMinuteSecond.Microseconds Zone offset"))
+
+	def testAssertWrongTime(self):
+		self.assertRaises(AssertionError, 
+			lambda: _assert_equal_entries(self, 
+				('1.1.1.1', 1, 1421262060.0), 
+				('1.1.1.1', 1, 1421262059.0), 
+			1)
+		)
 
 
 class IgnoreIP(LogCaptureTestCase):
@@ -899,6 +911,41 @@ class GetFailures(unittest.TestCase):
 				_assert_correct_last_attempt(self, self.filter, out)
 		except FailManagerEmpty:
 			pass
+
+	def testGetFailuresWrongChar(self):
+		# write wrong utf-8 char:
+		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='crlf')
+		fout = fopen(fname, 'wb')
+		try:
+			# write:
+			for l in (
+				b'2015-01-14 20:00:58 user \"test\xf1ing\" from \"192.0.2.0\"\n',          # wrong utf-8 char
+				b'2015-01-14 20:00:59 user \"\xd1\xe2\xe5\xf2\xe0\" from \"192.0.2.0\"\n', # wrong utf-8 chars
+				b'2015-01-14 20:01:00 user \"testing\" from \"192.0.2.0\"\n'               # correct utf-8 chars
+			):
+				fout.write(l)
+			fout.close()
+			#
+			output = ('192.0.2.0', 3, 1421262060.0)
+			failregex = "^\s*user \"[^\"]*\" from \"<HOST>\"\s*$"
+
+			# encoding - auto
+			self.filter.addLogPath(fname)
+			self.filter.addFailRegex(failregex)
+			self.filter.getFailures(fname)
+			_assert_correct_last_attempt(self, self.filter, output)
+
+			# test direct set of encoding:
+			for enc in ('utf-8', 'ascii'):
+				self.tearDown();self.setUp();
+				self.filter.setLogEncoding('utf-8');
+				self.filter.addLogPath(fname)
+				self.filter.addFailRegex(failregex)
+				self.filter.getFailures(fname)
+				_assert_correct_last_attempt(self, self.filter, output)
+
+		finally:
+			_killfile(fout, fname)
 
 	def testGetFailuresUseDNS(self):
 		# We should still catch failures with usedns = no ;-)
