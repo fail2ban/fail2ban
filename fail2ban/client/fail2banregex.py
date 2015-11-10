@@ -44,16 +44,16 @@ from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderErro
 
 try:
 	from systemd import journal
-	from fail2ban.server.filtersystemd import FilterSystemd
+	from ..server.filtersystemd import FilterSystemd
 except ImportError:
 	journal = None
 
-from fail2ban.version import version
-from fail2ban.client.filterreader import FilterReader
-from fail2ban.server.filter import Filter
-from fail2ban.server.failregex import RegexException
+from ..version import version
+from .filterreader import FilterReader
+from ..server.filter import Filter, FileContainer
+from ..server.failregex import RegexException
 
-from fail2ban.helpers import FormatterWithTraceBack, getLogger
+from ..helpers import FormatterWithTraceBack, getLogger
 # Gets the instance of the logger.
 logSys = getLogger("fail2ban")
 
@@ -62,6 +62,9 @@ def debuggexURL(sample, regex):
 							'str': sample,
 							'flavor': 'python' })
 	return 'http://www.debuggex.com/?' + q
+
+def output(args):
+	print(args)
 
 def shortstr(s, l=53):
 	"""Return shortened string
@@ -77,22 +80,7 @@ def pprint_list(l, header=None):
 		s = "|- %s\n" % header
 	else:
 		s = ''
-	print s + "|  " + "\n|  ".join(l) + '\n`-'
-
-def file_lines_gen(hdlr):
-	for line in hdlr:
-		try:
-			line = line.decode(fail2banRegex.encoding, 'strict')
-		except UnicodeDecodeError:
-			logSys.warning(
-				"Error decoding line from '%s' with '%s'."
-				" Consider setting logencoding=utf-8 (or another appropriate"
-				" encoding) for this jail. Continuing"
-				" to process line ignoring invalid characters: %r" %
-				('<LOG>', fail2banRegex.encoding, line))
-			# decode with replacing error chars:
-			line = line.decode(fail2banRegex.encoding, 'replace')
-		yield line
+	output( s + "|  " + "\n|  ".join(l) + '\n`-' )
 
 def journal_lines_gen(myjournal):
 	while True:
@@ -259,14 +247,14 @@ class Fail2banRegex(object):
 			self._filter.setDatePattern(pattern)
 			self._datepattern_set = True
 			if pattern is not None:
-				print "Use      datepattern : %s" % (
-					self._filter.getDatePattern()[1], )
+				output( "Use      datepattern : %s" % (
+					self._filter.getDatePattern()[1], ) )
 
 	def setMaxLines(self, v):
 		if not self._maxlines_set:
 			self._filter.setMaxLines(int(v))
 			self._maxlines_set = True
-			print "Use         maxlines : %d" % self._filter.getMaxLines()
+			output( "Use         maxlines : %d" % self._filter.getMaxLines() )
 
 	def setJournalMatch(self, v):
 		if self._journalmatch is None:
@@ -280,18 +268,18 @@ class Fail2banRegex(object):
 				## within filter.d folder - use standard loading algorithm to load filter completely (with .local etc.):
 				basedir = os.path.dirname(os.path.dirname(value))
 				value = os.path.splitext(os.path.basename(value))[0]
-				print "Use %11s filter file : %s, basedir: %s" % (regex, value, basedir)
+				output( "Use %11s filter file : %s, basedir: %s" % (regex, value, basedir) )
 				reader = FilterReader(value, 'fail2ban-regex-jail', {}, share_config=self.share_config, basedir=basedir)
 				if not reader.read():
-					print "ERROR: failed to load filter %s" % value
+					output( "ERROR: failed to load filter %s" % value )
 					return False
 			else:
 				## foreign file - readexplicit this file and includes if possible:
-				print "Use %11s file : %s" % (regex, value)
+				output( "Use %11s file : %s" % (regex, value) )
 				reader = FilterReader(value, 'fail2ban-regex-jail', {}, share_config=self.share_config)
 				reader.setBaseDir(None)
 				if not reader.readexplicit():
-					print "ERROR: failed to read %s" % value
+					output( "ERROR: failed to read %s" % value )
 					return False
 			reader.getOptions(None)
 			readercommands = reader.convert()
@@ -307,8 +295,8 @@ class Fail2banRegex(object):
 					try:
 						self.setMaxLines(maxlines)
 					except ValueError:
-						print "ERROR: Invalid value for maxlines (%(maxlines)r) " \
-							  "read from %(value)s" % locals()
+						output( "ERROR: Invalid value for maxlines (%(maxlines)r) " \
+							  "read from %(value)s" % locals() )
 						return False
 				elif command[2] == 'addjournalmatch':
 					journalmatch = command[3:]
@@ -317,7 +305,7 @@ class Fail2banRegex(object):
 					datepattern = command[3]
 					self.setDatePattern(datepattern)
 		else:
-			print "Use %11s line : %s" % (regex, shortstr(value))
+			output( "Use %11s line : %s" % (regex, shortstr(value)) )
 			regex_values = [RegexStat(value)]
 
 		setattr(self, "_" + regex, regex_values)
@@ -335,7 +323,7 @@ class Fail2banRegex(object):
 				found = True
 				regex = self._ignoreregex[ret].inc()
 		except RegexException, e:
-			print e
+			output( e )
 			return False
 		return found
 
@@ -352,10 +340,10 @@ class Fail2banRegex(object):
 				regex.inc()
 				regex.appendIP(match)
 		except RegexException, e:
-			print e
+			output( e )
 			return False
 		except IndexError:
-			print "Sorry, but no <HOST> found in regex"
+			output( "Sorry, but no <HOST> found in regex" )
 			return False
 		for bufLine in orgLineBuffer[int(fullBuffer):]:
 			if bufLine not in self._filter._Filter__lineBuffer:
@@ -376,7 +364,7 @@ class Fail2banRegex(object):
 		t0 = time.time()
 		for line_no, line in enumerate(test_lines):
 			if isinstance(line, tuple):
-				line_datetimestripped, ret = fail2banRegex.testRegex(
+				line_datetimestripped, ret = self.testRegex(
 					line[0], line[1])
 				line = "".join(line[0])
 			else:
@@ -384,8 +372,8 @@ class Fail2banRegex(object):
 				if line.startswith('#') or not line:
 					# skip comment and empty lines
 					continue
-				line_datetimestripped, ret = fail2banRegex.testRegex(line)
-			is_ignored = fail2banRegex.testIgnoreRegex(line_datetimestripped)
+				line_datetimestripped, ret = self.testRegex(line)
+			is_ignored = self.testIgnoreRegex(line_datetimestripped)
 
 			if is_ignored:
 				self._line_stats.ignored += 1
@@ -432,18 +420,18 @@ class Fail2banRegex(object):
 					b = map(lambda a: a[0] +  ' | ' + a[1].getFailRegex() + ' |  ' + debuggexURL(a[0], a[1].getFailRegex()), ans)
 					pprint_list([x.rstrip() for x in b], header)
 				else:
-					print "%s too many to print.  Use --print-all-%s " \
-						  "to print all %d lines" % (header, ltype, lines)
+					output( "%s too many to print.  Use --print-all-%s " \
+						  "to print all %d lines" % (header, ltype, lines) )
 			elif lines < self._maxlines or getattr(self, '_print_all_' + ltype):
 				pprint_list([x.rstrip() for x in l], header)
 			else:
-				print "%s too many to print.  Use --print-all-%s " \
-					  "to print all %d lines" % (header, ltype, lines)
+				output( "%s too many to print.  Use --print-all-%s " \
+					  "to print all %d lines" % (header, ltype, lines) )
 
 	def printStats(self):
-		print
-		print "Results"
-		print "======="
+		output( "" )
+		output( "Results" )
+		output( "=======" )
 
 		def print_failregexes(title, failregexes):
 			# Print title
@@ -464,7 +452,7 @@ class Fail2banRegex(object):
 								timeString,
 								ip[-1] and " (multiple regex matched)" or ""))
 
-			print "\n%s: %d total" % (title, total)
+			output( "\n%s: %d total" % (title, total) )
 			pprint_list(out, " #) [# of hits] regular expression")
 			return total
 
@@ -474,7 +462,7 @@ class Fail2banRegex(object):
 
 
 		if self._filter.dateDetector is not None:
-			print "\nDate template hits:"
+			output( "\nDate template hits:" )
 			out = []
 			for template in self._filter.dateDetector.templates:
 				if self._verbose or template.hits:
@@ -482,10 +470,10 @@ class Fail2banRegex(object):
 						template.hits, template.name))
 			pprint_list(out, "[# of hits] date format")
 
-		print "\nLines: %s" % self._line_stats,
+		output( "\nLines: %s" % self._line_stats, )
 		if self._time_elapsed is not None:
-			print "[processed in %.2f sec]" % self._time_elapsed,
-		print
+			output( "[processed in %.2f sec]" % self._time_elapsed, )
+		output( "" )
 
 		if self._print_all_matched:
 			self.printLines('matched')
@@ -496,9 +484,62 @@ class Fail2banRegex(object):
 
 		return True
 
+	def file_lines_gen(self, hdlr):
+		for line in hdlr:
+			yield FileContainer.decode_line('<LOG>', self.encoding, line)
 
-if __name__ == "__main__":
+	def start(self, opts, args):
 
+		cmd_log, cmd_regex = args[:2]
+
+		if not self.readRegex(cmd_regex, 'fail'):
+			return False
+
+		if len(args) == 3 and not self.readRegex(args[2], 'ignore'):
+			return False
+
+		if os.path.isfile(cmd_log):
+			try:
+				hdlr = open(cmd_log, 'rb')
+				output( "Use         log file : %s" % cmd_log )
+				output( "Use         encoding : %s" % self.encoding )
+				test_lines = self.file_lines_gen(hdlr)
+			except IOError, e:
+				output( e )
+				return False
+		elif cmd_log == "systemd-journal":
+			if not journal:
+				output( "Error: systemd library not found. Exiting..." )
+				return False
+			myjournal = journal.Reader(converters={'__CURSOR': lambda x: x})
+			journalmatch = self._journalmatch
+			self.setDatePattern(None)
+			if journalmatch:
+				try:
+					for element in journalmatch:
+						if element == "+":
+							myjournal.add_disjunction()
+						else:
+							myjournal.add_match(element)
+				except ValueError:
+					output( "Error: Invalid journalmatch: %s" % shortstr(" ".join(journalmatch)) )
+					return False
+			output( "Use    journal match : %s" % " ".join(journalmatch) )
+			test_lines = journal_lines_gen(myjournal)
+		else:
+			output( "Use      single line : %s" % shortstr(cmd_log) )
+			test_lines = [ cmd_log ]
+		output( "" )
+
+		self.process(test_lines)
+
+		if not self.printStats():
+			return False
+
+		return True
+
+
+def exec_command_line(): # pragma: no cover
 	parser = get_opt_parser()
 	(opts, args) = parser.parse_args()
 	if opts.print_no_missed and opts.print_all_missed:
@@ -510,18 +551,16 @@ if __name__ == "__main__":
 		parser.print_help()
 		sys.exit(-1)
 
-	print
-	print "Running tests"
-	print "============="
-	print
-
-	fail2banRegex = Fail2banRegex(opts)
-
 	# We need 2 or 3 parameters
 	if not len(args) in (2, 3):
 		sys.stderr.write("ERROR: provide both <LOG> and <REGEX>.\n\n")
 		parser.print_help()
-		sys.exit(-1)
+		return False
+
+	output( "" )
+	output( "Running tests" )
+	output( "=============" )
+	output( "" )
 
 	# TODO: taken from -testcases -- move common functionality somewhere
 	if opts.log_level is not None: # pragma: no cover
@@ -552,46 +591,6 @@ if __name__ == "__main__":
 		stdout.setFormatter(Formatter(fmt))
 	logSys.addHandler(stdout)
 
-	cmd_log, cmd_regex = args[:2]
-
-	fail2banRegex.readRegex(cmd_regex, 'fail') or sys.exit(-1)
-
-	if len(args) == 3:
-		fail2banRegex.readRegex(args[2], 'ignore') or sys.exit(-1)
-
-	if os.path.isfile(cmd_log):
-		try:
-			hdlr = open(cmd_log, 'rb')
-			print "Use         log file : %s" % cmd_log
-			print "Use         encoding : %s" % fail2banRegex.encoding
-			test_lines = file_lines_gen(hdlr)
-		except IOError, e:
-			print e
-			sys.exit(-1)
-	elif cmd_log == "systemd-journal":
-		if not journal:
-			print "Error: systemd library not found. Exiting..."
-			sys.exit(-1)
-		myjournal = journal.Reader(converters={'__CURSOR': lambda x: x})
-		journalmatch = fail2banRegex._journalmatch
-		fail2banRegex.setDatePattern(None)
-		if journalmatch:
-			try:
-				for element in journalmatch:
-					if element == "+":
-						myjournal.add_disjunction()
-					else:
-						myjournal.add_match(element)
-			except ValueError:
-				print "Error: Invalid journalmatch: %s" % shortstr(" ".join(journalmatch))
-				sys.exit(-1)
-		print "Use    journal match : %s" % " ".join(journalmatch)
-		test_lines = journal_lines_gen(myjournal)
-	else:
-		print "Use      single line : %s" % shortstr(cmd_log)
-		test_lines = [ cmd_log ]
-	print
-
-	fail2banRegex.process(test_lines)
-
-	fail2banRegex.printStats() or sys.exit(-1)
+	fail2banRegex = Fail2banRegex(opts)
+	if not fail2banRegex.start(opts, args):
+		sys.exit(-1)

@@ -792,22 +792,26 @@ class FileContainer:
 		self.__handler.seek(self.__pos)
 		return True
 
-	def readline(self):
-		if self.__handler is None:
-			return ""
-		line = self.__handler.readline()
+	@staticmethod
+	def decode_line(filename, enc, line):
 		try:
-			line = line.decode(self.getEncoding(), 'strict')
+			line = line.decode(enc, 'strict')
 		except UnicodeDecodeError:
 			logSys.warning(
 				"Error decoding line from '%s' with '%s'."
 				" Consider setting logencoding=utf-8 (or another appropriate"
 				" encoding) for this jail. Continuing"
 				" to process line ignoring invalid characters: %r" %
-				(self.getFileName(), self.getEncoding(), line))
+				(filename, enc, line))
 			# decode with replacing error chars:
-			line = line.decode(self.getEncoding(), 'replace')
+			line = line.decode(enc, 'replace')
 		return line
+
+	def readline(self):
+		if self.__handler is None:
+			return ""
+		return FileContainer.decode_line(
+			self.getFileName(), self.getEncoding(), self.__handler.readline())
 
 	def close(self):
 		if not self.__handler is None:
