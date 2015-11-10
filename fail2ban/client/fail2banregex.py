@@ -542,7 +542,7 @@ class Fail2banRegex(object):
 		return True
 
 
-def exec_command_line(): # pragma: no cover
+def exec_command_line():
 	parser = get_opt_parser()
 	(opts, args) = parser.parse_args()
 	if opts.print_no_missed and opts.print_all_missed:
@@ -566,10 +566,10 @@ def exec_command_line(): # pragma: no cover
 	output( "" )
 
 	# TODO: taken from -testcases -- move common functionality somewhere
-	if opts.log_level is not None: # pragma: no cover
+	if opts.log_level is not None:
 		# so we had explicit settings
 		logSys.setLevel(getattr(logging, opts.log_level.upper()))
-	else: # pragma: no cover
+	else:
 		# suppress the logging but it would leave unittests' progress dots
 		# ticking, unless like with '-l critical' which would be silent
 		# unless error occurs
@@ -587,9 +587,9 @@ def exec_command_line(): # pragma: no cover
 		Formatter = logging.Formatter
 
 	# Custom log format for the verbose tests runs
-	if opts.verbose: # pragma: no cover
+	if opts.verbose:
 		stdout.setFormatter(Formatter(' %(asctime)-15s %(thread)s' + fmt))
-	else: # pragma: no cover
+	else:
 		# just prefix with the space
 		stdout.setFormatter(Formatter(fmt))
 	logSys.addHandler(stdout)
