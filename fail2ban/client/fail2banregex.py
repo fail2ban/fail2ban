@@ -204,7 +204,7 @@ class LineStats(object):
 
 	# just for convenient str
 	def __getitem__(self, key):
-		return getattr(self, key)
+		return getattr(self, key) if hasattr(self, key) else ''
 
 
 class Fail2banRegex(object):
@@ -240,7 +240,11 @@ class Fail2banRegex(object):
 		else:
 			self.encoding = locale.getpreferredencoding()
 
+	def decode_line(self, line):
+		return FileContainer.decode_line('<LOG>', self.encoding, line)
 
+	def encode_line(self, line):
+		return line.encode(self.encoding, 'ignore')
 
 	def setDatePattern(self, pattern):
 		if not self._datepattern_set:
@@ -398,8 +402,6 @@ class Fail2banRegex(object):
 				self._filter.dateDetector.sortTemplate()
 		self._time_elapsed = time.time() - t0
 
-
-
 	def printLines(self, ltype):
 		lstats = self._line_stats
 		assert(self._line_stats.missed == lstats.tested - (lstats.matched + lstats.ignored))
@@ -417,7 +419,8 @@ class Fail2banRegex(object):
 					ans = [[]]
 					for arg in [l, regexlist]:
 						ans = [ x + [y] for x in ans for y in arg ]
-					b = map(lambda a: a[0] +  ' | ' + a[1].getFailRegex() + ' |  ' + debuggexURL(a[0], a[1].getFailRegex()), ans)
+					b = map(lambda a: a[0] +  ' | ' + a[1].getFailRegex() + ' |  ' + 
+						debuggexURL(self.encode_line(a[0]), a[1].getFailRegex()), ans)
 					pprint_list([x.rstrip() for x in b], header)
 				else:
 					output( "%s too many to print.  Use --print-all-%s " \
@@ -486,7 +489,7 @@ class Fail2banRegex(object):
 
 	def file_lines_gen(self, hdlr):
 		for line in hdlr:
-			yield FileContainer.decode_line('<LOG>', self.encoding, line)
+			yield self.decode_line(line)
 
 	def start(self, opts, args):
 
@@ -507,7 +510,7 @@ class Fail2banRegex(object):
 			except IOError, e:
 				output( e )
 				return False
-		elif cmd_log == "systemd-journal":
+		elif cmd_log == "systemd-journal": # pragma: no cover
 			if not journal:
 				output( "Error: systemd library not found. Exiting..." )
 				return False

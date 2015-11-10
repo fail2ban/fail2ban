@@ -60,6 +60,8 @@ def _Fail2banRegex(*args):
 
 class Fail2banRegexTest(LogCaptureTestCase):
 
+	RE_00 = r"(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>"
+
 	FILENAME_01 = os.path.join(TEST_FILES_DIR, "testcase01.log")
 	FILENAME_02 = os.path.join(TEST_FILES_DIR, "testcase02.log")
 	FILENAME_WRONGCHAR = os.path.join(TEST_FILES_DIR, "testcase-wrong-char.log")
@@ -120,7 +122,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"--print-all-matched",
 			Fail2banRegexTest.FILENAME_01, 
-			r"(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>"
+			Fail2banRegexTest.RE_00
 		)
 		self.assertTrue(fail2banRegex.start(opts, args))
 		self.assertLogged('Lines: 19 lines, 0 ignored, 13 matched, 6 missed')
@@ -135,10 +137,22 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"--print-all-matched",
 			Fail2banRegexTest.FILENAME_02, 
-			r"(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>"
+			Fail2banRegexTest.RE_00
 		)
 		self.assertTrue(fail2banRegex.start(opts, args))
 		self.assertLogged('Lines: 13 lines, 0 ignored, 5 matched, 8 missed')
+
+	def testVerbose(self):
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"--verbose", "--print-no-missed",
+			Fail2banRegexTest.FILENAME_02, 
+			Fail2banRegexTest.RE_00
+		)
+		self.assertTrue(fail2banRegex.start(opts, args))
+		self.assertLogged('Lines: 13 lines, 0 ignored, 5 matched, 8 missed')
+
+		self.assertLogged('141.3.81.106  Fri Aug 14 11:53:59 2015')
+		self.assertLogged('141.3.81.106  Fri Aug 14 11:54:59 2015')
 
 	def testWronChar(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
@@ -153,3 +167,15 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 		self.assertLogged('Nov  8 00:16:12 main sshd[32548]: input_userauth_request: invalid user llinco')
 		self.assertLogged('Nov  8 00:16:12 main sshd[32547]: pam_succeed_if(sshd:auth): error retrieving information about user llinco')
+
+	def testWronCharDebuggex(self):
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"--debuggex", "--print-all-matched",
+			Fail2banRegexTest.FILENAME_WRONGCHAR, Fail2banRegexTest.FILTER_SSHD
+		)
+		self.assertTrue(fail2banRegex.start(opts, args))
+		self.assertLogged('Lines: 4 lines, 0 ignored, 2 matched, 2 missed')
+
+		self.assertLogged('http://')
+
+
