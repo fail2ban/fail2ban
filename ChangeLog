@@ -22,9 +22,25 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
      different log messages), which addresses different behavior on different
      exit codes of dash and bash (gh-1155)
    * Fix jail.conf.5 man's section (gh-1226)
+   * Fixed default banaction for allports jails like pam-generic, recidive, etc
+     with new default variable `banaction_allports` (gh-1216)
+   * Fixed `fail2ban-regex` stops working on invalid (wrong encoded) character
+     for python version < 3.x (gh-1248)
    * Use postfix_log logpath for postfix-rbl jail
 
 - New Features:
+   * New interpolation feature for definition config readers - `<known/parameter>`
+     (means last known init definition of filters or actions with name `parameter`).
+     This interpolation makes possible to extend a parameters of stock filter or 
+     action directly in jail inside jail.local file, without creating a separately
+     filter.d/*.local file.
+     As extension to interpolation `%(known/parameter)s`, that does not works for
+     filter and action init parameters
+   * New filters:
+     - openhab - domotic software authentication failure with the
+       rest api and web interface (gh-1223)
+     - nginx-limit-req - ban hosts, that were failed through nginx by limit
+       request processing rate (ngx_http_limit_req_module)
 
 - Enhancements:
    * Do not rotate empty log files
@@ -38,6 +54,7 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
      (Thanks Pablo Rodriguez Fernandez)
    * Enhance filter against atacker's Googlebot PTR fake records
      (gh-1226)
+   * Nginx log paths extended (prefixed with "*" wildcard) (gh-1237)
    * Added filter for openhab domotic software authentication failure with the
      rest api and web interface (gh-1223)
    * Add *_backend options for services to allow distros to set the default

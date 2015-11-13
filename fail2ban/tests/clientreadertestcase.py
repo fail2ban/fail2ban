@@ -165,11 +165,11 @@ class JailReaderTest(LogCaptureTestCase):
 		self.__share_cfg = {}
 
 	def testIncorrectJail(self):
-		jail = JailReader('XXXABSENTXXX', basedir=CONFIG_DIR, share_config = self.__share_cfg)
+		jail = JailReader('XXXABSENTXXX', basedir=CONFIG_DIR, share_config=self.__share_cfg)
 		self.assertRaises(ValueError, jail.read)
 		
 	def testJailActionEmpty(self):
-		jail = JailReader('emptyaction', basedir=IMPERFECT_CONFIG, share_config = self.__share_cfg)
+		jail = JailReader('emptyaction', basedir=IMPERFECT_CONFIG, share_config=self.__share_cfg)
 		self.assertTrue(jail.read())
 		self.assertTrue(jail.getOptions())
 		self.assertTrue(jail.isEnabled())
@@ -177,7 +177,7 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertLogged('No actions were defined for emptyaction')
 
 	def testJailActionFilterMissing(self):
-		jail = JailReader('missingbitsjail', basedir=IMPERFECT_CONFIG, share_config = self.__share_cfg)
+		jail = JailReader('missingbitsjail', basedir=IMPERFECT_CONFIG, share_config=self.__share_cfg)
 		self.assertTrue(jail.read())
 		self.assertFalse(jail.getOptions())
 		self.assertTrue(jail.isEnabled())
@@ -200,7 +200,7 @@ class JailReaderTest(LogCaptureTestCase):
 
 	if STOCK:
 		def testStockSSHJail(self):
-			jail = JailReader('sshd', basedir=CONFIG_DIR, share_config = self.__share_cfg) # we are running tests from root project dir atm
+			jail = JailReader('sshd', basedir=CONFIG_DIR, share_config=self.__share_cfg) # we are running tests from root project dir atm
 			self.assertTrue(jail.read())
 			self.assertTrue(jail.getOptions())
 			self.assertFalse(jail.isEnabled())
@@ -274,6 +274,10 @@ class JailReaderTest(LogCaptureTestCase):
 		
 class FilterReaderTest(unittest.TestCase):
 
+	def __init__(self, *args, **kwargs):
+		super(FilterReaderTest, self).__init__(*args, **kwargs)
+		self.__share_cfg = {}
+
 	def testConvert(self):
 		output = [['set', 'testcase01', 'addfailregex',
 			"^\\s*(?:\\S+ )?(?:kernel: \\[\\d+\\.\\d+\\] )?(?:@vserver_\\S+ )"
@@ -311,9 +315,8 @@ class FilterReaderTest(unittest.TestCase):
 		# is unreliable
 		self.assertEqual(sorted(filterReader.convert()), sorted(output))
 
-		filterReader = FilterReader(
-			"testcase01", "testcase01", {'maxlines': "5"})
-		filterReader.setBaseDir(TEST_FILES_DIR)
+		filterReader = FilterReader("testcase01", "testcase01", {'maxlines': "5"},
+		  share_config=self.__share_cfg, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		#filterReader.getOptions(["failregex", "ignoreregex"])
 		filterReader.getOptions(None)
@@ -322,8 +325,8 @@ class FilterReaderTest(unittest.TestCase):
 
 	def testFilterReaderSubstitionDefault(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sweet@example.com fromip=<IP>']]
-		filterReader = FilterReader('substition', "jailname", {})
-		filterReader.setBaseDir(TEST_FILES_DIR)
+		filterReader = FilterReader('substition', "jailname", {},
+		  share_config=self.__share_cfg, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)
 		c = filterReader.convert()
@@ -331,16 +334,34 @@ class FilterReaderTest(unittest.TestCase):
 
 	def testFilterReaderSubstitionSet(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sour@example.com fromip=<IP>']]
-		filterReader = FilterReader('substition', "jailname", {'honeypot': 'sour@example.com'})
-		filterReader.setBaseDir(TEST_FILES_DIR)
+		filterReader = FilterReader('substition', "jailname", {'honeypot': 'sour@example.com'},
+		  share_config=self.__share_cfg, basedir=TEST_FILES_DIR)
+		filterReader.read()
+		filterReader.getOptions(None)
+		c = filterReader.convert()
+		self.assertEqual(sorted(c), sorted(output))
+
+	def testFilterReaderSubstitionKnown(self):
+		output = [['set', 'jailname', 'addfailregex', 'to=test,sweet@example.com,test2,sweet@example.com fromip=<IP>']]
+		filterName, filterOpt = JailReader.extractOptions(
+			'substition[honeypot="<sweet>,<known/honeypot>", sweet="test,<known/honeypot>,test2"]')
+		filterReader = FilterReader('substition', "jailname", filterOpt,
+		  share_config=self.__share_cfg, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)
 		c = filterReader.convert()
 		self.assertEqual(sorted(c), sorted(output))
 
 	def testFilterReaderSubstitionFail(self):
-		filterReader = FilterReader('substition', "jailname", {'honeypot': '<sweet>', 'sweet': '<honeypot>'})
-		filterReader.setBaseDir(TEST_FILES_DIR)
+		# directly subst the same var :
+		filterReader = FilterReader('substition', "jailname", {'honeypot': '<honeypot>'},
+		  share_config=self.__share_cfg, basedir=TEST_FILES_DIR)
+		filterReader.read()
+		filterReader.getOptions(None)
+		self.assertRaises(ValueError, FilterReader.convert, filterReader)
+		# cross subst the same var :
+		filterReader = FilterReader('substition', "jailname", {'honeypot': '<sweet>', 'sweet': '<honeypot>'},
+		  share_config=self.__share_cfg, basedir=TEST_FILES_DIR)
 		filterReader.read()
 		filterReader.getOptions(None)
 		self.assertRaises(ValueError, FilterReader.convert, filterReader)
@@ -508,12 +529,13 @@ class JailsReaderTest(LogCaptureTestCase):
 				if jail == 'INCLUDES':
 					continue
 				filterName = jails.get(jail, 'filter')
+				filterName, filterOpt = JailReader.extractOptions(filterName)
 				allFilters.add(filterName)
 				self.assertTrue(len(filterName))
 				# moreover we must have a file for it
 				# and it must be readable as a Filter
-				filterReader = FilterReader(filterName, jail, {})
-				filterReader.setBaseDir(CONFIG_DIR)
+				filterReader = FilterReader(filterName, jail, filterOpt, 
+					share_config=self.__share_cfg, basedir=CONFIG_DIR)
 				self.assertTrue(filterReader.read(),"Failed to read filter:" + filterName)		  # opens fine
 				filterReader.getOptions({})	  # reads fine
 
@@ -551,7 +573,10 @@ class JailsReaderTest(LogCaptureTestCase):
 			filters = set(os.path.splitext(os.path.split(a)[1])[0]
 				for a in glob.glob(os.path.join('config', 'filter.d', '*.conf'))
 					if not a.endswith('common.conf'))
-			filters_jail = set(jail.options['filter'] for jail in jails.jails)
+			# get filters of all jails (filter names without options inside filter[...])
+			filters_jail = set(
+				JailReader.extractOptions(jail.options['filter'])[0] for jail in jails.jails
+			)
 			self.maxDiff = None
 			self.assertTrue(filters.issubset(filters_jail),
 					"More filters exists than are referenced in stock jail.conf %r" % filters.difference(filters_jail))

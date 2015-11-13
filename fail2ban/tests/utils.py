@@ -85,6 +85,7 @@ def gatherTests(regexps=None, no_network=False):
 	from . import misctestcase
 	from . import databasetestcase
 	from . import samplestestcase
+	from . import fail2banregextestcase
 
 	if not regexps: # pragma: no cover
 		tests = unittest.TestSuite()
@@ -151,6 +152,9 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
 	# Filter Regex tests with sample logs
 	tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
+
+	# bin/fail2ban-regex
+	tests.addTest(unittest.makeSuite(fail2banregextestcase.Fail2banRegexTest))
 
 	#
 	# Python action testcases
