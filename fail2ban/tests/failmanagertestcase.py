@@ -68,11 +68,11 @@ class AddFailure(unittest.TestCase):
 		self.assertEqual(self.__failManager.getMaxTime(), 13)
 		self.__failManager.setMaxTime(600)
 
-	def _testDel(self):
+	def testDel(self):
 		self.__failManager.delFailure('193.168.0.128')
 		self.__failManager.delFailure('111.111.1.111')
 		
-		self.assertEqual(self.__failManager.size(), 1)
+		self.assertEqual(self.__failManager.size(), 2)
 		
 	def testCleanupOK(self):
 		timestamp = 1167606999.0

@@ -44,53 +44,30 @@ class FailManager:
 		self.__failTotal = 0
 	
 	def setFailTotal(self, value):
-		try:
-			self.__lock.acquire()
+		with self.__lock:
 			self.__failTotal = value
-		finally:
-			self.__lock.release()
 		
 	def getFailTotal(self):
-		try:
-			self.__lock.acquire()
+		with self.__lock:
 			return self.__failTotal
-		finally:
-			self.__lock.release()
 	
 	def setMaxRetry(self, value):
-		try:
-			self.__lock.acquire()
-			self.__maxRetry = value
-		finally:
-			self.__lock.release()
+		self.__maxRetry = value
 	
 	def getMaxRetry(self):
-		try:
-			self.__lock.acquire()
-			return self.__maxRetry
-		finally:
-			self.__lock.release()
+		return self.__maxRetry
 	
 	def setMaxTime(self, value):
-		try:
-			self.__lock.acquire()
-			self.__maxTime = value
-		finally:
-			self.__lock.release()
+		self.__maxTime = value
 	
 	def getMaxTime(self):
-		try:
-			self.__lock.acquire()
-			return self.__maxTime
-		finally:
-			self.__lock.release()
+		return self.__maxTime
 
 	def addFailure(self, ticket, count=1):
 		attempts = 1
-		try:
-			self.__lock.acquire()
+		with self.__lock:
 			ip = ticket.getIP()
-			if ip in self.__failList:
+			try:
 				fData = self.__failList[ip]
 				# if the same object:
 				if fData is ticket:
@@ -103,7 +80,7 @@ class FailManager:
 					fData.setRetry(0)
 				fData.inc(matches, 1, count)
 				fData.setLastTime(unixTime)
-			else:
+			except KeyError:
 				# if already FailTicket - add it direct, otherwise create (using copy all ticket data):
 				if isinstance(ticket, FailTicket):
 					fData = ticket;
@@ -124,42 +101,46 @@ class FailManager:
 											  for k,v in  self.__failList.iteritems()])
 				logSys.debug("Total # of detected failures: %d. Current failures from %d IPs (IP:count): %s"
 							 % (self.__failTotal, len(self.__failList), failures_summary))
-		finally:
-			self.__lock.release()
 		return attempts
 	
 	def size(self):
-		try:
-			self.__lock.acquire()
+		with self.__lock:
 			return len(self.__failList)
-		finally:
-			self.__lock.release()
 	
 	def cleanup(self, time):
-		try:
-			self.__lock.acquire()
-			tmp = self.__failList.copy()
-			for item in tmp:
-				if tmp[item].getLastTime() < time - self.__maxTime:
-					self.__delFailure(item)
-		finally:
-			self.__lock.release()
+		with self.__lock:
+			todelete = [ip for ip,item in self.__failList.iteritems() \
+				if item.getLastTime() + self.__maxTime <= time]
+			if len(todelete) == len(self.__failList):
+				# remove all:
+				self.__failList = dict()
+			elif not len(todelete):
+				# nothing:
+				return
+			if len(todelete) / 2.0 <= len(self.__failList) / 3.0:
+				# few as 2/3 should be removed - remove particular items:
+				for ip in todelete:
+					del self.__failList[ip]
+			else:
+				# create new dictionary without items to be deleted:
+				self.__failList = dict((ip,item) for ip,item in self.__failList.iteritems() \
+					if item.getLastTime() + self.__maxTime > time)
 	
-	def __delFailure(self, ip):
-		if ip in self.__failList:
-			del self.__failList[ip]
+	def delFailure(self, ip):
+		with self.__lock:
+			try:
+				del self.__failList[ip]
+			except KeyError:
+				pass
 	
 	def toBan(self, ip=None):
-		try:
-			self.__lock.acquire()
+		with self.__lock:
 			for ip in ([ip] if ip != None and ip in self.__failList else self.__failList):
 				data = self.__failList[ip]
 				if data.getRetry() >= self.__maxRetry:
 					del self.__failList[ip]
 					return data
 			raise FailManagerEmpty
-		finally:
-			self.__lock.release()
 
 
 class FailManagerEmpty(Exception):
