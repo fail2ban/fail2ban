@@ -176,6 +176,7 @@ def gatherTests(regexps=None, opts=None):
 	tests.addTest(unittest.makeSuite(tickettestcase.TicketTests))
 	# FailManager
 	tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
+	tests.addTest(unittest.makeSuite(failmanagertestcase.FailmanagerComplex))
 	# BanManager
 	tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
 	try:

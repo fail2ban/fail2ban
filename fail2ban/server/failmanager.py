@@ -32,6 +32,7 @@ from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
+logLevel = logging.DEBUG
 
 
 class FailManager:
@@ -93,13 +94,13 @@ class FailManager:
 			attempts = fData.getRetry()
 			self.__failTotal += 1
 
-			if logSys.getEffectiveLevel() <= logging.DEBUG:
+			if logSys.getEffectiveLevel() <= logLevel:
 				# yoh: Since composing this list might be somewhat time consuming
 				# in case of having many active failures, it should be ran only
 				# if debug level is "low" enough
 				failures_summary = ', '.join(['%s:%d' % (k, v.getRetry())
 											  for k,v in  self.__failList.iteritems()])
-				logSys.debug("Total # of detected failures: %d. Current failures from %d IPs (IP:count): %s"
+				logSys.log(logLevel, "Total # of detected failures: %d. Current failures from %d IPs (IP:count): %s"
 							 % (self.__failTotal, len(self.__failList), failures_summary))
 		return attempts
 	
