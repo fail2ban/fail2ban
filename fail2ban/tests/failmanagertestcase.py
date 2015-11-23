@@ -122,6 +122,29 @@ class AddFailure(unittest.TestCase):
 		self.assertNotEqual(ticket.getIP(), "100.100.10.10")
 		self.assertRaises(FailManagerEmpty, self.__failManager.toBan)
 
+	def testBgService(self):
+		bgSvc = self.__failManager._FailManager__bgSvc
+		failManager2nd = FailManager()
+		# test singleton (same object):
+		bgSvc2 = failManager2nd._FailManager__bgSvc
+		self.assertTrue(id(bgSvc) == id(bgSvc2))
+		bgSvc2 = None
+		# test service :
+		self.assertTrue(bgSvc.service(True, True))
+		self.assertFalse(bgSvc.service())
+		# bypass threshold and time:
+		for i in range(1, bgSvc._BgService__threshold):
+			self.assertFalse(bgSvc.service())
+		# bypass time check:
+		bgSvc._BgService__serviceTime = -0x7fffffff
+		self.assertTrue(bgSvc.service())
+		# bypass threshold and time:
+		bgSvc._BgService__serviceTime = -0x7fffffff
+		for i in range(1, bgSvc._BgService__threshold):
+			self.assertFalse(bgSvc.service())
+		self.assertTrue(bgSvc.service(False, True))
+		self.assertFalse(bgSvc.service(False, True))
+
 
 class FailmanagerComplex(unittest.TestCase):
 

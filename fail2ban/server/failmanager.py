@@ -28,7 +28,7 @@ from threading import Lock
 import logging
 
 from .ticket import FailTicket
-from ..helpers import getLogger
+from ..helpers import getLogger, BgService
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -43,6 +43,7 @@ class FailManager:
 		self.__maxRetry = 3
 		self.__maxTime = 600
 		self.__failTotal = 0
+		self.__bgSvc = BgService()
 	
 	def setFailTotal(self, value):
 		with self.__lock:
@@ -102,6 +103,8 @@ class FailManager:
 											  for k,v in  self.__failList.iteritems()])
 				logSys.log(logLevel, "Total # of detected failures: %d. Current failures from %d IPs (IP:count): %s"
 							 % (self.__failTotal, len(self.__failList), failures_summary))
+
+		self.__bgSvc.service()
 		return attempts
 	
 	def size(self):
@@ -126,6 +129,7 @@ class FailManager:
 				# create new dictionary without items to be deleted:
 				self.__failList = dict((ip,item) for ip,item in self.__failList.iteritems() \
 					if item.getLastTime() + self.__maxTime > time)
+		self.__bgSvc.service()
 	
 	def delFailure(self, ip):
 		with self.__lock:
@@ -141,7 +145,8 @@ class FailManager:
 				if data.getRetry() >= self.__maxRetry:
 					del self.__failList[ip]
 					return data
-			raise FailManagerEmpty
+		self.__bgSvc.service()
+		raise FailManagerEmpty
 
 
 class FailManagerEmpty(Exception):
