@@ -247,7 +247,7 @@ class CommandActionTest(LogCaptureTestCase):
 		cpid = getnastypid()
 		# Verify that the process itself got killed
 		self.assertTrue(Utils.wait_for(lambda: not pid_exists(cpid), 3))  # process should have been killed
-		self.assertLogged('my pid ')
+		self.assertLogged('my pid ', 'Resource temporarily unavailable')
 		self.assertLogged('timed out')
 		self.assertLogged('killed with SIGTERM', 
 		                  'killed with SIGKILL')
@@ -261,7 +261,7 @@ class CommandActionTest(LogCaptureTestCase):
 		cpid = getnastypid()
 		# Verify that the process itself got killed
 		self.assertTrue(Utils.wait_for(lambda: not pid_exists(cpid), 3))
-		self.assertLogged('my pid ')
+		self.assertLogged('my pid ', 'Resource temporarily unavailable')
 		self.assertLogged('timed out')
 		self.assertLogged('killed with SIGTERM', 
 		                  'killed with SIGKILL')

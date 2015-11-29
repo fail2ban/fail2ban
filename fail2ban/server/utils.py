@@ -159,7 +159,7 @@ class Utils():
 			# if was timeouted (killed/terminated) - to prevent waiting, set std handles to non-blocking mode.
 			if popen.stdout:
 				try:
-					if retcode < 0:
+					if retcode is None or retcode < 0:
 						Utils.setFBlockMode(popen.stdout, False)
 					stdout = popen.stdout.read()
 				except IOError as e:
@@ -169,7 +169,7 @@ class Utils():
 				popen.stdout.close()
 			if popen.stderr:
 				try:
-					if retcode < 0:
+					if retcode is None or retcode < 0:
 						Utils.setFBlockMode(popen.stderr, False)
 					stderr = popen.stderr.read()
 				except IOError as e:
