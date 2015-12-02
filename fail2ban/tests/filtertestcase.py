@@ -859,6 +859,16 @@ class GetFailures(LogCaptureTestCase):
 		self.filter.delLogPath(GetFailures.FILENAME_01)
 		self.assertEqual(self.filter.getLogPath(),[])
 
+	def testNoLogAdded(self):
+		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)
+		self.assertTrue(self.filter.containsLogPath(GetFailures.FILENAME_01))
+		self.filter.delLogPath(GetFailures.FILENAME_01)
+		self.assertFalse(self.filter.containsLogPath(GetFailures.FILENAME_01))
+		# and unknown (safety and cover)
+		self.assertFalse(self.filter.containsLogPath('unknown.log'))
+		self.filter.delLogPath('unknown.log')
+
+
 	def testGetFailures01(self, filename=None, failures=None):
 		filename = filename or GetFailures.FILENAME_01
 		failures = failures or GetFailures.FAILURES_01
