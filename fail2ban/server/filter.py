@@ -38,6 +38,11 @@ from .failregex import FailRegex, Regex, RegexException
 from .action import CommandAction
 from ..helpers import getLogger
 
+try:
+	from collections import OrderedDict
+except ImportError:
+	OrderedDict = dict
+
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
@@ -552,7 +557,7 @@ class FileFilter(Filter):
 	def __init__(self, jail, **kwargs):
 		Filter.__init__(self, jail, **kwargs)
 		## The log file path.
-		self.__logPath = []
+		self.__logs = OrderedDict()
 		self.setLogEncoding("auto")
 
 	##
@@ -561,7 +566,7 @@ class FileFilter(Filter):
 	# @param path log file path
 
 	def addLogPath(self, path, tail = False):
-		if self.containsLogPath(path):
+		if path in self.__logs:
 			logSys.error(path + " already exists")
 		else:
 			container = FileContainer(path, self.getLogEncoding(), tail)
@@ -570,7 +575,7 @@ class FileFilter(Filter):
 				lastpos = db.addLog(self.jail, container)
 				if lastpos and not tail:
 					container.setPos(lastpos)
-			self.__logPath.append(container)
+			self.__logs[path] = container
 			logSys.info("Added logfile = %s" % path)
 			self._addLogPath(path)			# backend specific
 
@@ -585,15 +590,16 @@ class FileFilter(Filter):
 	# @param path the log file to delete
 
 	def delLogPath(self, path):
-		for log in self.__logPath:
-			if log.getFileName() == path:
-				self.__logPath.remove(log)
-				db = self.jail.database
-				if db is not None:
-					db.updateLog(self.jail, log)
-				logSys.info("Removed logfile = %s" % path)
-				self._delLogPath(path)
-				return
+		try:
+			log = self.__logs.pop(path)
+		except KeyError:
+			return
+		db = self.jail.database
+		if db is not None:
+			db.updateLog(self.jail, log)
+		logSys.info("Removed logfile = %s" % path)
+		self._delLogPath(path)
+		return
 
 	def _delLogPath(self, path): # pragma: no cover - overwritten function
 		# nothing to do by default
@@ -606,7 +612,7 @@ class FileFilter(Filter):
 	# @return log file path
 
 	def getLogPath(self):
-		return self.__logPath
+		return self.__logs.values()
 
 	##
 	# Check whether path is already monitored.
@@ -615,10 +621,7 @@ class FileFilter(Filter):
 	# @return True if the path is already monitored else False
 
 	def containsLogPath(self, path):
-		for log in self.__logPath:
-			if log.getFileName() == path:
-				return True
-		return False
+		return path in self.__logs
 
 	##
 	# Set the log file encoding
@@ -629,7 +632,7 @@ class FileFilter(Filter):
 		if encoding.lower() == "auto":
 			encoding = locale.getpreferredencoding()
 		codecs.lookup(encoding) # Raise LookupError if invalid codec
-		for log in self.getLogPath():
+		for log in self.__logs.itervalues():
 			log.setEncoding(encoding)
 		self.__encoding = encoding
 		logSys.info("Set jail log file encoding to %s" % encoding)
@@ -643,10 +646,7 @@ class FileFilter(Filter):
 		return self.__encoding
 
 	def getFileContainer(self, path):
-		for log in self.__logPath:
-			if log.getFileName() == path:
-				return log
-		return None
+		return self.__logs.get(path, None)
 
 	##
 	# Gets all the failure in the log file.
@@ -698,7 +698,7 @@ class FileFilter(Filter):
 		"""Status of Filter plus files being monitored.
 		"""
 		ret = super(FileFilter, self).status(flavor=flavor)
-		path = [m.getFileName() for m in self.getLogPath()]
+		path = self.__logs.keys()
 		ret.append(("File list", path))
 		return ret
 
