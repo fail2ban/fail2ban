@@ -569,13 +569,13 @@ class FileFilter(Filter):
 		if path in self.__logs:
 			logSys.error(path + " already exists")
 		else:
-			container = FileContainer(path, self.getLogEncoding(), tail)
+			log = FileContainer(path, self.getLogEncoding(), tail)
 			db = self.jail.database
 			if db is not None:
-				lastpos = db.addLog(self.jail, container)
+				lastpos = db.addLog(self.jail, log)
 				if lastpos and not tail:
-					container.setPos(lastpos)
-			self.__logs[path] = container
+					log.setPos(lastpos)
+			self.__logs[path] = log
 			logSys.info("Added logfile = %s" % path)
 			self._addLogPath(path)			# backend specific
 
@@ -645,7 +645,7 @@ class FileFilter(Filter):
 	def getLogEncoding(self):
 		return self.__encoding
 
-	def getFileContainer(self, path):
+	def getLog(self, path):
 		return self.__logs.get(path, None)
 
 	##
@@ -656,13 +656,13 @@ class FileFilter(Filter):
 	# is created and is added to the FailManager.
 
 	def getFailures(self, filename):
-		container = self.getFileContainer(filename)
-		if container is None:
+		log = self.getLog(filename)
+		if log is None:
 			logSys.error("Unable to get failures in " + filename)
 			return False
 		# Try to open log file.
 		try:
-			has_content = container.open()
+			has_content = log.open()
 		# see http://python.org/dev/peps/pep-3151/
 		except IOError, e:
 			logSys.error("Unable to open %s" % filename)
@@ -683,15 +683,15 @@ class FileFilter(Filter):
 		# start reading tested to be empty container -- race condition
 		# might occur leading at least to tests failures.
 		while has_content:
-			line = container.readline()
+			line = log.readline()
 			if not line or not self.active:
 				# The jail reached the bottom or has been stopped
 				break
 			self.processLineAndAdd(line)
-		container.close()
+		log.close()
 		db = self.jail.database
 		if db is not None:
-			db.updateLog(self.jail, container)
+			db.updateLog(self.jail, log)
 		return True
 
 	def status(self, flavor="basic"):
