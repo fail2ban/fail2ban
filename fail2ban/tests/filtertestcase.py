@@ -852,6 +852,8 @@ class GetFailures(LogCaptureTestCase):
 		LogCaptureTestCase.tearDown(self)
 
 	def testTail(self):
+		# There must be no containters registered, otherwise [-1] indexing would be wrong
+		self.assertEqual(self.filter.getLogs(), [])
 		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)
 		self.assertEqual(self.filter.getLogs()[-1].getPos(), 1653)
 		self.filter.getLogs()[-1].close()
