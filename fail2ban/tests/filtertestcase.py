@@ -853,11 +853,11 @@ class GetFailures(LogCaptureTestCase):
 
 	def testTail(self):
 		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)
-		self.assertEqual(self.filter.getLogPath()[-1].getPos(), 1653)
-		self.filter.getLogPath()[-1].close()
-		self.assertEqual(self.filter.getLogPath()[-1].readline(), "")
+		self.assertEqual(self.filter.getLogs()[-1].getPos(), 1653)
+		self.filter.getLogs()[-1].close()
+		self.assertEqual(self.filter.getLogs()[-1].readline(), "")
 		self.filter.delLogPath(GetFailures.FILENAME_01)
-		self.assertEqual(self.filter.getLogPath(),[])
+		self.assertEqual(self.filter.getLogs(), [])
 
 	def testNoLogAdded(self):
 		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)

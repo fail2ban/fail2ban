@@ -565,7 +565,7 @@ class FileFilter(Filter):
 	#
 	# @param path log file path
 
-	def addLogPath(self, path, tail = False):
+	def addLogPath(self, path, tail=False):
 		if path in self.__logs:
 			logSys.error(path + " already exists")
 		else:
@@ -607,11 +607,11 @@ class FileFilter(Filter):
 		pass
 
 	##
-	# Get the log file path
+	# Get the log containers
 	#
-	# @return log file path
+	# @return log containers
 
-	def getLogPath(self):
+	def getLogs(self):
 		return self.__logs.values()
 
 	##
