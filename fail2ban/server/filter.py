@@ -38,11 +38,6 @@ from .failregex import FailRegex, Regex, RegexException
 from .action import CommandAction
 from ..helpers import getLogger
 
-try:
-	from collections import OrderedDict
-except ImportError:
-	OrderedDict = dict
-
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
@@ -557,7 +552,7 @@ class FileFilter(Filter):
 	def __init__(self, jail, **kwargs):
 		Filter.__init__(self, jail, **kwargs)
 		## The log file path.
-		self.__logs = OrderedDict()
+		self.__logs = dict()
 		self.setLogEncoding("auto")
 
 	##
