@@ -148,6 +148,9 @@ Feb 12 04:09:18 localhost sshd[26713]: Connection from 115.249.163.77 port 51353
 # failJSON: { "time": "2005-02-12T04:09:21", "match": true , "host": "115.249.163.77", "desc": "Multiline match with interface address" }
 Feb 12 04:09:21 localhost sshd[26713]: Disconnecting: Too many authentication failures for root [preauth]
 
+# failJSON: { "time": "2004-11-23T21:50:37", "match": true , "host": "61.0.0.1", "desc": "New logline format as openssh 6.8 to replace prev multiline version" }
+Nov 23 21:50:37 myhost sshd[21810]: error: maximum authentication attempts exceeded for root from 61.0.0.1 port 49940 ssh2 [preauth]
+
 # failJSON: { "match": false }
 Apr 27 13:02:04 host sshd[29116]: User root not allowed because account is locked
 # failJSON: { "match": false }

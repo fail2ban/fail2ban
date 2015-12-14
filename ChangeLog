@@ -41,6 +41,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
        rest api and web interface (gh-1223)
      - nginx-limit-req - ban hosts, that were failed through nginx by limit
        request processing rate (ngx_http_limit_req_module)
+   * sshd filter got new failregex to match "maximum authentication
+     attempts exceeded" (introduced in openssh 6.8)
 
 - Enhancements:
    * Do not rotate empty log files
