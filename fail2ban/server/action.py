@@ -101,6 +101,10 @@ class CallingMap(MutableMapping):
 	def copy(self):
 		return self.__class__(self.data.copy())
 
+	def update(self, values):
+		"""Update content with items from another container"""
+		self.data.update(values)
+
 
 class ActionBase(object):
 	"""An abstract base class for actions in Fail2Ban.

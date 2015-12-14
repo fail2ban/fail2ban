@@ -25,3 +25,5 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2005-2015 Yaroslav Halchenko,
 __license__ = "GPL-v2+"
 
 version = "0.9.3.dev"
+
+agent_string = "Fail2Ban %s" % version
