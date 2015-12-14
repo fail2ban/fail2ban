@@ -491,6 +491,7 @@ class Filter(JailThread):
 
 		self.__lineBuffer = (
 			self.__lineBuffer + [tupleLine])[-self.__lineBufferSize:]
+		logSys.log(5, "Looking for failregex match of %r" % self.__lineBuffer)
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
