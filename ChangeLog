@@ -45,6 +45,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
        murmur/mumble-server with an invalid server password or certificate.
    * New jails:
      - murmur - bans TCP and UDP from the bad host on the default murmur port.
+   * sshd filter got new failregex to match "maximum authentication
+     attempts exceeded" (introduced in openssh 6.8)
 
 - Enhancements:
    * Do not rotate empty log files
@@ -63,6 +65,9 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
      rest api and web interface (gh-1223)
    * Add *_backend options for services to allow distros to set the default
      backend per service, set default to systemd for Fedora as appropriate
+   * Performance improvements while monitoring large number of files (gh-1265).
+     Use associative array (dict) for monitored log files to speed up lookup 
+     operations. Thanks @kshetragia
 
 ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
 ----------

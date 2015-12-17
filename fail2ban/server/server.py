@@ -212,7 +212,7 @@ class Server:
 		filter_ = self.__jails[name].filter
 		if isinstance(filter_, FileFilter):
 			return [m.getFileName()
-					for m in filter_.getLogPath()]
+					for m in filter_.getLogs()]
 		else: # pragma: systemd no cover
 			logSys.info("Jail %s is not a FileFilter instance" % name)
 			return []

@@ -552,7 +552,7 @@ class FileFilter(Filter):
 	def __init__(self, jail, **kwargs):
 		Filter.__init__(self, jail, **kwargs)
 		## The log file path.
-		self.__logPath = []
+		self.__logs = dict()
 		self.setLogEncoding("auto")
 
 	##
@@ -560,17 +560,17 @@ class FileFilter(Filter):
 	#
 	# @param path log file path
 
-	def addLogPath(self, path, tail = False):
-		if self.containsLogPath(path):
+	def addLogPath(self, path, tail=False):
+		if path in self.__logs:
 			logSys.error(path + " already exists")
 		else:
-			container = FileContainer(path, self.getLogEncoding(), tail)
+			log = FileContainer(path, self.getLogEncoding(), tail)
 			db = self.jail.database
 			if db is not None:
-				lastpos = db.addLog(self.jail, container)
+				lastpos = db.addLog(self.jail, log)
 				if lastpos and not tail:
-					container.setPos(lastpos)
-			self.__logPath.append(container)
+					log.setPos(lastpos)
+			self.__logs[path] = log
 			logSys.info("Added logfile = %s" % path)
 			self._addLogPath(path)			# backend specific
 
@@ -585,15 +585,16 @@ class FileFilter(Filter):
 	# @param path the log file to delete
 
 	def delLogPath(self, path):
-		for log in self.__logPath:
-			if log.getFileName() == path:
-				self.__logPath.remove(log)
-				db = self.jail.database
-				if db is not None:
-					db.updateLog(self.jail, log)
-				logSys.info("Removed logfile = %s" % path)
-				self._delLogPath(path)
-				return
+		try:
+			log = self.__logs.pop(path)
+		except KeyError:
+			return
+		db = self.jail.database
+		if db is not None:
+			db.updateLog(self.jail, log)
+		logSys.info("Removed logfile = %s" % path)
+		self._delLogPath(path)
+		return
 
 	def _delLogPath(self, path): # pragma: no cover - overwritten function
 		# nothing to do by default
@@ -601,12 +602,12 @@ class FileFilter(Filter):
 		pass
 
 	##
-	# Get the log file path
+	# Get the log containers
 	#
-	# @return log file path
+	# @return log containers
 
-	def getLogPath(self):
-		return self.__logPath
+	def getLogs(self):
+		return self.__logs.values()
 
 	##
 	# Check whether path is already monitored.
@@ -615,10 +616,7 @@ class FileFilter(Filter):
 	# @return True if the path is already monitored else False
 
 	def containsLogPath(self, path):
-		for log in self.__logPath:
-			if log.getFileName() == path:
-				return True
-		return False
+		return path in self.__logs
 
 	##
 	# Set the log file encoding
@@ -629,7 +627,7 @@ class FileFilter(Filter):
 		if encoding.lower() == "auto":
 			encoding = locale.getpreferredencoding()
 		codecs.lookup(encoding) # Raise LookupError if invalid codec
-		for log in self.getLogPath():
+		for log in self.__logs.itervalues():
 			log.setEncoding(encoding)
 		self.__encoding = encoding
 		logSys.info("Set jail log file encoding to %s" % encoding)
@@ -642,11 +640,8 @@ class FileFilter(Filter):
 	def getLogEncoding(self):
 		return self.__encoding
 
-	def getFileContainer(self, path):
-		for log in self.__logPath:
-			if log.getFileName() == path:
-				return log
-		return None
+	def getLog(self, path):
+		return self.__logs.get(path, None)
 
 	##
 	# Gets all the failure in the log file.
@@ -656,13 +651,13 @@ class FileFilter(Filter):
 	# is created and is added to the FailManager.
 
 	def getFailures(self, filename):
-		container = self.getFileContainer(filename)
-		if container is None:
+		log = self.getLog(filename)
+		if log is None:
 			logSys.error("Unable to get failures in " + filename)
 			return False
 		# Try to open log file.
 		try:
-			has_content = container.open()
+			has_content = log.open()
 		# see http://python.org/dev/peps/pep-3151/
 		except IOError, e:
 			logSys.error("Unable to open %s" % filename)
@@ -683,22 +678,22 @@ class FileFilter(Filter):
 		# start reading tested to be empty container -- race condition
 		# might occur leading at least to tests failures.
 		while has_content:
-			line = container.readline()
+			line = log.readline()
 			if not line or not self.active:
 				# The jail reached the bottom or has been stopped
 				break
 			self.processLineAndAdd(line)
-		container.close()
+		log.close()
 		db = self.jail.database
 		if db is not None:
-			db.updateLog(self.jail, container)
+			db.updateLog(self.jail, log)
 		return True
 
 	def status(self, flavor="basic"):
 		"""Status of Filter plus files being monitored.
 		"""
 		ret = super(FileFilter, self).status(flavor=flavor)
-		path = [m.getFileName() for m in self.getLogPath()]
+		path = self.__logs.keys()
 		ret.append(("File list", path))
 		return ret
 

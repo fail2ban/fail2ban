@@ -88,10 +88,10 @@ class FilterPoll(FileFilter):
 		while self.active:
 			if logSys.getEffectiveLevel() <= 6:
 				logSys.log(6, "Woke up idle=%s with %d files monitored",
-						   self.idle, len(self.getLogPath()))
+						   self.idle, len(self.getLogs()))
 			if not self.idle:
 				# Get file modification
-				for container in self.getLogPath():
+				for container in self.getLogs():
 					filename = container.getFileName()
 					if self.isModified(filename):
 						self.getFailures(filename)

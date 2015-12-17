@@ -852,12 +852,24 @@ class GetFailures(LogCaptureTestCase):
 		LogCaptureTestCase.tearDown(self)
 
 	def testTail(self):
+		# There must be no containters registered, otherwise [-1] indexing would be wrong
+		self.assertEqual(self.filter.getLogs(), [])
 		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)
-		self.assertEqual(self.filter.getLogPath()[-1].getPos(), 1653)
-		self.filter.getLogPath()[-1].close()
-		self.assertEqual(self.filter.getLogPath()[-1].readline(), "")
+		self.assertEqual(self.filter.getLogs()[-1].getPos(), 1653)
+		self.filter.getLogs()[-1].close()
+		self.assertEqual(self.filter.getLogs()[-1].readline(), "")
 		self.filter.delLogPath(GetFailures.FILENAME_01)
-		self.assertEqual(self.filter.getLogPath(),[])
+		self.assertEqual(self.filter.getLogs(), [])
+
+	def testNoLogAdded(self):
+		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)
+		self.assertTrue(self.filter.containsLogPath(GetFailures.FILENAME_01))
+		self.filter.delLogPath(GetFailures.FILENAME_01)
+		self.assertFalse(self.filter.containsLogPath(GetFailures.FILENAME_01))
+		# and unknown (safety and cover)
+		self.assertFalse(self.filter.containsLogPath('unknown.log'))
+		self.filter.delLogPath('unknown.log')
+
 
 	def testGetFailures01(self, filename=None, failures=None):
 		filename = filename or GetFailures.FILENAME_01
