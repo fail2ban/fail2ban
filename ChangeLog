@@ -43,6 +43,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
        request processing rate (ngx_http_limit_req_module)
      - murmur - ban hosts that repeatedly attempt to connect to
        murmur/mumble-server with an invalid server password or certificate.
+   * New jails:
+     - murmur - bans TCP and UDP from the bad host on the default murmur port.
 
 - Enhancements:
    * Do not rotate empty log files
