@@ -26,4 +26,5 @@ __license__ = "GPL-v2+"
 
 version = "0.9.3.dev"
 
-agent_string = "Fail2Ban %s" % version
+# Format https://tools.ietf.org/html/rfc7231#section-5.5.3
+agent_string = "Fail2Ban/%s" % version
