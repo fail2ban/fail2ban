@@ -27,6 +27,7 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
    * Fixed `fail2ban-regex` stops working on invalid (wrong encoded) character
      for python version < 3.x (gh-1248)
    * Use postfix_log logpath for postfix-rbl jail
+   * filters.d/postfix.conf - add 'Sender address rejected: Domain not found' failregex
 
 - New Features:
    * New interpolation feature for definition config readers - `<known/parameter>`
