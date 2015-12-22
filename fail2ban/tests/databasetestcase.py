@@ -251,6 +251,37 @@ class DatabaseTest(LogCaptureTestCase):
 		# be returned
 		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=-1)), 2)
 
+	def testGetBansMerged_MaxEntries(self):
+		if Fail2BanDb is None: # pragma: no cover
+			return
+		self.testAddJail()
+		maxEntries = 2
+		failures = ["abc\n", "123\n", "ABC\n", "1234\n"]
+		# add failures sequential:
+		i = 80
+		for f in failures:
+			i -= 10
+			ticket = FailTicket("127.0.0.1", MyTime.time() - i, [f])
+			ticket.setAttempt(1)
+			self.db.addBan(self.jail, ticket)
+		# should retrieve 2 matches only, but count of all attempts:
+		self.db.maxEntries = maxEntries;
+		ticket = self.db.getBansMerged("127.0.0.1")
+		self.assertEqual(ticket.getIP(), "127.0.0.1")
+		self.assertEqual(ticket.getAttempt(), len(failures))
+		self.assertEqual(len(ticket.getMatches()), maxEntries)
+		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxEntries:])
+    # add more failures at once:
+		ticket = FailTicket("127.0.0.1", MyTime.time() - 10, failures)
+		ticket.setAttempt(len(failures))
+		self.db.addBan(self.jail, ticket)
+		# should retrieve 2 matches only, but count of all attempts:
+		self.db.maxEntries = maxEntries;
+		ticket = self.db.getBansMerged("127.0.0.1")
+		self.assertEqual(ticket.getAttempt(), 2 * len(failures))
+		self.assertEqual(len(ticket.getMatches()), maxEntries)
+		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxEntries:])
+
 	def testGetBansMerged(self):
 		if Fail2BanDb is None: # pragma: no cover
 			return

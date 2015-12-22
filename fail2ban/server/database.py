@@ -163,6 +163,7 @@ class Fail2BanDb(object):
 
 
 	def __init__(self, filename, purgeAge=24*60*60):
+		self.maxEntries = 50
 		try:
 			self._lock = RLock()
 			self._db = sqlite3.connect(
@@ -454,7 +455,7 @@ class Fail2BanDb(object):
 		if ip is not None:
 			query += " AND ip=?"
 			queryArgs.append(ip)
-		query += " ORDER BY ip, timeofban"
+		query += " ORDER BY ip, timeofban desc"
 
 		return cur.execute(query, queryArgs)
 
@@ -535,7 +536,14 @@ class Fail2BanDb(object):
 						matches = []
 						failures = 0
 						tickdata = {}
-					matches.extend(data.get('matches', ()))
+					m = data.get('matches', [])
+					# pre-insert "maxadd" enries (because tickets are ordered desc by time)
+					maxadd = self.maxEntries - len(matches)
+					if maxadd > 0:
+						if len(m) <= maxadd:
+							matches = m + matches
+						else:
+							matches = m[-maxadd:] + matches
 					failures += data.get('failures', 1)
 					tickdata.update(data.get('data', {}))
 					prev_timeofban = timeofban

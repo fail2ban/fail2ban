@@ -35,6 +35,13 @@ class AddFailure(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		self.__items = None
+		self.__failManager = FailManager()
+
+	def tearDown(self):
+		"""Call after every test case."""
+
+	def _addDefItems(self):
 		self.__items = [[u'193.168.0.128', 1167605999.0],
 					    [u'193.168.0.128', 1167605999.0],
 					    [u'193.168.0.128', 1167605999.0],
@@ -48,44 +55,87 @@ class AddFailure(unittest.TestCase):
 					    ['100.100.10.10', 1000001000.0],
 					    ['100.100.10.10', 1000001500.0],
 					    ['100.100.10.10', 1000002000.0]]
-		
-		self.__failManager = FailManager()
 		for i in self.__items:
 			self.__failManager.addFailure(FailTicket(i[0], i[1]))
 
-	def tearDown(self):
-		"""Call after every test case."""
-	
 	def testFailManagerAdd(self):
+		self._addDefItems()
 		self.assertEqual(self.__failManager.size(), 3)
 		self.assertEqual(self.__failManager.getFailTotal(), 13)
 		self.__failManager.setFailTotal(0)
 		self.assertEqual(self.__failManager.getFailTotal(), 0)
 		self.__failManager.setFailTotal(13)
 	
+	def testFailManagerAdd_MaxEntries(self):
+		maxEntries = 2
+		self.__failManager.maxEntries = maxEntries
+		failures = ["abc\n", "123\n", "ABC\n", "1234\n"]
+		# add failures sequential:
+		i = 80
+		for f in failures:
+			i -= 10
+			ticket = FailTicket("127.0.0.1", 1000002000 - i, [f])
+			ticket.setAttempt(1)
+			self.__failManager.addFailure(ticket)
+		#
+		manFailList = self.__failManager._FailManager__failList
+		self.assertEqual(len(manFailList), 1)
+		ticket = manFailList["127.0.0.1"]
+		# should retrieve 2 matches only, but count of all attempts (4):
+		self.assertEqual(ticket.getAttempt(), len(failures))
+		self.assertEqual(len(ticket.getMatches()), maxEntries)
+		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxEntries:])
+    # add more failures at once:
+		ticket = FailTicket("127.0.0.1", 1000002000 - 10, failures)
+		ticket.setAttempt(len(failures))
+		self.__failManager.addFailure(ticket)
+		#
+		manFailList = self.__failManager._FailManager__failList
+		self.assertEqual(len(manFailList), 1)
+		ticket = manFailList["127.0.0.1"]
+		# should retrieve 2 matches only, but count of all attempts (8):
+		self.assertEqual(ticket.getAttempt(), 2 * len(failures))
+		self.assertEqual(len(ticket.getMatches()), maxEntries)
+		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxEntries:])
+		# add self ticket again:
+		self.__failManager.addFailure(ticket)
+		#
+		manFailList = self.__failManager._FailManager__failList
+		self.assertEqual(len(manFailList), 1)
+		ticket = manFailList["127.0.0.1"]
+		# same matches, but +1 attempt (9)
+		self.assertEqual(ticket.getAttempt(), 2 * len(failures) + 1)
+		self.assertEqual(len(ticket.getMatches()), maxEntries)
+		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxEntries:])
+	
 	def testFailManagerMaxTime(self):
+		self._addDefItems()
 		self.assertEqual(self.__failManager.getMaxTime(), 600)
 		self.__failManager.setMaxTime(13)
 		self.assertEqual(self.__failManager.getMaxTime(), 13)
 		self.__failManager.setMaxTime(600)
 
 	def testDel(self):
+		self._addDefItems()
 		self.__failManager.delFailure('193.168.0.128')
 		self.__failManager.delFailure('111.111.1.111')
 		
 		self.assertEqual(self.__failManager.size(), 2)
 		
 	def testCleanupOK(self):
+		self._addDefItems()
 		timestamp = 1167606999.0
 		self.__failManager.cleanup(timestamp)
 		self.assertEqual(self.__failManager.size(), 0)
 		
 	def testCleanupNOK(self):
+		self._addDefItems()
 		timestamp = 1167605990.0
 		self.__failManager.cleanup(timestamp)
 		self.assertEqual(self.__failManager.size(), 2)
 	
 	def testbanOK(self):
+		self._addDefItems()
 		self.__failManager.setMaxRetry(5)
 		#ticket = FailTicket('193.168.0.128', None)
 		ticket = self.__failManager.toBan()
@@ -112,10 +162,12 @@ class AddFailure(unittest.TestCase):
 			'FailTicket: ip=193.168.0.128 time=1000002000.0 #attempts=5 matches=[]')
 	
 	def testbanNOK(self):
+		self._addDefItems()
 		self.__failManager.setMaxRetry(10)
 		self.assertRaises(FailManagerEmpty, self.__failManager.toBan)
 
 	def testWindow(self):
+		self._addDefItems()
 		ticket = self.__failManager.toBan()
 		self.assertNotEqual(ticket.getIP(), "100.100.10.10")
 		ticket = self.__failManager.toBan()

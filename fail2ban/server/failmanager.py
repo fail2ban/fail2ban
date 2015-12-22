@@ -43,6 +43,7 @@ class FailManager:
 		self.__maxRetry = 3
 		self.__maxTime = 600
 		self.__failTotal = 0
+		self.maxEntries = 50
 		self.__bgSvc = BgService()
 	
 	def setFailTotal(self, value):
@@ -71,17 +72,26 @@ class FailManager:
 			ip = ticket.getIP()
 			try:
 				fData = self.__failList[ip]
-				# if the same object:
+				# if the same object - the same matches but +1 attempt:
 				if fData is ticket:
 					matches = None
+					attempt = 1
 				else:
+					# will be incremented / extended (be sure we have at least +1 attempt):
 					matches = ticket.getMatches()
+					attempt = ticket.getAttempt()
+					if attempt <= 0:
+						attempt += 1
 				unixTime = ticket.getTime()
+				fData.setLastTime(unixTime)
 				if fData.getLastReset() < unixTime - self.__maxTime:
 					fData.setLastReset(unixTime)
 					fData.setRetry(0)
-				fData.inc(matches, 1, count)
-				fData.setLastTime(unixTime)
+				fData.inc(matches, attempt, count)
+				# truncate to maxEntries:
+				matches = fData.getMatches()
+				if len(matches) > self.maxEntries:
+					fData.setMatches(matches[-self.maxEntries:])
 			except KeyError:
 				# if already FailTicket - add it direct, otherwise create (using copy all ticket data):
 				if isinstance(ticket, FailTicket):
