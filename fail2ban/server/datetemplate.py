@@ -50,6 +50,7 @@ class DateTemplate(object):
 		self._regex = ""
 		self._cRegex = None
 		self.hits = 0
+		self.lastUsed = 0
 
 	@property
 	def name(self):

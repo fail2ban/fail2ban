@@ -21,6 +21,8 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import time
+
 from threading import Lock
 
 from .datetemplate import DatePatternRegex, DateTai64n, DateEpoch
@@ -44,6 +46,8 @@ class DateDetector(object):
 		self.__lock = Lock()
 		self.__templates = list()
 		self.__known_names = set()
+		# time the template was long unused (currently 300 == 5m):
+		self.__unusedTime = 300
 
 	def _appendTemplate(self, template):
 		name = template.name
@@ -153,21 +157,28 @@ class DateDetector(object):
 			The regex match returned from the first successfully matched
 			template.
 		"""
-		self.__lock.acquire()
-		try:
+		i = 0
+		with self.__lock:
 			for template in self.__templates:
 				match = template.matchDate(line)
 				if not match is None:
 					if logSys.getEffectiveLevel() <= logLevel:
 						logSys.log(logLevel, "Matched time template %s", template.name)
 					template.hits += 1
+					template.lastUsed = time.time()
+					# if not first - try to reorder current template (bubble up), they will be not sorted anymore:
+					if i:
+						self._reorderTemplate(i)
+					# return tuple with match and template reference used for parsing:
 					return (match, template)
-			return (None, None)
-		finally:
-			self.__lock.release()
+				i += 1
+		# not found:
+		return (None, None)
 
 	def getTime(self, line):
 		"""Attempts to return the date on a log line using templates.
+
+		Obsolete: Use "getTime2" instead.
 
 		This uses the templates' `getDate` method in an attempt to find
 		a date.
@@ -183,8 +194,7 @@ class DateDetector(object):
 			The Unix timestamp returned from the first successfully matched
 			template or None if not found.
 		"""
-		self.__lock.acquire()
-		try:
+		with self.__lock:
 			for template in self.__templates:
 				try:
 					date = template.getDate(line)
@@ -197,8 +207,6 @@ class DateDetector(object):
 				except ValueError: # pragma: no cover
 					pass
 			return None
-		finally:
-			self.__lock.release()
 
 	def getTime2(self, line, timeMatch = None):
 		"""Attempts to return the date on a log line using given template.
@@ -232,21 +240,28 @@ class DateDetector(object):
 			return date
 		return self.getTime(line)
 
-	def sortTemplate(self):
-		"""Sort the date templates by number of hits
+	def _reorderTemplate(self, num):
+		"""Reorder template (bubble up) in template list if hits grows enough.
 
-		Sort the template lists using the hits score. This method is not
-		called in this object and thus should be called from time to time.
-		This ensures the most commonly matched templates are checked first,
-		improving performance of matchTime and getTime.
+		Parameters
+		----------
+		num : int
+			Index of template should be moved.
 		"""
-		self.__lock.acquire()
-		try:
-			if logSys.getEffectiveLevel() <= logLevel:
-				logSys.log(logLevel, "Sorting the template list")
-			self.__templates.sort(key=lambda x: x.hits, reverse=True)
-			t = self.__templates[0]
-			if logSys.getEffectiveLevel() <= logLevel:
-				logSys.log(logLevel, "Winning template: %s with %d hits", t.name, t.hits)
-		finally:
-			self.__lock.release()
+		if num:
+			templates = self.__templates
+			template = templates[num]
+		  ## current hits and time the template was long unused:
+			untime = template.lastUsed - self.__unusedTime
+			hits = template.hits
+			## don't move too often (multiline logs resp. log's with different date patterns),
+			## if template not used too long, replace it also :
+			if hits > templates[num-1].hits + 5 or templates[num-1].lastUsed < untime:
+				## try to move faster (half of part to current template):
+				pos = num // 2
+				## if not larger - move slow (exact 1 position):
+				if hits <= templates[pos].hits or templates[pos].lastUsed < untime:
+					pos = num-1
+				templates[pos], templates[num] = template, templates[pos]
+
+

@@ -87,8 +87,31 @@ def _maxWaitTime(wtime):
 	return wtime
 
 
-def _tm(time):
-	return datetime.datetime.fromtimestamp(time).strftime("%Y-%m-%d %H:%M:%S")
+class _tmSerial():
+	_last_s = -0x7fffffff
+	_last_m = -0x7fffffff
+	_str_s = ""
+	_str_m = ""
+	@staticmethod
+	def _tm(time):
+		# ## strftime it too slow for large time serializer :
+		# return datetime.datetime.fromtimestamp(time).strftime("%Y-%m-%d %H:%M:%S")
+		c = _tmSerial
+		sec = (time % 60)
+		if c._last_s == time - sec:
+			return "%s%02u" % (c._str_s, sec)
+		mt = (time % 3600)
+		if c._last_m == time - mt:
+			c._last_s = time - sec
+			c._str_s = "%s%02u:" % (c._str_m, mt // 60)
+			return "%s%02u" % (c._str_s, sec)
+		c._last_m = time - mt
+		c._str_m = datetime.datetime.fromtimestamp(time).strftime("%Y-%m-%d %H:")
+		c._last_s = time - sec
+		c._str_s = "%s%02u:" % (c._str_m, mt // 60)
+		return "%s%02u" % (c._str_s, sec)
+
+_tm = _tmSerial._tm
 
 
 def _assert_equal_entries(utest, found, output, count=None):
@@ -244,6 +267,14 @@ class BasicFilter(unittest.TestCase):
 				('1.1.1.1', 1, 1421262059.0), 
 			1)
 		)
+
+	def testTest_tm(self):
+		unittest.F2B.SkipIfFast()
+		## test function "_tm" works correct (returns the same as slow strftime):
+		for i in xrange(1417512352, (1417512352 // 3600 + 3) * 3600):
+			tm = datetime.datetime.fromtimestamp(i).strftime("%Y-%m-%d %H:%M:%S")
+			if _tm(i) != tm:
+				self.assertEqual((_tm(i), i), (tm, i))
 
 
 class IgnoreIP(LogCaptureTestCase):
