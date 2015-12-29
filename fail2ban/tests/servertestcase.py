@@ -47,6 +47,7 @@ except ImportError: # pragma: no cover
 	filtersystemd = None
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
+FAST_BACKEND = "polling"
 
 
 class TestServer(Server):
@@ -72,7 +73,7 @@ class TransmitterBase(unittest.TestCase):
 		self.tmp_files.append(pidfile_name)
 		self.server.start(sock_name, pidfile_name, force=False)
 		self.jailName = "TestJail1"
-		self.server.addJail(self.jailName, "auto")
+		self.server.addJail(self.jailName, FAST_BACKEND)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -195,7 +196,7 @@ class Transmitter(TransmitterBase):
 		self.setGetTest("dbpurgeage", "600", 600)
 		self.setGetTestNOK("dbpurgeage", "LIZARD")
 		# the same file name (again with jails / not changed):
-		self.server.addJail(self.jailName, "auto")
+		self.server.addJail(self.jailName, FAST_BACKEND)
 		self.setGetTest("dbfile", tmpFilename)
 		self.server.delJail(self.jailName)
 
@@ -213,7 +214,7 @@ class Transmitter(TransmitterBase):
 			["get", "dbpurgeage"]),
 			(0, None))
 		# the same (again with jails / not changed):
-		self.server.addJail(self.jailName, "auto")
+		self.server.addJail(self.jailName, FAST_BACKEND)
 		self.assertEqual(self.transm.proceed(
 			["set", "dbfile", "None"]),
 			(0, None))
@@ -252,7 +253,7 @@ class Transmitter(TransmitterBase):
 		self.assertTrue(self.jailName not in self.server._Server__jails)
 
 	def testStartStopAllJail(self):
-		self.server.addJail("TestJail2", "auto")
+		self.server.addJail("TestJail2", FAST_BACKEND)
 		self.assertEqual(
 			self.transm.proceed(["start", self.jailName]), (0, None))
 		self.assertEqual(
@@ -497,7 +498,7 @@ class Transmitter(TransmitterBase):
 		jails = [self.jailName]
 		self.assertEqual(self.transm.proceed(["status"]),
 			(0, [('Number of jail', len(jails)), ('Jail list', ", ".join(jails))]))
-		self.server.addJail("TestJail2", "auto")
+		self.server.addJail("TestJail2", FAST_BACKEND)
 		jails.append("TestJail2")
 		self.assertEqual(self.transm.proceed(["status"]),
 			(0, [('Number of jail', len(jails)), ('Jail list', ", ".join(jails))]))

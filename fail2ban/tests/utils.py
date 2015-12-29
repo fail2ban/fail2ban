@@ -59,6 +59,7 @@ class F2B(optparse.Values):
 		if self.fast:
 			self.memory_db = True
 			self.no_gamin = True
+		self.__dict__['share_config'] = {}
 	def SkipIfFast(self):
 		pass
 	def SkipIfNoNetwork(self):

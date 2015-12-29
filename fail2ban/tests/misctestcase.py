@@ -80,6 +80,7 @@ def _getSysPythonVersion():
 class SetupTest(unittest.TestCase):
 
 	def setUp(self):
+		unittest.F2B.SkipIfFast()
 		setup = os.path.join(os.path.dirname(__file__), '..', '..', 'setup.py')
 		self.setup = os.path.exists(setup) and setup or None
 		if not self.setup and sys.version_info >= (2,7): # pragma: no cover - running not out of the source
