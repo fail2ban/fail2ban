@@ -52,7 +52,7 @@ except ImportError: # pragma: no cover
 
 class Server:
 	
-	def __init__(self, daemon = False):
+	def __init__(self, daemon=False):
 		self.__loggingLock = Lock()
 		self.__lock = RLock()
 		self.__jails = Jails()
@@ -81,7 +81,7 @@ class Server:
 		logSys.debug("Caught signal %d. Flushing logs" % signum)
 		self.flushLogs()
 
-	def start(self, sock, pidfile, force = False):
+	def start(self, sock, pidfile, force=False, observer=True):
 		logSys.info("Starting Fail2ban v%s", version.version)
 		
 		# Install signal handlers
@@ -112,6 +112,12 @@ class Server:
 		except IOError, e:
 			logSys.error("Unable to create PID file: %s" % e)
 		
+		# Create observers and start it:
+		if observer:
+			if Observers.Main is None:
+				Observers.Main = ObserverThread()
+				Observers.Main.start()
+
 		# Start the communication
 		logSys.debug("Starting communication")
 		try:
@@ -150,15 +156,10 @@ class Server:
 			self.__loggingLock.release()
 
 	def addJail(self, name, backend):
-		# Create an observer if not yet created and start it:
-		if Observers.Main is None:
-			Observers.Main = ObserverThread()
-			Observers.Main.start()
 		# Add jail hereafter:
 		self.__jails.add(name, backend, self.__db)
 		if self.__db is not None:
 			self.__db.addJail(self.__jails[name])
-			Observers.Main.db_set(self.__db)
 
 	def delJail(self, name):
 		if self.__db is not None:
@@ -541,6 +542,8 @@ class Server:
 				logSys.error(
 					"Unable to import fail2ban database module as sqlite "
 					"is not available.")
+		if Observers.Main is not None:
+			Observers.Main.db_set(self.__db)
 	
 	def getDatabase(self):
 		return self.__db

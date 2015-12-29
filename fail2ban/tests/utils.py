@@ -167,8 +167,8 @@ def gatherTests(regexps=None, opts=None):
 		tests = FilteredTestSuite()
 
 	# Server
-	#tests.addTest(unittest.makeSuite(servertestcase.StartStop))
 	tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
+	tests.addTest(unittest.makeSuite(servertestcase.TransmitterWithObserver))
 	tests.addTest(unittest.makeSuite(servertestcase.JailTests))
 	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
 	tests.addTest(unittest.makeSuite(servertestcase.LoggingTests))

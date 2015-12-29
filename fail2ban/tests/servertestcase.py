@@ -71,7 +71,7 @@ class TransmitterBase(unittest.TestCase):
 			'fail2ban.pid', 'transmitter')
 		os.close(pidfile_fd)
 		self.tmp_files.append(pidfile_name)
-		self.server.start(sock_name, pidfile_name, force=False)
+		self.server.start(sock_name, pidfile_name, **self.server_start_args)
 		self.jailName = "TestJail1"
 		self.server.addJail(self.jailName, FAST_BACKEND)
 
@@ -160,6 +160,7 @@ class Transmitter(TransmitterBase):
 
 	def setUp(self):
 		self.server = TestServer()
+		self.server_start_args = {'force':False, 'observer':False}
 		super(Transmitter, self).setUp()
 
 	def testStopServer(self):
@@ -795,6 +796,7 @@ class TransmitterLogging(TransmitterBase):
 		self.server.setLogTarget("/dev/null")
 		self.server.setLogLevel("CRITICAL")
 		self.server.setSyslogSocket("auto")
+		self.server_start_args = {'force':False, 'observer':False}
 		super(TransmitterLogging, self).setUp()
 
 	def testLogTarget(self):
@@ -911,6 +913,18 @@ class TransmitterLogging(TransmitterBase):
 		self.setGetTest("bantime.formula", "ban.Time * math.exp(float(ban.Count+1)*banFactor)/math.exp(1*banFactor)", jail=self.jailName)
 		self.setGetTest("bantime.multipliers", "1 5 30 60 300 720 1440 2880", "1 5 30 60 300 720 1440 2880", jail=self.jailName)
 		self.setGetTest("bantime.overalljails", "true", "true", jail=self.jailName)
+
+
+class TransmitterWithObserver(TransmitterBase):
+
+	def setUp(self):
+		self.server = TestServer()
+		self.server_start_args = {'force':False, 'observer':True}
+		super(TransmitterWithObserver, self).setUp()
+
+	def testObserver(self):
+		pass
+
 
 class JailTests(unittest.TestCase):
 
