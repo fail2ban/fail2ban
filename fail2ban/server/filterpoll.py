@@ -58,7 +58,6 @@ class FilterPoll(FileFilter):
 		## The time of the last modification of the file.
 		self.__prevStats = dict()
 		self.__file404Cnt = dict()
-		self.__initial = dict()
 		logSys.debug("Created FilterPoll")
 
 	##

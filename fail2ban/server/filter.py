@@ -683,7 +683,7 @@ class FileFilter(Filter):
 	# MyTime.time()-self.findTime. When a failure is detected, a FailTicket
 	# is created and is added to the FailManager.
 
-	def getFailures(self, filename, startTime=None):
+	def getFailures(self, filename):
 		log = self.getLog(filename)
 		if log is None:
 			logSys.error("Unable to get failures in " + filename)

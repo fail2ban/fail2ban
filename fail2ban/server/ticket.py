@@ -24,19 +24,16 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import sys
-
 from ..helpers import getLogger
 from .mytime import MyTime
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
-RESTORED = 0x01
-
 
 class Ticket:
 	
+	RESTORED = 0x01
 	def __init__(self, ip=None, time=None, matches=None, ticket=None):
 		"""Ticket constructor
 
@@ -60,7 +57,7 @@ class Ticket:
 	def __str__(self):
 		return "%s: ip=%s time=%s bantime=%s bancount=%s #attempts=%d matches=%r" % \
 				 (self.__class__.__name__.split('.')[-1], self.__ip, self._time,
-					self.__banTime, self.__banCount,
+					self._banTime, self._banCount,
 					self._data['failures'], self._data.get('matches', []))
 
 	def __repr__(self):
@@ -125,10 +122,13 @@ class Ticket:
 		return self._data.get('matches', [])
 
 	def setRestored(self, value):
-		self._flags |= RESTORED
+		if value:
+			self._flags = Ticket.RESTORED
+		else:
+			self._flags &= ~(Ticket.RESTORED)
 	
 	def getRestored(self):
-		return 1 if self._flags & RESTORED else 0
+		return self._flags & Ticket.RESTORED
 
 	def setData(self, *args, **argv):
 		# if overwrite - set data and filter None values:

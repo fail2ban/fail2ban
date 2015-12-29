@@ -33,14 +33,14 @@ import time
 from ..server.mytime import MyTime
 from ..server.ticket import FailTicket
 from ..server.failmanager import FailManager
+from ..server.banmanager import BanManager
 from ..server.observer import Observers, ObserverThread
+from ..server.utils import Utils
 from .utils import LogCaptureTestCase
 from ..server.filter import Filter
 from .dummyjail import DummyJail
-try:
-	from ..server.database import Fail2BanDb
-except ImportError:
-	Fail2BanDb = None
+
+from .databasetestcase import getFail2BanDb, Fail2BanDb
 
 
 class BanTimeIncr(LogCaptureTestCase):
@@ -191,7 +191,7 @@ class BanTimeIncrDB(unittest.TestCase):
 		elif Fail2BanDb is None:
 			return
 		_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
-		self.db = Fail2BanDb(self.dbFilename)
+		self.db = getFail2BanDb(self.dbFilename)
 		self.jail = DummyJail()
 		self.jail.database = self.db
 		self.Observer = ObserverThread()
@@ -199,13 +199,13 @@ class BanTimeIncrDB(unittest.TestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
-		super(BanTimeIncrDB, self).tearDown()
 		if Fail2BanDb is None: # pragma: no cover
 			return
 		# Cleanup
 		self.Observer.stop()
 		Observers.Main = None
 		os.remove(self.dbFilename)
+		super(BanTimeIncrDB, self).tearDown()
 
 	def incrBanTime(self, ticket, banTime=None):
 		jail = self.jail;
@@ -457,7 +457,7 @@ class BanTimeIncrDB(unittest.TestCase):
 		self.db._purgeAge = -240*60*60
 		obs.add_named_timer('DB_PURGE', 0.001, 'db_purge')
 		# wait for timer ready
-		time.sleep(0.025)
+		obs.wait_idle(0.025)
 		# wait for ready
 		obs.add('nop')
 		obs.wait_empty(5)
@@ -498,13 +498,17 @@ class BanTimeIncrDB(unittest.TestCase):
 			ticket2 = jail.getFailTicket()
 			if ticket2:
 				break
-			time.sleep(0.1)
+			time.sleep(Utils.DEFAULT_SLEEP_INTERVAL)
 			if MyTime.time() > to: # pragma: no cover
 				raise RuntimeError('unexpected timeout: wait 30 seconds instead of few ms.')
 		# check ticket and failure count:
 		self.assertFalse(not ticket2)
-		self.assertEqual(ticket2.getAttempt(), failManager.getMaxRetry())
+		self.assertEqual(ticket2.getRetry(), failManager.getMaxRetry())
 
+		# wrap FailTicket to BanTicket:
+		failticket2 = ticket2
+		ticket2 = BanManager.createBanTicket(failticket2)
+		self.assertEqual(ticket2, failticket2)
 		# add this ticket to ban (use observer only without ban manager):
 		obs.add('banFound', ticket2, jail, 10)
 		obs.wait_empty(5)
@@ -568,7 +572,7 @@ class ObserverTest(LogCaptureTestCase):
 		obs = ObserverThread()
 		obs.start()
 		# wait for idle
-		obs.wait_idle(0.1)
+		obs.wait_idle(1)
 		# observer will replace test set:
 		o = set(['test'])
 		obs.add('call', o.clear)
@@ -582,7 +586,7 @@ class ObserverTest(LogCaptureTestCase):
 		# observer will replace test set, but first after pause ends:
 		obs.add('call', o.clear)
 		obs.add('call', o.add, 'test3')
-		obs.wait_empty(0.25)
+		obs.wait_empty(10 * Utils.DEFAULT_SLEEP_TIME)
 		self.assertTrue(obs.is_full)
 		self.assertEqual(o, set(['test2']))
 		obs.paused = False
@@ -590,8 +594,8 @@ class ObserverTest(LogCaptureTestCase):
 		obs.wait_empty(1)
 		self.assertEqual(o, set(['test3']))
 
-		self.assertTrue(obs.is_active())
-		self.assertTrue(obs.is_alive())
+		self.assertTrue(obs.isActive())
+		self.assertTrue(obs.isAlive())
 		obs.stop()
 		obs = None
 

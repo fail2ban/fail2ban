@@ -8,9 +8,16 @@ Fail2Ban: Changelog
 
 ver. 0.9.5 (2015/XX/XXX) - increment ban time
 -----------
+
+- Fixes:
+   * purge database will be executed now (within observer).
+   * restoring currently banned ip after service restart fixed 
+     (now < timeofban + bantime), ignore old log failures (already banned)
+
 - New Features:
    * increment ban time (+ observer) functionality introduced.
      Thanks Serg G. Brester (sebres)
+   * database functionality extended with bad ips.
 
 ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
 -----------
@@ -94,10 +101,6 @@ ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
      the emails.  Adjust <grepopts> to augment the behavior.
 
 - Fixes:
-   * purge database will be executed now (within observer).
-   * database functionality extended with bad ips.
-   * restoring currently banned ip after service restart fixed 
-     (now < timeofban + bantime), ignore old log failures (already banned)
    * reload in interactive mode appends all the jails twice (gh-825)
    * reload server/jail failed if database used (but was not changed) and
      some jail active (gh-1072)
@@ -240,6 +243,7 @@ ver. 0.9.2 (2015/04/29) - better-quick-now-than-later
    * Absorbed DNSUtils.cidr into addr2bin in filter.py, added unittests
    * Added syslogsocket configuration to fail2ban.conf
    * Note in the jail.conf for the recidive jail to increase dbpurgeage (gh-964)
+
 
 ver. 0.9.1 (2014/10/29) - better, faster, stronger
 ----------

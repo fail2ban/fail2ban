@@ -27,10 +27,12 @@ __license__ = "GPL"
 
 import threading
 from .jailthread import JailThread
+from .failmanager import FailManagerEmpty
 import os, logging, time, datetime, math, json, random
 import sys
 from ..helpers import getLogger
 from .mytime import MyTime
+from .utils import Utils
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -55,9 +57,14 @@ class ObserverThread(JailThread):
 		The time the thread sleeps for in the loop.
 	"""
 
+	# observer is event driven and it sleep organized incremental, so sleep intervals can be shortly:
+	DEFAULT_SLEEP_INTERVAL = Utils.DEFAULT_SLEEP_INTERVAL / 10
+
 	def __init__(self):
-		self.active = False
-		self.idle = False
+    # init thread
+		super(ObserverThread, self).__init__(name='Observer')
+		# before started - idle:
+		self.idle = True
 		## Event queue
 		self._queue_lock = threading.RLock()
 		self._queue = []
@@ -71,8 +78,6 @@ class ObserverThread(JailThread):
 		self._paused = False
 		self.__db = None
 		self.__db_purge_interval = 60*60
-    # start thread
-		super(ObserverThread, self).__init__(name='Observer')
 		# observer is a not main thread:
 		self.daemon = True
 
@@ -167,8 +172,8 @@ class ObserverThread(JailThread):
 			'db_set': self.db_set,
 			'db_purge': self.db_purge,
 			# service events of observer self:
-			'is_alive' : self.is_alive,
-			'is_active': self.is_active,
+			'is_alive' : self.isAlive,
+			'is_active': self.isActive,
 			'start': self.start,
 			'stop': self.stop,
 			'nop': lambda:(),
@@ -208,7 +213,7 @@ class ObserverThread(JailThread):
 						continue
 				else:
 					## notify event deleted (shutdown) - just sleep a litle bit (waiting for shutdown events, prevent high cpu usage)
-					time.sleep(0.001)
+					time.sleep(ObserverThread.DEFAULT_SLEEP_INTERVAL)
 					## stop by shutdown and empty queue :
 					if not self.is_full:
 						break
@@ -224,11 +229,11 @@ class ObserverThread(JailThread):
 		self.idle = True
 		return True
 
-	def is_alive(self):
+	def isAlive(self):
 		#logSys.debug("Observer alive...")
 		return True
 
-	def is_active(self, fromStr=None):
+	def isActive(self, fromStr=None):
 		# logSys.info("Observer alive, %s%s", 
 		# 	'active' if self.active else 'inactive', 
 		# 	'' if fromStr is None else (", called from '%s'" % fromStr))
@@ -266,7 +271,7 @@ class ObserverThread(JailThread):
 	def wait_empty(self, sleeptime=None):
 		"""Wait observer is running and returns if observer has no more events (queue is empty)
 		"""
-		time.sleep(0.001)
+		time.sleep(ObserverThread.DEFAULT_SLEEP_INTERVAL)
 		if sleeptime is not None:
 			e = MyTime.time() + sleeptime
 		# block queue with not operation to be sure all really jobs are executed if nop goes from queue :
@@ -277,16 +282,16 @@ class ObserverThread(JailThread):
 		while self.is_full:
 			if sleeptime is not None and MyTime.time() > e:
 				break
-			time.sleep(0.01)
+			time.sleep(ObserverThread.DEFAULT_SLEEP_INTERVAL)
 		# wait idle to be sure the last queue element is processed (because pop event before processing it) :
-		self.wait_idle(0.01)
+		self.wait_idle(0.001)
 		return not self.is_full
 
 
 	def wait_idle(self, sleeptime=None):
 		"""Wait observer is running and returns if observer idle (observer sleeps)
 		"""
-		time.sleep(0.001)
+		time.sleep(ObserverThread.DEFAULT_SLEEP_INTERVAL)
 		if self.idle:
 			return True
 		if sleeptime is not None:
@@ -294,7 +299,7 @@ class ObserverThread(JailThread):
 		while not self.idle:
 			if sleeptime is not None and MyTime.time() > e:
 				break
-			time.sleep(0.01)
+			time.sleep(ObserverThread.DEFAULT_SLEEP_INTERVAL)
 		return self.idle
 
 	@property
@@ -340,7 +345,7 @@ class ObserverThread(JailThread):
 		Observer will check ip was known (bad) and possibly increase an retry count
 		"""
 		# check jail active :
-		if not jail.is_alive():
+		if not jail.isAlive():
 			return
 		ip = ticket.getIP()
 		unixTime = ticket.getTime()
@@ -371,10 +376,8 @@ class ObserverThread(JailThread):
 			logSys.info("[%s] Found %s, bad - %s, %s # -> %s%s", jail.name, ip, 
 				datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S"), banCount, retryCount,
 				(', Ban' if retryCount >= maxRetry else ''))
-			# remove matches from this ticket, because a ticket was already added by filter self
-			ticket.setMatches(None)
 			# retryCount-1, because a ticket was already once incremented by filter self
-			failManager.addFailure(ticket, retryCount - 1, True)
+			retryCount = failManager.addFailure(ticket, retryCount - 1, True)
 
 			# after observe we have increased count >= maxretry ...
 			if retryCount >= maxRetry:
@@ -384,7 +387,7 @@ class ObserverThread(JailThread):
 					while True:
 						ticket = failManager.toBan(ip)
 						jail.putFailTicket(ticket)
-				except Exception:
+				except FailManagerEmpty:
 					failManager.cleanup(MyTime.time())
 
 		except Exception as e:
@@ -409,7 +412,7 @@ class ObserverThread(JailThread):
 			new ban time.
 		"""
 		# check jail active :
-		if not jail.is_alive():
+		if not jail.isAlive() or not jail.database:
 			return
 		be = jail.getBanTimeExtra()
 		ip = ticket.getIP()

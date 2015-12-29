@@ -127,7 +127,7 @@ class DatabaseTest(LogCaptureTestCase):
 		os.remove(self.db._dbBackupFilename)
 
 	def testUpdateDb2(self):
-		if Fail2BanDb is None: # pragma: no cover
+		if Fail2BanDb is None or self.db.filename == ':memory:': # pragma: no cover
 			return
 		shutil.copyfile(
 			os.path.join(TEST_FILES_DIR, 'database_v2.db'), self.dbFilename)
