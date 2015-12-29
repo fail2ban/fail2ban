@@ -55,6 +55,7 @@ class F2B(optparse.Values):
 	def __init__(self, opts={}):
 		self.__dict__ = opts.__dict__ if opts else {
 			'fast': False, 'memory_db':False, 'no_gamin': False, 'no_network': False, 
+			"negate_re": False,
 		}
 		if self.fast:
 			self.memory_db = True
@@ -157,7 +158,8 @@ def gatherTests(regexps=None, opts=None):
 				for test in suite:
 					s = str(test)
 					for r in self._regexps:
-						if r.search(s):
+						m = r.search(s)
+						if (m if not opts.negate_re else not m):
 							matched.append(test)
 							break
 				for test in matched:
