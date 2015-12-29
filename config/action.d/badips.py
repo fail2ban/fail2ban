@@ -117,7 +117,7 @@ class BadIPsAction(ActionBase):
 		"""
 		try:
 			response = urlopen(
-				self._Request("/".join([self._badips, "get", "categories"])))
+				self._Request("/".join([self._badips, "get", "categories"])), None, 3)
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
 			self._logSys.error(

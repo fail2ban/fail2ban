@@ -180,7 +180,6 @@ fail2ban/server/banmanager.py
 fail2ban/server/database.py
 fail2ban/server/datedetector.py
 fail2ban/server/datetemplate.py
-fail2ban/server/faildata.py
 fail2ban/server/failmanager.py
 fail2ban/server/failregex.py
 fail2ban/server/filter.py
@@ -197,6 +196,7 @@ fail2ban/server/server.py
 fail2ban/server/strptime.py
 fail2ban/server/ticket.py
 fail2ban/server/transmitter.py
+fail2ban/server/utils.py
 fail2ban/tests/__init__.py
 fail2ban/tests/action_d/__init__.py
 fail2ban/tests/action_d/test_badips.py
@@ -331,6 +331,7 @@ fail2ban/tests/misctestcase.py
 fail2ban/tests/samplestestcase.py
 fail2ban/tests/servertestcase.py
 fail2ban/tests/sockettestcase.py
+fail2ban/tests/tickettestcase.py
 fail2ban/tests/utils.py
 fail2ban/version.py
 files/bash-completion

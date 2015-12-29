@@ -95,7 +95,7 @@ class Transmitter:
 			return None
 		elif command[0] == "sleep":
 			value = command[1]
-			time.sleep(int(value))
+			time.sleep(float(value))
 			return None
 		elif command[0] == "flushlogs":
 			return self.__server.flushLogs()
@@ -139,6 +139,7 @@ class Transmitter:
 		elif name == "dbpurgeage":
 			db = self.__server.getDatabase()
 			if db is None:
+				logSys.warning("dbpurgeage setting was not in effect since no db yet")
 				return None
 			else:
 				db.purgeage = command[1]

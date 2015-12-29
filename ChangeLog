@@ -6,12 +6,92 @@
 Fail2Ban: Changelog
 ===================
 
-ver. 0.9.3 (2015/XX/XXX) - increment ban time
+ver. 0.9.5 (2015/XX/XXX) - increment ban time
 -----------
+- New Features:
+   * increment ban time (+ observer) functionality introduced.
+     Thanks Serg G. Brester (sebres)
+
+ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
+-----------
+
+- Fixes:
+   * roundcube-auth jail typo for logpath
+   * Fix dnsToIp resolver for fqdn with large list of IPs (gh-1164)
+   * filter.d/apache-badbots.conf
+     - Updated useragent string regex adding escape for `+`
+   * filter.d/mysqld-auth.conf
+     - Updated "Access denied ..." regex for MySQL 5.6 and later (gh-1211)
+   * filter.d/sshd.conf
+     - Updated "Auth fail" regex for OpenSSH 5.9 and later
+   * Treat failed and killed execution of commands identically (only
+     different log messages), which addresses different behavior on different
+     exit codes of dash and bash (gh-1155)
+   * Fix jail.conf.5 man's section (gh-1226)
+   * Fixed default banaction for allports jails like pam-generic, recidive, etc
+     with new default variable `banaction_allports` (gh-1216)
+   * Fixed `fail2ban-regex` stops working on invalid (wrong encoded) character
+     for python version < 3.x (gh-1248)
+   * Use postfix_log logpath for postfix-rbl jail
+   * filters.d/postfix.conf - add 'Sender address rejected: Domain not found' failregex
+
+- New Features:
+   * New interpolation feature for definition config readers - `<known/parameter>`
+     (means last known init definition of filters or actions with name `parameter`).
+     This interpolation makes possible to extend a parameters of stock filter or 
+     action directly in jail inside jail.local file, without creating a separately
+     filter.d/*.local file.
+     As extension to interpolation `%(known/parameter)s`, that does not works for
+     filter and action init parameters
+   * New filters:
+     - openhab - domotic software authentication failure with the
+       rest api and web interface (gh-1223)
+     - nginx-limit-req - ban hosts, that were failed through nginx by limit
+       request processing rate (ngx_http_limit_req_module)
+     - murmur - ban hosts that repeatedly attempt to connect to
+       murmur/mumble-server with an invalid server password or certificate.
+   * New jails:
+     - murmur - bans TCP and UDP from the bad host on the default murmur port.
+   * sshd filter got new failregex to match "maximum authentication
+     attempts exceeded" (introduced in openssh 6.8)
+
+- Enhancements:
+   * Do not rotate empty log files
+   * Added new date pattern with year after day (e.g. Sun Jan 23 2005 21:59:59)
+     http://bugs.debian.org/798923
+   * Added openSUSE path configuration (Thanks Johannes Weberhofer)
+   * Allow to split ignoreip entries by ',' as well as by ' ' (gh-1197)
+   * Added a timeout (3 sec) to urlopen within badips.py action
+     (Thanks M. Maraun)
+   * Added check against atacker's Googlebot PTR fake records
+     (Thanks Pablo Rodriguez Fernandez)
+   * Enhance filter against atacker's Googlebot PTR fake records
+     (gh-1226)
+   * Nginx log paths extended (prefixed with "*" wildcard) (gh-1237)
+   * Added filter for openhab domotic software authentication failure with the
+     rest api and web interface (gh-1223)
+   * Add *_backend options for services to allow distros to set the default
+     backend per service, set default to systemd for Fedora as appropriate
+   * Performance improvements while monitoring large number of files (gh-1265).
+     Use associative array (dict) for monitored log files to speed up lookup 
+     operations. Thanks @kshetragia
+
+ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
+----------
 
 - IMPORTANT incompatible changes:
    * filter.d/roundcube-auth.conf
      - Changed logpath to 'errors' log (was 'userlogins')
+   * action.d/iptables-common.conf
+     - All calls to iptables command now use -w switch introduced in
+       iptables 1.4.20 (some distribution could have patched their
+       earlier base version as well) to provide this locking mechanism
+       useful under heavy load to avoid contesting on iptables calls.
+       If you need to disable, define 'action.d/iptables-common.local'
+       with empty value for 'lockingopt' in `[Init]` section.
+   * mail-whois-lines, sendmail-geoip-lines and sendmail-whois-lines
+     actions now include by default only the first 1000 log lines in
+     the emails.  Adjust <grepopts> to augment the behavior.
 
 - Fixes:
    * purge database will be executed now (within observer).
@@ -28,18 +108,32 @@ ver. 0.9.3 (2015/XX/XXX) - increment ban time
    * filter.d/roundcube-auth.conf
      - Updated regex to work with 'errors' log (1.0.5 and 1.1.1)
      - Added regex to work with 'userlogins' log
-   * action.d/sendmail*.conf - use LC_ALL (superseeding LC_TIME) to override 
+   * action.d/sendmail*.conf - use LC_ALL (superseeding LC_TIME) to override
      locale on systems with customized LC_ALL
    * performance fix: minimizes connection overhead, close socket only at
      communication end (gh-1099)
    * unbanip always deletes ip from database (independent of bantime, also if
      currently not banned or persistent)
+   * guarantee order of dbfile to be before dbpurgeage (gh-1048)
+   * always set 'dbfile' before other database options (gh-1050)
+   * kill the entire process group of the child process upon timeout (gh-1129).
+     Otherwise could lead to resource exhaustion due to hanging whois
+     processes.
+   * resolve /var/run/fail2ban path in setup.py to help installation
+     on platforms with /var/run -> /run symlink (gh-1142)
 
 - New Features:
-   * increment ban time (+ observer) functionality introduced.
-     Thanks Serg G. Brester (sebres)
+   * RETURN iptables target is now a variable: <returntype>
+   * New type of operation: pass2allow, use fail2ban for "knocking",
+     opening a closed port by swapping blocktype and returntype
    * New filters:
-     - froxlor-auth  Thanks Joern Muehlencord
+     - froxlor-auth - Thanks Joern Muehlencord
+     - apache-pass - filter Apache access log for successful authentication
+   * New actions:
+     - shorewall-ipset-proto6 - using proto feature of the Shorewall. Still requires
+	   manual pre-configuration of the shorewall. See the action file for detail.
+   * New jails:
+     - pass2allow-ftp - allows FTP traffic after successful HTTP authentication
 
 - Enhancements:
    * action.d/cloudflare.conf - improved documentation on how to allow
@@ -50,6 +144,19 @@ ver. 0.9.3 (2015/XX/XXX) - increment ban time
    * filter.d/apache-badbots.conf, filter.d/nginx-botsearch.conf - add
      HEAD method verb
    * Revamp of Travis and coverage automated testing
+   * Added a space between IP address and the following colon
+     in notification emails for easier text selection
+   * Character detection heuristics for whois output via optional setting
+     in mail-whois*.conf. Thanks Thomas Mayer.
+     Not enabled by default, if _whois_command is set to be
+     %(_whois_convert_charset)s (e.g. in action.d/mail-whois-common.local),
+     it
+     - detects character set of whois output (which is undefined by
+       RFC 3912) via heuristics of the file command
+     - converts whois data to UTF-8 character set with iconv
+     - sends the whois output in UTF-8 character set to mail program
+     - avoids that heirloom mailx creates binary attachment for input with
+       unknown character set
 
 
 ver. 0.9.2 (2015/04/29) - better-quick-now-than-later

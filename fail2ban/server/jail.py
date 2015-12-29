@@ -36,7 +36,7 @@ from .mytime import MyTime
 logSys = getLogger(__name__)
 
 
-class Jail:
+class Jail(object):
 	"""Fail2Ban jail, which manages a filter and associated actions.
 
 	The class handles the initialisation of a filter, and actions. It's
@@ -299,7 +299,7 @@ class Jail:
 		self.actions.join()
 		logSys.info("Jail '%s' stopped" % self.name)
 
-	def is_alive(self):
-		"""Check jail "is_alive" by checking filter and actions threads.
+	def isAlive(self):
+		"""Check jail "isAlive" by checking filter and actions threads.
 		"""
-		return self.filter.is_alive() or self.actions.is_alive()
+		return self.filter.isAlive() or self.actions.isAlive()

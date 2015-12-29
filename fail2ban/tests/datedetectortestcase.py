@@ -36,6 +36,7 @@ from ..helpers import getLogger
 
 logSys = getLogger("fail2ban")
 
+
 class DateDetectorTest(LogCaptureTestCase):
 
 	def setUp(self):
@@ -82,6 +83,7 @@ class DateDetectorTest(LogCaptureTestCase):
 			(False, "Jan 23 21:59:59"),
 			(False, "Sun Jan 23 21:59:59 2005"),
 			(False, "Sun Jan 23 21:59:59"),
+			(False, "Sun Jan 23 2005 21:59:59"),
 			(False, "2005/01/23 21:59:59"),
 			(False, "2005.01.23 21:59:59"),
 			(False, "23/01/2005 21:59:59"),
@@ -141,13 +143,6 @@ class DateDetectorTest(LogCaptureTestCase):
 				else:
 					self.assertEqual(logtime, None, "getTime should have not matched for %r Got: %s" % (sdate, logtime))
 
-	def testStableSortTemplate(self):
-		old_names = [x.name for x in self.__datedetector.templates]
-		self.__datedetector.sortTemplate()
-		# If there were no hits -- sorting should not change the order
-		for old_name, n in zip(old_names, self.__datedetector.templates):
-			self.assertEqual(old_name, n.name) # "Sort must be stable"
-
 	def testAllUniqueTemplateNames(self):
 		self.assertRaises(ValueError, self.__datedetector.appendTemplate,
 						  self.__datedetector.templates[0])
@@ -162,13 +157,11 @@ class DateDetectorTest(LogCaptureTestCase):
 		( logTime, logMatch ) = logdate
 		self.assertEqual(logTime, mu)
 		self.assertEqual(logMatch.group(), '2012/10/11 02:37:17')
-		self.__datedetector.sortTemplate()
 		# confuse it with year being at the end
 		for i in xrange(10):
 			( logTime, logMatch ) =	self.__datedetector.getTime('11/10/2012 02:37:17 [error] 18434#0')
 			self.assertEqual(logTime, mu)
 			self.assertEqual(logMatch.group(), '11/10/2012 02:37:17')
-		self.__datedetector.sortTemplate()
 		# and now back to the original
 		( logTime, logMatch ) = self.__datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')
 		self.assertEqual(logTime, mu)

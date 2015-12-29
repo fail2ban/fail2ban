@@ -1,0 +1,6 @@
+
+# failJSON: { "time": "2015-10-29T20:01:02", "match": true , "host": "1.2.3.4" }
+2015/10/29 20:01:02 [error] 256554#0: *99927 limiting requests, excess: 1.852 by zone "one", client: 1.2.3.4, server: example.com, request: "POST /index.htm HTTP/1.0", host: "exmaple.com"
+
+# failJSON: { "time": "2015-10-29T19:24:05", "match": true , "host": "192.0.2.0" }
+2015/10/29 19:24:05 [error] 12684#12684: *22174 limiting requests, excess: 1.495 by zone "one", client: 192.0.2.0, server: example.com, request: "GET /index.php HTTP/1.1", host: "example.com", referrer: "https://example.com"

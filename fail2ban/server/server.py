@@ -45,7 +45,7 @@ logSys = getLogger(__name__)
 
 try:
 	from .database import Fail2BanDb
-except ImportError:
+except ImportError: # pragma: no cover
 	# Dont print error here, as database may not even be used
 	Fail2BanDb = None
 
@@ -68,10 +68,10 @@ class Server:
 			'FreeBSD': '/var/run/log',
 			'Linux': '/dev/log',
 		}
+		self.setSyslogSocket("auto")
 		# Set logging level
 		self.setLogLevel("INFO")
 		self.setLogTarget("STDOUT")
-		self.setSyslogSocket("auto")
 
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
@@ -168,7 +168,7 @@ class Server:
 	def startJail(self, name):
 		try:
 			self.__lock.acquire()
-			if not self.__jails[name].is_alive():
+			if not self.__jails[name].isAlive():
 				self.__jails[name].start()
 		finally:
 			self.__lock.release()
@@ -177,7 +177,7 @@ class Server:
 		logSys.debug("Stopping jail %s" % name)
 		try:
 			self.__lock.acquire()
-			if self.__jails[name].is_alive():
+			if self.__jails[name].isAlive():
 				self.__jails[name].stop()
 				self.delJail(name)
 		finally:
@@ -222,8 +222,7 @@ class Server:
 	def getLogPath(self, name):
 		filter_ = self.__jails[name].filter
 		if isinstance(filter_, FileFilter):
-			return [m.getFileName()
-					for m in filter_.getLogPath()]
+			return filter_.getLogPaths()
 		else: # pragma: systemd no cover
 			logSys.info("Jail %s is not a FileFilter instance" % name)
 			return []
@@ -341,6 +340,14 @@ class Server:
 	def getBanTimeExtra(self, name, opt):
 		return self.__jails[name].getBanTimeExtra(opt)
 	
+	def isAlive(self, jailnum=None):
+		if jailnum is not None and len(self.__jails) != jailnum:
+			return 0
+		for jail in self.__jails.values():
+			if not jail.isAlive():
+				return 0
+		return 1
+
 	# Status
 	def status(self):
 		try:

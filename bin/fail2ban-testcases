@@ -58,6 +58,15 @@ def get_opt_parser():
 		Option('-n', "--no-network", action="store_true",
 			   dest="no_network",
 			   help="Do not run tests that require the network"),
+		Option('-g', "--no-gamin", action="store_true",
+			   dest="no_gamin",
+			   help="Do not run tests that require the gamin"),
+		Option('-m', "--memory-db", action="store_true",
+			   dest="memory_db",
+			   help="Run database tests using memory instead of file"),
+		Option('-f', "--fast", action="store_true",
+			   dest="fast",
+			   help="Try to increase speed of the tests, decreasing of wait intervals, memory database"),
 		Option("-t", "--log-traceback", action='store_true',
 			   help="Enrich log-messages with compressed tracebacks"),
 		Option("--full-traceback", action='store_true',
@@ -120,7 +129,7 @@ if not opts.log_level or opts.log_level != 'critical': # pragma: no cover
 	print("Fail2ban %s test suite. Python %s. Please wait..." \
 	    % (version, str(sys.version).replace('\n', '')))
 
-tests = gatherTests(regexps, opts.no_network)
+tests = gatherTests(regexps, opts)
 #
 # Run the tests
 #

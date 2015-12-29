@@ -428,11 +428,11 @@ class Filter(JailThread):
 			ip = element[1]
 			unixTime = element[2]
 			lines = element[3]
-			logSys.debug("Processing line with time:%s and ip:%s"
-						 % (unixTime, ip))
+			logSys.debug("Processing line with time:%s and ip:%s", 
+					unixTime, ip)
 			if unixTime < MyTime.time() - self.getFindTime():
-				logSys.debug("Ignore line since time %s < %s - %s"
-							 % (unixTime, MyTime.time(), self.getFindTime()))
+				logSys.debug("Ignore line since time %s < %s - %s", 
+					unixTime, MyTime.time(), self.getFindTime())
 				break
 			if self.inIgnoreIPList(ip, log_ignore=True):
 				continue
@@ -501,6 +501,7 @@ class Filter(JailThread):
 
 		self.__lineBuffer = (
 			self.__lineBuffer + [tupleLine[:3]])[-self.__lineBufferSize:]
+		logSys.log(5, "Looking for failregex match of %r" % self.__lineBuffer)
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
@@ -562,7 +563,8 @@ class FileFilter(Filter):
 	def __init__(self, jail, **kwargs):
 		Filter.__init__(self, jail, **kwargs)
 		## The log file path.
-		self.__logPath = []
+		self.__logs = dict()
+		self.__autoSeek = dict()
 		self.setLogEncoding("auto")
 
 	##
@@ -570,18 +572,23 @@ class FileFilter(Filter):
 	#
 	# @param path log file path
 
-	def addLogPath(self, path, tail=False):
-		if self.containsLogPath(path):
+	def addLogPath(self, path, tail=False, autoSeek=True):
+		if path in self.__logs:
 			logSys.error(path + " already exists")
 		else:
-			container = FileContainer(path, self.getLogEncoding(), tail)
+			log = FileContainer(path, self.getLogEncoding(), tail)
 			db = self.jail.database
 			if db is not None:
-				lastpos = db.addLog(self.jail, container)
+				lastpos = db.addLog(self.jail, log)
 				if lastpos and not tail:
-					container.setPos(lastpos)
-			self.__logPath.append(container)
-			logSys.info("Added logfile = %s (pos = %s, hash = %s)" , path, container.getPos(), container.getHash())
+					log.setPos(lastpos)
+			self.__logs[path] = log
+			logSys.info("Added logfile = %s (pos = %s, hash = %s)" , path, log.getPos(), log.getHash())
+			if autoSeek:
+				# if default, seek to "current time" - "find time":
+				if isinstance(autoSeek, bool):
+					autoSeek = MyTime.time() - self.getFindTime()
+				self.__autoSeek[path] = autoSeek
 			self._addLogPath(path)			# backend specific
 
 	def _addLogPath(self, path):
@@ -595,15 +602,16 @@ class FileFilter(Filter):
 	# @param path the log file to delete
 
 	def delLogPath(self, path):
-		for log in self.__logPath:
-			if log.getFileName() == path:
-				self.__logPath.remove(log)
-				db = self.jail.database
-				if db is not None:
-					db.updateLog(self.jail, log)
-				logSys.info("Removed logfile = %s" % path)
-				self._delLogPath(path)
-				return
+		try:
+			log = self.__logs.pop(path)
+		except KeyError:
+			return
+		db = self.jail.database
+		if db is not None:
+			db.updateLog(self.jail, log)
+		logSys.info("Removed logfile = %s" % path)
+		self._delLogPath(path)
+		return
 
 	def _delLogPath(self, path): # pragma: no cover - overwritten function
 		# nothing to do by default
@@ -611,12 +619,28 @@ class FileFilter(Filter):
 		pass
 
 	##
-	# Get the log file path
+	# Get the log file names
 	#
-	# @return log file path
+	# @return log paths
 
-	def getLogPath(self):
-		return self.__logPath
+	def getLogPaths(self):
+		return self.__logs.keys()
+
+	##
+	# Get the log containers
+	#
+	# @return log containers
+
+	def getLogs(self):
+		return self.__logs.values()
+
+	##
+	# Get the count of log containers
+	#
+	# @return count of log containers
+
+	def getLogCount(self):
+		return len(self.__logs)
 
 	##
 	# Check whether path is already monitored.
@@ -625,10 +649,7 @@ class FileFilter(Filter):
 	# @return True if the path is already monitored else False
 
 	def containsLogPath(self, path):
-		for log in self.__logPath:
-			if log.getFileName() == path:
-				return True
-		return False
+		return path in self.__logs
 
 	##
 	# Set the log file encoding
@@ -639,7 +660,7 @@ class FileFilter(Filter):
 		if encoding.lower() == "auto":
 			encoding = locale.getpreferredencoding()
 		codecs.lookup(encoding) # Raise LookupError if invalid codec
-		for log in self.getLogPath():
+		for log in self.__logs.itervalues():
 			log.setEncoding(encoding)
 		self.__encoding = encoding
 		logSys.info("Set jail log file encoding to %s" % encoding)
@@ -652,11 +673,8 @@ class FileFilter(Filter):
 	def getLogEncoding(self):
 		return self.__encoding
 
-	def getFileContainer(self, path):
-		for log in self.__logPath:
-			if log.getFileName() == path:
-				return log
-		return None
+	def getLog(self, path):
+		return self.__logs.get(path, None)
 
 	##
 	# Gets all the failure in the log file.
@@ -666,13 +684,13 @@ class FileFilter(Filter):
 	# is created and is added to the FailManager.
 
 	def getFailures(self, filename, startTime=None):
-		container = self.getFileContainer(filename)
-		if container is None:
+		log = self.getLog(filename)
+		if log is None:
 			logSys.error("Unable to get failures in " + filename)
 			return False
 		# Try to open log file.
 		try:
-			has_content = container.open()
+			has_content = log.open()
 		# see http://python.org/dev/peps/pep-3151/
 		except IOError, e:
 			logSys.error("Unable to open %s" % filename)
@@ -687,13 +705,17 @@ class FileFilter(Filter):
 			logSys.exception(e)
 			return False
 
-		# prevent completely read of big files first time (after start of service), initial seek to start time using half-interval search algorithm:
-		if container.getPos() == 0 and startTime is not None:
+		# seek to find time for first usage only (prevent performance decline with polling of big files)
+		if self.__autoSeek.get(filename):
+			startTime = self.__autoSeek[filename]
+			del self.__autoSeek[filename]
+			# prevent completely read of big files first time (after start of service), 
+			# initial seek to start time using half-interval search algorithm:
 			try:
-				# startTime = MyTime.time() - self.getFindTime()
-				self.seekToTime(container, startTime)
+				self.seekToTime(log, startTime)
 			except Exception, e: # pragma: no cover
 				logSys.error("Error during seek to start time in \"%s\"", filename)
+				raise
 				logSys.exception(e)
 				return False
 
@@ -703,92 +725,109 @@ class FileFilter(Filter):
 		# start reading tested to be empty container -- race condition
 		# might occur leading at least to tests failures.
 		while has_content:
-			line = container.readline()
+			line = log.readline()
 			if not line or not self.active:
 				# The jail reached the bottom or has been stopped
 				break
 			self.processLineAndAdd(line)
-		container.close()
+		log.close()
 		db = self.jail.database
 		if db is not None:
-			db.updateLog(self.jail, container)
+			db.updateLog(self.jail, log)
 		return True
 
 	##
 	# Seeks to line with date (search using half-interval search algorithm), to start polling from it
 	#
 
-	def seekToTime(self, container, date):
+	def seekToTime(self, container, date, accuracy=3):
 		fs = container.getFileSize()
 		if logSys.getEffectiveLevel() <= logging.DEBUG:
 			logSys.debug("Seek to find time %s (%s), file size %s", date, 
 				datetime.datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S"), fs)
-		date -= 0.009
-		minp = 0
+		minp = container.getPos()
 		maxp = fs
-		lastpos = 0
-		lastFew = 0
-		lastTime = None
+		tryPos = minp
+		lastPos = -1
+		foundPos = 0
+		foundTime = None
 		cntr = 0
 		unixTime = None
-		lasti = 0
-		movecntr = 1
+		movecntr = accuracy
 		while maxp > minp:
-			i = int(minp + (maxp - minp) / 2)
-			pos = container.seek(i)
+			if tryPos is None:
+				pos = int(minp + (maxp - minp) / 2)
+			else:
+				pos, tryPos = tryPos, None
+			# because container seek will go to start of next line (minus CRLF):
+			pos = max(0, pos-2)
+			seekpos = pos = container.seek(pos)
 			cntr += 1
 			# within next 5 lines try to find any legal datetime:
 			lncntr = 5;
 			dateTimeMatch = None
-			llen = 0
-			if lastpos == pos:
-				i = pos
+			nextp = None
 			while True:
 				line = container.readline()
 				if not line:
 					break
-				llen += len(line)
-				l = line.rstrip('\r\n')
-				(timeMatch, template) = self.dateDetector.matchTime(l)
+				(timeMatch, template) = self.dateDetector.matchTime(line)
 				if timeMatch:
-					dateTimeMatch = self.dateDetector.getTime2(l[timeMatch.start():timeMatch.end()], (timeMatch, template))
+					dateTimeMatch = self.dateDetector.getTime2(line[timeMatch.start():timeMatch.end()], (timeMatch, template))
+				else:
+					nextp = container.tell()
+					if nextp > maxp:
+						pos = seekpos
+						break
+					pos = nextp
 				if not dateTimeMatch and lncntr:
 					lncntr -= 1
 					continue
 				break
+		 	# not found at this step - stop searching
+			if dateTimeMatch:
+				unixTime = dateTimeMatch[0]
+				if unixTime >= date:
+					if foundTime is None or unixTime <= foundTime:
+						foundPos = pos
+						foundTime = unixTime
+					if pos == maxp:
+						pos = seekpos
+					if pos < maxp:
+						maxp = pos
+				else:
+					if foundTime is None or unixTime >= foundTime:
+						foundPos = pos
+						foundTime = unixTime
+					if nextp is None:
+						nextp = container.tell()
+					pos = nextp
+					if pos > minp:
+						minp = pos
 			# if we can't move (position not changed)
-			if i + llen == lasti:
+			if pos == lastPos:
 				movecntr -= 1
 				if movecntr <= 0:
 		 			break
-			lasti = i + llen;
-		 	# not found at this step - stop searching
-			if not dateTimeMatch:
+				# we have found large area without any date mached 
+				# or end of search - try min position (because can be end of previous line):
+				if minp != lastPos:
+					lastPos = tryPos = minp
+					continue
 				break
-			unixTime = dateTimeMatch[0]
-			if unixTime >= date:
-				maxp = i
-			else:
-				minp = i + llen
-				lastFew = pos;
-				lastTime = unixTime
-			lastpos = pos
-		# if found position have a time greater as given - use smallest time we have found
-		if unixTime is None or unixTime > date:
-			unixTime = lastTime
-			lastpos = container.seek(lastFew, False)
-		else:
-			lastpos = container.seek(lastpos, False)
-		container.setPos(lastpos)
+			lastPos = pos
+		# always use smallest pos, that could be found:
+		foundPos = container.seek(minp, False)
+		container.setPos(foundPos)
 		if logSys.getEffectiveLevel() <= logging.DEBUG:
-			logSys.debug("Position %s from %s, found time %s (%s) within %s seeks", lastpos, fs, unixTime, 
-				(datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S") if unixTime is not None else ''), cntr)
+			logSys.debug("Position %s from %s, found time %s (%s) within %s seeks", lastPos, fs, foundTime, 
+				(datetime.datetime.fromtimestamp(foundTime).strftime("%Y-%m-%d %H:%M:%S") if foundTime is not None else ''), cntr)
 		
 	def status(self, flavor="basic"):
 		"""Status of Filter plus files being monitored.
 		"""
 		ret = super(FileFilter, self).status(flavor=flavor)
-		path = [m.getFileName() for m in self.getLogPath()]
+		path = self.__logs.keys()
 		ret.append(("File list", path))
 		return ret
 
@@ -885,32 +924,40 @@ class FileContainer:
 		self.__handler.seek(self.__pos)
 		return True
 
-	def seek(self, offs, endLine = True):
+	def seek(self, offs, endLine=True):
 		h = self.__handler
 		# seek to given position
 		h.seek(offs, 0)
 		# goto end of next line
-		if endLine:
+		if offs and endLine:
 			h.readline()
 		# get current real position
 		return h.tell()
 
-	def readline(self):
-		if self.__handler is None:
-			return ""
-		line = self.__handler.readline()
+	def tell(self):
+		# get current real position
+		return self.__handler.tell()
+
+	@staticmethod
+	def decode_line(filename, enc, line):
 		try:
-			line = line.decode(self.getEncoding(), 'strict')
+			line = line.decode(enc, 'strict')
 		except UnicodeDecodeError:
 			logSys.warning(
 				"Error decoding line from '%s' with '%s'."
 				" Consider setting logencoding=utf-8 (or another appropriate"
 				" encoding) for this jail. Continuing"
 				" to process line ignoring invalid characters: %r" %
-				(self.getFileName(), self.getEncoding(), line))
+				(filename, enc, line))
 			# decode with replacing error chars:
-			line = line.decode(self.getEncoding(), 'replace')
+			line = line.decode(enc, 'replace')
 		return line
+
+	def readline(self):
+		if self.__handler is None:
+			return ""
+		return FileContainer.decode_line(
+			self.getFileName(), self.getEncoding(), self.__handler.readline())
 
 	def close(self):
 		if not self.__handler is None:
@@ -947,31 +994,50 @@ class JournalFilter(Filter): # pragma: systemd no cover
 
 import socket
 import struct
+from .utils import Utils
 
 
 class DNSUtils:
 
 	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
 
+	# todo: make configurable the expired time and max count of cache entries:
+	CACHE_dnsToIp = Utils.Cache(maxCount=1000, maxTime=5*60)
+	CACHE_ipToName = Utils.Cache(maxCount=1000, maxTime=5*60)
+
 	@staticmethod
 	def dnsToIp(dns):
 		""" Convert a DNS into an IP address using the Python socket module.
 			Thanks to Kevin Drapel.
 		"""
+		# cache, also prevent long wait during retrieving of ip for wrong dns or lazy dns-system:
+		v = DNSUtils.CACHE_dnsToIp.get(dns)
+		if v is not None: 
+			return v
+		# retrieve ip (todo: use AF_INET6 for IPv6)
 		try:
-			return set(socket.gethostbyname_ex(dns)[2])
+			v = set([i[4][0] for i in socket.getaddrinfo(dns, None, socket.AF_INET, 0, socket.IPPROTO_TCP)])
 		except socket.error, e:
-			logSys.warning("Unable to find a corresponding IP address for %s: %s"
-						% (dns, e))
-			return list()
+			# todo: make configurable the expired time of cache entry:
+			logSys.warning("Unable to find a corresponding IP address for %s: %s", dns, e)
+			v = list()
+		DNSUtils.CACHE_dnsToIp.set(dns, v)
+		return v
 
 	@staticmethod
 	def ipToName(ip):
+		# cache, also prevent long wait during retrieving of name for wrong addresses, lazy dns:
+		v = DNSUtils.CACHE_ipToName.get(ip, ())
+		if v != ():
+			return v
+		# retrieve name
 		try:
-			return socket.gethostbyaddr(ip)[0]
+			v = socket.gethostbyaddr(ip)[0]
 		except socket.error, e:
-			logSys.debug("Unable to find a name for the IP %s: %s" % (ip, e))
-			return None
+			logSys.debug("Unable to find a name for the IP %s: %s", ip, e)
+			v = None
+		DNSUtils.CACHE_ipToName.set(ip, v)
+		return v
 
 	@staticmethod
 	def searchIP(text):

@@ -60,12 +60,12 @@ case "$1" in
 
 	if [ -f $FAIL2BAN_SOCKET ]
          then
-         echo "$FAIL2BAN_SOCKET  not removed .. removing .." 
+         echo "$FAIL2BAN_SOCKET  not removed .. removing .."
          rm $FAIL2BAN_SOCKET
         fi
         if [ -f $FAIL2BAN_PID ]
          then
-         echo "$FAIL2BAN_PID  not removed .. removing .." 
+         echo "$FAIL2BAN_PID  not removed .. removing .."
          rm $FAIL2BAN_PID
         fi
 

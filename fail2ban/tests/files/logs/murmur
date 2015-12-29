@@ -1,0 +1,5 @@
+# failJSON: { "time": "2015-11-29T16:38:01", "match": true , "host": "192.168.0.1" }
+<W>2015-11-29 16:38:01.818 1 => <4:testUsernameOne(-1)> Rejected connection from 192.168.0.1:29530: Invalid server password
+
+# failJSON: { "time": "2015-11-29T17:18:20", "match": true , "host": "192.168.1.2" }
+<W>2015-11-29 17:18:20.962 1 => <8:testUsernameTwo(-1)> Rejected connection from 192.168.1.2:29761: Wrong certificate or password for existing user

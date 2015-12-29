@@ -28,6 +28,7 @@ import sys
 from threading import Thread
 from abc import abstractmethod
 
+from .utils import Utils
 from ..helpers import excepthook
 
 
@@ -55,7 +56,7 @@ class JailThread(Thread):
 		## Control the idle state of the thread.
 		self.idle = False
 		## The time the thread sleeps in the loop.
-		self.sleeptime = 1
+		self.sleeptime = Utils.DEFAULT_SLEEP_TIME
 
 		# excepthook workaround for threads, derived from:
 		# http://bugs.python.org/issue1230540#msg91244

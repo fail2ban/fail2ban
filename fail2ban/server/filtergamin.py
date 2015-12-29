@@ -31,6 +31,7 @@ import gamin
 from .failmanager import FailManagerEmpty
 from .filter import FileFilter
 from .mytime import MyTime
+from .utils import Utils
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
@@ -83,7 +84,6 @@ class FilterGamin(FileFilter):
 				self.jail.putFailTicket(ticket)
 		except FailManagerEmpty:
 			self.failManager.cleanup(MyTime.time())
-		self.dateDetector.sortTemplate()
 		self.__modified = False
 
 	##
@@ -102,6 +102,15 @@ class FilterGamin(FileFilter):
 	def _delLogPath(self, path):
 		self.monitor.stop_watch(path)
 
+	def _handleEvents(self):
+		ret = False
+		mon = self.monitor
+		while mon and mon.event_pending():
+			mon.handle_events()
+			mon = self.monitor
+			ret = True
+		return ret
+
 	##
 	# Main loop.
 	#
@@ -112,12 +121,10 @@ class FilterGamin(FileFilter):
 	def run(self):
 		# Gamin needs a loop to collect and dispatch events
 		while self.active:
-			if not self.idle:
-				# We cannot block here because we want to be able to
-				# exit.
-				if self.monitor.event_pending():
-					self.monitor.handle_events()
-			time.sleep(self.sleeptime)
+			if self.idle:
+				time.sleep(self.sleeptime)
+				continue
+			Utils.wait_for(self._handleEvents, self.sleeptime)
 		logSys.debug(self.jail.name + ": filter terminated")
 		return True
 
@@ -129,6 +136,6 @@ class FilterGamin(FileFilter):
 	# Desallocates the resources used by Gamin.
 
 	def __cleanup(self):
-		for path in self.getLogPath():
-			self.monitor.stop_watch(path.getFileName())
-		del self.monitor
+		for filename in self.getLogPaths():
+			self.monitor.stop_watch(filename)
+		self.monitor = None

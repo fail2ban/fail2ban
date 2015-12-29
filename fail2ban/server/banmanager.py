@@ -247,16 +247,10 @@ class BanManager:
 	
 	@staticmethod
 	def createBanTicket(ticket):
-		ip = ticket.getIP()
-		# if ticked was restored from database - set time of original restored ticket:
 		# we should always use correct time to calculate correct end time (ban time is variable now, 
 		# + possible double banning by restore from database and from log file)
-		lastTime = ticket.getTime()
-		# if not ticket.getRestored():
-		# 	lastTime = MyTime.time()
-		banTicket = BanTicket(ip, lastTime, ticket.getMatches())
-		banTicket.setAttempt(ticket.getAttempt())
-		return banTicket
+		# so use as lastTime always time from ticket.
+		return BanTicket(ticket=ticket)
 	
 	##
 	# Add a ban ticket.
@@ -269,19 +263,19 @@ class BanManager:
 		try:
 			self.__lock.acquire()
 			# check already banned
-			for i in self.__banList:
-				if ticket.getIP() == i.getIP():
+			for oldticket in self.__banList:
+				if ticket.getIP() == oldticket.getIP():
 					# if already permanent
-					btorg, torg = i.getBanTime(self.__banTime), i.getTime()
-					if btorg == -1:
+					btold, told = oldticket.getBanTime(self.__banTime), oldticket.getTime()
+					if btold == -1:
 						return False
 					# if given time is less than already banned time
 					btnew, tnew = ticket.getBanTime(self.__banTime), ticket.getTime()
-					if btnew != -1 and tnew + btnew <= torg + btorg:
+					if btnew != -1 and tnew + btnew <= told + btold:
 						return False
 					# we have longest ban - set new (increment) ban time
-					i.setTime(tnew)
-					i.setBanTime(btnew)
+					oldticket.setTime(tnew)
+					oldticket.setBanTime(btnew)
 					return False
 			# not yet banned - add new
 			self.__banList.append(ticket)

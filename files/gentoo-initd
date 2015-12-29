@@ -30,14 +30,10 @@ depend() {
 
 start() {
 	ebegin "Starting fail2ban"
-	if [ ! -d /var/run/fail2ban ]; then
-		mkdir /var/run/fail2ban || return 1
-	fi
-	if [ -e /var/run/fail2ban/fail2ban.sock ]; then
-		# remove stalled sock file after system crash
-		# bug 347477
-		rm -rf /var/run/fail2ban/fail2ban.sock || return 1
-	fi
+	mkdir -p /var/run/fail2ban || return 1
+	# remove stalled sock file after system crash
+	# bug 347477
+	rm -f /var/run/fail2ban/fail2ban.sock || return 1
 	${FAIL2BAN} start &> /dev/null
 	eend $? "Failed to start fail2ban"
 }

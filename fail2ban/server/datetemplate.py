@@ -50,6 +50,7 @@ class DateTemplate(object):
 		self._regex = ""
 		self._cRegex = None
 		self.hits = 0
+		self.lastUsed = 0
 
 	@property
 	def name(self):
@@ -85,7 +86,6 @@ class DateTemplate(object):
 		if (wordBegin and not re.search(r'^\^', regex)):
 			regex = r'\b' + regex
 		self._regex = regex
-		self._cRegex = re.compile(regex, re.UNICODE | re.IGNORECASE)
 
 	regex = property(getRegex, setRegex, doc=
 		"""Regex used to search for date.
@@ -94,6 +94,8 @@ class DateTemplate(object):
 	def matchDate(self, line):
 		"""Check if regex for date matches on a log line.
 		"""
+		if not self._cRegex:
+			self._cRegex = re.compile(self.regex, re.UNICODE | re.IGNORECASE)
 		dateMatch = self._cRegex.search(line)
 		return dateMatch
 
@@ -170,7 +172,7 @@ class DatePatternRegex(DateTemplate):
 	regex
 	pattern
 	"""
-	_patternRE = r"%%(%%|[%s])" % "".join(timeRE.keys())
+	_patternRE = re.compile(r"%%(%%|[%s])" % "".join(timeRE.keys()))
 	_patternName = {
 		'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
 		'H': "24hour", 'I': "12hour", 'j': "Yearday", 'm': "Month",
@@ -201,10 +203,9 @@ class DatePatternRegex(DateTemplate):
 	@pattern.setter
 	def pattern(self, pattern):
 		self._pattern = pattern
-		self._name = re.sub(
-			self._patternRE, r'%(\1)s', pattern) % self._patternName
-		super(DatePatternRegex, self).setRegex(
-			re.sub(self._patternRE, r'%(\1)s', pattern) % timeRE)
+		fmt = self._patternRE.sub(r'%(\1)s', pattern)
+		self._name = fmt % self._patternName
+		super(DatePatternRegex, self).setRegex(fmt % timeRE)
 
 	def setRegex(self, value):
 		raise NotImplementedError("Regex derived from pattern")

@@ -98,7 +98,6 @@ class MyTime:
 		else:
 			return time.localtime(MyTime.myTime)
 
-
 	@staticmethod
 	def str2seconds(val):
 		"""Wraps string expression like "1h 2m 3s" into number contains seconds (3723).

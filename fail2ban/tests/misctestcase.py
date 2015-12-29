@@ -33,6 +33,7 @@ from glob import glob
 from StringIO import StringIO
 
 from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger
+from ..helpers import splitcommaspace
 from ..server.datetemplate import DatePatternRegex
 from ..server.mytime import MyTime
 
@@ -56,16 +57,42 @@ class HelpersTest(unittest.TestCase):
 			# might be fragile due to ' vs "
 			self.assertEqual(args, "('Very bad', None)")
 
+	def testsplitcommaspace(self):
+		self.assertEqual(splitcommaspace(None), [])
+		self.assertEqual(splitcommaspace(''), [])
+		self.assertEqual(splitcommaspace('  '), [])
+		self.assertEqual(splitcommaspace('1'), ['1'])
+		self.assertEqual(splitcommaspace(' 1 2 '), ['1', '2'])
+		self.assertEqual(splitcommaspace(' 1, 2 , '), ['1', '2'])
+
+
+def _getSysPythonVersion():
+	import subprocess, locale
+	sysVerCmd = "python -c 'import sys; print(tuple(sys.version_info))'"
+	if sys.version_info >= (2,7):
+		sysVer = subprocess.check_output(sysVerCmd, shell=True)
+	else:
+		sysVer = subprocess.Popen(sysVerCmd, shell=True, stdout=subprocess.PIPE).stdout.read()
+	if sys.version_info >= (3,):
+		sysVer = sysVer.decode(locale.getpreferredencoding(), 'replace')
+	return str(sysVer).rstrip()
 
 class SetupTest(unittest.TestCase):
 
 	def setUp(self):
+		unittest.F2B.SkipIfFast()
 		setup = os.path.join(os.path.dirname(__file__), '..', '..', 'setup.py')
 		self.setup = os.path.exists(setup) and setup or None
 		if not self.setup and sys.version_info >= (2,7): # pragma: no cover - running not out of the source
 			raise unittest.SkipTest(
 				"Seems to be running not out of source distribution"
 				" -- cannot locate setup.py")
+		# compare current version of python installed resp. active one:
+		sysVer = _getSysPythonVersion()
+		if sysVer != str(tuple(sys.version_info)):
+			raise unittest.SkipTest(
+				"Seems to be running with python distribution %s"
+				" -- install can be tested only with system distribution %s" % (str(tuple(sys.version_info)), sysVer))
 
 	def testSetupInstallRoot(self):
 		if not self.setup:

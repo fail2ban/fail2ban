@@ -24,12 +24,16 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import os
+import tempfile
 import time
+import unittest
 
 from ..server.action import CommandAction, CallingMap
+from ..server.utils import Utils
 
 from .utils import LogCaptureTestCase
-
+from .utils import pid_exists
 
 class CommandActionTest(LogCaptureTestCase):
 
@@ -141,17 +145,17 @@ class CommandActionTest(LogCaptureTestCase):
 		self.__action.actionunban = "true"
 		self.assertEqual(self.__action.actionunban, 'true')
 
-		self.assertFalse(self._is_logged('returned'))
+		self.assertNotLogged('returned')
 		# no action was actually executed yet
 
 		self.__action.ban({'ip': None})
-		self.assertTrue(self._is_logged('Invariant check failed'))
-		self.assertTrue(self._is_logged('returned successfully'))
+		self.assertLogged('Invariant check failed')
+		self.assertLogged('returned successfully')
 
 	def testExecuteActionEmptyUnban(self):
 		self.__action.actionunban = ""
 		self.__action.unban({})
-		self.assertTrue(self._is_logged('Nothing to do'))
+		self.assertLogged('Nothing to do')
 
 	def testExecuteActionStartCtags(self):
 		self.__action.HOST = "192.0.2.0"
@@ -166,7 +170,7 @@ class CommandActionTest(LogCaptureTestCase):
 		self.__action.actionban = "rm /tmp/fail2ban.test"
 		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
 		self.assertRaises(RuntimeError, self.__action.ban, {'ip': None})
-		self.assertTrue(self._is_logged('Unable to restore environment'))
+		self.assertLogged('Unable to restore environment')
 
 	def testExecuteActionChangeCtags(self):
 		self.assertRaises(AttributeError, getattr, self.__action, "ROST")
@@ -185,30 +189,93 @@ class CommandActionTest(LogCaptureTestCase):
 	def testExecuteActionStartEmpty(self):
 		self.__action.actionstart = ""
 		self.__action.start()
-		self.assertTrue(self._is_logged('Nothing to do'))
+		self.assertLogged('Nothing to do')
 
 	def testExecuteIncorrectCmd(self):
 		CommandAction.executeCmd('/bin/ls >/dev/null\nbogusXXX now 2>/dev/null')
-		self.assertTrue(self._is_logged('HINT on 127: "Command not found"'))
+		self.assertLogged('HINT on 127: "Command not found"')
 
 	def testExecuteTimeout(self):
+		unittest.F2B.SkipIfFast()
 		stime = time.time()
 		# Should take a minute
-		self.assertRaises(
-			RuntimeError, CommandAction.executeCmd, 'sleep 60', timeout=2)
+		self.assertFalse(CommandAction.executeCmd('sleep 30', timeout=1))
 		# give a test still 1 second, because system could be too busy
-		self.assertTrue(time.time() >= stime + 2 and time.time() <= stime + 3)
-		self.assertTrue(self._is_logged('sleep 60 -- timed out after 2 seconds') 
-			or self._is_logged('sleep 60 -- timed out after 3 seconds'))
-		self.assertTrue(self._is_logged('sleep 60 -- killed with SIGTERM'))
+		self.assertTrue(time.time() >= stime + 1 and time.time() <= stime + 2)
+		self.assertLogged(
+			'sleep 30 -- timed out after 1 seconds',
+			'sleep 30 -- timed out after 2 seconds'
+		)
+		self.assertLogged('sleep 30 -- killed with SIGTERM')
+
+	def testExecuteTimeoutWithNastyChildren(self):
+		# temporary file for a nasty kid shell script
+		tmpFilename = tempfile.mktemp(".sh", "fail2ban_")
+		# Create a nasty script which would hang there for a while
+		with open(tmpFilename, 'w') as f:
+			f.write("""#!/bin/bash
+		trap : HUP EXIT TERM
+
+		echo "$$" > %s.pid
+		echo "my pid $$ . sleeping lo-o-o-ong"
+		sleep 30
+		""" % tmpFilename)
+		stime = 0
+
+		# timeout as long as pid-file was not created, but max 5 seconds
+		def getnasty_tout():
+			return (
+				getnastypid() is None
+				and time.time() - stime <= 5
+			)
+
+		def getnastypid():
+			cpid = None
+			if os.path.isfile(tmpFilename + '.pid'):
+				with open(tmpFilename + '.pid') as f:
+					try:
+						cpid = int(f.read())
+					except ValueError:
+						pass
+			return cpid
+
+		# First test if can kill the bastard
+		stime = time.time()
+		self.assertFalse(CommandAction.executeCmd(
+			'bash %s' % tmpFilename, timeout=getnasty_tout))
+		# Wait up to 3 seconds, the child got killed
+		cpid = getnastypid()
+		# Verify that the process itself got killed
+		self.assertTrue(Utils.wait_for(lambda: not pid_exists(cpid), 3))  # process should have been killed
+		self.assertLogged('my pid ', 'Resource temporarily unavailable')
+		self.assertLogged('timed out')
+		self.assertLogged('killed with SIGTERM', 
+		                  'killed with SIGKILL')
+		os.unlink(tmpFilename + '.pid')
+
+		# A bit evolved case even though, previous test already tests killing children processes
+		stime = time.time()
+		self.assertFalse(CommandAction.executeCmd(
+			'out=`bash %s`; echo ALRIGHT' % tmpFilename, timeout=getnasty_tout))
+		# Wait up to 3 seconds, the child got killed
+		cpid = getnastypid()
+		# Verify that the process itself got killed
+		self.assertTrue(Utils.wait_for(lambda: not pid_exists(cpid), 3))
+		self.assertLogged('my pid ', 'Resource temporarily unavailable')
+		self.assertLogged('timed out')
+		self.assertLogged('killed with SIGTERM', 
+		                  'killed with SIGKILL')
+		os.unlink(tmpFilename)
+		os.unlink(tmpFilename + '.pid')
+
 
 	def testCaptureStdOutErr(self):
 		CommandAction.executeCmd('echo "How now brown cow"')
-		self.assertTrue(self._is_logged("'How now brown cow\\n'"))
+		self.assertLogged("'How now brown cow\\n'")
 		CommandAction.executeCmd(
 			'echo "The rain in Spain stays mainly in the plain" 1>&2')
-		self.assertTrue(self._is_logged(
-			"'The rain in Spain stays mainly in the plain\\n'"))
+		self.assertLogged(
+			"'The rain in Spain stays mainly in the plain\\n'")
 
 	def testCallingMap(self):
 		mymap = CallingMap(callme=lambda: str(10), error=lambda: int('a'),
