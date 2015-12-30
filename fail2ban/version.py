@@ -25,3 +25,6 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2005-2015 Yaroslav Halchenko,
 __license__ = "GPL-v2+"
 
 version = "0.9.3.dev"
+
+# Format https://tools.ietf.org/html/rfc7231#section-5.5.3
+agent_string = "Fail2Ban/%s" % version

@@ -33,6 +33,8 @@ from ..server.ticket import FailTicket
 from .dummyjail import DummyJail
 from .utils import LogCaptureTestCase
 
+from ..version import agent_string
+
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
 
@@ -165,3 +167,9 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertNotLogged("Failed to execute unban")
 		self.assertLogged("action1 unban deleted aInfo IP")
 		self.assertLogged("action2 unban deleted aInfo IP")
+
+	def test_prepare_aInfo(self):
+		ticket = FailTicket("1.2.3.4", 0)
+		aInfo = self.__jail.actions._prepare_aInfo(ticket)
+		self.assertEqual(aInfo['ip'], '1.2.3.4')
+		self.assertEqual(aInfo['fail2ban-agent-string'], agent_string)
