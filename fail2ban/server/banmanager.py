@@ -256,7 +256,7 @@ class BanManager:
 		# we should always use correct time to calculate correct end time (ban time is variable now, 
 		# + possible double banning by restore from database and from log file)
 		# so use as lastTime always time from ticket.
-		return BanTicket(ticket=ticket)
+		return BanTicket.wrap(ticket)
 	
 	##
 	# Add a ban ticket.
