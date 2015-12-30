@@ -28,18 +28,20 @@ import re
 import shutil
 import tempfile
 import unittest
-from ..client.configreader import ConfigReaderUnshared
+from ..client.configreader import ConfigReader, ConfigReaderUnshared
 from ..client import configparserinc
 from ..client.jailreader import JailReader
 from ..client.filterreader import FilterReader
 from ..client.jailsreader import JailsReader
 from ..client.actionreader import ActionReader
 from ..client.configurator import Configurator
+from ..version import version
 from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
 from .utils import CONFIG_DIR
+CONFIG_DIR_TESTSHARE_CFG = {}
 
 STOCK = os.path.exists(os.path.join('config','fail2ban.conf'))
 
@@ -250,6 +252,34 @@ class JailReaderTest(LogCaptureTestCase):
 		})
 		result = JailReader.extractOptions(option)
 		self.assertEqual(expected, result)
+
+	def testVersionAgent(self):
+		jail = JailReader('blocklisttest', force_enable=True, basedir=CONFIG_DIR)
+		# emulate jail.read(), because such jail not exists:
+		ConfigReader.read(jail, "jail"); 
+		sections = jail._cfg.get_sections()
+		sections['blocklisttest'] = dict((('__name__', 'blocklisttest'), 
+			('filter', ''),	('failregex', '^test <HOST>$'),
+			('sender', 'f2b-test@example.com'), ('blocklist_de_apikey', 'test-key'), 
+			('action', 
+				'%(action_blocklist_de)s\n'
+				'%(action_badips_report)s\n'
+				'%(action_badips)s\n'
+				'mynetwatchman[port=1234,protocol=udp,agent="%(fail2ban_agent)s"]'
+			),
+		))
+		# get options:
+		self.assertTrue(jail.getOptions())
+		# convert and get stream
+		stream = jail.convert()
+		# get action and retrieve agent from it, compare with agent saved in version:
+		act = [o for o in stream if len(o) > 4 and (o[4] == 'agent' or o[4].endswith('badips.py'))]
+		useragent = 'Fail2Ban/%s' % version
+		self.assertEqual(len(act), 4)
+		self.assertEqual(act[0], ['set', 'blocklisttest', 'action', 'blocklist_de', 'agent', useragent])
+		self.assertEqual(act[1], ['set', 'blocklisttest', 'action', 'badips', 'agent', useragent])
+		self.assertEqual(eval(act[2][5]).get('agent', '<wrong>'), useragent)
+		self.assertEqual(act[3], ['set', 'blocklisttest', 'action', 'mynetwatchman', 'agent', useragent])
 
 	def testGlob(self):
 		d = tempfile.mkdtemp(prefix="f2b-temp")

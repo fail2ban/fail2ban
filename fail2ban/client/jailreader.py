@@ -32,6 +32,7 @@ import re
 from .configreader import ConfigReaderUnshared, ConfigReader
 from .filterreader import FilterReader
 from .actionreader import ActionReader
+from ..version import version
 from ..helpers import getLogger
 from ..helpers import splitcommaspace
 
@@ -107,6 +108,10 @@ class JailReader(ConfigReader):
 				["string", "ignoreip", None],
 				["string", "filter", ""],
 				["string", "action", ""]]
+
+		# Before interpolation (substitution) add static options always available as default:
+		defsec = self._cfg.get_defaults()
+		defsec["fail2ban_version"] = version
 
 		# Read first options only needed for merge defaults ('known/...' from filter):
 		self.__opts = ConfigReader.getOptions(self, self.__name, opts1st)
