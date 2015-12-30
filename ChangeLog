@@ -48,6 +48,7 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
      - murmur - bans TCP and UDP from the bad host on the default murmur port.
    * sshd filter got new failregex to match "maximum authentication
      attempts exceeded" (introduced in openssh 6.8)
+   * Added filter for Mac OS screen sharing (VNC) daemon
 
 - Enhancements:
    * Do not rotate empty log files
