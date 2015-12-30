@@ -594,6 +594,12 @@ class JailsReaderTest(LogCaptureTestCase):
 			# by default we have lots of jails ;)
 			self.assertTrue(len(comm_commands))
 
+			# some common sanity checks for commands
+			for command in comm_commands:
+				if len(command) >= 3 and [command[0], command[2]] == ['set', 'bantime']:
+					self.assertTrue(isinstance(command[3], int))
+					self.assertTrue(command[3] > 0)
+
 			# and we know even some of them by heart
 			for j in ['sshd', 'recidive']:
 				# by default we have 'auto' backend ATM
