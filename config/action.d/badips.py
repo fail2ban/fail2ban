@@ -21,7 +21,6 @@ import sys
 if sys.version_info < (2, 7):
 	raise ImportError("badips.py action requires Python >= 2.7")
 import json
-from functools import partial
 import threading
 import logging
 if sys.version_info >= (3, ):
@@ -72,6 +71,9 @@ class BadIPsAction(ActionBase):
 	updateperiod : int, optional
 		Time in seconds between updating bad IPs blacklist.
 		Default 900 (15 minutes)
+	agent : str, optional
+		User agent transmitted to server.
+		Default `Fail2Ban/ver.`
 
 	Raises
 	------
@@ -80,13 +82,14 @@ class BadIPsAction(ActionBase):
 	"""
 
 	_badips = "http://www.badips.com"
-	_Request = partial(
-		Request, headers={'User-Agent': "Fail2Ban %s" % f2bVersion})
+	def _Request(self, url, **argv):
+		return Request(url, headers={'User-Agent': self.agent}, **argv)
 
 	def __init__(self, jail, name, category, score=3, age="24h", key=None,
-		banaction=None, bancategory=None, bankey=None, updateperiod=900):
+		banaction=None, bancategory=None, bankey=None, updateperiod=900, agent=None):
 		super(BadIPsAction, self).__init__(jail, name)
 
+		self.agent = agent if agent is not None else ("Fail2Ban/%s" % f2bVersion)
 		self.category = category
 		self.score = score
 		self.age = age
