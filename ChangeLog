@@ -44,6 +44,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
        request processing rate (ngx_http_limit_req_module)
      - murmur - ban hosts that repeatedly attempt to connect to
        murmur/mumble-server with an invalid server password or certificate.
+     - haproxy-http-auth - filter to match failed HTTP Authentications against a
+       HAProxy server
    * New jails:
      - murmur - bans TCP and UDP from the bad host on the default murmur port.
    * sshd filter got new failregex to match "maximum authentication
