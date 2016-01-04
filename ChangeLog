@@ -28,6 +28,7 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
      for python version < 3.x (gh-1248)
    * Use postfix_log logpath for postfix-rbl jail
    * filters.d/postfix.conf - add 'Sender address rejected: Domain not found' failregex
+   * use `fail2ban_agent` as user-agent in actions badips, blocklist_de, etc (gh-1271)
 
 - New Features:
    * New interpolation feature for definition config readers - `<known/parameter>`
@@ -72,6 +73,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
      operations. Thanks @kshetragia
    * Specified that fail2ban is PartOf iptables.service firewalld.service in
      .service file -- would reload fail2ban if those services are restarted
+   * Provides new default `fail2ban_version` and interpolation variable
+     `fail2ban_agent` in jail.conf
 
 
 ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
