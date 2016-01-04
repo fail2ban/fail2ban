@@ -32,7 +32,6 @@ else:
 	from urllib import urlencode
 
 from fail2ban.server.actions import ActionBase
-from fail2ban.version import version as f2bVersion
 
 
 class BadIPsAction(ActionBase):
@@ -86,10 +85,10 @@ class BadIPsAction(ActionBase):
 		return Request(url, headers={'User-Agent': self.agent}, **argv)
 
 	def __init__(self, jail, name, category, score=3, age="24h", key=None,
-		banaction=None, bancategory=None, bankey=None, updateperiod=900, agent=None):
+		banaction=None, bancategory=None, bankey=None, updateperiod=900, agent="Fail2Ban"):
 		super(BadIPsAction, self).__init__(jail, name)
 
-		self.agent = agent if agent is not None else ("Fail2Ban/%s" % f2bVersion)
+		self.agent = agent
 		self.category = category
 		self.score = score
 		self.age = age
