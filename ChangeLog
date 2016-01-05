@@ -37,6 +37,9 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
      filter.d/*.local file.
      As extension to interpolation `%(known/parameter)s`, that does not works for
      filter and action init parameters
+   * New actions:
+     - nftables-multiport and nftables-allports - filtering using nftables
+       framework. Note: it requires a pre-existing chain for the filtering rule.
    * New filters:
      - openhab - domotic software authentication failure with the
        rest api and web interface (gh-1223)
