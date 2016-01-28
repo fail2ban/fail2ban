@@ -59,3 +59,11 @@ Nov 4 18:30:40 localhost asterisk[32229]: NOTICE[32257]: chan_sip.c:23417 in han
 # match UTF-8 in SessionID
 # failJSON: { "time": "2015-05-25T07:52:36", "match": true, "host": "10.250.251.252" }
 [2015-05-25 07:52:36] SECURITY[6988] res_security_log.c: SecurityEvent="InvalidAccountID",EventTV="2015-05-25T07:52:36.888+0300",Severity="Error",Service="PJSIP",EventVersion="1",AccountID="70000180",SessionID="Негодяй",LocalAddress="IPV4/UDP/1.2.3.4/5060",RemoteAddress="IPV4/UDP/10.250.251.252/5061"
+
+# match phone numbers with + symbol
+# failJSON: { "time": "2016-01-28T10:22:27", "match": true , "host": "1.2.3.4" }
+[2016-01-28 10:22:27] NOTICE[3477][C-000003bb] chan_sip.c: Call from '' (1.2.3.4:10836) to extension '++441772285411' rejected because extension not found in context 'default'.
+# failJSON: { "time": "2016-01-28T10:23:57", "match": true , "host": "1.2.3.4" }
+[2016-01-28 10:23:57] NOTICE[3477][C-000003bc] chan_sip.c: Call from '' (1.2.3.4:10836) to extension '+441772285403' rejected because extension not found in context 'default'.
+# failJSON: { "time": "2016-01-28T10:34:31", "match": true , "host": "1.2.3.4" }
+[2016-01-28 10:34:31] NOTICE[3477][C-000003c3] chan_sip.c: Call from '' (1.2.3.4:10836) to extension '0+441772285407' rejected because extension not found in context 'default'.
