@@ -67,10 +67,6 @@ class Server:
 			'FreeBSD': '/var/run/log',
 			'Linux': '/dev/log',
 		}
-		self.setSyslogSocket("auto")
-		# Set logging level
-		self.setLogLevel("INFO")
-		self.setLogTarget("STDOUT")
 
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
@@ -80,7 +76,12 @@ class Server:
 		logSys.debug("Caught signal %d. Flushing logs" % signum)
 		self.flushLogs()
 
-	def start(self, sock, pidfile, force = False):
+	def start(self, sock, pidfile, force=False, conf={}):
+		# First set all logging parameters:
+		self.setSyslogSocket(conf.get("syslogsocket", "auto"))
+		self.setLogLevel(conf.get("loglevel", "INFO"))
+		self.setLogTarget(conf.get("logtarget", "STDOUT"))
+
 		logSys.info("Starting Fail2ban v%s", version.version)
 		
 		# Install signal handlers
@@ -392,8 +393,9 @@ class Server:
 	# @param target the logging target
 	
 	def setLogTarget(self, target):
-		try:
-			self.__loggingLock.acquire()
+		with self.__loggingLock:
+			if self.__logTarget == target:
+				return True
 			# set a format which is simpler for console use
 			formatter = logging.Formatter("%(asctime)s %(name)-24s[%(process)d]: %(levelname)-7s %(message)s")
 			if target == "SYSLOG":
@@ -461,8 +463,6 @@ class Server:
 			# Sets the logging target.
 			self.__logTarget = target
 			return True
-		finally:
-			self.__loggingLock.release()
 
 	##
 	# Sets the syslog socket.

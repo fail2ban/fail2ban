@@ -129,7 +129,8 @@ class Fail2banServer:
 			return True
 		except Exception, e:
 			logSys.exception(e)
-			self.__server.quit()
+			if self.__server:
+				self.__server.quit()
 			return False
 
 if __name__ == "__main__":

@@ -54,6 +54,7 @@ class Fail2banClient:
 	PROMPT = "fail2ban> "
 
 	def __init__(self):
+		self.__server = None
 		self.__argv = None
 		self.__stream = None
 		self.__configurator = Configurator()
@@ -89,13 +90,16 @@ class Fail2banClient:
 		print "    -c <DIR>                configuration directory"
 		print "    -s <FILE>               socket path"
 		print "    -p <FILE>               pidfile path"
+		print "    --loglevel <LEVEL>      logging level"
+		print "    --logtarget <FILE>|STDOUT|STDERR|SYSLOG"
+		print "    --syslogsocket auto|file"
 		print "    -d                      dump configuration. For debugging"
 		print "    -i                      interactive mode"
 		print "    -v                      increase verbosity"
 		print "    -q                      decrease verbosity"
 		print "    -x                      force execution of the server (remove socket file)"
 		print "    -b                      start server in background (default)"
-		print "    -f                      start server in foreground (note that the client forks once itself)"
+		print "    -f                      start server in foreground"
 		print "    -h, --help              display this help message"
 		print "    -V, --version           print the version"
 		print
@@ -128,6 +132,8 @@ class Fail2banClient:
 				self.__conf["socket"] = opt[1]
 			elif opt[0] == "-p":
 				self.__conf["pidfile"] = opt[1]
+			elif opt[0].startswith("--log") or opt[0].startswith("--sys"):
+				self.__conf[ opt[0][2:] ] = opt[1]
 			elif opt[0] == "-d":
 				self.__conf["dump"] = True
 			elif opt[0] == "-v":
@@ -234,24 +240,32 @@ class Fail2banClient:
 						"Directory %s exists but not accessible for writing"
 						% (socket_dir,))
 					return False
-				# Start the server
-				self.__startServerAsync(self.__conf["socket"],
-										self.__conf["pidfile"],
-										self.__conf["force"],
-										self.__conf["background"])
-				try:
-					# Wait for the server to start
-					self.__waitOnServer()
-					# Configure the server
-					self.__processCmd(self.__stream, False)
-					return True
-				except ServerExecutionException:
-					logSys.error("Could not start server. Maybe an old "
-								 "socket file is still present. Try to "
-								 "remove " + self.__conf["socket"] + ". If "
-								 "you used fail2ban-client to start the "
-								 "server, adding the -x option will do it")
+
+				# Check already running
+				if not self.__conf["force"] and os.path.exists(self.__conf["socket"]):
+					logSys.error("Fail2ban seems to be in unexpected state (not running but socket exists)")
 					return False
+
+				# Start the server
+				t = None
+				if self.__conf["background"]:
+					# Start server daemon as fork of client process:
+					self.__startServerAsync()
+					# Send config stream to server:
+					return self.__processStartStreamAfterWait()
+				else:
+					# In foreground mode we should start server/client communication in other thread:
+					from threading import Thread
+					t = Thread(target=Fail2banClient.__processStartStreamAfterWait, args=(self,))
+					t.start()
+					# Start server direct here in main thread:
+					try:
+						self.__startServerDirect()
+					except KeyboardInterrupt:
+						None
+
+				return True
+
 		elif len(cmd) == 1 and cmd[0] == "reload":
 			if self.__ping():
 				ret = self.__readConfig()
@@ -281,12 +295,50 @@ class Fail2banClient:
 			return self.__processCmd([cmd])
 
 
+	def __processStartStreamAfterWait(self):
+		try:
+			# Wait for the server to start
+			self.__waitOnServer()
+			# Configure the server
+			self.__processCmd(self.__stream, False)
+		except ServerExecutionException:
+			logSys.error("Could not start server. Maybe an old "
+						 "socket file is still present. Try to "
+						 "remove " + self.__conf["socket"] + ". If "
+						 "you used fail2ban-client to start the "
+						 "server, adding the -x option will do it")
+			if not self.__conf["background"]:
+				self.__server.quit()
+				sys.exit(-1)
+			return False
+		return True
+
+
+	##
+	# Start Fail2Ban server in main thread without fork (foreground).
+	#
+	# Start the Fail2ban server in foreground (daemon mode or not).
+
+	def __startServerDirect(self):
+		from fail2ban.server.server import Server
+		try:
+			self.__server = Server(False)
+			self.__server.start(self.__conf["socket"],
+							self.__conf["pidfile"], self.__conf["force"], 
+							conf=self.__conf)
+		except Exception, e:
+			logSys.exception(e)
+			if self.__server:
+				self.__server.quit()
+			sys.exit(-1)
+
+
 	##
 	# Start Fail2Ban server.
 	#
 	# Start the Fail2ban server in daemon mode.
 
-	def __startServerAsync(self, socket, pidfile, force = False, background = True):
+	def __startServerAsync(self):
 		# Forks the current process.
 		pid = os.fork()
 		if pid == 0:
@@ -294,18 +346,15 @@ class Fail2banClient:
 			args.append(self.SERVER)
 			# Set the socket path.
 			args.append("-s")
-			args.append(socket)
+			args.append(self.__conf["socket"])
 			# Set the pidfile
 			args.append("-p")
-			args.append(pidfile)
+			args.append(self.__conf["pidfile"])
 			# Force the execution if needed.
-			if force:
+			if self.__conf["force"]:
 				args.append("-x")
-			# Start in foreground mode if requested.
-			if background:
-				args.append("-b")
-			else:
-				args.append("-f")
+			# Start in background as requested.
+			args.append("-b")
 			
 			try:
 				# Use the current directory.
@@ -361,7 +410,7 @@ class Fail2banClient:
 		# Reads the command line options.
 		try:
 			cmdOpts = 'hc:s:p:xfbdviqV'
-			cmdLongOpts = ['help', 'version']
+			cmdLongOpts = ['loglevel', 'logtarget', 'syslogsocket', 'help', 'version']
 			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
 		except getopt.GetoptError:
 			self.dispUsage()
@@ -396,7 +445,17 @@ class Fail2banClient:
 			self.__conf["socket"] = conf["socket"]
 		if self.__conf["pidfile"] is None:
 			self.__conf["pidfile"] = conf["pidfile"]
-		logSys.info("Using socket file " + self.__conf["socket"])
+		if self.__conf.get("logtarget", None) is None:
+			self.__conf["logtarget"] = conf["logtarget"]
+		if self.__conf.get("loglevel", None) is None:
+			self.__conf["loglevel"] = conf["loglevel"]
+		if self.__conf.get("syslogsocket", None) is None:
+			self.__conf["syslogsocket"] = conf["syslogsocket"]
+
+		logSys.info("Using socket file %s", self.__conf["socket"])
+
+		logSys.info("Using pid file %s, [%s] logging to %s",
+			self.__conf["pidfile"], self.__conf["loglevel"], self.__conf["logtarget"])
 
 		if self.__conf["dump"]:
 			ret = self.__readConfig()
