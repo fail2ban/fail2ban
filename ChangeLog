@@ -31,6 +31,8 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
    * use `fail2ban_agent` as user-agent in actions badips, blocklist_de, etc (gh-1271)
    * Fix ignoring the sender option by action_mw, action_mwl and action_c_mwl
    * Changed filter.d/asterisk regex for "Call from ..." (few vulnerable now)
+   * Removed compression and rotation count from logrotate (inherit them from
+     the global logrotate config)
 
 - New Features:
    * New interpolation feature for definition config readers - `<known/parameter>`
