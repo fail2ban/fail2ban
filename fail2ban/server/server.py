@@ -24,6 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import threading
 from threading import Lock, RLock
 import logging
 import logging.handlers
@@ -42,11 +43,19 @@ from ..helpers import getLogger, excepthook
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+DEF_SYSLOGSOCKET = "auto"
+DEF_LOGLEVEL = "INFO"
+DEF_LOGTARGET = "STDOUT"
+
 try:
 	from .database import Fail2BanDb
 except ImportError: # pragma: no cover
 	# Dont print error here, as database may not even be used
 	Fail2BanDb = None
+
+
+def _thread_name():
+	return threading.current_thread().__class__.__name__
 
 
 class Server:
@@ -67,11 +76,7 @@ class Server:
 			'FreeBSD': '/var/run/log',
 			'Linux': '/dev/log',
 		}
-		# todo: remove that, if test cases are fixed
-		self.setSyslogSocket("auto")
-		# Set logging level
-		self.setLogLevel("INFO")
-		self.setLogTarget("STDOUT")
+		self.__prev_signals = {}
 
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
@@ -93,9 +98,12 @@ class Server:
 				raise ServerInitializationError("Could not create daemon")
 		
 		# Set all logging parameters (or use default if not specified):
-		self.setSyslogSocket(conf.get("syslogsocket", self.__syslogSocket))
-		self.setLogLevel(conf.get("loglevel", self.__logLevel))
-		self.setLogTarget(conf.get("logtarget", self.__logTarget))
+		self.setSyslogSocket(conf.get("syslogsocket", 
+			self.__syslogSocket if self.__syslogSocket is not None else DEF_SYSLOGSOCKET))
+		self.setLogLevel(conf.get("loglevel", 
+			self.__logLevel if self.__logLevel is not None else DEF_LOGLEVEL))
+		self.setLogTarget(conf.get("logtarget", 
+			self.__logTarget if self.__logTarget is not None else DEF_LOGTARGET))
 
 		logSys.info("-"*50)
 		logSys.info("Starting Fail2ban v%s", version.version)
@@ -104,10 +112,10 @@ class Server:
 			logSys.info("Daemon started")
 
 		# Install signal handlers
-		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
-		signal.signal(signal.SIGINT, self.__sigTERMhandler)
-		signal.signal(signal.SIGUSR1, self.__sigUSR1handler)
-		
+		if _thread_name() == '_MainThread':
+			for s in (signal.SIGTERM, signal.SIGINT, signal.SIGUSR1):
+				self.__prev_signals[s] = signal.getsignal(s)
+				signal.signal(s, self.__sigTERMhandler if s != signal.SIGUSR1 else self.__sigUSR1handler)
 		# Ensure unhandled exceptions are logged
 		sys.excepthook = excepthook
 
@@ -149,6 +157,10 @@ class Server:
 		# Only now shutdown the logging.
 		with self.__loggingLock:
 			logging.shutdown()
+
+		# Restore default signal handlers:
+		for s, sh in self.__prev_signals.iteritems():
+			signal.signal(s, sh)
 
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend, self.__db)
@@ -405,7 +417,12 @@ class Server:
 	
 	def setLogTarget(self, target):
 		with self.__loggingLock:
+			# don't set new handlers if already the same
+			# or if "INHERITED" (foreground worker of the test cases, to prevent stop logging):
 			if self.__logTarget == target:
+				return True
+			if target == "INHERITED":
+				self.__logTarget = target
 				return True
 			# set a format which is simpler for console use
 			formatter = logging.Formatter("%(asctime)s %(name)-24s[%(process)d]: %(levelname)-7s %(message)s")
@@ -549,7 +566,10 @@ class Server:
 		# We need to set this in the parent process, so it gets inherited by the
 		# child process, and this makes sure that it is effect even if the parent
 		# terminates quickly.
-		signal.signal(signal.SIGHUP, signal.SIG_IGN)
+		if _thread_name() == '_MainThread':
+			for s in (signal.SIGHUP,):
+				self.__prev_signals[s] = signal.getsignal(s)
+				signal.signal(s, signal.SIG_IGN)
 
 		try:
 			# Fork a child process so the parent can exit.  This will return control

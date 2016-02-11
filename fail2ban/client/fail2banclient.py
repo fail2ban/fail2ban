@@ -28,12 +28,20 @@ import socket
 import sys
 import time
 
+import threading
 from threading import Thread
 
 from ..version import version
 from .csocket import CSocket
 from .beautifier import Beautifier
-from .fail2bancmdline import Fail2banCmdLine, logSys, exit
+from .fail2bancmdline import Fail2banCmdLine, ExitException, logSys, exit, output
+
+MAX_WAITTIME = 30
+
+
+def _thread_name():
+	return threading.current_thread().__class__.__name__
+
 
 ##
 #
@@ -51,13 +59,13 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		self._beautifier = None
 
 	def dispInteractive(self):
-		print "Fail2Ban v" + version + " reads log file that contains password failure report"
-		print "and bans the corresponding IP addresses using firewall rules."
-		print
+		output("Fail2Ban v" + version + " reads log file that contains password failure report")
+		output("and bans the corresponding IP addresses using firewall rules.")
+		output("")
 
 	def __sigTERMhandler(self, signum, frame):
 		# Print a new line because we probably come from wait
-		print
+		output("")
 		logSys.warning("Caught signal %d. Exiting" % signum)
 		exit(-1)
 
@@ -85,11 +93,11 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 					if ret[0] == 0:
 						logSys.debug("OK : " + `ret[1]`)
 						if showRet or c[0] == 'echo':
-							print beautifier.beautify(ret[1])
+							output(beautifier.beautify(ret[1]))
 					else:
 						logSys.error("NOK: " + `ret[1].args`)
 						if showRet:
-							print beautifier.beautifyError(ret[1])
+							output(beautifier.beautifyError(ret[1]))
 						streamRet = False
 				except socket.error:
 					if showRet or self._conf["verbose"] > 1:
@@ -182,10 +190,13 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 				# Start server direct here in main thread (not fork):
 				self._server = Fail2banServer.startServerDirect(self._conf, False)
 
+		except ExitException:
+			pass
 		except Exception as e:
-			print
-			logSys.error("Exception while starting server foreground")
+			output("")
+			logSys.error("Exception while starting server " + ("background" if background else "foreground"))
 			logSys.error(e)
+			return False
 		finally:
 			self._alive = False
 
@@ -229,18 +240,18 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		elif len(cmd) == 1 and cmd[0] == "restart":
 
 			if self._conf.get("interactive", False):
-				print('  ## stop ... ')
+				output('  ## stop ... ')
 			self.__processCommand(['stop'])
 			self.__waitOnServer(False)
 			# in interactive mode reset config, to make full-reload if there something changed:
 			if self._conf.get("interactive", False):
-				print('  ## load configuration ... ')
+				output('  ## load configuration ... ')
 				self.resetConf()
 				ret = self.initCmdLine(self._argv)
 				if ret is not None:
 					return ret
 			if self._conf.get("interactive", False):
-				print('  ## start ... ')
+				output('  ## start ... ')
 			return self.__processCommand(['start'])
 
 		elif len(cmd) >= 1 and cmd[0] == "reload":
@@ -283,7 +294,9 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 			return False
 		return True
 
-	def __waitOnServer(self, alive=True, maxtime=30):
+	def __waitOnServer(self, alive=True, maxtime=None):
+		if maxtime is None:
+			maxtime = MAX_WAITTIME
 		# Wait for the server to start (the server has 30 seconds to answer ping)
 		starttime = time.time()
 		with VisualWait(self._conf["verbose"]) as vis:
@@ -301,53 +314,59 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 
 	def start(self, argv):
 		# Install signal handlers
-		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
-		signal.signal(signal.SIGINT, self.__sigTERMhandler)
+		_prev_signals = {}
+		if _thread_name() == '_MainThread':
+			for s in (signal.SIGTERM, signal.SIGINT):
+				_prev_signals[s] = signal.getsignal(s)
+				signal.signal(s, self.__sigTERMhandler)
+		try:
+			# Command line options
+			if self._argv is None:
+				ret = self.initCmdLine(argv)
+				if ret is not None:
+					return ret
 
-		# Command line options
-		if self._argv is None:
-			ret = self.initCmdLine(argv)
-			if ret is not None:
-				return ret
+			# Commands
+			args = self._args
 
-		# Commands
-		args = self._args
-
-		# Interactive mode
-		if self._conf.get("interactive", False):
-			try:
-				import readline
-			except ImportError:
-				logSys.error("Readline not available")
-				return False
-			try:
-				ret = True
-				if len(args) > 0:
-					ret = self.__processCommand(args)
-				if ret:
-					readline.parse_and_bind("tab: complete")
-					self.dispInteractive()
-					while True:
-						cmd = raw_input(self.PROMPT)
-						if cmd == "exit" or cmd == "quit":
-							# Exit
-							return True
-						if cmd == "help":
-							self.dispUsage()
-						elif not cmd == "":
-							try:
-								self.__processCommand(shlex.split(cmd))
-							except Exception, e:
-								logSys.error(e)
-			except (EOFError, KeyboardInterrupt):
-				print
-				return True
-		# Single command mode
-		else:
-			if len(args) < 1:
-				self.dispUsage()
-				return False
-			return self.__processCommand(args)
+			# Interactive mode
+			if self._conf.get("interactive", False):
+				try:
+					import readline
+				except ImportError:
+					logSys.error("Readline not available")
+					return False
+				try:
+					ret = True
+					if len(args) > 0:
+						ret = self.__processCommand(args)
+					if ret:
+						readline.parse_and_bind("tab: complete")
+						self.dispInteractive()
+						while True:
+							cmd = raw_input(self.PROMPT)
+							if cmd == "exit" or cmd == "quit":
+								# Exit
+								return True
+							if cmd == "help":
+								self.dispUsage()
+							elif not cmd == "":
+								try:
+									self.__processCommand(shlex.split(cmd))
+								except Exception, e:
+									logSys.error(e)
+				except (EOFError, KeyboardInterrupt):
+					output("")
+					return True
+			# Single command mode
+			else:
+				if len(args) < 1:
+					self.dispUsage()
+					return False
+				return self.__processCommand(args)
+		finally:
+			for s, sh in _prev_signals.iteritems():
+				signal.signal(s, sh)
 
 
 class ServerExecutionException(Exception):
@@ -361,7 +380,8 @@ class ServerExecutionException(Exception):
 class _VisualWait:
 	pos = 0
 	delta = 1
-	maxpos = 10
+	def __init__(self, maxpos=10):
+		self.maxpos = maxpos
 	def __enter__(self):
 		return self
 	def __exit__(self, *args):
@@ -390,14 +410,14 @@ class _NotVisualWait:
 	def heartbeat(self):
 		pass
 
-def VisualWait(verbose):
-	return _VisualWait() if verbose > 1 else _NotVisualWait()
+def VisualWait(verbose, *args, **kwargs):
+	return _VisualWait(*args, **kwargs) if verbose > 1 else _NotVisualWait()
 
 
-def exec_command_line(): # pragma: no cover - can't test main
+def exec_command_line(argv):
 	client = Fail2banClient()
 	# Exit with correct return value
-	if client.start(sys.argv):
+	if client.start(argv):
 		exit(0)
 	else:
 		exit(-1)

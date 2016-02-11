@@ -31,7 +31,7 @@ __author__ = "Fail2Ban Developers"
 __copyright__ = "Copyright (c) 2004-2008 Cyril Jaquier, 2012-2014 Yaroslav Halchenko, 2014-2016 Serg G. Brester"
 __license__ = "GPL"
 
-from fail2ban.client.fail2banserver import exec_command_line
+from fail2ban.client.fail2banserver import exec_command_line, sys
 
 if __name__ == "__main__":
-	exec_command_line()
+	exec_command_line(sys.argv)
