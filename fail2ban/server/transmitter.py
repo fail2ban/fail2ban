@@ -93,6 +93,8 @@ class Transmitter:
 				name = command[1]
 				self.__server.stopJail(name)
 			return None
+		elif command[0] == "echo":
+			return command[1:]
 		elif command[0] == "sleep":
 			value = command[1]
 			time.sleep(float(value))

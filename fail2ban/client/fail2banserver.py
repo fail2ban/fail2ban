@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: t -*-
 # vi: set ft=python sts=4 ts=4 sw=4 noet :
-
+#
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -17,125 +17,171 @@
 # You should have received a copy of the GNU General Public License
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-__author__ = "Cyril Jaquier"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Fail2Ban Developers"
+__copyright__ = "Copyright (c) 2004-2008 Cyril Jaquier, 2012-2014 Yaroslav Halchenko, 2014-2016 Serg G. Brester"
 __license__ = "GPL"
 
-import getopt
 import os
 import sys
 
-from fail2ban.version import version
-from fail2ban.server.server import Server
-from fail2ban.helpers import getLogger
+from ..version import version
+from ..server.server import Server, ServerDaemonize
+from ..server.utils import Utils
+from .fail2bancmdline import Fail2banCmdLine, logSys, exit
 
-# Gets the instance of the logger.
-logSys = getLogger("fail2ban")
-
+SERVER = "fail2ban-server"
 ##
 # \mainpage Fail2Ban
 #
 # \section Introduction
 #
-# Fail2ban is designed to protect your server against brute force attacks.
-# Its first goal was to protect a SSH server.
+class Fail2banServer(Fail2banCmdLine):
 
-class Fail2banServer:
+	# def __init__(self):
+	# 	Fail2banCmdLine.__init__(self)
 
-	def __init__(self):
-		self.__server = None
-		self.__argv = None
-		self.__conf = dict()
-		self.__conf["background"] = True
-		self.__conf["force"] = False
-		self.__conf["socket"] = "/var/run/fail2ban/fail2ban.sock"
-		self.__conf["pidfile"] = "/var/run/fail2ban/fail2ban.pid"
+	##
+	# Start Fail2Ban server in main thread without fork (foreground).
+	#
+	# Start the Fail2ban server in foreground (daemon mode or not).
 
-	def dispVersion(self):
-		print "Fail2Ban v" + version
-		print
-		print "Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors"
-		print "Copyright of modifications held by their respective authors."
-		print "Licensed under the GNU General Public License v2 (GPL)."
-		print
-		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
-		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
+	@staticmethod
+	def startServerDirect(conf, daemon=True):
+		server = None
+		try:
+			# Start it in foreground (current thread, not new process),
+			# server object will internally fork self if daemon is True
+			server = Server(daemon)
+			server.start(conf["socket"],
+							conf["pidfile"], conf["force"], 
+							conf=conf)
+		except ServerDaemonize:
+			pass
+		except Exception, e:
+			logSys.exception(e)
+			if server:
+				server.quit()
+			exit(-1)
 
-	def dispUsage(self):
-		""" Prints Fail2Ban command line options and exits
-		"""
-		print "Usage: "+self.__argv[0]+" [OPTIONS]"
-		print
-		print "Fail2Ban v" + version + " reads log file that contains password failure report"
-		print "and bans the corresponding IP addresses using firewall rules."
-		print
-		print "Only use this command for debugging purpose. Start the server with"
-		print "fail2ban-client instead. The default behaviour is to start the server"
-		print "in background."
-		print
-		print "Options:"
-		print "    -b                   start in background"
-		print "    -f                   start in foreground"
-		print "    -s <FILE>            socket path"
-		print "    -p <FILE>            pidfile path"
-		print "    -x                   force execution of the server (remove socket file)"
-		print "    -h, --help           display this help message"
-		print "    -V, --version        print the version"
-		print
-		print "Report bugs to https://github.com/fail2ban/fail2ban/issues"
+		return server
 
-	def __getCmdLineOptions(self, optList):
-		""" Gets the command line options
-		"""
-		for opt in optList:
-			if opt[0] == "-b":
-				self.__conf["background"] = True
-			if opt[0] == "-f":
-				self.__conf["background"] = False
-			if opt[0] == "-s":
-				self.__conf["socket"] = opt[1]
-			if opt[0] == "-p":
-				self.__conf["pidfile"] = opt[1]
-			if opt[0] == "-x":
-				self.__conf["force"] = True
-			if opt[0] in ["-h", "--help"]:
-				self.dispUsage()
-				sys.exit(0)
-			if opt[0] in ["-V", "--version"]:
-				self.dispVersion()
-				sys.exit(0)
+	##
+	# Start Fail2Ban server.
+	#
+	# Start the Fail2ban server in daemon mode (background, start from client).
+
+	@staticmethod
+	def startServerAsync(conf):
+		# Forks the current process.
+		pid = os.fork()
+		if pid == 0:
+			args = list()
+			args.append(SERVER)
+			# Start async (don't read config) and in background as requested.
+			args.append("--async")
+			args.append("-b")
+			# Set the socket path.
+			args.append("-s")
+			args.append(conf["socket"])
+			# Set the pidfile
+			args.append("-p")
+			args.append(conf["pidfile"])
+			# Force the execution if needed.
+			if conf["force"]:
+				args.append("-x")
+			# Logging parameters:
+			for o in ('loglevel', 'logtarget', 'syslogsocket'):
+				args.append("--"+o)
+				args.append(conf[o])
+
+			try:
+				# Use the current directory.
+				exe = os.path.abspath(os.path.join(sys.path[0], SERVER))
+				logSys.debug("Starting %r with args %r", exe, args)
+				os.execv(exe, args)
+			except OSError:
+				try:
+					# Use the PATH env.
+					logSys.warning("Initial start attempt failed.  Starting %r with the same args", SERVER)
+					os.execvp(SERVER, args)
+				except OSError:
+					exit(-1)
+
+	def _Fail2banClient(self):
+		from .fail2banclient import Fail2banClient
+		cli = Fail2banClient()
+		cli.applyMembers(self)
+		return cli
 
 	def start(self, argv):
 		# Command line options
-		self.__argv = argv
+		ret = self.initCmdLine(argv)
+		if ret is not None:
+			return ret
 
-		# Reads the command line options.
+		# Commands
+		args = self._args
+
+		cli = None
+		# If client mode - whole processing over client:
+		if len(args) or self._conf.get("interactive", False):
+			cli = self._Fail2banClient()
+			return cli.start(argv)
+
+		# Start the server:
+		server = None
 		try:
-			cmdOpts = 'bfs:p:xhV'
-			cmdLongOpts = ['help', 'version']
-			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
-		except getopt.GetoptError:
-			self.dispUsage()
-			sys.exit(-1)
+			# async = True, if started from client, should fork, daemonize, etc...
+			# background = True, if should start in new process, otherwise start in foreground
+			async = self._conf.get("async", False)
+			background = self._conf["background"]
+			# If was started not from the client:
+			if not async:
+				# Start new thread with client to read configuration and
+				# transfer it to the server:
+				cli = self._Fail2banClient()
+				phase = dict()
+				logSys.debug('Configure via async client thread')
+				cli.configureServer(async=True, phase=phase)
+				# wait up to 30 seconds, do not continue if configuration is not 100% valid:
+				Utils.wait_for(lambda: phase.get('ready', None) is not None, 30)
+				if not phase.get('start', False):
+					return False
 
-		self.__getCmdLineOptions(optList)
+			# Start server, daemonize it, etc.
+			if async or not background:
+				server = Fail2banServer.startServerDirect(self._conf, background)
+			else:
+				Fail2banServer.startServerAsync(self._conf)
+			if cli:
+				cli._server = server
 
-		try:
-			self.__server = Server(self.__conf["background"])
-			self.__server.start(self.__conf["socket"],
-								self.__conf["pidfile"],
-								self.__conf["force"])
-			return True
+			# wait for client answer "done":
+			if not async and cli:
+				Utils.wait_for(lambda: phase.get('done', None) is not None, 30)
+				if not phase.get('done', False):
+					if server:
+						server.quit()
+					exit(-1)
+				logSys.debug('Starting server done')
+
 		except Exception, e:
 			logSys.exception(e)
-			if self.__server:
-				self.__server.quit()
-			return False
+			if server:
+				server.quit()
+			exit(-1)
 
-if __name__ == "__main__":
+		return True
+
+	@staticmethod
+	def exit(code=0): # pragma: no cover
+		if code != 0:
+			logSys.error("Could not start %s", SERVER)
+		exit(code)
+
+def exec_command_line(): # pragma: no cover - can't test main
 	server = Fail2banServer()
 	if server.start(sys.argv):
-		sys.exit(0)
+		exit(0)
 	else:
-		sys.exit(-1)
+		exit(-1)
