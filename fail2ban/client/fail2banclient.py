@@ -34,7 +34,7 @@ from threading import Thread
 from ..version import version
 from .csocket import CSocket
 from .beautifier import Beautifier
-from .fail2bancmdline import Fail2banCmdLine, ExitException, logSys, exit, output
+from .fail2bancmdline import Fail2banCmdLine, ExitException, PRODUCTION, logSys, exit, output
 
 MAX_WAITTIME = 30
 
@@ -108,8 +108,13 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 						logSys.error(e)
 					return False
 		finally:
+			# prevent errors by close during shutdown (on exit command):
 			if client:
-				client.close()
+				try :
+					client.close()
+				except Exception as e:
+					if showRet or self._conf["verbose"] > 1:
+						logSys.debug(e)
 			if showRet or c[0] == 'echo':
 				sys.stdout.flush()
 		return streamRet
@@ -184,7 +189,9 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 					return False
 			else:
 				# In foreground mode we should make server/client communication in different threads:
-				Thread(target=Fail2banClient.__processStartStreamAfterWait, args=(self, stream, False)).start()
+				th = Thread(target=Fail2banClient.__processStartStreamAfterWait, args=(self, stream, False))
+				th.daemon = True
+				th.start()
 				# Mark current (main) thread as daemon:
 				self.setDaemon(True)
 				# Start server direct here in main thread (not fork):
@@ -197,8 +204,6 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 			logSys.error("Exception while starting server " + ("background" if background else "foreground"))
 			logSys.error(e)
 			return False
-		finally:
-			self._alive = False
 
 		return True
 
@@ -206,7 +211,9 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 	def configureServer(self, async=True, phase=None):
 		# if asynchron start this operation in the new thread:
 		if async:
-			return Thread(target=Fail2banClient.configureServer, args=(self, False, phase)).start()
+			th = Thread(target=Fail2banClient.configureServer, args=(self, False, phase))
+			th.daemon = True
+			return th.start()
 		# prepare: read config, check configuration is valid, etc.:
 		if phase is not None:
 			phase['start'] = True
@@ -290,7 +297,6 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 						 "server, adding the -x option will do it")
 			if self._server:
 				self._server.quit()
-				exit(-1)
 			return False
 		return True
 
@@ -299,10 +305,12 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 			maxtime = MAX_WAITTIME
 		# Wait for the server to start (the server has 30 seconds to answer ping)
 		starttime = time.time()
+		logSys.debug("__waitOnServer: %r", (alive, maxtime))
 		with VisualWait(self._conf["verbose"]) as vis:
-			while self._alive and not self.__ping() == alive or (
+			while self._alive and (
+				not self.__ping() == alive or (
 				not alive and os.path.exists(self._conf["socket"])
-			):
+			)):
 				now = time.time()
 				# Wonderful visual :)
 				if now > starttime + 1:
@@ -365,6 +373,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 					return False
 				return self.__processCommand(args)
 		finally:
+			self._alive = False
 			for s, sh in _prev_signals.iteritems():
 				signal.signal(s, sh)
 

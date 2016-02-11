@@ -51,6 +51,8 @@ class JailThread(Thread):
 
 	def __init__(self, name=None):
 		super(JailThread, self).__init__(name=name)
+		## Should going with main thread also:
+		self.daemon = True
 		## Control the state of the thread.
 		self.active = False
 		## Control the idle state of the thread.

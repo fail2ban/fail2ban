@@ -25,14 +25,13 @@ import os
 import sys
 
 from ..version import version
-from ..server.server import Server, ServerDaemonize
+from ..server.server import Server
 from ..server.utils import Utils
-from .fail2bancmdline import Fail2banCmdLine, logSys, exit
+from .fail2bancmdline import Fail2banCmdLine, logSys, PRODUCTION, exit
 
 MAX_WAITTIME = 30
 
 SERVER = "fail2ban-server"
-
 
 ##
 # \mainpage Fail2Ban
@@ -51,6 +50,7 @@ class Fail2banServer(Fail2banCmdLine):
 
 	@staticmethod
 	def startServerDirect(conf, daemon=True):
+		logSys.debug("-- direct starting of server in %s, deamon: %s", os.getpid(), daemon)
 		server = None
 		try:
 			# Start it in foreground (current thread, not new process),
@@ -59,8 +59,6 @@ class Fail2banServer(Fail2banCmdLine):
 			server.start(conf["socket"],
 							conf["pidfile"], conf["force"], 
 							conf=conf)
-		except ServerDaemonize:
-			pass
 		except Exception, e:
 			logSys.exception(e)
 			if server:
@@ -82,9 +80,10 @@ class Fail2banServer(Fail2banCmdLine):
 			startdir = os.path.dirname(sys.argv[0])
 		# Forks the current process, don't fork if async specified (ex: test cases)
 		pid = 0
-		frk = not conf["async"]
+		frk = not conf["async"] and PRODUCTION
 		if frk:
 			pid = os.fork()
+		logSys.debug("-- async starting of server in %s, fork: %s - %s", os.getpid(), frk, pid)
 		if pid == 0:
 			args = list()
 			args.append(SERVER)
