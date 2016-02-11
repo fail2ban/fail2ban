@@ -26,6 +26,9 @@ __license__ = "GPL"
 
 import textwrap
 
+def output(s):
+	print(s)
+
 ##
 # Describes the protocol used to communicate with the server.
 
@@ -143,7 +146,7 @@ def printFormatted():
 	firstHeading = False
 	for m in protocol:
 		if m[0] == '' and firstHeading:
-			print
+			output("")
 		firstHeading = True
 		first = True
 		if len(m[0]) >= MARGIN:
@@ -154,7 +157,7 @@ def printFormatted():
 				first = False
 			else:
 				line = ' ' * (INDENT + MARGIN) + n.strip()
-			print line
+			output(line)
 
 
 ##
@@ -165,20 +168,20 @@ def printWiki():
 	for m in protocol:
 		if m[0] == '':
 			if firstHeading:
-				print "|}"
+				output("|}")
 			__printWikiHeader(m[1], m[2])
 			firstHeading = True
 		else:
-			print "|-"
-			print "| <span style=\"white-space:nowrap;\"><tt>" + m[0] + "</tt></span> || || " + m[1]
-	print "|}"
+			output("|-")
+			output("| <span style=\"white-space:nowrap;\"><tt>" + m[0] + "</tt></span> || || " + m[1])
+	output("|}")
 
 
 def __printWikiHeader(section, desc):
-	print
-	print "=== " + section + " ==="
-	print
-	print desc
-	print
-	print "{|"
-	print "| '''Command''' || || '''Description'''"
+	output("")
+	output("=== " + section + " ===")
+	output("")
+	output(desc)
+	output("")
+	output("{|")
+	output("| '''Command''' || || '''Description'''")

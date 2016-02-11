@@ -29,7 +29,11 @@ from ..server.server import Server, ServerDaemonize
 from ..server.utils import Utils
 from .fail2bancmdline import Fail2banCmdLine, logSys, exit
 
+MAX_WAITTIME = 30
+
 SERVER = "fail2ban-server"
+
+
 ##
 # \mainpage Fail2Ban
 #
@@ -72,8 +76,15 @@ class Fail2banServer(Fail2banCmdLine):
 
 	@staticmethod
 	def startServerAsync(conf):
-		# Forks the current process.
-		pid = os.fork()
+		# Directory of client (to try the first start from the same directory as client):
+		startdir = sys.path[0]
+		if startdir in ("", "."): # may be uresolved in test-cases, so get bin-directory:
+			startdir = os.path.dirname(sys.argv[0])
+		# Forks the current process, don't fork if async specified (ex: test cases)
+		pid = 0
+		frk = not conf["async"]
+		if frk:
+			pid = os.fork()
 		if pid == 0:
 			args = list()
 			args.append(SERVER)
@@ -96,14 +107,20 @@ class Fail2banServer(Fail2banCmdLine):
 
 			try:
 				# Use the current directory.
-				exe = os.path.abspath(os.path.join(sys.path[0], SERVER))
+				exe = os.path.abspath(os.path.join(startdir, SERVER))
 				logSys.debug("Starting %r with args %r", exe, args)
-				os.execv(exe, args)
-			except OSError:
+				if frk:
+					os.execv(exe, args)
+				else:
+					os.spawnv(os.P_NOWAITO, exe, args)
+			except OSError as e:
 				try:
 					# Use the PATH env.
-					logSys.warning("Initial start attempt failed.  Starting %r with the same args", SERVER)
-					os.execvp(SERVER, args)
+					logSys.warning("Initial start attempt failed (%s). Starting %r with the same args", e, SERVER)
+					if frk:
+						os.execvp(SERVER, args)
+					else:
+						os.spawnvp(os.P_NOWAITO, SERVER, args)
 				except OSError:
 					exit(-1)
 
@@ -143,8 +160,8 @@ class Fail2banServer(Fail2banCmdLine):
 				phase = dict()
 				logSys.debug('Configure via async client thread')
 				cli.configureServer(async=True, phase=phase)
-				# wait up to 30 seconds, do not continue if configuration is not 100% valid:
-				Utils.wait_for(lambda: phase.get('ready', None) is not None, 30)
+				# wait up to MAX_WAITTIME, do not continue if configuration is not 100% valid:
+				Utils.wait_for(lambda: phase.get('ready', None) is not None, MAX_WAITTIME)
 				if not phase.get('start', False):
 					return False
 
@@ -158,7 +175,7 @@ class Fail2banServer(Fail2banCmdLine):
 
 			# wait for client answer "done":
 			if not async and cli:
-				Utils.wait_for(lambda: phase.get('done', None) is not None, 30)
+				Utils.wait_for(lambda: phase.get('done', None) is not None, MAX_WAITTIME)
 				if not phase.get('done', False):
 					if server:
 						server.quit()
@@ -179,9 +196,9 @@ class Fail2banServer(Fail2banCmdLine):
 			logSys.error("Could not start %s", SERVER)
 		exit(code)
 
-def exec_command_line(): # pragma: no cover - can't test main
+def exec_command_line(argv):
 	server = Fail2banServer()
-	if server.start(sys.argv):
+	if server.start(argv):
 		exit(0)
 	else:
 		exit(-1)

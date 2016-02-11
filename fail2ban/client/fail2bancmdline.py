@@ -33,7 +33,12 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger("fail2ban")
 
+def output(s):
+	print(s)
+
 CONFIG_PARAMS = ("socket", "pidfile", "logtarget", "loglevel", "syslogsocket",)
+# Used to signal - we are in test cases (ex: prevents change logging params, log capturing, etc)
+PRODUCTION = True
 
 
 class Fail2banCmdLine():
@@ -71,50 +76,50 @@ class Fail2banCmdLine():
 			self.__dict__[o] = obj.__dict__[o]
 
 	def dispVersion(self):
-		print "Fail2Ban v" + version
-		print
-		print "Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors"
-		print "Copyright of modifications held by their respective authors."
-		print "Licensed under the GNU General Public License v2 (GPL)."
-		print
-		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
-		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
+		output("Fail2Ban v" + version)
+		output("")
+		output("Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors")
+		output("Copyright of modifications held by their respective authors.")
+		output("Licensed under the GNU General Public License v2 (GPL).")
+		output("")
+		output("Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>.")
+		output("Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>.")
 
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
 		"""
 		caller = os.path.basename(self._argv[0])
-		print "Usage: "+caller+" [OPTIONS]" + (" <COMMAND>" if not caller.endswith('server') else "")
-		print
-		print "Fail2Ban v" + version + " reads log file that contains password failure report"
-		print "and bans the corresponding IP addresses using firewall rules."
-		print
-		print "Options:"
-		print "    -c <DIR>                configuration directory"
-		print "    -s <FILE>               socket path"
-		print "    -p <FILE>               pidfile path"
-		print "    --loglevel <LEVEL>      logging level"
-		print "    --logtarget <FILE>|STDOUT|STDERR|SYSLOG"
-		print "    --syslogsocket auto|<FILE>"
-		print "    -d                      dump configuration. For debugging"
-		print "    -i                      interactive mode"
-		print "    -v                      increase verbosity"
-		print "    -q                      decrease verbosity"
-		print "    -x                      force execution of the server (remove socket file)"
-		print "    -b                      start server in background (default)"
-		print "    -f                      start server in foreground"
-		print "    --async                 start server in async mode (for internal usage only, don't read configuration)"
-		print "    -h, --help              display this help message"
-		print "    -V, --version           print the version"
+		output("Usage: "+caller+" [OPTIONS]" + (" <COMMAND>" if not caller.endswith('server') else ""))
+		output("")
+		output("Fail2Ban v" + version + " reads log file that contains password failure report")
+		output("and bans the corresponding IP addresses using firewall rules.")
+		output("")
+		output("Options:")
+		output("    -c <DIR>                configuration directory")
+		output("    -s <FILE>               socket path")
+		output("    -p <FILE>               pidfile path")
+		output("    --loglevel <LEVEL>      logging level")
+		output("    --logtarget <FILE>|STDOUT|STDERR|SYSLOG")
+		output("    --syslogsocket auto|<FILE>")
+		output("    -d                      dump configuration. For debugging")
+		output("    -i                      interactive mode")
+		output("    -v                      increase verbosity")
+		output("    -q                      decrease verbosity")
+		output("    -x                      force execution of the server (remove socket file)")
+		output("    -b                      start server in background (default)")
+		output("    -f                      start server in foreground")
+		output("    --async                 start server in async mode (for internal usage only, don't read configuration)")
+		output("    -h, --help              display this help message")
+		output("    -V, --version           print the version")
 		
 		if not caller.endswith('server'):
-			print
-			print "Command:"
+			output("")
+			output("Command:")
 			# Prints the protocol
 			printFormatted()
 
-		print
-		print "Report bugs to https://github.com/fail2ban/fail2ban/issues"
+		output("")
+		output("Report bugs to https://github.com/fail2ban/fail2ban/issues")
 
 	def __getCmdLineOptions(self, optList):
 		""" Gets the command line options
@@ -147,69 +152,78 @@ class Fail2banCmdLine():
 				self._conf["background"] = False
 			elif o in ["-h", "--help"]:
 				self.dispUsage()
-				exit(0)
+				return True
 			elif o in ["-V", "--version"]:
 				self.dispVersion()
-				exit(0)
+				return True
+		return None
 
 	def initCmdLine(self, argv):
-		# First time?
-		initial = (self._argv is None)
-
-		# Command line options
-		self._argv = argv
-
-		# Reads the command line options.
 		try:
-			cmdOpts = 'hc:s:p:xfbdviqV'
-			cmdLongOpts = ['loglevel=', 'logtarget=', 'syslogsocket=', 'async', 'help', 'version']
-			optList, self._args = getopt.getopt(self._argv[1:], cmdOpts, cmdLongOpts)
-		except getopt.GetoptError:
-			self.dispUsage()
-			exit(-1)
+			# First time?
+			initial = (self._argv is None)
 
-		self.__getCmdLineOptions(optList)
+			# Command line options
+			self._argv = argv
+			logSys.info("Using start params %s", argv[1:])
 
-		if initial:
-			verbose = self._conf["verbose"]
-			if verbose <= 0:
-				logSys.setLevel(logging.ERROR)
-			elif verbose == 1:
-				logSys.setLevel(logging.WARNING)
-			elif verbose == 2:
-				logSys.setLevel(logging.INFO)
-			else:
-				logSys.setLevel(logging.DEBUG)
-			# Add the default logging handler to dump to stderr
-			logout = logging.StreamHandler(sys.stderr)
-			# set a format which is simpler for console use
-			formatter = logging.Formatter('%(levelname)-6s %(message)s')
-			# tell the handler to use this format
-			logout.setFormatter(formatter)
-			logSys.addHandler(logout)
+			# Reads the command line options.
+			try:
+				cmdOpts = 'hc:s:p:xfbdviqV'
+				cmdLongOpts = ['loglevel=', 'logtarget=', 'syslogsocket=', 'async', 'help', 'version']
+				optList, self._args = getopt.getopt(self._argv[1:], cmdOpts, cmdLongOpts)
+			except getopt.GetoptError:
+				self.dispUsage()
+				return False
 
-		# Set expected parameters (like socket, pidfile, etc) from configuration,
-		# if those not yet specified, in which read configuration only if needed here:
-		conf = None
-		for o in CONFIG_PARAMS:
-			if self._conf.get(o, None) is None:
-				if not conf:
-					self.configurator.readEarly()
-					conf = self.configurator.getEarlyOptions()
-				self._conf[o] = conf[o]
+			ret = self.__getCmdLineOptions(optList)
+			if ret is not None:
+				return ret
 
-		logSys.info("Using socket file %s", self._conf["socket"])
+			if initial and PRODUCTION: # pragma: no cover - can't test
+				verbose = self._conf["verbose"]
+				if verbose <= 0:
+					logSys.setLevel(logging.ERROR)
+				elif verbose == 1:
+					logSys.setLevel(logging.WARNING)
+				elif verbose == 2:
+					logSys.setLevel(logging.INFO)
+				else:
+					logSys.setLevel(logging.DEBUG)
+				# Add the default logging handler to dump to stderr
+				logout = logging.StreamHandler(sys.stderr)
+				# set a format which is simpler for console use
+				formatter = logging.Formatter('%(levelname)-6s %(message)s')
+				# tell the handler to use this format
+				logout.setFormatter(formatter)
+				logSys.addHandler(logout)
 
-		logSys.info("Using pid file %s, [%s] logging to %s",
-			self._conf["pidfile"], self._conf["loglevel"], self._conf["logtarget"])
+			# Set expected parameters (like socket, pidfile, etc) from configuration,
+			# if those not yet specified, in which read configuration only if needed here:
+			conf = None
+			for o in CONFIG_PARAMS:
+				if self._conf.get(o, None) is None:
+					if not conf:
+						self.configurator.readEarly()
+						conf = self.configurator.getEarlyOptions()
+					self._conf[o] = conf[o]
 
-		if self._conf.get("dump", False):
-			ret, stream = self.readConfig()
-			self.dumpConfig(stream)
-			return ret
+			logSys.info("Using socket file %s", self._conf["socket"])
 
-		# Nothing to do here, process in client/server
-		return None
+			logSys.info("Using pid file %s, [%s] logging to %s",
+				self._conf["pidfile"], self._conf["loglevel"], self._conf["logtarget"])
+
+			if self._conf.get("dump", False):
+				ret, stream = self.readConfig()
+				self.dumpConfig(stream)
+				return ret
+
+			# Nothing to do here, process in client/server
+			return None
+		except Exception as e:
+			output("ERROR: %s" % (e,))
+			#logSys.exception(e)
+			return False
 
 	def readConfig(self, jail=None):
 		# Read the configuration
@@ -243,3 +257,7 @@ class Fail2banCmdLine():
 
 # global exit handler:
 exit = Fail2banCmdLine.exit
+
+
+class ExitException:
+	pass

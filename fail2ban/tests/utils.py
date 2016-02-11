@@ -26,10 +26,14 @@ import logging
 import optparse
 import os
 import re
+import tempfile
+import shutil
 import sys
 import time
 import unittest
+
 from StringIO import StringIO
+from functools import wraps
 
 from ..helpers import getLogger
 from ..server.filter import DNSUtils
@@ -70,6 +74,17 @@ class F2B(optparse.Values):
 			wtime = float(wtime) / 10
 		return wtime
 
+
+def withtmpdir(f):
+	@wraps(f)
+	def wrapper(self, *args, **kwargs):
+		tmp = tempfile.mkdtemp(prefix="f2b-temp")
+		try:
+			return f(self, tmp, *args, **kwargs)
+		finally:
+			# clean up
+			shutil.rmtree(tmp)
+	return wrapper
 
 def initTests(opts):
 	unittest.F2B = F2B(opts)
@@ -145,6 +160,7 @@ def gatherTests(regexps=None, opts=None):
 	from . import misctestcase
 	from . import databasetestcase
 	from . import samplestestcase
+	from . import fail2banclienttestcase
 	from . import fail2banregextestcase
 
 	if not regexps: # pragma: no cover
@@ -223,6 +239,9 @@ def gatherTests(regexps=None, opts=None):
 	# Filter Regex tests with sample logs
 	tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
 
+	# bin/fail2ban-client, bin/fail2ban-server
+	tests.addTest(unittest.makeSuite(fail2banclienttestcase.Fail2banClientTest))
+	tests.addTest(unittest.makeSuite(fail2banclienttestcase.Fail2banServerTest))
 	# bin/fail2ban-regex
 	tests.addTest(unittest.makeSuite(fail2banregextestcase.Fail2banRegexTest))
 
@@ -293,8 +312,11 @@ class LogCaptureTestCase(unittest.TestCase):
 		# Let's log everything into a string
 		self._log = StringIO()
 		logSys.handlers = [logging.StreamHandler(self._log)]
+		if self._old_level <= logging.DEBUG:
+			print("")
 		if self._old_level < logging.DEBUG: # so if HEAVYDEBUG etc -- show them!
 			logSys.handlers += self._old_handlers
+			logSys.debug('--'*40)
 		logSys.setLevel(getattr(logging, 'DEBUG'))
 
 	def tearDown(self):
@@ -339,6 +361,9 @@ class LogCaptureTestCase(unittest.TestCase):
 				return
 		raise AssertionError("All of the %r were found present in the log: %r" % (s, logged))
 
+
+	def pruneLog(self):
+		self._log.truncate(0)
 
 	def getLog(self):
 		return self._log.getvalue()

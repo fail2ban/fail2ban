@@ -125,6 +125,7 @@ class Utils():
 			timeout_expr = lambda: time.time() - stime <= timeout
 		else:
 			timeout_expr = timeout
+		popen = None
 		try:
 			popen = subprocess.Popen(
 				realCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell,
@@ -151,7 +152,10 @@ class Utils():
 				if retcode is None and not Utils.pid_exists(pgid):
 					retcode = signal.SIGKILL
 		except OSError as e:
-			logSys.error("%s -- failed with %s" % (realCmd, e))
+			stderr = "%s -- failed with %s" % (realCmd, e)
+			logSys.error(stderr)
+			if not popen:
+				return False if not output else (False, stdout, stderr, retcode)
 
 		std_level = retcode == 0 and logging.DEBUG or logging.ERROR
 		# if we need output (to return or to log it): 
