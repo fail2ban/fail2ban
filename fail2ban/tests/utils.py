@@ -340,9 +340,8 @@ class LogCaptureTestCase(unittest.TestCase):
 		# Let's log everything into a string
 		self._log = StringIO()
 		logSys.handlers = [logging.StreamHandler(self._log)]
-		if self._old_level <= logging.DEBUG:
+		if self._old_level <= logging.DEBUG: # so if DEBUG etc -- show them (and log it in travis)!
 			print("")
-		if self._old_level < logging.DEBUG: # so if HEAVYDEBUG etc -- show them!
 			logSys.handlers += self._old_handlers
 			logSys.debug('--'*40)
 		logSys.setLevel(getattr(logging, 'DEBUG'))

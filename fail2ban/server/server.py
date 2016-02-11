@@ -351,6 +351,9 @@ class Server:
 	def getBanTime(self, name):
 		return self.__jails[name].actions.getBanTime()
 	
+	def isStarted(self):
+		self.__asyncServer.isActive()
+
 	def isAlive(self, jailnum=None):
 		if jailnum is not None and len(self.__jails) != jailnum:
 			return 0
@@ -642,7 +645,4 @@ class Server:
 
 
 class ServerInitializationError(Exception):
-	pass
-
-class ServerDaemonize(Exception):
 	pass
