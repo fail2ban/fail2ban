@@ -156,8 +156,11 @@ fail2ban/client/configparserinc.py
 fail2ban/client/configreader.py
 fail2ban/client/configurator.py
 fail2ban/client/csocket.py
+fail2ban/client/fail2banclient.py
+fail2ban/client/fail2bancmdline.py
 fail2ban/client/fail2banreader.py
 fail2ban/client/fail2banregex.py
+fail2ban/client/fail2banserver.py
 fail2ban/client/filterreader.py
 fail2ban/client/__init__.py
 fail2ban/client/jailreader.py

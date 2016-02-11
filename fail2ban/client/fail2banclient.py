@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: t -*-
 # vi: set ft=python sts=4 ts=4 sw=4 noet :
-
+#
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -17,99 +17,38 @@
 # You should have received a copy of the GNU General Public License
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-__author__ = "Cyril Jaquier"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Fail2Ban Developers"
+__copyright__ = "Copyright (c) 2004-2008 Cyril Jaquier, 2012-2014 Yaroslav Halchenko, 2014-2016 Serg G. Brester"
 __license__ = "GPL"
 
-import getopt
-import logging
 import os
-import pickle
-import re
 import shlex
 import signal
 import socket
-import string
 import sys
 import time
 
-from fail2ban.version import version
-from fail2ban.protocol import printFormatted
-from fail2ban.client.csocket import CSocket
-from fail2ban.client.configurator import Configurator
-from fail2ban.client.beautifier import Beautifier
-from fail2ban.helpers import getLogger
+from threading import Thread
 
-# Gets the instance of the logger.
-logSys = getLogger("fail2ban")
+from ..version import version
+from .csocket import CSocket
+from .beautifier import Beautifier
+from .fail2bancmdline import Fail2banCmdLine, logSys, exit
 
 ##
 #
 # @todo This class needs cleanup.
 
-class Fail2banClient:
+class Fail2banClient(Fail2banCmdLine, Thread):
 
-	SERVER = "fail2ban-server"
 	PROMPT = "fail2ban> "
 
 	def __init__(self):
-		self.__server = None
-		self.__argv = None
-		self.__stream = None
-		self.__configurator = Configurator()
-		self.__conf = dict()
-		self.__conf["conf"] = "/etc/fail2ban"
-		self.__conf["dump"] = False
-		self.__conf["force"] = False
-		self.__conf["background"] = True
-		self.__conf["verbose"] = 1
-		self.__conf["interactive"] = False
-		self.__conf["socket"] = None
-		self.__conf["pidfile"] = None
-
-	def dispVersion(self):
-		print "Fail2Ban v" + version
-		print
-		print "Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors"
-		print "Copyright of modifications held by their respective authors."
-		print "Licensed under the GNU General Public License v2 (GPL)."
-		print
-		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
-		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
-
-	def dispUsage(self):
-		""" Prints Fail2Ban command line options and exits
-		"""
-		print "Usage: "+self.__argv[0]+" [OPTIONS] <COMMAND>"
-		print
-		print "Fail2Ban v" + version + " reads log file that contains password failure report"
-		print "and bans the corresponding IP addresses using firewall rules."
-		print
-		print "Options:"
-		print "    -c <DIR>                configuration directory"
-		print "    -s <FILE>               socket path"
-		print "    -p <FILE>               pidfile path"
-		print "    --loglevel <LEVEL>      logging level"
-		print "    --logtarget <FILE>|STDOUT|STDERR|SYSLOG"
-		print "    --syslogsocket auto|file"
-		print "    -d                      dump configuration. For debugging"
-		print "    -i                      interactive mode"
-		print "    -v                      increase verbosity"
-		print "    -q                      decrease verbosity"
-		print "    -x                      force execution of the server (remove socket file)"
-		print "    -b                      start server in background (default)"
-		print "    -f                      start server in foreground"
-		print "    -h, --help              display this help message"
-		print "    -V, --version           print the version"
-		print
-		print "Command:"
-
-		# Prints the protocol
-		printFormatted()
-
-		print
-		print "Report bugs to https://github.com/fail2ban/fail2ban/issues"
+		Fail2banCmdLine.__init__(self)
+		Thread.__init__(self)
+		self._alive = True
+		self._server = None
+		self._beautifier = None
 
 	def dispInteractive(self):
 		print "Fail2Ban v" + version + " reads log file that contains password failure report"
@@ -120,58 +59,32 @@ class Fail2banClient:
 		# Print a new line because we probably come from wait
 		print
 		logSys.warning("Caught signal %d. Exiting" % signum)
-		sys.exit(-1)
-
-	def __getCmdLineOptions(self, optList):
-		""" Gets the command line options
-		"""
-		for opt in optList:
-			if opt[0] == "-c":
-				self.__conf["conf"] = opt[1]
-			elif opt[0] == "-s":
-				self.__conf["socket"] = opt[1]
-			elif opt[0] == "-p":
-				self.__conf["pidfile"] = opt[1]
-			elif opt[0].startswith("--log") or opt[0].startswith("--sys"):
-				self.__conf[ opt[0][2:] ] = opt[1]
-			elif opt[0] == "-d":
-				self.__conf["dump"] = True
-			elif opt[0] == "-v":
-				self.__conf["verbose"] = self.__conf["verbose"] + 1
-			elif opt[0] == "-q":
-				self.__conf["verbose"] = self.__conf["verbose"] - 1
-			elif opt[0] == "-x":
-				self.__conf["force"] = True
-			elif opt[0] == "-i":
-				self.__conf["interactive"] = True
-			elif opt[0] == "-b":
-				self.__conf["background"] = True
-			elif opt[0] == "-f":
-				self.__conf["background"] = False
-			elif opt[0] in ["-h", "--help"]:
-				self.dispUsage()
-				sys.exit(0)
-			elif opt[0] in ["-V", "--version"]:
-				self.dispVersion()
-				sys.exit(0)
+		exit(-1)
 
 	def __ping(self):
 		return self.__processCmd([["ping"]], False)
 
-	def __processCmd(self, cmd, showRet = True):
+	@property
+	def beautifier(self):
+		if self._beautifier:
+			return self._beautifier
+		self._beautifier = Beautifier()
+		return self._beautifier
+
+	def __processCmd(self, cmd, showRet=True):
 		client = None
 		try:
-			beautifier = Beautifier()
+			beautifier = self.beautifier
 			streamRet = True
 			for c in cmd:
 				beautifier.setInputCmd(c)
 				try:
 					if not client:
-						client = CSocket(self.__conf["socket"])
+						client = CSocket(self._conf["socket"])
 					ret = client.send(c)
 					if ret[0] == 0:
 						logSys.debug("OK : " + `ret[1]`)
-						if showRet:
+						if showRet or c[0] == 'echo':
 							print beautifier.beautify(ret[1])
 					else:
 						logSys.error("NOK: " + `ret[1].args`)
@@ -179,37 +92,125 @@ class Fail2banClient:
 							print beautifier.beautifyError(ret[1])
 						streamRet = False
 				except socket.error:
-					if showRet:
+					if showRet or self._conf["verbose"] > 1:
 						self.__logSocketError()
 					return False
 				except Exception, e:
-					if showRet:
+					if showRet or self._conf["verbose"] > 1:
 						logSys.error(e)
 					return False
 		finally:
 			if client:
 				client.close()
+			if showRet or c[0] == 'echo':
+				sys.stdout.flush()
 		return streamRet
 
 	def __logSocketError(self):
 		try:
-			if os.access(self.__conf["socket"], os.F_OK):
+			if os.access(self._conf["socket"], os.F_OK):
 				# This doesn't check if path is a socket,
 				#  but socket.error should be raised
-				if os.access(self.__conf["socket"], os.W_OK):
+				if os.access(self._conf["socket"], os.W_OK):
 					# Permissions look good, but socket.error was raised
 					logSys.error("Unable to contact server. Is it running?")
 				else:
 					logSys.error("Permission denied to socket: %s,"
-								 " (you must be root)", self.__conf["socket"])
+								 " (you must be root)", self._conf["socket"])
 			else:
 				logSys.error("Failed to access socket path: %s."
 							 " Is fail2ban running?",
-							 self.__conf["socket"])
+							 self._conf["socket"])
 		except Exception as e:
 			logSys.error("Exception while checking socket access: %s",
-						 self.__conf["socket"])
+						 self._conf["socket"])
 			logSys.error(e)
+
+	##
+	def __prepareStartServer(self):
+		if self.__ping():
+			logSys.error("Server already running")
+			return None
+
+		# Read the config
+		ret, stream = self.readConfig()
+		# Do not continue if configuration is not 100% valid
+		if not ret:
+			return None
+
+		# verify that directory for the socket file exists
+		socket_dir = os.path.dirname(self._conf["socket"])
+		if not os.path.exists(socket_dir):
+			logSys.error(
+				"There is no directory %s to contain the socket file %s."
+				% (socket_dir, self._conf["socket"]))
+			return None
+		if not os.access(socket_dir, os.W_OK | os.X_OK):
+			logSys.error(
+				"Directory %s exists but not accessible for writing"
+				% (socket_dir,))
+			return None
+
+		# Check already running
+		if not self._conf["force"] and os.path.exists(self._conf["socket"]):
+			logSys.error("Fail2ban seems to be in unexpected state (not running but the socket exists)")
+			return None
+
+		stream.append(['echo', 'Server ready'])
+		return stream
+
+	##
+	def __startServer(self, background=True):
+		from .fail2banserver import Fail2banServer
+		stream = self.__prepareStartServer()
+		self._alive = True
+		if not stream:
+			return False
+		# Start the server or just initialize started one:
+		try:
+			if background:
+				# Start server daemon as fork of client process:
+				Fail2banServer.startServerAsync(self._conf)
+				# Send config stream to server:
+				if not self.__processStartStreamAfterWait(stream, False):
+					return False
+			else:
+				# In foreground mode we should make server/client communication in different threads:
+				Thread(target=Fail2banClient.__processStartStreamAfterWait, args=(self, stream, False)).start()
+				# Mark current (main) thread as daemon:
+				self.setDaemon(True)
+				# Start server direct here in main thread (not fork):
+				self._server = Fail2banServer.startServerDirect(self._conf, False)
+
+		except Exception as e:
+			print
+			logSys.error("Exception while starting server foreground")
+			logSys.error(e)
+		finally:
+			self._alive = False
+
+		return True
+
+	##
+	def configureServer(self, async=True, phase=None):
+		# if asynchron start this operation in the new thread:
+		if async:
+			return Thread(target=Fail2banClient.configureServer, args=(self, False, phase)).start()
+		# prepare: read config, check configuration is valid, etc.:
+		if phase is not None:
+			phase['start'] = True
+			logSys.debug('-- client phase %s', phase)
+		stream = self.__prepareStartServer()
+		if phase is not None:
+			phase['ready'] = phase['start'] = (True if stream else False)
+			logSys.debug('-- client phase %s', phase)
+		if not stream:
+			return False
+		# configure server with config stream:
+		ret = self.__processStartStreamAfterWait(stream, False)
+		if phase is not None:
+			phase['done'] = ret
+		return ret
 
 	##
 	# Process a command line.
@@ -219,253 +220,101 @@ class Fail2banClient:
 
 	def __processCommand(self, cmd):
 		if len(cmd) == 1 and cmd[0] == "start":
-			if self.__ping():
-				logSys.error("Server already running")
+			
+			ret = self.__startServer(self._conf["background"])
+			if not ret:
 				return False
-			else:
-				# Read the config
-				ret = self.__readConfig()
-				# Do not continue if configuration is not 100% valid
-				if not ret:
-					return False
-				# verify that directory for the socket file exists
-				socket_dir = os.path.dirname(self.__conf["socket"])
-				if not os.path.exists(socket_dir):
-					logSys.error(
-						"There is no directory %s to contain the socket file %s."
-						% (socket_dir, self.__conf["socket"]))
-					return False
-				if not os.access(socket_dir, os.W_OK | os.X_OK):
-					logSys.error(
-						"Directory %s exists but not accessible for writing"
-						% (socket_dir,))
-					return False
+			return ret
 
-				# Check already running
-				if not self.__conf["force"] and os.path.exists(self.__conf["socket"]):
-					logSys.error("Fail2ban seems to be in unexpected state (not running but socket exists)")
-					return False
+		elif len(cmd) == 1 and cmd[0] == "restart":
 
-				# Start the server
-				t = None
-				if self.__conf["background"]:
-					# Start server daemon as fork of client process:
-					self.__startServerAsync()
-					# Send config stream to server:
-					return self.__processStartStreamAfterWait()
+			if self._conf.get("interactive", False):
+				print('  ## stop ... ')
+			self.__processCommand(['stop'])
+			self.__waitOnServer(False)
+			# in interactive mode reset config, to make full-reload if there something changed:
+			if self._conf.get("interactive", False):
+				print('  ## load configuration ... ')
+				self.resetConf()
+				ret = self.initCmdLine(self._argv)
+				if ret is not None:
+					return ret
+			if self._conf.get("interactive", False):
+				print('  ## start ... ')
+			return self.__processCommand(['start'])
+
+		elif len(cmd) >= 1 and cmd[0] == "reload":
+			if self.__ping():
+				if len(cmd) == 1:
+					jail = 'all'
+					ret, stream = self.readConfig()
 				else:
-					# In foreground mode we should start server/client communication in other thread:
-					from threading import Thread
-					t = Thread(target=Fail2banClient.__processStartStreamAfterWait, args=(self,))
-					t.start()
-					# Start server direct here in main thread:
-					try:
-						self.__startServerDirect()
-					except KeyboardInterrupt:
-						None
-
-				return True
-
-		elif len(cmd) == 1 and cmd[0] == "reload":
-			if self.__ping():
-				ret = self.__readConfig()
-				# Do not continue if configuration is not 100% valid
-				if not ret:
-					return False
-				self.__processCmd([['stop', 'all']], False)
-				# Configure the server
-				return self.__processCmd(self.__stream, False)
-			else:
-				logSys.error("Could not find server")
-				return False
-		elif len(cmd) == 2 and cmd[0] == "reload":
-			if self.__ping():
-				jail = cmd[1]
-				ret = self.__readConfig(jail)
+					jail = cmd[1]
+					ret, stream = self.readConfig(jail)
 				# Do not continue if configuration is not 100% valid
 				if not ret:
 					return False
 				self.__processCmd([['stop', jail]], False)
 				# Configure the server
-				return self.__processCmd(self.__stream, False)
+				return self.__processCmd(stream, True)
 			else:
 				logSys.error("Could not find server")
 				return False
+
 		else:
 			return self.__processCmd([cmd])
 
 
-	def __processStartStreamAfterWait(self):
+	def __processStartStreamAfterWait(self, *args):
 		try:
 			# Wait for the server to start
 			self.__waitOnServer()
-			# Configure the server
-			self.__processCmd(self.__stream, False)
+				# Configure the server
+			self.__processCmd(*args)
 		except ServerExecutionException:
 			logSys.error("Could not start server. Maybe an old "
 						 "socket file is still present. Try to "
-						 "remove " + self.__conf["socket"] + ". If "
+						 "remove " + self._conf["socket"] + ". If "
 						 "you used fail2ban-client to start the "
 						 "server, adding the -x option will do it")
-			if not self.__conf["background"]:
-				self.__server.quit()
-				sys.exit(-1)
+			if self._server:
+				self._server.quit()
+				exit(-1)
 			return False
 		return True
 
-
-	##
-	# Start Fail2Ban server in main thread without fork (foreground).
-	#
-	# Start the Fail2ban server in foreground (daemon mode or not).
-
-	def __startServerDirect(self):
-		from fail2ban.server.server import Server
-		try:
-			self.__server = Server(False)
-			self.__server.start(self.__conf["socket"],
-							self.__conf["pidfile"], self.__conf["force"], 
-							conf=self.__conf)
-		except Exception, e:
-			logSys.exception(e)
-			if self.__server:
-				self.__server.quit()
-			sys.exit(-1)
-
-
-	##
-	# Start Fail2Ban server.
-	#
-	# Start the Fail2ban server in daemon mode.
-
-	def __startServerAsync(self):
-		# Forks the current process.
-		pid = os.fork()
-		if pid == 0:
-			args = list()
-			args.append(self.SERVER)
-			# Set the socket path.
-			args.append("-s")
-			args.append(self.__conf["socket"])
-			# Set the pidfile
-			args.append("-p")
-			args.append(self.__conf["pidfile"])
-			# Force the execution if needed.
-			if self.__conf["force"]:
-				args.append("-x")
-			# Start in background as requested.
-			args.append("-b")
-			
-			try:
-				# Use the current directory.
-				exe = os.path.abspath(os.path.join(sys.path[0], self.SERVER))
-				logSys.debug("Starting %r with args %r" % (exe, args))
-				os.execv(exe, args)
-			except OSError:
-				try:
-					# Use the PATH env.
-					logSys.warning("Initial start attempt failed.  Starting %r with the same args" % (self.SERVER,))
-					os.execvp(self.SERVER, args)
-				except OSError:
-					logSys.error("Could not start %s" % self.SERVER)
-					os.exit(-1)
-
-	def __waitOnServer(self):
-		# Wait for the server to start
-		cnt = 0
-		if self.__conf["verbose"] > 1:
-			pos = 0
-			delta = 1
-			mask = "[          ]"
-		while not self.__ping():
-			# Wonderful visual :)
-			if self.__conf["verbose"] > 1:
-				pos += delta
-				sys.stdout.write("\rINFO   " + mask[:pos] + '#' + mask[pos+1:] +
-								 " Waiting on the server...")
-				sys.stdout.flush()
-				if pos > len(mask)-3:
-					delta = -1
-				elif pos < 2:
-					delta = 1
-			# The server has 30 seconds to start.
-			if cnt >= 300:
-				if self.__conf["verbose"] > 1:
-					sys.stdout.write('\n')
-				raise ServerExecutionException("Failed to start server")
-			time.sleep(0.1)
-			cnt += 1
-		if self.__conf["verbose"] > 1:
-			sys.stdout.write('\n')
-
+	def __waitOnServer(self, alive=True, maxtime=30):
+		# Wait for the server to start (the server has 30 seconds to answer ping)
+		starttime = time.time()
+		with VisualWait(self._conf["verbose"]) as vis:
+			while self._alive and not self.__ping() == alive or (
+				not alive and os.path.exists(self._conf["socket"])
+			):
+				now = time.time()
+				# Wonderful visual :)
+				if now > starttime + 1:
+					vis.heartbeat()
+				# f end time reached:
+				if now - starttime >= maxtime:
+					raise ServerExecutionException("Failed to start server")
+				time.sleep(0.1)
 
 	def start(self, argv):
-		# Command line options
-		self.__argv = argv
-
 		# Install signal handlers
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
 		signal.signal(signal.SIGINT, self.__sigTERMhandler)
 
-		# Reads the command line options.
-		try:
-			cmdOpts = 'hc:s:p:xfbdviqV'
-			cmdLongOpts = ['loglevel', 'logtarget', 'syslogsocket', 'help', 'version']
-			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
-		except getopt.GetoptError:
-			self.dispUsage()
-			return False
+		# Command line options
+		if self._argv is None:
+			ret = self.initCmdLine(argv)
+			if ret is not None:
+				return ret
 
-		self.__getCmdLineOptions(optList)
-
-		verbose = self.__conf["verbose"]
-		if verbose <= 0:
-			logSys.setLevel(logging.ERROR)
-		elif verbose == 1:
-			logSys.setLevel(logging.WARNING)
-		elif verbose == 2:
-			logSys.setLevel(logging.INFO)
-		elif verbose == 3:
-			logSys.setLevel(logging.DEBUG)
-		else:
-			logSys.setLevel(logging.HEAVYDEBUG)
-		# Add the default logging handler to dump to stderr
-		logout = logging.StreamHandler(sys.stderr)
-		# set a format which is simpler for console use
-		formatter = logging.Formatter('%(levelname)-6s %(message)s')
-		# tell the handler to use this format
-		logout.setFormatter(formatter)
-		logSys.addHandler(logout)
-
-		# Set the configuration path
-		self.__configurator.setBaseDir(self.__conf["conf"])
-
-		# Set socket path
-		self.__configurator.readEarly()
-		conf = self.__configurator.getEarlyOptions()
-		if self.__conf["socket"] is None:
-			self.__conf["socket"] = conf["socket"]
-		if self.__conf["pidfile"] is None:
-			self.__conf["pidfile"] = conf["pidfile"]
-		if self.__conf.get("logtarget", None) is None:
-			self.__conf["logtarget"] = conf["logtarget"]
-		if self.__conf.get("loglevel", None) is None:
-			self.__conf["loglevel"] = conf["loglevel"]
-		if self.__conf.get("syslogsocket", None) is None:
-			self.__conf["syslogsocket"] = conf["syslogsocket"]
-
-		logSys.info("Using socket file %s", self.__conf["socket"])
-
-		logSys.info("Using pid file %s, [%s] logging to %s",
-			self.__conf["pidfile"], self.__conf["loglevel"], self.__conf["logtarget"])
-
-		if self.__conf["dump"]:
-			ret = self.__readConfig()
-			self.dumpConfig(self.__stream)
-			return ret
+		# Commands
+		args = self._args
 
 		# Interactive mode
-		if self.__conf["interactive"]:
+		if self._conf.get("interactive", False):
 			try:
 				import readline
 			except ImportError:
@@ -500,35 +349,56 @@ class Fail2banClient:
 				return False
 			return self.__processCommand(args)
 
-	def __readConfig(self, jail=None):
-		# Read the configuration
-		# TODO: get away from stew of return codes and exception
-		# handling -- handle via exceptions
-		try:
-			self.__configurator.Reload()
-			self.__configurator.readAll()
-			ret = self.__configurator.getOptions(jail)
-			self.__configurator.convertToProtocol()
-			self.__stream = self.__configurator.getConfigStream()
-		except Exception, e:
-			logSys.error("Failed during configuration: %s" % e)
-			ret = False
-		return ret
-
-	@staticmethod
-	def dumpConfig(cmd):
-		for c in cmd:
-			print c
-		return True
-
 
 class ServerExecutionException(Exception):
 	pass
 
-if __name__ == "__main__": # pragma: no cover - can't test main
+
+##
+# Wonderful visual :)
+#
+
+class _VisualWait:
+	pos = 0
+	delta = 1
+	maxpos = 10
+	def __enter__(self):
+		return self
+	def __exit__(self, *args):
+		if self.pos:
+			sys.stdout.write('\r'+(' '*(35+self.maxpos))+'\r')
+			sys.stdout.flush()
+	def heartbeat(self):
+		if not self.pos:
+			sys.stdout.write("\nINFO   [#" + (' '*self.maxpos) + "] Waiting on the server...\r\x1b[8C")
+		self.pos += self.delta
+		if self.delta > 0:
+			s = " #\x1b[1D" if self.pos > 1 else "# \x1b[2D"
+		else: 
+			s = "\x1b[1D# \x1b[2D"
+		sys.stdout.write(s)
+		sys.stdout.flush()
+		if self.pos > self.maxpos:
+			self.delta = -1
+		elif self.pos < 2:
+			self.delta = 1
+class _NotVisualWait:
+	def __enter__(self):
+		return self
+	def __exit__(self, *args):
+		pass
+	def heartbeat(self):
+		pass
+
+def VisualWait(verbose):
+	return _VisualWait() if verbose > 1 else _NotVisualWait()
+
+
+def exec_command_line(): # pragma: no cover - can't test main
 	client = Fail2banClient()
 	# Exit with correct return value
 	if client.start(sys.argv):
-		sys.exit(0)
+		exit(0)
 	else:
-		sys.exit(-1)
+		exit(-1)
+

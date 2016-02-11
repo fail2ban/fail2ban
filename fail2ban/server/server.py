@@ -67,6 +67,11 @@ class Server:
 			'FreeBSD': '/var/run/log',
 			'Linux': '/dev/log',
 		}
+		# todo: remove that, if test cases are fixed
+		self.setSyslogSocket("auto")
+		# Set logging level
+		self.setLogLevel("INFO")
+		self.setLogTarget("STDOUT")
 
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
@@ -77,13 +82,27 @@ class Server:
 		self.flushLogs()
 
 	def start(self, sock, pidfile, force=False, conf={}):
-		# First set all logging parameters:
-		self.setSyslogSocket(conf.get("syslogsocket", "auto"))
-		self.setLogLevel(conf.get("loglevel", "INFO"))
-		self.setLogTarget(conf.get("logtarget", "STDOUT"))
+		# First set the mask to only allow access to owner
+		os.umask(0077)
+		# Second daemonize before logging etc, because it will close all handles:
+		if self.__daemon: # pragma: no cover
+			logSys.info("Starting in daemon mode")
+			ret = self.__createDaemon()
+			if not ret:
+				logSys.error("Could not create daemon")
+				raise ServerInitializationError("Could not create daemon")
+		
+		# Set all logging parameters (or use default if not specified):
+		self.setSyslogSocket(conf.get("syslogsocket", self.__syslogSocket))
+		self.setLogLevel(conf.get("loglevel", self.__logLevel))
+		self.setLogTarget(conf.get("logtarget", self.__logTarget))
 
+		logSys.info("-"*50)
 		logSys.info("Starting Fail2ban v%s", version.version)
 		
+		if self.__daemon: # pragma: no cover
+			logSys.info("Daemon started")
+
 		# Install signal handlers
 		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
 		signal.signal(signal.SIGINT, self.__sigTERMhandler)
@@ -92,17 +111,6 @@ class Server:
 		# Ensure unhandled exceptions are logged
 		sys.excepthook = excepthook
 
-		# First set the mask to only allow access to owner
-		os.umask(0077)
-		if self.__daemon: # pragma: no cover
-			logSys.info("Starting in daemon mode")
-			ret = self.__createDaemon()
-			if ret:
-				logSys.info("Daemon started")
-			else:
-				logSys.error("Could not create daemon")
-				raise ServerInitializationError("Could not create daemon")
-		
 		# Creates a PID file.
 		try:
 			logSys.debug("Creating PID file %s" % pidfile)
@@ -139,11 +147,8 @@ class Server:
 		self.stopAllJail()
 
 		# Only now shutdown the logging.
-		try:
-			self.__loggingLock.acquire()
+		with self.__loggingLock:
 			logging.shutdown()
-		finally:
-			self.__loggingLock.release()
 
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend, self.__db)
@@ -372,16 +377,15 @@ class Server:
 	# @param value the level
 	
 	def setLogLevel(self, value):
-		try:
-			self.__loggingLock.acquire()
-			getLogger("fail2ban").setLevel(
-				getattr(logging, value.upper()))
-		except AttributeError:
-			raise ValueError("Invalid log level")
-		else:
-			self.__logLevel = value.upper()
-		finally:
-			self.__loggingLock.release()
+		value = value.upper()
+		with self.__loggingLock:
+			if self.__logLevel == value:
+				return
+			try:
+				getLogger("fail2ban").setLevel(getattr(logging, value))
+				self.__logLevel = value
+			except AttributeError:
+				raise ValueError("Invalid log level")
 	
 	##
 	# Get the logging level.
@@ -390,11 +394,8 @@ class Server:
 	# @return the log level
 	
 	def getLogLevel(self):
-		try:
-			self.__loggingLock.acquire()
+		with self.__loggingLock:
 			return self.__logLevel
-		finally:
-			self.__loggingLock.release()
 
 	##
 	# Sets the logging target.
@@ -480,24 +481,21 @@ class Server:
 	# syslogsocket is the full path to the syslog socket
 	# @param syslogsocket the syslog socket path
 	def setSyslogSocket(self, syslogsocket):
-		self.__syslogSocket = syslogsocket
-		# Conditionally reload, logtarget depends on socket path when SYSLOG
-		return self.__logTarget != "SYSLOG"\
-			   or self.setLogTarget(self.__logTarget)
+		with self.__loggingLock:
+			if self.__syslogSocket == syslogsocket:
+				return True
+			self.__syslogSocket = syslogsocket
+			# Conditionally reload, logtarget depends on socket path when SYSLOG
+			return self.__logTarget != "SYSLOG"\
+				   or self.setLogTarget(self.__logTarget)
 
 	def getLogTarget(self):
-		try:
-			self.__loggingLock.acquire()
+		with self.__loggingLock:
 			return self.__logTarget
-		finally:
-			self.__loggingLock.release()
 
 	def getSyslogSocket(self):
-		try:
-			self.__loggingLock.acquire()
+		with self.__loggingLock:
 			return self.__syslogSocket
-		finally:
-			self.__loggingLock.release()
 
 	def flushLogs(self):
 		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG']:
@@ -552,7 +550,7 @@ class Server:
 		# child process, and this makes sure that it is effect even if the parent
 		# terminates quickly.
 		signal.signal(signal.SIGHUP, signal.SIG_IGN)
-		
+
 		try:
 			# Fork a child process so the parent can exit.  This will return control
 			# to the command line or shell.  This is required so that the new process
@@ -593,7 +591,7 @@ class Server:
 				os._exit(0)	  # Exit parent (the first child) of the second child.
 		else:
 			os._exit(0)		 # Exit parent of the first child.
-		
+	
 		# Close all open files.  Try the system configuration variable, SC_OPEN_MAX,
 		# for the maximum number of open files to close.  If it doesn't exist, use
 		# the default value (configurable).
@@ -624,4 +622,7 @@ class Server:
 
 
 class ServerInitializationError(Exception):
+	pass
+
+class ServerDaemonize(Exception):
 	pass
