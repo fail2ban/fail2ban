@@ -93,9 +93,15 @@ class Server:
 		if self.__daemon: # pragma: no cover
 			logSys.info("Starting in daemon mode")
 			ret = self.__createDaemon()
-			if not ret:
-				logSys.error("Could not create daemon")
-				raise ServerInitializationError("Could not create daemon")
+			# If forked parent - return here (parent process will configure server later):
+			if ret is None:
+				return False
+			# If error:
+			if not ret[0]:
+				err = "Could not create daemon %s", ret[1:]
+				logSys.error(err)
+				raise ServerInitializationError(err)
+			# We are daemon.
 		
 		# Set all logging parameters (or use default if not specified):
 		self.setSyslogSocket(conf.get("syslogsocket", 
@@ -159,8 +165,12 @@ class Server:
 			logging.shutdown()
 
 		# Restore default signal handlers:
-		for s, sh in self.__prev_signals.iteritems():
-			signal.signal(s, sh)
+		if _thread_name() == '_MainThread':
+			for s, sh in self.__prev_signals.iteritems():
+				signal.signal(s, sh)
+
+		# Prevent to call quit twice:
+		self.quit = lambda: False
 
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend, self.__db)
@@ -559,10 +569,9 @@ class Server:
 		# We need to set this in the parent process, so it gets inherited by the
 		# child process, and this makes sure that it is effect even if the parent
 		# terminates quickly.
-		if _thread_name() == '_MainThread':
-			for s in (signal.SIGHUP,):
-				self.__prev_signals[s] = signal.getsignal(s)
-				signal.signal(s, signal.SIG_IGN)
+		for s in (signal.SIGHUP,):
+			self.__prev_signals[s] = signal.getsignal(s)
+			signal.signal(s, signal.SIG_IGN)
 
 		try:
 			# Fork a child process so the parent can exit.  This will return control
@@ -573,7 +582,7 @@ class Server:
 			# PGID.
 			pid = os.fork()
 		except OSError, e:
-			return((e.errno, e.strerror))	 # ERROR (return a tuple)
+			return (False, (e.errno, e.strerror))	 # ERROR (return a tuple)
 		
 		if pid == 0:	   # The first child.
 	
@@ -594,7 +603,7 @@ class Server:
 				# preventing the daemon from ever acquiring a controlling terminal.
 				pid = os.fork()		# Fork a second child.
 			except OSError, e:
-				return((e.errno, e.strerror))  # ERROR (return a tuple)
+				return (False, (e.errno, e.strerror))  # ERROR (return a tuple)
 		
 			if (pid == 0):	  # The second child.
 				# Ensure that the daemon doesn't keep any directory in use.  Failure
@@ -603,7 +612,8 @@ class Server:
 			else:
 				os._exit(0)	  # Exit parent (the first child) of the second child.
 		else:
-			os._exit(0)		 # Exit parent of the first child.
+			# Signal to exit, parent of the first child.
+			return None
 	
 		# Close all open files.  Try the system configuration variable, SC_OPEN_MAX,
 		# for the maximum number of open files to close.  If it doesn't exist, use
@@ -631,7 +641,7 @@ class Server:
 		os.open("/dev/null", os.O_RDONLY)	# standard input (0)
 		os.open("/dev/null", os.O_RDWR)		# standard output (1)
 		os.open("/dev/null", os.O_RDWR)		# standard error (2)
-		return True
+		return (True,)
 
 
 class ServerInitializationError(Exception):

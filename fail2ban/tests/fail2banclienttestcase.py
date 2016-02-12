@@ -26,6 +26,7 @@ __license__ = "GPL"
 import fileinput
 import os
 import re
+import sys
 import time
 import unittest
 
@@ -50,10 +51,9 @@ else:
 
 CLIENT = "fail2ban-client"
 SERVER = "fail2ban-server"
-BIN = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "bin")
+BIN = os.path.dirname(Fail2banServer.getServerPath())
 
-MAX_WAITTIME = 10
-MAX_WAITTIME = unittest.F2B.maxWaitTime(MAX_WAITTIME)
+MAX_WAITTIME = 30 if not unittest.F2B.fast else 5
 
 ##
 # Several wrappers and settings for proper testing:
@@ -66,8 +66,6 @@ fail2banserver.MAX_WAITTIME = MAX_WAITTIME
 fail2bancmdline.logSys = \
 fail2banclient.logSys = \
 fail2banserver.logSys = logSys
-
-LOG_LEVEL = logSys.level
 
 server.DEF_LOGTARGET = "/dev/null"
 
@@ -89,13 +87,13 @@ fail2banclient.exit = \
 fail2banserver.exit = _test_exit
 
 INTERACT = []
-def _test_raw_input(*args):
+def _test_input_command(*args):
 	if len(INTERACT):
-		#print('--- interact command: ', INTERACT[0])
+		#logSys.debug('--- interact command: %r', INTERACT[0])
 		return INTERACT.pop(0)
 	else:
 		return "exit" 
-fail2banclient.raw_input = _test_raw_input
+fail2banclient.input_command = _test_input_command
 
 # prevents change logging params, log capturing, etc:
 fail2bancmdline.PRODUCTION = \
@@ -142,7 +140,7 @@ def _start_params(tmp, use_stock=False, logtarget="/dev/null"):
 	else:
 		# just empty config directory without anything (only fail2ban.conf/jail.conf):
 		os.mkdir(cfg)
-		f = open(cfg+"/fail2ban.conf", "wb")
+		f = open(cfg+"/fail2ban.conf", "w")
 		f.write('\n'.join((
 			"[Definition]",
 			"loglevel = INFO",
@@ -156,20 +154,20 @@ def _start_params(tmp, use_stock=False, logtarget="/dev/null"):
 			"",
 		)))
 		f.close()
-		f = open(cfg+"/jail.conf", "wb")
+		f = open(cfg+"/jail.conf", "w")
 		f.write('\n'.join((
 			"[INCLUDES]", "",
 			"[DEFAULT]", "",
 			"",
 		)))
 		f.close()
-		if LOG_LEVEL < logging.DEBUG: # if HEAVYDEBUG
+		if logSys.level < logging.DEBUG: # if HEAVYDEBUG
 			_out_file(cfg+"/fail2ban.conf")
 			_out_file(cfg+"/jail.conf")
-	# parameters:
-	return ("-c", cfg, 
-					"--logtarget", logtarget, "--loglevel", "DEBUG", "--syslogsocket", "auto",
-					"-s", tmp+"/f2b.sock", "-p", tmp+"/f2b.pid")
+	# parameters (sock/pid and config, increase verbosity, set log, etc.):
+	return ("-c", cfg, "-s", tmp+"/f2b.sock", "-p", tmp+"/f2b.pid",
+					"-vv", "--logtarget", logtarget, "--loglevel", "DEBUG", "--syslogsocket", "auto",
+	)
 
 def _kill_srv(pidfile): # pragma: no cover
 	def _pid_exists(pid):
@@ -206,14 +204,14 @@ def _kill_srv(pidfile): # pragma: no cover
 			os.kill(pid, signal.SIGKILL)
 		return not _pid_exists(pid)
 	except Exception as e:
-		sysLog.debug(e)
+		logSys.debug(e)
 	finally:
 		if f is not None:
 			f.close()
 	return True
 
 
-class Fail2banClientTest(LogCaptureTestCase):
+class Fail2banClientServerBase(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
@@ -222,6 +220,21 @@ class Fail2banClientTest(LogCaptureTestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 		LogCaptureTestCase.tearDown(self)
+
+	def _wait_for_srv(self, tmp, ready=True, startparams=None):
+		sock = tmp+"/f2b.sock"
+		# wait for server (socket):
+		ret = Utils.wait_for(lambda: os.path.exists(sock), MAX_WAITTIME)
+		if not ret:
+			raise Exception('Unexpected: Socket file does not exists.\nStart failed: %r' % (startparams,))
+		if ready:
+			# wait for communication with worker ready:
+			ret = Utils.wait_for(lambda: "Server ready" in self.getLog(), MAX_WAITTIME)
+			if not ret:
+				raise Exception('Unexpected: Server ready was not found.\nStart failed: %r' % (startparams,))
+
+
+class Fail2banClientTest(Fail2banClientServerBase):
 
 	def testClientUsage(self):
 		self.assertRaises(ExitException, _exec_client, 
@@ -232,12 +245,13 @@ class Fail2banClientTest(LogCaptureTestCase):
 	@withtmpdir
 	def testClientStartBackgroundInside(self, tmp):
 		try:
-			# always add "--async" by start inside, should don't fork by async (not replace client with server, just start in new process)
-			# (we can't fork the test cases process):
+			# use once the stock configuration (to test starting also)
 			startparams = _start_params(tmp, True)
 			# start:
 			self.assertRaises(ExitException, _exec_client, 
-				(CLIENT, "--async", "-b") + startparams + ("start",))
+				(CLIENT, "-b") + startparams + ("start",))
+			# wait for server (socket and ready):
+			self._wait_for_srv(tmp, True, startparams=startparams)
 			self.assertLogged("Server ready")
 			self.assertLogged("Exit with code 0")
 			try:
@@ -245,6 +259,11 @@ class Fail2banClientTest(LogCaptureTestCase):
 					(CLIENT,) + startparams + ("echo", "TEST-ECHO",))
 				self.assertRaises(FailExitException, _exec_client, 
 					(CLIENT,) + startparams + ("~~unknown~cmd~failed~~",))
+				self.pruneLog()
+				# start again (should fail):
+				self.assertRaises(FailExitException, _exec_client, 
+					(CLIENT, "-b") + startparams + ("start",))
+				self.assertLogged("Server already running")
 			finally:
 				self.pruneLog()
 				# stop:
@@ -260,11 +279,14 @@ class Fail2banClientTest(LogCaptureTestCase):
 		try:
 			global INTERACT
 			startparams = _start_params(tmp)
-			# start (without async in new process):
-			cmd = os.path.join(os.path.join(BIN), CLIENT)
+			# start (in new process, using the same python version):
+			cmd = (sys.executable, os.path.join(os.path.join(BIN), CLIENT))
 			logSys.debug('Start %s ...', cmd)
-			Utils.executeCmd((cmd,) + startparams + ("start",), 
-				timeout=MAX_WAITTIME, shell=False, output=False)
+			cmd = cmd + startparams + ("start",)
+			Utils.executeCmd(cmd, timeout=MAX_WAITTIME, shell=False, output=True)
+			# wait for server (socket and ready):
+			self._wait_for_srv(tmp, True, startparams=cmd)
+			self.assertLogged("Server ready")
 			self.pruneLog()
 			try:
 				# echo from client (inside):
@@ -312,7 +334,7 @@ class Fail2banClientTest(LogCaptureTestCase):
 		# start and wait to end (foreground):
 		logSys.debug("-- start of test worker")
 		phase['start'] = True
-		self.assertRaises(ExitException, _exec_client, 
+		self.assertRaises(fail2bancmdline.ExitException, _exec_client, 
 			(CLIENT, "-f") + startparams + ("start",))
 		# end :
 		phase['end'] = True
@@ -334,9 +356,10 @@ class Fail2banClientTest(LogCaptureTestCase):
 				# wait for start thread:
 				Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
 				self.assertTrue(phase.get('start', None))
-				# wait for server (socket):
-				Utils.wait_for(lambda: os.path.exists(tmp+"/f2b.sock"), MAX_WAITTIME)
-				self.assertLogged("Starting communication")
+				# wait for server (socket and ready):
+				self._wait_for_srv(tmp, True, startparams=startparams)
+				self.pruneLog()
+				# several commands to server:
 				self.assertRaises(ExitException, _exec_client, 
 					(CLIENT,) + startparams + ("ping",))
 				self.assertRaises(FailExitException, _exec_client, 
@@ -382,15 +405,7 @@ class Fail2banClientTest(LogCaptureTestCase):
 					cntr -= 1
 
 
-class Fail2banServerTest(LogCaptureTestCase):
-
-	def setUp(self):
-		"""Call before every test case."""
-		LogCaptureTestCase.setUp(self)
-
-	def tearDown(self):
-		"""Call after every test case."""
-		LogCaptureTestCase.tearDown(self)
+class Fail2banServerTest(Fail2banClientServerBase):
 
 	def testServerUsage(self):
 		self.assertRaises(ExitException, _exec_server, 
@@ -401,15 +416,17 @@ class Fail2banServerTest(LogCaptureTestCase):
 	@withtmpdir
 	def testServerStartBackground(self, tmp):
 		try:
-			# don't add "--async" by start, because if will fork current process by daemonize
-			# (we can't fork the test cases process),
-			# because server started internal communication in new thread use INHERITED as logtarget here:
-			startparams = _start_params(tmp, logtarget="INHERITED")
-			# start:
-			self.assertRaises(ExitException, _exec_server, 
-				(SERVER, "-b") + startparams)
+			# to prevent fork of test-cases process, start server in background via command:
+			startparams = _start_params(tmp)
+			# start (in new process, using the same python version):
+			cmd = (sys.executable, os.path.join(os.path.join(BIN), SERVER))
+			logSys.debug('Start %s ...', cmd)
+			cmd = cmd + startparams + ("-b",)
+			Utils.executeCmd(cmd, timeout=MAX_WAITTIME, shell=False, output=True)
+			# wait for server (socket and ready):
+			self._wait_for_srv(tmp, True, startparams=cmd)
 			self.assertLogged("Server ready")
-			self.assertLogged("Exit with code 0")
+			self.pruneLog()
 			try:
 				self.assertRaises(ExitException, _exec_server, 
 					(SERVER,) + startparams + ("echo", "TEST-ECHO",))
@@ -429,7 +446,7 @@ class Fail2banServerTest(LogCaptureTestCase):
 		# start and wait to end (foreground):
 		logSys.debug("-- start of test worker")
 		phase['start'] = True
-		self.assertRaises(ExitException, _exec_server, 
+		self.assertRaises(fail2bancmdline.ExitException, _exec_server, 
 			(SERVER, "-f") + startparams + ("start",))
 		# end :
 		phase['end'] = True
@@ -451,9 +468,10 @@ class Fail2banServerTest(LogCaptureTestCase):
 				# wait for start thread:
 				Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
 				self.assertTrue(phase.get('start', None))
-				# wait for server (socket):
-				Utils.wait_for(lambda: os.path.exists(tmp+"/f2b.sock"), MAX_WAITTIME)
-				self.assertLogged("Starting communication")
+				# wait for server (socket and ready):
+				self._wait_for_srv(tmp, True, startparams=startparams)
+				self.pruneLog()
+				# several commands to server:
 				self.assertRaises(ExitException, _exec_server, 
 					(SERVER,) + startparams + ("ping",))
 				self.assertRaises(FailExitException, _exec_server, 

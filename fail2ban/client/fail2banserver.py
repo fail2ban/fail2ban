@@ -24,10 +24,8 @@ __license__ = "GPL"
 import os
 import sys
 
-from ..version import version
-from ..server.server import Server
-from ..server.utils import Utils
-from .fail2bancmdline import Fail2banCmdLine, logSys, PRODUCTION, exit
+from .fail2bancmdline import Fail2banCmdLine, ServerExecutionException, \
+	logSys, PRODUCTION, exit
 
 MAX_WAITTIME = 30
 
@@ -44,13 +42,14 @@ class Fail2banServer(Fail2banCmdLine):
 	# 	Fail2banCmdLine.__init__(self)
 
 	##
-	# Start Fail2Ban server in main thread without fork (foreground).
+	# Start Fail2Ban server in main thread without fork (direct, it can fork itself in Server if daemon=True).
 	#
-	# Start the Fail2ban server in foreground (daemon mode or not).
+	# Start the Fail2ban server in background/foreground (daemon mode or not).
 
 	@staticmethod
 	def startServerDirect(conf, daemon=True):
 		logSys.debug("-- direct starting of server in %s, deamon: %s", os.getpid(), daemon)
+		from ..server.server import Server
 		server = None
 		try:
 			# Start it in foreground (current thread, not new process),
@@ -59,11 +58,14 @@ class Fail2banServer(Fail2banCmdLine):
 			server.start(conf["socket"],
 							conf["pidfile"], conf["force"], 
 							conf=conf)
-		except Exception, e:
-			logSys.exception(e)
-			if server:
-				server.quit()
-			exit(-1)
+		except Exception as e:
+			try:
+				if server:
+					server.quit()
+			except Exception as e2:
+				if conf["verbose"] > 1:
+					logSys.exception(e2)
+			raise
 
 		return server
 
@@ -74,10 +76,6 @@ class Fail2banServer(Fail2banCmdLine):
 
 	@staticmethod
 	def startServerAsync(conf):
-		# Directory of client (to try the first start from the same directory as client):
-		startdir = sys.path[0]
-		if startdir in ("", "."): # may be uresolved in test-cases, so get bin-directory:
-			startdir = os.path.dirname(sys.argv[0])
 		# Forks the current process, don't fork if async specified (ex: test cases)
 		pid = 0
 		frk = not conf["async"] and PRODUCTION
@@ -103,25 +101,43 @@ class Fail2banServer(Fail2banCmdLine):
 			for o in ('loglevel', 'logtarget', 'syslogsocket'):
 				args.append("--"+o)
 				args.append(conf[o])
-
 			try:
-				# Use the current directory.
-				exe = os.path.abspath(os.path.join(startdir, SERVER))
+				# Directory of client (to try the first start from current or the same directory as client, and from relative bin):
+				exe = Fail2banServer.getServerPath()
+				if not frk:
+					# Wrapr args to use the same python version in client/server (important for multi-python systems):
+					args[0] = exe
+					exe = sys.executable
+					args[0:0] = [exe]
 				logSys.debug("Starting %r with args %r", exe, args)
 				if frk:
-					os.execv(exe, args)
+					return os.execv(exe, args)
 				else:
-					os.spawnv(os.P_NOWAITO, exe, args)
+					# use P_WAIT instead of P_NOWAIT (to prevent defunct-zomby process), it startet as daemon, so parent exit fast after fork):
+					return os.spawnv(os.P_WAIT, exe, args)
 			except OSError as e:
-				try:
-					# Use the PATH env.
-					logSys.warning("Initial start attempt failed (%s). Starting %r with the same args", e, SERVER)
-					if frk:
-						os.execvp(SERVER, args)
-					else:
-						os.spawnvp(os.P_NOWAITO, SERVER, args)
-				except OSError:
-					exit(-1)
+				# Use the PATH env.
+				logSys.warning("Initial start attempt failed (%s). Starting %r with the same args", e, SERVER)
+				if frk:
+					return os.execvp(SERVER, args)
+				else:
+					del args[0]
+					args[0] = SERVER
+					return os.spawnvp(os.P_WAIT, SERVER, args)
+		return pid
+
+	@staticmethod
+	def getServerPath():
+		startdir = sys.path[0]
+		exe = os.path.abspath(os.path.join(startdir, SERVER))
+		if not os.path.isfile(exe): # may be uresolved in test-cases, so get relative starter (client):
+			startdir = os.path.dirname(sys.argv[0])
+			exe = os.path.abspath(os.path.join(startdir, SERVER))
+			if not os.path.isfile(exe): # may be uresolved in test-cases, so try to get relative bin-directory:
+				startdir = os.path.dirname(os.path.abspath(__file__))
+				startdir = os.path.join(os.path.dirname(os.path.dirname(startdir)), "bin")
+				exe = os.path.abspath(os.path.join(startdir, SERVER))
+		return exe
 
 	def _Fail2banClient(self):
 		from .fail2banclient import Fail2banClient
@@ -139,18 +155,24 @@ class Fail2banServer(Fail2banCmdLine):
 		args = self._args
 
 		cli = None
-		# If client mode - whole processing over client:
-		if len(args) or self._conf.get("interactive", False):
-			cli = self._Fail2banClient()
-			return cli.start(argv)
+		# Just start:
+		if len(args) == 1 and args[0] == 'start' and not self._conf.get("interactive", False):
+			pass
+		else:
+			# If client mode - whole processing over client:
+			if len(args) or self._conf.get("interactive", False):
+				cli = self._Fail2banClient()
+				return cli.start(argv)
 
 		# Start the server:
 		server = None
 		try:
-			# async = True, if started from client, should fork, daemonize, etc...
-			# background = True, if should start in new process, otherwise start in foreground
-			async = self._conf.get("async", False)
+			from ..server.utils import Utils
+			# background = True, if should be new process running in background, otherwise start in foreground
+			# process will be forked in daemonize, inside of Server module.
+			# async = True, if started from client, should...
 			background = self._conf["background"]
+			async = self._conf.get("async", False)
 			# If was started not from the client:
 			if not async:
 				# Start new thread with client to read configuration and
@@ -162,13 +184,14 @@ class Fail2banServer(Fail2banCmdLine):
 				# wait up to MAX_WAITTIME, do not continue if configuration is not 100% valid:
 				Utils.wait_for(lambda: phase.get('ready', None) is not None, MAX_WAITTIME)
 				if not phase.get('start', False):
-					return False
+					raise ServerExecutionException('Async configuration of server failed')
 
 			# Start server, daemonize it, etc.
-			if async or not background:
-				server = Fail2banServer.startServerDirect(self._conf, background)
-			else:
-				Fail2banServer.startServerAsync(self._conf)
+			pid = os.getpid()
+			server = Fail2banServer.startServerDirect(self._conf, background)
+			# If forked - just exit other processes
+			if pid != os.getpid():
+				os._exit(0)
 			if cli:
 				cli._server = server
 
@@ -182,7 +205,8 @@ class Fail2banServer(Fail2banCmdLine):
 				logSys.debug('Starting server done')
 
 		except Exception, e:
-			logSys.exception(e)
+			if self._conf["verbose"] > 1:
+				logSys.exception(e)
 			if server:
 				server.quit()
 			exit(-1)

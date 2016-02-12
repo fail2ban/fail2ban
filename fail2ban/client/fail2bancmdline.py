@@ -259,5 +259,9 @@ class Fail2banCmdLine():
 exit = Fail2banCmdLine.exit
 
 
-class ExitException:
+class ExitException(Exception):
+	pass
+
+
+class ServerExecutionException(Exception):
 	pass
