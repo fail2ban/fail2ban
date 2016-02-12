@@ -67,7 +67,8 @@ class Server:
 		self.__db = None
 		self.__daemon = daemon
 		self.__transm = Transmitter(self)
-		self.__asyncServer = AsyncServer(self.__transm)
+		#self.__asyncServer = AsyncServer(self.__transm)
+		self.__asyncServer = None
 		self.__logLevel = None
 		self.__logTarget = None
 		self.__syslogSocket = None
@@ -137,6 +138,7 @@ class Server:
 		# Start the communication
 		logSys.debug("Starting communication")
 		try:
+			self.__asyncServer = AsyncServer(self.__transm)
 			self.__asyncServer.start(sock, force)
 		except AsyncServerException, e:
 			logSys.error("Could not start server: %s", e)
@@ -155,14 +157,17 @@ class Server:
 		# communications first (which should be ok anyways since we
 		# are exiting)
 		# See https://github.com/fail2ban/fail2ban/issues/7
-		self.__asyncServer.stop()
+		if self.__asyncServer is not None:
+			self.__asyncServer.stop()
+			self.__asyncServer = None
 
 		# Now stop all the jails
 		self.stopAllJail()
 
 		# Only now shutdown the logging.
-		with self.__loggingLock:
-			logging.shutdown()
+		if self.__logTarget is not None:
+			with self.__loggingLock:
+				logging.shutdown()
 
 		# Restore default signal handlers:
 		if _thread_name() == '_MainThread':

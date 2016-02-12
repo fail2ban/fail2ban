@@ -62,25 +62,18 @@ class TransmitterBase(unittest.TestCase):
 	
 	def setUp(self):
 		"""Call before every test case."""
+		#super(TransmitterBase, self).setUp()
 		self.transm = self.server._Server__transm
-		self.tmp_files = []
-		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'transmitter')
-		os.close(sock_fd)
-		self.tmp_files.append(sock_name)
-		pidfile_fd, pidfile_name = tempfile.mkstemp(
-			'fail2ban.pid', 'transmitter')
-		os.close(pidfile_fd)
-		self.tmp_files.append(pidfile_name)
-		self.server.start(sock_name, pidfile_name, force=False)
+		# To test thransmitter we don't need to start server...
+		#self.server.start('/dev/null', '/dev/null', force=False)
 		self.jailName = "TestJail1"
 		self.server.addJail(self.jailName, FAST_BACKEND)
 
 	def tearDown(self):
 		"""Call after every test case."""
+		# stop jails, etc.
 		self.server.quit()
-		for f in self.tmp_files:
-			if os.path.exists(f):
-				os.remove(f)
+		#super(TransmitterBase, self).tearDown()
 
 	def setGetTest(self, cmd, inValue, outValue=(None,), outCode=0, jail=None, repr_=False):
 		"""Process set/get commands and compare both return values 
@@ -792,10 +785,10 @@ class TransmitterLogging(TransmitterBase):
 
 	def setUp(self):
 		self.server = Server()
+		super(TransmitterLogging, self).setUp()
 		self.server.setLogTarget("/dev/null")
 		self.server.setLogLevel("CRITICAL")
 		self.server.setSyslogSocket("auto")
-		super(TransmitterLogging, self).setUp()
 
 	def testLogTarget(self):
 		logTargets = []
@@ -963,3 +956,21 @@ class LoggingTests(LogCaptureTestCase):
 			sys.__excepthook__ = prev_exchook
 		self.assertEqual(len(x), 1)
 		self.assertEqual(x[0][0], RuntimeError)
+
+	def testStartFailedSockExists(self):
+		tmp_files = []
+		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'f2b-test')
+		os.close(sock_fd)
+		tmp_files.append(sock_name)
+		pidfile_fd, pidfile_name = tempfile.mkstemp('fail2ban.pid', 'f2b-test')
+		os.close(pidfile_fd)
+		tmp_files.append(pidfile_name)
+		server = TestServer()
+		try:
+			server.start(sock_name, pidfile_name, force=False)
+			self.assertLogged("Server already running")
+		finally:
+			server.quit()
+			for f in tmp_files:
+				if os.path.exists(f):
+					os.remove(f)
