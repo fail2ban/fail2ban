@@ -119,10 +119,14 @@ else:
 
 # Custom log format for the verbose tests runs
 if verbosity > 1: # pragma: no cover
-	stdout.setFormatter(Formatter(' %(asctime)-15s %(thread)s' + fmt))
-else: # pragma: no cover
-	# just prefix with the space
-	stdout.setFormatter(Formatter(fmt))
+	if verbosity > 3:
+		fmt = ' | %(module)15.15s-%(levelno)-2d: %(funcName)-20.20s |' + fmt
+	if verbosity > 2:
+	  fmt = ' +%(relativeCreated)5d %(thread)X %(levelname)-5.5s' + fmt
+	else:
+		fmt = ' %(asctime)-15s %(thread)X %(levelname)-5.5s' + fmt
+#
+stdout.setFormatter(Formatter(fmt))
 logSys.addHandler(stdout)
 
 #

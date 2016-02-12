@@ -44,8 +44,8 @@ class CommandActionTest(LogCaptureTestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
-		LogCaptureTestCase.tearDown(self)
 		self.__action.stop()
+		LogCaptureTestCase.tearDown(self)
 
 	def testSubstituteRecursiveTags(self):
 		aInfo = {
