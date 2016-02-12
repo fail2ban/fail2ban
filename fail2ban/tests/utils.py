@@ -54,6 +54,10 @@ if not CONFIG_DIR:
 	else:
 		CONFIG_DIR = '/etc/fail2ban'
 
+# In not installed env (setup, test-cases) use fail2ban modules from main directory:
+if 1 or os.environ.get('PYTHONPATH', None) is None:
+	os.putenv('PYTHONPATH', os.path.dirname(os.path.dirname(os.path.dirname(
+		os.path.abspath(__file__)))))
 
 class F2B(optparse.Values):
 	def __init__(self, opts={}):
@@ -343,7 +347,7 @@ class LogCaptureTestCase(unittest.TestCase):
 		if self._old_level <= logging.DEBUG: # so if DEBUG etc -- show them (and log it in travis)!
 			print("")
 			logSys.handlers += self._old_handlers
-			logSys.debug('--'*40)
+			logSys.debug('='*10 + ' %s ' + '='*20, self.id())
 		logSys.setLevel(getattr(logging, 'DEBUG'))
 
 	def tearDown(self):

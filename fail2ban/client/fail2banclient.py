@@ -34,22 +34,24 @@ from threading import Thread
 from ..version import version
 from .csocket import CSocket
 from .beautifier import Beautifier
-from .fail2bancmdline import Fail2banCmdLine, ExitException, PRODUCTION, logSys, exit, output
+from .fail2bancmdline import Fail2banCmdLine, ServerExecutionException, ExitException, \
+	logSys, PRODUCTION, exit, output
 
 MAX_WAITTIME = 30
+PROMPT = "fail2ban> "
 
 
 def _thread_name():
 	return threading.current_thread().__class__.__name__
 
+def input_command():
+	return raw_input(PROMPT)
 
 ##
 #
 # @todo This class needs cleanup.
 
 class Fail2banClient(Fail2banCmdLine, Thread):
-
-	PROMPT = "fail2ban> "
 
 	def __init__(self):
 		Fail2banCmdLine.__init__(self)
@@ -91,11 +93,11 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 						client = CSocket(self._conf["socket"])
 					ret = client.send(c)
 					if ret[0] == 0:
-						logSys.debug("OK : " + `ret[1]`)
+						logSys.debug("OK : %r", ret[1])
 						if showRet or c[0] == 'echo':
 							output(beautifier.beautify(ret[1]))
 					else:
-						logSys.error("NOK: " + `ret[1].args`)
+						logSys.error("NOK: %r", ret[1].args)
 						if showRet:
 							output(beautifier.beautifyError(ret[1]))
 						streamRet = False
@@ -202,7 +204,10 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		except Exception as e:
 			output("")
 			logSys.error("Exception while starting server " + ("background" if background else "foreground"))
-			logSys.error(e)
+			if self._conf["verbose"] > 1:
+				logSys.exception(e)
+			else:
+				logSys.error(e)
 			return False
 
 		return True
@@ -249,7 +254,9 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 			if self._conf.get("interactive", False):
 				output('  ## stop ... ')
 			self.__processCommand(['stop'])
-			self.__waitOnServer(False)
+			if not self.__waitOnServer(False):
+				logSys.error("Could not stop server")
+				return False
 			# in interactive mode reset config, to make full-reload if there something changed:
 			if self._conf.get("interactive", False):
 				output('  ## load configuration ... ')
@@ -286,10 +293,14 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 	def __processStartStreamAfterWait(self, *args):
 		try:
 			# Wait for the server to start
-			self.__waitOnServer()
+			if not self.__waitOnServer():
+				logSys.error("Could not find server, waiting failed")
+				return False
 				# Configure the server
 			self.__processCmd(*args)
-		except ServerExecutionException:
+		except ServerExecutionException as e:
+			if self._conf["verbose"] > 1:
+				logSys.exception(e)
 			logSys.error("Could not start server. Maybe an old "
 						 "socket file is still present. Try to "
 						 "remove " + self._conf["socket"] + ". If "
@@ -306,11 +317,13 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		# Wait for the server to start (the server has 30 seconds to answer ping)
 		starttime = time.time()
 		logSys.debug("__waitOnServer: %r", (alive, maxtime))
+		test = lambda: os.path.exists(self._conf["socket"]) and self.__ping() 
 		with VisualWait(self._conf["verbose"]) as vis:
-			while self._alive and (
-				not self.__ping() == alive or (
-				not alive and os.path.exists(self._conf["socket"])
-			)):
+			sltime = 0.0125 / 2
+			while self._alive:
+				runf = test()
+				if runf == alive:
+					return True
 				now = time.time()
 				# Wonderful visual :)
 				if now > starttime + 1:
@@ -318,7 +331,9 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 				# f end time reached:
 				if now - starttime >= maxtime:
 					raise ServerExecutionException("Failed to start server")
-				time.sleep(0.1)
+				sltime = min(sltime * 2, 0.5)
+				time.sleep(sltime)
+		return False
 
 	def start(self, argv):
 		# Install signal handlers
@@ -332,27 +347,31 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 			if self._argv is None:
 				ret = self.initCmdLine(argv)
 				if ret is not None:
-					return ret
+					if ret:
+						return True
+					raise ServerExecutionException("Init of command line failed")
 
 			# Commands
 			args = self._args
 
 			# Interactive mode
 			if self._conf.get("interactive", False):
-				try:
-					import readline
-				except ImportError:
-					logSys.error("Readline not available")
-					return False
+				# no readline in test:
+				if PRODUCTION: # pragma: no cover
+					try:
+						import readline
+					except ImportError:
+						raise ServerExecutionException("Readline not available")
 				try:
 					ret = True
 					if len(args) > 0:
 						ret = self.__processCommand(args)
 					if ret:
-						readline.parse_and_bind("tab: complete")
+						if PRODUCTION: # pragma: no cover
+							readline.parse_and_bind("tab: complete")
 						self.dispInteractive()
 						while True:
-							cmd = raw_input(self.PROMPT)
+							cmd = input_command()
 							if cmd == "exit" or cmd == "quit":
 								# Exit
 								return True
@@ -362,24 +381,29 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 								try:
 									self.__processCommand(shlex.split(cmd))
 								except Exception, e:
-									logSys.error(e)
+									if self._conf["verbose"] > 1:
+										logSys.exception(e)
+									else:
+										logSys.error(e)
 				except (EOFError, KeyboardInterrupt):
 					output("")
-					return True
+					raise
 			# Single command mode
 			else:
 				if len(args) < 1:
 					self.dispUsage()
 					return False
 				return self.__processCommand(args)
+		except Exception as e:
+			if self._conf["verbose"] > 1:
+				logSys.exception(e)
+			else:
+				logSys.error(e)
+			return False
 		finally:
 			self._alive = False
 			for s, sh in _prev_signals.iteritems():
 				signal.signal(s, sh)
-
-
-class ServerExecutionException(Exception):
-	pass
 
 
 ##
