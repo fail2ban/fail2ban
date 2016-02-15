@@ -64,7 +64,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		output("and bans the corresponding IP addresses using firewall rules.")
 		output("")
 
-	def __sigTERMhandler(self, signum, frame):
+	def __sigTERMhandler(self, signum, frame): # pragma: no cover
 		# Print a new line because we probably come from wait
 		output("")
 		logSys.warning("Caught signal %d. Exiting" % signum)
@@ -141,7 +141,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 				logSys.error("Failed to access socket path: %s."
 							 " Is fail2ban running?",
 							 self._conf["socket"])
-		except Exception as e:
+		except Exception as e: # pragma: no cover
 			logSys.error("Exception while checking socket access: %s",
 						 self._conf["socket"])
 			logSys.error(e)
@@ -165,7 +165,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 				"There is no directory %s to contain the socket file %s."
 				% (socket_dir, self._conf["socket"]))
 			return None
-		if not os.access(socket_dir, os.W_OK | os.X_OK):
+		if not os.access(socket_dir, os.W_OK | os.X_OK): # pragma: no cover
 			logSys.error(
 				"Directory %s exists but not accessible for writing"
 				% (socket_dir,))
@@ -204,9 +204,9 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 				# Start server direct here in main thread (not fork):
 				self._server = Fail2banServer.startServerDirect(self._conf, False)
 
-		except ExitException:
+		except ExitException: # pragma: no cover
 			pass
-		except Exception as e:
+		except Exception as e: # pragma: no cover
 			output("")
 			logSys.error("Exception while starting server " + ("background" if background else "foreground"))
 			if self._conf["verbose"] > 1:
@@ -259,7 +259,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 			if self._conf.get("interactive", False):
 				output('  ## stop ... ')
 			self.__processCommand(['stop'])
-			if not self.__waitOnServer(False):
+			if not self.__waitOnServer(False): # pragma: no cover
 				logSys.error("Could not stop server")
 				return False
 			# in interactive mode reset config, to make full-reload if there something changed:
@@ -298,12 +298,12 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 	def __processStartStreamAfterWait(self, *args):
 		try:
 			# Wait for the server to start
-			if not self.__waitOnServer():
+			if not self.__waitOnServer(): # pragma: no cover
 				logSys.error("Could not find server, waiting failed")
 				return False
 				# Configure the server
 			self.__processCmd(*args)
-		except ServerExecutionException as e:
+		except ServerExecutionException as e: # pragma: no cover
 			if self._conf["verbose"] > 1:
 				logSys.exception(e)
 			logSys.error("Could not start server. Maybe an old "
@@ -385,12 +385,12 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 							elif not cmd == "":
 								try:
 									self.__processCommand(shlex.split(cmd))
-								except Exception, e:
+								except Exception, e: # pragma: no cover
 									if self._conf["verbose"] > 1:
 										logSys.exception(e)
 									else:
 										logSys.error(e)
-				except (EOFError, KeyboardInterrupt):
+				except (EOFError, KeyboardInterrupt): # pragma: no cover
 					output("")
 					raise
 			# Single command mode

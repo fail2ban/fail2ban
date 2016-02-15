@@ -347,6 +347,21 @@ class Fail2banClientTest(Fail2banClientServerBase):
 				self.assertLogged("Server ready")
 				self.assertLogged("Exit with code 0")
 				self.pruneLog()
+				# test reload missing jail (interactive):
+				INTERACT += [
+					"reload ~~unknown~jail~fail~~",
+					"exit"
+				]
+				self.assertRaises(ExitException, _exec_client, 
+					(CLIENT,) + startparams + ("-i",))
+				self.assertLogged("Failed during configuration: No section: '~~unknown~jail~fail~~'")
+				self.pruneLog()
+				# test reload missing jail (direct):
+				self.assertRaises(FailExitException, _exec_client, 
+					(CLIENT,) + startparams + ("reload", "~~unknown~jail~fail~~"))
+				self.assertLogged("Failed during configuration: No section: '~~unknown~jail~fail~~'")
+				self.assertLogged("Exit with code -1")
+				self.pruneLog()
 			finally:
 				self.pruneLog()
 				# stop:
@@ -423,6 +438,12 @@ class Fail2banClientTest(Fail2banClientServerBase):
 			self.assertRaises(FailExitException, _exec_client, 
 				(CLIENT, "--async", "-c", tmp+"/config", "-s", tmp+"/miss/f2b.sock", "start",))
 			self.assertLogged("There is no directory " + tmp+"/miss" + " to contain the socket file")
+			self.pruneLog()
+
+			## not running
+			self.assertRaises(FailExitException, _exec_client, 
+				(CLIENT, "-c", tmp+"/config", "-s", tmp+"/f2b.sock", "reload",))
+			self.assertLogged("Could not find server")
 			self.pruneLog()
 
 			## already exists:

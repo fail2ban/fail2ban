@@ -56,7 +56,7 @@ class Fail2banServer(Fail2banCmdLine):
 			server.start(conf["socket"],
 							conf["pidfile"], conf["force"], 
 							conf=conf)
-		except Exception as e:
+		except Exception as e: # pragma: no cover
 			try:
 				if server:
 					server.quit()
@@ -77,7 +77,7 @@ class Fail2banServer(Fail2banCmdLine):
 		# Forks the current process, don't fork if async specified (ex: test cases)
 		pid = 0
 		frk = not conf["async"] and PRODUCTION
-		if frk:
+		if frk: # pragma: no cover
 			pid = os.fork()
 		logSys.debug("-- async starting of server in %s, fork: %s - %s", os.getpid(), frk, pid)
 		if pid == 0:
@@ -108,22 +108,20 @@ class Fail2banServer(Fail2banCmdLine):
 					exe = sys.executable
 					args[0:0] = [exe]
 				logSys.debug("Starting %r with args %r", exe, args)
-				if frk:
-					return os.execv(exe, args)
+				if frk: # pragma: no cover
+					os.execv(exe, args)
 				else:
 					# use P_WAIT instead of P_NOWAIT (to prevent defunct-zomby process), it startet as daemon, so parent exit fast after fork):
 					ret = os.spawnv(os.P_WAIT, exe, args)
-					if ret != 0:
+					if ret != 0: # pragma: no cover
 						raise OSError(ret, "Unknown error by executing server %r with %r" % (args[1], exe))
-					return 0
 			except OSError as e: # pragma: no cover
 				if not frk: #not PRODUCTION:
 					raise
 				# Use the PATH env.
 				logSys.warning("Initial start attempt failed (%s). Starting %r with the same args", e, SERVER)
-				if frk:
-					return os.execvp(SERVER, args)
-		return pid
+				if frk: # pragma: no cover
+					os.execvp(SERVER, args)
 
 	@staticmethod
 	def getServerPath():
@@ -189,7 +187,7 @@ class Fail2banServer(Fail2banCmdLine):
 			pid = os.getpid()
 			server = Fail2banServer.startServerDirect(self._conf, background)
 			# If forked - just exit other processes
-			if pid != os.getpid():
+			if pid != os.getpid(): # pragma: no cover
 				os._exit(0)
 			if cli:
 				cli._server = server
@@ -198,7 +196,7 @@ class Fail2banServer(Fail2banCmdLine):
 			if not async and cli:
 				Utils.wait_for(lambda: phase.get('done', None) is not None, self._conf["timeout"])
 				if not phase.get('done', False):
-					if server:
+					if server: # pragma: no cover
 						server.quit()
 					exit(-1)
 				logSys.debug('Starting server done')
@@ -206,7 +204,9 @@ class Fail2banServer(Fail2banCmdLine):
 		except Exception, e:
 			if self._conf["verbose"] > 1:
 				logSys.exception(e)
-			if server:
+			else:
+				logSys.error(e)
+			if server: # pragma: no cover
 				server.quit()
 			exit(-1)
 
