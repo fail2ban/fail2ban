@@ -168,8 +168,10 @@ class Utils():
 					stdout = popen.stdout.read()
 				except IOError as e:
 					logSys.error(" ... -- failed to read stdout %s", e)
-				if stdout is not None and stdout != '':
-					logSys.log(std_level, "%s -- stdout: %r", realCmd, stdout)
+				if stdout is not None and stdout != '' and std_level >= logSys.getEffectiveLevel():
+					logSys.log(std_level, "%s -- stdout:", realCmd)
+					for l in stdout.splitlines():
+						logSys.log(std_level, " -- stdout: %r", l)
 				popen.stdout.close()
 			if popen.stderr:
 				try:
@@ -178,8 +180,10 @@ class Utils():
 					stderr = popen.stderr.read()
 				except IOError as e:
 					logSys.error(" ... -- failed to read stderr %s", e)
-				if stderr is not None and stderr != '':
-					logSys.log(std_level, "%s -- stderr: %r", realCmd, stderr)
+				if stderr is not None and stderr != '' and std_level >= logSys.getEffectiveLevel():
+					logSys.log(std_level, "%s -- stderr:", realCmd)
+					for l in stderr.splitlines():
+						logSys.log(std_level, " -- stderr: %r", l)
 				popen.stderr.close()
 
 		if retcode == 0:

@@ -33,13 +33,14 @@ from ..helpers import getLogger
 # Gets the instance of the logger.
 logSys = getLogger("fail2ban")
 
-def output(s):
+def output(s): # pragma: no cover
 	print(s)
 
 CONFIG_PARAMS = ("socket", "pidfile", "logtarget", "loglevel", "syslogsocket",)
 # Used to signal - we are in test cases (ex: prevents change logging params, log capturing, etc)
 PRODUCTION = True
 
+MAX_WAITTIME = 30
 
 class Fail2banCmdLine():
 
@@ -56,7 +57,8 @@ class Fail2banCmdLine():
 			"background": True,
 			"verbose": 1,
 			"socket": None,
-			"pidfile": None
+			"pidfile": None,
+			"timeout": MAX_WAITTIME
 		}
 
 	@property
@@ -109,6 +111,7 @@ class Fail2banCmdLine():
 		output("    -b                      start server in background (default)")
 		output("    -f                      start server in foreground")
 		output("    --async                 start server in async mode (for internal usage only, don't read configuration)")
+		output("    --timeout               timeout to wait for the server (for internal usage only, don't read configuration)")
 		output("    -h, --help              display this help message")
 		output("    -V, --version           print the version")
 		
@@ -126,8 +129,6 @@ class Fail2banCmdLine():
 		"""
 		for opt in optList:
 			o = opt[0]
-			if o == "--async":
-				self._conf["async"] = True
 			if o == "-c":
 				self._conf["conf"] = opt[1]
 			elif o == "-s":
@@ -150,6 +151,11 @@ class Fail2banCmdLine():
 				self._conf["background"] = True
 			elif o == "-f":
 				self._conf["background"] = False
+			elif o == "--async":
+				self._conf["async"] = True
+			elif o == "-timeout":
+				from ..mytime import MyTime
+				self._conf["timeout"] = MyTime.str2seconds(opt[1])
 			elif o in ["-h", "--help"]:
 				self.dispUsage()
 				return True
@@ -170,7 +176,7 @@ class Fail2banCmdLine():
 			# Reads the command line options.
 			try:
 				cmdOpts = 'hc:s:p:xfbdviqV'
-				cmdLongOpts = ['loglevel=', 'logtarget=', 'syslogsocket=', 'async', 'help', 'version']
+				cmdLongOpts = ['loglevel=', 'logtarget=', 'syslogsocket=', 'async', 'timeout=', 'help', 'version']
 				optList, self._args = getopt.getopt(self._argv[1:], cmdOpts, cmdLongOpts)
 			except getopt.GetoptError:
 				self.dispUsage()
@@ -179,6 +185,8 @@ class Fail2banCmdLine():
 			ret = self.__getCmdLineOptions(optList)
 			if ret is not None:
 				return ret
+
+			logSys.debug("-- conf: %r, args: %r", self._conf, self._args)
 
 			if initial and PRODUCTION: # pragma: no cover - can't test
 				verbose = self._conf["verbose"]
@@ -244,11 +252,11 @@ class Fail2banCmdLine():
 	@staticmethod
 	def dumpConfig(cmd):
 		for c in cmd:
-			print c
+			output(c)
 		return True
 
 	@staticmethod
-	def exit(code=0):
+	def exit(code=0): # pragma: no cover - can't test
 		logSys.debug("Exit with code %s", code)
 		if os._exit:
 			os._exit(code)

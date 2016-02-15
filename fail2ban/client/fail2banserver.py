@@ -27,8 +27,6 @@ import sys
 from .fail2bancmdline import Fail2banCmdLine, ServerExecutionException, \
 	logSys, PRODUCTION, exit
 
-MAX_WAITTIME = 30
-
 SERVER = "fail2ban-server"
 
 ##
@@ -114,16 +112,17 @@ class Fail2banServer(Fail2banCmdLine):
 					return os.execv(exe, args)
 				else:
 					# use P_WAIT instead of P_NOWAIT (to prevent defunct-zomby process), it startet as daemon, so parent exit fast after fork):
-					return os.spawnv(os.P_WAIT, exe, args)
-			except OSError as e:
+					ret = os.spawnv(os.P_WAIT, exe, args)
+					if ret != 0:
+						raise OSError(ret, "Unknown error by executing server %r with %r" % (args[1], exe))
+					return 0
+			except OSError as e: # pragma: no cover
+				if not frk: #not PRODUCTION:
+					raise
 				# Use the PATH env.
 				logSys.warning("Initial start attempt failed (%s). Starting %r with the same args", e, SERVER)
 				if frk:
 					return os.execvp(SERVER, args)
-				else:
-					del args[0]
-					args[0] = SERVER
-					return os.spawnvp(os.P_WAIT, SERVER, args)
 		return pid
 
 	@staticmethod
@@ -181,8 +180,8 @@ class Fail2banServer(Fail2banCmdLine):
 				phase = dict()
 				logSys.debug('Configure via async client thread')
 				cli.configureServer(async=True, phase=phase)
-				# wait up to MAX_WAITTIME, do not continue if configuration is not 100% valid:
-				Utils.wait_for(lambda: phase.get('ready', None) is not None, MAX_WAITTIME)
+				# wait, do not continue if configuration is not 100% valid:
+				Utils.wait_for(lambda: phase.get('ready', None) is not None, self._conf["timeout"])
 				if not phase.get('start', False):
 					raise ServerExecutionException('Async configuration of server failed')
 
@@ -197,7 +196,7 @@ class Fail2banServer(Fail2banCmdLine):
 
 			# wait for client answer "done":
 			if not async and cli:
-				Utils.wait_for(lambda: phase.get('done', None) is not None, MAX_WAITTIME)
+				Utils.wait_for(lambda: phase.get('done', None) is not None, self._conf["timeout"])
 				if not phase.get('done', False):
 					if server:
 						server.quit()
