@@ -37,14 +37,13 @@ from .beautifier import Beautifier
 from .fail2bancmdline import Fail2banCmdLine, ServerExecutionException, ExitException, \
 	logSys, PRODUCTION, exit, output
 
-MAX_WAITTIME = 30
 PROMPT = "fail2ban> "
 
 
 def _thread_name():
 	return threading.current_thread().__class__.__name__
 
-def input_command():
+def input_command(): # pragma: no cover
 	return raw_input(PROMPT)
 
 ##
@@ -101,13 +100,19 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 						if showRet:
 							output(beautifier.beautifyError(ret[1]))
 						streamRet = False
-				except socket.error:
+				except socket.error as e:
 					if showRet or self._conf["verbose"] > 1:
-						self.__logSocketError()
+						if showRet or c != ["ping"]:
+							self.__logSocketError()
+						else:
+							logSys.debug(" -- ping failed -- %r", e)
 					return False
-				except Exception, e:
+				except Exception as e: # pragma: no cover
 					if showRet or self._conf["verbose"] > 1:
-						logSys.error(e)
+						if self._conf["verbose"] > 1:
+							logSys.exception(e)
+						else:
+							logSys.error(e)
 					return False
 		finally:
 			# prevent errors by close during shutdown (on exit command):
@@ -123,7 +128,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 
 	def __logSocketError(self):
 		try:
-			if os.access(self._conf["socket"], os.F_OK):
+			if os.access(self._conf["socket"], os.F_OK): # pragma: no cover
 				# This doesn't check if path is a socket,
 				#  but socket.error should be raised
 				if os.access(self._conf["socket"], os.W_OK):
@@ -313,7 +318,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 
 	def __waitOnServer(self, alive=True, maxtime=None):
 		if maxtime is None:
-			maxtime = MAX_WAITTIME
+			maxtime = self._conf["timeout"]
 		# Wait for the server to start (the server has 30 seconds to answer ping)
 		starttime = time.time()
 		logSys.debug("__waitOnServer: %r", (alive, maxtime))

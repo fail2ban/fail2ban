@@ -43,11 +43,6 @@ from .utils import LogCaptureTestCase, logSys, withtmpdir, shutil, logging
 
 STOCK_CONF_DIR = "config"
 STOCK = os.path.exists(os.path.join(STOCK_CONF_DIR,'fail2ban.conf'))
-TEST_CONF_DIR = os.path.join(os.path.dirname(__file__), "config")
-if STOCK:
-	CONF_DIR = STOCK_CONF_DIR
-else:
-	CONF_DIR = TEST_CONF_DIR
 
 CLIENT = "fail2ban-client"
 SERVER = "fail2ban-server"
@@ -59,9 +54,7 @@ MAX_WAITTIME = 30 if not unittest.F2B.fast else 5
 # Several wrappers and settings for proper testing:
 #
 
-fail2banclient.MAX_WAITTIME = \
-fail2banserver.MAX_WAITTIME = MAX_WAITTIME
-
+fail2bancmdline.MAX_WAITTIME = MAX_WAITTIME-1
 
 fail2bancmdline.logSys = \
 fail2banclient.logSys = \
@@ -167,6 +160,7 @@ def _start_params(tmp, use_stock=False, logtarget="/dev/null"):
 	# parameters (sock/pid and config, increase verbosity, set log, etc.):
 	return ("-c", cfg, "-s", tmp+"/f2b.sock", "-p", tmp+"/f2b.pid",
 					"-vv", "--logtarget", logtarget, "--loglevel", "DEBUG", "--syslogsocket", "auto",
+					"--timeout", str(fail2bancmdline.MAX_WAITTIME),
 	)
 
 def _kill_srv(pidfile): # pragma: no cover
@@ -199,7 +193,7 @@ def _kill_srv(pidfile): # pragma: no cover
 		## try to preper stop (have signal handler):
 		os.kill(pid, signal.SIGTERM)
 		## check still exists after small timeout:
-		if not Utils.wait_for(lambda: not _pid_exists(pid), MAX_WAITTIME / 3):
+		if not Utils.wait_for(lambda: not _pid_exists(pid), 1):
 			## try to kill hereafter:
 			os.kill(pid, signal.SIGKILL)
 		return not _pid_exists(pid)
@@ -222,25 +216,50 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 		LogCaptureTestCase.tearDown(self)
 
 	def _wait_for_srv(self, tmp, ready=True, startparams=None):
-		sock = tmp+"/f2b.sock"
-		# wait for server (socket):
-		ret = Utils.wait_for(lambda: os.path.exists(sock), MAX_WAITTIME)
-		if not ret:
-			raise Exception('Unexpected: Socket file does not exists.\nStart failed: %r' % (startparams,))
-		if ready:
-			# wait for communication with worker ready:
-			ret = Utils.wait_for(lambda: "Server ready" in self.getLog(), MAX_WAITTIME)
+		try:
+			sock = tmp+"/f2b.sock"
+			# wait for server (socket):
+			ret = Utils.wait_for(lambda: os.path.exists(sock), MAX_WAITTIME)
 			if not ret:
-				raise Exception('Unexpected: Server ready was not found.\nStart failed: %r' % (startparams,))
+				raise Exception('Unexpected: Socket file does not exists.\nStart failed: %r' % (startparams,))
+			if ready:
+				# wait for communication with worker ready:
+				ret = Utils.wait_for(lambda: "Server ready" in self.getLog(), MAX_WAITTIME)
+				if not ret:
+					raise Exception('Unexpected: Server ready was not found.\nStart failed: %r' % (startparams,))
+		except: # pragma: no cover
+			log = tmp+"/f2b.log"
+			if os.path.isfile(log):
+				_out_file(log)
+			else:
+				logSys.debug("No log file %s to examine details of error", log)
+			raise
 
 
 class Fail2banClientTest(Fail2banClientServerBase):
+
+	def testConsistency(self):
+		self.assertTrue(os.path.isfile(os.path.join(os.path.join(BIN), CLIENT)))
+		self.assertTrue(os.path.isfile(os.path.join(os.path.join(BIN), SERVER)))
 
 	def testClientUsage(self):
 		self.assertRaises(ExitException, _exec_client, 
 			(CLIENT, "-h",))
 		self.assertLogged("Usage: " + CLIENT)
 		self.assertLogged("Report bugs to ")
+		self.pruneLog()
+		self.assertRaises(ExitException, _exec_client, 
+			(CLIENT, "-vq", "-V",))
+		self.assertLogged("Fail2Ban v" + fail2bancmdline.version)
+
+	@withtmpdir
+	def testClientDump(self, tmp):
+		# use here the stock configuration (if possible)
+		startparams = _start_params(tmp, True)
+		self.assertRaises(ExitException, _exec_client, 
+			((CLIENT,) + startparams + ("-vvd",)))
+		self.assertLogged("Loading files")
+		self.assertLogged("logtarget")
 
 	@withtmpdir
 	def testClientStartBackgroundInside(self, tmp):
@@ -271,6 +290,13 @@ class Fail2banClientTest(Fail2banClientServerBase):
 					(CLIENT,) + startparams + ("stop",))
 				self.assertLogged("Shutdown successful")
 				self.assertLogged("Exit with code 0")
+
+			self.pruneLog()
+			# stop again (should fail):
+			self.assertRaises(FailExitException, _exec_client, 
+				(CLIENT,) + startparams + ("stop",))
+			self.assertLogged("Failed to access socket path")
+			self.assertLogged("Is fail2ban running?")
 		finally:
 			_kill_srv(tmp)
 
@@ -278,12 +304,13 @@ class Fail2banClientTest(Fail2banClientServerBase):
 	def testClientStartBackgroundCall(self, tmp):
 		try:
 			global INTERACT
-			startparams = _start_params(tmp)
+			startparams = _start_params(tmp, logtarget=tmp+"/f2b.log")
 			# start (in new process, using the same python version):
 			cmd = (sys.executable, os.path.join(os.path.join(BIN), CLIENT))
 			logSys.debug('Start %s ...', cmd)
-			cmd = cmd + startparams + ("start",)
-			Utils.executeCmd(cmd, timeout=MAX_WAITTIME, shell=False, output=True)
+			cmd = cmd + startparams + ("--async", "start",)
+			ret = Utils.executeCmd(cmd, timeout=MAX_WAITTIME, shell=False, output=True)
+			self.assertTrue(len(ret) and ret[0])
 			# wait for server (socket and ready):
 			self._wait_for_srv(tmp, True, startparams=cmd)
 			self.assertLogged("Server ready")
@@ -383,13 +410,35 @@ class Fail2banClientTest(Fail2banClientServerBase):
 	@withtmpdir
 	def testClientFailStart(self, tmp):
 		try:
+			# started directly here, so prevent overwrite test cases logger with "INHERITED"
+			startparams = _start_params(tmp, logtarget="INHERITED")
+
+			## wrong config directory
 			self.assertRaises(FailExitException, _exec_client, 
 				(CLIENT, "--async", "-c", tmp+"/miss", "start",))
 			self.assertLogged("Base configuration directory " + tmp+"/miss" + " does not exist")
+			self.pruneLog()
 
+			## wrong socket
 			self.assertRaises(FailExitException, _exec_client, 
-				(CLIENT, "--async", "-c", CONF_DIR, "-s", tmp+"/miss/f2b.sock", "start",))
+				(CLIENT, "--async", "-c", tmp+"/config", "-s", tmp+"/miss/f2b.sock", "start",))
 			self.assertLogged("There is no directory " + tmp+"/miss" + " to contain the socket file")
+			self.pruneLog()
+
+			## already exists:
+			open(tmp+"/f2b.sock", 'a').close()
+			self.assertRaises(FailExitException, _exec_client, 
+				(CLIENT, "--async", "-c", tmp+"/config", "-s", tmp+"/f2b.sock", "start",))
+			self.assertLogged("Fail2ban seems to be in unexpected state (not running but the socket exists)")
+			self.pruneLog()
+			os.remove(tmp+"/f2b.sock")
+
+			## wrong option:
+			self.assertRaises(FailExitException, _exec_client, 
+				(CLIENT, "-s",))
+			self.assertLogged("Usage: ")
+			self.pruneLog()
+
 		finally:
 			_kill_srv(tmp)
 
@@ -417,12 +466,13 @@ class Fail2banServerTest(Fail2banClientServerBase):
 	def testServerStartBackground(self, tmp):
 		try:
 			# to prevent fork of test-cases process, start server in background via command:
-			startparams = _start_params(tmp)
+			startparams = _start_params(tmp, logtarget=tmp+"/f2b.log")
 			# start (in new process, using the same python version):
 			cmd = (sys.executable, os.path.join(os.path.join(BIN), SERVER))
 			logSys.debug('Start %s ...', cmd)
 			cmd = cmd + startparams + ("-b",)
-			Utils.executeCmd(cmd, timeout=MAX_WAITTIME, shell=False, output=True)
+			ret = Utils.executeCmd(cmd, timeout=MAX_WAITTIME, shell=False, output=True)
+			self.assertTrue(len(ret) and ret[0])
 			# wait for server (socket and ready):
 			self._wait_for_srv(tmp, True, startparams=cmd)
 			self.assertLogged("Server ready")
@@ -495,12 +545,28 @@ class Fail2banServerTest(Fail2banClientServerBase):
 	@withtmpdir
 	def testServerFailStart(self, tmp):
 		try:
+			# started directly here, so prevent overwrite test cases logger with "INHERITED"
+			startparams = _start_params(tmp, logtarget="INHERITED")
+
+			## wrong config directory
 			self.assertRaises(FailExitException, _exec_server, 
 				(SERVER, "-c", tmp+"/miss",))
 			self.assertLogged("Base configuration directory " + tmp+"/miss" + " does not exist")
+			self.pruneLog()
 
+			## wrong socket
 			self.assertRaises(FailExitException, _exec_server, 
-				(SERVER, "-c", CONF_DIR, "-s", tmp+"/miss/f2b.sock",))
+				(SERVER, "-c", tmp+"/config", "-x", "-s", tmp+"/miss/f2b.sock",))
 			self.assertLogged("There is no directory " + tmp+"/miss" + " to contain the socket file")
+			self.pruneLog()
+
+			## already exists:
+			open(tmp+"/f2b.sock", 'a').close()
+			self.assertRaises(FailExitException, _exec_server, 
+				(SERVER, "-c", tmp+"/config", "-s", tmp+"/f2b.sock",))
+			self.assertLogged("Fail2ban seems to be in unexpected state (not running but the socket exists)")
+			self.pruneLog()
+			os.remove(tmp+"/f2b.sock")
+
 		finally:
 			_kill_srv(tmp)
