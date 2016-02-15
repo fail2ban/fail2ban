@@ -68,6 +68,8 @@ class Beautifier:
 				msg = "Added jail " + response
 			elif inC[0] == "flushlogs":
 				msg = "logs: " + response
+			elif inC[0] == "echo":
+				msg = ' '.join(msg)
 			elif inC[0:1] == ['status']:
 				if len(inC) > 1:
 					# Display information

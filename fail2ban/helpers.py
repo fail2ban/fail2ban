@@ -20,11 +20,16 @@
 __author__ = "Cyril Jaquier, Arturo 'Buanzo' Busleiman, Yaroslav Halchenko"
 __license__ = "GPL"
 
-import sys
-import os
-import traceback
-import re
+import gc
 import logging
+import os
+import re
+import sys
+import traceback
+
+from threading import Lock
+
+from .server.mytime import MyTime
 
 
 def formatExceptionInfo():
@@ -137,3 +142,48 @@ def splitcommaspace(s):
 	if not s:
 		return []
 	return filter(bool, re.split('[ ,]', s))
+
+
+class BgService(object):
+	"""Background servicing
+
+	Prevents memory leak on some platforms/python versions, 
+	using forced GC in periodical intervals.
+	"""
+
+	_mutex = Lock()
+	_instance = None
+	def __new__(cls):
+		if not cls._instance:
+			cls._instance = \
+				super(BgService, cls).__new__(cls)
+		return cls._instance
+
+	def __init__(self):
+		self.__serviceTime = -0x7fffffff
+		self.__periodTime = 30
+		self.__threshold = 100;
+		self.__count = self.__threshold;
+		if hasattr(gc, 'set_threshold'):
+			gc.set_threshold(0)
+		gc.disable()
+
+	def service(self, force=False, wait=False):
+		self.__count -= 1
+		# avoid locking if next service time don't reached
+		if not force and (self.__count > 0 or MyTime.time() < self.__serviceTime):
+			return False
+		# return immediately if mutex already locked (other thread in servicing):
+		if not BgService._mutex.acquire(wait):
+			return False
+		try:
+			# check again in lock:
+			if MyTime.time() < self.__serviceTime:
+				return False
+			gc.collect()
+			self.__serviceTime = MyTime.time() + self.__periodTime
+			self.__count = self.__threshold
+			return True
+		finally:
+			BgService._mutex.release()
+		return False

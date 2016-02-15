@@ -33,7 +33,7 @@ from ..helpers import getLogger
 logSys = getLogger(__name__)
 
 
-class Jail:
+class Jail(object):
 	"""Fail2Ban jail, which manages a filter and associated actions.
 
 	The class handles the initialisation of a filter, and actions. It's
@@ -76,7 +76,8 @@ class Jail:
 		self.__queue = Queue.Queue()
 		self.__filter = None
 		logSys.info("Creating new jail '%s'" % self.name)
-		self._setBackend(backend)
+		if backend is not None:
+			self._setBackend(backend)
 
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__.__name__, self.name)
@@ -106,11 +107,12 @@ class Jail:
 					logSys.info("Initiated %r backend" % b)
 				self.__actions = Actions(self)
 				return					# we are done
-			except ImportError, e:
+			except ImportError, e: # pragma: no cover
 				# Log debug if auto, but error if specific
 				logSys.log(
 					logging.DEBUG if backend == "auto" else logging.ERROR,
 					"Backend %r failed to initialize due to %s" % (b, e))
+		# pragma: no cover
 		# log error since runtime error message isn't printed, INVALID COMMAND
 		logSys.error(
 			"Failed to initialize any backend for Jail %r" % self.name)
@@ -227,7 +229,7 @@ class Jail:
 		self.actions.join()
 		logSys.info("Jail '%s' stopped" % self.name)
 
-	def is_alive(self):
-		"""Check jail "is_alive" by checking filter and actions threads.
+	def isAlive(self):
+		"""Check jail "isAlive" by checking filter and actions threads.
 		"""
-		return self.filter.is_alive() or self.actions.is_alive()
+		return self.filter.isAlive() or self.actions.isAlive()

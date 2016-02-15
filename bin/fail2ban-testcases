@@ -58,6 +58,18 @@ def get_opt_parser():
 		Option('-n', "--no-network", action="store_true",
 			   dest="no_network",
 			   help="Do not run tests that require the network"),
+		Option('-g', "--no-gamin", action="store_true",
+			   dest="no_gamin",
+			   help="Do not run tests that require the gamin"),
+		Option('-m', "--memory-db", action="store_true",
+			   dest="memory_db",
+			   help="Run database tests using memory instead of file"),
+		Option('-f', "--fast", action="store_true",
+			   dest="fast",
+			   help="Try to increase speed of the tests, decreasing of wait intervals, memory database"),
+		Option('-i', "--ignore", action="store_true",
+			   dest="negate_re",
+			   help="negate [regexps] filter to ignore tests matched specified regexps"),
 		Option("-t", "--log-traceback", action='store_true',
 			   help="Enrich log-messages with compressed tracebacks"),
 		Option("--full-traceback", action='store_true',
@@ -107,10 +119,14 @@ else:
 
 # Custom log format for the verbose tests runs
 if verbosity > 1: # pragma: no cover
-	stdout.setFormatter(Formatter(' %(asctime)-15s %(thread)s' + fmt))
-else: # pragma: no cover
-	# just prefix with the space
-	stdout.setFormatter(Formatter(fmt))
+	if verbosity > 3:
+		fmt = ' | %(module)15.15s-%(levelno)-2d: %(funcName)-20.20s |' + fmt
+	if verbosity > 2:
+	  fmt = ' +%(relativeCreated)5d %(thread)X %(levelname)-5.5s' + fmt
+	else:
+		fmt = ' %(asctime)-15s %(thread)X %(levelname)-5.5s' + fmt
+#
+stdout.setFormatter(Formatter(fmt))
 logSys.addHandler(stdout)
 
 #
@@ -120,7 +136,7 @@ if not opts.log_level or opts.log_level != 'critical': # pragma: no cover
 	print("Fail2ban %s test suite. Python %s. Please wait..." \
 	    % (version, str(sys.version).replace('\n', '')))
 
-tests = gatherTests(regexps, opts.no_network)
+tests = gatherTests(regexps, opts)
 #
 # Run the tests
 #

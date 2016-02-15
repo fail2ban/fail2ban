@@ -93,9 +93,11 @@ class Transmitter:
 				name = command[1]
 				self.__server.stopJail(name)
 			return None
+		elif command[0] == "echo":
+			return command[1:]
 		elif command[0] == "sleep":
 			value = command[1]
-			time.sleep(int(value))
+			time.sleep(float(value))
 			return None
 		elif command[0] == "flushlogs":
 			return self.__server.flushLogs()
@@ -216,7 +218,7 @@ class Transmitter:
 			return self.__server.getUseDns(name)
 		elif command[1] == "findtime":
 			value = command[2]
-			self.__server.setFindTime(name, int(value))
+			self.__server.setFindTime(name, value)
 			return self.__server.getFindTime(name)
 		elif command[1] == "datepattern":
 			value = command[2]
@@ -233,7 +235,7 @@ class Transmitter:
 		# command
 		elif command[1] == "bantime":
 			value = command[2]
-			self.__server.setBanTime(name, int(value))
+			self.__server.setBanTime(name, value)
 			return self.__server.getBanTime(name)
 		elif command[1] == "banip":
 			value = command[2]

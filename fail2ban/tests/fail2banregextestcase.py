@@ -23,19 +23,7 @@ __author__ = "Serg Brester"
 __copyright__ = "Copyright (c) 2015 Serg G. Brester (sebres), 2008- Fail2Ban Contributors"
 __license__ = "GPL"
 
-from __builtin__ import open as fopen
-import unittest
-import getpass
 import os
-import sys
-import time
-import tempfile
-import uuid
-
-try:
-	from systemd import journal
-except ImportError:
-	journal = None
 
 from ..client import fail2banregex
 from ..client.fail2banregex import Fail2banRegex, get_opt_parser, output

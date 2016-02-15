@@ -98,9 +98,9 @@ class JailReader(ConfigReader):
 				["string", "logpath", None],
 				["string", "logencoding", None],
 				["string", "backend", "auto"],
-				["int", "maxretry", None],
-				["int", "findtime", None],
-				["int", "bantime", None],
+				["int",    "maxretry", None],
+				["string", "findtime", None],
+				["string", "bantime", None],
 				["string", "usedns", None],
 				["string", "failregex", None],
 				["string", "ignoreregex", None],
@@ -114,7 +114,7 @@ class JailReader(ConfigReader):
 		defsec["fail2ban_version"] = version
 
 		# Read first options only needed for merge defaults ('known/...' from filter):
-		self.__opts = ConfigReader.getOptions(self, self.__name, opts1st)
+		self.__opts = ConfigReader.getOptions(self, self.__name, opts1st, shouldExist=True)
 		if not self.__opts:
 			return False
 		
