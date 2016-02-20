@@ -1,14 +1,23 @@
-_Please fill out following information while also paying attention to comments.
-Depending on your issue not all fields might apply -- just remove those which
-do not apply, and remove the comments.  Thanks!_
+_We will be very grateful, if your problem was described as completely as possible,
+enclosing excerpts from logs (if possible within DEBUG mode, if no errors evident
+within INFO mode), and configuration in particular of effected relevant settings
+(e.g., with ` fail2ban-client -d | grep 'affected-jail-name' ` for a particular
+jail troubleshooting).
+Thank you in advance for the details, because such issues like "It does not work" 
+alone could not help to resolve anything!
+Thanks! (remove this paragraph and other comments upon reading)_
 
 ### Environment:
 
-#### Your OS (including release name/version):
-#### Fail2Ban version:
+_Fill out and check (`[x]`) the boxes which apply. If your Fail2Ban version is outdated, 
+and you can't verify that the issue persists in the recent release, better seek support 
+from the distribution you obtained Fail2Ban from_
 
-_If your Fail2Ban version is outdated, and you can't verify that the issue persists in
-the recent release, better seek support from the distribution you obtained Fail2Ban from_
+- Fail2Ban version (including any possible distribution suffixes):
+- OS, including release name/version: 
+- [ ] Fail2Ban installed via OS/distribution mechanisms
+- [ ] You have not applied any additional foreign patches to the codebase
+- [ ] Some customizations were done to the configuration (provide details below is so)
 
 ### The issue:
 
@@ -22,7 +31,7 @@ _Summary here_
 
 #### Any additional information
 
-### Supplementals
+### Configuration, dump and another helpful excerpts
 
 #### Any customizations done to /etc/fail2ban/ configuration
 ```
