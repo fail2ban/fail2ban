@@ -116,7 +116,7 @@ Pre Release
 
     * http://packages.qa.debian.org/f/fail2ban.html
 
-  * FreeBSD: Christoph Theis theis@gmx.at>, Nick Hilliard <nick@foobar.org>
+  * FreeBSD: Christoph Theis theis@gmx.at>
 
     * http://svnweb.freebsd.org/ports/head/security/py-fail2ban/Makefile?view=markup
     * http://www.freebsd.org/cgi/query-pr-summary.cgi?text=fail2ban
