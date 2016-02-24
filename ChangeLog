@@ -15,7 +15,7 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
    * filter.d/apache-badbots.conf
      - Updated useragent string regex adding escape for `+`
    * filter.d/mysqld-auth.conf
-     - Updated "Access denied ..." regex for MySQL 5.6 and later (gh-1211)
+     - Updated "Access denied ..." regex for MySQL 5.6 and later (gh-1211, gh-1332)
    * filter.d/sshd.conf
      - Updated "Auth fail" regex for OpenSSH 5.9 and later
    * Treat failed and killed execution of commands identically (only
