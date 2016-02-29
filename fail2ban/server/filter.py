@@ -1012,18 +1012,22 @@ class DNSUtils:
 			Thanks to Kevin Drapel.
 		"""
 		# cache, also prevent long wait during retrieving of ip for wrong dns or lazy dns-system:
-		v = DNSUtils.CACHE_nameToIp.get(dns)
-		if v is not None: 
-			return v
-		# retrieve ip (todo: use AF_INET6 for IPv6)
+		ips = DNSUtils.CACHE_nameToIp.get(dns)
+		if ips is not None: 
+			return ips
+		# retrieve ips
 		try:
-			v = set([i[4][0] for i in socket.getaddrinfo(dns, None, socket.AF_INET, 0, socket.IPPROTO_TCP)])
+			ips = list()
+			for result in socket.getaddrinfo(dns, None, 0, 0, socket.IPPROTO_TCP):
+				ip = IPAddr(result[4][0])
+				if ip.isValidIP():
+					ips.append(ip)
 		except socket.error, e:
 			# todo: make configurable the expired time of cache entry:
 			logSys.warning("Unable to find a corresponding IP address for %s: %s", dns, e)
-			v = list()
-		DNSUtils.CACHE_nameToIp.set(dns, v)
-		return v
+			ips = list()
+		DNSUtils.CACHE_nameToIp.set(dns, ips)
+		return ips
 
 	@staticmethod
 	def ipToName(ip):
@@ -1033,7 +1037,7 @@ class DNSUtils:
 			return v
 		# retrieve name
 		try:
-			v = socket.gethostbyaddr(ip)[0]
+			v = socket.gethostbyaddr(ip.ntoa())[0]
 		except socket.error, e:
 			logSys.debug("Unable to find a name for the IP %s: %s", ip, e)
 			v = None
@@ -1068,11 +1072,11 @@ class DNSUtils:
 		"""
 		ipList = list()
 		# Search for plain IP
-		plainIP = DNSUtils.searchIP(text)
+		plainIP = IPAddr.searchIP(text)
 		if not plainIP is None:
-			plainIPStr = plainIP.group(0)
-			if DNSUtils.isValidIP(plainIPStr):
-				ipList.append(plainIPStr)
+			ip = IPAddr(plainIP.group(0))
+			if ip.isValidIP():
+				ipList.append(ip)
 
 		# If we are allowed to resolve -- give it a try if nothing was found
 		if useDns in ("yes", "warn") and not ipList:
