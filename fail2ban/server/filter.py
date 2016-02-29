@@ -334,7 +334,22 @@ class Filter(JailThread):
 	# when finding failures. CIDR mask and DNS are also accepted.
 	# @param ip IP address to ignore
 
-	def addIgnoreIP(self, ip):
+	def addIgnoreIP(self, ipstr):
+		# An empty string is always false
+		if ipstr == "":
+			return
+		s = ipstr.split('/', 1)
+		# IP address without CIDR mask
+		if len(s) == 1:
+			s.insert(1, -1) # <0 means no CIDR
+		elif "." in s[1]: # 255.255.255.0 style mask
+			s[1] = IPAddr.masktoplen(s[1])
+		s[1] = long(s[1])
+		
+		# Create IP address object
+		ip = IPAddr(s[0], s[1])
+
+		# log and append to ignore list
 		logSys.debug("Add " + ip + " to ignore list")
 		self.__ignoreIpList.append(ip)
 
@@ -354,34 +369,22 @@ class Filter(JailThread):
 	#
 	# Check if the given IP address matches an IP address/DNS or a CIDR
 	# mask in the ignore list.
-	# @param ip IP address
+	# @param ip IP address object
 	# @return True if IP address is in ignore list
 
 	def inIgnoreIPList(self, ip, log_ignore=False):
-		for i in self.__ignoreIpList:
-			# An empty string is always false
-			if i == "":
-				continue
-			s = i.split('/', 1)
-			# IP address without CIDR mask
-			if len(s) == 1:
-				s.insert(1, '32')
-			elif "." in s[1]: # 255.255.255.0 style mask
-				s[1] = len(re.search(
-					"(?<=b)1+", bin(DNSUtils.addr2bin(s[1]))).group())
-			s[1] = long(s[1])
-			try:
-				a = DNSUtils.addr2bin(s[0], cidr=s[1])
-				b = DNSUtils.addr2bin(ip, cidr=s[1])
-			except Exception:
+		for net in self.__ignoreIpList:
+			# if it isn't a valid IP address, try DNS resolution
+			if not net.isValidIP() and net.getRaw() != "":
 				# Check if IP in DNS
-				ips = DNSUtils.dnsToIp(i)
+				ips = DNSUtils.dnsToIp(net.getRaw())
 				if ip in ips:
 					self.logIgnoreIp(ip, log_ignore, ignore_source="dns")
 					return True
 				else:
 					continue
-			if a == b:
+			# check if the IP is covered by ignore IP
+			if ip.isInNet(net):
 				self.logIgnoreIp(ip, log_ignore, ignore_source="ip")
 				return True
 
@@ -389,6 +392,7 @@ class Filter(JailThread):
 			command = CommandAction.replaceTag(self.__ignoreCommand, { 'ip': ip } )
 			logSys.debug('ignore command: ' + command)
 			ret_ignore = CommandAction.executeCmd(command)
+
 			self.logIgnoreIp(ip, log_ignore and ret_ignore, ignore_source="command")
 			return ret_ignore
 
