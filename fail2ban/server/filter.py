@@ -861,22 +861,24 @@ class DNSUtils:
 		""" Convert a DNS into an IP address using the Python socket module.
 			Thanks to Kevin Drapel.
 		"""
-		# retrieve ip (todo: use AF_INET6 for IPv6)
 		try:
-			return set([i[4][0] for i in socket.getaddrinfo(dns, None, socket.AF_INET, 0, socket.IPPROTO_TCP)])
+			ips = list()
+			for result in socket.getaddrinfo(dns, None, 0, 0, 
+					socket.IPPROTO_TCP):
+				ip = IPAddr(result[4][0])
+				if ip.isValidIP():
+					ips.append(ip)
+
+			return ips
 		except socket.error, e:
 			logSys.warning("Unable to find a corresponding IP address for %s: %s"
-						% (dns, e))
-			return list()
-		except socket.error, e:
-			logSys.warning("Socket error raised trying to resolve hostname %s: %s"
 						% (dns, e))
 			return list()
 
 	@staticmethod
 	def ipToName(ip):
 		try:
-			return socket.gethostbyaddr(ip)[0]
+			return socket.gethostbyaddr(ip.ntoa())[0]
 		except socket.error, e:
 			logSys.debug("Unable to find a name for the IP %s: %s" % (ip, e))
 			return None
@@ -909,11 +911,11 @@ class DNSUtils:
 		"""
 		ipList = list()
 		# Search for plain IP
-		plainIP = DNSUtils.searchIP(text)
+		plainIP = IPAddr.searchIP(text)
 		if not plainIP is None:
-			plainIPStr = plainIP.group(0)
-			if DNSUtils.isValidIP(plainIPStr):
-				ipList.append(plainIPStr)
+			ip = IPAddr(plainIP.group(0))
+			if ip.isValidIP():
+				ipList.append(ip)
 
 		# If we are allowed to resolve -- give it a try if nothing was found
 		if useDns in ("yes", "warn") and not ipList:
