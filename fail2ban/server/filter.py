@@ -307,12 +307,18 @@ class Filter(JailThread):
 		return self.__ignoreCommand
 
 	##
+	# create new IPAddr object from IP address string
+	def newIP(self, ipstr):
+		return IPAddr(ipstr)
+
+	##
 	# Ban an IP - http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
 	# Arturo 'Buanzo' Busleiman <buanzo@buanzo.com.ar>
 	#
 	# to enable banip fail2ban-client BAN command
 
-	def addBannedIP(self, ip):
+	def addBannedIP(self, ipstr):
+		ip = IPAddr(ipstr)
 		if self.inIgnoreIPList(ip):
 			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.' % ip)
 
@@ -540,11 +546,11 @@ class Filter(JailThread):
 							if not checkAllRegex:
 								break
 						else:
-							ipMatch = DNSUtils.textToIp(host, self.__useDns)
-							if ipMatch:
-								for ip in ipMatch:
-									failList.append([failRegexIndex, ip, date,
-										 failRegex.getMatchedLines()])
+							ips = DNSUtils.textToIp(host, self.__useDns)
+							if ips:
+								for ip in ips:
+									failList.append([failRegexIndex, ip, 
+										 date, failRegex.getMatchedLines()])
 								if not checkAllRegex:
 									break
 					except RegexException, e: # pragma: no cover - unsure if reachable

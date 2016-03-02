@@ -152,9 +152,9 @@ class BanManager:
 			for banData in self.__banList:
 				ip = banData.getIP()
 				# Reference: http://www.team-cymru.org/Services/ip-to-asn.html#dns
-				# TODO: IPv6 compatibility
-				reversed_ip = ".".join(reversed(ip.split(".")))
-				question = "%s.origin.asn.cymru.com" % reversed_ip
+				question = ip.getPTR("origin.asn.cymru.com" if ip.isIPv4()
+						else "origin6.asn.cymru.com"
+				)
 				try:
 					answers = dns.resolver.query(question, "TXT")
 					for rdata in answers:
