@@ -32,6 +32,7 @@ from threading import RLock
 
 from .mytime import MyTime
 from .ticket import FailTicket
+from .filter import IPAddr
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
@@ -413,7 +414,7 @@ class Fail2BanDb(object):
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
-			(jail.name, ticket.getIP(), int(round(ticket.getTime())),
+			(jail.name, ticket.getIP().ntoa(), int(round(ticket.getTime())),
 				{"matches": ticket.getMatches(),
 				 "failures": ticket.getAttempt()}))
 
@@ -428,7 +429,7 @@ class Fail2BanDb(object):
 		ip : str
 			IP to be removed.
 		"""
-		queryArgs = (jail.name, ip);
+		queryArgs = (jail.name, ip.ntoa());
 		cur.execute(
 			"DELETE FROM bans WHERE jail = ? AND ip = ?", 
 			queryArgs);
@@ -446,7 +447,7 @@ class Fail2BanDb(object):
 			queryArgs.append(MyTime.time() - bantime)
 		if ip is not None:
 			query += " AND ip=?"
-			queryArgs.append(ip)
+			queryArgs.append(ip.ntoa())
 		query += " ORDER BY ip, timeofban"
 
 		return cur.execute(query, queryArgs)
@@ -462,7 +463,7 @@ class Fail2BanDb(object):
 			Ban time in seconds, such that bans returned would still be
 			valid now.  Negative values are equivalent to `None`.
 			Default `None`; no limit.
-		ip : str
+		ip : IPAddr object
 			IP Address to filter bans by. Default `None`; all IPs.
 
 		Returns
@@ -471,7 +472,8 @@ class Fail2BanDb(object):
 			List of `Ticket`s for bans stored in database.
 		"""
 		tickets = []
-		for ip, timeofban, data in self._getBans(**kwargs):
+		for ipstr, timeofban, data in self._getBans(**kwargs):
+			ip = IPAddr(ipstr)
 			#TODO: Implement data parts once arbitrary match keys completed
 			tickets.append(FailTicket(ip, timeofban, data.get('matches')))
 			tickets[-1].setAttempt(data.get('failures', 1))
@@ -491,7 +493,7 @@ class Fail2BanDb(object):
 			Ban time in seconds, such that bans returned would still be
 			valid now. Negative values are equivalent to `None`.
 			Default `None`; no limit.
-		ip : str
+		ip : IPAddr object
 			IP Address to filter bans by. Default `None`; all IPs.
 
 		Returns
@@ -512,6 +514,8 @@ class Fail2BanDb(object):
 			ticket = None
 
 			results = list(self._getBans(ip=ip, jail=jail, bantime=bantime))
+			# Convert IP strings to IPAddr objects
+			results = map(lambda i:(IPAddr(i[0]),)+i[1:], results)
 			if results:
 				prev_banip = results[0][0]
 				matches = []
