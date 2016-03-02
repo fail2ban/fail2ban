@@ -113,19 +113,15 @@ class TransmitterBase(unittest.TestCase):
 		self.assertEqual(
 			self.transm.proceed(["get", jail, cmd]), (0, []))
 		for n, value in enumerate(values):
-			self.assertEqual(
-				self.transm.proceed(["set", jail, cmdAdd, value]),
-				(0, values[:n+1]))
-			self.assertEqual(
-				self.transm.proceed(["get", jail, cmd]),
-				(0, values[:n+1]))
+			ret = self.transm.proceed(["set", jail, cmdAdd, value])
+			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(values[:n+1])))
+			ret = self.transm.proceed(["get", jail, cmd])
+			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(values[:n+1])))
 		for n, value in enumerate(values):
-			self.assertEqual(
-				self.transm.proceed(["set", jail, cmdDel, value]),
-				(0, values[n+1:]))
-			self.assertEqual(
-				self.transm.proceed(["get", jail, cmd]),
-				(0, values[n+1:]))
+			ret = self.transm.proceed(["set", jail, cmdDel, value])
+			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(values[n+1:])))
+			ret = self.transm.proceed(["get", jail, cmd])
+			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(values[n+1:])))
 
 	def jailAddDelRegexTest(self, cmd, inValues, outValues, jail):
 		cmdAdd = "add" + cmd
@@ -168,8 +164,9 @@ class Transmitter(TransmitterBase):
 		t0 = time.time()
 		self.assertEqual(self.transm.proceed(["sleep", "1"]), (0, None))
 		t1 = time.time()
-		# Approx 1 second delay
-		self.assertAlmostEqual(t1 - t0, 1, places=1)
+		# Approx 1 second delay but not faster
+		dt = t1 - t0
+		self.assertTrue(0.99 < dt < 1.1, msg="Sleep was %g sec" % dt)
 
 	def testDatabase(self):
 		tmp, tmpFilename = tempfile.mkstemp(".db", "fail2ban_")
@@ -934,7 +931,7 @@ class LoggingTests(LogCaptureTestCase):
 			badThread = _BadThread()
 			badThread.start()
 			badThread.join()
-			self.assertTrue(self._is_logged("Unhandled exception"))
+			self.assertLogged("Unhandled exception")
 		finally:
 			sys.__excepthook__ = prev_exchook
 		self.assertEqual(len(x), 1)

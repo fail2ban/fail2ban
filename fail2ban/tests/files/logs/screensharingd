@@ -1,0 +1,12 @@
+# NOTE: dates here include years -- this is not the typical configuration for the system.log
+# file on Mac OS. However, without it the test routines will use 2004 as the year and matches will not pass.
+#
+# failJSON: { "match": false }
+Oct 27 2015 09:24:46 test1.beezwax.net screensharingd[1170]: Authentication: SUCCEEDED :: User Name: simon :: Viewer Address: 192.168.5.247 :: Type: DH
+#
+# failJSON: { "time": "2015-10-27T12:35:40", "match": true , "host": "192.168.5.247" }
+Oct 27 2015 12:35:40 test1.beezwax.net screensharingd[1170]: Authentication: FAILED :: User Name: sdfsdfs () mro :: Viewer Address: 192.168.5.247 :: Type: DH
+# failJSON: { "time": "2015-10-27T12:35:50", "match": true , "host": "192.168.5.247" }
+Oct 27 2015 12:35:50 test1.beezwax.net screensharingd[1170]: Authentication: FAILED :: User Name: brown_s :: :: Viewer Address: 192.168.5.247 :: Type: DH
+# failJSON: { "time": "2015-10-27T12:26:01", "match": true , "host": "192.168.5.247" }
+Oct 27 2015 12:26:01 test1.beezwax.net screensharingd[1170]: Authentication: FAILED :: User Name: brown @! s:: :: Viewer Address: 192.168.5.247 :: Type: DH

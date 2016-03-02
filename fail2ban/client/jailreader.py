@@ -32,7 +32,9 @@ import re
 from .configreader import ConfigReaderUnshared, ConfigReader
 from .filterreader import FilterReader
 from .actionreader import ActionReader
+from ..version import version
 from ..helpers import getLogger
+from ..helpers import splitcommaspace
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -106,6 +108,10 @@ class JailReader(ConfigReader):
 				["string", "ignoreip", None],
 				["string", "filter", ""],
 				["string", "action", ""]]
+
+		# Before interpolation (substitution) add static options always available as default:
+		defsec = self._cfg.get_defaults()
+		defsec["fail2ban_version"] = version
 
 		# Read first options only needed for merge defaults ('known/...' from filter):
 		self.__opts = ConfigReader.getOptions(self, self.__name, opts1st)
@@ -208,10 +214,8 @@ class JailReader(ConfigReader):
 			elif opt == "maxretry":
 				stream.append(["set", self.__name, "maxretry", self.__opts[opt]])
 			elif opt == "ignoreip":
-				for ip in self.__opts[opt].split():
-					# Do not send a command if the rule is empty.
-					if ip != '':
-						stream.append(["set", self.__name, "addignoreip", ip])
+				for ip in splitcommaspace(self.__opts[opt]):
+					stream.append(["set", self.__name, "addignoreip", ip])
 			elif opt == "findtime":
 				stream.append(["set", self.__name, "findtime", self.__opts[opt]])
 			elif opt == "bantime":

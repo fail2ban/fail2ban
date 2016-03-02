@@ -8,8 +8,8 @@ How to use
 ----------
 Just have to run the following command:
     $ ./check_fail2ban --help
- 
-If you need to use this script with NRPE you just have to do the 
+
+If you need to use this script with NRPE you just have to do the
 following steps:
 
 1 allow your user to run the script with the sudo rights. Just add
@@ -20,7 +20,7 @@ following steps:
   command[check_fail2ban]=/usr/bin/sudo /<path-to>/check_fail2ban
 
 3 don't forget to restart your NRPE daemon
-   
+
 /!\ be careful to let no one able to update the check_fail2ban ;)
 ------------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ HELP:
 2.) delete the socket if available
 rm /var/run/fail2ban/fail2ban.sock
 
-3.) start the Service 
+3.) start the Service
 /etc/init.d/fail2ban start
 
 4.) check if fail2ban is working
@@ -58,7 +58,7 @@ Options:
  -V, --version
     Print version information
  -D, --display=STRING
-    To modify the output display 
+    To modify the output display
     default is "CHECK FAIL2BAN ACTIVITY"
  -P, --path-fail2ban_client=STRING
     Specify the path to the tw_cli binary

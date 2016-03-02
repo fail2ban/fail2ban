@@ -4,12 +4,12 @@
 #             -=- <check_fail2ban> -=-
 #  -------------------------------------------------------
 #
-#  Description : This plugin checks if the fail2ban server is running 
+#  Description : This plugin checks if the fail2ban server is running
 #  and how many IPs are currently banned.
-#  
+#
 #
 # inspired by the work of Sebastian Mueller - http://www.elchtest.eu
-# 
+#
 #
 #  Version : 0.1
 #  -------------------------------------------------------
@@ -17,7 +17,7 @@
 #     - see the How to use section
 #
 #  Out :
-#     - only print on the standard output 
+#     - only print on the standard output
 #
 #  Features :
 #     - perfdata output
@@ -51,8 +51,8 @@
 #
 # Just have to run the following command:
 #       $ ./check_fail2ban --help
-# 
-# If you need to use this script with NRPE you just have to do the 
+#
+# If you need to use this script with NRPE you just have to do the
 # following steps:
 #
 # 1 allow your user to run the script with the sudo rights. Just add
@@ -64,7 +64,7 @@
 #
 # 3 don't forget to restart your NRPE daemon
 #
-#	
+#
 # /!\ be careful to let no one able to update the check_fail2ban ;)
 # ------------------------------------------------------------------------------
 #
@@ -251,7 +251,7 @@ Options:
  -V, --version
     Print version information
  -D, --display=STRING
-    To modify the output display 
+    To modify the output display
     default is "CHECK FAIL2BAN ACTIVITY"
  -P, --path-fail2ban_client=STRING
     Specify the path to the tw_cli binary
@@ -269,7 +269,7 @@ Options:
     If you want to activate the perfdata output
  -v, --verbose
     Show details for command-line debugging (Nagios may truncate the output)
-    
+
 Send email to $a_mail if you have questions
 regarding use of this software. To submit patches or suggest improvements,
 send email to $a_mail
@@ -315,7 +315,7 @@ sub obtain_jail_list {
     if ($return_code) {
         return -1;
     }
-    
+
     my @jail_list;
     foreach (@command_output) {
         if ($_=~/^.*Jail list:\t+(.*)/) {
@@ -323,7 +323,7 @@ sub obtain_jail_list {
             @jail_list = split(/,/, $1);
         }
     }
-    
+
     return @jail_list;
 }
 

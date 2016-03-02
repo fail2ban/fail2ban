@@ -94,15 +94,15 @@ class ExecuteActions(LogCaptureTestCase):
 			"Action", os.path.join(TEST_FILES_DIR, "action.d/action.py"),
 			{'opt1': 'value'})
 
-		self.assertTrue(self._is_logged("TestAction initialised"))
+		self.assertLogged("TestAction initialised")
 
 		self.__actions.start()
 		time.sleep(3)
-		self.assertTrue(self._is_logged("TestAction action start"))
+		self.assertLogged("TestAction action start")
 
 		self.__actions.stop()
 		self.__actions.join()
-		self.assertTrue(self._is_logged("TestAction action stop"))
+		self.assertLogged("TestAction action stop")
 
 		self.assertRaises(IOError,
 			self.__actions.add, "Action3", "/does/not/exist.py", {})
@@ -136,10 +136,10 @@ class ExecuteActions(LogCaptureTestCase):
 			{})
 		self.__actions.start()
 		time.sleep(3)
-		self.assertTrue(self._is_logged("Failed to start"))
+		self.assertLogged("Failed to start")
 		self.__actions.stop()
 		self.__actions.join()
-		self.assertTrue(self._is_logged("Failed to stop"))
+		self.assertLogged("Failed to stop")
 
 	def testBanActionsAInfo(self):
 		# Action which deletes IP address from aInfo
@@ -155,13 +155,13 @@ class ExecuteActions(LogCaptureTestCase):
 		self.__actions._Actions__checkBan()
 		# Will fail if modification of aInfo from first action propagates
 		# to second action, as both delete same key
-		self.assertFalse(self._is_logged("Failed to execute ban"))
-		self.assertTrue(self._is_logged("action1 ban deleted aInfo IP"))
-		self.assertTrue(self._is_logged("action2 ban deleted aInfo IP"))
+		self.assertNotLogged("Failed to execute ban")
+		self.assertLogged("action1 ban deleted aInfo IP")
+		self.assertLogged("action2 ban deleted aInfo IP")
 
 		self.__actions._Actions__flushBan()
 		# Will fail if modification of aInfo from first action propagates
 		# to second action, as both delete same key
-		self.assertFalse(self._is_logged("Failed to execute unban"))
-		self.assertTrue(self._is_logged("action1 unban deleted aInfo IP"))
-		self.assertTrue(self._is_logged("action2 unban deleted aInfo IP"))
+		self.assertNotLogged("Failed to execute unban")
+		self.assertLogged("action1 unban deleted aInfo IP")
+		self.assertLogged("action2 unban deleted aInfo IP")

@@ -33,6 +33,7 @@ from glob import glob
 from StringIO import StringIO
 
 from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger
+from ..helpers import splitcommaspace
 from ..server.datetemplate import DatePatternRegex
 
 
@@ -54,6 +55,14 @@ class HelpersTest(unittest.TestCase):
 			self.assertEqual(name, "ValueError")
 			# might be fragile due to ' vs "
 			self.assertEqual(args, "('Very bad', None)")
+
+	def testsplitcommaspace(self):
+		self.assertEqual(splitcommaspace(None), [])
+		self.assertEqual(splitcommaspace(''), [])
+		self.assertEqual(splitcommaspace('  '), [])
+		self.assertEqual(splitcommaspace('1'), ['1'])
+		self.assertEqual(splitcommaspace(' 1 2 '), ['1', '2'])
+		self.assertEqual(splitcommaspace(' 1, 2 , '), ['1', '2'])
 
 
 class SetupTest(unittest.TestCase):
