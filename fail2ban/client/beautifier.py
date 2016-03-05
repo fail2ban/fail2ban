@@ -78,13 +78,13 @@ class Beautifier:
 						prefix1 = "   " if n == len(response) - 1 else "|  "
 						for m, res2 in enumerate(res1[1]):
 							prefix2 = prefix1 + ("`-" if m == len(res1[1]) - 1 else "|-")
-							val = " ".join(res2[1]) if isinstance(res2[1], list) else res2[1]
+							val = " ".join(map(str, res2[1])) if isinstance(res2[1], list) else res2[1]
 							msg.append("%s %s:\t%s" % (prefix2, res2[0], val))
 				else:
 					msg = ["Status"]
 					for n, res1 in enumerate(response):
 						prefix1 = "`-" if n == len(response) - 1 else "|-"
-						val = " ".join(res1[1]) if isinstance(res1[1], list) else res1[1]
+						val = " ".join(map(str, res1[1])) if isinstance(res1[1], list) else res1[1]
 						msg.append("%s %s:\t%s" % (prefix1, res1[0], val))
 				msg = "\n".join(msg)
 			elif inC[1] == "syslogsocket":
