@@ -30,10 +30,13 @@ else:
 
 from ..dummyjail import DummyJail
 
-from ..utils import CONFIG_DIR, asyncserver
-
+from ..utils import CONFIG_DIR, asyncserver, Utils
 
 class TestSMTPServer(smtpd.SMTPServer):
+
+	def __init__(self, *args):
+		smtpd.SMTPServer.__init__(self, *args)
+		self.ready = False
 
 	def process_message(self, peer, mailfrom, rcpttos, data):
 		self.peer = peer
@@ -42,6 +45,7 @@ class TestSMTPServer(smtpd.SMTPServer):
 		self.org_data = data
 		# replace new line (with tab or space) for possible mime translations (word wrap):
 		self.data = re.sub(r"\n[\t ]", " ", data)
+		self.ready = True
 
 
 class SMTPActionTest(unittest.TestCase):
@@ -78,8 +82,13 @@ class SMTPActionTest(unittest.TestCase):
 		self._active = False
 		self._loop_thread.join()
 
+	def _exec_and_wait(self, doaction):
+		self.smtpd.ready = False
+		doaction()
+		Utils.wait_for(lambda: self.smtpd.ready, 3)
+
 	def testStart(self):
-		self.action.start()
+		self._exec_and_wait(self.action.start)
 		self.assertEqual(self.smtpd.mailfrom, "fail2ban")
 		self.assertEqual(self.smtpd.rcpttos, ["root"])
 		self.assertTrue(
@@ -87,7 +96,7 @@ class SMTPActionTest(unittest.TestCase):
 			in self.smtpd.data)
 
 	def testStop(self):
-		self.action.stop()
+		self._exec_and_wait(self.action.stop)
 		self.assertEqual(self.smtpd.mailfrom, "fail2ban")
 		self.assertEqual(self.smtpd.rcpttos, ["root"])
 		self.assertTrue(
@@ -105,7 +114,7 @@ class SMTPActionTest(unittest.TestCase):
 		if restored:
 			aInfo['restored'] = 1
 
-		self.action.ban(aInfo)
+		self._exec_and_wait(lambda: self.action.ban(aInfo))
 		if restored: # no mail, should raises attribute error:
 			self.assertRaises(AttributeError, lambda: self.smtpd.mailfrom)
 			return
@@ -118,15 +127,15 @@ class SMTPActionTest(unittest.TestCase):
 			"%i attempts" % aInfo['failures'], self.smtpd.data)
 
 		self.action.matches = "matches"
-		self.action.ban(aInfo)
+		self._exec_and_wait(lambda: self.action.ban(aInfo))
 		self.assertIn(aInfo['matches'], self.smtpd.data)
 
 		self.action.matches = "ipjailmatches"
-		self.action.ban(aInfo)
+		self._exec_and_wait(lambda: self.action.ban(aInfo))
 		self.assertIn(aInfo['ipjailmatches'], self.smtpd.data)
 
 		self.action.matches = "ipmatches"
-		self.action.ban(aInfo)
+		self._exec_and_wait(lambda: self.action.ban(aInfo))
 		self.assertIn(aInfo['ipmatches'], self.smtpd.data)
 	
 	def testBan(self):
@@ -136,14 +145,14 @@ class SMTPActionTest(unittest.TestCase):
 		self._testBan(restored=True)
 
 	def testOptions(self):
-		self.action.start()
+		self._exec_and_wait(self.action.start)
 		self.assertEqual(self.smtpd.mailfrom, "fail2ban")
 		self.assertEqual(self.smtpd.rcpttos, ["root"])
 
 		self.action.fromname = "Test"
 		self.action.fromaddr = "test@example.com"
 		self.action.toaddr = "test@example.com, test2@example.com"
-		self.action.start()
+		self._exec_and_wait(self.action.start)
 		self.assertEqual(self.smtpd.mailfrom, "test@example.com")
 		self.assertTrue("From: %s <%s>" %
 			(self.action.fromname, self.action.fromaddr) in self.smtpd.data)
