@@ -960,9 +960,10 @@ class LoggingTests(LogCaptureTestCase):
 			badThread = _BadThread()
 			badThread.start()
 			badThread.join()
-			self.assertLogged("Unhandled exception")
+			self.assertTrue( Utils.wait_for( lambda: len(x) and self._is_logged("Unhandled exception"), 3) )
 		finally:
 			sys.__excepthook__ = prev_exchook
+		self.assertLogged("Unhandled exception")
 		self.assertEqual(len(x), 1)
 		self.assertEqual(x[0][0], RuntimeError)
 
