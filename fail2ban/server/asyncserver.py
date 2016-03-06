@@ -95,6 +95,7 @@ def loop(active, timeout=None, use_poll=False):
 		# Use poll instead of loop, because of recognition of active flag, 
 		# because of loop timeout mistake: different in poll and poll2 (sec vs ms),
 		# and to prevent sporadical errors like EBADF 'Bad file descriptor' etc. (see gh-161)
+		errCount = 0
 		if timeout is None:
 			timeout = Utils.DEFAULT_SLEEP_TIME
 		poll = asyncore.poll
@@ -107,11 +108,20 @@ def loop(active, timeout=None, use_poll=False):
 		while active():
 			try:
 				poll(timeout)
+				if errCount:
+					errCount -= 1
 			except Exception as e: # pragma: no cover
-				if e.args[0] in (errno.ENOTCONN, errno.EBADF): # (errno.EBADF, 'Bad file descriptor')
-					logSys.info('Server connection was closed: %s', str(e))
-				else:
-					logSys.error('Server connection was closed: %s', str(e))
+				if not active():
+					break
+				errCount += 1
+				if errCount < 20:
+					if e.args[0] in (errno.ENOTCONN, errno.EBADF): # (errno.EBADF, 'Bad file descriptor')
+						logSys.info('Server connection was closed: %s', str(e))
+					else:
+						logSys.error('Server connection was closed: %s', str(e))
+				elif errCount == 20:
+					logSys.info('Too many errors - stop logging connection errors')
+					logSys.exception(e)
 
 
 ##
@@ -162,7 +172,7 @@ class AsyncServer(asyncore.dispatcher):
 			logSys.error("Fail2ban seems to be already running")
 			if force:
 				logSys.warning("Forcing execution of the server")
-				os.remove(sock)
+				self._remove_sock()
 			else:
 				raise AsyncServerException("Server already running")
 		# Creates the socket.
@@ -175,20 +185,22 @@ class AsyncServer(asyncore.dispatcher):
 		AsyncServer.__markCloseOnExec(self.socket)
 		self.listen(1)
 		# Sets the init flag.
-		self.__init = self.__active = True
+		self.__init = self.__loop = self.__active = True
 		# Event loop as long as active:
-		loop(lambda: self.__active)
+		loop(lambda: self.__loop)
+		self.__active = False
 		# Cleanup all
 		self.stop()
 
 
 	def close(self):
 		if self.__active:
+			self.__loop = False
 			asyncore.dispatcher.close(self)
 		# Remove socket (file) only if it was created:
 		if self.__init and os.path.exists(self.__sock):
 			logSys.debug("Removed socket file " + self.__sock)
-			os.remove(self.__sock)
+			self._remove_sock()
 		logSys.debug("Socket shutdown")
 		self.__active = False
 
@@ -200,6 +212,17 @@ class AsyncServer(asyncore.dispatcher):
 
 	def isActive(self):
 		return self.__active
+
+	
+	##
+	# Safe remove (in multithreaded mode):
+
+	def _remove_sock(self):
+		try:
+			os.remove(self.__sock)
+		except OSError as e:
+			if e.errno != errno.ENOENT:
+				raise
 
 	##
 	# Marks socket as close-on-exec to avoid leaking file descriptors when

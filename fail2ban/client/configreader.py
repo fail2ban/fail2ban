@@ -208,7 +208,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	# 1 -> the name of the option
 	# 2 -> the default value for the option
 	
-	def getOptions(self, sec, options, pOptions=None):
+	def getOptions(self, sec, options, pOptions=None, shouldExist=False):
 		values = dict()
 		for option in options:
 			try:
@@ -222,6 +222,8 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 					continue
 				values[option[1]] = v
 			except NoSectionError, e:
+				if shouldExist:
+					raise
 				# No "Definition" section or wrong basedir
 				logSys.error(e)
 				values[option[1]] = option[2]

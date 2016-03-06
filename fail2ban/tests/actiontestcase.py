@@ -44,8 +44,8 @@ class CommandActionTest(LogCaptureTestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
-		LogCaptureTestCase.tearDown(self)
 		self.__action.stop()
+		LogCaptureTestCase.tearDown(self)
 
 	def testSubstituteRecursiveTags(self):
 		aInfo = {
@@ -271,11 +271,11 @@ class CommandActionTest(LogCaptureTestCase):
 
 	def testCaptureStdOutErr(self):
 		CommandAction.executeCmd('echo "How now brown cow"')
-		self.assertLogged("'How now brown cow\\n'")
+		self.assertLogged("stdout: 'How now brown cow'\n", "stdout: b'How now brown cow'\n")
 		CommandAction.executeCmd(
 			'echo "The rain in Spain stays mainly in the plain" 1>&2')
 		self.assertLogged(
-			"'The rain in Spain stays mainly in the plain\\n'")
+			"stderr: 'The rain in Spain stays mainly in the plain'\n", "stderr: b'The rain in Spain stays mainly in the plain'\n")
 
 	def testCallingMap(self):
 		mymap = CallingMap(callme=lambda: str(10), error=lambda: int('a'),
