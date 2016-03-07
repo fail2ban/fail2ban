@@ -87,6 +87,7 @@ ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
    * Enhance filter 'postfix' to ban incoming SMTP client with no fqdn hostname,
      and to support multiple instances of postfix having varying suffix (gh-1331)
      (Thanks Tom Hendrikx)
+   * files/gentoo-initd to use start-stop-daemon to robustify restarting the service
 
 
 ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
