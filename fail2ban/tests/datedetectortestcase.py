@@ -128,9 +128,9 @@ class DateDetectorTest(LogCaptureTestCase):
 						self.assertEqual(logMatch.group(), sdate)
 				else:
 					self.assertEqual(logtime, None, "getTime should have not matched for %r Got: %s" % (sdate, logtime))
-				# with matchTime and getTime2 (this combination used in filter) :
+				# with getTime(matchTime) - this combination used in filter:
 				matchTime = self.__datedetector.matchTime(log)
-				logtime = self.__datedetector.getTime2(log, matchTime)
+				logtime = self.__datedetector.getTime(log, matchTime)
 				if should_match:
 					self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s, anchored: %r, log: %s" % ( sdate, anchored, log))
 					( logUnix, logMatch ) = logtime

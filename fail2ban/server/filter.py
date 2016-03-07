@@ -479,7 +479,7 @@ class Filter(JailThread):
 			self.__lastDate = date
 		elif timeText:
 
-			dateTimeMatch = self.dateDetector.getTime2(timeText, tupleLine[3])
+			dateTimeMatch = self.dateDetector.getTime(timeText, tupleLine[3])
 
 			if dateTimeMatch is None:
 				logSys.error("findFailure failed to parse timeText: " + timeText)
@@ -769,7 +769,7 @@ class FileFilter(Filter):
 					break
 				(timeMatch, template) = self.dateDetector.matchTime(line)
 				if timeMatch:
-					dateTimeMatch = self.dateDetector.getTime2(line[timeMatch.start():timeMatch.end()], (timeMatch, template))
+					dateTimeMatch = self.dateDetector.getTime(line[timeMatch.start():timeMatch.end()], (timeMatch, template))
 				else:
 					nextp = container.tell()
 					if nextp > maxp:

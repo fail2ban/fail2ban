@@ -202,13 +202,13 @@ class DateDetector(object):
 		# not found:
 		return (None, None)
 
-	def getTime(self, line):
+	def getTime(self, line, timeMatch=None):
 		"""Attempts to return the date on a log line using templates.
 
-		Obsolete: Use "getTime2" instead.
-
 		This uses the templates' `getDate` method in an attempt to find
-		a date.
+		a date. 
+		For the faster usage, always specify a parameter timeMatch (the previous tuple result
+		of the matchTime), then this will work without locking and without cycle over templates.
 
 		Parameters
 		----------
@@ -221,6 +221,15 @@ class DateDetector(object):
 			The Unix timestamp returned from the first successfully matched
 			template or None if not found.
 		"""
+		if timeMatch:
+			template = timeMatch[1]
+			if template is not None:
+				date = template.getDate(line, timeMatch[0])
+				if date is not None:
+					if logSys.getEffectiveLevel() <= logLevel:
+						logSys.log(logLevel, "Got time %f for \"%r\" using template %s",
+							date[0], date[1].group(), template.name)
+					return date
 		with self.__lock:
 			for template in self.__templates:
 				try:
@@ -234,38 +243,6 @@ class DateDetector(object):
 				except ValueError: # pragma: no cover
 					pass
 			return None
-
-	def getTime2(self, line, timeMatch = None):
-		"""Attempts to return the date on a log line using given template.
-
-		This uses the templates' `getDate` method in an attempt to find
-		a date.
-		Method 'getTime2' is a little bit faster as 'getTime' if template was specified (cause works without locking and without cycle)
-
-		Parameters
-		----------
-		line : str
-			Line which is searched by the date templates.
-		timeMatch (timeMatch, template) : (Match, DateTemplate)
-			Time match and template previously returned from matchTime
-
-		Returns
-		-------
-		float
-			The Unix timestamp returned from the first successfully matched
-			template or None if not found.
-		"""
-		date = None
-		if timeMatch:
-			template = timeMatch[1]
-			if template is not None:
-				date = template.getDate(line, timeMatch[0])
-		if date is not None:
-			if logSys.getEffectiveLevel() <= logLevel:
-				logSys.log(logLevel, "Got time(2) %f for \"%r\" using template %s",
-					date[0], date[1].group(), template.name)
-			return date
-		return self.getTime(line)
 
 	def _reorderTemplate(self, num):
 		"""Reorder template (bubble up) in template list if hits grows enough.
