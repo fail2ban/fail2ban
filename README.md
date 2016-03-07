@@ -77,6 +77,8 @@ Code status:
 
 * [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=master)](https://coveralls.io/r/fail2ban/fail2ban)
 
+* [![codecov.io](https://codecov.io/github/fail2ban/fail2ban/coverage.svg?branch=master)](https://codecov.io/github/fail2ban/fail2ban?branch=master)
+
 Contact:
 --------
 

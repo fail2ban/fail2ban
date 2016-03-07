@@ -696,7 +696,7 @@ class FileFilter(Filter):
 			logSys.error("Error opening %s" % filename)
 			logSys.exception(e)
 			return False
-		except OSError, e: # pragma: no cover - Requires implemention error in FileContainer to generate
+		except Exception, e: # pragma: no cover - Requires implemention error in FileContainer to generate
 			logSys.error("Internal error in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
 			logSys.exception(e)
 			return False

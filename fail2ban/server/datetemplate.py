@@ -134,7 +134,7 @@ class DateEpoch(DateTemplate):
 
 	def __init__(self):
 		DateTemplate.__init__(self)
-		self.regex = "(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=audit\()))\d{10}(?:\.\d{3,6})?(?(selinux)(?=:\d+\))(?(square)(?=\])))"
+		self.regex = r"(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=audit\()))\d{10,11}\b(?:\.\d{3,6})?(?:(?(selinux)(?=:\d+\)))|(?(square)(?=\])))"
 
 	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.

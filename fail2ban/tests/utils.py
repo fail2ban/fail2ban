@@ -279,6 +279,18 @@ def gatherTests(regexps=None, opts=None):
 	return tests
 
 
+# forwards compatibility of unittest.TestCase for some early python versions
+if not hasattr(unittest.TestCase, 'assertIn'):
+	def __assertIn(self, a, b, msg=None):
+		if a not in b: # pragma: no cover
+			self.fail(msg or "%r was not found in %r" % (a, b))
+	unittest.TestCase.assertIn = __assertIn
+	def __assertNotIn(self, a, b, msg=None):
+		if a in b: # pragma: no cover
+			self.fail(msg or "%r was found in %r" % (a, b))
+	unittest.TestCase.assertNotIn = __assertNotIn
+
+
 class LogCaptureTestCase(unittest.TestCase):
 
 	def setUp(self):

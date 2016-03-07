@@ -55,13 +55,23 @@ class DateDetectorTest(LogCaptureTestCase):
 		tearDownMyTime()
 	
 	def testGetEpochTime(self):
-		log = "1138049999 [sshd] error: PAM: Authentication failure"
-		#date = [2006, 1, 23, 21, 59, 59, 0, 23, 0]
-		dateUnix = 1138049999.0
-
-		( datelog, matchlog ) = self.__datedetector.getTime(log)
-		self.assertEqual(datelog, dateUnix)
-		self.assertEqual(matchlog.group(), '1138049999')
+		# correct epoch time, using all variants:
+		for dateUnix in (1138049999, 32535244799):
+			for date in ("%s", "[%s]", "[%s.555]", "audit(%s.555:101)"):
+				date = date % dateUnix
+				log = date + " [sshd] error: PAM: Authentication failure"
+				datelog = self.__datedetector.getTime(log)
+				self.assertTrue(datelog, "Parse epoch time for %s failed" % (date,))
+				( datelog, matchlog ) = datelog
+				self.assertEqual(int(datelog), dateUnix)
+				self.assertIn(matchlog.group(), (str(dateUnix), str(dateUnix)+'.555'))
+		# wrong, no epoch time (< 10 digits, more as 11 digits, begin/end of word) :
+		for dateUnix in ('123456789', '9999999999999999', '1138049999A', 'A1138049999'):
+			for date in ("%s", "[%s]", "[%s.555]", "audit(%s.555:101)"):
+				date = date % dateUnix
+				log = date + " [sshd] error: PAM: Authentication failure"
+				datelog = self.__datedetector.getTime(log)
+				self.assertFalse(datelog)
 	
 	def testGetTime(self):
 		log = "Jan 23 21:59:59 [sshd] error: PAM: Authentication failure"
