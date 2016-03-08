@@ -44,6 +44,9 @@ config/action.d/mail-whois-lines.conf
 config/action.d/mail-whois.conf
 config/action.d/mail.conf
 config/action.d/mynetwatchman.conf
+config/action.d/nftables-allports.conf
+config/action.d/nftables-common.conf
+config/action.d/nftables-multiport.conf
 config/action.d/nsupdate.conf
 config/action.d/nsupdate.conf
 config/action.d/osx-afctl.conf
@@ -166,6 +169,7 @@ fail2ban/client/configreader.py
 fail2ban/client/configurator.py
 fail2ban/client/csocket.py
 fail2ban/client/fail2banreader.py
+fail2ban/client/fail2banregex.py
 fail2ban/client/filterreader.py
 fail2ban/client/jailreader.py
 fail2ban/client/jailsreader.py
@@ -218,6 +222,7 @@ fail2ban/tests/config/paths-osx.conf
 fail2ban/tests/databasetestcase.py
 fail2ban/tests/datedetectortestcase.py
 fail2ban/tests/dummyjail.py
+fail2ban/tests/fail2banregextestcase.py
 fail2ban/tests/failmanagertestcase.py
 fail2ban/tests/files/action.d/action.py
 fail2ban/tests/files/action.d/action_checkainfo.py
