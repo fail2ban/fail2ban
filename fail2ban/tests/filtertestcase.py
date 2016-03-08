@@ -90,7 +90,11 @@ def _assert_equal_entries(utest, found, output, count=None):
 	found_time, output_time = \
 				MyTime.localtime(found[2]),\
 				MyTime.localtime(output[2])
-	utest.assertEqual(found_time, output_time)
+	try:
+		utest.assertEqual(found_time, output_time)
+	except AssertionError as e:
+		# assert more structured:
+		utest.assertEqual((float(found[2]), found_time), (float(output[2]), output_time))
 	if len(output) > 3 and count is None: # match matches
 		# do not check if custom count (e.g. going through them twice)
 		if os.linesep != '\n' or sys.platform.startswith('cygwin'):
@@ -216,6 +220,14 @@ class BasicFilter(unittest.TestCase):
 			("^%Y-%m-%d-%H%M%S.%f %z",
 			"^Year-Month-Day-24hourMinuteSecond.Microseconds Zone offset"))
 
+	def testAssertWrongTime(self):
+		self.assertRaises(AssertionError, 
+			lambda: _assert_equal_entries(self, 
+				('1.1.1.1', 1, 1421262060.0), 
+				('1.1.1.1', 1, 1421262059.0), 
+			1)
+		)
+
 
 class IgnoreIP(LogCaptureTestCase):
 
@@ -260,14 +272,14 @@ class IgnoreIP(LogCaptureTestCase):
 		self.filter.addIgnoreIP('192.168.1.0/25')
 		self.filter.addFailRegex('<HOST>')
 		self.filter.processLineAndAdd('1387203300.222 192.168.1.32')
-		self.assertTrue(self._is_logged('Ignore 192.168.1.32'))
+		self.assertLogged('Ignore 192.168.1.32')
 		tearDownMyTime()
 
 	def testIgnoreAddBannedIP(self):
 		self.filter.addIgnoreIP('192.168.1.0/25')
 		self.filter.addBannedIP('192.168.1.32')
-		self.assertFalse(self._is_logged('Ignore 192.168.1.32'))
-		self.assertTrue(self._is_logged('Requested to manually ban an ignored IP 192.168.1.32. User knows best. Proceeding to ban it.'))
+		self.assertNotLogged('Ignore 192.168.1.32')
+		self.assertLogged('Requested to manually ban an ignored IP 192.168.1.32. User knows best. Proceeding to ban it.')
 
 	def testIgnoreCommand(self):
 		self.filter.setIgnoreCommand(sys.executable + ' ' + os.path.join(TEST_FILES_DIR, "ignorecommand.py <ip>"))
@@ -278,11 +290,11 @@ class IgnoreIP(LogCaptureTestCase):
 		ip = "93.184.216.34"
 		for ignore_source in ["dns", "ip", "command"]:
 			self.filter.logIgnoreIp(ip, True, ignore_source=ignore_source)
-			self.assertTrue(self._is_logged("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source)))
+			self.assertLogged("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source))
 
 	def testIgnoreCauseNOK(self):
 		self.filter.logIgnoreIp("example.com", False, ignore_source="NOT_LOGGED")
-		self.assertFalse(self._is_logged("[%s] Ignore %s by %s" % (self.jail.name, "example.com", "NOT_LOGGED")))
+		self.assertNotLogged("[%s] Ignore %s by %s" % (self.jail.name, "example.com", "NOT_LOGGED"))
 
 
 class IgnoreIPDNS(IgnoreIP):
@@ -382,18 +394,17 @@ class LogFileMonitor(LogCaptureTestCase):
 	def testNoLogFile(self):
 		_killfile(self.file, self.name)
 		self.filter.getFailures(self.name)
-		failure_was_logged = self._is_logged('Unable to open %s' % self.name)
-		self.assertTrue(failure_was_logged)
+		self.assertLogged('Unable to open %s' % self.name)
 
 	def testRemovingFailRegex(self):
 		self.filter.delFailRegex(0)
-		self.assertFalse(self._is_logged('Cannot remove regular expression. Index 0 is not valid'))
+		self.assertNotLogged('Cannot remove regular expression. Index 0 is not valid')
 		self.filter.delFailRegex(0)
-		self.assertTrue(self._is_logged('Cannot remove regular expression. Index 0 is not valid'))
+		self.assertLogged('Cannot remove regular expression. Index 0 is not valid')
 
 	def testRemovingIgnoreRegex(self):
 		self.filter.delIgnoreRegex(0)
-		self.assertTrue(self._is_logged('Cannot remove regular expression. Index 0 is not valid'))
+		self.assertLogged('Cannot remove regular expression. Index 0 is not valid')
 
 	def testNewChangeViaIsModified(self):
 		# it is a brand new one -- so first we think it is modified
@@ -811,7 +822,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 	return MonitorJournalFailures
 
 
-class GetFailures(unittest.TestCase):
+class GetFailures(LogCaptureTestCase):
 
 	FILENAME_01 = os.path.join(TEST_FILES_DIR, "testcase01.log")
 	FILENAME_02 = os.path.join(TEST_FILES_DIR, "testcase02.log")
@@ -826,6 +837,7 @@ class GetFailures(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		LogCaptureTestCase.setUp(self)
 		setUpMyTime()
 		self.jail = DummyJail()
 		self.filter = FileFilter(self.jail)
@@ -837,14 +849,27 @@ class GetFailures(unittest.TestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 		tearDownMyTime()
+		LogCaptureTestCase.tearDown(self)
 
 	def testTail(self):
+		# There must be no containters registered, otherwise [-1] indexing would be wrong
+		self.assertEqual(self.filter.getLogs(), [])
 		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)
-		self.assertEqual(self.filter.getLogPath()[-1].getPos(), 1653)
-		self.filter.getLogPath()[-1].close()
-		self.assertEqual(self.filter.getLogPath()[-1].readline(), "")
+		self.assertEqual(self.filter.getLogs()[-1].getPos(), 1653)
+		self.filter.getLogs()[-1].close()
+		self.assertEqual(self.filter.getLogs()[-1].readline(), "")
 		self.filter.delLogPath(GetFailures.FILENAME_01)
-		self.assertEqual(self.filter.getLogPath(),[])
+		self.assertEqual(self.filter.getLogs(), [])
+
+	def testNoLogAdded(self):
+		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)
+		self.assertTrue(self.filter.containsLogPath(GetFailures.FILENAME_01))
+		self.filter.delLogPath(GetFailures.FILENAME_01)
+		self.assertFalse(self.filter.containsLogPath(GetFailures.FILENAME_01))
+		# and unknown (safety and cover)
+		self.assertFalse(self.filter.containsLogPath('unknown.log'))
+		self.filter.delLogPath('unknown.log')
+
 
 	def testGetFailures01(self, filename=None, failures=None):
 		filename = filename or GetFailures.FILENAME_01
@@ -900,6 +925,41 @@ class GetFailures(unittest.TestCase):
 				_assert_correct_last_attempt(self, self.filter, out)
 		except FailManagerEmpty:
 			pass
+
+	def testGetFailuresWrongChar(self):
+		# write wrong utf-8 char:
+		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='crlf')
+		fout = fopen(fname, 'wb')
+		try:
+			# write:
+			for l in (
+				b'2015-01-14 20:00:58 user \"test\xf1ing\" from \"192.0.2.0\"\n',          # wrong utf-8 char
+				b'2015-01-14 20:00:59 user \"\xd1\xe2\xe5\xf2\xe0\" from \"192.0.2.0\"\n', # wrong utf-8 chars
+				b'2015-01-14 20:01:00 user \"testing\" from \"192.0.2.0\"\n'               # correct utf-8 chars
+			):
+				fout.write(l)
+			fout.close()
+			#
+			output = ('192.0.2.0', 3, 1421262060.0)
+			failregex = "^\s*user \"[^\"]*\" from \"<HOST>\"\s*$"
+
+			# test encoding auto or direct set of encoding:
+			for enc in (None, 'utf-8', 'ascii'):
+				if enc is not None:
+					self.tearDown();self.setUp();
+					self.filter.setLogEncoding(enc);
+				self.assertNotLogged('Error decoding line');
+				self.filter.addLogPath(fname)
+				self.filter.addFailRegex(failregex)
+				self.filter.getFailures(fname)
+				_assert_correct_last_attempt(self, self.filter, output)
+				
+				self.assertLogged('Error decoding line');
+				self.assertLogged('Continuing to process line ignoring invalid characters:', '2015-01-14 20:00:58 user ');
+				self.assertLogged('Continuing to process line ignoring invalid characters:', '2015-01-14 20:00:59 user ');
+
+		finally:
+			_killfile(fout, fname)
 
 	def testGetFailuresUseDNS(self):
 		# We should still catch failures with usedns = no ;-)
@@ -1026,8 +1086,8 @@ class DNSUtilsTests(unittest.TestCase):
 				self.assertEqual(res, [])
 
 	def testIpToName(self):
-		res = DNSUtils.ipToName('66.249.66.1')
-		self.assertEqual(res, 'crawl-66-249-66-1.googlebot.com')
+		res = DNSUtils.ipToName('8.8.4.4')
+		self.assertEqual(res, 'google-public-dns-b.google.com')
 		# invalid ip (TEST-NET-1 according to RFC 5737)
 		res = DNSUtils.ipToName('192.0.2.0')
 		self.assertEqual(res, None)

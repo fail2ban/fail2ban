@@ -2,6 +2,7 @@
 Description=Fail2Ban Service
 Documentation=man:fail2ban(1)
 After=network.target iptables.service firewalld.service
+PartOf=iptables.service firewalld.service
 
 [Service]
 Type=forking

@@ -143,17 +143,17 @@ class CommandActionTest(LogCaptureTestCase):
 		self.__action.actionunban = "true"
 		self.assertEqual(self.__action.actionunban, 'true')
 
-		self.assertFalse(self._is_logged('returned'))
+		self.assertNotLogged('returned')
 		# no action was actually executed yet
 
 		self.__action.ban({'ip': None})
-		self.assertTrue(self._is_logged('Invariant check failed'))
-		self.assertTrue(self._is_logged('returned successfully'))
+		self.assertLogged('Invariant check failed')
+		self.assertLogged('returned successfully')
 
 	def testExecuteActionEmptyUnban(self):
 		self.__action.actionunban = ""
 		self.__action.unban({})
-		self.assertTrue(self._is_logged('Nothing to do'))
+		self.assertLogged('Nothing to do')
 
 	def testExecuteActionStartCtags(self):
 		self.__action.HOST = "192.0.2.0"
@@ -168,7 +168,7 @@ class CommandActionTest(LogCaptureTestCase):
 		self.__action.actionban = "rm /tmp/fail2ban.test"
 		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
 		self.assertRaises(RuntimeError, self.__action.ban, {'ip': None})
-		self.assertTrue(self._is_logged('Unable to restore environment'))
+		self.assertLogged('Unable to restore environment')
 
 	def testExecuteActionChangeCtags(self):
 		self.assertRaises(AttributeError, getattr, self.__action, "ROST")
@@ -187,22 +187,23 @@ class CommandActionTest(LogCaptureTestCase):
 	def testExecuteActionStartEmpty(self):
 		self.__action.actionstart = ""
 		self.__action.start()
-		self.assertTrue(self._is_logged('Nothing to do'))
+		self.assertLogged('Nothing to do')
 
 	def testExecuteIncorrectCmd(self):
 		CommandAction.executeCmd('/bin/ls >/dev/null\nbogusXXX now 2>/dev/null')
-		self.assertTrue(self._is_logged('HINT on 127: "Command not found"'))
+		self.assertLogged('HINT on 127: "Command not found"')
 
 	def testExecuteTimeout(self):
 		stime = time.time()
 		# Should take a minute
-		self.assertRaises(
-			RuntimeError, CommandAction.executeCmd, 'sleep 60', timeout=2)
+		self.assertFalse(CommandAction.executeCmd('sleep 60', timeout=2))
 		# give a test still 1 second, because system could be too busy
 		self.assertTrue(time.time() >= stime + 2 and time.time() <= stime + 3)
-		self.assertTrue(self._is_logged('sleep 60 -- timed out after 2 seconds') 
-			or self._is_logged('sleep 60 -- timed out after 3 seconds'))
-		self.assertTrue(self._is_logged('sleep 60 -- killed with SIGTERM'))
+		self.assertLogged(
+			'sleep 60 -- timed out after 2 seconds',
+			'sleep 60 -- timed out after 3 seconds'
+		)
+		self.assertLogged('sleep 60 -- killed with SIGTERM')
 
 	def testExecuteTimeoutWithNastyChildren(self):
 		# temporary file for a nasty kid shell script
@@ -222,21 +223,20 @@ class CommandActionTest(LogCaptureTestCase):
 				return int(f.read())
 
 		# First test if can kill the bastard
-		self.assertRaises(
-			RuntimeError, CommandAction.executeCmd, 'bash %s' % tmpFilename, timeout=.1)
-		# Verify that the proccess itself got killed
+		self.assertFalse(CommandAction.executeCmd(
+		                 'bash %s' % tmpFilename, timeout=.1))
+		# Verify that the process itself got killed
 		self.assertFalse(pid_exists(getnastypid()))  # process should have been killed
-		self.assertTrue(self._is_logged('timed out'))
-		self.assertTrue(self._is_logged('killed with SIGTERM'))
+		self.assertLogged('timed out')
+		self.assertLogged('killed with SIGTERM')
 
 		# A bit evolved case even though, previous test already tests killing children processes
-		self.assertRaises(
-			RuntimeError, CommandAction.executeCmd, 'out=`bash %s`; echo ALRIGHT' % tmpFilename,
-			timeout=.2)
-		# Verify that the proccess itself got killed
+		self.assertFalse(CommandAction.executeCmd(
+			'out=`bash %s`; echo ALRIGHT' % tmpFilename, timeout=.2))
+		# Verify that the process itself got killed
 		self.assertFalse(pid_exists(getnastypid()))
-		self.assertTrue(self._is_logged('timed out'))
-		self.assertTrue(self._is_logged('killed with SIGTERM'))
+		self.assertLogged('timed out')
+		self.assertLogged('killed with SIGTERM')
 
 		os.unlink(tmpFilename)
 		os.unlink(tmpFilename + '.pid')
@@ -244,11 +244,11 @@ class CommandActionTest(LogCaptureTestCase):
 
 	def testCaptureStdOutErr(self):
 		CommandAction.executeCmd('echo "How now brown cow"')
-		self.assertTrue(self._is_logged("'How now brown cow\\n'"))
+		self.assertLogged("'How now brown cow\\n'")
 		CommandAction.executeCmd(
 			'echo "The rain in Spain stays mainly in the plain" 1>&2')
-		self.assertTrue(self._is_logged(
-			"'The rain in Spain stays mainly in the plain\\n'"))
+		self.assertLogged(
+			"'The rain in Spain stays mainly in the plain\\n'")
 
 	def testCallingMap(self):
 		mymap = CallingMap(callme=lambda: str(10), error=lambda: int('a'),

@@ -51,6 +51,11 @@ Preparation
 
      find -type f | grep -v -e '\.git' -e '/doc/' -e '\.travis' -e MANIFEST | sed -e 's,^\./,,g' | while read f; do grep -ne "^$f\$" MANIFEST >/dev/null || echo "$f" ; done
 
+  or an alternative for comparison with previous release
+
+     git diff 0.9.4 | grep -B2 'index 0000000..' | grep -B1 'new file mode' | sed -n -e '/^diff /s,.* b/,,gp' >> MANIFEST
+     sort MANIFEST | uniq | sponge MANIFEST
+
 * Run::
 
   python setup.py sdist
@@ -61,24 +66,24 @@ Preparation
 
   * Which indicates that testcases/files/logs/mysqld.log has been moved or is a directory::
 
-      tar -C /tmp -jxf dist/fail2ban-0.9.3.tar.bz2
+      tar -C /tmp -jxf dist/fail2ban-0.9.4.tar.bz2
 
 * clean up current direcory::
 
-    diff -rul --exclude \*.pyc . /tmp/fail2ban-0.9.3/
+    diff -rul --exclude \*.pyc . /tmp/fail2ban-0.9.4/
 
   * Only differences should be files that you don't want distributed.
 
 
 * Ensure the tests work from the tarball::
 
-    cd /tmp/fail2ban-0.9.3/ && bin/fail2ban-testcases
+    cd /tmp/fail2ban-0.9.4/ && bin/fail2ban-testcases
 
 * Add/finalize the corresponding entry in the ChangeLog
 
   * To generate a list of committers use e.g.::
 
-      git shortlog -sn 0.9.3.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
+      git shortlog -sn 0.9.4.. | sed -e 's,^[ 0-9\t]*,,g' | tr '\n' '\|' | sed -e 's:|:, :g'
 
   * Ensure the top of the ChangeLog has the right version and current date.
   * Ensure the top entry of the ChangeLog has the right version and current date.
@@ -101,7 +106,7 @@ Preparation
 * Tag the release by using a signed (and annotated) tag.  Cut/paste
   release ChangeLog entry as tag annotation::
 
-    git tag -s 0.9.3
+    git tag -s 0.9.4
 
 Pre Release
 ===========
@@ -116,7 +121,7 @@ Pre Release
 
     * http://packages.qa.debian.org/f/fail2ban.html
 
-  * FreeBSD: Christoph Theis theis@gmx.at>, Nick Hilliard <nick@foobar.org>
+  * FreeBSD: Christoph Theis theis@gmx.at>
 
     * http://svnweb.freebsd.org/ports/head/security/py-fail2ban/Makefile?view=markup
     * http://www.freebsd.org/cgi/query-pr-summary.cgi?text=fail2ban
@@ -185,7 +190,7 @@ Post Release
 
 Add the following to the top of the ChangeLog::
 
-  ver. 0.9.4 (2014/XX/XXX) - wanna-be-released
+  ver. 0.9.5 (2015/XX/XXX) - wanna-be-released
   -----------
   
   - Fixes:

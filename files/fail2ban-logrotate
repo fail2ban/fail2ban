@@ -4,15 +4,11 @@
 #
 # Debian:
 # https://github.com/fail2ban/fail2ban/blob/debian/debian/fail2ban.logrotate
-#
-# Fedora view:
-#  http://pkgs.fedoraproject.org/cgit/fail2ban.git/tree/fail2ban-logrotate
 
 /var/log/fail2ban.log {
-    rotate 7
     missingok
-    compress
+    notifempty
     postrotate
-      /usr/bin/fail2ban-client flushlogs  1>/dev/null || true
+      /usr/bin/fail2ban-client flushlogs >/dev/null || true
     endscript
 }

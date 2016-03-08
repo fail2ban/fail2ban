@@ -129,6 +129,6 @@ class FilterGamin(FileFilter):
 	# Desallocates the resources used by Gamin.
 
 	def __cleanup(self):
-		for path in self.getLogPath():
-			self.monitor.stop_watch(path.getFileName())
+		for log in self.getLogs():
+			self.monitor.stop_watch(log.getFileName())
 		del self.monitor

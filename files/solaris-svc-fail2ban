@@ -2,7 +2,7 @@
 #
 # fail2ban		This init.d script is used to start fail2ban.
 # (C) by Hanno Wagner <wagner@rince.de>, License is GPL
- 
+
 #set -x
 
 . /lib/svc/share/smf_include.sh

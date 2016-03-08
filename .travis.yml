@@ -6,7 +6,8 @@ python:
   - 2.6
   - 2.7
   - pypy
-  - 3.2
+  # disabled until coverage module fixes up compatibility issue
+  # - 3.2
   - 3.3
   - 3.4
   - pypy3
@@ -22,7 +23,7 @@ install:
   #   coverage
   - travis_retry pip install coverage
   #   coveralls
-  - travis_retry pip install coveralls
+  - travis_retry pip install coveralls codecov
   #   dnspython or dnspython3
   - if [[ "$F2B_PY_2" ]]; then travis_retry pip install dnspython; fi
   - if [[ "$F2B_PY_3" ]]; then travis_retry pip install dnspython3; fi
@@ -42,6 +43,7 @@ script:
   - sudo $VENV_BIN/pip install .
 after_success:
   - coveralls
+  - codecov
 matrix:
   fast_finish: true
 # Might be worth looking into
