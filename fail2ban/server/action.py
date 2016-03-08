@@ -203,9 +203,13 @@ class CommandAction(ActionBase):
 	Attributes
 	----------
 	actionban
+	actionban6
 	actionstart
+	actionstart6
 	actionstop
+	actionstop6
 	actionunban
+	actionunban6
 	timeout
 	"""
 
@@ -216,14 +220,24 @@ class CommandAction(ActionBase):
 		self.timeout = 60
 		## Command executed in order to initialize the system.
 		self.actionstart = ''
+		## Command executed in order to initialize the system.
+		self.actionstart6 = ''
 		## Command executed when an IP address gets banned.
 		self.actionban = ''
+		## Command executed when an IPv6 address gets banned.
+		self.actionban6 = ''
 		## Command executed when an IP address gets removed.
 		self.actionunban = ''
+		## Command executed when an IPv6 address gets removed.
+		self.actionunban6 = ''
 		## Command executed in order to check requirements.
 		self.actioncheck = ''
+		## Command executed in order to check requirements.
+		self.actioncheck6 = ''
 		## Command executed in order to stop the system.
 		self.actionstop = ''
+		## Command executed in order to stop the system.
+		self.actionstop6 = ''
 		self._logSys.debug("Created %s" % self.__class__)
 
 	@classmethod
@@ -264,6 +278,17 @@ class CommandAction(ActionBase):
 		self._actionstart = value
 		self._logSys.debug("Set actionstart = %s" % value)
 
+	@property
+	def actionstart6(self):
+		"""The command executed on start of the jail/action.
+		"""
+		return self._actionstart6
+
+	@actionstart6.setter
+	def actionstart6(self, value):
+		self._actionstart6 = value
+		self._logSys.debug("Set actionstart6 = %s" % value)
+
 	def start(self):
 		"""Executes the "actionstart" command.
 
@@ -279,10 +304,16 @@ class CommandAction(ActionBase):
 		startCmd = self.replaceTag(self.actionstart, self._properties)
 		if not self.executeCmd(startCmd, self.timeout):
 			raise RuntimeError("Error starting action")
+		# Start actionstart6 if available
+		if self.actionstart6:
+			startCmd = self.replaceTag(self.actionstart6, self._properties)
+			if not self.executeCmd(startCmd, self.timeout):
+				raise RuntimeError("Error starting action")
+
 
 	@property
 	def actionban(self):
-		"""The command used when a ban occurs.
+		"""The command used when a ban on IPv4 address occurs.
 		"""
 		return self._actionban
 
@@ -290,6 +321,17 @@ class CommandAction(ActionBase):
 	def actionban(self, value):
 		self._actionban = value
 		self._logSys.debug("Set actionban = %s" % value)
+
+	@property
+	def actionban6(self):
+		"""The command used when a ban on IPv6 address occurs.
+		"""
+		return self._actionban6
+
+	@actionban6.setter
+	def actionban6(self, value):
+		self._actionban6 = value
+		self._logSys.debug("Set actionban6 = %s" % value)
 
 	def ban(self, aInfo):
 		"""Executes the "actionban" command.
@@ -303,7 +345,10 @@ class CommandAction(ActionBase):
 			Dictionary which includes information in relation to
 			the ban.
 		"""
-		if not self._processCmd(self.actionban, aInfo):
+		banaction = self.actionban
+		if "ip" in aInfo and aInfo["ip"] and aInfo["ip"].isIPv6() and self.actionban6:
+			banaction = self.actionban6
+		if not self._processCmd(banaction, aInfo):
 			raise RuntimeError("Error banning %(ip)s" % aInfo)
 
 	@property
@@ -317,6 +362,17 @@ class CommandAction(ActionBase):
 		self._actionunban = value
 		self._logSys.debug("Set actionunban = %s" % value)
 
+	@property
+	def actionunban6(self):
+		"""The command used when an unban occurs.
+		"""
+		return self._actionunban6
+
+	@actionunban6.setter
+	def actionunban6(self, value):
+		self._actionunban6 = value
+		self._logSys.debug("Set actionunban6 = %s" % value)
+
 	def unban(self, aInfo):
 		"""Executes the "actionunban" command.
 
@@ -329,7 +385,11 @@ class CommandAction(ActionBase):
 			Dictionary which includes information in relation to
 			the ban.
 		"""
-		if not self._processCmd(self.actionunban, aInfo):
+		unbanaction = self.actionunban
+		if "ip" in aInfo and aInfo["ip"] and aInfo["ip"].isIPv6() and self.actionunban6:
+			unbanaction = self.actionunban6
+
+		if not self._processCmd(unbanaction, aInfo):
 			raise RuntimeError("Error unbanning %(ip)s" % aInfo)
 
 	@property
@@ -348,6 +408,21 @@ class CommandAction(ActionBase):
 		self._logSys.debug("Set actioncheck = %s" % value)
 
 	@property
+	def actioncheck6(self):
+		"""The command used to check the environment.
+
+		This is used prior to a ban taking place to ensure the
+		environment is appropriate. If this check fails, `stop` and
+		`start` is executed prior to the check being called again.
+		"""
+		return self._actioncheck
+
+	@actioncheck6.setter
+	def actioncheck6(self, value):
+		self._actioncheck6 = value
+		self._logSys.debug("Set actioncheck6 = %s" % value)
+
+	@property
 	def actionstop(self):
 		"""The command executed when the jail/actions stops.
 		"""
@@ -358,8 +433,19 @@ class CommandAction(ActionBase):
 		self._actionstop = value
 		self._logSys.debug("Set actionstop = %s" % value)
 
+	@property
+	def actionstop6(self):
+		"""The command executed when the jail/actions stops.
+		"""
+		return self._actionstop6
+
+	@actionstop6.setter
+	def actionstop6(self, value):
+		self._actionstop6 = value
+		self._logSys.debug("Set actionstop6 = %s" % value)
+
 	def stop(self):
-		"""Executes the "actionstop" command.
+		"""Executes the "actionstop6" command.
 
 		Replaces the tags in the action command with actions properties
 		and executes the resulting command.
@@ -367,6 +453,11 @@ class CommandAction(ActionBase):
 		stopCmd = self.replaceTag(self.actionstop, self._properties)
 		if not self.executeCmd(stopCmd, self.timeout):
 			raise RuntimeError("Error stopping action")
+		# Start actionstop6 if available
+		if self.actionstop6:
+			stopCmd = self.replaceTag(self.actionstop6, self._properties)
+			if not self.executeCmd(stopCmd, self.timeout):
+				raise RuntimeError("Error stopping action")
 
 	@classmethod
 	def substituteRecursiveTags(cls, tags):

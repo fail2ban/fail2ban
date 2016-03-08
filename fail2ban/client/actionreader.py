@@ -37,10 +37,15 @@ class ActionReader(DefinitionInitConfigReader):
 
 	_configOpts = [
 		["string", "actionstart", None],
+		["string", "actionstart6", None],
 		["string", "actionstop", None],
+		["string", "actionstop6", None],
 		["string", "actioncheck", None],
+		["string", "actioncheck6", None],
 		["string", "actionban", None],
+		["string", "actionban6", None],
 		["string", "actionunban", None],
+		["string", "actionunban6", None],
 	]
 
 	def __init__(self, file_, jailName, initOpts, **kwargs):
@@ -69,14 +74,24 @@ class ActionReader(DefinitionInitConfigReader):
 		for opt in self._opts:
 			if opt == "actionstart":
 				stream.append(head + ["actionstart", self._opts[opt]])
+			elif opt == "actionstart6":
+				stream.append(head + ["actionstart6", self._opts[opt]])
 			elif opt == "actionstop":
 				stream.append(head + ["actionstop", self._opts[opt]])
+			elif opt == "actionstop6":
+				stream.append(head + ["actionstop6", self._opts[opt]])
 			elif opt == "actioncheck":
 				stream.append(head + ["actioncheck", self._opts[opt]])
+			elif opt == "actioncheck6":
+				stream.append(head + ["actioncheck6", self._opts[opt]])
 			elif opt == "actionban":
 				stream.append(head + ["actionban", self._opts[opt]])
+			elif opt == "actionban6":
+				stream.append(head + ["actionban6", self._opts[opt]])
 			elif opt == "actionunban":
 				stream.append(head + ["actionunban", self._opts[opt]])
+			elif opt == "actionunban6":
+				stream.append(head + ["actionunban6", self._opts[opt]])
 		if self._initOpts:
 			for p in self._initOpts:
 				stream.append(head + [p, self._initOpts[p]])
