@@ -51,6 +51,11 @@ Preparation
 
      find -type f | grep -v -e '\.git' -e '/doc/' -e '\.travis' -e MANIFEST | sed -e 's,^\./,,g' | while read f; do grep -ne "^$f\$" MANIFEST >/dev/null || echo "$f" ; done
 
+  or an alternative for comparison with previous release
+
+     git diff 0.9.4 | grep -B2 'index 0000000..' | grep -B1 'new file mode' | sed -n -e '/^diff /s,.* b/,,gp' >> MANIFEST
+     sort MANIFEST | uniq | sponge MANIFEST
+
 * Run::
 
   python setup.py sdist
