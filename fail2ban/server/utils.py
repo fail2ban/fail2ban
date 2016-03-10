@@ -133,6 +133,7 @@ class Utils():
 			timeout_expr = lambda: time.time() - stime <= timeout
 		else:
 			timeout_expr = timeout
+		popen = None
 		try:
 			popen = subprocess.Popen(
 				realCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell,
@@ -159,7 +160,10 @@ class Utils():
 				if retcode is None and not Utils.pid_exists(pgid):
 					retcode = signal.SIGKILL
 		except OSError as e:
-			logSys.error("%s -- failed with %s" % (realCmd, e))
+			stderr = "%s -- failed with %s" % (realCmd, e)
+			logSys.error(stderr)
+			if not popen:
+				return False if not output else (False, stdout, stderr, retcode)
 
 		std_level = retcode == 0 and logging.DEBUG or logging.ERROR
 		# if we need output (to return or to log it): 
@@ -172,8 +176,10 @@ class Utils():
 					stdout = popen.stdout.read()
 				except IOError as e:
 					logSys.error(" ... -- failed to read stdout %s", e)
-				if stdout is not None and stdout != '':
-					logSys.log(std_level, "%s -- stdout: %r", realCmd, stdout)
+				if stdout is not None and stdout != '' and std_level >= logSys.getEffectiveLevel():
+					logSys.log(std_level, "%s -- stdout:", realCmd)
+					for l in stdout.splitlines():
+						logSys.log(std_level, " -- stdout: %r", l)
 				popen.stdout.close()
 			if popen.stderr:
 				try:
@@ -182,8 +188,10 @@ class Utils():
 					stderr = popen.stderr.read()
 				except IOError as e:
 					logSys.error(" ... -- failed to read stderr %s", e)
-				if stderr is not None and stderr != '':
-					logSys.log(std_level, "%s -- stderr: %r", realCmd, stderr)
+				if stderr is not None and stderr != '' and std_level >= logSys.getEffectiveLevel():
+					logSys.log(std_level, "%s -- stderr:", realCmd)
+					for l in stderr.splitlines():
+						logSys.log(std_level, " -- stderr: %r", l)
 				popen.stderr.close()
 
 		success = False
