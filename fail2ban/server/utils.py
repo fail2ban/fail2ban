@@ -50,34 +50,41 @@ class Utils():
 	DEFAULT_SLEEP_INTERVAL = 0.01
 
 
-	class Cache(dict):
+	class Cache(object):
+		"""A simple cache with a TTL and limit on size
+		"""
 
 		def __init__(self, *args, **kwargs):
 			self.setOptions(*args, **kwargs)
+			self._cache = {}
 
 		def setOptions(self, maxCount=1000, maxTime=60):
 			self.maxCount = maxCount
 			self.maxTime = maxTime
 
+		def __len__(self):
+			return len(self._cache)
+
 		def get(self, k, defv=None):
-			v = dict.get(self, k)
+			v = self._cache.get(k)
 			if v: 
 				if v[1] > time.time():
 					return v[0]
-				del self[k]
+				del self._cache[k]
 			return defv
 			
 		def set(self, k, v):
 			t = time.time()
+			cache = self._cache  # for shorter local access
 			# clean cache if max count reached:
-			if len(self) >= self.maxCount:
-				for (ck,cv) in self.items():
+			if len(cache) >= self.maxCount:
+				for (ck, cv) in cache.items():
 					if cv[1] < t:
-						del self[ck]
+						del cache[ck]
 				# if still max count - remove any one:
-				if len(self) >= self.maxCount:
-					self.popitem()
-			self[k] = (v, t + self.maxTime)
+				if len(cache) >= self.maxCount:
+					cache.popitem()
+			cache[k] = (v, t + self.maxTime)
 
 
 	@staticmethod
