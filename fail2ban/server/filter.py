@@ -998,7 +998,7 @@ class DNSUtils:
 	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
 
 	# todo: make configurable the expired time and max count of cache entries:
-	CACHE_dnsToIp = Utils.Cache(maxCount=1000, maxTime=5*60)
+	CACHE_nameToIp = Utils.Cache(maxCount=1000, maxTime=5*60)
 	CACHE_ipToName = Utils.Cache(maxCount=1000, maxTime=5*60)
 
 	@staticmethod
@@ -1007,7 +1007,7 @@ class DNSUtils:
 			Thanks to Kevin Drapel.
 		"""
 		# cache, also prevent long wait during retrieving of ip for wrong dns or lazy dns-system:
-		v = DNSUtils.CACHE_dnsToIp.get(dns)
+		v = DNSUtils.CACHE_nameToIp.get(dns)
 		if v is not None: 
 			return v
 		# retrieve ip (todo: use AF_INET6 for IPv6)
@@ -1017,7 +1017,7 @@ class DNSUtils:
 			# todo: make configurable the expired time of cache entry:
 			logSys.warning("Unable to find a corresponding IP address for %s: %s", dns, e)
 			v = list()
-		DNSUtils.CACHE_dnsToIp.set(dns, v)
+		DNSUtils.CACHE_nameToIp.set(dns, v)
 		return v
 
 	@staticmethod

@@ -111,12 +111,13 @@ class Utils():
 			If shell is True (default), the specified command (may be a string) will be 
 			executed through the shell.
 		output : bool
-			If output is True, the function returns tuple (success, stdoutdata, stderrdata, returncode)
+			If output is True, the function returns tuple (success, stdoutdata, stderrdata, returncode).
+			If False, just indication of success is returned
 
 		Returns
 		-------
-		bool
-			True if the command succeeded.
+		bool or (bool, str, str, int)
+			True if the command succeeded and with stdout, stderr, returncode if output was set to True
 
 		Raises
 		------
@@ -185,9 +186,10 @@ class Utils():
 					logSys.log(std_level, "%s -- stderr: %r", realCmd, stderr)
 				popen.stderr.close()
 
+		success = False
 		if retcode == 0:
 			logSys.debug("%s -- returned successfully", realCmd)
-			return True if not output else (True, stdout, stderr, retcode)
+			success = True
 		elif retcode is None:
 			logSys.error("%s -- unable to kill PID %i" % (realCmd, popen.pid))
 		elif retcode < 0 or retcode > 128:
@@ -200,13 +202,13 @@ class Utils():
 			logSys.error("%s -- returned %i" % (realCmd, retcode))
 			if msg:
 				logSys.info("HINT on %i: %s", retcode, msg % locals())
-		return False if not output else (False, stdout, stderr, retcode)
+		return success if not output else (success, stdout, stderr, retcode)
 	
 	@staticmethod
 	def wait_for(cond, timeout, interval=None):
 		"""Wait until condition expression `cond` is True, up to `timeout` sec
 		"""
-		ini = 1
+		ini = 1  # to delay initializations until/when necessary
 		while True:
 			ret = cond()
 			if ret:
