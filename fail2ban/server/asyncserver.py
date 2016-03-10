@@ -92,26 +92,29 @@ class RequestHandler(asynchat.async_chat):
 		
 
 def loop(active, timeout=None, use_poll=False):
-		# Use poll instead of loop, because of recognition of active flag, 
-		# because of loop timeout mistake: different in poll and poll2 (sec vs ms),
-		# and to prevent sporadical errors like EBADF 'Bad file descriptor' etc. (see gh-161)
-		if timeout is None:
-			timeout = Utils.DEFAULT_SLEEP_TIME
-		poll = asyncore.poll
-		if use_poll and asyncore.poll2 and hasattr(asyncore.select, 'poll'): # pragma: no cover
-			logSys.debug('Server listener (select) uses poll')
-			# poll2 expected a timeout in milliseconds (but poll and loop in seconds):
-			timeout = float(timeout) / 1000
-			poll = asyncore.poll2
-		# Poll as long as active:
-		while active():
-			try:
-				poll(timeout)
-			except Exception as e: # pragma: no cover
-				if e.args[0] in (errno.ENOTCONN, errno.EBADF): # (errno.EBADF, 'Bad file descriptor')
-					logSys.info('Server connection was closed: %s', str(e))
-				else:
-					logSys.error('Server connection was closed: %s', str(e))
+	"""Custom event loop implementation
+
+	Uses poll instead of loop to respect `active` flag,
+	to avoid loop timeout mistake: different in poll and poll2 (sec vs ms),
+	and to prevent sporadic errors like EBADF 'Bad file descriptor' etc. (see gh-161)
+	"""
+	if timeout is None:
+		timeout = Utils.DEFAULT_SLEEP_TIME
+	poll = asyncore.poll
+	if use_poll and asyncore.poll2 and hasattr(asyncore.select, 'poll'):  # pragma: no cover
+		logSys.debug('Server listener (select) uses poll')
+		# poll2 expected a timeout in milliseconds (but poll and loop in seconds):
+		timeout = float(timeout) / 1000
+		poll = asyncore.poll2
+	# Poll as long as active:
+	while active():
+		try:
+			poll(timeout)
+		except Exception as e:  # pragma: no cover
+			if e.args[0] in (errno.ENOTCONN, errno.EBADF):  # (errno.EBADF, 'Bad file descriptor')
+				logSys.info('Server connection was closed: %s', str(e))
+			else:
+				logSys.error('Server connection was closed: %s', str(e))
 
 
 ##
@@ -177,7 +180,7 @@ class AsyncServer(asyncore.dispatcher):
 		# Sets the init flag.
 		self.__init = self.__active = True
 		# Event loop as long as active:
-		loop(lambda: self.__active)
+		loop(lambda: self.__active, use_poll=use_poll)
 		# Cleanup all
 		self.stop()
 
@@ -187,8 +190,8 @@ class AsyncServer(asyncore.dispatcher):
 			asyncore.dispatcher.close(self)
 		# Remove socket (file) only if it was created:
 		if self.__init and os.path.exists(self.__sock):
-			logSys.debug("Removed socket file " + self.__sock)
 			os.remove(self.__sock)
+			logSys.debug("Removed socket file " + self.__sock)
 		logSys.debug("Socket shutdown")
 		self.__active = False
 
@@ -198,6 +201,7 @@ class AsyncServer(asyncore.dispatcher):
 	def stop(self):
 		self.close()
 
+	# better remains a method (not a property) since used as a callable for wait_for
 	def isActive(self):
 		return self.__active
 
