@@ -78,6 +78,14 @@ ver. 0.9.4 (2016/03/08) - for-you-ladies
    * sshd filter got new failregex to match "maximum authentication
      attempts exceeded" (introduced in openssh 6.8)
    * Added filter for Mac OS screen sharing (VNC) daemon
+   * IPv6 support:
+     - IP addresses are now handled as objects rather than strings capable for 
+       handling both address types IPv4 and IPv6
+     - iptables related actions have been amended to support IPv6 specific actions
+       additionally
+     - hostsdeny and route actions have been tested to be aware of v4 and v6 already
+     - pf action for *BSD systems has been improved and supports now also v4 and v6
+     - Name resolution is now working for either address type
 
 - Enhancements:
    * Do not rotate empty log files
