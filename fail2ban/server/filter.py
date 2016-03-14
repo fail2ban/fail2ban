@@ -848,18 +848,16 @@ class JournalFilter(Filter): # pragma: systemd no cover
 		return []
 
 ##
-# Utils class for DNS and IP handling.
+# Utils class for DNS handling.
 #
-# This class contains only static methods used to handle DNS and IP
-# addresses.
+# This class contains only static methods used to handle DNS 
+#
 
 import socket
 import struct
 
 
 class DNSUtils:
-
-	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
 
 	@staticmethod
 	def dnsToIp(dns):
@@ -889,28 +887,6 @@ class DNSUtils:
 			return None
 
 	@staticmethod
-	def searchIP(text):
-		""" Search if an IP address if directly available and return
-			it.
-		"""
-		match = DNSUtils.IP_CRE.match(text)
-		if match:
-			return match
-		else:
-			return None
-
-	@staticmethod
-	def isValidIP(string):
-		""" Return true if str is a valid IP
-		"""
-		s = string.split('/', 1)
-		try:
-			socket.inet_aton(s[0])
-			return True
-		except socket.error:
-			return False
-
-	@staticmethod
 	def textToIp(text, useDns):
 		""" Return the IP of DNS found in a given text.
 		"""
@@ -932,25 +908,6 @@ class DNSUtils:
 					text, ipList)
 
 		return ipList
-
-	@staticmethod
-	def addr2bin(ipstring, cidr=None):
-		""" Convert a string IPv4 address into binary form.
-		If cidr is supplied, return the network address for the given block
-		"""
-		if cidr is None:
-			return struct.unpack("!L", socket.inet_aton(ipstring))[0]
-		else:
-			MASK = 0xFFFFFFFFL
-			return ~(MASK >> cidr) & MASK & DNSUtils.addr2bin(ipstring)
-
-	@staticmethod
-	def bin2addr(ipbin):
-		""" Convert a binary IPv4 address into string n.n.n.n form.
-		"""
-		return socket.inet_ntoa(struct.pack("!L", ipbin))
-
-
 
 ##
 # Class for IP address handling.
