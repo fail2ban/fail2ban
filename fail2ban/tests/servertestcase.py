@@ -36,6 +36,7 @@ from ..server.failregex import Regex, FailRegex, RegexException
 from ..server.server import Server
 from ..server.jail import Jail
 from ..server.jailthread import JailThread
+from ..server.filter import IPAddr
 from .utils import LogCaptureTestCase
 from ..helpers import getLogger
 from .. import version
@@ -110,18 +111,23 @@ class TransmitterBase(unittest.TestCase):
 		cmdAdd = "add" + cmd
 		cmdDel = "del" + cmd
 
+		# sorting IPAddr objects and strings differs so that the comparism values
+		# must also be sorted as IPAddr objects
+		# convert to IPAddr objects if values look like a list of IP address strings
+		ips = map(lambda x: IPAddr(x) if IPAddr.searchIP(x) else x , values)
+
 		self.assertEqual(
 			self.transm.proceed(["get", jail, cmd]), (0, []))
 		for n, value in enumerate(values):
 			ret = self.transm.proceed(["set", jail, cmdAdd, value])
-			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(values[:n+1])))
+			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(ips[:n+1])))
 			ret = self.transm.proceed(["get", jail, cmd])
-			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(values[:n+1])))
-		for n, value in enumerate(values):
+			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(ips[:n+1])))
+		for n, value in enumerate(ips):
 			ret = self.transm.proceed(["set", jail, cmdDel, value])
-			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(values[n+1:])))
+			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(ips[n+1:])))
 			ret = self.transm.proceed(["get", jail, cmd])
-			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(values[n+1:])))
+			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(ips[n+1:])))
 
 	def jailAddDelRegexTest(self, cmd, inValues, outValues, jail):
 		cmdAdd = "add" + cmd

@@ -38,7 +38,7 @@ except ImportError:
 
 from ..server.jail import Jail
 from ..server.filterpoll import FilterPoll
-from ..server.filter import Filter, FileFilter, DNSUtils
+from ..server.filter import Filter, FileFilter, DNSUtils, IPAddr
 from ..server.failmanager import FailManagerEmpty
 from ..server.mytime import MyTime
 from .utils import setUpMyTime, tearDownMyTime, mtimesleep, LogCaptureTestCase
@@ -85,8 +85,14 @@ def _assert_equal_entries(utest, found, output, count=None):
 
 	and report helpful failure reports instead of millions of seconds ;)
 	"""
-	utest.assertEqual(found[0], output[0])            # IP
-	utest.assertEqual(found[1], count or output[1])   # count
+	# if DNS is involved, multiple addresses may be returned
+	if isinstance(output[0], list):
+		utest.assertIn(found[0], output[0])                           # IP
+		utest.assertEqual(found[1], count or output[1])               # count
+	else:
+		utest.assertEqual(found[0], output[0])                        # IP
+		utest.assertEqual(found[1], count or output[1])               # count
+
 	found_time, output_time = \
 				MyTime.localtime(found[2]),\
 				MyTime.localtime(output[2])
@@ -241,7 +247,7 @@ class IgnoreIP(LogCaptureTestCase):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
 		for ip in ipList:
 			self.filter.addIgnoreIP(ip)
-			self.assertTrue(self.filter.inIgnoreIPList(ip))
+			self.assertTrue(self.filter.inIgnoreIPList(IPAddr(ip)))
 
 	def testIgnoreIPNOK(self):
 		ipList = "", "999.999.999.999", "abcdef.abcdef", "192.168.0."
@@ -251,21 +257,21 @@ class IgnoreIP(LogCaptureTestCase):
 
 	def testIgnoreIPCIDR(self):
 		self.filter.addIgnoreIP('192.168.1.0/25')
-		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.0'))
-		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.1'))
-		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.127'))
-		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.128'))
-		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.255'))
-		self.assertFalse(self.filter.inIgnoreIPList('192.168.0.255'))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.168.1.0')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.168.1.1')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.168.1.127')))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('192.168.1.128')))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('192.168.1.255')))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('192.168.0.255')))
 
 	def testIgnoreIPMask(self):
 		self.filter.addIgnoreIP('192.168.1.0/255.255.255.128')
-		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.0'))
-		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.1'))
-		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.127'))
-		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.128'))
-		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.255'))
-		self.assertFalse(self.filter.inIgnoreIPList('192.168.0.255'))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.168.1.0')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.168.1.1')))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.168.1.127')))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('192.168.1.128')))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('192.168.1.255')))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('192.168.0.255')))
 
 	def testIgnoreInProcessLine(self):
 		setUpMyTime()
@@ -283,17 +289,17 @@ class IgnoreIP(LogCaptureTestCase):
 
 	def testIgnoreCommand(self):
 		self.filter.setIgnoreCommand(sys.executable + ' ' + os.path.join(TEST_FILES_DIR, "ignorecommand.py <ip>"))
-		self.assertTrue(self.filter.inIgnoreIPList("10.0.0.1"))
-		self.assertFalse(self.filter.inIgnoreIPList("10.0.0.0"))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr("10.0.0.1")))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr("10.0.0.0")))
 
 	def testIgnoreCauseOK(self):
 		ip = "93.184.216.34"
 		for ignore_source in ["dns", "ip", "command"]:
-			self.filter.logIgnoreIp(ip, True, ignore_source=ignore_source)
+			self.filter.logIgnoreIp(IPAddr(ip), True, ignore_source=ignore_source)
 			self.assertLogged("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source))
 
 	def testIgnoreCauseNOK(self):
-		self.filter.logIgnoreIp("example.com", False, ignore_source="NOT_LOGGED")
+		self.filter.logIgnoreIp(IPAddr("example.com"), False, ignore_source="NOT_LOGGED")
 		self.assertNotLogged("[%s] Ignore %s by %s" % (self.jail.name, "example.com", "NOT_LOGGED"))
 
 
@@ -301,14 +307,14 @@ class IgnoreIPDNS(IgnoreIP):
 
 	def testIgnoreIPDNSOK(self):
 		self.filter.addIgnoreIP("www.epfl.ch")
-		self.assertTrue(self.filter.inIgnoreIPList("128.178.50.12"))
+		self.assertTrue(self.filter.inIgnoreIPList(IPAddr("128.178.50.12")))
 
 	def testIgnoreIPDNSNOK(self):
 		# Test DNS
 		self.filter.addIgnoreIP("www.epfl.ch")
-		self.assertFalse(self.filter.inIgnoreIPList("127.177.50.10"))
-		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.11"))
-		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.13"))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr("127.177.50.10")))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr("128.178.50.11")))
+		self.assertFalse(self.filter.inIgnoreIPList(IPAddr("128.178.50.13")))
 
 
 class LogFile(LogCaptureTestCase):
@@ -963,12 +969,12 @@ class GetFailures(LogCaptureTestCase):
 
 	def testGetFailuresUseDNS(self):
 		# We should still catch failures with usedns = no ;-)
-		output_yes = ('93.184.216.34', 2, 1124013539.0,
-					  [u'Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2',
-					   u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.34 port 51332 ssh2'])
+		output_yes = (['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'], 1, 1124013299.0,
+					  [u'Aug 14 11:54:59 i60p295 sshd[12365]: Failed publickey for roehl from example.com port 51332 ssh2'])
 
-		output_no = ('93.184.216.34', 1, 1124013539.0,
-					  [u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:93.184.216.34 port 51332 ssh2'])
+		output_no = ('172.31.0.34', 2, 1124013539.0,
+					  [u'Aug 14 11:56:59 i60p295 sshd[12365]: Failed publickey for roehl from 172.31.0.34 port 51332 ssh2',
+					  u'Aug 14 11:58:59 i60p295 sshd[12365]: Failed publickey for roehl from ::ffff:172.31.0.34 port 51332 ssh2'])
 
 		# Actually no exception would be raised -- it will be just set to 'no'
 		#self.assertRaises(ValueError,
@@ -1067,9 +1073,11 @@ class DNSUtilsTests(unittest.TestCase):
 		res = DNSUtils.textToIp('www.example.com', 'no')
 		self.assertEqual(res, [])
 		res = DNSUtils.textToIp('www.example.com', 'warn')
-		self.assertEqual(res, ['93.184.216.34'])
+		self.assertIn('93.184.216.34', res)
+		self.assertIn('2606:2800:220:1:248:1893:25c8:1946', res)
 		res = DNSUtils.textToIp('www.example.com', 'yes')
-		self.assertEqual(res, ['93.184.216.34'])
+		self.assertIn('93.184.216.34', res)
+		self.assertIn('2606:2800:220:1:248:1893:25c8:1946', res)
 
 	def testTextToIp(self):
 		# Test hostnames
@@ -1081,32 +1089,31 @@ class DNSUtilsTests(unittest.TestCase):
 		for s in hostnames:
 			res = DNSUtils.textToIp(s, 'yes')
 			if s == 'www.example.com':
-				self.assertEqual(res, ['93.184.216.34'])
+				self.assertIn('93.184.216.34', res)
+				self.assertIn('2606:2800:220:1:248:1893:25c8:1946', res)
 			else:
 				self.assertEqual(res, [])
 
 	def testIpToName(self):
-		res = DNSUtils.ipToName('8.8.4.4')
+		res = DNSUtils.ipToName(IPAddr('8.8.4.4'))
+		self.assertEqual(res, 'google-public-dns-b.google.com')
+		res = DNSUtils.ipToName(IPAddr('2001:4860:4860::8844'))
 		self.assertEqual(res, 'google-public-dns-b.google.com')
 		# invalid ip (TEST-NET-1 according to RFC 5737)
-		res = DNSUtils.ipToName('192.0.2.0')
+		res = DNSUtils.ipToName(IPAddr('192.0.2.0'))
 		self.assertEqual(res, None)
 
 	def testAddr2bin(self):
-		res = DNSUtils.addr2bin('10.0.0.0')
-		self.assertEqual(res, 167772160L)
-		res = DNSUtils.addr2bin('10.0.0.0', cidr=None)
-		self.assertEqual(res, 167772160L)
-		res = DNSUtils.addr2bin('10.0.0.0', cidr=32L)
-		self.assertEqual(res, 167772160L)
-		res = DNSUtils.addr2bin('10.0.0.1', cidr=32L)
-		self.assertEqual(res, 167772161L)
-		res = DNSUtils.addr2bin('10.0.0.1', cidr=31L)
-		self.assertEqual(res, 167772160L)
-
-	def testBin2addr(self):
-		res = DNSUtils.bin2addr(167772160L)
-		self.assertEqual(res, '10.0.0.0')
+		res = IPAddr('10.0.0.0')
+		self.assertEqual(res.addr, 167772160L)
+		res = IPAddr('10.0.0.0', cidr=None)
+		self.assertEqual(res.addr, 167772160L)
+		res = IPAddr('10.0.0.0', cidr=32L)
+		self.assertEqual(res.addr, 167772160L)
+		res = IPAddr('10.0.0.1', cidr=32L)
+		self.assertEqual(res.addr, 167772161L)
+		res = IPAddr('10.0.0.1', cidr=31L)
+		self.assertEqual(res.addr, 167772160L)
 
 
 class JailTests(unittest.TestCase):
