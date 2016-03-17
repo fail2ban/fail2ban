@@ -12,7 +12,8 @@ ver. 0.9.5 (2015/XX/XXX) - wanna-be-released
 - Fixes:
 
 - New Features:
-
+   * New Actions:
+     - action.d/firewallcmd-rich-rules and action.d/firewallcmd-rich-logging
 - Enhancements:
    * journald journalmatch for pure-ftpd (gh-1362)
 
