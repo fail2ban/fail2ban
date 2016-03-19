@@ -137,6 +137,9 @@ class Server:
 		# Now stop all the jails
 		self.stopAllJail()
 
+		if self.__db is not None:
+			self.__db.backupDbIfNeeded()
+
 		# Only now shutdown the logging.
 		try:
 			self.__loggingLock.acquire()
@@ -509,8 +512,12 @@ class Server:
 		if filename.lower() == "none":
 			self.__db = None
 		else:
+			if filename.startswith(':memory:,'):
+				filename, backupFilename = filename.split(',', 1)
+			else:
+				backupFilename = None
 			if Fail2BanDb is not None:
-				self.__db = Fail2BanDb(filename)
+				self.__db = Fail2BanDb(filename, backupFilename=backupFilename)
 				self.__db.delAllJails()
 			else:
 				logSys.error(
