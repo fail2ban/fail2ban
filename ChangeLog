@@ -15,6 +15,7 @@ ver. 0.9.5 (2015/XX/XXX) - wanna-be-released
 
 - Enhancements:
    * journald journalmatch for pure-ftpd (gh-1362)
+   * Add additional regex filter for dovecot ldap authentication failures
 
 
 ver. 0.9.4 (2016/03/08) - for-you-ladies
