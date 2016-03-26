@@ -10,6 +10,9 @@ ver. 0.9.5 (2016/XX/XXX) - wanna-be-released
 -----------
 
 - Fixes:
+   * filter.d/monit.conf
+     - extended failregex with new monit "access denied" version (gh-1355);
+     - failregex of previous monit version merged as single expression.
 
 - New Features:
    * New Actions:
