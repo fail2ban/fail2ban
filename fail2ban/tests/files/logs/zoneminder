@@ -1,0 +1,6 @@
+[Mon Mar 28 10:51:24.201977 2016] [:error] [pid 29646] [client 10.1.1.2:46454] INF [Login successful for user "gooduser1"]
+[Mon Mar 28 16:50:45.522240 2016] [:error] [pid 1795] [client 10.1.1.1:50700] WAR [Login denied for user "baduser1"], referer: https://zoneminder/
+[Mon Mar 28 16:50:46.522240 2016] [:error] [pid 1795] [client 10.1.1.1:50700] WAR [Login denied for user "baduser1"], referer: https://zoneminder/
+[Mon Mar 28 16:50:47.522240 2016] [:error] [pid 1795] [client 10.1.1.1:50700] WAR [Login denied for user "baduser1"], referer: https://zoneminder/
+[Mon Mar 28 16:50:48.522240 2016] [:error] [pid 1795] [client 10.1.1.1:50700] WAR [Login denied for user "baduser1"], referer: https://zoneminder/
+[Mon Mar 28 16:50:49.522240 2016] [:error] [pid 1795] [client 10.1.1.1:50700] WAR [Login denied for user "baduser1"], referer: https://zoneminder/
