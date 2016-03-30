@@ -165,6 +165,7 @@ class Fail2banCmdLine():
 		return None
 
 	def initCmdLine(self, argv):
+		verbose = 1
 		try:
 			# First time?
 			initial = (self._argv is None)
@@ -232,7 +233,8 @@ class Fail2banCmdLine():
 			return None
 		except Exception as e:
 			output("ERROR: %s" % (e,))
-			#logSys.exception(e)
+			if verbose > 2:
+				logSys.exception(e)
 			return False
 
 	def readConfig(self, jail=None):
