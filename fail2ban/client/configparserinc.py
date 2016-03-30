@@ -107,12 +107,17 @@ after = 1.conf
 			kwargs['inline_comment_prefixes'] = ";"
 			super(SafeConfigParserWithIncludes, self).__init__(
 				*args, **kwargs)
-			self._cfg_share = share_config
+			self.__post_init(share_config)
 
 	else:
 		def __init__(self, share_config=None, *args, **kwargs):
 			SafeConfigParser.__init__(self, *args, **kwargs)
-			self._cfg_share = share_config
+			self.__post_init(share_config)
+
+	def __post_init(self, share_config):
+		self.__persec_defaults = None
+		self.__persec_merged = dict()
+		self._cfg_share = share_config
 
 	@property
 	def share_config(self):
@@ -197,6 +202,64 @@ after = 1.conf
 	def get_sections(self):
 		return self._sections
 
+	def extract_defaults(self):
+		"""
+		Extract per section defaults (section "[default.sec-name]") into special dict,
+		that will be involved for all options, that are not directly specified in the 
+		section "[sec-name]" after following all includes.
+		"""
+		alls = self.get_sections()
+		# per section defaults (should begin with 'default.'):
+		pdefs = self.__persec_defaults
+		if pdefs is not None:
+			return pdefs
+		# move such sections from all sections:
+		l = len('default.')
+		pdefs = self.__persec_defaults = dict()
+		deldefs = []
+		for n, s2 in alls.iteritems():
+			if not n.lower().startswith('default.'):
+				continue
+			deldefs.append(n)
+			n = n[l:]
+			if not len(n):
+				continue
+			# move section to per section defaults:
+			s2['__name__'] = n
+			pdefs[n] = s2
+		for n in deldefs:
+			del alls[n]
+		return pdefs
+
+	def merge_defaults(self, section):
+		"""
+		Merge per section defaults (section "[default.section]") into options of the 
+		section "[section]", that are not directly specified there, after following all includes.
+		"""
+		pdefs = self.extract_defaults()
+		alls = self.get_sections()
+		alld = self.get_defaults()
+		# if section exists, merge - set all options not yet already set:
+		s = alls.get(section)
+		if s is not None and not self.__persec_merged.get(section):
+			logSys.log(logLevel, '  Merge defaults for [%s]', section)
+			# merge:
+			s2 = pdefs.pop(section, None)
+			if s2 is not None:
+				for k, v in s2.iteritems():
+					if k not in s:
+						s[k] = v
+						if logSys.getEffectiveLevel() <= logLevel:
+							logSys.log(logLevel, "\t[D] [%s] %r = %r", section, k, v)
+					elif k not in ('__name__'):
+						if logSys.getEffectiveLevel() <= logLevel:
+							logSys.log(logLevel, "\t[-] [%s] %r = %r", section, k, s.get(k, alld.get(k)))
+			if logSys.getEffectiveLevel() <= logLevel:
+				for k, v in s.iteritems():
+					if (not s2 or k not in s2) and k not in ('__name__'):
+						logSys.log(logLevel, "\t[-] [%s] %r = %r", section, k, s.get(k, alld.get(k)))
+			self.__persec_merged[section] = 1
+
 	def read(self, filenames, get_includes=True):
 		if not isinstance(filenames, list):
 			filenames = [ filenames ]
@@ -217,13 +280,25 @@ after = 1.conf
 			ret = []
 			alld = self.get_defaults()
 			alls = self.get_sections()
+			allpdefs = self.__persec_defaults = dict()
 			for filename in fileNamesFull:
 				# read single one, add to return list, use sharing if possible:
 				cfg, i = self._getSharedSCPWI(filename)
 				if i:
 					ret += i
+					# clear per section defaults for all global defaults specified:
+					lg = 1
+					for n, s in allpdefs.iteritems():
+						for k, v in cfg.get_defaults().iteritems():
+							if logSys.getEffectiveLevel() <= logLevel:
+								if lg:
+									logSys.log(logLevel, "  [DEFAULTS] from '%s'", os.path.basename(filename))
+									lg = 0
+								logSys.log(logLevel, "\t[G] [%s] %r = %r", n, k, v)
+							s.pop(k, None)
 					# merge defaults and all sections to self:
 					alld.update(cfg.get_defaults())
+					allpdefs.update(cfg.extract_defaults())
 					for n, s in cfg.get_sections().iteritems():
 						if isinstance(s, dict):
 							s2 = alls.get(n)
@@ -231,7 +306,7 @@ after = 1.conf
 								# save previous known values, for possible using in local interpolations later:
 								sk = {}
 								for k, v in s2.iteritems():
-									if not k.startswith('known/'):
+									if not k.startswith('known/') and k not in ('__name__'):
 										sk['known/'+k] = v
 								s2.update(sk)
 								# merge section
@@ -240,17 +315,21 @@ after = 1.conf
 								alls[n] = s.copy()
 						else:
 							alls[n] = s
-
-			return ret
-
-		# read one config :
-		if logSys.getEffectiveLevel() <= logLevel:
-			logSys.log(logLevel, "    Reading file: %s", fileNamesFull[0])
-		# read file(s) :
-		if sys.version_info >= (3,2): # pragma: no cover
-			return SafeConfigParser.read(self, fileNamesFull, encoding='utf-8')
 		else:
-			return SafeConfigParser.read(self, fileNamesFull)
+			# read one config :
+			if logSys.getEffectiveLevel() <= logLevel:
+				logSys.log(logLevel, "    Reading file: %s", fileNamesFull[0])
+			# read file(s) :
+			if sys.version_info >= (3,2): # pragma: no cover
+				ret = SafeConfigParser.read(self, fileNamesFull, encoding='utf-8')
+			else:
+				ret = SafeConfigParser.read(self, fileNamesFull)
+
+		# move per section defaults (should not be available in all sections):
+		if ret:
+			self.extract_defaults()
+		return ret
+
 
 	def merge_section(self, section, options, pref='known/'):
 		alls = self.get_sections()
