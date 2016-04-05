@@ -22,11 +22,14 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import codecs
+import inspect
 import fcntl
 import locale
 import os
 import re
 import sys
+
+from functools import wraps
 
 from .failmanager import FailManagerEmpty, FailManager
 from .ticket import FailTicket
@@ -909,6 +912,29 @@ class DNSUtils:
 
 		return ipList
 
+def asip(ip):
+	"""A little helper to guarantee ip being an IPAddr instance"""
+	return ip if isinstance(ip, IPAddr) else IPAddr(ip)
+
+def iparg(f):
+	"""A helper decorator to simplify use of asip throughout the code"""
+	args = inspect.getargspec(f).args
+	# I consider clarity better than trying to avoid any duplication here
+	# also better to make a decision at code parsing stage, not within the
+	# actual decorator function (i.e. checkip)
+	if args and args[0] == 'self':
+		# method -- just above simpler version
+		@wraps(f)
+		def checkip(self, ip, *argv, **kwargs):
+			return f(self, asip(ip), *argv, **kwargs)
+	else:
+		@wraps(f)
+		def checkip(ip, *argv, **kwargs):
+			return f(asip(ip), *argv, **kwargs)
+
+	return checkip
+
+
 ##
 # Class for IP address handling.
 #
@@ -984,8 +1010,8 @@ class IPAddr:
 	def __str__(self):
 		return self.ntoa()
 
+	@iparg
 	def __eq__(self, other):
-		other = other if isinstance(other, IPAddr) else IPAddr(other)
 		if not self.valid and not other.valid: return self.raw == other.raw
 		if not self.valid or not other.valid: return False
 		if self.addr != other.addr: return False
@@ -993,21 +1019,23 @@ class IPAddr:
 		if self.plen != other.plen: return False
 		return True
 
+	@iparg
 	def __ne__(self, other):
-		other = other if isinstance(other, IPAddr) else IPAddr(other)
 		if not self.valid and not other.valid: return self.raw != other.raw
 		if self.addr != other.addr: return True
 		if self.family != other.family: return True
 		if self.plen != other.plen: return True
 		return False
 
+	@iparg
 	def __lt__(self, other):
-		other = other if isinstance(other, IPAddr) else IPAddr(other)
 		return self.family < other.family or self.addr < other.addr
 
+	@iparg
 	def __add__(self, other):
 		return "%s%s" % (self, other)
 
+	@iparg
 	def __radd__(self, other):
 		return "%s%s" % (other, self)
 
