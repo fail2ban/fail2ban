@@ -29,7 +29,7 @@ import unittest
 from ..server.banmanager import BanManager
 from ..server.ticket import BanTicket
 from .utils import assert_dict_equal
-from ..server.filter import IPAddr
+from ..ipaddr import IPAddr
 
 
 class AddFailure(unittest.TestCase):

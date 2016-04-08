@@ -42,7 +42,7 @@ from .banmanager import BanManager
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
-from .filter import IPAddr
+from ..ipaddr import IPAddr
 from ..helpers import getLogger
 
 # Gets the instance of the logger.

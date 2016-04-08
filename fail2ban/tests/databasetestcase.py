@@ -29,10 +29,11 @@ import tempfile
 import sqlite3
 import shutil
 
-from ..server.filter import FileContainer, IPAddr
+from ..server.filter import FileContainer
 from ..server.mytime import MyTime
 from ..server.ticket import FailTicket
 from ..server.actions import Actions
+from ..ipaddr import IPAddr
 from .dummyjail import DummyJail
 try:
 	from ..server.database import Fail2BanDb

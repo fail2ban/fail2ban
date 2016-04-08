@@ -32,7 +32,7 @@ from threading import RLock
 
 from .mytime import MyTime
 from .ticket import FailTicket
-from .filter import IPAddr
+from ..ipaddr import IPAddr
 from ..helpers import getLogger
 
 # Gets the instance of the logger.

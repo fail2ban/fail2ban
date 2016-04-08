@@ -36,7 +36,7 @@ from ..server.failregex import Regex, FailRegex, RegexException
 from ..server.server import Server
 from ..server.jail import Jail
 from ..server.jailthread import JailThread
-from ..server.filter import IPAddr
+from ..ipaddr import IPAddr
 from .utils import LogCaptureTestCase
 from ..helpers import getLogger
 from .. import version
