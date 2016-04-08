@@ -37,7 +37,7 @@ from functools import wraps
 #
 def asip(ip):
 	"""A little helper to guarantee ip being an IPAddr instance"""
-	return ip if isinstance(ip, IPAddr) or ip == None else IPAddr(ip)
+	return ip if isinstance(ip, IPAddr) or ip is None else IPAddr(ip)
 
 def iparg(f):
 	"""A helper decorator to simplify use of asip throughout the code"""
@@ -220,12 +220,12 @@ class IPAddr:
 	def isIPv4(self):
 		""" return true if the IP object is of address family AF_INET
 		"""
-		return True if self.family == socket.AF_INET else False
+		return self.family == socket.AF_INET
 
 	def isIPv6(self):
 		""" return true if the IP object is of address family AF_INET6
 		"""
-		return True if self.family == socket.AF_INET6 else False
+		return self.family == socket.AF_INET6
 
 	def getRaw(self):
 		""" returns the raw attribute - should only be set
