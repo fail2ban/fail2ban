@@ -21,7 +21,7 @@
 # 
 
 __author__ = "Alexander Koeppe"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__copyright__ = "Copyright (c) 2016 Alexander Koeppe"
 __license__ = "GPL"
 
 import inspect
@@ -33,11 +33,11 @@ from functools import wraps
 
 ##
 # Helper functions / decorator
-#
+# Thanks to Yaroslav Halchenko (yarikoptic)
 #
 def asip(ip):
 	"""A little helper to guarantee ip being an IPAddr instance"""
-	return ip if isinstance(ip, IPAddr) else IPAddr(ip)
+	return ip if isinstance(ip, IPAddr) or ip == None else IPAddr(ip)
 
 def iparg(f):
 	"""A helper decorator to simplify use of asip throughout the code"""
@@ -48,11 +48,11 @@ def iparg(f):
 	if args and args[0] == 'self':
 		# method -- just above simpler version
 		@wraps(f)
-		def checkip(self, ip, *argv, **kwargs):
+		def checkip(self, ip=None, *argv, **kwargs):
 			return f(self, asip(ip), *argv, **kwargs)
 	else:
 		@wraps(f)
-		def checkip(ip, *argv, **kwargs):
+		def checkip(ip=None, *argv, **kwargs):
 			return f(asip(ip), *argv, **kwargs)
 
 	return checkip
