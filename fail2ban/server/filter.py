@@ -38,7 +38,7 @@ from .mytime import MyTime
 from .failregex import FailRegex, Regex, RegexException
 from .action import CommandAction
 from ..helpers import getLogger
-from ..ipaddr import IPAddr
+from ..ipaddr import IPAddr, iparg
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -307,8 +307,9 @@ class Filter(JailThread):
 
 	##
 	# create new IPAddr object from IP address string
-	def newIP(self, ipstr):
-		return IPAddr(ipstr)
+	@iparg
+	def newIP(self, ip):
+		return ip
 
 	##
 	# Ban an IP - http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
@@ -316,8 +317,8 @@ class Filter(JailThread):
 	#
 	# to enable banip fail2ban-client BAN command
 
-	def addBannedIP(self, ipstr):
-		ip = IPAddr(ipstr)
+	@iparg
+	def addBannedIP(self, ip):
 		if self.inIgnoreIPList(ip):
 			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.' % ip)
 
@@ -361,10 +362,12 @@ class Filter(JailThread):
 		logSys.debug("Add " + ip + " to ignore list")
 		self.__ignoreIpList.append(ip)
 
+	@iparg
 	def delIgnoreIP(self, ip):
 		logSys.debug("Remove " + ip + " from ignore list")
 		self.__ignoreIpList.remove(ip)
 
+	@iparg
 	def logIgnoreIp(self, ip, log_ignore, ignore_source="unknown source"):
 		if log_ignore:
 			logSys.info("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source))
@@ -380,6 +383,7 @@ class Filter(JailThread):
 	# @param ip IP address object
 	# @return True if IP address is in ignore list
 
+	@iparg
 	def inIgnoreIPList(self, ip, log_ignore=False):
 		for net in self.__ignoreIpList:
 			# if it isn't a valid IP address, try DNS resolution
@@ -881,6 +885,7 @@ class DNSUtils:
 			return list()
 
 	@staticmethod
+	@iparg
 	def ipToName(ip):
 		try:
 			return socket.gethostbyaddr(ip.ntoa())[0]

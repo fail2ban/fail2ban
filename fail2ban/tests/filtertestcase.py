@@ -248,7 +248,7 @@ class IgnoreIP(LogCaptureTestCase):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
 		for ip in ipList:
 			self.filter.addIgnoreIP(ip)
-			self.assertTrue(self.filter.inIgnoreIPList(IPAddr(ip)))
+			self.assertTrue(self.filter.inIgnoreIPList(ip))
 
 	def testIgnoreIPNOK(self):
 		ipList = "", "999.999.999.999", "abcdef.abcdef", "192.168.0."
@@ -258,21 +258,21 @@ class IgnoreIP(LogCaptureTestCase):
 
 	def testIgnoreIPCIDR(self):
 		self.filter.addIgnoreIP('192.168.1.0/25')
-		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.168.1.0')))
-		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.168.1.1')))
-		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.168.1.127')))
-		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('192.168.1.128')))
-		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('192.168.1.255')))
-		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('192.168.0.255')))
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.0'))
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.1'))
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.127'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.128'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.255'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.0.255'))
 
 	def testIgnoreIPMask(self):
 		self.filter.addIgnoreIP('192.168.1.0/255.255.255.128')
-		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.168.1.0')))
-		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.168.1.1')))
-		self.assertTrue(self.filter.inIgnoreIPList(IPAddr('192.168.1.127')))
-		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('192.168.1.128')))
-		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('192.168.1.255')))
-		self.assertFalse(self.filter.inIgnoreIPList(IPAddr('192.168.0.255')))
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.0'))
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.1'))
+		self.assertTrue(self.filter.inIgnoreIPList('192.168.1.127'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.128'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.1.255'))
+		self.assertFalse(self.filter.inIgnoreIPList('192.168.0.255'))
 
 	def testIgnoreInProcessLine(self):
 		setUpMyTime()
@@ -290,17 +290,17 @@ class IgnoreIP(LogCaptureTestCase):
 
 	def testIgnoreCommand(self):
 		self.filter.setIgnoreCommand(sys.executable + ' ' + os.path.join(TEST_FILES_DIR, "ignorecommand.py <ip>"))
-		self.assertTrue(self.filter.inIgnoreIPList(IPAddr("10.0.0.1")))
-		self.assertFalse(self.filter.inIgnoreIPList(IPAddr("10.0.0.0")))
+		self.assertTrue(self.filter.inIgnoreIPList("10.0.0.1"))
+		self.assertFalse(self.filter.inIgnoreIPList("10.0.0.0"))
 
 	def testIgnoreCauseOK(self):
 		ip = "93.184.216.34"
 		for ignore_source in ["dns", "ip", "command"]:
-			self.filter.logIgnoreIp(IPAddr(ip), True, ignore_source=ignore_source)
+			self.filter.logIgnoreIp(ip, True, ignore_source=ignore_source)
 			self.assertLogged("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source))
 
 	def testIgnoreCauseNOK(self):
-		self.filter.logIgnoreIp(IPAddr("example.com"), False, ignore_source="NOT_LOGGED")
+		self.filter.logIgnoreIp("example.com", False, ignore_source="NOT_LOGGED")
 		self.assertNotLogged("[%s] Ignore %s by %s" % (self.jail.name, "example.com", "NOT_LOGGED"))
 
 
@@ -308,14 +308,14 @@ class IgnoreIPDNS(IgnoreIP):
 
 	def testIgnoreIPDNSOK(self):
 		self.filter.addIgnoreIP("www.epfl.ch")
-		self.assertTrue(self.filter.inIgnoreIPList(IPAddr("128.178.50.12")))
+		self.assertTrue(self.filter.inIgnoreIPList("128.178.50.12"))
 
 	def testIgnoreIPDNSNOK(self):
 		# Test DNS
 		self.filter.addIgnoreIP("www.epfl.ch")
-		self.assertFalse(self.filter.inIgnoreIPList(IPAddr("127.177.50.10")))
-		self.assertFalse(self.filter.inIgnoreIPList(IPAddr("128.178.50.11")))
-		self.assertFalse(self.filter.inIgnoreIPList(IPAddr("128.178.50.13")))
+		self.assertFalse(self.filter.inIgnoreIPList("127.177.50.10"))
+		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.11"))
+		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.13"))
 
 
 class LogFile(LogCaptureTestCase):
@@ -1096,12 +1096,12 @@ class DNSUtilsTests(unittest.TestCase):
 				self.assertEqual(res, [])
 
 	def testIpToName(self):
-		res = DNSUtils.ipToName(IPAddr('8.8.4.4'))
+		res = DNSUtils.ipToName('8.8.4.4')
 		self.assertEqual(res, 'google-public-dns-b.google.com')
-		res = DNSUtils.ipToName(IPAddr('2001:4860:4860::8844'))
+		res = DNSUtils.ipToName('2001:4860:4860::8844')
 		self.assertEqual(res, 'google-public-dns-b.google.com')
 		# invalid ip (TEST-NET-1 according to RFC 5737)
-		res = DNSUtils.ipToName(IPAddr('192.0.2.0'))
+		res = DNSUtils.ipToName('192.0.2.0')
 		self.assertEqual(res, None)
 
 	def testAddr2bin(self):

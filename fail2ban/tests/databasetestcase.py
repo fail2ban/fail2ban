@@ -33,7 +33,6 @@ from ..server.filter import FileContainer
 from ..server.mytime import MyTime
 from ..server.ticket import FailTicket
 from ..server.actions import Actions
-from ..ipaddr import IPAddr
 from .dummyjail import DummyJail
 try:
 	from ..server.database import Fail2BanDb
@@ -98,7 +97,7 @@ class DatabaseTest(LogCaptureTestCase):
 		self.db = Fail2BanDb(self.dbFilename)
 		self.assertEqual(self.db.getJailNames(), set(['DummyJail #29162448 with 0 tickets']))
 		self.assertEqual(self.db.getLogPaths(), set(['/tmp/Fail2BanDb_pUlZJh.log']))
-		ticket = FailTicket(IPAddr("127.0.0.1"), 1388009242.26, [u"abc\n"])
+		ticket = FailTicket("127.0.0.1", 1388009242.26, [u"abc\n"])
 		self.assertEqual(self.db.getBans()[0], ticket)
 
 		self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
@@ -172,7 +171,7 @@ class DatabaseTest(LogCaptureTestCase):
 		if Fail2BanDb is None: # pragma: no cover
 			return
 		self.testAddJail()
-		ticket = FailTicket(IPAddr("127.0.0.1"), 0, ["abc\n"])
+		ticket = FailTicket("127.0.0.1", 0, ["abc\n"])
 		self.db.addBan(self.jail, ticket)
 
 		self.assertEqual(len(self.db.getBans(jail=self.jail)), 1)
@@ -185,9 +184,9 @@ class DatabaseTest(LogCaptureTestCase):
 		self.testAddJail()
 		# invalid + valid, invalid + valid unicode, invalid + valid dual converted (like in filter:readline by fallback) ...
 		tickets = [
-		  FailTicket(IPAddr("127.0.0.1"), 0, ['user "\xd1\xe2\xe5\xf2\xe0"', 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
-		  FailTicket(IPAddr("127.0.0.2"), 0, ['user "\xd1\xe2\xe5\xf2\xe0"', u'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
-		  FailTicket(IPAddr("127.0.0.3"), 0, ['user "\xd1\xe2\xe5\xf2\xe0"', b'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'.decode('utf-8', 'replace')])
+		  FailTicket("127.0.0.1", 0, ['user "\xd1\xe2\xe5\xf2\xe0"', 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
+		  FailTicket("127.0.0.2", 0, ['user "\xd1\xe2\xe5\xf2\xe0"', u'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
+		  FailTicket("127.0.0.3", 0, ['user "\xd1\xe2\xe5\xf2\xe0"', b'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'.decode('utf-8', 'replace')])
 		]
 		self.db.addBan(self.jail, tickets[0])
 		self.db.addBan(self.jail, tickets[1])
@@ -198,15 +197,15 @@ class DatabaseTest(LogCaptureTestCase):
 		## python 2 or 3 :
 		invstr = u'user "\ufffd\ufffd\ufffd\ufffd\ufffd"'.encode('utf-8', 'replace')
 		self.assertTrue(
-			   readtickets[0] == FailTicket(IPAddr("127.0.0.1"), 0, [invstr, 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'])
+			   readtickets[0] == FailTicket("127.0.0.1", 0, [invstr, 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'])
 			or readtickets[0] == tickets[0]
 		)
 		self.assertTrue(
-			   readtickets[1] == FailTicket(IPAddr("127.0.0.2"), 0, [invstr, u'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'.encode('utf-8', 'replace')])
+			   readtickets[1] == FailTicket("127.0.0.2", 0, [invstr, u'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'.encode('utf-8', 'replace')])
 			or readtickets[1] == tickets[1]
 		)
 		self.assertTrue(
-			   readtickets[2] == FailTicket(IPAddr("127.0.0.3"), 0, [invstr, 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'])
+			   readtickets[2] == FailTicket("127.0.0.3", 0, [invstr, 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'])
 			or readtickets[2] == tickets[2]
 		)
 
@@ -221,9 +220,9 @@ class DatabaseTest(LogCaptureTestCase):
 			return
 		self.testAddJail()
 		self.db.addBan(
-			self.jail, FailTicket(IPAddr("127.0.0.1"), MyTime.time() - 60, ["abc\n"]))
+			self.jail, FailTicket("127.0.0.1", MyTime.time() - 60, ["abc\n"]))
 		self.db.addBan(
-			self.jail, FailTicket(IPAddr("127.0.0.1"), MyTime.time() - 40, ["abc\n"]))
+			self.jail, FailTicket("127.0.0.1", MyTime.time() - 40, ["abc\n"]))
 		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=50)), 1)
 		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=20)), 0)
 		# Negative values are for persistent bans, and such all bans should
@@ -238,27 +237,27 @@ class DatabaseTest(LogCaptureTestCase):
 		jail2 = DummyJail()
 		self.db.addJail(jail2)
 
-		ticket = FailTicket(IPAddr("127.0.0.1"), MyTime.time() - 40, ["abc\n"])
+		ticket = FailTicket("127.0.0.1", MyTime.time() - 40, ["abc\n"])
 		ticket.setAttempt(10)
 		self.db.addBan(self.jail, ticket)
-		ticket = FailTicket(IPAddr("127.0.0.1"), MyTime.time() - 30, ["123\n"])
+		ticket = FailTicket("127.0.0.1", MyTime.time() - 30, ["123\n"])
 		ticket.setAttempt(20)
 		self.db.addBan(self.jail, ticket)
-		ticket = FailTicket(IPAddr("127.0.0.2"), MyTime.time() - 20, ["ABC\n"])
+		ticket = FailTicket("127.0.0.2", MyTime.time() - 20, ["ABC\n"])
 		ticket.setAttempt(30)
 		self.db.addBan(self.jail, ticket)
-		ticket = FailTicket(IPAddr("127.0.0.1"), MyTime.time() - 10, ["ABC\n"])
+		ticket = FailTicket("127.0.0.1", MyTime.time() - 10, ["ABC\n"])
 		ticket.setAttempt(40)
 		self.db.addBan(jail2, ticket)
 
 		# All for IP 127.0.0.1
-		ticket = self.db.getBansMerged(IPAddr("127.0.0.1"))
+		ticket = self.db.getBansMerged("127.0.0.1")
 		self.assertEqual(ticket.getIP(), "127.0.0.1")
 		self.assertEqual(ticket.getAttempt(), 70)
 		self.assertEqual(ticket.getMatches(), ["abc\n", "123\n", "ABC\n"])
 
 		# All for IP 127.0.0.1 for single jail
-		ticket = self.db.getBansMerged(IPAddr("127.0.0.1"), jail=self.jail)
+		ticket = self.db.getBansMerged("127.0.0.1", jail=self.jail)
 		self.assertEqual(ticket.getIP(), "127.0.0.1")
 		self.assertEqual(ticket.getAttempt(), 30)
 		self.assertEqual(ticket.getMatches(), ["abc\n", "123\n"])
@@ -266,23 +265,23 @@ class DatabaseTest(LogCaptureTestCase):
 		# Should cache result if no extra bans added
 		self.assertEqual(
 			id(ticket),
-			id(self.db.getBansMerged(IPAddr("127.0.0.1"), jail=self.jail)))
+			id(self.db.getBansMerged("127.0.0.1", jail=self.jail)))
 
-		newTicket = FailTicket(IPAddr("127.0.0.2"), MyTime.time() - 20, ["ABC\n"])
+		newTicket = FailTicket("127.0.0.2", MyTime.time() - 20, ["ABC\n"])
 		ticket.setAttempt(40)
 		# Add ticket, but not for same IP, so cache still valid
 		self.db.addBan(self.jail, newTicket)
 		self.assertEqual(
 			id(ticket),
-			id(self.db.getBansMerged(IPAddr("127.0.0.1"), jail=self.jail)))
+			id(self.db.getBansMerged("127.0.0.1", jail=self.jail)))
 
-		newTicket = FailTicket(IPAddr("127.0.0.1"), MyTime.time() - 10, ["ABC\n"])
+		newTicket = FailTicket("127.0.0.1", MyTime.time() - 10, ["ABC\n"])
 		ticket.setAttempt(40)
 		self.db.addBan(self.jail, newTicket)
 		# Added ticket, so cache should have been cleared
 		self.assertNotEqual(
 			id(ticket),
-			id(self.db.getBansMerged(IPAddr("127.0.0.1"), jail=self.jail)))
+			id(self.db.getBansMerged("127.0.0.1", jail=self.jail)))
 
 		tickets = self.db.getBansMerged()
 		self.assertEqual(len(tickets), 2)
@@ -313,7 +312,7 @@ class DatabaseTest(LogCaptureTestCase):
 			"action_checkainfo",
 			os.path.join(TEST_FILES_DIR, "action.d/action_checkainfo.py"),
 			{})
-		ticket = FailTicket(IPAddr("1.2.3.4"), MyTime.time(), ['test', 'test'])
+		ticket = FailTicket("1.2.3.4", MyTime.time(), ['test', 'test'])
 		ticket.setAttempt(5)
 		self.jail.putFailTicket(ticket)
 		actions._Actions__checkBan()
@@ -340,7 +339,7 @@ class DatabaseTest(LogCaptureTestCase):
 		# Should leave jail
 		self.testAddJail()
 		self.db.addBan(
-			self.jail, FailTicket(IPAddr("127.0.0.1"), MyTime.time(), ["abc\n"]))
+			self.jail, FailTicket("127.0.0.1", MyTime.time(), ["abc\n"]))
 		self.db.delJail(self.jail)
 		self.db.purge() # Should leave jail as ban present
 		self.assertEqual(len(self.db.getJailNames()), 1)

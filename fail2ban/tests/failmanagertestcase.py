@@ -51,7 +51,7 @@ class AddFailure(unittest.TestCase):
 		
 		self.__failManager = FailManager()
 		for i in self.__items:
-			self.__failManager.addFailure(FailTicket(IPAddr(i[0]), i[1]))
+			self.__failManager.addFailure(FailTicket(i[0], i[1]))
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -70,8 +70,8 @@ class AddFailure(unittest.TestCase):
 		self.__failManager.setMaxTime(600)
 
 	def _testDel(self):
-		self.__failManager.delFailure(IPAddr('193.168.0.128'))
-		self.__failManager.delFailure(IPAddr('111.111.1.111'))
+		self.__failManager.delFailure('193.168.0.128')
+		self.__failManager.delFailure('111.111.1.111')
 		
 		self.assertEqual(self.__failManager.size(), 1)
 		

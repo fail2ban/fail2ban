@@ -42,8 +42,8 @@ from .banmanager import BanManager
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
-from ..ipaddr import IPAddr
 from ..helpers import getLogger
+from ..ipaddr import iparg
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -179,7 +179,8 @@ class Actions(JailThread, Mapping):
 	def getBanTime(self):
 		return self.__banManager.getBanTime()
 
-	def removeBannedIP(self, ipstr):
+	@iparg
+	def removeBannedIP(self, ip):
 		"""Removes banned IP calling actions' unban method
 
 		Remove a banned IP now, rather than waiting for it to expire,
@@ -187,16 +188,14 @@ class Actions(JailThread, Mapping):
 
 		Parameters
 		----------
-		ipstr : str
-			The IP address string to unban
+		ip : str
+			The IP address to unban
 
 		Raises
 		------
 		ValueError
 			If `ip` is not banned
 		"""
-		# Create new IPAddr object from IP string
-		ip = IPAddr(ipstr)
 		# Always delete ip from database (also if currently not banned)
 		if self._jail.database is not None:
 			self._jail.database.delBan(self._jail, ip)

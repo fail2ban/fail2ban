@@ -25,6 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from ..helpers import getLogger
+from ..ipaddr import iparg
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -32,6 +33,7 @@ logSys = getLogger(__name__)
 
 class Ticket:
 	
+	@iparg
 	def __init__(self, ip, time, matches=None):
 		"""Ticket constructor
 

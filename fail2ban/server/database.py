@@ -32,7 +32,7 @@ from threading import RLock
 
 from .mytime import MyTime
 from .ticket import FailTicket
-from ..ipaddr import IPAddr
+from ..ipaddr import IPAddr, iparg
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
@@ -479,6 +479,7 @@ class Fail2BanDb(object):
 			tickets[-1].setAttempt(data.get('failures', 1))
 		return tickets
 
+	@iparg
 	def getBansMerged(self, ip=None, jail=None, bantime=None):
 		"""Get bans from the database, merged into single ticket.
 
