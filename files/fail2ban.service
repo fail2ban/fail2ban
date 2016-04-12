@@ -6,6 +6,7 @@ PartOf=iptables.service firewalld.service
 
 [Service]
 Type=forking
+ExecStartPre=/bin/mkdir -p /var/run/fail2ban
 ExecStart=/usr/bin/fail2ban-client -x start
 ExecStop=/usr/bin/fail2ban-client stop
 ExecReload=/usr/bin/fail2ban-client reload
