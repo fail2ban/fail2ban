@@ -23,3 +23,6 @@ Feb  3 08:29:28 mail postfix/smtpd[21022]: warning: unknown[1.1.1.1]: SASL LOGIN
 
 # failJSON: { "time": "2005-01-29T08:11:45", "match": true , "host": "1.1.1.1" }
 Jan 29 08:11:45 mail postfix-incoming/smtpd[10752]: warning: unknown[1.1.1.1]: SASL LOGIN authentication failed: Password:
+
+# failJSON: { "time": "2005-04-12T02:24:11", "match": true , "host": "62.138.2.143" }
+Apr 12 02:24:11 xxx postfix/smtps/smtpd[42]: warning: astra4139.startdedicated.de[62.138.2.143]: SASL LOGIN authentication failed: UGFzc3dvcmQ6
