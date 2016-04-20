@@ -163,6 +163,7 @@ fail2ban/client/__init__.py
 fail2ban/client/jailreader.py
 fail2ban/client/jailsreader.py
 fail2ban/exceptions.py
+fail2ban/ipaddr.py
 fail2ban/helpers.py
 fail2ban/__init__.py
 fail2ban/protocol.py
