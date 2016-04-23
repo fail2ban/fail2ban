@@ -74,6 +74,7 @@ def gatherTests(regexps=None, no_network=False):
 	# Import all the test cases here instead of a module level to
 	# avoid circular imports
 	from . import banmanagertestcase
+	from . import clientbeautifiertestcase
 	from . import clientreadertestcase
 	from . import failmanagertestcase
 	from . import filtertestcase
@@ -119,6 +120,10 @@ def gatherTests(regexps=None, no_network=False):
 		tests.addTest(unittest.makeSuite(banmanagertestcase.StatusExtendedCymruInfo))
 	except ImportError:
 		pass
+	
+	# ClientBeautifier
+	tests.addTest(unittest.makeSuite(clientbeautifiertestcase.BeautifierTest))
+
 	# ClientReaders
 	tests.addTest(unittest.makeSuite(clientreadertestcase.ConfigReaderTest))
 	tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
