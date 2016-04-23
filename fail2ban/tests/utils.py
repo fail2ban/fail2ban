@@ -133,6 +133,7 @@ def gatherTests(regexps=None, opts=None):
 	# Import all the test cases here instead of a module level to
 	# avoid circular imports
 	from . import banmanagertestcase
+	from . import clientbeautifiertestcase
 	from . import clientreadertestcase
 	from . import tickettestcase
 	from . import failmanagertestcase
@@ -187,6 +188,10 @@ def gatherTests(regexps=None, opts=None):
 		tests.addTest(unittest.makeSuite(banmanagertestcase.StatusExtendedCymruInfo))
 	except ImportError: # pragma: no cover
 		pass
+	
+	# ClientBeautifier
+	tests.addTest(unittest.makeSuite(clientbeautifiertestcase.BeautifierTest))
+
 	# ClientReaders
 	tests.addTest(unittest.makeSuite(clientreadertestcase.ConfigReaderTest))
 	tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
