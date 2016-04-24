@@ -414,7 +414,7 @@ class Fail2BanDb(object):
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
-			(jail.name, ticket.getIP().ntoa(), int(round(ticket.getTime())),
+			(jail.name, ticket.getIP().ntoa, int(round(ticket.getTime())),
 				{"matches": ticket.getMatches(),
 				 "failures": ticket.getAttempt()}))
 
@@ -429,7 +429,7 @@ class Fail2BanDb(object):
 		ip : str
 			IP to be removed.
 		"""
-		queryArgs = (jail.name, ip.ntoa());
+		queryArgs = (jail.name, ip.ntoa);
 		cur.execute(
 			"DELETE FROM bans WHERE jail = ? AND ip = ?", 
 			queryArgs);
@@ -447,7 +447,7 @@ class Fail2BanDb(object):
 			queryArgs.append(MyTime.time() - bantime)
 		if ip is not None:
 			query += " AND ip=?"
-			queryArgs.append(ip.ntoa())
+			queryArgs.append(ip.ntoa)
 		query += " ORDER BY ip, timeofban"
 
 		return cur.execute(query, queryArgs)

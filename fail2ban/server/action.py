@@ -346,7 +346,7 @@ class CommandAction(ActionBase):
 			the ban.
 		"""
 		banaction = self.actionban
-		if "ip" in aInfo and aInfo["ip"] and aInfo["ip"].isIPv6() and self.actionban6:
+		if "ip" in aInfo and aInfo["ip"] and aInfo["ip"].isIPv6 and self.actionban6:
 			banaction = self.actionban6
 		if not self._processCmd(banaction, aInfo):
 			raise RuntimeError("Error banning %(ip)s" % aInfo)
@@ -386,7 +386,7 @@ class CommandAction(ActionBase):
 			the ban.
 		"""
 		unbanaction = self.actionunban
-		if "ip" in aInfo and aInfo["ip"] and aInfo["ip"].isIPv6() and self.actionunban6:
+		if "ip" in aInfo and aInfo["ip"] and aInfo["ip"].isIPv6 and self.actionunban6:
 			unbanaction = self.actionunban6
 
 		if not self._processCmd(unbanaction, aInfo):

@@ -201,6 +201,7 @@ fail2ban/tests/actionstestcase.py
 fail2ban/tests/actiontestcase.py
 fail2ban/tests/banmanagertestcase.py
 fail2ban/tests/clientreadertestcase.py
+fail2ban/tests/clientbeautifiertestcase.py
 fail2ban/tests/config/action.d/brokenaction.conf
 fail2ban/tests/config/fail2ban.conf
 fail2ban/tests/config/filter.d/simple.conf

@@ -387,9 +387,9 @@ class Filter(JailThread):
 	def inIgnoreIPList(self, ip, log_ignore=False):
 		for net in self.__ignoreIpList:
 			# if it isn't a valid IP address, try DNS resolution
-			if not net.isValidIP() and net.getRaw() != "":
+			if not net.isValid and net.raw != "":
 				# Check if IP in DNS
-				ips = DNSUtils.dnsToIp(net.getRaw())
+				ips = DNSUtils.dnsToIp(net.raw)
 				if ip in ips:
 					self.logIgnoreIp(ip, log_ignore, ignore_source="dns")
 					return True
@@ -875,7 +875,7 @@ class DNSUtils:
 			for result in socket.getaddrinfo(dns, None, 0, 0, 
 					socket.IPPROTO_TCP):
 				ip = IPAddr(result[4][0])
-				if ip.isValidIP():
+				if ip.isValid:
 					ips.append(ip)
 
 			return ips
@@ -888,7 +888,7 @@ class DNSUtils:
 	@iparg
 	def ipToName(ip):
 		try:
-			return socket.gethostbyaddr(ip.ntoa())[0]
+			return socket.gethostbyaddr(ip.ntoa)[0]
 		except socket.error, e:
 			logSys.debug("Unable to find a name for the IP %s: %s" % (ip, e))
 			return None
@@ -900,9 +900,9 @@ class DNSUtils:
 		ipList = list()
 		# Search for plain IP
 		plainIP = IPAddr.searchIP(text)
-		if not plainIP is None:
+		if plainIP is not None:
 			ip = IPAddr(plainIP.group(0))
-			if ip.isValidIP():
+			if ip.isValid:
 				ipList.append(ip)
 
 		# If we are allowed to resolve -- give it a try if nothing was found

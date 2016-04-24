@@ -51,7 +51,7 @@ class Ticket:
 	def __str__(self):
 		return "%s: ip=%s time=%s #attempts=%d matches=%r" % \
 			   (self.__class__.__name__.split('.')[-1], 
-				self.__ip.ntoa(), self.__time, self.__attempt, 
+				self.__ip.ntoa, self.__time, self.__attempt, 
 				self.__matches)
 
 	def __repr__(self):
