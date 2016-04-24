@@ -107,5 +107,3 @@ class BeautifierTest(unittest.TestCase):
 
 		self.assertEqual(self.b.beautify(response), output)
 
-
-	

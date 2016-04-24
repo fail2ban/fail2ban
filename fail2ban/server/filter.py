@@ -383,7 +383,7 @@ class Filter(JailThread):
 		for net in self.__ignoreIpList:
 			# check if the IP is covered by ignore IP
 			if ip.isInNet(net):
-				self.logIgnoreIp(ip, log_ignore, ignore_source=("ip" if net.isValidIP() else "dns"))
+				self.logIgnoreIp(ip, log_ignore, ignore_source=("ip" if net.isValid else "dns"))
 				return True
 
 		if self.__ignoreCommand:
