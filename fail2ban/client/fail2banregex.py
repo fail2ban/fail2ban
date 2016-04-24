@@ -58,7 +58,7 @@ from ..helpers import FormatterWithTraceBack, getLogger
 logSys = getLogger("fail2ban")
 
 def debuggexURL(sample, regex):
-	q = urllib.urlencode({ 're': regex.replace('<HOST>', '(?&.ipv4)'),
+	q = urllib.urlencode({ 're': regex.replace('<HOST>', "(?:::f{4,6}:)?(?P<host>[\w\-.^_]*\w)"),
 							'str': sample,
 							'flavor': 'python' })
 	return 'http://www.debuggex.com/?' + q
