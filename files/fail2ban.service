@@ -1,8 +1,13 @@
 # For Ubuntu 16.04 LTS
+# Edited by ItsAdventureTime (Github) > Juan Karlo de Guzman
 # Copy fail2ban-source/files/fail2ban.service to /lib/systemd/system/
 # sudo chown root:root /lib/systemd/system/fail2ban.service
 # sudo systemctl start fail2ban
+# To make sure it starts on boot time: sudo systemctl enable fail2ban.service
+# Restart systemd daemon: sudo systemctl daemon-reload
+# Restart fail2ban service: sudo systemctl restart fail2ban
 # Reference: https://wiki.ubuntu.com/SystemdForUpstartUsers
+# https://www.digitalocean.com/community/tutorials/how-to-configure-a-linux-service-to-start-automatically-after-a-crash-or-reboot-part-1-practical-examples
 
 [Unit]
 Description=Fail2Ban Service
