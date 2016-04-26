@@ -1,3 +1,9 @@
+# For Ubuntu 16.04 LTS
+# Copy fail2ban-source/files/fail2ban.service to /lib/systemd/system/
+# sudo chown root:root /lib/systemd/system/fail2ban.service
+# sudo systemctl start fail2ban
+# Reference: https://wiki.ubuntu.com/SystemdForUpstartUsers
+
 [Unit]
 Description=Fail2Ban Service
 Documentation=man:fail2ban(1)
@@ -6,9 +12,9 @@ PartOf=iptables.service firewalld.service
 
 [Service]
 Type=forking
-ExecStart=/usr/bin/fail2ban-client -x start
-ExecStop=/usr/bin/fail2ban-client stop
-ExecReload=/usr/bin/fail2ban-client reload
+ExecStart=/usr/local/bin/fail2ban-client -x start
+ExecStop=/usr/local/bin/fail2ban-client stop
+ExecReload=/usr/local/bin/fail2ban-client reload
 PIDFile=/var/run/fail2ban/fail2ban.pid
 Restart=always
 
