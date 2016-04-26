@@ -7,7 +7,7 @@
 # Restart systemd daemon: sudo systemctl daemon-reload
 # Restart fail2ban service: sudo systemctl restart fail2ban
 # Reference: https://wiki.ubuntu.com/SystemdForUpstartUsers
-# https://www.digitalocean.com/community/tutorials/how-to-configure-a-linux-service-to-start-automatically-after-a-crash-or-reboot-part-1-practical-examples
+# Reference: https://www.digitalocean.com/community/tutorials/how-to-configure-a-linux-service-to-start-automatically-after-a-crash-or-reboot-part-1-practical-examples
 
 [Unit]
 Description=Fail2Ban Service
