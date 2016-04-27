@@ -28,7 +28,7 @@ import unittest
 
 from ..server.banmanager import BanManager
 from ..server.ticket import BanTicket
-
+from .utils import assert_dict_equal
 
 class AddFailure(unittest.TestCase):
 	def setUp(self):
@@ -74,15 +74,10 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 
 	def testCymruInfo(self):
 		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
-		if "assertDictEqual" in dir(self):
-			self.assertDictEqual(cymru_info, {"asn": [self.__asn],
-											  "country": [self.__country],
-											  "rir": [self.__rir]})
-		else:
-			# Python 2.6 does not support assertDictEqual()
-			self.assertEqual(cymru_info["asn"], [self.__asn])
-			self.assertEqual(cymru_info["country"], [self.__country])
-			self.assertEqual(cymru_info["rir"], [self.__rir])
+		assert_dict_equal(cymru_info,
+						  {"asn": [self.__asn],
+						   "country": [self.__country],
+						   "rir": [self.__rir]})
 
 	def testCymruInfoASN(self):
 		self.assertEqual(
@@ -100,16 +95,24 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 			[self.__rir])
 
 	def testCymruInfoNxdomain(self):
-		ticket = BanTicket("10.0.0.0", 1167605999.0)
 		self.__banManager = BanManager()
+
+		# non-existing IP
+		ticket = BanTicket("0.0.0.0", 1167605999.0)
 		self.assertTrue(self.__banManager.addBanTicket(ticket))
 		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
-		if "assertDictEqual" in dir(self):
-			self.assertDictEqual(cymru_info, {"asn": ["nxdomain"],
-											  "country": ["nxdomain"],
-											  "rir": ["nxdomain"]})
-		else:
-			# Python 2.6 does not support assertDictEqual()
-			self.assertEqual(cymru_info["asn"], ["nxdomain"])
-			self.assertEqual(cymru_info["country"], ["nxdomain"])
-			self.assertEqual(cymru_info["rir"], ["nxdomain"])
+		assert_dict_equal(cymru_info,
+						  {"asn": ["nxdomain"],
+						   "country": ["nxdomain"],
+						   "rir": ["nxdomain"]})
+
+		# even for private IPs ASNs defined
+		# Since it outputs for all active tickets we would get previous results
+		# and new ones
+		ticket = BanTicket("10.0.0.0", 1167606000.0)
+		self.assertTrue(self.__banManager.addBanTicket(ticket))
+		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
+		assert_dict_equal(cymru_info,
+						  {"asn": ["nxdomain", "4565",],
+						   "country": ["nxdomain", "unknown"],
+						   "rir": ["nxdomain", "other"]})
