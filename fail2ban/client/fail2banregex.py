@@ -61,7 +61,7 @@ def debuggexURL(sample, regex):
 	q = urllib.urlencode({ 're': regex.replace('<HOST>', '(?&.ipv4)'),
 							'str': sample,
 							'flavor': 'python' })
-	return 'http://www.debuggex.com/?' + q
+	return 'https://www.debuggex.com/?' + q
 
 def output(args):
 	print(args)
