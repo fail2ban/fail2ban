@@ -389,7 +389,10 @@ class Server:
 			self.__loggingLock.acquire()
 			# set a format which is simpler for console use
 			formatter = logging.Formatter("%(asctime)s %(name)-24s[%(process)d]: %(levelname)-7s %(message)s")
-			if target == "SYSLOG":
+			if target == "SYSTEMD-JOURNAL":
+				from systemd.journal import JournalHandler
+				hdlr = JournalHandler(SYSLOG_IDENTIFIER='fail2ban')
+			elif target == "SYSLOG":
 				# Syslog daemons already add date to the message.
 				formatter = logging.Formatter("%(name)s[%(process)d]: %(levelname)s %(message)s")
 				facility = logging.handlers.SysLogHandler.LOG_DAEMON
@@ -438,9 +441,12 @@ class Server:
 					if (2,6,3) <= sys.version_info < (3,) or \
 							(3,2) <= sys.version_info:
 						raise
-			# tell the handler to use this format
-			hdlr.setFormatter(formatter)
+
+			if target != "SYSTEMD-JOURNAL":
+				# tell the handler to use this format
+				hdlr.setFormatter(formatter)
 			logger.addHandler(hdlr)
+
 			# Does not display this message at startup.
 			if not self.__logTarget is None:
 				logSys.info(
@@ -482,7 +488,7 @@ class Server:
 			self.__loggingLock.release()
 
 	def flushLogs(self):
-		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG']:
+		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG', 'SYSTEMD-JOURNAL']:
 			for handler in getLogger("fail2ban").handlers:
 				try:
 					handler.doRollover()
@@ -576,28 +582,6 @@ class Server:
 		else:
 			os._exit(0)		 # Exit parent of the first child.
 		
-		# Close all open files.  Try the system configuration variable, SC_OPEN_MAX,
-		# for the maximum number of open files to close.  If it doesn't exist, use
-		# the default value (configurable).
-		try:
-			maxfd = os.sysconf("SC_OPEN_MAX")
-		except (AttributeError, ValueError):
-			maxfd = 256	   # default maximum
-	
-		# urandom should not be closed in Python 3.4.0. Fixed in 3.4.1
-		# http://bugs.python.org/issue21207
-		if sys.version_info[0:3] == (3, 4, 0): # pragma: no cover
-			urandom_fd = os.open("/dev/urandom", os.O_RDONLY)
-			for fd in range(0, maxfd):
-				try:
-					if not os.path.sameopenfile(urandom_fd, fd):
-						os.close(fd)
-				except OSError:   # ERROR (ignore)
-					pass
-			os.close(urandom_fd)
-		else:
-			os.closerange(0, maxfd)
-	
 		# Redirect the standard file descriptors to /dev/null.
 		os.open("/dev/null", os.O_RDONLY)	# standard input (0)
 		os.open("/dev/null", os.O_RDWR)		# standard output (1)
