@@ -175,6 +175,6 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertTrue(fail2banRegex.start(opts, args))
 		self.assertLogged('Lines: 4 lines, 0 ignored, 2 matched, 2 missed')
 
-		self.assertLogged('http://')
+		self.assertLogged('https://')
 
 
