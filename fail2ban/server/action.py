@@ -415,7 +415,7 @@ class CommandAction(ActionBase):
 		environment is appropriate. If this check fails, `stop` and
 		`start` is executed prior to the check being called again.
 		"""
-		return self._actioncheck
+		return self._actioncheck6
 
 	@actioncheck6.setter
 	def actioncheck6(self, value):
@@ -601,7 +601,10 @@ class CommandAction(ActionBase):
 			self._logSys.debug("Nothing to do")
 			return True
 
-		checkCmd = self.replaceTag(self.actioncheck, self._properties)
+		actioncheck = self.actioncheck
+		if "ip" in aInfo and aInfo["ip"] and aInfo["ip"].isIPv6 and self.actioncheck6:
+			actioncheck = self.actioncheck6
+		checkCmd = self.replaceTag(actioncheck, self._properties)
 		if not self.executeCmd(checkCmd, self.timeout):
 			self._logSys.error(
 				"Invariant check failed. Trying to restore a sane environment")

@@ -109,6 +109,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(servertestcase.JailTests))
 	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
 	tests.addTest(unittest.makeSuite(servertestcase.LoggingTests))
+	tests.addTest(unittest.makeSuite(servertestcase.ServerConfigReaderTests))
 	tests.addTest(unittest.makeSuite(actiontestcase.CommandActionTest))
 	tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
 	# FailManager
@@ -285,6 +286,8 @@ class LogCaptureTestCase(unittest.TestCase):
 				return
 		raise AssertionError("All of the %r were found present in the log: %r" % (s, logged))
 
+	def pruneLog(self):
+		self._log.truncate(0)
 
 	def getLog(self):
 		return self._log.getvalue()
