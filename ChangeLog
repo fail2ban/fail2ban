@@ -6,7 +6,26 @@
 Fail2Ban: Changelog
 ===================
 
-ver. 0.9.4 (2015/XX/XXX) - wanna-be-released
+ver. 0.9.5 (2016/XX/XXX) - wanna-be-released
+-----------
+
+- Fixes:
+   * filter.d/monit.conf
+     - extended failregex with new monit "access denied" version (gh-1355);
+     - failregex of previous monit version merged as single expression.
+   * filter.d/postfix.conf, filter.d/postfix-sasl.conf
+     - extended failregex daemon part, matching also `postfix/smtps/smtpd` now (gh-1391)
+
+- New Features:
+   * New Actions:
+     - action.d/firewallcmd-rich-rules and action.d/firewallcmd-rich-logging (gh-1367)
+- Enhancements:
+   * journald journalmatch for pure-ftpd (gh-1362)
+   * Add additional regex filter for dovecot ldap authentication failures (gh-1370)
+   * added additional regex filters for exim (gh-1371)
+
+
+ver. 0.9.4 (2016/03/08) - for-you-ladies
 -----------
 
 - Fixes:

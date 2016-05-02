@@ -358,4 +358,11 @@ class LogCaptureTestCase(unittest.TestCase):
 	def printLog(self):
 		print(self._log.getvalue())
 
+
 pid_exists = Utils.pid_exists
+
+# Python 2.6 compatibility. in 2.7 assertDictEqual
+def assert_dict_equal(a, b):
+	assert isinstance(a, dict), "Object is not dictionary: %r" % a
+	assert isinstance(b, dict), "Object is not dictionary: %r" % b
+	assert a==b, "Dictionaries differ:\n%r !=\n%r" % (a, b)

@@ -32,3 +32,6 @@ Jan 31 13:55:24 xxx postfix/smtpd[3462]: NOQUEUE: reject: EHLO from s271272.stat
 
 # failJSON: { "time": "2005-01-31T13:55:24", "match": true , "host": "78.107.251.238" }
 Jan 31 13:55:24 xxx postfix-incoming/smtpd[3462]: NOQUEUE: reject: EHLO from s271272.static.corbina.ru[78.107.251.238]: 504 5.5.2 <User>: Helo command rejected: need fully-qualified hostname; proto=SMTP helo=<User>
+
+# failJSON: { "time": "2005-04-12T02:24:11", "match": true , "host": "62.138.2.143" }
+Apr 12 02:24:11 xxx postfix/smtps/smtpd[42]: NOQUEUE: reject: EHLO from astra4139.startdedicated.de[62.138.2.143]: 504 5.5.2 <User>: Helo command rejected: need fully-qualified hostname; proto=SMTP helo=<User>

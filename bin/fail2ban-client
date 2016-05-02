@@ -376,8 +376,10 @@ class Fail2banClient:
 			logSys.setLevel(logging.WARNING)
 		elif verbose == 2:
 			logSys.setLevel(logging.INFO)
-		else:
+		elif verbose == 3:
 			logSys.setLevel(logging.DEBUG)
+		else:
+			logSys.setLevel(logging.HEAVYDEBUG)
 		# Add the default logging handler to dump to stderr
 		logout = logging.StreamHandler(sys.stderr)
 		# set a format which is simpler for console use

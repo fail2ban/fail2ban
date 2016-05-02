@@ -40,6 +40,7 @@ except ImportError:
 from ..client import fail2banregex
 from ..client.fail2banregex import Fail2banRegex, get_opt_parser, output
 from .utils import LogCaptureTestCase, logSys
+from .utils import CONFIG_DIR
 
 
 fail2banregex.logSys = logSys
@@ -48,8 +49,6 @@ def _test_output(*args):
 
 fail2banregex.output = _test_output
 
-CONF_FILES_DIR = os.path.abspath(
-	os.path.join(os.path.dirname(__file__),"..", "..", "config"))
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
 
@@ -66,7 +65,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 	FILENAME_02 = os.path.join(TEST_FILES_DIR, "testcase02.log")
 	FILENAME_WRONGCHAR = os.path.join(TEST_FILES_DIR, "testcase-wrong-char.log")
 
-	FILTER_SSHD = os.path.join(CONF_FILES_DIR, 'filter.d', 'sshd.conf')
+	FILTER_SSHD = os.path.join(CONFIG_DIR, 'filter.d', 'sshd.conf')
 
 	def setUp(self):
 		"""Call before every test case."""
@@ -176,6 +175,6 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertTrue(fail2banRegex.start(opts, args))
 		self.assertLogged('Lines: 4 lines, 0 ignored, 2 matched, 2 missed')
 
-		self.assertLogged('http://')
+		self.assertLogged('https://')
 
 
