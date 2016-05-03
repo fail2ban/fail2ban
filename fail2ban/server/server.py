@@ -262,8 +262,13 @@ class Server:
 	def getIgnoreCommand(self, name):
 		return self.__jails[name].filter.getIgnoreCommand()
 
-	def addFailRegex(self, name, value):
-		self.__jails[name].filter.addFailRegex(value)
+	def addFailRegex(self, name, value, multiple=False):
+		flt = self.__jails[name].filter
+		if multiple:
+			for value in value:
+				flt.addFailRegex(value)
+		else:
+			flt.addFailRegex(value)
 	
 	def delFailRegex(self, name, index):
 		self.__jails[name].filter.delFailRegex(index)
@@ -271,8 +276,13 @@ class Server:
 	def getFailRegex(self, name):
 		return self.__jails[name].filter.getFailRegex()
 	
-	def addIgnoreRegex(self, name, value):
-		self.__jails[name].filter.addIgnoreRegex(value)
+	def addIgnoreRegex(self, name, value, multiple=False):
+		flt = self.__jails[name].filter
+		if multiple:
+			for value in value:
+				flt.addIgnoreRegex(value)
+		else:
+			flt.addIgnoreRegex(value)
 	
 	def delIgnoreRegex(self, name, index):
 		self.__jails[name].filter.delIgnoreRegex(index)
