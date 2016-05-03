@@ -190,11 +190,11 @@ class JailReader(ConfigReader):
 		 """
 
 		stream = []
-		for opt in self.__opts:
+		for opt, value in self.__opts.iteritems():
 			if opt == "logpath" and	\
 					self.__opts.get('backend', None) != "systemd":
 				found_files = 0
-				for path in self.__opts[opt].split("\n"):
+				for path in value.split("\n"):
 					path = path.rsplit(" ", 1)
 					path, tail = path if len(path) > 1 else (path[0], "head")
 					pathList = JailReader._glob(path)
@@ -208,32 +208,32 @@ class JailReader(ConfigReader):
 					raise ValueError(
 						"Have not found any log file for %s jail" % self.__name)
 			elif opt == "logencoding":
-				stream.append(["set", self.__name, "logencoding", self.__opts[opt]])
+				stream.append(["set", self.__name, "logencoding", value])
 			elif opt == "backend":
-				backend = self.__opts[opt]
+				backend = value
 			elif opt == "maxretry":
-				stream.append(["set", self.__name, "maxretry", self.__opts[opt]])
+				stream.append(["set", self.__name, "maxretry", value])
 			elif opt == "ignoreip":
-				for ip in splitcommaspace(self.__opts[opt]):
+				for ip in splitcommaspace(value):
 					stream.append(["set", self.__name, "addignoreip", ip])
 			elif opt == "findtime":
-				stream.append(["set", self.__name, "findtime", self.__opts[opt]])
+				stream.append(["set", self.__name, "findtime", value])
 			elif opt == "bantime":
-				stream.append(["set", self.__name, "bantime", self.__opts[opt]])
+				stream.append(["set", self.__name, "bantime", value])
 			elif opt == "usedns":
-				stream.append(["set", self.__name, "usedns", self.__opts[opt]])
-			elif opt == "failregex":
-				for regex in self.__opts[opt].split('\n'):
+				stream.append(["set", self.__name, "usedns", value])
+			elif opt in ("failregex", "ignoreregex"):
+				multi = []
+				for regex in value.split('\n'):
 					# Do not send a command if the rule is empty.
 					if regex != '':
-						stream.append(["set", self.__name, "addfailregex", regex])
+						multi.append(regex)
+				if len(multi) > 1:
+					stream.append(["multi-set", self.__name, "add" + opt, multi])
+				elif len(multi):
+					stream.append(["set", self.__name, "add" + opt, multi[0]])
 			elif opt == "ignorecommand":
-				stream.append(["set", self.__name, "ignorecommand", self.__opts[opt]])
-			elif opt == "ignoreregex":
-				for regex in self.__opts[opt].split('\n'):
-					# Do not send a command if the rule is empty.
-					if regex != '':
-						stream.append(["set", self.__name, "addignoreregex", regex])
+				stream.append(["set", self.__name, "ignorecommand", value])
 		if self.__filter:
 			stream.extend(self.__filter.convert())
 		for action in self.__actions:

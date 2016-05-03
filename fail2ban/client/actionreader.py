@@ -35,18 +35,18 @@ logSys = getLogger(__name__)
 
 class ActionReader(DefinitionInitConfigReader):
 
-	_configOpts = [
-		["string", "actionstart", None],
-		["string", "actionstart6", None],
-		["string", "actionstop", None],
-		["string", "actionstop6", None],
-		["string", "actioncheck", None],
-		["string", "actioncheck6", None],
-		["string", "actionban", None],
-		["string", "actionban6", None],
-		["string", "actionunban", None],
-		["string", "actionunban6", None],
-	]
+	_configOpts = {
+		"actionstart": ["string", None],
+		"actionstart6": ["string", None],
+		"actionstop": ["string", None],
+		"actionstop6": ["string", None],
+		"actioncheck": ["string", None],
+		"actioncheck6": ["string", None],
+		"actionban": ["string", None],
+		"actionban6": ["string", None],
+		"actionunban": ["string", None],
+		"actionunban6": ["string", None],
+	}
 
 	def __init__(self, file_, jailName, initOpts, **kwargs):
 		self._name = initOpts.get("actname", file_)
@@ -70,30 +70,16 @@ class ActionReader(DefinitionInitConfigReader):
 		head = ["set", self._jailName]
 		stream = list()
 		stream.append(head + ["addaction", self._name])
-		head.extend(["action", self._name])
-		for opt in self._opts:
-			if opt == "actionstart":
-				stream.append(head + ["actionstart", self._opts[opt]])
-			elif opt == "actionstart6":
-				stream.append(head + ["actionstart6", self._opts[opt]])
-			elif opt == "actionstop":
-				stream.append(head + ["actionstop", self._opts[opt]])
-			elif opt == "actionstop6":
-				stream.append(head + ["actionstop6", self._opts[opt]])
-			elif opt == "actioncheck":
-				stream.append(head + ["actioncheck", self._opts[opt]])
-			elif opt == "actioncheck6":
-				stream.append(head + ["actioncheck6", self._opts[opt]])
-			elif opt == "actionban":
-				stream.append(head + ["actionban", self._opts[opt]])
-			elif opt == "actionban6":
-				stream.append(head + ["actionban6", self._opts[opt]])
-			elif opt == "actionunban":
-				stream.append(head + ["actionunban", self._opts[opt]])
-			elif opt == "actionunban6":
-				stream.append(head + ["actionunban6", self._opts[opt]])
+		multi = []
+		for opt, optval in self._opts.iteritems():
+			if opt in self._configOpts:
+				multi.append([opt, optval])
 		if self._initOpts:
-			for p in self._initOpts:
-				stream.append(head + [p, self._initOpts[p]])
+			for opt, optval in self._initOpts.iteritems():
+				multi.append([opt, optval])
+		if len(multi) > 1:
+			stream.append(["multi-set", self._jailName, "action", self._name, multi])
+		elif len(multi):
+			stream.append(["set", self._jailName, "action", self._name] + multi[0])
 
 		return stream

@@ -1002,7 +1002,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						cmd[3] = os.path.join(TEST_FILES_DIR, 'logs', cmd[1])
 					# add dummy regex to prevent too long compile of all regexp (we don't use it in this test at all):
 					# [todo sebres] remove `not hasattr(unittest, 'F2B') or `, after merge with "f2b-perfom-prepare-716" ...
-					elif (not hasattr(unittest, 'F2B') or unittest.F2B.fast) and len(cmd) > 3 and cmd[0] == 'set' and cmd[2] == 'addfailregex':
+					elif (not hasattr(unittest, 'F2B') or unittest.F2B.fast) and (
+						len(cmd) > 3 and cmd[0] in ('set', 'multi-set') and cmd[2] == 'addfailregex'
+					):
+						cmd[0] = "set"
 						cmd[3] = "DUMMY-REGEX <HOST>"
 					# command to server, use cmdHandler direct instead of `transm.proceed(cmd)`:
 					try:
@@ -1036,7 +1039,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 
 			testJailsActions = (
 				('j-w-iptables-mp', 'iptables-multiport[name=%(__name__)s, bantime="600", port="http,https", protocol="tcp", chain="INPUT"]', {
-					'ip4': '`iptables ', 'ip6': '`ip6tables ',
+					'ip4': ('`iptables ',), 'ip6': ('`ip6tables ',),
 					'start': (
 						"`iptables -w -N f2b-j-w-iptables-mp`",
 						"`iptables -w -A f2b-j-w-iptables-mp -j RETURN`",
@@ -1073,7 +1076,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				('j-w-iptables-ap', 'iptables-allports[name=%(__name__)s, bantime="600", protocol="tcp", chain="INPUT"]', {
-					'ip4': '`iptables ', 'ip6': '`ip6tables ',
+					'ip4': ('`iptables ',), 'ip6': ('`ip6tables ',),
 					'start': (
 						"`iptables -w -N f2b-j-w-iptables-ap`",
 						"`iptables -w -A f2b-j-w-iptables-ap -j RETURN`",
@@ -1110,7 +1113,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, bantime="600", port="http", protocol="tcp", chain="INPUT"]', {
-					'ip4': ' f2b-j-w-iptables-ipset ', 'ip6': ' f2b-j-w-iptables-ipset6 ',
+					'ip4': (' f2b-j-w-iptables-ipset ',), 'ip6': (' f2b-j-w-iptables-ipset6 ',),
 					'start': (
 						"`ipset create f2b-j-w-iptables-ipset hash:ip timeout 600`",
 						"`iptables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`",
@@ -1174,22 +1177,22 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					logSys.debug('# === ban-ipv4 ==='); self.pruneLog()
 					action.ban({'ip': IPAddr('192.0.2.1')})
 					self.assertLogged(*tests['ip4-check']+tests['ip4-ban'], all=True)
-					self.assertNotLogged(tests['ip6'])
+					self.assertNotLogged(*tests['ip6'], all=True)
 					# test unban ip4 :
 					logSys.debug('# === unban ipv4 ==='); self.pruneLog()
 					action.unban({'ip': IPAddr('192.0.2.1')})
 					self.assertLogged(*tests['ip4-check']+tests['ip4-unban'], all=True)
-					self.assertNotLogged(tests['ip6'])
+					self.assertNotLogged(*tests['ip6'], all=True)
 					# test ban ip6 :
 					logSys.debug('# === ban ipv6 ==='); self.pruneLog()
 					action.ban({'ip': IPAddr('2001:DB8::')})
 					self.assertLogged(*tests['ip6-check']+tests['ip6-ban'], all=True)
-					self.assertNotLogged(tests['ip4'])
+					self.assertNotLogged(*tests['ip4'], all=True)
 					# test unban ip6 :
 					logSys.debug('# === unban ipv6 ==='); self.pruneLog()
 					action.unban({'ip': IPAddr('2001:DB8::')})
 					self.assertLogged(*tests['ip6-check']+tests['ip6-unban'], all=True)
-					self.assertNotLogged(tests['ip4'])
+					self.assertNotLogged(*tests['ip4'], all=True)
 					# test stop :
 					logSys.debug('# === stop ==='); self.pruneLog()
 					action.stop()

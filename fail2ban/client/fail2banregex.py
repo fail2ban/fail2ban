@@ -291,7 +291,14 @@ class Fail2banRegex(object):
 				RegexStat(m[3])
 				for m in filter(
 					lambda x: x[0] == 'set' and x[2] == "add%sregex" % regextype,
-					readercommands)]
+					readercommands)
+			] + [
+				RegexStat(m)
+				for mm in filter(
+					lambda x: x[0] == 'multi-set' and x[2] == "add%sregex" % regextype,
+					readercommands)
+				for m in mm[3]
+			]
 			# Read out and set possible value of maxlines
 			for command in readercommands:
 				if command[2] == "maxlines":

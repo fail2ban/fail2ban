@@ -264,7 +264,7 @@ class LogCaptureTestCase(unittest.TestCase):
 		----------
 		s : string or list/set/tuple of strings
 		  Test should succeed if string (or any of the listed) is present in the log
-		all : boolean, should find all in s
+		all : boolean (default False) if True should fail if any of s not logged
 		"""
 		logged = self._log.getvalue()
 		if not kwargs.get('all', False):
@@ -272,16 +272,15 @@ class LogCaptureTestCase(unittest.TestCase):
 			for s_ in s:
 				if s_ in logged:
 					return
-			# pragma: no cover
-			self.fail("None among %r was found in the log: ===\n%s===" % (s, logged))
+			if True: # pragma: no cover
+				self.fail("None among %r was found in the log: ===\n%s===" % (s, logged))
 		else:
 			# each entry should be found:
 			for s_ in s:
-				if s_ not in logged:
-					# pragma: no cover
+				if s_ not in logged: # pragma: no cover
 					self.fail("%r was not found in the log: ===\n%s===" % (s_, logged))
 
-	def assertNotLogged(self, *s):
+	def assertNotLogged(self, *s, **kwargs):
 		"""Assert that strings were not logged
 
 		Parameters
@@ -289,13 +288,19 @@ class LogCaptureTestCase(unittest.TestCase):
 		s : string or list/set/tuple of strings
 		  Test should succeed if the string (or at least one of the listed) is not
 		  present in the log
+		all : boolean (default False) if True should fail if any of s logged
 		"""
 		logged = self._log.getvalue()
-		for s_ in s:
-			if s_ not in logged:
-				return
-		# pragma: no cover
-		self.fail("All of the %r were found present in the log: ===\n%s===" % (s, logged))
+		if not kwargs.get('all', False):
+			for s_ in s:
+				if s_ not in logged:
+					return
+			if True: # pragma: no cover
+				self.fail("All of the %r were found present in the log: ===\n%s===" % (s, logged))
+		else:
+			for s_ in s:
+				if s_ in logged: # pragma: no cover
+					self.fail("%r was found in the log: ===\n%s===" % (s_, logged))
 
 	def pruneLog(self):
 		self._log.truncate(0)

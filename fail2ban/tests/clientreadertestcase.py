@@ -273,7 +273,15 @@ class JailReaderTest(LogCaptureTestCase):
 		# convert and get stream
 		stream = jail.convert()
 		# get action and retrieve agent from it, compare with agent saved in version:
-		act = [o for o in stream if len(o) > 4 and (o[4] == 'agent' or o[4].endswith('badips.py'))]
+		act = []
+		for cmd in stream:
+			if len(cmd) <= 4:
+				continue
+			# differentiate between set and multi-set (wrop it here to single set):
+			if cmd[0] == 'set' and (cmd[4] == 'agent' or cmd[4].endswith('badips.py')):
+				act.append(cmd)
+			elif cmd[0] == 'multi-set':
+				act.extend([['set'] + cmd[1:4] + o for o in cmd[4] if o[0] == 'agent'])
 		useragent = 'Fail2Ban/%s' % version
 		self.assertEqual(len(act), 4)
 		self.assertEqual(act[0], ['set', 'blocklisttest', 'action', 'blocklist_de', 'agent', useragent])
@@ -309,23 +317,21 @@ class FilterReaderTest(unittest.TestCase):
 		self.__share_cfg = {}
 
 	def testConvert(self):
-		output = [['set', 'testcase01', 'addfailregex',
+		output = [['multi-set', 'testcase01', 'addfailregex', [
 			"^\\s*(?:\\S+ )?(?:kernel: \\[\\d+\\.\\d+\\] )?(?:@vserver_\\S+ )"
 			"?(?:(?:\\[\\d+\\])?:\\s+[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?|"
 			"[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?(?:\\[\\d+\\])?:)?\\s*(?:"
-			"error: PAM: )?Authentication failure for .* from <HOST>\\s*$"],
-			['set', 'testcase01', 'addfailregex',
+			"error: PAM: )?Authentication failure for .* from <HOST>\\s*$",
 			"^\\s*(?:\\S+ )?(?:kernel: \\[\\d+\\.\\d+\\] )?(?:@vserver_\\S+ )"
 			"?(?:(?:\\[\\d+\\])?:\\s+[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?|"
 			"[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?(?:\\[\\d+\\])?:)?\\s*(?:"
 			"error: PAM: )?User not known to the underlying authentication mo"
-			"dule for .* from <HOST>\\s*$"],
-			['set', 'testcase01', 'addfailregex',
+			"dule for .* from <HOST>\\s*$",
 			"^\\s*(?:\\S+ )?(?:kernel: \\[\\d+\\.\\d+\\] )?(?:@vserver_\\S+ )"
 			"?(?:(?:\\[\\d+\\])?:\\s+[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?|"
 			"[\\[\\(]?sshd(?:\\(\\S+\\))?[\\]\\)]?:?(?:\\[\\d+\\])?:)?\\s*(?:"
 			"error: PAM: )?User not known to the\\nunderlying authentication."
-			"+$<SKIPLINES>^.+ module for .* from <HOST>\\s*$"],
+			"+$<SKIPLINES>^.+ module for .* from <HOST>\\s*$"]],
 			['set', 'testcase01', 'addignoreregex', 
 			"^.+ john from host 192.168.1.1\\s*$"],
 			['set', 'testcase01', 'addjournalmatch',
@@ -493,9 +499,11 @@ class JailsReaderTest(LogCaptureTestCase):
 		self.assertEqual(sorted(comm_commands),
 			sorted([['add', 'emptyaction', 'auto'],
 			 ['add', 'test-known-interp', 'auto'],
-			 ['set', 'test-known-interp', 'addfailregex', 'failure test 1 (filter.d/test.conf) <HOST>'],
-			 ['set', 'test-known-interp', 'addfailregex', 'failure test 2 (filter.d/test.local) <HOST>'],
-			 ['set', 'test-known-interp', 'addfailregex', 'failure test 3 (jail.local) <HOST>'],
+			 ['multi-set', 'test-known-interp', 'addfailregex', [
+			   'failure test 1 (filter.d/test.conf) <HOST>',
+			   'failure test 2 (filter.d/test.local) <HOST>',
+			   'failure test 3 (jail.local) <HOST>'
+			 ]],
 			 ['start', 'test-known-interp'],
 			 ['add', 'missinglogfiles', 'auto'],
 			 ['set', 'missinglogfiles', 'addfailregex', '<IP>'],
@@ -658,12 +666,16 @@ class JailsReaderTest(LogCaptureTestCase):
 						self.assertTrue('blocktype' in action._initOpts)
 						# Verify that we have a call to set it up
 						blocktype_present = False
-						target_command = ['set', jail_name, 'action', action_name, 'blocktype']
+						target_command = [jail_name, 'action', action_name]
 						for command in commands:
-							if (len(command) > 5 and
-								command[:5] == target_command):
-								blocktype_present = True
-								continue
+							if (len(command) > 4 and command[0] == 'multi-set' and
+								command[1:4] == target_command):
+									blocktype_present = ('blocktype' in [cmd[0] for cmd in command[4]])
+							elif (len(command) > 5 and command[0] == 'set' and
+								command[1:4] == target_command and command[4] == 'blocktype'): # pragma: no cover - because of multi-set
+									blocktype_present = True
+							if blocktype_present:
+								break
 						self.assertTrue(
 							blocktype_present,
 							msg="Found no %s command among %s"

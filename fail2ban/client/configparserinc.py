@@ -231,7 +231,7 @@ after = 1.conf
 								# save previous known values, for possible using in local interpolations later:
 								sk = {}
 								for k, v in s2.iteritems():
-									if not k.startswith('known/'):
+									if not k.startswith('known/') and k != '__name__':
 										sk['known/'+k] = v
 								s2.update(sk)
 								# merge section
@@ -256,7 +256,7 @@ after = 1.conf
 		alls = self.get_sections()
 		sk = {}
 		for k, v in options.iteritems():
-			if pref == '' or not k.startswith(pref):
+			if pref == '' or (not k.startswith(pref) and k != '__name__'):
 				sk[pref+k] = v
 		alls[section].update(sk)
 
