@@ -1033,13 +1033,16 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			return stream
 
 		def testCheckStockCommandActions(self):
-			server = TestServer()
-			transm = server._Server__transm
-			cmdHandler = transm._Transmitter__commandHandler
-
+			# test cases to check valid ipv4/ipv6 action definition, tuple with (('jail', 'action[params]', 'tests', ...)
+			# where tests is a dictionary contains:
+			#   'ip4' - should not be found (logged) on ban/unban of IPv6 (negative test),
+			#   'ip6' - should not be found (logged) on ban/unban of IPv4 (negative test),
+			#   'start', 'stop' - should be found (logged) on action start/stop,
+			#   etc.
 			testJailsActions = (
+				# iptables-multiport --
 				('j-w-iptables-mp', 'iptables-multiport[name=%(__name__)s, bantime="600", port="http,https", protocol="tcp", chain="INPUT"]', {
-					'ip4': ('`iptables ',), 'ip6': ('`ip6tables ',),
+					'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 					'start': (
 						"`iptables -w -N f2b-j-w-iptables-mp`",
 						"`iptables -w -A f2b-j-w-iptables-mp -j RETURN`",
@@ -1075,8 +1078,9 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						r"`ip6tables -w -D f2b-j-w-iptables-mp -s 2001:db8:: -j REJECT --reject-with icmp6-port-unreachable`",
 					),					
 				}),
+				# iptables-allports --
 				('j-w-iptables-ap', 'iptables-allports[name=%(__name__)s, bantime="600", protocol="tcp", chain="INPUT"]', {
-					'ip4': ('`iptables ',), 'ip6': ('`ip6tables ',),
+					'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 					'start': (
 						"`iptables -w -N f2b-j-w-iptables-ap`",
 						"`iptables -w -A f2b-j-w-iptables-ap -j RETURN`",
@@ -1112,6 +1116,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						r"`ip6tables -w -D f2b-j-w-iptables-ap -s 2001:db8:: -j REJECT --reject-with icmp6-port-unreachable`",
 					),					
 				}),
+				# iptables-ipset-proto6 --
 				('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, bantime="600", port="http", protocol="tcp", chain="INPUT"]', {
 					'ip4': (' f2b-j-w-iptables-ipset ',), 'ip6': (' f2b-j-w-iptables-ipset6 ',),
 					'start': (
@@ -1143,7 +1148,169 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						r"`ipset del f2b-j-w-iptables-ipset6 2001:db8:: -exist`",
 					),					
 				}),
+				# iptables-ipset-proto6-allports --
+				('j-w-iptables-ipset-ap', 'iptables-ipset-proto6-allports[name=%(__name__)s, bantime="600", chain="INPUT"]', {
+					'ip4': (' f2b-j-w-iptables-ipset-ap ',), 'ip6': (' f2b-j-w-iptables-ipset-ap6 ',),
+					'start': (
+						"`ipset create f2b-j-w-iptables-ipset-ap hash:ip timeout 600`",
+						"`iptables -w -I INPUT -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
+						"`ipset create f2b-j-w-iptables-ipset-ap6 hash:ip timeout 600 family inet6`",
+						"`ip6tables -w -I INPUT -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
+					),
+					'stop': (
+						"`iptables -w -D INPUT -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
+						"`ipset flush f2b-j-w-iptables-ipset-ap`",
+						"`ipset destroy f2b-j-w-iptables-ipset-ap`",
+						"`ip6tables -w -D INPUT -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
+						"`ipset flush f2b-j-w-iptables-ipset-ap6`",
+						"`ipset destroy f2b-j-w-iptables-ipset-ap6`",
+					),
+					'ip4-check': (),
+					'ip6-check': (),
+					'ip4-ban': (
+						r"`ipset add f2b-j-w-iptables-ipset-ap 192.0.2.1 timeout 600 -exist`",
+					),
+					'ip4-unban': (
+						r"`ipset del f2b-j-w-iptables-ipset-ap 192.0.2.1 -exist`",
+					),
+					'ip6-ban': (
+						r"`ipset add f2b-j-w-iptables-ipset-ap6 2001:db8:: timeout 600 -exist`",
+					),
+					'ip6-unban': (
+						r"`ipset del f2b-j-w-iptables-ipset-ap6 2001:db8:: -exist`",
+					),					
+				}),
+				# iptables --
+				('j-w-iptables', 'iptables[name=%(__name__)s, bantime="600", port="http", protocol="tcp", chain="INPUT"]', {
+					'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
+					'start': (
+						"`iptables -w -N f2b-j-w-iptables`",
+						"`iptables -w -A f2b-j-w-iptables -j RETURN`",
+						"`iptables -w -I INPUT -p tcp --dport http -j f2b-j-w-iptables`",
+						"`ip6tables -w -N f2b-j-w-iptables`",
+						"`ip6tables -w -A f2b-j-w-iptables -j RETURN`",
+						"`ip6tables -w -I INPUT -p tcp --dport http -j f2b-j-w-iptables`",
+					),
+					'stop': (
+						"`iptables -w -D INPUT -p tcp --dport http -j f2b-j-w-iptables`",
+						"`iptables -w -F f2b-j-w-iptables`",
+						"`iptables -w -X f2b-j-w-iptables`",
+						"`ip6tables -w -D INPUT -p tcp --dport http -j f2b-j-w-iptables`",
+						"`ip6tables -w -F f2b-j-w-iptables`",
+						"`ip6tables -w -X f2b-j-w-iptables`",
+					),
+					'ip4-check': (
+						r"""`iptables -w -n -L INPUT | grep -q 'f2b-j-w-iptables[ \t]'`""",
+					),
+					'ip6-check': (
+						r"""`ip6tables -w -n -L INPUT | grep -q 'f2b-j-w-iptables[ \t]'`""",
+					),
+					'ip4-ban': (
+						r"`iptables -w -I f2b-j-w-iptables 1 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
+					),
+					'ip4-unban': (
+						r"`iptables -w -D f2b-j-w-iptables -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
+					),
+					'ip6-ban': (
+						r"`ip6tables -w -I f2b-j-w-iptables 1 -s 2001:db8:: -j REJECT --reject-with icmp6-port-unreachable`",
+					),
+					'ip6-unban': (
+						r"`ip6tables -w -D f2b-j-w-iptables -s 2001:db8:: -j REJECT --reject-with icmp6-port-unreachable`",
+					),					
+				}),
+				# iptables-new --
+				('j-w-iptables-new', 'iptables-new[name=%(__name__)s, bantime="600", port="http", protocol="tcp", chain="INPUT"]', {
+					'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
+					'start': (
+						"`iptables -w -N f2b-j-w-iptables-new`",
+						"`iptables -w -A f2b-j-w-iptables-new -j RETURN`",
+						"`iptables -w -I INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`",
+						"`ip6tables -w -N f2b-j-w-iptables-new`",
+						"`ip6tables -w -A f2b-j-w-iptables-new -j RETURN`",
+						"`ip6tables -w -I INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`",
+					),
+					'stop': (
+						"`iptables -w -D INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`",
+						"`iptables -w -F f2b-j-w-iptables-new`",
+						"`iptables -w -X f2b-j-w-iptables-new`",
+						"`ip6tables -w -D INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`",
+						"`ip6tables -w -F f2b-j-w-iptables-new`",
+						"`ip6tables -w -X f2b-j-w-iptables-new`",
+					),
+					'ip4-check': (
+						r"""`iptables -w -n -L INPUT | grep -q 'f2b-j-w-iptables-new[ \t]'`""",
+					),
+					'ip6-check': (
+						r"""`ip6tables -w -n -L INPUT | grep -q 'f2b-j-w-iptables-new[ \t]'`""",
+					),
+					'ip4-ban': (
+						r"`iptables -w -I f2b-j-w-iptables-new 1 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
+					),
+					'ip4-unban': (
+						r"`iptables -w -D f2b-j-w-iptables-new -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
+					),
+					'ip6-ban': (
+						r"`ip6tables -w -I f2b-j-w-iptables-new 1 -s 2001:db8:: -j REJECT --reject-with icmp6-port-unreachable`",
+					),
+					'ip6-unban': (
+						r"`ip6tables -w -D f2b-j-w-iptables-new -s 2001:db8:: -j REJECT --reject-with icmp6-port-unreachable`",
+					),					
+				}),
+				# iptables-xt_recent-echo --
+				('j-w-iptables-xtre', 'iptables-xt_recent-echo[name=%(__name__)s, bantime="600", chain="INPUT"]', {
+					'ip4': ('`iptables ', '/f2b-j-w-iptables-xtre`'), 'ip6': ('`ip6tables ', '/f2b-j-w-iptables-xtre6`'),
+					'start': (
+						"`if [ `id -u` -eq 0 ];then iptables -w -I INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable;fi`",
+						"`if [ `id -u` -eq 0 ];then ip6tables -w -I INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable;fi`",
+					),
+					'stop': (
+						"`echo / > /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
+						"`if [ `id -u` -eq 0 ];then iptables -w -D INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable;fi`",
+						"`echo / > /proc/net/xt_recent/f2b-j-w-iptables-xtre6`",
+						"`if [ `id -u` -eq 0 ];then ip6tables -w -D INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable;fi`",
+					),
+					'ip4-check': (
+						r"`test -e /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
+					),
+					'ip6-check': (
+						r"`test -e /proc/net/xt_recent/f2b-j-w-iptables-xtre6`",
+					),
+					'ip4-ban': (
+						r"`echo +192.0.2.1 > /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
+					),
+					'ip4-unban': (
+						r"`echo -192.0.2.1 > /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
+					),
+					'ip6-ban': (
+						r"`echo +2001:db8:: > /proc/net/xt_recent/f2b-j-w-iptables-xtre6`",
+					),
+					'ip6-unban': (
+						r"`echo -2001:db8:: > /proc/net/xt_recent/f2b-j-w-iptables-xtre6`",
+					),					
+				}),
+				# pf --
+				('j-w-pf', 'pf[name=%(__name__)s]', {
+					'ip4': (), 'ip6': (),
+					'start': (
+						'`echo "table <f2b-j-w-pf> persist counters" | pfctl -f-`',
+ 						'`echo "block proto tcp from <f2b-j-w-pf> to any port any" | pfctl -f-`',
+					),
+					'stop': (
+						'`pfctl -sr 2>/dev/null | grep -v f2b-j-w-pf | pfctl -f-`',
+						'`pfctl -t f2b-j-w-pf -T flush`',
+						'`pfctl -t f2b-j-w-pf -T kill`',
+					),
+					'ip4-check': ("`pfctl -sr | grep -q f2b-j-w-pf`",),
+					'ip6-check': ("`pfctl -sr | grep -q f2b-j-w-pf`",),
+					'ip4-ban':   ("`pfctl -t f2b-j-w-pf -T add 192.0.2.1`",),
+					'ip4-unban': ("`pfctl -t f2b-j-w-pf -T delete 192.0.2.1`",),
+					'ip6-ban':   ("`pfctl -t f2b-j-w-pf -T add 2001:db8::`",),
+					'ip6-unban': ("`pfctl -t f2b-j-w-pf -T delete 2001:db8::`",),
+				}),
 			)
+			server = TestServer()
+			transm = server._Server__transm
+			cmdHandler = transm._Transmitter__commandHandler
 
 			for jail, act, tests in testJailsActions:
 				stream = self.getDefaultJailStream(jail, act)
