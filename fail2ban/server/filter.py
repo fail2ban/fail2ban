@@ -433,7 +433,7 @@ class Filter(JailThread):
 				logSys.debug("Ignore line since time %s < %s - %s", 
 					unixTime, MyTime.time(), self.getFindTime())
 				break
-			if self.inIgnoreIPList(ip.ntoa(), log_ignore=True):
+			if self.inIgnoreIPList(ip, log_ignore=True):
 				continue
 			logSys.info(
 				"[%s] Found %s - %s", self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
@@ -530,8 +530,7 @@ class Filter(JailThread):
 					try:
 						host = failRegex.getHost()
 						if returnRawHost:
-							ipaddr = IPAddr(host)
-							failList.append([failRegexIndex, ipaddr, date,
+							failList.append([failRegexIndex, IPAddr(host), date,
 								 failRegex.getMatchedLines()])
 							if not checkAllRegex:
 								break
@@ -539,9 +538,8 @@ class Filter(JailThread):
 							ipMatch = DNSUtils.textToIp(host, self.__useDns)
 							if ipMatch:
 								for ip in ipMatch:
-									ipaddr = IPAddr(ip)
-									failList.append([failRegexIndex, ipaddr, 
-										 date, failRegex.getMatchedLines()])
+									failList.append([failRegexIndex, ip, date,
+										 failRegex.getMatchedLines()])
 								if not checkAllRegex:
 									break
 					except RegexException, e: # pragma: no cover - unsure if reachable
