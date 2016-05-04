@@ -125,14 +125,14 @@ class TransmitterBase(unittest.TestCase):
 			self.transm.proceed(["get", jail, cmd]), (0, []))
 		for n, value in enumerate(values):
 			ret = self.transm.proceed(["set", jail, cmdAdd, value])
-			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(values[:n+1])))
+			self.assertEqual((ret[0], sorted(map(str, ret[1]))), (0, sorted(map(str, values[:n+1]))))
 			ret = self.transm.proceed(["get", jail, cmd])
-			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(values[:n+1])))
+			self.assertEqual((ret[0], sorted(map(str, ret[1]))), (0, sorted(map(str, values[:n+1]))))
 		for n, value in enumerate(values):
 			ret = self.transm.proceed(["set", jail, cmdDel, value])
-			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(values[n+1:])))
+			self.assertEqual((ret[0], sorted(map(str, ret[1]))), (0, sorted(map(str, values[n+1:]))))
 			ret = self.transm.proceed(["get", jail, cmd])
-			self.assertEqual((ret[0], sorted(ret[1])), (0, sorted(values[n+1:])))
+			self.assertEqual((ret[0], sorted(map(str, ret[1]))), (0, sorted(map(str, values[n+1:]))))
 
 	def jailAddDelRegexTest(self, cmd, inValues, outValues, jail):
 		cmdAdd = "add" + cmd

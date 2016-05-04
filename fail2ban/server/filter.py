@@ -375,6 +375,8 @@ class Filter(JailThread):
 	# @return True if IP address is in ignore list
 
 	def inIgnoreIPList(self, ip, log_ignore=False):
+		if isinstance(ip, basestring):
+			ip = IPAddr(ip)
 		for net in self.__ignoreIpList:
 			# if it isn't a valid IP address, try DNS resolution
 			if not net.isValidIP() and net.getRaw() != "":
@@ -394,7 +396,6 @@ class Filter(JailThread):
 			command = CommandAction.replaceTag(self.__ignoreCommand, { 'ip': ip } )
 			logSys.debug('ignore command: ' + command)
 			ret_ignore = CommandAction.executeCmd(command)
-
 			self.logIgnoreIp(ip, log_ignore and ret_ignore, ignore_source="command")
 			return ret_ignore
 
