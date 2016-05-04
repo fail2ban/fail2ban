@@ -72,6 +72,10 @@ class Ticket:
 			return False
 
 	def setIP(self, value):
+		# guarantee using IPAddr instead of unicode, str for the IP
+		if isinstance(value, basestring):
+			from .filter import IPAddr
+			value = IPAddr(value)
 		self.__ip = value
 	
 	def getIP(self):

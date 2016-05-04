@@ -307,18 +307,14 @@ class Filter(JailThread):
 		return self.__ignoreCommand
 
 	##
-	# create new IPAddr object from IP address string
-	def newIP(self, ipstr):
-		return IPAddr(ipstr)
-
-	##
 	# Ban an IP - http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
 	# Arturo 'Buanzo' Busleiman <buanzo@buanzo.com.ar>
 	#
 	# to enable banip fail2ban-client BAN command
 
-	def addBannedIP(self, ipstr):
-		ip = IPAddr(ipstr)
+	def addBannedIP(self, ip):
+		if not isinstance(ip, IPAddr):
+			ip = IPAddr(ip)
 		if self.inIgnoreIPList(ip):
 			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.' % ip)
 
@@ -358,11 +354,11 @@ class Filter(JailThread):
 		ip = IPAddr(s[0], s[1])
 
 		# log and append to ignore list
-		logSys.debug("Add " + ip + " to ignore list")
+		logSys.debug("Add %r to ignore list (%r, %r)", ip, s[0], s[1])
 		self.__ignoreIpList.append(ip)
 
 	def delIgnoreIP(self, ip):
-		logSys.debug("Remove " + ip + " from ignore list")
+		logSys.debug("Remove %r from ignore list", ip)
 		self.__ignoreIpList.remove(ip)
 
 	def logIgnoreIp(self, ip, log_ignore, ignore_source="unknown source"):
@@ -384,18 +380,9 @@ class Filter(JailThread):
 		if not isinstance(ip, IPAddr):
 			ip = IPAddr(ip)
 		for net in self.__ignoreIpList:
-			# if it isn't a valid IP address, try DNS resolution
-			if not net.isValidIP() and net.getRaw() != "":
-				# Check if IP in DNS
-				ips = DNSUtils.dnsToIp(net.getRaw())
-				if ip in ips:
-					self.logIgnoreIp(ip, log_ignore, ignore_source="dns")
-					return True
-				else:
-					continue
 			# check if the IP is covered by ignore IP
 			if ip.isInNet(net):
-				self.logIgnoreIp(ip, log_ignore, ignore_source="ip")
+				self.logIgnoreIp(ip, log_ignore, ignore_source=("ip" if net.isValidIP() else "dns"))
 				return True
 
 		if self.__ignoreCommand:
@@ -1006,8 +993,6 @@ from .utils import Utils
 
 class DNSUtils:
 
-	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
-
 	# todo: make configurable the expired time and max count of cache entries:
 	CACHE_nameToIp = Utils.Cache(maxCount=1000, maxTime=5*60)
 	CACHE_ipToName = Utils.Cache(maxCount=1000, maxTime=5*60)
@@ -1054,17 +1039,6 @@ class DNSUtils:
 		return v
 
 	@staticmethod
-	def searchIP(text):
-		""" Search if an IP address if directly available and return
-			it.
-		"""
-		match = DNSUtils.IP_CRE.match(text)
-		if match:
-			return match
-		else:
-			return None
-
-	@staticmethod
 	def isValidIP(string):
 		""" Return true if str is a valid IP
 		"""
@@ -1082,7 +1056,7 @@ class DNSUtils:
 		ipList = list()
 		# Search for plain IP
 		plainIP = IPAddr.searchIP(text)
-		if not plainIP is None:
+		if plainIP is not None:
 			ip = IPAddr(plainIP.group(0))
 			if ip.isValidIP():
 				ipList.append(ip)
@@ -1122,7 +1096,7 @@ class DNSUtils:
 #
 # This class contains methods for handling IPv4 and IPv6 addresses.
 
-class IPAddr:
+class IPAddr(object):
 	""" provide functions to handle IPv4 and IPv6 addresses 
 	"""
 
@@ -1136,8 +1110,22 @@ class IPAddr:
 	valid = False
 	raw = ""
 
+	# todo: make configurable the expired time and max count of cache entries:
+	CACHE_OBJ = Utils.Cache(maxCount=1000, maxTime=5*60)
+
+	def __new__(cls, ipstring, cidr=-1):
+		# already correct IPAddr
+		args = (ipstring, cidr)
+		ip = IPAddr.CACHE_OBJ.get(args)
+		if ip is not None:
+			return ip
+		ip = super(IPAddr, cls).__new__(cls)
+		ip.__init(ipstring, cidr)
+		IPAddr.CACHE_OBJ.set(args, ip)
+		return ip
+
 	# object methods
-	def __init__(self, ipstring, cidr=-1):
+	def __init(self, ipstring, cidr=-1):
 		""" initialize IP object by converting IP address string
 			to binary to integer
 		"""
@@ -1193,7 +1181,9 @@ class IPAddr:
 		return self.ntoa()
 
 	def __eq__(self, other):
-		other = other if isinstance(other, IPAddr) else IPAddr(other)
+		if not isinstance(other, IPAddr):
+			if other is None: return False
+			other = IPAddr(other)
 		if not self.valid and not other.valid: return self.raw == other.raw
 		if not self.valid or not other.valid: return False
 		if self.addr != other.addr: return False
@@ -1202,7 +1192,9 @@ class IPAddr:
 		return True
 
 	def __ne__(self, other):
-		other = other if isinstance(other, IPAddr) else IPAddr(other)
+		if not isinstance(other, IPAddr):
+			if other is None: return True
+			other = IPAddr(other)
 		if not self.valid and not other.valid: return self.raw != other.raw
 		if self.addr != other.addr: return True
 		if self.family != other.family: return True
@@ -1210,7 +1202,9 @@ class IPAddr:
 		return False
 
 	def __lt__(self, other):
-		other = other if isinstance(other, IPAddr) else IPAddr(other)
+		if not isinstance(other, IPAddr):
+			if other is None: return False
+			other = IPAddr(other)
 		return self.family < other.family or self.addr < other.addr
 
 	def __add__(self, other):
@@ -1220,7 +1214,9 @@ class IPAddr:
 		return "%s%s" % (other, self)
 
 	def __hash__(self):
-		return hash(self.addr)^hash((self.plen<<16)|self.family)
+		# should be the same as by string (because of possible compare with string):
+		return hash(self.ntoa())
+		#return hash(self.addr)^hash((self.plen<<16)|self.family)
 
 	def hexdump(self):
 		""" dump the ip address in as a hex sequence in
@@ -1302,6 +1298,11 @@ class IPAddr:
 		""" returns true if the IP object is in the provided
 			network (object)
 		"""
+		# if it isn't a valid IP address, try DNS resolution
+		if not net.isValidIP() and net.getRaw() != "":
+			# Check if IP in DNS
+			return self in DNSUtils.dnsToIp(net.getRaw())
+
 		if self.family != net.family:
 			return False
 
@@ -1318,18 +1319,27 @@ class IPAddr:
 
 		return False
 
+	@property
+	def maskplen(self):
+		plen = 0
+		if (hasattr(self, '_maskplen')):
+			return self._plen
+		maddr = self.addr
+		while maddr:
+			if not (maddr & 0x80000000):
+				raise ValueError("invalid mask %r, no plen representation" % (self.ntoa(),))
+			maddr = (maddr << 1) & 0xFFFFFFFFL
+			plen += 1
+		self._maskplen = plen
+		return plen
+
 		
 	@staticmethod
 	def masktoplen(maskstr):
 		""" converts mask string to prefix length
 			only used for IPv4 masks
 		"""
-		mask = IPAddr(maskstr)
-		plen = 0
-		while mask.addr:
-			mask.addr = (mask.addr << 1) & 0xFFFFFFFFL
-			plen += 1
-		return plen
+		return IPAddr(maskstr).maskplen
 
 
 	@staticmethod
