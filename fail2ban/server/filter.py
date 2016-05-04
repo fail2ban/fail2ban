@@ -375,7 +375,7 @@ class Filter(JailThread):
 	# @return True if IP address is in ignore list
 
 	def inIgnoreIPList(self, ip, log_ignore=False):
-		if isinstance(ip, basestring):
+		if not isinstance(ip, IPAddr):
 			ip = IPAddr(ip)
 		for net in self.__ignoreIpList:
 			# if it isn't a valid IP address, try DNS resolution
@@ -1037,7 +1037,10 @@ class DNSUtils:
 			return v
 		# retrieve name
 		try:
-			v = socket.gethostbyaddr(ip.ntoa())[0]
+			if not isinstance(ip, IPAddr):
+				v = socket.gethostbyaddr(ip)[0]
+			else:
+				v = socket.gethostbyaddr(ip.ntoa())[0]
 		except socket.error, e:
 			logSys.debug("Unable to find a name for the IP %s: %s", ip, e)
 			v = None

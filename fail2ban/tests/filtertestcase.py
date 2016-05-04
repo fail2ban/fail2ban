@@ -1314,9 +1314,9 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		res = DNSUtils.textToIp('www.example.com', 'no')
 		self.assertEqual(res, [])
 		res = DNSUtils.textToIp('www.example.com', 'warn')
-		self.assertEqual(res, ['93.184.216.34'])
+		self.assertEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
 		res = DNSUtils.textToIp('www.example.com', 'yes')
-		self.assertEqual(res, ['93.184.216.34'])
+		self.assertEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
 
 	def testTextToIp(self):
 		# Test hostnames
@@ -1328,7 +1328,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		for s in hostnames:
 			res = DNSUtils.textToIp(s, 'yes')
 			if s == 'www.example.com':
-				self.assertEqual(res, ['93.184.216.34'])
+				self.assertEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
 			else:
 				self.assertEqual(res, [])
 
