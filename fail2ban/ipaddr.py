@@ -130,10 +130,15 @@ class IPAddr:
 			self._raw = ipstring
 
 	def __repr__(self):
-		return self.ntoa
+		if self.isIPv4 and self.plen < 32:
+			return "%s/%d" % (self.ntoa, self.plen)
+		elif self.isIPv6 and self.plen < 128:
+			return "%s/%d" % (self.ntoa, self.plen)
+		else:
+			return self.ntoa
 
 	def __str__(self):
-		return self.ntoa
+		return self.__repr__()
 	
 	@property
 	def addr(self):
