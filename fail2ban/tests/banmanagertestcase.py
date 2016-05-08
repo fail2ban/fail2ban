@@ -29,6 +29,8 @@ import unittest
 from ..server.banmanager import BanManager
 from ..server.ticket import BanTicket
 from .utils import assert_dict_equal
+from ..ipaddr import IPAddr
+
 
 class AddFailure(unittest.TestCase):
 	def setUp(self):

@@ -43,6 +43,7 @@ from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
 from ..helpers import getLogger
+from ..ipaddr import iparg
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -178,6 +179,7 @@ class Actions(JailThread, Mapping):
 	def getBanTime(self):
 		return self.__banManager.getBanTime()
 
+	@iparg
 	def removeBannedIP(self, ip):
 		"""Removes banned IP calling actions' unban method
 

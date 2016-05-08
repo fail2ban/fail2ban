@@ -32,6 +32,7 @@ else:
 	from urllib import urlencode
 
 from fail2ban.server.actions import ActionBase
+from fail2ban.server.filter import IPAddr
 
 
 class BadIPsAction(ActionBase):
@@ -259,7 +260,7 @@ class BadIPsAction(ActionBase):
 		for ip in ips:
 			try:
 				self._jail.actions[self.banaction].ban({
-					'ip': ip,
+					'ip': IPAddr(ip),
 					'failures': 0,
 					'matches': "",
 					'ipmatches': "",
@@ -280,7 +281,7 @@ class BadIPsAction(ActionBase):
 		for ip in ips:
 			try:
 				self._jail.actions[self.banaction].unban({
-					'ip': ip,
+					'ip': IPAddr(ip),
 					'failures': 0,
 					'matches': "",
 					'ipmatches': "",

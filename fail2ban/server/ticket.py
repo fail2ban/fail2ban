@@ -25,6 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from ..helpers import getLogger
+from ..ipaddr import iparg
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -32,6 +33,7 @@ logSys = getLogger(__name__)
 
 class Ticket:
 	
+	@iparg
 	def __init__(self, ip, time, matches=None):
 		"""Ticket constructor
 
@@ -48,7 +50,9 @@ class Ticket:
 
 	def __str__(self):
 		return "%s: ip=%s time=%s #attempts=%d matches=%r" % \
-			   (self.__class__.__name__.split('.')[-1], self.__ip, self.__time, self.__attempt, self.__matches)
+			   (self.__class__.__name__.split('.')[-1], 
+				self.__ip.ntoa, self.__time, self.__attempt, 
+				self.__matches)
 
 	def __repr__(self):
 		return str(self)
@@ -63,9 +67,6 @@ class Ticket:
 			return False
 
 	def setIP(self, value):
-		if isinstance(value, basestring):
-			# guarantee using regular str instead of unicode for the IP
-			value = str(value)
 		self.__ip = value
 	
 	def getIP(self):

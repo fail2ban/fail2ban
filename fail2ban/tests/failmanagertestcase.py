@@ -28,6 +28,7 @@ import unittest
 
 from ..server.failmanager import FailManager, FailManagerEmpty
 from ..server.ticket import FailTicket
+from ..server.filter import IPAddr
 
 
 class AddFailure(unittest.TestCase):
@@ -89,7 +90,7 @@ class AddFailure(unittest.TestCase):
 		#ticket = FailTicket('193.168.0.128', None)
 		ticket = self.__failManager.toBan()
 		self.assertEqual(ticket.getIP(), "193.168.0.128")
-		self.assertTrue(isinstance(ticket.getIP(), str))
+		self.assertTrue(isinstance(ticket.getIP(), IPAddr))
 
 		# finish with rudimentary tests of the ticket
 		# verify consistent str

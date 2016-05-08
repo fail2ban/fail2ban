@@ -30,6 +30,7 @@ import logging
 from .faildata import FailData
 from .ticket import FailTicket
 from ..helpers import getLogger
+from ..ipaddr import iparg
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -136,6 +137,7 @@ class FailManager:
 		finally:
 			self.__lock.release()
 	
+	@iparg
 	def __delFailure(self, ip):
 		if ip in self.__failList:
 			del self.__failList[ip]
