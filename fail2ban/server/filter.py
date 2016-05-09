@@ -1102,11 +1102,10 @@ class IPAddr(object):
 		for family in [socket.AF_INET, socket.AF_INET6]:
 			try:
 				binary = socket.inet_pton(family, ipstring)
-			except socket.error:
-				continue
-			else: 
 				self.valid = True
 				break
+			except socket.error:
+				continue
 
 		if self.valid and family == socket.AF_INET:
 			# convert host to network byte order
@@ -1178,9 +1177,13 @@ class IPAddr(object):
 		return self.family < other.family or self.addr < other.addr
 
 	def __add__(self, other):
+		if not isinstance(other, IPAddr):
+			other = IPAddr(other)
 		return "%s%s" % (self, other)
 
 	def __radd__(self, other):
+		if not isinstance(other, IPAddr):
+			other = IPAddr(other)
 		return "%s%s" % (other, self)
 
 	def __hash__(self):
