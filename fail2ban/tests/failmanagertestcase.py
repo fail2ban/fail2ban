@@ -28,7 +28,7 @@ import unittest
 
 from ..server import failmanager
 from ..server.failmanager import FailManager, FailManagerEmpty
-from ..server.filter import IPAddr
+from ..server.ipdns import IPAddr
 from ..server.ticket import FailTicket
 
 

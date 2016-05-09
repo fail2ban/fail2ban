@@ -32,7 +32,7 @@ import unittest
 from StringIO import StringIO
 
 from ..helpers import getLogger
-from ..server.filter import DNSUtils
+from ..server.ipdns import DNSUtils
 from ..server.mytime import MyTime
 from ..server.utils import Utils
 # for action_d.test_smtp :

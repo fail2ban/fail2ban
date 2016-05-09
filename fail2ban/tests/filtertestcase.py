@@ -38,8 +38,9 @@ except ImportError:
 
 from ..server.jail import Jail
 from ..server.filterpoll import FilterPoll
-from ..server.filter import Filter, FileFilter, FileContainer, DNSUtils, IPAddr
+from ..server.filter import Filter, FileFilter, FileContainer
 from ..server.failmanager import FailManagerEmpty
+from ..server.ipdns import DNSUtils, IPAddr
 from ..server.mytime import MyTime
 from ..server.utils import Utils
 from .utils import setUpMyTime, tearDownMyTime, mtimesleep, LogCaptureTestCase

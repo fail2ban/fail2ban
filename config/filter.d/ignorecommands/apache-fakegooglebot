@@ -14,7 +14,7 @@ def process_args(argv):
 
     ip = argv[1]
 
-    from fail2ban.server.filter import DNSUtils
+    from fail2ban.server.ipdns import DNSUtils
     if not DNSUtils.isValidIP(ip):
        sys.stderr.write("Argument must be a single valid IP. Got: %s\n"
                         % ip)
@@ -23,7 +23,7 @@ def process_args(argv):
 
 def is_googlebot(ip):
     import re
-    from fail2ban.server.filter import DNSUtils
+    from fail2ban.server.ipdns import DNSUtils
 
     host = DNSUtils.ipToName(ip)
     if not host or not re.match('.*\.google(bot)?\.com$', host):
