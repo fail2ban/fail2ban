@@ -343,19 +343,11 @@ class Filter(JailThread):
 		# An empty string is always false
 		if ipstr == "":
 			return
-		s = ipstr.split('/', 1)
-		# IP address without CIDR mask
-		if len(s) == 1:
-			s.insert(1, -1) # <0 means no CIDR
-		elif "." in s[1]: # 255.255.255.0 style mask
-			s[1] = IPAddr.masktoplen(s[1])
-		s[1] = long(s[1])
-		
 		# Create IP address object
-		ip = IPAddr(s[0], s[1])
+		ip = IPAddr(ipstr)
 
 		# log and append to ignore list
-		logSys.debug("Add %r to ignore list (%r, %r)", ip, s[0], s[1])
+		logSys.debug("Add %r to ignore list (%r)", ip, ipstr)
 		self.__ignoreIpList.append(ip)
 
 	def delIgnoreIP(self, ip):

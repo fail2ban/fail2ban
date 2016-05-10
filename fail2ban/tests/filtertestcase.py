@@ -1446,6 +1446,17 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		# compare with string direct:
 		self.assertEqual(d, d2)
 
+	def testIPAddr_CIDR(self):
+		self.assertEqual(str(IPAddr('93.184.0.1', 24)), '93.184.0.0/24')
+		self.assertEqual(str(IPAddr('192.168.1.0/255.255.255.128')), '192.168.1.0/25')
+		self.assertEqual(IPAddr('93.184.0.1', 24).ntoa, '93.184.0.0/24')
+		self.assertEqual(IPAddr('192.168.1.0/255.255.255.128').ntoa, '192.168.1.0/25')
+
+		self.assertEqual(str(IPAddr('2606:2800:220:1:248:1893:25c8::', 120)), '2606:2800:220:1:248:1893:25c8:0/120')
+		self.assertEqual(IPAddr('2606:2800:220:1:248:1893:25c8::', 120).ntoa, '2606:2800:220:1:248:1893:25c8:0/120')
+		self.assertEqual(str(IPAddr('2606:2800:220:1:248:1893:25c8:0/120')), '2606:2800:220:1:248:1893:25c8:0/120')
+		self.assertEqual(IPAddr('2606:2800:220:1:248:1893:25c8:0/120').ntoa, '2606:2800:220:1:248:1893:25c8:0/120')
+
 	def testIPAddr_CompareDNS(self):
 		ips = IPAddr('example.com')
 		self.assertTrue(IPAddr("93.184.216.34").isInNet(ips))
