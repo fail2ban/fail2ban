@@ -139,6 +139,48 @@ class CommandActionTest(LogCaptureTestCase):
 			self.__action.replaceTag("abc",
 				CallingMap(matches=lambda: int("a"))), "abc")
 
+	def testReplaceTagConditionalCached(self):
+		setattr(self.__action, 'abc', "123")
+		setattr(self.__action, 'abc?family=inet4', "345")
+		setattr(self.__action, 'abc?family=inet6', "567")
+		setattr(self.__action, 'xyz', "890-<abc>")
+		setattr(self.__action, 'banaction', "Text <xyz> text <abc>")
+		# test replacement in sub tags and direct, conditional, cached:
+		cache = self.__action._substCache
+		for i in range(2):
+			self.assertEqual(
+				self.__action.replaceTag("<banaction>", self.__action._properties, 
+					conditional="", cache=cache),
+				"Text 890-123 text 123")
+			self.assertEqual(
+				self.__action.replaceTag("<banaction>", self.__action._properties, 
+					conditional="family=inet4", cache=cache),
+				"Text 890-345 text 345")
+			self.assertEqual(
+				self.__action.replaceTag("<banaction>", self.__action._properties, 
+					conditional="family=inet6", cache=cache),
+				"Text 890-567 text 567")
+		self.assertEqual(len(cache) if cache is not None else -1, 3)
+		# set one parameter - internal properties and cache should be reseted:
+		setattr(self.__action, 'xyz', "000-<abc>")
+		self.assertEqual(len(cache) if cache is not None else -1, 0)
+		# test againg, should have 000 instead of 890:
+		for i in range(2):
+			self.assertEqual(
+				self.__action.replaceTag("<banaction>", self.__action._properties, 
+					conditional="", cache=cache),
+				"Text 000-123 text 123")
+			self.assertEqual(
+				self.__action.replaceTag("<banaction>", self.__action._properties, 
+					conditional="family=inet4", cache=cache),
+				"Text 000-345 text 345")
+			self.assertEqual(
+				self.__action.replaceTag("<banaction>", self.__action._properties, 
+					conditional="family=inet6", cache=cache),
+				"Text 000-567 text 567")
+		self.assertEqual(len(cache), 3)
+
+
 	def testExecuteActionBan(self):
 		self.__action.actionstart = "touch /tmp/fail2ban.test"
 		self.assertEqual(self.__action.actionstart, "touch /tmp/fail2ban.test")
