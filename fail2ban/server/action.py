@@ -32,6 +32,7 @@ import time
 from abc import ABCMeta
 from collections import MutableMapping
 
+from .ipdns import asip
 from .utils import Utils
 from ..helpers import getLogger
 
@@ -41,6 +42,11 @@ logSys = getLogger(__name__)
 # Create a lock for running system commands
 _cmd_lock = threading.Lock()
 
+# Todo: make it configurable resp. automatically set, ex.: `[ -f /proc/net/if_inet6 ] && echo 'yes' || echo 'no'`:
+allowed_ipv6 = True
+
+# compiled RE for tag name (replacement name) 
+TAG_CRE = re.compile(r'<([^ <>]+)>')
 
 class CallingMap(MutableMapping):
 	"""A Mapping type which returns the result of callable values.
@@ -256,14 +262,18 @@ class CommandAction(ActionBase):
 		Replace the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
-		if (self._properties and
-			not self.substituteRecursiveTags(self._properties)):
-			self._logSys.error(
-				"properties contain self referencing definitions "
-				"and cannot be resolved")
-			raise RuntimeError("Error starting action")
-		startCmd = self.replaceTag(self.actionstart, self._properties)
-		if not self.executeCmd(startCmd, self.timeout):
+		# check valid tags in properties (raises ValueError if self recursion, etc.):
+		if self._properties:
+			self.substituteRecursiveTags(self._properties)
+		# common (resp. ipv4):
+		startCmd = self.replaceTag('<actionstart>', self._properties, conditional='family=inet4')
+		res = self.executeCmd(startCmd, self.timeout)
+		# start ipv6 actions if available:
+		if allowed_ipv6:
+			startCmd6 = self.replaceTag('<actionstart>', self._properties, conditional='family=inet6')
+			if startCmd6 != startCmd:
+				res &= self.executeCmd(startCmd6, self.timeout)
+		if not res:
 			raise RuntimeError("Error starting action")
 
 	@property
@@ -289,7 +299,7 @@ class CommandAction(ActionBase):
 			Dictionary which includes information in relation to
 			the ban.
 		"""
-		if not self._processCmd(self.actionban, aInfo):
+		if not self._processCmd('<actionban>', aInfo):
 			raise RuntimeError("Error banning %(ip)s" % aInfo)
 
 	@property
@@ -315,7 +325,7 @@ class CommandAction(ActionBase):
 			Dictionary which includes information in relation to
 			the ban.
 		"""
-		if not self._processCmd(self.actionunban, aInfo):
+		if not self._processCmd('<actionunban>', aInfo):
 			raise RuntimeError("Error unbanning %(ip)s" % aInfo)
 
 	@property
@@ -350,12 +360,19 @@ class CommandAction(ActionBase):
 		Replaces the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
-		stopCmd = self.replaceTag(self.actionstop, self._properties)
-		if not self.executeCmd(stopCmd, self.timeout):
+		# common (resp. ipv4):
+		stopCmd = self.replaceTag('<actionstop>', self._properties, conditional='family=inet4')
+		res = self.executeCmd(stopCmd, self.timeout)
+		# ipv6 actions if available:
+		if allowed_ipv6:
+			stopCmd6 = self.replaceTag('<actionstop>', self._properties, conditional='family=inet6')
+			if stopCmd6 != stopCmd:
+				res &= self.executeCmd(stopCmd6, self.timeout)
+		if not res:
 			raise RuntimeError("Error stopping action")
 
 	@classmethod
-	def substituteRecursiveTags(cls, tags):
+	def substituteRecursiveTags(cls, tags, conditional=''):
 		"""Sort out tag definitions within other tags.
 		Since v.0.9.2 supports embedded interpolation (see test cases for examples).
 
@@ -374,7 +391,7 @@ class CommandAction(ActionBase):
 			Dictionary of tags(keys) and their values, with tags
 			within the values recursively replaced.
 		"""
-		t = re.compile(r'<([^ <>]+)>')
+		t = TAG_CRE
 		# repeat substitution while embedded-recursive (repFlag is True)
 		while True:
 			repFlag = False
@@ -394,14 +411,21 @@ class CommandAction(ActionBase):
 					if found_tag == tag or found_tag in done:
 						# recursive definitions are bad
 						#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
-						return False
-					if found_tag in cls._escapedTags or not found_tag in tags:
+						raise ValueError(
+							"properties contain self referencing definitions "
+							"and cannot be resolved, fail tag: %s value: %s" % (tag, value))
+					repl = None
+					if found_tag not in cls._escapedTags:
+						repl = tags.get(found_tag + '?' + conditional)
+						if repl is None:
+							repl = tags.get(found_tag)
+					if repl is None:
 						# Escaped or missing tags - just continue on searching after end of match
 						# Missing tags are ok - cInfo can contain aInfo elements like <HOST> and valid shell
 						# constructs like <STDIN>.
 						m = t.search(value, m.end())
 						continue
-					value = value.replace('<%s>' % found_tag , tags[found_tag])
+					value = value.replace('<%s>' % found_tag, repl)
 					#logSys.log(5, 'value now: %s' % value)
 					done.append(found_tag)
 					m = t.search(value, m.start())
@@ -443,7 +467,7 @@ class CommandAction(ActionBase):
 		return value
 
 	@classmethod
-	def replaceTag(cls, query, aInfo):
+	def replaceTag(cls, query, aInfo, conditional=''):
 		"""Replaces tags in `query` with property values.
 
 		Parameters
@@ -459,7 +483,7 @@ class CommandAction(ActionBase):
 			`query` string with tags replaced.
 		"""
 		string = query
-		aInfo = cls.substituteRecursiveTags(aInfo)
+		aInfo = cls.substituteRecursiveTags(aInfo, conditional)
 		for tag in aInfo:
 			if "<%s>" % tag in query:
 				value = str(aInfo[tag])			  # assure string
@@ -469,10 +493,10 @@ class CommandAction(ActionBase):
 					value = cls.escapeTag(value)
 				string = string.replace('<' + tag + '>', value)
 		# New line
-		string = string.replace("<br>", '\n')
+		string = reduce(lambda s, kv: s.replace(*kv), (("<br>", '\n'), ("<sp>", " ")), string)
 		return string
 
-	def _processCmd(self, cmd, aInfo = None):
+	def _processCmd(self, cmd, aInfo=None, conditional=''):
 		"""Executes a command with preliminary checks and substitutions.
 
 		Before executing any commands, executes the "check" command first
@@ -496,7 +520,17 @@ class CommandAction(ActionBase):
 			self._logSys.debug("Nothing to do")
 			return True
 
-		checkCmd = self.replaceTag(self.actioncheck, self._properties)
+		if conditional == '':
+			conditional = 'family=inet4'
+			if allowed_ipv6:
+				try:
+					ip = aInfo["ip"]
+					if ip and asip(ip).isIPv6:
+						conditional = 'family=inet6'
+				except KeyError:
+					pass
+
+		checkCmd = self.replaceTag('<actioncheck>', self._properties, conditional=conditional)
 		if not self.executeCmd(checkCmd, self.timeout):
 			self._logSys.error(
 				"Invariant check failed. Trying to restore a sane environment")
@@ -506,14 +540,14 @@ class CommandAction(ActionBase):
 				self._logSys.critical("Unable to restore environment")
 				return False
 
+		# Replace static fields
+		realCmd = self.replaceTag(cmd, self._properties, conditional=conditional)
+
 		# Replace tags
-		if not aInfo is None:
-			realCmd = self.replaceTag(cmd, aInfo)
+		if aInfo is not None:
+			realCmd = self.replaceTag(realCmd, aInfo, conditional=conditional)
 		else:
 			realCmd = cmd
-
-		# Replace static fields
-		realCmd = self.replaceTag(realCmd, self._properties)
 
 		return self.executeCmd(realCmd, self.timeout)
 

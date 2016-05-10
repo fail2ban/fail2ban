@@ -54,12 +54,17 @@ class CommandActionTest(LogCaptureTestCase):
 			'xyz': "890 <ABC>",
 		}
 		# Recursion is bad
-		self.assertFalse(CommandAction.substituteRecursiveTags({'A': '<A>'}))
-		self.assertFalse(CommandAction.substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
-		self.assertFalse(CommandAction.substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
+		self.assertRaises(ValueError,
+			lambda: CommandAction.substituteRecursiveTags({'A': '<A>'}))
+		self.assertRaises(ValueError,
+			lambda: CommandAction.substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
+		self.assertRaises(ValueError,
+			lambda: CommandAction.substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
 		# Unresolveable substition
-		self.assertFalse(CommandAction.substituteRecursiveTags({'A': 'to=<B> fromip=<IP>', 'C': '<B>', 'B': '<C>', 'D': ''}))
-		self.assertFalse(CommandAction.substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP>', 'sweet': '<honeypot>', 'honeypot': '<sweet>', 'ignoreregex': ''}))
+		self.assertRaises(ValueError,
+			lambda: CommandAction.substituteRecursiveTags({'A': 'to=<B> fromip=<IP>', 'C': '<B>', 'B': '<C>', 'D': ''}))
+		self.assertRaises(ValueError,
+			lambda: CommandAction.substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP>', 'sweet': '<honeypot>', 'honeypot': '<sweet>', 'ignoreregex': ''}))
 		# missing tags are ok
 		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<C>'}), {'A': '<C>'})
 		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<C> <D> <X>','X':'fun'}), {'A': '<C> <D> fun', 'X':'fun'})
@@ -127,6 +132,7 @@ class CommandActionTest(LogCaptureTestCase):
 				CallingMap(matches=lambda: str(10))),
 			"09 10 11")
 
+	def testReplaceNoTag(self):
 		# As tag not present, therefore callable should not be called
 		# Will raise ValueError if it is
 		self.assertEqual(
