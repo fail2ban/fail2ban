@@ -201,8 +201,10 @@ class BeautifierTest(unittest.TestCase):
 			IPAddr("::ffff:10.0.2.1")
 		]
 		output = "These IP addresses/networks are ignored:\n"
-		output += "|- 127.0.0.0/8\n|- ::1\n"
-		output += "|- 2001:db8::/32\n`- 10.0.2.1"
+		output += "|- 127.0.0.0/8\n"
+		output += "|- ::1\n"
+		output += "|- 2001:db8::/32\n"
+		output += "`- 10.0.2.1"
 		self.assertEqual(self.b.beautify(response), output)
 
 	def testFailRegex(self):

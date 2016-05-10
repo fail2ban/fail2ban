@@ -1457,6 +1457,11 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertEqual(str(IPAddr('2606:2800:220:1:248:1893:25c8:0/120')), '2606:2800:220:1:248:1893:25c8:0/120')
 		self.assertEqual(IPAddr('2606:2800:220:1:248:1893:25c8:0/120').ntoa, '2606:2800:220:1:248:1893:25c8:0/120')
 
+	def testIPAddr_CIDR_Repr(self):
+		self.assertEqual(["127.0.0.0/8", "::/32", "2001:db8::/32"],
+			[IPAddr("127.0.0.0", 8), IPAddr("::1", 32), IPAddr("2001:db8::", 32)]
+		)
+
 	def testIPAddr_CompareDNS(self):
 		ips = IPAddr('example.com')
 		self.assertTrue(IPAddr("93.184.216.34").isInNet(ips))
