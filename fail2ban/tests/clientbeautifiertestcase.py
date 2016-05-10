@@ -25,7 +25,7 @@ import unittest
 
 from ..client.beautifier import Beautifier
 from ..version import version
-from ..ipaddr import IPAddr
+from ..server.ipdns import IPAddr
 
 class BeautifierTest(unittest.TestCase):
 
