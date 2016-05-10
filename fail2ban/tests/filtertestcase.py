@@ -1416,20 +1416,20 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertNotEqual(ip4[0], None)
 		self.assertTrue(ip4[0] is not None)
 		self.assertFalse(ip4[0] is None)
-		self.assertLess(ip4[0], ip4[1])
-		self.assertLess(ip4[1], ip4[2])
+		self.assertTrue(ip4[0] < ip4[1])
+		self.assertTrue(ip4[1] < ip4[2])
 		self.assertEqual(sorted(reversed(ip4)), ip4)
 		# ip6
 		self.assertNotEqual(ip6[0], None)
 		self.assertTrue(ip6[0] is not None)
 		self.assertFalse(ip6[0] is None)
-		self.assertLess(ip6[0], ip6[1])
-		self.assertLess(ip6[1], ip6[2])
+		self.assertTrue(ip6[0] < ip6[1])
+		self.assertTrue(ip6[1] < ip6[2])
 		self.assertEqual(sorted(reversed(ip6)), ip6)
 		# ip4 vs ip6
 		self.assertNotEqual(ip4[0], ip6[0])
-		self.assertLess(ip4[0], ip6[0])
-		self.assertLess(ip4[2], ip6[2])
+		self.assertTrue(ip4[0] < ip6[0])
+		self.assertTrue(ip4[2] < ip6[2])
 		self.assertEqual(sorted(reversed(ip4+ip6)), ip4+ip6)
 		# hashing (with string as key):
 		d={
