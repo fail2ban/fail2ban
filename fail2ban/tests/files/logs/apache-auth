@@ -8,6 +8,8 @@
 
 # failJSON: { "time": "2013-07-11T01:21:43", "match": true , "host": "194.228.20.113" } 
 [Thu Jul 11 01:21:43 2013] [error] [client 194.228.20.113] user dsfasdf not found: /
+# failJSON: { "time": "2013-07-11T01:21:44", "match": true , "host": "2606:2800:220:1:248:1893:25c8:1946" } 
+[Thu Jul 11 01:21:44 2013] [error] [client 2606:2800:220:1:248:1893:25c8:1946] user test-ipv6 not found: /
 
 # The failures below use the configuration described in fail2ban/tests/files/config/apache-auth
 #
@@ -56,6 +58,8 @@
 
 # failJSON: { "time": "2013-07-20T22:11:43", "match": true , "host": "127.0.0.1" } 
 [Sat Jul 20 22:11:43.147674 2013] [authz_owner:error] [pid 17540:tid 140122922129152] [client 127.0.0.1:51548] AH01637: Authorization of user username to access /basic/authz_owner/cant_get_me.html failed, reason: file owner dan does not match
+# failJSON: { "time": "2013-07-20T22:11:44", "match": true , "host": "2606:2800:220:1:248:1893:25c8:1946" } 
+[Sat Jul 20 22:11:44.147674 2013] [authz_owner:error] [pid 17540:tid 140122922129152] [client [2606:2800:220:1:248:1893:25c8:1946]:51548] AH01637: Authorization of user test-ipv6 to access /basic/authz_owner/cant_get_me.html failed, reason: file owner dan does not match
 
 # wget --http-user=username --http-password=password http://localhost/basic/authz_owner/cant_get_me.html -O /dev/null
 # failJSON: { "time": "2013-07-20T21:42:44", "match": true , "host": "127.0.0.1" } 

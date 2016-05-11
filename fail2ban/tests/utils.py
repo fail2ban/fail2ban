@@ -32,7 +32,7 @@ import unittest
 from StringIO import StringIO
 
 from ..helpers import getLogger
-from ..server.filter import DNSUtils
+from ..server.ipdns import DNSUtils
 from ..server.mytime import MyTime
 from ..server.utils import Utils
 # for action_d.test_smtp :
@@ -101,6 +101,16 @@ def initTests(opts):
 		c.set('192.0.2.%s' % i, None)
 		c.set('198.51.100.%s' % i, None)
 		c.set('203.0.113.%s' % i, None)
+	if unittest.F2B.no_network: # pragma: no cover
+		# precache all wrong dns to ip's used in test cases:
+		c = DNSUtils.CACHE_nameToIp
+		for i in (
+			('999.999.999.999', []),
+			('abcdef.abcdef', []),
+			('192.168.0.', []),
+			('failed.dns.ch', []),
+		):
+			c.set(*i)
 
 
 def mtimesleep():
@@ -133,6 +143,7 @@ def gatherTests(regexps=None, opts=None):
 	# Import all the test cases here instead of a module level to
 	# avoid circular imports
 	from . import banmanagertestcase
+	from . import clientbeautifiertestcase
 	from . import clientreadertestcase
 	from . import tickettestcase
 	from . import failmanagertestcase
@@ -173,6 +184,7 @@ def gatherTests(regexps=None, opts=None):
 	tests.addTest(unittest.makeSuite(servertestcase.JailTests))
 	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
 	tests.addTest(unittest.makeSuite(servertestcase.LoggingTests))
+	tests.addTest(unittest.makeSuite(servertestcase.ServerConfigReaderTests))
 	tests.addTest(unittest.makeSuite(actiontestcase.CommandActionTest))
 	tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
 	# Ticket, BanTicket, FailTicket
@@ -187,6 +199,10 @@ def gatherTests(regexps=None, opts=None):
 		tests.addTest(unittest.makeSuite(banmanagertestcase.StatusExtendedCymruInfo))
 	except ImportError: # pragma: no cover
 		pass
+	
+	# ClientBeautifier
+	tests.addTest(unittest.makeSuite(clientbeautifiertestcase.BeautifierTest))
+
 	# ClientReaders
 	tests.addTest(unittest.makeSuite(clientreadertestcase.ConfigReaderTest))
 	tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
@@ -319,7 +335,7 @@ class LogCaptureTestCase(unittest.TestCase):
 	def _is_logged(self, s):
 		return s in self._log.getvalue()
 
-	def assertLogged(self, *s):
+	def assertLogged(self, *s, **kwargs):
 		"""Assert that one of the strings was logged
 
 		Preferable to assertTrue(self._is_logged(..)))
@@ -329,14 +345,23 @@ class LogCaptureTestCase(unittest.TestCase):
 		----------
 		s : string or list/set/tuple of strings
 		  Test should succeed if string (or any of the listed) is present in the log
+		all : boolean (default False) if True should fail if any of s not logged
 		"""
 		logged = self._log.getvalue()
-		for s_ in s:
-			if s_ in logged:
-				return
-		raise AssertionError("None among %r was found in the log: %r" % (s, logged))
+		if not kwargs.get('all', False):
+			# at least one entry should be found:
+			for s_ in s:
+				if s_ in logged:
+					return
+			if True: # pragma: no cover
+				self.fail("None among %r was found in the log: ===\n%s===" % (s, logged))
+		else:
+			# each entry should be found:
+			for s_ in s:
+				if s_ not in logged: # pragma: no cover
+					self.fail("%r was not found in the log: ===\n%s===" % (s_, logged))
 
-	def assertNotLogged(self, *s):
+	def assertNotLogged(self, *s, **kwargs):
 		"""Assert that strings were not logged
 
 		Parameters
@@ -344,13 +369,22 @@ class LogCaptureTestCase(unittest.TestCase):
 		s : string or list/set/tuple of strings
 		  Test should succeed if the string (or at least one of the listed) is not
 		  present in the log
+		all : boolean (default False) if True should fail if any of s logged
 		"""
 		logged = self._log.getvalue()
-		for s_ in s:
-			if s_ not in logged:
-				return
-		raise AssertionError("All of the %r were found present in the log: %r" % (s, logged))
+		if not kwargs.get('all', False):
+			for s_ in s:
+				if s_ not in logged:
+					return
+			if True: # pragma: no cover
+				self.fail("All of the %r were found present in the log: ===\n%s===" % (s, logged))
+		else:
+			for s_ in s:
+				if s_ in logged: # pragma: no cover
+					self.fail("%r was found in the log: ===\n%s===" % (s_, logged))
 
+	def pruneLog(self):
+		self._log.truncate(0)
 
 	def getLog(self):
 		return self._log.getvalue()

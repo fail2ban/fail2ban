@@ -164,6 +164,7 @@ fail2ban/client/jailreader.py
 fail2ban/client/jailsreader.py
 fail2ban/exceptions.py
 fail2ban/helpers.py
+fail2ban/ipdns.py
 fail2ban/__init__.py
 fail2ban/protocol.py
 fail2ban/server/action.py
@@ -200,6 +201,7 @@ fail2ban/tests/actionstestcase.py
 fail2ban/tests/actiontestcase.py
 fail2ban/tests/banmanagertestcase.py
 fail2ban/tests/clientreadertestcase.py
+fail2ban/tests/clientbeautifiertestcase.py
 fail2ban/tests/config/action.d/brokenaction.conf
 fail2ban/tests/config/fail2ban.conf
 fail2ban/tests/config/filter.d/simple.conf

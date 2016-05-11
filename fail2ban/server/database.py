@@ -411,18 +411,19 @@ class Fail2BanDb(object):
 		ticket : BanTicket
 			Ticket of the ban to be added.
 		"""
+		ip = str(ticket.getIP())
 		try:
-			del self._bansMergedCache[(ticket.getIP(), jail)]
+			del self._bansMergedCache[(ip, jail)]
 		except KeyError:
 			pass
 		try:
-			del self._bansMergedCache[(ticket.getIP(), None)]
+			del self._bansMergedCache[(ip, None)]
 		except KeyError:
 			pass
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
-			(jail.name, ticket.getIP(), int(round(ticket.getTime())),
+			(jail.name, ip, int(round(ticket.getTime())),
 				ticket.getData()))
 
 	@commitandrollback
@@ -436,7 +437,7 @@ class Fail2BanDb(object):
 		ip : str
 			IP to be removed.
 		"""
-		queryArgs = (jail.name, ip);
+		queryArgs = (jail.name, str(ip));
 		cur.execute(
 			"DELETE FROM bans WHERE jail = ? AND ip = ?", 
 			queryArgs);

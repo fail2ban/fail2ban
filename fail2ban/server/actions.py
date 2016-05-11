@@ -42,6 +42,7 @@ from .banmanager import BanManager
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
+from .filter import IPAddr
 from .utils import Utils
 from ..helpers import getLogger
 
@@ -188,8 +189,8 @@ class Actions(JailThread, Mapping):
 
 		Parameters
 		----------
-		ip : str
-			The IP address to unban
+		ip : str or IPAddr
+			The IP address  to unban
 
 		Raises
 		------

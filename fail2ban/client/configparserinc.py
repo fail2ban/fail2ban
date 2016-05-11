@@ -25,6 +25,7 @@ __copyright__ = 'Copyright (c) 2007 Yaroslav Halchenko'
 __license__ = 'GPL'
 
 import os
+import re
 import sys
 from ..helpers import getLogger
 
@@ -98,6 +99,8 @@ after = 1.conf
 	"""
 
 	SECTION_NAME = "INCLUDES"
+
+	CONDITIONAL_RE = re.compile(r"^(\w+)(\?.+)$")
 
 	if sys.version_info >= (3,2):
 		# overload constructor only for fancy new Python3's
@@ -225,21 +228,31 @@ after = 1.conf
 					# merge defaults and all sections to self:
 					alld.update(cfg.get_defaults())
 					for n, s in cfg.get_sections().iteritems():
-						if isinstance(s, dict):
-							s2 = alls.get(n)
-							if isinstance(s2, dict):
-								# save previous known values, for possible using in local interpolations later:
-								sk = {}
-								for k, v in s2.iteritems():
-									if not k.startswith('known/'):
-										sk['known/'+k] = v
-								s2.update(sk)
-								# merge section
-								s2.update(s)
-							else:
-								alls[n] = s.copy()
+						curalls = alls
+						# conditional sections
+						cond = SafeConfigParserWithIncludes.CONDITIONAL_RE.match(n)
+						if cond:
+							n, cond = cond.groups()
+							s = s.copy()
+							try: 
+								del(s['__name__'])
+							except KeyError:
+								pass
+							for k in s.keys():
+								v = s.pop(k)
+								s[k + cond] = v
+						s2 = alls.get(n)
+						if isinstance(s2, dict):
+							# save previous known values, for possible using in local interpolations later:
+							sk = {}
+							for k, v in s2.iteritems():
+								if not k.startswith('known/') and k != '__name__':
+									sk['known/'+k] = v
+							s2.update(sk)
+							# merge section
+							s2.update(s)
 						else:
-							alls[n] = s
+							alls[n] = s.copy()
 
 			return ret
 
@@ -254,9 +267,12 @@ after = 1.conf
 
 	def merge_section(self, section, options, pref='known/'):
 		alls = self.get_sections()
+		if pref == '':
+			alls[section].update(options)
+			return
 		sk = {}
 		for k, v in options.iteritems():
-			if pref == '' or not k.startswith(pref):
+			if not k.startswith(pref) and k != '__name__':
 				sk[pref+k] = v
 		alls[section].update(sk)
 

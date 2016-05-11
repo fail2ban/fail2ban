@@ -27,6 +27,7 @@ __license__ = "GPL"
 import sys
 
 from ..helpers import getLogger
+from .ipdns import IPAddr
 from .mytime import MyTime
 
 # Gets the instance of the logger.
@@ -72,9 +73,9 @@ class Ticket:
 			return False
 
 	def setIP(self, value):
+		# guarantee using IPAddr instead of unicode, str for the IP
 		if isinstance(value, basestring):
-			# guarantee using regular str instead of unicode for the IP
-			value = str(value)
+			value = IPAddr(value)
 		self.__ip = value
 	
 	def getIP(self):

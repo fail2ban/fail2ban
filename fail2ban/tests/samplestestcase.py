@@ -72,14 +72,21 @@ def testSampleRegexsFactory(name):
 		filterConf.getOptions({})
 
 		for opt in filterConf.convert():
-			if opt[2] == "addfailregex":
-				self.filter.addFailRegex(opt[3])
-			elif opt[2] == "maxlines":
-				self.filter.setMaxLines(opt[3])
-			elif opt[2] == "addignoreregex":
-				self.filter.addIgnoreRegex(opt[3])
-			elif opt[2] == "datepattern":
-				self.filter.setDatePattern(opt[3])
+			if opt[0] == 'multi-set':
+				optval = opt[3]
+			elif opt[0] == 'set':
+				optval = [opt[3]]
+			else:
+				continue
+			for optval in optval:
+				if opt[2] == "addfailregex":
+					self.filter.addFailRegex(optval)
+				elif opt[2] == "addignoreregex":
+					self.filter.addIgnoreRegex(optval)
+				elif opt[2] == "maxlines":
+					self.filter.setMaxLines(optval)
+				elif opt[2] == "datepattern":
+					self.filter.setDatePattern(optval)
 
 		self.assertTrue(
 			os.path.isfile(os.path.join(TEST_FILES_DIR, "logs", name)),
