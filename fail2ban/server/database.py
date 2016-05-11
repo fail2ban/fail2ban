@@ -163,6 +163,7 @@ class Fail2BanDb(object):
 
 
 	def __init__(self, filename, purgeAge=24*60*60):
+		self.maxEntries = 50
 		try:
 			self._lock = RLock()
 			self._db = sqlite3.connect(
@@ -218,7 +219,7 @@ class Fail2BanDb(object):
 
 	@purgeage.setter
 	def purgeage(self, value):
-		self._purgeAge = int(value)
+		self._purgeAge = MyTime.str2seconds(value)
 
 	@commitandrollback
 	def createDb(self, cur):
@@ -274,8 +275,12 @@ class Fail2BanDb(object):
 			Jail to be added to the database.
 		"""
 		cur.execute(
-			"INSERT OR REPLACE INTO jails(name, enabled) VALUES(?, 1)",
+			"INSERT OR IGNORE INTO jails(name, enabled) VALUES(?, 1)",
 			(jail.name,))
+		if cur.rowcount <= 0:
+			cur.execute(
+				"UPDATE jails SET enabled = 1 WHERE name = ? AND enabled != 1",
+				(jail.name,))
 
 	@commitandrollback
 	def delJail(self, cur, jail):
@@ -298,7 +303,7 @@ class Fail2BanDb(object):
 		cur.execute("UPDATE jails SET enabled=0")
 
 	@commitandrollback
-	def getJailNames(self, cur):
+	def getJailNames(self, cur, enabled=None):
 		"""Get name of jails in database.
 
 		Currently only used for testing purposes.
@@ -308,7 +313,11 @@ class Fail2BanDb(object):
 		set
 			Set of jail names.
 		"""
-		cur.execute("SELECT name FROM jails")
+		if enabled is None:
+			cur.execute("SELECT name FROM jails")
+		else:
+			cur.execute("SELECT name FROM jails WHERE enabled=%s" %
+				(int(enabled),))
 		return set(row[0] for row in cur.fetchmany())
 
 	@commitandrollback
@@ -414,8 +423,7 @@ class Fail2BanDb(object):
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
 			(jail.name, ticket.getIP(), int(round(ticket.getTime())),
-				{"matches": ticket.getMatches(),
-				 "failures": ticket.getAttempt()}))
+				ticket.getData()))
 
 	@commitandrollback
 	def delBan(self, cur, jail, ip):
@@ -447,7 +455,7 @@ class Fail2BanDb(object):
 		if ip is not None:
 			query += " AND ip=?"
 			queryArgs.append(ip)
-		query += " ORDER BY ip, timeofban"
+		query += " ORDER BY ip, timeofban desc"
 
 		return cur.execute(query, queryArgs)
 
@@ -473,8 +481,8 @@ class Fail2BanDb(object):
 		tickets = []
 		for ip, timeofban, data in self._getBans(**kwargs):
 			#TODO: Implement data parts once arbitrary match keys completed
-			tickets.append(FailTicket(ip, timeofban, data.get('matches')))
-			tickets[-1].setAttempt(data.get('failures', 1))
+			tickets.append(FailTicket(ip, timeofban))
+			tickets[-1].setData(data)
 		return tickets
 
 	def getBansMerged(self, ip=None, jail=None, bantime=None):
@@ -516,6 +524,7 @@ class Fail2BanDb(object):
 				prev_banip = results[0][0]
 				matches = []
 				failures = 0
+				tickdata = {}
 				for banip, timeofban, data in results:
 					#TODO: Implement data parts once arbitrary match keys completed
 					if banip != prev_banip:
@@ -526,11 +535,21 @@ class Fail2BanDb(object):
 						prev_banip = banip
 						matches = []
 						failures = 0
-					matches.extend(data.get('matches', []))
+						tickdata = {}
+					m = data.get('matches', [])
+					# pre-insert "maxadd" enries (because tickets are ordered desc by time)
+					maxadd = self.maxEntries - len(matches)
+					if maxadd > 0:
+						if len(m) <= maxadd:
+							matches = m + matches
+						else:
+							matches = m[-maxadd:] + matches
 					failures += data.get('failures', 1)
+					tickdata.update(data.get('data', {}))
 					prev_timeofban = timeofban
 				ticket = FailTicket(banip, prev_timeofban, matches)
 				ticket.setAttempt(failures)
+				ticket.setData(**tickdata)
 				tickets.append(ticket)
 
 			if cacheKey:

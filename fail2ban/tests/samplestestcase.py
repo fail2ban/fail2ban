@@ -64,7 +64,8 @@ def testSampleRegexsFactory(name):
 	def testFilter(self):
 
 		# Check filter exists
-		filterConf = FilterReader(name, "jail", {}, basedir=CONFIG_DIR)
+		filterConf = FilterReader(name, "jail", {}, 
+			basedir=CONFIG_DIR, share_config=unittest.F2B.share_config)
 		self.assertEqual(filterConf.getFile(), name)
 		self.assertEqual(filterConf.getJailName(), "jail")
 		filterConf.read()

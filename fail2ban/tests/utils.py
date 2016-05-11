@@ -23,6 +23,7 @@ __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import logging
+import optparse
 import os
 import re
 import sys
@@ -30,8 +31,13 @@ import time
 import unittest
 from StringIO import StringIO
 
-from ..server.mytime import MyTime
 from ..helpers import getLogger
+from ..server.filter import DNSUtils
+from ..server.mytime import MyTime
+from ..server.utils import Utils
+# for action_d.test_smtp :
+from ..server import asyncserver
+
 
 logSys = getLogger(__name__)
 
@@ -43,6 +49,58 @@ if not CONFIG_DIR:
 		CONFIG_DIR = 'config'
 	else:
 		CONFIG_DIR = '/etc/fail2ban'
+
+
+class F2B(optparse.Values):
+	def __init__(self, opts={}):
+		self.__dict__ = opts.__dict__ if opts else {
+			'fast': False, 'memory_db':False, 'no_gamin': False, 'no_network': False, 
+			"negate_re": False,
+		}
+		if self.fast:
+			self.memory_db = True
+			self.no_gamin = True
+		self.__dict__['share_config'] = {}
+	def SkipIfFast(self):
+		pass
+	def SkipIfNoNetwork(self):
+		pass
+	def maxWaitTime(self,wtime):
+		if self.fast:
+			wtime = float(wtime) / 10
+		return wtime
+
+
+def initTests(opts):
+	unittest.F2B = F2B(opts)
+	# --fast :
+	if unittest.F2B.fast: # pragma: no cover
+		# racy decrease default sleep intervals to test it faster 
+		# (prevent long sleeping during test cases ... less time goes to sleep):
+		Utils.DEFAULT_SLEEP_TIME = 0.0025
+		Utils.DEFAULT_SLEEP_INTERVAL = 0.0005
+		def F2B_SkipIfFast():
+			raise unittest.SkipTest('Skip test because of "--fast"')
+		unittest.F2B.SkipIfFast = F2B_SkipIfFast
+	else:
+		# sleep intervals are large - use replacement for sleep to check time to sleep:
+		_org_sleep = time.sleep
+		def _new_sleep(v):
+			if (v > Utils.DEFAULT_SLEEP_TIME): # pragma: no cover
+				raise ValueError('[BAD-CODE] To long sleep interval: %s, try to use conditional Utils.wait_for instead' % v)
+			_org_sleep(min(v, Utils.DEFAULT_SLEEP_TIME))
+		time.sleep = _new_sleep
+	# --no-network :
+	if unittest.F2B.no_network: # pragma: no cover
+		def F2B_SkipIfNoNetwork():
+			raise unittest.SkipTest('Skip test because of "--no-network"')
+		unittest.F2B.SkipIfNoNetwork = F2B_SkipIfNoNetwork
+	# precache all invalid ip's (TEST-NET-1, ..., TEST-NET-3 according to RFC 5737):
+	c = DNSUtils.CACHE_ipToName
+	for i in xrange(255):
+		c.set('192.0.2.%s' % i, None)
+		c.set('198.51.100.%s' % i, None)
+		c.set('203.0.113.%s' % i, None)
 
 
 def mtimesleep():
@@ -64,17 +122,19 @@ def setUpMyTime():
 
 def tearDownMyTime():
 	os.environ.pop('TZ')
-	if old_TZ:
+	if old_TZ: # pragma: no cover
 		os.environ['TZ'] = old_TZ
 	time.tzset()
 	MyTime.myTime = None
 
 
-def gatherTests(regexps=None, no_network=False):
+def gatherTests(regexps=None, opts=None):
+	initTests(opts)
 	# Import all the test cases here instead of a module level to
 	# avoid circular imports
 	from . import banmanagertestcase
 	from . import clientreadertestcase
+	from . import tickettestcase
 	from . import failmanagertestcase
 	from . import filtertestcase
 	from . import servertestcase
@@ -94,11 +154,16 @@ def gatherTests(regexps=None, no_network=False):
 			_regexps = [re.compile(r) for r in regexps]
 
 			def addTest(self, suite):
-				suite_str = str(suite)
-				for r in self._regexps:
-					if r.search(suite_str):
-						super(FilteredTestSuite, self).addTest(suite)
-						return
+				matched = []
+				for test in suite:
+					s = str(test)
+					for r in self._regexps:
+						m = r.search(s)
+						if (m if not opts.negate_re else not m):
+							matched.append(test)
+							break
+				for test in matched:
+					super(FilteredTestSuite, self).addTest(test)
 
 		tests = FilteredTestSuite()
 
@@ -110,14 +175,17 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(servertestcase.LoggingTests))
 	tests.addTest(unittest.makeSuite(actiontestcase.CommandActionTest))
 	tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
+	# Ticket, BanTicket, FailTicket
+	tests.addTest(unittest.makeSuite(tickettestcase.TicketTests))
 	# FailManager
 	tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
+	tests.addTest(unittest.makeSuite(failmanagertestcase.FailmanagerComplex))
 	# BanManager
 	tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
 	try:
 		import dns
 		tests.addTest(unittest.makeSuite(banmanagertestcase.StatusExtendedCymruInfo))
-	except ImportError:
+	except ImportError: # pragma: no cover
 		pass
 	# ClientReaders
 	tests.addTest(unittest.makeSuite(clientreadertestcase.ConfigReaderTest))
@@ -133,6 +201,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
 	tests.addTest(unittest.makeSuite(misctestcase.TestsUtilsTest))
 	tests.addTest(unittest.makeSuite(misctestcase.CustomDateFormatsTest))
+	tests.addTest(unittest.makeSuite(misctestcase.MyTimeTest))
 	# Database
 	tests.addTest(unittest.makeSuite(databasetestcase.DatabaseTest))
 
@@ -142,10 +211,11 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFileFilterPoll))
-	if not no_network:
-		tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIPDNS))
-		tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
-		tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
+	# each test case class self will check no network, and skip it (we see it in log)
+	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIPDNS))
+	tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
+	tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
+	tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsNetworkTests))
 	tests.addTest(unittest.makeSuite(filtertestcase.JailTests))
 
 	# DateDetector
@@ -164,9 +234,6 @@ def gatherTests(regexps=None, no_network=False):
 	for file_ in os.listdir(
 		os.path.abspath(os.path.dirname(action_d.__file__))):
 		if file_.startswith("test_") and file_.endswith(".py"):
-			if no_network and file_ in ['test_badips.py','test_smtp.py']: #pragma: no cover
-				# Test required network
-				continue
 			tests.addTest(testloader.loadTestsFromName(
 				"%s.%s" % (action_d.__name__, os.path.splitext(file_)[0])))
 
@@ -181,6 +248,10 @@ def gatherTests(regexps=None, no_network=False):
 	# yoh: Since I do not know better way for parametric tests
 	#      with good old unittest
 	try:
+		# because gamin can be very slow on some platforms (and can produce many failures 
+		# with fast sleep interval) - skip it by fast run:
+		if unittest.F2B.fast or unittest.F2B.no_gamin: # pragma: no cover
+			raise Exception('Skip, fast: %s, no_gamin: %s' % (unittest.F2B.fast, unittest.F2B.no_gamin))
 		from ..server.filtergamin import FilterGamin
 		filters.append(FilterGamin)
 	except Exception, e: # pragma: no cover
@@ -287,32 +358,8 @@ class LogCaptureTestCase(unittest.TestCase):
 	def printLog(self):
 		print(self._log.getvalue())
 
-# Solution from http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid
-# under cc by-sa 3.0
-if os.name == 'posix':
-	def pid_exists(pid):
-		"""Check whether pid exists in the current process table."""
-		import errno
-		if pid < 0:
-			return False
-		try:
-			os.kill(pid, 0)
-		except OSError as e:
-			return e.errno == errno.EPERM
-		else:
-			return True
-else:
-	def pid_exists(pid):
-		import ctypes
-		kernel32 = ctypes.windll.kernel32
-		SYNCHRONIZE = 0x100000
 
-		process = kernel32.OpenProcess(SYNCHRONIZE, 0, pid)
-		if process != 0:
-			kernel32.CloseHandle(process)
-			return True
-		else:
-			return False
+pid_exists = Utils.pid_exists
 
 # Python 2.6 compatibility. in 2.7 assertDictEqual
 def assert_dict_equal(a, b):

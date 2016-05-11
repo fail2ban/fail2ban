@@ -366,7 +366,7 @@ class Fail2banRegex(object):
 
 	def process(self, test_lines):
 		t0 = time.time()
-		for line_no, line in enumerate(test_lines):
+		for line in test_lines:
 			if isinstance(line, tuple):
 				line_datetimestripped, ret = self.testRegex(
 					line[0], line[1])
@@ -398,8 +398,6 @@ class Fail2banRegex(object):
 						self._line_stats.missed_lines_timeextracted.append(line_datetimestripped)
 			self._line_stats.tested += 1
 
-			if line_no % 10 == 0 and self._filter.dateDetector is not None:
-				self._filter.dateDetector.sortTemplate()
 		self._time_elapsed = time.time() - t0
 
 	def printLines(self, ltype):
