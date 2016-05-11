@@ -1022,9 +1022,8 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					# change log path to test log of jail (to prevent "Permission denied" on /var/logs/ for test-user):
 					elif len(cmd) > 3 and cmd[0] == 'set' and cmd[2] == 'addlogpath':
 						cmd[3] = os.path.join(TEST_FILES_DIR, 'logs', cmd[1])
-					# add dummy regex to prevent too long compile of all regexp (we don't use it in this test at all):
-					# [todo sebres] remove `not hasattr(unittest, 'F2B') or `, after merge with "f2b-perfom-prepare-716" ...
-					elif (not hasattr(unittest, 'F2B') or unittest.F2B.fast) and (
+					# if fast add dummy regex to prevent too long compile of all regexp (we don't use it in this test at all):
+					elif unittest.F2B.fast and (
 						len(cmd) > 3 and cmd[0] in ('set', 'multi-set') and cmd[2] == 'addfailregex'
 					):
 						cmd[0] = "set"
