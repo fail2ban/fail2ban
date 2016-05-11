@@ -149,17 +149,17 @@ class CommandActionTest(LogCaptureTestCase):
 		cache = self.__action._substCache
 		for i in range(2):
 			self.assertEqual(
-				self.__action.replaceTag("<banaction>", self.__action._properties, 
+				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
 					conditional="", cache=cache),
-				"Text 890-123 text 123")
+				"Text 890-123 text 123 '123'")
 			self.assertEqual(
-				self.__action.replaceTag("<banaction>", self.__action._properties, 
+				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
 					conditional="family=inet4", cache=cache),
-				"Text 890-345 text 345")
+				"Text 890-345 text 345 '345'")
 			self.assertEqual(
-				self.__action.replaceTag("<banaction>", self.__action._properties, 
+				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
 					conditional="family=inet6", cache=cache),
-				"Text 890-567 text 567")
+				"Text 890-567 text 567 '567'")
 		self.assertEqual(len(cache) if cache is not None else -1, 3)
 		# set one parameter - internal properties and cache should be reseted:
 		setattr(self.__action, 'xyz', "000-<abc>")
@@ -167,17 +167,17 @@ class CommandActionTest(LogCaptureTestCase):
 		# test againg, should have 000 instead of 890:
 		for i in range(2):
 			self.assertEqual(
-				self.__action.replaceTag("<banaction>", self.__action._properties, 
+				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
 					conditional="", cache=cache),
-				"Text 000-123 text 123")
+				"Text 000-123 text 123 '123'")
 			self.assertEqual(
-				self.__action.replaceTag("<banaction>", self.__action._properties, 
+				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
 					conditional="family=inet4", cache=cache),
-				"Text 000-345 text 345")
+				"Text 000-345 text 345 '345'")
 			self.assertEqual(
-				self.__action.replaceTag("<banaction>", self.__action._properties, 
+				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
 					conditional="family=inet6", cache=cache),
-				"Text 000-567 text 567")
+				"Text 000-567 text 567 '567'")
 		self.assertEqual(len(cache), 3)
 
 
