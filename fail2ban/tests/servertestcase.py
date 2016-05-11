@@ -458,9 +458,9 @@ class Transmitter(TransmitterBase):
 				"failed attempt from <HOST> again",
 			],
 			[
-				"user john at (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w)",
-				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w)",
-				"failed attempt from (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w) again",
+				"user john at %s" % (Regex._resolveHostTag('<HOST>')),
+				"Admin user login from %s" % (Regex._resolveHostTag('<HOST>')),
+				"failed attempt from %s again" % (Regex._resolveHostTag('<HOST>')),
 			],
 			self.jailName
 		)
@@ -483,7 +483,7 @@ class Transmitter(TransmitterBase):
 			],
 			[
 				"user john",
-				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w)",
+				"Admin user login from %s" % (Regex._resolveHostTag('<HOST>')),
 				"Dont match me!",
 			],
 			self.jailName

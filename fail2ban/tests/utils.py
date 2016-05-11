@@ -101,6 +101,16 @@ def initTests(opts):
 		c.set('192.0.2.%s' % i, None)
 		c.set('198.51.100.%s' % i, None)
 		c.set('203.0.113.%s' % i, None)
+	if unittest.F2B.no_network: # pragma: no cover
+		# precache all wrong dns to ip's used in test cases:
+		c = DNSUtils.CACHE_nameToIp
+		for i in (
+			('999.999.999.999', []),
+			('abcdef.abcdef', []),
+			('192.168.0.', []),
+			('failed.dns.ch', []),
+		):
+			c.set(*i)
 
 
 def mtimesleep():

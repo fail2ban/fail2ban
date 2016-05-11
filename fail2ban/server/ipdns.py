@@ -103,7 +103,7 @@ class DNSUtils:
 		# Search for plain IP
 		plainIP = IPAddr.searchIP(text)
 		if plainIP is not None:
-			ip = IPAddr(plainIP.group(0))
+			ip = IPAddr(plainIP)
 			if ip.isValid:
 				ipList.append(ip)
 
@@ -127,9 +127,8 @@ class DNSUtils:
 class IPAddr(object):
 	"""Encapsulate functionality for IPv4 and IPv6 addresses
 	"""
-
-	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
-	IP6_CRE = re.compile("^[0-9a-fA-F]{4}[0-9a-fA-F:]+:[0-9a-fA-F]{1,4}|::1$")
+	IP_4_6_CRE = re.compile(
+	  r"""^(?:(?P<IPv4>(?:\d{1,3}\.){3}\d{1,3})|\[?(?P<IPv6>(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}|(?<=:):))\]?)$""")
 	# An IPv4 compatible IPv6 to be reused (see below)
 	IP6_4COMPAT = None
 
@@ -139,19 +138,33 @@ class IPAddr(object):
 	# todo: make configurable the expired time and max count of cache entries:
 	CACHE_OBJ = Utils.Cache(maxCount=1000, maxTime=5*60)
 
-	def __new__(cls, ipstring, cidr=-1):
-		# already correct IPAddr
-		args = (ipstring, cidr)
+	def __new__(cls, ipstr, cidr=-1):
+		# check already cached as IPAddr
+		args = (ipstr, cidr)
 		ip = IPAddr.CACHE_OBJ.get(args)
 		if ip is not None:
 			return ip
+		# wrap mask to cidr (correct plen):
+		if cidr == -1:
+			ipstr, cidr = IPAddr.__wrap_ipstr(ipstr)
+			args = (ipstr, cidr)
+			# check cache again:
+			if cidr != -1:
+				ip = IPAddr.CACHE_OBJ.get(args)
+				if ip is not None:
+					return ip
 		ip = super(IPAddr, cls).__new__(cls)
-		ip.__init(ipstring, cidr)
+		ip.__init(ipstr, cidr)
 		IPAddr.CACHE_OBJ.set(args, ip)
 		return ip
 
 	@staticmethod
 	def __wrap_ipstr(ipstr):
+		# because of standard spelling of IPv6 (with port) enclosed in brackets ([ipv6]:port),
+		# remove they now (be sure the <HOST> inside failregex uses this for IPv6 (has \[?...\]?)
+		if len(ipstr) > 2 and ipstr[0] == '[' and ipstr[-1] == ']':
+			ipstr = ipstr[1:-1]
+		# test mask:
 		if "/" not in ipstr:
 			return ipstr, -1
 		s = ipstr.split('/', 1)
@@ -172,9 +185,6 @@ class IPAddr(object):
 		self._plen = 0
 		self._maskplen = None
 		self._raw = ""
-
-		if cidr == -1:
-			ipstr, cidr = self.__wrap_ipstr(ipstr)
 
 		for family in [socket.AF_INET, socket.AF_INET6]:
 			try:
@@ -376,17 +386,17 @@ class IPAddr(object):
 
 	@property
 	def maskplen(self):
-		plen = 0
+		mplen = 0
 		if self._maskplen is not None:
-			return self._plen
-		maddr = self.addr
+			return self._maskplen
+		maddr = self._addr
 		while maddr:
 			if not (maddr & 0x80000000):
 				raise ValueError("invalid mask %r, no plen representation" % (str(self),))
 			maddr = (maddr << 1) & 0xFFFFFFFFL
-			plen += 1
-		self._maskplen = plen
-		return plen
+			mplen += 1
+		self._maskplen = mplen
+		return mplen
 		
 	@staticmethod
 	def masktoplen(mask):
@@ -400,10 +410,13 @@ class IPAddr(object):
 	def searchIP(text):
 		"""Search if text is an IP address, and return it if so, else None
 		"""
-		match = IPAddr.IP_CRE.match(text)
+		match = IPAddr.IP_4_6_CRE.match(text)
 		if not match:
-			match = IPAddr.IP6_CRE.match(text)
-		return match if match else None
+			return None
+		ipstr = match.group('IPv4')
+		if ipstr != '':
+			return ipstr
+		return match.group('IPv6')
 
 
 # An IPv4 compatible IPv6 to be reused

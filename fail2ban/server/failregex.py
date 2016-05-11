@@ -43,8 +43,8 @@ class Regex:
 	def __init__(self, regex):
 		self._matchCache = None
 		# Perform shortcuts expansions.
-		# Replace "<HOST>" with default regular expression for host.
-		regex = regex.replace("<HOST>", "(?:::f{4,6}:)?(?P<host>[\w\-.^_]*\w)")
+		# Resolve "<HOST>" tag using default regular expression for host:
+		regex = Regex._resolveHostTag(regex)
 		# Replace "<SKIPLINES>" with regular expression for multiple lines.
 		regexSplit = regex.split("<SKIPLINES>")
 		regex = regexSplit[0]
@@ -61,6 +61,20 @@ class Regex:
 
 	def __str__(self):
 		return "%s(%r)" % (self.__class__.__name__, self._regex)
+
+	@staticmethod
+	def _resolveHostTag(regex):
+		# Replace "<HOST>" with default regular expression for host:
+		# Other candidates (see gh-1374 for the discussion about):
+		#   differentiate: r"""(?:(?:::f{4,6}:)?(?P<IPv4>(?:\d{1,3}\.){3}\d{1,3})|\[?(?P<IPv6>(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}|(?<=:):))\]?|(?P<HOST>[\w\-.^_]*\w))"""
+		#     expected many changes in filter, failregex, etc...
+		#   simple:        r"""(?:::f{4,6}:)?(?P<host>[\w\-.^_:]*\w)"""
+		#     not good enough, if not precise expressions around <HOST>, because for example will match '1.2.3.4:23930' as ip-address;
+		# Todo: move this functionality to filter reader, as default <HOST> replacement,
+		#       make it configurable (via jail/filter configs)
+		return regex.replace("<HOST>",
+		 	r"""(?:::f{4,6}:)?(?P<host>(?:\d{1,3}\.){3}\d{1,3}|\[?(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}\]?|(?<=:):)|[\w\-.^_]*\w)""")
+
 	##
 	# Gets the regular expression.
 	#
