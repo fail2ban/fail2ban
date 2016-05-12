@@ -1021,7 +1021,11 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						cmd[2] = 'polling'
 					# change log path to test log of jail (to prevent "Permission denied" on /var/logs/ for test-user):
 					elif len(cmd) > 3 and cmd[0] == 'set' and cmd[2] == 'addlogpath':
-						cmd[3] = os.path.join(TEST_FILES_DIR, 'logs', cmd[1])
+						fn = os.path.join(TEST_FILES_DIR, 'logs', cmd[1])
+						# fallback to testcase01 if jail has not an own test log-file (currently should be no matter):
+						if not os.path.exists(fn): # pragma: no cover
+							fn = os.path.join(TEST_FILES_DIR, 'testcase01.log')
+						cmd[3] = fn
 					# if fast add dummy regex to prevent too long compile of all regexp (we don't use it in this test at all):
 					elif unittest.F2B.fast and (
 						len(cmd) > 3 and cmd[0] in ('set', 'multi-set') and cmd[2] == 'addfailregex'
