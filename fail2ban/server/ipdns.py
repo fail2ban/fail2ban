@@ -233,6 +233,14 @@ class IPAddr(object):
 
 	def __str__(self):
 		return self.ntoa
+
+	def __reduce__(self):
+		"""IPAddr pickle-handler, that simple wrap IPAddr to the str
+
+		Returns a string as instance to be pickled, because fail2ban-client can't
+		unserialize IPAddr objects
+		"""
+		return (str, (self.ntoa,))
 	
 	@property
 	def addr(self):
