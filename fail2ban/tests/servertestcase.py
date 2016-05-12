@@ -466,6 +466,34 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(
 				["set", self.jailName, "addignoreregex", 50])[0],
 			1)
+	
+	def testJailResetRegex(self):
+		self.jailAddDelRegexTest("resetregex",
+			[
+				"user john at <HOST>",
+				"Admin user login from <HOST>",
+				"failed attempt from <HOST> again",
+			],
+			[
+				"user john at (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w)",
+				"Admin user login from (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w)",
+				"failed attempt from (?:::f{4,6}:)?(?P<host>[\w\-.^_]*\\w) again",
+			],
+			self.jailName
+		)
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "addresetregex", "No host regex"])[0],
+			1)
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "addresetregex", "Invalid [regex"])[0],
+			1)
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "addresetregex", 50])[0],
+			1)
+
 
 	def testStatus(self):
 		jails = [self.jailName]

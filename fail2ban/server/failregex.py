@@ -228,3 +228,11 @@ class FailRegex(Regex):
 			r = self._matchCache.re
 			raise RegexException("No 'host' found in '%s' using '%s'" % (s, r))
 		return str(host)
+##
+# Another regular expression - just in case it needs to be different to above.
+#
+# This class represents a regular expression with its compiled version.
+
+class ResetRegex(FailRegex):
+	pass
+

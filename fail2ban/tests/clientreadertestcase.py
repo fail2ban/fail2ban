@@ -328,6 +328,8 @@ class FilterReaderTest(unittest.TestCase):
 			"+$<SKIPLINES>^.+ module for .* from <HOST>\\s*$"],
 			['set', 'testcase01', 'addignoreregex', 
 			"^.+ john from host 192.168.1.1\\s*$"],
+			['set', 'testcase01', 'addresetregex', 
+			"^.+ john from host 192.168.1.1\\s*$"],
 			['set', 'testcase01', 'addjournalmatch',
 				"_COMM=sshd", "+", "_SYSTEMD_UNIT=sshd.service", "_UID=0"],
 			['set', 'testcase01', 'addjournalmatch',
@@ -410,6 +412,7 @@ class FilterReaderTest(unittest.TestCase):
 			# from testcase01
 			filterReader.get('Definition', 'failregex')
 			filterReader.get('Definition', 'ignoreregex')
+			filterReader.get('Definition', 'resetregex')
 		except Exception, e: # pragma: no cover - failed if reachable
 			self.fail('unexpected options after readexplicit: %s' % (e))
 
@@ -499,8 +502,10 @@ class JailsReaderTest(LogCaptureTestCase):
 			 ['start', 'test-known-interp'],
 			 ['add', 'missinglogfiles', 'auto'],
 			 ['set', 'missinglogfiles', 'addfailregex', '<IP>'],
+			 ['set', 'missinglogfiles', 'addresetregex', '<IP>'],
 			 ['add', 'brokenaction', 'auto'],
 			 ['set', 'brokenaction', 'addfailregex', '<IP>'],
+			 ['set', 'brokenaction', 'addresetregex', '<IP>'],
 			 ['set', 'brokenaction', 'addaction', 'brokenaction'],
 			 ['set',
 			  'brokenaction',
@@ -510,6 +515,7 @@ class JailsReaderTest(LogCaptureTestCase):
 			  'hit with big stick <ip>'],
 			 ['add', 'parse_to_end_of_jail.conf', 'auto'],
 			 ['set', 'parse_to_end_of_jail.conf', 'addfailregex', '<IP>'],
+			 ['set', 'parse_to_end_of_jail.conf', 'addresetregex', '<IP>'],
 			 ['start', 'emptyaction'],
 			 ['start', 'missinglogfiles'],
 			 ['start', 'brokenaction'],

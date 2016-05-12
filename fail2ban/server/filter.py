@@ -34,7 +34,7 @@ from .jailthread import JailThread
 from .datedetector import DateDetector
 from .datetemplate import DatePatternRegex, DateEpoch, DateTai64n
 from .mytime import MyTime
-from .failregex import FailRegex, Regex, RegexException
+from .failregex import FailRegex, Regex, RegexException, ResetRegex
 from .action import CommandAction
 from ..helpers import getLogger
 
@@ -67,6 +67,8 @@ class Filter(JailThread):
 		self.__failRegex = list()
 		## The regular expression list with expressions to ignore.
 		self.__ignoreRegex = list()
+		## The regular expression list with expressions to reset ip.
+		self.__resetRegex = list()
 		## Use DNS setting
 		self.setUseDns(useDns)
 		## The amount of time to look back.
@@ -159,6 +161,43 @@ class Filter(JailThread):
 		for regex in self.__ignoreRegex:
 			ignoreRegex.append(regex.getRegex())
 		return ignoreRegex
+
+	##
+	# Add a regular expression which matches the reset.
+	#
+	# The regular expression can also match any other pattern than reets
+	# and thus can be used for many purporse.
+	# @param value the regular expression
+
+	def addResetRegex(self, value):
+		try:
+			regex = ResetRegex(value)
+			self.__resetRegex.append(regex)
+			if "\n" in regex.getRegex() and not self.getMaxLines() > 1:
+				logSys.warning(
+					"Multiline regex set for jail '%s' "
+					"but maxlines not greater than 1")
+		except RegexException, e:
+			logSys.error(e)
+			raise e
+
+	def delResetRegex(self, index):
+		try:
+			del self.__resetRegex[index]
+		except IndexError:
+			logSys.error("Cannot remove regular expression. Index %d is not "
+						 "valid" % index)
+
+	##
+	# Get the regular expression which matches the reset.
+	#
+	# @return the regular expression
+
+	def getResetRegex(self):
+		resetRegex = list()
+		for regex in self.__resetRegex:
+			resetRegex.append(regex.getRegex())
+		return resetRegex
 
 	##
 	# Set the Use DNS mode
@@ -492,6 +531,27 @@ class Filter(JailThread):
 		self.__lineBuffer = (
 			self.__lineBuffer + [tupleLine])[-self.__lineBufferSize:]
 		logSys.log(5, "Looking for failregex match of %r" % self.__lineBuffer)
+
+		# Iterates over all the regular expressions to reset Ip.
+		for resetRegexIndex, resetRegex in enumerate(self.__resetRegex):
+			resetRegex.search(self.__lineBuffer)
+			if resetRegex.hasMatched():
+				logSys.log(7, "Matched reset %s", resetRegex)
+				host = resetRegex.getHost()
+				if returnRawHost:
+					self.failManager.resetIp(FailTicket(host, date,
+										  resetRegex.getMatchedLines()))
+					if not checkAllRegex:
+						break
+				else:
+					ipMatch = DNSUtils.textToIp(host, self.__useDns)
+					if ipMatch:
+						for ip in ipMatch:
+							self.failManager.resetIp(FailTicket(ip, date,
+											  resetRegex.getMatchedLines()))
+
+						if not checkAllRegex:
+							break
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):

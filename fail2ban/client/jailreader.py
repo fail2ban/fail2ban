@@ -104,6 +104,7 @@ class JailReader(ConfigReader):
 				["string", "usedns", None],
 				["string", "failregex", None],
 				["string", "ignoreregex", None],
+				["string", "resetregex", None],
 				["string", "ignorecommand", None],
 				["string", "ignoreip", None],
 				["string", "filter", ""],
@@ -234,6 +235,12 @@ class JailReader(ConfigReader):
 					# Do not send a command if the rule is empty.
 					if regex != '':
 						stream.append(["set", self.__name, "addignoreregex", regex])
+			elif opt == "resetregex":
+				for regex in self.__opts[opt].split('\n'):
+					# Do not send a command if the rule is empty.
+					if regex != '':
+						stream.append(["set", self.__name, "addresetregex", regex])
+
 		if self.__filter:
 			stream.extend(self.__filter.convert())
 		for action in self.__actions:

@@ -40,6 +40,7 @@ class FilterReader(DefinitionInitConfigReader):
 	_configOpts = [
 		["string", "ignoreregex", None],
 		["string", "failregex", ""],
+		["string", "resetregex", ""],
 	]
 
 	def setFile(self, fileName):
@@ -74,6 +75,12 @@ class FilterReader(DefinitionInitConfigReader):
 					# Do not send a command if the rule is empty.
 					if regex != '':
 						stream.append(["set", self._jailName, "addignoreregex", regex])
+			elif opt == "resetregex":
+				for regex in value.split('\n'):
+					# Do not send a command if the rule is empty.
+					if regex != '':
+						stream.append(["set", self._jailName, "addresetregex", regex])
+
 		if self._initOpts:
 			if 'maxlines' in self._initOpts:
 				# We warn when multiline regex is used without maxlines > 1

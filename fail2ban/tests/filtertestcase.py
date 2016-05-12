@@ -405,6 +405,10 @@ class LogFileMonitor(LogCaptureTestCase):
 	def testRemovingIgnoreRegex(self):
 		self.filter.delIgnoreRegex(0)
 		self.assertLogged('Cannot remove regular expression. Index 0 is not valid')
+	
+	def testRemovingResetRegex(self):
+		self.filter.delResetRegex(0)
+		self.assertLogged('Cannot remove regular expression. Index 0 is not valid')
 
 	def testNewChangeViaIsModified(self):
 		# it is a brand new one -- so first we think it is modified
@@ -1004,6 +1008,15 @@ class GetFailures(LogCaptureTestCase):
 
 		self.filter.getFailures(GetFailures.FILENAME_02)
 
+		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+	
+	def testGetFailuresResetRegex(self):
+		self.filter.addLogPath(GetFailures.FILENAME_02)
+		self.filter.addFailRegex("Failed .* from <HOST>")
+		self.filter.addResetRegex("Accepted .* from <HOST>")
+
+		self.filter.getFailures(GetFailures.FILENAME_02)
+		self.filter.getFailures(GetFailures.FILENAME_02)
 		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
 	def testGetFailuresMultiLine(self):
