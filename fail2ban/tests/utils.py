@@ -79,7 +79,12 @@ class F2B(optparse.Values):
 		return wtime
 
 
-def withtmpdir(f):
+def with_tmpdir(f):
+	"""Helper decorator to create a temporary directory
+
+	Directory gets removed after function returns, regardless
+	if exception was thrown of not
+	"""
 	@wraps(f)
 	def wrapper(self, *args, **kwargs):
 		tmp = tempfile.mkdtemp(prefix="f2b-temp")
@@ -89,6 +94,7 @@ def withtmpdir(f):
 			# clean up
 			shutil.rmtree(tmp)
 	return wrapper
+
 
 def initTests(opts):
 	unittest.F2B = F2B(opts)

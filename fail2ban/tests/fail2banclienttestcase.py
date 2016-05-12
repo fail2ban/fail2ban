@@ -28,6 +28,7 @@ import os
 import re
 import sys
 import time
+import signal
 import unittest
 
 from threading import Thread
@@ -38,7 +39,7 @@ from ..client.fail2banserver import Fail2banServer, exec_command_line as _exec_s
 from .. import protocol
 from ..server import server
 from ..server.utils import Utils
-from .utils import LogCaptureTestCase, logSys, withtmpdir, shutil, logging
+from .utils import LogCaptureTestCase, logSys, with_tmpdir, shutil, logging
 
 
 STOCK_CONF_DIR = "config"
@@ -252,7 +253,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 			(CLIENT, "-vq", "-V",))
 		self.assertLogged("Fail2Ban v" + fail2bancmdline.version)
 
-	@withtmpdir
+	@with_tmpdir
 	def testClientDump(self, tmp):
 		# use here the stock configuration (if possible)
 		startparams = _start_params(tmp, True)
@@ -261,7 +262,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		self.assertLogged("Loading files")
 		self.assertLogged("logtarget")
 
-	@withtmpdir
+	@with_tmpdir
 	def testClientStartBackgroundInside(self, tmp):
 		try:
 			# use once the stock configuration (to test starting also)
@@ -300,7 +301,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		finally:
 			_kill_srv(tmp)
 
-	@withtmpdir
+	@with_tmpdir
 	def testClientStartBackgroundCall(self, tmp):
 		try:
 			global INTERACT
@@ -382,7 +383,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		phase['end'] = True
 		logSys.debug("-- end of test worker")
 
-	@withtmpdir
+	@with_tmpdir
 	def testClientStartForeground(self, tmp):
 		th = None
 		try:
@@ -422,7 +423,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 			if th:
 				th.join()
 
-	@withtmpdir
+	@with_tmpdir
 	def testClientFailStart(self, tmp):
 		try:
 			# started directly here, so prevent overwrite test cases logger with "INHERITED"
@@ -483,7 +484,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged("Usage: " + SERVER)
 		self.assertLogged("Report bugs to ")
 
-	@withtmpdir
+	@with_tmpdir
 	def testServerStartBackground(self, tmp):
 		try:
 			# to prevent fork of test-cases process, start server in background via command:
@@ -523,7 +524,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		phase['end'] = True
 		logSys.debug("-- end of test worker")
 
-	@withtmpdir
+	@with_tmpdir
 	def testServerStartForeground(self, tmp):
 		th = None
 		try:
@@ -563,7 +564,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			if th:
 				th.join()
 
-	@withtmpdir
+	@with_tmpdir
 	def testServerFailStart(self, tmp):
 		try:
 			# started directly here, so prevent overwrite test cases logger with "INHERITED"
