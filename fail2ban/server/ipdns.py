@@ -171,7 +171,7 @@ class IPAddr(object):
 		# IP address without CIDR mask
 		if len(s) > 2:
 			raise ValueError("invalid ipstr %r, too many plen representation" % (ipstr,))
-		if "." in s[1]: # 255.255.255.0 style mask
+		if "." in s[1] or ":" in s[1]: # 255.255.255.0 resp. ffff:: style mask
 			s[1] = IPAddr.masktoplen(s[1])
 		s[1] = long(s[1])
 		return s
@@ -235,7 +235,7 @@ class IPAddr(object):
 		return self.ntoa
 
 	def __reduce__(self):
-		"""IPAddr pickle-handler, that simple wrap IPAddr to the str
+		"""IPAddr pickle-handler, that simply wraps IPAddr to the str
 
 		Returns a string as instance to be pickled, because fail2ban-client can't
 		unserialize IPAddr objects
@@ -392,17 +392,29 @@ class IPAddr(object):
 		
 		return (self.addr & mask) == net.addr
 
+	# Pre-calculated map: addr to maskplen
+	def __getMaskMap():
+		m6 = (1 << 128)-1
+		m4 = (1 << 32)-1
+		mmap = {m6: 128, m4: 32, 0: 0}
+		m = 0
+		for i in xrange(0, 128):
+			m |= 1 << i
+			if i < 32:
+				mmap[m ^ m4] = 32-1-i
+			mmap[m ^ m6] = 128-1-i
+		return mmap
+
+	MAP_ADDR2MASKPLEN = __getMaskMap()
+
 	@property
 	def maskplen(self):
 		mplen = 0
 		if self._maskplen is not None:
 			return self._maskplen
-		maddr = self._addr
-		while maddr:
-			if not (maddr & 0x80000000):
-				raise ValueError("invalid mask %r, no plen representation" % (str(self),))
-			maddr = (maddr << 1) & 0xFFFFFFFFL
-			mplen += 1
+		mplen = IPAddr.MAP_ADDR2MASKPLEN.get(self._addr)
+		if mplen is None:
+			raise ValueError("invalid mask %r, no plen representation" % (str(self),))
 		self._maskplen = mplen
 		return mplen
 		

@@ -1452,10 +1452,23 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertEqual(IPAddr('93.184.0.1', 24).ntoa, '93.184.0.0/24')
 		self.assertEqual(IPAddr('192.168.1.0/255.255.255.128').ntoa, '192.168.1.0/25')
 
+		self.assertEqual(IPAddr('93.184.0.1/32').ntoa, '93.184.0.1')
+		self.assertEqual(IPAddr('93.184.0.1/255.255.255.255').ntoa, '93.184.0.1')
+
 		self.assertEqual(str(IPAddr('2606:2800:220:1:248:1893:25c8::', 120)), '2606:2800:220:1:248:1893:25c8:0/120')
 		self.assertEqual(IPAddr('2606:2800:220:1:248:1893:25c8::', 120).ntoa, '2606:2800:220:1:248:1893:25c8:0/120')
 		self.assertEqual(str(IPAddr('2606:2800:220:1:248:1893:25c8:0/120')), '2606:2800:220:1:248:1893:25c8:0/120')
 		self.assertEqual(IPAddr('2606:2800:220:1:248:1893:25c8:0/120').ntoa, '2606:2800:220:1:248:1893:25c8:0/120')
+
+		self.assertEqual(str(IPAddr('2606:28ff:220:1:248:1893:25c8::', 25)), '2606:2880::/25')
+		self.assertEqual(str(IPAddr('2606:28ff:220:1:248:1893:25c8::/ffff:ff80::')), '2606:2880::/25')
+		self.assertEqual(str(IPAddr('2606:28ff:220:1:248:1893:25c8::/ffff:ffff:ffff:ffff:ffff:ffff:ffff::')), 
+			'2606:28ff:220:1:248:1893:25c8:0/112')
+
+		self.assertEqual(str(IPAddr('2606:28ff:220:1:248:1893:25c8::/128')), 
+			'2606:28ff:220:1:248:1893:25c8:0')
+		self.assertEqual(str(IPAddr('2606:28ff:220:1:248:1893:25c8::/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff')), 
+			'2606:28ff:220:1:248:1893:25c8:0')
 
 	def testIPAddr_CIDR_Repr(self):
 		self.assertEqual(["127.0.0.0/8", "::/32", "2001:db8::/32"],
