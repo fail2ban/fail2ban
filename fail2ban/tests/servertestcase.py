@@ -844,7 +844,7 @@ class TransmitterLogging(TransmitterBase):
 				   outCode=1,
 				   outValue=Exception('Failed to change log target'),
 				   repr_=True # Exceptions are not comparable apparently
-                                  )
+                                )
 			  }[platform.system() in ('Linux',) and os.path.exists('/dev/log')]
 		)
 
@@ -1001,7 +1001,8 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 	if STOCK:
 
 		def testCheckStockJailActions(self):
-			jails = JailsReader(basedir=CONFIG_DIR, force_enable=True, share_config=self.__share_cfg) # we are running tests from root project dir atm
+			# we are running tests from root project dir atm
+			jails = JailsReader(basedir=CONFIG_DIR, force_enable=True, share_config=self.__share_cfg)
 			self.assertTrue(jails.read())		  # opens fine
 			self.assertTrue(jails.getOptions())	  # reads fine
 			stream = jails.convert(allow_no_files=True)
@@ -1019,14 +1020,17 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					# change to the fast init backend:
 					if cmd[0] == 'add':
 						cmd[2] = 'polling'
-					# change log path to test log of jail (to prevent "Permission denied" on /var/logs/ for test-user):
+					# change log path to test log of the jail
+					# (to prevent "Permission denied" on /var/logs/ for test-user):
 					elif len(cmd) > 3 and cmd[0] == 'set' and cmd[2] == 'addlogpath':
 						fn = os.path.join(TEST_FILES_DIR, 'logs', cmd[1])
-						# fallback to testcase01 if jail has not an own test log-file (currently should be no matter):
-						if not os.path.exists(fn): # pragma: no cover
+						# fallback to testcase01 if jail has no its own test log-file
+						# (should not matter really):
+						if not os.path.exists(fn):  # pragma: no cover
 							fn = os.path.join(TEST_FILES_DIR, 'testcase01.log')
 						cmd[3] = fn
-					# if fast add dummy regex to prevent too long compile of all regexp (we don't use it in this test at all):
+					# if fast add dummy regex to prevent too long compile of all regexp
+					# (we don't use it in this test at all):
 					elif unittest.F2B.fast and (
 						len(cmd) > 3 and cmd[0] in ('set', 'multi-set') and cmd[2] == 'addfailregex'
 					):
@@ -1035,7 +1039,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					# command to server, use cmdHandler direct instead of `transm.proceed(cmd)`:
 					try:
 						cmdHandler(cmd)
-					except Exception, e: # pragma: no cover
+					except Exception, e:  # pragma: no cover
 						self.fail("Command %r has failed. Received %r" % (cmd, e))
 
 			# jails = server._Server__jails
@@ -1318,7 +1322,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'ip4': (), 'ip6': (),
 					'start': (
 						'`echo "table <f2b-j-w-pf> persist counters" | pfctl -f-`',
- 						'`echo "block proto tcp from <f2b-j-w-pf> to any port any" | pfctl -f-`',
+						'`echo "block proto tcp from <f2b-j-w-pf> to any port any" | pfctl -f-`',
 					),
 					'stop': (
 						'`pfctl -sr 2>/dev/null | grep -v f2b-j-w-pf | pfctl -f-`',

@@ -45,7 +45,7 @@ TEST_FILES_DIR_SHARE_CFG = {}
 from .utils import CONFIG_DIR
 CONFIG_DIR_SHARE_CFG = unittest.F2B.share_config
 
-STOCK = os.path.exists(os.path.join('config','fail2ban.conf'))
+STOCK = os.path.exists(os.path.join('config', 'fail2ban.conf'))
 
 IMPERFECT_CONFIG = os.path.join(os.path.dirname(__file__), 'config')
 IMPERFECT_CONFIG_SHARE_CFG = {}
