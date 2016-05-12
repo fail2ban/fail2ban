@@ -366,17 +366,22 @@ class CommandAction(ActionBase):
 				value = str(tags[tag])
 				# search and replace all tags within value, that can be interpolated using other tags:
 				m = t.search(value)
-				done = []
+				done = {}
+				last_found = tag
 				#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
 				while m:
 					found_tag = m.group(1)
 					#logSys.log(5, 'found: %s' % found_tag)
-					if found_tag == tag or found_tag in done:
+					curdone = done.get(last_found)
+					if curdone is None:
+						done[last_found] = curdone = []
+					if found_tag == tag or found_tag in curdone:
 						# recursive definitions are bad
 						#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 						raise ValueError(
 							"properties contain self referencing definitions "
-							"and cannot be resolved, fail tag: %s value: %s" % (tag, value))
+							"and cannot be resolved, fail tag: %s, found: %s in %s, value: %s" % 
+							(tag, found_tag, curdone, value))
 					repl = None
 					if found_tag not in cls._escapedTags:
 						repl = tags.get(found_tag + '?' + conditional)
@@ -390,7 +395,8 @@ class CommandAction(ActionBase):
 						continue
 					value = value.replace('<%s>' % found_tag, repl)
 					#logSys.log(5, 'value now: %s' % value)
-					done.append(found_tag)
+					curdone.append(found_tag)
+					last_found = found_tag
 					m = t.search(value, m.start())
 				#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
 				# was substituted?
