@@ -15,6 +15,9 @@ ver. 0.9.5 (2016/XX/XXX) - wanna-be-released
      - failregex of previous monit version merged as single expression.
    * filter.d/postfix.conf, filter.d/postfix-sasl.conf
      - extended failregex daemon part, matching also `postfix/smtps/smtpd` now (gh-1391)
+   * fixed a grave bug within tags substitutions because of incorrect detection of recursion 
+     in case of multiple inline substitutions of the same tag (affected actions: `bsd-ipfw`, etc). 
+     Now tracks the actual list of the already substituted tags (per tag instead of single list)
 
 - New Features:
    * New Actions:
