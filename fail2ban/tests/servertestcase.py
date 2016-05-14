@@ -1392,21 +1392,21 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'ip6-unban': ("`pfctl -t f2b-j-w-pf -T delete 2001:db8::`",),
 				}),
 				# firewallcmd-multiport --
-				('j-w-fwcmd-mp', 'firewallcmd-multiport[name=%(__name__)s, bantime="600", port="http,https", protocol="tcp", chain="INPUT"]', {
+				('j-w-fwcmd-mp', 'firewallcmd-multiport[name=%(__name__)s, bantime="600", port="http,https", protocol="tcp", chain="INPUT_direct"]', {
 					'ip4': (' ipv4 ', 'icmp-port-unreachable'), 'ip6': (' ipv6 ', 'icmp6-port-unreachable'),
 					'start': (
 						"`firewall-cmd --direct --add-chain ipv4 filter f2b-j-w-fwcmd-mp`",
 						"`firewall-cmd --direct --add-rule ipv4 filter f2b-j-w-fwcmd-mp 1000 -j RETURN`",
-						"`firewall-cmd --direct --add-rule ipv4 filter INPUT 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
+						"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
 						"`firewall-cmd --direct --add-chain ipv6 filter f2b-j-w-fwcmd-mp`",
 						"`firewall-cmd --direct --add-rule ipv6 filter f2b-j-w-fwcmd-mp 1000 -j RETURN`",
-						"`firewall-cmd --direct --add-rule ipv6 filter INPUT 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
+						"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
 					),
 					'stop': (
-						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
+						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
 						"`firewall-cmd --direct --remove-rules ipv4 filter f2b-j-w-fwcmd-mp`",
 						"`firewall-cmd --direct --remove-chain ipv4 filter f2b-j-w-fwcmd-mp`",
-						"`firewall-cmd --direct --remove-rule ipv6 filter INPUT 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
+						"`firewall-cmd --direct --remove-rule ipv6 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
 						"`firewall-cmd --direct --remove-rules ipv6 filter f2b-j-w-fwcmd-mp`",
 						"`firewall-cmd --direct --remove-chain ipv6 filter f2b-j-w-fwcmd-mp`",
 					),
@@ -1430,21 +1430,21 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# firewallcmd-allports --
-				('j-w-fwcmd-ap', 'firewallcmd-allports[name=%(__name__)s, bantime="600", protocol="tcp", chain="INPUT"]', {
+				('j-w-fwcmd-ap', 'firewallcmd-allports[name=%(__name__)s, bantime="600", protocol="tcp", chain="INPUT_direct"]', {
 					'ip4': (' ipv4 ', 'icmp-port-unreachable'), 'ip6': (' ipv6 ', 'icmp6-port-unreachable'),
 					'start': (
 						"`firewall-cmd --direct --add-chain ipv4 filter f2b-j-w-fwcmd-ap`",
 						"`firewall-cmd --direct --add-rule ipv4 filter f2b-j-w-fwcmd-ap 1000 -j RETURN`",
-						"`firewall-cmd --direct --add-rule ipv4 filter INPUT 0 -j f2b-j-w-fwcmd-ap`",
+						"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -j f2b-j-w-fwcmd-ap`",
 						"`firewall-cmd --direct --add-chain ipv6 filter f2b-j-w-fwcmd-ap`",
 						"`firewall-cmd --direct --add-rule ipv6 filter f2b-j-w-fwcmd-ap 1000 -j RETURN`",
-						"`firewall-cmd --direct --add-rule ipv6 filter INPUT 0 -j f2b-j-w-fwcmd-ap`",
+						"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -j f2b-j-w-fwcmd-ap`",
 					),
 					'stop': (
-						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT 0 -j f2b-j-w-fwcmd-ap`",
+						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -j f2b-j-w-fwcmd-ap`",
 						"`firewall-cmd --direct --remove-rules ipv4 filter f2b-j-w-fwcmd-ap`",
 						"`firewall-cmd --direct --remove-chain ipv4 filter f2b-j-w-fwcmd-ap`",
-						"`firewall-cmd --direct --remove-rule ipv6 filter INPUT 0 -j f2b-j-w-fwcmd-ap`",
+						"`firewall-cmd --direct --remove-rule ipv6 filter INPUT_direct 0 -j f2b-j-w-fwcmd-ap`",
 						"`firewall-cmd --direct --remove-rules ipv6 filter f2b-j-w-fwcmd-ap`",
 						"`firewall-cmd --direct --remove-chain ipv6 filter f2b-j-w-fwcmd-ap`",
 					),
@@ -1468,19 +1468,19 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# firewallcmd-ipset --
-				('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, bantime="600", port="http", protocol="tcp", chain="INPUT"]', {
+				('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, bantime="600", port="http", protocol="tcp", chain="INPUT_direct"]', {
 					'ip4': (' f2b-j-w-fwcmd-ipset ',), 'ip6': (' f2b-j-w-fwcmd-ipset6 ',),
 					'start': (
 						"`ipset create f2b-j-w-fwcmd-ipset hash:ip timeout 600`",
-						"`firewall-cmd --direct --add-rule ipv4 filter INPUT 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
+						"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 						"`ipset create f2b-j-w-fwcmd-ipset6 hash:ip timeout 600`",
-						"`firewall-cmd --direct --add-rule ipv6 filter INPUT 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
+						"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					),
 					'stop': (
-						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
+						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 						"`ipset flush f2b-j-w-fwcmd-ipset`",
 						"`ipset destroy f2b-j-w-fwcmd-ipset`",
-						"`firewall-cmd --direct --remove-rule ipv6 filter INPUT 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
+						"`firewall-cmd --direct --remove-rule ipv6 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 						"`ipset flush f2b-j-w-fwcmd-ipset6`",
 						"`ipset destroy f2b-j-w-fwcmd-ipset6`",
 					),
@@ -1497,6 +1497,84 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),
 					'ip6-unban': (
 						r"`ipset del f2b-j-w-fwcmd-ipset6 2001:db8:: -exist`",
+					),					
+				}),
+                # firewallcmd-rich-rules --
+				('j-w-fwcmd-rr', 'firewallcmd-rich-rules[name=%(__name__)s, bantime="600", port="http,https", protocol="tcp", chain="INPUT_direct"]', {
+					'ip4': (' ipv4 ', 'icmp-port-unreachable'), 'ip6': (' ipv6 ', 'icmp6-port-unreachable'),
+					'start': (),
+					'stop': (),
+					'ip4-check': (),
+					'ip6-check': (),
+					'ip4-ban': (
+						r"""`ports="http,https"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' reject type='icmp-port-unreachable'"; done`""",
+					),
+					'ip4-unban': (
+						r"""`ports="http,https"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' reject type='icmp-port-unreachable'"; done`""",
+					),
+					'ip6-ban': (
+						r"""`ports="http,https"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' reject type='icmp6-port-unreachable'"; done`""",
+					),
+					'ip6-unban': (
+						r"""`ports="http,https"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' reject type='icmp6-port-unreachable'"; done`""",
+					),					
+				}),
+                 # firewallcmd-rich-logging --
+				('j-w-fwcmd-rl', 'firewallcmd-rich-logging[name=%(__name__)s, bantime="600", port="http,https", protocol="tcp", chain="INPUT_direct"]', {
+					'ip4': (' ipv4 ', 'icmp-port-unreachable'), 'ip6': (' ipv6 ', 'icmp6-port-unreachable'),
+					'start': (),
+					'stop': (),
+					'ip4-check': (),
+					'ip6-check': (),
+					'ip4-ban': (
+						r"""`ports="http,https"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' log prefix='f2b-j-w-fwcmd-rl' level='info' limit value='1/m' reject type='icmp-port-unreachable'"; done`""",
+					),
+					'ip4-unban': (
+						r"""`ports="http,https"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv4' source address='192.0.2.1' port port='$p' protocol='tcp' log prefix='f2b-j-w-fwcmd-rl' level='info' limit value='1/m' reject type='icmp-port-unreachable'"; done`""",
+					),
+					'ip6-ban': (
+						r"""`ports="http,https"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --add-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' log prefix='f2b-j-w-fwcmd-rl' level='info' limit value='1/m' reject type='icmp6-port-unreachable'"; done`""",
+					),
+					'ip6-unban': (
+						r"""`ports="http,https"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' log prefix='f2b-j-w-fwcmd-rl' level='info' limit value='1/m' reject type='icmp6-port-unreachable'"; done`""",
+					),					
+				}),
+                # firewallcmd-new --
+				('j-w-fwcmd-new', 'firewallcmd-new[name=%(__name__)s, bantime="600", port="http,https", protocol="tcp", chain="INPUT_direct"]', {
+					'ip4': (' ipv4 ', 'icmp-port-unreachable'), 'ip6': (' ipv6 ', 'icmp6-port-unreachable'),
+					'start': (
+						"`firewall-cmd --direct --add-chain ipv4 filter f2b-j-w-fwcmd-new`",
+						"`firewall-cmd --direct --add-rule ipv4 filter f2b-j-w-fwcmd-new 1000 -j RETURN`",
+						"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -m state --state NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-new`",
+						"`firewall-cmd --direct --add-chain ipv6 filter f2b-j-w-fwcmd-new`",
+						"`firewall-cmd --direct --add-rule ipv6 filter f2b-j-w-fwcmd-new 1000 -j RETURN`",
+						"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -m state --state NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-new`",
+					),
+					'stop': (
+						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -m state --state NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-new`",
+						"`firewall-cmd --direct --remove-rules ipv4 filter f2b-j-w-fwcmd-new`",
+						"`firewall-cmd --direct --remove-chain ipv4 filter f2b-j-w-fwcmd-new`",
+						"`firewall-cmd --direct --remove-rule ipv6 filter INPUT_direct 0 -m state --state NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-new`",
+						"`firewall-cmd --direct --remove-rules ipv6 filter f2b-j-w-fwcmd-new`",
+						"`firewall-cmd --direct --remove-chain ipv6 filter f2b-j-w-fwcmd-new`",
+					),
+					'ip4-check': (
+						r"`firewall-cmd --direct --get-chains ipv4 filter | grep -q 'f2b-j-w-fwcmd-new$'`",
+					),
+					'ip6-check': (
+						r"`firewall-cmd --direct --get-chains ipv6 filter | grep -q 'f2b-j-w-fwcmd-new$'`",
+					),
+					'ip4-ban': (
+						r"`firewall-cmd --direct --add-rule ipv4 filter f2b-j-w-fwcmd-new 0 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
+					),
+					'ip4-unban': (
+						r"`firewall-cmd --direct --remove-rule ipv4 filter f2b-j-w-fwcmd-new 0 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
+					),
+					'ip6-ban': (
+						r"`firewall-cmd --direct --add-rule ipv6 filter f2b-j-w-fwcmd-new 0 -s 2001:db8:: -j REJECT --reject-with icmp6-port-unreachable`",
+					),
+					'ip6-unban': (
+						r"`firewall-cmd --direct --remove-rule ipv6 filter f2b-j-w-fwcmd-new 0 -s 2001:db8:: -j REJECT --reject-with icmp6-port-unreachable`",
 					),					
 				}),
 			)
