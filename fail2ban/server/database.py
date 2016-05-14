@@ -455,7 +455,7 @@ class Fail2BanDb(object):
 			queryArgs.append(MyTime.time() - bantime)
 		if ip is not None:
 			query += " AND ip=?"
-			queryArgs.append(ip)
+			queryArgs.append(str(ip))
 		query += " ORDER BY ip, timeofban desc"
 
 		return cur.execute(query, queryArgs)
