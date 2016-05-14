@@ -1499,7 +1499,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						r"`ipset del f2b-j-w-fwcmd-ipset6 2001:db8:: -exist`",
 					),					
 				}),
-                # firewallcmd-rich-rules --
+                                # firewallcmd-rich-rules --
 				('j-w-fwcmd-rr', 'firewallcmd-rich-rules[name=%(__name__)s, bantime="600", port="http,https", protocol="tcp", chain="INPUT_direct"]', {
 					'ip4': (' ipv4 ', 'icmp-port-unreachable'), 'ip6': (' ipv6 ', 'icmp6-port-unreachable'),
 					'start': (),
@@ -1519,7 +1519,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						r"""`ports="http,https"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' reject type='icmp6-port-unreachable'"; done`""",
 					),					
 				}),
-                 # firewallcmd-rich-logging --
+                                # firewallcmd-rich-logging --
 				('j-w-fwcmd-rl', 'firewallcmd-rich-logging[name=%(__name__)s, bantime="600", port="http,https", protocol="tcp", chain="INPUT_direct"]', {
 					'ip4': (' ipv4 ', 'icmp-port-unreachable'), 'ip6': (' ipv6 ', 'icmp6-port-unreachable'),
 					'start': (),
@@ -1539,7 +1539,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						r"""`ports="http,https"; for p in $(echo $ports | tr ", " " "); do firewall-cmd --remove-rich-rule="rule family='ipv6' source address='2001:db8::' port port='$p' protocol='tcp' log prefix='f2b-j-w-fwcmd-rl' level='info' limit value='1/m' reject type='icmp6-port-unreachable'"; done`""",
 					),					
 				}),
-                # firewallcmd-new --
+                                # firewallcmd-new --
 				('j-w-fwcmd-new', 'firewallcmd-new[name=%(__name__)s, bantime="600", port="http,https", protocol="tcp", chain="INPUT_direct"]', {
 					'ip4': (' ipv4 ', 'icmp-port-unreachable'), 'ip6': (' ipv6 ', 'icmp6-port-unreachable'),
 					'start': (
