@@ -255,6 +255,13 @@ class JailReaderTest(LogCaptureTestCase):
 		result = JailReader.extractOptions(option)
 		self.assertEqual(expected, result)
 
+		# And multiple groups (`][` instead of `,`)
+		result = JailReader.extractOptions(option.replace(',', ']['))
+		expected2 = (expected[0],
+		 dict((k, v.replace(',', '][')) for k, v in expected[1].iteritems())
+		)
+		self.assertEqual(expected2, result)
+
 	def testVersionAgent(self):
 		jail = JailReader('blocklisttest', force_enable=True, basedir=CONFIG_DIR)
 		# emulate jail.read(), because such jail not exists:
