@@ -600,10 +600,9 @@ class JailsReaderTest(LogCaptureTestCase):
 			self.assertTrue(jails.read())             # opens fine
 			self.assertTrue(jails.getOptions())       # reads fine
 			# grab all filter names
-			filters = (os.path.splitext(os.path.split(flt)[1])[0]
-				for flt in glob.glob(os.path.join('config', 'filter.d', '*.conf'))
-					if not flt.endswith('common.conf'))
-			filters = set(filter(lambda flt: not flt.startswith('zzz-'), filters))
+			filters = set(os.path.splitext(os.path.split(a)[1])[0]
+				for a in glob.glob(os.path.join('config', 'filter.d', '*.conf'))
+					if not a.endswith('common.conf'))
 			# get filters of all jails (filter names without options inside filter[...])
 			filters_jail = set(
 				JailReader.extractOptions(jail.options['filter'])[0] for jail in jails.jails
