@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import sys
 if sys.argv[1] == "10.0.0.1":
 	exit(0)
