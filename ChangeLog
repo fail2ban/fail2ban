@@ -21,6 +21,8 @@ ver. 0.9.5 (2016/XX/XXX) - wanna-be-released
    * filter.d/common.conf
      - unexpected extra regex-space in generic `__prefix_line` (gh-1405)
      - all optional spaces normalized in `common.conf`, test covered now
+     - generic `__prefix_line` extended with optional brackets for the date ambit (gh-1421),
+       added new parameter `__date_ambit`
 
 - New Features:
    * New Actions:
