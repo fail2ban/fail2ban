@@ -418,9 +418,6 @@ class LogCaptureTestCase(unittest.TestCase):
 	def pruneLog(self):
 		self._log.truncate(0)
 
-	def pruneLog(self):
-		self._log.truncate(0)
-
 	def getLog(self):
 		return self._log.getvalue()
 
