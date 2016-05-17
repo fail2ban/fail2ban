@@ -42,9 +42,14 @@ logSys = getLogger(__name__)
 
 class JailReader(ConfigReader):
 	
+	# regex, to extract list of options:
 	optionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
+	# regex, to iterate over single option in option list, syntax:
+	# `action = act[p1="...", p2='...', p3=...]`, where the p3=... not contains `,` or ']'
+	# since v0.10 separator extended with `]\s*[` for support of multiple option groups, syntax 
+	# `action = act[p1=...][p2=...]`
 	optionExtractRE = re.compile(
-		r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,]*))(?:,|$)')
+		r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$)')
 	
 	def __init__(self, name, force_enable=False, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
