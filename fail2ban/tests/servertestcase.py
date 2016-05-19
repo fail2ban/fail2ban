@@ -1372,12 +1372,12 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						r"`echo -2001:db8:: > /proc/net/xt_recent/f2b-j-w-iptables-xtre6`",
 					),
 				}),
-				# pf default - multiport on ssh --
+				# pf default -- multiport on default port (tag <port> set in jail.conf, but not in this test case)
 				('j-w-pf', 'pf[name=%(__name__)s]', {
 					'ip4': (), 'ip6': (),
 					'start': (
 						'`echo "table <f2b-j-w-pf> persist counters" | pfctl -f-`',
-						'`echo "block proto tcp from <f2b-j-w-pf> to any port ssh" | pfctl -f-`',
+						'`echo "block proto tcp from <f2b-j-w-pf> to any port <port>" | pfctl -f-`',
 					),
 					'stop': (
 						'`pfctl -sr 2>/dev/null | grep -v f2b-j-w-pf | pfctl -f-`',
@@ -1411,7 +1411,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'ip6-unban': ("`pfctl -t f2b-j-w-pf-mp -T delete 2001:db8::`",),
 				}),
 				# pf allports --
-				('j-w-pf-ap', 'pf[name=%(__name__)s,actiontype=<allports>]', {
+				('j-w-pf-ap', 'pf[actiontype=<allports>][name=%(__name__)s]', {
 					'ip4': (), 'ip6': (),
 					'start': (
 						'`echo "table <f2b-j-w-pf-ap> persist counters" | pfctl -f-`',
