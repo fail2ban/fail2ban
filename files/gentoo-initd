@@ -34,15 +34,15 @@ start() {
 	# remove stalled sock file after system crash
 	# bug 347477
 	rm -f /var/run/fail2ban/fail2ban.sock || return 1
-	start-stop-daemon --start --exec ${FAIL2BAN} start \
-	--pidfile /var/run/fail2ban/fail2ban.pid
+	start-stop-daemon --start --pidfile /var/run/fail2ban/fail2ban.pid \
+	--exec ${FAIL2BAN} start
 	eend $? "Failed to start fail2ban"
 }
 
 stop() {
 	ebegin "Stopping fail2ban"
-	start-stop-daemon --stop --exec ${FAIL2BAN} stop \
-	--pidfile /var/run/fail2ban/fail2ban.pid
+	start-stop-daemon --stop --pidfile /var/run/fail2ban/fail2ban.pid \
+	--exec ${FAIL2BAN} stop
 	eend $? "Failed to stop fail2ban"
 }
 
