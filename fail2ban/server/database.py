@@ -182,8 +182,11 @@ class Fail2BanDb(object):
 			raise
 
 		cur = self._db.cursor()
-		cur.execute("PRAGMA foreign_keys = ON;")
-
+		cur.execute("PRAGMA foreign_keys = ON")
+		# speedup: write data through OS without syncing (no wait):
+		cur.execute("PRAGMA synchronous = OFF")
+		# speedup: transaction log in memory, alternate using OFF (disable, rollback will be impossible):
+		cur.execute("PRAGMA journal_mode = MEMORY")
 		try:
 			cur.execute("SELECT version FROM fail2banDb LIMIT 1")
 		except sqlite3.OperationalError:
