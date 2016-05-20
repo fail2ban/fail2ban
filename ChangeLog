@@ -18,6 +18,8 @@ ver. 0.9.5 (2016/XX/XXX) - wanna-be-released
    * fixed a grave bug within tags substitutions because of incorrect detection of recursion 
      in case of multiple inline substitutions of the same tag (affected actions: `bsd-ipfw`, etc). 
      Now tracks the actual list of the already substituted tags (per tag instead of single list)
+   * gentoo-initd fixed --pidfile bug: `--pidfile` is option of start-stop-daemon, 
+     not argument of fail2ban (see gh-1434)
 
 - New Features:
    * New Actions:
