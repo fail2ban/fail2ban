@@ -229,8 +229,8 @@ class CommandAction(ActionBase):
 	def __setattr__(self, name, value):
 		if not name.startswith('_') and not callable(value):
 			# special case for some pasrameters:
-			if name == 'timeout':
-				value = MyTime.str2seconds(value)
+			if name in ('timeout', 'bantime'):
+				value = str(MyTime.str2seconds(value))
 			# parameters changed - clear properties and substitution cache:
 			self.__properties = None
 			self.__substCache.clear()

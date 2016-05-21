@@ -638,11 +638,11 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(
 				["set", self.jailName, "action", action, "timeout", "10"]),
-			(0, 10))
+			(0, "10"))
 		self.assertEqual(
 			self.transm.proceed(
 				["get", self.jailName, "action", action, "timeout"]),
-			(0, 10))
+			(0, "10"))
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "delaction", action]),
 			(0, None))
@@ -1125,7 +1125,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			#   etc.
 			testJailsActions = (
 				# iptables-multiport --
-				('j-w-iptables-mp', 'iptables-multiport[name=%(__name__)s, bantime="600", port="http,https", protocol="tcp", chain="INPUT"]', {
+				('j-w-iptables-mp', 'iptables-multiport[name=%(__name__)s, bantime="10m", port="http,https", protocol="tcp", chain="INPUT"]', {
 					'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 					'start': (
 						"`iptables -w -N f2b-j-w-iptables-mp`",
@@ -1163,7 +1163,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables-allports --
-				('j-w-iptables-ap', 'iptables-allports[name=%(__name__)s, bantime="600", protocol="tcp", chain="INPUT"]', {
+				('j-w-iptables-ap', 'iptables-allports[name=%(__name__)s, bantime="10m", protocol="tcp", chain="INPUT"]', {
 					'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 					'start': (
 						"`iptables -w -N f2b-j-w-iptables-ap`",
@@ -1201,7 +1201,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables-ipset-proto6 --
-				('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, bantime="600", port="http", protocol="tcp", chain="INPUT"]', {
+				('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="INPUT"]', {
 					'ip4': (' f2b-j-w-iptables-ipset ',), 'ip6': (' f2b-j-w-iptables-ipset6 ',),
 					'start': (
 						"`ipset create f2b-j-w-iptables-ipset hash:ip timeout 600`",
@@ -1233,7 +1233,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables-ipset-proto6-allports --
-				('j-w-iptables-ipset-ap', 'iptables-ipset-proto6-allports[name=%(__name__)s, bantime="600", chain="INPUT"]', {
+				('j-w-iptables-ipset-ap', 'iptables-ipset-proto6-allports[name=%(__name__)s, bantime="10m", chain="INPUT"]', {
 					'ip4': (' f2b-j-w-iptables-ipset-ap ',), 'ip6': (' f2b-j-w-iptables-ipset-ap6 ',),
 					'start': (
 						"`ipset create f2b-j-w-iptables-ipset-ap hash:ip timeout 600`",
@@ -1265,7 +1265,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables --
-				('j-w-iptables', 'iptables[name=%(__name__)s, bantime="600", port="http", protocol="tcp", chain="INPUT"]', {
+				('j-w-iptables', 'iptables[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="INPUT"]', {
 					'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 					'start': (
 						"`iptables -w -N f2b-j-w-iptables`",
@@ -1303,7 +1303,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables-new --
-				('j-w-iptables-new', 'iptables-new[name=%(__name__)s, bantime="600", port="http", protocol="tcp", chain="INPUT"]', {
+				('j-w-iptables-new', 'iptables-new[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="INPUT"]', {
 					'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 					'start': (
 						"`iptables -w -N f2b-j-w-iptables-new`",
@@ -1341,7 +1341,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables-xt_recent-echo --
-				('j-w-iptables-xtre', 'iptables-xt_recent-echo[name=%(__name__)s, bantime="600", chain="INPUT"]', {
+				('j-w-iptables-xtre', 'iptables-xt_recent-echo[name=%(__name__)s, bantime="10m", chain="INPUT"]', {
 					'ip4': ('`iptables ', '/f2b-j-w-iptables-xtre`'), 'ip6': ('`ip6tables ', '/f2b-j-w-iptables-xtre6`'),
 					'start': (
 						"`if [ `id -u` -eq 0 ];then iptables -w -I INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable;fi`",
@@ -1411,7 +1411,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'ip6-unban': ("`pfctl -t f2b-j-w-pf-mp -T delete 2001:db8::`",),
 				}),
 				# firewallcmd-multiport --
-				('j-w-fwcmd-mp', 'firewallcmd-multiport[name=%(__name__)s, bantime="600", port="http,https", protocol="tcp", chain="INPUT"]', {
+				('j-w-fwcmd-mp', 'firewallcmd-multiport[name=%(__name__)s, bantime="10m", port="http,https", protocol="tcp", chain="INPUT"]', {
 					'ip4': (' ipv4 ', 'icmp-port-unreachable'), 'ip6': (' ipv6 ', 'icmp6-port-unreachable'),
 					'start': (
 						"`firewall-cmd --direct --add-chain ipv4 filter f2b-j-w-fwcmd-mp`",
@@ -1449,7 +1449,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# firewallcmd-allports --
-				('j-w-fwcmd-ap', 'firewallcmd-allports[name=%(__name__)s, bantime="600", protocol="tcp", chain="INPUT"]', {
+				('j-w-fwcmd-ap', 'firewallcmd-allports[name=%(__name__)s, bantime="10m", protocol="tcp", chain="INPUT"]', {
 					'ip4': (' ipv4 ', 'icmp-port-unreachable'), 'ip6': (' ipv6 ', 'icmp6-port-unreachable'),
 					'start': (
 						"`firewall-cmd --direct --add-chain ipv4 filter f2b-j-w-fwcmd-ap`",
@@ -1487,7 +1487,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# firewallcmd-ipset --
-				('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, bantime="600", port="http", protocol="tcp", chain="INPUT"]', {
+				('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="INPUT"]', {
 					'ip4': (' f2b-j-w-fwcmd-ipset ',), 'ip6': (' f2b-j-w-fwcmd-ipset6 ',),
 					'start': (
 						"`ipset create f2b-j-w-fwcmd-ipset hash:ip timeout 600`",
