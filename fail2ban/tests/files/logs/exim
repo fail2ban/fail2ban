@@ -48,6 +48,8 @@
 2016-03-18 00:34:06 [7513] SMTP protocol error in "AUTH LOGIN" H=(ylmf-pc) [45.32.34.167]:60723 I=[172.89.0.6]:587 AUTH command used when not advertised
 # failJSON: { "time": "2016-03-19T18:40:44", "match": true , "host": "92.45.204.170" }
 2016-03-19 18:40:44 [26221] SMTP protocol error in "AUTH LOGIN aW5mb0BtYW5iYXQub3Jn" H=([127.0.0.1]) [92.45.204.170]:14243 I=[172.89.0.6]:587 AUTH command used when not advertised
+# failJSON: { "time": "2016-05-17T06:25:27", "match": true , "host": "69.10.61.61", "desc": "from gh-1430" }
+2016-05-17 06:25:27 SMTP protocol error in "AUTH LOGIN" H=(ylmf-pc) [69.10.61.61] AUTH command used when not advertised
 # failJSON: { "time": "2016-03-21T06:38:05", "match": true , "host": "49.212.207.15" }
 2016-03-21 06:38:05 [5718] no MAIL in SMTP connection from www3005.sakura.ne.jp [49.212.207.15]:28890 I=[172.89.0.6]:25 D=21s C=EHLO,STARTTLS
 # failJSON: { "time": "2016-03-21T06:57:36", "match": true , "host": "122.165.71.116" }
