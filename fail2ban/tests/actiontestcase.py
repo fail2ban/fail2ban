@@ -72,6 +72,12 @@ class CommandActionTest(LogCaptureTestCase):
 				OrderedDict((('X', 'x=x<T>'), ('T', '1'), ('Z', '<X> <T> <Y>'), ('Y', 'y=y<T>')))
 				), {'X': 'x=x1', 'T': '1', 'Y': 'y=y1', 'Z': 'x=x1 1 y=y1'}
 			)
+		# No-recursion, just multiple replacement of tag <T>, should be successful
+		if OrderedDict: # we need here an ordered, because the sequence of iteration is very important for this test
+			self.assertEqual(CommandAction.substituteRecursiveTags(
+				OrderedDict((('X', 'x=x<T>'), ('T', '1'), ('Z', '<X> <T> <Y>'), ('Y', 'y=y<T>')))
+				), {'X': 'x=x1', 'T': '1', 'Y': 'y=y1', 'Z': 'x=x1 1 y=y1'}
+			)
 		# missing tags are ok
 		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<C>'}), {'A': '<C>'})
 		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<C> <D> <X>','X':'fun'}), {'A': '<C> <D> fun', 'X':'fun'})
