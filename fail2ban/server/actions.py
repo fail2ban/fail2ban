@@ -42,7 +42,6 @@ from .banmanager import BanManager
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
-from .filter import IPAddr
 from .utils import Utils
 from ..helpers import getLogger
 
