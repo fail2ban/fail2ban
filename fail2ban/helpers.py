@@ -136,4 +136,4 @@ def splitwords(s):
 	"""
 	if not s:
 		return []
-	return filter(bool, map(str.strip, re.split('[ ,\n]', s)))
+	return filter(bool, map(str.strip, re.split('[ ,\n]+', s)))
