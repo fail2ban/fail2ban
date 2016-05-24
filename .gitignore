@@ -10,4 +10,5 @@ htmlcov
 __pycache__
 .vagrant/
 .idea/
+.egg-info
 .vscode
