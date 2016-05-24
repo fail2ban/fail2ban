@@ -34,7 +34,7 @@ from .filterreader import FilterReader
 from .actionreader import ActionReader
 from ..version import version
 from ..helpers import getLogger
-from ..helpers import splitwords
+from ..helpers import splitcommaspace
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -219,11 +219,7 @@ class JailReader(ConfigReader):
 			elif opt == "maxretry":
 				stream.append(["set", self.__name, "maxretry", value])
 			elif opt == "ignoreip":
-<<<<<<< HEAD
 				for ip in splitcommaspace(value):
-=======
-				for ip in splitwords(self.__opts[opt]):
->>>>>>> 9df7973e95cfcc1f5adeed0f14554676ff265c2e
 					stream.append(["set", self.__name, "addignoreip", ip])
 			elif opt == "findtime":
 				stream.append(["set", self.__name, "findtime", value])

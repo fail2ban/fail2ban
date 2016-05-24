@@ -133,15 +133,14 @@ def excepthook(exctype, value, traceback):
 		"Unhandled exception in Fail2Ban:", exc_info=True)
 	return sys.__excepthook__(exctype, value, traceback)
 
-def splitwords(s):
-	"""Helper to split words on any comma, space, or a new line
+def splitcommaspace(s):
+	"""Helper to split on any comma or space
 
 	Returns empty list if input is empty (or None) and filters
 	out empty entries
 	"""
 	if not s:
 		return []
-<<<<<<< HEAD
 	return filter(bool, re.split('[ ,]', s))
 
 
@@ -188,6 +187,3 @@ class BgService(object):
 		finally:
 			BgService._mutex.release()
 		return False
-=======
-	return filter(bool, map(str.strip, re.split('[ ,\n]+', s)))
->>>>>>> 9df7973e95cfcc1f5adeed0f14554676ff265c2e
