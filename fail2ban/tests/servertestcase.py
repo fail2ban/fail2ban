@@ -1370,14 +1370,14 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),
 					'ip6-unban': (
 						r"`echo -2001:db8:: > /proc/net/xt_recent/f2b-j-w-iptables-xtre6`",
-					),					
+					),
 				}),
-				# pf allports --
+				# pf default -- multiport on default port (tag <port> set in jail.conf, but not in this test case)
 				('j-w-pf', 'pf[name=%(__name__)s]', {
 					'ip4': (), 'ip6': (),
 					'start': (
 						'`echo "table <f2b-j-w-pf> persist counters" | pfctl -f-`',
-						'`echo "block proto tcp from <f2b-j-w-pf> to any" | pfctl -f-`',
+						'`echo "block proto tcp from <f2b-j-w-pf> to any port <port>" | pfctl -f-`',
 					),
 					'stop': (
 						'`pfctl -sr 2>/dev/null | grep -v f2b-j-w-pf | pfctl -f-`',
@@ -1391,7 +1391,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'ip6-ban':   ("`pfctl -t f2b-j-w-pf -T add 2001:db8::`",),
 					'ip6-unban': ("`pfctl -t f2b-j-w-pf -T delete 2001:db8::`",),
 				}),
-				# pf multiport --
+				# pf multiport with custom port --
 				('j-w-pf-mp', 'pf[actiontype=<multiport>][name=%(__name__)s, port=http]', {
 					'ip4': (), 'ip6': (),
 					'start': (
@@ -1409,6 +1409,25 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'ip4-unban': ("`pfctl -t f2b-j-w-pf-mp -T delete 192.0.2.1`",),
 					'ip6-ban':   ("`pfctl -t f2b-j-w-pf-mp -T add 2001:db8::`",),
 					'ip6-unban': ("`pfctl -t f2b-j-w-pf-mp -T delete 2001:db8::`",),
+				}),
+				# pf allports --
+				('j-w-pf-ap', 'pf[actiontype=<allports>][name=%(__name__)s]', {
+					'ip4': (), 'ip6': (),
+					'start': (
+						'`echo "table <f2b-j-w-pf-ap> persist counters" | pfctl -f-`',
+						'`echo "block proto tcp from <f2b-j-w-pf-ap> to any" | pfctl -f-`',
+					),
+					'stop': (
+						'`pfctl -sr 2>/dev/null | grep -v f2b-j-w-pf-ap | pfctl -f-`',
+						'`pfctl -t f2b-j-w-pf-ap -T flush`',
+						'`pfctl -t f2b-j-w-pf-ap -T kill`',
+					),
+					'ip4-check': ("`pfctl -sr | grep -q f2b-j-w-pf-ap`",),
+					'ip6-check': ("`pfctl -sr | grep -q f2b-j-w-pf-ap`",),
+					'ip4-ban':   ("`pfctl -t f2b-j-w-pf-ap -T add 192.0.2.1`",),
+					'ip4-unban': ("`pfctl -t f2b-j-w-pf-ap -T delete 192.0.2.1`",),
+					'ip6-ban':   ("`pfctl -t f2b-j-w-pf-ap -T add 2001:db8::`",),
+					'ip6-unban': ("`pfctl -t f2b-j-w-pf-ap -T delete 2001:db8::`",),
 				}),
 				# firewallcmd-multiport --
 				('j-w-fwcmd-mp', 'firewallcmd-multiport[name=%(__name__)s, bantime="10m", port="http,https", protocol="tcp", chain="INPUT"]', {
