@@ -126,6 +126,8 @@ Report bugs to https://github.com/fail2ban/fail2ban/issues
 			   help="set custom pattern used to match date/times"),
 		Option("-e", "--encoding",
 			   help="File encoding. Default: system locale"),
+		Option("-r", "--raw", action='store_true',
+			   help="Raw hosts, don't resolve dns"),
 		Option("-L", "--maxlines", type=int, default=0,
 			   help="maxlines for multi-line regex"),
 		Option("-m", "--journalmatch",
@@ -239,6 +241,7 @@ class Fail2banRegex(object):
 			self.encoding = opts.encoding
 		else:
 			self.encoding = locale.getpreferredencoding()
+		self.raw = True if opts.raw else False
 
 	def decode_line(self, line):
 		return FileContainer.decode_line('<LOG>', self.encoding, line)
@@ -335,7 +338,7 @@ class Fail2banRegex(object):
 		orgLineBuffer = self._filter._Filter__lineBuffer
 		fullBuffer = len(orgLineBuffer) >= self._filter.getMaxLines()
 		try:
-			line, ret = self._filter.processLine(line, date, checkAllRegex=True)
+			line, ret = self._filter.processLine(line, date, checkAllRegex=True, returnRawHost=self.raw)
 			for match in ret:
 				# Append True/False flag depending if line was matched by
 				# more than one regex
