@@ -523,7 +523,7 @@ class Filter(JailThread):
 					self.__lineBuffer = failRegex.getUnmatchedTupleLines()
 					try:
 						host = failRegex.getHost()
-						if returnRawHost:
+						if returnRawHost or self.__useDns not in ("yes", "warn"):
 							failList.append([failRegexIndex, host, date,
 								 failRegex.getMatchedLines()])
 							if not checkAllRegex:
