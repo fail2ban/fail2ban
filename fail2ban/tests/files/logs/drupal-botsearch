@@ -1,0 +1,15 @@
+# failJSON: { "time": "2004-10-02T10:02:36", "match": true , "host": "1.2.3.4" }
+Oct  2 10:02:36 webserver drupal: http://www.example.com|1443780156|page not found|1.2.3.4|http://www.example.com/phpMyAdmin||0||phpMyAdmin
+# failJSON: { "time": "2004-10-02T09:38:47", "match": true , "host": "1.2.3.4" }
+Oct  2 09:38:47 webserver drupal: https://www.example.com|1443778727|page not found|1.2.3.4|https://www.example.com/wp-login.php|http://www.example.com/wp-login.php|0||wp-login.php
+# failJSON: { "time": "2004-10-02T09:38:47", "match": true , "host": "1.2.3.4" }
+Oct  2 09:38:47 webserver drupal: https://www.example.com|1443778727|page not found|1.2.3.4|https://www.example.com/pma|http://www.example.com/|0||pma
+
+# failJSON: { "time": "2004-10-02T10:02:33", "match": false , "host": "1.2.3.4" }
+Oct  2 10:02:33 webserver drupal: https://www.example.com|1443780153|user|1.2.3.4|https://www.example.com/user/login||1||Session opened for admin.
+# failJSON: { "time": "2004-10-01T16:59:56", "match": false , "host": "1.2.3.4" }
+Oct  1 16:59:56 webserver drupal: http://www.example.com|1443718796|page not found|1.2.3.4|http://www.example.com/article/test|http://www.example.com/articles|0||node/40283
+# failJSON: { "time": "2004-10-01T16:59:56", "match": false , "host": "1.2.3.4" }
+Oct  1 16:59:56 webserver drupal: http://www.example.com|1443718796|page not found|1.2.3.4|http://www.example.com/favicon.ico||0||favicon.ico
+# failJSON: { "time": "2004-10-01T16:59:56", "match": false , "host": "1.2.3.4" }
+Oct  1 16:59:56 webserver drupal: http://www.example.com|1443718796|page not found|1.2.3.4|http://www.example.com/apple-touch-icon.png||0||apple-touch-icon.png

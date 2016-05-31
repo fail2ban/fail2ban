@@ -173,6 +173,7 @@ ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
    * New filters:
      - froxlor-auth - Thanks Joern Muehlencord
      - apache-pass - filter Apache access log for successful authentication
+     - drupal-botsearch - Thanks Chris Wells
    * New actions:
      - shorewall-ipset-proto6 - using proto feature of the Shorewall. Still requires
 	   manual pre-configuration of the shorewall. See the action file for detail.
