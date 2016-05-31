@@ -62,18 +62,39 @@ class Regex:
 	def __str__(self):
 		return "%s(%r)" % (self.__class__.__name__, self._regex)
 
+	##
+	# Replaces "<HOST>", "<IP4>", "<IP6>", "<FID>" with default regular expression for host
+	#
+	# (see gh-1374 for the discussion about other candidates)
+	# @return the replaced regular expression as string
+
 	@staticmethod
 	def _resolveHostTag(regex):
-		# Replace "<HOST>" with default regular expression for host:
-		# Other candidates (see gh-1374 for the discussion about):
-		#   differentiate: r"""(?:(?:::f{4,6}:)?(?P<IPv4>(?:\d{1,3}\.){3}\d{1,3})|\[?(?P<IPv6>(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}|(?<=:):))\]?|(?P<HOST>[\w\-.^_]*\w))"""
-		#     expected many changes in filter, failregex, etc...
-		#   simple:        r"""(?:::f{4,6}:)?(?P<host>[\w\-.^_:]*\w)"""
-		#     not good enough, if not precise expressions around <HOST>, because for example will match '1.2.3.4:23930' as ip-address;
-		# Todo: move this functionality to filter reader, as default <HOST> replacement,
-		#       make it configurable (via jail/filter configs)
-		return regex.replace("<HOST>",
-		 	r"""(?:::f{4,6}:)?(?P<host>(?:\d{1,3}\.){3}\d{1,3}|\[?(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}\]?|(?<=:):)|[\w\-.^_]*\w)""")
+		# 3 groups instead of <HOST> - separated ipv4, ipv6 and host
+		regex = regex.replace("<HOST>",
+		 	r"""(?:(?:::f{4,6}:)?(?P<ip4>(?:\d{1,3}\.){3}\d{1,3})|\[?(?P<ip6>(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}|(?<=:):))\]?|(?P<dns>[\w\-.^_]*\w))""")
+		# separated ipv4:
+		r = r"""(?:::f{4,6}:)?(?P<ip4>(?:\d{1,3}\.){3}\d{1,3})"""
+		regex = regex.replace("<IP4>", r); # self closed
+		regex = regex.replace("<F-IP4/>", r); # closed
+		# separated ipv6:
+		r = r"""(?P<ip6>(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}?|(?<=:):))"""
+		regex = regex.replace("<IP6>", r); # self closed
+		regex = regex.replace("<F-IP6/>", r); # closed
+		# separated dns:
+		r = r"""(?P<dns>[\w\-.^_]*\w)"""
+		regex = regex.replace("<DNS>", r); # self closed
+		regex = regex.replace("<F-DNS/>", r); # closed
+		# default failure-id as no space tag:
+		regex = regex.replace("<F-ID/>", r"""(?P<fid>\S+)"""); # closed
+		# default failure port, like 80 or http :
+		regex = regex.replace("<F-PORT/>", r"""(?P<port>\w+)"""); # closed
+		# default failure groups (begin / end tag) for customizable expressions:
+		for o,r in (('IP4', 'ip4'), ('IP6', 'ip6'), ('DNS', 'dns'), ('ID', 'fid'), ('PORT', 'fport')):
+			regex = regex.replace("<F-%s>" % o, "(?P<%s>" % r); # open tag
+			regex = regex.replace("</F-%s>" % o, ")"); # close tag
+
+		return regex
 
 	##
 	# Gets the regular expression.
@@ -208,6 +229,13 @@ class RegexException(Exception):
 
 
 ##
+# Groups used as failure identifier.
+#
+# The order of this tuple is important while searching for failure-id
+#
+FAILURE_ID_GROPS = ("fid", "ip4", "ip6", "dns")
+
+##
 # Regular expression class.
 #
 # This class represents a regular expression with its compiled version.
@@ -220,25 +248,48 @@ class FailRegex(Regex):
 	# Creates a new object. This method can throw RegexException in order to
 	# avoid construction of invalid object.
 	# @param value the regular expression
-	
+
 	def __init__(self, regex):
 		# Initializes the parent.
 		Regex.__init__(self, regex)
-		# Check for group "host"
-		if "host" not in self._regexObj.groupindex:
-			raise RegexException("No 'host' group in '%s'" % self._regex)
+		# Check for group "dns", "ip4", "ip6", "fid"
+		if not [grp for grp in FAILURE_ID_GROPS if grp in self._regexObj.groupindex]:
+			raise RegexException("No failure-id group in '%s'" % self._regex)
 	
 	##
-	# Returns the matched host.
+	# Returns all matched groups.
 	#
-	# This corresponds to the pattern matched by the named group "host".
-	# @return the matched host
+
+	def getGroups(self):
+		return self._matchCache.groupdict()
+
+	##
+	# Returns the matched failure id.
+	#
+	# This corresponds to the pattern matched by the named group from given groups.
+	# @return the matched failure-id
 	
-	def getHost(self):
-		host = self._matchCache.group("host")
-		if host is None:
+	def getFailID(self, groups=FAILURE_ID_GROPS):
+		fid = None
+		for grp in groups:
+			try:
+				fid = self._matchCache.group(grp)
+			except IndexError:
+				continue
+			if fid is not None:
+				break
+		if fid is None:
 			# Gets a few information.
 			s = self._matchCache.string
 			r = self._matchCache.re
-			raise RegexException("No 'host' found in '%s' using '%s'" % (s, r))
-		return str(host)
+			raise RegexException("No group found in '%s' using '%s'" % (s, r))
+		return str(fid)
+
+	##
+	# Returns the matched host.
+	#
+	# This corresponds to the pattern matched by the named group "ip4", "ip6" or "dns".
+	# @return the matched host
+	
+	def getHost(self):
+		return self.getFailID(("ip4", "ip6", "dns"))

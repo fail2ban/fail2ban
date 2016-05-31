@@ -78,9 +78,9 @@ class FailManager:
 	def addFailure(self, ticket, count=1):
 		attempts = 1
 		with self.__lock:
-			ip = ticket.getIP()
+			fid = ticket.getID()
 			try:
-				fData = self.__failList[ip]
+				fData = self.__failList[fid]
 				# if the same object - the same matches but +1 attempt:
 				if fData is ticket:
 					matches = None
@@ -109,7 +109,7 @@ class FailManager:
 					fData = FailTicket(ticket=ticket)
 				if count > ticket.getAttempt():
 					fData.setRetry(count)
-				self.__failList[ip] = fData
+				self.__failList[fid] = fData
 
 			attempts = fData.getRetry()
 			self.__failTotal += 1
@@ -132,7 +132,7 @@ class FailManager:
 	
 	def cleanup(self, time):
 		with self.__lock:
-			todelete = [ip for ip,item in self.__failList.iteritems() \
+			todelete = [fid for fid,item in self.__failList.iteritems() \
 				if item.getLastTime() + self.__maxTime <= time]
 			if len(todelete) == len(self.__failList):
 				# remove all:
@@ -142,27 +142,27 @@ class FailManager:
 				return
 			if len(todelete) / 2.0 <= len(self.__failList) / 3.0:
 				# few as 2/3 should be removed - remove particular items:
-				for ip in todelete:
-					del self.__failList[ip]
+				for fid in todelete:
+					del self.__failList[fid]
 			else:
 				# create new dictionary without items to be deleted:
-				self.__failList = dict((ip,item) for ip,item in self.__failList.iteritems() \
+				self.__failList = dict((fid,item) for fid,item in self.__failList.iteritems() \
 					if item.getLastTime() + self.__maxTime > time)
 		self.__bgSvc.service()
 	
-	def delFailure(self, ip):
+	def delFailure(self, fid):
 		with self.__lock:
 			try:
-				del self.__failList[ip]
+				del self.__failList[fid]
 			except KeyError:
 				pass
 	
-	def toBan(self, ip=None):
+	def toBan(self, fid=None):
 		with self.__lock:
-			for ip in ([ip] if ip != None and ip in self.__failList else self.__failList):
-				data = self.__failList[ip]
+			for fid in ([fid] if fid != None and fid in self.__failList else self.__failList):
+				data = self.__failList[fid]
 				if data.getRetry() >= self.__maxRetry:
-					del self.__failList[ip]
+					del self.__failList[fid]
 					return data
 		self.__bgSvc.service()
 		raise FailManagerEmpty

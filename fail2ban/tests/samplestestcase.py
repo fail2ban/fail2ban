@@ -127,7 +127,7 @@ def testSampleRegexsFactory(name, basedir):
 								 (map(lambda x: x[0], ret),logFile.filename(), logFile.filelineno()))
 
 				# Verify timestamp and host as expected
-				failregex, host, fail2banTime, lines = ret[0]
+				failregex, host, fail2banTime, lines, fail = ret[0]
 				self.assertEqual(host, faildata.get("host", None))
 
 				t = faildata.get("time", None)
