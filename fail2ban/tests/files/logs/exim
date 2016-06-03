@@ -55,7 +55,7 @@
 # failJSON: { "time": "2016-03-21T06:57:36", "match": true , "host": "122.165.71.116" }
 2016-03-21 06:57:36 [5908] no MAIL in SMTP connection from [122.165.71.116]:2056 I=[172.89.0.6]:25 D=10s
 # failJSON: { "time": "2016-03-21T06:57:36", "match": true , "host": "122.165.71.116" }
-2016-03-21 06:57:36 [5908] no MAIL in SMTP connection from [122.165.71.116]:2056 I=[172.89.0.6]:25 D=10s
+2016-03-21 06:57:36 [5908] no MAIL in SMTP connection from [122.165.71.116] I=[172.89.0.6]:25 D=10s
 # failJSON: { "time": "2016-03-21T04:07:49", "match": true , "host": "174.137.147.204" }
 2016-03-21 04:07:49 [25874] 1ahr79-0006jK-G9 SMTP connection from (voyeur.webair.com) [174.137.147.204]:44884 I=[172.89.0.6]:25 closed by DROP in ACL
 # failJSON: { "time": "2016-03-21T04:33:13", "match": true , "host": "206.214.71.53" }
