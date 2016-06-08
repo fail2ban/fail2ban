@@ -30,6 +30,7 @@ ver. 0.9.5 (2016/XX/XXX) - wanna-be-released
 - New Features:
    * New Actions:
      - action.d/firewallcmd-rich-rules and action.d/firewallcmd-rich-logging (gh-1367)
+
 - Enhancements:
    * Extreme speedup of all sqlite database operations (gh-1436),
      by using of following sqlite options:
@@ -38,7 +39,9 @@ ver. 0.9.5 (2016/XX/XXX) - wanna-be-released
      - (temp_store = MEMORY) temporary tables and indices are kept in memory
    * journald journalmatch for pure-ftpd (gh-1362)
    * Add additional regex filter for dovecot ldap authentication failures (gh-1370)
-   * added additional regex filters for exim (gh-1371)
+   * filter.d/exim*conf
+     - added additional regexes (gh-1371)
+     - made port entry optional
 
 
 ver. 0.9.4 (2016/03/08) - for-you-ladies
