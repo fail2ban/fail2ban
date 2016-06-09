@@ -569,8 +569,5 @@ class CommandAction(ActionBase):
 			logSys.debug("Nothing to do")
 			return True
 
-		_cmd_lock.acquire()
-		try:
+		with _cmd_lock:
 			return Utils.executeCmd(realCmd, timeout, shell=True, output=False)
-		finally:
-			_cmd_lock.release()

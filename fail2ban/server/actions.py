@@ -39,6 +39,7 @@ except ImportError:
 	OrderedDict = None
 
 from .banmanager import BanManager
+from .observer import Observers
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
@@ -299,11 +300,18 @@ class Actions(JailThread, Mapping):
 		if ticket:
 			aInfo = CallingMap()
 			bTicket = BanManager.createBanTicket(ticket)
+			if ticket.getBanTime() is not None:
+				bTicket.setBanTime(ticket.getBanTime())
+				bTicket.setBanCount(ticket.getBanCount())
+			if ticket.getRestored():
+				bTicket.setRestored(True)
 			ip = bTicket.getIP()
 			aInfo["ip"] = ip
 			aInfo["failures"] = bTicket.getAttempt()
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "\n".join(bTicket.getMatches())
+			btime = bTicket.getBanTime(self.__banManager.getBanTime())
+			# retarded merge info via twice lambdas : once for merge, once for matches/failures:
 			if self._jail.database is not None:
 				mi4ip = lambda overalljails=False, self=self, \
 					mi={'ip':ip, 'ticket':bTicket}: self.__getBansMerged(mi, overalljails)
@@ -311,8 +319,20 @@ class Actions(JailThread, Mapping):
 				aInfo["ipjailmatches"]  = lambda: "\n".join(mi4ip().getMatches())
 				aInfo["ipfailures"]     = lambda: mi4ip(True).getAttempt()
 				aInfo["ipjailfailures"] = lambda: mi4ip().getAttempt()
+
+			if btime != -1:
+				bendtime = aInfo["time"] + btime
+				# check ban is not too old :
+				if bendtime < MyTime.time():
+					logSys.info('[%s] Ignore %s, expired bantime', self._jail.name, ip)
+					return False
+
 			if self.__banManager.addBanTicket(bTicket):
-				logSys.notice("[%s] Ban %s" % (self._jail.name, aInfo["ip"]))
+				# report ticket to observer, to check time should be increased and hereafter observer writes ban to database (asynchronous)
+				if Observers.Main is not None and not bTicket.getRestored():
+					Observers.Main.add('banFound', bTicket, self._jail, btime)
+				logSys.notice("[%s] %sBan %s", self._jail.name, ('' if not bTicket.getRestored() else 'Restore '), aInfo["ip"])
+				# do actions :
 				for name, action in self._actions.iteritems():
 					try:
 						action.ban(aInfo.copy())
@@ -324,8 +344,7 @@ class Actions(JailThread, Mapping):
 							exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 				return True
 			else:
-				logSys.notice("[%s] %s already banned" % (self._jail.name,
-														aInfo["ip"]))
+				logSys.notice("[%s] %s already banned" % (self._jail.name, aInfo["ip"]))
 		return False
 
 	def __checkUnBan(self):

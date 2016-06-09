@@ -75,7 +75,7 @@ class FailManager:
 	def getMaxTime(self):
 		return self.__maxTime
 
-	def addFailure(self, ticket, count=1):
+	def addFailure(self, ticket, count=1, observed=False):
 		attempts = 1
 		with self.__lock:
 			fid = ticket.getID()
@@ -102,6 +102,9 @@ class FailManager:
 				if len(matches) > self.maxEntries:
 					fData.setMatches(matches[-self.maxEntries:])
 			except KeyError:
+				# not found - already banned - prevent to add failure if comes from observer:
+				if observed:
+					return
 				# if already FailTicket - add it direct, otherwise create (using copy all ticket data):
 				if isinstance(ticket, FailTicket):
 					fData = ticket;
