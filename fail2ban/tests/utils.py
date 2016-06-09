@@ -26,10 +26,14 @@ import logging
 import optparse
 import os
 import re
+import tempfile
+import shutil
 import sys
 import time
 import unittest
+
 from StringIO import StringIO
+from functools import wraps
 
 from ..helpers import getLogger
 from ..server.ipdns import DNSUtils
@@ -50,6 +54,10 @@ if not CONFIG_DIR:
 	else:
 		CONFIG_DIR = '/etc/fail2ban'
 
+# In not installed env (setup, test-cases) use fail2ban modules from main directory:
+if 1 or os.environ.get('PYTHONPATH', None) is None:
+	os.putenv('PYTHONPATH', os.path.dirname(os.path.dirname(os.path.dirname(
+		os.path.abspath(__file__)))))
 
 class F2B(optparse.Values):
 	def __init__(self, opts={}):
@@ -69,6 +77,23 @@ class F2B(optparse.Values):
 		if self.fast:
 			wtime = float(wtime) / 10
 		return wtime
+
+
+def with_tmpdir(f):
+	"""Helper decorator to create a temporary directory
+
+	Directory gets removed after function returns, regardless
+	if exception was thrown of not
+	"""
+	@wraps(f)
+	def wrapper(self, *args, **kwargs):
+		tmp = tempfile.mkdtemp(prefix="f2b-temp")
+		try:
+			return f(self, tmp, *args, **kwargs)
+		finally:
+			# clean up
+			shutil.rmtree(tmp)
+	return wrapper
 
 
 def initTests(opts):
@@ -156,6 +181,7 @@ def gatherTests(regexps=None, opts=None):
 	from . import misctestcase
 	from . import databasetestcase
 	from . import samplestestcase
+	from . import fail2banclienttestcase
 	from . import fail2banregextestcase
 
 	if not regexps: # pragma: no cover
@@ -239,6 +265,9 @@ def gatherTests(regexps=None, opts=None):
 	# Filter Regex tests with sample logs
 	tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
 
+	# bin/fail2ban-client, bin/fail2ban-server
+	tests.addTest(unittest.makeSuite(fail2banclienttestcase.Fail2banClientTest))
+	tests.addTest(unittest.makeSuite(fail2banclienttestcase.Fail2banServerTest))
 	# bin/fail2ban-regex
 	tests.addTest(unittest.makeSuite(fail2banregextestcase.Fail2banRegexTest))
 
@@ -321,13 +350,16 @@ class LogCaptureTestCase(unittest.TestCase):
 		# Let's log everything into a string
 		self._log = StringIO()
 		logSys.handlers = [logging.StreamHandler(self._log)]
-		if self._old_level < logging.DEBUG: # so if HEAVYDEBUG etc -- show them!
+		if self._old_level <= logging.DEBUG: # so if DEBUG etc -- show them (and log it in travis)!
+			print("")
 			logSys.handlers += self._old_handlers
+			logSys.debug('='*10 + ' %s ' + '='*20, self.id())
 		logSys.setLevel(getattr(logging, 'DEBUG'))
 
 	def tearDown(self):
 		"""Call after every test case."""
 		# print "O: >>%s<<" % self._log.getvalue()
+		self.pruneLog()
 		logSys = getLogger("fail2ban")
 		logSys.handlers = self._old_handlers
 		logSys.level = self._old_level

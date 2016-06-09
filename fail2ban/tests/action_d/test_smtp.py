@@ -65,6 +65,7 @@ class SMTPActionTest(unittest.TestCase):
 		self._active = True
 		self._loop_thread = threading.Thread(
 			target=asyncserver.loop, kwargs={'active': lambda: self._active})
+		self._loop_thread.daemon = True
 		self._loop_thread.start()
 
 	def tearDown(self):
