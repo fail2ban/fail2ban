@@ -1353,6 +1353,42 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		"""Call before every test case."""
 		unittest.F2B.SkipIfNoNetwork()
 
+	def test_IPAddr(self):
+		self.assertTrue(IPAddr('192.0.2.1').isIPv4)
+		self.assertTrue(IPAddr('2001:DB8::').isIPv6)
+
+	def test_IPAddr_Raw(self):
+		# raw string:
+		r = IPAddr('xxx', IPAddr.CIDR_RAW)
+		self.assertFalse(r.isIPv4)
+		self.assertFalse(r.isIPv6)
+		self.assertTrue(r.isValid)
+		self.assertEqual(r, 'xxx')
+		self.assertEqual('xxx', str(r))
+		self.assertNotEqual(r, IPAddr('xxx'))
+		# raw (not IP, for example host:port as string):
+		r = IPAddr('1:2', IPAddr.CIDR_RAW)
+		self.assertFalse(r.isIPv4)
+		self.assertFalse(r.isIPv6)
+		self.assertTrue(r.isValid)
+		self.assertEqual(r, '1:2')
+		self.assertEqual('1:2', str(r))
+		self.assertNotEqual(r, IPAddr('1:2'))
+		# raw vs ip4 (raw is not an ip):
+		r = IPAddr('93.184.0.1', IPAddr.CIDR_RAW)
+		ip4 = IPAddr('93.184.0.1')
+		self.assertNotEqual(ip4, r)
+		self.assertNotEqual(r, ip4)
+		self.assertTrue(r < ip4)
+		self.assertTrue(r < ip4)
+		# raw vs ip6 (raw is not an ip):
+		r = IPAddr('1::2', IPAddr.CIDR_RAW)
+		ip6 = IPAddr('1::2')
+		self.assertNotEqual(ip6, r)
+		self.assertNotEqual(r, ip6)
+		self.assertTrue(r < ip6)
+		self.assertTrue(r < ip6)
+
 	def testUseDns(self):
 		res = DNSUtils.textToIp('www.example.com', 'no')
 		self.assertEqual(res, [])
@@ -1377,13 +1413,24 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 				self.assertEqual(sorted(res), ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
 			else:
 				self.assertEqual(res, [])
+		# pure ips:
+		for s in ('93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'):
+			ips = DNSUtils.textToIp(s, 'yes')
+			self.assertEqual(ips, [s])
+			self.assertTrue(isinstance(ips[0], IPAddr))
 
 	def testIpToName(self):
 		unittest.F2B.SkipIfNoNetwork()
 		res = DNSUtils.ipToName('8.8.4.4')
 		self.assertEqual(res, 'google-public-dns-b.google.com')
+		# same as above, but with IPAddr:
+		res = DNSUtils.ipToName(IPAddr('8.8.4.4'))
+		self.assertEqual(res, 'google-public-dns-b.google.com')
 		# invalid ip (TEST-NET-1 according to RFC 5737)
 		res = DNSUtils.ipToName('192.0.2.0')
+		self.assertEqual(res, None)
+		# invalid ip:
+		res = DNSUtils.ipToName('192.0.2.888')
 		self.assertEqual(res, None)
 
 	def testAddr2bin(self):
@@ -1398,11 +1445,44 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		res = IPAddr('10.0.0.1', cidr=31L)
 		self.assertEqual(res.addr, 167772160L)
 
+		self.assertEqual(IPAddr('10.0.0.0').hexdump, '0a000000')
+		self.assertEqual(IPAddr('1::2').hexdump, '00010000000000000000000000000002')
+		self.assertEqual(IPAddr('xxx').hexdump, '')
+
+		self.assertEqual(IPAddr('192.0.2.0').getPTR(), '0.2.0.192.in-addr.arpa.')
+		self.assertEqual(IPAddr('192.0.2.1').getPTR(), '1.2.0.192.in-addr.arpa.')
+		self.assertEqual(IPAddr('2606:2800:220:1:248:1893:25c8:1946').getPTR(), 
+			'6.4.9.1.8.c.5.2.3.9.8.1.8.4.2.0.1.0.0.0.0.2.2.0.0.0.8.2.6.0.6.2.ip6.arpa.')
+
 	def testIPAddr_Equal6(self):
 		self.assertEqual(
 			IPAddr('2606:2800:220:1:248:1893::'),
 			IPAddr('2606:2800:220:1:248:1893:0:0')
 		)
+		# special case IPv6 in brackets:
+		self.assertEqual(
+			IPAddr('[2606:2800:220:1:248:1893::]'),
+			IPAddr('2606:2800:220:1:248:1893:0:0')
+		)
+
+	def testIPAddr_InInet(self):
+		ip4net = IPAddr('93.184.0.1/24')
+		ip6net = IPAddr('2606:2800:220:1:248:1893:25c8:0/120')
+		# ip4:
+		self.assertTrue(IPAddr('93.184.0.1').isInNet(ip4net))
+		self.assertTrue(IPAddr('93.184.0.255').isInNet(ip4net))
+		self.assertFalse(IPAddr('93.184.1.0').isInNet(ip4net))
+		self.assertFalse(IPAddr('93.184.0.1').isInNet(ip6net))
+		# ip6:
+		self.assertTrue(IPAddr('2606:2800:220:1:248:1893:25c8:1').isInNet(ip6net))
+		self.assertTrue(IPAddr('2606:2800:220:1:248:1893:25c8:ff').isInNet(ip6net))
+		self.assertFalse(IPAddr('2606:2800:220:1:248:1893:25c8:100').isInNet(ip6net))
+		self.assertFalse(IPAddr('2606:2800:220:1:248:1893:25c8:100').isInNet(ip4net))
+		# raw not in net:
+		self.assertFalse(IPAddr('93.184.0.1', IPAddr.CIDR_RAW).isInNet(ip4net))
+		self.assertFalse(IPAddr('2606:2800:220:1:248:1893:25c8:1', IPAddr.CIDR_RAW).isInNet(ip6net))
+		# invalid not in net:
+		self.assertFalse(IPAddr('xxx').isInNet(ip4net))
 
 	def testIPAddr_Compare(self):
 		ip4 = [
@@ -1472,6 +1552,10 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 			'2606:28ff:220:1:248:1893:25c8:0')
 		self.assertEqual(str(IPAddr('2606:28ff:220:1:248:1893:25c8::/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff')), 
 			'2606:28ff:220:1:248:1893:25c8:0')
+
+	def testIPAddr_CIDR_Wrong(self):
+		# too many plen representations:
+		self.assertRaises(ValueError, IPAddr, '2606:28ff:220:1:248:1893:25c8::/ffff::/::1')
 
 	def testIPAddr_CIDR_Repr(self):
 		self.assertEqual(["127.0.0.0/8", "::/32", "2001:db8::/32"],

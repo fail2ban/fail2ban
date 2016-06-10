@@ -85,10 +85,7 @@ class DNSUtils:
 			return v
 		# retrieve name
 		try:
-			if not isinstance(ip, IPAddr):
-				v = socket.gethostbyaddr(ip)[0]
-			else:
-				v = socket.gethostbyaddr(ip.ntoa)[0]
+			v = socket.gethostbyaddr(ip)[0]
 		except socket.error, e:
 			logSys.debug("Unable to find a name for the IP %s: %s", ip, e)
 			v = None
@@ -359,7 +356,7 @@ class IPAddr(object):
 			if not suffix:
 				suffix = "in-addr.arpa."
 		elif self.isIPv6:
-			exploded_ip = self.hexdump()
+			exploded_ip = self.hexdump
 			if not suffix:
 				suffix = "ip6.arpa."
 		else:

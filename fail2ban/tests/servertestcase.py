@@ -1026,28 +1026,6 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				logSys.debug(l)
 		return True
 
-	def test_IPAddr(self):
-		self.assertTrue(IPAddr('192.0.2.1').isIPv4)
-		self.assertTrue(IPAddr('2001:DB8::').isIPv6)
-
-	def test_IPAddr_Raw(self):
-		# raw string:
-		r = IPAddr('xxx', IPAddr.CIDR_RAW)
-		self.assertFalse(r.isIPv4)
-		self.assertFalse(r.isIPv6)
-		self.assertTrue(r.isValid)
-		self.assertEqual(r, 'xxx')
-		self.assertEqual('xxx', str(r))
-		self.assertNotEqual(r, IPAddr('xxx'))
-		# raw (not IP, for example host:port as string):
-		r = IPAddr('1:2', IPAddr.CIDR_RAW)
-		self.assertFalse(r.isIPv4)
-		self.assertFalse(r.isIPv6)
-		self.assertTrue(r.isValid)
-		self.assertEqual(r, '1:2')
-		self.assertEqual('1:2', str(r))
-		self.assertNotEqual(r, IPAddr('1:2'))
-
 	def _testExecActions(self, server):
 		jails = server._Server__jails
 		for jail in jails:
