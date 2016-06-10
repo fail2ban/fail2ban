@@ -533,21 +533,17 @@ class Filter(JailThread):
 						# failure-id:
 						fid = fail.get('fid')
 						# ip-address or host:
-						host = fail.get('ip4')
+						host = fail.get('ip4') or fail.get('ip6')
 						if host is not None:
 							raw = True
 						else:
-							host = fail.get('ip6')
-							if host is not None:
-								raw = True
-							else:
-								host = fail.get('dns')
-								if host is None:
-									# if no failure-id also (obscure case, wrong regex), throw error inside getFailID:
-									if fid is None:
-										fid = failRegex.getFailID()
-									host = fid
-									cidr = IPAddr.CIDR_RAW
+							host = fail.get('dns')
+							if host is None:
+								# if no failure-id also (obscure case, wrong regex), throw error inside getFailID:
+								if fid is None:
+									fid = failRegex.getFailID()
+								host = fid
+								cidr = IPAddr.CIDR_RAW
 						# if raw - add single ip or failure-id,
 						# otherwise expand host to multiple ips using dns (or ignore it if not valid):
 						if raw:
