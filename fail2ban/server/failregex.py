@@ -274,7 +274,7 @@ class FailRegex(Regex):
 		for grp in groups:
 			try:
 				fid = self._matchCache.group(grp)
-			except IndexError:
+			except (IndexError, KeyError):
 				continue
 			if fid is not None:
 				break
