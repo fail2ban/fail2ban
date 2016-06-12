@@ -80,14 +80,17 @@ class BadIPsAction(ActionBase):
 		If invalid `category`, `score`, `banaction` or `updateperiod`.
 	"""
 
+	TIMEOUT = 10
 	_badips = "http://www.badips.com"
 	def _Request(self, url, **argv):
 		return Request(url, headers={'User-Agent': self.agent}, **argv)
 
 	def __init__(self, jail, name, category, score=3, age="24h", key=None,
-		banaction=None, bancategory=None, bankey=None, updateperiod=900, agent="Fail2Ban"):
+		banaction=None, bancategory=None, bankey=None, updateperiod=900, agent="Fail2Ban", 
+		timeout=TIMEOUT):
 		super(BadIPsAction, self).__init__(jail, name)
 
+		self.timeout = timeout
 		self.agent = agent
 		self.category = category
 		self.score = score
@@ -119,7 +122,7 @@ class BadIPsAction(ActionBase):
 		"""
 		try:
 			response = urlopen(
-				self._Request("/".join([self._badips, "get", "categories"])), None, 3)
+				self._Request("/".join([self._badips, "get", "categories"])), timeout=self.timeout)
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
 			self._logSys.error(
@@ -173,7 +176,7 @@ class BadIPsAction(ActionBase):
 				urlencode({'age': age})])
 			if key:
 				url = "&".join([url, urlencode({'key': key})])
-			response = urlopen(self._Request(url))
+			response = urlopen(self._Request(url), timeout=self.timeout)
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
 			self._logSys.error(
@@ -358,7 +361,7 @@ class BadIPsAction(ActionBase):
 			url = "/".join([self._badips, "add", self.category, aInfo['ip']])
 			if self.key:
 				url = "?".join([url, urlencode({'key': self.key})])
-			response = urlopen(self._Request(url))
+			response = urlopen(self._Request(url), timeout=self.timeout)
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
 			self._logSys.error(
