@@ -418,6 +418,9 @@ class Filter(JailThread):
 			ip = element[1]
 			unixTime = element[2]
 			lines = element[3]
+			fail = {}
+			if len(element) > 4:
+				fail = element[4]
 			logSys.debug("Processing line with time:%s and ip:%s", 
 					unixTime, ip)
 			if unixTime < MyTime.time() - self.getFindTime():
@@ -429,7 +432,7 @@ class Filter(JailThread):
 			logSys.info(
 				"[%s] Found %s - %s", self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
 			)
-			tick = FailTicket(ip, unixTime, lines)
+			tick = FailTicket(ip, unixTime, lines, data=fail)
 			self.failManager.addFailure(tick)
 
 	##
@@ -457,7 +460,12 @@ class Filter(JailThread):
 		checkAllRegex=False):
 		failList = list()
 
-		# Checks if we must ignore this line.
+		cidr = IPAddr.CIDR_UNSPEC
+		if self.__useDns == "raw":
+			returnRawHost = True
+			cidr = IPAddr.CIDR_RAW
+
+		# Checks if we mut ignore this line.
 		if self.ignoreLine([tupleLine[::2]]) is not None:
 			# The ignoreregex matched. Return.
 			logSys.log(7, "Matched ignoreregex and was \"%s\" ignored",
@@ -518,19 +526,41 @@ class Filter(JailThread):
 						 % ("\n".join(failRegex.getMatchedLines()), timeText))
 				else:
 					self.__lineBuffer = failRegex.getUnmatchedTupleLines()
+					# retrieve failure-id, host, etc from failure match:
+					raw = returnRawHost
 					try:
-						host = failRegex.getHost()
-						if returnRawHost or self.__useDns == "raw":
-							failList.append([failRegexIndex, IPAddr(host), date,
-								 failRegex.getMatchedLines()])
+						fail = failRegex.getGroups()
+						# failure-id:
+						fid = fail.get('fid')
+						# ip-address or host:
+						host = fail.get('ip4') or fail.get('ip6')
+						if host is not None:
+							raw = True
+						else:
+							host = fail.get('dns')
+							if host is None:
+								# if no failure-id also (obscure case, wrong regex), throw error inside getFailID:
+								if fid is None:
+									fid = failRegex.getFailID()
+								host = fid
+								cidr = IPAddr.CIDR_RAW
+						# if raw - add single ip or failure-id,
+						# otherwise expand host to multiple ips using dns (or ignore it if not valid):
+						if raw:
+							ip = IPAddr(host, cidr)
+							# check host equal failure-id, if not - failure with complex id:
+							if fid is not None and fid != host:
+								ip = IPAddr(fid, IPAddr.CIDR_RAW)
+							failList.append([failRegexIndex, ip, date,
+								failRegex.getMatchedLines(), fail])
 							if not checkAllRegex:
 								break
 						else:
 							ips = DNSUtils.textToIp(host, self.__useDns)
 							if ips:
 								for ip in ips:
-									failList.append([failRegexIndex, ip, 
-										 date, failRegex.getMatchedLines()])
+									failList.append([failRegexIndex, ip, date,
+										failRegex.getMatchedLines(), fail])
 								if not checkAllRegex:
 									break
 					except RegexException, e: # pragma: no cover - unsure if reachable

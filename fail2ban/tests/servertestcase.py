@@ -933,6 +933,14 @@ class RegexTests(unittest.TestCase):
 
 	def testHost(self):
 		self.assertRaises(RegexException, FailRegex, '')
+		self.assertRaises(RegexException, FailRegex, '^test no group$')
+		self.assertTrue(FailRegex('^test <HOST> group$'))
+		self.assertTrue(FailRegex('^test <IP4> group$'))
+		self.assertTrue(FailRegex('^test <IP6> group$'))
+		self.assertTrue(FailRegex('^test <DNS> group$'))
+		self.assertTrue(FailRegex('^test id group: ip:port = <F-ID><IP4>(?::<F-PORT/>)?</F-ID>$'))
+		self.assertTrue(FailRegex('^test id group: user:\(<F-ID>[^\)]+</F-ID>\)$'))
+		self.assertTrue(FailRegex('^test id group: anything = <F-ID/>$'))
 		# Testing obscure case when host group might be missing in the matched pattern,
 		# e.g. if we made it optional.
 		fr = FailRegex('%%<HOST>?')
@@ -940,6 +948,30 @@ class RegexTests(unittest.TestCase):
 		fr.search([('%%',"","")])
 		self.assertTrue(fr.hasMatched())
 		self.assertRaises(RegexException, fr.getHost)
+		# The same as above but using separated IPv4/IPv6 expressions
+		fr = FailRegex('%%inet(?:=<F-IP4/>|inet6=<F-IP6/>)?')
+		self.assertFalse(fr.hasMatched())
+		fr.search([('%%inet=test',"","")])
+		self.assertTrue(fr.hasMatched())
+		self.assertRaises(RegexException, fr.getHost)
+		# Success case: using separated IPv4/IPv6 expressions (no HOST)
+		fr = FailRegex('%%(?:inet(?:=<IP4>|6=<IP6>)?|dns=<DNS>?)')
+		self.assertFalse(fr.hasMatched())
+		fr.search([('%%inet=192.0.2.1',"","")])
+		self.assertTrue(fr.hasMatched())
+		self.assertEqual(fr.getHost(), '192.0.2.1')
+		fr.search([('%%inet6=2001:DB8::',"","")])
+		self.assertTrue(fr.hasMatched())
+		self.assertEqual(fr.getHost(), '2001:DB8::')
+		fr.search([('%%dns=example.com',"","")])
+		self.assertTrue(fr.hasMatched())
+		self.assertEqual(fr.getHost(), 'example.com')
+		# Success case: using user as failure-id
+		fr = FailRegex('^test id group: user:\(<F-ID>[^\)]+</F-ID>\)$')
+		self.assertFalse(fr.hasMatched())
+		fr.search([('test id group: user:(test login name)',"","")])
+		self.assertTrue(fr.hasMatched())
+		self.assertEqual(fr.getFailID(), 'test login name')
 
 
 class _BadThread(JailThread):
@@ -993,10 +1025,6 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			else:
 				logSys.debug(l)
 		return True
-
-	def test_IPAddr(self):
-		self.assertTrue(IPAddr('192.0.2.1').isIPv4)
-		self.assertTrue(IPAddr('2001:DB8::').isIPv6)
 
 	def _testExecActions(self, server):
 		jails = server._Server__jails
