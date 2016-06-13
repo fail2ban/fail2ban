@@ -37,6 +37,7 @@ if sys.version_info >= (2,7):
 			self.jail.actions.add("badips", pythonModule, initOpts={
 				'category': "ssh",
 				'banaction': "test",
+				'timeout': 30,
 				})
 			self.action = self.jail.actions["badips"]
 
