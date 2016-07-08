@@ -30,6 +30,9 @@ releases.
     - Extended failregex and test cases to handle ASSP V1 and V2 (gh-1494)
 * `filter.d/postfix-sasl.conf`
     - Allow for having no trailing space after 'failed:' (gh-1497)
+* filter.d/sshd.conf
+    - recognized "Failed publickey for" (gh-1477);
+    - optimized failregex to match all of "Failed any-method for ... from <HOST>" (gh-1479)
 
 ### New Features
 

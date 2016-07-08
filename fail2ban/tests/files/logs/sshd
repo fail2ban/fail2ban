@@ -118,6 +118,8 @@ Sep 29 17:15:02 spaceman sshd[12946]: Failed password for user from 127.0.0.1 po
 # failJSON: { "time": "2004-11-11T08:04:51", "match": true , "host": "127.0.0.1", "desc": "Injecting on username ssh 'from 10.10.1.1'@localhost" }
 Nov 11 08:04:51 redbamboo sshd[2737]: Failed password for invalid user from 10.10.1.1 from 127.0.0.1 port 58946 ssh2
 
+# failJSON: { "time": "2005-07-05T18:22:44", "match": true , "host": "127.0.0.1", "desc": "Failed publickey for ..." }
+Jul 05 18:22:44 mercury sshd[4669]: Failed publickey for graysky from 127.0.0.1 port 37954 ssh2: RSA SHA256:v3dpapGleDaUKf$4V1vKyR9ZyUgjaJAmoCTcb2PLljI
 
 # failJSON: { "match": false }
 Nov 23 21:50:19 sshd[8148]: Disconnecting: Too many authentication failures for root [preauth]
@@ -161,4 +163,3 @@ Apr 27 13:02:04 host sshd[29116]: Received disconnect from 1.2.3.4: 11: Normal S
 # Match sshd auth errors on OpenSUSE systems
 # failJSON: { "time": "2015-04-16T20:02:50", "match": true , "host": "222.186.21.217", "desc": "Authentication for user failed" }
 2015-04-16T18:02:50.321974+00:00 host sshd[2716]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=222.186.21.217  user=root
-
