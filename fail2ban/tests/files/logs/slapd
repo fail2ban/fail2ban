@@ -1,0 +1,9 @@
+Jul  8 01:47:19 ldap-server slapd[1183]: conn=1022 fd=21 ACCEPT from IP=8.8.8.8:45011 (IP=0.0.0.0:636)
+Jul  8 01:47:19 ldap-server slapd[1183]: conn=1022 fd=21 TLS established tls_ssf=256 ssf=256
+Jul  8 01:47:19 ldap-server slapd[1183]: conn=1022 op=0 EXT oid=1.3.6.1.4.1.6.1
+Jul  8 01:47:19 ldap-server slapd[1183]: conn=1022 op=0 STARTTLS
+Jul  8 01:47:19 ldap-server slapd[1183]: conn=1022 op=0 RESULT oid= err=1 text=TLS already started
+Jul  8 01:47:20 ldap-server slapd[1183]: conn=1022 op=1 BIND dn="uid=gipson,ou=people,dc=example,dc=com" method=128
+Jul  8 01:47:20 ldap-server slapd[1183]: conn=1022 op=1 RESULT tag=97 err=49 text=
+Jul  8 01:47:20 ldap-server slapd[1183]: conn=1022 op=2 UNBIND
+Jul  8 01:47:20 ldap-server slapd[1183]: conn=1022 fd=21 closed
