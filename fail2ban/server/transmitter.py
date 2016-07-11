@@ -52,7 +52,7 @@ class Transmitter:
 	
 	def proceed(self, command):
 		# Deserialize object
-		logSys.debug("Command: " + repr(command))
+		logSys.debug("Command: %r", command)
 		try:
 			ret = self.__commandHandler(command)
 			ack = 0, ret
@@ -265,6 +265,7 @@ class Transmitter:
 			action = self.__server.getAction(name, actionname)
 			if multiple:
 				for cmd in command[3]:
+					logSys.debug("  %r", cmd)
 					actionkey = cmd[0]
 					if callable(getattr(action, actionkey, None)):
 						actionvalue = json.loads(cmd[1]) if len(cmd)>1 else {}

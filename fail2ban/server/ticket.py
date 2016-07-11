@@ -36,7 +36,7 @@ logSys = getLogger(__name__)
 
 class Ticket:
 	
-	def __init__(self, ip=None, time=None, matches=None, ticket=None):
+	def __init__(self, ip=None, time=None, matches=None, data={}, ticket=None):
 		"""Ticket constructor
 
 		@param ip the IP address
@@ -50,6 +50,7 @@ class Ticket:
 		self._banTime = None;
 		self._time = time if time is not None else MyTime.time()
 		self._data = {'matches': [], 'failures': 0}
+		self._data.update(data)
 		if ticket:
 			# ticket available - copy whole information from ticket:
 			self.__dict__.update(i for i in ticket.__dict__.iteritems() if i[0] in self.__dict__)
@@ -77,6 +78,9 @@ class Ticket:
 		if isinstance(value, basestring):
 			value = IPAddr(value)
 		self.__ip = value
+	
+	def getID(self):
+		return self._data.get('fid', self.__ip)
 	
 	def getIP(self):
 		return self.__ip
@@ -164,12 +168,12 @@ class Ticket:
 
 class FailTicket(Ticket):
 
-	def __init__(self, ip=None, time=None, matches=None, ticket=None):
+	def __init__(self, ip=None, time=None, matches=None, data={}, ticket=None):
 		# this class variables:
 		self.__retry = 0
 		self.__lastReset = None
 		# create/copy using default ticket constructor:
-		Ticket.__init__(self, ip, time, matches, ticket)
+		Ticket.__init__(self, ip, time, matches, data, ticket)
 		# init:
 		if ticket is None:
 			self.__lastReset = time if time is not None else self.getTime()

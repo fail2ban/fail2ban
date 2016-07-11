@@ -85,10 +85,7 @@ class DNSUtils:
 			return v
 		# retrieve name
 		try:
-			if not isinstance(ip, IPAddr):
-				v = socket.gethostbyaddr(ip)[0]
-			else:
-				v = socket.gethostbyaddr(ip.ntoa)[0]
+			v = socket.gethostbyaddr(ip)[0]
 		except socket.error, e:
 			logSys.debug("Unable to find a name for the IP %s: %s", ip, e)
 			v = None
@@ -138,18 +135,21 @@ class IPAddr(object):
 	# todo: make configurable the expired time and max count of cache entries:
 	CACHE_OBJ = Utils.Cache(maxCount=1000, maxTime=5*60)
 
-	def __new__(cls, ipstr, cidr=-1):
+	CIDR_RAW = -2
+	CIDR_UNSPEC = -1
+
+	def __new__(cls, ipstr, cidr=CIDR_UNSPEC):
 		# check already cached as IPAddr
 		args = (ipstr, cidr)
 		ip = IPAddr.CACHE_OBJ.get(args)
 		if ip is not None:
 			return ip
 		# wrap mask to cidr (correct plen):
-		if cidr == -1:
+		if cidr == IPAddr.CIDR_UNSPEC:
 			ipstr, cidr = IPAddr.__wrap_ipstr(ipstr)
 			args = (ipstr, cidr)
 			# check cache again:
-			if cidr != -1:
+			if cidr != IPAddr.CIDR_UNSPEC:
 				ip = IPAddr.CACHE_OBJ.get(args)
 				if ip is not None:
 					return ip
@@ -166,17 +166,17 @@ class IPAddr(object):
 			ipstr = ipstr[1:-1]
 		# test mask:
 		if "/" not in ipstr:
-			return ipstr, -1
+			return ipstr, IPAddr.CIDR_UNSPEC
 		s = ipstr.split('/', 1)
 		# IP address without CIDR mask
 		if len(s) > 2:
 			raise ValueError("invalid ipstr %r, too many plen representation" % (ipstr,))
-		if "." in s[1]: # 255.255.255.0 style mask
+		if "." in s[1] or ":" in s[1]: # 255.255.255.0 resp. ffff:: style mask
 			s[1] = IPAddr.masktoplen(s[1])
 		s[1] = long(s[1])
 		return s
 		
-	def __init(self, ipstr, cidr=-1):
+	def __init(self, ipstr, cidr=CIDR_UNSPEC):
 		""" initialize IP object by converting IP address string
 			to binary to integer
 		"""
@@ -184,55 +184,62 @@ class IPAddr(object):
 		self._addr = 0
 		self._plen = 0
 		self._maskplen = None
-		self._raw = ""
+		# always save raw value (normally used if really raw or not valid only):
+		self._raw = ipstr
+		# if not raw - recognize family, set addr, etc.:
+		if cidr != IPAddr.CIDR_RAW:
+			for family in [socket.AF_INET, socket.AF_INET6]:
+				try:
+					binary = socket.inet_pton(family, ipstr)
+					self._family = family
+					break
+				except socket.error:
+					continue
 
-		for family in [socket.AF_INET, socket.AF_INET6]:
-			try:
-				binary = socket.inet_pton(family, ipstr)
-				self._family = family
-				break
-			except socket.error:
-				continue
-
-		if self._family == socket.AF_INET:
-			# convert host to network byte order
-			self._addr, = struct.unpack("!L", binary)
-			self._plen = 32
-
-			# mask out host portion if prefix length is supplied
-			if cidr is not None and cidr >= 0:
-				mask = ~(0xFFFFFFFFL >> cidr)
-				self._addr &= mask
-				self._plen = cidr
-
-		elif self._family == socket.AF_INET6:
-			# convert host to network byte order
-			hi, lo = struct.unpack("!QQ", binary)
-			self._addr = (hi << 64) | lo
-			self._plen = 128
-
-			# mask out host portion if prefix length is supplied
-			if cidr is not None and cidr >= 0:
-				mask = ~(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFL >> cidr)
-				self._addr &= mask
-				self._plen = cidr
-
-			# if IPv6 address is a IPv4-compatible, make instance a IPv4
-			elif self.isInNet(IPAddr.IP6_4COMPAT):
-				self._addr = lo & 0xFFFFFFFFL
-				self._family = socket.AF_INET
+			if self._family == socket.AF_INET:
+				# convert host to network byte order
+				self._addr, = struct.unpack("!L", binary)
 				self._plen = 32
+
+				# mask out host portion if prefix length is supplied
+				if cidr is not None and cidr >= 0:
+					mask = ~(0xFFFFFFFFL >> cidr)
+					self._addr &= mask
+					self._plen = cidr
+
+			elif self._family == socket.AF_INET6:
+				# convert host to network byte order
+				hi, lo = struct.unpack("!QQ", binary)
+				self._addr = (hi << 64) | lo
+				self._plen = 128
+
+				# mask out host portion if prefix length is supplied
+				if cidr is not None and cidr >= 0:
+					mask = ~(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFL >> cidr)
+					self._addr &= mask
+					self._plen = cidr
+
+				# if IPv6 address is a IPv4-compatible, make instance a IPv4
+				elif self.isInNet(IPAddr.IP6_4COMPAT):
+					self._addr = lo & 0xFFFFFFFFL
+					self._family = socket.AF_INET
+					self._plen = 32
 		else:
-			# string couldn't be converted neither to a IPv4 nor
-			# to a IPv6 address - retain raw input for later use
-			# (e.g. DNS resolution)
-			self._raw = ipstr
+			self._family = IPAddr.CIDR_RAW
 
 	def __repr__(self):
 		return self.ntoa
 
 	def __str__(self):
 		return self.ntoa
+
+	def __reduce__(self):
+		"""IPAddr pickle-handler, that simply wraps IPAddr to the str
+
+		Returns a string as instance to be pickled, because fail2ban-client can't
+		unserialize IPAddr objects
+		"""
+		return (str, (self.ntoa,))
 	
 	@property
 	def addr(self):
@@ -262,6 +269,8 @@ class IPAddr(object):
 		return self._family != socket.AF_UNSPEC
 
 	def __eq__(self, other):
+		if self._family == IPAddr.CIDR_RAW and not isinstance(other, IPAddr):
+			return self._raw == other
 		if not isinstance(other, IPAddr):
 			if other is None: return False
 			other = IPAddr(other)
@@ -277,6 +286,8 @@ class IPAddr(object):
 		return not (self == other)
 
 	def __lt__(self, other):
+		if self._family == IPAddr.CIDR_RAW and not isinstance(other, IPAddr):
+			return self._raw < other
 		if not isinstance(other, IPAddr):
 			if other is None: return False
 			other = IPAddr(other)
@@ -345,7 +356,7 @@ class IPAddr(object):
 			if not suffix:
 				suffix = "in-addr.arpa."
 		elif self.isIPv6:
-			exploded_ip = self.hexdump()
+			exploded_ip = self.hexdump
 			if not suffix:
 				suffix = "ip6.arpa."
 		else:
@@ -384,17 +395,29 @@ class IPAddr(object):
 		
 		return (self.addr & mask) == net.addr
 
+	# Pre-calculated map: addr to maskplen
+	def __getMaskMap():
+		m6 = (1 << 128)-1
+		m4 = (1 << 32)-1
+		mmap = {m6: 128, m4: 32, 0: 0}
+		m = 0
+		for i in xrange(0, 128):
+			m |= 1 << i
+			if i < 32:
+				mmap[m ^ m4] = 32-1-i
+			mmap[m ^ m6] = 128-1-i
+		return mmap
+
+	MAP_ADDR2MASKPLEN = __getMaskMap()
+
 	@property
 	def maskplen(self):
 		mplen = 0
 		if self._maskplen is not None:
 			return self._maskplen
-		maddr = self._addr
-		while maddr:
-			if not (maddr & 0x80000000):
-				raise ValueError("invalid mask %r, no plen representation" % (str(self),))
-			maddr = (maddr << 1) & 0xFFFFFFFFL
-			mplen += 1
+		mplen = IPAddr.MAP_ADDR2MASKPLEN.get(self._addr)
+		if mplen is None:
+			raise ValueError("invalid mask %r, no plen representation" % (str(self),))
 		self._maskplen = mplen
 		return mplen
 		

@@ -299,8 +299,10 @@ class Server:
 		flt = self.__jails[name].filter
 		if multiple:
 			for value in value:
+				logSys.debug("  failregex: %r", value)
 				flt.addFailRegex(value)
 		else:
+			logSys.debug("  failregex: %r", value)
 			flt.addFailRegex(value)
 	
 	def delFailRegex(self, name, index):
@@ -313,8 +315,10 @@ class Server:
 		flt = self.__jails[name].filter
 		if multiple:
 			for value in value:
+				logSys.debug("  ignoreregex: %r", value)
 				flt.addIgnoreRegex(value)
 		else:
+			logSys.debug("  ignoreregex: %r", value)
 			flt.addIgnoreRegex(value)
 	
 	def delIgnoreRegex(self, name, index):

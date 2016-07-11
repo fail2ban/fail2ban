@@ -34,7 +34,7 @@ from .filterreader import FilterReader
 from .actionreader import ActionReader
 from ..version import version
 from ..helpers import getLogger
-from ..helpers import splitcommaspace
+from ..helpers import splitwords
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -42,9 +42,14 @@ logSys = getLogger(__name__)
 
 class JailReader(ConfigReader):
 	
+	# regex, to extract list of options:
 	optionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
+	# regex, to iterate over single option in option list, syntax:
+	# `action = act[p1="...", p2='...', p3=...]`, where the p3=... not contains `,` or ']'
+	# since v0.10 separator extended with `]\s*[` for support of multiple option groups, syntax 
+	# `action = act[p1=...][p2=...]`
 	optionExtractRE = re.compile(
-		r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,]*))(?:,|$)')
+		r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$)')
 	
 	def __init__(self, name, force_enable=False, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
@@ -214,7 +219,7 @@ class JailReader(ConfigReader):
 			elif opt == "maxretry":
 				stream.append(["set", self.__name, "maxretry", value])
 			elif opt == "ignoreip":
-				for ip in splitcommaspace(value):
+				for ip in splitwords(value):
 					stream.append(["set", self.__name, "addignoreip", ip])
 			elif opt == "findtime":
 				stream.append(["set", self.__name, "findtime", value])

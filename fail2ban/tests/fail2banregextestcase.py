@@ -120,6 +120,15 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('Dez 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128')
 		self.assertLogged('Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10')
 
+	def testDirectRE_1raw(self):
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"--print-all-matched", "--raw",
+			Fail2banRegexTest.FILENAME_01, 
+			Fail2banRegexTest.RE_00
+		)
+		self.assertTrue(fail2banRegex.start(opts, args))
+		self.assertLogged('Lines: 19 lines, 0 ignored, 16 matched, 3 missed')
+
 	def testDirectRE_2(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"--print-all-matched",

@@ -35,6 +35,7 @@ from ..server.filter import Filter
 from ..client.filterreader import FilterReader
 from .utils import setUpMyTime, tearDownMyTime, CONFIG_DIR
 
+TEST_CONFIG_DIR = os.path.join(os.path.dirname(__file__), "config")
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
 
@@ -60,12 +61,12 @@ class FilterSamplesRegex(unittest.TestCase):
 			"Expected more FilterSampleRegexs tests")
 
 
-def testSampleRegexsFactory(name):
+def testSampleRegexsFactory(name, basedir):
 	def testFilter(self):
 
 		# Check filter exists
 		filterConf = FilterReader(name, "jail", {}, 
-			basedir=CONFIG_DIR, share_config=unittest.F2B.share_config)
+			basedir=basedir, share_config=unittest.F2B.share_config)
 		self.assertEqual(filterConf.getFile(), name)
 		self.assertEqual(filterConf.getJailName(), "jail")
 		filterConf.read()
@@ -126,7 +127,7 @@ def testSampleRegexsFactory(name):
 								 (map(lambda x: x[0], ret),logFile.filename(), logFile.filelineno()))
 
 				# Verify timestamp and host as expected
-				failregex, host, fail2banTime, lines = ret[0]
+				failregex, host, fail2banTime, lines, fail = ret[0]
 				self.assertEqual(host, faildata.get("host", None))
 
 				t = faildata.get("time", None)
@@ -155,11 +156,15 @@ def testSampleRegexsFactory(name):
 
 	return testFilter
 
-for filter_ in filter(lambda x: not x.endswith('common.conf') and x.endswith('.conf'),
-					  os.listdir(os.path.join(CONFIG_DIR, "filter.d"))):
-	filterName = filter_.rpartition(".")[0]
-	if not filterName.startswith('.'):
-		setattr(
-			FilterSamplesRegex,
-			"testSampleRegexs%s" % filterName.upper(),
-			testSampleRegexsFactory(filterName))
+for basedir_, filter_ in (
+	(CONFIG_DIR, lambda x: not x.endswith('common.conf') and x.endswith('.conf')),
+	(TEST_CONFIG_DIR, lambda x: x.startswith('zzz-') and x.endswith('.conf')),
+):
+	for filter_ in filter(filter_,
+						  os.listdir(os.path.join(basedir_, "filter.d"))):
+		filterName = filter_.rpartition(".")[0]
+		if not filterName.startswith('.'):
+			setattr(
+				FilterSamplesRegex,
+				"testSampleRegexs%s" % filterName.upper(),
+				testSampleRegexsFactory(filterName, basedir_))

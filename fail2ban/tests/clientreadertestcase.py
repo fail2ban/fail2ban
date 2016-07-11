@@ -45,7 +45,7 @@ TEST_FILES_DIR_SHARE_CFG = {}
 from .utils import CONFIG_DIR
 CONFIG_DIR_SHARE_CFG = unittest.F2B.share_config
 
-STOCK = os.path.exists(os.path.join('config','fail2ban.conf'))
+STOCK = os.path.exists(os.path.join('config', 'fail2ban.conf'))
 
 IMPERFECT_CONFIG = os.path.join(os.path.dirname(__file__), 'config')
 IMPERFECT_CONFIG_SHARE_CFG = {}
@@ -254,6 +254,13 @@ class JailReaderTest(LogCaptureTestCase):
 		})
 		result = JailReader.extractOptions(option)
 		self.assertEqual(expected, result)
+
+		# And multiple groups (`][` instead of `,`)
+		result = JailReader.extractOptions(option.replace(',', ']['))
+		expected2 = (expected[0],
+		 dict((k, v.replace(',', '][')) for k, v in expected[1].iteritems())
+		)
+		self.assertEqual(expected2, result)
 
 	def testVersionAgent(self):
 		jail = JailReader('blocklisttest', force_enable=True, basedir=CONFIG_DIR)

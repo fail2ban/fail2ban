@@ -46,8 +46,12 @@ _cmd_lock = threading.Lock()
 # Todo: make it configurable resp. automatically set, ex.: `[ -f /proc/net/if_inet6 ] && echo 'yes' || echo 'no'`:
 allowed_ipv6 = True
 
+# max tag replacement count:
+MAX_TAG_REPLACE_COUNT = 10
+
 # compiled RE for tag name (replacement name) 
 TAG_CRE = re.compile(r'<([^ <>]+)>')
+
 
 class CallingMap(MutableMapping):
 	"""A Mapping type which returns the result of callable values.
@@ -229,8 +233,8 @@ class CommandAction(ActionBase):
 	def __setattr__(self, name, value):
 		if not name.startswith('_') and not callable(value):
 			# special case for some pasrameters:
-			if name == 'timeout':
-				value = MyTime.str2seconds(value)
+			if name in ('timeout', 'bantime'):
+				value = str(MyTime.str2seconds(value))
 			# parameters changed - clear properties and substitution cache:
 			self.__properties = None
 			self.__substCache.clear()
@@ -356,27 +360,28 @@ class CommandAction(ActionBase):
 		tags = inptags.copy()
 		t = TAG_CRE
 		# repeat substitution while embedded-recursive (repFlag is True)
+		done = cls._escapedTags.copy()
 		while True:
 			repFlag = False
 			# substitute each value:
 			for tag in tags.iterkeys():
-				if tag in cls._escapedTags:
-					# Escaped so won't match
-					continue
+				# ignore escaped or already done:
+				if tag in done: continue
 				value = str(tags[tag])
 				# search and replace all tags within value, that can be interpolated using other tags:
 				m = t.search(value)
-				done = []
+				refCounts = {}
 				#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
 				while m:
 					found_tag = m.group(1)
 					#logSys.log(5, 'found: %s' % found_tag)
-					if found_tag == tag or found_tag in done:
+					if found_tag == tag or refCounts.get(found_tag, 1) > MAX_TAG_REPLACE_COUNT:
 						# recursive definitions are bad
 						#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 						raise ValueError(
 							"properties contain self referencing definitions "
-							"and cannot be resolved, fail tag: %s value: %s" % (tag, value))
+							"and cannot be resolved, fail tag: %s, found: %s in %s, value: %s" % 
+							(tag, found_tag, refCounts, value))
 					repl = None
 					if found_tag not in cls._escapedTags:
 						repl = tags.get(found_tag + '?' + conditional)
@@ -390,7 +395,9 @@ class CommandAction(ActionBase):
 						continue
 					value = value.replace('<%s>' % found_tag, repl)
 					#logSys.log(5, 'value now: %s' % value)
-					done.append(found_tag)
+					# increment reference count:
+					refCounts[found_tag] = refCounts.get(found_tag, 0) + 1
+					# the next match for replace:
 					m = t.search(value, m.start())
 				#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
 				# was substituted?
@@ -399,6 +406,9 @@ class CommandAction(ActionBase):
 					if t.search(value):
 						repFlag = True
 					tags[tag] = value
+				# no more sub tags (and no possible composite), add this tag to done set (just to be faster):
+				if '<' not in value: done.add(tag)
+			# stop interpolation, if no replacements anymore:
 			if not repFlag:
 				break
 		return tags

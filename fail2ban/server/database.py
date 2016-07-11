@@ -182,8 +182,23 @@ class Fail2BanDb(object):
 				filename, e.args[0])
 			raise
 
+		# differentiate pypy: switch journal mode later (save it during the upgrade), 
+		# to prevent errors like "database table is locked":
+		try:
+			import __pypy__
+			pypy = True
+		except ImportError:
+			pypy = False
+
 		cur = self._db.cursor()
-		cur.execute("PRAGMA foreign_keys = ON;")
+		cur.execute("PRAGMA foreign_keys = ON")
+		# speedup: write data through OS without syncing (no wait):
+		cur.execute("PRAGMA synchronous = OFF")
+		# speedup: transaction log in memory, alternate using OFF (disable, rollback will be impossible):
+		if not pypy:
+			cur.execute("PRAGMA journal_mode = MEMORY")
+		# speedup: temporary tables and indices are kept in memory:
+		cur.execute("PRAGMA temp_store = MEMORY")
 
 		try:
 			cur.execute("SELECT version FROM fail2banDb LIMIT 1")
@@ -203,6 +218,9 @@ class Fail2BanDb(object):
 						Fail2BanDb.__version__, version, newversion)
 					raise RuntimeError('Failed to fully update')
 		finally:
+			# pypy: set journal mode after possible upgrade db:
+			if pypy:
+				cur.execute("PRAGMA journal_mode = MEMORY")
 			cur.close()
 
 	@property
@@ -245,12 +263,13 @@ class Fail2BanDb(object):
 
 		A timestamped backup is also created prior to attempting the update.
 		"""
-		self._dbBackupFilename = self.filename + '.' + time.strftime('%Y%m%d-%H%M%S', MyTime.gmtime())
-		shutil.copyfile(self.filename, self._dbBackupFilename)
-		logSys.info("Database backup created: %s", self._dbBackupFilename)
 		if version > Fail2BanDb.__version__:
 			raise NotImplementedError(
 						"Attempt to travel to future version of database ...how did you get here??")
+
+		self._dbBackupFilename = self.filename + '.' + time.strftime('%Y%m%d-%H%M%S', MyTime.gmtime())
+		shutil.copyfile(self.filename, self._dbBackupFilename)
+		logSys.info("Database backup created: %s", self._dbBackupFilename)
 
 		if version < 2:
 			cur.executescript("BEGIN TRANSACTION;"
@@ -455,7 +474,7 @@ class Fail2BanDb(object):
 			queryArgs.append(MyTime.time() - bantime)
 		if ip is not None:
 			query += " AND ip=?"
-			queryArgs.append(ip)
+			queryArgs.append(str(ip))
 		query += " ORDER BY ip, timeofban desc"
 
 		return cur.execute(query, queryArgs)

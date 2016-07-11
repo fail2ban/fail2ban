@@ -167,7 +167,6 @@ fail2ban/client/jailreader.py
 fail2ban/client/jailsreader.py
 fail2ban/exceptions.py
 fail2ban/helpers.py
-fail2ban/ipdns.py
 fail2ban/__init__.py
 fail2ban/protocol.py
 fail2ban/server/action.py
@@ -185,6 +184,7 @@ fail2ban/server/filter.py
 fail2ban/server/filterpyinotify.py
 fail2ban/server/filtersystemd.py
 fail2ban/server/__init__.py
+fail2ban/server/ipdns.py
 fail2ban/server/iso8601.py
 fail2ban/server/jail.py
 fail2ban/server/jails.py
