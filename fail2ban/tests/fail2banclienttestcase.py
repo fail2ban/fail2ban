@@ -111,24 +111,24 @@ def _out_file(fn): # pragma: no cover
 	logSys.debug('-'*30)
 
 def _start_params(tmp, use_stock=False, logtarget="/dev/null"):
-	cfg = tmp+"/config"
+	cfg = os.path.join(tmp,"config")
 	if use_stock and STOCK:
 		# copy config (sub-directories as alias):
 		def ig_dirs(dir, files):
 			return [f for f in files if os.path.isdir(os.path.join(dir, f))]
 		shutil.copytree(STOCK_CONF_DIR, cfg, ignore=ig_dirs)
-		os.symlink(STOCK_CONF_DIR+"/action.d", cfg+"/action.d")
-		os.symlink(STOCK_CONF_DIR+"/filter.d", cfg+"/filter.d")
+		os.symlink(os.path.join(STOCK_CONF_DIR,"action.d"), os.path.join(cfg,"action.d"))
+		os.symlink(os.path.join(STOCK_CONF_DIR,"filter.d"), os.path.join(cfg,"filter.d"))
 		# replace fail2ban params (database with memory):
 		r = re.compile(r'^dbfile\s*=')
-		for line in fileinput.input(cfg+"/fail2ban.conf", inplace=True):
+		for line in fileinput.input(os.path.join(cfg,"fail2ban.conf"), inplace=True):
 			line = line.rstrip('\n')
 			if r.match(line):
 				line = "dbfile = :memory:"
 			print(line)
 		# replace jail params (polling as backend to be fast in initialize):
 		r = re.compile(r'^backend\s*=')
-		for line in fileinput.input(cfg+"/jail.conf", inplace=True):
+		for line in fileinput.input(os.path.join(cfg,"jail.conf"), inplace=True):
 			line = line.rstrip('\n')
 			if r.match(line):
 				line = "backend = polling"
@@ -136,21 +136,21 @@ def _start_params(tmp, use_stock=False, logtarget="/dev/null"):
 	else:
 		# just empty config directory without anything (only fail2ban.conf/jail.conf):
 		os.mkdir(cfg)
-		f = open(cfg+"/fail2ban.conf", "w")
+		f = open(os.path.join(cfg,"fail2ban.conf"), "w")
 		f.write('\n'.join((
 			"[Definition]",
 			"loglevel = INFO",
 			"logtarget = " + logtarget,
 			"syslogsocket = auto",
-			"socket = "+tmp+"/f2b.sock",
-			"pidfile = "+tmp+"/f2b.pid",
+			"socket = "+os.path.join(tmp,"f2b.sock"),
+			"pidfile = "+os.path.join(tmp,"f2b.pid"),
 			"backend = polling",
 			"dbfile = :memory:",
 			"dbpurgeage = 1d",
 			"",
 		)))
 		f.close()
-		f = open(cfg+"/jail.conf", "w")
+		f = open(os.path.join(cfg,"jail.conf"), "w")
 		f.write('\n'.join((
 			"[INCLUDES]", "",
 			"[DEFAULT]", "",
@@ -158,10 +158,10 @@ def _start_params(tmp, use_stock=False, logtarget="/dev/null"):
 		)))
 		f.close()
 		if logSys.level < logging.DEBUG: # if HEAVYDEBUG
-			_out_file(cfg+"/fail2ban.conf")
-			_out_file(cfg+"/jail.conf")
+			_out_file(os.path.join(cfg,"fail2ban.conf"))
+			_out_file(os.path.join(cfg,"jail.conf"))
 	# parameters (sock/pid and config, increase verbosity, set log, etc.):
-	return ("-c", cfg, "-s", tmp+"/f2b.sock", "-p", tmp+"/f2b.pid",
+	return ("-c", cfg, "-s", os.path.join(tmp,"f2b.sock"), "-p", os.path.join(tmp,"f2b.pid"),
 					"-vv", "--logtarget", logtarget, "--loglevel", "DEBUG", "--syslogsocket", "auto",
 					"--timeout", str(fail2bancmdline.MAX_WAITTIME),
 	)
@@ -234,7 +234,7 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 
 	def _wait_for_srv(self, tmp, ready=True, startparams=None):
 		try:
-			sock = tmp+"/f2b.sock"
+			sock = os.path.join(tmp,"f2b.sock")
 			# wait for server (socket):
 			ret = Utils.wait_for(lambda: os.path.exists(sock), MAX_WAITTIME)
 			if not ret:
@@ -245,7 +245,7 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 				if not ret:
 					raise Exception('Unexpected: Server ready was not found.\nStart failed: %r' % (startparams,))
 		except: # pragma: no cover
-			log = tmp+"/f2b.log"
+			log = os.path.join(tmp,"f2b.log")
 			if os.path.isfile(log):
 				_out_file(log)
 			else:
@@ -319,7 +319,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 	@with_kill_srv
 	def testClientStartBackgroundCall(self, tmp):
 		global INTERACT
-		startparams = _start_params(tmp, logtarget=tmp+"/f2b.log")
+		startparams = _start_params(tmp, logtarget=os.path.join(tmp,"f2b.log"))
 		# start (in new process, using the same python version):
 		cmd = (sys.executable, os.path.join(os.path.join(BIN), CLIENT))
 		logSys.debug('Start %s ...', cmd)
@@ -443,29 +443,29 @@ class Fail2banClientTest(Fail2banClientServerBase):
 
 		## wrong config directory
 		self.assertRaises(FailExitException, _exec_client, 
-			(CLIENT, "--async", "-c", tmp+"/miss", "start",))
-		self.assertLogged("Base configuration directory " + tmp+"/miss" + " does not exist")
+			(CLIENT, "--async", "-c", os.path.join(tmp,"miss"), "start",))
+		self.assertLogged("Base configuration directory " + os.path.join(tmp,"miss") + " does not exist")
 		self.pruneLog()
 
 		## wrong socket
 		self.assertRaises(FailExitException, _exec_client, 
-			(CLIENT, "--async", "-c", tmp+"/config", "-s", tmp+"/miss/f2b.sock", "start",))
-		self.assertLogged("There is no directory " + tmp+"/miss" + " to contain the socket file")
+			(CLIENT, "--async", "-c", os.path.join(tmp,"config"), "-s", os.path.join(tmp,"miss/f2b.sock"), "start",))
+		self.assertLogged("There is no directory " + os.path.join(tmp,"miss") + " to contain the socket file")
 		self.pruneLog()
 
 		## not running
 		self.assertRaises(FailExitException, _exec_client, 
-			(CLIENT, "-c", tmp+"/config", "-s", tmp+"/f2b.sock", "reload",))
+			(CLIENT, "-c", os.path.join(tmp,"config"), "-s", os.path.join(tmp,"f2b.sock"), "reload",))
 		self.assertLogged("Could not find server")
 		self.pruneLog()
 
 		## already exists:
-		open(tmp+"/f2b.sock", 'a').close()
+		open(os.path.join(tmp,"f2b.sock"), 'a').close()
 		self.assertRaises(FailExitException, _exec_client, 
-			(CLIENT, "--async", "-c", tmp+"/config", "-s", tmp+"/f2b.sock", "start",))
+			(CLIENT, "--async", "-c", os.path.join(tmp,"config"), "-s", os.path.join(tmp,"f2b.sock"), "start",))
 		self.assertLogged("Fail2ban seems to be in unexpected state (not running but the socket exists)")
 		self.pruneLog()
-		os.remove(tmp+"/f2b.sock")
+		os.remove(os.path.join(tmp,"f2b.sock"))
 
 		## wrong option:
 		self.assertRaises(FailExitException, _exec_client, 
@@ -497,7 +497,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 	@with_kill_srv
 	def testServerStartBackground(self, tmp):
 		# to prevent fork of test-cases process, start server in background via command:
-		startparams = _start_params(tmp, logtarget=tmp+"/f2b.log")
+		startparams = _start_params(tmp, logtarget=os.path.join(tmp,"f2b.log"))
 		# start (in new process, using the same python version):
 		cmd = (sys.executable, os.path.join(os.path.join(BIN), SERVER))
 		logSys.debug('Start %s ...', cmd)
@@ -579,20 +579,20 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 		## wrong config directory
 		self.assertRaises(FailExitException, _exec_server, 
-			(SERVER, "-c", tmp+"/miss",))
-		self.assertLogged("Base configuration directory " + tmp+"/miss" + " does not exist")
+			(SERVER, "-c", os.path.join(tmp,"miss"),))
+		self.assertLogged("Base configuration directory " + os.path.join(tmp,"miss") + " does not exist")
 		self.pruneLog()
 
 		## wrong socket
 		self.assertRaises(FailExitException, _exec_server, 
-			(SERVER, "-c", tmp+"/config", "-x", "-s", tmp+"/miss/f2b.sock",))
-		self.assertLogged("There is no directory " + tmp+"/miss" + " to contain the socket file")
+			(SERVER, "-c", os.path.join(tmp,"config"), "-x", "-s", os.path.join(tmp,"miss/f2b.sock"),))
+		self.assertLogged("There is no directory " + os.path.join(tmp,"miss") + " to contain the socket file")
 		self.pruneLog()
 
 		## already exists:
-		open(tmp+"/f2b.sock", 'a').close()
+		open(os.path.join(tmp,"f2b.sock"), 'a').close()
 		self.assertRaises(FailExitException, _exec_server, 
-			(SERVER, "-c", tmp+"/config", "-s", tmp+"/f2b.sock",))
+			(SERVER, "-c", os.path.join(tmp,"config"), "-s", os.path.join(tmp,"f2b.sock"),))
 		self.assertLogged("Fail2ban seems to be in unexpected state (not running but the socket exists)")
 		self.pruneLog()
-		os.remove(tmp+"/f2b.sock")
+		os.remove(os.path.join(tmp,"f2b.sock"))
