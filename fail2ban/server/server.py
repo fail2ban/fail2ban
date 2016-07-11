@@ -419,7 +419,7 @@ class Server:
 				getLogger("fail2ban").setLevel(getattr(logging, value))
 				self.__logLevel = value
 			except AttributeError:
-				raise ValueError("Invalid log level")
+				raise ValueError("Invalid log level %r" % value)
 	
 	##
 	# Get the logging level.

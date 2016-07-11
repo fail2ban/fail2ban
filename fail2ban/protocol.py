@@ -27,6 +27,9 @@ __license__ = "GPL"
 import textwrap
 
 def output(s):
+	"""Default output handler for printing protocol. 
+  Used to ease mocking in the test cases.
+	"""
 	print(s)
 
 ##

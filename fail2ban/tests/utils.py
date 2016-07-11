@@ -54,10 +54,9 @@ if not CONFIG_DIR:
 	else:
 		CONFIG_DIR = '/etc/fail2ban'
 
-# In not installed env (setup, test-cases) use fail2ban modules from main directory:
-if 1 or os.environ.get('PYTHONPATH', None) is None:
-	os.putenv('PYTHONPATH', os.path.dirname(os.path.dirname(os.path.dirname(
-		os.path.abspath(__file__)))))
+# During the test cases (or setup) use fail2ban modules from main directory:
+os.putenv('PYTHONPATH', os.path.dirname(os.path.dirname(os.path.dirname(
+	os.path.abspath(__file__)))))
 
 class F2B(optparse.Values):
 	def __init__(self, opts={}):

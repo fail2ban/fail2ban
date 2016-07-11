@@ -411,11 +411,9 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 				signal.signal(s, sh)
 
 
-##
-# Wonderful visual :)
-#
-
 class _VisualWait:
+	"""Small progress indication (as "wonderful visual") during waiting process
+	"""
 	pos = 0
 	delta = 1
 	def __init__(self, maxpos=10):
@@ -427,6 +425,8 @@ class _VisualWait:
 			sys.stdout.write('\r'+(' '*(35+self.maxpos))+'\r')
 			sys.stdout.flush()
 	def heartbeat(self):
+		"""Show or step for progress indicator
+		"""
 		if not self.pos:
 			sys.stdout.write("\nINFO   [#" + (' '*self.maxpos) + "] Waiting on the server...\r\x1b[8C")
 		self.pos += self.delta
@@ -441,6 +441,8 @@ class _VisualWait:
 		elif self.pos < 2:
 			self.delta = 1
 class _NotVisualWait:
+	"""Mockup for invisible progress indication (not verbose)
+	"""
 	def __enter__(self):
 		return self
 	def __exit__(self, *args):
@@ -449,6 +451,8 @@ class _NotVisualWait:
 		pass
 
 def VisualWait(verbose, *args, **kwargs):
+	"""Wonderful visual progress indication (if verbose)
+	"""
 	return _VisualWait(*args, **kwargs) if verbose > 1 else _NotVisualWait()
 
 

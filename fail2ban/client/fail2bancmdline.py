@@ -83,9 +83,6 @@ class Fail2banCmdLine():
 		output("Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors")
 		output("Copyright of modifications held by their respective authors.")
 		output("Licensed under the GNU General Public License v2 (GPL).")
-		output("")
-		output("Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>.")
-		output("Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>.")
 
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
@@ -262,7 +259,7 @@ class Fail2banCmdLine():
 	@staticmethod
 	def exit(code=0): # pragma: no cover - can't test
 		logSys.debug("Exit with code %s", code)
-		if os._exit:
+		if hasattr(os, '_exit') and os._exit:
 			os._exit(code)
 		else:
 			sys.exit(code)
