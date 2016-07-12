@@ -419,7 +419,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		global INTERACT
 		startparams = _start_params(tmp, logtarget=pjoin(tmp, "f2b.log"))
 		# start (in new process, using the same python version):
-		cmd = (sys.executable, pjoin(pjoin(BIN), CLIENT))
+		cmd = (sys.executable, pjoin(BIN, CLIENT))
 		logSys.debug('Start %s ...', cmd)
 		cmd = cmd + startparams + ("--async", "start",)
 		ret = Utils.executeCmd(cmd, timeout=MAX_WAITTIME, shell=False, output=True)
@@ -550,7 +550,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# to prevent fork of test-cases process, start server in background via command:
 		startparams = _start_params(tmp, logtarget=pjoin(tmp, "f2b.log"))
 		# start (in new process, using the same python version):
-		cmd = (sys.executable, pjoin(pjoin(BIN), SERVER))
+		cmd = (sys.executable, pjoin(BIN, SERVER))
 		logSys.debug('Start %s ...', cmd)
 		cmd = cmd + startparams + ("-b",)
 		ret = Utils.executeCmd(cmd, timeout=MAX_WAITTIME, shell=False, output=True)

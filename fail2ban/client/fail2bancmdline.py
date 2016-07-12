@@ -270,7 +270,6 @@ class Fail2banCmdLine():
 	@staticmethod
 	def exit(code=0):
 		logSys.debug("Exit with code %s", code)
-		# import pdb; pdb.set_trace()
 		Fail2banCmdLine._exit(code)
 
 
