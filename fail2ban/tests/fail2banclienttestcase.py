@@ -98,7 +98,7 @@ INTERACT = []
 
 def _test_input_command(*args):
 	if len(INTERACT):
-		#logSys.debug('interact command: %r', INTERACT[0])
+		#logSys.debug('--- interact command: %r', INTERACT[0])
 		return INTERACT.pop(0)
 	else:
 		return "exit"
@@ -179,15 +179,6 @@ def _start_params(tmp, use_stock=False, logtarget="/dev/null"):
 	)
 
 
-def _pid_exists(pid):
-	"""Check if PID exists by sending 0 signal to the PID process"""
-	try:
-		os.kill(pid, 0)
-		return True
-	except OSError:
-		return False
-
-
 def _kill_srv(pidfile):
 	logSys.debug("cleanup: %r", (pidfile, isdir(pidfile)))
 	if isdir(pidfile):
@@ -204,25 +195,32 @@ def _kill_srv(pidfile):
 	try:
 		logSys.debug("cleanup pidfile: %r", pidfile)
 		f = open(pidfile)
-		pid = f.read().split()[1]
+		pid = f.read()
+		pid = re.match(r'\S+', pid).group()
 		pid = int(pid)
-		logSys.debug("cleanup pid: %r", pid)
-		if pid <= 0:
-			raise ValueError('pid %s of %s is invalid' % (pid, pidfile))
-		if not _pid_exists(pid):
-			return True
-		## try to prepare stop (have signal handler):
-		os.kill(pid, signal.SIGTERM)
-		## check still exists after small timeout:
-		if not Utils.wait_for(lambda: not _pid_exists(pid), 1):
-			## try to kill hereafter:
-			os.kill(pid, signal.SIGKILL)
-		return not _pid_exists(pid)
-	except Exception as e:
+	except Exception as e: # pragma: no cover
 		logSys.debug(e)
+		return False
 	finally:
 		if f is not None:
 			f.close()
+
+	try:
+		logSys.debug("cleanup pid: %r", pid)
+		if pid <= 0 or pid == os.getpid(): # pragma: no cover
+			raise ValueError('pid %s of %s is invalid' % (pid, pidfile))
+		if not Utils.pid_exists(pid):
+			return True
+		## try to properly stop (have signal handler):
+		os.kill(pid, signal.SIGTERM)
+		## check still exists after small timeout:
+		if not Utils.wait_for(lambda: not Utils.pid_exists(pid), 1):
+			## try to kill hereafter:
+			os.kill(pid, signal.SIGKILL)
+		logSys.debug("cleanup: kill ready")
+		return not Utils.pid_exists(pid)
+	except Exception as e: # pragma: no cover
+		logSys.exception(e)
 	return True
 
 
@@ -310,11 +308,11 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 	def testStartForeground(self, tmp):
 		# intended to be ran only in subclasses
 		th = None
+		phase = dict()
 		try:
 			# started directly here, so prevent overwrite test cases logger with "INHERITED"
 			startparams = _start_params(tmp, logtarget="INHERITED")
 			# because foreground block execution - start it in thread:
-			phase = dict()
 			th = Thread(
 				name="_TestCaseWorker",
 				target=self._testStartForeground,
@@ -342,9 +340,11 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 				self.assertTrue(phase.get('end', None))
 				self.assertLogged("Shutdown successful", "Exiting Fail2ban")
 		finally:
-			_kill_srv(tmp)
 			if th:
-				th.join()
+				# we start client/server directly in current process (new thread),
+				# so don't kill (same process) - if success, just wait for end of worker:
+				if phase.get('end', None):
+					th.join()
 
 
 class Fail2banClientTest(Fail2banClientServerBase):
@@ -586,3 +586,30 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged("Fail2ban seems to be in unexpected state (not running but the socket exists)")
 		self.pruneLog()
 		os.remove(pjoin(tmp, "f2b.sock"))
+
+	@with_tmpdir
+	def testKillAfterStart(self, tmp):
+		try:
+			# to prevent fork of test-cases process, start server in background via command:
+			startparams = _start_params(tmp, logtarget=pjoin(tmp, "f2b.log"))
+			# start (in new process, using the same python version):
+			cmd = (sys.executable, pjoin(BIN, SERVER))
+			logSys.debug('Start %s ...', cmd)
+			cmd = cmd + startparams + ("-b",)
+			ret = Utils.executeCmd(cmd, timeout=MAX_WAITTIME, shell=False, output=True)
+			self.assertTrue(len(ret) and ret[0])
+			# wait for server (socket and ready):
+			self._wait_for_srv(tmp, True, startparams=cmd)
+			self.assertLogged("Server ready")
+			self.pruneLog()
+			logSys.debug('Kill server ... %s', tmp)
+		finally:
+			self.assertTrue(_kill_srv(tmp))
+		# wait for end (kill was successful):
+		Utils.wait_for(lambda: not isfile(pjoin(tmp, "f2b.pid")), MAX_WAITTIME)
+		self.assertFalse(isfile(pjoin(tmp, "f2b.pid")))
+		self.assertLogged("cleanup: kill ready")
+		self.pruneLog()
+		# again:
+		self.assertTrue(_kill_srv(tmp))
+		self.assertLogged("cleanup: no pidfile for")
