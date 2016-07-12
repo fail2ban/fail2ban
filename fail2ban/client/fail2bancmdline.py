@@ -42,6 +42,7 @@ PRODUCTION = True
 
 MAX_WAITTIME = 30
 
+
 class Fail2banCmdLine():
 
 	def __init__(self):
@@ -256,13 +257,22 @@ class Fail2banCmdLine():
 			output(c)
 		return True
 
+	#
+	# _exit is made to ease mocking out of the behaviour in tests,
+	# since method is also exposed in API via globally bound variable
 	@staticmethod
-	def exit(code=0): # pragma: no cover - can't test
-		logSys.debug("Exit with code %s", code)
+	def _exit(code=0):
 		if hasattr(os, '_exit') and os._exit:
 			os._exit(code)
 		else:
 			sys.exit(code)
+
+	@staticmethod
+	def exit(code=0):
+		logSys.debug("Exit with code %s", code)
+		# import pdb; pdb.set_trace()
+		Fail2banCmdLine._exit(code)
+
 
 # global exit handler:
 exit = Fail2banCmdLine.exit

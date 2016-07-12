@@ -36,6 +36,7 @@ from functools import wraps
 from threading import Thread
 
 from ..client import fail2banclient, fail2banserver, fail2bancmdline
+from ..client.fail2bancmdline import Fail2banCmdLine
 from ..client.fail2banclient import exec_command_line as _exec_client, VisualWait
 from ..client.fail2banserver import Fail2banServer, exec_command_line as _exec_server
 from .. import protocol
@@ -91,17 +92,6 @@ class FailExitException(fail2bancmdline.ExitException):
 	"""Exception upon abnormal exit"""
 	pass
 
-
-def _test_exit(code=0):
-	logSys.debug("Exit with code %s", code)
-	if code == 0:
-		raise ExitException()
-	else:
-		raise FailExitException()
-
-fail2bancmdline.exit = \
-fail2banclient.exit = \
-fail2banserver.exit = _test_exit
 
 INTERACT = []
 
@@ -256,10 +246,21 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		LogCaptureTestCase.setUp(self)
+		Fail2banCmdLine._exit = staticmethod(self._test_exit)
 
 	def tearDown(self):
 		"""Call after every test case."""
+		Fail2banCmdLine._exit = self._orig_exit
 		LogCaptureTestCase.tearDown(self)
+
+	_orig_exit = Fail2banCmdLine._exit
+
+	@staticmethod
+	def _test_exit(code=0):
+		if code == 0:
+			raise ExitException()
+		else:
+			raise FailExitException()
 
 	def _wait_for_srv(self, tmp, ready=True, startparams=None):
 		try:
