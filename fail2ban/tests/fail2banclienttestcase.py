@@ -287,29 +287,91 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 				logSys.debug("No log file %s to examine details of error", log)
 			raise
 
+	def assertExitsNormally(self, args):
+		raise NotImplementedError("To be defined in subclass")
+
+	def assertExitsAbnormally(self, args):
+		raise NotImplementedError("To be defined in subclass")
+
+	#
+	# Common tests
+	#
+	def _testStartForeground(self, tmp, startparams, phase):
+		# start and wait to end (foreground):
+		logSys.debug("start of test worker")
+		phase['start'] = True
+		self.assertExitsNormally(("-f",) + startparams + ("start",))
+		# end :
+		phase['end'] = True
+		logSys.debug("end of test worker")
+
+	@with_tmpdir
+	def testStartForeground(self, tmp):
+		# intended to be ran only in subclasses
+		th = None
+		try:
+			# started directly here, so prevent overwrite test cases logger with "INHERITED"
+			startparams = _start_params(tmp, logtarget="INHERITED")
+			# because foreground block execution - start it in thread:
+			phase = dict()
+			th = Thread(
+				name="_TestCaseWorker",
+				target=self._testStartForeground,
+				args=(tmp, startparams, phase)
+			)
+			th.daemon = True
+			th.start()
+			try:
+				# wait for start thread:
+				Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
+				self.assertTrue(phase.get('start', None))
+				# wait for server (socket and ready):
+				self._wait_for_srv(tmp, True, startparams=startparams)
+				self.pruneLog()
+				# several commands to server:
+				self.assertExitsNormally(startparams + ("ping",))
+				self.assertExitsAbnormally(startparams + ("~~unknown~cmd~failed~~",))
+				self.assertExitsNormally(startparams + ("echo", "TEST-ECHO",))
+			finally:
+				self.pruneLog()
+				# stop:
+				self.assertExitsNormally(startparams + ("stop",))
+				# wait for end:
+				Utils.wait_for(lambda: phase.get('end', None) is not None, MAX_WAITTIME)
+				self.assertTrue(phase.get('end', None))
+				self.assertLogged("Shutdown successful", "Exiting Fail2ban")
+		finally:
+			_kill_srv(tmp)
+			if th:
+				th.join()
+
 
 class Fail2banClientTest(Fail2banClientServerBase):
+
+	def assertExitsNormally(self, args):
+		self.assertRaises(ExitException, _exec_client, ((CLIENT,) + args))
+
+	def assertExitsAbnormally(self, args):
+		self.assertRaises(FailExitException, _exec_client, ((CLIENT,) + args))
 
 	def testConsistency(self):
 		self.assertTrue(isfile(pjoin(BIN, CLIENT)))
 		self.assertTrue(isfile(pjoin(BIN, SERVER)))
 
 	def testClientUsage(self):
-		self.assertRaises(ExitException, _exec_client,
-			(CLIENT, "-h",))
+		self.assertExitsNormally(("-h",))
 		self.assertLogged("Usage: " + CLIENT)
 		self.assertLogged("Report bugs to ")
 		self.pruneLog()
-		self.assertRaises(ExitException, _exec_client,
-			(CLIENT, "-vq", "-V",))
+		self.assertExitsNormally(("-vq", "-V",))
 		self.assertLogged("Fail2Ban v" + fail2bancmdline.version)
 
 	@with_tmpdir
 	def testClientDump(self, tmp):
 		# use here the stock configuration (if possible)
 		startparams = _start_params(tmp, True)
-		self.assertRaises(ExitException, _exec_client,
-			((CLIENT,) + startparams + ("-vvd",)))
+		self.assertExitsNormally(
+			(startparams + ("-vvd",)))
 		self.assertLogged("Loading files")
 		self.assertLogged("logtarget")
 
@@ -319,34 +381,34 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		# use once the stock configuration (to test starting also)
 		startparams = _start_params(tmp, True)
 		# start:
-		self.assertRaises(ExitException, _exec_client,
-			(CLIENT, "-b") + startparams + ("start",))
+		self.assertExitsNormally(
+			("-b",) + startparams + ("start",))
 		# wait for server (socket and ready):
 		self._wait_for_srv(tmp, True, startparams=startparams)
 		self.assertLogged("Server ready")
 		self.assertLogged("Exit with code 0")
 		try:
-			self.assertRaises(ExitException, _exec_client,
-				(CLIENT,) + startparams + ("echo", "TEST-ECHO",))
-			self.assertRaises(FailExitException, _exec_client,
-				(CLIENT,) + startparams + ("~~unknown~cmd~failed~~",))
+			self.assertExitsNormally(
+				startparams + ("echo", "TEST-ECHO",))
+			self.assertExitsAbnormally(
+				startparams + ("~~unknown~cmd~failed~~",))
 			self.pruneLog()
 			# start again (should fail):
-			self.assertRaises(FailExitException, _exec_client,
-				(CLIENT, "-b") + startparams + ("start",))
+			self.assertExitsAbnormally(
+				("-b",) + startparams + ("start",))
 			self.assertLogged("Server already running")
 		finally:
 			self.pruneLog()
 			# stop:
-			self.assertRaises(ExitException, _exec_client,
-				(CLIENT,) + startparams + ("stop",))
+			self.assertExitsNormally(
+				startparams + ("stop",))
 			self.assertLogged("Shutdown successful")
 			self.assertLogged("Exit with code 0")
 
 		self.pruneLog()
 		# stop again (should fail):
-		self.assertRaises(FailExitException, _exec_client,
-			(CLIENT,) + startparams + ("stop",))
+		self.assertExitsAbnormally(
+			startparams + ("stop",))
 		self.assertLogged("Failed to access socket path")
 		self.assertLogged("Is fail2ban running?")
 
@@ -367,8 +429,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		self.pruneLog()
 		try:
 			# echo from client (inside):
-			self.assertRaises(ExitException, _exec_client,
-				(CLIENT,) + startparams + ("echo", "TEST-ECHO",))
+			self.assertExitsNormally(startparams + ("echo", "TEST-ECHO",))
 			self.assertLogged("TEST-ECHO")
 			self.assertLogged("Exit with code 0")
 			self.pruneLog()
@@ -378,8 +439,8 @@ class Fail2banClientTest(Fail2banClientServerBase):
 				"status",
 				"exit"
 			]
-			self.assertRaises(ExitException, _exec_client,
-				(CLIENT,) + startparams + ("-i",))
+			self.assertExitsNormally(
+				startparams + ("-i",))
 			self.assertLogged("INTERACT-ECHO")
 			self.assertLogged("Status", "Number of jail:")
 			self.assertLogged("Exit with code 0")
@@ -390,8 +451,8 @@ class Fail2banClientTest(Fail2banClientServerBase):
 				"restart",
 				"exit"
 			]
-			self.assertRaises(ExitException, _exec_client,
-				(CLIENT,) + startparams + ("-i",))
+			self.assertExitsNormally(
+				startparams + ("-i",))
 			self.assertLogged("Reading config files:")
 			self.assertLogged("Shutdown successful")
 			self.assertLogged("Server ready")
@@ -402,73 +463,22 @@ class Fail2banClientTest(Fail2banClientServerBase):
 				"reload ~~unknown~jail~fail~~",
 				"exit"
 			]
-			self.assertRaises(ExitException, _exec_client,
-				(CLIENT,) + startparams + ("-i",))
+			self.assertExitsNormally(
+				startparams + ("-i",))
 			self.assertLogged("Failed during configuration: No section: '~~unknown~jail~fail~~'")
 			self.pruneLog()
 			# test reload missing jail (direct):
-			self.assertRaises(FailExitException, _exec_client,
-				(CLIENT,) + startparams + ("reload", "~~unknown~jail~fail~~"))
+			self.assertExitsAbnormally(
+				startparams + ("reload", "~~unknown~jail~fail~~"))
 			self.assertLogged("Failed during configuration: No section: '~~unknown~jail~fail~~'")
 			self.assertLogged("Exit with code -1")
 			self.pruneLog()
 		finally:
 			self.pruneLog()
 			# stop:
-			self.assertRaises(ExitException, _exec_client,
-				(CLIENT,) + startparams + ("stop",))
+			self.assertExitsNormally(startparams + ("stop",))
 			self.assertLogged("Shutdown successful")
 			self.assertLogged("Exit with code 0")
-
-	def _testClientStartForeground(self, tmp, startparams, phase):
-		# start and wait to end (foreground):
-		logSys.debug("start of test worker")
-		phase['start'] = True
-		self.assertRaises(fail2bancmdline.ExitException, _exec_client,
-			(CLIENT, "-f") + startparams + ("start",))
-		# end :
-		phase['end'] = True
-		logSys.debug("end of test worker")
-
-	@with_tmpdir
-	def testClientStartForeground(self, tmp):
-		th = None
-		try:
-			# started directly here, so prevent overwrite test cases logger with "INHERITED"
-			startparams = _start_params(tmp, logtarget="INHERITED")
-			# because foreground block execution - start it in thread:
-			phase = dict()
-			th = Thread(name="_TestCaseWorker",
-				target=Fail2banClientTest._testClientStartForeground, args=(self, tmp, startparams, phase))
-			th.daemon = True
-			th.start()
-			try:
-				# wait for start thread:
-				Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
-				self.assertTrue(phase.get('start', None))
-				# wait for server (socket and ready):
-				self._wait_for_srv(tmp, True, startparams=startparams)
-				self.pruneLog()
-				# several commands to server:
-				self.assertRaises(ExitException, _exec_client,
-					(CLIENT,) + startparams + ("ping",))
-				self.assertRaises(FailExitException, _exec_client,
-					(CLIENT,) + startparams + ("~~unknown~cmd~failed~~",))
-				self.assertRaises(ExitException, _exec_client,
-					(CLIENT,) + startparams + ("echo", "TEST-ECHO",))
-			finally:
-				self.pruneLog()
-				# stop:
-				self.assertRaises(ExitException, _exec_client,
-					(CLIENT,) + startparams + ("stop",))
-				# wait for end:
-				Utils.wait_for(lambda: phase.get('end', None) is not None, MAX_WAITTIME)
-				self.assertTrue(phase.get('end', None))
-				self.assertLogged("Shutdown successful", "Exiting Fail2ban")
-		finally:
-			_kill_srv(tmp)
-			if th:
-				th.join()
 
 	@with_tmpdir
 	@with_kill_srv
@@ -477,34 +487,34 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		startparams = _start_params(tmp, logtarget="INHERITED")
 
 		## wrong config directory
-		self.assertRaises(FailExitException, _exec_client,
-			(CLIENT, "--async", "-c", pjoin(tmp, "miss"), "start",))
+		self.assertExitsAbnormally(
+			("--async", "-c", pjoin(tmp, "miss"), "start",))
 		self.assertLogged("Base configuration directory " + pjoin(tmp, "miss") + " does not exist")
 		self.pruneLog()
 
 		## wrong socket
-		self.assertRaises(FailExitException, _exec_client,
-			(CLIENT, "--async", "-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "miss/f2b.sock"), "start",))
+		self.assertExitsAbnormally(
+			("--async", "-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "miss/f2b.sock"), "start",))
 		self.assertLogged("There is no directory " + pjoin(tmp, "miss") + " to contain the socket file")
 		self.pruneLog()
 
 		## not running
-		self.assertRaises(FailExitException, _exec_client,
-			(CLIENT, "-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "f2b.sock"), "reload",))
+		self.assertExitsAbnormally(
+			("-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "f2b.sock"), "reload",))
 		self.assertLogged("Could not find server")
 		self.pruneLog()
 
 		## already exists:
 		open(pjoin(tmp, "f2b.sock"), 'a').close()
-		self.assertRaises(FailExitException, _exec_client,
-			(CLIENT, "--async", "-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "f2b.sock"), "start",))
+		self.assertExitsAbnormally(
+			("--async", "-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "f2b.sock"), "start",))
 		self.assertLogged("Fail2ban seems to be in unexpected state (not running but the socket exists)")
 		self.pruneLog()
 		os.remove(pjoin(tmp, "f2b.sock"))
 
 		## wrong option:
-		self.assertRaises(FailExitException, _exec_client,
-			(CLIENT, "-s",))
+		self.assertExitsAbnormally(
+			("-s",))
 		self.assertLogged("Usage: ")
 		self.pruneLog()
 
@@ -522,9 +532,14 @@ class Fail2banClientTest(Fail2banClientServerBase):
 
 class Fail2banServerTest(Fail2banClientServerBase):
 
+	def assertExitsNormally(self, args):
+		self.assertRaises(ExitException, _exec_server, ((SERVER,) + args))
+
+	def assertExitsAbnormally(self, args):
+		self.assertRaises(FailExitException, _exec_server, ((SERVER,) + args))
+
 	def testServerUsage(self):
-		self.assertRaises(ExitException, _exec_server,
-			(SERVER, "-h",))
+		self.assertExitsNormally(("-h",))
 		self.assertLogged("Usage: " + SERVER)
 		self.assertLogged("Report bugs to ")
 
@@ -544,67 +559,14 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged("Server ready")
 		self.pruneLog()
 		try:
-			self.assertRaises(ExitException, _exec_server,
-				(SERVER,) + startparams + ("echo", "TEST-ECHO",))
-			self.assertRaises(FailExitException, _exec_server,
-				(SERVER,) + startparams + ("~~unknown~cmd~failed~~",))
+			self.assertExitsNormally(startparams + ("echo", "TEST-ECHO",))
+			self.assertExitsAbnormally(startparams + ("~~unknown~cmd~failed~~",))
 		finally:
 			self.pruneLog()
 			# stop:
-			self.assertRaises(ExitException, _exec_server,
-				(SERVER,) + startparams + ("stop",))
+			self.assertExitsNormally(startparams + ("stop",))
 			self.assertLogged("Shutdown successful")
 			self.assertLogged("Exit with code 0")
-
-	def _testServerStartForeground(self, tmp, startparams, phase):
-		# start and wait to end (foreground):
-		logSys.debug("-- start of test worker")
-		phase['start'] = True
-		self.assertRaises(fail2bancmdline.ExitException, _exec_server,
-			(SERVER, "-f") + startparams + ("start",))
-		# end :
-		phase['end'] = True
-		logSys.debug("-- end of test worker")
-
-	@with_tmpdir
-	def testServerStartForeground(self, tmp):
-		th = None
-		try:
-			# started directly here, so prevent overwrite test cases logger with "INHERITED"
-			startparams = _start_params(tmp, logtarget="INHERITED")
-			# because foreground block execution - start it in thread:
-			phase = dict()
-			th = Thread(name="_TestCaseWorker",
-				target=Fail2banServerTest._testServerStartForeground, args=(self, tmp, startparams, phase))
-			th.daemon = True
-			th.start()
-			try:
-				# wait for start thread:
-				Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
-				self.assertTrue(phase.get('start', None))
-				# wait for server (socket and ready):
-				self._wait_for_srv(tmp, True, startparams=startparams)
-				self.pruneLog()
-				# several commands to server:
-				self.assertRaises(ExitException, _exec_server,
-					(SERVER,) + startparams + ("ping",))
-				self.assertRaises(FailExitException, _exec_server,
-					(SERVER,) + startparams + ("~~unknown~cmd~failed~~",))
-				self.assertRaises(ExitException, _exec_server,
-					(SERVER,) + startparams + ("echo", "TEST-ECHO",))
-			finally:
-				self.pruneLog()
-				# stop:
-				self.assertRaises(ExitException, _exec_server,
-					(SERVER,) + startparams + ("stop",))
-				# wait for end:
-				Utils.wait_for(lambda: phase.get('end', None) is not None, MAX_WAITTIME)
-				self.assertTrue(phase.get('end', None))
-				self.assertLogged("Shutdown successful", "Exiting Fail2ban")
-		finally:
-			_kill_srv(tmp)
-			if th:
-				th.join()
 
 	@with_tmpdir
 	@with_kill_srv
@@ -613,21 +575,21 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		startparams = _start_params(tmp, logtarget="INHERITED")
 
 		## wrong config directory
-		self.assertRaises(FailExitException, _exec_server,
-			(SERVER, "-c", pjoin(tmp, "miss"),))
+		self.assertExitsAbnormally(
+			("-c", pjoin(tmp, "miss"),))
 		self.assertLogged("Base configuration directory " + pjoin(tmp, "miss") + " does not exist")
 		self.pruneLog()
 
 		## wrong socket
-		self.assertRaises(FailExitException, _exec_server,
-			(SERVER, "-c", pjoin(tmp, "config"), "-x", "-s", pjoin(tmp, "miss/f2b.sock"),))
+		self.assertExitsAbnormally(
+			("-c", pjoin(tmp, "config"), "-x", "-s", pjoin(tmp, "miss/f2b.sock"),))
 		self.assertLogged("There is no directory " + pjoin(tmp, "miss") + " to contain the socket file")
 		self.pruneLog()
 
 		## already exists:
 		open(pjoin(tmp, "f2b.sock"), 'a').close()
-		self.assertRaises(FailExitException, _exec_server,
-			(SERVER, "-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "f2b.sock"),))
+		self.assertExitsAbnormally(
+			("-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "f2b.sock"),))
 		self.assertLogged("Fail2ban seems to be in unexpected state (not running but the socket exists)")
 		self.pruneLog()
 		os.remove(pjoin(tmp, "f2b.sock"))
