@@ -30,7 +30,7 @@ import sys
 import time
 import unittest
 
-# Check if local fail2ban module exists, and use if it exists by 
+# Check if local fail2ban module exists, and use if it exists by
 # modifying the path. This is such that tests can be used in dev
 # environment.
 if os.path.exists("fail2ban/__init__.py"):
@@ -122,7 +122,7 @@ if verbosity > 1: # pragma: no cover
 	if verbosity > 3:
 		fmt = ' | %(module)15.15s-%(levelno)-2d: %(funcName)-20.20s |' + fmt
 	if verbosity > 2:
-		fmt = ' +%(relativeCreated)5d %(thread)X %(name)-25s %(levelname)-5.5s' + fmt
+		fmt = ' +%(relativeCreated)5d %(thread)X %(name)-25.25s %(levelname)-5.5s' + fmt
 	else:
 		fmt = ' %(asctime)-15s %(thread)X %(levelname)-5.5s' + fmt
 #
