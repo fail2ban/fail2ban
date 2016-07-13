@@ -35,7 +35,7 @@ from ..version import version
 from .csocket import CSocket
 from .beautifier import Beautifier
 from .fail2bancmdline import Fail2banCmdLine, ServerExecutionException, ExitException, \
-	logSys, PRODUCTION, exit, output
+	logSys, exit, output
 
 PROMPT = "fail2ban> "
 
@@ -361,19 +361,16 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 
 			# Interactive mode
 			if self._conf.get("interactive", False):
-				# no readline in test:
-				if PRODUCTION: # pragma: no cover
-					try:
-						import readline
-					except ImportError:
-						raise ServerExecutionException("Readline not available")
+				try:
+					import readline
+				except ImportError:
+					raise ServerExecutionException("Readline not available")
 				try:
 					ret = True
 					if len(args) > 0:
 						ret = self.__processCommand(args)
 					if ret:
-						if PRODUCTION: # pragma: no cover
-							readline.parse_and_bind("tab: complete")
+						readline.parse_and_bind("tab: complete")
 						self.dispInteractive()
 						while True:
 							cmd = input_command()

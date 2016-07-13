@@ -107,7 +107,6 @@ fail2banclient.input_command = _test_input_command
 
 # prevents change logging params, log capturing, etc:
 fail2bancmdline.PRODUCTION = \
-fail2banclient.PRODUCTION = \
 fail2banserver.PRODUCTION = False
 
 
