@@ -82,7 +82,9 @@ ver. 0.9.5 (2016/XX/XXX) - wanna-be-released
        added new parameter `__date_ambit`
    * gentoo-initd fixed --pidfile bug: `--pidfile` is option of start-stop-daemon, 
      not argument of fail2ban (see gh-1434)
-   * filter.d/asterisk.conf - fix security log support for PJSIP and Asterisk 13+
+   * filter.d/asterisk.conf
+     - fix security log support for PJSIP and Asterisk 13+ (gh-1456)
+     - improved log support for PJSIP and Asterisk 13+ with different callID (gh-1458)
 
 - New Features:
    * New Actions:
