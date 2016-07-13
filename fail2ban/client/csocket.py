@@ -44,7 +44,9 @@ class CSocket:
 	
 	def send(self, msg):
 		# Convert every list member to string
-		obj = dumps([str(m) for m in msg], HIGHEST_PROTOCOL)
+		obj = dumps(map(
+			lambda m: str(m) if not isinstance(m, (list, dict, set)) else m, msg),
+		  HIGHEST_PROTOCOL)
 		self.__csock.send(obj + CSPROTO.END)
 		return self.receive(self.__csock)
 

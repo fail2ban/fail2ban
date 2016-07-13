@@ -30,6 +30,7 @@ import tempfile
 
 from ..server.actions import Actions
 from ..server.ticket import FailTicket
+from ..server.utils import Utils
 from .dummyjail import DummyJail
 from .utils import LogCaptureTestCase
 
@@ -81,8 +82,7 @@ class ExecuteActions(LogCaptureTestCase):
 		self.defaultActions()
 		self.__actions.start()
 		with open(self.__tmpfilename) as f:
-			time.sleep(3)
-			self.assertEqual(f.read(),"ip start 64\n")
+			self.assertTrue( Utils.wait_for(lambda: (f.read() == "ip start 64\n"), 3) )
 
 		self.__actions.stop()
 		self.__actions.join()
@@ -97,8 +97,7 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertLogged("TestAction initialised")
 
 		self.__actions.start()
-		time.sleep(3)
-		self.assertLogged("TestAction action start")
+		self.assertTrue( Utils.wait_for(lambda: self._is_logged("TestAction action start"), 3) )
 
 		self.__actions.stop()
 		self.__actions.join()
@@ -135,8 +134,7 @@ class ExecuteActions(LogCaptureTestCase):
 				"action.d/action_errors.py"),
 			{})
 		self.__actions.start()
-		time.sleep(3)
-		self.assertLogged("Failed to start")
+		self.assertTrue( Utils.wait_for(lambda: self._is_logged("Failed to start"), 3) )
 		self.__actions.stop()
 		self.__actions.join()
 		self.assertLogged("Failed to stop")

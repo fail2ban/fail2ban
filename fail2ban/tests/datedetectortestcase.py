@@ -29,20 +29,29 @@ import time
 import datetime
 
 from ..server.datedetector import DateDetector
+from ..server import datedetector
 from ..server.datetemplate import DateTemplate
-from .utils import setUpMyTime, tearDownMyTime
+from .utils import setUpMyTime, tearDownMyTime, LogCaptureTestCase
+from ..helpers import getLogger
+
+logSys = getLogger("fail2ban")
 
 
-class DateDetectorTest(unittest.TestCase):
+class DateDetectorTest(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		LogCaptureTestCase.setUp(self)
+		self.__old_eff_level = datedetector.logLevel
+		datedetector.logLevel = logSys.getEffectiveLevel()
 		setUpMyTime()
 		self.__datedetector = DateDetector()
 		self.__datedetector.addDefaultTemplate()
 
 	def tearDown(self):
 		"""Call after every test case."""
+		LogCaptureTestCase.tearDown(self)
+		datedetector.logLevel = self.__old_eff_level
 		tearDownMyTime()
 	
 	def testGetEpochTime(self):
@@ -116,6 +125,7 @@ class DateDetectorTest(unittest.TestCase):
 										 (not anchored, "bogus-prefix ")):
 				log = prefix + sdate + "[sshd] error: PAM: Authentication failure"
 
+				# with getTime:
 				logtime = self.__datedetector.getTime(log)
 				if should_match:
 					self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s, anchored: %r, log: %s" % ( sdate, anchored, log))
@@ -128,13 +138,20 @@ class DateDetectorTest(unittest.TestCase):
 						self.assertEqual(logMatch.group(), sdate)
 				else:
 					self.assertEqual(logtime, None, "getTime should have not matched for %r Got: %s" % (sdate, logtime))
-
-	def testStableSortTemplate(self):
-		old_names = [x.name for x in self.__datedetector.templates]
-		self.__datedetector.sortTemplate()
-		# If there were no hits -- sorting should not change the order
-		for old_name, n in zip(old_names, self.__datedetector.templates):
-			self.assertEqual(old_name, n.name) # "Sort must be stable"
+				# with getTime(matchTime) - this combination used in filter:
+				matchTime = self.__datedetector.matchTime(log)
+				logtime = self.__datedetector.getTime(log, matchTime)
+				if should_match:
+					self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s, anchored: %r, log: %s" % ( sdate, anchored, log))
+					( logUnix, logMatch ) = logtime
+					self.assertEqual(logUnix, dateUnix, "getTime comparison failure for %s: \"%s\" is not \"%s\"" % (sdate, logUnix, dateUnix))
+					if sdate.startswith('audit('):
+						# yes, special case, the group only matches the number
+						self.assertEqual(logMatch.group(), '1106513999.000')
+					else:
+						self.assertEqual(logMatch.group(), sdate)
+				else:
+					self.assertEqual(logtime, None, "getTime should have not matched for %r Got: %s" % (sdate, logtime))
 
 	def testAllUniqueTemplateNames(self):
 		self.assertRaises(ValueError, self.__datedetector.appendTemplate,
@@ -150,13 +167,11 @@ class DateDetectorTest(unittest.TestCase):
 		( logTime, logMatch ) = logdate
 		self.assertEqual(logTime, mu)
 		self.assertEqual(logMatch.group(), '2012/10/11 02:37:17')
-		self.__datedetector.sortTemplate()
 		# confuse it with year being at the end
 		for i in xrange(10):
 			( logTime, logMatch ) =	self.__datedetector.getTime('11/10/2012 02:37:17 [error] 18434#0')
 			self.assertEqual(logTime, mu)
 			self.assertEqual(logMatch.group(), '11/10/2012 02:37:17')
-		self.__datedetector.sortTemplate()
 		# and now back to the original
 		( logTime, logMatch ) = self.__datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')
 		self.assertEqual(logTime, mu)

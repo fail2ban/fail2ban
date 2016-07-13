@@ -52,7 +52,7 @@ class Transmitter:
 	
 	def proceed(self, command):
 		# Deserialize object
-		logSys.debug("Command: " + repr(command))
+		logSys.debug("Command: %r", command)
 		try:
 			ret = self.__commandHandler(command)
 			ack = 0, ret
@@ -93,12 +93,16 @@ class Transmitter:
 				name = command[1]
 				self.__server.stopJail(name)
 			return None
+		elif command[0] == "echo":
+			return command[1:]
 		elif command[0] == "sleep":
 			value = command[1]
-			time.sleep(int(value))
+			time.sleep(float(value))
 			return None
 		elif command[0] == "flushlogs":
 			return self.__server.flushLogs()
+		elif command[0] == "multi-set":
+			return self.__commandSet(command[1:], True)
 		elif command[0] == "set":
 			return self.__commandSet(command[1:])
 		elif command[0] == "get":
@@ -109,7 +113,7 @@ class Transmitter:
 			return version.version
 		raise Exception("Invalid command")
 	
-	def __commandSet(self, command):
+	def __commandSet(self, command, multiple=False):
 		name = command[0]
 		# Logging
 		if name == "loglevel":
@@ -196,7 +200,9 @@ class Transmitter:
 			return self.__server.getJournalMatch(name)
 		elif command[1] == "addfailregex":
 			value = command[2]
-			self.__server.addFailRegex(name, value)
+			self.__server.addFailRegex(name, value, multiple=multiple)
+			if multiple:
+				return True
 			return self.__server.getFailRegex(name)
 		elif command[1] == "delfailregex":
 			value = int(command[2])
@@ -204,7 +210,9 @@ class Transmitter:
 			return self.__server.getFailRegex(name)
 		elif command[1] == "addignoreregex":
 			value = command[2]
-			self.__server.addIgnoreRegex(name, value)
+			self.__server.addIgnoreRegex(name, value, multiple=multiple)
+			if multiple:
+				return True
 			return self.__server.getIgnoreRegex(name)
 		elif command[1] == "delignoreregex":
 			value = int(command[2])
@@ -216,7 +224,7 @@ class Transmitter:
 			return self.__server.getUseDns(name)
 		elif command[1] == "findtime":
 			value = command[2]
-			self.__server.setFindTime(name, int(value))
+			self.__server.setFindTime(name, value)
 			return self.__server.getFindTime(name)
 		elif command[1] == "datepattern":
 			value = command[2]
@@ -233,7 +241,7 @@ class Transmitter:
 		# command
 		elif command[1] == "bantime":
 			value = command[2]
-			self.__server.setBanTime(name, int(value))
+			self.__server.setBanTime(name, value)
 			return self.__server.getBanTime(name)
 		elif command[1] == "banip":
 			value = command[2]
@@ -254,15 +262,27 @@ class Transmitter:
 			return None
 		elif command[1] == "action":
 			actionname = command[2]
-			actionkey = command[3]
 			action = self.__server.getAction(name, actionname)
-			if callable(getattr(action, actionkey, None)):
-				actionvalue = json.loads(command[4]) if len(command)>4 else {}
-				return getattr(action, actionkey)(**actionvalue)
+			if multiple:
+				for cmd in command[3]:
+					logSys.debug("  %r", cmd)
+					actionkey = cmd[0]
+					if callable(getattr(action, actionkey, None)):
+						actionvalue = json.loads(cmd[1]) if len(cmd)>1 else {}
+						getattr(action, actionkey)(**actionvalue)
+					else:
+						actionvalue = cmd[1]
+						setattr(action, actionkey, actionvalue)
+				return True
 			else:
-				actionvalue = command[4]
-				setattr(action, actionkey, actionvalue)
-				return getattr(action, actionkey)
+				actionkey = command[3]
+				if callable(getattr(action, actionkey, None)):
+					actionvalue = json.loads(command[4]) if len(command)>4 else {}
+					return getattr(action, actionkey)(**actionvalue)
+				else:
+					actionvalue = command[4]
+					setattr(action, actionkey, actionvalue)
+					return getattr(action, actionkey)
 		raise Exception("Invalid command (no set action or not yet implemented)")
 	
 	def __commandGet(self, command):

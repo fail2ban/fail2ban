@@ -40,8 +40,13 @@ class Fail2banReader(ConfigReader):
 		ConfigReader.read(self, "fail2ban")
 	
 	def getEarlyOptions(self):
-		opts = [["string", "socket", "/var/run/fail2ban/fail2ban.sock"],
-				["string", "pidfile", "/var/run/fail2ban/fail2ban.pid"]]
+		opts = [
+			["string", "socket", "/var/run/fail2ban/fail2ban.sock"],
+			["string", "pidfile", "/var/run/fail2ban/fail2ban.pid"],
+			["string", "loglevel", "INFO"],
+			["string", "logtarget", "/var/log/fail2ban.log"],
+			["string", "syslogsocket", "auto"]
+		]
 		return ConfigReader.getOptions(self, "Definition", opts)
 	
 	def getOptions(self):
@@ -49,7 +54,7 @@ class Fail2banReader(ConfigReader):
 				["string", "logtarget", "STDERR"],
 				["string", "syslogsocket", "auto"],
 				["string", "dbfile", "/var/lib/fail2ban/fail2ban.sqlite3"],
-				["int", "dbpurgeage", 86400]]
+				["string", "dbpurgeage", "1d"]]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
 	
 	def convert(self):

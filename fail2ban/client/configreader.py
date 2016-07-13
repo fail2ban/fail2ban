@@ -203,40 +203,49 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	#
 	# Read the given option in the configuration file. Default values
 	# are used...
-	# Each optionValues entry is composed of an array with:
-	# 0 -> the type of the option
-	# 1 -> the name of the option
-	# 2 -> the default value for the option
+	# Each options entry is composed of an array with:
+	#  [[type, name, default], ...]
+	# Or it is a dict:
+	#  {name: [type, default], ...}
 	
-	def getOptions(self, sec, options, pOptions=None):
+	def getOptions(self, sec, options, pOptions=None, shouldExist=False):
 		values = dict()
-		for option in options:
-			try:
-				if option[0] == "bool":
-					v = self.getboolean(sec, option[1])
-				elif option[0] == "int":
-					v = self.getint(sec, option[1])
+		for optname in options:
+			if isinstance(options, (list,tuple)):
+				if len(optname) > 2:
+					opttype, optname, optvalue = optname
 				else:
-					v = self.get(sec, option[1])
-				if not pOptions is None and option[1] in pOptions:
+					(opttype, optname), optvalue = optname, None
+			else:
+				opttype, optvalue = options[optname]
+			try:
+				if opttype == "bool":
+					v = self.getboolean(sec, optname)
+				elif opttype == "int":
+					v = self.getint(sec, optname)
+				else:
+					v = self.get(sec, optname)
+				if not pOptions is None and optname in pOptions:
 					continue
-				values[option[1]] = v
+				values[optname] = v
 			except NoSectionError, e:
+				if shouldExist:
+					raise
 				# No "Definition" section or wrong basedir
 				logSys.error(e)
-				values[option[1]] = option[2]
+				values[optname] = optvalue
 				# TODO: validate error handling here.
 			except NoOptionError:
-				if not option[2] is None:
+				if not optvalue is None:
 					logSys.warning("'%s' not defined in '%s'. Using default one: %r"
-								% (option[1], sec, option[2]))
-					values[option[1]] = option[2]
+								% (optname, sec, optvalue))
+					values[optname] = optvalue
 				elif logSys.getEffectiveLevel() <= logLevel:
-					logSys.log(logLevel, "Non essential option '%s' not defined in '%s'.", option[1], sec)
+					logSys.log(logLevel, "Non essential option '%s' not defined in '%s'.", optname, sec)
 			except ValueError:
-				logSys.warning("Wrong value for '" + option[1] + "' in '" + sec +
-							"'. Using default one: '" + repr(option[2]) + "'")
-				values[option[1]] = option[2]
+				logSys.warning("Wrong value for '" + optname + "' in '" + sec +
+							"'. Using default one: '" + repr(optvalue) + "'")
+				values[optname] = optvalue
 		return values
 
 
@@ -286,7 +295,8 @@ class DefinitionInitConfigReader(ConfigReader):
 		if self.has_section("Init"):
 			for opt in self.options("Init"):
 				v = self.get("Init", opt)
-				self._initOpts['known/'+opt] = v
+				if not opt.startswith('known/') and opt != '__name__':
+					self._initOpts['known/'+opt] = v
 				if not opt in self._initOpts:
 					self._initOpts[opt] = v
 	

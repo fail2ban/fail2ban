@@ -33,6 +33,7 @@ import unittest
 
 from .. import protocol
 from ..server.asyncserver import AsyncServer, AsyncServerException
+from ..server.utils import Utils
 from ..client.csocket import CSocket
 
 
@@ -54,14 +55,39 @@ class Socket(unittest.TestCase):
 		"""Test transmitter proceed method which just returns first arg"""
 		return message
 
+	def testStopPerCloseUnexpected(self):
+		# start in separate thread :
+		serverThread = threading.Thread(
+			target=self.server.start, args=(self.sock_name, False))
+		serverThread.daemon = True
+		serverThread.start()
+		self.assertTrue(Utils.wait_for(self.server.isActive, unittest.F2B.maxWaitTime(10)))
+		# unexpected stop directly after start:
+		self.server.close()
+		# wait for end of thread :
+		Utils.wait_for(lambda: not serverThread.isAlive() 
+			or serverThread.join(Utils.DEFAULT_SLEEP_INTERVAL), unittest.F2B.maxWaitTime(10))
+		self.assertFalse(serverThread.isAlive())
+		# clean :
+		self.server.stop()
+		self.assertFalse(self.server.isActive())
+		self.assertFalse(os.path.exists(self.sock_name))
+
+	def _serverSocket(self):
+		try:
+			return CSocket(self.sock_name)
+		except Exception as e:
+			return None
+
 	def testSocket(self):
 		serverThread = threading.Thread(
 			target=self.server.start, args=(self.sock_name, False))
 		serverThread.daemon = True
 		serverThread.start()
-		time.sleep(1)
+		self.assertTrue(Utils.wait_for(self.server.isActive, unittest.F2B.maxWaitTime(10)))
+		time.sleep(Utils.DEFAULT_SLEEP_TIME)
 
-		client = CSocket(self.sock_name)
+		client = Utils.wait_for(self._serverSocket, 2)
 		testMessage = ["A", "test", "message"]
 		self.assertEqual(client.send(testMessage), testMessage)
 
@@ -71,7 +97,11 @@ class Socket(unittest.TestCase):
 		client.close()
 
 		self.server.stop()
-		serverThread.join(1)
+		# wait for end of thread :
+		Utils.wait_for(lambda: not serverThread.isAlive() 
+			or serverThread.join(Utils.DEFAULT_SLEEP_INTERVAL), unittest.F2B.maxWaitTime(10))
+		self.assertFalse(serverThread.isAlive())
+		self.assertFalse(self.server.isActive())
 		self.assertFalse(os.path.exists(self.sock_name))
 
 	def testSocketForce(self):
@@ -85,10 +115,13 @@ class Socket(unittest.TestCase):
 			target=self.server.start, args=(self.sock_name, True))
 		serverThread.daemon = True
 		serverThread.start()
-		time.sleep(1)
+		self.assertTrue(Utils.wait_for(self.server.isActive, unittest.F2B.maxWaitTime(10)))
 
 		self.server.stop()
-		serverThread.join(1)
+		# wait for end of thread :
+		Utils.wait_for(lambda: not serverThread.isAlive() 
+			or serverThread.join(Utils.DEFAULT_SLEEP_INTERVAL), unittest.F2B.maxWaitTime(10))
+		self.assertFalse(self.server.isActive())
 		self.assertFalse(os.path.exists(self.sock_name))
 
 

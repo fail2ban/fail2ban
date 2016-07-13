@@ -50,6 +50,7 @@ class DateTemplate(object):
 		self._regex = ""
 		self._cRegex = None
 		self.hits = 0
+		self.lastUsed = 0
 
 	@property
 	def name(self):
@@ -85,7 +86,6 @@ class DateTemplate(object):
 		if (wordBegin and not re.search(r'^\^', regex)):
 			regex = r'\b' + regex
 		self._regex = regex
-		self._cRegex = re.compile(regex, re.UNICODE | re.IGNORECASE)
 
 	regex = property(getRegex, setRegex, doc=
 		"""Regex used to search for date.
@@ -94,11 +94,13 @@ class DateTemplate(object):
 	def matchDate(self, line):
 		"""Check if regex for date matches on a log line.
 		"""
+		if not self._cRegex:
+			self._cRegex = re.compile(self.regex, re.UNICODE | re.IGNORECASE)
 		dateMatch = self._cRegex.search(line)
 		return dateMatch
 
 	@abstractmethod
-	def getDate(self, line):
+	def getDate(self, line, dateMatch=None):
 		"""Abstract method, which should return the date for a log line
 
 		This should return the date for a log line, typically taking the
@@ -134,7 +136,7 @@ class DateEpoch(DateTemplate):
 		DateTemplate.__init__(self)
 		self.regex = r"(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=audit\()))\d{10,11}\b(?:\.\d{3,6})?(?:(?(selinux)(?=:\d+\)))|(?(square)(?=\])))"
 
-	def getDate(self, line):
+	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.
 
 		Parameters
@@ -148,7 +150,8 @@ class DateEpoch(DateTemplate):
 			Tuple containing a Unix timestamp, and the string of the date
 			which was matched and in turned used to calculated the timestamp.
 		"""
-		dateMatch = self.matchDate(line)
+		if not dateMatch:
+			dateMatch = self.matchDate(line)
 		if dateMatch:
 			# extract part of format which represents seconds since epoch
 			return (float(dateMatch.group()), dateMatch)
@@ -169,7 +172,7 @@ class DatePatternRegex(DateTemplate):
 	regex
 	pattern
 	"""
-	_patternRE = r"%%(%%|[%s])" % "".join(timeRE.keys())
+	_patternRE = re.compile(r"%%(%%|[%s])" % "".join(timeRE.keys()))
 	_patternName = {
 		'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
 		'H': "24hour", 'I': "12hour", 'j': "Yearday", 'm': "Month",
@@ -200,10 +203,9 @@ class DatePatternRegex(DateTemplate):
 	@pattern.setter
 	def pattern(self, pattern):
 		self._pattern = pattern
-		self._name = re.sub(
-			self._patternRE, r'%(\1)s', pattern) % self._patternName
-		super(DatePatternRegex, self).setRegex(
-			re.sub(self._patternRE, r'%(\1)s', pattern) % timeRE)
+		fmt = self._patternRE.sub(r'%(\1)s', pattern)
+		self._name = fmt % self._patternName
+		super(DatePatternRegex, self).setRegex(fmt % timeRE)
 
 	def setRegex(self, value):
 		raise NotImplementedError("Regex derived from pattern")
@@ -212,7 +214,7 @@ class DatePatternRegex(DateTemplate):
 	def name(self, value):
 		raise NotImplementedError("Name derived from pattern")
 
-	def getDate(self, line):
+	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.
 
 		This uses a custom version of strptime, using the named groups
@@ -229,7 +231,8 @@ class DatePatternRegex(DateTemplate):
 			Tuple containing a Unix timestamp, and the string of the date
 			which was matched and in turned used to calculated the timestamp.
 		"""
-		dateMatch = self.matchDate(line)
+		if not dateMatch:
+			dateMatch = self.matchDate(line)
 		if dateMatch:
 			groupdict = dict(
 				(key, value)
@@ -253,7 +256,7 @@ class DateTai64n(DateTemplate):
 		# yoh: we should not add an additional front anchor
 		self.setRegex("@[0-9a-f]{24}", wordBegin=False)
 
-	def getDate(self, line):
+	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.
 
 		Parameters
@@ -267,7 +270,8 @@ class DateTai64n(DateTemplate):
 			Tuple containing a Unix timestamp, and the string of the date
 			which was matched and in turned used to calculated the timestamp.
 		"""
-		dateMatch = self.matchDate(line)
+		if not dateMatch:
+			dateMatch = self.matchDate(line)
 		if dateMatch:
 			# extract part of format which represents seconds since epoch
 			value = dateMatch.group()
