@@ -208,7 +208,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	# Or it is a dict:
 	#  {name: [type, default], ...}
 	
-	def getOptions(self, sec, options, pOptions=None):
+	def getOptions(self, sec, options, pOptions=None, shouldExist=False):
 		values = dict()
 		for optname in options:
 			if isinstance(options, (list,tuple)):
@@ -229,6 +229,8 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 					continue
 				values[optname] = v
 			except NoSectionError, e:
+				if shouldExist:
+					raise
 				# No "Definition" section or wrong basedir
 				logSys.error(e)
 				values[optname] = optvalue

@@ -26,6 +26,12 @@ __license__ = "GPL"
 
 import textwrap
 
+def output(s):
+	"""Default output handler for printing protocol. 
+  Used to ease mocking in the test cases.
+	"""
+	print(s)
+
 ##
 # Describes the protocol used to communicate with the server.
 
@@ -42,11 +48,13 @@ CSPROTO = dotdict({
 protocol = [
 ['', "BASIC", ""],
 ["start", "starts the server and the jails"], 
-["reload", "reloads the configuration"], 
+["restart", "restarts the server"], 
+["reload", "reloads the configuration without restart"], 
 ["reload <JAIL>", "reloads the jail <JAIL>"], 
 ["stop", "stops all jails and terminate the server"], 
 ["status", "gets the current status of the server"], 
-["ping", "tests if the server is alive"], 
+["ping", "tests if the server is alive"],
+["echo", "for internal usage, returns back and outputs a given string"],
 ["help", "return this output"], 
 ["version", "return the server version"],
 ['', "LOGGING", ""],
@@ -141,7 +149,7 @@ def printFormatted():
 	firstHeading = False
 	for m in protocol:
 		if m[0] == '' and firstHeading:
-			print
+			output("")
 		firstHeading = True
 		first = True
 		if len(m[0]) >= MARGIN:
@@ -152,7 +160,7 @@ def printFormatted():
 				first = False
 			else:
 				line = ' ' * (INDENT + MARGIN) + n.strip()
-			print line
+			output(line)
 
 
 ##
@@ -163,20 +171,20 @@ def printWiki():
 	for m in protocol:
 		if m[0] == '':
 			if firstHeading:
-				print "|}"
+				output("|}")
 			__printWikiHeader(m[1], m[2])
 			firstHeading = True
 		else:
-			print "|-"
-			print "| <span style=\"white-space:nowrap;\"><tt>" + m[0] + "</tt></span> || || " + m[1]
-	print "|}"
+			output("|-")
+			output("| <span style=\"white-space:nowrap;\"><tt>" + m[0] + "</tt></span> || || " + m[1])
+	output("|}")
 
 
 def __printWikiHeader(section, desc):
-	print
-	print "=== " + section + " ==="
-	print
-	print desc
-	print
-	print "{|"
-	print "| '''Command''' || || '''Description'''"
+	output("")
+	output("=== " + section + " ===")
+	output("")
+	output(desc)
+	output("")
+	output("{|")
+	output("| '''Command''' || || '''Description'''")

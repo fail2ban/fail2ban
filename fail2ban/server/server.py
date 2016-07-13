@@ -24,6 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import threading
 from threading import Lock, RLock
 import logging
 import logging.handlers
@@ -42,6 +43,10 @@ from ..helpers import getLogger, excepthook
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
+DEF_SYSLOGSOCKET = "auto"
+DEF_LOGLEVEL = "INFO"
+DEF_LOGTARGET = "STDOUT"
+
 try:
 	from .database import Fail2BanDb
 except ImportError: # pragma: no cover
@@ -49,16 +54,21 @@ except ImportError: # pragma: no cover
 	Fail2BanDb = None
 
 
+def _thread_name():
+	return threading.current_thread().__class__.__name__
+
+
 class Server:
 	
-	def __init__(self, daemon = False):
+	def __init__(self, daemon=False):
 		self.__loggingLock = Lock()
 		self.__lock = RLock()
 		self.__jails = Jails()
 		self.__db = None
 		self.__daemon = daemon
 		self.__transm = Transmitter(self)
-		self.__asyncServer = AsyncServer(self.__transm)
+		#self.__asyncServer = AsyncServer(self.__transm)
+		self.__asyncServer = None
 		self.__logLevel = None
 		self.__logTarget = None
 		self.__syslogSocket = None
@@ -67,10 +77,7 @@ class Server:
 			'FreeBSD': '/var/run/log',
 			'Linux': '/dev/log',
 		}
-		self.setSyslogSocket("auto")
-		# Set logging level
-		self.setLogLevel("INFO")
-		self.setLogTarget("STDOUT")
+		self.__prev_signals = {}
 
 	def __sigTERMhandler(self, signum, frame):
 		logSys.debug("Caught signal %d. Exiting" % signum)
@@ -80,28 +87,51 @@ class Server:
 		logSys.debug("Caught signal %d. Flushing logs" % signum)
 		self.flushLogs()
 
-	def start(self, sock, pidfile, force = False):
-		logSys.info("Starting Fail2ban v%s", version.version)
-		
-		# Install signal handlers
-		signal.signal(signal.SIGTERM, self.__sigTERMhandler)
-		signal.signal(signal.SIGINT, self.__sigTERMhandler)
-		signal.signal(signal.SIGUSR1, self.__sigUSR1handler)
-		
-		# Ensure unhandled exceptions are logged
-		sys.excepthook = excepthook
+	def _rebindSignal(self, s, new):
+		"""Bind new signal handler while storing old one in _prev_signals"""
+		self.__prev_signals[s] = signal.getsignal(s)
+		signal.signal(s, new)
 
+	def start(self, sock, pidfile, force=False, conf={}):
 		# First set the mask to only allow access to owner
 		os.umask(0077)
+		# Second daemonize before logging etc, because it will close all handles:
 		if self.__daemon: # pragma: no cover
 			logSys.info("Starting in daemon mode")
 			ret = self.__createDaemon()
-			if ret:
-				logSys.info("Daemon started")
-			else:
-				logSys.error("Could not create daemon")
-				raise ServerInitializationError("Could not create daemon")
+			# If forked parent - return here (parent process will configure server later):
+			if ret is None:
+				return False
+			# If error:
+			if not ret[0]:
+				err = "Could not create daemon %s", ret[1:]
+				logSys.error(err)
+				raise ServerInitializationError(err)
+			# We are daemon.
 		
+		# Set all logging parameters (or use default if not specified):
+		self.setSyslogSocket(conf.get("syslogsocket", 
+			self.__syslogSocket if self.__syslogSocket is not None else DEF_SYSLOGSOCKET))
+		self.setLogLevel(conf.get("loglevel", 
+			self.__logLevel if self.__logLevel is not None else DEF_LOGLEVEL))
+		self.setLogTarget(conf.get("logtarget", 
+			self.__logTarget if self.__logTarget is not None else DEF_LOGTARGET))
+
+		logSys.info("-"*50)
+		logSys.info("Starting Fail2ban v%s", version.version)
+		
+		if self.__daemon: # pragma: no cover
+			logSys.info("Daemon started")
+
+		# Install signal handlers
+		if _thread_name() == '_MainThread':
+			for s in (signal.SIGTERM, signal.SIGINT):
+				self._rebindSignal(s, self.__sigTERMhandler)
+			self._rebindSignal(signal.SIGUSR1, self.__sigUSR1handler)
+
+		# Ensure unhandled exceptions are logged
+		sys.excepthook = excepthook
+
 		# Creates a PID file.
 		try:
 			logSys.debug("Creating PID file %s" % pidfile)
@@ -114,6 +144,7 @@ class Server:
 		# Start the communication
 		logSys.debug("Starting communication")
 		try:
+			self.__asyncServer = AsyncServer(self.__transm)
 			self.__asyncServer.start(sock, force)
 		except AsyncServerException, e:
 			logSys.error("Could not start server: %s", e)
@@ -132,17 +163,25 @@ class Server:
 		# communications first (which should be ok anyways since we
 		# are exiting)
 		# See https://github.com/fail2ban/fail2ban/issues/7
-		self.__asyncServer.stop()
+		if self.__asyncServer is not None:
+			self.__asyncServer.stop()
+			self.__asyncServer = None
 
 		# Now stop all the jails
 		self.stopAllJail()
 
 		# Only now shutdown the logging.
-		try:
-			self.__loggingLock.acquire()
-			logging.shutdown()
-		finally:
-			self.__loggingLock.release()
+		if self.__logTarget is not None:
+			with self.__loggingLock:
+				logging.shutdown()
+
+		# Restore default signal handlers:
+		if _thread_name() == '_MainThread':
+			for s, sh in self.__prev_signals.iteritems():
+				signal.signal(s, sh)
+
+		# Prevent to call quit twice:
+		self.quit = lambda: False
 
 	def addJail(self, name, backend):
 		self.__jails.add(name, backend, self.__db)
@@ -337,6 +376,9 @@ class Server:
 	def getBanTime(self, name):
 		return self.__jails[name].actions.getBanTime()
 	
+	def isStarted(self):
+		return self.__asyncServer is not None and self.__asyncServer.isActive()
+
 	def isAlive(self, jailnum=None):
 		if jailnum is not None and len(self.__jails) != jailnum:
 			return 0
@@ -375,16 +417,15 @@ class Server:
 	# @param value the level
 	
 	def setLogLevel(self, value):
-		try:
-			self.__loggingLock.acquire()
-			getLogger("fail2ban").setLevel(
-				getattr(logging, value.upper()))
-		except AttributeError:
-			raise ValueError("Invalid log level")
-		else:
-			self.__logLevel = value.upper()
-		finally:
-			self.__loggingLock.release()
+		value = value.upper()
+		with self.__loggingLock:
+			if self.__logLevel == value:
+				return
+			try:
+				getLogger("fail2ban").setLevel(getattr(logging, value))
+				self.__logLevel = value
+			except AttributeError:
+				raise ValueError("Invalid log level %r" % value)
 	
 	##
 	# Get the logging level.
@@ -393,11 +434,8 @@ class Server:
 	# @return the log level
 	
 	def getLogLevel(self):
-		try:
-			self.__loggingLock.acquire()
+		with self.__loggingLock:
 			return self.__logLevel
-		finally:
-			self.__loggingLock.release()
 
 	##
 	# Sets the logging target.
@@ -406,8 +444,14 @@ class Server:
 	# @param target the logging target
 	
 	def setLogTarget(self, target):
-		try:
-			self.__loggingLock.acquire()
+		with self.__loggingLock:
+			# don't set new handlers if already the same
+			# or if "INHERITED" (foreground worker of the test cases, to prevent stop logging):
+			if self.__logTarget == target:
+				return True
+			if target == "INHERITED":
+				self.__logTarget = target
+				return True
 			# set a format which is simpler for console use
 			formatter = logging.Formatter("%(asctime)s %(name)-24s[%(process)d]: %(levelname)-7s %(message)s")
 			if target == "SYSLOG":
@@ -452,18 +496,18 @@ class Server:
 				try:
 					handler.flush()
 					handler.close()
-				except (ValueError, KeyError): # pragma: no cover
+				except (ValueError, KeyError):  # pragma: no cover
 					# Is known to be thrown after logging was shutdown once
 					# with older Pythons -- seems to be safe to ignore there
 					# At least it was still failing on 2.6.2-0ubuntu1 (jaunty)
-					if (2,6,3) <= sys.version_info < (3,) or \
-							(3,2) <= sys.version_info:
+					if (2, 6, 3) <= sys.version_info < (3,) or \
+							(3, 2) <= sys.version_info:
 						raise
 			# tell the handler to use this format
 			hdlr.setFormatter(formatter)
 			logger.addHandler(hdlr)
 			# Does not display this message at startup.
-			if not self.__logTarget is None:
+			if self.__logTarget is not None:
 				logSys.info("Start Fail2ban v%s", version.version)
 				logSys.info(
 					"Changed logging target to %s for Fail2ban v%s"
@@ -475,8 +519,6 @@ class Server:
 			# Sets the logging target.
 			self.__logTarget = target
 			return True
-		finally:
-			self.__loggingLock.release()
 
 	##
 	# Sets the syslog socket.
@@ -484,24 +526,21 @@ class Server:
 	# syslogsocket is the full path to the syslog socket
 	# @param syslogsocket the syslog socket path
 	def setSyslogSocket(self, syslogsocket):
-		self.__syslogSocket = syslogsocket
-		# Conditionally reload, logtarget depends on socket path when SYSLOG
-		return self.__logTarget != "SYSLOG"\
-			   or self.setLogTarget(self.__logTarget)
+		with self.__loggingLock:
+			if self.__syslogSocket == syslogsocket:
+				return True
+			self.__syslogSocket = syslogsocket
+			# Conditionally reload, logtarget depends on socket path when SYSLOG
+			return self.__logTarget != "SYSLOG"\
+				   or self.setLogTarget(self.__logTarget)
 
 	def getLogTarget(self):
-		try:
-			self.__loggingLock.acquire()
+		with self.__loggingLock:
 			return self.__logTarget
-		finally:
-			self.__loggingLock.release()
 
 	def getSyslogSocket(self):
-		try:
-			self.__loggingLock.acquire()
+		with self.__loggingLock:
 			return self.__syslogSocket
-		finally:
-			self.__loggingLock.release()
 
 	def flushLogs(self):
 		if self.__logTarget not in ['STDERR', 'STDOUT', 'SYSLOG']:
@@ -555,8 +594,8 @@ class Server:
 		# We need to set this in the parent process, so it gets inherited by the
 		# child process, and this makes sure that it is effect even if the parent
 		# terminates quickly.
-		signal.signal(signal.SIGHUP, signal.SIG_IGN)
-		
+		self._rebindSignal(signal.SIGHUP, signal.SIG_IGN)
+
 		try:
 			# Fork a child process so the parent can exit.  This will return control
 			# to the command line or shell.  This is required so that the new process
@@ -566,7 +605,7 @@ class Server:
 			# PGID.
 			pid = os.fork()
 		except OSError, e:
-			return((e.errno, e.strerror))	 # ERROR (return a tuple)
+			return (False, (e.errno, e.strerror))	 # ERROR (return a tuple)
 		
 		if pid == 0:	   # The first child.
 	
@@ -587,7 +626,7 @@ class Server:
 				# preventing the daemon from ever acquiring a controlling terminal.
 				pid = os.fork()		# Fork a second child.
 			except OSError, e:
-				return((e.errno, e.strerror))  # ERROR (return a tuple)
+				return (False, (e.errno, e.strerror))  # ERROR (return a tuple)
 		
 			if (pid == 0):	  # The second child.
 				# Ensure that the daemon doesn't keep any directory in use.  Failure
@@ -596,8 +635,9 @@ class Server:
 			else:
 				os._exit(0)	  # Exit parent (the first child) of the second child.
 		else:
-			os._exit(0)		 # Exit parent of the first child.
-		
+			# Signal to exit, parent of the first child.
+			return None
+	
 		# Close all open files.  Try the system configuration variable, SC_OPEN_MAX,
 		# for the maximum number of open files to close.  If it doesn't exist, use
 		# the default value (configurable).
@@ -624,7 +664,7 @@ class Server:
 		os.open("/dev/null", os.O_RDONLY)	# standard input (0)
 		os.open("/dev/null", os.O_RDWR)		# standard output (1)
 		os.open("/dev/null", os.O_RDWR)		# standard error (2)
-		return True
+		return (True,)
 
 
 class ServerInitializationError(Exception):
