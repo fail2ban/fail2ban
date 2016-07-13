@@ -158,6 +158,8 @@ class Transmitter(TransmitterBase):
 	def setUp(self):
 		self.server = TestServer()
 		super(Transmitter, self).setUp()
+
+	def testServerIsNotStarted(self):
 		# so far isStarted only tested but not used otherwise
 		# and here we don't really .start server
 		self.assertFalse(self.server.isStarted())
