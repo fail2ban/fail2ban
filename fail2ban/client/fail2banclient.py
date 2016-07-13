@@ -227,11 +227,11 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		# prepare: read config, check configuration is valid, etc.:
 		if phase is not None:
 			phase['start'] = True
-			logSys.debug('-- client phase %s', phase)
+			logSys.debug('  client phase %s', phase)
 		stream = self.__prepareStartServer()
 		if phase is not None:
 			phase['ready'] = phase['start'] = (True if stream else False)
-			logSys.debug('-- client phase %s', phase)
+			logSys.debug('  client phase %s', phase)
 		if not stream:
 			return False
 		# configure server with config stream:
@@ -248,7 +248,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 
 	def __processCommand(self, cmd):
 		if len(cmd) == 1 and cmd[0] == "start":
-			
+
 			ret = self.__startServer(self._conf["background"])
 			if not ret:
 				return False
@@ -322,7 +322,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		# Wait for the server to start (the server has 30 seconds to answer ping)
 		starttime = time.time()
 		logSys.debug("__waitOnServer: %r", (alive, maxtime))
-		test = lambda: os.path.exists(self._conf["socket"]) and self.__ping() 
+		test = lambda: os.path.exists(self._conf["socket"]) and self.__ping()
 		with VisualWait(self._conf["verbose"]) as vis:
 			sltime = 0.0125 / 2
 			while self._alive:
@@ -432,7 +432,7 @@ class _VisualWait:
 		self.pos += self.delta
 		if self.delta > 0:
 			s = " #\x1b[1D" if self.pos > 1 else "# \x1b[2D"
-		else: 
+		else:
 			s = "\x1b[1D# \x1b[2D"
 		sys.stdout.write(s)
 		sys.stdout.flush()

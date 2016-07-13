@@ -112,7 +112,7 @@ class Fail2banCmdLine():
 		output("    --timeout               timeout to wait for the server (for internal usage only, don't read configuration)")
 		output("    -h, --help              display this help message")
 		output("    -V, --version           print the version")
-		
+
 		if not caller.endswith('server'):
 			output("")
 			output("Command:")
@@ -185,7 +185,7 @@ class Fail2banCmdLine():
 			if ret is not None:
 				return ret
 
-			logSys.debug("-- conf: %r, args: %r", self._conf, self._args)
+			logSys.debug("  conf: %r, args: %r", self._conf, self._args)
 
 			if initial and PRODUCTION: # pragma: no cover - can't test
 				verbose = self._conf["verbose"]
