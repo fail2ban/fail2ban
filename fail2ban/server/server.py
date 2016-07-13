@@ -60,7 +60,7 @@ def _thread_name():
 
 class Server:
 	
-	def __init__(self, daemon = False):
+	def __init__(self, daemon=False):
 		self.__loggingLock = Lock()
 		self.__lock = RLock()
 		self.__jails = Jails()
@@ -377,7 +377,7 @@ class Server:
 		return self.__jails[name].actions.getBanTime()
 	
 	def isStarted(self):
-		self.__asyncServer.isActive()
+		return self.__asyncServer is not None and self.__asyncServer.isActive()
 
 	def isAlive(self, jailnum=None):
 		if jailnum is not None and len(self.__jails) != jailnum:
