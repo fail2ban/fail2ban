@@ -32,6 +32,8 @@ ver. 0.9.5 (2016/XX/XXX) - wanna-be-released
 - New Features:
    * New Actions:
      - action.d/firewallcmd-rich-rules and action.d/firewallcmd-rich-logging (gh-1367)
+   * New filters:
+     - slapd - ban hosts, that were failed to connect with invalid credentials: error code 49 (gh-1478)
 
 - Enhancements:
    * Extreme speedup of all sqlite database operations (gh-1436),
