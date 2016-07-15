@@ -1,6 +1,6 @@
-                         __      _ _ ___ _               
-                        / _|__ _(_) |_  ) |__  __ _ _ _  
-                       |  _/ _` | | |/ /| '_ \/ _` | ' \ 
+                         __      _ _ ___ _
+                        / _|__ _(_) |_  ) |__  __ _ _ _
+                       |  _/ _` | | |/ /| '_ \/ _` | ' \
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
 
 Fail2Ban: Changelog
@@ -9,200 +9,207 @@ Fail2Ban: Changelog
 ver. 0.9.5 (2016/XX/XXX) - wanna-be-released
 -----------
 
-- Fixes:
-   * filter.d/monit.conf
-     - extended failregex with new monit "access denied" version (gh-1355);
-     - failregex of previous monit version merged as single expression.
-   * filter.d/postfix.conf, filter.d/postfix-sasl.conf
-     - extended failregex daemon part, matching also `postfix/smtps/smtpd` now (gh-1391)
-   * fixed a grave bug within tags substitutions because of incorrect detection of recursion 
-     in case of multiple inline substitutions of the same tag (affected actions: `bsd-ipfw`, etc). 
-     Now tracks the actual list of the already substituted tags (per tag instead of single list)
-   * filter.d/common.conf
-     - unexpected extra regex-space in generic `__prefix_line` (gh-1405)
-     - all optional spaces normalized in `common.conf`, test covered now
-     - generic `__prefix_line` extended with optional brackets for the date ambit (gh-1421),
-       added new parameter `__date_ambit`
-   * gentoo-initd fixed --pidfile bug: `--pidfile` is option of start-stop-daemon, 
-     not argument of fail2ban (see gh-1434)
-   * filter.d/asterisk.conf
-     - fix security log support for PJSIP and Asterisk 13+ (gh-1456)
-     - improved log support for PJSIP and Asterisk 13+ with different callID (gh-1458)
+### Fixes
+* `filter.d/monit.conf`
+    - Extended failregex with new monit "access denied" version (gh-1355)
+    - failregex of previous monit version merged as single expression
+* `filter.d/postfix.conf`, `filter.d/postfix-sasl.conf`
+    - Extended failregex daemon part, matching also `postfix/smtps/smtpd`
+      now (gh-1391)
+* Fixed a grave bug within tags substitutions because of incorrect
+  detection of recursion in case of multiple inline substitutions
+  of the same tag (affected actions: `bsd-ipfw`, etc).  Now tracks
+  the actual list of the already substituted tags (per tag instead
+  of single list)
+* `filter.d/common.conf`
+    - Unexpected extra regex-space in generic `__prefix_line` (gh-1405)
+    - All optional spaces normalized in `common.conf`, test covered now
+    - Generic `__prefix_line` extended with optional brackets for the
+     date ambit (gh-1421), added new parameter `__date_ambit`
+* `gentoo-initd` fixed `--pidfile` bug: `--pidfile` is option of
+  `start-stop-daemon`, not argument of fail2ban (see gh-1434)
+* `filter.d/asterisk.conf`
+    - Fixed security log support for PJSIP and Asterisk 13+ (gh-1456)
+    - Improved log support for PJSIP and Asterisk 13+ with different
+      callID (gh-1458)
 
-- New Features:
-   * New Actions:
-     - action.d/firewallcmd-rich-rules and action.d/firewallcmd-rich-logging (gh-1367)
-   * New filters:
-     - slapd - ban hosts, that were failed to connect with invalid credentials: error code 49 (gh-1478)
+### New Features
+* New Actions:
+    - `action.d/firewallcmd-rich-rules` and `action.d/firewallcmd-rich-logging`
+	(gh-1367)
+* New filters:
+    - slapd - ban hosts, that were failed to connect with invalid
+	credentials: error code 49 (gh-1478)
 
-- Enhancements:
-   * Extreme speedup of all sqlite database operations (gh-1436),
-     by using of following sqlite options:
-     - (synchronous = OFF) write data through OS without syncing
-     - (journal_mode = MEMORY) use memory for the transaction logging
-     - (temp_store = MEMORY) temporary tables and indices are kept in memory
-   * journald journalmatch for pure-ftpd (gh-1362)
-   * Add additional regex filter for dovecot ldap authentication failures (gh-1370)
-   * filter.d/exim*conf
-     - added additional regexes (gh-1371)
-     - made port entry optional
+
+### Enhancements
+* Extreme speedup of all sqlite database operations (gh-1436),
+  by using of following sqlite options:
+    - (synchronous = OFF) write data through OS without syncing
+    - (journal_mode = MEMORY) use memory for the transaction logging
+    - (temp_store = MEMORY) temporary tables and indices are kept in memory
+* journald journalmatch for pure-ftpd (gh-1362)
+* Added additional regex filter for dovecot ldap authentication failures (gh-1370)
+* `filter.d/exim*conf`
+    - Added additional regexes (gh-1371)
+    - Made port entry optional
 
 
 ver. 0.9.4 (2016/03/08) - for-you-ladies
 -----------
 
-- Fixes:
-   * roundcube-auth jail typo for logpath
-   * Fix dnsToIp resolver for fqdn with large list of IPs (gh-1164)
-   * filter.d/apache-badbots.conf
-     - Updated useragent string regex adding escape for `+`
-   * filter.d/mysqld-auth.conf
-     - Updated "Access denied ..." regex for MySQL 5.6 and later (gh-1211, gh-1332)
-   * filter.d/sshd.conf
-     - Updated "Auth fail" regex for OpenSSH 5.9 and later
-   * Treat failed and killed execution of commands identically (only
-     different log messages), which addresses different behavior on different
-     exit codes of dash and bash (gh-1155)
-   * Fix jail.conf.5 man's section (gh-1226)
-   * Fixed default banaction for allports jails like pam-generic, recidive, etc
-     with new default variable `banaction_allports` (gh-1216)
-   * Fixed `fail2ban-regex` stops working on invalid (wrong encoded) character
-     for python version < 3.x (gh-1248)
-   * Use postfix_log logpath for postfix-rbl jail
-   * filters.d/postfix.conf - add 'Sender address rejected: Domain not found' failregex
-   * use `fail2ban_agent` as user-agent in actions badips, blocklist_de, etc (gh-1271)
-   * Fix ignoring the sender option by action_mw, action_mwl and action_c_mwl
-   * Changed filter.d/asterisk regex for "Call from ..." (few vulnerable now)
-   * Removed compression and rotation count from logrotate (inherit them from
-     the global logrotate config)
+### Fixes
+* `roundcube-auth` jail typo for logpath
+* Fix dnsToIp resolver for fqdn with large list of IPs (gh-1164)
+* `filter.d/apache-badbots.conf`
+    - Updated useragent string regex adding escape for `+`
+* `filter.d/mysqld-auth.conf`
+    - Updated "Access denied ..." regex for MySQL 5.6 and later (gh-1211, gh-1332)
+* `filter.d/sshd.conf`
+    - Updated "Auth fail" regex for OpenSSH 5.9 and later
+* Treat failed and killed execution of commands identically (only
+  different log messages), which addresses different behavior on different
+  exit codes of dash and bash (gh-1155)
+* Fix jail.conf.5 man's section (gh-1226)
+* Fixed default banaction for allports jails like pam-generic, recidive, etc
+  with new default variable `banaction_allports` (gh-1216)
+* Fixed `fail2ban-regex` stops working on invalid (wrong encoded) character
+  for python version < 3.x (gh-1248)
+* Use postfix_log logpath for postfix-rbl jail
+* `filters.d/postfix.conf` - add 'Sender address rejected: Domain not found' failregex
+* use `fail2ban_agent` as user-agent in actions badips, blocklist_de, etc (gh-1271)
+* Fix ignoring the sender option by action_mw, action_mwl and action_c_mwl
+* Changed `filter.d/asterisk` regex for "Call from ..." (few vulnerable now)
+* Removed compression and rotation count from logrotate (inherit them from
+  the global logrotate config)
 
-- New Features:
-   * New interpolation feature for definition config readers - `<known/parameter>`
-     (means last known init definition of filters or actions with name `parameter`).
-     This interpolation makes possible to extend a parameters of stock filter or 
-     action directly in jail inside jail.local file, without creating a separately
-     filter.d/*.local file.
-     As extension to interpolation `%(known/parameter)s`, that does not works for
-     filter and action init parameters
-   * New actions:
-     - nftables-multiport and nftables-allports - filtering using nftables
-       framework. Note: it requires a pre-existing chain for the filtering rule.
-   * New filters:
-     - openhab - domotic software authentication failure with the
-       rest api and web interface (gh-1223)
-     - nginx-limit-req - ban hosts, that were failed through nginx by limit
-       request processing rate (ngx_http_limit_req_module)
-     - murmur - ban hosts that repeatedly attempt to connect to
-       murmur/mumble-server with an invalid server password or certificate.
-     - haproxy-http-auth - filter to match failed HTTP Authentications against a
-       HAProxy server
-   * New jails:
-     - murmur - bans TCP and UDP from the bad host on the default murmur port.
-   * sshd filter got new failregex to match "maximum authentication
-     attempts exceeded" (introduced in openssh 6.8)
-   * Added filter for Mac OS screen sharing (VNC) daemon
+### New Features
+* New interpolation feature for definition config readers - `<known/parameter>`
+  (means last known init definition of filters or actions with name `parameter`).
+  This interpolation makes possible to extend a parameters of stock filter or
+  action directly in jail inside jail.local file, without creating a separately
+  `filter.d/*.local` file.
+  As extension to interpolation `%(known/parameter)s`, that does not works for
+  filter and action init parameters
+* New actions:
+    - `nftables-multiport` and `nftables-allports` - filtering using nftables
+      framework. Note: it requires a pre-existing chain for the filtering rule.
+* New filters:
+    - `openhab` - domotic software authentication failure with the
+      rest api and web interface (gh-1223)
+    - `nginx-limit-req` - ban hosts, that were failed through nginx by limit
+      request processing rate (ngx_http_limit_req_module)
+    - `murmur` - ban hosts that repeatedly attempt to connect to
+      murmur/mumble-server with an invalid server password or certificate.
+    - `haproxy-http-auth` - filter to match failed HTTP Authentications against a
+      HAProxy server
+* New jails:
+    - `murmur` - bans TCP and UDP from the bad host on the default murmur port.
+* `sshd` filter got new failregex to match "maximum authentication
+  attempts exceeded" (introduced in openssh 6.8)
+* Added filter for Mac OS screen sharing (VNC) daemon
 
-- Enhancements:
-   * Do not rotate empty log files
-   * Added new date pattern with year after day (e.g. Sun Jan 23 2005 21:59:59)
-     http://bugs.debian.org/798923
-   * Added openSUSE path configuration (Thanks Johannes Weberhofer)
-   * Allow to split ignoreip entries by ',' as well as by ' ' (gh-1197)
-   * Added a timeout (3 sec) to urlopen within badips.py action
-     (Thanks M. Maraun)
-   * Added check against atacker's Googlebot PTR fake records
-     (Thanks Pablo Rodriguez Fernandez)
-   * Enhance filter against atacker's Googlebot PTR fake records
-     (gh-1226)
-   * Nginx log paths extended (prefixed with "*" wildcard) (gh-1237)
-   * Added filter for openhab domotic software authentication failure with the
-     rest api and web interface (gh-1223)
-   * Add *_backend options for services to allow distros to set the default
-     backend per service, set default to systemd for Fedora as appropriate
-   * Performance improvements while monitoring large number of files (gh-1265).
-     Use associative array (dict) for monitored log files to speed up lookup 
-     operations. Thanks @kshetragia
-   * Specified that fail2ban is PartOf iptables.service firewalld.service in
-     .service file -- would reload fail2ban if those services are restarted
-   * Provides new default `fail2ban_version` and interpolation variable
-     `fail2ban_agent` in jail.conf
-   * Enhance filter 'postfix' to ban incoming SMTP client with no fqdn hostname,
-     and to support multiple instances of postfix having varying suffix (gh-1331)
-     (Thanks Tom Hendrikx)
-   * files/gentoo-initd to use start-stop-daemon to robustify restarting the service
+### Enhancements
+* Do not rotate empty log files
+* Added new date pattern with year after day (e.g. `Sun Jan 23 2005 21:59:59`)
+  http://bugs.debian.org/798923
+* Added openSUSE path configuration (Thanks Johannes Weberhofer)
+* Allow to split ignoreip entries by ',' as well as by ' ' (gh-1197)
+* Added a timeout (3 sec) to urlopen within badips.py action
+  (Thanks M. Maraun)
+* Added check against atacker's Googlebot PTR fake records
+  (Thanks Pablo Rodriguez Fernandez)
+* Enhance filter against atacker's Googlebot PTR fake records
+  (gh-1226)
+* Nginx log paths extended (prefixed with "*" wildcard) (gh-1237)
+* Added filter for openhab domotic software authentication failure with the
+  rest api and web interface (gh-1223)
+* Add `*_backend` options for services to allow distros to set the default
+  backend per service, set default to systemd for Fedora as appropriate
+* Performance improvements while monitoring large number of files (gh-1265).
+  Use associative array (dict) for monitored log files to speed up lookup
+  operations. Thanks @kshetragia
+* Specified that fail2ban is PartOf iptables.service `firewalld.service` in
+  `.service` file -- would reload fail2ban if those services are restarted
+* Provides new default `fail2ban_version` and interpolation variable
+  `fail2ban_agent` in jail.conf
+* Enhance filter 'postfix' to ban incoming SMTP client with no fqdn hostname,
+  and to support multiple instances of postfix having varying suffix (gh-1331)
+  (Thanks Tom Hendrikx)
+* `files/gentoo-initd` to use `start-stop-daemon` to robustify restarting the service
 
 
 ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
 ----------
 
-- IMPORTANT incompatible changes:
-   * filter.d/roundcube-auth.conf
-     - Changed logpath to 'errors' log (was 'userlogins')
-   * action.d/iptables-common.conf
-     - All calls to iptables command now use -w switch introduced in
-       iptables 1.4.20 (some distribution could have patched their
-       earlier base version as well) to provide this locking mechanism
-       useful under heavy load to avoid contesting on iptables calls.
-       If you need to disable, define 'action.d/iptables-common.local'
-       with empty value for 'lockingopt' in `[Init]` section.
-   * mail-whois-lines, sendmail-geoip-lines and sendmail-whois-lines
-     actions now include by default only the first 1000 log lines in
-     the emails.  Adjust <grepopts> to augment the behavior.
+### IMPORTANT incompatible changes
+* `filter.d/roundcube-auth.conf`
+    - Changed logpath to 'errors' log (was 'userlogins')
+* `action.d/iptables-common.conf`
+    - All calls to iptables command now use -w switch introduced in
+      iptables 1.4.20 (some distribution could have patched their
+      earlier base version as well) to provide this locking mechanism
+      useful under heavy load to avoid contesting on iptables calls.
+      If you need to disable, define `action.d/iptables-common.local`
+      with empty value for 'lockingopt' in `[Init]` section.
+* `mail-whois-lines`, `sendmail-geoip-lines` and `sendmail-whois-lines`
+  actions now include by default only the first 1000 log lines in
+  the emails.  Adjust `<grepopts>` to augment the behavior.
 
-- Fixes:
-   * reload in interactive mode appends all the jails twice (gh-825)
-   * reload server/jail failed if database used (but was not changed) and
-     some jail active (gh-1072)
-   * filter.d/dovecot.conf - also match unknown user in passwd-file.
-     Thanks Anton Shestakov
-   * Fix fail2ban-regex not parsing journalmatch correctly from filter config
-   * filter.d/asterisk.conf - fix security log support for Asterisk 12+
-   * filter.d/roundcube-auth.conf
+### Fixes
+* reload in interactive mode appends all the jails twice (gh-825)
+* reload server/jail failed if database used (but was not changed) and
+  some jail active (gh-1072)
+* `filter.d/dovecot.conf` - also match unknown user in passwd-file.
+  Thanks Anton Shestakov
+* Fix fail2ban-regex not parsing journalmatch correctly from filter config
+* `filter.d/asterisk.conf` - fix security log support for Asterisk 12+
+* `filter.d/roundcube-auth.conf`
      - Updated regex to work with 'errors' log (1.0.5 and 1.1.1)
      - Added regex to work with 'userlogins' log
-   * action.d/sendmail*.conf - use LC_ALL (superseeding LC_TIME) to override
-     locale on systems with customized LC_ALL
-   * performance fix: minimizes connection overhead, close socket only at
-     communication end (gh-1099)
-   * unbanip always deletes ip from database (independent of bantime, also if
-     currently not banned or persistent)
-   * guarantee order of dbfile to be before dbpurgeage (gh-1048)
-   * always set 'dbfile' before other database options (gh-1050)
-   * kill the entire process group of the child process upon timeout (gh-1129).
-     Otherwise could lead to resource exhaustion due to hanging whois
-     processes.
-   * resolve /var/run/fail2ban path in setup.py to help installation
-     on platforms with /var/run -> /run symlink (gh-1142)
+* `action.d/sendmail*.conf` - use LC_ALL (superseeding LC_TIME) to override
+  locale on systems with customized LC_ALL
+* performance fix: minimizes connection overhead, close socket only at
+  communication end (gh-1099)
+* unbanip always deletes ip from database (independent of bantime, also if
+  currently not banned or persistent)
+* guarantee order of dbfile to be before dbpurgeage (gh-1048)
+* always set 'dbfile' before other database options (gh-1050)
+* kill the entire process group of the child process upon timeout (gh-1129).
+  Otherwise could lead to resource exhaustion due to hanging whois
+  processes.
+* resolve `/var/run/fail2ban` path in setup.py to help installation
+  on platforms with `/var/run` -> /run symlink (gh-1142)
 
-- New Features:
-   * RETURN iptables target is now a variable: <returntype>
-   * New type of operation: pass2allow, use fail2ban for "knocking",
-     opening a closed port by swapping blocktype and returntype
-   * New filters:
+### New Features
+* RETURN iptables target is now a variable: `<returntype>`
+* New type of operation: pass2allow, use fail2ban for "knocking",
+  opening a closed port by swapping blocktype and returntype
+* New filters:
      - froxlor-auth - Thanks Joern Muehlencord
      - apache-pass - filter Apache access log for successful authentication
-   * New actions:
+* New actions:
      - shorewall-ipset-proto6 - using proto feature of the Shorewall. Still requires
 	   manual pre-configuration of the shorewall. See the action file for detail.
-   * New jails:
+* New jails:
      - pass2allow-ftp - allows FTP traffic after successful HTTP authentication
 
-- Enhancements:
-   * action.d/cloudflare.conf - improved documentation on how to allow
-     multiple CF accounts, and jail.conf got new compound action
-     definition action_cf_mwl to submit cloudflare report.
-   * Check access to socket for more detailed logging on error (gh-595)
-   * fail2ban-testcases man page
-   * filter.d/apache-badbots.conf, filter.d/nginx-botsearch.conf - add
-     HEAD method verb
-   * Revamp of Travis and coverage automated testing
-   * Added a space between IP address and the following colon
-     in notification emails for easier text selection
-   * Character detection heuristics for whois output via optional setting
-     in mail-whois*.conf. Thanks Thomas Mayer.
-     Not enabled by default, if _whois_command is set to be
-     %(_whois_convert_charset)s (e.g. in action.d/mail-whois-common.local),
-     it
+### Enhancements
+* `action.d/cloudflare.conf` - improved documentation on how to allow
+  multiple CF accounts, and jail.conf got new compound action
+  definition action_cf_mwl to submit cloudflare report.
+* Check access to socket for more detailed logging on error (gh-595)
+* fail2ban-testcases man page
+* `filter.d/apache-badbots.conf`, `filter.d/nginx-botsearch.conf` - add
+  HEAD method verb
+* Revamp of Travis and coverage automated testing
+* Added a space between IP address and the following colon
+  in notification emails for easier text selection
+* Character detection heuristics for whois output via optional setting
+  in mail-whois*.conf. Thanks Thomas Mayer.
+  Not enabled by default, if _whois_command is set to be
+  %(_whois_convert_charset)s (e.g. in `action.d/mail-whois-common.local`),
+  it
      - detects character set of whois output (which is undefined by
        RFC 3912) via heuristics of the file command
      - converts whois data to UTF-8 character set with iconv
@@ -214,161 +221,162 @@ ver. 0.9.3 (2015/08/01) - lets-all-stay-friends
 ver. 0.9.2 (2015/04/29) - better-quick-now-than-later
 ----------
 
-- Fixes:
-   * Fix ufw action commands
-   * infinite busy loop on _escapedTags match in substituteRecursiveTags gh-907.
-     Thanks TonyThompson
-   * port[s] typo in jail.conf/nginx-http-auth gh-913. Thanks Frederik Wagner
-     (fnerdwq)
-   * $ typo in jail.conf. Thanks Skibbi. Debian bug #767255
-   * grep'ing for IP in *mail-whois-lines.conf should now match also
-     at the beginning and EOL.  Thanks Dean Lee
-   * jail.conf
-     - php-url-fopen: separate logpath entries by newline
-   * failregex declared direct in jail was joined to single line (specifying of
-     multiple expressions was not possible).
-   * filters.d/exim.conf - cover different settings of exim logs
-     details. Thanks bes.internal
-   * filter.d/postfix-sasl.conf - failregex is now case insensitive
-   * filters.d/postfix.conf - add 'Client host rejected error message' failregex
-   * fail2ban/__init__.py - add strptime thread safety hack-around
-   * recidive uses iptables-allports banaction by default now.
-     Avoids problems with iptables versions not understanding 'all' for
-     protocols and ports
-   * filter.d/dovecot.conf
+### Fixes
+* Fix ufw action commands
+* infinite busy loop on _escapedTags match in substituteRecursiveTags gh-907.
+  Thanks TonyThompson
+* port[s] typo in jail.conf/nginx-http-auth gh-913. Thanks Frederik Wagner
+  (fnerdwq)
+* $ typo in jail.conf. Thanks Skibbi. Debian bug #767255
+* grep'ing for IP in *mail-whois-lines.conf should now match also
+  at the beginning and EOL.  Thanks Dean Lee
+* `jail.conf`
+     - `php-url-fopen`: separate logpath entries by newline
+* failregex declared direct in jail was joined to single line (specifying of
+  multiple expressions was not possible).
+* `filters.d/exim.conf` - cover different settings of exim logs
+  details. Thanks bes.internal
+* `filter.d/postfix-sasl.conf` - failregex is now case insensitive
+* `filters.d/postfix.conf` - add 'Client host rejected error message' failregex
+* `fail2ban/__init__.py` - add strptime thread safety hack-around
+* recidive uses `iptables-allports` banaction by default now.
+  Avoids problems with iptables versions not understanding 'all' for
+  protocols and ports
+* `filter.d/dovecot.conf`
      - match pam_authenticate line from EL7
      - match unknown user line from EL7
-   * Use use_poll=True for Python 2.7 and >=3.4 to overcome "Bad file
-     descriptor" msgs issue (gh-161)
-   * filter.d/postfix-sasl.conf - tweak failregex and add ignoreregex to ignore
-     system authentication issues
-   * fail2ban-regex reads filter file(s) completely, incl. '.local' file etc.
-     (gh-954)
-   * firewallcmd-* actions: split output into separate lines for grepping (gh-908)
-   * Guard unicode encode/decode issues while storing records in the database.
-     Fixes "binding parameter error (unsupported type)" (gh-973), thanks to kot
-     for reporting
-   * filter.d/sshd added regex for matching openSUSE ssh authentication failure
-   * filter.d/asterisk.conf:
+* Use `use_poll=True` for Python 2.7 and >=3.4 to overcome "Bad file
+  descriptor" msgs issue (gh-161)
+* `filter.d/postfix-sasl.conf` - tweak failregex and add ignoreregex to ignore
+  system authentication issues
+* fail2ban-regex reads filter file(s) completely, incl. '.local' file etc.
+  (gh-954)
+* firewallcmd-* actions: split output into separate lines for grepping (gh-908)
+* Guard unicode encode/decode issues while storing records in the database.
+  Fixes "binding parameter error (unsupported type)" (gh-973), thanks to kot
+  for reporting
+* `filter.d/sshd` added regex for matching openSUSE ssh authentication failure
+* `filter.d/asterisk.conf`:
      - Dropped "Sending fake auth rejection" failregex since it incorrectly
 	   targets the asterisk server itself
      - match "hacking attempt detected" logs
 
-- New Features:
-   - New filters:
-     - postfix-rbl  Thanks Lee Clemens
-     - apache-fakegooglebot.conf  Thanks Lee Clemens
-     - nginx-botsearch  Thanks Frantisek Sumsal
-     - drupal-auth  Thanks Lee Clemens
-   - New recursive embedded substitution feature added:
-     - `<<PREF>HOST>` becomes `<IPV4HOST>` for PREF=`IPV4`;
-     - `<<PREF>HOST>` becomes `1.2.3.4` for PREF=`IPV4` and IPV4HOST=`1.2.3.4`;
-   - New interpolation feature for config readers - `%(known/parameter)s`.
-     (means last known option with name `parameter`). This interpolation makes
-     possible to extend a stock filter or jail regexp in .local file
-     (opposite to simply set failregex/ignoreregex that overwrites it),
-     see gh-867.
-   - Monit config for fail2ban in files/monit/
-   - New actions:
-     - action.d/firewallcmd-multiport and action.d/firewallcmd-allports Thanks Donald Yandt
-     - action.d/sendmail-geoip-lines.conf
-     - action.d/nsupdate to update DNSBL. Thanks Andrew St. Jean
-   - New status argument for fail2ban-client -- flavor:
-     fail2ban-client status <jail> [flavor]
-     - empty or "basic" works as-is
-     - "cymru" additionally prints (ASN, Country RIR) per banned IP
-       (requires dnspython or dnspython3)
-   - Flush log at USR1 signal
+### New Features
+* New filters:
+    - postfix-rbl  Thanks Lee Clemens
+    - apache-fakegooglebot.conf  Thanks Lee Clemens
+    - nginx-botsearch  Thanks Frantisek Sumsal
+    - drupal-auth  Thanks Lee Clemens
+* New recursive embedded substitution feature added:
+    - `<<PREF>HOST>` becomes `<IPV4HOST>` for PREF=`IPV4`;
+    - `<<PREF>HOST>` becomes `1.2.3.4` for PREF=`IPV4` and IPV4HOST=`1.2.3.4`;
+* New interpolation feature for config readers - `%(known/parameter)s`.
+  (means last known option with name `parameter`). This interpolation makes
+  possible to extend a stock filter or jail regexp in .local file
+  (opposite to simply set failregex/ignoreregex that overwrites it),
+  see gh-867.
+* Monit config for fail2ban in `files/monit/`
+* New actions:
+    - `action.d/firewallcmd-multiport` and `action.d/firewallcmd-allports` Thanks Donald Yandt
+    - `action.d/sendmail-geoip-lines.conf`
+    - `action.d/nsupdate` to update DNSBL. Thanks Andrew St. Jean
+* New status argument for fail2ban-client -- flavor:
+  `fail2ban-client status <jail> [flavor]`
+    - empty or "basic" works as-is
+    - "cymru" additionally prints (ASN, Country RIR) per banned IP
+      (requires dnspython or dnspython3)
+* Flush log at USR1 signal
 
-- Enhancements:
-   * Enable multiport for firewallcmd-new action.  Closes gh-834
-   * files/debian-initd migrated from the debian branch and should be
-     suitable for manual installations now (thanks Juan Karlo de Guzman)
-   * Define empty ignoreregex in filters which didn't have it to avoid
-     warnings (gh-934)
-   * action.d/{sendmail-*,xarf-login-attack}.conf - report local
-     timezone not UTC time/zone. Closes gh-911
-   * Conditionally log Ignore IP with reason (dns, ip, command). Closes gh-916
-   * Absorbed DNSUtils.cidr into addr2bin in filter.py, added unittests
-   * Added syslogsocket configuration to fail2ban.conf
-   * Note in the jail.conf for the recidive jail to increase dbpurgeage (gh-964)
+### Enhancements
+* Enable multiport for firewallcmd-new action.  Closes gh-834
+* files/debian-initd migrated from the debian branch and should be
+  suitable for manual installations now (thanks Juan Karlo de Guzman)
+* Define empty ignoreregex in filters which didn't have it to avoid
+  warnings (gh-934)
+* `action.d/{sendmail-*,xarf-login-attack}.conf` - report local
+  timezone not UTC time/zone. Closes gh-911
+* Conditionally log Ignore IP with reason (dns, ip, command). Closes gh-916
+* Absorbed DNSUtils.cidr into addr2bin in filter.py, added unittests
+* Added syslogsocket configuration to fail2ban.conf
+* Note in the `jail.conf` for the recidive jail to increase dbpurgeage (gh-964)
 
 
 ver. 0.9.1 (2014/10/29) - better, faster, stronger
 ----------
 
-- Refactoring (IMPORTANT -- Please review your setup and configuration):
-   * iptables-common.conf replaced iptables-blocktype.conf
-     (iptables-blocktype.local should still be read) and now also
-     provides defaults for the chain, port, protocol and name tags
+### Refactoring (IMPORTANT -- Please review your setup and configuration)
+* `iptables-common.conf` replaced `iptables-blocktype.conf`
+  (`iptables-blocktype.local` should still be read) and now also
+  provides defaults for the chain, port, protocol and name tags
 
-- Fixes:
-   * start of file2ban aborted (on slow hosts, systemd considers the server has
-     been timed out and kills him), see gh-824
-   * UTF-8 fixes in pure-ftp thanks to Johannes Weberhofer. Closes gh-806.
-   * systemd backend error on bad utf-8 in python3
-   * badips.py action error when logging HTTP error raised with badips request
-   * fail2ban-regex failed to work in python3 due to space/tab mix
-   * recidive regex samples incorrect log level
-   * journalmatch for recidive incorrect PRIORITY
-   * loglevel couldn't be changed in fail2ban.conf
-   * Handle case when no sqlite library is available for persistent database
-   * Only reban once per IP from database on fail2ban restart
-   * Nginx filter to support missing server_name. Closes gh-676
-   * fail2ban-regex assertion error caused by miscount missed lines with
-     multiline regex
-   * Fix actions failing to execute for Python 3.4.0. Workaround for
-     http://bugs.python.org/issue21207
-   * Database now returns persistent bans on restart (bantime < 0)
-   * Recursive action tags now fully processed. Fixes issue with bsd-ipfw
-     action
-   * Fixed TypeError with "ipfailures" and "ipjailfailures" action tags.
-     Thanks Serg G. Brester
-   * Correct times for non-timezone date times formats during DST
-   * Pass a copy of, not original, aInfo into actions to avoid side-effects
-   * Per-distribution paths to the exim's main log
-   * Ignored IPs are no longer banned when being restored from persistent
-     database
-   * Manually unbanned IPs are now removed from persistent database, such they
-     wont be banned again when Fail2Ban is restarted
-   * Pass "bantime" parameter to the actions in default jail's action
-     definition(s)
-   * filters.d/sieve.conf - fixed typo in _daemon.  Thanks Jisoo Park
-   * cyrus-imap -- also catch also failed logins via secured (imaps/pop3s).
-     Regression was introduced while strengthening failregex in 0.8.11 (bd175f)
-     Debian bug #755173
-   * postfix-sasl - added journalmatch.  Thanks Luc Maisonobe
-   * postfix* - match with a new daemon string (postfix/submission/smtpd).
-     Closes gh-804 .  Thanks Paul Traina
-   * apache - added filter for AH01630 client denied by server configuration.
+### Fixes
+* start of file2ban aborted (on slow hosts, systemd considers the server has
+  been timed out and kills him), see gh-824
+* UTF-8 fixes in pure-ftp thanks to Johannes Weberhofer. Closes gh-806.
+* systemd backend error on bad utf-8 in python3
+* badips.py action error when logging HTTP error raised with badips request
+* fail2ban-regex failed to work in python3 due to space/tab mix
+* recidive regex samples incorrect log level
+* journalmatch for recidive incorrect PRIORITY
+* loglevel couldn't be changed in fail2ban.conf
+* Handle case when no sqlite library is available for persistent database
+* Only reban once per IP from database on fail2ban restart
+* Nginx filter to support missing server_name. Closes gh-676
+* fail2ban-regex assertion error caused by miscount missed lines with
+  multiline regex
+* Fix actions failing to execute for Python 3.4.0. Workaround for
+  http://bugs.python.org/issue21207
+* Database now returns persistent bans on restart (bantime < 0)
+* Recursive action tags now fully processed. Fixes issue with bsd-ipfw
+  action
+* Fixed TypeError with "ipfailures" and "ipjailfailures" action tags.
+  Thanks Serg G. Brester
+* Correct times for non-timezone date times formats during DST
+* Pass a copy of, not original, aInfo into actions to avoid side-effects
+* Per-distribution paths to the exim's main log
+* Ignored IPs are no longer banned when being restored from persistent
+  database
+* Manually unbanned IPs are now removed from persistent database, such they
+  wont be banned again when Fail2Ban is restarted
+* Pass "bantime" parameter to the actions in default jail's action
+  definition(s)
+* `filters.d/sieve.conf` - fixed typo in _daemon.  Thanks Jisoo Park
+* cyrus-imap -- also catch also failed logins via secured (imaps/pop3s).
+  Regression was introduced while strengthening failregex in 0.8.11 (bd175f)
+  Debian bug #755173
+* postfix-sasl - added journalmatch.  Thanks Luc Maisonobe
+* postfix* - match with a new daemon string (postfix/submission/smtpd).
+  Closes gh-804 .  Thanks Paul Traina
+* apache - added filter for AH01630 client denied by server configuration.
 
-- New features:
-   - New filters:
-     - monit  Thanks Jason H Martin
-     - directadmin  Thanks niorg
-     - apache-shellshock  Thanks Eugene Hopkinson (SlowRiot)
-   - New actions:
-     - symbiosis-blacklist-allports  for Bytemark symbiosis firewall
-   - fail2ban-client can fetch the running server version
-   - Added Cloudflare API action
+### New Features
+* New filters:
+    - monit  Thanks Jason H Martin
+    - directadmin  Thanks niorg
+    - apache-shellshock  Thanks Eugene Hopkinson (SlowRiot)
+* New actions:
+    - symbiosis-blacklist-allports  for Bytemark symbiosis firewall
+    - fail2ban-client can fetch the running server version
+    - Added Cloudflare API action
 
-- Enhancements
-   * Start performance of fail2ban-client (and tests) increased, start time
-     and cpu usage rapidly reduced. Introduced a shared storage logic, to
-     bypass reading lots of config files (see gh-824).
-     Thanks to Joost Molenaar for good catch (reported gh-820).
-   * Fail2ban-regex - add print-all-matched option. Closes gh-652
-   * Suppress fail2ban-client warnings for non-critical config options
-   * Match non "Bye Bye" disconnect messages for sshd locked account regex
-   * courier-smtp filter:
-     - match lines with user names
-     - match lines containing "535 Authentication failed" attempts
-   * Add <chain> tag to iptables-ipsets
-   * Realign fail2ban log output with white space to improve readability. Does
-     not affect SYSLOG output
-   * Log unhandled exceptions
-   * cyrus-imap: catch "user not found" attempts
-   * Add support for Portsentry
+### Enhancements
+* Start performance of fail2ban-client (and tests) increased, start time
+  and cpu usage rapidly reduced. Introduced a shared storage logic, to
+  bypass reading lots of config files (see gh-824).
+  Thanks to Joost Molenaar for good catch (reported gh-820).
+* Fail2ban-regex - add print-all-matched option. Closes gh-652
+* Suppress fail2ban-client warnings for non-critical config options
+* Match non "Bye Bye" disconnect messages for sshd locked account regex
+* courier-smtp filter:
+    - match lines with user names
+    - match lines containing "535 Authentication failed" attempts
+* Add `<chain>` tag to iptables-ipsets
+* Realign fail2ban log output with white space to improve readability. Does
+  not affect SYSLOG output
+* Log unhandled exceptions
+* cyrus-imap: catch "user not found" attempts
+* Add support for Portsentry
+
 
 ver. 0.9.0 (2014/03/14) - beta
 ----------
@@ -388,94 +396,94 @@ Nearly all development is thanks to Steven Hiscocks (THANKS!), merging,
 testcases and timezone support from Daniel Black, and code-review and minor
 additions from Yaroslav Halchenko.
 
-- Refactoring (IMPORTANT -- Please review your setup and configuration):
-   * [..bddbf1e] jail.conf was heavily refactored and now is similar
-     to how it looked on Debian systems:
+### Refactoring (IMPORTANT -- Please review your setup and configuration):
+* [..bddbf1e] jail.conf was heavily refactored and now is similar
+  to how it looked on Debian systems:
      - default action could be configured once for all jails
      - jails definitions only provide customizations (port, logpath)
      - no need to specify 'filter' if name matches jail name
-   * [..5aef036] Core functionality moved into fail2ban/ module.
-     Closes gh-26
+* [..5aef036] Core functionality moved into fail2ban/ module.
+  Closes gh-26
      - tests included in module to aid testing and debugging
-   * Added fail2ban persistent database
-     - default location at /var/lib/fail2ban/fail2ban.sqlite3
+* Added fail2ban persistent database
+     - default location at `/var/lib/fail2ban/fail2ban.sqlite3`
      - allows active bans to be reinstated on restart
      - log files read from last position after restart
-   * Added systemd journal backend
+* Added systemd journal backend
      - Dependency on python-systemd
      - New "journalmatch" option added to filter configs files
      - New "systemd-journal" option added to fail2ban-regex
-   * Added python3 support
-   * Support %z (Timezone offset) and %f (sub-seconds) support for
-     datedetector. Enhanced existing date/time have been updated patterns to
-     support these. ISO8601 now defaults to localtime unless specified otherwise.
-     Some filters have been change as required to capture these elements in the
-     right timezone correctly.
-   * Log levels are now set by Syslog style strings e.g. DEBUG, ERROR.
+* Added python3 support
+* Support %z (Timezone offset) and %f (sub-seconds) support for
+  datedetector. Enhanced existing date/time have been updated patterns to
+  support these. ISO8601 now defaults to localtime unless specified otherwise.
+  Some filters have been change as required to capture these elements in the
+  right timezone correctly.
+* Log levels are now set by Syslog style strings e.g. DEBUG, ERROR.
      - Log level INFO is now more verbose
-   * Optionally can read log files starting from "head" or "tail".
+* Optionally can read log files starting from "head" or "tail".
      - See "logpath" option in jail.conf(5) man page.
-   * Can now set log encoding for files per jail.
+* Can now set log encoding for files per jail.
      - Default uses systemd locale.
 
-- New features:
-   * [..c7ae460] Multiline failregex. Close gh-54
-   * [8af32ed] Guacamole filter and support for Apache Tomcat date
-     format
-   * [..b6059f4] 'timeout' option for actions Close gh-60 and Debian bug
-     #410077.  Also it would now capture and include stdout and stderr
-     into logging messages in case of error or at DEBUG loglevel.
-   * Added action xarf-login-attack to report formatted attack messages
-     according to the XARF standard (v0.2). Close gh-105
-   * Support PyPy
-   * Add filter for apache-botsearch
-   * Add filter for kerio. Thanks Tony Lawrence for blog of regexs and
-     providing samples. Close gh-120
-   * Filter for stunnel
-   * Filter for Counter Strike 1.6. Thanks to onorua for logs.
-     Close gh-347
-   * Filter for squirrelmail. Close gh-261
-   * Filter for tine20. Close gh-583
-   * Custom date formats (strptime) can now be set in filters and jail.conf
-   * Python based actions can now be created.
+### New Features
+* [..c7ae460] Multiline failregex. Close gh-54
+* [8af32ed] Guacamole filter and support for Apache Tomcat date
+  format
+* [..b6059f4] 'timeout' option for actions Close gh-60 and Debian
+  bug #410077.  Also it would now capture and include stdout and stderr
+  into logging messages in case of error or at DEBUG loglevel.
+* Added action xarf-login-attack to report formatted attack messages
+  according to the XARF standard (v0.2). Close gh-105
+* Support PyPy
+* Add filter for apache-botsearch
+* Add filter for kerio. Thanks Tony Lawrence for blog of regexs and
+  providing samples. Close gh-120
+* Filter for stunnel
+* Filter for Counter Strike 1.6. Thanks to onorua for logs.
+  Close gh-347
+* Filter for squirrelmail. Close gh-261
+* Filter for tine20. Close gh-583
+* Custom date formats (strptime) can now be set in filters and jail.conf
+* Python based actions can now be created.
      - SMTP action for sending emails on jail start, stop and ban.
-   * Added action to use badips.com reporting and blacklist
+* Added action to use badips.com reporting and blacklist
      - Requires Python 2.7+
 
-- Enhancements
-   * Fail2ban-regex - don't accumulate lines if not printing them.
-     add options to suppress output of missed/ignored lines. Close gh-644
-   * Asterisk now supports syslog format
-   * Jail names increased to 26 characters and iptables prefix reduced
-     from fail2ban- to f2b- as suggested by buanzo in gh-462.
-   * Multiline filter for sendmail-spam. Close gh-418
-   * Multiline regex for Disconnecting: Too many authentication failures for
-     root [preauth]\nConnection closed by 6X.XXX.XXX.XXX [preauth]
-   * Multiline regex for Disconnecting: Connection from 61.XX.XX.XX port
-     51353\nToo many authentication failures for root [preauth]. Thanks
-     Helmut Grohne. Close gh-457
-   * Replacing use of deprecated API (.warning, .assertEqual, etc)
-   * [..a648cc2] Filters can have options now too which are substituted into
-     failregex / ignoreregex
-   * [..e019ab7] Multiple instances of the same action are allowed in the
-     same jail -- use actname option to disambiguate.
-   * Add honeypot email address to exim-spam filter as argument
-   * Properties and methods of actions accessible from fail2ban-client
+### Enhancements
+* Fail2ban-regex - don't accumulate lines if not printing them.
+  add options to suppress output of missed/ignored lines. Close gh-644
+* Asterisk now supports syslog format
+* Jail names increased to 26 characters and iptables prefix reduced
+  from fail2ban- to f2b- as suggested by buanzo in gh-462.
+* Multiline filter for sendmail-spam. Close gh-418
+* Multiline regex for Disconnecting: Too many authentication failures for
+  root [preauth]\nConnection closed by 6X.XXX.XXX.XXX [preauth]
+* Multiline regex for Disconnecting: Connection from 61.XX.XX.XX port
+  51353\nToo many authentication failures for root [preauth]. Thanks
+  Helmut Grohne. Close gh-457
+* Replacing use of deprecated API (.warning, .assertEqual, etc)
+* [..a648cc2] Filters can have options now too which are substituted into
+  failregex / ignoreregex
+* [..e019ab7] Multiple instances of the same action are allowed in the
+  same jail -- use actname option to disambiguate.
+* Add honeypot email address to exim-spam filter as argument
+* Properties and methods of actions accessible from fail2ban-client
      - Use of properties replaces command actions "cinfo" interface
 
 ver. 0.8.13 (2014/03/15) - maintenance-only-from-now-on
 -----------
 
-- Fixes:
+### Fixes
   - action firewallcmd-ipset had non-working actioncheck. Removed.
     redhat bug #1046816.
   - filter pureftpd - added _daemon which got removed. Added
 
-- New Features:
+### New Features
   - filter nagios - detects unauthorized access to the nrpe daemon (Ivo Truxa)
   - filter sendmail-{auth,reject} (jserrachinha and cepheid666 and fab23).
 
-- Enhancements:
+### Enhancements
   - filter asterisk now supports syslog format
   - filter pureftpd - added all translations of "Authentication failed for
     user"
@@ -491,7 +499,7 @@ ver. 0.8.12 (2014/01/22) - things-can-only-get-better
   - mysqld-syslog-iptables jailname was too long. Renamed to mysqld-syslog.
     Part of gh-447.
 
-- Fixes:
+### Fixes
   - allow for ",milliseconds" in the custom date format of proftpd.log
   - allow for ", referer ..." in apache-* filter for apache error logs.
   - allow for spaces at the beginning of kernel messages. Closes gh-448
@@ -514,7 +522,7 @@ ver. 0.8.12 (2014/01/22) - things-can-only-get-better
   - A single bad failregex or command syntax in configuration files won't stop
     fail2ban from starting. Thanks Tomasz Ciolek. Closes gh-585.
 
-- Enhancements:
+### Enhancements
   - long names on jails documented based on iptables limit of 30 less
     len("fail2ban-").
   - remove indentation of name and loglevel while logging to SYSLOG to
@@ -524,32 +532,32 @@ ver. 0.8.12 (2014/01/22) - things-can-only-get-better
     Thanks dani. Closes gh-503
   - exim-spam filter to match spamassassin log entry for option SAdevnull.
     Thanks Ivo Truxa. Closes gh-533
-  - filter.d/nsd.conf -- also amended Unix date template to match nsd format
-  - Added to sshd filter expression for "Received disconnect from <HOST>: 3:
-    ...: Auth fail". Thanks Marcel Dopita. Closes gh-289
+  - `filter.d/nsd.conf` -- also amended Unix date template to match nsd format
+  - Added to sshd filter expression for `Received disconnect from <HOST>: 3:
+    ...: Auth fail`. Thanks Marcel Dopita. Closes gh-289
   - loglines now also report "[PID]" after the name portion
-  - Added filter.d/ejabberd-auth
+  - Added `filter.d/ejabberd-auth`
   - Improved ACL-handling for Asterisk
   - loglines now also report "[PID]" after the name portion
   - Added improper command pipelining to postfix filter.
 
-- New Features:
+### New Features
 
-  - filter.d/solid-pop3d -- added thanks to Jacques Lav!gnotte on mailinglist.
+  - `filter.d/solid-pop3d` -- added thanks to Jacques Lav!gnotte on mailinglist.
   - Add filter for apache-modsecurity.
-  - filter.d/nsd.conf -- also amended Unix date template to match nsd format
+  - `filter.d/nsd.conf` -- also amended Unix date template to match nsd format
   - Added openwebmail filter thanks Ivo Truxa. Closes gh-543
-  - Added filter for freeswitch. Thanks Jim and editors and authors of 
+  - Added filter for freeswitch. Thanks Jim and editors and authors of
     http://wiki.freeswitch.org/wiki/Fail2ban
   - Added groupoffice filter thanks to logs from Merijn Schering.
     Closes gh-566
   - Added filter for horde
   - Added filter for squid. Thanks Roman Gelfand.
   - Added filter for ejabberd-auth.
-  - Added filter.d/openwebmail filter thanks Ivo Truxa. Closes gh-543
-  - Added filter.d/groupoffice filter thanks to logs from Merijn Schering.
+  - Added `filter.d/openwebmail` filter thanks Ivo Truxa. Closes gh-543
+  - Added `filter.d/groupoffice` filter thanks to logs from Merijn Schering.
     Closes gh-566
-  - Added action.d/badips. Thanks to Amy for making a nice API.
+  - Added `action.d/badips`. Thanks to Amy for making a nice API.
   - Added firewallcmd-ipset action.
   - Added ufw action. Thanks Guilhem Lettron. lp-#701522
   - Added blocklist_de action.
@@ -577,155 +585,156 @@ Alexander Dietrich, JP Espinosa, Jamyn Shanley, Beau Raines, François
 Boulogne and others who have helped on IRC and mailing list, logged issues
 and bug requests.
 
-- IMPORTANT incompatible changes:
-  Filter name changes:
-   * 'lighttpd-fastcgi' filter has been renamed to 'suhosin'
-   * 'sasl' has been renamed to 'postfix-sasl'
-   * 'exim' spam catching failregexes was split out into 'exim-spam'
-  These changes will require changing jail.{conf,local} if any of
-  those filters were used.
+### IMPORTANT incompatible changes
 
-- Fixes:
-  Jonathan Lanning
-   * filter.d/asterisk -- identified another regex for blocking. Also channel
-     ID is hex not decimal as noted in sample logs provided.
-  Daniel Black & Marcel Dopita
-   * filter.d/apache-auth -- fixed and apache auth samples provide. Closes gh-286
-  Yaroslav Halchenko
-   * filter.d/common.conf -- make colon after [daemon] optional. Closes gh-267
-   * filter.d/apache-common.conf -- support apache 2.4 more detailed error
-     log format.  Closes gh-268
-   * Backends changes detection and parsing. Close gh-223 and gh-103:
-     - Polling backend: detect changes in the files not only based on
-       mtime, but also on the size and inode.  It should allow for
-       better detection of changes and log rotations on busy servers,
-       older python 2.4, and file systems with precision of mtime only
-       up to a second (e.g. ext3).
-     - All backends, possible race condition: do not read from a file
-       initially reported empty.  Originally could have lead to
-       accounting for detected log lines multiple times.
-     - Do not crash if executing a command in fail2ban-client interactive
-       mode has failed (e.g. due to incorrect syntax). Closes gh-353
-  Daniel Black & Мернов Георгий
-   * filter.d/dovecot.conf -- Fix when no TLS enabled - line doesn't end in ,
-  Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
-   * filter.d/exim.conf -- regex hardening and extra failure examples in
-     sample logs
-   * filter.d/named-refused.conf - BIND 9.9.3 regex changes
-  Daniel Black & Sebastian Arcus
-   * filter.d/asterisk -- more regexes
-  Daniel Black
-   * action.d/hostsdeny -- NOTE: new dependency 'ed'. Switched to use 'ed' across
-     all platforms to ensure permissions are the same before and after a ban.
-     Closes gh-266. hostsdeny supports daemon_list now too.
-   * action.d/bsd-ipfw - action option unused. Change blocktype to port unreach
-     instead of deny for consistancy.
-   * filter.d/dovecot - added to support different dovecot failure
-     "..disallowed plaintext auth". Closes Debian bug #709324
-   * filter.d/roundcube-auth - timezone offset can be positive or negative
-   * action.d/bsd-ipfw - action option unused. Fixed to blocktype for
-     consistency. default to port unreach instead of deny
-   * filter.d/dropbear - fix regexs to match standard dropbear and the patched
-     http://www.unchartedbackwaters.co.uk/files/dropbear/dropbear-0.52.patch
-     and add PAM is it in dropbear-2013.60 source code.
-   * filter.d/{asterisk,assp,dovecot,proftpd}.conf -- regex hardening
-     and extra failure examples in sample logs
-   * filter.d/apache-auth - added expressions for mod_authz, mod_auth and
-     mod_auth_digest failures.
-   * filter.d/recidive -- support f2b syslog target and anchor regex at start
-   * filter.d/mysqld-auth.conf - mysql can use syslog
-   * filter.d/sshd - regex enhancements to support openssh-6.3. Closes Debian
-     bug #722970. Thanks Colin Watson for the regex analysis.
-   * filter.d/wuftpd - regex enhancements to support pam and wuftpd. Closes
-     Debian bug #665925
-  Rolf Fokkens
-   * action.d/dshield.conf and complain.conf -- reorder mailx arguments.
-     https://bugzilla.redhat.com/show_bug.cgi?id=998020
-  John Doe (ache)
-   * action.d/bsd-ipfw.conf - invert actionstop logic to make exist status 0.
-     Closes gh-343.
-  JP Espinosa (Reviewed by O.Poplawski)
-   * files/redhat-initd - rewritten to use stock init.d functions thus
-     avoiding problems with getpid.  Also $network and iptables moved
-     to Should- rc init fields
-  Rick Mellor
-   * filter.d/vsftp - fix capture with tty=ftp
+Filter name changes:
+    * 'lighttpd-fastcgi' filter has been renamed to 'suhosin'
+    * 'sasl' has been renamed to 'postfix-sasl'
+    * 'exim' spam catching failregexes was split out into 'exim-spam'
+These changes will require changing jail.{conf,local} if any of
+those filters were used.
 
-- New Features:
-  Edgar Hoch
-   * action.d/firewall-cmd-direct-new.conf - action for firewalld
-     from https://bugzilla.redhat.com/show_bug.cgi?id=979622
-     NOTE: requires firewalld-0.3.8+
-  Andy Fragen and Daniel Black
-   * filter.d/osx-ipfw.conf - ipfw action for OSX based on random rule
-     numbers.
-  Anonymous:
-   * action.d/osx-afctl - an action based on afctl for osx
-  Daniel Black & ykimon
-   * filter.d/3proxy.conf -- filter added
-   * fail2ban-regex - now generates http://www.debuggex.com urls for debugging
-     regular expressions with the -D parameter.
-  Daniel Black
-   * filter.d/exim-spam.conf -- a splitout of exim's spam regexes
-     with additions for greater control over filtering spam.
-   * add date expression for apache-2.4 - milliseconds
-   * filter.d/nginx-http-auth -- filter added for http basic authentication
-     failures in nginx. Partially fulfills gh-405.
-  Christophe Carles & Daniel Black
-   * filter.d/perdition.conf -- filter added
-  Mark McKinstry
-   * action.d/apf.conf - add action for Advanced Policy Firewall (apf)
-  Amir Caspi and kjohnsonecl
-   * filter.d/uwimap-auth - filter for uwimap-auth IMAP/POP server
-  Steven Hiscocks and Daniel Black
-   * filter.d/selinux-{common,ssh} -- add SELinux date and ssh filter
+### Fixes
+- Jonathan Lanning
+    * `filter.d/asterisk` -- identified another regex for blocking. Also channel
+      ID is hex not decimal as noted in sample logs provided.
+- Daniel Black & Marcel Dopita
+    * `filter.d/apache-auth` -- fixed and apache auth samples provide. Closes gh-286
+- Yaroslav Halchenko
+    * `filter.d/common.conf` -- make colon after [daemon] optional. Closes gh-267
+    * `filter.d/apache-common.conf` -- support apache 2.4 more detailed error
+      log format.  Closes gh-268
+    * Backends changes detection and parsing. Close gh-223 and gh-103:
+        - Polling backend: detect changes in the files not only based on
+          mtime, but also on the size and inode.  It should allow for
+          better detection of changes and log rotations on busy servers,
+          older python 2.4, and file systems with precision of mtime only
+          up to a second (e.g. ext3).
+        - All backends, possible race condition: do not read from a file
+          initially reported empty.  Originally could have lead to
+          accounting for detected log lines multiple times.
+        - Do not crash if executing a command in fail2ban-client interactive
+          mode has failed (e.g. due to incorrect syntax). Closes gh-353
+- Daniel Black & Мернов Георгий
+    * `filter.d/dovecot.conf` -- Fix when no TLS enabled - line doesn't end in ,
+- Daniel Black & Georgiy Mernov & ftoppi & Мернов Георгий
+    * `filter.d/exim.conf` -- regex hardening and extra failure examples in
+      sample logs
+    * `filter.d/named-refused.conf` - BIND 9.9.3 regex changes
+- Daniel Black & Sebastian Arcus
+    * `filter.d/asterisk` -- more regexes
+- Daniel Black
+    * `action.d/hostsdeny` -- NOTE: new dependency 'ed'. Switched to use 'ed' across
+      all platforms to ensure permissions are the same before and after a ban.
+      Closes gh-266. hostsdeny supports daemon_list now too.
+    * `action.d/bsd-ipfw` - action option unused. Change blocktype to port unreach
+      instead of deny for consistancy.
+    * `filter.d/dovecot` - added to support different dovecot failure
+      "..disallowed plaintext auth". Closes Debian bug #709324
+    * `filter.d/roundcube-auth` - timezone offset can be positive or negative
+    * `action.d/bsd-ipfw` - action option unused. Fixed to blocktype for
+      consistency. default to port unreach instead of deny
+    * `filter.d/dropbear` - fix regexs to match standard dropbear and the patched
+      http://www.unchartedbackwaters.co.uk/files/dropbear/dropbear-0.52.patch
+      and add PAM is it in dropbear-2013.60 source code.
+    * `filter.d/{asterisk,assp,dovecot,proftpd}.conf` -- regex hardening
+      and extra failure examples in sample logs
+    * `filter.d/apache-auth` - added expressions for mod_authz, mod_auth and
+      mod_auth_digest failures.
+    * `filter.d/recidive` -- support f2b syslog target and anchor regex at start
+    * `filter.d/mysqld-auth.conf` - mysql can use syslog
+    * `filter.d/sshd` - regex enhancements to support openssh-6.3. Closes Debian
+      bug #722970. Thanks Colin Watson for the regex analysis.
+    * `filter.d/wuftpd` - regex enhancements to support pam and wuftpd. Closes
+      Debian bug #665925
+- Rolf Fokkens
+    * `action.d/dshield.conf` and complain.conf -- reorder mailx arguments.
+      https://bugzilla.redhat.com/show_bug.cgi?id=998020
+- John Doe (ache)
+    * `action.d/bsd-ipfw.conf` - invert actionstop logic to make exist status 0.
+      Closes gh-343.
+- JP Espinosa (Reviewed by O.Poplawski)
+    * files/redhat-initd - rewritten to use stock init.d functions thus
+      avoiding problems with getpid.  Also $network and iptables moved
+      to Should- rc init fields
+- Rick Mellor
+    * `filter.d/vsftp` - fix capture with tty=ftp
 
-- Enhancements:
-  François Boulogne and Frédéric
-   * filter.d/lighttpd - auth regexs for lighttpd-1.4.31
-  Daniel Black
-   * reorder parsing of jail.conf, jail.d/*.conf, jail.local, jail.d/*.local
-     and likewise for fail2ban.{conf|local|d/*.conf|d/*.local}. Closes gh-392
-   * jail.conf now has asterisk jail - no need for asterisk-tcp and
-     asterisk-udp. Users should replace existing jails with asterisk to
-     reduce duplicate parsing of the asterisk log file.
-   * filter.d/{suhosin,pam-generic,gssftpd,sogo-auth,webmin}- regex anchor at
-     start
-   * filter.d/vsftpd - anchored regex at start. disable old pam format regex
-   * filter.d/pam-generic - added syslog prefix. Disabled support for
-     linux-pam before version 0.99.2.0 (2005)
-   * filter.d/postfix-sasl - renamed from sasl, anchor at start and base on
-     syslog
-   * filter.d/qmail - rewrote regex to anchor at start. Added regex for
-     another "in the wild" patch to rblsmtp.
-  Yaroslav Halchenko
-   * fail2ban-regex -- refactored to provide more details (missing and
-     ignored lines, control over logging, etc) while maintaining look&feel
-   * fail2ban-client -- log to standard error. Closes gh-264
-   * Fail to configure if not a single log file was found for an
-     enabled jail. Closes gh-63
-   * <HOST> is now enforced to end with an alphanumeric
-   * filter.d/roundcube-auth.conf -- anchored version
-   * date matching - for standard asctime formats prefer more detailed
-     first (thus use year if available)
-   * files/gen_badbots was added and filter.d/apache-badbots.conf was
-     regenerated to get updated (although now still an old) list of
-     "bad" bots
-  Alexander Dietrich
-   * action.d/sendmail-common.conf -- added common sendmail settings file
-     and made the sender display name configurable
-  Steven Hiscocks
-   * filter.d/dovecot - Addition of session, time values and possible blank
-     user
-  Zurd and Daniel Black
-   * filter/named-refused - added refused on zone transfer
-   * filter.d/{courier{login,smtp},proftpd,sieve,wuftpd,xinetd} - General
-     regex impovements
-  Zurd
-   * filter.d/postfix - add filter for VRFY failures. Closes gh-322.
-  Orion Poplawski
-   * fail2ban.d/ and jail.d/ directories are added to etc/fail2ban to facilitate
-     their use
+### New Features
+- Edgar Hoch
+    * `action.d/firewall-cmd-direct-new.conf` - action for firewalld
+      from https://bugzilla.redhat.com/show_bug.cgi?id=979622
+      NOTE: requires firewalld-0.3.8+
+- Andy Fragen and Daniel Black
+    * `filter.d/osx-ipfw.conf` - ipfw action for OSX based on random rule
+      numbers.
+- Anonymous:
+    * `action.d/osx-afctl` - an action based on afctl for osx
+- Daniel Black & ykimon
+    * `filter.d/3proxy.conf` -- filter added
+    * fail2ban-regex - now generates http://www.debuggex.com urls for debugging
+      regular expressions with the -D parameter.
+- Daniel Black
+    * `filter.d/exim-spam.conf` -- a splitout of exim's spam regexes
+      with additions for greater control over filtering spam.
+    * add date expression for apache-2.4 - milliseconds
+    * `filter.d/nginx-http-auth` -- filter added for http basic authentication
+      failures in nginx. Partially fulfills gh-405.
+- Christophe Carles & Daniel Black
+    * `filter.d/perdition.conf` -- filter added
+- Mark McKinstry
+    * `action.d/apf.conf` - add action for Advanced Policy Firewall (apf)
+- Amir Caspi and kjohnsonecl
+    * `filter.d/uwimap-auth` - filter for uwimap-auth IMAP/POP server
+- Steven Hiscocks and Daniel Black
+    * `filter.d/selinux-{common,ssh`} -- add SELinux date and ssh filter
+
+### Enhancements
+- François Boulogne and Frédéric
+    * `filter.d/lighttpd` - auth regexs for lighttpd-1.4.31
+- Daniel Black
+    * reorder parsing of jail.conf, `jail.d/*.conf`, `jail.local`, `jail.d/*.local`
+      and likewise for `fail2ban.{conf|local|d/*.conf|d/*.local`}. Closes gh-392
+    * jail.conf now has asterisk jail - no need for asterisk-tcp and
+      asterisk-udp. Users should replace existing jails with asterisk to
+      reduce duplicate parsing of the asterisk log file.
+    * `filter.d/{suhosin,pam-generic,gssftpd,sogo-auth,webmin`}- regex anchor at
+      start
+    * `filter.d/vsftpd` - anchored regex at start. disable old pam format regex
+    * `filter.d/pam-generic` - added syslog prefix. Disabled support for
+      linux-pam before version 0.99.2.0 (2005)
+    * `filter.d/postfix-sasl` - renamed from sasl, anchor at start and base on
+      syslog
+    * `filter.d/qmail` - rewrote regex to anchor at start. Added regex for
+      another "in the wild" patch to rblsmtp.
+- Yaroslav Halchenko
+    * fail2ban-regex -- refactored to provide more details (missing and
+      ignored lines, control over logging, etc) while maintaining look&feel
+    * fail2ban-client -- log to standard error. Closes gh-264
+    * Fail to configure if not a single log file was found for an
+      enabled jail. Closes gh-63
+    * `<HOST>` is now enforced to end with an alphanumeric
+    * `filter.d/roundcube-auth.conf` -- anchored version
+    * date matching - for standard asctime formats prefer more detailed
+      first (thus use year if available)
+    * files/gen_badbots was added and `filter.d/apache-badbots.conf` was
+      regenerated to get updated (although now still an old) list of
+      "bad" bots
+- Alexander Dietrich
+    * `action.d/sendmail-common.conf` -- added common sendmail settings file
+      and made the sender display name configurable
+- Steven Hiscocks
+    * `filter.d/dovecot` - Addition of session, time values and possible blank
+      user
+- Zurd and Daniel Black
+    * `filter.d/named-refused` - added refused on zone transfer
+    * `filter.d/{courier{login,smtp},proftpd,sieve,wuftpd,xinetd`} - General
+      regex improvements
+- Zurd
+    * `filter.d/postfix` - add filter for VRFY failures. Closes gh-322.
+- Orion Poplawski
+    * `fail2ban.d/` and `jail.d/` directories are added to `etc/fail2ban` to facilitate
+      their use
 
 ver. 0.8.10 (2013/06/12) - wanna-be-secure
 -----------
@@ -735,23 +744,24 @@ apache- filters.  If you are relying on listed below apache- filters,
 upgrade asap and seek your distributions to patch their fail2ban
 distribution with [6ccd5781].
 
-- Fixes: Yaroslav Halchenko
-   * [6ccd5781] filter.d/apache-{auth,nohome,noscript,overflows} - anchor
-     failregex at the beginning (and where applicable at the end).
-     Addresses a possible DoS. Closes gh-248
-   * action.d/{route,shorewall}.conf - blocktype must be defined
-     within [Init].  Closes gh-232
-- Enhancements
-  Yaroslav Halchenko
-   * jail.conf -- assure all jails have actions and remove unused
-     ports specifications
-  Terence Namusonge
-   * config/filter.d/roundcube-auth.conf -- support roundcube 0.9+
-  Daniel Black
-   * files/suse-initd -- update to the copy from stock SUSE
-  silviogarbes & Daniel Black
+### Fixes
+- Yaroslav Halchenko
+    * [6ccd5781] `filter.d/apache-{auth,nohome,noscript,overflows`} - anchor
+      failregex at the beginning (and where applicable at the end).
+      Addresses a possible DoS. Closes gh-248
+    * `action.d/{route,shorewall}.conf` - blocktype must be defined
+      within [Init].  Closes gh-232
+### Enhancements
+- Yaroslav Halchenko
+    * jail.conf -- assure all jails have actions and remove unused
+      ports specifications
+- Terence Namusonge
+    * `filter.d/roundcube-auth.conf` -- support roundcube 0.9+
+- Daniel Black
+    * `files/suse-initd` -- update to the copy from stock SUSE
+      silviogarbes & Daniel Black
     * Updates to asterisk filter. Closes gh-227/gh-230.
-  Carlos Alberto Lopez Perez
+- Carlos Alberto Lopez Perez
     * Updates to asterisk to include AUTH_UNKNOWN_DOMAIN. Closes gh-244.
 
 ver. 0.8.9 (2013/05/13) - wanna-be-stable
@@ -771,258 +781,262 @@ Special Kudos also go to Fabian Wenk, Arturo 'Buanzo' Busleiman, Tom
 Hendrikx, Yehuda Katz and other TBN heroes supporting users on
 fail2ban-users mailing list and IRC.
 
-- Fixes: Yaroslav Halchenko
-   * [6f4dad46] python-2.4 is the minimal version.
-   * [1eb23cf8] do not rely on scripts being under /usr -- might differ e.g.
-     on Fedora. Closes gh-112. Thanks to Camusensei for the bug report.
-   * [bf4d4af1] Changes for atomic writes. Thanks to Steven Hiscocks for
-     insight. Closes gh-103.
-   * [ab044b75] delay check for the existence of config directory until read.
-   * [3b4084d4] fixing up for handling of TAI64N timestamps.
-   * [154aa38e] do not shutdown logging until all jails stop.
-   * [f2156604] pyinotify -- monitor IN_MOVED_TO events. Closes gh-184.
-     Thanks to Jon Foster for report and troubleshooting.
-  Orion Poplawski
-   * [e4aedfdc00] pyinotify - use bitwise op on masks and do not try tracking
-     newly created directories.
-  Nicolas Collignon
-   * [39667ff6] Avoid leaking file descriptors. Closes gh-167.
-  Sergey Brester
-   * [b6bb2f88 and d17b4153] invalid date recognition, irregular because of
-     sorting template list.
-  Steven Hiscocks
-   * [7a442f07] When changing log target with python2.{4,5} handle KeyError.
-     Closes gh-147, gh-148.
-   * [b6a68f51] Fix delaction on server side. Closes gh-124.
-  Daniel Black
-   * [f0610c01] Allow more that a one word command when changing and Action via
-     the fail2ban-client. Closes gh-134.
-   * [945ad3d9] Fix dates on email actions to work in different locals. Closes
-     gh-70. Thanks to iGeorgeX for the idea.
-  blotus
-   * [96eb8986] ' and " should also be escaped in action tags Closes gh-109
-  Christoph Theis, Nick Hilliard, Daniel Black
-   * [b3bd877d,cde71080] Make syslog -v and syslog -vv formats work on FreeBSD
-- New features:
-  Yaroslav Halchenko
-   * [9ba27353] Add support for jail.d/{confilefile} and fail2ban.d/{configfile}
-     to provide additional flexibility to system adminstrators. Thanks to
-     beilber for the idea. Closes gh-114.
-   * [3ce53e87] Add exim filter.
-  Erwan Ben Souiden
-   * [d7d5228] add nagios integration documentation and script to ensure
-     fail2ban is running. Closes gh-166.
-  Artur Penttinen
-   * [29d0df5] Add mysqld filter. Closes gh-152.
-  ArndRaphael Brandes
-   * [bba3fd8] Add Sogo filter. Closes gh-117.
-  Michael Gebetsriother
-   * [f9b78ba] Add action route to block at routing level.
-  Teodor Micu & Yaroslav Halchenko
-   * [5f2d383] Add roundcube auth filter. Closes Debian bug #699442.
-  Daniel Black
-   * [be06b1b] Add action for iptables-ipsets. Closes gh-102.
-  Nick Munger, Ken Menzel, Daniel Black, Christoph Theis & Fabian Wenk
-   * [b6d0e8a] Add and enhance the bsd-ipfw action from
-     FreeBSD ports.
-  Soulard Morgan
-   * [f336d9f] Add filter for webmin. Closes gh-99.
-  Steven Hiscocks
-   * [..746c7d9] bash interactive shell completions for fail2ban-*'s
-  Nick Hilliard
-   * [0c5a9c5] Add pf action.
-- Enhancements:
-  Enrico Labedzki
-   * [24a8d07] Added new date format for ASSP SMTP Proxy.
-  Steven Hiscocks
-   * [3d6791f] Ensure restart of Actions after a check fails occurs
-     consistently. Closes gh-172.
-   * [MANY] Improvements to test cases, travis, and code coverage (coveralls).
-   * [b36835f] Add get cinfo to fail2ban-client. Closes gh-124.
-   * [ce3ab34] Added ability to specify PID file.
-  Orion Poplawski
-   * [ddebcab] Enhance fail2ban.service definition dependencies and Pidfile.
-     Closes gh-142.
-  Yaroslav Halchenko
-   * [MANY] Lots of improvements to log messages, man pages and test cases.
-   * [91d5736] Postfix filter improvements - empty helo, from and rcpt to.
-     Closes gh-126. Bug report by Michael Heuberger.
-   * [40c5a2d] adding more of diagnostic messages into -client while starting
-     the daemon.
-   * [8e63d4c] Compare against None with 'is' instead of '=='.
-   * [6fef85f] Strip CR and LF while analyzing the log line
-  Daniel Black
-   * [3aeb1a9] Add jail.conf manual page. Closes gh-143.
-   * [MANY] man page edits.
-   * [7cd6dab] Added help command to fail2ban-client.
-   * [c8c7b0b,23bbc60] Better logging of log file read errors.
-   * [3665e6d] Added code coverage to development process.
-   * [41b9f7b,32d10e9,39750b8] More complete ssh filter rules to match openssh
-     source. Also include BSD changes.
-   * [1d9abd1] Action files can have tags in definition that refer to other
-     tags.
-   * [10886e7,cec5da2,adb991a] Change actions to response with ICMP port
-     unreachable rather than just a drop of the packet.
-  Pascal Borreli
-   * [a2b29b4] Fixed lots of typos in config files and documentation.
-  hamilton5
-   * [7ede1e8] Update dovecot filter config.
-  Romain Riviere
-   * [0ac8746] Enhance named-refused filter for views.
-  James Stout
-   * [..2143cdf] Solaris support enhancements:
-     - README.Solaris
-     - failregex'es tune ups (sshd.conf)
-     - hostsdeny: do not rely on support of '-i' in sed
+### Fixes
+- Yaroslav Halchenko
+    * [6f4dad46] python-2.4 is the minimal version.
+    * [1eb23cf8] do not rely on scripts being under /usr -- might differ e.g.
+      on Fedora. Closes gh-112. Thanks to Camusensei for the bug report.
+    * [bf4d4af1] Changes for atomic writes. Thanks to Steven Hiscocks for
+      insight. Closes gh-103.
+    * [ab044b75] delay check for the existence of config directory until read.
+    * [3b4084d4] fixing up for handling of TAI64N timestamps.
+    * [154aa38e] do not shutdown logging until all jails stop.
+    * [f2156604] pyinotify -- monitor IN_MOVED_TO events. Closes gh-184.
+      Thanks to Jon Foster for report and troubleshooting.
+- Orion Poplawski
+    * [e4aedfdc00] pyinotify - use bitwise op on masks and do not try tracking
+      newly created directories.
+- Nicolas Collignon
+    * [39667ff6] Avoid leaking file descriptors. Closes gh-167.
+- Sergey Brester
+    * [b6bb2f88 and d17b4153] invalid date recognition, irregular because of
+      sorting template list.
+- Steven Hiscocks
+    * [7a442f07] When changing log target with python2.{4,5} handle KeyError.
+      Closes gh-147, gh-148.
+    * [b6a68f51] Fix delaction on server side. Closes gh-124.
+- Daniel Black
+    * [f0610c01] Allow more that a one word command when changing and Action via
+      the fail2ban-client. Closes gh-134.
+    * [945ad3d9] Fix dates on email actions to work in different locals. Closes
+      gh-70. Thanks to iGeorgeX for the idea.
+- blotus
+    * [96eb8986] ' and " should also be escaped in action tags Closes gh-109
+- Christoph Theis, Nick Hilliard, Daniel Black
+    * [b3bd877d,cde71080] Make `syslog -v` and `syslog -vv` formats work on FreeBSD
+
+### New Features
+- Yaroslav Halchenko
+    * [9ba27353] Add support for `jail.d/{confilefile}` and `fail2ban.d/{configfile}`
+      to provide additional flexibility to system adminstrators. Thanks to
+      beilber for the idea. Closes gh-114.
+    * [3ce53e87] Add exim filter.
+- Erwan Ben Souiden
+    * [d7d5228] add nagios integration documentation and script to ensure
+      fail2ban is running. Closes gh-166.
+- Artur Penttinen
+    * [29d0df5] Add mysqld filter. Closes gh-152.
+- ArndRaphael Brandes
+    * [bba3fd8] Add Sogo filter. Closes gh-117.
+- Michael Gebetsriother
+    * [f9b78ba] Add action route to block at routing level.
+- Teodor Micu & Yaroslav Halchenko
+    * [5f2d383] Add roundcube auth filter. Closes Debian bug #699442.
+- Daniel Black
+    * [be06b1b] Add action for iptables-ipsets. Closes gh-102.
+- Nick Munger, Ken Menzel, Daniel Black, Christoph Theis & Fabian Wenk
+    * [b6d0e8a] Add and enhance the bsd-ipfw action from
+      FreeBSD ports.
+- Soulard Morgan
+    * [f336d9f] Add filter for webmin. Closes gh-99.
+- Steven Hiscocks
+    * [..746c7d9] bash interactive shell completions for fail2ban-*'s
+- Nick Hilliard
+    * [0c5a9c5] Add pf action.
+
+### Enhancements
+- Enrico Labedzki
+    * [24a8d07] Added new date format for ASSP SMTP Proxy.
+- Steven Hiscocks
+    * [3d6791f] Ensure restart of Actions after a check fails occurs
+      consistently. Closes gh-172.
+    * [MANY] Improvements to test cases, travis, and code coverage (coveralls).
+    * [b36835f] Add get cinfo to fail2ban-client. Closes gh-124.
+    * [ce3ab34] Added ability to specify PID file.
+- Orion Poplawski
+    * [ddebcab] Enhance fail2ban.service definition dependencies and Pidfile.
+      Closes gh-142.
+- Yaroslav Halchenko
+    * [MANY] Lots of improvements to log messages, man pages and test cases.
+    * [91d5736] Postfix filter improvements - empty helo, from and rcpt to.
+      Closes gh-126. Bug report by Michael Heuberger.
+    * [40c5a2d] adding more of diagnostic messages into -client while starting
+      the daemon.
+    * [8e63d4c] Compare against None with 'is' instead of '=='.
+    * [6fef85f] Strip CR and LF while analyzing the log line
+- Daniel Black
+    * [3aeb1a9] Add jail.conf manual page. Closes gh-143.
+    * [MANY] man page edits.
+    * [7cd6dab] Added help command to fail2ban-client.
+    * [c8c7b0b,23bbc60] Better logging of log file read errors.
+    * [3665e6d] Added code coverage to development process.
+    * [41b9f7b,32d10e9,39750b8] More complete ssh filter rules to match openssh
+      source. Also include BSD changes.
+    * [1d9abd1] Action files can have tags in definition that refer to other
+      tags.
+    * [10886e7,cec5da2,adb991a] Change actions to response with ICMP port
+      unreachable rather than just a drop of the packet.
+- Pascal Borreli
+    * [a2b29b4] Fixed lots of typos in config files and documentation.
+- hamilton5
+    * [7ede1e8] Update dovecot filter config.
+- Romain Riviere
+    * [0ac8746] Enhance named-refused filter for views.
+- James Stout
+    * [..2143cdf] Solaris support enhancements:
+        - `README.Solaris`
+        - failregex'es tune ups (`sshd.conf`)
+        - hostsdeny: do not rely on support of '-i' in sed
 
 ver. 0.8.8 (2012/12/06) - stable
 ----------
-- Fixes:
-  Alan Jenkins
-   * [8c38907] Removed 'POSSIBLE BREAK-IN ATTEMPT' from sshd filter to avoid
-     banning due to misconfigured DNS. Closes gh-64
-  Yaroslav Halchenko
-   * [83109bc] IMPORTANT: escape the content of <matches> (if used in
-     custom action files) since its value could contain arbitrary
-     symbols.  Thanks for discovery go to the NBS System security
-     team
-   * [0935566,5becaf8] Various python 2.4 and 2.5 compatibility fixes. Closes gh-83
-   * [b159eab] do not enable pyinotify backend if pyinotify < 0.8.3
-   * [37a2e59] store IP as a base, non-unicode str to avoid spurious messages
-     in the console. Closes gh-91
-- New features:
-  David Engeset
-   * [2d672d1,6288ec2] 'unbanip' command for the client + avoidance of touching
-     the log file to take 'banip' or 'unbanip' in effect. Closes gh-81, gh-86
-  Yaroslav Halchenko
-- Enhancements:
-   * [2d66f31] replaced uninformative "Invalid command" message with warning log
-     exception why command actually failed
-   * [958a1b0] improved failregex to "support" auth.backend = "htdigest"
-   * [9e7a3b7] until we make it proper module -- adjusted sys.path only if
-     system-wide run
-   * [f52ba99] downgraded "already banned" from WARN to INFO level. Closes gh-79
-   * [f105379] added hints into the log on some failure return codes (e.g. 0x7f00
-     for this gh-87)
-   * Various others: travis-ci integration, script to run tests
-     against all available Python versions, etc
+### Fixes
+- Alan Jenkins
+    * [8c38907] Removed 'POSSIBLE BREAK-IN ATTEMPT' from sshd filter to avoid
+      banning due to misconfigured DNS. Closes gh-64
+- Yaroslav Halchenko
+    * [83109bc] IMPORTANT: escape the content of <matches> (if used in
+      custom action files) since its value could contain arbitrary
+      symbols.  Thanks for discovery go to the NBS System security
+      team
+    * [0935566,5becaf8] Various python 2.4 and 2.5 compatibility fixes. Closes gh-83
+    * [b159eab] do not enable pyinotify backend if pyinotify < 0.8.3
+    * [37a2e59] store IP as a base, non-unicode str to avoid spurious messages
+      in the console. Closes gh-91
+
+### New Features
+- David Engeset
+    * [2d672d1,6288ec2] 'unbanip' command for the client + avoidance of touching
+      the log file to take 'banip' or 'unbanip' in effect. Closes gh-81, gh-86
+
+### Enhancements
+* [2d66f31] replaced uninformative "Invalid command" message with warning log
+  exception why command actually failed
+* [958a1b0] improved failregex to "support" auth.backend = "htdigest"
+* [9e7a3b7] until we make it proper module -- adjusted sys.path only if
+  system-wide run
+* [f52ba99] downgraded "already banned" from WARN to INFO level. Closes gh-79
+* [f105379] added hints into the log on some failure return codes (e.g. 0x7f00
+  for this gh-87)
+* Various others: travis-ci integration, script to run tests
+  against all available Python versions, etc
 
 ver. 0.8.7.1 (2012/07/31) - stable
 ----------
 
-- Fixes:
-  Yaroslav Halchenko
-   * [e9762f3] Removed sneaked in comment on sys.path.insert
+### Fixes
+* [e9762f3] Removed sneaked in comment on sys.path.insert
 
 ver. 0.8.7 (2012/07/31) - stable
 ----------
 
-- Fixes:
-  Tom Hendrikx & Jeremy Olexa
-   * [0eaa4c2,444e4ac] Fix Gentoo init script: $opts variable is deprecated.
-     See http://forums.gentoo.org/viewtopic-t-899018.html
-  Chris Reffett
-   * [a018a26] Fixed addBannedIP to add enough failures to trigger a ban,
-     rather than just one failure.
-  Yaroslav Halchenko
-   * [4c76fb3] allow trailing white-spaces in lighttpd-auth.conf
-   * [25f1e8d] allow trailing whitespace in few missing it regexes for sshd.conf
-   * [ed16ecc] enforce "ip" field returned as str, not unicode so that log
-     message stays non-unicode. Close gh-32
-   * [b257be4] added %m-%d-%Y pattern + do not add %Y for Feb 29 fix if
-     already present in the pattern
-   * [47e956b] replace "|" with "_" in ipmasq-ZZZzzz|fail2ban.rul to be
-     friend to developers stuck with Windows (Closes gh-66)
-   * [80b191c] anchor grep regexp in actioncheck to not match partial names
-     of the jails (Closes: #672228) (Thanks Szépe Viktor for the report)
-- New features:
-  François Boulogne
-   * [a7cb20e..] add lighttpd-auth filter/jail
-  Lee Clemens & Yaroslav Halchenko
-   * [e442503] pyinotify backend (default if backend='auto' and pyinotify
-     is available)
-   * [d73a71f,3989d24] usedns parameter for the jails to allow disabling
-     use of DNS
-  Tom Hendrikx
-   * [f94a121..] 'recidive' filter/jail to monitor fail2ban.conf to ban
-     repeated offenders. Close gh-19
-  Xavier Devlamynck
-   * [7d465f9..] Add asterisk support
-  Zbigniew Jędrzejewski-Szmek
-   * [de502cf..] allow running fail2ban as non-root user (disabled by
-     default) via xt_recent. See doc/run-rootless.txt
-- Enhancements
-  Lee Clemens
-   * [47c03a2] files/nagios - spelling/grammar fixes
-   * [b083038] updated Free Software Foundation's address
-   * [9092a63] changed TLDs to invalid domains, in accordance with RFC 2606
-   * [642d9af,3282f86] reformated printing of jail's name to be consistent
-     with init's info messages
-   * [3282f86] uniform use of capitalized Jail in the messages
-  Leonardo Chiquitto
-   * [4502adf] Fix comments in dshield.conf and mynetwatchman.conf
-     to reflect code
-   * [a7d47e8] Update Free Software Foundation's address
-  Petr Voralek
-   * [4007751] catch failed ssh logins due to being listed in DenyUsers.
-     Close gh-47 (Closes: #669063)
-  Yaroslav Halchenko
-   * [MANY]    extended and robustified unittests: test different backends
-   * [d9248a6] refactored Filter's to avoid duplicate functionality
-   * [7821174] direct users to issues on github
-   * [d2ffee0..] re-factored fail2ban-regex -- more condensed output by
-     default with -v to control verbosity
-   * [b4099da] adjusted header for config/*.conf to mention .local and way
-     to comment (Thanks Stefano Forli for the note)
-   * [6ad55f6] added failregex for wu-ftpd to match against syslog instead
-     of DoS-prone auth.log's rhost (Closes: #514239)
-   * [2082fee] match possibly present "pam_unix(sshd:auth):" portion for
-     sshd filter (Closes: #648020)
-  Yehuda Katz & Yaroslav Halchenko
-   * [322f53e,bd40cc7] ./DEVELOP -- documentation for developers
+### Fixes
+- Tom Hendrikx & Jeremy Olexa
+    * [0eaa4c2,444e4ac] Fix Gentoo init script: $opts variable is deprecated.
+      See http://forums.gentoo.org/viewtopic-t-899018.html
+- Chris Reffett
+    * [a018a26] Fixed addBannedIP to add enough failures to trigger a ban,
+      rather than just one failure.
+- Yaroslav Halchenko
+    * [4c76fb3] allow trailing white-spaces in lighttpd-auth.conf
+    * [25f1e8d] allow trailing whitespace in few missing it regexes for sshd.conf
+    * [ed16ecc] enforce "ip" field returned as str, not unicode so that log
+      message stays non-unicode. Close gh-32
+    * [b257be4] added %m-%d-%Y pattern + do not add %Y for Feb 29 fix if
+      already present in the pattern
+    * [47e956b] replace "|" with "_" in ipmasq-ZZZzzz|fail2ban.rul to be
+      friend to developers stuck with Windows (Closes gh-66)
+    * [80b191c] anchor grep regexp in actioncheck to not match partial names
+      of the jails (Closes: #672228) (Thanks Szépe Viktor for the report)
+### New Features
+- François Boulogne
+    * [a7cb20e..] add lighttpd-auth filter/jail
+- Lee Clemens & Yaroslav Halchenko
+    * [e442503] pyinotify backend (default if backend='auto' and pyinotify
+      is available)
+    * [d73a71f,3989d24] usedns parameter for the jails to allow disabling
+      use of DNS
+- Tom Hendrikx
+    * [f94a121..] 'recidive' filter/jail to monitor fail2ban.conf to ban
+      repeated offenders. Close gh-19
+- Xavier Devlamynck
+    * [7d465f9..] Add asterisk support
+- Zbigniew Jędrzejewski-Szmek
+    * [de502cf..] allow running fail2ban as non-root user (disabled by
+      default) via xt_recent. See doc/run-rootless.txt
+### Enhancements
+- Lee Clemens
+    * [47c03a2] files/nagios - spelling/grammar fixes
+    * [b083038] updated Free Software Foundation's address
+    * [9092a63] changed TLDs to invalid domains, in accordance with RFC 2606
+    * [642d9af,3282f86] reformated printing of jail's name to be consistent
+      with init's info messages
+    * [3282f86] uniform use of capitalized Jail in the messages
+- Leonardo Chiquitto
+    * [4502adf] Fix comments in dshield.conf and mynetwatchman.conf
+      to reflect code
+    * [a7d47e8] Update Free Software Foundation's address
+- Petr Voralek
+    * [4007751] catch failed ssh logins due to being listed in DenyUsers.
+      Close gh-47 (Closes: #669063)
+- Yaroslav Halchenko
+    * [MANY]    extended and robustified unittests: test different backends
+    * [d9248a6] refactored Filter's to avoid duplicate functionality
+    * [7821174] direct users to issues on github
+    * [d2ffee0..] re-factored fail2ban-regex -- more condensed output by
+      default with -v to control verbosity
+    * [b4099da] adjusted header for config/*.conf to mention .local and way
+      to comment (Thanks Stefano Forli for the note)
+    * [6ad55f6] added failregex for wu-ftpd to match against syslog instead
+      of DoS-prone auth.log's rhost (Closes: #514239)
+    * [2082fee] match possibly present "pam_unix(sshd:auth):" portion for
+      sshd filter (Closes: #648020)
+- Yehuda Katz & Yaroslav Halchenko
+    * [322f53e,bd40cc7] ./DEVELOP -- documentation for developers
 
 ver. 0.8.6 (2011/11/28) - stable
 ----------
-- Fixes:
-  Markos Chandras & Yaroslav Halchenko
-   * [492d8e5,bd658fc] Use hashlib (instead of deprecated md5) where available
-  Robert Trace & Michael Lorant
-   * [c48c2b1] gentoo-initd cleanup and fixes: assure /var/run + remove stale
-     sock file
-  Michael Saavedra
-   * [3a58d0e] Lock server's executeCmd to prevent racing among iptables calls:
-     see http://bugs.debian.org/554162
-  Yaroslav Halchenko
-   * [3eb5e3b] Allow for trailing spaces in sasl logs
-   * [1632244] Stop server-side communication before stopping the
-     jails (prevents lockup if actions use fail2ban-client upon
-     unban): see https://github.com/fail2ban/fail2ban/issues/7
-   * [5a2d518] Various changes to reincarnate unittests
-  Yehuda Katz
-   * Wiki was cleaned from SPAM
-- Enhancements:
-  Adam Spiers
-   * [3152afb] Recognise time-stamped kernel messages
-  Guido Bozzetto
-   * [713fea6] Added ipmasq rule file to restart fail2ban when iptables are
-     wiped out: see http://bugs.debian.org/461417
-  Łukasz
-   * [5f23542] Matching of month names in Polish (thanks michaelberg79
-     for QA)
-  Tom Hendrikx
-   * [9fa54cf] Added Date: header for sendmail*.conf actions
-  Yaroslav Halchenko & Tom Hendrikx
-   * [b52d420..22b7007] <matches> in action files now can be used
-     to provide matched loglines which triggered action
-  Yaroslav Halchenko
-   * [ed0bf3a] Removed duplicate entry for DataCha0s/2\.0 in badbots:
-     see http://bugs.debian.org/519557
-   * [dad91f7] sshd.conf: allow user names to have spaces and
-     trailing spaces in the line
-   * [a9be451] removed expansions for few Date and Revision SVN keywords
-   * [a33135c] set/getFile for ticket.py -- found in source distribution
-     of 0.8.4
-   * [fbce415] additional logging while stopping the jails
+### Fixes
+- Markos Chandras & Yaroslav Halchenko
+    * [492d8e5,bd658fc] Use hashlib (instead of deprecated md5) where available
+- Robert Trace & Michael Lorant
+    * [c48c2b1] gentoo-initd cleanup and fixes: assure `/var/run` + remove stale
+      sock file
+- Michael Saavedra
+    * [3a58d0e] Lock server's executeCmd to prevent racing among iptables calls:
+      see http://bugs.debian.org/554162
+- Yaroslav Halchenko
+    * [3eb5e3b] Allow for trailing spaces in sasl logs
+    * [1632244] Stop server-side communication before stopping the
+      jails (prevents lockup if actions use fail2ban-client upon
+      unban): see https://github.com/fail2ban/fail2ban/issues/7
+    * [5a2d518] Various changes to reincarnate unittests
+- Yehuda Katz
+    * Wiki was cleaned from SPAM
+
+### Enhancements
+- Adam Spiers
+    * [3152afb] Recognise time-stamped kernel messages
+- Guido Bozzetto
+    * [713fea6] Added ipmasq rule file to restart fail2ban when iptables are
+      wiped out: see http://bugs.debian.org/461417
+- Łukasz
+    * [5f23542] Matching of month names in Polish (thanks michaelberg79
+      for QA)
+- Tom Hendrikx
+    * [9fa54cf] Added Date: header for sendmail*.conf actions
+- Yaroslav Halchenko & Tom Hendrikx
+    * [b52d420..22b7007] <matches> in action files now can be used
+      to provide matched loglines which triggered action
+- Yaroslav Halchenko
+    * [ed0bf3a] Removed duplicate entry for DataCha0s/2\.0 in badbots:
+      see http://bugs.debian.org/519557
+    * [dad91f7] sshd.conf: allow user names to have spaces and
+      trailing spaces in the line
+    * [a9be451] removed expansions for few Date and Revision SVN keywords
+    * [a33135c] set/getFile for ticket.py -- found in source distribution
+      of 0.8.4
+    * [fbce415] additional logging while stopping the jails
 
 ver. 0.8.5 (2011/07/28) - stable
 ----------
@@ -1036,7 +1050,7 @@ ver. 0.8.5 (2011/07/28) - stable
 - Fix: escaped () in pure-ftpd filter. Thanks to Teodor
 - Fix: allowed space in the trailing of failregex for sasl.conf:
   see http://bugs.debian.org/573314
-- Fix: use /var/run/fail2ban instead of /tmp for temp files in actions:
+- Fix: use `/var/run/fail2ban` instead of `/tmp` for temp files in actions:
   see http://bugs.debian.org/544232
 - Fix: Tai64N stores time in GMT, needed to convert to local time before
   returning
@@ -1050,10 +1064,10 @@ ver. 0.8.5 (2011/07/28) - stable
   in the regexp
 - Enhancement: proftpd filter -- if login failed -- count regardless of the
   reason for failure
-- Enhancement: added <chain> to action.d/iptables*. Thanks to Matthijs Kooijman:
+- Enhancement: added <chain> to `action.d/iptables*`. Thanks to Matthijs Kooijman:
   see http://bugs.debian.org/515599
-- Enhancement: added filter.d/dovecot.conf from Martin Waschbuesch
-- Enhancement: made filter.d/apache-overflows.conf catch more:
+- Enhancement: added `filter.d/dovecot.conf` from Martin Waschbuesch
+- Enhancement: made `filter.d/apache-overflows.conf` catch more:
   see http://bugs.debian.org/574182
 - Enhancement: added dropbear filter from Francis Russell and Zak B. Elep:
   see http://bugs.debian.org/546913
@@ -1087,16 +1101,14 @@ ver. 0.8.4 (2009/09/07) - stable
 - Added nagios script. Thanks to Sebastian Mueller.
 - Added CPanel date format. Thanks to David Collins. Tracker #1967610.
 - Improved SASL filter. Thanks to Loic Pefferkorn. Tracker #2310410.
-- Added NetBSD ipfilter (ipf command) action. Thanks to Ed Ravin. Tracker
-  #2484115.
+- Added NetBSD ipfilter (ipf command) action. Thanks to Ed Ravin. Tracker #2484115.
 - Added cyrus-imap and sieve filters. Thanks to Jan Wagner. Debian bug #513953.
-- Changed <HOST> template to be more restrictive. Debian bug #514163.
+- Changed `<HOST>` template to be more restrictive. Debian bug #514163.
 - Use timetuple instead of utctimetuple for ISO 8601. Maybe not a 100% correct
   fix but seems to work. Tracker #2500276.
 - Made the named-refused regex a bit less restrictive in order to match logs
   with "view". Thanks to Stephen Gildea.
-- Fixed maxretry/findtime rate. Many thanks to Christos Psonis. Tracker
-  #2019714.
+- Fixed maxretry/findtime rate. Many thanks to Christos Psonis. Tracker #2019714
 
 ver. 0.8.3 (2008/07/17) - stable
 ----------
@@ -1106,7 +1118,7 @@ ver. 0.8.3 (2008/07/17) - stable
 - Fixed socket path in redhat and suse init script. Thanks to Jim Wight.
 - Fixed PID file while started in daemon mode. Thanks to Christian Jobic who
   submitted a similar patch.
-- Fixed "fail2ban-client get <jail> logpath". Bug #1916986.
+- Fixed `fail2ban-client get <jail> logpath`. Bug #1916986.
 - Added gssftpd filter. Thanks to Kevin Zembower.
 - Added "Day/Month/Year Hour:Minute:Second" date template. Thanks to Dennis
   Winter.
@@ -1128,16 +1140,16 @@ ver. 0.8.2 (2008/03/06) - stable
 - Removed date from logging message when using SYSLOG. Thanks to Iain Lea
 - Fixed "ignore IPs". Only the first value was taken into account. Thanks to
   Adrien Clerc
-- Moved socket to /var/run/fail2ban.
+- Moved socket to `/var/run/fail2ban`.
 - Rewrote the communication server.
 - Refactoring. Reduced number of files.
 - Removed Python 2.4. Minimum required version is now Python 2.3.
 - New log rotation detection algorithm.
 - Print monitored files in status.
-- Create a PID file in /var/run/fail2ban/. Thanks to Julien Perez.
+- Create a PID file in `/var/run/fail2ban/`. Thanks to Julien Perez.
 - Fixed "Feb 29" bug. Thanks to James Andrewartha who pointed this out. Thanks
   to Yaroslav Halchenko for the fix.
-- "reload <jail>" reloads a single jail and the parameters in fail2ban.conf.
+- `reload <jail>` reloads a single jail and the parameters in fail2ban.conf.
 - Added Mac OS/X startup script. Thanks to Bill Heaton.
 - Absorbed some Debian patches. Thanks to Yaroslav Halchenko.
 - Replaced "echo" with "printf" in actions. Fix #1839673
@@ -1197,7 +1209,7 @@ ver. 0.7.7 (2007/02/08) - release candidate
 ver. 0.7.6 (2007/01/04) - beta
 ----------
 - Added a "sleep 1" in redhat-initd. Thanks to Jim Wight
-- Use /dev/log for SYSLOG output. Thanks to Joerg Sommrey
+- Use `/dev/log` for SYSLOG output. Thanks to Joerg Sommrey
 - Use numeric output for iptables in "actioncheck"
 - Fixed removal of host in hosts.deny. Thanks to René Berber
 - Added new date format (2006-12-21 06:43:20) and Exim4 filter. Thanks to mEDI
@@ -1206,25 +1218,25 @@ ver. 0.7.6 (2007/01/04) - beta
 - Added license in COPYING. Thanks to Axel Thimm
 - Allow comma in action options. The value of the option must be escaped with "
   or '. Thanks to Yaroslav Halchenko
-- Now Fail2ban goes in /usr/share/fail2ban instead of /usr/lib/fail2ban. This is
+- Now Fail2ban goes in `/usr/share/fail2ban` instead of `/usr/lib/fail2ban`. This is
   more compliant with FHS. Thanks to Axel Thimm and Yaroslav Halchenko
 
 ver. 0.7.5 (2006/12/07) - beta
 ----------
 - Do not ban a host that is currently banned. Thanks to Yaroslav Halchenko
-- The supported tags in "action(un)ban" are <ip>, <failures> and <time>
+- The supported tags in "action(un)ban" are `<ip>`, `<failures>` and `<time>`
 - Fixed refactoring bug (getLastcommand -> getLastAction)
-- Added option "ignoreregex" in filter scripts and jail.conf. Feature Request
-  #1283304
+- Added option "ignoreregex" in filter scripts and `jail.conf`.
+  Feature Request #1283304
 - Fixed a bug in user defined time regex/pattern
 - Improved documentation
-- Moved version.py and protocol.py to common/
+- Moved `version.py` and `protocol.py` to `common/`
 - Merged "maxtime" option with "findtime"
-- Added "<HOST>" tag support in failregex which matches default IP
-  address/hostname. "(?P<host>\S)" is still valid and supported
+- Added `<HOST>` tag support in failregex which matches default IP
+  address/hostname. `(?P<host>\S)` is still valid and supported
 - Fixed exception when calling fail2ban-server with unknown option
 - Fixed Debian bug 400162. The "socket" option is now handled correctly by
-  fail2ban-client
+  `fail2ban-client`
 - Fixed RedHat init script. Thanks to Justin Shore
 - Changed timeout to 30 secondes before assuming the server cannot be started.
   Thanks to Joël Bertrand
@@ -1340,7 +1352,7 @@ ver. 0.5.5 (2005/10/26) - beta
   * reordered code a bit so that log targets are setup right after background
     and then only loglevel (verbose, debug) is processed, so the warning could
     be seen in the logs
-  * Added a keyword <section> in parsing of the subject and the body of an email
+  * Added a keyword `<section>` in parsing of the subject and the body of an email
     sent out by fail2ban (closes: #330311)
 
 ver. 0.5.4 (2005/09/13) - beta
@@ -1406,9 +1418,9 @@ ver. 0.4.1 (2005/06/30) - stable
 ----------
 - Fixed textToDNS method which generated wrong matches for "rhost=12-xyz...".
   Thanks to Tom Pike
-- fail2ban.conf modified for readability. Thanks to Iain Lea
+- `fail2ban.conf` modified for readability. Thanks to Iain Lea
 - Added an initd script for Gentoo
-- Changed default PID lock file location from /tmp to /var/run
+- Changed default PID lock file location from `/tmp` to `/var/run`
 
 ver. 0.4.0 (2005/04/24) - stable
 ----------
@@ -1426,11 +1438,11 @@ ver. 0.3.0 (2005/02/24) - beta
 ----------
 - Re-writting of parts of the code in order to handle several log files with
   different rules
-- Removed sshd.py because it is no more needed
+- Removed `sshd.py` because it is no more needed
 - Fixed a bug when exiting with IP in the ban list
 - Added PID lock file
 - Improved some parts of the code
-- Added ipfw-start-rule option (thanks to Robert Edeker)
+- Added `ipfw-start-rule` option (thanks to Robert Edeker)
 - Added -k option which kills a currently running Fail2Ban
 
 ver. 0.1.2 (2004/11/21) - beta
@@ -1448,7 +1460,7 @@ ver. 0.1.1 (2004/10/23) - beta
 - Remove the Metalog class as the log file are not so syslog daemon specific
 - Rewrite log reader to be service centered. Sshd support added. Match "Failed
   password" and "Illegal user"
-- Add /etc/fail2ban.conf configuration support
+- Add `/etc/fail2ban.conf` configuration support
 - Code documentation
 
 ver. 0.1.0 (2004/10/12) - alpha
