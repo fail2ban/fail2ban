@@ -33,7 +33,7 @@ fail2ban with apache, please enable apache section manually in
 [apache]
 enabled = true
 
-NOTE: -e command line parameter is non existant in 0.7.x
+NOTE: -e command line parameter is non existent in 0.7.x
 
 
 * Interpolations vs actions/filters parameters:
@@ -216,7 +216,7 @@ for more information on jail options.
 From
 http://www.fail2ban.org/wiki/index.php/MANUAL_0_8#Possibility_of_DOS_attack_by_a_local_user
 
-Especially on systems wich provide ssh/CGI/PHP services to unknown
+Especially on systems which provide ssh/CGI/PHP services to unknown
 users it is possible to block other users from ssh and probably other
 access as a unprivileged user may issue:
 
@@ -231,4 +231,4 @@ P.S. Anyone is welcome to recommend proper security solution to this
 issue, such as an alternative to sysklogd which allows better control
 over users logging to specific facilities (such as AUTH)
 
- -- Yaroslav Halchenko <debian@onerussian.com>, Thu, 28 Jul 2011 23:19:44 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>, Fri, 15 Jul 2016 08:59:10 -0400

@@ -1,4 +1,8 @@
-* Collect more sections for other log files
+* completions installation
+
+W: fail2ban: package-installs-into-obsolete-dir etc/bash_completion.d/ : ^etc/bash_completion.d/ -> usr/share/bash-completion/completions (see also https://bugs.debian.org/776954)
+W: fail2ban: package-installs-into-obsolete-dir etc/bash_completion.d/fail2ban : ^etc/bash_completion.d/ -> usr/share/bash-completion/completions (see also https://bugs.debian.org/776954)
+
 * Find proper answer to "Syslog entries can be 'forged' by a regular
    user" mentioned in README.Debian
 
