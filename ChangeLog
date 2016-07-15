@@ -6,8 +6,12 @@
 Fail2Ban: Changelog
 ===================
 
-ver. 0.9.5 (2016/XX/XXX) - wanna-be-released
+ver. 0.9.5 (2016/07/15) - old-not-obsolete
 -----------
+
+0.9.x line is no longer heavily developed.  If you are interested in
+new features (e.g. IPv6 support), please consider 0.10 branch and its
+releases.
 
 ### Fixes
 * `filter.d/monit.conf`
