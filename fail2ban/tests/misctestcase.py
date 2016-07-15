@@ -33,7 +33,7 @@ from glob import glob
 from StringIO import StringIO
 
 from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger
-from ..helpers import splitcommaspace
+from ..helpers import splitwords
 from ..server.datetemplate import DatePatternRegex
 
 
@@ -56,13 +56,15 @@ class HelpersTest(unittest.TestCase):
 			# might be fragile due to ' vs "
 			self.assertEqual(args, "('Very bad', None)")
 
-	def testsplitcommaspace(self):
-		self.assertEqual(splitcommaspace(None), [])
-		self.assertEqual(splitcommaspace(''), [])
-		self.assertEqual(splitcommaspace('  '), [])
-		self.assertEqual(splitcommaspace('1'), ['1'])
-		self.assertEqual(splitcommaspace(' 1 2 '), ['1', '2'])
-		self.assertEqual(splitcommaspace(' 1, 2 , '), ['1', '2'])
+	def testsplitwords(self):
+		self.assertEqual(splitwords(None), [])
+		self.assertEqual(splitwords(''), [])
+		self.assertEqual(splitwords('  '), [])
+		self.assertEqual(splitwords('1'), ['1'])
+		self.assertEqual(splitwords(' 1 2 '), ['1', '2'])
+		self.assertEqual(splitwords(' 1, 2 , '), ['1', '2'])
+		self.assertEqual(splitwords(' 1\n  2'), ['1', '2'])
+		self.assertEqual(splitwords(' 1\n  2, 3'), ['1', '2', '3'])
 
 
 class SetupTest(unittest.TestCase):

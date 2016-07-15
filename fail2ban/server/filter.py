@@ -168,7 +168,7 @@ class Filter(JailThread):
 		if isinstance(value, bool):
 			value = {True: 'yes', False: 'no'}[value]
 		value = value.lower()			  # must be a string by now
-		if not (value in ('yes', 'no', 'warn')):
+		if not (value in ('yes', 'warn', 'no', 'raw')):
 			logSys.error("Incorrect value %r specified for usedns. "
 						 "Using safe 'no'" % (value,))
 			value = 'no'
@@ -523,7 +523,7 @@ class Filter(JailThread):
 					self.__lineBuffer = failRegex.getUnmatchedTupleLines()
 					try:
 						host = failRegex.getHost()
-						if returnRawHost:
+						if returnRawHost or self.__useDns == "raw":
 							failList.append([failRegexIndex, host, date,
 								 failRegex.getMatchedLines()])
 							if not checkAllRegex:

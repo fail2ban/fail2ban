@@ -70,3 +70,6 @@ Jun 13 21:48:06 platypus dovecot: pop3-login: Disconnected: Inactivity (no auth 
 Jun 13 20:20:21 platypus dovecot: imap-login: Disconnected (no auth attempts): rip=180.189.168.166, lip=113.212.99.194, TLS handshaking: Disconnected
 # failJSON: { "time": "2005-07-02T13:49:32", "match": false , "host": "192.51.100.13" }
 Jul 02 13:49:32 hostname dovecot[442]: pop3-login: Disconnected (no auth attempts in 58 secs): user=<>, rip=192.51.100.13, lip=203.0.113.17, session=<LgDINsQCkttVIMPg>
+
+# failJSON: { "time": "2005-03-23T06:10:52", "match": true , "host": "52.37.139.121" }
+Mar 23 06:10:52 auth: Info: ldap(dog,52.37.139.121,): invalid credentials

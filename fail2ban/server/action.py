@@ -55,6 +55,9 @@ _RETCODE_HINTS = {
 signame = dict((num, name)
 	for name, num in signal.__dict__.iteritems() if name.startswith("SIG"))
 
+# max tag replacement count:
+MAX_TAG_REPLACE_COUNT = 10
+
 
 class CallingMap(MutableMapping):
 	"""A Mapping type which returns the result of callable values.
@@ -390,22 +393,22 @@ class CommandAction(ActionBase):
 		"""
 		t = re.compile(r'<([^ <>]+)>')
 		# repeat substitution while embedded-recursive (repFlag is True)
+		done = cls._escapedTags.copy()
 		while True:
 			repFlag = False
 			# substitute each value:
 			for tag in tags.iterkeys():
-				if tag in cls._escapedTags:
-					# Escaped so won't match
-					continue
+				# ignore escaped or already done:
+				if tag in done: continue
 				value = str(tags[tag])
 				# search and replace all tags within value, that can be interpolated using other tags:
 				m = t.search(value)
-				done = []
+				refCounts = {}
 				#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
 				while m:
 					found_tag = m.group(1)
 					#logSys.log(5, 'found: %s' % found_tag)
-					if found_tag == tag or found_tag in done:
+					if found_tag == tag or refCounts.get(found_tag, 1) > MAX_TAG_REPLACE_COUNT:
 						# recursive definitions are bad
 						#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 						return False
@@ -417,7 +420,9 @@ class CommandAction(ActionBase):
 						continue
 					value = value.replace('<%s>' % found_tag , tags[found_tag])
 					#logSys.log(5, 'value now: %s' % value)
-					done.append(found_tag)
+					# increment reference count:
+					refCounts[found_tag] = refCounts.get(found_tag, 0) + 1
+					# the next match for replace:
 					m = t.search(value, m.start())
 				#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
 				# was substituted?
@@ -426,6 +431,9 @@ class CommandAction(ActionBase):
 					if t.search(value):
 						repFlag = True
 					tags[tag] = value
+				# no more sub tags (and no possible composite), add this tag to done set (just to be faster):
+				if '<' not in value: done.add(tag)
+			# stop interpolation, if no replacements anymore:
 			if not repFlag:
 				break
 		return tags

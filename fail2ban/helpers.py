@@ -128,12 +128,12 @@ def excepthook(exctype, value, traceback):
 		"Unhandled exception in Fail2Ban:", exc_info=True)
 	return sys.__excepthook__(exctype, value, traceback)
 
-def splitcommaspace(s):
-	"""Helper to split on any comma or space
+def splitwords(s):
+	"""Helper to split words on any comma, space, or a new line
 
 	Returns empty list if input is empty (or None) and filters
 	out empty entries
 	"""
 	if not s:
 		return []
-	return filter(bool, re.split('[ ,]', s))
+	return filter(bool, map(str.strip, re.split('[ ,\n]+', s)))

@@ -2,7 +2,7 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v0.9.4                  2015/03/08
+                       v0.9.5                  2016/07/15
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
@@ -39,8 +39,8 @@ Optional:
 
 To install, just do:
 
-    tar xvfj fail2ban-0.9.4.tar.bz2
-    cd fail2ban-0.9.4
+    tar xvfj fail2ban-0.9.5.tar.bz2
+    cd fail2ban-0.9.5
     python setup.py install
 
 This will install Fail2Ban into the python library directory. The executable
