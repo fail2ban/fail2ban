@@ -35,7 +35,7 @@ from ..version import version
 from .csocket import CSocket
 from .beautifier import Beautifier
 from .fail2bancmdline import Fail2banCmdLine, ServerExecutionException, ExitException, \
-	logSys, PRODUCTION, exit, output
+	logSys, exit, output
 
 PROMPT = "fail2ban> "
 
@@ -227,11 +227,11 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		# prepare: read config, check configuration is valid, etc.:
 		if phase is not None:
 			phase['start'] = True
-			logSys.debug('-- client phase %s', phase)
+			logSys.debug('  client phase %s', phase)
 		stream = self.__prepareStartServer()
 		if phase is not None:
 			phase['ready'] = phase['start'] = (True if stream else False)
-			logSys.debug('-- client phase %s', phase)
+			logSys.debug('  client phase %s', phase)
 		if not stream:
 			return False
 		# configure server with config stream:
@@ -248,7 +248,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 
 	def __processCommand(self, cmd):
 		if len(cmd) == 1 and cmd[0] == "start":
-			
+
 			ret = self.__startServer(self._conf["background"])
 			if not ret:
 				return False
@@ -322,7 +322,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		# Wait for the server to start (the server has 30 seconds to answer ping)
 		starttime = time.time()
 		logSys.debug("__waitOnServer: %r", (alive, maxtime))
-		test = lambda: os.path.exists(self._conf["socket"]) and self.__ping() 
+		test = lambda: os.path.exists(self._conf["socket"]) and self.__ping()
 		with VisualWait(self._conf["verbose"]) as vis:
 			sltime = 0.0125 / 2
 			while self._alive:
@@ -361,19 +361,16 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 
 			# Interactive mode
 			if self._conf.get("interactive", False):
-				# no readline in test:
-				if PRODUCTION: # pragma: no cover
-					try:
-						import readline
-					except ImportError:
-						raise ServerExecutionException("Readline not available")
+				try:
+					import readline
+				except ImportError:
+					raise ServerExecutionException("Readline not available")
 				try:
 					ret = True
 					if len(args) > 0:
 						ret = self.__processCommand(args)
 					if ret:
-						if PRODUCTION: # pragma: no cover
-							readline.parse_and_bind("tab: complete")
+						readline.parse_and_bind("tab: complete")
 						self.dispInteractive()
 						while True:
 							cmd = input_command()
@@ -411,11 +408,9 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 				signal.signal(s, sh)
 
 
-##
-# Wonderful visual :)
-#
-
 class _VisualWait:
+	"""Small progress indication (as "wonderful visual") during waiting process
+	"""
 	pos = 0
 	delta = 1
 	def __init__(self, maxpos=10):
@@ -427,12 +422,14 @@ class _VisualWait:
 			sys.stdout.write('\r'+(' '*(35+self.maxpos))+'\r')
 			sys.stdout.flush()
 	def heartbeat(self):
+		"""Show or step for progress indicator
+		"""
 		if not self.pos:
 			sys.stdout.write("\nINFO   [#" + (' '*self.maxpos) + "] Waiting on the server...\r\x1b[8C")
 		self.pos += self.delta
 		if self.delta > 0:
 			s = " #\x1b[1D" if self.pos > 1 else "# \x1b[2D"
-		else: 
+		else:
 			s = "\x1b[1D# \x1b[2D"
 		sys.stdout.write(s)
 		sys.stdout.flush()
@@ -441,6 +438,8 @@ class _VisualWait:
 		elif self.pos < 2:
 			self.delta = 1
 class _NotVisualWait:
+	"""Mockup for invisible progress indication (not verbose)
+	"""
 	def __enter__(self):
 		return self
 	def __exit__(self, *args):
@@ -449,6 +448,8 @@ class _NotVisualWait:
 		pass
 
 def VisualWait(verbose, *args, **kwargs):
+	"""Wonderful visual progress indication (if verbose)
+	"""
 	return _VisualWait(*args, **kwargs) if verbose > 1 else _NotVisualWait()
 
 

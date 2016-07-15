@@ -42,6 +42,7 @@ PRODUCTION = True
 
 MAX_WAITTIME = 30
 
+
 class Fail2banCmdLine():
 
 	def __init__(self):
@@ -83,9 +84,6 @@ class Fail2banCmdLine():
 		output("Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors")
 		output("Copyright of modifications held by their respective authors.")
 		output("Licensed under the GNU General Public License v2 (GPL).")
-		output("")
-		output("Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>.")
-		output("Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>.")
 
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
@@ -114,7 +112,7 @@ class Fail2banCmdLine():
 		output("    --timeout               timeout to wait for the server (for internal usage only, don't read configuration)")
 		output("    -h, --help              display this help message")
 		output("    -V, --version           print the version")
-		
+
 		if not caller.endswith('server'):
 			output("")
 			output("Command:")
@@ -187,7 +185,7 @@ class Fail2banCmdLine():
 			if ret is not None:
 				return ret
 
-			logSys.debug("-- conf: %r, args: %r", self._conf, self._args)
+			logSys.debug("  conf: %r, args: %r", self._conf, self._args)
 
 			if initial and PRODUCTION: # pragma: no cover - can't test
 				verbose = self._conf["verbose"]
@@ -259,13 +257,25 @@ class Fail2banCmdLine():
 			output(c)
 		return True
 
+	#
+	# _exit is made to ease mocking out of the behaviour in tests,
+	# since method is also exposed in API via globally bound variable
 	@staticmethod
-	def exit(code=0): # pragma: no cover - can't test
-		logSys.debug("Exit with code %s", code)
-		if os._exit:
+	def _exit(code=0):
+		if hasattr(os, '_exit') and os._exit:
 			os._exit(code)
 		else:
 			sys.exit(code)
+
+	@staticmethod
+	def exit(code=0):
+		logSys.debug("Exit with code %s", code)
+		# because of possible buffered output in python, we should flush it before exit:
+		sys.stdout.flush()
+		sys.stderr.flush()
+		# exit
+		Fail2banCmdLine._exit(code)
+
 
 # global exit handler:
 exit = Fail2banCmdLine.exit

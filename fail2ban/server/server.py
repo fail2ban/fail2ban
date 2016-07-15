@@ -88,6 +88,11 @@ class Server:
 		logSys.debug("Caught signal %d. Flushing logs" % signum)
 		self.flushLogs()
 
+	def _rebindSignal(self, s, new):
+		"""Bind new signal handler while storing old one in _prev_signals"""
+		self.__prev_signals[s] = signal.getsignal(s)
+		signal.signal(s, new)
+
 	def start(self, sock, pidfile, force=False, observer=True, conf={}):
 		# First set the mask to only allow access to owner
 		os.umask(0077)
@@ -121,9 +126,10 @@ class Server:
 
 		# Install signal handlers
 		if _thread_name() == '_MainThread':
-			for s in (signal.SIGTERM, signal.SIGINT, signal.SIGUSR1):
-				self.__prev_signals[s] = signal.getsignal(s)
-				signal.signal(s, self.__sigTERMhandler if s != signal.SIGUSR1 else self.__sigUSR1handler)
+			for s in (signal.SIGTERM, signal.SIGINT):
+				self._rebindSignal(s, self.__sigTERMhandler)
+			self._rebindSignal(signal.SIGUSR1, self.__sigUSR1handler)
+
 		# Ensure unhandled exceptions are logged
 		sys.excepthook = excepthook
 
@@ -389,7 +395,7 @@ class Server:
 		return self.__jails[name].getBanTimeExtra(opt)
 	
 	def isStarted(self):
-		self.__asyncServer.isActive()
+		return self.__asyncServer is not None and self.__asyncServer.isActive()
 
 	def isAlive(self, jailnum=None):
 		if jailnum is not None and len(self.__jails) != jailnum:
@@ -437,7 +443,7 @@ class Server:
 				getLogger("fail2ban").setLevel(getattr(logging, value))
 				self.__logLevel = value
 			except AttributeError:
-				raise ValueError("Invalid log level")
+				raise ValueError("Invalid log level %r" % value)
 	
 	##
 	# Get the logging level.
@@ -512,14 +518,14 @@ class Server:
 					# Is known to be thrown after logging was shutdown once
 					# with older Pythons -- seems to be safe to ignore there
 					# At least it was still failing on 2.6.2-0ubuntu1 (jaunty)
-					if (2,6,3) <= sys.version_info < (3,) or \
-							(3,2) <= sys.version_info:
+					if (2, 6, 3) <= sys.version_info < (3,) or \
+							(3, 2) <= sys.version_info:
 						raise
 			# tell the handler to use this format
 			hdlr.setFormatter(formatter)
 			logger.addHandler(hdlr)
 			# Does not display this message at startup.
-			if not self.__logTarget is None:
+			if self.__logTarget is not None:
 				logSys.info("Start Fail2ban v%s", version.version)
 				logSys.info(
 					"Changed logging target to %s for Fail2ban v%s"
@@ -608,9 +614,7 @@ class Server:
 		# We need to set this in the parent process, so it gets inherited by the
 		# child process, and this makes sure that it is effect even if the parent
 		# terminates quickly.
-		for s in (signal.SIGHUP,):
-			self.__prev_signals[s] = signal.getsignal(s)
-			signal.signal(s, signal.SIG_IGN)
+		self._rebindSignal(signal.SIGHUP, signal.SIG_IGN)
 
 		try:
 			# Fork a child process so the parent can exit.  This will return control

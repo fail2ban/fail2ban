@@ -159,6 +159,11 @@ class Transmitter(TransmitterBase):
 		self.server = TestServer()
 		super(Transmitter, self).setUp()
 
+	def testServerIsNotStarted(self):
+		# so far isStarted only tested but not used otherwise
+		# and here we don't really .start server
+		self.assertFalse(self.server.isStarted())
+
 	def testStopServer(self):
 		self.assertEqual(self.transm.proceed(["stop"]), (0, None))
 
@@ -1014,6 +1019,7 @@ class LoggingTests(LogCaptureTestCase):
 		server = TestServer()
 		try:
 			server.start(sock_name, pidfile_name, force=False)
+			self.assertFalse(server.isStarted())
 			self.assertLogged("Server already running")
 		finally:
 			server.quit()

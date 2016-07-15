@@ -46,7 +46,7 @@ class Fail2banServer(Fail2banCmdLine):
 
 	@staticmethod
 	def startServerDirect(conf, daemon=True):
-		logSys.debug("-- direct starting of server in %s, deamon: %s", os.getpid(), daemon)
+		logSys.debug("  direct starting of server in %s, deamon: %s", os.getpid(), daemon)
 		from ..server.server import Server
 		server = None
 		try:
@@ -54,7 +54,7 @@ class Fail2banServer(Fail2banCmdLine):
 			# server object will internally fork self if daemon is True
 			server = Server(daemon)
 			server.start(conf["socket"],
-							conf["pidfile"], conf["force"], 
+							conf["pidfile"], conf["force"],
 							conf=conf)
 		except Exception as e: # pragma: no cover
 			try:
@@ -79,7 +79,7 @@ class Fail2banServer(Fail2banCmdLine):
 		frk = not conf["async"] and PRODUCTION
 		if frk: # pragma: no cover
 			pid = os.fork()
-		logSys.debug("-- async starting of server in %s, fork: %s - %s", os.getpid(), frk, pid)
+		logSys.debug("  async starting of server in %s, fork: %s - %s", os.getpid(), frk, pid)
 		if pid == 0:
 			args = list()
 			args.append(SERVER)
