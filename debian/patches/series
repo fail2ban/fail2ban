@@ -1,3 +1,2 @@
 deb_init_paths
 deb_manpages_reportbug
-0001-BF-use-tests.utils.CONFIG_DIR-instead-of-fixed-one-C.patch
