@@ -22,6 +22,7 @@ __author__ = "Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
+import itertools
 import logging
 import optparse
 import os
@@ -323,16 +324,45 @@ def gatherTests(regexps=None, opts=None):
 	return tests
 
 
-# forwards compatibility of unittest.TestCase for some early python versions
-if not hasattr(unittest.TestCase, 'assertIn'):
-	def __assertIn(self, a, b, msg=None):
-		if a not in b: # pragma: no cover
-			self.fail(msg or "%r was not found in %r" % (a, b))
-	unittest.TestCase.assertIn = __assertIn
-	def __assertNotIn(self, a, b, msg=None):
-		if a in b: # pragma: no cover
-			self.fail(msg or "%r was found in %r" % (a, b))
-	unittest.TestCase.assertNotIn = __assertNotIn
+#
+# Forwards compatibility of unittest.TestCase for some early python versions
+#
+
+if not hasattr(unittest.TestCase, 'assertRaisesRegexp'):
+	def assertRaisesRegexp(self, exccls, regexp, fun, *args, **kwargs):
+		try:
+			fun(*args, **kwargs)
+		except exccls as e:
+			if re.search(regexp, e.message) is None:
+				self.fail('\"%s\" does not match \"%s\"' % (regexp, e.message))
+		else:
+			self.fail('%s not raised' % getattr(exccls, '__name__'))
+	unittest.TestCase.assertRaisesRegexp = assertRaisesRegexp
+
+# always custom following methods, because we use atm better version of both (support generators)
+if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
+	def assertIn(self, a, b, msg=None):
+		bb = b
+		wrap = False
+		if msg is None and hasattr(b, '__iter__') and not isinstance(b, basestring):
+			b, bb = itertools.tee(b)
+			wrap = True
+		if a not in b:
+			if wrap: bb = list(bb)
+			msg = msg or "%r was not found in %r" % (a, bb)
+			self.fail(msg)
+	unittest.TestCase.assertIn = assertIn
+	def assertNotIn(self, a, b, msg=None):
+		bb = b
+		wrap = False
+		if msg is None and hasattr(b, '__iter__') and not isinstance(b, basestring):
+			b, bb = itertools.tee(b)
+			wrap = True
+		if a in b:
+			if wrap: bb = list(bb)
+			msg = msg or "%r unexpectedly found in %r" % (a, bb)
+			self.fail(msg)
+	unittest.TestCase.assertNotIn = assertNotIn
 
 
 class LogCaptureTestCase(unittest.TestCase):

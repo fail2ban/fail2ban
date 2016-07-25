@@ -252,7 +252,7 @@ class Transmitter(TransmitterBase):
 			3) )
 		self.assertEqual(
 			self.transm.proceed(["stop", self.jailName]), (0, None))
-		self.assertTrue(self.jailName not in self.server._Server__jails)
+		self.assertNotIn(self.jailName, self.server._Server__jails)
 
 	def testStartStopAllJail(self):
 		self.server.addJail("TestJail2", FAST_BACKEND)
@@ -269,8 +269,8 @@ class Transmitter(TransmitterBase):
 			3) )
 		self.assertEqual(self.transm.proceed(["stop", "all"]), (0, None))
 		self.assertTrue( Utils.wait_for( lambda: not len(self.server._Server__jails), 3) )
-		self.assertTrue(self.jailName not in self.server._Server__jails)
-		self.assertTrue("TestJail2" not in self.server._Server__jails)
+		self.assertNotIn(self.jailName, self.server._Server__jails)
+		self.assertNotIn("TestJail2", self.server._Server__jails)
 
 	def testJailIdle(self):
 		self.assertEqual(

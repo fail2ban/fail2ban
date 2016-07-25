@@ -66,12 +66,12 @@ class ExecuteActions(LogCaptureTestCase):
 	def testActionsManipulation(self):
 		self.__actions.add('test')
 		self.assertTrue(self.__actions['test'])
-		self.assertTrue('test' in self.__actions)
-		self.assertFalse('nonexistant action' in self.__actions)
+		self.assertIn('test', self.__actions)
+		self.assertNotIn('nonexistant action', self.__actions)
 		self.__actions.add('test1')
 		del self.__actions['test']
 		del self.__actions['test1']
-		self.assertFalse('test' in self.__actions)
+		self.assertNotIn('test', self.__actions)
 		self.assertEqual(len(self.__actions), 0)
 
 		self.__actions.setBanTime(127)
