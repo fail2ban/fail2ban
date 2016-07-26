@@ -649,8 +649,9 @@ class JailsReaderTest(LogCaptureTestCase):
 
 			# and we know even some of them by heart
 			for j in ['sshd', 'recidive']:
-				# by default we have 'auto' backend ATM
-				self.assertTrue(['add', j, 'auto'] in comm_commands)
+				# by default we have 'auto' backend ATM, but some distributions can overwrite it, 
+				# (e.g. fedora default is 'systemd') therefore let check it without backend...
+				self.assertTrue([True for i in comm_commands if len(i) == 3 and i[0:2] == ['add', j]])
 				# and warn on useDNS
 				self.assertTrue(['set', j, 'usedns', 'warn'] in comm_commands)
 				self.assertTrue(['start', j] in comm_commands)
