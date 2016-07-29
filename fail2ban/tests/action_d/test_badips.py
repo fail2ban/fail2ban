@@ -51,7 +51,7 @@ if sys.version_info >= (2,7):
 
 		def testCategory(self):
 			categories = self.action.getCategories()
-			self.assertTrue("ssh" in categories)
+			self.assertIn("ssh", categories)
 			self.assertTrue(len(categories) >= 10)
 
 			self.assertRaises(

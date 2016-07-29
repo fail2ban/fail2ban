@@ -1320,11 +1320,11 @@ class DNSUtilsTests(unittest.TestCase):
 		for i in xrange(5):
 			c.set(i, i)
 		self.assertEqual([c.get(i) for i in xrange(5)], [i for i in xrange(5)])
-		self.assertFalse(-1 in [c.get(i, -1) for i in xrange(5)])
+		self.assertNotIn(-1, (c.get(i, -1) for i in xrange(5)))
 		# add one - too many:
 		c.set(10, i)
 		# one element should be removed :
-		self.assertTrue(-1 in [c.get(i, -1) for i in xrange(5)])
+		self.assertIn(-1, (c.get(i, -1) for i in xrange(5)))
 		# test max size (not expired):
 		for i in xrange(10):
 			c.set(i, 1)

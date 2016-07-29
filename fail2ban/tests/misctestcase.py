@@ -23,6 +23,7 @@ __license__ = "GPL"
 
 import logging
 import os
+import re
 import sys
 import unittest
 import tempfile
@@ -31,6 +32,8 @@ import fnmatch
 import datetime
 from glob import glob
 from StringIO import StringIO
+
+from utils import LogCaptureTestCase, logSys as DefLogSys
 
 from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger
 from ..helpers import splitwords
@@ -149,7 +152,7 @@ class SetupTest(unittest.TestCase):
 					  % (sys.executable, self.setup))
 
 
-class TestsUtilsTest(unittest.TestCase):
+class TestsUtilsTest(LogCaptureTestCase):
 
 	def testmbasename(self):
 		self.assertEqual(mbasename("sample.py"), 'sample')
@@ -184,12 +187,88 @@ class TestsUtilsTest(unittest.TestCase):
 			if not ('fail2ban-testcases' in s):
 				# we must be calling it from setup or nosetests but using at least
 				# nose's core etc
-				self.assertTrue('>' in s, msg="no '>' in %r" % s)
+				self.assertIn('>', s)
 			elif not ('coverage' in s):
 				# There is only "fail2ban-testcases" in this case, no true traceback
-				self.assertFalse('>' in s, msg="'>' present in %r" % s)
+				self.assertNotIn('>', s)
 
-			self.assertTrue(':' in s, msg="no ':' in %r" % s)
+			self.assertIn(':', s)
+
+	def _testAssertionErrorRE(self, regexp, fun, *args, **kwargs):
+		self.assertRaisesRegexp(AssertionError, regexp, fun, *args, **kwargs)
+	
+	def testExtendedAssertRaisesRE(self):
+		## test _testAssertionErrorRE several fail cases:
+		def _key_err(msg):
+			raise KeyError(msg)			
+		self.assertRaises(KeyError,
+			self._testAssertionErrorRE, r"^failed$", 
+				_key_err, 'failed')
+		self.assertRaises(AssertionError,
+			self._testAssertionErrorRE, r"^failed$",
+				self.fail, '__failed__')
+		self._testAssertionErrorRE(r'failed.* does not match .*__failed__',
+			lambda: self._testAssertionErrorRE(r"^failed$",
+				self.fail, '__failed__')
+		)
+		## no exception in callable:
+		self.assertRaises(AssertionError,
+			self._testAssertionErrorRE, r"", int, 1)
+		self._testAssertionErrorRE(r'0 AssertionError not raised X.* does not match .*AssertionError not raised',
+			lambda: self._testAssertionErrorRE(r"^0 AssertionError not raised X$",
+				lambda: self._testAssertionErrorRE(r"", int, 1))
+		)
+
+	def testExtendedAssertMethods(self):
+		## assertIn, assertNotIn positive case:
+		self.assertIn('a', ['a', 'b', 'c', 'd'])
+		self.assertIn('a', ('a', 'b', 'c', 'd',))
+		self.assertIn('a', 'cba')
+		self.assertIn('a', (c for c in 'cba' if c != 'b'))
+		self.assertNotIn('a', ['b', 'c', 'd'])
+		self.assertNotIn('a', ('b', 'c', 'd',))
+		self.assertNotIn('a', 'cbd')
+		self.assertNotIn('a', (c.upper() for c in 'cba' if c != 'b'))
+		## assertIn, assertNotIn negative case:
+		self._testAssertionErrorRE(r"'a' unexpectedly found in 'cba'",
+			self.assertNotIn, 'a', 'cba')
+		self._testAssertionErrorRE(r"1 unexpectedly found in \[0, 1, 2\]",
+			self.assertNotIn, 1, xrange(3))
+		self._testAssertionErrorRE(r"'A' unexpectedly found in \['C', 'A'\]",
+			self.assertNotIn, 'A', (c.upper() for c in 'cba' if c != 'b'))
+		self._testAssertionErrorRE(r"'a' was not found in 'xyz'",
+			self.assertIn, 'a', 'xyz')
+		self._testAssertionErrorRE(r"5 was not found in \[0, 1, 2\]",
+			self.assertIn, 5, xrange(3))
+		self._testAssertionErrorRE(r"'A' was not found in \['C', 'B'\]",
+			self.assertIn, 'A', (c.upper() for c in 'cba' if c != 'a'))
+		## assertLogged, assertNotLogged positive case:
+		logSys = DefLogSys
+		self.pruneLog()
+		logSys.debug('test "xyz"')
+		self.assertLogged('test "xyz"')
+		self.assertLogged('test', 'xyz', all=True)
+		self.assertNotLogged('test', 'zyx', all=False)
+		self.assertNotLogged('test_zyx', 'zyx', all=True)
+		self.assertLogged('test', 'zyx', all=False)
+		self.pruneLog()
+		logSys.debug('xxxx "xxx"')
+		self.assertNotLogged('test "xyz"')
+		self.assertNotLogged('test', 'xyz', all=False)
+		self.assertNotLogged('test', 'xyz', 'zyx', all=True)
+		## assertLogged, assertNotLogged negative case:
+		self.pruneLog()
+		logSys.debug('test "xyz"')
+		self._testAssertionErrorRE(r"All of the .* were found present in the log",
+			self.assertNotLogged, 'test "xyz"')
+		self._testAssertionErrorRE(r"was found in the log",
+			self.assertNotLogged, 'test', 'xyz', all=True)
+		self._testAssertionErrorRE(r"was not found in the log",
+			self.assertLogged, 'test', 'zyx', all=True)
+		self._testAssertionErrorRE(r"None among .* was found in the log",
+			self.assertLogged, 'test_zyx', 'zyx', all=False)
+		self._testAssertionErrorRE(r"All of the .* were found present in the log",
+			self.assertNotLogged, 'test', 'xyz', all=False)
 
 	def testFormatterWithTraceBack(self):
 		strout = StringIO()
