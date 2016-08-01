@@ -525,12 +525,12 @@ class JailsReaderTest(LogCaptureTestCase):
 				self.assertTrue(actionReader.read())
 				actionReader.getOptions({})	  # populate _opts
 				if not actionName.endswith('-common'):
-					self.assertTrue('Definition' in actionReader.sections(),
+					self.assertIn('Definition', actionReader.sections(),
 						msg="Action file %r is lacking [Definition] section" % actionConfig)
 					# all must have some actionban defined
 					self.assertTrue(actionReader._opts.get('actionban', '').strip(),
 						msg="Action file %r is lacking actionban" % actionConfig)
-				self.assertTrue('Init' in actionReader.sections(),
+				self.assertIn('Init', actionReader.sections(),
 						msg="Action file %r is lacking [Init] section" % actionConfig)
 
 		def testReadStockJailConf(self):
@@ -582,7 +582,7 @@ class JailsReaderTest(LogCaptureTestCase):
 					self.assertTrue(len(actName))
 					self.assertTrue(isinstance(actOpt, dict))
 					if actName == 'iptables-multiport':
-						self.assertTrue('port' in actOpt)
+						self.assertIn('port', actOpt)
 
 					actionReader = ActionReader(
 						actName, jail, {}, basedir=CONFIG_DIR)
@@ -632,11 +632,13 @@ class JailsReaderTest(LogCaptureTestCase):
 
 			# and we know even some of them by heart
 			for j in ['sshd', 'recidive']:
-				# by default we have 'auto' backend ATM
-				self.assertTrue(['add', j, 'auto'] in comm_commands)
+				# by default we have 'auto' backend ATM, but some distributions can overwrite it, 
+				# (e.g. fedora default is 'systemd') therefore let check it without backend...
+				self.assertIn(['add', j], 
+					(cmd[:2] for cmd in comm_commands if len(cmd) == 3 and cmd[0] == 'add'))
 				# and warn on useDNS
-				self.assertTrue(['set', j, 'usedns', 'warn'] in comm_commands)
-				self.assertTrue(['start', j] in comm_commands)
+				self.assertIn(['set', j, 'usedns', 'warn'], comm_commands)
+				self.assertIn(['start', j], comm_commands)
 
 			# last commands should be the 'start' commands
 			self.assertEqual(comm_commands[-1][0], 'start')
@@ -655,7 +657,7 @@ class JailsReaderTest(LogCaptureTestCase):
 					action_name = action.getName()
 					if '<blocktype>' in str(commands):
 						# Verify that it is among cInfo
-						self.assertTrue('blocktype' in action._initOpts)
+						self.assertIn('blocktype', action._initOpts)
 						# Verify that we have a call to set it up
 						blocktype_present = False
 						target_command = ['set', jail_name, 'action', action_name, 'blocktype']

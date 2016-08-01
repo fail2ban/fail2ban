@@ -293,8 +293,12 @@ class Fail2BanDb(object):
 			Jail to be added to the database.
 		"""
 		cur.execute(
-			"INSERT OR REPLACE INTO jails(name, enabled) VALUES(?, 1)",
+			"INSERT OR IGNORE INTO jails(name, enabled) VALUES(?, 1)",
 			(jail.name,))
+		if cur.rowcount <= 0:
+			cur.execute(
+				"UPDATE jails SET enabled = 1 WHERE name = ? AND enabled != 1",
+				(jail.name,))
 
 	@commitandrollback
 	def delJail(self, cur, jail):
@@ -317,7 +321,7 @@ class Fail2BanDb(object):
 		cur.execute("UPDATE jails SET enabled=0")
 
 	@commitandrollback
-	def getJailNames(self, cur):
+	def getJailNames(self, cur, enabled=None):
 		"""Get name of jails in database.
 
 		Currently only used for testing purposes.
@@ -327,7 +331,11 @@ class Fail2BanDb(object):
 		set
 			Set of jail names.
 		"""
-		cur.execute("SELECT name FROM jails")
+		if enabled is None:
+			cur.execute("SELECT name FROM jails")
+		else:
+			cur.execute("SELECT name FROM jails WHERE enabled=%s" %
+				(int(enabled),))
 		return set(row[0] for row in cur.fetchmany())
 
 	@commitandrollback
