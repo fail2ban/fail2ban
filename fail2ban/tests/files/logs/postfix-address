@@ -1,0 +1,5 @@
+# failJSON: { "time": "2005-07-15T17:40:29", "match": true , "host": "1.1.1.1" }
+Jul 15 17:40:29 anton postfix/smtpd[21824]: NOQUEUE: reject: RCPT from unknown[1.1.1.1]: 550 5.1.1 <target-not-existing@mydomain.com>: Recipient address rejected: User unknown in virtual mailbox table; from=<randomname@example.com> to=<target-not-existing@mydomain.com> proto=ESMTP helo=<jkqw4bd90>
+
+# failJSON: { "time": "2005-08-10T10:55:38", "match": true , "host": "72.53.132.234" }
+Aug 10 10:55:38 f-vanier-bourgeois postfix/smtpd[2162]: NOQUEUE: reject: VRFY from 72-53-132-234.cpe.distributel.net[72.53.132.234]: 550 5.1.1 : Recipient address rejected: User unknown in local recipient tab
