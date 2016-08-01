@@ -11,57 +11,58 @@ ver. 0.10.0 (2016/XX/XXX) - gonna-be-released-some-time-shining
 
 TODO: implementing of options resp. other tasks from PR #1346
 
-- Fixes:
-   * [grave] memory leak's fixed (gh-1277, gh-1234)
-   * tricky bug fix: last position of log file will be never retrieved (gh-795),
-     because of CASCADE all log entries will be deleted from logs table together with jail, 
-     if used "INSERT OR REPLACE" statement
-   * asyncserver (asyncore) code fixed and test cases repaired (again gh-161)
-   * testSocket: sporadical bug repaired - wait for server thread starts a socket (listener)
-   * testExecuteTimeoutWithNastyChildren: sporadical bug repaired - wait for pid file inside bash,
-     kill tree in any case (gh-1155)
+### Fixes
+* [grave] memory leak's fixed (gh-1277, gh-1234)
+* tricky bug fix: last position of log file will be never retrieved (gh-795),
+  because of CASCADE all log entries will be deleted from logs table together with jail, 
+  if used "INSERT OR REPLACE" statement
+* asyncserver (asyncore) code fixed and test cases repaired (again gh-161)
+* testSocket: sporadical bug repaired - wait for server thread starts a socket (listener)
+* testExecuteTimeoutWithNastyChildren: sporadical bug repaired - wait for pid file inside bash,
+  kill tree in any case (gh-1155)
 
-- New Features:
-   * IPv6 support:
-     - IP addresses are now handled as objects rather than strings capable for 
-       handling both address types IPv4 and IPv6
-     - iptables related actions have been amended to support IPv6 specific actions
-       additionally
-     - hostsdeny and route actions have been tested to be aware of v4 and v6 already
-     - pf action for *BSD systems has been improved and supports now also v4 and v6
-     - name resolution is now working for either address type
-		 - new conditional section functionality used in config resp. includes:
-       - [Init?family=inet4] - IPv4 qualified hosts only
-       - [Init?family=inet6] - IPv6 qualified hosts only
+### New Features
+* IPv6 support:
+    - IP addresses are now handled as objects rather than strings capable for 
+      handling both address types IPv4 and IPv6
+    - iptables related actions have been amended to support IPv6 specific actions
+      additionally
+    - hostsdeny and route actions have been tested to be aware of v4 and v6 already
+    - pf action for *BSD systems has been improved and supports now also v4 and v6
+    - name resolution is now working for either address type
+    - new conditional section functionality used in config resp. includes:
+      - [Init?family=inet4] - IPv4 qualified hosts only
+      - [Init?family=inet6] - IPv6 qualified hosts only
 
-- Enhancements:
-   * huge increasing of fail2ban performance and especially test-cases performance (see gh-1109)
-   * datedetector: in-place reordering using hits and last used time: 
-     matchTime, template list etc. rewritten because of performance degradation
-   * prevent out of memory situation if many IP's makes extremely many failures (maxEntries)
-   * introduced string to seconds (str2seconds) for configuration entries with time,
-     use `1h` instead of `3600`, `1d` instead of `86400`, etc
-   * seekToTime - prevent completely read of big files first time (after start of service), 
-     initial seek to start time using half-interval search algorithm (see issue gh-795)
-   * ticket and some other modules prepared to easy merge with newest version of 'ban-time-incr'
-   * cache dnsToIp, ipToName to prevent long wait during retrieving of ip/name,
-     especially for wrong dns or lazy dns-system
-   * FailManager memory-optimization: increases performance, 
-     prevents memory leakage, because don't copy failures list on some operations
-   * fail2ban-testcases - new options introduced:
-     - `-f`, `--fast` to decrease wait intervals, avoid passive waiting, and skip
-       few very slow test cases (implied memory database, see `-m` and no gamin tests `-g`)
-     - `-g`, `--no-gamin` to prevent running of tests that require the gamin (slow)
-     - `-m`, `--memory-db` - run database tests using memory instead of file
-     - `-i`, `--ignore` - negate [regexps] filter to ignore tests matched specified regexps
-   * background servicing: prevents memory leak on some platforms/python versions, using forced GC
-     in periodic intervals (latency and threshold)
-   * executeCmd partially moved from action to new module utils
-   * several functionality of class `DNSUtils` moved to new class `IPAddr`, 
-     both classes moved to new module `ipdns`
-   * pseudo-conditional section introduced, for conditional substitution resp. 
-     evaluation of parameters for different family qualified hosts, 
-     syntax `[Section?family=inet6]` (currently use for IPv6-support only).
+### Enhancements
+* huge increasing of fail2ban performance and especially test-cases performance (see gh-1109)
+* datedetector: in-place reordering using hits and last used time: 
+  matchTime, template list etc. rewritten because of performance degradation
+* prevent out of memory situation if many IP's makes extremely many failures (maxEntries)
+* introduced string to seconds (str2seconds) for configuration entries with time,
+  use `1h` instead of `3600`, `1d` instead of `86400`, etc
+* seekToTime - prevent completely read of big files first time (after start of service), 
+  initial seek to start time using half-interval search algorithm (see issue gh-795)
+* ticket and some other modules prepared to easy merge with newest version of 'ban-time-incr'
+* cache dnsToIp, ipToName to prevent long wait during retrieving of ip/name,
+  especially for wrong dns or lazy dns-system
+* FailManager memory-optimization: increases performance, 
+  prevents memory leakage, because don't copy failures list on some operations
+* fail2ban-testcases - new options introduced:
+    - `-f`, `--fast` to decrease wait intervals, avoid passive waiting, and skip
+      few very slow test cases (implied memory database, see `-m` and no gamin tests `-g`)
+    - `-g`, `--no-gamin` to prevent running of tests that require the gamin (slow)
+    - `-m`, `--memory-db` - run database tests using memory instead of file
+    - `-i`, `--ignore` - negate [regexps] filter to ignore tests matched specified regexps
+* background servicing: prevents memory leak on some platforms/python versions, using forced GC
+  in periodic intervals (latency and threshold)
+* executeCmd partially moved from action to new module utils
+* several functionality of class `DNSUtils` moved to new class `IPAddr`, 
+  both classes moved to new module `ipdns`
+* pseudo-conditional section introduced, for conditional substitution resp. 
+  evaluation of parameters for different family qualified hosts, 
+  syntax `[Section?family=inet6]` (currently use for IPv6-support only).
+
 
 ver. 0.9.5 (2016/07/15) - old-not-obsolete
 -----------
