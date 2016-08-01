@@ -1,0 +1,18 @@
+# failJSON: { "match": false }
+Jul  8 01:47:19 ldap-server slapd[1183]: conn=1022 fd=21 ACCEPT from IP=8.8.8.8:45011 (IP=0.0.0.0:636)
+# failJSON: { "match": false }
+Jul  8 01:47:19 ldap-server slapd[1183]: conn=1022 fd=21 TLS established tls_ssf=256 ssf=256
+# failJSON: { "match": false }
+Jul  8 01:47:19 ldap-server slapd[1183]: conn=1022 op=0 EXT oid=1.3.6.1.4.1.6.1
+# failJSON: { "match": false }
+Jul  8 01:47:19 ldap-server slapd[1183]: conn=1022 op=0 STARTTLS
+# failJSON: { "match": false }
+Jul  8 01:47:19 ldap-server slapd[1183]: conn=1022 op=0 RESULT oid= err=1 text=TLS already started
+# failJSON: { "match": false }
+Jul  8 01:47:20 ldap-server slapd[1183]: conn=1022 op=1 BIND dn="uid=gipson,ou=people,dc=example,dc=com" method=128
+# failJSON: { "time": "2005-07-08T01:47:20", "match": true , "host": "8.8.8.8", "desc": "Multiline match for invalid credentials" }
+Jul  8 01:47:20 ldap-server slapd[1183]: conn=1022 op=1 RESULT tag=97 err=49 text=
+# failJSON: { "match": false }
+Jul  8 01:47:20 ldap-server slapd[1183]: conn=1022 op=2 UNBIND
+# failJSON: { "match": false }
+Jul  8 01:47:20 ldap-server slapd[1183]: conn=1022 fd=21 closed

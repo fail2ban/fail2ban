@@ -130,6 +130,7 @@ config/filter.d/selinux-ssh.conf
 config/filter.d/sendmail-auth.conf
 config/filter.d/sendmail-reject.conf
 config/filter.d/sieve.conf
+config/filter.d/slapd.conf
 config/filter.d/sogo-auth.conf
 config/filter.d/solid-pop3d.conf
 config/filter.d/squid.conf
@@ -314,6 +315,7 @@ fail2ban/tests/files/logs/selinux-ssh
 fail2ban/tests/files/logs/sendmail-auth
 fail2ban/tests/files/logs/sendmail-reject
 fail2ban/tests/files/logs/sieve
+fail2ban/tests/files/logs/slapd
 fail2ban/tests/files/logs/sogo-auth
 fail2ban/tests/files/logs/solid-pop3d
 fail2ban/tests/files/logs/squid
