@@ -14,6 +14,8 @@ new features (e.g. IPv6 support), please consider 0.10 branch and its
 releases.
 
 ### Fixes
+* `filter.d/assp.conf`
+    - Extended failregex and test cases to handle ASSP V1 and V2 (gh-1494)
 * `filter.d/monit.conf`
     - Extended failregex with new monit "access denied" version (gh-1355)
     - failregex of previous monit version merged as single expression
