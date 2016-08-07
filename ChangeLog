@@ -33,7 +33,9 @@ TODO: implementing of options resp. other tasks from PR #1346
     - new conditional section functionality used in config resp. includes:
       - [Init?family=inet4] - IPv4 qualified hosts only
       - [Init?family=inet6] - IPv6 qualified hosts only
-
+* New Actions:
+    - `action.d/npf.conf` for NPF, the latest packet filter for NetBSD
+    
 ### Enhancements
 * huge increasing of fail2ban performance and especially test-cases performance (see gh-1109)
 * datedetector: in-place reordering using hits and last used time: 
