@@ -19,8 +19,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 __author__ = "Cyril Jaquier, Steven Hiscocks, Yaroslav Halchenko"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2008-2013 Fail2Ban Contributors"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2008-2016 Fail2Ban Contributors"
 __license__ = "GPL"
+
+import platform
 
 try:
 	import setuptools
@@ -85,6 +87,18 @@ if os.path.exists('/var/run'):
 	# realpath is used to possibly resolve /var/run -> /run symlink
 	data_files_extra += [(realpath('/var/run/fail2ban'), '')]
 
+# Installing documentation files only under Linux or other GNU/ systems
+# (e.g. GNU/kFreeBSD), since others might have protective mechanisms forbidding
+# installation there (see e.g. #1233)
+platform_system = platform.system().lower()
+doc_files = ['README.md', 'DEVELOP', 'FILTERS', 'doc/run-rootless.txt']
+if platform_system in ('solaris', 'sunos'):
+	doc_files.append('README.Solaris')
+if platform_system in ('linux', 'solaris', 'sunos') or platform_system.startswith('gnu'):
+	data_files_extra.append(
+		('/usr/share/doc/fail2ban', doc_files)
+	)
+
 # Get version number, avoiding importing fail2ban.
 # This is due to tests not functioning for python3 as 2to3 takes place later
 exec(open(join("fail2ban", "version.py")).read())
@@ -148,10 +162,6 @@ setup(
 		('/var/lib/fail2ban',
 			''
 		),
-		('/usr/share/doc/fail2ban',
-			['README.md', 'README.Solaris', 'DEVELOP', 'FILTERS',
-			 'doc/run-rootless.txt']
-		)
 	] + data_files_extra,
 	**setup_extra
 )
