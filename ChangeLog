@@ -20,6 +20,8 @@ releases.
   (e.g. test-cases faults on Fedora, see gh-1353)
 * `filter.d/assp.conf`
     - Extended failregex and test cases to handle ASSP V1 and V2 (gh-1494)
+* `filter.d/postfix-sasl.conf`
+    - Allow for having no trailing space after 'failed:' (gh-1497)
 
 ### New Features
 
