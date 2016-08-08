@@ -18,6 +18,8 @@ releases.
   induced a subsequent error: last position of log file will be never retrieved (gh-795)
 * Fixed a distribution related bug within testReadStockJailConfForceEnabled
   (e.g. test-cases faults on Fedora, see gh-1353)
+* `filter.d/assp.conf`
+    - Extended failregex and test cases to handle ASSP V1 and V2 (gh-1494)
 
 ### New Features
 
