@@ -41,6 +41,8 @@ script:
   - if [[ "$F2B_PY_3" ]]; then coverage run bin/fail2ban-testcases; fi
   # Use $VENV_BIN (not python) or else sudo will always run the system's python (2.7)
   - sudo $VENV_BIN/pip install .
+  # Doc files should get installed on Travis under Linux
+  - test -e /usr/share/doc/fail2ban/FILTERS
 after_success:
   - coveralls
   - codecov
