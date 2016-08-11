@@ -104,9 +104,10 @@ def initTests(opts):
 		# (prevent long sleeping during test cases ... less time goes to sleep):
 		Utils.DEFAULT_SLEEP_TIME = 0.0025
 		Utils.DEFAULT_SLEEP_INTERVAL = 0.0005
-		def F2B_SkipIfFast():
-			raise unittest.SkipTest('Skip test because of "--fast"')
-		unittest.F2B.SkipIfFast = F2B_SkipIfFast
+		if sys.version_info >= (2,7): # no skip in previous version:
+			def F2B_SkipIfFast():
+				raise unittest.SkipTest('Skip test because of "--fast"')
+			unittest.F2B.SkipIfFast = F2B_SkipIfFast
 	else:
 		# sleep intervals are large - use replacement for sleep to check time to sleep:
 		_org_sleep = time.sleep
@@ -333,8 +334,8 @@ if not hasattr(unittest.TestCase, 'assertRaisesRegexp'):
 		try:
 			fun(*args, **kwargs)
 		except exccls as e:
-			if re.search(regexp, e.message) is None:
-				self.fail('\"%s\" does not match \"%s\"' % (regexp, e.message))
+			if re.search(regexp, str(e)) is None:
+				self.fail('\"%s\" does not match \"%s\"' % (regexp, e))
 		else:
 			self.fail('%s not raised' % getattr(exccls, '__name__'))
 	unittest.TestCase.assertRaisesRegexp = assertRaisesRegexp
