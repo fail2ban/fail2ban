@@ -70,16 +70,21 @@ class HelpersTest(unittest.TestCase):
 		self.assertEqual(splitwords(' 1\n  2, 3'), ['1', '2', '3'])
 
 
+if sys.version_info >= (2,7):
+	def _sh_call(cmd):
+		import subprocess, locale
+		ret = subprocess.check_output(cmd, shell=True)
+		if sys.version_info >= (3,):
+			ret = ret.decode(locale.getpreferredencoding(), 'replace')
+		return str(ret).rstrip()
+else:
+	def _sh_call(cmd):
+		import subprocess
+		ret = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
+		return str(ret).rstrip()
+
 def _getSysPythonVersion():
-	import subprocess, locale
-	sysVerCmd = "fail2ban-python -c 'import sys; print(tuple(sys.version_info))'"
-	if sys.version_info >= (2,7):
-		sysVer = subprocess.check_output(sysVerCmd, shell=True)
-	else:
-		sysVer = subprocess.Popen(sysVerCmd, shell=True, stdout=subprocess.PIPE).stdout.read()
-	if sys.version_info >= (3,):
-		sysVer = sysVer.decode(locale.getpreferredencoding(), 'replace')
-	return str(sysVer).rstrip()
+	return _sh_call("fail2ban-python -c 'import sys; print(tuple(sys.version_info))'")
 
 class SetupTest(unittest.TestCase):
 
@@ -142,9 +147,13 @@ class SetupTest(unittest.TestCase):
 					  'etc/fail2ban/jail.conf'):
 				self.assertTrue(os.path.exists(os.path.join(tmp, f)),
 								msg="Can't find %s" % f)
-			self.assertEqual(
-				os.path.realpath(os.path.join(tmp, 'usr/local/bin/fail2ban-python')),
-				os.path.realpath(sys.executable))
+			# Because the install (test) path in virtual-env differs from some development-env,
+			# it is not a `tmp + '/usr/local/bin/'`, so search for it:
+			installedPath = _sh_call('find ' + tmp+ ' -name fail2ban-python').split('\n')
+			self.assertTrue(len(installedPath) > 0)
+			for installedPath in installedPath:
+				self.assertEqual(
+					os.path.realpath(installedPath), os.path.realpath(sys.executable))
 
 		finally:
 			# clean up
