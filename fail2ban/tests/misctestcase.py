@@ -70,6 +70,17 @@ class HelpersTest(unittest.TestCase):
 		self.assertEqual(splitwords(' 1\n  2, 3'), ['1', '2', '3'])
 
 
+def _getSysPythonVersion():
+	import subprocess, locale
+	sysVerCmd = "fail2ban-python -c 'import sys; print(tuple(sys.version_info))'"
+	if sys.version_info >= (2,7):
+		sysVer = subprocess.check_output(sysVerCmd, shell=True)
+	else:
+		sysVer = subprocess.Popen(sysVerCmd, shell=True, stdout=subprocess.PIPE).stdout.read()
+	if sys.version_info >= (3,):
+		sysVer = sysVer.decode(locale.getpreferredencoding(), 'replace')
+	return str(sysVer).rstrip()
+
 class SetupTest(unittest.TestCase):
 
 	def setUp(self):
@@ -79,6 +90,12 @@ class SetupTest(unittest.TestCase):
 			raise unittest.SkipTest(
 				"Seems to be running not out of source distribution"
 				" -- cannot locate setup.py")
+		# compare current version of python installed resp. active one:
+		sysVer = _getSysPythonVersion()
+		if sysVer != str(tuple(sys.version_info)):
+			raise unittest.SkipTest(
+				"Seems to be running with python distribution %s"
+				" -- install can be tested only with system distribution %s" % (str(tuple(sys.version_info)), sysVer))
 
 	def testSetupInstallRoot(self):
 		if not self.setup:
@@ -125,6 +142,10 @@ class SetupTest(unittest.TestCase):
 					  'etc/fail2ban/jail.conf'):
 				self.assertTrue(os.path.exists(os.path.join(tmp, f)),
 								msg="Can't find %s" % f)
+			self.assertEqual(
+				os.path.realpath(os.path.join(tmp, 'usr/local/bin/fail2ban-python')),
+				os.path.realpath(sys.executable))
+
 		finally:
 			# clean up
 			shutil.rmtree(tmp)

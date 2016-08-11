@@ -40,11 +40,45 @@ except ImportError:
 	# python 2.x
 	from distutils.command.build_py import build_py
 	from distutils.command.build_scripts import build_scripts
+# all versions
+from distutils.command.install_scripts import install_scripts
+
 import os
 from os.path import isfile, join, isdir, realpath
 import sys
 import warnings
 from glob import glob
+
+
+def updatePyExec(bindir, executable=None):
+	"""Update fail2ban-python link to current python version (where f2b-modules located/installed)
+	"""
+	bindir = os.path.realpath(bindir)
+	if executable is None:
+		executable = sys.executable
+	pypath = os.path.join(bindir, 'fail2ban-python')
+	# if not exists or point to another version - update link:
+	isfile = os.path.isfile(pypath)
+	if not isfile or os.path.realpath(pypath) != os.path.realpath(executable):
+		if isfile:
+			os.unlink(pypath)
+		os.symlink(executable, pypath)
+
+
+# Wrapper to install python binding (to current python version):
+class install_scripts_f2b(install_scripts):
+
+	def get_outputs(self):
+		outputs = install_scripts.get_outputs(self)
+		fn = None
+		for fn in outputs:
+			if os.path.basename(fn) == 'fail2ban-server':
+				break
+		bindir = os.path.dirname(fn)
+		print('creating fail2ban-python binding -> %s' % (bindir,))
+		updatePyExec(bindir)
+		return outputs
+
 
 if setuptools and "test" in sys.argv:
 	import logging
@@ -113,12 +147,16 @@ setup(
 	url = "http://www.fail2ban.org",
 	license = "GPL",
 	platforms = "Posix",
-	cmdclass = {'build_py': build_py, 'build_scripts': build_scripts},
+	cmdclass = {
+		'build_py': build_py, 'build_scripts': build_scripts, 
+		'install_scripts': install_scripts_f2b
+	},
 	scripts = [
 		'bin/fail2ban-client',
 		'bin/fail2ban-server',
 		'bin/fail2ban-regex',
 		'bin/fail2ban-testcases',
+		# 'bin/fail2ban-python', -- link (binary), will be installed via install_scripts_f2b wrapper
 	],
 	packages = [
 		'fail2ban',
