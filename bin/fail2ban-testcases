@@ -38,10 +38,13 @@ if os.path.exists("fail2ban/__init__.py"):
 from fail2ban.version import version
 
 from fail2ban.tests.utils import gatherTests
-from fail2ban.helpers import FormatterWithTraceBack, getLogger
+from fail2ban.helpers import updatePyExec, FormatterWithTraceBack, getLogger
 from fail2ban.server.mytime import MyTime
 
 from optparse import OptionParser, Option
+
+# Update fail2ban-python env to current python version (where f2b-modules located/installed)
+updatePyExec(os.path.dirname(__file__))
 
 def get_opt_parser():
 	# use module docstring for help output

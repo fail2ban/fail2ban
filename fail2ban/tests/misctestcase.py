@@ -73,7 +73,7 @@ class HelpersTest(unittest.TestCase):
 
 def _getSysPythonVersion():
 	import subprocess, locale
-	sysVerCmd = "python -c 'import sys; print(tuple(sys.version_info))'"
+	sysVerCmd = "fail2ban-python -c 'import sys; print(tuple(sys.version_info))'"
 	if sys.version_info >= (2,7):
 		sysVer = subprocess.check_output(sysVerCmd, shell=True)
 	else:
@@ -144,6 +144,10 @@ class SetupTest(unittest.TestCase):
 					  'etc/fail2ban/jail.conf'):
 				self.assertTrue(os.path.exists(os.path.join(tmp, f)),
 								msg="Can't find %s" % f)
+			self.assertEqual(
+				os.path.realpath(os.path.join(tmp, 'usr/local/bin/fail2ban-python')),
+				os.path.realpath(sys.executable))
+
 		finally:
 			# clean up
 			shutil.rmtree(tmp)
