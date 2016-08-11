@@ -38,7 +38,8 @@ if os.path.exists("fail2ban/__init__.py"):
 from fail2ban.version import version
 
 from fail2ban.tests.utils import gatherTests
-from fail2ban.helpers import updatePyExec, FormatterWithTraceBack, getLogger
+from fail2ban.helpers import FormatterWithTraceBack, getLogger
+from fail2ban.setup import updatePyExec
 from fail2ban.server.mytime import MyTime
 
 from optparse import OptionParser, Option
