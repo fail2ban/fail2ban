@@ -113,6 +113,7 @@ else: # pragma: no cover
 	# ticking, unless like with '-l critical' which would be silent
 	# unless error occurs
 	logSys.setLevel(getattr(logging, 'CRITICAL'))
+opts.log_level = logSys.level
 
 # Add the default logging handler
 stdout = logging.StreamHandler(sys.stdout)
@@ -140,7 +141,7 @@ logSys.addHandler(stdout)
 #
 # Let know the version
 #
-if not opts.log_level or opts.log_level != 'critical': # pragma: no cover
+if opts.log_level != logging.CRITICAL: # pragma: no cover
 	print("Fail2ban %s test suite. Python %s. Please wait..." \
 			% (version, str(sys.version).replace('\n', '')))
 
