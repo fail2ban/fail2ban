@@ -28,6 +28,7 @@ try:
 	import setuptools
 	from setuptools import setup
 	from setuptools.command.install import install
+	from setuptools.command.install_scripts import install_scripts
 except ImportError:
 	setuptools = None
 	from distutils.core import setup
@@ -35,9 +36,9 @@ except ImportError:
 # all versions
 from distutils.command.build_py import build_py
 from distutils.command.build_scripts import build_scripts
-from distutils.command.install_scripts import install_scripts
 if setuptools is None:
 	from distutils.command.install import install
+	from distutils.command.install_scripts import install_scripts
 try:
 	# python 3.x
 	from distutils.command.build_py import build_py_2to3
