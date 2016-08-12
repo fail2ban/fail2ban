@@ -66,7 +66,11 @@ class install_scripts_f2b(install_scripts):
 
 
 # Update fail2ban-python env to current python version (where f2b-modules located/installed)
-updatePyExec(os.path.join(os.path.dirname(__file__), 'bin'))
+rootdir = os.path.realpath(os.path.dirname(
+	# __file__ seems to be overwritten sometimes on some python versions (e.g. bug of 2.6 by running under cProfile, etc.):
+	sys.argv[0] if os.path.basename(sys.argv[0]) == 'setup.py' else __file__
+))
+updatePyExec(os.path.join(rootdir, 'bin'))
 
 if setuptools and "test" in sys.argv:
 	import logging
