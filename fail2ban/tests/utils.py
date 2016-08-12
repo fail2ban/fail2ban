@@ -59,12 +59,73 @@ if not CONFIG_DIR:
 os.putenv('PYTHONPATH', os.path.dirname(os.path.dirname(os.path.dirname(
 	os.path.abspath(__file__)))))
 
-class F2B(optparse.Values):
-	def __init__(self, opts={}):
-		self.__dict__ = opts.__dict__ if opts else {
-			'fast': False, 'memory_db':False, 'no_gamin': False, 'no_network': False, 
-			"negate_re": False,
+# Default options, if running from installer (setup.py):
+class DefaultTestOptions(optparse.Values):
+	def __init__(self):
+		self.__dict__ = {
+			'log_level': None, 'log_traceback': None, 'full_traceback': None,
+			'fast': False, 'memory_db': False, 'no_gamin': False,
+			'no_network': False, 'negate_re': False
 		}
+
+#
+# Initialization
+#
+def initProcess(opts):
+	# Logger:
+	logSys = getLogger("fail2ban")
+
+	# Numerical level of verbosity corresponding to a log "level"
+	verbosity = {'heavydebug': 4,
+				 'debug': 3,
+				 'info': 2,
+				 'notice': 2,
+				 'warning': 1,
+				 'error': 1,
+				 'critical': 0,
+				 None: 1}[opts.log_level]
+	opts.verbosity = verbosity
+
+	if opts.log_level is not None: # pragma: no cover
+		# so we had explicit settings
+		logSys.setLevel(getattr(logging, opts.log_level.upper()))
+	else: # pragma: no cover
+		# suppress the logging but it would leave unittests' progress dots
+		# ticking, unless like with '-l critical' which would be silent
+		# unless error occurs
+		logSys.setLevel(logging.CRITICAL)
+	opts.log_level = logSys.level
+
+	# Add the default logging handler
+	stdout = logging.StreamHandler(sys.stdout)
+
+	fmt = ' %(message)s'
+
+	if opts.log_traceback: # pragma: no cover
+		from ..helpers import FormatterWithTraceBack as Formatter
+		fmt = (opts.full_traceback and ' %(tb)s' or ' %(tbc)s') + fmt
+	else:
+		Formatter = logging.Formatter
+
+	# Custom log format for the verbose tests runs
+	if verbosity > 1: # pragma: no cover
+		if verbosity > 3:
+			fmt = ' | %(module)15.15s-%(levelno)-2d: %(funcName)-20.20s |' + fmt
+		if verbosity > 2:
+			fmt = ' +%(relativeCreated)5d %(thread)X %(name)-25.25s %(levelname)-5.5s' + fmt
+		else:
+			fmt = ' %(asctime)-15s %(thread)X %(levelname)-5.5s' + fmt
+
+	#
+	stdout.setFormatter(Formatter(fmt))
+	logSys.addHandler(stdout)
+	#
+	return opts;
+
+
+class F2B(optparse.Values):
+	def __init__(self, opts):
+		self.__dict__ = opts.__dict__
 		if self.fast:
 			self.memory_db = True
 			self.no_gamin = True
@@ -114,6 +175,9 @@ if not hasattr(unittest, 'SkipTest'): # pragma: no cover
 	unittest._TextTestResult.addError = addError
 
 def initTests(opts):
+	## if running from installer (setup.py):
+	if not opts:
+		opts = initProcess(DefaultTestOptions())
 	unittest.F2B = F2B(opts)
 	# --fast :
 	if unittest.F2B.fast: # pragma: no cover
