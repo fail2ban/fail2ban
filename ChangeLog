@@ -64,12 +64,53 @@ TODO: implementing of options resp. other tasks from PR #1346
   syntax `[Section?family=inet6]` (currently use for IPv6-support only).
 
 
-ver. 0.9.5 (2016/07/15) - old-not-obsolete
+ver. 0.9.6 (2016/XX/XX) - wanna-be-released
 -----------
 
 0.9.x line is no longer heavily developed.  If you are interested in
 new features (e.g. IPv6 support), please consider 0.10 branch and its
 releases.
+
+### Fixes
+* Misleading add resp. enable of (already available) jail in database, that
+  induced a subsequent error: last position of log file will be never retrieved (gh-795)
+* Fixed a distribution related bug within testReadStockJailConfForceEnabled
+  (e.g. test-cases faults on Fedora, see gh-1353)
+* Fixed pythonic filters and test scripts (running via wrong python version, 
+  uses "fail2ban-python" now);
+* Fixed test case "testSetupInstallRoot" for not default python version (also
+  using direct call, out of virtualenv);
+* `filter.d/ignorecommands/apache-fakegooglebot`
+    - Fixed error within apache-fakegooglebot, that will be called 
+      with wrong python version (gh-1506)
+* `filter.d/assp.conf`
+    - Extended failregex and test cases to handle ASSP V1 and V2 (gh-1494)
+* `filter.d/postfix-sasl.conf`
+    - Allow for having no trailing space after 'failed:' (gh-1497)
+
+### New Features
+
+### Enhancements
+* Introduces new command "fail2ban-python", as automatically created symlink to 
+  python executable, where fail2ban currently installed (resp. its modules are located):
+    - allows to use the same version, fail2ban currently running, e.g. in 
+      external scripts just via replace python with fail2ban-python:
+      ```diff
+      -#!/usr/bin/env python
+      +#!/usr/bin/env fail2ban-python
+      ```
+    - always the same pickle protocol
+    - the same (and also guaranteed available) fail2ban modules
+    - simplified stand-alone install, resp. stand-alone installation possibility
+      via setup (like gh-1487) is getting closer
+* Several test cases rewritten using new methods assertIn, assertNotIn
+* New forward compatibility method assertRaisesRegexp (normally python >= 2.7).
+  Methods assertIn, assertNotIn, assertRaisesRegexp, assertLogged, assertNotLogged
+  are test covered now
+
+
+ver. 0.9.5 (2016/07/15) - old-not-obsolete
+-----------
 
 ### Fixes
 * `filter.d/monit.conf`
