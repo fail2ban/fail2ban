@@ -200,6 +200,7 @@ fail2ban/server/strptime.py
 fail2ban/server/ticket.py
 fail2ban/server/transmitter.py
 fail2ban/server/utils.py
+fail2ban/setup.py
 fail2ban-testcases-all
 fail2ban-testcases-all-python3
 fail2ban/tests/action_d/__init__.py

@@ -39,9 +39,17 @@ from fail2ban.version import version
 
 from fail2ban.tests.utils import gatherTests
 from fail2ban.helpers import FormatterWithTraceBack, getLogger
+from fail2ban.setup import updatePyExec
 from fail2ban.server.mytime import MyTime
 
 from optparse import OptionParser, Option
+
+# Update fail2ban-python env to current python version (where f2b-modules located/installed)
+bindir = os.path.dirname(
+	# __file__ seems to be overwritten sometimes on some python versions (e.g. bug of 2.6 by running under cProfile, etc.):
+	sys.argv[0] if os.path.basename(sys.argv[0]) == 'fail2ban-testcases' else __file__
+)
+updatePyExec(bindir)
 
 def get_opt_parser():
 	# use module docstring for help output
