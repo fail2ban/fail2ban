@@ -72,8 +72,12 @@ class DateTemplate(object):
 		regex : str
 			The regex the template will use for searching for a date.
 		wordBegin : bool
-			Defines whether the regex should be modified to search at
-			beginning of a word, by adding "\\b" to start of regex.
+			Defines whether the regex should be modified to search at beginning of a
+			word, by adding special boundary r'(?=^|\b|\W)' to start of regex.
+			Default True.
+		wordEnd : bool
+			Defines whether the regex should be modified to search at end of a word,
+			by adding special boundary r'(?=\b|\W|$)' to end of regex.
 			Default True.
 
 		Raises
