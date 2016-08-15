@@ -200,9 +200,18 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			# direct specified patterns:
 			(1, ('-d', r'%H:%M:%S %d.%m.%Y$', '192.0.2.1 at 20:00:00 01.02.2003', '^<HOST>')),
 			(1, ('-d', r'\[%H:%M:%S %d.%m.%Y\]', '192.0.2.1[20:00:00 01.02.2003]', '^<HOST>$')),
+			(1, ('-d', r'\[%H:%M:%S %d.%m.%Y\]', '[20:00:00 01.02.2003]192.0.2.1', '^<HOST>$')),
 			(1, ('-d', r'\[%H:%M:%S %d.%m.%Y\]$', '192.0.2.1[20:00:00 01.02.2003]', '^<HOST>$')),
 			(1, ('-d', r'^\[%H:%M:%S %d.%m.%Y\]', '[20:00:00 01.02.2003]192.0.2.1', '^<HOST>$')),
 			(1, ('-d', r'^\[%d/%b/%Y %H:%M:%S\]', '[17/Jun/2011 17:00:45] Attempt, IP address 192.0.2.1', r'^ Attempt, IP address <HOST>$')),
+			(1, ('-d', r'\[%d/%b/%Y %H:%M:%S\]', 'Attempt [17/Jun/2011 17:00:45] IP address 192.0.2.1', r'^Attempt\s+IP address <HOST>$')),
+			(1, ('-d', r'\[%d/%b/%Y %H:%M:%S\]', 'Attempt IP address 192.0.2.1, date: [17/Jun/2011 17:00:45]', r'^Attempt IP address <HOST>, date: $')),
+			# direct specified patterns (begin/end, missed):
+			(0, ('-d', r'%H:%M:%S %d.%m.%Y', '192.0.2.1x20:00:00 01.02.2003', '^<HOST>')),
+			(0, ('-d', r'%H:%M:%S %d.%m.%Y', '20:00:00 01.02.2003x192.0.2.1', '<HOST>$')),
+			# direct specified patterns (begin/end, matched):
+			(1, ('-d', r'%H:%M:%S %d.%m.%Y', '192.0.2.1 20:00:00 01.02.2003', '^<HOST>')),
+			(1, ('-d', r'%H:%M:%S %d.%m.%Y', '20:00:00 01.02.2003 192.0.2.1', '<HOST>$')),
 		):
 			logSys.debug('== test: %r', args)
 			(opts, args, fail2banRegex) = _Fail2banRegex(*args)
