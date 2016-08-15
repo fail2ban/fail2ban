@@ -64,7 +64,7 @@ class DateTemplate(object):
 	def getRegex(self):
 		return self._regex
 
-	def setRegex(self, regex, wordBegin=True):
+	def setRegex(self, regex, wordBegin=True, wordEnd=True):
 		"""Sets regex to use for searching for date in log line.
 
 		Parameters
@@ -82,8 +82,10 @@ class DateTemplate(object):
 			If regular expression fails to compile
 		"""
 		regex = regex.strip()
-		if (wordBegin and not re.search(r'^\^', regex)):
-			regex = r'\b' + regex
+		if wordBegin and not re.search(r'^\^', regex):
+			regex = r'(?=^|\b|\W)' + regex
+		if wordEnd and not re.search(r'\$$', regex):
+			regex += r'(?=\b|\W|$)'
 		self._regex = regex
 		self._cRegex = re.compile(regex, re.UNICODE | re.IGNORECASE)
 

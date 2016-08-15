@@ -187,4 +187,32 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 		self.assertLogged('https://')
 
-
+	def testAmbiguousDatePattern(self):
+		for (matched, args) in (
+			# positive case:
+			(1, ('Test failure Jan 23 21:59:59 for 192.0.2.1', r'for <HOST>$')),
+			# ambiguous "unbound" patterns (missed):
+			(0, ('Test failure TestJan 23 21:59:59.011 2015 for 192.0.2.1', r'for <HOST>$')),
+			(0, ('Test failure Jan 23 21:59:59123456789 for 192.0.2.1', r'for <HOST>$')),
+			# ambiguous "no optional year" patterns (matched):
+			(1, ('Aug 8 11:25:50 14430f2329b8 Authentication failed from 192.0.2.1', r'from <HOST>$')),
+			(1, ('[Aug 8 11:25:50] 14430f2329b8 Authentication failed from 192.0.2.1', r'from <HOST>$')),
+			# direct specified patterns:
+			(1, ('-d', r'%H:%M:%S %d.%m.%Y$', '192.0.2.1 at 20:00:00 01.02.2003', '^<HOST>')),
+			(1, ('-d', r'\[%H:%M:%S %d.%m.%Y\]', '192.0.2.1[20:00:00 01.02.2003]', '^<HOST>$')),
+			(1, ('-d', r'\[%H:%M:%S %d.%m.%Y\]$', '192.0.2.1[20:00:00 01.02.2003]', '^<HOST>$')),
+			(1, ('-d', r'^\[%H:%M:%S %d.%m.%Y\]', '[20:00:00 01.02.2003]192.0.2.1', '^<HOST>$')),
+			(1, ('-d', r'^\[%d/%b/%Y %H:%M:%S\]', '[17/Jun/2011 17:00:45] Attempt, IP address 192.0.2.1', r'^ Attempt, IP address <HOST>$')),
+		):
+			logSys.debug('== test: %r', args)
+			(opts, args, fail2banRegex) = _Fail2banRegex(*args)
+			self.assertTrue(fail2banRegex.start(opts, args))
+			matchedLog = 'Lines: 1 lines, 0 ignored, 1 matched, 0 missed'
+			missedLog = 'Lines: 1 lines, 0 ignored, 0 matched, 1 missed'
+			if matched:
+				self.assertLogged(matchedLog)
+				self.assertNotLogged(missedLog)
+			else:
+				self.assertNotLogged(matchedLog)
+				self.assertLogged(missedLog)
+			self.pruneLog()
