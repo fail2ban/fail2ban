@@ -80,6 +80,7 @@ releases.
   uses "fail2ban-python" now);
 * Fixed test case "testSetupInstallRoot" for not default python version (also
   using direct call, out of virtualenv);
+* Fixed ambiguous wrong recognized date pattern resp. its optional parts (see gh-1512);
 * `filter.d/ignorecommands/apache-fakegooglebot`
     - Fixed error within apache-fakegooglebot, that will be called 
       with wrong python version (gh-1506)
@@ -91,6 +92,8 @@ releases.
 ### New Features
 
 ### Enhancements
+* DateTemplate regexp extended with the word-end boundary, additionally to 
+  word-start boundary
 * Introduces new command "fail2ban-python", as automatically created symlink to 
   python executable, where fail2ban currently installed (resp. its modules are located):
     - allows to use the same version, fail2ban currently running, e.g. in 
