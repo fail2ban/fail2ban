@@ -449,11 +449,19 @@ if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
 class LogCaptureTestCase(unittest.TestCase):
 
 	class _MemHandler(logging.StreamHandler):
+		"""Logging handler helper
+		
+		Affords not to delegate logging to StreamHandler at all,
+		format lazily on demand in getvalue.
+		Increases performance inside the LogCaptureTestCase tests, because there
+		the log level set to DEBUG.
+		"""
+
 		def __init__(self):
 			self._recs = list()
 			self._strm = StringIO()
 			logging.StreamHandler.__init__(self, self._strm)
-			# 
+			
 		def truncate(self, size=None):
 			"""Truncate the internal buffer and records."""
 			if size:
@@ -461,7 +469,7 @@ class LogCaptureTestCase(unittest.TestCase):
 			self._strm.truncate(0)
 			self._val = None
 			self._recs = list()
-			# 
+			 
 		def getvalue(self):
 			"""Return current buffer as whole string."""
 			# cached:
@@ -474,7 +482,7 @@ class LogCaptureTestCase(unittest.TestCase):
 			# cache and return:
 			self._val = self._strm.getvalue()
 			return self._val
-			# 
+			 
 		def handle(self, record):
 			"""Handle the specified record."""
 			self._val = None
