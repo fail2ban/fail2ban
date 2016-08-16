@@ -88,6 +88,7 @@ else:
 def _getSysPythonVersion():
 	return _sh_call("fail2ban-python -c 'import sys; print(tuple(sys.version_info))'")
 
+
 class SetupTest(unittest.TestCase):
 
 	def setUp(self):
@@ -109,9 +110,11 @@ class SetupTest(unittest.TestCase):
 		if not self.setup:
 			return			  # if verbose skip didn't work out
 		tmp = tempfile.mkdtemp()
+		# suppress stdout (and stderr) if not heavydebug
+		supdbgout = ' >/dev/null' if unittest.F2B.log_level >= logging.DEBUG else '' # HEAVYDEBUG
 		try:
-			os.system("%s %s install --root=%s >/dev/null"
-					  % (sys.executable, self.setup, tmp))
+			os.system("%s %s install --disable-2to3 --dry-run --root=%s%s"
+					  % (sys.executable, self.setup, tmp, supdbgout))
 
 			def strippath(l):
 				return [x[len(tmp)+1:] for x in l]
@@ -162,8 +165,8 @@ class SetupTest(unittest.TestCase):
 			# clean up
 			shutil.rmtree(tmp)
 			# remove build directory
-			os.system("%s %s clean --all >/dev/null 2>&1"
-					  % (sys.executable, self.setup))
+			os.system("%s %s clean --all%s"
+					  % (sys.executable, self.setup, (supdbgout + ' 2>&1') if supdbgout else ''))
 
 
 class TestsUtilsTest(LogCaptureTestCase):
@@ -303,6 +306,17 @@ class TestsUtilsTest(LogCaptureTestCase):
 		# in this case compressed and not should be the same (?)
 		self.assertTrue(pindex > 10)	  # we should have some traceback
 		self.assertEqual(s[:pindex], s[pindex+1:pindex*2 + 1])
+
+	def testLazyLogging(self):
+		logSys = DefLogSys
+		if unittest.F2B.log_lazy:
+			# wrong logging syntax will throw an error lazy (on demand):
+			logSys.debug('test', 1, 2, 3)
+			self.assertRaisesRegexp(Exception, 'not all arguments converted', lambda: self.assertNotLogged('test'))
+		else: # pragma: no cover
+			# wrong logging syntax will throw an error directly:
+			self.assertRaisesRegexp(Exception, 'not all arguments converted', lambda: logSys.debug('test', 1, 2, 3))
+
 
 iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
 

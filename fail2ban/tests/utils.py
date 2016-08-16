@@ -31,9 +31,10 @@ import tempfile
 import shutil
 import sys
 import time
+import threading
 import unittest
 
-from StringIO import StringIO
+from cStringIO import StringIO
 from functools import wraps
 
 from ..helpers import getLogger
@@ -59,12 +60,74 @@ if not CONFIG_DIR:
 os.putenv('PYTHONPATH', os.path.dirname(os.path.dirname(os.path.dirname(
 	os.path.abspath(__file__)))))
 
-class F2B(optparse.Values):
-	def __init__(self, opts={}):
-		self.__dict__ = opts.__dict__ if opts else {
-			'fast': False, 'memory_db':False, 'no_gamin': False, 'no_network': False, 
-			"negate_re": False,
+# Default options, if running from installer (setup.py):
+class DefaultTestOptions(optparse.Values):
+	def __init__(self):
+		self.__dict__ = {
+			'log_level': None, 'log_lazy': True, 
+			'log_traceback': None, 'full_traceback': None,
+			'fast': False, 'memory_db': False, 'no_gamin': False,
+			'no_network': False, 'negate_re': False
 		}
+
+#
+# Initialization
+#
+def initProcess(opts):
+	# Logger:
+	logSys = getLogger("fail2ban")
+
+	# Numerical level of verbosity corresponding to a log "level"
+	verbosity = {'heavydebug': 4,
+				 'debug': 3,
+				 'info': 2,
+				 'notice': 2,
+				 'warning': 1,
+				 'error': 1,
+				 'critical': 0,
+				 None: 1}[opts.log_level]
+	opts.verbosity = verbosity
+
+	if opts.log_level is not None: # pragma: no cover
+		# so we had explicit settings
+		logSys.setLevel(getattr(logging, opts.log_level.upper()))
+	else: # pragma: no cover
+		# suppress the logging but it would leave unittests' progress dots
+		# ticking, unless like with '-l critical' which would be silent
+		# unless error occurs
+		logSys.setLevel(logging.CRITICAL)
+	opts.log_level = logSys.level
+
+	# Add the default logging handler
+	stdout = logging.StreamHandler(sys.stdout)
+
+	fmt = ' %(message)s'
+
+	if opts.log_traceback: # pragma: no cover
+		from ..helpers import FormatterWithTraceBack as Formatter
+		fmt = (opts.full_traceback and ' %(tb)s' or ' %(tbc)s') + fmt
+	else:
+		Formatter = logging.Formatter
+
+	# Custom log format for the verbose tests runs
+	if verbosity > 1: # pragma: no cover
+		if verbosity > 3:
+			fmt = ' | %(module)15.15s-%(levelno)-2d: %(funcName)-20.20s |' + fmt
+		if verbosity > 2:
+			fmt = ' +%(relativeCreated)5d %(thread)X %(name)-25.25s %(levelname)-5.5s' + fmt
+		else:
+			fmt = ' %(asctime)-15s %(thread)X %(levelname)-5.5s' + fmt
+
+	#
+	stdout.setFormatter(Formatter(fmt))
+	logSys.addHandler(stdout)
+	#
+	return opts;
+
+
+class F2B(DefaultTestOptions):
+	def __init__(self, opts):
+		self.__dict__ = opts.__dict__
 		if self.fast:
 			self.memory_db = True
 			self.no_gamin = True
@@ -96,7 +159,27 @@ def with_tmpdir(f):
 	return wrapper
 
 
+# backwards compatibility to python 2.6:
+if not hasattr(unittest, 'SkipTest'): # pragma: no cover
+	class SkipTest(Exception):
+		pass
+	unittest.SkipTest = SkipTest
+	_org_AddError = unittest._TextTestResult.addError
+	def addError(self, test, err):
+		if err[0] is SkipTest: 
+			if self.showAll:
+				self.stream.writeln(str(err[1]))
+			elif self.dots:
+				self.stream.write('s')
+				self.stream.flush()
+			return
+		_org_AddError(self, test, err)
+	unittest._TextTestResult.addError = addError
+
 def initTests(opts):
+	## if running from installer (setup.py):
+	if not opts:
+		opts = initProcess(DefaultTestOptions())
 	unittest.F2B = F2B(opts)
 	# --fast :
 	if unittest.F2B.fast: # pragma: no cover
@@ -104,10 +187,9 @@ def initTests(opts):
 		# (prevent long sleeping during test cases ... less time goes to sleep):
 		Utils.DEFAULT_SLEEP_TIME = 0.0025
 		Utils.DEFAULT_SLEEP_INTERVAL = 0.0005
-		if sys.version_info >= (2,7): # no skip in previous version:
-			def F2B_SkipIfFast():
-				raise unittest.SkipTest('Skip test because of "--fast"')
-			unittest.F2B.SkipIfFast = F2B_SkipIfFast
+		def F2B_SkipIfFast():
+			raise unittest.SkipTest('Skip test because of "--fast"')
+		unittest.F2B.SkipIfFast = F2B_SkipIfFast
 	else:
 		# sleep intervals are large - use replacement for sleep to check time to sleep:
 		_org_sleep = time.sleep
@@ -368,6 +450,66 @@ if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
 
 class LogCaptureTestCase(unittest.TestCase):
 
+	class _MemHandler(logging.Handler):
+		"""Logging handler helper
+		
+		Affords not to delegate logging to StreamHandler at all,
+		format lazily on demand in getvalue.
+		Increases performance inside the LogCaptureTestCase tests, because there
+		the log level set to DEBUG.
+		"""
+
+		def __init__(self, lazy=True):
+			self._lock = threading.Lock()
+			self._val = None
+			self._recs = list()
+			self._strm = StringIO()
+			logging.Handler.__init__(self)
+			if lazy:
+				self.handle = self._handle_lazy
+			
+		def truncate(self, size=None):
+			"""Truncate the internal buffer and records."""
+			if size:
+				raise Exception('invalid size argument: %r, should be None or 0' % size)
+			with self._lock:
+				self._strm.truncate(0)
+				self._val = None
+				self._recs = list()
+
+		def __write(self, record):
+			msg = record.getMessage() + '\n'
+			try:
+				self._strm.write(msg)
+			except UnicodeEncodeError:
+				self._strm.write(msg.encode('UTF-8'))
+
+		def getvalue(self):
+			"""Return current buffer as whole string."""
+			with self._lock:
+				# cached:
+				if self._val is not None:
+					return self._val
+				# submit already emitted (delivered to handle) records:
+				for record in self._recs:
+					self.__write(record)
+				self._recs = list()
+				# cache and return:
+				self._val = self._strm.getvalue()
+				return self._val
+			 
+		def handle(self, record): # pragma: no cover
+			"""Handle the specified record direct (not lazy)"""
+			with self._lock:
+				self._val = None
+				self.__write(record)
+
+		def _handle_lazy(self, record):
+			"""Lazy handle the specified record on demand"""
+			with self._lock:
+				self._val = None
+				self._recs.append(record)
+
 	def setUp(self):
 
 		# For extended testing of what gets output into logging
@@ -378,13 +520,13 @@ class LogCaptureTestCase(unittest.TestCase):
 		self._old_level = logSys.level
 		self._old_handlers = logSys.handlers
 		# Let's log everything into a string
-		self._log = StringIO()
-		logSys.handlers = [logging.StreamHandler(self._log)]
+		self._log = LogCaptureTestCase._MemHandler(unittest.F2B.log_lazy)
+		logSys.handlers = [self._log]
 		if self._old_level <= logging.DEBUG: # so if DEBUG etc -- show them (and log it in travis)!
 			print("")
 			logSys.handlers += self._old_handlers
 			logSys.debug('='*10 + ' %s ' + '='*20, self.id())
-		logSys.setLevel(getattr(logging, 'DEBUG'))
+		logSys.setLevel(logging.DEBUG)
 
 	def tearDown(self):
 		"""Call after every test case."""
