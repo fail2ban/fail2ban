@@ -75,7 +75,7 @@ Code status:
 
 * [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=0.10)](https://travis-ci.org/fail2ban/fail2ban?branch=0.10) travis-ci.org (0.10 branch) / [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=master)](https://travis-ci.org/fail2ban/fail2ban) travis-ci.org (master branch)
 
-* [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=0.10)](https://coveralls.io/r/fail2ban/fail2ban?https://coveralls.io/github/fail2ban/fail2ban?branch=0.10)
+* [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=0.10)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.10)
 
 * [![codecov.io](https://codecov.io/gh/fail2ban/fail2ban/coverage.svg?branch=0.10)](https://codecov.io/gh/fail2ban/fail2ban/branch/0.10)
 
