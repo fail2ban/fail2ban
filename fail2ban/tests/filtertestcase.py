@@ -83,7 +83,7 @@ def _killfile(f, name):
 
 
 def _maxWaitTime(wtime):
-	if unittest.F2B.fast:
+	if unittest.F2B.fast: # pragma: no cover
 		wtime /= 10
 	return wtime
 
@@ -715,7 +715,7 @@ class CommonMonitorTestCase(unittest.TestCase):
 		"""
 		return Utils.wait_for(self.jail.isFilled, _maxWaitTime(delay))
 
-	def isEmpty(self, delay=_maxWaitTime(5)):
+	def isEmpty(self, delay=5):
 		"""Wait up to `delay` sec to assure that it empty again
 		"""
 		return Utils.wait_for(self.jail.isEmpty, _maxWaitTime(delay))
@@ -772,7 +772,7 @@ def get_monitor_failures_testcase(Filter_):
 				Utils.wait_for(self.filter.isAlive, _maxWaitTime(5))
 
 		def assert_correct_last_attempt(self, failures, count=None):
-			self.assertTrue(self.isFilled(10)) # give Filter a chance to react
+			self.assertTrue(self.waitFailTotal(count if count else failures[1], 10))
 			_assert_correct_last_attempt(self, self.jail, failures, count=count)
 
 		def test_grow_file(self):
@@ -788,7 +788,7 @@ def get_monitor_failures_testcase(Filter_):
 
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=5)
 			self.assertTrue(self.isFilled(10))
-			# so we sleep for up to 2 sec for it not to become empty,
+			# so we sleep a bit for it not to become empty,
 			# and meanwhile pass to other thread(s) and filter should
 			# have gathered new failures and passed them into the
 			# DummyJail
