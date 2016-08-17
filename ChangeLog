@@ -20,6 +20,9 @@ TODO: implementing of options resp. other tasks from PR #1346
 * testSocket: sporadical bug repaired - wait for server thread starts a socket (listener)
 * testExecuteTimeoutWithNastyChildren: sporadical bug repaired - wait for pid file inside bash,
   kill tree in any case (gh-1155)
+* purge database will be executed now (within observer).
+* restoring currently banned ip after service restart fixed 
+  (now < timeofban + bantime), ignore old log failures (already banned)
 
 ### New Features
 * IPv6 support:
@@ -33,6 +36,9 @@ TODO: implementing of options resp. other tasks from PR #1346
     - new conditional section functionality used in config resp. includes:
       - [Init?family=inet4] - IPv4 qualified hosts only
       - [Init?family=inet6] - IPv6 qualified hosts only
+* Increment ban time (+ observer) functionality introduced.
+  Thanks Serg G. Brester (sebres)
+* Database functionality extended with bad ips.
 
 ### Enhancements
 * huge increasing of fail2ban performance and especially test-cases performance (see gh-1109)

@@ -24,8 +24,6 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import sys
-
 from ..helpers import getLogger
 from .ipdns import IPAddr
 from .mytime import MyTime
@@ -36,6 +34,8 @@ logSys = getLogger(__name__)
 
 class Ticket:
 	
+	RESTORED = 0x01
+
 	def __init__(self, ip=None, time=None, matches=None, data={}, ticket=None):
 		"""Ticket constructor
 
@@ -58,8 +58,9 @@ class Ticket:
 			self._data['matches'] = matches or []
 
 	def __str__(self):
-		return "%s: ip=%s time=%s #attempts=%d matches=%r" % \
+		return "%s: ip=%s time=%s bantime=%s bancount=%s #attempts=%d matches=%r" % \
 			   (self.__class__.__name__.split('.')[-1], self.__ip, self._time,
+			   	self._banTime, self._banCount,
 			   	self._data['failures'], self._data.get('matches', []))
 
 	def __repr__(self):
@@ -94,7 +95,7 @@ class Ticket:
 	def setBanTime(self, value):
 		self._banTime = value;
 
-	def getBanTime(self, defaultBT = None):
+	def getBanTime(self, defaultBT=None):
 		return (self._banTime if not self._banTime is None else defaultBT);
 
 	def setBanCount(self, value):
@@ -106,7 +107,7 @@ class Ticket:
 	def getBanCount(self):
 		return self._banCount;
 
-	def isTimedOut(self, time, defaultBT = None):
+	def isTimedOut(self, time, defaultBT=None):
 		bantime = (self._banTime if not self._banTime is None else defaultBT);
 		# permanent
 		if bantime == -1:
@@ -125,6 +126,15 @@ class Ticket:
 
 	def getMatches(self):
 		return self._data.get('matches', [])
+
+	def setRestored(self, value):
+		if value:
+			self._flags = Ticket.RESTORED
+		else:
+			self._flags &= ~(Ticket.RESTORED)
+	
+	def getRestored(self):
+		return self._flags & Ticket.RESTORED
 
 	def setData(self, *args, **argv):
 		# if overwrite - set data and filter None values:
