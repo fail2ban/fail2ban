@@ -64,7 +64,7 @@ os.putenv('PYTHONPATH', os.path.dirname(os.path.dirname(os.path.dirname(
 class DefaultTestOptions(optparse.Values):
 	def __init__(self):
 		self.__dict__ = {
-			'log_level': None, 'log_lazy': True, 
+			'log_level': None, 'verbosity': None, 'log_lazy': True, 
 			'log_traceback': None, 'full_traceback': None,
 			'fast': False, 'memory_db': False, 'no_gamin': False,
 			'no_network': False, 'negate_re': False
@@ -78,15 +78,17 @@ def initProcess(opts):
 	logSys = getLogger("fail2ban")
 
 	# Numerical level of verbosity corresponding to a log "level"
-	verbosity = {'heavydebug': 4,
-				 'debug': 3,
-				 'info': 2,
-				 'notice': 2,
-				 'warning': 1,
-				 'error': 1,
-				 'critical': 0,
-				 None: 1}[opts.log_level]
-	opts.verbosity = verbosity
+	verbosity = opts.verbosity
+	if verbosity is None:
+		verbosity = {'heavydebug': 4,
+					 'debug': 3,
+					 'info': 2,
+					 'notice': 2,
+					 'warning': 1,
+					 'error': 1,
+					 'critical': 0,
+					 None: 1}[opts.log_level]
+		opts.verbosity = verbosity
 
 	if opts.log_level is not None: # pragma: no cover
 		# so we had explicit settings
