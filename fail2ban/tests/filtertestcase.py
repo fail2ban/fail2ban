@@ -912,6 +912,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.test_file = os.path.join(TEST_FILES_DIR, "testcase-journal.log")
 			self.jail = DummyJail()
 			self.filter = Filter_(self.jail)
+			self._failTotal = 0
 			# UUID used to ensure that only meeages generated
 			# as part of this test are picked up by the filter
 			self.test_uuid = str(uuid.uuid4())
@@ -939,6 +940,15 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			return "MonitorJournalFailures%s(%s)" \
 			  % (Filter_, hasattr(self, 'name') and self.name or 'tempfile')
 
+		def waitFailTotal(self, count, delay=1.):
+			"""Wait up to `delay` sec to assure that expected failure `count` reached
+			"""
+			ret = Utils.wait_for(
+				lambda: self.filter.failManager.getFailTotal() >= self._failTotal + count and self.jail.isFilled(),
+				_maxWaitTime(delay))
+			self._failTotal += count
+			return ret
+
 		def isFilled(self, delay=1.):
 			"""Wait up to `delay` sec to assure that it was modified or not
 			"""
@@ -949,8 +959,9 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			return Utils.wait_for(self.jail.isEmpty, _maxWaitTime(delay))
 
 		def assert_correct_ban(self, test_ip, test_attempts):
-			self.assertTrue(self.isFilled(_maxWaitTime(10))) # give Filter a chance to react
+			self.assertTrue(self.waitFailTotal(test_attempts, 10)) # give Filter a chance to react
 			ticket = self.jail.getFailTicket()
+			self.assertTrue(ticket)
 
 			attempts = ticket.getAttempt()
 			ip = ticket.getIP()
