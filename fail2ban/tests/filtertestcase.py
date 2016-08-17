@@ -727,7 +727,7 @@ def get_monitor_failures_testcase(Filter_):
 
 	# add Filter_'s name so we could easily identify bad cows
 	testclass_name = tempfile.mktemp(
-		'fail2ban', 'monitorfailures_%s' % (Filter_.__name__,))
+		'fail2ban', 'monitorfailures_%s_' % (Filter_.__name__,))
 
 	class MonitorFailures(CommonMonitorTestCase):
 		count = 0
@@ -923,6 +923,8 @@ def get_monitor_failures_testcase(Filter_):
 def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 	"""Generator of TestCase's for journal based filters/backends
 	"""
+	
+	testclass_name = "monitorjournalfailures_%s" % (Filter_.__name__,)
 
 	class MonitorJournalFailures(CommonMonitorTestCase):
 		def setUp(self):
@@ -934,7 +936,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			# UUID used to ensure that only meeages generated
 			# as part of this test are picked up by the filter
 			self.test_uuid = str(uuid.uuid4())
-			self.name = "monitorjournalfailures-%s" % self.test_uuid
+			self.name = "%s-%s" % (testclass_name, self.test_uuid)
 			self.filter.addJournalMatch([
 				"SYSLOG_IDENTIFIER=fail2ban-testcases",
 				"TEST_FIELD=1",
@@ -953,10 +955,6 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.filter.stop()
 			self.filter.join()		  # wait for the thread to terminate
 			pass
-
-		def __str__(self):
-			return "MonitorJournalFailures%s(%s)" \
-			  % (Filter_, hasattr(self, 'name') and self.name or 'tempfile')
 
 		def assert_correct_ban(self, test_ip, test_attempts):
 			self.assertTrue(self.waitFailTotal(test_attempts, 10)) # give Filter a chance to react
@@ -1029,6 +1027,8 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			# we should detect the failures
 			self.assertTrue(self.isFilled(10))
 
+	MonitorJournalFailures.__name__ = "MonitorJournalFailures<%s>(%s)" \
+			  % (Filter_.__name__, testclass_name)
 	return MonitorJournalFailures
 
 
