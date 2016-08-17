@@ -83,7 +83,7 @@ def _killfile(f, name):
 
 
 def _maxWaitTime(wtime):
-	if unittest.F2B.fast:
+	if unittest.F2B.fast: # pragma: no cover
 		wtime /= 10
 	return wtime
 
@@ -695,19 +695,46 @@ class LogFileMonitor(LogCaptureTestCase):
 		self.assertEqual(self.filter.failManager.getFailTotal(), 3)
 
 
+class CommonMonitorTestCase(unittest.TestCase):
+
+	def setUp(self):
+		"""Call before every test case."""
+		self._failTotal = 0
+
+	def waitFailTotal(self, count, delay=1.):
+		"""Wait up to `delay` sec to assure that expected failure `count` reached
+		"""
+		ret = Utils.wait_for(
+			lambda: self.filter.failManager.getFailTotal() >= self._failTotal + count and self.jail.isFilled(),
+			_maxWaitTime(delay))
+		self._failTotal += count
+		return ret
+
+	def isFilled(self, delay=1.):
+		"""Wait up to `delay` sec to assure that it was modified or not
+		"""
+		return Utils.wait_for(self.jail.isFilled, _maxWaitTime(delay))
+
+	def isEmpty(self, delay=5):
+		"""Wait up to `delay` sec to assure that it empty again
+		"""
+		return Utils.wait_for(self.jail.isEmpty, _maxWaitTime(delay))
+
+
 def get_monitor_failures_testcase(Filter_):
 	"""Generator of TestCase's for different filters/backends
 	"""
 
 	# add Filter_'s name so we could easily identify bad cows
 	testclass_name = tempfile.mktemp(
-		'fail2ban', 'monitorfailures_%s' % (Filter_.__name__,))
+		'fail2ban', 'monitorfailures_%s_' % (Filter_.__name__,))
 
-	class MonitorFailures(unittest.TestCase):
+	class MonitorFailures(CommonMonitorTestCase):
 		count = 0
 
 		def setUp(self):
 			"""Call before every test case."""
+			super(MonitorFailures, self).setUp()
 			setUpMyTime()
 			self.filter = self.name = 'NA'
 			self.name = '%s-%d' % (testclass_name, self.count)
@@ -737,11 +764,6 @@ def get_monitor_failures_testcase(Filter_):
 			#time.sleep(0.2)			  # Give FS time to ack the removal
 			pass
 
-		def isFilled(self, delay=1.):
-			"""Wait up to `delay` sec to assure that it was modified or not
-			"""
-			return Utils.wait_for(self.jail.isFilled, _maxWaitTime(delay))
-
 		def _sleep_4_poll(self):
 			# Since FilterPoll relies on time stamps and some
 			# actions might be happening too fast in the tests,
@@ -749,12 +771,8 @@ def get_monitor_failures_testcase(Filter_):
 			if isinstance(self.filter, FilterPoll):
 				Utils.wait_for(self.filter.isAlive, _maxWaitTime(5))
 
-		def isEmpty(self, delay=_maxWaitTime(5)):
-			# shorter wait time for not modified status
-			return Utils.wait_for(self.jail.isEmpty, _maxWaitTime(delay))
-
 		def assert_correct_last_attempt(self, failures, count=None):
-			self.assertTrue(self.isFilled(10)) # give Filter a chance to react
+			self.assertTrue(self.waitFailTotal(count if count else failures[1], 10))
 			_assert_correct_last_attempt(self, self.jail, failures, count=count)
 
 		def test_grow_file(self):
@@ -770,7 +788,7 @@ def get_monitor_failures_testcase(Filter_):
 
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=5)
 			self.assertTrue(self.isFilled(10))
-			# so we sleep for up to 2 sec for it not to become empty,
+			# so we sleep a bit for it not to become empty,
 			# and meanwhile pass to other thread(s) and filter should
 			# have gathered new failures and passed them into the
 			# DummyJail
@@ -905,17 +923,20 @@ def get_monitor_failures_testcase(Filter_):
 def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 	"""Generator of TestCase's for journal based filters/backends
 	"""
+	
+	testclass_name = "monitorjournalfailures_%s" % (Filter_.__name__,)
 
-	class MonitorJournalFailures(unittest.TestCase):
+	class MonitorJournalFailures(CommonMonitorTestCase):
 		def setUp(self):
 			"""Call before every test case."""
+			super(MonitorJournalFailures, self).setUp()
 			self.test_file = os.path.join(TEST_FILES_DIR, "testcase-journal.log")
 			self.jail = DummyJail()
 			self.filter = Filter_(self.jail)
 			# UUID used to ensure that only meeages generated
 			# as part of this test are picked up by the filter
 			self.test_uuid = str(uuid.uuid4())
-			self.name = "monitorjournalfailures-%s" % self.test_uuid
+			self.name = "%s-%s" % (testclass_name, self.test_uuid)
 			self.filter.addJournalMatch([
 				"SYSLOG_IDENTIFIER=fail2ban-testcases",
 				"TEST_FIELD=1",
@@ -935,22 +956,10 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.filter.join()		  # wait for the thread to terminate
 			pass
 
-		def __str__(self):
-			return "MonitorJournalFailures%s(%s)" \
-			  % (Filter_, hasattr(self, 'name') and self.name or 'tempfile')
-
-		def isFilled(self, delay=1.):
-			"""Wait up to `delay` sec to assure that it was modified or not
-			"""
-			return Utils.wait_for(self.jail.isFilled, _maxWaitTime(delay))
-
-		def isEmpty(self, delay=_maxWaitTime(5)):
-			# shorter wait time for not modified status
-			return Utils.wait_for(self.jail.isEmpty, _maxWaitTime(delay))
-
 		def assert_correct_ban(self, test_ip, test_attempts):
-			self.assertTrue(self.isFilled(_maxWaitTime(10))) # give Filter a chance to react
+			self.assertTrue(self.waitFailTotal(test_attempts, 10)) # give Filter a chance to react
 			ticket = self.jail.getFailTicket()
+			self.assertTrue(ticket)
 
 			attempts = ticket.getAttempt()
 			ip = ticket.getIP()
@@ -1018,6 +1027,8 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			# we should detect the failures
 			self.assertTrue(self.isFilled(10))
 
+	MonitorJournalFailures.__name__ = "MonitorJournalFailures<%s>(%s)" \
+			  % (Filter_.__name__, testclass_name)
 	return MonitorJournalFailures
 
 
