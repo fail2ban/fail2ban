@@ -105,7 +105,7 @@ verbosity = opts.verbosity
 #
 # Let know the version
 #
-if opts.log_level != logging.CRITICAL: # pragma: no cover
+if opts.verbosity != 0: # pragma: no cover
 	print("Fail2ban %s test suite. Python %s. Please wait..." \
 			% (version, str(sys.version).replace('\n', '')))
 
