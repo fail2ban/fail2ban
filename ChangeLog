@@ -33,6 +33,7 @@ releases.
 * filter.d/sshd.conf
     - recognized "Failed publickey for" (gh-1477);
     - optimized failregex to match all of "Failed any-method for ... from <HOST>" (gh-1479)
+    - eliminated possible complex injections (on user-name resp. auth-info, see gh-1479)
 
 ### New Features
 
