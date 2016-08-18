@@ -43,6 +43,7 @@ from ..server.mytime import MyTime
 from ..server.utils import Utils
 # for action_d.test_smtp :
 from ..server import asyncserver
+from ..version import version
 
 
 logSys = getLogger(__name__)
@@ -73,6 +74,49 @@ class DefaultTestOptions(optparse.Values):
 #
 # Initialization
 #
+def getOptParser(doc=""):
+	Option = optparse.Option
+	# use module docstring for help output
+	p = optparse.OptionParser(
+				usage="%s [OPTIONS] [regexps]\n" % sys.argv[0] + doc,
+				version="%prog " + version)
+
+	p.add_options([
+		Option('-l', "--log-level", type="choice",
+			   dest="log_level",
+			   choices=('heavydebug', 'debug', 'info', 'notice', 'warning', 'error', 'critical'),
+			   default=None,
+			   help="Log level for the logger to use during running tests"),
+		Option('-v', "--verbosity", action="store",
+			   dest="verbosity", type=int,
+			   default=None,
+			   help="Set numerical level of verbosity (0..4)"),
+		Option("--log-direct", action="store_false",
+			   dest="log_lazy",
+			   default=True,
+			   help="Prevent lazy logging inside tests"),
+		Option('-n', "--no-network", action="store_true",
+			   dest="no_network",
+			   help="Do not run tests that require the network"),
+		Option('-g', "--no-gamin", action="store_true",
+			   dest="no_gamin",
+			   help="Do not run tests that require the gamin"),
+		Option('-m', "--memory-db", action="store_true",
+			   dest="memory_db",
+			   help="Run database tests using memory instead of file"),
+		Option('-f', "--fast", action="store_true",
+			   dest="fast",
+			   help="Try to increase speed of the tests, decreasing of wait intervals, memory database"),
+		Option('-i', "--ignore", action="store_true",
+			   dest="negate_re",
+			   help="negate [regexps] filter to ignore tests matched specified regexps"),
+		Option("-t", "--log-traceback", action='store_true',
+			   help="Enrich log-messages with compressed tracebacks"),
+		Option("--full-traceback", action='store_true',
+			   help="Either to make the tracebacks full, not compressed (as by default)"),
+		])
+	return p
+
 def initProcess(opts):
 	# Logger:
 	logSys = getLogger("fail2ban")
@@ -123,7 +167,12 @@ def initProcess(opts):
 	#
 	stdout.setFormatter(Formatter(fmt))
 	logSys.addHandler(stdout)
-	#
+
+	# Let know the version
+	if opts.verbosity != 0:
+		print("Fail2ban %s test suite. Python %s. Please wait..." \
+				% (version, str(sys.version).replace('\n', '')))
+
 	return opts;
 
 
