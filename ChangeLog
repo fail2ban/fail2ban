@@ -54,6 +54,11 @@ releases.
 * New forward compatibility method assertRaisesRegexp (normally python >= 2.7).
   Methods assertIn, assertNotIn, assertRaisesRegexp, assertLogged, assertNotLogged
   are test covered now
+* Jail configuration extended with new syntax to pass options to the backend (see gh-1408),
+  examples:
+    - `backend = systemd[journalpath=/run/log/journal/machine-1]`
+    - `backend = systemd[journalfiles="/run/log/journal/machine-1/system.journal, /run/log/journal/machine-1/user.journal"]`
+    - `backend = systemd[journalflags=2]`
 
 
 ver. 0.9.5 (2016/07/15) - old-not-obsolete

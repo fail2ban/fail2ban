@@ -27,6 +27,7 @@ import logging
 import Queue
 
 from .actions import Actions
+from ..client.jailreader import JailReader
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
@@ -82,6 +83,7 @@ class Jail:
 		return "%s(%r)" % (self.__class__.__name__, self.name)
 
 	def _setBackend(self, backend):
+		backend, beArgs = JailReader.extractOptions(backend)
 		backend = backend.lower()		# to assure consistent matching
 
 		backends = self._BACKENDS
@@ -98,7 +100,7 @@ class Jail:
 		for b in backends:
 			initmethod = getattr(self, '_init%s' % b.capitalize())
 			try:
-				initmethod()
+				initmethod(**beArgs)
 				if backend != 'auto' and b != backend:
 					logSys.warning("Could only initiated %r backend whenever "
 								   "%r was requested" % (b, backend))
@@ -117,28 +119,28 @@ class Jail:
 		raise RuntimeError(
 			"Failed to initialize any backend for Jail %r" % self.name)
 
-	def _initPolling(self):
+	def _initPolling(self, **kwargs):
 		from filterpoll import FilterPoll
-		logSys.info("Jail '%s' uses poller" % self.name)
-		self.__filter = FilterPoll(self)
+		logSys.info("Jail '%s' uses poller %r" % (self.name, kwargs))
+		self.__filter = FilterPoll(self, **kwargs)
 
-	def _initGamin(self):
+	def _initGamin(self, **kwargs):
 		# Try to import gamin
 		from filtergamin import FilterGamin
-		logSys.info("Jail '%s' uses Gamin" % self.name)
-		self.__filter = FilterGamin(self)
+		logSys.info("Jail '%s' uses Gamin %r" % (self.name, kwargs))
+		self.__filter = FilterGamin(self, **kwargs)
 
-	def _initPyinotify(self):
+	def _initPyinotify(self, **kwargs):
 		# Try to import pyinotify
 		from filterpyinotify import FilterPyinotify
-		logSys.info("Jail '%s' uses pyinotify" % self.name)
-		self.__filter = FilterPyinotify(self)
+		logSys.info("Jail '%s' uses pyinotify %r" % (self.name, kwargs))
+		self.__filter = FilterPyinotify(self, **kwargs)
 
-	def _initSystemd(self): # pragma: systemd no cover
+	def _initSystemd(self, **kwargs): # pragma: systemd no cover
 		# Try to import systemd
 		from filtersystemd import FilterSystemd
-		logSys.info("Jail '%s' uses systemd" % self.name)
-		self.__filter = FilterSystemd(self)
+		logSys.info("Jail '%s' uses systemd %r" % (self.name, kwargs))
+		self.__filter = FilterSystemd(self, **kwargs)
 
 	@property
 	def name(self):
