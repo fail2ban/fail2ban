@@ -31,7 +31,7 @@ if LooseVersion(getattr(journal, '__version__', "0")) < '204':
 	raise ImportError("Fail2Ban requires systemd >= 204")
 
 from .failmanager import FailManagerEmpty
-from .filter import JournalFilter
+from .filter import JournalFilter, FileContainer
 from .mytime import MyTime
 from ..helpers import getLogger
 
@@ -162,7 +162,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	# @return format log line
 
 	@classmethod
-	def formatJournalEntry(cls, logentry):
+	def formatJournalEntry(cls, logentry, encoding='utf-8'):
 		logelements = [""]
 		if logentry.get('_HOSTNAME'):
 			logelements.append(logentry['_HOSTNAME'])
@@ -184,7 +184,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			else:
 				monotonic = logentry.get('__MONOTONIC_TIMESTAMP')[0]
 			logelements.append("[%12.6f]" % monotonic.total_seconds())
-		if isinstance(logentry.get('MESSAGE',''), list):
+		if isinstance(logentry.get('MESSAGE', ''), list):
 			logelements.append(" ".join(logentry['MESSAGE']))
 		else:
 			logelements.append(logentry.get('MESSAGE', ''))
@@ -198,7 +198,11 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			# Python 3, one or more elements bytes
 			logSys.warning("Error decoding log elements from journal: %s" %
 				repr(logelements))
-			logline =  cls._joinStrAndBytes(logelements)
+			logline = cls._joinStrAndBytes(logelements)
+
+		# If we have failed along the way -- decode now the string
+		if not isinstance(logline, unicode):
+			logline = FileContainer.decode_line("systemd_journal", encoding, logline)
 
 		date = logentry.get('_SOURCE_REALTIME_TIMESTAMP',
 				logentry.get('__REALTIME_TIMESTAMP'))
@@ -243,7 +247,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 						continue
 					if logentry:
 						self.processLineAndAdd(
-							*self.formatJournalEntry(logentry))
+							*self.formatJournalEntry(logentry, self.getEncoding()))
 						self.__modified = True
 					else:
 						break
