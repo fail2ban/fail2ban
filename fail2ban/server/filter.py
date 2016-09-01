@@ -85,6 +85,8 @@ class Filter(JailThread):
 		self.__lastDate = None
 		## External command
 		self.__ignoreCommand = False
+		## Ticks counter
+		self.ticks = 0
 
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()

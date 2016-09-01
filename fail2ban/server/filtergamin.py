@@ -69,6 +69,7 @@ class FilterGamin(FileFilter):
 			logSys.debug("File changed: " + path)
 			self.__modified = True
 
+		self.ticks += 1
 		self._process_file(path)
 
 	def _process_file(self, path):
@@ -105,7 +106,7 @@ class FilterGamin(FileFilter):
 	def _handleEvents(self):
 		ret = False
 		mon = self.monitor
-		while mon and mon.event_pending():
+		while mon and mon.event_pending() > 0:
 			mon.handle_events()
 			mon = self.monitor
 			ret = True
@@ -122,9 +123,14 @@ class FilterGamin(FileFilter):
 		# Gamin needs a loop to collect and dispatch events
 		while self.active:
 			if self.idle:
-				time.sleep(self.sleeptime)
-				continue
+				# wait a little bit here for not idle, to prevent hi-load:
+				if not Utils.wait_for(lambda: not self.idle, 
+					self.sleeptime * 10, self.sleeptime
+				):
+					self.ticks += 1
+					continue
 			Utils.wait_for(self._handleEvents, self.sleeptime)
+			self.ticks += 1
 		logSys.debug(self.jail.name + ": filter terminated")
 		return True
 

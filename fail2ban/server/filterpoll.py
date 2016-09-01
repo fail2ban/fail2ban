@@ -30,8 +30,9 @@ import time
 from .failmanager import FailManagerEmpty
 from .filter import FileFilter
 from .mytime import MyTime
+from .utils import Utils
 from ..helpers import getLogger
-from ..server.utils import Utils
+
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -101,8 +102,9 @@ class FilterPoll(FileFilter):
 						   self.idle, self.getLogCount())
 			if self.idle:
 				if not Utils.wait_for(lambda: not self.idle, 
-					self.sleeptime * 100, self.sleeptime
+					self.sleeptime * 10, self.sleeptime
 				):
+					self.ticks += 1
 					continue
 			# Get file modification
 			modlst = []
@@ -111,6 +113,7 @@ class FilterPoll(FileFilter):
 				self.getFailures(filename)
 				self.__modified = True
 
+			self.ticks += 1
 			if self.__modified:
 				try:
 					while True:

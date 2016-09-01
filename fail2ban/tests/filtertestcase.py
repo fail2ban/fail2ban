@@ -720,6 +720,12 @@ class CommonMonitorTestCase(unittest.TestCase):
 		"""
 		return Utils.wait_for(self.jail.isEmpty, _maxWaitTime(delay))
 
+	def waitForTicks(self, ticks, delay=2.):
+		"""Wait up to `delay` sec to assure that it was modified or not
+		"""
+		last_ticks = self.filter.ticks
+		return Utils.wait_for(lambda: self.filter.ticks >= last_ticks + ticks, _maxWaitTime(delay))
+
 
 def get_monitor_failures_testcase(Filter_):
 	"""Generator of TestCase's for different filters/backends
@@ -776,6 +782,16 @@ def get_monitor_failures_testcase(Filter_):
 			_assert_correct_last_attempt(self, self.jail, failures, count=count)
 
 		def test_grow_file(self):
+			self._test_grow_file()
+
+		def test_grow_file_in_idle(self):
+			self._test_grow_file(True)
+
+		def _test_grow_file(self, idle=False):
+			if idle:
+				self.filter.sleeptime /= 100.0
+				self.filter.idle = True
+				self.waitForTicks(1)
 			# suck in lines from this sample log file
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
@@ -787,6 +803,10 @@ def get_monitor_failures_testcase(Filter_):
 			# since it should have not been enough
 
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, skip=5)
+			if idle:
+				self.waitForTicks(1)
+				self.assertTrue(self.isEmpty(1))
+				return
 			self.assertTrue(self.isFilled(10))
 			# so we sleep a bit for it not to become empty,
 			# and meanwhile pass to other thread(s) and filter should
@@ -958,12 +978,6 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				self.filter.join()		  # wait for the thread to terminate
 				pass
 
-		def waitForTicks(self, ticks, delay=2.):
-			"""Wait up to `delay` sec to assure that it was modified or not
-			"""
-			last_ticks = self.filter.ticks
-			return Utils.wait_for(lambda: self.filter.ticks >= last_ticks + ticks, _maxWaitTime(delay))
-
 		def _getRuntimeJournal(self):
 			# retrieve current system journal path
 			tmp = Utils.executeCmd('find "$(systemd-path system-runtime-logs)" -name system.journal', 
@@ -1006,8 +1020,18 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.assertEqual(attempts, test_attempts)
 
 		def test_grow_file(self):
+			self._test_grow_file()
+
+		def test_grow_file_in_idle(self):
+			self._test_grow_file(True)
+
+		def _test_grow_file(self, idle=False):
 			self._initFilter()
 			self.filter.start()
+			if idle:
+				self.filter.sleeptime /= 100.0
+				self.filter.idle = True
+				self.waitForTicks(1)
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
 			# Now let's feed it with entries from the file
@@ -1020,6 +1044,10 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, skip=2, n=3)
+			if idle:
+				self.waitForTicks(1)
+				self.assertTrue(self.isEmpty(1))
+				return
 			self.assertTrue(self.isFilled(10))
 			# so we sleep for up to 6 sec for it not to become empty,
 			# and meanwhile pass to other thread(s) and filter should

@@ -430,16 +430,16 @@ def gatherTests(regexps=None, opts=None):
 		# because gamin can be very slow on some platforms (and can produce many failures 
 		# with fast sleep interval) - skip it by fast run:
 		if unittest.F2B.fast or unittest.F2B.no_gamin: # pragma: no cover
-			raise Exception('Skip, fast: %s, no_gamin: %s' % (unittest.F2B.fast, unittest.F2B.no_gamin))
+			raise ImportError('Skip, fast: %s, no_gamin: %s' % (unittest.F2B.fast, unittest.F2B.no_gamin))
 		from ..server.filtergamin import FilterGamin
 		filters.append(FilterGamin)
-	except Exception, e: # pragma: no cover
+	except ImportError, e: # pragma: no cover
 		logSys.warning("Skipping gamin backend testing. Got exception '%s'" % e)
 
 	try:
 		from ..server.filterpyinotify import FilterPyinotify
 		filters.append(FilterPyinotify)
-	except Exception, e: # pragma: no cover
+	except ImportError, e: # pragma: no cover
 		logSys.warning("I: Skipping pyinotify backend testing. Got exception '%s'" % e)
 
 	for Filter_ in filters:
@@ -448,7 +448,7 @@ def gatherTests(regexps=None, opts=None):
 	try: # pragma: systemd no cover
 		from ..server.filtersystemd import FilterSystemd
 		tests.addTest(unittest.makeSuite(filtertestcase.get_monitor_failures_journal_testcase(FilterSystemd)))
-	except Exception, e: # pragma: no cover
+	except ImportError, e: # pragma: no cover
 		logSys.warning("I: Skipping systemd backend testing. Got exception '%s'" % e)
 
 	# Server test for logging elements which break logging used to support
