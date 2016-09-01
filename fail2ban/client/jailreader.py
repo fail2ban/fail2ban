@@ -192,7 +192,7 @@ class JailReader(ConfigReader):
 		stream = []
 		for opt in self.__opts:
 			if opt == "logpath" and	\
-					self.__opts.get('backend', None) != "systemd":
+					not self.__opts.get('backend', None).startswith("systemd"):
 				found_files = 0
 				for path in self.__opts[opt].split("\n"):
 					path = path.rsplit(" ", 1)
