@@ -84,7 +84,7 @@ def _killfile(f, name):
 
 def _maxWaitTime(wtime):
 	if unittest.F2B.fast: # pragma: no cover
-		wtime /= 10
+		wtime /= 10.0
 	return wtime
 
 
@@ -958,12 +958,40 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				self.filter.join()		  # wait for the thread to terminate
 				pass
 
-		def testJournalFlagsArg(self):
-			self._initFilter(journalflags=2) # journal.RUNTIME_ONLY
+		def waitForTicks(self, ticks, delay=2.):
+			"""Wait up to `delay` sec to assure that it was modified or not
+			"""
+			last_ticks = self.filter.ticks
+			return Utils.wait_for(lambda: self.filter.ticks >= last_ticks + ticks, _maxWaitTime(delay))
 
-		def __str__(self):
-			return "MonitorJournalFailures%s(%s)" \
-			  % (Filter_, hasattr(self, 'name') and self.name or 'tempfile')
+		def _getRuntimeJournal(self):
+			# retrieve current system journal path
+			tmp = Utils.executeCmd('find "$(systemd-path system-runtime-logs)" -name system.journal', 
+				timeout=10, shell=True, output=True);
+			self.assertTrue(tmp)
+			return str(tmp[1].decode('utf-8')).split('\n')[0]
+
+		def testJournalFilesArg(self):
+			# retrieve current system journal path
+			jrnlfile = self._getRuntimeJournal()
+			self._initFilter(journalfiles=jrnlfile)
+
+		def testJournalPathArg(self):
+			# retrieve current system journal path
+			jrnlpath = self._getRuntimeJournal()
+			jrnlpath = os.path.dirname(jrnlpath)
+			self._initFilter(journalpath=jrnlpath)
+			self.filter.seekToTime(
+				datetime.datetime.now() - datetime.timedelta(days=1)
+			)
+			self.filter.start()
+			self.waitForTicks(2)
+			self.assertTrue(self.isEmpty(1))
+			self.assertEqual(len(self.jail), 0)
+			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
+
+		def testJournalFlagsArg(self):
+			self._initFilter(journalflags=0) # e. g. 2 - journal.RUNTIME_ONLY
 
 		def assert_correct_ban(self, test_ip, test_attempts):
 			self.assertTrue(self.waitFailTotal(test_attempts, 10)) # give Filter a chance to react
@@ -1027,7 +1055,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, n=5, skip=5)
 			# so we should get no more failures detected
-			self.assertTrue(self.isEmpty(_maxWaitTime(10)))
+			self.assertTrue(self.isEmpty(10))
 
 			# but then if we add it back again
 			self.filter.addJournalMatch([

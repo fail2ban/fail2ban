@@ -274,8 +274,10 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			if self.idle:
 				# because journal.wait will returns immediatelly if we have records in journal,
 				# just wait a little bit here for not idle, to prevent hi-load:
-				time.sleep(self.sleeptime)
-				continue
+				if not Utils.wait_for(lambda: not self.idle, 
+					self.sleeptime * 10, self.sleeptime
+				):
+					continue
 			self.__modified = 0
 			while self.active:
 				logentry = None
