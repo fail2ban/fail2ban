@@ -81,6 +81,8 @@ releases.
 * Fixed test case "testSetupInstallRoot" for not default python version (also
   using direct call, out of virtualenv);
 * Fixed ambiguous wrong recognized date pattern resp. its optional parts (see gh-1512);
+* `filter.d/asterisk.conf`
+    - Fixed to match different asterisk log prefix (source file: method:)
 * `filter.d/ignorecommands/apache-fakegooglebot`
     - Fixed error within apache-fakegooglebot, that will be called 
       with wrong python version (gh-1506)
