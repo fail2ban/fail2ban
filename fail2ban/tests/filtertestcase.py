@@ -734,7 +734,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				pass
 
 		def testJournalFlagsArg(self):
-			self._initFilter(journalflags=0) # journal.RUNTIME_ONLY
+			self._initFilter(journalflags=2) # journal.RUNTIME_ONLY
 
 		def __str__(self):
 			return "MonitorJournalFailures%s(%s)" \
