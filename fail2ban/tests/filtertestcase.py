@@ -707,11 +707,16 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			"""Call before every test case."""
 			self.test_file = os.path.join(TEST_FILES_DIR, "testcase-journal.log")
 			self.jail = DummyJail()
-			self.filter = Filter_(self.jail)
+			self.filter = None
 			# UUID used to ensure that only meeages generated
 			# as part of this test are picked up by the filter
 			self.test_uuid = str(uuid.uuid4())
 			self.name = "monitorjournalfailures-%s" % self.test_uuid
+			self.journal_fields = {
+				'TEST_FIELD': "1", 'TEST_UUID': self.test_uuid}
+
+		def _initFilter(self, **kwargs):
+			self.filter = Filter_(self.jail, **kwargs)
 			self.filter.addJournalMatch([
 				"SYSLOG_IDENTIFIER=fail2ban-testcases",
 				"TEST_FIELD=1",
@@ -720,16 +725,16 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				"SYSLOG_IDENTIFIER=fail2ban-testcases",
 				"TEST_FIELD=2",
 				"TEST_UUID=%s" % self.test_uuid])
-			self.journal_fields = {
-				'TEST_FIELD': "1", 'TEST_UUID': self.test_uuid}
-			self.filter.active = True
 			self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
-			self.filter.start()
 
 		def tearDown(self):
-			self.filter.stop()
-			self.filter.join()		  # wait for the thread to terminate
-			pass
+			if self.filter and self.filter.active:
+				self.filter.stop()
+				self.filter.join()		  # wait for the thread to terminate
+				pass
+
+		def testJournalFlagsArg(self):
+			self._initFilter(journalflags=2) # journal.RUNTIME_ONLY
 
 		def __str__(self):
 			return "MonitorJournalFailures%s(%s)" \
@@ -761,6 +766,8 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.assertEqual(attempts, test_attempts)
 
 		def test_grow_file(self):
+			self._initFilter()
+			self.filter.start()
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
 
 			# Now let's feed it with entries from the file
@@ -790,6 +797,8 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.assert_correct_ban("193.168.0.128", 3)
 
 		def test_delJournalMatch(self):
+			self._initFilter()
+			self.filter.start()
 			# Smoke test for removing of match
 
 			# basic full test

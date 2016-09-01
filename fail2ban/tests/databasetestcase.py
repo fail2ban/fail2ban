@@ -48,12 +48,10 @@ class DatabaseTest(LogCaptureTestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		super(DatabaseTest, self).setUp()
-		if Fail2BanDb is None and sys.version_info >= (2,7): # pragma: no cover
+		if Fail2BanDb is None: # pragma: no cover
 			raise unittest.SkipTest(
 				"Unable to import fail2ban database module as sqlite is not "
 				"available.")
-		elif Fail2BanDb is None:
-			return
 		_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
 		self.db = Fail2BanDb(self.dbFilename)
 

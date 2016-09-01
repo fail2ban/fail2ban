@@ -26,10 +26,13 @@ import itertools
 import logging
 import os
 import re
+import tempfile
+import shutil
 import sys
 import time
 import unittest
 from StringIO import StringIO
+from functools import wraps
 
 from ..server.mytime import MyTime
 from ..helpers import getLogger
@@ -45,6 +48,40 @@ if not CONFIG_DIR:
 	else:
 		CONFIG_DIR = '/etc/fail2ban'
 
+
+def with_tmpdir(f):
+	"""Helper decorator to create a temporary directory
+
+	Directory gets removed after function returns, regardless
+	if exception was thrown of not
+	"""
+	@wraps(f)
+	def wrapper(self, *args, **kwargs):
+		tmp = tempfile.mkdtemp(prefix="f2b-temp")
+		try:
+			return f(self, tmp, *args, **kwargs)
+		finally:
+			# clean up
+			shutil.rmtree(tmp)
+	return wrapper
+
+
+# backwards compatibility to python 2.6:
+if not hasattr(unittest, 'SkipTest'): # pragma: no cover
+	class SkipTest(Exception):
+		pass
+	unittest.SkipTest = SkipTest
+	_org_AddError = unittest._TextTestResult.addError
+	def addError(self, test, err):
+		if err[0] is SkipTest: 
+			if self.showAll:
+				self.stream.writeln(str(err[1]))
+			elif self.dots:
+				self.stream.write('s')
+				self.stream.flush()
+			return
+		_org_AddError(self, test, err)
+	unittest._TextTestResult.addError = addError
 
 def mtimesleep():
 	# no sleep now should be necessary since polling tracks now not only
@@ -218,8 +255,8 @@ if not hasattr(unittest.TestCase, 'assertRaisesRegexp'):
 		try:
 			fun(*args, **kwargs)
 		except exccls as e:
-			if re.search(regexp, e.message) is None:
-				self.fail('\"%s\" does not match \"%s\"' % (regexp, e.message))
+			if re.search(regexp, str(e)) is None:
+				self.fail('\"%s\" does not match \"%s\"' % (regexp, e))
 		else:
 			self.fail('%s not raised' % getattr(exccls, '__name__'))
 	unittest.TestCase.assertRaisesRegexp = assertRaisesRegexp

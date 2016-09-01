@@ -33,7 +33,7 @@ if LooseVersion(getattr(journal, '__version__', "0")) < '204':
 from .failmanager import FailManagerEmpty
 from .filter import JournalFilter
 from .mytime import MyTime
-from ..helpers import getLogger
+from ..helpers import getLogger, logging, splitwords
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -54,13 +54,44 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	# @param jail the jail object
 
 	def __init__(self, jail, **kwargs):
+		jrnlargs = FilterSystemd._getJournalArgs(kwargs)
 		JournalFilter.__init__(self, jail, **kwargs)
-		self.__modified = False
+		self.__modified = 0
 		# Initialise systemd-journal connection
-		self.__journal = journal.Reader(converters={'__CURSOR': lambda x: x})
+		self.__journal = journal.Reader(**jrnlargs)
 		self.__matches = []
 		self.setDatePattern(None)
+		self.ticks = 0
 		logSys.debug("Created FilterSystemd")
+
+	@staticmethod
+	def _getJournalArgs(kwargs):
+		args = {'converters':{'__CURSOR': lambda x: x}}
+		try:
+			args['path'] = kwargs.pop('journalpath')
+		except KeyError:
+			pass
+
+		try:
+			args['files'] = kwargs.pop('journalfiles')
+		except KeyError:
+			pass
+		else:
+			import glob
+			p = args['files']
+			if not isinstance(p, (list, set, tuple)):
+				p = splitwords(p)
+			files = []
+			for p in p:
+				files.extend(glob.glob(p))
+			args['files'] = list(set(files))
+
+		try:
+			args['flags'] = kwargs.pop('journalflags')
+		except KeyError:
+			pass
+
+		return args
 
 	##
 	# Add a journal match filters from list structure
@@ -207,6 +238,11 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		return (('', date.isoformat(), logline),
 			time.mktime(date.timetuple()) + date.microsecond/1.0E6)
 
+	def seekToTime(self, date):
+		if not isinstance(date, datetime.datetime):
+			date = datetime.datetime.fromtimestamp(date)
+		self.__journal.seek_realtime(date)
+
 	##
 	# Main loop.
 	#
@@ -224,7 +260,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		# Seek to now - findtime in journal
 		start_time = datetime.datetime.now() - \
 				datetime.timedelta(seconds=int(self.getFindTime()))
-		self.__journal.seek_realtime(start_time)
+		self.seekToTime(start_time)
 		# Move back one entry to ensure do not end up in dead space
 		# if start time beyond end of journal
 		try:
@@ -233,29 +269,38 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			pass # Reading failure, so safe to ignore
 
 		while self.active:
-			if not self.idle:
-				while self.active:
-					try:
-						logentry = self.__journal.get_next()
-					except OSError:
-						logSys.warning(
-							"Error reading line from systemd journal")
-						continue
-					if logentry:
-						self.processLineAndAdd(
-							*self.formatJournalEntry(logentry))
-						self.__modified = True
-					else:
-						break
-				if self.__modified:
-					try:
-						while True:
-							ticket = self.failManager.toBan()
-							self.jail.putFailTicket(ticket)
-					except FailManagerEmpty:
-						self.failManager.cleanup(MyTime.time())
-					self.__modified = False
+			# wait for records (or for timeout in sleeptime seconds):
 			self.__journal.wait(self.sleeptime)
+			if self.idle:
+				# because journal.wait will returns immediatelly if we have records in journal,
+				# just wait a little bit here for not idle, to prevent hi-load:
+				time.sleep(self.sleeptime)
+				continue
+			self.__modified = 0
+			while self.active:
+				logentry = None
+				try:
+					logentry = self.__journal.get_next()
+				except OSError as e:
+					logSys.error("Error reading line from systemd journal: %s",
+						e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
+				self.ticks += 1
+				if logentry:
+					self.processLineAndAdd(
+						*self.formatJournalEntry(logentry))
+					self.__modified += 1
+					if self.__modified >= 100: # todo: should be configurable
+						break
+				else:
+					break
+			if self.__modified:
+				try:
+					while True:
+						ticket = self.failManager.toBan()
+						self.jail.putFailTicket(ticket)
+				except FailManagerEmpty:
+					self.failManager.cleanup(MyTime.time())
+
 		logSys.debug((self.jail is not None and self.jail.name
                       or "jailless") +" filter terminated")
 		return True
