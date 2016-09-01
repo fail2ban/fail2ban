@@ -717,10 +717,7 @@ class Transmitter(TransmitterBase):
 
 	def testJournalMatch(self):
 		if not filtersystemd: # pragma: no cover
-			if sys.version_info >= (2, 7):
-				raise unittest.SkipTest(
-					"systemd python interface not available")
-			return
+			raise unittest.SkipTest("systemd python interface not available")
 		jailName = "TestJail2"
 		self.server.addJail(jailName, "systemd")
 		values = [
@@ -820,10 +817,8 @@ class TransmitterLogging(TransmitterBase):
 		self.setGetTest("logtarget", "STDERR")
 
 	def testLogTargetSYSLOG(self):
-		if not os.path.exists("/dev/log") and sys.version_info >= (2, 7):
+		if not os.path.exists("/dev/log"):
 			raise unittest.SkipTest("'/dev/log' not present")
-		elif not os.path.exists("/dev/log"):
-			return
 		self.assertTrue(self.server.getSyslogSocket(), "auto")
 		self.setGetTest("logtarget", "SYSLOG")
 		self.assertTrue(self.server.getSyslogSocket(), "/dev/log")

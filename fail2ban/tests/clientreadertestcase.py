@@ -37,7 +37,7 @@ from ..client.actionreader import ActionReader
 from ..client.configurator import Configurator
 from ..server.mytime import MyTime
 from ..version import version
-from .utils import LogCaptureTestCase
+from .utils import LogCaptureTestCase, with_tmpdir
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 TEST_FILES_DIR_SHARE_CFG = {}
@@ -97,9 +97,8 @@ option = %s
 		if not os.access(f, os.R_OK):
 			self.assertFalse(self.c.read('d'))	# should not be readable BUT present
 		else:
-			# SkipTest introduced only in 2.7 thus can't yet use generally
-			# raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform)
-			pass
+			import platform
+			raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform.platform())
 
 	def testOptionalDotDDir(self):
 		self.assertFalse(self.c.read('c'))	# nothing is there yet
@@ -298,8 +297,8 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertEqual(eval(act[2][5]).get('agent', '<wrong>'), useragent)
 		self.assertEqual(act[3], ['set', 'blocklisttest', 'action', 'mynetwatchman', 'agent', useragent])
 
-	def testGlob(self):
-		d = tempfile.mkdtemp(prefix="f2b-temp")
+	@with_tmpdir
+	def testGlob(self, d):
 		# Generate few files
 		# regular file
 		f1 = os.path.join(d, 'f1')
@@ -314,9 +313,6 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertEqual(JailReader._glob(f2), [])
 		self.assertLogged('File %s is a dangling link, thus cannot be monitored' % f2)
 		self.assertEqual(JailReader._glob(os.path.join(d, 'nonexisting')), [])
-		os.remove(f1)
-		os.remove(f2)
-		os.rmdir(d)
 
 		
 class FilterReaderTest(unittest.TestCase):
@@ -448,11 +444,11 @@ class JailsReaderTestCache(LogCaptureTestCase):
 				cnt += 1
 		return cnt
 
-	def testTestJailConfCache(self):
+	@with_tmpdir
+	def testTestJailConfCache(self, basedir):
 		unittest.F2B.SkipIfFast()
 		saved_ll = configparserinc.logLevel
 		configparserinc.logLevel = logging.DEBUG
-		basedir = tempfile.mkdtemp("fail2ban_conf")
 		try:
 			shutil.rmtree(basedir)
 			shutil.copytree(CONFIG_DIR, basedir)
@@ -484,7 +480,6 @@ class JailsReaderTestCache(LogCaptureTestCase):
 			cnt = self._getLoggedReadCount(r'action\.d/iptables-common\.conf')
 			self.assertTrue(cnt == 1, "Unexpected count by reading of action files, cnt = %s" % cnt)
 		finally:
-			shutil.rmtree(basedir)
 			configparserinc.logLevel = saved_ll
 
 
@@ -739,8 +734,8 @@ class JailsReaderTest(LogCaptureTestCase):
 			self.assertEqual(configurator._Configurator__jails.getBaseDir(), '/tmp')
 			self.assertEqual(configurator.getBaseDir(), CONFIG_DIR)
 
-	def testMultipleSameAction(self):
-		basedir = tempfile.mkdtemp("fail2ban_conf")
+	@with_tmpdir
+	def testMultipleSameAction(self, basedir):
 		os.mkdir(os.path.join(basedir, "filter.d"))
 		os.mkdir(os.path.join(basedir, "action.d"))
 		open(os.path.join(basedir, "action.d", "testaction1.conf"), 'w').close()
@@ -769,4 +764,33 @@ filter = testfilter1
 		# Python actions should not be passed `actname`
 		self.assertEqual(add_actions[-1][-1], "{}")
 
-		shutil.rmtree(basedir)
+	def testLogPathFileFilterBackend(self):
+		self.assertRaisesRegexp(ValueError, r"Have not found any log file for .* jail", 
+			self._testLogPath, backend='polling')
+
+	def testLogPathSystemdBackend(self):
+		try: # pragma: systemd no cover
+			from ..server.filtersystemd import FilterSystemd
+		except Exception, e: # pragma: no cover
+			raise unittest.SkipTest("systemd python interface not available")
+		self._testLogPath(backend='systemd')
+		self._testLogPath(backend='systemd[journalflags=2]')
+	
+	@with_tmpdir
+	def _testLogPath(self, basedir, backend):
+		jailfd = open(os.path.join(basedir, "jail.conf"), 'w')
+		jailfd.write("""
+[testjail1]
+enabled = true
+backend = %s
+logpath = %s/not/exist.log
+          /this/path/should/not/exist.log
+action = 
+filter = 
+failregex = test <HOST>
+""" % (backend, basedir))
+		jailfd.close()
+		jails = JailsReader(basedir=basedir)
+		self.assertTrue(jails.read())
+		self.assertTrue(jails.getOptions())
+		jails.convert()
