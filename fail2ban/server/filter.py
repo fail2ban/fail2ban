@@ -105,7 +105,7 @@ class Filter(JailThread):
 				logSys.warning(
 					"Mutliline regex set for jail '%s' "
 					"but maxlines not greater than 1")
-		except RegexException, e:
+		except RegexException as e:
 			logSys.error(e)
 			raise e
 
@@ -138,7 +138,7 @@ class Filter(JailThread):
 		try:
 			regex = Regex(value)
 			self.__ignoreRegex.append(regex)
-		except RegexException, e:
+		except RegexException as e:
 			logSys.error(e)
 			raise e 
 
@@ -536,7 +536,7 @@ class Filter(JailThread):
 										 failRegex.getMatchedLines()])
 								if not checkAllRegex:
 									break
-					except RegexException, e: # pragma: no cover - unsure if reachable
+					except RegexException as e: # pragma: no cover - unsure if reachable
 						logSys.error(e)
 		return failList
 
@@ -660,15 +660,15 @@ class FileFilter(Filter):
 		try:
 			has_content = log.open()
 		# see http://python.org/dev/peps/pep-3151/
-		except IOError, e:
+		except IOError as e:
 			logSys.error("Unable to open %s" % filename)
 			logSys.exception(e)
 			return False
-		except OSError, e: # pragma: no cover - requires race condition to tigger this
+		except OSError as e: # pragma: no cover - requires race condition to tigger this
 			logSys.error("Error opening %s" % filename)
 			logSys.exception(e)
 			return False
-		except Exception, e: # pragma: no cover - Requires implemention error in FileContainer to generate
+		except Exception as e: # pragma: no cover - Requires implemention error in FileContainer to generate
 			logSys.error("Internal errror in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
 			logSys.exception(e)
 			return False
@@ -858,11 +858,11 @@ class DNSUtils:
 		# retrieve ip (todo: use AF_INET6 for IPv6)
 		try:
 			return set([i[4][0] for i in socket.getaddrinfo(dns, None, socket.AF_INET, 0, socket.IPPROTO_TCP)])
-		except socket.error, e:
+		except socket.error as e:
 			logSys.warning("Unable to find a corresponding IP address for %s: %s"
 						% (dns, e))
 			return list()
-		except socket.error, e:
+		except socket.error as e:
 			logSys.warning("Socket error raised trying to resolve hostname %s: %s"
 						% (dns, e))
 			return list()
@@ -871,7 +871,7 @@ class DNSUtils:
 	def ipToName(ip):
 		try:
 			return socket.gethostbyaddr(ip)[0]
-		except socket.error, e:
+		except socket.error as e:
 			logSys.debug("Unable to find a name for the IP %s: %s" % (ip, e))
 			return None
 

@@ -410,7 +410,7 @@ class FilterReaderTest(unittest.TestCase):
 			# from testcase01
 			filterReader.get('Definition', 'failregex')
 			filterReader.get('Definition', 'ignoreregex')
-		except Exception, e: # pragma: no cover - failed if reachable
+		except Exception as e: # pragma: no cover - failed if reachable
 			self.fail('unexpected options after readexplicit: %s' % (e))
 
 

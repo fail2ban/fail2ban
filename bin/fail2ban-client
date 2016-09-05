@@ -176,7 +176,7 @@ class Fail2banClient:
 					if showRet:
 						self.__logSocketError()
 					return False
-				except Exception, e:
+				except Exception as e:
 					if showRet:
 						logSys.error(e)
 					return False
@@ -429,7 +429,7 @@ class Fail2banClient:
 						elif not cmd == "":
 							try:
 								self.__processCommand(shlex.split(cmd))
-							except Exception, e:
+							except Exception as e:
 								logSys.error(e)
 			except (EOFError, KeyboardInterrupt):
 				print
@@ -451,7 +451,7 @@ class Fail2banClient:
 			ret = self.__configurator.getOptions(jail)
 			self.__configurator.convertToProtocol()
 			self.__stream = self.__configurator.getConfigStream()
-		except Exception, e:
+		except Exception as e:
 			logSys.error("Failed during configuration: %s" % e)
 			ret = False
 		return ret
