@@ -29,6 +29,7 @@ import logging
 import os
 import re
 import sys
+import time
 
 from .failmanager import FailManagerEmpty, FailManager
 from .ipdns import DNSUtils, IPAddr
@@ -443,8 +444,10 @@ class Filter(JailThread):
 		except Exception as e:
 			logSys.error("Failed to process line: %r, caught exception: %r", line, e,
 				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-			# incr error counter, stop processing this :
+			# incr error counter, stop processing (going idle) after 100th error :
 			self.__errors += 1
+			# sleep a little bit (to get around time-related errors):
+			time.sleep(self.sleeptime)
 			if self.__errors >= 100:
 				logSys.error("Too many errors at once (%s), going idle", self.__errors)
 				self.__errors //= 2

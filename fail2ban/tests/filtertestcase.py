@@ -605,6 +605,7 @@ class LogFileMonitor(LogCaptureTestCase):
 		self.assertLogged('Unable to open %s' % self.name)
 
 	def testErrorProcessLine(self):
+		self.filter.sleeptime /= 1000.0
 		## produce error with not callable processLine:
 		_org_processLine = self.filter.processLine
 		self.filter.processLine = None
