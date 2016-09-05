@@ -24,6 +24,7 @@ __license__ = "GPL"
 import codecs
 import fcntl
 import locale
+import logging
 import os
 import re
 import sys
@@ -394,11 +395,35 @@ class Filter(JailThread):
 
 		return False
 
+	if sys.version_info >= (3,):
+		@staticmethod
+		def uni_decode(x, enc, errors='strict'):
+			try:
+				if isinstance(x, bytes):
+					return x.decode(enc, errors)
+				return x
+			except (UnicodeDecodeError, UnicodeEncodeError):
+				if errors != 'strict': # pragma: no cover - unsure if reachable
+					raise
+				return uni_decode(x, enc, 'replace')
+	else:
+		@staticmethod
+		def uni_decode(x, enc, errors='strict'):
+			try:
+				if isinstance(x, unicode):
+					return x.encode(enc, errors)
+				return x
+			except (UnicodeDecodeError, UnicodeEncodeError):
+				if errors != 'strict': # pragma: no cover - unsure if reachable
+					raise
+				return uni_decode(x, enc, 'replace')
+
 	def processLine(self, line, date=None, returnRawHost=False,
-		checkAllRegex=False):
+		checkAllRegex=False, checkFindTime=False):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
 		if date:
+			# be sure each element of tuple line has the same type:
 			tupleLine = line
 		else:
 			l = line.rstrip('\r\n')
@@ -414,7 +439,7 @@ class Filter(JailThread):
 				tupleLine = (l, "", "")
 
 		return "".join(tupleLine[::2]), self.findFailure(
-			tupleLine, date, returnRawHost, checkAllRegex)
+			tupleLine, date, returnRawHost, checkAllRegex, checkFindTime)
 
 	def processLineAndAdd(self, line, date=None):
 		"""Processes the line for failures and populates failManager
@@ -457,7 +482,7 @@ class Filter(JailThread):
 	# @return a dict with IP and timestamp.
 
 	def findFailure(self, tupleLine, date=None, returnRawHost=False,
-		checkAllRegex=False):
+		checkAllRegex=False, checkFindTime=False):
 		failList = list()
 
 		# Checks if we must ignore this line.
@@ -488,6 +513,11 @@ class Filter(JailThread):
 		else:
 			timeText = self.__lastTimeText or "".join(tupleLine[::2])
 			date = self.__lastDate
+
+		if checkFindTime and date is not None and date < MyTime.time() - self.getFindTime():
+			logSys.log(5, "Ignore line since time %s < %s - %s", 
+				date, MyTime.time(), self.getFindTime())
+			return failList
 
 		self.__lineBuffer = (
 			self.__lineBuffer + [tupleLine])[-self.__lineBufferSize:]
@@ -791,17 +821,25 @@ class FileContainer:
 	@staticmethod
 	def decode_line(filename, enc, line):
 		try:
-			line = line.decode(enc, 'strict')
-		except UnicodeDecodeError:
-			logSys.warning(
-				"Error decoding line from '%s' with '%s'."
-				" Consider setting logencoding=utf-8 (or another appropriate"
-				" encoding) for this jail. Continuing"
-				" to process line ignoring invalid characters: %r" %
-				(filename, enc, line))
+			return line.decode(enc, 'strict')
+		except UnicodeDecodeError as e:
 			# decode with replacing error chars:
-			line = line.decode(enc, 'replace')
-		return line
+			rline = line.decode(enc, 'replace')
+		except UnicodeEncodeError as e:
+			# encode with replacing error chars:
+			rline = line.decode(enc, 'replace')
+		global _decode_line_warn
+		lev = logging.DEBUG
+		if _decode_line_warn.get(filename, 0) <= MyTime.time():
+			lev = logging.WARNING
+			_decode_line_warn[filename] = MyTime.time() + 24*60*60
+		logSys.log(lev,
+			"Error decoding line from '%s' with '%s'."
+			" Consider setting logencoding=utf-8 (or another appropriate"
+			" encoding) for this jail. Continuing"
+			" to process line ignoring invalid characters: %r",
+			filename, enc, line)
+		return rline
 
 	def readline(self):
 		if self.__handler is None:
@@ -818,6 +856,8 @@ class FileContainer:
 			self.__handler = None
 		## print "D: Closed %s with pos %d" % (handler, self.__pos)
 		## sys.stdout.flush()
+
+_decode_line_warn = {}
 
 
 ##

@@ -38,7 +38,7 @@ except ImportError:
 
 from ..server.jail import Jail
 from ..server.filterpoll import FilterPoll
-from ..server.filter import Filter, FileFilter, DNSUtils
+from ..server.filter import Filter, FileFilter, FileContainer, locale, DNSUtils
 from ..server.failmanager import FailManagerEmpty
 from ..server.mytime import MyTime
 from .utils import setUpMyTime, tearDownMyTime, mtimesleep, LogCaptureTestCase
@@ -166,6 +166,10 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	return fout
 
 
+TEST_JOURNAL_FIELDS = {
+  "SYSLOG_IDENTIFIER": "fail2ban-testcases",
+	"PRIORITY": "7",
+}
 def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # pragma: systemd no cover
 	"""Copy lines from one file to systemd journal
 
@@ -176,9 +180,7 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 	else:
 		fin = in_
 	# Required for filtering
-	fields.update({"SYSLOG_IDENTIFIER": "fail2ban-testcases",
-					"PRIORITY": "7",
-					})
+	fields.update(TEST_JOURNAL_FIELDS)
 	# Skip
 	for i in xrange(skip):
 		fin.readline()
@@ -227,6 +229,19 @@ class BasicFilter(unittest.TestCase):
 				('1.1.1.1', 1, 1421262059.0), 
 			1)
 		)
+
+	def testWrongCharInTupleLine(self):
+		## line tuple has different types (ascii after ascii / unicode):
+		for a1 in ('', u'', b''):
+			for a2 in ('2016-09-05T20:18:56', u'2016-09-05T20:18:56', b'2016-09-05T20:18:56'):
+				for a3 in (
+					'Fail for "g\xc3\xb6ran" from 192.0.2.1', 
+					u'Fail for "g\xc3\xb6ran" from 192.0.2.1',
+					b'Fail for "g\xc3\xb6ran" from 192.0.2.1'
+				):
+					# join should work if all arguments have the same type:
+					enc = locale.getpreferredencoding()
+					"".join([Filter.uni_decode(v, enc) for v in (a1, a2, a3)])
 
 
 class IgnoreIP(LogCaptureTestCase):
@@ -827,6 +842,33 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				self.test_file, self.journal_fields, n=6, skip=10)
 			# we should detect the failures
 			self.assertTrue(self.isFilled(6))
+
+		def test_WrongChar(self):
+			self._initFilter()
+			self.filter.start()
+			# Now let's feed it with entries from the file
+			_copy_lines_to_journal(
+				self.test_file, self.journal_fields, skip=15, n=4)
+			self.assertTrue(self.isFilled(10))
+			self.assert_correct_ban("87.142.124.10", 4)
+			# Add direct utf, unicode, blob:
+			for l in (
+		    "error: PAM: Authentication failure for \xe4\xf6\xfc\xdf from 192.0.2.1",
+		   u"error: PAM: Authentication failure for \xe4\xf6\xfc\xdf from 192.0.2.1",
+		   b"error: PAM: Authentication failure for \xe4\xf6\xfc\xdf from 192.0.2.1".decode('utf-8', 'replace'),
+		    "error: PAM: Authentication failure for \xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f from 192.0.2.2",
+		   u"error: PAM: Authentication failure for \xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f from 192.0.2.2",
+		   b"error: PAM: Authentication failure for \xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f from 192.0.2.2".decode('utf-8', 'replace')
+			):
+				fields = self.journal_fields
+				fields.update(TEST_JOURNAL_FIELDS)
+				journal.send(MESSAGE=l, **fields)
+			self.assertTrue(self.isFilled(10))
+			endtm = MyTime.time()+10
+			while len(self.jail) != 2 and MyTime.time() < endtm:
+				time.sleep(0.10)
+			self.assertEqual(sorted([self.jail.getFailTicket().getIP(), self.jail.getFailTicket().getIP()]), 
+				["192.0.2.1", "192.0.2.2"])
 
 	return MonitorJournalFailures
 

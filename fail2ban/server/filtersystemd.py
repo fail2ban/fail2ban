@@ -31,7 +31,7 @@ if LooseVersion(getattr(journal, '__version__', "0")) < '204':
 	raise ImportError("Fail2Ban requires systemd >= 204")
 
 from .failmanager import FailManagerEmpty
-from .filter import JournalFilter
+from .filter import JournalFilter, Filter, locale
 from .mytime import MyTime
 from ..helpers import getLogger, logging, splitwords
 
@@ -170,21 +170,10 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	def getJournalMatch(self):
 		return self.__matches
 
-    ##
-    # Join group of log elements which may be a mix of bytes and strings
-    #
-    # @param elements list of strings and bytes
-    # @return elements joined as string
-
 	@staticmethod
-	def _joinStrAndBytes(elements):
-		strElements = []
-		for element in elements:
-			if isinstance(element, str):
-				strElements.append(element)
-			else:
-				strElements.append(str(element, errors='ignore'))
-		return " ".join(strElements)
+	def uni_decode(x):
+		v = Filter.uni_decode(x, locale.getpreferredencoding())
+		return v
 
 	##
 	# Format journal log entry into syslog style
@@ -194,48 +183,43 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 	@classmethod
 	def formatJournalEntry(cls, logentry):
-		logelements = [""]
-		if logentry.get('_HOSTNAME'):
-			logelements.append(logentry['_HOSTNAME'])
-		if logentry.get('SYSLOG_IDENTIFIER'):
-			logelements.append(logentry['SYSLOG_IDENTIFIER'])
-			if logentry.get('SYSLOG_PID'):
-				logelements[-1] += ("[%i]" % logentry['SYSLOG_PID'])
-			elif logentry.get('_PID'):
-				logelements[-1] += ("[%i]" % logentry['_PID'])
+		# Be sure, all argument of line tuple should have the same type:
+		uni_decode = FilterSystemd.uni_decode
+		logelements = []
+		v = logentry.get('_HOSTNAME')
+		if v:
+			logelements.append(uni_decode(v))
+		v = logentry.get('SYSLOG_IDENTIFIER')
+		if not v:
+			v = logentry.get('_COMM')
+		if v:
+			logelements.append(uni_decode(v))
+			v = logentry.get('SYSLOG_PID')
+			if not v:
+				v = logentry.get('_PID')
+			if v:
+				logelements[-1] += ("[%i]" % v)
 			logelements[-1] += ":"
-		elif logentry.get('_COMM'):
-			logelements.append(logentry['_COMM'])
-			if logentry.get('_PID'):
-				logelements[-1] += ("[%i]" % logentry['_PID'])
-			logelements[-1] += ":"
-		if logelements[-1] == "kernel:":
-			if '_SOURCE_MONOTONIC_TIMESTAMP' in logentry:
-				monotonic = logentry.get('_SOURCE_MONOTONIC_TIMESTAMP')
-			else:
-				monotonic = logentry.get('__MONOTONIC_TIMESTAMP')[0]
-			logelements.append("[%12.6f]" % monotonic.total_seconds())
-		if isinstance(logentry.get('MESSAGE',''), list):
-			logelements.append(" ".join(logentry['MESSAGE']))
+			if logelements[-1] == "kernel:":
+				if '_SOURCE_MONOTONIC_TIMESTAMP' in logentry:
+					monotonic = logentry.get('_SOURCE_MONOTONIC_TIMESTAMP')
+				else:
+					monotonic = logentry.get('__MONOTONIC_TIMESTAMP')[0]
+				logelements.append("[%12.6f]" % monotonic.total_seconds())
+		msg = logentry.get('MESSAGE','')
+		if isinstance(msg, list):
+			logelements.append(" ".join(uni_decode(v) for v in msg))
 		else:
-			logelements.append(logentry.get('MESSAGE', ''))
+			logelements.append(uni_decode(msg))
 
-		try:
-			logline = u" ".join(logelements)
-		except UnicodeDecodeError:
-			# Python 2, so treat as string
-			logline = " ".join([str(logline) for logline in logelements])
-		except TypeError:
-			# Python 3, one or more elements bytes
-			logSys.warning("Error decoding log elements from journal: %s" %
-				repr(logelements))
-			logline =  cls._joinStrAndBytes(logelements)
+		logline = " ".join(logelements)
 
 		date = logentry.get('_SOURCE_REALTIME_TIMESTAMP',
 				logentry.get('__REALTIME_TIMESTAMP'))
 		logSys.debug("Read systemd journal entry: %r" %
 			"".join([date.isoformat(), logline]))
-		return (('', date.isoformat(), logline),
+		## use the same type for 1st argument:
+		return ((logline[:0], date.isoformat(), logline),
 			time.mktime(date.timetuple()) + date.microsecond/1.0E6)
 
 	def seekToTime(self, date):
