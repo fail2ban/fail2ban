@@ -604,6 +604,28 @@ class LogFileMonitor(LogCaptureTestCase):
 		self.filter.getFailures(self.name)
 		self.assertLogged('Unable to open %s' % self.name)
 
+	def testErrorProcessLine(self):
+		self.filter.sleeptime /= 1000.0
+		## produce error with not callable processLine:
+		_org_processLine = self.filter.processLine
+		self.filter.processLine = None
+		for i in range(100):
+			self.file.write("line%d\n" % 1)
+		self.file.flush()
+		for i in range(100):
+			self.filter.getFailures(self.name)
+		self.assertLogged('Failed to process line:')
+		self.assertLogged('Too many errors at once')
+		self.pruneLog()
+		self.assertTrue(self.filter.idle)
+		self.filter.idle = False
+		self.filter.getFailures(self.name)
+		self.filter.processLine = _org_processLine
+		self.file.write("line%d\n" % 1)
+		self.file.flush()
+		self.filter.getFailures(self.name)
+		self.assertNotLogged('Failed to process line:')
+
 	def testRemovingFailRegex(self):
 		self.filter.delFailRegex(0)
 		self.assertNotLogged('Cannot remove regular expression. Index 0 is not valid')
