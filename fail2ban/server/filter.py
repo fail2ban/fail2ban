@@ -422,8 +422,8 @@ class Filter(JailThread):
 				if isinstance(x, bytes):
 					return x.decode(enc, errors)
 				return x
-			except (UnicodeDecodeError, UnicodeEncodeError):
-				if errors != 'strict': # pragma: no cover - unsure if reachable
+			except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
+				if errors != 'strict': 
 					raise
 				return uni_decode(x, enc, 'replace')
 	else:
@@ -433,8 +433,8 @@ class Filter(JailThread):
 				if isinstance(x, unicode):
 					return x.encode(enc, errors)
 				return x
-			except (UnicodeDecodeError, UnicodeEncodeError):
-				if errors != 'strict': # pragma: no cover - unsure if reachable
+			except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
+				if errors != 'strict':
 					raise
 				return uni_decode(x, enc, 'replace')
 
@@ -443,7 +443,6 @@ class Filter(JailThread):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
 		if date:
-			# be sure each element of tuple line has the same type:
 			tupleLine = line
 		else:
 			l = line.rstrip('\r\n')
@@ -467,7 +466,7 @@ class Filter(JailThread):
 		"""Processes the line for failures and populates failManager
 		"""
 		try:
-			for element in self.processLine(line, date)[1]:
+			for element in self.processLine(line, date, checkFindTime=True)[1]:
 				ip = element[1]
 				unixTime = element[2]
 				lines = element[3]
@@ -1018,24 +1017,21 @@ class FileContainer:
 	def decode_line(filename, enc, line):
 		try:
 			return line.decode(enc, 'strict')
-		except UnicodeDecodeError as e:
+		except (UnicodeDecodeError, UnicodeEncodeError) as e:
+			global _decode_line_warn
+			lev = logging.DEBUG
+			if _decode_line_warn.get(filename, 0) <= MyTime.time():
+				lev = logging.WARNING
+				_decode_line_warn[filename] = MyTime.time() + 24*60*60
+			logSys.log(lev,
+				"Error decoding line from '%s' with '%s'."
+				" Consider setting logencoding=utf-8 (or another appropriate"
+				" encoding) for this jail. Continuing"
+				" to process line ignoring invalid characters: %r",
+				filename, enc, line)
 			# decode with replacing error chars:
-			rline = line.decode(enc, 'replace')
-		except UnicodeEncodeError as e:
-			# encode with replacing error chars:
-			rline = line.decode(enc, 'replace')
-		global _decode_line_warn
-		lev = logging.DEBUG
-		if _decode_line_warn.get(filename, 0) <= MyTime.time():
-			lev = logging.WARNING
-			_decode_line_warn[filename] = MyTime.time() + 24*60*60
-		logSys.log(lev,
-			"Error decoding line from '%s' with '%s'."
-			" Consider setting logencoding=utf-8 (or another appropriate"
-			" encoding) for this jail. Continuing"
-			" to process line ignoring invalid characters: %r",
-			filename, enc, line)
-		return rline
+			line = line.decode(enc, 'replace')
+		return line
 
 	def readline(self):
 		if self.__handler is None:
