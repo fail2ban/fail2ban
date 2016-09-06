@@ -102,7 +102,7 @@ def testSampleRegexsFactory(name, basedir):
 			if jsonREMatch:
 				try:
 					faildata = json.loads(jsonREMatch.group(1))
-				except ValueError, e:
+				except ValueError as e:
 					raise ValueError("%s: %s:%i" %
 						(e, logFile.filename(), logFile.filelineno()))
 				line = next(logFile)

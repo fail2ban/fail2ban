@@ -284,7 +284,7 @@ class CommandAction(ActionBase):
 					res &= self.executeCmd(startCmd6, self.timeout)
 			if not res:
 				raise RuntimeError("Error starting action %s/%s" % (self._jail, self._name,))
-		except ValueError, e:
+		except ValueError as e:
 			raise RuntimeError("Error starting action %s/%s: %r" % (self._jail, self._name, e))
 
 	def ban(self, aInfo):

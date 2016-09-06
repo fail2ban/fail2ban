@@ -245,7 +245,7 @@ class Fail2banCmdLine():
 			ret = self.configurator.getOptions(jail)
 			self.configurator.convertToProtocol()
 			stream = self.configurator.getConfigStream()
-		except Exception, e:
+		except Exception as e:
 			logSys.error("Failed during configuration: %s" % e)
 			ret = False
 		return ret, stream

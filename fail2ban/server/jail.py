@@ -109,7 +109,7 @@ class Jail(object):
 					logSys.info("Initiated %r backend" % b)
 				self.__actions = Actions(self)
 				return					# we are done
-			except ImportError, e: # pragma: no cover
+			except ImportError as e: # pragma: no cover
 				# Log debug if auto, but error if specific
 				logSys.log(
 					logging.DEBUG if backend == "auto" else logging.ERROR,

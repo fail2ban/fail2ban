@@ -421,7 +421,7 @@ class FilterReaderTest(unittest.TestCase):
 			# from testcase01
 			filterReader.get('Definition', 'failregex')
 			filterReader.get('Definition', 'ignoreregex')
-		except Exception, e: # pragma: no cover - failed if reachable
+		except Exception as e: # pragma: no cover - failed if reachable
 			self.fail('unexpected options after readexplicit: %s' % (e))
 
 
@@ -771,7 +771,7 @@ filter = testfilter1
 	def testLogPathSystemdBackend(self):
 		try: # pragma: systemd no cover
 			from ..server.filtersystemd import FilterSystemd
-		except Exception, e: # pragma: no cover
+		except Exception as e: # pragma: no cover
 			raise unittest.SkipTest("systemd python interface not available")
 		self._testLogPath(backend='systemd')
 		self._testLogPath(backend='systemd[journalflags=2]')

@@ -70,7 +70,7 @@ class DNSUtils:
 				ip = IPAddr(result[4][0])
 				if ip.isValid:
 					ips.append(ip)
-		except socket.error, e:
+		except socket.error as e:
 			# todo: make configurable the expired time of cache entry:
 			logSys.warning("Unable to find a corresponding IP address for %s: %s", dns, e)
 			ips = list()
@@ -86,7 +86,7 @@ class DNSUtils:
 		# retrieve name
 		try:
 			v = socket.gethostbyaddr(ip)[0]
-		except socket.error, e:
+		except socket.error as e:
 			logSys.debug("Unable to find a name for the IP %s: %s", ip, e)
 			v = None
 		DNSUtils.CACHE_ipToName.set(ip, v)

@@ -113,7 +113,7 @@ class Filter(JailThread):
 				logSys.warning(
 					"Mutliline regex set for jail '%s' "
 					"but maxlines not greater than 1")
-		except RegexException, e:
+		except RegexException as e:
 			logSys.error(e)
 			raise e
 
@@ -146,7 +146,7 @@ class Filter(JailThread):
 		try:
 			regex = Regex(value)
 			self.__ignoreRegex.append(regex)
-		except RegexException, e:
+		except RegexException as e:
 			logSys.error(e)
 			raise e 
 
@@ -583,7 +583,7 @@ class Filter(JailThread):
 										failRegex.getMatchedLines(), fail])
 								if not checkAllRegex:
 									break
-					except RegexException, e: # pragma: no cover - unsure if reachable
+					except RegexException as e: # pragma: no cover - unsure if reachable
 						logSys.error(e)
 		return failList
 
@@ -729,15 +729,15 @@ class FileFilter(Filter):
 		try:
 			has_content = log.open()
 		# see http://python.org/dev/peps/pep-3151/
-		except IOError, e:
+		except IOError as e:
 			logSys.error("Unable to open %s" % filename)
 			logSys.exception(e)
 			return False
-		except OSError, e: # pragma: no cover - requires race condition to tigger this
+		except OSError as e: # pragma: no cover - requires race condition to tigger this
 			logSys.error("Error opening %s" % filename)
 			logSys.exception(e)
 			return False
-		except Exception, e: # pragma: no cover - Requires implemention error in FileContainer to generate
+		except Exception as e: # pragma: no cover - Requires implemention error in FileContainer to generate
 			logSys.error("Internal error in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
 			logSys.exception(e)
 			return False
@@ -750,7 +750,7 @@ class FileFilter(Filter):
 			# initial seek to start time using half-interval search algorithm:
 			try:
 				self.seekToTime(log, startTime)
-			except Exception, e: # pragma: no cover
+			except Exception as e: # pragma: no cover
 				logSys.error("Error during seek to start time in \"%s\"", filename)
 				raise
 				logSys.exception(e)

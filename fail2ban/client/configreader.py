@@ -228,7 +228,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 				if not pOptions is None and optname in pOptions:
 					continue
 				values[optname] = v
-			except NoSectionError, e:
+			except NoSectionError as e:
 				if shouldExist:
 					raise
 				# No "Definition" section or wrong basedir

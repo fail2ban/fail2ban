@@ -1111,7 +1111,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					# command to server, use cmdHandler direct instead of `transm.proceed(cmd)`:
 					try:
 						cmdHandler(cmd)
-					except Exception, e:  # pragma: no cover
+					except Exception as e:  # pragma: no cover
 						self.fail("Command %r has failed. Received %r" % (cmd, e))
 
 			# jails = server._Server__jails

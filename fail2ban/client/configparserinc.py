@@ -171,7 +171,7 @@ after = 1.conf
 			parser, i = self._getSharedSCPWI(resource)
 			if not i:
 				return []
-		except UnicodeDecodeError, e:
+		except UnicodeDecodeError as e:
 			logSys.error("Error decoding config file '%s': %s" % (resource, e))
 			return []
 		

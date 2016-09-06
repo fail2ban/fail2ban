@@ -200,7 +200,7 @@ class Fail2banServer(Fail2banCmdLine):
 					exit(-1)
 				logSys.debug('Starting server done')
 
-		except Exception, e:
+		except Exception as e:
 			if self._conf["verbose"] > 1:
 				logSys.exception(e)
 			else:

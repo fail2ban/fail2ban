@@ -381,7 +381,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 							elif not cmd == "":
 								try:
 									self.__processCommand(shlex.split(cmd))
-								except Exception, e: # pragma: no cover
+								except Exception as e: # pragma: no cover
 									if self._conf["verbose"] > 1:
 										logSys.exception(e)
 									else:
