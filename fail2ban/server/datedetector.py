@@ -224,12 +224,15 @@ class DateDetector(object):
 		if timeMatch:
 			template = timeMatch[1]
 			if template is not None:
-				date = template.getDate(line, timeMatch[0])
-				if date is not None:
-					if logSys.getEffectiveLevel() <= logLevel:
-						logSys.log(logLevel, "Got time %f for \"%r\" using template %s",
-							date[0], date[1].group(), template.name)
-					return date
+				try:
+					date = template.getDate(line, timeMatch[0])
+					if date is not None:
+						if logSys.getEffectiveLevel() <= logLevel:
+							logSys.log(logLevel, "Got time %f for %r using template %s",
+								date[0], date[1].group(), template.name)
+						return date
+				except ValueError:
+					return None
 		with self.__lock:
 			for template in self.__templates:
 				try:
@@ -237,7 +240,7 @@ class DateDetector(object):
 					if date is None:
 						continue
 					if logSys.getEffectiveLevel() <= logLevel:
-						logSys.log(logLevel, "Got time %f for \"%r\" using template %s", 
+						logSys.log(logLevel, "Got time %f for %r using template %s", 
 							date[0], date[1].group(), template.name)
 					return date
 				except ValueError: # pragma: no cover

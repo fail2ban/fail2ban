@@ -604,6 +604,28 @@ class LogFileMonitor(LogCaptureTestCase):
 		self.filter.getFailures(self.name)
 		self.assertLogged('Unable to open %s' % self.name)
 
+	def testErrorProcessLine(self):
+		self.filter.sleeptime /= 1000.0
+		## produce error with not callable processLine:
+		_org_processLine = self.filter.processLine
+		self.filter.processLine = None
+		for i in range(100):
+			self.file.write("line%d\n" % 1)
+		self.file.flush()
+		for i in range(100):
+			self.filter.getFailures(self.name)
+		self.assertLogged('Failed to process line:')
+		self.assertLogged('Too many errors at once')
+		self.pruneLog()
+		self.assertTrue(self.filter.idle)
+		self.filter.idle = False
+		self.filter.getFailures(self.name)
+		self.filter.processLine = _org_processLine
+		self.file.write("line%d\n" % 1)
+		self.file.flush()
+		self.filter.getFailures(self.name)
+		self.assertNotLogged('Failed to process line:')
+
 	def testRemovingFailRegex(self):
 		self.filter.delFailRegex(0)
 		self.assertNotLogged('Cannot remove regular expression. Index 0 is not valid')
@@ -917,13 +939,17 @@ def get_monitor_failures_testcase(Filter_):
 
 			# and now remove the LogPath
 			self.filter.delLogPath(self.name)
+			# wait a bit for filter (backend-threads):
+			self.waitForTicks(2)
 
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
 			# so we should get no more failures detected
-			self.assertTrue(self.isEmpty(_maxWaitTime(10)))
+			self.assertTrue(self.isEmpty(10))
 
 			# but then if we add it back again (no seek to time in FileFilter's, because in file used the same time)
 			self.filter.addLogPath(self.name, autoSeek=False)
+			# wait a bit for filter (backend-threads):
+			self.waitForTicks(2)
 			# Tricky catch here is that it should get them from the
 			# tail written before, so let's not copy anything yet
 			#_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100)
@@ -932,8 +958,10 @@ def get_monitor_failures_testcase(Filter_):
 
 			# now copy and get even more
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.file, n=100)
-			# yoh: not sure why count here is not 9... TODO
-			self.assert_correct_last_attempt(GetFailures.FAILURES_01)#, count=9)
+      # check for 3 failures (not 9), because 6 already get above...
+			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
+			# total count in this test:
+			self.assertEqual(self.filter.failManager.getFailTotal(), 12)
 
 	MonitorFailures.__name__ = "MonitorFailures<%s>(%s)" \
 			  % (Filter_.__name__, testclass_name) # 'tempfile')

@@ -29,6 +29,7 @@ import logging
 import os
 import re
 import sys
+import time
 
 from .failmanager import FailManagerEmpty, FailManager
 from .ipdns import DNSUtils, IPAddr
@@ -85,6 +86,8 @@ class Filter(JailThread):
 		self.__lastDate = None
 		## External command
 		self.__ignoreCommand = False
+		## Error counter
+		self.__errors = 0
 		## Ticks counter
 		self.ticks = 0
 
@@ -416,26 +419,41 @@ class Filter(JailThread):
 	def processLineAndAdd(self, line, date=None):
 		"""Processes the line for failures and populates failManager
 		"""
-		for element in self.processLine(line, date)[1]:
-			ip = element[1]
-			unixTime = element[2]
-			lines = element[3]
-			fail = {}
-			if len(element) > 4:
-				fail = element[4]
-			logSys.debug("Processing line with time:%s and ip:%s", 
-					unixTime, ip)
-			if unixTime < MyTime.time() - self.getFindTime():
-				logSys.debug("Ignore line since time %s < %s - %s", 
-					unixTime, MyTime.time(), self.getFindTime())
-				break
-			if self.inIgnoreIPList(ip, log_ignore=True):
-				continue
-			logSys.info(
-				"[%s] Found %s - %s", self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
-			)
-			tick = FailTicket(ip, unixTime, lines, data=fail)
-			self.failManager.addFailure(tick)
+		try:
+			for element in self.processLine(line, date)[1]:
+				ip = element[1]
+				unixTime = element[2]
+				lines = element[3]
+				fail = {}
+				if len(element) > 4:
+					fail = element[4]
+				logSys.debug("Processing line with time:%s and ip:%s", 
+						unixTime, ip)
+				if unixTime < MyTime.time() - self.getFindTime():
+					logSys.debug("Ignore line since time %s < %s - %s", 
+						unixTime, MyTime.time(), self.getFindTime())
+					break
+				if self.inIgnoreIPList(ip, log_ignore=True):
+					continue
+				logSys.info(
+					"[%s] Found %s - %s", self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
+				)
+				tick = FailTicket(ip, unixTime, lines, data=fail)
+				self.failManager.addFailure(tick)
+			# reset (halve) error counter (successfully processed line):
+			if self.__errors:
+				self.__errors //= 2
+		except Exception as e:
+			logSys.error("Failed to process line: %r, caught exception: %r", line, e,
+				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+			# incr error counter, stop processing (going idle) after 100th error :
+			self.__errors += 1
+			# sleep a little bit (to get around time-related errors):
+			time.sleep(self.sleeptime)
+			if self.__errors >= 100:
+				logSys.error("Too many errors at once (%s), going idle", self.__errors)
+				self.__errors //= 2
+				self.idle = True
 
 	##
 	# Returns true if the line should be ignored.
