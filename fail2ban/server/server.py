@@ -275,13 +275,11 @@ class Server:
 	
 	def setLogEncoding(self, name, encoding):
 		filter_ = self.__jails[name].filter
-		if isinstance(filter_, FileFilter):
-			filter_.setLogEncoding(encoding)
+		filter_.setLogEncoding(encoding)
 	
 	def getLogEncoding(self, name):
 		filter_ = self.__jails[name].filter
-		if isinstance(filter_, FileFilter):
-			return filter_.getLogEncoding()
+		return filter_.getLogEncoding()
 	
 	def setFindTime(self, name, value):
 		self.__jails[name].filter.setFindTime(value)

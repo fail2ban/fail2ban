@@ -86,6 +86,8 @@ class Filter(JailThread):
 		self.__lastDate = None
 		## External command
 		self.__ignoreCommand = False
+		## Default or preferred encoding (to decode bytes from file or journal):
+		self.__encoding = locale.getpreferredencoding()
 		## Error counter
 		self.__errors = 0
 		## Ticks counter
@@ -289,6 +291,27 @@ class Filter(JailThread):
 		return self.__lineBufferSize
 
 	##
+	# Set the log file encoding
+	#
+	# @param encoding the encoding used with log files
+
+	def setLogEncoding(self, encoding):
+		if encoding.lower() == "auto":
+			encoding = locale.getpreferredencoding()
+		codecs.lookup(encoding) # Raise LookupError if invalid codec
+		self.__encoding = encoding
+		logSys.info("Set jail log file encoding to %s" % encoding)
+		return encoding
+
+	##
+	# Get the log file encoding
+	#
+	# @return log encoding value
+
+	def getLogEncoding(self):
+		return self.__encoding
+
+	##
 	# Main loop.
 	#
 	# This function is the main loop of the thread. It checks if the
@@ -392,11 +415,35 @@ class Filter(JailThread):
 
 		return False
 
+	if sys.version_info >= (3,):
+		@staticmethod
+		def uni_decode(x, enc, errors='strict'):
+			try:
+				if isinstance(x, bytes):
+					return x.decode(enc, errors)
+				return x
+			except (UnicodeDecodeError, UnicodeEncodeError):
+				if errors != 'strict': # pragma: no cover - unsure if reachable
+					raise
+				return uni_decode(x, enc, 'replace')
+	else:
+		@staticmethod
+		def uni_decode(x, enc, errors='strict'):
+			try:
+				if isinstance(x, unicode):
+					return x.encode(enc, errors)
+				return x
+			except (UnicodeDecodeError, UnicodeEncodeError):
+				if errors != 'strict': # pragma: no cover - unsure if reachable
+					raise
+				return uni_decode(x, enc, 'replace')
+
 	def processLine(self, line, date=None, returnRawHost=False,
-		checkAllRegex=False):
+		checkAllRegex=False, checkFindTime=False):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
 		if date:
+			# be sure each element of tuple line has the same type:
 			tupleLine = line
 		else:
 			l = line.rstrip('\r\n')
@@ -414,7 +461,7 @@ class Filter(JailThread):
 				tupleLine = (l, "", "", None)
 
 		return "".join(tupleLine[::2]), self.findFailure(
-			tupleLine, date, returnRawHost, checkAllRegex)
+			tupleLine, date, returnRawHost, checkAllRegex, checkFindTime)
 
 	def processLineAndAdd(self, line, date=None):
 		"""Processes the line for failures and populates failManager
@@ -477,7 +524,7 @@ class Filter(JailThread):
 	# @return a dict with IP and timestamp.
 
 	def findFailure(self, tupleLine, date=None, returnRawHost=False,
-		checkAllRegex=False):
+		checkAllRegex=False, checkFindTime=False):
 		failList = list()
 
 		cidr = IPAddr.CIDR_UNSPEC
@@ -513,6 +560,11 @@ class Filter(JailThread):
 		else:
 			timeText = self.__lastTimeText or "".join(tupleLine[::2])
 			date = self.__lastDate
+
+		if checkFindTime and date is not None and date < MyTime.time() - self.getFindTime():
+			logSys.log(5, "Ignore line since time %s < %s - %s", 
+				date, MyTime.time(), self.getFindTime())
+			return failList
 
 		self.__lineBuffer = (
 			self.__lineBuffer + [tupleLine[:3]])[-self.__lineBufferSize:]
@@ -602,7 +654,6 @@ class FileFilter(Filter):
 		## The log file path.
 		self.__logs = dict()
 		self.__autoSeek = dict()
-		self.setLogEncoding("auto")
 
 	##
 	# Add a log file path
@@ -694,21 +745,9 @@ class FileFilter(Filter):
 	# @param encoding the encoding used with log files
 
 	def setLogEncoding(self, encoding):
-		if encoding.lower() == "auto":
-			encoding = locale.getpreferredencoding()
-		codecs.lookup(encoding) # Raise LookupError if invalid codec
+		encoding = super(FileFilter, self).setLogEncoding(encoding)
 		for log in self.__logs.itervalues():
 			log.setEncoding(encoding)
-		self.__encoding = encoding
-		logSys.info("Set jail log file encoding to %s" % encoding)
-
-	##
-	# Get the log file encoding
-	#
-	# @return log encoding value
-
-	def getLogEncoding(self):
-		return self.__encoding
 
 	def getLog(self, path):
 		return self.__logs.get(path, None)
@@ -978,17 +1017,25 @@ class FileContainer:
 	@staticmethod
 	def decode_line(filename, enc, line):
 		try:
-			line = line.decode(enc, 'strict')
-		except UnicodeDecodeError:
-			logSys.warning(
-				"Error decoding line from '%s' with '%s'."
-				" Consider setting logencoding=utf-8 (or another appropriate"
-				" encoding) for this jail. Continuing"
-				" to process line ignoring invalid characters: %r" %
-				(filename, enc, line))
+			return line.decode(enc, 'strict')
+		except UnicodeDecodeError as e:
 			# decode with replacing error chars:
-			line = line.decode(enc, 'replace')
-		return line
+			rline = line.decode(enc, 'replace')
+		except UnicodeEncodeError as e:
+			# encode with replacing error chars:
+			rline = line.decode(enc, 'replace')
+		global _decode_line_warn
+		lev = logging.DEBUG
+		if _decode_line_warn.get(filename, 0) <= MyTime.time():
+			lev = logging.WARNING
+			_decode_line_warn[filename] = MyTime.time() + 24*60*60
+		logSys.log(lev,
+			"Error decoding line from '%s' with '%s'."
+			" Consider setting logencoding=utf-8 (or another appropriate"
+			" encoding) for this jail. Continuing"
+			" to process line ignoring invalid characters: %r",
+			filename, enc, line)
+		return rline
 
 	def readline(self):
 		if self.__handler is None:
@@ -1005,6 +1052,8 @@ class FileContainer:
 			self.__handler = None
 		## print "D: Closed %s with pos %d" % (handler, self.__pos)
 		## sys.stdout.flush()
+
+_decode_line_warn = {}
 
 
 ##
