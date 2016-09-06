@@ -1145,6 +1145,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			# Now let's feed it with entries from the file
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, skip=15, n=4)
+			self.waitForTicks(1)
 			self.assertTrue(self.isFilled(10))
 			self.assert_correct_ban("87.142.124.10", 4)
 			# Add direct utf, unicode, blob:
@@ -1159,10 +1160,8 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				fields = self.journal_fields
 				fields.update(TEST_JOURNAL_FIELDS)
 				journal.send(MESSAGE=l, **fields)
-			self.assertTrue(self.isFilled(10))
-			endtm = MyTime.time()+10
-			while len(self.jail) != 2 and MyTime.time() < endtm:
-				time.sleep(0.10)
+			self.waitFailTotal(6, 10)
+			self.assertTrue(Utils.wait_for(lambda: len(self.jail) == 2, 10))
 			self.assertEqual(sorted([self.jail.getFailTicket().getIP(), self.jail.getFailTicket().getIP()]), 
 				["192.0.2.1", "192.0.2.2"])
 
