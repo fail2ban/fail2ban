@@ -472,10 +472,6 @@ class Filter(JailThread):
 			lines = element[3]
 			logSys.debug("Processing line with time:%s and ip:%s"
 						 % (unixTime, ip))
-			if unixTime < MyTime.time() - self.getFindTime():
-				logSys.debug("Ignore line since time %s < %s - %s"
-							 % (unixTime, MyTime.time(), self.getFindTime()))
-				break
 			if self.inIgnoreIPList(ip, log_ignore=True):
 				continue
 			logSys.info("[%s] Found %s" % (self.jail.name, ip))
