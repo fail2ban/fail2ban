@@ -31,7 +31,7 @@ if LooseVersion(getattr(journal, '__version__', "0")) < '204':
 	raise ImportError("Fail2Ban requires systemd >= 204")
 
 from .failmanager import FailManagerEmpty
-from .filter import JournalFilter, Filter, locale
+from .filter import JournalFilter, Filter
 from .mytime import MyTime
 from ..helpers import getLogger, logging, splitwords
 
@@ -170,9 +170,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	def getJournalMatch(self):
 		return self.__matches
 
-	@staticmethod
-	def uni_decode(x):
-		v = Filter.uni_decode(x, locale.getpreferredencoding())
+	def uni_decode(self, x):
+		v = Filter.uni_decode(x, self.getLogEncoding())
 		return v
 
 	##
@@ -181,10 +180,9 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	# @param entry systemd journal entry dict
 	# @return format log line
 
-	@classmethod
-	def formatJournalEntry(cls, logentry):
+	def formatJournalEntry(self, logentry):
 		# Be sure, all argument of line tuple should have the same type:
-		uni_decode = FilterSystemd.uni_decode
+		uni_decode = self.uni_decode
 		logelements = []
 		v = logentry.get('_HOSTNAME')
 		if v:

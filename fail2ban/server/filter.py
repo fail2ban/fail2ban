@@ -83,6 +83,8 @@ class Filter(JailThread):
 		self.__lastDate = None
 		## External command
 		self.__ignoreCommand = False
+		## Default or preferred encoding (to decode bytes from file or journal):
+		self.__encoding = locale.getpreferredencoding()
 
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
@@ -279,6 +281,27 @@ class Filter(JailThread):
 
 	def getMaxLines(self):
 		return self.__lineBufferSize
+
+	##
+	# Set the log file encoding
+	#
+	# @param encoding the encoding used with log files
+
+	def setLogEncoding(self, encoding):
+		if encoding.lower() == "auto":
+			encoding = locale.getpreferredencoding()
+		codecs.lookup(encoding) # Raise LookupError if invalid codec
+		self.__encoding = encoding
+		logSys.info("Set jail log file encoding to %s" % encoding)
+		return encoding
+
+	##
+	# Get the log file encoding
+	#
+	# @return log encoding value
+
+	def getLogEncoding(self):
+		return self.__encoding
 
 	##
 	# Main loop.
@@ -584,7 +607,6 @@ class FileFilter(Filter):
 		Filter.__init__(self, jail, **kwargs)
 		## The log file path.
 		self.__logs = dict()
-		self.setLogEncoding("auto")
 
 	##
 	# Add a log file path
@@ -655,21 +677,9 @@ class FileFilter(Filter):
 	# @param encoding the encoding used with log files
 
 	def setLogEncoding(self, encoding):
-		if encoding.lower() == "auto":
-			encoding = locale.getpreferredencoding()
-		codecs.lookup(encoding) # Raise LookupError if invalid codec
+		encoding = super(FileFilter, self).setLogEncoding(encoding)
 		for log in self.__logs.itervalues():
 			log.setEncoding(encoding)
-		self.__encoding = encoding
-		logSys.info("Set jail log file encoding to %s" % encoding)
-
-	##
-	# Get the log file encoding
-	#
-	# @return log encoding value
-
-	def getLogEncoding(self):
-		return self.__encoding
 
 	def getLog(self, path):
 		return self.__logs.get(path, None)
