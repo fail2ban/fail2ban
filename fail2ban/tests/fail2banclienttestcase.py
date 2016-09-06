@@ -41,6 +41,7 @@ from ..client.fail2banclient import exec_command_line as _exec_client, VisualWai
 from ..client.fail2banserver import Fail2banServer, exec_command_line as _exec_server
 from .. import protocol
 from ..server import server
+from ..server.mytime import MyTime
 from ..server.utils import Utils
 from .utils import LogCaptureTestCase, with_tmpdir, shutil, logging
 
@@ -303,47 +304,60 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 		phase['end'] = True
 		logSys.debug("end of test worker")
 
-	@with_tmpdir
-	def testStartForeground(self, tmp):
-		# intended to be ran only in subclasses
-		th = None
-		phase = dict()
-		try:
-			# started directly here, so prevent overwrite test cases logger with "INHERITED"
-			startparams = _start_params(tmp, logtarget="INHERITED")
-			# because foreground block execution - start it in thread:
-			th = Thread(
-				name="_TestCaseWorker",
-				target=self._testStartForeground,
-				args=(tmp, startparams, phase)
-			)
-			th.daemon = True
-			th.start()
-			try:
-				# wait for start thread:
-				Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
-				self.assertTrue(phase.get('start', None))
-				# wait for server (socket and ready):
-				self._wait_for_srv(tmp, True, startparams=startparams)
-				self.pruneLog()
-				# several commands to server:
-				self.execSuccess(startparams, "ping")
-				self.execFailed(startparams, "~~unknown~cmd~failed~~")
-				self.execSuccess(startparams, "echo", "TEST-ECHO")
-			finally:
-				self.pruneLog()
-				# stop:
-				self.execSuccess(startparams, "stop")
-				# wait for end:
-				Utils.wait_for(lambda: phase.get('end', None) is not None, MAX_WAITTIME)
-				self.assertTrue(phase.get('end', None))
-				self.assertLogged("Shutdown successful", "Exiting Fail2ban")
-		finally:
-			if th:
-				# we start client/server directly in current process (new thread),
-				# so don't kill (same process) - if success, just wait for end of worker:
-				if phase.get('end', None):
-					th.join()
+	def with_foreground_server_thread(startextra={}):
+		"""Helper to decorate tests uses foreground server (as thread), started directly in test-cases
+
+		To be used only in subclasses
+		"""
+		def _deco_wrapper(f):
+			@with_tmpdir
+			@wraps(f)
+			def wrapper(self, tmp, *args, **kwargs):
+				th = None
+				phase = dict()
+				try:
+					# started directly here, so prevent overwrite test cases logger with "INHERITED"
+					startparams = _start_params(tmp, logtarget="INHERITED", **startextra)
+					# because foreground block execution - start it in thread:
+					th = Thread(
+						name="_TestCaseWorker",
+						target=self._testStartForeground,
+						args=(tmp, startparams, phase)
+					)
+					th.daemon = True
+					th.start()
+					try:
+						# wait for start thread:
+						Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
+						self.assertTrue(phase.get('start', None))
+						# wait for server (socket and ready):
+						self._wait_for_srv(tmp, True, startparams=startparams)
+						self.pruneLog()
+						# several commands to server in body of decorated function:
+						return f(self, tmp, startparams, *args, **kwargs)
+					finally:
+						self.pruneLog()
+						# stop:
+						self.execSuccess(startparams, "stop")
+						# wait for end:
+						Utils.wait_for(lambda: phase.get('end', None) is not None, MAX_WAITTIME)
+						self.assertTrue(phase.get('end', None))
+						self.assertLogged("Shutdown successful", "Exiting Fail2ban")
+				finally:
+					if th:
+						# we start client/server directly in current process (new thread),
+						# so don't kill (same process) - if success, just wait for end of worker:
+						if phase.get('end', None):
+							th.join()
+			return wrapper
+		return _deco_wrapper
+
+	@with_foreground_server_thread()
+	def testStartForeground(self, tmp, startparams):
+		# several commands to server:
+		self.execSuccess(startparams, "ping")
+		self.execFailed(startparams, "~~unknown~cmd~failed~~")
+		self.execSuccess(startparams, "echo", "TEST-ECHO")
 
 
 class Fail2banClientTest(Fail2banClientServerBase):
