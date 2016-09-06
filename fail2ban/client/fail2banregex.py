@@ -329,7 +329,7 @@ class Fail2banRegex(object):
 			if ret is not None:
 				found = True
 				regex = self._ignoreregex[ret].inc()
-		except RegexException, e:
+		except RegexException as e:
 			output( e )
 			return False
 		return found
@@ -346,7 +346,7 @@ class Fail2banRegex(object):
 				regex = self._failregex[match[0]]
 				regex.inc()
 				regex.appendIP(match)
-		except RegexException, e:
+		except RegexException as e:
 			output( e )
 			return False
 		except IndexError:
@@ -510,7 +510,7 @@ class Fail2banRegex(object):
 				output( "Use         log file : %s" % cmd_log )
 				output( "Use         encoding : %s" % self.encoding )
 				test_lines = self.file_lines_gen(hdlr)
-			except IOError, e:
+			except IOError as e:
 				output( e )
 				return False
 		elif cmd_log == "systemd-journal": # pragma: no cover

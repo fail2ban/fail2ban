@@ -56,7 +56,7 @@ class Transmitter:
 		try:
 			ret = self.__commandHandler(command)
 			ack = 0, ret
-		except Exception, e:
+		except Exception as e:
 			logSys.warning("Command %r has failed. Received %r"
 						% (command, e))
 			ack = 1, e

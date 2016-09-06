@@ -127,7 +127,7 @@ class Fail2banServer:
 								self.__conf["pidfile"],
 								self.__conf["force"])
 			return True
-		except Exception, e:
+		except Exception as e:
 			logSys.exception(e)
 			self.__server.quit()
 			return False

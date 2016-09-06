@@ -221,7 +221,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 				if not pOptions is None and option[1] in pOptions:
 					continue
 				values[option[1]] = v
-			except NoSectionError, e:
+			except NoSectionError as e:
 				# No "Definition" section or wrong basedir
 				logSys.error(e)
 				values[option[1]] = option[2]

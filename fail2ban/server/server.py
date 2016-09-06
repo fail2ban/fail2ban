@@ -108,20 +108,20 @@ class Server:
 			pidFile = open(pidfile, 'w')
 			pidFile.write("%s\n" % os.getpid())
 			pidFile.close()
-		except IOError, e:
+		except IOError as e:
 			logSys.error("Unable to create PID file: %s" % e)
 		
 		# Start the communication
 		logSys.debug("Starting communication")
 		try:
 			self.__asyncServer.start(sock, force)
-		except AsyncServerException, e:
+		except AsyncServerException as e:
 			logSys.error("Could not start server: %s", e)
 		# Removes the PID file.
 		try:
 			logSys.debug("Remove PID file %s" % pidfile)
 			os.remove(pidfile)
-		except OSError, e:
+		except OSError as e:
 			logSys.error("Unable to remove PID file: %s" % e)
 		logSys.info("Exiting Fail2ban")
 	
@@ -543,7 +543,7 @@ class Server:
 			# the child gets a new PID, making it impossible for its PID to equal its
 			# PGID.
 			pid = os.fork()
-		except OSError, e:
+		except OSError as e:
 			return((e.errno, e.strerror))	 # ERROR (return a tuple)
 		
 		if pid == 0:	   # The first child.
@@ -564,7 +564,7 @@ class Server:
 				# fork guarantees that the child is no longer a session leader, thus
 				# preventing the daemon from ever acquiring a controlling terminal.
 				pid = os.fork()		# Fork a second child.
-			except OSError, e:
+			except OSError as e:
 				return((e.errno, e.strerror))  # ERROR (return a tuple)
 		
 			if (pid == 0):	  # The second child.
