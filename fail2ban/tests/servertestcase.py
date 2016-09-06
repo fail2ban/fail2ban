@@ -240,7 +240,7 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["add", self.jailName, "polling"])[0], 1)
 		# All name is reserved
 		self.assertEqual(
-			self.transm.proceed(["add", "all", "polling"])[0], 1)
+			self.transm.proceed(["add", "--all", "polling"])[0], 1)
 
 	def testStartStopJail(self):
 		self.assertEqual(
@@ -267,7 +267,7 @@ class Transmitter(TransmitterBase):
 		self.assertTrue( Utils.wait_for(
 			lambda: self.server.isAlive(2) and not isinstance(self.transm.proceed(["status", self.jailName]), RuntimeError),
 			3) )
-		self.assertEqual(self.transm.proceed(["stop", "all"]), (0, None))
+		self.assertEqual(self.transm.proceed(["stop", "--all"]), (0, None))
 		self.assertTrue( Utils.wait_for( lambda: not len(self.server._Server__jails), 3) )
 		self.assertNotIn(self.jailName, self.server._Server__jails)
 		self.assertNotIn("TestJail2", self.server._Server__jails)

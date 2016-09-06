@@ -119,6 +119,7 @@ def getOptParser(doc=""):
 
 def initProcess(opts):
 	# Logger:
+	global logSys
 	logSys = getLogger("fail2ban")
 
 	# Numerical level of verbosity corresponding to a log "level"
@@ -577,7 +578,8 @@ class LogCaptureTestCase(unittest.TestCase):
 			print("")
 			logSys.handlers += self._old_handlers
 			logSys.debug('='*10 + ' %s ' + '='*20, self.id())
-		logSys.setLevel(logging.DEBUG)
+		else:
+			logSys.setLevel(logging.DEBUG)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -638,8 +640,10 @@ class LogCaptureTestCase(unittest.TestCase):
 				if s_ in logged: # pragma: no cover
 					self.fail("%r was found in the log: ===\n%s===" % (s_, logged))
 
-	def pruneLog(self):
+	def pruneLog(self, logphase=None):
 		self._log.truncate(0)
+		if logphase:
+			logSys.debug('='*5 + ' %s ' + '='*5, logphase)
 
 	def getLog(self):
 		return self._log.getvalue()

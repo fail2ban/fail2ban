@@ -180,7 +180,7 @@ class Actions(JailThread, Mapping):
 	def getBanTime(self):
 		return self.__banManager.getBanTime()
 
-	def removeBannedIP(self, ip):
+	def removeBannedIP(self, ip=None, db=True, ifexists=False):
 		"""Removes banned IP calling actions' unban method
 
 		Remove a banned IP now, rather than waiting for it to expire,
@@ -188,16 +188,20 @@ class Actions(JailThread, Mapping):
 
 		Parameters
 		----------
-		ip : str or IPAddr
-			The IP address  to unban
+		ip : str or IPAddr or None
+			The IP address to unban or all IPs if None
 
 		Raises
 		------
 		ValueError
 			If `ip` is not banned
 		"""
+		# Unban all?
+		if ip is None:
+			return self.__flushBan(db)
+		# Single IP:
 		# Always delete ip from database (also if currently not banned)
-		if self._jail.database is not None:
+		if db and self._jail.database is not None:
 			self._jail.database.delBan(self._jail, ip)
 		# Find the ticket with the IP.
 		ticket = self.__banManager.getTicketByIP(ip)
@@ -205,7 +209,11 @@ class Actions(JailThread, Mapping):
 			# Unban the IP.
 			self.__unBan(ticket)
 		else:
-			raise ValueError("IP %s is not banned" % ip)
+			if ifexists:
+				return 0
+			raise ValueError("%s is not banned" % ip)
+		return 1
+
 
 	def run(self):
 		"""Main loop for Threading.
@@ -336,14 +344,21 @@ class Actions(JailThread, Mapping):
 		for ticket in self.__banManager.unBanList(MyTime.time()):
 			self.__unBan(ticket)
 
-	def __flushBan(self):
+	def __flushBan(self, db=False):
 		"""Flush the ban list.
 
 		Unban all IP address which are still in the banning list.
 		"""
 		logSys.debug("Flush ban list")
-		for ticket in self.__banManager.flushBanList():
+		lst = self.__banManager.flushBanList()
+		for ticket in lst:
+			# delete ip from database also:
+			if db and self._jail.database is not None:
+				ip = str(ticket.getIP())
+				self._jail.database.delBan(self._jail, ip)
+			# unban ip:
 			self.__unBan(ticket)
+		return len(lst)
 
 	def __unBan(self, ticket):
 		"""Unbans host corresponding to the ticket.

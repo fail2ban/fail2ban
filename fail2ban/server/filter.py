@@ -88,8 +88,9 @@ class Filter(JailThread):
 		self.__ignoreCommand = False
 		## Default or preferred encoding (to decode bytes from file or journal):
 		self.__encoding = locale.getpreferredencoding()
-		## Error counter
-		self.__errors = 0
+		## Error counter (protected, so can be used in filter implementations)
+		## if it reached 100 (at once), run-cycle will go idle
+		self._errors = 0
 		## Ticks counter
 		self.ticks = 0
 
@@ -99,6 +100,30 @@ class Filter(JailThread):
 
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__.__name__, self.jail)
+
+	def clearAllParams(self):
+		""" Clear all lists/dicts parameters (used by reloading)
+		"""
+		self.delFailRegex()
+		self.delIgnoreRegex()
+		self.delIgnoreIP()
+
+	def reload(self, begin=True):
+		""" Begin or end of reloading resp. refreshing of all parameters
+		"""
+		if begin:
+			self.clearAllParams()
+			if hasattr(self, 'getLogPaths'):
+				self._reload_logs = dict((k, 1) for k in self.getLogPaths())
+		else:
+			if hasattr(self, '_reload_logs'):
+				dellogs = dict()
+				# if it was not reloaded - remove obsolete log file:
+				for path in self._reload_logs:
+					self.delLogPath(path)
+				delattr(self, '_reload_logs')
+
+
 
 	##
 	# Add a regular expression which matches the failure.
@@ -119,8 +144,13 @@ class Filter(JailThread):
 			logSys.error(e)
 			raise e
 
-	def delFailRegex(self, index):
+	def delFailRegex(self, index=None):
 		try:
+			# clear all:
+			if index is None:
+				del self.__failRegex[:]
+				return
+			# delete by index:
 			del self.__failRegex[index]
 		except IndexError:
 			logSys.error("Cannot remove regular expression. Index %d is not "
@@ -152,8 +182,13 @@ class Filter(JailThread):
 			logSys.error(e)
 			raise e 
 
-	def delIgnoreRegex(self, index):
+	def delIgnoreRegex(self, index=None):
 		try:
+			# clear all:
+			if index is None:
+				del self.__ignoreRegex[:]
+				return
+			# delete by index:
 			del self.__ignoreRegex[index]
 		except IndexError:
 			logSys.error("Cannot remove regular expression. Index %d is not "
@@ -203,7 +238,7 @@ class Filter(JailThread):
 		value = MyTime.str2seconds(value)
 		self.__findTime = value
 		self.failManager.setMaxTime(value)
-		logSys.info("Set findtime = %s" % value)
+		logSys.info("  findtime: %s", value)
 
 	##
 	# Get the time needed to find a failure.
@@ -232,10 +267,10 @@ class Filter(JailThread):
 			template = DatePatternRegex(pattern)
 		self.dateDetector = DateDetector()
 		self.dateDetector.appendTemplate(template)
-		logSys.info("Date pattern set to `%r`: `%s`" %
-			(pattern, template.name))
-		logSys.debug("Date pattern regex for %r: %s" %
-			(pattern, template.regex))
+		logSys.info("  date pattern `%r`: `%s`",
+			pattern, template.name)
+		logSys.debug("  date pattern regex for %r: %s",
+			pattern, template.regex)
 
 	##
 	# Get the date detector pattern, or Default Detectors if not changed
@@ -261,7 +296,7 @@ class Filter(JailThread):
 
 	def setMaxRetry(self, value):
 		self.failManager.setMaxRetry(value)
-		logSys.info("Set maxRetry = %s" % value)
+		logSys.info("  maxRetry: %s", value)
 
 	##
 	# Get the maximum retry value.
@@ -280,7 +315,7 @@ class Filter(JailThread):
 		if int(value) <= 0:
 			raise ValueError("maxlines must be integer greater than zero")
 		self.__lineBufferSize = int(value)
-		logSys.info("Set maxlines = %i" % self.__lineBufferSize)
+		logSys.info("  maxLines: %i", self.__lineBufferSize)
 
 	##
 	# Get the maximum line buffer size.
@@ -300,7 +335,7 @@ class Filter(JailThread):
 			encoding = locale.getpreferredencoding()
 		codecs.lookup(encoding) # Raise LookupError if invalid codec
 		self.__encoding = encoding
-		logSys.info("Set jail log file encoding to %s" % encoding)
+		logSys.info("  encoding: %s" % encoding)
 		return encoding
 
 	##
@@ -375,11 +410,16 @@ class Filter(JailThread):
 		ip = IPAddr(ipstr)
 
 		# log and append to ignore list
-		logSys.debug("Add %r to ignore list (%r)", ip, ipstr)
+		logSys.debug("  Add %r to ignore list (%r)", ip, ipstr)
 		self.__ignoreIpList.append(ip)
 
-	def delIgnoreIP(self, ip):
-		logSys.debug("Remove %r from ignore list", ip)
+	def delIgnoreIP(self, ip=None):
+		# clear all:
+		if ip is None:
+			del self.__ignoreIpList[:]
+			return
+		# delete by ip:
+		logSys.debug("  Remove %r from ignore list", ip)
 		self.__ignoreIpList.remove(ip)
 
 	def logIgnoreIp(self, ip, log_ignore, ignore_source="unknown source"):
@@ -483,18 +523,18 @@ class Filter(JailThread):
 				tick = FailTicket(ip, unixTime, lines, data=fail)
 				self.failManager.addFailure(tick)
 			# reset (halve) error counter (successfully processed line):
-			if self.__errors:
-				self.__errors //= 2
+			if self._errors:
+				self._errors //= 2
 		except Exception as e:
 			logSys.error("Failed to process line: %r, caught exception: %r", line, e,
 				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 			# incr error counter, stop processing (going idle) after 100th error :
-			self.__errors += 1
+			self._errors += 1
 			# sleep a little bit (to get around time-related errors):
 			time.sleep(self.sleeptime)
-			if self.__errors >= 100:
-				logSys.error("Too many errors at once (%s), going idle", self.__errors)
-				self.__errors //= 2
+			if self._errors >= 100:
+				logSys.error("Too many errors at once (%s), going idle", self._errors)
+				self._errors //= 2
 				self.idle = True
 
 	##
@@ -657,7 +697,10 @@ class FileFilter(Filter):
 
 	def addLogPath(self, path, tail=False, autoSeek=True):
 		if path in self.__logs:
-			logSys.error(path + " already exists")
+			if hasattr(self, '_reload_logs') and path in self._reload_logs:
+				del self._reload_logs[path]
+			else:
+				logSys.error(path + " already exists")
 		else:
 			log = FileContainer(path, self.getLogEncoding(), tail)
 			db = self.jail.database
@@ -666,7 +709,7 @@ class FileFilter(Filter):
 				if lastpos and not tail:
 					log.setPos(lastpos)
 			self.__logs[path] = log
-			logSys.info("Added logfile = %s (pos = %s, hash = %s)" , path, log.getPos(), log.getHash())
+			logSys.info("Added logfile: %r (pos = %s, hash = %s)" , path, log.getPos(), log.getHash())
 			if autoSeek:
 				# if default, seek to "current time" - "find time":
 				if isinstance(autoSeek, bool):
@@ -692,7 +735,7 @@ class FileFilter(Filter):
 		db = self.jail.database
 		if db is not None:
 			db.updateLog(self.jail, log)
-		logSys.info("Removed logfile = %s" % path)
+		logSys.info("Removed logfile: %r" % path)
 		self._delLogPath(path)
 		return
 
@@ -1055,10 +1098,14 @@ _decode_line_warn = {}
 
 class JournalFilter(Filter): # pragma: systemd no cover
 
+	def clearAllParams(self):
+		super(JournalFilter, self).clearAllParams()
+		self.delJournalMatch()
+
 	def addJournalMatch(self, match): # pragma: no cover - Base class, not used
 		pass
 
-	def delJournalMatch(self, match): # pragma: no cover - Base class, not used
+	def delJournalMatch(self, match=None): # pragma: no cover - Base class, not used
 		pass
 
 	def getJournalMatch(self, match): # pragma: no cover - Base class, not used

@@ -46,7 +46,7 @@ class Beautifier:
 		return self.__inputCmd
 
 	def beautify(self, response):
-		logSys.debug(
+		logSys.log(5,
 			"Beautify " + repr(response) + " with " + repr(self.__inputCmd))
 		inC = self.__inputCmd
 		msg = response

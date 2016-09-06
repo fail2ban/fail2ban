@@ -43,7 +43,7 @@ from .. import protocol
 from ..server import server
 from ..server.mytime import MyTime
 from ..server.utils import Utils
-from .utils import LogCaptureTestCase, with_tmpdir, shutil, logging
+from .utils import LogCaptureTestCase, logSys as DefLogSys, with_tmpdir, shutil, logging
 
 from ..helpers import getLogger
 
@@ -69,7 +69,8 @@ fail2bancmdline.logSys = \
 fail2banclient.logSys = \
 fail2banserver.logSys = logSys
 
-server.DEF_LOGTARGET = "/dev/null"
+SRV_DEF_LOGTARGET = server.DEF_LOGTARGET
+SRV_DEF_LOGLEVEL = server.DEF_LOGLEVEL
 
 def _test_output(*args):
 	logSys.info(args[0])
@@ -111,17 +112,25 @@ fail2bancmdline.PRODUCTION = \
 fail2banserver.PRODUCTION = False
 
 
-def _out_file(fn):
+def _out_file(fn, handle=logSys.debug):
 	"""Helper which outputs content of the file at HEAVYDEBUG loglevels"""
-	logSys.debug('---- ' + fn + ' ----')
+	handle('---- ' + fn + ' ----')
 	for line in fileinput.input(fn):
 		line = line.rstrip('\n')
-		logSys.debug(line)
-	logSys.debug('-'*30)
+		handle(line)
+	handle('-'*30)
 
 
-def _start_params(tmp, use_stock=False, logtarget="/dev/null"):
+def _write_file(fn, mode, *lines):
+	f = open(fn, mode)
+	f.write('\n'.join(lines))
+	f.close()
+
+
+def _start_params(tmp, use_stock=False, logtarget="/dev/null", db=":memory:"):
 	cfg = pjoin(tmp, "config")
+	if db == 'auto':
+		db = pjoin(tmp, "f2b-db.sqlite3")
 	if use_stock and STOCK:
 		# copy config (sub-directories as alias):
 		def ig_dirs(dir, files):
@@ -147,8 +156,7 @@ def _start_params(tmp, use_stock=False, logtarget="/dev/null"):
 	else:
 		# just empty config directory without anything (only fail2ban.conf/jail.conf):
 		os.mkdir(cfg)
-		f = open(pjoin(cfg, "fail2ban.conf"), "w")
-		f.write('\n'.join((
+		_write_file(pjoin(cfg, "fail2ban.conf"), "w",
 			"[Definition]",
 			"loglevel = INFO",
 			"logtarget = " + logtarget,
@@ -156,19 +164,16 @@ def _start_params(tmp, use_stock=False, logtarget="/dev/null"):
 			"socket = " + pjoin(tmp, "f2b.sock"),
 			"pidfile = " + pjoin(tmp, "f2b.pid"),
 			"backend = polling",
-			"dbfile = :memory:",
+			"dbfile = " + db,
 			"dbpurgeage = 1d",
 			"",
-		)))
-		f.close()
-		f = open(pjoin(cfg, "jail.conf"), "w")
-		f.write('\n'.join((
+		)
+		_write_file(pjoin(cfg, "jail.conf"), "w",
 			"[INCLUDES]", "",
 			"[DEFAULT]", "",
 			"",
-		)))
-		f.close()
-		if logSys.level < logging.DEBUG:  # if HEAVYDEBUG
+		)
+		if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
 			_out_file(pjoin(cfg, "fail2ban.conf"))
 			_out_file(pjoin(cfg, "jail.conf"))
 	# parameters (sock/pid and config, increase verbosity, set log, etc.):
@@ -238,19 +243,78 @@ def with_kill_srv(f):
 			_kill_srv(pidfile)
 	return wrapper
 
+def with_foreground_server_thread(startextra={}):
+	"""Helper to decorate tests uses foreground server (as thread), started directly in test-cases
+
+	To be used only in subclasses
+	"""
+	def _deco_wrapper(f):
+		@with_tmpdir
+		@wraps(f)
+		def wrapper(self, tmp, *args, **kwargs):
+			th = None
+			phase = dict()
+			try:
+				# started directly here, so prevent overwrite test cases logger with "INHERITED"
+				startparams = _start_params(tmp, logtarget="INHERITED", **startextra)
+				# because foreground block execution - start it in thread:
+				th = Thread(
+					name="_TestCaseWorker",
+					target=self._testStartForeground,
+					args=(tmp, startparams, phase)
+				)
+				th.daemon = True
+				th.start()
+				try:
+					# wait for start thread:
+					Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
+					self.assertTrue(phase.get('start', None))
+					# wait for server (socket and ready):
+					self._wait_for_srv(tmp, True, startparams=startparams)
+					DefLogSys.info('=== within server: begin ===')
+					self.pruneLog()
+					# several commands to server in body of decorated function:
+					return f(self, tmp, startparams, *args, **kwargs)
+				finally:
+					DefLogSys.info('=== within server: end.  ===')
+					self.pruneLog()
+					# stop:
+					self.execSuccess(startparams, "stop")
+					# wait for end:
+					Utils.wait_for(lambda: phase.get('end', None) is not None, MAX_WAITTIME)
+					self.assertTrue(phase.get('end', None))
+					self.assertLogged("Shutdown successful", "Exiting Fail2ban")
+			finally:
+				if th:
+					# we start client/server directly in current process (new thread),
+					# so don't kill (same process) - if success, just wait for end of worker:
+					if phase.get('end', None):
+						th.join()
+		return wrapper
+	return _deco_wrapper
+
 
 class Fail2banClientServerBase(LogCaptureTestCase):
 
 	_orig_exit = Fail2banCmdLine._exit
 
+	def _setLogLevel(self, *args, **kwargs):
+		pass
+
 	def setUp(self):
 		"""Call before every test case."""
 		LogCaptureTestCase.setUp(self)
+		# prevent to switch the logging in the test cases (use inherited one):
+		server.DEF_LOGTARGET = "INHERITED"
+		server.DEF_LOGLEVEL = DefLogSys.level
 		Fail2banCmdLine._exit = staticmethod(self._test_exit)
 
 	def tearDown(self):
 		"""Call after every test case."""
 		Fail2banCmdLine._exit = self._orig_exit
+		# restore server log target:
+		server.DEF_LOGTARGET = SRV_DEF_LOGTARGET
+		server.DEF_LOGLEVEL = SRV_DEF_LOGLEVEL
 		LogCaptureTestCase.tearDown(self)
 
 	@staticmethod
@@ -303,54 +367,6 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 		# end :
 		phase['end'] = True
 		logSys.debug("end of test worker")
-
-	def with_foreground_server_thread(startextra={}):
-		"""Helper to decorate tests uses foreground server (as thread), started directly in test-cases
-
-		To be used only in subclasses
-		"""
-		def _deco_wrapper(f):
-			@with_tmpdir
-			@wraps(f)
-			def wrapper(self, tmp, *args, **kwargs):
-				th = None
-				phase = dict()
-				try:
-					# started directly here, so prevent overwrite test cases logger with "INHERITED"
-					startparams = _start_params(tmp, logtarget="INHERITED", **startextra)
-					# because foreground block execution - start it in thread:
-					th = Thread(
-						name="_TestCaseWorker",
-						target=self._testStartForeground,
-						args=(tmp, startparams, phase)
-					)
-					th.daemon = True
-					th.start()
-					try:
-						# wait for start thread:
-						Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
-						self.assertTrue(phase.get('start', None))
-						# wait for server (socket and ready):
-						self._wait_for_srv(tmp, True, startparams=startparams)
-						self.pruneLog()
-						# several commands to server in body of decorated function:
-						return f(self, tmp, startparams, *args, **kwargs)
-					finally:
-						self.pruneLog()
-						# stop:
-						self.execSuccess(startparams, "stop")
-						# wait for end:
-						Utils.wait_for(lambda: phase.get('end', None) is not None, MAX_WAITTIME)
-						self.assertTrue(phase.get('end', None))
-						self.assertLogged("Shutdown successful", "Exiting Fail2ban")
-				finally:
-					if th:
-						# we start client/server directly in current process (new thread),
-						# so don't kill (same process) - if success, just wait for end of worker:
-						if phase.get('end', None):
-							th.join()
-			return wrapper
-		return _deco_wrapper
 
 	@with_foreground_server_thread()
 	def testStartForeground(self, tmp, startparams):
@@ -522,6 +538,24 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		self.assertLogged("Usage: ")
 		self.pruneLog()
 
+	@with_tmpdir
+	def testClientFailCommands(self, tmp):
+		# started directly here, so prevent overwrite test cases logger with "INHERITED"
+		startparams = _start_params(tmp, logtarget="INHERITED")
+
+		# not started:
+		self.execFailed(startparams,
+			"reload", "jail")
+		self.assertLogged("Could not find server")
+		self.pruneLog()
+
+		# unexpected arg:
+		self.execFailed(startparams,
+			"--async", "reload", "--xxx", "jail")
+		self.assertLogged("Unexpected argument(s) for reload:")
+		self.pruneLog()
+
+
 	def testVisualWait(self):
 		sleeptime = 0.035
 		for verbose in (2, 0):
@@ -626,3 +660,242 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# again:
 		self.assertTrue(_kill_srv(tmp))
 		self.assertLogged("cleanup: no pidfile for")
+
+	@with_foreground_server_thread(startextra={'db': 'auto'})
+	def testServerReloadTest(self, tmp, startparams):
+		"""Very complicated test-case, that expected running server (foreground in thread).
+
+		In this test-case, each phase is related from previous one, 
+		so it cannot be splitted in multiple test cases.
+
+		It uses file database (instead of :memory:), to restore bans and log-file positions,
+		after restart/reload between phases.
+		"""
+		cfg = pjoin(tmp, "config")
+		test1log = pjoin(tmp, "test1.log")
+		test2log = pjoin(tmp, "test2.log")
+		test3log = pjoin(tmp, "test3.log")
+
+		def _write_jail_cfg(enabled=[1, 2]):
+			_write_file(pjoin(cfg, "jail.conf"), "w",
+				"[INCLUDES]", "",
+				"[DEFAULT]", "",
+				"maxretry = 3",
+				"findtime = 10m",
+				"failregex = ^\s*failure (401|403) from <HOST>",
+				"",
+				"[test-jail1]", "backend = polling", "filter =", "action =",
+				"logpath = " + test1log,
+				"          " + test2log if 2 in enabled else "",
+				"          " + test3log if 2 in enabled else "",
+				"failregex = ^\s*failure (401|403) from <HOST>",
+				"            ^\s*error (401|403) from <HOST>" if 2 in enabled else "",
+				"enabled = true" if 1 in enabled else "",
+				"",
+				"[test-jail2]", "backend = polling", "filter =", "action =",
+				"logpath = " + test2log,
+				"enabled = true" if 2 in enabled else "",
+			)
+			if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
+				_out_file(pjoin(cfg, "jail.conf"))
+
+		_write_jail_cfg(enabled=[1])
+		_write_file(test1log, "w", *((str(int(MyTime.time())) + " failure 401 from 192.0.2.1: test 1",) * 3))
+		_write_file(test2log, "w")
+		_write_file(test3log, "w")
+		
+		# reload and wait for ban:
+		self.pruneLog("[test-phase 1]")
+		if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
+			_out_file(test1log)
+		self.execSuccess(startparams, "reload")
+		self.assertTrue(
+			Utils.wait_for(lambda: self._is_logged("[test-jail1] Ban 192.0.2.1"), MAX_WAITTIME / 5.0))
+		self.assertLogged("Added logfile: %r" % test1log)
+		
+		# enable both jails, 3 logs for jail1, etc...
+		# truncate test-log - we should not find unban/ban again by reload:
+		self.pruneLog("[test-phase 2a]")
+		_write_jail_cfg()
+		_write_file(test1log, "w+")
+		if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
+			_out_file(test1log)
+		self.execSuccess(startparams, "reload")
+		self.assertTrue(
+			Utils.wait_for(lambda: self._is_logged("Reload finished."), MAX_WAITTIME / 5.0))
+		# test not unbanned / banned again:
+		self.assertNotLogged(
+			"[test-jail1] Unban 192.0.2.1", 
+			"[test-jail1] Ban 192.0.2.1", all=True)
+		# test 2 new log files:
+		self.assertLogged(
+			"Added logfile: %r" % test2log, 
+			"Added logfile: %r" % test3log, all=True)
+		# test 1 new jail:
+		self.assertLogged(
+			"Creating new jail 'test-jail2'",
+			"Jail 'test-jail2' started", all=True)
+
+		# write new failures:
+		self.pruneLog("[test-phase 2b]")
+		_write_file(test2log, "w+", *(
+			(str(int(MyTime.time())) + "   error 403 from 192.0.2.2: test 2",) * 3 +
+		  (str(int(MyTime.time())) + "   error 403 from 192.0.2.3: test 2",) * 3 +
+		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.4: test 2",) * 3
+		))
+		if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
+			_out_file(test2log)
+		# test all will be found in jail1 and one in jail2:
+		self.assertTrue(
+			Utils.wait_for(lambda: \
+				self._is_logged("[test-jail1] Ban 192.0.2.2") and 
+				self._is_logged("[test-jail1] Ban 192.0.2.3") and 
+				self._is_logged("[test-jail1] Ban 192.0.2.4") and 
+				self._is_logged("[test-jail2] Ban 192.0.2.4")
+				, MAX_WAITTIME / 5.0))
+		# test ips at all not visible for jail2:
+		self.assertNotLogged(
+			"[test-jail2] Found 192.0.2.2", 
+			"[test-jail2] Ban 192.0.2.2",
+			"[test-jail2] Found 192.0.2.3", 
+			"[test-jail2] Ban 192.0.2.3", all=True)
+
+		# rotate logs:
+		_write_file(test1log, "w+")
+		_write_file(test2log, "w+")
+
+		# restart jail without unban all:
+		self.pruneLog("[test-phase 2c]")
+		self.execSuccess(startparams,
+			"restart", "test-jail2")
+		self.assertTrue(
+			Utils.wait_for(lambda: \
+				self._is_logged("Jail 'test-jail2' started") and
+				self._is_logged("[test-jail2] Ban 192.0.2.4")
+				, MAX_WAITTIME / 5.0))
+		# stop/start and ban/unban:
+		self.assertLogged(
+			"Jail 'test-jail2' stopped",
+			"Jail 'test-jail2' started",
+			"[test-jail2] Unban 192.0.2.4",
+			"[test-jail2] Ban 192.0.2.4", all=True
+		)
+
+		# restart jail with unban all:
+		self.pruneLog("[test-phase 2d]")
+		self.execSuccess(startparams,
+			"restart", "--unban", "test-jail2")
+		self.assertTrue(
+			Utils.wait_for(lambda: self._is_logged("Jail 'test-jail2' started"),
+				MAX_WAITTIME / 5.0))
+		self.assertLogged(
+			"Jail 'test-jail2' stopped",
+			"Jail 'test-jail2' started",
+			"[test-jail2] Unban 192.0.2.4", all=True
+		)
+		# no more ban (unbanned all):
+		self.assertNotLogged(
+			"[test-jail2] Ban 192.0.2.4", all=True
+		)
+
+		# reload jail1 without restart (without ban/unban):
+		self.pruneLog("[test-phase 3]")
+		self.execSuccess(startparams, "reload", "test-jail1")
+		self.assertTrue(
+			Utils.wait_for(lambda: self._is_logged("Reload finished."), MAX_WAITTIME / 5.0))
+		self.assertLogged(
+			"Reload jail 'test-jail1'",
+			"Jail 'test-jail1' reloaded", all=True)
+		self.assertNotLogged(
+			"Reload jail 'test-jail2'",
+			"Jail 'test-jail2' reloaded",
+			"Jail 'test-jail1' started", all=True
+		)
+
+		# whole reload, but this time with jail1 only (jail2 should be stopped via configuration):
+		self.pruneLog("[test-phase 4]")
+		_write_jail_cfg(enabled=[1])
+		self.execSuccess(startparams, "reload")
+		self.assertTrue(
+			Utils.wait_for(lambda: self._is_logged("Reload finished."), MAX_WAITTIME / 5.0))
+		# test both jails should be reloaded:
+		self.assertLogged(
+			"Reload jail 'test-jail1'")
+		# test jail2 goes down:
+		self.assertLogged(
+			"Stopping jail 'test-jail2'", 
+			"Jail 'test-jail2' stopped", all=True)
+		# test 2 log files removed:
+		self.assertLogged(
+			"Removed logfile: %r" % test2log, 
+			"Removed logfile: %r" % test3log, all=True)
+
+		# now write failures again and check already banned (jail1 was alive the whole time) and new bans occurred (jail1 was alive the whole time):
+		self.pruneLog("[test-phase 5]")
+		_write_file(test1log, "w+", *(
+			(str(int(MyTime.time())) + " failure 401 from 192.0.2.1: test 5",) * 3 + 
+			(str(int(MyTime.time())) + "   error 403 from 192.0.2.5: test 5",) * 3 +
+			(str(int(MyTime.time())) + " failure 401 from 192.0.2.6: test 5",) * 3
+		))
+		if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
+			_out_file(test1log)
+		# test "failure" regexp still available:
+		self.assertTrue(
+			Utils.wait_for(lambda: \
+				self._is_logged("[test-jail1] 192.0.2.1 already banned") and
+				self._is_logged("[test-jail1] Ban 192.0.2.6")
+				, MAX_WAITTIME / 5.0))
+		self.assertLogged(
+			"[test-jail1] Found 192.0.2.1",
+			"[test-jail1] Found 192.0.2.6", all=True
+		)
+		# test "error" regexp no more available:
+		self.assertNotLogged("[test-jail1] Found 192.0.2.5")
+
+		# unban single ips:
+		self.pruneLog("[test-phase 6]")
+		self.execSuccess(startparams,
+			"--async", "unban", "192.0.2.5", "192.0.2.6")
+		self.assertLogged(
+			"192.0.2.5 is not banned",
+			"[test-jail1] Unban 192.0.2.6", all=True
+		)
+
+		# reload all (one jail) with unban all:
+		self.pruneLog("[test-phase 7]")
+		self.execSuccess(startparams,
+			"reload", "--unban")
+		self.assertTrue(
+			Utils.wait_for(lambda: self._is_logged("Reload finished."), MAX_WAITTIME / 5.0))
+		# reloads unbanned all:
+		self.assertLogged(
+			"Jail 'test-jail1' reloaded",
+			"[test-jail1] Unban 192.0.2.1",
+			"[test-jail1] Unban 192.0.2.2",
+			"[test-jail1] Unban 192.0.2.3",
+			"[test-jail1] Unban 192.0.2.4", all=True
+		)
+		# no restart occurred, no more ban (unbanned all using option "--unban"):
+		self.assertNotLogged(
+			"Jail 'test-jail1' stopped",
+			"Jail 'test-jail1' started",
+			"[test-jail1] Ban 192.0.2.1",
+			"[test-jail1] Ban 192.0.2.2",
+			"[test-jail1] Ban 192.0.2.3",
+			"[test-jail1] Ban 192.0.2.4", all=True
+		)
+
+		# several small cases:
+		self.pruneLog("[test-phase end-1]")
+		# wrong jail (not-started):
+		self.execFailed(startparams,
+			"--async", "reload", "test-jail2")
+		self.assertLogged("the jail 'test-jail2' does not exist")
+		self.pruneLog()
+		# unavailable jail (but exit 0), using --if-exists option:
+		self.execSuccess(startparams,
+			"--async", "reload", "--if-exists", "test-jail2")
+		self.assertNotLogged(
+			"Creating new jail 'test-jail2'",
+			"Jail 'test-jail2' started", all=True)
+		self.pruneLog()

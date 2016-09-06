@@ -154,12 +154,16 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	#
 	# @param match journalctl syntax matches
 
-	def delJournalMatch(self, match):
-		if match in self.__matches:
+	def delJournalMatch(self, match=None):
+		# clear all:
+		if match is None:
+			del self.__matches[:]
+		# delete by index:
+		elif match in self.__matches:
 			del self.__matches[self.__matches.index(match)]
-			self.resetJournalMatches()
 		else:
 			raise ValueError("Match not found")
+		self.resetJournalMatches()
 		logSys.info("Removed journal match for: %r" % " ".join(match))
 
 	##

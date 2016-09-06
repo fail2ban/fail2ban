@@ -27,7 +27,7 @@ __license__ = "GPL"
 import time
 import json
 
-from ..helpers import getLogger
+from ..helpers import getLogger, logging
 from .. import version
 
 # Gets the instance of the logger.
@@ -52,13 +52,14 @@ class Transmitter:
 	
 	def proceed(self, command):
 		# Deserialize object
-		logSys.debug("Command: %r", command)
+		logSys.log(5, "Command: %r", command)
 		try:
 			ret = self.__commandHandler(command)
 			ack = 0, ret
 		except Exception as e:
-			logSys.warning("Command %r has failed. Received %r"
-						% (command, e))
+			logSys.warning("Command %r has failed. Received %r",
+						command, e, 
+						exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 			ack = 1, e
 		return ack
 	
@@ -72,8 +73,8 @@ class Transmitter:
 			return "pong"
 		elif command[0] == "add":
 			name = command[1]
-			if name == "all":
-				raise Exception("Reserved name")
+			if name == "--all":
+				raise Exception("Reserved name %r" % (name,))
 			try:
 				backend = command[2]
 			except IndexError:
@@ -87,11 +88,30 @@ class Transmitter:
 		elif command[0] == "stop":
 			if len(command) == 1:
 				self.__server.quit()
-			elif command[1] == "all":
+			elif command[1] == "--all":
 				self.__server.stopAllJail()
 			else:
 				name = command[1]
 				self.__server.stopJail(name)
+			return None
+		elif command[0] == "reload":
+			opts = command[1:3]
+			try:
+				self.__server.reloadJails(*opts, begin=True)
+				for cmd in command[3]:
+					self.__commandHandler(cmd)
+			finally:
+				self.__server.reloadJails(*opts, begin=False)
+			return None
+		elif len(command) >= 2 and command[0] == "unban":
+			# unban in all jails:
+			value = command[1:]
+			# if all ips:
+			if len(value) == 1 and value[0] == "--all":
+				self.__server.setUnbanIP()
+				return
+			for value in value:
+				self.__server.setUnbanIP(None, value)
 			return None
 		elif command[0] == "echo":
 			return command[1:]
@@ -265,7 +285,7 @@ class Transmitter:
 			action = self.__server.getAction(name, actionname)
 			if multiple:
 				for cmd in command[3]:
-					logSys.debug("  %r", cmd)
+					logSys.log(5, "  %r", cmd)
 					actionkey = cmd[0]
 					if callable(getattr(action, actionkey, None)):
 						actionvalue = json.loads(cmd[1]) if len(cmd)>1 else {}

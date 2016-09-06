@@ -31,7 +31,7 @@ from .failmanager import FailManagerEmpty
 from .filter import FileFilter
 from .mytime import MyTime
 from .utils import Utils
-from ..helpers import getLogger
+from ..helpers import getLogger, logging
 
 
 # Gets the instance of the logger.
@@ -137,28 +137,34 @@ class FilterPoll(FileFilter):
 		try:
 			logStats = os.stat(filename)
 			stats = logStats.st_mtime, logStats.st_ino, logStats.st_size
-			pstats = self.__prevStats.get(filename, ())
-			self.__file404Cnt[filename] = 0
+			pstats = self.__prevStats.get(filename, (0))
 			if logSys.getEffectiveLevel() <= 7:
 				# we do not want to waste time on strftime etc if not necessary
 				dt = logStats.st_mtime - pstats[0]
 				logSys.log(7, "Checking %s for being modified. Previous/current stats: %s / %s. dt: %s",
 				           filename, pstats, stats, dt)
 				# os.system("stat %s | grep Modify" % filename)
+			self.__file404Cnt[filename] = 0
 			if pstats == stats:
 				return False
 			logSys.debug("%s has been modified", filename)
 			self.__prevStats[filename] = stats
 			return True
-		except OSError as e:
-			logSys.error("Unable to get stat on %s because of: %s"
-						 % (filename, e))
+		except Exception as e:
+			# stil alive (may be deleted because multi-threaded):
+			if not self.getLog(filename):
+				logSys.warning("Log %r seems to be down: %s", filename, e)
+				return
+			# log error:
+			if self.__file404Cnt[filename] < 2:
+				logSys.error("Unable to get stat on %s because of: %s",
+							 filename, e, 
+							 exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+			# increase file and common error counters:
 			self.__file404Cnt[filename] += 1
-			if self.__file404Cnt[filename] > 2:
-				logSys.warning("Too many errors. Setting the jail idle")
-				if self.jail is not None:
-					self.jail.idle = True
-				else:
-					logSys.warning("No jail is assigned to %s" % self)
+			self._errors += 1
+			if self.__file404Cnt[filename] > 50:
+				logSys.warning("Too many errors. Remove file %r from monitoring process", filename)
 				self.__file404Cnt[filename] = 0
+				self.delLogPath(filename)
 			return False

@@ -79,6 +79,7 @@ class Jail(object):
 		logSys.info("Creating new jail '%s'" % self.name)
 		if backend is not None:
 			self._setBackend(backend)
+		self.backend = backend
 
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__.__name__, self.name)
@@ -220,7 +221,7 @@ class Jail(object):
 				jail=self, bantime=self.actions.getBanTime()):
 				if not self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True):
 					self.__queue.put(ticket)
-		logSys.info("Jail '%s' started" % self.name)
+		logSys.info("Jail %r started", self.name)
 
 	def stop(self):
 		"""Stop the jail, by stopping filter and actions threads.
