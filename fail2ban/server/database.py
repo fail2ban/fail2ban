@@ -577,6 +577,49 @@ class Fail2BanDb(object):
 			return tickets if ip is None else ticket
 
 	@commitandrollback
+	def _getCurrentBans(self, cur, jail = None, ip = None, forbantime=None, fromtime=None):
+		if fromtime is None:
+			fromtime = MyTime.time()
+		queryArgs = []
+		if jail is not None:
+			query = "SELECT ip, timeofban, data FROM bans WHERE jail=?"
+			queryArgs.append(jail.name)
+		else:
+			query = "SELECT ip, max(timeofban), data FROM bans WHERE 1"
+		if ip is not None:
+			query += " AND ip=?"
+			queryArgs.append(ip)
+		if forbantime is not None:
+			query += " AND timeofban > ?"
+			queryArgs.append(fromtime - forbantime)
+		if ip is None:
+			query += " GROUP BY ip ORDER BY ip, timeofban DESC"
+		cur = self._db.cursor()
+		return cur.execute(query, queryArgs)
+
+	def getCurrentBans(self, jail = None, ip = None, forbantime=None, fromtime=None):
+		tickets = []
+		ticket = None
+
+		results = list(self._getCurrentBans(jail=jail, ip=ip, forbantime=forbantime, fromtime=fromtime))
+
+		if results:
+			matches = []
+			failures = 0
+			for banip, timeofban, data in results:
+				#TODO: Implement data parts once arbitrary match keys completed
+				ticket = FailTicket(banip, timeofban, matches)
+				ticket.setAttempt(failures)
+				matches = []
+				failures = 0
+				matches.extend(data['matches'])
+				failures += data['failures']
+				ticket.setAttempt(failures)
+				tickets.append(ticket)
+
+		return tickets if ip is None else ticket
+
+	@commitandrollback
 	def purge(self, cur):
 		"""Purge old bans, jails and log files from database.
 		"""

@@ -58,6 +58,7 @@ SERVER = "fail2ban-server"
 BIN = dirname(Fail2banServer.getServerPath())
 
 MAX_WAITTIME = 30 if not unittest.F2B.fast else 5
+MID_WAITTIME = MAX_WAITTIME / 2.5
 
 ##
 # Several wrappers and settings for proper testing:
@@ -663,14 +664,14 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 	@with_foreground_server_thread(startextra={'db': 'auto'})
 	def testServerReloadTest(self, tmp, startparams):
-		"""Very complicated test-case, that expected running server (foreground in thread).
-
-		In this test-case, each phase is related from previous one, 
-		so it cannot be splitted in multiple test cases.
-
-		It uses file database (instead of :memory:), to restore bans and log-file positions,
-		after restart/reload between phases.
-		"""
+		# Very complicated test-case, that expected running server (foreground in thread).
+		#
+		# In this test-case, each phase is related from previous one, 
+		# so it cannot be splitted in multiple test cases.
+		# Additionaly many log-messages used as ready-sign (to wait for end of phase).
+		#
+		# Used file database (instead of :memory:), to restore bans and log-file positions,
+		# after restart/reload between phases.
 		cfg = pjoin(tmp, "config")
 		test1log = pjoin(tmp, "test1.log")
 		test2log = pjoin(tmp, "test2.log")
@@ -710,7 +711,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			_out_file(test1log)
 		self.execSuccess(startparams, "reload")
 		self.assertTrue(
-			Utils.wait_for(lambda: self._is_logged("[test-jail1] Ban 192.0.2.1"), MAX_WAITTIME / 5.0))
+			Utils.wait_for(lambda: self._is_logged("[test-jail1] Ban 192.0.2.1"), MID_WAITTIME))
 		self.assertLogged("Added logfile: %r" % test1log)
 		
 		# enable both jails, 3 logs for jail1, etc...
@@ -722,7 +723,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			_out_file(test1log)
 		self.execSuccess(startparams, "reload")
 		self.assertTrue(
-			Utils.wait_for(lambda: self._is_logged("Reload finished."), MAX_WAITTIME / 5.0))
+			Utils.wait_for(lambda: self._is_logged("Reload finished."), MID_WAITTIME))
 		# test not unbanned / banned again:
 		self.assertNotLogged(
 			"[test-jail1] Unban 192.0.2.1", 
@@ -741,7 +742,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		_write_file(test2log, "w+", *(
 			(str(int(MyTime.time())) + "   error 403 from 192.0.2.2: test 2",) * 3 +
 		  (str(int(MyTime.time())) + "   error 403 from 192.0.2.3: test 2",) * 3 +
-		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.4: test 2",) * 3
+		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.4: test 2",) * 3 +
+		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.8: test 2",) * 3
 		))
 		if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
 			_out_file(test2log)
@@ -751,8 +753,10 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				self._is_logged("[test-jail1] Ban 192.0.2.2") and 
 				self._is_logged("[test-jail1] Ban 192.0.2.3") and 
 				self._is_logged("[test-jail1] Ban 192.0.2.4") and 
-				self._is_logged("[test-jail2] Ban 192.0.2.4")
-				, MAX_WAITTIME / 5.0))
+				self._is_logged("[test-jail1] Ban 192.0.2.8") and 
+				self._is_logged("[test-jail2] Ban 192.0.2.4") and
+				self._is_logged("[test-jail2] Ban 192.0.2.8")
+				, MID_WAITTIME))
 		# test ips at all not visible for jail2:
 		self.assertNotLogged(
 			"[test-jail2] Found 192.0.2.2", 
@@ -771,14 +775,17 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertTrue(
 			Utils.wait_for(lambda: \
 				self._is_logged("Jail 'test-jail2' started") and
-				self._is_logged("[test-jail2] Ban 192.0.2.4")
-				, MAX_WAITTIME / 5.0))
-		# stop/start and ban/unban:
+				self._is_logged("[test-jail2] Restore Ban 192.0.2.4") and
+				self._is_logged("[test-jail2] Restore Ban 192.0.2.8")
+				, MID_WAITTIME))
+		# stop/start and unban/restore ban:
 		self.assertLogged(
 			"Jail 'test-jail2' stopped",
 			"Jail 'test-jail2' started",
 			"[test-jail2] Unban 192.0.2.4",
-			"[test-jail2] Ban 192.0.2.4", all=True
+			"[test-jail2] Unban 192.0.2.8",
+			"[test-jail2] Restore Ban 192.0.2.4",
+			"[test-jail2] Restore Ban 192.0.2.8", all=True
 		)
 
 		# restart jail with unban all:
@@ -787,22 +794,24 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"restart", "--unban", "test-jail2")
 		self.assertTrue(
 			Utils.wait_for(lambda: self._is_logged("Jail 'test-jail2' started"),
-				MAX_WAITTIME / 5.0))
+				MID_WAITTIME))
 		self.assertLogged(
 			"Jail 'test-jail2' stopped",
 			"Jail 'test-jail2' started",
-			"[test-jail2] Unban 192.0.2.4", all=True
+			"[test-jail2] Unban 192.0.2.4",
+			"[test-jail2] Unban 192.0.2.8", all=True
 		)
 		# no more ban (unbanned all):
 		self.assertNotLogged(
-			"[test-jail2] Ban 192.0.2.4", all=True
+			"[test-jail2] Ban 192.0.2.4",
+			"[test-jail2] Ban 192.0.2.8", all=True
 		)
 
 		# reload jail1 without restart (without ban/unban):
 		self.pruneLog("[test-phase 3]")
 		self.execSuccess(startparams, "reload", "test-jail1")
 		self.assertTrue(
-			Utils.wait_for(lambda: self._is_logged("Reload finished."), MAX_WAITTIME / 5.0))
+			Utils.wait_for(lambda: self._is_logged("Reload finished."), MID_WAITTIME))
 		self.assertLogged(
 			"Reload jail 'test-jail1'",
 			"Jail 'test-jail1' reloaded", all=True)
@@ -817,7 +826,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		_write_jail_cfg(enabled=[1])
 		self.execSuccess(startparams, "reload")
 		self.assertTrue(
-			Utils.wait_for(lambda: self._is_logged("Reload finished."), MAX_WAITTIME / 5.0))
+			Utils.wait_for(lambda: self._is_logged("Reload finished."), MID_WAITTIME))
 		# test both jails should be reloaded:
 		self.assertLogged(
 			"Reload jail 'test-jail1'")
@@ -844,7 +853,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			Utils.wait_for(lambda: \
 				self._is_logged("[test-jail1] 192.0.2.1 already banned") and
 				self._is_logged("[test-jail1] Ban 192.0.2.6")
-				, MAX_WAITTIME / 5.0))
+				, MID_WAITTIME))
 		self.assertLogged(
 			"[test-jail1] Found 192.0.2.1",
 			"[test-jail1] Found 192.0.2.6", all=True
@@ -866,7 +875,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.execSuccess(startparams,
 			"reload", "--unban")
 		self.assertTrue(
-			Utils.wait_for(lambda: self._is_logged("Reload finished."), MAX_WAITTIME / 5.0))
+			Utils.wait_for(lambda: self._is_logged("Reload finished."), MID_WAITTIME))
 		# reloads unbanned all:
 		self.assertLogged(
 			"Jail 'test-jail1' reloaded",
@@ -885,7 +894,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"[test-jail1] Ban 192.0.2.4", all=True
 		)
 
-		# several small cases:
+		# several small cases (cover several parts):
 		self.pruneLog("[test-phase end-1]")
 		# wrong jail (not-started):
 		self.execFailed(startparams,

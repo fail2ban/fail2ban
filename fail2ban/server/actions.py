@@ -320,7 +320,7 @@ class Actions(JailThread, Mapping):
 				aInfo["ipfailures"]     = lambda: mi4ip(True).getAttempt()
 				aInfo["ipjailfailures"] = lambda: mi4ip().getAttempt()
 			if self.__banManager.addBanTicket(bTicket):
-				logSys.notice("[%s] Ban %s" % (self._jail.name, aInfo["ip"]))
+				logSys.notice("[%s] %sBan %s", self._jail.name, ('' if not bTicket.getRestored() else 'Restore '), ip)
 				for name, action in self._actions.iteritems():
 					try:
 						action.ban(aInfo.copy())

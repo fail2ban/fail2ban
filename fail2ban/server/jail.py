@@ -194,7 +194,7 @@ class Jail(object):
 		Used by filter to add a failure for banning.
 		"""
 		self.__queue.put(ticket)
-		if self.database is not None:
+		if not ticket.getRestored() and self.database is not None:
 			self.database.addBan(self, ticket)
 
 	def getFailTicket(self):
@@ -207,6 +207,21 @@ class Jail(object):
 		except Queue.Empty:
 			return False
 
+	def restoreCurrentBans(self):
+		"""Restore any previous valid bans from the database.
+		"""
+		try:
+			if self.database is not None:
+				forbantime = self.actions.getBanTime()
+				for ticket in self.database.getCurrentBans(jail=self, forbantime=forbantime):
+					#logSys.debug('restored ticket: %s', ticket)
+					if not self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True):
+						# mark ticked was restored from database - does not put it again into db:
+						ticket.setRestored(True)
+						self.putFailTicket(ticket)
+		except Exception as e: # pragma: no cover
+			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+
 	def start(self):
 		"""Start the jail, by starting filter and actions threads.
 
@@ -215,12 +230,7 @@ class Jail(object):
 		"""
 		self.filter.start()
 		self.actions.start()
-		# Restore any previous valid bans from the database
-		if self.database is not None:
-			for ticket in self.database.getBansMerged(
-				jail=self, bantime=self.actions.getBanTime()):
-				if not self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True):
-					self.__queue.put(ticket)
+		self.restoreCurrentBans()
 		logSys.info("Jail %r started", self.name)
 
 	def stop(self):

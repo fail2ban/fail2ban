@@ -36,6 +36,8 @@ logSys = getLogger(__name__)
 
 class Ticket:
 	
+	RESTORED = 0x01
+
 	def __init__(self, ip=None, time=None, matches=None, data={}, ticket=None):
 		"""Ticket constructor
 
@@ -125,6 +127,15 @@ class Ticket:
 
 	def getMatches(self):
 		return self._data.get('matches', [])
+
+	def setRestored(self, value):
+		if value:
+			self._flags = Ticket.RESTORED
+		else:
+			self._flags &= ~(Ticket.RESTORED)
+	
+	def getRestored(self):
+		return self._flags & Ticket.RESTORED
 
 	def setData(self, *args, **argv):
 		# if overwrite - set data and filter None values:
