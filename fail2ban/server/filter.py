@@ -134,12 +134,12 @@ class Filter(JailThread):
 
 	def addFailRegex(self, value):
 		try:
-			regex = FailRegex(value)
+			regex = FailRegex(value, useDns=self.__useDns)
 			self.__failRegex.append(regex)
 			if "\n" in regex.getRegex() and not self.getMaxLines() > 1:
 				logSys.warning(
-					"Mutliline regex set for jail '%s' "
-					"but maxlines not greater than 1")
+					"Mutliline regex set for jail %r "
+					"but maxlines not greater than 1", self.jail.name)
 		except RegexException as e:
 			logSys.error(e)
 			raise e
@@ -176,7 +176,7 @@ class Filter(JailThread):
 
 	def addIgnoreRegex(self, value):
 		try:
-			regex = Regex(value)
+			regex = Regex(value, useDns=self.__useDns)
 			self.__ignoreRegex.append(regex)
 		except RegexException as e:
 			logSys.error(e)

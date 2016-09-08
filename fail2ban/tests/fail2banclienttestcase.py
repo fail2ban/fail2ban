@@ -58,7 +58,7 @@ SERVER = "fail2ban-server"
 BIN = dirname(Fail2banServer.getServerPath())
 
 MAX_WAITTIME = 30 if not unittest.F2B.fast else 5
-MID_WAITTIME = MAX_WAITTIME / 2.5
+MID_WAITTIME = MAX_WAITTIME
 
 ##
 # Several wrappers and settings for proper testing:
@@ -681,6 +681,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			_write_file(pjoin(cfg, "jail.conf"), "w",
 				"[INCLUDES]", "",
 				"[DEFAULT]", "",
+				"usedns = no",
 				"maxretry = 3",
 				"findtime = 10m",
 				"failregex = ^\s*failure (401|403) from <HOST>",
