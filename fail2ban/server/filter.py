@@ -117,13 +117,10 @@ class Filter(JailThread):
 				self._reload_logs = dict((k, 1) for k in self.getLogPaths())
 		else:
 			if hasattr(self, '_reload_logs'):
-				dellogs = dict()
 				# if it was not reloaded - remove obsolete log file:
 				for path in self._reload_logs:
 					self.delLogPath(path)
 				delattr(self, '_reload_logs')
-
-
 
 	##
 	# Add a regular expression which matches the failure.

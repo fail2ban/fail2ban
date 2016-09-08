@@ -677,6 +677,20 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		test2log = pjoin(tmp, "test2.log")
 		test3log = pjoin(tmp, "test3.log")
 
+		os.mkdir(pjoin(cfg, "action.d"))
+		def _write_action_cfg(actname="test-action1"):
+			fn = pjoin(cfg, "action.d", "%s.conf" % actname)
+			_write_file(fn, "w",
+				"[Definition]",
+				"actionstart = echo '[<name>] %s: ** start'" % actname,
+				"actionstop =  echo '[<name>] %s: -- unban <ip>'" % actname,
+				"actionreload = echo '[<name>] %s: ** reload'" % actname,
+				"actionban =   echo '[<name>] %s: ++ ban <ip>'" % actname,
+				"actionunban = echo '[<name>] %s: // stop'" % actname,
+			)
+			if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
+				_out_file(fn)
+
 		def _write_jail_cfg(enabled=[1, 2]):
 			_write_file(pjoin(cfg, "jail.conf"), "w",
 				"[INCLUDES]", "",
@@ -686,7 +700,9 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"findtime = 10m",
 				"failregex = ^\s*failure (401|403) from <HOST>",
 				"",
-				"[test-jail1]", "backend = polling", "filter =", "action =",
+				"[test-jail1]", "backend = polling", "filter =", 
+				"action = test-action1[name='%(__name__)s']",
+				"         test-action2[name='%(__name__)s']",
 				"logpath = " + test1log,
 				"          " + test2log if 2 in enabled else "",
 				"          " + test3log if 2 in enabled else "",
@@ -700,6 +716,10 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			)
 			if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
 				_out_file(pjoin(cfg, "jail.conf"))
+
+		# create default test actions:
+		_write_action_cfg(actname="test-action1")
+		_write_action_cfg(actname="test-action2")
 
 		_write_jail_cfg(enabled=[1])
 		_write_file(test1log, "w", *((str(int(MyTime.time())) + " failure 401 from 192.0.2.1: test 1",) * 3))
@@ -737,6 +757,11 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"Added logfile: %r" % test2log, 
 			"Added logfile: %r" % test3log, all=True)
+		# test actions reloaded:
+		self.assertLogged(
+			"echo '[test-jail1] test-action1: ** reload' -- returned successfully", 
+			"echo '[test-jail1] test-action2: ** reload' -- returned successfully", all=True)
+
 		# test 1 new jail:
 		self.assertLogged(
 			"Creating new jail 'test-jail2'",

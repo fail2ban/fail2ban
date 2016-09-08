@@ -267,6 +267,7 @@ class Server:
 						jail.idle = True
 						self.__reload_state[jn] = jail
 						jail.filter.reload(begin=True)
+						jail.actions.reload(begin=True)
 				pass
 		else:
 			# end reload, all affected (or new) jails have already all new parameters (via stream) and (re)started:
@@ -280,6 +281,7 @@ class Server:
 					else:
 						# commit (reload was finished):
 						jail.filter.reload(begin=False)
+						jail.actions.reload(begin=False)
 				for jn in deljails:
 					self.delJail(jn)
 			self.__reload_state = {}
@@ -416,7 +418,9 @@ class Server:
 	
 	# Action
 	def addAction(self, name, value, *args):
-		self.__jails[name].actions.add(value, *args)
+		## create (or reload) jail action:
+		self.__jails[name].actions.add(value, *args, 
+			reload=name in self.__reload_state)
 	
 	def getActions(self, name):
 		return self.__jails[name].actions

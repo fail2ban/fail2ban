@@ -201,6 +201,7 @@ class CommandAction(ActionBase):
 	----------
 	actionban
 	actioncheck
+	actionreload
 	actionrepair
 	actionstart
 	actionstop
@@ -210,24 +211,35 @@ class CommandAction(ActionBase):
 
 	_escapedTags = set(('matches', 'ipmatches', 'ipjailmatches'))
 
-	timeout = 60
-	## Command executed in order to initialize the system.
-	actionstart = ''
-	## Command executed when an IP address gets banned.
-	actionban = ''
-	## Command executed when an IP address gets removed.
-	actionunban = ''
-	## Command executed in order to check requirements.
-	actioncheck = ''
-	## Command executed in order to restore sane environment in error case.
-	actionrepair = ''
-	## Command executed in order to stop the system.
-	actionstop = ''
+	def clearAllParams(self):
+		""" Clear all lists/dicts parameters (used by reloading)
+		"""
+		self.__init = 1
+		try:
+			self.timeout = 60
+			## Command executed in order to initialize the system.
+			self.actionstart = ''
+			## Command executed when an IP address gets banned.
+			self.actionban = ''
+			## Command executed when an IP address gets removed.
+			self.actionunban = ''
+			## Command executed in order to check requirements.
+			self.actioncheck = ''
+			## Command executed in order to restore sane environment in error case.
+			self.actionrepair = ''
+			## Command executed in order to stop the system.
+			self.actionstop = ''
+			## Command executed in case of reloading action.
+			self.actionreload = ''
+		finally:
+			self.__init = 0
 
 	def __init__(self, jail, name):
 		super(CommandAction, self).__init__(jail, name)
+		self.__init = 1
 		self.__properties = None
 		self.__substCache = {}
+		self.clearAllParams()
 		self._logSys.debug("Created %s" % self.__class__)
 
 	@classmethod
@@ -235,7 +247,7 @@ class CommandAction(ActionBase):
 		return NotImplemented # Standard checks
 
 	def __setattr__(self, name, value):
-		if not name.startswith('_') and not callable(value):
+		if not name.startswith('_') and not self.__init and not callable(value):
 			# special case for some pasrameters:
 			if name in ('timeout', 'bantime'):
 				value = str(MyTime.str2seconds(value))
@@ -268,8 +280,8 @@ class CommandAction(ActionBase):
 	def _substCache(self):
 		return self.__substCache
 
-	def start(self):
-		"""Executes the "actionstart" command.
+	def _executeOperation(self, tag, operation):
+		"""Executes the operation commands (like "actionstart", "actionstop", etc).
 
 		Replace the tags in the action command with actions properties
 		and executes the resulting command.
@@ -278,20 +290,28 @@ class CommandAction(ActionBase):
 		res = True
 		try:
 			# common (resp. ipv4):
-			startCmd = self.replaceTag('<actionstart>', self._properties, 
+			startCmd = self.replaceTag(tag, self._properties, 
 				conditional='family=inet4', cache=self.__substCache)
 			if startCmd:
 				res &= self.executeCmd(startCmd, self.timeout)
 			# start ipv6 actions if available:
 			if allowed_ipv6:
-				startCmd6 = self.replaceTag('<actionstart>', self._properties, 
+				startCmd6 = self.replaceTag(tag, self._properties, 
 					conditional='family=inet6', cache=self.__substCache)
 				if startCmd6 and startCmd6 != startCmd:
 					res &= self.executeCmd(startCmd6, self.timeout)
 			if not res:
-				raise RuntimeError("Error starting action %s/%s" % (self._jail, self._name,))
+				raise RuntimeError("Error %s action %s/%s" % (operation, self._jail, self._name,))
 		except ValueError as e:
-			raise RuntimeError("Error starting action %s/%s: %r" % (self._jail, self._name, e))
+			raise RuntimeError("Error %s action %s/%s: %r" % (operation, self._jail, self._name, e))
+
+	def start(self):
+		"""Executes the "actionstart" command.
+
+		Replace the tags in the action command with actions properties
+		and executes the resulting command.
+		"""
+		return self._executeOperation('<actionstart>', 'starting')
 
 	def ban(self, aInfo):
 		"""Executes the "actionban" command.
@@ -329,20 +349,20 @@ class CommandAction(ActionBase):
 		Replaces the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
-		res = True
-		# common (resp. ipv4):
-		stopCmd = self.replaceTag('<actionstop>', self._properties, 
-			conditional='family=inet4', cache=self.__substCache)
-		if stopCmd:
-			res &= self.executeCmd(stopCmd, self.timeout)
-		# ipv6 actions if available:
-		if allowed_ipv6:
-			stopCmd6 = self.replaceTag('<actionstop>', self._properties, 
-				conditional='family=inet6', cache=self.__substCache)
-			if stopCmd6 and stopCmd6 != stopCmd:
-				res &= self.executeCmd(stopCmd6, self.timeout)
-		if not res:
-			raise RuntimeError("Error stopping action")
+		return self._executeOperation('<actionstop>', 'stopping')
+
+	def reload(self, **kwargs):
+		"""Executes the "actionreload" command.
+
+		Parameters
+		----------
+		kwargs : dict
+		  Currently unused, because CommandAction do not support initOpts
+
+		Replaces the tags in the action command with actions properties
+		and executes the resulting command.
+		"""
+		return self._executeOperation('<actionreload>', 'reloading')
 
 	@classmethod
 	def substituteRecursiveTags(cls, inptags, conditional=''):

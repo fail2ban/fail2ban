@@ -604,16 +604,14 @@ class Fail2BanDb(object):
 		results = list(self._getCurrentBans(jail=jail, ip=ip, forbantime=forbantime, fromtime=fromtime))
 
 		if results:
-			matches = []
-			failures = 0
 			for banip, timeofban, data in results:
-				#TODO: Implement data parts once arbitrary match keys completed
-				ticket = FailTicket(banip, timeofban, matches)
-				ticket.setAttempt(failures)
 				matches = []
 				failures = 0
-				matches.extend(data['matches'])
-				failures += data['failures']
+				if isinstance(data['matches'], list):
+					matches.extend(data['matches'])
+				if data['failures']:
+					failures += data['failures']
+				ticket = FailTicket(banip, timeofban, matches)
 				ticket.setAttempt(failures)
 				tickets.append(ticket)
 

@@ -107,6 +107,15 @@ class BanManager:
 			return self.__banList.keys()
 
 	##
+	# Returns a iterator to ban list (used in reload, so idle).
+	#
+	# @return ban list iterator
+	
+	def __iter__(self):
+		with self.__lock:
+			return self.__banList.itervalues()
+
+	##
 	# Returns normalized value
 	#
 	# @return value or "unknown" if value is None or empty string

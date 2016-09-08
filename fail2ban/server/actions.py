@@ -36,7 +36,7 @@ from collections import Mapping
 try:
 	from collections import OrderedDict
 except ImportError:
-	OrderedDict = None
+	OrderedDict = dict
 
 from .banmanager import BanManager
 from .jailthread import JailThread
@@ -81,14 +81,11 @@ class Actions(JailThread, Mapping):
 		JailThread.__init__(self)
 		## The jail which contains this action.
 		self._jail = jail
-		if OrderedDict is not None:
-			self._actions = OrderedDict()
-		else:
-			self._actions = dict()
+		self._actions = OrderedDict()
 		## The ban manager.
 		self.__banManager = BanManager()
 
-	def add(self, name, pythonModule=None, initOpts=None):
+	def add(self, name, pythonModule=None, initOpts=None, reload=False):
 		"""Adds a new action.
 
 		Add a new action if not already present, defaulting to standard
@@ -116,7 +113,17 @@ class Actions(JailThread, Mapping):
 		"""
 		# Check is action name already exists
 		if name in self._actions:
-			raise ValueError("Action %s already exists" % name)
+			if not reload:
+				raise ValueError("Action %s already exists" % name)
+			# don't create new action if reload supported:
+			action = self._actions[name]
+			if hasattr(action, 'reload'):
+				# don't execute reload right now, reload after all parameters are actualized
+				if hasattr(action, 'clearAllParams'):
+					action.clearAllParams()
+					self._reload_actions[name] = initOpts
+				return
+		## Create new action:
 		if pythonModule is None:
 			action = CommandAction(self._jail, name)
 		else:
@@ -137,6 +144,27 @@ class Actions(JailThread, Mapping):
 						pythonModule, customActionModule.Action.__name__))
 			action = customActionModule.Action(self._jail, name, **initOpts)
 		self._actions[name] = action
+
+	def reload(self, begin=True):
+		""" Begin or end of reloading resp. refreshing of all parameters
+		"""
+		if begin:
+			self._reload_actions = dict()
+		else:
+			if hasattr(self, '_reload_actions'):
+				# reload actions after all parameters set via stream:
+				for name, initOpts in self._reload_actions.iteritems():
+					if name in self._actions:
+						self._actions[name].reload(**initOpts if initOpts else {})
+				# remove obsolete actions (untouched by reload process):
+				delacts = OrderedDict((name, action) for name, action in self._actions.iteritems()
+					if name not in self._reload_actions)
+				if len(delacts):
+					# unban all tickets using remove action only:
+					self.__flushBan(db=False, actions=delacts)
+					# stop and remove it:
+					self.stopActions(actions=delacts)
+				delattr(self, '_reload_actions')
 
 	def __getitem__(self, name):
 		try:
@@ -215,6 +243,24 @@ class Actions(JailThread, Mapping):
 		return 1
 
 
+	def stopActions(self, actions=None):
+		"""Stops the actions in reverse sequence (optionally filtered)
+		"""
+		if actions is None:
+			actions = self._actions
+		revactions = actions.items()
+		revactions.reverse()
+		for name, action in revactions:
+			try:
+				action.stop()
+			except Exception as e:
+				logSys.error("Failed to stop jail '%s' action '%s': %s",
+					self._jail.name, name, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+			del self._actions[name]
+			logSys.debug("%s: action %s terminated", self._jail.name, name)
+
+
 	def run(self):
 		"""Main loop for Threading.
 
@@ -239,18 +285,9 @@ class Actions(JailThread, Mapping):
 				continue
 			if not Utils.wait_for(self.__checkBan, self.sleeptime):
 				self.__checkUnBan()
+		
 		self.__flushBan()
-
-		actions = self._actions.items()
-		actions.reverse()
-		for name, action in actions:
-			try:
-				action.stop()
-			except Exception as e:
-				logSys.error("Failed to stop jail '%s' action '%s': %s",
-					self._jail.name, name, e,
-					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-		logSys.debug(self._jail.name + ": action terminated")
+		self.stopActions()
 		return True
 
 	def __getBansMerged(self, mi, overalljails=False):
@@ -355,26 +392,33 @@ class Actions(JailThread, Mapping):
 				cnt, self.__banManager.size(), self._jail.name)
 		return cnt
 
-	def __flushBan(self, db=False):
+	def __flushBan(self, db=False, actions=None):
 		"""Flush the ban list.
 
 		Unban all IP address which are still in the banning list.
+
+		If actions specified, don't flush list - just execute unban for 
+		given actions (reload, obsolete resp. removed actions).
 		"""
-		logSys.debug("Flush ban list")
-		lst = self.__banManager.flushBanList()
+		if actions is None:
+			logSys.debug("Flush ban list")
+			lst = self.__banManager.flushBanList()
+		else:
+			lst = iter(self.__banManager)
+		cnt = 0
 		for ticket in lst:
 			# delete ip from database also:
 			if db and self._jail.database is not None:
 				ip = str(ticket.getIP())
 				self._jail.database.delBan(self._jail, ip)
 			# unban ip:
-			self.__unBan(ticket)
-		cnt = len(lst)
+			self.__unBan(ticket, actions=actions)
+			cnt += 1
 		logSys.debug("Unbanned %s, %s ticket(s) in %r", 
 			cnt, self.__banManager.size(), self._jail.name)
 		return cnt
 
-	def __unBan(self, ticket):
+	def __unBan(self, ticket, actions=None):
 		"""Unbans host corresponding to the ticket.
 
 		Executes the actions in order to unban the host given in the
@@ -385,13 +429,15 @@ class Actions(JailThread, Mapping):
 		ticket : FailTicket
 			Ticket of failures of which to unban
 		"""
+		if actions is None:
+			actions = self._actions
 		aInfo = dict()
 		aInfo["ip"] = ticket.getIP()
 		aInfo["failures"] = ticket.getAttempt()
 		aInfo["time"] = ticket.getTime()
 		aInfo["matches"] = "".join(ticket.getMatches())
 		logSys.notice("[%s] Unban %s" % (self._jail.name, aInfo["ip"]))
-		for name, action in self._actions.iteritems():
+		for name, action in actions.iteritems():
 			try:
 				action.unban(aInfo.copy())
 			except Exception as e:
