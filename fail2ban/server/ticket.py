@@ -51,13 +51,12 @@ class Ticket:
 		self._banCount = 0;
 		self._banTime = None;
 		self._time = time if time is not None else MyTime.time()
-		self._data = {'matches': [], 'failures': 0}
-		self._data.update(data)
+		self._data = {'matches': matches or [], 'failures': 0}
+		if data is not None:
+			self._data.update(data)
 		if ticket:
 			# ticket available - copy whole information from ticket:
 			self.__dict__.update(i for i in ticket.__dict__.iteritems() if i[0] in self.__dict__)
-		else:
-			self._data['matches'] = matches or []
 
 	def __str__(self):
 		return "%s: ip=%s time=%s #attempts=%d matches=%r" % \

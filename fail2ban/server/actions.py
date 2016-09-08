@@ -430,15 +430,19 @@ class Actions(JailThread, Mapping):
 			Ticket of failures of which to unban
 		"""
 		if actions is None:
-			actions = self._actions
+			unbactions = self._actions
+		else:
+			unbactions = actions
 		aInfo = dict()
 		aInfo["ip"] = ticket.getIP()
 		aInfo["failures"] = ticket.getAttempt()
 		aInfo["time"] = ticket.getTime()
 		aInfo["matches"] = "".join(ticket.getMatches())
-		logSys.notice("[%s] Unban %s" % (self._jail.name, aInfo["ip"]))
-		for name, action in actions.iteritems():
+		if actions is None:
+			logSys.notice("[%s] Unban %s", self._jail.name, aInfo["ip"])
+		for name, action in unbactions.iteritems():
 			try:
+				logSys.debug("[%s] action %r: unban %s", self._jail.name, name, aInfo["ip"])
 				action.unban(aInfo.copy())
 			except Exception as e:
 				logSys.error(

@@ -223,6 +223,11 @@ class Fail2BanDb(object):
 				cur.execute("PRAGMA journal_mode = MEMORY")
 			cur.close()
 
+	def close(self):
+		logSys.debug("Close connection to database ...")
+		self._db.close()
+		logSys.info("Connection to database closed.")
+
 	@property
 	def filename(self):
 		"""File name of SQLite3 database file.
@@ -605,14 +610,9 @@ class Fail2BanDb(object):
 
 		if results:
 			for banip, timeofban, data in results:
-				matches = []
-				failures = 0
-				if isinstance(data['matches'], list):
-					matches.extend(data['matches'])
-				if data['failures']:
-					failures += data['failures']
-				ticket = FailTicket(banip, timeofban, matches)
-				ticket.setAttempt(failures)
+				# logSys.debug('restore ticket   %r, %r, %r', banip, timeofban, data)
+				ticket = FailTicket(banip, timeofban, data=data)
+				# logSys.debug('restored ticket: %r', ticket)
 				tickets.append(ticket)
 
 		return tickets if ip is None else ticket

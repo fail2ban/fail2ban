@@ -171,6 +171,12 @@ class Server:
 		# Now stop all the jails
 		self.stopAllJail()
 
+		# Explicit close database (server can leave in a thread, 
+		# so delayed GC can prevent commiting changes)
+		if self.__db:
+			self.__db.close()
+			self.__db = None
+
 		# Only now shutdown the logging.
 		if self.__logTarget is not None:
 			with self.__loggingLock:

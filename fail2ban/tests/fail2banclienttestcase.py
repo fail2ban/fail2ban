@@ -678,20 +678,24 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		test3log = pjoin(tmp, "test3.log")
 
 		os.mkdir(pjoin(cfg, "action.d"))
-		def _write_action_cfg(actname="test-action1"):
+		def _write_action_cfg(actname="test-action1", allow=True, 
+			start="", reload="", ban="", unban="", stop=""):
 			fn = pjoin(cfg, "action.d", "%s.conf" % actname)
+			if not allow:
+				os.remove(fn)
+				return
 			_write_file(fn, "w",
 				"[Definition]",
-				"actionstart = echo '[<name>] %s: ** start'" % actname,
-				"actionstop =  echo '[<name>] %s: -- unban <ip>'" % actname,
-				"actionreload = echo '[<name>] %s: ** reload'" % actname,
-				"actionban =   echo '[<name>] %s: ++ ban <ip>'" % actname,
-				"actionunban = echo '[<name>] %s: // stop'" % actname,
+				"actionstart =  echo '[<name>] %s: ** start'" % actname, start,
+				"actionreload = echo '[<name>] %s: .. reload'" % actname, reload,
+				"actionban =    echo '[<name>] %s: ++ ban <ip>'" % actname, ban,
+				"actionunban =  echo '[<name>] %s: -- unban <ip>'" % actname, unban,
+				"actionstop =   echo '[<name>] %s: __ stop'" % actname, stop,
 			)
-			if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
+			if DefLogSys.level <= logging.DEBUG:  # if DEBUG
 				_out_file(fn)
 
-		def _write_jail_cfg(enabled=[1, 2]):
+		def _write_jail_cfg(enabled=(1, 2), actions=()):
 			_write_file(pjoin(cfg, "jail.conf"), "w",
 				"[INCLUDES]", "",
 				"[DEFAULT]", "",
@@ -701,8 +705,9 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"failregex = ^\s*failure (401|403) from <HOST>",
 				"",
 				"[test-jail1]", "backend = polling", "filter =", 
-				"action = test-action1[name='%(__name__)s']",
-				"         test-action2[name='%(__name__)s']",
+				"action = ",
+				"         test-action1[name='%(__name__)s']" if 1 in actions else "",
+				"         test-action2[name='%(__name__)s']" if 2 in actions else "",
 				"logpath = " + test1log,
 				"          " + test2log if 2 in enabled else "",
 				"          " + test3log if 2 in enabled else "",
@@ -710,24 +715,25 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"            ^\s*error (401|403) from <HOST>" if 2 in enabled else "",
 				"enabled = true" if 1 in enabled else "",
 				"",
-				"[test-jail2]", "backend = polling", "filter =", "action =",
+				"[test-jail2]", "backend = polling", "filter =", 
+				"action =",
 				"logpath = " + test2log,
 				"enabled = true" if 2 in enabled else "",
 			)
-			if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
+			if DefLogSys.level <= logging.DEBUG:  # if DEBUG
 				_out_file(pjoin(cfg, "jail.conf"))
 
 		# create default test actions:
 		_write_action_cfg(actname="test-action1")
 		_write_action_cfg(actname="test-action2")
 
-		_write_jail_cfg(enabled=[1])
+		_write_jail_cfg(enabled=[1], actions=[1,2])
 		_write_file(test1log, "w", *((str(int(MyTime.time())) + " failure 401 from 192.0.2.1: test 1",) * 3))
 		_write_file(test2log, "w")
 		_write_file(test3log, "w")
 		
 		# reload and wait for ban:
-		self.pruneLog("[test-phase 1]")
+		self.pruneLog("[test-phase 1a]")
 		if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
 			_out_file(test1log)
 		self.execSuccess(startparams, "reload")
@@ -738,11 +744,15 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				, MID_WAITTIME))
 		self.assertLogged("Added logfile: %r" % test1log)
 		self.assertLogged("[test-jail1] Ban 192.0.2.1")
+		# test actions started:
+		self.assertLogged(
+			"stdout: '[test-jail1] test-action1: ** start'", 
+			"stdout: '[test-jail1] test-action2: ** start'", all=True)
 		
 		# enable both jails, 3 logs for jail1, etc...
 		# truncate test-log - we should not find unban/ban again by reload:
-		self.pruneLog("[test-phase 2a]")
-		_write_jail_cfg()
+		self.pruneLog("[test-phase 1b]")
+		_write_jail_cfg(actions=[1,2])
 		_write_file(test1log, "w+")
 		if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
 			_out_file(test1log)
@@ -759,14 +769,47 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"Added logfile: %r" % test3log, all=True)
 		# test actions reloaded:
 		self.assertLogged(
-			"echo '[test-jail1] test-action1: ** reload' -- returned successfully", 
-			"echo '[test-jail1] test-action2: ** reload' -- returned successfully", all=True)
-
+			"stdout: '[test-jail1] test-action1: .. reload'", 
+			"stdout: '[test-jail1] test-action2: .. reload'", all=True)
 		# test 1 new jail:
 		self.assertLogged(
 			"Creating new jail 'test-jail2'",
 			"Jail 'test-jail2' started", all=True)
-
+		
+		# update action1, delete action2 (should be stopped via configuration)...
+		self.pruneLog("[test-phase 2a]")
+		_write_jail_cfg(actions=[1])
+		_write_action_cfg(actname="test-action1", 
+			start= "               echo '[<name>] %s: started.'" % "test-action1",
+			reload="               echo '[<name>] %s: reloaded.'" % "test-action1", 
+			stop=  "               echo '[<name>] %s: stopped.'" % "test-action1")
+		self.execSuccess(startparams, "reload")
+		self.assertTrue(
+			Utils.wait_for(lambda: self._is_logged("Reload finished."), MID_WAITTIME))
+		# test not unbanned / banned again:
+		self.assertNotLogged(
+			"[test-jail1] Unban 192.0.2.1", 
+			"[test-jail1] Ban 192.0.2.1", all=True)
+		# no new log files:
+		self.assertNotLogged("Added logfile:")
+		# test action reloaded (update):
+		self.assertLogged(
+			"stdout: '[test-jail1] test-action1: .. reload'",
+			"stdout: '[test-jail1] test-action1: reloaded.'", all=True)
+		# test stopped action unbans:
+		self.assertLogged(
+			"stdout: '[test-jail1] test-action2: -- unban 192.0.2.1'")
+		# test action stopped:
+		self.assertLogged(
+			"stdout: '[test-jail1] test-action2: __ stop'")
+		self.assertNotLogged(
+			"stdout: '[test-jail1] test-action1: -- unban 192.0.2.1'")
+		
+		# don't need both actions anymore:
+		_write_action_cfg(actname="test-action1", allow=False)
+		_write_action_cfg(actname="test-action2", allow=False)
+		_write_jail_cfg(actions=[])
+		
 		# write new failures:
 		self.pruneLog("[test-phase 2b]")
 		_write_file(test2log, "w+", *(

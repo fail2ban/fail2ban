@@ -199,6 +199,7 @@ class AsyncServer(asyncore.dispatcher):
 
 
 	def close(self):
+		stopflg = False
 		if self.__active:
 			self.__loop = False
 			asyncore.dispatcher.close(self)
@@ -206,11 +207,13 @@ class AsyncServer(asyncore.dispatcher):
 			# for the server leaves loop, before remove socket
 			if threading.current_thread() != self.__worker:
 				Utils.wait_for(lambda: not self.__active, 1)
+			stopflg = True
 		# Remove socket (file) only if it was created:
 		if self.__init and os.path.exists(self.__sock):
 			self._remove_sock()
 			logSys.debug("Removed socket file " + self.__sock)
-		logSys.debug("Socket shutdown")
+		if stopflg:
+			logSys.debug("Socket shutdown")
 		self.__active = False
 
 	##
