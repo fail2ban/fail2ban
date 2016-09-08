@@ -50,7 +50,7 @@ protocol = [
 ["start", "starts the server and the jails"], 
 ["restart", "restarts the server"], 
 ["restart [--unban] [--if-exists] <JAIL>", "restarts the jail <JAIL> (alias for 'reload --restart ... <JAIL>')"], 
-["reload [--restart] [--unban] [--all]", "reloads the configuration without restarting of the server, the option '--restart' activates completely restarting of affected jails, thereby unbans IP addresses (if option '--unban' specified)"],
+["reload [--restart] [--unban] [--all]", "reloads the configuration without restarting of the server, the option '--restart' activates completely restarting of affected jails, thereby can unban IP addresses (if option '--unban' specified)"],
 ["reload [--restart] [--unban] [--if-exists] <JAIL>", "reloads the jail <JAIL>, or restarts it (if option '--restart' specified)"],
 ["stop", "stops all jails and terminate the server"], 
 ["unban --all", "unbans all IP addresses (in all jails and database)"],

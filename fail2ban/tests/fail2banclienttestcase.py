@@ -712,8 +712,12 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			_out_file(test1log)
 		self.execSuccess(startparams, "reload")
 		self.assertTrue(
-			Utils.wait_for(lambda: self._is_logged("[test-jail1] Ban 192.0.2.1"), MID_WAITTIME))
+			Utils.wait_for(lambda: \
+				self._is_logged("Reload finished.") and
+				self._is_logged("1 ticket(s) in 'test-jail1")
+				, MID_WAITTIME))
 		self.assertLogged("Added logfile: %r" % test1log)
+		self.assertLogged("[test-jail1] Ban 192.0.2.1")
 		
 		# enable both jails, 3 logs for jail1, etc...
 		# truncate test-log - we should not find unban/ban again by reload:
@@ -751,13 +755,16 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# test all will be found in jail1 and one in jail2:
 		self.assertTrue(
 			Utils.wait_for(lambda: \
-				self._is_logged("[test-jail1] Ban 192.0.2.2") and 
-				self._is_logged("[test-jail1] Ban 192.0.2.3") and 
-				self._is_logged("[test-jail1] Ban 192.0.2.4") and 
-				self._is_logged("[test-jail1] Ban 192.0.2.8") and 
-				self._is_logged("[test-jail2] Ban 192.0.2.4") and
-				self._is_logged("[test-jail2] Ban 192.0.2.8")
+				self._is_logged("2 ticket(s) in 'test-jail2") and
+				self._is_logged("5 ticket(s) in 'test-jail1")
 				, MID_WAITTIME))
+		self.assertLogged(
+			"[test-jail1] Ban 192.0.2.2",
+			"[test-jail1] Ban 192.0.2.3",
+			"[test-jail1] Ban 192.0.2.4",
+			"[test-jail1] Ban 192.0.2.8",
+			"[test-jail2] Ban 192.0.2.4",
+			"[test-jail2] Ban 192.0.2.8", all=True)
 		# test ips at all not visible for jail2:
 		self.assertNotLogged(
 			"[test-jail2] Found 192.0.2.2", 
@@ -775,9 +782,9 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"restart", "test-jail2")
 		self.assertTrue(
 			Utils.wait_for(lambda: \
-				self._is_logged("Jail 'test-jail2' started") and
-				self._is_logged("[test-jail2] Restore Ban 192.0.2.4") and
-				self._is_logged("[test-jail2] Restore Ban 192.0.2.8")
+				self._is_logged("Reload finished.") and
+				self._is_logged("Restore Ban") and
+				self._is_logged("2 ticket(s) in 'test-jail2")
 				, MID_WAITTIME))
 		# stop/start and unban/restore ban:
 		self.assertLogged(
@@ -794,8 +801,10 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.execSuccess(startparams,
 			"restart", "--unban", "test-jail2")
 		self.assertTrue(
-			Utils.wait_for(lambda: self._is_logged("Jail 'test-jail2' started"),
-				MID_WAITTIME))
+			Utils.wait_for(lambda: \
+				self._is_logged("Reload finished.") and
+				self._is_logged("Jail 'test-jail2' started")
+				, MID_WAITTIME))
 		self.assertLogged(
 			"Jail 'test-jail2' stopped",
 			"Jail 'test-jail2' started",
@@ -849,16 +858,17 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		))
 		if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
 			_out_file(test1log)
-		# test "failure" regexp still available:
 		self.assertTrue(
 			Utils.wait_for(lambda: \
-				self._is_logged("[test-jail1] 192.0.2.1 already banned") and
-				self._is_logged("[test-jail1] Ban 192.0.2.6")
+				self._is_logged("6 ticket(s) in 'test-jail1") and
+				self._is_logged("[test-jail1] 192.0.2.1 already banned")
 				, MID_WAITTIME))
+		# test "failure" regexp still available:
 		self.assertLogged(
 			"[test-jail1] Found 192.0.2.1",
-			"[test-jail1] Found 192.0.2.6", all=True
-		)
+			"[test-jail1] Found 192.0.2.6",
+			"[test-jail1] 192.0.2.1 already banned",
+			"[test-jail1] Ban 192.0.2.6", all=True)
 		# test "error" regexp no more available:
 		self.assertNotLogged("[test-jail1] Found 192.0.2.5")
 
