@@ -70,7 +70,7 @@ class AddFailure(unittest.TestCase):
 			self.assertFalse(self.__banManager.addBanTicket(ticket2))
 			self.assertEqual(self.__banManager.size(), 1)
 			# pop ticket and check it was prolonged :
-			banticket = self.__banManager.getTicketByIP(ticket2.getIP())
+			banticket = self.__banManager.getTicketByID(ticket2.getID())
 			self.assertEqual(banticket.getTime(), ticket2.getTime())
 			self.assertEqual(banticket.getTime(), ticket2.getTime())
 			self.assertEqual(banticket.getBanTime(), ticket2.getBanTime(self.__banManager.getBanTime()))

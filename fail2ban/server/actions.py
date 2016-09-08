@@ -204,7 +204,7 @@ class Actions(JailThread, Mapping):
 		if db and self._jail.database is not None:
 			self._jail.database.delBan(self._jail, ip)
 		# Find the ticket with the IP.
-		ticket = self.__banManager.getTicketByIP(ip)
+		ticket = self.__banManager.getTicketByID(ip)
 		if ticket is not None:
 			# Unban the IP.
 			self.__unBan(ticket)
@@ -303,8 +303,11 @@ class Actions(JailThread, Mapping):
 		bool
 			True if an IP address get banned.
 		"""
-		ticket = self._jail.getFailTicket()
-		if ticket:
+		cnt = 0
+		while cnt < 100:
+			ticket = self._jail.getFailTicket()
+			if not ticket:
+				break
 			aInfo = CallingMap()
 			bTicket = BanManager.createBanTicket(ticket)
 			ip = bTicket.getIP()
@@ -320,6 +323,7 @@ class Actions(JailThread, Mapping):
 				aInfo["ipfailures"]     = lambda: mi4ip(True).getAttempt()
 				aInfo["ipjailfailures"] = lambda: mi4ip().getAttempt()
 			if self.__banManager.addBanTicket(bTicket):
+				cnt += 1
 				logSys.notice("[%s] %sBan %s", self._jail.name, ('' if not bTicket.getRestored() else 'Restore '), ip)
 				for name, action in self._actions.iteritems():
 					try:
@@ -330,19 +334,26 @@ class Actions(JailThread, Mapping):
 							"info '%r': %s",
 							self._jail.name, name, aInfo, e,
 							exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-				return True
 			else:
-				logSys.notice("[%s] %s already banned" % (self._jail.name,
-														aInfo["ip"]))
-		return False
+				logSys.notice("[%s] %s already banned", self._jail.name, ip)
+		if cnt:
+			logSys.debug("Banned %s / %s, %s ticket(s) in %r", cnt, 
+				self.__banManager.getBanTotal(), self.__banManager.size(), self._jail.name)
+		return cnt
 
 	def __checkUnBan(self):
 		"""Check for IP address to unban.
 
 		Unban IP addresses which are outdated.
 		"""
-		for ticket in self.__banManager.unBanList(MyTime.time()):
+		lst = self.__banManager.unBanList(MyTime.time())
+		for ticket in lst:
 			self.__unBan(ticket)
+		cnt = len(lst)
+		if cnt:
+			logSys.debug("Unbanned %s, %s ticket(s) in %r", 
+				cnt, self.__banManager.size(), self._jail.name)
+		return cnt
 
 	def __flushBan(self, db=False):
 		"""Flush the ban list.
@@ -358,7 +369,10 @@ class Actions(JailThread, Mapping):
 				self._jail.database.delBan(self._jail, ip)
 			# unban ip:
 			self.__unBan(ticket)
-		return len(lst)
+		cnt = len(lst)
+		logSys.debug("Unbanned %s, %s ticket(s) in %r", 
+			cnt, self.__banManager.size(), self._jail.name)
+		return cnt
 
 	def __unBan(self, ticket):
 		"""Unbans host corresponding to the ticket.

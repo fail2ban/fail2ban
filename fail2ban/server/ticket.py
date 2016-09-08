@@ -96,8 +96,8 @@ class Ticket:
 	def setBanTime(self, value):
 		self._banTime = value;
 
-	def getBanTime(self, defaultBT = None):
-		return (self._banTime if not self._banTime is None else defaultBT);
+	def getBanTime(self, defaultBT=None):
+		return (self._banTime if self._banTime is not None else defaultBT)
 
 	def setBanCount(self, value):
 		self._banCount = value;
@@ -108,8 +108,16 @@ class Ticket:
 	def getBanCount(self):
 		return self._banCount;
 
-	def isTimedOut(self, time, defaultBT = None):
-		bantime = (self._banTime if not self._banTime is None else defaultBT);
+	def getEndOfBanTime(self, defaultBT=None):
+		bantime = (self._banTime if self._banTime is not None else defaultBT)
+		# permanent
+		if bantime == -1:
+			return 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFL
+		# unban time (end of ban):
+		return self._time + bantime
+
+	def isTimedOut(self, time, defaultBT=None):
+		bantime = (self._banTime if self._banTime is not None else defaultBT)
 		# permanent
 		if bantime == -1:
 			return False
