@@ -200,6 +200,8 @@ class CommandAction(ActionBase):
 	Attributes
 	----------
 	actionban
+	actioncheck
+	actionrepair
 	actionstart
 	actionstop
 	actionunban
@@ -217,6 +219,8 @@ class CommandAction(ActionBase):
 	actionunban = ''
 	## Command executed in order to check requirements.
 	actioncheck = ''
+	## Command executed in order to restore sane environment in error case.
+	actionrepair = ''
 	## Command executed in order to stop the system.
 	actionstop = ''
 
@@ -271,16 +275,18 @@ class CommandAction(ActionBase):
 		and executes the resulting command.
 		"""
 		# check valid tags in properties (raises ValueError if self recursion, etc.):
+		res = True
 		try:
 			# common (resp. ipv4):
 			startCmd = self.replaceTag('<actionstart>', self._properties, 
 				conditional='family=inet4', cache=self.__substCache)
-			res = self.executeCmd(startCmd, self.timeout)
+			if startCmd:
+				res &= self.executeCmd(startCmd, self.timeout)
 			# start ipv6 actions if available:
 			if allowed_ipv6:
 				startCmd6 = self.replaceTag('<actionstart>', self._properties, 
 					conditional='family=inet6', cache=self.__substCache)
-				if startCmd6 != startCmd:
+				if startCmd6 and startCmd6 != startCmd:
 					res &= self.executeCmd(startCmd6, self.timeout)
 			if not res:
 				raise RuntimeError("Error starting action %s/%s" % (self._jail, self._name,))
@@ -323,15 +329,17 @@ class CommandAction(ActionBase):
 		Replaces the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
+		res = True
 		# common (resp. ipv4):
 		stopCmd = self.replaceTag('<actionstop>', self._properties, 
 			conditional='family=inet4', cache=self.__substCache)
-		res = self.executeCmd(stopCmd, self.timeout)
+		if stopCmd:
+			res &= self.executeCmd(stopCmd, self.timeout)
 		# ipv6 actions if available:
 		if allowed_ipv6:
 			stopCmd6 = self.replaceTag('<actionstop>', self._properties, 
 				conditional='family=inet6', cache=self.__substCache)
-			if stopCmd6 != stopCmd:
+			if stopCmd6 and stopCmd6 != stopCmd:
 				res &= self.executeCmd(stopCmd6, self.timeout)
 		if not res:
 			raise RuntimeError("Error stopping action")
@@ -520,14 +528,28 @@ class CommandAction(ActionBase):
 
 		checkCmd = self.replaceTag('<actioncheck>', self._properties, 
 			conditional=conditional, cache=self.__substCache)
-		if not self.executeCmd(checkCmd, self.timeout):
-			self._logSys.error(
-				"Invariant check failed. Trying to restore a sane environment")
-			self.stop()
-			self.start()
+		if checkCmd:
 			if not self.executeCmd(checkCmd, self.timeout):
-				self._logSys.critical("Unable to restore environment")
-				return False
+				self._logSys.error(
+					"Invariant check failed. Trying to restore a sane environment")
+				# try to find repair command, if exists - exec it:
+				repairCmd = self.replaceTag('<actionrepair>', self._properties, 
+					conditional=conditional, cache=self.__substCache)
+				if repairCmd:
+					if not self.executeCmd(repairCmd, self.timeout):
+						self._logSys.critical("Unable to restore environment")
+						return False
+				else:
+					# no repair command, try to restart action...
+					# [WARNING] TODO: be sure all banactions get a repair command, because
+					#    otherwise stop/start will theoretically remove all the bans,
+					#    but the tickets are still in BanManager, so in case of new failures
+					#    it will not be banned, because "already banned" will happen.
+					self.stop()
+					self.start()
+				if not self.executeCmd(checkCmd, self.timeout):
+					self._logSys.critical("Unable to restore environment")
+					return False
 
 		# Replace static fields
 		realCmd = self.replaceTag(cmd, self._properties, 

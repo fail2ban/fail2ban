@@ -277,6 +277,24 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertRaises(RuntimeError, self.__action.ban, {'ip': None})
 		self.assertLogged('Unable to restore environment')
 
+	def testExecuteActionCheckRepairEnvironment(self):
+		self.__action.actionstart = ""
+		self.__action.actionstop = ""
+		self.__action.actionban = "rm /tmp/fail2ban.test"
+		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
+		self.__action.actionrepair = "echo 'repair ...'; touch /tmp/fail2ban.test"
+		# 1st time with success repair:
+		self.__action.ban({'ip': None})
+		self.assertLogged("Invariant check failed. Trying", "echo 'repair ...'", all=True)
+		self.pruneLog()
+		# 2nd time failed (not really repaired):
+		self.__action.actionrepair = "echo 'repair ...'"
+		self.assertRaises(RuntimeError, self.__action.ban, {'ip': None})
+		self.assertLogged(
+			"Invariant check failed. Trying", 
+			"echo 'repair ...'", 
+			"Unable to restore environment", all=True)
+
 	def testExecuteActionChangeCtags(self):
 		self.assertRaises(AttributeError, getattr, self.__action, "ROST")
 		self.__action.ROST = "192.0.2.0"
@@ -294,7 +312,12 @@ class CommandActionTest(LogCaptureTestCase):
 	def testExecuteActionStartEmpty(self):
 		self.__action.actionstart = ""
 		self.__action.start()
+		self.assertTrue(self.__action.executeCmd(""))
 		self.assertLogged('Nothing to do')
+		self.pruneLog()
+		self.assertTrue(self.__action._processCmd(""))
+		self.assertLogged('Nothing to do')
+		self.pruneLog()
 
 	def testExecuteIncorrectCmd(self):
 		CommandAction.executeCmd('/bin/ls >/dev/null\nbogusXXX now 2>/dev/null')
