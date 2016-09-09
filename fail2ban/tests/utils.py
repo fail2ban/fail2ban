@@ -589,8 +589,21 @@ class LogCaptureTestCase(unittest.TestCase):
 		logSys.handlers = self._old_handlers
 		logSys.level = self._old_level
 
-	def _is_logged(self, s):
-		return s in self._log.getvalue()
+	def _is_logged(self, *s, **kwargs):
+		logged = self._log.getvalue()
+		if not kwargs.get('all', False):
+			# at least one entry should be found:
+			for s_ in s:
+				if s_ in logged:
+					return True
+			if True: # pragma: no cover
+				return False
+		else:
+			# each entry should be found:
+			for s_ in s:
+				if s_ not in logged: # pragma: no cover
+					return False
+			return True
 
 	def assertLogged(self, *s, **kwargs):
 		"""Assert that one of the strings was logged
@@ -604,19 +617,23 @@ class LogCaptureTestCase(unittest.TestCase):
 		  Test should succeed if string (or any of the listed) is present in the log
 		all : boolean (default False) if True should fail if any of s not logged
 		"""
-		logged = self._log.getvalue()
+		wait = kwargs.get('wait', None)
+		if wait:
+			res = Utils.wait_for(lambda: self._is_logged(*s, **kwargs), wait)
+		else:
+			res = self._is_logged(*s, **kwargs)
 		if not kwargs.get('all', False):
 			# at least one entry should be found:
-			for s_ in s:
-				if s_ in logged:
-					return
-			if True: # pragma: no cover
+			if not res: # pragma: no cover
+				logged = self._log.getvalue()
 				self.fail("None among %r was found in the log: ===\n%s===" % (s, logged))
 		else:
 			# each entry should be found:
-			for s_ in s:
-				if s_ not in logged: # pragma: no cover
-					self.fail("%r was not found in the log: ===\n%s===" % (s_, logged))
+			if not res: # pragma: no cover
+				logged = self._log.getvalue()
+				for s_ in s:
+					if s_ not in logged:
+						self.fail("%r was not found in the log: ===\n%s===" % (s_, logged))
 
 	def assertNotLogged(self, *s, **kwargs):
 		"""Assert that strings were not logged
