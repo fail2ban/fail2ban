@@ -799,49 +799,48 @@ class FileFilter(Filter):
 		if log is None:
 			logSys.error("Unable to get failures in " + filename)
 			return False
-		# Try to open log file.
+		# We should always close log (file), otherwise may be locked (log-rotate, etc.)
 		try:
-			has_content = log.open()
-		# see http://python.org/dev/peps/pep-3151/
-		except IOError as e:
-			logSys.error("Unable to open %s" % filename)
-			logSys.exception(e)
-			return False
-		except OSError as e: # pragma: no cover - requires race condition to tigger this
-			logSys.error("Error opening %s" % filename)
-			logSys.exception(e)
-			return False
-		except Exception as e: # pragma: no cover - Requires implemention error in FileContainer to generate
-			logSys.error("Internal error in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
-			logSys.exception(e)
-			return False
-
-		# seek to find time for first usage only (prevent performance decline with polling of big files)
-		if self.__autoSeek.get(filename):
-			startTime = self.__autoSeek[filename]
-			del self.__autoSeek[filename]
-			# prevent completely read of big files first time (after start of service), 
-			# initial seek to start time using half-interval search algorithm:
+			# Try to open log file.
 			try:
-				self.seekToTime(log, startTime)
-			except Exception as e: # pragma: no cover
-				logSys.error("Error during seek to start time in \"%s\"", filename)
-				raise
+				has_content = log.open()
+			# see http://python.org/dev/peps/pep-3151/
+			except IOError as e:
+				logSys.error("Unable to open %s" % filename)
+				logSys.exception(e)
+				return False
+			except OSError as e: # pragma: no cover - requires race condition to tigger this
+				logSys.error("Error opening %s" % filename)
+				logSys.exception(e)
+				return False
+			except Exception as e: # pragma: no cover - Requires implemention error in FileContainer to generate
+				logSys.error("Internal error in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
 				logSys.exception(e)
 				return False
 
-		# yoh: has_content is just a bool, so do not expect it to
-		# change -- loop is exited upon break, and is not entered at
-		# all if upon container opening that one was empty.  If we
-		# start reading tested to be empty container -- race condition
-		# might occur leading at least to tests failures.
-		while has_content:
-			line = log.readline()
-			if not line or not self.active:
-				# The jail reached the bottom or has been stopped
-				break
-			self.processLineAndAdd(line)
-		log.close()
+			# seek to find time for first usage only (prevent performance decline with polling of big files)
+			if self.__autoSeek.get(filename):
+				startTime = self.__autoSeek[filename]
+				del self.__autoSeek[filename]
+				# prevent completely read of big files first time (after start of service), 
+				# initial seek to start time using half-interval search algorithm:
+				try:
+					self.seekToTime(log, startTime)
+				except Exception as e: # pragma: no cover
+					logSys.error("Error during seek to start time in \"%s\"", filename)
+					raise
+					logSys.exception(e)
+					return False
+
+			if has_content:
+				while not self.idle:
+					line = log.readline()
+					if not line or not self.active:
+						# The jail reached the bottom or has been stopped
+						break
+					self.processLineAndAdd(line)
+		finally:
+			log.close()
 		db = self.jail.database
 		if db is not None:
 			db.updateLog(self.jail, log)
