@@ -131,6 +131,15 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertTrue(fail2banRegex.start(opts, args))
 		self.assertLogged('Lines: 19 lines, 0 ignored, 16 matched, 3 missed')
 
+	def testDirectRE_1raw_noDns(self):
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"--print-all-matched", "--raw", "--usedns=no",
+			Fail2banRegexTest.FILENAME_01, 
+			Fail2banRegexTest.RE_00
+		)
+		self.assertTrue(fail2banRegex.start(opts, args))
+		self.assertLogged('Lines: 19 lines, 0 ignored, 13 matched, 6 missed')
+
 	def testDirectRE_2(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"--print-all-matched",
