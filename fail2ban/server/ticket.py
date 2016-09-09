@@ -34,9 +34,10 @@ from .mytime import MyTime
 logSys = getLogger(__name__)
 
 
-class Ticket:
+class Ticket(object):
 	
 	RESTORED = 0x01
+	BANNED   = 0x08
 
 	def __init__(self, ip=None, time=None, matches=None, data={}, ticket=None):
 		"""Ticket constructor
@@ -135,14 +136,25 @@ class Ticket:
 	def getMatches(self):
 		return self._data.get('matches', [])
 
-	def setRestored(self, value):
+	@property
+	def restored(self):
+		return self._flags & Ticket.RESTORED
+	@restored.setter
+	def restored(self, value):
 		if value:
-			self._flags = Ticket.RESTORED
+			self._flags |= Ticket.RESTORED
 		else:
 			self._flags &= ~(Ticket.RESTORED)
 	
-	def getRestored(self):
-		return self._flags & Ticket.RESTORED
+	@property
+	def banned(self):
+		return self._flags & Ticket.BANNED
+	@banned.setter
+	def banned(self, value):
+		if value:
+			self._flags |= Ticket.BANNED
+		else:
+			self._flags &= ~(Ticket.BANNED)
 
 	def setData(self, *args, **argv):
 		# if overwrite - set data and filter None values:

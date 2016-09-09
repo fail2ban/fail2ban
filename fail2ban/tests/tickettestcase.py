@@ -108,6 +108,24 @@ class TicketTests(unittest.TestCase):
     self.assertEqual(ft2.getLastTime(), ft.getLastTime())
     self.assertEqual(ft2.getBanTime(), ft.getBanTime())
 
+  def testTicketFlags(self):
+    flags = ('restored', 'banned')
+    ticket = Ticket('test', 0)
+    trueflags = []
+    for v in (True, False, True):
+      for f in flags:
+        setattr(ticket, f, v)
+        if v:
+          trueflags.append(f)
+        else:
+          trueflags.remove(f)
+        for f2 in flags:
+          self.assertEqual(bool(getattr(ticket, f2)), f2 in trueflags)
+    ## inherite props from another tockets:
+    ticket = FailTicket(ticket=ticket)
+    for f2 in flags:
+      self.assertTrue(bool(getattr(ticket, f2)))
+
   def testTicketData(self):
     t = BanTicket('193.168.0.128', None, ['first', 'second'])
     # expand data (no overwrites, matches are available) :

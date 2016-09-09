@@ -359,9 +359,10 @@ class Actions(JailThread, Mapping):
 				aInfo["ipjailmatches"]  = lambda: "\n".join(mi4ip().getMatches())
 				aInfo["ipfailures"]     = lambda: mi4ip(True).getAttempt()
 				aInfo["ipjailfailures"] = lambda: mi4ip().getAttempt()
-			if self.__banManager.addBanTicket(bTicket):
+			reason = {}
+			if self.__banManager.addBanTicket(bTicket, reason=reason):
 				cnt += 1
-				logSys.notice("[%s] %sBan %s", self._jail.name, ('' if not bTicket.getRestored() else 'Restore '), ip)
+				logSys.notice("[%s] %sBan %s", self._jail.name, ('' if not bTicket.restored else 'Restore '), ip)
 				for name, action in self._actions.iteritems():
 					try:
 						action.ban(aInfo.copy())
@@ -371,8 +372,22 @@ class Actions(JailThread, Mapping):
 							"info '%r': %s",
 							self._jail.name, name, aInfo, e,
 							exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+				# after all actions are processed set banned flag:
+				bTicket.banned = True
 			else:
-				logSys.notice("[%s] %s already banned", self._jail.name, ip)
+				bTicket = reason['ticket']
+				# if already banned (otherwise still process some action)
+				if bTicket.banned:
+					# compare time of failure occurrence with time ticket was really banned:
+					diftm = ticket.getTime() - bTicket.getTime()
+					# log already banned with following level:
+					#   DEBUG   - before 3 seconds - certain interval for it, because of possible latency by recognizing in backends, etc.
+					#   NOTICE  - before 60 seconds - may still occurre if action are slow, or very high load in backend,
+					#   WARNING - after 60 seconds - very long time, something may be wrong
+					ll = logging.DEBUG   if diftm < 3 \
+					else logging.NOTICE  if diftm < 60 \
+					else logging.WARNING
+					logSys.log(ll, "[%s] %s already banned", self._jail.name, ip)
 		if cnt:
 			logSys.debug("Banned %s / %s, %s ticket(s) in %r", cnt, 
 				self.__banManager.getBanTotal(), self.__banManager.size(), self._jail.name)

@@ -28,7 +28,7 @@ import Queue
 
 from .actions import Actions
 from ..client.jailreader import JailReader
-from ..helpers import getLogger
+from ..helpers import getLogger, MyTime
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -194,7 +194,7 @@ class Jail(object):
 		Used by filter to add a failure for banning.
 		"""
 		self.__queue.put(ticket)
-		if not ticket.getRestored() and self.database is not None:
+		if not ticket.restored and self.database is not None:
 			self.database.addBan(self, ticket)
 
 	def getFailTicket(self):
@@ -203,7 +203,8 @@ class Jail(object):
 		Used by actions to get a failure for banning.
 		"""
 		try:
-			return self.__queue.get(False)
+			ticket = self.__queue.get(False)
+			return ticket
 		except Queue.Empty:
 			return False
 
@@ -217,7 +218,17 @@ class Jail(object):
 					#logSys.debug('restored ticket: %s', ticket)
 					if not self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True):
 						# mark ticked was restored from database - does not put it again into db:
-						ticket.setRestored(True)
+						ticket.restored = True
+						# correct start time / ban time (by the same end of ban):
+						btm = ticket.getBanTime(forbantime)
+						diftm = MyTime.time() - ticket.getTime()
+						if btm != -1 and diftm > 0:
+							btm -= diftm
+						# ignore obsolete tickets:
+						if btm != -1 and btm <= 0:
+							continue
+						ticket.setTime(MyTime.time())
+						ticket.setBanTime(btm)
 						self.putFailTicket(ticket)
 		except Exception as e: # pragma: no cover
 			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)

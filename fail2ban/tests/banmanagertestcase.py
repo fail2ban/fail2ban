@@ -53,11 +53,15 @@ class AddFailure(unittest.TestCase):
 		self.assertEqual(self.__banManager.size(), 1)
 
 	def testAddDuplicateWithTime(self):
+		defBanTime = self.__banManager.getBanTime()
+		prevEndOfBanTime = 0
 		# add again a duplicate :
-		#   1) with newer start time and the same ban time
+		#   0) with same start time and the same (default) ban time
+		#   1) with newer start time and the same (default) ban time
 		#   2) with same start time and longer ban time
     #   3) with permanent ban time (-1)
 		for tnew, btnew in (
+			(1167605999.0,       None),
 			(1167605999.0 + 100, None),
 			(1167605999.0,       24*60*60),
 			(1167605999.0,       -1),
@@ -71,9 +75,14 @@ class AddFailure(unittest.TestCase):
 			self.assertEqual(self.__banManager.size(), 1)
 			# pop ticket and check it was prolonged :
 			banticket = self.__banManager.getTicketByID(ticket2.getID())
-			self.assertEqual(banticket.getTime(), ticket2.getTime())
-			self.assertEqual(banticket.getTime(), ticket2.getTime())
-			self.assertEqual(banticket.getBanTime(), ticket2.getBanTime(self.__banManager.getBanTime()))
+			self.assertEqual(banticket.getEndOfBanTime(defBanTime), ticket2.getEndOfBanTime(defBanTime))
+			self.assertTrue(banticket.getEndOfBanTime(defBanTime) > prevEndOfBanTime)
+			prevEndOfBanTime = ticket1.getEndOfBanTime(defBanTime)
+			# but the start time should not be changed (+ 100 is ignored):
+			self.assertEqual(banticket.getTime(), 1167605999.0)
+			# if prolong to permanent, it should also have permanent ban time:
+			if btnew == -1:
+				self.assertEqual(banticket.getBanTime(defBanTime), -1)
 
 	def testInListOK(self):
 		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))

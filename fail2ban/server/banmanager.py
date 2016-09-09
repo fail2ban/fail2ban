@@ -256,29 +256,30 @@ class BanManager:
 	# @param ticket the ticket
 	# @return True if the IP address is not in the ban list
 	
-	def addBanTicket(self, ticket):
+	def addBanTicket(self, ticket, reason={}):
+		eob = ticket.getEndOfBanTime(self.__banTime)
 		with self.__lock:
 			# check already banned
 			fid = ticket.getID()
 			oldticket = self.__banList.get(fid)
 			if oldticket:
-				# if already permanent
-				btold, told = oldticket.getBanTime(self.__banTime), oldticket.getTime()
-				if btold == -1:
-					return False
-				# if given time is less than already banned time
-				btnew, tnew = ticket.getBanTime(self.__banTime), ticket.getTime()
-				if btnew != -1 and tnew + btnew <= told + btold:
-					return False
-				# we have longest ban - set new (increment) ban time
-				oldticket.setTime(tnew)
-				oldticket.setBanTime(btnew)
+				reason['ticket'] = oldticket
+				# if new time for end of ban is larger than already banned end-time:
+				if eob > oldticket.getEndOfBanTime(self.__banTime):
+					# we have longest ban - set new (increment) ban time
+					reason['prolong'] = 1
+					btm = ticket.getBanTime(self.__banTime)
+					# if not permanent:
+					if btm != -1:
+						diftm = ticket.getTime() - oldticket.getTime()
+						if diftm > 0:
+							btm += diftm
+					oldticket.setBanTime(btm)
 				return False
-			# not yet banned - add new
+			# not yet banned - add new one:
 			self.__banList[fid] = ticket
 			self.__banTotal += 1
 			# correct next unban time:
-			eob = ticket.getEndOfBanTime(self.__banTime)
 			if self.__nextUnbanTime > eob:
 				self.__nextUnbanTime = eob
 			return True
