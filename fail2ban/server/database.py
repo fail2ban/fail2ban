@@ -482,7 +482,8 @@ class Fail2BanDb(object):
 			queryArgs.append(str(ip))
 		query += " ORDER BY ip, timeofban desc"
 
-		return cur.execute(query, queryArgs)
+		# repack iterator as long as in lock:
+		return list(cur.execute(query, queryArgs))
 
 	def getBans(self, **kwargs):
 		"""Get bans from the database.
@@ -581,7 +582,6 @@ class Fail2BanDb(object):
 				self._bansMergedCache[cacheKey] = tickets if ip is None else ticket
 			return tickets if ip is None else ticket
 
-	@commitandrollback
 	def _getCurrentBans(self, cur, jail = None, ip = None, forbantime=None, fromtime=None):
 		if fromtime is None:
 			fromtime = MyTime.time()
@@ -606,7 +606,9 @@ class Fail2BanDb(object):
 		tickets = []
 		ticket = None
 
-		results = list(self._getCurrentBans(jail=jail, ip=ip, forbantime=forbantime, fromtime=fromtime))
+		with self._lock:
+			results = list(self._getCurrentBans(self._db.cursor(), 
+				jail=jail, ip=ip, forbantime=forbantime, fromtime=fromtime))
 
 		if results:
 			for banip, timeofban, data in results:
