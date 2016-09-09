@@ -12,3 +12,6 @@ Fri Jan 19 12:20:33 2007 [pid 27202] [anonymous] FAIL LOGIN: Client "64.106.46.9
 
 # failJSON: { "time": "2004-10-23T21:15:42", "match": true , "host": "58.254.172.161" }
 Oct 23 21:15:42 vps vsftpd: pam_unix(vsftpd:auth): authentication failure; logname= uid=0 euid=0 tty=ftp ruser=test rhost=58.254.172.161
+
+# failJSON: { "time": "2016-09-08T00:39:49", "match": true , "host": "192.0.2.1" }
+Thu Sep  8 00:39:49 2016 [pid 15019] [guest] FAIL LOGIN: Client "::ffff:192.0.2.1", "User is not in the allow user list."
