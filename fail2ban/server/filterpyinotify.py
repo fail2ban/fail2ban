@@ -119,14 +119,15 @@ class FilterPyinotify(FileFilter):
 		logSys.debug("Added file watcher for %s", path)
 
 	def _delFileWatcher(self, path):
-		wdInt = self.__watches[path]
-		wd = self.__monitor.rm_watch(wdInt)
-		if wd[wdInt]:
-			del self.__watches[path]
-			logSys.debug("Removed file watcher for %s", path)
-			return True
-		else:
-			return False
+		try:
+			wdInt = self.__watches.pop(path)
+			wd = self.__monitor.rm_watch(wdInt)
+			if wd[wdInt]:
+				logSys.debug("Removed file watcher for %s", path)
+				return True
+		except KeyError: # pragma: no cover
+			pass
+		return False
 
 	##
 	# Add a log file path
@@ -158,8 +159,11 @@ class FilterPyinotify(FileFilter):
 					if k.startswith(path_dir + pathsep)]):
 			# Remove watches for the directory
 			# since there is no other monitored file under this directory
-			wdInt = self.__watches.pop(path_dir)
-			self.__monitor.rm_watch(wdInt)
+			try:
+				wdInt = self.__watches.pop(path_dir)
+				self.__monitor.rm_watch(wdInt)
+			except KeyError: # pragma: no cover
+				pass
 			logSys.debug("Removed monitor for the parent directory %s", path_dir)
 
 	# pyinotify.ProcessEvent default handler:
