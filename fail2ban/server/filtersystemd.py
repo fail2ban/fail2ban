@@ -34,7 +34,7 @@ from .failmanager import FailManagerEmpty
 from .filter import JournalFilter, Filter
 from .mytime import MyTime
 from .utils import Utils
-from ..helpers import getLogger, logging, splitwords
+from ..helpers import getLogger, logging, splitwords, uni_decode
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -174,10 +174,6 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	def getJournalMatch(self):
 		return self.__matches
 
-	def uni_decode(self, x):
-		v = Filter.uni_decode(x, self.getLogEncoding())
-		return v
-
 	##
 	# Format journal log entry into syslog style
 	#
@@ -186,16 +182,16 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 	def formatJournalEntry(self, logentry):
 		# Be sure, all argument of line tuple should have the same type:
-		uni_decode = self.uni_decode
+		enc = self.getLogEncoding()
 		logelements = []
 		v = logentry.get('_HOSTNAME')
 		if v:
-			logelements.append(uni_decode(v))
+			logelements.append(uni_decode(v, enc))
 		v = logentry.get('SYSLOG_IDENTIFIER')
 		if not v:
 			v = logentry.get('_COMM')
 		if v:
-			logelements.append(uni_decode(v))
+			logelements.append(uni_decode(v, enc))
 			v = logentry.get('SYSLOG_PID')
 			if not v:
 				v = logentry.get('_PID')
@@ -210,9 +206,9 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				logelements.append("[%12.6f]" % monotonic.total_seconds())
 		msg = logentry.get('MESSAGE','')
 		if isinstance(msg, list):
-			logelements.append(" ".join(uni_decode(v) for v in msg))
+			logelements.append(" ".join(uni_decode(v, enc) for v in msg))
 		else:
-			logelements.append(uni_decode(msg))
+			logelements.append(uni_decode(msg, enc))
 
 		logline = " ".join(logelements)
 

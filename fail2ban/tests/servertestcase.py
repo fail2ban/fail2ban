@@ -28,7 +28,6 @@ import unittest
 import time
 import tempfile
 import os
-import locale
 import sys
 import platform
 
@@ -40,7 +39,7 @@ from ..server.jail import Jail
 from ..server.jailthread import JailThread
 from ..server.utils import Utils
 from .utils import LogCaptureTestCase
-from ..helpers import getLogger
+from ..helpers import getLogger, PREFER_ENC
 from .. import version
 
 try:
@@ -354,7 +353,7 @@ class Transmitter(TransmitterBase):
 	def testJailLogEncoding(self):
 		self.setGetTest("logencoding", "UTF-8", jail=self.jailName)
 		self.setGetTest("logencoding", "ascii", jail=self.jailName)
-		self.setGetTest("logencoding", "auto", locale.getpreferredencoding(),
+		self.setGetTest("logencoding", "auto", PREFER_ENC,
 			jail=self.jailName)
 		self.setGetTestNOK("logencoding", "Monkey", jail=self.jailName)
 

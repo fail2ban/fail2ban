@@ -35,7 +35,7 @@ from StringIO import StringIO
 
 from utils import LogCaptureTestCase, logSys as DefLogSys
 
-from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger
+from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger, uni_decode
 from ..helpers import splitwords
 from ..server.datedetector import DateDetector
 from ..server.datetemplate import DatePatternRegex
@@ -74,16 +74,14 @@ class HelpersTest(unittest.TestCase):
 
 if sys.version_info >= (2,7):
 	def _sh_call(cmd):
-		import subprocess, locale
+		import subprocess
 		ret = subprocess.check_output(cmd, shell=True)
-		if sys.version_info >= (3,):
-			ret = ret.decode(locale.getpreferredencoding(), 'replace')
-		return str(ret).rstrip()
+		return uni_decode(ret).rstrip()
 else:
 	def _sh_call(cmd):
 		import subprocess
 		ret = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
-		return str(ret).rstrip()
+		return uni_decode(ret).rstrip()
 
 def _getSysPythonVersion():
 	return _sh_call("fail2ban-python -c 'import sys; print(tuple(sys.version_info))'")

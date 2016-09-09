@@ -38,11 +38,11 @@ except ImportError:
 
 from ..server.jail import Jail
 from ..server.filterpoll import FilterPoll
-from ..server.filter import Filter, FileFilter, FileContainer, locale
+from ..server.filter import Filter, FileFilter, FileContainer
 from ..server.failmanager import FailManagerEmpty
 from ..server.ipdns import DNSUtils, IPAddr
 from ..server.mytime import MyTime
-from ..server.utils import Utils
+from ..server.utils import Utils, uni_decode
 from .utils import setUpMyTime, tearDownMyTime, mtimesleep, LogCaptureTestCase
 from .dummyjail import DummyJail
 
@@ -311,8 +311,7 @@ class BasicFilter(unittest.TestCase):
 					b'Fail for "g\xc3\xb6ran" from 192.0.2.1'
 				):
 					# join should work if all arguments have the same type:
-					enc = locale.getpreferredencoding()
-					"".join([Filter.uni_decode(v, enc) for v in (a1, a2, a3)])
+					"".join([uni_decode(v) for v in (a1, a2, a3)])
 
 
 class IgnoreIP(LogCaptureTestCase):

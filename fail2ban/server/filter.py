@@ -24,7 +24,6 @@ __license__ = "GPL"
 import codecs
 import datetime
 import fcntl
-import locale
 import logging
 import os
 import re
@@ -40,7 +39,7 @@ from .datetemplate import DatePatternRegex, DateEpoch, DateTai64n
 from .mytime import MyTime
 from .failregex import FailRegex, Regex, RegexException
 from .action import CommandAction
-from ..helpers import getLogger
+from ..helpers import getLogger, PREFER_ENC
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -87,7 +86,7 @@ class Filter(JailThread):
 		## External command
 		self.__ignoreCommand = False
 		## Default or preferred encoding (to decode bytes from file or journal):
-		self.__encoding = locale.getpreferredencoding()
+		self.__encoding = PREFER_ENC
 		## Error counter (protected, so can be used in filter implementations)
 		## if it reached 100 (at once), run-cycle will go idle
 		self._errors = 0
@@ -329,7 +328,7 @@ class Filter(JailThread):
 
 	def setLogEncoding(self, encoding):
 		if encoding.lower() == "auto":
-			encoding = locale.getpreferredencoding()
+			encoding = PREFER_ENC
 		codecs.lookup(encoding) # Raise LookupError if invalid codec
 		self.__encoding = encoding
 		logSys.info("  encoding: %s" % encoding)
@@ -451,29 +450,6 @@ class Filter(JailThread):
 			return ret_ignore
 
 		return False
-
-	if sys.version_info >= (3,):
-		@staticmethod
-		def uni_decode(x, enc, errors='strict'):
-			try:
-				if isinstance(x, bytes):
-					return x.decode(enc, errors)
-				return x
-			except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
-				if errors != 'strict': 
-					raise
-				return uni_decode(x, enc, 'replace')
-	else:
-		@staticmethod
-		def uni_decode(x, enc, errors='strict'):
-			try:
-				if isinstance(x, unicode):
-					return x.encode(enc, errors)
-				return x
-			except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
-				if errors != 'strict':
-					raise
-				return uni_decode(x, enc, 'replace')
 
 	def processLine(self, line, date=None, returnRawHost=False,
 		checkAllRegex=False, checkFindTime=False):

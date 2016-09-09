@@ -22,7 +22,6 @@ __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 import json
-import locale
 import shutil
 import sqlite3
 import sys
@@ -32,7 +31,7 @@ from threading import RLock
 
 from .mytime import MyTime
 from .ticket import FailTicket
-from ..helpers import getLogger
+from ..helpers import getLogger, PREFER_ENC
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -41,7 +40,7 @@ if sys.version_info >= (3,):
 	def _json_dumps_safe(x):
 		try:
 			x = json.dumps(x, ensure_ascii=False).encode(
-				locale.getpreferredencoding(), 'replace')
+				PREFER_ENC, 'replace')
 		except Exception as e: # pragma: no cover
 			logSys.error('json dumps failed: %s', e)
 			x = '{}'
@@ -50,7 +49,7 @@ if sys.version_info >= (3,):
 	def _json_loads_safe(x):
 		try:
 			x = json.loads(x.decode(
-				locale.getpreferredencoding(), 'replace'))
+				PREFER_ENC, 'replace'))
 		except Exception as e: # pragma: no cover
 			logSys.error('json loads failed: %s', e)
 			x = {}
@@ -62,14 +61,14 @@ else:
 		elif isinstance(x, list):
 			return [_normalize(element) for element in x]
 		elif isinstance(x, unicode):
-			return x.encode(locale.getpreferredencoding())
+			return x.encode(PREFER_ENC)
 		else:
 			return x
 
 	def _json_dumps_safe(x):
 		try:
 			x = json.dumps(_normalize(x), ensure_ascii=False).decode(
-				locale.getpreferredencoding(), 'replace')
+				PREFER_ENC, 'replace')
 		except Exception as e: # pragma: no cover
 			logSys.error('json dumps failed: %s', e)
 			x = '{}'
@@ -78,7 +77,7 @@ else:
 	def _json_loads_safe(x):
 		try:
 			x = _normalize(json.loads(x.decode(
-				locale.getpreferredencoding(), 'replace')))
+				PREFER_ENC, 'replace')))
 		except Exception as e: # pragma: no cover
 			logSys.error('json loads failed: %s', e)
 			x = {}
