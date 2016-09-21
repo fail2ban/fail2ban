@@ -49,13 +49,15 @@ class Fail2banReader(ConfigReader):
 		]
 		return ConfigReader.getOptions(self, "Definition", opts)
 	
-	def getOptions(self):
+	def getOptions(self, updateMainOpt=None):
 		opts = [["string", "loglevel", "INFO" ],
 				["string", "logtarget", "STDERR"],
 				["string", "syslogsocket", "auto"],
 				["string", "dbfile", "/var/lib/fail2ban/fail2ban.sqlite3"],
 				["string", "dbpurgeage", "1d"]]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
+		if updateMainOpt:
+			self.__opts.update(updateMainOpt)
 	
 	def convert(self):
 		# Ensure logtarget/level set first so any db errors are captured

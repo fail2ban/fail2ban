@@ -72,8 +72,8 @@ class Configurator:
 	def getEarlyOptions(self):
 		return self.__fail2ban.getEarlyOptions()
 
-	def getOptions(self, jail = None):
-		self.__fail2ban.getOptions()
+	def getOptions(self, jail=None, updateMainOpt=None):
+		self.__fail2ban.getOptions(updateMainOpt)
 		return self.__jails.getOptions(jail)
 		
 	def convertToProtocol(self):
