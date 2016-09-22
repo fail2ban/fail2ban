@@ -243,6 +243,9 @@ def initTests(opts):
 			raise unittest.SkipTest('Skip test because of "--fast"')
 		unittest.F2B.SkipIfFast = F2B_SkipIfFast
 	else:
+		# smaller inertance inside test-cases (litle speedup):
+		Utils.DEFAULT_SLEEP_TIME = 0.25
+		Utils.DEFAULT_SLEEP_INTERVAL = 0.025
 		# sleep intervals are large - use replacement for sleep to check time to sleep:
 		_org_sleep = time.sleep
 		def _new_sleep(v):
