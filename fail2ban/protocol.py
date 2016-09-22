@@ -61,7 +61,8 @@ protocol = [
 ["help", "return this output"], 
 ["version", "return the server version"],
 ['', "LOGGING", ""],
-["set loglevel <LEVEL>", "sets logging level to <LEVEL>. Levels: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG"], 
+["set loglevel <LEVEL>", "sets logging level to <LEVEL>. Levels: CRITICAL, ERROR, WARNING, NOTICE, INFO, "
+	"DEBUG, TRACEDEBUG, HEAVYDEBUG or corresponding numeric value (50-5)"], 
 ["get loglevel", "gets the logging level"], 
 ["set logtarget <TARGET>", "sets logging target to <TARGET>. Can be STDOUT, STDERR, SYSLOG or a file"], 
 ["get logtarget", "gets logging target"], 

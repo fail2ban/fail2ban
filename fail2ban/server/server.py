@@ -38,7 +38,7 @@ from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
-from ..helpers import getLogger, excepthook
+from ..helpers import getLogger, str2LogLevel, excepthook
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -510,14 +510,11 @@ class Server:
 		with self.__loggingLock:
 			if self.__logLevel == value:
 				return
-			try:
-				ll = getattr(logging, value)
-				# don't change real log-level if running from the test cases:
-				getLogger("fail2ban").setLevel(
-					ll if DEF_LOGTARGET != "INHERITED" or ll < logging.DEBUG else DEF_LOGLEVEL)
-				self.__logLevel = value
-			except AttributeError:
-				raise ValueError("Invalid log level %r" % value)
+			ll = str2LogLevel(value)
+			# don't change real log-level if running from the test cases:
+			getLogger("fail2ban").setLevel(
+				ll if DEF_LOGTARGET != "INHERITED" or ll < logging.DEBUG else DEF_LOGLEVEL)
+			self.__logLevel = value
 	
 	##
 	# Get the logging level.

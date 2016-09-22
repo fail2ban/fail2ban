@@ -842,6 +842,8 @@ class TransmitterLogging(TransmitterBase):
 
 	def testLogLevel(self):
 		self.setGetTest("loglevel", "HEAVYDEBUG")
+		self.setGetTest("loglevel", "TRACEDEBUG")
+		self.setGetTest("loglevel", "9")
 		self.setGetTest("loglevel", "DEBUG")
 		self.setGetTest("loglevel", "INFO")
 		self.setGetTest("loglevel", "NOTICE")

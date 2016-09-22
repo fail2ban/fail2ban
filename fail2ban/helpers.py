@@ -129,6 +129,16 @@ def getLogger(name):
 		name = "fail2ban.%s" % name.rpartition(".")[-1]
 	return logging.getLogger(name)
 
+def str2LogLevel(value):
+	try:
+		if isinstance(value, int) or value.isdigit():
+			ll = int(value)
+		else:
+			ll = getattr(logging, value)
+	except AttributeError:
+		raise ValueError("Invalid log level %r" % value)
+	return ll
+
 
 def excepthook(exctype, value, traceback):
 	"""Except hook used to log unhandled exceptions to Fail2Ban log

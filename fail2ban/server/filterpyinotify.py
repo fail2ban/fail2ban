@@ -76,7 +76,7 @@ class FilterPyinotify(FileFilter):
 		logSys.debug("Created FilterPyinotify")
 
 	def callback(self, event, origin=''):
-		logSys.debug("%sCallback for Event: %s", origin, event)
+		logSys.log(7, "[%s] %sCallback for Event: %s", self.jailName, origin, event)
 		path = event.pathname
 		if event.mask & ( pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO ):
 			# skip directories altogether

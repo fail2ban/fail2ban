@@ -137,10 +137,10 @@ class FilterPoll(FileFilter):
 			logStats = os.stat(filename)
 			stats = logStats.st_mtime, logStats.st_ino, logStats.st_size
 			pstats = self.__prevStats.get(filename, (0))
-			if logSys.getEffectiveLevel() <= 7:
+			if logSys.getEffectiveLevel() <= 5:
 				# we do not want to waste time on strftime etc if not necessary
 				dt = logStats.st_mtime - pstats[0]
-				logSys.log(7, "Checking %s for being modified. Previous/current stats: %s / %s. dt: %s",
+				logSys.log(5, "Checking %s for being modified. Previous/current stats: %s / %s. dt: %s",
 				           filename, pstats, stats, dt)
 				# os.system("stat %s | grep Modify" % filename)
 			self.__file404Cnt[filename] = 0

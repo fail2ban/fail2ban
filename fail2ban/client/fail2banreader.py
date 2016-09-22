@@ -25,7 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from .configreader import ConfigReader
-from ..helpers import getLogger
+from ..helpers import getLogger, str2LogLevel
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -58,6 +58,8 @@ class Fail2banReader(ConfigReader):
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
 		if updateMainOpt:
 			self.__opts.update(updateMainOpt)
+		# check given log-level:
+		str2LogLevel(self.__opts.get('loglevel', 0))
 	
 	def convert(self):
 		# Ensure logtarget/level set first so any db errors are captured

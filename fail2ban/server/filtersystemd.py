@@ -218,7 +218,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 		date = logentry.get('_SOURCE_REALTIME_TIMESTAMP',
 				logentry.get('__REALTIME_TIMESTAMP'))
-		logSys.debug("[%s] Read systemd journal entry: %s %s", self.jailName,
+		logSys.log(5, "[%s] Read systemd journal entry: %s %s", self.jailName,
 			date.isoformat(), logline)
 		## use the same type for 1st argument:
 		return ((logline[:0], date.isoformat(), logline),
