@@ -28,7 +28,6 @@ import unittest
 
 from ..server.banmanager import BanManager
 from ..server.ticket import BanTicket
-from .utils import assert_dict_equal
 
 class AddFailure(unittest.TestCase):
 	def setUp(self):
@@ -131,7 +130,7 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 
 	def testCymruInfo(self):
 		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
-		assert_dict_equal(cymru_info,
+		self.assertDictEqual(cymru_info,
 						  {"asn": [self.__asn],
 						   "country": [self.__country],
 						   "rir": [self.__rir]})
@@ -158,7 +157,7 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		ticket = BanTicket("0.0.0.0", 1167605999.0)
 		self.assertTrue(self.__banManager.addBanTicket(ticket))
 		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
-		assert_dict_equal(cymru_info,
+		self.assertDictEqual(cymru_info,
 						  {"asn": ["nxdomain"],
 						   "country": ["nxdomain"],
 						   "rir": ["nxdomain"]})
@@ -169,7 +168,7 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		ticket = BanTicket("10.0.0.0", 1167606000.0)
 		self.assertTrue(self.__banManager.addBanTicket(ticket))
 		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
-		assert_dict_equal(cymru_info,
-						  {"asn": ["nxdomain", "4565",],
-						   "country": ["nxdomain", "unknown"],
-						   "rir": ["nxdomain", "other"]})
+		self.assertDictEqual(dict((k, sorted(v)) for k, v in cymru_info.iteritems()),
+						  {"asn": sorted(["nxdomain", "4565",]),
+						   "country": sorted(["nxdomain", "unknown"]),
+						   "rir": sorted(["nxdomain", "other"])})

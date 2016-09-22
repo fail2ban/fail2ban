@@ -466,6 +466,20 @@ def gatherTests(regexps=None, opts=None):
 # Forwards compatibility of unittest.TestCase for some early python versions
 #
 
+if not hasattr(unittest.TestCase, 'assertDictEqual'):
+	import difflib, pprint
+	def assertDictEqual(self, d1, d2, msg=None):
+		self.assert_(isinstance(d1, dict), 'First argument is not a dictionary')
+		self.assert_(isinstance(d2, dict), 'Second argument is not a dictionary')
+		if d1 != d2:
+			standardMsg = '%r != %r' % (d1, d2)
+			diff = ('\n' + '\n'.join(difflib.ndiff(
+				pprint.pformat(d1).splitlines(),
+				pprint.pformat(d2).splitlines())))
+			msg = msg or (standardMsg + diff)
+			self.fail(msg)
+	unittest.TestCase.assertDictEqual = assertDictEqual
+
 if not hasattr(unittest.TestCase, 'assertRaisesRegexp'):
 	def assertRaisesRegexp(self, exccls, regexp, fun, *args, **kwargs):
 		try:
@@ -673,9 +687,3 @@ class LogCaptureTestCase(unittest.TestCase):
 
 
 pid_exists = Utils.pid_exists
-
-# Python 2.6 compatibility. in 2.7 assertDictEqual
-def assert_dict_equal(a, b):
-	assert isinstance(a, dict), "Object is not dictionary: %r" % a
-	assert isinstance(b, dict), "Object is not dictionary: %r" % b
-	assert a==b, "Dictionaries differ:\n%r !=\n%r" % (a, b)

@@ -284,6 +284,10 @@ class TestsUtilsTest(LogCaptureTestCase):
 			self.assertLogged, 'test_zyx', 'zyx', all=False)
 		self._testAssertionErrorRE(r"All of the .* were found present in the log",
 			self.assertNotLogged, 'test', 'xyz', all=False)
+		## assertDictEqual:
+		self.assertDictEqual({'A': [1, 2]}, {'A': [1, 2]})
+		self.assertRaises(AssertionError, self.assertDictEqual, 
+			{'A': [1, 2]}, {'A': [2, 1]})
 
 	def testFormatterWithTraceBack(self):
 		strout = StringIO()
