@@ -198,7 +198,7 @@ class FilterPyinotify(FileFilter):
 			prcevent, timeout=self.sleeptime)
 		self.__notifier.check_events = self.__check_events
 		self.__notifier.start()
-		logSys.debug("pyinotifier started for %s.", self.jail.name)
+		logSys.debug("[%s] filter started (pyinotifier)", self.jailName)
 		return True
 
 	##
@@ -206,15 +206,22 @@ class FilterPyinotify(FileFilter):
 
 	def stop(self):
 		super(FilterPyinotify, self).stop()
-
 		# Stop the notifier thread
 		self.__notifier.stop()
-		self.__notifier.join()			# to not exit before notifier does
-		self.__cleanup()				# for pedantic ones
+
+	##
+	# Wait for exit with cleanup.
+
+	def join(self):
+		self.__cleanup()
+		super(FilterPyinotify, self).join()
+		logSys.debug("[%s] filter terminated (pyinotifier)", self.jailName)
 
 	##
 	# Deallocates the resources used by pyinotify.
 
 	def __cleanup(self):
-		self.__notifier = None
+		if self.__notifier:
+			self.__notifier.join()			# to not exit before notifier does
+			self.__notifier = None
 		self.__monitor = None

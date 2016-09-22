@@ -100,6 +100,10 @@ class Filter(JailThread):
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__.__name__, self.jail)
 
+	@property
+	def jailName(self):
+		return (self.jail is not None and self.jail.name or "~jailless~")
+
 	def clearAllParams(self):
 		""" Clear all lists/dicts parameters (used by reloading)
 		"""
@@ -135,7 +139,7 @@ class Filter(JailThread):
 			if "\n" in regex.getRegex() and not self.getMaxLines() > 1:
 				logSys.warning(
 					"Mutliline regex set for jail %r "
-					"but maxlines not greater than 1", self.jail.name)
+					"but maxlines not greater than 1", self.jailName)
 		except RegexException as e:
 			logSys.error(e)
 			raise e
@@ -420,7 +424,7 @@ class Filter(JailThread):
 
 	def logIgnoreIp(self, ip, log_ignore, ignore_source="unknown source"):
 		if log_ignore:
-			logSys.info("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source))
+			logSys.info("[%s] Ignore %s by %s" % (self.jailName, ip, ignore_source))
 
 	def getIgnoreIP(self):
 		return self.__ignoreIpList
@@ -491,7 +495,7 @@ class Filter(JailThread):
 				if self.inIgnoreIPList(ip, log_ignore=True):
 					continue
 				logSys.info(
-					"[%s] Found %s - %s", self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
+					"[%s] Found %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
 				)
 				tick = FailTicket(ip, unixTime, lines, data=fail)
 				self.failManager.addFailure(tick)

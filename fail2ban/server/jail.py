@@ -257,8 +257,7 @@ class Jail(object):
 					obj.stop()
 				## wait for end of threads:
 				if join:
-					if obj.isAlive():
-						obj.join()
+					obj.join()
 			except Exception as e:
 				logSys.error("Stop %r of jail %r failed: %s", obj, self.name, e,
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)

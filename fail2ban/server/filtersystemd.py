@@ -130,7 +130,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			self.resetJournalMatches()
 			raise
 		else:
-			logSys.info("Added journal match for: %r", " ".join(match))
+			logSys.info("[%s] Added journal match for: %r", self.jailName, 
+				" ".join(match))
 	##
 	# Reset a journal match filter called on removal or failure
 	#
@@ -138,7 +139,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 	def resetJournalMatches(self):
 		self.__journal.flush_matches()
-		logSys.debug("Flushed all journal matches")
+		logSys.debug("[%s] Flushed all journal matches", self.jailName)
 		match_copy = self.__matches[:]
 		self.__matches = []
 		try:
@@ -157,14 +158,17 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	def delJournalMatch(self, match=None):
 		# clear all:
 		if match is None:
+			if not self.__matches:
+				return
 			del self.__matches[:]
 		# delete by index:
 		elif match in self.__matches:
 			del self.__matches[self.__matches.index(match)]
 		else:
-			raise ValueError("Match not found")
+			raise ValueError("Match %r not found" % match)
 		self.resetJournalMatches()
-		logSys.info("Removed journal match for: %r" % " ".join(match))
+		logSys.info("[%s] Removed journal match for: %r", self.jailName, 
+			match if match else '*')
 
 	##
 	# Get current journal match filter
@@ -214,8 +218,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 		date = logentry.get('_SOURCE_REALTIME_TIMESTAMP',
 				logentry.get('__REALTIME_TIMESTAMP'))
-		logSys.debug("Read systemd journal entry: %r" %
-			"".join([date.isoformat(), logline]))
+		logSys.debug("[%s] Read systemd journal entry: %s %s", self.jailName,
+			date.isoformat(), logline)
 		## use the same type for 1st argument:
 		return ((logline[:0], date.isoformat(), logline),
 			time.mktime(date.timetuple()) + date.microsecond/1.0E6)
@@ -302,6 +306,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				# incr common error counter:
 				self.commonError()
 
+		logSys.debug("[%s] filter terminated", self.jailName)
 		# close journal:
 		try:
 			if self.__journal:

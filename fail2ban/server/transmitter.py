@@ -102,7 +102,7 @@ class Transmitter:
 					self.__commandHandler(cmd)
 			finally:
 				self.__server.reloadJails(*opts, begin=False)
-			return None
+			return 'OK'
 		elif len(command) >= 2 and command[0] == "unban":
 			# unban in all jails:
 			value = command[1:]

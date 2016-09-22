@@ -132,7 +132,7 @@ class FilterGamin(FileFilter):
 			Utils.wait_for(lambda: not self.active or self._handleEvents(),
 				self.sleeptime)
 			self.ticks += 1
-		logSys.debug(self.jail.name + ": filter terminated")
+		logSys.debug("[%s] filter terminated", self.jailName)
 		return True
 
 	def stop(self):

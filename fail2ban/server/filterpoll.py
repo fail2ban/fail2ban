@@ -123,9 +123,7 @@ class FilterPoll(FileFilter):
 				except FailManagerEmpty:
 					self.failManager.cleanup(MyTime.time())
 				self.__modified = False
-		logSys.debug(
-			(self.jail is not None and self.jail.name or "jailless") +
-					 " filter terminated")
+		logSys.debug("[%s] filter terminated", self.jailName)
 		return True
 
 	##
