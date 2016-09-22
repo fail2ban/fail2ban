@@ -194,8 +194,9 @@ class FilterPyinotify(FileFilter):
 	def run(self):
 		prcevent = pyinotify.ProcessEvent()
 		prcevent.process_default = self.__process_default
+		## timeout for pyinotify must be set in milliseconds (our time values are floats contain seconds)
 		self.__notifier = pyinotify.ThreadedNotifier(self.__monitor,
-			prcevent, timeout=self.sleeptime)
+			prcevent, timeout=self.sleeptime * 1000)
 		self.__notifier.check_events = self.__check_events
 		self.__notifier.start()
 		logSys.debug("[%s] filter started (pyinotifier)", self.jailName)
