@@ -101,14 +101,15 @@ class FilterPoll(FileFilter):
 				logSys.log(6, "Woke up idle=%s with %d files monitored",
 						   self.idle, self.getLogCount())
 			if self.idle:
-				if not Utils.wait_for(lambda: not self.idle, 
+				if not Utils.wait_for(lambda: not self.active or not self.idle, 
 					self.sleeptime * 10, self.sleeptime
 				):
 					self.ticks += 1
 					continue
 			# Get file modification
 			modlst = []
-			Utils.wait_for(lambda: self.getModified(modlst), self.sleeptime)
+			Utils.wait_for(lambda: not self.active or self.getModified(modlst),
+				self.sleeptime)
 			for filename in modlst:
 				self.getFailures(filename)
 				self.__modified = True
@@ -162,7 +163,7 @@ class FilterPoll(FileFilter):
 							 exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 			# increase file and common error counters:
 			self.__file404Cnt[filename] += 1
-			self._errors += 1
+			self.commonError()
 			if self.__file404Cnt[filename] > 50:
 				logSys.warning("Too many errors. Remove file %r from monitoring process", filename)
 				self.__file404Cnt[filename] = 0

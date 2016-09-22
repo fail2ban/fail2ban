@@ -67,23 +67,28 @@ class RequestHandler(asynchat.async_chat):
 	# This method is called once we have a complete request.
 
 	def found_terminator(self):
-		# Pop whole buffer
-		message = self.__buffer
-		self.__buffer = []		
-		# Joins the buffer items.
-		message = CSPROTO.EMPTY.join(message)
-		# Closes the channel if close was received
-		if message == CSPROTO.CLOSE:
-			self.close_when_done()
-			return
-		# Deserialize
-		message = loads(message)
-		# Gives the message to the transmitter.
-		message = self.__transmitter.proceed(message)
-		# Serializes the response.
-		message = dumps(message, HIGHEST_PROTOCOL)
-		# Sends the response to the client.
-		self.push(message + CSPROTO.END)
+		try:
+			# Pop whole buffer
+			message = self.__buffer
+			self.__buffer = []		
+			# Joins the buffer items.
+			message = CSPROTO.EMPTY.join(message)
+			# Closes the channel if close was received
+			if message == CSPROTO.CLOSE:
+				self.close_when_done()
+				return
+			# Deserialize
+			message = loads(message)
+			# Gives the message to the transmitter.
+			message = self.__transmitter.proceed(message)
+			# Serializes the response.
+			message = dumps(message, HIGHEST_PROTOCOL)
+			# Sends the response to the client.
+			self.push(message + CSPROTO.END)
+		except Exception as e: # pragma: no cover
+			logSys.error("Caught unhandled exception: %r", e,
+				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+
 		
 	def handle_error(self):
 		e1, e2 = formatExceptionInfo()

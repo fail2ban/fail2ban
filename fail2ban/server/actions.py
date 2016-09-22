@@ -281,9 +281,10 @@ class Actions(JailThread, Mapping):
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 		while self.active:
 			if self.idle:
-				time.sleep(self.sleeptime)
+				Utils.wait_for(lambda: not self.active or not self.idle,
+					self.sleeptime * 10, self.sleeptime)
 				continue
-			if not Utils.wait_for(self.__checkBan, self.sleeptime):
+			if not Utils.wait_for(lambda: not self.active or self.__checkBan(), self.sleeptime):
 				self.__checkUnBan()
 		
 		self.__flushBan()

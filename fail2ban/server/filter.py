@@ -501,14 +501,18 @@ class Filter(JailThread):
 		except Exception as e:
 			logSys.error("Failed to process line: %r, caught exception: %r", line, e,
 				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-			# incr error counter, stop processing (going idle) after 100th error :
-			self._errors += 1
-			# sleep a little bit (to get around time-related errors):
-			time.sleep(self.sleeptime)
-			if self._errors >= 100:
-				logSys.error("Too many errors at once (%s), going idle", self._errors)
-				self._errors //= 2
-				self.idle = True
+			# incr common error counter:
+			self.commonError()
+
+	def commonError(self):
+		# incr error counter, stop processing (going idle) after 100th error :
+		self._errors += 1
+		# sleep a little bit (to get around time-related errors):
+		time.sleep(self.sleeptime)
+		if self._errors >= 100:
+			logSys.error("Too many errors at once (%s), going idle", self._errors)
+			self._errors //= 2
+			self.idle = True
 
 	##
 	# Returns true if the line should be ignored.

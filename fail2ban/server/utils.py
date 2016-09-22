@@ -52,8 +52,8 @@ class Utils():
 	"""Utilities provide diverse static methods like executes OS shell commands, etc.
 	"""
 
-	DEFAULT_SLEEP_TIME = 0.1
-	DEFAULT_SLEEP_INTERVAL = 0.01
+	DEFAULT_SLEEP_TIME = 2
+	DEFAULT_SLEEP_INTERVAL = 0.2
 
 
 	class Cache(object):

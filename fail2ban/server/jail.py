@@ -239,19 +239,31 @@ class Jail(object):
 		Once stated, also queries the persistent database to reinstate
 		any valid bans.
 		"""
+		logSys.debug("Starting jail %r", self.name)
 		self.filter.start()
 		self.actions.start()
 		self.restoreCurrentBans()
 		logSys.info("Jail %r started", self.name)
 
-	def stop(self):
+	def stop(self, stop=True, join=True):
 		"""Stop the jail, by stopping filter and actions threads.
 		"""
-		self.filter.stop()
-		self.actions.stop()
-		self.filter.join()
-		self.actions.join()
-		logSys.info("Jail '%s' stopped" % self.name)
+		if stop:
+			logSys.debug("Stopping jail %r", self.name)
+		for obj in (self.filter, self.actions):
+			try:
+				## signal to stop filter / actions:
+				if stop:
+					obj.stop()
+				## wait for end of threads:
+				if join:
+					if obj.isAlive():
+						obj.join()
+			except Exception as e:
+				logSys.error("Stop %r of jail %r failed: %s", obj, self.name, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+		if join:
+			logSys.info("Jail %r stopped", self.name)
 
 	def isAlive(self):
 		"""Check jail "isAlive" by checking filter and actions threads.

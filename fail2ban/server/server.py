@@ -210,14 +210,14 @@ class Server:
 		if self.__db is not None:
 			self.__db.addJail(self.__jails[name])
 		
-	def delJail(self, name, stop=True):
+	def delJail(self, name, stop=True, join=True):
 		jail = self.__jails[name]
-		if stop and jail.isAlive():
-			logSys.debug("Stopping jail %r" % name)
-			jail.stop()
-		if self.__db is not None:
-			self.__db.delJail(jail)
-		del self.__jails[name]
+		if join or jail.isAlive():
+			jail.stop(stop=stop, join=join)
+		if join:
+			if self.__db is not None:
+				self.__db.delJail(jail)
+			del self.__jails[name]
 
 	def startJail(self, name):
 		with self.__lock:
@@ -237,8 +237,12 @@ class Server:
 	def stopAllJail(self):
 		logSys.info("Stopping all jails")
 		with self.__lock:
+			# 1st stop all jails (signal and stop actions/filter thread):
 			for name in self.__jails.keys():
-				self.delJail(name, stop=True)
+				self.delJail(name, stop=True, join=False)
+			# 2nd wait for end and delete jails:
+			for name in self.__jails.keys():
+				self.delJail(name, stop=False, join=True)
 
 	def reloadJails(self, name, opts, begin):
 		if begin:

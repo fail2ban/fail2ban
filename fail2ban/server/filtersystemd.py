@@ -252,40 +252,63 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 
 		while self.active:
 			# wait for records (or for timeout in sleeptime seconds):
-			self.__journal.wait(self.sleeptime)
-			if self.idle:
-				# because journal.wait will returns immediatelly if we have records in journal,
-				# just wait a little bit here for not idle, to prevent hi-load:
-				if not Utils.wait_for(lambda: not self.idle, 
-					self.sleeptime * 10, self.sleeptime
-				):
+			try:
+				## todo: find better method as wait_for to break (e.g. notify) journal.wait(self.sleeptime),
+				## don't use `journal.close()` for it, because in some python/systemd implementation it may 
+				## cause abnormal program termination
+				#self.__journal.wait(self.sleeptime) != journal.NOP
+				## 
+				## wait for entries without sleep in intervals, because "sleeping" in journal.wait:
+				Utils.wait_for(lambda: not self.active or \
+					self.__journal.wait(Utils.DEFAULT_SLEEP_INTERVAL) != journal.NOP,
+					self.sleeptime, 0.00001)
+				if self.idle:
+					# because journal.wait will returns immediatelly if we have records in journal,
+					# just wait a little bit here for not idle, to prevent hi-load:
+					if not Utils.wait_for(lambda: not self.active or not self.idle, 
+						self.sleeptime * 10, self.sleeptime
+					):
+						self.ticks += 1
+						continue
+				self.__modified = 0
+				while self.active:
+					logentry = None
+					try:
+						logentry = self.__journal.get_next()
+					except OSError as e:
+						logSys.error("Error reading line from systemd journal: %s",
+							e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
 					self.ticks += 1
-					continue
-			self.__modified = 0
-			while self.active:
-				logentry = None
-				try:
-					logentry = self.__journal.get_next()
-				except OSError as e:
-					logSys.error("Error reading line from systemd journal: %s",
-						e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
-				self.ticks += 1
-				if logentry:
-					self.processLineAndAdd(
-						*self.formatJournalEntry(logentry))
-					self.__modified += 1
-					if self.__modified >= 100: # todo: should be configurable
+					if logentry:
+						self.processLineAndAdd(
+							*self.formatJournalEntry(logentry))
+						self.__modified += 1
+						if self.__modified >= 100: # todo: should be configurable
+							break
+					else:
 						break
-				else:
+				if self.__modified:
+					try:
+						while True:
+							ticket = self.failManager.toBan()
+							self.jail.putFailTicket(ticket)
+					except FailManagerEmpty:
+						self.failManager.cleanup(MyTime.time())
+			except Exception as e: # pragma: no cover
+				if not self.active: # if not active - error by stop...
 					break
-			if self.__modified:
-				try:
-					while True:
-						ticket = self.failManager.toBan()
-						self.jail.putFailTicket(ticket)
-				except FailManagerEmpty:
-					self.failManager.cleanup(MyTime.time())
+				logSys.error("Caught unhandled exception in main cycle: %r", e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+				# incr common error counter:
+				self.commonError()
 
+		# close journal:
+		try:
+			if self.__journal:
+				self.__journal.close()
+		except Exception as e: # pragma: no cover
+			logSys.error("Close journal failed: %r", e,
+				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 		logSys.debug((self.jail is not None and self.jail.name
                       or "jailless") +" filter terminated")
 		return True

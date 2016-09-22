@@ -178,7 +178,7 @@ class FilterPyinotify(FileFilter):
 	# slow check events while idle:
 	def __check_events(self, *args, **kwargs):
 		if self.idle:
-			if Utils.wait_for(lambda: not self.idle, 
+			if Utils.wait_for(lambda: not self.active or not self.idle,
 				self.sleeptime * 10, self.sleeptime
 			):
 				pass
