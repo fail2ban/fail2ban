@@ -35,6 +35,8 @@ logSys = getLogger(__name__)
 
 
 class Ticket(object):
+
+	MAX_TIME = 0X7FFFFFFFFFFF ;# 4461763-th year
 	
 	RESTORED = 0x01
 	BANNED   = 0x08
@@ -112,7 +114,7 @@ class Ticket(object):
 		bantime = (self._banTime if self._banTime is not None else defaultBT)
 		# permanent
 		if bantime == -1:
-			return 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFL
+			return Ticket.MAX_TIME
 		# unban time (end of ban):
 		return self._time + bantime
 

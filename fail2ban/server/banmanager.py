@@ -57,7 +57,7 @@ class BanManager:
 		## Total number of banned IP address
 		self.__banTotal = 0
 		## The time for next unban process (for performance and load reasons):
-		self.__nextUnbanTime = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFL
+		self.__nextUnbanTime = BanTicket.MAX_TIME
 	
 	##
 	# Set the ban time.
@@ -322,7 +322,7 @@ class BanManager:
 
 			# Gets the list of ticket to remove (thereby correct next unban time).
 			unBanList = {}
-			self.__nextUnbanTime = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFL
+			self.__nextUnbanTime = BanTicket.MAX_TIME
 			for fid,ticket in self.__banList.iteritems():
 				# current time greater as end of ban - timed out:
 				eob = ticket.getEndOfBanTime(self.__banTime)
