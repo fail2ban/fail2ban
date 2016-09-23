@@ -95,9 +95,28 @@ class AddFailure(unittest.TestCase):
 
 	def testUnban(self):
 		btime = self.__banManager.getBanTime()
+		stime = self.__ticket.getTime()
 		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
 		self.assertTrue(self.__banManager._inBanList(self.__ticket))
-		self.assertEqual(self.__banManager.unBanList(self.__ticket.getTime() + btime + 1), [self.__ticket])
+		self.assertEqual(self.__banManager.unBanList(stime), [])
+		self.assertEqual(self.__banManager.unBanList(stime + btime + 1), [self.__ticket])
+		self.assertEqual(self.__banManager.size(), 0)
+		## again, but now we will prolong ban-time and then try to unban again (1st too early):
+		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
+		# prolong ban:
+		ticket = BanTicket(self.__ticket.getID(), stime + 600)
+		self.assertFalse(self.__banManager.addBanTicket(ticket))
+		# try unban too early:
+		self.assertEqual(len(self.__banManager.unBanList(stime + btime + 1)), 0)
+		# try unban using correct time:
+		self.assertEqual(len(self.__banManager.unBanList(stime + btime + 600 + 1)), 1)
+		## again, but now we test removing tickets particular (to test < 2/3-rule):
+		for i in range(5):
+			ticket = BanTicket('193.168.0.%s' % i, stime)
+			ticket.setBanTime(ticket.getBanTime(btime) + i*10)
+			self.assertTrue(self.__banManager.addBanTicket(ticket))
+		self.assertEqual(len(self.__banManager.unBanList(stime + btime + 1*10 + 1)), 2)
+		self.assertEqual(len(self.__banManager.unBanList(stime + btime + 5*10 + 1)), 3)
 		self.assertEqual(self.__banManager.size(), 0)
 
 	def testUnbanPermanent(self):
