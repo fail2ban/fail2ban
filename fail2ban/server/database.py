@@ -211,7 +211,7 @@ class Fail2BanDb(object):
 				if newversion == Fail2BanDb.__version__:
 					logSys.warning( "Database updated from '%i' to '%i'",
 						version, newversion)
-				else:
+				else: # pragma: no cover
 					logSys.error( "Database update failed to achieve version '%i'"
 						": updated from '%i' to '%i'",
 						Fail2BanDb.__version__, version, newversion)
