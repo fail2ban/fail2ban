@@ -34,8 +34,13 @@ from .mytime import MyTime
 logSys = getLogger(__name__)
 
 
-class Ticket:
+class Ticket(object):
+
+	MAX_TIME = 0X7FFFFFFFFFFF ;# 4461763-th year
 	
+	RESTORED = 0x01
+	BANNED   = 0x08
+
 	def __init__(self, ip=None, time=None, matches=None, data={}, ticket=None):
 		"""Ticket constructor
 
@@ -49,13 +54,12 @@ class Ticket:
 		self._banCount = 0;
 		self._banTime = None;
 		self._time = time if time is not None else MyTime.time()
-		self._data = {'matches': [], 'failures': 0}
-		self._data.update(data)
+		self._data = {'matches': matches or [], 'failures': 0}
+		if data is not None:
+			self._data.update(data)
 		if ticket:
 			# ticket available - copy whole information from ticket:
 			self.__dict__.update(i for i in ticket.__dict__.iteritems() if i[0] in self.__dict__)
-		else:
-			self._data['matches'] = matches or []
 
 	def __str__(self):
 		return "%s: ip=%s time=%s #attempts=%d matches=%r" % \
@@ -94,8 +98,8 @@ class Ticket:
 	def setBanTime(self, value):
 		self._banTime = value;
 
-	def getBanTime(self, defaultBT = None):
-		return (self._banTime if not self._banTime is None else defaultBT);
+	def getBanTime(self, defaultBT=None):
+		return (self._banTime if self._banTime is not None else defaultBT)
 
 	def setBanCount(self, value):
 		self._banCount = value;
@@ -106,8 +110,16 @@ class Ticket:
 	def getBanCount(self):
 		return self._banCount;
 
-	def isTimedOut(self, time, defaultBT = None):
-		bantime = (self._banTime if not self._banTime is None else defaultBT);
+	def getEndOfBanTime(self, defaultBT=None):
+		bantime = (self._banTime if self._banTime is not None else defaultBT)
+		# permanent
+		if bantime == -1:
+			return Ticket.MAX_TIME
+		# unban time (end of ban):
+		return self._time + bantime
+
+	def isTimedOut(self, time, defaultBT=None):
+		bantime = (self._banTime if self._banTime is not None else defaultBT)
 		# permanent
 		if bantime == -1:
 			return False
@@ -125,6 +137,26 @@ class Ticket:
 
 	def getMatches(self):
 		return self._data.get('matches', [])
+
+	@property
+	def restored(self):
+		return self._flags & Ticket.RESTORED
+	@restored.setter
+	def restored(self, value):
+		if value:
+			self._flags |= Ticket.RESTORED
+		else:
+			self._flags &= ~(Ticket.RESTORED)
+	
+	@property
+	def banned(self):
+		return self._flags & Ticket.BANNED
+	@banned.setter
+	def banned(self, value):
+		if value:
+			self._flags |= Ticket.BANNED
+		else:
+			self._flags &= ~(Ticket.BANNED)
 
 	def setData(self, *args, **argv):
 		# if overwrite - set data and filter None values:

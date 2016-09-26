@@ -106,7 +106,7 @@ class JailReader(ConfigReader):
 				["int",    "maxretry", None],
 				["string", "findtime", None],
 				["string", "bantime", None],
-				["string", "usedns", None],
+				["string", "usedns", None], # be sure usedns is before all regex(s) in stream
 				["string", "failregex", None],
 				["string", "ignoreregex", None],
 				["string", "ignorecommand", None],

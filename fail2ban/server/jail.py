@@ -28,7 +28,7 @@ import Queue
 
 from .actions import Actions
 from ..client.jailreader import JailReader
-from ..helpers import getLogger
+from ..helpers import getLogger, MyTime
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -79,6 +79,7 @@ class Jail(object):
 		logSys.info("Creating new jail '%s'" % self.name)
 		if backend is not None:
 			self._setBackend(backend)
+		self.backend = backend
 
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__.__name__, self.name)
@@ -193,7 +194,7 @@ class Jail(object):
 		Used by filter to add a failure for banning.
 		"""
 		self.__queue.put(ticket)
-		if self.database is not None:
+		if not ticket.restored and self.database is not None:
 			self.database.addBan(self, ticket)
 
 	def getFailTicket(self):
@@ -202,9 +203,35 @@ class Jail(object):
 		Used by actions to get a failure for banning.
 		"""
 		try:
-			return self.__queue.get(False)
+			ticket = self.__queue.get(False)
+			return ticket
 		except Queue.Empty:
 			return False
+
+	def restoreCurrentBans(self):
+		"""Restore any previous valid bans from the database.
+		"""
+		try:
+			if self.database is not None:
+				forbantime = self.actions.getBanTime()
+				for ticket in self.database.getCurrentBans(jail=self, forbantime=forbantime):
+					#logSys.debug('restored ticket: %s', ticket)
+					if not self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True):
+						# mark ticked was restored from database - does not put it again into db:
+						ticket.restored = True
+						# correct start time / ban time (by the same end of ban):
+						btm = ticket.getBanTime(forbantime)
+						diftm = MyTime.time() - ticket.getTime()
+						if btm != -1 and diftm > 0:
+							btm -= diftm
+						# ignore obsolete tickets:
+						if btm != -1 and btm <= 0:
+							continue
+						ticket.setTime(MyTime.time())
+						ticket.setBanTime(btm)
+						self.putFailTicket(ticket)
+		except Exception as e: # pragma: no cover
+			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
 	def start(self):
 		"""Start the jail, by starting filter and actions threads.
@@ -212,24 +239,30 @@ class Jail(object):
 		Once stated, also queries the persistent database to reinstate
 		any valid bans.
 		"""
+		logSys.debug("Starting jail %r", self.name)
 		self.filter.start()
 		self.actions.start()
-		# Restore any previous valid bans from the database
-		if self.database is not None:
-			for ticket in self.database.getBansMerged(
-				jail=self, bantime=self.actions.getBanTime()):
-				if not self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True):
-					self.__queue.put(ticket)
-		logSys.info("Jail '%s' started" % self.name)
+		self.restoreCurrentBans()
+		logSys.info("Jail %r started", self.name)
 
-	def stop(self):
+	def stop(self, stop=True, join=True):
 		"""Stop the jail, by stopping filter and actions threads.
 		"""
-		self.filter.stop()
-		self.actions.stop()
-		self.filter.join()
-		self.actions.join()
-		logSys.info("Jail '%s' stopped" % self.name)
+		if stop:
+			logSys.debug("Stopping jail %r", self.name)
+		for obj in (self.filter, self.actions):
+			try:
+				## signal to stop filter / actions:
+				if stop:
+					obj.stop()
+				## wait for end of threads:
+				if join:
+					obj.join()
+			except Exception as e:
+				logSys.error("Stop %r of jail %r failed: %s", obj, self.name, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+		if join:
+			logSys.info("Jail %r stopped", self.name)
 
 	def isAlive(self):
 		"""Check jail "isAlive" by checking filter and actions threads.

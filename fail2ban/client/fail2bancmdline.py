@@ -242,7 +242,7 @@ class Fail2banCmdLine():
 		try:
 			self.configurator.Reload()
 			self.configurator.readAll()
-			ret = self.configurator.getOptions(jail)
+			ret = self.configurator.getOptions(jail, self._conf)
 			self.configurator.convertToProtocol()
 			stream = self.configurator.getConfigStream()
 		except Exception as e:

@@ -53,8 +53,8 @@ class JailThread(Thread):
 		super(JailThread, self).__init__(name=name)
 		## Should going with main thread also:
 		self.daemon = True
-		## Control the state of the thread.
-		self.active = False
+		## Control the state of the thread (None - was not started, True - active, False - stopped).
+		self.active = None
 		## Control the idle state of the thread.
 		self.idle = False
 		## The time the thread sleeps in the loop.
@@ -93,3 +93,14 @@ class JailThread(Thread):
 		"""Abstract - Called when thread starts, thread stops when returns.
 		"""
 		pass
+
+	def join(self):
+		""" Safer join, that could be called also for not started (or ended) threads (used for cleanup).
+		"""
+		## if cleanup needed - create derivate and call it before join...
+
+		## if was really started - should call join:
+		if self.active is not None:
+			super(JailThread, self).join()
+
+

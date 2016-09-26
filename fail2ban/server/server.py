@@ -38,7 +38,7 @@ from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
-from ..helpers import getLogger, excepthook
+from ..helpers import getLogger, str2LogLevel, excepthook
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -67,6 +67,7 @@ class Server:
 		self.__db = None
 		self.__daemon = daemon
 		self.__transm = Transmitter(self)
+		self.__reload_state = {}
 		#self.__asyncServer = AsyncServer(self.__transm)
 		self.__asyncServer = None
 		self.__logLevel = None
@@ -170,6 +171,12 @@ class Server:
 		# Now stop all the jails
 		self.stopAllJail()
 
+		# Explicit close database (server can leave in a thread, 
+		# so delayed GC can prevent commiting changes)
+		if self.__db:
+			self.__db.close()
+			self.__db = None
+
 		# Only now shutdown the logging.
 		if self.__logTarget is not None:
 			with self.__loggingLock:
@@ -184,41 +191,111 @@ class Server:
 		self.quit = lambda: False
 
 	def addJail(self, name, backend):
-		self.__jails.add(name, backend, self.__db)
+		addflg = True
+		if self.__reload_state.get(name) and self.__jails.exists(name):
+			jail = self.__jails[name]
+			# if backend switch - restart instead of reload:
+			if jail.backend == backend:
+				addflg = False
+				logSys.info("Reload jail %r", name)
+				# prevent to reload the same jail twice (temporary keep it in state, needed to commit reload):
+				self.__reload_state[name] = None
+			else:
+				logSys.info("Restart jail %r (reason: %r != %r)", name, jail.backend, backend)
+				self.delJail(name, stop=True)
+				# prevent to start the same jail twice (no reload more - restart):
+				del self.__reload_state[name]
+		if addflg:
+			self.__jails.add(name, backend, self.__db)
 		if self.__db is not None:
 			self.__db.addJail(self.__jails[name])
 		
-	def delJail(self, name):
-		if self.__db is not None:
-			self.__db.delJail(self.__jails[name])
-		del self.__jails[name]
+	def delJail(self, name, stop=True, join=True):
+		jail = self.__jails[name]
+		if join or jail.isAlive():
+			jail.stop(stop=stop, join=join)
+		if join:
+			if self.__db is not None:
+				self.__db.delJail(jail)
+			del self.__jails[name]
 
 	def startJail(self, name):
-		try:
-			self.__lock.acquire()
-			if not self.__jails[name].isAlive():
-				self.__jails[name].start()
-		finally:
-			self.__lock.release()
+		with self.__lock:
+			jail = self.__jails[name]
+			if not jail.isAlive():
+				jail.start()
+			elif name in self.__reload_state:
+				logSys.info("Jail %r reloaded", name)
+				del self.__reload_state[name]
+			if jail.idle:
+				jail.idle = False
 	
 	def stopJail(self, name):
-		logSys.debug("Stopping jail %s" % name)
-		try:
-			self.__lock.acquire()
-			if self.__jails[name].isAlive():
-				self.__jails[name].stop()
-				self.delJail(name)
-		finally:
-			self.__lock.release()
+		with self.__lock:
+			self.delJail(name, stop=True)
 	
 	def stopAllJail(self):
 		logSys.info("Stopping all jails")
-		try:
-			self.__lock.acquire()
-			for jail in self.__jails.keys():
-				self.stopJail(jail)
-		finally:
-			self.__lock.release()
+		with self.__lock:
+			# 1st stop all jails (signal and stop actions/filter thread):
+			for name in self.__jails.keys():
+				self.delJail(name, stop=True, join=False)
+			# 2nd wait for end and delete jails:
+			for name in self.__jails.keys():
+				self.delJail(name, stop=False, join=True)
+
+	def reloadJails(self, name, opts, begin):
+		if begin:
+			# begin reload:
+			if self.__reload_state and (name == '--all' or self.__reload_state.get(name)):
+				raise ValueError('Reload already in progress')
+			logSys.info("Reload " + (("jail %s" % name) if name != '--all' else "all jails"))
+			with self.__lock:
+				# if single jail:
+				if name != '--all':
+					jail = None
+					# test jail exists (throws exception if not):
+					if "--if-exists" not in opts or self.__jails.exists(name):
+						jail = self.__jails[name]
+					if jail:
+						# first unban all ips (will be not restored after (re)start):
+						if "--unban" in opts:
+							self.setUnbanIP(name)
+						# stop if expected:
+						if "--restart" in opts:
+							self.stopJail(name)
+				else:
+					# first unban all ips (will be not restored after (re)start):
+					if "--unban" in opts:
+						self.setUnbanIP()
+					# stop if expected:
+					if "--restart" in opts:
+						self.stopAllJail()
+				# first set all affected jail(s) to idle and reset filter regex and other lists/dicts:
+				for jn, jail in self.__jails.iteritems():
+					if name == '--all' or jn == name:
+						jail.idle = True
+						self.__reload_state[jn] = jail
+						jail.filter.reload(begin=True)
+						jail.actions.reload(begin=True)
+				pass
+		else:
+			# end reload, all affected (or new) jails have already all new parameters (via stream) and (re)started:
+			with self.__lock:
+				deljails = []
+				for jn, jail in self.__jails.iteritems():
+					# still in reload state:
+					if jn in self.__reload_state:
+						# remove jails that are not reloaded (untouched, so not in new configuration)
+						deljails.append(jn)
+					else:
+						# commit (reload was finished):
+						jail.filter.reload(begin=False)
+						jail.actions.reload(begin=False)
+				for jn in deljails:
+					self.delJail(jn)
+			self.__reload_state = {}
+			logSys.info("Reload finished.")
 
 	def setIdleJail(self, name, value):
 		self.__jails[name].idle = value
@@ -309,7 +386,7 @@ class Server:
 			logSys.debug("  failregex: %r", value)
 			flt.addFailRegex(value)
 	
-	def delFailRegex(self, name, index):
+	def delFailRegex(self, name, index=None):
 		self.__jails[name].filter.delFailRegex(index)
 	
 	def getFailRegex(self, name):
@@ -351,7 +428,9 @@ class Server:
 	
 	# Action
 	def addAction(self, name, value, *args):
-		self.__jails[name].actions.add(value, *args)
+		## create (or reload) jail action:
+		self.__jails[name].actions.add(value, *args, 
+			reload=name in self.__reload_state)
 	
 	def getActions(self, name):
 		return self.__jails[name].actions
@@ -368,8 +447,20 @@ class Server:
 	def setBanIP(self, name, value):
 		return self.__jails[name].filter.addBannedIP(value)
 		
-	def setUnbanIP(self, name, value):
-		self.__jails[name].actions.removeBannedIP(value)
+	def setUnbanIP(self, name=None, value=None):
+		if name is not None:
+			# in all jails:
+			jails = [self.__jails[name]]
+		else:
+			# single jail:
+			jails = self.__jails.values()
+		# unban given or all (if value is None):
+		cnt = 0
+		for jail in jails:
+			cnt += jail.actions.removeBannedIP(value, ifexists=(name is None))
+		if value and not cnt:
+			logSys.info("%s is not banned", value)
+		return cnt
 		
 	def getBanTime(self, name):
 		return self.__jails[name].actions.getBanTime()
@@ -419,11 +510,11 @@ class Server:
 		with self.__loggingLock:
 			if self.__logLevel == value:
 				return
-			try:
-				getLogger("fail2ban").setLevel(getattr(logging, value))
-				self.__logLevel = value
-			except AttributeError:
-				raise ValueError("Invalid log level %r" % value)
+			ll = str2LogLevel(value)
+			# don't change real log-level if running from the test cases:
+			getLogger("fail2ban").setLevel(
+				ll if DEF_LOGTARGET != "INHERITED" or ll < logging.DEBUG else DEF_LOGLEVEL)
+			self.__logLevel = value
 	
 	##
 	# Get the logging level.

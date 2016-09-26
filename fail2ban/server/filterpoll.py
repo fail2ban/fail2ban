@@ -31,7 +31,7 @@ from .failmanager import FailManagerEmpty
 from .filter import FileFilter
 from .mytime import MyTime
 from .utils import Utils
-from ..helpers import getLogger
+from ..helpers import getLogger, logging
 
 
 # Gets the instance of the logger.
@@ -101,14 +101,15 @@ class FilterPoll(FileFilter):
 				logSys.log(6, "Woke up idle=%s with %d files monitored",
 						   self.idle, self.getLogCount())
 			if self.idle:
-				if not Utils.wait_for(lambda: not self.idle, 
+				if not Utils.wait_for(lambda: not self.active or not self.idle, 
 					self.sleeptime * 10, self.sleeptime
 				):
 					self.ticks += 1
 					continue
 			# Get file modification
 			modlst = []
-			Utils.wait_for(lambda: self.getModified(modlst), self.sleeptime)
+			Utils.wait_for(lambda: not self.active or self.getModified(modlst),
+				self.sleeptime)
 			for filename in modlst:
 				self.getFailures(filename)
 				self.__modified = True
@@ -122,9 +123,7 @@ class FilterPoll(FileFilter):
 				except FailManagerEmpty:
 					self.failManager.cleanup(MyTime.time())
 				self.__modified = False
-		logSys.debug(
-			(self.jail is not None and self.jail.name or "jailless") +
-					 " filter terminated")
+		logSys.debug("[%s] filter terminated", self.jailName)
 		return True
 
 	##
@@ -137,28 +136,34 @@ class FilterPoll(FileFilter):
 		try:
 			logStats = os.stat(filename)
 			stats = logStats.st_mtime, logStats.st_ino, logStats.st_size
-			pstats = self.__prevStats.get(filename, ())
-			self.__file404Cnt[filename] = 0
-			if logSys.getEffectiveLevel() <= 7:
+			pstats = self.__prevStats.get(filename, (0))
+			if logSys.getEffectiveLevel() <= 5:
 				# we do not want to waste time on strftime etc if not necessary
 				dt = logStats.st_mtime - pstats[0]
-				logSys.log(7, "Checking %s for being modified. Previous/current stats: %s / %s. dt: %s",
+				logSys.log(5, "Checking %s for being modified. Previous/current stats: %s / %s. dt: %s",
 				           filename, pstats, stats, dt)
 				# os.system("stat %s | grep Modify" % filename)
+			self.__file404Cnt[filename] = 0
 			if pstats == stats:
 				return False
 			logSys.debug("%s has been modified", filename)
 			self.__prevStats[filename] = stats
 			return True
-		except OSError as e:
-			logSys.error("Unable to get stat on %s because of: %s"
-						 % (filename, e))
+		except Exception as e:
+			# stil alive (may be deleted because multi-threaded):
+			if not self.getLog(filename):
+				logSys.warning("Log %r seems to be down: %s", filename, e)
+				return
+			# log error:
+			if self.__file404Cnt[filename] < 2:
+				logSys.error("Unable to get stat on %s because of: %s",
+							 filename, e, 
+							 exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+			# increase file and common error counters:
 			self.__file404Cnt[filename] += 1
-			if self.__file404Cnt[filename] > 2:
-				logSys.warning("Too many errors. Setting the jail idle")
-				if self.jail is not None:
-					self.jail.idle = True
-				else:
-					logSys.warning("No jail is assigned to %s" % self)
+			self.commonError()
+			if self.__file404Cnt[filename] > 50:
+				logSys.warning("Too many errors. Remove file %r from monitoring process", filename)
 				self.__file404Cnt[filename] = 0
+				self.delLogPath(filename)
 			return False

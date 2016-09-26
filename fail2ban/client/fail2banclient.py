@@ -91,7 +91,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 						client = CSocket(self._conf["socket"])
 					ret = client.send(c)
 					if ret[0] == 0:
-						logSys.debug("OK : %r", ret[1])
+						logSys.log(5, "OK : %r", ret[1])
 						if showRet or c[0] == 'echo':
 							output(beautifier.beautify(ret[1]))
 					else:
@@ -104,7 +104,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 						if showRet or c != ["ping"]:
 							self.__logSocketError()
 						else:
-							logSys.debug(" -- ping failed -- %r", e)
+							logSys.log(5, " -- ping failed -- %r", e)
 					return False
 				except Exception as e: # pragma: no cover
 					if showRet or self._conf["verbose"] > 1:
@@ -226,11 +226,11 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		# prepare: read config, check configuration is valid, etc.:
 		if phase is not None:
 			phase['start'] = True
-			logSys.debug('  client phase %s', phase)
+			logSys.log(5, '  client phase %s', phase)
 		stream = self.__prepareStartServer()
 		if phase is not None:
 			phase['ready'] = phase['start'] = (True if stream else False)
-			logSys.debug('  client phase %s', phase)
+			logSys.log(5, '  client phase %s', phase)
 		if not stream:
 			return False
 		# configure server with config stream:
@@ -246,6 +246,10 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 	# @param cmd the command line
 
 	def __processCommand(self, cmd):
+		# wrap tuple to list (because could be modified here):
+		if not isinstance(cmd, list):
+			cmd = list(cmd)
+		# process:
 		if len(cmd) == 1 and cmd[0] == "start":
 
 			ret = self.__startServer(self._conf["background"])
@@ -253,8 +257,12 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 				return False
 			return ret
 
-		elif len(cmd) == 1 and cmd[0] == "restart":
-
+		elif len(cmd) >= 1 and cmd[0] == "restart":
+			# if restart jail - re-operate via "reload --restart ...":
+			if len(cmd) > 1:
+				cmd[0:1] = ["reload", "--restart"]
+				return self.__processCommand(cmd)
+			# restart server:
 			if self._conf.get("interactive", False):
 				output('  ## stop ... ')
 			self.__processCommand(['stop'])
@@ -273,9 +281,21 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 			return self.__processCommand(['start'])
 
 		elif len(cmd) >= 1 and cmd[0] == "reload":
+			# reload options:
+			opts = []
+			while len(cmd) >= 2:
+				if cmd[1] in ('--restart', "--unban", "--if-exists"):
+					opts.append(cmd[1])
+					del cmd[1]
+				else:
+					if len(cmd) > 2:
+						logSys.error("Unexpected argument(s) for reload: %r", cmd[1:])
+						return False
+					# stop options - jail name or --all
+					break
 			if self.__ping():
 				if len(cmd) == 1:
-					jail = 'all'
+					jail = '--all'
 					ret, stream = self.readConfig()
 				else:
 					jail = cmd[1]
@@ -283,9 +303,10 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 				# Do not continue if configuration is not 100% valid
 				if not ret:
 					return False
-				self.__processCmd([['stop', jail]], False)
-				# Configure the server
-				return self.__processCmd(stream, True)
+				if self._conf.get("interactive", False):
+					output('  ## reload ... ')
+				# Reconfigure the server
+				return self.__processCmd([['reload', jail, opts, stream]], True)
 			else:
 				logSys.error("Could not find server")
 				return False
@@ -320,7 +341,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 			maxtime = self._conf["timeout"]
 		# Wait for the server to start (the server has 30 seconds to answer ping)
 		starttime = time.time()
-		logSys.debug("__waitOnServer: %r", (alive, maxtime))
+		logSys.log(5, "__waitOnServer: %r", (alive, maxtime))
 		test = lambda: os.path.exists(self._conf["socket"]) and self.__ping()
 		with VisualWait(self._conf["verbose"]) as vis:
 			sltime = 0.0125 / 2

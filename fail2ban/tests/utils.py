@@ -119,6 +119,7 @@ def getOptParser(doc=""):
 
 def initProcess(opts):
 	# Logger:
+	global logSys
 	logSys = getLogger("fail2ban")
 
 	# Numerical level of verbosity corresponding to a log "level"
@@ -242,6 +243,9 @@ def initTests(opts):
 			raise unittest.SkipTest('Skip test because of "--fast"')
 		unittest.F2B.SkipIfFast = F2B_SkipIfFast
 	else:
+		# smaller inertance inside test-cases (litle speedup):
+		Utils.DEFAULT_SLEEP_TIME = 0.25
+		Utils.DEFAULT_SLEEP_INTERVAL = 0.025
 		# sleep intervals are large - use replacement for sleep to check time to sleep:
 		_org_sleep = time.sleep
 		def _new_sleep(v):
@@ -462,6 +466,20 @@ def gatherTests(regexps=None, opts=None):
 # Forwards compatibility of unittest.TestCase for some early python versions
 #
 
+if not hasattr(unittest.TestCase, 'assertDictEqual'):
+	import difflib, pprint
+	def assertDictEqual(self, d1, d2, msg=None):
+		self.assert_(isinstance(d1, dict), 'First argument is not a dictionary')
+		self.assert_(isinstance(d2, dict), 'Second argument is not a dictionary')
+		if d1 != d2:
+			standardMsg = '%r != %r' % (d1, d2)
+			diff = ('\n' + '\n'.join(difflib.ndiff(
+				pprint.pformat(d1).splitlines(),
+				pprint.pformat(d2).splitlines())))
+			msg = msg or (standardMsg + diff)
+			self.fail(msg)
+	unittest.TestCase.assertDictEqual = assertDictEqual
+
 if not hasattr(unittest.TestCase, 'assertRaisesRegexp'):
 	def assertRaisesRegexp(self, exccls, regexp, fun, *args, **kwargs):
 		try:
@@ -577,7 +595,8 @@ class LogCaptureTestCase(unittest.TestCase):
 			print("")
 			logSys.handlers += self._old_handlers
 			logSys.debug('='*10 + ' %s ' + '='*20, self.id())
-		logSys.setLevel(logging.DEBUG)
+		else:
+			logSys.setLevel(logging.DEBUG)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -587,8 +606,21 @@ class LogCaptureTestCase(unittest.TestCase):
 		logSys.handlers = self._old_handlers
 		logSys.level = self._old_level
 
-	def _is_logged(self, s):
-		return s in self._log.getvalue()
+	def _is_logged(self, *s, **kwargs):
+		logged = self._log.getvalue()
+		if not kwargs.get('all', False):
+			# at least one entry should be found:
+			for s_ in s:
+				if s_ in logged:
+					return True
+			if True: # pragma: no cover
+				return False
+		else:
+			# each entry should be found:
+			for s_ in s:
+				if s_ not in logged: # pragma: no cover
+					return False
+			return True
 
 	def assertLogged(self, *s, **kwargs):
 		"""Assert that one of the strings was logged
@@ -602,19 +634,23 @@ class LogCaptureTestCase(unittest.TestCase):
 		  Test should succeed if string (or any of the listed) is present in the log
 		all : boolean (default False) if True should fail if any of s not logged
 		"""
-		logged = self._log.getvalue()
+		wait = kwargs.get('wait', None)
+		if wait:
+			res = Utils.wait_for(lambda: self._is_logged(*s, **kwargs), wait)
+		else:
+			res = self._is_logged(*s, **kwargs)
 		if not kwargs.get('all', False):
 			# at least one entry should be found:
-			for s_ in s:
-				if s_ in logged:
-					return
-			if True: # pragma: no cover
+			if not res: # pragma: no cover
+				logged = self._log.getvalue()
 				self.fail("None among %r was found in the log: ===\n%s===" % (s, logged))
 		else:
 			# each entry should be found:
-			for s_ in s:
-				if s_ not in logged: # pragma: no cover
-					self.fail("%r was not found in the log: ===\n%s===" % (s_, logged))
+			if not res: # pragma: no cover
+				logged = self._log.getvalue()
+				for s_ in s:
+					if s_ not in logged:
+						self.fail("%r was not found in the log: ===\n%s===" % (s_, logged))
 
 	def assertNotLogged(self, *s, **kwargs):
 		"""Assert that strings were not logged
@@ -638,8 +674,10 @@ class LogCaptureTestCase(unittest.TestCase):
 				if s_ in logged: # pragma: no cover
 					self.fail("%r was found in the log: ===\n%s===" % (s_, logged))
 
-	def pruneLog(self):
+	def pruneLog(self, logphase=None):
 		self._log.truncate(0)
+		if logphase:
+			logSys.debug('='*5 + ' %s ' + '='*5, logphase)
 
 	def getLog(self):
 		return self._log.getvalue()
@@ -649,9 +687,3 @@ class LogCaptureTestCase(unittest.TestCase):
 
 
 pid_exists = Utils.pid_exists
-
-# Python 2.6 compatibility. in 2.7 assertDictEqual
-def assert_dict_equal(a, b):
-	assert isinstance(a, dict), "Object is not dictionary: %r" % a
-	assert isinstance(b, dict), "Object is not dictionary: %r" % b
-	assert a==b, "Dictionaries differ:\n%r !=\n%r" % (a, b)

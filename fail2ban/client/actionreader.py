@@ -38,7 +38,9 @@ class ActionReader(DefinitionInitConfigReader):
 	_configOpts = {
 		"actionstart": ["string", None],
 		"actionstop": ["string", None],
+		"actionreload": ["string", None],
 		"actioncheck": ["string", None],
+		"actionrepair": ["string", None],
 		"actionban": ["string", None],
 		"actionunban": ["string", None],
 	}

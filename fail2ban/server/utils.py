@@ -21,8 +21,14 @@ __author__ = "Serg G. Brester (sebres) and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Yaroslav Halchenko, 2012-2015 Serg G. Brester"
 __license__ = "GPL"
 
-import logging, os, fcntl, subprocess, time, signal
-from ..helpers import getLogger
+import fcntl
+import logging
+import os
+import signal
+import subprocess
+import sys
+import time
+from ..helpers import getLogger, uni_decode
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -46,8 +52,8 @@ class Utils():
 	"""Utilities provide diverse static methods like executes OS shell commands, etc.
 	"""
 
-	DEFAULT_SLEEP_TIME = 0.1
-	DEFAULT_SLEEP_INTERVAL = 0.01
+	DEFAULT_SLEEP_TIME = 2
+	DEFAULT_SLEEP_INTERVAL = 0.2
 
 
 	class Cache(object):
@@ -179,7 +185,7 @@ class Utils():
 				if stdout is not None and stdout != '' and std_level >= logSys.getEffectiveLevel():
 					logSys.log(std_level, "%s -- stdout:", realCmd)
 					for l in stdout.splitlines():
-						logSys.log(std_level, " -- stdout: %r", l)
+						logSys.log(std_level, " -- stdout: %r", uni_decode(l))
 				popen.stdout.close()
 			if popen.stderr:
 				try:
@@ -191,7 +197,7 @@ class Utils():
 				if stderr is not None and stderr != '' and std_level >= logSys.getEffectiveLevel():
 					logSys.log(std_level, "%s -- stderr:", realCmd)
 					for l in stderr.splitlines():
-						logSys.log(std_level, " -- stderr: %r", l)
+						logSys.log(std_level, " -- stderr: %r", uni_decode(l))
 				popen.stderr.close()
 
 		success = False

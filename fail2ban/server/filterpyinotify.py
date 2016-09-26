@@ -76,7 +76,7 @@ class FilterPyinotify(FileFilter):
 		logSys.debug("Created FilterPyinotify")
 
 	def callback(self, event, origin=''):
-		logSys.debug("%sCallback for Event: %s", origin, event)
+		logSys.log(7, "[%s] %sCallback for Event: %s", self.jailName, origin, event)
 		path = event.pathname
 		if event.mask & ( pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO ):
 			# skip directories altogether
@@ -119,14 +119,15 @@ class FilterPyinotify(FileFilter):
 		logSys.debug("Added file watcher for %s", path)
 
 	def _delFileWatcher(self, path):
-		wdInt = self.__watches[path]
-		wd = self.__monitor.rm_watch(wdInt)
-		if wd[wdInt]:
-			del self.__watches[path]
-			logSys.debug("Removed file watcher for %s", path)
-			return True
-		else:
-			return False
+		try:
+			wdInt = self.__watches.pop(path)
+			wd = self.__monitor.rm_watch(wdInt)
+			if wd[wdInt]:
+				logSys.debug("Removed file watcher for %s", path)
+				return True
+		except KeyError: # pragma: no cover
+			pass
+		return False
 
 	##
 	# Add a log file path
@@ -158,8 +159,11 @@ class FilterPyinotify(FileFilter):
 					if k.startswith(path_dir + pathsep)]):
 			# Remove watches for the directory
 			# since there is no other monitored file under this directory
-			wdInt = self.__watches.pop(path_dir)
-			self.__monitor.rm_watch(wdInt)
+			try:
+				wdInt = self.__watches.pop(path_dir)
+				self.__monitor.rm_watch(wdInt)
+			except KeyError: # pragma: no cover
+				pass
 			logSys.debug("Removed monitor for the parent directory %s", path_dir)
 
 	# pyinotify.ProcessEvent default handler:
@@ -174,7 +178,7 @@ class FilterPyinotify(FileFilter):
 	# slow check events while idle:
 	def __check_events(self, *args, **kwargs):
 		if self.idle:
-			if Utils.wait_for(lambda: not self.idle, 
+			if Utils.wait_for(lambda: not self.active or not self.idle,
 				self.sleeptime * 10, self.sleeptime
 			):
 				pass
@@ -190,11 +194,12 @@ class FilterPyinotify(FileFilter):
 	def run(self):
 		prcevent = pyinotify.ProcessEvent()
 		prcevent.process_default = self.__process_default
+		## timeout for pyinotify must be set in milliseconds (our time values are floats contain seconds)
 		self.__notifier = pyinotify.ThreadedNotifier(self.__monitor,
-			prcevent, timeout=self.sleeptime)
+			prcevent, timeout=self.sleeptime * 1000)
 		self.__notifier.check_events = self.__check_events
 		self.__notifier.start()
-		logSys.debug("pyinotifier started for %s.", self.jail.name)
+		logSys.debug("[%s] filter started (pyinotifier)", self.jailName)
 		return True
 
 	##
@@ -202,15 +207,22 @@ class FilterPyinotify(FileFilter):
 
 	def stop(self):
 		super(FilterPyinotify, self).stop()
-
 		# Stop the notifier thread
 		self.__notifier.stop()
-		self.__notifier.join()			# to not exit before notifier does
-		self.__cleanup()				# for pedantic ones
+
+	##
+	# Wait for exit with cleanup.
+
+	def join(self):
+		self.__cleanup()
+		super(FilterPyinotify, self).join()
+		logSys.debug("[%s] filter terminated (pyinotifier)", self.jailName)
 
 	##
 	# Deallocates the resources used by pyinotify.
 
 	def __cleanup(self):
-		self.__notifier = None
+		if self.__notifier:
+			self.__notifier.join()			# to not exit before notifier does
+			self.__notifier = None
 		self.__monitor = None

@@ -21,6 +21,7 @@ __author__ = "Cyril Jaquier, Arturo 'Buanzo' Busleiman, Yaroslav Halchenko"
 __license__ = "GPL"
 
 import gc
+import locale
 import logging
 import os
 import re
@@ -30,6 +31,9 @@ import traceback
 from threading import Lock
 
 from .server.mytime import MyTime
+
+
+PREFER_ENC = locale.getpreferredencoding()
 
 
 def formatExceptionInfo():
@@ -125,6 +129,16 @@ def getLogger(name):
 		name = "fail2ban.%s" % name.rpartition(".")[-1]
 	return logging.getLogger(name)
 
+def str2LogLevel(value):
+	try:
+		if isinstance(value, int) or value.isdigit():
+			ll = int(value)
+		else:
+			ll = getattr(logging, value)
+	except AttributeError:
+		raise ValueError("Invalid log level %r" % value)
+	return ll
+
 
 def excepthook(exctype, value, traceback):
 	"""Except hook used to log unhandled exceptions to Fail2Ban log
@@ -143,6 +157,36 @@ def splitwords(s):
 		return []
 	return filter(bool, map(str.strip, re.split('[ ,\n]+', s)))
 
+
+#
+# Following "uni_decode" function unified python independent any to string converting
+#
+# Typical example resp. work-case for understanding the coding/decoding issues:
+#
+#   [isinstance('', str), isinstance(b'', str), isinstance(u'', str)]
+#   [True, True, False]; # -- python2
+#	  [True, False, True]; # -- python3
+#
+if sys.version_info >= (3,):
+	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
+		try:
+			if isinstance(x, bytes):
+				return x.decode(enc, errors)
+			return x
+		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
+			if errors != 'strict': 
+				raise
+			return uni_decode(x, enc, 'replace')
+else:
+	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
+		try:
+			if isinstance(x, unicode):
+				return x.encode(enc, errors)
+			return x
+		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
+			if errors != 'strict':
+				raise
+			return uni_decode(x, enc, 'replace')
 
 class BgService(object):
 	"""Background servicing

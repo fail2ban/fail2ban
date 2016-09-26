@@ -353,6 +353,11 @@ class DatabaseTest(LogCaptureTestCase):
 		# be returned
 		tickets = self.db.getBansMerged(bantime=-1)
 		self.assertEqual(len(tickets), 2)
+		# getCurrentBans:
+		tickets = self.db.getCurrentBans(jail=self.jail)
+		self.assertEqual(len(tickets), 2)
+		ticket = self.db.getCurrentBans(jail=None, ip="127.0.0.1");
+		self.assertEqual(ticket.getIP(), "127.0.0.1")
 
 	def testActionWithDB(self):
 		# test action together with database functionality

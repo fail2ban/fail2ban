@@ -124,14 +124,15 @@ class FilterGamin(FileFilter):
 		while self.active:
 			if self.idle:
 				# wait a little bit here for not idle, to prevent hi-load:
-				if not Utils.wait_for(lambda: not self.idle, 
+				if not Utils.wait_for(lambda: not self.active or not self.idle,
 					self.sleeptime * 10, self.sleeptime
 				):
 					self.ticks += 1
 					continue
-			Utils.wait_for(self._handleEvents, self.sleeptime)
+			Utils.wait_for(lambda: not self.active or self._handleEvents(),
+				self.sleeptime)
 			self.ticks += 1
-		logSys.debug(self.jail.name + ": filter terminated")
+		logSys.debug("[%s] filter terminated", self.jailName)
 		return True
 
 	def stop(self):

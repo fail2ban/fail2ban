@@ -24,7 +24,6 @@ __license__ = "GPL"
 import codecs
 import datetime
 import fcntl
-import locale
 import logging
 import os
 import re
@@ -40,7 +39,7 @@ from .datetemplate import DatePatternRegex, DateEpoch, DateTai64n
 from .mytime import MyTime
 from .failregex import FailRegex, Regex, RegexException
 from .action import CommandAction
-from ..helpers import getLogger
+from ..helpers import getLogger, PREFER_ENC
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -87,9 +86,10 @@ class Filter(JailThread):
 		## External command
 		self.__ignoreCommand = False
 		## Default or preferred encoding (to decode bytes from file or journal):
-		self.__encoding = locale.getpreferredencoding()
-		## Error counter
-		self.__errors = 0
+		self.__encoding = PREFER_ENC
+		## Error counter (protected, so can be used in filter implementations)
+		## if it reached 100 (at once), run-cycle will go idle
+		self._errors = 0
 		## Ticks counter
 		self.ticks = 0
 
@@ -100,6 +100,31 @@ class Filter(JailThread):
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__.__name__, self.jail)
 
+	@property
+	def jailName(self):
+		return (self.jail is not None and self.jail.name or "~jailless~")
+
+	def clearAllParams(self):
+		""" Clear all lists/dicts parameters (used by reloading)
+		"""
+		self.delFailRegex()
+		self.delIgnoreRegex()
+		self.delIgnoreIP()
+
+	def reload(self, begin=True):
+		""" Begin or end of reloading resp. refreshing of all parameters
+		"""
+		if begin:
+			self.clearAllParams()
+			if hasattr(self, 'getLogPaths'):
+				self._reload_logs = dict((k, 1) for k in self.getLogPaths())
+		else:
+			if hasattr(self, '_reload_logs'):
+				# if it was not reloaded - remove obsolete log file:
+				for path in self._reload_logs:
+					self.delLogPath(path)
+				delattr(self, '_reload_logs')
+
 	##
 	# Add a regular expression which matches the failure.
 	#
@@ -109,18 +134,23 @@ class Filter(JailThread):
 
 	def addFailRegex(self, value):
 		try:
-			regex = FailRegex(value)
+			regex = FailRegex(value, useDns=self.__useDns)
 			self.__failRegex.append(regex)
 			if "\n" in regex.getRegex() and not self.getMaxLines() > 1:
 				logSys.warning(
-					"Mutliline regex set for jail '%s' "
-					"but maxlines not greater than 1")
+					"Mutliline regex set for jail %r "
+					"but maxlines not greater than 1", self.jailName)
 		except RegexException as e:
 			logSys.error(e)
 			raise e
 
-	def delFailRegex(self, index):
+	def delFailRegex(self, index=None):
 		try:
+			# clear all:
+			if index is None:
+				del self.__failRegex[:]
+				return
+			# delete by index:
 			del self.__failRegex[index]
 		except IndexError:
 			logSys.error("Cannot remove regular expression. Index %d is not "
@@ -146,14 +176,19 @@ class Filter(JailThread):
 
 	def addIgnoreRegex(self, value):
 		try:
-			regex = Regex(value)
+			regex = Regex(value, useDns=self.__useDns)
 			self.__ignoreRegex.append(regex)
 		except RegexException as e:
 			logSys.error(e)
 			raise e 
 
-	def delIgnoreRegex(self, index):
+	def delIgnoreRegex(self, index=None):
 		try:
+			# clear all:
+			if index is None:
+				del self.__ignoreRegex[:]
+				return
+			# delete by index:
 			del self.__ignoreRegex[index]
 		except IndexError:
 			logSys.error("Cannot remove regular expression. Index %d is not "
@@ -203,7 +238,7 @@ class Filter(JailThread):
 		value = MyTime.str2seconds(value)
 		self.__findTime = value
 		self.failManager.setMaxTime(value)
-		logSys.info("Set findtime = %s" % value)
+		logSys.info("  findtime: %s", value)
 
 	##
 	# Get the time needed to find a failure.
@@ -232,10 +267,10 @@ class Filter(JailThread):
 			template = DatePatternRegex(pattern)
 		self.dateDetector = DateDetector()
 		self.dateDetector.appendTemplate(template)
-		logSys.info("Date pattern set to `%r`: `%s`" %
-			(pattern, template.name))
-		logSys.debug("Date pattern regex for %r: %s" %
-			(pattern, template.regex))
+		logSys.info("  date pattern `%r`: `%s`",
+			pattern, template.name)
+		logSys.debug("  date pattern regex for %r: %s",
+			pattern, template.regex)
 
 	##
 	# Get the date detector pattern, or Default Detectors if not changed
@@ -261,7 +296,7 @@ class Filter(JailThread):
 
 	def setMaxRetry(self, value):
 		self.failManager.setMaxRetry(value)
-		logSys.info("Set maxRetry = %s" % value)
+		logSys.info("  maxRetry: %s", value)
 
 	##
 	# Get the maximum retry value.
@@ -280,7 +315,7 @@ class Filter(JailThread):
 		if int(value) <= 0:
 			raise ValueError("maxlines must be integer greater than zero")
 		self.__lineBufferSize = int(value)
-		logSys.info("Set maxlines = %i" % self.__lineBufferSize)
+		logSys.info("  maxLines: %i", self.__lineBufferSize)
 
 	##
 	# Get the maximum line buffer size.
@@ -297,10 +332,10 @@ class Filter(JailThread):
 
 	def setLogEncoding(self, encoding):
 		if encoding.lower() == "auto":
-			encoding = locale.getpreferredencoding()
+			encoding = PREFER_ENC
 		codecs.lookup(encoding) # Raise LookupError if invalid codec
 		self.__encoding = encoding
-		logSys.info("Set jail log file encoding to %s" % encoding)
+		logSys.info("  encoding: %s" % encoding)
 		return encoding
 
 	##
@@ -375,16 +410,21 @@ class Filter(JailThread):
 		ip = IPAddr(ipstr)
 
 		# log and append to ignore list
-		logSys.debug("Add %r to ignore list (%r)", ip, ipstr)
+		logSys.debug("  Add %r to ignore list (%r)", ip, ipstr)
 		self.__ignoreIpList.append(ip)
 
-	def delIgnoreIP(self, ip):
-		logSys.debug("Remove %r from ignore list", ip)
+	def delIgnoreIP(self, ip=None):
+		# clear all:
+		if ip is None:
+			del self.__ignoreIpList[:]
+			return
+		# delete by ip:
+		logSys.debug("  Remove %r from ignore list", ip)
 		self.__ignoreIpList.remove(ip)
 
 	def logIgnoreIp(self, ip, log_ignore, ignore_source="unknown source"):
 		if log_ignore:
-			logSys.info("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source))
+			logSys.info("[%s] Ignore %s by %s" % (self.jailName, ip, ignore_source))
 
 	def getIgnoreIP(self):
 		return self.__ignoreIpList
@@ -414,29 +454,6 @@ class Filter(JailThread):
 			return ret_ignore
 
 		return False
-
-	if sys.version_info >= (3,):
-		@staticmethod
-		def uni_decode(x, enc, errors='strict'):
-			try:
-				if isinstance(x, bytes):
-					return x.decode(enc, errors)
-				return x
-			except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
-				if errors != 'strict': 
-					raise
-				return uni_decode(x, enc, 'replace')
-	else:
-		@staticmethod
-		def uni_decode(x, enc, errors='strict'):
-			try:
-				if isinstance(x, unicode):
-					return x.encode(enc, errors)
-				return x
-			except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
-				if errors != 'strict':
-					raise
-				return uni_decode(x, enc, 'replace')
 
 	def processLine(self, line, date=None, returnRawHost=False,
 		checkAllRegex=False, checkFindTime=False):
@@ -478,24 +495,28 @@ class Filter(JailThread):
 				if self.inIgnoreIPList(ip, log_ignore=True):
 					continue
 				logSys.info(
-					"[%s] Found %s - %s", self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
+					"[%s] Found %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
 				)
 				tick = FailTicket(ip, unixTime, lines, data=fail)
 				self.failManager.addFailure(tick)
 			# reset (halve) error counter (successfully processed line):
-			if self.__errors:
-				self.__errors //= 2
+			if self._errors:
+				self._errors //= 2
 		except Exception as e:
 			logSys.error("Failed to process line: %r, caught exception: %r", line, e,
 				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-			# incr error counter, stop processing (going idle) after 100th error :
-			self.__errors += 1
-			# sleep a little bit (to get around time-related errors):
-			time.sleep(self.sleeptime)
-			if self.__errors >= 100:
-				logSys.error("Too many errors at once (%s), going idle", self.__errors)
-				self.__errors //= 2
-				self.idle = True
+			# incr common error counter:
+			self.commonError()
+
+	def commonError(self):
+		# incr error counter, stop processing (going idle) after 100th error :
+		self._errors += 1
+		# sleep a little bit (to get around time-related errors):
+		time.sleep(self.sleeptime)
+		if self._errors >= 100:
+			logSys.error("Too many errors at once (%s), going idle", self._errors)
+			self._errors //= 2
+			self.idle = True
 
 	##
 	# Returns true if the line should be ignored.
@@ -657,7 +678,10 @@ class FileFilter(Filter):
 
 	def addLogPath(self, path, tail=False, autoSeek=True):
 		if path in self.__logs:
-			logSys.error(path + " already exists")
+			if hasattr(self, '_reload_logs') and path in self._reload_logs:
+				del self._reload_logs[path]
+			else:
+				logSys.error(path + " already exists")
 		else:
 			log = FileContainer(path, self.getLogEncoding(), tail)
 			db = self.jail.database
@@ -666,7 +690,7 @@ class FileFilter(Filter):
 				if lastpos and not tail:
 					log.setPos(lastpos)
 			self.__logs[path] = log
-			logSys.info("Added logfile = %s (pos = %s, hash = %s)" , path, log.getPos(), log.getHash())
+			logSys.info("Added logfile: %r (pos = %s, hash = %s)" , path, log.getPos(), log.getHash())
 			if autoSeek:
 				# if default, seek to "current time" - "find time":
 				if isinstance(autoSeek, bool):
@@ -692,7 +716,7 @@ class FileFilter(Filter):
 		db = self.jail.database
 		if db is not None:
 			db.updateLog(self.jail, log)
-		logSys.info("Removed logfile = %s" % path)
+		logSys.info("Removed logfile: %r" % path)
 		self._delLogPath(path)
 		return
 
@@ -759,49 +783,48 @@ class FileFilter(Filter):
 		if log is None:
 			logSys.error("Unable to get failures in " + filename)
 			return False
-		# Try to open log file.
+		# We should always close log (file), otherwise may be locked (log-rotate, etc.)
 		try:
-			has_content = log.open()
-		# see http://python.org/dev/peps/pep-3151/
-		except IOError as e:
-			logSys.error("Unable to open %s" % filename)
-			logSys.exception(e)
-			return False
-		except OSError as e: # pragma: no cover - requires race condition to tigger this
-			logSys.error("Error opening %s" % filename)
-			logSys.exception(e)
-			return False
-		except Exception as e: # pragma: no cover - Requires implemention error in FileContainer to generate
-			logSys.error("Internal error in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
-			logSys.exception(e)
-			return False
-
-		# seek to find time for first usage only (prevent performance decline with polling of big files)
-		if self.__autoSeek.get(filename):
-			startTime = self.__autoSeek[filename]
-			del self.__autoSeek[filename]
-			# prevent completely read of big files first time (after start of service), 
-			# initial seek to start time using half-interval search algorithm:
+			# Try to open log file.
 			try:
-				self.seekToTime(log, startTime)
-			except Exception as e: # pragma: no cover
-				logSys.error("Error during seek to start time in \"%s\"", filename)
-				raise
+				has_content = log.open()
+			# see http://python.org/dev/peps/pep-3151/
+			except IOError as e:
+				logSys.error("Unable to open %s" % filename)
+				logSys.exception(e)
+				return False
+			except OSError as e: # pragma: no cover - requires race condition to tigger this
+				logSys.error("Error opening %s" % filename)
+				logSys.exception(e)
+				return False
+			except Exception as e: # pragma: no cover - Requires implemention error in FileContainer to generate
+				logSys.error("Internal error in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
 				logSys.exception(e)
 				return False
 
-		# yoh: has_content is just a bool, so do not expect it to
-		# change -- loop is exited upon break, and is not entered at
-		# all if upon container opening that one was empty.  If we
-		# start reading tested to be empty container -- race condition
-		# might occur leading at least to tests failures.
-		while has_content:
-			line = log.readline()
-			if not line or not self.active:
-				# The jail reached the bottom or has been stopped
-				break
-			self.processLineAndAdd(line)
-		log.close()
+			# seek to find time for first usage only (prevent performance decline with polling of big files)
+			if self.__autoSeek.get(filename):
+				startTime = self.__autoSeek[filename]
+				del self.__autoSeek[filename]
+				# prevent completely read of big files first time (after start of service), 
+				# initial seek to start time using half-interval search algorithm:
+				try:
+					self.seekToTime(log, startTime)
+				except Exception as e: # pragma: no cover
+					logSys.error("Error during seek to start time in \"%s\"", filename)
+					raise
+					logSys.exception(e)
+					return False
+
+			if has_content:
+				while not self.idle:
+					line = log.readline()
+					if not line or not self.active:
+						# The jail reached the bottom or has been stopped
+						break
+					self.processLineAndAdd(line)
+		finally:
+			log.close()
 		db = self.jail.database
 		if db is not None:
 			db.updateLog(self.jail, log)
@@ -1055,10 +1078,14 @@ _decode_line_warn = {}
 
 class JournalFilter(Filter): # pragma: systemd no cover
 
+	def clearAllParams(self):
+		super(JournalFilter, self).clearAllParams()
+		self.delJournalMatch()
+
 	def addJournalMatch(self, match): # pragma: no cover - Base class, not used
 		pass
 
-	def delJournalMatch(self, match): # pragma: no cover - Base class, not used
+	def delJournalMatch(self, match=None): # pragma: no cover - Base class, not used
 		pass
 
 	def getJournalMatch(self, match): # pragma: no cover - Base class, not used

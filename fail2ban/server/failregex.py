@@ -40,11 +40,11 @@ class Regex:
 	# avoid construction of invalid object.
 	# @param value the regular expression
 	
-	def __init__(self, regex):
+	def __init__(self, regex, **kwargs):
 		self._matchCache = None
 		# Perform shortcuts expansions.
 		# Resolve "<HOST>" tag using default regular expression for host:
-		regex = Regex._resolveHostTag(regex)
+		regex = Regex._resolveHostTag(regex, **kwargs)
 		# Replace "<SKIPLINES>" with regular expression for multiple lines.
 		regexSplit = regex.split("<SKIPLINES>")
 		regex = regexSplit[0]
@@ -69,22 +69,29 @@ class Regex:
 	# @return the replaced regular expression as string
 
 	@staticmethod
-	def _resolveHostTag(regex):
-		# 3 groups instead of <HOST> - separated ipv4, ipv6 and host
-		regex = regex.replace("<HOST>",
-		 	r"""(?:(?:::f{4,6}:)?(?P<ip4>(?:\d{1,3}\.){3}\d{1,3})|\[?(?P<ip6>(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}|(?<=:):))\]?|(?P<dns>[\w\-.^_]*\w))""")
+	def _resolveHostTag(regex, useDns="yes"):
 		# separated ipv4:
+		r_host = []
 		r = r"""(?:::f{4,6}:)?(?P<ip4>(?:\d{1,3}\.){3}\d{1,3})"""
 		regex = regex.replace("<IP4>", r); # self closed
 		regex = regex.replace("<F-IP4/>", r); # closed
+		r_host.append(r)
 		# separated ipv6:
 		r = r"""(?P<ip6>(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}?|(?<=:):))"""
 		regex = regex.replace("<IP6>", r); # self closed
 		regex = regex.replace("<F-IP6/>", r); # closed
+		r_host.append(r"""\[?%s\]?""" % (r,)); # enclose ipv6 in optional [] in host-regex
+		# 2 address groups instead of <ADDR> - in opposition to `<HOST>`, 
+		# for separate usage of 2 address groups only (regardless of `usedns`), `ip4` and `ip6` together
+		regex = regex.replace("<ADDR>", "(?:%s)" % ("|".join(r_host),))
 		# separated dns:
 		r = r"""(?P<dns>[\w\-.^_]*\w)"""
 		regex = regex.replace("<DNS>", r); # self closed
 		regex = regex.replace("<F-DNS/>", r); # closed
+		if useDns not in ("no",):
+			r_host.append(r)
+		# 3 groups instead of <HOST> - separated ipv4, ipv6 and host (dns)
+		regex = regex.replace("<HOST>", "(?:%s)" % ("|".join(r_host),))
 		# default failure-id as no space tag:
 		regex = regex.replace("<F-ID/>", r"""(?P<fid>\S+)"""); # closed
 		# default failure port, like 80 or http :
@@ -249,9 +256,9 @@ class FailRegex(Regex):
 	# avoid construction of invalid object.
 	# @param value the regular expression
 
-	def __init__(self, regex):
+	def __init__(self, regex, **kwargs):
 		# Initializes the parent.
-		Regex.__init__(self, regex)
+		Regex.__init__(self, regex, **kwargs)
 		# Check for group "dns", "ip4", "ip6", "fid"
 		if not [grp for grp in FAILURE_ID_GROPS if grp in self._regexObj.groupindex]:
 			raise RegexException("No failure-id group in '%s'" % self._regex)

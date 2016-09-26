@@ -29,7 +29,6 @@ __copyright__ = "Copyright (c) 2004-2008 Cyril Jaquier, 2012-2014 Yaroslav Halch
 __license__ = "GPL"
 
 import getopt
-import locale
 import logging
 import os
 import shlex
@@ -52,7 +51,7 @@ from .filterreader import FilterReader
 from ..server.filter import Filter, FileContainer
 from ..server.failregex import RegexException
 
-from ..helpers import FormatterWithTraceBack, getLogger
+from ..helpers import FormatterWithTraceBack, getLogger, PREFER_ENC
 # Gets the instance of the logger.
 logSys = getLogger("fail2ban")
 
@@ -127,6 +126,9 @@ Report bugs to https://github.com/fail2ban/fail2ban/issues
 			   help="File encoding. Default: system locale"),
 		Option("-r", "--raw", action='store_true',
 			   help="Raw hosts, don't resolve dns"),
+		Option("--usedns", action='store', default=None,
+			   help="DNS specified replacement of tags <HOST> in regexp "
+			        "('yes' - matches all form of hosts, 'no' - IP addresses only)"),
 		Option("-L", "--maxlines", type=int, default=0,
 			   help="maxlines for multi-line regex"),
 		Option("-m", "--journalmatch",
@@ -239,8 +241,10 @@ class Fail2banRegex(object):
 		if opts.encoding:
 			self.encoding = opts.encoding
 		else:
-			self.encoding = locale.getpreferredencoding()
+			self.encoding = PREFER_ENC
 		self.raw = True if opts.raw else False
+		if opts.usedns:
+			self._filter.setUseDns(opts.usedns)
 
 	def decode_line(self, line):
 		return FileContainer.decode_line('<LOG>', self.encoding, line)
