@@ -12,14 +12,22 @@ ver. 0.10.0 (2016/XX/XXX) - gonna-be-released-some-time-shining
 TODO: implementing of options resp. other tasks from PR #1346
 
 ### Fixes
-* [grave] memory leak's fixed (gh-1277, gh-1234)
-* tricky bug fix: last position of log file will be never retrieved (gh-795),
+* [Grave] memory leak's fixed (gh-1277, gh-1234)
+* Tricky bug fix: last position of log file will be never retrieved (gh-795),
   because of CASCADE all log entries will be deleted from logs table together with jail, 
   if used "INSERT OR REPLACE" statement
-* asyncserver (asyncore) code fixed and test cases repaired (again gh-161)
+* Asyncserver (asyncore) code fixed and test cases repaired (again gh-161)
 * testSocket: sporadical bug repaired - wait for server thread starts a socket (listener)
 * testExecuteTimeoutWithNastyChildren: sporadical bug repaired - wait for pid file inside bash,
   kill tree in any case (gh-1155)
+* Fixed high-load of pyinotify-backend,
+  see https://github.com/fail2ban/fail2ban/issues/885#issuecomment-248964591
+* Database: stability fix - repack cursor iterator as long as locked
+* File filter backends: stability fix for sporadically errors - always close file
+  handle, otherwise may be locked (prevent log-rotate, etc.)
+* Pyinotify-backend: stability fix for sporadically errors in multi-threaded
+  environment (without lock)
+* Fixed sporadically error in testCymruInfoNxdomain, because of unsorted values
 
 ### New Features
 * IPv6 support:
@@ -33,18 +41,33 @@ TODO: implementing of options resp. other tasks from PR #1346
     - new conditional section functionality used in config resp. includes:
       - [Init?family=inet4] - IPv4 qualified hosts only
       - [Init?family=inet6] - IPv6 qualified hosts only
+* New reload functionality (now totally without restart, unbanning/rebanning, etc.),
+  see gh-1557
+* Several commands extended and new commands introduced:
+  - `restart [--unban] [--if-exists] <JAIL>` - restarts the jail \<JAIL\>
+    (alias for `reload --restart ... <JAIL>`)
+  - `reload [--restart] [--unban] [--all]` - reloads the configuration without restarting
+    of the server, the option `--restart` activates completely restarting of affected jails,
+    thereby can unban IP addresses (if option `--unban` specified)
+  - `reload [--restart] [--unban] [--if-exists] <JAIL>` - reloads the jail \<JAIL\>,
+    or restarts it (if option `--restart` specified), at the same time unbans all IP addresses
+    banned in this jail, if option `--unban` specified
+  - `unban --all` - unbans all IP addresses (in all jails and database)
+  - `unban <IP> ... <IP>` - unbans \<IP\> (in all jails and database) (see gh-1388)
+* New command action parameter `actionrepair` - command executed in order to restore
+  sane environment in error case of `actioncheck`.
 
 ### Enhancements
-* huge increasing of fail2ban performance and especially test-cases performance (see gh-1109)
-* datedetector: in-place reordering using hits and last used time: 
+* Huge increasing of fail2ban performance and especially test-cases performance (see gh-1109)
+* Datedetector: in-place reordering using hits and last used time: 
   matchTime, template list etc. rewritten because of performance degradation
-* prevent out of memory situation if many IP's makes extremely many failures (maxEntries)
-* introduced string to seconds (str2seconds) for configuration entries with time,
+* Prevent out of memory situation if many IP's makes extremely many failures (maxEntries)
+* Introduced string to seconds (str2seconds) for configuration entries with time,
   use `1h` instead of `3600`, `1d` instead of `86400`, etc
 * seekToTime - prevent completely read of big files first time (after start of service), 
   initial seek to start time using half-interval search algorithm (see issue gh-795)
-* ticket and some other modules prepared to easy merge with newest version of 'ban-time-incr'
-* cache dnsToIp, ipToName to prevent long wait during retrieving of ip/name,
+* Ticket and some other modules prepared to easy merge with newest version of 'ban-time-incr'
+* Cache dnsToIp, ipToName to prevent long wait during retrieving of ip/name,
   especially for wrong dns or lazy dns-system
 * FailManager memory-optimization: increases performance, 
   prevents memory leakage, because don't copy failures list on some operations
@@ -54,14 +77,52 @@ TODO: implementing of options resp. other tasks from PR #1346
     - `-g`, `--no-gamin` to prevent running of tests that require the gamin (slow)
     - `-m`, `--memory-db` - run database tests using memory instead of file
     - `-i`, `--ignore` - negate [regexps] filter to ignore tests matched specified regexps
-* background servicing: prevents memory leak on some platforms/python versions, using forced GC
+* Background servicing: prevents memory leak on some platforms/python versions, using forced GC
   in periodic intervals (latency and threshold)
 * executeCmd partially moved from action to new module utils
-* several functionality of class `DNSUtils` moved to new class `IPAddr`, 
+* Several functionality of class `DNSUtils` moved to new class `IPAddr`, 
   both classes moved to new module `ipdns`
-* pseudo-conditional section introduced, for conditional substitution resp. 
+* Pseudo-conditional section introduced, for conditional substitution resp. 
   evaluation of parameters for different family qualified hosts, 
   syntax `[Section?family=inet6]` (currently use for IPv6-support only).
+* All the backends were rewritten to get reload-possibility, performance increased,
+  so fewer greedy regarding cpu- resp. system-load now
+* Numeric log-level allowed now in server (resp. fail2ban.conf);
+* Implemented better error handling in some multi-threaded routines; shutdown of jails
+  rewritten (faster and safer, does not breaks shutdown process if some error occurred)
+* Possibility for overwriting some configuration options (read with config-readers)
+  with command line option, e. g.:
+```bash
+## start server with DEBUG log-level (ignore level read from fail2ban.conf):
+fail2ban-client --loglevel DEBUG start
+## or
+fail2ban-server -c /cfg/path --loglevel DEBUG start
+## keep server log-level by reload (without restart it)
+fail2ban-client --loglevel DEBUG reload
+## switch log-level back to INFO:
+fail2ban-client set loglevel INFO
+```
+* Optimized BanManager: increase performance, fewer system load, try to prevent
+  memory leakage:
+  - better ban/unban handling within actions (e.g. used dict instead of list)
+  - don't copy bans resp. its list on some operations;
+  - added new unbantime handling to relieve unBanList (prevent permanent
+    searching for tickets to unban)
+  - prefer failure-ID as identifier of the ticket to its IP (most of the time
+    the same, but it can be something else e.g. user name in some complex jails,
+    as introduced in 0.10)
+* Regexp enhancements:
+  - build replacement of `<HOST>` substitution corresponding parameter
+    `usedns` - dns-part will be added only if `usedns` is not `no`,
+    also using fail2ban-regex
+  - new replacement for `<ADDR>` in opposition to `<HOST>`, for separate
+    usage of 2 address groups only (regardless of `usedns`), `ip4` and `ip6`
+    together, without host (dns)
+* fail2ban-testcases:
+  - `assertLogged` extended with parameter wait (to wait up to specified timeout,
+    before we throw assert exception) + test cases rewritten using that
+  - added `assertDictEqual` for compatibility to early python versions (< 2.7);
+  - new `with_foreground_server_thread` decorator to test several client/server commands
 
 
 ver. 0.9.6 (2016/XX/XX) - wanna-be-released
