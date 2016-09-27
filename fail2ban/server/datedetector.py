@@ -21,6 +21,7 @@ __author__ = "Cyril Jaquier and Fail2Ban Contributors"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import copy
 import time
 
 from threading import Lock
@@ -35,6 +36,8 @@ logLevel = 6
 
 
 class DateDetectorCache(object):
+	"""Implements the caching of the default templates list.
+	"""
 	def __init__(self):
 		self.__lock = Lock()
 		self.__templates = list()
@@ -51,26 +54,44 @@ class DateDetectorCache(object):
 
 	def _cacheTemplate(self, template):
 		"""Cache Fail2Ban's default template.
+
 		"""
 		if isinstance(template, str):
+			# exact given template with word benin-end boundary:
 			template = DatePatternRegex(template)
+		# additional template, that prefers datetime at start of a line (safety+performance feature):
+		template2 = copy.copy(template)
+		if hasattr(template, 'pattern'):
+			regex = template.pattern
+			wordEnd = True
+		else:
+			regex = template.regex
+			wordEnd = False
+		template2.setRegex(regex, wordBegin='start', wordEnd=wordEnd)
+		if template2.name != template.name:
+			self.__templates.append(template2)
+		# add template:
 		self.__templates.append(template)
 
 	def _addDefaultTemplate(self):
 		"""Add resp. cache Fail2Ban's default set of date templates.
 		"""
+		# ISO 8601, simple date, optional subsecond and timezone:
+		# 2005-01-23T21:59:59.981746, 2005-01-23 21:59:59
+		# simple date: 2005/01/23 21:59:59 
+		# custom for syslog-ng 2006.12.21 06:43:20
+		self._cacheTemplate("%Y(?P<_sep>[-/.])%m(?P=_sep)%d[T ]%H:%M:%S(?:[.,]%f)?(?:\s*%z)?")
+		# 20050123T215959, 20050123 215959
+		self._cacheTemplate("%Y%Em%Ed[T ]%EH%EM%ES(?:[.,]%f)?(?:\s*%z)?")
 		# asctime with optional day, subsecond and/or year:
 		# Sun Jan 23 21:59:59.011 2005 
-		self._cacheTemplate("(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %Y)?")
+		# prefixed with optional time zone (monit):
+		# PDT Apr 16 21:05:29
+		self._cacheTemplate("(?:%z )?(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %Y)?")
 		# asctime with optional day, subsecond and/or year coming after day
 		# http://bugs.debian.org/798923
 		# Sun Jan 23 2005 21:59:59.011
 		self._cacheTemplate("(?:%a )?%b %d %Y %H:%M:%S(?:\.%f)?")
-		# simple date, optional subsecond (proftpd):
-		# 2005-01-23 21:59:59 
-		# simple date: 2005/01/23 21:59:59 
-		# custom for syslog-ng 2006.12.21 06:43:20
-		self._cacheTemplate("%Y(?P<_sep>[-/.])%m(?P=_sep)%d %H:%M:%S(?:,%f)?")
 		# simple date too (from x11vnc): 23/01/2005 21:59:59 
 		# and with optional year given by 2 digits: 23/01/05 21:59:59 
 		# (See http://bugs.debian.org/537610)
@@ -79,35 +100,46 @@ class DateDetectorCache(object):
 		# Apache format optional time zone:
 		# [31/Oct/2006:09:22:55 -0000]
 		# 26-Jul-2007 15:20:52
+		# named 26-Jul-2007 15:20:52.252
+		# roundcube 26-Jul-2007 15:20:52 +0200
 		self._cacheTemplate("%d(?P<_sep>[-/])%b(?P=_sep)%Y[ :]?%H:%M:%S(?:\.%f)?(?: %z)?")
 		# CPanel 05/20/2008:01:57:39
 		self._cacheTemplate("%m/%d/%Y:%H:%M:%S")
-		# named 26-Jul-2007 15:20:52.252 
-		# roundcube 26-Jul-2007 15:20:52 +0200
 		# 01-27-2012 16:22:44.252
 		# subseconds explicit to avoid possible %m<->%d confusion
-		# with previous
-		self._cacheTemplate("%m-%d-%Y %H:%M:%S\.%f")
+		# with previous ("%d-%m-%Y %H:%M:%S" by "%d(?P<_sep>[-/])%m(?P=_sep)(?:%Y|%y) %H:%M:%S")
+		self._cacheTemplate("%m-%d-%Y %H:%M:%S(?:\.%f)?")
 		# TAI64N
-		template = DateTai64n()
-		template.name = "TAI64N"
-		self._cacheTemplate(template)
+		self._cacheTemplate(DateTai64n())
 		# Epoch
-		template = DateEpoch()
-		template.name = "Epoch"
-		self._cacheTemplate(template)
-		# ISO 8601
-		self._cacheTemplate("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?(?:%z)?")
+		self._cacheTemplate(DateEpoch())
 		# Only time information in the log
 		self._cacheTemplate("^%H:%M:%S")
 		# <09/16/08@05:03:30>
 		self._cacheTemplate("^<%m/%d/%y@%H:%M:%S>")
 		# MySQL: 130322 11:46:11
-		self._cacheTemplate("^%y%m%d  ?%H:%M:%S")
+		self._cacheTemplate("%y%Em%Ed  ?%H:%M:%S")
 		# Apache Tomcat
 		self._cacheTemplate("%b %d, %Y %I:%M:%S %p")
 		# ASSP: Apr-27-13 02:33:06
 		self._cacheTemplate("^%b-%d-%y %H:%M:%S")
+
+
+class DateDetectorTemplate(object):
+	"""Used for "shallow copy" of the template object.
+
+	Prevents collectively usage of hits/lastUsed in cached templates
+	"""
+	__slots__ = ('template', 'hits', 'lastUsed')
+	def __init__(self, template):
+		self.template = template
+		self.hits = 0
+		self.lastUsed = 0
+
+	def __getattr__(self, name):
+		""" Returns attribute of template (called for parameters not in slots)
+		"""
+		return getattr(self.template, name)
 
 
 class DateDetector(object):
@@ -132,7 +164,7 @@ class DateDetector(object):
 			raise ValueError(
 				"There is already a template with name %s" % name)
 		self.__known_names.add(name)
-		self.__templates.append(template)
+		self.__templates.append(DateDetectorTemplate(template))
 
 	def appendTemplate(self, template):
 		"""Add a date template to manage and use in search of dates.
@@ -186,13 +218,14 @@ class DateDetector(object):
 		"""
 		i = 0
 		with self.__lock:
-			for template in self.__templates:
+			for ddtemplate in self.__templates:
+				template = ddtemplate.template
 				match = template.matchDate(line)
 				if not match is None:
 					if logSys.getEffectiveLevel() <= logLevel:
 						logSys.log(logLevel, "Matched time template %s", template.name)
-					template.hits += 1
-					template.lastUsed = time.time()
+					ddtemplate.hits += 1
+					ddtemplate.lastUsed = time.time()
 					# if not first - try to reorder current template (bubble up), they will be not sorted anymore:
 					if i:
 						self._reorderTemplate(i)
@@ -234,7 +267,8 @@ class DateDetector(object):
 				except ValueError:
 					return None
 		with self.__lock:
-			for template in self.__templates:
+			for ddtemplate in self.__templates:
+				template = ddtemplate.template
 				try:
 					date = template.getDate(line)
 					if date is None:
@@ -261,14 +295,21 @@ class DateDetector(object):
 		  ## current hits and time the template was long unused:
 			untime = template.lastUsed - self.__unusedTime
 			hits = template.hits
+			## try to move faster (first 2 if it still unused, or half of part to current template position):
+			phits = 0
+			for pos in (0, 1, num // 2):
+				phits = templates[pos].hits
+				if not phits:
+					break
 			## don't move too often (multiline logs resp. log's with different date patterns),
 			## if template not used too long, replace it also :
-			if hits > templates[num-1].hits + 5 or templates[num-1].lastUsed < untime:
-				## try to move faster (half of part to current template):
-				pos = num // 2
-				## if not larger - move slow (exact 1 position):
-				if hits <= templates[pos].hits or templates[pos].lastUsed < untime:
+			if not phits or hits > phits + 5 or templates[pos].lastUsed < untime:
+				## if not larger (and target position recently used) - move slow (exact 1 position):
+				if hits <= phits and templates[pos].lastUsed > untime:
 					pos = num-1
+					## if still smaller and template at position used, don't move:
+					if hits < templates[pos].hits and templates[pos].lastUsed > untime:
+						return
 				templates[pos], templates[num] = template, templates[pos]
 
 

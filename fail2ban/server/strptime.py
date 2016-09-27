@@ -26,7 +26,23 @@ from .mytime import MyTime
 
 locale_time = LocaleTime()
 timeRE = TimeRE()
+#todo: implement literal time zone support like CET, PST, PDT, etc (via pytz):
+#timeRE['z'] = r"%s?(?P<z>Z|[+-]\d{2}(?::?[0-5]\d)?|[A-Z]{3})?" % timeRE['Z']
 timeRE['z'] = r"(?P<z>Z|[+-]\d{2}(?::?[0-5]\d)?)"
+
+# Extend build-in TimeRE with some exact (two-digit) patterns:
+timeRE['Ed'] = r"(?P<d>3[0-1]|[1-2]\d|0[1-9])"
+timeRE['Em'] = r"(?P<m>1[0-2]|0[1-9])"
+timeRE['EH'] = r"(?P<H>2[0-3]|[0-1]\d)"
+timeRE['EM'] = r"(?P<M>[0-5]\d)"
+timeRE['ES'] = r"(?P<S>6[0-1]|[0-5]\d)"
+
+def getTimePatternRE():
+	keys = timeRE.keys()
+	return (r"%%(%%|%s|[%s])" % (
+		"|".join([k for k in keys if len(k) > 1]),
+		"".join([k for k in keys if len(k) == 1]),
+	))
 
 
 def reGroupDictStrptime(found_dict):

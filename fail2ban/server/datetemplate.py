@@ -27,7 +27,7 @@ __license__ = "GPL"
 import re
 from abc import abstractmethod
 
-from .strptime import reGroupDictStrptime, timeRE
+from .strptime import reGroupDictStrptime, timeRE, getTimePatternRE
 from ..helpers import getLogger
 
 logSys = getLogger(__name__)
@@ -49,8 +49,6 @@ class DateTemplate(object):
 		self._name = ""
 		self._regex = ""
 		self._cRegex = None
-		self.hits = 0
-		self.lastUsed = 0
 
 	@property
 	def name(self):
@@ -88,9 +86,11 @@ class DateTemplate(object):
 		"""
 		regex = regex.strip()
 		if wordBegin and not re.search(r'^\^', regex):
-			regex = r'(?=^|\b|\W)' + regex
+			regex = (r'(?<=^|\b)' if wordBegin != 'start' else r"^(?<=\W)?") + regex
+			self._name = ('[*WD-BEG]' if wordBegin != 'start' else '[^LN-BEG]') + self._name
 		if wordEnd and not re.search(r'\$$', regex):
 			regex += r'(?=\b|\W|$)'
+			self._name += ('[*WD-END]' if wordEnd else '')
 		self._regex = regex
 
 	regex = property(getRegex, setRegex, doc=
@@ -140,7 +140,9 @@ class DateEpoch(DateTemplate):
 
 	def __init__(self):
 		DateTemplate.__init__(self)
-		self.regex = r"(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=audit\()))\d{10,11}\b(?:\.\d{3,6})?(?:(?(selinux)(?=:\d+\)))|(?(square)(?=\])))"
+		self.name = "Epoch"
+		self.setRegex(r"(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=\baudit\()))\d{10,11}\b(?:\.\d{3,6})?(?:(?(selinux)(?=:\d+\)))|(?(square)(?=\])))",
+			wordBegin=False) ;# already line begin resp. word begin anchored
 
 	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.
@@ -178,7 +180,8 @@ class DatePatternRegex(DateTemplate):
 	regex
 	pattern
 	"""
-	_patternRE = re.compile(r"%%(%%|[%s])" % "".join(timeRE.keys()))
+	
+	_patternRE = re.compile(getTimePatternRE())
 	_patternName = {
 		'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
 		'H': "24hour", 'I': "12hour", 'j': "Yearday", 'm': "Month",
@@ -188,11 +191,11 @@ class DatePatternRegex(DateTemplate):
 	for _key in set(timeRE) - set(_patternName): # may not have them all...
 		_patternName[_key] = "%%%s" % _key
 
-	def __init__(self, pattern=None):
+	def __init__(self, pattern=None, **kwargs):
 		super(DatePatternRegex, self).__init__()
 		self._pattern = None
 		if pattern is not None:
-			self.pattern = pattern
+			self.setRegex(pattern, **kwargs)
 
 	@property
 	def pattern(self):
@@ -208,17 +211,13 @@ class DatePatternRegex(DateTemplate):
 
 	@pattern.setter
 	def pattern(self, pattern):
+		self.setRegex(pattern)
+
+	def setRegex(self, pattern, wordBegin=True, wordEnd=True):
 		self._pattern = pattern
 		fmt = self._patternRE.sub(r'%(\1)s', pattern)
 		self._name = fmt % self._patternName
-		super(DatePatternRegex, self).setRegex(fmt % timeRE)
-
-	def setRegex(self, value):
-		raise NotImplementedError("Regex derived from pattern")
-
-	@DateTemplate.name.setter
-	def name(self, value):
-		raise NotImplementedError("Name derived from pattern")
+		super(DatePatternRegex, self).setRegex(fmt % timeRE, wordBegin, wordEnd)
 
 	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.
@@ -258,6 +257,7 @@ class DateTai64n(DateTemplate):
 
 	def __init__(self):
 		DateTemplate.__init__(self)
+		self.name = "TAI64N"
 		# We already know the format for TAI64N
 		# yoh: we should not add an additional front anchor
 		self.setRegex("@[0-9a-f]{24}", wordBegin=False)

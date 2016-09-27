@@ -89,69 +89,79 @@ class DateDetectorTest(LogCaptureTestCase):
 		"""
 		dateUnix = 1106513999.0
 
-		for anchored, sdate in (
-			(False, "Jan 23 21:59:59"),
-			(False, "Sun Jan 23 21:59:59 2005"),
-			(False, "Sun Jan 23 21:59:59"),
-			(False, "Sun Jan 23 2005 21:59:59"),
-			(False, "2005/01/23 21:59:59"),
-			(False, "2005.01.23 21:59:59"),
-			(False, "23/01/2005 21:59:59"),
-			(False, "23/01/05 21:59:59"),
-			(False, "23/Jan/2005:21:59:59"),
-			(False, "23/Jan/2005:21:59:59 +0100"),
-			(False, "01/23/2005:21:59:59"),
-			(False, "2005-01-23 21:59:59"),
-		    (False, "2005-01-23 21:59:59,000"),	  # proftpd
-			(False, "23-Jan-2005 21:59:59"),
-			(False, "23-Jan-2005 21:59:59.02"),
-			(False, "23-Jan-2005 21:59:59 +0100"),
-			(False, "23-01-2005 21:59:59"),
-			(True, "1106513999"), # Portsetry
-			(False, "01-23-2005 21:59:59.252"), # reported on f2b, causes Feb29 fix to break
-			(False, "@4000000041f4104f00000000"), # TAI64N
-			(False, "2005-01-23T20:59:59.252Z"), #ISO 8601 (UTC)
-			(False, "2005-01-23T15:59:59-05:00"), #ISO 8601 with TZ
-			(False, "2005-01-23T21:59:59"), #ISO 8601 no TZ, assume local
-			(True,  "<01/23/05@21:59:59>"),
-			(True,  "050123 21:59:59"), # MySQL
-			(True,  "Jan-23-05 21:59:59"), # ASSP like
-			(False, "Jan 23, 2005 9:59:59 PM"), # Apache Tomcat
-			(True,  "1106513999"), # Regular epoch
-			(True,  "1106513999.000"), # Regular epoch with millisec
-			(False, "audit(1106513999.000:987)"), # SELinux
+		for anchored, bound, sdate, rdate in (
+			(False, True,  "Jan 23 21:59:59", None),
+			(False, False, "Sun Jan 23 21:59:59 2005", None),
+			(False, False, "Sun Jan 23 21:59:59", None),
+			(False, False, "Sun Jan 23 2005 21:59:59", None),
+			(False, True,  "2005/01/23 21:59:59", None),
+			(False, True,  "2005.01.23 21:59:59", None),
+			(False, True,  "23/01/2005 21:59:59", None),
+			(False, True,  "23/01/05 21:59:59", None),
+			(False, True,  "23/Jan/2005:21:59:59", None),
+			(False, True,  "23/Jan/2005:21:59:59 +0100", None),
+			(False, True,  "01/23/2005:21:59:59", None),
+			(False, True,  "2005-01-23 21:59:59", None),
+			(False, True,  "2005-01-23 21:59:59,000", None),	  # proftpd
+			(False, True,  "23-Jan-2005 21:59:59", None),
+			(False, True,  "23-Jan-2005 21:59:59.02", None),
+			(False, True,  "23-Jan-2005 21:59:59 +0100", None),
+			(False, True,  "23-01-2005 21:59:59", None),
+			(True,  True,  "1106513999", None), # Portsetry
+			(False, True,  "01-23-2005 21:59:59.252", None), # reported on f2b, causes Feb29 fix to break
+			(False, False, "@4000000041f4104f00000000", None), # TAI64N
+			(False, True,  "2005-01-23T20:59:59.252Z", None), #ISO 8601 (UTC)
+			(False, True,  "2005-01-23T15:59:59-05:00", None), #ISO 8601 with TZ
+			(False, True,  "2005-01-23 21:59:59", None), #ISO 8601 no TZ, assume local
+			(False, True,  "20050123T215959", None),   #Short ISO
+			(False, True,  "20050123 215959", None),   #Short ISO
+			(True,  True,  "<01/23/05@21:59:59>", None),
+			(False, True,  "050123 21:59:59", None), # MySQL
+			(True,  True,  "Jan-23-05 21:59:59", None), # ASSP like
+			(False, True,  "Jan 23, 2005 9:59:59 PM", None), # Apache Tomcat
+			(True,  True,  "1106513999", None), # Regular epoch
+			(True,  True,  "1106513999.000", None), # Regular epoch with millisec
+			(True,  True,  "[1106513999.000]", "1106513999.000"), # epoch squared
+			(False, True,  "audit(1106513999.000:987)", "1106513999.000"), # SELinux
+		):
+			logSys.debug('== test %r', (anchored, bound, sdate))
+			for should_match, prefix in (
+				(True,         ""),
+				(not anchored, "bogus-prefix "),
+				(False,        "word-boundary")
 			):
-			for should_match, prefix in ((True,     ""),
-										 (not anchored, "bogus-prefix ")):
+				if rdate is None: rdate = sdate
 				log = prefix + sdate + "[sshd] error: PAM: Authentication failure"
-
+				# if not allowed boundary test:
+				if not bound and prefix == "word-boundary": continue
+				logSys.debug('  -- test %-5s for %r', should_match, log)
 				# with getTime:
 				logtime = self.__datedetector.getTime(log)
 				if should_match:
-					self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s, anchored: %r, log: %s" % ( sdate, anchored, log))
+					self.assertNotEqual(logtime, None,
+						"getTime retrieved nothing: failure for %s by prefix %r, anchored: %r, log: %s" % ( sdate, prefix, anchored, log))
 					( logUnix, logMatch ) = logtime
-					self.assertEqual(logUnix, dateUnix, "getTime comparison failure for %s: \"%s\" is not \"%s\"" % (sdate, logUnix, dateUnix))
-					if sdate.startswith('audit('):
-						# yes, special case, the group only matches the number
-						self.assertEqual(logMatch.group(), '1106513999.000')
-					else:
-						self.assertEqual(logMatch.group(), sdate)
+					self.assertEqual(logUnix, dateUnix,
+						"getTime comparison failure for %s: by prefix %r \"%s\" is not \"%s\"" % (sdate, prefix, logUnix, dateUnix))
+					self.assertEqual(logMatch.group(), rdate)
 				else:
-					self.assertEqual(logtime, None, "getTime should have not matched for %r Got: %s" % (sdate, logtime))
+					self.assertEqual(logtime, None,
+						"getTime should have not matched for %r by prefix %r Got: %s" % (sdate, prefix, logtime))
 				# with getTime(matchTime) - this combination used in filter:
-				matchTime = self.__datedetector.matchTime(log)
+				(timeMatch, template) = matchTime = self.__datedetector.matchTime(log)
 				logtime = self.__datedetector.getTime(log, matchTime)
+				logSys.debug('  -- found - %r', template.name if timeMatch else False)
 				if should_match:
-					self.assertNotEqual(logtime, None, "getTime retrieved nothing: failure for %s, anchored: %r, log: %s" % ( sdate, anchored, log))
+					self.assertNotEqual(logtime, None,
+						"getTime retrieved nothing: failure for %s by prefix %r, anchored: %r, log: %s" % ( sdate, prefix, anchored, log))
 					( logUnix, logMatch ) = logtime
-					self.assertEqual(logUnix, dateUnix, "getTime comparison failure for %s: \"%s\" is not \"%s\"" % (sdate, logUnix, dateUnix))
-					if sdate.startswith('audit('):
-						# yes, special case, the group only matches the number
-						self.assertEqual(logMatch.group(), '1106513999.000')
-					else:
-						self.assertEqual(logMatch.group(), sdate)
+					self.assertEqual(logUnix, dateUnix,
+						"getTime comparison failure for %s by prefix %r: \"%s\" is not \"%s\"" % (sdate, prefix, logUnix, dateUnix))
+					self.assertEqual(logMatch.group(), rdate)
 				else:
-					self.assertEqual(logtime, None, "getTime should have not matched for %r Got: %s" % (sdate, logtime))
+					self.assertEqual(logtime, None,
+						"getTime should have not matched for %r by prefix %r Got: %s" % (sdate, prefix, logtime))
+				logSys.debug('  -- OK')
 
 	def testAllUniqueTemplateNames(self):
 		self.assertRaises(ValueError, self.__datedetector.appendTemplate,
