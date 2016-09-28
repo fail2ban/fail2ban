@@ -32,6 +32,9 @@ from ..helpers import getLogger
 
 logSys = getLogger(__name__)
 
+RE_NO_WRD_BOUND_BEG = re.compile(r'^(?:\^|\*\*|\(\?:\^)')
+RE_NO_WRD_BOUND_END = re.compile(r'(?<!\\)(?:\$|\*\*)$')
+RE_DEL_WRD_BOUNDS =   re.compile(r'^\*\*|(?<!\\)\*\*$')
 
 class DateTemplate(object):
 	"""A template which searches for and returns a date from a log line.
@@ -46,19 +49,10 @@ class DateTemplate(object):
 	"""
 
 	def __init__(self):
-		self._name = ""
+		self.name = ""
+		self.weight = 1
 		self._regex = ""
 		self._cRegex = None
-
-	@property
-	def name(self):
-		"""Name assigned to template.
-		"""
-		return self._name
-
-	@name.setter
-	def name(self, name):
-		self._name = name
 
 	def getRegex(self):
 		return self._regex
@@ -73,10 +67,12 @@ class DateTemplate(object):
 		wordBegin : bool
 			Defines whether the regex should be modified to search at beginning of a
 			word, by adding special boundary r'(?=^|\b|\W)' to start of regex.
+			Can be disabled with specifying of ** at front of regex.
 			Default True.
 		wordEnd : bool
 			Defines whether the regex should be modified to search at end of a word,
 			by adding special boundary r'(?=\b|\W|$)' to end of regex.
+			Can be disabled with specifying of ** at end of regex.
 			Default True.
 
 		Raises
@@ -85,12 +81,16 @@ class DateTemplate(object):
 			If regular expression fails to compile
 		"""
 		regex = regex.strip()
-		if wordBegin and not re.search(r'^\^', regex):
-			regex = (r'(?<=^|\b)' if wordBegin != 'start' else r"^(?<=\W)?") + regex
-			self._name = ('[*WD-BEG]' if wordBegin != 'start' else '[^LN-BEG]') + self._name
-		if wordEnd and not re.search(r'\$$', regex):
+		# if word or line start boundary:
+		if wordBegin and not RE_NO_WRD_BOUND_BEG.search(regex):
+			regex = (r'(?=^|\b|\W)' if wordBegin != 'start' else r"(?:^|(?<=^\W)|(?<=^\W{2}))") + regex
+			self.name = ('{*WD-BEG}' if wordBegin != 'start' else '{^LN-BEG}') + self.name
+		# if word end boundary:
+		if wordEnd and not RE_NO_WRD_BOUND_END.search(regex):
 			regex += r'(?=\b|\W|$)'
-			self._name += ('[*WD-END]' if wordEnd else '')
+			self.name += ('{*WD-END}' if wordEnd else '')
+		# remove possible special pattern "**" in front and end of regex:
+		regex = RE_DEL_WRD_BOUNDS.sub('', regex)
 		self._regex = regex
 
 	regex = property(getRegex, setRegex, doc=
@@ -181,15 +181,8 @@ class DatePatternRegex(DateTemplate):
 	pattern
 	"""
 	
-	_patternRE = re.compile(getTimePatternRE())
-	_patternName = {
-		'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
-		'H': "24hour", 'I': "12hour", 'j': "Yearday", 'm': "Month",
-		'M': "Minute", 'p': "AMPM", 'S': "Second", 'U': "Yearweek",
-		'w': "Weekday", 'W': "Yearweek", 'y': 'Year2', 'Y': "Year", '%': "%",
-		'z': "Zone offset", 'f': "Microseconds", 'Z': "Zone name"}
-	for _key in set(timeRE) - set(_patternName): # may not have them all...
-		_patternName[_key] = "%%%s" % _key
+	_patternRE, _patternName = getTimePatternRE()
+	_patternRE = re.compile(_patternRE)
 
 	def __init__(self, pattern=None, **kwargs):
 		super(DatePatternRegex, self).__init__()
@@ -216,7 +209,7 @@ class DatePatternRegex(DateTemplate):
 	def setRegex(self, pattern, wordBegin=True, wordEnd=True):
 		self._pattern = pattern
 		fmt = self._patternRE.sub(r'%(\1)s', pattern)
-		self._name = fmt % self._patternName
+		self.name = fmt % self._patternName
 		super(DatePatternRegex, self).setRegex(fmt % timeRE, wordBegin, wordEnd)
 
 	def getDate(self, line, dateMatch=None):

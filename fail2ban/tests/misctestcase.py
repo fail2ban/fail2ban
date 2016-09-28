@@ -23,13 +23,11 @@ __license__ = "GPL"
 
 import logging
 import os
-import re
 import sys
 import unittest
 import tempfile
 import shutil
 import fnmatch
-import datetime
 from glob import glob
 from StringIO import StringIO
 
@@ -37,8 +35,6 @@ from utils import LogCaptureTestCase, logSys as DefLogSys
 
 from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger, uni_decode
 from ..helpers import splitwords
-from ..server.datedetector import DateDetector
-from ..server.datetemplate import DatePatternRegex
 from ..server.mytime import MyTime
 
 
@@ -318,91 +314,6 @@ class TestsUtilsTest(LogCaptureTestCase):
 		else: # pragma: no cover
 			# wrong logging syntax will throw an error directly:
 			self.assertRaisesRegexp(Exception, 'not all arguments converted', lambda: logSys.debug('test', 1, 2, 3))
-
-
-iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
-
-
-class CustomDateFormatsTest(unittest.TestCase):
-
-	def testIso8601(self):
-		date = datetime.datetime.utcfromtimestamp(
-			iso8601.getDate("2007-01-25T12:00:00Z")[0])
-		self.assertEqual(
-			date,
-			datetime.datetime(2007, 1, 25, 12, 0))
-		self.assertRaises(TypeError, iso8601.getDate, None)
-		self.assertRaises(TypeError, iso8601.getDate, date)
-
-		self.assertEqual(iso8601.getDate(""), None)
-		self.assertEqual(iso8601.getDate("Z"), None)
-
-		self.assertEqual(iso8601.getDate("2007-01-01T120:00:00Z"), None)
-		self.assertEqual(iso8601.getDate("2007-13-01T12:00:00Z"), None)
-		date = datetime.datetime.utcfromtimestamp(
-			iso8601.getDate("2007-01-25T12:00:00+0400")[0])
-		self.assertEqual(
-			date,
-			datetime.datetime(2007, 1, 25, 8, 0))
-		date = datetime.datetime.utcfromtimestamp(
-			iso8601.getDate("2007-01-25T12:00:00+04:00")[0])
-		self.assertEqual(
-			date,
-			datetime.datetime(2007, 1, 25, 8, 0))
-		date = datetime.datetime.utcfromtimestamp(
-			iso8601.getDate("2007-01-25T12:00:00-0400")[0])
-		self.assertEqual(
-			date,
-			datetime.datetime(2007, 1, 25, 16, 0))
-		date = datetime.datetime.utcfromtimestamp(
-			iso8601.getDate("2007-01-25T12:00:00-04")[0])
-		self.assertEqual(
-			date,
-			datetime.datetime(2007, 1, 25, 16, 0))
-
-	def testAmbiguousDatePattern(self):
-		defDD = DateDetector()
-		defDD.addDefaultTemplate()
-		logSys = DefLogSys
-		for (matched, dp, line) in (
-			# positive case:
-			('Jan 23 21:59:59',   None, 'Test failure Jan 23 21:59:59 for 192.0.2.1'),
-			# ambiguous "unbound" patterns (missed):
-			(False,               None, 'Test failure TestJan 23 21:59:59.011 2015 for 192.0.2.1'),
-			(False,               None, 'Test failure Jan 23 21:59:59123456789 for 192.0.2.1'),
-			# ambiguous "no optional year" patterns (matched):
-			('Aug 8 11:25:50',      None, 'Aug 8 11:25:50 14430f2329b8 Authentication failed from 192.0.2.1'),
-			('Aug 8 11:25:50',      None, '[Aug 8 11:25:50] 14430f2329b8 Authentication failed from 192.0.2.1'),
-			('Aug 8 11:25:50 2014', None, 'Aug 8 11:25:50 2014 14430f2329b8 Authentication failed from 192.0.2.1'),
-			# direct specified patterns:
-			('20:00:00 01.02.2003',    r'%H:%M:%S %d.%m.%Y$', '192.0.2.1 at 20:00:00 01.02.2003'),
-			('[20:00:00 01.02.2003]',  r'\[%H:%M:%S %d.%m.%Y\]', '192.0.2.1[20:00:00 01.02.2003]'),
-			('[20:00:00 01.02.2003]',  r'\[%H:%M:%S %d.%m.%Y\]', '[20:00:00 01.02.2003]192.0.2.1'),
-			('[20:00:00 01.02.2003]',  r'\[%H:%M:%S %d.%m.%Y\]$', '192.0.2.1[20:00:00 01.02.2003]'),
-			('[20:00:00 01.02.2003]',  r'^\[%H:%M:%S %d.%m.%Y\]', '[20:00:00 01.02.2003]192.0.2.1'),
-			('[17/Jun/2011 17:00:45]', r'^\[%d/%b/%Y %H:%M:%S\]', '[17/Jun/2011 17:00:45] Attempt, IP address 192.0.2.1'),
-			('[17/Jun/2011 17:00:45]', r'\[%d/%b/%Y %H:%M:%S\]', 'Attempt [17/Jun/2011 17:00:45] IP address 192.0.2.1'),
-			('[17/Jun/2011 17:00:45]', r'\[%d/%b/%Y %H:%M:%S\]', 'Attempt IP address 192.0.2.1, date: [17/Jun/2011 17:00:45]'),
-			# direct specified patterns (begin/end, missed):
-			(False,                 r'%H:%M:%S %d.%m.%Y', '192.0.2.1x20:00:00 01.02.2003'),
-			(False,                 r'%H:%M:%S %d.%m.%Y', '20:00:00 01.02.2003x192.0.2.1'),
-			# direct specified patterns (begin/end, matched):
-			('20:00:00 01.02.2003', r'%H:%M:%S %d.%m.%Y', '192.0.2.1 20:00:00 01.02.2003'),
-			('20:00:00 01.02.2003', r'%H:%M:%S %d.%m.%Y', '20:00:00 01.02.2003 192.0.2.1'),
-		):
-			logSys.debug('== test: %r', (matched, dp, line))
-			if dp is None:
-				dd = defDD
-			else:
-				dp = DatePatternRegex(dp)
-				dd = DateDetector()
-				dd.appendTemplate(dp)
-			date = dd.getTime(line)
-			if matched:
-				self.assertTrue(date)
-				self.assertEqual(matched, date[1].group())
-			else:
-				self.assertEqual(date, None)
 
 
 class MyTimeTest(unittest.TestCase):

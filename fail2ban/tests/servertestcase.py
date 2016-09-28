@@ -298,7 +298,7 @@ class Transmitter(TransmitterBase):
 
 	def testDatePattern(self):
 		self.setGetTest("datepattern", "%%%Y%m%d%H%M%S",
-			("%%%Y%m%d%H%M%S", "%YearMonthDay24hourMinuteSecond"),
+			("%%%Y%m%d%H%M%S", "{*WD-BEG}%YearMonthDay24hourMinuteSecond{*WD-END}"),
 			jail=self.jailName)
 		self.setGetTest(
 			"datepattern", "Epoch", (None, "Epoch"), jail=self.jailName)

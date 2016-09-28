@@ -48,6 +48,8 @@ from ..version import version
 
 logSys = getLogger(__name__)
 
+TEST_NOW = 1124013600
+
 CONFIG_DIR = os.environ.get('FAIL2BAN_CONFIG_DIR', None)
 
 if not CONFIG_DIR:
@@ -257,6 +259,10 @@ def initTests(opts):
 		def F2B_SkipIfNoNetwork():
 			raise unittest.SkipTest('Skip test because of "--no-network"')
 		unittest.F2B.SkipIfNoNetwork = F2B_SkipIfNoNetwork
+
+	# set alternate now for time related test cases:
+	MyTime.setAlternateNow(TEST_NOW)
+
 	# precache all invalid ip's (TEST-NET-1, ..., TEST-NET-3 according to RFC 5737):
 	c = DNSUtils.CACHE_ipToName
 	for i in xrange(255):
@@ -289,7 +295,7 @@ def setUpMyTime():
 	# yoh: we need to adjust TZ to match the one used by Cyril so all the timestamps match
 	os.environ['TZ'] = 'Europe/Zurich'
 	time.tzset()
-	MyTime.setTime(1124013600)
+	MyTime.setTime(TEST_NOW)
 
 
 def tearDownMyTime():
@@ -384,7 +390,6 @@ def gatherTests(regexps=None, opts=None):
 	tests.addTest(unittest.makeSuite(misctestcase.HelpersTest))
 	tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
 	tests.addTest(unittest.makeSuite(misctestcase.TestsUtilsTest))
-	tests.addTest(unittest.makeSuite(misctestcase.CustomDateFormatsTest))
 	tests.addTest(unittest.makeSuite(misctestcase.MyTimeTest))
 	# Database
 	tests.addTest(unittest.makeSuite(databasetestcase.DatabaseTest))
@@ -404,6 +409,7 @@ def gatherTests(regexps=None, opts=None):
 
 	# DateDetector
 	tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
+	tests.addTest(unittest.makeSuite(datedetectortestcase.CustomDateFormatsTest))
 	# Filter Regex tests with sample logs
 	tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
 

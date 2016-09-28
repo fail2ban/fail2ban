@@ -283,10 +283,10 @@ class BasicFilter(unittest.TestCase):
 	def testGetSetDatePattern(self):
 		self.assertEqual(self.filter.getDatePattern(),
 			(None, "Default Detectors"))
-		self.filter.setDatePattern("^%Y-%m-%d-%H%M%S.%f %z")
+		self.filter.setDatePattern("^%Y-%m-%d-%H%M%S.%f %z **")
 		self.assertEqual(self.filter.getDatePattern(),
-			("^%Y-%m-%d-%H%M%S.%f %z",
-			"^Year-Month-Day-24hourMinuteSecond.Microseconds Zone offset"))
+			("^%Y-%m-%d-%H%M%S.%f %z **",
+			"^Year-Month-Day-24hourMinuteSecond.Microseconds Zone offset **"))
 
 	def testAssertWrongTime(self):
 		self.assertRaises(AssertionError, 

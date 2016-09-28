@@ -26,24 +26,59 @@ from .mytime import MyTime
 
 locale_time = LocaleTime()
 timeRE = TimeRE()
+
+def _getYearCentRE(cent=(0,3), distance=3, now=(MyTime.now(), MyTime.alternateNow)):
+	""" Build century regex for last year and the next years (distance).
+		
+	Thereby respect possible run in the test-cases (alternate date used there)
+	"""
+	cent = lambda year, f=cent[0], t=cent[1]: str(year)[f:t]
+	exprset = set( cent(now[0].year + i) for i in (-1, distance) )
+	if len(now) and now[1]:
+		exprset |= set( cent(now[1].year + i) for i in (-1, distance) )
+	return "(?:%s)" % "|".join(exprset) if len(exprset) > 1 else "".join(exprset)
+
 #todo: implement literal time zone support like CET, PST, PDT, etc (via pytz):
 #timeRE['z'] = r"%s?(?P<z>Z|[+-]\d{2}(?::?[0-5]\d)?|[A-Z]{3})?" % timeRE['Z']
 timeRE['z'] = r"(?P<z>Z|[+-]\d{2}(?::?[0-5]\d)?)"
 
-# Extend build-in TimeRE with some exact (two-digit) patterns:
-timeRE['Ed'] = r"(?P<d>3[0-1]|[1-2]\d|0[1-9])"
-timeRE['Em'] = r"(?P<m>1[0-2]|0[1-9])"
-timeRE['EH'] = r"(?P<H>2[0-3]|[0-1]\d)"
-timeRE['EM'] = r"(?P<M>[0-5]\d)"
-timeRE['ES'] = r"(?P<S>6[0-1]|[0-5]\d)"
+# Extend build-in TimeRE with some exact patterns
+# exact two-digit patterns:
+timeRE['Exd'] = r"(?P<d>3[0-1]|[1-2]\d|0[1-9])"
+timeRE['Exm'] = r"(?P<m>1[0-2]|0[1-9])"
+timeRE['ExH'] = r"(?P<H>2[0-3]|[0-1]\d)"
+timeRE['ExM'] = r"(?P<M>[0-5]\d)"
+timeRE['ExS'] = r"(?P<S>6[0-1]|[0-5]\d)"
+# more precise year patterns, within same century of last year and
+# the next 3 years (for possible long uptime of fail2ban); thereby
+# respect possible run in the test-cases (alternate date used there):
+timeRE['ExY'] = r"(?P<Y>%s\d)" % _getYearCentRE(cent=(0,3), distance=3)
+timeRE['Exy'] = r"(?P<y>%s\d)" % _getYearCentRE(cent=(2,3), distance=3)
+# Special pattern "start of the line", analogous to `wordBegin='start'` of default templates:
+timeRE['ExLB'] = r"(?:^|(?<=^\W)|(?<=^\W{2}))"
 
 def getTimePatternRE():
 	keys = timeRE.keys()
-	return (r"%%(%%|%s|[%s])" % (
+	patt = (r"%%(%%|%s|[%s])" % (
 		"|".join([k for k in keys if len(k) > 1]),
 		"".join([k for k in keys if len(k) == 1]),
 	))
-
+	names = {
+		'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
+		'H': "24hour", 'I': "12hour", 'j': "Yearday", 'm': "Month",
+		'M': "Minute", 'p': "AMPM", 'S': "Second", 'U': "Yearweek",
+		'w': "Weekday", 'W': "Yearweek", 'y': 'Year2', 'Y': "Year", '%': "%",
+		'z': "Zone offset", 'f': "Microseconds", 'Z': "Zone name",
+		'ExLB': '{^LN-BEG}',
+	}
+	for key in set(keys) - set(names): # may not have them all...
+		if key.startswith('Ex'):
+			kn = names.get(key[2:])
+			if kn:
+				names[key] = "Ex" + kn
+				continue
+		names[key] = "%%%s" % key
+	return (patt, names)
 
 def reGroupDictStrptime(found_dict):
 	"""Return time from dictionary of strptime fields
