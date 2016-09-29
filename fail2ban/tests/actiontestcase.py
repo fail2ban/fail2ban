@@ -324,16 +324,13 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertLogged('HINT on 127: "Command not found"')
 
 	def testExecuteTimeout(self):
-		unittest.F2B.SkipIfFast()
 		stime = time.time()
-		# Should take a minute
-		self.assertFalse(CommandAction.executeCmd('sleep 30', timeout=1))
+		timeout = 1 if not unittest.F2B.fast else 0.01
+		# Should take a 30 seconds (so timeout will occur)
+		self.assertFalse(CommandAction.executeCmd('sleep 30', timeout=timeout))
 		# give a test still 1 second, because system could be too busy
-		self.assertTrue(time.time() >= stime + 1 and time.time() <= stime + 2)
-		self.assertLogged(
-			'sleep 30 -- timed out after 1 seconds',
-			'sleep 30 -- timed out after 2 seconds'
-		)
+		self.assertTrue(time.time() >= stime + timeout and time.time() <= stime + timeout + 1)
+		self.assertLogged('sleep 30 -- timed out after')
 		self.assertLogged('sleep 30 -- killed with SIGTERM')
 
 	def testExecuteTimeoutWithNastyChildren(self):
