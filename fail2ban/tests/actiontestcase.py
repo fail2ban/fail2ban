@@ -353,8 +353,8 @@ class CommandActionTest(LogCaptureTestCase):
 		# timeout as long as pid-file was not created, but max 5 seconds
 		def getnasty_tout():
 			return (
-				getnastypid() is None
-				and time.time() - stime <= 5
+				getnastypid() is not None
+				or time.time() - stime > 5
 			)
 
 		def getnastypid():
