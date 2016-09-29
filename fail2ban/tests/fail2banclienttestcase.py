@@ -184,6 +184,19 @@ def _start_params(tmp, use_stock=False, logtarget="/dev/null", db=":memory:"):
 		"--timeout", str(fail2bancmdline.MAX_WAITTIME),
 	)
 
+def _get_pid_from_file(pidfile):
+	f = pid = None
+	try:
+		f = open(pidfile)
+		pid = f.read()
+		pid = re.match(r'\S+', pid).group()
+		return int(pid)
+	except Exception as e: # pragma: no cover
+		logSys.debug(e)
+	finally:
+		if f is not None:
+			f.close()
+	return pid
 
 def _kill_srv(pidfile):
 	logSys.debug("cleanup: %r", (pidfile, isdir(pidfile)))
@@ -193,23 +206,22 @@ def _kill_srv(pidfile):
 		if not isfile(pidfile): # pragma: no cover
 			pidfile = pjoin(piddir, "fail2ban.pid")
 
+	# output log in heavydebug (to see possible start errors):
+	if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
+		logfile = pjoin(piddir, "f2b.log")
+		if isfile(logfile):
+			_out_file(logfile)
+		else:
+			logSys.log(5, 'no logfile %r', logfile)
+
 	if not isfile(pidfile):
 		logSys.debug("cleanup: no pidfile for %r", piddir)
 		return True
 
-	f = pid = None
-	try:
-		logSys.debug("cleanup pidfile: %r", pidfile)
-		f = open(pidfile)
-		pid = f.read()
-		pid = re.match(r'\S+', pid).group()
-		pid = int(pid)
-	except Exception as e: # pragma: no cover
-		logSys.debug(e)
+	logSys.debug("cleanup pidfile: %r", pidfile)
+	pid = _get_pid_from_file(pidfile)
+	if pid is None: # pragma: no cover
 		return False
-	finally:
-		if f is not None:
-			f.close()
 
 	try:
 		logSys.debug("cleanup pid: %r", pid)
@@ -443,14 +455,18 @@ class Fail2banClientTest(Fail2banClientServerBase):
 	def testClientStartBackgroundCall(self, tmp):
 		global INTERACT
 		startparams = _start_params(tmp, logtarget=pjoin(tmp, "f2b.log"))
-		# start (in new process, using the same python version):
-		cmd = (sys.executable, pjoin(BIN, CLIENT))
-		logSys.debug('Start %s ...', cmd)
-		cmd = cmd + startparams + ("--async", "start",)
-		ret = Utils.executeCmd(cmd, timeout=MAX_WAITTIME, shell=False, output=True)
-		self.assertTrue(len(ret) and ret[0])
-		# wait for server (socket and ready):
-		self._wait_for_srv(tmp, True, startparams=cmd)
+		# if fast, start server process from client started direct here:
+		if unittest.F2B.fast: # pragma: no cover
+			self.execSuccess(startparams + ("start",))
+		else:
+			# start (in new process, using the same python version):
+			cmd = (sys.executable, pjoin(BIN, CLIENT))
+			logSys.debug('Start %s ...', cmd)
+			cmd = cmd + startparams + ("--async", "start",)
+			ret = Utils.executeCmd(cmd, timeout=MAX_WAITTIME, shell=False, output=True)
+			self.assertTrue(len(ret) and ret[0])
+			# wait for server (socket and ready):
+			self._wait_for_srv(tmp, True, startparams=cmd)
 		self.assertLogged("Server ready")
 		self.pruneLog()
 		try:
@@ -458,6 +474,24 @@ class Fail2banClientTest(Fail2banClientServerBase):
 			self.execSuccess(startparams, "echo", "TEST-ECHO")
 			self.assertLogged("TEST-ECHO")
 			self.assertLogged("Exit with code 0")
+			self.pruneLog()
+			# test ping timeout:
+			self.execSuccess(startparams, "ping", "0.1")
+			self.assertLogged("Server replied: pong")
+			self.pruneLog()
+			# python 3 seems to bypass such short timeouts also, 
+			# so suspend/resume server process and test between it...
+			pid = _get_pid_from_file(pjoin(tmp, "f2b.pid"))
+			try:
+				# suspend:
+				os.kill(pid, signal.SIGSTOP); # or SIGTSTP?
+				time.sleep(Utils.DEFAULT_SHORT_INTERVAL)
+				# test ping with short timeout:
+				self.execFailed(startparams, "ping", "1e-10")
+			finally:
+				# resume:
+				os.kill(pid, signal.SIGCONT)
+			self.assertLogged("timed out")
 			self.pruneLog()
 			# interactive client chat with started server:
 			INTERACT += [

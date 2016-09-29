@@ -178,13 +178,17 @@ class Fail2banServer(Fail2banCmdLine):
 				logSys.debug('Configure via async client thread')
 				cli.configureServer(async=True, phase=phase)
 				# wait, do not continue if configuration is not 100% valid:
-				Utils.wait_for(lambda: phase.get('ready', None) is not None, self._conf["timeout"])
+				Utils.wait_for(lambda: phase.get('ready', None) is not None, self._conf["timeout"], 0.001)
+				logSys.log(5, '  server phase %s', phase)
 				if not phase.get('start', False):
 					raise ServerExecutionException('Async configuration of server failed')
 
 			# Start server, daemonize it, etc.
 			pid = os.getpid()
 			server = Fail2banServer.startServerDirect(self._conf, background)
+			if not async:
+				phase['start-ready'] = True
+				logSys.log(5, '  server phase %s', phase)
 			# If forked - just exit other processes
 			if pid != os.getpid(): # pragma: no cover
 				os._exit(0)
@@ -193,7 +197,7 @@ class Fail2banServer(Fail2banCmdLine):
 
 			# wait for client answer "done":
 			if not async and cli:
-				Utils.wait_for(lambda: phase.get('done', None) is not None, self._conf["timeout"])
+				Utils.wait_for(lambda: phase.get('done', None) is not None, self._conf["timeout"], 0.001)
 				if not phase.get('done', False):
 					if server: # pragma: no cover
 						server.quit()
