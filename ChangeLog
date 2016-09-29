@@ -142,6 +142,8 @@ releases.
 * Fixed test case "testSetupInstallRoot" for not default python version (also
   using direct call, out of virtualenv);
 * Fixed ambiguous wrong recognized date pattern resp. its optional parts (see gh-1512);
+* FIPS compliant, use sha1 instead of md5 if it not allowed (see gh-1540)
+* Monit config: scripting is not supported in path (gh-1556)
 * `filter.d/asterisk.conf`
     - Fixed to match different asterisk log prefix (source file: method:)
 * `filter.d/ignorecommands/apache-fakegooglebot`
@@ -151,6 +153,9 @@ releases.
     - Extended failregex and test cases to handle ASSP V1 and V2 (gh-1494)
 * `filter.d/postfix-sasl.conf`
     - Allow for having no trailing space after 'failed:' (gh-1497)
+* `filter.d/vsftpd.conf`
+    - Optional reason part in message after FAIL LOGIN (gh-1543)
+
 
 ### New Features
 
