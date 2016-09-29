@@ -94,6 +94,8 @@ class Fail2banServer(Fail2banCmdLine):
 			# Force the execution if needed.
 			if conf["force"]:
 				args.append("-x")
+			if conf["verbose"] > 1:
+				args.append("-" + "v"*(conf["verbose"]-1))
 			# Logging parameters:
 			for o in ('loglevel', 'logtarget', 'syslogsocket'):
 				args.append("--"+o)

@@ -22,7 +22,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2013- Yaroslav Halchenko"
 __license__ = "GPL"
 
 from ..exceptions import UnknownJailException, DuplicateJailException
-from ..helpers import getLogger
+from ..helpers import getLogger, logging
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -97,16 +97,7 @@ class Beautifier:
 				msg += "`- " + response
 			elif inC[1:2] == ['loglevel']:
 				msg = "Current logging level is "
-				if response == 1:
-					msg += "ERROR"
-				elif response == 2:
-					msg += "WARN"
-				elif response == 3:
-					msg += "INFO"
-				elif response == 4:
-					msg += "DEBUG"
-				else:
-					msg += repr(response)
+				msg += repr(logging.getLevelName(response) if isinstance(response, int) else response)
 			elif inC[1] == "dbfile":
 				if response is None:
 					msg = "Database currently disabled"
@@ -187,14 +178,12 @@ class Beautifier:
 					msg += ", ".join(response)
 		except Exception:
 			logSys.warning("Beautifier error. Please report the error")
-			logSys.error("Beautify " + repr(response) + " with "
-				+ repr(self.__inputCmd) + " failed")
-			msg += repr(response)
+			logSys.error("Beautify %r with %r failed", response, self.__inputCmd)
+			msg = repr(msg) + repr(response)
 		return msg
 
 	def beautifyError(self, response):
-		logSys.debug("Beautify (error) " + repr(response) + " with "
-					 + repr(self.__inputCmd))
+		logSys.debug("Beautify (error) %r with %r", response, self.__inputCmd)
 		msg = response
 		if isinstance(response, UnknownJailException):
 			msg = "Sorry but the jail '" + response.args[0] + "' does not exist"

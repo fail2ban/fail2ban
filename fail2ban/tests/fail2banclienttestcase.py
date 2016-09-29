@@ -174,13 +174,19 @@ def _start_params(tmp, use_stock=False, logtarget="/dev/null", db=":memory:"):
 			"[DEFAULT]", "",
 			"",
 		)
-		if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
+		if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
 			_out_file(pjoin(cfg, "fail2ban.conf"))
 			_out_file(pjoin(cfg, "jail.conf"))
 	# parameters (sock/pid and config, increase verbosity, set log, etc.):
+	vvv, llev = (), "INFO"
+	if unittest.F2B.log_level < logging.INFO: # pragma: no cover
+		llev = str(unittest.F2B.log_level)
+		if unittest.F2B.verbosity > 1:
+			vvv = ("-" + "v"*unittest.F2B.verbosity,)
+	llev = vvv + ("--loglevel", llev)
 	return (
 		"-c", cfg, "-s", pjoin(tmp, "f2b.sock"), "-p", pjoin(tmp, "f2b.pid"),
-		"-vv", "--logtarget", logtarget, "--loglevel", "DEBUG", "--syslogsocket", "auto",
+		"--logtarget", logtarget,) + llev + ("--syslogsocket", "auto",
 		"--timeout", str(fail2bancmdline.MAX_WAITTIME),
 	)
 
@@ -726,7 +732,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"actionunban =  echo '[<name>] %s: -- unban <ip>'" % actname, unban,
 				"actionstop =   echo '[<name>] %s: __ stop'" % actname, stop,
 			)
-			if DefLogSys.level <= logging.DEBUG:  # if DEBUG
+			if unittest.F2B.log_level <= logging.DEBUG: # pragma: no cover
 				_out_file(fn)
 
 		def _write_jail_cfg(enabled=(1, 2), actions=()):
@@ -754,7 +760,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"logpath = " + test2log,
 				"enabled = true" if 2 in enabled else "",
 			)
-			if DefLogSys.level <= logging.DEBUG:  # if DEBUG
+			if unittest.F2B.log_level <= logging.DEBUG: # pragma: no cover
 				_out_file(pjoin(cfg, "jail.conf"))
 
 		# create default test actions:
@@ -768,7 +774,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		
 		# reload and wait for ban:
 		self.pruneLog("[test-phase 1a]")
-		if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
+		if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
 			_out_file(test1log)
 		self.execSuccess(startparams, "reload")
 		self.assertLogged(
@@ -786,7 +792,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.pruneLog("[test-phase 1b]")
 		_write_jail_cfg(actions=[1,2])
 		_write_file(test1log, "w+")
-		if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
+		if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
 			_out_file(test1log)
 		self.execSuccess(startparams, "reload")
 		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
@@ -848,7 +854,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.4: test 2",) * 3 +
 		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.8: test 2",) * 3
 		))
-		if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
+		if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
 			_out_file(test2log)
 		# test all will be found in jail1 and one in jail2:
 		self.assertLogged(
@@ -947,7 +953,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			(str(int(MyTime.time())) + "   error 403 from 192.0.2.5: test 5",) * 3 +
 			(str(int(MyTime.time())) + " failure 401 from 192.0.2.6: test 5",) * 3
 		))
-		if DefLogSys.level < logging.DEBUG:  # if HEAVYDEBUG
+		if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
 			_out_file(test1log)
 		self.assertLogged(
 			"6 ticket(s) in 'test-jail1",
