@@ -330,6 +330,11 @@ def gatherTests(regexps=None, opts=None):
 			def addTest(self, suite):
 				matched = []
 				for test in suite:
+					# test of suite loaded with loadTestsFromName may be a suite self:
+					if isinstance(test, unittest.TestSuite): # pragma: no cover
+						self.addTest(test)
+						continue
+					# filter by regexp:
 					s = str(test)
 					for r in self._regexps:
 						m = r.search(s)
