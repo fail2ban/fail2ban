@@ -198,6 +198,29 @@ class DateDetectorTest(LogCaptureTestCase):
 			self.assertRaises(Exception, t.getDate, '')
 			self.assertEqual(t.matchDate('aaaac').group(), 'aaaac')
 
+	def testAmbiguousInOrderedTemplates(self):
+		dd = DateDetector()
+		dd.addDefaultTemplate()
+		for (debit, line, cnt) in (
+			("2003-03-07 17:05:01",        "some free text 2003-03-07 17:05:01 test ...", 15),
+			# distance collision detection (date from foreign input should not be found):
+			("030324  0:04:00",            "server mysqld[1000]: 030324  0:04:00 [Warning] Access denied ..."
+																				" foreign-input just some free text 2003-03-07 17:05:01 test", 10),
+			# distance collision detection (first date should be found):
+			("Sep 16 21:30:26",            "server mysqld[1020]: Sep 16 21:30:26 server mysqld: 030916 21:30:26 [Warning] Access denied", 10),
+			# just to test sorting:
+			("2005-10-07 06:09:42",        "server mysqld[5906]: 2005-10-07 06:09:42 5907 [Warning] Access denied", 20),
+			("2005-10-08T15:26:18.237955", "server mysqld[5906]: 2005-10-08T15:26:18.237955 6 [Note] Access denied", 20),
+			# date format changed again:
+			("051009 10:05:30",            "server mysqld[1000]: 051009 10:05:30 [Warning] Access denied ...", 20),
+		):
+			logSys.debug('== test: %r', (debit, line, cnt))
+			for i in range(cnt):
+				logSys.debug('Line: %s', line)
+				match, template = dd.matchTime(line)
+				self.assertTrue(match)
+				self.assertEqual(match.group(), debit)
+
 
 iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
 
@@ -308,30 +331,6 @@ class CustomDateFormatsTest(unittest.TestCase):
 				self.assertEqual(matched, date[1].group())
 			else:
 				self.assertEqual(date, None)
-
-	# def testAmbiguousUsingOrderedTemplates(self):
-	# 	defDD = DateDetector()
-	# 	defDD.addDefaultTemplate()
-	# 	for (matched, dp, line) in (
-	# 		# wrong date recognized short month/day (unbounded date pattern without separator),
-	# 		# in the 2nd and 3th tests (with precise month and day) it should find correct the 2nd date:
-	# 		('200333 010203',   r'%Y%m%d %H%M%S',             "text:200333 010203 | date:20031230 010203"),
-	# 		('20031230 010203', r'%ExY%Exm%Exd %ExH%ExM%ExS', "text:200333 010203 | date:20031230 010203"),
-	# 		('20031230 010203', None,                         "text:200333 010203 | date:20031230 010203"),
-	# 	):
-	# 		logSys.debug('== test: %r', (matched, dp, line))
-	# 		if dp is None:
-	# 			dd = defDD
-	# 		else:
-	# 			dp = DatePatternRegex(dp)
-	# 			dd = DateDetector()
-	# 			dd.appendTemplate(dp)
-	# 		date = dd.getTime(line)
-	# 		if matched:
-	# 			self.assertTrue(date)
-	# 			self.assertEqual(matched, date[1].group())
-	# 		else:
-	# 			self.assertEqual(date, None)
 
 
 #	def testDefaultTempate(self):
