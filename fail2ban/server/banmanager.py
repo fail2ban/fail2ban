@@ -28,7 +28,7 @@ from threading import Lock
 
 from .ticket import BanTicket
 from .mytime import MyTime
-from ..helpers import getLogger
+from ..helpers import getLogger, logging
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -132,17 +132,23 @@ class BanManager:
 	#
 	# @return {"asn": [], "country": [], "rir": []} dict for self.__banList IPs
 
-	def getBanListExtendedCymruInfo(self):
+	def getBanListExtendedCymruInfo(self, timeout=10):
 		return_dict = {"asn": [], "country": [], "rir": []}
-		try:
-			import dns.exception
-			import dns.resolver
-		except ImportError:
-			logSys.error("dnspython package is required but could not be imported")
-			return_dict["asn"].append("error")
-			return_dict["country"].append("error")
-			return_dict["rir"].append("error")
-			return return_dict
+		if not hasattr(self, 'dnsResolver'):
+			try:
+				import dns.exception
+				import dns.resolver
+				resolver = dns.resolver.Resolver()
+				resolver.lifetime = timeout
+				resolver.timeout = timeout / 2
+				self.dnsResolver = resolver
+			except ImportError: # pragma: no cover
+				logSys.error("dnspython package is required but could not be imported")
+				return_dict["error"] = repr(e)
+				return_dict["asn"].append("error")
+				return_dict["country"].append("error")
+				return_dict["rir"].append("error")
+				return return_dict
 		# get ips in lock:
 		with self.__lock:
 			banIPs = [banData.getIP() for banData in self.__banList.values()]
@@ -155,7 +161,10 @@ class BanManager:
 					else "origin6.asn.cymru.com"
 				)
 				try:
-					answers = dns.resolver.query(question, "TXT")
+					resolver = self.dnsResolver
+					answers = resolver.query(question, "TXT")
+					if not answers:
+						raise ValueError("No data retrieved")
 					for rdata in answers:
 						asn, net, country, rir, changed =\
 							[answer.strip("'\" ") for answer in rdata.to_text().split("|")]
@@ -169,20 +178,23 @@ class BanManager:
 					return_dict["asn"].append("nxdomain")
 					return_dict["country"].append("nxdomain")
 					return_dict["rir"].append("nxdomain")
-				except dns.exception.DNSException as dnse:
-					logSys.error("Unhandled DNSException querying Cymru for %s TXT" % question)
-					logSys.exception(dnse)
-					return_dict["error"] = dnse
+				except (dns.exception.DNSException, dns.resolver.NoNameservers, dns.exception.Timeout) as dnse: # pragma: no cover
+					logSys.error("DNSException %r querying Cymru for %s TXT", dnse, question)
+					if logSys.level <= logging.DEBUG:
+						logSys.exception(dnse)
+					return_dict["error"] = repr(dnse)
 					break
-				except Exception as e:
-					logSys.error("Unhandled Exception querying Cymru for %s TXT" % question)
-					logSys.exception(e)
-					return_dict["error"] = e
+				except Exception as e: # pragma: no cover
+					logSys.error("Unhandled Exception %r querying Cymru for %s TXT", e, question)
+					if logSys.level <= logging.DEBUG:
+						logSys.exception(e)
+					return_dict["error"] = repr(e)
 					break
-		except Exception as e:
-			logSys.error("Failure looking up extended Cymru info")
-			logSys.exception(e)
-			return_dict["error"] = e
+		except Exception as e: # pragma: no cover
+			logSys.error("Failure looking up extended Cymru info: %s", e)
+			if logSys.level <= logging.DEBUG:
+				logSys.exception(e)
+			return_dict["error"] = repr(e)
 		return return_dict
 
 	##

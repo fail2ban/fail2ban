@@ -147,9 +147,17 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		"""Call after every test case."""
 		pass
 
+	available = True, None
+
 	def _getBanListExtendedCymruInfo(self):
-		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
+		tc = StatusExtendedCymruInfo
+		if tc.available[0]:
+			cymru_info = self.__banManager.getBanListExtendedCymruInfo(
+				timeout=(2 if unittest.F2B.fast else 20))
+		else:
+			cymru_info = tc.available[1]
 		if cymru_info.get("error"): # pragma: no cover - availability
+			tc.available = False, cymru_info
 			raise unittest.SkipTest('Skip test because service is not available: %s' % cymru_info["error"])
 		return cymru_info
 
