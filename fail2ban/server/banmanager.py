@@ -143,10 +143,12 @@ class BanManager:
 			return_dict["country"].append("error")
 			return_dict["rir"].append("error")
 			return return_dict
-		self.__lock.acquire()
+		# get ips in lock:
+		with self.__lock:
+			banIPs = [banData.getIP() for banData in self.__banList.values()]
+		# get cymru info:
 		try:
-			for banData in self.__banList.values():
-				ip = banData.getIP()
+			for ip in banIPs:
 				# Reference: http://www.team-cymru.org/Services/ip-to-asn.html#dns
 				question = ip.getPTR(
 					"origin.asn.cymru.com" if ip.isIPv4
@@ -170,14 +172,17 @@ class BanManager:
 				except dns.exception.DNSException as dnse:
 					logSys.error("Unhandled DNSException querying Cymru for %s TXT" % question)
 					logSys.exception(dnse)
+					return_dict["error"] = dnse
+					break
 				except Exception as e:
 					logSys.error("Unhandled Exception querying Cymru for %s TXT" % question)
 					logSys.exception(e)
+					return_dict["error"] = e
+					break
 		except Exception as e:
 			logSys.error("Failure looking up extended Cymru info")
 			logSys.exception(e)
-		finally:
-			self.__lock.release()
+			return_dict["error"] = e
 		return return_dict
 
 	##
@@ -188,15 +193,12 @@ class BanManager:
 	# @return list of Banned ASNs
 
 	def geBanListExtendedASN(self, cymru_info):
-		self.__lock.acquire()
 		try:
 			return [asn for asn in cymru_info["asn"]]
 		except Exception as e:
 			logSys.error("Failed to lookup ASN")
 			logSys.exception(e)
 			return []
-		finally:
-			self.__lock.release()
 
 	##
 	# Returns list of Banned Countries from Cymru info
@@ -206,15 +208,12 @@ class BanManager:
 	# @return list of Banned Countries
 
 	def geBanListExtendedCountry(self, cymru_info):
-		self.__lock.acquire()
 		try:
 			return [country for country in cymru_info["country"]]
 		except Exception as e:
 			logSys.error("Failed to lookup Country")
 			logSys.exception(e)
 			return []
-		finally:
-			self.__lock.release()
 
 	##
 	# Returns list of Banned RIRs from Cymru info
@@ -224,15 +223,12 @@ class BanManager:
 	# @return list of Banned RIRs
 
 	def geBanListExtendedRIR(self, cymru_info):
-		self.__lock.acquire()
 		try:
 			return [rir for rir in cymru_info["rir"]]
 		except Exception as e:
 			logSys.error("Failed to lookup RIR")
 			logSys.exception(e)
 			return []
-		finally:
-			self.__lock.release()
 
 	##
 	# Create a ban ticket.

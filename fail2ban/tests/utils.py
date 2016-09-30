@@ -248,7 +248,7 @@ def initTests(opts):
 		# sleep intervals are large - use replacement for sleep to check time to sleep:
 		_org_sleep = time.sleep
 		def _new_sleep(v):
-			if (v > Utils.DEFAULT_SLEEP_TIME): # pragma: no cover
+			if v > min(1, Utils.DEFAULT_SLEEP_TIME): # pragma: no cover
 				raise ValueError('[BAD-CODE] To long sleep interval: %s, try to use conditional Utils.wait_for instead' % v)
 			_org_sleep(min(v, Utils.DEFAULT_SLEEP_TIME))
 		time.sleep = _new_sleep

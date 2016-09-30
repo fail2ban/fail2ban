@@ -147,8 +147,15 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		"""Call after every test case."""
 		pass
 
-	def testCymruInfo(self):
+	def _getBanListExtendedCymruInfo(self):
 		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
+		if cymru_info.get("error"): # pragma: no cover - availability
+			raise unittest.SkipTest('Skip test because service is not available: %s' % cymru_info["error"])
+		return cymru_info
+
+
+	def testCymruInfo(self):
+		cymru_info = self._getBanListExtendedCymruInfo()
 		self.assertDictEqual(cymru_info,
 						  {"asn": [self.__asn],
 						   "country": [self.__country],
@@ -156,17 +163,17 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 
 	def testCymruInfoASN(self):
 		self.assertEqual(
-			self.__banManager.geBanListExtendedASN(self.__banManager.getBanListExtendedCymruInfo()),
+			self.__banManager.geBanListExtendedASN(self._getBanListExtendedCymruInfo()),
 			[self.__asn])
 
 	def testCymruInfoCountry(self):
 		self.assertEqual(
-			self.__banManager.geBanListExtendedCountry(self.__banManager.getBanListExtendedCymruInfo()),
+			self.__banManager.geBanListExtendedCountry(self._getBanListExtendedCymruInfo()),
 			[self.__country])
 
 	def testCymruInfoRIR(self):
 		self.assertEqual(
-			self.__banManager.geBanListExtendedRIR(self.__banManager.getBanListExtendedCymruInfo()),
+			self.__banManager.geBanListExtendedRIR(self._getBanListExtendedCymruInfo()),
 			[self.__rir])
 
 	def testCymruInfoNxdomain(self):
@@ -175,7 +182,7 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		# non-existing IP
 		ticket = BanTicket("0.0.0.0", 1167605999.0)
 		self.assertTrue(self.__banManager.addBanTicket(ticket))
-		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
+		cymru_info = self._getBanListExtendedCymruInfo()
 		self.assertDictEqual(cymru_info,
 						  {"asn": ["nxdomain"],
 						   "country": ["nxdomain"],
@@ -186,7 +193,7 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		# and new ones
 		ticket = BanTicket("10.0.0.0", 1167606000.0)
 		self.assertTrue(self.__banManager.addBanTicket(ticket))
-		cymru_info = self.__banManager.getBanListExtendedCymruInfo()
+		cymru_info = self._getBanListExtendedCymruInfo()
 		self.assertDictEqual(dict((k, sorted(v)) for k, v in cymru_info.iteritems()),
 						  {"asn": sorted(["nxdomain", "4565",]),
 						   "country": sorted(["nxdomain", "unknown"]),
