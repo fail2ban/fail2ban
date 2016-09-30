@@ -124,8 +124,11 @@ class DNSUtils:
 class IPAddr(object):
 	"""Encapsulate functionality for IPv4 and IPv6 addresses
 	"""
+
+	IP_4_RE = r"""(?:\d{1,3}\.){3}\d{1,3}"""
+	IP_6_RE = r"""(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}|(?<=:):)"""
 	IP_4_6_CRE = re.compile(
-	  r"""^(?:(?P<IPv4>(?:\d{1,3}\.){3}\d{1,3})|\[?(?P<IPv6>(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}|(?<=:):))\]?)$""")
+	  r"""^(?:(?P<IPv4>%s)|\[?(?P<IPv6>%s)\]?)$""" % (IP_4_RE, IP_6_RE))
 	# An IPv4 compatible IPv6 to be reused (see below)
 	IP6_4COMPAT = None
 

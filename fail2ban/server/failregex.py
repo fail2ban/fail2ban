@@ -25,6 +25,7 @@ import re
 import sre_constants
 import sys
 
+from .ipdns import IPAddr
 
 ##
 # Regular expression class.
@@ -72,12 +73,12 @@ class Regex:
 	def _resolveHostTag(regex, useDns="yes"):
 		# separated ipv4:
 		r_host = []
-		r = r"""(?:::f{4,6}:)?(?P<ip4>(?:\d{1,3}\.){3}\d{1,3})"""
+		r = r"""(?:::f{4,6}:)?(?P<ip4>%s)""" % (IPAddr.IP_4_RE,)
 		regex = regex.replace("<IP4>", r); # self closed
 		regex = regex.replace("<F-IP4/>", r); # closed
 		r_host.append(r)
 		# separated ipv6:
-		r = r"""(?P<ip6>(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}?|(?<=:):))"""
+		r = r"""(?P<ip6>%s)""" % (IPAddr.IP_6_RE,)
 		regex = regex.replace("<IP6>", r); # self closed
 		regex = regex.replace("<F-IP6/>", r); # closed
 		r_host.append(r"""\[?%s\]?""" % (r,)); # enclose ipv6 in optional [] in host-regex

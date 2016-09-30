@@ -4,3 +4,9 @@
 
 # failJSON: { "time": "2015-10-29T19:24:05", "match": true , "host": "192.0.2.0" }
 2015/10/29 19:24:05 [error] 12684#12684: *22174 limiting requests, excess: 1.495 by zone "one", client: 192.0.2.0, server: example.com, request: "GET /index.php HTTP/1.1", host: "example.com", referrer: "https://example.com"
+
+# failJSON: { "time": "2016-09-30T08:36:06", "match": true, "host": "13.123.1.123" }
+2016/09/30 08:36:06 [error] 22923#0: *4758725916 limiting requests, excess: 15.243 by zone "one", client: 13.123.1.123, server: example.com, request: "GET / HTTP/1.1", host: "example.com"
+
+# failJSON: { "time": "2016-09-30T08:36:06", "match": true, "host": "2606:2800:220:1:248:1893:25c8:1946" }
+2016/09/30 08:36:06 [error] 22923#0: *4758725916 limiting requests, excess: 15.243 by zone "one", client: 2606:2800:220:1:248:1893:25c8:1946, server: example.com, request: "GET / HTTP/1.1", host: "example.com"
