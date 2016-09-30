@@ -77,7 +77,7 @@ class Regex:
 		regex = regex.replace("<F-IP4/>", r); # closed
 		r_host.append(r)
 		# separated ipv6:
-		r = r"""(?P<ip6>(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}?|(?<=:):))"""
+		r = r"""(?P<ip6>(?:[0-9a-fA-F]{1,4}::?|::){1,7}(?:[0-9a-fA-F]{1,4}|(?<=:):))"""
 		regex = regex.replace("<IP6>", r); # self closed
 		regex = regex.replace("<F-IP6/>", r); # closed
 		r_host.append(r"""\[?%s\]?""" % (r,)); # enclose ipv6 in optional [] in host-regex
