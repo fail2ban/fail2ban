@@ -27,7 +27,7 @@ import sys
 
 from ..version import version
 from ..protocol import printFormatted
-from ..helpers import getLogger
+from ..helpers import getLogger, str2LogLevel, getVerbosityFormat
 
 # Gets the instance of the logger.
 logSys = getLogger("fail2ban")
@@ -200,8 +200,10 @@ class Fail2banCmdLine():
 					logSys.setLevel(logging.HEAVYDEBUG)
 				# Add the default logging handler to dump to stderr
 				logout = logging.StreamHandler(sys.stderr)
-				# set a format which is simpler for console use
-				formatter = logging.Formatter('%(levelname)-6s %(message)s')
+
+				# Custom log format for the verbose run (-1, because default verbosity here is 1):
+				fmt = getVerbosityFormat(verbose-1)
+				formatter = logging.Formatter(fmt)
 				# tell the handler to use this format
 				logout.setFormatter(formatter)
 				logSys.addHandler(logout)
@@ -218,8 +220,10 @@ class Fail2banCmdLine():
 
 			logSys.info("Using socket file %s", self._conf["socket"])
 
+			# Check log-level before start (or transmit to server), to prevent error in background:
+			llev = str2LogLevel(self._conf["loglevel"])
 			logSys.info("Using pid file %s, [%s] logging to %s",
-				self._conf["pidfile"], self._conf["loglevel"], self._conf["logtarget"])
+				self._conf["pidfile"], logging.getLevelName(llev), self._conf["logtarget"])
 
 			if self._conf.get("dump", False):
 				ret, stream = self.readConfig()

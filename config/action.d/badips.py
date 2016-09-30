@@ -34,7 +34,7 @@ else:
 from fail2ban.server.actions import ActionBase
 
 
-class BadIPsAction(ActionBase):
+class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	"""Fail2Ban action which reports bans to badips.com, and also
 	blacklist bad IPs listed on badips.com by using another action's
 	ban method.
@@ -104,6 +104,16 @@ class BadIPsAction(ActionBase):
 		self._bannedips = set()
 		# Used later for threading.Timer for updating badips
 		self._timer = None
+
+	@staticmethod
+	def isAvailable(timeout=1):
+		try:
+			response = urlopen(Request("/".join([BadIPsAction._badips]),
+					headers={'User-Agent': "Fail2Ban"}), timeout=timeout)
+			return True, ''
+		except Exception as e: # pragma: no cover
+			return False, e
+
 
 	def getCategories(self, incParents=False):
 		"""Get badips.com categories.

@@ -24,9 +24,12 @@ import sys
 from ..dummyjail import DummyJail
 from ..utils import CONFIG_DIR
 
-if sys.version_info >= (2,7):
+if sys.version_info >= (2,7): # pragma: no cover - may be unavailable
 	class BadIPsActionTest(unittest.TestCase):
 
+		available = True, None
+		modAction = None
+		
 		def setUp(self):
 			"""Call before every test case."""
 			unittest.F2B.SkipIfNoNetwork()
@@ -36,6 +39,15 @@ if sys.version_info >= (2,7):
 			self.jail.actions.add("test")
 
 			pythonModule = os.path.join(CONFIG_DIR, "action.d", "badips.py")
+
+			# check availability (once if not alive, used shorter timeout as in test cases):
+			if BadIPsActionTest.available[0]:
+				if not BadIPsActionTest.modAction:
+					BadIPsActionTest.modAction = self.jail.actions._load_python_module(pythonModule).Action
+				BadIPsActionTest.available = BadIPsActionTest.modAction.isAvailable(timeout=2 if unittest.F2B.fast else 10)
+			if not BadIPsActionTest.available[0]:
+				raise unittest.SkipTest('Skip test because service is not available: %s' % BadIPsActionTest.available[1])
+
 			self.jail.actions.add("badips", pythonModule, initOpts={
 				'category': "ssh",
 				'banaction': "test",

@@ -54,6 +54,7 @@ class Utils():
 
 	DEFAULT_SLEEP_TIME = 2
 	DEFAULT_SLEEP_INTERVAL = 0.2
+	DEFAULT_SHORT_INTERVAL = 0.001
 
 
 	class Cache(object):
@@ -134,21 +135,22 @@ class Utils():
 		"""
 		stdout = stderr = None
 		retcode = None
-		if not callable(timeout):
-			stime = time.time()
-			timeout_expr = lambda: time.time() - stime <= timeout
-		else:
-			timeout_expr = timeout
 		popen = None
 		try:
 			popen = subprocess.Popen(
 				realCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell,
 				preexec_fn=os.setsid  # so that killpg does not kill our process
 			)
+			# wait with timeout for process has terminated:
 			retcode = popen.poll()
-			while retcode is None and timeout_expr():
-				time.sleep(Utils.DEFAULT_SLEEP_INTERVAL)
-				retcode = popen.poll()
+			if retcode is None:
+				def _popen_wait_end():
+					retcode = popen.poll()
+					return (True, retcode) if retcode is not None else None
+				retcode = Utils.wait_for(_popen_wait_end, timeout, Utils.DEFAULT_SHORT_INTERVAL)
+				if retcode:
+					retcode = retcode[1]
+			# if timeout:
 			if retcode is None:
 				logSys.error("%s -- timed out after %s seconds." %
 					(realCmd, timeout))
@@ -202,18 +204,18 @@ class Utils():
 
 		success = False
 		if retcode == 0:
-			logSys.debug("%s -- returned successfully", realCmd)
+			logSys.debug("%-.40s -- returned successfully", realCmd)
 			success = True
 		elif retcode is None:
-			logSys.error("%s -- unable to kill PID %i" % (realCmd, popen.pid))
+			logSys.error("%-.40s -- unable to kill PID %i", realCmd, popen.pid)
 		elif retcode < 0 or retcode > 128:
 			# dash would return negative while bash 128 + n
 			sigcode = -retcode if retcode < 0 else retcode - 128
-			logSys.error("%s -- killed with %s (return code: %s)" %
-				(realCmd, signame.get(sigcode, "signal %i" % sigcode), retcode))
+			logSys.error("%-.40s -- killed with %s (return code: %s)",
+				realCmd, signame.get(sigcode, "signal %i" % sigcode), retcode)
 		else:
 			msg = _RETCODE_HINTS.get(retcode, None)
-			logSys.error("%s -- returned %i" % (realCmd, retcode))
+			logSys.error("%-.40s -- returned %i", realCmd, retcode)
 			if msg:
 				logSys.info("HINT on %i: %s", retcode, msg % locals())
 		return success if not output else (success, stdout, stderr, retcode)
@@ -221,7 +223,25 @@ class Utils():
 	@staticmethod
 	def wait_for(cond, timeout, interval=None):
 		"""Wait until condition expression `cond` is True, up to `timeout` sec
+
+		Parameters
+		----------
+		cond : callable
+			The expression to check condition 
+			(should return equivalent to bool True if wait successful).
+		timeout : float or callable
+			The time out for end of wait
+			(in seconds or callable that returns True if timeout occurred).
+		interval : float (optional)
+			Polling start interval for wait cycle in seconds.
+
+		Returns
+		-------
+		variable
+			The return value of the last call of `cond`, 
+			logical False (or None, 0, etc) if timeout occurred.
 		"""
+		#logSys.log(5, "  wait for %r, tout: %r / %r", cond, timeout, interval)
 		ini = 1  # to delay initializations until/when necessary
 		while True:
 			ret = cond()
@@ -229,10 +249,14 @@ class Utils():
 				return ret
 			if ini:
 				ini = stm = 0
-				time0 = time.time() + timeout
+				if not callable(timeout):
+					time0 = time.time() + timeout
+					timeout_expr = lambda: time.time() > time0
+				else:
+					timeout_expr = timeout
 				if not interval:
 					interval = Utils.DEFAULT_SLEEP_INTERVAL
-			if time.time() > time0:
+			if timeout_expr():
 				break
 			stm = min(stm + interval, Utils.DEFAULT_SLEEP_TIME)
 			time.sleep(stm)

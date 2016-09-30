@@ -134,10 +134,22 @@ def str2LogLevel(value):
 		if isinstance(value, int) or value.isdigit():
 			ll = int(value)
 		else:
-			ll = getattr(logging, value)
+			ll = getattr(logging, value.upper())
 	except AttributeError:
 		raise ValueError("Invalid log level %r" % value)
 	return ll
+
+def getVerbosityFormat(verbosity, fmt=' %(message)s'):
+	"""Custom log format for the verbose runs
+	"""
+	if verbosity > 1: # pragma: no cover
+		if verbosity > 3:
+			fmt = ' | %(module)15.15s-%(levelno)-2d: %(funcName)-20.20s |' + fmt
+		if verbosity > 2:
+			fmt = ' +%(relativeCreated)5d %(thread)X %(name)-25.25s %(levelname)-5.5s' + fmt
+		else:
+			fmt = ' %(asctime)-15s %(thread)X %(levelname)-5.5s' + fmt
+	return fmt
 
 
 def excepthook(exctype, value, traceback):

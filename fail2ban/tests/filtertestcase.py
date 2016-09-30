@@ -225,7 +225,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 		# Opened earlier, therefore must close it
 		fin.close()
 	# to give other threads possibly some time to crunch
-	time.sleep(Utils.DEFAULT_SLEEP_INTERVAL)
+	time.sleep(Utils.DEFAULT_SHORT_INTERVAL)
 	return fout
 
 
@@ -909,7 +909,7 @@ def get_monitor_failures_testcase(Filter_):
 
 			if interim_kill:
 				_killfile(None, self.name)
-				time.sleep(Utils.DEFAULT_SLEEP_INTERVAL)				  # let them know
+				time.sleep(Utils.DEFAULT_SHORT_INTERVAL)				  # let them know
 
 			# now create a new one to override old one
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name + '.new',

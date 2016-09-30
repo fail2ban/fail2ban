@@ -37,7 +37,7 @@ import unittest
 from cStringIO import StringIO
 from functools import wraps
 
-from ..helpers import getLogger
+from ..helpers import getLogger, str2LogLevel, getVerbosityFormat
 from ..server.ipdns import DNSUtils
 from ..server.mytime import MyTime
 from ..server.utils import Utils
@@ -82,13 +82,14 @@ def getOptParser(doc=""):
 				version="%prog " + version)
 
 	p.add_options([
-		Option('-l', "--log-level", type="choice",
+		Option('-l', "--log-level",
 			   dest="log_level",
-			   choices=('heavydebug', 'debug', 'info', 'notice', 'warning', 'error', 'critical'),
 			   default=None,
 			   help="Log level for the logger to use during running tests"),
-		Option('-v', "--verbosity", action="store",
-			   dest="verbosity", type=int,
+		Option('-v', action="count", dest="verbosity",
+			   default=None,
+			   help="Increase verbosity"),
+		Option("--verbosity", action="store", dest="verbosity", type=int,
 			   default=None,
 			   help="Set numerical level of verbosity (0..4)"),
 		Option("--log-direct", action="store_false",
@@ -122,28 +123,30 @@ def initProcess(opts):
 	global logSys
 	logSys = getLogger("fail2ban")
 
-	# Numerical level of verbosity corresponding to a log "level"
-	verbosity = opts.verbosity
-	if verbosity is None:
-		verbosity = {'heavydebug': 4,
-					 'debug': 3,
-					 'info': 2,
-					 'notice': 2,
-					 'warning': 1,
-					 'error': 1,
-					 'critical': 0,
-					 None: 1}[opts.log_level]
-		opts.verbosity = verbosity
-
+	llev = None
 	if opts.log_level is not None: # pragma: no cover
 		# so we had explicit settings
-		logSys.setLevel(getattr(logging, opts.log_level.upper()))
+		llev = str2LogLevel(opts.log_level)
+		logSys.setLevel(llev)
 	else: # pragma: no cover
 		# suppress the logging but it would leave unittests' progress dots
 		# ticking, unless like with '-l critical' which would be silent
 		# unless error occurs
 		logSys.setLevel(logging.CRITICAL)
 	opts.log_level = logSys.level
+
+	# Numerical level of verbosity corresponding to a given log "level"
+	verbosity = opts.verbosity
+	if verbosity is None:
+		verbosity = (
+			1 if llev is None else \
+			4 if llev <= logging.HEAVYDEBUG else \
+			3 if llev <= logging.DEBUG else \
+			2 if llev <= min(logging.INFO, logging.NOTICE) else \
+			1 if llev <= min(logging.WARNING, logging.ERROR) else \
+			0 # if llev <= logging.CRITICAL
+		)
+		opts.verbosity = verbosity
 
 	# Add the default logging handler
 	stdout = logging.StreamHandler(sys.stdout)
@@ -157,13 +160,7 @@ def initProcess(opts):
 		Formatter = logging.Formatter
 
 	# Custom log format for the verbose tests runs
-	if verbosity > 1: # pragma: no cover
-		if verbosity > 3:
-			fmt = ' | %(module)15.15s-%(levelno)-2d: %(funcName)-20.20s |' + fmt
-		if verbosity > 2:
-			fmt = ' +%(relativeCreated)5d %(thread)X %(name)-25.25s %(levelname)-5.5s' + fmt
-		else:
-			fmt = ' %(asctime)-15s %(thread)X %(levelname)-5.5s' + fmt
+	fmt = getVerbosityFormat(verbosity, fmt)
 
 	#
 	stdout.setFormatter(Formatter(fmt))
@@ -239,6 +236,7 @@ def initTests(opts):
 		# (prevent long sleeping during test cases ... less time goes to sleep):
 		Utils.DEFAULT_SLEEP_TIME = 0.0025
 		Utils.DEFAULT_SLEEP_INTERVAL = 0.0005
+		Utils.DEFAULT_SHORT_INTERVAL = 0.0001
 		def F2B_SkipIfFast():
 			raise unittest.SkipTest('Skip test because of "--fast"')
 		unittest.F2B.SkipIfFast = F2B_SkipIfFast
@@ -246,6 +244,7 @@ def initTests(opts):
 		# smaller inertance inside test-cases (litle speedup):
 		Utils.DEFAULT_SLEEP_TIME = 0.25
 		Utils.DEFAULT_SLEEP_INTERVAL = 0.025
+		Utils.DEFAULT_SHORT_INTERVAL = 0.0005
 		# sleep intervals are large - use replacement for sleep to check time to sleep:
 		_org_sleep = time.sleep
 		def _new_sleep(v):
@@ -331,6 +330,11 @@ def gatherTests(regexps=None, opts=None):
 			def addTest(self, suite):
 				matched = []
 				for test in suite:
+					# test of suite loaded with loadTestsFromName may be a suite self:
+					if isinstance(test, unittest.TestSuite): # pragma: no cover
+						self.addTest(test)
+						continue
+					# filter by regexp:
 					s = str(test)
 					for r in self._regexps:
 						m = r.search(s)

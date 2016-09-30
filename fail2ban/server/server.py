@@ -38,7 +38,7 @@ from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
-from ..helpers import getLogger, str2LogLevel, excepthook
+from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, excepthook
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -72,6 +72,7 @@ class Server:
 		self.__asyncServer = None
 		self.__logLevel = None
 		self.__logTarget = None
+		self.__verbose = None
 		self.__syslogSocket = None
 		self.__autoSyslogSocketPaths = {
 			'Darwin':  '/var/run/syslog',
@@ -111,6 +112,7 @@ class Server:
 			# We are daemon.
 		
 		# Set all logging parameters (or use default if not specified):
+		self.__verbose = conf.get("verbose", None)
 		self.setSyslogSocket(conf.get("syslogsocket", 
 			self.__syslogSocket if self.__syslogSocket is not None else DEF_SYSLOGSOCKET))
 		self.setLogLevel(conf.get("loglevel", 
@@ -542,10 +544,10 @@ class Server:
 				self.__logTarget = target
 				return True
 			# set a format which is simpler for console use
-			formatter = logging.Formatter("%(asctime)s %(name)-24s[%(process)d]: %(levelname)-7s %(message)s")
+			fmt = "%(asctime)s %(name)-24s[%(process)d]: %(levelname)-7s %(message)s"
 			if target == "SYSLOG":
 				# Syslog daemons already add date to the message.
-				formatter = logging.Formatter("%(name)s[%(process)d]: %(levelname)s %(message)s")
+				fmt = "%(name)s[%(process)d]: %(levelname)s %(message)s"
 				facility = logging.handlers.SysLogHandler.LOG_DAEMON
 				if self.__syslogSocket == "auto":
 					import platform
@@ -572,8 +574,8 @@ class Server:
 					open(target, "a").close()
 					hdlr = logging.handlers.RotatingFileHandler(target)
 				except IOError:
-					logSys.error("Unable to log to " + target)
-					logSys.info("Logging to previous target " + self.__logTarget)
+					logSys.error("Unable to log to %r", target)
+					logSys.info("Logging to previous target %r", self.__logTarget)
 					return False
 			# Removes previous handlers -- in reverse order since removeHandler
 			# alter the list in-place and that can confuses the iterable
@@ -592,8 +594,13 @@ class Server:
 					if (2, 6, 3) <= sys.version_info < (3,) or \
 							(3, 2) <= sys.version_info:
 						raise
+			# detailed format by deep log levels (as DEBUG=10):
+			if logger.getEffectiveLevel() <= logging.DEBUG: # pragma: no cover
+				if self.__verbose is None:
+					self.__verbose = logging.DEBUG - logger.getEffectiveLevel() + 1
+				fmt = getVerbosityFormat(self.__verbose-1)
 			# tell the handler to use this format
-			hdlr.setFormatter(formatter)
+			hdlr.setFormatter(logging.Formatter(fmt))
 			logger.addHandler(hdlr)
 			# Does not display this message at startup.
 			if self.__logTarget is not None:

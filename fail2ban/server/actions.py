@@ -85,6 +85,26 @@ class Actions(JailThread, Mapping):
 		## The ban manager.
 		self.__banManager = BanManager()
 
+	@staticmethod
+	def _load_python_module(pythonModule):
+		pythonModuleName = os.path.splitext(
+			os.path.basename(pythonModule))[0]
+		if sys.version_info >= (3, 3):
+			mod = importlib.machinery.SourceFileLoader(
+				pythonModuleName, pythonModule).load_module()
+		else:
+			mod = imp.load_source(
+				pythonModuleName, pythonModule)
+		if not hasattr(mod, "Action"):
+			raise RuntimeError(
+				"%s module does not have 'Action' class" % pythonModule)
+		elif not issubclass(mod.Action, ActionBase):
+			raise RuntimeError(
+				"%s module %s does not implement required methods" % (
+					pythonModule, mod.Action.__name__))
+		return mod
+
+
 	def add(self, name, pythonModule=None, initOpts=None, reload=False):
 		"""Adds a new action.
 
@@ -127,21 +147,7 @@ class Actions(JailThread, Mapping):
 		if pythonModule is None:
 			action = CommandAction(self._jail, name)
 		else:
-			pythonModuleName = os.path.splitext(
-				os.path.basename(pythonModule))[0]
-			if sys.version_info >= (3, 3):
-				customActionModule = importlib.machinery.SourceFileLoader(
-					pythonModuleName, pythonModule).load_module()
-			else:
-				customActionModule = imp.load_source(
-					pythonModuleName, pythonModule)
-			if not hasattr(customActionModule, "Action"):
-				raise RuntimeError(
-					"%s module does not have 'Action' class" % pythonModule)
-			elif not issubclass(customActionModule.Action, ActionBase):
-				raise RuntimeError(
-					"%s module %s does not implement required methods" % (
-						pythonModule, customActionModule.Action.__name__))
+			customActionModule = self._load_python_module(pythonModule)
 			action = customActionModule.Action(self._jail, name, **initOpts)
 		self._actions[name] = action
 

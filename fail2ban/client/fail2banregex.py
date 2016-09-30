@@ -51,7 +51,7 @@ from .filterreader import FilterReader
 from ..server.filter import Filter, FileContainer
 from ..server.failregex import RegexException
 
-from ..helpers import FormatterWithTraceBack, getLogger, PREFER_ENC
+from ..helpers import str2LogLevel, getVerbosityFormat, FormatterWithTraceBack, getLogger, PREFER_ENC
 # Gets the instance of the logger.
 logSys = getLogger("fail2ban")
 
@@ -134,13 +134,16 @@ Report bugs to https://github.com/fail2ban/fail2ban/issues
 		Option("-m", "--journalmatch",
 			   help="journalctl style matches overriding filter file. "
 			   "\"systemd-journal\" only"),
-		Option('-l', "--log-level", type="choice",
+		Option('-l', "--log-level",
 			   dest="log_level",
-			   choices=('heavydebug', 'debug', 'info', 'notice', 'warning', 'error', 'critical'),
 			   default=None,
 			   help="Log level for the Fail2Ban logger to use"),
-		Option("-v", "--verbose", action='store_true',
-			   help="Be verbose in output"),
+		Option('-v', '--verbose', action="count", dest="verbose",
+			   default=None,
+			   help="Increase verbosity"),
+		Option("--verbosity", action="store", dest="verbose", type=int,
+			   default=None,
+			   help="Set numerical level of verbosity (0..4)"),
 		Option("-D", "--debuggex", action='store_true',
 			   help="Produce debuggex.com urls for debugging there"),
 		Option("--print-no-missed", action='store_true',
@@ -579,17 +582,17 @@ def exec_command_line():
 	# TODO: taken from -testcases -- move common functionality somewhere
 	if opts.log_level is not None:
 		# so we had explicit settings
-		logSys.setLevel(getattr(logging, opts.log_level.upper()))
+		logSys.setLevel(str2LogLevel(opts.log_level))
 	else:
 		# suppress the logging but it would leave unittests' progress dots
 		# ticking, unless like with '-l critical' which would be silent
 		# unless error occurs
-		logSys.setLevel(getattr(logging, 'CRITICAL'))
+		logSys.setLevel(logging.CRITICAL)
 
 	# Add the default logging handler
 	stdout = logging.StreamHandler(sys.stdout)
 
-	fmt = 'D: %(message)s'
+	fmt = '%(levelname)-1.1s: %(message)s' if opts.verbose <= 1 else '%(message)s'
 
 	if opts.log_traceback:
 		Formatter = FormatterWithTraceBack
@@ -598,11 +601,7 @@ def exec_command_line():
 		Formatter = logging.Formatter
 
 	# Custom log format for the verbose tests runs
-	if opts.verbose:
-		stdout.setFormatter(Formatter(' %(asctime)-15s %(thread)s' + fmt))
-	else:
-		# just prefix with the space
-		stdout.setFormatter(Formatter(fmt))
+	stdout.setFormatter(Formatter(getVerbosityFormat(opts.verbose, fmt)))
 	logSys.addHandler(stdout)
 
 	fail2banRegex = Fail2banRegex(opts)
