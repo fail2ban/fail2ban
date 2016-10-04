@@ -50,7 +50,7 @@ class DateTemplate(object):
 
 	def __init__(self):
 		self.name = ""
-		self.weight = 1
+		self.weight = 1.0
 		self._regex = ""
 		self._cRegex = None
 
@@ -232,11 +232,7 @@ class DatePatternRegex(DateTemplate):
 		if not dateMatch:
 			dateMatch = self.matchDate(line)
 		if dateMatch:
-			groupdict = dict(
-				(key, value)
-				for key, value in dateMatch.groupdict().iteritems()
-				if value is not None)
-			return reGroupDictStrptime(groupdict), dateMatch
+			return reGroupDictStrptime(dateMatch.groupdict()), dateMatch
 
 
 class DateTai64n(DateTemplate):

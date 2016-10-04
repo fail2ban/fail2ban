@@ -202,6 +202,9 @@ class DateDetectorTest(LogCaptureTestCase):
 		dd = DateDetector()
 		dd.addDefaultTemplate()
 		for (debit, line, cnt) in (
+			# shortest distance to datetime should win:
+			("030324  0:03:59",            "some free text 030324  0:03:59 -- 2003-03-07 17:05:01 ...", 1),
+			# some free text with datetime:
 			("2003-03-07 17:05:01",        "some free text 2003-03-07 17:05:01 test ...", 15),
 			# distance collision detection (date from foreign input should not be found):
 			("030324  0:04:00",            "server mysqld[1000]: 030324  0:04:00 [Warning] Access denied ..."
