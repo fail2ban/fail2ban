@@ -205,7 +205,7 @@ setup(
 			glob("config/filter.d/*.conf")
 		),
 		('/etc/fail2ban/filter.d/ignorecommands',
-			glob("config/filter.d/ignorecommands/*")
+			[p for p in glob("config/filter.d/ignorecommands/*") if isfile(p)]
 		),
 		('/etc/fail2ban/action.d',
 			glob("config/action.d/*.conf") +
