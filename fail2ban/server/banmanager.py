@@ -142,7 +142,7 @@ class BanManager:
 				resolver.lifetime = timeout
 				resolver.timeout = timeout / 2
 				self.dnsResolver = resolver
-			except ImportError: # pragma: no cover
+			except ImportError as e: # pragma: no cover
 				logSys.error("dnspython package is required but could not be imported")
 				return_dict["error"] = repr(e)
 				return_dict["asn"].append("error")

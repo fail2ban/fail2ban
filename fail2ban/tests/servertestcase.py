@@ -559,6 +559,7 @@ class Transmitter(TransmitterBase):
 		)
 
 	def testJailStatusCymru(self):
+		unittest.F2B.SkipIfNoNetwork()
 		try:
 			import dns.exception
 			import dns.resolver
