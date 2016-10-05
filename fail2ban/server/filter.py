@@ -35,7 +35,7 @@ from .ipdns import DNSUtils, IPAddr
 from .ticket import FailTicket
 from .jailthread import JailThread
 from .datedetector import DateDetector
-from .datetemplate import DatePatternRegex, DateEpoch, DateTai64n
+from .datetemplate import DateTemplate, DatePatternRegex, DateEpoch, DateTai64n
 from .mytime import MyTime
 from .failregex import FailRegex, Regex, RegexException
 from .action import CommandAction
@@ -257,14 +257,29 @@ class Filter(JailThread):
 		if pattern is None:
 			self.dateDetector = None
 			return
-		elif pattern.upper() == "EPOCH":
-			template = DateEpoch()
-			template.name = "Epoch"
-		elif pattern.upper() == "TAI64N":
-			template = DateTai64n()
-			template.name = "TAI64N"
 		else:
-			template = DatePatternRegex(pattern)
+			key = pattern.upper()
+			if key == "EPOCH":
+				template = DateEpoch()
+				template.name = "Epoch"
+			elif key == "TAI64N":
+				template = DateTai64n()
+				template.name = "TAI64N"
+			elif key in ("{^LN-BEG}", "{*WD-BEG}", "{DEFAULT}"):
+				self.dateDetector = DateDetector()
+				flt = \
+					lambda template: template.flags & DateTemplate.LINE_BEGIN if key == "{^LN-BEG}" else \
+					lambda template: template.flags & DateTemplate.WORD_BEGIN if key == "{*WD-BEG}" else \
+					None
+				self.dateDetector.addDefaultTemplate(flt)
+				return
+			elif "{DATE}" in key:
+				self.dateDetector = DateDetector()
+				self.dateDetector.addDefaultTemplate(
+					lambda template: not template.flags & DateTemplate.LINE_BEGIN, pattern)
+				return
+			else:
+				template = DatePatternRegex(pattern)
 		self.dateDetector = DateDetector()
 		self.dateDetector.appendTemplate(template)
 		logSys.info("  date pattern `%r`: `%s`",
@@ -280,9 +295,9 @@ class Filter(JailThread):
 	def getDatePattern(self):
 		if self.dateDetector is not None:
 			templates = self.dateDetector.templates
-			if len(templates) > 1:
+			if len(templates) > 2:
 				return None, "Default Detectors"
-			elif len(templates) == 1:
+			elif len(templates):
 				if hasattr(templates[0], "pattern"):
 					pattern =  templates[0].pattern
 				else:

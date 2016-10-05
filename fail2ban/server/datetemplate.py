@@ -33,8 +33,11 @@ from ..helpers import getLogger
 logSys = getLogger(__name__)
 
 RE_NO_WRD_BOUND_BEG = re.compile(r'^(?:\^|\*\*|\(\?:\^)')
-RE_NO_WRD_BOUND_END = re.compile(r'(?<!\\)(?:\$|\*\*)$')
+RE_NO_WRD_BOUND_END = re.compile(r'(?<!\\)(?:\$\)?|\*\*)$')
 RE_DEL_WRD_BOUNDS =   re.compile(r'^\*\*|(?<!\\)\*\*$')
+
+RE_LINE_BOUND_BEG = re.compile(r'^(?:\^|\(\?:\^(?!\|))')
+RE_LINE_BOUND_END = re.compile(r'(?<![\\\|])(?:\$\)?)$')
 
 class DateTemplate(object):
 	"""A template which searches for and returns a date from a log line.
@@ -49,6 +52,7 @@ class DateTemplate(object):
 	"""
 
 	LINE_BEGIN = 8
+	LINE_END =   4
 	WORD_BEGIN = 2
 	WORD_END =   1
 
@@ -86,6 +90,7 @@ class DateTemplate(object):
 			If regular expression fails to compile
 		"""
 		regex = regex.strip()
+		self.flags = 0
 		# if word or line start boundary:
 		if wordBegin and not RE_NO_WRD_BOUND_BEG.search(regex):
 			self.flags |= DateTemplate.WORD_BEGIN if wordBegin != 'start' else DateTemplate.LINE_BEGIN
@@ -96,9 +101,12 @@ class DateTemplate(object):
 			self.flags |= DateTemplate.WORD_END
 			regex += r'(?=\b|\W|$)'
 			self.name += '{*WD-END}'
+		if RE_LINE_BOUND_BEG.search(regex): self.flags |= DateTemplate.LINE_BEGIN
+		if RE_LINE_BOUND_END.search(regex): self.flags |= DateTemplate.LINE_END
 		# remove possible special pattern "**" in front and end of regex:
 		regex = RE_DEL_WRD_BOUNDS.sub('', regex)
 		self._regex = regex
+		self._cRegex = None
 
 	regex = property(getRegex, setRegex, doc=
 		"""Regex used to search for date.
@@ -151,11 +159,15 @@ class DateEpoch(DateTemplate):
 	regex
 	"""
 
-	def __init__(self):
+	def __init__(self, lineBeginOnly=False):
 		DateTemplate.__init__(self)
 		self.name = "Epoch"
-		self.setRegex(r"(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=\baudit\()))\d{10,11}\b(?:\.\d{3,6})?(?:(?(selinux)(?=:\d+\)))|(?(square)(?=\])))",
-			wordBegin=False) ;# already line begin resp. word begin anchored
+		if not lineBeginOnly:
+			regex = r"(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=\baudit\()))\d{10,11}\b(?:\.\d{3,6})?(?:(?(selinux)(?=:\d+\)))|(?(square)(?=\])))"
+			self.setRegex(regex, wordBegin=False) ;# already line begin resp. word begin anchored
+		else:
+			regex = r"(?P<square>(?<=^\[))\d{10,11}\b(?:\.\d{3,6})?(?(square)(?=\]))"
+			self.setRegex(regex, wordBegin='start', wordEnd=True)
 
 	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.

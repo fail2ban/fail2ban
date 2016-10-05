@@ -474,8 +474,9 @@ class Fail2banRegex(object):
 				if self._verbose or template.hits:
 					out.append("[%d] %s" % (template.hits, template.name))
 					if self._verbose_date:
-						out.append("    # weight: %3s, pattern: %s" % (
-							template.weight, getattr(template, 'pattern', ''),))
+						out.append("    # weight: %.3f (%.3f), pattern: %s" % (
+							template.weight, template.template.weight,
+							getattr(template, 'pattern', ''),))
 						out.append("    # regex:   %s" % (getattr(template, 'regex', ''),))
 			pprint_list(out, "[# of hits] date format")
 

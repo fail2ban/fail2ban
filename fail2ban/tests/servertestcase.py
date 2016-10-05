@@ -1107,7 +1107,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					# (we don't use it in this test at all):
 					elif unittest.F2B.fast and (
 						len(cmd) > 3 and cmd[0] in ('set', 'multi-set') and cmd[2] == 'addfailregex'
-					):
+					): # pragma: no cover
 						cmd[0] = "set"
 						cmd[3] = "DUMMY-REGEX <HOST>"
 					# command to server, use cmdHandler direct instead of `transm.proceed(cmd)`:

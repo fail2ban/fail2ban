@@ -26,13 +26,15 @@ import time
 
 from threading import Lock
 
-from .datetemplate import DateTemplate, DatePatternRegex, DateTai64n, DateEpoch
+from .datetemplate import re, DateTemplate, DatePatternRegex, DateTai64n, DateEpoch
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
 logLevel = 6
+
+RE_DATE_PREMATCH = re.compile("\{DATE\}", re.IGNORECASE)
 
 
 class DateDetectorCache(object):
@@ -54,15 +56,18 @@ class DateDetectorCache(object):
 			self._addDefaultTemplate()
 			return self.__templates
 
-	def _cacheTemplate(self, template):
+	def _cacheTemplate(self, template, lineBeginOnly=False):
 		"""Cache Fail2Ban's default template.
 
 		"""
 		if isinstance(template, str):
 			# exact given template with word benin-end boundary:
-			template = DatePatternRegex(template)
+			if not lineBeginOnly:
+				template = DatePatternRegex(template)
+			else:
+				template = DatePatternRegex(template, wordBegin='start')
 		# additional template, that prefers datetime at start of a line (safety+performance feature):
-		if hasattr(template, 'regex'):
+		if not lineBeginOnly and hasattr(template, 'regex'):
 			template2 = copy.copy(template)
 			regex = getattr(template, 'pattern', template.regex)
 			template2.setRegex(regex, wordBegin='start', wordEnd=True)
@@ -90,6 +95,7 @@ class DateDetectorCache(object):
 		# prefixed with optional time zone (monit):
 		# PDT Apr 16 21:05:29
 		self._cacheTemplate("(?:%z )?(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?")
+		self._cacheTemplate("(?:%Z )?(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?")
 		# asctime with optional day, subsecond and/or year coming after day
 		# http://bugs.debian.org/798923
 		# Sun Jan 23 2005 21:59:59.011
@@ -114,17 +120,18 @@ class DateDetectorCache(object):
 		# TAI64N
 		self._cacheTemplate(DateTai64n())
 		# Epoch
+		self._cacheTemplate(DateEpoch(lineBeginOnly=True), lineBeginOnly=True)
 		self._cacheTemplate(DateEpoch())
 		# Only time information in the log
-		self._cacheTemplate("^%H:%M:%S")
+		self._cacheTemplate("%H:%M:%S", lineBeginOnly=True)
 		# <09/16/08@05:03:30>
-		self._cacheTemplate("^<%m/%d/%Exy@%H:%M:%S>")
+		self._cacheTemplate("<%m/%d/%Exy@%H:%M:%S>", lineBeginOnly=True)
 		# MySQL: 130322 11:46:11
 		self._cacheTemplate("%Exy%Exm%Exd  ?%H:%M:%S")
 		# Apache Tomcat
 		self._cacheTemplate("%b %d, %ExY %I:%M:%S %p")
 		# ASSP: Apr-27-13 02:33:06
-		self._cacheTemplate("^%b-%d-%Exy %H:%M:%S")
+		self._cacheTemplate("%b-%d-%Exy %H:%M:%S", lineBeginOnly=True)
 		self.__templates = self.__tmpcache[0] + self.__tmpcache[1]
 		del self.__tmpcache
 
@@ -172,6 +179,8 @@ class DateDetector(object):
 		self.__lastTemplIdx = 0x7fffffff
 		# first free place:
 		self.__firstUnused = 0
+		# pre-match pattern:
+		self.__preMatch = None
 
 	def _appendTemplate(self, template):
 		name = template.name
@@ -200,10 +209,18 @@ class DateDetector(object):
 			template = DatePatternRegex(template)
 		self._appendTemplate(template)
 
-	def addDefaultTemplate(self):
+	def addDefaultTemplate(self, filterTemplate=None, preMatch=None):
 		"""Add Fail2Ban's default set of date templates.
 		"""
 		for template in DateDetector._defCache.templates:
+			# filter if specified:
+			if filterTemplate is not None and not filterTemplate(template): continue
+			# if exact pattern available - create copy of template, contains replaced {DATE} with default regex:
+			if preMatch is not None:
+				regex = getattr(template, 'pattern', template.regex)
+				template = copy.copy(template)
+				template.setRegex(RE_DATE_PREMATCH.sub(regex, preMatch))
+			# append date detector template:
 			self._appendTemplate(template)
 
 	@property
@@ -230,7 +247,7 @@ class DateDetector(object):
 			The regex match returned from the first successfully matched
 			template.
 		"""
-		#logSys.log(logLevel, "try to match time for line: %.250s", line)
+		#logSys.log(logLevel, "try to match time for line: %.120s", line)
 		match = None
 		# first try to use last template with same start/end position:
 		i = self.__lastTemplIdx
@@ -238,13 +255,16 @@ class DateDetector(object):
 			ddtempl = self.__templates[i]
 			template = ddtempl.template
 			distance, endpos = self.__lastPos[0], self.__lastEndPos[0]
+			if logSys.getEffectiveLevel() <= logLevel-1:
+				logSys.log(logLevel-1, "  try to match last template #%02i (from %r to %r): ...%r==%r %s %r==%r...",
+					i, distance, endpos, 
+					line[distance-1:distance], self.__lastPos[1],
+					line[distance:endpos],
+					line[endpos:endpos+1], self.__lastEndPos[1])
 			# check same boundaries left/right, otherwise possible collision/pattern switch:
 			if (line[distance-1:distance] == self.__lastPos[1] and 
 					line[endpos:endpos+1] == self.__lastEndPos[1]
 			):
-				if logSys.getEffectiveLevel() <= logLevel-1:
-					logSys.log(logLevel-1, "  try to match last template #%02i (from %r to %r): ... %s ...",
-						i, distance, endpos, line[distance:endpos])
 				match = template.matchDate(line, distance, endpos)
 				if match:
 					distance = match.start()
@@ -270,8 +290,8 @@ class DateDetector(object):
 					if logSys.getEffectiveLevel() <= logLevel:
 						logSys.log(logLevel, "  matched time template #%02i (at %r <= %r, %r) %s",
 							i, distance, ddtempl.distance, self.__lastPos[0], template.name)
-					## if line-begin anchored - stop searching:
-					if template.flags & DateTemplate.LINE_BEGIN:
+					## if line-begin/end anchored - stop searching:
+					if template.flags & (DateTemplate.LINE_BEGIN|DateTemplate.LINE_END):
 						break
 					## [grave] if distance changed, possible date-match was found somewhere 
 					## in body of message, so save this template, and search further:

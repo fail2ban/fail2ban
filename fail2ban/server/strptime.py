@@ -40,6 +40,7 @@ def _getYearCentRE(cent=(0,3), distance=3, now=(MyTime.now(), MyTime.alternateNo
 
 #todo: implement literal time zone support like CET, PST, PDT, etc (via pytz):
 #timeRE['z'] = r"%s?(?P<z>Z|[+-]\d{2}(?::?[0-5]\d)?|[A-Z]{3})?" % timeRE['Z']
+timeRE['Z'] = r"(?P<Z>[A-Z]{3,5})"
 timeRE['z'] = r"(?P<z>Z|[+-]\d{2}(?::?[0-5]\d)?)"
 
 # Extend build-in TimeRE with some exact patterns
