@@ -42,17 +42,20 @@ class DateDetectorTest(LogCaptureTestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		LogCaptureTestCase.setUp(self)
-		self.__old_eff_level = datedetector.logLevel
-		datedetector.logLevel = logSys.getEffectiveLevel()
 		setUpMyTime()
-		self.__datedetector = DateDetector()
-		self.__datedetector.addDefaultTemplate()
+		self.__datedetector = None
 
 	def tearDown(self):
 		"""Call after every test case."""
 		LogCaptureTestCase.tearDown(self)
-		datedetector.logLevel = self.__old_eff_level
 		tearDownMyTime()
+
+	@property
+	def datedetector(self):
+		if self.__datedetector is None:
+			self.__datedetector = DateDetector()
+			self.__datedetector.addDefaultTemplate()
+		return self.__datedetector
 	
 	def testGetEpochTime(self):
 		# correct epoch time, using all variants:
@@ -60,7 +63,7 @@ class DateDetectorTest(LogCaptureTestCase):
 			for date in ("%s", "[%s]", "[%s.555]", "audit(%s.555:101)"):
 				date = date % dateUnix
 				log = date + " [sshd] error: PAM: Authentication failure"
-				datelog = self.__datedetector.getTime(log)
+				datelog = self.datedetector.getTime(log)
 				self.assertTrue(datelog, "Parse epoch time for %s failed" % (date,))
 				( datelog, matchlog ) = datelog
 				self.assertEqual(int(datelog), dateUnix)
@@ -70,7 +73,7 @@ class DateDetectorTest(LogCaptureTestCase):
 			for date in ("%s", "[%s]", "[%s.555]", "audit(%s.555:101)"):
 				date = date % dateUnix
 				log = date + " [sshd] error: PAM: Authentication failure"
-				datelog = self.__datedetector.getTime(log)
+				datelog = self.datedetector.getTime(log)
 				self.assertFalse(datelog)
 	
 	def testGetTime(self):
@@ -80,7 +83,7 @@ class DateDetectorTest(LogCaptureTestCase):
 		#      is not correctly determined atm, since year is not present
 		#      in the log entry.  Since this doesn't effect the operation
 		#      of fail2ban -- we just ignore incorrect day of the week
-		( datelog, matchlog ) = self.__datedetector.getTime(log)
+		( datelog, matchlog ) = self.datedetector.getTime(log)
 		self.assertEqual(datelog, dateUnix)
 		self.assertEqual(matchlog.group(), 'Jan 23 21:59:59')
 
@@ -140,7 +143,7 @@ class DateDetectorTest(LogCaptureTestCase):
 				if not bound and prefix == "word-boundary": continue
 				logSys.debug('  -- test %-5s for %r', should_match, log)
 				# with getTime:
-				logtime = self.__datedetector.getTime(log)
+				logtime = self.datedetector.getTime(log)
 				if should_match:
 					self.assertNotEqual(logtime, None,
 						"getTime retrieved nothing: failure for %s by prefix %r, anchored: %r, log: %s" % ( sdate, prefix, anchored, log))
@@ -152,8 +155,8 @@ class DateDetectorTest(LogCaptureTestCase):
 					self.assertEqual(logtime, None,
 						"getTime should have not matched for %r by prefix %r Got: %s" % (sdate, prefix, logtime))
 				# with getTime(matchTime) - this combination used in filter:
-				(timeMatch, template) = matchTime = self.__datedetector.matchTime(log)
-				logtime = self.__datedetector.getTime(log, matchTime)
+				(timeMatch, template) = matchTime = self.datedetector.matchTime(log)
+				logtime = self.datedetector.getTime(log, matchTime)
 				logSys.debug('  -- found - %r', template.name if timeMatch else False)
 				if should_match:
 					self.assertNotEqual(logtime, None,
@@ -168,26 +171,26 @@ class DateDetectorTest(LogCaptureTestCase):
 				logSys.debug('  -- OK')
 
 	def testAllUniqueTemplateNames(self):
-		self.assertRaises(ValueError, self.__datedetector.appendTemplate,
-						  self.__datedetector.templates[0])
+		self.assertRaises(ValueError, self.datedetector.appendTemplate,
+						  self.datedetector.templates[0])
 
 	def testFullYearMatch_gh130(self):
 		# see https://github.com/fail2ban/fail2ban/pull/130
 		# yoh: unfortunately this test is not really effective to reproduce the
 		#      situation but left in place to assure consistent behavior
 		mu = time.mktime(datetime.datetime(2012, 10, 11, 2, 37, 17).timetuple())
-		logdate = self.__datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')
+		logdate = self.datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')
 		self.assertNotEqual(logdate, None)
 		( logTime, logMatch ) = logdate
 		self.assertEqual(logTime, mu)
 		self.assertEqual(logMatch.group(), '2012/10/11 02:37:17')
 		# confuse it with year being at the end
 		for i in xrange(10):
-			( logTime, logMatch ) =	self.__datedetector.getTime('11/10/2012 02:37:17 [error] 18434#0')
+			( logTime, logMatch ) =	self.datedetector.getTime('11/10/2012 02:37:17 [error] 18434#0')
 			self.assertEqual(logTime, mu)
 			self.assertEqual(logMatch.group(), '11/10/2012 02:37:17')
 		# and now back to the original
-		( logTime, logMatch ) = self.__datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')
+		( logTime, logMatch ) = self.datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')
 		self.assertEqual(logTime, mu)
 		self.assertEqual(logMatch.group(), '2012/10/11 02:37:17')
 
@@ -199,8 +202,7 @@ class DateDetectorTest(LogCaptureTestCase):
 			self.assertEqual(t.matchDate('aaaac').group(), 'aaaac')
 
 	def testAmbiguousInOrderedTemplates(self):
-		dd = DateDetector()
-		dd.addDefaultTemplate()
+		dd = self.datedetector
 		for (debit, line, cnt) in (
 			# shortest distance to datetime should win:
 			("030324  0:03:59",            "some free text 030324  0:03:59 -- 2003-03-07 17:05:01 ...", 1),
@@ -224,6 +226,25 @@ class DateDetectorTest(LogCaptureTestCase):
 				self.assertTrue(match)
 				self.assertEqual(match.group(), debit)
 
+	def testLowLevelLogging(self):
+		# test coverage for the deep (heavy) debug messages:
+		try:
+			self.__old_eff_level = datedetector.logLevel
+			if datedetector.logLevel < logSys.getEffectiveLevel()+1:
+				datedetector.logLevel = logSys.getEffectiveLevel()+1
+			dd = self.datedetector
+			i = 0
+			for (line, cnt) in (
+				("server mysqld[5906]: 2005-10-07 06:09:%02i 5907 [Warning] Access denied", 2),
+				("server mysqld[5906]: 051007 06:10:%02i 5907 [Warning] Access denied", 5),
+				("server mysqld[5906]: 2005-10-07 06:09:%02i 5907 [Warning] Access denied", 10),
+			):
+				for i in range(i, i+cnt+1):
+					logSys.debug('== test: %r', (line % i, cnt))
+					match, template = dd.matchTime(line % i)
+					self.assertTrue(match)
+		finally:
+			datedetector.logLevel = self.__old_eff_level
 
 iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
 

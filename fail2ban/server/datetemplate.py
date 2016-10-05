@@ -48,9 +48,14 @@ class DateTemplate(object):
 	regex
 	"""
 
+	LINE_BEGIN = 8
+	WORD_BEGIN = 2
+	WORD_END =   1
+
 	def __init__(self):
 		self.name = ""
 		self.weight = 1.0
+		self.flags = 0
 		self._regex = ""
 		self._cRegex = None
 
@@ -83,12 +88,14 @@ class DateTemplate(object):
 		regex = regex.strip()
 		# if word or line start boundary:
 		if wordBegin and not RE_NO_WRD_BOUND_BEG.search(regex):
+			self.flags |= DateTemplate.WORD_BEGIN if wordBegin != 'start' else DateTemplate.LINE_BEGIN
 			regex = (r'(?=^|\b|\W)' if wordBegin != 'start' else r"(?:^|(?<=^\W)|(?<=^\W{2}))") + regex
 			self.name = ('{*WD-BEG}' if wordBegin != 'start' else '{^LN-BEG}') + self.name
 		# if word end boundary:
 		if wordEnd and not RE_NO_WRD_BOUND_END.search(regex):
+			self.flags |= DateTemplate.WORD_END
 			regex += r'(?=\b|\W|$)'
-			self.name += ('{*WD-END}' if wordEnd else '')
+			self.name += '{*WD-END}'
 		# remove possible special pattern "**" in front and end of regex:
 		regex = RE_DEL_WRD_BOUNDS.sub('', regex)
 		self._regex = regex
@@ -97,12 +104,18 @@ class DateTemplate(object):
 		"""Regex used to search for date.
 		""")
 
-	def matchDate(self, line):
-		"""Check if regex for date matches on a log line.
+	def _compileRegex(self):
+		"""Compile regex by first usage.
 		"""
 		if not self._cRegex:
 			self._cRegex = re.compile(self.regex, re.UNICODE | re.IGNORECASE)
-		dateMatch = self._cRegex.search(line)
+
+	def matchDate(self, line, *args):
+		"""Check if regex for date matches on a log line.
+		"""
+		if not self._cRegex:
+			self._compileRegex()
+		dateMatch = self._cRegex.search(line, *args); # pos, endpos
 		return dateMatch
 
 	@abstractmethod

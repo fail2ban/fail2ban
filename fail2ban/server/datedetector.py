@@ -26,7 +26,7 @@ import time
 
 from threading import Lock
 
-from .datetemplate import DatePatternRegex, DateTai64n, DateEpoch
+from .datetemplate import DateTemplate, DatePatternRegex, DateTai64n, DateEpoch
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
@@ -142,6 +142,10 @@ class DateDetectorTemplate(object):
 		# the last distance to date-match within the log file:
 		self.distance = 0x7fffffff
 
+	@property
+	def weight(self):
+		return self.hits * self.template.weight / max(1, self.distance)
+
 	def __getattr__(self, name):
 		""" Returns attribute of template (called for parameters not in slots)
 		"""
@@ -158,13 +162,14 @@ class DateDetector(object):
 	_defCache = DateDetectorCache()
 
 	def __init__(self):
-		self.__lock = Lock()
 		self.__templates = list()
 		self.__known_names = set()
 		# time the template was long unused (currently 300 == 5m):
 		self.__unusedTime = 300
-		# last known distance:
-		self.__lastDistance = 0
+		# last known distance (bypass one char collision) and end position:
+		self.__lastPos = 1, None
+		self.__lastEndPos = 0x7fffffff, None
+		self.__lastTemplIdx = 0x7fffffff
 		# first free place:
 		self.__firstUnused = 0
 
@@ -198,9 +203,8 @@ class DateDetector(object):
 	def addDefaultTemplate(self):
 		"""Add Fail2Ban's default set of date templates.
 		"""
-		with self.__lock:
-			for template in DateDetector._defCache.templates:
-				self._appendTemplate(template)
+		for template in DateDetector._defCache.templates:
+			self._appendTemplate(template)
 
 	@property
 	def templates(self):
@@ -226,29 +230,59 @@ class DateDetector(object):
 			The regex match returned from the first successfully matched
 			template.
 		"""
+		#logSys.log(logLevel, "try to match time for line: %.250s", line)
 		match = None
-		i = 0
-		found = None, 0x7fffffff, -1
-		with self.__lock:
+		# first try to use last template with same start/end position:
+		i = self.__lastTemplIdx
+		if i < len(self.__templates):
+			ddtempl = self.__templates[i]
+			template = ddtempl.template
+			distance, endpos = self.__lastPos[0], self.__lastEndPos[0]
+			# check same boundaries left/right, otherwise possible collision/pattern switch:
+			if (line[distance-1:distance] == self.__lastPos[1] and 
+					line[endpos:endpos+1] == self.__lastEndPos[1]
+			):
+				if logSys.getEffectiveLevel() <= logLevel-1:
+					logSys.log(logLevel-1, "  try to match last template #%02i (from %r to %r): ... %s ...",
+						i, distance, endpos, line[distance:endpos])
+				match = template.matchDate(line, distance, endpos)
+				if match:
+					distance = match.start()
+					endpos = match.end()
+					# if different position, possible collision/pattern switch:
+					if distance == self.__lastPos[0] and endpos == self.__lastEndPos[0]:
+						logSys.log(logLevel, "  matched last time template #%02i", i)
+					else:
+						logSys.log(logLevel, "  ** last pattern collision - pattern change, search ...")
+						match = None
+		# search template and better match:
+		if not match:
+			self.__lastTemplIdx = 0x7fffffff
+			logSys.log(logLevel, " search template ...")
+			found = None, 0x7fffffff, -1
+			i = 0
 			for ddtempl in self.__templates:
 				template = ddtempl.template
 				match = template.matchDate(line)
-				if match is not None:
-					distance = max(1, match.start() + 1)
+				if match:
+					distance = match.start()
+					endpos = match.end()
 					if logSys.getEffectiveLevel() <= logLevel:
-						logSys.log(logLevel, "  matched time template #%r (at %r <= %r, %r) %s",
-							i, distance, ddtempl.distance, self.__lastDistance, template.name)
+						logSys.log(logLevel, "  matched time template #%02i (at %r <= %r, %r) %s",
+							i, distance, ddtempl.distance, self.__lastPos[0], template.name)
+					## if line-begin anchored - stop searching:
+					if template.flags & DateTemplate.LINE_BEGIN:
+						break
 					## [grave] if distance changed, possible date-match was found somewhere 
 					## in body of message, so save this template, and search further:
 					if (
-						(distance > ddtempl.distance or distance > self.__lastDistance) and
+						(distance > ddtempl.distance or distance > self.__lastPos[0]) and
 						len(self.__templates) > 1
 					):
-						if logSys.getEffectiveLevel() <= logLevel:
-							logSys.log(logLevel, "  ** distance collision - pattern change, reserve")
+						logSys.log(logLevel, "  ** distance collision - pattern change, reserve")
 						## shortest of both:
 						if distance < found[1]:
-							found = match, distance, i
+							found = match, distance, endpos, i
 						## search further:
 						match = None
 						i += 1
@@ -257,25 +291,29 @@ class DateDetector(object):
 					break
 				i += 1
 			# check other template was found (use this one with shortest distance):
-			if match is None and found[0]:
-				match, distance, i = found
+			if not match and found[0]:
+				match, distance, endpos, i = found
+				logSys.log(logLevel, "  use best time template #%02i", i)
 				ddtempl = self.__templates[i]
 				template = ddtempl.template
-			# we've winner, incr hits, set distance, usage, reorder, etc:
-			if match is not None:
-				ddtempl.hits += 1
-				self.__lastDistance = ddtempl.distance = distance
-				ddtempl.lastUsed = time.time()
-				if self.__firstUnused == i:
-					self.__firstUnused += 1
-				# if not first - try to reorder current template (bubble up), they will be not sorted anymore:
-				if i:
-					logSys.log(logLevel, "  -> reorder template #%r, hits: %r", i, ddtempl.hits)
-					self._reorderTemplate(i)
-				# return tuple with match and template reference used for parsing:
-				return (match, template)
+		# we've winner, incr hits, set distance, usage, reorder, etc:
+		if match:
+			ddtempl.hits += 1
+			ddtempl.lastUsed = time.time()
+			ddtempl.distance = distance
+			if self.__firstUnused == i:
+				self.__firstUnused += 1
+			self.__lastPos = distance, line[distance-1:distance]
+			self.__lastEndPos = endpos, line[endpos:endpos+1]
+			# if not first - try to reorder current template (bubble up), they will be not sorted anymore:
+			if i:
+				i = self._reorderTemplate(i)
+			self.__lastTemplIdx = i
+			# return tuple with match and template reference used for parsing:
+			return (match, template)
 
 		# not found:
+		logSys.log(logLevel, " no template.")
 		return (None, None)
 
 	def getTime(self, line, timeMatch=None):
@@ -311,7 +349,8 @@ class DateDetector(object):
 							date[0], date[1].group(), template.name)
 					return date
 			except ValueError:
-				return None
+				pass
+		return None
 
 	def _reorderTemplate(self, num):
 		"""Reorder template (bubble up) in template list if hits grows enough.
@@ -324,29 +363,36 @@ class DateDetector(object):
 		if num:
 			templates = self.__templates
 			ddtempl = templates[num]
+			if logSys.getEffectiveLevel() <= logLevel:
+				logSys.log(logLevel, "  -> reorder template #%02i, hits: %r", num, ddtempl.hits)
 		  ## current hits and time the template was long unused:
 			untime = ddtempl.lastUsed - self.__unusedTime
-			weight = ddtempl.hits * ddtempl.template.weight / ddtempl.distance
+			weight = ddtempl.weight
 			## try to move faster (first if unused available, or half of part to current template position):
 			pos = self.__firstUnused if self.__firstUnused < num else num // 2
-			pweight = templates[pos].hits * templates[pos].template.weight / templates[pos].distance
+			pweight = templates[pos].weight
 			## don't move too often (multiline logs resp. log's with different date patterns),
 			## if template not used too long, replace it also :
-			logSys.log(logLevel, "  -> compare template #%r & #%r, weight %r > %r, hits %r > %r",
-				num, pos, weight, pweight, ddtempl.hits, templates[pos].hits)
+			if logSys.getEffectiveLevel() <= logLevel:
+				logSys.log(logLevel, "  -> compare template #%02i & #%02i, weight %.3f > %.3f, hits %r > %r",
+					num, pos, weight, pweight, ddtempl.hits, templates[pos].hits)
 			if not pweight or weight > pweight or templates[pos].lastUsed < untime:
 				## if not larger (and target position recently used) - move slow (exact 1 position):
 				if weight <= pweight and templates[pos].lastUsed > untime:
 					pos = num-1
 					## if still smaller and template at position used, don't move:
-					pweight = templates[pos].hits * templates[pos].template.weight / templates[pos].distance
-					logSys.log(logLevel, "  -> compare template #%r & #%r, weight %r > %r, hits %r > %r",
-						num, pos, weight, pweight, ddtempl.hits, templates[pos].hits)
+					pweight = templates[pos].weight
+					if logSys.getEffectiveLevel() <= logLevel:
+						logSys.log(logLevel, "  -> compare template #%02i & #%02i, weight %.3f > %.3f, hits %r > %r",
+							num, pos, weight, pweight, ddtempl.hits, templates[pos].hits)
 					if weight < pweight and templates[pos].lastUsed > untime:
 						return
 				del templates[num]
 				templates[pos:0] = [ddtempl]
 				## correct first unused:
-				if pos == self.__firstUnused:
+				while self.__firstUnused < len(templates) and templates[self.__firstUnused].hits:
 					self.__firstUnused += 1
-				logSys.log(logLevel, "  -> moved template #%r -> #%r", num, pos)
+				if logSys.getEffectiveLevel() <= logLevel:
+					logSys.log(logLevel, "  -> moved template #%02i -> #%02i", num, pos)
+				return pos
+		return num
