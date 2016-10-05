@@ -135,6 +135,7 @@ class BanManager:
 	def getBanListExtendedCymruInfo(self, timeout=10):
 		return_dict = {"asn": [], "country": [], "rir": []}
 		if not hasattr(self, 'dnsResolver'):
+			global dns
 			try:
 				import dns.exception
 				import dns.resolver
