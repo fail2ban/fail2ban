@@ -476,6 +476,8 @@ class LogFileFilterPoll(unittest.TestCase):
 		self.assertFalse(self.filter.isModified(LogFileFilterPoll.FILENAME))
 
 	def testSeekToTimeSmallFile(self):
+		# speedup search using exact date pattern:
+		self.filter.setDatePattern('^%ExY-%Exm-%Exd %ExH:%ExM:%ExS')
 		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='.log')
 		time = 1417512352
 		f = open(fname, 'w')
@@ -560,6 +562,8 @@ class LogFileFilterPoll(unittest.TestCase):
 			_killfile(f, fname)
 
 	def testSeekToTimeLargeFile(self):
+		# speedup search using exact date pattern:
+		self.filter.setDatePattern('^%ExY-%Exm-%Exd %ExH:%ExM:%ExS')
 		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='.log')
 		time = 1417512352
 		f = open(fname, 'w')
