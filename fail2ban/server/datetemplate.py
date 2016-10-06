@@ -32,12 +32,17 @@ from ..helpers import getLogger
 
 logSys = getLogger(__name__)
 
-RE_NO_WRD_BOUND_BEG = re.compile(r'^(?:\^|\*\*|\(\?:\^)')
+RE_NO_WRD_BOUND_BEG = re.compile(r'^(?:\(\?\w+\))?(?:\^|\*\*|\(\?:\^)')
 RE_NO_WRD_BOUND_END = re.compile(r'(?<!\\)(?:\$\)?|\*\*)$')
-RE_DEL_WRD_BOUNDS =   re.compile(r'^\*\*|(?<!\\)\*\*$')
+RE_DEL_WRD_BOUNDS = ( re.compile(r'^(?:\(\?\w+\))?\*\*|(?<!\\)\*\*()$'), 
+	                    lambda m: m.group().replace('**', '') )
 
-RE_LINE_BOUND_BEG = re.compile(r'^(?:\^|\(\?:\^(?!\|))')
+RE_LINE_BOUND_BEG = re.compile(r'^(?:\(\?\w+\))?(?:\^|\(\?:\^(?!\|))')
 RE_LINE_BOUND_END = re.compile(r'(?<![\\\|])(?:\$\)?)$')
+
+RE_ALPHA_PATTERN = re.compile(r'(?<!\%)\%[aAbBpc]')
+
+_Templ_RECache = {}
 
 class DateTemplate(object):
 	"""A template which searches for and returns a date from a log line.
@@ -104,7 +109,7 @@ class DateTemplate(object):
 		if RE_LINE_BOUND_BEG.search(regex): self.flags |= DateTemplate.LINE_BEGIN
 		if RE_LINE_BOUND_END.search(regex): self.flags |= DateTemplate.LINE_END
 		# remove possible special pattern "**" in front and end of regex:
-		regex = RE_DEL_WRD_BOUNDS.sub('', regex)
+		regex = RE_DEL_WRD_BOUNDS[0].sub(RE_DEL_WRD_BOUNDS[1], regex)
 		self._regex = regex
 		self._cRegex = None
 
@@ -116,7 +121,11 @@ class DateTemplate(object):
 		"""Compile regex by first usage.
 		"""
 		if not self._cRegex:
-			self._cRegex = re.compile(self.regex, re.UNICODE | re.IGNORECASE)
+			try:
+				self._cRegex = re.compile(self.regex)
+			except Exception as e:
+				logSys.error('Compile %r failed, expression %r', self.name, self.regex)
+				raise e
 
 	def matchDate(self, line, *args):
 		"""Check if regex for date matches on a log line.
@@ -235,7 +244,11 @@ class DatePatternRegex(DateTemplate):
 		self._pattern = pattern
 		fmt = self._patternRE.sub(r'%(\1)s', pattern)
 		self.name = fmt % self._patternName
-		super(DatePatternRegex, self).setRegex(fmt % timeRE, wordBegin, wordEnd)
+		regex = fmt % timeRE
+		# if expected add (?iu) for "ignore case" and "unicode":
+		if RE_ALPHA_PATTERN.search(pattern):
+			regex = r'(?iu)' + regex
+		super(DatePatternRegex, self).setRegex(regex, wordBegin, wordEnd)
 
 	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.

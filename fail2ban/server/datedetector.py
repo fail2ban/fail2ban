@@ -254,27 +254,32 @@ class DateDetector(object):
 		if i < len(self.__templates):
 			ddtempl = self.__templates[i]
 			template = ddtempl.template
-			distance, endpos = self.__lastPos[0], self.__lastEndPos[0]
-			if logSys.getEffectiveLevel() <= logLevel-1:
-				logSys.log(logLevel-1, "  try to match last template #%02i (from %r to %r): ...%r==%r %s %r==%r...",
-					i, distance, endpos, 
-					line[distance-1:distance], self.__lastPos[1],
-					line[distance:endpos],
-					line[endpos:endpos+1], self.__lastEndPos[1])
-			# check same boundaries left/right, otherwise possible collision/pattern switch:
-			if (line[distance-1:distance] == self.__lastPos[1] and 
-					line[endpos:endpos+1] == self.__lastEndPos[1]
-			):
-				match = template.matchDate(line, distance, endpos)
-				if match:
-					distance = match.start()
-					endpos = match.end()
-					# if different position, possible collision/pattern switch:
-					if distance == self.__lastPos[0] and endpos == self.__lastEndPos[0]:
-						logSys.log(logLevel, "  matched last time template #%02i", i)
-					else:
-						logSys.log(logLevel, "  ** last pattern collision - pattern change, search ...")
-						match = None
+			if template.flags & DateTemplate.LINE_BEGIN:
+				if logSys.getEffectiveLevel() <= logLevel-1:
+					logSys.log(logLevel-1, "  try to match last anchored template #%02i ...", i)
+					match = template.matchDate(line)
+			else:
+				distance, endpos = self.__lastPos[0], self.__lastEndPos[0]
+				if logSys.getEffectiveLevel() <= logLevel-1:
+					logSys.log(logLevel-1, "  try to match last template #%02i (from %r to %r): ...%r==%r %s %r==%r...",
+						i, distance, endpos, 
+						line[distance-1:distance], self.__lastPos[1],
+						line[distance:endpos],
+						line[endpos:endpos+1], self.__lastEndPos[1])
+				# check same boundaries left/right, otherwise possible collision/pattern switch:
+				if (line[distance-1:distance] == self.__lastPos[1] and 
+						line[endpos:endpos+1] == self.__lastEndPos[1]
+				):
+					match = template.matchDate(line, distance, endpos)
+			if match:
+				distance = match.start()
+				endpos = match.end()
+				# if different position, possible collision/pattern switch:
+				if distance == self.__lastPos[0] and endpos == self.__lastEndPos[0]:
+					logSys.log(logLevel, "  matched last time template #%02i", i)
+				else:
+					logSys.log(logLevel, "  ** last pattern collision - pattern change, search ...")
+					match = None
 		# search template and better match:
 		if not match:
 			self.__lastTemplIdx = 0x7fffffff

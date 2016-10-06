@@ -195,11 +195,46 @@ class DateDetectorTest(LogCaptureTestCase):
 		self.assertEqual(logMatch.group(), '2012/10/11 02:37:17')
 
 	def testDateTemplate(self):
-			t = DateTemplate()
-			t.setRegex('^a{3,5}b?c*$')
-			self.assertEqual(t.getRegex(), '^a{3,5}b?c*$')
-			self.assertRaises(Exception, t.getDate, '')
-			self.assertEqual(t.matchDate('aaaac').group(), 'aaaac')
+		t = DateTemplate()
+		t.setRegex('^a{3,5}b?c*$')
+		self.assertEqual(t.regex, '^a{3,5}b?c*$')
+		self.assertRaises(Exception, t.getDate, '')
+		self.assertEqual(t.matchDate('aaaac').group(), 'aaaac')
+
+		## no word boundaries left and right:
+		t = DatePatternRegex()
+		t.pattern = '(?iu)**time:%ExY%Exm%ExdT%ExH%ExM%ExS**'
+		# ** was removed from end-regex:
+		self.assertFalse('**' in t.regex)
+		# match date:
+		dt = 'TIME:20050102T010203'
+		self.assertEqual(t.matchDate('X' + dt + 'X').group(), dt)
+		self.assertEqual(t.matchDate(dt).group(), dt)
+		# wrong year (for exact %ExY):
+		dt = 'TIME:50050102T010203'
+		self.assertFalse(t.matchDate(dt))
+
+		## start boundary left and word boundary right:
+		t = DatePatternRegex()
+		t.pattern = '%ExLBtime:%ExY%Exm%ExdT%ExH%ExM%ExS'
+		self.assertTrue('^' in t.regex)
+		# try match date:
+		dt = 'time:20050102T010203'
+		self.assertFalse(t.matchDate('X' + dt))
+		self.assertFalse(t.matchDate(dt + 'X'))
+		self.assertEqual(t.matchDate('##' + dt + '...').group(), dt)
+		self.assertEqual(t.matchDate(dt).group(), dt)
+		# case sensitive:
+		dt = 'TIME:20050102T010203'
+		self.assertFalse(t.matchDate(dt))
+
+		## auto-switching "ignore case" and "unicode"
+		t = DatePatternRegex()
+		t.pattern = '^%Y %b %d'
+		self.assertTrue('(?iu)' in t.regex)
+		dt = '2005 jun 03'; self.assertEqual(t.matchDate(dt).group(), dt)
+		dt = '2005 Jun 03'; self.assertEqual(t.matchDate(dt).group(), dt)
+		dt = '2005 JUN 03'; self.assertEqual(t.matchDate(dt).group(), dt)
 
 	def testAmbiguousInOrderedTemplates(self):
 		dd = self.datedetector
