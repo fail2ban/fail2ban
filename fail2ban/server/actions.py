@@ -28,10 +28,6 @@ import logging
 import os
 import sys
 import time
-if sys.version_info >= (3, 3):
-	import importlib.machinery
-else:
-	import imp
 from collections import Mapping
 try:
 	from collections import OrderedDict
@@ -87,18 +83,11 @@ class Actions(JailThread, Mapping):
 
 	@staticmethod
 	def _load_python_module(pythonModule):
-		pythonModuleName = os.path.splitext(
-			os.path.basename(pythonModule))[0]
-		if sys.version_info >= (3, 3):
-			mod = importlib.machinery.SourceFileLoader(
-				pythonModuleName, pythonModule).load_module()
-		else:
-			mod = imp.load_source(
-				pythonModuleName, pythonModule)
-		if not hasattr(mod, "Action"):
+		mod = Utils.load_python_module(pythonModule)
+		if not hasattr(mod, "Action"): # pragma: no cover
 			raise RuntimeError(
 				"%s module does not have 'Action' class" % pythonModule)
-		elif not issubclass(mod.Action, ActionBase):
+		elif not issubclass(mod.Action, ActionBase): # pragma: no cover
 			raise RuntimeError(
 				"%s module %s does not implement required methods" % (
 					pythonModule, mod.Action.__name__))

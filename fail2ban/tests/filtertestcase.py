@@ -48,6 +48,9 @@ from .dummyjail import DummyJail
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
+STOCK_CONF_DIR = "config"
+STOCK = os.path.exists(os.path.join(STOCK_CONF_DIR, 'fail2ban.conf'))
+
 
 # yoh: per Steven Hiscocks's insight while troubleshooting
 # https://github.com/fail2ban/fail2ban/issues/103#issuecomment-15542836
@@ -408,6 +411,33 @@ class IgnoreIPDNS(LogCaptureTestCase):
 		self.assertFalse(self.filter.inIgnoreIPList("127.177.50.10"))
 		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.11"))
 		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.13"))
+
+	def testIgnoreCmdApacheFakegooglebot(self):
+		if not STOCK: # pragma: no cover
+			raise unittest.SkipTest('Skip test because of no STOCK config')
+		cmd = os.path.join(STOCK_CONF_DIR, "filter.d/ignorecommands/apache-fakegooglebot")
+		## below test direct as python module:
+		mod = Utils.load_python_module(cmd)
+		self.assertFalse(mod.is_googlebot(mod.process_args([cmd, "128.178.50.12"])))
+		self.assertFalse(mod.is_googlebot(mod.process_args([cmd, "192.0.2.1"])))
+		bot_ips = ['66.249.66.1']
+		for ip in bot_ips:
+			self.assertTrue(mod.is_googlebot(mod.process_args([cmd, str(ip)])), "test of googlebot ip %s failed" % ip)
+		self.assertRaises(ValueError, lambda: mod.is_googlebot(mod.process_args([cmd])))
+		self.assertRaises(ValueError, lambda: mod.is_googlebot(mod.process_args([cmd, "192.0"])))
+		## via command:
+		self.filter.setIgnoreCommand(cmd + " <ip>")
+		for ip in bot_ips:
+			self.assertTrue(self.filter.inIgnoreIPList(str(ip)), "test of googlebot ip %s failed" % ip)
+			self.assertLogged('-- returned successfully')
+			self.pruneLog()
+		self.assertFalse(self.filter.inIgnoreIPList("192.0"))
+		self.assertLogged('Argument must be a single valid IP.')
+		self.pruneLog()
+		self.filter.setIgnoreCommand(cmd + " bad arguments <ip>")
+		self.assertFalse(self.filter.inIgnoreIPList("192.0"))
+		self.assertLogged('Please provide a single IP as an argument.')
+
 
 
 class LogFile(LogCaptureTestCase):
