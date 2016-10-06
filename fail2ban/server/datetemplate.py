@@ -65,6 +65,7 @@ class DateTemplate(object):
 		self.name = ""
 		self.weight = 1.0
 		self.flags = 0
+		self.hits = 0
 		self._regex = ""
 		self._cRegex = None
 
@@ -133,6 +134,8 @@ class DateTemplate(object):
 		if not self._cRegex:
 			self._compileRegex()
 		dateMatch = self._cRegex.search(line, *args); # pos, endpos
+		if dateMatch:
+			self.hits += 1
 		return dateMatch
 
 	@abstractmethod

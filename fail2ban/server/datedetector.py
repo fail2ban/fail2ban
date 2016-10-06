@@ -88,14 +88,9 @@ class DateDetectorCache(object):
 		# simple date: 2005/01/23 21:59:59 
 		# custom for syslog-ng 2006.12.21 06:43:20
 		self._cacheTemplate("%ExY(?P<_sep>[-/.])%m(?P=_sep)%d[T ]%H:%M:%S(?:[.,]%f)?(?:\s*%z)?")
-		# 20050123T215959, 20050123 215959
-		self._cacheTemplate("%ExY%Exm%Exd[T ]%ExH%ExM%ExS(?:[.,]%f)?(?:\s*%z)?")
 		# asctime with optional day, subsecond and/or year:
 		# Sun Jan 23 21:59:59.011 2005 
-		# prefixed with optional time zone (monit):
-		# PDT Apr 16 21:05:29
 		self._cacheTemplate("(?:%z )?(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?")
-		self._cacheTemplate("(?:%Z )?(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?")
 		# asctime with optional day, subsecond and/or year coming after day
 		# http://bugs.debian.org/798923
 		# Sun Jan 23 2005 21:59:59.011
@@ -132,6 +127,12 @@ class DateDetectorCache(object):
 		self._cacheTemplate("%b %d, %ExY %I:%M:%S %p")
 		# ASSP: Apr-27-13 02:33:06
 		self._cacheTemplate("%b-%d-%Exy %H:%M:%S", lineBeginOnly=True)
+		# 20050123T215959, 20050123 215959
+		self._cacheTemplate("%ExY%Exm%Exd[T ]%ExH%ExM%ExS(?:[.,]%f)?(?:\s*%z)?")
+		# prefixed with optional named time zone (monit):
+		# PDT Apr 16 21:05:29
+		self._cacheTemplate("(?:%Z )?(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?")
+		#
 		self.__templates = self.__tmpcache[0] + self.__tmpcache[1]
 		del self.__tmpcache
 
@@ -212,7 +213,9 @@ class DateDetector(object):
 	def addDefaultTemplate(self, filterTemplate=None, preMatch=None):
 		"""Add Fail2Ban's default set of date templates.
 		"""
-		for template in DateDetector._defCache.templates:
+		for template in sorted(DateDetector._defCache.templates,
+			lambda a,b: b.hits - a.hits
+		):
 			# filter if specified:
 			if filterTemplate is not None and not filterTemplate(template): continue
 			# if exact pattern available - create copy of template, contains replaced {DATE} with default regex:
