@@ -298,14 +298,14 @@ class Transmitter(TransmitterBase):
 
 	def testDatePattern(self):
 		self.setGetTest("datepattern", "%%%Y%m%d%H%M%S",
-			("%%%Y%m%d%H%M%S", "{*WD-BEG}%YearMonthDay24hourMinuteSecond{*WD-END}"),
+			("%%%Y%m%d%H%M%S", "%YearMonthDay24hourMinuteSecond"),
 			jail=self.jailName)
 		self.setGetTest(
-			"datepattern", "Epoch", (None, "Epoch{*WD-END}"), jail=self.jailName)
+			"datepattern", "Epoch", (None, "Epoch"), jail=self.jailName)
 		self.setGetTest(
-			"datepattern", "^Epoch", (None, "{^LN-BEG}Epoch{*WD-END}"), jail=self.jailName)
+			"datepattern", "^Epoch", (None, "{^LN-BEG}Epoch"), jail=self.jailName)
 		self.setGetTest(
-			"datepattern", "TAI64N", (None, "TAI64N{*WD-END}"), jail=self.jailName)
+			"datepattern", "TAI64N", (None, "TAI64N"), jail=self.jailName)
 		self.setGetTestNOK("datepattern", "%Cat%a%%%g", jail=self.jailName)
 
 	def testJailUseDNS(self):

@@ -36,6 +36,46 @@ logSys = getLogger(__name__)
 logLevel = 6
 
 RE_DATE_PREMATCH = re.compile("\{DATE\}", re.IGNORECASE)
+DD_patternCache = Utils.Cache(maxCount=1000, maxTime=60*60)
+
+
+def _getPatternTemplate(pattern, key=None):
+	if key is None:
+		key = pattern
+		if '%' not in pattern:
+			key = pattern.upper()
+	template = DD_patternCache.get(key)
+
+	if not template:
+		if key in ("EPOCH", "{^LN-BEG}EPOCH", "^EPOCH"):
+			template = DateEpoch(lineBeginOnly=(key != "EPOCH"))
+		elif key in ("TAI64N", "{^LN-BEG}TAI64N", "^TAI64N"):
+			template = DateTai64n(wordBegin=('start' if key != "TAI64N" else False))
+		else:
+			template = DatePatternRegex(pattern)
+
+	DD_patternCache.set(key, template)
+	return template
+
+def _getAnchoredTemplate(template, wrap=lambda s: '{^LN-BEG}' + s):
+	# wrap name:
+	name = wrap(template.name)
+	# try to find in cache (by name):
+	template2 = DD_patternCache.get(name)
+	if not template2:
+		# wrap pattern (or regexp if not pattern template):
+		regex = wrap(getattr(template, 'pattern', template.regex))
+		if hasattr(template, 'pattern'):
+			# try to find in cache (by pattern):
+			template2 = DD_patternCache.get(regex)
+		# make duplicate and set new anchored regex:
+		if not template2:
+			if not hasattr(template, 'pattern'):
+				template2 = _getPatternTemplate(name)
+			else:
+				template2 = _getPatternTemplate(regex)
+	return template2
+
 
 
 class DateDetectorCache(object):
@@ -57,22 +97,20 @@ class DateDetectorCache(object):
 			self._addDefaultTemplate()
 			return self.__templates
 
-	def _cacheTemplate(self, template, lineBeginOnly=False):
+	def _cacheTemplate(self, template):
 		"""Cache Fail2Ban's default template.
 
 		"""
 		if isinstance(template, str):
-			# exact given template with word benin-end boundary:
-			if not lineBeginOnly:
-				template = DatePatternRegex(template)
-			else:
-				template = DatePatternRegex(template, wordBegin='start')
-		# additional template, that prefers datetime at start of a line (safety+performance feature):
-		if not lineBeginOnly and hasattr(template, 'regex'):
-			template2 = copy.copy(template)
-			regex = getattr(template, 'pattern', template.regex)
-			template2.setRegex(regex, wordBegin='start', wordEnd=True)
-			if template2.name != template.name:
+			# exact given template with word begin-end boundary:
+			template = _getPatternTemplate(template)
+		# if not already line-begin anchored, additional template, that prefers datetime 
+		# at start of a line (safety+performance feature):
+		name = template.name
+		if not name.startswith('{^LN-BEG}') and not name.startswith('^') and hasattr(template, 'regex'):
+			template2 = _getAnchoredTemplate(template)
+			# prevent to add duplicates:
+			if template2.name != name:
 				# increase weight of such templates, because they should be always
 				# preferred in template sorting process (bubble up):
 				template2.weight = 100.0
@@ -114,18 +152,17 @@ class DateDetectorCache(object):
 		# with previous ("%d-%m-%ExY %H:%M:%S" by "%d(?P<_sep>[-/])%m(?P=_sep)(?:%ExY|%Exy) %H:%M:%S")
 		self._cacheTemplate("%m-%d-%ExY %H:%M:%S(?:\.%f)?")
 		# Epoch
-		self._cacheTemplate(DateEpoch(lineBeginOnly=True), lineBeginOnly=True)
-		self._cacheTemplate(DateEpoch())
+		self._cacheTemplate('EPOCH')
 		# Only time information in the log
-		self._cacheTemplate("%H:%M:%S", lineBeginOnly=True)
+		self._cacheTemplate("{^LN-BEG}%H:%M:%S")
 		# <09/16/08@05:03:30>
-		self._cacheTemplate("<%m/%d/%Exy@%H:%M:%S>", lineBeginOnly=True)
+		self._cacheTemplate("^<%m/%d/%Exy@%H:%M:%S>")
 		# MySQL: 130322 11:46:11
 		self._cacheTemplate("%Exy%Exm%Exd  ?%H:%M:%S")
 		# Apache Tomcat
 		self._cacheTemplate("%b %d, %ExY %I:%M:%S %p")
 		# ASSP: Apr-27-13 02:33:06
-		self._cacheTemplate("%b-%d-%Exy %H:%M:%S", lineBeginOnly=True)
+		self._cacheTemplate("^%b-%d-%Exy %H:%M:%S")
 		# 20050123T215959, 20050123 215959
 		self._cacheTemplate("%ExY%Exm%Exd[T ]%ExH%ExM%ExS(?:[.,]%f)?(?:\s*%z)?")
 		# prefixed with optional named time zone (monit):
@@ -134,7 +171,7 @@ class DateDetectorCache(object):
 		# +00:00 Jan 23 21:59:59.011 2005 
 		self._cacheTemplate("(?:%z )?(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?")
 		# TAI64N
-		self._cacheTemplate(DateTai64n())
+		self._cacheTemplate("TAI64N")
 		#
 		self.__templates = self.__tmpcache[0] + self.__tmpcache[1]
 		del self.__tmpcache
@@ -171,7 +208,6 @@ class DateDetector(object):
 	templates
 	"""
 	_defCache = DateDetectorCache()
-	_patternCache = Utils.Cache(maxCount=1000, maxTime=60*60)
 
 	def __init__(self):
 		self.__templates = list()
@@ -215,18 +251,11 @@ class DateDetector(object):
 			key = pattern = template
 			if '%' not in pattern:
 				key = pattern.upper()
-			template = DateDetector._patternCache.get(key)
-
+			template = DD_patternCache.get(key)
 			if not template:
-				if key in ("EPOCH", "{^LN-BEG}EPOCH", "^EPOCH"):
-					template = DateEpoch(lineBeginOnly=(key != "EPOCH"))
-				elif key in ("TAI64N", "{^LN-BEG}TAI64N", "^TAI64N"):
-					template = DateTai64n(wordBegin=('start' if key != "TAI64N" else False))
-				elif key in ("{^LN-BEG}", "{*WD-BEG}", "{DEFAULT}"):
+				if key in ("{^LN-BEG}", "{DEFAULT}"):
 					flt = \
-						lambda template: template.flags & DateTemplate.LINE_BEGIN if key == "{^LN-BEG}" else \
-						lambda template: template.flags & DateTemplate.WORD_BEGIN if key == "{*WD-BEG}" else \
-						None
+						lambda template: template.flags & DateTemplate.LINE_BEGIN if key == "{^LN-BEG}" else None
 					self.addDefaultTemplate(flt)
 					return
 				elif "{DATE}" in key:
@@ -234,9 +263,9 @@ class DateDetector(object):
 						lambda template: not template.flags & DateTemplate.LINE_BEGIN, pattern)
 					return
 				else:
-					template = DatePatternRegex(pattern)
+					template = _getPatternTemplate(pattern, key)
 
-			DateDetector._patternCache.set(key, template)
+			DD_patternCache.set(key, template)
 
 		self._appendTemplate(template)
 		logSys.info("  date pattern `%r`: `%s`",
@@ -253,13 +282,9 @@ class DateDetector(object):
 			if filterTemplate is not None and not filterTemplate(template): continue
 			# if exact pattern available - create copy of template, contains replaced {DATE} with default regex:
 			if preMatch is not None:
-				deftemplate = template
-				template = DateDetector._patternCache.get((preMatch, deftemplate.name))
-				if not template:
-					regex = getattr(deftemplate, 'pattern', deftemplate.regex)
-					template = copy.copy(deftemplate)
-					template.setRegex(RE_DATE_PREMATCH.sub(regex, preMatch))
-				DateDetector._patternCache.set((preMatch, deftemplate.name), template)
+				# get cached or create a copy with modified name/pattern, using preMatch replacement for {DATE}:
+				template = _getAnchoredTemplate(template,
+					wrap=lambda s: RE_DATE_PREMATCH.sub(s, preMatch))
 			# append date detector template (ignore duplicate if some was added before default):
 			self._appendTemplate(template, ignoreDup=ignoreDup)
 

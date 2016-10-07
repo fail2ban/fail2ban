@@ -115,15 +115,14 @@ class DateTemplate(object):
 			self.flags |= DateTemplate.WORD_BEGIN if wordBegin != 'start' else DateTemplate.LINE_BEGIN
 			if wordBegin != 'start':
 				regex = r'(?:^|\b|\W)' + regex
-				self.name = '{*WD-BEG}' + self.name
 			else:
 				regex = r"^(?:\W{0,2})?" + regex
-				self.name = '{^LN-BEG}' + self.name
+				if not self.name.startswith('{^LN-BEG}'):
+					self.name = '{^LN-BEG}' + self.name
 		# if word end boundary:
 		if boundEnd:
 			self.flags |= DateTemplate.WORD_END
 			regex += r'(?=\b|\W|$)'
-			self.name += '{*WD-END}'
 		if RE_LINE_BOUND_BEG.search(regex): self.flags |= DateTemplate.LINE_BEGIN
 		if RE_LINE_BOUND_END.search(regex): self.flags |= DateTemplate.LINE_END
 		# remove possible special pattern "**" in front and end of regex:
