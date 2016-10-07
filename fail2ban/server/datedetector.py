@@ -27,6 +27,7 @@ import time
 from threading import Lock
 
 from .datetemplate import re, DateTemplate, DatePatternRegex, DateTai64n, DateEpoch
+from .utils import Utils
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
@@ -90,7 +91,7 @@ class DateDetectorCache(object):
 		self._cacheTemplate("%ExY(?P<_sep>[-/.])%m(?P=_sep)%d[T ]%H:%M:%S(?:[.,]%f)?(?:\s*%z)?")
 		# asctime with optional day, subsecond and/or year:
 		# Sun Jan 23 21:59:59.011 2005 
-		self._cacheTemplate("(?:%z )?(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?")
+		self._cacheTemplate("(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?")
 		# asctime with optional day, subsecond and/or year coming after day
 		# http://bugs.debian.org/798923
 		# Sun Jan 23 2005 21:59:59.011
@@ -112,8 +113,6 @@ class DateDetectorCache(object):
 		# subseconds explicit to avoid possible %m<->%d confusion
 		# with previous ("%d-%m-%ExY %H:%M:%S" by "%d(?P<_sep>[-/])%m(?P=_sep)(?:%ExY|%Exy) %H:%M:%S")
 		self._cacheTemplate("%m-%d-%ExY %H:%M:%S(?:\.%f)?")
-		# TAI64N
-		self._cacheTemplate(DateTai64n())
 		# Epoch
 		self._cacheTemplate(DateEpoch(lineBeginOnly=True), lineBeginOnly=True)
 		self._cacheTemplate(DateEpoch())
@@ -132,6 +131,10 @@ class DateDetectorCache(object):
 		# prefixed with optional named time zone (monit):
 		# PDT Apr 16 21:05:29
 		self._cacheTemplate("(?:%Z )?(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?")
+		# +00:00 Jan 23 21:59:59.011 2005 
+		self._cacheTemplate("(?:%z )?(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?")
+		# TAI64N
+		self._cacheTemplate(DateTai64n())
 		#
 		self.__templates = self.__tmpcache[0] + self.__tmpcache[1]
 		del self.__tmpcache
@@ -168,6 +171,7 @@ class DateDetector(object):
 	templates
 	"""
 	_defCache = DateDetectorCache()
+	_patternCache = Utils.Cache(maxCount=1000, maxTime=60*60)
 
 	def __init__(self):
 		self.__templates = list()
@@ -183,9 +187,10 @@ class DateDetector(object):
 		# pre-match pattern:
 		self.__preMatch = None
 
-	def _appendTemplate(self, template):
+	def _appendTemplate(self, template, ignoreDup=False):
 		name = template.name
 		if name in self.__known_names:
+			if ignoreDup: return
 			raise ValueError(
 				"There is already a template with name %s" % name)
 		self.__known_names.add(name)
@@ -207,24 +212,56 @@ class DateDetector(object):
 			If a template already exists with the same name.
 		"""
 		if isinstance(template, str):
-			template = DatePatternRegex(template)
+			key = pattern = template
+			if '%' not in pattern:
+				key = pattern.upper()
+			template = DateDetector._patternCache.get(key)
+
+			if not template:
+				if key in ("EPOCH", "{^LN-BEG}EPOCH", "^EPOCH"):
+					template = DateEpoch(lineBeginOnly=(key != "EPOCH"))
+				elif key in ("TAI64N", "{^LN-BEG}TAI64N", "^TAI64N"):
+					template = DateTai64n(wordBegin=('start' if key != "TAI64N" else False))
+				elif key in ("{^LN-BEG}", "{*WD-BEG}", "{DEFAULT}"):
+					flt = \
+						lambda template: template.flags & DateTemplate.LINE_BEGIN if key == "{^LN-BEG}" else \
+						lambda template: template.flags & DateTemplate.WORD_BEGIN if key == "{*WD-BEG}" else \
+						None
+					self.addDefaultTemplate(flt)
+					return
+				elif "{DATE}" in key:
+					self.addDefaultTemplate(
+						lambda template: not template.flags & DateTemplate.LINE_BEGIN, pattern)
+					return
+				else:
+					template = DatePatternRegex(pattern)
+
+			DateDetector._patternCache.set(key, template)
+
 		self._appendTemplate(template)
+		logSys.info("  date pattern `%r`: `%s`",
+			getattr(template, 'pattern', ''), template.name)
+		logSys.debug("  date pattern regex for %r: %s",
+			getattr(template, 'pattern', ''), template.regex)
 
 	def addDefaultTemplate(self, filterTemplate=None, preMatch=None):
 		"""Add Fail2Ban's default set of date templates.
 		"""
-		for template in sorted(DateDetector._defCache.templates,
-			lambda a,b: b.hits - a.hits
-		):
+		ignoreDup = len(self.__templates) > 0
+		for template in DateDetector._defCache.templates:
 			# filter if specified:
 			if filterTemplate is not None and not filterTemplate(template): continue
 			# if exact pattern available - create copy of template, contains replaced {DATE} with default regex:
 			if preMatch is not None:
-				regex = getattr(template, 'pattern', template.regex)
-				template = copy.copy(template)
-				template.setRegex(RE_DATE_PREMATCH.sub(regex, preMatch))
-			# append date detector template:
-			self._appendTemplate(template)
+				deftemplate = template
+				template = DateDetector._patternCache.get((preMatch, deftemplate.name))
+				if not template:
+					regex = getattr(deftemplate, 'pattern', deftemplate.regex)
+					template = copy.copy(deftemplate)
+					template.setRegex(RE_DATE_PREMATCH.sub(regex, preMatch))
+				DateDetector._patternCache.set((preMatch, deftemplate.name), template)
+			# append date detector template (ignore duplicate if some was added before default):
+			self._appendTemplate(template, ignoreDup=ignoreDup)
 
 	@property
 	def templates(self):
@@ -250,17 +287,22 @@ class DateDetector(object):
 			The regex match returned from the first successfully matched
 			template.
 		"""
-		#logSys.log(logLevel, "try to match time for line: %.120s", line)
+		# if no templates specified - default templates should be used:
+		if not len(self.__templates):
+			self.addDefaultTemplate()
+		logSys.log(logLevel-1, "try to match time for line: %.120s", line)
 		match = None
 		# first try to use last template with same start/end position:
+		ignoreBySearch = 0x7fffffff
 		i = self.__lastTemplIdx
 		if i < len(self.__templates):
 			ddtempl = self.__templates[i]
 			template = ddtempl.template
-			if template.flags & DateTemplate.LINE_BEGIN:
+			if template.flags & (DateTemplate.LINE_BEGIN|DateTemplate.LINE_END):
 				if logSys.getEffectiveLevel() <= logLevel-1:
 					logSys.log(logLevel-1, "  try to match last anchored template #%02i ...", i)
 					match = template.matchDate(line)
+					ignoreBySearch = i
 			else:
 				distance, endpos = self.__lastPos[0], self.__lastEndPos[0]
 				if logSys.getEffectiveLevel() <= logLevel-1:
@@ -278,18 +320,28 @@ class DateDetector(object):
 				distance = match.start()
 				endpos = match.end()
 				# if different position, possible collision/pattern switch:
-				if distance == self.__lastPos[0] and endpos == self.__lastEndPos[0]:
+				if (
+					template.flags & (DateTemplate.LINE_BEGIN|DateTemplate.LINE_END) or 
+					(distance == self.__lastPos[0] and endpos == self.__lastEndPos[0])
+				):
 					logSys.log(logLevel, "  matched last time template #%02i", i)
 				else:
 					logSys.log(logLevel, "  ** last pattern collision - pattern change, search ...")
 					match = None
+			else:
+				logSys.log(logLevel, "  ** last pattern not found - pattern change, search ...")
 		# search template and better match:
 		if not match:
 			self.__lastTemplIdx = 0x7fffffff
-			logSys.log(logLevel, " search template ...")
+			logSys.log(logLevel, " search template (%i) ...", len(self.__templates))
 			found = None, 0x7fffffff, -1
 			i = 0
 			for ddtempl in self.__templates:
+				if logSys.getEffectiveLevel() <= logLevel-1:
+					logSys.log(logLevel-1, "  try template #%02i: %s", i, ddtempl.name)
+				if i == ignoreBySearch:
+					i += 1
+					continue
 				template = ddtempl.template
 				match = template.matchDate(line)
 				if match:
@@ -298,15 +350,18 @@ class DateDetector(object):
 					if logSys.getEffectiveLevel() <= logLevel:
 						logSys.log(logLevel, "  matched time template #%02i (at %r <= %r, %r) %s",
 							i, distance, ddtempl.distance, self.__lastPos[0], template.name)
+					## last (or single) template - fast stop:
+					if i+1 >= len(self.__templates):
+						break
 					## if line-begin/end anchored - stop searching:
 					if template.flags & (DateTemplate.LINE_BEGIN|DateTemplate.LINE_END):
 						break
+					## stop searching if next template still unused, but we had already hits:
+					if (distance == 0 and ddtempl.hits) and not self.__templates[i+1].template.hits:
+						break
 					## [grave] if distance changed, possible date-match was found somewhere 
 					## in body of message, so save this template, and search further:
-					if (
-						(distance > ddtempl.distance or distance > self.__lastPos[0]) and
-						len(self.__templates) > 1
-					):
+					if distance > ddtempl.distance or distance > self.__lastPos[0]:
 						logSys.log(logLevel, "  ** distance collision - pattern change, reserve")
 						## shortest of both:
 						if distance < found[1]:
@@ -374,7 +429,7 @@ class DateDetector(object):
 				if date is not None:
 					if logSys.getEffectiveLevel() <= logLevel:
 						logSys.log(logLevel, "  got time %f for %r using template %s",
-							date[0], date[1].group(), template.name)
+							date[0], date[1].group(1), template.name)
 					return date
 			except ValueError:
 				pass

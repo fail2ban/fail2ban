@@ -270,6 +270,7 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 class BasicFilter(unittest.TestCase):
 
 	def setUp(self):
+		super(BasicFilter, self).setUp()
 		self.filter = Filter('name')
 
 	def testGetSetUseDNS(self):
@@ -363,6 +364,7 @@ class IgnoreIP(LogCaptureTestCase):
 		setUpMyTime()
 		self.filter.addIgnoreIP('192.168.1.0/25')
 		self.filter.addFailRegex('<HOST>')
+		self.filter.setDatePattern('{^LN-BEG}EPOCH')
 		self.filter.processLineAndAdd('1387203300.222 192.168.1.32')
 		self.assertLogged('Ignore 192.168.1.32')
 		tearDownMyTime()
@@ -461,6 +463,7 @@ class LogFileFilterPoll(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		super(LogFileFilterPoll, self).setUp()
 		self.filter = FilterPoll(DummyJail())
 		self.filter.addLogPath(LogFileFilterPoll.FILENAME)
 
@@ -653,6 +656,8 @@ class LogFileMonitor(LogCaptureTestCase):
 		self.assertLogged('Unable to open %s' % self.name)
 
 	def testErrorProcessLine(self):
+		# speedup search using exact date pattern:
+		self.filter.setDatePattern('^%ExY-%Exm-%Exd %ExH:%ExM:%ExS')
 		self.filter.sleeptime /= 1000.0
 		## produce error with not callable processLine:
 		_org_processLine = self.filter.processLine
@@ -715,6 +720,8 @@ class LogFileMonitor(LogCaptureTestCase):
 		pass
 
 	def testNewChangeViaGetFailures_simple(self):
+		# speedup search using exact date pattern:
+		self.filter.setDatePattern('^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
 		# suck in lines from this sample log file
 		self.filter.getFailures(self.name)
 		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
@@ -730,6 +737,8 @@ class LogFileMonitor(LogCaptureTestCase):
 		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
 
 	def testNewChangeViaGetFailures_rewrite(self):
+		# speedup search using exact date pattern:
+		self.filter.setDatePattern('^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
 		#
 		# if we rewrite the file at once
 		self.file.close()
@@ -748,6 +757,8 @@ class LogFileMonitor(LogCaptureTestCase):
 		_assert_correct_last_attempt(self, self.filter, GetFailures.FAILURES_01)
 
 	def testNewChangeViaGetFailures_move(self):
+		# speedup search using exact date pattern:
+		self.filter.setDatePattern('^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
 		#
 		# if we move file into a new location while it has been open already
 		self.file.close()
@@ -769,6 +780,7 @@ class CommonMonitorTestCase(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		super(CommonMonitorTestCase, self).setUp()
 		self._failTotal = 0
 
 	def waitFailTotal(self, count, delay=1.):
@@ -819,6 +831,8 @@ def get_monitor_failures_testcase(Filter_):
 			self.jail = DummyJail()
 			self.filter = Filter_(self.jail)
 			self.filter.addLogPath(self.name, autoSeek=False)
+			# speedup search using exact date pattern:
+			self.filter.setDatePattern('^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
 			self.filter.active = True
 			self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 			self.filter.start()
@@ -1223,6 +1237,8 @@ class GetFailures(LogCaptureTestCase):
 		self.jail = DummyJail()
 		self.filter = FileFilter(self.jail)
 		self.filter.active = True
+		# speedup search using exact date pattern:
+		self.filter.setDatePattern('^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
 		# TODO Test this
 		#self.filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 		#self.filter.setTimePattern("%b %d %H:%M:%S")
@@ -1329,6 +1345,11 @@ class GetFailures(LogCaptureTestCase):
 		output = (('212.41.96.186', 4, 1124013600.0),
 				  ('212.41.96.185', 2, 1124013598.0))
 
+		# speedup search using exact date pattern:
+		self.filter.setDatePattern(('^%ExY(?P<_sep>[-/.])%m(?P=_sep)%d[T ]%H:%M:%S(?:[.,]%f)?(?:\s*%z)?',
+			'^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?',
+			'^EPOCH'
+		))
 		self.filter.setMaxRetry(2)
 		self.filter.addLogPath(GetFailures.FILENAME_04, autoSeek=0)
 		self.filter.addFailRegex("Invalid user .* <HOST>")
@@ -1358,6 +1379,8 @@ class GetFailures(LogCaptureTestCase):
 				if enc is not None:
 					self.tearDown();self.setUp();
 					self.filter.setLogEncoding(enc);
+				# speedup search using exact date pattern:
+				self.filter.setDatePattern('^%ExY-%Exm-%Exd %ExH:%ExM:%ExS')
 				self.assertNotLogged('Error decoding line');
 				self.filter.addLogPath(fname)
 				self.filter.addFailRegex(failregex)
@@ -1533,6 +1556,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		super(DNSUtilsNetworkTests, self).setUp()
 		unittest.F2B.SkipIfNoNetwork()
 
 	def test_IPAddr(self):

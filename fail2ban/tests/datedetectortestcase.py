@@ -58,6 +58,8 @@ class DateDetectorTest(LogCaptureTestCase):
 		return self.__datedetector
 	
 	def testGetEpochTime(self):
+		self.__datedetector = DateDetector()
+		self.__datedetector.appendTemplate('EPOCH')
 		# correct epoch time, using all variants:
 		for dateUnix in (1138049999, 32535244799):
 			for date in ("%s", "[%s]", "[%s.555]", "audit(%s.555:101)"):
@@ -67,7 +69,7 @@ class DateDetectorTest(LogCaptureTestCase):
 				self.assertTrue(datelog, "Parse epoch time for %s failed" % (date,))
 				( datelog, matchlog ) = datelog
 				self.assertEqual(int(datelog), dateUnix)
-				self.assertIn(matchlog.group(), (str(dateUnix), str(dateUnix)+'.555'))
+				self.assertIn(matchlog.group(1), (str(dateUnix), str(dateUnix)+'.555'))
 		# wrong, no epoch time (< 10 digits, more as 11 digits, begin/end of word) :
 		for dateUnix in ('123456789', '9999999999999999', '1138049999A', 'A1138049999'):
 			for date in ("%s", "[%s]", "[%s.555]", "audit(%s.555:101)"):
@@ -85,7 +87,7 @@ class DateDetectorTest(LogCaptureTestCase):
 		#      of fail2ban -- we just ignore incorrect day of the week
 		( datelog, matchlog ) = self.datedetector.getTime(log)
 		self.assertEqual(datelog, dateUnix)
-		self.assertEqual(matchlog.group(), 'Jan 23 21:59:59')
+		self.assertEqual(matchlog.group(1), 'Jan 23 21:59:59')
 
 	def testVariousTimes(self):
 		"""Test detection of various common date/time formats f2b should understand
@@ -150,7 +152,7 @@ class DateDetectorTest(LogCaptureTestCase):
 					( logUnix, logMatch ) = logtime
 					self.assertEqual(logUnix, dateUnix,
 						"getTime comparison failure for %s: by prefix %r \"%s\" is not \"%s\"" % (sdate, prefix, logUnix, dateUnix))
-					self.assertEqual(logMatch.group(), rdate)
+					self.assertEqual(logMatch.group(1), rdate)
 				else:
 					self.assertEqual(logtime, None,
 						"getTime should have not matched for %r by prefix %r Got: %s" % (sdate, prefix, logtime))
@@ -164,7 +166,7 @@ class DateDetectorTest(LogCaptureTestCase):
 					( logUnix, logMatch ) = logtime
 					self.assertEqual(logUnix, dateUnix,
 						"getTime comparison failure for %s by prefix %r: \"%s\" is not \"%s\"" % (sdate, prefix, logUnix, dateUnix))
-					self.assertEqual(logMatch.group(), rdate)
+					self.assertEqual(logMatch.group(1), rdate)
 				else:
 					self.assertEqual(logtime, None,
 						"getTime should have not matched for %r by prefix %r Got: %s" % (sdate, prefix, logtime))
@@ -183,23 +185,23 @@ class DateDetectorTest(LogCaptureTestCase):
 		self.assertNotEqual(logdate, None)
 		( logTime, logMatch ) = logdate
 		self.assertEqual(logTime, mu)
-		self.assertEqual(logMatch.group(), '2012/10/11 02:37:17')
+		self.assertEqual(logMatch.group(1), '2012/10/11 02:37:17')
 		# confuse it with year being at the end
 		for i in xrange(10):
 			( logTime, logMatch ) =	self.datedetector.getTime('11/10/2012 02:37:17 [error] 18434#0')
 			self.assertEqual(logTime, mu)
-			self.assertEqual(logMatch.group(), '11/10/2012 02:37:17')
+			self.assertEqual(logMatch.group(1), '11/10/2012 02:37:17')
 		# and now back to the original
 		( logTime, logMatch ) = self.datedetector.getTime('2012/10/11 02:37:17 [error] 18434#0')
 		self.assertEqual(logTime, mu)
-		self.assertEqual(logMatch.group(), '2012/10/11 02:37:17')
+		self.assertEqual(logMatch.group(1), '2012/10/11 02:37:17')
 
 	def testDateTemplate(self):
 		t = DateTemplate()
 		t.setRegex('^a{3,5}b?c*$')
-		self.assertEqual(t.regex, '^a{3,5}b?c*$')
+		self.assertEqual(t.regex, '^(a{3,5}b?c*)$')
 		self.assertRaises(Exception, t.getDate, '')
-		self.assertEqual(t.matchDate('aaaac').group(), 'aaaac')
+		self.assertEqual(t.matchDate('aaaac').group(1), 'aaaac')
 
 		## no word boundaries left and right:
 		t = DatePatternRegex()
@@ -208,22 +210,22 @@ class DateDetectorTest(LogCaptureTestCase):
 		self.assertFalse('**' in t.regex)
 		# match date:
 		dt = 'TIME:20050102T010203'
-		self.assertEqual(t.matchDate('X' + dt + 'X').group(), dt)
-		self.assertEqual(t.matchDate(dt).group(), dt)
+		self.assertEqual(t.matchDate('X' + dt + 'X').group(1), dt)
+		self.assertEqual(t.matchDate(dt).group(1), dt)
 		# wrong year (for exact %ExY):
 		dt = 'TIME:50050102T010203'
 		self.assertFalse(t.matchDate(dt))
 
-		## start boundary left and word boundary right:
+		## start boundary left and word boundary right (automatically if not **):
 		t = DatePatternRegex()
-		t.pattern = '%ExLBtime:%ExY%Exm%ExdT%ExH%ExM%ExS'
+		t.pattern = '{^LN-BEG}time:%ExY%Exm%ExdT%ExH%ExM%ExS'
 		self.assertTrue('^' in t.regex)
 		# try match date:
 		dt = 'time:20050102T010203'
 		self.assertFalse(t.matchDate('X' + dt))
 		self.assertFalse(t.matchDate(dt + 'X'))
-		self.assertEqual(t.matchDate('##' + dt + '...').group(), dt)
-		self.assertEqual(t.matchDate(dt).group(), dt)
+		self.assertEqual(t.matchDate('##' + dt + '...').group(1), dt)
+		self.assertEqual(t.matchDate(dt).group(1), dt)
 		# case sensitive:
 		dt = 'TIME:20050102T010203'
 		self.assertFalse(t.matchDate(dt))
@@ -232,9 +234,9 @@ class DateDetectorTest(LogCaptureTestCase):
 		t = DatePatternRegex()
 		t.pattern = '^%Y %b %d'
 		self.assertTrue('(?iu)' in t.regex)
-		dt = '2005 jun 03'; self.assertEqual(t.matchDate(dt).group(), dt)
-		dt = '2005 Jun 03'; self.assertEqual(t.matchDate(dt).group(), dt)
-		dt = '2005 JUN 03'; self.assertEqual(t.matchDate(dt).group(), dt)
+		dt = '2005 jun 03'; self.assertEqual(t.matchDate(dt).group(1), dt)
+		dt = '2005 Jun 03'; self.assertEqual(t.matchDate(dt).group(1), dt)
+		dt = '2005 JUN 03'; self.assertEqual(t.matchDate(dt).group(1), dt)
 
 	def testAmbiguousInOrderedTemplates(self):
 		dd = self.datedetector
@@ -259,7 +261,7 @@ class DateDetectorTest(LogCaptureTestCase):
 				logSys.debug('Line: %s', line)
 				match, template = dd.matchTime(line)
 				self.assertTrue(match)
-				self.assertEqual(match.group(), debit)
+				self.assertEqual(match.group(1), debit)
 
 	def testLowLevelLogging(self):
 		# test coverage for the deep (heavy) debug messages:
@@ -363,31 +365,30 @@ class CustomDateFormatsTest(unittest.TestCase):
 			('200333 010203',   r'%Y%m%d %H%M%S',             "text:200333 010203 | date:20031230 010203"),
 			('20031230 010203', r'%ExY%Exm%Exd %ExH%ExM%ExS', "text:200333 010203 | date:20031230 010203"),
 			('20031230 010203', None,                         "text:200333 010203 | date:20031230 010203"),
-			# Explicit bound in start of the line using %ExLB key,
+			# Explicit bound in start of the line using {^LN-BEG} key,
 			# (negative) in the 1st case without line begin boundary - wrong date may be found,
 			# (positive) in the 2nd case with line begin boundary - unexpected date / log line (not found)
 			# (positive) and in 3th case with line begin boundary - find the correct date
 			("20030101 000000", "%ExY%Exm%Exd %ExH%ExM%ExS",      "00001230 010203 - 20030101 000000"),
-			(None,              "%ExLB%ExY%Exm%Exd %ExH%ExM%ExS", "00001230 010203 - 20030101 000000"),
-			("20031230 010203", "%ExLB%ExY%Exm%Exd %ExH%ExM%ExS", "20031230 010203 - 20030101 000000"),
-			# Explicit bound in start of the line using %ExLB key, 
+			(None,              "{^LN-BEG}%ExY%Exm%Exd %ExH%ExM%ExS", "00001230 010203 - 20030101 000000"),
+			("20031230 010203", "{^LN-BEG}%ExY%Exm%Exd %ExH%ExM%ExS", "20031230 010203 - 20030101 000000"),
+			# Explicit bound in start of the line using {^LN-BEG} key, 
 			# up to 2 non-alphanumeric chars front, ** - no word boundary on the right
-			("20031230010203",  "%ExLB%ExY%Exm%Exd%ExH%ExM%ExS**", "2003123001020320030101000000"),
-			("20031230010203",  "%ExLB%ExY%Exm%Exd%ExH%ExM%ExS**", "#2003123001020320030101000000"),
-			("20031230010203",  "%ExLB%ExY%Exm%Exd%ExH%ExM%ExS**", "##2003123001020320030101000000"),
-			("20031230010203",  "%ExLB%ExY%Exm%Exd%ExH%ExM%ExS",   "[20031230010203]20030101000000"),
+			("20031230010203",  "{^LN-BEG}%ExY%Exm%Exd%ExH%ExM%ExS**", "2003123001020320030101000000"),
+			("20031230010203",  "{^LN-BEG}%ExY%Exm%Exd%ExH%ExM%ExS**", "#2003123001020320030101000000"),
+			("20031230010203",  "{^LN-BEG}%ExY%Exm%Exd%ExH%ExM%ExS**", "##2003123001020320030101000000"),
+			("20031230010203",  "{^LN-BEG}%ExY%Exm%Exd%ExH%ExM%ExS",   "[20031230010203]20030101000000"),
 		):
 			logSys.debug('== test: %r', (matched, dp, line))
 			if dp is None:
 				dd = defDD
 			else:
-				dp = DatePatternRegex(dp)
 				dd = DateDetector()
 				dd.appendTemplate(dp)
 			date = dd.getTime(line)
 			if matched:
 				self.assertTrue(date)
-				self.assertEqual(matched, date[1].group())
+				self.assertEqual(matched, date[1].group(1))
 			else:
 				self.assertEqual(date, None)
 

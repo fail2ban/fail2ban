@@ -32,6 +32,7 @@ if sys.version_info >= (2,7): # pragma: no cover - may be unavailable
 		
 		def setUp(self):
 			"""Call before every test case."""
+			super(BadIPsActionTest, self).setUp()
 			unittest.F2B.SkipIfNoNetwork()
 
 			self.jail = DummyJail()

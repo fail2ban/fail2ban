@@ -43,6 +43,7 @@ class FilterSamplesRegex(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		super(FilterSamplesRegex, self).setUp()
 		self.filter = Filter(None)
 		self.filter.active = True
 

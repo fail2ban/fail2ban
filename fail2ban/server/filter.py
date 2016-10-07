@@ -35,7 +35,6 @@ from .ipdns import DNSUtils, IPAddr
 from .ticket import FailTicket
 from .jailthread import JailThread
 from .datedetector import DateDetector
-from .datetemplate import DateTemplate, DatePatternRegex, DateEpoch, DateTai64n
 from .mytime import MyTime
 from .failregex import FailRegex, Regex, RegexException
 from .action import CommandAction
@@ -94,7 +93,6 @@ class Filter(JailThread):
 		self.ticks = 0
 
 		self.dateDetector = DateDetector()
-		self.dateDetector.addDefaultTemplate()
 		logSys.debug("Created %s" % self)
 
 	def __repr__(self):
@@ -258,34 +256,12 @@ class Filter(JailThread):
 			self.dateDetector = None
 			return
 		else:
-			key = pattern.upper()
-			if key == "EPOCH":
-				template = DateEpoch()
-				template.name = "Epoch"
-			elif key == "TAI64N":
-				template = DateTai64n()
-				template.name = "TAI64N"
-			elif key in ("{^LN-BEG}", "{*WD-BEG}", "{DEFAULT}"):
-				self.dateDetector = DateDetector()
-				flt = \
-					lambda template: template.flags & DateTemplate.LINE_BEGIN if key == "{^LN-BEG}" else \
-					lambda template: template.flags & DateTemplate.WORD_BEGIN if key == "{*WD-BEG}" else \
-					None
-				self.dateDetector.addDefaultTemplate(flt)
-				return
-			elif "{DATE}" in key:
-				self.dateDetector = DateDetector()
-				self.dateDetector.addDefaultTemplate(
-					lambda template: not template.flags & DateTemplate.LINE_BEGIN, pattern)
-				return
-			else:
-				template = DatePatternRegex(pattern)
-		self.dateDetector = DateDetector()
-		self.dateDetector.appendTemplate(template)
-		logSys.info("  date pattern `%r`: `%s`",
-			pattern, template.name)
-		logSys.debug("  date pattern regex for %r: %s",
-			pattern, template.regex)
+			dd = DateDetector()
+			if not isinstance(pattern, (list, tuple)):
+				pattern = filter(bool, map(str.strip, re.split('\n+', pattern)))
+			for pattern in pattern:
+				dd.appendTemplate(pattern)
+			self.dateDetector = dd
 
 	##
 	# Get the date detector pattern, or Default Detectors if not changed
@@ -295,7 +271,8 @@ class Filter(JailThread):
 	def getDatePattern(self):
 		if self.dateDetector is not None:
 			templates = self.dateDetector.templates
-			if len(templates) > 2:
+			# lazy template init, by first match
+			if not len(templates) or len(templates) > 2:
 				return None, "Default Detectors"
 			elif len(templates):
 				if hasattr(templates[0], "pattern"):
@@ -303,6 +280,7 @@ class Filter(JailThread):
 				else:
 					pattern = None
 				return pattern, templates[0].name
+		return None
 
 	##
 	# Set the maximum retry value.
@@ -483,9 +461,9 @@ class Filter(JailThread):
 			(timeMatch, template) = self.dateDetector.matchTime(l)
 			if timeMatch:
 				tupleLine  = (
-					l[:timeMatch.start()],
-					l[timeMatch.start():timeMatch.end()],
-					l[timeMatch.end():],
+					l[:timeMatch.start(1)],
+					l[timeMatch.start(1):timeMatch.end(1)],
+					l[timeMatch.end(1):],
 					(timeMatch, template)
 				)
 			else:

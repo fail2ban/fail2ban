@@ -526,6 +526,16 @@ if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
 			self.fail(msg)
 	unittest.TestCase.assertNotIn = assertNotIn
 
+_org_setUp = unittest.TestCase.setUp
+def _customSetUp(self):
+	# print('=='*10, self)
+	if unittest.F2B.log_level <= logging.DEBUG: # so if DEBUG etc -- show them (and log it in travis)!
+		print("")
+		logSys.debug('='*10 + ' %s ' + '='*20, self.id())
+	_org_setUp(self)
+
+unittest.TestCase.setUp = _customSetUp
+
 
 class LogCaptureTestCase(unittest.TestCase):
 
@@ -601,12 +611,11 @@ class LogCaptureTestCase(unittest.TestCase):
 		# Let's log everything into a string
 		self._log = LogCaptureTestCase._MemHandler(unittest.F2B.log_lazy)
 		logSys.handlers = [self._log]
-		if self._old_level <= logging.DEBUG: # so if DEBUG etc -- show them (and log it in travis)!
-			print("")
+		if self._old_level <= logging.DEBUG:
 			logSys.handlers += self._old_handlers
-			logSys.debug('='*10 + ' %s ' + '='*20, self.id())
-		else:
+		else: # lowest log level to capture messages
 			logSys.setLevel(logging.DEBUG)
+		super(LogCaptureTestCase, self).setUp()
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -615,6 +624,7 @@ class LogCaptureTestCase(unittest.TestCase):
 		logSys = getLogger("fail2ban")
 		logSys.handlers = self._old_handlers
 		logSys.level = self._old_level
+		super(LogCaptureTestCase, self).tearDown()
 
 	def _is_logged(self, *s, **kwargs):
 		logged = self._log.getvalue()

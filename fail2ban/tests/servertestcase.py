@@ -65,7 +65,7 @@ class TransmitterBase(unittest.TestCase):
 	
 	def setUp(self):
 		"""Call before every test case."""
-		#super(TransmitterBase, self).setUp()
+		super(TransmitterBase, self).setUp()
 		self.transm = self.server._Server__transm
 		# To test thransmitter we don't need to start server...
 		#self.server.start('/dev/null', '/dev/null', force=False)
@@ -301,9 +301,11 @@ class Transmitter(TransmitterBase):
 			("%%%Y%m%d%H%M%S", "{*WD-BEG}%YearMonthDay24hourMinuteSecond{*WD-END}"),
 			jail=self.jailName)
 		self.setGetTest(
-			"datepattern", "Epoch", (None, "Epoch"), jail=self.jailName)
+			"datepattern", "Epoch", (None, "Epoch{*WD-END}"), jail=self.jailName)
 		self.setGetTest(
-			"datepattern", "TAI64N", (None, "TAI64N"), jail=self.jailName)
+			"datepattern", "^Epoch", (None, "{^LN-BEG}Epoch{*WD-END}"), jail=self.jailName)
+		self.setGetTest(
+			"datepattern", "TAI64N", (None, "TAI64N{*WD-END}"), jail=self.jailName)
 		self.setGetTestNOK("datepattern", "%Cat%a%%%g", jail=self.jailName)
 
 	def testJailUseDNS(self):

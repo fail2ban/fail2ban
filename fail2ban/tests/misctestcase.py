@@ -86,6 +86,7 @@ def _getSysPythonVersion():
 class SetupTest(unittest.TestCase):
 
 	def setUp(self):
+		super(SetupTest, self).setUp()
 		unittest.F2B.SkipIfFast()
 		setup = os.path.join(os.path.dirname(__file__), '..', '..', 'setup.py')
 		self.setup = os.path.exists(setup) and setup or None

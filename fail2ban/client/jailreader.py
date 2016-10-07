@@ -112,6 +112,7 @@ class JailReader(ConfigReader):
 				["string", "ignorecommand", None],
 				["string", "ignoreip", None],
 				["string", "filter", ""],
+				["string", "datepattern", None],
 				["string", "action", ""]]
 
 		# Before interpolation (substitution) add static options always available as default:
@@ -195,6 +196,8 @@ class JailReader(ConfigReader):
 		 """
 
 		stream = []
+		if self.__filter:
+			stream.extend(self.__filter.convert())
 		for opt, value in self.__opts.iteritems():
 			if opt == "logpath" and	\
 					not self.__opts.get('backend', None).startswith("systemd"):
@@ -216,17 +219,9 @@ class JailReader(ConfigReader):
 				stream.append(["set", self.__name, "logencoding", value])
 			elif opt == "backend":
 				backend = value
-			elif opt == "maxretry":
-				stream.append(["set", self.__name, "maxretry", value])
 			elif opt == "ignoreip":
 				for ip in splitwords(value):
 					stream.append(["set", self.__name, "addignoreip", ip])
-			elif opt == "findtime":
-				stream.append(["set", self.__name, "findtime", value])
-			elif opt == "bantime":
-				stream.append(["set", self.__name, "bantime", value])
-			elif opt == "usedns":
-				stream.append(["set", self.__name, "usedns", value])
 			elif opt in ("failregex", "ignoreregex"):
 				multi = []
 				for regex in value.split('\n'):
@@ -237,10 +232,8 @@ class JailReader(ConfigReader):
 					stream.append(["multi-set", self.__name, "add" + opt, multi])
 				elif len(multi):
 					stream.append(["set", self.__name, "add" + opt, multi[0]])
-			elif opt == "ignorecommand":
-				stream.append(["set", self.__name, "ignorecommand", value])
-		if self.__filter:
-			stream.extend(self.__filter.convert())
+			elif opt not in ('action', 'filter', 'enabled'):
+				stream.append(["set", self.__name, opt, value])
 		for action in self.__actions:
 			if isinstance(action, (ConfigReaderUnshared, ConfigReader)):
 				stream.extend(action.convert())

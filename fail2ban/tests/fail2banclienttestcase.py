@@ -743,6 +743,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"maxretry = 3",
 				"findtime = 10m",
 				"failregex = ^\s*failure (401|403) from <HOST>",
+				"datepattern = {^LN-BEG}EPOCH",
 				"",
 				"[test-jail1]", "backend = " + backend, "filter =", 
 				"action = ",

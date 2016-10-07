@@ -55,8 +55,6 @@ timeRE['ExS'] = r"(?P<S>6[0-1]|[0-5]\d)"
 # respect possible run in the test-cases (alternate date used there):
 timeRE['ExY'] = r"(?P<Y>%s\d)" % _getYearCentRE(cent=(0,3), distance=3)
 timeRE['Exy'] = r"(?P<y>%s\d)" % _getYearCentRE(cent=(2,3), distance=3)
-# Special pattern "start of the line", analogous to `wordBegin='start'` of default templates:
-timeRE['ExLB'] = r"(?:^|(?<=^\W)|(?<=^\W{2}))"
 
 def getTimePatternRE():
 	keys = timeRE.keys()
@@ -70,7 +68,6 @@ def getTimePatternRE():
 		'M': "Minute", 'p': "AMPM", 'S': "Second", 'U': "Yearweek",
 		'w': "Weekday", 'W': "Yearweek", 'y': 'Year2', 'Y': "Year", '%': "%",
 		'z': "Zone offset", 'f': "Microseconds", 'Z': "Zone name",
-		'ExLB': '{^LN-BEG}',
 	}
 	for key in set(keys) - set(names): # may not have them all...
 		if key.startswith('Ex'):
