@@ -39,6 +39,8 @@ releases.
 
 
 ### New Features
+* New Actions:
+    - `action.d/npf.conf` for NPF, the latest packet filter for NetBSD
 
 ### Enhancements
 * DateTemplate regexp extended with the word-end boundary, additionally to 
