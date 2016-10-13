@@ -40,7 +40,7 @@ from optparse import OptionParser, Option
 
 from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
 
-try:
+try: # pragma: no cover
 	from systemd import journal
 	from ..server.filtersystemd import FilterSystemd
 except ImportError:
@@ -80,7 +80,7 @@ def pprint_list(l, header=None):
 		s = ''
 	output( s + "|  " + "\n|  ".join(l) + '\n`-' )
 
-def journal_lines_gen(myjournal):
+def journal_lines_gen(myjournal): # pragma: no cover
 	while True:
 		try:
 			entry = myjournal.get_next()
@@ -342,7 +342,7 @@ class Fail2banRegex(object):
 				found = True
 				regex = self._ignoreregex[ret].inc()
 		except RegexException as e:
-			output( e )
+			output( 'ERROR: %s' % e )
 			return False
 		return found
 
@@ -359,10 +359,7 @@ class Fail2banRegex(object):
 				regex.inc()
 				regex.appendIP(match)
 		except RegexException as e:
-			output( e )
-			return False
-		except IndexError:
-			output( "Sorry, but no <HOST> found in regex" )
+			output( 'ERROR: %s' % e )
 			return False
 		for bufLine in orgLineBuffer[int(fullBuffer):]:
 			if bufLine not in self._filter._Filter__lineBuffer:
@@ -508,10 +505,13 @@ class Fail2banRegex(object):
 
 		cmd_log, cmd_regex = args[:2]
 
-		if not self.readRegex(cmd_regex, 'fail'):
-			return False
-
-		if len(args) == 3 and not self.readRegex(args[2], 'ignore'):
+		try:
+			if not self.readRegex(cmd_regex, 'fail'):
+				return False
+			if len(args) == 3 and not self.readRegex(args[2], 'ignore'):
+				return False
+		except RegexException as e:
+			output( 'ERROR: %s' % e )
 			return False
 
 		if os.path.isfile(cmd_log):
@@ -558,18 +558,17 @@ class Fail2banRegex(object):
 def exec_command_line(*args):
 	parser = get_opt_parser()
 	(opts, args) = parser.parse_args(*args)
-	if opts.print_no_missed and opts.print_all_missed:
-		sys.stderr.write("ERROR: --print-no-missed and --print-all-missed are mutually exclusive.\n\n")
-		parser.print_help()
-		sys.exit(-1)
-	if opts.print_no_ignored and opts.print_all_ignored:
-		sys.stderr.write("ERROR: --print-no-ignored and --print-all-ignored are mutually exclusive.\n\n")
-		parser.print_help()
-		sys.exit(-1)
+	errors = []
+	if opts.print_no_missed and opts.print_all_missed: # pragma: no cover
+		errors.append("ERROR: --print-no-missed and --print-all-missed are mutually exclusive.")
+	if opts.print_no_ignored and opts.print_all_ignored: # pragma: no cover
+		errors.append("ERROR: --print-no-ignored and --print-all-ignored are mutually exclusive.")
 
 	# We need 2 or 3 parameters
 	if not len(args) in (2, 3):
-		sys.stderr.write("ERROR: provide both <LOG> and <REGEX>.\n\n")
+		errors.append("ERROR: provide both <LOG> and <REGEX>.")
+	if errors:
+		sys.stderr.write("\n".join(errors) + "\n\n")
 		parser.print_help()
 		sys.exit(-1)
 

@@ -96,14 +96,14 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"test", r".** from <HOST>$"
 		)
-		self.assertRaises(Exception, lambda: fail2banRegex.start(opts, args))
+		self.assertFalse(fail2banRegex.start(opts, args))
 		self.assertLogged("Unable to compile regular expression")
 
 	def testWrongIngnoreRE(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"test", r".*? from <HOST>$", r".**"
 		)
-		self.assertRaises(Exception, lambda: fail2banRegex.start(opts, args))
+		self.assertFalse(fail2banRegex.start(opts, args))
 		self.assertLogged("Unable to compile regular expression")
 
 	def testDirectFound(self):
@@ -221,3 +221,11 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			r"Authentication failure for .*? from <HOST>$"
 		), 0)
 		self.assertLogged('Lines: 1 lines, 0 ignored, 1 matched, 0 missed')
+		
+	def testExecCmdLine_MissFailID(self):
+		self.assertNotEqual(_test_exec_command_line(
+			'-l', 'info',
+			"Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 192.0.2.0",
+			r"Authentication failure"
+		), 0)
+		self.assertLogged('No failure-id group in ')
