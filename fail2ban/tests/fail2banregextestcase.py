@@ -24,9 +24,10 @@ __copyright__ = "Copyright (c) 2015 Serg G. Brester (sebres), 2008- Fail2Ban Con
 __license__ = "GPL"
 
 import os
+import sys
 
 from ..client import fail2banregex
-from ..client.fail2banregex import Fail2banRegex, get_opt_parser, output
+from ..client.fail2banregex import Fail2banRegex, get_opt_parser, exec_command_line, output
 from .utils import setUpMyTime, tearDownMyTime, LogCaptureTestCase, logSys
 from .utils import CONFIG_DIR
 
@@ -39,11 +40,37 @@ fail2banregex.output = _test_output
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
+DEV_NULL = None
 
 def _Fail2banRegex(*args):
 	parser = get_opt_parser()
 	(opts, args) = parser.parse_args(list(args))
 	return (opts, args, Fail2banRegex(opts))
+
+class ExitException(Exception):
+	def __init__(self, code):
+		self.code = code
+		self.msg = 'Exit with code: %s' % code
+
+def _test_exec_command_line(*args):
+	def _exit(code=0):
+		raise ExitException(code)
+	global DEV_NULL
+	_org = {'exit': sys.exit, 'stdout': sys.stdout, 'stderr': sys.stderr}
+	_exit_code = 0
+	sys.exit = _exit
+	if not DEV_NULL: DEV_NULL = open(os.devnull, "w")
+	sys.stderr = sys.stdout = DEV_NULL
+	try:
+		exec_command_line(list(args))
+	except ExitException as e:
+		_exit_code = e.code
+	finally:
+		sys.exit = _org['exit']
+		sys.stdout = _org['stdout']
+		sys.stderr = _org['stderr']
+	return _exit_code
+
 
 class Fail2banRegexTest(LogCaptureTestCase):
 
@@ -69,14 +96,14 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"test", r".** from <HOST>$"
 		)
-		self.assertRaises(Exception, lambda: fail2banRegex.start(opts, args))
+		self.assertFalse(fail2banRegex.start(opts, args))
 		self.assertLogged("Unable to compile regular expression")
 
 	def testWrongIngnoreRE(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"test", r".*? from <HOST>$", r".**"
 		)
-		self.assertRaises(Exception, lambda: fail2banRegex.start(opts, args))
+		self.assertFalse(fail2banRegex.start(opts, args))
 		self.assertLogged("Unable to compile regular expression")
 
 	def testDirectFound(self):
@@ -184,4 +211,21 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 		self.assertLogged('https://')
 
+	def testExecCmdLine_Usage(self):
+		self.assertNotEqual(_test_exec_command_line(), 0)
 
+	def testExecCmdLine_Direct(self):
+		self.assertEqual(_test_exec_command_line(
+			'-l', 'info',
+			"Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 192.0.2.0",
+			r"Authentication failure for .*? from <HOST>$"
+		), 0)
+		self.assertLogged('Lines: 1 lines, 0 ignored, 1 matched, 0 missed')
+		
+	def testExecCmdLine_MissFailID(self):
+		self.assertNotEqual(_test_exec_command_line(
+			'-l', 'info',
+			"Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 192.0.2.0",
+			r"Authentication failure"
+		), 0)
+		self.assertLogged('No failure-id group in ')
