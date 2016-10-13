@@ -136,13 +136,12 @@ Report bugs to https://github.com/fail2ban/fail2ban/issues
 			   "\"systemd-journal\" only"),
 		Option('-l', "--log-level",
 			   dest="log_level",
-			   default=None,
+			   default='critical',
 			   help="Log level for the Fail2Ban logger to use"),
 		Option('-v', '--verbose', action="count", dest="verbose",
-			   default=None,
+			   default=0,
 			   help="Increase verbosity"),
 		Option("--verbosity", action="store", dest="verbose", type=int,
-			   default=None,
 			   help="Set numerical level of verbosity (0..4)"),
 		Option("-D", "--debuggex", action='store_true',
 			   help="Produce debuggex.com urls for debugging there"),
@@ -556,9 +555,9 @@ class Fail2banRegex(object):
 		return True
 
 
-def exec_command_line():
+def exec_command_line(*args):
 	parser = get_opt_parser()
-	(opts, args) = parser.parse_args()
+	(opts, args) = parser.parse_args(*args)
 	if opts.print_no_missed and opts.print_all_missed:
 		sys.stderr.write("ERROR: --print-no-missed and --print-all-missed are mutually exclusive.\n\n")
 		parser.print_help()
@@ -572,27 +571,21 @@ def exec_command_line():
 	if not len(args) in (2, 3):
 		sys.stderr.write("ERROR: provide both <LOG> and <REGEX>.\n\n")
 		parser.print_help()
-		return False
+		sys.exit(-1)
 
 	output( "" )
 	output( "Running tests" )
 	output( "=============" )
 	output( "" )
 
-	# TODO: taken from -testcases -- move common functionality somewhere
-	if opts.log_level is not None:
-		# so we had explicit settings
-		logSys.setLevel(str2LogLevel(opts.log_level))
-	else:
-		# suppress the logging but it would leave unittests' progress dots
-		# ticking, unless like with '-l critical' which would be silent
-		# unless error occurs
-		logSys.setLevel(logging.CRITICAL)
+	# Log level (default critical):
+	opts.log_level = str2LogLevel(opts.log_level)
+	logSys.setLevel(opts.log_level)
 
 	# Add the default logging handler
 	stdout = logging.StreamHandler(sys.stdout)
 
-	fmt = '%(levelname)-1.1s: %(message)s' if opts.verbose <= 1 else '%(message)s'
+	fmt = '%(levelname)-1.1s: %(message)s' if opts.verbose <= 1 else ' %(message)s'
 
 	if opts.log_traceback:
 		Formatter = FormatterWithTraceBack
