@@ -35,6 +35,7 @@ except ImportError:
 	OrderedDict = dict
 
 from .banmanager import BanManager
+from .observer import Observers
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
@@ -343,11 +344,20 @@ class Actions(JailThread, Mapping):
 				break
 			aInfo = CallingMap()
 			bTicket = BanManager.createBanTicket(ticket)
+			btime = ticket.getBanTime()
+			if btime is not None:
+				bTicket.setBanTime(btime)
+				bTicket.setBanCount(ticket.getBanCount())
+			else:
+				btime = self.__banManager.getBanTime()
+			if ticket.restored:
+				bTicket.restored = True
 			ip = bTicket.getIP()
 			aInfo["ip"] = ip
 			aInfo["failures"] = bTicket.getAttempt()
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "\n".join(bTicket.getMatches())
+			# retarded merge info via twice lambdas : once for merge, once for matches/failures:
 			if self._jail.database is not None:
 				mi4ip = lambda overalljails=False, self=self, \
 					mi={'ip':ip, 'ticket':bTicket}: self.__getBansMerged(mi, overalljails)
@@ -358,7 +368,11 @@ class Actions(JailThread, Mapping):
 			reason = {}
 			if self.__banManager.addBanTicket(bTicket, reason=reason):
 				cnt += 1
+				# report ticket to observer, to check time should be increased and hereafter observer writes ban to database (asynchronous)
+				if Observers.Main is not None and not bTicket.restored:
+					Observers.Main.add('banFound', bTicket, self._jail, btime)
 				logSys.notice("[%s] %sBan %s", self._jail.name, ('' if not bTicket.restored else 'Restore '), ip)
+				# do actions :
 				for name, action in self._actions.iteritems():
 					try:
 						action.ban(aInfo.copy())
@@ -371,7 +385,10 @@ class Actions(JailThread, Mapping):
 				# after all actions are processed set banned flag:
 				bTicket.banned = True
 			else:
-				bTicket = reason['ticket']
+				if reason.get('expired', 0):
+					logSys.info('[%s] Ignore %s, expired bantime', self._jail.name, ip)
+					continue
+				bTicket = reason.get('ticket', bTicket)
 				# if already banned (otherwise still process some action)
 				if bTicket.banned:
 					# compare time of failure occurrence with time ticket was really banned:

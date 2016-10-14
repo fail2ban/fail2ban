@@ -267,6 +267,9 @@ class BanManager:
 	
 	def addBanTicket(self, ticket, reason={}):
 		eob = ticket.getEndOfBanTime(self.__banTime)
+		if eob < MyTime.time():
+			reason['expired'] = 1
+			return False
 		with self.__lock:
 			# check already banned
 			fid = ticket.getID()

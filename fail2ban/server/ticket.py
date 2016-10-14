@@ -24,8 +24,6 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import sys
-
 from ..helpers import getLogger
 from .ipdns import IPAddr
 from .mytime import MyTime
@@ -62,8 +60,9 @@ class Ticket(object):
 			self.__dict__.update(i for i in ticket.__dict__.iteritems() if i[0] in self.__dict__)
 
 	def __str__(self):
-		return "%s: ip=%s time=%s #attempts=%d matches=%r" % \
+		return "%s: ip=%s time=%s bantime=%s bancount=%s #attempts=%d matches=%r" % \
 			   (self.__class__.__name__.split('.')[-1], self.__ip, self._time,
+			   	self._banTime, self._banCount,
 			   	self._data['failures'], self._data.get('matches', []))
 
 	def __repr__(self):

@@ -263,6 +263,11 @@ class Transmitter:
 			value = command[2]
 			self.__server.setBanTime(name, value)
 			return self.__server.getBanTime(name)
+		elif command[1].startswith("bantime."):
+			value = command[2]
+			opt = command[1][len("bantime."):]
+			self.__server.setBanTimeExtra(name, opt, value)
+			return self.__server.getBanTimeExtra(name, opt)
 		elif command[1] == "banip":
 			value = command[2]
 			return self.__server.setBanIP(name,value)
@@ -355,6 +360,9 @@ class Transmitter:
 		# Action
 		elif command[1] == "bantime":
 			return self.__server.getBanTime(name)
+		elif command[1].startswith("bantime."):
+			opt = command[1][len("bantime."):]
+			return self.__server.getBanTimeExtra(name, opt)
 		elif command[1] == "actions":
 			return self.__server.getActions(name).keys()
 		elif command[1] == "action":

@@ -20,6 +20,9 @@ TODO: implementing of options resp. other tasks from PR #1346
 * testSocket: sporadical bug repaired - wait for server thread starts a socket (listener)
 * testExecuteTimeoutWithNastyChildren: sporadical bug repaired - wait for pid file inside bash,
   kill tree in any case (gh-1155)
+* purge database will be executed now (within observer).
+* restoring currently banned ip after service restart fixed 
+  (now < timeofban + bantime), ignore old log failures (already banned)
 * Fixed high-load of pyinotify-backend,
   see https://github.com/fail2ban/fail2ban/issues/885#issuecomment-248964591
 * Database: stability fix - repack cursor iterator as long as locked
@@ -41,6 +44,9 @@ TODO: implementing of options resp. other tasks from PR #1346
     - new conditional section functionality used in config resp. includes:
       - [Init?family=inet4] - IPv4 qualified hosts only
       - [Init?family=inet6] - IPv6 qualified hosts only
+* Increment ban time (+ observer) functionality introduced.
+  Thanks Serg G. Brester (sebres)
+* Database functionality extended with bad ips.
 * New reload functionality (now totally without restart, unbanning/rebanning, etc.),
   see gh-1557
 * Several commands extended and new commands introduced:
