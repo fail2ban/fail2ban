@@ -735,7 +735,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			if unittest.F2B.log_level <= logging.DEBUG: # pragma: no cover
 				_out_file(fn)
 
-		def _write_jail_cfg(enabled=(1, 2), actions=()):
+		def _write_jail_cfg(enabled=(1, 2), actions=(), backend="polling"):
 			_write_file(pjoin(cfg, "jail.conf"), "w",
 				"[INCLUDES]", "",
 				"[DEFAULT]", "",
@@ -744,7 +744,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"findtime = 10m",
 				"failregex = ^\s*failure (401|403) from <HOST>",
 				"",
-				"[test-jail1]", "backend = polling", "filter =", 
+				"[test-jail1]", "backend = " + backend, "filter =", 
 				"action = ",
 				"         test-action1[name='%(__name__)s']" if 1 in actions else "",
 				"         test-action2[name='%(__name__)s']" if 2 in actions else "",
@@ -755,7 +755,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"            ^\s*error (401|403) from <HOST>" if 2 in enabled else "",
 				"enabled = true" if 1 in enabled else "",
 				"",
-				"[test-jail2]", "backend = polling", "filter =", 
+				"[test-jail2]", "backend = " + backend, "filter =", 
 				"action =",
 				"logpath = " + test2log,
 				"enabled = true" if 2 in enabled else "",
@@ -998,6 +998,20 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"[test-jail1] Ban 192.0.2.3",
 			"[test-jail1] Ban 192.0.2.4", all=True
 		)
+
+		# backend-switch (restart instead of reload):
+		self.pruneLog("[test-phase 8a]")
+		_write_jail_cfg(enabled=[1], backend="xxx-unknown-backend-zzz")
+		self.execFailed(startparams, "reload")
+		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
+		self.assertLogged(
+			"Restart jail 'test-jail1' (reason: 'polling' != ", 
+			"Unknown backend ", all=True)
+
+		self.pruneLog("[test-phase 8b]")
+		_write_jail_cfg(enabled=[1])
+		self.execSuccess(startparams, "reload")
+		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)	
 
 		# several small cases (cover several parts):
 		self.pruneLog("[test-phase end-1]")
