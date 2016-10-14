@@ -184,13 +184,19 @@ class Fail2banServer(Fail2banCmdLine):
 				logSys.log(5, '  server phase %s', phase)
 				if not phase.get('start', False):
 					raise ServerExecutionException('Async configuration of server failed')
+				# event for server ready flag:
+				def _server_ready():
+					phase['start-ready'] = True
+					logSys.log(5, '  server phase %s', phase)
+				# notify waiting thread if server really ready
+				self._conf['onstart'] = _server_ready
 
 			# Start server, daemonize it, etc.
 			pid = os.getpid()
 			server = Fail2banServer.startServerDirect(self._conf, background)
+			# notify waiting thread server ready resp. done (background execution, error case, etc):
 			if not async:
-				phase['start-ready'] = True
-				logSys.log(5, '  server phase %s', phase)
+				_server_ready()
 			# If forked - just exit other processes
 			if pid != os.getpid(): # pragma: no cover
 				os._exit(0)

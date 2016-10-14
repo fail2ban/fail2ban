@@ -148,6 +148,7 @@ class Server:
 		logSys.debug("Starting communication")
 		try:
 			self.__asyncServer = AsyncServer(self.__transm)
+			self.__asyncServer.onstart = conf.get('onstart')
 			self.__asyncServer.start(sock, force)
 		except AsyncServerException as e:
 			logSys.error("Could not start server: %s", e)
