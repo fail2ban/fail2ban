@@ -310,7 +310,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 					# stop options - jail name or --all
 					break
 			if self.__ping(timeout=-1):
-				if len(cmd) == 1:
+				if len(cmd) == 1 or cmd[1] == '--all':
 					jail = '--all'
 					ret, stream = self.readConfig()
 				else:

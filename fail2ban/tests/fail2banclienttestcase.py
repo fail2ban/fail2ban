@@ -1026,4 +1026,11 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertNotLogged(
 			"Creating new jail 'test-jail2'",
 			"Jail 'test-jail2' started", all=True)
-		self.pruneLog()
+
+		# restart all jails (without restart server):
+		self.pruneLog("[test-phase end-2]")
+		self.execSuccess(startparams,
+			"--async", "reload", "--restart", "--all")
+		self.assertLogged(
+			"Jail 'test-jail1' stopped", 
+			"Jail 'test-jail1' started", all=True)
