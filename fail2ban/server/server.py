@@ -599,6 +599,7 @@ class Server:
 			if logger.getEffectiveLevel() <= logging.DEBUG: # pragma: no cover
 				if self.__verbose is None:
 					self.__verbose = logging.DEBUG - logger.getEffectiveLevel() + 1
+			if self.__verbose is not None and self.__verbose > 2: # pragma: no cover
 				fmt = getVerbosityFormat(self.__verbose-1)
 			# tell the handler to use this format
 			hdlr.setFormatter(logging.Formatter(fmt))
