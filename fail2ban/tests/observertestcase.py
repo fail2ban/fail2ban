@@ -493,16 +493,9 @@ class BanTimeIncrDB(unittest.TestCase):
 		obs.add('failureFound', failManager, self.jail, ticket)
 		obs.wait_empty(5)
 		# wait until ticket transfered from failmanager into jail:
-		to = int(MyTime.time())+30
-		while True:
-			ticket2 = jail.getFailTicket()
-			if ticket2:
-				break
-			time.sleep(Utils.DEFAULT_SLEEP_INTERVAL)
-			if MyTime.time() > to: # pragma: no cover
-				raise RuntimeError('unexpected timeout: wait 30 seconds instead of few ms.')
+		ticket2 = Utils.wait_for(jail.getFailTicket, 10)
 		# check ticket and failure count:
-		self.assertFalse(not ticket2)
+		self.assertTrue(ticket2)
 		self.assertEqual(ticket2.getRetry(), failManager.getMaxRetry())
 
 		# wrap FailTicket to BanTicket:

@@ -280,15 +280,12 @@ class Jail(object):
 						ticket.restored = True
 						# correct start time / ban time (by the same end of ban):
 						btm = ticket.getBanTime(forbantime)
-						curtime = int(MyTime.time())
-						diftm = curtime - ticket.getTime()
+						diftm = MyTime.time() - ticket.getTime()
 						if btm != -1 and diftm > 0:
 							btm -= diftm
 						# ignore obsolete tickets:
 						if btm != -1 and btm <= 0:
 							continue
-						ticket.setTime(curtime)
-						ticket.setBanTime(btm)
 						self.putFailTicket(ticket)
 		except Exception as e: # pragma: no cover
 			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
