@@ -97,32 +97,40 @@ class FilterPoll(FileFilter):
 
 	def run(self):
 		while self.active:
-			if logSys.getEffectiveLevel() <= 6:
-				logSys.log(6, "Woke up idle=%s with %d files monitored",
-						   self.idle, self.getLogCount())
-			if self.idle:
-				if not Utils.wait_for(lambda: not self.active or not self.idle, 
-					self.sleeptime * 10, self.sleeptime
-				):
-					self.ticks += 1
-					continue
-			# Get file modification
-			modlst = []
-			Utils.wait_for(lambda: not self.active or self.getModified(modlst),
-				self.sleeptime)
-			for filename in modlst:
-				self.getFailures(filename)
-				self.__modified = True
+			try:
+				if logSys.getEffectiveLevel() <= 6:
+					logSys.log(6, "Woke up idle=%s with %d files monitored",
+							   self.idle, self.getLogCount())
+				if self.idle:
+					if not Utils.wait_for(lambda: not self.active or not self.idle, 
+						self.sleeptime * 10, self.sleeptime
+					):
+						self.ticks += 1
+						continue
+				# Get file modification
+				modlst = []
+				Utils.wait_for(lambda: not self.active or self.getModified(modlst),
+					self.sleeptime)
+				for filename in modlst:
+					self.getFailures(filename)
+					self.__modified = True
 
-			self.ticks += 1
-			if self.__modified:
-				try:
-					while True:
-						ticket = self.failManager.toBan()
-						self.jail.putFailTicket(ticket)
-				except FailManagerEmpty:
-					self.failManager.cleanup(MyTime.time())
-				self.__modified = False
+				self.ticks += 1
+				if self.__modified:
+					try:
+						while True:
+							ticket = self.failManager.toBan()
+							self.jail.putFailTicket(ticket)
+					except FailManagerEmpty:
+						self.failManager.cleanup(MyTime.time())
+					self.__modified = False
+			except Exception as e: # pragma: no cover
+				if not self.active: # if not active - error by stop...
+					break
+				logSys.error("Caught unhandled exception in main cycle: %r", e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+				# incr common error counter:
+				self.commonError()
 		logSys.debug("[%s] filter terminated", self.jailName)
 		return True
 
@@ -151,9 +159,9 @@ class FilterPoll(FileFilter):
 			return True
 		except Exception as e:
 			# stil alive (may be deleted because multi-threaded):
-			if not self.getLog(filename):
+			if not self.getLog(filename) or self.__prevStats.get(filename) is None:
 				logSys.warning("Log %r seems to be down: %s", filename, e)
-				return
+				return False
 			# log error:
 			if self.__file404Cnt[filename] < 2:
 				logSys.error("Unable to get stat on %s because of: %s",
