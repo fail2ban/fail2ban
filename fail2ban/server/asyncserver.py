@@ -147,6 +147,7 @@ class AsyncServer(asyncore.dispatcher):
 		self.__sock = "/var/run/fail2ban/fail2ban.sock"
 		self.__init = False
 		self.__active = False
+		self.onstart = None
 
 	##
 	# Returns False as we only read the socket first.
@@ -196,6 +197,9 @@ class AsyncServer(asyncore.dispatcher):
 		self.listen(1)
 		# Sets the init flag.
 		self.__init = self.__loop = self.__active = True
+		# Execute on start event (server ready):
+		if self.onstart:
+			self.onstart()
 		# Event loop as long as active:
 		loop(lambda: self.__loop, use_poll=use_poll)
 		self.__active = False

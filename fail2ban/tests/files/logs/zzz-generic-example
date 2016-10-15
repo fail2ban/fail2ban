@@ -45,3 +45,10 @@ Jun 22 20:37:04 server test-demo[402]: writeToStorage plist={
 # -- wrong time direct in journal-line (used last known date):
 # failJSON: { "time": "2005-06-22T20:37:04", "match": true , "host": "192.0.2.2" }
 0000-12-30 00:00:00 server test-demo[47831]:  F2B: failure from 192.0.2.2
+
+# failJSON: { "time": "2005-06-21T16:56:02", "match": true , "host": "192.0.2.250" }
+[Jun 21 16:56:02] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.250
+# failJSON: { "match": false, "desc": "test 1st ignoreregex" }
+[Jun 21 16:56:03] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.251
+# failJSON: { "match": false, "desc": "test 2nd ignoreregex" }
+[Jun 21 16:56:04] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.252

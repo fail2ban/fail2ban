@@ -82,12 +82,12 @@ class Server:
 		}
 		self.__prev_signals = {}
 
-	def __sigTERMhandler(self, signum, frame):
-		logSys.debug("Caught signal %d. Exiting" % signum)
+	def __sigTERMhandler(self, signum, frame): # pragma: no cover - indirect tested
+		logSys.debug("Caught signal %d. Exiting", signum)
 		self.quit()
 	
-	def __sigUSR1handler(self, signum, fname):
-		logSys.debug("Caught signal %d. Flushing logs" % signum)
+	def __sigUSR1handler(self, signum, fname): # pragma: no cover - indirect tested
+		logSys.debug("Caught signal %d. Flushing logs", signum)
 		self.flushLogs()
 
 	def _rebindSignal(self, s, new):
@@ -138,12 +138,12 @@ class Server:
 
 		# Creates a PID file.
 		try:
-			logSys.debug("Creating PID file %s" % pidfile)
+			logSys.debug("Creating PID file %s", pidfile)
 			pidFile = open(pidfile, 'w')
 			pidFile.write("%s\n" % os.getpid())
 			pidFile.close()
-		except IOError as e:
-			logSys.error("Unable to create PID file: %s" % e)
+		except (OSError, IOError) as e: # pragma: no cover
+			logSys.error("Unable to create PID file: %s", e)
 		
 		# Create observers and start it:
 		if observer:
@@ -155,15 +155,16 @@ class Server:
 		logSys.debug("Starting communication")
 		try:
 			self.__asyncServer = AsyncServer(self.__transm)
+			self.__asyncServer.onstart = conf.get('onstart')
 			self.__asyncServer.start(sock, force)
 		except AsyncServerException as e:
 			logSys.error("Could not start server: %s", e)
 		# Removes the PID file.
 		try:
-			logSys.debug("Remove PID file %s" % pidfile)
+			logSys.debug("Remove PID file %s", pidfile)
 			os.remove(pidfile)
-		except OSError as e:
-			logSys.error("Unable to remove PID file: %s" % e)
+		except (OSError, IOError) as e: # pragma: no cover
+			logSys.error("Unable to remove PID file: %s", e)
 		# Stop observer and exit
 		if Observers.Main is not None:
 			Observers.Main.stop()
@@ -260,7 +261,7 @@ class Server:
 	def reloadJails(self, name, opts, begin):
 		if begin:
 			# begin reload:
-			if self.__reload_state and (name == '--all' or self.__reload_state.get(name)):
+			if self.__reload_state and (name == '--all' or self.__reload_state.get(name)): # pragma: no cover
 				raise ValueError('Reload already in progress')
 			logSys.info("Reload " + (("jail %s" % name) if name != '--all' else "all jails"))
 			with self.__lock:
@@ -391,11 +392,8 @@ class Server:
 
 	def addFailRegex(self, name, value, multiple=False):
 		flt = self.__jails[name].filter
-		if multiple:
-			for value in value:
-				logSys.debug("  failregex: %r", value)
-				flt.addFailRegex(value)
-		else:
+		if not multiple: value = (value,)
+		for value in value:
 			logSys.debug("  failregex: %r", value)
 			flt.addFailRegex(value)
 	
@@ -407,11 +405,8 @@ class Server:
 	
 	def addIgnoreRegex(self, name, value, multiple=False):
 		flt = self.__jails[name].filter
-		if multiple:
-			for value in value:
-				logSys.debug("  ignoreregex: %r", value)
-				flt.addIgnoreRegex(value)
-		else:
+		if not multiple: value = (value,)
+		for value in value:
 			logSys.debug("  ignoreregex: %r", value)
 			flt.addIgnoreRegex(value)
 	
@@ -615,6 +610,7 @@ class Server:
 			if logger.getEffectiveLevel() <= logging.DEBUG: # pragma: no cover
 				if self.__verbose is None:
 					self.__verbose = logging.DEBUG - logger.getEffectiveLevel() + 1
+			if self.__verbose is not None and self.__verbose > 2: # pragma: no cover
 				fmt = getVerbosityFormat(self.__verbose-1)
 			# tell the handler to use this format
 			hdlr.setFormatter(logging.Formatter(fmt))
@@ -686,7 +682,7 @@ class Server:
 			if Fail2BanDb is not None:
 				self.__db = Fail2BanDb(filename)
 				self.__db.delAllJails()
-			else:
+			else: # pragma: no cover
 				logSys.error(
 					"Unable to import fail2ban database module as sqlite "
 					"is not available.")
