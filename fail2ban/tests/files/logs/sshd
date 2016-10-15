@@ -162,3 +162,6 @@ Apr 27 13:02:04 host sshd[29116]: Received disconnect from 1.2.3.4: 11: Normal S
 # failJSON: { "time": "2015-04-16T20:02:50", "match": true , "host": "222.186.21.217", "desc": "Authentication for user failed" }
 2015-04-16T18:02:50.321974+00:00 host sshd[2716]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=222.186.21.217  user=root
 
+# Match invalid user messages with port at the end
+# failJSON: {"time": "2004-10-15T11:35:28", "match": true , "host": "1.2.3.4", "desc": "Invalid user root" }
+Oct 15 11:35:28 somehost sshd[7024]: Invalid user root from 1.2.3.4 port 37220
