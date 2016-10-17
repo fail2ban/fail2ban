@@ -41,7 +41,7 @@ def _getYearCentRE(cent=(0,3), distance=3, now=(MyTime.now(), MyTime.alternateNo
 #todo: implement literal time zone support like CET, PST, PDT, etc (via pytz):
 #timeRE['z'] = r"%s?(?P<z>Z|[+-]\d{2}(?::?[0-5]\d)?|[A-Z]{3})?" % timeRE['Z']
 timeRE['Z'] = r"(?P<Z>[A-Z]{3,5})"
-timeRE['z'] = r"(?P<z>Z|[+-]\d{2}(?::?[0-5]\d)?)"
+timeRE['z'] = r"(?P<z>Z|UTC|GMT|[+-]\d{2}(?::?[0-5]\d)?)"
 
 # Extend build-in TimeRE with some exact patterns
 # exact two-digit patterns:
@@ -183,7 +183,7 @@ def reGroupDictStrptime(found_dict, msec=False):
 				week_of_year_start = 0
 		elif key == 'z':
 			z = val
-			if z == "Z":
+			if z in ("Z", "UTC", "GMT"):
 				tzoffset = 0
 			else:
 				tzoffset = int(z[1:3]) * 60 # Hours...
@@ -191,6 +191,10 @@ def reGroupDictStrptime(found_dict, msec=False):
 					tzoffset += int(z[-2:]) # ...and minutes
 				if z.startswith("-"):
 					tzoffset = -tzoffset
+		elif key == 'Z':
+			z = val
+			if z in ("UTC", "GMT"):
+				tzoffset = 0
 
 	# Fail2Ban will assume it's this year
 	assume_year = False

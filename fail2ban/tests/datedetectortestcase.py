@@ -378,6 +378,11 @@ class CustomDateFormatsTest(unittest.TestCase):
 			("20031230010203",  "{^LN-BEG}%ExY%Exm%Exd%ExH%ExM%ExS**", "#2003123001020320030101000000"),
 			("20031230010203",  "{^LN-BEG}%ExY%Exm%Exd%ExH%ExM%ExS**", "##2003123001020320030101000000"),
 			("20031230010203",  "{^LN-BEG}%ExY%Exm%Exd%ExH%ExM%ExS",   "[20031230010203]20030101000000"),
+			# UTC/GMT time zone offset (with %z and %Z):
+			(1072746123.0 - 3600, "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %z)?", "[2003-12-30 01:02:03] server ..."),
+			(1072746123.0 - 3600, "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %Z)?", "[2003-12-30 01:02:03] server ..."),
+			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %z)?", "[2003-12-30 01:02:03 UTC] server ..."),
+			(1072746123.0,        "{^LN-BEG}%ExY-%Exm-%Exd %ExH:%ExM:%ExS(?: %Z)?", "[2003-12-30 01:02:03 UTC] server ..."),
 		):
 			logSys.debug('== test: %r', (matched, dp, line))
 			if dp is None:
@@ -388,7 +393,10 @@ class CustomDateFormatsTest(unittest.TestCase):
 			date = dd.getTime(line)
 			if matched:
 				self.assertTrue(date)
-				self.assertEqual(matched, date[1].group(1))
+				if isinstance(matched, basestring):
+					self.assertEqual(matched, date[1].group(1))
+				else:
+					self.assertEqual(matched, date[0])
 			else:
 				self.assertEqual(date, None)
 
