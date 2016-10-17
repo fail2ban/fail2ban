@@ -260,6 +260,10 @@ def initTests(opts):
 			raise unittest.SkipTest('Skip test because of "--no-network"')
 		unittest.F2B.SkipIfNoNetwork = F2B_SkipIfNoNetwork
 
+	# persistently set time zone to CET (used in zone-related test-cases),
+	# yoh: we need to adjust TZ to match the one used by Cyril so all the timestamps match
+	os.environ['TZ'] = 'Europe/Zurich'
+	time.tzset()
 	# set alternate now for time related test cases:
 	MyTime.setAlternateNow(TEST_NOW)
 
@@ -292,17 +296,10 @@ old_TZ = os.environ.get('TZ', None)
 def setUpMyTime():
 	# Set the time to a fixed, known value
 	# Sun Aug 14 12:00:00 CEST 2005
-	# yoh: we need to adjust TZ to match the one used by Cyril so all the timestamps match
-	os.environ['TZ'] = 'Europe/Zurich'
-	time.tzset()
 	MyTime.setTime(TEST_NOW)
 
 
 def tearDownMyTime():
-	os.environ.pop('TZ')
-	if old_TZ: # pragma: no cover
-		os.environ['TZ'] = old_TZ
-	time.tzset()
 	MyTime.myTime = None
 
 
