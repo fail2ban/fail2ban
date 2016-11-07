@@ -5,4 +5,4 @@
 # failJSON: { "time": "2014-09-08T06:14:27", "match": true , "host": "1.2.3.4" }
 08-09-2014 06:14:27   smtp: postmaster [1.2.3.4] authentication failure using internet password
 # failJSON: { "time": "2016-11-07T22:21:20", "match": true , "host": "1.2.3.4" }
-2016-11-07 06:14:27   smtp: postmaster [1.2.3.4] authentication failure using internet password
+2016-11-07 22:21:20   smtp: postmaster [1.2.3.4] authentication failure using internet password
