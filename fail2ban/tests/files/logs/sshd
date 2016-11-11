@@ -169,27 +169,3 @@ Apr 27 13:02:04 host sshd[29116]: Received disconnect from 1.2.3.4: 11: Normal S
 # Match sshd auth errors on OpenSUSE systems
 # failJSON: { "time": "2015-04-16T20:02:50", "match": true , "host": "222.186.21.217", "desc": "Authentication for user failed" }
 2015-04-16T18:02:50.321974+00:00 host sshd[2716]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=222.186.21.217  user=root
-
-# gh-864(1):
-# failJSON: { "match": false }
-Nov 24 23:46:39 host sshd[32686]: SSH: Server;Ltype: Version;Remote: 127.0.0.1-1780;Protocol: 2.0;Client: libssh2_1.4.3
-# failJSON: { "time": "2004-11-24T23:46:43", "match": true , "host": "127.0.0.1", "desc": "Multiline for connection reset by peer (1)" }
-Nov 24 23:46:43 host sshd[32686]: fatal: Read from socket failed: Connection reset by peer [preauth]
-
-# gh-864(2):
-# failJSON: { "match": false }
-Nov 24 23:46:40 host sshd[32686]: SSH: Server;Ltype: Kex;Remote: 127.0.0.1-1780;Enc: aes128-ctr;MAC: hmac-sha1;Comp: none [preauth]
-# failJSON: { "time": "2004-11-24T23:46:43", "match": true , "host": "127.0.0.1", "desc": "Multiline for connection reset by peer (2)" }
-Nov 24 23:46:43 host sshd[32686]: fatal: Read from socket failed: Connection reset by peer [preauth]
-
-# gh-864(3):
-# failJSON: { "match": false }
-Nov 24 23:46:41 host sshd[32686]: SSH: Server;Ltype: Authname;Remote: 127.0.0.1-1780;Name: root [preauth]
-# failJSON: { "time": "2004-11-24T23:46:43", "match": true , "host": "127.0.0.1", "desc": "Multiline for connection reset by peer (3)" }
-Nov 24 23:46:43 host sshd[32686]: fatal: Read from socket failed: Connection reset by peer [preauth]
-
-# several other cases from gh-864:
-# failJSON: { "time": "2004-11-25T01:34:12", "match": true , "host": "127.0.0.1", "desc": "No supported authentication methods" }
-Nov 25 01:34:12 srv sshd[123]: Received disconnect from 127.0.0.1: 14: No supported authentication methods available [preauth]
-# failJSON: { "time": "2004-11-25T01:35:13", "match": true , "host": "127.0.0.1", "desc": "No supported authentication methods" }
-Nov 25 01:35:13 srv sshd[123]: error: Received disconnect from 127.0.0.1: 14: No supported authentication methods available [preauth]

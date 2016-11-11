@@ -103,68 +103,75 @@ def testSampleRegexsFactory(name, basedir):
 			os.path.isfile(os.path.join(TEST_FILES_DIR, "logs", name)),
 			"No sample log file available for '%s' filter" % name)
 
-		logFile = fileinput.FileInput(
-			os.path.join(TEST_FILES_DIR, "logs", name))
-
-		# test regexp contains greedy catch-all before <HOST>, that is
-		# not hard-anchored at end or has not precise sub expression after <HOST>:
-		for fr in self.filter.getFailRegex():
-			if RE_WRONG_GREED.search(fr): #pragma: no cover
-				raise AssertionError("Following regexp of \"%s\" contains greedy catch-all before <HOST>, "
-					"that is not hard-anchored at end or has not precise sub expression after <HOST>:\n%s" %
-					(name, str(fr).replace(RE_HOST, '<HOST>')))
-
 		regexsUsed = set()
-		for line in logFile:
-			jsonREMatch = re.match("^# ?failJSON:(.+)$", line)
-			if jsonREMatch:
-				try:
-					faildata = json.loads(jsonREMatch.group(1))
-				except ValueError as e:
-					raise ValueError("%s: %s:%i" %
-						(e, logFile.filename(), logFile.filelineno()))
-				line = next(logFile)
-			elif line.startswith("#") or not line.strip():
-				continue
-			else:
-				faildata = {}
+		filenames = [name]
+		i = 0
+		while i < len(filenames):
+			filename = filenames[i]; i += 1;
+			logFile = fileinput.FileInput(os.path.join(TEST_FILES_DIR, "logs",
+				filename))
 
-			ret = self.filter.processLine(
-				line, returnRawHost=True, checkAllRegex=True)[1]
-			if not ret:
-				# Check line is flagged as none match
-				self.assertFalse(faildata.get('match', True),
-					 "Line not matched when should have: %s:%i %r" %
-					(logFile.filename(), logFile.filelineno(), line))
-			elif ret:
-				# Check line is flagged to match
-				self.assertTrue(faildata.get('match', False),
-					"Line matched when shouldn't have: %s:%i %r" %
-					(logFile.filename(), logFile.filelineno(), line))
-				self.assertEqual(len(ret), 1, "Multiple regexs matched %r - %s:%i" %
-								 (map(lambda x: x[0], ret),logFile.filename(), logFile.filelineno()))
+			# test regexp contains greedy catch-all before <HOST>, that is
+			# not hard-anchored at end or has not precise sub expression after <HOST>:
+			for fr in self.filter.getFailRegex():
+				if RE_WRONG_GREED.search(fr): #pragma: no cover
+					raise AssertionError("Following regexp of \"%s\" contains greedy catch-all before <HOST>, "
+						"that is not hard-anchored at end or has not precise sub expression after <HOST>:\n%s" %
+						(name, str(fr).replace(RE_HOST, '<HOST>')))
 
-				# Verify timestamp and host as expected
-				failregex, host, fail2banTime, lines = ret[0]
-				self.assertEqual(host, faildata.get("host", None))
+			for line in logFile:
+				jsonREMatch = re.match("^# ?(failJSON|addFILE):(.+)$", line)
+				if jsonREMatch:
+					try:
+						faildata = json.loads(jsonREMatch.group(2))
+						if jsonREMatch.group(1) == 'addFILE':
+							filenames.append(faildata)
+							continue
+					except ValueError as e:
+						raise ValueError("%s: %s:%i" %
+							(e, logFile.filename(), logFile.filelineno()))
+					line = next(logFile)
+				elif line.startswith("#") or not line.strip():
+					continue
+				else:
+					faildata = {}
 
-				t = faildata.get("time", None)
-				try:
-					jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S")
-				except ValueError:
-					jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f")
+				ret = self.filter.processLine(
+					line, returnRawHost=True, checkAllRegex=True)[1]
+				if not ret:
+					# Check line is flagged as none match
+					self.assertFalse(faildata.get('match', True),
+						 "Line not matched when should have: %s:%i %r" %
+						(logFile.filename(), logFile.filelineno(), line))
+				elif ret:
+					# Check line is flagged to match
+					self.assertTrue(faildata.get('match', False),
+						"Line matched when shouldn't have: %s:%i %r" %
+						(logFile.filename(), logFile.filelineno(), line))
+					self.assertEqual(len(ret), 1, "Multiple regexs matched %r - %s:%i" %
+									 (map(lambda x: x[0], ret),logFile.filename(), logFile.filelineno()))
 
-				jsonTime = time.mktime(jsonTimeLocal.timetuple())
-				
-				jsonTime += jsonTimeLocal.microsecond / 1000000
+					# Verify timestamp and host as expected
+					failregex, host, fail2banTime, lines = ret[0]
+					self.assertEqual(host, faildata.get("host", None))
 
-				self.assertEqual(fail2banTime, jsonTime,
-					"UTC Time  mismatch fail2ban %s (%s) != failJson %s (%s)  (diff %.3f seconds) on: %s:%i %r:" % 
-					(fail2banTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(fail2banTime)),
-					jsonTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(jsonTime)),
-					fail2banTime - jsonTime, logFile.filename(), logFile.filelineno(), line ) )
+					t = faildata.get("time", None)
+					try:
+						jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S")
+					except ValueError:
+						jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f")
 
-				regexsUsed.add(failregex)
+					jsonTime = time.mktime(jsonTimeLocal.timetuple())
+					
+					jsonTime += jsonTimeLocal.microsecond / 1000000
+
+					self.assertEqual(fail2banTime, jsonTime,
+						"UTC Time  mismatch fail2ban %s (%s) != failJson %s (%s)  (diff %.3f seconds) on: %s:%i %r:" % 
+						(fail2banTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(fail2banTime)),
+						jsonTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(jsonTime)),
+						fail2banTime - jsonTime, logFile.filename(), logFile.filelineno(), line ) )
+
+					regexsUsed.add(failregex)
 
 		for failRegexIndex, failRegex in enumerate(self.filter.getFailRegex()):
 			self.assertTrue(
