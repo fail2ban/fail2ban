@@ -42,6 +42,7 @@ releases.
     - recognized "Failed publickey for" (gh-1477);
     - optimized failregex to match all of "Failed any-method for ... from <HOST>" (gh-1479)
     - eliminated possible complex injections (on user-name resp. auth-info, see gh-1479)
+    - optional port part after host (see gh-1533, gh-1581)
 
 
 ### New Features
