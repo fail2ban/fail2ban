@@ -155,6 +155,12 @@ releases.
     - Allow for having no trailing space after 'failed:' (gh-1497)
 * `filter.d/vsftpd.conf`
     - Optional reason part in message after FAIL LOGIN (gh-1543)
+* `filter.d/sendmail-reject.conf`
+    - removed mandatory double space (if dns-host available, gh-1579)
+* filter.d/sshd.conf
+    - recognized "Failed publickey for" (gh-1477);
+    - optimized failregex to match all of "Failed any-method for ... from <HOST>" (gh-1479)
+    - eliminated possible complex injections (on user-name resp. auth-info, see gh-1479)
 
 
 ### New Features
