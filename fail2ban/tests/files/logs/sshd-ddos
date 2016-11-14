@@ -25,3 +25,15 @@ Nov 24 23:46:43 host sshd[32686]: fatal: Read from socket failed: Connection res
 Nov 25 01:34:12 srv sshd[123]: Received disconnect from 127.0.0.1: 14: No supported authentication methods available [preauth]
 # failJSON: { "time": "2004-11-25T01:35:13", "match": true , "host": "127.0.0.1", "desc": "No supported authentication methods" }
 Nov 25 01:35:13 srv sshd[123]: error: Received disconnect from 127.0.0.1: 14: No supported authentication methods available [preauth]
+
+# gh-1545:
+# failJSON: { "time": "2004-11-26T13:03:29", "match": true , "host": "192.0.2.1", "desc": "No matching cipher" }
+Nov 26 13:03:29 srv sshd[45]: Unable to negotiate with 192.0.2.1 port 55419: no matching cipher found. Their offer: aes256-cbc,rijndael-cbc@lysator.liu.se,aes192-cbc,aes128-cbc,arcfour128,arcfour,3des-cbc,none [preauth]
+
+# gh-1117:
+# failJSON: { "time": "2004-11-26T13:03:30", "match": true , "host": "192.0.2.2", "desc": "No matching key exchange method" }
+Nov 26 13:03:30 srv sshd[45]: fatal: Unable to negotiate with 192.0.2.2 port 55419: no matching key exchange method found. Their offer: diffie-hellman-group1-sha1
+# failJSON: { "match": false }
+Nov 26 15:03:30 host sshd[22440]: Connection from 192.0.2.3 port 39678 on 192.168.1.9 port 22
+# failJSON: { "time": "2004-11-26T15:03:31", "match": true , "host": "192.0.2.3", "desc": "Multiline - no matching key exchange method" }
+Nov 26 15:03:31 host sshd[22440]: fatal: Unable to negotiate a key exchange method [preauth]
