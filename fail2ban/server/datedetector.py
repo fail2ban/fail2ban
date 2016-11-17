@@ -359,7 +359,7 @@ class DateDetector(object):
 		if not match:
 			self.__lastTemplIdx = 0x7fffffff
 			logSys.log(logLevel, " search template (%i) ...", len(self.__templates))
-			found = None, 0x7fffffff, -1
+			found = None, 0x7fffffff, 0x7fffffff, -1
 			i = 0
 			for ddtempl in self.__templates:
 				if logSys.getEffectiveLevel() <= logLevel-1:
