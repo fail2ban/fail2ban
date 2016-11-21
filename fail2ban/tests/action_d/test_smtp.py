@@ -21,6 +21,7 @@ import os
 import smtpd
 import threading
 import unittest
+import re
 import sys
 if sys.version_info >= (3, 3):
 	import importlib
@@ -38,7 +39,9 @@ class TestSMTPServer(smtpd.SMTPServer):
 		self.peer = peer
 		self.mailfrom = mailfrom
 		self.rcpttos = rcpttos
-		self.data = data
+		self.org_data = data
+		# replace new line (with tab or space) for possible mime translations (word wrap):
+		self.data = re.sub(r"\n[\t ]", " ", data)
 
 
 class SMTPActionTest(unittest.TestCase):
@@ -104,9 +107,9 @@ class SMTPActionTest(unittest.TestCase):
 		self.assertEqual(self.smtpd.rcpttos, ["root"])
 		subject = "Subject: [Fail2Ban] %s: banned %s" % (
 			self.jail.name, aInfo['ip'])
-		self.assertIn(subject, self.smtpd.data.replace("\n", ""))
-		self.assertTrue(
-			"%i attempts" % aInfo['failures'] in self.smtpd.data)
+		self.assertIn(subject, self.smtpd.data)
+		self.assertIn(
+			"%i attempts" % aInfo['failures'], self.smtpd.data)
 
 		self.action.matches = "matches"
 		self.action.ban(aInfo)
