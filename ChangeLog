@@ -28,6 +28,7 @@ TODO: implementing of options resp. other tasks from PR #1346
 * Pyinotify-backend: stability fix for sporadically errors in multi-threaded
   environment (without lock)
 * Fixed sporadically error in testCymruInfoNxdomain, because of unsorted values
+* Misleading errors logged from ignorecommand in success case on retcode 1 (gh-1194)
 
 ### New Features
 * IPv6 support:
