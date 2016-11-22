@@ -768,6 +768,10 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		_write_action_cfg(actname="test-action2")
 
 		_write_jail_cfg(enabled=[1], actions=[1,2])
+		# append one wrong configured jail:
+		_write_file(pjoin(cfg, "jail.conf"), "a", "", "[broken-jail]", 
+			"", "filter = broken-jail-filter", "enabled = true")
+
 		_write_file(test1log, "w", *((str(int(MyTime.time())) + " failure 401 from 192.0.2.1: test 1",) * 3))
 		_write_file(test2log, "w")
 		_write_file(test3log, "w")
@@ -786,6 +790,12 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"stdout: '[test-jail1] test-action1: ** start'", 
 			"stdout: '[test-jail1] test-action2: ** start'", all=True)
+
+		# broken jail was logged (in client and server log):
+		self.assertLogged(
+			"Unable to read the filter 'broken-jail-filter'",
+			"Errors in jail 'broken-jail'. Skipping...",
+			"Jail 'broken-jail' skipped, because of wrong configuration", all=True)
 		
 		# enable both jails, 3 logs for jail1, etc...
 		# truncate test-log - we should not find unban/ban again by reload:
