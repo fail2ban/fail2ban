@@ -676,6 +676,36 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		os.remove(pjoin(tmp, "f2b.sock"))
 
 	@with_tmpdir
+	@with_kill_srv
+	def testServerTestFailStart(self, tmp):
+		# started directly here, so prevent overwrite test cases logger with "INHERITED"
+		startparams = _start_params(tmp, logtarget="INHERITED")
+		cfg = pjoin(tmp, "config")
+
+		# test configuration is correct:
+		self.pruneLog("[test-phase 0]")
+		self.execSuccess(startparams, "--test")
+		self.assertLogged("OK: configuration test is successful")
+
+		# append one wrong configured jail:
+		_write_file(pjoin(cfg, "jail.conf"), "a", "", "[broken-jail]", 
+			"", "filter = broken-jail-filter", "enabled = true")
+
+		# first try test config:
+		self.pruneLog("[test-phase 0a]")
+		self.execFailed(startparams, "--test")
+		self.assertLogged("Unable to read the filter 'broken-jail-filter'",
+			"Errors in jail 'broken-jail'.",
+			"ERROR: test configuration failed", all=True)
+
+		# failed to start with test config:
+		self.pruneLog("[test-phase 0b]")
+		self.execFailed(startparams, "-t", "start")
+		self.assertLogged("Unable to read the filter 'broken-jail-filter'",
+			"Errors in jail 'broken-jail'.",
+			"ERROR: test configuration failed", all=True)
+
+	@with_tmpdir
 	def testKillAfterStart(self, tmp):
 		try:
 			# to prevent fork of test-cases process, start server in background via command:

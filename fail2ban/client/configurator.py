@@ -72,9 +72,9 @@ class Configurator:
 	def getEarlyOptions(self):
 		return self.__fail2ban.getEarlyOptions()
 
-	def getOptions(self, jail=None, updateMainOpt=None):
+	def getOptions(self, jail=None, updateMainOpt=None, ignoreWrong=True):
 		self.__fail2ban.getOptions(updateMainOpt)
-		return self.__jails.getOptions(jail)
+		return self.__jails.getOptions(jail, ignoreWrong=ignoreWrong)
 		
 	def convertToProtocol(self):
 		self.__streams["general"] = self.__fail2ban.convert()

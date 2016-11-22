@@ -54,7 +54,7 @@ class JailsReader(ConfigReader):
 		self.__jails = list()
 		return ConfigReader.read(self, "jail")
 
-	def getOptions(self, section=None):
+	def getOptions(self, section=None, ignoreWrong=True):
 		"""Reads configuration for jail(s) and adds enabled jails to __jails
 		"""
 		opts = []
@@ -66,7 +66,7 @@ class JailsReader(ConfigReader):
 			sections = [ section ]
 
 		# Get the options of all jails.
-		parse_status = None
+		parse_status = 0
 		for sec in sections:
 			if sec == 'INCLUDES':
 				continue
@@ -78,14 +78,15 @@ class JailsReader(ConfigReader):
 			if ret:
 				if jail.isEnabled():
 					# at least one jail was successful:
-					parse_status = True
+					parse_status |= 1
 					# We only add enabled jails
 					self.__jails.append(jail)
 			else:
-				logSys.error("Errors in jail %r. Skipping..." % sec)
+				logSys.error("Errors in jail %r.%s", sec, " Skipping..." if ignoreWrong else "")
 				self.__jails.append(jail)
-				if parse_status is None: parse_status = False
-		return True if parse_status != False else False
+				# at least one jail was invalid:
+				parse_status |= 2
+		return ((ignoreWrong and parse_status & 1) or not (parse_status & 2))
 
 	def convert(self, allow_no_files=False):
 		"""Convert read before __opts and jails to the commands stream

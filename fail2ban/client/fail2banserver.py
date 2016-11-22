@@ -144,27 +144,27 @@ class Fail2banServer(Fail2banCmdLine):
 		return cli
 
 	def start(self, argv):
-		# Command line options
-		ret = self.initCmdLine(argv)
-		if ret is not None:
-			return ret
-
-		# Commands
-		args = self._args
-
-		cli = None
-		# Just start:
-		if len(args) == 1 and args[0] == 'start' and not self._conf.get("interactive", False):
-			pass
-		else:
-			# If client mode - whole processing over client:
-			if len(args) or self._conf.get("interactive", False):
-				cli = self._Fail2banClient()
-				return cli.start(argv)
-
-		# Start the server:
 		server = None
 		try:
+			# Command line options
+			ret = self.initCmdLine(argv)
+			if ret is not None:
+				return ret
+
+			# Commands
+			args = self._args
+
+			cli = None
+			# Just start:
+			if len(args) == 1 and args[0] == 'start' and not self._conf.get("interactive", False):
+				pass
+			else:
+				# If client mode - whole processing over client:
+				if len(args) or self._conf.get("interactive", False):
+					cli = self._Fail2banClient()
+					return cli.start(argv)
+
+			# Start the server:
 			from ..server.utils import Utils
 			# background = True, if should be new process running in background, otherwise start in foreground
 			# process will be forked in daemonize, inside of Server module.
