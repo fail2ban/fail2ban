@@ -125,7 +125,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 			if client:
 				try :
 					client.close()
-				except Exception as e:
+				except Exception as e: # pragma: no cover
 					if showRet or self._conf["verbose"] > 1:
 						logSys.debug(e)
 			if showRet or c[0] == 'echo':

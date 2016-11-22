@@ -241,7 +241,7 @@ class AsyncServer(asyncore.dispatcher):
 	def _remove_sock(self):
 		try:
 			os.remove(self.__sock)
-		except OSError as e:
+		except OSError as e: # pragma: no cover
 			if e.errno != errno.ENOENT:
 				raise
 
