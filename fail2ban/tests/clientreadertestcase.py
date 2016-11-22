@@ -498,7 +498,7 @@ class JailsReaderTest(LogCaptureTestCase):
 	def testReadTestJailConf(self):
 		jails = JailsReader(basedir=IMPERFECT_CONFIG, share_config=IMPERFECT_CONFIG_SHARE_CFG)
 		self.assertTrue(jails.read())
-		self.assertTrue(jails.getOptions())
+		self.assertFalse(jails.getOptions(ignoreWrong=False))
 		self.assertRaises(ValueError, jails.convert)
 		comm_commands = jails.convert(allow_no_files=True)
 		self.maxDiff = None
@@ -537,7 +537,8 @@ class JailsReaderTest(LogCaptureTestCase):
 			 ['config-error',
 				"Jail 'missingbitsjail' skipped, because of wrong configuration: Unable to read the filter 'catchallthebadies'"],
 			 ]))
-		self.assertLogged("Errors in jail 'missingbitsjail'. Skipping...")
+		self.assertLogged("Errors in jail 'missingbitsjail'.")
+		self.assertNotLogged("Skipping...")
 		self.assertLogged("No file(s) found for glob /weapons/of/mass/destruction")
 
 	if STOCK:
