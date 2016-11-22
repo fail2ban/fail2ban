@@ -66,7 +66,7 @@ class JailsReader(ConfigReader):
 			sections = [ section ]
 
 		# Get the options of all jails.
-		parse_status = True
+		parse_status = None
 		for sec in sections:
 			if sec == 'INCLUDES':
 				continue
@@ -77,11 +77,17 @@ class JailsReader(ConfigReader):
 			ret = jail.getOptions()
 			if ret:
 				if jail.isEnabled():
+					# at least one jail was successful:
+					parse_status = True
 					# We only add enabled jails
 					self.__jails.append(jail)
 			else:
 				logSys.error("Errors in jail %r. Skipping..." % sec)
-				parse_status = False
+				self.__jails.append(jail)
+				if parse_status is None:
+					parse_status = False
+		if parse_status is None:
+			parse_status = True
 		return parse_status
 
 	def convert(self, allow_no_files=False):
@@ -103,7 +109,8 @@ class JailsReader(ConfigReader):
 			stream.extend(jail.convert(allow_no_files=allow_no_files))
 		# Start jails
 		for jail in self.__jails:
-			stream.append(["start", jail.getName()])
+			if not jail.options.get('config-error'):
+				stream.append(["start", jail.getName()])
 
 		return stream
 
