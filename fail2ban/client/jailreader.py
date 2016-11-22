@@ -122,8 +122,8 @@ class JailReader(ConfigReader):
 
 			# Read first options only needed for merge defaults ('known/...' from filter):
 			self.__opts = ConfigReader.getOptions(self, self.__name, opts1st, shouldExist=True)
-			if not self.__opts:
-				raise ValueError("Init jail options failed")
+			if not self.__opts: # pragma: no cover
+				raise JailDefError("Init jail options failed")
 			
 			if self.isEnabled():
 				# Read filter
@@ -131,7 +131,7 @@ class JailReader(ConfigReader):
 				if flt:
 					filterName, filterOpt = JailReader.extractOptions(flt)
 					if not filterName:
-						raise ValueError("Invalid filter declaration %r" % flt)
+						raise JailDefError("Invalid filter definition %r" % flt)
 					self.__filter = FilterReader(
 						filterName, self.__name, filterOpt, share_config=self.share_config, basedir=self.getBaseDir())
 					ret = self.__filter.read()
@@ -139,15 +139,15 @@ class JailReader(ConfigReader):
 					self.__filter.getOptions(self.__opts)
 					ConfigReader.merge_section(self, self.__name, self.__filter.getCombined(), 'known/')
 					if not ret:
-						raise ValueError("Unable to read the filter %r" % filterName)
+						raise JailDefError("Unable to read the filter %r" % filterName)
 				else:
 					self.__filter = None
 					logSys.warning("No filter set for jail %s" % self.__name)
 
 				# Read second all options (so variables like %(known/param) can be interpolated):
 				self.__opts = ConfigReader.getOptions(self, self.__name, opts)
-				if not self.__opts:
-					raise ValueError("Read jail options failed")
+				if not self.__opts: # pragma: no cover
+					raise JailDefError("Read jail options failed")
 			
 				# cumulate filter options again (ignore given in jail):
 				if self.__filter:
@@ -160,7 +160,7 @@ class JailReader(ConfigReader):
 							continue
 						actName, actOpt = JailReader.extractOptions(act)
 						if not actName:
-							raise ValueError("Invalid action declaration %r" % act)
+							raise JailDefError("Invalid action definition %r" % act)
 						if actName.endswith(".py"):
 							self.__actions.append([
 								"set",
@@ -180,14 +180,16 @@ class JailReader(ConfigReader):
 								action.getOptions(self.__opts)
 								self.__actions.append(action)
 							else:
-								raise AttributeError("Unable to read action")
+								raise JailDefError("Unable to read action %r" % actName)
+					except JailDefError:
+						raise
 					except Exception as e:
 						logSys.debug("Caught exception: %s", e, exc_info=True)
 						raise ValueError("Error in action definition %r: %r" % (act, e))
 				if not len(self.__actions):
 					logSys.warning("No actions were defined for %s" % self.__name)
 			
-		except ValueError as e:
+		except JailDefError as e:
 			e = str(e)
 			logSys.error(e)
 			if not self.__opts:
@@ -280,3 +282,7 @@ class JailReader(ConfigReader):
 					val for val in optmatch.group(2,3,4) if val is not None][0]
 				option_opts[opt.strip()] = value.strip()
 		return option_name, option_opts
+
+
+class JailDefError(Exception):
+	pass

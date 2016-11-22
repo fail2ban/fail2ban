@@ -84,11 +84,8 @@ class JailsReader(ConfigReader):
 			else:
 				logSys.error("Errors in jail %r. Skipping..." % sec)
 				self.__jails.append(jail)
-				if parse_status is None:
-					parse_status = False
-		if parse_status is None:
-			parse_status = True
-		return parse_status
+				if parse_status is None: parse_status = False
+		return True if parse_status != False else False
 
 	def convert(self, allow_no_files=False):
 		"""Convert read before __opts and jails to the commands stream
@@ -101,9 +98,6 @@ class JailsReader(ConfigReader):
 		"""
 
 		stream = list()
-		for opt in self.__opts:
-			if opt == "":
-				stream.append([])
 		# Convert jails
 		for jail in self.__jails:
 			stream.extend(jail.convert(allow_no_files=allow_no_files))
