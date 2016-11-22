@@ -127,9 +127,11 @@ class JailReader(ConfigReader):
 			
 			if self.isEnabled():
 				# Read filter
-				if self.__opts["filter"]:
-					filterName, filterOpt = JailReader.extractOptions(
-						self.__opts["filter"])
+				flt = self.__opts["filter"]
+				if flt:
+					filterName, filterOpt = JailReader.extractOptions(flt)
+					if not filterName:
+						raise ValueError("Invalid filter declaration %r" % flt)
 					self.__filter = FilterReader(
 						filterName, self.__name, filterOpt, share_config=self.share_config, basedir=self.getBaseDir())
 					ret = self.__filter.read()
@@ -157,6 +159,8 @@ class JailReader(ConfigReader):
 						if not act:			  # skip empty actions
 							continue
 						actName, actOpt = JailReader.extractOptions(act)
+						if not actName:
+							raise ValueError("Invalid action declaration %r" % act)
 						if actName.endswith(".py"):
 							self.__actions.append([
 								"set",
@@ -178,8 +182,8 @@ class JailReader(ConfigReader):
 							else:
 								raise AttributeError("Unable to read action")
 					except Exception as e:
-						logSys.debug("Caught exception: %s" % (e,))
-						raise ValueError("Error in action definition %r" % e)
+						logSys.debug("Caught exception: %s", e, exc_info=True)
+						raise ValueError("Error in action definition %r: %r" % (act, e))
 				if not len(self.__actions):
 					logSys.warning("No actions were defined for %s" % self.__name)
 			

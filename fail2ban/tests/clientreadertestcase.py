@@ -193,13 +193,9 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertTrue(jail.read())
 		self.assertFalse(jail.getOptions())
 		self.assertTrue(jail.isEnabled())
-		self.assertLogged('Error in action definition joho[foo')
-		# This unittest has been deactivated for some time...
-		# self.assertLogged(
-		#     'Caught exception: While reading action joho[foo we should have got 1 or 2 groups. Got: 0')
-		#   let's test for what is actually logged and handle changes in the future
+		self.assertLogged("Error in action definition 'joho[foo'")
 		self.assertLogged(
-			"Caught exception: 'NoneType' object has no attribute 'endswith'")
+			"Caught exception: Invalid action declaration 'joho[foo'")
 
 	if STOCK:
 		def testStockSSHJail(self):
@@ -496,7 +492,7 @@ class JailsReaderTest(LogCaptureTestCase):
 	def testReadTestJailConf(self):
 		jails = JailsReader(basedir=IMPERFECT_CONFIG, share_config=IMPERFECT_CONFIG_SHARE_CFG)
 		self.assertTrue(jails.read())
-		self.assertFalse(jails.getOptions())
+		self.assertTrue(jails.getOptions())
 		self.assertRaises(ValueError, jails.convert)
 		comm_commands = jails.convert(allow_no_files=True)
 		self.maxDiff = None
@@ -525,7 +521,12 @@ class JailsReaderTest(LogCaptureTestCase):
 			 ['start', 'emptyaction'],
 			 ['start', 'missinglogfiles'],
 			 ['start', 'brokenaction'],
-			 ['start', 'parse_to_end_of_jail.conf'],]))
+			 ['start', 'parse_to_end_of_jail.conf'],
+			 ['config-error',
+				'Jail \'brokenactiondef\' skipped, because of wrong configuration: Error in action definition \'joho[foo\': ValueError("Invalid action declaration \'joho[foo\'",)'],
+			 ['config-error',
+				"Jail 'missingbitsjail' skipped, because of wrong configuration: Unable to read the filter 'catchallthebadies'"],
+			 ]))
 		self.assertLogged("Errors in jail 'missingbitsjail'. Skipping...")
 		self.assertLogged("No file(s) found for glob /weapons/of/mass/destruction")
 
