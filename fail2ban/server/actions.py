@@ -193,7 +193,7 @@ class Actions(JailThread, Mapping):
 	def setBanTime(self, value):
 		value = MyTime.str2seconds(value)
 		self.__banManager.setBanTime(value)
-		logSys.info("Set banTime = %s" % value)
+		logSys.info("  banTime: %s" % value)
 	
 	##
 	# Get the ban time.

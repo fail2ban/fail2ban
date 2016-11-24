@@ -676,6 +676,36 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		os.remove(pjoin(tmp, "f2b.sock"))
 
 	@with_tmpdir
+	@with_kill_srv
+	def testServerTestFailStart(self, tmp):
+		# started directly here, so prevent overwrite test cases logger with "INHERITED"
+		startparams = _start_params(tmp, logtarget="INHERITED")
+		cfg = pjoin(tmp, "config")
+
+		# test configuration is correct:
+		self.pruneLog("[test-phase 0]")
+		self.execSuccess(startparams, "--test")
+		self.assertLogged("OK: configuration test is successful")
+
+		# append one wrong configured jail:
+		_write_file(pjoin(cfg, "jail.conf"), "a", "", "[broken-jail]", 
+			"", "filter = broken-jail-filter", "enabled = true")
+
+		# first try test config:
+		self.pruneLog("[test-phase 0a]")
+		self.execFailed(startparams, "--test")
+		self.assertLogged("Unable to read the filter 'broken-jail-filter'",
+			"Errors in jail 'broken-jail'.",
+			"ERROR: test configuration failed", all=True)
+
+		# failed to start with test config:
+		self.pruneLog("[test-phase 0b]")
+		self.execFailed(startparams, "-t", "start")
+		self.assertLogged("Unable to read the filter 'broken-jail-filter'",
+			"Errors in jail 'broken-jail'.",
+			"ERROR: test configuration failed", all=True)
+
+	@with_tmpdir
 	def testKillAfterStart(self, tmp):
 		try:
 			# to prevent fork of test-cases process, start server in background via command:
@@ -768,6 +798,10 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		_write_action_cfg(actname="test-action2")
 
 		_write_jail_cfg(enabled=[1], actions=[1,2])
+		# append one wrong configured jail:
+		_write_file(pjoin(cfg, "jail.conf"), "a", "", "[broken-jail]", 
+			"", "filter = broken-jail-filter", "enabled = true")
+
 		_write_file(test1log, "w", *((str(int(MyTime.time())) + " failure 401 from 192.0.2.1: test 1",) * 3))
 		_write_file(test2log, "w")
 		_write_file(test3log, "w")
@@ -786,6 +820,12 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"stdout: '[test-jail1] test-action1: ** start'", 
 			"stdout: '[test-jail1] test-action2: ** start'", all=True)
+
+		# broken jail was logged (in client and server log):
+		self.assertLogged(
+			"Unable to read the filter 'broken-jail-filter'",
+			"Errors in jail 'broken-jail'. Skipping...",
+			"Jail 'broken-jail' skipped, because of wrong configuration", all=True)
 		
 		# enable both jails, 3 logs for jail1, etc...
 		# truncate test-log - we should not find unban/ban again by reload:

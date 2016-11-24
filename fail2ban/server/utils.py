@@ -170,7 +170,7 @@ class Utils():
 					time.sleep(Utils.DEFAULT_SLEEP_INTERVAL)
 					retcode = popen.poll()
 					#logSys.debug("%s -- killed %s ", realCmd, retcode)
-				if retcode is None and not Utils.pid_exists(pgid):
+				if retcode is None and not Utils.pid_exists(pgid): # pragma: no cover
 					retcode = signal.SIGKILL
 		except OSError as e:
 			stderr = "%s -- failed with %s" % (realCmd, e)
