@@ -55,6 +55,8 @@ TODO: implementing of options resp. other tasks from PR #1346
     banned in this jail, if option `--unban` specified
   - `unban --all` - unbans all IP addresses (in all jails and database)
   - `unban <IP> ... <IP>` - unbans \<IP\> (in all jails and database) (see gh-1388)
+  - introduced new option `-t` or `--test` to test configuration resp. start server only 
+    if configuration is clean (fails by wrong configured jails if option `-t` specified)
 * New command action parameter `actionrepair` - command executed in order to restore
   sane environment in error case of `actioncheck`.
 
@@ -119,6 +121,10 @@ fail2ban-client set loglevel INFO
   - new replacement for `<ADDR>` in opposition to `<HOST>`, for separate
     usage of 2 address groups only (regardless of `usedns`), `ip4` and `ip6`
     together, without host (dns)
+* Misconfigured jails don't prevent fail2ban from starting, server starts 
+  nevertheless, as long as one jail was successful configured (gh-1619)
+  Message about wrong jail configuration logged in client log (stdout, systemd
+  journal etc.) and in server log with error level
 * fail2ban-testcases:
   - `assertLogged` extended with parameter wait (to wait up to specified timeout,
     before we throw assert exception) + test cases rewritten using that
