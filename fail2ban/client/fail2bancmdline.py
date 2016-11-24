@@ -274,6 +274,7 @@ class Fail2banCmdLine():
 	def exit(code=0):
 		logSys.debug("Exit with code %s", code)
 		# because of possible buffered output in python, we should flush it before exit:
+		logging.shutdown()
 		sys.stdout.flush()
 		sys.stderr.flush()
 		# exit

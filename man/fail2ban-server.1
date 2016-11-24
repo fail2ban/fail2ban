@@ -23,6 +23,9 @@ pidfile path
 logging level
 .HP
 \fB\-\-logtarget\fR <FILE>|STDOUT|STDERR|SYSLOG
+logging target
+.br
+Note. If fail2ban running as systemd-service, for logging to the systemd-journal, the logtarget could be set to STDOUT
 .HP
 \fB\-\-syslogsocket\fR auto|<FILE>
 .TP
