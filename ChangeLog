@@ -29,6 +29,16 @@ TODO: implementing of options resp. other tasks from PR #1346
   environment (without lock)
 * Fixed sporadically error in testCymruInfoNxdomain, because of unsorted values
 * Misleading errors logged from ignorecommand in success case on retcode 1 (gh-1194)
+* fail2ban.service - systemd service updated (gh-1618):
+  - starting service in normal mode (without forking)
+  - does not restart if service exited normally (exit-code 0, e.g. stopped via fail2ban-client)
+  - does not restart if service can not start (exit-code 255, e.g. wrong configuration, etc.)
+  - service can be additionally started/stopped with commands (fail2ban-client, fail2ban-server)
+  - automatically creates `/var/run/fail2ban` directory before start fail2ban 
+    (systems with virtual resp. memory-based FS for `/var/run`), see gh-1531
+  - if fail2ban running as systemd-service, for logging to the systemd-journal, 
+    the `logtarget` could be set to STDOUT
+  - value `logtarget` for system targets allowed also in lowercase (stdout, stderr, syslog, etc.)
 
 ### New Features
 * IPv6 support:
