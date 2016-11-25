@@ -28,6 +28,7 @@ import unittest
 import time
 import tempfile
 import os
+import re
 import sys
 import platform
 
@@ -1609,31 +1610,114 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					# wrap default command processor:
 					action.executeCmd = self._executeCmd
 					# test start :
-					logSys.debug('# === start ==='); self.pruneLog()
+					self.pruneLog('# === start ===')
 					action.start()
 					self.assertLogged(*tests['start'], all=True)
 					# test ban ip4 :
-					logSys.debug('# === ban-ipv4 ==='); self.pruneLog()
+					self.pruneLog('# === ban-ipv4 ===')
 					action.ban({'ip': IPAddr('192.0.2.1')})
 					self.assertLogged(*tests['ip4-check']+tests['ip4-ban'], all=True)
 					self.assertNotLogged(*tests['ip6'], all=True)
 					# test unban ip4 :
-					logSys.debug('# === unban ipv4 ==='); self.pruneLog()
+					self.pruneLog('# === unban ipv4 ===')
 					action.unban({'ip': IPAddr('192.0.2.1')})
 					self.assertLogged(*tests['ip4-check']+tests['ip4-unban'], all=True)
 					self.assertNotLogged(*tests['ip6'], all=True)
 					# test ban ip6 :
-					logSys.debug('# === ban ipv6 ==='); self.pruneLog()
+					self.pruneLog('# === ban ipv6 ===')
 					action.ban({'ip': IPAddr('2001:DB8::')})
 					self.assertLogged(*tests['ip6-check']+tests['ip6-ban'], all=True)
 					self.assertNotLogged(*tests['ip4'], all=True)
 					# test unban ip6 :
-					logSys.debug('# === unban ipv6 ==='); self.pruneLog()
+					self.pruneLog('# === unban ipv6 ===')
 					action.unban({'ip': IPAddr('2001:DB8::')})
 					self.assertLogged(*tests['ip6-check']+tests['ip6-unban'], all=True)
 					self.assertNotLogged(*tests['ip4'], all=True)
 					# test stop :
-					logSys.debug('# === stop ==='); self.pruneLog()
+					self.pruneLog('# === stop ===')
 					action.stop()
 					self.assertLogged(*tests['stop'], all=True)
 
+		def _executeMailCmd(self, realCmd, timeout=60):
+			# replace pipe to mail with pipe to cat:
+			realCmd = re.sub(r'\)\s*\|\s*mail\b([^\n]*)',
+				r' echo mail \1 ) | cat', realCmd)
+			# replace abuse retrieving (possible no-network):
+			realCmd = re.sub(r'[^\n]+\bADDRESSES=\$\(dig\s[^\n]+',
+				'ADDRESSES="abuse-1@abuse-test-server, abuse-2@abuse-test-server"', realCmd)
+			# execute action:
+			return _actions.CommandAction.executeCmd(realCmd, timeout=timeout)
+
+		def testComplexMailActionMultiLog(self):
+			testJailsActions = (
+				# mail-whois-lines --
+				('j-mail-whois-lines', 
+					'mail-whois-lines['
+					  'name=%(__name__)s, grepopts="-m 1", grepmax=2, mailcmd="mail -s", ' +
+						# 2 logs to test grep from multiple logs:
+					  'logpath="' + os.path.join(TEST_FILES_DIR, "testcase01.log") + '\n' +
+				    '         ' + os.path.join(TEST_FILES_DIR, "testcase01a.log") + '", '
+					  '_whois_command="echo \'-- information about <ip> --\'"'
+					  ']',
+				{
+					'ip4-ban': (
+						'The IP 87.142.124.10 has just been banned by Fail2Ban after',
+						'100 attempts against j-mail-whois-lines.',
+						'Here is more information about 87.142.124.10 :',
+						'-- information about 87.142.124.10 --',
+						'Lines containing failures of 87.142.124.10 (max 2)',
+						'testcase01.log:Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10',
+						'testcase01a.log:Dec 31 11:55:01 [sshd] error: PAM: Authentication failure for test from 87.142.124.10',
+					),
+				}),
+				# complain --
+				('j-complain-abuse', 
+					'complain['
+					  'name=%(__name__)s, grepopts="-m 1", grepmax=2, mailcmd="mail -s",' +
+						# 2 logs to test grep from multiple logs:
+					  'logpath="' + os.path.join(TEST_FILES_DIR, "testcase01.log") + '\n' +
+				    '         ' + os.path.join(TEST_FILES_DIR, "testcase01a.log") + '", '
+					  ']',
+				{
+					'ip4-ban': (
+						'Lines containing failures of 87.142.124.10 (max 2)',
+						'testcase01.log:Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10',
+						'testcase01a.log:Dec 31 11:55:01 [sshd] error: PAM: Authentication failure for test from 87.142.124.10',
+						# both abuse mails should be separated with space:
+						'mail -s Abuse from 87.142.124.10 abuse-1@abuse-test-server abuse-2@abuse-test-server',
+					),
+				}),
+			)
+			server = TestServer()
+			transm = server._Server__transm
+			cmdHandler = transm._Transmitter__commandHandler
+
+			for jail, act, tests in testJailsActions:
+				stream = self.getDefaultJailStream(jail, act)
+
+				# for cmd in stream:
+				# 	print(cmd)
+
+				# transmit jail to the server:
+				for cmd in stream:
+					# command to server:
+					ret, res = transm.proceed(cmd)
+					self.assertEqual(ret, 0)
+
+			jails = server._Server__jails
+
+			for jail, act, tests in testJailsActions:
+				# print(jail, jails[jail])
+				for a in jails[jail].actions:
+					action = jails[jail].actions[a]
+					logSys.debug('# ' + ('=' * 50))
+					logSys.debug('# == %-44s ==', jail + ' - ' + action._name)
+					logSys.debug('# ' + ('=' * 50))
+					# wrap default command processor:
+					action.executeCmd = self._executeMailCmd
+					# test ban :
+					self.pruneLog('# === ban ===')
+					action.ban({'ip': IPAddr('87.142.124.10'), 
+						'failures': 100,
+					})
+					self.assertLogged(*tests['ip4-ban'], all=True)
