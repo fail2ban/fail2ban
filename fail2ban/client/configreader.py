@@ -141,7 +141,7 @@ class ConfigReader():
 
 	def get(self, sec, opt, raw=False, vars={}):
 		if self._cfg is not None:
-			return self._cfg.get(sec, opt, raw, vars)
+			return self._cfg.get(sec, opt, raw=raw, vars=vars)
 		return None
 
 	def getOptions(self, *args, **kwargs):
