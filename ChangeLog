@@ -27,6 +27,8 @@ releases.
 * Monit config: scripting is not supported in path (gh-1556)
 * `filter.d/asterisk.conf`
     - Fixed to match different asterisk log prefix (source file: method:)
+* `filter.d/dovecot.conf`
+    - Fixed failregex ignores failures through some not relevant info (gh-1623)
 * `filter.d/ignorecommands/apache-fakegooglebot`
     - Fixed error within apache-fakegooglebot, that will be called 
       with wrong python version (gh-1506)
