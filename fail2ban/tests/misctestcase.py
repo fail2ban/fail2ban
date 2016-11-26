@@ -39,6 +39,7 @@ from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTr
 from ..helpers import splitwords
 from ..server.datedetector import DateDetector
 from ..server.datetemplate import DatePatternRegex
+from ..server.mytime import MyTime
 
 
 class HelpersTest(unittest.TestCase):
@@ -87,9 +88,11 @@ else:
 def _getSysPythonVersion():
 	return _sh_call("fail2ban-python -c 'import sys; print(tuple(sys.version_info))'")
 
+
 class SetupTest(unittest.TestCase):
 
 	def setUp(self):
+		unittest.F2B.SkipIfFast()
 		setup = os.path.join(os.path.dirname(__file__), '..', '..', 'setup.py')
 		self.setup = os.path.exists(setup) and setup or None
 		if not self.setup and sys.version_info >= (2,7): # pragma: no cover - running not out of the source
@@ -107,9 +110,11 @@ class SetupTest(unittest.TestCase):
 		if not self.setup:
 			return			  # if verbose skip didn't work out
 		tmp = tempfile.mkdtemp()
+		# suppress stdout (and stderr) if not heavydebug
+		supdbgout = ' >/dev/null' if unittest.F2B.log_level >= logging.DEBUG else '' # HEAVYDEBUG
 		try:
-			os.system("%s %s install --root=%s >/dev/null"
-					  % (sys.executable, self.setup, tmp))
+			os.system("%s %s install --disable-2to3 --dry-run --root=%s%s"
+					  % (sys.executable, self.setup, tmp, supdbgout))
 
 			def strippath(l):
 				return [x[len(tmp)+1:] for x in l]
@@ -160,8 +165,8 @@ class SetupTest(unittest.TestCase):
 			# clean up
 			shutil.rmtree(tmp)
 			# remove build directory
-			os.system("%s %s clean --all >/dev/null 2>&1"
-					  % (sys.executable, self.setup))
+			os.system("%s %s clean --all%s"
+					  % (sys.executable, self.setup, (supdbgout + ' 2>&1') if supdbgout else ''))
 
 
 class TestsUtilsTest(LogCaptureTestCase):
@@ -302,6 +307,17 @@ class TestsUtilsTest(LogCaptureTestCase):
 		self.assertTrue(pindex > 10)	  # we should have some traceback
 		self.assertEqual(s[:pindex], s[pindex+1:pindex*2 + 1])
 
+	def testLazyLogging(self):
+		logSys = DefLogSys
+		if unittest.F2B.log_lazy:
+			# wrong logging syntax will throw an error lazy (on demand):
+			logSys.debug('test', 1, 2, 3)
+			self.assertRaisesRegexp(Exception, 'not all arguments converted', lambda: self.assertNotLogged('test'))
+		else: # pragma: no cover
+			# wrong logging syntax will throw an error directly:
+			self.assertRaisesRegexp(Exception, 'not all arguments converted', lambda: logSys.debug('test', 1, 2, 3))
+
+
 iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
 
 
@@ -385,3 +401,21 @@ class CustomDateFormatsTest(unittest.TestCase):
 				self.assertEqual(matched, date[1].group())
 			else:
 				self.assertEqual(date, None)
+
+
+class MyTimeTest(unittest.TestCase):
+
+	def testStr2Seconds(self):
+		# several formats / write styles:
+		str2sec = MyTime.str2seconds
+		self.assertEqual(str2sec('1y6mo30w15d12h35m25s'), 66821725)
+		self.assertEqual(str2sec('2yy 3mo 4ww 10dd 5hh 30mm 20ss'), 74307620)
+		self.assertEqual(str2sec('2 years 3 months 4 weeks 10 days 5 hours 30 minutes 20 seconds'), 74307620)
+		self.assertEqual(str2sec('1 year + 1 month - 1 week + 1 day'), 33669000)
+		self.assertEqual(str2sec('2 * 0.5 yea + 1*1 mon - 3*1/3 wee + 2/2 day - (2*12 hou 3*20 min 80 sec) '), 33578920.0)
+		self.assertEqual(str2sec('2*.5y+1*1mo-3*1/3w+2/2d-(2*12h3*20m80s) '), 33578920.0)
+		self.assertEqual(str2sec('1ye -2mo -3we -4da -5ho -6mi -7se'), 24119633)
+		# month and year in days :
+		self.assertEqual(float(str2sec("1 month")) / 60 / 60 / 24, 30.4375)
+		self.assertEqual(float(str2sec("1 year")) / 60 / 60 / 24, 365.25)
+

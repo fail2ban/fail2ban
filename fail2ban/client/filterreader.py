@@ -37,10 +37,10 @@ logSys = getLogger(__name__)
 
 class FilterReader(DefinitionInitConfigReader):
 
-	_configOpts = [
-		["string", "ignoreregex", None],
-		["string", "failregex", ""],
-	]
+	_configOpts = {
+		"ignoreregex": ["string", None],
+		"failregex": ["string", ""],
+	}
 
 	def setFile(self, fileName):
 		self.__file = fileName
@@ -64,16 +64,16 @@ class FilterReader(DefinitionInitConfigReader):
 		if not len(opts):
 			return stream
 		for opt, value in opts.iteritems():
-			if opt == "failregex":
+			if opt in ("failregex", "ignoreregex"):
+				multi = []
 				for regex in value.split('\n'):
 					# Do not send a command if the rule is empty.
 					if regex != '':
-						stream.append(["set", self._jailName, "addfailregex", regex])
-			elif opt == "ignoreregex":
-				for regex in value.split('\n'):
-					# Do not send a command if the rule is empty.
-					if regex != '':
-						stream.append(["set", self._jailName, "addignoreregex", regex])
+						multi.append(regex)
+				if len(multi) > 1:
+					stream.append(["multi-set", self._jailName, "add" + opt, multi])
+				elif len(multi):
+					stream.append(["set", self._jailName, "add" + opt, multi[0]])
 		if self._initOpts:
 			if 'maxlines' in self._initOpts:
 				# We warn when multiline regex is used without maxlines > 1

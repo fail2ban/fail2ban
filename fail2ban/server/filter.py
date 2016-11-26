@@ -22,14 +22,17 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import codecs
+import datetime
 import fcntl
 import locale
 import logging
 import os
 import re
 import sys
+import time
 
 from .failmanager import FailManagerEmpty, FailManager
+from .ipdns import DNSUtils, IPAddr
 from .ticket import FailTicket
 from .jailthread import JailThread
 from .datedetector import DateDetector
@@ -85,6 +88,10 @@ class Filter(JailThread):
 		self.__ignoreCommand = False
 		## Default or preferred encoding (to decode bytes from file or journal):
 		self.__encoding = locale.getpreferredencoding()
+		## Error counter
+		self.__errors = 0
+		## Ticks counter
+		self.ticks = 0
 
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
@@ -193,6 +200,7 @@ class Filter(JailThread):
 	# @param value the time
 
 	def setFindTime(self, value):
+		value = MyTime.str2seconds(value)
 		self.__findTime = value
 		self.failManager.setMaxTime(value)
 		logSys.info("Set findtime = %s" % value)
@@ -334,17 +342,18 @@ class Filter(JailThread):
 	# to enable banip fail2ban-client BAN command
 
 	def addBannedIP(self, ip):
+		if not isinstance(ip, IPAddr):
+			ip = IPAddr(ip)
 		if self.inIgnoreIPList(ip):
 			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.' % ip)
 
 		unixTime = MyTime.time()
-		for i in xrange(self.failManager.getMaxRetry()):
-			self.failManager.addFailure(FailTicket(ip, unixTime))
+		self.failManager.addFailure(FailTicket(ip, unixTime), self.failManager.getMaxRetry())
 
 		# Perform the banning of the IP now.
 		try: # pragma: no branch - exception is the only way out
 			while True:
-				ticket = self.failManager.toBan()
+				ticket = self.failManager.toBan(ip)
 				self.jail.putFailTicket(ticket)
 		except FailManagerEmpty:
 			self.failManager.cleanup(MyTime.time())
@@ -358,12 +367,19 @@ class Filter(JailThread):
 	# when finding failures. CIDR mask and DNS are also accepted.
 	# @param ip IP address to ignore
 
-	def addIgnoreIP(self, ip):
-		logSys.debug("Add " + ip + " to ignore list")
+	def addIgnoreIP(self, ipstr):
+		# An empty string is always false
+		if ipstr == "":
+			return
+		# Create IP address object
+		ip = IPAddr(ipstr)
+
+		# log and append to ignore list
+		logSys.debug("Add %r to ignore list (%r)", ip, ipstr)
 		self.__ignoreIpList.append(ip)
 
 	def delIgnoreIP(self, ip):
-		logSys.debug("Remove " + ip + " from ignore list")
+		logSys.debug("Remove %r from ignore list", ip)
 		self.__ignoreIpList.remove(ip)
 
 	def logIgnoreIp(self, ip, log_ignore, ignore_source="unknown source"):
@@ -378,35 +394,16 @@ class Filter(JailThread):
 	#
 	# Check if the given IP address matches an IP address/DNS or a CIDR
 	# mask in the ignore list.
-	# @param ip IP address
+	# @param ip IP address object
 	# @return True if IP address is in ignore list
 
 	def inIgnoreIPList(self, ip, log_ignore=False):
-		for i in self.__ignoreIpList:
-			# An empty string is always false
-			if i == "":
-				continue
-			s = i.split('/', 1)
-			# IP address without CIDR mask
-			if len(s) == 1:
-				s.insert(1, '32')
-			elif "." in s[1]: # 255.255.255.0 style mask
-				s[1] = len(re.search(
-					"(?<=b)1+", bin(DNSUtils.addr2bin(s[1]))).group())
-			s[1] = long(s[1])
-			try:
-				a = DNSUtils.addr2bin(s[0], cidr=s[1])
-				b = DNSUtils.addr2bin(ip, cidr=s[1])
-			except Exception:
-				# Check if IP in DNS
-				ips = DNSUtils.dnsToIp(i)
-				if ip in ips:
-					self.logIgnoreIp(ip, log_ignore, ignore_source="dns")
-					return True
-				else:
-					continue
-			if a == b:
-				self.logIgnoreIp(ip, log_ignore, ignore_source="ip")
+		if not isinstance(ip, IPAddr):
+			ip = IPAddr(ip)
+		for net in self.__ignoreIpList:
+			# check if the IP is covered by ignore IP
+			if ip.isInNet(net):
+				self.logIgnoreIp(ip, log_ignore, ignore_source=("ip" if net.isValid else "dns"))
 				return True
 
 		if self.__ignoreCommand:
@@ -451,14 +448,16 @@ class Filter(JailThread):
 			l = line.rstrip('\r\n')
 			logSys.log(7, "Working on line %r", line)
 
-			timeMatch = self.dateDetector.matchTime(l)
+			(timeMatch, template) = self.dateDetector.matchTime(l)
 			if timeMatch:
 				tupleLine  = (
 					l[:timeMatch.start()],
 					l[timeMatch.start():timeMatch.end()],
-					l[timeMatch.end():])
+					l[timeMatch.end():],
+					(timeMatch, template)
+				)
 			else:
-				tupleLine = (l, "", "")
+				tupleLine = (l, "", "", None)
 
 		return "".join(tupleLine[::2]), self.findFailure(
 			tupleLine, date, returnRawHost, checkAllRegex, checkFindTime)
@@ -466,17 +465,37 @@ class Filter(JailThread):
 	def processLineAndAdd(self, line, date=None):
 		"""Processes the line for failures and populates failManager
 		"""
-		for element in self.processLine(line, date, checkFindTime=True)[1]:
-			ip = element[1]
-			unixTime = element[2]
-			lines = element[3]
-			logSys.debug("Processing line with time:%s and ip:%s"
-						 % (unixTime, ip))
-			if self.inIgnoreIPList(ip, log_ignore=True):
-				continue
-			logSys.info("[%s] Found %s" % (self.jail.name, ip))
-			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
-			self.failManager.addFailure(FailTicket(ip, unixTime, lines))
+		try:
+			for element in self.processLine(line, date, checkFindTime=True)[1]:
+				ip = element[1]
+				unixTime = element[2]
+				lines = element[3]
+				fail = {}
+				if len(element) > 4:
+					fail = element[4]
+				logSys.debug("Processing line with time:%s and ip:%s", 
+						unixTime, ip)
+				if self.inIgnoreIPList(ip, log_ignore=True):
+					continue
+				logSys.info(
+					"[%s] Found %s - %s", self.jail.name, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
+				)
+				tick = FailTicket(ip, unixTime, lines, data=fail)
+				self.failManager.addFailure(tick)
+			# reset (halve) error counter (successfully processed line):
+			if self.__errors:
+				self.__errors //= 2
+		except Exception as e:
+			logSys.error("Failed to process line: %r, caught exception: %r", line, e,
+				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+			# incr error counter, stop processing (going idle) after 100th error :
+			self.__errors += 1
+			# sleep a little bit (to get around time-related errors):
+			time.sleep(self.sleeptime)
+			if self.__errors >= 100:
+				logSys.error("Too many errors at once (%s), going idle", self.__errors)
+				self.__errors //= 2
+				self.idle = True
 
 	##
 	# Returns true if the line should be ignored.
@@ -503,7 +522,12 @@ class Filter(JailThread):
 		checkAllRegex=False, checkFindTime=False):
 		failList = list()
 
-		# Checks if we must ignore this line.
+		cidr = IPAddr.CIDR_UNSPEC
+		if self.__useDns == "raw":
+			returnRawHost = True
+			cidr = IPAddr.CIDR_RAW
+
+		# Checks if we mut ignore this line.
 		if self.ignoreLine([tupleLine[::2]]) is not None:
 			# The ignoreregex matched. Return.
 			logSys.log(7, "Matched ignoreregex and was \"%s\" ignored",
@@ -516,7 +540,7 @@ class Filter(JailThread):
 			self.__lastDate = date
 		elif timeText:
 
-			dateTimeMatch = self.dateDetector.getTime(timeText)
+			dateTimeMatch = self.dateDetector.getTime(timeText, tupleLine[3])
 
 			if dateTimeMatch is None:
 				logSys.error("findFailure failed to parse timeText: " + timeText)
@@ -538,7 +562,7 @@ class Filter(JailThread):
 			return failList
 
 		self.__lineBuffer = (
-			self.__lineBuffer + [tupleLine])[-self.__lineBufferSize:]
+			self.__lineBuffer + [tupleLine[:3]])[-self.__lineBufferSize:]
 		logSys.log(5, "Looking for failregex match of %r" % self.__lineBuffer)
 
 		# Iterates over all the regular expressions.
@@ -569,19 +593,41 @@ class Filter(JailThread):
 						 % ("\n".join(failRegex.getMatchedLines()), timeText))
 				else:
 					self.__lineBuffer = failRegex.getUnmatchedTupleLines()
+					# retrieve failure-id, host, etc from failure match:
+					raw = returnRawHost
 					try:
-						host = failRegex.getHost()
-						if returnRawHost or self.__useDns == "raw":
-							failList.append([failRegexIndex, host, date,
-								 failRegex.getMatchedLines()])
+						fail = failRegex.getGroups()
+						# failure-id:
+						fid = fail.get('fid')
+						# ip-address or host:
+						host = fail.get('ip4') or fail.get('ip6')
+						if host is not None:
+							raw = True
+						else:
+							host = fail.get('dns')
+							if host is None:
+								# if no failure-id also (obscure case, wrong regex), throw error inside getFailID:
+								if fid is None:
+									fid = failRegex.getFailID()
+								host = fid
+								cidr = IPAddr.CIDR_RAW
+						# if raw - add single ip or failure-id,
+						# otherwise expand host to multiple ips using dns (or ignore it if not valid):
+						if raw:
+							ip = IPAddr(host, cidr)
+							# check host equal failure-id, if not - failure with complex id:
+							if fid is not None and fid != host:
+								ip = IPAddr(fid, IPAddr.CIDR_RAW)
+							failList.append([failRegexIndex, ip, date,
+								failRegex.getMatchedLines(), fail])
 							if not checkAllRegex:
 								break
 						else:
-							ipMatch = DNSUtils.textToIp(host, self.__useDns)
-							if ipMatch:
-								for ip in ipMatch:
+							ips = DNSUtils.textToIp(host, self.__useDns)
+							if ips:
+								for ip in ips:
 									failList.append([failRegexIndex, ip, date,
-										 failRegex.getMatchedLines()])
+										failRegex.getMatchedLines(), fail])
 								if not checkAllRegex:
 									break
 					except RegexException as e: # pragma: no cover - unsure if reachable
@@ -602,13 +648,14 @@ class FileFilter(Filter):
 		Filter.__init__(self, jail, **kwargs)
 		## The log file path.
 		self.__logs = dict()
+		self.__autoSeek = dict()
 
 	##
 	# Add a log file path
 	#
 	# @param path log file path
 
-	def addLogPath(self, path, tail=False):
+	def addLogPath(self, path, tail=False, autoSeek=True):
 		if path in self.__logs:
 			logSys.error(path + " already exists")
 		else:
@@ -619,7 +666,12 @@ class FileFilter(Filter):
 				if lastpos and not tail:
 					log.setPos(lastpos)
 			self.__logs[path] = log
-			logSys.info("Added logfile = %s" % path)
+			logSys.info("Added logfile = %s (pos = %s, hash = %s)" , path, log.getPos(), log.getHash())
+			if autoSeek:
+				# if default, seek to "current time" - "find time":
+				if isinstance(autoSeek, bool):
+					autoSeek = MyTime.time() - self.getFindTime()
+				self.__autoSeek[path] = autoSeek
 			self._addLogPath(path)			# backend specific
 
 	def _addLogPath(self, path):
@@ -650,12 +702,28 @@ class FileFilter(Filter):
 		pass
 
 	##
+	# Get the log file names
+	#
+	# @return log paths
+
+	def getLogPaths(self):
+		return self.__logs.keys()
+
+	##
 	# Get the log containers
 	#
 	# @return log containers
 
 	def getLogs(self):
 		return self.__logs.values()
+
+	##
+	# Get the count of log containers
+	#
+	# @return count of log containers
+
+	def getLogCount(self):
+		return len(self.__logs)
 
 	##
 	# Check whether path is already monitored.
@@ -704,9 +772,23 @@ class FileFilter(Filter):
 			logSys.exception(e)
 			return False
 		except Exception as e: # pragma: no cover - Requires implemention error in FileContainer to generate
-			logSys.error("Internal errror in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
+			logSys.error("Internal error in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
 			logSys.exception(e)
 			return False
+
+		# seek to find time for first usage only (prevent performance decline with polling of big files)
+		if self.__autoSeek.get(filename):
+			startTime = self.__autoSeek[filename]
+			del self.__autoSeek[filename]
+			# prevent completely read of big files first time (after start of service), 
+			# initial seek to start time using half-interval search algorithm:
+			try:
+				self.seekToTime(log, startTime)
+			except Exception as e: # pragma: no cover
+				logSys.error("Error during seek to start time in \"%s\"", filename)
+				raise
+				logSys.exception(e)
+				return False
 
 		# yoh: has_content is just a bool, so do not expect it to
 		# change -- loop is exited upon break, and is not entered at
@@ -725,6 +807,93 @@ class FileFilter(Filter):
 			db.updateLog(self.jail, log)
 		return True
 
+	##
+	# Seeks to line with date (search using half-interval search algorithm), to start polling from it
+	#
+
+	def seekToTime(self, container, date, accuracy=3):
+		fs = container.getFileSize()
+		if logSys.getEffectiveLevel() <= logging.DEBUG:
+			logSys.debug("Seek to find time %s (%s), file size %s", date, 
+				datetime.datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S"), fs)
+		minp = container.getPos()
+		maxp = fs
+		tryPos = minp
+		lastPos = -1
+		foundPos = 0
+		foundTime = None
+		cntr = 0
+		unixTime = None
+		movecntr = accuracy
+		while maxp > minp:
+			if tryPos is None:
+				pos = int(minp + (maxp - minp) / 2)
+			else:
+				pos, tryPos = tryPos, None
+			# because container seek will go to start of next line (minus CRLF):
+			pos = max(0, pos-2)
+			seekpos = pos = container.seek(pos)
+			cntr += 1
+			# within next 5 lines try to find any legal datetime:
+			lncntr = 5;
+			dateTimeMatch = None
+			nextp = None
+			while True:
+				line = container.readline()
+				if not line:
+					break
+				(timeMatch, template) = self.dateDetector.matchTime(line)
+				if timeMatch:
+					dateTimeMatch = self.dateDetector.getTime(line[timeMatch.start():timeMatch.end()], (timeMatch, template))
+				else:
+					nextp = container.tell()
+					if nextp > maxp:
+						pos = seekpos
+						break
+					pos = nextp
+				if not dateTimeMatch and lncntr:
+					lncntr -= 1
+					continue
+				break
+		 	# not found at this step - stop searching
+			if dateTimeMatch:
+				unixTime = dateTimeMatch[0]
+				if unixTime >= date:
+					if foundTime is None or unixTime <= foundTime:
+						foundPos = pos
+						foundTime = unixTime
+					if pos == maxp:
+						pos = seekpos
+					if pos < maxp:
+						maxp = pos
+				else:
+					if foundTime is None or unixTime >= foundTime:
+						foundPos = pos
+						foundTime = unixTime
+					if nextp is None:
+						nextp = container.tell()
+					pos = nextp
+					if pos > minp:
+						minp = pos
+			# if we can't move (position not changed)
+			if pos == lastPos:
+				movecntr -= 1
+				if movecntr <= 0:
+		 			break
+				# we have found large area without any date mached 
+				# or end of search - try min position (because can be end of previous line):
+				if minp != lastPos:
+					lastPos = tryPos = minp
+					continue
+				break
+			lastPos = pos
+		# always use smallest pos, that could be found:
+		foundPos = container.seek(minp, False)
+		container.setPos(foundPos)
+		if logSys.getEffectiveLevel() <= logging.DEBUG:
+			logSys.debug("Position %s from %s, found time %s (%s) within %s seeks", lastPos, fs, foundTime, 
+				(datetime.datetime.fromtimestamp(foundTime).strftime("%Y-%m-%d %H:%M:%S") if foundTime is not None else ''), cntr)
+		
 	def status(self, flavor="basic"):
 		"""Status of Filter plus files being monitored.
 		"""
@@ -782,6 +951,9 @@ class FileContainer:
 	def getFileName(self):
 		return self.__filename
 
+	def getFileSize(self):
+		return os.path.getsize(self.__filename);
+
 	def setEncoding(self, encoding):
 		codecs.lookup(encoding) # Raises LookupError if invalid
 		self.__encoding = encoding
@@ -827,6 +999,20 @@ class FileContainer:
 		# Sets the file pointer to the last position.
 		self.__handler.seek(self.__pos)
 		return True
+
+	def seek(self, offs, endLine=True):
+		h = self.__handler
+		# seek to given position
+		h.seek(offs, 0)
+		# goto end of next line
+		if offs and endLine:
+			h.readline()
+		# get current real position
+		return h.tell()
+
+	def tell(self):
+		# get current real position
+		return self.__handler.tell()
 
 	@staticmethod
 	def decode_line(filename, enc, line):
@@ -883,103 +1069,3 @@ class JournalFilter(Filter): # pragma: systemd no cover
 	def getJournalMatch(self, match): # pragma: no cover - Base class, not used
 		return []
 
-##
-# Utils class for DNS and IP handling.
-#
-# This class contains only static methods used to handle DNS and IP
-# addresses.
-
-import socket
-import struct
-
-
-class DNSUtils:
-
-	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
-
-	@staticmethod
-	def dnsToIp(dns):
-		""" Convert a DNS into an IP address using the Python socket module.
-			Thanks to Kevin Drapel.
-		"""
-		# retrieve ip (todo: use AF_INET6 for IPv6)
-		try:
-			return set([i[4][0] for i in socket.getaddrinfo(dns, None, socket.AF_INET, 0, socket.IPPROTO_TCP)])
-		except socket.error as e:
-			logSys.warning("Unable to find a corresponding IP address for %s: %s"
-						% (dns, e))
-			return list()
-		except socket.error as e:
-			logSys.warning("Socket error raised trying to resolve hostname %s: %s"
-						% (dns, e))
-			return list()
-
-	@staticmethod
-	def ipToName(ip):
-		try:
-			return socket.gethostbyaddr(ip)[0]
-		except socket.error as e:
-			logSys.debug("Unable to find a name for the IP %s: %s" % (ip, e))
-			return None
-
-	@staticmethod
-	def searchIP(text):
-		""" Search if an IP address if directly available and return
-			it.
-		"""
-		match = DNSUtils.IP_CRE.match(text)
-		if match:
-			return match
-		else:
-			return None
-
-	@staticmethod
-	def isValidIP(string):
-		""" Return true if str is a valid IP
-		"""
-		s = string.split('/', 1)
-		try:
-			socket.inet_aton(s[0])
-			return True
-		except socket.error:
-			return False
-
-	@staticmethod
-	def textToIp(text, useDns):
-		""" Return the IP of DNS found in a given text.
-		"""
-		ipList = list()
-		# Search for plain IP
-		plainIP = DNSUtils.searchIP(text)
-		if not plainIP is None:
-			plainIPStr = plainIP.group(0)
-			if DNSUtils.isValidIP(plainIPStr):
-				ipList.append(plainIPStr)
-
-		# If we are allowed to resolve -- give it a try if nothing was found
-		if useDns in ("yes", "warn") and not ipList:
-			# Try to get IP from possible DNS
-			ip = DNSUtils.dnsToIp(text)
-			ipList.extend(ip)
-			if ip and useDns == "warn":
-				logSys.warning("Determined IP using DNS Lookup: %s = %s",
-					text, ipList)
-
-		return ipList
-
-	@staticmethod
-	def addr2bin(ipstring, cidr=None):
-		""" Convert a string IPv4 address into binary form.
-		If cidr is supplied, return the network address for the given block
-		"""
-		if cidr is None:
-			return struct.unpack("!L", socket.inet_aton(ipstring))[0]
-		else:
-			MASK = 0xFFFFFFFFL
-			return ~(MASK >> cidr) & MASK & DNSUtils.addr2bin(ipstring)
-
-	@staticmethod
-	def bin2addr(ipbin):
-		""" Convert a binary IPv4 address into string n.n.n.n form.
-		"""
-		return socket.inet_ntoa(struct.pack("!L", ipbin))

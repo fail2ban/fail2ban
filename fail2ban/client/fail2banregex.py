@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: t -*-
 # vi: set ft=python sts=4 ts=4 sw=4 noet :
 #
@@ -294,7 +293,14 @@ class Fail2banRegex(object):
 				RegexStat(m[3])
 				for m in filter(
 					lambda x: x[0] == 'set' and x[2] == "add%sregex" % regextype,
-					readercommands)]
+					readercommands)
+			] + [
+				RegexStat(m)
+				for mm in filter(
+					lambda x: x[0] == 'multi-set' and x[2] == "add%sregex" % regextype,
+					readercommands)
+				for m in mm[3]
+			]
 			# Read out and set possible value of maxlines
 			for command in readercommands:
 				if command[2] == "maxlines":
@@ -369,7 +375,7 @@ class Fail2banRegex(object):
 
 	def process(self, test_lines):
 		t0 = time.time()
-		for line_no, line in enumerate(test_lines):
+		for line in test_lines:
 			if isinstance(line, tuple):
 				line_datetimestripped, ret = self.testRegex(
 					line[0], line[1])
@@ -401,8 +407,6 @@ class Fail2banRegex(object):
 						self._line_stats.missed_lines_timeextracted.append(line_datetimestripped)
 			self._line_stats.tested += 1
 
-			if line_no % 10 == 0 and self._filter.dateDetector is not None:
-				self._filter.dateDetector.sortTemplate()
 		self._time_elapsed = time.time() - t0
 
 	def printLines(self, ltype):

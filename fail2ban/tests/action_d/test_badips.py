@@ -29,6 +29,8 @@ if sys.version_info >= (2,7):
 
 		def setUp(self):
 			"""Call before every test case."""
+			unittest.F2B.SkipIfNoNetwork()
+
 			self.jail = DummyJail()
 
 			self.jail.actions.add("test")
@@ -37,7 +39,7 @@ if sys.version_info >= (2,7):
 			self.jail.actions.add("badips", pythonModule, initOpts={
 				'category': "ssh",
 				'banaction': "test",
-				'timeout': 30,
+				'timeout': (3 if unittest.F2B.fast else 30),
 				})
 			self.action = self.jail.actions["badips"]
 

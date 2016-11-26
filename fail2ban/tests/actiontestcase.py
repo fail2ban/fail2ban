@@ -25,11 +25,13 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import os
-import time
 import tempfile
+import time
+import unittest
 
 from ..server.action import CommandAction, CallingMap
 from ..server.actions import OrderedDict
+from ..server.utils import Utils
 
 from .utils import LogCaptureTestCase
 from .utils import pid_exists
@@ -43,8 +45,8 @@ class CommandActionTest(LogCaptureTestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
-		LogCaptureTestCase.tearDown(self)
 		self.__action.stop()
+		LogCaptureTestCase.tearDown(self)
 
 	def testSubstituteRecursiveTags(self):
 		aInfo = {
@@ -53,12 +55,17 @@ class CommandActionTest(LogCaptureTestCase):
 			'xyz': "890 <ABC>",
 		}
 		# Recursion is bad
-		self.assertFalse(CommandAction.substituteRecursiveTags({'A': '<A>'}))
-		self.assertFalse(CommandAction.substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
-		self.assertFalse(CommandAction.substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
+		self.assertRaises(ValueError,
+			lambda: CommandAction.substituteRecursiveTags({'A': '<A>'}))
+		self.assertRaises(ValueError,
+			lambda: CommandAction.substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
+		self.assertRaises(ValueError,
+			lambda: CommandAction.substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
 		# Unresolveable substition
-		self.assertFalse(CommandAction.substituteRecursiveTags({'A': 'to=<B> fromip=<IP>', 'C': '<B>', 'B': '<C>', 'D': ''}))
-		self.assertFalse(CommandAction.substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP>', 'sweet': '<honeypot>', 'honeypot': '<sweet>', 'ignoreregex': ''}))
+		self.assertRaises(ValueError,
+			lambda: CommandAction.substituteRecursiveTags({'A': 'to=<B> fromip=<IP>', 'C': '<B>', 'B': '<C>', 'D': ''}))
+		self.assertRaises(ValueError,
+			lambda: CommandAction.substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP>', 'sweet': '<honeypot>', 'honeypot': '<sweet>', 'ignoreregex': ''}))
 		# We need here an ordered, because the sequence of iteration is very important for this test
 		if OrderedDict:
 			# No cyclic recursion, just multiple replacement of tag <T>, should be successful:
@@ -104,12 +111,12 @@ class CommandActionTest(LogCaptureTestCase):
 				))
 			)
 			# Cyclic recursion by composite tag creation, tags "create" another tag, that closes cycle:
-			self.assertFalse(CommandAction.substituteRecursiveTags( OrderedDict((
+			self.assertRaises(ValueError, lambda: CommandAction.substituteRecursiveTags( OrderedDict((
 					('A', '<<B><C>>'),
 					('B', 'D'), ('C', 'E'),
 					('DE', 'cycle <A>'),
 			)) ))
-			self.assertFalse(CommandAction.substituteRecursiveTags( OrderedDict((
+			self.assertRaises(ValueError, lambda: CommandAction.substituteRecursiveTags( OrderedDict((
 					('DE', 'cycle <A>'),
 					('A', '<<B><C>>'),
 					('B', 'D'), ('C', 'E'),
@@ -189,6 +196,48 @@ class CommandActionTest(LogCaptureTestCase):
 			self.__action.replaceTag("abc",
 				CallingMap(matches=lambda: int("a"))), "abc")
 
+	def testReplaceTagConditionalCached(self):
+		setattr(self.__action, 'abc', "123")
+		setattr(self.__action, 'abc?family=inet4', "345")
+		setattr(self.__action, 'abc?family=inet6', "567")
+		setattr(self.__action, 'xyz', "890-<abc>")
+		setattr(self.__action, 'banaction', "Text <xyz> text <abc>")
+		# test replacement in sub tags and direct, conditional, cached:
+		cache = self.__action._substCache
+		for i in range(2):
+			self.assertEqual(
+				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
+					conditional="", cache=cache),
+				"Text 890-123 text 123 '123'")
+			self.assertEqual(
+				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
+					conditional="family=inet4", cache=cache),
+				"Text 890-345 text 345 '345'")
+			self.assertEqual(
+				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
+					conditional="family=inet6", cache=cache),
+				"Text 890-567 text 567 '567'")
+		self.assertEqual(len(cache) if cache is not None else -1, 3)
+		# set one parameter - internal properties and cache should be reseted:
+		setattr(self.__action, 'xyz', "000-<abc>")
+		self.assertEqual(len(cache) if cache is not None else -1, 0)
+		# test againg, should have 000 instead of 890:
+		for i in range(2):
+			self.assertEqual(
+				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
+					conditional="", cache=cache),
+				"Text 000-123 text 123 '123'")
+			self.assertEqual(
+				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
+					conditional="family=inet4", cache=cache),
+				"Text 000-345 text 345 '345'")
+			self.assertEqual(
+				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
+					conditional="family=inet6", cache=cache),
+				"Text 000-567 text 567 '567'")
+		self.assertEqual(len(cache), 3)
+
+
 	def testExecuteActionBan(self):
 		self.__action.actionstart = "touch /tmp/fail2ban.test"
 		self.assertEqual(self.__action.actionstart, "touch /tmp/fail2ban.test")
@@ -252,16 +301,17 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertLogged('HINT on 127: "Command not found"')
 
 	def testExecuteTimeout(self):
+		unittest.F2B.SkipIfFast()
 		stime = time.time()
 		# Should take a minute
-		self.assertFalse(CommandAction.executeCmd('sleep 60', timeout=2))
+		self.assertFalse(CommandAction.executeCmd('sleep 30', timeout=1))
 		# give a test still 1 second, because system could be too busy
-		self.assertTrue(time.time() >= stime + 2 and time.time() <= stime + 3)
+		self.assertTrue(time.time() >= stime + 1 and time.time() <= stime + 2)
 		self.assertLogged(
-			'sleep 60 -- timed out after 2 seconds',
-			'sleep 60 -- timed out after 3 seconds'
+			'sleep 30 -- timed out after 1 seconds',
+			'sleep 30 -- timed out after 2 seconds'
 		)
-		self.assertLogged('sleep 60 -- killed with SIGTERM')
+		self.assertLogged('sleep 30 -- killed with SIGTERM')
 
 	def testExecuteTimeoutWithNastyChildren(self):
 		# temporary file for a nasty kid shell script
@@ -273,40 +323,64 @@ class CommandActionTest(LogCaptureTestCase):
 
 		echo "$$" > %s.pid
 		echo "my pid $$ . sleeping lo-o-o-ong"
-		sleep 10000
+		sleep 30
 		""" % tmpFilename)
+		stime = 0
+
+		# timeout as long as pid-file was not created, but max 5 seconds
+		def getnasty_tout():
+			return (
+				getnastypid() is None
+				and time.time() - stime <= 5
+			)
 
 		def getnastypid():
-			with open(tmpFilename + '.pid') as f:
-				return int(f.read())
+			cpid = None
+			if os.path.isfile(tmpFilename + '.pid'):
+				with open(tmpFilename + '.pid') as f:
+					try:
+						cpid = int(f.read())
+					except ValueError:
+						pass
+			return cpid
 
 		# First test if can kill the bastard
+		stime = time.time()
 		self.assertFalse(CommandAction.executeCmd(
-		                 'bash %s' % tmpFilename, timeout=.1))
+			'bash %s' % tmpFilename, timeout=getnasty_tout))
+		# Wait up to 3 seconds, the child got killed
+		cpid = getnastypid()
 		# Verify that the process itself got killed
-		self.assertFalse(pid_exists(getnastypid()))  # process should have been killed
+		self.assertTrue(Utils.wait_for(lambda: not pid_exists(cpid), 3))  # process should have been killed
+		self.assertLogged('my pid ', 'Resource temporarily unavailable')
 		self.assertLogged('timed out')
-		self.assertLogged('killed with SIGTERM')
+		self.assertLogged('killed with SIGTERM', 
+		                  'killed with SIGKILL')
+		os.unlink(tmpFilename + '.pid')
 
 		# A bit evolved case even though, previous test already tests killing children processes
+		stime = time.time()
 		self.assertFalse(CommandAction.executeCmd(
-			'out=`bash %s`; echo ALRIGHT' % tmpFilename, timeout=.2))
+			'out=`bash %s`; echo ALRIGHT' % tmpFilename, timeout=getnasty_tout))
+		# Wait up to 3 seconds, the child got killed
+		cpid = getnastypid()
 		# Verify that the process itself got killed
-		self.assertFalse(pid_exists(getnastypid()))
+		self.assertTrue(Utils.wait_for(lambda: not pid_exists(cpid), 3))
+		self.assertLogged('my pid ', 'Resource temporarily unavailable')
 		self.assertLogged('timed out')
-		self.assertLogged('killed with SIGTERM')
-
+		self.assertLogged('killed with SIGTERM', 
+		                  'killed with SIGKILL')
 		os.unlink(tmpFilename)
 		os.unlink(tmpFilename + '.pid')
 
 
 	def testCaptureStdOutErr(self):
 		CommandAction.executeCmd('echo "How now brown cow"')
-		self.assertLogged("'How now brown cow\\n'")
+		self.assertLogged("stdout: 'How now brown cow'\n", "stdout: b'How now brown cow'\n")
 		CommandAction.executeCmd(
 			'echo "The rain in Spain stays mainly in the plain" 1>&2')
 		self.assertLogged(
-			"'The rain in Spain stays mainly in the plain\\n'")
+			"stderr: 'The rain in Spain stays mainly in the plain'\n", "stderr: b'The rain in Spain stays mainly in the plain'\n")
 
 	def testCallingMap(self):
 		mymap = CallingMap(callme=lambda: str(10), error=lambda: int('a'),

@@ -35,31 +35,79 @@ class AddFailure(unittest.TestCase):
 		"""Call before every test case."""
 		self.__ticket = BanTicket('193.168.0.128', 1167605999.0)
 		self.__banManager = BanManager()
-		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
 
 	def tearDown(self):
 		"""Call after every test case."""
 		pass
 
 	def testAdd(self):
+		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
 		self.assertEqual(self.__banManager.size(), 1)
-
+		self.assertEqual(self.__banManager.getBanTotal(), 1)
+		self.__banManager.setBanTotal(0)
+		self.assertEqual(self.__banManager.getBanTotal(), 0)
+	
 	def testAddDuplicate(self):
+		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
 		self.assertFalse(self.__banManager.addBanTicket(self.__ticket))
 		self.assertEqual(self.__banManager.size(), 1)
 
+	def testAddDuplicateWithTime(self):
+		# add again a duplicate :
+		#   1) with newer start time and the same ban time
+		#   2) with same start time and longer ban time
+    #   3) with permanent ban time (-1)
+		for tnew, btnew in (
+			(1167605999.0 + 100, None),
+			(1167605999.0,       24*60*60),
+			(1167605999.0,       -1),
+		):
+			ticket1 = BanTicket('193.168.0.128', 1167605999.0)
+			ticket2 = BanTicket('193.168.0.128', tnew)
+			if btnew is not None:
+				ticket2.setBanTime(btnew)
+			self.assertTrue(self.__banManager.addBanTicket(ticket1))
+			self.assertFalse(self.__banManager.addBanTicket(ticket2))
+			self.assertEqual(self.__banManager.size(), 1)
+			# pop ticket and check it was prolonged :
+			banticket = self.__banManager.getTicketByIP(ticket2.getIP())
+			self.assertEqual(banticket.getTime(), ticket2.getTime())
+			self.assertEqual(banticket.getTime(), ticket2.getTime())
+			self.assertEqual(banticket.getBanTime(), ticket2.getBanTime(self.__banManager.getBanTime()))
+
 	def testInListOK(self):
+		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
 		ticket = BanTicket('193.168.0.128', 1167605999.0)
 		self.assertTrue(self.__banManager._inBanList(ticket))
 
 	def testInListNOK(self):
+		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
 		ticket = BanTicket('111.111.1.111', 1167605999.0)
 		self.assertFalse(self.__banManager._inBanList(ticket))
+
+	def testUnban(self):
+		btime = self.__banManager.getBanTime()
+		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
+		self.assertTrue(self.__banManager._inBanList(self.__ticket))
+		self.assertEqual(self.__banManager.unBanList(self.__ticket.getTime() + btime + 1), [self.__ticket])
+		self.assertEqual(self.__banManager.size(), 0)
+
+	def testUnbanPermanent(self):
+		btime = self.__banManager.getBanTime()
+		self.__banManager.setBanTime(-1)
+		try:
+			self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
+			self.assertTrue(self.__banManager._inBanList(self.__ticket))
+			self.assertEqual(self.__banManager.unBanList(self.__ticket.getTime() + btime + 1), [])
+			self.assertEqual(self.__banManager.size(), 1)
+		finally:
+			self.__banManager.setBanTime(btime)
 
 
 class StatusExtendedCymruInfo(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
+		unittest.F2B.SkipIfNoNetwork()
 		self.__ban_ip = "93.184.216.34"
 		self.__asn = "15133"
 		self.__country = "EU"

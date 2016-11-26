@@ -2,7 +2,7 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v0.9.5                  2016/07/15
+                       v0.10.0                 2016/??/??
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
@@ -39,8 +39,8 @@ Optional:
 
 To install, just do:
 
-    tar xvfj fail2ban-0.9.5.tar.bz2
-    cd fail2ban-0.9.5
+    tar xvfj fail2ban-0.10.0.tar.bz2
+    cd fail2ban-0.10.0
     python setup.py install
 
 This will install Fail2Ban into the python library directory. The executable
@@ -73,11 +73,11 @@ fail2ban(1) and jail.conf(5)  manpages for further references.
 Code status:
 ------------
 
-* [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=master)](https://travis-ci.org/fail2ban/fail2ban) travis-ci.org (master branch)
+* [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=0.10)](https://travis-ci.org/fail2ban/fail2ban?branch=0.10) travis-ci.org (0.10 branch) / [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=master)](https://travis-ci.org/fail2ban/fail2ban) travis-ci.org (master branch)
 
-* [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=master)](https://coveralls.io/r/fail2ban/fail2ban)
+* [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=0.10)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.10)
 
-* [![codecov.io](https://codecov.io/github/fail2ban/fail2ban/coverage.svg?branch=master)](https://codecov.io/github/fail2ban/fail2ban?branch=master)
+* [![codecov.io](https://codecov.io/gh/fail2ban/fail2ban/coverage.svg?branch=0.10)](https://codecov.io/gh/fail2ban/fail2ban/branch/0.10)
 
 Contact:
 --------

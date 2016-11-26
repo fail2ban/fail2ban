@@ -65,21 +65,29 @@ def testSampleRegexsFactory(name, basedir):
 	def testFilter(self):
 
 		# Check filter exists
-		filterConf = FilterReader(name, "jail", {}, basedir=basedir)
+		filterConf = FilterReader(name, "jail", {}, 
+			basedir=basedir, share_config=unittest.F2B.share_config)
 		self.assertEqual(filterConf.getFile(), name)
 		self.assertEqual(filterConf.getJailName(), "jail")
 		filterConf.read()
 		filterConf.getOptions({})
 
 		for opt in filterConf.convert():
-			if opt[2] == "addfailregex":
-				self.filter.addFailRegex(opt[3])
-			elif opt[2] == "maxlines":
-				self.filter.setMaxLines(opt[3])
-			elif opt[2] == "addignoreregex":
-				self.filter.addIgnoreRegex(opt[3])
-			elif opt[2] == "datepattern":
-				self.filter.setDatePattern(opt[3])
+			if opt[0] == 'multi-set':
+				optval = opt[3]
+			elif opt[0] == 'set':
+				optval = [opt[3]]
+			else:
+				continue
+			for optval in optval:
+				if opt[2] == "addfailregex":
+					self.filter.addFailRegex(optval)
+				elif opt[2] == "addignoreregex":
+					self.filter.addIgnoreRegex(optval)
+				elif opt[2] == "maxlines":
+					self.filter.setMaxLines(optval)
+				elif opt[2] == "datepattern":
+					self.filter.setDatePattern(optval)
 
 		self.assertTrue(
 			os.path.isfile(os.path.join(TEST_FILES_DIR, "logs", name)),
@@ -119,7 +127,7 @@ def testSampleRegexsFactory(name, basedir):
 								 (map(lambda x: x[0], ret),logFile.filename(), logFile.filelineno()))
 
 				# Verify timestamp and host as expected
-				failregex, host, fail2banTime, lines = ret[0]
+				failregex, host, fail2banTime, lines, fail = ret[0]
 				self.assertEqual(host, faildata.get("host", None))
 
 				t = faildata.get("time", None)

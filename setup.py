@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: t -*-
 # vi: set ft=python sts=4 ts=4 sw=4 noet :
 
@@ -27,21 +27,26 @@ import platform
 try:
 	import setuptools
 	from setuptools import setup
+	from setuptools.command.install import install
+	from setuptools.command.install_scripts import install_scripts
 except ImportError:
 	setuptools = None
 	from distutils.core import setup
 
+# all versions
+from distutils.command.build_py import build_py
+from distutils.command.build_scripts import build_scripts
+if setuptools is None:
+	from distutils.command.install import install
+	from distutils.command.install_scripts import install_scripts
 try:
 	# python 3.x
-	from distutils.command.build_py import build_py_2to3 as build_py
-	from distutils.command.build_scripts \
-		import build_scripts_2to3 as build_scripts
+	from distutils.command.build_py import build_py_2to3
+	from distutils.command.build_scripts import build_scripts_2to3
+	_2to3 = True
 except ImportError:
 	# python 2.x
-	from distutils.command.build_py import build_py
-	from distutils.command.build_scripts import build_scripts
-# all versions
-from distutils.command.install_scripts import install_scripts
+	_2to3 = False
 
 import os
 from os.path import isfile, join, isdir, realpath
@@ -65,6 +70,27 @@ class install_scripts_f2b(install_scripts):
 		print('creating fail2ban-python binding -> %s' % (bindir,))
 		updatePyExec(bindir)
 		return outputs
+
+# Wrapper to specify fail2ban own options:
+class install_command_f2b(install):
+	user_options = install.user_options + [
+		('disable-2to3', None, 'Specify to deactivate 2to3, e.g. if the install runs from fail2ban test-cases.'),
+	]
+	def initialize_options(self):
+		self.disable_2to3 = None
+		install.initialize_options(self)
+	def finalize_options(self):
+		global _2to3
+		## in the test cases 2to3 should be already done (fail2ban-2to3):
+		if self.disable_2to3:
+			_2to3 = False
+		if _2to3:
+			cmdclass = self.distribution.cmdclass
+			cmdclass['build_py'] = build_py_2to3
+			cmdclass['build_scripts'] = build_scripts_2to3
+		install.finalize_options(self)
+	def run(self):
+		install.run(self)
 
 
 # Update fail2ban-python env to current python version (where f2b-modules located/installed)
@@ -143,7 +169,7 @@ setup(
 	platforms = "Posix",
 	cmdclass = {
 		'build_py': build_py, 'build_scripts': build_scripts, 
-		'install_scripts': install_scripts_f2b
+		'install_scripts': install_scripts_f2b, 'install': install_command_f2b
 	},
 	scripts = [
 		'bin/fail2ban-client',

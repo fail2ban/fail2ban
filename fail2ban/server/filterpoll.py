@@ -30,7 +30,9 @@ import time
 from .failmanager import FailManagerEmpty
 from .filter import FileFilter
 from .mytime import MyTime
+from .utils import Utils
 from ..helpers import getLogger
+
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -78,6 +80,15 @@ class FilterPoll(FileFilter):
 		del self.__file404Cnt[path]
 
 	##
+	# Get a modified log path at once
+	#
+	def getModified(self, modlst):
+		for filename in self.getLogPaths():
+			if self.isModified(filename):
+				modlst.append(filename)
+		return modlst
+
+	##
 	# Main loop.
 	#
 	# This function is the main loop of the thread. It checks if the
@@ -88,27 +99,29 @@ class FilterPoll(FileFilter):
 		while self.active:
 			if logSys.getEffectiveLevel() <= 6:
 				logSys.log(6, "Woke up idle=%s with %d files monitored",
-						   self.idle, len(self.getLogs()))
-			if not self.idle:
-				# Get file modification
-				for container in self.getLogs():
-					filename = container.getFileName()
-					if self.isModified(filename):
-						self.getFailures(filename)
-						self.__modified = True
+						   self.idle, self.getLogCount())
+			if self.idle:
+				if not Utils.wait_for(lambda: not self.idle, 
+					self.sleeptime * 10, self.sleeptime
+				):
+					self.ticks += 1
+					continue
+			# Get file modification
+			modlst = []
+			Utils.wait_for(lambda: self.getModified(modlst), self.sleeptime)
+			for filename in modlst:
+				self.getFailures(filename)
+				self.__modified = True
 
-				if self.__modified:
-					try:
-						while True:
-							ticket = self.failManager.toBan()
-							self.jail.putFailTicket(ticket)
-					except FailManagerEmpty:
-						self.failManager.cleanup(MyTime.time())
-					self.dateDetector.sortTemplate()
-					self.__modified = False
-				time.sleep(self.sleeptime)
-			else:
-				time.sleep(self.sleeptime)
+			self.ticks += 1
+			if self.__modified:
+				try:
+					while True:
+						ticket = self.failManager.toBan()
+						self.jail.putFailTicket(ticket)
+				except FailManagerEmpty:
+					self.failManager.cleanup(MyTime.time())
+				self.__modified = False
 		logSys.debug(
 			(self.jail is not None and self.jail.name or "jailless") +
 					 " filter terminated")
@@ -124,7 +137,7 @@ class FilterPoll(FileFilter):
 		try:
 			logStats = os.stat(filename)
 			stats = logStats.st_mtime, logStats.st_ino, logStats.st_size
-			pstats = self.__prevStats[filename]
+			pstats = self.__prevStats.get(filename, ())
 			self.__file404Cnt[filename] = 0
 			if logSys.getEffectiveLevel() <= 7:
 				# we do not want to waste time on strftime etc if not necessary
@@ -134,10 +147,9 @@ class FilterPoll(FileFilter):
 				# os.system("stat %s | grep Modify" % filename)
 			if pstats == stats:
 				return False
-			else:
-				logSys.debug("%s has been modified", filename)
-				self.__prevStats[filename] = stats
-				return True
+			logSys.debug("%s has been modified", filename)
+			self.__prevStats[filename] = stats
+			return True
 		except OSError as e:
 			logSys.error("Unable to get stat on %s because of: %s"
 						 % (filename, e))

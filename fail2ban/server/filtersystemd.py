@@ -33,6 +33,7 @@ if LooseVersion(getattr(journal, '__version__', "0")) < '204':
 from .failmanager import FailManagerEmpty
 from .filter import JournalFilter, Filter
 from .mytime import MyTime
+from .utils import Utils
 from ..helpers import getLogger, logging, splitwords
 
 # Gets the instance of the logger.
@@ -61,7 +62,6 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		self.__journal = journal.Reader(**jrnlargs)
 		self.__matches = []
 		self.setDatePattern(None)
-		self.ticks = 0
 		logSys.debug("Created FilterSystemd")
 
 	@staticmethod
@@ -256,8 +256,11 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			if self.idle:
 				# because journal.wait will returns immediatelly if we have records in journal,
 				# just wait a little bit here for not idle, to prevent hi-load:
-				time.sleep(self.sleeptime)
-				continue
+				if not Utils.wait_for(lambda: not self.idle, 
+					self.sleeptime * 10, self.sleeptime
+				):
+					self.ticks += 1
+					continue
 			self.__modified = 0
 			while self.active:
 				logentry = None

@@ -24,18 +24,27 @@ __license__ = "GPL"
 
 import itertools
 import logging
+import optparse
 import os
 import re
 import tempfile
 import shutil
 import sys
 import time
+import threading
 import unittest
-from StringIO import StringIO
+
+from cStringIO import StringIO
 from functools import wraps
 
-from ..server.mytime import MyTime
 from ..helpers import getLogger
+from ..server.ipdns import DNSUtils
+from ..server.mytime import MyTime
+from ..server.utils import Utils
+# for action_d.test_smtp :
+from ..server import asyncserver
+from ..version import version
+
 
 logSys = getLogger(__name__)
 
@@ -47,6 +56,141 @@ if not CONFIG_DIR:
 		CONFIG_DIR = 'config'
 	else:
 		CONFIG_DIR = '/etc/fail2ban'
+
+# During the test cases (or setup) use fail2ban modules from main directory:
+os.putenv('PYTHONPATH', os.path.dirname(os.path.dirname(os.path.dirname(
+	os.path.abspath(__file__)))))
+
+# Default options, if running from installer (setup.py):
+class DefaultTestOptions(optparse.Values):
+	def __init__(self):
+		self.__dict__ = {
+			'log_level': None, 'verbosity': None, 'log_lazy': True, 
+			'log_traceback': None, 'full_traceback': None,
+			'fast': False, 'memory_db': False, 'no_gamin': False,
+			'no_network': False, 'negate_re': False
+		}
+
+#
+# Initialization
+#
+def getOptParser(doc=""):
+	Option = optparse.Option
+	# use module docstring for help output
+	p = optparse.OptionParser(
+				usage="%s [OPTIONS] [regexps]\n" % sys.argv[0] + doc,
+				version="%prog " + version)
+
+	p.add_options([
+		Option('-l', "--log-level", type="choice",
+			   dest="log_level",
+			   choices=('heavydebug', 'debug', 'info', 'notice', 'warning', 'error', 'critical'),
+			   default=None,
+			   help="Log level for the logger to use during running tests"),
+		Option('-v', "--verbosity", action="store",
+			   dest="verbosity", type=int,
+			   default=None,
+			   help="Set numerical level of verbosity (0..4)"),
+		Option("--log-direct", action="store_false",
+			   dest="log_lazy",
+			   default=True,
+			   help="Prevent lazy logging inside tests"),
+		Option('-n', "--no-network", action="store_true",
+			   dest="no_network",
+			   help="Do not run tests that require the network"),
+		Option('-g', "--no-gamin", action="store_true",
+			   dest="no_gamin",
+			   help="Do not run tests that require the gamin"),
+		Option('-m', "--memory-db", action="store_true",
+			   dest="memory_db",
+			   help="Run database tests using memory instead of file"),
+		Option('-f', "--fast", action="store_true",
+			   dest="fast",
+			   help="Try to increase speed of the tests, decreasing of wait intervals, memory database"),
+		Option('-i', "--ignore", action="store_true",
+			   dest="negate_re",
+			   help="negate [regexps] filter to ignore tests matched specified regexps"),
+		Option("-t", "--log-traceback", action='store_true',
+			   help="Enrich log-messages with compressed tracebacks"),
+		Option("--full-traceback", action='store_true',
+			   help="Either to make the tracebacks full, not compressed (as by default)"),
+		])
+	return p
+
+def initProcess(opts):
+	# Logger:
+	logSys = getLogger("fail2ban")
+
+	# Numerical level of verbosity corresponding to a log "level"
+	verbosity = opts.verbosity
+	if verbosity is None:
+		verbosity = {'heavydebug': 4,
+					 'debug': 3,
+					 'info': 2,
+					 'notice': 2,
+					 'warning': 1,
+					 'error': 1,
+					 'critical': 0,
+					 None: 1}[opts.log_level]
+		opts.verbosity = verbosity
+
+	if opts.log_level is not None: # pragma: no cover
+		# so we had explicit settings
+		logSys.setLevel(getattr(logging, opts.log_level.upper()))
+	else: # pragma: no cover
+		# suppress the logging but it would leave unittests' progress dots
+		# ticking, unless like with '-l critical' which would be silent
+		# unless error occurs
+		logSys.setLevel(logging.CRITICAL)
+	opts.log_level = logSys.level
+
+	# Add the default logging handler
+	stdout = logging.StreamHandler(sys.stdout)
+
+	fmt = ' %(message)s'
+
+	if opts.log_traceback: # pragma: no cover
+		from ..helpers import FormatterWithTraceBack as Formatter
+		fmt = (opts.full_traceback and ' %(tb)s' or ' %(tbc)s') + fmt
+	else:
+		Formatter = logging.Formatter
+
+	# Custom log format for the verbose tests runs
+	if verbosity > 1: # pragma: no cover
+		if verbosity > 3:
+			fmt = ' | %(module)15.15s-%(levelno)-2d: %(funcName)-20.20s |' + fmt
+		if verbosity > 2:
+			fmt = ' +%(relativeCreated)5d %(thread)X %(name)-25.25s %(levelname)-5.5s' + fmt
+		else:
+			fmt = ' %(asctime)-15s %(thread)X %(levelname)-5.5s' + fmt
+
+	#
+	stdout.setFormatter(Formatter(fmt))
+	logSys.addHandler(stdout)
+
+	# Let know the version
+	if opts.verbosity != 0:
+		print("Fail2ban %s test suite. Python %s. Please wait..." \
+				% (version, str(sys.version).replace('\n', '')))
+
+	return opts;
+
+
+class F2B(DefaultTestOptions):
+	def __init__(self, opts):
+		self.__dict__ = opts.__dict__
+		if self.fast:
+			self.memory_db = True
+			self.no_gamin = True
+		self.__dict__['share_config'] = {}
+	def SkipIfFast(self):
+		pass
+	def SkipIfNoNetwork(self):
+		pass
+	def maxWaitTime(self,wtime):
+		if self.fast:
+			wtime = float(wtime) / 10
+		return wtime
 
 
 def with_tmpdir(f):
@@ -83,6 +227,51 @@ if not hasattr(unittest, 'SkipTest'): # pragma: no cover
 		_org_AddError(self, test, err)
 	unittest._TextTestResult.addError = addError
 
+def initTests(opts):
+	## if running from installer (setup.py):
+	if not opts:
+		opts = initProcess(DefaultTestOptions())
+	unittest.F2B = F2B(opts)
+	# --fast :
+	if unittest.F2B.fast: # pragma: no cover
+		# racy decrease default sleep intervals to test it faster 
+		# (prevent long sleeping during test cases ... less time goes to sleep):
+		Utils.DEFAULT_SLEEP_TIME = 0.0025
+		Utils.DEFAULT_SLEEP_INTERVAL = 0.0005
+		def F2B_SkipIfFast():
+			raise unittest.SkipTest('Skip test because of "--fast"')
+		unittest.F2B.SkipIfFast = F2B_SkipIfFast
+	else:
+		# sleep intervals are large - use replacement for sleep to check time to sleep:
+		_org_sleep = time.sleep
+		def _new_sleep(v):
+			if (v > Utils.DEFAULT_SLEEP_TIME): # pragma: no cover
+				raise ValueError('[BAD-CODE] To long sleep interval: %s, try to use conditional Utils.wait_for instead' % v)
+			_org_sleep(min(v, Utils.DEFAULT_SLEEP_TIME))
+		time.sleep = _new_sleep
+	# --no-network :
+	if unittest.F2B.no_network: # pragma: no cover
+		def F2B_SkipIfNoNetwork():
+			raise unittest.SkipTest('Skip test because of "--no-network"')
+		unittest.F2B.SkipIfNoNetwork = F2B_SkipIfNoNetwork
+	# precache all invalid ip's (TEST-NET-1, ..., TEST-NET-3 according to RFC 5737):
+	c = DNSUtils.CACHE_ipToName
+	for i in xrange(255):
+		c.set('192.0.2.%s' % i, None)
+		c.set('198.51.100.%s' % i, None)
+		c.set('203.0.113.%s' % i, None)
+	if unittest.F2B.no_network: # pragma: no cover
+		# precache all wrong dns to ip's used in test cases:
+		c = DNSUtils.CACHE_nameToIp
+		for i in (
+			('999.999.999.999', []),
+			('abcdef.abcdef', []),
+			('192.168.0.', []),
+			('failed.dns.ch', []),
+		):
+			c.set(*i)
+
+
 def mtimesleep():
 	# no sleep now should be necessary since polling tracks now not only
 	# mtime but also ino and size
@@ -102,17 +291,20 @@ def setUpMyTime():
 
 def tearDownMyTime():
 	os.environ.pop('TZ')
-	if old_TZ:
+	if old_TZ: # pragma: no cover
 		os.environ['TZ'] = old_TZ
 	time.tzset()
 	MyTime.myTime = None
 
 
-def gatherTests(regexps=None, no_network=False):
+def gatherTests(regexps=None, opts=None):
+	initTests(opts)
 	# Import all the test cases here instead of a module level to
 	# avoid circular imports
 	from . import banmanagertestcase
+	from . import clientbeautifiertestcase
 	from . import clientreadertestcase
+	from . import tickettestcase
 	from . import failmanagertestcase
 	from . import filtertestcase
 	from . import servertestcase
@@ -123,6 +315,7 @@ def gatherTests(regexps=None, no_network=False):
 	from . import misctestcase
 	from . import databasetestcase
 	from . import samplestestcase
+	from . import fail2banclienttestcase
 	from . import fail2banregextestcase
 
 	if not regexps: # pragma: no cover
@@ -132,11 +325,16 @@ def gatherTests(regexps=None, no_network=False):
 			_regexps = [re.compile(r) for r in regexps]
 
 			def addTest(self, suite):
-				suite_str = str(suite)
-				for r in self._regexps:
-					if r.search(suite_str):
-						super(FilteredTestSuite, self).addTest(suite)
-						return
+				matched = []
+				for test in suite:
+					s = str(test)
+					for r in self._regexps:
+						m = r.search(s)
+						if (m if not opts.negate_re else not m):
+							matched.append(test)
+							break
+				for test in matched:
+					super(FilteredTestSuite, self).addTest(test)
 
 		tests = FilteredTestSuite()
 
@@ -146,17 +344,25 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(servertestcase.JailTests))
 	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
 	tests.addTest(unittest.makeSuite(servertestcase.LoggingTests))
+	tests.addTest(unittest.makeSuite(servertestcase.ServerConfigReaderTests))
 	tests.addTest(unittest.makeSuite(actiontestcase.CommandActionTest))
 	tests.addTest(unittest.makeSuite(actionstestcase.ExecuteActions))
+	# Ticket, BanTicket, FailTicket
+	tests.addTest(unittest.makeSuite(tickettestcase.TicketTests))
 	# FailManager
 	tests.addTest(unittest.makeSuite(failmanagertestcase.AddFailure))
+	tests.addTest(unittest.makeSuite(failmanagertestcase.FailmanagerComplex))
 	# BanManager
 	tests.addTest(unittest.makeSuite(banmanagertestcase.AddFailure))
 	try:
 		import dns
 		tests.addTest(unittest.makeSuite(banmanagertestcase.StatusExtendedCymruInfo))
-	except ImportError:
+	except ImportError: # pragma: no cover
 		pass
+	
+	# ClientBeautifier
+	tests.addTest(unittest.makeSuite(clientbeautifiertestcase.BeautifierTest))
+
 	# ClientReaders
 	tests.addTest(unittest.makeSuite(clientreadertestcase.ConfigReaderTest))
 	tests.addTest(unittest.makeSuite(clientreadertestcase.JailReaderTest))
@@ -171,6 +377,7 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
 	tests.addTest(unittest.makeSuite(misctestcase.TestsUtilsTest))
 	tests.addTest(unittest.makeSuite(misctestcase.CustomDateFormatsTest))
+	tests.addTest(unittest.makeSuite(misctestcase.MyTimeTest))
 	# Database
 	tests.addTest(unittest.makeSuite(databasetestcase.DatabaseTest))
 
@@ -180,10 +387,11 @@ def gatherTests(regexps=None, no_network=False):
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFile))
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFileMonitor))
 	tests.addTest(unittest.makeSuite(filtertestcase.LogFileFilterPoll))
-	if not no_network:
-		tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIPDNS))
-		tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
-		tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
+	# each test case class self will check no network, and skip it (we see it in log)
+	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIPDNS))
+	tests.addTest(unittest.makeSuite(filtertestcase.GetFailures))
+	tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsTests))
+	tests.addTest(unittest.makeSuite(filtertestcase.DNSUtilsNetworkTests))
 	tests.addTest(unittest.makeSuite(filtertestcase.JailTests))
 
 	# DateDetector
@@ -191,6 +399,9 @@ def gatherTests(regexps=None, no_network=False):
 	# Filter Regex tests with sample logs
 	tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
 
+	# bin/fail2ban-client, bin/fail2ban-server
+	tests.addTest(unittest.makeSuite(fail2banclienttestcase.Fail2banClientTest))
+	tests.addTest(unittest.makeSuite(fail2banclienttestcase.Fail2banServerTest))
 	# bin/fail2ban-regex
 	tests.addTest(unittest.makeSuite(fail2banregextestcase.Fail2banRegexTest))
 
@@ -202,9 +413,6 @@ def gatherTests(regexps=None, no_network=False):
 	for file_ in os.listdir(
 		os.path.abspath(os.path.dirname(action_d.__file__))):
 		if file_.startswith("test_") and file_.endswith(".py"):
-			if no_network and file_ in ['test_badips.py','test_smtp.py']: #pragma: no cover
-				# Test required network
-				continue
 			tests.addTest(testloader.loadTestsFromName(
 				"%s.%s" % (action_d.__name__, os.path.splitext(file_)[0])))
 
@@ -219,15 +427,19 @@ def gatherTests(regexps=None, no_network=False):
 	# yoh: Since I do not know better way for parametric tests
 	#      with good old unittest
 	try:
+		# because gamin can be very slow on some platforms (and can produce many failures 
+		# with fast sleep interval) - skip it by fast run:
+		if unittest.F2B.fast or unittest.F2B.no_gamin: # pragma: no cover
+			raise ImportError('Skip, fast: %s, no_gamin: %s' % (unittest.F2B.fast, unittest.F2B.no_gamin))
 		from ..server.filtergamin import FilterGamin
 		filters.append(FilterGamin)
-	except Exception as e: # pragma: no cover
+	except ImportError as e: # pragma: no cover
 		logSys.warning("Skipping gamin backend testing. Got exception '%s'" % e)
 
 	try:
 		from ..server.filterpyinotify import FilterPyinotify
 		filters.append(FilterPyinotify)
-	except Exception as e: # pragma: no cover
+	except ImportError as e: # pragma: no cover
 		logSys.warning("I: Skipping pyinotify backend testing. Got exception '%s'" % e)
 
 	for Filter_ in filters:
@@ -236,7 +448,7 @@ def gatherTests(regexps=None, no_network=False):
 	try: # pragma: systemd no cover
 		from ..server.filtersystemd import FilterSystemd
 		tests.addTest(unittest.makeSuite(filtertestcase.get_monitor_failures_journal_testcase(FilterSystemd)))
-	except Exception as e: # pragma: no cover
+	except ImportError as e: # pragma: no cover
 		logSys.warning("I: Skipping systemd backend testing. Got exception '%s'" % e)
 
 	# Server test for logging elements which break logging used to support
@@ -289,6 +501,66 @@ if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
 
 class LogCaptureTestCase(unittest.TestCase):
 
+	class _MemHandler(logging.Handler):
+		"""Logging handler helper
+		
+		Affords not to delegate logging to StreamHandler at all,
+		format lazily on demand in getvalue.
+		Increases performance inside the LogCaptureTestCase tests, because there
+		the log level set to DEBUG.
+		"""
+
+		def __init__(self, lazy=True):
+			self._lock = threading.Lock()
+			self._val = None
+			self._recs = list()
+			self._strm = StringIO()
+			logging.Handler.__init__(self)
+			if lazy:
+				self.handle = self._handle_lazy
+			
+		def truncate(self, size=None):
+			"""Truncate the internal buffer and records."""
+			if size:
+				raise Exception('invalid size argument: %r, should be None or 0' % size)
+			with self._lock:
+				self._strm.truncate(0)
+				self._val = None
+				self._recs = list()
+
+		def __write(self, record):
+			msg = record.getMessage() + '\n'
+			try:
+				self._strm.write(msg)
+			except UnicodeEncodeError:
+				self._strm.write(msg.encode('UTF-8'))
+
+		def getvalue(self):
+			"""Return current buffer as whole string."""
+			with self._lock:
+				# cached:
+				if self._val is not None:
+					return self._val
+				# submit already emitted (delivered to handle) records:
+				for record in self._recs:
+					self.__write(record)
+				self._recs = list()
+				# cache and return:
+				self._val = self._strm.getvalue()
+				return self._val
+			 
+		def handle(self, record): # pragma: no cover
+			"""Handle the specified record direct (not lazy)"""
+			with self._lock:
+				self._val = None
+				self.__write(record)
+
+		def _handle_lazy(self, record):
+			"""Lazy handle the specified record on demand"""
+			with self._lock:
+				self._val = None
+				self._recs.append(record)
+
 	def setUp(self):
 
 		# For extended testing of what gets output into logging
@@ -299,11 +571,13 @@ class LogCaptureTestCase(unittest.TestCase):
 		self._old_level = logSys.level
 		self._old_handlers = logSys.handlers
 		# Let's log everything into a string
-		self._log = StringIO()
-		logSys.handlers = [logging.StreamHandler(self._log)]
-		if self._old_level < logging.DEBUG: # so if HEAVYDEBUG etc -- show them!
+		self._log = LogCaptureTestCase._MemHandler(unittest.F2B.log_lazy)
+		logSys.handlers = [self._log]
+		if self._old_level <= logging.DEBUG: # so if DEBUG etc -- show them (and log it in travis)!
+			print("")
 			logSys.handlers += self._old_handlers
-		logSys.setLevel(getattr(logging, 'DEBUG'))
+			logSys.debug('='*10 + ' %s ' + '='*20, self.id())
+		logSys.setLevel(logging.DEBUG)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -373,32 +647,8 @@ class LogCaptureTestCase(unittest.TestCase):
 	def printLog(self):
 		print(self._log.getvalue())
 
-# Solution from http://stackoverflow.com/questions/568271/how-to-check-if-there-exists-a-process-with-a-given-pid
-# under cc by-sa 3.0
-if os.name == 'posix':
-	def pid_exists(pid):
-		"""Check whether pid exists in the current process table."""
-		import errno
-		if pid < 0:
-			return False
-		try:
-			os.kill(pid, 0)
-		except OSError as e:
-			return e.errno == errno.EPERM
-		else:
-			return True
-else:
-	def pid_exists(pid):
-		import ctypes
-		kernel32 = ctypes.windll.kernel32
-		SYNCHRONIZE = 0x100000
 
-		process = kernel32.OpenProcess(SYNCHRONIZE, 0, pid)
-		if process != 0:
-			kernel32.CloseHandle(process)
-			return True
-		else:
-			return False
+pid_exists = Utils.pid_exists
 
 # Python 2.6 compatibility. in 2.7 assertDictEqual
 def assert_dict_equal(a, b):
