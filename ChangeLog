@@ -49,14 +49,12 @@ releases.
     - eliminated possible complex injections (on user-name resp. auth-info, see gh-1479)
     - optional port part after host (see gh-1533, gh-1581)
 
-
 ### New Features
 * New Actions:
     - `action.d/npf.conf` for NPF, the latest packet filter for NetBSD
-
 * New Filters:
     - `filter.d/mongodb-auth.conf` for MongoDB (document-oriented NoSQL database engine)
-
+      (gh-1586, gh-1606 and gh-1607)
 
 ### Enhancements
 * DateTemplate regexp extended with the word-end boundary, additionally to 
