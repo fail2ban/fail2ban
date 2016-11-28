@@ -219,7 +219,6 @@ class DateEpoch(DateTemplate):
 		if dateMatch:
 			# extract part of format which represents seconds since epoch
 			return (float(dateMatch.group(1)), dateMatch)
-		return None
 
 
 class DatePatternRegex(DateTemplate):
@@ -338,4 +337,3 @@ class DateTai64n(DateTemplate):
 			seconds_since_epoch = value[2:17]
 			# convert seconds from HEX into local time stamp
 			return (int(seconds_since_epoch, 16), dateMatch)
-		return None

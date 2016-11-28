@@ -132,14 +132,15 @@ class DateDetectorTest(LogCaptureTestCase):
 			(True,  True,  "1106513999.000", None), # Regular epoch with millisec
 			(True,  True,  "[1106513999.000]", "1106513999.000"), # epoch squared (brackets are not in match)
 			(False, True,  "audit(1106513999.000:987)", "1106513999.000"), # SELinux
+			(True,  True,  "no date line", None), # no date in string
 		):
-			logSys.debug('== test %r', (anchored, bound, sdate))
+			if rdate is None and sdate != "no date line": rdate = sdate
+			logSys.debug('== test %r', (anchored, bound, sdate, rdate))
 			for should_match, prefix in (
-				(True,         ""),
+				(rdate is not None, ""),
 				(not anchored, "bogus-prefix "),
 				(False,        "word-boundary")
 			):
-				if rdate is None: rdate = sdate
 				log = prefix + sdate + "[sshd] error: PAM: Authentication failure"
 				# if not allowed boundary test:
 				if not bound and prefix == "word-boundary": continue
@@ -282,6 +283,16 @@ class DateDetectorTest(LogCaptureTestCase):
 					self.assertTrue(match)
 		finally:
 			datedetector.logLevel = self.__old_eff_level
+
+	def testWrongTemplate(self):
+		t = DatePatternRegex('(%ExY%Exm%Exd')
+		# lazy compiling used, so try match:
+		self.assertRaises(Exception, t.matchDate, '(20050101')
+		self.assertLogged("Compile %r failed" % t.name)
+		# abstract:
+		t = DateTemplate()
+		self.assertRaises(Exception, t.getDate, 'no date line')
+
 
 iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
 
