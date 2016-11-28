@@ -92,7 +92,7 @@ class DateDetectorCache(object):
 		if self.__templates:
 			return self.__templates
 		with self.__lock:
-			if self.__templates:
+			if self.__templates: # pragma: no cover - race-condition + multi-threaded environment only
 				return self.__templates
 			self._addDefaultTemplate()
 			return self.__templates
@@ -324,7 +324,7 @@ class DateDetector(object):
 			ddtempl = self.__templates[i]
 			template = ddtempl.template
 			if template.flags & (DateTemplate.LINE_BEGIN|DateTemplate.LINE_END):
-				if logSys.getEffectiveLevel() <= logLevel-1:
+				if logSys.getEffectiveLevel() <= logLevel-1: # pragma: no cover - very-heavy debug
 					logSys.log(logLevel-1, "  try to match last anchored template #%02i ...", i)
 					match = template.matchDate(line)
 					ignoreBySearch = i
@@ -452,7 +452,7 @@ class DateDetector(object):
 			try:
 				date = template.getDate(line, timeMatch[0])
 				if date is not None:
-					if logSys.getEffectiveLevel() <= logLevel:
+					if logSys.getEffectiveLevel() <= logLevel: # pragma: no cover - heavy debug
 						logSys.log(logLevel, "  got time %f for %r using template %s",
 							date[0], date[1].group(1), template.name)
 					return date
@@ -478,29 +478,31 @@ class DateDetector(object):
 			weight = ddtempl.weight
 			## try to move faster (first if unused available, or half of part to current template position):
 			pos = self.__firstUnused if self.__firstUnused < num else num // 2
-			pweight = templates[pos].weight
 			## don't move too often (multiline logs resp. log's with different date patterns),
 			## if template not used too long, replace it also :
-			if logSys.getEffectiveLevel() <= logLevel:
-				logSys.log(logLevel, "  -> compare template #%02i & #%02i, weight %.3f > %.3f, hits %r > %r",
-					num, pos, weight, pweight, ddtempl.hits, templates[pos].hits)
-			if not pweight or weight > pweight or templates[pos].lastUsed < untime:
-				## if not larger (and target position recently used) - move slow (exact 1 position):
-				if weight <= pweight and templates[pos].lastUsed > untime:
-					pos = num-1
-					## if still smaller and template at position used, don't move:
-					pweight = templates[pos].weight
-					if logSys.getEffectiveLevel() <= logLevel:
-						logSys.log(logLevel, "  -> compare template #%02i & #%02i, weight %.3f > %.3f, hits %r > %r",
-							num, pos, weight, pweight, ddtempl.hits, templates[pos].hits)
-					if weight < pweight and templates[pos].lastUsed > untime:
-						return
-				del templates[num]
-				templates[pos:0] = [ddtempl]
-				## correct first unused:
-				while self.__firstUnused < len(templates) and templates[self.__firstUnused].hits:
-					self.__firstUnused += 1
+			def _moveable():
+				pweight = templates[pos].weight
 				if logSys.getEffectiveLevel() <= logLevel:
-					logSys.log(logLevel, "  -> moved template #%02i -> #%02i", num, pos)
-				return pos
+					logSys.log(logLevel, "  -> compare template #%02i & #%02i, weight %.3f > %.3f, hits %r > %r",
+						num, pos, weight, pweight, ddtempl.hits, templates[pos].hits)
+				return weight > pweight or untime > templates[pos].lastUsed
+			##
+			## if not moveable (smaller weight or target position recently used):
+			if not _moveable():
+				## try to move slow (exact 1 position):
+				if pos == num-1:
+					return num				
+				pos = num-1
+				## if still smaller and template at position used, don't move:
+				if not _moveable():
+					return num				
+			## move:
+			del templates[num]
+			templates[pos:0] = [ddtempl]
+			## correct first unused:
+			while self.__firstUnused < len(templates) and templates[self.__firstUnused].hits:
+				self.__firstUnused += 1
+			if logSys.getEffectiveLevel() <= logLevel:
+				logSys.log(logLevel, "  -> moved template #%02i -> #%02i", num, pos)
+			return pos
 		return num

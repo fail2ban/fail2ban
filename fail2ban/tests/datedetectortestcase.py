@@ -250,12 +250,12 @@ class DateDetectorTest(LogCaptureTestCase):
 			("030324  0:04:00",            "server mysqld[1000]: 030324  0:04:00 [Warning] Access denied ..."
 																				" foreign-input just some free text 2003-03-07 17:05:01 test", 10),
 			# distance collision detection (first date should be found):
-			("Sep 16 21:30:26",            "server mysqld[1020]: Sep 16 21:30:26 server mysqld: 030916 21:30:26 [Warning] Access denied", 10),
+			("Sep 16 21:30:26",            "server mysqld[1020]: Sep 16 21:30:26 server mysqld: 030916 21:30:26 [Warning] Access denied", 15),
 			# just to test sorting:
 			("2005-10-07 06:09:42",        "server mysqld[5906]: 2005-10-07 06:09:42 5907 [Warning] Access denied", 20),
 			("2005-10-08T15:26:18.237955", "server mysqld[5906]: 2005-10-08T15:26:18.237955 6 [Note] Access denied", 20),
 			# date format changed again:
-			("051009 10:05:30",            "server mysqld[1000]: 051009 10:05:30 [Warning] Access denied ...", 20),
+			("051009 10:05:30",            "server mysqld[1000]: 051009 10:05:30 [Warning] Access denied ...", 50),
 		):
 			logSys.debug('== test: %r', (debit, line, cnt))
 			for i in range(cnt):
