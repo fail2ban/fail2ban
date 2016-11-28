@@ -25,6 +25,9 @@ releases.
 * Fixed ambiguous wrong recognized date pattern resp. its optional parts (see gh-1512);
 * FIPS compliant, use sha1 instead of md5 if it not allowed (see gh-1540)
 * Monit config: scripting is not supported in path (gh-1556)
+* `filter.d/apache-modsecurity.conf`
+    - Fixed for newer version (one space, gh-1626), optimized: non-greedy catch-all
+      replaced for safer match, unneeded catch-all anchoring removed, non-capturing
 * `filter.d/asterisk.conf`
     - Fixed to match different asterisk log prefix (source file: method:)
 * `filter.d/dovecot.conf`
