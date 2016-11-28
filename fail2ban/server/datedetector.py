@@ -326,8 +326,8 @@ class DateDetector(object):
 			if template.flags & (DateTemplate.LINE_BEGIN|DateTemplate.LINE_END):
 				if logSys.getEffectiveLevel() <= logLevel-1: # pragma: no cover - very-heavy debug
 					logSys.log(logLevel-1, "  try to match last anchored template #%02i ...", i)
-					match = template.matchDate(line)
-					ignoreBySearch = i
+				match = template.matchDate(line)
+				ignoreBySearch = i
 			else:
 				distance, endpos = self.__lastPos[0], self.__lastEndPos[0]
 				if logSys.getEffectiveLevel() <= logLevel-1:
@@ -357,7 +357,6 @@ class DateDetector(object):
 				logSys.log(logLevel, "  ** last pattern not found - pattern change, search ...")
 		# search template and better match:
 		if not match:
-			self.__lastTemplIdx = 0x7fffffff
 			logSys.log(logLevel, " search template (%i) ...", len(self.__templates))
 			found = None, 0x7fffffff, 0x7fffffff, -1
 			i = 0
@@ -414,7 +413,7 @@ class DateDetector(object):
 			self.__lastPos = distance, line[distance-1:distance]
 			self.__lastEndPos = endpos, line[endpos:endpos+1]
 			# if not first - try to reorder current template (bubble up), they will be not sorted anymore:
-			if i:
+			if i and i != self.__lastTemplIdx:
 				i = self._reorderTemplate(i)
 			self.__lastTemplIdx = i
 			# return tuple with match and template reference used for parsing:
