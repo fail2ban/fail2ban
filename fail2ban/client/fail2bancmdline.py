@@ -47,6 +47,7 @@ class Fail2banCmdLine():
 	def __init__(self):
 		self._argv = self._args = None
 		self._configurator = None
+		self.cleanConfOnly = False
 		self.resetConf()
 
 	def resetConf(self):
@@ -101,6 +102,7 @@ class Fail2banCmdLine():
 		output("    --logtarget <FILE>|STDOUT|STDERR|SYSLOG")
 		output("    --syslogsocket auto|<FILE>")
 		output("    -d                      dump configuration. For debugging")
+		output("    -t, --test              test configuration (can be also specified with start parameters)")
 		output("    -i                      interactive mode")
 		output("    -v                      increase verbosity")
 		output("    -q                      decrease verbosity")
@@ -136,6 +138,9 @@ class Fail2banCmdLine():
 				self._conf[ o[2:] ] = opt[1]
 			elif o == "-d":
 				self._conf["dump"] = True
+			elif o == "-t" or o == "--test":
+				self.cleanConfOnly = True
+				self._conf["test"] = True
 			elif o == "-v":
 				self._conf["verbose"] += 1
 			elif o == "-q":
@@ -173,8 +178,8 @@ class Fail2banCmdLine():
 
 			# Reads the command line options.
 			try:
-				cmdOpts = 'hc:s:p:xfbdviqV'
-				cmdLongOpts = ['loglevel=', 'logtarget=', 'syslogsocket=', 'async', 'timeout=', 'help', 'version']
+				cmdOpts = 'hc:s:p:xfbdtviqV'
+				cmdLongOpts = ['loglevel=', 'logtarget=', 'syslogsocket=', 'test', 'async', 'timeout=', 'help', 'version']
 				optList, self._args = getopt.getopt(self._argv[1:], cmdOpts, cmdLongOpts)
 			except getopt.GetoptError:
 				self.dispUsage()
@@ -225,13 +230,30 @@ class Fail2banCmdLine():
 			logSys.info("Using pid file %s, [%s] logging to %s",
 				self._conf["pidfile"], logging.getLevelName(llev), self._conf["logtarget"])
 
+			readcfg = True
 			if self._conf.get("dump", False):
-				ret, stream = self.readConfig()
+				if readcfg:
+					ret, stream = self.readConfig()
+					readcfg = False
 				self.dumpConfig(stream)
-				return ret
+				if not self._conf.get("test", False):
+					return ret
+
+			if self._conf.get("test", False):
+				if readcfg:
+					readcfg = False
+					ret, stream = self.readConfig()
+				if not ret:
+					raise ServerExecutionException("ERROR: test configuration failed")
+				# exit after test if no commands specified (test only):
+				if not len(self._args):
+					output("OK: configuration test is successful")
+					return ret
 
 			# Nothing to do here, process in client/server
 			return None
+		except ServerExecutionException:
+			raise
 		except Exception as e:
 			output("ERROR: %s" % (e,))
 			if verbose > 2:
@@ -246,7 +268,8 @@ class Fail2banCmdLine():
 		try:
 			self.configurator.Reload()
 			self.configurator.readAll()
-			ret = self.configurator.getOptions(jail, self._conf)
+			ret = self.configurator.getOptions(jail, self._conf, 
+				ignoreWrong=not self.cleanConfOnly)
 			self.configurator.convertToProtocol()
 			stream = self.configurator.getConfigStream()
 		except Exception as e:
@@ -274,6 +297,7 @@ class Fail2banCmdLine():
 	def exit(code=0):
 		logSys.debug("Exit with code %s", code)
 		# because of possible buffered output in python, we should flush it before exit:
+		logging.shutdown()
 		sys.stdout.flush()
 		sys.stderr.flush()
 		# exit

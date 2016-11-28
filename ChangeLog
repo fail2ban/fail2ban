@@ -37,6 +37,17 @@ TODO: implementing of options resp. other tasks from PR #1346
 * Pyinotify-backend: stability fix for sporadically errors in multi-threaded
   environment (without lock)
 * Fixed sporadically error in testCymruInfoNxdomain, because of unsorted values
+* Misleading errors logged from ignorecommand in success case on retcode 1 (gh-1194)
+* fail2ban.service - systemd service updated (gh-1618):
+  - starting service in normal mode (without forking)
+  - does not restart if service exited normally (exit-code 0, e.g. stopped via fail2ban-client)
+  - does not restart if service can not start (exit-code 255, e.g. wrong configuration, etc.)
+  - service can be additionally started/stopped with commands (fail2ban-client, fail2ban-server)
+  - automatically creates `/var/run/fail2ban` directory before start fail2ban 
+    (systems with virtual resp. memory-based FS for `/var/run`), see gh-1531
+  - if fail2ban running as systemd-service, for logging to the systemd-journal, 
+    the `logtarget` could be set to STDOUT
+  - value `logtarget` for system targets allowed also in lowercase (stdout, stderr, syslog, etc.)
 * Fixed UTC/GMT named time zone, using `%Z` and `%z` patterns 
   (special case with 0 zone offset, see gh-1575)
 * `filter.d/freeswitch.conf`
@@ -68,6 +79,8 @@ TODO: implementing of options resp. other tasks from PR #1346
     banned in this jail, if option `--unban` specified
   - `unban --all` - unbans all IP addresses (in all jails and database)
   - `unban <IP> ... <IP>` - unbans \<IP\> (in all jails and database) (see gh-1388)
+  - introduced new option `-t` or `--test` to test configuration resp. start server only 
+    if configuration is clean (fails by wrong configured jails if option `-t` specified)
 * New command action parameter `actionrepair` - command executed in order to restore
   sane environment in error case of `actioncheck`.
 
@@ -132,6 +145,10 @@ fail2ban-client set loglevel INFO
   - new replacement for `<ADDR>` in opposition to `<HOST>`, for separate
     usage of 2 address groups only (regardless of `usedns`), `ip4` and `ip6`
     together, without host (dns)
+* Misconfigured jails don't prevent fail2ban from starting, server starts 
+  nevertheless, as long as one jail was successful configured (gh-1619)
+  Message about wrong jail configuration logged in client log (stdout, systemd
+  journal etc.) and in server log with error level
 * More precise date template handling (WARNING: theoretically possible incompatibilities):
   - datedetector rewritten more strict as earlier;
   - default templates can be specified exacter using prefix/suffix syntax (via `datepattern`);
@@ -185,6 +202,12 @@ releases.
     - Allow for having no trailing space after 'failed:' (gh-1497)
 * `filter.d/vsftpd.conf`
     - Optional reason part in message after FAIL LOGIN (gh-1543)
+* `filter.d/sendmail-reject.conf`
+    - removed mandatory double space (if dns-host available, gh-1579)
+* filter.d/sshd.conf
+    - recognized "Failed publickey for" (gh-1477);
+    - optimized failregex to match all of "Failed any-method for ... from <HOST>" (gh-1479)
+    - eliminated possible complex injections (on user-name resp. auth-info, see gh-1479)
 
 
 ### New Features

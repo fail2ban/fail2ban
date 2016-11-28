@@ -240,6 +240,9 @@ class Fail2banRegex(object):
 			self.setDatePattern(opts.datepattern)
 		if opts.usedns:
 			self._filter.setUseDns(opts.usedns)
+		self._filter.returnRawHost = opts.raw
+		self._filter.checkFindTime = False
+		self._filter.checkAllRegex = True
 
 	def decode_line(self, line):
 		return FileContainer.decode_line('<LOG>', self._encoding, line)
@@ -343,7 +346,8 @@ class Fail2banRegex(object):
 		orgLineBuffer = self._filter._Filter__lineBuffer
 		fullBuffer = len(orgLineBuffer) >= self._filter.getMaxLines()
 		try:
-			line, ret = self._filter.processLine(line, date, checkAllRegex=True, returnRawHost=self._raw)
+			ret = self._filter.processLine(line, date)
+			line = self._filter.processedLine()
 			for match in ret:
 				# Append True/False flag depending if line was matched by
 				# more than one regex

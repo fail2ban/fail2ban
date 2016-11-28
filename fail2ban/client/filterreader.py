@@ -27,7 +27,7 @@ __license__ = "GPL"
 import os
 import shlex
 
-from .configreader import DefinitionInitConfigReader
+from .configreader import DefinitionInitConfigReader, _merge_dicts
 from ..server.action import CommandAction
 from ..helpers import getLogger
 
@@ -53,7 +53,9 @@ class FilterReader(DefinitionInitConfigReader):
 		return self.__file
 
 	def getCombined(self):
-		combinedopts = dict(list(self._opts.items()) + list(self._initOpts.items()))
+		combinedopts = self._opts
+		if self._initOpts:
+			combinedopts = _merge_dicts(self._opts, self._initOpts)
 		if not len(combinedopts):
 			return {}
 		opts = CommandAction.substituteRecursiveTags(combinedopts)

@@ -584,7 +584,7 @@ class CommandAction(ActionBase):
 		return self.executeCmd(realCmd, self.timeout)
 
 	@staticmethod
-	def executeCmd(realCmd, timeout=60):
+	def executeCmd(realCmd, timeout=60, **kwargs):
 		"""Executes a command.
 
 		Parameters
@@ -613,6 +613,6 @@ class CommandAction(ActionBase):
 
 		_cmd_lock.acquire()
 		try:
-			return Utils.executeCmd(realCmd, timeout, shell=True, output=False)
+			return Utils.executeCmd(realCmd, timeout, shell=True, output=False, **kwargs)
 		finally:
 			_cmd_lock.release()

@@ -45,6 +45,9 @@ class FilterSamplesRegex(unittest.TestCase):
 		"""Call before every test case."""
 		super(FilterSamplesRegex, self).setUp()
 		self.filter = Filter(None)
+		self.filter.returnRawHost = True
+		self.filter.checkAllRegex = True
+		self.filter.checkFindTime = False
 		self.filter.active = True
 
 		setUpMyTime()
@@ -112,8 +115,7 @@ def testSampleRegexsFactory(name, basedir):
 			else:
 				faildata = {}
 
-			ret = self.filter.processLine(
-				line, returnRawHost=True, checkAllRegex=True)[1]
+			ret = self.filter.processLine(line)
 			if not ret:
 				# Check line is flagged as none match
 				self.assertFalse(faildata.get('match', True),

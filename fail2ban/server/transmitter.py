@@ -131,6 +131,9 @@ class Transmitter:
 			return self.status(command[1:])
 		elif command[0] == "version":
 			return version.version
+		elif command[0] == "config-error":
+			logSys.error(command[1])
+			return None
 		raise Exception("Invalid command")
 	
 	def __commandSet(self, command, multiple=False):

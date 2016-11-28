@@ -5,12 +5,16 @@ After=network.target iptables.service firewalld.service
 PartOf=iptables.service firewalld.service
 
 [Service]
-Type=forking
-ExecStart=/usr/bin/fail2ban-client -x start
+Type=simple
+ExecStartPre=/bin/mkdir -p /var/run/fail2ban
+ExecStart=/usr/bin/fail2ban-server -xf start
+# if should be logged in systemd journal, use following line or set logtarget to stdout in fail2ban.local
+# ExecStart=/usr/bin/fail2ban-server -xf --logtarget=stdout start
 ExecStop=/usr/bin/fail2ban-client stop
 ExecReload=/usr/bin/fail2ban-client reload
 PIDFile=/var/run/fail2ban/fail2ban.pid
-Restart=always
+Restart=on-failure
+RestartPreventExitStatus=0 255
 
 [Install]
 WantedBy=multi-user.target
