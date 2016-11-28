@@ -40,6 +40,9 @@ class FilterReader(DefinitionInitConfigReader):
 	_configOpts = {
 		"ignoreregex": ["string", None],
 		"failregex": ["string", ""],
+		"maxlines": ["int", None],
+		"datepattern": ["string", None],
+		"journalmatch": ["string", None],
 	}
 
 	def setFile(self, fileName):
@@ -76,16 +79,16 @@ class FilterReader(DefinitionInitConfigReader):
 					stream.append(["multi-set", self._jailName, "add" + opt, multi])
 				elif len(multi):
 					stream.append(["set", self._jailName, "add" + opt, multi[0]])
-		if self._initOpts:
-			if 'maxlines' in self._initOpts:
+			elif opt == 'maxlines':
 				# We warn when multiline regex is used without maxlines > 1
 				# therefore keep sure we set this option first.
-				stream.insert(0, ["set", self._jailName, "maxlines", self._initOpts["maxlines"]])
-			if 'datepattern' in self._initOpts:
-				stream.append(["set", self._jailName, "datepattern", self._initOpts["datepattern"]])
+				stream.insert(0, ["set", self._jailName, "maxlines", value])
+			elif opt == 'datepattern':
+				stream.append(["set", self._jailName, "datepattern", value])
 			# Do not send a command if the match is empty.
-			if self._initOpts.get("journalmatch", '') != '':
-				for match in self._initOpts["journalmatch"].split("\n"):
+			elif opt == 'journalmatch':
+				for match in value.split("\n"):
+					if match == '': continue
 					stream.append(
 						["set", self._jailName, "addjournalmatch"] +
                         shlex.split(match))

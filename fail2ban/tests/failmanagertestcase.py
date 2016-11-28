@@ -36,6 +36,7 @@ class AddFailure(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		super(AddFailure, self).setUp()
 		self.__items = None
 		self.__failManager = FailManager()
 

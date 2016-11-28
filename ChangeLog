@@ -13,6 +13,15 @@ TODO: implementing of options resp. other tasks from PR #1346
 
 ### Fixes
 * [Grave] memory leak's fixed (gh-1277, gh-1234)
+* [Grave] Misleading date patterns defined more precisely (using extended syntax
+  `%Ex[mdHMS]` for exact two-digit match or e. g. `%ExY` as more precise year 
+  pattern, within same century of last year and the next 3 years)
+* [Grave] extends date detector template with distance (position of match in 
+  log-line), to prevent grave collision using (re)ordered template list (e.g.
+  find-spot of wrong date-match inside foreign input, misleading date patterns
+  by ambiguous formats, etc.)
+* Distance collision check always prefers template with shortest distance
+  (left for right) if date pattern is not anchored
 * Tricky bug fix: last position of log file will be never retrieved (gh-795),
   because of CASCADE all log entries will be deleted from logs table together with jail, 
   if used "INSERT OR REPLACE" statement
@@ -39,6 +48,11 @@ TODO: implementing of options resp. other tasks from PR #1346
   - if fail2ban running as systemd-service, for logging to the systemd-journal, 
     the `logtarget` could be set to STDOUT
   - value `logtarget` for system targets allowed also in lowercase (stdout, stderr, syslog, etc.)
+* Fixed UTC/GMT named time zone, using `%Z` and `%z` patterns 
+  (special case with 0 zone offset, see gh-1575)
+* `filter.d/freeswitch.conf`
+    - Optional prefixes (server, daemon, dual time) if systemd daemon logs used (gh-1548)
+    - User part rewritten to accept IPv6 resp. domain after "@" (gh-1548)
 
 ### New Features
 * IPv6 support:
@@ -135,6 +149,22 @@ fail2ban-client set loglevel INFO
   nevertheless, as long as one jail was successful configured (gh-1619)
   Message about wrong jail configuration logged in client log (stdout, systemd
   journal etc.) and in server log with error level
+* More precise date template handling (WARNING: theoretically possible incompatibilities):
+  - datedetector rewritten more strict as earlier;
+  - default templates can be specified exacter using prefix/suffix syntax (via `datepattern`);
+  - more as one date pattern can be specified using option `datepattern` now 
+    (new-line separated);
+  - some default options like `datepattern` can be specified directly in 
+    section `[Definition]`, that avoids contrary usage of unnecessarily `[Init]`
+    section, because of performance (each extra section costs time);
+  - option `datepattern` can be specified in jail also (e. g. jails without filters 
+    or custom log-format, new-line separated for multiple patterns);
+  - if first unnamed group specified in pattern, only this will be cut out from
+    search log-line (e. g.: `^date:[({DATE})]` will cut out only datetime match 
+    pattern, and leaves `date:[] ...` for searching in filter);
+  - faster match and fewer searching of appropriate templates
+    (DateDetector.matchTime calls rarer DateTemplate.matchDate now);
+  - several standard filters extended with exact prefixed or anchored date templates;
 * fail2ban-testcases:
   - `assertLogged` extended with parameter wait (to wait up to specified timeout,
     before we throw assert exception) + test cases rewritten using that

@@ -48,6 +48,8 @@ from ..version import version
 
 logSys = getLogger(__name__)
 
+TEST_NOW = 1124013600
+
 CONFIG_DIR = os.environ.get('FAIL2BAN_CONFIG_DIR', None)
 
 if not CONFIG_DIR:
@@ -257,6 +259,14 @@ def initTests(opts):
 		def F2B_SkipIfNoNetwork():
 			raise unittest.SkipTest('Skip test because of "--no-network"')
 		unittest.F2B.SkipIfNoNetwork = F2B_SkipIfNoNetwork
+
+	# persistently set time zone to CET (used in zone-related test-cases),
+	# yoh: we need to adjust TZ to match the one used by Cyril so all the timestamps match
+	os.environ['TZ'] = 'Europe/Zurich'
+	time.tzset()
+	# set alternate now for time related test cases:
+	MyTime.setAlternateNow(TEST_NOW)
+
 	# precache all invalid ip's (TEST-NET-1, ..., TEST-NET-3 according to RFC 5737):
 	c = DNSUtils.CACHE_ipToName
 	for i in xrange(255):
@@ -286,17 +296,10 @@ old_TZ = os.environ.get('TZ', None)
 def setUpMyTime():
 	# Set the time to a fixed, known value
 	# Sun Aug 14 12:00:00 CEST 2005
-	# yoh: we need to adjust TZ to match the one used by Cyril so all the timestamps match
-	os.environ['TZ'] = 'Europe/Zurich'
-	time.tzset()
-	MyTime.setTime(1124013600)
+	MyTime.setTime(TEST_NOW)
 
 
 def tearDownMyTime():
-	os.environ.pop('TZ')
-	if old_TZ: # pragma: no cover
-		os.environ['TZ'] = old_TZ
-	time.tzset()
 	MyTime.myTime = None
 
 
@@ -384,7 +387,6 @@ def gatherTests(regexps=None, opts=None):
 	tests.addTest(unittest.makeSuite(misctestcase.HelpersTest))
 	tests.addTest(unittest.makeSuite(misctestcase.SetupTest))
 	tests.addTest(unittest.makeSuite(misctestcase.TestsUtilsTest))
-	tests.addTest(unittest.makeSuite(misctestcase.CustomDateFormatsTest))
 	tests.addTest(unittest.makeSuite(misctestcase.MyTimeTest))
 	# Database
 	tests.addTest(unittest.makeSuite(databasetestcase.DatabaseTest))
@@ -404,6 +406,7 @@ def gatherTests(regexps=None, opts=None):
 
 	# DateDetector
 	tests.addTest(unittest.makeSuite(datedetectortestcase.DateDetectorTest))
+	tests.addTest(unittest.makeSuite(datedetectortestcase.CustomDateFormatsTest))
 	# Filter Regex tests with sample logs
 	tests.addTest(unittest.makeSuite(samplestestcase.FilterSamplesRegex))
 
@@ -520,6 +523,16 @@ if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
 			self.fail(msg)
 	unittest.TestCase.assertNotIn = assertNotIn
 
+_org_setUp = unittest.TestCase.setUp
+def _customSetUp(self):
+	# print('=='*10, self)
+	if unittest.F2B.log_level <= logging.DEBUG: # so if DEBUG etc -- show them (and log it in travis)!
+		print("")
+		logSys.debug('='*10 + ' %s ' + '='*20, self.id())
+	_org_setUp(self)
+
+unittest.TestCase.setUp = _customSetUp
+
 
 class LogCaptureTestCase(unittest.TestCase):
 
@@ -595,12 +608,11 @@ class LogCaptureTestCase(unittest.TestCase):
 		# Let's log everything into a string
 		self._log = LogCaptureTestCase._MemHandler(unittest.F2B.log_lazy)
 		logSys.handlers = [self._log]
-		if self._old_level <= logging.DEBUG: # so if DEBUG etc -- show them (and log it in travis)!
-			print("")
+		if self._old_level <= logging.DEBUG:
 			logSys.handlers += self._old_handlers
-			logSys.debug('='*10 + ' %s ' + '='*20, self.id())
-		else:
+		else: # lowest log level to capture messages
 			logSys.setLevel(logging.DEBUG)
+		super(LogCaptureTestCase, self).setUp()
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -609,6 +621,7 @@ class LogCaptureTestCase(unittest.TestCase):
 		logSys = getLogger("fail2ban")
 		logSys.handlers = self._old_handlers
 		logSys.level = self._old_level
+		super(LogCaptureTestCase, self).tearDown()
 
 	def _is_logged(self, *s, **kwargs):
 		logged = self._log.getvalue()

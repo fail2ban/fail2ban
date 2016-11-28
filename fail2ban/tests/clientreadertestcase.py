@@ -55,6 +55,7 @@ class ConfigReaderTest(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		super(ConfigReaderTest, self).setUp()
 		self.d = tempfile.mkdtemp(prefix="f2b-temp")
 		self.c = ConfigReaderUnshared(basedir=self.d)
 

@@ -66,7 +66,7 @@ class TransmitterBase(unittest.TestCase):
 	
 	def setUp(self):
 		"""Call before every test case."""
-		#super(TransmitterBase, self).setUp()
+		super(TransmitterBase, self).setUp()
 		self.transm = self.server._Server__transm
 		# To test thransmitter we don't need to start server...
 		#self.server.start('/dev/null', '/dev/null', force=False)
@@ -303,6 +303,8 @@ class Transmitter(TransmitterBase):
 			jail=self.jailName)
 		self.setGetTest(
 			"datepattern", "Epoch", (None, "Epoch"), jail=self.jailName)
+		self.setGetTest(
+			"datepattern", "^Epoch", (None, "{^LN-BEG}Epoch"), jail=self.jailName)
 		self.setGetTest(
 			"datepattern", "TAI64N", (None, "TAI64N"), jail=self.jailName)
 		self.setGetTestNOK("datepattern", "%Cat%a%%%g", jail=self.jailName)
@@ -1108,7 +1110,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					# (we don't use it in this test at all):
 					elif unittest.F2B.fast and (
 						len(cmd) > 3 and cmd[0] in ('set', 'multi-set') and cmd[2] == 'addfailregex'
-					):
+					): # pragma: no cover
 						cmd[0] = "set"
 						cmd[3] = "DUMMY-REGEX <HOST>"
 					# command to server, use cmdHandler direct instead of `transm.proceed(cmd)`:

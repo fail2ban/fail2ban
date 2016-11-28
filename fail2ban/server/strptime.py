@@ -26,10 +26,59 @@ from .mytime import MyTime
 
 locale_time = LocaleTime()
 timeRE = TimeRE()
-timeRE['z'] = r"(?P<z>Z|[+-]\d{2}(?::?[0-5]\d)?)"
 
+def _getYearCentRE(cent=(0,3), distance=3, now=(MyTime.now(), MyTime.alternateNow)):
+	""" Build century regex for last year and the next years (distance).
+		
+	Thereby respect possible run in the test-cases (alternate date used there)
+	"""
+	cent = lambda year, f=cent[0], t=cent[1]: str(year)[f:t]
+	exprset = set( cent(now[0].year + i) for i in (-1, distance) )
+	if len(now) and now[1]:
+		exprset |= set( cent(now[1].year + i) for i in (-1, distance) )
+	return "(?:%s)" % "|".join(exprset) if len(exprset) > 1 else "".join(exprset)
 
-def reGroupDictStrptime(found_dict):
+#todo: implement literal time zone support like CET, PST, PDT, etc (via pytz):
+#timeRE['z'] = r"%s?(?P<z>Z|[+-]\d{2}(?::?[0-5]\d)?|[A-Z]{3})?" % timeRE['Z']
+timeRE['Z'] = r"(?P<Z>[A-Z]{3,5})"
+timeRE['z'] = r"(?P<z>Z|UTC|GMT|[+-]\d{2}(?::?[0-5]\d)?)"
+
+# Extend build-in TimeRE with some exact patterns
+# exact two-digit patterns:
+timeRE['Exd'] = r"(?P<d>3[0-1]|[1-2]\d|0[1-9])"
+timeRE['Exm'] = r"(?P<m>1[0-2]|0[1-9])"
+timeRE['ExH'] = r"(?P<H>2[0-3]|[0-1]\d)"
+timeRE['ExM'] = r"(?P<M>[0-5]\d)"
+timeRE['ExS'] = r"(?P<S>6[0-1]|[0-5]\d)"
+# more precise year patterns, within same century of last year and
+# the next 3 years (for possible long uptime of fail2ban); thereby
+# respect possible run in the test-cases (alternate date used there):
+timeRE['ExY'] = r"(?P<Y>%s\d)" % _getYearCentRE(cent=(0,3), distance=3)
+timeRE['Exy'] = r"(?P<y>%s\d)" % _getYearCentRE(cent=(2,3), distance=3)
+
+def getTimePatternRE():
+	keys = timeRE.keys()
+	patt = (r"%%(%%|%s|[%s])" % (
+		"|".join([k for k in keys if len(k) > 1]),
+		"".join([k for k in keys if len(k) == 1]),
+	))
+	names = {
+		'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
+		'H': "24hour", 'I': "12hour", 'j': "Yearday", 'm': "Month",
+		'M': "Minute", 'p': "AMPM", 'S': "Second", 'U': "Yearweek",
+		'w': "Weekday", 'W': "Yearweek", 'y': 'Year2', 'Y': "Year", '%': "%",
+		'z': "Zone offset", 'f': "Microseconds", 'Z': "Zone name",
+	}
+	for key in set(keys) - set(names): # may not have them all...
+		if key.startswith('Ex'):
+			kn = names.get(key[2:])
+			if kn:
+				names[key] = "Ex" + kn
+				continue
+		names[key] = "%%%s" % key
+	return (patt, names)
+
+def reGroupDictStrptime(found_dict, msec=False):
 	"""Return time from dictionary of strptime fields
 
 	This is tweaked from python built-in _strptime.
@@ -58,14 +107,15 @@ def reGroupDictStrptime(found_dict):
 	# weekday and julian defaulted to -1 so as to signal need to calculate
 	# values
 	weekday = julian = -1
-	for group_key in found_dict.keys():
+	for key, val in found_dict.iteritems():
+		if val is None: continue
 		# Directives not explicitly handled below:
 		#   c, x, X
 		#	  handled by making out of other directives
 		#   U, W
 		#	  worthless without day of the week
-		if group_key == 'y':
-			year = int(found_dict['y'])
+		if key == 'y':
+			year = int(val)
 			# Open Group specification for strptime() states that a %y
 			#value in the range of [00, 68] is in the century 2000, while
 			#[69,99] is in the century 1900
@@ -73,20 +123,20 @@ def reGroupDictStrptime(found_dict):
 				year += 2000
 			else:
 				year += 1900
-		elif group_key == 'Y':
-			year = int(found_dict['Y'])
-		elif group_key == 'm':
-			month = int(found_dict['m'])
-		elif group_key == 'B':
-			month = locale_time.f_month.index(found_dict['B'].lower())
-		elif group_key == 'b':
-			month = locale_time.a_month.index(found_dict['b'].lower())
-		elif group_key == 'd':
-			day = int(found_dict['d'])
-		elif group_key == 'H':
-			hour = int(found_dict['H'])
-		elif group_key == 'I':
-			hour = int(found_dict['I'])
+		elif key == 'Y':
+			year = int(val)
+		elif key == 'm':
+			month = int(val)
+		elif key == 'B':
+			month = locale_time.f_month.index(val.lower())
+		elif key == 'b':
+			month = locale_time.a_month.index(val.lower())
+		elif key == 'd':
+			day = int(val)
+		elif key == 'H':
+			hour = int(val)
+		elif key == 'I':
+			hour = int(val)
 			ampm = found_dict.get('p', '').lower()
 			# If there was no AM/PM indicator, we'll treat this like AM
 			if ampm in ('', locale_time.am_pm[0]):
@@ -101,38 +151,39 @@ def reGroupDictStrptime(found_dict):
 				# 12 noon == 12 PM == hour 12
 				if hour != 12:
 					hour += 12
-		elif group_key == 'M':
-			minute = int(found_dict['M'])
-		elif group_key == 'S':
-			second = int(found_dict['S'])
-		elif group_key == 'f':
-			s = found_dict['f']
-			# Pad to always return microseconds.
-			s += "0" * (6 - len(s))
-			fraction = int(s)
-		elif group_key == 'A':
-			weekday = locale_time.f_weekday.index(found_dict['A'].lower())
-		elif group_key == 'a':
-			weekday = locale_time.a_weekday.index(found_dict['a'].lower())
-		elif group_key == 'w':
-			weekday = int(found_dict['w'])
+		elif key == 'M':
+			minute = int(val)
+		elif key == 'S':
+			second = int(val)
+		elif key == 'f':
+			if msec:
+				s = val
+				# Pad to always return microseconds.
+				s += "0" * (6 - len(s))
+				fraction = int(s)
+		elif key == 'A':
+			weekday = locale_time.f_weekday.index(val.lower())
+		elif key == 'a':
+			weekday = locale_time.a_weekday.index(val.lower())
+		elif key == 'w':
+			weekday = int(val)
 			if weekday == 0:
 				weekday = 6
 			else:
 				weekday -= 1
-		elif group_key == 'j':
-			julian = int(found_dict['j'])
-		elif group_key in ('U', 'W'):
-			week_of_year = int(found_dict[group_key])
-			if group_key == 'U':
+		elif key == 'j':
+			julian = int(val)
+		elif key in ('U', 'W'):
+			week_of_year = int(val)
+			if key == 'U':
 				# U starts week on Sunday.
 				week_of_year_start = 6
 			else:
 				# W starts week on Monday.
 				week_of_year_start = 0
-		elif group_key == 'z':
-			z = found_dict['z']
-			if z == "Z":
+		elif key == 'z':
+			z = val
+			if z in ("Z", "UTC", "GMT"):
 				tzoffset = 0
 			else:
 				tzoffset = int(z[1:3]) * 60 # Hours...
@@ -140,6 +191,10 @@ def reGroupDictStrptime(found_dict):
 					tzoffset += int(z[-2:]) # ...and minutes
 				if z.startswith("-"):
 					tzoffset = -tzoffset
+		elif key == 'Z':
+			z = val
+			if z in ("UTC", "GMT"):
+				tzoffset = 0
 
 	# Fail2Ban will assume it's this year
 	assume_year = False
@@ -176,7 +231,7 @@ def reGroupDictStrptime(found_dict):
 	# Actully create date
 	date_result =  datetime.datetime(
 		year, month, day, hour, minute, second, fraction)
-	if gmtoff:
+	if gmtoff is not None:
 		date_result = date_result - datetime.timedelta(seconds=gmtoff)
 
 	if date_result > now and assume_today:
@@ -189,7 +244,9 @@ def reGroupDictStrptime(found_dict):
 			year=year-1, month=month, day=day)
 
 	if gmtoff is not None:
-		return calendar.timegm(date_result.utctimetuple())
+		tm = calendar.timegm(date_result.utctimetuple())
 	else:
-		return time.mktime(date_result.timetuple())
-
+		tm = time.mktime(date_result.timetuple())
+	if msec:
+		tm += fraction/1000000.0
+	return tm

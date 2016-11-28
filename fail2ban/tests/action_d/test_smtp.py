@@ -48,6 +48,7 @@ class SMTPActionTest(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		super(SMTPActionTest, self).setUp()
 		self.jail = DummyJail()
 		pythonModule = os.path.join(CONFIG_DIR, "action.d", "smtp.py")
 		pythonModuleName = os.path.basename(pythonModule.rstrip(".py"))
