@@ -138,8 +138,8 @@ def _start_params(tmp, use_stock=False, logtarget="/dev/null", db=":memory:"):
 			"""Filters list of 'files' to contain only directories (under dir)"""
 			return [f for f in files if isdir(pjoin(dir, f))]
 		shutil.copytree(STOCK_CONF_DIR, cfg, ignore=ig_dirs)
-		os.symlink(pjoin(STOCK_CONF_DIR, "action.d"), pjoin(cfg, "action.d"))
-		os.symlink(pjoin(STOCK_CONF_DIR, "filter.d"), pjoin(cfg, "filter.d"))
+		os.symlink(os.path.abspath(pjoin(STOCK_CONF_DIR, "action.d")), pjoin(cfg, "action.d"))
+		os.symlink(os.path.abspath(pjoin(STOCK_CONF_DIR, "filter.d")), pjoin(cfg, "filter.d"))
 		# replace fail2ban params (database with memory):
 		r = re.compile(r'^dbfile\s*=')
 		for line in fileinput.input(pjoin(cfg, "fail2ban.conf"), inplace=True):
@@ -424,7 +424,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		self.execSuccess(startparams, "-vvd")
 		self.assertLogged("Loading files")
 		self.assertLogged("logtarget")
-
+		
 	@with_tmpdir
 	@with_kill_srv
 	def testClientStartBackgroundInside(self, tmp):
