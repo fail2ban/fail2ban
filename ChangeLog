@@ -44,6 +44,10 @@ releases.
 * New Actions:
     - `action.d/npf.conf` for NPF, the latest packet filter for NetBSD
 
+* New Filters:
+    - `filter.d/mongodb-auth.conf` for MongoDB (document-oriented NoSQL database engine)
+
+
 ### Enhancements
 * DateTemplate regexp extended with the word-end boundary, additionally to 
   word-start boundary
