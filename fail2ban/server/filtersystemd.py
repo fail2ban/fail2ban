@@ -283,9 +283,23 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				except FailManagerEmpty:
 					self.failManager.cleanup(MyTime.time())
 
+		self.__cleanup()
 		logSys.debug((self.jail is not None and self.jail.name
                       or "jailless") +" filter terminated")
 		return True
+
+	def cleanup(self):
+		super(FilterSystemd, self).cleanup()
+		self.__cleanup()
+
+	def __cleanup(self):
+		if self.__journal:
+			try:
+				self.__journal.close()
+			except Exception as e: # pragma: no cover
+				logSys.error("Close journal failed: %r", e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+		self.__journal = None
 
 	def status(self, flavor="basic"):
 		ret = super(FilterSystemd, self).status(flavor=flavor)
