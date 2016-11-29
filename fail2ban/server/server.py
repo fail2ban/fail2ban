@@ -150,6 +150,7 @@ class Server:
 			self.__db.addJail(self.__jails[name])
 		
 	def delJail(self, name):
+		self.__jails[name].cleanup()
 		if self.__db is not None:
 			self.__db.delJail(self.__jails[name])
 		del self.__jails[name]
@@ -168,7 +169,7 @@ class Server:
 			self.__lock.acquire()
 			if self.__jails[name].is_alive():
 				self.__jails[name].stop()
-				self.delJail(name)
+			self.delJail(name)
 		finally:
 			self.__lock.release()
 	

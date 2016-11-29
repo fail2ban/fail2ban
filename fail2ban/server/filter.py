@@ -290,6 +290,13 @@ class Filter(JailThread):
 		raise Exception("run() is abstract")
 
 	##
+	# Clean up resources allocated by the filter, if necessary.
+	#
+
+	def cleanup(self):
+		pass
+
+	##
 	# Set external command, for ignoredips
 	#
 

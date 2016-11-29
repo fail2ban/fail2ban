@@ -227,6 +227,11 @@ class Jail:
 		self.actions.join()
 		logSys.info("Jail '%s' stopped" % self.name)
 
+	def cleanup(self):
+		"""Clean up resources allocated by the filter, if necessary.
+		"""
+		self.filter.cleanup()
+
 	def is_alive(self):
 		"""Check jail "is_alive" by checking filter and actions threads.
 		"""
