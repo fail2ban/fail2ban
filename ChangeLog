@@ -6,7 +6,7 @@
 Fail2Ban: Changelog
 ===================
 
-ver. 0.9.6 (2016/XX/XX) - wanna-be-released
+ver. 0.9.6 (2016/12/10) - stretch-is-coming
 -----------
 
 0.9.x line is no longer heavily developed.  If you are interested in
@@ -18,7 +18,7 @@ releases.
   induced a subsequent error: last position of log file will be never retrieved (gh-795)
 * Fixed a distribution related bug within testReadStockJailConfForceEnabled
   (e.g. test-cases faults on Fedora, see gh-1353)
-* Fixed pythonic filters and test scripts (running via wrong python version, 
+* Fixed pythonic filters and test scripts (running via wrong python version,
   uses "fail2ban-python" now);
 * Fixed test case "testSetupInstallRoot" for not default python version (also
   using direct call, out of virtualenv);
@@ -33,7 +33,7 @@ releases.
 * `filter.d/dovecot.conf`
     - Fixed failregex ignores failures through some not relevant info (gh-1623)
 * `filter.d/ignorecommands/apache-fakegooglebot`
-    - Fixed error within apache-fakegooglebot, that will be called 
+    - Fixed error within apache-fakegooglebot, that will be called
       with wrong python version (gh-1506)
 * `filter.d/assp.conf`
     - Extended failregex and test cases to handle ASSP V1 and V2 (gh-1494)
@@ -57,11 +57,11 @@ releases.
       (gh-1586, gh-1606 and gh-1607)
 
 ### Enhancements
-* DateTemplate regexp extended with the word-end boundary, additionally to 
+* DateTemplate regexp extended with the word-end boundary, additionally to
   word-start boundary
-* Introduces new command "fail2ban-python", as automatically created symlink to 
+* Introduces new command "fail2ban-python", as automatically created symlink to
   python executable, where fail2ban currently installed (resp. its modules are located):
-    - allows to use the same version, fail2ban currently running, e.g. in 
+    - allows to use the same version, fail2ban currently running, e.g. in
       external scripts just via replace python with fail2ban-python:
       ```diff
       -#!/usr/bin/env python
