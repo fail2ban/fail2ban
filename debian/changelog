@@ -1,3 +1,10 @@
+fail2ban (0.9.6-1) unstable; urgency=medium
+
+  * Fresh upstream release
+    - should resolve outstanding FTBFS (Closes: #835707)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 09 Dec 2016 09:37:54 -0500
+
 fail2ban (0.9.5-1) unstable; urgency=medium
 
   * Fresh upstream release
