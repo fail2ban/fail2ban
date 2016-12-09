@@ -227,7 +227,7 @@ Regular expressions (failregex, ignoreregex) assume that the date/time has been
 removed from the log line (this is just how fail2ban works internally ATM).
 
 If the format is like '<date...> error 1.2.3.4 is evil' then you need to match
-the < at the start so regex should be similar to '^<> <HOST> is evil$' using
+the <> at the start so regex should be similar to '^<> error <HOST> is evil$' using
 <HOST> where the IP/domain name appears in the log line.
 
 The following general rules apply to regular expressions:

@@ -43,6 +43,8 @@
 
 # failJSON: { "time": "2004-11-04T18:30:40", "match": true , "host": "192.168.200.100" }
 Nov 4 18:30:40 localhost asterisk[32229]: NOTICE[32257]: chan_sip.c:23417 in handle_request_register: Registration from '<sip:301@example.com>' failed for '192.168.200.100:36998' - Wrong password
+# failJSON: { "time": "2016-08-19T11:11:26", "match": true , "host": "192.0.2.1", "desc": "Another log_prefix used (` in` should be optional)" }
+[2016-08-19 11:11:26] NOTICE[12931]: chan_sip.c:28468 handle_request_register: Registration from 'sip:bob@192.0.2.1' failed for '192.0.2.1:42406' - Wrong password
 
 # failed authentication attempt on INVITE using PJSIP
 # failJSON: { "time": "2015-05-24T08:42:16", "match": true, "host": "10.250.251.252" }

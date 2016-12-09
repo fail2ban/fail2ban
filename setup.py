@@ -19,8 +19,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 __author__ = "Cyril Jaquier, Steven Hiscocks, Yaroslav Halchenko"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2008-2013 Fail2Ban Contributors"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2008-2016 Fail2Ban Contributors"
 __license__ = "GPL"
+
+import platform
 
 try:
 	import setuptools
@@ -38,11 +40,39 @@ except ImportError:
 	# python 2.x
 	from distutils.command.build_py import build_py
 	from distutils.command.build_scripts import build_scripts
+# all versions
+from distutils.command.install_scripts import install_scripts
+
 import os
 from os.path import isfile, join, isdir, realpath
 import sys
 import warnings
 from glob import glob
+
+from fail2ban.setup import updatePyExec
+
+
+# Wrapper to install python binding (to current python version):
+class install_scripts_f2b(install_scripts):
+
+	def get_outputs(self):
+		outputs = install_scripts.get_outputs(self)
+		fn = None
+		for fn in outputs:
+			if os.path.basename(fn) == 'fail2ban-server':
+				break
+		bindir = os.path.dirname(fn)
+		print('creating fail2ban-python binding -> %s' % (bindir,))
+		updatePyExec(bindir)
+		return outputs
+
+
+# Update fail2ban-python env to current python version (where f2b-modules located/installed)
+rootdir = os.path.realpath(os.path.dirname(
+	# __file__ seems to be overwritten sometimes on some python versions (e.g. bug of 2.6 by running under cProfile, etc.):
+	sys.argv[0] if os.path.basename(sys.argv[0]) == 'setup.py' else __file__
+))
+updatePyExec(os.path.join(rootdir, 'bin'))
 
 if setuptools and "test" in sys.argv:
 	import logging
@@ -85,6 +115,18 @@ if os.path.exists('/var/run'):
 	# realpath is used to possibly resolve /var/run -> /run symlink
 	data_files_extra += [(realpath('/var/run/fail2ban'), '')]
 
+# Installing documentation files only under Linux or other GNU/ systems
+# (e.g. GNU/kFreeBSD), since others might have protective mechanisms forbidding
+# installation there (see e.g. #1233)
+platform_system = platform.system().lower()
+doc_files = ['README.md', 'DEVELOP', 'FILTERS', 'doc/run-rootless.txt']
+if platform_system in ('solaris', 'sunos'):
+	doc_files.append('README.Solaris')
+if platform_system in ('linux', 'solaris', 'sunos') or platform_system.startswith('gnu'):
+	data_files_extra.append(
+		('/usr/share/doc/fail2ban', doc_files)
+	)
+
 # Get version number, avoiding importing fail2ban.
 # This is due to tests not functioning for python3 as 2to3 takes place later
 exec(open(join("fail2ban", "version.py")).read())
@@ -99,12 +141,16 @@ setup(
 	url = "http://www.fail2ban.org",
 	license = "GPL",
 	platforms = "Posix",
-	cmdclass = {'build_py': build_py, 'build_scripts': build_scripts},
+	cmdclass = {
+		'build_py': build_py, 'build_scripts': build_scripts, 
+		'install_scripts': install_scripts_f2b
+	},
 	scripts = [
 		'bin/fail2ban-client',
 		'bin/fail2ban-server',
 		'bin/fail2ban-regex',
 		'bin/fail2ban-testcases',
+		# 'bin/fail2ban-python', -- link (binary), will be installed via install_scripts_f2b wrapper
 	],
 	packages = [
 		'fail2ban',
@@ -148,10 +194,6 @@ setup(
 		('/var/lib/fail2ban',
 			''
 		),
-		('/usr/share/doc/fail2ban',
-			['README.md', 'README.Solaris', 'DEVELOP', 'FILTERS',
-			 'doc/run-rootless.txt']
-		)
 	] + data_files_extra,
 	**setup_extra
 )

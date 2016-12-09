@@ -39,7 +39,7 @@ except ImportError:
 
 from ..client import fail2banregex
 from ..client.fail2banregex import Fail2banRegex, get_opt_parser, output
-from .utils import LogCaptureTestCase, logSys
+from .utils import setUpMyTime, tearDownMyTime, LogCaptureTestCase, logSys
 from .utils import CONFIG_DIR
 
 
@@ -70,10 +70,12 @@ class Fail2banRegexTest(LogCaptureTestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		LogCaptureTestCase.setUp(self)
+		setUpMyTime()
 
 	def tearDown(self):
 		"""Call after every test case."""
 		LogCaptureTestCase.tearDown(self)
+		tearDownMyTime()
 
 	def testWrongRE(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
@@ -159,8 +161,8 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertTrue(fail2banRegex.start(opts, args))
 		self.assertLogged('Lines: 13 lines, 0 ignored, 5 matched, 8 missed')
 
-		self.assertLogged('141.3.81.106  Fri Aug 14 11:53:59 2015')
-		self.assertLogged('141.3.81.106  Fri Aug 14 11:54:59 2015')
+		self.assertLogged('141.3.81.106  Sun Aug 14 11:53:59 2005')
+		self.assertLogged('141.3.81.106  Sun Aug 14 11:54:59 2005')
 
 	def testWronChar(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
@@ -169,9 +171,8 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertTrue(fail2banRegex.start(opts, args))
 		self.assertLogged('Lines: 4 lines, 0 ignored, 2 matched, 2 missed')
 
-		self.assertLogged('Error decoding line');
-		self.assertLogged('Continuing to process line ignoring invalid characters:', '2015-01-14 20:00:58 user ');
-		self.assertLogged('Continuing to process line ignoring invalid characters:', '2015-01-14 20:00:59 user ');
+		self.assertLogged('Error decoding line')
+		self.assertLogged('Continuing to process line ignoring invalid characters:')
 
 		self.assertLogged('Nov  8 00:16:12 main sshd[32548]: input_userauth_request: invalid user llinco')
 		self.assertLogged('Nov  8 00:16:12 main sshd[32547]: pam_succeed_if(sshd:auth): error retrieving information about user llinco')

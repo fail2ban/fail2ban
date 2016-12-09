@@ -48,12 +48,10 @@ class DatabaseTest(LogCaptureTestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		super(DatabaseTest, self).setUp()
-		if Fail2BanDb is None and sys.version_info >= (2,7): # pragma: no cover
+		if Fail2BanDb is None: # pragma: no cover
 			raise unittest.SkipTest(
 				"Unable to import fail2ban database module as sqlite is not "
 				"available.")
-		elif Fail2BanDb is None:
-			return
 		_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
 		self.db = Fail2BanDb(self.dbFilename)
 
@@ -123,7 +121,7 @@ class DatabaseTest(LogCaptureTestCase):
 
 		self.db.addLog(self.jail, self.fileContainer)
 
-		self.assertTrue(filename in self.db.getLogPaths(self.jail))
+		self.assertIn(filename, self.db.getLogPaths(self.jail))
 		os.remove(filename)
 
 	def testUpdateLog(self):
@@ -317,6 +315,25 @@ class DatabaseTest(LogCaptureTestCase):
 		self.jail.putFailTicket(ticket)
 		actions._Actions__checkBan()
 		self.assertLogged("ban ainfo %s, %s, %s, %s" % (True, True, True, True))
+
+	def testDelAndAddJail(self):
+		self.testAddJail() # Add jail
+		# Delete jail (just disabled it):
+		self.db.delJail(self.jail)
+		jails = self.db.getJailNames()
+		self.assertIn(len(jails) == 1 and self.jail.name, jails)
+		jails = self.db.getJailNames(enabled=False)
+		self.assertIn(len(jails) == 1 and self.jail.name, jails)
+		jails = self.db.getJailNames(enabled=True)
+		self.assertTrue(len(jails) == 0)
+		# Add it again - should just enable it:
+		self.db.addJail(self.jail)
+		jails = self.db.getJailNames()
+		self.assertIn(len(jails) == 1 and self.jail.name, jails)
+		jails = self.db.getJailNames(enabled=True)
+		self.assertIn(len(jails) == 1 and self.jail.name, jails)
+		jails = self.db.getJailNames(enabled=False)
+		self.assertTrue(len(jails) == 0)
 
 	def testPurge(self):
 		if Fail2BanDb is None: # pragma: no cover

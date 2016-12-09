@@ -36,7 +36,7 @@ from ..client.jailsreader import JailsReader
 from ..client.actionreader import ActionReader
 from ..client.configurator import Configurator
 from ..version import version
-from .utils import LogCaptureTestCase
+from .utils import LogCaptureTestCase, with_tmpdir
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
@@ -94,9 +94,8 @@ option = %s
 		if not os.access(f, os.R_OK):
 			self.assertFalse(self.c.read('d'))	# should not be readable BUT present
 		else:
-			# SkipTest introduced only in 2.7 thus can't yet use generally
-			# raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform)
-			pass
+			import platform
+			raise unittest.SkipTest("Skipping on %s -- access rights are not enforced" % platform.platform())
 
 	def testOptionalDotDDir(self):
 		self.assertFalse(self.c.read('c'))	# nothing is there yet
@@ -281,8 +280,8 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertEqual(eval(act[2][5]).get('agent', '<wrong>'), useragent)
 		self.assertEqual(act[3], ['set', 'blocklisttest', 'action', 'mynetwatchman', 'agent', useragent])
 
-	def testGlob(self):
-		d = tempfile.mkdtemp(prefix="f2b-temp")
+	@with_tmpdir
+	def testGlob(self, d):
 		# Generate few files
 		# regular file
 		f1 = os.path.join(d, 'f1')
@@ -297,9 +296,6 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertEqual(JailReader._glob(f2), [])
 		self.assertLogged('File %s is a dangling link, thus cannot be monitored' % f2)
 		self.assertEqual(JailReader._glob(os.path.join(d, 'nonexisting')), [])
-		os.remove(f1)
-		os.remove(f2)
-		os.rmdir(d)
 
 		
 class FilterReaderTest(unittest.TestCase):
@@ -410,7 +406,7 @@ class FilterReaderTest(unittest.TestCase):
 			# from testcase01
 			filterReader.get('Definition', 'failregex')
 			filterReader.get('Definition', 'ignoreregex')
-		except Exception, e: # pragma: no cover - failed if reachable
+		except Exception as e: # pragma: no cover - failed if reachable
 			self.fail('unexpected options after readexplicit: %s' % (e))
 
 
@@ -433,10 +429,10 @@ class JailsReaderTestCache(LogCaptureTestCase):
 				cnt += 1
 		return cnt
 
-	def testTestJailConfCache(self):
+	@with_tmpdir
+	def testTestJailConfCache(self, basedir):
 		saved_ll = configparserinc.logLevel
 		configparserinc.logLevel = logging.DEBUG
-		basedir = tempfile.mkdtemp("fail2ban_conf")
 		try:
 			shutil.rmtree(basedir)
 			shutil.copytree(CONFIG_DIR, basedir)
@@ -468,7 +464,6 @@ class JailsReaderTestCache(LogCaptureTestCase):
 			cnt = self._getLoggedReadCount(r'action\.d/iptables-common\.conf')
 			self.assertTrue(cnt == 1, "Unexpected count by reading of action files, cnt = %s" % cnt)
 		finally:
-			shutil.rmtree(basedir)
 			configparserinc.logLevel = saved_ll
 
 
@@ -525,12 +520,12 @@ class JailsReaderTest(LogCaptureTestCase):
 				self.assertTrue(actionReader.read())
 				actionReader.getOptions({})	  # populate _opts
 				if not actionName.endswith('-common'):
-					self.assertTrue('Definition' in actionReader.sections(),
+					self.assertIn('Definition', actionReader.sections(),
 						msg="Action file %r is lacking [Definition] section" % actionConfig)
 					# all must have some actionban defined
 					self.assertTrue(actionReader._opts.get('actionban', '').strip(),
 						msg="Action file %r is lacking actionban" % actionConfig)
-				self.assertTrue('Init' in actionReader.sections(),
+				self.assertIn('Init', actionReader.sections(),
 						msg="Action file %r is lacking [Init] section" % actionConfig)
 
 		def testReadStockJailConf(self):
@@ -582,7 +577,7 @@ class JailsReaderTest(LogCaptureTestCase):
 					self.assertTrue(len(actName))
 					self.assertTrue(isinstance(actOpt, dict))
 					if actName == 'iptables-multiport':
-						self.assertTrue('port' in actOpt)
+						self.assertIn('port', actOpt)
 
 					actionReader = ActionReader(
 						actName, jail, {}, basedir=CONFIG_DIR)
@@ -632,11 +627,13 @@ class JailsReaderTest(LogCaptureTestCase):
 
 			# and we know even some of them by heart
 			for j in ['sshd', 'recidive']:
-				# by default we have 'auto' backend ATM
-				self.assertTrue(['add', j, 'auto'] in comm_commands)
+				# by default we have 'auto' backend ATM, but some distributions can overwrite it, 
+				# (e.g. fedora default is 'systemd') therefore let check it without backend...
+				self.assertIn(['add', j], 
+					(cmd[:2] for cmd in comm_commands if len(cmd) == 3 and cmd[0] == 'add'))
 				# and warn on useDNS
-				self.assertTrue(['set', j, 'usedns', 'warn'] in comm_commands)
-				self.assertTrue(['start', j] in comm_commands)
+				self.assertIn(['set', j, 'usedns', 'warn'], comm_commands)
+				self.assertIn(['start', j], comm_commands)
 
 			# last commands should be the 'start' commands
 			self.assertEqual(comm_commands[-1][0], 'start')
@@ -655,7 +652,7 @@ class JailsReaderTest(LogCaptureTestCase):
 					action_name = action.getName()
 					if '<blocktype>' in str(commands):
 						# Verify that it is among cInfo
-						self.assertTrue('blocktype' in action._initOpts)
+						self.assertIn('blocktype', action._initOpts)
 						# Verify that we have a call to set it up
 						blocktype_present = False
 						target_command = ['set', jail_name, 'action', action_name, 'blocktype']
@@ -716,8 +713,8 @@ class JailsReaderTest(LogCaptureTestCase):
 			self.assertEqual(configurator._Configurator__jails.getBaseDir(), '/tmp')
 			self.assertEqual(configurator.getBaseDir(), CONFIG_DIR)
 
-	def testMultipleSameAction(self):
-		basedir = tempfile.mkdtemp("fail2ban_conf")
+	@with_tmpdir
+	def testMultipleSameAction(self, basedir):
 		os.mkdir(os.path.join(basedir, "filter.d"))
 		os.mkdir(os.path.join(basedir, "action.d"))
 		open(os.path.join(basedir, "action.d", "testaction1.conf"), 'w').close()
@@ -746,4 +743,33 @@ filter = testfilter1
 		# Python actions should not be passed `actname`
 		self.assertEqual(add_actions[-1][-1], "{}")
 
-		shutil.rmtree(basedir)
+	def testLogPathFileFilterBackend(self):
+		self.assertRaisesRegexp(ValueError, r"Have not found any log file for .* jail", 
+			self._testLogPath, backend='polling')
+
+	def testLogPathSystemdBackend(self):
+		try: # pragma: systemd no cover
+			from ..server.filtersystemd import FilterSystemd
+		except Exception, e: # pragma: no cover
+			raise unittest.SkipTest("systemd python interface not available")
+		self._testLogPath(backend='systemd')
+		self._testLogPath(backend='systemd[journalflags=2]')
+	
+	@with_tmpdir
+	def _testLogPath(self, basedir, backend):
+		jailfd = open(os.path.join(basedir, "jail.conf"), 'w')
+		jailfd.write("""
+[testjail1]
+enabled = true
+backend = %s
+logpath = %s/not/exist.log
+          /this/path/should/not/exist.log
+action = 
+filter = 
+failregex = test <HOST>
+""" % (backend, basedir))
+		jailfd.close()
+		jails = JailsReader(basedir=basedir)
+		self.assertTrue(jails.read())
+		self.assertTrue(jails.getOptions())
+		jails.convert()

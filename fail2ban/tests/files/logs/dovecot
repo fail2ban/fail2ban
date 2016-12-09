@@ -73,3 +73,8 @@ Jul 02 13:49:32 hostname dovecot[442]: pop3-login: Disconnected (no auth attempt
 
 # failJSON: { "time": "2005-03-23T06:10:52", "match": true , "host": "52.37.139.121" }
 Mar 23 06:10:52 auth: Info: ldap(dog,52.37.139.121,): invalid credentials
+
+# failJSON: { "time": "2005-07-26T11:11:21", "match": true , "host": "192.0.2.1" }
+Jul 26 11:11:21 hostname dovecot: imap-login: Disconnected: Too many invalid commands (tried to use disallowed plaintext auth): user=<test>, rip=192.0.2.1, lip=192.168.1.1, session=<S5dIdTFCDKUWWMbU>
+# failJSON: { "time": "2005-07-26T11:12:19", "match": true , "host": "192.0.2.2" }
+Jul 26 11:12:19 hostname dovecot: imap-login: Disconnected: Too many invalid commands (auth failed, 1 attempts in 17 secs): user=<test>, method=PLAIN, rip=192.0.2.2, lip=192.168.1.1, TLS, session=<g3ZKeDECFqlWWMbU>

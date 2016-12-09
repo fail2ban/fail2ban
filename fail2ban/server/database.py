@@ -42,7 +42,7 @@ if sys.version_info >= (3,):
 		try:
 			x = json.dumps(x, ensure_ascii=False).encode(
 				locale.getpreferredencoding(), 'replace')
-		except Exception, e: # pragma: no cover
+		except Exception as e: # pragma: no cover
 			logSys.error('json dumps failed: %s', e)
 			x = '{}'
 		return x
@@ -51,7 +51,7 @@ if sys.version_info >= (3,):
 		try:
 			x = json.loads(x.decode(
 				locale.getpreferredencoding(), 'replace'))
-		except Exception, e: # pragma: no cover
+		except Exception as e: # pragma: no cover
 			logSys.error('json loads failed: %s', e)
 			x = {}
 		return x
@@ -70,7 +70,7 @@ else:
 		try:
 			x = json.dumps(_normalize(x), ensure_ascii=False).decode(
 				locale.getpreferredencoding(), 'replace')
-		except Exception, e: # pragma: no cover
+		except Exception as e: # pragma: no cover
 			logSys.error('json dumps failed: %s', e)
 			x = '{}'
 		return x
@@ -79,7 +79,7 @@ else:
 		try:
 			x = _normalize(json.loads(x.decode(
 				locale.getpreferredencoding(), 'replace')))
-		except Exception, e: # pragma: no cover
+		except Exception as e: # pragma: no cover
 			logSys.error('json loads failed: %s', e)
 			x = {}
 		return x
@@ -175,7 +175,7 @@ class Fail2BanDb(object):
 
 			logSys.info(
 				"Connected to fail2ban persistent database '%s'", filename)
-		except sqlite3.OperationalError, e:
+		except sqlite3.OperationalError as e:
 			logSys.error(
 				"Error connecting to fail2ban persistent database '%s': %s",
 				filename, e.args[0])
@@ -293,8 +293,12 @@ class Fail2BanDb(object):
 			Jail to be added to the database.
 		"""
 		cur.execute(
-			"INSERT OR REPLACE INTO jails(name, enabled) VALUES(?, 1)",
+			"INSERT OR IGNORE INTO jails(name, enabled) VALUES(?, 1)",
 			(jail.name,))
+		if cur.rowcount <= 0:
+			cur.execute(
+				"UPDATE jails SET enabled = 1 WHERE name = ? AND enabled != 1",
+				(jail.name,))
 
 	@commitandrollback
 	def delJail(self, cur, jail):
@@ -317,7 +321,7 @@ class Fail2BanDb(object):
 		cur.execute("UPDATE jails SET enabled=0")
 
 	@commitandrollback
-	def getJailNames(self, cur):
+	def getJailNames(self, cur, enabled=None):
 		"""Get name of jails in database.
 
 		Currently only used for testing purposes.
@@ -327,7 +331,11 @@ class Fail2BanDb(object):
 		set
 			Set of jail names.
 		"""
-		cur.execute("SELECT name FROM jails")
+		if enabled is None:
+			cur.execute("SELECT name FROM jails")
+		else:
+			cur.execute("SELECT name FROM jails WHERE enabled=%s" %
+				(int(enabled),))
 		return set(row[0] for row in cur.fetchmany())
 
 	@commitandrollback

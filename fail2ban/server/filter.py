@@ -24,6 +24,7 @@ __license__ = "GPL"
 import codecs
 import fcntl
 import locale
+import logging
 import os
 import re
 import sys
@@ -82,6 +83,8 @@ class Filter(JailThread):
 		self.__lastDate = None
 		## External command
 		self.__ignoreCommand = False
+		## Default or preferred encoding (to decode bytes from file or journal):
+		self.__encoding = locale.getpreferredencoding()
 
 		self.dateDetector = DateDetector()
 		self.dateDetector.addDefaultTemplate()
@@ -105,7 +108,7 @@ class Filter(JailThread):
 				logSys.warning(
 					"Mutliline regex set for jail '%s' "
 					"but maxlines not greater than 1")
-		except RegexException, e:
+		except RegexException as e:
 			logSys.error(e)
 			raise e
 
@@ -138,7 +141,7 @@ class Filter(JailThread):
 		try:
 			regex = Regex(value)
 			self.__ignoreRegex.append(regex)
-		except RegexException, e:
+		except RegexException as e:
 			logSys.error(e)
 			raise e 
 
@@ -280,6 +283,27 @@ class Filter(JailThread):
 		return self.__lineBufferSize
 
 	##
+	# Set the log file encoding
+	#
+	# @param encoding the encoding used with log files
+
+	def setLogEncoding(self, encoding):
+		if encoding.lower() == "auto":
+			encoding = locale.getpreferredencoding()
+		codecs.lookup(encoding) # Raise LookupError if invalid codec
+		self.__encoding = encoding
+		logSys.info("Set jail log file encoding to %s" % encoding)
+		return encoding
+
+	##
+	# Get the log file encoding
+	#
+	# @return log encoding value
+
+	def getLogEncoding(self):
+		return self.__encoding
+
+	##
 	# Main loop.
 	#
 	# This function is the main loop of the thread. It checks if the
@@ -394,8 +418,31 @@ class Filter(JailThread):
 
 		return False
 
+	if sys.version_info >= (3,):
+		@staticmethod
+		def uni_decode(x, enc, errors='strict'):
+			try:
+				if isinstance(x, bytes):
+					return x.decode(enc, errors)
+				return x
+			except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
+				if errors != 'strict': 
+					raise
+				return uni_decode(x, enc, 'replace')
+	else:
+		@staticmethod
+		def uni_decode(x, enc, errors='strict'):
+			try:
+				if isinstance(x, unicode):
+					return x.encode(enc, errors)
+				return x
+			except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
+				if errors != 'strict':
+					raise
+				return uni_decode(x, enc, 'replace')
+
 	def processLine(self, line, date=None, returnRawHost=False,
-		checkAllRegex=False):
+		checkAllRegex=False, checkFindTime=False):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
 		if date:
@@ -414,21 +461,17 @@ class Filter(JailThread):
 				tupleLine = (l, "", "")
 
 		return "".join(tupleLine[::2]), self.findFailure(
-			tupleLine, date, returnRawHost, checkAllRegex)
+			tupleLine, date, returnRawHost, checkAllRegex, checkFindTime)
 
 	def processLineAndAdd(self, line, date=None):
 		"""Processes the line for failures and populates failManager
 		"""
-		for element in self.processLine(line, date)[1]:
+		for element in self.processLine(line, date, checkFindTime=True)[1]:
 			ip = element[1]
 			unixTime = element[2]
 			lines = element[3]
 			logSys.debug("Processing line with time:%s and ip:%s"
 						 % (unixTime, ip))
-			if unixTime < MyTime.time() - self.getFindTime():
-				logSys.debug("Ignore line since time %s < %s - %s"
-							 % (unixTime, MyTime.time(), self.getFindTime()))
-				break
 			if self.inIgnoreIPList(ip, log_ignore=True):
 				continue
 			logSys.info("[%s] Found %s" % (self.jail.name, ip))
@@ -457,7 +500,7 @@ class Filter(JailThread):
 	# @return a dict with IP and timestamp.
 
 	def findFailure(self, tupleLine, date=None, returnRawHost=False,
-		checkAllRegex=False):
+		checkAllRegex=False, checkFindTime=False):
 		failList = list()
 
 		# Checks if we must ignore this line.
@@ -488,6 +531,11 @@ class Filter(JailThread):
 		else:
 			timeText = self.__lastTimeText or "".join(tupleLine[::2])
 			date = self.__lastDate
+
+		if checkFindTime and date is not None and date < MyTime.time() - self.getFindTime():
+			logSys.log(5, "Ignore line since time %s < %s - %s", 
+				date, MyTime.time(), self.getFindTime())
+			return failList
 
 		self.__lineBuffer = (
 			self.__lineBuffer + [tupleLine])[-self.__lineBufferSize:]
@@ -536,7 +584,7 @@ class Filter(JailThread):
 										 failRegex.getMatchedLines()])
 								if not checkAllRegex:
 									break
-					except RegexException, e: # pragma: no cover - unsure if reachable
+					except RegexException as e: # pragma: no cover - unsure if reachable
 						logSys.error(e)
 		return failList
 
@@ -554,7 +602,6 @@ class FileFilter(Filter):
 		Filter.__init__(self, jail, **kwargs)
 		## The log file path.
 		self.__logs = dict()
-		self.setLogEncoding("auto")
 
 	##
 	# Add a log file path
@@ -625,21 +672,9 @@ class FileFilter(Filter):
 	# @param encoding the encoding used with log files
 
 	def setLogEncoding(self, encoding):
-		if encoding.lower() == "auto":
-			encoding = locale.getpreferredencoding()
-		codecs.lookup(encoding) # Raise LookupError if invalid codec
+		encoding = super(FileFilter, self).setLogEncoding(encoding)
 		for log in self.__logs.itervalues():
 			log.setEncoding(encoding)
-		self.__encoding = encoding
-		logSys.info("Set jail log file encoding to %s" % encoding)
-
-	##
-	# Get the log file encoding
-	#
-	# @return log encoding value
-
-	def getLogEncoding(self):
-		return self.__encoding
 
 	def getLog(self, path):
 		return self.__logs.get(path, None)
@@ -660,15 +695,15 @@ class FileFilter(Filter):
 		try:
 			has_content = log.open()
 		# see http://python.org/dev/peps/pep-3151/
-		except IOError, e:
+		except IOError as e:
 			logSys.error("Unable to open %s" % filename)
 			logSys.exception(e)
 			return False
-		except OSError, e: # pragma: no cover - requires race condition to tigger this
+		except OSError as e: # pragma: no cover - requires race condition to tigger this
 			logSys.error("Error opening %s" % filename)
 			logSys.exception(e)
 			return False
-		except Exception, e: # pragma: no cover - Requires implemention error in FileContainer to generate
+		except Exception as e: # pragma: no cover - Requires implemention error in FileContainer to generate
 			logSys.error("Internal errror in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
 			logSys.exception(e)
 			return False
@@ -707,7 +742,12 @@ class FileFilter(Filter):
 
 try:
 	import hashlib
-	md5sum = hashlib.md5
+	try:
+		md5sum = hashlib.md5
+		# try to use it (several standards like FIPS forbid it):
+		md5sum(' ').hexdigest()
+	except: # pragma: no cover
+		md5sum = hashlib.sha1
 except ImportError: # pragma: no cover
 	# hashlib was introduced in Python 2.5.  For compatibility with those
 	# elderly Pythons, import from md5
@@ -791,14 +831,19 @@ class FileContainer:
 	@staticmethod
 	def decode_line(filename, enc, line):
 		try:
-			line = line.decode(enc, 'strict')
-		except UnicodeDecodeError:
-			logSys.warning(
+			return line.decode(enc, 'strict')
+		except (UnicodeDecodeError, UnicodeEncodeError) as e:
+			global _decode_line_warn
+			lev = logging.DEBUG
+			if _decode_line_warn.get(filename, 0) <= MyTime.time():
+				lev = logging.WARNING
+				_decode_line_warn[filename] = MyTime.time() + 24*60*60
+			logSys.log(lev,
 				"Error decoding line from '%s' with '%s'."
 				" Consider setting logencoding=utf-8 (or another appropriate"
 				" encoding) for this jail. Continuing"
-				" to process line ignoring invalid characters: %r" %
-				(filename, enc, line))
+				" to process line ignoring invalid characters: %r",
+				filename, enc, line)
 			# decode with replacing error chars:
 			line = line.decode(enc, 'replace')
 		return line
@@ -818,6 +863,8 @@ class FileContainer:
 			self.__handler = None
 		## print "D: Closed %s with pos %d" % (handler, self.__pos)
 		## sys.stdout.flush()
+
+_decode_line_warn = {}
 
 
 ##
@@ -858,11 +905,11 @@ class DNSUtils:
 		# retrieve ip (todo: use AF_INET6 for IPv6)
 		try:
 			return set([i[4][0] for i in socket.getaddrinfo(dns, None, socket.AF_INET, 0, socket.IPPROTO_TCP)])
-		except socket.error, e:
+		except socket.error as e:
 			logSys.warning("Unable to find a corresponding IP address for %s: %s"
 						% (dns, e))
 			return list()
-		except socket.error, e:
+		except socket.error as e:
 			logSys.warning("Socket error raised trying to resolve hostname %s: %s"
 						% (dns, e))
 			return list()
@@ -871,7 +918,7 @@ class DNSUtils:
 	def ipToName(ip):
 		try:
 			return socket.gethostbyaddr(ip)[0]
-		except socket.error, e:
+		except socket.error as e:
 			logSys.debug("Unable to find a name for the IP %s: %s" % (ip, e))
 			return None
 

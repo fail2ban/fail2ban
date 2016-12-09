@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env fail2ban-python
 import requests
 
 try:

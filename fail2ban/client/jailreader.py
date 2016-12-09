@@ -171,7 +171,7 @@ class JailReader(ConfigReader):
 							self.__actions.append(action)
 						else:
 							raise AttributeError("Unable to read action")
-				except Exception, e:
+				except Exception as e:
 					logSys.error("Error in action definition " + act)
 					logSys.debug("Caught exception: %s" % (e,))
 					return False
@@ -192,7 +192,7 @@ class JailReader(ConfigReader):
 		stream = []
 		for opt in self.__opts:
 			if opt == "logpath" and	\
-					self.__opts.get('backend', None) != "systemd":
+					not self.__opts.get('backend', None).startswith("systemd"):
 				found_files = 0
 				for path in self.__opts[opt].split("\n"):
 					path = path.rsplit(" ", 1)

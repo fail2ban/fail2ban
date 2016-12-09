@@ -22,13 +22,17 @@ __author__ = "Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
+import itertools
 import logging
 import os
 import re
+import tempfile
+import shutil
 import sys
 import time
 import unittest
 from StringIO import StringIO
+from functools import wraps
 
 from ..server.mytime import MyTime
 from ..helpers import getLogger
@@ -44,6 +48,40 @@ if not CONFIG_DIR:
 	else:
 		CONFIG_DIR = '/etc/fail2ban'
 
+
+def with_tmpdir(f):
+	"""Helper decorator to create a temporary directory
+
+	Directory gets removed after function returns, regardless
+	if exception was thrown of not
+	"""
+	@wraps(f)
+	def wrapper(self, *args, **kwargs):
+		tmp = tempfile.mkdtemp(prefix="f2b-temp")
+		try:
+			return f(self, tmp, *args, **kwargs)
+		finally:
+			# clean up
+			shutil.rmtree(tmp)
+	return wrapper
+
+
+# backwards compatibility to python 2.6:
+if not hasattr(unittest, 'SkipTest'): # pragma: no cover
+	class SkipTest(Exception):
+		pass
+	unittest.SkipTest = SkipTest
+	_org_AddError = unittest._TextTestResult.addError
+	def addError(self, test, err):
+		if err[0] is SkipTest: 
+			if self.showAll:
+				self.stream.writeln(str(err[1]))
+			elif self.dots:
+				self.stream.write('s')
+				self.stream.flush()
+			return
+		_org_AddError(self, test, err)
+	unittest._TextTestResult.addError = addError
 
 def mtimesleep():
 	# no sleep now should be necessary since polling tracks now not only
@@ -183,13 +221,13 @@ def gatherTests(regexps=None, no_network=False):
 	try:
 		from ..server.filtergamin import FilterGamin
 		filters.append(FilterGamin)
-	except Exception, e: # pragma: no cover
+	except Exception as e: # pragma: no cover
 		logSys.warning("Skipping gamin backend testing. Got exception '%s'" % e)
 
 	try:
 		from ..server.filterpyinotify import FilterPyinotify
 		filters.append(FilterPyinotify)
-	except Exception, e: # pragma: no cover
+	except Exception as e: # pragma: no cover
 		logSys.warning("I: Skipping pyinotify backend testing. Got exception '%s'" % e)
 
 	for Filter_ in filters:
@@ -198,7 +236,7 @@ def gatherTests(regexps=None, no_network=False):
 	try: # pragma: systemd no cover
 		from ..server.filtersystemd import FilterSystemd
 		tests.addTest(unittest.makeSuite(filtertestcase.get_monitor_failures_journal_testcase(FilterSystemd)))
-	except Exception, e: # pragma: no cover
+	except Exception as e: # pragma: no cover
 		logSys.warning("I: Skipping systemd backend testing. Got exception '%s'" % e)
 
 	# Server test for logging elements which break logging used to support
@@ -208,16 +246,45 @@ def gatherTests(regexps=None, no_network=False):
 	return tests
 
 
-# forwards compatibility of unittest.TestCase for some early python versions
-if not hasattr(unittest.TestCase, 'assertIn'):
-	def __assertIn(self, a, b, msg=None):
-		if a not in b: # pragma: no cover
-			self.fail(msg or "%r was not found in %r" % (a, b))
-	unittest.TestCase.assertIn = __assertIn
-	def __assertNotIn(self, a, b, msg=None):
-		if a in b: # pragma: no cover
-			self.fail(msg or "%r was found in %r" % (a, b))
-	unittest.TestCase.assertNotIn = __assertNotIn
+#
+# Forwards compatibility of unittest.TestCase for some early python versions
+#
+
+if not hasattr(unittest.TestCase, 'assertRaisesRegexp'):
+	def assertRaisesRegexp(self, exccls, regexp, fun, *args, **kwargs):
+		try:
+			fun(*args, **kwargs)
+		except exccls as e:
+			if re.search(regexp, str(e)) is None:
+				self.fail('\"%s\" does not match \"%s\"' % (regexp, e))
+		else:
+			self.fail('%s not raised' % getattr(exccls, '__name__'))
+	unittest.TestCase.assertRaisesRegexp = assertRaisesRegexp
+
+# always custom following methods, because we use atm better version of both (support generators)
+if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
+	def assertIn(self, a, b, msg=None):
+		bb = b
+		wrap = False
+		if msg is None and hasattr(b, '__iter__') and not isinstance(b, basestring):
+			b, bb = itertools.tee(b)
+			wrap = True
+		if a not in b:
+			if wrap: bb = list(bb)
+			msg = msg or "%r was not found in %r" % (a, bb)
+			self.fail(msg)
+	unittest.TestCase.assertIn = assertIn
+	def assertNotIn(self, a, b, msg=None):
+		bb = b
+		wrap = False
+		if msg is None and hasattr(b, '__iter__') and not isinstance(b, basestring):
+			b, bb = itertools.tee(b)
+			wrap = True
+		if a in b:
+			if wrap: bb = list(bb)
+			msg = msg or "%r unexpectedly found in %r" % (a, bb)
+			self.fail(msg)
+	unittest.TestCase.assertNotIn = assertNotIn
 
 
 class LogCaptureTestCase(unittest.TestCase):
@@ -241,6 +308,7 @@ class LogCaptureTestCase(unittest.TestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 		# print "O: >>%s<<" % self._log.getvalue()
+		self.pruneLog()
 		logSys = getLogger("fail2ban")
 		logSys.handlers = self._old_handlers
 		logSys.level = self._old_level
@@ -248,7 +316,7 @@ class LogCaptureTestCase(unittest.TestCase):
 	def _is_logged(self, s):
 		return s in self._log.getvalue()
 
-	def assertLogged(self, *s):
+	def assertLogged(self, *s, **kwargs):
 		"""Assert that one of the strings was logged
 
 		Preferable to assertTrue(self._is_logged(..)))
@@ -258,14 +326,23 @@ class LogCaptureTestCase(unittest.TestCase):
 		----------
 		s : string or list/set/tuple of strings
 		  Test should succeed if string (or any of the listed) is present in the log
+		all : boolean (default False) if True should fail if any of s not logged
 		"""
 		logged = self._log.getvalue()
-		for s_ in s:
-			if s_ in logged:
-				return
-		raise AssertionError("None among %r was found in the log: %r" % (s, logged))
+		if not kwargs.get('all', False):
+			# at least one entry should be found:
+			for s_ in s:
+				if s_ in logged:
+					return
+			if True: # pragma: no cover
+				self.fail("None among %r was found in the log: ===\n%s===" % (s, logged))
+		else:
+			# each entry should be found:
+			for s_ in s:
+				if s_ not in logged: # pragma: no cover
+					self.fail("%r was not found in the log: ===\n%s===" % (s_, logged))
 
-	def assertNotLogged(self, *s):
+	def assertNotLogged(self, *s, **kwargs):
 		"""Assert that strings were not logged
 
 		Parameters
@@ -273,13 +350,22 @@ class LogCaptureTestCase(unittest.TestCase):
 		s : string or list/set/tuple of strings
 		  Test should succeed if the string (or at least one of the listed) is not
 		  present in the log
+		all : boolean (default False) if True should fail if any of s logged
 		"""
 		logged = self._log.getvalue()
-		for s_ in s:
-			if s_ not in logged:
-				return
-		raise AssertionError("All of the %r were found present in the log: %r" % (s, logged))
+		if not kwargs.get('all', False):
+			for s_ in s:
+				if s_ not in logged:
+					return
+			if True: # pragma: no cover
+				self.fail("All of the %r were found present in the log: ===\n%s===" % (s, logged))
+		else:
+			for s_ in s:
+				if s_ in logged: # pragma: no cover
+					self.fail("%r was found in the log: ===\n%s===" % (s_, logged))
 
+	def pruneLog(self):
+		self._log.truncate(0)
 
 	def getLog(self):
 		return self._log.getvalue()

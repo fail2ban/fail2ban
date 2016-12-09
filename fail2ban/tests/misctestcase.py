@@ -23,6 +23,7 @@ __license__ = "GPL"
 
 import logging
 import os
+import re
 import sys
 import unittest
 import tempfile
@@ -32,8 +33,11 @@ import datetime
 from glob import glob
 from StringIO import StringIO
 
+from utils import LogCaptureTestCase, logSys as DefLogSys
+
 from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger
 from ..helpers import splitwords
+from ..server.datedetector import DateDetector
 from ..server.datetemplate import DatePatternRegex
 
 
@@ -67,6 +71,22 @@ class HelpersTest(unittest.TestCase):
 		self.assertEqual(splitwords(' 1\n  2, 3'), ['1', '2', '3'])
 
 
+if sys.version_info >= (2,7):
+	def _sh_call(cmd):
+		import subprocess, locale
+		ret = subprocess.check_output(cmd, shell=True)
+		if sys.version_info >= (3,):
+			ret = ret.decode(locale.getpreferredencoding(), 'replace')
+		return str(ret).rstrip()
+else:
+	def _sh_call(cmd):
+		import subprocess
+		ret = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
+		return str(ret).rstrip()
+
+def _getSysPythonVersion():
+	return _sh_call("fail2ban-python -c 'import sys; print(tuple(sys.version_info))'")
+
 class SetupTest(unittest.TestCase):
 
 	def setUp(self):
@@ -76,6 +96,12 @@ class SetupTest(unittest.TestCase):
 			raise unittest.SkipTest(
 				"Seems to be running not out of source distribution"
 				" -- cannot locate setup.py")
+		# compare current version of python installed resp. active one:
+		sysVer = _getSysPythonVersion()
+		if sysVer != str(tuple(sys.version_info)):
+			raise unittest.SkipTest(
+				"Seems to be running with python distribution %s"
+				" -- install can be tested only with system distribution %s" % (str(tuple(sys.version_info)), sysVer))
 
 	def testSetupInstallRoot(self):
 		if not self.setup:
@@ -122,6 +148,14 @@ class SetupTest(unittest.TestCase):
 					  'etc/fail2ban/jail.conf'):
 				self.assertTrue(os.path.exists(os.path.join(tmp, f)),
 								msg="Can't find %s" % f)
+			# Because the install (test) path in virtual-env differs from some development-env,
+			# it is not a `tmp + '/usr/local/bin/'`, so search for it:
+			installedPath = _sh_call('find ' + tmp+ ' -name fail2ban-python').split('\n')
+			self.assertTrue(len(installedPath) > 0)
+			for installedPath in installedPath:
+				self.assertEqual(
+					os.path.realpath(installedPath), os.path.realpath(sys.executable))
+
 		finally:
 			# clean up
 			shutil.rmtree(tmp)
@@ -130,7 +164,7 @@ class SetupTest(unittest.TestCase):
 					  % (sys.executable, self.setup))
 
 
-class TestsUtilsTest(unittest.TestCase):
+class TestsUtilsTest(LogCaptureTestCase):
 
 	def testmbasename(self):
 		self.assertEqual(mbasename("sample.py"), 'sample')
@@ -165,12 +199,88 @@ class TestsUtilsTest(unittest.TestCase):
 			if not ('fail2ban-testcases' in s):
 				# we must be calling it from setup or nosetests but using at least
 				# nose's core etc
-				self.assertTrue('>' in s, msg="no '>' in %r" % s)
+				self.assertIn('>', s)
 			elif not ('coverage' in s):
 				# There is only "fail2ban-testcases" in this case, no true traceback
-				self.assertFalse('>' in s, msg="'>' present in %r" % s)
+				self.assertNotIn('>', s)
 
-			self.assertTrue(':' in s, msg="no ':' in %r" % s)
+			self.assertIn(':', s)
+
+	def _testAssertionErrorRE(self, regexp, fun, *args, **kwargs):
+		self.assertRaisesRegexp(AssertionError, regexp, fun, *args, **kwargs)
+	
+	def testExtendedAssertRaisesRE(self):
+		## test _testAssertionErrorRE several fail cases:
+		def _key_err(msg):
+			raise KeyError(msg)			
+		self.assertRaises(KeyError,
+			self._testAssertionErrorRE, r"^failed$", 
+				_key_err, 'failed')
+		self.assertRaises(AssertionError,
+			self._testAssertionErrorRE, r"^failed$",
+				self.fail, '__failed__')
+		self._testAssertionErrorRE(r'failed.* does not match .*__failed__',
+			lambda: self._testAssertionErrorRE(r"^failed$",
+				self.fail, '__failed__')
+		)
+		## no exception in callable:
+		self.assertRaises(AssertionError,
+			self._testAssertionErrorRE, r"", int, 1)
+		self._testAssertionErrorRE(r'0 AssertionError not raised X.* does not match .*AssertionError not raised',
+			lambda: self._testAssertionErrorRE(r"^0 AssertionError not raised X$",
+				lambda: self._testAssertionErrorRE(r"", int, 1))
+		)
+
+	def testExtendedAssertMethods(self):
+		## assertIn, assertNotIn positive case:
+		self.assertIn('a', ['a', 'b', 'c', 'd'])
+		self.assertIn('a', ('a', 'b', 'c', 'd',))
+		self.assertIn('a', 'cba')
+		self.assertIn('a', (c for c in 'cba' if c != 'b'))
+		self.assertNotIn('a', ['b', 'c', 'd'])
+		self.assertNotIn('a', ('b', 'c', 'd',))
+		self.assertNotIn('a', 'cbd')
+		self.assertNotIn('a', (c.upper() for c in 'cba' if c != 'b'))
+		## assertIn, assertNotIn negative case:
+		self._testAssertionErrorRE(r"'a' unexpectedly found in 'cba'",
+			self.assertNotIn, 'a', 'cba')
+		self._testAssertionErrorRE(r"1 unexpectedly found in \[0, 1, 2\]",
+			self.assertNotIn, 1, xrange(3))
+		self._testAssertionErrorRE(r"'A' unexpectedly found in \['C', 'A'\]",
+			self.assertNotIn, 'A', (c.upper() for c in 'cba' if c != 'b'))
+		self._testAssertionErrorRE(r"'a' was not found in 'xyz'",
+			self.assertIn, 'a', 'xyz')
+		self._testAssertionErrorRE(r"5 was not found in \[0, 1, 2\]",
+			self.assertIn, 5, xrange(3))
+		self._testAssertionErrorRE(r"'A' was not found in \['C', 'B'\]",
+			self.assertIn, 'A', (c.upper() for c in 'cba' if c != 'a'))
+		## assertLogged, assertNotLogged positive case:
+		logSys = DefLogSys
+		self.pruneLog()
+		logSys.debug('test "xyz"')
+		self.assertLogged('test "xyz"')
+		self.assertLogged('test', 'xyz', all=True)
+		self.assertNotLogged('test', 'zyx', all=False)
+		self.assertNotLogged('test_zyx', 'zyx', all=True)
+		self.assertLogged('test', 'zyx', all=False)
+		self.pruneLog()
+		logSys.debug('xxxx "xxx"')
+		self.assertNotLogged('test "xyz"')
+		self.assertNotLogged('test', 'xyz', all=False)
+		self.assertNotLogged('test', 'xyz', 'zyx', all=True)
+		## assertLogged, assertNotLogged negative case:
+		self.pruneLog()
+		logSys.debug('test "xyz"')
+		self._testAssertionErrorRE(r"All of the .* were found present in the log",
+			self.assertNotLogged, 'test "xyz"')
+		self._testAssertionErrorRE(r"was found in the log",
+			self.assertNotLogged, 'test', 'xyz', all=True)
+		self._testAssertionErrorRE(r"was not found in the log",
+			self.assertLogged, 'test', 'zyx', all=True)
+		self._testAssertionErrorRE(r"None among .* was found in the log",
+			self.assertLogged, 'test_zyx', 'zyx', all=False)
+		self._testAssertionErrorRE(r"All of the .* were found present in the log",
+			self.assertNotLogged, 'test', 'xyz', all=False)
 
 	def testFormatterWithTraceBack(self):
 		strout = StringIO()
@@ -231,3 +341,47 @@ class CustomDateFormatsTest(unittest.TestCase):
 		self.assertEqual(
 			date,
 			datetime.datetime(2007, 1, 25, 16, 0))
+
+	def testAmbiguousDatePattern(self):
+		defDD = DateDetector()
+		defDD.addDefaultTemplate()
+		logSys = DefLogSys
+		for (matched, dp, line) in (
+			# positive case:
+			('Jan 23 21:59:59',   None, 'Test failure Jan 23 21:59:59 for 192.0.2.1'),
+			# ambiguous "unbound" patterns (missed):
+			(False,               None, 'Test failure TestJan 23 21:59:59.011 2015 for 192.0.2.1'),
+			(False,               None, 'Test failure Jan 23 21:59:59123456789 for 192.0.2.1'),
+			# ambiguous "no optional year" patterns (matched):
+			('Aug 8 11:25:50',      None, 'Aug 8 11:25:50 14430f2329b8 Authentication failed from 192.0.2.1'),
+			('Aug 8 11:25:50',      None, '[Aug 8 11:25:50] 14430f2329b8 Authentication failed from 192.0.2.1'),
+			('Aug 8 11:25:50 2014', None, 'Aug 8 11:25:50 2014 14430f2329b8 Authentication failed from 192.0.2.1'),
+			# direct specified patterns:
+			('20:00:00 01.02.2003',    r'%H:%M:%S %d.%m.%Y$', '192.0.2.1 at 20:00:00 01.02.2003'),
+			('[20:00:00 01.02.2003]',  r'\[%H:%M:%S %d.%m.%Y\]', '192.0.2.1[20:00:00 01.02.2003]'),
+			('[20:00:00 01.02.2003]',  r'\[%H:%M:%S %d.%m.%Y\]', '[20:00:00 01.02.2003]192.0.2.1'),
+			('[20:00:00 01.02.2003]',  r'\[%H:%M:%S %d.%m.%Y\]$', '192.0.2.1[20:00:00 01.02.2003]'),
+			('[20:00:00 01.02.2003]',  r'^\[%H:%M:%S %d.%m.%Y\]', '[20:00:00 01.02.2003]192.0.2.1'),
+			('[17/Jun/2011 17:00:45]', r'^\[%d/%b/%Y %H:%M:%S\]', '[17/Jun/2011 17:00:45] Attempt, IP address 192.0.2.1'),
+			('[17/Jun/2011 17:00:45]', r'\[%d/%b/%Y %H:%M:%S\]', 'Attempt [17/Jun/2011 17:00:45] IP address 192.0.2.1'),
+			('[17/Jun/2011 17:00:45]', r'\[%d/%b/%Y %H:%M:%S\]', 'Attempt IP address 192.0.2.1, date: [17/Jun/2011 17:00:45]'),
+			# direct specified patterns (begin/end, missed):
+			(False,                 r'%H:%M:%S %d.%m.%Y', '192.0.2.1x20:00:00 01.02.2003'),
+			(False,                 r'%H:%M:%S %d.%m.%Y', '20:00:00 01.02.2003x192.0.2.1'),
+			# direct specified patterns (begin/end, matched):
+			('20:00:00 01.02.2003', r'%H:%M:%S %d.%m.%Y', '192.0.2.1 20:00:00 01.02.2003'),
+			('20:00:00 01.02.2003', r'%H:%M:%S %d.%m.%Y', '20:00:00 01.02.2003 192.0.2.1'),
+		):
+			logSys.debug('== test: %r', (matched, dp, line))
+			if dp is None:
+				dd = defDD
+			else:
+				dp = DatePatternRegex(dp)
+				dd = DateDetector()
+				dd.appendTemplate(dp)
+			date = dd.getTime(line)
+			if matched:
+				self.assertTrue(date)
+				self.assertEqual(matched, date[1].group())
+			else:
+				self.assertEqual(date, None)

@@ -44,7 +44,7 @@ if not hasattr(pyinotify, '__version__') \
 try:
 	manager = pyinotify.WatchManager()
 	del manager
-except Exception, e:
+except Exception as e:
 	raise ImportError("Pyinotify is probably not functional on this system: %s"
 					  % str(e))
 
