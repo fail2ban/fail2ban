@@ -124,3 +124,12 @@
 
 # failJSON: { "time": "2013-11-18T22:39:33", "match": true , "host": "91.49.82.139" }
 [Mon Nov 18 22:39:33 2013] [error] [client 91.49.82.139] user gg not found: /, referer: http://sj.hopto.org/management.html
+
+# Default message patterns to protect web apps
+#
+# failJSON: { "time": "2016-06-01T02:17:42", "match": true , "host": "192.168.0.2" }
+[Sat Jun 01 02:17:42 2016] [error] [client 192.168.0.2] user "bob" not found: My Protected Web Application
+# failJSON: { "time": "2016-06-01T03:17:42", "match": true , "host": "192.168.0.2" }
+[Sat Jun 01 03:17:42 2016] [error] [client 192.168.0.2] user "bob" password mismatch: My Protected Web Application
+# failJSON: { "time": "2016-06-01T04:17:42", "match": true , "host": "192.168.0.2" }
+[Sat Jun 01 04:17:42 2016] [error] [client 192.168.0.2] client used invalid token: My Protected Web Application
