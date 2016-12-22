@@ -158,6 +158,9 @@ This sets the age at which bans should be purged from the database.
 
 .SH "JAIL CONFIGURATION FILE(S) (\fIjail.conf\fB)"
 The following options are applicable to any jail. They appear in a section specifying the jail name or in the \fI[DEFAULT]\fR section which defines default values to be used if not specified in the individual section.
+Another way to define default options per jail is to specify those in the section \fI[default.jail-name]\fR.
+The option is looked up in \fI[jail]\fR section, in jail defaults \fI[default.jail]\fR and in global \fI[DEFAULT]\fR section in exactly that order.
+Setting of some options in \fI[DEFAULT]\fR overwrites per section defaults for this options of the previous includes. This applies to all configuration files that file2ban uses by read of jail parameters.
 .TP
 .B filter
 name of the filter -- filename of the filter in /etc/fail2ban/filter.d/ without the .conf/.local extension.

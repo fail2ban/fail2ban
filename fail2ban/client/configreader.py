@@ -209,17 +209,18 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	# 2 -> the default value for the option
 	
 	def getOptions(self, sec, options, pOptions=None):
+		self.merge_defaults(sec)
 		values = dict()
 		for option in options:
 			try:
+				if not pOptions is None and option[1] in pOptions:
+					continue
 				if option[0] == "bool":
 					v = self.getboolean(sec, option[1])
 				elif option[0] == "int":
 					v = self.getint(sec, option[1])
 				else:
 					v = self.get(sec, option[1])
-				if not pOptions is None and option[1] in pOptions:
-					continue
 				values[option[1]] = v
 			except NoSectionError as e:
 				# No "Definition" section or wrong basedir
