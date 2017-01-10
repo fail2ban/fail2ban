@@ -43,12 +43,12 @@ from optparse import OptionParser, Option
 from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
 
 try:
-	from systemd import journal
 	from ..server.filtersystemd import FilterSystemd
 except ImportError:
-	journal = None
+	FilterSystemd = None
 
 from ..version import version
+from .jailreader import JailReader
 from .filterreader import FilterReader
 from ..server.filter import Filter, FileContainer
 from ..server.failregex import RegexException
@@ -82,7 +82,7 @@ def pprint_list(l, header=None):
 		s = ''
 	output( s + "|  " + "\n|  ".join(l) + '\n`-' )
 
-def journal_lines_gen(myjournal):
+def journal_lines_gen(flt, myjournal): # pragma: no cover
 	while True:
 		try:
 			entry = myjournal.get_next()
@@ -90,7 +90,7 @@ def journal_lines_gen(myjournal):
 			continue
 		if not entry:
 			break
-		yield FilterSystemd.formatJournalEntry(entry)
+		yield flt.formatJournalEntry(entry)
 
 def get_opt_parser():
 	# use module docstring for help output
@@ -513,25 +513,22 @@ class Fail2banRegex(object):
 			except IOError as e:
 				output( e )
 				return False
-		elif cmd_log == "systemd-journal": # pragma: no cover
-			if not journal:
+		elif cmd_log.startswith("systemd-journal"): # pragma: no cover
+			if not FilterSystemd:
 				output( "Error: systemd library not found. Exiting..." )
 				return False
-			myjournal = journal.Reader(converters={'__CURSOR': lambda x: x})
+			output( "Use         systemd journal" )
+			output( "Use         encoding : %s" % self.encoding )
+			backend, beArgs = JailReader.extractOptions(cmd_log)
+			flt = FilterSystemd(None, **beArgs)
+			flt.setLogEncoding(self.encoding)
+			myjournal = flt.getJournalReader()
 			journalmatch = self._journalmatch
 			self.setDatePattern(None)
 			if journalmatch:
-				try:
-					for element in journalmatch:
-						if element == "+":
-							myjournal.add_disjunction()
-						else:
-							myjournal.add_match(element)
-				except ValueError:
-					output( "Error: Invalid journalmatch: %s" % shortstr(" ".join(journalmatch)) )
-					return False
+				flt.addJournalMatch(journalmatch)
 			output( "Use    journal match : %s" % " ".join(journalmatch) )
-			test_lines = journal_lines_gen(myjournal)
+			test_lines = journal_lines_gen(flt, myjournal)
 		else:
 			output( "Use      single line : %s" % shortstr(cmd_log) )
 			test_lines = [ cmd_log ]
