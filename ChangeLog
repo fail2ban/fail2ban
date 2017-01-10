@@ -16,6 +16,10 @@ releases.
 
 ### Fixes
 * Fixed a systemd-journal handling in fail2ban-regex (gh-1657)
+* filter.d/sshd.conf
+    - Fixed non-anchored part of failregex (misleading match of colon inside
+      IPv6 address instead of `: ` in the reason-part by missing space, gh-1658)
+      (0.10th resp. IPv6 relevant only, amend for gh-1479)
 
 ### New Features
 * New Actions:
