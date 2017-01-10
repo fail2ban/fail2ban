@@ -1,0 +1,30 @@
+# failJSON: { "match": false }
+2016-11-20T00:04:00.110+0100 [conn1] Failed to authenticate root@admin with mechanism MONGODB-CR: AuthenticationFailed UserNotFound Could not find user root@admin
+# failJSON: { "time": "2016-11-20T00:04:00", "match": true , "host": "192.0.2.35" }
+2016-11-20T00:04:00.111+0100 [conn1] end connection 192.0.2.35:53276 (0 connections now open)
+
+# failJSON: { "match": false }
+2016-11-20T00:24:00.110+0100 [conn5] Failed to authenticate root@admin with mechanism MONGODB-CR: AuthenticationFailed UserNotFound Could not find user root@admin
+# failJSON: { "time": "2016-11-20T00:24:00", "match": true , "host": "192.0.2.171" }
+2016-11-20T00:24:00.111+0100 [conn5] end connection 192.0.2.171:53276 (0 connections now open)
+
+# failJSON: { "match": false }
+2016-11-20T00:24:00.110+0100 [conn334] Failed to authenticate root@admin with mechanism MONGODB-CR: AuthenticationFailed key mismatch
+# failJSON: { "time": "2016-11-20T00:24:00", "match": true , "host": "192.0.2.176" }
+2016-11-20T00:24:00.111+0100 [conn334] end connection 192.0.2.176:53276 (0 connections now open)
+
+# failJSON: { "match": false }
+2016-11-20T00:24:00.110+0100 [conn56] Failed to authenticate root@admin with mechanism MONGODB-CR: AuthenticationFailed key mismatch
+# failJSON: { "time": "2016-11-20T00:24:00", "match": true , "host": "192.0.2.1" }
+2016-11-20T00:24:00.111+0100 [conn56] end connection 192.0.2.1:53276 (0 connections now open)
+
+# failJSON: { "match": false }
+2016-11-20T12:54:02.370+0100 [initandlisten] connection accepted from 127.0.0.1:58774 #2261 (1 connection now open)
+# failJSON: { "match": false }
+2016-11-20T12:54:02.370+0100 [conn2261] end connection 127.0.0.1:58774 (0 connections now open)
+
+# failJSON: { "match": false }
+2016-11-20T13:07:49.781+0100 [conn2271]  authenticate db: admin { authenticate: 1, nonce: "xxx", user: "root", key: "xxx" }
+# failJSON: { "time": "2016-11-20T13:07:49", "match": false , "host": "192.0.2.178" }
+2016-11-20T13:07:49.834+0100 [conn2271] end connection 192.0.2.178:60268 (3 connections now open)
+

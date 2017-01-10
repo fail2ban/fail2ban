@@ -19,8 +19,10 @@ Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM 1.2.3.4
 Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM ::ffff:1.2.3.4
 
 #4
-# failJSON: { "time": "2005-07-20T14:42:11", "match": true , "host": "211.114.51.213" }
-Jul 20 14:42:11 localhost sshd[22708]: Invalid user ftp from 211.114.51.213
+# failJSON: { "time": "2005-07-20T14:42:11", "match": true , "host": "192.0.2.1", "desc": "Invalid user" }
+Jul 20 14:42:11 localhost sshd[22708]: Invalid user ftp from 192.0.2.1
+# failJSON: { "time": "2005-07-20T14:42:12", "match": true , "host": "192.0.2.2", "desc": "Invalid user with port" }
+Jul 20 14:42:12 localhost sshd[22708]: Invalid user ftp from 192.0.2.2 port 37220
 
 #5 new filter introduced after looking at 44087D8C.9090407@bluewin.ch
 # yoh: added ':' after [sshd] since the case without is not really common any more

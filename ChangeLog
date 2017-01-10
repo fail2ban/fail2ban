@@ -172,7 +172,7 @@ fail2ban-client set loglevel INFO
   - new `with_foreground_server_thread` decorator to test several client/server commands
 
 
-ver. 0.9.6 (2016/XX/XX) - wanna-be-released
+ver. 0.9.x (2016/??/??) - wanna-be-released
 -----------
 
 0.9.x line is no longer heavily developed.  If you are interested in
@@ -180,21 +180,41 @@ new features (e.g. IPv6 support), please consider 0.10 branch and its
 releases.
 
 ### Fixes
+* Fixed a systemd-journal handling in fail2ban-regex (gh-1657)
+
+### New Features
+* New Actions:
+
+* New Filters:
+
+
+### Enhancements
+
+
+ver. 0.9.6 (2016/12/10) - stretch-is-coming
+-----------
+
+### Fixes
 * Misleading add resp. enable of (already available) jail in database, that
   induced a subsequent error: last position of log file will be never retrieved (gh-795)
 * Fixed a distribution related bug within testReadStockJailConfForceEnabled
   (e.g. test-cases faults on Fedora, see gh-1353)
-* Fixed pythonic filters and test scripts (running via wrong python version, 
+* Fixed pythonic filters and test scripts (running via wrong python version,
   uses "fail2ban-python" now);
 * Fixed test case "testSetupInstallRoot" for not default python version (also
   using direct call, out of virtualenv);
 * Fixed ambiguous wrong recognized date pattern resp. its optional parts (see gh-1512);
 * FIPS compliant, use sha1 instead of md5 if it not allowed (see gh-1540)
 * Monit config: scripting is not supported in path (gh-1556)
+* `filter.d/apache-modsecurity.conf`
+    - Fixed for newer version (one space, gh-1626), optimized: non-greedy catch-all
+      replaced for safer match, unneeded catch-all anchoring removed, non-capturing
 * `filter.d/asterisk.conf`
     - Fixed to match different asterisk log prefix (source file: method:)
+* `filter.d/dovecot.conf`
+    - Fixed failregex ignores failures through some not relevant info (gh-1623)
 * `filter.d/ignorecommands/apache-fakegooglebot`
-    - Fixed error within apache-fakegooglebot, that will be called 
+    - Fixed error within apache-fakegooglebot, that will be called
       with wrong python version (gh-1506)
 * `filter.d/assp.conf`
     - Extended failregex and test cases to handle ASSP V1 and V2 (gh-1494)
@@ -208,18 +228,21 @@ releases.
     - recognized "Failed publickey for" (gh-1477);
     - optimized failregex to match all of "Failed any-method for ... from <HOST>" (gh-1479)
     - eliminated possible complex injections (on user-name resp. auth-info, see gh-1479)
-
+    - optional port part after host (see gh-1533, gh-1581)
 
 ### New Features
 * New Actions:
     - `action.d/npf.conf` for NPF, the latest packet filter for NetBSD
+* New Filters:
+    - `filter.d/mongodb-auth.conf` for MongoDB (document-oriented NoSQL database engine)
+      (gh-1586, gh-1606 and gh-1607)
 
 ### Enhancements
-* DateTemplate regexp extended with the word-end boundary, additionally to 
+* DateTemplate regexp extended with the word-end boundary, additionally to
   word-start boundary
-* Introduces new command "fail2ban-python", as automatically created symlink to 
+* Introduces new command "fail2ban-python", as automatically created symlink to
   python executable, where fail2ban currently installed (resp. its modules are located):
-    - allows to use the same version, fail2ban currently running, e.g. in 
+    - allows to use the same version, fail2ban currently running, e.g. in
       external scripts just via replace python with fail2ban-python:
       ```diff
       -#!/usr/bin/env python
