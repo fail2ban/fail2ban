@@ -15,6 +15,7 @@ new features (e.g. IPv6 support), please consider 0.10 branch and its
 releases.
 
 ### Fixes
+* Fixed a systemd-journal handling in fail2ban-regex (gh-1657)
 
 ### New Features
 * New Actions:
