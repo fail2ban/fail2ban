@@ -30,6 +30,7 @@ from ConfigParser import NoOptionError, NoSectionError
 
 from .configparserinc import sys, SafeConfigParserWithIncludes, logLevel
 from ..helpers import getLogger
+from ..server.action import CommandAction
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -319,6 +320,28 @@ class DefinitionInitConfigReader(ConfigReader):
 					self._initOpts['known/'+opt] = v
 				if not opt in self._initOpts:
 					self._initOpts[opt] = v
+
+	def _convert_to_boolean(self, value):
+		return value.lower() in ("1", "yes", "true", "on")
+	
+	def getCombined(self, ignore=()):
+		combinedopts = self._opts
+		ignore = set(ignore).copy()
+		if self._initOpts:
+			combinedopts = _merge_dicts(self._opts, self._initOpts)
+		if not len(combinedopts):
+			return {}
+		# ignore conditional options:
+		for n in combinedopts:
+			cond = SafeConfigParserWithIncludes.CONDITIONAL_RE.match(n)
+			if cond:
+				n, cond = cond.groups()
+				ignore.add(n)
+		# substiture options already specified direct:
+		opts = CommandAction.substituteRecursiveTags(combinedopts, ignore=ignore)
+		if not opts:
+			raise ValueError('recursive tag definitions unable to be resolved')
+		return opts
 	
 	def convert(self):
 		raise NotImplementedError

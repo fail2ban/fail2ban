@@ -365,7 +365,7 @@ class CommandAction(ActionBase):
 		return self._executeOperation('<actionreload>', 'reloading')
 
 	@classmethod
-	def substituteRecursiveTags(cls, inptags, conditional=''):
+	def substituteRecursiveTags(cls, inptags, conditional='', ignore=()):
 		"""Sort out tag definitions within other tags.
 		Since v.0.9.2 supports embedded interpolation (see test cases for examples).
 
@@ -387,21 +387,26 @@ class CommandAction(ActionBase):
 		# copy return tags dict to prevent modifying of inptags:
 		tags = inptags.copy()
 		t = TAG_CRE
+		ignore = set(ignore)
+		done = cls._escapedTags.copy() | ignore
 		# repeat substitution while embedded-recursive (repFlag is True)
-		done = cls._escapedTags.copy()
 		while True:
 			repFlag = False
 			# substitute each value:
 			for tag in tags.iterkeys():
-				# ignore escaped or already done:
+				# ignore escaped or already done (or in ignore list):
 				if tag in done: continue
-				value = str(tags[tag])
+				value = orgval = str(tags[tag])
 				# search and replace all tags within value, that can be interpolated using other tags:
 				m = t.search(value)
 				refCounts = {}
 				#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
 				while m:
 					found_tag = m.group(1)
+					# don't replace tags that should be currently ignored (pre-replacement):
+					if found_tag in ignore: 
+						m = t.search(value, m.end())
+						continue
 					#logSys.log(5, 'found: %s' % found_tag)
 					if found_tag == tag or refCounts.get(found_tag, 1) > MAX_TAG_REPLACE_COUNT:
 						# recursive definitions are bad
@@ -429,7 +434,7 @@ class CommandAction(ActionBase):
 					m = t.search(value, m.start())
 				#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
 				# was substituted?
-				if tags[tag] != value:
+				if orgval != value:
 					# check still contains any tag - should be repeated (possible embedded-recursive substitution):
 					if t.search(value):
 						repFlag = True

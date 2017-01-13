@@ -136,7 +136,8 @@ class JailReader(ConfigReader):
 				if not filterName:
 					raise JailDefError("Invalid filter definition %r" % flt)
 				self.__filter = FilterReader(
-					filterName, self.__name, filterOpt, share_config=self.share_config, basedir=self.getBaseDir())
+					filterName, self.__name, filterOpt, 
+					share_config=self.share_config, basedir=self.getBaseDir())
 				ret = self.__filter.read()
 				# merge options from filter as 'known/...':
 				self.__filter.getOptions(self.__opts)
