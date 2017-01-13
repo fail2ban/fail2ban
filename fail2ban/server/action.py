@@ -219,9 +219,9 @@ class CommandAction(ActionBase):
 			self.timeout = 60
 			## Command executed in order to initialize the system.
 			self.actionstart = ''
-			## Command executed when an IP address gets banned.
+			## Command executed when ticket gets banned.
 			self.actionban = ''
-			## Command executed when an IP address gets removed.
+			## Command executed when ticket gets removed.
 			self.actionunban = ''
 			## Command executed in order to check requirements.
 			self.actioncheck = ''

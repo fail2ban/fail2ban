@@ -756,9 +756,10 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				return
 			_write_file(fn, "w",
 				"[Definition]",
+				"restore = ",
 				"actionstart =  echo '[<name>] %s: ** start'" % actname, start,
 				"actionreload = echo '[<name>] %s: .. reload'" % actname, reload,
-				"actionban =    echo '[<name>] %s: ++ ban <ip>'" % actname, ban,
+				"actionban =    echo '[<name>] %s: ++ ban <ip> %%(restore)s'" % actname, ban,
 				"actionunban =  echo '[<name>] %s: -- unban <ip>'" % actname, unban,
 				"actionstop =   echo '[<name>] %s: __ stop'" % actname, stop,
 			)
@@ -777,17 +778,22 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"",
 				"[test-jail1]", "backend = " + backend, "filter =", 
 				"action = ",
-				"         test-action1[name='%(__name__)s']" if 1 in actions else "",
-				"         test-action2[name='%(__name__)s']" if 2 in actions else "",
+				"         test-action1[name='%(__name__)s']" \
+					if 1 in actions else "",
+				"         test-action2[name='%(__name__)s', restore='restored: <restored>']" \
+					if 2 in actions else "",
 				"logpath = " + test1log,
 				"          " + test2log if 2 in enabled else "",
 				"          " + test3log if 2 in enabled else "",
 				"failregex = ^\s*failure (401|403) from <HOST>",
-				"            ^\s*error (401|403) from <HOST>" if 2 in enabled else "",
+				"            ^\s*error (401|403) from <HOST>" \
+					if 2 in enabled else "",
 				"enabled = true" if 1 in enabled else "",
 				"",
 				"[test-jail2]", "backend = " + backend, "filter =", 
-				"action =",
+				"action = ",
+				"         test-action2[name='%(__name__)s', restore='restored: <restored>']" \
+					if 2 in actions else "",
 				"logpath = " + test2log,
 				"enabled = true" if 2 in enabled else "",
 			)
@@ -821,6 +827,10 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"stdout: '[test-jail1] test-action1: ** start'", 
 			"stdout: '[test-jail1] test-action2: ** start'", all=True)
+		# test restored is 0:
+		self.assertLogged(
+			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.1 restored: 0'",
+			all=True, wait=MID_WAITTIME)
 
 		# broken jail was logged (in client and server log):
 		self.assertLogged(
@@ -882,10 +892,10 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertNotLogged(
 			"stdout: '[test-jail1] test-action1: -- unban 192.0.2.1'")
 		
-		# don't need both actions anymore:
+		# don't need action1 anymore:
 		_write_action_cfg(actname="test-action1", allow=False)
-		_write_action_cfg(actname="test-action2", allow=False)
-		_write_jail_cfg(actions=[])
+		# leave action2 just to test restored interpolation:
+		_write_jail_cfg(actions=[2])
 		
 		# write new failures:
 		self.pruneLog("[test-phase 2b]")
@@ -913,7 +923,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"[test-jail2] Found 192.0.2.2", 
 			"[test-jail2] Ban 192.0.2.2",
 			"[test-jail2] Found 192.0.2.3", 
-			"[test-jail2] Ban 192.0.2.3", all=True)
+			"[test-jail2] Ban 192.0.2.3", 
+			all=True)
 
 		# rotate logs:
 		_write_file(test1log, "w+")
@@ -936,6 +947,19 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"[test-jail2] Restore Ban 192.0.2.4",
 			"[test-jail2] Restore Ban 192.0.2.8", all=True
 		)
+		# test restored is 1:
+		self.assertLogged(
+			"stdout: '[test-jail2] test-action2: ++ ban 192.0.2.4 restored: 1'",
+			"stdout: '[test-jail2] test-action2: ++ ban 192.0.2.8 restored: 1'",
+			all=True, wait=MID_WAITTIME)
+		self.assertNotLogged(
+			"stdout: '[test-jail2] test-action2: ++ ban 192.0.2.4 restored: 0'",
+			"stdout: '[test-jail2] test-action2: ++ ban 192.0.2.8 restored: 0'",
+			all=True)
+
+		# don't need actions anymore:
+		_write_action_cfg(actname="test-action2", allow=False)
+		_write_jail_cfg(actions=[])
 
 		# restart jail with unban all:
 		self.pruneLog("[test-phase 2d]")

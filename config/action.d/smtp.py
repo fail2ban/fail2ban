@@ -211,6 +211,8 @@ class SMTPAction(ActionBase):
 			Dictionary which includes information in relation to
 			the ban.
 		"""
+		if aInfo.get('restored'):
+			return
 		aInfo.update(self.message_values)
 		message = "".join([
 			messages['ban']['head'],

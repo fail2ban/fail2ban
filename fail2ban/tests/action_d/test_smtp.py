@@ -94,16 +94,21 @@ class SMTPActionTest(unittest.TestCase):
 			"Subject: [Fail2Ban] %s: stopped" %
 				self.jail.name in self.smtpd.data)
 
-	def testBan(self):
+	def _testBan(self, restored=False):
 		aInfo = {
 			'ip': "127.0.0.2",
 			'failures': 3,
 			'matches': "Test fail 1\n",
 			'ipjailmatches': "Test fail 1\nTest Fail2\n",
 			'ipmatches': "Test fail 1\nTest Fail2\nTest Fail3\n",
-			}
+		}
+		if restored:
+			aInfo['restored'] = 1
 
 		self.action.ban(aInfo)
+		if restored: # no mail, should raises attribute error:
+			self.assertRaises(AttributeError, lambda: self.smtpd.mailfrom)
+			return
 		self.assertEqual(self.smtpd.mailfrom, "fail2ban")
 		self.assertEqual(self.smtpd.rcpttos, ["root"])
 		subject = "Subject: [Fail2Ban] %s: banned %s" % (
@@ -123,6 +128,12 @@ class SMTPActionTest(unittest.TestCase):
 		self.action.matches = "ipmatches"
 		self.action.ban(aInfo)
 		self.assertIn(aInfo['ipmatches'], self.smtpd.data)
+	
+	def testBan(self):
+		self._testBan()
+
+	def testNOPByRestored(self):
+		self._testBan(restored=True)
 
 	def testOptions(self):
 		self.action.start()
