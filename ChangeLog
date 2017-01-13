@@ -165,6 +165,28 @@ fail2ban-client set loglevel INFO
   - faster match and fewer searching of appropriate templates
     (DateDetector.matchTime calls rarer DateTemplate.matchDate now);
   - several standard filters extended with exact prefixed or anchored date templates;
+* Added possibility to recognize restored state of the tickets (see gh-1669).
+  For the shell-based actions it is enough to add following script-piece at begin 
+  of `actionban` (or `actionunban`), to prevent execution for the restored 
+  (after restart) tickets.
+  `if [ '<restored>' = '1' ]; then exit 0; fi;`
+  Several actions extended now:
+  - complain.conf
+  - dshield.conf
+  - mail-buffered.conf
+  - mail-whois-lines.conf
+  - mail-whois.conf
+  - mail.conf
+  - sendmail-buffered.conf
+  - sendmail-geoip-lines.conf
+  - sendmail-whois-ipjailmatches.conf
+  - sendmail-whois-ipmatches.conf
+  - sendmail-whois-lines.conf
+  - sendmail-whois-matches.conf
+  - sendmail-whois.conf
+  - sendmail.conf
+  - smtp.py
+  - xarf-login-attack.conf
 * fail2ban-testcases:
   - `assertLogged` extended with parameter wait (to wait up to specified timeout,
     before we throw assert exception) + test cases rewritten using that
