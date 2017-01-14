@@ -173,3 +173,4 @@ Apr 27 13:02:04 host sshd[29116]: Received disconnect from 1.2.3.4: 11: Normal S
 
 # failJSON: { "time": "2017-01-13T19:04:58", "match": true , "host": "91.197.232.15", "desc": "Connection closed preauth" }
 2017-01-13T19:04:58.040989k2dls sshd[26743]: Connection closed by 91.197.232.15 port 9224 [preauth]
+
