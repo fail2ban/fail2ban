@@ -139,16 +139,6 @@ Jul 05 18:22:44 mercury sshd[4669]: Failed publickey for graysky from 127.0.0.1 
 # failJSON: { "time": "2005-07-05T18:22:45", "match": true , "host": "aaaa:bbbb:cccc:1234::1:1", "desc": "Failed publickey for ..." }
 Jul 05 18:22:45 mercury sshd[4670]: Failed publickey for graysky from aaaa:bbbb:cccc:1234::1:1 port 37955 ssh2: RSA SHA256:v3dpapGleDaUKf$4V1vKyR9ZyUgjaJAmoCTcb2PLljI
 
-# failJSON: { "match": false }
-Nov 23 21:50:19 sshd[8148]: Disconnecting: Too many authentication failures for root [preauth]
-# failJSON: { "time": "2004-11-23T21:50:37", "match": true , "host": "61.0.0.1", "desc": "Multiline match for preauth failures" }
-Nov 23 21:50:37 sshd[8148]: Connection closed by 61.0.0.1 [preauth]
-
-# failJSON: { "match": false }
-Nov 23 21:50:19 sshd[9148]: Disconnecting: Too many authentication failures for root [preauth]
-# failJSON: { "match": false , "desc": "Pids don't match" }
-Nov 23 21:50:37 sshd[7148]: Connection closed by 61.0.0.1 [preauth]
-
 # failJSON: { "time": "2005-07-13T18:44:28", "match": true , "host": "89.24.13.192", "desc": "from gh-289" }
 Jul 13 18:44:28 mdop sshd[4931]: Received disconnect from 89.24.13.192: 3: com.jcraft.jsch.JSchException: Auth fail
 
@@ -157,16 +147,6 @@ Oct  1 17:27:44 localhost sshd[24077]: error: Received disconnect from 94.249.23
 
 # failJSON: { "time": "2004-10-01T17:27:44", "match": true , "host": "94.249.236.6", "desc": "space in disconnect description per commit 36919d9f" }
 Oct  1 17:27:44 localhost sshd[24077]: error: Received disconnect from 94.249.236.6: 3: Ha ha, suckers!: Auth fail [preauth]
-
-# failJSON: { "match": false }
-Feb 12 04:09:18 localhost sshd[26713]: Connection from 115.249.163.77 port 51353
-# failJSON: { "time": "2005-02-12T04:09:21", "match": true , "host": "115.249.163.77", "desc": "from gh-457" }
-Feb 12 04:09:21 localhost sshd[26713]: Disconnecting: Too many authentication failures for root [preauth]
-
-# failJSON: { "match": false }
-Feb 12 04:09:18 localhost sshd[26713]: Connection from 115.249.163.77 port 51353 on 127.0.0.1 port 22
-# failJSON: { "time": "2005-02-12T04:09:21", "match": true , "host": "115.249.163.77", "desc": "Multiline match with interface address" }
-Feb 12 04:09:21 localhost sshd[26713]: Disconnecting: Too many authentication failures for root [preauth]
 
 # failJSON: { "time": "2004-11-23T21:50:37", "match": true , "host": "61.0.0.1", "desc": "New logline format as openssh 6.8 to replace prev multiline version" }
 Nov 23 21:50:37 myhost sshd[21810]: error: maximum authentication attempts exceeded for root from 61.0.0.1 port 49940 ssh2 [preauth]
@@ -181,3 +161,15 @@ Apr 27 13:02:04 host sshd[29116]: Received disconnect from 1.2.3.4: 11: Normal S
 # Match sshd auth errors on OpenSUSE systems
 # failJSON: { "time": "2015-04-16T20:02:50", "match": true , "host": "222.186.21.217", "desc": "Authentication for user failed" }
 2015-04-16T18:02:50.321974+00:00 host sshd[2716]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=222.186.21.217  user=root
+
+# failJSON: { "time": "2017-01-14T03:30:13", "match": true , "host": "123.31.32.26", "desc": "no matching key exchange method" }
+2017-01-14T03:30:13.688765k2dls sshd[1705]: Unable to negotiate with 123.31.32.26 port 14161: no matching key exchange method found. Their offer: diffie-hellman-group1-sha1 [preauth]
+
+# failJSON: { "time": "2017-01-13T07:05:05", "match": true , "host": "91.195.103.149", "desc": "no matching cipher found" }
+2017-01-13T07:05:05.600951.private sshd[7016]: Unable to negotiate with 91.195.103.149 port 49283: no matching cipher found. Their offer: aes256-cbc,rijndael-cbc@lysator.liu.se,aes192-cbc,aes128-cbc,arcfour128,arcfour,3des-cbc,none [preauth]
+
+# failJSON: { "time": "2017-01-10T01:55:48", "match": true , "host": "108.45.93.80", "desc": "no matching host key" }
+2017-01-10T01:55:48.896418k2dls sshd[13641]: Unable to negotiate with 108.45.93.80 port 19000: no matching host key type found. Their offer: ssh-dss [preauth]
+
+# failJSON: { "time": "2017-01-13T19:04:58", "match": true , "host": "91.197.232.15", "desc": "Connection closed preauth" }
+2017-01-13T19:04:58.040989k2dls sshd[26743]: Connection closed by 91.197.232.15 port 9224 [preauth]
