@@ -1,0 +1,12 @@
+
+# failJSON: { "time": "2017-1-14T18:36:27", "match": true , "host": "31.192.245.57" }
+2017-01-14T18:36:27.633279localhost sendmail[24152]: v0ENaRWH024152: ruleset=check_rcpt, arg1=<linda_morgan@example.com>, relay=[31.192.245.57], reject=554 5.7.1 Rejected 31.192.245.57 listed by zen.spamhaus.org
+
+# failJSON: { "time": "2017-01-14T18:36:04", "match": true , "host": "209.145.97.15" }
+2017-01-14T18:36:04.535880localhost sendmail[24135]: v0ENa2Aq024135: ruleset=check_rcpt, arg1=<peronilla@iboat.com.au>, relay=[209.145.97.15], reject=550 5.7.1 <peronilla@iboat.com.au>... Relaying denied. IP name lookup failed [209.145.97.15]
+
+# failJSON: { "time": "2017-01-14T08:24:00", "match": true , "host": "192.155.106.117" }
+2017-01-14T08:24:00.884312localhost sendmail[6299]: v0EDNvYT006299: [192.155.106.117] did not issue MAIL/EXPN/VRFY/ETRN during connection to TLSMTA-v6
+
+# failJSON: { "time": "2016-10-17T20:47:27", "match": true , "host": "216.15.186.126" }
+2016-10-17T20:47:27.036309localhost sendmail[32724]: u9I0lQow032724: [216.15.186.126] did not issue MAIL/EXPN/VRFY/ETRN during connection to MTA-v4
