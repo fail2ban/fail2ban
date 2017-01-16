@@ -166,11 +166,14 @@ fail2ban-client set loglevel INFO
     (DateDetector.matchTime calls rarer DateTemplate.matchDate now);
   - several standard filters extended with exact prefixed or anchored date templates;
 * Added possibility to recognize restored state of the tickets (see gh-1669).
-  For the shell-based actions it is enough to add following script-piece at begin 
-  of `actionban` (or `actionunban`), to prevent execution for the restored 
-  (after restart) tickets.
+  New option `norestored` introduced, to ignore restored tickets (after restart).
+  To avoid execution of ban/unban for the restored tickets, `norestored = true`
+  could be added in definition section of action.
+  For conditional usage in the shell-based actions an interpolation `<restored>` 
+  could be used also. E. g. it is enough to add following script-piece at begin
+  of `actionban` (or `actionunban`) to prevent execution:
   `if [ '<restored>' = '1' ]; then exit 0; fi;`
-  Several actions extended now:
+  Several actions extended now using `norestored` option:
   - complain.conf
   - dshield.conf
   - mail-buffered.conf
