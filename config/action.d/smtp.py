@@ -126,6 +126,9 @@ class SMTPAction(ActionBase):
 			bantime = self._jail.actions.getBanTime,
 			)
 
+		# bypass ban/unban for restored tickets
+		self.norestored = 1
+
 	def _sendMessage(self, subject, text):
 		"""Sends message based on arguments and instance's properties.
 
