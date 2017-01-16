@@ -363,6 +363,8 @@ class Actions(JailThread, Mapping):
 				logSys.notice("[%s] %sBan %s", self._jail.name, ('' if not bTicket.restored else 'Restore '), ip)
 				for name, action in self._actions.iteritems():
 					try:
+						if ticket.restored and getattr(action, 'norestored', False):
+							continue
 						action.ban(aInfo.copy())
 					except Exception as e:
 						logSys.error(
@@ -457,6 +459,8 @@ class Actions(JailThread, Mapping):
 			logSys.notice("[%s] Unban %s", self._jail.name, aInfo["ip"])
 		for name, action in unbactions.iteritems():
 			try:
+				if ticket.restored and getattr(action, 'norestored', False):
+					continue
 				logSys.debug("[%s] action %r: unban %s", self._jail.name, name, aInfo["ip"])
 				action.unban(aInfo.copy())
 			except Exception as e:

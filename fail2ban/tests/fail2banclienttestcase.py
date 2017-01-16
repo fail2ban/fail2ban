@@ -755,13 +755,17 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				os.remove(fn)
 				return
 			_write_file(fn, "w",
+				"[DEFAULT]",
+				"_exec_once = 0",
+				"",
 				"[Definition]",
+				"norestored = %(_exec_once)s",
 				"restore = ",
-				"actionstart =  echo '[<name>] %s: ** start'" % actname, start,
-				"actionreload = echo '[<name>] %s: .. reload'" % actname, reload,
-				"actionban =    echo '[<name>] %s: ++ ban <ip> %%(restore)s'" % actname, ban,
-				"actionunban =  echo '[<name>] %s: -- unban <ip>'" % actname, unban,
-				"actionstop =   echo '[<name>] %s: __ stop'" % actname, stop,
+				"actionstart =  echo '[%(name)s] %(actname)s: ** start'", start,
+				"actionreload = echo '[%(name)s] %(actname)s: .. reload'", reload,
+				"actionban =    echo '[%(name)s] %(actname)s: ++ ban <ip> %(restore)s'", ban,
+				"actionunban =  echo '[%(name)s] %(actname)s: -- unban <ip>'", unban,
+				"actionstop =   echo '[%(name)s] %(actname)s: __ stop'", stop,
 			)
 			if unittest.F2B.log_level <= logging.DEBUG: # pragma: no cover
 				_out_file(fn)
@@ -782,6 +786,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 					if 1 in actions else "",
 				"         test-action2[name='%(__name__)s', restore='restored: <restored>']" \
 					if 2 in actions else "",
+				"         test-action2[name='%(__name__)s', actname=test-action3, _exec_once=1, restore='restored: <restored>']" \
+					if 3 in actions else "",
 				"logpath = " + test1log,
 				"          " + test2log if 2 in enabled else "",
 				"          " + test3log if 2 in enabled else "",
@@ -794,6 +800,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"action = ",
 				"         test-action2[name='%(__name__)s', restore='restored: <restored>']" \
 					if 2 in actions else "",
+				"         test-action2[name='%(__name__)s', actname=test-action3, _exec_once=1, restore='restored: <restored>']" \
+					if 3 in actions else "",
 				"logpath = " + test2log,
 				"enabled = true" if 2 in enabled else "",
 			)
@@ -804,7 +812,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		_write_action_cfg(actname="test-action1")
 		_write_action_cfg(actname="test-action2")
 
-		_write_jail_cfg(enabled=[1], actions=[1,2])
+		_write_jail_cfg(enabled=[1], actions=[1,2,3])
 		# append one wrong configured jail:
 		_write_file(pjoin(cfg, "jail.conf"), "a", "", "[broken-jail]", 
 			"", "filter = broken-jail-filter", "enabled = true")
@@ -827,9 +835,10 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"stdout: '[test-jail1] test-action1: ** start'", 
 			"stdout: '[test-jail1] test-action2: ** start'", all=True)
-		# test restored is 0:
+		# test restored is 0 (both actions available):
 		self.assertLogged(
 			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.1 restored: 0'",
+			"stdout: '[test-jail1] test-action3: ++ ban 192.0.2.1 restored: 0'",
 			all=True, wait=MID_WAITTIME)
 
 		# broken jail was logged (in client and server log):
@@ -895,7 +904,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# don't need action1 anymore:
 		_write_action_cfg(actname="test-action1", allow=False)
 		# leave action2 just to test restored interpolation:
-		_write_jail_cfg(actions=[2])
+		_write_jail_cfg(actions=[2,3])
 		
 		# write new failures:
 		self.pruneLog("[test-phase 2b]")
@@ -947,14 +956,15 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"[test-jail2] Restore Ban 192.0.2.4",
 			"[test-jail2] Restore Ban 192.0.2.8", all=True
 		)
-		# test restored is 1:
+		# test restored is 1 (only test-action2):
 		self.assertLogged(
 			"stdout: '[test-jail2] test-action2: ++ ban 192.0.2.4 restored: 1'",
 			"stdout: '[test-jail2] test-action2: ++ ban 192.0.2.8 restored: 1'",
 			all=True, wait=MID_WAITTIME)
+		# test test-action3 not executed at all (norestored check):
 		self.assertNotLogged(
-			"stdout: '[test-jail2] test-action2: ++ ban 192.0.2.4 restored: 0'",
-			"stdout: '[test-jail2] test-action2: ++ ban 192.0.2.8 restored: 0'",
+			"stdout: '[test-jail2] test-action3: ++ ban 192.0.2.4 restored: 1'",
+			"stdout: '[test-jail2] test-action3: ++ ban 192.0.2.8 restored: 1'",
 			all=True)
 
 		# don't need actions anymore:
