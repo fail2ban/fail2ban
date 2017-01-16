@@ -546,7 +546,10 @@ class JailsReaderTest(LogCaptureTestCase):
 				actionName = os.path.basename(actionConfig).replace('.conf', '')
 				actionReader = ActionReader(actionName, "TEST", {}, basedir=CONFIG_DIR)
 				self.assertTrue(actionReader.read())
-				actionReader.getOptions({})	  # populate _opts
+				try:
+					actionReader.getOptions({})	  # populate _opts
+				except Exception as e: # pragma: no cover
+					self.fail("action %r\n%s: %s" % (actionName, type(e).__name__, e))
 				if not actionName.endswith('-common'):
 					self.assertIn('Definition', actionReader.sections(),
 						msg="Action file %r is lacking [Definition] section" % actionConfig)
