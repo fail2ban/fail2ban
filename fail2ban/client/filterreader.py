@@ -27,8 +27,7 @@ __license__ = "GPL"
 import os
 import shlex
 
-from .configreader import DefinitionInitConfigReader, _merge_dicts
-from ..server.action import CommandAction
+from .configreader import DefinitionInitConfigReader
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
@@ -52,17 +51,6 @@ class FilterReader(DefinitionInitConfigReader):
 	def getFile(self):
 		return self.__file
 
-	def getCombined(self):
-		combinedopts = self._opts
-		if self._initOpts:
-			combinedopts = _merge_dicts(self._opts, self._initOpts)
-		if not len(combinedopts):
-			return {}
-		opts = CommandAction.substituteRecursiveTags(combinedopts)
-		if not opts:
-			raise ValueError('recursive tag definitions unable to be resolved')
-		return opts
-	
 	def convert(self):
 		stream = list()
 		opts = self.getCombined()
@@ -70,6 +58,7 @@ class FilterReader(DefinitionInitConfigReader):
 			return stream
 		for opt, value in opts.iteritems():
 			if opt in ("failregex", "ignoreregex"):
+				if value is None: continue
 				multi = []
 				for regex in value.split('\n'):
 					# Do not send a command if the rule is empty.
@@ -87,6 +76,7 @@ class FilterReader(DefinitionInitConfigReader):
 				stream.append(["set", self._jailName, "datepattern", value])
 			# Do not send a command if the match is empty.
 			elif opt == 'journalmatch':
+				if value is None: continue
 				for match in value.split("\n"):
 					if match == '': continue
 					stream.append(

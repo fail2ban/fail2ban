@@ -348,6 +348,8 @@ class Actions(JailThread, Mapping):
 			aInfo["failures"] = bTicket.getAttempt()
 			aInfo["time"] = bTicket.getTime()
 			aInfo["matches"] = "\n".join(bTicket.getMatches())
+			# to bypass actions, that should not be executed for restored tickets
+			aInfo["restored"] = 1 if ticket.restored else 0
 			if self._jail.database is not None:
 				mi4ip = lambda overalljails=False, self=self, \
 					mi={'ip':ip, 'ticket':bTicket}: self.__getBansMerged(mi, overalljails)
@@ -361,6 +363,8 @@ class Actions(JailThread, Mapping):
 				logSys.notice("[%s] %sBan %s", self._jail.name, ('' if not bTicket.restored else 'Restore '), ip)
 				for name, action in self._actions.iteritems():
 					try:
+						if ticket.restored and getattr(action, 'norestored', False):
+							continue
 						action.ban(aInfo.copy())
 					except Exception as e:
 						logSys.error(
@@ -449,10 +453,14 @@ class Actions(JailThread, Mapping):
 		aInfo["failures"] = ticket.getAttempt()
 		aInfo["time"] = ticket.getTime()
 		aInfo["matches"] = "".join(ticket.getMatches())
+		# to bypass actions, that should not be executed for restored tickets
+		aInfo["restored"] = 1 if ticket.restored else 0
 		if actions is None:
 			logSys.notice("[%s] Unban %s", self._jail.name, aInfo["ip"])
 		for name, action in unbactions.iteritems():
 			try:
+				if ticket.restored and getattr(action, 'norestored', False):
+					continue
 				logSys.debug("[%s] action %r: unban %s", self._jail.name, name, aInfo["ip"])
 				action.unban(aInfo.copy())
 			except Exception as e:
