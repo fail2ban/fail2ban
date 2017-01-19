@@ -25,6 +25,7 @@ releases.
 
 ### New Features
 * New Actions:
+    - action.d/netscaler: Block IPs on a Citrix Netscaler ADC (gh-1663)
 
 * New Filters:
 
