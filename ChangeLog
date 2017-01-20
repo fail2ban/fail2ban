@@ -28,7 +28,7 @@ releases.
     - action.d/netscaler: Block IPs on a Citrix Netscaler ADC (gh-1663)
 
 * New Filters:
-
+    - filter.d/domino-smtp: IBM Domino SMTP task (gh-1603)
 
 ### Enhancements
 
