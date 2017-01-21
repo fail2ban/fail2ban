@@ -597,7 +597,7 @@ class JailsReaderTest(LogCaptureTestCase):
 			# grab all filter names
 			filters = set(os.path.splitext(os.path.split(a)[1])[0]
 				for a in glob.glob(os.path.join('config', 'filter.d', '*.conf'))
-					if not a.endswith('common.conf'))
+					if not (a.endswith('common.conf') or a.endswith('-aggressive.conf')))
 			# get filters of all jails (filter names without options inside filter[...])
 			filters_jail = set(
 				JailReader.extractOptions(jail.options['filter'])[0] for jail in jails.jails
