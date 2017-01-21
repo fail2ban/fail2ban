@@ -139,6 +139,8 @@ Nov 23 21:50:37 sshd[7148]: Connection closed by 61.0.0.1 [preauth]
 
 # failJSON: { "time": "2005-07-13T18:44:28", "match": true , "host": "89.24.13.192", "desc": "from gh-289" }
 Jul 13 18:44:28 mdop sshd[4931]: Received disconnect from 89.24.13.192: 3: com.jcraft.jsch.JSchException: Auth fail
+# failJSON: { "time": "2005-01-02T01:18:41", "match": true , "host": "10.0.0.1", "desc": "space after port is optional (gh-1652)" }
+Jan  2 01:18:41 host sshd[11808]: error: Received disconnect from 10.0.0.1 port 7736:3: com.jcraft.jsch.JSchException: Auth fail [preauth]
 
 # failJSON: { "time": "2004-10-01T17:27:44", "match": true , "host": "94.249.236.6", "desc": "newer format per commit 36919d9f" }
 Oct  1 17:27:44 localhost sshd[24077]: error: Received disconnect from 94.249.236.6: 3: com.jcraft.jsch.JSchException: Auth fail [preauth]

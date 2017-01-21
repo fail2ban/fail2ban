@@ -28,6 +28,9 @@ releases.
       - No supported authentication methods available
     - single line and multi-line expression optimized, added optional prefixes
       and suffix (logged from several ssh versions), according to gh-1206;
+    - fixed expression received disconnect auth fail (optional space after port
+      part, gh-1652)
+      and suffix (logged from several ssh versions), according to gh-1206;
 * filter.d/suhosin.conf
     - greedy catch-all before `<HOST>` fixed (potential vulnerability)
 * Filter tests extended with check of all config-regexp, that contains greedy catch-all
