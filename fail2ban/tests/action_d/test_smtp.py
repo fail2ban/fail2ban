@@ -82,10 +82,11 @@ class SMTPActionTest(unittest.TestCase):
 		self._active = False
 		self._loop_thread.join()
 
-	def _exec_and_wait(self, doaction):
+	def _exec_and_wait(self, doaction, timeout=3, short=False):
+		if short: timeout /= 25
 		self.smtpd.ready = False
 		doaction()
-		Utils.wait_for(lambda: self.smtpd.ready, 3)
+		Utils.wait_for(lambda: self.smtpd.ready, timeout)
 
 	def testStart(self):
 		self._exec_and_wait(self.action.start)
@@ -114,7 +115,7 @@ class SMTPActionTest(unittest.TestCase):
 		if restored:
 			aInfo['restored'] = 1
 
-		self._exec_and_wait(lambda: self.action.ban(aInfo))
+		self._exec_and_wait(lambda: self.action.ban(aInfo), short=restored)
 		if restored: # no mail, should raises attribute error:
 			self.assertRaises(AttributeError, lambda: self.smtpd.mailfrom)
 			return
