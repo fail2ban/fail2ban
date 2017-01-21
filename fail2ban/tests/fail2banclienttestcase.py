@@ -81,6 +81,14 @@ fail2banserver.output = \
 protocol.output = _test_output
 
 
+Observers = server.Observers
+
+def _observer_wait_idle():
+	"""Helper to wait observer becomes idle"""
+	if Observers.Main is not None:
+		Observers.Main.wait_empty(MID_WAITTIME)
+		Observers.Main.wait_idle(MID_WAITTIME / 5)
+
 #
 # Mocking .exit so we could test its correct operation.
 # Two custom exceptions will be assessed to be raised in the tests
@@ -934,6 +942,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"[test-jail2] Found 192.0.2.3", 
 			"[test-jail2] Ban 192.0.2.3", 
 			all=True)
+		# if observer available wait for it becomes idle (write all tickets to db):
+		_observer_wait_idle()
 
 		# rotate logs:
 		_write_file(test1log, "w+")

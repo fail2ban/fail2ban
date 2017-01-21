@@ -172,6 +172,10 @@ class Server:
 		logSys.info("Exiting Fail2ban")
 	
 	def quit(self):
+		# Give observer a small chance to complete its work before exit
+		if Observers.Main is not None:
+			Observers.Main.stop()
+
 		# Stop communication first because if jail's unban action
 		# tries to communicate via fail2ban-client we get a lockup
 		# among threads.  So the simplest resolution is to stop all

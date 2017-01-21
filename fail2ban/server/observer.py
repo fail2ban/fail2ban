@@ -413,7 +413,7 @@ class ObserverThread(JailThread):
 		"""
 		# check jail active :
 		if not jail.isAlive() or not jail.database:
-			return
+			return banTime
 		be = jail.getBanTimeExtra()
 		ip = ticket.getIP()
 		orgBanTime = banTime
