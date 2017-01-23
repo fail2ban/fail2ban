@@ -25,6 +25,8 @@ Nov 24 23:46:43 host sshd[32686]: fatal: Read from socket failed: Connection res
 Nov 25 01:34:12 srv sshd[123]: Received disconnect from 127.0.0.1: 14: No supported authentication methods available [preauth]
 # failJSON: { "time": "2004-11-25T01:35:13", "match": true , "host": "127.0.0.1", "desc": "No supported authentication methods" }
 Nov 25 01:35:13 srv sshd[123]: error: Received disconnect from 127.0.0.1: 14: No supported authentication methods available [preauth]
+# failJSON: { "time": "2004-11-25T01:35:14", "match": true , "host": "192.168.2.92", "desc": "Optional space after port" }
+Nov 25 01:35:14 srv sshd[3625]: error: Received disconnect from 192.168.2.92 port 1684:14: No supported authentication methods available [preauth]
 
 # gh-1545:
 # failJSON: { "time": "2004-11-26T13:03:29", "match": true , "host": "192.0.2.1", "desc": "No matching cipher" }
