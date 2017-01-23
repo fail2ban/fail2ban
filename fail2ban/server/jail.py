@@ -274,8 +274,9 @@ class Jail(object):
 				if not self.getBanTimeExtra('increment'):
 					forbantime = self.actions.getBanTime()
 				for ticket in self.database.getCurrentBans(jail=self, forbantime=forbantime):
-					#logSys.debug('restored ticket: %s', ticket)
-					if not self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True):
+					try:
+						#logSys.debug('restored ticket: %s', ticket)
+						if self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True): continue
 						# mark ticked was restored from database - does not put it again into db:
 						ticket.restored = True
 						# correct start time / ban time (by the same end of ban):
@@ -287,8 +288,12 @@ class Jail(object):
 						if btm != -1 and btm <= 0:
 							continue
 						self.putFailTicket(ticket)
+					except Exception as e: # pragma: no cover
+						logSys.error('Restore ticket failed: %s', e, 
+							exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 		except Exception as e: # pragma: no cover
-			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+			logSys.error('Restore bans failed: %s', e,
+				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
 	def start(self):
 		"""Start the jail, by starting filter and actions threads.

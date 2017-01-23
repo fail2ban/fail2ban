@@ -80,7 +80,10 @@ class RequestHandler(asynchat.async_chat):
 			# Deserialize
 			message = loads(message)
 			# Gives the message to the transmitter.
-			message = self.__transmitter.proceed(message)
+			if self.__transmitter:
+				message = self.__transmitter.proceed(message)
+			else:
+				message = ['SHUTDOWN']
 			# Serializes the response.
 			message = dumps(message, HIGHEST_PROTOCOL)
 			# Sends the response to the client.
@@ -227,6 +230,13 @@ class AsyncServer(asyncore.dispatcher):
 
 	##
 	# Stops the communication server.
+	
+	def stop_communication(self):
+		logSys.debug("Stop communication")
+		self.__transmitter = None
+
+	##
+	# Stops the server.
 	
 	def stop(self):
 		self.close()

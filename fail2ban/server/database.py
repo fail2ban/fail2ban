@@ -643,7 +643,6 @@ class Fail2BanDb(object):
 		cur = self._db.cursor()
 		return cur.execute(query, queryArgs)
 
-	@commitandrollback
 	def _getCurrentBans(self, cur, jail = None, ip = None, forbantime=None, fromtime=None):
 		if fromtime is None:
 			fromtime = MyTime.time()
@@ -666,20 +665,29 @@ class Fail2BanDb(object):
 		cur = self._db.cursor()
 		return cur.execute(query, queryArgs)
 
-	def getCurrentBans(self, jail = None, ip = None, forbantime=None, fromtime=None):
+	@commitandrollback
+	def getCurrentBans(self, cur, jail = None, ip = None, forbantime=None, fromtime=None):
 		tickets = []
 		ticket = None
 
-		results = list(self._getCurrentBans(jail=jail, ip=ip, forbantime=forbantime, fromtime=fromtime))
-
-		if results:
-			for banip, timeofban, bantime, bancount, data in results:
-				# logSys.debug('restore ticket   %r, %r, %r', banip, timeofban, data)
-				ticket = FailTicket(banip, timeofban, data=data)
-				# logSys.debug('restored ticket: %r', ticket)
-				ticket.setBanTime(bantime)
-				ticket.setBanCount(bancount)
-				tickets.append(ticket)
+		for ticket in self._getCurrentBans(cur, jail=jail, ip=ip, 
+			forbantime=forbantime, fromtime=fromtime
+		):
+			# can produce unpack error (database may return sporadical wrong-empty row):
+			try:
+				banip, timeofban, bantime, bancount, data = ticket
+				# additionally check for empty values:
+				if banip is None or banip == "": # pragma: no cover
+					raise ValueError('unexpected value %r' % (banip,))
+			except ValueError as e: # pragma: no cover
+				logSys.debug("get current bans: ignore row %r - %s", ticket, e)
+				continue
+			# logSys.debug('restore ticket   %r, %r, %r', banip, timeofban, data)
+			ticket = FailTicket(banip, timeofban, data=data)
+			# logSys.debug('restored ticket: %r', ticket)
+			ticket.setBanTime(bantime)
+			ticket.setBanCount(bancount)
+			tickets.append(ticket)
 
 		return tickets if ip is None else ticket
 

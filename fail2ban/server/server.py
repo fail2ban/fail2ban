@@ -159,17 +159,16 @@ class Server:
 			self.__asyncServer.start(sock, force)
 		except AsyncServerException as e:
 			logSys.error("Could not start server: %s", e)
+
 		# Removes the PID file.
 		try:
 			logSys.debug("Remove PID file %s", pidfile)
 			os.remove(pidfile)
 		except (OSError, IOError) as e: # pragma: no cover
 			logSys.error("Unable to remove PID file: %s", e)
-		# Stop observer and exit
-		if Observers.Main is not None:
-			Observers.Main.stop()
-			Observers.Main = None
-		logSys.info("Exiting Fail2ban")
+
+		# Stop (if not yet already executed):
+		self.quit()
 	
 	def quit(self):
 		# Give observer a small chance to complete its work before exit
@@ -183,8 +182,7 @@ class Server:
 		# are exiting)
 		# See https://github.com/fail2ban/fail2ban/issues/7
 		if self.__asyncServer is not None:
-			self.__asyncServer.stop()
-			self.__asyncServer = None
+			self.__asyncServer.stop_communication()
 
 		# Now stop all the jails
 		self.stopAllJail()
@@ -204,6 +202,16 @@ class Server:
 		if _thread_name() == '_MainThread':
 			for s, sh in self.__prev_signals.iteritems():
 				signal.signal(s, sh)
+
+		# Stop observer and exit
+		if Observers.Main is not None:
+			Observers.Main.stop()
+			Observers.Main = None
+		# Stop async
+		if self.__asyncServer is not None:
+			self.__asyncServer.stop()
+			self.__asyncServer = None
+		logSys.info("Exiting Fail2ban")
 
 		# Prevent to call quit twice:
 		self.quit = lambda: False
