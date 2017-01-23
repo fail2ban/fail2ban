@@ -5,3 +5,18 @@
 2012-09-26 10:24:35: (http_auth.c.1136) digest: auth failed for  xxx : wrong password, IP: 4.4.4.4
 # failJSON: { "time": "2013-08-25T00:24:55", "match": true , "host": "4.4.4.4" }
 2013-08-25 00:24:55: (http_auth.c.877) get_password failed, IP: 4.4.4.4
+
+# Default message patterns to protect web apps
+# /!\ Please re-activate them once we can enable "protect_web_apps" parameter through failJSON
+# See https://github.com/fail2ban/fail2ban/issues/1676
+#
+# _dis_failJSON: { "time": "2016-06-01T01:17:42", "match": true , "host": "192.168.0.2" }
+#2016-06-01 01:17:42: (module.c.997) user  not found: My Protected Web Application, IP: 192.168.0.2
+# _dis_failJSON: { "time": "2016-06-01T02:17:42", "match": true , "host": "192.168.0.2" }
+#2016-06-01 02:17:42: (module.c.997) user bob not authorized: My Protected Web Application, IP: 192.168.0.2
+# _dis_failJSON: { "time": "2016-06-01T03:17:42", "match": true , "host": "192.168.0.2" }
+#2016-06-01 03:17:42: (module.c.997) user "bob" password mismatch: My Protected Web Application, IP: 192.168.0.2
+# _dis_failJSON: { "time": "2016-06-01T04:17:42", "match": true , "host": "192.168.0.2" }
+#2016-06-01 04:17:42: (module.c.997) user sent invalid token: My Protected Web Application, IP: 192.168.0.2
+# _dis_failJSON: { "time": "2016-06-01T05:17:42", "match": true , "host": "192.168.0.2" }
+#2016-06-01 05:17:42: (module.c.997) user misbehaved: My Protected Web Application, IP: 192.168.0.2
