@@ -28,11 +28,24 @@ import glob
 import os
 from ConfigParser import NoOptionError, NoSectionError
 
-from .configparserinc import SafeConfigParserWithIncludes, logLevel
+from .configparserinc import sys, SafeConfigParserWithIncludes, logLevel
 from ..helpers import getLogger
+from ..server.action import CommandAction
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
+
+
+# if sys.version_info >= (3,5):
+# 	def _merge_dicts(x, y):
+# 		return {**x, **y}
+# else:
+def _merge_dicts(x, y):
+	r = x
+	if y:
+		r = x.copy()
+		r.update(y)
+	return r
 
 
 class ConfigReader():
@@ -127,9 +140,9 @@ class ConfigReader():
 			return self._cfg.options(*args)
 		return {}
 
-	def get(self, sec, opt):
+	def get(self, sec, opt, raw=False, vars={}):
 		if self._cfg is not None:
-			return self._cfg.get(sec, opt)
+			return self._cfg.get(sec, opt, raw=raw, vars=vars)
 		return None
 
 	def getOptions(self, *args, **kwargs):
@@ -210,6 +223,8 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	
 	def getOptions(self, sec, options, pOptions=None, shouldExist=False):
 		values = dict()
+		if pOptions is None:
+			pOptions = {}
 		for optname in options:
 			if isinstance(options, (list,tuple)):
 				if len(optname) > 2:
@@ -218,15 +233,15 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 					(opttype, optname), optvalue = optname, None
 			else:
 				opttype, optvalue = options[optname]
+			if optname in pOptions:
+				continue
 			try:
 				if opttype == "bool":
 					v = self.getboolean(sec, optname)
 				elif opttype == "int":
 					v = self.getint(sec, optname)
 				else:
-					v = self.get(sec, optname)
-				if not pOptions is None and optname in pOptions:
-					continue
+					v = self.get(sec, optname, vars=pOptions)
 				values[optname] = v
 			except NoSectionError as e:
 				if shouldExist:
@@ -289,6 +304,12 @@ class DefinitionInitConfigReader(ConfigReader):
 		return SafeConfigParserWithIncludes.read(self._cfg, self._file)
 	
 	def getOptions(self, pOpts):
+		# overwrite static definition options with init values, supplied as
+		# direct parameters from jail-config via action[xtra1="...", xtra2=...]:
+		if self._initOpts:
+			if not pOpts:
+				pOpts = dict()
+			pOpts = _merge_dicts(pOpts, self._initOpts)
 		self._opts = ConfigReader.getOptions(
 			self, "Definition", self._configOpts, pOpts)
 		
@@ -299,6 +320,28 @@ class DefinitionInitConfigReader(ConfigReader):
 					self._initOpts['known/'+opt] = v
 				if not opt in self._initOpts:
 					self._initOpts[opt] = v
+
+	def _convert_to_boolean(self, value):
+		return value.lower() in ("1", "yes", "true", "on")
+	
+	def getCombined(self, ignore=()):
+		combinedopts = self._opts
+		ignore = set(ignore).copy()
+		if self._initOpts:
+			combinedopts = _merge_dicts(self._opts, self._initOpts)
+		if not len(combinedopts):
+			return {}
+		# ignore conditional options:
+		for n in combinedopts:
+			cond = SafeConfigParserWithIncludes.CONDITIONAL_RE.match(n)
+			if cond:
+				n, cond = cond.groups()
+				ignore.add(n)
+		# substiture options already specified direct:
+		opts = CommandAction.substituteRecursiveTags(combinedopts, ignore=ignore)
+		if not opts:
+			raise ValueError('recursive tag definitions unable to be resolved')
+		return opts
 	
 	def convert(self):
 		raise NotImplementedError

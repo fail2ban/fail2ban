@@ -41,6 +41,7 @@ class Socket(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		super(Socket, self).setUp()
 		self.server = AsyncServer(self)
 		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'socket')
 		os.close(sock_fd)

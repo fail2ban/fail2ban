@@ -13,6 +13,15 @@ TODO: implementing of options resp. other tasks from PR #1346
 
 ### Fixes
 * [Grave] memory leak's fixed (gh-1277, gh-1234)
+* [Grave] Misleading date patterns defined more precisely (using extended syntax
+  `%Ex[mdHMS]` for exact two-digit match or e. g. `%ExY` as more precise year 
+  pattern, within same century of last year and the next 3 years)
+* [Grave] extends date detector template with distance (position of match in 
+  log-line), to prevent grave collision using (re)ordered template list (e.g.
+  find-spot of wrong date-match inside foreign input, misleading date patterns
+  by ambiguous formats, etc.)
+* Distance collision check always prefers template with shortest distance
+  (left for right) if date pattern is not anchored
 * Tricky bug fix: last position of log file will be never retrieved (gh-795),
   because of CASCADE all log entries will be deleted from logs table together with jail, 
   if used "INSERT OR REPLACE" statement
@@ -31,6 +40,22 @@ TODO: implementing of options resp. other tasks from PR #1346
 * Pyinotify-backend: stability fix for sporadically errors in multi-threaded
   environment (without lock)
 * Fixed sporadically error in testCymruInfoNxdomain, because of unsorted values
+* Misleading errors logged from ignorecommand in success case on retcode 1 (gh-1194)
+* fail2ban.service - systemd service updated (gh-1618):
+  - starting service in normal mode (without forking)
+  - does not restart if service exited normally (exit-code 0, e.g. stopped via fail2ban-client)
+  - does not restart if service can not start (exit-code 255, e.g. wrong configuration, etc.)
+  - service can be additionally started/stopped with commands (fail2ban-client, fail2ban-server)
+  - automatically creates `/var/run/fail2ban` directory before start fail2ban 
+    (systems with virtual resp. memory-based FS for `/var/run`), see gh-1531
+  - if fail2ban running as systemd-service, for logging to the systemd-journal, 
+    the `logtarget` could be set to STDOUT
+  - value `logtarget` for system targets allowed also in lowercase (stdout, stderr, syslog, etc.)
+* Fixed UTC/GMT named time zone, using `%Z` and `%z` patterns 
+  (special case with 0 zone offset, see gh-1575)
+* `filter.d/freeswitch.conf`
+    - Optional prefixes (server, daemon, dual time) if systemd daemon logs used (gh-1548)
+    - User part rewritten to accept IPv6 resp. domain after "@" (gh-1548)
 
 ### New Features
 * IPv6 support:
@@ -60,6 +85,8 @@ TODO: implementing of options resp. other tasks from PR #1346
     banned in this jail, if option `--unban` specified
   - `unban --all` - unbans all IP addresses (in all jails and database)
   - `unban <IP> ... <IP>` - unbans \<IP\> (in all jails and database) (see gh-1388)
+  - introduced new option `-t` or `--test` to test configuration resp. start server only 
+    if configuration is clean (fails by wrong configured jails if option `-t` specified)
 * New command action parameter `actionrepair` - command executed in order to restore
   sane environment in error case of `actioncheck`.
 
@@ -124,6 +151,51 @@ fail2ban-client set loglevel INFO
   - new replacement for `<ADDR>` in opposition to `<HOST>`, for separate
     usage of 2 address groups only (regardless of `usedns`), `ip4` and `ip6`
     together, without host (dns)
+* Misconfigured jails don't prevent fail2ban from starting, server starts 
+  nevertheless, as long as one jail was successful configured (gh-1619)
+  Message about wrong jail configuration logged in client log (stdout, systemd
+  journal etc.) and in server log with error level
+* More precise date template handling (WARNING: theoretically possible incompatibilities):
+  - datedetector rewritten more strict as earlier;
+  - default templates can be specified exacter using prefix/suffix syntax (via `datepattern`);
+  - more as one date pattern can be specified using option `datepattern` now 
+    (new-line separated);
+  - some default options like `datepattern` can be specified directly in 
+    section `[Definition]`, that avoids contrary usage of unnecessarily `[Init]`
+    section, because of performance (each extra section costs time);
+  - option `datepattern` can be specified in jail also (e. g. jails without filters 
+    or custom log-format, new-line separated for multiple patterns);
+  - if first unnamed group specified in pattern, only this will be cut out from
+    search log-line (e. g.: `^date:[({DATE})]` will cut out only datetime match 
+    pattern, and leaves `date:[] ...` for searching in filter);
+  - faster match and fewer searching of appropriate templates
+    (DateDetector.matchTime calls rarer DateTemplate.matchDate now);
+  - several standard filters extended with exact prefixed or anchored date templates;
+* Added possibility to recognize restored state of the tickets (see gh-1669).
+  New option `norestored` introduced, to ignore restored tickets (after restart).
+  To avoid execution of ban/unban for the restored tickets, `norestored = true`
+  could be added in definition section of action.
+  For conditional usage in the shell-based actions an interpolation `<restored>` 
+  could be used also. E. g. it is enough to add following script-piece at begin
+  of `actionban` (or `actionunban`) to prevent execution:
+  `if [ '<restored>' = '1' ]; then exit 0; fi;`
+  Several actions extended now using `norestored` option:
+  - complain.conf
+  - dshield.conf
+  - mail-buffered.conf
+  - mail-whois-lines.conf
+  - mail-whois.conf
+  - mail.conf
+  - sendmail-buffered.conf
+  - sendmail-geoip-lines.conf
+  - sendmail-whois-ipjailmatches.conf
+  - sendmail-whois-ipmatches.conf
+  - sendmail-whois-lines.conf
+  - sendmail-whois-matches.conf
+  - sendmail-whois.conf
+  - sendmail.conf
+  - smtp.py
+  - xarf-login-attack.conf
 * fail2ban-testcases:
   - `assertLogged` extended with parameter wait (to wait up to specified timeout,
     before we throw assert exception) + test cases rewritten using that
@@ -131,7 +203,7 @@ fail2ban-client set loglevel INFO
   - new `with_foreground_server_thread` decorator to test several client/server commands
 
 
-ver. 0.9.6 (2016/XX/XX) - wanna-be-released
+ver. 0.9.x (2016/??/??) - wanna-be-released
 -----------
 
 0.9.x line is no longer heavily developed.  If you are interested in
@@ -139,21 +211,61 @@ new features (e.g. IPv6 support), please consider 0.10 branch and its
 releases.
 
 ### Fixes
+* Fixed a systemd-journal handling in fail2ban-regex (gh-1657)
+* filter.d/sshd.conf
+    - Fixed non-anchored part of failregex (misleading match of colon inside
+      IPv6 address instead of `: ` in the reason-part by missing space, gh-1658)
+      (0.10th resp. IPv6 relevant only, amend for gh-1479)
+* config/pathes-freebsd.conf
+    - Fixed filenames for apache and nginx log files (gh-1667)
+* filter.d/sshd.conf
+    - new aggressive rules (gh-864):
+      - Connection reset by peer (multi-line rule during authorization process)
+      - No supported authentication methods available
+    - single line and multi-line expression optimized, added optional prefixes
+      and suffix (logged from several ssh versions), according to gh-1206;
+    - fixed expression received disconnect auth fail (optional space after port
+      part, gh-1652)
+      and suffix (logged from several ssh versions), according to gh-1206;
+* filter.d/suhosin.conf
+    - greedy catch-all before `<HOST>` fixed (potential vulnerability)
+* Filter tests extended with check of all config-regexp, that contains greedy catch-all
+  before `<HOST>`, that is hard-anchored at end or precise  sub expression after `<HOST>`
+
+### New Features
+* New Actions:
+    - action.d/netscaler: Block IPs on a Citrix Netscaler ADC (gh-1663)
+
+* New Filters:
+    - filter.d/domino-smtp: IBM Domino SMTP task (gh-1603)
+
+### Enhancements
+
+
+ver. 0.9.6 (2016/12/10) - stretch-is-coming
+-----------
+
+### Fixes
 * Misleading add resp. enable of (already available) jail in database, that
   induced a subsequent error: last position of log file will be never retrieved (gh-795)
 * Fixed a distribution related bug within testReadStockJailConfForceEnabled
   (e.g. test-cases faults on Fedora, see gh-1353)
-* Fixed pythonic filters and test scripts (running via wrong python version, 
+* Fixed pythonic filters and test scripts (running via wrong python version,
   uses "fail2ban-python" now);
 * Fixed test case "testSetupInstallRoot" for not default python version (also
   using direct call, out of virtualenv);
 * Fixed ambiguous wrong recognized date pattern resp. its optional parts (see gh-1512);
 * FIPS compliant, use sha1 instead of md5 if it not allowed (see gh-1540)
 * Monit config: scripting is not supported in path (gh-1556)
+* `filter.d/apache-modsecurity.conf`
+    - Fixed for newer version (one space, gh-1626), optimized: non-greedy catch-all
+      replaced for safer match, unneeded catch-all anchoring removed, non-capturing
 * `filter.d/asterisk.conf`
     - Fixed to match different asterisk log prefix (source file: method:)
+* `filter.d/dovecot.conf`
+    - Fixed failregex ignores failures through some not relevant info (gh-1623)
 * `filter.d/ignorecommands/apache-fakegooglebot`
-    - Fixed error within apache-fakegooglebot, that will be called 
+    - Fixed error within apache-fakegooglebot, that will be called
       with wrong python version (gh-1506)
 * `filter.d/assp.conf`
     - Extended failregex and test cases to handle ASSP V1 and V2 (gh-1494)
@@ -161,18 +273,27 @@ releases.
     - Allow for having no trailing space after 'failed:' (gh-1497)
 * `filter.d/vsftpd.conf`
     - Optional reason part in message after FAIL LOGIN (gh-1543)
-
+* `filter.d/sendmail-reject.conf`
+    - removed mandatory double space (if dns-host available, gh-1579)
+* filter.d/sshd.conf
+    - recognized "Failed publickey for" (gh-1477);
+    - optimized failregex to match all of "Failed any-method for ... from <HOST>" (gh-1479)
+    - eliminated possible complex injections (on user-name resp. auth-info, see gh-1479)
+    - optional port part after host (see gh-1533, gh-1581)
 
 ### New Features
 * New Actions:
     - `action.d/npf.conf` for NPF, the latest packet filter for NetBSD
+* New Filters:
+    - `filter.d/mongodb-auth.conf` for MongoDB (document-oriented NoSQL database engine)
+      (gh-1586, gh-1606 and gh-1607)
 
 ### Enhancements
-* DateTemplate regexp extended with the word-end boundary, additionally to 
+* DateTemplate regexp extended with the word-end boundary, additionally to
   word-start boundary
-* Introduces new command "fail2ban-python", as automatically created symlink to 
+* Introduces new command "fail2ban-python", as automatically created symlink to
   python executable, where fail2ban currently installed (resp. its modules are located):
-    - allows to use the same version, fail2ban currently running, e.g. in 
+    - allows to use the same version, fail2ban currently running, e.g. in
       external scripts just via replace python with fail2ban-python:
       ```diff
       -#!/usr/bin/env python

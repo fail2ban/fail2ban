@@ -41,12 +41,12 @@ from optparse import OptionParser, Option
 from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
 
 try: # pragma: no cover
-	from systemd import journal
 	from ..server.filtersystemd import FilterSystemd
 except ImportError:
-	journal = None
+	FilterSystemd = None
 
 from ..version import version
+from .jailreader import JailReader
 from .filterreader import FilterReader
 from ..server.filter import Filter, FileContainer
 from ..server.failregex import RegexException
@@ -80,7 +80,7 @@ def pprint_list(l, header=None):
 		s = ''
 	output( s + "|  " + "\n|  ".join(l) + '\n`-' )
 
-def journal_lines_gen(myjournal): # pragma: no cover
+def journal_lines_gen(flt, myjournal): # pragma: no cover
 	while True:
 		try:
 			entry = myjournal.get_next()
@@ -88,7 +88,7 @@ def journal_lines_gen(myjournal): # pragma: no cover
 			continue
 		if not entry:
 			break
-		yield FilterSystemd.formatJournalEntry(entry)
+		yield flt.formatJournalEntry(entry)
 
 def get_opt_parser():
 	# use module docstring for help output
@@ -122,15 +122,15 @@ Report bugs to https://github.com/fail2ban/fail2ban/issues
 	p.add_options([
 		Option("-d", "--datepattern",
 			   help="set custom pattern used to match date/times"),
-		Option("-e", "--encoding",
+		Option("-e", "--encoding", default=PREFER_ENC,
 			   help="File encoding. Default: system locale"),
-		Option("-r", "--raw", action='store_true',
+		Option("-r", "--raw", action='store_true', default=False,
 			   help="Raw hosts, don't resolve dns"),
 		Option("--usedns", action='store', default=None,
 			   help="DNS specified replacement of tags <HOST> in regexp "
 			        "('yes' - matches all form of hosts, 'no' - IP addresses only)"),
 		Option("-L", "--maxlines", type=int, default=0,
-			   help="maxlines for multi-line regex"),
+			   help="maxlines for multi-line regex."),
 		Option("-m", "--journalmatch",
 			   help="journalctl style matches overriding filter file. "
 			   "\"systemd-journal\" only"),
@@ -143,6 +143,8 @@ Report bugs to https://github.com/fail2ban/fail2ban/issues
 			   help="Increase verbosity"),
 		Option("--verbosity", action="store", dest="verbose", type=int,
 			   help="Set numerical level of verbosity (0..4)"),
+		Option("--verbose-date", "--VD", action='store_true',
+			   help="Verbose date patterns/regex in output"),
 		Option("-D", "--debuggex", action='store_true',
 			   help="Produce debuggex.com urls for debugging there"),
 		Option("--print-no-missed", action='store_true',
@@ -215,14 +217,8 @@ class LineStats(object):
 class Fail2banRegex(object):
 
 	def __init__(self, opts):
-		self._verbose = opts.verbose
-		self._debuggex = opts.debuggex
-		self._maxlines = 20
-		self._print_no_missed = opts.print_no_missed
-		self._print_no_ignored = opts.print_no_ignored
-		self._print_all_matched = opts.print_all_matched
-		self._print_all_missed = opts.print_all_missed
-		self._print_all_ignored = opts.print_all_ignored
+		# set local protected memebers from given options:
+		self.__dict__.update(dict(('_'+o,v) for o,v in opts.__dict__.iteritems()))
 		self._maxlines_set = False		  # so we allow to override maxlines in cmdline
 		self._datepattern_set = False
 		self._journalmatch = None
@@ -236,23 +232,23 @@ class Fail2banRegex(object):
 
 		if opts.maxlines:
 			self.setMaxLines(opts.maxlines)
+		else:
+			self._maxlines = 20
 		if opts.journalmatch is not None:
 			self.setJournalMatch(opts.journalmatch.split())
 		if opts.datepattern:
 			self.setDatePattern(opts.datepattern)
-		if opts.encoding:
-			self.encoding = opts.encoding
-		else:
-			self.encoding = PREFER_ENC
-		self.raw = True if opts.raw else False
 		if opts.usedns:
 			self._filter.setUseDns(opts.usedns)
+		self._filter.returnRawHost = opts.raw
+		self._filter.checkFindTime = False
+		self._filter.checkAllRegex = True
 
 	def decode_line(self, line):
-		return FileContainer.decode_line('<LOG>', self.encoding, line)
+		return FileContainer.decode_line('<LOG>', self._encoding, line)
 
 	def encode_line(self, line):
-		return line.encode(self.encoding, 'ignore')
+		return line.encode(self._encoding, 'ignore')
 
 	def setDatePattern(self, pattern):
 		if not self._datepattern_set:
@@ -350,7 +346,8 @@ class Fail2banRegex(object):
 		orgLineBuffer = self._filter._Filter__lineBuffer
 		fullBuffer = len(orgLineBuffer) >= self._filter.getMaxLines()
 		try:
-			line, ret = self._filter.processLine(line, date, checkAllRegex=True, returnRawHost=self.raw)
+			ret = self._filter.processLine(line, date)
+			line = self._filter.processedLine()
 			for match in ret:
 				# Append True/False flag depending if line was matched by
 				# more than one regex
@@ -479,8 +476,12 @@ class Fail2banRegex(object):
 			out = []
 			for template in self._filter.dateDetector.templates:
 				if self._verbose or template.hits:
-					out.append("[%d] %s" % (
-						template.hits, template.name))
+					out.append("[%d] %s" % (template.hits, template.name))
+					if self._verbose_date:
+						out.append("    # weight: %.3f (%.3f), pattern: %s" % (
+							template.weight, template.template.weight,
+							getattr(template, 'pattern', ''),))
+						out.append("    # regex:   %s" % (getattr(template, 'regex', ''),))
 			pprint_list(out, "[# of hits] date format")
 
 		output( "\nLines: %s" % self._line_stats, )
@@ -518,30 +519,27 @@ class Fail2banRegex(object):
 			try:
 				hdlr = open(cmd_log, 'rb')
 				output( "Use         log file : %s" % cmd_log )
-				output( "Use         encoding : %s" % self.encoding )
+				output( "Use         encoding : %s" % self._encoding )
 				test_lines = self.file_lines_gen(hdlr)
 			except IOError as e:
 				output( e )
 				return False
-		elif cmd_log == "systemd-journal": # pragma: no cover
-			if not journal:
+		elif cmd_log.startswith("systemd-journal"): # pragma: no cover
+			if not FilterSystemd:
 				output( "Error: systemd library not found. Exiting..." )
 				return False
-			myjournal = journal.Reader(converters={'__CURSOR': lambda x: x})
+			output( "Use         systemd journal" )
+			output( "Use         encoding : %s" % self._encoding )
+			backend, beArgs = JailReader.extractOptions(cmd_log)
+			flt = FilterSystemd(None, **beArgs)
+			flt.setLogEncoding(self._encoding)
+			myjournal = flt.getJournalReader()
 			journalmatch = self._journalmatch
 			self.setDatePattern(None)
 			if journalmatch:
-				try:
-					for element in journalmatch:
-						if element == "+":
-							myjournal.add_disjunction()
-						else:
-							myjournal.add_match(element)
-				except ValueError:
-					output( "Error: Invalid journalmatch: %s" % shortstr(" ".join(journalmatch)) )
-					return False
+				flt.addJournalMatch(journalmatch)
 			output( "Use    journal match : %s" % " ".join(journalmatch) )
-			test_lines = journal_lines_gen(myjournal)
+			test_lines = journal_lines_gen(flt, myjournal)
 		else:
 			output( "Use      single line : %s" % shortstr(cmd_log) )
 			test_lines = [ cmd_log ]

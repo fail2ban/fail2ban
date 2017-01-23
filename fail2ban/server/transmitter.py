@@ -131,6 +131,9 @@ class Transmitter:
 			return self.status(command[1:])
 		elif command[0] == "version":
 			return version.version
+		elif command[0] == "config-error":
+			logSys.error(command[1])
+			return None
 		raise Exception("Invalid command")
 	
 	def __commandSet(self, command, multiple=False):
@@ -308,7 +311,7 @@ class Transmitter:
 					actionvalue = command[4]
 					setattr(action, actionkey, actionvalue)
 					return getattr(action, actionkey)
-		raise Exception("Invalid command (no set action or not yet implemented)")
+		raise Exception("Invalid command %r (no set action or not yet implemented)" % (command[1],))
 	
 	def __commandGet(self, command):
 		name = command[0]

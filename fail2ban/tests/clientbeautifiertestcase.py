@@ -32,6 +32,7 @@ class BeautifierTest(unittest.TestCase):
 
 	def setUp(self):
 		""" Call before every test case """
+		super(BeautifierTest, self).setUp()
 		self.b = Beautifier()
 
 	def tearDown(self):

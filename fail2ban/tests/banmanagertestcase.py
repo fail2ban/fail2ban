@@ -34,6 +34,7 @@ from ..server.ticket import BanTicket
 class AddFailure(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
+		super(AddFailure, self).setUp()
 		setUpMyTime()
 		self.__ticket = BanTicket('193.168.0.128', 1167605999.0)
 		self.__banManager = BanManager()
@@ -155,6 +156,7 @@ class AddFailure(unittest.TestCase):
 class StatusExtendedCymruInfo(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
+		super(StatusExtendedCymruInfo, self).setUp()
 		unittest.F2B.SkipIfNoNetwork()
 		setUpMyTime()
 		self.__ban_ip = "93.184.216.34"

@@ -41,6 +41,21 @@ class MyTime:
 	"""
 
 	myTime = None
+	alternateNowTime = None
+	alternateNow = None
+
+	@staticmethod
+	def setAlternateNow(t):
+		"""Set current time.
+
+		Use None in order to always get the real current time.
+
+		@param t the time to set or None
+		"""
+
+		MyTime.alternateNowTime = t
+		MyTime.alternateNow = \
+			datetime.datetime.fromtimestamp(t) if t is not None else None
 
 	@staticmethod
 	def setTime(t):
@@ -84,8 +99,9 @@ class MyTime:
 		"""
 		if MyTime.myTime is None:
 			return datetime.datetime.now()
-		else:
-			return datetime.datetime.fromtimestamp(MyTime.myTime)
+		if MyTime.myTime == MyTime.alternateNowTime:
+			return MyTime.alternateNow
+		return datetime.datetime.fromtimestamp(MyTime.myTime)
 
 	@staticmethod
 	def localtime(x=None):

@@ -110,7 +110,7 @@ class Utils():
 		return flags
 
 	@staticmethod
-	def executeCmd(realCmd, timeout=60, shell=True, output=False, tout_kill_tree=True):
+	def executeCmd(realCmd, timeout=60, shell=True, output=False, tout_kill_tree=True, success_codes=(0,)):
 		"""Executes a command.
 
 		Parameters
@@ -170,7 +170,7 @@ class Utils():
 					time.sleep(Utils.DEFAULT_SLEEP_INTERVAL)
 					retcode = popen.poll()
 					#logSys.debug("%s -- killed %s ", realCmd, retcode)
-				if retcode is None and not Utils.pid_exists(pgid):
+				if retcode is None and not Utils.pid_exists(pgid): # pragma: no cover
 					retcode = signal.SIGKILL
 		except OSError as e:
 			stderr = "%s -- failed with %s" % (realCmd, e)
@@ -178,7 +178,7 @@ class Utils():
 			if not popen:
 				return False if not output else (False, stdout, stderr, retcode)
 
-		std_level = retcode == 0 and logging.DEBUG or logging.ERROR
+		std_level = logging.DEBUG if retcode in success_codes else logging.ERROR
 		# if we need output (to return or to log it): 
 		if output or std_level >= logSys.getEffectiveLevel():
 			# if was timeouted (killed/terminated) - to prevent waiting, set std handles to non-blocking mode.
@@ -208,8 +208,8 @@ class Utils():
 				popen.stderr.close()
 
 		success = False
-		if retcode == 0:
-			logSys.debug("%-.40s -- returned successfully", realCmd)
+		if retcode in success_codes:
+			logSys.debug("%-.40s -- returned successfully %i", realCmd, retcode)
 			success = True
 		elif retcode is None:
 			logSys.error("%-.40s -- unable to kill PID %i", realCmd, popen.pid)
@@ -223,7 +223,9 @@ class Utils():
 			logSys.error("%-.40s -- returned %i", realCmd, retcode)
 			if msg:
 				logSys.info("HINT on %i: %s", retcode, msg % locals())
-		return success if not output else (success, stdout, stderr, retcode)
+		if output:
+			return success, stdout, stderr, retcode
+		return success if len(success_codes) == 1 else (success, retcode)
 	
 	@staticmethod
 	def wait_for(cond, timeout, interval=None):

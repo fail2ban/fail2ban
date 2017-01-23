@@ -29,7 +29,7 @@ import re
 import sys
 from ..helpers import getLogger
 
-if sys.version_info >= (3,2): # pragma: no cover
+if sys.version_info >= (3,2):
 
 	# SafeConfigParser deprecated from Python 3.2 (renamed to ConfigParser)
 	from configparser import ConfigParser as SafeConfigParser, \

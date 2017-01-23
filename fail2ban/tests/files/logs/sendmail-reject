@@ -40,6 +40,8 @@ Feb 19 18:01:50 batman sm-mta[78152]: ruleset=check_relay, arg1=[196.213.73.146]
 
 # failJSON: { "time": "2005-02-27T10:53:06", "match": true , "host": "209.15.212.253" }
 Feb 27 10:53:06 batman sm-mta[44307]: s1R9r60D044307: rejecting commands from  [209.15.212.253] due to pre-greeting traffic after 0 seconds
+# failJSON: { "time": "2005-02-27T10:53:07", "match": true , "host": "1.2.3.4" }
+Feb 27 10:53:07 strange sm-mta[18001]: u9A0GtpL018001: rejecting commands from example.com [1.2.3.4] due to pre-greeting traffic after 6 seconds
 
 # failJSON: { "time": "2005-02-27T15:44:18", "match": true , "host": "41.204.78.137" }
 Feb 27 15:44:18 batman sm-mta[87838]: s1REiHdq087838: ruleset=check_rcpt, arg1=<gert-jan@t-online.ch>, relay=[41.204.78.137], reject=550 5.7.1 <gert-jan@t-online.ch>... Relaying denied. IP name lookup failed [41.204.78.137]

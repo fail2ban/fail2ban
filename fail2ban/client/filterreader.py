@@ -28,7 +28,6 @@ import os
 import shlex
 
 from .configreader import DefinitionInitConfigReader
-from ..server.action import CommandAction
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
@@ -40,6 +39,9 @@ class FilterReader(DefinitionInitConfigReader):
 	_configOpts = {
 		"ignoreregex": ["string", None],
 		"failregex": ["string", ""],
+		"maxlines": ["int", None],
+		"datepattern": ["string", None],
+		"journalmatch": ["string", None],
 	}
 
 	def setFile(self, fileName):
@@ -49,15 +51,6 @@ class FilterReader(DefinitionInitConfigReader):
 	def getFile(self):
 		return self.__file
 
-	def getCombined(self):
-		combinedopts = dict(list(self._opts.items()) + list(self._initOpts.items()))
-		if not len(combinedopts):
-			return {}
-		opts = CommandAction.substituteRecursiveTags(combinedopts)
-		if not opts:
-			raise ValueError('recursive tag definitions unable to be resolved')
-		return opts
-	
 	def convert(self):
 		stream = list()
 		opts = self.getCombined()
@@ -65,6 +58,7 @@ class FilterReader(DefinitionInitConfigReader):
 			return stream
 		for opt, value in opts.iteritems():
 			if opt in ("failregex", "ignoreregex"):
+				if value is None: continue
 				multi = []
 				for regex in value.split('\n'):
 					# Do not send a command if the rule is empty.
@@ -74,16 +68,17 @@ class FilterReader(DefinitionInitConfigReader):
 					stream.append(["multi-set", self._jailName, "add" + opt, multi])
 				elif len(multi):
 					stream.append(["set", self._jailName, "add" + opt, multi[0]])
-		if self._initOpts:
-			if 'maxlines' in self._initOpts:
+			elif opt == 'maxlines':
 				# We warn when multiline regex is used without maxlines > 1
 				# therefore keep sure we set this option first.
-				stream.insert(0, ["set", self._jailName, "maxlines", self._initOpts["maxlines"]])
-			if 'datepattern' in self._initOpts:
-				stream.append(["set", self._jailName, "datepattern", self._initOpts["datepattern"]])
+				stream.insert(0, ["set", self._jailName, "maxlines", value])
+			elif opt == 'datepattern':
+				stream.append(["set", self._jailName, "datepattern", value])
 			# Do not send a command if the match is empty.
-			if self._initOpts.get("journalmatch", '') != '':
-				for match in self._initOpts["journalmatch"].split("\n"):
+			elif opt == 'journalmatch':
+				if value is None: continue
+				for match in value.split("\n"):
+					if match == '': continue
 					stream.append(
 						["set", self._jailName, "addjournalmatch"] +
                         shlex.split(match))

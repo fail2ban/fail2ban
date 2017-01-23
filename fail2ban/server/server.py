@@ -547,17 +547,19 @@ class Server:
 	# @param target the logging target
 	
 	def setLogTarget(self, target):
+		# check reserved targets in uppercase, don't change target, because it can be file:
+		systarget = target.upper()
 		with self.__loggingLock:
 			# don't set new handlers if already the same
 			# or if "INHERITED" (foreground worker of the test cases, to prevent stop logging):
 			if self.__logTarget == target:
 				return True
-			if target == "INHERITED":
+			if systarget == "INHERITED":
 				self.__logTarget = target
 				return True
 			# set a format which is simpler for console use
 			fmt = "%(asctime)s %(name)-24s[%(process)d]: %(levelname)-7s %(message)s"
-			if target == "SYSLOG":
+			if systarget == "SYSLOG":
 				# Syslog daemons already add date to the message.
 				fmt = "%(name)s[%(process)d]: %(levelname)s %(message)s"
 				facility = logging.handlers.SysLogHandler.LOG_DAEMON
@@ -576,9 +578,9 @@ class Server:
 						"Syslog socket file: %s does not exists"
 						" or is not a socket" % self.__syslogSocket)
 					return False
-			elif target == "STDOUT":
+			elif systarget == "STDOUT":
 				hdlr = logging.StreamHandler(sys.stdout)
-			elif target == "STDERR":
+			elif systarget == "STDERR":
 				hdlr = logging.StreamHandler(sys.stderr)
 			else:
 				# Target should be a file

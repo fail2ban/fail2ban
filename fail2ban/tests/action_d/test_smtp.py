@@ -21,6 +21,7 @@ import os
 import smtpd
 import threading
 import unittest
+import re
 import sys
 if sys.version_info >= (3, 3):
 	import importlib
@@ -41,7 +42,9 @@ class TestSMTPServer(smtpd.SMTPServer):
 		self.peer = peer
 		self.mailfrom = mailfrom
 		self.rcpttos = rcpttos
-		self.data = data
+		self.org_data = data
+		# replace new line (with tab or space) for possible mime translations (word wrap):
+		self.data = re.sub(r"\n[\t ]", " ", data)
 		self.ready = True
 
 
@@ -49,6 +52,7 @@ class SMTPActionTest(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		super(SMTPActionTest, self).setUp()
 		self.jail = DummyJail()
 		pythonModule = os.path.join(CONFIG_DIR, "action.d", "smtp.py")
 		pythonModuleName = os.path.basename(pythonModule.rstrip(".py"))
@@ -99,23 +103,28 @@ class SMTPActionTest(unittest.TestCase):
 			"Subject: [Fail2Ban] %s: stopped" %
 				self.jail.name in self.smtpd.data)
 
-	def testBan(self):
+	def _testBan(self, restored=False):
 		aInfo = {
 			'ip': "127.0.0.2",
 			'failures': 3,
 			'matches': "Test fail 1\n",
 			'ipjailmatches': "Test fail 1\nTest Fail2\n",
 			'ipmatches': "Test fail 1\nTest Fail2\nTest Fail3\n",
-			}
+		}
+		if restored:
+			aInfo['restored'] = 1
 
 		self._exec_and_wait(lambda: self.action.ban(aInfo))
+		if restored: # no mail, should raises attribute error:
+			self.assertRaises(AttributeError, lambda: self.smtpd.mailfrom)
+			return
 		self.assertEqual(self.smtpd.mailfrom, "fail2ban")
 		self.assertEqual(self.smtpd.rcpttos, ["root"])
 		subject = "Subject: [Fail2Ban] %s: banned %s" % (
 			self.jail.name, aInfo['ip'])
-		self.assertIn(subject, self.smtpd.data.replace("\n", ""))
-		self.assertTrue(
-			"%i attempts" % aInfo['failures'] in self.smtpd.data)
+		self.assertIn(subject, self.smtpd.data)
+		self.assertIn(
+			"%i attempts" % aInfo['failures'], self.smtpd.data)
 
 		self.action.matches = "matches"
 		self._exec_and_wait(lambda: self.action.ban(aInfo))
@@ -128,6 +137,12 @@ class SMTPActionTest(unittest.TestCase):
 		self.action.matches = "ipmatches"
 		self._exec_and_wait(lambda: self.action.ban(aInfo))
 		self.assertIn(aInfo['ipmatches'], self.smtpd.data)
+	
+	def testBan(self):
+		self._testBan()
+
+	def testNOPByRestored(self):
+		self._testBan(restored=True)
 
 	def testOptions(self):
 		self._exec_and_wait(self.action.start)
