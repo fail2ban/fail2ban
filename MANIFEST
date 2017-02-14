@@ -148,6 +148,7 @@ config/filter.d/webmin-auth.conf
 config/filter.d/wuftpd.conf
 config/filter.d/xinetd-fail.conf
 config/jail.conf
+config/paths-arch.conf
 config/paths-common.conf
 config/paths-debian.conf
 config/paths-fedora.conf
