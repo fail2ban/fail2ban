@@ -22,6 +22,9 @@ releases.
       (0.10th resp. IPv6 relevant only, amend for gh-1479)
 * config/pathes-freebsd.conf
     - Fixed filenames for apache and nginx log files (gh-1667)
+* action.d/bsd-ipfw.conf
+    - Make the rule number, the action starts looking for a free slot to insert
+      the new rule, configurable (gh-1689)
 
 ### New Features
 * New Actions:
