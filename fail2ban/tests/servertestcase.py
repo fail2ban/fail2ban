@@ -1644,9 +1644,9 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			# replace pipe to mail with pipe to cat:
 			realCmd = re.sub(r'\)\s*\|\s*mail\b([^\n]*)',
 				r' echo mail \1 ) | cat', realCmd)
-			# replace abuse retrieving (possible no-network):
-			realCmd = re.sub(r'[^\n]+\bADDRESSES=\$\(dig\s[^\n]+',
-				'ADDRESSES="abuse-1@abuse-test-server, abuse-2@abuse-test-server"', realCmd)
+			# replace abuse retrieving (possible no-network), just replace first occurrence of 'dig...':
+			realCmd = re.sub(r'\bADDRESSES=\$\(dig\s[^\n]+',
+				'ADDRESSES="abuse-1@abuse-test-server, abuse-2@abuse-test-server"', realCmd, 1)
 			# execute action:
 			return _actions.CommandAction.executeCmd(realCmd, timeout=timeout)
 
