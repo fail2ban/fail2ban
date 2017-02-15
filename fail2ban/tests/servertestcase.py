@@ -1656,7 +1656,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				r' echo mail \1 ) | cat', realCmd)
 			# replace abuse retrieving (possible no-network):
 			realCmd = re.sub(r'[^\n]+\bADDRESSES=\$\(dig\s[^\n]+',
-				'ADDRESSES="abuse-1@abuse-test-server, abuse-2@abuse-test-server"', realCmd)
+				lambda m: 'ADDRESSES="abuse-1@abuse-test-server, abuse-2@abuse-test-server"', realCmd)
 			# execute action:
 			return _actions.CommandAction.executeCmd(realCmd, timeout=timeout)
 
