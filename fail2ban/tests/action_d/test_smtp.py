@@ -30,7 +30,7 @@ else:
 
 from ..dummyjail import DummyJail
 
-from ..utils import CONFIG_DIR, asyncserver, Utils
+from ..utils import CONFIG_DIR, asyncserver, Utils, uni_decode
 
 class TestSMTPServer(smtpd.SMTPServer):
 
@@ -38,13 +38,13 @@ class TestSMTPServer(smtpd.SMTPServer):
 		smtpd.SMTPServer.__init__(self, *args)
 		self.ready = False
 
-	def process_message(self, peer, mailfrom, rcpttos, data):
+	def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
 		self.peer = peer
 		self.mailfrom = mailfrom
 		self.rcpttos = rcpttos
 		self.org_data = data
-		# replace new line (with tab or space) for possible mime translations (word wrap):
-		self.data = re.sub(r"\n[\t ]", " ", data)
+		# replace new line (with tab or space) for possible mime translations (word wrap),
+		self.data = re.sub(r"\n[\t ]", " ", uni_decode(data))
 		self.ready = True
 
 
