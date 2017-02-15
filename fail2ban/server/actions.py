@@ -150,7 +150,7 @@ class Actions(JailThread, Mapping):
 				# reload actions after all parameters set via stream:
 				for name, initOpts in self._reload_actions.iteritems():
 					if name in self._actions:
-						self._actions[name].reload(**initOpts if initOpts else {})
+						self._actions[name].reload(**(initOpts if initOpts else {}))
 				# remove obsolete actions (untouched by reload process):
 				delacts = OrderedDict((name, action) for name, action in self._actions.iteritems()
 					if name not in self._reload_actions)
