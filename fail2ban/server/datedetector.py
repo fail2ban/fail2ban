@@ -284,7 +284,7 @@ class DateDetector(object):
 			if preMatch is not None:
 				# get cached or create a copy with modified name/pattern, using preMatch replacement for {DATE}:
 				template = _getAnchoredTemplate(template,
-					wrap=lambda s: RE_DATE_PREMATCH.sub(s, preMatch))
+					wrap=lambda s: RE_DATE_PREMATCH.sub(lambda m: s, preMatch))
 			# append date detector template (ignore duplicate if some was added before default):
 			self._appendTemplate(template, ignoreDup=ignoreDup)
 

@@ -992,9 +992,10 @@ class LoggingTests(LogCaptureTestCase):
 			badThread = _BadThread()
 			badThread.start()
 			badThread.join()
-			self.assertLogged("Unhandled exception")
+			self.assertTrue( Utils.wait_for( lambda: len(x) and self._is_logged("Unhandled exception"), 3) )
 		finally:
 			sys.__excepthook__ = prev_exchook
+		self.assertLogged("Unhandled exception")
 		self.assertEqual(len(x), 1)
 		self.assertEqual(x[0][0], RuntimeError)
 
@@ -1646,7 +1647,8 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				r' echo mail \1 ) | cat', realCmd)
 			# replace abuse retrieving (possible no-network), just replace first occurrence of 'dig...':
 			realCmd = re.sub(r'\bADDRESSES=\$\(dig\s[^\n]+',
-				'ADDRESSES="abuse-1@abuse-test-server, abuse-2@abuse-test-server"', realCmd, 1)
+				lambda m: 'ADDRESSES="abuse-1@abuse-test-server, abuse-2@abuse-test-server"',
+					realCmd, 1)
 			# execute action:
 			return _actions.CommandAction.executeCmd(realCmd, timeout=timeout)
 

@@ -37,7 +37,7 @@ import unittest
 from cStringIO import StringIO
 from functools import wraps
 
-from ..helpers import getLogger, str2LogLevel, getVerbosityFormat
+from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, uni_decode
 from ..server.ipdns import DNSUtils
 from ..server.mytime import MyTime
 from ..server.utils import Utils
