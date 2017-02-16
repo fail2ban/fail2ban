@@ -217,10 +217,10 @@ class CommandActionTest(LogCaptureTestCase):
 				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
 					conditional="family=inet6", cache=cache),
 				"Text 890-567 text 567 '567'")
-		self.assertEqual(len(cache) if cache is not None else -1, 3)
+		self.assertTrue(len(cache) >= 3)
 		# set one parameter - internal properties and cache should be reseted:
 		setattr(self.__action, 'xyz', "000-<abc>")
-		self.assertEqual(len(cache) if cache is not None else -1, 0)
+		self.assertEqual(len(cache), 0)
 		# test againg, should have 000 instead of 890:
 		for i in range(2):
 			self.assertEqual(
@@ -235,7 +235,7 @@ class CommandActionTest(LogCaptureTestCase):
 				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
 					conditional="family=inet6", cache=cache),
 				"Text 000-567 text 567 '567'")
-		self.assertEqual(len(cache), 3)
+		self.assertTrue(len(cache) >= 3)
 
 
 	def testExecuteActionBan(self):

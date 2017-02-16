@@ -34,7 +34,7 @@ from collections import MutableMapping
 from .ipdns import asip
 from .mytime import MyTime
 from .utils import Utils
-from ..helpers import getLogger, substituteRecursiveTags
+from ..helpers import getLogger, substituteRecursiveTags, TAG_CRE, MAX_TAG_REPLACE_COUNT
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -399,33 +399,71 @@ class CommandAction(ActionBase):
 		str
 			`query` string with tags replaced.
 		"""
+		if '<' not in query: return query
+
 		# use cache if allowed:
 		if cache is not None:
 			ckey = (query, conditional)
-			string = cache.get(ckey)
-			if string is not None:
-				return string
-		# replace:
-		string = query
-		aInfo = substituteRecursiveTags(aInfo, conditional, ignore=cls._escapedTags)
-		for tag in aInfo:
-			if "<%s>" % tag in query:
-				value = aInfo.get(tag + '?' + conditional)
-				if value is None:
-					value = aInfo.get(tag)
-				value = str(value)			  # assure string
-				if tag in cls._escapedTags:
-					# That one needs to be escaped since its content is
-					# out of our control
-					value = cls.escapeTag(value)
-				string = string.replace('<' + tag + '>', value)
-		# New line, space
-		string = reduce(lambda s, kv: s.replace(*kv), (("<br>", '\n'), ("<sp>", " ")), string)
-		# cache if properties:
+			value = cache.get(ckey)
+			if value is not None:
+				return value
+
+		# first try get cached tags dictionary:
+		subInfo = csubkey = None
 		if cache is not None:
-			cache[ckey] = string
+			csubkey = ('subst-tags', id(aInfo), conditional)
+			subInfo = cache.get(csubkey)
+		# interpolation of dictionary:
+		if subInfo is None:
+			subInfo = substituteRecursiveTags(aInfo, conditional, ignore=cls._escapedTags)
+		# New line, space
+		for (tag, value) in (("br", '\n'), ("sp", " ")):
+			if subInfo.get(tag) is None: subInfo[tag] = value
+		# cache if possible:
+		if csubkey is not None:
+			cache[csubkey] = subInfo
+
+		# substitution callable, used by interpolation of each tag
+		repeatSubst = {}
+		def substVal(m):
+			tag = m.group(1)			# tagname from match
+			value = None
+			if conditional:
+				value = subInfo.get(tag + '?' + conditional)
+			if value is None:
+				value = subInfo.get(tag)
+				if value is None:
+					return m.group()	# fallback (no replacement)
+			value = str(value)		# assure string
+			if tag in cls._escapedTags:
+				# That one needs to be escaped since its content is
+				# out of our control
+				value = cls.escapeTag(value)
+			# possible contains tags:
+			if '<' in value:
+				repeatSubst[1] = True
+			return value
+
+		# interpolation of query:
+		count = MAX_TAG_REPLACE_COUNT + 1
+		while True:
+			repeatSubst = {}
+			value = TAG_CRE.sub(substVal, query)
+			# possible recursion ?
+			if not repeatSubst or value == query: break
+			query = value
+			count -= 1
+			if count <= 0: # pragma: no cover - almost impossible (because resolved above)
+				raise ValueError(
+					"unexpected too long replacement interpolation, "
+					"possible self referencing definitions in query: %s" % (query,))
+
+
+		# cache if possible:
+		if cache is not None:
+			cache[ckey] = value
 		#
-		return string
+		return value
 
 	def _processCmd(self, cmd, aInfo=None, conditional=''):
 		"""Executes a command with preliminary checks and substitutions.
@@ -491,7 +529,7 @@ class CommandAction(ActionBase):
 		realCmd = self.replaceTag(cmd, self._properties, 
 			conditional=conditional, cache=self.__substCache)
 
-		# Replace tags
+		# Replace dynamical tags (don't use cache here)
 		if aInfo is not None:
 			realCmd = self.replaceTag(realCmd, aInfo, conditional=conditional)
 		else:
