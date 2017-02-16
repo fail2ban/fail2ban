@@ -40,12 +40,20 @@ class CommandActionTest(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		self.__action = CommandAction(None, "Test")
 		LogCaptureTestCase.setUp(self)
+		self.__action = CommandAction(None, "Test")
+		# prevent execute stop if start fails (or event not started at all):
+		self.__action_started = False
+		orgstart = self.__action.start
+		def _action_start():
+			self.__action_started = True
+			return orgstart()
+		self.__action.start = _action_start
 
 	def tearDown(self):
 		"""Call after every test case."""
-		self.__action.stop()
+		if self.__action_started:
+			self.__action.stop()
 		LogCaptureTestCase.tearDown(self)
 
 	def testSubstituteRecursiveTags(self):
@@ -195,6 +203,26 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertEqual(
 			self.__action.replaceTag("abc",
 				CallingMap(matches=lambda: int("a"))), "abc")
+
+	def testReplaceTagSelfRecursion(self):
+		setattr(self.__action, 'a', "<a")
+		setattr(self.__action, 'b', "c>")
+		setattr(self.__action, 'b?family=inet6', "b>")
+		setattr(self.__action, 'ac', "<a><b>")
+		setattr(self.__action, 'ab', "<ac>")
+		setattr(self.__action, 'x?family=inet6', "")
+		# produce self-referencing properties except:
+		self.assertRaisesRegexp(ValueError, r"properties contain self referencing definitions",
+			lambda: self.__action.replaceTag("<a><b>", 
+				self.__action._properties, conditional="family=inet4")
+		)
+		# remore self-referencing in props:
+		delattr(self.__action, 'ac')
+		# produce self-referencing query except:
+		self.assertRaisesRegexp(ValueError, r"possible self referencing definitions in query",
+			lambda: self.__action.replaceTag("<x<x<x<x<x<x<x<x<x<x<x<x<x<x<x<x<x<x<x<x<x>>>>>>>>>>>>>>>>>>>>>", 
+				self.__action._properties, conditional="family=inet6")
+		)
 
 	def testReplaceTagConditionalCached(self):
 		setattr(self.__action, 'abc', "123")

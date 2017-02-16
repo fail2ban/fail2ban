@@ -233,9 +233,11 @@ def substituteRecursiveTags(inptags, conditional='',
 		Dictionary of tags(keys) and their values, with tags
 		within the values recursively replaced.
 	"""
+	#logSys = getLogger("fail2ban")
+	tre_search = TAG_CRE.search
 	# copy return tags dict to prevent modifying of inptags:
 	tags = inptags.copy()
-	t = TAG_CRE
+	# init:
 	ignore = set(ignore)
 	done = set()
 	# repeat substitution while embedded-recursive (repFlag is True)
@@ -247,48 +249,49 @@ def substituteRecursiveTags(inptags, conditional='',
 			if tag in ignore or tag in done: continue
 			value = orgval = str(tags[tag])
 			# search and replace all tags within value, that can be interpolated using other tags:
-			m = t.search(value)
+			m = tre_search(value)
 			refCounts = {}
 			#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
 			while m:
-				found_tag = m.group(1)
+				# found replacement tag:
+				rtag = m.group(1)
 				# don't replace tags that should be currently ignored (pre-replacement):
-				if found_tag in ignore: 
-					m = t.search(value, m.end())
+				if rtag in ignore: 
+					m = tre_search(value, m.end())
 					continue
-				#logSys.log(5, 'found: %s' % found_tag)
-				if found_tag == tag or refCounts.get(found_tag, 1) > MAX_TAG_REPLACE_COUNT:
+				#logSys.log(5, 'found: %s' % rtag)
+				if rtag == tag or refCounts.get(rtag, 1) > MAX_TAG_REPLACE_COUNT:
 					# recursive definitions are bad
 					#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
 					raise ValueError(
 						"properties contain self referencing definitions "
 						"and cannot be resolved, fail tag: %s, found: %s in %s, value: %s" % 
-						(tag, found_tag, refCounts, value))
+						(tag, rtag, refCounts, value))
 				repl = None
 				if conditional:
-					repl = tags.get(found_tag + '?' + conditional)
+					repl = tags.get(rtag + '?' + conditional)
 				if repl is None:
-					repl = tags.get(found_tag)
+					repl = tags.get(rtag)
 					# try to find tag using additional replacement (callable):
 					if repl is None and addrepl is not None:
-						repl = addrepl(found_tag)
+						repl = addrepl(rtag)
 				if repl is None:
 					# Missing tags - just continue on searching after end of match
 					# Missing tags are ok - cInfo can contain aInfo elements like <HOST> and valid shell
 					# constructs like <STDIN>.
-					m = t.search(value, m.end())
+					m = tre_search(value, m.end())
 					continue
-				value = value.replace('<%s>' % found_tag, repl)
+				value = value.replace('<%s>' % rtag, repl)
 				#logSys.log(5, 'value now: %s' % value)
 				# increment reference count:
-				refCounts[found_tag] = refCounts.get(found_tag, 0) + 1
+				refCounts[rtag] = refCounts.get(rtag, 0) + 1
 				# the next match for replace:
-				m = t.search(value, m.start())
+				m = tre_search(value, m.start())
 			#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
 			# was substituted?
 			if orgval != value:
 				# check still contains any tag - should be repeated (possible embedded-recursive substitution):
-				if t.search(value):
+				if tre_search(value):
 					repFlag = True
 				tags[tag] = value
 			# no more sub tags (and no possible composite), add this tag to done set (just to be faster):

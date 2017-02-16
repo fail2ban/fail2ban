@@ -252,6 +252,16 @@ class CommandAction(ActionBase):
 		# set:
 		self.__dict__[name] = value
 
+	def __delattr__(self, name):
+		if not name.startswith('_'):
+			# parameters changed - clear properties and substitution cache:
+			self.__properties = None
+			self.__substCache.clear()
+			#self._logSys.debug("Unset action %r %s", self._name, name)
+			self._logSys.debug("  Unset %s", name)
+		# del:
+		del self.__dict__[name]
+
 	@property
 	def _properties(self):
 		"""A dictionary of the actions properties.
@@ -404,15 +414,19 @@ class CommandAction(ActionBase):
 		# use cache if allowed:
 		if cache is not None:
 			ckey = (query, conditional)
-			value = cache.get(ckey)
-			if value is not None:
-				return value
+			try:
+				return cache[ckey]
+			except KeyError:
+				pass
 
 		# first try get cached tags dictionary:
 		subInfo = csubkey = None
 		if cache is not None:
 			csubkey = ('subst-tags', id(aInfo), conditional)
-			subInfo = cache.get(csubkey)
+			try:
+				subInfo = cache[csubkey]
+			except KeyError:
+				pass
 		# interpolation of dictionary:
 		if subInfo is None:
 			subInfo = substituteRecursiveTags(aInfo, conditional, ignore=cls._escapedTags)
@@ -424,7 +438,7 @@ class CommandAction(ActionBase):
 			cache[csubkey] = subInfo
 
 		# substitution callable, used by interpolation of each tag
-		repeatSubst = {}
+		repeatSubst = {0: 0}
 		def substVal(m):
 			tag = m.group(1)			# tagname from match
 			value = None
@@ -441,19 +455,19 @@ class CommandAction(ActionBase):
 				value = cls.escapeTag(value)
 			# possible contains tags:
 			if '<' in value:
-				repeatSubst[1] = True
+				repeatSubst[0] = 1
 			return value
 
 		# interpolation of query:
 		count = MAX_TAG_REPLACE_COUNT + 1
 		while True:
-			repeatSubst = {}
+			repeatSubst[0] = 0
 			value = TAG_CRE.sub(substVal, query)
 			# possible recursion ?
 			if not repeatSubst or value == query: break
 			query = value
 			count -= 1
-			if count <= 0: # pragma: no cover - almost impossible (because resolved above)
+			if count <= 0:
 				raise ValueError(
 					"unexpected too long replacement interpolation, "
 					"possible self referencing definitions in query: %s" % (query,))
