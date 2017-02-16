@@ -29,7 +29,7 @@ import tempfile
 import time
 import unittest
 
-from ..server.action import CommandAction, CallingMap
+from ..server.action import CommandAction, CallingMap, substituteRecursiveTags
 from ..server.actions import OrderedDict
 from ..server.utils import Utils
 
@@ -56,30 +56,30 @@ class CommandActionTest(LogCaptureTestCase):
 		}
 		# Recursion is bad
 		self.assertRaises(ValueError,
-			lambda: CommandAction.substituteRecursiveTags({'A': '<A>'}))
+			lambda: substituteRecursiveTags({'A': '<A>'}))
 		self.assertRaises(ValueError,
-			lambda: CommandAction.substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
+			lambda: substituteRecursiveTags({'A': '<B>', 'B': '<A>'}))
 		self.assertRaises(ValueError,
-			lambda: CommandAction.substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
+			lambda: substituteRecursiveTags({'A': '<B>', 'B': '<C>', 'C': '<A>'}))
 		# Unresolveable substition
 		self.assertRaises(ValueError,
-			lambda: CommandAction.substituteRecursiveTags({'A': 'to=<B> fromip=<IP>', 'C': '<B>', 'B': '<C>', 'D': ''}))
+			lambda: substituteRecursiveTags({'A': 'to=<B> fromip=<IP>', 'C': '<B>', 'B': '<C>', 'D': ''}))
 		self.assertRaises(ValueError,
-			lambda: CommandAction.substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP>', 'sweet': '<honeypot>', 'honeypot': '<sweet>', 'ignoreregex': ''}))
+			lambda: substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP>', 'sweet': '<honeypot>', 'honeypot': '<sweet>', 'ignoreregex': ''}))
 		# We need here an ordered, because the sequence of iteration is very important for this test
 		if OrderedDict:
 			# No cyclic recursion, just multiple replacement of tag <T>, should be successful:
-			self.assertEqual(CommandAction.substituteRecursiveTags( OrderedDict(
+			self.assertEqual(substituteRecursiveTags( OrderedDict(
 					(('X', 'x=x<T>'), ('T', '1'), ('Z', '<X> <T> <Y>'), ('Y', 'y=y<T>')))
 				), {'X': 'x=x1', 'T': '1', 'Y': 'y=y1', 'Z': 'x=x1 1 y=y1'}
 			)
 			# No cyclic recursion, just multiple replacement of tag <T> in composite tags, should be successful:
-			self.assertEqual(CommandAction.substituteRecursiveTags( OrderedDict(
+			self.assertEqual(substituteRecursiveTags( OrderedDict(
 				  (('X', 'x=x<T> <Z> <<R1>> <<R2>>'), ('R1', 'Z'), ('R2', 'Y'), ('T', '1'), ('Z', '<T> <Y>'), ('Y', 'y=y<T>')))
 				), {'X': 'x=x1 1 y=y1 1 y=y1 y=y1', 'R1': 'Z', 'R2': 'Y', 'T': '1', 'Z': '1 y=y1', 'Y': 'y=y1'}
 			)
 			# No cyclic recursion, just multiple replacement of same tags, should be successful:
-			self.assertEqual(CommandAction.substituteRecursiveTags( OrderedDict((
+			self.assertEqual(substituteRecursiveTags( OrderedDict((
 					('actionstart', 'ipset create <ipmset> hash:ip timeout <bantime> family <ipsetfamily>\n<iptables> -I <chain> <actiontype>'),
 					('ipmset', 'f2b-<name>'),
 					('name', 'any'),
@@ -111,42 +111,42 @@ class CommandActionTest(LogCaptureTestCase):
 				))
 			)
 			# Cyclic recursion by composite tag creation, tags "create" another tag, that closes cycle:
-			self.assertRaises(ValueError, lambda: CommandAction.substituteRecursiveTags( OrderedDict((
+			self.assertRaises(ValueError, lambda: substituteRecursiveTags( OrderedDict((
 					('A', '<<B><C>>'),
 					('B', 'D'), ('C', 'E'),
 					('DE', 'cycle <A>'),
 			)) ))
-			self.assertRaises(ValueError, lambda: CommandAction.substituteRecursiveTags( OrderedDict((
+			self.assertRaises(ValueError, lambda: substituteRecursiveTags( OrderedDict((
 					('DE', 'cycle <A>'),
 					('A', '<<B><C>>'),
 					('B', 'D'), ('C', 'E'),
 			)) ))
 			
 		# missing tags are ok
-		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<C>'}), {'A': '<C>'})
-		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<C> <D> <X>','X':'fun'}), {'A': '<C> <D> fun', 'X':'fun'})
-		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<C> <B>', 'B': 'cool'}), {'A': '<C> cool', 'B': 'cool'})
+		self.assertEqual(substituteRecursiveTags({'A': '<C>'}), {'A': '<C>'})
+		self.assertEqual(substituteRecursiveTags({'A': '<C> <D> <X>','X':'fun'}), {'A': '<C> <D> fun', 'X':'fun'})
+		self.assertEqual(substituteRecursiveTags({'A': '<C> <B>', 'B': 'cool'}), {'A': '<C> cool', 'B': 'cool'})
 		# Escaped tags should be ignored
-		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<matches> <B>', 'B': 'cool'}), {'A': '<matches> cool', 'B': 'cool'})
+		self.assertEqual(substituteRecursiveTags({'A': '<matches> <B>', 'B': 'cool'}), {'A': '<matches> cool', 'B': 'cool'})
 		# Multiple stuff on same line is ok
-		self.assertEqual(CommandAction.substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP> evilperson=<honeypot>', 'honeypot': 'pokie', 'ignoreregex': ''}),
+		self.assertEqual(substituteRecursiveTags({'failregex': 'to=<honeypot> fromip=<IP> evilperson=<honeypot>', 'honeypot': 'pokie', 'ignoreregex': ''}),
 								{ 'failregex': "to=pokie fromip=<IP> evilperson=pokie",
 									'honeypot': 'pokie',
 									'ignoreregex': '',
 								})
 		# rest is just cool
-		self.assertEqual(CommandAction.substituteRecursiveTags(aInfo),
+		self.assertEqual(substituteRecursiveTags(aInfo),
 								{ 'HOST': "192.0.2.0",
 									'ABC': '123 192.0.2.0',
 									'xyz': '890 123 192.0.2.0',
 								})
 		# obscure embedded case
-		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<<PREF>HOST>', 'PREF': 'IPV4'}),
+		self.assertEqual(substituteRecursiveTags({'A': '<<PREF>HOST>', 'PREF': 'IPV4'}),
 						 {'A': '<IPV4HOST>', 'PREF': 'IPV4'})
-		self.assertEqual(CommandAction.substituteRecursiveTags({'A': '<<PREF>HOST>', 'PREF': 'IPV4', 'IPV4HOST': '1.2.3.4'}),
+		self.assertEqual(substituteRecursiveTags({'A': '<<PREF>HOST>', 'PREF': 'IPV4', 'IPV4HOST': '1.2.3.4'}),
 						 {'A': '1.2.3.4', 'PREF': 'IPV4', 'IPV4HOST': '1.2.3.4'})
 		# more embedded within a string and two interpolations
-		self.assertEqual(CommandAction.substituteRecursiveTags({'A': 'A <IP<PREF>HOST> B IP<PREF> C', 'PREF': 'V4', 'IPV4HOST': '1.2.3.4'}),
+		self.assertEqual(substituteRecursiveTags({'A': 'A <IP<PREF>HOST> B IP<PREF> C', 'PREF': 'V4', 'IPV4HOST': '1.2.3.4'}),
 						 {'A': 'A 1.2.3.4 B IPV4 C', 'PREF': 'V4', 'IPV4HOST': '1.2.3.4'})
 
 	def testReplaceTag(self):

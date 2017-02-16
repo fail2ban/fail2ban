@@ -200,6 +200,105 @@ else:
 				raise
 			return uni_decode(x, enc, 'replace')
 
+
+#
+# Following facilities used for safe recursive interpolation of
+# tags (<tag>) in tagged options.
+#
+
+# max tag replacement count:
+MAX_TAG_REPLACE_COUNT = 10
+
+# compiled RE for tag name (replacement name) 
+TAG_CRE = re.compile(r'<([^ <>]+)>')
+
+def substituteRecursiveTags(inptags, conditional='', 
+	ignore=(), addrepl=None
+):
+	"""Sort out tag definitions within other tags.
+	Since v.0.9.2 supports embedded interpolation (see test cases for examples).
+
+	so:		becomes:
+	a = 3		a = 3
+	b = <a>_3	b = 3_3
+
+	Parameters
+	----------
+	inptags : dict
+		Dictionary of tags(keys) and their values.
+
+	Returns
+	-------
+	dict
+		Dictionary of tags(keys) and their values, with tags
+		within the values recursively replaced.
+	"""
+	# copy return tags dict to prevent modifying of inptags:
+	tags = inptags.copy()
+	t = TAG_CRE
+	ignore = set(ignore)
+	done = set()
+	# repeat substitution while embedded-recursive (repFlag is True)
+	while True:
+		repFlag = False
+		# substitute each value:
+		for tag in tags.iterkeys():
+			# ignore escaped or already done (or in ignore list):
+			if tag in ignore or tag in done: continue
+			value = orgval = str(tags[tag])
+			# search and replace all tags within value, that can be interpolated using other tags:
+			m = t.search(value)
+			refCounts = {}
+			#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
+			while m:
+				found_tag = m.group(1)
+				# don't replace tags that should be currently ignored (pre-replacement):
+				if found_tag in ignore: 
+					m = t.search(value, m.end())
+					continue
+				#logSys.log(5, 'found: %s' % found_tag)
+				if found_tag == tag or refCounts.get(found_tag, 1) > MAX_TAG_REPLACE_COUNT:
+					# recursive definitions are bad
+					#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
+					raise ValueError(
+						"properties contain self referencing definitions "
+						"and cannot be resolved, fail tag: %s, found: %s in %s, value: %s" % 
+						(tag, found_tag, refCounts, value))
+				repl = None
+				if conditional:
+					repl = tags.get(found_tag + '?' + conditional)
+				if repl is None:
+					repl = tags.get(found_tag)
+					# try to find tag using additional replacement (callable):
+					if repl is None and addrepl is not None:
+						repl = addrepl(found_tag)
+				if repl is None:
+					# Missing tags - just continue on searching after end of match
+					# Missing tags are ok - cInfo can contain aInfo elements like <HOST> and valid shell
+					# constructs like <STDIN>.
+					m = t.search(value, m.end())
+					continue
+				value = value.replace('<%s>' % found_tag, repl)
+				#logSys.log(5, 'value now: %s' % value)
+				# increment reference count:
+				refCounts[found_tag] = refCounts.get(found_tag, 0) + 1
+				# the next match for replace:
+				m = t.search(value, m.start())
+			#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
+			# was substituted?
+			if orgval != value:
+				# check still contains any tag - should be repeated (possible embedded-recursive substitution):
+				if t.search(value):
+					repFlag = True
+				tags[tag] = value
+			# no more sub tags (and no possible composite), add this tag to done set (just to be faster):
+			if '<' not in value: done.add(tag)
+		# stop interpolation, if no replacements anymore:
+		if not repFlag:
+			break
+	return tags
+
+
 class BgService(object):
 	"""Background servicing
 

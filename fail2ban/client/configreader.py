@@ -29,8 +29,7 @@ import os
 from ConfigParser import NoOptionError, NoSectionError
 
 from .configparserinc import sys, SafeConfigParserWithIncludes, logLevel
-from ..helpers import getLogger
-from ..server.action import CommandAction
+from ..helpers import getLogger, substituteRecursiveTags
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -328,6 +327,11 @@ class DefinitionInitConfigReader(ConfigReader):
 		return value.lower() in ("1", "yes", "true", "on")
 	
 	def getCombOption(self, optname):
+		"""Get combined definition option (as string) using pre-set and init
+		options as preselection (values with higher precedence as specified in section).
+
+		Can be used only after calling of getOptions.
+		"""
 		try:
 			return self._defCache[optname]
 		except KeyError:
@@ -352,7 +356,7 @@ class DefinitionInitConfigReader(ConfigReader):
 				n, cond = cond.groups()
 				ignore.add(n)
 		# substiture options already specified direct:
-		opts = CommandAction.substituteRecursiveTags(combinedopts,
+		opts = substituteRecursiveTags(combinedopts, 
 			ignore=ignore, addrepl=self.getCombOption)
 		if not opts:
 			raise ValueError('recursive tag definitions unable to be resolved')
