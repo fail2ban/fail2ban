@@ -221,13 +221,10 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	# Or it is a dict:
 	#  {name: [type, default], ...}
 	
-	def getOptions(self, sec, options, pOptions=None, 
-		allOpts=None, shouldExist=False
-	):
+	def getOptions(self, sec, options, pOptions=None, shouldExist=False):
 		values = dict()
 		if pOptions is None:
 			pOptions = {}
-
 		# Get only specified options:
 		for optname in options:
 			if isinstance(options, (list,tuple)):
@@ -265,15 +262,6 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 				logSys.warning("Wrong value for '" + optname + "' in '" + sec +
 							"'. Using default one: '" + repr(optvalue) + "'")
 				values[optname] = optvalue
-
-		# Fill all option of the section (used for replacement):
-		if allOpts is not None and self.has_section(sec):
-			for optname in self.options(sec):
-				v = values.get(optname)
-				if v is None:
-					v = self.get(sec, optname, vars=pOptions)
-				allOpts[optname] = v
-
 		return values
 
 
@@ -293,6 +281,8 @@ class DefinitionInitConfigReader(ConfigReader):
 		self.setFile(file_)
 		self.setJailName(jailName)
 		self._initOpts = initOpts
+		self._pOpts = dict()
+		self._defCache = dict()
 	
 	def setFile(self, fileName):
 		self._file = fileName
@@ -323,9 +313,9 @@ class DefinitionInitConfigReader(ConfigReader):
 			if not pOpts:
 				pOpts = dict()
 			pOpts = _merge_dicts(pOpts, self._initOpts)
-		self._allOpts = dict()
 		self._opts = ConfigReader.getOptions(
-			self, "Definition", self._configOpts, pOpts, allOpts=self._allOpts)
+			self, "Definition", self._configOpts, pOpts)
+		self._pOpts = pOpts
 		if self.has_section("Init"):
 			for opt in self.options("Init"):
 				v = self.get("Init", opt)
@@ -337,6 +327,17 @@ class DefinitionInitConfigReader(ConfigReader):
 	def _convert_to_boolean(self, value):
 		return value.lower() in ("1", "yes", "true", "on")
 	
+	def getCombOption(self, optname):
+		try:
+			return self._defCache[optname]
+		except KeyError:
+			try:
+				v = self.get("Definition", optname, vars=self._pOpts)
+			except (NoSectionError, NoOptionError, ValueError):
+				v = None
+			self._defCache[optname] = v
+			return v
+
 	def getCombined(self, ignore=()):
 		combinedopts = self._opts
 		ignore = set(ignore).copy()
@@ -352,7 +353,7 @@ class DefinitionInitConfigReader(ConfigReader):
 				ignore.add(n)
 		# substiture options already specified direct:
 		opts = CommandAction.substituteRecursiveTags(combinedopts,
-			ignore=ignore, addtags=self._allOpts)
+			ignore=ignore, addrepl=self.getCombOption)
 		if not opts:
 			raise ValueError('recursive tag definitions unable to be resolved')
 		return opts

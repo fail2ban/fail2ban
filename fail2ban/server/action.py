@@ -366,7 +366,7 @@ class CommandAction(ActionBase):
 
 	@classmethod
 	def substituteRecursiveTags(cls, inptags, conditional='', 
-		ignore=(), addtags={}
+		ignore=(), addrepl=None
 	):
 		"""Sort out tag definitions within other tags.
 		Since v.0.9.2 supports embedded interpolation (see test cases for examples).
@@ -419,11 +419,12 @@ class CommandAction(ActionBase):
 							(tag, found_tag, refCounts, value))
 					repl = None
 					if found_tag not in cls._escapedTags:
-						repl = tags.get(found_tag + '?' + conditional)
+						if conditional:
+							repl = tags.get(found_tag + '?' + conditional)
 						if repl is None:
 							repl = tags.get(found_tag)
-							if repl is None:
-								repl = addtags.get(found_tag)
+							if repl is None and addrepl is not None:
+								repl = addrepl(found_tag)
 					if repl is None:
 						# Escaped or missing tags - just continue on searching after end of match
 						# Missing tags are ok - cInfo can contain aInfo elements like <HOST> and valid shell
