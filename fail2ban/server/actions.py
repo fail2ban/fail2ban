@@ -350,7 +350,9 @@ class Actions(JailThread, Mapping):
 				"time"		:	bTicket.getTime(),
 				"matches"	:	"\n".join(bTicket.getMatches()),
 				# to bypass actions, that should not be executed for restored tickets
-				"restored":	(1 if ticket.restored else 0)
+				"restored":	(1 if ticket.restored else 0),
+				# extra-interpolation - all match-tags (captured from the filter):
+				"F-*": lambda tag=None: bTicket.getData(tag)
 			})
 			if self._jail.database is not None:
 				mi4ip = lambda overalljails=False, self=self, \

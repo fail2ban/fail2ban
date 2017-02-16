@@ -27,6 +27,62 @@ import sys
 
 from .ipdns import IPAddr
 
+
+FTAG_CRE = re.compile(r'</?[\w\-]+/?>')
+
+FCUSTAG_CRE = re.compile(r'^(/?)F-([A-Z0-9_\-]+)$'); # currently uppercase only
+
+R_HOST = [
+		# separated ipv4:
+		r"""(?:::f{4,6}:)?(?P<ip4>%s)""" % (IPAddr.IP_4_RE,),
+		# separated ipv6:
+		r"""(?P<ip6>%s)""" % (IPAddr.IP_6_RE,),
+		# place-holder for ipv6 enclosed in optional [] (used in addr-, host-regex)
+		"",
+		# separated dns:
+		r"""(?P<dns>[\w\-.^_]*\w)""",
+		# place-holder for ADDR tag-replacement (joined):
+		"",
+		# place-holder for HOST tag replacement (joined):
+		""
+]
+RI_IPV4 =		0
+RI_IPV6 =		1
+RI_IPV6BR =	2
+RI_DNS =		3
+RI_ADDR =		4
+RI_HOST =		5
+
+R_HOST[RI_IPV6BR] =	r"""\[?%s\]?""" % (R_HOST[RI_IPV6],)
+R_HOST[RI_ADDR] =		"(?:%s)" % ("|".join((R_HOST[RI_IPV4], R_HOST[RI_IPV6BR])),)
+R_HOST[RI_HOST] =		"(?:%s)" % ("|".join((R_HOST[RI_IPV4], R_HOST[RI_IPV6BR], R_HOST[RI_DNS])),)
+
+RH4TAG = {
+	# separated ipv4 (self closed, closed):
+	"IP4":			R_HOST[RI_IPV4],
+	"F-IP4/":		R_HOST[RI_IPV4],
+	# separated ipv6 (self closed, closed):
+	"IP6":			R_HOST[RI_IPV6],
+	"F-IP6/":		R_HOST[RI_IPV6],
+	# 2 address groups instead of <ADDR> - in opposition to `<HOST>`, 
+	# for separate usage of 2 address groups only (regardless of `usedns`), `ip4` and `ip6` together
+	"ADDR":			R_HOST[RI_ADDR],
+	"F-ADDR/":	R_HOST[RI_ADDR],
+	# separated dns (self closed, closed):
+	"DNS":			R_HOST[RI_DNS],
+	"F-DNS/":		R_HOST[RI_DNS],
+	# default failure-id as no space tag:
+	"F-ID/":		r"""(?P<fid>\S+)""",
+	# default failure port, like 80 or http :
+	"F-PORT/": 	r"""(?P<fport>\w+)""",
+}
+
+# default failure groups map for customizable expressions (with different group-id):
+R_MAP = {
+	"ID": "fid",
+	"PORT": "fport",
+}
+
 ##
 # Regular expression class.
 #
@@ -71,38 +127,46 @@ class Regex:
 
 	@staticmethod
 	def _resolveHostTag(regex, useDns="yes"):
-		# separated ipv4:
-		r_host = []
-		r = r"""(?:::f{4,6}:)?(?P<ip4>%s)""" % (IPAddr.IP_4_RE,)
-		regex = regex.replace("<IP4>", r); # self closed
-		regex = regex.replace("<F-IP4/>", r); # closed
-		r_host.append(r)
-		# separated ipv6:
-		r = r"""(?P<ip6>%s)""" % (IPAddr.IP_6_RE,)
-		regex = regex.replace("<IP6>", r); # self closed
-		regex = regex.replace("<F-IP6/>", r); # closed
-		r_host.append(r"""\[?%s\]?""" % (r,)); # enclose ipv6 in optional [] in host-regex
-		# 2 address groups instead of <ADDR> - in opposition to `<HOST>`, 
-		# for separate usage of 2 address groups only (regardless of `usedns`), `ip4` and `ip6` together
-		regex = regex.replace("<ADDR>", "(?:%s)" % ("|".join(r_host),))
-		# separated dns:
-		r = r"""(?P<dns>[\w\-.^_]*\w)"""
-		regex = regex.replace("<DNS>", r); # self closed
-		regex = regex.replace("<F-DNS/>", r); # closed
-		if useDns not in ("no",):
-			r_host.append(r)
-		# 3 groups instead of <HOST> - separated ipv4, ipv6 and host (dns)
-		regex = regex.replace("<HOST>", "(?:%s)" % ("|".join(r_host),))
-		# default failure-id as no space tag:
-		regex = regex.replace("<F-ID/>", r"""(?P<fid>\S+)"""); # closed
-		# default failure port, like 80 or http :
-		regex = regex.replace("<F-PORT/>", r"""(?P<port>\w+)"""); # closed
-		# default failure groups (begin / end tag) for customizable expressions:
-		for o,r in (('IP4', 'ip4'), ('IP6', 'ip6'), ('DNS', 'dns'), ('ID', 'fid'), ('PORT', 'fport')):
-			regex = regex.replace("<F-%s>" % o, "(?P<%s>" % r); # open tag
-			regex = regex.replace("</F-%s>" % o, ")"); # close tag
 
-		return regex
+		openTags = dict()
+		# tag interpolation callable:
+		def substTag(m):
+			tag = m.group()
+			tn = tag[1:-1]
+			# 3 groups instead of <HOST> - separated ipv4, ipv6 and host (dns)
+			if tn == "HOST":
+				return R_HOST[RI_HOST if useDns not in ("no",) else RI_ADDR]
+			# static replacement from RH4TAG:
+			try:
+				return RH4TAG[tn]
+			except KeyError:
+				pass
+
+			# (begin / end tag) for customizable expressions, additionally used as
+			# user custom tags (match will be stored in ticket data, can be used in actions):
+			m = FCUSTAG_CRE.match(tn)
+			if m: # match F-...
+				m = m.groups()
+				tn = m[1]
+				# close tag:
+				if m[0]:
+					# check it was already open:
+					if openTags.get(tn):
+						return ")"
+					return tag; # tag not opened, use original
+				# open tag:
+				openTags[tn] = 1
+				try: # if should be mapped:
+					tn = R_MAP[tn]
+				except KeyError:
+					tn = tn.lower()
+				return "(?P<%s>" % (tn,)
+
+			# original, no replacement:
+			return tag
+		
+		# substitute tags:
+		return FTAG_CRE.sub(substTag, regex)
 
 	##
 	# Gets the regular expression.
