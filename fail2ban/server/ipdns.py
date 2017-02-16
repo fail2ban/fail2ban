@@ -346,7 +346,7 @@ class IPAddr(object):
 		
 		return socket.inet_ntop(self._family, binary) + add
 
-	def getPTR(self, suffix=""):
+	def getPTR(self, suffix=None):
 		""" return the DNS PTR string of the provided IP address object
 
 			If "suffix" is provided it will be appended as the second and top
@@ -356,11 +356,11 @@ class IPAddr(object):
 		"""
 		if self.isIPv4:
 			exploded_ip = self.ntoa.split(".")
-			if not suffix:
+			if suffix is None:
 				suffix = "in-addr.arpa."
 		elif self.isIPv6:
 			exploded_ip = self.hexdump
-			if not suffix:
+			if suffix is None:
 				suffix = "ip6.arpa."
 		else:
 			return ""

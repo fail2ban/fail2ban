@@ -341,15 +341,17 @@ class Actions(JailThread, Mapping):
 			ticket = self._jail.getFailTicket()
 			if not ticket:
 				break
-			aInfo = CallingMap()
 			bTicket = BanManager.createBanTicket(ticket)
 			ip = bTicket.getIP()
-			aInfo["ip"] = ip
-			aInfo["failures"] = bTicket.getAttempt()
-			aInfo["time"] = bTicket.getTime()
-			aInfo["matches"] = "\n".join(bTicket.getMatches())
-			# to bypass actions, that should not be executed for restored tickets
-			aInfo["restored"] = 1 if ticket.restored else 0
+			aInfo = CallingMap({
+				"ip"			:	ip,
+				"ip-rev"	:	lambda: ip.getPTR(''),
+				"failures":	bTicket.getAttempt(),
+				"time"		:	bTicket.getTime(),
+				"matches"	:	"\n".join(bTicket.getMatches()),
+				# to bypass actions, that should not be executed for restored tickets
+				"restored":	(1 if ticket.restored else 0)
+			})
 			if self._jail.database is not None:
 				mi4ip = lambda overalljails=False, self=self, \
 					mi={'ip':ip, 'ticket':bTicket}: self.__getBansMerged(mi, overalljails)
