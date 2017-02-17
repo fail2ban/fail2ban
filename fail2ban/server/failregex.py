@@ -30,7 +30,7 @@ from .ipdns import IPAddr
 
 FTAG_CRE = re.compile(r'</?[\w\-]+/?>')
 
-FCUSTAG_CRE = re.compile(r'^(/?)F-([A-Z0-9_\-]+)$'); # currently uppercase only
+FCUSTNAME_CRE = re.compile(r'^(/?)F-([A-Z0-9_\-]+)$'); # currently uppercase only
 
 R_HOST = [
 		# separated ipv4:
@@ -82,6 +82,12 @@ R_MAP = {
 	"ID": "fid",
 	"PORT": "fport",
 }
+
+def mapTag2Opt(tag):
+	try: # if should be mapped:
+		return R_MAP[tag]
+	except KeyError:
+		return tag.lower()
 
 ##
 # Regular expression class.
@@ -144,7 +150,7 @@ class Regex:
 
 			# (begin / end tag) for customizable expressions, additionally used as
 			# user custom tags (match will be stored in ticket data, can be used in actions):
-			m = FCUSTAG_CRE.match(tn)
+			m = FCUSTNAME_CRE.match(tn)
 			if m: # match F-...
 				m = m.groups()
 				tn = m[1]
@@ -156,10 +162,8 @@ class Regex:
 					return tag; # tag not opened, use original
 				# open tag:
 				openTags[tn] = 1
-				try: # if should be mapped:
-					tn = R_MAP[tn]
-				except KeyError:
-					tn = tn.lower()
+				# if should be mapped:
+				tn = mapTag2Opt(tn)
 				return "(?P<%s>" % (tn,)
 
 			# original, no replacement:

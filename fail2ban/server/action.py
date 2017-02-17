@@ -23,6 +23,7 @@ __license__ = "GPL"
 
 import logging
 import os
+import re
 import signal
 import subprocess
 import tempfile
@@ -31,6 +32,7 @@ import time
 from abc import ABCMeta
 from collections import MutableMapping
 
+from .failregex import mapTag2Opt
 from .ipdns import asip
 from .mytime import MyTime
 from .utils import Utils
@@ -44,6 +46,10 @@ _cmd_lock = threading.Lock()
 
 # Todo: make it configurable resp. automatically set, ex.: `[ -f /proc/net/if_inet6 ] && echo 'yes' || echo 'no'`:
 allowed_ipv6 = True
+
+# capture groups from filter for map to ticket data:
+FCUSTAG_CRE = re.compile(r'<F-([A-Z0-9_\-]+)>'); # currently uppercase only
+
 
 
 class CallingMap(MutableMapping):
@@ -72,9 +78,9 @@ class CallingMap(MutableMapping):
 	def __getitem__(self, key):
 		value = self.data[key]
 		if callable(value):
-			return value()
-		else:
-			return value
+			value = value()
+			self.data[key] = value
+		return value
 
 	def __setitem__(self, key, value):
 		self.data[key] = value
@@ -546,6 +552,18 @@ class CommandAction(ActionBase):
 		# Replace dynamical tags (don't use cache here)
 		if aInfo is not None:
 			realCmd = self.replaceTag(realCmd, aInfo, conditional=conditional)
+			# Replace ticket options (filter capture groups) non-recursive:
+			if '<' in realCmd:
+				tickData = aInfo.get("F-*")
+				if not tickData: tickData = {}
+				def substTag(m):
+					tn = mapTag2Opt(m.groups()[0])
+					try:
+						return str(tickData[tn])
+					except KeyError:
+						return ""
+				
+				realCmd = FCUSTAG_CRE.sub(substTag, realCmd)
 		else:
 			realCmd = cmd
 

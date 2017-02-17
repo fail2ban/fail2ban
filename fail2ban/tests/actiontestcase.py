@@ -329,13 +329,24 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertEqual(self.__action.ROST,"192.0.2.0")
 
 	def testExecuteActionUnbanAinfo(self):
-		aInfo = {
+		aInfo = CallingMap({
 			'ABC': "123",
-		}
-		self.__action.actionban = "touch /tmp/fail2ban.test.123"
-		self.__action.actionunban = "rm /tmp/fail2ban.test.<ABC>"
+			'ip': '192.0.2.1',
+			'F-*': lambda: {
+		  	'fid': 111,
+		  	'fport': 222,
+				'user': "tester"
+			}
+		})
+		self.__action.actionban = "touch /tmp/fail2ban.test.123; echo 'failure <F-ID> of <F-USER> -<F-TEST>- from <ip>:<F-PORT>'"
+		self.__action.actionunban = "rm /tmp/fail2ban.test.<ABC>; echo 'user <F-USER> unbanned'"
 		self.__action.ban(aInfo)
 		self.__action.unban(aInfo)
+		self.assertLogged(
+			" -- stdout: 'failure 111 of tester -- from 192.0.2.1:222'",
+			" -- stdout: 'user tester unbanned'",
+			all=True
+		)
 
 	def testExecuteActionStartEmpty(self):
 		self.__action.actionstart = ""
