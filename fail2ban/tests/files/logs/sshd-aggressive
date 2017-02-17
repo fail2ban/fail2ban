@@ -1,0 +1,3 @@
+# sshd-aggressive includes sshd and sshd-ddos failregex's:
+# addFILE: "sshd"
+# addFILE: "sshd-ddos"
