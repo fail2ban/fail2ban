@@ -5,3 +5,12 @@
 2012-09-26 10:24:35: (http_auth.c.1136) digest: auth failed for  xxx : wrong password, IP: 4.4.4.4
 # failJSON: { "time": "2013-08-25T00:24:55", "match": true , "host": "4.4.4.4" }
 2013-08-25 00:24:55: (http_auth.c.877) get_password failed, IP: 4.4.4.4
+
+# Default message patterns to protect web apps
+#
+# failJSON: { "time": "2016-08-25T00:24:55", "match": true , "host": "4.4.4.5" }
+2016-08-25 00:24:55: (http_auth.c.877) user "bob" not found: My Protected Web Application, IP: 4.4.4.5
+# failJSON: { "time": "2016-08-25T01:24:55", "match": true , "host": "4.4.4.5" }
+2016-08-25 01:24:55: (http_auth.c.877) user "bob" password mismatch: My Protected Web Application, IP: 4.4.4.5
+# failJSON: { "time": "2016-08-25T02:24:55", "match": true , "host": "4.4.4.5" }
+2016-08-25 02:24:55: (http_auth.c.877) client used invalid token: My Protected Web Application, IP: 4.4.4.5
