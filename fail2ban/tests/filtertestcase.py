@@ -337,6 +337,11 @@ class IgnoreIP(LogCaptureTestCase):
 		for ip in ipList:
 			self.filter.addIgnoreIP(ip)
 			self.assertFalse(self.filter.inIgnoreIPList(ip))
+		if not unittest.F2B.no_network: # pragma: no cover
+			self.assertLogged(
+				'Unable to find a corresponding IP address for 999.999.999.999',
+				'Unable to find a corresponding IP address for abcdef.abcdef',
+				'Unable to find a corresponding IP address for 192.168.0.', all=True)
 
 	def testIgnoreIPCIDR(self):
 		self.filter.addIgnoreIP('192.168.1.0/25')
