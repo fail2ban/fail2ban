@@ -102,7 +102,9 @@ def testSampleRegexsFactory(name, basedir):
 			else:
 				continue
 			for optval in optval:
-				if opt[2] == "addfailregex":
+				if opt[2] == "prefregex":
+					self.filter.prefRegex = optval
+				elif opt[2] == "addfailregex":
 					self.filter.addFailRegex(optval)
 				elif opt[2] == "addignoreregex":
 					self.filter.addIgnoreRegex(optval)
@@ -126,7 +128,7 @@ def testSampleRegexsFactory(name, basedir):
 			# test regexp contains greedy catch-all before <HOST>, that is
 			# not hard-anchored at end or has not precise sub expression after <HOST>:
 			for fr in self.filter.getFailRegex():
-				if RE_WRONG_GREED.search(fr): #pragma: no cover
+				if RE_WRONG_GREED.search(fr): # pragma: no cover
 					raise AssertionError("Following regexp of \"%s\" contains greedy catch-all before <HOST>, "
 						"that is not hard-anchored at end or has not precise sub expression after <HOST>:\n%s" %
 						(name, str(fr).replace(RE_HOST, '<HOST>')))
@@ -152,12 +154,12 @@ def testSampleRegexsFactory(name, basedir):
 				if not ret:
 					# Check line is flagged as none match
 					self.assertFalse(faildata.get('match', True),
-						 "Line not matched when should have: %s:%i %r" %
+						 "Line not matched when should have: %s:%i, line:\n%s" %
 						(logFile.filename(), logFile.filelineno(), line))
 				elif ret:
 					# Check line is flagged to match
 					self.assertTrue(faildata.get('match', False),
-						"Line matched when shouldn't have: %s:%i %r" %
+						"Line matched when shouldn't have: %s:%i, line:\n%s" %
 						(logFile.filename(), logFile.filelineno(), line))
 					self.assertEqual(len(ret), 1, "Multiple regexs matched %r - %s:%i" %
 									 (map(lambda x: x[0], ret),logFile.filename(), logFile.filelineno()))
@@ -165,6 +167,12 @@ def testSampleRegexsFactory(name, basedir):
 					# Verify timestamp and host as expected
 					failregex, host, fail2banTime, lines, fail = ret[0]
 					self.assertEqual(host, faildata.get("host", None))
+					# Verify other captures:
+					for k, v in faildata.iteritems():
+						if k not in ("time", "match", "host", "desc"):
+							fv = fail.get(k, None)
+							self.assertEqual(fv, v, "Value of %s mismatch %r != %r on: %s:%i, line:\n%s" % (
+								k, fv, v, logFile.filename(), logFile.filelineno(), line))
 
 					t = faildata.get("time", None)
 					try:
@@ -177,7 +185,7 @@ def testSampleRegexsFactory(name, basedir):
 					jsonTime += jsonTimeLocal.microsecond / 1000000
 
 					self.assertEqual(fail2banTime, jsonTime,
-						"UTC Time  mismatch fail2ban %s (%s) != failJson %s (%s)  (diff %.3f seconds) on: %s:%i %r:" % 
+						"UTC Time  mismatch %s (%s) != %s (%s)  (diff %.3f seconds) on: %s:%i, line:\n%s" % 
 						(fail2banTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(fail2banTime)),
 						jsonTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(jsonTime)),
 						fail2banTime - jsonTime, logFile.filename(), logFile.filelineno(), line ) )

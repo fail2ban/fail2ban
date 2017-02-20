@@ -37,6 +37,7 @@ logSys = getLogger(__name__)
 class FilterReader(DefinitionInitConfigReader):
 
 	_configOpts = {
+		"prefregex": ["string", None],
 		"ignoreregex": ["string", None],
 		"failregex": ["string", ""],
 		"maxlines": ["int", None],
@@ -72,8 +73,8 @@ class FilterReader(DefinitionInitConfigReader):
 				# We warn when multiline regex is used without maxlines > 1
 				# therefore keep sure we set this option first.
 				stream.insert(0, ["set", self._jailName, "maxlines", value])
-			elif opt == 'datepattern':
-				stream.append(["set", self._jailName, "datepattern", value])
+			elif opt in ('datepattern', 'prefregex'):
+				stream.append(["set", self._jailName, opt, value])
 			# Do not send a command if the match is empty.
 			elif opt == 'journalmatch':
 				if value is None: continue

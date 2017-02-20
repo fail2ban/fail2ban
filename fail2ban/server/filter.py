@@ -65,6 +65,8 @@ class Filter(JailThread):
 		self.jail = jail
 		## The failures manager.
 		self.failManager = FailManager()
+		## Regular expression pre-filtering matching the failures.
+		self.__prefRegex = None
 		## The regular expression list matching the failures.
 		self.__failRegex = list()
 		## The regular expression list with expressions to ignore.
@@ -128,6 +130,16 @@ class Filter(JailThread):
 				for path in self._reload_logs:
 					self.delLogPath(path)
 				delattr(self, '_reload_logs')
+
+	@property
+	def prefRegex(self):
+		return self.__prefRegex
+	@prefRegex.setter
+	def prefRegex(self, value):
+		if value:
+			self.__prefRegex = Regex(value, useDns=self.__useDns)
+		else:
+			self.__prefRegex = None
 
 	##
 	# Add a regular expression which matches the failure.
@@ -582,13 +594,30 @@ class Filter(JailThread):
 				date, MyTime.time(), self.getFindTime())
 			return failList
 
-		self.__lineBuffer = (
-			self.__lineBuffer + [tupleLine[:3]])[-self.__lineBufferSize:]
-		logSys.log(5, "Looking for failregex match of %r" % self.__lineBuffer)
+		if self.__lineBufferSize > 1:
+			orgBuffer = self.__lineBuffer = (
+				self.__lineBuffer + [tupleLine[:3]])[-self.__lineBufferSize:]
+		else:
+			orgBuffer = self.__lineBuffer = [tupleLine[:3]]
+		logSys.log(5, "Looking for failregex match of %r", self.__lineBuffer)
+
+		# Pre-filter fail regex (if available):
+		preGroups = {}
+		if self.__prefRegex:
+			failRegex = self.__prefRegex.search(self.__lineBuffer)
+			if not self.__prefRegex.hasMatched():
+				return failList
+			logSys.log(7, "Pre-filter matched %s", failRegex)
+			preGroups = self.__prefRegex.getGroups()
+			repl = preGroups.get('content')
+			# Content replacement:
+			if repl:
+				del preGroups['content']
+				self.__lineBuffer = [('', '', repl)]
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
-			failRegex.search(self.__lineBuffer)
+			failRegex.search(self.__lineBuffer, orgBuffer)
 			if failRegex.hasMatched():
 				# The failregex matched.
 				logSys.log(7, "Matched %s", failRegex)
@@ -617,7 +646,11 @@ class Filter(JailThread):
 					# retrieve failure-id, host, etc from failure match:
 					raw = returnRawHost
 					try:
-						fail = failRegex.getGroups()
+						if preGroups:
+							fail = preGroups.copy()
+							fail.update(failRegex.getGroups())
+						else:
+							fail = failRegex.getGroups()
 						# failure-id:
 						fid = fail.get('fid')
 						# ip-address or host:

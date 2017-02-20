@@ -189,40 +189,45 @@ class Regex:
 	# method of this object.
 	# @param a list of tupples. The tupples are ( prematch, datematch, postdatematch )
 	
-	def search(self, tupleLines):
+	def search(self, tupleLines, orgLines=None):
 		self._matchCache = self._regexObj.search(
 			"\n".join("".join(value[::2]) for value in tupleLines) + "\n")
-		if self.hasMatched():
-			# Find start of the first line where the match was found
-			try:
-				self._matchLineStart = self._matchCache.string.rindex(
-					"\n", 0, self._matchCache.start() +1 ) + 1
-			except ValueError:
-				self._matchLineStart = 0
-			# Find end of the last line where the match was found
-			try:
-				self._matchLineEnd = self._matchCache.string.index(
-					"\n", self._matchCache.end() - 1) + 1
-			except ValueError:
-				self._matchLineEnd = len(self._matchCache.string)
+		if self._matchCache:
+			if orgLines is None: orgLines = tupleLines
+			# if single-line:
+			if len(orgLines) <= 1:
+				self._matchedTupleLines = orgLines
+				self._unmatchedTupleLines = []
+			else:
+				# Find start of the first line where the match was found
+				try:
+					matchLineStart = self._matchCache.string.rindex(
+						"\n", 0, self._matchCache.start() +1 ) + 1
+				except ValueError:
+					matchLineStart = 0
+				# Find end of the last line where the match was found
+				try:
+					matchLineEnd = self._matchCache.string.index(
+						"\n", self._matchCache.end() - 1) + 1
+				except ValueError:
+					matchLineEnd = len(self._matchCache.string)
 
-			lineCount1 = self._matchCache.string.count(
-				"\n", 0, self._matchLineStart)
-			lineCount2 = self._matchCache.string.count(
-				"\n", 0, self._matchLineEnd)
-			self._matchedTupleLines = tupleLines[lineCount1:lineCount2]
-			self._unmatchedTupleLines = tupleLines[:lineCount1]
-
-			n = 0
-			for skippedLine in self.getSkippedLines():
-				for m, matchedTupleLine in enumerate(
-					self._matchedTupleLines[n:]):
-					if "".join(matchedTupleLine[::2]) == skippedLine:
-						self._unmatchedTupleLines.append(
-							self._matchedTupleLines.pop(n+m))
-						n += m
-						break
-			self._unmatchedTupleLines.extend(tupleLines[lineCount2:])
+				lineCount1 = self._matchCache.string.count(
+					"\n", 0, matchLineStart)
+				lineCount2 = self._matchCache.string.count(
+					"\n", 0, matchLineEnd)
+				self._matchedTupleLines = orgLines[lineCount1:lineCount2]
+				self._unmatchedTupleLines = orgLines[:lineCount1]
+				n = 0
+				for skippedLine in self.getSkippedLines():
+					for m, matchedTupleLine in enumerate(
+						self._matchedTupleLines[n:]):
+						if "".join(matchedTupleLine[::2]) == skippedLine:
+							self._unmatchedTupleLines.append(
+								self._matchedTupleLines.pop(n+m))
+							n += m
+							break
+				self._unmatchedTupleLines.extend(orgLines[lineCount2:])
 
 	# Checks if the previous call to search() matched.
 	#
@@ -233,6 +238,13 @@ class Regex:
 			return True
 		else:
 			return False
+
+	##
+	# Returns all matched groups.
+	#
+
+	def getGroups(self):
+		return self._matchCache.groupdict()
 
 	##
 	# Returns skipped lines.
@@ -332,13 +344,6 @@ class FailRegex(Regex):
 		if not [grp for grp in FAILURE_ID_GROPS if grp in self._regexObj.groupindex]:
 			raise RegexException("No failure-id group in '%s'" % self._regex)
 	
-	##
-	# Returns all matched groups.
-	#
-
-	def getGroups(self):
-		return self._matchCache.groupdict()
-
 	##
 	# Returns the matched failure id.
 	#

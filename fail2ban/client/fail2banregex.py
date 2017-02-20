@@ -271,7 +271,7 @@ class Fail2banRegex(object):
 	def readRegex(self, value, regextype):
 		assert(regextype in ('fail', 'ignore'))
 		regex = regextype + 'regex'
-		if os.path.isfile(value) or os.path.isfile(value + '.conf'):
+		if regextype == 'fail' and (os.path.isfile(value) or os.path.isfile(value + '.conf')):
 			if os.path.basename(os.path.dirname(value)) == 'filter.d':
 				## within filter.d folder - use standard loading algorithm to load filter completely (with .local etc.):
 				basedir = os.path.dirname(os.path.dirname(value))
@@ -291,43 +291,51 @@ class Fail2banRegex(object):
 					return False
 			reader.getOptions(None)
 			readercommands = reader.convert()
-			regex_values = [
-				RegexStat(m[3])
-				for m in filter(
-					lambda x: x[0] == 'set' and x[2] == "add%sregex" % regextype,
-					readercommands)
-			] + [
-				RegexStat(m)
-				for mm in filter(
-					lambda x: x[0] == 'multi-set' and x[2] == "add%sregex" % regextype,
-					readercommands)
-				for m in mm[3]
-			]
-			# Read out and set possible value of maxlines
-			for command in readercommands:
-				if command[2] == "maxlines":
-					maxlines = int(command[3])
+
+			regex_values = {}
+			for opt in readercommands:
+				if opt[0] == 'multi-set':
+					optval = opt[3]
+				elif opt[0] == 'set':
+					optval = [opt[3]]
+				else:
+					continue
+				for optval in optval:
 					try:
-						self.setMaxLines(maxlines)
-					except ValueError:
-						output( "ERROR: Invalid value for maxlines (%(maxlines)r) " \
-							  "read from %(value)s" % locals() )
+						if opt[2] == "prefregex":
+							self._filter.prefRegex = optval
+						elif opt[2] == "addfailregex":
+							stor = regex_values.get('fail')
+							if not stor: stor = regex_values['fail'] = list()
+							stor.append(RegexStat(optval))
+							#self._filter.addFailRegex(optval)
+						elif opt[2] == "addignoreregex":
+							stor = regex_values.get('ignore')
+							if not stor: stor = regex_values['ignore'] = list()
+							stor.append(RegexStat(optval))
+							#self._filter.addIgnoreRegex(optval)
+						elif opt[2] == "maxlines":
+							self.setMaxLines(optval)
+						elif opt[2] == "datepattern":
+							self.setDatePattern(optval)
+						elif opt[2] == "addjournalmatch":
+							self.setJournalMatch(optval)
+					except ValueError as e: # pragma: no cover
+						output( "ERROR: Invalid value for %s (%r) " \
+							  "read from %s: %s" % (opt[2], optval, value, e) )
 						return False
-				elif command[2] == 'addjournalmatch':
-					journalmatch = command[3:]
-					self.setJournalMatch(journalmatch)
-				elif command[2] == 'datepattern':
-					datepattern = command[3]
-					self.setDatePattern(datepattern)
+
 		else:
 			output( "Use %11s line : %s" % (regex, shortstr(value)) )
-			regex_values = [RegexStat(value)]
+			regex_values = {regextype: [RegexStat(value)]}
 
-		setattr(self, "_" + regex, regex_values)
-		for regex in regex_values:
-			getattr(
-				self._filter,
-				'add%sRegex' % regextype.title())(regex.getFailRegex())
+		for regextype, regex_values in regex_values.iteritems():
+			regex = regextype + 'regex'
+			setattr(self, "_" + regex, regex_values)
+			for regex in regex_values:
+				getattr(
+					self._filter,
+					'add%sRegex' % regextype.title())(regex.getFailRegex())
 		return True
 
 	def testIgnoreRegex(self, line):
