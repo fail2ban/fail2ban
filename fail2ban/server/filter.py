@@ -564,7 +564,7 @@ class Filter(JailThread):
 			dateTimeMatch = self.dateDetector.getTime(timeText, tupleLine[3])
 
 			if dateTimeMatch is None:
-				logSys.error("findFailure failed to parse timeText: " + timeText)
+				logSys.error("findFailure failed to parse timeText: %s", timeText)
 				date = self.__lastDate
 
 			else:
@@ -621,10 +621,16 @@ class Filter(JailThread):
 						# failure-id:
 						fid = fail.get('fid')
 						# ip-address or host:
-						host = fail.get('ip4') or fail.get('ip6')
+						host = fail.get('ip4')
 						if host is not None:
+							cidr = IPAddr.FAM_IPv4
 							raw = True
 						else:
+							host = fail.get('ip6')
+							if host is not None:
+								cidr = IPAddr.FAM_IPv6
+								raw = True
+						if host is None:
 							host = fail.get('dns')
 							if host is None:
 								# if no failure-id also (obscure case, wrong regex), throw error inside getFailID:
@@ -639,18 +645,14 @@ class Filter(JailThread):
 							# check host equal failure-id, if not - failure with complex id:
 							if fid is not None and fid != host:
 								ip = IPAddr(fid, IPAddr.CIDR_RAW)
-							failList.append([failRegexIndex, ip, date,
-								failRegex.getMatchedLines(), fail])
-							if not self.checkAllRegex:
-								break
+							ips = [ip]
 						else:
 							ips = DNSUtils.textToIp(host, self.__useDns)
-							if ips:
-								for ip in ips:
-									failList.append([failRegexIndex, ip, date,
-										failRegex.getMatchedLines(), fail])
-								if not self.checkAllRegex:
-									break
+						for ip in ips:
+							failList.append([failRegexIndex, ip, date,
+								failRegex.getMatchedLines(), fail])
+						if not self.checkAllRegex:
+							break
 					except RegexException as e: # pragma: no cover - unsure if reachable
 						logSys.error(e)
 		return failList
