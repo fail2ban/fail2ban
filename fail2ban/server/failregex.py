@@ -337,11 +337,14 @@ class FailRegex(Regex):
 	# avoid construction of invalid object.
 	# @param value the regular expression
 
-	def __init__(self, regex, **kwargs):
+	def __init__(self, regex, prefRegex=None, **kwargs):
 		# Initializes the parent.
 		Regex.__init__(self, regex, **kwargs)
 		# Check for group "dns", "ip4", "ip6", "fid"
-		if not [grp for grp in FAILURE_ID_GROPS if grp in self._regexObj.groupindex]:
+		if (not [grp for grp in FAILURE_ID_GROPS if grp in self._regexObj.groupindex]
+			and (prefRegex is None or
+				not [grp for grp in FAILURE_ID_GROPS if grp in prefRegex._regexObj.groupindex])
+		):
 			raise RegexException("No failure-id group in '%s'" % self._regex)
 	
 	##

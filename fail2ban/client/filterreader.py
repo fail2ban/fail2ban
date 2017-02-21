@@ -69,11 +69,10 @@ class FilterReader(DefinitionInitConfigReader):
 					stream.append(["multi-set", self._jailName, "add" + opt, multi])
 				elif len(multi):
 					stream.append(["set", self._jailName, "add" + opt, multi[0]])
-			elif opt == 'maxlines':
-				# We warn when multiline regex is used without maxlines > 1
-				# therefore keep sure we set this option first.
-				stream.insert(0, ["set", self._jailName, "maxlines", value])
-			elif opt in ('datepattern', 'prefregex'):
+			elif opt in ('maxlines', 'prefregex'):
+				# Be sure we set this options first.
+				stream.insert(0, ["set", self._jailName, opt, value])
+			elif opt in ('datepattern'):
 				stream.append(["set", self._jailName, opt, value])
 			# Do not send a command if the match is empty.
 			elif opt == 'journalmatch':

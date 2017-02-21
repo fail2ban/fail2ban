@@ -150,7 +150,7 @@ class Filter(JailThread):
 
 	def addFailRegex(self, value):
 		try:
-			regex = FailRegex(value, useDns=self.__useDns)
+			regex = FailRegex(value, prefRegex=self.__prefRegex, useDns=self.__useDns)
 			self.__failRegex.append(regex)
 			if "\n" in regex.getRegex() and not self.getMaxLines() > 1:
 				logSys.warning(
@@ -604,11 +604,11 @@ class Filter(JailThread):
 		# Pre-filter fail regex (if available):
 		preGroups = {}
 		if self.__prefRegex:
-			failRegex = self.__prefRegex.search(self.__lineBuffer)
+			self.__prefRegex.search(self.__lineBuffer)
 			if not self.__prefRegex.hasMatched():
 				return failList
-			logSys.log(7, "Pre-filter matched %s", failRegex)
 			preGroups = self.__prefRegex.getGroups()
+			logSys.log(7, "Pre-filter matched %s", preGroups)
 			repl = preGroups.get('content')
 			# Content replacement:
 			if repl:
