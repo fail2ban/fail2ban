@@ -235,7 +235,7 @@ class Fail2banRegex(object):
 		else:
 			self._maxlines = 20
 		if opts.journalmatch is not None:
-			self.setJournalMatch(opts.journalmatch.split())
+			self.setJournalMatch(shlex.split(opts.journalmatch))
 		if opts.datepattern:
 			self.setDatePattern(opts.datepattern)
 		if opts.usedns:
@@ -243,6 +243,7 @@ class Fail2banRegex(object):
 		self._filter.returnRawHost = opts.raw
 		self._filter.checkFindTime = False
 		self._filter.checkAllRegex = True
+		self._opts = opts
 
 	def decode_line(self, line):
 		return FileContainer.decode_line('<LOG>', self._encoding, line)
@@ -265,8 +266,7 @@ class Fail2banRegex(object):
 			output( "Use         maxlines : %d" % self._filter.getMaxLines() )
 
 	def setJournalMatch(self, v):
-		if self._journalmatch is None:
-			self._journalmatch = v
+		self._journalmatch = v
 
 	def readRegex(self, value, regextype):
 		assert(regextype in ('fail', 'ignore'))
@@ -297,33 +297,38 @@ class Fail2banRegex(object):
 				if opt[0] == 'multi-set':
 					optval = opt[3]
 				elif opt[0] == 'set':
-					optval = [opt[3]]
+					optval = opt[3:]
 				else:
 					continue
-				for optval in optval:
-					try:
-						if opt[2] == "prefregex":
+				try:
+					if opt[2] == "prefregex":
+						for optval in optval:
 							self._filter.prefRegex = optval
-						elif opt[2] == "addfailregex":
-							stor = regex_values.get('fail')
-							if not stor: stor = regex_values['fail'] = list()
+					elif opt[2] == "addfailregex":
+						stor = regex_values.get('fail')
+						if not stor: stor = regex_values['fail'] = list()
+						for optval in optval:
 							stor.append(RegexStat(optval))
 							#self._filter.addFailRegex(optval)
-						elif opt[2] == "addignoreregex":
-							stor = regex_values.get('ignore')
-							if not stor: stor = regex_values['ignore'] = list()
+					elif opt[2] == "addignoreregex":
+						stor = regex_values.get('ignore')
+						if not stor: stor = regex_values['ignore'] = list()
+						for optval in optval:
 							stor.append(RegexStat(optval))
 							#self._filter.addIgnoreRegex(optval)
-						elif opt[2] == "maxlines":
+					elif opt[2] == "maxlines":
+						for optval in optval:
 							self.setMaxLines(optval)
-						elif opt[2] == "datepattern":
+					elif opt[2] == "datepattern":
+						for optval in optval:
 							self.setDatePattern(optval)
-						elif opt[2] == "addjournalmatch":
+					elif opt[2] == "addjournalmatch":
+						if self._opts.journalmatch is None:
 							self.setJournalMatch(optval)
-					except ValueError as e: # pragma: no cover
-						output( "ERROR: Invalid value for %s (%r) " \
-							  "read from %s: %s" % (opt[2], optval, value, e) )
-						return False
+				except ValueError as e: # pragma: no cover
+					output( "ERROR: Invalid value for %s (%r) " \
+						  "read from %s: %s" % (opt[2], optval, value, e) )
+					return False
 
 		else:
 			output( "Use %11s line : %s" % (regex, shortstr(value)) )
@@ -510,7 +515,7 @@ class Fail2banRegex(object):
 		for line in hdlr:
 			yield self.decode_line(line)
 
-	def start(self, opts, args):
+	def start(self, args):
 
 		cmd_log, cmd_regex = args[:2]
 
@@ -603,5 +608,5 @@ def exec_command_line(*args):
 	logSys.addHandler(stdout)
 
 	fail2banRegex = Fail2banRegex(opts)
-	if not fail2banRegex.start(opts, args):
+	if not fail2banRegex.start(args):
 		sys.exit(-1)

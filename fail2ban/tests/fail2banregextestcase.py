@@ -96,7 +96,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"test", r".** from <HOST>$"
 		)
-		self.assertFalse(fail2banRegex.start(opts, args))
+		self.assertFalse(fail2banRegex.start(args))
 		self.assertLogged("Unable to compile regular expression")
 
 	def testWrongIngnoreRE(self):
@@ -104,7 +104,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"--datepattern", "{^LN-BEG}EPOCH",
 			"test", r".*? from <HOST>$", r".**"
 		)
-		self.assertFalse(fail2banRegex.start(opts, args))
+		self.assertFalse(fail2banRegex.start(args))
 		self.assertLogged("Unable to compile regular expression")
 
 	def testDirectFound(self):
@@ -114,7 +114,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 192.0.2.0",
 			r"Authentication failure for .*? from <HOST>$"
 		)
-		self.assertTrue(fail2banRegex.start(opts, args))
+		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Lines: 1 lines, 0 ignored, 1 matched, 0 missed')
 
 	def testDirectNotFound(self):
@@ -123,7 +123,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 192.0.2.0",
 			r"XYZ from <HOST>$"
 		)
-		self.assertTrue(fail2banRegex.start(opts, args))
+		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Lines: 1 lines, 0 ignored, 0 matched, 1 missed')
 
 	def testDirectIgnored(self):
@@ -133,7 +133,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			r"Authentication failure for .*? from <HOST>$",
 			r"kevin from 192.0.2.0$"
 		)
-		self.assertTrue(fail2banRegex.start(opts, args))
+		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Lines: 1 lines, 1 ignored, 0 matched, 0 missed')
 
 	def testDirectRE_1(self):
@@ -143,7 +143,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			Fail2banRegexTest.FILENAME_01, 
 			Fail2banRegexTest.RE_00
 		)
-		self.assertTrue(fail2banRegex.start(opts, args))
+		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Lines: 19 lines, 0 ignored, 13 matched, 6 missed')
 
 		self.assertLogged('Error decoding line');
@@ -159,7 +159,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			Fail2banRegexTest.FILENAME_01, 
 			Fail2banRegexTest.RE_00
 		)
-		self.assertTrue(fail2banRegex.start(opts, args))
+		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Lines: 19 lines, 0 ignored, 16 matched, 3 missed')
 
 	def testDirectRE_1raw_noDns(self):
@@ -169,7 +169,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			Fail2banRegexTest.FILENAME_01, 
 			Fail2banRegexTest.RE_00
 		)
-		self.assertTrue(fail2banRegex.start(opts, args))
+		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Lines: 19 lines, 0 ignored, 13 matched, 6 missed')
 
 	def testDirectRE_2(self):
@@ -179,7 +179,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			Fail2banRegexTest.FILENAME_02, 
 			Fail2banRegexTest.RE_00
 		)
-		self.assertTrue(fail2banRegex.start(opts, args))
+		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Lines: 13 lines, 0 ignored, 5 matched, 8 missed')
 
 	def testVerbose(self):
@@ -189,7 +189,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			Fail2banRegexTest.FILENAME_02, 
 			Fail2banRegexTest.RE_00
 		)
-		self.assertTrue(fail2banRegex.start(opts, args))
+		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Lines: 13 lines, 0 ignored, 5 matched, 8 missed')
 
 		self.assertLogged('141.3.81.106  Sun Aug 14 11:53:59 2005')
@@ -200,7 +200,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"--datepattern", "^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
 			Fail2banRegexTest.FILENAME_WRONGCHAR, Fail2banRegexTest.FILTER_SSHD
 		)
-		self.assertTrue(fail2banRegex.start(opts, args))
+		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Lines: 4 lines, 0 ignored, 2 matched, 2 missed')
 
 		self.assertLogged('Error decoding line')
@@ -215,7 +215,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"--debuggex", "--print-all-matched",
 			Fail2banRegexTest.FILENAME_WRONGCHAR, Fail2banRegexTest.FILTER_SSHD
 		)
-		self.assertTrue(fail2banRegex.start(opts, args))
+		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Lines: 4 lines, 0 ignored, 2 matched, 2 missed')
 
 		self.assertLogged('https://')
