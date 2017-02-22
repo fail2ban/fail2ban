@@ -98,6 +98,12 @@ class Utils():
 					cache.popitem()
 			cache[k] = (v, t + self.maxTime)
 
+		def unset(self, k):
+			try:
+				del self._cache[k]
+			except KeyError: # pragme: no cover
+				pass
+
 
 	@staticmethod
 	def setFBlockMode(fhandle, value):

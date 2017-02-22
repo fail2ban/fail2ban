@@ -1431,6 +1431,7 @@ class GetFailures(LogCaptureTestCase):
 			('no',   output_no),
 			('warn', output_yes)
 		):
+			self.pruneLog("[test-phase useDns=%s]" % useDns)
 			jail = DummyJail()
 			filter_ = FileFilter(jail, useDns=useDns)
 			filter_.active = True

@@ -138,7 +138,8 @@ class Ticket(object):
 		self._data['matches'] = matches or []
 
 	def getMatches(self):
-		return self._data.get('matches', [])
+		return [(line if isinstance(line, basestring) else "".join(line)) \
+			for line in self._data.get('matches', ())]
 
 	@property
 	def restored(self):
@@ -235,7 +236,11 @@ class FailTicket(Ticket):
 		self.__retry += count
 		self._data['failures'] += attempt
 		if matches:
-			self._data['matches'] += matches
+			# we should duplicate "matches", because possibly referenced to multiple tickets:
+			if self._data['matches']:
+				self._data['matches'] = self._data['matches'] + matches
+			else:
+				self._data['matches'] = matches
 
 	def setLastTime(self, value):
 		if value > self._time:

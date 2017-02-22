@@ -323,6 +323,10 @@ class RegexException(Exception):
 #
 FAILURE_ID_GROPS = ("fid", "ip4", "ip6", "dns")
 
+# Additionally allows multi-line failure-id (used for wrapping e. g. conn-id to host)
+#
+FAILURE_ID_PRESENTS = FAILURE_ID_GROPS + ("mlfid",)
+
 ##
 # Regular expression class.
 #
@@ -341,9 +345,9 @@ class FailRegex(Regex):
 		# Initializes the parent.
 		Regex.__init__(self, regex, **kwargs)
 		# Check for group "dns", "ip4", "ip6", "fid"
-		if (not [grp for grp in FAILURE_ID_GROPS if grp in self._regexObj.groupindex]
+		if (not [grp for grp in FAILURE_ID_PRESENTS if grp in self._regexObj.groupindex]
 			and (prefRegex is None or
-				not [grp for grp in FAILURE_ID_GROPS if grp in prefRegex._regexObj.groupindex])
+				not [grp for grp in FAILURE_ID_PRESENTS if grp in prefRegex._regexObj.groupindex])
 		):
 			raise RegexException("No failure-id group in '%s'" % self._regex)
 	
