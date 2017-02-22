@@ -27,14 +27,14 @@ import os
 import sys
 
 from ..client import fail2banregex
-from ..client.fail2banregex import Fail2banRegex, get_opt_parser, exec_command_line, output
+from ..client.fail2banregex import Fail2banRegex, get_opt_parser, exec_command_line, output, str2LogLevel
 from .utils import setUpMyTime, tearDownMyTime, LogCaptureTestCase, logSys
 from .utils import CONFIG_DIR
 
 
 fail2banregex.logSys = logSys
 def _test_output(*args):
-	logSys.info(args[0])
+	logSys.notice(args[0])
 
 fail2banregex.output = _test_output
 
@@ -45,6 +45,9 @@ DEV_NULL = None
 def _Fail2banRegex(*args):
 	parser = get_opt_parser()
 	(opts, args) = parser.parse_args(list(args))
+	# put down log-level if expected, because of too many debug-messages:
+	if opts.log_level in ("notice", "warning"):
+		logSys.setLevel(str2LogLevel(opts.log_level))
 	return (opts, args, Fail2banRegex(opts))
 
 class ExitException(Exception):
@@ -80,6 +83,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 	FILENAME_02 = os.path.join(TEST_FILES_DIR, "testcase02.log")
 	FILENAME_WRONGCHAR = os.path.join(TEST_FILES_DIR, "testcase-wrong-char.log")
 
+	FILENAME_SSHD = os.path.join(TEST_FILES_DIR, "logs", "sshd")
 	FILTER_SSHD = os.path.join(CONFIG_DIR, 'filter.d', 'sshd.conf')
 
 	def setUp(self):
@@ -195,8 +199,26 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('141.3.81.106  Sun Aug 14 11:53:59 2005')
 		self.assertLogged('141.3.81.106  Sun Aug 14 11:54:59 2005')
 
-	def testWronChar(self):
+	def testVerboseFullSshd(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"-l", "notice", # put down log-level, because of too many debug-messages
+			"-v", "--verbose-date", "--print-all-matched",
+			Fail2banRegexTest.FILENAME_SSHD, Fail2banRegexTest.FILTER_SSHD
+		)
+		self.assertTrue(fail2banRegex.start(args))
+		# test failure line and not-failure lines both presents:
+		self.assertLogged("[29116]: User root not allowed because account is locked",
+			"[29116]: Received disconnect from 1.2.3.4", all=True)
+
+	def _reset(self):
+		# reset global warn-counter:
+		from ..server.filter import _decode_line_warn
+		_decode_line_warn.clear()
+
+	def testWronChar(self):
+		self._reset()
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"-l", "notice", # put down log-level, because of too many debug-messages
 			"--datepattern", "^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
 			Fail2banRegexTest.FILENAME_WRONGCHAR, Fail2banRegexTest.FILTER_SSHD
 		)
@@ -210,12 +232,15 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('Nov  8 00:16:12 main sshd[32547]: pam_succeed_if(sshd:auth): error retrieving information about user llinco')
 
 	def testWronCharDebuggex(self):
+		self._reset()
 		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"-l", "notice", # put down log-level, because of too many debug-messages
 			"--datepattern", "^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
 			"--debuggex", "--print-all-matched",
 			Fail2banRegexTest.FILENAME_WRONGCHAR, Fail2banRegexTest.FILTER_SSHD
 		)
 		self.assertTrue(fail2banRegex.start(args))
+		self.assertLogged('Error decoding line')
 		self.assertLogged('Lines: 4 lines, 0 ignored, 2 matched, 2 missed')
 
 		self.assertLogged('https://')
