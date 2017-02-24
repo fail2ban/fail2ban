@@ -38,6 +38,7 @@ def _test_output(*args):
 
 fail2banregex.output = _test_output
 
+TEST_CONFIG_DIR = os.path.join(os.path.dirname(__file__), "config")
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
 DEV_NULL = None
@@ -85,6 +86,11 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	FILENAME_SSHD = os.path.join(TEST_FILES_DIR, "logs", "sshd")
 	FILTER_SSHD = os.path.join(CONFIG_DIR, 'filter.d', 'sshd.conf')
+	FILENAME_ZZZ_SSHD = os.path.join(TEST_FILES_DIR, 'zzz-sshd-obsolete-multiline.log')
+	FILTER_ZZZ_SSHD = os.path.join(TEST_CONFIG_DIR, 'filter.d', 'zzz-sshd-obsolete-multiline.conf')
+
+	FILENAME_ZZZ_GEN = os.path.join(TEST_FILES_DIR, "logs", "zzz-generic-example")
+	FILTER_ZZZ_GEN = os.path.join(TEST_CONFIG_DIR, 'filter.d', 'zzz-generic-example.conf')
 
 	def setUp(self):
 		"""Call before every test case."""
@@ -209,6 +215,39 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		# test failure line and not-failure lines both presents:
 		self.assertLogged("[29116]: User root not allowed because account is locked",
 			"[29116]: Received disconnect from 1.2.3.4", all=True)
+
+	def testFastSshd(self):
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"-l", "notice", # put down log-level, because of too many debug-messages
+			"--print-all-matched",
+			Fail2banRegexTest.FILENAME_ZZZ_SSHD, Fail2banRegexTest.FILTER_SSHD
+		)
+		self.assertTrue(fail2banRegex.start(args))
+		# test failure line and all not-failure lines presents:
+		self.assertLogged(
+			"[29116]: Connection from 192.0.2.4",
+			"[29116]: User root not allowed because account is locked",
+			"[29116]: Received disconnect from 192.0.2.4", all=True)
+
+	def testMultilineSshd(self):
+		# by the way test of missing lines by multiline in `for bufLine in orgLineBuffer[int(fullBuffer):]`
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"-l", "notice", # put down log-level, because of too many debug-messages
+			"--print-all-matched", "--print-all-missed",
+			Fail2banRegexTest.FILENAME_ZZZ_SSHD, Fail2banRegexTest.FILTER_ZZZ_SSHD
+		)
+		self.assertTrue(fail2banRegex.start(args))
+		# test "failure" line presents (2nd part only, because multiline fewer precise):
+		self.assertLogged(
+			"[29116]: Received disconnect from 192.0.2.4", all=True)
+
+	def testFullGeneric(self):
+		# by the way test of ignoreregex (specified in filter file)...
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"-l", "notice", # put down log-level, because of too many debug-messages
+			Fail2banRegexTest.FILENAME_ZZZ_GEN, Fail2banRegexTest.FILTER_ZZZ_GEN
+		)
+		self.assertTrue(fail2banRegex.start(args))
 
 	def _reset(self):
 		# reset global warn-counter:

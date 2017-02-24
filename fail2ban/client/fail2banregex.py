@@ -61,7 +61,7 @@ def debuggexURL(sample, regex):
 							'flavor': 'python' })
 	return 'https://www.debuggex.com/?' + q
 
-def output(args):
+def output(args): # pragma: no cover (overriden in test-cases)
 	print(args)
 
 def shortstr(s, l=53):
@@ -278,15 +278,15 @@ class Fail2banRegex(object):
 				value = os.path.splitext(os.path.basename(value))[0]
 				output( "Use %11s filter file : %s, basedir: %s" % (regex, value, basedir) )
 				reader = FilterReader(value, 'fail2ban-regex-jail', {}, share_config=self.share_config, basedir=basedir)
-				if not reader.read():
+				if not reader.read(): # pragma: no cover
 					output( "ERROR: failed to load filter %s" % value )
 					return False
-			else:
+			else: # pragma: no cover
 				## foreign file - readexplicit this file and includes if possible:
 				output( "Use %11s file : %s" % (regex, value) )
 				reader = FilterReader(value, 'fail2ban-regex-jail', {}, share_config=self.share_config)
 				reader.setBaseDir(None)
-				if not reader.readexplicit():
+				if not reader.readexplicit(): 
 					output( "ERROR: failed to read %s" % value )
 					return False
 			reader.getOptions(None)
@@ -298,7 +298,7 @@ class Fail2banRegex(object):
 					optval = opt[3]
 				elif opt[0] == 'set':
 					optval = opt[3:]
-				else:
+				else: # pragma: no cover
 					continue
 				try:
 					if opt[2] == "prefregex":
@@ -322,7 +322,7 @@ class Fail2banRegex(object):
 					elif opt[2] == "datepattern":
 						for optval in optval:
 							self.setDatePattern(optval)
-					elif opt[2] == "addjournalmatch":
+					elif opt[2] == "addjournalmatch": # pragma: no cover
 						if self._opts.journalmatch is None:
 							self.setJournalMatch(optval)
 				except ValueError as e: # pragma: no cover
@@ -350,7 +350,7 @@ class Fail2banRegex(object):
 			if ret is not None:
 				found = True
 				regex = self._ignoreregex[ret].inc()
-		except RegexException as e:
+		except RegexException as e: # pragma: no cover
 			output( 'ERROR: %s' % e )
 			return False
 		return found
@@ -368,7 +368,7 @@ class Fail2banRegex(object):
 				regex = self._failregex[match[0]]
 				regex.inc()
 				regex.appendIP(match)
-		except RegexException as e:
+		except RegexException as e: # pragma: no cover
 			output( 'ERROR: %s' % e )
 			return False
 		for bufLine in orgLineBuffer[int(fullBuffer):]:
@@ -520,9 +520,9 @@ class Fail2banRegex(object):
 		cmd_log, cmd_regex = args[:2]
 
 		try:
-			if not self.readRegex(cmd_regex, 'fail'):
+			if not self.readRegex(cmd_regex, 'fail'): # pragma: no cover
 				return False
-			if len(args) == 3 and not self.readRegex(args[2], 'ignore'):
+			if len(args) == 3 and not self.readRegex(args[2], 'ignore'): # pragma: no cover
 				return False
 		except RegexException as e:
 			output( 'ERROR: %s' % e )
@@ -534,7 +534,7 @@ class Fail2banRegex(object):
 				output( "Use         log file : %s" % cmd_log )
 				output( "Use         encoding : %s" % self._encoding )
 				test_lines = self.file_lines_gen(hdlr)
-			except IOError as e:
+			except IOError as e: # pragma: no cover
 				output( e )
 				return False
 		elif cmd_log.startswith("systemd-journal"): # pragma: no cover
