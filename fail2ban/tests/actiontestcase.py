@@ -194,7 +194,7 @@ class CommandActionTest(LogCaptureTestCase):
 		# Callable
 		self.assertEqual(
 			self.__action.replaceTag("09 <matches> 11",
-				CallingMap(matches=lambda: str(10))),
+				CallingMap(matches=lambda self: str(10))),
 			"09 10 11")
 
 	def testReplaceNoTag(self):
@@ -202,7 +202,7 @@ class CommandActionTest(LogCaptureTestCase):
 		# Will raise ValueError if it is
 		self.assertEqual(
 			self.__action.replaceTag("abc",
-				CallingMap(matches=lambda: int("a"))), "abc")
+				CallingMap(matches=lambda self: int("a"))), "abc")
 
 	def testReplaceTagSelfRecursion(self):
 		setattr(self.__action, 'a', "<a")
@@ -332,7 +332,7 @@ class CommandActionTest(LogCaptureTestCase):
 		aInfo = CallingMap({
 			'ABC': "123",
 			'ip': '192.0.2.1',
-			'F-*': lambda: {
+			'F-*': lambda self: {
 		  	'fid': 111,
 		  	'fport': 222,
 				'user': "tester"
@@ -442,7 +442,7 @@ class CommandActionTest(LogCaptureTestCase):
 			"stderr: 'The rain in Spain stays mainly in the plain'\n")
 
 	def testCallingMap(self):
-		mymap = CallingMap(callme=lambda: str(10), error=lambda: int('a'),
+		mymap = CallingMap(callme=lambda self: str(10), error=lambda self: int('a'),
 			dontcallme= "string", number=17)
 
 		# Should work fine
@@ -451,3 +451,43 @@ class CommandActionTest(LogCaptureTestCase):
 			"10 okay string 17")
 		# Error will now trip, demonstrating delayed call
 		self.assertRaises(ValueError, lambda x: "%(error)i" % x, mymap)
+
+	def testCallingMapModify(self):
+		m = CallingMap({
+			'a': lambda self: 2 + 3,
+			'b': lambda self: self['a'] + 6,
+			'c': 'test',
+		})
+		# test reset (without modifications):
+		m.reset()
+		# do modifications:
+		m['a'] = 4
+		del m['c']
+		# test set and delete:
+		self.assertEqual(len(m), 2)
+		self.assertNotIn('c', m)
+		self.assertEqual((m['a'], m['b']), (4, 10))
+		# reset to original and test again:
+		m.reset()
+		s = repr(m)
+		self.assertEqual(len(m), 3)
+		self.assertIn('c', m)
+		self.assertEqual((m['a'], m['b'], m['c']), (5, 11, 'test'))
+
+	def testCallingMapRep(self):
+		m = CallingMap({
+			'a': lambda self: 2 + 3,
+			'b': lambda self: self['a'] + 6,
+			'c': ''
+		})
+		s = repr(m)
+		self.assertIn("'a': 5", s)
+		self.assertIn("'b': 11", s)
+		self.assertIn("'c': ''", s)
+		
+		m['c'] = lambda self: self['xxx'] + 7; # unresolvable
+		s = repr(m)
+		self.assertIn("'a': 5", s)
+		self.assertIn("'b': 11", s)
+		self.assertIn("'c': ", s) # presents as callable
+		self.assertNotIn("'c': ''", s) # but not empty

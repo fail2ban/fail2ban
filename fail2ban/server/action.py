@@ -50,9 +50,14 @@ allowed_ipv6 = True
 # capture groups from filter for map to ticket data:
 FCUSTAG_CRE = re.compile(r'<F-([A-Z0-9_\-]+)>'); # currently uppercase only
 
+# New line, space
+ADD_REPL_TAGS = {
+  "br": "\n", 
+  "sp": " "
+}
 
 
-class CallingMap(MutableMapping):
+class CallingMap(MutableMapping, object):
 	"""A Mapping type which returns the result of callable values.
 
 	`CallingMap` behaves similar to a standard python dictionary,
@@ -69,23 +74,64 @@ class CallingMap(MutableMapping):
 		The dictionary data which can be accessed to obtain items uncalled
 	"""
 
+	# immutable=True saves content between actions, without interim copying (save original on demand, recoverable via reset)
+	__slots__ = ('data', 'storage', 'immutable', '__org_data')
 	def __init__(self, *args, **kwargs):
+		self.storage = dict()
+		self.immutable = True
 		self.data = dict(*args, **kwargs)
 
+	def reset(self, immutable=True):
+		self.storage = dict()
+		try:
+			self.data = self.__org_data
+		except AttributeError:
+			pass
+		self.immutable = immutable
+
 	def __repr__(self):
-		return "%s(%r)" % (self.__class__.__name__, self.data)
+		return "%s(%r)" % (self.__class__.__name__, self._asdict())
+
+	def _asdict(self):
+		try:
+			return dict(self)
+		except:
+			return dict(self.data, **self.storage)
 
 	def __getitem__(self, key):
-		value = self.data[key]
+		try:
+			value = self.storage[key]
+		except KeyError:
+			value = self.data[key]
 		if callable(value):
-			value = value()
-			self.data[key] = value
+			# check arguments can be supplied to callable (for backwards compatibility):
+			value = value(self) if hasattr(value, '__code__') and value.__code__.co_argcount else value()
+			self.storage[key] = value
 		return value
 
 	def __setitem__(self, key, value):
-		self.data[key] = value
+		# mutate to copy:
+		if self.immutable:
+			self.storage = self.storage.copy()
+			self.__org_data = self.data
+			self.data = self.data.copy()
+			self.immutable = False
+		self.storage[key] = value
+
+	def __unavailable(self, key):
+		raise KeyError("Key %r was deleted" % key)
 
 	def __delitem__(self, key):
+		# mutate to copy:
+		if self.immutable:
+			self.storage = self.storage.copy()
+			self.__org_data = self.data
+			self.data = self.data.copy()
+			self.immutable = False
+		try:
+			del self.storage[key]
+		except KeyError:
+			pass
 		del self.data[key]
 
 	def __iter__(self):
@@ -94,7 +140,7 @@ class CallingMap(MutableMapping):
 	def __len__(self):
 		return len(self.data)
 
-	def copy(self):
+	def copy(self): # pargma: no cover
 		return self.__class__(self.data.copy())
 
 
@@ -436,9 +482,6 @@ class CommandAction(ActionBase):
 		# interpolation of dictionary:
 		if subInfo is None:
 			subInfo = substituteRecursiveTags(aInfo, conditional, ignore=cls._escapedTags)
-		# New line, space
-		for (tag, value) in (("br", '\n'), ("sp", " ")):
-			if subInfo.get(tag) is None: subInfo[tag] = value
 		# cache if possible:
 		if csubkey is not None:
 			cache[csubkey] = subInfo
@@ -453,7 +496,8 @@ class CommandAction(ActionBase):
 			if value is None:
 				value = subInfo.get(tag)
 				if value is None:
-					return m.group()	# fallback (no replacement)
+					# fallback (no or default replacement)
+					return ADD_REPL_TAGS.get(tag, m.group())
 			value = str(value)		# assure string
 			if tag in cls._escapedTags:
 				# That one needs to be escaped since its content is

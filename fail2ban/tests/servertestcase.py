@@ -1737,6 +1737,6 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						if not tests.get(test): continue
 						self.pruneLog('# === %s ===' % test)
 						ticket = _actions.CallingMap({
-							'ip': ip, 'ip-rev': lambda: ip.getPTR(''), 'failures': 100,})
+							'ip': ip, 'ip-rev': lambda self: self['ip'].getPTR(''), 'failures': 100,})
 						action.ban(ticket)
 						self.assertLogged(*tests[test], all=True)

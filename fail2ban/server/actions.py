@@ -286,44 +286,86 @@ class Actions(JailThread, Mapping):
 		self.stopActions()
 		return True
 
-	def __getBansMerged(self, mi, overalljails=False):
-		"""Gets bans merged once, a helper for lambda(s), prevents stop of executing action by any exception inside.
+	class ActionInfo(CallingMap):
 
-		This function never returns None for ainfo lambdas - always a ticket (merged or single one)
-		and prevents any errors through merging (to guarantee ban actions will be executed).
-		[TODO] move merging to observer - here we could wait for merge and read already merged info from a database
+		AI_DICT = {
+			"ip":				lambda self: self.__ticket.getIP(),
+			"ip-rev":		lambda self: self['ip'].getPTR(''),
+			"fid":			lambda self: self.__ticket.getID(),
+			"failures":	lambda self: self.__ticket.getAttempt(),
+			"time":			lambda self: self.__ticket.getTime(),
+			"matches":	lambda self: "\n".join(self.__ticket.getMatches()),
+			# to bypass actions, that should not be executed for restored tickets
+			"restored":	lambda self: (1 if self.__ticket.restored else 0),
+			# extra-interpolation - all match-tags (captured from the filter):
+			"F-*":			lambda self, tag=None: self.__ticket.getData(tag),
+			# merged info:
+			"ipmatches":			lambda self: "\n".join(self._mi4ip(True).getMatches()),
+			"ipjailmatches":	lambda self: "\n".join(self._mi4ip().getMatches()),
+			"ipfailures":			lambda self: self._mi4ip(True).getAttempt(),
+			"ipjailfailures":	lambda self: self._mi4ip().getAttempt(),
+		}
 
-		Parameters
-		----------
-		mi : dict
-			merge info, initial for lambda should contains {ip, ticket}
-		overalljails : bool
-			switch to get a merged bans :
-			False - (default) bans merged for current jail only
-			True - bans merged for all jails of current ip address
+		__slots__ = CallingMap.__slots__ + ('__ticket', '__jail', '__mi4ip')
 
-		Returns
-		-------
-		BanTicket 
-			merged or self ticket only
-		"""
-		idx = 'all' if overalljails else 'jail'
-		if idx in mi:
-			return mi[idx] if mi[idx] is not None else mi['ticket']
-		try:
-			jail=self._jail
-			ip=mi['ip']
-			mi[idx] = None
-			if overalljails:
-				mi[idx] = jail.database.getBansMerged(ip=ip)
-			else:
-				mi[idx] = jail.database.getBansMerged(ip=ip, jail=jail)
-		except Exception as e:
-			logSys.error(
-				"Failed to get %s bans merged, jail '%s': %s",
-				idx, jail.name, e,
-				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-		return mi[idx] if mi[idx] is not None else mi['ticket']
+		def __init__(self, ticket, jail=None, immutable=True, data=AI_DICT):
+			self.__ticket = ticket
+			self.__jail = jail
+			self.storage = dict()
+			self.immutable = immutable
+			self.data = data
+		
+		def copy(self): # pargma: no cover
+			return self.__class__(self.__ticket, self.__jail, self.immutable, self.data.copy())
+
+		def _mi4ip(self, overalljails=False):
+			"""Gets bans merged once, a helper for lambda(s), prevents stop of executing action by any exception inside.
+
+			This function never returns None for ainfo lambdas - always a ticket (merged or single one)
+			and prevents any errors through merging (to guarantee ban actions will be executed).
+			[TODO] move merging to observer - here we could wait for merge and read already merged info from a database
+
+			Parameters
+			----------
+			overalljails : bool
+				switch to get a merged bans :
+				False - (default) bans merged for current jail only
+				True - bans merged for all jails of current ip address
+
+			Returns
+			-------
+			BanTicket 
+				merged or self ticket only
+			"""
+			if not hasattr(self, '__mi4ip'):
+				self.__mi4ip = {}
+			mi = self.__mi4ip
+			idx = 'all' if overalljails else 'jail'
+			if idx in mi:
+				return mi[idx] if mi[idx] is not None else self.__ticket
+			try:
+				jail = self.__jail
+				ip = self['ip']
+				mi[idx] = None
+				if not jail.database: # pragma: no cover
+					return self.__ticket
+				if overalljails:
+					mi[idx] = jail.database.getBansMerged(ip=ip)
+				else:
+					mi[idx] = jail.database.getBansMerged(ip=ip, jail=jail)
+			except Exception as e:
+				logSys.error(
+					"Failed to get %s bans merged, jail '%s': %s",
+					idx, jail.name, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+			return mi[idx] if mi[idx] is not None else self.__ticket
+
+
+	def __getActionInfo(self, ticket):
+		ip = ticket.getIP()
+		aInfo = Actions.ActionInfo(ticket, self._jail)
+		return aInfo
+
 
 	def __checkBan(self):
 		"""Check for IP address to ban.
@@ -343,24 +385,7 @@ class Actions(JailThread, Mapping):
 				break
 			bTicket = BanManager.createBanTicket(ticket)
 			ip = bTicket.getIP()
-			aInfo = CallingMap({
-				"ip"			:	ip,
-				"ip-rev"	:	lambda: ip.getPTR(''),
-				"failures":	bTicket.getAttempt(),
-				"time"		:	bTicket.getTime(),
-				"matches"	:	"\n".join(bTicket.getMatches()),
-				# to bypass actions, that should not be executed for restored tickets
-				"restored":	(1 if ticket.restored else 0),
-				# extra-interpolation - all match-tags (captured from the filter):
-				"F-*": lambda tag=None: bTicket.getData(tag)
-			})
-			if self._jail.database is not None:
-				mi4ip = lambda overalljails=False, self=self, \
-					mi={'ip':ip, 'ticket':bTicket}: self.__getBansMerged(mi, overalljails)
-				aInfo["ipmatches"]      = lambda: "\n".join(mi4ip(True).getMatches())
-				aInfo["ipjailmatches"]  = lambda: "\n".join(mi4ip().getMatches())
-				aInfo["ipfailures"]     = lambda: mi4ip(True).getAttempt()
-				aInfo["ipjailfailures"] = lambda: mi4ip().getAttempt()
+			aInfo = self.__getActionInfo(bTicket)
 			reason = {}
 			if self.__banManager.addBanTicket(bTicket, reason=reason):
 				cnt += 1
@@ -369,7 +394,8 @@ class Actions(JailThread, Mapping):
 					try:
 						if ticket.restored and getattr(action, 'norestored', False):
 							continue
-						action.ban(aInfo.copy())
+						if not aInfo.immutable: aInfo.reset()
+						action.ban(aInfo)
 					except Exception as e:
 						logSys.error(
 							"Failed to execute ban jail '%s' action '%s' "
@@ -452,21 +478,17 @@ class Actions(JailThread, Mapping):
 			unbactions = self._actions
 		else:
 			unbactions = actions
-		aInfo = dict()
-		aInfo["ip"] = ticket.getIP()
-		aInfo["failures"] = ticket.getAttempt()
-		aInfo["time"] = ticket.getTime()
-		aInfo["matches"] = "".join(ticket.getMatches())
-		# to bypass actions, that should not be executed for restored tickets
-		aInfo["restored"] = 1 if ticket.restored else 0
+		ip = ticket.getIP()
+		aInfo = self.__getActionInfo(ticket)
 		if actions is None:
 			logSys.notice("[%s] Unban %s", self._jail.name, aInfo["ip"])
 		for name, action in unbactions.iteritems():
 			try:
 				if ticket.restored and getattr(action, 'norestored', False):
 					continue
-				logSys.debug("[%s] action %r: unban %s", self._jail.name, name, aInfo["ip"])
-				action.unban(aInfo.copy())
+				logSys.debug("[%s] action %r: unban %s", self._jail.name, name, ip)
+				if not aInfo.immutable: aInfo.reset()
+				action.unban(aInfo)
 			except Exception as e:
 				logSys.error(
 					"Failed to execute unban jail '%s' action '%s' "
