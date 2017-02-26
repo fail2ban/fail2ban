@@ -1,0 +1,2330 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"pre",
+				"preview_regex"
+			],
+			[
+				"im",
+				"important_strings"
+			],
+			[
+				"impor",
+				"important_strings"
+			],
+			[
+				"rege",
+				"regexmaker"
+			],
+			[
+				"su",
+				"suggestion〔variable〕"
+			],
+			[
+				"sug",
+				"suggetions"
+			],
+			[
+				"raw",
+				"raw_input_default〔function〕"
+			],
+			[
+				"com",
+				"common_substrings"
+			],
+			[
+				"log",
+				"log_input"
+			],
+			[
+				"int",
+				"interactive_maker"
+			],
+			[
+				"ex",
+				"expected〔variable〕"
+			],
+			[
+				"if",
+				"ifmain\tif __name__ == '__main__'"
+			],
+			[
+				"add",
+				"add_node〔function〕"
+			],
+			[
+				"al",
+				"all_leaves〔function〕"
+			],
+			[
+				"a",
+				"add_node〔function〕"
+			],
+			[
+				"count",
+				"count_1st"
+			],
+			[
+				"nex",
+				"next_ways〔variable〕"
+			],
+			[
+				"next",
+				"next_ways"
+			],
+			[
+				"di",
+				"dice_sides〔argument〕"
+			],
+			[
+				"was",
+				"ways_to_end〔function〕"
+			],
+			[
+				"by_",
+				"by_parent〔variable〕"
+			],
+			[
+				"fi",
+				"filter_useless_stuff〔function〕"
+			],
+			[
+				"test",
+				"test_failregex〔function〕"
+			],
+			[
+				"get",
+				"get_important_tokens"
+			],
+			[
+				"pro",
+				"process_log"
+			],
+			[
+				"ne",
+				"new_date〔variable〕"
+			],
+			[
+				"da",
+				"date_string〔variable〕"
+			],
+			[
+				"Ex",
+				"ExitParser"
+			],
+			[
+				"fet",
+				"fetch_all_from_url〔function〕"
+			],
+			[
+				"Co",
+				"CoversPageParser〔class〕"
+			],
+			[
+				"fetch",
+				"fetchOwnUser"
+			],
+			[
+				"grou",
+				"groupby"
+			],
+			[
+				"q",
+				"query_params"
+			],
+			[
+				"que",
+				"query_params"
+			],
+			[
+				"query",
+				"queryset〔argument〕"
+			],
+			[
+				"delete",
+				"deleteExpense"
+			],
+			[
+				"update",
+				"updateExpense"
+			],
+			[
+				"create",
+				"createApiAction〔function〕"
+			],
+			[
+				"API",
+				"API_HOST〔variable〕"
+			],
+			[
+				"borde",
+				"border-bottom"
+			],
+			[
+				"fake",
+				"fake_expenses"
+			],
+			[
+				"clear",
+				"clearFilter"
+			],
+			[
+				"Peri",
+				"PeriodName〔function〕"
+			],
+			[
+				"des",
+				"description〔variable〕"
+			],
+			[
+				"defaul",
+				"defaultValue"
+			],
+			[
+				"upda",
+				"updateExpense〔function〕"
+			],
+			[
+				"padding",
+				"padding-right"
+			],
+			[
+				"min",
+				"min-width"
+			],
+			[
+				"Exp",
+				"ExpenseDetail"
+			],
+			[
+				"text",
+				"text-align"
+			],
+			[
+				"Expen",
+				"ExpensesTable"
+			],
+			[
+				"Expe",
+				"Expenses"
+			],
+			[
+				"E",
+				"Expenses"
+			],
+			[
+				"set",
+				"setup_report〔function〕"
+			],
+			[
+				"gro",
+				"groupers"
+			],
+			[
+				"date",
+				"datetime"
+			],
+			[
+				"exp",
+				"expensegroup"
+			],
+			[
+				"iso_",
+				"iso_year_start〔function〕"
+			],
+			[
+				"ser",
+				"serializers"
+			],
+			[
+				"cre",
+				"create_url〔variable〕"
+			],
+			[
+				"api",
+				"api_schema"
+			],
+			[
+				"render",
+				"renderer_classes〔module〕"
+			],
+			[
+				"au",
+				"auth_url"
+			],
+			[
+				"sc",
+				"schema"
+			],
+			[
+				"model",
+				"modelname"
+			],
+			[
+				"sche",
+				"schemas"
+			],
+			[
+				"mode",
+				"modelname"
+			],
+			[
+				"map",
+				"mapStateToProps〔function〕"
+			],
+			[
+				"A",
+				"ApiError"
+			],
+			[
+				"prom",
+				"promiseMiddleware"
+			],
+			[
+				"Li",
+				"LibraryContianer"
+			],
+			[
+				"lib",
+				"library"
+			],
+			[
+				"dom",
+				"domainname"
+			],
+			[
+				"comp",
+				"components"
+			],
+			[
+				"getA",
+				"getAllBooks"
+			],
+			[
+				"Lib",
+				"LibraryBrowser"
+			],
+			[
+				"library",
+				"libraryBrowser"
+			],
+			[
+				"new",
+				"newstate〔variable〕"
+			],
+			[
+				"fn",
+				"font-weight"
+			],
+			[
+				"pad",
+				"padding-right"
+			],
+			[
+				"Logi",
+				"LoginForm"
+			],
+			[
+				"Transfer",
+				"TransferGroup"
+			],
+			[
+				"exe",
+				"executed_by〔variable〕"
+			],
+			[
+				"o",
+				"override_settings"
+			],
+			[
+				"Tr",
+				"TransferPlan〔class〕"
+			],
+			[
+				"trans",
+				"transfers〔variable〕"
+			],
+			[
+				"cont",
+				"containerB"
+			],
+			[
+				"content",
+				"content_substance"
+			],
+			[
+				"transf",
+				"transfer_group"
+			],
+			[
+				"num",
+				"num_transfers〔variable〕"
+			],
+			[
+				"transfer_",
+				"transfer_number〔argument〕"
+			],
+			[
+				"Trans",
+				"TransferLog〔class〕"
+			],
+			[
+				"tra",
+				"transfer_number"
+			],
+			[
+				"sum",
+				"sum_volume〔variable〕"
+			],
+			[
+				"vol",
+				"volume_with_added_content"
+			],
+			[
+				"tr",
+				"transfer_to"
+			],
+			[
+				"Cont",
+				"Container〔module〕"
+			],
+			[
+				"Con",
+				"ContainerKind〔class〕"
+			],
+			[
+				"Content",
+				"ContentSerializer〔class〕"
+			],
+			[
+				"read_",
+				"read_only=True"
+			],
+			[
+				"M",
+				"ModelSerializer"
+			],
+			[
+				"Container",
+				"ContainerSerializer〔class〕"
+			],
+			[
+				"rel",
+				"related_name"
+			],
+			[
+				"lon",
+				"long_name"
+			],
+			[
+				"unique",
+				"unique_together"
+			],
+			[
+				"max",
+				"max_length"
+			],
+			[
+				"get_",
+				"get_serializer"
+			],
+			[
+				"Bo",
+				"BookSerializer〔module〕"
+			],
+			[
+				"seri",
+				"serializer_class"
+			],
+			[
+				"Str",
+				"StringRelatedField"
+			],
+			[
+				"Au",
+				"AuthorSerializer〔class〕"
+			],
+			[
+				"Book",
+				"BookViewSet〔class〕"
+			],
+			[
+				"sin",
+				"single_space〔variable〕"
+			],
+			[
+				"level",
+				"levelwidth〔variable〕"
+			],
+			[
+				"down",
+				"down_heap〔function〕"
+			],
+			[
+				"heap",
+				"heap_t〔variable〕"
+			],
+			[
+				"qui",
+				"quick_t_mid〔variable〕"
+			],
+			[
+				"test_",
+				"test_quick〔function〕"
+			],
+			[
+				"qu",
+				"quick_times〔variable〕"
+			],
+			[
+				"me",
+				"mergesort〔module〕"
+			],
+			[
+				"hea",
+				"heapsort〔module〕"
+			],
+			[
+				"arr",
+				"arr_len"
+			],
+			[
+				"mi",
+				"mid_pivot〔argument〕"
+			],
+			[
+				"imp",
+				"import"
+			],
+			[
+				"cur",
+				"currentval"
+			],
+			[
+				"mer",
+				"mergesort〔function〕"
+			],
+			[
+				"merge",
+				"mergesort"
+			],
+			[
+				"list",
+				"listb〔argument〕"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "log",
+			"settings":
+			{
+				"buffer_size": 604,
+				"encoding": "UTF-8",
+				"line_ending": "Unix",
+				"name": "log"
+			}
+		},
+		{
+			"contents": "Package Control Messages\n========================\n\nVirtualenv\n----------\n\n  Sublime Text - Virtualenv\n  =========================\n  \n  Manage your virtualenvs directly from Sublime Text 3. (BETA)\n  \n  ## Features\n  \n  - Reusable build system. Execute code with a virtualenv without\n  editing your paths manually.\n  - Virtualenv search. Finds virtualenvs in the open folders or anywhere in your system.\n  - Activation/Deactivation. Select or disable the current virtualenv easily.\n  - Create and delete virtualenvs. With target python selection.\n  \n  \n  ## Support\n  \n  Only Sublime Text 3. Tested in Linux and Windows but it should work in OS X as well.\n  \n  \n  ## Usage\n  \n  - Set your build system to `Python + Virtualenv`. (Tools -> Build System)\n  - Search \"Virtualenv\" in the command palette.\n  \n  \n  For further details and instructions see the README:\n  Preferences -> Package Settings -> Virtualenv -> README\n  \n  -----------------------------------------------------------------------------------------\n  \n  Hello! Thank you for testing this package.\n  \n  IMPORTANT:\n  \n  Before you start using the commands verify that the default settings are suitable for\n  your system. Check them in Preferences -> Package Settings -> Virtualenv.\n  *But* do not modify the default settings as you will lose all the changes if the package\n  is updated. You should override the necessary settings in Virtualenv -> User instead.\n  \n  Please report any issues or suggestions in the issue tracker:\n  https://github.com/AdrianLC/sublime-text-virtualenv/issues\n",
+			"settings":
+			{
+				"buffer_size": 1550,
+				"line_ending": "Unix",
+				"name": "Package Control Messages",
+				"read_only": true,
+				"scratch": true
+			}
+		},
+		{
+			"contents": "dovecot_login authenticator failed for 535 Incorrect authentication data (set_id=sexy)\ndovecot_login authenticator failed for (User) [xx.xx.xx.231]:9859: 535 Incorrect authentication data (set_id=evans)\ndovecot_login authenticator failed for (User) [xx.xx.16.128]:60350: 535 Incorrect authentication data (set_id=orange)\ndovecot_login authenticator failed for XXXX.onlinehome-server.com (User) [xx.xx.96.171]:52799: 535 Incorrect authentication data (set_id=matrix)",
+			"settings":
+			{
+				"buffer_size": 465,
+				"line_ending": "Unix",
+				"name": "dovecot_login authenticator failed for 535 Incorre"
+			}
+		},
+		{
+			"file": "common_substrings.py",
+			"settings":
+			{
+				"buffer_size": 544,
+				"encoding": "UTF-8",
+				"line_ending": "Unix",
+				"name": "common_substrings.py"
+			}
+		},
+		{
+			"file": "regex_maker.py",
+			"settings":
+			{
+				"buffer_size": 2556,
+				"encoding": "UTF-8",
+				"line_ending": "Unix",
+				"name": "regex_maker.py"
+			}
+		},
+		{
+			"file": "lib/regexmaker.py",
+			"settings":
+			{
+				"buffer_size": 1697,
+				"encoding": "UTF-8",
+				"line_ending": "Unix",
+				"name": "regexmaker.py"
+			}
+		},
+		{
+			"file": "lib/input_default.py",
+			"settings":
+			{
+				"buffer_size": 614,
+				"encoding": "UTF-8",
+				"line_ending": "Unix",
+				"name": "input_default.py"
+			}
+		},
+		{
+			"file": "__init__.py",
+			"settings":
+			{
+				"buffer_size": 0,
+				"encoding": "UTF-8",
+				"line_ending": "Unix",
+				"name": "__init__.py"
+			}
+		},
+		{
+			"file": "lib/__init__.py",
+			"settings":
+			{
+				"buffer_size": 0,
+				"encoding": "UTF-8",
+				"line_ending": "Unix",
+				"name": "__init__.py"
+			}
+		},
+		{
+			"file": "lib/common_substrings.py",
+			"settings":
+			{
+				"buffer_size": 648,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "test/test_common_substrings.py",
+			"settings":
+			{
+				"buffer_size": 1800,
+				"encoding": "UTF-8",
+				"line_ending": "Unix",
+				"name": "test_common_substrings.py"
+			}
+		},
+		{
+			"file": "regex_maker_proof_of_concept.py",
+			"settings":
+			{
+				"buffer_size": 2245,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": ".gitignore",
+			"settings":
+			{
+				"buffer_size": 16,
+				"encoding": "UTF-8",
+				"line_ending": "Unix",
+				"name": ".gitignore"
+			}
+		},
+		{
+			"file": "regexmaker.sublime-project",
+			"settings":
+			{
+				"buffer_size": 324,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/joe/Library/Application Support/Sublime Text 3/Packages/User/unittest.sublime-build",
+			"settings":
+			{
+				"buffer_size": 48,
+				"encoding": "UTF-8",
+				"line_ending": "Unix",
+				"name": "untitled.sublime-build"
+			}
+		},
+		{
+			"file": "test/__init__.py",
+			"settings":
+			{
+				"buffer_size": 0,
+				"encoding": "UTF-8",
+				"line_ending": "Unix",
+				"name": "__init__.py"
+			}
+		}
+	],
+	"build_system": "Packages/User/unittest.sublime-build",
+	"build_system_choices":
+	[
+		[
+			[
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					"Run"
+				],
+				[
+					"Packages/User/dot.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/C++/C++ Single File.sublime-build",
+				"Run"
+			]
+		],
+		[
+			[
+				[
+					"Packages/Python/Python.sublime-build",
+					""
+				],
+				[
+					"Packages/Python/Python.sublime-build",
+					"Syntax Check"
+				],
+				[
+					"Packages/User/dot.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/Python/Python.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/Python/Python.sublime-build",
+					""
+				],
+				[
+					"Packages/Python/Python.sublime-build",
+					"Syntax Check"
+				],
+				[
+					"Packages/Virtualenv/Python + Virtualenv.sublime-build",
+					""
+				],
+				[
+					"Packages/User/dot.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/Virtualenv/Python + Virtualenv.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/Python/Python.sublime-build",
+					""
+				],
+				[
+					"Packages/Python/Python.sublime-build",
+					"Syntax Check"
+				],
+				[
+					"Packages/Virtualenv/Python + Virtualenv.sublime-build",
+					""
+				],
+				[
+					"Packages/User/dot.sublime-build",
+					""
+				],
+				[
+					"Packages/User/unittest.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/User/unittest.sublime-build",
+				""
+			]
+		]
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 225.0,
+		"last_filter": "spaces",
+		"selected_items":
+		[
+			[
+				"spaces",
+				"Indentation: Convert to Spaces"
+			],
+			[
+				"virtual",
+				"Virtualenv: Activate"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"inde",
+				"Indentation: Reindent Lines"
+			],
+			[
+				"indent",
+				"Indentation: Reindent Lines"
+			],
+			[
+				"space",
+				"Indentation: Convert to Spaces"
+			],
+			[
+				"jav",
+				"Javascript Beautify"
+			],
+			[
+				"spa",
+				"Indentation: Convert to Spaces"
+			],
+			[
+				"spac",
+				"Indentation: Convert to Spaces"
+			],
+			[
+				"tabs",
+				"Indentation: Convert to Tabs"
+			],
+			[
+				"pack",
+				"Package Control: Enable Package"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"rever",
+				"Permute Lines: Reverse"
+			],
+			[
+				"inst",
+				"Package Control: Install Package"
+			],
+			[
+				"jsh",
+				"JSHint"
+			],
+			[
+				"pret",
+				"HTMLPrettify"
+			],
+			[
+				"ht",
+				"HTMLPrettify"
+			],
+			[
+				"html",
+				"HTMLPrettify"
+			],
+			[
+				"prret",
+				"Preferences: Settings - Default"
+			],
+			[
+				"prett",
+				"HTMLPrettify"
+			],
+			[
+				"beu",
+				"Javascript Beautify"
+			],
+			[
+				"beau",
+				"Javascript Beautify"
+			],
+			[
+				"ins",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 579.0
+	},
+	"console":
+	{
+		"height": 126.0,
+		"history":
+		[
+			"import urllib.request,os; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); open(os.path.join(ipp, pf), 'wb').write(urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ','%20')).read())"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/joe/Desktop/freelancer/regexmaker",
+		"/Users/joe/Desktop/freelancer/regexmaker/lib",
+		"/Users/joe/Desktop/freelancer/regexmaker/test"
+	],
+	"file_history":
+	[
+		"/Users/joe/Desktop/freelancer/regexmaker/regexconstructor.py",
+		"/Users/joe/Desktop/freelancer/regexmaker/regex_maker.py",
+		"/Users/joe/Downloads/omg.c",
+		"/Users/joe/Downloads/test2.py",
+		"/Users/joe/Downloads/test.py",
+		"/Users/joe/Downloads/regex.custom.pm",
+		"/Users/joe/Desktop/freelancer/coverscraper/src/dc/dc/spiders/__init__.py",
+		"/Users/joe/Desktop/freelancer/coverscraper/src/scraper.py",
+		"/Users/joe/gigster/gigster/client/README.md",
+		"/Users/joe/gigster/gigster/client/src/api/swagger.js",
+		"/Users/joe/gigster/gigster/expenses/views.py",
+		"/Users/joe/gigster/gigster/expenses/models.py",
+		"/Users/joe/gigster/gigster/client/src/reducers/report.js",
+		"/Users/joe/gigster/gigster/client/src/reducers/expenses.js",
+		"/Users/joe/gigster/gigster/client/src/containers/Loading.js",
+		"/Users/joe/gigster/gigster/tests/test_expenses.py",
+		"/Users/joe/gigster/gigster/gigster/urls.py",
+		"/Users/joe/gigster/gigster/tests/__init__.py",
+		"/Users/joe/gigster/gigster/client/src/css/App.css",
+		"/Users/joe/gigster/gigster/tests/common.py",
+		"/Users/joe/gigster/gigster/tests/test_report.py",
+		"/Users/joe/gigster/gigster/gigster/settings.py",
+		"/Users/joe/gigster/gigster/expenses/signals.py",
+		"/Users/joe/gigster/gigster/expenses/urls.py",
+		"/Users/joe/gigster/gigster/expenses/serializers.py",
+		"/Users/joe/gigster/gigster/.gitignore",
+		"/Users/joe/gigster/gigster/client/src/routes.js",
+		"/Users/joe/gigster/gigster/client/src/index.js",
+		"/Users/joe/gigster/gigster/client/src/App.test.js",
+		"/Users/joe/gigster/gigster/client/src/components/index.js",
+		"/Users/joe/gigster/gigster/expenses/dategrouper.py",
+		"/Users/joe/gigster/gigster/client/src/components/App.js",
+		"/Users/joe/gigster/gigster/gigster.sublime-project",
+		"/Users/joe/gigster/gigster/expenses/schema_export.py",
+		"/Users/joe/gigster/gigster/expenses/apps.py",
+		"/Users/joe/gigster/gigster/client/public/index.html",
+		"/Users/joe/gigster/gigster/client/src/components/ExpensesTable.js",
+		"/Users/joe/gigster/gigster/client/src/css/DataTable.css",
+		"/Users/joe/gigster/gigster/client/src/components/ExpenseDetail.js",
+		"/Users/joe/gigster/gigster/client/src/containers/index.js",
+		"/Users/joe/gigster/gigster/client/src/containers/Expenses.js",
+		"/Users/joe/gigster/gigster/client/src/api/fake_api.js",
+		"/Users/joe/gigster/gigster/client/src/components/ReportTable.js",
+		"/Users/joe/gigster/gigster/client/src/containers/Report.js",
+		"/Users/joe/gigster/gigster/client/src/api/index.js",
+		"/Users/joe/gigster/gigster/client/src/containers/Expense.js",
+		"/Users/joe/gigster/gigster/client/src/components/LoginForm.js",
+		"/Users/joe/gigster/gigster/client/src/api/api.js",
+		"/Users/joe/gigster/gigster/client/src/api/auth.py",
+		"/Users/joe/gigster/gigster/client/routes.js",
+		"/Users/joe/gigster/gigster/client/src/css/ExpensesTable.css",
+		"/Users/joe/gigster/gigster/client/src/css/ReportTable.css",
+		"/Users/joe/gigster/gigster/client/src/containers/index.",
+		"/Users/joe/gigster/gigster/client/src/containers/Expenses.j",
+		"/Users/joe/gigster/gigster/client/package.json",
+		"/Users/joe/gigster/gigster/client/src/static/logo.svg",
+		"/Users/joe/gigster/gigster/client/src/App.css",
+		"/Users/joe/gigster/gigster/client/src/App.js",
+		"/Users/joe/gigster/gigster/client/src/logo.svg",
+		"/Users/joe/gigster/gigster/tests/common.p",
+		"/Users/joe/gigster/gigster/expenses/tests/test_expenses.py",
+		"/Users/joe/gigster/gigster/expenses/tests.py",
+		"/Users/joe/django-rest-test/booksproject/assets/js/index.js",
+		"/Users/joe/django-rest-test/booksproject/books/views.py",
+		"/Users/joe/django-rest-test/booksproject/assets/js/api/error.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/api/auth.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/api/auth.j",
+		"/Users/joe/django-rest-test/booksproject/schemacode/authors.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/library/libraryBrowser.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/auth/loginForm.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/app/errors.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/app/errorPanel.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/reducers/errors.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/reducers/library.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/components/libraryBrowser.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/components/loginForm.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/reducers/auth.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/actions/authActions.js",
+		"/Users/joe/django-rest-test/booksproject/.gitignore",
+		"/Users/joe/django-rest-test/booksproject/client_tests/authActions.test.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/components/errorPanel.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/components/userPanel.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/actions/libraryActions.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/containers/libraryApp.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/components/app.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/reducers/index.js",
+		"/Users/joe/django-rest-test/booksproject/index.html",
+		"/Users/joe/django-rest-test/booksproject/assets/js/containers.js/authPage.js",
+		"/Users/joe/django-rest-test/booksproject/books/urls.py",
+		"/Users/joe/django-rest-test/booksproject/webpack.config.js",
+		"/Users/joe/django-rest-test/booksproject/package.json",
+		"/Users/joe/django-rest-test/booksproject/.babelrc",
+		"/Users/joe/django-rest-test/booksproject/books/apps.py",
+		"/Users/joe/django-rest-test/booksproject/books/templates/index.html",
+		"/Users/joe/django-rest-test/booksproject/booksproject/settings.py",
+		"/Users/joe/django-rest-test/booksproject/assets/css/site.css",
+		"/Users/joe/django-rest-test/booksproject/webpack-stats.json",
+		"/Users/joe/django-rest-test/booksproject/books/serializers.py",
+		"/Users/joe/django-rest-test/booksproject/assets/js/api/api.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/components/userPanel.j",
+		"/Users/joe/django-rest-test/booksproject/assets/js/containers/authPage.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/containers/errorDisplay.js",
+		"/Users/joe/notable/notable/webstuff.sublime-project",
+		"/Users/joe/django-rest-test/booksproject/node_modules/jquery/src/css.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/containers.js/app.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/actions/auth.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/reducers.js",
+		"/Users/joe/django-rest-test/booksproject/booksproject/urls.py",
+		"/Users/joe/django-rest-test/booksproject/node_modules/lodash/fp/whereEq.js",
+		"/Users/joe/django-rest-test/booksproject/assets/js/actions.js",
+		"/Users/joe/django-rest-test/booksproject/books/signals.py",
+		"/Users/joe/django-rest-test/booksproject/books/admin.py",
+		"/Users/joe/notable/notable/notable/settings.py",
+		"/Users/joe/notable/notable/requirements.txt",
+		"/Users/joe/notable/notable/tubes/views.py",
+		"/Users/joe/django-rest-test/booksproject/books/migrations/serializers.py",
+		"/Users/joe/Desktop/algorithms/__pycache__/quicksort.py",
+		"/Users/joe/Desktop/algorithms/heap.py",
+		"/Users/joe/Desktop/algorithms/hash.py",
+		"/Users/joe/Desktop/algorithms/snake.py",
+		"/Users/joe/Desktop/algorithms/mergesort.py",
+		"/Users/joe/Desktop/algorithms/Astar.py",
+		"/Users/joe/Library/Application Support/Steam/SteamApps/common/Sid Meier's Civilization VI/Civ6.app/Contents/Assets/Base/Assets/UI/FrontEnd/Multiplayer/StagingRoom.lua",
+		"/Users/joe/jekyll-site/_posts/2016-09-27-Bad-stats-and-racism.markdown",
+		"/Users/joe/jekyll-site/_posts/2014-12-07-Hummus-pasta-salad.markdown",
+		"/Users/joe/jekyll-site/_posts/2016-09-26-first-post.markdown",
+		"/Users/joe/jekyll-site/index.html",
+		"/Users/joe/jekyll-site/_posts/2014-02-08-Setting-up-shop.markdown"
+	],
+	"find":
+	{
+		"height": 37.0
+	},
+	"find_in_files":
+	{
+		"height": 95.0,
+		"where_history":
+		[
+			"<current file>,<open folders>",
+			"<current file>",
+			"<open folders>",
+			"/Users/joe/dank-web/app/dank",
+			"",
+			"/Users/joe/Dropbox/EE/ThirdYear/COMP3004/Coursework1",
+			"",
+			"glm::vec3",
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"log",
+			"suggestions",
+			"suggetion",
+			"suggetions",
+			"main",
+			"new_main",
+			"main",
+			"OrderedDict",
+			"ordered",
+			"orderedd",
+			"ordered",
+			"\"",
+			"root",
+			"add_node",
+			"rrrr",
+			"meeh",
+			"blooh",
+			"blah",
+			"replace_HOST",
+			"filter_useless_stuff",
+			"cache",
+			"urljoin",
+			"login()",
+			"SUCCEESS",
+			"mergeDataActions",
+			"Expenses",
+			"?",
+			"request",
+			"console.log",
+			"action",
+			"Expense",
+			"result_type",
+			"TOKEN",
+			"rootRe",
+			"etClient",
+			"logout()",
+			"username",
+			"token",
+			"class",
+			"ExpensesTable",
+			"DataTable",
+			"ExpensesTable",
+			"datet",
+			"amount",
+			"td",
+			"App",
+			"time",
+			"iso_year_start",
+			"DateStats",
+			"iso",
+			"week",
+			"views",
+			"list_url",
+			"create_url",
+			"books",
+			"redux",
+			"export_schema",
+			"assets",
+			"loginForm",
+			"console.log",
+			"data",
+			"loadAuth",
+			"console.log",
+			"url",
+			"title",
+			"BookList",
+			"books.map",
+			"self",
+			"setupClient",
+			"getToken",
+			"fro '",
+			"setToken",
+			"doFetch",
+			"auth",
+			"returnthis",
+			"setupClient",
+			"promiseMiddleware",
+			"body",
+			"serviceOptions",
+			"reqInfo",
+			"buildRe",
+			"applyAuth",
+			"rightsInfo",
+			"applyAuthor",
+			"auth",
+			"SimpleRouter",
+			"simple",
+			"REST_FRAMEWORK",
+			"react",
+			"LibraryApp",
+			"libraryApp",
+			"setItem",
+			"onLogout",
+			"action.payload.message",
+			"payload",
+			"onLogin",
+			"onFormSubmit",
+			"gotauthors",
+			"booksError",
+			"author_id",
+			"user",
+			"MyError",
+			"AuthPage",
+			"React",
+			"react",
+			"React",
+			"ErrorDisplay",
+			"LoginForm",
+			"ErrorDisplay",
+			"div",
+			"{{",
+			"DefaultRouter",
+			"STATIC",
+			"^\\*\\*(.*?)\\*\\*",
+			"^\\*\\*(.*)\\**",
+			"^**",
+			"**",
+			"transfergroup",
+			"user",
+			"related",
+			"add_content",
+			"add_sub",
+			"print",
+			"SETTIN",
+			"pprint",
+			"json",
+			"contents",
+			"cytarabine"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": true,
+		"replace_history":
+		[
+			"#### \\1",
+			"\", ",
+			"\" ",
+			"\"",
+			"'",
+			",",
+			"",
+			",",
+			"",
+			",",
+			" ",
+			"\\n\\n",
+			"",
+			",",
+			"192.168.0.20:3000",
+			"', '",
+			"192.168.0.20",
+			"\"",
+			"\"\\1\", \"\\2\"",
+			"\\1 \\2",
+			"",
+			"],",
+			"[\\1]",
+			" -2000",
+			"glm::vec3",
+			"model",
+			"Model",
+			""
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 5,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "log",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 604,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								604,
+								604
+							]
+						],
+						"settings":
+						{
+							"auto_name": "log",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1550,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1550,
+								1550
+							]
+						],
+						"settings":
+						{
+							"auto_indent": false,
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_width": 2,
+							"word_wrap": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 12,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 465,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								465,
+								465
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"auto_name": "dovecot_login authenticator failed for 535 Incorre",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 15,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "common_substrings.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 544,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								544,
+								544
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"auto_name": "common_substrings.py",
+							"syntax": "Packages/Python/Python.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 10,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "regex_maker.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2556,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2057,
+								2057
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"auto_name": "regex_maker.py",
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 311.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "lib/regexmaker.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1697,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								295,
+								295
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"auto_name": "regexmaker.py",
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "lib/input_default.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 614,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								614,
+								614
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"auto_name": "input_default.py",
+							"syntax": "Packages/Python/Python.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "__init__.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 0,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"auto_name": "__init__.py",
+							"syntax": "Packages/Python/Python.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "lib/__init__.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 0,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"auto_name": "__init__.py",
+							"syntax": "Packages/Python/Python.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "lib/common_substrings.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 648,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								330,
+								283
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "test/test_common_substrings.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1800,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1762,
+								1762
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"auto_name": "test_common_substrings.py",
+							"syntax": "Packages/Python/Python.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 11,
+					"file": "regex_maker_proof_of_concept.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2245,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								295,
+								11
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 12,
+					"file": ".gitignore",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 16,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								16,
+								16
+							]
+						],
+						"settings":
+						{
+							"auto_name": ".gitignore",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 11,
+					"type": "text"
+				},
+				{
+					"buffer": 13,
+					"file": "regexmaker.sublime-project",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 324,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								260,
+								260
+							]
+						],
+						"settings":
+						{
+							"auto_complete": true,
+							"syntax": "Packages/JavaScript/JSON.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 13,
+					"type": "text"
+				},
+				{
+					"buffer": 14,
+					"file": "/Users/joe/Library/Application Support/Sublime Text 3/Packages/User/unittest.sublime-build",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 48,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								48,
+								48
+							]
+						],
+						"settings":
+						{
+							"auto_complete": true,
+							"syntax": "Packages/JavaScript/JSON.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 14,
+					"type": "text"
+				},
+				{
+					"buffer": 15,
+					"file": "test/__init__.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 0,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"auto_name": "__init__.py",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 33.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 276.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "Unittest",
+	"project": "regexmaker.sublime-project",
+	"replace":
+	{
+		"height": 42.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"si",
+				"simple.py"
+			],
+			[
+				"re",
+				"README.md"
+			],
+			[
+				"read",
+				"README.md"
+			],
+			[
+				"inde",
+				"client/src/index.js"
+			],
+			[
+				"readm",
+				"client/README.md"
+			],
+			[
+				"report",
+				"client/src/components/ReportTable.js"
+			],
+			[
+				"",
+				".gitignore"
+			],
+			[
+				"ser",
+				"expenses/serializers.py"
+			],
+			[
+				"seri",
+				"expenses/serializers.py"
+			],
+			[
+				"mod",
+				"expenses/models.py"
+			],
+			[
+				"pack",
+				"client/package.json"
+			],
+			[
+				"test",
+				"client/src/App.test.js"
+			],
+			[
+				"np",
+				"client/package.json"
+			],
+			[
+				"view",
+				"expenses/views.py"
+			],
+			[
+				"grouper",
+				"expenses/dategrouper.py"
+			],
+			[
+				"mode",
+				"expenses/models.py"
+			],
+			[
+				"views",
+				"expenses/views.py"
+			],
+			[
+				"vie",
+				"expenses/views.py"
+			],
+			[
+				"mo",
+				"expenses/models.py"
+			],
+			[
+				"vi",
+				"expenses/views.py"
+			],
+			[
+				"saga",
+				"client/src/sagas.js"
+			],
+			[
+				"routes",
+				"client/src/routes.js"
+			],
+			[
+				"rout",
+				"client/src/routes.js"
+			],
+			[
+				"api",
+				"client/src/api/index.js"
+			],
+			[
+				"actions",
+				"client/src/actions/index.js"
+			],
+			[
+				"ex",
+				"client/src/containers/Expenses.js"
+			],
+			[
+				"route",
+				"client/src/routes.js"
+			],
+			[
+				"urls",
+				"expenses/urls.py"
+			],
+			[
+				"seria",
+				"expenses/serializers.py"
+			],
+			[
+				"s",
+				"client/src/sagas.js"
+			],
+			[
+				"acti",
+				"client/src/actions/index.js"
+			],
+			[
+				"app.css",
+				"client/src/css/App.css"
+			],
+			[
+				"expe",
+				"client/src/containers/Expense.js"
+			],
+			[
+				"reduc",
+				"client/src/reducers/expenses.js"
+			],
+			[
+				"reportt",
+				"client/src/components/ReportTable.js"
+			],
+			[
+				"rep",
+				"client/src/containers/Report.js"
+			],
+			[
+				"act",
+				"client/src/actions/index.js"
+			],
+			[
+				"index",
+				"client/src/index.js"
+			],
+			[
+				"sag",
+				"client/src/sagas.js"
+			],
+			[
+				"app",
+				"client/src/components/App.js"
+			],
+			[
+				"apiind",
+				"client/src/api/index.js"
+			],
+			[
+				"git",
+				".gitignore"
+			],
+			[
+				"repo",
+				"client/src/containers/Report.js"
+			],
+			[
+				"report.",
+				"client/src/containers/Report.js"
+			],
+			[
+				"apiin",
+				"client/src/api/index.js"
+			],
+			[
+				"login",
+				"client/src/containers/Login.js"
+			],
+			[
+				"lo",
+				"client/src/containers/Login.js"
+			],
+			[
+				"app.js",
+				"client/src/components/App.js"
+			],
+			[
+				"r",
+				"client/src/containers/Report.js"
+			],
+			[
+				"ind",
+				"client/src/index.js"
+			],
+			[
+				"apiinde",
+				"client/src/api/index.js"
+			],
+			[
+				"repor",
+				"client/src/containers/Report.js"
+			],
+			[
+				"src/ind",
+				"client/src/index.js"
+			],
+			[
+				"apiindex",
+				"client/src/api/index.js"
+			],
+			[
+				"expense",
+				"client/src/containers/Expense.js"
+			],
+			[
+				"i",
+				"client/src/index.js"
+			],
+			[
+				"setti",
+				"gigster/settings.py"
+			],
+			[
+				"schema",
+				"expenses/schema_export.py"
+			],
+			[
+				"swag",
+				"client/src/api/swagger.js"
+			],
+			[
+				"sett",
+				"gigster/settings.py"
+			],
+			[
+				"fake",
+				"client/src/api/fake_api.js"
+			],
+			[
+				"setting",
+				"gigster/settings.py"
+			],
+			[
+				"package",
+				"client/package.json"
+			],
+			[
+				"url",
+				"expenses/urls.py"
+			],
+			[
+				"set",
+				"gigster/settings.py"
+			],
+			[
+				"tests",
+				"tests/test_expenses.py"
+			],
+			[
+				"se",
+				"gigster/settings.py"
+			],
+			[
+				"ap",
+				"books/apps.py"
+			],
+			[
+				"apps",
+				"books/apps.py"
+			],
+			[
+				"wsg",
+				"booksproject/wsgi.py"
+			],
+			[
+				"log",
+				"assets/js/auth/loginForm.js"
+			],
+			[
+				"swa",
+				"assets/js/lib/swaggerActionAPI.js"
+			],
+			[
+				"api.js",
+				"assets/js/api/index.js"
+			],
+			[
+				"we",
+				"webpack.config.js"
+			],
+			[
+				"root",
+				"assets/js/app/rootComponent.js"
+			],
+			[
+				"userp",
+				"assets/js/app/userPanel.js"
+			],
+			[
+				"giti",
+				".gitignore"
+			],
+			[
+				"auth",
+				"assets/js/actions/authActions.js"
+			],
+			[
+				"autha",
+				"client_tests/authActions.test.js"
+			],
+			[
+				"testa",
+				"client_tests/authActions.test.js"
+			],
+			[
+				"packa",
+				"package.json"
+			],
+			[
+				"pa",
+				"package.json"
+			],
+			[
+				"inde.",
+				"assets/js/index.js"
+			],
+			[
+				"css",
+				"assets/css/site.css"
+			],
+			[
+				"settings.py",
+				"booksproject/settings.py"
+			],
+			[
+				"web",
+				"webpack.config.js"
+			],
+			[
+				"webpac",
+				"webpack.config.js"
+			],
+			[
+				"packae",
+				"package.json"
+			],
+			[
+				"settin",
+				"booksproject/settings.py"
+			],
+			[
+				"model",
+				"tubes/models.py"
+			],
+			[
+				"settings",
+				"notable/settings.py"
+			],
+			[
+				"rl",
+				"booksproject/urls.py"
+			],
+			[
+				"heap",
+				"heap.py"
+			],
+			[
+				"site",
+				"static/site.css"
+			],
+			[
+				"lav",
+				"static/lavish-bootstrap.css"
+			],
+			[
+				"beefo",
+				"components/BeerForm.js"
+			],
+			[
+				"beerlist",
+				"components/BeerList.js"
+			],
+			[
+				"form",
+				"components/BeerForm.js"
+			],
+			[
+				"beli",
+				"components/BeerList.js"
+			],
+			[
+				"beers",
+				"reducers/beers.js"
+			],
+			[
+				"bl",
+				"~/Desktop/blah.py"
+			],
+			[
+				"d",
+				"~/Desktop/templ.py"
+			],
+			[
+				"doc",
+				"libpebble2/docgen.py"
+			],
+			[
+				"main",
+				"main.py"
+			],
+			[
+				"ed",
+				"buildserver/templates/editor.html"
+			],
+			[
+				"readme",
+				"README.md"
+			],
+			[
+				"e2e",
+				"e2e-tests/scenarios.js"
+			],
+			[
+				"mock",
+				"mock-rest/server.js"
+			],
+			[
+				"boots",
+				"bootstrap.sh"
+			],
+			[
+				"vag",
+				"Vagrantfile"
+			],
+			[
+				"progres",
+				"app/dank/controllers/progressBar/progressBarCtrl.js"
+			],
+			[
+				"jobdc",
+				"app/dank/controllers/jobDetail/jobDetailCtrl.js"
+			],
+			[
+				"job",
+				"app/dank/controllers/jobs/jobsCtrl.js"
+			],
+			[
+				"job.",
+				"app/partials/job.html"
+			],
+			[
+				"job.html",
+				"app/partials/job.html"
+			],
+			[
+				"jobs.h",
+				"app/partials/jobs.html"
+			],
+			[
+				"glo",
+				"app/dank/controllers/global/globalCtrl.js"
+			],
+			[
+				"globa",
+				"app/dank/controllers/global/globalCtrl.js"
+			],
+			[
+				"jobs",
+				"app/partials/jobs.html"
+			],
+			[
+				"errors",
+				"app/dank/components/errorsInterceptor.js"
+			],
+			[
+				"er",
+				"app/partials/errorbox.html"
+			],
+			[
+				"404",
+				"~/dank-web/app/images/404.jpg"
+			],
+			[
+				"jobsl",
+				"app/partials/joblist.html"
+			],
+			[
+				"glob",
+				"app/dank/controllers/global/globalCtrl.js"
+			],
+			[
+				"jobli",
+				"app/partials/joblist.html"
+			],
+			[
+				"agentsc",
+				"app/dank/controllers/agents/agentsCtrl.js"
+			],
+			[
+				"progr",
+				"app/partials/progress.html"
+			],
+			[
+				"progre",
+				"app/partials/progress.html"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"",
+				"~/COMP6208project/gensim_testing/gensim.sublime-project"
+			]
+		],
+		"width": 840.0
+	},
+	"select_symbol":
+	{
+		"height": 375.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"PebbleC",
+				"PebbleConnection"
+			],
+			[
+				"dataloggingt",
+				"DataLoggingTimeout"
+			],
+			[
+				"gethe",
+				"getHeight"
+			],
+			[
+				"render",
+				"Render"
+			]
+		],
+		"width": 378.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 267.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

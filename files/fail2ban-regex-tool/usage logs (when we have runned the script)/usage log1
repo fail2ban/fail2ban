@@ -1,0 +1,70 @@
+(.env)joe@Joebook-Pro ~/D/f/regexmaker (master)> cat log
+2014-09-18 16:34:30 dovecot_login authenticator failed for xx-xx-78-xx.dedicated.abac.net (User) [xx.xx.78.xx]:64298: 535 Incorrect authentication data (set_id=sexy)
+2014-09-18 16:50:17 dovecot_login authenticator failed for (User) [xx.xx.xx.231]:9859: 535 Incorrect authentication data (set_id=evans)
+2014-09-18 16:52:30 dovecot_login authenticator failed for (User) [xx.xx.16.128]:60350: 535 Incorrect authentication data (set_id=orange)
+2014-09-18 17:10:19 dovecot_login authenticator failed for XXXX.onlinehome-server.com (User) [xx.xx.96.171]:52799: 535 Incorrect authentication data (set_id=matrix)
+
+(.env)joe@Joebook-Pro ~/D/f/regexmaker (master)> python regex_maker.py log
+Here is an example log
+2014-09-18 16:34:30 dovecot_login authenticator failed for xx-xx-78-xx.dedicated.abac.net (User) [xx.xx.78.xx]:64298: 535 Incorrect authentication data (set_id=sexy)
+
+Which strings do you want to match on?
+
+Here are some suggestions:
+0: 2014-09-18
+1: dovecot_login authenticator failed for
+2: (User)
+3: 535 Incorrect authentication data
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> 1
+Search for> dovecot_login authenticator failed
+
+
+You're currently looking for:
+ - dovecot_login authenticator failed
+
+Do you want to match on anything else?
+
+Here are some suggestions:
+0: 2014-09-18
+1: dovecot_login authenticator failed for
+2: (User)
+3: 535 Incorrect authentication data
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> 3
+Search for> 535 Incorrect authentication data
+
+
+You're currently looking for:
+ - dovecot_login authenticator failed
+ - 535 Incorrect authentication data
+
+Do you want to match on anything else?
+
+Here are some suggestions:
+0: 2014-09-18
+1: dovecot_login authenticator failed for
+2: (User)
+3: 535 Incorrect authentication data
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> q
+
+
+
+Your regex currently looks like this:
+
+failregex = dovecot\_login authenticator failed.*<HOST>.*535 Incorrect authentication data
+
+This regex successfully matches all logs in the file

@@ -1,0 +1,43 @@
+joe@Joebook-Pro ~/D/f/regexmaker (master)> failregexmaker authlog
+Here is an example log
+Feb 17 10:32:20 cont postfix/smtpd[4278]: warning: unknown[154.66.148.142]: SASL LOGIN authentication failed: UGFzc3dvcmQ6
+
+Which strings do you want to match on?
+
+Here are some suggestions:
+0: Feb 17 10:32:20 cont postfix/smtpd[4278]: warning:
+1: SASL LOGIN authentication failed: UGFzc3dvcmQ6
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> 1
+Search for> SASL LOGIN authentication failed
+
+
+You're currently looking for:
+ - SASL LOGIN authentication failed
+
+Do you want to match on anything else?
+
+Here are some suggestions:
+0: Feb 17 10:32:20 cont postfix/smtpd[4278]: warning:
+1: SASL LOGIN authentication failed: UGFzc3dvcmQ6
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> q
+
+
+
+Your regex currently looks like this:
+
+failregex = <HOST>.*SASL LOGIN authentication failed
+
+This regex successfully matches all logs in the file
+
+joe@Joebook-Pro ~/D/f/regexmaker (master)>
+

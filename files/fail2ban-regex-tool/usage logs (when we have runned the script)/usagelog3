@@ -1,0 +1,129 @@
+(.env)joe@Joebook-Pro ~/D/f/regexmaker (master)> cat logs3
+Tue Jan 23 14:04:09 2007 [pid 55555] [Administrator] FAIL LOGIN: Client "123.123.123.123"
+Jan 23 14:04:14 Fedora6Srv1 vsftpd: pam_unix(vsftpd:auth): authentication failure; logname= uid=0 euid=0 tty=ftp ruser=Administrator rhost=123.123.123.123
+Thu Aug 6 16:01:28 2009 [pid 3501] [username] FTP response: Client "192.20.10.127", "530 Login incorrect."
+
+
+(.env)joe@Joebook-Pro ~/D/f/regexmaker (master)> python regex_maker.py logs3
+Here is an example log
+Tue Jan 23 14:04:09 2007 [pid 55555] [Administrator] FAIL LOGIN: Client "123.123.123.123"
+
+Which strings do you want to match on?
+
+No suggestions found. What would you like to do?
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> m
+Search for> FAIL LOGIN: Client
+
+
+You're currently looking for:
+ - FAIL LOGIN: Client
+
+Do you want to match on anything else?
+
+No suggestions found. What would you like to do?
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> q
+
+Your regex currently looks like this:
+
+failregex = FAIL LOGIN\: Client.*<HOST>
+This regex does not match all the logs in your log file, so you need to add additional lines.
+
+Here is an example log
+Jan 23 14:04:14 Fedora6Srv1 vsftpd: pam_unix(vsftpd:auth): authentication failure; logname= uid=0 euid=0 tty=ftp ruser=Administrator rhost=123.123.123.123
+
+Which strings do you want to match on?
+
+No suggestions found. What would you like to do?
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> m
+Search for> authentication failure
+
+
+You're currently looking for:
+ - authentication failure
+
+Do you want to match on anything else?
+
+No suggestions found. What would you like to do?
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> q
+
+Your regex currently looks like this:
+
+failregex = authentication failure.*<HOST>
+    FAIL LOGIN\: Client.*<HOST>
+This regex does not match all the logs in your log file, so you need to add additional lines.
+
+Here is an example log
+Thu Aug 6 16:01:28 2009 [pid 3501] [username] FTP response: Client "192.20.10.127", "530 Login incorrect."
+
+Which strings do you want to match on?
+
+No suggestions found. What would you like to do?
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> m
+Search for> FTP response: Client
+
+
+You're currently looking for:
+ - FTP response: Client
+
+Do you want to match on anything else?
+
+No suggestions found. What would you like to do?
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> m
+Search for> 530 Login incorrect
+
+
+You're currently looking for:
+ - FTP response: Client
+ - 530 Login incorrect
+
+Do you want to match on anything else?
+
+No suggestions found. What would you like to do?
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> q
+
+
+
+Your regex currently looks like this:
+
+failregex = authentication failure.*<HOST>
+    FTP response\: Client.*<HOST>.*530 Login incorrect
+    FAIL LOGIN\: Client.*<HOST>
+
+This regex successfully matches all logs in the file
+
+(.env)joe@Joebook-Pro ~/D/f/regexmaker (master)>

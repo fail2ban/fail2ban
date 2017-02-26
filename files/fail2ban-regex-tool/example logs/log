@@ -1,0 +1,5 @@
+2014-09-18 16:34:30 dovecot_login authenticator failed for xx-xx-78-xx.dedicated.abac.net (User) [xx.xx.78.xx]:64298: 535 Incorrect authentication data (set_id=sexy)
+2014-09-18 16:50:17 dovecot_login authenticator failed for (User) [xx.xx.xx.231]:9859: 535 Incorrect authentication data (set_id=evans)
+2014-09-18 16:52:30 dovecot_login authenticator failed for (User) [xx.xx.16.128]:60350: 535 Incorrect authentication data (set_id=orange)
+2014-09-18 17:10:19 dovecot_login authenticator failed for XXXX.onlinehome-server.com (User) [xx.xx.96.171]:52799: 535 Incorrect authentication data (set_id=matrix)
+

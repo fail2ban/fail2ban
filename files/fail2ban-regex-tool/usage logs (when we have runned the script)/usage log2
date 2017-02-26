@@ -1,0 +1,100 @@
+(.env)joe@Joebook-Pro ~/D/f/regexmaker (master)> cat logs2
+2011-03-10 08:59:56.319954 [WARNING] sofia_reg.c:1247 SIP auth challenge (REGISTER) on sofia profile 'internal' for [qwerty123@10.2.39.4] from ip 109.169.63.142
+2011-03-10 08:59:56.355872 [WARNING] sofia_reg.c:1247 SIP auth challenge (REGISTER) on sofia profile 'internal' for [qwerty123@10.2.39.4] from ip 109.169.63.142
+2011-03-10 08:59:56.382909 [WARNING] sofia_reg.c:1247 SIP auth challenge (REGISTER) on sofia profile 'internal' for [qwerty123@10.2.39.4] from ip 109.169.63.142
+2011-03-10 08:59:56.894607 [WARNING] sofia_reg.c:1247 SIP auth challenge (REGISTER) on sofia profile 'internal' for [qwerty123@10.2.39.4] from ip 109.169.63.142
+
+
+
+(.env)joe@Joebook-Pro ~/D/f/regexmaker (master)> python regex_maker.py logs2
+Here is an example log
+2011-03-10 08:59:56.319954 [WARNING] sofia_reg.c:1247 SIP auth challenge (REGISTER) on sofia profile 'internal' for [qwerty123@10.2.39.4] from ip 109.169.63.142
+
+Which strings do you want to match on?
+
+Here are some suggestions:
+0: 2011-03-10
+1: [WARNING]
+2: SIP auth challenge (REGISTER) on sofia profile 'internal' for
+3: from ip
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> 1
+Search for> [WARNING] sofia_reg.c
+
+
+You're currently looking for:
+ - [WARNING] sofia_reg.c
+
+Do you want to match on anything else?
+
+Here are some suggestions:
+0: 2011-03-10
+1: [WARNING]
+2: SIP auth challenge (REGISTER) on sofia profile 'internal' for
+3: from ip
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> 2
+Search for> SIP auth challenge (REGISTER) on sofia profile 'internal'
+
+
+You're currently looking for:
+ - [WARNING] sofia_reg.c
+ - SIP auth challenge (REGISTER) on sofia profile 'internal'
+
+Do you want to match on anything else?
+
+Here are some suggestions:
+0: 2011-03-10
+1: [WARNING]
+2: SIP auth challenge (REGISTER) on sofia profile 'internal' for
+3: from ip
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> 3
+Search for> from ip
+
+
+You're currently looking for:
+ - [WARNING] sofia_reg.c
+ - SIP auth challenge (REGISTER) on sofia profile 'internal'
+ - from ip
+
+Do you want to match on anything else?
+
+Here are some suggestions:
+0: 2011-03-10
+1: [WARNING]
+2: SIP auth challenge (REGISTER) on sofia profile 'internal' for
+3: from ip
+m: Custom entry
+q: Done
+
+Type a number to select and edit one, press enter to input manually.
+
+Option> q
+
+
+The first log contains 2 possible <HOST>s
+You need to pick one to be the actual <HOST>
+Which one would you like to pick? (first = 1, last = 2)
+
+To remind you, here is your first log line:
+    2011-03-10 08:59:56.319954 [WARNING] sofia_reg.c:1247 SIP auth challenge (REGISTER) on sofia profile 'internal' for [qwerty123@10.2.39.4] from ip 109.169.63.142
+>2
+
+Your regex currently looks like this:
+
+failregex = \[WARNING\] sofia\_reg\.c.*SIP auth challenge \(REGISTER\) on sofia profile \'internal\'.*\S+.*from ip.*<HOST>
+
+This regex successfully matches all logs in the file
