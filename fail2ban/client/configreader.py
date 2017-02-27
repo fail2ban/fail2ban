@@ -29,8 +29,7 @@ import os
 from ConfigParser import NoOptionError, NoSectionError
 
 from .configparserinc import sys, SafeConfigParserWithIncludes, logLevel
-from ..helpers import getLogger
-from ..server.action import CommandAction
+from ..helpers import getLogger, substituteRecursiveTags
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -225,6 +224,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 		values = dict()
 		if pOptions is None:
 			pOptions = {}
+		# Get only specified options:
 		for optname in options:
 			if isinstance(options, (list,tuple)):
 				if len(optname) > 2:
@@ -280,6 +280,8 @@ class DefinitionInitConfigReader(ConfigReader):
 		self.setFile(file_)
 		self.setJailName(jailName)
 		self._initOpts = initOpts
+		self._pOpts = dict()
+		self._defCache = dict()
 	
 	def setFile(self, fileName):
 		self._file = fileName
@@ -312,7 +314,7 @@ class DefinitionInitConfigReader(ConfigReader):
 			pOpts = _merge_dicts(pOpts, self._initOpts)
 		self._opts = ConfigReader.getOptions(
 			self, "Definition", self._configOpts, pOpts)
-		
+		self._pOpts = pOpts
 		if self.has_section("Init"):
 			for opt in self.options("Init"):
 				v = self.get("Init", opt)
@@ -324,6 +326,22 @@ class DefinitionInitConfigReader(ConfigReader):
 	def _convert_to_boolean(self, value):
 		return value.lower() in ("1", "yes", "true", "on")
 	
+	def getCombOption(self, optname):
+		"""Get combined definition option (as string) using pre-set and init
+		options as preselection (values with higher precedence as specified in section).
+
+		Can be used only after calling of getOptions.
+		"""
+		try:
+			return self._defCache[optname]
+		except KeyError:
+			try:
+				v = self.get("Definition", optname, vars=self._pOpts)
+			except (NoSectionError, NoOptionError, ValueError):
+				v = None
+			self._defCache[optname] = v
+			return v
+
 	def getCombined(self, ignore=()):
 		combinedopts = self._opts
 		ignore = set(ignore).copy()
@@ -338,7 +356,8 @@ class DefinitionInitConfigReader(ConfigReader):
 				n, cond = cond.groups()
 				ignore.add(n)
 		# substiture options already specified direct:
-		opts = CommandAction.substituteRecursiveTags(combinedopts, ignore=ignore)
+		opts = substituteRecursiveTags(combinedopts, 
+			ignore=ignore, addrepl=self.getCombOption)
 		if not opts:
 			raise ValueError('recursive tag definitions unable to be resolved')
 		return opts

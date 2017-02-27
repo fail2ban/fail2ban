@@ -28,6 +28,7 @@ import os
 
 from .configreader import DefinitionInitConfigReader
 from ..helpers import getLogger
+from ..server.action import CommandAction
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -69,7 +70,8 @@ class ActionReader(DefinitionInitConfigReader):
 		return self._name
 
 	def convert(self):
-		opts = self.getCombined(ignore=('timeout', 'bantime'))
+		opts = self.getCombined(
+			ignore=CommandAction._escapedTags | set(('timeout', 'bantime')))
 		# type-convert only after combined (otherwise boolean converting prevents substitution):
 		if opts.get('norestored'):
 			opts['norestored'] = self._convert_to_boolean(opts['norestored'])
