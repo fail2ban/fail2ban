@@ -483,7 +483,7 @@ class Fail2BanDb(object):
 		cur.execute(
 			"INSERT OR REPLACE INTO bips(ip, jail, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
 			(ip, jail.name, int(round(ticket.getTime())), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
-				{"matches": ticket.getMatches(), "failures": ticket.getAttempt()}))
+				ticket.getData()))
 
 	@commitandrollback
 	def delBan(self, cur, jail, ip):

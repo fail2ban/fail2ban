@@ -402,6 +402,14 @@ class Server:
 	def getIgnoreCommand(self, name):
 		return self.__jails[name].filter.getIgnoreCommand()
 
+	def setPrefRegex(self, name, value):
+		flt = self.__jails[name].filter
+		logSys.debug("  prefregex: %r", value)
+		flt.prefRegex = value
+
+	def getPrefRegex(self, name):
+		return self.__jails[name].filter.prefRegex
+	
 	def addFailRegex(self, name, value, multiple=False):
 		flt = self.__jails[name].filter
 		if not multiple: value = (value,)

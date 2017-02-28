@@ -221,6 +221,10 @@ class Transmitter:
 			value = command[2:]
 			self.__server.delJournalMatch(name, value)
 			return self.__server.getJournalMatch(name)
+		elif command[1] == "prefregex":
+			value = command[2]
+			self.__server.setPrefRegex(name, value)
+			return self.__server.getPrefRegex(name)
 		elif command[1] == "addfailregex":
 			value = command[2]
 			self.__server.addFailRegex(name, value, multiple=multiple)
@@ -346,6 +350,8 @@ class Transmitter:
 			return self.__server.getIgnoreIP(name)
 		elif command[1] == "ignorecommand":
 			return self.__server.getIgnoreCommand(name)
+		elif command[1] == "prefregex":
+			return self.__server.getPrefRegex(name)
 		elif command[1] == "failregex":
 			return self.__server.getFailRegex(name)
 		elif command[1] == "ignoreregex":

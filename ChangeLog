@@ -10,6 +10,45 @@ ver. 0.10.0 (2016/XX/XXX) - gonna-be-released-some-time-shining
 -----------
 
 TODO: implementing of options resp. other tasks from PR #1346
+      documentation should be extended (new options, etc)
+      
+### Fixes
+* `filter.d/pam-generic.conf`:
+  - [grave] injection on user name to host fixed
+* `action.d/complain.conf`
+  - fixed using new tag `<ip-rev>` (sh/dash compliant now)
+
+### New Features
+* New Actions:
+
+* New Filters:
+
+### Enhancements
+* Introduced new filter option `prefregex` for pre-filtering using single regular expression (gh-1698);
+* Many times faster and fewer CPU-hungry because of parsing with `maxlines=1`, so without 
+  line buffering (scrolling of the buffer-window).
+  Combination of tags `<F-MLFID>` and `<F-NOFAIL>` can be used now to process multi-line logs
+  using single-line expressions:
+  - tag `<F-MLFID>`: used to identify resp. store failure info for groups of log-lines with the same
+    identifier (e. g. combined failure-info for the same conn-id by `<F-MLFID>(?:conn-id)</F-MLFID>`,
+    see sshd.conf for example)
+  - tag `<F-NOFAIL>`: used as mark for no-failure (helper to accumulate common failure-info, 
+    e. g. from lines that contain IP-address);
+* Several filters optimized with pre-filtering using new option `prefregex`, and multiline filter 
+  using `<F-MLFID>` + `<F-NOFAIL>` combination;
+* Exposes filter group captures in actions (non-recursive interpolation of tags `<F-...>`, 
+  see gh-1698, gh-1110)
+* Some filters extended with user name (can be used in gh-1243 to distinguish IP and user,
+  resp. to remove after success login the user-related failures only);
+* Safer, more stable and faster replaceTag interpolation (switched from cycle over all tags
+  to re.sub with callable)
+* substituteRecursiveTags optimization + moved in helpers facilities (because currently used 
+  commonly in server and in client)
+* Provides new tag `<ip-rev>` for PTR reversed representation of IP address
+
+
+ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
+-----------
 
 ### Fixes
 * [Grave] memory leak's fixed (gh-1277, gh-1234)

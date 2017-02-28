@@ -769,9 +769,10 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"[Definition]",
 				"norestored = %(_exec_once)s",
 				"restore = ",
+				"info = ",
 				"actionstart =  echo '[%(name)s] %(actname)s: ** start'", start,
 				"actionreload = echo '[%(name)s] %(actname)s: .. reload'", reload,
-				"actionban =    echo '[%(name)s] %(actname)s: ++ ban <ip> %(restore)s'", ban,
+				"actionban =    echo '[%(name)s] %(actname)s: ++ ban <ip> %(restore)s%(info)s'", ban,
 				"actionunban =  echo '[%(name)s] %(actname)s: -- unban <ip>'", unban,
 				"actionstop =   echo '[%(name)s] %(actname)s: __ stop'", stop,
 			)
@@ -785,28 +786,28 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"usedns = no",
 				"maxretry = 3",
 				"findtime = 10m",
-				"failregex = ^\s*failure (401|403) from <HOST>",
+				"failregex = ^\s*failure <F-ERRCODE>401|403</F-ERRCODE> from <HOST>",
 				"datepattern = {^LN-BEG}EPOCH",
 				"",
 				"[test-jail1]", "backend = " + backend, "filter =", 
 				"action = ",
 				"         test-action1[name='%(__name__)s']" \
 					if 1 in actions else "",
-				"         test-action2[name='%(__name__)s', restore='restored: <restored>']" \
+				"         test-action2[name='%(__name__)s', restore='restored: <restored>', info=', err-code: <F-ERRCODE>']" \
 					if 2 in actions else "",
 				"         test-action2[name='%(__name__)s', actname=test-action3, _exec_once=1, restore='restored: <restored>']" \
 					if 3 in actions else "",
 				"logpath = " + test1log,
 				"          " + test2log if 2 in enabled else "",
 				"          " + test3log if 2 in enabled else "",
-				"failregex = ^\s*failure (401|403) from <HOST>",
-				"            ^\s*error (401|403) from <HOST>" \
+				"failregex = ^\s*failure <F-ERRCODE>401|403</F-ERRCODE> from <HOST>",
+				"            ^\s*error <F-ERRCODE>401|403</F-ERRCODE> from <HOST>" \
 					if 2 in enabled else "",
 				"enabled = true" if 1 in enabled else "",
 				"",
 				"[test-jail2]", "backend = " + backend, "filter =", 
 				"action = ",
-				"         test-action2[name='%(__name__)s', restore='restored: <restored>']" \
+				"         test-action2[name='%(__name__)s', restore='restored: <restored>', info=', err-code: <F-ERRCODE>']" \
 					if 2 in actions else "",
 				"         test-action2[name='%(__name__)s', actname=test-action3, _exec_once=1, restore='restored: <restored>']" \
 					if 3 in actions else "",
@@ -845,7 +846,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"stdout: '[test-jail1] test-action2: ** start'", all=True)
 		# test restored is 0 (both actions available):
 		self.assertLogged(
-			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.1 restored: 0'",
+			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.1 restored: 0, err-code: 401'",
 			"stdout: '[test-jail1] test-action3: ++ ban 192.0.2.1 restored: 0'",
 			all=True, wait=MID_WAITTIME)
 
@@ -968,8 +969,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		)
 		# test restored is 1 (only test-action2):
 		self.assertLogged(
-			"stdout: '[test-jail2] test-action2: ++ ban 192.0.2.4 restored: 1'",
-			"stdout: '[test-jail2] test-action2: ++ ban 192.0.2.8 restored: 1'",
+			"stdout: '[test-jail2] test-action2: ++ ban 192.0.2.4 restored: 1, err-code: 401'",
+			"stdout: '[test-jail2] test-action2: ++ ban 192.0.2.8 restored: 1, err-code: 401'",
 			all=True, wait=MID_WAITTIME)
 		# test test-action3 not executed at all (norestored check):
 		self.assertNotLogged(
