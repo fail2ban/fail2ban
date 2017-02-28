@@ -32,37 +32,57 @@ import time
 import unittest
 
 from .. import protocol
-from ..server.asyncserver import AsyncServer, AsyncServerException
+from ..server.asyncserver import RequestHandler, AsyncServer, AsyncServerException
 from ..server.utils import Utils
 from ..client.csocket import CSocket
 
+from .utils import LogCaptureTestCase
 
-class Socket(unittest.TestCase):
+
+def TestMsgError(*args):
+	raise Exception('test unpickle error')
+class TestMsg(object):
+	def __reduce__(self):
+		return (TestMsgError, ())
+
+
+class Socket(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		LogCaptureTestCase.setUp(self)
 		super(Socket, self).setUp()
 		self.server = AsyncServer(self)
 		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'socket')
 		os.close(sock_fd)
 		os.remove(sock_name)
 		self.sock_name = sock_name
+		self.serverThread = None
 
 	def tearDown(self):
 		"""Call after every test case."""
+		if self.serverThread:
+			self.server.stop(); # stop if not already stopped
+			self.serverThread.join()
+		LogCaptureTestCase.tearDown(self)
 
 	@staticmethod
 	def proceed(message):
 		"""Test transmitter proceed method which just returns first arg"""
 		return message
 
-	def testStopPerCloseUnexpected(self):
+	def _createServerThread(self):
 		# start in separate thread :
-		serverThread = threading.Thread(
+		self.serverThread = serverThread = threading.Thread(
 			target=self.server.start, args=(self.sock_name, False))
 		serverThread.daemon = True
 		serverThread.start()
 		self.assertTrue(Utils.wait_for(self.server.isActive, unittest.F2B.maxWaitTime(10)))
+		return serverThread
+
+	def testStopPerCloseUnexpected(self):
+		# start in separate thread :
+		serverThread = self._createServerThread()
 		# unexpected stop directly after start:
 		self.server.close()
 		# wait for end of thread :
@@ -81,21 +101,30 @@ class Socket(unittest.TestCase):
 			return None
 
 	def testSocket(self):
-		serverThread = threading.Thread(
-			target=self.server.start, args=(self.sock_name, False))
-		serverThread.daemon = True
-		serverThread.start()
-		self.assertTrue(Utils.wait_for(self.server.isActive, unittest.F2B.maxWaitTime(10)))
-		time.sleep(Utils.DEFAULT_SLEEP_TIME)
-
+		# start in separate thread :
+		serverThread = self._createServerThread()
 		client = Utils.wait_for(self._serverSocket, 2)
+
 		testMessage = ["A", "test", "message"]
+		self.assertEqual(client.send(testMessage), testMessage)
+
+		# test wrong message:
+		self.assertEqual(client.send([[TestMsg()]]), 'ERROR: test unpickle error')
+		self.assertLogged("Caught unhandled exception", "test unpickle error", all=True)
+
+		# test good message again:
 		self.assertEqual(client.send(testMessage), testMessage)
 
 		# test close message
 		client.close()
 		# 2nd close does nothing
 		client.close()
+
+		# force shutdown:
+		self.server.stop_communication()
+		# test send again (should get in shutdown message):
+		client = Utils.wait_for(self._serverSocket, 2)
+		self.assertEqual(client.send(testMessage), ['SHUTDOWN'])
 
 		self.server.stop()
 		# wait for end of thread :
@@ -104,6 +133,25 @@ class Socket(unittest.TestCase):
 		self.assertFalse(serverThread.isAlive())
 		self.assertFalse(self.server.isActive())
 		self.assertFalse(os.path.exists(self.sock_name))
+
+
+	def testSocketConnectBroken(self):
+		# start in separate thread :
+		serverThread = self._createServerThread()
+		client = Utils.wait_for(self._serverSocket, 2)
+
+		testMessage = ["A", "test", "message"]
+		self.assertEqual(client.send(testMessage), testMessage)
+
+		org_handler = RequestHandler.found_terminator
+		try:
+			RequestHandler.found_terminator = lambda self: TestMsgError()
+			self.assertRaisesRegexp(RuntimeError, r"socket connection broken", client.send, testMessage)
+		finally:
+			RequestHandler.found_terminator = org_handler
+		
+		self.assertLogged("Unexpected communication error", "test unpickle error", all=True)
+		self.server.stop()
 
 	def testSocketForce(self):
 		open(self.sock_name, 'w').close() # Create sock file

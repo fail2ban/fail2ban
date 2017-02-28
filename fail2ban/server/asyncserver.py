@@ -37,7 +37,7 @@ import traceback
 
 from .utils import Utils
 from ..protocol import CSPROTO
-from ..helpers import getLogger,formatExceptionInfo
+from ..helpers import logging, getLogger, formatExceptionInfo
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -88,9 +88,12 @@ class RequestHandler(asynchat.async_chat):
 			message = dumps(message, HIGHEST_PROTOCOL)
 			# Sends the response to the client.
 			self.push(message + CSPROTO.END)
-		except Exception as e: # pragma: no cover
+		except Exception as e:
 			logSys.error("Caught unhandled exception: %r", e,
 				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+			# Sends the response to the client.
+			message = dumps("ERROR: %s" % e, HIGHEST_PROTOCOL)
+			self.push(message + CSPROTO.END)
 
 		
 	def handle_error(self):
@@ -161,10 +164,10 @@ class AsyncServer(asyncore.dispatcher):
 	def handle_accept(self):
 		try:
 			conn, addr = self.accept()
-		except socket.error:
+		except socket.error: # pragma: no cover
 			logSys.warning("Socket error")
 			return
-		except TypeError:
+		except TypeError: # pragma: no cover
 			logSys.warning("Type error")
 			return
 		AsyncServer.__markCloseOnExec(conn)
@@ -194,7 +197,7 @@ class AsyncServer(asyncore.dispatcher):
 		self.set_reuse_addr()
 		try:
 			self.bind(sock)
-		except Exception:
+		except Exception: # pragma: no cover
 			raise AsyncServerException("Unable to bind socket %s" % self.__sock)
 		AsyncServer.__markCloseOnExec(self.socket)
 		self.listen(1)
