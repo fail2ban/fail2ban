@@ -95,13 +95,21 @@ class RequestHandler(asynchat.async_chat):
 			message = dumps("ERROR: %s" % e, HIGHEST_PROTOCOL)
 			self.push(message + CSPROTO.END)
 
-		
+	##
+	# Handles an communication errors in request.
+	#
 	def handle_error(self):
-		e1, e2 = formatExceptionInfo()
-		logSys.error("Unexpected communication error: %s" % str(e2))
-		logSys.error(traceback.format_exc().splitlines())
-		self.close()
-		
+		try:
+			e1, e2 = formatExceptionInfo()
+			logSys.error("Unexpected communication error: %s" % str(e2))
+			logSys.error(traceback.format_exc().splitlines())
+			# Sends the response to the client.
+			message = dumps("ERROR: %s" % e2, HIGHEST_PROTOCOL)
+			self.push(message + CSPROTO.END)
+		except Exception as e: # pragma: no cover - normally unreachable
+			pass
+		self.close_when_done()
+
 
 def loop(active, timeout=None, use_poll=False):
 	"""Custom event loop implementation
@@ -125,7 +133,7 @@ def loop(active, timeout=None, use_poll=False):
 			poll(timeout)
 			if errCount:
 				errCount -= 1
-		except Exception as e: # pragma: no cover
+		except Exception as e:
 			if not active():
 				break
 			errCount += 1
@@ -181,7 +189,7 @@ class AsyncServer(asyncore.dispatcher):
 	# @param sock: socket file.
 	# @param force: remove the socket file if exists.
 	
-	def start(self, sock, force, use_poll=False):
+	def start(self, sock, force, timeout=None, use_poll=False):
 		self.__worker = threading.current_thread()
 		self.__sock = sock
 		# Remove socket
@@ -207,11 +215,10 @@ class AsyncServer(asyncore.dispatcher):
 		if self.onstart:
 			self.onstart()
 		# Event loop as long as active:
-		loop(lambda: self.__loop, use_poll=use_poll)
+		loop(lambda: self.__loop, timeout=timeout, use_poll=use_poll)
 		self.__active = False
 		# Cleanup all
 		self.stop()
-
 
 	def close(self):
 		stopflg = False
