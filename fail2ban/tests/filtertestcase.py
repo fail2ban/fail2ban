@@ -302,7 +302,7 @@ class BasicFilter(unittest.TestCase):
 		## test function "_tm" works correct (returns the same as slow strftime):
 		for i in xrange(1417512352, (1417512352 // 3600 + 3) * 3600):
 			tm = datetime.datetime.fromtimestamp(i).strftime("%Y-%m-%d %H:%M:%S")
-			if _tm(i) != tm:
+			if _tm(i) != tm: # pragma: no cover - never reachable
 				self.assertEqual((_tm(i), i), (tm, i))
 
 	def testWrongCharInTupleLine(self):
@@ -796,7 +796,7 @@ class CommonMonitorTestCase(unittest.TestCase):
 		"""Wait up to `delay` sec to assure that expected failure `count` reached
 		"""
 		ret = Utils.wait_for(
-			lambda: self.filter.failManager.getFailTotal() >= self._failTotal + count and self.jail.isFilled(),
+			lambda: self.filter.failManager.getFailTotal() >= (self._failTotal + count) and self.jail.isFilled(),
 			_maxWaitTime(delay))
 		self._failTotal += count
 		return ret
@@ -1034,9 +1034,10 @@ def get_monitor_failures_testcase(Filter_):
 			# total count in this test:
 			self.assertEqual(self.filter.failManager.getFailTotal(), 12)
 
-	MonitorFailures.__name__ = "MonitorFailures<%s>(%s)" \
+	cls = MonitorFailures
+	cls.__qualname__ = cls.__name__ = "MonitorFailures<%s>(%s)" \
 			  % (Filter_.__name__, testclass_name) # 'tempfile')
-	return MonitorFailures
+	return cls
 
 
 def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
@@ -1216,14 +1217,16 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				fields = self.journal_fields
 				fields.update(TEST_JOURNAL_FIELDS)
 				journal.send(MESSAGE=l, **fields)
+			self.waitForTicks(1)
 			self.waitFailTotal(6, 10)
 			self.assertTrue(Utils.wait_for(lambda: len(self.jail) == 2, 10))
 			self.assertEqual(sorted([self.jail.getFailTicket().getIP(), self.jail.getFailTicket().getIP()]), 
 				["192.0.2.1", "192.0.2.2"])
 
-	MonitorJournalFailures.__name__ = "MonitorJournalFailures<%s>(%s)" \
+	cls = MonitorJournalFailures
+	cls.__qualname__ = cls.__name__ = "MonitorJournalFailures<%s>(%s)" \
 			  % (Filter_.__name__, testclass_name)
-	return MonitorJournalFailures
+	return cls
 
 
 class GetFailures(LogCaptureTestCase):
