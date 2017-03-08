@@ -17,6 +17,8 @@ TODO: implementing of options resp. other tasks from PR #1346
   - [grave] injection on user name to host fixed
 * `action.d/complain.conf`
   - fixed using new tag `<ip-rev>` (sh/dash compliant now)
+* `action.d/sendmail-geoip-lines.conf`
+  - fixed using new tag `<ip-host>` (without external command execution)
 
 ### New Features
 * New Actions:
@@ -44,7 +46,11 @@ TODO: implementing of options resp. other tasks from PR #1346
   to re.sub with callable)
 * substituteRecursiveTags optimization + moved in helpers facilities (because currently used 
   commonly in server and in client)
-* Provides new tag `<ip-rev>` for PTR reversed representation of IP address
+* New tags (usable in actions):
+  - `<fid>` - failure identifier (if raw resp. failures without IP address)
+  - `<ip-rev>` - PTR reversed representation of IP address
+  - `<ip-host>` - host name of the IP address
+  - `<F-...>` - interpolates to the corresponding filter group capture `...`
 
 
 ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
