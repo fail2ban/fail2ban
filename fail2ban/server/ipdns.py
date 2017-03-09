@@ -376,6 +376,11 @@ class IPAddr(object):
 
 		return "%s.%s" % (".".join(reversed(exploded_ip)), suffix)
 
+	def getHost(self):
+		"""Return the host name (DNS) of the provided IP address object
+		"""
+		return DNSUtils.ipToName(self.ntoa)
+
 	@property
 	def isIPv4(self):
 		"""Either the IP object is of address family AF_INET
