@@ -33,6 +33,8 @@ releases.
       and suffix (logged from several ssh versions), according to gh-1206;
 * filter.d/suhosin.conf
     - greedy catch-all before `<HOST>` fixed (potential vulnerability)
+* filter.d/cyrus-imap.conf
+    - accept entries without login-info resp. hostname before IP address (gh-1707)
 * Filter tests extended with check of all config-regexp, that contains greedy catch-all
   before `<HOST>`, that is hard-anchored at end or precise  sub expression after `<HOST>`
 
