@@ -128,6 +128,10 @@ ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
     if configuration is clean (fails by wrong configured jails if option `-t` specified)
 * New command action parameter `actionrepair` - command executed in order to restore
   sane environment in error case of `actioncheck`.
+* Reporting via abuseipdb.com:
+  - Bans can now be reported to abuseipdb
+  - Catagories must be set in the config
+  - Relevant log lines included in report
 
 ### Enhancements
 * Huge increasing of fail2ban performance and especially test-cases performance (see gh-1109)
