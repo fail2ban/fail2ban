@@ -255,7 +255,6 @@ class Fail2banRegexTest(LogCaptureTestCase):
 	def testWrongFilterFile(self):
 		# use test log as filter file to cover eror cases...
 		(opts, args, fail2banRegex) = _Fail2banRegex(
-			"-l", "notice", # put down log-level, because of too many debug-messages
 			Fail2banRegexTest.FILENAME_ZZZ_GEN, Fail2banRegexTest.FILENAME_ZZZ_GEN
 		)
 		self.assertFalse(fail2banRegex.start(args))

@@ -313,12 +313,17 @@ class Fail2banRegex(object):
 			if fltOpt:
 				output( "Use   filter options : %r" % fltOpt )
 			reader = FilterReader(fltName, 'fail2ban-regex-jail', fltOpt, share_config=self.share_config, basedir=basedir)
-			if basedir is not None: # pragma: no cover
-				ret = reader.read()
-			else:
-				## foreign file - readexplicit this file and includes if possible:
-				reader.setBaseDir(None)
-				ret = reader.readexplicit()
+			ret = None
+			try:
+				if basedir is not None:
+					ret = reader.read()
+				else:
+					## foreign file - readexplicit this file and includes if possible:
+					reader.setBaseDir(None)
+					ret = reader.readexplicit()
+			except Exception as e:
+				output("Wrong config file: %s" % (str(e),))
+				if self._verbose: raise(e)
 			if not ret:
 				output( "ERROR: failed to load filter %s" % value )
 				return False
