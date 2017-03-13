@@ -286,11 +286,12 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			"-l", "notice", # put down log-level, because of too many debug-messages
 			"--datepattern", "^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
 			"--debuggex", "--print-all-matched",
-			Fail2banRegexTest.FILENAME_WRONGCHAR, Fail2banRegexTest.FILTER_SSHD
+			Fail2banRegexTest.FILENAME_WRONGCHAR, Fail2banRegexTest.FILTER_SSHD,
+			r"llinco[^\\]"
 		)
 		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Error decoding line')
-		self.assertLogged('Lines: 4 lines, 0 ignored, 2 matched, 2 missed')
+		self.assertLogged('Lines: 4 lines, 1 ignored, 2 matched, 1 missed')
 
 		self.assertLogged('https://')
 
