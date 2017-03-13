@@ -453,7 +453,7 @@ class CommandAction(ActionBase):
 		return value
 
 	@classmethod
-	def replaceTag(cls, query, aInfo, conditional='', cache=None):
+	def replaceTag(cls, query, aInfo, conditional='', cache=None, substRec=True):
 		"""Replaces tags in `query` with property values.
 
 		Parameters
@@ -478,23 +478,29 @@ class CommandAction(ActionBase):
 			except KeyError:
 				pass
 
-		# first try get cached tags dictionary:
-		subInfo = csubkey = None
-		if cache is not None:
-			csubkey = ('subst-tags', id(aInfo), conditional)
-			try:
-				subInfo = cache[csubkey]
-			except KeyError:
-				pass
-		# interpolation of dictionary:
-		if subInfo is None:
-			subInfo = substituteRecursiveTags(aInfo, conditional, ignore=cls._escapedTags)
-		# cache if possible:
-		if csubkey is not None:
-			cache[csubkey] = subInfo
+		# **Important**: don't replace if calling map - contains dynamic values only,
+		# no recursive tags, otherwise may be vulnerable on foreign user-input:
+		noRecRepl = isinstance(aInfo, CallingMap)
+		if noRecRepl:
+			subInfo = aInfo
+		else:
+			# substitute tags recursive (and cache if possible),
+			# first try get cached tags dictionary:
+			subInfo = csubkey = None
+			if cache is not None:
+				csubkey = ('subst-tags', id(aInfo), conditional)
+				try:
+					subInfo = cache[csubkey]
+				except KeyError:
+					pass
+			# interpolation of dictionary:
+			if subInfo is None:
+				subInfo = substituteRecursiveTags(aInfo, conditional, ignore=cls._escapedTags)
+			# cache if possible:
+			if csubkey is not None:
+				cache[csubkey] = subInfo
 
 		# substitution callable, used by interpolation of each tag
-		repeatSubst = {0: 0}
 		def substVal(m):
 			tag = m.group(1)			# tagname from match
 			value = None
@@ -510,18 +516,17 @@ class CommandAction(ActionBase):
 				# That one needs to be escaped since its content is
 				# out of our control
 				value = cls.escapeTag(value)
-			# possible contains tags:
-			if '<' in value:
-				repeatSubst[0] = 1
+			# replacement for tag:
 			return value
 
 		# interpolation of query:
 		count = MAX_TAG_REPLACE_COUNT + 1
 		while True:
-			repeatSubst[0] = 0
 			value = TAG_CRE.sub(substVal, query)
+			# **Important**: no recursive replacement for tags from calling map (properties only):
+			if noRecRepl: break
 			# possible recursion ?
-			if not repeatSubst or value == query: break
+			if value == query or '<' not in value: break
 			query = value
 			count -= 1
 			if count <= 0:

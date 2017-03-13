@@ -157,6 +157,20 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertEqual(substituteRecursiveTags({'A': 'A <IP<PREF>HOST> B IP<PREF> C', 'PREF': 'V4', 'IPV4HOST': '1.2.3.4'}),
 						 {'A': 'A 1.2.3.4 B IPV4 C', 'PREF': 'V4', 'IPV4HOST': '1.2.3.4'})
 
+	def testSubstRec_DontTouchUnusedCallable(self):
+		cm = CallingMap(
+			A=0,
+			B=lambda self: '<A><A>',
+			C=lambda self,i=0: 5 // int(self['A']) # raise error by access
+		)
+		# should raise no exceptions:
+		self.assertEqual(self.__action.replaceTag('test=<A>', cm), "test=0")
+		# **Important**: recursive replacement of dynamic data from calling map should be prohibited,
+		# otherwise may be vulnerable on foreign user-input:
+		self.assertEqual(self.__action.replaceTag('test=<A>--<B>--<A>', cm), "test=0--<A><A>--0")
+		# should raise an exception:
+		self.assertRaises(ZeroDivisionError, lambda: self.__action.replaceTag('test=<C>', cm))
+
 	def testReplaceTag(self):
 		aInfo = {
 			'HOST': "192.0.2.0",

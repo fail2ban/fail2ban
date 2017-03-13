@@ -240,7 +240,7 @@ def substituteRecursiveTags(inptags, conditional='',
 	# init:
 	ignore = set(ignore)
 	done = set()
-	calmap = hasattr(tags, "getRawItem")
+	noRecRepl = hasattr(tags, "getRawItem")
 	# repeat substitution while embedded-recursive (repFlag is True)
 	while True:
 		repFlag = False
@@ -249,7 +249,7 @@ def substituteRecursiveTags(inptags, conditional='',
 			# ignore escaped or already done (or in ignore list):
 			if tag in ignore or tag in done: continue
 			# ignore replacing callable items from calling map - should be converted on demand only (by get):
-			if calmap and callable(tags.getRawItem(tag)): continue
+			if noRecRepl and callable(tags.getRawItem(tag)): continue
 			value = orgval = str(tags[tag])
 			# search and replace all tags within value, that can be interpolated using other tags:
 			m = tre_search(value)
@@ -284,6 +284,8 @@ def substituteRecursiveTags(inptags, conditional='',
 					# constructs like <STDIN>.
 					m = tre_search(value, m.end())
 					continue
+				# if calling map - be sure we've string:
+				if noRecRepl: repl = str(repl)
 				value = value.replace('<%s>' % rtag, repl)
 				#logSys.log(5, 'value now: %s' % value)
 				# increment reference count:
