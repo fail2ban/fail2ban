@@ -59,6 +59,8 @@ TODO: implementing of options resp. other tasks from PR #1346
   - `<ip-rev>` - PTR reversed representation of IP address
   - `<ip-host>` - host name of the IP address
   - `<F-...>` - interpolates to the corresponding filter group capture `...`
+* Allow to use filter options by `fail2ban-regex`, example:
+  fail2ban-regex text.log "sshd[mode=aggressive]"
 * Samples test case factory extended with filter options - dict in JSON to control 
   filter options (e. g. mode, etc.):
   # filterOptions: {"mode": "aggressive"}
