@@ -169,6 +169,36 @@ def splitwords(s):
 		return []
 	return filter(bool, map(str.strip, re.split('[ ,\n]+', s)))
 
+if sys.version_info >= (3,5):
+	eval(compile(r'''if 1:
+	def _merge_dicts(x, y):
+		"""Helper to merge dicts.
+		"""
+		if y:
+			return {**x, **y}
+		return x
+	
+	def _merge_copy_dicts(x, y):
+		"""Helper to merge dicts to guarantee a copy result (r is never x).
+		"""
+		return {**x, **y}
+	''', __file__, 'exec'))
+else:
+	def _merge_dicts(x, y):
+		"""Helper to merge dicts.
+		"""
+		r = x
+		if y:
+			r = x.copy()
+			r.update(y)
+		return r
+	def _merge_copy_dicts(x, y):
+		"""Helper to merge dicts to guarantee a copy result (r is never x).
+		"""
+		r = x.copy()
+		if y:
+			r.update(y)
+		return r
 
 #
 # Following "uni_decode" function unified python independent any to string converting

@@ -158,18 +158,35 @@ class CommandActionTest(LogCaptureTestCase):
 						 {'A': 'A 1.2.3.4 B IPV4 C', 'PREF': 'V4', 'IPV4HOST': '1.2.3.4'})
 
 	def testSubstRec_DontTouchUnusedCallable(self):
-		cm = CallingMap(
-			A=0,
-			B=lambda self: '<A><A>',
-			C=lambda self,i=0: 5 // int(self['A']) # raise error by access
-		)
+		cm = CallingMap({
+			'A':0,
+			'B':lambda self: '<A><A>',
+			'C':'',
+			'D':''
+		})
+		#
+		# should raise no exceptions:
+		substituteRecursiveTags(cm)
+		# add exception tag:
+		cm['C'] = lambda self,i=0: 5 // int(self['A']) # raise error by access
+		# test direct get of callable (should raise an error):
+		self.assertRaises(ZeroDivisionError, lambda: cm['C'])
+		# should raise no exceptions (tag "C" still unused):
+		substituteRecursiveTags(cm)
+		# add reference to "broken" tag:
+		cm['D'] = 'test=<C>'
+		# should raise an exception (BOOM by replacement of tag "D" recursive):
+		self.assertRaises(ZeroDivisionError, lambda: substituteRecursiveTags(cm))
+		#
 		# should raise no exceptions:
 		self.assertEqual(self.__action.replaceTag('test=<A>', cm), "test=0")
 		# **Important**: recursive replacement of dynamic data from calling map should be prohibited,
 		# otherwise may be vulnerable on foreign user-input:
 		self.assertEqual(self.__action.replaceTag('test=<A>--<B>--<A>', cm), "test=0--<A><A>--0")
-		# should raise an exception:
+		# should raise an exception (BOOM by replacement of tag "C"):
 		self.assertRaises(ZeroDivisionError, lambda: self.__action.replaceTag('test=<C>', cm))
+		# should raise no exceptions (replaces tag "D" only):
+		self.assertEqual(self.__action.replaceTag('<D>', cm), "test=<C>")
 
 	def testReplaceTag(self):
 		aInfo = {

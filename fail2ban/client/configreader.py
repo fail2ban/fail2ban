@@ -29,22 +29,10 @@ import os
 from ConfigParser import NoOptionError, NoSectionError
 
 from .configparserinc import sys, SafeConfigParserWithIncludes, logLevel
-from ..helpers import getLogger, substituteRecursiveTags
+from ..helpers import getLogger, _merge_dicts, substituteRecursiveTags
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
-
-
-# if sys.version_info >= (3,5):
-# 	def _merge_dicts(x, y):
-# 		return {**x, **y}
-# else:
-def _merge_dicts(x, y):
-	r = x
-	if y:
-		r = x.copy()
-		r.update(y)
-	return r
 
 
 class ConfigReader():

@@ -36,7 +36,7 @@ from .failregex import mapTag2Opt
 from .ipdns import asip
 from .mytime import MyTime
 from .utils import Utils
-from ..helpers import getLogger, substituteRecursiveTags, TAG_CRE, MAX_TAG_REPLACE_COUNT
+from ..helpers import getLogger, _merge_copy_dicts, substituteRecursiveTags, TAG_CRE, MAX_TAG_REPLACE_COUNT
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -148,7 +148,7 @@ class CallingMap(MutableMapping, object):
 		return len(self.data)
 
 	def copy(self): # pargma: no cover
-		return self.__class__(self.data.copy())
+		return self.__class__(_merge_copy_dicts(self.data, self.storage))
 
 
 class ActionBase(object):
