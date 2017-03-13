@@ -209,7 +209,8 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"-l", "notice", # put down log-level, because of too many debug-messages
 			"-v", "--verbose-date", "--print-all-matched",
-			Fail2banRegexTest.FILENAME_SSHD, Fail2banRegexTest.FILTER_SSHD
+			"-c", CONFIG_DIR,
+			Fail2banRegexTest.FILENAME_SSHD, "sshd"
 		)
 		self.assertTrue(fail2banRegex.start(args))
 		# test failure line and not-failure lines both presents:
@@ -220,7 +221,8 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"-l", "notice", # put down log-level, because of too many debug-messages
 			"--print-all-matched",
-			Fail2banRegexTest.FILENAME_ZZZ_SSHD, Fail2banRegexTest.FILTER_SSHD
+			"-c", CONFIG_DIR,
+			Fail2banRegexTest.FILENAME_ZZZ_SSHD, "sshd.conf[mode=normal]"
 		)
 		self.assertTrue(fail2banRegex.start(args))
 		# test failure line and all not-failure lines presents:
@@ -234,7 +236,8 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"-l", "notice", # put down log-level, because of too many debug-messages
 			"--print-all-matched", "--print-all-missed",
-			Fail2banRegexTest.FILENAME_ZZZ_SSHD, Fail2banRegexTest.FILTER_ZZZ_SSHD
+			"-c", os.path.dirname(Fail2banRegexTest.FILTER_ZZZ_SSHD),
+			Fail2banRegexTest.FILENAME_ZZZ_SSHD, os.path.basename(Fail2banRegexTest.FILTER_ZZZ_SSHD)
 		)
 		self.assertTrue(fail2banRegex.start(args))
 		# test "failure" line presents (2nd part only, because multiline fewer precise):
@@ -245,9 +248,16 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		# by the way test of ignoreregex (specified in filter file)...
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"-l", "notice", # put down log-level, because of too many debug-messages
-			Fail2banRegexTest.FILENAME_ZZZ_GEN, Fail2banRegexTest.FILTER_ZZZ_GEN
+			Fail2banRegexTest.FILENAME_ZZZ_GEN, Fail2banRegexTest.FILTER_ZZZ_GEN+"[mode=test]"
 		)
 		self.assertTrue(fail2banRegex.start(args))
+
+	def testWrongFilterFile(self):
+		# use test log as filter file to cover eror cases...
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			Fail2banRegexTest.FILENAME_ZZZ_GEN, Fail2banRegexTest.FILENAME_ZZZ_GEN
+		)
+		self.assertFalse(fail2banRegex.start(args))
 
 	def _reset(self):
 		# reset global warn-counter:

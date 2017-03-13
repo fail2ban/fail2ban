@@ -138,7 +138,6 @@ config/filter.d/solid-pop3d.conf
 config/filter.d/squid.conf
 config/filter.d/squirrelmail.conf
 config/filter.d/sshd.conf
-config/filter.d/sshd-ddos.conf
 config/filter.d/stunnel.conf
 config/filter.d/suhosin.conf
 config/filter.d/tine20.conf
@@ -327,7 +326,6 @@ fail2ban/tests/files/logs/solid-pop3d
 fail2ban/tests/files/logs/squid
 fail2ban/tests/files/logs/squirrelmail
 fail2ban/tests/files/logs/sshd
-fail2ban/tests/files/logs/sshd-ddos
 fail2ban/tests/files/logs/stunnel
 fail2ban/tests/files/logs/suhosin
 fail2ban/tests/files/logs/tine20
