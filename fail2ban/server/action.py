@@ -98,6 +98,13 @@ class CallingMap(MutableMapping, object):
 		except:
 			return dict(self.data, **self.storage)
 
+	def getRawItem(self, key):
+		try:
+			value = self.storage[key]
+		except KeyError:
+			value = self.data[key]
+		return value
+
 	def __getitem__(self, key):
 		try:
 			value = self.storage[key]

@@ -240,6 +240,7 @@ def substituteRecursiveTags(inptags, conditional='',
 	# init:
 	ignore = set(ignore)
 	done = set()
+	calmap = hasattr(tags, "getRawItem")
 	# repeat substitution while embedded-recursive (repFlag is True)
 	while True:
 		repFlag = False
@@ -247,6 +248,8 @@ def substituteRecursiveTags(inptags, conditional='',
 		for tag in tags.iterkeys():
 			# ignore escaped or already done (or in ignore list):
 			if tag in ignore or tag in done: continue
+			# ignore replacing callable items from calling map - should be converted on demand only (by get):
+			if calmap and callable(tags.getRawItem(tag)): continue
 			value = orgval = str(tags[tag])
 			# search and replace all tags within value, that can be interpolated using other tags:
 			m = tre_search(value)
