@@ -15,8 +15,18 @@ TODO: implementing of options resp. other tasks from PR #1346
 ### Fixes
 * `filter.d/pam-generic.conf`:
   - [grave] injection on user name to host fixed
+* `filter.d/sshd.conf`:
+  - rewritten using `prefregex` and used MLFID-related multi-line parsing
+    (by using tag `<F-MLFID>` instead of buffering with `maxlines`);
+  - optional parameter `mode` rewritten: normal (default), ddos, extra or aggressive (combines all),
+    see sshd for regex details)
+* filter.d/sendmail-reject.conf:
+  - rewritten using `prefregex` and used MLFID-related multi-line parsing;
+  - optional parameter `mode` introduced: normal (default), extra or aggressive
 * `action.d/complain.conf`
   - fixed using new tag `<ip-rev>` (sh/dash compliant now)
+* `action.d/sendmail-geoip-lines.conf`
+  - fixed using new tag `<ip-host>` (without external command execution)
 
 ### New Features
 * New Actions:
@@ -44,7 +54,16 @@ TODO: implementing of options resp. other tasks from PR #1346
   to re.sub with callable)
 * substituteRecursiveTags optimization + moved in helpers facilities (because currently used 
   commonly in server and in client)
-* Provides new tag `<ip-rev>` for PTR reversed representation of IP address
+* New tags (usable in actions):
+  - `<fid>` - failure identifier (if raw resp. failures without IP address)
+  - `<ip-rev>` - PTR reversed representation of IP address
+  - `<ip-host>` - host name of the IP address
+  - `<F-...>` - interpolates to the corresponding filter group capture `...`
+* Allow to use filter options by `fail2ban-regex`, example:
+  fail2ban-regex text.log "sshd[mode=aggressive]"
+* Samples test case factory extended with filter options - dict in JSON to control 
+  filter options (e. g. mode, etc.):
+  # filterOptions: {"mode": "aggressive"}
 
 
 ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
@@ -128,6 +147,10 @@ ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
     if configuration is clean (fails by wrong configured jails if option `-t` specified)
 * New command action parameter `actionrepair` - command executed in order to restore
   sane environment in error case of `actioncheck`.
+* Reporting via abuseipdb.com:
+  - Bans can now be reported to abuseipdb
+  - Catagories must be set in the config
+  - Relevant log lines included in report
 
 ### Enhancements
 * Huge increasing of fail2ban performance and especially test-cases performance (see gh-1109)
@@ -268,6 +291,8 @@ releases.
       and suffix (logged from several ssh versions), according to gh-1206;
 * filter.d/suhosin.conf
     - greedy catch-all before `<HOST>` fixed (potential vulnerability)
+* filter.d/cyrus-imap.conf
+    - accept entries without login-info resp. hostname before IP address (gh-1707)
 * Filter tests extended with check of all config-regexp, that contains greedy catch-all
   before `<HOST>`, that is hard-anchored at end or precise  sub expression after `<HOST>`
 

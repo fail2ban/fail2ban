@@ -120,6 +120,8 @@ Report bugs to https://github.com/fail2ban/fail2ban/issues
 				version="%prog " + version)
 
 	p.add_options([
+		Option("-c", "--config", default='/etc/fail2ban',
+			   help="set alternate config directory"),
 		Option("-d", "--datepattern",
 			   help="set custom pattern used to match date/times"),
 		Option("-e", "--encoding", default=PREFER_ENC,
@@ -271,24 +273,60 @@ class Fail2banRegex(object):
 	def readRegex(self, value, regextype):
 		assert(regextype in ('fail', 'ignore'))
 		regex = regextype + 'regex'
-		if regextype == 'fail' and (os.path.isfile(value) or os.path.isfile(value + '.conf')):
-			if os.path.basename(os.path.dirname(value)) == 'filter.d':
+		# try to check - we've case filter?[options...]?:
+		basedir = self._opts.config
+		fltFile = None
+		fltOpt = {}
+		if regextype == 'fail':
+			fltName, fltOpt = JailReader.extractOptions(value)
+			if fltName is not None:
+				if "." in fltName[~5:]:
+					tryNames = (fltName,)
+				else:
+					tryNames = (fltName, fltName + '.conf', fltName + '.local')
+				for fltFile in tryNames:
+					if not "/" in fltFile:
+						if os.path.basename(basedir) == 'filter.d':
+							fltFile = os.path.join(basedir, fltFile)
+						else:
+							fltFile = os.path.join(basedir, 'filter.d', fltFile)
+					else:
+						basedir = os.path.dirname(fltFile)
+					if os.path.isfile(fltFile):
+						break
+					fltFile = None
+		# if it is filter file:
+		if fltFile is not None:
+			if (basedir == self._opts.config
+				or os.path.basename(basedir) == 'filter.d'
+				or ("." not in fltName[~5:] and "/" not in fltName)
+			):
 				## within filter.d folder - use standard loading algorithm to load filter completely (with .local etc.):
-				basedir = os.path.dirname(os.path.dirname(value))
-				value = os.path.splitext(os.path.basename(value))[0]
-				output( "Use %11s filter file : %s, basedir: %s" % (regex, value, basedir) )
-				reader = FilterReader(value, 'fail2ban-regex-jail', {}, share_config=self.share_config, basedir=basedir)
-				if not reader.read(): # pragma: no cover
-					output( "ERROR: failed to load filter %s" % value )
-					return False
-			else: # pragma: no cover
+				if os.path.basename(basedir) == 'filter.d':
+					basedir = os.path.dirname(basedir)
+				fltName = os.path.splitext(os.path.basename(fltName))[0]
+				output( "Use %11s filter file : %s, basedir: %s" % (regex, fltName, basedir) )
+			else:
 				## foreign file - readexplicit this file and includes if possible:
-				output( "Use %11s file : %s" % (regex, value) )
-				reader = FilterReader(value, 'fail2ban-regex-jail', {}, share_config=self.share_config)
-				reader.setBaseDir(None)
-				if not reader.readexplicit(): 
-					output( "ERROR: failed to read %s" % value )
-					return False
+				output( "Use %11s file : %s" % (regex, fltName) )
+				basedir = None
+			if fltOpt:
+				output( "Use   filter options : %r" % fltOpt )
+			reader = FilterReader(fltName, 'fail2ban-regex-jail', fltOpt, share_config=self.share_config, basedir=basedir)
+			ret = None
+			try:
+				if basedir is not None:
+					ret = reader.read()
+				else:
+					## foreign file - readexplicit this file and includes if possible:
+					reader.setBaseDir(None)
+					ret = reader.readexplicit()
+			except Exception as e:
+				output("Wrong config file: %s" % (str(e),))
+				if self._verbose: raise(e)
+			if not ret:
+				output( "ERROR: failed to load filter %s" % value )
+				return False
 			reader.getOptions(None)
 			readercommands = reader.convert()
 

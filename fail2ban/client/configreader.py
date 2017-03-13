@@ -176,6 +176,8 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 		if not os.path.exists(self._basedir):
 			raise ValueError("Base configuration directory %s does not exist "
 							  % self._basedir)
+		if filename.startswith("./"): # pragma: no cover
+			filename = os.path.abspath(filename)
 		basename = os.path.join(self._basedir, filename)
 		logSys.debug("Reading configs for %s under %s " , filename, self._basedir)
 		config_files = [ basename + ".conf" ]
@@ -277,6 +279,8 @@ class DefinitionInitConfigReader(ConfigReader):
 	
 	def __init__(self, file_, jailName, initOpts, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
+		if file_.startswith("./"): # pragma: no cover
+			file_ = os.path.abspath(file_)
 		self.setFile(file_)
 		self.setJailName(jailName)
 		self._initOpts = initOpts
