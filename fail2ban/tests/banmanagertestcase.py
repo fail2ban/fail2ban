@@ -41,6 +41,7 @@ class AddFailure(unittest.TestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
+		super(AddFailure, self).tearDown()
 		tearDownMyTime()
 
 	def testAdd(self):
@@ -169,6 +170,7 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
+		super(StatusExtendedCymruInfo, self).tearDown()
 		tearDownMyTime()
 
 	available = True, None

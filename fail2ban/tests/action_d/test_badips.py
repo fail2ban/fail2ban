@@ -61,6 +61,7 @@ if sys.version_info >= (2,7): # pragma: no cover - may be unavailable
 			# Must cancel timer!
 			if self.action._timer:
 				self.action._timer.cancel()
+			super(BadIPsActionTest, self).tearDown()
 
 		def testCategory(self):
 			categories = self.action.getCategories()

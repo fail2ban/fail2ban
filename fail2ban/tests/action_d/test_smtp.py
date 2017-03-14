@@ -81,6 +81,7 @@ class SMTPActionTest(unittest.TestCase):
 		self.smtpd.close()
 		self._active = False
 		self._loop_thread.join()
+		super(SMTPActionTest, self).tearDown()
 
 	def _exec_and_wait(self, doaction, timeout=3, short=False):
 		if short: timeout /= 25
