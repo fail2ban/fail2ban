@@ -138,13 +138,15 @@ def loop(active, timeout=None, use_poll=False):
 				break
 			errCount += 1
 			if errCount < 20:
-				if e.args[0] in (errno.ENOTCONN, errno.EBADF): # (errno.EBADF, 'Bad file descriptor')
+				# errno.ENOTCONN - 'Socket is not connected'
+				# errno.EBADF - 'Bad file descriptor'
+				if e.args[0] in (errno.ENOTCONN, errno.EBADF): # pragma: no cover (too sporadic)
 					logSys.info('Server connection was closed: %s', str(e))
 				else:
 					logSys.error('Server connection was closed: %s', str(e))
 			elif errCount == 20:
-				logSys.info('Too many errors - stop logging connection errors')
 				logSys.exception(e)
+				logSys.error('Too many errors - stop logging connection errors')
 
 
 ##
