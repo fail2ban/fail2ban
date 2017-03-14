@@ -478,7 +478,7 @@ class LogFileFilterPoll(unittest.TestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
-		pass
+		super(LogFileFilterPoll, self).tearDown()
 
 	#def testOpen(self):
 	#	self.filter.openLogFile(LogFile.FILENAME)
@@ -861,7 +861,7 @@ def get_monitor_failures_testcase(Filter_):
 			#print "D: KILLING THE FILE"
 			_killfile(self.file, self.name)
 			#time.sleep(0.2)			  # Give FS time to ack the removal
-			pass
+			super(MonitorFailures, self).tearDown()
 
 		def _sleep_4_poll(self):
 			# Since FilterPoll relies on time stamps and some
@@ -1076,7 +1076,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			if self.filter and self.filter.active:
 				self.filter.stop()
 				self.filter.join()		  # wait for the thread to terminate
-				pass
+			super(MonitorJournalFailures, self).tearDown()
 
 		def _getRuntimeJournal(self):
 			# retrieve current system journal path

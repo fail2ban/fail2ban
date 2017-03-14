@@ -79,7 +79,7 @@ class TransmitterBase(unittest.TestCase):
 		"""Call after every test case."""
 		# stop jails, etc.
 		self.server.quit()
-		#super(TransmitterBase, self).tearDown()
+		super(TransmitterBase, self).tearDown()
 
 	def setGetTest(self, cmd, inValue, outValue=(None,), outCode=0, jail=None, repr_=False):
 		"""Process set/get commands and compare both return values 

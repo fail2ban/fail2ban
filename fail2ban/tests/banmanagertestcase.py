@@ -38,7 +38,7 @@ class AddFailure(unittest.TestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
-		pass
+		super(AddFailure, self).tearDown()
 
 	def testAdd(self):
 		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
@@ -147,7 +147,7 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
-		pass
+		super(StatusExtendedCymruInfo, self).tearDown()
 
 	available = True, None
 

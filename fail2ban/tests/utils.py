@@ -531,12 +531,21 @@ if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
 _org_setUp = unittest.TestCase.setUp
 def _customSetUp(self):
 	# print('=='*10, self)
-	if unittest.F2B.log_level <= logging.DEBUG: # so if DEBUG etc -- show them (and log it in travis)!
-		print("")
+	# so if DEBUG etc -- show them (and log it in travis)!
+	if unittest.F2B.log_level <= logging.DEBUG: # pragma: no cover
+		sys.stderr.write("\n")
 		logSys.debug('='*10 + ' %s ' + '='*20, self.id())
 	_org_setUp(self)
+	if unittest.F2B.verbosity > 2: # pragma: no cover
+		self.__startTime = time.time()
+
+_org_tearDown = unittest.TestCase.tearDown
+def _customTearDown(self):
+	if unittest.F2B.verbosity > 2: # pragma: no cover
+		sys.stderr.write(" %.3fs -- " % (time.time() - self.__startTime,))
 
 unittest.TestCase.setUp = _customSetUp
+unittest.TestCase.tearDown = _customTearDown
 
 
 class LogCaptureTestCase(unittest.TestCase):

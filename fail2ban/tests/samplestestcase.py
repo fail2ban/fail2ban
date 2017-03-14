@@ -54,6 +54,7 @@ class FilterSamplesRegex(unittest.TestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
+		super(FilterSamplesRegex, self).tearDown()
 		tearDownMyTime()
 
 	def testFiltersPresent(self):
