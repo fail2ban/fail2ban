@@ -169,6 +169,36 @@ def splitwords(s):
 		return []
 	return filter(bool, map(str.strip, re.split('[ ,\n]+', s)))
 
+if sys.version_info >= (3,5):
+	eval(compile(r'''if 1:
+	def _merge_dicts(x, y):
+		"""Helper to merge dicts.
+		"""
+		if y:
+			return {**x, **y}
+		return x
+	
+	def _merge_copy_dicts(x, y):
+		"""Helper to merge dicts to guarantee a copy result (r is never x).
+		"""
+		return {**x, **y}
+	''', __file__, 'exec'))
+else:
+	def _merge_dicts(x, y):
+		"""Helper to merge dicts.
+		"""
+		r = x
+		if y:
+			r = x.copy()
+			r.update(y)
+		return r
+	def _merge_copy_dicts(x, y):
+		"""Helper to merge dicts to guarantee a copy result (r is never x).
+		"""
+		r = x.copy()
+		if y:
+			r.update(y)
+		return r
 
 #
 # Following "uni_decode" function unified python independent any to string converting
@@ -240,6 +270,7 @@ def substituteRecursiveTags(inptags, conditional='',
 	# init:
 	ignore = set(ignore)
 	done = set()
+	noRecRepl = hasattr(tags, "getRawItem")
 	# repeat substitution while embedded-recursive (repFlag is True)
 	while True:
 		repFlag = False
@@ -247,6 +278,8 @@ def substituteRecursiveTags(inptags, conditional='',
 		for tag in tags.iterkeys():
 			# ignore escaped or already done (or in ignore list):
 			if tag in ignore or tag in done: continue
+			# ignore replacing callable items from calling map - should be converted on demand only (by get):
+			if noRecRepl and callable(tags.getRawItem(tag)): continue
 			value = orgval = str(tags[tag])
 			# search and replace all tags within value, that can be interpolated using other tags:
 			m = tre_search(value)
@@ -281,6 +314,8 @@ def substituteRecursiveTags(inptags, conditional='',
 					# constructs like <STDIN>.
 					m = tre_search(value, m.end())
 					continue
+				# if calling map - be sure we've string:
+				if noRecRepl: repl = str(repl)
 				value = value.replace('<%s>' % rtag, repl)
 				#logSys.log(5, 'value now: %s' % value)
 				# increment reference count:

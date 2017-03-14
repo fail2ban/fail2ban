@@ -49,14 +49,14 @@ from ..version import version
 from .jailreader import JailReader
 from .filterreader import FilterReader
 from ..server.filter import Filter, FileContainer
-from ..server.failregex import RegexException
+from ..server.failregex import Regex, RegexException
 
 from ..helpers import str2LogLevel, getVerbosityFormat, FormatterWithTraceBack, getLogger, PREFER_ENC
 # Gets the instance of the logger.
 logSys = getLogger("fail2ban")
 
-def debuggexURL(sample, regex):
-	q = urllib.urlencode({ 're': regex.replace('<HOST>', '(?&.ipv4)'),
+def debuggexURL(sample, regex, useDns="yes"):
+	q = urllib.urlencode({ 're': Regex._resolveHostTag(regex, useDns=useDns),
 							'str': sample,
 							'flavor': 'python' })
 	return 'https://www.debuggex.com/?' + q
@@ -198,15 +198,17 @@ class RegexStat(object):
 class LineStats(object):
 	"""Just a convenience container for stats
 	"""
-	def __init__(self):
+	def __init__(self, opts):
 		self.tested = self.matched = 0
 		self.matched_lines = []
 		self.missed = 0
 		self.missed_lines = []
-		self.missed_lines_timeextracted = []
 		self.ignored = 0
 		self.ignored_lines = []
-		self.ignored_lines_timeextracted = []
+		if opts.debuggex:
+			self.matched_lines_timeextracted = []
+			self.missed_lines_timeextracted = []
+			self.ignored_lines_timeextracted = []
 
 	def __str__(self):
 		return "%(tested)d lines, %(ignored)d ignored, %(matched)d matched, %(missed)d missed" % self
@@ -230,7 +232,7 @@ class Fail2banRegex(object):
 		self._ignoreregex = list()
 		self._failregex = list()
 		self._time_elapsed = None
-		self._line_stats = LineStats()
+		self._line_stats = LineStats(opts)
 
 		if opts.maxlines:
 			self.setMaxLines(opts.maxlines)
@@ -414,9 +416,10 @@ class Fail2banRegex(object):
 				try:
 					self._line_stats.missed_lines.pop(
 						self._line_stats.missed_lines.index("".join(bufLine)))
-					self._line_stats.missed_lines_timeextracted.pop(
-						self._line_stats.missed_lines_timeextracted.index(
-							"".join(bufLine[::2])))
+					if self._debuggex:
+						self._line_stats.missed_lines_timeextracted.pop(
+							self._line_stats.missed_lines_timeextracted.index(
+								"".join(bufLine[::2])))
 				except ValueError:
 					pass
 				else:
@@ -443,19 +446,23 @@ class Fail2banRegex(object):
 				self._line_stats.ignored += 1
 				if not self._print_no_ignored and (self._print_all_ignored or self._line_stats.ignored <= self._maxlines + 1):
 					self._line_stats.ignored_lines.append(line)
-					self._line_stats.ignored_lines_timeextracted.append(line_datetimestripped)
+					if self._debuggex:
+						self._line_stats.ignored_lines_timeextracted.append(line_datetimestripped)
 
 			if len(ret) > 0:
 				assert(not is_ignored)
 				self._line_stats.matched += 1
 				if self._print_all_matched:
 					self._line_stats.matched_lines.append(line)
+					if self._debuggex:
+						self._line_stats.matched_lines_timeextracted.append(line_datetimestripped)
 			else:
 				if not is_ignored:
 					self._line_stats.missed += 1
 					if not self._print_no_missed and (self._print_all_missed or self._line_stats.missed <= self._maxlines + 1):
 						self._line_stats.missed_lines.append(line)
-						self._line_stats.missed_lines_timeextracted.append(line_datetimestripped)
+						if self._debuggex:
+							self._line_stats.missed_lines_timeextracted.append(line_datetimestripped)
 			self._line_stats.tested += 1
 
 		self._time_elapsed = time.time() - t0
@@ -478,7 +485,7 @@ class Fail2banRegex(object):
 					for arg in [l, regexlist]:
 						ans = [ x + [y] for x in ans for y in arg ]
 					b = map(lambda a: a[0] +  ' | ' + a[1].getFailRegex() + ' |  ' + 
-						debuggexURL(self.encode_line(a[0]), a[1].getFailRegex()), ans)
+						debuggexURL(self.encode_line(a[0]), a[1].getFailRegex(), self._opts.usedns), ans)
 					pprint_list([x.rstrip() for x in b], header)
 				else:
 					output( "%s too many to print.  Use --print-all-%s " \
