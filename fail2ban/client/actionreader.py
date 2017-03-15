@@ -45,6 +45,7 @@ class ActionReader(DefinitionInitConfigReader):
 		"actioncheck": ["string", None],
 		"actionrepair": ["string", None],
 		"actionban": ["string", None],
+		"actionprolong": ["string", None],
 		"actionunban": ["string", None],
 		"norestored": ["string", None],
 	}

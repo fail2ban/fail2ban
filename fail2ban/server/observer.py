@@ -121,7 +121,26 @@ class ObserverThread(JailThread):
 	def add_timer(self, starttime, *event):
 		"""Add a timer event to queue will start (and wake) in 'starttime' seconds
 		"""
+		# in testing we should wait (looping) for the possible time drifts:
+		if MyTime.myTime is not None and starttime:
+			# test time after short sleep:
+			t = threading.Timer(Utils.DEFAULT_SLEEP_INTERVAL, self._delayedEvent,
+				(MyTime.time() + starttime, time.time() + starttime, event)
+			)
+			t.start()
+			return
+		# add timer event:
 		t = threading.Timer(starttime, self.add, event)
+		t.start()
+
+	def _delayedEvent(self, endMyTime, endTime, event):
+		if MyTime.time() >= endMyTime or time.time() >= endTime:
+			self.add_timer(0, *event)
+			return
+		# repeat after short sleep:
+		t = threading.Timer(Utils.DEFAULT_SLEEP_INTERVAL, self._delayedEvent,
+			(endMyTime, endTime, event)
+		)
 		t.start()
 
 	def pulse_notify(self):
@@ -196,7 +215,8 @@ class ObserverThread(JailThread):
 						if ev is None:
 							break
 						## retrieve method by name
-						meth = __meth[ev[0]]
+						meth = ev[0]
+						if not callable(ev[0]): meth = __meth[meth]
 						## execute it with rest of event as variable arguments
 						meth(*ev[1:])
 					except Exception as e:
@@ -448,10 +468,10 @@ class ObserverThread(JailThread):
 		Observer will check ip was known (bad) and possibly increase/prolong a ban time
 		Secondary we will actualize the bans and bips (bad ip) in database
 		"""
-		oldbtime = btime
-		ip = ticket.getIP()
-		logSys.debug("[%s] Observer: ban found %s, %s", jail.name, ip, btime)
 		try:
+			oldbtime = btime
+			ip = ticket.getIP()
+			logSys.debug("[%s] Observer: ban found %s, %s", jail.name, ip, btime)
 			# if not permanent, not restored and ban time was not set - check time should be increased:
 			if btime != -1 and not ticket.restored and ticket.getBanTime() is None:
 				btime = self.incrBanTime(jail, btime, ticket)
@@ -475,10 +495,28 @@ class ObserverThread(JailThread):
 			if btime != oldbtime:
 				logSys.notice("[%s] Increase Ban %s (%d # %s -> %s)", jail.name, 
 					ip, ticket.getBanCount(), *logtime)
+				# delayed prolonging ticket via actions that expected this:
+				logSys.log(5, "[%s] Observer: prolong %s in %s", jail.name, ip, (btime, oldbtime))
+				self.add_timer(min(10, btime - oldbtime - 5), self.prolongBan, ticket, jail)
 			# add ticket to database, but only if was not restored (not already read from database):
 			if jail.database is not None and not ticket.restored:
 				# add to database always only after ban time was calculated an not yet already banned:
 				jail.database.addBan(jail, ticket)
+		except Exception as e:
+			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+
+	def prolongBan(self, ticket, jail):
+		""" Notify observer a ban occured for ip
+
+		Observer will check ip was known (bad) and possibly increase/prolong a ban time
+		Secondary we will actualize the bans and bips (bad ip) in database
+		"""
+		try:
+			btime = ticket.getBanTime()
+			ip = ticket.getIP()
+			logSys.debug("[%s] Observer: prolong %s, %s", jail.name, ip, btime)
+			# prolong ticket via actions that expected this:
+			jail.actions._prolongBan(ticket)
 		except Exception as e:
 			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 

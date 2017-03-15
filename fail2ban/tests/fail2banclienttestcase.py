@@ -43,7 +43,8 @@ from .. import protocol
 from ..server import server
 from ..server.mytime import MyTime
 from ..server.utils import Utils
-from .utils import LogCaptureTestCase, logSys as DefLogSys, with_tmpdir, shutil, logging
+from .utils import LogCaptureTestCase, logSys as DefLogSys, with_tmpdir, shutil, logging, \
+	TEST_NOW, tearDownMyTime
 
 from ..helpers import getLogger
 
@@ -79,6 +80,11 @@ fail2bancmdline.output = \
 fail2banclient.output = \
 fail2banserver.output = \
 protocol.output = _test_output
+
+def _time_shift(shift):
+	# jump to the future (+shift minutes):
+	logSys.debug("===>>> time shift + %s min", shift)
+	MyTime.setTime(MyTime.time() + shift*60)
 
 
 Observers = server.Observers
@@ -317,6 +323,7 @@ def with_foreground_server_thread(startextra={}):
 					# so don't kill (same process) - if success, just wait for end of worker:
 					if phase.get('end', None):
 						th.join()
+				tearDownMyTime()
 		return wrapper
 	return _deco_wrapper
 
@@ -343,6 +350,7 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 		server.DEF_LOGTARGET = SRV_DEF_LOGTARGET
 		server.DEF_LOGLEVEL = SRV_DEF_LOGLEVEL
 		LogCaptureTestCase.tearDown(self)
+		tearDownMyTime()
 
 	@staticmethod
 	def _test_exit(code=0):
@@ -1158,3 +1166,97 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"Jail 'test-jail1' stopped", 
 			"Jail 'test-jail1' started", all=True)
+
+	@with_foreground_server_thread()
+	def testServerObserver(self, tmp, startparams):
+		cfg = pjoin(tmp, "config")
+		test1log = pjoin(tmp, "test1.log")
+
+		os.mkdir(pjoin(cfg, "action.d"))
+		def _write_action_cfg(actname="test-action1", prolong=True):
+			fn = pjoin(cfg, "action.d", "%s.conf" % actname)
+			_write_file(fn, "w",
+				"[DEFAULT]",
+				"",
+				"[Definition]",
+				"actionban =     printf %%b '[%(name)s] %(actname)s: ++ ban <ip> -t <bantime> : <F-MSG>'",
+				"actionprolong = printf %%b '[%(name)s] %(actname)s: ++ prolong <ip> -t <bantime> : <F-MSG>'" \
+					if prolong else "",
+				"actionunban =   printf %%b '[%(name)s] %(actname)s: -- unban <ip>'",
+			)
+			if unittest.F2B.log_level <= logging.DEBUG: # pragma: no cover
+				_out_file(fn)
+
+		def _write_jail_cfg(backend="polling"):
+			_write_file(pjoin(cfg, "jail.conf"), "w",
+				"[INCLUDES]", "",
+				"[DEFAULT]", "",
+				"usedns = no",
+				"maxretry = 3",
+				"findtime = 1m",
+				"bantime = 5m",
+				"bantime.increment = true",
+				"datepattern = {^LN-BEG}EPOCH",
+				"",
+				"[test-jail1]", "backend = " + backend, "filter =", 
+				"action = test-action1[name='%(__name__)s']",
+				"         test-action2[name='%(__name__)s']",
+				"logpath = " + test1log,
+				"failregex = ^\s*failure <F-ERRCODE>401|403</F-ERRCODE> from <HOST>:\s*<F-MSG>.*</F-MSG>$",
+				"enabled = true",
+				"",
+			)
+			if unittest.F2B.log_level <= logging.DEBUG: # pragma: no cover
+				_out_file(pjoin(cfg, "jail.conf"))
+
+		# create test config:
+		_write_action_cfg(actname="test-action1", prolong=False)
+		_write_action_cfg(actname="test-action2", prolong=True)
+		_write_jail_cfg()
+
+		_write_file(test1log, "w")
+		# initial start:
+		self.pruneLog("[test-phase 0) time-0]")
+		self.execSuccess(startparams, "reload")
+		# generate bad ip:
+		_write_file(test1log, "w+", *(
+		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.11: I'm bad \"hacker\" `` $(echo test)",) * 3
+		))
+		# wait for ban:
+		self.assertLogged(
+			"stdout: '[test-jail1] test-action1: ++ ban 192.0.2.11 -t 300 : ",
+			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.11 -t 300 : ",
+			all=True, wait=MID_WAITTIME)
+		# wait for observer idle (write all tickets to db):
+		_observer_wait_idle()
+
+		self.pruneLog("[test-phase 1) time+10m]")
+		# jump to the future (+10 minutes):
+		_time_shift(10)
+		self.assertLogged(
+			"stdout: '[test-jail1] test-action1: -- unban 192.0.2.11",
+			"stdout: '[test-jail1] test-action2: -- unban 192.0.2.11",
+			all=True, wait=MID_WAITTIME)
+
+		self.pruneLog("[test-phase 2) time+10m]")
+		# write again (IP already bad):
+		_write_file(test1log, "w+", *(
+		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.11: I'm very bad \"hacker\" `` $(echo test)",) * 2
+		))
+		# wait for ban:
+		self.assertLogged(
+			"stdout: '[test-jail1] test-action1: ++ ban 192.0.2.11 -t 300 : ",
+			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.11 -t 300 : ",
+			all=True, wait=MID_WAITTIME)
+		# wait for observer idle (write all tickets to db):
+		_observer_wait_idle()
+
+		self.pruneLog("[test-phase 2) time+11m]")
+		# jump to the future (+1 minute):
+		_time_shift(1)
+		# wait for observer idle (write all tickets to db):
+		_observer_wait_idle()
+		# wait for prolong:
+		self.assertLogged(
+			"stdout: '[test-jail1] test-action2: ++ prolong 192.0.2.11 -t 600 : ",
+			all=True, wait=MID_WAITTIME)
