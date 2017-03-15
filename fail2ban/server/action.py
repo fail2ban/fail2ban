@@ -453,7 +453,7 @@ class CommandAction(ActionBase):
 		return value
 
 	@classmethod
-	def replaceTag(cls, query, aInfo, conditional='', cache=None, substRec=True):
+	def replaceTag(cls, query, aInfo, conditional='', cache=None):
 		"""Replaces tags in `query` with property values.
 
 		Parameters
@@ -481,9 +481,8 @@ class CommandAction(ActionBase):
 		# **Important**: don't replace if calling map - contains dynamic values only,
 		# no recursive tags, otherwise may be vulnerable on foreign user-input:
 		noRecRepl = isinstance(aInfo, CallingMap)
-		if noRecRepl:
-			subInfo = aInfo
-		else:
+		subInfo = aInfo
+		if not noRecRepl:
 			# substitute tags recursive (and cache if possible),
 			# first try get cached tags dictionary:
 			subInfo = csubkey = None
@@ -534,12 +533,49 @@ class CommandAction(ActionBase):
 					"unexpected too long replacement interpolation, "
 					"possible self referencing definitions in query: %s" % (query,))
 
-
 		# cache if possible:
 		if cache is not None:
 			cache[ckey] = value
 		#
 		return value
+
+	@classmethod
+	def replaceDynamicTags(cls, realCmd, aInfo):
+		"""Replaces dynamical tags in `query` with property values.
+
+		**Important**
+		-------------
+		Because this tags are dynamic resp. foreign (user) input:
+		  - values should be escaped
+		  - no recursive substitution (no interpolation for <a<b>>)
+		  - don't use cache
+
+		Parameters
+		----------
+		query : str
+			String with tags.
+		aInfo : dict
+			Tags(keys) and associated values for substitution in query.
+
+		Returns
+		-------
+		str
+			shell script as string or array with tags replaced (direct or as variables).
+		"""
+		realCmd = cls.replaceTag(realCmd, aInfo, conditional=False)
+		# Replace ticket options (filter capture groups) non-recursive:
+		if '<' in realCmd:
+			tickData = aInfo.get("F-*")
+			if not tickData: tickData = {}
+			def substTag(m):
+				tn = mapTag2Opt(m.groups()[0])
+				try:
+					return str(tickData[tn])
+				except KeyError:
+					return ""
+			
+			realCmd = FCUSTAG_CRE.sub(substTag, realCmd)
+		return realCmd
 
 	def _processCmd(self, cmd, aInfo=None, conditional=''):
 		"""Executes a command with preliminary checks and substitutions.
@@ -605,21 +641,9 @@ class CommandAction(ActionBase):
 		realCmd = self.replaceTag(cmd, self._properties, 
 			conditional=conditional, cache=self.__substCache)
 
-		# Replace dynamical tags (don't use cache here)
+		# Replace dynamical tags, important - don't cache, no recursion and auto-escape here
 		if aInfo is not None:
-			realCmd = self.replaceTag(realCmd, aInfo, conditional=conditional)
-			# Replace ticket options (filter capture groups) non-recursive:
-			if '<' in realCmd:
-				tickData = aInfo.get("F-*")
-				if not tickData: tickData = {}
-				def substTag(m):
-					tn = mapTag2Opt(m.groups()[0])
-					try:
-						return str(tickData[tn])
-					except KeyError:
-						return ""
-				
-				realCmd = FCUSTAG_CRE.sub(substTag, realCmd)
+			realCmd = self.replaceDynamicTags(realCmd, aInfo)
 		else:
 			realCmd = cmd
 
@@ -653,8 +677,5 @@ class CommandAction(ActionBase):
 			logSys.debug("Nothing to do")
 			return True
 
-		_cmd_lock.acquire()
-		try:
+		with _cmd_lock:
 			return Utils.executeCmd(realCmd, timeout, shell=True, output=False, **kwargs)
-		finally:
-			_cmd_lock.release()
