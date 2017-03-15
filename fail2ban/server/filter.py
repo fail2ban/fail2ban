@@ -183,15 +183,12 @@ class Filter(JailThread):
 						 "valid", index)
 
 	##
-	# Get the regular expression which matches the failure.
+	# Get the regular expressions as list.
 	#
-	# @return the regular expression
+	# @return the regular expression list
 
 	def getFailRegex(self):
-		failRegex = list()
-		for regex in self.__failRegex:
-			failRegex.append(regex.getRegex())
-		return failRegex
+		return [regex.getRegex() for regex in self.__failRegex]
 
 	##
 	# Add the regular expression which matches the failure.
