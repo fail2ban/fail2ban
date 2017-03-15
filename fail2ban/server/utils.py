@@ -60,6 +60,7 @@ class Utils():
 	DEFAULT_SLEEP_TIME = 2
 	DEFAULT_SLEEP_INTERVAL = 0.2
 	DEFAULT_SHORT_INTERVAL = 0.001
+	DEFAULT_SHORTEST_INTERVAL = DEFAULT_SHORT_INTERVAL / 100
 
 
 	class Cache(object):
@@ -183,8 +184,8 @@ class Utils():
 				def _popen_wait_end():
 					retcode = popen.poll()
 					return (True, retcode) if retcode is not None else None
-				# popen.poll is fast operation so we can put down the sleep interval:
-				retcode = Utils.wait_for(_popen_wait_end, timeout, Utils.DEFAULT_SHORT_INTERVAL / 100)
+				# popen.poll is fast operation so we can use the shortest sleep interval:
+				retcode = Utils.wait_for(_popen_wait_end, timeout, Utils.DEFAULT_SHORTEST_INTERVAL)
 				if retcode:
 					retcode = retcode[1]
 			# if timeout:

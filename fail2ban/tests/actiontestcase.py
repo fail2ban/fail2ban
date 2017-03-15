@@ -394,7 +394,7 @@ class CommandActionTest(LogCaptureTestCase):
 			r'''printf %b "foreign input:\n'''
 			r''' -- $f2bV_A --\n'''
 			r''' -- $f2bV_B --\n'''
-			r''' -- $(echo $f2bV_C) --''' # echo just replaces \n to test it as single line
+			r''' -- $(echo -n $f2bV_C) --''' # echo just replaces \n to test it as single line
 			r'''"''', 
 			varsDict={
 			'f2bV_A': 'I\'m a hacker; && $(echo $f2bV_B)', 
@@ -405,6 +405,34 @@ class CommandActionTest(LogCaptureTestCase):
 			' -- I\'m a hacker; && $(echo $f2bV_B) --',
 			' -- I"m very bad hacker --',
 			' -- `Very | very $(bad & worst hacker)` --', all=True)
+
+	def testExecuteReplaceEscapeWithVars(self):
+		self.__action.actionban = 'echo "** ban <ip>, reason: <reason> ...\\n<matches>"'
+		self.__action.actionunban = 'echo "** unban <ip>"'
+		self.__action.actionstop = 'echo "** stop monitoring"'
+		matches = [
+			'<actionunban>',
+			'" Hooray! #',
+			'`I\'m cool script kiddy',
+			'`I`m very cool > /here-is-the-path/to/bin/.x-attempt.sh',
+			'<actionstop>',
+		]
+		aInfo = {
+			'ip': '192.0.2.1',
+			'reason': 'hacking attempt ( he thought he knows how f2b internally works ;)',
+			'matches': '\n'.join(matches)
+		}
+		self.pruneLog()
+		self.__action.ban(aInfo)
+		self.assertLogged(
+			'** ban %s' % aInfo['ip'], aInfo['reason'], *matches, all=True)
+		self.assertNotLogged(
+			'** unban %s' % aInfo['ip'], '** stop monitoring', all=True)
+		self.pruneLog()
+		self.__action.unban(aInfo)
+		self.__action.stop()
+		self.assertLogged(
+			'** unban %s' % aInfo['ip'], '** stop monitoring', all=True)
 
 	def testExecuteIncorrectCmd(self):
 		CommandAction.executeCmd('/bin/ls >/dev/null\nbogusXXX now 2>/dev/null')

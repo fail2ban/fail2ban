@@ -539,6 +539,9 @@ class CommandAction(ActionBase):
 		#
 		return value
 
+	ESCAPE_CRE = re.compile(r"""[\\#&;`|*?~<>\^\(\)\[\]{}$'"\n\r]""")
+	ESCAPE_VN_CRE = re.compile(r"\W")
+
 	@classmethod
 	def replaceDynamicTags(cls, realCmd, aInfo):
 		"""Replaces dynamical tags in `query` with property values.
@@ -546,7 +549,7 @@ class CommandAction(ActionBase):
 		**Important**
 		-------------
 		Because this tags are dynamic resp. foreign (user) input:
-		  - values should be escaped
+		  - values should be escaped (using "escape" as shell variable)
 		  - no recursive substitution (no interpolation for <a<b>>)
 		  - don't use cache
 
@@ -562,19 +565,52 @@ class CommandAction(ActionBase):
 		str
 			shell script as string or array with tags replaced (direct or as variables).
 		"""
-		realCmd = cls.replaceTag(realCmd, aInfo, conditional=False)
+		# array for escaped vars:
+		varsDict = dict()
+
+		def escapeVal(tag, value):
+			# if the value should be escaped:
+			if cls.ESCAPE_CRE.search(value):
+				# That one needs to be escaped since its content is
+				# out of our control
+				tag = 'f2bV_%s' % cls.ESCAPE_VN_CRE.sub('_', tag)
+				varsDict[tag] = value # add variable
+				value = '$'+tag	# replacement as variable
+			# replacement for tag:
+			return value
+
+		# substitution callable, used by interpolation of each tag
+		def substVal(m):
+			tag = m.group(1)			# tagname from match
+			try:
+				value = aInfo[tag]
+			except KeyError:
+				# fallback (no or default replacement)
+				return ADD_REPL_TAGS.get(tag, m.group())
+			value = str(value)		# assure string
+			# replacement for tag:
+			return escapeVal(tag, value)
+		
+		# Replace normally properties of aInfo non-recursive:
+		realCmd = TAG_CRE.sub(substVal, realCmd)
+
 		# Replace ticket options (filter capture groups) non-recursive:
 		if '<' in realCmd:
 			tickData = aInfo.get("F-*")
 			if not tickData: tickData = {}
 			def substTag(m):
-				tn = mapTag2Opt(m.groups()[0])
+				tag = mapTag2Opt(m.groups()[0])
 				try:
-					return str(tickData[tn])
+					value = str(tickData[tag])
 				except KeyError:
 					return ""
+				return escapeVal("F_"+tag, value)
 			
 			realCmd = FCUSTAG_CRE.sub(substTag, realCmd)
+
+		# build command corresponding "escaped" variables:
+		if varsDict:
+			realCmd = Utils.buildShellCmd(realCmd, varsDict)
 		return realCmd
 
 	def _processCmd(self, cmd, aInfo=None, conditional=''):
