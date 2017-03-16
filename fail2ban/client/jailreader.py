@@ -43,7 +43,7 @@ logSys = getLogger(__name__)
 class JailReader(ConfigReader):
 	
 	# regex, to extract list of options:
-	optionCRE = re.compile(r"^([\w\-_\.]+)(?:\[(.*)\])?\s*$", re.DOTALL)
+	optionCRE = re.compile(r"^([^\[]+)(?:\[(.*)\])?\s*$", re.DOTALL)
 	# regex, to iterate over single option in option list, syntax:
 	# `action = act[p1="...", p2='...', p3=...]`, where the p3=... not contains `,` or ']'
 	# since v0.10 separator extended with `]\s*[` for support of multiple option groups, syntax 
@@ -136,7 +136,8 @@ class JailReader(ConfigReader):
 				if not filterName:
 					raise JailDefError("Invalid filter definition %r" % flt)
 				self.__filter = FilterReader(
-					filterName, self.__name, filterOpt, share_config=self.share_config, basedir=self.getBaseDir())
+					filterName, self.__name, filterOpt, 
+					share_config=self.share_config, basedir=self.getBaseDir())
 				ret = self.__filter.read()
 				# merge options from filter as 'known/...':
 				self.__filter.getOptions(self.__opts)

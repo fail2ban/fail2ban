@@ -1,0 +1,8 @@
+# failJSON: { "time": "2005-07-03T23:07:20", "match": true , "host": "1.2.3.4" }
+03-07-2005 23:07:20   SMTP Server: Authentication failed for user postmaster ; connecting host 1.2.3.4
+# failJSON: { "time": "2014-06-22T09:56:12", "match": true , "host": "1.2.3.4" }
+[28325:00010-3735542592] 22-06-2014 09:56:12   smtp: postmaster [1.2.3.4] authentication failure using internet password
+# failJSON: { "time": "2014-09-08T06:14:27", "match": true , "host": "1.2.3.4" }
+08-09-2014 06:14:27   smtp: postmaster [1.2.3.4] authentication failure using internet password
+# failJSON: { "time": "2016-11-07T22:21:20", "match": true , "host": "1.2.3.4" }
+2016-11-07 22:21:20   smtp: postmaster [1.2.3.4] authentication failure using internet password

@@ -38,7 +38,9 @@ from ..server.server import Server
 from ..server.ipdns import IPAddr
 from ..server.jail import Jail
 from ..server.jailthread import JailThread
+from ..server.ticket import BanTicket
 from ..server.utils import Utils
+from .dummyjail import DummyJail
 from .utils import LogCaptureTestCase
 from ..helpers import getLogger, PREFER_ENC
 from .. import version
@@ -77,7 +79,7 @@ class TransmitterBase(unittest.TestCase):
 		"""Call after every test case."""
 		# stop jails, etc.
 		self.server.quit()
-		#super(TransmitterBase, self).tearDown()
+		super(TransmitterBase, self).tearDown()
 
 	def setGetTest(self, cmd, inValue, outValue=(None,), outCode=0, jail=None, repr_=False):
 		"""Process set/get commands and compare both return values 
@@ -992,9 +994,10 @@ class LoggingTests(LogCaptureTestCase):
 			badThread = _BadThread()
 			badThread.start()
 			badThread.join()
-			self.assertLogged("Unhandled exception")
+			self.assertTrue( Utils.wait_for( lambda: len(x) and self._is_logged("Unhandled exception"), 3) )
 		finally:
 			sys.__excepthook__ = prev_exchook
+		self.assertLogged("Unhandled exception")
 		self.assertEqual(len(x), 1)
 		self.assertEqual(x[0][0], RuntimeError)
 
@@ -1644,9 +1647,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			# replace pipe to mail with pipe to cat:
 			realCmd = re.sub(r'\)\s*\|\s*mail\b([^\n]*)',
 				r' echo mail \1 ) | cat', realCmd)
-			# replace abuse retrieving (possible no-network):
-			realCmd = re.sub(r'[^\n]+\bADDRESSES=\$\(dig\s[^\n]+',
-				'ADDRESSES="abuse-1@abuse-test-server, abuse-2@abuse-test-server"', realCmd)
+			# replace abuse retrieving (possible no-network), just replace first occurrence of 'dig...':
+			realCmd = re.sub(r'\bADDRESSES=\$\(dig\s[^\n]+',
+				lambda m: 'ADDRESSES="abuse-1@abuse-test-server, abuse-2@abuse-test-server"',
+					realCmd, 1)
 			# execute action:
 			return _actions.CommandAction.executeCmd(realCmd, timeout=timeout)
 
@@ -1675,18 +1679,29 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				# complain --
 				('j-complain-abuse', 
 					'complain['
-					  'name=%(__name__)s, grepopts="-m 1", grepmax=2, mailcmd="mail -s",' +
+					  'name=%(__name__)s, grepopts="-m 1", grepmax=2, mailcmd="mail -s Hostname: <ip-host> - ",' +
+					  # test reverse ip:
+					  'debug=1,' +
 						# 2 logs to test grep from multiple logs:
 					  'logpath="' + os.path.join(TEST_FILES_DIR, "testcase01.log") + '\n' +
 				    '         ' + os.path.join(TEST_FILES_DIR, "testcase01a.log") + '", '
 					  ']',
 				{
 					'ip4-ban': (
+						# test reverse ip:
+						'try to resolve 10.124.142.87.abuse-contacts.abusix.org',
 						'Lines containing failures of 87.142.124.10 (max 2)',
 						'testcase01.log:Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10',
 						'testcase01a.log:Dec 31 11:55:01 [sshd] error: PAM: Authentication failure for test from 87.142.124.10',
 						# both abuse mails should be separated with space:
-						'mail -s Abuse from 87.142.124.10 abuse-1@abuse-test-server abuse-2@abuse-test-server',
+						'mail -s Hostname: test-host - Abuse from 87.142.124.10 abuse-1@abuse-test-server abuse-2@abuse-test-server',
+					),
+					'ip6-ban': (
+						# test reverse ip:
+						'try to resolve 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.abuse-contacts.abusix.org',
+						'Lines containing failures of 2001:db8::1 (max 2)',
+						# both abuse mails should be separated with space:
+						'mail -s Hostname: test-host - Abuse from 2001:db8::1 abuse-1@abuse-test-server abuse-2@abuse-test-server',
 					),
 				}),
 			)
@@ -1708,6 +1723,9 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 
 			jails = server._Server__jails
 
+			ipv4 = IPAddr('87.142.124.10')
+			ipv6 = IPAddr('2001:db8::1');
+			dmyjail = DummyJail()
 			for jail, act, tests in testJailsActions:
 				# print(jail, jails[jail])
 				for a in jails[jail].actions:
@@ -1718,8 +1736,11 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					# wrap default command processor:
 					action.executeCmd = self._executeMailCmd
 					# test ban :
-					self.pruneLog('# === ban ===')
-					action.ban({'ip': IPAddr('87.142.124.10'), 
-						'failures': 100,
-					})
-					self.assertLogged(*tests['ip4-ban'], all=True)
+					for (test, ip) in (('ip4-ban', ipv4), ('ip6-ban', ipv6)):
+						if not tests.get(test): continue
+						self.pruneLog('# === %s ===' % test)
+						ticket = BanTicket(ip)
+						ticket.setAttempt(100)
+						ticket = _actions.Actions.ActionInfo(ticket, dmyjail)
+						action.ban(ticket)
+						self.assertLogged(*tests[test], all=True)

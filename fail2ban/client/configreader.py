@@ -29,22 +29,10 @@ import os
 from ConfigParser import NoOptionError, NoSectionError
 
 from .configparserinc import sys, SafeConfigParserWithIncludes, logLevel
-from ..helpers import getLogger
+from ..helpers import getLogger, _merge_dicts, substituteRecursiveTags
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
-
-
-# if sys.version_info >= (3,5):
-# 	def _merge_dicts(x, y):
-# 		return {**x, **y}
-# else:
-def _merge_dicts(x, y):
-	r = x
-	if y:
-		r = x.copy()
-		r.update(y)
-	return r
 
 
 class ConfigReader():
@@ -176,6 +164,8 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 		if not os.path.exists(self._basedir):
 			raise ValueError("Base configuration directory %s does not exist "
 							  % self._basedir)
+		if filename.startswith("./"): # pragma: no cover
+			filename = os.path.abspath(filename)
 		basename = os.path.join(self._basedir, filename)
 		logSys.debug("Reading configs for %s under %s " , filename, self._basedir)
 		config_files = [ basename + ".conf" ]
@@ -224,6 +214,7 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 		values = dict()
 		if pOptions is None:
 			pOptions = {}
+		# Get only specified options:
 		for optname in options:
 			if isinstance(options, (list,tuple)):
 				if len(optname) > 2:
@@ -276,9 +267,13 @@ class DefinitionInitConfigReader(ConfigReader):
 	
 	def __init__(self, file_, jailName, initOpts, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
+		if file_.startswith("./"): # pragma: no cover
+			file_ = os.path.abspath(file_)
 		self.setFile(file_)
 		self.setJailName(jailName)
 		self._initOpts = initOpts
+		self._pOpts = dict()
+		self._defCache = dict()
 	
 	def setFile(self, fileName):
 		self._file = fileName
@@ -311,7 +306,7 @@ class DefinitionInitConfigReader(ConfigReader):
 			pOpts = _merge_dicts(pOpts, self._initOpts)
 		self._opts = ConfigReader.getOptions(
 			self, "Definition", self._configOpts, pOpts)
-		
+		self._pOpts = pOpts
 		if self.has_section("Init"):
 			for opt in self.options("Init"):
 				v = self.get("Init", opt)
@@ -319,6 +314,45 @@ class DefinitionInitConfigReader(ConfigReader):
 					self._initOpts['known/'+opt] = v
 				if not opt in self._initOpts:
 					self._initOpts[opt] = v
+
+	def _convert_to_boolean(self, value):
+		return value.lower() in ("1", "yes", "true", "on")
+	
+	def getCombOption(self, optname):
+		"""Get combined definition option (as string) using pre-set and init
+		options as preselection (values with higher precedence as specified in section).
+
+		Can be used only after calling of getOptions.
+		"""
+		try:
+			return self._defCache[optname]
+		except KeyError:
+			try:
+				v = self.get("Definition", optname, vars=self._pOpts)
+			except (NoSectionError, NoOptionError, ValueError):
+				v = None
+			self._defCache[optname] = v
+			return v
+
+	def getCombined(self, ignore=()):
+		combinedopts = self._opts
+		ignore = set(ignore).copy()
+		if self._initOpts:
+			combinedopts = _merge_dicts(self._opts, self._initOpts)
+		if not len(combinedopts):
+			return {}
+		# ignore conditional options:
+		for n in combinedopts:
+			cond = SafeConfigParserWithIncludes.CONDITIONAL_RE.match(n)
+			if cond:
+				n, cond = cond.groups()
+				ignore.add(n)
+		# substiture options already specified direct:
+		opts = substituteRecursiveTags(combinedopts, 
+			ignore=ignore, addrepl=self.getCombOption)
+		if not opts:
+			raise ValueError('recursive tag definitions unable to be resolved')
+		return opts
 	
 	def convert(self):
 		raise NotImplementedError

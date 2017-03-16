@@ -37,6 +37,7 @@ class BeautifierTest(unittest.TestCase):
 
 	def tearDown(self):
 		""" Call after every test case """
+		super(BeautifierTest, self).tearDown()
 
 	def testGetInputCmd(self):
 		cmd = ["test"]

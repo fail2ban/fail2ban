@@ -10,6 +10,64 @@ ver. 0.10.0 (2016/XX/XXX) - gonna-be-released-some-time-shining
 -----------
 
 TODO: implementing of options resp. other tasks from PR #1346
+      documentation should be extended (new options, etc)
+      
+### Fixes
+* `filter.d/pam-generic.conf`:
+  - [grave] injection on user name to host fixed
+* `filter.d/sshd.conf`:
+  - rewritten using `prefregex` and used MLFID-related multi-line parsing
+    (by using tag `<F-MLFID>` instead of buffering with `maxlines`);
+  - optional parameter `mode` rewritten: normal (default), ddos, extra or aggressive (combines all),
+    see sshd for regex details)
+* filter.d/sendmail-reject.conf:
+  - rewritten using `prefregex` and used MLFID-related multi-line parsing;
+  - optional parameter `mode` introduced: normal (default), extra or aggressive
+* `action.d/complain.conf`
+  - fixed using new tag `<ip-rev>` (sh/dash compliant now)
+* `action.d/sendmail-geoip-lines.conf`
+  - fixed using new tag `<ip-host>` (without external command execution)
+
+### New Features
+* New Actions:
+
+* New Filters:
+
+### Enhancements
+* Introduced new filter option `prefregex` for pre-filtering using single regular expression (gh-1698);
+* Many times faster and fewer CPU-hungry because of parsing with `maxlines=1`, so without 
+  line buffering (scrolling of the buffer-window).
+  Combination of tags `<F-MLFID>` and `<F-NOFAIL>` can be used now to process multi-line logs
+  using single-line expressions:
+  - tag `<F-MLFID>`: used to identify resp. store failure info for groups of log-lines with the same
+    identifier (e. g. combined failure-info for the same conn-id by `<F-MLFID>(?:conn-id)</F-MLFID>`,
+    see sshd.conf for example)
+  - tag `<F-NOFAIL>`: used as mark for no-failure (helper to accumulate common failure-info, 
+    e. g. from lines that contain IP-address);
+* Several filters optimized with pre-filtering using new option `prefregex`, and multiline filter 
+  using `<F-MLFID>` + `<F-NOFAIL>` combination;
+* Exposes filter group captures in actions (non-recursive interpolation of tags `<F-...>`, 
+  see gh-1698, gh-1110)
+* Some filters extended with user name (can be used in gh-1243 to distinguish IP and user,
+  resp. to remove after success login the user-related failures only);
+* Safer, more stable and faster replaceTag interpolation (switched from cycle over all tags
+  to re.sub with callable)
+* substituteRecursiveTags optimization + moved in helpers facilities (because currently used 
+  commonly in server and in client)
+* New tags (usable in actions):
+  - `<fid>` - failure identifier (if raw resp. failures without IP address)
+  - `<ip-rev>` - PTR reversed representation of IP address
+  - `<ip-host>` - host name of the IP address
+  - `<F-...>` - interpolates to the corresponding filter group capture `...`
+* Allow to use filter options by `fail2ban-regex`, example:
+  fail2ban-regex text.log "sshd[mode=aggressive]"
+* Samples test case factory extended with filter options - dict in JSON to control 
+  filter options (e. g. mode, etc.):
+  # filterOptions: {"mode": "aggressive"}
+
+
+ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
+-----------
 
 ### Fixes
 * [Grave] memory leak's fixed (gh-1277, gh-1234)
@@ -83,6 +141,10 @@ TODO: implementing of options resp. other tasks from PR #1346
     if configuration is clean (fails by wrong configured jails if option `-t` specified)
 * New command action parameter `actionrepair` - command executed in order to restore
   sane environment in error case of `actioncheck`.
+* Reporting via abuseipdb.com:
+  - Bans can now be reported to abuseipdb
+  - Catagories must be set in the config
+  - Relevant log lines included in report
 
 ### Enhancements
 * Huge increasing of fail2ban performance and especially test-cases performance (see gh-1109)
@@ -165,6 +227,31 @@ fail2ban-client set loglevel INFO
   - faster match and fewer searching of appropriate templates
     (DateDetector.matchTime calls rarer DateTemplate.matchDate now);
   - several standard filters extended with exact prefixed or anchored date templates;
+* Added possibility to recognize restored state of the tickets (see gh-1669).
+  New option `norestored` introduced, to ignore restored tickets (after restart).
+  To avoid execution of ban/unban for the restored tickets, `norestored = true`
+  could be added in definition section of action.
+  For conditional usage in the shell-based actions an interpolation `<restored>` 
+  could be used also. E. g. it is enough to add following script-piece at begin
+  of `actionban` (or `actionunban`) to prevent execution:
+  `if [ '<restored>' = '1' ]; then exit 0; fi;`
+  Several actions extended now using `norestored` option:
+  - complain.conf
+  - dshield.conf
+  - mail-buffered.conf
+  - mail-whois-lines.conf
+  - mail-whois.conf
+  - mail.conf
+  - sendmail-buffered.conf
+  - sendmail-geoip-lines.conf
+  - sendmail-whois-ipjailmatches.conf
+  - sendmail-whois-ipmatches.conf
+  - sendmail-whois-lines.conf
+  - sendmail-whois-matches.conf
+  - sendmail-whois.conf
+  - sendmail.conf
+  - smtp.py
+  - xarf-login-attack.conf
 * fail2ban-testcases:
   - `assertLogged` extended with parameter wait (to wait up to specified timeout,
     before we throw assert exception) + test cases rewritten using that
@@ -185,12 +272,30 @@ releases.
     - Fixed non-anchored part of failregex (misleading match of colon inside
       IPv6 address instead of `: ` in the reason-part by missing space, gh-1658)
       (0.10th resp. IPv6 relevant only, amend for gh-1479)
+* config/pathes-freebsd.conf
+    - Fixed filenames for apache and nginx log files (gh-1667)
+* filter.d/sshd.conf
+    - new aggressive rules (gh-864):
+      - Connection reset by peer (multi-line rule during authorization process)
+      - No supported authentication methods available
+    - single line and multi-line expression optimized, added optional prefixes
+      and suffix (logged from several ssh versions), according to gh-1206;
+    - fixed expression received disconnect auth fail (optional space after port
+      part, gh-1652)
+      and suffix (logged from several ssh versions), according to gh-1206;
+* filter.d/suhosin.conf
+    - greedy catch-all before `<HOST>` fixed (potential vulnerability)
+* filter.d/cyrus-imap.conf
+    - accept entries without login-info resp. hostname before IP address (gh-1707)
+* Filter tests extended with check of all config-regexp, that contains greedy catch-all
+  before `<HOST>`, that is hard-anchored at end or precise  sub expression after `<HOST>`
 
 ### New Features
 * New Actions:
+    - action.d/netscaler: Block IPs on a Citrix Netscaler ADC (gh-1663)
 
 * New Filters:
-
+    - filter.d/domino-smtp: IBM Domino SMTP task (gh-1603)
 
 ### Enhancements
 
