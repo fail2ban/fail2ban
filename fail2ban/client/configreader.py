@@ -122,9 +122,9 @@ class ConfigReader():
 		if self._cfg is not None:
 			return self._cfg.merge_section(*args, **kwargs)
 
-	def options(self, *args):
+	def options(self, section, onlyOwn=False):
 		if self._cfg is not None:
-			return self._cfg.options(*args)
+			return self._cfg.options(section, onlyOwn)
 		return {}
 
 	def get(self, sec, opt, raw=False, vars={}):
@@ -297,23 +297,35 @@ class DefinitionInitConfigReader(ConfigReader):
 			self._create_unshared(self._file)
 		return SafeConfigParserWithIncludes.read(self._cfg, self._file)
 	
-	def getOptions(self, pOpts):
+	def getOptions(self, pOpts, all=False):
 		# overwrite static definition options with init values, supplied as
 		# direct parameters from jail-config via action[xtra1="...", xtra2=...]:
+		if not pOpts:
+			pOpts = dict()
 		if self._initOpts:
-			if not pOpts:
-				pOpts = dict()
 			pOpts = _merge_dicts(pOpts, self._initOpts)
 		self._opts = ConfigReader.getOptions(
 			self, "Definition", self._configOpts, pOpts)
 		self._pOpts = pOpts
 		if self.has_section("Init"):
-			for opt in self.options("Init"):
-				v = self.get("Init", opt)
-				if not opt.startswith('known/') and opt != '__name__':
+			# get only own options (without options from default):
+			getopt = lambda opt: self.get("Init", opt)
+			for opt in self.options("Init", onlyOwn=True):
+				if opt == '__name__': continue
+				v = None
+				if not opt.startswith('known/'):
+					if v is None: v = getopt(opt)
 					self._initOpts['known/'+opt] = v
-				if not opt in self._initOpts:
+				if opt not in self._initOpts:
+					if v is None: v = getopt(opt)
 					self._initOpts[opt] = v
+		if all and self.has_section("Definition"):
+			# merge with all definition options (and options from default),
+			# bypass already converted option (so merge only new options):
+			for opt in self.options("Definition"):
+				if opt == '__name__' or opt in self._opts: continue
+				self._opts[opt] = self.get("Definition", opt)
+
 
 	def _convert_to_boolean(self, value):
 		return value.lower() in ("1", "yes", "true", "on")
@@ -336,12 +348,12 @@ class DefinitionInitConfigReader(ConfigReader):
 
 	def getCombined(self, ignore=()):
 		combinedopts = self._opts
-		ignore = set(ignore).copy()
 		if self._initOpts:
-			combinedopts = _merge_dicts(self._opts, self._initOpts)
+			combinedopts = _merge_dicts(combinedopts, self._initOpts)
 		if not len(combinedopts):
 			return {}
 		# ignore conditional options:
+		ignore = set(ignore).copy()
 		for n in combinedopts:
 			cond = SafeConfigParserWithIncludes.CONDITIONAL_RE.match(n)
 			if cond:
