@@ -108,11 +108,11 @@ class Transmitter:
 			value = command[1:]
 			# if all ips:
 			if len(value) == 1 and value[0] == "--all":
-				self.__server.setUnbanIP()
-				return
+				return self.__server.setUnbanIP()
+			cnt = 0
 			for value in value:
-				self.__server.setUnbanIP(None, value)
-			return None
+				cnt += self.__server.setUnbanIP(None, value)
+			return cnt
 		elif command[0] == "echo":
 			return command[1:]
 		elif command[0] == "sleep":

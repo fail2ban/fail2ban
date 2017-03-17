@@ -1075,6 +1075,14 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"[test-jail1] Ban 192.0.2.4", all=True
 		)
 
+		# unban all (just to test command, already empty - nothing to unban):
+		self.pruneLog("[test-phase 7b]")
+		self.execSuccess(startparams,
+			"--async", "unban", "--all")
+		self.assertLogged(
+			"Flush ban list",
+			"Unbanned 0, 0 ticket(s) in 'test-jail1'", all=True)
+
 		# backend-switch (restart instead of reload):
 		self.pruneLog("[test-phase 8a]")
 		_write_jail_cfg(enabled=[1], backend="xxx-unknown-backend-zzz")
