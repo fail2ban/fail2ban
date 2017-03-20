@@ -554,20 +554,29 @@ class Filter(JailThread):
 			mlfidGroups = mlfidFail[1]
 			# if current line not failure, but previous was failure:
 			if fail.get('nofail') and not mlfidGroups.get('nofail'):
-				del fail['nofail'] # remove nofail flag - was already market as failure
+				del fail['nofail'] # remove nofail flag - completed with fid (host, ip)
 				self.mlfidCache.unset(mlfid) # remove cache entry
 			# if current line is failure, but previous was not:
 			elif not fail.get('nofail') and mlfidGroups.get('nofail'):
-				del mlfidGroups['nofail'] # remove nofail flag
+				del mlfidGroups['nofail'] # remove nofail flag - completed as failure
 				self.mlfidCache.unset(mlfid) # remove cache entry
+			else:
+				# cache this line info (if not forget):
+				if not fail.get('mlfforget'):
+					mlfidFail = [self.__lastDate, fail]
+					self.mlfidCache.set(mlfid, mlfidFail)
+				else:
+					self.mlfidCache.unset(mlfid) # remove cache entry
+				return fail
 			fail2 = mlfidGroups.copy()
 			fail2.update(fail)
 			fail2["matches"] = fail.get("matches", []) + failRegex.getMatchedTupleLines()
 			fail = fail2
-		elif fail.get('nofail'):
-			fail["matches"] = failRegex.getMatchedTupleLines()
+		elif not fail.get('mlfforget'):
 			mlfidFail = [self.__lastDate, fail]
 			self.mlfidCache.set(mlfid, mlfidFail)
+			if fail.get('nofail'):
+				fail["matches"] = failRegex.getMatchedTupleLines()
 		return fail
 
 
@@ -683,6 +692,11 @@ class Filter(JailThread):
 				mlfid = fail.get('mlfid')
 				if mlfid is not None:
 					fail = self._mergeFailure(mlfid, fail, failRegex)
+					# bypass if no-failure case:
+					if fail.get('nofail'):
+						logSys.log(7, "Nofail by mlfid %r in regex %s: waiting for failure",
+							mlfid, failRegexIndex)
+						if not self.checkAllRegex: return failList
 				else:
 					# matched lines:
 					fail["matches"] = fail.get("matches", []) + failRegex.getMatchedTupleLines()
@@ -702,18 +716,16 @@ class Filter(JailThread):
 					host = fail.get('dns')
 					if host is None:
 						# first try to check we have mlfid case (cache connection id):
-						if fid is None:
-							if mlfid:
-								fail = self._mergeFailure(mlfid, fail, failRegex)
-							else:
+						if fid is None and mlfid is None:
 								# if no failure-id also (obscure case, wrong regex), throw error inside getFailID:
 								fid = failRegex.getFailID()
 						host = fid
 						cidr = IPAddr.CIDR_RAW
 				# if mlfid case (not failure):
 				if host is None:
-					if not self.checkAllRegex: # or fail.get('nofail'):
-					 	return failList
+					logSys.log(7, "No failure-id by mlfid %r in regex %s: waiting for identifier",
+						mlfid, failRegexIndex)
+					if not self.checkAllRegex: return failList
 					ips = [None]
 				# if raw - add single ip or failure-id,
 				# otherwise expand host to multiple ips using dns (or ignore it if not valid):
