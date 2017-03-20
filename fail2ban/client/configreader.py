@@ -109,33 +109,40 @@ class ConfigReader():
 			self._cfg = ConfigReaderUnshared(**self._cfg_share_kwargs)
 
 	def sections(self):
-		if self._cfg is not None:
+		try:
 			return self._cfg.sections()
-		return []
+		except AttributeError:
+			return []
 
 	def has_section(self, sec):
-		if self._cfg is not None:
+		try:
 			return self._cfg.has_section(sec)
-		return False
+		except AttributeError:
+			return False
 
-	def merge_section(self, *args, **kwargs):
-		if self._cfg is not None:
-			return self._cfg.merge_section(*args, **kwargs)
-
+	def merge_section(self, section, *args, **kwargs):
+		try:
+			return self._cfg.merge_section(section, *args, **kwargs)
+		except AttributeError:
+			raise NoSectionError(section)
+	
 	def options(self, section, onlyOwn=False):
-		if self._cfg is not None:
+		try:
 			return self._cfg.options(section, onlyOwn)
-		return {}
+		except AttributeError:
+			raise NoSectionError(section)
 
 	def get(self, sec, opt, raw=False, vars={}):
-		if self._cfg is not None:
+		try:
 			return self._cfg.get(sec, opt, raw=raw, vars=vars)
-		return None
+		except AttributeError:
+			raise NoSectionError(sec)
 
-	def getOptions(self, *args, **kwargs):
-		if self._cfg is not None:
-			return self._cfg.getOptions(*args, **kwargs)
-		return {}
+	def getOptions(self, section, *args, **kwargs):
+		try:
+			return self._cfg.getOptions(section, *args, **kwargs)
+		except AttributeError:
+			raise NoSectionError(section)
 
 
 class ConfigReaderUnshared(SafeConfigParserWithIncludes):
