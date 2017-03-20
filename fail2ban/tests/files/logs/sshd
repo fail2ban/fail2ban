@@ -239,3 +239,5 @@ Nov 26 13:03:30 srv sshd[45]: fatal: Unable to negotiate with 192.0.2.2 port 554
 Nov 26 15:03:30 host sshd[22440]: Connection from 192.0.2.3 port 39678 on 192.168.1.9 port 22
 # failJSON: { "time": "2004-11-26T15:03:31", "match": true , "host": "192.0.2.3", "desc": "Multiline - no matching key exchange method" }
 Nov 26 15:03:31 host sshd[22440]: fatal: Unable to negotiate a key exchange method [preauth]
+# failJSON: { "time": "2004-11-26T15:03:32", "match": true , "host": "192.0.2.3", "desc": "Second attempt within the same connect" }
+Nov 26 15:03:32 host sshd[22440]: fatal: Unable to negotiate a key exchange method [preauth]

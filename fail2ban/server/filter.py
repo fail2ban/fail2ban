@@ -550,26 +550,22 @@ class Filter(JailThread):
 
 	def _mergeFailure(self, mlfid, fail, failRegex):
 		mlfidFail = self.mlfidCache.get(mlfid) if self.__mlfidCache else None
+		# if multi-line failure id (connection id) known:
 		if mlfidFail:
 			mlfidGroups = mlfidFail[1]
-			# if current line not failure, but previous was failure:
-			if fail.get('nofail') and not mlfidGroups.get('nofail'):
-				del fail['nofail'] # remove nofail flag - completed with fid (host, ip)
-				self.mlfidCache.unset(mlfid) # remove cache entry
-			# if current line is failure, but previous was not:
-			elif not fail.get('nofail') and mlfidGroups.get('nofail'):
-				del mlfidGroups['nofail'] # remove nofail flag - completed as failure
-				self.mlfidCache.unset(mlfid) # remove cache entry
+			# update - if not forget (disconnect/reset):
+			if not fail.get('mlfforget'):
+				mlfidGroups.update(fail)
 			else:
-				# cache this line info (if not forget):
-				if not fail.get('mlfforget'):
-					mlfidFail = [self.__lastDate, fail]
-					self.mlfidCache.set(mlfid, mlfidFail)
-				else:
-					self.mlfidCache.unset(mlfid) # remove cache entry
-				return fail
+				self.mlfidCache.unset(mlfid) # remove cached entry
+			# merge with previous info:
 			fail2 = mlfidGroups.copy()
 			fail2.update(fail)
+			if not fail.get('nofail'): # be sure we've correct current state
+				try:
+					del fail2['nofail']
+				except KeyError:
+					pass
 			fail2["matches"] = fail.get("matches", []) + failRegex.getMatchedTupleLines()
 			fail = fail2
 		elif not fail.get('mlfforget'):

@@ -200,13 +200,13 @@ def testSampleRegexsFactory(name, basedir):
 					self.assertEqual(len(ret), 1,
 						"Multiple regexs matched %r" % (map(lambda x: x[0], ret)))
 
-					# Fallback for backwards compatibility (previously no fid, was host only):
-					if faildata.get("host", None) is not None and fail.get("host", None) is None:
-						fail["host"] = fid
 					# Verify match captures (at least fid/host) and timestamp as expected
 					for k, v in faildata.iteritems():
 						if k not in ("time", "match", "desc"):
 							fv = fail.get(k, None)
+							# Fallback for backwards compatibility (previously no fid, was host only):
+							if k == "host" and fv is None:
+								fv = fid
 							self.assertEqual(fv, v)
 
 					t = faildata.get("time", None)
