@@ -126,9 +126,13 @@ class ConfigReader():
 		except AttributeError:
 			raise NoSectionError(section)
 	
-	def options(self, section, onlyOwn=False):
+	def options(self, section, withDefault=False):
+		"""Return a list of option names for the given section name.
+
+		Parameter `withDefault` controls the include of names from section `[DEFAULT]`
+		"""
 		try:
-			return self._cfg.options(section, onlyOwn)
+			return self._cfg.options(section, withDefault)
 		except AttributeError:
 			raise NoSectionError(section)
 
@@ -317,7 +321,7 @@ class DefinitionInitConfigReader(ConfigReader):
 		if self.has_section("Init"):
 			# get only own options (without options from default):
 			getopt = lambda opt: self.get("Init", opt)
-			for opt in self.options("Init", onlyOwn=True):
+			for opt in self.options("Init", withDefault=False):
 				if opt == '__name__': continue
 				v = None
 				if not opt.startswith('known/'):

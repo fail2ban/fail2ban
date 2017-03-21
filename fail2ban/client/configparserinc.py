@@ -200,13 +200,16 @@ after = 1.conf
 	def get_sections(self):
 		return self._sections
 
-	def options(self, section, onlyOwn=False):
-		"""Return a list of option names for the given section name."""
+	def options(self, section, withDefault=True):
+		"""Return a list of option names for the given section name.
+
+		Parameter `withDefault` controls the include of names from section `[DEFAULT]`
+		"""
 		try:
 			opts = self._sections[section]
 		except KeyError:
 			raise NoSectionError(section)
-		if not onlyOwn:
+		if withDefault:
 			# mix it with defaults:
 			return set(opts.keys()) | set(self._defaults)
 		# only own option names:

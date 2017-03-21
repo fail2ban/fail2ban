@@ -118,6 +118,15 @@ class Utils():
 
 	@staticmethod
 	def buildShellCmd(realCmd, varsDict):
+		"""Generates new shell command as array, contains map as variables to
+		arguments statement (varsStat), the command (realCmd) used this variables and
+		the list of the arguments, mapped from varsDict
+
+		Example:
+			buildShellCmd('echo "V2: $v2, V1: $v1"', {"v1": "val 1", "v2": "val 2", "vUnused": "unused var"})
+		returns:
+			['v1=$0 v2=$1 vUnused=$2 \necho "V2: $v2, V1: $v1"', 'val 1', 'val 2', 'unused var']
+		"""
 		# build map as array of vars and command line array:
 		varsStat = ""
 		if not isinstance(realCmd, list):
@@ -172,7 +181,7 @@ class Utils():
 			else: # pragma: no cover - currently unused
 				env = _merge_dicts(os.environ, varsDict)
 		realCmdId = id(realCmd)
-		outCmd = lambda level: logSys.log(level, "%x -- exec: %s", realCmdId, realCmd)
+		logCmd = lambda level: logSys.log(level, "%x -- exec: %s", realCmdId, realCmd)
 		try:
 			popen = subprocess.Popen(
 				realCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell, env=env,
@@ -190,7 +199,7 @@ class Utils():
 					retcode = retcode[1]
 			# if timeout:
 			if retcode is None:
-				if outCmd: outCmd(logging.ERROR); outCmd = None
+				if logCmd: logCmd(logging.ERROR); logCmd = None
 				logSys.error("%x -- timed out after %s seconds." %
 					(realCmdId, timeout))
 				pgid = os.getpgid(popen.pid)
@@ -207,6 +216,7 @@ class Utils():
 				if retcode is None and not Utils.pid_exists(pgid): # pragma: no cover
 					retcode = signal.SIGKILL
 		except OSError as e:
+			if logCmd: logCmd(logging.ERROR); logCmd = None
 			stderr = "%s -- failed with %s" % (realCmd, e)
 			logSys.error(stderr)
 			if not popen:
@@ -214,7 +224,7 @@ class Utils():
 
 		std_level = logging.DEBUG if retcode in success_codes else logging.ERROR
 		if std_level > logSys.getEffectiveLevel():
-			if outCmd: outCmd(std_level-1); outCmd = None
+			if logCmd: logCmd(std_level-1); logCmd = None
 		# if we need output (to return or to log it): 
 		if output or std_level >= logSys.getEffectiveLevel():
 
