@@ -113,6 +113,11 @@ May 27 00:16:33 host sshd[2364]: Received disconnect from 198.51.100.76: 11: Bye
 # failJSON: { "time": "2004-09-29T16:28:02", "match": true , "host": "127.0.0.1" }
 Sep 29 16:28:02 spaceman sshd[16699]: Failed password for dan from 127.0.0.1 port 45416 ssh1
 
+# failJSON: { "match": false, "desc": "no failure, just cache mlfid (conn-id)" }
+Sep 29 16:28:05 localhost sshd[16700]: Connection from 192.0.2.5
+# failJSON: { "match": false, "desc": "no failure, just covering mlfid (conn-id) forget" }
+Sep 29 16:28:05 localhost sshd[16700]: Connection closed by 192.0.2.5 [preauth]
+
 # failJSON: { "time": "2004-09-29T17:15:02", "match": true , "host": "127.0.0.1" }
 Sep 29 17:15:02 spaceman sshd[12946]: Failed hostbased for dan from 127.0.0.1 port 45785 ssh2: RSA 8c:e3:aa:0f:64:51:02:f7:14:79:89:3f:65:84:7c:30, client user "dan", client host "localhost.localdomain"
 
@@ -234,3 +239,5 @@ Nov 26 13:03:30 srv sshd[45]: fatal: Unable to negotiate with 192.0.2.2 port 554
 Nov 26 15:03:30 host sshd[22440]: Connection from 192.0.2.3 port 39678 on 192.168.1.9 port 22
 # failJSON: { "time": "2004-11-26T15:03:31", "match": true , "host": "192.0.2.3", "desc": "Multiline - no matching key exchange method" }
 Nov 26 15:03:31 host sshd[22440]: fatal: Unable to negotiate a key exchange method [preauth]
+# failJSON: { "time": "2004-11-26T15:03:32", "match": true , "host": "192.0.2.3", "filter": "sshd", "desc": "Second attempt within the same connect" }
+Nov 26 15:03:32 host sshd[22440]: fatal: Unable to negotiate a key exchange method [preauth]
