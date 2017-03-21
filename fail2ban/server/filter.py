@@ -690,8 +690,8 @@ class Filter(JailThread):
 					fail = self._mergeFailure(mlfid, fail, failRegex)
 					# bypass if no-failure case:
 					if fail.get('nofail'):
-						logSys.log(7, "Nofail by mlfid %r in regex %s: waiting for failure",
-							mlfid, failRegexIndex)
+						logSys.log(7, "Nofail by mlfid %r in regex %s: %s",
+							mlfid, failRegexIndex, fail.get('mlfforget', "waiting for failure"))
 						if not self.checkAllRegex: return failList
 				else:
 					# matched lines:
@@ -719,8 +719,8 @@ class Filter(JailThread):
 						cidr = IPAddr.CIDR_RAW
 				# if mlfid case (not failure):
 				if host is None:
-					logSys.log(7, "No failure-id by mlfid %r in regex %s: waiting for identifier",
-						mlfid, failRegexIndex)
+					logSys.log(7, "No failure-id by mlfid %r in regex %s: %s",
+						mlfid, failRegexIndex, fail.get('mlfforget', "waiting for identifier"))
 					if not self.checkAllRegex: return failList
 					ips = [None]
 				# if raw - add single ip or failure-id,
