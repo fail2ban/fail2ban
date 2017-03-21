@@ -139,11 +139,11 @@ class JailReader(ConfigReader):
 					filterName, self.__name, filterOpt, 
 					share_config=self.share_config, basedir=self.getBaseDir())
 				ret = self.__filter.read()
-				# merge options from filter as 'known/...':
-				self.__filter.getOptions(self.__opts)
-				ConfigReader.merge_section(self, self.__name, self.__filter.getCombined(), 'known/')
 				if not ret:
 					raise JailDefError("Unable to read the filter %r" % filterName)
+				# merge options from filter as 'known/...' (all options unfiltered):
+				self.__filter.getOptions(self.__opts, all=True)
+				ConfigReader.merge_section(self, self.__name, self.__filter.getCombined(), 'known/')
 			else:
 				self.__filter = None
 				logSys.warning("No filter set for jail %s" % self.__name)
@@ -220,8 +220,8 @@ class JailReader(ConfigReader):
 		if self.__filter:
 			stream.extend(self.__filter.convert())
 		for opt, value in self.__opts.iteritems():
-			if opt == "logpath" and	\
-					not self.__opts.get('backend', None).startswith("systemd"):
+			if opt == "logpath":
+				if self.__opts.get('backend', None).startswith("systemd"): continue
 				found_files = 0
 				for path in value.split("\n"):
 					path = path.rsplit(" ", 1)

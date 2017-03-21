@@ -290,6 +290,7 @@ class Actions(JailThread, Mapping):
 
 		AI_DICT = {
 			"ip":				lambda self: self.__ticket.getIP(),
+			"family":   lambda self: self['ip'].familyStr,
 			"ip-rev":		lambda self: self['ip'].getPTR(''),
 			"ip-host":	lambda self: self['ip'].getHost(),
 			"fid":			lambda self: self.__ticket.getID(),

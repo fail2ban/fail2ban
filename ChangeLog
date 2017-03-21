@@ -41,9 +41,13 @@ TODO: implementing of options resp. other tasks from PR #1346
   using single-line expressions:
   - tag `<F-MLFID>`: used to identify resp. store failure info for groups of log-lines with the same
     identifier (e. g. combined failure-info for the same conn-id by `<F-MLFID>(?:conn-id)</F-MLFID>`,
-    see sshd.conf for example)
+    see sshd.conf for example);
+  - tag `<F-MLFFORGET>`: can be used as mark to forget current multi-line MLFID (e. g. by connection 
+    closed, reset or disconnect etc);
   - tag `<F-NOFAIL>`: used as mark for no-failure (helper to accumulate common failure-info, 
     e. g. from lines that contain IP-address);
+  Opposite to obsolete multi-line parsing (using buffering with `maxlines`) it is more precise and 
+  can recognize multiple failure attempts within the same connection (MLFID).
 * Several filters optimized with pre-filtering using new option `prefregex`, and multiline filter 
   using `<F-MLFID>` + `<F-NOFAIL>` combination;
 * Exposes filter group captures in actions (non-recursive interpolation of tags `<F-...>`, 
