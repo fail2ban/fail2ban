@@ -182,6 +182,9 @@ def testSampleRegexsFactory(name, basedir):
 				try:
 					ret = self.filter.processLine(line)
 					if not ret:
+						# Bypass if filter constraint specified:
+						if faildata.get('filter') and name != faildata.get('filter'):
+							continue
 						# Check line is flagged as none match
 						self.assertFalse(faildata.get('match', True),
 							"Line not matched when should have")
@@ -202,7 +205,7 @@ def testSampleRegexsFactory(name, basedir):
 
 					# Verify match captures (at least fid/host) and timestamp as expected
 					for k, v in faildata.iteritems():
-						if k not in ("time", "match", "desc"):
+						if k not in ("time", "match", "desc", "filter"):
 							fv = fail.get(k, None)
 							# Fallback for backwards compatibility (previously no fid, was host only):
 							if k == "host" and fv is None:
