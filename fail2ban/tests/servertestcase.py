@@ -1679,7 +1679,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				# complain --
 				('j-complain-abuse', 
 					'complain['
-					  'name=%(__name__)s, grepopts="-m 1", grepmax=2, mailcmd="mail -s Hostname: <ip-host> - ",' +
+					  'name=%(__name__)s, grepopts="-m 1", grepmax=2, mailcmd="mail -s \'Hostname: <ip-host>, family: <family>\' - ",' +
 					  # test reverse ip:
 					  'debug=1,' +
 						# 2 logs to test grep from multiple logs:
@@ -1694,14 +1694,14 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						'testcase01.log:Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10',
 						'testcase01a.log:Dec 31 11:55:01 [sshd] error: PAM: Authentication failure for test from 87.142.124.10',
 						# both abuse mails should be separated with space:
-						'mail -s Hostname: test-host - Abuse from 87.142.124.10 abuse-1@abuse-test-server abuse-2@abuse-test-server',
+						'mail -s Hostname: test-host, family: inet4 - Abuse from 87.142.124.10 abuse-1@abuse-test-server abuse-2@abuse-test-server',
 					),
 					'ip6-ban': (
 						# test reverse ip:
 						'try to resolve 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.abuse-contacts.abusix.org',
 						'Lines containing failures of 2001:db8::1 (max 2)',
 						# both abuse mails should be separated with space:
-						'mail -s Hostname: test-host - Abuse from 2001:db8::1 abuse-1@abuse-test-server abuse-2@abuse-test-server',
+						'mail -s Hostname: test-host, family: inet6 - Abuse from 2001:db8::1 abuse-1@abuse-test-server abuse-2@abuse-test-server',
 					),
 				}),
 			)

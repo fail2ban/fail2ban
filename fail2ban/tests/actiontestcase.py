@@ -389,6 +389,51 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertLogged('Nothing to do')
 		self.pruneLog()
 
+	def testExecuteWithVars(self):
+		self.assertTrue(self.__action.executeCmd(
+			r'''printf %b "foreign input:\n'''
+			r''' -- $f2bV_A --\n'''
+			r''' -- $f2bV_B --\n'''
+			r''' -- $(echo -n $f2bV_C) --''' # echo just replaces \n to test it as single line
+			r'''"''', 
+			varsDict={
+			'f2bV_A': 'I\'m a hacker; && $(echo $f2bV_B)', 
+			'f2bV_B': 'I"m very bad hacker', 
+			'f2bV_C': '`Very | very\n$(bad & worst hacker)`'
+		}))
+		self.assertLogged(r"""foreign input:""",
+			' -- I\'m a hacker; && $(echo $f2bV_B) --',
+			' -- I"m very bad hacker --',
+			' -- `Very | very $(bad & worst hacker)` --', all=True)
+
+	def testExecuteReplaceEscapeWithVars(self):
+		self.__action.actionban = 'echo "** ban <ip>, reason: <reason> ...\\n<matches>"'
+		self.__action.actionunban = 'echo "** unban <ip>"'
+		self.__action.actionstop = 'echo "** stop monitoring"'
+		matches = [
+			'<actionunban>',
+			'" Hooray! #',
+			'`I\'m cool script kiddy',
+			'`I`m very cool > /here-is-the-path/to/bin/.x-attempt.sh',
+			'<actionstop>',
+		]
+		aInfo = {
+			'ip': '192.0.2.1',
+			'reason': 'hacking attempt ( he thought he knows how f2b internally works ;)',
+			'matches': '\n'.join(matches)
+		}
+		self.pruneLog()
+		self.__action.ban(aInfo)
+		self.assertLogged(
+			'** ban %s' % aInfo['ip'], aInfo['reason'], *matches, all=True)
+		self.assertNotLogged(
+			'** unban %s' % aInfo['ip'], '** stop monitoring', all=True)
+		self.pruneLog()
+		self.__action.unban(aInfo)
+		self.__action.stop()
+		self.assertLogged(
+			'** unban %s' % aInfo['ip'], '** stop monitoring', all=True)
+
 	def testExecuteIncorrectCmd(self):
 		CommandAction.executeCmd('/bin/ls >/dev/null\nbogusXXX now 2>/dev/null')
 		self.assertLogged('HINT on 127: "Command not found"')
@@ -400,8 +445,9 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertFalse(CommandAction.executeCmd('sleep 30', timeout=timeout))
 		# give a test still 1 second, because system could be too busy
 		self.assertTrue(time.time() >= stime + timeout and time.time() <= stime + timeout + 1)
-		self.assertLogged('sleep 30 -- timed out after')
-		self.assertLogged('sleep 30 -- killed with SIGTERM')
+		self.assertLogged('sleep 30', ' -- timed out after', all=True)
+		self.assertLogged(' -- killed with SIGTERM', 
+		                  ' -- killed with SIGKILL')
 
 	def testExecuteTimeoutWithNastyChildren(self):
 		# temporary file for a nasty kid shell script
@@ -457,9 +503,9 @@ class CommandActionTest(LogCaptureTestCase):
 		# Verify that the process itself got killed
 		self.assertTrue(Utils.wait_for(lambda: not pid_exists(cpid), 3))
 		self.assertLogged('my pid ', 'Resource temporarily unavailable')
-		self.assertLogged('timed out')
-		self.assertLogged('killed with SIGTERM', 
-		                  'killed with SIGKILL')
+		self.assertLogged(' -- timed out')
+		self.assertLogged(' -- killed with SIGTERM', 
+		                  ' -- killed with SIGKILL')
 		os.unlink(tmpFilename)
 		os.unlink(tmpFilename + '.pid')
 

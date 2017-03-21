@@ -261,6 +261,11 @@ class IPAddr(object):
 	def family(self):
 		return self._family
 
+	FAM2STR = {socket.AF_INET: 'inet4', socket.AF_INET6: 'inet6'}
+	@property
+	def familyStr(self):
+		return IPAddr.FAM2STR.get(self._family)
+
 	@property
 	def plen(self):
 		return self._plen
