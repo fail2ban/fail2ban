@@ -180,7 +180,7 @@ Apr 27 13:02:04 host sshd[29116]: Received disconnect from 1.2.3.4: 11: Normal S
 2015-04-16T18:02:50.321974+00:00 host sshd[2716]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=222.186.21.217  user=root
 
 # failJSON: { "time": "2017-01-13T19:04:58", "match": true , "host": "91.197.232.15", "desc": "Connection closed preauth" }
-2017-01-13 19:04:58 k2dls sshd[26743]: Connection closed by 91.197.232.15 port 9224 [preauth]
+2017-01-13T19:04:58.040989k2dls sshd[26743]: Connection closed by 91.197.232.15 port 9224 [preauth]
 
 # filterOptions: {"mode": "ddos"}
 
