@@ -161,10 +161,14 @@ class Filter(JailThread):
 	# @param value the regular expression
 
 	def addFailRegex(self, value):
+		multiLine = self.getMaxLines() > 1
 		try:
-			regex = FailRegex(value, prefRegex=self.__prefRegex, useDns=self.__useDns)
+			regex = FailRegex(value, prefRegex=self.__prefRegex, multiline=multiLine,
+				useDns=self.__useDns)
 			self.__failRegex.append(regex)
-			if "\n" in regex.getRegex() and not self.getMaxLines() > 1:
+			regexExpr = regex.getRegex()
+			# check new lines present in regex (was compiled as multiline), incorrect by `maxlines=1`:
+			if (regex.flags & re.MULTILINE) and not multiLine:
 				logSys.warning(
 					"Mutliline regex set for jail %r "
 					"but maxlines not greater than 1", self.jailName)
