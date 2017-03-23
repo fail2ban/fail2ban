@@ -118,6 +118,42 @@ class DNSUtils:
 
 		return ipList
 
+	@staticmethod
+	def getSelfNames():
+		"""Get own host names of self"""
+		# try find cached own hostnames (this tuple-key cannot be used elsewhere):
+		key = ('self','dns')
+		names = DNSUtils.CACHE_ipToName.get(key)
+		# get it using different ways (a set with names of localhost, hostname, fully qualified):
+		if names is None:
+			names = set(['localhost'])
+			for hostname in (socket.gethostname, socket.getfqdn):
+				try:
+					names |= set([hostname()])
+				except Exception as e: # pragma: no cover
+					logSys.warning("Retrieving own hostnames failed: %s", e)
+		# cache and return :
+		DNSUtils.CACHE_ipToName.set(key, names)
+		return names
+
+	@staticmethod
+	def getSelfIPs():
+		"""Get own IP addresses of self"""
+		# try find cached own IPs (this tuple-key cannot be used elsewhere):
+		key = ('self','ips')
+		ips = DNSUtils.CACHE_nameToIp.get(key)
+		# get it using different ways (a set with IPs of localhost, hostname, fully qualified):
+		if ips is None:
+			ips = set()
+			for hostname in DNSUtils.getSelfNames():
+				try:
+					ips |= set(DNSUtils.textToIp(hostname, 'yes'))
+				except Exception as e: # pragma: no cover
+					logSys.warning("Retrieving own IPs of %s failed: %s", hostname, e)
+		# cache and return :
+		DNSUtils.CACHE_nameToIp.set(key, ips)
+		return ips
+
 
 ##
 # Class for IP address handling.

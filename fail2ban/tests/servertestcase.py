@@ -449,6 +449,16 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["set", self.jailName, "delignoreip", value]),
 			(0, [value]))
 
+		self.assertEqual(
+			self.transm.proceed(["get", self.jailName, "ignoreself"]),
+			(0, True))
+		self.assertEqual(
+			self.transm.proceed(["set", self.jailName, "ignoreself", False]),
+			(0, False))
+		self.assertEqual(
+			self.transm.proceed(["get", self.jailName, "ignoreself"]),
+			(0, False))
+
 	def testJailIgnoreCommand(self):
 		self.setGetTest("ignorecommand", "bin ", jail=self.jailName)
 

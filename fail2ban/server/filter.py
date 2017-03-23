@@ -76,6 +76,8 @@ class Filter(JailThread):
 		self.setUseDns(useDns)
 		## The amount of time to look back.
 		self.__findTime = 600
+		## Ignore own IPs flag:
+		self.__ignoreSelf = True
 		## The ignore IP list.
 		self.__ignoreIpList = []
 		## Size of line buffer
@@ -414,6 +416,17 @@ class Filter(JailThread):
 		return ip
 
 	##
+	# Ignore own IP/DNS.
+	#
+	@property
+	def ignoreSelf(self):
+		return self.__ignoreSelf
+
+	@ignoreSelf.setter
+	def ignoreSelf(self, value):
+		self.__ignoreSelf = value
+
+	##
 	# Add an IP/DNS to the ignore list.
 	#
 	# IP addresses in the ignore list are not taken into account
@@ -458,6 +471,11 @@ class Filter(JailThread):
 	def inIgnoreIPList(self, ip, log_ignore=False):
 		if not isinstance(ip, IPAddr):
 			ip = IPAddr(ip)
+
+		# check own IPs should be ignored and 'ip' is self IP:
+		if self.__ignoreSelf and ip in DNSUtils.getSelfIPs():
+			return True
+
 		for net in self.__ignoreIpList:
 			# check if the IP is covered by ignore IP
 			if ip.isInNet(net):

@@ -110,6 +110,7 @@ class JailReader(ConfigReader):
 				["string", "failregex", None],
 				["string", "ignoreregex", None],
 				["string", "ignorecommand", None],
+				["bool",   "ignoreself", None],
 				["string", "ignoreip", None],
 				["string", "filter", ""],
 				["string", "datepattern", None],
