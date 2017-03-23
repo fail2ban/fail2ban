@@ -211,7 +211,8 @@ class Utils():
 				if retcode is None or tout_kill_tree: # Still going...
 					os.killpg(pgid, signal.SIGKILL) # Kill the process
 					time.sleep(Utils.DEFAULT_SLEEP_INTERVAL)
-					retcode = popen.poll()
+					if retcode is None: # pragma: no cover - too sporadic
+						retcode = popen.poll()
 					#logSys.debug("%s -- killed %s ", realCmd, retcode)
 				if retcode is None and not Utils.pid_exists(pgid): # pragma: no cover
 					retcode = signal.SIGKILL
