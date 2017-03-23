@@ -780,6 +780,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"findtime = 10m",
 				"failregex = ^\s*failure <F-ERRCODE>401|403</F-ERRCODE> from <HOST>",
 				"datepattern = {^LN-BEG}EPOCH",
+				"ignoreip = 127.0.0.1/8 ::1", # just to cover ignoreip in jailreader/transmitter
 				"",
 				"[test-jail1]", "backend = " + backend, "filter =", 
 				"action = ",
