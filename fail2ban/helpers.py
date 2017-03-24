@@ -20,11 +20,20 @@
 __author__ = "Cyril Jaquier, Arturo 'Buanzo' Busleiman, Yaroslav Halchenko"
 __license__ = "GPL"
 
-import sys
-import os
-import traceback
-import re
+import gc
+import locale
 import logging
+import os
+import re
+import sys
+import traceback
+
+from threading import Lock
+
+from .server.mytime import MyTime
+
+
+PREFER_ENC = locale.getpreferredencoding()
 
 
 def formatExceptionInfo():
@@ -120,6 +129,28 @@ def getLogger(name):
 		name = "fail2ban.%s" % name.rpartition(".")[-1]
 	return logging.getLogger(name)
 
+def str2LogLevel(value):
+	try:
+		if isinstance(value, int) or value.isdigit():
+			ll = int(value)
+		else:
+			ll = getattr(logging, value.upper())
+	except AttributeError:
+		raise ValueError("Invalid log level %r" % value)
+	return ll
+
+def getVerbosityFormat(verbosity, fmt=' %(message)s'):
+	"""Custom log format for the verbose runs
+	"""
+	if verbosity > 1: # pragma: no cover
+		if verbosity > 3:
+			fmt = ' | %(module)15.15s-%(levelno)-2d: %(funcName)-20.20s |' + fmt
+		if verbosity > 2:
+			fmt = ' +%(relativeCreated)5d %(thread)X %(name)-25.25s %(levelname)-5.5s' + fmt
+		else:
+			fmt = ' %(asctime)-15s %(thread)X %(levelname)-5.5s' + fmt
+	return fmt
+
 
 def excepthook(exctype, value, traceback):
 	"""Except hook used to log unhandled exceptions to Fail2Ban log
@@ -137,3 +168,215 @@ def splitwords(s):
 	if not s:
 		return []
 	return filter(bool, map(str.strip, re.split('[ ,\n]+', s)))
+
+if sys.version_info >= (3,5):
+	eval(compile(r'''if 1:
+	def _merge_dicts(x, y):
+		"""Helper to merge dicts.
+		"""
+		if y:
+			return {**x, **y}
+		return x
+	
+	def _merge_copy_dicts(x, y):
+		"""Helper to merge dicts to guarantee a copy result (r is never x).
+		"""
+		return {**x, **y}
+	''', __file__, 'exec'))
+else:
+	def _merge_dicts(x, y):
+		"""Helper to merge dicts.
+		"""
+		r = x
+		if y:
+			r = x.copy()
+			r.update(y)
+		return r
+	def _merge_copy_dicts(x, y):
+		"""Helper to merge dicts to guarantee a copy result (r is never x).
+		"""
+		r = x.copy()
+		if y:
+			r.update(y)
+		return r
+
+#
+# Following "uni_decode" function unified python independent any to string converting
+#
+# Typical example resp. work-case for understanding the coding/decoding issues:
+#
+#   [isinstance('', str), isinstance(b'', str), isinstance(u'', str)]
+#   [True, True, False]; # -- python2
+#	  [True, False, True]; # -- python3
+#
+if sys.version_info >= (3,):
+	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
+		try:
+			if isinstance(x, bytes):
+				return x.decode(enc, errors)
+			return x
+		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
+			if errors != 'strict': 
+				raise
+			return uni_decode(x, enc, 'replace')
+else:
+	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
+		try:
+			if isinstance(x, unicode):
+				return x.encode(enc, errors)
+			return x
+		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
+			if errors != 'strict':
+				raise
+			return uni_decode(x, enc, 'replace')
+
+
+#
+# Following facilities used for safe recursive interpolation of
+# tags (<tag>) in tagged options.
+#
+
+# max tag replacement count:
+MAX_TAG_REPLACE_COUNT = 10
+
+# compiled RE for tag name (replacement name) 
+TAG_CRE = re.compile(r'<([^ <>]+)>')
+
+def substituteRecursiveTags(inptags, conditional='', 
+	ignore=(), addrepl=None
+):
+	"""Sort out tag definitions within other tags.
+	Since v.0.9.2 supports embedded interpolation (see test cases for examples).
+
+	so:		becomes:
+	a = 3		a = 3
+	b = <a>_3	b = 3_3
+
+	Parameters
+	----------
+	inptags : dict
+		Dictionary of tags(keys) and their values.
+
+	Returns
+	-------
+	dict
+		Dictionary of tags(keys) and their values, with tags
+		within the values recursively replaced.
+	"""
+	#logSys = getLogger("fail2ban")
+	tre_search = TAG_CRE.search
+	# copy return tags dict to prevent modifying of inptags:
+	tags = inptags.copy()
+	# init:
+	ignore = set(ignore)
+	done = set()
+	noRecRepl = hasattr(tags, "getRawItem")
+	# repeat substitution while embedded-recursive (repFlag is True)
+	while True:
+		repFlag = False
+		# substitute each value:
+		for tag in tags.iterkeys():
+			# ignore escaped or already done (or in ignore list):
+			if tag in ignore or tag in done: continue
+			# ignore replacing callable items from calling map - should be converted on demand only (by get):
+			if noRecRepl and callable(tags.getRawItem(tag)): continue
+			value = orgval = str(tags[tag])
+			# search and replace all tags within value, that can be interpolated using other tags:
+			m = tre_search(value)
+			refCounts = {}
+			#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
+			while m:
+				# found replacement tag:
+				rtag = m.group(1)
+				# don't replace tags that should be currently ignored (pre-replacement):
+				if rtag in ignore: 
+					m = tre_search(value, m.end())
+					continue
+				#logSys.log(5, 'found: %s' % rtag)
+				if rtag == tag or refCounts.get(rtag, 1) > MAX_TAG_REPLACE_COUNT:
+					# recursive definitions are bad
+					#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
+					raise ValueError(
+						"properties contain self referencing definitions "
+						"and cannot be resolved, fail tag: %s, found: %s in %s, value: %s" % 
+						(tag, rtag, refCounts, value))
+				repl = None
+				if conditional:
+					repl = tags.get(rtag + '?' + conditional)
+				if repl is None:
+					repl = tags.get(rtag)
+					# try to find tag using additional replacement (callable):
+					if repl is None and addrepl is not None:
+						repl = addrepl(rtag)
+				if repl is None:
+					# Missing tags - just continue on searching after end of match
+					# Missing tags are ok - cInfo can contain aInfo elements like <HOST> and valid shell
+					# constructs like <STDIN>.
+					m = tre_search(value, m.end())
+					continue
+				# if calling map - be sure we've string:
+				if noRecRepl: repl = str(repl)
+				value = value.replace('<%s>' % rtag, repl)
+				#logSys.log(5, 'value now: %s' % value)
+				# increment reference count:
+				refCounts[rtag] = refCounts.get(rtag, 0) + 1
+				# the next match for replace:
+				m = tre_search(value, m.start())
+			#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
+			# was substituted?
+			if orgval != value:
+				# check still contains any tag - should be repeated (possible embedded-recursive substitution):
+				if tre_search(value):
+					repFlag = True
+				tags[tag] = value
+			# no more sub tags (and no possible composite), add this tag to done set (just to be faster):
+			if '<' not in value: done.add(tag)
+		# stop interpolation, if no replacements anymore:
+		if not repFlag:
+			break
+	return tags
+
+
+class BgService(object):
+	"""Background servicing
+
+	Prevents memory leak on some platforms/python versions, 
+	using forced GC in periodical intervals.
+	"""
+
+	_mutex = Lock()
+	_instance = None
+	def __new__(cls):
+		if not cls._instance:
+			cls._instance = \
+				super(BgService, cls).__new__(cls)
+		return cls._instance
+
+	def __init__(self):
+		self.__serviceTime = -0x7fffffff
+		self.__periodTime = 30
+		self.__threshold = 100;
+		self.__count = self.__threshold;
+		if hasattr(gc, 'set_threshold'):
+			gc.set_threshold(0)
+		gc.disable()
+
+	def service(self, force=False, wait=False):
+		self.__count -= 1
+		# avoid locking if next service time don't reached
+		if not force and (self.__count > 0 or MyTime.time() < self.__serviceTime):
+			return False
+		# return immediately if mutex already locked (other thread in servicing):
+		if not BgService._mutex.acquire(wait):
+			return False
+		try:
+			# check again in lock:
+			if MyTime.time() < self.__serviceTime:
+				return False
+			gc.collect()
+			self.__serviceTime = MyTime.time() + self.__periodTime
+			self.__count = self.__threshold
+			return True
+		finally:
+			BgService._mutex.release()
+		return False

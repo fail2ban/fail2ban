@@ -28,7 +28,7 @@ from threading import Lock
 
 from .ticket import BanTicket
 from .mytime import MyTime
-from ..helpers import getLogger
+from ..helpers import getLogger, logging
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -51,11 +51,13 @@ class BanManager:
 		## Mutex used to protect the ban list.
 		self.__lock = Lock()
 		## The ban list.
-		self.__banList = list()
+		self.__banList = dict()
 		## The amount of time an IP address gets banned.
 		self.__banTime = 600
 		## Total number of banned IP address
 		self.__banTotal = 0
+		## The time for next unban process (for performance and load reasons):
+		self.__nextUnbanTime = BanTicket.MAX_TIME
 	
 	##
 	# Set the ban time.
@@ -64,11 +66,8 @@ class BanManager:
 	# @param value the time
 	
 	def setBanTime(self, value):
-		try:
-			self.__lock.acquire()
+		with self.__lock:
 			self.__banTime = int(value)
-		finally:
-			self.__lock.release()
 	
 	##
 	# Get the ban time.
@@ -77,11 +76,8 @@ class BanManager:
 	# @return the time
 	
 	def getBanTime(self):
-		try:
-			self.__lock.acquire()
+		with self.__lock:
 			return self.__banTime
-		finally:
-			self.__lock.release()
 	
 	##
 	# Set the total number of banned address.
@@ -89,11 +85,8 @@ class BanManager:
 	# @param value total number
 	
 	def setBanTotal(self, value):
-		try:
-			self.__lock.acquire()
+		with self.__lock:
 			self.__banTotal = value
-		finally:
-			self.__lock.release()
 	
 	##
 	# Get the total number of banned address.
@@ -101,11 +94,8 @@ class BanManager:
 	# @return the total number
 	
 	def getBanTotal(self):
-		try:
-			self.__lock.acquire()
+		with self.__lock:
 			return self.__banTotal
-		finally:
-			self.__lock.release()
 
 	##
 	# Returns a copy of the IP list.
@@ -113,11 +103,17 @@ class BanManager:
 	# @return IP list
 	
 	def getBanList(self):
-		try:
-			self.__lock.acquire()
-			return [m.getIP() for m in self.__banList]
-		finally:
-			self.__lock.release()
+		with self.__lock:
+			return self.__banList.keys()
+
+	##
+	# Returns a iterator to ban list (used in reload, so idle).
+	#
+	# @return ban list iterator
+	
+	def __iter__(self):
+		with self.__lock:
+			return self.__banList.itervalues()
 
 	##
 	# Returns normalized value
@@ -136,27 +132,40 @@ class BanManager:
 	#
 	# @return {"asn": [], "country": [], "rir": []} dict for self.__banList IPs
 
-	def getBanListExtendedCymruInfo(self):
+	def getBanListExtendedCymruInfo(self, timeout=10):
 		return_dict = {"asn": [], "country": [], "rir": []}
+		if not hasattr(self, 'dnsResolver'):
+			global dns
+			try:
+				import dns.exception
+				import dns.resolver
+				resolver = dns.resolver.Resolver()
+				resolver.lifetime = timeout
+				resolver.timeout = timeout / 2
+				self.dnsResolver = resolver
+			except ImportError as e: # pragma: no cover
+				logSys.error("dnspython package is required but could not be imported")
+				return_dict["error"] = repr(e)
+				return_dict["asn"].append("error")
+				return_dict["country"].append("error")
+				return_dict["rir"].append("error")
+				return return_dict
+		# get ips in lock:
+		with self.__lock:
+			banIPs = [banData.getIP() for banData in self.__banList.values()]
+		# get cymru info:
 		try:
-			import dns.exception
-			import dns.resolver
-		except ImportError:
-			logSys.error("dnspython package is required but could not be imported")
-			return_dict["asn"].append("error")
-			return_dict["country"].append("error")
-			return_dict["rir"].append("error")
-			return return_dict
-		self.__lock.acquire()
-		try:
-			for banData in self.__banList:
-				ip = banData.getIP()
+			for ip in banIPs:
 				# Reference: http://www.team-cymru.org/Services/ip-to-asn.html#dns
-				# TODO: IPv6 compatibility
-				reversed_ip = ".".join(reversed(ip.split(".")))
-				question = "%s.origin.asn.cymru.com" % reversed_ip
+				question = ip.getPTR(
+					"origin.asn.cymru.com" if ip.isIPv4
+					else "origin6.asn.cymru.com"
+				)
 				try:
-					answers = dns.resolver.query(question, "TXT")
+					resolver = self.dnsResolver
+					answers = resolver.query(question, "TXT")
+					if not answers:
+						raise ValueError("No data retrieved")
 					for rdata in answers:
 						asn, net, country, rir, changed =\
 							[answer.strip("'\" ") for answer in rdata.to_text().split("|")]
@@ -170,17 +179,23 @@ class BanManager:
 					return_dict["asn"].append("nxdomain")
 					return_dict["country"].append("nxdomain")
 					return_dict["rir"].append("nxdomain")
-				except dns.exception.DNSException as dnse:
-					logSys.error("Unhandled DNSException querying Cymru for %s TXT" % question)
-					logSys.exception(dnse)
-				except Exception as e:
-					logSys.error("Unhandled Exception querying Cymru for %s TXT" % question)
-					logSys.exception(e)
-		except Exception as e:
-			logSys.error("Failure looking up extended Cymru info")
-			logSys.exception(e)
-		finally:
-			self.__lock.release()
+				except (dns.exception.DNSException, dns.resolver.NoNameservers, dns.exception.Timeout) as dnse: # pragma: no cover
+					logSys.error("DNSException %r querying Cymru for %s TXT", dnse, question)
+					if logSys.level <= logging.DEBUG:
+						logSys.exception(dnse)
+					return_dict["error"] = repr(dnse)
+					break
+				except Exception as e: # pragma: no cover
+					logSys.error("Unhandled Exception %r querying Cymru for %s TXT", e, question)
+					if logSys.level <= logging.DEBUG:
+						logSys.exception(e)
+					return_dict["error"] = repr(e)
+					break
+		except Exception as e: # pragma: no cover
+			logSys.error("Failure looking up extended Cymru info: %s", e)
+			if logSys.level <= logging.DEBUG:
+				logSys.exception(e)
+			return_dict["error"] = repr(e)
 		return return_dict
 
 	##
@@ -191,15 +206,12 @@ class BanManager:
 	# @return list of Banned ASNs
 
 	def geBanListExtendedASN(self, cymru_info):
-		self.__lock.acquire()
 		try:
 			return [asn for asn in cymru_info["asn"]]
 		except Exception as e:
 			logSys.error("Failed to lookup ASN")
 			logSys.exception(e)
 			return []
-		finally:
-			self.__lock.release()
 
 	##
 	# Returns list of Banned Countries from Cymru info
@@ -209,15 +221,12 @@ class BanManager:
 	# @return list of Banned Countries
 
 	def geBanListExtendedCountry(self, cymru_info):
-		self.__lock.acquire()
 		try:
 			return [country for country in cymru_info["country"]]
 		except Exception as e:
 			logSys.error("Failed to lookup Country")
 			logSys.exception(e)
 			return []
-		finally:
-			self.__lock.release()
 
 	##
 	# Returns list of Banned RIRs from Cymru info
@@ -227,15 +236,12 @@ class BanManager:
 	# @return list of Banned RIRs
 
 	def geBanListExtendedRIR(self, cymru_info):
-		self.__lock.acquire()
 		try:
 			return [rir for rir in cymru_info["rir"]]
 		except Exception as e:
 			logSys.error("Failed to lookup RIR")
 			logSys.exception(e)
 			return []
-		finally:
-			self.__lock.release()
 
 	##
 	# Create a ban ticket.
@@ -247,12 +253,10 @@ class BanManager:
 	
 	@staticmethod
 	def createBanTicket(ticket):
-		ip = ticket.getIP()
-		#lastTime = ticket.getTime()
-		lastTime = MyTime.time()
-		banTicket = BanTicket(ip, lastTime, ticket.getMatches())
-		banTicket.setAttempt(ticket.getAttempt())
-		return banTicket
+		# we should always use correct time to calculate correct end time (ban time is variable now, 
+		# + possible double banning by restore from database and from log file)
+		# so use as lastTime always time from ticket.
+		return BanTicket(ticket=ticket)
 	
 	##
 	# Add a ban ticket.
@@ -261,16 +265,33 @@ class BanManager:
 	# @param ticket the ticket
 	# @return True if the IP address is not in the ban list
 	
-	def addBanTicket(self, ticket):
-		try:
-			self.__lock.acquire()
-			if not self._inBanList(ticket):
-				self.__banList.append(ticket)
-				self.__banTotal += 1
-				return True
-			return False
-		finally:
-			self.__lock.release()
+	def addBanTicket(self, ticket, reason={}):
+		eob = ticket.getEndOfBanTime(self.__banTime)
+		with self.__lock:
+			# check already banned
+			fid = ticket.getID()
+			oldticket = self.__banList.get(fid)
+			if oldticket:
+				reason['ticket'] = oldticket
+				# if new time for end of ban is larger than already banned end-time:
+				if eob > oldticket.getEndOfBanTime(self.__banTime):
+					# we have longest ban - set new (increment) ban time
+					reason['prolong'] = 1
+					btm = ticket.getBanTime(self.__banTime)
+					# if not permanent:
+					if btm != -1:
+						diftm = ticket.getTime() - oldticket.getTime()
+						if diftm > 0:
+							btm += diftm
+					oldticket.setBanTime(btm)
+				return False
+			# not yet banned - add new one:
+			self.__banList[fid] = ticket
+			self.__banTotal += 1
+			# correct next unban time:
+			if self.__nextUnbanTime > eob:
+				self.__nextUnbanTime = eob
+			return True
 
 	##
 	# Get the size of the ban list.
@@ -278,11 +299,7 @@ class BanManager:
 	# @return the size
 
 	def size(self):
-		try:
-			self.__lock.acquire()
-			return len(self.__banList)
-		finally:
-			self.__lock.release()
+		return len(self.__banList)
 
 	##
 	# Check if a ticket is in the list.
@@ -293,10 +310,7 @@ class BanManager:
 	# @return True if a ticket already exists
 	
 	def _inBanList(self, ticket):
-		for i in self.__banList:
-			if ticket.getIP() == i.getIP():
-				return True
-		return False
+		return ticket.getID() in self.__banList
 	
 	##
 	# Get the list of IP address to unban.
@@ -306,23 +320,39 @@ class BanManager:
 	# @return the list of ticket to unban
 	
 	def unBanList(self, time):
-		try:
-			self.__lock.acquire()
+		with self.__lock:
 			# Permanent banning
 			if self.__banTime < 0:
 				return list()
 
-			# Gets the list of ticket to remove.
-			unBanList = [ticket for ticket in self.__banList
-						 if ticket.getTime() < time - self.__banTime]
-			
+			# Check next unban time:
+			if self.__nextUnbanTime > time:
+				return list()
+
+			# Gets the list of ticket to remove (thereby correct next unban time).
+			unBanList = {}
+			self.__nextUnbanTime = BanTicket.MAX_TIME
+			for fid,ticket in self.__banList.iteritems():
+				# current time greater as end of ban - timed out:
+				eob = ticket.getEndOfBanTime(self.__banTime)
+				if time > eob:
+					unBanList[fid] = ticket
+				elif self.__nextUnbanTime > eob:
+					self.__nextUnbanTime = eob
+
 			# Removes tickets.
-			self.__banList = [ticket for ticket in self.__banList
-							  if ticket not in unBanList]
+			if len(unBanList):
+				if len(unBanList) / 2.0 <= len(self.__banList) / 3.0:
+					# few as 2/3 should be removed - remove particular items:
+					for fid in unBanList.iterkeys():
+						del self.__banList[fid]
+				else:
+					# create new dictionary without items to be deleted:
+					self.__banList = dict((fid,ticket) for fid,ticket in self.__banList.iteritems() \
+						if fid not in unBanList)
 						
-			return unBanList
-		finally:
-			self.__lock.release()
+			# return list of tickets:
+			return unBanList.values()
 
 	##
 	# Flush the ban list.
@@ -331,28 +361,21 @@ class BanManager:
 	# @return the complete ban list
 	
 	def flushBanList(self):
-		try:
-			self.__lock.acquire()
-			uBList = self.__banList
-			self.__banList = list()
+		with self.__lock:
+			uBList = self.__banList.values()
+			self.__banList = dict()
 			return uBList
-		finally:
-			self.__lock.release()
 
 	##
-	# Gets the ticket for the specified IP.
+	# Gets the ticket for the specified ID (most of the time it is IP-address).
 	#
-	# @return the ticket for the IP or False.
-	def getTicketByIP(self, ip):
-		try:
-			self.__lock.acquire()
-
-			# Find the ticket the IP goes with and return it
-			for i, ticket in enumerate(self.__banList):
-				if ticket.getIP() == ip:
-					# Return the ticket after removing (popping)
-					# if from the ban list.
-					return self.__banList.pop(i)
-		finally:
-			self.__lock.release()
+	# @return the ticket or False.
+	def getTicketByID(self, fid):
+		with self.__lock:
+			try:
+				# Return the ticket after removing (popping)
+				# if from the ban list.
+				return self.__banList.pop(fid)
+			except KeyError:
+				pass
 		return None						  # if none found

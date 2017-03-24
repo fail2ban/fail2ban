@@ -32,6 +32,7 @@ import pyinotify
 from .failmanager import FailManagerEmpty
 from .filter import FileFilter
 from .mytime import MyTime
+from .utils import Utils
 from ..helpers import getLogger
 
 
@@ -75,7 +76,7 @@ class FilterPyinotify(FileFilter):
 		logSys.debug("Created FilterPyinotify")
 
 	def callback(self, event, origin=''):
-		logSys.debug("%sCallback for Event: %s", origin, event)
+		logSys.log(7, "[%s] %sCallback for Event: %s", self.jailName, origin, event)
 		path = event.pathname
 		if event.mask & ( pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO ):
 			# skip directories altogether
@@ -92,7 +93,9 @@ class FilterPyinotify(FileFilter):
 				self._delFileWatcher(path)
 				# place a new one
 				self._addFileWatcher(path)
-
+		# do nothing if idle:
+		if self.idle:
+			return
 		self._process_file(path)
 
 	def _process_file(self, path):
@@ -108,7 +111,6 @@ class FilterPyinotify(FileFilter):
 				self.jail.putFailTicket(ticket)
 		except FailManagerEmpty:
 			self.failManager.cleanup(MyTime.time())
-		self.dateDetector.sortTemplate()
 		self.__modified = False
 
 	def _addFileWatcher(self, path):
@@ -117,14 +119,15 @@ class FilterPyinotify(FileFilter):
 		logSys.debug("Added file watcher for %s", path)
 
 	def _delFileWatcher(self, path):
-		wdInt = self.__watches[path]
-		wd = self.__monitor.rm_watch(wdInt)
-		if wd[wdInt]:
-			del self.__watches[path]
-			logSys.debug("Removed file watcher for %s", path)
-			return True
-		else:
-			return False
+		try:
+			wdInt = self.__watches.pop(path)
+			wd = self.__monitor.rm_watch(wdInt)
+			if wd[wdInt]:
+				logSys.debug("Removed file watcher for %s", path)
+				return True
+		except KeyError: # pragma: no cover
+			pass
+		return False
 
 	##
 	# Add a log file path
@@ -156,9 +159,31 @@ class FilterPyinotify(FileFilter):
 					if k.startswith(path_dir + pathsep)]):
 			# Remove watches for the directory
 			# since there is no other monitored file under this directory
-			wdInt = self.__watches.pop(path_dir)
-			self.__monitor.rm_watch(wdInt)
+			try:
+				wdInt = self.__watches.pop(path_dir)
+				self.__monitor.rm_watch(wdInt)
+			except KeyError: # pragma: no cover
+				pass
 			logSys.debug("Removed monitor for the parent directory %s", path_dir)
+
+	# pyinotify.ProcessEvent default handler:
+	def __process_default(self, event):
+		try:
+			self.callback(event, origin='Default ')
+		except Exception as e:
+			logSys.error("Error in FilterPyinotify callback: %s",
+				e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
+		self.ticks += 1
+
+	# slow check events while idle:
+	def __check_events(self, *args, **kwargs):
+		if self.idle:
+			if Utils.wait_for(lambda: not self.active or not self.idle,
+				self.sleeptime * 10, self.sleeptime
+			):
+				pass
+		self.ticks += 1
+		return pyinotify.ThreadedNotifier.check_events(self.__notifier, *args, **kwargs)
 
 	##
 	# Main loop.
@@ -167,12 +192,14 @@ class FilterPyinotify(FileFilter):
 	# loop is necessary
 
 	def run(self):
+		prcevent = pyinotify.ProcessEvent()
+		prcevent.process_default = self.__process_default
+		## timeout for pyinotify must be set in milliseconds (our time values are floats contain seconds)
 		self.__notifier = pyinotify.ThreadedNotifier(self.__monitor,
-			ProcessPyinotify(self))
+			prcevent, timeout=self.sleeptime * 1000)
+		self.__notifier.check_events = self.__check_events
 		self.__notifier.start()
-		logSys.debug("pyinotifier started for %s.", self.jail.name)
-		# TODO: verify that there is nothing really to be done for
-		#       idle jails
+		logSys.debug("[%s] filter started (pyinotifier)", self.jailName)
 		return True
 
 	##
@@ -180,34 +207,22 @@ class FilterPyinotify(FileFilter):
 
 	def stop(self):
 		super(FilterPyinotify, self).stop()
-
 		# Stop the notifier thread
 		self.__notifier.stop()
-		self.__notifier.join()			# to not exit before notifier does
-		self.__cleanup()				# for pedantic ones
+
+	##
+	# Wait for exit with cleanup.
+
+	def join(self):
+		self.__cleanup()
+		super(FilterPyinotify, self).join()
+		logSys.debug("[%s] filter terminated (pyinotifier)", self.jailName)
 
 	##
 	# Deallocates the resources used by pyinotify.
 
 	def __cleanup(self):
-		self.__notifier = None
+		if self.__notifier:
+			self.__notifier.join()			# to not exit before notifier does
+			self.__notifier = None
 		self.__monitor = None
-
-
-class ProcessPyinotify(pyinotify.ProcessEvent):
-	def __init__(self, FileFilter, **kargs):
-		#super(ProcessPyinotify, self).__init__(**kargs)
-		# for some reason root class _ProcessEvent is old-style (is
-		# not derived from object), so to play safe let's avoid super
-		# for now, and call superclass directly
-		pyinotify.ProcessEvent.__init__(self, **kargs)
-		self.__FileFilter = FileFilter
-		pass
-
-	# just need default, since using mask on watch to limit events
-	def process_default(self, event):
-		try:
-			self.__FileFilter.callback(event, origin='Default ')
-		except Exception as e:
-			logSys.error("Error in FilterPyinotify callback: %s",
-				e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)

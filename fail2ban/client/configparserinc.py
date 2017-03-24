@@ -25,13 +25,14 @@ __copyright__ = 'Copyright (c) 2007 Yaroslav Halchenko'
 __license__ = 'GPL'
 
 import os
+import re
 import sys
 from ..helpers import getLogger
 
-if sys.version_info >= (3,2): # pragma: no cover
+if sys.version_info >= (3,2):
 
 	# SafeConfigParser deprecated from Python 3.2 (renamed to ConfigParser)
-	from configparser import ConfigParser as SafeConfigParser, \
+	from configparser import ConfigParser as SafeConfigParser, NoSectionError, \
 		BasicInterpolation
 
 	# And interpolation of __name__ was simply removed, thus we need to
@@ -59,7 +60,7 @@ if sys.version_info >= (3,2): # pragma: no cover
 				parser, option, accum, rest, section, map, depth)
 
 else: # pragma: no cover
-	from ConfigParser import SafeConfigParser
+	from ConfigParser import SafeConfigParser, NoSectionError
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -98,6 +99,8 @@ after = 1.conf
 	"""
 
 	SECTION_NAME = "INCLUDES"
+
+	CONDITIONAL_RE = re.compile(r"^(\w+)(\?.+)$")
 
 	if sys.version_info >= (3,2):
 		# overload constructor only for fancy new Python3's
@@ -197,6 +200,21 @@ after = 1.conf
 	def get_sections(self):
 		return self._sections
 
+	def options(self, section, withDefault=True):
+		"""Return a list of option names for the given section name.
+
+		Parameter `withDefault` controls the include of names from section `[DEFAULT]`
+		"""
+		try:
+			opts = self._sections[section]
+		except KeyError:
+			raise NoSectionError(section)
+		if withDefault:
+			# mix it with defaults:
+			return set(opts.keys()) | set(self._defaults)
+		# only own option names:
+		return opts.keys()
+
 	def read(self, filenames, get_includes=True):
 		if not isinstance(filenames, list):
 			filenames = [ filenames ]
@@ -225,21 +243,31 @@ after = 1.conf
 					# merge defaults and all sections to self:
 					alld.update(cfg.get_defaults())
 					for n, s in cfg.get_sections().iteritems():
-						if isinstance(s, dict):
-							s2 = alls.get(n)
-							if isinstance(s2, dict):
-								# save previous known values, for possible using in local interpolations later:
-								sk = {}
-								for k, v in s2.iteritems():
-									if not k.startswith('known/'):
-										sk['known/'+k] = v
-								s2.update(sk)
-								# merge section
-								s2.update(s)
-							else:
-								alls[n] = s.copy()
+						curalls = alls
+						# conditional sections
+						cond = SafeConfigParserWithIncludes.CONDITIONAL_RE.match(n)
+						if cond:
+							n, cond = cond.groups()
+							s = s.copy()
+							try: 
+								del(s['__name__'])
+							except KeyError:
+								pass
+							for k in s.keys():
+								v = s.pop(k)
+								s[k + cond] = v
+						s2 = alls.get(n)
+						if isinstance(s2, dict):
+							# save previous known values, for possible using in local interpolations later:
+							sk = {}
+							for k, v in s2.iteritems():
+								if not k.startswith('known/') and k != '__name__':
+									sk['known/'+k] = v
+							s2.update(sk)
+							# merge section
+							s2.update(s)
 						else:
-							alls[n] = s
+							alls[n] = s.copy()
 
 			return ret
 
@@ -254,9 +282,12 @@ after = 1.conf
 
 	def merge_section(self, section, options, pref='known/'):
 		alls = self.get_sections()
+		if pref == '':
+			alls[section].update(options)
+			return
 		sk = {}
 		for k, v in options.iteritems():
-			if pref == '' or not k.startswith(pref):
+			if not k.startswith(pref) and k != '__name__':
 				sk[pref+k] = v
 		alls[section].update(sk)
 

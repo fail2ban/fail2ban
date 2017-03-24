@@ -28,8 +28,8 @@ import glob
 import os
 from ConfigParser import NoOptionError, NoSectionError
 
-from .configparserinc import SafeConfigParserWithIncludes, logLevel
-from ..helpers import getLogger
+from .configparserinc import sys, SafeConfigParserWithIncludes, logLevel
+from ..helpers import getLogger, _merge_dicts, substituteRecursiveTags
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -109,33 +109,44 @@ class ConfigReader():
 			self._cfg = ConfigReaderUnshared(**self._cfg_share_kwargs)
 
 	def sections(self):
-		if self._cfg is not None:
+		try:
 			return self._cfg.sections()
-		return []
+		except AttributeError:
+			return []
 
 	def has_section(self, sec):
-		if self._cfg is not None:
+		try:
 			return self._cfg.has_section(sec)
-		return False
+		except AttributeError:
+			return False
 
-	def merge_section(self, *args, **kwargs):
-		if self._cfg is not None:
-			return self._cfg.merge_section(*args, **kwargs)
+	def merge_section(self, section, *args, **kwargs):
+		try:
+			return self._cfg.merge_section(section, *args, **kwargs)
+		except AttributeError:
+			raise NoSectionError(section)
+	
+	def options(self, section, withDefault=False):
+		"""Return a list of option names for the given section name.
 
-	def options(self, *args):
-		if self._cfg is not None:
-			return self._cfg.options(*args)
-		return {}
+		Parameter `withDefault` controls the include of names from section `[DEFAULT]`
+		"""
+		try:
+			return self._cfg.options(section, withDefault)
+		except AttributeError:
+			raise NoSectionError(section)
 
-	def get(self, sec, opt):
-		if self._cfg is not None:
-			return self._cfg.get(sec, opt)
-		return None
+	def get(self, sec, opt, raw=False, vars={}):
+		try:
+			return self._cfg.get(sec, opt, raw=raw, vars=vars)
+		except AttributeError:
+			raise NoSectionError(sec)
 
-	def getOptions(self, *args, **kwargs):
-		if self._cfg is not None:
-			return self._cfg.getOptions(*args, **kwargs)
-		return {}
+	def getOptions(self, section, *args, **kwargs):
+		try:
+			return self._cfg.getOptions(section, *args, **kwargs)
+		except AttributeError:
+			raise NoSectionError(section)
 
 
 class ConfigReaderUnshared(SafeConfigParserWithIncludes):
@@ -164,6 +175,8 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 		if not os.path.exists(self._basedir):
 			raise ValueError("Base configuration directory %s does not exist "
 							  % self._basedir)
+		if filename.startswith("./"): # pragma: no cover
+			filename = os.path.abspath(filename)
 		basename = os.path.join(self._basedir, filename)
 		logSys.debug("Reading configs for %s under %s " , filename, self._basedir)
 		config_files = [ basename + ".conf" ]
@@ -203,40 +216,52 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	#
 	# Read the given option in the configuration file. Default values
 	# are used...
-	# Each optionValues entry is composed of an array with:
-	# 0 -> the type of the option
-	# 1 -> the name of the option
-	# 2 -> the default value for the option
+	# Each options entry is composed of an array with:
+	#  [[type, name, default], ...]
+	# Or it is a dict:
+	#  {name: [type, default], ...}
 	
-	def getOptions(self, sec, options, pOptions=None):
+	def getOptions(self, sec, options, pOptions=None, shouldExist=False):
 		values = dict()
-		for option in options:
-			try:
-				if option[0] == "bool":
-					v = self.getboolean(sec, option[1])
-				elif option[0] == "int":
-					v = self.getint(sec, option[1])
+		if pOptions is None:
+			pOptions = {}
+		# Get only specified options:
+		for optname in options:
+			if isinstance(options, (list,tuple)):
+				if len(optname) > 2:
+					opttype, optname, optvalue = optname
 				else:
-					v = self.get(sec, option[1])
-				if not pOptions is None and option[1] in pOptions:
-					continue
-				values[option[1]] = v
+					(opttype, optname), optvalue = optname, None
+			else:
+				opttype, optvalue = options[optname]
+			if optname in pOptions:
+				continue
+			try:
+				if opttype == "bool":
+					v = self.getboolean(sec, optname)
+				elif opttype == "int":
+					v = self.getint(sec, optname)
+				else:
+					v = self.get(sec, optname, vars=pOptions)
+				values[optname] = v
 			except NoSectionError as e:
+				if shouldExist:
+					raise
 				# No "Definition" section or wrong basedir
 				logSys.error(e)
-				values[option[1]] = option[2]
+				values[optname] = optvalue
 				# TODO: validate error handling here.
 			except NoOptionError:
-				if not option[2] is None:
+				if not optvalue is None:
 					logSys.warning("'%s' not defined in '%s'. Using default one: %r"
-								% (option[1], sec, option[2]))
-					values[option[1]] = option[2]
+								% (optname, sec, optvalue))
+					values[optname] = optvalue
 				elif logSys.getEffectiveLevel() <= logLevel:
-					logSys.log(logLevel, "Non essential option '%s' not defined in '%s'.", option[1], sec)
+					logSys.log(logLevel, "Non essential option '%s' not defined in '%s'.", optname, sec)
 			except ValueError:
-				logSys.warning("Wrong value for '" + option[1] + "' in '" + sec +
-							"'. Using default one: '" + repr(option[2]) + "'")
-				values[option[1]] = option[2]
+				logSys.warning("Wrong value for '" + optname + "' in '" + sec +
+							"'. Using default one: '" + repr(optvalue) + "'")
+				values[optname] = optvalue
 		return values
 
 
@@ -253,9 +278,13 @@ class DefinitionInitConfigReader(ConfigReader):
 	
 	def __init__(self, file_, jailName, initOpts, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
+		if file_.startswith("./"): # pragma: no cover
+			file_ = os.path.abspath(file_)
 		self.setFile(file_)
 		self.setJailName(jailName)
 		self._initOpts = initOpts
+		self._pOpts = dict()
+		self._defCache = dict()
 	
 	def setFile(self, fileName):
 		self._file = fileName
@@ -279,16 +308,74 @@ class DefinitionInitConfigReader(ConfigReader):
 			self._create_unshared(self._file)
 		return SafeConfigParserWithIncludes.read(self._cfg, self._file)
 	
-	def getOptions(self, pOpts):
+	def getOptions(self, pOpts, all=False):
+		# overwrite static definition options with init values, supplied as
+		# direct parameters from jail-config via action[xtra1="...", xtra2=...]:
+		if not pOpts:
+			pOpts = dict()
+		if self._initOpts:
+			pOpts = _merge_dicts(pOpts, self._initOpts)
 		self._opts = ConfigReader.getOptions(
 			self, "Definition", self._configOpts, pOpts)
-		
+		self._pOpts = pOpts
 		if self.has_section("Init"):
-			for opt in self.options("Init"):
-				v = self.get("Init", opt)
-				self._initOpts['known/'+opt] = v
-				if not opt in self._initOpts:
+			# get only own options (without options from default):
+			getopt = lambda opt: self.get("Init", opt)
+			for opt in self.options("Init", withDefault=False):
+				if opt == '__name__': continue
+				v = None
+				if not opt.startswith('known/'):
+					if v is None: v = getopt(opt)
+					self._initOpts['known/'+opt] = v
+				if opt not in self._initOpts:
+					if v is None: v = getopt(opt)
 					self._initOpts[opt] = v
+		if all and self.has_section("Definition"):
+			# merge with all definition options (and options from default),
+			# bypass already converted option (so merge only new options):
+			for opt in self.options("Definition"):
+				if opt == '__name__' or opt in self._opts: continue
+				self._opts[opt] = self.get("Definition", opt)
+
+
+	def _convert_to_boolean(self, value):
+		return value.lower() in ("1", "yes", "true", "on")
+	
+	def getCombOption(self, optname):
+		"""Get combined definition option (as string) using pre-set and init
+		options as preselection (values with higher precedence as specified in section).
+
+		Can be used only after calling of getOptions.
+		"""
+		try:
+			return self._defCache[optname]
+		except KeyError:
+			try:
+				v = self.get("Definition", optname, vars=self._pOpts)
+			except (NoSectionError, NoOptionError, ValueError):
+				v = None
+			self._defCache[optname] = v
+			return v
+
+	def getCombined(self, ignore=()):
+		combinedopts = self._opts
+		if self._initOpts:
+			combinedopts = _merge_dicts(combinedopts, self._initOpts)
+		if not len(combinedopts):
+			return {}
+		# ignore conditional options:
+		ignore = set(ignore).copy()
+		for n in combinedopts:
+			cond = SafeConfigParserWithIncludes.CONDITIONAL_RE.match(n)
+			if cond:
+				n, cond = cond.groups()
+				ignore.add(n)
+		# substiture options already specified direct:
+		opts = substituteRecursiveTags(combinedopts, 
+			ignore=ignore, addrepl=self.getCombOption)
+		if not opts:
+			raise ValueError('recursive tag definitions unable to be resolved')
+		return opts
 	
 	def convert(self):
 		raise NotImplementedError

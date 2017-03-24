@@ -26,6 +26,12 @@ __license__ = "GPL"
 
 import textwrap
 
+def output(s):
+	"""Default output handler for printing protocol. 
+  Used to ease mocking in the test cases.
+	"""
+	print(s)
+
 ##
 # Describes the protocol used to communicate with the server.
 
@@ -42,15 +48,21 @@ CSPROTO = dotdict({
 protocol = [
 ['', "BASIC", ""],
 ["start", "starts the server and the jails"], 
-["reload", "reloads the configuration"], 
-["reload <JAIL>", "reloads the jail <JAIL>"], 
+["restart", "restarts the server"], 
+["restart [--unban] [--if-exists] <JAIL>", "restarts the jail <JAIL> (alias for 'reload --restart ... <JAIL>')"], 
+["reload [--restart] [--unban] [--all]", "reloads the configuration without restarting of the server, the option '--restart' activates completely restarting of affected jails, thereby can unban IP addresses (if option '--unban' specified)"],
+["reload [--restart] [--unban] [--if-exists] <JAIL>", "reloads the jail <JAIL>, or restarts it (if option '--restart' specified)"],
 ["stop", "stops all jails and terminate the server"], 
+["unban --all", "unbans all IP addresses (in all jails and database)"],
+["unban <IP> ... <IP>", "unbans <IP> (in all jails and database)"],
 ["status", "gets the current status of the server"], 
-["ping", "tests if the server is alive"], 
+["ping", "tests if the server is alive"],
+["echo", "for internal usage, returns back and outputs a given string"],
 ["help", "return this output"], 
 ["version", "return the server version"],
 ['', "LOGGING", ""],
-["set loglevel <LEVEL>", "sets logging level to <LEVEL>. Levels: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG"], 
+["set loglevel <LEVEL>", "sets logging level to <LEVEL>. Levels: CRITICAL, ERROR, WARNING, NOTICE, INFO, "
+	"DEBUG, TRACEDEBUG, HEAVYDEBUG or corresponding numeric value (50-5)"], 
 ["get loglevel", "gets the logging level"], 
 ["set logtarget <TARGET>", "sets logging target to <TARGET>. Can be STDOUT, STDERR, SYSLOG or a file"], 
 ["get logtarget", "gets logging target"], 
@@ -141,7 +153,7 @@ def printFormatted():
 	firstHeading = False
 	for m in protocol:
 		if m[0] == '' and firstHeading:
-			print
+			output("")
 		firstHeading = True
 		first = True
 		if len(m[0]) >= MARGIN:
@@ -152,7 +164,7 @@ def printFormatted():
 				first = False
 			else:
 				line = ' ' * (INDENT + MARGIN) + n.strip()
-			print line
+			output(line)
 
 
 ##
@@ -163,20 +175,20 @@ def printWiki():
 	for m in protocol:
 		if m[0] == '':
 			if firstHeading:
-				print "|}"
+				output("|}")
 			__printWikiHeader(m[1], m[2])
 			firstHeading = True
 		else:
-			print "|-"
-			print "| <span style=\"white-space:nowrap;\"><tt>" + m[0] + "</tt></span> || || " + m[1]
-	print "|}"
+			output("|-")
+			output("| <span style=\"white-space:nowrap;\"><tt>" + m[0] + "</tt></span> || || " + m[1])
+	output("|}")
 
 
 def __printWikiHeader(section, desc):
-	print
-	print "=== " + section + " ==="
-	print
-	print desc
-	print
-	print "{|"
-	print "| '''Command''' || || '''Description'''"
+	output("")
+	output("=== " + section + " ===")
+	output("")
+	output(desc)
+	output("")
+	output("{|")
+	output("| '''Command''' || || '''Description'''")

@@ -35,12 +35,19 @@ from ..server.ticket import FailTicket
 from ..server.actions import Actions
 from .dummyjail import DummyJail
 try:
-	from ..server.database import Fail2BanDb
-except ImportError:
+	from ..server.database import Fail2BanDb as Fail2BanDb
+except ImportError: # pragma: no cover
 	Fail2BanDb = None
 from .utils import LogCaptureTestCase
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
+
+
+# because of tests performance use memory instead of file:
+def getFail2BanDb(filename):
+	if unittest.F2B.memory_db: # pragma: no cover
+		return Fail2BanDb(':memory:')
+	return Fail2BanDb(filename)
 
 
 class DatabaseTest(LogCaptureTestCase):
@@ -52,8 +59,10 @@ class DatabaseTest(LogCaptureTestCase):
 			raise unittest.SkipTest(
 				"Unable to import fail2ban database module as sqlite is not "
 				"available.")
-		_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
-		self.db = Fail2BanDb(self.dbFilename)
+		self.dbFilename = None
+		if not unittest.F2B.memory_db:
+			_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
+		self.db = getFail2BanDb(self.dbFilename)
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -61,12 +70,22 @@ class DatabaseTest(LogCaptureTestCase):
 		if Fail2BanDb is None: # pragma: no cover
 			return
 		# Cleanup
-		os.remove(self.dbFilename)
+		if self.dbFilename is not None:
+			os.remove(self.dbFilename)
 
 	def testGetFilename(self):
-		if Fail2BanDb is None: # pragma: no cover
+		if Fail2BanDb is None or self.db.filename == ':memory:': # pragma: no cover
 			return
 		self.assertEqual(self.dbFilename, self.db.filename)
+
+	def testPurgeAge(self):
+		if Fail2BanDb is None: # pragma: no cover
+			return
+		self.assertEqual(self.db.purgeage, 86400)
+		self.db.purgeage = '1y6mon15d5h30m'
+		self.assertEqual(self.db.purgeage, 48652200)
+		self.db.purgeage = '2y 12mon 30d 10h 60m'
+		self.assertEqual(self.db.purgeage, 48652200*2)
 
 	def testCreateInvalidPath(self):
 		if Fail2BanDb is None: # pragma: no cover
@@ -77,7 +96,7 @@ class DatabaseTest(LogCaptureTestCase):
 			"/this/path/should/not/exist")
 
 	def testCreateAndReconnect(self):
-		if Fail2BanDb is None: # pragma: no cover
+		if Fail2BanDb is None or self.db.filename == ':memory:': # pragma: no cover
 			return
 		self.testAddJail()
 		# Reconnect...
@@ -90,6 +109,9 @@ class DatabaseTest(LogCaptureTestCase):
 	def testUpdateDb(self):
 		if Fail2BanDb is None: # pragma: no cover
 			return
+		self.db = None
+		if self.dbFilename is None: # pragma: no cover
+			_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
 		shutil.copyfile(
 			os.path.join(TEST_FILES_DIR, 'database_v1.db'), self.dbFilename)
 		self.db = Fail2BanDb(self.dbFilename)
@@ -108,7 +130,7 @@ class DatabaseTest(LogCaptureTestCase):
 		self.jail = DummyJail()
 		self.db.addJail(self.jail)
 		self.assertTrue(
-			self.jail.name in self.db.getJailNames(),
+			self.jail.name in self.db.getJailNames(True),
 			"Jail not added to database")
 
 	def testAddLog(self):
@@ -227,6 +249,37 @@ class DatabaseTest(LogCaptureTestCase):
 		# be returned
 		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=-1)), 2)
 
+	def testGetBansMerged_MaxEntries(self):
+		if Fail2BanDb is None: # pragma: no cover
+			return
+		self.testAddJail()
+		maxEntries = 2
+		failures = ["abc\n", "123\n", "ABC\n", "1234\n"]
+		# add failures sequential:
+		i = 80
+		for f in failures:
+			i -= 10
+			ticket = FailTicket("127.0.0.1", MyTime.time() - i, [f])
+			ticket.setAttempt(1)
+			self.db.addBan(self.jail, ticket)
+		# should retrieve 2 matches only, but count of all attempts:
+		self.db.maxEntries = maxEntries;
+		ticket = self.db.getBansMerged("127.0.0.1")
+		self.assertEqual(ticket.getIP(), "127.0.0.1")
+		self.assertEqual(ticket.getAttempt(), len(failures))
+		self.assertEqual(len(ticket.getMatches()), maxEntries)
+		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxEntries:])
+    # add more failures at once:
+		ticket = FailTicket("127.0.0.1", MyTime.time() - 10, failures)
+		ticket.setAttempt(len(failures))
+		self.db.addBan(self.jail, ticket)
+		# should retrieve 2 matches only, but count of all attempts:
+		self.db.maxEntries = maxEntries;
+		ticket = self.db.getBansMerged("127.0.0.1")
+		self.assertEqual(ticket.getAttempt(), 2 * len(failures))
+		self.assertEqual(len(ticket.getMatches()), maxEntries)
+		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxEntries:])
+
 	def testGetBansMerged(self):
 		if Fail2BanDb is None: # pragma: no cover
 			return
@@ -300,6 +353,11 @@ class DatabaseTest(LogCaptureTestCase):
 		# be returned
 		tickets = self.db.getBansMerged(bantime=-1)
 		self.assertEqual(len(tickets), 2)
+		# getCurrentBans:
+		tickets = self.db.getCurrentBans(jail=self.jail)
+		self.assertEqual(len(tickets), 2)
+		ticket = self.db.getCurrentBans(jail=None, ip="127.0.0.1");
+		self.assertEqual(ticket.getIP(), "127.0.0.1")
 
 	def testActionWithDB(self):
 		# test action together with database functionality

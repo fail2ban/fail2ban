@@ -127,10 +127,12 @@ These files have one section, [Definition].
 The items that can be set are:
 .TP
 .B loglevel
-verbosity level of log output: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG. Default: ERROR
+verbosity level of log output: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG, TRACEDEBUG, HEAVYDEBUG or corresponding numeric value (50-5). Default: ERROR (equal 40)
 .TP
 .B logtarget
-log target: filename, SYSLOG, STDERR or STDOUT. Default: STDERR
+log target: filename, SYSLOG, STDERR or STDOUT. Default: STDOUT if not set in fail2ban.conf/fail2ban.local
+.br
+Note. If fail2ban running as systemd-service, for logging to the systemd-journal, the logtarget could be set to STDOUT
 .br
 Only a single log target can be specified.
 If you change logtarget from the default value and you are using logrotate -- also adjust or disable rotation in the

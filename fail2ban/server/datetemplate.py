@@ -24,14 +24,28 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import re
+import re, time
 from abc import abstractmethod
 
-from .strptime import reGroupDictStrptime, timeRE
+from .strptime import reGroupDictStrptime, timeRE, getTimePatternRE
 from ..helpers import getLogger
 
 logSys = getLogger(__name__)
 
+# check already grouped contains "(", but ignores char "\(" and conditional "(?(id)...)":
+RE_GROUPED = re.compile(r'(?<!(?:\(\?))(?<!\\)\((?!\?)')
+RE_GROUP = ( re.compile(r'^((?:\(\?\w+\))?\^?(?:\(\?\w+\))?)(.*?)(\$?)$'), r"\1(\2)\3" )
+
+RE_EXLINE_BOUND_BEG = re.compile(r'^\{\^LN-BEG\}')
+RE_NO_WRD_BOUND_BEG = re.compile(r'^\(*(?:\(\?\w+\))?(?:\^|\(*\*\*|\(\?:\^)')
+RE_NO_WRD_BOUND_END = re.compile(r'(?<!\\)(?:\$\)?|\*\*\)*)$')
+RE_DEL_WRD_BOUNDS = ( re.compile(r'^\(*(?:\(\?\w+\))?\(*\*\*|(?<!\\)\*\*\)*$'), 
+	                    lambda m: m.group().replace('**', '') )
+
+RE_LINE_BOUND_BEG = re.compile(r'^(?:\(\?\w+\))?(?:\^|\(\?:\^(?!\|))')
+RE_LINE_BOUND_END = re.compile(r'(?<![\\\|])(?:\$\)?)$')
+
+RE_ALPHA_PATTERN = re.compile(r'(?<!\%)\%[aAbBpc]')
 
 class DateTemplate(object):
 	"""A template which searches for and returns a date from a log line.
@@ -45,21 +59,19 @@ class DateTemplate(object):
 	regex
 	"""
 
+	LINE_BEGIN = 8
+	LINE_END =   4
+	WORD_BEGIN = 2
+	WORD_END =   1
+
 	def __init__(self):
-		self._name = ""
+		self.name = ""
+		self.weight = 1.0
+		self.flags = 0
+		self.hits = 0
+		self.time = 0
 		self._regex = ""
 		self._cRegex = None
-		self.hits = 0
-
-	@property
-	def name(self):
-		"""Name assigned to template.
-		"""
-		return self._name
-
-	@name.setter
-	def name(self, name):
-		self._name = name
 
 	def getRegex(self):
 		return self._regex
@@ -74,10 +86,12 @@ class DateTemplate(object):
 		wordBegin : bool
 			Defines whether the regex should be modified to search at beginning of a
 			word, by adding special boundary r'(?=^|\b|\W)' to start of regex.
+			Can be disabled with specifying of ** at front of regex.
 			Default True.
 		wordEnd : bool
 			Defines whether the regex should be modified to search at end of a word,
 			by adding special boundary r'(?=\b|\W|$)' to end of regex.
+			Can be disabled with specifying of ** at end of regex.
 			Default True.
 
 		Raises
@@ -85,26 +99,66 @@ class DateTemplate(object):
 		re.error
 			If regular expression fails to compile
 		"""
+		# Warning: don't use lookahead for line-begin boundary, 
+		# (e. g. r"^(?:\W{0,2})?" is much faster as r"(?:^|(?<=^\W)|(?<=^\W{2}))")
+		# because it may be very slow in negative case (by long log-lines not matching pattern)
+
 		regex = regex.strip()
-		if wordBegin and not re.search(r'^\^', regex):
-			regex = r'(?=^|\b|\W)' + regex
-		if wordEnd and not re.search(r'\$$', regex):
+		boundBegin = wordBegin and not RE_NO_WRD_BOUND_BEG.search(regex)
+		boundEnd = wordEnd and not RE_NO_WRD_BOUND_END.search(regex)
+		# if no group add it now, should always have a group(1):
+		if not RE_GROUPED.search(regex):
+			regex = RE_GROUP[0].sub(RE_GROUP[1], regex)
+		self.flags = 0
+		# if word or line start boundary:
+		if boundBegin:
+			self.flags |= DateTemplate.WORD_BEGIN if wordBegin != 'start' else DateTemplate.LINE_BEGIN
+			if wordBegin != 'start':
+				regex = r'(?:^|\b|\W)' + regex
+			else:
+				regex = r"^(?:\W{0,2})?" + regex
+				if not self.name.startswith('{^LN-BEG}'):
+					self.name = '{^LN-BEG}' + self.name
+		# if word end boundary:
+		if boundEnd:
+			self.flags |= DateTemplate.WORD_END
 			regex += r'(?=\b|\W|$)'
+		if RE_LINE_BOUND_BEG.search(regex): self.flags |= DateTemplate.LINE_BEGIN
+		if RE_LINE_BOUND_END.search(regex): self.flags |= DateTemplate.LINE_END
+		# remove possible special pattern "**" in front and end of regex:
+		regex = RE_DEL_WRD_BOUNDS[0].sub(RE_DEL_WRD_BOUNDS[1], regex)
 		self._regex = regex
-		self._cRegex = re.compile(regex, re.UNICODE | re.IGNORECASE)
+		logSys.debug('  constructed regex %s', regex)
+		self._cRegex = None
 
 	regex = property(getRegex, setRegex, doc=
 		"""Regex used to search for date.
 		""")
 
-	def matchDate(self, line):
+	def _compileRegex(self):
+		"""Compile regex by first usage.
+		"""
+		if not self._cRegex:
+			try:
+				# print('*'*10 + (' compile - %-30.30s -- %s' % (getattr(self, 'pattern', self.regex), self.name)))
+				self._cRegex = re.compile(self.regex)
+			except Exception as e:
+				logSys.error('Compile %r failed, expression %r', self.name, self.regex)
+				raise e
+
+	def matchDate(self, line, *args):
 		"""Check if regex for date matches on a log line.
 		"""
-		dateMatch = self._cRegex.search(line)
+		if not self._cRegex:
+			self._compileRegex()
+		dateMatch = self._cRegex.search(line, *args); # pos, endpos
+		if dateMatch:
+			self.hits += 1
+		# print('*'*10 + ('[%s] - %-30.30s -- %s' % ('*' if dateMatch else ' ', getattr(self, 'pattern', self.regex), self.name)))
 		return dateMatch
 
 	@abstractmethod
-	def getDate(self, line):
+	def getDate(self, line, dateMatch=None):
 		"""Abstract method, which should return the date for a log line
 
 		This should return the date for a log line, typically taking the
@@ -136,11 +190,17 @@ class DateEpoch(DateTemplate):
 	regex
 	"""
 
-	def __init__(self):
+	def __init__(self, lineBeginOnly=False):
 		DateTemplate.__init__(self)
-		self.regex = r"(?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=audit\()))\d{10,11}\b(?:\.\d{3,6})?(?:(?(selinux)(?=:\d+\)))|(?(square)(?=\])))"
+		self.name = "Epoch"
+		if not lineBeginOnly:
+			regex = r"((?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=\baudit\()))\d{10,11}\b(?:\.\d{3,6})?)(?:(?(selinux)(?=:\d+\)))|(?(square)(?=\])))"
+			self.setRegex(regex, wordBegin=False) ;# already line begin resp. word begin anchored
+		else:
+			regex = r"((?P<square>(?<=^\[))?\d{10,11}\b(?:\.\d{3,6})?)(?(square)(?=\]))"
+			self.setRegex(regex, wordBegin='start', wordEnd=True)
 
-	def getDate(self, line):
+	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.
 
 		Parameters
@@ -154,11 +214,11 @@ class DateEpoch(DateTemplate):
 			Tuple containing a Unix timestamp, and the string of the date
 			which was matched and in turned used to calculated the timestamp.
 		"""
-		dateMatch = self.matchDate(line)
+		if not dateMatch:
+			dateMatch = self.matchDate(line)
 		if dateMatch:
 			# extract part of format which represents seconds since epoch
-			return (float(dateMatch.group()), dateMatch)
-		return None
+			return (float(dateMatch.group(1)), dateMatch)
 
 
 class DatePatternRegex(DateTemplate):
@@ -175,21 +235,15 @@ class DatePatternRegex(DateTemplate):
 	regex
 	pattern
 	"""
-	_patternRE = r"%%(%%|[%s])" % "".join(timeRE.keys())
-	_patternName = {
-		'a': "DAY", 'A': "DAYNAME", 'b': "MON", 'B': "MONTH", 'd': "Day",
-		'H': "24hour", 'I': "12hour", 'j': "Yearday", 'm': "Month",
-		'M': "Minute", 'p': "AMPM", 'S': "Second", 'U': "Yearweek",
-		'w': "Weekday", 'W': "Yearweek", 'y': 'Year2', 'Y': "Year", '%': "%",
-		'z': "Zone offset", 'f': "Microseconds", 'Z': "Zone name"}
-	for _key in set(timeRE) - set(_patternName): # may not have them all...
-		_patternName[_key] = "%%%s" % _key
+	
+	_patternRE, _patternName = getTimePatternRE()
+	_patternRE = re.compile(_patternRE)
 
-	def __init__(self, pattern=None):
+	def __init__(self, pattern=None, **kwargs):
 		super(DatePatternRegex, self).__init__()
 		self._pattern = None
 		if pattern is not None:
-			self.pattern = pattern
+			self.setRegex(pattern, **kwargs)
 
 	@property
 	def pattern(self):
@@ -205,20 +259,25 @@ class DatePatternRegex(DateTemplate):
 
 	@pattern.setter
 	def pattern(self, pattern):
+		self.setRegex(pattern)
+
+	def setRegex(self, pattern, wordBegin=True, wordEnd=True):
+		# original pattern:
 		self._pattern = pattern
-		self._name = re.sub(
-			self._patternRE, r'%(\1)s', pattern) % self._patternName
-		super(DatePatternRegex, self).setRegex(
-			re.sub(self._patternRE, r'%(\1)s', pattern) % timeRE)
+		# if explicit given {^LN-BEG} - remove it from pattern and set 'start' in wordBegin:
+		if wordBegin and RE_EXLINE_BOUND_BEG.search(pattern):
+			pattern = RE_EXLINE_BOUND_BEG.sub('', pattern)
+			wordBegin = 'start'
+		# wrap to regex:
+		fmt = self._patternRE.sub(r'%(\1)s', pattern)
+		self.name = fmt % self._patternName
+		regex = fmt % timeRE
+		# if expected add (?iu) for "ignore case" and "unicode":
+		if RE_ALPHA_PATTERN.search(pattern):
+			regex = r'(?iu)' + regex
+		super(DatePatternRegex, self).setRegex(regex, wordBegin, wordEnd)
 
-	def setRegex(self, value):
-		raise NotImplementedError("Regex derived from pattern")
-
-	@DateTemplate.name.setter
-	def name(self, value):
-		raise NotImplementedError("Name derived from pattern")
-
-	def getDate(self, line):
+	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.
 
 		This uses a custom version of strptime, using the named groups
@@ -235,13 +294,10 @@ class DatePatternRegex(DateTemplate):
 			Tuple containing a Unix timestamp, and the string of the date
 			which was matched and in turned used to calculated the timestamp.
 		"""
-		dateMatch = self.matchDate(line)
+		if not dateMatch:
+			dateMatch = self.matchDate(line)
 		if dateMatch:
-			groupdict = dict(
-				(key, value)
-				for key, value in dateMatch.groupdict().iteritems()
-				if value is not None)
-			return reGroupDictStrptime(groupdict), dateMatch
+			return reGroupDictStrptime(dateMatch.groupdict()), dateMatch
 
 
 class DateTai64n(DateTemplate):
@@ -253,13 +309,13 @@ class DateTai64n(DateTemplate):
 	regex
 	"""
 
-	def __init__(self):
+	def __init__(self, wordBegin=False):
 		DateTemplate.__init__(self)
+		self.name = "TAI64N"
 		# We already know the format for TAI64N
-		# yoh: we should not add an additional front anchor
-		self.setRegex("@[0-9a-f]{24}", wordBegin=False)
+		self.setRegex("@[0-9a-f]{24}", wordBegin=wordBegin)
 
-	def getDate(self, line):
+	def getDate(self, line, dateMatch=None):
 		"""Method to return the date for a log line.
 
 		Parameters
@@ -273,11 +329,11 @@ class DateTai64n(DateTemplate):
 			Tuple containing a Unix timestamp, and the string of the date
 			which was matched and in turned used to calculated the timestamp.
 		"""
-		dateMatch = self.matchDate(line)
+		if not dateMatch:
+			dateMatch = self.matchDate(line)
 		if dateMatch:
 			# extract part of format which represents seconds since epoch
-			value = dateMatch.group()
+			value = dateMatch.group(1)
 			seconds_since_epoch = value[2:17]
 			# convert seconds from HEX into local time stamp
 			return (int(seconds_since_epoch, 16), dateMatch)
-		return None

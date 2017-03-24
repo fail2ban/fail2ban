@@ -31,6 +31,7 @@ import gamin
 from .failmanager import FailManagerEmpty
 from .filter import FileFilter
 from .mytime import MyTime
+from .utils import Utils
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
@@ -68,6 +69,7 @@ class FilterGamin(FileFilter):
 			logSys.debug("File changed: " + path)
 			self.__modified = True
 
+		self.ticks += 1
 		self._process_file(path)
 
 	def _process_file(self, path):
@@ -83,7 +85,6 @@ class FilterGamin(FileFilter):
 				self.jail.putFailTicket(ticket)
 		except FailManagerEmpty:
 			self.failManager.cleanup(MyTime.time())
-		self.dateDetector.sortTemplate()
 		self.__modified = False
 
 	##
@@ -102,6 +103,15 @@ class FilterGamin(FileFilter):
 	def _delLogPath(self, path):
 		self.monitor.stop_watch(path)
 
+	def _handleEvents(self):
+		ret = False
+		mon = self.monitor
+		while mon and mon.event_pending() > 0:
+			mon.handle_events()
+			mon = self.monitor
+			ret = True
+		return ret
+
 	##
 	# Main loop.
 	#
@@ -112,13 +122,17 @@ class FilterGamin(FileFilter):
 	def run(self):
 		# Gamin needs a loop to collect and dispatch events
 		while self.active:
-			if not self.idle:
-				# We cannot block here because we want to be able to
-				# exit.
-				if self.monitor.event_pending():
-					self.monitor.handle_events()
-			time.sleep(self.sleeptime)
-		logSys.debug(self.jail.name + ": filter terminated")
+			if self.idle:
+				# wait a little bit here for not idle, to prevent hi-load:
+				if not Utils.wait_for(lambda: not self.active or not self.idle,
+					self.sleeptime * 10, self.sleeptime
+				):
+					self.ticks += 1
+					continue
+			Utils.wait_for(lambda: not self.active or self._handleEvents(),
+				self.sleeptime)
+			self.ticks += 1
+		logSys.debug("[%s] filter terminated", self.jailName)
 		return True
 
 	def stop(self):
@@ -129,6 +143,6 @@ class FilterGamin(FileFilter):
 	# Desallocates the resources used by Gamin.
 
 	def __cleanup(self):
-		for log in self.getLogs():
-			self.monitor.stop_watch(log.getFileName())
-		del self.monitor
+		for filename in self.getLogPaths():
+			self.monitor.stop_watch(filename)
+		self.monitor = None

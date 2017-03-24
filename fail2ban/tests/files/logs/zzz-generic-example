@@ -29,3 +29,34 @@ Jun 21 16:55:02   <auth.info> machine kernel: [  970.699396] @vserver_demo test-
 # -- the same as above with brackets as date ambit --
 # failJSON: { "time": "2005-06-21T16:55:03", "match": true , "host": "192.0.2.3" }
 [Jun 21 16:55:03] <auth.info> machine kernel: [  970.699396] @vserver_demo test-demo(pam_unix)[13709] [ID 255 test] F2B: failure from 192.0.2.3
+
+# -- wrong time direct in journal-line (used last known date):
+# failJSON: { "time": "2005-06-21T16:55:03", "match": true , "host": "192.0.2.1" }
+0000-12-30 00:00:00 server test-demo[47831]:  F2B: failure from 192.0.2.1
+# -- wrong time after newline in message (plist without escaped newlines):
+# failJSON: { "match": false }
+Jun 22 20:37:04 server test-demo[402]: writeToStorage plist={
+# failJSON: { "match": false }
+             absentCircleWithNoReason = 0;
+# failJSON: { "match": false }
+             applicationDate = "0000-12-30 00:00:00 +0000";
+# failJSON: { "match": false }
+}
+# -- wrong time direct in journal-line (used last known date):
+# failJSON: { "time": "2005-06-22T20:37:04", "match": true , "host": "192.0.2.2" }
+0000-12-30 00:00:00 server test-demo[47831]:  F2B: failure from 192.0.2.2
+
+# -- test no zone and UTC/GMT named zone "2005-06-21T14:55:10 UTC" == "2005-06-21T16:55:10 CEST" (diff +2h in CEST):
+# failJSON: { "time": "2005-06-21T16:55:09", "match": true , "host": "192.0.2.09" }
+2005-06-21 16:55:09 machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.09
+# failJSON: { "time": "2005-06-21T16:55:10", "match": true , "host": "192.0.2.10" }
+2005-06-21 14:55:10 UTC machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.10
+# failJSON: { "time": "2005-06-21T16:55:11", "match": true , "host": "192.0.2.11" }
+2005-06-21 14:55:11 GMT machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.11
+
+# failJSON: { "time": "2005-06-21T16:56:02", "match": true , "host": "192.0.2.250" }
+[Jun 21 16:56:02] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.250
+# failJSON: { "match": false, "desc": "test 1st ignoreregex" }
+[Jun 21 16:56:03] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.251
+# failJSON: { "match": false, "desc": "test 2nd ignoreregex" }
+[Jun 21 16:56:04] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.252

@@ -28,6 +28,7 @@ import os
 
 from .configreader import DefinitionInitConfigReader
 from ..helpers import getLogger
+from ..server.action import CommandAction
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -35,16 +36,23 @@ logSys = getLogger(__name__)
 
 class ActionReader(DefinitionInitConfigReader):
 
-	_configOpts = [
-		["string", "actionstart", None],
-		["string", "actionstop", None],
-		["string", "actioncheck", None],
-		["string", "actionban", None],
-		["string", "actionunban", None],
-	]
+	_configOpts = {
+		"actionstart": ["string", None],
+		"actionstop": ["string", None],
+		"actionreload": ["string", None],
+		"actioncheck": ["string", None],
+		"actionrepair": ["string", None],
+		"actionban": ["string", None],
+		"actionunban": ["string", None],
+		"norestored": ["string", None],
+	}
 
 	def __init__(self, file_, jailName, initOpts, **kwargs):
-		self._name = initOpts.get("actname", file_)
+		actname = initOpts.get("actname")
+		if actname is None:
+			actname = file_
+			initOpts["actname"] = actname
+		self._name = actname
 		DefinitionInitConfigReader.__init__(
 			self, file_, jailName, initOpts, **kwargs)
 
@@ -62,23 +70,26 @@ class ActionReader(DefinitionInitConfigReader):
 		return self._name
 
 	def convert(self):
+		opts = self.getCombined(
+			ignore=CommandAction._escapedTags | set(('timeout', 'bantime')))
+		# type-convert only after combined (otherwise boolean converting prevents substitution):
+		if opts.get('norestored'):
+			opts['norestored'] = self._convert_to_boolean(opts['norestored'])
+		# stream-convert:
 		head = ["set", self._jailName]
 		stream = list()
 		stream.append(head + ["addaction", self._name])
-		head.extend(["action", self._name])
-		for opt in self._opts:
-			if opt == "actionstart":
-				stream.append(head + ["actionstart", self._opts[opt]])
-			elif opt == "actionstop":
-				stream.append(head + ["actionstop", self._opts[opt]])
-			elif opt == "actioncheck":
-				stream.append(head + ["actioncheck", self._opts[opt]])
-			elif opt == "actionban":
-				stream.append(head + ["actionban", self._opts[opt]])
-			elif opt == "actionunban":
-				stream.append(head + ["actionunban", self._opts[opt]])
+		multi = []
+		for opt, optval in opts.iteritems():
+			if opt in self._configOpts:
+				multi.append([opt, optval])
 		if self._initOpts:
-			for p in self._initOpts:
-				stream.append(head + [p, self._initOpts[p]])
+			for opt, optval in self._initOpts.iteritems():
+				if opt not in self._configOpts:
+					multi.append([opt, optval])
+		if len(multi) > 1:
+			stream.append(["multi-set", self._jailName, "action", self._name, multi])
+		elif len(multi):
+			stream.append(["set", self._jailName, "action", self._name] + multi[0])
 
 		return stream

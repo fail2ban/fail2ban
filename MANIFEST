@@ -13,6 +13,7 @@ config/action.d/complain.conf
 config/action.d/dshield.conf
 config/action.d/dummy.conf
 config/action.d/firewallcmd-allports.conf
+config/action.d/firewallcmd-common.conf
 config/action.d/firewallcmd-ipset.conf
 config/action.d/firewallcmd-multiport.conf
 config/action.d/firewallcmd-new.conf
@@ -97,7 +98,6 @@ config/filter.d/gssftpd.conf
 config/filter.d/guacamole.conf
 config/filter.d/haproxy-http-auth.conf
 config/filter.d/horde.conf
-config/filter.d/ignorecommands
 config/filter.d/ignorecommands/apache-fakegooglebot
 config/filter.d/kerio.conf
 config/filter.d/lighttpd-auth.conf
@@ -131,7 +131,6 @@ config/filter.d/selinux-common.conf
 config/filter.d/selinux-ssh.conf
 config/filter.d/sendmail-auth.conf
 config/filter.d/sendmail-reject.conf
-config/filter.d/sendmail-spam.conf
 config/filter.d/sieve.conf
 config/filter.d/slapd.conf
 config/filter.d/sogo-auth.conf
@@ -139,7 +138,6 @@ config/filter.d/solid-pop3d.conf
 config/filter.d/squid.conf
 config/filter.d/squirrelmail.conf
 config/filter.d/sshd.conf
-config/filter.d/sshd-ddos.conf
 config/filter.d/stunnel.conf
 config/filter.d/suhosin.conf
 config/filter.d/tine20.conf
@@ -159,7 +157,6 @@ CONTRIBUTING.md
 COPYING
 .coveragerc
 DEVELOP
-doc/run-rootless.txt
 fail2ban-2to3
 fail2ban/client/actionreader.py
 fail2ban/client/beautifier.py
@@ -167,8 +164,11 @@ fail2ban/client/configparserinc.py
 fail2ban/client/configreader.py
 fail2ban/client/configurator.py
 fail2ban/client/csocket.py
+fail2ban/client/fail2banclient.py
+fail2ban/client/fail2bancmdline.py
 fail2ban/client/fail2banreader.py
 fail2ban/client/fail2banregex.py
+fail2ban/client/fail2banserver.py
 fail2ban/client/filterreader.py
 fail2ban/client/__init__.py
 fail2ban/client/jailreader.py
@@ -184,7 +184,6 @@ fail2ban/server/banmanager.py
 fail2ban/server/database.py
 fail2ban/server/datedetector.py
 fail2ban/server/datetemplate.py
-fail2ban/server/faildata.py
 fail2ban/server/failmanager.py
 fail2ban/server/failregex.py
 fail2ban/server/filtergamin.py
@@ -193,7 +192,7 @@ fail2ban/server/filter.py
 fail2ban/server/filterpyinotify.py
 fail2ban/server/filtersystemd.py
 fail2ban/server/__init__.py
-fail2ban/server/iso8601.py
+fail2ban/server/ipdns.py
 fail2ban/server/jail.py
 fail2ban/server/jails.py
 fail2ban/server/jailthread.py
@@ -202,6 +201,7 @@ fail2ban/server/server.py
 fail2ban/server/strptime.py
 fail2ban/server/ticket.py
 fail2ban/server/transmitter.py
+fail2ban/server/utils.py
 fail2ban/setup.py
 fail2ban-testcases-all
 fail2ban-testcases-all-python3
@@ -211,6 +211,7 @@ fail2ban/tests/action_d/test_smtp.py
 fail2ban/tests/actionstestcase.py
 fail2ban/tests/actiontestcase.py
 fail2ban/tests/banmanagertestcase.py
+fail2ban/tests/clientbeautifiertestcase.py
 fail2ban/tests/clientreadertestcase.py
 fail2ban/tests/config/action.d/brokenaction.conf
 fail2ban/tests/config/fail2ban.conf
@@ -220,13 +221,10 @@ fail2ban/tests/config/filter.d/test.conf
 fail2ban/tests/config/filter.d/test.local
 fail2ban/tests/config/filter.d/zzz-generic-example.conf
 fail2ban/tests/config/jail.conf
-fail2ban/tests/config/paths-common.conf
-fail2ban/tests/config/paths-debian.conf
-fail2ban/tests/config/paths-freebsd.conf
-fail2ban/tests/config/paths-osx.conf
 fail2ban/tests/databasetestcase.py
 fail2ban/tests/datedetectortestcase.py
 fail2ban/tests/dummyjail.py
+fail2ban/tests/fail2banclienttestcase.py
 fail2ban/tests/fail2banregextestcase.py
 fail2ban/tests/failmanagertestcase.py
 fail2ban/tests/files/action.d/action_checkainfo.py
@@ -259,7 +257,6 @@ fail2ban/tests/files/ignorecommand.py
 fail2ban/tests/files/logs/3proxy
 fail2ban/tests/files/logs/apache-auth
 fail2ban/tests/files/logs/apache-badbots
-fail2ban/tests/files/logs/apache-botscripts
 fail2ban/tests/files/logs/apache-botsearch
 fail2ban/tests/files/logs/apache-fakegooglebot
 fail2ban/tests/files/logs/apache-modsecurity
@@ -322,7 +319,6 @@ fail2ban/tests/files/logs/screensharingd
 fail2ban/tests/files/logs/selinux-ssh
 fail2ban/tests/files/logs/sendmail-auth
 fail2ban/tests/files/logs/sendmail-reject
-fail2ban/tests/files/logs/sendmail-spam
 fail2ban/tests/files/logs/sieve
 fail2ban/tests/files/logs/slapd
 fail2ban/tests/files/logs/sogo-auth
@@ -330,7 +326,6 @@ fail2ban/tests/files/logs/solid-pop3d
 fail2ban/tests/files/logs/squid
 fail2ban/tests/files/logs/squirrelmail
 fail2ban/tests/files/logs/sshd
-fail2ban/tests/files/logs/sshd-ddos
 fail2ban/tests/files/logs/stunnel
 fail2ban/tests/files/logs/suhosin
 fail2ban/tests/files/logs/tine20
@@ -354,6 +349,7 @@ fail2ban/tests/misctestcase.py
 fail2ban/tests/samplestestcase.py
 fail2ban/tests/servertestcase.py
 fail2ban/tests/sockettestcase.py
+fail2ban/tests/tickettestcase.py
 fail2ban/tests/utils.py
 fail2ban/version.py
 files/bash-completion
