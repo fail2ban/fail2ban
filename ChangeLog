@@ -68,6 +68,10 @@ TODO: implementing of options resp. other tasks from PR #1346
 * Samples test case factory extended with filter options - dict in JSON to control 
   filter options (e. g. mode, etc.):
   # filterOptions: {"mode": "aggressive"}
+* Introduced new jail option "ignoreself", specifies whether the local resp. own IP addresses 
+  should be ignored (default is true). Fail2ban will not ban a host which matches such addresses.
+  Option "ignoreip" affects additionally to "ignoreself" and don't need to include the DNS 
+  resp. IPs of the host self.
 
 
 ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc

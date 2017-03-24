@@ -181,6 +181,10 @@ class Transmitter:
 				raise Exception("Invalid idle option, must be 'on' or 'off'")
 			return self.__server.getIdleJail(name)
 		# Filter
+		elif command[1] == "ignoreself":
+			value = command[2]
+			self.__server.setIgnoreSelf(name, value)
+			return self.__server.getIgnoreSelf(name)
 		elif command[1] == "addignoreip":
 			value = command[2]
 			self.__server.addIgnoreIP(name, value)
@@ -341,6 +345,8 @@ class Transmitter:
 			return self.__server.getLogEncoding(name)
 		elif command[1] == "journalmatch": # pragma: systemd no cover
 			return self.__server.getJournalMatch(name)
+		elif command[1] == "ignoreself":
+			return self.__server.getIgnoreSelf(name)
 		elif command[1] == "ignoreip":
 			return self.__server.getIgnoreIP(name)
 		elif command[1] == "ignorecommand":

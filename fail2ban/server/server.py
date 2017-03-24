@@ -308,6 +308,12 @@ class Server:
 		return self.__jails[name].idle
 	
 	# Filter
+	def setIgnoreSelf(self, name, value):
+		self.__jails[name].filter.ignoreSelf = value
+	
+	def getIgnoreSelf(self, name):
+		return self.__jails[name].filter.ignoreSelf
+
 	def addIgnoreIP(self, name, ip):
 		self.__jails[name].filter.addIgnoreIP(ip)
 	

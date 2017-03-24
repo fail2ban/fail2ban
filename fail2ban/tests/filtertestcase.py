@@ -325,6 +325,17 @@ class IgnoreIP(LogCaptureTestCase):
 		LogCaptureTestCase.setUp(self)
 		self.jail = DummyJail()
 		self.filter = FileFilter(self.jail)
+		self.filter.ignoreSelf = False
+
+	def testIgnoreSelfIP(self):
+		ipList = ("127.0.0.1",)
+		# test ignoreSelf is false:
+		for ip in ipList:
+			self.assertFalse(self.filter.inIgnoreIPList(ip))
+		# test ignoreSelf with true:
+		self.filter.ignoreSelf = True
+		for ip in ipList:
+			self.assertTrue(self.filter.inIgnoreIPList(ip))
 
 	def testIgnoreIPOK(self):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
