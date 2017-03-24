@@ -111,9 +111,8 @@ class Regex:
 		#
 		if regex.lstrip() == '':
 			raise RegexException("Cannot add empty regex")
-		flags = re.MULTILINE if (multiline or "\n" in regex or r"\n" in regex) else 0
 		try:
-			self._regexObj = re.compile(regex, flags)
+			self._regexObj = re.compile(regex, re.MULTILINE if multiline else 0)
 			self._regex = regex
 		except sre_constants.error:
 			raise RegexException("Unable to compile regular expression '%s'" %
@@ -121,11 +120,6 @@ class Regex:
 
 	def __str__(self):
 		return "%s(%r)" % (self.__class__.__name__, self._regex)
-
-	@property
-	def flags(self):
-		"""Returns the regex matching flags combination of the compiled regex object"""
-		return self._regexObj.flags
 
 	##
 	# Replaces "<HOST>", "<IP4>", "<IP6>", "<FID>" with default regular expression for host

@@ -40,7 +40,7 @@ TEST_CONFIG_DIR = os.path.join(os.path.dirname(__file__), "config")
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
 # regexp to test greedy catch-all should be not-greedy:
-RE_HOST = Regex('<HOST>').getRegex()
+RE_HOST = Regex._resolveHostTag('<HOST>')
 RE_WRONG_GREED = re.compile(r'\.[+\*](?!\?)[^\$\^]*' + re.escape(RE_HOST) + r'.*(?:\.[+\*].*|[^\$])$')
 
 
