@@ -276,7 +276,8 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		)
 		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Lines: 4 lines, 0 ignored, 2 matched, 2 missed')
-		self.assertLogged("&flags=m")
+		# the sequence in args-dict is currently undefined (so can be 1st argument)
+		self.assertLogged("&flags=m", "?flags=m")
 
 	def testSinglelineWithNLinContent(self):
 		# 
