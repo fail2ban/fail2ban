@@ -252,6 +252,44 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		)
 		self.assertTrue(fail2banRegex.start(args))
 
+	def testDirectMultilineBuf(self):
+		# test it with some pre-lines also to cover correct buffer scrolling (all multi-lines printed):
+		for preLines in (0, 20):
+			self.pruneLog("[test-phase %s]" % preLines)
+			(opts, args, fail2banRegex) = _Fail2banRegex(
+				"--usedns", "no", "-d", "^Epoch", "--print-all-matched", "--maxlines", "5", 
+				("1490349000 TEST-NL\n"*preLines) + 
+				"1490349000 FAIL\n1490349000 TEST1\n1490349001 TEST2\n1490349001 HOST 192.0.2.34",
+				r"^\s*FAIL\s*$<SKIPLINES>^\s*HOST <HOST>\s*$"
+			)
+			self.assertTrue(fail2banRegex.start(args))
+			self.assertLogged('Lines: %s lines, 0 ignored, 2 matched, %s missed' % (preLines+4, preLines+2))
+			# both matched lines were printed:
+			self.assertLogged("|  1490349000 FAIL", "|  1490349001 HOST 192.0.2.34", all=True)
+
+
+	def testDirectMultilineBufDebuggex(self):
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"--usedns", "no", "-d", "^Epoch", "--debuggex", "--print-all-matched", "--maxlines", "5",
+			"1490349000 FAIL\n1490349000 TEST1\n1490349001 TEST2\n1490349001 HOST 192.0.2.34",
+			r"^\s*FAIL\s*$<SKIPLINES>^\s*HOST <HOST>\s*$"
+		)
+		self.assertTrue(fail2banRegex.start(args))
+		self.assertLogged('Lines: 4 lines, 0 ignored, 2 matched, 2 missed')
+		# the sequence in args-dict is currently undefined (so can be 1st argument)
+		self.assertLogged("&flags=m", "?flags=m")
+
+	def testSinglelineWithNLinContent(self):
+		# 
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"--usedns", "no", "-d", "^Epoch", "--print-all-matched",
+			"1490349000 FAIL: failure\nhost: 192.0.2.35",
+			r"^\s*FAIL:\s*.*\nhost:\s+<HOST>$"
+		)
+		self.assertTrue(fail2banRegex.start(args))
+		self.assertLogged('Lines: 1 lines, 0 ignored, 1 matched, 0 missed')
+
+
 	def testWrongFilterFile(self):
 		# use test log as filter file to cover eror cases...
 		(opts, args, fail2banRegex) = _Fail2banRegex(

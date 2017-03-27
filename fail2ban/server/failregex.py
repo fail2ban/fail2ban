@@ -103,20 +103,16 @@ class Regex:
 	# avoid construction of invalid object.
 	# @param value the regular expression
 	
-	def __init__(self, regex, **kwargs):
+	def __init__(self, regex, multiline=False, **kwargs):
 		self._matchCache = None
 		# Perform shortcuts expansions.
-		# Resolve "<HOST>" tag using default regular expression for host:
+		# Replace standard f2b-tags (like "<HOST>", etc) using default regular expressions:
 		regex = Regex._resolveHostTag(regex, **kwargs)
-		# Replace "<SKIPLINES>" with regular expression for multiple lines.
-		regexSplit = regex.split("<SKIPLINES>")
-		regex = regexSplit[0]
-		for n, regexLine in enumerate(regexSplit[1:]):
-			regex += "\n(?P<skiplines%i>(?:(.*\n)*?))" % n + regexLine
+		#
 		if regex.lstrip() == '':
 			raise RegexException("Cannot add empty regex")
 		try:
-			self._regexObj = re.compile(regex, re.MULTILINE)
+			self._regexObj = re.compile(regex, re.MULTILINE if multiline else 0)
 			self._regex = regex
 		except sre_constants.error:
 			raise RegexException("Unable to compile regular expression '%s'" %
@@ -135,6 +131,9 @@ class Regex:
 	def _resolveHostTag(regex, useDns="yes"):
 
 		openTags = dict()
+		props = {
+			'nl': 0, # new lines counter by <SKIPLINES> tag;
+		}
 		# tag interpolation callable:
 		def substTag(m):
 			tag = m.group()
@@ -142,6 +141,11 @@ class Regex:
 			# 3 groups instead of <HOST> - separated ipv4, ipv6 and host (dns)
 			if tn == "HOST":
 				return R_HOST[RI_HOST if useDns not in ("no",) else RI_ADDR]
+			# replace "<SKIPLINES>" with regular expression for multiple lines (by buffering with maxlines)
+			if tn == "SKIPLINES":
+				nl = props['nl']
+				props['nl'] = nl + 1
+				return r"\n(?P<skiplines%i>(?:(?:.*\n)*?))" % (nl,)
 			# static replacement from RH4TAG:
 			try:
 				return RH4TAG[tn]

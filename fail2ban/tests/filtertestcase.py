@@ -1479,8 +1479,8 @@ class GetFailures(LogCaptureTestCase):
 		output = [("192.0.43.10", 2, 1124013599.0),
 			("192.0.43.11", 1, 1124013598.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
-		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.setMaxLines(100)
+		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.setMaxRetry(1)
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)
@@ -1497,9 +1497,9 @@ class GetFailures(LogCaptureTestCase):
 	def testGetFailuresMultiLineIgnoreRegex(self):
 		output = [("192.0.43.10", 2, 1124013599.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
+		self.filter.setMaxLines(100)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addIgnoreRegex("rsync error: Received SIGINT")
-		self.filter.setMaxLines(100)
 		self.filter.setMaxRetry(1)
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)
@@ -1513,9 +1513,9 @@ class GetFailures(LogCaptureTestCase):
 			("192.0.43.11", 1, 1124013598.0),
 			("192.0.43.15", 1, 1124013598.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
+		self.filter.setMaxLines(100)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addFailRegex("^.* sendmail\[.*, msgid=<(?P<msgid>[^>]+).*relay=\[<HOST>\].*$<SKIPLINES>^.+ spamd: result: Y \d+ .*,mid=<(?P=msgid)>(,bayes=[.\d]+)?(,autolearn=\S+)?\s*$")
-		self.filter.setMaxLines(100)
 		self.filter.setMaxRetry(1)
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)

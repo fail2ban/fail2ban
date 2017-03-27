@@ -55,11 +55,14 @@ from ..helpers import str2LogLevel, getVerbosityFormat, FormatterWithTraceBack, 
 # Gets the instance of the logger.
 logSys = getLogger("fail2ban")
 
-def debuggexURL(sample, regex, useDns="yes"):
-	q = urllib.urlencode({ 're': Regex._resolveHostTag(regex, useDns=useDns),
-							'str': sample,
-							'flavor': 'python' })
-	return 'https://www.debuggex.com/?' + q
+def debuggexURL(sample, regex, multiline=False, useDns="yes"):
+	args = {
+		're': Regex._resolveHostTag(regex, useDns=useDns),
+		'str': sample,
+		'flavor': 'python'
+	}
+	if multiline: args['flags'] = 'm'
+	return 'https://www.debuggex.com/?' + urllib.urlencode(args)
 
 def output(args): # pragma: no cover (overriden in test-cases)
 	print(args)
@@ -400,6 +403,7 @@ class Fail2banRegex(object):
 		fullBuffer = len(orgLineBuffer) >= self._filter.getMaxLines()
 		try:
 			ret = self._filter.processLine(line, date)
+			lines = []
 			line = self._filter.processedLine()
 			for match in ret:
 				# Append True/False flag depending if line was matched by
@@ -422,9 +426,17 @@ class Fail2banRegex(object):
 								"".join(bufLine[::2])))
 				except ValueError:
 					pass
-				else:
-					self._line_stats.matched += 1
-					self._line_stats.missed -= 1
+				# if buffering - add also another lines from match:
+				if self._print_all_matched:
+					if not self._debuggex:
+						self._line_stats.matched_lines.append("".join(bufLine))
+					else:
+						lines.append(bufLine[0] + bufLine[2])
+				self._line_stats.matched += 1
+				self._line_stats.missed -= 1
+		if lines: # pre-lines parsed in multiline mode (buffering)
+			lines.append(line)
+			line = "\n".join(lines)
 		return line, ret
 
 	def process(self, test_lines):
@@ -472,6 +484,7 @@ class Fail2banRegex(object):
 		assert(self._line_stats.missed == lstats.tested - (lstats.matched + lstats.ignored))
 		lines = lstats[ltype]
 		l = lstats[ltype + '_lines']
+		multiline = self._filter.getMaxLines() > 1
 		if lines:
 			header = "%s line(s):" % (ltype.capitalize(),)
 			if self._debuggex:
@@ -485,7 +498,8 @@ class Fail2banRegex(object):
 					for arg in [l, regexlist]:
 						ans = [ x + [y] for x in ans for y in arg ]
 					b = map(lambda a: a[0] +  ' | ' + a[1].getFailRegex() + ' |  ' + 
-						debuggexURL(self.encode_line(a[0]), a[1].getFailRegex(), self._opts.usedns), ans)
+						debuggexURL(self.encode_line(a[0]), a[1].getFailRegex(), 
+							multiline, self._opts.usedns), ans)
 					pprint_list([x.rstrip() for x in b], header)
 				else:
 					output( "%s too many to print.  Use --print-all-%s " \
@@ -599,8 +613,19 @@ class Fail2banRegex(object):
 			output( "Use    journal match : %s" % " ".join(journalmatch) )
 			test_lines = journal_lines_gen(flt, myjournal)
 		else:
-			output( "Use      single line : %s" % shortstr(cmd_log) )
-			test_lines = [ cmd_log ]
+			# if single line parsing (without buffering)
+			if self._filter.getMaxLines() <= 1:
+				output( "Use      single line : %s" % shortstr(cmd_log.replace("\n", r"\n")) )
+				test_lines = [ cmd_log ]
+			else: # multi line parsing (with buffering)
+				test_lines = cmd_log.split("\n")
+				output( "Use      multi line : %s line(s)" % len(test_lines) )
+				for i, l in enumerate(test_lines):
+					if i >= 5:
+						output( "| ..." ); break
+					output( "| %2.2s: %s" % (i+1, shortstr(l)) )
+				output( "`-" )
+			
 		output( "" )
 
 		self.process(test_lines)
