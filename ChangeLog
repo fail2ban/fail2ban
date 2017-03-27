@@ -27,6 +27,8 @@ TODO: implementing of options resp. other tasks from PR #1346
   - fixed using new tag `<ip-rev>` (sh/dash compliant now)
 * `action.d/sendmail-geoip-lines.conf`
   - fixed using new tag `<ip-host>` (without external command execution)
+* fail2ban-regex: fixed matched output by multi-line (buffered) parsing
+* fail2ban-regex: support for multi-line debuggex URL implemented (gh-422)
 
 ### New Features
 * New Actions:
@@ -72,6 +74,13 @@ TODO: implementing of options resp. other tasks from PR #1346
   should be ignored (default is true). Fail2ban will not ban a host which matches such addresses.
   Option "ignoreip" affects additionally to "ignoreself" and don't need to include the DNS 
   resp. IPs of the host self.
+* Regex will be compiled as MULTILINE only if needed (buffering with `maxlines` > 1), that enables:
+  - to improve performance by the single line parsing (see gh-1733);
+  - make regex more precise (because distinguish between anchors `^`/`$` for the begin/end of string
+    and the new-line character '\n', e. g. if coming from filters (like systemd journal) that allow
+    the parsing of log-entries contain new-line chars (as single entry);
+  - if multiline regex however expected (by single-line parsing without buffering) - prefix `(?m)` 
+    could be used in regex to enable it;
 
 
 ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
