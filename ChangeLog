@@ -315,6 +315,7 @@ releases.
     - filter.d/domino-smtp: IBM Domino SMTP task (gh-1603)
 
 ### Enhancements
+* Introduced new log-level `MSG` (as INFO-2, equivalent to 18)
 
 
 ver. 0.9.6 (2016/12/10) - stretch-is-coming
