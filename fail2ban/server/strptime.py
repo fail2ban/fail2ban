@@ -95,18 +95,10 @@ def reGroupDictStrptime(found_dict, msec=False):
 		Unix time stamp.
 	"""
 
-	now = MyTime.now()
-	year = month = day = hour = minute = None
-	hour = minute = None
+	now = \
+	year = month = day = hour = minute = tzoffset = \
+	weekday = julian = week_of_year = None
 	second = fraction = 0
-	tzoffset = None
-	# Default to -1 to signify that values not known; not critical to have,
-	# though
-	week_of_year = -1
-	week_of_year_start = -1
-	# weekday and julian defaulted to -1 so as to signal need to calculate
-	# values
-	weekday = julian = -1
 	for key, val in found_dict.iteritems():
 		if val is None: continue
 		# Directives not explicitly handled below:
@@ -199,31 +191,28 @@ def reGroupDictStrptime(found_dict, msec=False):
 	# Fail2Ban will assume it's this year
 	assume_year = False
 	if year is None:
+		if not now: now = MyTime.now()
 		year = now.year
 		assume_year = True
-	# If we know the week of the year and what day of that week, we can figure
-	# out the Julian day of the year.
-	if julian == -1 and week_of_year != -1 and weekday != -1:
-		week_starts_Mon = True if week_of_year_start == 0 else False
-		julian = _calc_julian_from_U_or_W(year, week_of_year, weekday,
-											week_starts_Mon)
-	# Cannot pre-calculate datetime.datetime() since can change in Julian
-	# calculation and thus could have different value for the day of the week
-	# calculation.
-	if julian != -1 and (month is None or day is None):
-		datetime_result = datetime.datetime.fromordinal((julian - 1) + datetime.datetime(year, 1, 1).toordinal())
-		year = datetime_result.year
-		month = datetime_result.month
-		day = datetime_result.day
-	# Add timezone info
-	if tzoffset is not None:
-		gmtoff = tzoffset * 60
-	else:
-		gmtoff = None
+	if month is None or day is None:
+		# If we know the week of the year and what day of that week, we can figure
+		# out the Julian day of the year.
+		if julian is None and week_of_year is not None and weekday is not None:
+			julian = _calc_julian_from_U_or_W(year, week_of_year, weekday,
+												(week_of_year_start == 0))
+		# Cannot pre-calculate datetime.datetime() since can change in Julian
+		# calculation and thus could have different value for the day of the week
+		# calculation.
+		if julian is not None:
+			datetime_result = datetime.datetime.fromordinal((julian - 1) + datetime.datetime(year, 1, 1).toordinal())
+			year = datetime_result.year
+			month = datetime_result.month
+			day = datetime_result.day
 
 	# Fail2Ban assume today
 	assume_today = False
 	if month is None and day is None:
+		if not now: now = MyTime.now()
 		month = now.month
 		day = now.day
 		assume_today = True
@@ -231,19 +220,25 @@ def reGroupDictStrptime(found_dict, msec=False):
 	# Actully create date
 	date_result =  datetime.datetime(
 		year, month, day, hour, minute, second, fraction)
-	if gmtoff is not None:
-		date_result = date_result - datetime.timedelta(seconds=gmtoff)
+	# Add timezone info
+	if tzoffset is not None:
+		date_result -= datetime.timedelta(seconds=tzoffset * 60)
 
-	if date_result > now and assume_today:
-		# Rollover at midnight, could mean it's yesterday...
-		date_result = date_result - datetime.timedelta(days=1)
-	if date_result > now and assume_year:
-		# Could be last year?
-		# also reset month and day as it's not yesterday...
-		date_result = date_result.replace(
-			year=year-1, month=month, day=day)
+	if assume_today:
+		if not now: now = MyTime.now()
+		if date_result > now:
+			# Rollover at midnight, could mean it's yesterday...
+			date_result -= datetime.timedelta(days=1)
+	if assume_year:
+		if not now: now = MyTime.now()
+		if date_result > now:
+			# Could be last year?
+			# also reset month and day as it's not yesterday...
+			date_result = date_result.replace(
+				year=year-1, month=month, day=day)
 
-	if gmtoff is not None:
+	# make time:
+	if tzoffset is not None:
 		tm = calendar.timegm(date_result.utctimetuple())
 	else:
 		tm = time.mktime(date_result.timetuple())
