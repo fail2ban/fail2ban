@@ -108,13 +108,9 @@ def reGroupDictStrptime(found_dict, msec=False):
 		#	  worthless without day of the week
 		if key == 'y':
 			year = int(val)
-			# Open Group specification for strptime() states that a %y
-			#value in the range of [00, 68] is in the century 2000, while
-			#[69,99] is in the century 1900
-			if year <= 68:
+			# Fail2ban year should be always in the current century (>= 2000)
+			if year <= 2000:
 				year += 2000
-			else:
-				year += 1900
 		elif key == 'Y':
 			year = int(val)
 		elif key == 'm':
@@ -148,7 +144,7 @@ def reGroupDictStrptime(found_dict, msec=False):
 		elif key == 'S':
 			second = int(val)
 		elif key == 'f':
-			if msec:
+			if msec: # pragma: no cover - currently unused
 				s = val
 				# Pad to always return microseconds.
 				s += "0" * (6 - len(s))
@@ -158,21 +154,14 @@ def reGroupDictStrptime(found_dict, msec=False):
 		elif key == 'a':
 			weekday = locale_time.a_weekday.index(val.lower())
 		elif key == 'w':
-			weekday = int(val)
-			if weekday == 0:
-				weekday = 6
-			else:
-				weekday -= 1
+			weekday = int(val) - 1
+			if weekday < 0: weekday = 6
 		elif key == 'j':
 			julian = int(val)
 		elif key in ('U', 'W'):
 			week_of_year = int(val)
-			if key == 'U':
-				# U starts week on Sunday.
-				week_of_year_start = 6
-			else:
-				# W starts week on Monday.
-				week_of_year_start = 0
+			# U starts week on Sunday, W - on Monday
+			week_of_year_start = 6 if key == 'U' else 0
 		elif key == 'z':
 			z = val
 			if z in ("Z", "UTC", "GMT"):
@@ -242,6 +231,6 @@ def reGroupDictStrptime(found_dict, msec=False):
 		tm = calendar.timegm(date_result.utctimetuple())
 	else:
 		tm = time.mktime(date_result.timetuple())
-	if msec:
+	if msec: # pragma: no cover - currently unused
 		tm += fraction/1000000.0
 	return tm
