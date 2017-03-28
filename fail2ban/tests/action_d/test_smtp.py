@@ -67,7 +67,7 @@ class SMTPActionTest(unittest.TestCase):
 		port = self.smtpd.socket.getsockname()[1]
 
 		self.action = customActionModule.Action(
-			self.jail, "test", host="127.0.0.1:%i" % port)
+			self.jail, "test", host="localhost:%i" % port)
 
 		## because of bug in loop (see loop in asyncserver.py) use it's loop instead of asyncore.loop:
 		self._active = True
