@@ -38,6 +38,7 @@ class ActionReader(DefinitionInitConfigReader):
 
 	_configOpts = {
 		"actionstart": ["string", None],
+		"actionstart_on_demand": ["string", None],
 		"actionstop": ["string", None],
 		"actionreload": ["string", None],
 		"actioncheck": ["string", None],
@@ -73,8 +74,10 @@ class ActionReader(DefinitionInitConfigReader):
 		opts = self.getCombined(
 			ignore=CommandAction._escapedTags | set(('timeout', 'bantime')))
 		# type-convert only after combined (otherwise boolean converting prevents substitution):
-		if opts.get('norestored'):
-			opts['norestored'] = self._convert_to_boolean(opts['norestored'])
+		for o in ('norestored', 'actionstart_on_demand'):
+			if opts.get(o):
+				opts[o] = self._convert_to_boolean(opts[o])
+		
 		# stream-convert:
 		head = ["set", self._jailName]
 		stream = list()
