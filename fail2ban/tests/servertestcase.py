@@ -1195,6 +1195,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						"`ip6tables -w -A f2b-j-w-iptables-mp -j RETURN`",
 						"`ip6tables -w -I INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp`",
 					),
+					'flush': (
+						"`iptables -w -F f2b-j-w-iptables-mp`",
+						"`ip6tables -w -F f2b-j-w-iptables-mp`",
+					),
 					'stop': (
 						"`iptables -w -D INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp`",
 						"`iptables -w -F f2b-j-w-iptables-mp`",
@@ -1235,6 +1239,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						"`ip6tables -w -A f2b-j-w-iptables-ap -j RETURN`",
 						"`ip6tables -w -I INPUT -p tcp -j f2b-j-w-iptables-ap`",
 					),
+					'flush': (
+						"`iptables -w -F f2b-j-w-iptables-ap`",
+						"`ip6tables -w -F f2b-j-w-iptables-ap`",
+					),
 					'stop': (
 						"`iptables -w -D INPUT -p tcp -j f2b-j-w-iptables-ap`",
 						"`iptables -w -F f2b-j-w-iptables-ap`",
@@ -1273,6 +1281,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						"`ipset create f2b-j-w-iptables-ipset6 hash:ip timeout 600 family inet6`",
 						"`ip6tables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					),
+					'flush': (
+						"`ipset flush f2b-j-w-iptables-ipset`",
+						"`ipset flush f2b-j-w-iptables-ipset6`",
+					),
 					'stop': (
 						"`iptables -w -D INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 						"`ipset flush f2b-j-w-iptables-ipset`",
@@ -1306,6 +1318,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'ip6-start': (
 						"`ipset create f2b-j-w-iptables-ipset-ap6 hash:ip timeout 600 family inet6`",
 						"`ip6tables -w -I INPUT -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
+					),
+					'flush': (
+						"`ipset flush f2b-j-w-iptables-ipset-ap`",
+						"`ipset flush f2b-j-w-iptables-ipset-ap6`",
 					),
 					'stop': (
 						"`iptables -w -D INPUT -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
@@ -1342,6 +1358,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						"`ip6tables -w -N f2b-j-w-iptables`",
 						"`ip6tables -w -A f2b-j-w-iptables -j RETURN`",
 						"`ip6tables -w -I INPUT -p tcp --dport http -j f2b-j-w-iptables`",
+					),
+					'flush': (
+						"`iptables -w -F f2b-j-w-iptables`",
+						"`ip6tables -w -F f2b-j-w-iptables`",
 					),
 					'stop': (
 						"`iptables -w -D INPUT -p tcp --dport http -j f2b-j-w-iptables`",
@@ -1382,6 +1402,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						"`ip6tables -w -N f2b-j-w-iptables-new`",
 						"`ip6tables -w -A f2b-j-w-iptables-new -j RETURN`",
 						"`ip6tables -w -I INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`",
+					),
+					'flush': (
+						"`iptables -w -F f2b-j-w-iptables-new`",
+						"`ip6tables -w -F f2b-j-w-iptables-new`",
 					),
 					'stop': (
 						"`iptables -w -D INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`",
@@ -1684,6 +1708,11 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					action.unban(ainfo['ip6'])
 					self.assertLogged(*tests['ip6-check']+tests['ip6-unban'], all=True)
 					self.assertNotLogged(*tests['ip4'], all=True)
+					# test flush for actions should supported this:
+					if tests.get('flush'):
+						self.pruneLog('# === flush ===')
+						action.flush()
+						self.assertLogged(*tests['flush'], all=True)
 					# test stop :
 					self.pruneLog('# === stop ===')
 					action.stop()
