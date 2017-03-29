@@ -281,6 +281,8 @@ class CommandAction(ActionBase):
 			self.actioncheck = ''
 			## Command executed in order to restore sane environment in error case.
 			self.actionrepair = ''
+			## Command executed in order to flush all bans at once (e. g. by stop/shutdown the system).
+			self.actionflush = ''
 			## Command executed in order to stop the system.
 			self.actionstop = ''
 			## Command executed in case of reloading action.
@@ -446,6 +448,25 @@ class CommandAction(ActionBase):
 		"""
 		if not self._processCmd('<actionunban>', aInfo):
 			raise RuntimeError("Error unbanning %(ip)s" % aInfo)
+
+	def flush(self):
+		"""Executes the "actionflush" command.
+		
+		Command executed in order to flush all bans at once (e. g. by stop/shutdown 
+		the system), instead of unbunning of each single ticket.
+
+		Replaces the tags in the action command with actions properties
+		and executes the resulting command.
+		"""
+		family = []
+		# cumulate started families, if started on demand (conditional):
+		if self._startOnDemand:
+			for f in CommandAction.COND_FAMILIES:
+				if self.__started.get(f) == 1: # only real started:
+					family.append(f)
+			# if no started (on demand) actions:
+			if not family: return True
+		return self._executeOperation('<actionflush>', 'flushing', family=family)
 
 	def stop(self):
 		"""Executes the "actionstop" command.
