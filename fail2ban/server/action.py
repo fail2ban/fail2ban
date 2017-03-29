@@ -203,17 +203,17 @@ class ActionBase(object):
 		self._name = name
 		self._logSys = getLogger("fail2ban.%s" % self.__class__.__name__)
 
-	def start(self):
+	def start(self): # pragma: no cover - abstract
 		"""Executed when the jail/action is started.
 		"""
 		pass
 
-	def stop(self):
+	def stop(self): # pragma: no cover - abstract
 		"""Executed when the jail/action is stopped.
 		"""
 		pass
 
-	def ban(self, aInfo):
+	def ban(self, aInfo): # pragma: no cover - abstract
 		"""Executed when a ban occurs.
 
 		Parameters
@@ -224,7 +224,7 @@ class ActionBase(object):
 		"""
 		pass
 
-	def unban(self, aInfo):
+	def unban(self, aInfo): # pragma: no cover - abstract
 		"""Executed when a ban expires.
 
 		Parameters
@@ -399,7 +399,7 @@ class CommandAction(ActionBase):
 			# check the action depends on family (conditional):
 			if self._startOnDemand:
 				return True
-		elif self.__started.get(family):
+		elif self.__started.get(family): # pragma: no cover - normally unreachable
 			return True
 		return self._executeOperation('<actionstart>', 'starting', family=family)
 
