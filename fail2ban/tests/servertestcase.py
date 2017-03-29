@@ -1074,16 +1074,16 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				action.start()
 				# test ban ip4 :
 				logSys.debug('# === ban-ipv4 ==='); self.pruneLog()
-				action.ban({'ip': IPAddr('192.0.2.1')})
+				action.ban({'ip': IPAddr('192.0.2.1'), 'family': 'inet4'})
 				# test unban ip4 :
 				logSys.debug('# === unban ipv4 ==='); self.pruneLog()
-				action.unban({'ip': IPAddr('192.0.2.1')})
+				action.unban({'ip': IPAddr('192.0.2.1'), 'family': 'inet4'})
 				# test ban ip6 :
 				logSys.debug('# === ban ipv6 ==='); self.pruneLog()
-				action.ban({'ip': IPAddr('2001:DB8::')})
+				action.ban({'ip': IPAddr('2001:DB8::'), 'family': 'inet6'})
 				# test unban ip6 :
 				logSys.debug('# === unban ipv6 ==='); self.pruneLog()
-				action.unban({'ip': IPAddr('2001:DB8::')})
+				action.unban({'ip': IPAddr('2001:DB8::'), 'family': 'inet6'})
 				# test stop :
 				logSys.debug('# === stop ==='); self.pruneLog()
 				action.stop()
