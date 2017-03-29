@@ -29,6 +29,7 @@ TODO: implementing of options resp. other tasks from PR #1346
   - fixed using new tag `<ip-host>` (without external command execution)
 * fail2ban-regex: fixed matched output by multi-line (buffered) parsing
 * fail2ban-regex: support for multi-line debuggex URL implemented (gh-422)
+* fixed ipv6-action errors on systems not supporting ipv6 und umgekehrt (gh-1741)
 
 ### New Features
 * New Actions:
@@ -81,6 +82,12 @@ TODO: implementing of options resp. other tasks from PR #1346
     the parsing of log-entries contain new-line chars (as single entry);
   - if multiline regex however expected (by single-line parsing without buffering) - prefix `(?m)` 
     could be used in regex to enable it;
+* implemented execution of `actionstart` on demand (conditional), if action depends on `family` (gh-1742):
+  - new action parameter `actionstart_on_demand` (bool) can be set to prevent/allow starting action
+    on demand (default retrieved automatically, if some conditional parameter `param?family=...` 
+    presents in action properties), see `action.d/pf.conf` for example;
+  - additionally `actionstop` will be executed only for families previously executing `actionstart`
+    (starting on demand only)
 
 
 ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
