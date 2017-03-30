@@ -1182,6 +1182,33 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 			#   'start', 'stop' - should be found (logged) on action start/stop,
 			#   etc.
 			testJailsActions = (
+				# dummy --
+				('j-dummy', 'dummy[name=%(__name__)s, init="==", target="/tmp/fail2ban.dummy"]', {
+					'ip4': ('family: inet4',), 'ip6': ('family: inet6',),
+					'start': (
+						'`echo "[j-dummy] dummy /tmp/fail2ban.dummy -- started"`',
+					), 
+					'flush': (
+						'`echo "[j-dummy] dummy /tmp/fail2ban.dummy -- clear all"`',
+					),
+					'stop': (
+						'`echo "[j-dummy] dummy /tmp/fail2ban.dummy -- stopped"`',
+					),
+					'ip4-check': (),
+					'ip6-check': (),
+					'ip4-ban': (
+						'`echo "[j-dummy] dummy /tmp/fail2ban.dummy -- banned 192.0.2.1 (family: inet4)"`',
+					),
+					'ip4-unban': (
+						'`echo "[j-dummy] dummy /tmp/fail2ban.dummy -- unbanned 192.0.2.1 (family: inet4)"`',
+					),
+					'ip6-ban': (
+						'`echo "[j-dummy] dummy /tmp/fail2ban.dummy -- banned 2001:db8:: (family: inet6)"`',
+					),
+					'ip6-unban': (
+						'`echo "[j-dummy] dummy /tmp/fail2ban.dummy -- unbanned 2001:db8:: (family: inet6)"`',
+					),					
+				}),
 				# iptables-multiport --
 				('j-w-iptables-mp', 'iptables-multiport[name=%(__name__)s, bantime="10m", port="http,https", protocol="tcp", chain="INPUT"]', {
 					'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),

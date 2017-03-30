@@ -452,7 +452,7 @@ class Actions(JailThread, Mapping):
 			logSys.debug("Flush ban list")
 			lst = self.__banManager.flushBanList()
 		else:
-			log = False
+			log = False # don't log "[jail] Unban ..." if removing actions only.
 			lst = iter(self.__banManager)
 		cnt = 0
 		# first we'll execute flush for actions supporting this operation:
