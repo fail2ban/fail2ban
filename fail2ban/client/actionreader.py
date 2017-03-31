@@ -40,6 +40,7 @@ class ActionReader(DefinitionInitConfigReader):
 		"actionstart": ["string", None],
 		"actionstart_on_demand": ["string", None],
 		"actionstop": ["string", None],
+		"actionflush": ["string", None],
 		"actionreload": ["string", None],
 		"actioncheck": ["string", None],
 		"actionrepair": ["string", None],
