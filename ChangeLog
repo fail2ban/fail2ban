@@ -88,6 +88,10 @@ TODO: implementing of options resp. other tasks from PR #1346
     presents in action properties), see `action.d/pf.conf` for example;
   - additionally `actionstop` will be executed only for families previously executing `actionstart`
     (starting on demand only)
+* introduced new command `actionflush`: executed in order to flush all bans at once 
+  e. g. by unban all, reload with removing action, stop, shutdown the system (gh-1743),
+  the actions having `actionflush` do not execute `actionunban` for each single ticket
+* add new command `actionflush` default for several iptables/iptables-ipset actions (and common include);
 
 
 ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
