@@ -1,0 +1,26 @@
+# http://forum.lissyara.su/viewtopic.php?f=20&t=29857
+# 2010-11-24 21:48:41 1PLKOW-00046U-EW F=wvhluo@droolindog.com H=93-143-146-237.adsl.net.t-com.hr (droolindog.com) [93.143.146.237] I=[10.10.10.32]:25 P=esmtp temporarily rejected by local_scan(): Temporary local problem
+# http://us.generation-nt.com/answer/exim-spamassassin-2010-0-x64-help-204020461.html
+# 2011-07-07 15:44:16 1QexIu-0006dj-PX F=XXXXXX@XXXXXXXXXXXX H=localhost (saf.bio.caltech.edu) [127.0.0.1] P=esmtp temporarily rejected by local_scan(): Local configuration error - local_scan() library failure/usr/lib/exim/sa-exim.so: cannot open shared object file: No such file or directory
+# http://www.clues.ltd.uk/howto/debian-sa-fprot-HOWTO.html
+# failJSON: { "time": "2004-01-18T07:15:35", "match": true , "host": "4.47.28.40" }
+2004-01-18 07:15:35 1Ai79e-0000Dq-8i F=uzwltcmwto24@melissacam.biz H=lsanca1-ar3-4-47-028-040.lsanca1.elnk.dsl.genuity.net [4.47.28.40] P=smtp rejected by local_scan(): Rejected: hits=7.5 required=5.0 trigger=5.0
+# https://github.com/fail2ban/fail2ban/pull/251#issuecomment-19493875
+# failJSON: { "time": "2013-06-15T11:19:33", "match": true , "host": "2.181.148.95" }
+2013-06-15 11:19:33 [2249] H=([2.181.148.95]) [2.181.148.95]:52391 I=[1.2.3.4]:25 F=fantasizesg4@google.com rejected RCPT some@email.com: rejected found in dnsbl zen.spamhaus.org
+# failJSON: { "time": "2013-06-09T10:21:28", "match": true , "host": "46.254.240.82" }
+2013-06-09 10:21:28 [14127] 1UlasQ-0003fr-45 F=mcorporation4@aol.com H=(mail38.fssprus.ru) [46.254.240.82]:43671 I=[1.2.3.4]:25 P=esmtp rejected by local_scan(): Rejected
+# failJSON: { "time": "2013-06-15T11:20:36", "match": true , "host": "83.235.177.148" }
+2013-06-15 11:20:36 [2516] 1Unmew-0000ea-SE H=egeftech.static.otenet.gr [83.235.177.148]:32706 I=[1.2.3.4]:25 F=auguriesvbd40@google.com rejected after DATA: This message contains a virus (Sanesecurity.Junk.39934.UNOFFICIAL).
+# failJSON: { "time": "2013-06-16T02:50:43", "match": true , "host": "111.67.203.114" }
+2013-06-16 02:50:43 H=dbs.marsukov.com [111.67.203.114] F=<trudofspiori@mail.ru> rejected RCPT <info@nanomedtech.ua>: rejected because 111.67.203.114 is in a black list at dnsbl.sorbs.net\nCurrently Sending Spam See: http://www.sorbs.net/lookup.shtml?111.67.203.114
+# https://github.com/fail2ban/fail2ban/issues/541
+# failJSON: { "time": "2013-12-30T00:24:50", "match": true , "host": "178.123.108.196" }
+2013-12-30 00:24:50 1VxPit-000MMd-U4 SA: Action: flagged as Spam but accepted: score=8.2 required=5.0 (scanned in 6/6 secs | Message-Id: 008701cf04ed_24497d70_6cdc7850_@xxx.xx). From <spammer@xxx.xx> (host=ip-4.net-3-2-1.rev.xxx.xx [178.123.108.196]) for trap@example.com
+# https://github.com/fail2ban/fail2ban/issues/533
+# failJSON: { "time": "2013-12-29T15:34:12", "match": true , "host": "188.76.45.72" }
+2013-12-29 15:34:12 1VxHRO-000NiI-Ly SA: Action: silently tossed message: score=31.0 required=5.0 trigger=30.0 (scanned in 6/6 secs | Message-Id: etPan.09bd0c40.c3d5f675.fdf7@server.local). From <Flossiedpd@jazztel.es> (host=72.45.76.188.dynamic.jazztel.es [188.76.45.72]) for me@my.com
+# https://github.com/fail2ban/fail2ban/issues/533
+# failJSON: { "time": "2013-12-29T15:39:11", "match": true , "host": "178.123.108.196" }
+2013-12-29 15:39:11 1VxHWD-000NuW-83 SA: Action: silently tossed message: score=35.8 required=5.0 trigger=30.0 (scanned in 6/6 secs | Message-Id: 1VxHWD-000NuW-83). From <> (host=NULL [178.123.108.196]) for me@my.com
+

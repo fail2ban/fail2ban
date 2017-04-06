@@ -1,0 +1,17 @@
+#1 PAM based
+# failJSON: { "time": "2004-10-11T01:06:47", "match": true , "host": "209.67.1.67" }
+Oct 11 01:06:47 ServerJV vsftpd: (pam_unix) authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=209.67.1.67
+
+# Pam pre 0.99.2.0 - https://github.com/fail2ban/fail2ban/pull/358
+# failJSON: { "time": "2005-02-06T12:02:29", "match": false , "host": "64.168.103.1" }
+Feb 6 12:02:29 server vsftpd(pam_unix)[15522]: authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=64.168.103.1 user=user1
+
+#2 Internal
+# failJSON: { "time": "2007-01-19T12:20:33", "match": true , "host": "64.106.46.98" }
+Fri Jan 19 12:20:33 2007 [pid 27202] [anonymous] FAIL LOGIN: Client "64.106.46.98"
+
+# failJSON: { "time": "2004-10-23T21:15:42", "match": true , "host": "58.254.172.161" }
+Oct 23 21:15:42 vps vsftpd: pam_unix(vsftpd:auth): authentication failure; logname= uid=0 euid=0 tty=ftp ruser=test rhost=58.254.172.161
+
+# failJSON: { "time": "2016-09-08T00:39:49", "match": true , "host": "192.0.2.1" }
+Thu Sep  8 00:39:49 2016 [pid 15019] [guest] FAIL LOGIN: Client "::ffff:192.0.2.1", "User is not in the allow user list."

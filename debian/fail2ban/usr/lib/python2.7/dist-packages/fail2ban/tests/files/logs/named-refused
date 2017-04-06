@@ -1,0 +1,25 @@
+# failJSON: { "time": "2005-07-24T14:16:55", "match": true , "host": "194.145.196.18" }
+Jul 24 14:16:55 raid5 named[3935]: client 194.145.196.18#4795: query 'ricreig.com/NS/IN' denied
+# failJSON: { "time": "2005-07-24T14:16:56", "match": true , "host": "62.123.164.113" }
+Jul 24 14:16:56 raid5 named[3935]: client 62.123.164.113#32768: query 'ricreig.com/NS/IN' denied
+# failJSON: { "time": "2005-07-24T14:17:13", "match": true , "host": "148.160.29.6" }
+Jul 24 14:17:13 raid5 named[3935]: client 148.160.29.6#33081: query (cache) 'geo-mueller.de/NS/IN' denied
+# failJSON: { "time": "2005-07-24T14:20:25", "match": true , "host": "148.160.29.6" }
+Jul 24 14:20:25 raid5 named[3935]: client 148.160.29.6#33081: query (cache) 'shivaree.de/NS/IN' denied
+# failJSON: { "time": "2005-07-24T14:23:36", "match": true , "host": "148.160.29.6" }
+Jul 24 14:23:36 raid5 named[3935]: client 148.160.29.6#33081: query (cache) 'mietberatung.de/NS/IN' denied
+# failJSON: { "time": "2005-07-24T14:23:36", "match": true , "host": "62.109.4.89" }
+Jul 24 14:23:36 raid5 named[3935]: client 62.109.4.89#9334: view external: query (cache) './NS/IN' denied
+# failJSON: { "time": "2013-08-11T03:36:11", "match": true , "host": "1.2.3.4" }
+11-Aug-2013 03:36:11.372 error: client 1.2.3.4#52115: zone transfer 'domain.com/AXFR/IN' denied
+# failJSON: { "time": "2004-08-17T08:20:22", "match": true , "host": "223.252.23.219" }
+Aug 17 08:20:22 catinthehat named[2954]: client 223.252.23.219#56275: zone transfer 'openquery.eu/AXFR/IN' denied
+# https://github.com/fail2ban/fail2ban/issues/333
+# BIND9 ver: BIND 9.9.3-rpz2+rl.13208.13-P2-RedHat-9.9.3-4.P2.el6 (Extended Support Version)
+# failJSON: { "time": "2013-08-23T10:32:56", "match": true , "host": "82.207.95.42" }
+23-Aug-2013 10:32:56.621 client 82.207.95.42#40278 (redginseng.com.ua): query (cache) 'redginseng.com.ua/A/IN' denied
+
+# failJSON: { "time": "2013-08-27T17:49:45", "match": true , "host": "59.167.242.100" }
+27-Aug-2013 17:49:45.330 client 59.167.242.100#44281 (watt.kiev.ua): zone transfer 'watt.kiev.ua/AXFR/IN' denied
+# failJSON: { "time": "2004-08-27T16:58:31", "match": true , "host": "176.9.92.38" }
+Aug 27 16:58:31 vhost1-ua named[29206]: client 176.9.92.38#42592 (simmarket.com.ua): bad zone transfer request: 'simmarket.com.ua/IN': non-authoritative zone (NOTAUTH)

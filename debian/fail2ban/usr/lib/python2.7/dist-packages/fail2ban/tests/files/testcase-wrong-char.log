@@ -1,0 +1,4 @@
+Nov  8 00:16:12 main sshd[32547]: Invalid user llinco\361ir from 192.0.2.0
+Nov  8 00:16:12 main sshd[32548]: input_userauth_request: invalid user llinco\361ir
+Nov  8 00:16:12 main sshd[32547]: pam_succeed_if(sshd:auth): error retrieving information about user llincoñir
+Nov  8 00:16:14 main sshd[32547]: Failed password for invalid user llinco\361ir from 192.0.2.0 port 57025 ssh2

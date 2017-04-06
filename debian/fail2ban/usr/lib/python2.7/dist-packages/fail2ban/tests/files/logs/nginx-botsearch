@@ -1,0 +1,35 @@
+# failJSON: { "time": "2015-01-20T19:53:28", "match": true , "host": "12.34.56.78" }
+12.34.56.78 - - [20/Jan/2015:19:53:28 +0100] "GET //phpMyAdmin-2.8.2.3/scripts/setup.php HTTP/1.1" 404 47 "-" "-" "-"
+
+# failJSON: { "time": "2015-01-20T19:53:28", "match": true , "host": "12.34.56.78" }
+12.34.56.78 - - [20/Jan/2015:19:53:28 +0100] "GET //pma/scripts/setup.php HTTP/1.1" 404 47 "-" "-" "-"
+
+# failJSON: { "time": "2015-01-20T19:53:28", "match": true , "host": "12.34.56.78" }
+12.34.56.78 - - [20/Jan/2015:19:53:28 +0100] "GET //mysqladmin/scripts/setup.php HTTP/1.1" 404 47 "-" "-" "-"
+
+# failJSON: { "time": "2015-01-20T19:53:28", "match": true , "host": "12.34.56.78" }
+12.34.56.78 - - [20/Jan/2015:19:53:28 +0100] "GET //admin/pma/scripts/setup.php HTTP/1.1" 404 47 "-" "-" "-"
+
+# failJSON: { "time": "2015-01-20T19:54:28", "match": true , "host": "12.34.56.78" }
+12.34.56.78 - - [20/Jan/2015:19:54:28 +0100] "POST //admin/pma/scripts/setup.php HTTP/1.1" 404 47 "-" "-" "-"
+
+# failJSON: { "time": "2015-01-20T19:55:28", "match": true , "host": "12.34.56.78" }
+12.34.56.78 - - [20/Jan/2015:19:55:28 +0100] "HEAD //admin/pma/scripts/setup.php HTTP/1.1" 404 47 "-" "-" "-"
+
+# failJSON: { "time": "2015-01-20T01:17:07", "match": true , "host": "7.8.9.10" }
+7.8.9.10 - root [20/Jan/2015:01:17:07 +0100] "GET /cgi-bin/recent.cgi HTTP/1.1" 404 162 "-" "-" "-"
+
+# failJSON: { "time": "2014-12-12T22:59:02", "match": true , "host": "2.5.2.5" }
+2.5.2.5 - tomcat [12/Dec/2014:22:59:02 +0100] "GET /cgi-bin/tools/tools.pl HTTP/1.1" 404 162 "-" "-" "-"
+
+# failJSON: { "time": "2015-01-21T10:56:10", "match": true , "host": "5.7.9.2" }
+2015/01/21 10:56:10 [error] 2833#0: *16336 open() "/var/www/site/cgi-bin/php4" failed (2: No such file or directory), client: 5.7.9.2, server: localhost, request: "GET /cgi-bin/php4 HTTP/1.1", host: "1.2.3.4"
+
+# failJSON: { "time": "2015-01-21T10:57:10", "match": true , "host": "5.7.9.2" }
+2015/01/21 10:57:10 [error] 2833#0: *16336 open() "/var/www/site/cgi-bin/php4" failed (2: No such file or directory), client: 5.7.9.2, server: localhost, request: "POST /cgi-bin/php4 HTTP/1.1", host: "1.2.3.4"
+
+# failJSON: { "time": "2015-01-21T10:58:10", "match": true , "host": "5.7.9.2" }
+2015/01/21 10:58:10 [error] 2833#0: *16336 open() "/var/www/site/cgi-bin/php4" failed (2: No such file or directory), client: 5.7.9.2, server: localhost, request: "HEAD /cgi-bin/php4 HTTP/1.1", host: "1.2.3.4"
+
+# failJSON: { "time": "2015-01-21T15:02:27", "match": true , "host": "5.7.9.2" }
+2015/01/21 15:02:27 [error] 2833#0: *16813 "/var/www/site/roundcube/" is not found (2: No such file or directory), client: 5.7.9.2, server: localhost, request: "GET /roundcube/ HTTP/1.1", host: "1.2.3.4"

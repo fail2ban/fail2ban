@@ -1,0 +1,24 @@
+# failJSON: { "time": "2013-03-24T00:04:00", "match": true , "host": "192.168.1.35" }
+130324  0:04:00 [Warning] Access denied for user 'root'@'192.168.1.35' (using password: NO)
+# failJSON: { "time": "2013-03-24T08:24:09", "match": true , "host": "220.95.238.171" }
+130324  8:24:09 [Warning] Access denied for user 'root'@'220.95.238.171' (using password: NO)
+# failJSON: { "time": "2013-03-24T17:56:13", "match": true , "host": "61.160.223.112" }
+130324 17:56:13 [Warning] Access denied for user 'root'@'61.160.223.112' (using password: NO)
+# failJSON: { "time": "2013-03-24T17:56:14", "match": true , "host": "61.160.223.112" }
+130324 17:56:14 [Warning] Access denied for user 'root'@'61.160.223.112' (using password: YES)
+# failJSON: { "time": "2013-03-24T19:01:39", "match": true , "host": "61.147.108.35" }
+130324 19:01:39 [Warning] Access denied for user 'root'@'61.147.108.35' (using password: NO)
+# failJSON: { "time": "2013-03-24T19:01:40", "match": true , "host": "61.147.108.35" }
+130324 19:01:40 [Warning] Access denied for user 'root'@'61.147.108.35' (using password: YES)
+# failJSON: { "time": "2004-09-16T21:30:26", "match": true , "host": "74.207.241.159" }
+Sep 16 21:30:26 catinthehat mysqld: 130916 21:30:26 [Warning] Access denied for user 'hacker'@'74.207.241.159' (using password: YES)
+# failJSON: { "time": "2004-09-16T21:30:32", "match": true , "host": "74.207.241.159" }
+Sep 16 21:30:32 catinthehat mysqld: 130916 21:30:32 [Warning] Access denied for user 'hacker'@'74.207.241.159' (using password: NO)
+
+# failJSON: { "time": "2015-10-07T06:09:42", "match": true , "host": "127.0.0.1", "desc": "mysql 5.6 log format" }
+2015-10-07 06:09:42 5907 [Warning] Access denied for user 'root'@'127.0.0.1' (using password: YES)
+# failJSON: { "time": "2016-02-24T15:26:18", "match": true , "host": "localhost", "desc": "mysql 5.6 log format, Note instead of Warning" }
+2016-02-24T15:26:18.237955 6 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+
+# failJSON: { "time": "2016-02-24T15:26:18", "match": false , "host": "localhost", "desc": "A hypothetical example of injection having full log line first (for paranoid yoh)" }
+2016-02-24T15:26:18.237955 6 [Note] Access denied for user 'root'@'localhost' (using password: YES) condition lead to a hypothetical failure

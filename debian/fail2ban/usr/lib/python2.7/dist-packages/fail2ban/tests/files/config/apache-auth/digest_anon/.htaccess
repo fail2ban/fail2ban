@@ -1,0 +1,9 @@
+AuthType Digest
+AuthName "digest anon"
+AuthDigestDomain /digest_anon/
+AuthBasicProvider file anon
+AuthUserFile /var/www/html/digest_anon/.htpasswd
+Anonymous_NoUserID off
+Anonymous anonymous
+Anonymous_LogEmail on
+Require valid-user

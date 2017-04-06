@@ -1,0 +1,46 @@
+From: Yaroslav Halchenko <debian@onerussian.com>
+Date: Thu, 6 Dec 2012 12:50:12 -0500
+Subject: [PATCH] Patch for elderly Debian/Ubuntu (e.g. 10.04) releases without dh_python2
+
+Use again pycentral etc
+
+crafted post 0.8.8-1 release when a user complained about inability to upgrade
+
+---
+ debian/control |  2 ++
+ debian/rules   | 12 +++++-------
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+
+--- a/debian/control
++++ b/debian/control
+@@ -3,6 +3,8 @@ Section: net
+ Priority: optional
+ Maintainer: Yaroslav Halchenko <debian@onerussian.com>
+ Build-Depends: debhelper (>= 5.0.37.2), python (>= 2.5.4-1~), python-pyinotify
++Build-Depends-Indep: python-central (>= 0.5.6)
++XS-Python-Version: current, >= 2.4
+ Homepage: http://www.fail2ban.org
+ Vcs-Git: git://github.com/fail2ban/fail2ban.git
+ Vcs-Browser: http://github.com/fail2ban/fail2ban
+--- a/debian/rules
++++ b/debian/rules
+@@ -72,14 +72,12 @@ binary-indep: install
+ 	dh_installdocs
+ 	dh_installexamples config/jail.conf files/ipmasq-*
+ 	dh_installlogrotate
+-	dh_python2 /usr/share/fail2ban
++	dh_pycentral
+ 	dh_installinit -- defaults 99
+-
+-	# perform swap of order of calls to init and pycentral (or even
+-	# bleedingly new dh_python2) in prerm to close #422655 --
+-	# python-cleanup section is cut and placed at the end of the file
+-	# since .init script would trigger their compilation again
+-	sed -i -e '/^#.*ed by dh_python2/,/# End auto/{H;d};$$G' \
++	# perform swap of order of calls to init and pycentral in prerm
++	# to close #422655 -- pycentral section is cut and placed at
++	# the end of the file
++	sed -i -e '/^#.*ed by dh_pycentral/,/# End auto/{H;d};$$G' \
+ 		debian/fail2ban.prerm.debhelper
+ 
+ 	dh_installman man/*.[15]

@@ -1,0 +1,11 @@
+# should match
+# failJSON: { "time": "2015-09-02T00:11:31", "match": true , "host": "175.18.15.10" } 
+175.18.15.10 -  -  [02/sept./2015:00:11:31 +0200] "GET /openhab.app HTTP/1.1" 401 1382 
+# failJSON: { "time": "2015-09-02T00:11:31", "match": true , "host": "175.18.15.10" } 
+175.18.15.10 -  -  [02/sept./2015:00:11:31 +0200] "GET /rest/bindings HTTP/1.1" 401 1384
+
+# Should not match
+# failJSON: { "match": false }
+175.18.15.11 -  -  [17/oct./2015:00:35:12 +0200] "GET /openhab.app?sitemap=default&poll=true&__async=true&__source=waHome HTTP/1.1" 200 92 
+# failJSON: { "match": false }
+175.18.15.11 -  -  [16/oct./2015:20:29:38 +0200] "GET /rest/sitemaps/default/maison HTTP/1.1" 200 2837 

@@ -1,0 +1,10 @@
+Apr  2 17:51:27 <4.3> pancake sshd[55624]: error: PAM: authentication error for nick from example.com
+Apr  2 17:51:32 <4.6> pancake sshd[55628]: Invalid user r00t from 192.0.2.100
+Apr  2 17:51:33 <4.3> pancake sshd[55628]: error: PAM: authentication error for illegal user r00t from example.com
+Apr  2 17:51:33 <4.6> pancake sshd[55628]: Failed keyboard-interactive/pam for invalid user r00t from 192.0.2.100 port 46050 ssh2
+Apr  2 17:51:34 <4.3> pancake sshd[55628]: error: PAM: authentication error for illegal user r00t from example.com
+Apr  2 17:51:34 <4.6> pancake sshd[55628]: Failed keyboard-interactive/pam for invalid user r00t from 192.0.2.100 port 46050 ssh2
+Apr  2 17:51:36 <4.3> pancake sshd[55628]: error: PAM: authentication error for illegal user r00t from example.com
+Apr  2 17:51:36 <4.6> pancake sshd[55628]: Failed keyboard-interactive/pam for invalid user r00t from 192.0.2.100 port 46050 ssh2
+Apr  2 17:52:06 <4.6> pancake sshd[55647]: Invalid user oracle from 192.0.2.100
+Apr  2 17:52:07 <4.3> pancake sshd[55647]: error: PAM: authentication error for illegal user oracle from example.com

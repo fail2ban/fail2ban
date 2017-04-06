@@ -1,0 +1,6 @@
+# failJSON: { "time": "2004-12-01T20:36:56", "match": true , "host": "1.2.3.4" }
+Dec 1 20:36:56 mail sieve[23713]: badlogin: example.com[1.2.3.4] PLAIN authentication failure
+# failJSON: { "time": "2005-07-18T17:21:58", "match": true , "host": "1.2.3.4" }
+Jul 18 17:21:58 ophelia cyrus/timsieved[12305]: badlogin: example.com[1.2.3.4] PLAIN authentication failure
+# failJSON: { "time": "2004-09-25T22:07:38", "match": true , "host": "1.2.3.4" }
+Sep 25 22:07:38 web9 timsieved[21040]: badlogin: web4[1.2.3.4] OTP authentication failure

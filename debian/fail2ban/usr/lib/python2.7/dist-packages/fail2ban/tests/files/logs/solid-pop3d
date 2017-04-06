@@ -1,0 +1,25 @@
+# failJSON: { "time": "2004-11-15T00:34:53", "match": true , "host": "123.33.44.45" }
+Nov 15 00:34:53 rmc1pt2-2-35-70 solid-pop3d[3822]: authentication failed: no such user: adrian - 123.33.44.45
+
+# All below are manufactured from looking at log
+# failJSON: { "time": "2004-11-15T00:34:53", "match": true , "host": "123.33.44.45" }
+Nov 15 00:34:53 rmc1pt2-2-35-70 solid-pop3d[3822]: authentication failed: can't map user name: adrian - 123.33.44.45
+
+# failJSON: { "time": "2004-11-15T00:34:53", "match": true , "host": "123.33.44.45" }
+Nov 15 00:34:53 rmc1pt2-2-35-70 solid-pop3d[3822]: authentication failed for user adrain - 123.33.44.45
+
+# failJSON: { "time": "2004-11-15T00:34:53", "match": true , "host": "123.33.44.45" }
+Nov 15 00:34:53 rmc1pt2-2-35-70 solid-pop3d[3822]: authentication failed for mapped user adrain - 123.33.44.45
+
+# failJSON: { "time": "2004-11-15T00:34:53", "match": true , "host": "123.33.44.45" }
+Nov 15 00:34:53 rmc1pt2-2-35-70 solid-pop3d[3822]: root login not allowed - 123.33.44.45
+
+# failJSON: { "time": "2004-11-15T00:34:53", "match": true , "host": "123.33.44.45" }
+Nov 15 00:34:53 rmc1pt2-2-35-70 solid-pop3d[3822]: can't find APOP secret for user adrian - 123.33.44.45
+
+# failJSON: { "time": "2004-11-15T00:34:53", "match": true , "host": "123.33.44.45" }
+Nov 15 00:34:53 rmc1pt2-2-35-70 solid-pop3d[3822]: APOP authentication failed for user adrian - 123.33.44.45
+
+# Real log messages again:
+# failJSON: { "time": "2004-11-17T23:10:03", "match": true , "host": "190.16.165.230" }
+Nov 17 23:10:03 emf1pt2-2-35-70 solid-pop3d[16993]: authentication failed for user jacques - 190.16.165.230

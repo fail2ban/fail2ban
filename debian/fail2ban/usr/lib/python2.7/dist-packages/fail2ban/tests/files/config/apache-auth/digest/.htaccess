@@ -1,0 +1,6 @@
+AuthType Digest
+AuthName "digest private area"
+AuthDigestDomain /digest/
+AuthBasicProvider file
+AuthUserFile /var/www/html/digest/.htpasswd
+Require valid-user

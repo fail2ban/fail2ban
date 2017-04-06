@@ -1,0 +1,13 @@
+# Logs thanks to Roman Gelfand
+#
+# failJSON: { "time": "2013-12-08T23:55:23.000", "match": true , "host": "91.188.124.227" }
+1386543323.000      4 91.188.124.227 TCP_DENIED/403 4099 GET http://www.proxy-listen.de/azenv.php - HIER_NONE/- text/html
+
+# failJSON: { "time": "2013-12-08T23:58:20", "match": true , "host": "175.44.0.184" }
+1386543500.000      5 175.44.0.184 NONE/405 3364 CONNECT error:method-not-allowed - HIER_NONE/- text/html
+
+# failJSON: { "time": "2013-12-09T00:08:04.000", "match": true , "host": "198.74.125.200" }
+1386544084.000      3 198.74.125.200 TCP_DENIED/403 3722 GET http://www2t.biglobe.ne.jp/~take52/test/env.cgi - HIER_NONE/- text/html
+
+# failJSON: { "time": "2013-12-09T00:09:06.000", "match": true , "host": "175.42.91.151" }
+1386544146.000      1 175.42.91.151 TCP_DENIED/403 3745 GET http://pkfsp.ru/wp-content/uploads/proxyc/engine.php - HIER_NONE/- text/html

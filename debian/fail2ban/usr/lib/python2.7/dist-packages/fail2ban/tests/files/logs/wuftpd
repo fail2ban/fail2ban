@@ -1,0 +1,7 @@
+# This login line is from syslog
+# failJSON: { "time": "2004-10-06T09:59:26", "match": true , "host": "202.108.145.173" }
+Oct  6 09:59:26 myserver wu-ftpd[18760]: failed login from hj-145-173-a8.bta.net.cn [202.108.145.173]
+# failJSON: { "time": "2004-10-11T16:45:07", "match": true , "host": "198.51.100.71" }
+Oct 11 16:45:07 ubuntu wu-ftpd[2360]: failed login from example.com [198.51.100.71]
+# failJSON: { "time": "2005-03-22T09:35:02", "match": true , "host": "198.51.100.71" }
+Mar 22 09:35:02 SiD wu-ftpd[31278]: pam_unix(wu-ftpd:auth): authentication failure; logname= uid=0 euid=0 tty= ruser= rhost=198.51.100.71  user=root

@@ -1,0 +1,4 @@
+# failJSON: { "time": "2013-12-17T14:58:14", "match": true , "host": "192.0.2.105" }
+[1387288694] nsd[7745]: info: ratelimit block example.com. type any target 192.0.2.0/24 query 192.0.2.105 TYPE255
+# failJSON: { "time": "2013-12-18T07:42:15", "match": true , "host": "192.0.2.115" }
+[1387348935] nsd[23600]: info: axfr for zone domain.nl. from client 192.0.2.115 refused, no acl matches.

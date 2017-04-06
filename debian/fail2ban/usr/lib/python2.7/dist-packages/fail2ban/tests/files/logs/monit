@@ -1,0 +1,21 @@
+# Previous version --
+# failJSON: { "time": "2005-04-16T21:05:29", "match": true , "host": "69.93.127.111" }
+[PDT Apr 16 21:05:29] error    : Warning: Client '69.93.127.111' supplied unknown user 'foo' accessing monit httpd
+# failJSON: { "time": "2005-04-16T20:59:33", "match": true , "host": "97.113.189.111" }
+[PDT Apr 16 20:59:33] error    : Warning: Client '97.113.189.111' supplied wrong password for user 'admin' accessing monit httpd
+
+# Current version -- corresponding "https://bitbucket.org/tildeslash/monit/src/6905335aa903d425cae732cab766bd88ea5f2d1d/src/http/processor.c?at=master&fileviewer=file-view-default#processor.c-728"
+# failJSON: { "time": "2005-03-09T09:18:28", "match": false, "desc": "should be ignored: no login" }
+Mar  9 09:18:28 hostname monit[5731]: HttpRequest: access denied -- client 1.2.3.4: missing or invalid Authorization header
+# failJSON: { "time": "2005-03-09T09:18:28", "match": false, "desc": "should be ignored: no login" }
+Mar  9 09:18:28 hostname monit[5731]: HttpRequest: access denied -- client 1.2.3.4: invalid Authorization header
+# failJSON: { "time": "2005-03-09T09:18:29", "match": false, "desc": "should be ignored: connect, still no user specified" }
+Mar  9 09:18:29 hostname monit[5731]: HttpRequest: access denied -- client 1.2.3.4: empty username
+# failJSON: { "time": "2005-03-09T09:18:31", "match": false, "desc": "should be ignored: connect, still no user specified" }
+Mar  9 09:18:31 hostname monit[5731]: HttpRequest: access denied -- client 1.2.3.4: unknown user ''
+# failJSON: { "time": "2005-03-09T09:18:32", "match": true, "host": "1.2.3.4", "desc": "no password try" }
+Mar  9 09:18:32 hostname monit[5731]: HttpRequest: access denied -- client 1.2.3.4: empty password
+# failJSON: { "time": "2005-03-09T09:18:33", "match": true, "host": "1.2.3.4", "desc": "unknown user try" }
+Mar  9 09:18:33 hostname monit[5731]: HttpRequest: access denied -- client 1.2.3.4: unknown user 'test1'
+# failJSON: { "time": "2005-03-09T09:18:34", "match": true, "host": "1.2.3.4", "desc": "wrong password try" }
+Mar  9 09:18:34 hostname monit[5731]: HttpRequest: access denied -- client 1.2.3.4: wrong password for user 'test2'

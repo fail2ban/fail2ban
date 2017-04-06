@@ -1,0 +1,15 @@
+# failJSON: { "time": "2005-03-24T15:25:51", "match": true , "host": "198.51.100.87" }
+Mar 24 15:25:51 buffalo1 dropbear[4092]: bad password attempt for 'root' from 198.51.100.87:5543
+# failJSON: { "time": "2005-02-11T15:23:17", "match": true , "host": "198.51.100.215" }
+Feb 11 15:23:17 dropbear[1252]: login attempt for nonexistent user from ::ffff:198.51.100.215:60495
+# failJSON: { "time": "2005-03-24T15:25:51", "match": true , "host": "198.51.100.87" }
+Mar 24 15:25:51 buffalo1 dropbear[4092]: bad password attempt for 'root' from 198.51.100.87:5543
+# failJSON: { "time": "2005-02-11T15:23:17", "match": true , "host": "198.51.100.215" }
+Feb 11 15:23:17 dropbear[1252]: login attempt for nonexistent user from ::ffff:198.51.100.215:60495
+
+# failJSON: { "time": "2005-07-27T01:04:12", "match": true , "host": "1.2.3.4" }
+Jul 27 01:04:12 fail2ban-test dropbear[1335]: Bad password attempt for 'root' from 1.2.3.4:60588
+# failJSON: { "time": "2005-07-27T01:04:22", "match": true , "host": "1.2.3.4" }
+Jul 27 01:04:22 fail2ban-test dropbear[1335]: Exit before auth (user 'root', 10 fails): Max auth tries reached - user 'root' from 1.2.3.4:60588
+# failJSON: { "time": "2005-07-27T01:18:59", "match": true , "host": "1.2.3.4" }
+Jul 27 01:18:59 fail2ban-test dropbear[1477]: Login attempt for nonexistent user from 1.2.3.4:60794

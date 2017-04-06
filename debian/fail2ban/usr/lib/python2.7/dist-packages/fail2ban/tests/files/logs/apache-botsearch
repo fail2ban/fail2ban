@@ -1,0 +1,43 @@
+# failJSON: { "time": "2008-07-22T06:48:30", "match": true , "host": "198.51.100.86" }
+[Tue Jul 22 06:48:30 2008] [error] [client 198.51.100.86] script not found or unable to stat: /var/www/wp-login.php
+
+# failJSON: { "time": "2013-12-23T09:49:10", "match": true , "host": "115.249.248.145" }
+[Mon Dec 23 09:49:10 2013] [error] [client 115.249.248.145] File does not exist: /var/www/pma
+# failJSON: { "time": "2013-12-23T09:49:10", "match": true , "host": "115.249.248.145" }
+[Mon Dec 23 09:49:10 2013] [error] [client 115.249.248.145] File does not exist: /var/www/phpmyadmin
+# failJSON: { "time": "2013-12-23T09:49:13", "match": true , "host": "115.249.248.145" }
+[Mon Dec 23 09:49:13 2013] [error] [client 115.249.248.145] File does not exist: /var/www/webmail
+# failJSON: { "time": "2013-12-23T09:49:13", "match": true , "host": "115.249.248.145" }
+[Mon Dec 23 09:49:13 2013] [error] [client 115.249.248.145] File does not exist: /var/www/mail
+
+# failJSON: { "time": "2013-12-31T09:13:47", "match": true , "host": "176.102.37.56" }
+[Tue Dec 31 09:13:47 2013] [error] [client 176.102.37.56] script '/var/www/wp-login.php' not found or unable to stat
+
+# failJSON: { "time": "2014-01-03T09:20:23", "match": true , "host": "46.23.77.174" }
+[Fri Jan 03 09:20:23 2014] [error] [client 46.23.77.174] File does not exist: /var/www/mail
+# failJSON: { "time": "2014-01-03T09:20:25", "match": true , "host": "46.23.77.174" }
+[Fri Jan 03 09:20:25 2014] [error] [client 46.23.77.174] File does not exist: /var/www/mail_this_entry
+# failJSON: { "time": "2014-01-03T09:26:52", "match": true , "host": "46.23.77.174" }
+[Fri Jan 03 09:26:52 2014] [error] [client 46.23.77.174] File does not exist: /var/www/pmapper-3.2-beta3
+# failJSON: { "time": "2014-01-03T09:33:53", "match": true , "host": "46.23.77.174" }
+[Fri Jan 03 09:33:53 2014] [error] [client 46.23.77.174] File does not exist: /var/www/v-webmail
+# failJSON: { "time": "2014-01-03T09:34:15", "match": true , "host": "46.23.77.174" }
+[Fri Jan 03 09:34:15 2014] [error] [client 46.23.77.174] File does not exist: /var/www/vwebmail
+# failJSON: { "time": "2014-01-03T09:35:47", "match": true , "host": "46.23.77.174" }
+[Fri Jan 03 09:35:47 2014] [error] [client 46.23.77.174] File does not exist: /var/www/webmail
+# failJSON: { "time": "2013-12-23T21:21:39", "match": true , "host": "183.60.244.49" }
+[Mon Dec 23 21:21:39 2013] [error] [client 183.60.244.49] File does not exist: /var/www/extmail, referer: http://www.baidu.com
+# failJSON: { "time": "2013-12-23T21:21:44", "match": true , "host": "183.60.244.49" }
+[Mon Dec 23 21:21:44 2013] [error] [client 183.60.244.49] File does not exist: /var/www/extmail, referer: http://www.baidu.com
+# failJSON: { "time": "2013-12-23T21:21:47", "match": true , "host": "183.60.244.49" }
+[Mon Dec 23 21:21:47 2013] [error] [client 183.60.244.49] File does not exist: /var/www/mails, referer: http://www.baidu.com
+# failJSON: { "time": "2013-12-23T21:22:00", "match": true , "host": "183.60.244.49" }
+[Mon Dec 23 21:22:00 2013] [error] [client 183.60.244.49] File does not exist: /var/www/extmail, referer: http://www.baidu.com
+# failJSON: { "time": "2013-12-23T21:22:16", "match": true , "host": "183.60.244.49" }
+[Mon Dec 23 21:22:16 2013] [error] [client 183.60.244.49] File does not exist: /var/www/phpmyadmin, referer: http://www.baidu.com
+
+# failJSON: { "time": "2014-01-03T14:50:39", "match": false , "host": "92.43.20.165" }
+[Fri Jan 03 14:50:39 2014] [error] [client 92.43.20.165] script '/var/www/forum/mail.php' not found or unable to stat
+
+# failJSON: { "time": "2014-12-06T09:29:34", "match": false , "host": "122.49.201.178" }
+[Fri Dec 06 09:29:34 2013] [error] [client 122.49.201.178] client denied by server configuration: /var/www/webmail/.htaccess

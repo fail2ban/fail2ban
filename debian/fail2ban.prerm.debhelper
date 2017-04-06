@@ -1,0 +1,6 @@
+# Automatically added by dh_installinit
+if [ -x "/etc/init.d/fail2ban" ]; then
+	invoke-rc.d fail2ban stop || exit $?
+fi
+# End automatically added section
+

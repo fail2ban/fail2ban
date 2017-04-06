@@ -1,0 +1,8 @@
+# failJSON: { "time": "2007-03-05T14:39:21", "match": true , "host": "1.2.3.4" }
+1.2.3.4 - - [05/Mar/2007:14:39:21 +0100] "POST /123.html/trackback/ HTTP/1.0" 301 459 "http://www.mydomain.tld/123.html/trackback" "TrackBack/1.02"
+
+# failJSON: { "time": "2007-03-05T14:40:21", "match": true , "host": "1.2.3.4" }
+1.2.3.4 - - [05/Mar/2007:14:40:21 +0100] "GET /123.html/trackback/ HTTP/1.0" 301 459 "http://www.mydomain.tld/123.html/trackback" "TrackBack/1.02"
+
+# failJSON: { "time": "2007-03-05T14:41:21", "match": true , "host": "1.2.3.4" }
+1.2.3.4 - - [05/Mar/2007:14:41:21 +0100] "HEAD /123.html/trackback/ HTTP/1.0" 301 459 "http://www.mydomain.tld/123.html/trackback" "TrackBack/1.02"

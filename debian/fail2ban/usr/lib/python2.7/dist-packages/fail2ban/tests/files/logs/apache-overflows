@@ -1,0 +1,25 @@
+# http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=574182
+# failJSON: { "time": "2010-03-16T15:39:29", "match": true , "host": "58.179.109.179" }
+[Tue Mar 16 15:39:29 2010] [error] [client 58.179.109.179] Invalid URI in request \xf9h\xa9\xf3\x88\x8cXKj \xbf-l*4\x87n\xe4\xfe\xd4\x1d\x06\x8c\xf8m\\rS\xf6n\xeb\x8
+# failJSON: { "time": "2010-03-15T15:44:47", "match": true , "host": "121.222.2.133" }
+[Mon Mar 15 15:44:47 2010] [error] [client 121.222.2.133] Invalid URI in request n\xed*\xbe*\xab\xefd\x80\xb5\xae\xf6\x01\x10M?\xf2\xce\x13\x9c\xd7\xa0N\xa7\xdb%0\xde\xe0\xfc\xd2\xa0\xfe\xe9w\xee\xc4`v\x9b[{\x0c:\xcb\x93\xc6\xa0\x93\x9c`l\\\x8d\xc9
+
+# http://forum.nconf.org/viewtopic.php?f=14&t=427&p=1488
+# failJSON: { "time": "2010-07-30T11:23:54", "match": true , "host": "10.85.6.69" }
+[Fri Jul 30 11:23:54 2010] [error] [client 10.85.6.69] request failed: URI too long (longer than 8190)
+# failJSON: { "time": "2010-10-27T23:16:37", "match": true , "host": "187.117.240.164" }
+[Wed Oct 27 23:16:37 2010] [error] [client 187.117.240.164] Invalid URI in request x\xb2\xa1:SMl\xcc{\xfd"\xd1\x91\x84!d\x0e~\xf6:\xfbVu\xdf\xc3\xdb[\xa9\xfe\xd3lpz\x92\xbf\x9f5\xa3\xbbvF\xbc\xee\x1a\xb1\xb0\xf8K\xecE\xbc\xe8r\xacx=\xc7>\xb5\xbd\xa3\xda\xe9\xf09\x95"fd\x1c\x05\x1c\xd5\xf3#:\x91\xe6WE\xdb\xadN;k14;\xdcr\xad\x9e\xa8\xde\x95\xc3\xebw\xa0\xb1N\x8c~\xf1\xcfSY\xd5zX\xd7\x0f\vH\xe4\xb5(\xcf,3\xc98\x19\xefYq@\xd2I\x96\xfb\xc7\xa9\xae._{S\xd1\x9c\xad\x17\xdci\x9b\xca\x93\xafSM\xb8\x99\xd9|\xc2\xd8\xc9\xe7\xe9O\x99\xad\x19\xc3V]\xcc\xddR\xf7$\xaa\xb8\x18\xe0f\xb8\xff
+
+
+# Could be apache-2.2 or earlier 
+# http://www.aota.net/forums/showthread.php?t=15796
+# failJSON: { "time": "2003-11-14T16:11:55", "match": true , "host": "1.2.3.4" }
+[Fri Nov 14 16:11:55 2003] [error] [client 1.2.3.4] request failed: erroneous characters after protocol string: User-Agent: Mozilla/5.0 (Windows; U; Win98; en-US; m18) Gecko/20001108 Netscape6/6.0
+
+# http://forum.directadmin.com/showthread.php?t=22412
+# failJSON: { "time": "2007-11-15T03:09:59", "match": true , "host": "89.189.71.87" }
+[Thu Nov 15 03:09:59 2007] [error] [client 89.189.71.87] Invalid method in request NOOP
+
+# https://issues.apache.org/bugzilla/show_bug.cgi?id=46123
+# failJSON: { "time": "2008-10-29T11:55:14", "match": true , "host": "127.0.0.1" }
+[Wed Oct 29 11:55:14 2008] [error] [client 127.0.0.1] Invalid method in request \x16\x03\x01 - possible attempt to establish SSL connection when the server isn't expecting it

@@ -1,0 +1,10 @@
+# failJSON: { "time": "2005-03-11T22:52:12", "match": true , "host": "198.51.100.167" }
+Mar 11 22:52:12   lighttpd[53690]: (mod_fastcgi.c.2676) FastCGI-stderr: ALERT - configured request variable name length limit exceeded - dropped variable 'upqchi07vFfAFuBjnIKGIwiLrHo3Vt68T3yqvhQu2TqetQ78roy7Q6bpTfDUtYFR593/MA' (attacker '198.51.100.167', file '/usr/local/captiveportal/index.php')
+# failJSON: { "time": "2005-02-26T22:52:29", "match": true , "host": "198.51.100.77" }
+Feb 26 22:52:29 host suhosin[9636]: ALERT - script tried to increase memory_limit to 268435456 bytes which is above the allowed value (attacker '198.51.100.77', file '/var/www/wordpress/wp-admin/includes/image.php', line 161)
+
+# failJSON: { "time": "2004-11-18T20:18:31", "match": true , "host": "188.132.244.3" }
+Nov 18 20:18:31 platypus suhosin[28433]: ALERT - ASCII-NUL chars not allowed within request variables - dropped variable 'templatefile' (attacker '188.132.244.3', file '/home/ace-hosting/public_html/cart.php')
+
+# failJSON: { "time": "2004-10-25T10:59:49", "match": true , "host": "38.111.147.83" }
+Oct 25 10:59:49 platypus suhosin[13953]: ALERT - configured GET variable value length limit exceeded - dropped variable '_route_' (attacker '38.111.147.83', file '/home/thegoblin/public_html/index.php')

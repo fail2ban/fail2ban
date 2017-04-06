@@ -1,0 +1,38 @@
+#!/usr/bin/env fail2ban-python
+# Inspired by https://isc.sans.edu/forums/diary/When+Google+isnt+Google/15968/
+#
+# Written in Python to reuse built-in Python batteries and not depend on
+# presence of host and cut commands
+#
+import sys
+from fail2ban.server.ipdns import DNSUtils, IPAddr
+
+def process_args(argv):
+    if len(argv) != 2:
+       raise ValueError("Please provide a single IP as an argument. Got: %s\n"
+                        % (argv[1:]))
+    ip = argv[1]
+
+    if not IPAddr(ip).isValid:
+       raise ValueError("Argument must be a single valid IP. Got: %s\n"
+                        % ip)
+    return ip
+
+google_ips = None
+
+def is_googlebot(ip):
+    import re
+
+    host = DNSUtils.ipToName(ip)
+    if not host or not re.match('.*\.google(bot)?\.com$', host):
+       return False
+    host_ips = DNSUtils.dnsToIp(host)
+    return (ip in host_ips)
+
+if __name__ == '__main__': # pragma: no cover
+    try:
+      ret = is_googlebot(process_args(sys.argv))
+    except ValueError as e:
+      sys.stderr.write(str(e))
+      sys.exit(2)
+    sys.exit(0 if ret else 1)

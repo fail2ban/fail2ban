@@ -1,0 +1,5 @@
+AuthType basic
+AuthName "private area"
+AuthBasicProvider file
+AuthUserFile /var/www/html/basic/file/.htpasswd
+Require valid-user

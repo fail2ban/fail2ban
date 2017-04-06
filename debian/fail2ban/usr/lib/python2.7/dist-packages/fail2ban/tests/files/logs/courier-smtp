@@ -1,0 +1,14 @@
+# failJSON: { "time": "2005-04-10T03:47:57", "match": true , "host": "1.2.3.4" }
+Apr 10 03:47:57 web courieresmtpd: error,relay=::ffff:1.2.3.4,ident=tmf,from=<tmf@example.com>,to=<mailman-subscribe@example.com>: 550 User unknown.
+# failJSON: { "time": "2005-07-03T23:07:20", "match": true , "host": "1.2.3.4" }
+Jul  3 23:07:20 szerver courieresmtpd: error,relay=::ffff:1.2.3.4,msg="535 Authentication failed.",cmd: YWRvYmVhZG9iZQ==
+# failJSON: { "time": "2005-07-04T18:39:39", "match": true , "host": "1.2.3.4" }
+Jul  4 18:39:39 mail courieresmtpd: error,relay=::ffff:1.2.3.4,from=<picaro@astroboymail.com>,to=<user@update.net>: 550 User <benny> unknown
+# failJSON: { "time": "2005-07-06T03:42:28", "match": true , "host": "1.2.3.4" }
+Jul  6 03:42:28 whistler courieresmtpd: error,relay=::ffff:1.2.3.4,from=<>,to=<admin at memcpy>: 550 User unknown.
+# failJSON: { "time": "2004-11-21T23:16:17", "match": true , "host": "1.2.3.4" }
+Nov 21 23:16:17 server courieresmtpd: error,relay=::ffff:1.2.3.4,from=<>,to=<>: 550 User unknown.
+# failJSON: { "time": "2004-08-14T12:51:04", "match": true , "host": "1.2.3.4" }
+Aug 14 12:51:04 HOSTNAME courieresmtpd: error,relay=::ffff:1.2.3.4,from=<firozquarl@aclunc.org>,to=<BOGUSUSER@HOSTEDDOMAIN.org>: 550 User unknown.
+# failJSON: { "time": "2004-08-14T12:51:04", "match": true , "host": "1.2.3.4" }
+Aug 14 12:51:04 mail.server courieresmtpd[26762]: error,relay=::ffff:1.2.3.4,msg="535 Authentication failed.",cmd: AUTH PLAIN AAAAABBBBCCCCWxlZA== admin

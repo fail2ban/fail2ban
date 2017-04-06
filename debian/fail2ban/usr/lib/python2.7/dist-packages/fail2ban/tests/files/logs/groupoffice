@@ -1,0 +1,4 @@
+# failJSON: { "time": "2014-01-06T10:59:38", "match": true, "host": "127.0.0.1" }
+[2014-01-06 10:59:38]LOGIN FAILED for user: "asdsad" from IP: 127.0.0.1
+# failJSON: { "time": "2014-01-06T10:59:49", "match": false, "host": "127.0.0.1" }
+[2014-01-06 10:59:49]LOGIN SUCCESS for user: "admin" from IP: 127.0.0.1

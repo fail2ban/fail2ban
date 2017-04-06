@@ -1,0 +1,18 @@
+# failJSON: { "time": "2005-01-10T00:00:00", "match": true , "host": "123.123.123.123" }
+Jan 10 00:00:00 myhost proftpd[12345] myhost.domain.com (123.123.123.123[123.123.123.123]): USER username (Login failed): User in /etc/ftpusers
+# failJSON: { "time": "2005-02-01T00:00:00", "match": true , "host": "123.123.123.123" }
+Feb 1 00:00:00 myhost proftpd[12345] myhost.domain.com (123.123.123.123[123.123.123.123]): USER username: no such user found from 123.123.123.123 [123.123.123.123] to 234.234.234.234:21 
+# failJSON: { "time": "2005-06-09T07:30:58", "match": true , "host": "67.227.224.66" }
+Jun 09 07:30:58 platypus.ace-hosting.com.au proftpd[11864] platypus.ace-hosting.com.au (mail.bloodymonster.net[::ffff:67.227.224.66]): USER username (Login failed): Incorrect password.
+# failJSON: { "time": "2005-06-09T11:15:43", "match": true , "host": "101.71.143.238" }
+Jun 09 11:15:43 platypus.ace-hosting.com.au proftpd[17424] platypus.ace-hosting.com.au (::ffff:101.71.143.238[::ffff:101.71.143.238]): USER god: no such user found from ::ffff:101.71.143.238 [::ffff:101.71.143.238] to ::ffff:123.212.99.194:21
+# failJSON: { "time": "2005-06-13T22:07:23", "match": true , "host": "59.167.242.100" }
+Jun 13 22:07:23 platypus.ace-hosting.com.au proftpd[15719] platypus.ace-hosting.com.au (::ffff:59.167.242.100[::ffff:59.167.242.100]): SECURITY VIOLATION: root login attempted.
+# failJSON: { "time": "2005-06-14T00:09:59", "match": true , "host": "59.167.242.100" }
+Jun 14 00:09:59 platypus.ace-hosting.com.au proftpd[17839] platypus.ace-hosting.com.au (::ffff:59.167.242.100[::ffff:59.167.242.100]): USER platypus.ace-hosting.com.au proftpd[17424] platypus.ace-hosting.com.au (hihoinjection[1.2.3.44]): no such user found from ::ffff:59.167.242.100 [::ffff:59.167.242.100] to ::ffff:113.212.99.194:21
+# failJSON: { "time": "2005-05-31T10:53:25", "match": true , "host": "1.2.3.4" }
+May 31 10:53:25 mail proftpd[15302]: xxxxxxxxxx (::ffff:1.2.3.4[::ffff:1.2.3.4]) - Maximum login attempts (3) exceeded 
+# failJSON: { "time": "2004-12-05T15:44:32", "match": true , "host": "1.2.3.4" }
+Dec 5 15:44:32 serv1 proftpd[70944]: serv1.domain.com (example.com[1.2.3.4]) - USER jtittle@domain.org: no such user found from example.com [1.2.3.4] to 1.2.3.4:21 
+# failJSON: { "time": "2013-11-16T21:59:30", "match": true , "host": "1.2.3.4", "desc": "proftpd-basic 1.3.5~rc3-2.1 on Debian uses date format with milliseconds if logging under /var/log/proftpd/proftpd.log" }
+2013-11-16 21:59:30,121 novo proftpd[25891] localhost (andy[1.2.3.4]): USER kjsad: no such user found from andy [1.2.3.5] to ::ffff:192.168.1.14:21

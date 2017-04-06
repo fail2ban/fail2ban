@@ -1,0 +1,86 @@
+Fail2ban normally requires root privileges to insert iptables rules
+through calls to /sbin/iptables and also to read the logfiles.
+Fail2ban can run as an unprivileged user provided that those two
+capabilities are preserved. The idea is to run fail2ban as a normal
+user (e.g. fail2ban) who belongs to a group which is allowed to read
+logfiles. The user should also be allowed to write to
+/proc/net/xt_recent/fail2ban-<name> (name is specified in the iptables
+rule).
+
+/proc/net/xt_recent/* is created by the xt_recent kernel module when
+an iptables rule with '-m limit' is inserted. This file contains a
+dynamic list of IP addresses which can than be used in iptables rules.
+Addresses can be matched against this list, with an optional timeout.
+One way to use xt_recent is to insert IPs into this list from an
+iptables rule, e.g. after connecting to the SSH port three times in a
+minute. This is the standard usage described in iptables(3).
+
+Another way to use xt_recent is by inserting the rules by writing to
+/proc/net/xt_recent/fail2ban-<name>. This can be performed by a fail2ban
+action. Files in /proc/net/xt_recent/ are protected by normal
+filesystem rules, so can be chown'ed and chmod'ed to be writable by a
+certain user. After the necessary iptables rules are inserted (which
+requires root privileges), blacklisting can be performed by an
+unprivileged user.
+
+Using fail2ban with xt_recent allows smarter filtering than normal
+iptables rules with the xt_recent module can provide.
+
+The disadvantage is that fail2ban cannot perform the setup by itself,
+which would require the privilege to call /sbin/iptables, and it must
+be done through other means.
+
+The primary advantage is obvious: it's generally better to run
+services not as root. This setup is more robust, because xt_recent has
+it's own memory management and should behave smartly in case a very
+large amount of IPs is blocked. Also in case the fail2ban process dies
+the rules expire automatically. In case of a large amount of blocked
+IPs, traversing rules linearly for each SYN packet as fail2ban
+normally inserts them will be slow, but xt_recent with the same number
+of IPs would be much faster. (Didn't test this, so this is pure
+handwaving, but it should really be this way ;)) From the
+administrators point of view, a setup with xt_recent might also be
+easier, because it's very simple to modify the permissions on
+/proc/net/xt_recent/fail2ban-<name> to be readable or writable by
+some user and thus allow delisting IPs by helper administrators
+without the ability to mess up other iptables rules.
+
+The xt_recent-echo jail can be used under the root user without
+further configuration. To run not as root, further setup is necessary:
+
+- Create user:
+
+  - set FAIL2BAN_USER in /etc/default/fail2ban.
+
+    This probably should be fail2ban.
+
+  - add user fail2ban who can read /var/log/auth.log and other
+    necessary log files. Log files are owned by group 'adm', so
+    it is enough if this user belongs to this group.
+
+    The user can be created e.g. with
+
+     useradd --system --no-create-home --home-dir / --groups adm fail2ban
+
+- Statically initialize chains firewall:
+
+  - put a rule to check the xt_recent list in the static firewall initialization
+    script, with names like fail2ban-ssh (action uses separate chains per each
+    jail, so define here the ones you need 1-per-jail)
+
+    Sample invocation might be
+
+     iptables -I INPUT -m recent --update --seconds 3600 --name fail2ban-<name> -j DROP
+
+    with <name> suitably replaced.
+
+- Permissions:
+
+  make sure that configuration files under /etc/fail2ban are readable by
+  fail2ban user. Make sure that logfiles of fail2ban itself are writable
+  by the fail2ban user. /etc/init.d/fail2ban will change the ownership at
+  startup, but it is also necessary to modify /etc/logrotate.d/fail2ban.
+
+  The simplest way is to replace '# create ...' with the following
+    # create 640 fail2ban adm
+

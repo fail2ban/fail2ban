@@ -1,0 +1,29 @@
+# failJSON: { "time": "2013-07-09T02:45:16", "match": false , "host": "173.242.116.187" } 
+type=USER_LOGIN msg=audit(1373330716.415:4063): user pid=11998 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:sshd_t:s0-s0:c0.c1023 msg='op=login acct="root" exe="/usr/sbin/sshd" hostname=? addr=173.242.116.187 terminal=ssh res=failed'
+
+# failJSON: { "time": "2013-07-09T02:45:17", "match": false , "host": "173.242.116.187" } 
+type=USER_LOGIN msg=audit(1373330717.000:4068): user pid=12000 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:sshd_t:s0-s0:c0.c1023 msg='op=login acct=28756E6B6E6F776E207573657229 exe="/usr/sbin/sshd" hostname=? addr=173.242.116.187 terminal=ssh res=failed'
+
+# failJSON: { "time": "2013-07-09T02:45:17", "match": true , "host": "173.242.116.187" } 
+type=USER_ERR msg=audit(1373330717.000:4070): user pid=12000 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:sshd_t:s0-s0:c0.c1023 msg='op=PAM:bad_ident acct="?" exe="/usr/sbin/sshd" hostname=173.242.116.187 addr=173.242.116.187 terminal=ssh res=failed'
+
+# failJSON: { "time": "2013-07-09T02:45:17", "match": false , "host": "173.242.116.187" } 
+type=USER_LOGIN msg=audit(1373330717.000:4073): user pid=12000 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:sshd_t:s0-s0:c0.c1023 msg='op=login acct=28696E76616C6964207573657229 exe="/usr/sbin/sshd" hostname=? addr=173.242.116.187 terminal=ssh res=failed'
+
+# failJSON: { "time": "2013-06-30T02:02:08", "match": false , "host": "113.240.248.18" } 
+type=USER_LOGIN msg=audit(1372546928.000:52008): user pid=21569 uid=0 auid=0 ses=76 subj=unconfined_u:system_r:sshd_t:s0-s0:c0.c1023 msg='op=login acct="sshd" exe="/usr/sbin/sshd" hostname=? addr=113.240.248.18 terminal=ssh res=failed'
+
+# failJSON: { "time": "2013-06-30T03:58:20", "match": true , "host": "113.240.248.18" } 
+type=USER_ERR msg=audit(1372557500.000:61747): user pid=23684 uid=0 auid=0 ses=76 subj=unconfined_u:system_r:sshd_t:s0-s0:c0.c1023 msg='op=PAM:bad_ident acct="?" exe="/usr/sbin/sshd" hostname=113.240.248.18 addr=113.240.248.18 terminal=ssh res=failed'
+
+# failJSON: { "time": "2013-06-30T04:58:20", "match": false , "host": "113.240.248.18" } 
+type=USER_LOGIN msg=audit(1372557500.000:61750): user pid=23684 uid=0 auid=0 ses=76 subj=unconfined_u:system_r:sshd_t:s0-s0:c0.c1023 msg='op=login acct=28696E76616C6964207573657229 exe="/usr/sbin/sshd" hostname=? addr=113.240.248.18 terminal=ssh res=failed'
+
+# failJSON: { "time": "2013-07-06T18:48:00", "match": true , "host": "194.228.20.113" } 
+type=USER_AUTH msg=audit(1373129280.000:9): user pid=1277 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:sshd_t:s0-s0:c0.c1023 msg='op=pubkey acct="root" exe="/usr/sbin/sshd" hostname=? addr=194.228.20.113 terminal=ssh res=failed'
+
+# failJSON: { "time": "2013-10-30T07:57:43", "match": true , "host": "192.168.3.100" } 
+type=USER_AUTH msg=audit(1383116263.000:603): pid=12887 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:sshd_t:s0-s0:c0.c1023 msg='op=password acct="dan" exe="/usr/sbin/sshd" hostname=? addr=192.168.3.100 terminal=ssh res=failed'
+
+# failJSON: { "time": "2013-10-30T07:54:08", "match": false , "host": "192.168.3.100" } 
+type=USER_LOGIN msg=audit(1383116048.000:595): pid=12354 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:sshd_t:s0-s0:c0.c1023 msg='op=login acct="dan" exe="/usr/sbin/sshd" hostname=? addr=192.168.3.100 terminal=ssh res=failed'

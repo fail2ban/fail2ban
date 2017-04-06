@@ -1,0 +1,44 @@
+# failJSON: { "time": "2013-04-07T07:08:36", "match": true , "host": "68.171.223.68" }
+Apr-07-13 07:08:36 [SSL-out] 68.171.223.68 SSL negotiation with client failed: SSL accept attempt failed with unknown errorerror:140760FC:SSL routines:SSL23_GET_CLIENT_HELLO:unknown protocol;
+# failJSON: { "time": "2013-04-07T07:08:36", "match": true , "host": "68.171.223.68" }
+Apr-07-13 07:08:36 [SSL-out] 68.171.223.68 SSL negotiation with client failed: SSL accept attempt failed with unknown errorerror:140760FC:SSL routines:SSL23_GET_CLIENT_HELLO:unknown protocol;
+# failJSON: { "time": "2013-04-07T07:10:37", "match": true , "host": "68.171.223.68" }
+Apr-07-13 07:10:37 [SSL-out] 68.171.223.68 SSL negotiation with client failed: SSL accept attempt failed with unknown errorerror:140760FC:SSL routines:SSL23_GET_CLIENT_HELLO:unknown protocol;
+# failJSON: { "time": "2013-04-07T07:12:37", "match": true , "host": "68.171.223.68" }
+Apr-07-13 07:12:37 [SSL-out] 68.171.223.68 SSL negotiation with client failed: SSL accept attempt failed with unknown errorerror:140760FC:SSL routines:SSL23_GET_CLIENT_HELLO:unknown protocol;
+# failJSON: { "time": "2013-04-07T07:14:36", "match": true , "host": "68.171.223.68" }
+Apr-07-13 07:14:36 [SSL-out] 68.171.223.68 SSL negotiation with client failed: SSL accept attempt failed with unknown errorerror:140760FC:SSL routines:SSL23_GET_CLIENT_HELLO:unknown protocol;
+# failJSON: { "time": "2013-04-27T02:25:09", "match": true , "host": "217.194.197.97" }
+Apr-27-13 02:25:09 Blocking 217.194.197.97 - too much AUTH errors (8);
+# failJSON: { "time": "2013-04-27T02:25:09", "match": true , "host": "217.194.197.97" }
+Apr-27-13 02:25:09 Blocking 217.194.197.97 - too much AUTH errors (9);
+# failJSON: { "time": "2013-04-27T02:25:09", "match": true , "host": "217.194.197.97" }
+Apr-27-13 02:25:09 Blocking 217.194.197.97 - too much AUTH errors (10);
+# failJSON: { "time": "2013-04-27T02:25:10", "match": true , "host": "217.194.197.97" }
+Apr-27-13 02:25:10 [SSL-out] 217.194.197.97 max sender authentication errors (5) exceeded -- dropping connection - after reply: 535 5.7.8 Error: authentication failed: UGFzc3dvcmQ6;
+# failJSON: { "time": "2013-04-27T02:25:10", "match": true , "host": "217.194.197.97" }
+Apr-27-13 02:25:10 [SSL-out] 217.194.197.97 max sender authentication errors (5) exceeded -- dropping connection - after reply: 535 5.7.8 Error: authentication failed: UGFzc3dvcmQ6;
+# failJSON: { "time": "2013-04-27T02:25:10", "match": true , "host": "217.194.197.97" }
+Apr-27-13 02:25:10 [SSL-out] 217.194.197.97 max sender authentication errors (5) exceeded -- dropping connection - after reply: 535 5.7.8 Error: authentication failed: UGFzc3dvcmQ6;
+# failJSON: { "time": "2013-04-27T02:25:11", "match": true , "host": "217.194.197.97" }
+Apr-27-13 02:25:11 [SSL-out] 217.194.197.97 max sender authentication errors (5) exceeded -- dropping connection - after reply: 535 5.7.8 Error: authentication failed: UGFzc3dvcmQ6;
+# failJSON: { "time": "2016-07-29T16:49:52", "match": true , "host": "0.0.0.0" }
+Jul-29-16 16:49:52 m1-25391-06124 [Worker_1] [TLS-out] [RelayAttempt] 0.0.0.0 <user@example.com> to: user@example.org relay attempt blocked for: someone@example.org
+# failJSON: { "time": "2016-07-30T17:07:25", "match": true , "host": "0.0.0.0" }
+Jul-30-16 17:07:25 [Worker_1] [TLS-out] 0.0.0.0 [SMTP Error] 535 5.7.8 Error: authentication failed: UGFzc3dvcmQ6
+# failJSON: { "time": "2016-07-30T17:11:05", "match": true , "host": "0.0.0.0" }
+Jul-30-16 17:11:05 m1-13060-05386 [Worker_1] [TLS-out] 0.0.0.0 [SMTP Error] 535 5.7.8 Error: authentication failed: UGFzc3dvcmQ6
+# failJSON: { "time": "2016-07-31T06:45:59", "match": true , "host": "0.0.0.0" }
+Jul-31-16 06:45:59 [Worker_1] [TLS-in] [TLS-out] 0.0.0.0 [SMTP Error] 535 5.7.8 Error: authentication failed: 
+# failJSON: { "time": "2016-01-05T08:38:49", "match": true , "host": "0.0.0.0" }
+Jan-05-16 08:38:49 m1-01129-09140 [Worker_1] [TLS-in] [TLS-out] [RelayAttempt] 0.0.0.0 <user@example.com> relay attempt blocked for (parsing): <user2@example>
+# failJSON: { "time": "2016-06-12T16:43:37", "match": true , "host": "0.0.0.0" }
+Jun-12-16 16:43:37 m1-64217-12013 [Worker_1] [TLS-in] [TLS-out] [RelayAttempt] 0.0.0.0 <user@example.com> to: user2@example.com relay attempt blocked for (parsing): <a.notheruser69@example.c>
+# failJSON: { "time": "2016-01-22T22:25:51", "match": true , "host": "0.0.0.0" }
+Jan-22-16 22:25:51 [Worker_1] [TLS-out] 0.0.0.0 [SMTP Error] 535 5.7.8 Error: authentication failed: Invalid authentication mechanism
+# failJSON: { "time": "2016-03-19T13:42:20", "match": true , "host": "0.0.0.0" }
+Mar-19-16 13:42:20 [Worker_1] [TLS-out] 0.0.0.0 [SMTP Error] 535 5.7.8 Error: authentication failed: Invalid base64 data in continued response
+# failJSON: { "time": "2016-07-18T16:54:21", "match": true , "host": "0.0.0.0" }
+Jul-18-16 16:54:21 [Worker_2] [TLS-out] 0.0.0.0 [SMTP Error] 535 5.7.8 Error: authentication failed: Connection lost to authentication server
+# failJSON: { "time": "2016-07-18T17:14:23", "match": true , "host": "0.0.0.0" }
+Jul-18-16 17:14:23 m1-76453-02949 [Worker_1] [TLS-out] 0.0.0.0 [SMTP Error] 535 5.7.8 Error: authentication failed: Connection lost to authentication server

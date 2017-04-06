@@ -1,0 +1,2 @@
+# failJSON: { "time": "2005-01-31T16:54:07", "match": true , "host": "24.79.92.194" }
+Jan 31 16:54:07 desktop pure-ftpd: (?@24.79.92.194) [WARNING] Authentication failed for user [Administrator]

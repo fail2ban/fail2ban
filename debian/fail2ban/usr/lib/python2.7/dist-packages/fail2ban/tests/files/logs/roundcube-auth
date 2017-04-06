@@ -1,0 +1,42 @@
+# failJSON: { "time": "2013-01-22T21:28:21", "match": true , "host": "192.0.43.10" }
+[22-Jan-2013 22:28:21 +0200]: FAILED login for user1 from 192.0.43.10
+# failJSON: { "time": "2005-05-26T07:12:40", "match": true , "host": "10.1.1.47" }
+May 26 07:12:40 hamster roundcube: IMAP Error: Login failed for sales@example.com from 10.1.1.47
+# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4" }
+Jul 11 03:06:37 myhostname roundcube: IMAP Error: Login failed for admin from 1.2.3.4. AUTHENTICATE PLAIN: A0002 NO Login failed. in /usr/share/roundcube/program/include/rcube_imap.php on line 205 (POST /wmail/?_task=login&_action=login)
+
+# Made up to attempts to inject a DoS on the server. Assume the user can manipulate the IMAP error response
+#
+# user = admin from 127.0.0.1
+# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4" }
+Jul 11 03:06:37 myhostname roundcube: IMAP Error: Login failed for admin from 127.0.0.1 from 1.2.3.4. AUTHENTICATE PLAIN: A0002 NO Login failed. in /usr/share/roundcube/program/include/rcube_imap.php on line 205 (POST /wmail/?_task=login&_action=login)
+#
+# IMAP server logs user=${username}
+# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4" }
+Jul 11 03:06:37 myhostname roundcube: IMAP Error: Login failed for admin from 127.0.0.1 from 1.2.3.4. AUTHENTICATE PLAIN: A0002 NO Login failed. user=admin from 127.0.0.1 in /usr/share/roundcube/program/include/rcube_imap.php on line 205 (POST /wmail/?_task=login&_action=login)
+#
+# Old roundcube version - no IMAP response
+# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4" }
+Jul 11 03:06:37 myhostname roundcube: IMAP Error: Login failed for admin from 127.0.0.1 from 1.2.3.4
+#
+# user = admin from 127.0.0.1 in 
+# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4" }
+Jul 11 03:06:37 myhostname roundcube: IMAP Error: Login failed for admin from 127.0.0.1 in from 1.2.3.4. AUTHENTICATE PLAIN: A0002 NO Login failed. user=admin from 127.0.0.1 in in /usr/share/roundcube/program/include/rcube_imap.php on line 205 (POST /wmail/?_task=login&_action=login)
+
+# Roundcube 1.0.5 CentOS 6 (/var/log/roundcubemail/errors)
+# failJSON: { "time": "2014-12-30T19:02:34", "match": true , "host": "1.2.3.4" }
+[30-Dec-2014 13:02:34 -0500]: IMAP Error: Login failed for admin@example.com from 1.2.3.4. AUTHENTICATE PLAIN: Authentication failed. in /docroot/path/program/lib/Roundcube/rcube_imap.php on line 184 (POST /?_task=login?_task=login&_action=login)
+
+# Roundcube 1.0.5 CentOS 6 (/var/log/roundcubemail/userlogins)
+# failJSON: { "time": "2015-05-10T19:02:52", "match": true , "host": "1.2.3.4" }
+[10-May-2015 13:02:52 -0400]: Failed login for sampleuser from 1.2.3.4 in session 1z506z6rvddstv6k7jz08hxo27 (error: 0)
+# failJSON: { "time": "2015-05-10T19:02:52", "match": true , "host": "1.2.3.4" }
+[10-May-2015 13:02:52 -0400]: Failed login for foo.bar-admin@some-thing.example.com from 1.2.3.4 in session 2z506z6rvddstv6k7jz08hxo27 (error: 0)
+
+# Roundcube 1.1.1 (/var/log/roundcubemail/errors)
+# failJSON: { "time": "2014-12-30T19:02:34", "match": true , "host": "1.2.3.4" }
+[30-Dec-2014 13:02:34 -0500]: <3z506z6r> IMAP Error: Login failed for admin@example.com from 1.2.3.4. AUTHENTICATE PLAIN: Authentication failed. in /docroot/path/program/lib/Roundcube/rcube_imap.php on line 198 (POST /?_task=login?_task=login&_action=login)
+
+# Roundcube 1.1.1 (/var/log/roundcubemail/userlogins)
+# failJSON: { "time": "2015-05-10T19:02:52", "match": true , "host": "1.2.3.4" }
+[10-May-2015 13:02:52 -0400]: <4z506z6r> Failed login for admin@example.com from 1.2.3.4 in session 4z506z6rvddstv6k7jz08hxo27 (error: 0)

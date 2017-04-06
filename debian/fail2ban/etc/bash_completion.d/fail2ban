@@ -1,0 +1,182 @@
+# fail2ban bash-completion                                 -*- shell-script -*-
+#
+# This file is part of Fail2Ban.
+#
+# Fail2Ban is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Fail2Ban is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Fail2Ban; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+__fail2ban_jails () {
+    "$1" status 2>/dev/null | awk -F"\t+" '/Jail list/{print $2}' | sed 's/, / /g'
+}
+__fail2ban_jail_actions () {
+    "$1" get "$2" actions 2>/dev/null | sed -n '$s/\([^,]\+\),\?/\1/gp'
+}
+__fail2ban_jail_action_properties () {
+    "$1" get "$2" actionproperties "$3" 2>/dev/null | sed -n '$s/\([^,]\+\),\?/\1/gp'
+}
+__fail2ban_jail_action_methods () {
+    "$1" get "$2" actionmethods "$3" 2>/dev/null | sed -n '$s/\([^,]\+\),\?/\1/gp'
+}
+
+_fail2ban () {
+    local cur prev words cword
+    _init_completion || return
+
+    case $prev in
+        -V|--version|-h|--help)
+            return 0 # No further completion valid
+            ;;
+        -c)
+            _filedir -d # Directories
+            return 0
+            ;;
+        -s|-p)
+            _filedir # Files
+            return 0
+            ;;
+        *)
+            if [[ "$cur" == "-"* ]];then
+                COMPREPLY=( $( compgen -W \
+                    "$( _parse_help "$1" --help 2>/dev/null) -V" \
+                     -- "$cur") )
+                return 0
+            fi
+            ;;
+    esac
+
+    if [[ "$1" == *"fail2ban-regex" ]];then
+        _filedir
+        return 0
+    elif [[ "$1" == *"fail2ban-client" ]];then
+        local cmd jail action
+        case $prev in
+            "$1")
+                COMPREPLY=( $( compgen -W \
+                    "$( "$1" --help 2>/dev/null | awk '/^    [a-z]+/{print $1}')" \
+                    -- "$cur") )
+                return 0
+                ;;
+            start|reload|stop|status)
+                COMPREPLY=( $(compgen -W "$(__fail2ban_jails "$1")" -- "$cur" ) )
+                return 0
+                ;;
+            set|get)
+                COMPREPLY=( $( compgen -W \
+                    "$( "$1" --help 2>/dev/null | awk '/^    '$prev' [^<]/{print $2}')" \
+                    -- "$cur") )
+                COMPREPLY+=( $(compgen -W "$(__fail2ban_jails "$1")" -- "$cur" ) )
+                return 0
+                ;;
+            *)
+                if [[ "${words[$cword-2]}" == "add" ]];then
+                    COMPREPLY=( $( compgen -W "auto polling gamin pyinotify systemd" -- "$cur" ) )
+                    return 0
+                elif [[ "${words[$cword-2]}" == "set" ||  "${words[$cword-2]}" == "get" ]];then
+                    cmd="${words[cword-2]}"
+                    # Handle in section below
+                elif [[ "${words[$cword-3]}" == "set" || "${words[$cword-3]}" == "get" ]];then
+                    cmd="${words[$cword-3]}"
+                    jail="${words[$cword-2]}"
+                    # Handle in section below
+                elif [[ "${words[$cword-4]}" == "set" || "${words[$cword-4]}" == "get"  && ${words[$cword-2]} == action* ]];then
+                    cmd="${words[$cword-4]}"
+                    jail="${words[$cword-3]}"
+                    action="${words[$cword-1]}"
+                    # Handle in section below
+                fi
+            ;;
+        esac
+
+        if [[ -z "$jail" && -n "$cmd" ]];then
+            case $prev in
+                loglevel)
+                    if [[ "$cmd" == "set" ]];then
+                        COMPREPLY=( $( compgen -W "CRITICAL ERROR WARNING NOTICE INFO DEBUG" -- "$cur" ) )
+                    fi
+                    return 0
+                    ;;
+                logtarget)
+                    if [[ "$cmd" == "set" ]];then
+                        COMPREPLY=( $( compgen -W "STDOUT STDERR SYSLOG" -- "$cur" ) )
+                        _filedir # And files
+                    fi
+                    return 0
+                    ;;
+                *) # Jail name
+                    COMPREPLY=( $( compgen -W \
+                        "$( "$1" --help 2>/dev/null | awk '/^    '${cmd}' <JAIL>/{print $3}')" \
+                        -- "$cur") )
+                    return 0
+                    ;;
+            esac
+        elif [[ -n "$jail" && -n "$action" ]];then
+            case ${words[$cwords-3]} in
+                action)
+                    COMPREPLY=( $( compgen -W \
+                        "$( __fail2ban_jail_action_properties "$1" "$jail" "$action")" \
+                    -- "$cur" ) )
+                    if [[ "$cmd" == "set" ]];then
+                        COMPREPLY+=( $(compgen -W "$(__fail2ban_jail_action_methods "$1" "$jail" "$action")" -- "$cur" ) )
+                    fi
+                    return 0
+                    ;;
+            esac
+        elif [[ -n "$jail" && $prev == action* ]];then
+            case $prev in
+                action|actionproperties|actionmethods)
+                    COMPREPLY=( $(compgen -W "$(__fail2ban_jail_actions "$1" "$jail")" -- "$cur" ) )
+                    return 0
+                    ;;
+            esac
+        elif [[ -n "$jail" && "$cmd" == "set" ]];then
+            case $prev in
+                addlogpath)
+                    _filedir
+                    return 0
+                    ;;
+                dellogpath|delignoreip)
+                    COMPREPLY=( $( compgen -W \
+                        "$( "$1" get "$jail" "${prev/del/}" 2>/dev/null | awk -F- '{print $2}')" \
+                    -- "$cur" ) )
+                    if [[ -z "$COMPREPLY" && "$prev" == "dellogpath" ]];then
+                        _filedir
+                    fi
+                    return 0
+                    ;;
+                delfailregex|delignoreregex)
+                    COMPREPLY=( $( compgen -W \
+                        "$( "$1" get "$jail" "${prev/del/}" 2>/dev/null | awk -F"[][]" '{print $2}')" \
+                    -- "$cur" ) )
+                    return 0
+                    ;;
+                unbanip)
+                    COMPREPLY=( $( compgen -W \
+                        "$( "$1" status "$jail" 2>/dev/null | awk -F"\t+" '/IP list:/{print $2}')" \
+                    -- "$cur" ) )
+                    return 0
+                    ;;
+                idle)
+                    COMPREPLY=( $( compgen -W "on off" -- "$cur" ) )
+                    return 0
+                    ;;
+                usedns)
+                    COMPREPLY=( $( compgen -W "yes no warn" -- "$cur" ) )
+                    return 0
+                    ;;
+            esac
+        fi
+
+    fi # fail2ban-client
+} &&
+complete -F _fail2ban fail2ban-client fail2ban-server fail2ban-regex

@@ -1,0 +1,4 @@
+# failJSON: { "time": "2005-07-18T16:07:18", "match": true , "host": "192.168.8.100" }
+Jul 18 16:07:18 ares perdition.imaps[3194]: Auth: 192.168.8.100:2274->193.48.191.9:993 client-secure=ssl authorisation_id=NONE authentication_id="carles" server="imap.biotoul.fr:993" protocol=IMAP4S server-secure=ssl status="failed: Re-Authentication Failure"
+# failJSON: { "time": "2005-07-18T16:08:58", "match": true , "host": "192.168.8.100" }
+Jul 18 16:08:58 ares perdition.imaps[3194]: Fatal Error reading authentication information from client 192.168.8.100:2274->193.48.191.9:993: Exiting child

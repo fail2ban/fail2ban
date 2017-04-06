@@ -1,0 +1,86 @@
+# Sample log files for asterisk 
+# failJSON: { "time": "2013-07-25T07:26:43", "match": true , "host": "1.2.3.4" }
+[2013-07-25 07:26:43] NOTICE[26015][C-000006b2] chan_sip.c: Failed to authenticate device 101<sip:101@1.2.3.4>;tag=deadbeef
+# failJSON: { "time": "2012-02-13T17:21:54", "match": true , "host": "1.2.3.4" }
+[2012-02-13 17:21:54] NOTICE[1638] chan_sip.c: Registration from '<sip:301@example.com>' failed for '1.2.3.4' - Wrong password
+# failJSON: { "time": "2012-02-13T17:18:22", "match": true , "host": "1.2.3.4" }
+[2012-02-13 17:18:22] NOTICE[1638] chan_sip.c: Registration from '<sip:301@example.com>' failed for '1.2.3.4' - No matching peer found
+# failJSON: { "time": "2012-02-13T17:21:21", "match": true , "host": "1.2.3.4" }
+[2012-02-13 17:21:21] NOTICE[1638] chan_sip.c: Registration from '<sip:301@example.com>' failed for '1.2.3.4' - Username/auth name mismatch
+# failJSON: { "time": "2012-02-13T17:32:01", "match": true , "host": "1.2.3.4" }
+[2012-02-13 17:32:01] NOTICE[1638] chan_sip.c: Registration from '<sip:301@example.com>' failed for '1.2.3.4' - Device does not match ACL
+# failJSON: { "time": "2012-02-13T17:34:10", "match": true , "host": "1.2.3.4" }
+[2012-02-13 17:34:10] NOTICE[1638] chan_sip.c: Registration from '<sip:301@example.com>' failed for '1.2.3.4' - Peer is not supposed to register
+# failJSON: { "time": "2012-02-13T17:36:23", "match": true , "host": "1.2.3.4" }
+[2012-02-13 17:36:23] NOTICE[1638] chan_sip.c: Registration from '<sip:301@example.com>' failed for '1.2.3.4' - ACL error (permit/deny)
+# failJSON: { "time": "2012-02-13T17:53:59", "match": true , "host": "1.2.3.4" }
+[2012-02-13 17:53:59] NOTICE[1638] chan_iax2.c: Host 1.2.3.4 failed to authenticate as 'Fail2ban'
+# failJSON: { "time": "2012-02-13T17:39:20", "match": true , "host": "1.2.3.4" }
+[2012-02-13 17:39:20] NOTICE[1638] chan_iax2.c: No registration for peer 'Fail2ban' (from 1.2.3.4)
+# failJSON: { "time": "2012-02-13T17:44:26", "match": true , "host": "1.2.3.4" }
+[2012-02-13 17:44:26] NOTICE[1638] chan_iax2.c: Host 1.2.3.4 failed MD5 authentication for 'Fail2ban' (e7df7cd2ca07f4f1ab415d457a6e1c13 != 53ac4bc41ee4ec77888ed4aa50677247)
+# failJSON: { "time": "2012-02-13T17:37:07", "match": true , "host": "1.2.3.4" }
+[2012-02-13 17:37:07] NOTICE[1638] chan_sip.c: Failed to authenticate user "Fail2ban" <sip:301@1.2.3.4>;tag=1r698745234
+# failJSON: { "time": "2013-02-05T23:44:42", "match": true , "host": "1.2.3.4" }
+[2013-02-05 23:44:42] NOTICE[436][C-00000fa9] chan_sip.c: Call from '' (1.2.3.4:10836) to extension '0972598285108' rejected because extension not found in context 'default'.
+# failJSON: { "time": "2013-03-26T15:47:54", "match": true , "host": "1.2.3.4" }
+[2013-03-26 15:47:54] NOTICE[1237] chan_sip.c: Registration from '"100"sip:100@1.2.3.4' failed for '1.2.3.4:23930' - No matching peer found
+# failJSON: { "time": "2013-05-13T07:10:53", "match": true , "host": "1.2.3.4" }
+[2013-05-13 07:10:53] SECURITY[1204] res_security_log.c: SecurityEvent="InvalidAccountID",EventTV="1368439853-500975",Severity="Error",Service="SIP",EventVersion="1",AccountID="00972599580679",SessionID="0x7f8ecc0421f8",LocalAddress="IPV4/UDP/1.2.3.4/5060",RemoteAddress="IPV4/UDP/1.2.3.4/5070"
+# failJSON: { "time": "2013-06-10T18:15:03", "match": true , "host": "1.2.3.4" }
+[2013-06-10 18:15:03] NOTICE[2723] chan_sip.c: Registration from '"100"<sip:100@192.168.0.2:5060>' failed for '1.2.3.4' - Not a local domain
+# http://sourceforge.net/p/fail2ban/mailman/message/33603322/
+# failJSON: { "time": "2015-03-16T18:46:34", "match": true , "host": "192.168.2.102" }
+[2015-03-16 18:46:34] NOTICE[3453] chan_sip.c: hacking attempt detected '192.168.2.102'
+# failJSON: { "time": "2013-07-06T09:09:25", "match": true , "host": "141.255.164.106" }
+[2013-07-06 09:09:25] SECURITY[3308] res_security_log.c: SecurityEvent="InvalidPassword",EventTV="1373098165-824497",Severity="Error",Service="SIP",EventVersion="2",AccountID="972592891005",SessionID="0x88aab6c",LocalAddress="IPV4/UDP/92.28.73.180/5060",RemoteAddress="IPV4/UDP/141.255.164.106/5084",Challenge="41d26de5",ReceivedChallenge="41d26de5",ReceivedHash="7a6a3a2e95a05260aee612896e1b4a39"
+# failJSON: { "time": "2014-01-10T16:39:06", "match": true , "host": "50.30.42.14" }
+[2014-01-10 16:39:06] SECURITY[1503] res_security_log.c: SecurityEvent="FailedACL",EventTV="1389368346-880526",Severity="Error",Service="SIP",EventVersion="1",AccountID="",SessionID="0x7ff408103b18",LocalAddress="IPV4/UDP/83.11.20.23/5060",RemoteAddress="IPV4/UDP/50.30.42.14/5066",ACLName="domain_must_match"
+
+# failJSON: { "time": "2013-11-11T14:33:38", "match": true , "host": "192.168.55.152" }
+[2013-11-11 14:33:38] WARNING[6756][C-0000001d] Ext. s: "Rejecting unknown SIP connection from 192.168.55.152"
+
+
+# failJSON: { "time": "2004-11-04T18:30:40", "match": true , "host": "192.168.200.100" }
+Nov 4 18:30:40 localhost asterisk[32229]: NOTICE[32257]: chan_sip.c:23417 in handle_request_register: Registration from '<sip:301@example.com>' failed for '192.168.200.100:36998' - Wrong password
+# failJSON: { "time": "2016-08-19T11:11:26", "match": true , "host": "192.0.2.1", "desc": "Another log_prefix used (` in` should be optional)" }
+[2016-08-19 11:11:26] NOTICE[12931]: chan_sip.c:28468 handle_request_register: Registration from 'sip:bob@192.0.2.1' failed for '192.0.2.1:42406' - Wrong password
+
+# failed authentication attempt on INVITE using PJSIP
+# failJSON: { "time": "2015-05-24T08:42:16", "match": true, "host": "10.250.251.252" }
+[2015-05-24 08:42:16] SECURITY[4583] res_security_log.c: SecurityEvent="ChallengeResponseFailed",EventTV="2015-05-24T08:42:16.296+0300",Severity="Error",Service="PJSIP",EventVersion="1",AccountID="<unknown>",SessionID="17a483d-eb8cc0-556164ab@1.2.3.4",LocalAddress="IPV4/UDP/1.2.3.4/5060",RemoteAddress="IPV4/UDP/10.250.251.252/5060",Challenge="1432446136/6d16ccf29ff59d423c6d548af00bf9b4",Response="849dfcf133d8156f77ef11a9194119df",ExpectedResponse=""
+
+# SessionID may contain any special characters and spaces
+# failJSON: { "time": "2015-05-25T07:19:19", "match": true, "host": "10.250.251.252" }
+[2015-05-25 07:19:19] SECURITY[6988] res_security_log.c: SecurityEvent="InvalidAccountID",EventTV="2015-05-25T07:19:19.015+0300",Severity="Error",Service="PJSIP",EventVersion="1",AccountID="70000180",SessionID="!@#$%^&   *(}((')[ -+"++",LocalAddress="IPV4/UDP/1.2.3.4/5060",RemoteAddress="IPV4/UDP/10.250.251.252/5061"
+
+# SessionID here start with '",LocalAddress' and ends with '5.6.7.8/1111"'
+# failJSON: { "time": "2015-05-25T07:21:48", "match": true, "host": "10.250.251.252" }
+[2015-05-25 07:21:48] SECURITY[6988] res_security_log.c: SecurityEvent="InvalidAccountID",EventTV="2015-05-25T07:21:48.275+0300",Severity="Error",Service="PJSIP",EventVersion="1",AccountID="70000180",SessionID="",LocalAddress="IPV4/UDP/127.0.0.1/5060",RemoteAddress="IPV4/UDP/5.6.7.8/1111"",LocalAddress="IPV4/UDP/1.2.3.4/5060",RemoteAddress="IPV4/UDP/10.250.251.252/5061"
+
+# match UTF-8 in SessionID
+# failJSON: { "time": "2015-05-25T07:52:36", "match": true, "host": "10.250.251.252" }
+[2015-05-25 07:52:36] SECURITY[6988] res_security_log.c: SecurityEvent="InvalidAccountID",EventTV="2015-05-25T07:52:36.888+0300",Severity="Error",Service="PJSIP",EventVersion="1",AccountID="70000180",SessionID="Негодяй",LocalAddress="IPV4/UDP/1.2.3.4/5060",RemoteAddress="IPV4/UDP/10.250.251.252/5061"
+
+# match phone numbers with + symbol (and without number, or other context)
+# failJSON: { "time": "2016-01-28T10:22:27", "match": true , "host": "1.2.3.4" }
+[2016-01-28 10:22:27] NOTICE[3477][C-000003bb] chan_sip.c: Call from '' (1.2.3.4:10836) to extension '++441772285411' rejected because extension not found in context 'default'.
+# failJSON: { "time": "2016-01-28T10:34:31", "match": true , "host": "1.2.3.4" }
+[2016-01-28 10:34:31] NOTICE[3477][C-000003c3] chan_sip.c: Call from '' (1.2.3.4:10836) to extension '0+441772285407' rejected because extension not found in context 'default'.
+# failJSON: { "time": "2016-01-28T10:34:33", "match": true , "host": "1.2.3.4" }
+[2016-01-28 10:34:33] NOTICE[3477][C-000003c3] chan_sip.c: Call from '' (1.2.3.4:10836) to extension '' rejected because extension not found in context 'my-context'.
+
+# Failed authentication with pjsip on Asterisk 13+
+# failJSON: { "time": "2016-05-23T10:18:16", "match": true , "host": "1.2.3.4" }
+[2016-05-23 10:18:16] NOTICE[19388] res_pjsip/pjsip_distributor.c: Request from '"1000" <sip:1000@10.0.0.1>' failed for '1.2.3.4:48336' (callid: 276666022) - No matching endpoint found
+# failJSON: { "time": "2016-05-23T10:18:16", "match": true , "host": "1.2.3.4" }
+[2016-05-23 10:18:16] NOTICE[19388] res_pjsip/pjsip_distributor.c: Request from '"1000" <sip:1000@10.0.0.1>' failed for '1.2.3.4:48336' (callid: 276666022) - Not match Endpoint ACL
+# failJSON: { "time": "2016-05-23T10:18:16", "match": true , "host": "1.2.3.4" }
+[2016-05-23 10:18:16] NOTICE[19388] res_pjsip/pjsip_distributor.c: Request from '"1000" <sip:1000@10.0.0.1>' failed for '1.2.3.4:48336' (callid: 276666022) - Not match Endpoint Contact ACL
+# failJSON: { "time": "2016-05-23T10:18:16", "match": true , "host": "1.2.3.4" }
+[2016-05-23 10:18:16] NOTICE[19388] res_pjsip/pjsip_distributor.c: Request from '"1000" <sip:1000@10.0.0.1>' failed for '1.2.3.4:48336' (callid: 276666022) - Failed to authenticate
+# failJSON: { "time": "2016-05-23T10:18:16", "match": true , "host": "1.2.3.4" }
+[2016-05-23 10:18:16] NOTICE[19388] res_pjsip/pjsip_distributor.c: Request from '"1000" <sip:1000@10.0.0.1>' failed for '1.2.3.4:48336' (callid: 276666022) - Error to authenticate
+# Failed authentication with pjsip on Asterisk 13+
+# failJSON: { "time": "2016-06-08T23:40:26", "match": true , "host": "2.3.4.5" }
+[2016-06-08 23:40:26] NOTICE[32497] res_pjsip/pjsip_distributor.c: Request from '"317" <sip:317@1.2.3.4>' failed for '2.3.4.5:5089' (callid: 206f178f-896564cb-57573f49@1.2.3.4) - No matching endpoint found

@@ -1,0 +1,39 @@
+# This file is part of Fail2Ban.
+#
+# Fail2Ban is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Fail2Ban is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Fail2Ban; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+# Author: Cyril Jaquier
+# 
+# $Revision$
+
+# Command line options for Fail2Ban. Refer to "fail2ban-client -h" for
+# valid options.
+FAIL2BAN_OPTS=""
+
+# Run fail2ban as a different user. If not set, fail2ban
+# will run as root.
+#
+# The user is not created automatically.
+# The user can be created e.g. with
+#    useradd --system --no-create-home --home-dir / --groups adm fail2ban
+# Log files are readable by group adm by default. Adding the fail2ban
+# user to this group allows it to read the logfiles.
+#
+# Another manual step that needs to be taken is to allow write access
+# for fail2ban user to fail2ban log files. The /etc/init.d/fail2ban
+# script will change the ownership when starting fail2ban. Logrotate
+# needs to be configured separately, see /etc/logrotate.d/fail2ban.
+#
+# FAIL2BAN_USER="fail2ban"

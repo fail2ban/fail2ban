@@ -1,0 +1,4 @@
+# Access of unauthorized host in /var/log/messages
+# failJSON: { "time": "2005-02-03T11:22:44", "match": true , "host": "50.97.225.132" }
+Feb  3 11:22:44 valhalla nrpe[63284]: Host 50.97.225.132 is not allowed to talk to us!
+

@@ -1,0 +1,6 @@
+# failJSON: { "time": "2013-12-28T19:03:53", "match": true , "host": "178.123.108.196" }
+Sat Dec 28 19:03:53 2013 - [72926] (178.123.108.196) gsdfg - userinfo error - auth_unix.pl, ret -4, User gsdfg doesn't exist
+# failJSON: { "time": "2013-12-28T19:04:03", "match": true , "host": "178.123.108.196" }
+Sat Dec 28 19:04:03 2013 - [72926] (178.123.108.196) gsdfg - login error - no such user - loginname=gsdfg
+# failJSON: { "time": "2013-12-28T19:05:38", "match": true , "host": "178.123.108.196" }
+Sat Dec 28 19:05:38 2013 - [73540] (178.123.108.196) myname - login error - auth_unix.pl, ret -4, Password incorrect

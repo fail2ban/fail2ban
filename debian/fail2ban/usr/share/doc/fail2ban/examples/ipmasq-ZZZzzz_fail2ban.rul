@@ -1,0 +1,31 @@
+#! /bin/sh
+#
+# ZZZzzz|fail2ban.rul
+#
+# Ultima modifica: 20060112 <Nauta@G-B.it> Creazione
+# Ultima modifica: 20071205 <Nauta@G-B.it> Verifica sia in esecuzione
+#
+# Riconfigura le regole di filtraggio relative a fail2ban alla fine
+# dell'inizializzazione delle regole.
+# Solo all'avvio del sistema mostra la (ri)esecuzione dello script
+
+_NAME=fail2ban
+_INITSCRIPT=/etc/init.d/$_NAME
+_CONFIG="/etc/$_NAME/$_NAME.local /etc/$_NAME/$_NAME.conf"
+
+if [ -s $_INITSCRIPT ]; then
+  SOCKFILE=`sed -n -e '/^[^#]*socket\s*=/{
+	s/.*socket\s*=\s*\(\S\+\).*/\1/p;q}' $_CONFIG 2>/dev/null`
+  [ -z "$SOCKFILE" ] && SOCKFILE="/tmp/$_NAME.sock"
+  if [ -S "$SOCKFILE" ]; then # Is daemon running ?
+    if [ "$SHOWRULES" = "yes" ]; then
+      echo "#: Reinitializing $_NAME"
+      echo $_INITSCRIPT force-reload
+    else
+      [ ! $runlevel ] && HIDEOUTPUT=true
+    fi
+    if [ "$NOACT" != "yes" ]; then
+      eval $_INITSCRIPT force-reload ${HIDEOUTPUT:+\>/dev/null 2\>&1}
+    fi
+  fi # SOCKFILE is a socket
+fi # _INITSCRIPT exist

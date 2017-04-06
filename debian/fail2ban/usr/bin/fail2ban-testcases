@@ -1,0 +1,71 @@
+#!/usr/bin/python
+# emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: t -*-
+# vi: set ft=python sts=4 ts=4 sw=4 noet :
+"""Script to run Fail2Ban tests battery
+"""
+
+# This file is part of Fail2Ban.
+#
+# Fail2Ban is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Fail2Ban is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Fail2Ban; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+__author__ = "Cyril Jaquier"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2012- Yaroslav Halchenko"
+__license__ = "GPL"
+
+import logging
+import os
+import sys
+import time
+import unittest
+
+# Check if local fail2ban module exists, and use if it exists by
+# modifying the path. This is such that tests can be used in dev
+# environment.
+if os.path.exists("fail2ban/__init__.py"):
+	sys.path.insert(0, ".")
+from fail2ban.version import version
+
+from fail2ban.tests.utils import getOptParser, initProcess, gatherTests
+from fail2ban.setup import updatePyExec
+
+# Update fail2ban-python env to current python version (where f2b-modules located/installed)
+bindir = os.path.dirname(
+	# __file__ seems to be overwritten sometimes on some python versions (e.g. bug of 2.6 by running under cProfile, etc.):
+	sys.argv[0] if os.path.basename(sys.argv[0]) == 'fail2ban-testcases' else __file__
+)
+updatePyExec(bindir)
+
+(opts, regexps) = getOptParser(__doc__).parse_args()
+
+#
+# Process initialization corresponding options (logging, default options, etc.)
+#
+opts = initProcess(opts)
+verbosity = opts.verbosity
+
+#
+# Gather tests (and filter corresponding options)
+#
+tests = gatherTests(regexps, opts)
+
+#
+# Run the tests
+#
+testRunner = unittest.TextTestRunner(verbosity=verbosity)
+
+tests_results = testRunner.run(tests)
+
+if not tests_results.wasSuccessful(): # pragma: no cover
+	sys.exit(1)
