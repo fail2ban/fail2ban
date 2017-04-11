@@ -23,6 +23,7 @@ TODO: implementing of options resp. other tasks from PR #1346
 * filter.d/sendmail-reject.conf:
   - rewritten using `prefregex` and used MLFID-related multi-line parsing;
   - optional parameter `mode` introduced: normal (default), extra or aggressive
+* filter.d/haproxy-http-auth: do not mistake client port for part of an IPv6 address (gh-1745)
 * `action.d/complain.conf`
   - fixed using new tag `<ip-rev>` (sh/dash compliant now)
 * `action.d/sendmail-geoip-lines.conf`
