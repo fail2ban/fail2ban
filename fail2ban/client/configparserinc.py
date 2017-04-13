@@ -56,14 +56,8 @@ if sys.version_info >= (3,2):
 			if section and not (__name__ in map):
 				map = map.copy()		  # just to be safe
 				map['__name__'] = section
-			try:
-				return super(BasicInterpolationWithName, self)._interpolate_some(
-					parser, option, accum, rest, section, map, *args, **kwargs)
-			except InterpolationMissingOptionError as e:
-				# fallback: try to wrap missing default options as "known/options":
-				if not parser._map_known_defaults(section, option, rest, map): # pragma: no cover
-					raise e
-				# try again:
+				# try to wrap section options like %(section/option)s:
+				parser._map_section_options(section, option, rest, map)
 				return super(BasicInterpolationWithName, self)._interpolate_some(
 					parser, option, accum, rest, section, map, *args, **kwargs)
 
@@ -74,15 +68,15 @@ else: # pragma: no cover
 	# Interpolate missing known/option as option from default section
 	SafeConfigParser._cp_interpolate_some = SafeConfigParser._interpolate_some
 	def _interpolate_some(self, option, accum, rest, section, map, *args, **kwargs):
-		try:
-			return self._cp_interpolate_some(option, accum, rest, section, map, *args, **kwargs)
-		except InterpolationMissingOptionError as e:
-			# fallback: try to wrap missing default options as "known/options":
-			if self._map_known_defaults(section, option, rest, map): # pragma: no cover
-				raise e
-			# try again:
-			return self._cp_interpolate_some(option, accum, rest, section, map, *args, **kwargs)
+		# try to wrap section options like %(section/option)s:
+		self._map_section_options(section, option, rest, map)
+		return self._cp_interpolate_some(option, accum, rest, section, map, *args, **kwargs)
 	SafeConfigParser._interpolate_some = _interpolate_some
+
+try:
+	from configparser import _UNSET
+except ImportError:
+	_UNSET = object()
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -123,7 +117,8 @@ after = 1.conf
 
 	SECTION_NAME = "INCLUDES"
 
-	_KNOWN_OPTSUBST_CRE = re.compile(r'%\(known/([^\)]+)\)s')
+	SECTION_OPT_CRE = re.compile(r'^(\w+)/(.+)$')
+	SECTION_OPTSUBST_CRE = re.compile(r'%\((\w+/([^\)]+))\)s')
 
 	CONDITIONAL_RE = re.compile(r"^(\w+)(\?.+)$")
 
@@ -142,22 +137,43 @@ after = 1.conf
 			SafeConfigParser.__init__(self, *args, **kwargs)
 			self._cfg_share = share_config
 
-	def _map_known_defaults(self, section, option, rest, map):
-		""" Fallback: try to wrap missing default options as "known/options"
+	def _map_section_options(self, section, option, rest, map):
 		"""
-		known = SafeConfigParserWithIncludes._KNOWN_OPTSUBST_CRE.findall(rest)
-		if not known: # pragma: no cover
+		Interpolates values of the section options (name syntax `%(section/option)s`).
+
+		Fallback: try to wrap missing default options as "default/options" resp. "known/options"
+		"""
+		if '/' not in rest or '%(' not in rest: # pragma: no cover
 			return 0
-		for opt in known:
-			kopt = 'known/'+opt
-			if kopt not in map:
-				try:
-					v = self._defaults[opt]
-				except KeyError:
-					continue
-				self._defaults[kopt] = v
-				try: # for python 2.6 we should duplicate it in map-vars also:
-					map[kopt] = v
+		soptrep = SafeConfigParserWithIncludes.SECTION_OPTSUBST_CRE.findall(rest)
+		if not soptrep: # pragma: no cover
+			return 0
+		for sopt, opt in soptrep:
+			if sopt not in map:
+				sec = sopt[:~len(opt)]
+				seclwr = sec.lower()
+				if seclwr != 'default':
+					if seclwr == 'known':
+						# try get raw value from known options:
+						try:
+							v = self._sections['KNOWN'][opt]
+						except KeyError:
+							# fallback to default:
+							try:
+								v = self._defaults[opt]
+							except KeyError:
+								continue
+					else:
+						# get substituted value of opt in section:
+						v = self.get(sec, opt)
+				else:
+					try:
+						v = self._defaults[opt]
+					except KeyError:
+						continue
+				self._defaults[sopt] = v
+				try: # for some python versions need to duplicate it in map-vars also:
+					map[sopt] = v
 				except: pass
 		return 1
 
@@ -244,6 +260,18 @@ after = 1.conf
 	def get_sections(self):
 		return self._sections
 
+	def get(self, sec, opt, raw=False, vars={}, fallback=_UNSET):
+		try:
+			return SafeConfigParser.get(self, sec, opt, raw=raw, vars=vars)
+		except:
+			sopt = SafeConfigParserWithIncludes.SECTION_OPT_CRE.match(opt)
+			if not sopt: raise
+			sec, opt = sopt.groups()
+			if sec.lower() == 'default':
+				# get default raw value:
+				return self._defaults[opt]
+			return SafeConfigParser.get(self, sec, opt, raw=raw, vars=vars)
+
 	def options(self, section, withDefault=True):
 		"""Return a list of option names for the given section name.
 
@@ -303,11 +331,7 @@ after = 1.conf
 						s2 = alls.get(n)
 						if isinstance(s2, dict):
 							# save previous known values, for possible using in local interpolations later:
-							sk = {}
-							for k, v in s2.iteritems():
-								if not k.startswith('known/') and k != '__name__':
-									sk['known/'+k] = v
-							s2.update(sk)
+							self.merge_section('KNOWN', s2, '')
 							# merge section
 							s2.update(s)
 						else:
@@ -324,14 +348,18 @@ after = 1.conf
 		else:
 			return SafeConfigParser.read(self, fileNamesFull)
 
-	def merge_section(self, section, options, pref='known/'):
+	def merge_section(self, section, options, pref=None):
 		alls = self.get_sections()
-		if pref == '':
-			alls[section].update(options)
+		try:
+			sec = alls[section]
+		except KeyError:
+			alls[section] = sec = dict()
+		if not pref:
+			sec.update(options)
 			return
 		sk = {}
 		for k, v in options.iteritems():
 			if not k.startswith(pref) and k != '__name__':
 				sk[pref+k] = v
-		alls[section].update(sk)
+		sec.update(sk)
 
