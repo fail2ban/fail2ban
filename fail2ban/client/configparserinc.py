@@ -32,8 +32,8 @@ from ..helpers import getLogger
 if sys.version_info >= (3,2):
 
 	# SafeConfigParser deprecated from Python 3.2 (renamed to ConfigParser)
-	from configparser import ConfigParser as SafeConfigParser, NoSectionError, \
-		BasicInterpolation
+	from configparser import ConfigParser as SafeConfigParser, BasicInterpolation, \
+		InterpolationMissingOptionError, NoSectionError
 
 	# And interpolation of __name__ was simply removed, thus we need to
 	# decorate default interpolator to handle it
@@ -52,19 +52,42 @@ if sys.version_info >= (3,2):
 		But should be fine to reincarnate for our use case
 		"""
 		def _interpolate_some(self, parser, option, accum, rest, section, map,
-							  depth):
+							  *args, **kwargs):
 			if section and not (__name__ in map):
 				map = map.copy()		  # just to be safe
 				map['__name__'] = section
-			return super(BasicInterpolationWithName, self)._interpolate_some(
-				parser, option, accum, rest, section, map, depth)
+			try:
+				return super(BasicInterpolationWithName, self)._interpolate_some(
+					parser, option, accum, rest, section, map, *args, **kwargs)
+			except InterpolationMissingOptionError as e:
+				# fallback: try to wrap missing default options as "known/options":
+				if not parser._map_known_defaults(section, option, rest, map): # pragma: no cover
+					raise e
+				# try again:
+				return super(BasicInterpolationWithName, self)._interpolate_some(
+					parser, option, accum, rest, section, map, *args, **kwargs)
 
 else: # pragma: no cover
-	from ConfigParser import SafeConfigParser, NoSectionError
+	from ConfigParser import SafeConfigParser, \
+		InterpolationMissingOptionError, NoSectionError
+
+	# Interpolate missing known/option as option from default section
+	SafeConfigParser._cp_interpolate_some = SafeConfigParser._interpolate_some
+	def _interpolate_some(self, option, accum, rest, section, map, *args, **kwargs):
+		try:
+			return self._cp_interpolate_some(option, accum, rest, section, map, *args, **kwargs)
+		except InterpolationMissingOptionError as e:
+			# fallback: try to wrap missing default options as "known/options":
+			if self._map_known_defaults(section, option, rest, map): # pragma: no cover
+				raise e
+			# try again:
+			return self._cp_interpolate_some(option, accum, rest, section, map, *args, **kwargs)
+	SafeConfigParser._interpolate_some = _interpolate_some
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 logLevel = 7
+
 
 __all__ = ['SafeConfigParserWithIncludes']
 
@@ -100,6 +123,8 @@ after = 1.conf
 
 	SECTION_NAME = "INCLUDES"
 
+	_KNOWN_OPTSUBST_CRE = re.compile(r'%\(known/([^\)]+)\)s')
+
 	CONDITIONAL_RE = re.compile(r"^(\w+)(\?.+)$")
 
 	if sys.version_info >= (3,2):
@@ -116,6 +141,25 @@ after = 1.conf
 		def __init__(self, share_config=None, *args, **kwargs):
 			SafeConfigParser.__init__(self, *args, **kwargs)
 			self._cfg_share = share_config
+
+	def _map_known_defaults(self, section, option, rest, map):
+		""" Fallback: try to wrap missing default options as "known/options"
+		"""
+		known = SafeConfigParserWithIncludes._KNOWN_OPTSUBST_CRE.findall(rest)
+		if not known: # pragma: no cover
+			return 0
+		for opt in known:
+			kopt = 'known/'+opt
+			if kopt not in map:
+				try:
+					v = self._defaults[opt]
+				except KeyError:
+					continue
+				self._defaults[kopt] = v
+				try: # for python 2.6 we should duplicate it in map-vars also:
+					map[kopt] = v
+				except: pass
+		return 1
 
 	@property
 	def share_config(self):
