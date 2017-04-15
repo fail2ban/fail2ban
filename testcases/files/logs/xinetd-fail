@@ -1,0 +1,2 @@
+# failJSON: { "time": "2005-07-27T02:08:16", "match": true , "host": "1.2.3.4" }
+Jul 27 02:08:16 fail2ban-test xinetd[2825]: FAIL: telnet address from=::ffff:1.2.3.4
