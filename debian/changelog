@@ -1,3 +1,10 @@
+fail2ban (0.9.6-2) unstable; urgency=medium
+
+  * debian/patches/changeset_a639f0b083c213bde4ff3dcfbbb9fbcab0dd55f8.diff
+    to resolve occasional FTBFSs if tzdata is not available (Closes: #855920)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 17 Apr 2017 10:27:28 -0400
+
 fail2ban (0.9.6-1) unstable; urgency=medium
 
   * Fresh upstream release
