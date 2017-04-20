@@ -24,6 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
+import fnmatch
 import glob
 import json
 import os.path
@@ -83,13 +84,21 @@ class JailReader(ConfigReader):
 			self.__opts and self.__opts.get("enabled", False))
 
 	@staticmethod
-	def _glob(path):
-		"""Given a path for glob return list of files to be passed to server.
+	def _glob(path, excludeGlobs):
+		"""Given a path for glob, and a list of exclude patterns, return list of files to be passed to server.
 
-		Dangling symlinks are warned about and not returned
+		Dangling symlinks are warned about and not returned.
 		"""
 		pathList = []
 		for p in glob.glob(path):
+			exclude = False
+			for g in excludeGlobs:
+				if fnmatch.fnmatch(p, g):
+					exclude = True
+					break
+			if exclude:
+				continue
+
 			if os.path.exists(p):
 				pathList.append(p)
 			else:
@@ -101,6 +110,7 @@ class JailReader(ConfigReader):
 				["string", "filter", ""]]
 		opts = [["bool", "enabled", False],
 				["string", "logpath", None],
+				["string", "excludepath", None],
 				["string", "logencoding", None],
 				["string", "backend", "auto"],
 				["int",    "maxretry", None],
@@ -214,6 +224,8 @@ class JailReader(ConfigReader):
 		 """
 
 		stream = []
+		pathGlobs = []
+		excludeGlobs = []
 		e = self.__opts.get('config-error')
 		if e:
 			stream.extend([['config-error', "Jail '%s' skipped, because of wrong configuration: %s" % (self.__name, e)]])
@@ -223,20 +235,10 @@ class JailReader(ConfigReader):
 		for opt, value in self.__opts.iteritems():
 			if opt == "logpath":
 				if self.__opts.get('backend', None).startswith("systemd"): continue
-				found_files = 0
-				for path in value.split("\n"):
-					path = path.rsplit(" ", 1)
-					path, tail = path if len(path) > 1 else (path[0], "head")
-					pathList = JailReader._glob(path)
-					if len(pathList) == 0:
-						logSys.error("No file(s) found for glob %s" % path)
-					for p in pathList:
-						found_files += 1
-						stream.append(
-							["set", self.__name, "addlogpath", p, tail])
-				if not (found_files or allow_no_files):
-					raise ValueError(
-						"Have not found any log file for %s jail" % self.__name)
+				pathGlobs += value.split("\n")
+			elif opt == "excludepath":
+				if self.__opts.get('backend', None).startswith("systemd"): continue
+				excludeGlobs += value.split("\n")
 			elif opt == "logencoding":
 				stream.append(["set", self.__name, "logencoding", value])
 			elif opt == "backend":
@@ -261,6 +263,21 @@ class JailReader(ConfigReader):
 				stream.extend(action.convert())
 			else:
 				stream.append(action)
+
+		if len(pathGlobs) > 0:
+			found_files = 0
+			for path in pathGlobs:
+				path = path.rsplit(" ", 1)
+				path, tail = path if len(path) > 1 else (path[0], "head")
+				pathList = JailReader._glob(path, excludeGlobs)
+				if len(pathList) == 0:
+					logSys.error("No file(s) found for glob %s" % path)
+				for p in pathList:
+					found_files += 1
+					stream.append(["set", self.__name, "addlogpath", p, tail])
+			if not (found_files or allow_no_files):
+				raise ValueError("Have not found any log file for %s jail" % self.__name)
+
 		stream.insert(0, ["add", self.__name, backend])
 		return stream
 	

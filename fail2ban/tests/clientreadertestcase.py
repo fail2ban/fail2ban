@@ -303,19 +303,25 @@ class JailReaderTest(LogCaptureTestCase):
 	@with_tmpdir
 	def testGlob(self, d):
 		# Generate few files
-		# regular file
+		# regular files
 		f1 = os.path.join(d, 'f1')
-		open(f1, 'w').close()
-		# dangling link
 		f2 = os.path.join(d, 'f2')
-		os.symlink('nonexisting',f2)
+		open(f1, 'w').close()
+		open(f2, 'w').close()
+		# dangling link
+		f3 = os.path.join(d, 'f3')
+		os.symlink('nonexisting',f3)
+
+		# must be only f1 and f2
+		self.assertEqual(sorted(JailReader._glob(os.path.join(d, '*'), [])), [f1, f2])
 
 		# must be only f1
-		self.assertEqual(JailReader._glob(os.path.join(d, '*')), [f1])
-		# since f2 is dangling -- empty list
-		self.assertEqual(JailReader._glob(f2), [])
-		self.assertLogged('File %s is a dangling link, thus cannot be monitored' % f2)
-		self.assertEqual(JailReader._glob(os.path.join(d, 'nonexisting')), [])
+		self.assertEqual(JailReader._glob(os.path.join(d, '*'), ['*2']), [f1])
+
+		# since f3 is dangling -- empty list
+		self.assertEqual(JailReader._glob(f3, []), [])
+		self.assertLogged('File %s is a dangling link, thus cannot be monitored' % f3)
+		self.assertEqual(JailReader._glob(os.path.join(d, 'nonexisting'), []), [])
 
 	def testCommonFunction(self):
 		c = ConfigReader(share_config={})
