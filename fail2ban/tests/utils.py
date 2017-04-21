@@ -37,7 +37,7 @@ import unittest
 from cStringIO import StringIO
 from functools import wraps
 
-from ..helpers import getLogger, str2LogLevel, getVerbosityFormat
+from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, uni_decode
 from ..server.ipdns import DNSUtils
 from ..server.mytime import MyTime
 from ..server.utils import Utils
@@ -269,10 +269,15 @@ def initTests(opts):
 
 	# precache all invalid ip's (TEST-NET-1, ..., TEST-NET-3 according to RFC 5737):
 	c = DNSUtils.CACHE_ipToName
-	for i in xrange(255):
+	# increase max count and max time (too many entries, long time testing):
+	c.setOptions(maxCount=10000, maxTime=5*60)
+	for i in xrange(256):
 		c.set('192.0.2.%s' % i, None)
 		c.set('198.51.100.%s' % i, None)
 		c.set('203.0.113.%s' % i, None)
+		c.set('2001:db8::%s' %i, 'test-host')
+	# some legal ips used in our test cases (prevent slow dns-resolving and failures if will be changed later):
+	c.set('87.142.124.10', 'test-host')
 	if unittest.F2B.no_network: # pragma: no cover
 		# precache all wrong dns to ip's used in test cases:
 		c = DNSUtils.CACHE_nameToIp
@@ -526,12 +531,21 @@ if True: ## if not hasattr(unittest.TestCase, 'assertIn'):
 _org_setUp = unittest.TestCase.setUp
 def _customSetUp(self):
 	# print('=='*10, self)
-	if unittest.F2B.log_level <= logging.DEBUG: # so if DEBUG etc -- show them (and log it in travis)!
-		print("")
+	# so if DEBUG etc -- show them (and log it in travis)!
+	if unittest.F2B.log_level <= logging.DEBUG: # pragma: no cover
+		sys.stderr.write("\n")
 		logSys.debug('='*10 + ' %s ' + '='*20, self.id())
 	_org_setUp(self)
+	if unittest.F2B.verbosity > 2: # pragma: no cover
+		self.__startTime = time.time()
+
+_org_tearDown = unittest.TestCase.tearDown
+def _customTearDown(self):
+	if unittest.F2B.verbosity > 2: # pragma: no cover
+		sys.stderr.write(" %.3fs -- " % (time.time() - self.__startTime,))
 
 unittest.TestCase.setUp = _customSetUp
+unittest.TestCase.tearDown = _customTearDown
 
 
 class LogCaptureTestCase(unittest.TestCase):

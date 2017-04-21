@@ -64,16 +64,19 @@ class DNSUtils:
 		if ips is not None: 
 			return ips
 		# retrieve ips
-		try:
-			ips = list()
-			for result in socket.getaddrinfo(dns, None, 0, 0, socket.IPPROTO_TCP):
-				ip = IPAddr(result[4][0])
-				if ip.isValid:
-					ips.append(ip)
-		except socket.error as e:
-			# todo: make configurable the expired time of cache entry:
-			logSys.warning("Unable to find a corresponding IP address for %s: %s", dns, e)
-			ips = list()
+		ips = list()
+		saveerr = None
+		for fam, ipfam in ((socket.AF_INET, IPAddr.FAM_IPv4), (socket.AF_INET6, IPAddr.FAM_IPv6)):
+			try:
+				for result in socket.getaddrinfo(dns, None, fam, 0, socket.IPPROTO_TCP):
+					ip = IPAddr(result[4][0], ipfam)
+					if ip.isValid:
+						ips.append(ip)
+			except socket.error as e:
+				saveerr = e
+		if not ips and saveerr:
+			logSys.warning("Unable to find a corresponding IP address for %s: %s", dns, saveerr)
+
 		DNSUtils.CACHE_nameToIp.set(dns, ips)
 		return ips
 
@@ -115,6 +118,42 @@ class DNSUtils:
 
 		return ipList
 
+	@staticmethod
+	def getSelfNames():
+		"""Get own host names of self"""
+		# try find cached own hostnames (this tuple-key cannot be used elsewhere):
+		key = ('self','dns')
+		names = DNSUtils.CACHE_ipToName.get(key)
+		# get it using different ways (a set with names of localhost, hostname, fully qualified):
+		if names is None:
+			names = set(['localhost'])
+			for hostname in (socket.gethostname, socket.getfqdn):
+				try:
+					names |= set([hostname()])
+				except Exception as e: # pragma: no cover
+					logSys.warning("Retrieving own hostnames failed: %s", e)
+		# cache and return :
+		DNSUtils.CACHE_ipToName.set(key, names)
+		return names
+
+	@staticmethod
+	def getSelfIPs():
+		"""Get own IP addresses of self"""
+		# try find cached own IPs (this tuple-key cannot be used elsewhere):
+		key = ('self','ips')
+		ips = DNSUtils.CACHE_nameToIp.get(key)
+		# get it using different ways (a set with IPs of localhost, hostname, fully qualified):
+		if ips is None:
+			ips = set()
+			for hostname in DNSUtils.getSelfNames():
+				try:
+					ips |= set(DNSUtils.textToIp(hostname, 'yes'))
+				except Exception as e: # pragma: no cover
+					logSys.warning("Retrieving own IPs of %s failed: %s", hostname, e)
+		# cache and return :
+		DNSUtils.CACHE_nameToIp.set(key, ips)
+		return ips
+
 
 ##
 # Class for IP address handling.
@@ -140,6 +179,8 @@ class IPAddr(object):
 
 	CIDR_RAW = -2
 	CIDR_UNSPEC = -1
+	FAM_IPv4 = CIDR_RAW - socket.AF_INET
+	FAM_IPv6 = CIDR_RAW - socket.AF_INET6
 
 	def __new__(cls, ipstr, cidr=CIDR_UNSPEC):
 		# check already cached as IPAddr
@@ -191,7 +232,11 @@ class IPAddr(object):
 		self._raw = ipstr
 		# if not raw - recognize family, set addr, etc.:
 		if cidr != IPAddr.CIDR_RAW:
-			for family in [socket.AF_INET, socket.AF_INET6]:
+			if cidr is not None and cidr < IPAddr.CIDR_RAW:
+				family = [IPAddr.CIDR_RAW - cidr]
+			else:
+				family = [socket.AF_INET, socket.AF_INET6]
+			for family in family:
 				try:
 					binary = socket.inet_pton(family, ipstr)
 					self._family = family
@@ -251,6 +296,11 @@ class IPAddr(object):
 	@property
 	def family(self):
 		return self._family
+
+	FAM2STR = {socket.AF_INET: 'inet4', socket.AF_INET6: 'inet6'}
+	@property
+	def familyStr(self):
+		return IPAddr.FAM2STR.get(self._family)
 
 	@property
 	def plen(self):
@@ -346,7 +396,7 @@ class IPAddr(object):
 		
 		return socket.inet_ntop(self._family, binary) + add
 
-	def getPTR(self, suffix=""):
+	def getPTR(self, suffix=None):
 		""" return the DNS PTR string of the provided IP address object
 
 			If "suffix" is provided it will be appended as the second and top
@@ -356,16 +406,21 @@ class IPAddr(object):
 		"""
 		if self.isIPv4:
 			exploded_ip = self.ntoa.split(".")
-			if not suffix:
+			if suffix is None:
 				suffix = "in-addr.arpa."
 		elif self.isIPv6:
 			exploded_ip = self.hexdump
-			if not suffix:
+			if suffix is None:
 				suffix = "ip6.arpa."
 		else:
 			return ""
 
 		return "%s.%s" % (".".join(reversed(exploded_ip)), suffix)
+
+	def getHost(self):
+		"""Return the host name (DNS) of the provided IP address object
+		"""
+		return DNSUtils.ipToName(self.ntoa)
 
 	@property
 	def isIPv4(self):

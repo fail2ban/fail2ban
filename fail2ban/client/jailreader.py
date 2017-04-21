@@ -43,7 +43,7 @@ logSys = getLogger(__name__)
 class JailReader(ConfigReader):
 	
 	# regex, to extract list of options:
-	optionCRE = re.compile(r"^([\w\-_\.]+)(?:\[(.*)\])?\s*$", re.DOTALL)
+	optionCRE = re.compile(r"^([^\[]+)(?:\[(.*)\])?\s*$", re.DOTALL)
 	# regex, to iterate over single option in option list, syntax:
 	# `action = act[p1="...", p2='...', p3=...]`, where the p3=... not contains `,` or ']'
 	# since v0.10 separator extended with `]\s*[` for support of multiple option groups, syntax 
@@ -110,6 +110,7 @@ class JailReader(ConfigReader):
 				["string", "failregex", None],
 				["string", "ignoreregex", None],
 				["string", "ignorecommand", None],
+				["bool",   "ignoreself", None],
 				["string", "ignoreip", None],
 				["string", "filter", ""],
 				["string", "datepattern", None],
@@ -136,13 +137,14 @@ class JailReader(ConfigReader):
 				if not filterName:
 					raise JailDefError("Invalid filter definition %r" % flt)
 				self.__filter = FilterReader(
-					filterName, self.__name, filterOpt, share_config=self.share_config, basedir=self.getBaseDir())
+					filterName, self.__name, filterOpt, 
+					share_config=self.share_config, basedir=self.getBaseDir())
 				ret = self.__filter.read()
-				# merge options from filter as 'known/...':
-				self.__filter.getOptions(self.__opts)
-				ConfigReader.merge_section(self, self.__name, self.__filter.getCombined(), 'known/')
 				if not ret:
 					raise JailDefError("Unable to read the filter %r" % filterName)
+				# merge options from filter as 'known/...' (all options unfiltered):
+				self.__filter.getOptions(self.__opts, all=True)
+				ConfigReader.merge_section(self, self.__name, self.__filter.getCombined(), 'known/')
 			else:
 				self.__filter = None
 				logSys.warning("No filter set for jail %s" % self.__name)
@@ -219,8 +221,8 @@ class JailReader(ConfigReader):
 		if self.__filter:
 			stream.extend(self.__filter.convert())
 		for opt, value in self.__opts.iteritems():
-			if opt == "logpath" and	\
-					not self.__opts.get('backend', None).startswith("systemd"):
+			if opt == "logpath":
+				if self.__opts.get('backend', None).startswith("systemd"): continue
 				found_files = 0
 				for path in value.split("\n"):
 					path = path.rsplit(" ", 1)

@@ -28,7 +28,7 @@ import re
 import shutil
 import tempfile
 import unittest
-from ..client.configreader import ConfigReader, ConfigReaderUnshared
+from ..client.configreader import ConfigReader, ConfigReaderUnshared, NoSectionError
 from ..client import configparserinc
 from ..client.jailreader import JailReader
 from ..client.filterreader import FilterReader
@@ -317,7 +317,17 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertLogged('File %s is a dangling link, thus cannot be monitored' % f2)
 		self.assertEqual(JailReader._glob(os.path.join(d, 'nonexisting')), [])
 
-		
+	def testCommonFunction(self):
+		c = ConfigReader(share_config={})
+		# test common functionalities (no shared, without read of config):
+		self.assertEqual(c.sections(), [])
+		self.assertFalse(c.has_section('test'))
+		self.assertRaises(NoSectionError, c.merge_section, 'test', {})
+		self.assertRaises(NoSectionError, c.options, 'test')
+		self.assertRaises(NoSectionError, c.get, 'test', 'any')
+		self.assertRaises(NoSectionError, c.getOptions, 'test', {})
+
+
 class FilterReaderTest(unittest.TestCase):
 
 	def __init__(self, *args, **kwargs):
@@ -347,7 +357,7 @@ class FilterReaderTest(unittest.TestCase):
 			['set', 'testcase01', 'addjournalmatch',
 				"FIELD= with spaces ", "+", "AFIELD= with + char and spaces"],
 			['set', 'testcase01', 'datepattern', "%Y %m %d %H:%M:%S"],
-			['set', 'testcase01', 'maxlines', "1"], # Last for overide test
+			['set', 'testcase01', 'maxlines', 1], # Last for overide test
 		]
 		filterReader = FilterReader("testcase01", "testcase01", {})
 		filterReader.setBaseDir(TEST_FILES_DIR)
@@ -517,12 +527,10 @@ class JailsReaderTest(LogCaptureTestCase):
 			 ['add', 'brokenaction', 'auto'],
 			 ['set', 'brokenaction', 'addfailregex', '<IP>'],
 			 ['set', 'brokenaction', 'addaction', 'brokenaction'],
-			 ['set',
-			  'brokenaction',
-			  'action',
-			  'brokenaction',
-			  'actionban',
-			  'hit with big stick <ip>'],
+			 ['multi-set', 'brokenaction', 'action', 'brokenaction', [
+				 ['actionban', 'hit with big stick <ip>'],
+				 ['actname', 'brokenaction']
+			 ]],
 			 ['add', 'parse_to_end_of_jail.conf', 'auto'],
 			 ['set', 'parse_to_end_of_jail.conf', 'addfailregex', '<IP>'],
 			 ['start', 'emptyaction'],
@@ -548,7 +556,10 @@ class JailsReaderTest(LogCaptureTestCase):
 				actionName = os.path.basename(actionConfig).replace('.conf', '')
 				actionReader = ActionReader(actionName, "TEST", {}, basedir=CONFIG_DIR)
 				self.assertTrue(actionReader.read())
-				actionReader.getOptions({})	  # populate _opts
+				try:
+					actionReader.getOptions({})	  # populate _opts
+				except Exception as e: # pragma: no cover
+					self.fail("action %r\n%s: %s" % (actionName, type(e).__name__, e))
 				if not actionName.endswith('-common'):
 					self.assertIn('Definition', actionReader.sections(),
 						msg="Action file %r is lacking [Definition] section" % actionConfig)
@@ -627,7 +638,7 @@ class JailsReaderTest(LogCaptureTestCase):
 			# grab all filter names
 			filters = set(os.path.splitext(os.path.split(a)[1])[0]
 				for a in glob.glob(os.path.join('config', 'filter.d', '*.conf'))
-					if not a.endswith('common.conf'))
+					if not (a.endswith('common.conf') or a.endswith('-aggressive.conf')))
 			# get filters of all jails (filter names without options inside filter[...])
 			filters_jail = set(
 				JailReader.extractOptions(jail.options['filter'])[0] for jail in jails.jails
@@ -711,6 +722,7 @@ class JailsReaderTest(LogCaptureTestCase):
 			self.assertEqual(opts['socket'], '/var/run/fail2ban/fail2ban.sock')
 			self.assertEqual(opts['pidfile'], '/var/run/fail2ban/fail2ban.pid')
 
+			configurator.readAll()
 			configurator.getOptions()
 			configurator.convertToProtocol()
 			commands = configurator.getConfigStream()

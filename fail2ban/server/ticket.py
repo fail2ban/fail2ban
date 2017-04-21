@@ -56,7 +56,9 @@ class Ticket(object):
 		self._time = time if time is not None else MyTime.time()
 		self._data = {'matches': matches or [], 'failures': 0}
 		if data is not None:
-			self._data.update(data)
+			for k,v in data.iteritems():
+				if v is not None:
+					self._data[k] = v
 		if ticket:
 			# ticket available - copy whole information from ticket:
 			self.__dict__.update(i for i in ticket.__dict__.iteritems() if i[0] in self.__dict__)
@@ -136,7 +138,8 @@ class Ticket(object):
 		self._data['matches'] = matches or []
 
 	def getMatches(self):
-		return self._data.get('matches', [])
+		return [(line if isinstance(line, basestring) else "".join(line)) \
+			for line in self._data.get('matches', ())]
 
 	@property
 	def restored(self):
@@ -233,7 +236,11 @@ class FailTicket(Ticket):
 		self.__retry += count
 		self._data['failures'] += attempt
 		if matches:
-			self._data['matches'] += matches
+			# we should duplicate "matches", because possibly referenced to multiple tickets:
+			if self._data['matches']:
+				self._data['matches'] = self._data['matches'] + matches
+			else:
+				self._data['matches'] = matches
 
 	def setLastTime(self, value):
 		if value > self._time:

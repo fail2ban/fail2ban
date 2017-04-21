@@ -28,7 +28,7 @@ import signal
 import subprocess
 import sys
 import time
-from ..helpers import getLogger, uni_decode
+from ..helpers import getLogger, _merge_dicts, uni_decode
 
 if sys.version_info >= (3, 3):
 	import importlib.machinery
@@ -60,6 +60,7 @@ class Utils():
 	DEFAULT_SLEEP_TIME = 2
 	DEFAULT_SLEEP_INTERVAL = 0.2
 	DEFAULT_SHORT_INTERVAL = 0.001
+	DEFAULT_SHORTEST_INTERVAL = DEFAULT_SHORT_INTERVAL / 100
 
 
 	class Cache(object):
@@ -98,6 +99,12 @@ class Utils():
 					cache.popitem()
 			cache[k] = (v, t + self.maxTime)
 
+		def unset(self, k):
+			try:
+				del self._cache[k]
+			except KeyError: # pragme: no cover
+				pass
+
 
 	@staticmethod
 	def setFBlockMode(fhandle, value):
@@ -110,7 +117,31 @@ class Utils():
 		return flags
 
 	@staticmethod
-	def executeCmd(realCmd, timeout=60, shell=True, output=False, tout_kill_tree=True, success_codes=(0,)):
+	def buildShellCmd(realCmd, varsDict):
+		"""Generates new shell command as array, contains map as variables to
+		arguments statement (varsStat), the command (realCmd) used this variables and
+		the list of the arguments, mapped from varsDict
+
+		Example:
+			buildShellCmd('echo "V2: $v2, V1: $v1"', {"v1": "val 1", "v2": "val 2", "vUnused": "unused var"})
+		returns:
+			['v1=$0 v2=$1 vUnused=$2 \necho "V2: $v2, V1: $v1"', 'val 1', 'val 2', 'unused var']
+		"""
+		# build map as array of vars and command line array:
+		varsStat = ""
+		if not isinstance(realCmd, list):
+			realCmd = [realCmd]
+		i = len(realCmd)-1
+		for k, v in varsDict.iteritems():
+			varsStat += "%s=$%s " % (k, i)
+			realCmd.append(v)
+			i += 1
+		realCmd[0] = varsStat + "\n" + realCmd[0]
+		return realCmd
+
+	@staticmethod
+	def executeCmd(realCmd, timeout=60, shell=True, output=False, tout_kill_tree=True, 
+		success_codes=(0,), varsDict=None):
 		"""Executes a command.
 
 		Parameters
@@ -125,6 +156,8 @@ class Utils():
 		output : bool
 			If output is True, the function returns tuple (success, stdoutdata, stderrdata, returncode).
 			If False, just indication of success is returned
+		varsDict: dict
+			variables supplied to the command (or to the shell script)
 
 		Returns
 		-------
@@ -140,10 +173,18 @@ class Utils():
 		"""
 		stdout = stderr = None
 		retcode = None
-		popen = None
+		popen = env = None
+		if varsDict:
+			if shell:
+				# build map as array of vars and command line array:
+				realCmd = Utils.buildShellCmd(realCmd, varsDict)
+			else: # pragma: no cover - currently unused
+				env = _merge_dicts(os.environ, varsDict)
+		realCmdId = id(realCmd)
+		logCmd = lambda level: logSys.log(level, "%x -- exec: %s", realCmdId, realCmd)
 		try:
 			popen = subprocess.Popen(
-				realCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell,
+				realCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell, env=env,
 				preexec_fn=os.setsid  # so that killpg does not kill our process
 			)
 			# wait with timeout for process has terminated:
@@ -152,13 +193,15 @@ class Utils():
 				def _popen_wait_end():
 					retcode = popen.poll()
 					return (True, retcode) if retcode is not None else None
-				retcode = Utils.wait_for(_popen_wait_end, timeout, Utils.DEFAULT_SHORT_INTERVAL)
+				# popen.poll is fast operation so we can use the shortest sleep interval:
+				retcode = Utils.wait_for(_popen_wait_end, timeout, Utils.DEFAULT_SHORTEST_INTERVAL)
 				if retcode:
 					retcode = retcode[1]
 			# if timeout:
 			if retcode is None:
-				logSys.error("%s -- timed out after %s seconds." %
-					(realCmd, timeout))
+				if logCmd: logCmd(logging.ERROR); logCmd = None
+				logSys.error("%x -- timed out after %s seconds." %
+					(realCmdId, timeout))
 				pgid = os.getpgid(popen.pid)
 				# if not tree - first try to terminate and then kill, otherwise - kill (-9) only:
 				os.killpg(pgid, signal.SIGTERM) # Terminate the process
@@ -168,59 +211,62 @@ class Utils():
 				if retcode is None or tout_kill_tree: # Still going...
 					os.killpg(pgid, signal.SIGKILL) # Kill the process
 					time.sleep(Utils.DEFAULT_SLEEP_INTERVAL)
-					retcode = popen.poll()
+					if retcode is None: # pragma: no cover - too sporadic
+						retcode = popen.poll()
 					#logSys.debug("%s -- killed %s ", realCmd, retcode)
 				if retcode is None and not Utils.pid_exists(pgid): # pragma: no cover
 					retcode = signal.SIGKILL
 		except OSError as e:
+			if logCmd: logCmd(logging.ERROR); logCmd = None
 			stderr = "%s -- failed with %s" % (realCmd, e)
 			logSys.error(stderr)
 			if not popen:
 				return False if not output else (False, stdout, stderr, retcode)
 
 		std_level = logging.DEBUG if retcode in success_codes else logging.ERROR
+		if std_level > logSys.getEffectiveLevel():
+			if logCmd: logCmd(std_level-1); logCmd = None
 		# if we need output (to return or to log it): 
 		if output or std_level >= logSys.getEffectiveLevel():
+
 			# if was timeouted (killed/terminated) - to prevent waiting, set std handles to non-blocking mode.
 			if popen.stdout:
 				try:
 					if retcode is None or retcode < 0:
 						Utils.setFBlockMode(popen.stdout, False)
 					stdout = popen.stdout.read()
-				except IOError as e:
+				except IOError as e: # pragma: no cover
 					logSys.error(" ... -- failed to read stdout %s", e)
 				if stdout is not None and stdout != '' and std_level >= logSys.getEffectiveLevel():
-					logSys.log(std_level, "%s -- stdout:", realCmd)
 					for l in stdout.splitlines():
-						logSys.log(std_level, " -- stdout: %r", uni_decode(l))
+						logSys.log(std_level, "%x -- stdout: %r", realCmdId, uni_decode(l))
 				popen.stdout.close()
 			if popen.stderr:
 				try:
 					if retcode is None or retcode < 0:
 						Utils.setFBlockMode(popen.stderr, False)
 					stderr = popen.stderr.read()
-				except IOError as e:
+				except IOError as e: # pragma: no cover
 					logSys.error(" ... -- failed to read stderr %s", e)
 				if stderr is not None and stderr != '' and std_level >= logSys.getEffectiveLevel():
-					logSys.log(std_level, "%s -- stderr:", realCmd)
 					for l in stderr.splitlines():
-						logSys.log(std_level, " -- stderr: %r", uni_decode(l))
+						logSys.log(std_level, "%x -- stderr: %r", realCmdId, uni_decode(l))
 				popen.stderr.close()
 
 		success = False
 		if retcode in success_codes:
-			logSys.debug("%-.40s -- returned successfully %i", realCmd, retcode)
+			logSys.debug("%x -- returned successfully %i", realCmdId, retcode)
 			success = True
 		elif retcode is None:
-			logSys.error("%-.40s -- unable to kill PID %i", realCmd, popen.pid)
+			logSys.error("%x -- unable to kill PID %i", realCmdId, popen.pid)
 		elif retcode < 0 or retcode > 128:
 			# dash would return negative while bash 128 + n
 			sigcode = -retcode if retcode < 0 else retcode - 128
-			logSys.error("%-.40s -- killed with %s (return code: %s)",
-				realCmd, signame.get(sigcode, "signal %i" % sigcode), retcode)
+			logSys.error("%x -- killed with %s (return code: %s)",
+				realCmdId, signame.get(sigcode, "signal %i" % sigcode), retcode)
 		else:
 			msg = _RETCODE_HINTS.get(retcode, None)
-			logSys.error("%-.40s -- returned %i", realCmd, retcode)
+			logSys.error("%x -- returned %i", realCmdId, retcode)
 			if msg:
 				logSys.info("HINT on %i: %s", retcode, msg % locals())
 		if output:
@@ -284,7 +330,7 @@ class Utils():
 				return e.errno == errno.EPERM
 			else:
 				return True
-	else:
+	else: # pragma : no cover (no windows currently supported)
 		@staticmethod
 		def pid_exists(pid):
 			import ctypes

@@ -298,6 +298,16 @@ iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
 
 class CustomDateFormatsTest(unittest.TestCase):
 
+	def setUp(self):
+		"""Call before every test case."""
+		unittest.TestCase.setUp(self)
+		setUpMyTime()
+
+	def tearDown(self):
+		"""Call after every test case."""
+		unittest.TestCase.tearDown(self)
+		tearDownMyTime()
+
 	def testIso8601(self):
 		date = datetime.datetime.utcfromtimestamp(
 			iso8601.getDate("2007-01-25T12:00:00Z")[0])
@@ -411,6 +421,37 @@ class CustomDateFormatsTest(unittest.TestCase):
 			else:
 				self.assertEqual(date, None)
 
+	def testVariousFormatSpecs(self):
+		for (matched, dp, line) in (
+			# cover %B (full-month-name) and %I (as 12 == 0):
+			(1106438399.0, "^%B %Exd %I:%ExM:%ExS**", 'January 23 12:59:59'),
+			# cover %U (week of year starts on sunday) and %A (weekday):
+			(985208399.0,  "^%y %U %A %ExH:%ExM:%ExS**", '01 11 Wednesday 21:59:59'),
+			# cover %W (week of year starts on monday) and %A (weekday):
+			(984603599.0,  "^%y %W %A %ExH:%ExM:%ExS**", '01 11 Wednesday 21:59:59'),
+			# cover %W (week of year starts on monday) and %w (weekday, 0 - sunday):
+			(984949199.0,  "^%y %W %w %ExH:%ExM:%ExS**", '01 11 0 21:59:59'),
+			# cover %W (week of year starts on monday) and %w (weekday, 6 - saturday):
+			(984862799.0,  "^%y %W %w %ExH:%ExM:%ExS**", '01 11 6 21:59:59'),
+			# cover time only, current date, in test cases now == 14 Aug 2005 12:00 -> back to yesterday (13 Aug):
+			(1123963199.0,  "^%ExH:%ExM:%ExS**", '21:59:59'),
+			# cover time only, current date, in test cases now == 14 Aug 2005 12:00 -> today (14 Aug):
+			(1123970401.0,  "^%ExH:%ExM:%ExS**", '00:00:01'),
+			# cover date with current year, in test cases now == Aug 2005 -> back to last year (Sep 2004):
+			(1094068799.0,  "^%m/%d %ExH:%ExM:%ExS**", '09/01 21:59:59'),
+		):
+			logSys.debug('== test: %r', (matched, dp, line))
+			dd = DateDetector()
+			dd.appendTemplate(dp)
+			date = dd.getTime(line)
+			if matched:
+				self.assertTrue(date)
+				if isinstance(matched, basestring): # pragma: no cover
+					self.assertEqual(matched, date[1].group(1))
+				else:
+					self.assertEqual(matched, date[0])
+			else: # pragma: no cover
+				self.assertEqual(date, None)
 
 #	def testDefaultTempate(self):
 #		self.__datedetector.setDefaultRegex("^\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")

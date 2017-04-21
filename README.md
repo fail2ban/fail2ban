@@ -17,9 +17,13 @@ Though Fail2Ban is able to reduce the rate of incorrect authentications
 attempts, it cannot eliminate the risk that weak authentication presents.
 Configure services to use only two factor or public/private authentication
 mechanisms if you really want to protect services.
+     
+<img src="http://www.worldipv6launch.org/wp-content/themes/ipv6/downloads/World_IPv6_launch_logo.svg" height="52pt"/> | Since v0.10 fail2ban supports the matching of the IPv6 addresses.
+------|------
 
 This README is a quick introduction to Fail2ban. More documentation, FAQ, HOWTOs
-are available in fail2ban(1) manpage and on the website http://www.fail2ban.org
+are available in fail2ban(1) manpage, [Wiki](https://github.com/fail2ban/fail2ban/wiki)
+and on the website http://www.fail2ban.org
 
 Installation:
 -------------
@@ -86,7 +90,7 @@ Contact:
 See [CONTRIBUTING.md](https://github.com/fail2ban/fail2ban/blob/master/CONTRIBUTING.md)
 
 ### You just appreciate this program:
-send kudos to the original author ([Cyril Jaquier](mailto: Cyril Jaquier <cyril.jaquier@fail2ban.org>))
+send kudos to the original author ([Cyril Jaquier](mailto:cyril.jaquier@fail2ban.org))
 or *better* to the [mailing list](https://lists.sourceforge.net/lists/listinfo/fail2ban-users)
 since Fail2Ban is "community-driven" for years now.
 

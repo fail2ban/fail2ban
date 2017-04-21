@@ -27,8 +27,10 @@ __license__ = "GPL"
 import logging.handlers
 
 # Custom debug levels
+logging.MSG = logging.INFO - 2
 logging.TRACEDEBUG = 7
 logging.HEAVYDEBUG = 5
+logging.addLevelName(logging.MSG, 'MSG')
 logging.addLevelName(logging.TRACEDEBUG, 'TRACE')
 logging.addLevelName(logging.HEAVYDEBUG, 'HEAVY')
 

@@ -16,3 +16,6 @@ Dec 30 16:03:27 somehost imapd[2517]: badlogin: local-somehost[1.2.3.4] OTP [SAS
 Jul 17 22:55:56 derry cyrus/imaps[7568]: badlogin: serafinat.xxxxxx [1.2.3.4] plain [SASL(-13): user not found: user: pressy@derry property: cmusaslsecretPLAIN not found in sasldb]
 # failJSON: { "time": "2005-07-18T16:46:42", "match": true , "host": "1.2.3.4" }
 Jul 18 16:46:42 derry cyrus/imaps[27449]: badlogin: serafinat.xxxxxx [1.2.3.4] PLAIN [SASL(-13): user not found: Password verification failed]
+
+# failJSON: { "time": "2005-03-08T05:25:21", "match": true , "host": "192.0.2.4", "desc": "entry without loginname/hostname before IP" }
+Mar  8 05:25:21 host imap[22130]: badlogin: [192.0.2.4] plain [SASL(-13): authentication failure: Password verification failed]

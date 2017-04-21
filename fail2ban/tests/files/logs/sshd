@@ -9,8 +9,14 @@ May 29 20:56:56 imago sshd[28732]: error: PAM: Authentication failure for test-i
 #2
 # failJSON: { "time": "2005-02-25T14:34:10", "match": true , "host": "194.117.26.69" }
 Feb 25 14:34:10 belka sshd[31602]: Failed password for invalid user ROOT from 194.117.26.69 port 50273 ssh2
+# failJSON: { "time": "2005-02-25T14:34:10", "match": true , "host": "aaaa:bbbb:cccc:1234::1:1" }
+Feb 25 14:34:10 belka sshd[31603]: Failed password for invalid user ROOT from aaaa:bbbb:cccc:1234::1:1 port 50273 ssh2
 # failJSON: { "time": "2005-02-25T14:34:10", "match": true , "host": "194.117.26.70" }
 Feb 25 14:34:10 belka sshd[31602]: Failed password for invalid user ROOT from 194.117.26.70 port 12345
+# failJSON: { "time": "2005-02-25T14:34:10", "match": true , "host": "aaaa:bbbb:cccc:1234::1:1" }
+Feb 25 14:34:10 belka sshd[31603]: Failed password for invalid user ROOT from aaaa:bbbb:cccc:1234::1:1 port 12345
+# failJSON: { "time": "2005-02-25T14:34:11", "match": true , "host": "aaaa:bbbb:cccc:1234::1:1" }
+Feb 25 14:34:11 belka sshd[31603]: Failed password for invalid user ROOT from aaaa:bbbb:cccc:1234::1:1
 
 #3
 # failJSON: { "time": "2005-01-05T01:31:41", "match": true , "host": "1.2.3.4" }
@@ -19,8 +25,10 @@ Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM 1.2.3.4
 Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM ::ffff:1.2.3.4
 
 #4
-# failJSON: { "time": "2005-07-20T14:42:11", "match": true , "host": "211.114.51.213" }
-Jul 20 14:42:11 localhost sshd[22708]: Invalid user ftp from 211.114.51.213
+# failJSON: { "time": "2005-07-20T14:42:11", "match": true , "host": "192.0.2.1", "desc": "Invalid user" }
+Jul 20 14:42:11 localhost sshd[22708]: Invalid user ftp from 192.0.2.1
+# failJSON: { "time": "2005-07-20T14:42:12", "match": true , "host": "192.0.2.2", "desc": "Invalid user with port" }
+Jul 20 14:42:12 localhost sshd[22708]: Invalid user ftp from 192.0.2.2 port 37220
 
 #5 new filter introduced after looking at 44087D8C.9090407@bluewin.ch
 # yoh: added ':' after [sshd] since the case without is not really common any more
@@ -105,6 +113,11 @@ May 27 00:16:33 host sshd[2364]: Received disconnect from 198.51.100.76: 11: Bye
 # failJSON: { "time": "2004-09-29T16:28:02", "match": true , "host": "127.0.0.1" }
 Sep 29 16:28:02 spaceman sshd[16699]: Failed password for dan from 127.0.0.1 port 45416 ssh1
 
+# failJSON: { "match": false, "desc": "no failure, just cache mlfid (conn-id)" }
+Sep 29 16:28:05 localhost sshd[16700]: Connection from 192.0.2.5
+# failJSON: { "match": false, "desc": "no failure, just covering mlfid (conn-id) forget" }
+Sep 29 16:28:05 localhost sshd[16700]: Connection closed by 192.0.2.5 [preauth]
+
 # failJSON: { "time": "2004-09-29T17:15:02", "match": true , "host": "127.0.0.1" }
 Sep 29 17:15:02 spaceman sshd[12946]: Failed hostbased for dan from 127.0.0.1 port 45785 ssh2: RSA 8c:e3:aa:0f:64:51:02:f7:14:79:89:3f:65:84:7c:30, client user "dan", client host "localhost.localdomain"
 
@@ -116,6 +129,8 @@ Sep 29 17:15:02 spaceman sshd[12946]: Failed password for user from 127.0.0.1 po
 
 # failJSON: { "time": "2004-09-29T17:15:02", "match": true , "host": "127.0.0.1", "desc": "Injecting while exhausting initially present {0,100} match length limits set for ruser etc" }
 Sep 29 17:15:02 spaceman sshd[12946]: Failed password for user from 127.0.0.1 port 20000 ssh1: ruser XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX from 1.2.3.4
+# failJSON: { "time": "2004-09-29T17:15:03", "match": true , "host": "aaaa:bbbb:cccc:1234::1:1", "desc": "Injecting while exhausting initially present {0,100} match length limits set for ruser etc" }
+Sep 29 17:15:03 spaceman sshd[12946]: Failed password for user from aaaa:bbbb:cccc:1234::1:1 port 20000 ssh1: ruser XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX from 1.2.3.4
 
 # failJSON: { "time": "2004-11-11T08:04:51", "match": true , "host": "127.0.0.1", "desc": "Injecting on username ssh 'from 10.10.1.1'@localhost" }
 Nov 11 08:04:51 redbamboo sshd[2737]: Failed password for invalid user from 10.10.1.1 from 127.0.0.1 port 58946 ssh2
@@ -126,6 +141,8 @@ Nov 11 08:04:52 redbamboo sshd[2737]: Failed password for invalid user test from
 
 # failJSON: { "time": "2005-07-05T18:22:44", "match": true , "host": "127.0.0.1", "desc": "Failed publickey for ..." }
 Jul 05 18:22:44 mercury sshd[4669]: Failed publickey for graysky from 127.0.0.1 port 37954 ssh2: RSA SHA256:v3dpapGleDaUKf$4V1vKyR9ZyUgjaJAmoCTcb2PLljI
+# failJSON: { "time": "2005-07-05T18:22:45", "match": true , "host": "aaaa:bbbb:cccc:1234::1:1", "desc": "Failed publickey for ..." }
+Jul 05 18:22:45 mercury sshd[4670]: Failed publickey for graysky from aaaa:bbbb:cccc:1234::1:1 port 37955 ssh2: RSA SHA256:v3dpapGleDaUKf$4V1vKyR9ZyUgjaJAmoCTcb2PLljI
 
 # failJSON: { "match": false }
 Nov 23 21:50:19 sshd[8148]: Disconnecting: Too many authentication failures for root [preauth]
@@ -139,6 +156,8 @@ Nov 23 21:50:37 sshd[7148]: Connection closed by 61.0.0.1 [preauth]
 
 # failJSON: { "time": "2005-07-13T18:44:28", "match": true , "host": "89.24.13.192", "desc": "from gh-289" }
 Jul 13 18:44:28 mdop sshd[4931]: Received disconnect from 89.24.13.192: 3: com.jcraft.jsch.JSchException: Auth fail
+# failJSON: { "time": "2005-01-02T01:18:41", "match": true , "host": "10.0.0.1", "desc": "space after port is optional (gh-1652)" }
+Jan  2 01:18:41 host sshd[11808]: error: Received disconnect from 10.0.0.1 port 7736:3: com.jcraft.jsch.JSchException: Auth fail [preauth]
 
 # failJSON: { "time": "2004-10-01T17:27:44", "match": true , "host": "94.249.236.6", "desc": "newer format per commit 36919d9f" }
 Oct  1 17:27:44 localhost sshd[24077]: error: Received disconnect from 94.249.236.6: 3: com.jcraft.jsch.JSchException: Auth fail [preauth]
@@ -154,7 +173,7 @@ Feb 12 04:09:21 localhost sshd[26713]: Disconnecting: Too many authentication fa
 # failJSON: { "match": false }
 Feb 12 04:09:18 localhost sshd[26713]: Connection from 115.249.163.77 port 51353 on 127.0.0.1 port 22
 # failJSON: { "time": "2005-02-12T04:09:21", "match": true , "host": "115.249.163.77", "desc": "Multiline match with interface address" }
-Feb 12 04:09:21 localhost sshd[26713]: Disconnecting: Too many authentication failures for root [preauth]
+Feb 12 04:09:21 localhost sshd[26713]: Disconnecting: Too many authentication failures [preauth]
 
 # failJSON: { "time": "2004-11-23T21:50:37", "match": true , "host": "61.0.0.1", "desc": "New logline format as openssh 6.8 to replace prev multiline version" }
 Nov 23 21:50:37 myhost sshd[21810]: error: maximum authentication attempts exceeded for root from 61.0.0.1 port 49940 ssh2 [preauth]
@@ -169,3 +188,56 @@ Apr 27 13:02:04 host sshd[29116]: Received disconnect from 1.2.3.4: 11: Normal S
 # Match sshd auth errors on OpenSUSE systems
 # failJSON: { "time": "2015-04-16T20:02:50", "match": true , "host": "222.186.21.217", "desc": "Authentication for user failed" }
 2015-04-16T18:02:50.321974+00:00 host sshd[2716]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=222.186.21.217  user=root
+
+# filterOptions: {"mode": "ddos"}
+
+# http://forums.powervps.com/showthread.php?t=1667
+# failJSON: { "time": "2005-06-07T01:10:56", "match": true , "host": "69.61.56.114" }
+Jun 7 01:10:56 host sshd[5937]: Did not receive identification string from 69.61.56.114
+
+# gh-864(1):
+# failJSON: { "match": false }
+Nov 24 23:46:39 host sshd[32686]: SSH: Server;Ltype: Version;Remote: 127.0.0.1-1780;Protocol: 2.0;Client: libssh2_1.4.3
+# failJSON: { "time": "2004-11-24T23:46:43", "match": true , "host": "127.0.0.1", "desc": "Multiline for connection reset by peer (1)" }
+Nov 24 23:46:43 host sshd[32686]: fatal: Read from socket failed: Connection reset by peer [preauth]
+
+# gh-864(2):
+# failJSON: { "match": false }
+Nov 24 23:46:40 host sshd[32686]: SSH: Server;Ltype: Kex;Remote: 127.0.0.1-1780;Enc: aes128-ctr;MAC: hmac-sha1;Comp: none [preauth]
+# failJSON: { "time": "2004-11-24T23:46:43", "match": true , "host": "127.0.0.1", "desc": "Multiline for connection reset by peer (2)" }
+Nov 24 23:46:43 host sshd[32686]: fatal: Read from socket failed: Connection reset by peer [preauth]
+
+# gh-864(3):
+# failJSON: { "match": false }
+Nov 24 23:46:41 host sshd[32686]: SSH: Server;Ltype: Authname;Remote: 127.0.0.1-1780;Name: root [preauth]
+# failJSON: { "time": "2004-11-24T23:46:43", "match": true , "host": "127.0.0.1", "desc": "Multiline for connection reset by peer (3)" }
+Nov 24 23:46:43 host sshd[32686]: fatal: Read from socket failed: Connection reset by peer [preauth]
+
+# gh-1719:
+# failJSON: { "time": "2005-03-15T09:20:57", "match": true , "host": "192.0.2.39", "desc": "Singleline for connection reset by" }
+Mar 15 09:20:57 host sshd[28972]: Connection reset by 192.0.2.39 port 14282 [preauth]
+
+
+# filterOptions: {"mode": "extra"}
+
+# several other cases from gh-864:
+# failJSON: { "time": "2004-11-25T01:34:12", "match": true , "host": "127.0.0.1", "desc": "No supported authentication methods" }
+Nov 25 01:34:12 srv sshd[123]: Received disconnect from 127.0.0.1: 14: No supported authentication methods available [preauth]
+# failJSON: { "time": "2004-11-25T01:35:13", "match": true , "host": "127.0.0.1", "desc": "No supported authentication methods" }
+Nov 25 01:35:13 srv sshd[123]: error: Received disconnect from 127.0.0.1: 14: No supported authentication methods available [preauth]
+# failJSON: { "time": "2004-11-25T01:35:14", "match": true , "host": "192.168.2.92", "desc": "Optional space after port" }
+Nov 25 01:35:14 srv sshd[3625]: error: Received disconnect from 192.168.2.92 port 1684:14: No supported authentication methods available [preauth]
+
+# gh-1545:
+# failJSON: { "time": "2004-11-26T13:03:29", "match": true , "host": "192.0.2.1", "desc": "No matching cipher" }
+Nov 26 13:03:29 srv sshd[45]: Unable to negotiate with 192.0.2.1 port 55419: no matching cipher found. Their offer: aes256-cbc,rijndael-cbc@lysator.liu.se,aes192-cbc,aes128-cbc,arcfour128,arcfour,3des-cbc,none [preauth]
+
+# gh-1117:
+# failJSON: { "time": "2004-11-26T13:03:30", "match": true , "host": "192.0.2.2", "desc": "No matching key exchange method" }
+Nov 26 13:03:30 srv sshd[45]: fatal: Unable to negotiate with 192.0.2.2 port 55419: no matching key exchange method found. Their offer: diffie-hellman-group1-sha1
+# failJSON: { "match": false }
+Nov 26 15:03:30 host sshd[22440]: Connection from 192.0.2.3 port 39678 on 192.168.1.9 port 22
+# failJSON: { "time": "2004-11-26T15:03:31", "match": true , "host": "192.0.2.3", "desc": "Multiline - no matching key exchange method" }
+Nov 26 15:03:31 host sshd[22440]: fatal: Unable to negotiate a key exchange method [preauth]
+# failJSON: { "time": "2004-11-26T15:03:32", "match": true , "host": "192.0.2.3", "filter": "sshd", "desc": "Second attempt within the same connect" }
+Nov 26 15:03:32 host sshd[22440]: fatal: Unable to negotiate a key exchange method [preauth]

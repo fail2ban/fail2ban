@@ -41,6 +41,7 @@ config/action.d/mynetwatchman.conf
 config/action.d/nftables-allports.conf
 config/action.d/nftables-common.conf
 config/action.d/nftables-multiport.conf
+config/action.d/npf.conf
 config/action.d/nsupdate.conf
 config/action.d/osx-afctl.conf
 config/action.d/osx-ipfw.conf
@@ -100,6 +101,7 @@ config/filter.d/horde.conf
 config/filter.d/ignorecommands/apache-fakegooglebot
 config/filter.d/kerio.conf
 config/filter.d/lighttpd-auth.conf
+config/filter.d/mongodb-auth.conf
 config/filter.d/monit.conf
 config/filter.d/murmur.conf
 config/filter.d/mysqld-auth.conf
@@ -136,7 +138,6 @@ config/filter.d/solid-pop3d.conf
 config/filter.d/squid.conf
 config/filter.d/squirrelmail.conf
 config/filter.d/sshd.conf
-config/filter.d/sshd-ddos.conf
 config/filter.d/stunnel.conf
 config/filter.d/suhosin.conf
 config/filter.d/tine20.conf
@@ -154,6 +155,7 @@ config/paths-opensuse.conf
 config/paths-osx.conf
 CONTRIBUTING.md
 COPYING
+.coveragerc
 DEVELOP
 fail2ban-2to3
 fail2ban/client/actionreader.py
@@ -213,6 +215,7 @@ fail2ban/tests/clientbeautifiertestcase.py
 fail2ban/tests/clientreadertestcase.py
 fail2ban/tests/config/action.d/brokenaction.conf
 fail2ban/tests/config/fail2ban.conf
+fail2ban/tests/config/filter.d/common.conf
 fail2ban/tests/config/filter.d/simple.conf
 fail2ban/tests/config/filter.d/test.conf
 fail2ban/tests/config/filter.d/test.local
@@ -287,6 +290,7 @@ fail2ban/tests/files/logs/haproxy-http-auth
 fail2ban/tests/files/logs/horde
 fail2ban/tests/files/logs/kerio
 fail2ban/tests/files/logs/lighttpd-auth
+fail2ban/tests/files/logs/mongodb-auth
 fail2ban/tests/files/logs/monit
 fail2ban/tests/files/logs/murmur
 fail2ban/tests/files/logs/mysqld-auth
@@ -322,7 +326,6 @@ fail2ban/tests/files/logs/solid-pop3d
 fail2ban/tests/files/logs/squid
 fail2ban/tests/files/logs/squirrelmail
 fail2ban/tests/files/logs/sshd
-fail2ban/tests/files/logs/sshd-ddos
 fail2ban/tests/files/logs/stunnel
 fail2ban/tests/files/logs/suhosin
 fail2ban/tests/files/logs/tine20
@@ -386,6 +389,7 @@ man/fail2ban-testcases.1
 man/fail2ban-testcases.h2m
 man/generate-man
 man/jail.conf.5
+.pylintrc
 README.md
 README.Solaris
 RELEASE

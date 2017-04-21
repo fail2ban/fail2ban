@@ -302,7 +302,7 @@ class BasicFilter(unittest.TestCase):
 		## test function "_tm" works correct (returns the same as slow strftime):
 		for i in xrange(1417512352, (1417512352 // 3600 + 3) * 3600):
 			tm = datetime.datetime.fromtimestamp(i).strftime("%Y-%m-%d %H:%M:%S")
-			if _tm(i) != tm:
+			if _tm(i) != tm: # pragma: no cover - never reachable
 				self.assertEqual((_tm(i), i), (tm, i))
 
 	def testWrongCharInTupleLine(self):
@@ -325,6 +325,17 @@ class IgnoreIP(LogCaptureTestCase):
 		LogCaptureTestCase.setUp(self)
 		self.jail = DummyJail()
 		self.filter = FileFilter(self.jail)
+		self.filter.ignoreSelf = False
+
+	def testIgnoreSelfIP(self):
+		ipList = ("127.0.0.1",)
+		# test ignoreSelf is false:
+		for ip in ipList:
+			self.assertFalse(self.filter.inIgnoreIPList(ip))
+		# test ignoreSelf with true:
+		self.filter.ignoreSelf = True
+		for ip in ipList:
+			self.assertTrue(self.filter.inIgnoreIPList(ip))
 
 	def testIgnoreIPOK(self):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
@@ -337,6 +348,11 @@ class IgnoreIP(LogCaptureTestCase):
 		for ip in ipList:
 			self.filter.addIgnoreIP(ip)
 			self.assertFalse(self.filter.inIgnoreIPList(ip))
+		if not unittest.F2B.no_network: # pragma: no cover
+			self.assertLogged(
+				'Unable to find a corresponding IP address for 999.999.999.999',
+				'Unable to find a corresponding IP address for abcdef.abcdef',
+				'Unable to find a corresponding IP address for 192.168.0.', all=True)
 
 	def testIgnoreIPCIDR(self):
 		self.filter.addIgnoreIP('192.168.1.0/25')
@@ -473,7 +489,7 @@ class LogFileFilterPoll(unittest.TestCase):
 
 	def tearDown(self):
 		"""Call after every test case."""
-		pass
+		super(LogFileFilterPoll, self).tearDown()
 
 	#def testOpen(self):
 	#	self.filter.openLogFile(LogFile.FILENAME)
@@ -791,7 +807,7 @@ class CommonMonitorTestCase(unittest.TestCase):
 		"""Wait up to `delay` sec to assure that expected failure `count` reached
 		"""
 		ret = Utils.wait_for(
-			lambda: self.filter.failManager.getFailTotal() >= self._failTotal + count and self.jail.isFilled(),
+			lambda: self.filter.failManager.getFailTotal() >= (self._failTotal + count) and self.jail.isFilled(),
 			_maxWaitTime(delay))
 		self._failTotal += count
 		return ret
@@ -856,7 +872,7 @@ def get_monitor_failures_testcase(Filter_):
 			#print "D: KILLING THE FILE"
 			_killfile(self.file, self.name)
 			#time.sleep(0.2)			  # Give FS time to ack the removal
-			pass
+			super(MonitorFailures, self).tearDown()
 
 		def _sleep_4_poll(self):
 			# Since FilterPoll relies on time stamps and some
@@ -1029,9 +1045,10 @@ def get_monitor_failures_testcase(Filter_):
 			# total count in this test:
 			self.assertEqual(self.filter.failManager.getFailTotal(), 12)
 
-	MonitorFailures.__name__ = "MonitorFailures<%s>(%s)" \
+	cls = MonitorFailures
+	cls.__qualname__ = cls.__name__ = "MonitorFailures<%s>(%s)" \
 			  % (Filter_.__name__, testclass_name) # 'tempfile')
-	return MonitorFailures
+	return cls
 
 
 def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
@@ -1070,7 +1087,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			if self.filter and self.filter.active:
 				self.filter.stop()
 				self.filter.join()		  # wait for the thread to terminate
-				pass
+			super(MonitorJournalFailures, self).tearDown()
 
 		def _getRuntimeJournal(self):
 			# retrieve current system journal path
@@ -1211,14 +1228,16 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				fields = self.journal_fields
 				fields.update(TEST_JOURNAL_FIELDS)
 				journal.send(MESSAGE=l, **fields)
+			self.waitForTicks(1)
 			self.waitFailTotal(6, 10)
 			self.assertTrue(Utils.wait_for(lambda: len(self.jail) == 2, 10))
 			self.assertEqual(sorted([self.jail.getFailTicket().getIP(), self.jail.getFailTicket().getIP()]), 
 				["192.0.2.1", "192.0.2.2"])
 
-	MonitorJournalFailures.__name__ = "MonitorJournalFailures<%s>(%s)" \
+	cls = MonitorJournalFailures
+	cls.__qualname__ = cls.__name__ = "MonitorJournalFailures<%s>(%s)" \
 			  % (Filter_.__name__, testclass_name)
-	return MonitorJournalFailures
+	return cls
 
 
 class GetFailures(LogCaptureTestCase):
@@ -1426,6 +1445,7 @@ class GetFailures(LogCaptureTestCase):
 			('no',   output_no),
 			('warn', output_yes)
 		):
+			self.pruneLog("[test-phase useDns=%s]" % useDns)
 			jail = DummyJail()
 			filter_ = FileFilter(jail, useDns=useDns)
 			filter_.active = True
@@ -1459,8 +1479,8 @@ class GetFailures(LogCaptureTestCase):
 		output = [("192.0.43.10", 2, 1124013599.0),
 			("192.0.43.11", 1, 1124013598.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
-		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.setMaxLines(100)
+		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.setMaxRetry(1)
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)
@@ -1477,9 +1497,9 @@ class GetFailures(LogCaptureTestCase):
 	def testGetFailuresMultiLineIgnoreRegex(self):
 		output = [("192.0.43.10", 2, 1124013599.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
+		self.filter.setMaxLines(100)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addIgnoreRegex("rsync error: Received SIGINT")
-		self.filter.setMaxLines(100)
 		self.filter.setMaxRetry(1)
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)
@@ -1493,9 +1513,9 @@ class GetFailures(LogCaptureTestCase):
 			("192.0.43.11", 1, 1124013598.0),
 			("192.0.43.15", 1, 1124013598.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
+		self.filter.setMaxLines(100)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addFailRegex("^.* sendmail\[.*, msgid=<(?P<msgid>[^>]+).*relay=\[<HOST>\].*$<SKIPLINES>^.+ spamd: result: Y \d+ .*,mid=<(?P=msgid)>(,bayes=[.\d]+)?(,autolearn=\S+)?\s*$")
-		self.filter.setMaxLines(100)
 		self.filter.setMaxRetry(1)
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)

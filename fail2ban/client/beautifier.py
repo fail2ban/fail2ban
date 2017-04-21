@@ -89,6 +89,8 @@ class Beautifier:
 						val = " ".join(map(str, res1[1])) if isinstance(res1[1], list) else res1[1]
 						msg.append("%s %s:\t%s" % (prefix1, res1[0], val))
 				msg = "\n".join(msg)
+			elif len(inC) < 2:
+				pass # to few cmd args for below
 			elif inC[1] == "syslogsocket":
 				msg = "Current syslog socket is:\n"
 				msg += "`- " + response
@@ -110,6 +112,8 @@ class Beautifier:
 				else:
 					msg = "Current database purge age is:\n"
 					msg += "`- %iseconds" % response
+			elif len(inC) < 3:
+				pass # to few cmd args for below
 			elif inC[2] in ("logpath", "addlogpath", "dellogpath"):
 				if len(response) == 0:
 					msg = "No file is currently monitored"
@@ -178,7 +182,8 @@ class Beautifier:
 					msg += ", ".join(response)
 		except Exception:
 			logSys.warning("Beautifier error. Please report the error")
-			logSys.error("Beautify %r with %r failed", response, self.__inputCmd)
+			logSys.error("Beautify %r with %r failed", response, self.__inputCmd,
+				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 			msg = repr(msg) + repr(response)
 		return msg
 

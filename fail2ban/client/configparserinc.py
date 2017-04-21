@@ -32,7 +32,7 @@ from ..helpers import getLogger
 if sys.version_info >= (3,2):
 
 	# SafeConfigParser deprecated from Python 3.2 (renamed to ConfigParser)
-	from configparser import ConfigParser as SafeConfigParser, \
+	from configparser import ConfigParser as SafeConfigParser, NoSectionError, \
 		BasicInterpolation
 
 	# And interpolation of __name__ was simply removed, thus we need to
@@ -60,7 +60,7 @@ if sys.version_info >= (3,2):
 				parser, option, accum, rest, section, map, depth)
 
 else: # pragma: no cover
-	from ConfigParser import SafeConfigParser
+	from ConfigParser import SafeConfigParser, NoSectionError
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -199,6 +199,21 @@ after = 1.conf
 
 	def get_sections(self):
 		return self._sections
+
+	def options(self, section, withDefault=True):
+		"""Return a list of option names for the given section name.
+
+		Parameter `withDefault` controls the include of names from section `[DEFAULT]`
+		"""
+		try:
+			opts = self._sections[section]
+		except KeyError:
+			raise NoSectionError(section)
+		if withDefault:
+			# mix it with defaults:
+			return set(opts.keys()) | set(self._defaults)
+		# only own option names:
+		return opts.keys()
 
 	def read(self, filenames, get_includes=True):
 		if not isinstance(filenames, list):
