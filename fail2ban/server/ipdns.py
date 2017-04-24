@@ -147,9 +147,9 @@ class DNSUtils:
 		names = DNSUtils.CACHE_ipToName.get(key)
 		# get it using different ways (a set with names of localhost, hostname, fully qualified):
 		if names is None:
-			names = set(['localhost'])
-			for fqdn in (False, True):
-				names.add(DNSUtils.getHostname(fqdn=fqdn))
+			names = set([
+				'localhost', DNSUtils.getHostname(False), DNSUtils.getHostname(True)
+			]) - set(['']) # getHostname can return ''
 		# cache and return :
 		DNSUtils.CACHE_ipToName.set(key, names)
 		return names
