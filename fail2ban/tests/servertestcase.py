@@ -1748,7 +1748,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 		def _executeMailCmd(self, realCmd, timeout=60):
 			# replace pipe to mail with pipe to cat:
 			realCmd = re.sub(r'\)\s*\|\s*mail\b([^\n]*)',
-				r' echo mail \1 ) | cat', realCmd)
+				r') | cat; printf "\\n... | "; echo mail \1', realCmd)
 			# replace abuse retrieving (possible no-network), just replace first occurrence of 'dig...':
 			realCmd = re.sub(r'\bADDRESSES=\$\(dig\s[^\n]+',
 				lambda m: 'ADDRESSES="abuse-1@abuse-test-server, abuse-2@abuse-test-server"',
