@@ -370,6 +370,8 @@ ver. 0.9.6 (2016/12/10) - stretch-is-coming
     - optimized failregex to match all of "Failed any-method for ... from <HOST>" (gh-1479)
     - eliminated possible complex injections (on user-name resp. auth-info, see gh-1479)
     - optional port part after host (see gh-1533, gh-1581)
+* `filter.d/squid.conf`
+    - Recognize 407 Proxy Authentication Required as failures (gh-1614)
 
 ### New Features
 * New Actions:
