@@ -148,11 +148,8 @@ class DNSUtils:
 		# get it using different ways (a set with names of localhost, hostname, fully qualified):
 		if names is None:
 			names = set(['localhost'])
-			for hostname in (socket.gethostname, socket.getfqdn):
-				try:
-					names |= set([hostname()])
-				except Exception as e: # pragma: no cover
-					logSys.warning("Retrieving own hostnames failed: %s", e)
+			for fqdn in (False, True):
+				names.add(DNSUtils.getHostname(fqdn=fqdn))
 		# cache and return :
 		DNSUtils.CACHE_ipToName.set(key, names)
 		return names
