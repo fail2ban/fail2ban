@@ -119,6 +119,27 @@ class DNSUtils:
 		return ipList
 
 	@staticmethod
+	def getHostname(fqdn=True):
+		"""Get short hostname or fully-qualified hostname of host self"""
+		# try find cached own hostnames (this tuple-key cannot be used elsewhere):
+		key = ('self','hostname', fqdn)
+		name = DNSUtils.CACHE_ipToName.get(key)
+		# get it using different ways (hostname, fully-qualified or vice versa):
+		if name is None:
+			name = ''
+			for hostname in (
+				(socket.getfqdn, socket.gethostname) if fqdn else (socket.gethostname, socket.getfqdn)
+			):
+				try:
+					name = hostname()
+					break
+				except Exception as e: # pragma: no cover
+					logSys.warning("Retrieving own hostnames failed: %s", e)
+		# cache and return :
+		DNSUtils.CACHE_ipToName.set(key, name)
+		return name
+
+	@staticmethod
 	def getSelfNames():
 		"""Get own host names of self"""
 		# try find cached own hostnames (this tuple-key cannot be used elsewhere):
@@ -126,12 +147,9 @@ class DNSUtils:
 		names = DNSUtils.CACHE_ipToName.get(key)
 		# get it using different ways (a set with names of localhost, hostname, fully qualified):
 		if names is None:
-			names = set(['localhost'])
-			for hostname in (socket.gethostname, socket.getfqdn):
-				try:
-					names |= set([hostname()])
-				except Exception as e: # pragma: no cover
-					logSys.warning("Retrieving own hostnames failed: %s", e)
+			names = set([
+				'localhost', DNSUtils.getHostname(False), DNSUtils.getHostname(True)
+			]) - set(['']) # getHostname can return ''
 		# cache and return :
 		DNSUtils.CACHE_ipToName.set(key, names)
 		return names
