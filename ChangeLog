@@ -307,6 +307,8 @@ releases.
       (0.10th resp. IPv6 relevant only, amend for gh-1479)
 * config/pathes-freebsd.conf
     - Fixed filenames for apache and nginx log files (gh-1667)
+* filter.d/exim.conf
+    - optional part `(...)` after host-name before `[IP]` (gh-1751)
 * filter.d/sshd.conf
     - new aggressive rules (gh-864):
       - Connection reset by peer (multi-line rule during authorization process)
