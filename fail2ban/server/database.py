@@ -34,6 +34,14 @@ from .mytime import MyTime
 from .ticket import FailTicket
 from ..helpers import getLogger
 
+try:
+	import sqlitebck
+except ImportError:
+	# Dont print error here, as sqlitebck may not even be used
+	sqlite_backup = False
+else:
+	sqlite_backup = True
+	
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
@@ -162,13 +170,26 @@ class Fail2BanDb(object):
 			"CREATE INDEX bans_ip ON bans(ip);" \
 
 
-	def __init__(self, filename, purgeAge=24*60*60):
+	def __init__(self, filename, purgeAge=24*60*60, backupFilename=None):
 		try:
 			self._lock = RLock()
 			self._db = sqlite3.connect(
 				filename, check_same_thread=False,
 				detect_types=sqlite3.PARSE_DECLTYPES)
+			self._backupDb = None
+			if backupFilename:
+				if not sqlite_backup:
+					logSys.error(
+						"Wanting to put backup DB in memory, but sqlitebck module not found")
+				else:
+					self._backupDb = sqlite3.connect(
+						backupFilename, check_same_thread=False,
+						detect_types=sqlite3.PARSE_DECLTYPES)
+					sqlitebck.copy(self._backupDb, self._db)
+					logSys.info(
+						"Copied backupDB '%s' to memory '%s'", backupFilename, filename)
 			self._dbFilename = filename
+			self._backupDbFilename = backupFilename
 			self._purgeAge = purgeAge
 
 			self._bansMergedCache = {}
@@ -237,6 +258,16 @@ class Fail2BanDb(object):
 	@purgeage.setter
 	def purgeage(self, value):
 		self._purgeAge = int(value)
+
+	def backupDbIfNeeded(self):
+		if self._backupDb:
+			if not sqlite_backup:
+				logSys.error(
+					"Wanting to put backup DB in memory, but sqlitebck module not found")
+			else:
+				sqlitebck.copy(self._db, self._backupDb)
+				logSys.info(
+					"Copied memory '%s' to backupDB '%s'", self._dbFilename, self._backupDbFilename)
 
 	@commitandrollback
 	def createDb(self, cur):
