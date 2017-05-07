@@ -309,6 +309,8 @@ releases.
     - Fixed filenames for apache and nginx log files (gh-1667)
 * filter.d/exim.conf
     - optional part `(...)` after host-name before `[IP]` (gh-1751)
+    - new reason "Unrouteable address" for "rejected RCPT" regex (gh-1762)
+    - match of complex time like `D=2m42s` in regex "no MAIL in SMTP connection" (gh-1766)
 * filter.d/sshd.conf
     - new aggressive rules (gh-864):
       - Connection reset by peer (multi-line rule during authorization process)
