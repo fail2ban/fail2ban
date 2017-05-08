@@ -638,9 +638,9 @@ class Server:
 			if self.__syslogSocket == syslogsocket:
 				return True
 			self.__syslogSocket = syslogsocket
-			# Conditionally reload, logtarget depends on socket path when SYSLOG
-			return self.__logTarget != "SYSLOG"\
-				   or self.setLogTarget(self.__logTarget)
+		# Conditionally reload, logtarget depends on socket path when SYSLOG
+		return self.__logTarget != "SYSLOG"\
+			   or self.setLogTarget(self.__logTarget)
 
 	def getLogTarget(self):
 		with self.__loggingLock:
