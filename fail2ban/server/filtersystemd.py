@@ -175,6 +175,14 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		return v
 
 	##
+	# Get journal reader
+	#
+	# @return journal reader
+
+	def getJournalReader(self):
+		return self.__journal
+
+	##
 	# Format journal log entry into syslog style
 	#
 	# @param entry systemd journal entry dict
