@@ -7,7 +7,7 @@ Fail2Ban: Changelog
 ===================
 
 
-ver. 0.9.x (2016/??/??) - wanna-be-released
+ver. 0.9.7 (2017/05/11) - awaiting-victory
 -----------
 
 0.9.x line is no longer heavily developed.  If you are interested in
@@ -40,7 +40,7 @@ releases.
 * filter.d/cyrus-imap.conf
     - accept entries without login-info resp. hostname before IP address (gh-1707)
 * Filter tests extended with check of all config-regexp, that contains greedy catch-all
-  before `<HOST>`, that is hard-anchored at end or precise  sub expression after `<HOST>`
+  before `<HOST>`, that is hard-anchored at end or precise sub expression after `<HOST>`
 
 ### New Features
 * New Actions:
