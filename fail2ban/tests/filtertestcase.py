@@ -43,7 +43,7 @@ from ..server.failmanager import FailManagerEmpty
 from ..server.ipdns import DNSUtils, IPAddr
 from ..server.mytime import MyTime
 from ..server.utils import Utils, uni_decode
-from .utils import setUpMyTime, tearDownMyTime, mtimesleep, LogCaptureTestCase
+from .utils import setUpMyTime, tearDownMyTime, mtimesleep, with_tmpdir, LogCaptureTestCase
 from .dummyjail import DummyJail
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
@@ -942,17 +942,21 @@ def get_monitor_failures_testcase(Filter_):
 												  skip=3, mode='w')
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 
-		def test_move_file(self):
-			# if we move file into a new location while it has been open already
-			self.file.close()
-			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-												  n=14, mode='w')
+		def _wait4failures(self, count=2):
 			# Poll might need more time
 			self.assertTrue(self.isEmpty(_maxWaitTime(5)),
 							"Queue must be empty but it is not: %s."
 							% (', '.join([str(x) for x in self.jail.queue])))
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
-			Utils.wait_for(lambda: self.filter.failManager.getFailTotal() == 2, _maxWaitTime(10))
+			Utils.wait_for(lambda: self.filter.failManager.getFailTotal() >= count, _maxWaitTime(10))
+			self.assertEqual(self.filter.failManager.getFailTotal(), count)
+
+		def test_move_file(self):
+			# if we move file into a new location while it has been open already
+			self.file.close()
+			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+												  n=14, mode='w')
+			self._wait4failures()
 			self.assertEqual(self.filter.failManager.getFailTotal(), 2)
 
 			# move aside, but leaving the handle still open...
@@ -966,6 +970,34 @@ def get_monitor_failures_testcase(Filter_):
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
+
+		@with_tmpdir
+		def test_move_dir(self, tmp):
+			self.file.close()
+			self.filter.delLogPath(self.name)
+			# if we rename parent dir into a new location (simulate directory-base log rotation)
+			tmpsub1 = os.path.join(tmp, "1")
+			tmpsub2 = os.path.join(tmp, "2")
+			os.mkdir(tmpsub1)
+			self.name = os.path.join(tmpsub1, os.path.basename(self.name))
+			os.close(os.open(self.name, os.O_CREAT|os.O_APPEND)); # create empty file
+			self.filter.addLogPath(self.name, autoSeek=False)
+			
+			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+												  skip=12, n=1, mode='w')
+			self.file.close()
+			self._wait4failures(1)
+
+			# rotate whole directory: rename directory 1 as 2:
+			os.rename(tmpsub1, tmpsub2)
+			os.mkdir(tmpsub1)
+			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+												  skip=12, n=1, mode='w')
+			self.file.close()
+			self._wait4failures(2)
+			# stop before tmpdir deleted (just prevents many monitor events)
+			self.filter.stop()
+
 
 		def _test_move_into_file(self, interim_kill=False):
 			# if we move a new file into the location of an old (monitored) file
