@@ -957,7 +957,6 @@ def get_monitor_failures_testcase(Filter_):
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 												  n=14, mode='w')
 			self._wait4failures()
-			self.assertEqual(self.filter.failManager.getFailTotal(), 2)
 
 			# move aside, but leaving the handle still open...
 			os.rename(self.name, self.name + '.bak')
