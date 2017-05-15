@@ -189,6 +189,10 @@ class FilterPyinotify(FileFilter):
 	##
 	# Deallocates the resources used by pyinotify.
 
+	def cleanup(self):
+		super(FilterPyinotify, self).cleanup()
+		self.__cleanup()
+
 	def __cleanup(self):
 		self.__notifier = None
 		self.__monitor = None
