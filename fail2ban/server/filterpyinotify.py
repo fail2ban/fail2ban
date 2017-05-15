@@ -290,22 +290,9 @@ class FilterPyinotify(FileFilter):
 		except Exception as e: # pragma: no cover
 			logSys.error("Error in FilterPyinotify callback: %s",
 				e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
+			# incr common error counter:
+			self.commonError()
 		self.ticks += 1
-
-	# slow check events while idle:
-	def __check_events(self, *args, **kwargs):
-		if self.idle:
-			if Utils.wait_for(lambda: not self.active or not self.idle,
-				self.sleeptime * 10, self.sleeptime
-			):
-				pass
-
-		# check pending files/dirs (logrotate ready):
-		if not self.idle and self.active:
-			self._checkPending()
-
-		self.ticks += 1
-		return pyinotify.ThreadedNotifier.check_events(self.__notifier, *args, **kwargs)
 
 	##
 	# Main loop.
@@ -317,26 +304,64 @@ class FilterPyinotify(FileFilter):
 		prcevent = pyinotify.ProcessEvent()
 		prcevent.process_default = self.__process_default
 		## timeout for pyinotify must be set in milliseconds (our time values are floats contain seconds)
-		self.__notifier = pyinotify.ThreadedNotifier(self.__monitor,
+		self.__notifier = pyinotify.Notifier(self.__monitor,
 			prcevent, timeout=self.sleeptime * 1000)
-		self.__notifier.check_events = self.__check_events
-		self.__notifier.start()
 		logSys.debug("[%s] filter started (pyinotifier)", self.jailName)
+		while self.active:
+			try:
+
+				# slow check events while idle:
+				if self.idle:
+					if Utils.wait_for(lambda: not self.active or not self.idle,
+						self.sleeptime * 10, self.sleeptime
+					):
+						if not self.active:
+							break
+
+				# default pyinotify handling using Notifier:
+				self.__notifier.process_events()
+				if Utils.wait_for(lambda: not self.active or self.__notifier.check_events(), self.sleeptime):
+					if not self.active:
+						break
+					self.__notifier.read_events()
+
+				# check pending files/dirs (logrotate ready):
+				if not self.idle:
+					self._checkPending()
+
+			except Exception as e: # pragma: no cover
+				if not self.active: # if not active - error by stop...
+					break
+				logSys.error("Caught unhandled exception in main cycle: %r", e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+				# incr common error counter:
+				self.commonError()
+			
+			self.ticks += 1
+
+		logSys.debug("[%s] filter exited (pyinotifier)", self.jailName)
+		self.__notifier = None
+		
 		return True
 
 	##
 	# Call super.stop() and then stop the 'Notifier'
 
 	def stop(self):
+		if self.__notifier: # stop the notifier
+			self.__notifier.stop()
+		# stop filter thread:
 		super(FilterPyinotify, self).stop()
-		# Stop the notifier thread
-		self.__notifier.stop()
-		self.__notifier.stop = lambda *args: 0; # prevent dual stop
+		self.join()
+		if self.__notifier: # stop the notifier
+			self.__notifier.stop()
+			self.__notifier.stop = lambda *args: 0; # prevent dual stop
 
 	##
 	# Wait for exit with cleanup.
 
 	def join(self):
+		self.join = lambda *args: 0
 		self.__cleanup()
 		super(FilterPyinotify, self).join()
 		logSys.debug("[%s] filter terminated (pyinotifier)", self.jailName)
@@ -346,6 +371,6 @@ class FilterPyinotify(FileFilter):
 
 	def __cleanup(self):
 		if self.__notifier:
-			self.__notifier.join()			# to not exit before notifier does
-			self.__notifier = None
-		self.__monitor = None
+			if Utils.wait_for(lambda: not self.__notifier, self.sleeptime * 10):
+				self.__notifier = None
+				self.__monitor = None
