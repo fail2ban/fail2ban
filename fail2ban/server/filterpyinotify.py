@@ -137,14 +137,15 @@ class FilterPyinotify(FileFilter):
 		TODO -- RF:
 		this is a common logic and must be shared/provided by FileFilter
 		"""
-		self.getFailures(path)
-		try:
-			while True:
-				ticket = self.failManager.toBan()
-				self.jail.putFailTicket(ticket)
-		except FailManagerEmpty:
-			self.failManager.cleanup(MyTime.time())
-		self.__modified = False
+		if not self.idle:
+			self.getFailures(path)
+			try:
+				while True:
+					ticket = self.failManager.toBan()
+					self.jail.putFailTicket(ticket)
+			except FailManagerEmpty:
+				self.failManager.cleanup(MyTime.time())
+			self.__modified = False
 
 	def _addPending(self, path, reason, isDir=False):
 		if path not in self.__pending:
@@ -268,7 +269,7 @@ class FilterPyinotify(FileFilter):
 	# @param path the log file to delete
 
 	def _delLogPath(self, path):
-		if not self._delFileWatcher(path):
+		if not self._delFileWatcher(path): # pragma: no cover
 			logSys.error("Failed to remove watch on path: %s", path)
 		self._delPending(path)
 
@@ -315,14 +316,12 @@ class FilterPyinotify(FileFilter):
 					if Utils.wait_for(lambda: not self.active or not self.idle,
 						self.sleeptime * 10, self.sleeptime
 					):
-						if not self.active:
-							break
+						if not self.active: break
 
 				# default pyinotify handling using Notifier:
 				self.__notifier.process_events()
 				if Utils.wait_for(lambda: not self.active or self.__notifier.check_events(), self.sleeptime):
-					if not self.active:
-						break
+					if not self.active: break
 					self.__notifier.read_events()
 
 				# check pending files/dirs (logrotate ready):
@@ -341,7 +340,7 @@ class FilterPyinotify(FileFilter):
 
 		logSys.debug("[%s] filter exited (pyinotifier)", self.jailName)
 		self.__notifier = None
-		
+
 		return True
 
 	##
@@ -353,9 +352,6 @@ class FilterPyinotify(FileFilter):
 		# stop filter thread:
 		super(FilterPyinotify, self).stop()
 		self.join()
-		if self.__notifier: # stop the notifier
-			self.__notifier.stop()
-			self.__notifier.stop = lambda *args: 0; # prevent dual stop
 
 	##
 	# Wait for exit with cleanup.
