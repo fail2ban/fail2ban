@@ -89,23 +89,12 @@ class FilterPyinotify(FileFilter):
 		logSys.log(7, "[%s] %sCallback for Event: %s", self.jailName, origin, event)
 		path = event.pathname
 		# check watching of this path:
-		isWF = isWD = False
-		if path in self.__watchDirs:
-			isWD = True
-		elif path in self.__watchFiles:
+		isWF = False
+		isWD = path in self.__watchDirs
+		if not isWD and path in self.__watchFiles:
 			isWF = True
-		# fix pyinotify behavior with '-unknown-path' (if target not watched also):
-		if (event.mask & pyinotify.IN_MOVE_SELF and 
-				path.endswith('-unknown-path') and not isWF and not isWD
-		):
-			path = path[:-len('-unknown-path')]
-			isWD = path in self.__watchDirs
 		assumeNoDir = False
 		if event.mask & ( pyinotify.IN_CREATE | pyinotify.IN_MOVED_TO ):
-			# refresh watched dir (may be expected):
-			if isWD:
-				self._refreshWatcher(path, isDir=True)
-				return
 			# skip directories altogether
 			if event.mask & pyinotify.IN_ISDIR:
 				logSys.debug("Ignoring creation of directory %s", path)
@@ -116,8 +105,14 @@ class FilterPyinotify(FileFilter):
 				return
 			self._refreshWatcher(path)
 		elif event.mask & (pyinotify.IN_IGNORED | pyinotify.IN_MOVE_SELF | pyinotify.IN_DELETE_SELF):
-			# watch was removed for some reasons (log-rotate?):
 			assumeNoDir = event.mask & (pyinotify.IN_MOVE_SELF | pyinotify.IN_DELETE_SELF)
+			# fix pyinotify behavior with '-unknown-path' (if target not watched also):
+			if (assumeNoDir and 
+					path.endswith('-unknown-path') and not isWF and not isWD
+			):
+				path = path[:-len('-unknown-path')]
+				isWD = path in self.__watchDirs
+			# watch was removed for some reasons (log-rotate?):
 			if isWD and (assumeNoDir or not os.path.isdir(path)):
 				self._addPending(path, event, isDir=True)
 			elif not isWF:
@@ -153,7 +148,7 @@ class FilterPyinotify(FileFilter):
 
 	def _addPending(self, path, reason, isDir=False):
 		if path not in self.__pending:
-			self.__pending[path] = [self.sleeptime / 10, isDir];
+			self.__pending[path] = [Utils.DEFAULT_SLEEP_INTERVAL, isDir];
 			self.__pendingNextTime = 0
 			if isinstance(reason, pyinotify.Event):
 				reason = [reason.maskname, reason.pathname]
@@ -166,43 +161,49 @@ class FilterPyinotify(FileFilter):
 		except KeyError: pass
 
 	def _checkPending(self):
-		if self.__pending:
-			ntm = time.time()
-			if ntm > self.__pendingNextTime:
-				found = {}
-				minTime = 60
-				for path, (retardTM, isDir) in self.__pending.iteritems():
-					if ntm - self.__pendingChkTime < retardTM:
-						if minTime > retardTM: minTime = retardTM
-						continue
-					chkpath = os.path.isdir if isDir else os.path.isfile
-					if not chkpath(path): # not found - prolong for next time
-						if retardTM < 60: retardTM *= 2
-						if minTime > retardTM: minTime = retardTM
-						self.__pending[path][0] = retardTM
-						continue
-					logSys.log(logging.MSG, "Log presence detected for %s %s", 
-						"directory" if isDir else "file", path)
-					found[path] = isDir
-				for path in found:
-					try:
-						del self.__pending[path]
-					except KeyError: pass
-				self.__pendingChkTime = time.time()
-				self.__pendingNextTime = self.__pendingChkTime + minTime
-				# process now because we'he missed it in monitoring:
-				for path, isDir in found.iteritems():
-					self._refreshWatcher(path, isDir=isDir)
-					if isDir:
-						for logpath in self.__watchFiles:
-							if logpath.startswith(path + pathsep):
-								if not os.path.isfile(logpath):
-									self._addPending(logpath, ['FROM_PARDIR', path])
-								else:
-									self._refreshWatcher(logpath)
-									self._process_file(logpath)
-					else:
-						self._process_file(path)
+		if not self.__pending:
+			return
+		ntm = time.time()
+		if ntm < self.__pendingNextTime:
+			return
+		found = {}
+		minTime = 60
+		for path, (retardTM, isDir) in self.__pending.iteritems():
+			if ntm - self.__pendingChkTime < retardTM:
+				if minTime > retardTM: minTime = retardTM
+				continue
+			chkpath = os.path.isdir if isDir else os.path.isfile
+			if not chkpath(path): # not found - prolong for next time
+				if retardTM < 60: retardTM *= 2
+				if minTime > retardTM: minTime = retardTM
+				self.__pending[path][0] = retardTM
+				continue
+			logSys.log(logging.MSG, "Log presence detected for %s %s", 
+				"directory" if isDir else "file", path)
+			found[path] = isDir
+		for path in found:
+			try:
+				del self.__pending[path]
+			except KeyError: pass
+		self.__pendingChkTime = time.time()
+		self.__pendingNextTime = self.__pendingChkTime + minTime
+		# process now because we've missed it in monitoring:
+		for path, isDir in found.iteritems():
+			# refresh monitoring of this:
+			self._refreshWatcher(path, isDir=isDir)
+			if isDir:
+				# check all files belong to this dir:
+				for logpath in self.__watchFiles:
+					if logpath.startswith(path + pathsep):
+						# if still no file - add to pending, otherwise refresh and process:
+						if not os.path.isfile(logpath):
+							self._addPending(logpath, ('FROM_PARDIR', path))
+						else:
+							self._refreshWatcher(logpath)
+							self._process_file(logpath)
+			else:
+				# process (possibly no old events for it from watcher):
+				self._process_file(path)
 
 	def _refreshWatcher(self, oldPath, newPath=None, isDir=False):
 		if not newPath: newPath = oldPath
@@ -286,7 +287,7 @@ class FilterPyinotify(FileFilter):
 	def __process_default(self, event):
 		try:
 			self.callback(event, origin='Default ')
-		except Exception as e:
+		except Exception as e: # pragma: no cover
 			logSys.error("Error in FilterPyinotify callback: %s",
 				e, exc_info=logSys.getEffectiveLevel() <= logging.DEBUG)
 		self.ticks += 1
@@ -300,7 +301,7 @@ class FilterPyinotify(FileFilter):
 				pass
 
 		# check pending files/dirs (logrotate ready):
-		if not self.idle:
+		if not self.idle and self.active:
 			self._checkPending()
 
 		self.ticks += 1

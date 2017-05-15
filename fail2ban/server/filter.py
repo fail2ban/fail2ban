@@ -895,7 +895,7 @@ class FileFilter(Filter):
 			# see http://python.org/dev/peps/pep-3151/
 			except IOError as e:
 				logSys.error("Unable to open %s", filename)
-				if e.errno != 2:
+				if e.errno != 2: # errno.ENOENT
 					logSys.exception(e)
 				return False
 			except OSError as e: # pragma: no cover - requires race condition to tigger this
