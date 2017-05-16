@@ -33,6 +33,7 @@ TODO: implementing of options resp. other tasks from PR #1346
 * fail2ban-regex: fixed matched output by multi-line (buffered) parsing
 * fail2ban-regex: support for multi-line debuggex URL implemented (gh-422)
 * fixed ipv6-action errors on systems not supporting ipv6 and vice versa (gh-1741)
+* fixed directory-based log-rotate for pyinotify-backend (gh-1778)
 
 ### New Features
 * New Actions:
