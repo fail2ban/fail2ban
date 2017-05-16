@@ -1,0 +1,4 @@
+# failJSON: { "time": "2017-01-09T10:50:27", "match": true , "host": "78.97.84.130" }
+78.97.84.130 - - [09/Jan/2017:10:50:27 +0200] "POST /wp-login.php HTTP/1.1" 500 4332 "https://www.environment.co.za/wp-login.php" "Opera/9.80 (Windows NT 6.2; Win64; x64) Presto/2.12.388 Version/12.17" "-"PORT:443 0.271 0.271 . "GZIP:-"
+# failJSON: { "time": "2017-01-09T10:50:30", "match": true , "host": "78.97.84.130" }
+78.97.84.130 - - [09/Jan/2017:10:50:30 +0200] "POST /wp-login.php HTTP/1.1" 500 4332 "https://www.environment.co.za/wp-login.php?redirect_to=https%3A%2F%2Fwww.environment.co.za%2Fwp-admin%2Fedit-tags.php%3Ftaxonomy%3Dcategory&reauth=1" "Opera/9.80 (Windows NT 6.2; Win64; x64) Presto/2.12.388 Version/12.17" "-"PORT:443 0.246 0.246 . "GZIP:-" 
