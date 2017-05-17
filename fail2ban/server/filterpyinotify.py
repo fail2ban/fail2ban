@@ -115,7 +115,7 @@ class FilterPyinotify(FileFilter):
 			# watch was removed for some reasons (log-rotate?):
 			if isWD and (assumeNoDir or not os.path.isdir(path)):
 				self._addPending(path, event, isDir=True)
-			elif not isWF:
+			elif not isWF: # pragma: no cover (assume too sporadic)
 				for logpath in self.__watchDirs:
 					if logpath.startswith(path + pathsep) and (assumeNoDir or not os.path.isdir(logpath)):
 						self._addPending(logpath, event, isDir=True)
@@ -182,14 +182,11 @@ class FilterPyinotify(FileFilter):
 			logSys.log(logging.MSG, "Log presence detected for %s %s", 
 				"directory" if isDir else "file", path)
 			found[path] = isDir
-		for path in found:
-			try:
-				del self.__pending[path]
-			except KeyError: pass
 		self.__pendingChkTime = time.time()
 		self.__pendingNextTime = self.__pendingChkTime + minTime
 		# process now because we've missed it in monitoring:
 		for path, isDir in found.iteritems():
+			self._delPending(path)
 			# refresh monitoring of this:
 			self._refreshWatcher(path, isDir=isDir)
 			if isDir:
