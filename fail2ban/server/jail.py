@@ -226,7 +226,7 @@ class Jail(object):
 		if opt == 'increment':
 			if isinstance(value, str):
 				be[opt] = value.lower() in ("yes", "true", "ok", "1")
-			if be[opt] and self.database is None:
+			if be.get(opt) and self.database is None:
 				logSys.warning("ban time increment is not available as long jail database is not set")
 		if opt in ['maxtime', 'rndtime']:
 			if not value is None:

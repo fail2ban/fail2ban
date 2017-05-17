@@ -121,7 +121,26 @@ class ObserverThread(JailThread):
 	def add_timer(self, starttime, *event):
 		"""Add a timer event to queue will start (and wake) in 'starttime' seconds
 		"""
+		# in testing we should wait (looping) for the possible time drifts:
+		if MyTime.myTime is not None and starttime:
+			# test time after short sleep:
+			t = threading.Timer(Utils.DEFAULT_SLEEP_INTERVAL, self._delayedEvent,
+				(MyTime.time() + starttime, time.time() + starttime, event)
+			)
+			t.start()
+			return
+		# add timer event:
 		t = threading.Timer(starttime, self.add, event)
+		t.start()
+
+	def _delayedEvent(self, endMyTime, endTime, event):
+		if MyTime.time() >= endMyTime or time.time() >= endTime:
+			self.add_timer(0, *event)
+			return
+		# repeat after short sleep:
+		t = threading.Timer(Utils.DEFAULT_SLEEP_INTERVAL, self._delayedEvent,
+			(endMyTime, endTime, event)
+		)
 		t.start()
 
 	def pulse_notify(self):
@@ -164,8 +183,6 @@ class ObserverThread(JailThread):
 		self.add_named_timer('DB_PURGE', self.__db_purge_interval, 'db_purge')
 		## Mapping of all possible event types of observer:
 		__meth = {
-			'failureFound': self.failureFound,
-			'banFound': self.banFound,
 			# universal lambda:
 			'call': self.call_lambda,
 			# system and service events:
@@ -196,7 +213,8 @@ class ObserverThread(JailThread):
 						if ev is None:
 							break
 						## retrieve method by name
-						meth = __meth[ev[0]]
+						meth = ev[0]
+						if not callable(ev[0]): meth = __meth.get(meth) or getattr(self, meth)
 						## execute it with rest of event as variable arguments
 						meth(*ev[1:])
 					except Exception as e:
@@ -359,6 +377,7 @@ class ObserverThread(JailThread):
 			db = jail.database
 			if db is not None:
 				for banCount, timeOfBan, lastBanTime in db.getBan(ip, jail):
+					banCount = max(banCount, ticket.getBanCount())
 					retryCount = ((1 << (banCount if banCount < 20 else 20))/2 + 1)
 					# if lastBanTime == -1 or timeOfBan + lastBanTime * 2 > MyTime.time():
 					# 	retryCount = maxRetry
@@ -378,8 +397,8 @@ class ObserverThread(JailThread):
 				(', Ban' if retryCount >= maxRetry else ''))
 			# retryCount-1, because a ticket was already once incremented by filter self
 			retryCount = failManager.addFailure(ticket, retryCount - 1, True)
-
-			# after observe we have increased count >= maxretry ...
+			ticket.setBanCount(banCount)
+			# after observe we have increased attempt count, compare it >= maxretry ...
 			if retryCount >= maxRetry:
 				# perform the banning of the IP now (again)
 				# [todo]: this code part will be used multiple times - optimize it later.
@@ -424,12 +443,14 @@ class ObserverThread(JailThread):
 				for banCount, timeOfBan, lastBanTime in \
 					jail.database.getBan(ip, jail, overalljails=be.get('overalljails', False)) \
 				:
+					# increment count in ticket (if still not increased from banmanager, test-cases?):
+					if banCount >= ticket.getBanCount():
+						ticket.setBanCount(banCount+1)
 					logSys.debug('IP %s was already banned: %s #, %s', ip, banCount, timeOfBan);
-					ticket.setBanCount(banCount);
 					# calculate new ban time
 					if banCount > 0:
 						banTime = be['evformula'](self.BanTimeIncr(banTime, banCount))
-					ticket.setBanTime(banTime);
+					ticket.setBanTime(banTime)
 					# check current ticket time to prevent increasing for twice read tickets (restored from log file besides database after restart)
 					if ticket.getTime() > timeOfBan:
 						logSys.info('[%s] IP %s is bad: %s # last %s - incr %s to %s' % (jail.name, ip, banCount, 
@@ -448,12 +469,14 @@ class ObserverThread(JailThread):
 		Observer will check ip was known (bad) and possibly increase/prolong a ban time
 		Secondary we will actualize the bans and bips (bad ip) in database
 		"""
-		oldbtime = btime
-		ip = ticket.getIP()
-		logSys.debug("[%s] Observer: ban found %s, %s", jail.name, ip, btime)
+		if ticket.restored: # pragma: no cover (normally not resored tickets only)
+			return
 		try:
-			# if not permanent, not restored and ban time was not set - check time should be increased:
-			if btime != -1 and not ticket.restored and ticket.getBanTime() is None:
+			oldbtime = btime
+			ip = ticket.getIP()
+			logSys.debug("[%s] Observer: ban found %s, %s", jail.name, ip, btime)
+			# if not permanent and ban time was not set - check time should be increased:
+			if btime != -1 and ticket.getBanTime() is None:
 				btime = self.incrBanTime(jail, btime, ticket)
 				# if we should prolong ban time:
 				if btime == -1 or btime > oldbtime:
@@ -469,16 +492,32 @@ class ObserverThread(JailThread):
 					return False
 			else:
 				logtime = ('permanent', 'infinite')
-			# increment count:
-			ticket.incrBanCount()
 			# if ban time was prolonged - log again with new ban time:
 			if btime != oldbtime:
 				logSys.notice("[%s] Increase Ban %s (%d # %s -> %s)", jail.name, 
 					ip, ticket.getBanCount(), *logtime)
+				# delayed prolonging ticket via actions that expected this (not later than 10 sec):
+				logSys.log(5, "[%s] Observer: prolong %s in %s", jail.name, ip, (btime, oldbtime))
+				self.add_timer(min(10, max(0, btime - oldbtime - 5)), self.prolongBan, ticket, jail)
 			# add ticket to database, but only if was not restored (not already read from database):
 			if jail.database is not None and not ticket.restored:
 				# add to database always only after ban time was calculated an not yet already banned:
 				jail.database.addBan(jail, ticket)
+		except Exception as e:
+			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+
+	def prolongBan(self, ticket, jail):
+		""" Notify observer a ban occured for ip
+
+		Observer will check ip was known (bad) and possibly increase/prolong a ban time
+		Secondary we will actualize the bans and bips (bad ip) in database
+		"""
+		try:
+			btime = ticket.getBanTime()
+			ip = ticket.getIP()
+			logSys.debug("[%s] Observer: prolong %s, %s", jail.name, ip, btime)
+			# prolong ticket via actions that expected this:
+			jail.actions._prolongBan(ticket)
 		except Exception as e:
 			logSys.error('%s', e, exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 

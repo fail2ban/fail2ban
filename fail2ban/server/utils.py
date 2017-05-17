@@ -102,7 +102,7 @@ class Utils():
 		def unset(self, k):
 			try:
 				del self._cache[k]
-			except KeyError: # pragme: no cover
+			except KeyError: # pragma: no cover
 				pass
 
 
@@ -330,7 +330,7 @@ class Utils():
 				return e.errno == errno.EPERM
 			else:
 				return True
-	else: # pragma : no cover (no windows currently supported)
+	else: # pragma: no cover (no windows currently supported)
 		@staticmethod
 		def pid_exists(pid):
 			import ctypes

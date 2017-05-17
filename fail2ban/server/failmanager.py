@@ -27,7 +27,7 @@ __license__ = "GPL"
 from threading import Lock
 import logging
 
-from .ticket import FailTicket
+from .ticket import FailTicket, BanTicket
 from ..helpers import getLogger, BgService
 
 # Gets the instance of the logger.
@@ -103,13 +103,13 @@ class FailManager:
 					fData.setMatches(matches[-self.maxEntries:])
 			except KeyError:
 				# not found - already banned - prevent to add failure if comes from observer:
-				if observed:
+				if observed or isinstance(ticket, BanTicket):
 					return
 				# if already FailTicket - add it direct, otherwise create (using copy all ticket data):
 				if isinstance(ticket, FailTicket):
 					fData = ticket;
 				else:
-					fData = FailTicket(ticket=ticket)
+					fData = FailTicket.wrap(ticket)
 				if count > ticket.getAttempt():
 					fData.setRetry(count)
 				self.__failList[fid] = fData

@@ -149,7 +149,7 @@ class CallingMap(MutableMapping, object):
 	def __len__(self):
 		return len(self.data)
 
-	def copy(self): # pargma: no cover
+	def copy(self): # pragma: no cover
 		return self.__class__(_merge_copy_dicts(self.data, self.storage))
 
 
@@ -224,6 +224,10 @@ class ActionBase(object):
 		"""
 		pass
 
+	@property
+	def _prolongable(self): # pragma: no cover - abstract
+		return False
+
 	def unban(self, aInfo): # pragma: no cover - abstract
 		"""Executed when a ban expires.
 
@@ -235,6 +239,11 @@ class ActionBase(object):
 		"""
 		pass
 
+
+WRAP_CMD_PARAMS = {
+	'timeout': 'str2seconds',
+	'bantime': 'ignore',
+}
 
 class CommandAction(ActionBase):
 	"""A action which executes OS shell commands.
@@ -306,7 +315,10 @@ class CommandAction(ActionBase):
 	def __setattr__(self, name, value):
 		if not name.startswith('_') and not self.__init and not callable(value):
 			# special case for some pasrameters:
-			if name in ('timeout', 'bantime'):
+			wrp = WRAP_CMD_PARAMS.get(name)
+			if wrp == 'ignore': # ignore (filter) dynamic parameters
+				return
+			elif wrp == 'str2seconds':
 				value = str(MyTime.str2seconds(value))
 			# parameters changed - clear properties and substitution cache:
 			self.__properties = None
@@ -434,6 +446,26 @@ class CommandAction(ActionBase):
 		if not self._processCmd('<actionban>', aInfo):
 			raise RuntimeError("Error banning %(ip)s" % aInfo)
 
+	@property
+	def _prolongable(self):
+		return (hasattr(self, 'actionprolong') and self.actionprolong 
+			and not str(self.actionprolong).isspace())
+	
+	def prolong(self, aInfo):
+		"""Executes the "actionprolong" command.
+
+		Replaces the tags in the action command with actions properties
+		and ban information, and executes the resulting command.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
+		"""
+		if not self._processCmd('<actionprolong>', aInfo):
+			raise RuntimeError("Error prolonging %(ip)s" % aInfo)
+
 	def unban(self, aInfo):
 		"""Executes the "actionunban" command.
 
@@ -498,8 +530,10 @@ class CommandAction(ActionBase):
 		"""
 		return self._executeOperation('<actionreload>', 'reloading')
 
-	@staticmethod
-	def escapeTag(value):
+	ESCAPE_CRE = re.compile(r"""[\\#&;`|*?~<>^()\[\]{}$'"\n\r]""")
+	
+	@classmethod
+	def escapeTag(cls, value):
 		"""Escape characters which may be used for command injection.
 
 		Parameters
@@ -516,12 +550,15 @@ class CommandAction(ActionBase):
 		-----
 		The following characters are escaped::
 
-			\\#&;`|*?~<>^()[]{}$'"
+			\\#&;`|*?~<>^()[]{}$'"\n\r
 
 		"""
-		for c in '\\#&;`|*?~<>^()[]{}$\'"':
-			if c in value:
-				value = value.replace(c, '\\' + c)
+		_map2c = {'\n': 'n', '\r': 'r'}
+		def substChar(m):
+			c = m.group()
+			return '\\' + _map2c.get(c, c)
+		
+		value = cls.ESCAPE_CRE.sub(substChar, value)
 		return value
 
 	@classmethod
@@ -780,7 +817,8 @@ class CommandAction(ActionBase):
 		RuntimeError
 			If command execution times out.
 		"""
-		logSys.debug(realCmd)
+		if logSys.getEffectiveLevel() < logging.DEBUG: # pragma: no cover
+			logSys.log(9, realCmd)
 		if not realCmd:
 			logSys.debug("Nothing to do")
 			return True

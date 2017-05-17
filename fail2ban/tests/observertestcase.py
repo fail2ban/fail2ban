@@ -31,9 +31,8 @@ import tempfile
 import time
 
 from ..server.mytime import MyTime
-from ..server.ticket import FailTicket
+from ..server.ticket import FailTicket, BanTicket
 from ..server.failmanager import FailManager
-from ..server.banmanager import BanManager
 from ..server.observer import Observers, ObserverThread
 from ..server.utils import Utils
 from .utils import LogCaptureTestCase
@@ -246,7 +245,6 @@ class BanTimeIncrDB(unittest.TestCase):
 		# incr time and ban a ticket again :
 		ticket.setTime(stime + 15)
 		self.assertEqual(self.incrBanTime(ticket, 10), 20)
-		ticket.incrBanCount()
 		self.db.addBan(jail, ticket)
 		# get a ticket already banned in this jail:
 		self.assertEqual(
@@ -292,7 +290,6 @@ class BanTimeIncrDB(unittest.TestCase):
 			ticket.setTime(stime + lastBanTime + 5)
 			banTime = self.incrBanTime(ticket, 10)
 			self.assertEqual(banTime, lastBanTime * 2)
-			ticket.incrBanCount()
 			self.db.addBan(jail, ticket)
 			lastBanTime = banTime
 		# increase again, but the last multiplier reached (time not increased):
@@ -300,7 +297,6 @@ class BanTimeIncrDB(unittest.TestCase):
 		banTime = self.incrBanTime(ticket, 10)
 		self.assertNotEqual(banTime, lastBanTime * 2)
 		self.assertEqual(banTime, lastBanTime)
-		ticket.incrBanCount()
 		self.db.addBan(jail, ticket)
 		lastBanTime = banTime
 		# add two tickets from yesterday: one unbanned (bantime already out-dated):
@@ -500,7 +496,7 @@ class BanTimeIncrDB(unittest.TestCase):
 
 		# wrap FailTicket to BanTicket:
 		failticket2 = ticket2
-		ticket2 = BanManager.createBanTicket(failticket2)
+		ticket2 = BanTicket.wrap(failticket2)
 		self.assertEqual(ticket2, failticket2)
 		# add this ticket to ban (use observer only without ban manager):
 		obs.add('banFound', ticket2, jail, 10)

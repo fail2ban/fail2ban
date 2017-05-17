@@ -69,9 +69,14 @@ TODO: implementing of options resp. other tasks from PR #1346
   - `<fid>` - failure identifier (if raw resp. failures without IP address)
   - `<ip-rev>` - PTR reversed representation of IP address
   - `<ip-host>` - host name of the IP address
+  - `<bancount>` - ban count of this offender if known as bad (started by 1 for unknown)
+  - `<bantime>` - current ban-time of the ticket (prolongation can be retarded up to 10 sec.)
   - `<F-...>` - interpolates to the corresponding filter group capture `...`
   - `<fq-hostname>` - fully-qualified name of host (the same as `$(hostname -f)`)
   - `<sh-hostname>` - short hostname (the same as `$(uname -n)`)
+* Introduced new action command `actionprolong` to prolong ban-time (e. g. set new timeout if expected);
+  Several actions (like ipset, etc.) rewritten using net logic with `actionprolong`.
+  Note: because ban-time is dynamic, it was removed from jail.conf as timeout argument (check jail.local).
 * Allow to use filter options by `fail2ban-regex`, example:
   fail2ban-regex text.log "sshd[mode=aggressive]"
 * Samples test case factory extended with filter options - dict in JSON to control 

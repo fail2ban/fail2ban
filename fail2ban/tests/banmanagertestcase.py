@@ -100,21 +100,22 @@ class AddFailure(unittest.TestCase):
 		
 	def testBanTimeIncr(self):
 		ticket = BanTicket(self.__ticket.getIP(), self.__ticket.getTime())
-		## increase twice and at end permanent:
+		## increase twice and at end permanent, check time/count increase:
+		c = 0
 		for i in (1000, 2000, -1):
-			self.__banManager.addBanTicket(self.__ticket)
+			self.__banManager.addBanTicket(self.__ticket); c += 1
 			ticket.setBanTime(i)
-			self.assertFalse(self.__banManager.addBanTicket(ticket))
+			self.assertFalse(self.__banManager.addBanTicket(ticket)); # no incr of c (already banned)
 			self.assertEqual(str(self.__banManager.getTicketByID(ticket.getIP())), 
-				"BanTicket: ip=%s time=%s bantime=%s bancount=0 #attempts=0 matches=[]" % (ticket.getIP(), ticket.getTime(), i))
+				"BanTicket: ip=%s time=%s bantime=%s bancount=%s #attempts=0 matches=[]" % (ticket.getIP(), ticket.getTime(), i, c))
 		## after permanent, it should remain permanent ban time (-1):
-		self.__banManager.addBanTicket(self.__ticket)
+		self.__banManager.addBanTicket(self.__ticket); c += 1
 		ticket.setBanTime(-1)
-		self.assertFalse(self.__banManager.addBanTicket(ticket))
+		self.assertFalse(self.__banManager.addBanTicket(ticket)); # no incr of c (already banned)
 		ticket.setBanTime(1000)
-		self.assertFalse(self.__banManager.addBanTicket(ticket))
+		self.assertFalse(self.__banManager.addBanTicket(ticket)); # no incr of c (already banned)
 		self.assertEqual(str(self.__banManager.getTicketByID(ticket.getIP())), 
-			"BanTicket: ip=%s time=%s bantime=%s bancount=0 #attempts=0 matches=[]" % (ticket.getIP(), ticket.getTime(), -1))
+			"BanTicket: ip=%s time=%s bantime=%s bancount=%s #attempts=0 matches=[]" % (ticket.getIP(), ticket.getTime(), -1, c))
 
 	def testUnban(self):
 		btime = self.__banManager.getBanTime()
