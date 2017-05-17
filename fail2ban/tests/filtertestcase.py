@@ -973,6 +973,7 @@ def get_monitor_failures_testcase(Filter_):
 		@with_tmpdir
 		def test_move_dir(self, tmp):
 			self.file.close()
+			self.filter.setMaxRetry(10)
 			self.filter.delLogPath(self.name)
 			# if we rename parent dir into a new location (simulate directory-base log rotation)
 			tmpsub1 = os.path.join(tmp, "1")
@@ -987,13 +988,25 @@ def get_monitor_failures_testcase(Filter_):
 			self.file.close()
 			self._wait4failures(1)
 
-			# rotate whole directory: rename directory 1 as 2:
-			os.rename(tmpsub1, tmpsub2)
+			# rotate whole directory: rename directory 1 as 2a:
+			os.rename(tmpsub1, tmpsub2 + 'a')
 			os.mkdir(tmpsub1)
 			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
 												  skip=12, n=1, mode='w')
 			self.file.close()
 			self._wait4failures(2)
+
+			# rotate whole directory: rename directory 1 as 2b:
+			os.rename(tmpsub1, tmpsub2 + 'b')
+			# wait a bit in-between (try to increase coverage, should find pending file for pending dir):
+			self.waitForTicks(2)
+			os.mkdir(tmpsub1)
+			self.waitForTicks(2)
+			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+												  skip=12, n=1, mode='w')
+			self.file.close()
+			self._wait4failures(3)
+
 			# stop before tmpdir deleted (just prevents many monitor events)
 			self.filter.stop()
 
