@@ -183,8 +183,6 @@ class ObserverThread(JailThread):
 		self.add_named_timer('DB_PURGE', self.__db_purge_interval, 'db_purge')
 		## Mapping of all possible event types of observer:
 		__meth = {
-			'failureFound': self.failureFound,
-			'banFound': self.banFound,
 			# universal lambda:
 			'call': self.call_lambda,
 			# system and service events:
@@ -216,7 +214,7 @@ class ObserverThread(JailThread):
 							break
 						## retrieve method by name
 						meth = ev[0]
-						if not callable(ev[0]): meth = __meth[meth]
+						if not callable(ev[0]): meth = __meth.get(meth) or getattr(self, meth)
 						## execute it with rest of event as variable arguments
 						meth(*ev[1:])
 					except Exception as e:

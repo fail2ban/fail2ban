@@ -95,6 +95,22 @@ def _observer_wait_idle():
 		Observers.Main.wait_empty(MID_WAITTIME)
 		Observers.Main.wait_idle(MID_WAITTIME / 5)
 
+def _observer_wait_before_incrban(cond, timeout=MID_WAITTIME):
+	"""Helper to block observer before increase bantime until some condition gets true"""
+	if Observers.Main is not None:
+		# switch ban handler:
+		_obs_banFound = Observers.Main.banFound
+		def _banFound(*args, **kwargs):
+			# restore original handler:
+			Observers.Main.banFound = _obs_banFound
+			# wait for:
+			logSys.debug('  [Observer::banFound] *** observer blocked for test')
+			Utils.wait_for(cond, timeout)
+			logSys.debug('  [Observer::banFound] +++ observer runs again')
+			# original banFound:
+			_obs_banFound(*args, **kwargs)
+		Observers.Main.banFound = _banFound
+
 #
 # Mocking .exit so we could test its correct operation.
 # Two custom exceptions will be assessed to be raised in the tests
@@ -1179,8 +1195,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"[DEFAULT]",
 				"",
 				"[Definition]",
-				"actionban =     printf %%b '[%(name)s] %(actname)s: ++ ban <ip> -t <bantime> : <F-MSG>'",
-				"actionprolong = printf %%b '[%(name)s] %(actname)s: ++ prolong <ip> -t <bantime> : <F-MSG>'" \
+				"actionban =     printf %%s \"[%(name)s] %(actname)s: ++ ban <ip> -t <bantime> : <F-MSG>\"", \
+				"actionprolong = printf %%s \"[%(name)s] %(actname)s: ++ prolong <ip> -t <bantime> : <F-MSG>\"" \
 					if prolong else "",
 				"actionunban =   printf %%b '[%(name)s] %(actname)s: -- unban <ip>'",
 			)
@@ -1223,6 +1239,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.11: I'm bad \"hacker\" `` $(echo test)",) * 3
 		))
 		# wait for ban:
+		_observer_wait_idle()
 		self.assertLogged(
 			"stdout: '[test-jail1] test-action1: ++ ban 192.0.2.11 -t 300 : ",
 			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.11 -t 300 : ",
@@ -1233,12 +1250,19 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.pruneLog("[test-phase 1) time+10m]")
 		# jump to the future (+10 minutes):
 		_time_shift(10)
+		_observer_wait_idle()
 		self.assertLogged(
 			"stdout: '[test-jail1] test-action1: -- unban 192.0.2.11",
 			"stdout: '[test-jail1] test-action2: -- unban 192.0.2.11",
+			"0 ticket(s) in 'test-jail1'",
 			all=True, wait=MID_WAITTIME)
+		_observer_wait_idle()
 
 		self.pruneLog("[test-phase 2) time+10m]")
+		# following tests are time-related - observer can prolong ticket (increase ban-time) 
+		# before banning, so block it here before banFound called, prolong case later:
+		wakeObs = False
+		_observer_wait_before_incrban(lambda: wakeObs)
 		# write again (IP already bad):
 		_write_file(test1log, "w+", *(
 		  (str(int(MyTime.time())) + " failure 401 from 192.0.2.11: I'm very bad \"hacker\" `` $(echo test)",) * 2
@@ -1248,7 +1272,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"stdout: '[test-jail1] test-action1: ++ ban 192.0.2.11 -t 300 : ",
 			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.11 -t 300 : ",
 			all=True, wait=MID_WAITTIME)
-		# wait for observer idle (write all tickets to db):
+		# unblock observer here and wait it is done:
+		wakeObs = True
 		_observer_wait_idle()
 
 		self.pruneLog("[test-phase 2) time+11m]")
