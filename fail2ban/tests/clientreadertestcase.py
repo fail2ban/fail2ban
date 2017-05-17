@@ -28,7 +28,7 @@ import re
 import shutil
 import tempfile
 import unittest
-from ..client.configreader import ConfigReader, ConfigReaderUnshared
+from ..client.configreader import ConfigReader, ConfigReaderUnshared, NoSectionError
 from ..client import configparserinc
 from ..client.jailreader import JailReader
 from ..client.filterreader import FilterReader
@@ -317,7 +317,17 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertLogged('File %s is a dangling link, thus cannot be monitored' % f2)
 		self.assertEqual(JailReader._glob(os.path.join(d, 'nonexisting')), [])
 
-		
+	def testCommonFunction(self):
+		c = ConfigReader(share_config={})
+		# test common functionalities (no shared, without read of config):
+		self.assertEqual(c.sections(), [])
+		self.assertFalse(c.has_section('test'))
+		self.assertRaises(NoSectionError, c.merge_section, 'test', {})
+		self.assertRaises(NoSectionError, c.options, 'test')
+		self.assertRaises(NoSectionError, c.get, 'test', 'any')
+		self.assertRaises(NoSectionError, c.getOptions, 'test', {})
+
+
 class FilterReaderTest(unittest.TestCase):
 
 	def __init__(self, *args, **kwargs):
@@ -712,6 +722,7 @@ class JailsReaderTest(LogCaptureTestCase):
 			self.assertEqual(opts['socket'], '/var/run/fail2ban/fail2ban.sock')
 			self.assertEqual(opts['pidfile'], '/var/run/fail2ban/fail2ban.pid')
 
+			configurator.readAll()
 			configurator.getOptions()
 			configurator.convertToProtocol()
 			commands = configurator.getConfigStream()

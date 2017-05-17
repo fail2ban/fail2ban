@@ -43,7 +43,7 @@ from ..server.failmanager import FailManagerEmpty
 from ..server.ipdns import DNSUtils, IPAddr
 from ..server.mytime import MyTime
 from ..server.utils import Utils, uni_decode
-from .utils import setUpMyTime, tearDownMyTime, mtimesleep, LogCaptureTestCase
+from .utils import setUpMyTime, tearDownMyTime, mtimesleep, with_tmpdir, LogCaptureTestCase
 from .dummyjail import DummyJail
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
@@ -325,6 +325,17 @@ class IgnoreIP(LogCaptureTestCase):
 		LogCaptureTestCase.setUp(self)
 		self.jail = DummyJail()
 		self.filter = FileFilter(self.jail)
+		self.filter.ignoreSelf = False
+
+	def testIgnoreSelfIP(self):
+		ipList = ("127.0.0.1",)
+		# test ignoreSelf is false:
+		for ip in ipList:
+			self.assertFalse(self.filter.inIgnoreIPList(ip))
+		# test ignoreSelf with true:
+		self.filter.ignoreSelf = True
+		for ip in ipList:
+			self.assertTrue(self.filter.inIgnoreIPList(ip))
 
 	def testIgnoreIPOK(self):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
@@ -931,18 +942,21 @@ def get_monitor_failures_testcase(Filter_):
 												  skip=3, mode='w')
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 
-		def test_move_file(self):
-			# if we move file into a new location while it has been open already
-			self.file.close()
-			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
-												  n=14, mode='w')
+		def _wait4failures(self, count=2):
 			# Poll might need more time
 			self.assertTrue(self.isEmpty(_maxWaitTime(5)),
 							"Queue must be empty but it is not: %s."
 							% (', '.join([str(x) for x in self.jail.queue])))
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
-			Utils.wait_for(lambda: self.filter.failManager.getFailTotal() == 2, _maxWaitTime(10))
-			self.assertEqual(self.filter.failManager.getFailTotal(), 2)
+			Utils.wait_for(lambda: self.filter.failManager.getFailTotal() >= count, _maxWaitTime(10))
+			self.assertEqual(self.filter.failManager.getFailTotal(), count)
+
+		def test_move_file(self):
+			# if we move file into a new location while it has been open already
+			self.file.close()
+			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+												  n=14, mode='w')
+			self._wait4failures()
 
 			# move aside, but leaving the handle still open...
 			os.rename(self.name, self.name + '.bak')
@@ -955,6 +969,34 @@ def get_monitor_failures_testcase(Filter_):
 			_copy_lines_between_files(GetFailures.FILENAME_01, self.name, n=100).close()
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
+
+		@with_tmpdir
+		def test_move_dir(self, tmp):
+			self.file.close()
+			self.filter.delLogPath(self.name)
+			# if we rename parent dir into a new location (simulate directory-base log rotation)
+			tmpsub1 = os.path.join(tmp, "1")
+			tmpsub2 = os.path.join(tmp, "2")
+			os.mkdir(tmpsub1)
+			self.name = os.path.join(tmpsub1, os.path.basename(self.name))
+			os.close(os.open(self.name, os.O_CREAT|os.O_APPEND)); # create empty file
+			self.filter.addLogPath(self.name, autoSeek=False)
+			
+			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+												  skip=12, n=1, mode='w')
+			self.file.close()
+			self._wait4failures(1)
+
+			# rotate whole directory: rename directory 1 as 2:
+			os.rename(tmpsub1, tmpsub2)
+			os.mkdir(tmpsub1)
+			self.file = _copy_lines_between_files(GetFailures.FILENAME_01, self.name,
+												  skip=12, n=1, mode='w')
+			self.file.close()
+			self._wait4failures(2)
+			# stop before tmpdir deleted (just prevents many monitor events)
+			self.filter.stop()
+
 
 		def _test_move_into_file(self, interim_kill=False):
 			# if we move a new file into the location of an old (monitored) file
@@ -1468,8 +1510,8 @@ class GetFailures(LogCaptureTestCase):
 		output = [("192.0.43.10", 2, 1124013599.0),
 			("192.0.43.11", 1, 1124013598.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
-		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.setMaxLines(100)
+		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.setMaxRetry(1)
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)
@@ -1486,9 +1528,9 @@ class GetFailures(LogCaptureTestCase):
 	def testGetFailuresMultiLineIgnoreRegex(self):
 		output = [("192.0.43.10", 2, 1124013599.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
+		self.filter.setMaxLines(100)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addIgnoreRegex("rsync error: Received SIGINT")
-		self.filter.setMaxLines(100)
 		self.filter.setMaxRetry(1)
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)
@@ -1502,9 +1544,9 @@ class GetFailures(LogCaptureTestCase):
 			("192.0.43.11", 1, 1124013598.0),
 			("192.0.43.15", 1, 1124013598.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
+		self.filter.setMaxLines(100)
 		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addFailRegex("^.* sendmail\[.*, msgid=<(?P<msgid>[^>]+).*relay=\[<HOST>\].*$<SKIPLINES>^.+ spamd: result: Y \d+ .*,mid=<(?P=msgid)>(,bayes=[.\d]+)?(,autolearn=\S+)?\s*$")
-		self.filter.setMaxLines(100)
 		self.filter.setMaxRetry(1)
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)

@@ -118,6 +118,60 @@ class DNSUtils:
 
 		return ipList
 
+	@staticmethod
+	def getHostname(fqdn=True):
+		"""Get short hostname or fully-qualified hostname of host self"""
+		# try find cached own hostnames (this tuple-key cannot be used elsewhere):
+		key = ('self','hostname', fqdn)
+		name = DNSUtils.CACHE_ipToName.get(key)
+		# get it using different ways (hostname, fully-qualified or vice versa):
+		if name is None:
+			name = ''
+			for hostname in (
+				(socket.getfqdn, socket.gethostname) if fqdn else (socket.gethostname, socket.getfqdn)
+			):
+				try:
+					name = hostname()
+					break
+				except Exception as e: # pragma: no cover
+					logSys.warning("Retrieving own hostnames failed: %s", e)
+		# cache and return :
+		DNSUtils.CACHE_ipToName.set(key, name)
+		return name
+
+	@staticmethod
+	def getSelfNames():
+		"""Get own host names of self"""
+		# try find cached own hostnames (this tuple-key cannot be used elsewhere):
+		key = ('self','dns')
+		names = DNSUtils.CACHE_ipToName.get(key)
+		# get it using different ways (a set with names of localhost, hostname, fully qualified):
+		if names is None:
+			names = set([
+				'localhost', DNSUtils.getHostname(False), DNSUtils.getHostname(True)
+			]) - set(['']) # getHostname can return ''
+		# cache and return :
+		DNSUtils.CACHE_ipToName.set(key, names)
+		return names
+
+	@staticmethod
+	def getSelfIPs():
+		"""Get own IP addresses of self"""
+		# try find cached own IPs (this tuple-key cannot be used elsewhere):
+		key = ('self','ips')
+		ips = DNSUtils.CACHE_nameToIp.get(key)
+		# get it using different ways (a set with IPs of localhost, hostname, fully qualified):
+		if ips is None:
+			ips = set()
+			for hostname in DNSUtils.getSelfNames():
+				try:
+					ips |= set(DNSUtils.textToIp(hostname, 'yes'))
+				except Exception as e: # pragma: no cover
+					logSys.warning("Retrieving own IPs of %s failed: %s", hostname, e)
+		# cache and return :
+		DNSUtils.CACHE_nameToIp.set(key, ips)
+		return ips
+
 
 ##
 # Class for IP address handling.
@@ -260,6 +314,11 @@ class IPAddr(object):
 	@property
 	def family(self):
 		return self._family
+
+	FAM2STR = {socket.AF_INET: 'inet4', socket.AF_INET6: 'inet6'}
+	@property
+	def familyStr(self):
+		return IPAddr.FAM2STR.get(self._family)
 
 	@property
 	def plen(self):

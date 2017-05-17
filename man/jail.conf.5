@@ -199,11 +199,14 @@ Arguments can be passed to actions to override the default values from the [Init
 Values can also be quoted (required when value includes a ","). More that one action can be specified (in separate lines).
 .RE
 .TP
+.B ignoreself
+boolean value (default true) indicates the banning of own IP addresses should be prevented
+.TP
 .B ignoreip
-list of IPs not to ban. They can include a CIDR mask too.
+list of IPs not to ban. They can include a DNS resp. CIDR mask too. The option affects additionally to \fBignoreself\fR (if true) and don't need to contain own DNS resp. IPs of the running host.
 .TP
 .B ignorecommand
-command that is executed to determine if the current candidate IP for banning should not be banned.
+command that is executed to determine if the current candidate IP for banning (or failure-ID for raw IDs) should not be banned. The option affects additionally to \fBignoreself\fR and \fBignoreip\fR and will be first executed if both don't hit.
 .br
 IP will not be banned if command returns successfully (exit code 0).
 Like ACTION FILES, tags like <ip> are can be included in the ignorecommand value and will be substituted before execution. Currently only <ip> is supported however more will be added later.

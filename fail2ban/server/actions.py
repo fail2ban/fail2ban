@@ -35,10 +35,11 @@ except ImportError:
 	OrderedDict = dict
 
 from .banmanager import BanManager
-from .observer import Observers
+from .ipdns import DNSUtils
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
+from .observer import Observers
 from .utils import Utils
 from ..helpers import getLogger
 
@@ -291,6 +292,7 @@ class Actions(JailThread, Mapping):
 
 		AI_DICT = {
 			"ip":				lambda self: self.__ticket.getIP(),
+			"family":   lambda self: self['ip'].familyStr,
 			"ip-rev":		lambda self: self['ip'].getPTR(''),
 			"ip-host":	lambda self: self['ip'].getHost(),
 			"fid":			lambda self: self.__ticket.getID(),
@@ -306,6 +308,9 @@ class Actions(JailThread, Mapping):
 			"ipjailmatches":	lambda self: "\n".join(self._mi4ip().getMatches()),
 			"ipfailures":			lambda self: self._mi4ip(True).getAttempt(),
 			"ipjailfailures":	lambda self: self._mi4ip().getAttempt(),
+			# system-information:
+			"fq-hostname":	lambda self: DNSUtils.getHostname(fqdn=True),
+			"sh-hostname":	lambda self: DNSUtils.getHostname(fqdn=False)
 		}
 
 		__slots__ = CallingMap.__slots__ + ('__ticket', '__jail', '__mi4ip')
@@ -462,25 +467,37 @@ class Actions(JailThread, Mapping):
 		If actions specified, don't flush list - just execute unban for 
 		given actions (reload, obsolete resp. removed actions).
 		"""
+		log = True
 		if actions is None:
 			logSys.debug("Flush ban list")
 			lst = self.__banManager.flushBanList()
 		else:
+			log = False # don't log "[jail] Unban ..." if removing actions only.
 			lst = iter(self.__banManager)
 		cnt = 0
+		# first we'll execute flush for actions supporting this operation:
+		unbactions = {}
+		for name, action in (actions if actions is not None else self._actions).iteritems():
+			if hasattr(action, 'flush') and action.actionflush:
+				logSys.notice("[%s] Flush ticket(s) with %s", self._jail.name, name)
+				action.flush()
+			else:
+				unbactions[name] = action
+		actions = unbactions
+		# unban each ticket with non-flasheable actions:
 		for ticket in lst:
 			# delete ip from database also:
 			if db and self._jail.database is not None:
 				ip = str(ticket.getIP())
 				self._jail.database.delBan(self._jail, ip)
 			# unban ip:
-			self.__unBan(ticket, actions=actions)
+			self.__unBan(ticket, actions=actions, log=log)
 			cnt += 1
 		logSys.debug("Unbanned %s, %s ticket(s) in %r", 
 			cnt, self.__banManager.size(), self._jail.name)
 		return cnt
 
-	def __unBan(self, ticket, actions=None):
+	def __unBan(self, ticket, actions=None, log=True):
 		"""Unbans host corresponding to the ticket.
 
 		Executes the actions in order to unban the host given in the
@@ -497,7 +514,7 @@ class Actions(JailThread, Mapping):
 			unbactions = actions
 		ip = ticket.getIP()
 		aInfo = self.__getActionInfo(ticket)
-		if actions is None:
+		if log:
 			logSys.notice("[%s] Unban %s", self._jail.name, aInfo["ip"])
 		for name, action in unbactions.iteritems():
 			try:

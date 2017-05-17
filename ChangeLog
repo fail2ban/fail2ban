@@ -13,6 +13,8 @@ TODO: implementing of options resp. other tasks from PR #1346
       documentation should be extended (new options, etc)
       
 ### Fixes
+* `filter.d/apache-auth.conf`:
+  - better failure recognition using short form of regex (url/referer are foreign inputs, see gh-1645)
 * `filter.d/pam-generic.conf`:
   - [grave] injection on user name to host fixed
 * `filter.d/sshd.conf`:
@@ -23,10 +25,15 @@ TODO: implementing of options resp. other tasks from PR #1346
 * filter.d/sendmail-reject.conf:
   - rewritten using `prefregex` and used MLFID-related multi-line parsing;
   - optional parameter `mode` introduced: normal (default), extra or aggressive
+* filter.d/haproxy-http-auth: do not mistake client port for part of an IPv6 address (gh-1745)
 * `action.d/complain.conf`
   - fixed using new tag `<ip-rev>` (sh/dash compliant now)
 * `action.d/sendmail-geoip-lines.conf`
   - fixed using new tag `<ip-host>` (without external command execution)
+* fail2ban-regex: fixed matched output by multi-line (buffered) parsing
+* fail2ban-regex: support for multi-line debuggex URL implemented (gh-422)
+* fixed ipv6-action errors on systems not supporting ipv6 and vice versa (gh-1741)
+* fixed directory-based log-rotate for pyinotify-backend (gh-1778)
 
 ### New Features
 * New Actions:
@@ -41,9 +48,13 @@ TODO: implementing of options resp. other tasks from PR #1346
   using single-line expressions:
   - tag `<F-MLFID>`: used to identify resp. store failure info for groups of log-lines with the same
     identifier (e. g. combined failure-info for the same conn-id by `<F-MLFID>(?:conn-id)</F-MLFID>`,
-    see sshd.conf for example)
+    see sshd.conf for example);
+  - tag `<F-MLFFORGET>`: can be used as mark to forget current multi-line MLFID (e. g. by connection 
+    closed, reset or disconnect etc);
   - tag `<F-NOFAIL>`: used as mark for no-failure (helper to accumulate common failure-info, 
     e. g. from lines that contain IP-address);
+  Opposite to obsolete multi-line parsing (using buffering with `maxlines`) it is more precise and 
+  can recognize multiple failure attempts within the same connection (MLFID).
 * Several filters optimized with pre-filtering using new option `prefregex`, and multiline filter 
   using `<F-MLFID>` + `<F-NOFAIL>` combination;
 * Exposes filter group captures in actions (non-recursive interpolation of tags `<F-...>`, 
@@ -59,11 +70,34 @@ TODO: implementing of options resp. other tasks from PR #1346
   - `<ip-rev>` - PTR reversed representation of IP address
   - `<ip-host>` - host name of the IP address
   - `<F-...>` - interpolates to the corresponding filter group capture `...`
+  - `<fq-hostname>` - fully-qualified name of host (the same as `$(hostname -f)`)
+  - `<sh-hostname>` - short hostname (the same as `$(uname -n)`)
 * Allow to use filter options by `fail2ban-regex`, example:
   fail2ban-regex text.log "sshd[mode=aggressive]"
 * Samples test case factory extended with filter options - dict in JSON to control 
   filter options (e. g. mode, etc.):
   # filterOptions: {"mode": "aggressive"}
+* Introduced new jail option "ignoreself", specifies whether the local resp. own IP addresses 
+  should be ignored (default is true). Fail2ban will not ban a host which matches such addresses.
+  Option "ignoreip" affects additionally to "ignoreself" and don't need to include the DNS 
+  resp. IPs of the host self.
+* Regex will be compiled as MULTILINE only if needed (buffering with `maxlines` > 1), that enables:
+  - to improve performance by the single line parsing (see gh-1733);
+  - make regex more precise (because distinguish between anchors `^`/`$` for the begin/end of string
+    and the new-line character '\n', e. g. if coming from filters (like systemd journal) that allow
+    the parsing of log-entries contain new-line chars (as single entry);
+  - if multiline regex however expected (by single-line parsing without buffering) - prefix `(?m)` 
+    could be used in regex to enable it;
+* implemented execution of `actionstart` on demand (conditional), if action depends on `family` (gh-1742):
+  - new action parameter `actionstart_on_demand` (bool) can be set to prevent/allow starting action
+    on demand (default retrieved automatically, if some conditional parameter `param?family=...` 
+    presents in action properties), see `action.d/pf.conf` for example;
+  - additionally `actionstop` will be executed only for families previously executing `actionstart`
+    (starting on demand only)
+* introduced new command `actionflush`: executed in order to flush all bans at once 
+  e. g. by unban all, reload with removing action, stop, shutdown the system (gh-1743),
+  the actions having `actionflush` do not execute `actionunban` for each single ticket
+* add new command `actionflush` default for several iptables/iptables-ipset actions (and common include);
 
 
 ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
@@ -265,12 +299,24 @@ fail2ban-client set loglevel INFO
   - new `with_foreground_server_thread` decorator to test several client/server commands
 
 
-ver. 0.9.x (2016/??/??) - wanna-be-released
+ver. 0.9.8 (2016/XX/XXX) - wanna-be-released
 -----------
 
 0.9.x line is no longer heavily developed.  If you are interested in
 new features (e.g. IPv6 support), please consider 0.10 branch and its
 releases.
+
+
+### Fixes
+
+### New Features
+
+### Enhancements
+
+
+
+ver. 0.9.7 (2017/05/11) - awaiting-victory
+-----------
 
 ### Fixes
 * Fixed a systemd-journal handling in fail2ban-regex (gh-1657)
@@ -280,6 +326,10 @@ releases.
       (0.10th resp. IPv6 relevant only, amend for gh-1479)
 * config/pathes-freebsd.conf
     - Fixed filenames for apache and nginx log files (gh-1667)
+* filter.d/exim.conf
+    - optional part `(...)` after host-name before `[IP]` (gh-1751)
+    - new reason "Unrouteable address" for "rejected RCPT" regex (gh-1762)
+    - match of complex time like `D=2m42s` in regex "no MAIL in SMTP connection" (gh-1766)
 * filter.d/sshd.conf
     - new aggressive rules (gh-864):
       - Connection reset by peer (multi-line rule during authorization process)
@@ -294,7 +344,7 @@ releases.
 * filter.d/cyrus-imap.conf
     - accept entries without login-info resp. hostname before IP address (gh-1707)
 * Filter tests extended with check of all config-regexp, that contains greedy catch-all
-  before `<HOST>`, that is hard-anchored at end or precise  sub expression after `<HOST>`
+  before `<HOST>`, that is hard-anchored at end or precise sub expression after `<HOST>`
 
 ### New Features
 * New Actions:
@@ -304,6 +354,7 @@ releases.
     - filter.d/domino-smtp: IBM Domino SMTP task (gh-1603)
 
 ### Enhancements
+* Introduced new log-level `MSG` (as INFO-2, equivalent to 18)
 
 
 ver. 0.9.6 (2016/12/10) - stretch-is-coming

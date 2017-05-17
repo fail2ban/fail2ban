@@ -770,6 +770,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"norestored = %(_exec_once)s",
 				"restore = ",
 				"info = ",
+				"_use_flush_ = echo [<name>] <actname>: -- flushing IPs",
 				"actionstart =  echo '[%(name)s] %(actname)s: ** start'", start,
 				"actionreload = echo '[%(name)s] %(actname)s: .. reload'", reload,
 				"actionban =    echo '[%(name)s] %(actname)s: ++ ban <ip> %(restore)s%(info)s'", ban,
@@ -788,6 +789,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"findtime = 10m",
 				"failregex = ^\s*failure <F-ERRCODE>401|403</F-ERRCODE> from <HOST>",
 				"datepattern = {^LN-BEG}EPOCH",
+				"ignoreip = 127.0.0.1/8 ::1", # just to cover ignoreip in jailreader/transmitter
 				"",
 				"[test-jail1]", "backend = " + backend, "filter =", 
 				"action = ",
@@ -795,7 +797,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 					if 1 in actions else "",
 				"         test-action2[name='%(__name__)s', restore='restored: <restored>', info=', err-code: <F-ERRCODE>']" \
 					if 2 in actions else "",
-				"         test-action2[name='%(__name__)s', actname=test-action3, _exec_once=1, restore='restored: <restored>']" \
+				"         test-action2[name='%(__name__)s', actname=test-action3, _exec_once=1, restore='restored: <restored>',"
+										" actionflush=<_use_flush_>]" \
 					if 3 in actions else "",
 				"logpath = " + test1log,
 				"          " + test2log if 2 in enabled else "",
@@ -809,7 +812,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"action = ",
 				"         test-action2[name='%(__name__)s', restore='restored: <restored>', info=', err-code: <F-ERRCODE>']" \
 					if 2 in actions else "",
-				"         test-action2[name='%(__name__)s', actname=test-action3, _exec_once=1, restore='restored: <restored>']" \
+				"         test-action2[name='%(__name__)s', actname=test-action3, _exec_once=1, restore='restored: <restored>']"
+										" actionflush=<_use_flush_>]" \
 					if 3 in actions else "",
 				"logpath = " + test2log,
 				"enabled = true" if 2 in enabled else "",
@@ -881,6 +885,12 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"Creating new jail 'test-jail2'",
 			"Jail 'test-jail2' started", all=True)
+		# test action3 removed, test flushing successful (and no single unban occurred):
+		self.assertLogged(
+			"stdout: '[test-jail1] test-action3: -- flushing IPs'",
+			"stdout: '[test-jail1] test-action3: __ stop'", all=True)
+		self.assertNotLogged(
+			"stdout: '[test-jail1] test-action3: -- unban 192.0.2.1'")
 		
 		# update action1, delete action2 (should be stopped via configuration)...
 		self.pruneLog("[test-phase 2a]")
@@ -978,12 +988,18 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"stdout: '[test-jail2] test-action3: ++ ban 192.0.2.8 restored: 1'",
 			all=True)
 
-		# don't need actions anymore:
-		_write_action_cfg(actname="test-action2", allow=False)
-		_write_jail_cfg(actions=[])
+		# ban manually to test later flush by unban all:
+		self.pruneLog("[test-phase 2d]")
+		self.execSuccess(startparams,
+			"set", "test-jail2", "banip", "192.0.2.21")
+		self.execSuccess(startparams,
+			"set", "test-jail2", "banip", "192.0.2.22")
+		self.assertLogged(
+			"stdout: '[test-jail2] test-action3: ++ ban 192.0.2.22",
+			"stdout: '[test-jail2] test-action3: ++ ban 192.0.2.22 ", all=True, wait=MID_WAITTIME)
 
 		# restart jail with unban all:
-		self.pruneLog("[test-phase 2d]")
+		self.pruneLog("[test-phase 2e]")
 		self.execSuccess(startparams,
 			"restart", "--unban", "test-jail2")
 		self.assertLogged(
@@ -995,11 +1011,25 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"[test-jail2] Unban 192.0.2.4",
 			"[test-jail2] Unban 192.0.2.8", all=True
 		)
+		# test unban (action2):
+		self.assertLogged(
+			"stdout: '[test-jail2] test-action2: -- unban 192.0.2.21",
+			"stdout: '[test-jail2] test-action2: -- unban 192.0.2.22'", all=True)
+		# test flush (action3, and no single unban via action3 occurred):
+		self.assertLogged(
+			"stdout: '[test-jail2] test-action3: -- flushing IPs'")
+		self.assertNotLogged(
+			"stdout: '[test-jail2] test-action3: -- unban 192.0.2.21'",
+			"stdout: '[test-jail2] test-action3: -- unban 192.0.2.22'", all=True)
 		# no more ban (unbanned all):
 		self.assertNotLogged(
 			"[test-jail2] Ban 192.0.2.4",
 			"[test-jail2] Ban 192.0.2.8", all=True
 		)
+
+		# don't need actions anymore:
+		_write_action_cfg(actname="test-action2", allow=False)
+		_write_jail_cfg(actions=[])
 
 		# reload jail1 without restart (without ban/unban):
 		self.pruneLog("[test-phase 3]")
@@ -1084,6 +1114,14 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"[test-jail1] Ban 192.0.2.3",
 			"[test-jail1] Ban 192.0.2.4", all=True
 		)
+
+		# unban all (just to test command, already empty - nothing to unban):
+		self.pruneLog("[test-phase 7b]")
+		self.execSuccess(startparams,
+			"--async", "unban", "--all")
+		self.assertLogged(
+			"Flush ban list",
+			"Unbanned 0, 0 ticket(s) in 'test-jail1'", all=True)
 
 		# backend-switch (restart instead of reload):
 		self.pruneLog("[test-phase 8a]")

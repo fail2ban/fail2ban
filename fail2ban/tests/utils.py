@@ -262,7 +262,10 @@ def initTests(opts):
 
 	# persistently set time zone to CET (used in zone-related test-cases),
 	# yoh: we need to adjust TZ to match the one used by Cyril so all the timestamps match
-	os.environ['TZ'] = 'Europe/Zurich'
+	# This offset corresponds to Europe/Zurich timezone.  Specifying it
+	# explicitly allows to avoid requiring tzdata package to be installed during
+	# testing.   See https://bugs.debian.org/855920 for more information
+	os.environ['TZ'] = 'CET-01CEST-02,M3.5.0,M10.5.0'
 	time.tzset()
 	# set alternate now for time related test cases:
 	MyTime.setAlternateNow(TEST_NOW)

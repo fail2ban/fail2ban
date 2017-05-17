@@ -331,6 +331,12 @@ class Server:
 		return self.__jails[name].idle
 	
 	# Filter
+	def setIgnoreSelf(self, name, value):
+		self.__jails[name].filter.ignoreSelf = value
+	
+	def getIgnoreSelf(self, name):
+		return self.__jails[name].filter.ignoreSelf
+
 	def addIgnoreIP(self, name, ip):
 		self.__jails[name].filter.addIgnoreIP(ip)
 	
@@ -661,9 +667,9 @@ class Server:
 			if self.__syslogSocket == syslogsocket:
 				return True
 			self.__syslogSocket = syslogsocket
-			# Conditionally reload, logtarget depends on socket path when SYSLOG
-			return self.__logTarget != "SYSLOG"\
-				   or self.setLogTarget(self.__logTarget)
+		# Conditionally reload, logtarget depends on socket path when SYSLOG
+		return self.__logTarget != "SYSLOG"\
+			   or self.setLogTarget(self.__logTarget)
 
 	def getLogTarget(self):
 		with self.__loggingLock:

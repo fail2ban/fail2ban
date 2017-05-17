@@ -77,6 +77,8 @@ class Filter(JailThread):
 		self.setUseDns(useDns)
 		## The amount of time to look back.
 		self.__findTime = 600
+		## Ignore own IPs flag:
+		self.__ignoreSelf = True
 		## The ignore IP list.
 		self.__ignoreIpList = []
 		## Size of line buffer
@@ -160,13 +162,11 @@ class Filter(JailThread):
 	# @param value the regular expression
 
 	def addFailRegex(self, value):
+		multiLine = self.getMaxLines() > 1
 		try:
-			regex = FailRegex(value, prefRegex=self.__prefRegex, useDns=self.__useDns)
+			regex = FailRegex(value, prefRegex=self.__prefRegex, multiline=multiLine,
+				useDns=self.__useDns)
 			self.__failRegex.append(regex)
-			if "\n" in regex.getRegex() and not self.getMaxLines() > 1:
-				logSys.warning(
-					"Mutliline regex set for jail %r "
-					"but maxlines not greater than 1", self.jailName)
 		except RegexException as e:
 			logSys.error(e)
 			raise e
@@ -184,15 +184,12 @@ class Filter(JailThread):
 						 "valid", index)
 
 	##
-	# Get the regular expression which matches the failure.
+	# Get the regular expressions as list.
 	#
-	# @return the regular expression
+	# @return the regular expression list
 
 	def getFailRegex(self):
-		failRegex = list()
-		for regex in self.__failRegex:
-			failRegex.append(regex.getRegex())
-		return failRegex
+		return [regex.getRegex() for regex in self.__failRegex]
 
 	##
 	# Add the regular expression which matches the failure.
@@ -418,6 +415,17 @@ class Filter(JailThread):
 		return ip
 
 	##
+	# Ignore own IP/DNS.
+	#
+	@property
+	def ignoreSelf(self):
+		return self.__ignoreSelf
+
+	@ignoreSelf.setter
+	def ignoreSelf(self, value):
+		self.__ignoreSelf = value
+
+	##
 	# Add an IP/DNS to the ignore list.
 	#
 	# IP addresses in the ignore list are not taken into account
@@ -462,6 +470,11 @@ class Filter(JailThread):
 	def inIgnoreIPList(self, ip, log_ignore=False):
 		if not isinstance(ip, IPAddr):
 			ip = IPAddr(ip)
+
+		# check own IPs should be ignored and 'ip' is self IP:
+		if self.__ignoreSelf and ip in DNSUtils.getSelfIPs():
+			return True
+
 		for net in self.__ignoreIpList:
 			# check if the IP is covered by ignore IP
 			if ip.isInNet(net):
@@ -557,24 +570,29 @@ class Filter(JailThread):
 
 	def _mergeFailure(self, mlfid, fail, failRegex):
 		mlfidFail = self.mlfidCache.get(mlfid) if self.__mlfidCache else None
+		# if multi-line failure id (connection id) known:
 		if mlfidFail:
 			mlfidGroups = mlfidFail[1]
-			# if current line not failure, but previous was failure:
-			if fail.get('nofail') and not mlfidGroups.get('nofail'):
-				del fail['nofail'] # remove nofail flag - was already market as failure
-				self.mlfidCache.unset(mlfid) # remove cache entry
-			# if current line is failure, but previous was not:
-			elif not fail.get('nofail') and mlfidGroups.get('nofail'):
-				del mlfidGroups['nofail'] # remove nofail flag
-				self.mlfidCache.unset(mlfid) # remove cache entry
+			# update - if not forget (disconnect/reset):
+			if not fail.get('mlfforget'):
+				mlfidGroups.update(fail)
+			else:
+				self.mlfidCache.unset(mlfid) # remove cached entry
+			# merge with previous info:
 			fail2 = mlfidGroups.copy()
 			fail2.update(fail)
+			if not fail.get('nofail'): # be sure we've correct current state
+				try:
+					del fail2['nofail']
+				except KeyError:
+					pass
 			fail2["matches"] = fail.get("matches", []) + failRegex.getMatchedTupleLines()
 			fail = fail2
-		elif fail.get('nofail'):
-			fail["matches"] = failRegex.getMatchedTupleLines()
+		elif not fail.get('mlfforget'):
 			mlfidFail = [self.__lastDate, fail]
 			self.mlfidCache.set(mlfid, mlfidFail)
+			if fail.get('nofail'):
+				fail["matches"] = failRegex.getMatchedTupleLines()
 		return fail
 
 
@@ -690,6 +708,11 @@ class Filter(JailThread):
 				mlfid = fail.get('mlfid')
 				if mlfid is not None:
 					fail = self._mergeFailure(mlfid, fail, failRegex)
+					# bypass if no-failure case:
+					if fail.get('nofail'):
+						logSys.log(7, "Nofail by mlfid %r in regex %s: %s",
+							mlfid, failRegexIndex, fail.get('mlfforget', "waiting for failure"))
+						if not self.checkAllRegex: return failList
 				else:
 					# matched lines:
 					fail["matches"] = fail.get("matches", []) + failRegex.getMatchedTupleLines()
@@ -709,18 +732,16 @@ class Filter(JailThread):
 					host = fail.get('dns')
 					if host is None:
 						# first try to check we have mlfid case (cache connection id):
-						if fid is None:
-							if mlfid:
-								fail = self._mergeFailure(mlfid, fail, failRegex)
-							else:
+						if fid is None and mlfid is None:
 								# if no failure-id also (obscure case, wrong regex), throw error inside getFailID:
 								fid = failRegex.getFailID()
 						host = fid
 						cidr = IPAddr.CIDR_RAW
 				# if mlfid case (not failure):
 				if host is None:
-					if not self.checkAllRegex: # or fail.get('nofail'):
-					 	return failList
+					logSys.log(7, "No failure-id by mlfid %r in regex %s: %s",
+						mlfid, failRegexIndex, fail.get('mlfforget', "waiting for identifier"))
+					if not self.checkAllRegex: return failList
 					ips = [None]
 				# if raw - add single ip or failure-id,
 				# otherwise expand host to multiple ips using dns (or ignore it if not valid):
@@ -878,7 +899,8 @@ class FileFilter(Filter):
 			# see http://python.org/dev/peps/pep-3151/
 			except IOError as e:
 				logSys.error("Unable to open %s", filename)
-				logSys.exception(e)
+				if e.errno != 2: # errno.ENOENT
+					logSys.exception(e)
 				return False
 			except OSError as e: # pragma: no cover - requires race condition to tigger this
 				logSys.error("Error opening %s", filename)
@@ -1102,7 +1124,7 @@ class FileContainer:
 		## sys.stdout.flush()
 		# Compare hash and inode
 		if self.__hash != myHash or self.__ino != stats.st_ino:
-			logSys.info("Log rotation detected for %s", self.__filename)
+			logSys.log(logging.MSG, "Log rotation detected for %s", self.__filename)
 			self.__hash = myHash
 			self.__ino = stats.st_ino
 			self.__pos = 0

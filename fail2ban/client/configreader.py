@@ -109,33 +109,44 @@ class ConfigReader():
 			self._cfg = ConfigReaderUnshared(**self._cfg_share_kwargs)
 
 	def sections(self):
-		if self._cfg is not None:
+		try:
 			return self._cfg.sections()
-		return []
+		except AttributeError:
+			return []
 
 	def has_section(self, sec):
-		if self._cfg is not None:
+		try:
 			return self._cfg.has_section(sec)
-		return False
+		except AttributeError:
+			return False
 
-	def merge_section(self, *args, **kwargs):
-		if self._cfg is not None:
-			return self._cfg.merge_section(*args, **kwargs)
+	def merge_section(self, section, *args, **kwargs):
+		try:
+			return self._cfg.merge_section(section, *args, **kwargs)
+		except AttributeError:
+			raise NoSectionError(section)
+	
+	def options(self, section, withDefault=False):
+		"""Return a list of option names for the given section name.
 
-	def options(self, *args):
-		if self._cfg is not None:
-			return self._cfg.options(*args)
-		return {}
+		Parameter `withDefault` controls the include of names from section `[DEFAULT]`
+		"""
+		try:
+			return self._cfg.options(section, withDefault)
+		except AttributeError:
+			raise NoSectionError(section)
 
 	def get(self, sec, opt, raw=False, vars={}):
-		if self._cfg is not None:
+		try:
 			return self._cfg.get(sec, opt, raw=raw, vars=vars)
-		return None
+		except AttributeError:
+			raise NoSectionError(sec)
 
-	def getOptions(self, *args, **kwargs):
-		if self._cfg is not None:
-			return self._cfg.getOptions(*args, **kwargs)
-		return {}
+	def getOptions(self, section, *args, **kwargs):
+		try:
+			return self._cfg.getOptions(section, *args, **kwargs)
+		except AttributeError:
+			raise NoSectionError(section)
 
 
 class ConfigReaderUnshared(SafeConfigParserWithIncludes):
@@ -297,23 +308,35 @@ class DefinitionInitConfigReader(ConfigReader):
 			self._create_unshared(self._file)
 		return SafeConfigParserWithIncludes.read(self._cfg, self._file)
 	
-	def getOptions(self, pOpts):
+	def getOptions(self, pOpts, all=False):
 		# overwrite static definition options with init values, supplied as
 		# direct parameters from jail-config via action[xtra1="...", xtra2=...]:
+		if not pOpts:
+			pOpts = dict()
 		if self._initOpts:
-			if not pOpts:
-				pOpts = dict()
 			pOpts = _merge_dicts(pOpts, self._initOpts)
 		self._opts = ConfigReader.getOptions(
 			self, "Definition", self._configOpts, pOpts)
 		self._pOpts = pOpts
 		if self.has_section("Init"):
-			for opt in self.options("Init"):
-				v = self.get("Init", opt)
-				if not opt.startswith('known/') and opt != '__name__':
+			# get only own options (without options from default):
+			getopt = lambda opt: self.get("Init", opt)
+			for opt in self.options("Init", withDefault=False):
+				if opt == '__name__': continue
+				v = None
+				if not opt.startswith('known/'):
+					if v is None: v = getopt(opt)
 					self._initOpts['known/'+opt] = v
-				if not opt in self._initOpts:
+				if opt not in self._initOpts:
+					if v is None: v = getopt(opt)
 					self._initOpts[opt] = v
+		if all and self.has_section("Definition"):
+			# merge with all definition options (and options from default),
+			# bypass already converted option (so merge only new options):
+			for opt in self.options("Definition"):
+				if opt == '__name__' or opt in self._opts: continue
+				self._opts[opt] = self.get("Definition", opt)
+
 
 	def _convert_to_boolean(self, value):
 		return value.lower() in ("1", "yes", "true", "on")
@@ -336,12 +359,12 @@ class DefinitionInitConfigReader(ConfigReader):
 
 	def getCombined(self, ignore=()):
 		combinedopts = self._opts
-		ignore = set(ignore).copy()
 		if self._initOpts:
-			combinedopts = _merge_dicts(self._opts, self._initOpts)
+			combinedopts = _merge_dicts(combinedopts, self._initOpts)
 		if not len(combinedopts):
 			return {}
 		# ignore conditional options:
+		ignore = set(ignore).copy()
 		for n in combinedopts:
 			cond = SafeConfigParserWithIncludes.CONDITIONAL_RE.match(n)
 			if cond:
