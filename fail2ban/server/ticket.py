@@ -106,16 +106,17 @@ class Ticket(object):
 		return self._time
 
 	def setBanTime(self, value):
-		self._banTime = value;
+		self._banTime = value
 
 	def getBanTime(self, defaultBT=None):
 		return (self._banTime if self._banTime is not None else defaultBT)
 
-	def setBanCount(self, value):
-		self._banCount = value;
+	def setBanCount(self, value, always=False):
+		if always or value > self._banCount:
+			self._banCount = value
 
-	def incrBanCount(self, value = 1):
-		self._banCount += value;
+	def incrBanCount(self, value=1):
+		self._banCount += value
 
 	def getBanCount(self):
 		return self._banCount;

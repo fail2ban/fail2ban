@@ -34,7 +34,7 @@ try:
 except ImportError:
 	OrderedDict = dict
 
-from .banmanager import BanManager
+from .banmanager import BanManager, BanTicket
 from .ipdns import DNSUtils
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
@@ -299,6 +299,7 @@ class Actions(JailThread, Mapping):
 			"failures":	lambda self: self.__ticket.getAttempt(),
 			"time":			lambda self: self.__ticket.getTime(),
 			"bantime":  lambda self: self._getBanTime(),
+			"bancount":  lambda self: self.__ticket.getBanCount(),
 			"matches":	lambda self: "\n".join(self.__ticket.getMatches()),
 			# to bypass actions, that should not be executed for restored tickets
 			"restored":	lambda self: (1 if self.__ticket.restored else 0),
@@ -396,15 +397,9 @@ class Actions(JailThread, Mapping):
 			ticket = self._jail.getFailTicket()
 			if not ticket:
 				break
-			bTicket = BanManager.createBanTicket(ticket)
-			btime = ticket.getBanTime()
-			if btime is not None:
-				bTicket.setBanTime(btime)
-				bTicket.setBanCount(ticket.getBanCount())
-			else:
-				btime = self.__banManager.getBanTime()
-			if ticket.restored:
-				bTicket.restored = True
+
+			bTicket = BanTicket.wrap(ticket)
+			btime = ticket.getBanTime(self.__banManager.getBanTime())
 			ip = bTicket.getIP()
 			aInfo = self.__getActionInfo(bTicket)
 			reason = {}

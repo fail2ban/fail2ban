@@ -1195,8 +1195,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"[DEFAULT]",
 				"",
 				"[Definition]",
-				"actionban =     printf %%s \"[%(name)s] %(actname)s: ++ ban <ip> -t <bantime> : <F-MSG>\"", \
-				"actionprolong = printf %%s \"[%(name)s] %(actname)s: ++ prolong <ip> -t <bantime> : <F-MSG>\"" \
+				"actionban =     printf %%s \"[%(name)s] %(actname)s: ++ ban <ip> -c <bancount> -t <bantime> : <F-MSG>\"", \
+				"actionprolong = printf %%s \"[%(name)s] %(actname)s: ++ prolong <ip> -c <bancount> -t <bantime> : <F-MSG>\"" \
 					if prolong else "",
 				"actionunban =   printf %%b '[%(name)s] %(actname)s: -- unban <ip>'",
 			)
@@ -1241,8 +1241,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# wait for ban:
 		_observer_wait_idle()
 		self.assertLogged(
-			"stdout: '[test-jail1] test-action1: ++ ban 192.0.2.11 -t 300 : ",
-			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.11 -t 300 : ",
+			"stdout: '[test-jail1] test-action1: ++ ban 192.0.2.11 -c 1 -t 300 : ",
+			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.11 -c 1 -t 300 : ",
 			all=True, wait=MID_WAITTIME)
 		# wait for observer idle (write all tickets to db):
 		_observer_wait_idle()
@@ -1269,8 +1269,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		))
 		# wait for ban:
 		self.assertLogged(
-			"stdout: '[test-jail1] test-action1: ++ ban 192.0.2.11 -t 300 : ",
-			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.11 -t 300 : ",
+			"stdout: '[test-jail1] test-action1: ++ ban 192.0.2.11 -c 2 -t 300 : ",
+			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.11 -c 2 -t 300 : ",
 			all=True, wait=MID_WAITTIME)
 		# unblock observer here and wait it is done:
 		wakeObs = True
@@ -1283,5 +1283,5 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		_observer_wait_idle()
 		# wait for prolong:
 		self.assertLogged(
-			"stdout: '[test-jail1] test-action2: ++ prolong 192.0.2.11 -t 600 : ",
+			"stdout: '[test-jail1] test-action2: ++ prolong 192.0.2.11 -c 2 -t 600 : ",
 			all=True, wait=MID_WAITTIME)
