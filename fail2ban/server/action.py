@@ -149,7 +149,7 @@ class CallingMap(MutableMapping, object):
 	def __len__(self):
 		return len(self.data)
 
-	def copy(self): # pargma: no cover
+	def copy(self): # pragma: no cover
 		return self.__class__(_merge_copy_dicts(self.data, self.storage))
 
 
