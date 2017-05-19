@@ -302,6 +302,8 @@ releases.
 
 
 ### Fixes
+* Fix for systemd-backend: fail2ban hits the ulimit (out of file descriptors), see gh-991.
+  Partially back-ported from v.0.10.
 
 ### New Features
 
