@@ -996,6 +996,7 @@ def get_monitor_failures_testcase(Filter_):
 			self._wait4failures(2)
 			# stop before tmpdir deleted (just prevents many monitor events)
 			self.filter.stop()
+			self.filter.join()
 
 
 		def _test_move_into_file(self, interim_kill=False):
