@@ -89,6 +89,21 @@ class DateDetectorTest(LogCaptureTestCase):
 		self.assertEqual(datelog, dateUnix)
 		self.assertEqual(matchlog.group(1), 'Jan 23 21:59:59')
 
+	def testDefaultTimeZone(self):
+		log = "2017-01-23 15:00:00"
+		datelog, _ = self.datedetector.getTime(log, default_tz='UTC+0300')
+		# so in UTC, it was noon
+		self.assertEqual(datetime.datetime.utcfromtimestamp(datelog),
+				 datetime.datetime(2017, 1, 23, 12, 0, 0))
+
+		datelog, _ = self.datedetector.getTime(log, default_tz='UTC')
+		self.assertEqual(datetime.datetime.utcfromtimestamp(datelog),
+				 datetime.datetime(2017, 1, 23, 15, 0, 0))
+
+		datelog, _ = self.datedetector.getTime(log, default_tz='UTC-0430')
+		self.assertEqual(datetime.datetime.utcfromtimestamp(datelog),
+				 datetime.datetime(2017, 1, 23, 19, 30, 0))
+
 	def testVariousTimes(self):
 		"""Test detection of various common date/time formats f2b should understand
 		"""

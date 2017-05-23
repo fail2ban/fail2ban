@@ -379,6 +379,12 @@ class Server:
 	def getDatePattern(self, name):
 		return self.__jails[name].filter.getDatePattern()
 
+	def setLogTimeZone(self, name, tz):
+		self.__jails[name].filter.setLogTimeZone(tz)
+
+	def getLogTimeZone(self, name):
+		return self.__jails[name].filter.getLogTimeZone()
+
 	def setIgnoreCommand(self, name, value):
 		self.__jails[name].filter.setIgnoreCommand(value)
 

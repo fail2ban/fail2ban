@@ -158,7 +158,7 @@ class DateTemplate(object):
 		return dateMatch
 
 	@abstractmethod
-	def getDate(self, line, dateMatch=None):
+	def getDate(self, line, dateMatch=None, default_tz=None):
 		"""Abstract method, which should return the date for a log line
 
 		This should return the date for a log line, typically taking the
@@ -169,6 +169,8 @@ class DateTemplate(object):
 		----------
 		line : str
 			Log line, of which the date should be extracted from.
+		default_tz: if no explicit time zone is present in the line
+                            passing this will interpret it as in that time zone.
 
 		Raises
 		------
@@ -200,13 +202,14 @@ class DateEpoch(DateTemplate):
 			regex = r"((?P<square>(?<=^\[))?\d{10,11}\b(?:\.\d{3,6})?)(?(square)(?=\]))"
 			self.setRegex(regex, wordBegin='start', wordEnd=True)
 
-	def getDate(self, line, dateMatch=None):
+	def getDate(self, line, dateMatch=None, default_tz=None):
 		"""Method to return the date for a log line.
 
 		Parameters
 		----------
 		line : str
 			Log line, of which the date should be extracted from.
+		default_tz: ignored, Unix timestamps are time zone independent
 
 		Returns
 		-------
@@ -277,7 +280,7 @@ class DatePatternRegex(DateTemplate):
 			regex = r'(?iu)' + regex
 		super(DatePatternRegex, self).setRegex(regex, wordBegin, wordEnd)
 
-	def getDate(self, line, dateMatch=None):
+	def getDate(self, line, dateMatch=None, default_tz=None):
 		"""Method to return the date for a log line.
 
 		This uses a custom version of strptime, using the named groups
@@ -287,6 +290,7 @@ class DatePatternRegex(DateTemplate):
 		----------
 		line : str
 			Log line, of which the date should be extracted from.
+		default_tz: optionally used to correct timezone
 
 		Returns
 		-------
@@ -297,7 +301,8 @@ class DatePatternRegex(DateTemplate):
 		if not dateMatch:
 			dateMatch = self.matchDate(line)
 		if dateMatch:
-			return reGroupDictStrptime(dateMatch.groupdict()), dateMatch
+			return (reGroupDictStrptime(dateMatch.groupdict(), default_tz=default_tz),
+				dateMatch)
 
 
 class DateTai64n(DateTemplate):
@@ -315,13 +320,14 @@ class DateTai64n(DateTemplate):
 		# We already know the format for TAI64N
 		self.setRegex("@[0-9a-f]{24}", wordBegin=wordBegin)
 
-	def getDate(self, line, dateMatch=None):
+	def getDate(self, line, dateMatch=None, default_tz=None):
 		"""Method to return the date for a log line.
 
 		Parameters
 		----------
 		line : str
 			Log line, of which the date should be extracted from.
+		default_tz: ignored, since TAI is time zone independent
 
 		Returns
 		-------

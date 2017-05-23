@@ -423,7 +423,7 @@ class DateDetector(object):
 		logSys.log(logLevel, " no template.")
 		return (None, None)
 
-	def getTime(self, line, timeMatch=None):
+	def getTime(self, line, timeMatch=None, default_tz=None):
 		"""Attempts to return the date on a log line using templates.
 
 		This uses the templates' `getDate` method in an attempt to find
@@ -449,7 +449,7 @@ class DateDetector(object):
 		template = timeMatch[1]
 		if template is not None:
 			try:
-				date = template.getDate(line, timeMatch[0])
+				date = template.getDate(line, timeMatch[0], default_tz=default_tz)
 				if date is not None:
 					if logSys.getEffectiveLevel() <= logLevel: # pragma: no cover - heavy debug
 						logSys.log(logLevel, "  got time %f for %r using template %s",

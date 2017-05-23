@@ -17,6 +17,7 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import re
 import time
 import calendar
 import datetime
@@ -26,6 +27,7 @@ from .mytime import MyTime
 
 locale_time = LocaleTime()
 timeRE = TimeRE()
+FIXED_OFFSET_TZ_RE = re.compile(r'UTC(([+-]\d{2})(\d{2}))?$')
 
 def _getYearCentRE(cent=(0,3), distance=3, now=(MyTime.now(), MyTime.alternateNow)):
 	""" Build century regex for last year and the next years (distance).
@@ -78,7 +80,36 @@ def getTimePatternRE():
 		names[key] = "%%%s" % key
 	return (patt, names)
 
-def reGroupDictStrptime(found_dict, msec=False):
+
+def validateTimeZone(tz):
+	"""Validate a timezone.
+
+	For now this accepts only the UTC[+-]hhmm format.
+	In the future, it may be extended for named time zones (such as Europe/Paris)
+        present on the system, if a suitable tz library is present.
+	"""
+	m = FIXED_OFFSET_TZ_RE.match(tz)
+	if m is None:
+		raise ValueError("Unknown or unsupported time zone: %r" % tz)
+	return tz
+
+def zone2offset(tz, dt):
+	"""Return the proper offset, in minutes according to given timezone at a given time.
+
+	Parameters
+	----------
+	tz: symbolic timezone (for now only UTC[+-]hhmm is supported, and it's assumed to have
+                               been validated already)
+        dt: datetime instance for offset computation
+	"""
+	if tz == 'UTC':
+		return 0
+	unsigned = int(tz[4:6])*60 + int(tz[6:])
+	if tz[3] == '-':
+		return -unsigned
+	return unsigned
+
+def reGroupDictStrptime(found_dict, msec=False, default_tz=None):
 	"""Return time from dictionary of strptime fields
 
 	This is tweaked from python built-in _strptime.
@@ -88,7 +119,8 @@ def reGroupDictStrptime(found_dict, msec=False):
 	found_dict : dict
 		Dictionary where keys represent the strptime fields, and values the
 		respective value.
-
+	default_tz : default timezone to apply if nothing relevant is in found_dict
+                     (may be a non-fixed one in the future)
 	Returns
 	-------
 	float
@@ -209,6 +241,9 @@ def reGroupDictStrptime(found_dict, msec=False):
 	# Actully create date
 	date_result =  datetime.datetime(
 		year, month, day, hour, minute, second, fraction)
+	# Correct timezone if not supplied in the log linge
+	if tzoffset is None and default_tz is not None:
+		tzoffset = zone2offset(default_tz, date_result)
 	# Add timezone info
 	if tzoffset is not None:
 		date_result -= datetime.timedelta(seconds=tzoffset * 60)
