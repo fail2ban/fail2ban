@@ -1,0 +1,7 @@
+2011-03-10 08:59:56.319954 [WARNING] sofia_reg.c:1247 SIP auth challenge (REGISTER) on sofia profile 'internal' for [qwerty123@10.2.39.4] from ip 109.169.63.142
+2011-03-10 08:59:56.355872 [WARNING] sofia_reg.c:1247 SIP auth challenge (REGISTER) on sofia profile 'internal' for [qwerty123@10.2.39.4] from ip 109.169.63.142
+2011-03-10 08:59:56.382909 [WARNING] sofia_reg.c:1247 SIP auth challenge (REGISTER) on sofia profile 'internal' for [qwerty123@10.2.39.4] from ip 109.169.63.142
+2011-03-10 08:59:56.894607 [WARNING] sofia_reg.c:1247 SIP auth challenge (REGISTER) on sofia profile 'internal' for [qwerty123@10.2.39.4] from ip 109.169.63.142
+
+
+

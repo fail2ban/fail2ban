@@ -1,0 +1,5 @@
+Tue Jan 23 14:04:09 2007 [pid 55555] [Administrator] FAIL LOGIN: Client "123.123.123.123"
+Jan 23 14:04:14 Fedora6Srv1 vsftpd: pam_unix(vsftpd:auth): authentication failure; logname= uid=0 euid=0 tty=ftp ruser=Administrator rhost=123.123.123.123
+Thu Aug 6 16:01:28 2009 [pid 3501] [username] FTP response: Client "192.20.10.127", "530 Login incorrect."
+
+

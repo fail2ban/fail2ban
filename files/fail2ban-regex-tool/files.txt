@@ -1,0 +1,2 @@
+/Users/joe/anaconda/lib/python3.5/site-packages/regexmaker-1.0-py3.5.egg
+/Users/joe/anaconda/bin/failregexmaker

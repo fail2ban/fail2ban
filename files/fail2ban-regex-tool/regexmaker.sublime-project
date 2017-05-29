@@ -1,0 +1,17 @@
+{
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	],
+	"virtualenv": "/Users/joe/Desktop/freelancer/regexmaker/.env",
+    "build_systems":
+    [
+        {
+            "name": "Unittest",
+            "shell_cmd": "${project_path}/.env/bin/python2.7 -m unittest discover",
+            "working_dir": "${project_path}"
+        }
+    ]
+}
