@@ -39,3 +39,6 @@
 
 # failJSON: { "time": "2017-05-17T22:14:57", "match": true, "host": "67.211.219.82" }
 [17/May/2017 22:14:57] Message from IP address 67.211.219.82, sender <promo123@goodresponse.site> rejected: sender domain does not exist
+
+# failJSON: { "time": "2017-05-18T07:25:15", "match": true, "host": "212.92.127.112" }
+[18/May/2017 07:25:15] Failed SMTP login from 212.92.127.112 with SASL method CRAM-MD5.
