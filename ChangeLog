@@ -21,7 +21,7 @@ releases.
 ### New Features
 
 ### Enhancements
-
+* filter.d/kerio.conf - filter extended with new rules (see gh-1455)
 
 
 ver. 0.9.7 (2017/05/11) - awaiting-victory
