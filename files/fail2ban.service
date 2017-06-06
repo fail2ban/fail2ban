@@ -14,7 +14,7 @@ ExecStop=/usr/bin/fail2ban-client stop
 ExecReload=/usr/bin/fail2ban-client reload
 PIDFile=/var/run/fail2ban/fail2ban.pid
 Restart=on-failure
-RestartPreventExitStatus=0 255
+RestartPreventExitStatus=255
 
 [Install]
 WantedBy=multi-user.target
