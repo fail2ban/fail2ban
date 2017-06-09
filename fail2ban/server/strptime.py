@@ -107,17 +107,17 @@ def zone2offset(tz, dt):
 		been validated already)
 	dt: datetime instance for offset computation
 	"""
-	if isinstance(tz, basestring):
-		if len(tz) <= 3: # short tz (hh only)
-			# [+-]hh --> [+-]hh*60
-			return int(tz)*60
-		if tz[3] != ':':
-			# [+-]hhmm --> [+-]1 * (hh*60 + mm)
-			return int(tz[0]+'1') * (int(tz[1:3])*60 + int(tz[3:5]))
-		else:
-			# [+-]hh:mm --> [+-]1 * (hh*60 + mm)
-			return int(tz[0]+'1') * (int(tz[1:3])*60 + int(tz[4:6]))
-	return tz
+	if isinstance(tz, int):
+		return tz
+	if len(tz) <= 3: # short tz (hh only)
+		# [+-]hh --> [+-]hh*60
+		return int(tz)*60
+	if tz[3] != ':':
+		# [+-]hhmm --> [+-]1 * (hh*60 + mm)
+		return (-1 if tz[0] == '-' else 1) * (int(tz[1:3])*60 + int(tz[3:5]))
+	else:
+		# [+-]hh:mm --> [+-]1 * (hh*60 + mm)
+		return (-1 if tz[0] == '-' else 1) * (int(tz[1:3])*60 + int(tz[4:6]))
 
 def reGroupDictStrptime(found_dict, msec=False, default_tz=None):
 	"""Return time from dictionary of strptime fields

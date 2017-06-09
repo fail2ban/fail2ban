@@ -99,16 +99,16 @@ class DateDetectorTest(LogCaptureTestCase):
 			('UTC',      logdt, dtUTC), # UTC
 			('UTC-0430', logdt, dt(2017, 1, 23, 19, 30)),
 			('GMT+12',   logdt, dt(2017, 1, 23, 3, 0)),
-			(None,			 logdt, dt(2017, 1, 23, 14, 0)), # default CET in our test-framework
+			(None,       logdt, dt(2017, 1, 23, 14, 0)), # default CET in our test-framework
 			('UTC+0300', logdt+' GMT', dtUTC), # GMT wins
 			('UTC',      logdt+' GMT', dtUTC), # GMT wins
 			('UTC-0430', logdt+' GMT', dtUTC), # GMT wins
-			(None,			 logdt+' GMT', dtUTC), # GMT wins
+			(None,       logdt+' GMT', dtUTC), # GMT wins
 			('UTC',      logdt+' -1045', dt(2017, 1, 24, 1, 45)), # -1045 wins
-			(None,			 logdt+' -10:45', dt(2017, 1, 24, 1, 45)), # -1045 wins
+			(None,       logdt+' -10:45', dt(2017, 1, 24, 1, 45)), # -1045 wins
 			('UTC',      logdt+' +0945', dt(2017, 1, 23, 5, 15)), # +0945 wins
-			(None,			 logdt+' +09:45', dt(2017, 1, 23, 5, 15)), # +0945 wins
-			(None,			 logdt+' Z', dtUTC), # Z wins (UTC)
+			(None,       logdt+' +09:45', dt(2017, 1, 23, 5, 15)), # +0945 wins
+			(None,       logdt+' Z', dtUTC), # Z wins (UTC)
 		):
 			logSys.debug('== test %r with TZ %r', log, tz)
 			dd.default_tz=tz; datelog, _ = dd.getTime(log)
