@@ -98,7 +98,7 @@ TODO: implementing of options resp. other tasks from PR #1346
   e. g. by unban all, reload with removing action, stop, shutdown the system (gh-1743),
   the actions having `actionflush` do not execute `actionunban` for each single ticket
 * add new command `actionflush` default for several iptables/iptables-ipset actions (and common include);
-
+* add new jail option `logtimezone` to force the timezone on log lines that don't have an explicit one (gh-1773)
 
 ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
 -----------
