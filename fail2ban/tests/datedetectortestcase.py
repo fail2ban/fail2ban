@@ -91,18 +91,23 @@ class DateDetectorTest(LogCaptureTestCase):
 
 	def testDefaultTimeZone(self):
 		log = "2017-01-23 15:00:00"
-		datelog, _ = self.datedetector.getTime(log, default_tz='UTC+0300')
+		dd = self.datedetector
+		dd.default_tz='UTC+0300'; datelog, _ = dd.getTime(log)
 		# so in UTC, it was noon
 		self.assertEqual(datetime.datetime.utcfromtimestamp(datelog),
 				 datetime.datetime(2017, 1, 23, 12, 0, 0))
 
-		datelog, _ = self.datedetector.getTime(log, default_tz='UTC')
+		dd.default_tz='UTC'; datelog, _ = dd.getTime(log)
 		self.assertEqual(datetime.datetime.utcfromtimestamp(datelog),
 				 datetime.datetime(2017, 1, 23, 15, 0, 0))
+		self.assertEqual(dd.default_tz, 0); # utc == 0
 
-		datelog, _ = self.datedetector.getTime(log, default_tz='UTC-0430')
+		dd.default_tz='UTC-0430'; datelog, _ = dd.getTime(log)
 		self.assertEqual(datetime.datetime.utcfromtimestamp(datelog),
 				 datetime.datetime(2017, 1, 23, 19, 30, 0))
+
+		self.assertRaises(ValueError, setattr, dd, 'default_tz', 'WRONG-TZ')
+		dd.default_tz = None
 
 	def testVariousTimes(self):
 		"""Test detection of various common date/time formats f2b should understand

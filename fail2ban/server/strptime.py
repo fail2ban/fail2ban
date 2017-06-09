@@ -27,7 +27,7 @@ from .mytime import MyTime
 
 locale_time = LocaleTime()
 timeRE = TimeRE()
-FIXED_OFFSET_TZ_RE = re.compile(r'UTC(([+-]\d{2})(\d{2}))?$')
+FIXED_OFFSET_TZ_RE = re.compile(r'(?:Z|UTC|GMT)?([+-]\d{2}(?:\d{2}))?$')
 
 def _getYearCentRE(cent=(0,3), distance=3, now=(MyTime.now(), MyTime.alternateNow)):
 	""" Build century regex for last year and the next years (distance).
@@ -84,30 +84,33 @@ def getTimePatternRE():
 def validateTimeZone(tz):
 	"""Validate a timezone.
 
-	For now this accepts only the UTC[+-]hhmm format.
+	For now this accepts only the UTC[+-]hhmm format (UTC has aliases GMT/Z and optional).
 	In the future, it may be extended for named time zones (such as Europe/Paris)
         present on the system, if a suitable tz library is present.
 	"""
+	if tz is None:
+		return None
 	m = FIXED_OFFSET_TZ_RE.match(tz)
 	if m is None:
 		raise ValueError("Unknown or unsupported time zone: %r" % tz)
-	return tz
+	tz = m.group(1)
+	if tz is None or tz == '': # UTC/GMT
+		return 0; # fixed zero offzet
+	return zone2offset(tz, 0)
 
 def zone2offset(tz, dt):
 	"""Return the proper offset, in minutes according to given timezone at a given time.
 
 	Parameters
 	----------
-	tz: symbolic timezone (for now only UTC[+-]hhmm is supported, and it's assumed to have
-                               been validated already)
-        dt: datetime instance for offset computation
+	tz: symbolic timezone or offset (for now only [+-]hhmm is supported, and it's assumed to have
+		been validated already)
+	dt: datetime instance for offset computation
 	"""
-	if tz == 'UTC':
-		return 0
-	unsigned = int(tz[4:6])*60 + int(tz[6:])
-	if tz[3] == '-':
-		return -unsigned
-	return unsigned
+	if isinstance(tz, basestring):
+		# [+-]1 * (hh*60 + mm)
+		return int(tz[0]+'1') * (int(tz[1:3])*60 + int(tz[3:5]))
+	return tz
 
 def reGroupDictStrptime(found_dict, msec=False, default_tz=None):
 	"""Return time from dictionary of strptime fields

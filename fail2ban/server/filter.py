@@ -34,13 +34,12 @@ from .failmanager import FailManagerEmpty, FailManager
 from .ipdns import DNSUtils, IPAddr
 from .ticket import FailTicket
 from .jailthread import JailThread
-from .datedetector import DateDetector
+from .datedetector import DateDetector, validateTimeZone
 from .mytime import MyTime
 from .failregex import FailRegex, Regex, RegexException
 from .action import CommandAction
 from .utils import Utils
 from ..helpers import getLogger, PREFER_ENC
-from .strptime import validateTimeZone
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -88,6 +87,8 @@ class Filter(JailThread):
 		## Store last time stamp, applicable for multi-line
 		self.__lastTimeText = ""
 		self.__lastDate = None
+		## if set, treat log lines without explicit time zone to be in this time zone
+		self.__logtimezone = None
 		## External command
 		self.__ignoreCommand = False
 		## Default or preferred encoding (to decode bytes from file or journal):
@@ -103,8 +104,6 @@ class Filter(JailThread):
 		self.checkAllRegex = False
 		## if true ignores obsolete failures (failure time < now - findTime):
 		self.checkFindTime = True
-		## if set, treat log lines without explicit time zone to be in this time zone
-		self.logtimezone = None
 		## Ticks counter
 		self.ticks = 0
 
@@ -285,6 +284,7 @@ class Filter(JailThread):
 			return
 		else:
 			dd = DateDetector()
+			dd.default_tz = self.__logtimezone
 			if not isinstance(pattern, (list, tuple)):
 				pattern = filter(bool, map(str.strip, re.split('\n+', pattern)))
 			for pattern in pattern:
@@ -316,7 +316,9 @@ class Filter(JailThread):
 	# @param tz the symbolic timezone (for now fixed offset only: UTC[+-]HHMM)
 
 	def setLogTimeZone(self, tz):
-		self.logtimezone = validateTimeZone(tz)
+		validateTimeZone(tz); # avoid setting of wrong value, but hold original
+		self.__logtimezone = tz
+		if self.dateDetector: self.dateDetector.default_tz = self.__logtimezone
 
 	##
 	# Get the log default timezone
@@ -324,7 +326,7 @@ class Filter(JailThread):
 	# @return symbolic timezone (a string)
 
 	def getLogTimeZone(self):
-		return self.logtimezone
+		return self.__logtimezone
 
 	##
 	# Set the maximum retry value.
@@ -640,8 +642,7 @@ class Filter(JailThread):
 			self.__lastDate = date
 		elif timeText:
 
-			dateTimeMatch = self.dateDetector.getTime(timeText, tupleLine[3],
-								  default_tz=self.logtimezone)
+			dateTimeMatch = self.dateDetector.getTime(timeText, tupleLine[3])
 
 			if dateTimeMatch is None:
 				logSys.error("findFailure failed to parse timeText: %s", timeText)
@@ -994,8 +995,7 @@ class FileFilter(Filter):
 				if timeMatch:
 					dateTimeMatch = self.dateDetector.getTime(
 						line[timeMatch.start():timeMatch.end()],
-						(timeMatch, template),
-						default_tz=self.logtimezone)
+						(timeMatch, template))
 				else:
 					nextp = container.tell()
 					if nextp > maxp:
