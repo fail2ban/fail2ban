@@ -90,21 +90,31 @@ class DateDetectorTest(LogCaptureTestCase):
 		self.assertEqual(matchlog.group(1), 'Jan 23 21:59:59')
 
 	def testDefaultTimeZone(self):
-		log = "2017-01-23 15:00:00"
 		dd = self.datedetector
-		dd.default_tz='UTC+0300'; datelog, _ = dd.getTime(log)
-		# so in UTC, it was noon
-		self.assertEqual(datetime.datetime.utcfromtimestamp(datelog),
-				 datetime.datetime(2017, 1, 23, 12, 0, 0))
-
-		dd.default_tz='UTC'; datelog, _ = dd.getTime(log)
-		self.assertEqual(datetime.datetime.utcfromtimestamp(datelog),
-				 datetime.datetime(2017, 1, 23, 15, 0, 0))
-		self.assertEqual(dd.default_tz, 0); # utc == 0
-
-		dd.default_tz='UTC-0430'; datelog, _ = dd.getTime(log)
-		self.assertEqual(datetime.datetime.utcfromtimestamp(datelog),
-				 datetime.datetime(2017, 1, 23, 19, 30, 0))
+		dt = datetime.datetime
+		logdt = "2017-01-23 15:00:00"
+		dtUTC = dt(2017, 1, 23, 15, 0)
+		for tz, log, desired in (
+			('UTC+0300', logdt, dt(2017, 1, 23, 12, 0)), # so in UTC, it was noon
+			('UTC',      logdt, dtUTC), # UTC
+			('UTC-0430', logdt, dt(2017, 1, 23, 19, 30)),
+			('GMT+12',   logdt, dt(2017, 1, 23, 3, 0)),
+			(None,			 logdt, dt(2017, 1, 23, 14, 0)), # default CET in our test-framework
+			('UTC+0300', logdt+' GMT', dtUTC), # GMT wins
+			('UTC',      logdt+' GMT', dtUTC), # GMT wins
+			('UTC-0430', logdt+' GMT', dtUTC), # GMT wins
+			(None,			 logdt+' GMT', dtUTC), # GMT wins
+			('UTC',      logdt+' -1045', dt(2017, 1, 24, 1, 45)), # -1045 wins
+			(None,			 logdt+' -10:45', dt(2017, 1, 24, 1, 45)), # -1045 wins
+			('UTC',      logdt+' +0945', dt(2017, 1, 23, 5, 15)), # +0945 wins
+			(None,			 logdt+' +09:45', dt(2017, 1, 23, 5, 15)), # +0945 wins
+			(None,			 logdt+' Z', dtUTC), # Z wins (UTC)
+		):
+			logSys.debug('== test %r with TZ %r', log, tz)
+			dd.default_tz=tz; datelog, _ = dd.getTime(log)
+			val = dt.utcfromtimestamp(datelog)
+			self.assertEqual(val, desired,
+					 "wrong offset %r != %r by %r with TZ %r (%r)" % (val, desired, log, tz, dd.default_tz))
 
 		self.assertRaises(ValueError, setattr, dd, 'default_tz', 'WRONG-TZ')
 		dd.default_tz = None

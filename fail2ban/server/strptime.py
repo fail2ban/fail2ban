@@ -27,7 +27,7 @@ from .mytime import MyTime
 
 locale_time = LocaleTime()
 timeRE = TimeRE()
-FIXED_OFFSET_TZ_RE = re.compile(r'(?:Z|UTC|GMT)?([+-]\d{2}(?:\d{2}))?$')
+FIXED_OFFSET_TZ_RE = re.compile(r'(?:Z|UTC|GMT)?([+-]\d{2}(?::?\d{2})?)?$')
 
 def _getYearCentRE(cent=(0,3), distance=3, now=(MyTime.now(), MyTime.alternateNow)):
 	""" Build century regex for last year and the next years (distance).
@@ -108,8 +108,15 @@ def zone2offset(tz, dt):
 	dt: datetime instance for offset computation
 	"""
 	if isinstance(tz, basestring):
-		# [+-]1 * (hh*60 + mm)
-		return int(tz[0]+'1') * (int(tz[1:3])*60 + int(tz[3:5]))
+		if len(tz) <= 3: # short tz (hh only)
+			# [+-]hh --> [+-]hh*60
+			return int(tz)*60
+		if tz[3] != ':':
+			# [+-]hhmm --> [+-]1 * (hh*60 + mm)
+			return int(tz[0]+'1') * (int(tz[1:3])*60 + int(tz[3:5]))
+		else:
+			# [+-]hh:mm --> [+-]1 * (hh*60 + mm)
+			return int(tz[0]+'1') * (int(tz[1:3])*60 + int(tz[4:6]))
 	return tz
 
 def reGroupDictStrptime(found_dict, msec=False, default_tz=None):
@@ -202,11 +209,7 @@ def reGroupDictStrptime(found_dict, msec=False, default_tz=None):
 			if z in ("Z", "UTC", "GMT"):
 				tzoffset = 0
 			else:
-				tzoffset = int(z[1:3]) * 60 # Hours...
-				if len(z)>3:
-					tzoffset += int(z[-2:]) # ...and minutes
-				if z.startswith("-"):
-					tzoffset = -tzoffset
+				tzoffset = zone2offset(z, 0); # currently offset-based only
 		elif key == 'Z':
 			z = val
 			if z in ("UTC", "GMT"):
