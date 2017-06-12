@@ -22,10 +22,12 @@ TODO: implementing of options resp. other tasks from PR #1346
     (by using tag `<F-MLFID>` instead of buffering with `maxlines`);
   - optional parameter `mode` rewritten: normal (default), ddos, extra or aggressive (combines all),
     see sshd for regex details)
-* filter.d/sendmail-reject.conf:
+* `filter.d/sendmail-reject.conf`:
   - rewritten using `prefregex` and used MLFID-related multi-line parsing;
   - optional parameter `mode` introduced: normal (default), extra or aggressive
-* filter.d/haproxy-http-auth: do not mistake client port for part of an IPv6 address (gh-1745)
+* `filter.d/haproxy-http-auth`: do not mistake client port for part of an IPv6 address (gh-1745)
+* `filter.d/postfix-sasl.conf`
+    - updated to latest postfix formats
 * `action.d/complain.conf`
   - fixed using new tag `<ip-rev>` (sh/dash compliant now)
 * `action.d/sendmail-geoip-lines.conf`
