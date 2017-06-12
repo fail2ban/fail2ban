@@ -196,6 +196,14 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertTrue(jail.isEnabled())
 		self.assertLogged("Invalid action definition 'joho[foo'")
 
+	def testJailLogTimeZone(self):
+		jail = JailReader('tz_correct', basedir=IMPERFECT_CONFIG,
+			share_config=IMPERFECT_CONFIG_SHARE_CFG)
+		self.assertTrue(jail.read())
+		self.assertTrue(jail.getOptions())
+		self.assertTrue(jail.isEnabled())
+		self.assertEqual(jail.options['logtimezone'], 'UTC+0200')
+
 	def testJailFilterBrokenDef(self):
 		jail = JailReader('brokenfilterdef', basedir=IMPERFECT_CONFIG,
 			share_config=IMPERFECT_CONFIG_SHARE_CFG)
@@ -533,10 +541,14 @@ class JailsReaderTest(LogCaptureTestCase):
 			 ]],
 			 ['add', 'parse_to_end_of_jail.conf', 'auto'],
 			 ['set', 'parse_to_end_of_jail.conf', 'addfailregex', '<IP>'],
+			 ['set', 'tz_correct', 'addfailregex', '<IP>'],
+			 ['set', 'tz_correct', 'logtimezone', 'UTC+0200'],
 			 ['start', 'emptyaction'],
 			 ['start', 'missinglogfiles'],
 			 ['start', 'brokenaction'],
 			 ['start', 'parse_to_end_of_jail.conf'],
+		         ['add', 'tz_correct', 'auto'],
+			 ['start', 'tz_correct'],
 			 ['config-error',
 				"Jail 'brokenactiondef' skipped, because of wrong configuration: Invalid action definition 'joho[foo'"],
 			 ['config-error',

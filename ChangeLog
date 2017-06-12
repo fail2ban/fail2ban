@@ -88,16 +88,31 @@ TODO: implementing of options resp. other tasks from PR #1346
     the parsing of log-entries contain new-line chars (as single entry);
   - if multiline regex however expected (by single-line parsing without buffering) - prefix `(?m)` 
     could be used in regex to enable it;
-* implemented execution of `actionstart` on demand (conditional), if action depends on `family` (gh-1742):
+* Implemented execution of `actionstart` on demand (conditional), if action depends on `family` (gh-1742):
   - new action parameter `actionstart_on_demand` (bool) can be set to prevent/allow starting action
     on demand (default retrieved automatically, if some conditional parameter `param?family=...` 
     presents in action properties), see `action.d/pf.conf` for example;
   - additionally `actionstop` will be executed only for families previously executing `actionstart`
     (starting on demand only)
-* introduced new command `actionflush`: executed in order to flush all bans at once 
+* Introduced new command `actionflush`: executed in order to flush all bans at once 
   e. g. by unban all, reload with removing action, stop, shutdown the system (gh-1743),
   the actions having `actionflush` do not execute `actionunban` for each single ticket
-* add new command `actionflush` default for several iptables/iptables-ipset actions (and common include);
+* Add new command `actionflush` default for several iptables/iptables-ipset actions (and common include);
+* Add new jail option `logtimezone` to force the timezone on log lines that don't have an explicit one (gh-1773)
+* Implemented zone abbreviations (like CET, CEST, etc.) and abbr+-offset functionality (accept zones
+  like 'CET+0100'), for the list of abbreviations see strptime.TZ_STR;
+* Tokens `%z` and `%Z` are changed (more precise now);
+* Introduced new tokens `%Exz` and `%ExZ` that fully support zone abbreviations and/or offset-based
+  zones (implemented as enhancement using custom `datepattern`, because may be too dangerous for default
+  patterns and tokens like `%z`);
+  Note: the extended tokens supported zone abbreviations, but it can parse 1 or 3-5 char(s) in lowercase.
+        Don't use them in default date-patterns (if not anchored, few precise resp. optional).
+        Because python currently does not support mixing of case-sensitive with case-insensitive matching,
+	the TZ (in uppercase) cannot be combined with `%a`/`%b` etc (that are currently case-insensitive),
+	to avoid invalid date-time recognition in strings like '11-Aug-2013 03:36:11.372 error ...' with
+	wrong TZ "error".
+        Hence `%z` currently match literal Z|UTC|GMT only (and offset-based), and `%Exz` - all zone 
+	abbreviations.
 
 
 ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc

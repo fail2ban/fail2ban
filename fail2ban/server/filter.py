@@ -34,7 +34,7 @@ from .failmanager import FailManagerEmpty, FailManager
 from .ipdns import DNSUtils, IPAddr
 from .ticket import FailTicket
 from .jailthread import JailThread
-from .datedetector import DateDetector
+from .datedetector import DateDetector, validateTimeZone
 from .mytime import MyTime
 from .failregex import FailRegex, Regex, RegexException
 from .action import CommandAction
@@ -87,6 +87,8 @@ class Filter(JailThread):
 		## Store last time stamp, applicable for multi-line
 		self.__lastTimeText = ""
 		self.__lastDate = None
+		## if set, treat log lines without explicit time zone to be in this time zone
+		self.__logtimezone = None
 		## External command
 		self.__ignoreCommand = False
 		## Default or preferred encoding (to decode bytes from file or journal):
@@ -282,6 +284,7 @@ class Filter(JailThread):
 			return
 		else:
 			dd = DateDetector()
+			dd.default_tz = self.__logtimezone
 			if not isinstance(pattern, (list, tuple)):
 				pattern = filter(bool, map(str.strip, re.split('\n+', pattern)))
 			for pattern in pattern:
@@ -306,6 +309,24 @@ class Filter(JailThread):
 					pattern = None
 				return pattern, templates[0].name
 		return None
+
+	##
+	# Set the log default time zone
+	#
+	# @param tz the symbolic timezone (for now fixed offset only: UTC[+-]HHMM)
+
+	def setLogTimeZone(self, tz):
+		validateTimeZone(tz); # avoid setting of wrong value, but hold original
+		self.__logtimezone = tz
+		if self.dateDetector: self.dateDetector.default_tz = self.__logtimezone
+
+	##
+	# Get the log default timezone
+	#
+	# @return symbolic timezone (a string)
+
+	def getLogTimeZone(self):
+		return self.__logtimezone
 
 	##
 	# Set the maximum retry value.
@@ -972,7 +993,9 @@ class FileFilter(Filter):
 					break
 				(timeMatch, template) = self.dateDetector.matchTime(line)
 				if timeMatch:
-					dateTimeMatch = self.dateDetector.getTime(line[timeMatch.start():timeMatch.end()], (timeMatch, template))
+					dateTimeMatch = self.dateDetector.getTime(
+						line[timeMatch.start():timeMatch.end()],
+						(timeMatch, template))
 				else:
 					nextp = container.tell()
 					if nextp > maxp:
