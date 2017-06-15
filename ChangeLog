@@ -319,6 +319,9 @@ releases.
 ### Fixes
 * Fix for systemd-backend: fail2ban hits the ulimit (out of file descriptors), see gh-991.
   Partially back-ported from v.0.10.
+* filter.d/apache-overflows.conf:
+    - Fixes resources greedy expression (see gh-1790);
+    - Rewritten without end-anchor ($), because of potential vulnerability on very long URLs.
 
 ### New Features
 
