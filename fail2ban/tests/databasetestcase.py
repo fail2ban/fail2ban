@@ -358,6 +358,19 @@ class DatabaseTest(LogCaptureTestCase):
 		self.assertEqual(len(tickets), 2)
 		ticket = self.db.getCurrentBans(jail=None, ip="127.0.0.1");
 		self.assertEqual(ticket.getIP(), "127.0.0.1")
+		
+		# positive case (1 ticket not yet expired):
+		tickets = self.db.getCurrentBans(jail=self.jail, forbantime=15,
+			fromtime=MyTime.time())
+		self.assertEqual(len(tickets), 1)
+		# negative case (all are expired in 1year):
+		tickets = self.db.getCurrentBans(jail=self.jail, forbantime=15,
+			fromtime=MyTime.time() + MyTime.str2seconds("1year"))
+		self.assertEqual(len(tickets), 0)
+		# persistent bantime (-1), so never expired:
+		tickets = self.db.getCurrentBans(jail=self.jail, forbantime=-1,
+			fromtime=MyTime.time() + MyTime.str2seconds("1year"))
+		self.assertEqual(len(tickets), 2)
 
 	def testActionWithDB(self):
 		# test action together with database functionality
