@@ -17,6 +17,7 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import re
 import time
 import calendar
 import datetime
@@ -25,7 +26,9 @@ from _strptime import LocaleTime, TimeRE, _calc_julian_from_U_or_W
 from .mytime import MyTime
 
 locale_time = LocaleTime()
-timeRE = TimeRE()
+
+TZ_ABBR_RE = r"[A-Z](?:[A-Z]{2,4})?"
+FIXED_OFFSET_TZ_RE = re.compile(r"(%s)?([+-][01]\d(?::?\d{2})?)?$" % (TZ_ABBR_RE,))
 
 def _getYearCentRE(cent=(0,3), distance=3, now=(MyTime.now(), MyTime.alternateNow)):
 	""" Build century regex for last year and the next years (distance).
@@ -38,10 +41,20 @@ def _getYearCentRE(cent=(0,3), distance=3, now=(MyTime.now(), MyTime.alternateNo
 		exprset |= set( cent(now[1].year + i) for i in (-1, distance) )
 	return "(?:%s)" % "|".join(exprset) if len(exprset) > 1 else "".join(exprset)
 
-#todo: implement literal time zone support like CET, PST, PDT, etc (via pytz):
-#timeRE['z'] = r"%s?(?P<z>Z|[+-]\d{2}(?::?[0-5]\d)?|[A-Z]{3})?" % timeRE['Z']
-timeRE['Z'] = r"(?P<Z>[A-Z]{3,5})"
-timeRE['z'] = r"(?P<z>Z|UTC|GMT|[+-]\d{2}(?::?[0-5]\d)?)"
+timeRE = TimeRE()
+
+# TODO: because python currently does not support mixing of case-sensitive with case-insensitive matching,
+#       check how TZ (in uppercase) can be combined with %a/%b etc. (that are currently case-insensitive), 
+#       to avoid invalid date-time recognition in strings like '11-Aug-2013 03:36:11.372 error ...' 
+#       with wrong TZ "error", which is at least not backwards compatible.
+#       Hence %z currently match literal Z|UTC|GMT only (and offset-based), and %Exz - all zone abbreviations.
+timeRE['Z'] = r"(?P<Z>Z|[A-Z]{3,5})"
+timeRE['z'] = r"(?P<z>Z|UTC|GMT|[+-][01]\d(?::?\d{2})?)"
+
+# Note: this extended tokens supported zone abbreviations, but it can parse 1 or 3-5 char(s) in lowercase,
+#       see todo above. Don't use them in default date-patterns (if not anchored, few precise resp. optional).
+timeRE['ExZ'] = r"(?P<Z>%s)" % (TZ_ABBR_RE,)
+timeRE['Exz'] = r"(?P<z>(?:%s)?[+-][01]\d(?::?\d{2})?|%s)" % (TZ_ABBR_RE, TZ_ABBR_RE)
 
 # Extend build-in TimeRE with some exact patterns
 # exact two-digit patterns:
@@ -78,7 +91,56 @@ def getTimePatternRE():
 		names[key] = "%%%s" % key
 	return (patt, names)
 
-def reGroupDictStrptime(found_dict, msec=False):
+
+def validateTimeZone(tz):
+	"""Validate a timezone and convert it to offset if it can (offset-based TZ).
+
+	For now this accepts the UTC[+-]hhmm format (UTC has aliases GMT/Z and optional).
+	Additionally it accepts all zone abbreviations mentioned below in TZ_STR.
+	Note that currently this zone abbreviations are offset-based and used fixed
+	offset without automatically DST-switch (if CET used then no automatically CEST-switch).
+	
+	In the future, it may be extended for named time zones (such as Europe/Paris)
+	present on the system, if a suitable tz library is present (pytz).
+	"""
+	if tz is None:
+		return None
+	m = FIXED_OFFSET_TZ_RE.match(tz)
+	if m is None:
+		raise ValueError("Unknown or unsupported time zone: %r" % tz)
+	tz = m.groups()
+	return zone2offset(tz, 0)
+
+def zone2offset(tz, dt):
+	"""Return the proper offset, in minutes according to given timezone at a given time.
+
+	Parameters
+	----------
+	tz: symbolic timezone or offset (for now only TZA?([+-]hh:?mm?)? is supported,
+		as value are accepted:
+		  int offset;
+		  string in form like 'CET+0100' or 'UTC' or '-0400';
+		  tuple (or list) in form (zone name, zone offset);
+	dt: datetime instance for offset computation (currently unused)
+	"""
+	if isinstance(tz, int):
+		return tz
+	if isinstance(tz, basestring):
+		return validateTimeZone(tz)
+	tz, tzo = tz
+	if tzo is None or tzo == '': # without offset
+		return TZ_ABBR_OFFS[tz]
+	if len(tzo) <= 3: # short tzo (hh only)
+		# [+-]hh --> [+-]hh*60
+		return TZ_ABBR_OFFS[tz] + int(tzo)*60
+	if tzo[3] != ':':
+		# [+-]hhmm --> [+-]1 * (hh*60 + mm)
+		return TZ_ABBR_OFFS[tz] + (-1 if tzo[0] == '-' else 1) * (int(tzo[1:3])*60 + int(tzo[3:5]))
+	else:
+		# [+-]hh:mm --> [+-]1 * (hh*60 + mm)
+		return TZ_ABBR_OFFS[tz] + (-1 if tzo[0] == '-' else 1) * (int(tzo[1:3])*60 + int(tzo[4:6]))
+
+def reGroupDictStrptime(found_dict, msec=False, default_tz=None):
 	"""Return time from dictionary of strptime fields
 
 	This is tweaked from python built-in _strptime.
@@ -88,7 +150,8 @@ def reGroupDictStrptime(found_dict, msec=False):
 	found_dict : dict
 		Dictionary where keys represent the strptime fields, and values the
 		respective value.
-
+	default_tz : default timezone to apply if nothing relevant is in found_dict
+                     (may be a non-fixed one in the future)
 	Returns
 	-------
 	float
@@ -167,11 +230,7 @@ def reGroupDictStrptime(found_dict, msec=False):
 			if z in ("Z", "UTC", "GMT"):
 				tzoffset = 0
 			else:
-				tzoffset = int(z[1:3]) * 60 # Hours...
-				if len(z)>3:
-					tzoffset += int(z[-2:]) # ...and minutes
-				if z.startswith("-"):
-					tzoffset = -tzoffset
+				tzoffset = zone2offset(z, 0); # currently offset-based only
 		elif key == 'Z':
 			z = val
 			if z in ("UTC", "GMT"):
@@ -209,6 +268,9 @@ def reGroupDictStrptime(found_dict, msec=False):
 	# Actully create date
 	date_result =  datetime.datetime(
 		year, month, day, hour, minute, second, fraction)
+	# Correct timezone if not supplied in the log linge
+	if tzoffset is None and default_tz is not None:
+		tzoffset = zone2offset(default_tz, date_result)
 	# Add timezone info
 	if tzoffset is not None:
 		date_result -= datetime.timedelta(seconds=tzoffset * 60)
@@ -234,3 +296,56 @@ def reGroupDictStrptime(found_dict, msec=False):
 	if msec: # pragma: no cover - currently unused
 		tm += fraction/1000000.0
 	return tm
+
+
+TZ_ABBR_OFFS = {'':0, None:0}
+TZ_STR = '''
+	-12 Y
+	-11 X NUT SST
+	-10 W CKT HAST HST TAHT TKT
+	-9 V AKST GAMT GIT HADT HNY
+	-8 U AKDT CIST HAY HNP PST PT
+	-7 T HAP HNR MST PDT
+	-6 S CST EAST GALT HAR HNC MDT
+	-5 R CDT COT EASST ECT EST ET HAC HNE PET
+	-4 Q AST BOT CLT COST EDT FKT GYT HAE HNA PYT
+	-3 P ADT ART BRT CLST FKST GFT HAA PMST PYST SRT UYT WGT
+	-2 O BRST FNT PMDT UYST WGST
+	-1 N AZOT CVT EGT
+	0 Z EGST GMT UTC WET WT
+	1 A CET DFT WAT WEDT WEST
+	2 B CAT CEDT CEST EET SAST WAST
+	3 C EAT EEDT EEST IDT MSK
+	4 D AMT AZT GET GST KUYT MSD MUT RET SAMT SCT
+	5 E AMST AQTT AZST HMT MAWT MVT PKT TFT TJT TMT UZT YEKT
+	6 F ALMT BIOT BTT IOT KGT NOVT OMST YEKST
+	7 G CXT DAVT HOVT ICT KRAT NOVST OMSST THA WIB
+	8 H ACT AWST BDT BNT CAST HKT IRKT KRAST MYT PHT SGT ULAT WITA WST
+	9 I AWDT IRKST JST KST PWT TLT WDT WIT YAKT
+	10 K AEST ChST PGT VLAT YAKST YAPT
+	11 L AEDT LHDT MAGT NCT PONT SBT VLAST VUT
+	12 M ANAST ANAT FJT GILT MAGST MHT NZST PETST PETT TVT WFT
+	13 FJST NZDT
+	11.5 NFT
+	10.5 ACDT LHST
+	9.5 ACST
+	6.5 CCT MMT
+	5.75 NPT
+	5.5 SLT
+	4.5 AFT IRDT
+	3.5 IRST
+	-2.5 HAT NDT
+	-3.5 HNT NST NT
+	-4.5 HLV VET
+	-9.5 MART MIT
+'''
+
+def _init_TZ_ABBR():
+	"""Initialized TZ_ABBR_OFFS dictionary (TZ -> offset in minutes)"""
+	for tzline in map(str.split, TZ_STR.split('\n')):
+		if not len(tzline): continue
+		tzoffset = int(float(tzline[0]) * 60)
+		for tz in tzline[1:]:
+			TZ_ABBR_OFFS[tz] = tzoffset 
+
+_init_TZ_ABBR()

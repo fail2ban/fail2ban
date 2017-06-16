@@ -657,7 +657,7 @@ class Fail2BanDb(object):
 			queryArgs.append(ip)
 		query += " AND (timeofban + bantime > ? OR bantime = -1)"
 		queryArgs.append(fromtime)
-		if forbantime is not None:
+		if forbantime not in (None, -1): # not specified or persistent (all)
 			query += " AND timeofban > ?"
 			queryArgs.append(fromtime - forbantime)
 		if ip is None:

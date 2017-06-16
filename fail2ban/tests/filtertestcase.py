@@ -289,6 +289,16 @@ class BasicFilter(unittest.TestCase):
 			("^%Y-%m-%d-%H%M%S.%f %z **",
 			"^Year-Month-Day-24hourMinuteSecond.Microseconds Zone offset **"))
 
+	def testGetSetLogTimeZone(self):
+		self.assertEqual(self.filter.getLogTimeZone(), None)
+		self.filter.setLogTimeZone('UTC')
+		self.assertEqual(self.filter.getLogTimeZone(), 'UTC')
+		self.filter.setLogTimeZone('UTC-0400')
+		self.assertEqual(self.filter.getLogTimeZone(), 'UTC-0400')
+		self.filter.setLogTimeZone('UTC+0200')
+		self.assertEqual(self.filter.getLogTimeZone(), 'UTC+0200')
+		self.assertRaises(ValueError, self.filter.setLogTimeZone, 'not-a-time-zone')
+
 	def testAssertWrongTime(self):
 		self.assertRaises(AssertionError, 
 			lambda: _assert_equal_entries(self, 
@@ -1009,6 +1019,7 @@ def get_monitor_failures_testcase(Filter_):
 
 			# stop before tmpdir deleted (just prevents many monitor events)
 			self.filter.stop()
+			self.filter.join()
 
 
 		def _test_move_into_file(self, interim_kill=False):

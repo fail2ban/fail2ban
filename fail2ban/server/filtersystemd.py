@@ -315,6 +315,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				self.commonError()
 
 		logSys.debug("[%s] filter terminated", self.jailName)
+
 		# close journal:
 		try:
 			if self.__journal:
@@ -322,8 +323,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		except Exception as e: # pragma: no cover
 			logSys.error("Close journal failed: %r", e,
 				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
-		logSys.debug((self.jail is not None and self.jail.name
-                      or "jailless") +" filter terminated")
+
+		logSys.debug("[%s] filter exited (systemd)", self.jailName)
 		return True
 
 	def status(self, flavor="basic"):

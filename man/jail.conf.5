@@ -178,6 +178,25 @@ Ensure syslog or the program that generates the log file isn't configured to com
 .B logencoding
 encoding of log files used for decoding. Default value of "auto" uses current system locale.
 .TP
+.B logtimezone
+Force the time zone for log lines that don't have one.
+
+If this option is not specified, log lines from which no explicit time zone has been found are interpreted by fail2ban in its own system time zone, and that may turn to be inappropriate. While the best practice is to configure the monitored applications to include explicit offsets, this option is meant to handle cases where that is not possible.
+
+The supported time zones in this option are those with fixed offset: Z, UTC[+-]hhmm (you can also use GMT as an alias to UTC).
+
+This option has no effect on log lines on which an explicit time zone has been found.
+Examples:
+
+.RS
+.nf
+        logtimezone = UTC
+        logtimezone = UTC+0200
+        logtimezone = GMT-0100
+.fi
+.RE
+
+.TP
 .B banaction
 banning action (default iptables-multiport) typically specified in the \fI[DEFAULT]\fR section for all jails.
 .br

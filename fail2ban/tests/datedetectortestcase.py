@@ -89,6 +89,55 @@ class DateDetectorTest(LogCaptureTestCase):
 		self.assertEqual(datelog, dateUnix)
 		self.assertEqual(matchlog.group(1), 'Jan 23 21:59:59')
 
+	def testDefaultTimeZone(self):
+		# use special date-pattern (with %Exz), because %z currently does not supported 
+		# zone abbreviations except Z|UTC|GMT.
+		dd = DateDetector()
+		dd.appendTemplate('^%ExY-%Exm-%Exd %H:%M:%S(?: ?%Exz)?')
+		dt = datetime.datetime
+		logdt = "2017-01-23 15:00:00"
+		dtUTC = dt(2017, 1, 23, 15, 0)
+		for tz, log, desired in (
+			# no TZ in input-string:
+			('UTC+0300', logdt, dt(2017, 1, 23, 12, 0)), # so in UTC, it was noon
+			('UTC',      logdt, dtUTC), # UTC
+			('UTC-0430', logdt, dt(2017, 1, 23, 19, 30)),
+			('GMT+12',   logdt, dt(2017, 1, 23, 3, 0)),
+			(None,       logdt, dt(2017, 1, 23, 14, 0)), # default CET in our test-framework
+			# CET:
+			('CET',      logdt, dt(2017, 1, 23, 14, 0)),
+			('+0100',    logdt, dt(2017, 1, 23, 14, 0)),
+			('CEST-01',  logdt, dt(2017, 1, 23, 14, 0)),
+			# CEST:
+			('CEST',     logdt, dt(2017, 1, 23, 13, 0)),
+			('+0200',    logdt, dt(2017, 1, 23, 13, 0)),
+			('CET+01',   logdt, dt(2017, 1, 23, 13, 0)),
+			('CET+0100', logdt, dt(2017, 1, 23, 13, 0)),
+			# check offset in minutes:
+			('CET+0130', logdt, dt(2017, 1, 23, 12, 30)),
+			# TZ in input-string have precedence:
+			('UTC+0300', logdt+' GMT', dtUTC), # GMT wins
+			('UTC',      logdt+' GMT', dtUTC), # GMT wins
+			('UTC-0430', logdt+' GMT', dtUTC), # GMT wins
+			(None,       logdt+' GMT', dtUTC), # GMT wins
+			('UTC',      logdt+' -1045', dt(2017, 1, 24, 1, 45)), # -1045 wins
+			(None,       logdt+' -10:45', dt(2017, 1, 24, 1, 45)), # -1045 wins
+			('UTC',      logdt+' +0945', dt(2017, 1, 23, 5, 15)), # +0945 wins
+			(None,       logdt+' +09:45', dt(2017, 1, 23, 5, 15)), # +0945 wins
+			('UTC+0300', logdt+' Z', dtUTC), # Z wins (UTC)
+			('GMT+12',   logdt+' CET',  dt(2017, 1, 23, 14, 0)), # CET wins
+			('GMT+12',   logdt+' CEST', dt(2017, 1, 23, 13, 0)), # CEST wins
+			('GMT+12',   logdt+' CET+0130', dt(2017, 1, 23, 12, 30)), # CET+0130 wins
+		):
+			logSys.debug('== test %r with TZ %r', log, tz)
+			dd.default_tz=tz; datelog, _ = dd.getTime(log)
+			val = dt.utcfromtimestamp(datelog)
+			self.assertEqual(val, desired,
+					 "wrong offset %r != %r by %r with default TZ %r (%r)" % (val, desired, log, tz, dd.default_tz))
+
+		self.assertRaises(ValueError, setattr, dd, 'default_tz', 'WRONG-TZ')
+		dd.default_tz = None
+
 	def testVariousTimes(self):
 		"""Test detection of various common date/time formats f2b should understand
 		"""

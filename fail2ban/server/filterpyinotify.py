@@ -82,7 +82,7 @@ class FilterPyinotify(FileFilter):
 		self.__watchDirs = dict()
 		self.__pending = dict()
 		self.__pendingChkTime = 0
-		self.__pendingNextTime = 0
+		self.__pendingMinTime = 60
 		logSys.debug("Created FilterPyinotify")
 
 	def callback(self, event, origin=''):
@@ -150,7 +150,7 @@ class FilterPyinotify(FileFilter):
 	def _addPending(self, path, reason, isDir=False):
 		if path not in self.__pending:
 			self.__pending[path] = [Utils.DEFAULT_SLEEP_INTERVAL, isDir];
-			self.__pendingNextTime = 0
+			self.__pendingMinTime = 0
 			if isinstance(reason, pyinotify.Event):
 				reason = [reason.maskname, reason.pathname]
 			logSys.log(logging.MSG, "Log absence detected (possibly rotation) for %s, reason: %s of %s",
@@ -165,7 +165,7 @@ class FilterPyinotify(FileFilter):
 		if not self.__pending:
 			return
 		ntm = time.time()
-		if ntm < self.__pendingNextTime:
+		if ntm < self.__pendingChkTime + self.__pendingMinTime:
 			return
 		found = {}
 		minTime = 60
@@ -183,7 +183,7 @@ class FilterPyinotify(FileFilter):
 				"directory" if isDir else "file", path)
 			found[path] = isDir
 		self.__pendingChkTime = time.time()
-		self.__pendingNextTime = self.__pendingChkTime + minTime
+		self.__pendingMinTime = minTime
 		# process now because we've missed it in monitoring:
 		for path, isDir in found.iteritems():
 			self._delPending(path)
@@ -292,6 +292,12 @@ class FilterPyinotify(FileFilter):
 			self.commonError()
 		self.ticks += 1
 
+	@property
+	def __notify_maxtout(self):
+		# timeout for pyinotify must be set in milliseconds (fail2ban time values are 
+		# floats contain seconds), max 0.5 sec (additionally regards pending check time)
+		return min(self.sleeptime, 0.5, self.__pendingMinTime) * 1000
+
 	##
 	# Main loop.
 	#
@@ -301,9 +307,8 @@ class FilterPyinotify(FileFilter):
 	def run(self):
 		prcevent = pyinotify.ProcessEvent()
 		prcevent.process_default = self.__process_default
-		## timeout for pyinotify must be set in milliseconds (our time values are floats contain seconds)
 		self.__notifier = pyinotify.Notifier(self.__monitor,
-			prcevent, timeout=self.sleeptime * 1000)
+			prcevent, timeout=self.__notify_maxtout)
 		logSys.debug("[%s] filter started (pyinotifier)", self.jailName)
 		while self.active:
 			try:
@@ -311,13 +316,19 @@ class FilterPyinotify(FileFilter):
 				# slow check events while idle:
 				if self.idle:
 					if Utils.wait_for(lambda: not self.active or not self.idle,
-						self.sleeptime * 10, self.sleeptime
+						min(self.sleeptime * 10, self.__pendingMinTime), 
+						min(self.sleeptime, self.__pendingMinTime)
 					):
 						if not self.active: break
 
 				# default pyinotify handling using Notifier:
 				self.__notifier.process_events()
-				if Utils.wait_for(lambda: not self.active or self.__notifier.check_events(), self.sleeptime):
+
+				# wait for events / timeout:
+				notify_maxtout = self.__notify_maxtout
+				def __check_events():
+					return not self.active or self.__notifier.check_events(timeout=notify_maxtout)
+				if Utils.wait_for(__check_events, min(self.sleeptime, self.__pendingMinTime)):
 					if not self.active: break
 					self.__notifier.read_events()
 
@@ -344,11 +355,10 @@ class FilterPyinotify(FileFilter):
 	# Call super.stop() and then stop the 'Notifier'
 
 	def stop(self):
-		if self.__notifier: # stop the notifier
-			self.__notifier.stop()
 		# stop filter thread:
 		super(FilterPyinotify, self).stop()
-		self.join()
+		if self.__notifier: # stop the notifier
+			self.__notifier.stop()
 
 	##
 	# Wait for exit with cleanup.
