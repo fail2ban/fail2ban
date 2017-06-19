@@ -101,6 +101,7 @@ class JailReader(ConfigReader):
 				["string", "filter", ""]]
 		opts = [["bool", "enabled", False],
 				["string", "logpath", None],
+				["string", "logtimezone", None],
 				["string", "logencoding", None],
 				["string", "backend", "auto"],
 				["int",    "maxretry", None],

@@ -22,10 +22,15 @@ TODO: implementing of options resp. other tasks from PR #1346
     (by using tag `<F-MLFID>` instead of buffering with `maxlines`);
   - optional parameter `mode` rewritten: normal (default), ddos, extra or aggressive (combines all),
     see sshd for regex details)
-* filter.d/sendmail-reject.conf:
+* `filter.d/sendmail-reject.conf`:
   - rewritten using `prefregex` and used MLFID-related multi-line parsing;
   - optional parameter `mode` introduced: normal (default), extra or aggressive
-* filter.d/haproxy-http-auth: do not mistake client port for part of an IPv6 address (gh-1745)
+* `filter.d/haproxy-http-auth`: do not mistake client port for part of an IPv6 address (gh-1745)
+* `filter.d/postfix-sasl.conf`
+    - updated to latest postfix formats
+* `filter.d/roundcube-auth.conf`:
+    - fixed regex when logging authentication errors to journal instead to a local file (gh-1159);
+    - additionally fixed more complex injections on username (e. g. using dot after fake host).
 * `action.d/complain.conf`
   - fixed using new tag `<ip-rev>` (sh/dash compliant now)
 * `action.d/sendmail-geoip-lines.conf`
@@ -33,6 +38,7 @@ TODO: implementing of options resp. other tasks from PR #1346
 * fail2ban-regex: fixed matched output by multi-line (buffered) parsing
 * fail2ban-regex: support for multi-line debuggex URL implemented (gh-422)
 * fixed ipv6-action errors on systems not supporting ipv6 and vice versa (gh-1741)
+* fixed directory-based log-rotate for pyinotify-backend (gh-1778)
 
 ### New Features
 * New Actions:
@@ -87,17 +93,32 @@ TODO: implementing of options resp. other tasks from PR #1346
     the parsing of log-entries contain new-line chars (as single entry);
   - if multiline regex however expected (by single-line parsing without buffering) - prefix `(?m)` 
     could be used in regex to enable it;
-* implemented execution of `actionstart` on demand (conditional), if action depends on `family` (gh-1742):
+* Implemented execution of `actionstart` on demand (conditional), if action depends on `family` (gh-1742):
   - new action parameter `actionstart_on_demand` (bool) can be set to prevent/allow starting action
     on demand (default retrieved automatically, if some conditional parameter `param?family=...` 
     presents in action properties), see `action.d/pf.conf` for example;
   - additionally `actionstop` will be executed only for families previously executing `actionstart`
     (starting on demand only)
-* introduced new command `actionflush`: executed in order to flush all bans at once 
+* Introduced new command `actionflush`: executed in order to flush all bans at once 
   e. g. by unban all, reload with removing action, stop, shutdown the system (gh-1743),
   the actions having `actionflush` do not execute `actionunban` for each single ticket
-* add new command `actionflush` default for several iptables/iptables-ipset actions (and common include);
-* filter.d/courier-auth.conf: support failed logins with method only
+* Add new command `actionflush` default for several iptables/iptables-ipset actions (and common include);
+* Add new jail option `logtimezone` to force the timezone on log lines that don't have an explicit one (gh-1773)
+* Implemented zone abbreviations (like CET, CEST, etc.) and abbr+-offset functionality (accept zones
+  like 'CET+0100'), for the list of abbreviations see strptime.TZ_STR;
+* Tokens `%z` and `%Z` are changed (more precise now);
+* Introduced new tokens `%Exz` and `%ExZ` that fully support zone abbreviations and/or offset-based
+  zones (implemented as enhancement using custom `datepattern`, because may be too dangerous for default
+  patterns and tokens like `%z`);
+  Note: the extended tokens supported zone abbreviations, but it can parse 1 or 3-5 char(s) in lowercase.
+        Don't use them in default date-patterns (if not anchored, few precise resp. optional).
+        Because python currently does not support mixing of case-sensitive with case-insensitive matching,
+	the TZ (in uppercase) cannot be combined with `%a`/`%b` etc (that are currently case-insensitive),
+	to avoid invalid date-time recognition in strings like '11-Aug-2013 03:36:11.372 error ...' with
+	wrong TZ "error".
+        Hence `%z` currently match literal Z|UTC|GMT only (and offset-based), and `%Exz` - all zone 
+	abbreviations.
+* `filter.d/courier-auth.conf`: support failed logins with method only
 
 
 ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
@@ -293,12 +314,29 @@ fail2ban-client set loglevel INFO
   - new `with_foreground_server_thread` decorator to test several client/server commands
 
 
-ver. 0.9.x (2016/??/??) - wanna-be-released
+ver. 0.9.8 (2016/XX/XXX) - wanna-be-released
 -----------
 
 0.9.x line is no longer heavily developed.  If you are interested in
 new features (e.g. IPv6 support), please consider 0.10 branch and its
 releases.
+
+
+### Fixes
+* Fix for systemd-backend: fail2ban hits the ulimit (out of file descriptors), see gh-991.
+  Partially back-ported from v.0.10.
+* filter.d/apache-overflows.conf:
+    - Fixes resources greedy expression (see gh-1790);
+    - Rewritten without end-anchor ($), because of potential vulnerability on very long URLs.
+
+### New Features
+
+### Enhancements
+* filter.d/kerio.conf - filter extended with new rules (see gh-1455)
+
+
+ver. 0.9.7 (2017/05/11) - awaiting-victory
+-----------
 
 ### Fixes
 * Fixed a systemd-journal handling in fail2ban-regex (gh-1657)
@@ -310,6 +348,8 @@ releases.
     - Fixed filenames for apache and nginx log files (gh-1667)
 * filter.d/exim.conf
     - optional part `(...)` after host-name before `[IP]` (gh-1751)
+    - new reason "Unrouteable address" for "rejected RCPT" regex (gh-1762)
+    - match of complex time like `D=2m42s` in regex "no MAIL in SMTP connection" (gh-1766)
 * filter.d/sshd.conf
     - new aggressive rules (gh-864):
       - Connection reset by peer (multi-line rule during authorization process)
@@ -324,7 +364,7 @@ releases.
 * filter.d/cyrus-imap.conf
     - accept entries without login-info resp. hostname before IP address (gh-1707)
 * Filter tests extended with check of all config-regexp, that contains greedy catch-all
-  before `<HOST>`, that is hard-anchored at end or precise  sub expression after `<HOST>`
+  before `<HOST>`, that is hard-anchored at end or precise sub expression after `<HOST>`
 
 ### New Features
 * New Actions:

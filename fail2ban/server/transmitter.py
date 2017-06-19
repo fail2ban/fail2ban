@@ -261,6 +261,10 @@ class Transmitter:
 			value = command[2]
 			self.__server.setDatePattern(name, value)
 			return self.__server.getDatePattern(name)
+		elif command[1] == "logtimezone":
+			value = command[2]
+			self.__server.setLogTimeZone(name, value)
+			return self.__server.getLogTimeZone(name)
 		elif command[1] == "maxretry":
 			value = command[2]
 			self.__server.setMaxRetry(name, int(value))
@@ -363,6 +367,8 @@ class Transmitter:
 			return self.__server.getFindTime(name)
 		elif command[1] == "datepattern":
 			return self.__server.getDatePattern(name)
+		elif command[1] == "logtimezone":
+			return self.__server.getLogTimeZone(name)
 		elif command[1] == "maxretry":
 			return self.__server.getMaxRetry(name)
 		elif command[1] == "maxlines":

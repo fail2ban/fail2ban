@@ -311,6 +311,10 @@ class Transmitter(TransmitterBase):
 			"datepattern", "TAI64N", (None, "TAI64N"), jail=self.jailName)
 		self.setGetTestNOK("datepattern", "%Cat%a%%%g", jail=self.jailName)
 
+	def testLogTimeZone(self):
+		self.setGetTest("logtimezone", "UTC+0400", "UTC+0400", jail=self.jailName)
+		self.setGetTestNOK("logtimezone", "not-a-time-zone", jail=self.jailName)
+
 	def testJailUseDNS(self):
 		self.setGetTest("usedns", "yes", jail=self.jailName)
 		self.setGetTest("usedns", "warn", jail=self.jailName)
