@@ -1,4 +1,0 @@
-May 19 06:07:48 server roundcube[21296]: <crk9n97i> IMAP Error: Login failed for test from 178.191.91.44. AUTHENTICATE PLAIN: Authentication failed. in /usr/share/php5/Roundcube/rcube_imap.php on line 193 (POST /mail/?_task=login&_action=login)
-May 19 06:11:37 server roundcube[22926]: <crk9n97i> IMAP Error: Login failed for test from 178.191.91.44. AUTHENTICATE PLAIN: Authentication failed. in /usr/share/php5/Roundcube/rcube_imap.php on line 193 (POST /mail/?_task=login&_action=login)
-May 19 06:13:18 server roundcube[21528]: <crk9n97i> IMAP Error: Login failed for test from 178.191.91.44. AUTHENTICATE PLAIN: Authentication failed. in /usr/share/php5/Roundcube/rcube_imap.php on line 193 (POST /mail/?_task=login&_action=login)
-May 19 06:36:53 server roundcube[27572]: <crk9n97i> IMAP Error: Login failed for test from 178.191.91.44. AUTHENTICATE PLAIN: Authentication failed. in /usr/share/php5/Roundcube/rcube_imap.php on line 193 (POST /mail/?_task=login&_action=login)
