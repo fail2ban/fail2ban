@@ -28,6 +28,9 @@ TODO: implementing of options resp. other tasks from PR #1346
 * `filter.d/haproxy-http-auth`: do not mistake client port for part of an IPv6 address (gh-1745)
 * `filter.d/postfix-sasl.conf`
     - updated to latest postfix formats
+* `filter.d/roundcube-auth.conf`:
+    - fixed regex when logging authentication errors to journal instead to a local file (gh-1159);
+    - additionally fixed more complex injections on username (e. g. using dot after fake host).
 * `action.d/complain.conf`
   - fixed using new tag `<ip-rev>` (sh/dash compliant now)
 * `action.d/sendmail-geoip-lines.conf`
