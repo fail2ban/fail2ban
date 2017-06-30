@@ -10,10 +10,13 @@ python:
   # - 3.2
   - 3.3
   - 3.4
-  - pypy3
+  # disabled since setuptools dropped support for Python 3.0 - 3.2
+  # - pypy3
+  - pypy3.3-5.2-alpha1
 before_install:
-  - if [[ $TRAVIS_PYTHON_VERSION == 2* || $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then export F2B_PY_2=true && echo "Set F2B_PY_2"; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 3* || $TRAVIS_PYTHON_VERSION == 'pypy3' ]]; then export F2B_PY_3=true && echo "Set F2B_PY_3"; fi
+  - echo "running under $TRAVIS_PYTHON_VERSION"
+  - if [[ $TRAVIS_PYTHON_VERSION == 2* || $TRAVIS_PYTHON_VERSION == pypy* && $TRAVIS_PYTHON_VERSION != pypy3* ]]; then export F2B_PY_2=true && echo "Set F2B_PY_2"; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 3* || $TRAVIS_PYTHON_VERSION == pypy3* ]]; then export F2B_PY_3=true && echo "Set F2B_PY_3"; fi
   - travis_retry sudo apt-get update -qq
   # Set this so sudo executes the correct python binary
   #   Anything not using sudo will already have the correct environment

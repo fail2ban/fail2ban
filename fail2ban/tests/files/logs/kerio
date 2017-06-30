@@ -25,5 +25,20 @@
 # failJSON: { "time": "2013-12-13T01:11:04", "match": true, "host": "218.85.253.185" }
 [13/Dec/2013 01:11:04] Attempt to deliver to unknown recipient <marge@aplawrence.com>, from <yu@rrd.com>, IP address 218.85.253.185
 
+# failJSON: { "time": "2017-05-29T17:29:29", "match": true, "host": "185.140.108.56" }
+[29/May/2017 17:29:29] IP address 185.140.108.56 found in DNS blacklist SpamCop, mail from <noreply-tjgqNffcgPfpbZtpDzasm@oakspaversusa.com> to <info@verinion.com> rejected
 
+# failJSON: { "time": "2017-05-17T19:43:42", "match": true, "host": "185.140.108.26" }
+[17/May/2017 19:43:42] SMTP: User printer@verinion.com doesn't exist. Attempt from IP address 185.140.108.26.
 
+# failJSON: { "time": "2017-05-17T19:44:25", "match": true, "host": "184.171.168.211" }
+[17/May/2017 19:44:25] Client with IP address 184.171.168.211 has no reverse DNS entry, connection rejected before SMTP greeting
+
+# failJSON: { "time": "2017-05-17T19:45:27", "match": true, "host": "170.178.167.136" }
+[17/May/2017 19:45:27] Administration login into Web Administration from 170.178.167.136 failed: IP address not allowed
+
+# failJSON: { "time": "2017-05-17T22:14:57", "match": true, "host": "67.211.219.82" }
+[17/May/2017 22:14:57] Message from IP address 67.211.219.82, sender <promo123@goodresponse.site> rejected: sender domain does not exist
+
+# failJSON: { "time": "2017-05-18T07:25:15", "match": true, "host": "212.92.127.112" }
+[18/May/2017 07:25:15] Failed SMTP login from 212.92.127.112 with SASL method CRAM-MD5.
