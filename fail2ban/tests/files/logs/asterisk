@@ -84,3 +84,6 @@ Nov 4 18:30:40 localhost asterisk[32229]: NOTICE[32257]: chan_sip.c:23417 in han
 # Failed authentication with pjsip on Asterisk 13+
 # failJSON: { "time": "2016-06-08T23:40:26", "match": true , "host": "2.3.4.5" }
 [2016-06-08 23:40:26] NOTICE[32497] res_pjsip/pjsip_distributor.c: Request from '"317" <sip:317@1.2.3.4>' failed for '2.3.4.5:5089' (callid: 206f178f-896564cb-57573f49@1.2.3.4) - No matching endpoint found
+
+# failJSON: { "time": "2016-06-09T00:01:02", "match": true , "host": "192.0.2.1" }
+[2016-06-09 00:01:02] NOTICE [22382] manager.c: 192.0.2.1 failed to authenticate as 'admin'
