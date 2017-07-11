@@ -26,8 +26,14 @@ TODO: implementing of options resp. other tasks from PR #1346
   - rewritten using `prefregex` and used MLFID-related multi-line parsing;
   - optional parameter `mode` introduced: normal (default), extra or aggressive
 * `filter.d/haproxy-http-auth`: do not mistake client port for part of an IPv6 address (gh-1745)
-* `filter.d/postfix-sasl.conf`
+* `filter.d/postfix.conf`:
     - updated to latest postfix formats
+    - joined several postfix filter together (normalized and optimized version, gh-1825)
+    - introduced new parameter `mode` (see gh-1825): more (default, combines normal and rbl), auth, normal,
+      rbl, ddos, extra or aggressive (combines all)
+    - postfix postscreen (resp. other RBL's compatibility fix, gh-1764, gh-1825)
+* `filter.d/postfix-rbl.conf`: removed (replaced with `postfix[mode=rbl]`)
+* `filter.d/postfix-sasl.conf`: removed (replaced with `postfix[mode=auth]`)
 * `filter.d/roundcube-auth.conf`:
     - fixed regex when logging authentication errors to journal instead to a local file (gh-1159);
     - additionally fixed more complex injections on username (e. g. using dot after fake host).
