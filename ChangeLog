@@ -50,6 +50,7 @@ TODO: implementing of options resp. other tasks from PR #1346
 * New Actions:
 
 * New Filters:
+- filter.d/postfix-rbl-postscreen: for Postfix RBL detection during postscreen process.
 
 ### Enhancements
 * Introduced new filter option `prefregex` for pre-filtering using single regular expression (gh-1698);
