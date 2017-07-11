@@ -673,7 +673,7 @@ class Filter(JailThread):
 		# Pre-filter fail regex (if available):
 		preGroups = {}
 		if self.__prefRegex:
-			if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG:
+			if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG: # pragma: no cover
 				logSys.log(5, "  Looking for prefregex %r", self.__prefRegex.getRegex())
 			self.__prefRegex.search(self.__lineBuffer)
 			if not self.__prefRegex.hasMatched():
@@ -689,7 +689,7 @@ class Filter(JailThread):
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
-			if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG:
+			if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG: # pragma: no cover
 				logSys.log(5, "  Looking for failregex %r", failRegex.getRegex())
 			failRegex.search(self.__lineBuffer, orgBuffer)
 			if not failRegex.hasMatched():
