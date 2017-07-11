@@ -416,6 +416,9 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		self.pruneLog()
 		self.execSuccess((), "-vq", "-V")
 		self.assertLogged("Fail2Ban v" + fail2bancmdline.version)
+		self.pruneLog()
+		self.execSuccess((), "--str2sec", "1d12h30m")
+		self.assertLogged("131400")
 
 	@with_tmpdir
 	def testClientDump(self, tmp):

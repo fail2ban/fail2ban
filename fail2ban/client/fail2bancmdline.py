@@ -111,6 +111,7 @@ class Fail2banCmdLine():
 		output("    -f                      start server in foreground")
 		output("    --async                 start server in async mode (for internal usage only, don't read configuration)")
 		output("    --timeout               timeout to wait for the server (for internal usage only, don't read configuration)")
+		output("    --str2sec <STRING>      convert time abbreviation format to seconds")
 		output("    -h, --help              display this help message")
 		output("    -V, --version           print the version")
 
@@ -158,6 +159,10 @@ class Fail2banCmdLine():
 			elif o == "--timeout":
 				from ..server.mytime import MyTime
 				self._conf["timeout"] = MyTime.str2seconds(opt[1])
+			elif o == "--str2sec":
+				from ..server.mytime import MyTime
+				output(MyTime.str2seconds(opt[1]))
+				return True
 			elif o in ["-h", "--help"]:
 				self.dispUsage()
 				return True
@@ -179,7 +184,7 @@ class Fail2banCmdLine():
 			# Reads the command line options.
 			try:
 				cmdOpts = 'hc:s:p:xfbdtviqV'
-				cmdLongOpts = ['loglevel=', 'logtarget=', 'syslogsocket=', 'test', 'async', 'timeout=', 'help', 'version']
+				cmdLongOpts = ['loglevel=', 'logtarget=', 'syslogsocket=', 'test', 'async', 'timeout=', 'str2sec=', 'help', 'version']
 				optList, self._args = getopt.getopt(self._argv[1:], cmdOpts, cmdLongOpts)
 			except getopt.GetoptError:
 				self.dispUsage()
