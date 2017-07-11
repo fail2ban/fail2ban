@@ -125,17 +125,17 @@
 # failJSON: { "time": "2013-11-18T22:39:33", "match": true , "host": "91.49.82.139" }
 [Mon Nov 18 22:39:33 2013] [error] [client 91.49.82.139] user gg not found: /, referer: http://sj.hopto.org/management.html
 
-# Default message patterns to protect web apps
-# /!\ Please re-activate them once we can enable "protect_web_apps" parameter through failJSON
-# See https://github.com/fail2ban/fail2ban/issues/1676
-#
-# _dis_failJSON: { "time": "2016-06-01T01:17:42", "match": true , "host": "192.168.0.2" }
-#[Sat Jun 01 01:17:42 2016] [error] [client 192.168.0.2] AH01071: Got error 'PHP message: user  not found: My Protected Web Application'
-# _dis_failJSON: { "time": "2016-06-01T02:17:42", "match": true , "host": "192.168.0.2" }
-#[Sat Jun 01 02:17:42 2016] [error] [client 192.168.0.2] user bob not authorized: My Protected Web Application
-# _dis_failJSON: { "time": "2016-06-01T03:17:42", "match": true , "host": "192.168.0.2" }
-#[Sat Jun 01 03:17:42 2016] [error] [client 192.168.0.2] user "bob" password mismatch: My Protected Web Application
-# _dis_failJSON: { "time": "2016-06-01T04:17:42", "match": true , "host": "192.168.0.2" }
-#[Sat Jun 01 04:17:42 2016] [error] [client 192.168.0.2] user sent invalid token: My Protected Web Application
-# _dis_failJSON: { "time": "2016-06-01T05:17:42", "match": true , "host": "192.168.0.2" }
-#[Sat Jun 01 05:17:42 2016] [error] [client 192.168.0.2] user misbehaved: My Protected Web Application
+# filterOptions: {"extension": "protect-web-apps"}
+
+# Default message patterns to protect web apps (see gh-1676)
+# 
+# failJSON: { "time": "2016-06-01T01:17:42", "match": true , "host": "192.168.0.2" }
+[Sat Jun 01 01:17:42 2016] [error] [client 192.168.0.2] AH01071: Got error 'PHP message: user  not found: My Protected Web Application'
+# failJSON: { "time": "2016-06-01T02:17:42", "match": true , "host": "192.168.0.2" }
+[Sat Jun 01 02:17:42 2016] [error] [client 192.168.0.2] user bob not authorized: My Protected Web Application
+# failJSON: { "time": "2016-06-01T03:17:42", "match": true , "host": "192.168.0.2" }
+[Sat Jun 01 03:17:42 2016] [error] [client 192.168.0.2] user "bob" password mismatch: My Protected Web Application
+# failJSON: { "time": "2016-06-01T04:17:42", "match": true , "host": "192.168.0.2" }
+[Sat Jun 01 04:17:42 2016] [error] [client 192.168.0.2] user sent invalid token: My Protected Web Application
+# failJSON: { "time": "2016-06-01T05:17:42", "match": true , "host": "192.168.0.2" }
+[Sat Jun 01 05:17:42 2016] [error] [client 192.168.0.2] user misbehaved: My Protected Web Application
