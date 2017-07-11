@@ -38,6 +38,7 @@ TODO: implementing of options resp. other tasks from PR #1346
     - fixed regex when `X-Real-IP` or/and `X-Forwarded-For` are present after host (gh-1303);
     - fixed regex when logging authentication errors to journal instead to a local file (gh-1159);
     - additionally fixed more complex injections on username (e. g. using dot after fake host).
+* `filter.d/ejabberd-auth.conf`: fixed failregex - accept new log-format (gh-993)
 * `action.d/complain.conf`
   - fixed using new tag `<ip-rev>` (sh/dash compliant now)
 * `action.d/sendmail-geoip-lines.conf`
