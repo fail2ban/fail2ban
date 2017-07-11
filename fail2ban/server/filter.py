@@ -668,16 +668,19 @@ class Filter(JailThread):
 				self.__lineBuffer + [tupleLine[:3]])[-self.__lineBufferSize:]
 		else:
 			orgBuffer = self.__lineBuffer = [tupleLine[:3]]
-		logSys.log(5, "Looking for failregex match of %r", self.__lineBuffer)
+		logSys.log(5, "Looking for match of %r", self.__lineBuffer)
 
 		# Pre-filter fail regex (if available):
 		preGroups = {}
 		if self.__prefRegex:
+			if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG: # pragma: no cover
+				logSys.log(5, "  Looking for prefregex %r", self.__prefRegex.getRegex())
 			self.__prefRegex.search(self.__lineBuffer)
 			if not self.__prefRegex.hasMatched():
+				logSys.log(5, "  Prefregex not matched")
 				return failList
 			preGroups = self.__prefRegex.getGroups()
-			logSys.log(7, "Pre-filter matched %s", preGroups)
+			logSys.log(7, "  Pre-filter matched %s", preGroups)
 			repl = preGroups.get('content')
 			# Content replacement:
 			if repl:
@@ -686,17 +689,19 @@ class Filter(JailThread):
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
+			if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG: # pragma: no cover
+				logSys.log(5, "  Looking for failregex %r", failRegex.getRegex())
 			failRegex.search(self.__lineBuffer, orgBuffer)
 			if not failRegex.hasMatched():
 				continue
 			# The failregex matched.
-			logSys.log(7, "Matched %s", failRegex)
+			logSys.log(7, "  Matched %s", failRegex)
 			# Checks if we must ignore this match.
 			if self.ignoreLine(failRegex.getMatchedTupleLines()) \
 					is not None:
 				# The ignoreregex matched. Remove ignored match.
 				self.__lineBuffer = failRegex.getUnmatchedTupleLines()
-				logSys.log(7, "Matched ignoreregex and was ignored")
+				logSys.log(7, "  Matched ignoreregex and was ignored")
 				if not self.checkAllRegex:
 					break
 				else:
