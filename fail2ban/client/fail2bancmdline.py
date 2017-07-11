@@ -155,8 +155,8 @@ class Fail2banCmdLine():
 				self._conf["background"] = False
 			elif o == "--async":
 				self._conf["async"] = True
-			elif o == "-timeout":
-				from ..mytime import MyTime
+			elif o == "--timeout":
+				from ..server.mytime import MyTime
 				self._conf["timeout"] = MyTime.str2seconds(opt[1])
 			elif o in ["-h", "--help"]:
 				self.dispUsage()
