@@ -35,6 +35,7 @@ TODO: implementing of options resp. other tasks from PR #1346
 * `filter.d/postfix-rbl.conf`: removed (replaced with `postfix[mode=rbl]`)
 * `filter.d/postfix-sasl.conf`: removed (replaced with `postfix[mode=auth]`)
 * `filter.d/roundcube-auth.conf`:
+    - fixed regex when `X-Real-IP` or/and `X-Forwarded-For` are present after host (gh-1303);
     - fixed regex when logging authentication errors to journal instead to a local file (gh-1159);
     - additionally fixed more complex injections on username (e. g. using dot after fake host).
 * `action.d/complain.conf`
