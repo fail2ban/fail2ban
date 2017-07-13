@@ -437,7 +437,7 @@ So the general case here is a log line that contains::
 
     (fixed_data_1)<HOST>(fixed_data_2)(user_injectable_data)
 
-Where the regex that matches fixed_data_1 is gready and matches the entire
+Where the regex that matches fixed_data_1 is greedy and matches the entire
 string, before moving backwards and user_injectable_data can match the entire
 string.
 
