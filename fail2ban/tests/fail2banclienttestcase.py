@@ -812,7 +812,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		#
 		# In this test-case, each phase is related from previous one, 
 		# so it cannot be splitted in multiple test cases.
-		# Additionaly many log-messages used as ready-sign (to wait for end of phase).
+		# Additionally many log-messages used as ready-sign (to wait for end of phase).
 		#
 		# Used file database (instead of :memory:), to restore bans and log-file positions,
 		# after restart/reload between phases.
