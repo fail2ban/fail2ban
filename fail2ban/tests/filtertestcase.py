@@ -1747,7 +1747,7 @@ class DNSUtilsTests(unittest.TestCase):
 		self.assertTrue(Utils.wait_for(lambda: time.time() >= st + 0.0005, 1))
 		# we have still 5 elements (or fewer if too slow test mashine):
 		self.assertTrue(len(c) <= 5)
-		# but all that are expiered also:
+		# but all that are expired also:
 		for i in xrange(10):
 			self.assertTrue(c.get(i) is None)
 		# here the whole cache should be empty:
