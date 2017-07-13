@@ -1536,7 +1536,7 @@ fail2ban-users mailing list and IRC.
 ### New Features
 - Yaroslav Halchenko
     * [9ba27353] Add support for `jail.d/{confilefile}` and `fail2ban.d/{configfile}`
-      to provide additional flexibility to system adminstrators. Thanks to
+      to provide additional flexibility to system administrators. Thanks to
       beilber for the idea. Closes gh-114.
     * [3ce53e87] Add exim filter.
 - Erwan Ben Souiden
