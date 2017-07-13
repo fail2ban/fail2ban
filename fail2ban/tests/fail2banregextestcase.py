@@ -109,7 +109,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertFalse(fail2banRegex.start(args))
 		self.assertLogged("Unable to compile regular expression")
 
-	def testWrongIngnoreRE(self):
+	def testWrongIgnoreRE(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"--datepattern", "{^LN-BEG}EPOCH",
 			"test", r".*? from <HOST>$", r".**"
