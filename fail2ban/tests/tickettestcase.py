@@ -133,12 +133,12 @@ class TicketTests(unittest.TestCase):
     self.assertEqual(
       t.getData(), 
       {'matches': ['first', 'second'], 'failures':0, 'region': 'Hamburg', 'country': 'DE', 'city': 'Hamburg'})
-    # at once as dict (single argument, overwrites it completelly, no more matches/failures) :
+    # at once as dict (single argument, overwrites it completely, no more matches/failures) :
     t.setData({'region': None, 'country': 'FR', 'city': 'Paris'},)
     self.assertEqual(
       t.getData(), 
       {'city': 'Paris', 'country': 'FR'})
-    # at once as dict (overwrites it completelly, no more matches/failures) :
+    # at once as dict (overwrites it completely, no more matches/failures) :
     t.setData({'region': 'Hamburg', 'country': 'DE', 'city': None})
     self.assertEqual(
       t.getData(), 
