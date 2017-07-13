@@ -281,7 +281,7 @@ class CommandActionTest(LogCaptureTestCase):
 		# set one parameter - internal properties and cache should be reseted:
 		setattr(self.__action, 'xyz', "000-<abc>")
 		self.assertEqual(len(cache), 0)
-		# test againg, should have 000 instead of 890:
+		# test again, should have 000 instead of 890:
 		for i in range(2):
 			self.assertEqual(
 				self.__action.replaceTag("<banaction> '<abc>'", self.__action._properties, 
