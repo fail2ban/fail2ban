@@ -198,7 +198,7 @@ class Server:
 		self.stopAllJail()
 
 		# Explicit close database (server can leave in a thread, 
-		# so delayed GC can prevent commiting changes)
+		# so delayed GC can prevent committing changes)
 		if self.__db:
 			self.__db.close()
 			self.__db = None
