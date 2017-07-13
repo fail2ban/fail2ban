@@ -337,7 +337,7 @@ Examples of poor filters
 
 We find a log message::
 
-    Apr-07-13 07:08:36 Invalid command fial2ban from 1.2.3.4
+    Apr-07-13 07:08:36 Invalid command fail2ban from 1.2.3.4
 
 We make a failregex::
 
