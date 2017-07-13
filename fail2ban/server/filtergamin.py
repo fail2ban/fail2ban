@@ -42,7 +42,7 @@ logSys = getLogger(__name__)
 # Log reader class.
 #
 # This class reads a log file and detects login failures or anything else
-# that matches a given regular expression. This class is instanciated by
+# that matches a given regular expression. This class is instantiated by
 # a Jail object.
 
 class FilterGamin(FileFilter):
