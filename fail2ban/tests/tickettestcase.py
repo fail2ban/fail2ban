@@ -164,7 +164,7 @@ class TicketTests(unittest.TestCase):
     self.assertEqual(
       t.getData(), 
       {'city':'Berlin', 'region': 'Brandenburg', 'country': 'DE'})
-    # interator filter :
+    # iterator filter :
     self.assertEqual(
       t.getData(('city', 'country')), 
       {'city':'Berlin', 'country': 'DE'})
