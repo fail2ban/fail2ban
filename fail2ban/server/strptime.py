@@ -274,7 +274,7 @@ def reGroupDictStrptime(found_dict, msec=False, default_tz=None):
 		day = now.day
 		assume_today = True
 
-	# Actully create date
+	# Actually create date
 	date_result =  datetime.datetime(
 		year, month, day, hour, minute, second, fraction)
 	# Correct timezone if not supplied in the log linge
