@@ -33,7 +33,7 @@ class AddFailure(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		super(AddFailure, self).setUp()
-		self.__ticket = BanTicket('193.168.0.128', 1167605999.0)
+		self.__ticket = BanTicket('192.168.0.128', 1167605999.0)
 		self.__banManager = BanManager()
 
 	def tearDown(self):
@@ -66,8 +66,8 @@ class AddFailure(unittest.TestCase):
 			(1167605999.0,       24*60*60),
 			(1167605999.0,       -1),
 		):
-			ticket1 = BanTicket('193.168.0.128', 1167605999.0)
-			ticket2 = BanTicket('193.168.0.128', tnew)
+			ticket1 = BanTicket('192.168.0.128', 1167605999.0)
+			ticket2 = BanTicket('192.168.0.128', tnew)
 			if btnew is not None:
 				ticket2.setBanTime(btnew)
 			self.assertTrue(self.__banManager.addBanTicket(ticket1))
@@ -86,7 +86,7 @@ class AddFailure(unittest.TestCase):
 
 	def testInListOK(self):
 		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
-		ticket = BanTicket('193.168.0.128', 1167605999.0)
+		ticket = BanTicket('192.168.0.128', 1167605999.0)
 		self.assertTrue(self.__banManager._inBanList(ticket))
 
 	def testInListNOK(self):
@@ -113,7 +113,7 @@ class AddFailure(unittest.TestCase):
 		self.assertEqual(len(self.__banManager.unBanList(stime + btime + 600 + 1)), 1)
 		## again, but now we test removing tickets particular (to test < 2/3-rule):
 		for i in range(5):
-			ticket = BanTicket('193.168.0.%s' % i, stime)
+			ticket = BanTicket('192.168.0.%s' % i, stime)
 			ticket.setBanTime(ticket.getBanTime(btime) + i*10)
 			self.assertTrue(self.__banManager.addBanTicket(ticket))
 		self.assertEqual(len(self.__banManager.unBanList(stime + btime + 1*10 + 1)), 2)

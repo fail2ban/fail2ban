@@ -1222,13 +1222,13 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.assertEqual(len(self.jail), 1)
 			# and there should be no "stuck" ticket in failManager
 			self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
-			self.assert_correct_ban("193.168.0.128", 3)
+			self.assert_correct_ban("192.168.0.128", 3)
 			self.assertEqual(len(self.jail), 0)
 
 			# Lets read some more to check it bans again
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, skip=5, n=4)
-			self.assert_correct_ban("193.168.0.128", 3)
+			self.assert_correct_ban("192.168.0.128", 3)
 
 		def test_delJournalMatch(self):
 			self._initFilter()
@@ -1238,7 +1238,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			# basic full test
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, n=5)
-			self.assert_correct_ban("193.168.0.128", 3)
+			self.assert_correct_ban("192.168.0.128", 3)
 
 			# and now remove the JournalMatch
 			self.filter.delJournalMatch([
@@ -1256,7 +1256,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				"SYSLOG_IDENTIFIER=fail2ban-testcases",
 				"TEST_FIELD=1",
 				"TEST_UUID=%s" % self.test_uuid])
-			self.assert_correct_ban("193.168.0.128", 4)
+			self.assert_correct_ban("192.168.0.128", 4)
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, n=6, skip=10)
 			# we should detect the failures
@@ -1305,8 +1305,8 @@ class GetFailures(LogCaptureTestCase):
 	FILENAME_MULTILINE = os.path.join(TEST_FILES_DIR, "testcase-multiline.log")
 
 	# so that they could be reused by other tests
-	FAILURES_01 = ('193.168.0.128', 3, 1124013599.0,
-				  [u'Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 193.168.0.128']*3)
+	FAILURES_01 = ('192.168.0.128', 3, 1124013599.0,
+				  [u'Aug 14 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 192.168.0.128']*3)
 
 	def setUp(self):
 		"""Call before every test case."""
