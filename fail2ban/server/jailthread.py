@@ -94,7 +94,7 @@ class JailThread(Thread):
 		self.active = False
 
 	@abstractmethod
-	def run(self): # pragma: no cover - absract
+	def run(self): # pragma: no cover - abstract
 		"""Abstract - Called when thread starts, thread stops when returns.
 		"""
 		pass
