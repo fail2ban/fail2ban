@@ -1459,7 +1459,7 @@ class GetFailures(LogCaptureTestCase):
 		self.assertSortedEqual(self.filter.getLogPaths(), [GetFailures.FILENAME_01, GetFailures.FILENAME_02])
 
 	def testTail(self):
-		# There must be no containters registered, otherwise [-1] indexing would be wrong
+		# There must be no containers registered, otherwise [-1] indexing would be wrong
 		self.assertEqual(self.filter.getLogs(), [])
 		self.filter.addLogPath(GetFailures.FILENAME_01, tail=True)
 		self.assertEqual(self.filter.getLogs()[-1].getPos(), 1653)
