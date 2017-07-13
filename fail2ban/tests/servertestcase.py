@@ -1217,7 +1217,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 
 		for actCfg in glob.glob(os.path.join(CONFIG_DIR, 'action.d', '*.conf')):
 			act = os.path.basename(actCfg).replace('.conf', '')
-			# transmit artifical jail with each action to the server:
+			# transmit artificial jail with each action to the server:
 			stream = self.getDefaultJailStream('j-'+act, act)
 			for cmd in stream:
 				# command to server:
