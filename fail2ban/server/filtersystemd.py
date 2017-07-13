@@ -275,7 +275,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 					self.__journal.wait(Utils.DEFAULT_SLEEP_INTERVAL) != journal.NOP,
 					self.sleeptime, 0.00001)
 				if self.idle:
-					# because journal.wait will returns immediatelly if we have records in journal,
+					# because journal.wait will returns immediately if we have records in journal,
 					# just wait a little bit here for not idle, to prevent hi-load:
 					if not Utils.wait_for(lambda: not self.active or not self.idle, 
 						self.sleeptime * 10, self.sleeptime
