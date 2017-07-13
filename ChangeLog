@@ -1546,7 +1546,7 @@ fail2ban-users mailing list and IRC.
     * [29d0df5] Add mysqld filter. Closes gh-152.
 - ArndRaphael Brandes
     * [bba3fd8] Add Sogo filter. Closes gh-117.
-- Michael Gebetsriother
+- Michael Gebetsroither
     * [f9b78ba] Add action route to block at routing level.
 - Teodor Micu & Yaroslav Halchenko
     * [5f2d383] Add roundcube auth filter. Closes Debian bug #699442.
