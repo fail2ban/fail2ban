@@ -74,7 +74,7 @@ class ConfigReader():
 	def read(self, name, once=True):
 		""" Overloads a default (not shared) read of config reader.
 
-	  To prevent mutiple reads of config files with it includes, reads into 
+	  To prevent multiple reads of config files with it includes, reads into 
 	  the config reader, if it was not yet cached/shared by 'name'.
 	  """
 		# already shared ?
