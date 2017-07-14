@@ -67,7 +67,7 @@ class ExecuteActions(LogCaptureTestCase):
 		self.__actions.add('test')
 		self.assertTrue(self.__actions['test'])
 		self.assertIn('test', self.__actions)
-		self.assertNotIn('nonexistant action', self.__actions)
+		self.assertNotIn('nonexistent action', self.__actions)
 		self.__actions.add('test1')
 		del self.__actions['test']
 		del self.__actions['test1']
