@@ -124,3 +124,15 @@
 
 # failJSON: { "time": "2013-11-18T22:39:33", "match": true , "host": "91.49.82.139" }
 [Mon Nov 18 22:39:33 2013] [error] [client 91.49.82.139] user gg not found: /, referer: http://sj.hopto.org/management.html
+
+# filterOptions: {"logging": "syslog"}
+
+# failJSON: { "time": "2005-02-15T16:23:00", "match": true , "host": "192.0.2.1", "desc": "using syslog (ErrorLog syslog)" }
+Feb 15 16:23:00 srv httpd[22034]: [authz_core:error] [pid 22034] [client 192.0.2.1:58585] AH01630: client denied by server configuration: /home/www/
+# failJSON: { "time": "2005-02-15T16:23:40", "match": true , "host": "192.0.2.2", "desc": "using syslog (ErrorLog syslog)" }
+Feb 15 16:23:40 srv httpd/backend1[22034]: [authz_core:error] [pid 22036] [client 192.0.2.2:59392] AH01630: client denied by server configuration: /home/backend1/
+# failJSON: { "time": "2005-02-15T16:54:53", "match": true , "host": "192.0.2.3", "desc": "using syslog (ErrorLog syslog)" }
+Feb 15 16:54:53 tools apache2[18154]: [:error] [pid 18154:tid 140680873617152] [client 192.0.2.3:48154] AH01630: client denied by server configuration: /var/www
+
+# failJSON: { "time": "2005-02-16T22:32:48", "match": true , "host": "127.0.0.1" }
+Feb 16 22:32:48 srv httpd[22034]: [error] [client 127.0.0.1] user wrongusername not found: /basic/file
