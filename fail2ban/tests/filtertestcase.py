@@ -1224,7 +1224,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.test_file = os.path.join(TEST_FILES_DIR, "testcase-journal.log")
 			self.jail = DummyJail()
 			self.filter = None
-			# UUID used to ensure that only meeages generated
+			# UUID used to ensure that only messages generated
 			# as part of this test are picked up by the filter
 			self.test_uuid = str(uuid.uuid4())
 			self.name = "%s-%s" % (testclass_name, self.test_uuid)
