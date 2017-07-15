@@ -15,6 +15,12 @@ TODO: implementing of options resp. other tasks from PR #1346
 ### Fixes
 * `filter.d/apache-auth.conf`:
   - better failure recognition using short form of regex (url/referer are foreign inputs, see gh-1645)
+* `filter.d/apache-common.conf` (`filter.d/apache-*.conf`):
+  - support of apache log-format if logging into syslog/systemd (gh-1695), using parameter `logging`,
+    parameter usage for jail:
+      filter = apache-auth[logging=syslog]
+    parameter usage for `apache-common.local`:
+      logging = syslog
 * `filter.d/pam-generic.conf`:
   - [grave] injection on user name to host fixed
 * `filter.d/sshd.conf`:
