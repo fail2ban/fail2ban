@@ -619,7 +619,7 @@ ver. 0.9.7 (2017/05/11) - awaiting-victory
     - Fixed non-anchored part of failregex (misleading match of colon inside
       IPv6 address instead of `: ` in the reason-part by missing space, gh-1658)
       (0.10th resp. IPv6 relevant only, amend for gh-1479)
-* config/pathes-freebsd.conf
+* config/paths-freebsd.conf
     - Fixed filenames for apache and nginx log files (gh-1667)
 * filter.d/exim.conf
     - optional part `(...)` after host-name before `[IP]` (gh-1751)
