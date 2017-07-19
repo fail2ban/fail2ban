@@ -168,7 +168,7 @@ if (keys %ServicesBans) {
                   printf("      %d Duplicate Ban attempt(s)\n", $ServicesBans{$service}{$ip}{'AlreadyInTheList'}) ;
                }
                if ($ServicesBans{$service}{$ip}{'ReBan'}>0) {
-                  printf("      %d ReBan(s) due to rules reinitilizations\n", $ServicesBans{$service}{$ip}{'ReBan'}) ;
+                  printf("      %d ReBan(s) due to rules reinitializations\n", $ServicesBans{$service}{$ip}{'ReBan'}) ;
                }
             }
         }
