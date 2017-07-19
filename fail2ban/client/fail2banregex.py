@@ -64,7 +64,7 @@ def debuggexURL(sample, regex, multiline=False, useDns="yes"):
 	if multiline: args['flags'] = 'm'
 	return 'https://www.debuggex.com/?' + urllib.urlencode(args)
 
-def output(args): # pragma: no cover (overriden in test-cases)
+def output(args): # pragma: no cover (overridden in test-cases)
 	print(args)
 
 def shortstr(s, l=53):
