@@ -811,7 +811,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# Very complicated test-case, that expected running server (foreground in thread).
 		#
 		# In this test-case, each phase is related from previous one, 
-		# so it cannot be splitted in multiple test cases.
+		# so it cannot be split in multiple test cases.
 		# Additionally many log-messages used as ready-sign (to wait for end of phase).
 		#
 		# Used file database (instead of :memory:), to restore bans and log-file positions,
