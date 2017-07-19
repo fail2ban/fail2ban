@@ -207,7 +207,7 @@ class DateDetectorTest(LogCaptureTestCase):
 			(False, True,  "23-Jan-2005 21:59:59.02", None),
 			(False, True,  "23-Jan-2005 21:59:59 +0100", None),
 			(False, True,  "23-01-2005 21:59:59", None),
-			(True,  True,  "1106513999", None), # Portsetry
+			(True,  True,  "1106513999", None), # Portsentry
 			(False, True,  "01-23-2005 21:59:59.252", None), # reported on f2b, causes Feb29 fix to break
 			(False, False, "@4000000041f4104f00000000", None), # TAI64N
 			(False, True,  "2005-01-23T20:59:59.252Z", None), #ISO 8601 (UTC)
