@@ -240,7 +240,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 	##
 	# Main loop.
 	#
-	# Peridocily check for new journal entries matching the filter and
+	# Periodically check for new journal entries matching the filter and
 	# handover to FailManager
 
 	def run(self):
