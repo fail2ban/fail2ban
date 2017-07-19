@@ -70,7 +70,7 @@ class TransmitterBase(unittest.TestCase):
 		"""Call before every test case."""
 		super(TransmitterBase, self).setUp()
 		self.transm = self.server._Server__transm
-		# To test thransmitter we don't need to start server...
+		# To test transmitter we don't need to start server...
 		#self.server.start('/dev/null', '/dev/null', force=False)
 		self.jailName = "TestJail1"
 		self.server.addJail(self.jailName, FAST_BACKEND)
