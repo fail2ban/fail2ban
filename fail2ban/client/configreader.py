@@ -152,7 +152,7 @@ class ConfigReader():
 class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 	"""Unshared config reader (previously ConfigReader).
 
-	Do not use this class (internal not shared/cached represenation).
+	Do not use this class (internal not shared/cached representation).
 	Use ConfigReader instead.
 	"""
 
