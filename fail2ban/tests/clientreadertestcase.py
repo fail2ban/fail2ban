@@ -398,7 +398,7 @@ class FilterReaderTest(unittest.TestCase):
 			['set', 'testcase01', 'addjournalmatch',
 				"FIELD= with spaces ", "+", "AFIELD= with + char and spaces"],
 			['set', 'testcase01', 'datepattern', "%Y %m %d %H:%M:%S"],
-			['set', 'testcase01', 'maxlines', 1], # Last for overide test
+			['set', 'testcase01', 'maxlines', 1], # Last for override test
 		]
 		filterReader = FilterReader("testcase01", "testcase01", {})
 		filterReader.setBaseDir(TEST_FILES_DIR)
