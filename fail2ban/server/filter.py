@@ -163,7 +163,7 @@ class Filter(JailThread):
 	# Add a regular expression which matches the failure.
 	#
 	# The regular expression can also match any other pattern than failures
-	# and thus can be used for many purporse.
+	# and thus can be used for many purpose.
 	# @param value the regular expression
 
 	def addFailRegex(self, value):
