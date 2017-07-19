@@ -517,7 +517,7 @@ class Fail2BanDb(object):
 		Parameters
 		----------
 		jail : Jail
-			If specified, will only reutrn logs belonging to the jail.
+			If specified, will only return logs belonging to the jail.
 
 		Returns
 		-------
