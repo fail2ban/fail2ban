@@ -1188,7 +1188,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 		# for j in jails:
 		# 	print(j, jails[j])
 
-		# test default stock actions sepecified in all stock jails:
+		# test default stock actions specified in all stock jails:
 		if not unittest.F2B.fast:
 			self._testExecActions(server)
 
