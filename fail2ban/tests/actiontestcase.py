@@ -248,7 +248,7 @@ class CommandActionTest(LogCaptureTestCase):
 			lambda: self.__action.replaceTag("<a><b>", 
 				self.__action._properties, conditional="family=inet4")
 		)
-		# remore self-referencing in props:
+		# remove self-referencing in props:
 		delattr(self.__action, 'ac')
 		# produce self-referencing query except:
 		self.assertRaisesRegexp(ValueError, r"possible self referencing definitions in query",
