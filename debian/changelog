@@ -1,3 +1,9 @@
+fail2ban (0.9.7-2) unstable; urgency=medium
+
+  * Upload to unstable (Closes: #870651)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 03 Aug 2017 22:49:08 -0400
+
 fail2ban (0.9.7-1) experimental; urgency=medium
 
   * Fresh upstream release, primarily bugfix but includes some enhancements
