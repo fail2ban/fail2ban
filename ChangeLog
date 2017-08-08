@@ -120,6 +120,7 @@ TODO: implementing of options resp. other tasks from PR #1346
 * Add new jail option `logtimezone` to force the timezone on log lines that don't have an explicit one (gh-1773)
 * Implemented zone abbreviations (like CET, CEST, etc.) and abbr+-offset functionality (accept zones
   like 'CET+0100'), for the list of abbreviations see strptime.TZ_STR;
+* Introduced new option `--timezone` (resp. `--TZ`) for `fail2ban-regex`.
 * Tokens `%z` and `%Z` are changed (more precise now);
 * Introduced new tokens `%Exz` and `%ExZ` that fully support zone abbreviations and/or offset-based
   zones (implemented as enhancement using custom `datepattern`, because may be too dangerous for default
