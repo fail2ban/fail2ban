@@ -90,11 +90,16 @@ indicates that the specified file is to be parsed after the current file.
 .RE
 
 Using Python "string interpolation" mechanisms, other definitions are allowed and can later be used within other definitions as %(name)s.
-Additionally fail2ban has an extended interpolation feature named \fB%(known/parameter)s\fR (means last known option with name \fBparameter\fR). This interpolation makes possible to extend a stock filter or jail regexp in .local file (opposite to simply set failregex/ignoreregex that overwrites it), e.g.
+
+Fail2ban has more advanced syntax (similar python extended interpolation). This extended interpolation is using \fB%(section/parameter)s\fR to denote a value from a foreign section.
+.br
+Besides cross section interpolation the value of parameter in \fI[DEFAULT]\fR section can be retrieved with \fB%(default/parameter)s\fR.
+.br
+Fail2ban supports also another feature named \fB%(known/parameter)s\fR (means last known option with name \fBparameter\fR). This interpolation makes possible to extend a stock filter or jail regexp in .local file (opposite to simply set failregex/ignoreregex that overwrites it), e.g.
 
 .RS
 .nf
-baduseragents = IE|wget
+baduseragents = IE|wget|%(my-settings/baduseragents)s
 failregex = %(known/failregex)s
             useragent=%(baduseragents)s
 .fi
