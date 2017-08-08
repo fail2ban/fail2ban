@@ -164,8 +164,8 @@ after = 1.conf
 							except KeyError:
 								continue
 					else:
-						# get substituted value of opt in section:
-						v = self.get(sec, opt)
+						# get raw value of opt in section:
+						v = self.get(sec, opt, raw=True)
 				else:
 					try:
 						v = self._defaults[opt]
