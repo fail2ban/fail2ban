@@ -117,8 +117,8 @@ after = 1.conf
 
 	SECTION_NAME = "INCLUDES"
 
-	SECTION_OPT_CRE = re.compile(r'^(\w+)/(.+)$')
-	SECTION_OPTSUBST_CRE = re.compile(r'%\((\w+/([^\)]+))\)s')
+	SECTION_OPT_CRE = re.compile(r'^([\w\-]+)/(.+)$')
+	SECTION_OPTSUBST_CRE = re.compile(r'%\(([\w\-]+/([^\)]+))\)s')
 
 	CONDITIONAL_RE = re.compile(r"^(\w+)(\?.+)$")
 
