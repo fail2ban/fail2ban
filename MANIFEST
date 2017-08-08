@@ -3,6 +3,7 @@ bin/fail2ban-regex
 bin/fail2ban-server
 bin/fail2ban-testcases
 ChangeLog
+config/action.d/abuseipdb.conf
 config/action.d/apf.conf
 config/action.d/badips.conf
 config/action.d/badips.py
@@ -19,6 +20,7 @@ config/action.d/firewallcmd-multiport.conf
 config/action.d/firewallcmd-new.conf
 config/action.d/firewallcmd-rich-logging.conf
 config/action.d/firewallcmd-rich-rules.conf
+config/action.d/helpers-common.conf
 config/action.d/hostsdeny.conf
 config/action.d/ipfilter.conf
 config/action.d/ipfw.conf
@@ -38,6 +40,7 @@ config/action.d/mail-whois-common.conf
 config/action.d/mail-whois.conf
 config/action.d/mail-whois-lines.conf
 config/action.d/mynetwatchman.conf
+config/action.d/netscaler.conf
 config/action.d/nftables-allports.conf
 config/action.d/nftables-common.conf
 config/action.d/nftables-multiport.conf
@@ -84,6 +87,7 @@ config/filter.d/courier-auth.conf
 config/filter.d/courier-smtp.conf
 config/filter.d/cyrus-imap.conf
 config/filter.d/directadmin.conf
+config/filter.d/domino-smtp.conf
 config/filter.d/dovecot.conf
 config/filter.d/dropbear.conf
 config/filter.d/drupal-auth.conf
@@ -119,8 +123,6 @@ config/filter.d/perdition.conf
 config/filter.d/php-url-fopen.conf
 config/filter.d/portsentry.conf
 config/filter.d/postfix.conf
-config/filter.d/postfix-rbl.conf
-config/filter.d/postfix-sasl.conf
 config/filter.d/proftpd.conf
 config/filter.d/pure-ftpd.conf
 config/filter.d/qmail.conf
@@ -216,11 +218,11 @@ fail2ban/tests/clientbeautifiertestcase.py
 fail2ban/tests/clientreadertestcase.py
 fail2ban/tests/config/action.d/brokenaction.conf
 fail2ban/tests/config/fail2ban.conf
-fail2ban/tests/config/filter.d/common.conf
 fail2ban/tests/config/filter.d/simple.conf
 fail2ban/tests/config/filter.d/test.conf
 fail2ban/tests/config/filter.d/test.local
 fail2ban/tests/config/filter.d/zzz-generic-example.conf
+fail2ban/tests/config/filter.d/zzz-sshd-obsolete-multiline.conf
 fail2ban/tests/config/jail.conf
 fail2ban/tests/databasetestcase.py
 fail2ban/tests/datedetectortestcase.py
@@ -276,6 +278,7 @@ fail2ban/tests/files/logs/courier-auth
 fail2ban/tests/files/logs/courier-smtp
 fail2ban/tests/files/logs/cyrus-imap
 fail2ban/tests/files/logs/directadmin
+fail2ban/tests/files/logs/domino-smtp
 fail2ban/tests/files/logs/dovecot
 fail2ban/tests/files/logs/dropbear
 fail2ban/tests/files/logs/drupal-auth
@@ -309,8 +312,6 @@ fail2ban/tests/files/logs/perdition
 fail2ban/tests/files/logs/php-url-fopen
 fail2ban/tests/files/logs/portsentry
 fail2ban/tests/files/logs/postfix
-fail2ban/tests/files/logs/postfix-rbl
-fail2ban/tests/files/logs/postfix-sasl
 fail2ban/tests/files/logs/proftpd
 fail2ban/tests/files/logs/pure-ftpd
 fail2ban/tests/files/logs/qmail
@@ -336,6 +337,8 @@ fail2ban/tests/files/logs/webmin-auth
 fail2ban/tests/files/logs/wuftpd
 fail2ban/tests/files/logs/xinetd-fail
 fail2ban/tests/files/logs/zzz-generic-example
+fail2ban/tests/files/logs/zzz-sshd-obsolete-multiline
+fail2ban/tests/files/testcase01a.log
 fail2ban/tests/files/testcase01.log
 fail2ban/tests/files/testcase02.log
 fail2ban/tests/files/testcase03.log
@@ -344,6 +347,7 @@ fail2ban/tests/files/testcase-journal.log
 fail2ban/tests/files/testcase-multiline.log
 fail2ban/tests/files/testcase-usedns.log
 fail2ban/tests/files/testcase-wrong-char.log
+fail2ban/tests/files/zzz-sshd-obsolete-multiline.log
 fail2ban/tests/filtertestcase.py
 fail2ban/tests/__init__.py
 fail2ban/tests/misctestcase.py
