@@ -195,6 +195,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 	def testVerbose(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"--datepattern", "^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
+			"--timezone", "UTC+0200",
 			"--verbose", "--verbose-date", "--print-no-missed",
 			Fail2banRegexTest.FILENAME_02, 
 			Fail2banRegexTest.RE_00

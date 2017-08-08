@@ -127,6 +127,8 @@ Report bugs to https://github.com/fail2ban/fail2ban/issues
 			   help="set alternate config directory"),
 		Option("-d", "--datepattern",
 			   help="set custom pattern used to match date/times"),
+		Option("--timezone", "--TZ", action='store', default=None,
+			   help="set time-zone used by convert time format"),
 		Option("-e", "--encoding", default=PREFER_ENC,
 			   help="File encoding. Default: system locale"),
 		Option("-r", "--raw", action='store_true', default=False,
@@ -243,6 +245,8 @@ class Fail2banRegex(object):
 			self._maxlines = 20
 		if opts.journalmatch is not None:
 			self.setJournalMatch(shlex.split(opts.journalmatch))
+		if opts.timezone:
+			self._filter.setLogTimeZone(opts.timezone)
 		if opts.datepattern:
 			self.setDatePattern(opts.datepattern)
 		if opts.usedns:
