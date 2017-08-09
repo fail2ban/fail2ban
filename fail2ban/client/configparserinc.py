@@ -73,11 +73,6 @@ else: # pragma: no cover
 		return self._cp_interpolate_some(option, accum, rest, section, map, *args, **kwargs)
 	SafeConfigParser._interpolate_some = _interpolate_some
 
-try:
-	from configparser import _UNSET
-except ImportError:
-	_UNSET = object()
-
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 logLevel = 7
@@ -117,7 +112,6 @@ after = 1.conf
 
 	SECTION_NAME = "INCLUDES"
 
-	SECTION_OPT_CRE = re.compile(r'^([\w\-]+)/(.+)$')
 	SECTION_OPTSUBST_CRE = re.compile(r'%\(([\w\-]+/([^\)]+))\)s')
 
 	CONDITIONAL_RE = re.compile(r"^(\w+)(\?.+)$")
@@ -161,7 +155,7 @@ after = 1.conf
 							# fallback to default:
 							try:
 								v = self._defaults[opt]
-							except KeyError:
+							except KeyError: # pragma: no cover
 								continue
 					else:
 						# get raw value of opt in section:
@@ -169,7 +163,7 @@ after = 1.conf
 				else:
 					try:
 						v = self._defaults[opt]
-					except KeyError:
+					except KeyError: # pragma: no cover
 						continue
 				self._defaults[sopt] = v
 				try: # for some python versions need to duplicate it in map-vars also:
@@ -260,18 +254,6 @@ after = 1.conf
 	def get_sections(self):
 		return self._sections
 
-	def get(self, sec, opt, raw=False, vars={}, fallback=_UNSET):
-		try:
-			return SafeConfigParser.get(self, sec, opt, raw=raw, vars=vars)
-		except:
-			sopt = SafeConfigParserWithIncludes.SECTION_OPT_CRE.match(opt)
-			if not sopt: raise
-			sec, opt = sopt.groups()
-			if sec.lower() == 'default':
-				# get default raw value:
-				return self._defaults[opt]
-			return SafeConfigParser.get(self, sec, opt, raw=raw, vars=vars)
-
 	def options(self, section, withDefault=True):
 		"""Return a list of option names for the given section name.
 
@@ -279,7 +261,7 @@ after = 1.conf
 		"""
 		try:
 			opts = self._sections[section]
-		except KeyError:
+		except KeyError: # pragma: no cover
 			raise NoSectionError(section)
 		if withDefault:
 			# mix it with defaults:
