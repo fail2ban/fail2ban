@@ -110,7 +110,7 @@ class ConfigReader():
 
 	def sections(self):
 		try:
-			return self._cfg.sections()
+			return (n for n in self._cfg.sections() if n != 'KNOWN')
 		except AttributeError:
 			return []
 

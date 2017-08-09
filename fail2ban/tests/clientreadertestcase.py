@@ -162,6 +162,40 @@ c = d ;in line comment
 		self.assertEqual(self.c.get('DEFAULT', 'b'), 'a')
 		self.assertEqual(self.c.get('DEFAULT', 'c'), 'd')
 
+	def testTargetedSectionOptions(self):
+		self.assertFalse(self.c.read('g'))	# nothing is there yet
+		self._write("g.conf", value=None, content="""
+[DEFAULT]
+a = def-a
+b = def-b,a:`%(a)s`
+c = def-c,b:"%(b)s"
+d = def-d-b:"%(known/b)s"
+
+[jail]
+a = jail-a-%(test/a)s
+b = jail-b-%(test/b)s
+y = %(test/y)s
+
+[test]
+a = test-a-%(default/a)s
+b = test-b-%(known/b)s
+x = %(test/x)s
+y = %(jail/y)s
+""")
+		self.assertTrue(self.c.read('g'))
+		self.assertEqual(self.c.get('test', 'a'), 'test-a-def-a')
+		self.assertEqual(self.c.get('test', 'b'), 'test-b-def-b,a:`test-a-def-a`')
+		self.assertEqual(self.c.get('jail', 'a'), 'jail-a-test-a-def-a')
+		self.assertEqual(self.c.get('jail', 'b'), 'jail-b-test-b-def-b,a:`jail-a-test-a-def-a`')
+		self.assertEqual(self.c.get('jail', 'c'), 'def-c,b:"jail-b-test-b-def-b,a:`jail-a-test-a-def-a`"')
+		self.assertEqual(self.c.get('jail', 'd'), 'def-d-b:"def-b,a:`jail-a-test-a-def-a`"')
+		self.assertEqual(self.c.get('test', 'c'), 'def-c,b:"test-b-def-b,a:`test-a-def-a`"')
+		self.assertEqual(self.c.get('test', 'd'),  'def-d-b:"def-b,a:`test-a-def-a`"')
+		self.assertEqual(self.c.get('DEFAULT', 'c'), 'def-c,b:"def-b,a:`def-a`"')
+		self.assertEqual(self.c.get('DEFAULT', 'd'), 'def-d-b:"def-b,a:`def-a`"')
+		self.assertRaises(Exception, self.c.get, 'test', 'x')
+		self.assertRaises(Exception, self.c.get, 'jail', 'y')
+
 
 class JailReaderTest(LogCaptureTestCase):
 

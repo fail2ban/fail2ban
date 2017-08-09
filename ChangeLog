@@ -134,6 +134,13 @@ TODO: implementing of options resp. other tasks from PR #1346
         Hence `%z` currently match literal Z|UTC|GMT only (and offset-based), and `%Exz` - all zone 
 	abbreviations.
 * `filter.d/courier-auth.conf`: support failed logins with method only
+* Config reader's: introduced new syntax `%(section/option)s`, in opposite to extended interpolation of
+  python 3 `${section:option}` work with all supported python version in fail2ban and this syntax is 
+  like our another features like `%(known/option)s`, etc. (gh-1750)
+* Variable `default_backend` switched to `%(default/backend)s`, so totally backwards compatible now,
+  but now the setting of parameter `backend` in default section of `jail.local` can overwrite default
+  backend also (see gh-1750). In the future versions parameter `default_backend` can be removed (incompatibility, 
+  possibly some distributions affected).
 
 
 ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc

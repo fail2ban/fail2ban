@@ -32,8 +32,8 @@ from ..helpers import getLogger
 if sys.version_info >= (3,2):
 
 	# SafeConfigParser deprecated from Python 3.2 (renamed to ConfigParser)
-	from configparser import ConfigParser as SafeConfigParser, NoSectionError, \
-		BasicInterpolation
+	from configparser import ConfigParser as SafeConfigParser, BasicInterpolation, \
+		InterpolationMissingOptionError, NoSectionError
 
 	# And interpolation of __name__ was simply removed, thus we need to
 	# decorate default interpolator to handle it
@@ -52,19 +52,31 @@ if sys.version_info >= (3,2):
 		But should be fine to reincarnate for our use case
 		"""
 		def _interpolate_some(self, parser, option, accum, rest, section, map,
-							  depth):
+							  *args, **kwargs):
 			if section and not (__name__ in map):
 				map = map.copy()		  # just to be safe
 				map['__name__'] = section
-			return super(BasicInterpolationWithName, self)._interpolate_some(
-				parser, option, accum, rest, section, map, depth)
+				# try to wrap section options like %(section/option)s:
+				parser._map_section_options(section, option, rest, map)
+				return super(BasicInterpolationWithName, self)._interpolate_some(
+					parser, option, accum, rest, section, map, *args, **kwargs)
 
 else: # pragma: no cover
-	from ConfigParser import SafeConfigParser, NoSectionError
+	from ConfigParser import SafeConfigParser, \
+		InterpolationMissingOptionError, NoSectionError
+
+	# Interpolate missing known/option as option from default section
+	SafeConfigParser._cp_interpolate_some = SafeConfigParser._interpolate_some
+	def _interpolate_some(self, option, accum, rest, section, map, *args, **kwargs):
+		# try to wrap section options like %(section/option)s:
+		self._map_section_options(section, option, rest, map)
+		return self._cp_interpolate_some(option, accum, rest, section, map, *args, **kwargs)
+	SafeConfigParser._interpolate_some = _interpolate_some
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 logLevel = 7
+
 
 __all__ = ['SafeConfigParserWithIncludes']
 
@@ -100,6 +112,8 @@ after = 1.conf
 
 	SECTION_NAME = "INCLUDES"
 
+	SECTION_OPTSUBST_CRE = re.compile(r'%\(([\w\-]+/([^\)]+))\)s')
+
 	CONDITIONAL_RE = re.compile(r"^(\w+)(\?.+)$")
 
 	if sys.version_info >= (3,2):
@@ -116,6 +130,46 @@ after = 1.conf
 		def __init__(self, share_config=None, *args, **kwargs):
 			SafeConfigParser.__init__(self, *args, **kwargs)
 			self._cfg_share = share_config
+
+	def _map_section_options(self, section, option, rest, map):
+		"""
+		Interpolates values of the section options (name syntax `%(section/option)s`).
+
+		Fallback: try to wrap missing default options as "default/options" resp. "known/options"
+		"""
+		if '/' not in rest or '%(' not in rest: # pragma: no cover
+			return 0
+		soptrep = SafeConfigParserWithIncludes.SECTION_OPTSUBST_CRE.findall(rest)
+		if not soptrep: # pragma: no cover
+			return 0
+		for sopt, opt in soptrep:
+			if sopt not in map:
+				sec = sopt[:~len(opt)]
+				seclwr = sec.lower()
+				if seclwr != 'default':
+					if seclwr == 'known':
+						# try get raw value from known options:
+						try:
+							v = self._sections['KNOWN'][opt]
+						except KeyError:
+							# fallback to default:
+							try:
+								v = self._defaults[opt]
+							except KeyError: # pragma: no cover
+								continue
+					else:
+						# get raw value of opt in section:
+						v = self.get(sec, opt, raw=True)
+				else:
+					try:
+						v = self._defaults[opt]
+					except KeyError: # pragma: no cover
+						continue
+				self._defaults[sopt] = v
+				try: # for some python versions need to duplicate it in map-vars also:
+					map[sopt] = v
+				except: pass
+		return 1
 
 	@property
 	def share_config(self):
@@ -207,7 +261,7 @@ after = 1.conf
 		"""
 		try:
 			opts = self._sections[section]
-		except KeyError:
+		except KeyError: # pragma: no cover
 			raise NoSectionError(section)
 		if withDefault:
 			# mix it with defaults:
@@ -259,11 +313,7 @@ after = 1.conf
 						s2 = alls.get(n)
 						if isinstance(s2, dict):
 							# save previous known values, for possible using in local interpolations later:
-							sk = {}
-							for k, v in s2.iteritems():
-								if not k.startswith('known/') and k != '__name__':
-									sk['known/'+k] = v
-							s2.update(sk)
+							self.merge_section('KNOWN', s2, '')
 							# merge section
 							s2.update(s)
 						else:
@@ -280,14 +330,18 @@ after = 1.conf
 		else:
 			return SafeConfigParser.read(self, fileNamesFull)
 
-	def merge_section(self, section, options, pref='known/'):
+	def merge_section(self, section, options, pref=None):
 		alls = self.get_sections()
-		if pref == '':
-			alls[section].update(options)
+		try:
+			sec = alls[section]
+		except KeyError:
+			alls[section] = sec = dict()
+		if not pref:
+			sec.update(options)
 			return
 		sk = {}
 		for k, v in options.iteritems():
 			if not k.startswith(pref) and k != '__name__':
 				sk[pref+k] = v
-		alls[section].update(sk)
+		sec.update(sk)
 
