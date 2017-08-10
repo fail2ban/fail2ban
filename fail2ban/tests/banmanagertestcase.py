@@ -26,6 +26,8 @@ __license__ = "GPL"
 
 import unittest
 
+from .utils import setUpMyTime, tearDownMyTime
+
 from ..server.banmanager import BanManager
 from ..server.ticket import BanTicket
 
@@ -33,12 +35,14 @@ class AddFailure(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		super(AddFailure, self).setUp()
+		setUpMyTime()
 		self.__ticket = BanTicket('193.168.0.128', 1167605999.0)
 		self.__banManager = BanManager()
 
 	def tearDown(self):
 		"""Call after every test case."""
 		super(AddFailure, self).tearDown()
+		tearDownMyTime()
 
 	def testAdd(self):
 		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
@@ -93,6 +97,25 @@ class AddFailure(unittest.TestCase):
 		self.assertTrue(self.__banManager.addBanTicket(self.__ticket))
 		ticket = BanTicket('111.111.1.111', 1167605999.0)
 		self.assertFalse(self.__banManager._inBanList(ticket))
+		
+	def testBanTimeIncr(self):
+		ticket = BanTicket(self.__ticket.getIP(), self.__ticket.getTime())
+		## increase twice and at end permanent, check time/count increase:
+		c = 0
+		for i in (1000, 2000, -1):
+			self.__banManager.addBanTicket(self.__ticket); c += 1
+			ticket.setBanTime(i)
+			self.assertFalse(self.__banManager.addBanTicket(ticket)); # no incr of c (already banned)
+			self.assertEqual(str(self.__banManager.getTicketByID(ticket.getIP())), 
+				"BanTicket: ip=%s time=%s bantime=%s bancount=%s #attempts=0 matches=[]" % (ticket.getIP(), ticket.getTime(), i, c))
+		## after permanent, it should remain permanent ban time (-1):
+		self.__banManager.addBanTicket(self.__ticket); c += 1
+		ticket.setBanTime(-1)
+		self.assertFalse(self.__banManager.addBanTicket(ticket)); # no incr of c (already banned)
+		ticket.setBanTime(1000)
+		self.assertFalse(self.__banManager.addBanTicket(ticket)); # no incr of c (already banned)
+		self.assertEqual(str(self.__banManager.getTicketByID(ticket.getIP())), 
+			"BanTicket: ip=%s time=%s bantime=%s bancount=%s #attempts=0 matches=[]" % (ticket.getIP(), ticket.getTime(), -1, c))
 
 	def testUnban(self):
 		btime = self.__banManager.getBanTime()
@@ -137,6 +160,7 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		"""Call before every test case."""
 		super(StatusExtendedCymruInfo, self).setUp()
 		unittest.F2B.SkipIfNoNetwork()
+		setUpMyTime()
 		self.__ban_ip = "93.184.216.34"
 		self.__asn = "15133"
 		self.__country = "EU"
@@ -148,6 +172,7 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 	def tearDown(self):
 		"""Call after every test case."""
 		super(StatusExtendedCymruInfo, self).tearDown()
+		tearDownMyTime()
 
 	available = True, None
 

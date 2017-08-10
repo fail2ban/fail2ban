@@ -126,7 +126,7 @@ class Fail2BanDb(object):
 	filename
 	purgeage
 	"""
-	__version__ = 2
+	__version__ = 4
 	# Note all _TABLE_* strings must end in ';' for py26 compatibility
 	_TABLE_fail2banDb = "CREATE TABLE fail2banDb(version INTEGER);"
 	_TABLE_jails = "CREATE TABLE jails(" \
@@ -153,6 +153,8 @@ class Fail2BanDb(object):
 			"jail TEXT NOT NULL, " \
 			"ip TEXT, " \
 			"timeofban INTEGER NOT NULL, " \
+			"bantime INTEGER NOT NULL, " \
+			"bancount INTEGER NOT NULL default 1, " \
 			"data JSON, " \
 			"FOREIGN KEY(jail) REFERENCES jails(name) " \
 			");" \
@@ -160,8 +162,21 @@ class Fail2BanDb(object):
 			"CREATE INDEX bans_jail_ip ON bans(jail, ip);" \
 			"CREATE INDEX bans_ip ON bans(ip);" \
 
+	_TABLE_bips = "CREATE TABLE bips(" \
+			"ip TEXT NOT NULL, " \
+			"jail TEXT NOT NULL, " \
+			"timeofban INTEGER NOT NULL, " \
+			"bantime INTEGER NOT NULL, " \
+			"bancount INTEGER NOT NULL default 1, " \
+			"data JSON, " \
+			"PRIMARY KEY(ip, jail), " \
+			"FOREIGN KEY(jail) REFERENCES jails(name) " \
+			");" \
+			"CREATE INDEX bips_timeofban ON bips(timeofban);" \
+			"CREATE INDEX bips_ip ON bips(ip);" \
 
-	def __init__(self, filename, purgeAge=24*60*60):
+
+	def __init__(self, filename, purgeAge=24*60*60, outDatedFactor=3):
 		self.maxEntries = 50
 		try:
 			self._lock = RLock()
@@ -170,6 +185,7 @@ class Fail2BanDb(object):
 				detect_types=sqlite3.PARSE_DECLTYPES)
 			self._dbFilename = filename
 			self._purgeAge = purgeAge
+			self._outDatedFactor = outDatedFactor;
 
 			self._bansMergedCache = {}
 
@@ -257,6 +273,8 @@ class Fail2BanDb(object):
 		cur.executescript(Fail2BanDb._TABLE_logs)
 		# Bans
 		cur.executescript(Fail2BanDb._TABLE_bans)
+		# BIPs (bad ips)
+		cur.executescript(Fail2BanDb._TABLE_bips)
 
 		cur.execute("SELECT version FROM fail2banDb LIMIT 1")
 		return cur.fetchone()[0]
@@ -284,6 +302,20 @@ class Fail2BanDb(object):
 						"DROP TABLE logs_temp;"
 						"UPDATE fail2banDb SET version = 2;"
 						"COMMIT;" % Fail2BanDb._TABLE_logs)
+
+		if version < 3:
+			cur.executescript("BEGIN TRANSACTION;"
+						"CREATE TEMPORARY TABLE bans_temp AS SELECT jail, ip, timeofban, 600 as bantime, 1 as bancount, data FROM bans;"
+						"DROP TABLE bans;"
+						"%s;"
+						"INSERT INTO bans SELECT * from bans_temp;"
+						"DROP TABLE bans_temp;"
+						"COMMIT;" % Fail2BanDb._TABLE_bans)
+		if version < 4:
+			cur.executescript("BEGIN TRANSACTION;"
+						"%s;"
+						"UPDATE fail2banDb SET version = 4;"
+						"COMMIT;" % Fail2BanDb._TABLE_bips)
 
 		cur.execute("SELECT version FROM fail2banDb LIMIT 1")
 		return cur.fetchone()[0]
@@ -445,8 +477,12 @@ class Fail2BanDb(object):
 			pass
 		#TODO: Implement data parts once arbitrary match keys completed
 		cur.execute(
-			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
-			(jail.name, ip, int(round(ticket.getTime())),
+			"INSERT INTO bans(jail, ip, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
+			(jail.name, ip, int(round(ticket.getTime())), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
+				ticket.getData()))
+		cur.execute(
+			"INSERT OR REPLACE INTO bips(ip, jail, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
+			(ip, jail.name, int(round(ticket.getTime())), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
 				ticket.getData()))
 
 	@commitandrollback
@@ -461,6 +497,9 @@ class Fail2BanDb(object):
 			IP to be removed.
 		"""
 		queryArgs = (jail.name, str(ip));
+		cur.execute(
+			"DELETE FROM bips WHERE jail = ? AND ip = ?", 
+			queryArgs)
 		cur.execute(
 			"DELETE FROM bans WHERE jail = ? AND ip = ?", 
 			queryArgs);
@@ -581,18 +620,43 @@ class Fail2BanDb(object):
 				self._bansMergedCache[cacheKey] = tickets if ip is None else ticket
 			return tickets if ip is None else ticket
 
+	@commitandrollback
+	def getBan(self, cur, ip, jail=None, forbantime=None, overalljails=None, fromtime=None):
+		ip = str(ip)
+		if not overalljails:
+			query = "SELECT bancount, timeofban, bantime FROM bips"
+		else:
+			query = "SELECT sum(bancount), max(timeofban), sum(bantime) FROM bips"
+		query += " WHERE ip = ?"
+		queryArgs = [ip]
+		if not overalljails and jail is not None:
+			query += " AND jail=?"
+			queryArgs.append(jail.name)
+		if forbantime is not None:
+			query += " AND timeofban > ?"
+			queryArgs.append(MyTime.time() - forbantime)
+		if fromtime is not None:
+			query += " AND timeofban > ?"
+			queryArgs.append(fromtime)
+		if overalljails or jail is None:
+			query += " GROUP BY ip ORDER BY timeofban DESC LIMIT 1"
+		cur = self._db.cursor()
+		return cur.execute(query, queryArgs)
+
 	def _getCurrentBans(self, cur, jail = None, ip = None, forbantime=None, fromtime=None):
 		if fromtime is None:
 			fromtime = MyTime.time()
 		queryArgs = []
 		if jail is not None:
-			query = "SELECT ip, timeofban, data FROM bans WHERE jail=?"
+			query = "SELECT ip, timeofban, bantime, bancount, data FROM bips WHERE jail=?"
 			queryArgs.append(jail.name)
 		else:
-			query = "SELECT ip, max(timeofban), data FROM bans WHERE 1"
+			query = "SELECT ip, max(timeofban), bantime, bancount, data FROM bips WHERE 1"
 		if ip is not None:
 			query += " AND ip=?"
 			queryArgs.append(ip)
+		query += " AND (timeofban + bantime > ? OR bantime = -1)"
+		queryArgs.append(fromtime)
 		if forbantime not in (None, -1): # not specified or persistent (all)
 			query += " AND timeofban > ?"
 			queryArgs.append(fromtime - forbantime)
@@ -601,22 +665,48 @@ class Fail2BanDb(object):
 		cur = self._db.cursor()
 		return cur.execute(query, queryArgs)
 
-	def getCurrentBans(self, jail = None, ip = None, forbantime=None, fromtime=None):
+	@commitandrollback
+	def getCurrentBans(self, cur, jail = None, ip = None, forbantime=None, fromtime=None):
 		tickets = []
 		ticket = None
 
-		with self._lock:
-			results = list(self._getCurrentBans(self._db.cursor(), 
-				jail=jail, ip=ip, forbantime=forbantime, fromtime=fromtime))
-
-		if results:
-			for banip, timeofban, data in results:
-				# logSys.debug('restore ticket   %r, %r, %r', banip, timeofban, data)
-				ticket = FailTicket(banip, timeofban, data=data)
-				# logSys.debug('restored ticket: %r', ticket)
-				tickets.append(ticket)
+		for ticket in self._getCurrentBans(cur, jail=jail, ip=ip, 
+			forbantime=forbantime, fromtime=fromtime
+		):
+			# can produce unpack error (database may return sporadical wrong-empty row):
+			try:
+				banip, timeofban, bantime, bancount, data = ticket
+				# additionally check for empty values:
+				if banip is None or banip == "": # pragma: no cover
+					raise ValueError('unexpected value %r' % (banip,))
+			except ValueError as e: # pragma: no cover
+				logSys.debug("get current bans: ignore row %r - %s", ticket, e)
+				continue
+			# logSys.debug('restore ticket   %r, %r, %r', banip, timeofban, data)
+			ticket = FailTicket(banip, timeofban, data=data)
+			# logSys.debug('restored ticket: %r', ticket)
+			ticket.setBanTime(bantime)
+			ticket.setBanCount(bancount)
+			tickets.append(ticket)
 
 		return tickets if ip is None else ticket
+
+	def _cleanjails(self, cur):
+		"""Remove empty jails jails and log files from database.
+		"""
+		cur.execute(
+			"DELETE FROM jails WHERE enabled = 0 "
+				"AND NOT EXISTS(SELECT * FROM bans WHERE jail = jails.name) "
+				"AND NOT EXISTS(SELECT * FROM bips WHERE jail = jails.name)")
+
+	def _purge_bips(self, cur):
+		"""Purge old bad ips (jails and log files from database).
+		Currently it is timed out IP, whose time since last ban is several times out-dated (outDatedFactor is default 3).
+		Permanent banned ips will be never removed.
+		"""
+		cur.execute(
+			"DELETE FROM bips WHERE timeofban < ? and bantime != -1 and (timeofban + (bantime * ?)) < ?",
+			(int(MyTime.time()) - self._purgeAge, self._outDatedFactor, int(MyTime.time()) - self._purgeAge))
 
 	@commitandrollback
 	def purge(self, cur):
@@ -626,7 +716,6 @@ class Fail2BanDb(object):
 		cur.execute(
 			"DELETE FROM bans WHERE timeofban < ?",
 			(MyTime.time() - self._purgeAge, ))
-		cur.execute(
-			"DELETE FROM jails WHERE enabled = 0 "
-				"AND NOT EXISTS(SELECT * FROM bans WHERE jail = jails.name)")
+		self._purge_bips(cur)
+		self._cleanjails(cur)
 

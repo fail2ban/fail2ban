@@ -24,8 +24,6 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-import sys
-
 from ..helpers import getLogger
 from .ipdns import IPAddr
 from .mytime import MyTime
@@ -35,6 +33,7 @@ logSys = getLogger(__name__)
 
 
 class Ticket(object):
+	__slots__ = ('_ip', '_flags', '_banCount', '_banTime', '_time', '_data', '_retry', '_lastReset')
 
 	MAX_TIME = 0X7FFFFFFFFFFF ;# 4461763-th year
 	
@@ -61,35 +60,44 @@ class Ticket(object):
 					self._data[k] = v
 		if ticket:
 			# ticket available - copy whole information from ticket:
-			self.__dict__.update(i for i in ticket.__dict__.iteritems() if i[0] in self.__dict__)
+			self.update(ticket)
+			#self.__dict__.update(i for i in ticket.__dict__.iteritems() if i[0] in self.__dict__)
 
 	def __str__(self):
-		return "%s: ip=%s time=%s #attempts=%d matches=%r" % \
-			   (self.__class__.__name__.split('.')[-1], self.__ip, self._time,
-			   	self._data['failures'], self._data.get('matches', []))
+		return "%s: ip=%s time=%s bantime=%s bancount=%s #attempts=%d matches=%r" % \
+				 (self.__class__.__name__.split('.')[-1], self._ip, self._time,
+					self._banTime, self._banCount,
+					self._data['failures'], self._data.get('matches', []))
 
 	def __repr__(self):
 		return str(self)
 
 	def __eq__(self, other):
 		try:
-			return self.__ip == other.__ip and \
+			return self._ip == other._ip and \
 				round(self._time, 2) == round(other._time, 2) and \
 				self._data == other._data
 		except AttributeError:
 			return False
 
+	def update(self, ticket):
+		for n in ticket.__slots__:
+			v = getattr(ticket, n, None)
+			if v is not None:
+				setattr(self, n, v)
+
+
 	def setIP(self, value):
 		# guarantee using IPAddr instead of unicode, str for the IP
 		if isinstance(value, basestring):
 			value = IPAddr(value)
-		self.__ip = value
+		self._ip = value
 	
 	def getID(self):
-		return self._data.get('fid', self.__ip)
+		return self._data.get('fid', self._ip)
 	
 	def getIP(self):
-		return self.__ip
+		return self._ip
 	
 	def setTime(self, value):
 		self._time = value
@@ -98,16 +106,17 @@ class Ticket(object):
 		return self._time
 
 	def setBanTime(self, value):
-		self._banTime = value;
+		self._banTime = value
 
 	def getBanTime(self, defaultBT=None):
 		return (self._banTime if self._banTime is not None else defaultBT)
 
-	def setBanCount(self, value):
-		self._banCount = value;
+	def setBanCount(self, value, always=False):
+		if always or value > self._banCount:
+			self._banCount = value
 
-	def incrBanCount(self, value = 1):
-		self._banCount += value;
+	def incrBanCount(self, value=1):
+		self._banCount += value
 
 	def getBanCount(self):
 		return self._banCount;
@@ -205,21 +214,21 @@ class FailTicket(Ticket):
 
 	def __init__(self, ip=None, time=None, matches=None, data={}, ticket=None):
 		# this class variables:
-		self.__retry = 0
-		self.__lastReset = None
+		self._retry = 0
+		self._lastReset = None
 		# create/copy using default ticket constructor:
 		Ticket.__init__(self, ip, time, matches, data, ticket)
 		# init:
 		if ticket is None:
-			self.__lastReset = time if time is not None else self.getTime()
-		if not self.__retry:
-			self.__retry = self._data['failures'];
+			self._lastReset = time if time is not None else self.getTime()
+		if not self._retry:
+			self._retry = self._data['failures'];
 
 	def setRetry(self, value):
 		""" Set artificial retry count, normally equal failures / attempt,
 		used in incremental features (BanTimeIncr) to increase retry count for bad IPs
 		"""
-		self.__retry = value
+		self._retry = value
 		if not self._data['failures']:
 			self._data['failures'] = 1
 		if not value:
@@ -230,10 +239,10 @@ class FailTicket(Ticket):
 		""" Returns failures / attempt count or
 		artificial retry count increased for bad IPs
 		"""
-		return max(self.__retry, self._data['failures'])
+		return max(self._retry, self._data['failures'])
 
 	def inc(self, matches=None, attempt=1, count=1):
-		self.__retry += count
+		self._retry += count
 		self._data['failures'] += attempt
 		if matches:
 			# we should duplicate "matches", because possibly referenced to multiple tickets:
@@ -250,15 +259,24 @@ class FailTicket(Ticket):
 		return self._time
 
 	def getLastReset(self):
-		return self.__lastReset
+		return self._lastReset
 
 	def setLastReset(self, value):
-		self.__lastReset = value
+		self._lastReset = value
+
+	@staticmethod
+	def wrap(o):
+		o.__class__ = FailTicket
+		return o
 
 ##
 # Ban Ticket.
 #
 # This class extends the Ticket class. It is mainly used by the BanManager.
 
-class BanTicket(Ticket):
-	pass
+class BanTicket(FailTicket):
+	
+	@staticmethod
+	def wrap(o):
+		o.__class__ = BanTicket
+		return o

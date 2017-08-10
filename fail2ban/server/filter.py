@@ -32,6 +32,7 @@ import time
 
 from .failmanager import FailManagerEmpty, FailManager
 from .ipdns import DNSUtils, IPAddr
+from .observer import Observers
 from .ticket import FailTicket
 from .jailthread import JailThread
 from .datedetector import DateDetector, validateTimeZone
@@ -552,6 +553,9 @@ class Filter(JailThread):
 				)
 				tick = FailTicket(ip, unixTime, data=fail)
 				self.failManager.addFailure(tick)
+				# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
+				if Observers.Main is not None:
+					Observers.Main.add('failureFound', self.failManager, self.jail, tick)
 			# reset (halve) error counter (successfully processed line):
 			if self._errors:
 				self._errors //= 2

@@ -37,7 +37,7 @@ import traceback
 
 from .utils import Utils
 from ..protocol import CSPROTO
-from ..helpers import getLogger,formatExceptionInfo
+from ..helpers import logging, getLogger, formatExceptionInfo
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -80,22 +80,36 @@ class RequestHandler(asynchat.async_chat):
 			# Deserialize
 			message = loads(message)
 			# Gives the message to the transmitter.
-			message = self.__transmitter.proceed(message)
+			if self.__transmitter:
+				message = self.__transmitter.proceed(message)
+			else:
+				message = ['SHUTDOWN']
 			# Serializes the response.
 			message = dumps(message, HIGHEST_PROTOCOL)
 			# Sends the response to the client.
 			self.push(message + CSPROTO.END)
-		except Exception as e: # pragma: no cover
+		except Exception as e:
 			logSys.error("Caught unhandled exception: %r", e,
 				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+			# Sends the response to the client.
+			message = dumps("ERROR: %s" % e, HIGHEST_PROTOCOL)
+			self.push(message + CSPROTO.END)
 
-		
+	##
+	# Handles an communication errors in request.
+	#
 	def handle_error(self):
-		e1, e2 = formatExceptionInfo()
-		logSys.error("Unexpected communication error: %s" % str(e2))
-		logSys.error(traceback.format_exc().splitlines())
-		self.close()
-		
+		try:
+			e1, e2 = formatExceptionInfo()
+			logSys.error("Unexpected communication error: %s" % str(e2))
+			logSys.error(traceback.format_exc().splitlines())
+			# Sends the response to the client.
+			message = dumps("ERROR: %s" % e2, HIGHEST_PROTOCOL)
+			self.push(message + CSPROTO.END)
+		except Exception as e: # pragma: no cover - normally unreachable
+			pass
+		self.close_when_done()
+
 
 def loop(active, timeout=None, use_poll=False):
 	"""Custom event loop implementation
@@ -119,18 +133,20 @@ def loop(active, timeout=None, use_poll=False):
 			poll(timeout)
 			if errCount:
 				errCount -= 1
-		except Exception as e: # pragma: no cover
+		except Exception as e:
 			if not active():
 				break
 			errCount += 1
 			if errCount < 20:
-				if e.args[0] in (errno.ENOTCONN, errno.EBADF): # (errno.EBADF, 'Bad file descriptor')
+				# errno.ENOTCONN - 'Socket is not connected'
+				# errno.EBADF - 'Bad file descriptor'
+				if e.args[0] in (errno.ENOTCONN, errno.EBADF): # pragma: no cover (too sporadic)
 					logSys.info('Server connection was closed: %s', str(e))
 				else:
 					logSys.error('Server connection was closed: %s', str(e))
 			elif errCount == 20:
-				logSys.info('Too many errors - stop logging connection errors')
 				logSys.exception(e)
+				logSys.error('Too many errors - stop logging connection errors')
 
 
 ##
@@ -158,10 +174,10 @@ class AsyncServer(asyncore.dispatcher):
 	def handle_accept(self):
 		try:
 			conn, addr = self.accept()
-		except socket.error:
+		except socket.error: # pragma: no cover
 			logSys.warning("Socket error")
 			return
-		except TypeError:
+		except TypeError: # pragma: no cover
 			logSys.warning("Type error")
 			return
 		AsyncServer.__markCloseOnExec(conn)
@@ -175,7 +191,7 @@ class AsyncServer(asyncore.dispatcher):
 	# @param sock: socket file.
 	# @param force: remove the socket file if exists.
 	
-	def start(self, sock, force, use_poll=False):
+	def start(self, sock, force, timeout=None, use_poll=False):
 		self.__worker = threading.current_thread()
 		self.__sock = sock
 		# Remove socket
@@ -191,7 +207,7 @@ class AsyncServer(asyncore.dispatcher):
 		self.set_reuse_addr()
 		try:
 			self.bind(sock)
-		except Exception:
+		except Exception: # pragma: no cover
 			raise AsyncServerException("Unable to bind socket %s" % self.__sock)
 		AsyncServer.__markCloseOnExec(self.socket)
 		self.listen(1)
@@ -201,11 +217,10 @@ class AsyncServer(asyncore.dispatcher):
 		if self.onstart:
 			self.onstart()
 		# Event loop as long as active:
-		loop(lambda: self.__loop, use_poll=use_poll)
+		loop(lambda: self.__loop, timeout=timeout, use_poll=use_poll)
 		self.__active = False
 		# Cleanup all
 		self.stop()
-
 
 	def close(self):
 		stopflg = False
@@ -227,6 +242,13 @@ class AsyncServer(asyncore.dispatcher):
 
 	##
 	# Stops the communication server.
+	
+	def stop_communication(self):
+		logSys.debug("Stop communication")
+		self.__transmitter = None
+
+	##
+	# Stops the server.
 	
 	def stop(self):
 		self.close()

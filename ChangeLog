@@ -108,9 +108,14 @@ TODO: implementing of options resp. other tasks from PR #1346
   - `<fid>` - failure identifier (if raw resp. failures without IP address)
   - `<ip-rev>` - PTR reversed representation of IP address
   - `<ip-host>` - host name of the IP address
+  - `<bancount>` - ban count of this offender if known as bad (started by 1 for unknown)
+  - `<bantime>` - current ban-time of the ticket (prolongation can be retarded up to 10 sec.)
   - `<F-...>` - interpolates to the corresponding filter group capture `...`
   - `<fq-hostname>` - fully-qualified name of host (the same as `$(hostname -f)`)
   - `<sh-hostname>` - short hostname (the same as `$(uname -n)`)
+* Introduced new action command `actionprolong` to prolong ban-time (e. g. set new timeout if expected);
+  Several actions (like ipset, etc.) rewritten using net logic with `actionprolong`.
+  Note: because ban-time is dynamic, it was removed from jail.conf as timeout argument (check jail.local).
 * Allow to use filter options by `fail2ban-regex`, example:
   fail2ban-regex text.log "sshd[mode=aggressive]"
 * Samples test case factory extended with filter options - dict in JSON to control 
@@ -184,6 +189,9 @@ ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
 * testSocket: sporadical bug repaired - wait for server thread starts a socket (listener)
 * testExecuteTimeoutWithNastyChildren: sporadical bug repaired - wait for pid file inside bash,
   kill tree in any case (gh-1155)
+* purge database will be executed now (within observer).
+* restoring currently banned ip after service restart fixed 
+  (now < timeofban + bantime), ignore old log failures (already banned)
 * Fixed high-load of pyinotify-backend,
   see https://github.com/fail2ban/fail2ban/issues/885#issuecomment-248964591
 * Database: stability fix - repack cursor iterator as long as locked
@@ -221,6 +229,9 @@ ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
     - new conditional section functionality used in config resp. includes:
       - [Init?family=inet4] - IPv4 qualified hosts only
       - [Init?family=inet6] - IPv6 qualified hosts only
+* Increment ban time (+ observer) functionality introduced.
+  Thanks Serg G. Brester (sebres)
+* Database functionality extended with bad ips.
 * New reload functionality (now totally without restart, unbanning/rebanning, etc.),
   see gh-1557
 * Several commands extended and new commands introduced:

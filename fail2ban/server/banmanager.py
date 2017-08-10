@@ -244,21 +244,6 @@ class BanManager:
 			return []
 
 	##
-	# Create a ban ticket.
-	#
-	# Create a BanTicket from a FailTicket. The timestamp of the BanTicket
-	# is the current time. This is a static method.
-	# @param ticket the FailTicket
-	# @return a BanTicket
-	
-	@staticmethod
-	def createBanTicket(ticket):
-		# we should always use correct time to calculate correct end time (ban time is variable now, 
-		# + possible double banning by restore from database and from log file)
-		# so use as lastTime always time from ticket.
-		return BanTicket(ticket=ticket)
-	
-	##
 	# Add a ban ticket.
 	#
 	# Add a BanTicket instance into the ban list.
@@ -267,6 +252,9 @@ class BanManager:
 	
 	def addBanTicket(self, ticket, reason={}):
 		eob = ticket.getEndOfBanTime(self.__banTime)
+		if eob < MyTime.time():
+			reason['expired'] = 1
+			return False
 		with self.__lock:
 			# check already banned
 			fid = ticket.getID()
@@ -288,6 +276,7 @@ class BanManager:
 			# not yet banned - add new one:
 			self.__banList[fid] = ticket
 			self.__banTotal += 1
+			ticket.incrBanCount()
 			# correct next unban time:
 			if self.__nextUnbanTime > eob:
 				self.__nextUnbanTime = eob

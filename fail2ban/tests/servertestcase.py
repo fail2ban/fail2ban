@@ -921,6 +921,15 @@ class TransmitterLogging(TransmitterBase):
 		self.assertEqual(self.transm.proceed(["set", "logtarget", "STDERR"]), (0, "STDERR"))
 		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "flushed"))
 
+	def testBanTimeIncr(self):
+		self.setGetTest("bantime.increment", "true", True, jail=self.jailName)
+		self.setGetTest("bantime.rndtime", "30min", 30*60, jail=self.jailName)
+		self.setGetTest("bantime.maxtime", "1000 days", 1000*24*60*60, jail=self.jailName)
+		self.setGetTest("bantime.factor", "2", "2", jail=self.jailName)
+		self.setGetTest("bantime.formula", "ban.Time * math.exp(float(ban.Count+1)*banFactor)/math.exp(1*banFactor)", jail=self.jailName)
+		self.setGetTest("bantime.multipliers", "1 5 30 60 300 720 1440 2880", "1 5 30 60 300 720 1440 2880", jail=self.jailName)
+		self.setGetTest("bantime.overalljails", "true", "true", jail=self.jailName)
+
 
 class JailTests(unittest.TestCase):
 
@@ -1060,8 +1069,20 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				logSys.debug(l)
 		return True
 
+	def _testActionInfos(self):
+		if not hasattr(self, '__aInfos'):
+			dmyjail = DummyJail()
+			self.__aInfos = {}
+			for t, ip in (('ipv4', '192.0.2.1'), ('ipv6', '2001:DB8::')):
+				ticket = BanTicket(ip)
+				ticket.setBanTime(600)
+				self.__aInfos[t] = _actions.Actions.ActionInfo(ticket, dmyjail)
+		return self.__aInfos
+
 	def _testExecActions(self, server):
 		jails = server._Server__jails
+
+		aInfos = self._testActionInfos()
 		for jail in jails:
 			# print(jail, jails[jail])
 			for a in jails[jail].actions:
@@ -1078,16 +1099,16 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				action.start()
 				# test ban ip4 :
 				logSys.debug('# === ban-ipv4 ==='); self.pruneLog()
-				action.ban({'ip': IPAddr('192.0.2.1'), 'family': 'inet4'})
+				action.ban(aInfos['ipv4'])
 				# test unban ip4 :
 				logSys.debug('# === unban ipv4 ==='); self.pruneLog()
-				action.unban({'ip': IPAddr('192.0.2.1'), 'family': 'inet4'})
+				action.unban(aInfos['ipv4'])
 				# test ban ip6 :
 				logSys.debug('# === ban ipv6 ==='); self.pruneLog()
-				action.ban({'ip': IPAddr('2001:DB8::'), 'family': 'inet6'})
+				action.ban(aInfos['ipv6'])
 				# test unban ip6 :
 				logSys.debug('# === unban ipv6 ==='); self.pruneLog()
-				action.unban({'ip': IPAddr('2001:DB8::'), 'family': 'inet6'})
+				action.unban(aInfos['ipv6'])
 				# test stop :
 				logSys.debug('# === stop ==='); self.pruneLog()
 				action.stop()
@@ -1305,11 +1326,11 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="INPUT"]', {
 					'ip4': (' f2b-j-w-iptables-ipset ',), 'ip6': (' f2b-j-w-iptables-ipset6 ',),
 					'ip4-start': (
-						"`ipset create f2b-j-w-iptables-ipset hash:ip timeout 600`",
+						"`ipset create f2b-j-w-iptables-ipset hash:ip`",
 						"`iptables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 					), 
 					'ip6-start': (
-						"`ipset create f2b-j-w-iptables-ipset6 hash:ip timeout 600 family inet6`",
+						"`ipset create f2b-j-w-iptables-ipset6 hash:ip family inet6`",
 						"`ip6tables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					),
 					'flush': (
@@ -1343,11 +1364,11 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				('j-w-iptables-ipset-ap', 'iptables-ipset-proto6-allports[name=%(__name__)s, bantime="10m", chain="INPUT"]', {
 					'ip4': (' f2b-j-w-iptables-ipset-ap ',), 'ip6': (' f2b-j-w-iptables-ipset-ap6 ',),
 					'ip4-start': (
-						"`ipset create f2b-j-w-iptables-ipset-ap hash:ip timeout 600`",
+						"`ipset create f2b-j-w-iptables-ipset-ap hash:ip`",
 						"`iptables -w -I INPUT -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
 					), 
 					'ip6-start': (
-						"`ipset create f2b-j-w-iptables-ipset-ap6 hash:ip timeout 600 family inet6`",
+						"`ipset create f2b-j-w-iptables-ipset-ap6 hash:ip family inet6`",
 						"`ip6tables -w -I INPUT -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					),
 					'flush': (
@@ -1641,11 +1662,11 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="INPUT"]', {
 					'ip4': (' f2b-j-w-fwcmd-ipset ',), 'ip6': (' f2b-j-w-fwcmd-ipset6 ',),
 					'ip4-start': (
-						"`ipset create f2b-j-w-fwcmd-ipset hash:ip timeout 600`",
+						"`ipset create f2b-j-w-fwcmd-ipset hash:ip`",
 						"`firewall-cmd --direct --add-rule ipv4 filter INPUT 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 					), 
 					'ip6-start': (
-						"`ipset create f2b-j-w-fwcmd-ipset6 hash:ip timeout 600`",
+						"`ipset create f2b-j-w-fwcmd-ipset6 hash:ip`",
 						"`firewall-cmd --direct --add-rule ipv6 filter INPUT 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					),
 					'stop': (
@@ -1690,10 +1711,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 
 			jails = server._Server__jails
 
-			tickets = {
-				'ip4': BanTicket('192.0.2.1'),
-				'ip6': BanTicket('2001:DB8::'),
-			}
+			aInfos = self._testActionInfos()
 			for jail, act, tests in testJailsActions:
 				# print(jail, jails[jail])
 				for a in jails[jail].actions:
@@ -1711,32 +1729,28 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						self.assertLogged(*tests['start'], all=True)
 					else:
 						self.assertNotLogged(*tests['ip4-start']+tests['ip6-start'], all=True)
-					ainfo = {
-						'ip4': _actions.Actions.ActionInfo(tickets['ip4'], jails[jail]),
-						'ip6': _actions.Actions.ActionInfo(tickets['ip6'], jails[jail]),
-					}
 					# test ban ip4 :
 					self.pruneLog('# === ban-ipv4 ===')
-					action.ban(ainfo['ip4'])
+					action.ban(aInfos['ipv4'])
 					if tests.get('ip4-start'): self.assertLogged(*tests['ip4-start'], all=True)
 					if tests.get('ip6-start'): self.assertNotLogged(*tests['ip6-start'], all=True)
 					self.assertLogged(*tests['ip4-check']+tests['ip4-ban'], all=True)
 					self.assertNotLogged(*tests['ip6'], all=True)
 					# test unban ip4 :
 					self.pruneLog('# === unban ipv4 ===')
-					action.unban(ainfo['ip4'])
+					action.unban(aInfos['ipv4'])
 					self.assertLogged(*tests['ip4-check']+tests['ip4-unban'], all=True)
 					self.assertNotLogged(*tests['ip6'], all=True)
 					# test ban ip6 :
 					self.pruneLog('# === ban ipv6 ===')
-					action.ban(ainfo['ip6'])
+					action.ban(aInfos['ipv6'])
 					if tests.get('ip6-start'): self.assertLogged(*tests['ip6-start'], all=True)
 					if tests.get('ip4-start'): self.assertNotLogged(*tests['ip4-start'], all=True)
 					self.assertLogged(*tests['ip6-check']+tests['ip6-ban'], all=True)
 					self.assertNotLogged(*tests['ip4'], all=True)
 					# test unban ip6 :
 					self.pruneLog('# === unban ipv6 ===')
-					action.unban(ainfo['ip6'])
+					action.unban(aInfos['ipv6'])
 					self.assertLogged(*tests['ip6-check']+tests['ip6-unban'], all=True)
 					self.assertNotLogged(*tests['ip4'], all=True)
 					# test flush for actions should supported this:

@@ -612,8 +612,6 @@ class JailsReaderTest(LogCaptureTestCase):
 					# all must have some actionban defined
 					self.assertTrue(actionReader._opts.get('actionban', '').strip(),
 						msg="Action file %r is lacking actionban" % actionConfig)
-				self.assertIn('Init', actionReader.sections(),
-						msg="Action file %r is lacking [Init] section" % actionConfig)
 
 		def testReadStockJailConf(self):
 			jails = JailsReader(basedir=CONFIG_DIR, share_config=CONFIG_DIR_SHARE_CFG) # we are running tests from root project dir atm

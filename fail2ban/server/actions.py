@@ -34,11 +34,12 @@ try:
 except ImportError:
 	OrderedDict = dict
 
-from .banmanager import BanManager
+from .banmanager import BanManager, BanTicket
 from .ipdns import DNSUtils
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
+from .observer import Observers
 from .utils import Utils
 from ..helpers import getLogger
 
@@ -297,6 +298,8 @@ class Actions(JailThread, Mapping):
 			"fid":			lambda self: self.__ticket.getID(),
 			"failures":	lambda self: self.__ticket.getAttempt(),
 			"time":			lambda self: self.__ticket.getTime(),
+			"bantime":  lambda self: self._getBanTime(),
+			"bancount":  lambda self: self.__ticket.getBanCount(),
 			"matches":	lambda self: "\n".join(self.__ticket.getMatches()),
 			# to bypass actions, that should not be executed for restored tickets
 			"restored":	lambda self: (1 if self.__ticket.restored else 0),
@@ -321,8 +324,13 @@ class Actions(JailThread, Mapping):
 			self.immutable = immutable
 			self.data = data
 		
-		def copy(self): # pargma: no cover
+		def copy(self): # pragma: no cover
 			return self.__class__(self.__ticket, self.__jail, self.immutable, self.data.copy())
+
+		def _getBanTime(self):
+			btime = self.__ticket.getBanTime()
+			if btime is None: btime = self.__jail.actions.getBanTime()
+			return btime
 
 		def _mi4ip(self, overalljails=False):
 			"""Gets bans merged once, a helper for lambda(s), prevents stop of executing action by any exception inside.
@@ -389,13 +397,19 @@ class Actions(JailThread, Mapping):
 			ticket = self._jail.getFailTicket()
 			if not ticket:
 				break
-			bTicket = BanManager.createBanTicket(ticket)
+
+			bTicket = BanTicket.wrap(ticket)
+			btime = ticket.getBanTime(self.__banManager.getBanTime())
 			ip = bTicket.getIP()
 			aInfo = self.__getActionInfo(bTicket)
 			reason = {}
 			if self.__banManager.addBanTicket(bTicket, reason=reason):
 				cnt += 1
+				# report ticket to observer, to check time should be increased and hereafter observer writes ban to database (asynchronous)
+				if Observers.Main is not None and not bTicket.restored:
+					Observers.Main.add('banFound', bTicket, self._jail, btime)
 				logSys.notice("[%s] %sBan %s", self._jail.name, ('' if not bTicket.restored else 'Restore '), ip)
+				# do actions :
 				for name, action in self._actions.iteritems():
 					try:
 						if ticket.restored and getattr(action, 'norestored', False):
@@ -411,7 +425,10 @@ class Actions(JailThread, Mapping):
 				# after all actions are processed set banned flag:
 				bTicket.banned = True
 			else:
-				bTicket = reason['ticket']
+				if reason.get('expired', 0):
+					logSys.info('[%s] Ignore %s, expired bantime', self._jail.name, ip)
+					continue
+				bTicket = reason.get('ticket', bTicket)
 				# if already banned (otherwise still process some action)
 				if bTicket.banned:
 					# compare time of failure occurrence with time ticket was really banned:
@@ -428,6 +445,29 @@ class Actions(JailThread, Mapping):
 			logSys.debug("Banned %s / %s, %s ticket(s) in %r", cnt, 
 				self.__banManager.getBanTotal(), self.__banManager.size(), self._jail.name)
 		return cnt
+
+	def _prolongBan(self, ticket):
+		# prevent to prolong ticket that was removed in-between,
+		# if it in ban list - ban time already prolonged (and it stays there):
+		if not self.__banManager._inBanList(ticket): return
+		# do actions :
+		aInfo = None
+		for name, action in self._actions.iteritems():
+			try:
+				if ticket.restored and getattr(action, 'norestored', False):
+					continue
+				if not action._prolongable:
+					continue
+				if aInfo is None:
+					aInfo = self.__getActionInfo(ticket)
+				if not aInfo.immutable: aInfo.reset()
+				action.prolong(aInfo)
+			except Exception as e:
+				logSys.error(
+					"Failed to execute ban jail '%s' action '%s' "
+					"info '%r': %s",
+					self._jail.name, name, aInfo, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
 	def __checkUnBan(self):
 		"""Check for IP address to unban.
