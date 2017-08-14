@@ -33,7 +33,7 @@ from abc import ABCMeta
 from collections import MutableMapping
 
 from .failregex import mapTag2Opt
-from .ipdns import asip
+from .ipdns import asip, DNSUtils
 from .mytime import MyTime
 from .utils import Utils
 from ..helpers import getLogger, _merge_copy_dicts, substituteRecursiveTags, TAG_CRE, MAX_TAG_REPLACE_COUNT
@@ -52,11 +52,18 @@ FCUSTAG_CRE = re.compile(r'<F-([A-Z0-9_\-]+)>'); # currently uppercase only
 
 CONDITIONAL_FAM_RE = re.compile(r"^(\w+)\?(family)=")
 
+# Special tags:
+DYN_REPL_TAGS = {
+  # System-information:
+	"fq-hostname":	lambda: str(DNSUtils.getHostname(fqdn=True)),
+	"sh-hostname":	lambda: str(DNSUtils.getHostname(fqdn=False))
+}
 # New line, space
 ADD_REPL_TAGS = {
   "br": "\n", 
   "sp": " "
 }
+ADD_REPL_TAGS.update(DYN_REPL_TAGS)
 
 
 class CallingMap(MutableMapping, object):
@@ -571,6 +578,8 @@ class CommandAction(ActionBase):
 			if csubkey is not None:
 				cache[csubkey] = subInfo
 
+		# additional replacement as calling map:
+		ADD_REPL_TAGS_CM = CallingMap(ADD_REPL_TAGS)
 		# substitution callable, used by interpolation of each tag
 		def substVal(m):
 			tag = m.group(1)			# tagname from match
@@ -581,7 +590,7 @@ class CommandAction(ActionBase):
 				value = subInfo.get(tag)
 				if value is None:
 					# fallback (no or default replacement)
-					return ADD_REPL_TAGS.get(tag, m.group())
+					return ADD_REPL_TAGS_CM.get(tag, m.group())
 			value = str(value)		# assure string
 			if tag in cls._escapedTags:
 				# That one needs to be escaped since its content is
@@ -651,6 +660,8 @@ class CommandAction(ActionBase):
 			# replacement for tag:
 			return value
 
+		# additional replacement as calling map:
+		ADD_REPL_TAGS_CM = CallingMap(ADD_REPL_TAGS)
 		# substitution callable, used by interpolation of each tag
 		def substVal(m):
 			tag = m.group(1)			# tagname from match
@@ -658,7 +669,7 @@ class CommandAction(ActionBase):
 				value = aInfo[tag]
 			except KeyError:
 				# fallback (no or default replacement)
-				return ADD_REPL_TAGS.get(tag, m.group())
+				return ADD_REPL_TAGS_CM.get(tag, m.group())
 			value = str(value)		# assure string
 			# replacement for tag:
 			return escapeVal(tag, value)
