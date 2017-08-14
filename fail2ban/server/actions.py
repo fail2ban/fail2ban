@@ -35,7 +35,6 @@ except ImportError:
 	OrderedDict = dict
 
 from .banmanager import BanManager, BanTicket
-from .ipdns import DNSUtils
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
@@ -309,10 +308,7 @@ class Actions(JailThread, Mapping):
 			"ipmatches":			lambda self: "\n".join(self._mi4ip(True).getMatches()),
 			"ipjailmatches":	lambda self: "\n".join(self._mi4ip().getMatches()),
 			"ipfailures":			lambda self: self._mi4ip(True).getAttempt(),
-			"ipjailfailures":	lambda self: self._mi4ip().getAttempt(),
-			# system-information:
-			"fq-hostname":	lambda self: DNSUtils.getHostname(fqdn=True),
-			"sh-hostname":	lambda self: DNSUtils.getHostname(fqdn=False)
+			"ipjailfailures":	lambda self: self._mi4ip().getAttempt()
 		}
 
 		__slots__ = CallingMap.__slots__ + ('__ticket', '__jail', '__mi4ip')
@@ -376,7 +372,6 @@ class Actions(JailThread, Mapping):
 
 
 	def __getActionInfo(self, ticket):
-		ip = ticket.getIP()
 		aInfo = Actions.ActionInfo(ticket, self._jail)
 		return aInfo
 
