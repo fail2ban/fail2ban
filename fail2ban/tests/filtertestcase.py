@@ -1852,6 +1852,10 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertTrue(IPAddr("93.184.216.34").isInNet(ips))
 		self.assertTrue(IPAddr("2606:2800:220:1:248:1893:25c8:1946").isInNet(ips))
 
+	def testIPAddr_wrongDNS_IP(self):
+		DNSUtils.dnsToIp('`this`.dns-is-wrong.`wrong-nic`-dummy')
+		DNSUtils.ipToName('*')
+
 	def testIPAddr_Cached(self):
 		ips = [DNSUtils.dnsToIp('example.com'), DNSUtils.dnsToIp('example.com')]
 		for ip1, ip2 in zip(ips, ips):
