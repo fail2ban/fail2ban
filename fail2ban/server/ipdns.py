@@ -298,7 +298,7 @@ class IPAddr(object):
 			self._family = IPAddr.CIDR_RAW
 
 	def __repr__(self):
-		return self.ntoa
+		return repr(self.ntoa)
 
 	def __str__(self):
 		return self.ntoa
