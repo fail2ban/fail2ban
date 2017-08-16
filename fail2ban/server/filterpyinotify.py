@@ -231,6 +231,9 @@ class FilterPyinotify(FileFilter):
 				return True
 		except KeyError: # pragma: no cover
 			pass
+			# EnvironmentError is parent of IOError, OSError, etc.
+		except EnvironmentError as e: # pragma: no cover (normally unreached)
+			logSys.error("Remove file monitor for %s causes %s", path, e)
 		return False
 
 	def _addDirWatcher(self, path_dir):
@@ -249,6 +252,9 @@ class FilterPyinotify(FileFilter):
 			self.__monitor.rm_watch(wdInt)
 		except KeyError: # pragma: no cover
 			pass
+			# EnvironmentError is parent of IOError, OSError, etc.
+		except EnvironmentError as e: # pragma: no cover (normally unreached)
+			logSys.error("Remove monitor for the parent directory %s causes %s", path_dir, e)
 		logSys.debug("Removed monitor for the parent directory %s", path_dir)
 
 	##
