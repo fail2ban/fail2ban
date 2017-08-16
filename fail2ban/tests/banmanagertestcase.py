@@ -231,4 +231,4 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		self.assertSortedEqual(cymru_info,
 						  {"asn": ["nxdomain", "3356",],
 						   "country": ["nxdomain", "US"],
-						   "rir": ["nxdomain", "arin"]})
+						   "rir": ["nxdomain", "arin"]}, level=-1, key=str)
