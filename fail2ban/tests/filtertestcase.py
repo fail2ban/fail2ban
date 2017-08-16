@@ -1286,7 +1286,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			self.waitForTicks(1)
 			self.waitFailTotal(6, 10)
 			self.assertTrue(Utils.wait_for(lambda: len(self.jail) == 2, 10))
-			self.assertEqual(sorted([self.jail.getFailTicket().getIP(), self.jail.getFailTicket().getIP()]), 
+			self.assertSortedEqual([self.jail.getFailTicket().getIP(), self.jail.getFailTicket().getIP()], 
 				["192.0.2.1", "192.0.2.2"])
 
 	cls = MonitorJournalFailures
@@ -1334,7 +1334,7 @@ class GetFailures(LogCaptureTestCase):
 		self.assertEqual(self.filter.getLogPaths(), [GetFailures.FILENAME_01])
 		self.filter.addLogPath(GetFailures.FILENAME_02, tail=True)
 		self.assertEqual(self.filter.getLogCount(), 2)
-		self.assertEqual(sorted(self.filter.getLogPaths()), sorted([GetFailures.FILENAME_01, GetFailures.FILENAME_02]))
+		self.assertSortedEqual(self.filter.getLogPaths(), [GetFailures.FILENAME_01, GetFailures.FILENAME_02])
 
 	def testTail(self):
 		# There must be no containters registered, otherwise [-1] indexing would be wrong
@@ -1547,7 +1547,7 @@ class GetFailures(LogCaptureTestCase):
 					_ticket_tuple(self.filter.failManager.toBan())[0:3])
 			except FailManagerEmpty:
 				break
-		self.assertEqual(sorted(foundList), sorted(output))
+		self.assertSortedEqual(foundList, output)
 
 	def testGetFailuresMultiLineIgnoreRegex(self):
 		output = [("192.0.43.10", 2, 1124013599.0)]
@@ -1582,7 +1582,7 @@ class GetFailures(LogCaptureTestCase):
 					_ticket_tuple(self.filter.failManager.toBan())[0:3])
 			except FailManagerEmpty:
 				break
-		self.assertEqual(sorted(foundList), sorted(output))
+		self.assertSortedEqual(foundList, output)
 
 
 class DNSUtilsTests(unittest.TestCase):
@@ -1679,10 +1679,10 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertEqual(res, [])
 		res = DNSUtils.textToIp('www.example.com', 'warn')
 		# sort ipaddr, IPv4 is always smaller as IPv6
-		self.assertEqual(sorted(res), ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
+		self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
 		res = DNSUtils.textToIp('www.example.com', 'yes')
 		# sort ipaddr, IPv4 is always smaller as IPv6
-		self.assertEqual(sorted(res), ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
+		self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
 
 	def testTextToIp(self):
 		# Test hostnames
@@ -1695,7 +1695,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 			res = DNSUtils.textToIp(s, 'yes')
 			if s == 'www.example.com':
 				# sort ipaddr, IPv4 is always smaller as IPv6
-				self.assertEqual(sorted(res), ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
+				self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
 			else:
 				self.assertEqual(res, [])
 		# pure ips:

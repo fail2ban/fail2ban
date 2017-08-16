@@ -409,7 +409,7 @@ class FilterReaderTest(unittest.TestCase):
 
 		# Add sort as configreader uses dictionary and therefore order
 		# is unreliable
-		self.assertEqual(sorted(filterReader.convert()), sorted(output))
+		self.assertSortedEqual(filterReader.convert(), output)
 
 		filterReader = FilterReader("testcase01", "testcase01", {'maxlines': "5"},
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
@@ -417,7 +417,7 @@ class FilterReaderTest(unittest.TestCase):
 		#filterReader.getOptions(["failregex", "ignoreregex"])
 		filterReader.getOptions(None)
 		output[-1][-1] = "5"
-		self.assertEqual(sorted(filterReader.convert()), sorted(output))
+		self.assertSortedEqual(filterReader.convert(), output)
 
 	def testFilterReaderSubstitionDefault(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sweet@example.com fromip=<IP>']]
@@ -426,7 +426,7 @@ class FilterReaderTest(unittest.TestCase):
 		filterReader.read()
 		filterReader.getOptions(None)
 		c = filterReader.convert()
-		self.assertEqual(sorted(c), sorted(output))
+		self.assertSortedEqual(c, output)
 
 	def testFilterReaderSubstitionSet(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=sour@example.com fromip=<IP>']]
@@ -435,7 +435,7 @@ class FilterReaderTest(unittest.TestCase):
 		filterReader.read()
 		filterReader.getOptions(None)
 		c = filterReader.convert()
-		self.assertEqual(sorted(c), sorted(output))
+		self.assertSortedEqual(c, output)
 
 	def testFilterReaderSubstitionKnown(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=test,sweet@example.com,test2,sweet@example.com fromip=<IP>']]
@@ -446,7 +446,7 @@ class FilterReaderTest(unittest.TestCase):
 		filterReader.read()
 		filterReader.getOptions(None)
 		c = filterReader.convert()
-		self.assertEqual(sorted(c), sorted(output))
+		self.assertSortedEqual(c, output)
 
 	def testFilterReaderSubstitionFail(self):
 		# directly subst the same var :
@@ -555,8 +555,8 @@ class JailsReaderTest(LogCaptureTestCase):
 		self.assertRaises(ValueError, jails.convert)
 		comm_commands = jails.convert(allow_no_files=True)
 		self.maxDiff = None
-		self.assertEqual(sorted(comm_commands),
-			sorted([['add', 'emptyaction', 'auto'],
+		self.assertSortedEqual(comm_commands,
+			[['add', 'emptyaction', 'auto'],
 			 ['add', 'test-known-interp', 'auto'],
 			 ['multi-set', 'test-known-interp', 'addfailregex', [
 			   'failure test 1 (filter.d/test.conf) <HOST>',
@@ -592,7 +592,7 @@ class JailsReaderTest(LogCaptureTestCase):
 				"Jail 'missingaction' skipped, because of wrong configuration: Unable to read action 'noactionfileforthisaction'"],
 			 ['config-error',
 				"Jail 'missingbitsjail' skipped, because of wrong configuration: Unable to read the filter 'catchallthebadies'"],
-			 ]))
+			 ])
 		self.assertLogged("Errors in jail 'missingbitsjail'.")
 		self.assertNotLogged("Skipping...")
 		self.assertLogged("No file(s) found for glob /weapons/of/mass/destruction")
@@ -801,7 +801,7 @@ class JailsReaderTest(LogCaptureTestCase):
 
 			# and there is logging information left to be passed into the
 			# server
-			self.assertEqual(sorted(commands),
+			self.assertSortedEqual(commands,
 							 [['set', 'dbfile',
 								'/var/lib/fail2ban/fail2ban.sqlite3'],
 							  ['set', 'dbpurgeage', '1d'],

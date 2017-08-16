@@ -285,6 +285,25 @@ class TestsUtilsTest(LogCaptureTestCase):
 		self.assertDictEqual({'A': [1, 2]}, {'A': [1, 2]})
 		self.assertRaises(AssertionError, self.assertDictEqual, 
 			{'A': [1, 2]}, {'A': [2, 1]})
+		## assertSortedEqual:
+		self.assertSortedEqual(['A', 'B'], ['B', 'A'])
+		self.assertSortedEqual([['A', 'B']], [['B', 'A']], level=2)
+		self.assertSortedEqual([['A', 'B']], [['B', 'A']], nestedOnly=False)
+		self.assertRaises(AssertionError, lambda: self.assertSortedEqual(
+			[['A', 'B']], [['B', 'A']], level=1, nestedOnly=True))
+		self.assertSortedEqual({'A': ['A', 'B']}, {'A': ['B', 'A']}, nestedOnly=False)
+		self.assertRaises(AssertionError, lambda: self.assertSortedEqual(
+			{'A': ['A', 'B']}, {'A': ['B', 'A']}, level=1, nestedOnly=True))
+		self.assertSortedEqual(['Z', {'A': ['B', 'C'], 'B': ['E', 'F']}], [{'B': ['F', 'E'], 'A': ['C', 'B']}, 'Z'],
+			nestedOnly=False)
+		self.assertSortedEqual(['Z', {'A': ['B', 'C'], 'B': ['E', 'F']}], [{'B': ['F', 'E'], 'A': ['C', 'B']}, 'Z'],
+			level=-1)
+		self.assertRaises(AssertionError, lambda: self.assertSortedEqual(
+			['Z', {'A': ['B', 'C'], 'B': ['E', 'F']}], [{'B': ['F', 'E'], 'A': ['C', 'B']}, 'Z']))
+		self._testAssertionErrorRE(r"\['A'\] != \['C', 'B'\]",
+			self.assertSortedEqual, ['A'], ['C', 'B'])
+		self._testAssertionErrorRE(r"\['A', 'B'\] != \['B', 'C'\]",
+			self.assertSortedEqual, ['A', 'B'], ['C', 'B'])
 
 	def testFormatterWithTraceBack(self):
 		strout = StringIO()
