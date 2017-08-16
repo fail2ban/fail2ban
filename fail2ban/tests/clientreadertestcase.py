@@ -33,7 +33,7 @@ from ..client import configparserinc
 from ..client.jailreader import JailReader
 from ..client.filterreader import FilterReader
 from ..client.jailsreader import JailsReader
-from ..client.actionreader import ActionReader
+from ..client.actionreader import ActionReader, CommandAction
 from ..client.configurator import Configurator
 from ..server.mytime import MyTime
 from ..version import version
@@ -571,7 +571,8 @@ class JailsReaderTest(LogCaptureTestCase):
 			 ['set', 'brokenaction', 'addaction', 'brokenaction'],
 			 ['multi-set', 'brokenaction', 'action', 'brokenaction', [
 				 ['actionban', 'hit with big stick <ip>'],
-				 ['actname', 'brokenaction']
+				 ['actname', 'brokenaction'],
+				 ['name', 'brokenaction']
 			 ]],
 			 ['add', 'parse_to_end_of_jail.conf', 'auto'],
 			 ['set', 'parse_to_end_of_jail.conf', 'addfailregex', '<IP>'],
@@ -612,6 +613,16 @@ class JailsReaderTest(LogCaptureTestCase):
 					# all must have some actionban defined
 					self.assertTrue(actionReader._opts.get('actionban', '').strip(),
 						msg="Action file %r is lacking actionban" % actionConfig)
+					# test name of jail is set in options (also if not supplied within parameters):
+					opts = actionReader.getCombined(
+						ignore=CommandAction._escapedTags | set(('timeout', 'bantime')))
+					self.assertEqual(opts.get('name'), 'TEST',
+						msg="Action file %r does not contains jail-name 'f2b-TEST'" % actionConfig)
+					# and the name is substituted (test several actions surely contains name-interpolation):
+					if actionName in ('pf', 'iptables-allports', 'iptables-multiport'):
+						#print('****', actionName, opts.get('actionstart', ''))
+						self.assertIn('f2b-TEST', opts.get('actionstart', ''),
+							msg="Action file %r: interpolation of actionstart does not contains jail-name 'f2b-TEST'" % actionConfig)
 
 		def testReadStockJailConf(self):
 			jails = JailsReader(basedir=CONFIG_DIR, share_config=CONFIG_DIR_SHARE_CFG) # we are running tests from root project dir atm

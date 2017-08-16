@@ -69,10 +69,14 @@ class DNSUtils:
 		for fam, ipfam in ((socket.AF_INET, IPAddr.FAM_IPv4), (socket.AF_INET6, IPAddr.FAM_IPv6)):
 			try:
 				for result in socket.getaddrinfo(dns, None, fam, 0, socket.IPPROTO_TCP):
-					ip = IPAddr(result[4][0], ipfam)
+					# if getaddrinfo returns something unexpected:
+					if len(result) < 4 or not len(result[4]): continue
+					# get ip from `(2, 1, 6, '', ('127.0.0.1', 0))`,be sure we've an ip-string
+					# (some python-versions resp. host configurations causes returning of integer there):
+					ip = IPAddr(str(result[4][0]), ipfam)
 					if ip.isValid:
 						ips.append(ip)
-			except socket.error as e:
+			except Exception as e:
 				saveerr = e
 		if not ips and saveerr:
 			logSys.warning("Unable to find a corresponding IP address for %s: %s", dns, saveerr)

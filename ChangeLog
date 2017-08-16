@@ -6,6 +6,31 @@
 Fail2Ban: Changelog
 ===================
 
+Incompatibility list (compared to v.0.9):
+-----------
+
+* Filter (or `failregex`) internal capture-groups:
+
+  - If you've your own `failregex` or custom filters using conditional match `(?P=host)`, you should
+    rewrite the regex like in example below resp. using `(?:(?P=ip4)|(?P=ip6)` instead of `(?P=host)`
+    (or `(?:(?P=ip4)|(?P=ip6)|(?P=dns))` corresponding your `usedns` and `raw` settings).
+
+    Of course you can always your own capture-group (like below `_cond_ip_`) to do this.
+    ```
+    testln="1500000000 failure from 192.0.2.1: bad host 192.0.2.1"
+    fail2ban-regex "$testln" "^\s*failure from (?P<_cond_ip_><HOST>): bad host (?P=_cond_ip_)$"
+    ```
+  - New internal groups (currently reserved for internal usage):
+    `ip4`, `ip6`, `dns`, `fid`, `fport`, additionally `user` and another captures in lower case if
+    mapping from tag `<F-*>` used in failregex (e. g. `user` by `<F-USER>`).
+
+* v.0.10 uses more precise date template handling, that can be theoretically incompatible to some
+  user configurations resp. `datepattern`.
+
+* Since v0.10 fail2ban supports the matching of the IPv6 addresses, but not all ban actions are
+  IPv6-capable now.
+
+
 ver. 0.11.0-dev-0 (2017/??/??) - development nightly edition
 -----------
 
