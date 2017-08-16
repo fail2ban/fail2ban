@@ -495,7 +495,7 @@ if not hasattr(unittest.TestCase, 'assertDictEqual'):
 			self.fail(msg)
 	unittest.TestCase.assertDictEqual = assertDictEqual
 
-def assertSortedEqual(self, a, b, level=1, nestedOnly=True, msg=None):
+def assertSortedEqual(self, a, b, level=1, nestedOnly=True, key=repr, msg=None):
 	"""Compare complex elements (like dict, list or tuple) in sorted order until
 	level 0 not reached (initial level = -1 meant all levels),
 	or if nestedOnly set to True and some of the objects still contains nested lists or dicts.
@@ -506,7 +506,7 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=True, msg=None):
 			return any(isinstance(v, (dict, list, tuple)) for v in v.itervalues())
 		return any(isinstance(v, (dict, list, tuple)) for v in v)
 	# level comparison routine:
-	def _assertSortedEqual(a, b, level, nestedOnly):
+	def _assertSortedEqual(a, b, level, nestedOnly, key):
 		# first the lengths:
 		if len(a) != len(b):
 			raise ValueError('%r != %r' % (a, b))
@@ -519,20 +519,20 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=True, msg=None):
 			for k, v1 in a.iteritems():
 				v2 = b[k]
 				if isinstance(v1, (dict, list, tuple)) and isinstance(v2, (dict, list, tuple)):
-					_assertSortedEqual(v1, v2, level-1 if level != 0 else 0, nestedOnly)
+					_assertSortedEqual(v1, v2, level-1 if level != 0 else 0, nestedOnly, key)
 				elif v1 != v2:
 					raise ValueError('%r != %r' % (a, b))
 		else: # list, tuple, something iterable:
-			a = sorted(a, key=repr)
-			b = sorted(b, key=repr)
+			a = sorted(a, key=key)
+			b = sorted(b, key=key)
 			for v1, v2 in zip(a, b):
 				if isinstance(v1, (dict, list, tuple)) and isinstance(v2, (dict, list, tuple)):
-					_assertSortedEqual(v1, v2, level-1 if level != 0 else 0, nestedOnly)
+					_assertSortedEqual(v1, v2, level-1 if level != 0 else 0, nestedOnly, key)
 				elif v1 != v2:
 					raise ValueError('%r != %r' % (a, b))
 	# compare and produce assertion-error by exception:
 	try:
-		_assertSortedEqual(a, b, level, nestedOnly)
+		_assertSortedEqual(a, b, level, nestedOnly, key)
 	except Exception as e:
 		standardMsg = e.args[0] if isinstance(e, ValueError) else (str(e) + "\nwithin:")
 		diff = ('\n' + '\n'.join(difflib.ndiff(
