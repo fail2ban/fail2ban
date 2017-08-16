@@ -124,14 +124,14 @@ class TransmitterBase(unittest.TestCase):
 			self.transm.proceed(["get", jail, cmd]), (0, []))
 		for n, value in enumerate(values):
 			ret = self.transm.proceed(["set", jail, cmdAdd, value])
-			self.assertEqual((ret[0], sorted(map(str, ret[1]))), (0, sorted(map(str, values[:n+1]))))
+			self.assertSortedEqual((ret[0], map(str, ret[1])), (0, map(str, values[:n+1])), level=2)
 			ret = self.transm.proceed(["get", jail, cmd])
-			self.assertEqual((ret[0], sorted(map(str, ret[1]))), (0, sorted(map(str, values[:n+1]))))
+			self.assertSortedEqual((ret[0], map(str, ret[1])), (0, map(str, values[:n+1])), level=2)
 		for n, value in enumerate(values):
 			ret = self.transm.proceed(["set", jail, cmdDel, value])
-			self.assertEqual((ret[0], sorted(map(str, ret[1]))), (0, sorted(map(str, values[n+1:]))))
+			self.assertSortedEqual((ret[0], map(str, ret[1])), (0, map(str, values[n+1:])), level=2)
 			ret = self.transm.proceed(["get", jail, cmd])
-			self.assertEqual((ret[0], sorted(map(str, ret[1]))), (0, sorted(map(str, values[n+1:]))))
+			self.assertSortedEqual((ret[0], map(str, ret[1])), (0, map(str, values[n+1:])), level=2)
 
 	def jailAddDelRegexTest(self, cmd, inValues, outValues, jail):
 		cmdAdd = "add" + cmd
@@ -690,9 +690,9 @@ class Transmitter(TransmitterBase):
 					"be skipped" % (sys.version))
 				return
 			raise
-		self.assertEqual(
-			sorted(self.transm.proceed(["get", self.jailName,
-				"actionproperties", action])[1]),
+		self.assertSortedEqual(
+			self.transm.proceed(["get", self.jailName,
+				"actionproperties", action])[1],
 			['opt1', 'opt2'])
 		self.assertEqual(
 			self.transm.proceed(["get", self.jailName, "action", action,
@@ -702,9 +702,9 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["get", self.jailName, "action", action,
 				"opt2"]),
 			(0, None))
-		self.assertEqual(
-			sorted(self.transm.proceed(["get", self.jailName, "actionmethods",
-				action])[1]),
+		self.assertSortedEqual(
+			self.transm.proceed(["get", self.jailName, "actionmethods",
+				action])[1],
 			['ban', 'start', 'stop', 'testmethod', 'unban'])
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "action", action,

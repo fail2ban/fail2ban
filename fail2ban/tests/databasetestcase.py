@@ -363,9 +363,9 @@ class DatabaseTest(LogCaptureTestCase):
 
 		tickets = self.db.getBansMerged()
 		self.assertEqual(len(tickets), 2)
-		self.assertEqual(
-			sorted(list(set(ticket.getIP() for ticket in tickets))),
-			sorted([ticket.getIP() for ticket in tickets]))
+		self.assertSortedEqual(
+			list(set(ticket.getIP() for ticket in tickets)),
+			[ticket.getIP() for ticket in tickets])
 
 		tickets = self.db.getBansMerged(jail=jail2)
 		self.assertEqual(len(tickets), 1)
