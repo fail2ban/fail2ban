@@ -54,6 +54,9 @@ class ActionReader(DefinitionInitConfigReader):
 		if actname is None:
 			actname = file_
 			initOpts["actname"] = actname
+		# always supply jail name as name parameter if not specified in options:
+		if initOpts.get("name") is None:
+			initOpts["name"] = jailName
 		self._name = actname
 		DefinitionInitConfigReader.__init__(
 			self, file_, jailName, initOpts, **kwargs)
