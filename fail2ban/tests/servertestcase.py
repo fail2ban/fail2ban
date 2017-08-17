@@ -1504,7 +1504,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'ip4': (), 'ip6': (),
 					'start': (
 						'`echo "table <f2b-j-w-pf> persist counters" | pfctl -a f2b/j-w-pf -f-`',
-						'`echo "block proto tcp from <f2b-j-w-pf> to any port <port>" | pfctl -a f2b/j-w-pf -f-`',
+						'`echo "block quick proto tcp from <f2b-j-w-pf> to any port <port>" | pfctl -a f2b/j-w-pf -f-`',
 					),
 					'stop': (
 						'`pfctl -a f2b/j-w-pf -sr 2>/dev/null | grep -v f2b-j-w-pf | pfctl -a f2b/j-w-pf -f-`',
@@ -1523,7 +1523,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'ip4': (), 'ip6': (),
 					'start': (
 						'`echo "table <f2b-j-w-pf-mp> persist counters" | pfctl -a f2b/j-w-pf-mp -f-`',
-						'`echo "block proto tcp from <f2b-j-w-pf-mp> to any port http" | pfctl -a f2b/j-w-pf-mp -f-`',
+						'`echo "block quick proto tcp from <f2b-j-w-pf-mp> to any port http" | pfctl -a f2b/j-w-pf-mp -f-`',
 					),
 					'stop': (
 						'`pfctl -a f2b/j-w-pf-mp -sr 2>/dev/null | grep -v f2b-j-w-pf-mp | pfctl -a f2b/j-w-pf-mp -f-`',
@@ -1542,7 +1542,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'ip4': (), 'ip6': (),
 					'ip4-start': (
 						'`echo "table <f2b-j-w-pf-ap> persist counters" | pfctl -a f2b/j-w-pf-ap -f-`',
-						'`echo "block proto tcp from <f2b-j-w-pf-ap> to any" | pfctl -a f2b/j-w-pf-ap -f-`',
+						'`echo "block quick proto tcp from <f2b-j-w-pf-ap> to any" | pfctl -a f2b/j-w-pf-ap -f-`',
 					),
 					'ip6-start': (), # the same as ipv4
 					'stop': (
