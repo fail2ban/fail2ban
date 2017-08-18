@@ -34,6 +34,10 @@ from .server.mytime import MyTime
 
 
 PREFER_ENC = locale.getpreferredencoding()
+# correct prefered encoding if lang not set in environment:
+if PREFER_ENC.startswith('ANSI_'): # pragma: no cover
+	if all((os.getenv(v) in (None, "") for v in ('LANGUAGE', 'LC_ALL', 'LC_CTYPE', 'LANG'))):
+		PREFER_ENC = 'UTF-8';
 
 
 def formatExceptionInfo():
