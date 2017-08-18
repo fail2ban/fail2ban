@@ -406,6 +406,8 @@ releases.
 * action.d/bsd-ipfw.conf
     - Make the rule number, the action starts looking for a free slot to insert
       the new rule, configurable (gh-1689)
+    - Replace not posix-compliant grep option: fgrep with `-q` option can cause 
+      141 exit code in some cases (gh-1389)
 * filter.d/apache-overflows.conf:
     - Fixes resources greedy expression (see gh-1790);
     - Rewritten without end-anchor ($), because of potential vulnerability on very long URLs.
