@@ -32,6 +32,7 @@ releases.
 ### Enhancements
 * action.d/cloudflare.conf - Cloudflare API v4 implementation (gh-1651)
 * filter.d/kerio.conf - filter extended with new rules (see gh-1455)
+* filter.d/phpmyadmin-syslog.conf - new filter for phpMyAdmin using syslog for auth logging
 
 
 ver. 0.9.7 (2017/05/11) - awaiting-victory
