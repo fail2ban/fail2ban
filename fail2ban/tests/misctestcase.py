@@ -109,8 +109,8 @@ class SetupTest(unittest.TestCase):
 		supdbgout = ' >/dev/null 2>&1' if unittest.F2B.log_level >= logging.DEBUG else '' # HEAVYDEBUG
 		try:
 			# try dry-run:
-			self.assertEqual(os.system("%s %s --dry-run install --disable-2to3 --root=%s%s"
-					  % (sys.executable, self.setup , tmp, supdbgout)), 0)
+			os.system("%s %s --dry-run install --disable-2to3 --root=%s%s"
+					  % (sys.executable, self.setup , tmp, supdbgout))
 			# check nothing was created:
 			self.assertTrue(not os.listdir(tmp))
 		finally:
