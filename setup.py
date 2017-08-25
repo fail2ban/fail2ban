@@ -50,6 +50,7 @@ except ImportError:
 
 import os
 from os.path import isfile, join, isdir, realpath
+import re
 import sys
 import warnings
 from glob import glob
@@ -57,11 +58,25 @@ from glob import glob
 from fail2ban.setup import updatePyExec
 
 
+source_dir = os.path.realpath(os.path.dirname(
+	# __file__ seems to be overwritten sometimes on some python versions (e.g. bug of 2.6 by running under cProfile, etc.):
+	sys.argv[0] if os.path.basename(sys.argv[0]) == 'setup.py' else __file__
+))
+
 # Wrapper to install python binding (to current python version):
 class install_scripts_f2b(install_scripts):
 
 	def get_outputs(self):
 		outputs = install_scripts.get_outputs(self)
+		# setup.py --dry-run install:
+		dry_run = not outputs
+		self.update_scripts(dry_run)
+		if dry_run:
+			#bindir = self.install_dir
+			bindir = self.build_dir
+			print('creating fail2ban-python binding -> %s (dry-run, real path can be different)' % (bindir,))
+			print('Copying content of %s to %s' % (self.build_dir, self.install_dir));
+			return outputs
 		fn = None
 		for fn in outputs:
 			if os.path.basename(fn) == 'fail2ban-server':
@@ -70,6 +85,27 @@ class install_scripts_f2b(install_scripts):
 		print('creating fail2ban-python binding -> %s' % (bindir,))
 		updatePyExec(bindir)
 		return outputs
+
+	def update_scripts(self, dry_run=False):
+		buildroot = os.path.dirname(self.build_dir)
+		print('Creating %s/fail2ban.service (from fail2ban.service.in): @BINDIR@ -> %s' % (buildroot, self.install_dir))
+		with open(os.path.join(source_dir, 'files/fail2ban.service.in'), 'r') as fn:
+			lines = fn.readlines()
+		fn = None
+		if not dry_run:
+			fn = open(os.path.join(buildroot, 'fail2ban.service'), 'w')
+		try:
+			for ln in lines:
+				ln = re.sub(r'@BINDIR@', lambda v: self.install_dir, ln)
+				if dry_run:
+					sys.stdout.write(' | ' + ln)
+					continue
+				fn.write(ln)
+		finally:
+			if fn: fn.close()
+		if dry_run:
+			print(' `')
+
 
 # Wrapper to specify fail2ban own options:
 class install_command_f2b(install):
@@ -94,11 +130,7 @@ class install_command_f2b(install):
 
 
 # Update fail2ban-python env to current python version (where f2b-modules located/installed)
-rootdir = os.path.realpath(os.path.dirname(
-	# __file__ seems to be overwritten sometimes on some python versions (e.g. bug of 2.6 by running under cProfile, etc.):
-	sys.argv[0] if os.path.basename(sys.argv[0]) == 'setup.py' else __file__
-))
-updatePyExec(os.path.join(rootdir, 'bin'))
+updatePyExec(os.path.join(source_dir, 'bin'))
 
 if setuptools and "test" in sys.argv:
 	import logging
@@ -270,5 +302,8 @@ if isdir("/usr/lib/fail2ban"):
 if sys.argv[1] == "install":
 	print("")
 	print("Please do not forget to update your configuration files.")
-	print("They are in /etc/fail2ban/.")
+	print("They are in \"/etc/fail2ban/\".")
+	print("")
+	print("You can also install systemd service-unit file from \"build/fail2ban.service\"")
+	print("resp. corresponding init script from \"files/*-initd\".")
 	print("")
