@@ -1,0 +1,2 @@
+# failJSON: { "time": "2004-08-22T14:50:22", "match": true , "host": "192.0.2.1" }
+Aug 22 14:50:22 eurostream phpMyAdmin[16358]: user denied: root (mysql-denied) from 192.0.2.1
