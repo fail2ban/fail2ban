@@ -88,11 +88,11 @@ class ActionReader(DefinitionInitConfigReader):
 		stream.append(head + ["addaction", self._name])
 		multi = []
 		for opt, optval in opts.iteritems():
-			if opt in self._configOpts:
+			if opt in self._configOpts and not opt.startswith('known/'):
 				multi.append([opt, optval])
 		if self._initOpts:
 			for opt, optval in self._initOpts.iteritems():
-				if opt not in self._configOpts:
+				if opt not in self._configOpts and not opt.startswith('known/'):
 					multi.append([opt, optval])
 		if len(multi) > 1:
 			stream.append(["multi-set", self._jailName, "action", self._name, multi])
