@@ -20,8 +20,8 @@
 # Author: Yaroslav Halchenko
 # Modified: Cyril Jaquier
 
-__author__ = 'Yaroslav Halhenko'
-__copyright__ = 'Copyright (c) 2007 Yaroslav Halchenko'
+__author__ = 'Yaroslav Halhenko, Serg G. Brester (aka sebres)'
+__copyright__ = 'Copyright (c) 2007 Yaroslav Halchenko, 2015 Serg G. Brester (aka sebres)'
 __license__ = 'GPL'
 
 import os
@@ -150,7 +150,7 @@ after = 1.conf
 					if seclwr == 'known':
 						# try get raw value from known options:
 						try:
-							v = self._sections['KNOWN'][opt]
+							v = self._sections['KNOWN/'+section][opt]
 						except KeyError:
 							# fallback to default:
 							try:
@@ -297,7 +297,6 @@ after = 1.conf
 					# merge defaults and all sections to self:
 					alld.update(cfg.get_defaults())
 					for n, s in cfg.get_sections().iteritems():
-						curalls = alls
 						# conditional sections
 						cond = SafeConfigParserWithIncludes.CONDITIONAL_RE.match(n)
 						if cond:
@@ -313,7 +312,7 @@ after = 1.conf
 						s2 = alls.get(n)
 						if isinstance(s2, dict):
 							# save previous known values, for possible using in local interpolations later:
-							self.merge_section('KNOWN', s2, '')
+							self.merge_section('KNOWN/'+n, s2, '')
 							# merge section
 							s2.update(s)
 						else:
