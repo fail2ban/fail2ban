@@ -53,7 +53,7 @@
 # failJSON: { "time": "2016-03-21T06:38:05", "match": true , "host": "49.212.207.15" }
 2016-03-21 06:38:05 [5718] no MAIL in SMTP connection from www3005.sakura.ne.jp [49.212.207.15]:28890 I=[172.89.0.6]:25 D=21s C=EHLO,STARTTLS
 # failJSON: { "time": "2016-03-21T06:57:36", "match": true , "host": "122.165.71.116" }
-2016-03-21 06:57:36 [5908] no MAIL in SMTP connection from [122.165.71.116]:2056 I=[172.89.0.6]:25 D=10s
+2016-03-21 06:57:36 [5908] no MAIL in SMTP connection from [122.165.71.116]:2056 I=[172.89.0.6]:25 D=0s
 # failJSON: { "time": "2016-03-21T06:57:36", "match": true , "host": "122.165.71.116" }
 2016-03-21 06:57:36 [5908] no MAIL in SMTP connection from [122.165.71.116] I=[172.89.0.6]:25 D=10s
 # failJSON: { "time": "2016-03-21T04:07:49", "match": true , "host": "174.137.147.204" }
