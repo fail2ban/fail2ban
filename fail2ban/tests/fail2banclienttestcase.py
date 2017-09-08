@@ -458,7 +458,11 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		startparams = _start_params(tmp, True)
 		self.execSuccess(startparams, "-vvd")
 		self.assertLogged("Loading files")
-		self.assertLogged("logtarget")
+		self.assertLogged("['set', 'logtarget',")
+		self.pruneLog()
+		# pretty dump:
+		self.execSuccess(startparams, "--dp")
+		self.assertLogged("['set', 'logtarget',")
 		
 	@with_tmpdir
 	@with_kill_srv

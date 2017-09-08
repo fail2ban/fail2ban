@@ -45,10 +45,25 @@ ver. 0.10.1-dev-1 (2017/??/??) - development current edition
 -----------
 
 ### Fixes
+* jail "pass2allow-ftp" supply blocktype and returntype parameters to the action (gh-1884)
+* avoid using "ANSI_X3.4-1968" as preferred encoding (if missing environment variables 
+  'LANGUAGE', 'LC_ALL', 'LC_CTYPE', and 'LANG', see gh-1587).
+* action.d/pf.conf: several fixes for pf-action like anchoring, etc. (see gh-1866, gh-1867);
+* fixed ignorself issue "Retrieving own IPs of localhost failed: inet_pton() argument 2 must be string, not int" (see gh-1865);
+* fixed tags `<fq-hostname>` and `<sh-hostname>`, could be used without ticket (a. g. in `actionstart` etc., gh-1859).
+
+* setup.py: fixed several setup facilities (gh-1874):
+  - don't check return code by dry-run: returns 256 on some python/setuptool versions;
+  - `files/fail2ban.service` renamed as template to `files/fail2ban.service.in`;
+  - setup process generates `build/fail2ban.service` from `files/fail2ban.service.in` using distribution related bin-path;
+  - bug-fixing by running setup with option `--dry-run`;
 
 ### New Features
+* introduced new command-line options `--dp`, `--dump-pretty` to dump the configuration using more
+  human readable representation (opposite to `-d`);
 
 ### Enhancements
+* filter.d/dovecot.conf: introduced mode `aggressive` for cases like "disconnected before auth was ready" (gh-1880)
 
 
 ver. 0.10.0 (2017/08/09) - long-awaited 0.10th version
@@ -411,13 +426,18 @@ releases.
 * filter.d/apache-overflows.conf:
     - Fixes resources greedy expression (see gh-1790);
     - Rewritten without end-anchor ($), because of potential vulnerability on very long URLs.
+* filter.d/apache-badbots.conf - extended to recognize Jorgee Vulnerability Scanner (gh-1882)
 * filter.d/asterisk.conf - fixed failregex AMI Asterisk authentification failed (see gh-1302)
+* filter.d/dovecot.conf - fixed failregex, see gh-1879 (partially cherry-picked from gh-1880)
+* filter.d/exim.conf - fixed failregex for case of flood attempts with `D=0s` (gh-1887)
 
 ### New Features
 
 ### Enhancements
 * action.d/cloudflare.conf - Cloudflare API v4 implementation (gh-1651)
 * filter.d/kerio.conf - filter extended with new rules (see gh-1455)
+* filter.d/phpmyadmin-syslog.conf - new filter for phpMyAdmin using syslog for auth logging
+* filter.d/zoneminder.conf - new filter for ZoneMinder (gh-1376)
 
 
 ver. 0.9.7 (2017/05/11) - awaiting-victory

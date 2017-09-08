@@ -20,8 +20,8 @@
 # Author: Cyril Jaquier
 # Modified by: Yaroslav Halchenko (SafeConfigParserWithIncludes)
 
-__author__ = "Cyril Jaquier"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+__author__ = "Cyril Jaquier, Yaroslav Halchenko, Serg G. Brester (aka sebres)"
+__copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2007 Yaroslav Halchenko, 2015 Serg G. Brester (aka sebres)"
 __license__ = "GPL"
 
 import glob
@@ -110,7 +110,7 @@ class ConfigReader():
 
 	def sections(self):
 		try:
-			return (n for n in self._cfg.sections() if n != 'KNOWN')
+			return (n for n in self._cfg.sections() if not n.startswith('KNOWN/'))
 		except AttributeError:
 			return []
 
