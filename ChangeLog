@@ -25,7 +25,10 @@ releases.
 * filter.d/apache-overflows.conf:
     - Fixes resources greedy expression (see gh-1790);
     - Rewritten without end-anchor ($), because of potential vulnerability on very long URLs.
+* filter.d/apache-badbots.conf - extended to recognize Jorgee Vulnerability Scanner (gh-1882)
 * filter.d/asterisk.conf - fixed failregex AMI Asterisk authentification failed (see gh-1302)
+* filter.d/dovecot.conf - fixed failregex, see gh-1879 (partially cherry-picked from gh-1880)
+* filter.d/exim.conf - fixed failregex for case of flood attempts with `D=0s` (gh-1887)
 
 ### New Features
 
@@ -33,6 +36,7 @@ releases.
 * action.d/cloudflare.conf - Cloudflare API v4 implementation (gh-1651)
 * filter.d/kerio.conf - filter extended with new rules (see gh-1455)
 * filter.d/phpmyadmin-syslog.conf - new filter for phpMyAdmin using syslog for auth logging
+* filter.d/zoneminder.conf - new filter for ZoneMinder (gh-1376)
 
 
 ver. 0.9.7 (2017/05/11) - awaiting-victory
