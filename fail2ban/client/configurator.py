@@ -76,9 +76,9 @@ class Configurator:
 		self.__fail2ban.getOptions(updateMainOpt)
 		return self.__jails.getOptions(jail, ignoreWrong=ignoreWrong)
 		
-	def convertToProtocol(self):
+	def convertToProtocol(self, allow_no_files=False):
 		self.__streams["general"] = self.__fail2ban.convert()
-		self.__streams["jails"] = self.__jails.convert()
+		self.__streams["jails"] = self.__jails.convert(allow_no_files=allow_no_files)
 	
 	def getConfigStream(self):
 		cmds = list()
