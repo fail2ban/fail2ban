@@ -35,7 +35,7 @@ ver. 0.10.1-dev-1 (2016/??/??) - development edition
 -----------
 
 ### Fixes
-* fix Gentoo init script's shebang to use openrc-run instead of runscript
+* fix Gentoo init script's shebang to use openrc-run instead of runscript (gh-1891)
 * jail "pass2allow-ftp" supply blocktype and returntype parameters to the action (gh-1884)
 * avoid using "ANSI_X3.4-1968" as preferred encoding (if missing environment variables 
   'LANGUAGE', 'LC_ALL', 'LC_CTYPE', and 'LANG', see gh-1587).
