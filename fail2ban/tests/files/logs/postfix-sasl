@@ -30,3 +30,5 @@ Apr 12 02:24:11 xxx postfix/smtps/smtpd[42]: warning: astra4139.startdedicated.d
 # failJSON: { "time": "2005-08-03T15:30:49", "match": true , "host": "98.191.84.74" }
 Aug 3 15:30:49 ksusha postfix/smtpd[17041]: warning: mail.foldsandwalker.com[98.191.84.74]: SASL Plain authentication failed:
 
+# failJSON: { "time": "2005-08-04T16:47:52", "match": true , "host": "192.0.2.237", "desc": "cover optional port after host" }
+Aug 4 16:47:52 mail3 postfix/smtpd[31152]: warning: unknown[192.0.2.237]:55729: SASL LOGIN authentication failed: authentication failure
