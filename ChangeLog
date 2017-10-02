@@ -45,6 +45,7 @@ ver. 0.10.1-dev-1 (2017/??/??) - development current edition
 -----------
 
 ### Fixes
+* fix Gentoo init script's shebang to use openrc-run instead of runscript (gh-1891)
 * jail "pass2allow-ftp" supply blocktype and returntype parameters to the action (gh-1884)
 * avoid using "ANSI_X3.4-1968" as preferred encoding (if missing environment variables 
   'LANGUAGE', 'LC_ALL', 'LC_CTYPE', and 'LANG', see gh-1587).
@@ -63,6 +64,7 @@ ver. 0.10.1-dev-1 (2017/??/??) - development current edition
   human readable representation (opposite to `-d`);
 
 ### Enhancements
+* nftables actions are IPv6-capable now (gh-1893)
 * filter.d/dovecot.conf: introduced mode `aggressive` for cases like "disconnected before auth was ready" (gh-1880)
 
 
@@ -430,6 +432,7 @@ releases.
 * filter.d/asterisk.conf - fixed failregex AMI Asterisk authentification failed (see gh-1302)
 * filter.d/dovecot.conf - fixed failregex, see gh-1879 (partially cherry-picked from gh-1880)
 * filter.d/exim.conf - fixed failregex for case of flood attempts with `D=0s` (gh-1887)
+* filter.d/postfix-*.conf - added optional port regex (gh-1902)
 
 ### New Features
 
