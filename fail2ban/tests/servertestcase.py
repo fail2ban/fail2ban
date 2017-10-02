@@ -441,17 +441,16 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "addignoreip", value]),
 			(0, [value]))
-		# Will allow duplicate
-		#NOTE: Should duplicates be allowed, or silent ignore like logpath?
+		# Duplicates ignored
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "addignoreip", value]),
-			(0, [value, value]))
+			(0, [value]))
 		self.assertEqual(
 			self.transm.proceed(["get", self.jailName, "ignoreip"]),
-			(0, [value, value]))
+			(0, [value]))
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "delignoreip", value]),
-			(0, [value]))
+			(0, []))
 
 		self.assertEqual(
 			self.transm.proceed(["get", self.jailName, "ignoreself"]),

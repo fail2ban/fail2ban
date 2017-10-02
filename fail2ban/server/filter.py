@@ -458,7 +458,10 @@ class Filter(JailThread):
 			return
 		# Create IP address object
 		ip = IPAddr(ipstr)
-
+		# Avoid exact duplicates
+		if ip in self.__ignoreIpList:
+			logSys.warn("  Ignore duplicate %r (%r), already in ignore list", ip, ipstr)
+			return
 		# log and append to ignore list
 		logSys.debug("  Add %r to ignore list (%r)", ip, ipstr)
 		self.__ignoreIpList.append(ip)
