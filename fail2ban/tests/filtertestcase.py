@@ -980,6 +980,18 @@ def get_monitor_failures_testcase(Filter_):
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
+		def test_del_file(self):
+			# test filter reaction by delete watching file:
+			self.file.close()
+			self.waitForTicks(1)
+			# remove file (cause detection of log-rotation)...
+			os.unlink(self.name)
+			# check it was detected (in pending files):
+			self.waitForTicks(2)
+			if hasattr(self.filter, "getPendingPaths"):
+				self.assertTrue(Utils.wait_for(lambda: self.name in self.filter.getPendingPaths(), _maxWaitTime(10)))
+				self.assertEqual(len(self.filter.getPendingPaths()), 1)
+
 		@with_tmpdir
 		def test_move_dir(self, tmp):
 			self.file.close()

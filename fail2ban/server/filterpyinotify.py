@@ -161,6 +161,9 @@ class FilterPyinotify(FileFilter):
 			del self.__pending[path]
 		except KeyError: pass
 
+	def getPendingPaths(self):
+		return self.__pending.keys()
+
 	def _checkPending(self):
 		if not self.__pending:
 			return
@@ -225,7 +228,11 @@ class FilterPyinotify(FileFilter):
 	def _delFileWatcher(self, path):
 		try:
 			wdInt = self.__watchFiles.pop(path)
-			wd = self.__monitor.rm_watch(wdInt)
+			if self.__monitor.get_path(wdInt) is not None:
+				wd = self.__monitor.rm_watch(wdInt)
+			else: # pragma: no cover
+				logSys.debug("Non-existing file watcher %r for file %s", wdInt, path)
+				wd = {wdInt: 1}
 			if wd[wdInt]:
 				logSys.debug("Removed file watcher for %s", path)
 				return True
@@ -249,7 +256,10 @@ class FilterPyinotify(FileFilter):
 		# Remove watches for the directory:
 		try:
 			wdInt = self.__watchDirs.pop(path_dir)
-			self.__monitor.rm_watch(wdInt)
+			if self.__monitor.get_path(wdInt) is not None:
+				self.__monitor.rm_watch(wdInt)
+			else: # pragma: no cover
+				logSys.debug("Non-existing file watcher %r for directory %s", wdInt, path_dir)
 		except KeyError: # pragma: no cover
 			pass
 			# EnvironmentError is parent of IOError, OSError, etc.

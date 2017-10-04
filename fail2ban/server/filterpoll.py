@@ -164,7 +164,11 @@ class FilterPoll(FileFilter):
 				return False
 			# log error:
 			if self.__file404Cnt[filename] < 2:
-				logSys.error("Unable to get stat on %s because of: %s",
+				if e.errno == 2:
+					logSys.debug("Log absence detected (possibly rotation) for %s, reason: %s",
+							 filename, e)
+				else: # pragma: no cover
+					logSys.error("Unable to get stat on %s because of: %s",
 							 filename, e, 
 							 exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 			# increase file and common error counters:
@@ -175,3 +179,6 @@ class FilterPoll(FileFilter):
 				self.__file404Cnt[filename] = 0
 				self.delLogPath(filename)
 			return False
+
+	def getPendingPaths(self):
+		return self.__file404Cnt.keys()
