@@ -409,7 +409,9 @@ releases.
     - Rewritten without end-anchor ($), because of potential vulnerability on very long URLs.
 * filter.d/apache-badbots.conf - extended to recognize Jorgee Vulnerability Scanner (gh-1882)
 * filter.d/asterisk.conf - fixed failregex AMI Asterisk authentification failed (see gh-1302)
-* filter.d/dovecot.conf - fixed failregex, see gh-1879 (partially cherry-picked from gh-1880)
+* filter.d/dovecot.conf:
+    - fixed failregex, see gh-1879 (partially cherry-picked from gh-1880)
+    - extended to match pam_authenticate failures with "Permission denied" (gh-1897)
 * filter.d/exim.conf - fixed failregex for case of flood attempts with `D=0s` (gh-1887)
 * filter.d/postfix-*.conf - added optional port regex (gh-1902)
 
