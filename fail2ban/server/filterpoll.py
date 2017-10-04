@@ -170,7 +170,7 @@ class FilterPoll(FileFilter):
 				else: # pragma: no cover
 					logSys.error("Unable to get stat on %s because of: %s",
 							 filename, e, 
-							 exc_info=e.errno != 2 and logSys.getEffectiveLevel()<=logging.DEBUG)
+							 exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 			# increase file and common error counters:
 			self.__file404Cnt[filename] += 1
 			self.commonError()
