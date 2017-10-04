@@ -43,6 +43,9 @@ Jan 29 05:13:50 mail dovecot: auth: passwd-file(username,1.2.3.4): unknown user
 # failJSON: { "time": "2005-01-29T13:54:06", "match": true , "host": "192.0.2.5" }
 Jan 29 13:54:06 auth-worker(22401): Info: sql(admin@example.de,192.0.2.5,<n4JLdHNVngZGpV2j>): unknown user
 
+# failJSON: { "time": "2005-01-29T14:38:51", "match": true , "host": "192.0.2.6", "desc": "PAM Permission denied (gh-1897)" }
+Jan 29 14:38:51 example.com dovecot[24941]: auth-worker(30165): pam(user@example.com,192.0.2.6,<PNHQq8pZhqIKAQGd>): pam_authenticate() failed: Permission denied
+
 # failJSON: { "time": "2005-04-19T05:22:20", "match": true , "host": "80.255.3.104" }
 Apr 19 05:22:20 vm5 auth: pam_unix(dovecot:auth): authentication failure; logname= uid=0 euid=0 tty=dovecot ruser=informix rhost=80.255.3.104
 
