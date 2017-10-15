@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: t -*-
 # vi: set ft=python sts=4 ts=4 sw=4 noet :
 """Script to run Fail2Ban tests battery
@@ -30,19 +30,15 @@ import sys
 import time
 import unittest
 
-# Check if local fail2ban module exists, and use if it exists by 
+# Check if local fail2ban module exists, and use if it exists by
 # modifying the path. This is such that tests can be used in dev
 # environment.
 if os.path.exists("fail2ban/__init__.py"):
 	sys.path.insert(0, ".")
 from fail2ban.version import version
 
-from fail2ban.tests.utils import gatherTests
-from fail2ban.helpers import FormatterWithTraceBack, getLogger
+from fail2ban.tests.utils import getOptParser, initProcess, gatherTests
 from fail2ban.setup import updatePyExec
-from fail2ban.server.mytime import MyTime
-
-from optparse import OptionParser, Option
 
 # Update fail2ban-python env to current python version (where f2b-modules located/installed)
 bindir = os.path.dirname(
@@ -51,84 +47,19 @@ bindir = os.path.dirname(
 )
 updatePyExec(bindir)
 
-def get_opt_parser():
-	# use module docstring for help output
-	p = OptionParser(
-				usage="%s [OPTIONS] [regexps]\n" % sys.argv[0] + __doc__,
-				version="%prog " + version)
-
-	p.add_options([
-		Option('-l', "--log-level", type="choice",
-			   dest="log_level",
-			   choices=('heavydebug', 'debug', 'info', 'notice', 'warning', 'error', 'critical'),
-			   default=None,
-			   help="Log level for the logger to use during running tests"),
-		Option('-n', "--no-network", action="store_true",
-			   dest="no_network",
-			   help="Do not run tests that require the network"),
-		Option("-t", "--log-traceback", action='store_true',
-			   help="Enrich log-messages with compressed tracebacks"),
-		Option("--full-traceback", action='store_true',
-			   help="Either to make the tracebacks full, not compressed (as by default)"),
-
-		])
-
-	return p
-
-parser = get_opt_parser()
-(opts, regexps) = parser.parse_args()
+(opts, regexps) = getOptParser(__doc__).parse_args()
 
 #
-# Logging
+# Process initialization corresponding options (logging, default options, etc.)
 #
-logSys = getLogger("fail2ban")
-
-# Numerical level of verbosity corresponding to a log "level"
-verbosity = {'heavydebug': 4,
-			 'debug': 3,
-			 'info': 2,
-			 'notice': 2,
-			 'warning': 1,
-			 'error': 1,
-			 'critical': 0,
-			 None: 1}[opts.log_level]
-
-if opts.log_level is not None: # pragma: no cover
-	# so we had explicit settings
-	logSys.setLevel(getattr(logging, opts.log_level.upper()))
-else: # pragma: no cover
-	# suppress the logging but it would leave unittests' progress dots
-	# ticking, unless like with '-l critical' which would be silent
-	# unless error occurs
-	logSys.setLevel(getattr(logging, 'CRITICAL'))
-
-# Add the default logging handler
-stdout = logging.StreamHandler(sys.stdout)
-
-fmt = ' %(message)s'
-
-if opts.log_traceback:
-	Formatter = FormatterWithTraceBack
-	fmt = (opts.full_traceback and ' %(tb)s' or ' %(tbc)s') + fmt
-else:
-	Formatter = logging.Formatter
-
-# Custom log format for the verbose tests runs
-if verbosity > 1: # pragma: no cover
-	stdout.setFormatter(Formatter(' %(asctime)-15s %(thread)s' + fmt))
-else: # pragma: no cover
-	# just prefix with the space
-	stdout.setFormatter(Formatter(fmt))
-logSys.addHandler(stdout)
+opts = initProcess(opts)
+verbosity = opts.verbosity
 
 #
-# Let know the version
+# Gather tests (and filter corresponding options)
 #
-if not opts.log_level or opts.log_level != 'critical': # pragma: no cover
-	print("Fail2ban %s test suite. Python %s. Please wait..." \
-	    % (version, str(sys.version).replace('\n', '')))
+tests = gatherTests(regexps, opts)
 
-tests = gatherTests(regexps, opts.no_network)
 #
 # Run the tests
 #

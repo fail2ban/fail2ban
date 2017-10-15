@@ -26,17 +26,20 @@ __license__ = "GPL"
 
 import logging.handlers
 
-# Custom debug level
+# Custom debug levels
+logging.MSG = logging.INFO - 2
+logging.TRACEDEBUG = 7
 logging.HEAVYDEBUG = 5
+logging.addLevelName(logging.MSG, 'MSG')
+logging.addLevelName(logging.TRACEDEBUG, 'TRACE')
+logging.addLevelName(logging.HEAVYDEBUG, 'HEAVY')
 
 """
 Below derived from:
 	https://mail.python.org/pipermail/tutor/2007-August/056243.html
 """
 
-logging.MSG = logging.INFO - 2
 logging.NOTICE = logging.INFO + 5
-logging.addLevelName(logging.MSG, 'MSG')
 logging.addLevelName(logging.NOTICE, 'NOTICE')
 
 
