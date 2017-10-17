@@ -34,7 +34,14 @@ Incompatibility list (compared to v.0.9):
 ver. 0.10.2-dev-1 (2017/??/??) - development edition
 -----------
 
+### Incompatibility list:
+* The configuration for multiport jails using banaction `pf` can be incompatible after upgrade, if
+  ports are enclosed in curly braces `{ }` in the `jail.local` etc. This may cause a double-brackets now.
+
 ### Fixes
+* action.d/pf.conf: 
+  - fixed syntax error in achnor definition (documentation, see gh-1919);
+  - enclose ports in braces for multiport jails (see gh-1925);
 
 ### New Features
 
