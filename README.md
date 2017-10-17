@@ -2,7 +2,7 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v0.9.7.dev0             2017/??/??
+                       v0.11.0                 2017/??/??
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
@@ -17,9 +17,13 @@ Though Fail2Ban is able to reduce the rate of incorrect authentications
 attempts, it cannot eliminate the risk that weak authentication presents.
 Configure services to use only two factor or public/private authentication
 mechanisms if you really want to protect services.
+     
+<img src="http://www.worldipv6launch.org/wp-content/themes/ipv6/downloads/World_IPv6_launch_logo.svg" height="52pt"/> | Since v0.10 fail2ban supports the matching of the IPv6 addresses.
+------|------
 
 This README is a quick introduction to Fail2ban. More documentation, FAQ, HOWTOs
-are available in fail2ban(1) manpage and on the website http://www.fail2ban.org
+are available in fail2ban(1) manpage, [Wiki](https://github.com/fail2ban/fail2ban/wiki)
+and on the website http://www.fail2ban.org
 
 Installation:
 -------------
@@ -39,8 +43,8 @@ Optional:
 
 To install, just do:
 
-    tar xvfj fail2ban-0.9.7.tar.bz2
-    cd fail2ban-0.9.7
+    tar xvfj fail2ban-0.11.0.tar.bz2
+    cd fail2ban-0.11.0
     python setup.py install
 
 This will install Fail2Ban into the python library directory. The executable
@@ -73,11 +77,11 @@ fail2ban(1) and jail.conf(5)  manpages for further references.
 Code status:
 ------------
 
-* [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=master)](https://travis-ci.org/fail2ban/fail2ban) travis-ci.org (master branch)
+* travis-ci.org: [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=0.11)](https://travis-ci.org/fail2ban/fail2ban?branch=0.11) (0.11 branch) / [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=0.10)](https://travis-ci.org/fail2ban/fail2ban?branch=0.10) (0.10 branch) / [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=master)](https://travis-ci.org/fail2ban/fail2ban) (0.9 branch)
 
-* [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=master)](https://coveralls.io/r/fail2ban/fail2ban)
+* coveralls.io: [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=0.11)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.11) (0.11 branch) / [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=0.10)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.10) / (0.10 branch)
 
-* [![codecov.io](https://codecov.io/github/fail2ban/fail2ban/coverage.svg?branch=master)](https://codecov.io/github/fail2ban/fail2ban?branch=master)
+* codecov.io: [![codecov.io](https://codecov.io/gh/fail2ban/fail2ban/coverage.svg?branch=0.11)](https://codecov.io/gh/fail2ban/fail2ban/branch/0.11) (0.11 branch) / [![codecov.io](https://codecov.io/gh/fail2ban/fail2ban/coverage.svg?branch=0.10)](https://codecov.io/gh/fail2ban/fail2ban/branch/0.10) (0.10 branch)
 
 Contact:
 --------
@@ -86,7 +90,7 @@ Contact:
 See [CONTRIBUTING.md](https://github.com/fail2ban/fail2ban/blob/master/CONTRIBUTING.md)
 
 ### You just appreciate this program:
-send kudos to the original author ([Cyril Jaquier](mailto: Cyril Jaquier <cyril.jaquier@fail2ban.org>))
+send kudos to the original author ([Cyril Jaquier](mailto:cyril.jaquier@fail2ban.org))
 or *better* to the [mailing list](https://lists.sourceforge.net/lists/listinfo/fail2ban-users)
 since Fail2Ban is "community-driven" for years now.
 

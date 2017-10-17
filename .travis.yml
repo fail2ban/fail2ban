@@ -10,6 +10,8 @@ python:
   # - 3.2
   - 3.3
   - 3.4
+  - 3.5
+  - 3.6
   # disabled since setuptools dropped support for Python 3.0 - 3.2
   # - pypy3
   - pypy3.3-5.2-alpha1
@@ -40,8 +42,8 @@ before_script:
 script:
   # Keep the legacy setup.py test approach of checking coverage for python2
   - if [[ "$F2B_PY_2" ]]; then coverage run setup.py test; fi
-  # Coverage doesn't pick up setup.py test with python3, so run it directly
-  - if [[ "$F2B_PY_3" ]]; then coverage run bin/fail2ban-testcases; fi
+  # Coverage doesn't pick up setup.py test with python3, so run it directly (with same verbosity as from setup)
+  - if [[ "$F2B_PY_3" ]]; then coverage run bin/fail2ban-testcases --verbosity=2; fi
   # Use $VENV_BIN (not python) or else sudo will always run the system's python (2.7)
   - sudo $VENV_BIN/pip install .
   # Doc files should get installed on Travis under Linux

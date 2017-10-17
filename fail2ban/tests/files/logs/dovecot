@@ -87,3 +87,16 @@ Jul 26 11:12:19 hostname dovecot: imap-login: Disconnected: Too many invalid com
 
 # failJSON: { "time": "2004-08-28T06:38:51", "match": true , "host": "192.0.2.3" }
 Aug 28 06:38:51 s166-62-100-187 dovecot: imap-login: Disconnected (auth failed, 1 attempts in 9 secs): user=<administrator@example.com>, method=PLAIN, rip=192.0.2.3, lip=192.168.1.2, TLS: Disconnected, TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits)
+
+# ---------------------------------------
+# Test-cases of aggressive mode:
+# ---------------------------------------
+
+# filterOptions: [{"mode": "aggressive"}]
+
+# failJSON: { "time": "2004-08-29T16:06:58", "match": true , "host": "192.0.2.5" }
+Aug 29 16:06:58 s166-62-100-187 dovecot: imap-login: Disconnected (disconnected before auth was ready, waited 0 secs): user=<>, rip=192.0.2.5, lip=192.168.1.2, TLS handshaking: SSL_accept() syscall failed: Connection reset by peer
+# failJSON: { "time": "2004-08-31T16:15:10", "match": true , "host": "192.0.2.6" }
+Aug 31 16:15:10 s166-62-100-187 dovecot: imap-login: Disconnected (client didn't finish SASL auth, waited 2 secs): user=<>, method=PLAIN, rip=192.0.2.6, lip=192.168.1.2, TLS: SSL_read() syscall failed: Connection reset by peer, TLSv1.2 with cipher DHE-RSA-AES256-GCM-SHA384 (256/256 bits)
+# failJSON: { "time": "2004-08-31T16:21:53", "match": true , "host": "192.0.2.7" }
+Aug 31 16:21:53 s166-62-100-187 dovecot: imap-login: Disconnected (no auth attempts in 4 secs): user=<>, rip=192.0.2.7, lip=192.168.1.2, TLS handshaking: SSL_accept() syscall failed: Connection reset by peer

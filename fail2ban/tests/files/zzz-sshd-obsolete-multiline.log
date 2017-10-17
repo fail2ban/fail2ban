@@ -1,0 +1,4 @@
+Apr 27 13:02:01 host sshd[29116]: Connection from 192.0.2.4 port 55555
+Apr 27 13:02:02 host sshd[29116]: User root not allowed because account is locked
+Apr 27 13:02:03 host sshd[29116]: input_userauth_request: invalid user root [preauth]
+Apr 27 13:02:04 host sshd[29116]: Received disconnect from 192.0.2.4: 11: Normal Shutdown, Thank you for playing [preauth]

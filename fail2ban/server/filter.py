@@ -22,22 +22,25 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import codecs
+import datetime
 import fcntl
-import locale
 import logging
 import os
 import re
 import sys
+import time
 
 from .failmanager import FailManagerEmpty, FailManager
+from .ipdns import DNSUtils, IPAddr
+from .observer import Observers
 from .ticket import FailTicket
 from .jailthread import JailThread
-from .datedetector import DateDetector
-from .datetemplate import DatePatternRegex, DateEpoch, DateTai64n
+from .datedetector import DateDetector, validateTimeZone
 from .mytime import MyTime
 from .failregex import FailRegex, Regex, RegexException
 from .action import CommandAction
-from ..helpers import getLogger
+from .utils import Utils
+from ..helpers import getLogger, PREFER_ENC
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -64,6 +67,8 @@ class Filter(JailThread):
 		self.jail = jail
 		## The failures manager.
 		self.failManager = FailManager()
+		## Regular expression pre-filtering matching the failures.
+		self.__prefRegex = None
 		## The regular expression list matching the failures.
 		self.__failRegex = list()
 		## The regular expression list with expressions to ignore.
@@ -72,6 +77,8 @@ class Filter(JailThread):
 		self.setUseDns(useDns)
 		## The amount of time to look back.
 		self.__findTime = 600
+		## Ignore own IPs flag:
+		self.__ignoreSelf = True
 		## The ignore IP list.
 		self.__ignoreIpList = []
 		## Size of line buffer
@@ -81,17 +88,73 @@ class Filter(JailThread):
 		## Store last time stamp, applicable for multi-line
 		self.__lastTimeText = ""
 		self.__lastDate = None
+		## if set, treat log lines without explicit time zone to be in this time zone
+		self.__logtimezone = None
 		## External command
 		self.__ignoreCommand = False
 		## Default or preferred encoding (to decode bytes from file or journal):
-		self.__encoding = locale.getpreferredencoding()
+		self.__encoding = PREFER_ENC
+		## Cache temporary holds failures info (used by multi-line for wrapping e. g. conn-id to host):
+		self.__mlfidCache = None
+		## Error counter (protected, so can be used in filter implementations)
+		## if it reached 100 (at once), run-cycle will go idle
+		self._errors = 0
+		## return raw host (host is not dns):
+		self.returnRawHost = False
+		## check each regex (used for test purposes):
+		self.checkAllRegex = False
+		## if true ignores obsolete failures (failure time < now - findTime):
+		self.checkFindTime = True
+		## Ticks counter
+		self.ticks = 0
 
 		self.dateDetector = DateDetector()
-		self.dateDetector.addDefaultTemplate()
-		logSys.debug("Created %s" % self)
+		logSys.debug("Created %s", self)
 
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__.__name__, self.jail)
+
+	@property
+	def jailName(self):
+		return (self.jail is not None and self.jail.name or "~jailless~")
+
+	def clearAllParams(self):
+		""" Clear all lists/dicts parameters (used by reloading)
+		"""
+		self.delFailRegex()
+		self.delIgnoreRegex()
+		self.delIgnoreIP()
+
+	def reload(self, begin=True):
+		""" Begin or end of reloading resp. refreshing of all parameters
+		"""
+		if begin:
+			self.clearAllParams()
+			if hasattr(self, 'getLogPaths'):
+				self._reload_logs = dict((k, 1) for k in self.getLogPaths())
+		else:
+			if hasattr(self, '_reload_logs'):
+				# if it was not reloaded - remove obsolete log file:
+				for path in self._reload_logs:
+					self.delLogPath(path)
+				delattr(self, '_reload_logs')
+
+	@property
+	def mlfidCache(self):
+		if self.__mlfidCache:
+			return self.__mlfidCache
+		self.__mlfidCache = Utils.Cache(maxCount=100, maxTime=5*60)
+		return self.__mlfidCache
+
+	@property
+	def prefRegex(self):
+		return self.__prefRegex
+	@prefRegex.setter
+	def prefRegex(self, value):
+		if value:
+			self.__prefRegex = Regex(value, useDns=self.__useDns)
+		else:
+			self.__prefRegex = None
 
 	##
 	# Add a regular expression which matches the failure.
@@ -101,34 +164,34 @@ class Filter(JailThread):
 	# @param value the regular expression
 
 	def addFailRegex(self, value):
+		multiLine = self.getMaxLines() > 1
 		try:
-			regex = FailRegex(value)
+			regex = FailRegex(value, prefRegex=self.__prefRegex, multiline=multiLine,
+				useDns=self.__useDns)
 			self.__failRegex.append(regex)
-			if "\n" in regex.getRegex() and not self.getMaxLines() > 1:
-				logSys.warning(
-					"Mutliline regex set for jail '%s' "
-					"but maxlines not greater than 1")
 		except RegexException as e:
 			logSys.error(e)
 			raise e
 
-	def delFailRegex(self, index):
+	def delFailRegex(self, index=None):
 		try:
+			# clear all:
+			if index is None:
+				del self.__failRegex[:]
+				return
+			# delete by index:
 			del self.__failRegex[index]
 		except IndexError:
 			logSys.error("Cannot remove regular expression. Index %d is not "
-						 "valid" % index)
+						 "valid", index)
 
 	##
-	# Get the regular expression which matches the failure.
+	# Get the regular expressions as list.
 	#
-	# @return the regular expression
+	# @return the regular expression list
 
 	def getFailRegex(self):
-		failRegex = list()
-		for regex in self.__failRegex:
-			failRegex.append(regex.getRegex())
-		return failRegex
+		return [regex.getRegex() for regex in self.__failRegex]
 
 	##
 	# Add the regular expression which matches the failure.
@@ -139,18 +202,23 @@ class Filter(JailThread):
 
 	def addIgnoreRegex(self, value):
 		try:
-			regex = Regex(value)
+			regex = Regex(value, useDns=self.__useDns)
 			self.__ignoreRegex.append(regex)
 		except RegexException as e:
 			logSys.error(e)
 			raise e 
 
-	def delIgnoreRegex(self, index):
+	def delIgnoreRegex(self, index=None):
 		try:
+			# clear all:
+			if index is None:
+				del self.__ignoreRegex[:]
+				return
+			# delete by index:
 			del self.__ignoreRegex[index]
 		except IndexError:
 			logSys.error("Cannot remove regular expression. Index %d is not "
-						 "valid" % index)
+						 "valid", index)
 
 	##
 	# Get the regular expression which matches the failure.
@@ -173,9 +241,9 @@ class Filter(JailThread):
 		value = value.lower()			  # must be a string by now
 		if not (value in ('yes', 'warn', 'no', 'raw')):
 			logSys.error("Incorrect value %r specified for usedns. "
-						 "Using safe 'no'" % (value,))
+						 "Using safe 'no'", value)
 			value = 'no'
-		logSys.debug("Setting usedns = %s for %s" % (value, self))
+		logSys.debug("Setting usedns = %s for %s", value, self)
 		self.__useDns = value
 
 	##
@@ -193,9 +261,10 @@ class Filter(JailThread):
 	# @param value the time
 
 	def setFindTime(self, value):
+		value = MyTime.str2seconds(value)
 		self.__findTime = value
 		self.failManager.setMaxTime(value)
-		logSys.info("Set findtime = %s" % value)
+		logSys.info("  findtime: %s", value)
 
 	##
 	# Get the time needed to find a failure.
@@ -214,20 +283,14 @@ class Filter(JailThread):
 		if pattern is None:
 			self.dateDetector = None
 			return
-		elif pattern.upper() == "EPOCH":
-			template = DateEpoch()
-			template.name = "Epoch"
-		elif pattern.upper() == "TAI64N":
-			template = DateTai64n()
-			template.name = "TAI64N"
 		else:
-			template = DatePatternRegex(pattern)
-		self.dateDetector = DateDetector()
-		self.dateDetector.appendTemplate(template)
-		logSys.info("Date pattern set to `%r`: `%s`" %
-			(pattern, template.name))
-		logSys.debug("Date pattern regex for %r: %s" %
-			(pattern, template.regex))
+			dd = DateDetector()
+			dd.default_tz = self.__logtimezone
+			if not isinstance(pattern, (list, tuple)):
+				pattern = filter(bool, map(str.strip, re.split('\n+', pattern)))
+			for pattern in pattern:
+				dd.appendTemplate(pattern)
+			self.dateDetector = dd
 
 	##
 	# Get the date detector pattern, or Default Detectors if not changed
@@ -237,14 +300,34 @@ class Filter(JailThread):
 	def getDatePattern(self):
 		if self.dateDetector is not None:
 			templates = self.dateDetector.templates
-			if len(templates) > 1:
+			# lazy template init, by first match
+			if not len(templates) or len(templates) > 2:
 				return None, "Default Detectors"
-			elif len(templates) == 1:
+			elif len(templates):
 				if hasattr(templates[0], "pattern"):
 					pattern =  templates[0].pattern
 				else:
 					pattern = None
 				return pattern, templates[0].name
+		return None
+
+	##
+	# Set the log default time zone
+	#
+	# @param tz the symbolic timezone (for now fixed offset only: UTC[+-]HHMM)
+
+	def setLogTimeZone(self, tz):
+		validateTimeZone(tz); # avoid setting of wrong value, but hold original
+		self.__logtimezone = tz
+		if self.dateDetector: self.dateDetector.default_tz = self.__logtimezone
+
+	##
+	# Get the log default timezone
+	#
+	# @return symbolic timezone (a string)
+
+	def getLogTimeZone(self):
+		return self.__logtimezone
 
 	##
 	# Set the maximum retry value.
@@ -253,7 +336,7 @@ class Filter(JailThread):
 
 	def setMaxRetry(self, value):
 		self.failManager.setMaxRetry(value)
-		logSys.info("Set maxRetry = %s" % value)
+		logSys.info("  maxRetry: %s", value)
 
 	##
 	# Get the maximum retry value.
@@ -272,7 +355,7 @@ class Filter(JailThread):
 		if int(value) <= 0:
 			raise ValueError("maxlines must be integer greater than zero")
 		self.__lineBufferSize = int(value)
-		logSys.info("Set maxlines = %i" % self.__lineBufferSize)
+		logSys.info("  maxLines: %i", self.__lineBufferSize)
 
 	##
 	# Get the maximum line buffer size.
@@ -289,10 +372,10 @@ class Filter(JailThread):
 
 	def setLogEncoding(self, encoding):
 		if encoding.lower() == "auto":
-			encoding = locale.getpreferredencoding()
+			encoding = PREFER_ENC
 		codecs.lookup(encoding) # Raise LookupError if invalid codec
 		self.__encoding = encoding
-		logSys.info("Set jail log file encoding to %s" % encoding)
+		logSys.info("  encoding: %s", encoding)
 		return encoding
 
 	##
@@ -334,22 +417,34 @@ class Filter(JailThread):
 	# to enable banip fail2ban-client BAN command
 
 	def addBannedIP(self, ip):
+		if not isinstance(ip, IPAddr):
+			ip = IPAddr(ip)
 		if self.inIgnoreIPList(ip):
-			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.' % ip)
+			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.', ip)
 
 		unixTime = MyTime.time()
-		for i in xrange(self.failManager.getMaxRetry()):
-			self.failManager.addFailure(FailTicket(ip, unixTime))
+		self.failManager.addFailure(FailTicket(ip, unixTime), self.failManager.getMaxRetry())
 
 		# Perform the banning of the IP now.
 		try: # pragma: no branch - exception is the only way out
 			while True:
-				ticket = self.failManager.toBan()
+				ticket = self.failManager.toBan(ip)
 				self.jail.putFailTicket(ticket)
 		except FailManagerEmpty:
 			self.failManager.cleanup(MyTime.time())
 
 		return ip
+
+	##
+	# Ignore own IP/DNS.
+	#
+	@property
+	def ignoreSelf(self):
+		return self.__ignoreSelf
+
+	@ignoreSelf.setter
+	def ignoreSelf(self, value):
+		self.__ignoreSelf = value
 
 	##
 	# Add an IP/DNS to the ignore list.
@@ -358,17 +453,32 @@ class Filter(JailThread):
 	# when finding failures. CIDR mask and DNS are also accepted.
 	# @param ip IP address to ignore
 
-	def addIgnoreIP(self, ip):
-		logSys.debug("Add " + ip + " to ignore list")
+	def addIgnoreIP(self, ipstr):
+		# An empty string is always false
+		if ipstr == "":
+			return
+		# Create IP address object
+		ip = IPAddr(ipstr)
+		# Avoid exact duplicates
+		if ip in self.__ignoreIpList:
+			logSys.warn("  Ignore duplicate %r (%r), already in ignore list", ip, ipstr)
+			return
+		# log and append to ignore list
+		logSys.debug("  Add %r to ignore list (%r)", ip, ipstr)
 		self.__ignoreIpList.append(ip)
 
-	def delIgnoreIP(self, ip):
-		logSys.debug("Remove " + ip + " from ignore list")
+	def delIgnoreIP(self, ip=None):
+		# clear all:
+		if ip is None:
+			del self.__ignoreIpList[:]
+			return
+		# delete by ip:
+		logSys.debug("  Remove %r from ignore list", ip)
 		self.__ignoreIpList.remove(ip)
 
 	def logIgnoreIp(self, ip, log_ignore, ignore_source="unknown source"):
 		if log_ignore:
-			logSys.info("[%s] Ignore %s by %s" % (self.jail.name, ip, ignore_source))
+			logSys.info("[%s] Ignore %s by %s", self.jailName, ip, ignore_source)
 
 	def getIgnoreIP(self):
 		return self.__ignoreIpList
@@ -378,71 +488,34 @@ class Filter(JailThread):
 	#
 	# Check if the given IP address matches an IP address/DNS or a CIDR
 	# mask in the ignore list.
-	# @param ip IP address
+	# @param ip IP address object
 	# @return True if IP address is in ignore list
 
 	def inIgnoreIPList(self, ip, log_ignore=False):
-		for i in self.__ignoreIpList:
-			# An empty string is always false
-			if i == "":
-				continue
-			s = i.split('/', 1)
-			# IP address without CIDR mask
-			if len(s) == 1:
-				s.insert(1, '32')
-			elif "." in s[1]: # 255.255.255.0 style mask
-				s[1] = len(re.search(
-					"(?<=b)1+", bin(DNSUtils.addr2bin(s[1]))).group())
-			s[1] = long(s[1])
-			try:
-				a = DNSUtils.addr2bin(s[0], cidr=s[1])
-				b = DNSUtils.addr2bin(ip, cidr=s[1])
-			except Exception:
-				# Check if IP in DNS
-				ips = DNSUtils.dnsToIp(i)
-				if ip in ips:
-					self.logIgnoreIp(ip, log_ignore, ignore_source="dns")
-					return True
-				else:
-					continue
-			if a == b:
-				self.logIgnoreIp(ip, log_ignore, ignore_source="ip")
+		if not isinstance(ip, IPAddr):
+			ip = IPAddr(ip)
+
+		# check own IPs should be ignored and 'ip' is self IP:
+		if self.__ignoreSelf and ip in DNSUtils.getSelfIPs():
+			return True
+
+		for net in self.__ignoreIpList:
+			# check if the IP is covered by ignore IP
+			if ip.isInNet(net):
+				self.logIgnoreIp(ip, log_ignore, ignore_source=("ip" if net.isValid else "dns"))
 				return True
 
 		if self.__ignoreCommand:
 			command = CommandAction.replaceTag(self.__ignoreCommand, { 'ip': ip } )
-			logSys.debug('ignore command: ' + command)
-			ret_ignore = CommandAction.executeCmd(command)
+			logSys.debug('ignore command: %s', command)
+			ret, ret_ignore = CommandAction.executeCmd(command, success_codes=(0, 1))
+			ret_ignore = ret and ret_ignore == 0
 			self.logIgnoreIp(ip, log_ignore and ret_ignore, ignore_source="command")
 			return ret_ignore
 
 		return False
 
-	if sys.version_info >= (3,):
-		@staticmethod
-		def uni_decode(x, enc, errors='strict'):
-			try:
-				if isinstance(x, bytes):
-					return x.decode(enc, errors)
-				return x
-			except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
-				if errors != 'strict': 
-					raise
-				return uni_decode(x, enc, 'replace')
-	else:
-		@staticmethod
-		def uni_decode(x, enc, errors='strict'):
-			try:
-				if isinstance(x, unicode):
-					return x.encode(enc, errors)
-				return x
-			except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
-				if errors != 'strict':
-					raise
-				return uni_decode(x, enc, 'replace')
-
-	def processLine(self, line, date=None, returnRawHost=False,
-		checkAllRegex=False, checkFindTime=False):
+	def processLine(self, line, date=None):
 		"""Split the time portion from log msg and return findFailures on them
 		"""
 		if date:
@@ -451,32 +524,59 @@ class Filter(JailThread):
 			l = line.rstrip('\r\n')
 			logSys.log(7, "Working on line %r", line)
 
-			timeMatch = self.dateDetector.matchTime(l)
+			(timeMatch, template) = self.dateDetector.matchTime(l)
 			if timeMatch:
 				tupleLine  = (
-					l[:timeMatch.start()],
-					l[timeMatch.start():timeMatch.end()],
-					l[timeMatch.end():])
+					l[:timeMatch.start(1)],
+					l[timeMatch.start(1):timeMatch.end(1)],
+					l[timeMatch.end(1):],
+					(timeMatch, template)
+				)
 			else:
-				tupleLine = (l, "", "")
+				tupleLine = (l, "", "", None)
 
-		return "".join(tupleLine[::2]), self.findFailure(
-			tupleLine, date, returnRawHost, checkAllRegex, checkFindTime)
+		# save last line (lazy convert of process line tuple to string on demand):
+		self.processedLine = lambda: "".join(tupleLine[::2])
+		return self.findFailure(tupleLine, date)
 
 	def processLineAndAdd(self, line, date=None):
 		"""Processes the line for failures and populates failManager
 		"""
-		for element in self.processLine(line, date, checkFindTime=True)[1]:
-			ip = element[1]
-			unixTime = element[2]
-			lines = element[3]
-			logSys.debug("Processing line with time:%s and ip:%s"
-						 % (unixTime, ip))
-			if self.inIgnoreIPList(ip, log_ignore=True):
-				continue
-			logSys.info("[%s] Found %s" % (self.jail.name, ip))
-			## print "D: Adding a ticket for %s" % ((ip, unixTime, [line]),)
-			self.failManager.addFailure(FailTicket(ip, unixTime, lines))
+		try:
+			for element in self.processLine(line, date):
+				ip = element[1]
+				unixTime = element[2]
+				fail = element[3]
+				logSys.debug("Processing line with time:%s and ip:%s", 
+						unixTime, ip)
+				if self.inIgnoreIPList(ip, log_ignore=True):
+					continue
+				logSys.info(
+					"[%s] Found %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
+				)
+				tick = FailTicket(ip, unixTime, data=fail)
+				self.failManager.addFailure(tick)
+				# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
+				if Observers.Main is not None:
+					Observers.Main.add('failureFound', self.failManager, self.jail, tick)
+			# reset (halve) error counter (successfully processed line):
+			if self._errors:
+				self._errors //= 2
+		except Exception as e:
+			logSys.error("Failed to process line: %r, caught exception: %r", line, e,
+				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+			# incr common error counter:
+			self.commonError()
+
+	def commonError(self):
+		# incr error counter, stop processing (going idle) after 100th error :
+		self._errors += 1
+		# sleep a little bit (to get around time-related errors):
+		time.sleep(self.sleeptime)
+		if self._errors >= 100:
+			logSys.error("Too many errors at once (%s), going idle", self._errors)
+			self._errors //= 2
+			self.idle = True
 
 	##
 	# Returns true if the line should be ignored.
@@ -492,6 +592,34 @@ class Filter(JailThread):
 				return ignoreRegexIndex
 		return None
 
+	def _mergeFailure(self, mlfid, fail, failRegex):
+		mlfidFail = self.mlfidCache.get(mlfid) if self.__mlfidCache else None
+		# if multi-line failure id (connection id) known:
+		if mlfidFail:
+			mlfidGroups = mlfidFail[1]
+			# update - if not forget (disconnect/reset):
+			if not fail.get('mlfforget'):
+				mlfidGroups.update(fail)
+			else:
+				self.mlfidCache.unset(mlfid) # remove cached entry
+			# merge with previous info:
+			fail2 = mlfidGroups.copy()
+			fail2.update(fail)
+			if not fail.get('nofail'): # be sure we've correct current state
+				try:
+					del fail2['nofail']
+				except KeyError:
+					pass
+			fail2["matches"] = fail.get("matches", []) + failRegex.getMatchedTupleLines()
+			fail = fail2
+		elif not fail.get('mlfforget'):
+			mlfidFail = [self.__lastDate, fail]
+			self.mlfidCache.set(mlfid, mlfidFail)
+			if fail.get('nofail'):
+				fail["matches"] = failRegex.getMatchedTupleLines()
+		return fail
+
+
 	##
 	# Finds the failure in a line given split into time and log parts.
 	#
@@ -499,11 +627,16 @@ class Filter(JailThread):
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, tupleLine, date=None, returnRawHost=False,
-		checkAllRegex=False, checkFindTime=False):
+	def findFailure(self, tupleLine, date=None):
 		failList = list()
 
-		# Checks if we must ignore this line.
+		returnRawHost = self.returnRawHost
+		cidr = IPAddr.CIDR_UNSPEC
+		if self.__useDns == "raw":
+			returnRawHost = True
+			cidr = IPAddr.CIDR_RAW
+
+		# Checks if we mut ignore this line.
 		if self.ignoreLine([tupleLine[::2]]) is not None:
 			# The ignoreregex matched. Return.
 			logSys.log(7, "Matched ignoreregex and was \"%s\" ignored",
@@ -516,10 +649,10 @@ class Filter(JailThread):
 			self.__lastDate = date
 		elif timeText:
 
-			dateTimeMatch = self.dateDetector.getTime(timeText)
+			dateTimeMatch = self.dateDetector.getTime(timeText, tupleLine[3])
 
 			if dateTimeMatch is None:
-				logSys.error("findFailure failed to parse timeText: " + timeText)
+				logSys.error("findFailure failed to parse timeText: %s", timeText)
 				date = self.__lastDate
 
 			else:
@@ -532,60 +665,131 @@ class Filter(JailThread):
 			timeText = self.__lastTimeText or "".join(tupleLine[::2])
 			date = self.__lastDate
 
-		if checkFindTime and date is not None and date < MyTime.time() - self.getFindTime():
+		if self.checkFindTime and date is not None and date < MyTime.time() - self.getFindTime():
 			logSys.log(5, "Ignore line since time %s < %s - %s", 
 				date, MyTime.time(), self.getFindTime())
 			return failList
 
-		self.__lineBuffer = (
-			self.__lineBuffer + [tupleLine])[-self.__lineBufferSize:]
-		logSys.log(5, "Looking for failregex match of %r" % self.__lineBuffer)
+		if self.__lineBufferSize > 1:
+			orgBuffer = self.__lineBuffer = (
+				self.__lineBuffer + [tupleLine[:3]])[-self.__lineBufferSize:]
+		else:
+			orgBuffer = self.__lineBuffer = [tupleLine[:3]]
+		logSys.log(5, "Looking for match of %r", self.__lineBuffer)
+
+		# Pre-filter fail regex (if available):
+		preGroups = {}
+		if self.__prefRegex:
+			if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG: # pragma: no cover
+				logSys.log(5, "  Looking for prefregex %r", self.__prefRegex.getRegex())
+			self.__prefRegex.search(self.__lineBuffer)
+			if not self.__prefRegex.hasMatched():
+				logSys.log(5, "  Prefregex not matched")
+				return failList
+			preGroups = self.__prefRegex.getGroups()
+			logSys.log(7, "  Pre-filter matched %s", preGroups)
+			repl = preGroups.get('content')
+			# Content replacement:
+			if repl:
+				del preGroups['content']
+				self.__lineBuffer = [('', '', repl)]
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
-			failRegex.search(self.__lineBuffer)
-			if failRegex.hasMatched():
-				# The failregex matched.
-				logSys.log(7, "Matched %s", failRegex)
-				# Checks if we must ignore this match.
-				if self.ignoreLine(failRegex.getMatchedTupleLines()) \
-						is not None:
-					# The ignoreregex matched. Remove ignored match.
-					self.__lineBuffer = failRegex.getUnmatchedTupleLines()
-					logSys.log(7, "Matched ignoreregex and was ignored")
-					if not checkAllRegex:
-						break
-					else:
-						continue
-				if date is None:
-					logSys.warning(
-						"Found a match for %r but no valid date/time "
-						"found for %r. Please try setting a custom "
-						"date pattern (see man page jail.conf(5)). "
-						"If format is complex, please "
-						"file a detailed issue on"
-						" https://github.com/fail2ban/fail2ban/issues "
-						"in order to get support for this format."
-						 % ("\n".join(failRegex.getMatchedLines()), timeText))
+			if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG: # pragma: no cover
+				logSys.log(5, "  Looking for failregex %r", failRegex.getRegex())
+			failRegex.search(self.__lineBuffer, orgBuffer)
+			if not failRegex.hasMatched():
+				continue
+			# The failregex matched.
+			logSys.log(7, "  Matched %s", failRegex)
+			# Checks if we must ignore this match.
+			if self.ignoreLine(failRegex.getMatchedTupleLines()) \
+					is not None:
+				# The ignoreregex matched. Remove ignored match.
+				self.__lineBuffer = failRegex.getUnmatchedTupleLines()
+				logSys.log(7, "  Matched ignoreregex and was ignored")
+				if not self.checkAllRegex:
+					break
 				else:
-					self.__lineBuffer = failRegex.getUnmatchedTupleLines()
-					try:
-						host = failRegex.getHost()
-						if returnRawHost or self.__useDns == "raw":
-							failList.append([failRegexIndex, host, date,
-								 failRegex.getMatchedLines()])
-							if not checkAllRegex:
-								break
-						else:
-							ipMatch = DNSUtils.textToIp(host, self.__useDns)
-							if ipMatch:
-								for ip in ipMatch:
-									failList.append([failRegexIndex, ip, date,
-										 failRegex.getMatchedLines()])
-								if not checkAllRegex:
-									break
-					except RegexException as e: # pragma: no cover - unsure if reachable
-						logSys.error(e)
+					continue
+			if date is None:
+				logSys.warning(
+					"Found a match for %r but no valid date/time "
+					"found for %r. Please try setting a custom "
+					"date pattern (see man page jail.conf(5)). "
+					"If format is complex, please "
+					"file a detailed issue on"
+					" https://github.com/fail2ban/fail2ban/issues "
+					"in order to get support for this format.",
+					 "\n".join(failRegex.getMatchedLines()), timeText)
+				continue
+			self.__lineBuffer = failRegex.getUnmatchedTupleLines()
+			# retrieve failure-id, host, etc from failure match:
+			try:
+				raw = returnRawHost
+				if preGroups:
+					fail = preGroups.copy()
+					fail.update(failRegex.getGroups())
+				else:
+					fail = failRegex.getGroups()
+				# first try to check we have mlfid case (caching of connection id by multi-line):
+				mlfid = fail.get('mlfid')
+				if mlfid is not None:
+					fail = self._mergeFailure(mlfid, fail, failRegex)
+					# bypass if no-failure case:
+					if fail.get('nofail'):
+						logSys.log(7, "Nofail by mlfid %r in regex %s: %s",
+							mlfid, failRegexIndex, fail.get('mlfforget', "waiting for failure"))
+						if not self.checkAllRegex: return failList
+				else:
+					# matched lines:
+					fail["matches"] = fail.get("matches", []) + failRegex.getMatchedTupleLines()
+				# failure-id:
+				fid = fail.get('fid')
+				# ip-address or host:
+				host = fail.get('ip4')
+				if host is not None:
+					cidr = IPAddr.FAM_IPv4
+					raw = True
+				else:
+					host = fail.get('ip6')
+					if host is not None:
+						cidr = IPAddr.FAM_IPv6
+						raw = True
+				if host is None:
+					host = fail.get('dns')
+					if host is None:
+						# first try to check we have mlfid case (cache connection id):
+						if fid is None and mlfid is None:
+								# if no failure-id also (obscure case, wrong regex), throw error inside getFailID:
+								fid = failRegex.getFailID()
+						host = fid
+						cidr = IPAddr.CIDR_RAW
+				# if mlfid case (not failure):
+				if host is None:
+					logSys.log(7, "No failure-id by mlfid %r in regex %s: %s",
+						mlfid, failRegexIndex, fail.get('mlfforget', "waiting for identifier"))
+					if not self.checkAllRegex: return failList
+					ips = [None]
+				# if raw - add single ip or failure-id,
+				# otherwise expand host to multiple ips using dns (or ignore it if not valid):
+				elif raw:
+					ip = IPAddr(host, cidr)
+					# check host equal failure-id, if not - failure with complex id:
+					if fid is not None and fid != host:
+						ip = IPAddr(fid, IPAddr.CIDR_RAW)
+					ips = [ip]
+				# otherwise, try to use dns conversion:
+				else:
+					ips = DNSUtils.textToIp(host, self.__useDns)
+				# append failure with match to the list:
+				for ip in ips:
+					failList.append([failRegexIndex, ip, date, fail])
+				if not self.checkAllRegex:
+					break
+			except RegexException as e: # pragma: no cover - unsure if reachable
+				logSys.error(e)
 		return failList
 
 	def status(self, flavor="basic"):
@@ -602,15 +806,19 @@ class FileFilter(Filter):
 		Filter.__init__(self, jail, **kwargs)
 		## The log file path.
 		self.__logs = dict()
+		self.__autoSeek = dict()
 
 	##
 	# Add a log file path
 	#
 	# @param path log file path
 
-	def addLogPath(self, path, tail=False):
+	def addLogPath(self, path, tail=False, autoSeek=True):
 		if path in self.__logs:
-			logSys.error(path + " already exists")
+			if hasattr(self, '_reload_logs') and path in self._reload_logs:
+				del self._reload_logs[path]
+			else:
+				logSys.error(path + " already exists")
 		else:
 			log = FileContainer(path, self.getLogEncoding(), tail)
 			db = self.jail.database
@@ -619,7 +827,12 @@ class FileFilter(Filter):
 				if lastpos and not tail:
 					log.setPos(lastpos)
 			self.__logs[path] = log
-			logSys.info("Added logfile = %s" % path)
+			logSys.info("Added logfile: %r (pos = %s, hash = %s)" , path, log.getPos(), log.getHash())
+			if autoSeek:
+				# if default, seek to "current time" - "find time":
+				if isinstance(autoSeek, bool):
+					autoSeek = MyTime.time() - self.getFindTime()
+				self.__autoSeek[path] = autoSeek
 			self._addLogPath(path)			# backend specific
 
 	def _addLogPath(self, path):
@@ -640,7 +853,7 @@ class FileFilter(Filter):
 		db = self.jail.database
 		if db is not None:
 			db.updateLog(self.jail, log)
-		logSys.info("Removed logfile = %s" % path)
+		logSys.info("Removed logfile: %r", path)
 		self._delLogPath(path)
 		return
 
@@ -650,12 +863,28 @@ class FileFilter(Filter):
 		pass
 
 	##
+	# Get the log file names
+	#
+	# @return log paths
+
+	def getLogPaths(self):
+		return self.__logs.keys()
+
+	##
 	# Get the log containers
 	#
 	# @return log containers
 
 	def getLogs(self):
 		return self.__logs.values()
+
+	##
+	# Get the count of log containers
+	#
+	# @return count of log containers
+
+	def getLogCount(self):
+		return len(self.__logs)
 
 	##
 	# Check whether path is already monitored.
@@ -689,42 +918,145 @@ class FileFilter(Filter):
 	def getFailures(self, filename):
 		log = self.getLog(filename)
 		if log is None:
-			logSys.error("Unable to get failures in " + filename)
+			logSys.error("Unable to get failures in %s", filename)
 			return False
-		# Try to open log file.
+		# We should always close log (file), otherwise may be locked (log-rotate, etc.)
 		try:
-			has_content = log.open()
-		# see http://python.org/dev/peps/pep-3151/
-		except IOError as e:
-			logSys.error("Unable to open %s" % filename)
-			logSys.exception(e)
-			return False
-		except OSError as e: # pragma: no cover - requires race condition to tigger this
-			logSys.error("Error opening %s" % filename)
-			logSys.exception(e)
-			return False
-		except Exception as e: # pragma: no cover - Requires implemention error in FileContainer to generate
-			logSys.error("Internal errror in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
-			logSys.exception(e)
-			return False
+			# Try to open log file.
+			try:
+				has_content = log.open()
+			# see http://python.org/dev/peps/pep-3151/
+			except IOError as e:
+				logSys.error("Unable to open %s", filename)
+				if e.errno != 2: # errno.ENOENT
+					logSys.exception(e)
+				return False
+			except OSError as e: # pragma: no cover - requires race condition to tigger this
+				logSys.error("Error opening %s", filename)
+				logSys.exception(e)
+				return False
+			except Exception as e: # pragma: no cover - Requires implemention error in FileContainer to generate
+				logSys.error("Internal error in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
+				logSys.exception(e)
+				return False
 
-		# yoh: has_content is just a bool, so do not expect it to
-		# change -- loop is exited upon break, and is not entered at
-		# all if upon container opening that one was empty.  If we
-		# start reading tested to be empty container -- race condition
-		# might occur leading at least to tests failures.
-		while has_content:
-			line = log.readline()
-			if not line or not self.active:
-				# The jail reached the bottom or has been stopped
-				break
-			self.processLineAndAdd(line)
-		log.close()
+			# seek to find time for first usage only (prevent performance decline with polling of big files)
+			if self.__autoSeek.get(filename):
+				startTime = self.__autoSeek[filename]
+				del self.__autoSeek[filename]
+				# prevent completely read of big files first time (after start of service), 
+				# initial seek to start time using half-interval search algorithm:
+				try:
+					self.seekToTime(log, startTime)
+				except Exception as e: # pragma: no cover
+					logSys.error("Error during seek to start time in \"%s\"", filename)
+					raise
+					logSys.exception(e)
+					return False
+
+			if has_content:
+				while not self.idle:
+					line = log.readline()
+					if not line or not self.active:
+						# The jail reached the bottom or has been stopped
+						break
+					self.processLineAndAdd(line)
+		finally:
+			log.close()
 		db = self.jail.database
 		if db is not None:
 			db.updateLog(self.jail, log)
 		return True
 
+	##
+	# Seeks to line with date (search using half-interval search algorithm), to start polling from it
+	#
+
+	def seekToTime(self, container, date, accuracy=3):
+		fs = container.getFileSize()
+		if logSys.getEffectiveLevel() <= logging.DEBUG:
+			logSys.debug("Seek to find time %s (%s), file size %s", date, 
+				datetime.datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S"), fs)
+		minp = container.getPos()
+		maxp = fs
+		tryPos = minp
+		lastPos = -1
+		foundPos = 0
+		foundTime = None
+		cntr = 0
+		unixTime = None
+		movecntr = accuracy
+		while maxp > minp:
+			if tryPos is None:
+				pos = int(minp + (maxp - minp) / 2)
+			else:
+				pos, tryPos = tryPos, None
+			# because container seek will go to start of next line (minus CRLF):
+			pos = max(0, pos-2)
+			seekpos = pos = container.seek(pos)
+			cntr += 1
+			# within next 5 lines try to find any legal datetime:
+			lncntr = 5;
+			dateTimeMatch = None
+			nextp = None
+			while True:
+				line = container.readline()
+				if not line:
+					break
+				(timeMatch, template) = self.dateDetector.matchTime(line)
+				if timeMatch:
+					dateTimeMatch = self.dateDetector.getTime(
+						line[timeMatch.start():timeMatch.end()],
+						(timeMatch, template))
+				else:
+					nextp = container.tell()
+					if nextp > maxp:
+						pos = seekpos
+						break
+					pos = nextp
+				if not dateTimeMatch and lncntr:
+					lncntr -= 1
+					continue
+				break
+		 	# not found at this step - stop searching
+			if dateTimeMatch:
+				unixTime = dateTimeMatch[0]
+				if unixTime >= date:
+					if foundTime is None or unixTime <= foundTime:
+						foundPos = pos
+						foundTime = unixTime
+					if pos == maxp:
+						pos = seekpos
+					if pos < maxp:
+						maxp = pos
+				else:
+					if foundTime is None or unixTime >= foundTime:
+						foundPos = pos
+						foundTime = unixTime
+					if nextp is None:
+						nextp = container.tell()
+					pos = nextp
+					if pos > minp:
+						minp = pos
+			# if we can't move (position not changed)
+			if pos == lastPos:
+				movecntr -= 1
+				if movecntr <= 0:
+		 			break
+				# we have found large area without any date mached 
+				# or end of search - try min position (because can be end of previous line):
+				if minp != lastPos:
+					lastPos = tryPos = minp
+					continue
+				break
+			lastPos = pos
+		# always use smallest pos, that could be found:
+		foundPos = container.seek(minp, False)
+		container.setPos(foundPos)
+		if logSys.getEffectiveLevel() <= logging.DEBUG:
+			logSys.debug("Position %s from %s, found time %s (%s) within %s seeks", lastPos, fs, foundTime, 
+				(datetime.datetime.fromtimestamp(foundTime).strftime("%Y-%m-%d %H:%M:%S") if foundTime is not None else ''), cntr)
+		
 	def status(self, flavor="basic"):
 		"""Status of Filter plus files being monitored.
 		"""
@@ -782,6 +1114,9 @@ class FileContainer:
 	def getFileName(self):
 		return self.__filename
 
+	def getFileSize(self):
+		return os.path.getsize(self.__filename);
+
 	def setEncoding(self, encoding):
 		codecs.lookup(encoding) # Raises LookupError if invalid
 		self.__encoding = encoding
@@ -820,13 +1155,27 @@ class FileContainer:
 		## sys.stdout.flush()
 		# Compare hash and inode
 		if self.__hash != myHash or self.__ino != stats.st_ino:
-			logSys.log(logging.MSG, "Log rotation detected for %s" % self.__filename)
+			logSys.log(logging.MSG, "Log rotation detected for %s", self.__filename)
 			self.__hash = myHash
 			self.__ino = stats.st_ino
 			self.__pos = 0
 		# Sets the file pointer to the last position.
 		self.__handler.seek(self.__pos)
 		return True
+
+	def seek(self, offs, endLine=True):
+		h = self.__handler
+		# seek to given position
+		h.seek(offs, 0)
+		# goto end of next line
+		if offs and endLine:
+			h.readline()
+		# get current real position
+		return h.tell()
+
+	def tell(self):
+		# get current real position
+		return self.__handler.tell()
 
 	@staticmethod
 	def decode_line(filename, enc, line):
@@ -874,112 +1223,16 @@ _decode_line_warn = {}
 
 class JournalFilter(Filter): # pragma: systemd no cover
 
+	def clearAllParams(self):
+		super(JournalFilter, self).clearAllParams()
+		self.delJournalMatch()
+
 	def addJournalMatch(self, match): # pragma: no cover - Base class, not used
 		pass
 
-	def delJournalMatch(self, match): # pragma: no cover - Base class, not used
+	def delJournalMatch(self, match=None): # pragma: no cover - Base class, not used
 		pass
 
 	def getJournalMatch(self, match): # pragma: no cover - Base class, not used
 		return []
 
-##
-# Utils class for DNS and IP handling.
-#
-# This class contains only static methods used to handle DNS and IP
-# addresses.
-
-import socket
-import struct
-
-
-class DNSUtils:
-
-	IP_CRE = re.compile("^(?:\d{1,3}\.){3}\d{1,3}$")
-
-	@staticmethod
-	def dnsToIp(dns):
-		""" Convert a DNS into an IP address using the Python socket module.
-			Thanks to Kevin Drapel.
-		"""
-		# retrieve ip (todo: use AF_INET6 for IPv6)
-		try:
-			return set([i[4][0] for i in socket.getaddrinfo(dns, None, socket.AF_INET, 0, socket.IPPROTO_TCP)])
-		except socket.error as e:
-			logSys.warning("Unable to find a corresponding IP address for %s: %s"
-						% (dns, e))
-			return list()
-		except socket.error as e:
-			logSys.warning("Socket error raised trying to resolve hostname %s: %s"
-						% (dns, e))
-			return list()
-
-	@staticmethod
-	def ipToName(ip):
-		try:
-			return socket.gethostbyaddr(ip)[0]
-		except socket.error as e:
-			logSys.debug("Unable to find a name for the IP %s: %s" % (ip, e))
-			return None
-
-	@staticmethod
-	def searchIP(text):
-		""" Search if an IP address if directly available and return
-			it.
-		"""
-		match = DNSUtils.IP_CRE.match(text)
-		if match:
-			return match
-		else:
-			return None
-
-	@staticmethod
-	def isValidIP(string):
-		""" Return true if str is a valid IP
-		"""
-		s = string.split('/', 1)
-		try:
-			socket.inet_aton(s[0])
-			return True
-		except socket.error:
-			return False
-
-	@staticmethod
-	def textToIp(text, useDns):
-		""" Return the IP of DNS found in a given text.
-		"""
-		ipList = list()
-		# Search for plain IP
-		plainIP = DNSUtils.searchIP(text)
-		if not plainIP is None:
-			plainIPStr = plainIP.group(0)
-			if DNSUtils.isValidIP(plainIPStr):
-				ipList.append(plainIPStr)
-
-		# If we are allowed to resolve -- give it a try if nothing was found
-		if useDns in ("yes", "warn") and not ipList:
-			# Try to get IP from possible DNS
-			ip = DNSUtils.dnsToIp(text)
-			ipList.extend(ip)
-			if ip and useDns == "warn":
-				logSys.warning("Determined IP using DNS Lookup: %s = %s",
-					text, ipList)
-
-		return ipList
-
-	@staticmethod
-	def addr2bin(ipstring, cidr=None):
-		""" Convert a string IPv4 address into binary form.
-		If cidr is supplied, return the network address for the given block
-		"""
-		if cidr is None:
-			return struct.unpack("!L", socket.inet_aton(ipstring))[0]
-		else:
-			MASK = 0xFFFFFFFFL
-			return ~(MASK >> cidr) & MASK & DNSUtils.addr2bin(ipstring)
-
-	@staticmethod
-	def bin2addr(ipbin):
-		""" Convert a binary IPv4 address into string n.n.n.n form.
-		"""
-		return socket.inet_ntoa(struct.pack("!L", ipbin))

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: t -*-
 # vi: set ft=python sts=4 ts=4 sw=4 noet :
 
@@ -18,123 +18,20 @@
 # along with Fail2Ban; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-__author__ = "Cyril Jaquier"
-__copyright__ = "Copyright (c) 2004 Cyril Jaquier"
+"""
+Fail2Ban reads log file that contains password failure report
+and bans the corresponding IP addresses using firewall rules.
+
+This tools starts/stops fail2ban server or does client/server communication,
+to change/read parameters of the server or jails.
+
+"""
+
+__author__ = "Fail2Ban Developers"
+__copyright__ = "Copyright (c) 2004-2008 Cyril Jaquier, 2012-2014 Yaroslav Halchenko, 2014-2016 Serg G. Brester"
 __license__ = "GPL"
 
-import getopt
-import os
-import sys
-
-from fail2ban.version import version
-from fail2ban.server.server import Server
-from fail2ban.helpers import getLogger
-
-# Gets the instance of the logger.
-logSys = getLogger("fail2ban")
-
-##
-# \mainpage Fail2Ban
-#
-# \section Introduction
-#
-# Fail2ban is designed to protect your server against brute force attacks.
-# Its first goal was to protect a SSH server.
-
-class Fail2banServer:
-
-	def __init__(self):
-		self.__server = None
-		self.__argv = None
-		self.__conf = dict()
-		self.__conf["background"] = True
-		self.__conf["force"] = False
-		self.__conf["socket"] = "/var/run/fail2ban/fail2ban.sock"
-		self.__conf["pidfile"] = "/var/run/fail2ban/fail2ban.pid"
-
-	def dispVersion(self):
-		print "Fail2Ban v" + version
-		print
-		print "Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors"
-		print "Copyright of modifications held by their respective authors."
-		print "Licensed under the GNU General Public License v2 (GPL)."
-		print
-		print "Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>."
-		print "Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>."
-
-	def dispUsage(self):
-		""" Prints Fail2Ban command line options and exits
-		"""
-		print "Usage: "+self.__argv[0]+" [OPTIONS]"
-		print
-		print "Fail2Ban v" + version + " reads log file that contains password failure report"
-		print "and bans the corresponding IP addresses using firewall rules."
-		print
-		print "Only use this command for debugging purpose. Start the server with"
-		print "fail2ban-client instead. The default behaviour is to start the server"
-		print "in background."
-		print
-		print "Options:"
-		print "    -b                   start in background"
-		print "    -f                   start in foreground"
-		print "    -s <FILE>            socket path"
-		print "    -p <FILE>            pidfile path"
-		print "    -x                   force execution of the server (remove socket file)"
-		print "    -h, --help           display this help message"
-		print "    -V, --version        print the version"
-		print
-		print "Report bugs to https://github.com/fail2ban/fail2ban/issues"
-
-	def __getCmdLineOptions(self, optList):
-		""" Gets the command line options
-		"""
-		for opt in optList:
-			if opt[0] == "-b":
-				self.__conf["background"] = True
-			if opt[0] == "-f":
-				self.__conf["background"] = False
-			if opt[0] == "-s":
-				self.__conf["socket"] = opt[1]
-			if opt[0] == "-p":
-				self.__conf["pidfile"] = opt[1]
-			if opt[0] == "-x":
-				self.__conf["force"] = True
-			if opt[0] in ["-h", "--help"]:
-				self.dispUsage()
-				sys.exit(0)
-			if opt[0] in ["-V", "--version"]:
-				self.dispVersion()
-				sys.exit(0)
-
-	def start(self, argv):
-		# Command line options
-		self.__argv = argv
-
-		# Reads the command line options.
-		try:
-			cmdOpts = 'bfs:p:xhV'
-			cmdLongOpts = ['help', 'version']
-			optList, args = getopt.getopt(self.__argv[1:], cmdOpts, cmdLongOpts)
-		except getopt.GetoptError:
-			self.dispUsage()
-			sys.exit(-1)
-
-		self.__getCmdLineOptions(optList)
-
-		try:
-			self.__server = Server(self.__conf["background"])
-			self.__server.start(self.__conf["socket"],
-								self.__conf["pidfile"],
-								self.__conf["force"])
-			return True
-		except Exception as e:
-			logSys.exception(e)
-			self.__server.quit()
-			return False
+from fail2ban.client.fail2banserver import exec_command_line, sys
 
 if __name__ == "__main__":
-	server = Fail2banServer()
-	if server.start(sys.argv):
-		sys.exit(0)
-	else:
-		sys.exit(-1)
+	exec_command_line(sys.argv)

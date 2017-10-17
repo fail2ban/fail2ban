@@ -25,7 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 from .configreader import ConfigReader
-from ..helpers import getLogger
+from ..helpers import getLogger, str2LogLevel
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -40,17 +40,26 @@ class Fail2banReader(ConfigReader):
 		ConfigReader.read(self, "fail2ban")
 	
 	def getEarlyOptions(self):
-		opts = [["string", "socket", "/var/run/fail2ban/fail2ban.sock"],
-				["string", "pidfile", "/var/run/fail2ban/fail2ban.pid"]]
+		opts = [
+			["string", "socket", "/var/run/fail2ban/fail2ban.sock"],
+			["string", "pidfile", "/var/run/fail2ban/fail2ban.pid"],
+			["string", "loglevel", "INFO"],
+			["string", "logtarget", "/var/log/fail2ban.log"],
+			["string", "syslogsocket", "auto"]
+		]
 		return ConfigReader.getOptions(self, "Definition", opts)
 	
-	def getOptions(self):
+	def getOptions(self, updateMainOpt=None):
 		opts = [["string", "loglevel", "INFO" ],
 				["string", "logtarget", "STDERR"],
 				["string", "syslogsocket", "auto"],
 				["string", "dbfile", "/var/lib/fail2ban/fail2ban.sqlite3"],
-				["int", "dbpurgeage", 86400]]
+				["string", "dbpurgeage", "1d"]]
 		self.__opts = ConfigReader.getOptions(self, "Definition", opts)
+		if updateMainOpt:
+			self.__opts.update(updateMainOpt)
+		# check given log-level:
+		str2LogLevel(self.__opts.get('loglevel', 0))
 	
 	def convert(self):
 		# Ensure logtarget/level set first so any db errors are captured
