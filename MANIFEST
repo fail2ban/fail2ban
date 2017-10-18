@@ -120,6 +120,7 @@ config/filter.d/openwebmail.conf
 config/filter.d/oracleims.conf
 config/filter.d/pam-generic.conf
 config/filter.d/perdition.conf
+config/filter.d/phpmyadmin-syslog.conf
 config/filter.d/php-url-fopen.conf
 config/filter.d/portsentry.conf
 config/filter.d/postfix.conf
@@ -148,6 +149,7 @@ config/filter.d/vsftpd.conf
 config/filter.d/webmin-auth.conf
 config/filter.d/wuftpd.conf
 config/filter.d/xinetd-fail.conf
+config/filter.d/zoneminder.conf
 config/jail.conf
 config/paths-arch.conf
 config/paths-common.conf
@@ -311,6 +313,7 @@ fail2ban/tests/files/logs/openwebmail
 fail2ban/tests/files/logs/oracleims
 fail2ban/tests/files/logs/pam-generic
 fail2ban/tests/files/logs/perdition
+fail2ban/tests/files/logs/phpmyadmin-syslog
 fail2ban/tests/files/logs/php-url-fopen
 fail2ban/tests/files/logs/portsentry
 fail2ban/tests/files/logs/postfix
@@ -338,6 +341,7 @@ fail2ban/tests/files/logs/vsftpd
 fail2ban/tests/files/logs/webmin-auth
 fail2ban/tests/files/logs/wuftpd
 fail2ban/tests/files/logs/xinetd-fail
+fail2ban/tests/files/logs/zoneminder
 fail2ban/tests/files/logs/zzz-generic-example
 fail2ban/tests/files/logs/zzz-sshd-obsolete-multiline
 fail2ban/tests/files/testcase01a.log
@@ -366,7 +370,7 @@ files/cacti/fail2ban_stats.sh
 files/cacti/README
 files/debian-initd
 files/fail2ban-logrotate
-files/fail2ban.service
+files/fail2ban.service.in
 files/fail2ban-tmpfiles.conf
 files/fail2ban.upstart
 files/gen_badbots

@@ -1524,7 +1524,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'ip4': (), 'ip6': (),
 					'start': (
 						'`echo "table <f2b-j-w-pf> persist counters" | pfctl -a f2b/j-w-pf -f-`',
-						'`echo "block quick proto tcp from <f2b-j-w-pf> to any port <port>" | pfctl -a f2b/j-w-pf -f-`',
+						'`echo "block quick proto tcp from <f2b-j-w-pf> to any port {<port>}" | pfctl -a f2b/j-w-pf -f-`',
 					),
 					'stop': (
 						'`pfctl -a f2b/j-w-pf -sr 2>/dev/null | grep -v f2b-j-w-pf | pfctl -a f2b/j-w-pf -f-`',
@@ -1538,12 +1538,12 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'ip6-ban':   ("`pfctl -a f2b/j-w-pf -t f2b-j-w-pf -T add 2001:db8::`",),
 					'ip6-unban': ("`pfctl -a f2b/j-w-pf -t f2b-j-w-pf -T delete 2001:db8::`",),
 				}),
-				# pf multiport with custom port --
-				('j-w-pf-mp', 'pf[actiontype=<multiport>][name=%(__name__)s, port=http]', {
+				# pf multiport with custom ports --
+				('j-w-pf-mp', 'pf[actiontype=<multiport>][name=%(__name__)s, port="http,https"]', {
 					'ip4': (), 'ip6': (),
 					'start': (
 						'`echo "table <f2b-j-w-pf-mp> persist counters" | pfctl -a f2b/j-w-pf-mp -f-`',
-						'`echo "block quick proto tcp from <f2b-j-w-pf-mp> to any port http" | pfctl -a f2b/j-w-pf-mp -f-`',
+						'`echo "block quick proto tcp from <f2b-j-w-pf-mp> to any port {http,https}" | pfctl -a f2b/j-w-pf-mp -f-`',
 					),
 					'stop': (
 						'`pfctl -a f2b/j-w-pf-mp -sr 2>/dev/null | grep -v f2b-j-w-pf-mp | pfctl -a f2b/j-w-pf-mp -f-`',

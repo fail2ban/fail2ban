@@ -34,14 +34,21 @@ Incompatibility list (compared to v.0.9):
 ver. 0.11.0-dev-0 (2017/??/??) - development nightly edition
 -----------
 
+### Incompatibility list:
+* The configuration for multiport jails using banaction `pf` can be incompatible after upgrade, if
+  ports are enclosed in curly braces `{ }` in the `jail.local` etc. This may cause a double-brackets now.
+
 ### Fixes
+* action.d/pf.conf: 
+  - fixed syntax error in achnor definition (documentation, see gh-1919);
+  - enclose ports in braces for multiport jails (see gh-1925);
 
 ### New Features
 
 ### Enhancements
 
 
-ver. 0.10.1-dev-1 (2017/??/??) - development current edition
+ver. 0.10.1 (2017/10/12) - succeeded-before-friday-the-13th
 -----------
 
 ### Fixes
@@ -429,7 +436,10 @@ releases.
     - Fixes resources greedy expression (see gh-1790);
     - Rewritten without end-anchor ($), because of potential vulnerability on very long URLs.
 * filter.d/apache-badbots.conf - extended to recognize Jorgee Vulnerability Scanner (gh-1882)
-* filter.d/asterisk.conf - fixed failregex AMI Asterisk authentification failed (see gh-1302)
+* filter.d/asterisk.conf
+    - fixed failregex AMI Asterisk authentification failed (see gh-1302)
+    - removed invalid (vulnerable) regex blocking IPs using forign data (from header "from")
+      thus not the IP-address that really originates the request (see gh-1927)
 * filter.d/dovecot.conf:
     - fixed failregex, see gh-1879 (partially cherry-picked from gh-1880)
     - extended to match pam_authenticate failures with "Permission denied" (gh-1897)
