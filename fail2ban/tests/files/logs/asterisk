@@ -1,6 +1,4 @@
 # Sample log files for asterisk 
-# failJSON: { "time": "2013-07-25T07:26:43", "match": true , "host": "1.2.3.4" }
-[2013-07-25 07:26:43] NOTICE[26015][C-000006b2] chan_sip.c: Failed to authenticate device 101<sip:101@1.2.3.4>;tag=deadbeef
 # failJSON: { "time": "2012-02-13T17:21:54", "match": true , "host": "1.2.3.4" }
 [2012-02-13 17:21:54] NOTICE[1638] chan_sip.c: Registration from '<sip:301@example.com>' failed for '1.2.3.4' - Wrong password
 # failJSON: { "time": "2012-02-13T17:18:22", "match": true , "host": "1.2.3.4" }
@@ -19,8 +17,6 @@
 [2012-02-13 17:39:20] NOTICE[1638] chan_iax2.c: No registration for peer 'Fail2ban' (from 1.2.3.4)
 # failJSON: { "time": "2012-02-13T17:44:26", "match": true , "host": "1.2.3.4" }
 [2012-02-13 17:44:26] NOTICE[1638] chan_iax2.c: Host 1.2.3.4 failed MD5 authentication for 'Fail2ban' (e7df7cd2ca07f4f1ab415d457a6e1c13 != 53ac4bc41ee4ec77888ed4aa50677247)
-# failJSON: { "time": "2012-02-13T17:37:07", "match": true , "host": "1.2.3.4" }
-[2012-02-13 17:37:07] NOTICE[1638] chan_sip.c: Failed to authenticate user "Fail2ban" <sip:301@1.2.3.4>;tag=1r698745234
 # failJSON: { "time": "2013-02-05T23:44:42", "match": true , "host": "1.2.3.4" }
 [2013-02-05 23:44:42] NOTICE[436][C-00000fa9] chan_sip.c: Call from '' (1.2.3.4:10836) to extension '0972598285108' rejected because extension not found in context 'default'.
 # failJSON: { "time": "2013-03-26T15:47:54", "match": true , "host": "1.2.3.4" }
