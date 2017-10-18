@@ -28,7 +28,7 @@ releases.
 * filter.d/apache-badbots.conf - extended to recognize Jorgee Vulnerability Scanner (gh-1882)
 * filter.d/asterisk.conf
     - fixed failregex AMI Asterisk authentification failed (see gh-1302)
-    - removed invalid (vulnerable) regex blocking IPs using forign data (aus header "from")
+    - removed invalid (vulnerable) regex blocking IPs using forign data (from header "from")
       thus not the IP-address that really originates the request (see gh-1927)
 * filter.d/dovecot.conf:
     - fixed failregex, see gh-1879 (partially cherry-picked from gh-1880)
