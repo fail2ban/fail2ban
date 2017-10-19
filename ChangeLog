@@ -46,6 +46,7 @@ ver. 0.10.2-dev-1 (2017/??/??) - development edition
 ### New Features
 
 ### Enhancements
+* action.d/pf.conf: extended with bulk-unban, command `actionflush` in order to flush all bans at once.
 
 
 ver. 0.10.1 (2017/10/12) - succeeded-before-friday-the-13th
