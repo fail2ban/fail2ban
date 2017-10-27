@@ -34,7 +34,7 @@ override_dh_install:
 	: # take care about it anyways
 	rm -rf $(DESTDIR)/var/run/ $(DESTDIR)/run/
 	: # Install monit configuration
-	install -d $(DESTDIR)/etc/monit/monitrc.d
+	install -d $(DESTDIR)/etc/monit/conf-available
 	install -m 644 files/monit/fail2ban $(DESTDIR)/etc/monit/monitrc.d/fail2ban
 	: # Install bash completion
 	install -d $(DESTDIR)/etc/bash_completion.d
