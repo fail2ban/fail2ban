@@ -1234,7 +1234,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables-multiport --
-				('j-w-iptables-mp', 'iptables-multiport[name=%(__name__)s, bantime="10m", port="http,https", protocol="tcp", chain="INPUT"]', {
+				('j-w-iptables-mp', 'iptables-multiport[name=%(__name__)s, bantime="10m", port="http,https", protocol="tcp", chain="<known/chain>"]', {
 					'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 					'ip4-start': (
 						"`iptables -w -N f2b-j-w-iptables-mp`",
@@ -1278,7 +1278,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables-allports --
-				('j-w-iptables-ap', 'iptables-allports[name=%(__name__)s, bantime="10m", protocol="tcp", chain="INPUT"]', {
+				('j-w-iptables-ap', 'iptables-allports[name=%(__name__)s, bantime="10m", protocol="tcp", chain="<known/chain>"]', {
 					'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 					'ip4-start': (
 						"`iptables -w -N f2b-j-w-iptables-ap`",
@@ -1322,7 +1322,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables-ipset-proto6 --
-				('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="INPUT"]', {
+				('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
 					'ip4': (' f2b-j-w-iptables-ipset ',), 'ip6': (' f2b-j-w-iptables-ipset6 ',),
 					'ip4-start': (
 						"`ipset create f2b-j-w-iptables-ipset hash:ip`",
@@ -1360,7 +1360,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables-ipset-proto6-allports --
-				('j-w-iptables-ipset-ap', 'iptables-ipset-proto6-allports[name=%(__name__)s, bantime="10m", chain="INPUT"]', {
+				('j-w-iptables-ipset-ap', 'iptables-ipset-proto6-allports[name=%(__name__)s, bantime="10m", chain="<known/chain>"]', {
 					'ip4': (' f2b-j-w-iptables-ipset-ap ',), 'ip6': (' f2b-j-w-iptables-ipset-ap6 ',),
 					'ip4-start': (
 						"`ipset create f2b-j-w-iptables-ipset-ap hash:ip`",
@@ -1398,7 +1398,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables --
-				('j-w-iptables', 'iptables[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="INPUT"]', {
+				('j-w-iptables', 'iptables[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
 					'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 					'ip4-start': (
 						"`iptables -w -N f2b-j-w-iptables`",
@@ -1442,7 +1442,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables-new --
-				('j-w-iptables-new', 'iptables-new[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="INPUT"]', {
+				('j-w-iptables-new', 'iptables-new[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
 					'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 					'ip4-start': (
 						"`iptables -w -N f2b-j-w-iptables-new`",
@@ -1486,7 +1486,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables-xt_recent-echo --
-				('j-w-iptables-xtre', 'iptables-xt_recent-echo[name=%(__name__)s, bantime="10m", chain="INPUT"]', {
+				('j-w-iptables-xtre', 'iptables-xt_recent-echo[name=%(__name__)s, bantime="10m", chain="<known/chain>"]', {
 					'ip4': ('`iptables ', '/f2b-j-w-iptables-xtre`'), 'ip6': ('`ip6tables ', '/f2b-j-w-iptables-xtre6`'),
 					'ip4-start': (
 						"`if [ `id -u` -eq 0 ];then iptables -w -I INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre -j REJECT --reject-with icmp-port-unreachable;fi`",
@@ -1526,6 +1526,9 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						'`echo "table <f2b-j-w-pf> persist counters" | pfctl -a f2b/j-w-pf -f-`',
 						'`echo "block quick proto tcp from <f2b-j-w-pf> to any port {<port>}" | pfctl -a f2b/j-w-pf -f-`',
 					),
+					'flush': (
+						'`pfctl -a f2b/j-w-pf -t f2b-j-w-pf -T flush`',
+					),
 					'stop': (
 						'`pfctl -a f2b/j-w-pf -sr 2>/dev/null | grep -v f2b-j-w-pf | pfctl -a f2b/j-w-pf -f-`',
 						'`pfctl -a f2b/j-w-pf -t f2b-j-w-pf -T flush`',
@@ -1544,6 +1547,9 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'start': (
 						'`echo "table <f2b-j-w-pf-mp> persist counters" | pfctl -a f2b/j-w-pf-mp -f-`',
 						'`echo "block quick proto tcp from <f2b-j-w-pf-mp> to any port {http,https}" | pfctl -a f2b/j-w-pf-mp -f-`',
+					),
+					'flush': (
+						'`pfctl -a f2b/j-w-pf-mp -t f2b-j-w-pf-mp -T flush`',
 					),
 					'stop': (
 						'`pfctl -a f2b/j-w-pf-mp -sr 2>/dev/null | grep -v f2b-j-w-pf-mp | pfctl -a f2b/j-w-pf-mp -f-`',
@@ -1565,6 +1571,9 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						'`echo "block quick proto tcp from <f2b-j-w-pf-ap> to any" | pfctl -a f2b/j-w-pf-ap -f-`',
 					),
 					'ip6-start': (), # the same as ipv4
+					'flush': (
+						'`pfctl -a f2b/j-w-pf-ap -t f2b-j-w-pf-ap -T flush`',
+					),
 					'stop': (
 						'`pfctl -a f2b/j-w-pf-ap -sr 2>/dev/null | grep -v f2b-j-w-pf-ap | pfctl -a f2b/j-w-pf-ap -f-`',
 						'`pfctl -a f2b/j-w-pf-ap -t f2b-j-w-pf-ap -T flush`',
@@ -1578,23 +1587,23 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'ip6-unban': ("`pfctl -a f2b/j-w-pf-ap -t f2b-j-w-pf-ap -T delete 2001:db8::`",),
 				}),
 				# firewallcmd-multiport --
-				('j-w-fwcmd-mp', 'firewallcmd-multiport[name=%(__name__)s, bantime="10m", port="http,https", protocol="tcp", chain="INPUT"]', {
+				('j-w-fwcmd-mp', 'firewallcmd-multiport[name=%(__name__)s, bantime="10m", port="http,https", protocol="tcp", chain="<known/chain>"]', {
 					'ip4': (' ipv4 ', 'icmp-port-unreachable'), 'ip6': (' ipv6 ', 'icmp6-port-unreachable'),
 					'ip4-start': (
 						"`firewall-cmd --direct --add-chain ipv4 filter f2b-j-w-fwcmd-mp`",
 						"`firewall-cmd --direct --add-rule ipv4 filter f2b-j-w-fwcmd-mp 1000 -j RETURN`",
-						"`firewall-cmd --direct --add-rule ipv4 filter INPUT 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
+						"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
 					), 
 					'ip6-start': (
 						"`firewall-cmd --direct --add-chain ipv6 filter f2b-j-w-fwcmd-mp`",
 						"`firewall-cmd --direct --add-rule ipv6 filter f2b-j-w-fwcmd-mp 1000 -j RETURN`",
-						"`firewall-cmd --direct --add-rule ipv6 filter INPUT 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
+						"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
 					),
 					'stop': (
-						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
+						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
 						"`firewall-cmd --direct --remove-rules ipv4 filter f2b-j-w-fwcmd-mp`",
 						"`firewall-cmd --direct --remove-chain ipv4 filter f2b-j-w-fwcmd-mp`",
-						"`firewall-cmd --direct --remove-rule ipv6 filter INPUT 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
+						"`firewall-cmd --direct --remove-rule ipv6 filter INPUT_direct 0 -m conntrack --ctstate NEW -p tcp -m multiport --dports http,https -j f2b-j-w-fwcmd-mp`",
 						"`firewall-cmd --direct --remove-rules ipv6 filter f2b-j-w-fwcmd-mp`",
 						"`firewall-cmd --direct --remove-chain ipv6 filter f2b-j-w-fwcmd-mp`",
 					),
@@ -1618,23 +1627,23 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# firewallcmd-allports --
-				('j-w-fwcmd-ap', 'firewallcmd-allports[name=%(__name__)s, bantime="10m", protocol="tcp", chain="INPUT"]', {
+				('j-w-fwcmd-ap', 'firewallcmd-allports[name=%(__name__)s, bantime="10m", protocol="tcp", chain="<known/chain>"]', {
 					'ip4': (' ipv4 ', 'icmp-port-unreachable'), 'ip6': (' ipv6 ', 'icmp6-port-unreachable'),
 					'ip4-start': (
 						"`firewall-cmd --direct --add-chain ipv4 filter f2b-j-w-fwcmd-ap`",
 						"`firewall-cmd --direct --add-rule ipv4 filter f2b-j-w-fwcmd-ap 1000 -j RETURN`",
-						"`firewall-cmd --direct --add-rule ipv4 filter INPUT 0 -j f2b-j-w-fwcmd-ap`",
+						"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -j f2b-j-w-fwcmd-ap`",
 					), 
 					'ip6-start': (
 						"`firewall-cmd --direct --add-chain ipv6 filter f2b-j-w-fwcmd-ap`",
 						"`firewall-cmd --direct --add-rule ipv6 filter f2b-j-w-fwcmd-ap 1000 -j RETURN`",
-						"`firewall-cmd --direct --add-rule ipv6 filter INPUT 0 -j f2b-j-w-fwcmd-ap`",
+						"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -j f2b-j-w-fwcmd-ap`",
 					),
 					'stop': (
-						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT 0 -j f2b-j-w-fwcmd-ap`",
+						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -j f2b-j-w-fwcmd-ap`",
 						"`firewall-cmd --direct --remove-rules ipv4 filter f2b-j-w-fwcmd-ap`",
 						"`firewall-cmd --direct --remove-chain ipv4 filter f2b-j-w-fwcmd-ap`",
-						"`firewall-cmd --direct --remove-rule ipv6 filter INPUT 0 -j f2b-j-w-fwcmd-ap`",
+						"`firewall-cmd --direct --remove-rule ipv6 filter INPUT_direct 0 -j f2b-j-w-fwcmd-ap`",
 						"`firewall-cmd --direct --remove-rules ipv6 filter f2b-j-w-fwcmd-ap`",
 						"`firewall-cmd --direct --remove-chain ipv6 filter f2b-j-w-fwcmd-ap`",
 					),
@@ -1658,21 +1667,21 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# firewallcmd-ipset --
-				('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="INPUT"]', {
+				('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
 					'ip4': (' f2b-j-w-fwcmd-ipset ',), 'ip6': (' f2b-j-w-fwcmd-ipset6 ',),
 					'ip4-start': (
 						"`ipset create f2b-j-w-fwcmd-ipset hash:ip`",
-						"`firewall-cmd --direct --add-rule ipv4 filter INPUT 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
+						"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 					), 
 					'ip6-start': (
 						"`ipset create f2b-j-w-fwcmd-ipset6 hash:ip`",
-						"`firewall-cmd --direct --add-rule ipv6 filter INPUT 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
+						"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					),
 					'stop': (
-						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
+						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 						"`ipset flush f2b-j-w-fwcmd-ipset`",
 						"`ipset destroy f2b-j-w-fwcmd-ipset`",
-						"`firewall-cmd --direct --remove-rule ipv6 filter INPUT 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
+						"`firewall-cmd --direct --remove-rule ipv6 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 						"`ipset flush f2b-j-w-fwcmd-ipset6`",
 						"`ipset destroy f2b-j-w-fwcmd-ipset6`",
 					),
