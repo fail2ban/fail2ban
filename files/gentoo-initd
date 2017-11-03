@@ -18,6 +18,9 @@
 # Author: Sireyessire, Cyril Jaquier
 #
 
+description="Daemon to ban hosts that cause multiple authentication errors"
+description_reload="reload configuration"
+description_showlog="show fail2ban logs"
 extra_started_commands="reload showlog"
 
 FAIL2BAN="/usr/bin/fail2ban-client ${FAIL2BAN_OPTIONS}"
