@@ -39,6 +39,8 @@ ver. 0.10.2-dev-1 (2017/??/??) - development edition
   ports are enclosed in curly braces `{ }` in the `jail.local` etc. This may cause a double-brackets now.
 
 ### Fixes
+* jail.conf: port `imap3` replace with `imap` everywhere, since imap3 is not a standard port and old rarely 
+  (if ever) used and missing on some systems (e. g. debian stretch), see gh-1942.
 * action.d/pf.conf: 
   - fixed syntax error in achnor definition (documentation, see gh-1919);
   - enclose ports in braces for multiport jails (see gh-1925);
