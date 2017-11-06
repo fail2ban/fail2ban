@@ -41,6 +41,8 @@ ver. 0.10.2-dev-1 (2017/??/??) - development edition
 ### Fixes
 * jail.conf: port `imap3` replaced with `imap` everywhere, since imap3 is not a standard port and old rarely 
   (if ever) used and can missing on some systems (e. g. debian stretch), see gh-1942.
+* config/paths-common.conf: added missing initial values (and small normalization in config/paths-*.conf)
+  in order to avoid errors while interpolating (e. g. starting with systemd-backend), see gh-1955.
 * action.d/pf.conf: 
   - fixed syntax error in achnor definition (documentation, see gh-1919);
   - enclose ports in braces for multiport jails (see gh-1925);
