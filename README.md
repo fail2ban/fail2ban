@@ -19,7 +19,7 @@ Set up services to use only two factor, or public/private authentication
 mechanisms if you really want to protect services.
 
 This README is a quick introduction to Fail2Ban. More documentation, FAQ, and HOWTOs
-available in the fail2ban(1) manpage and on the website https://www.fail2ban.org
+to be found on fail2ban(1) manpage and the website: https://www.fail2ban.org
 
 Installation:
 -------------
