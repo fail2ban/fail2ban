@@ -40,6 +40,9 @@
 # failJSON: { "time": "2017-11-10T17:40:11", "match": true , "host": "185.172.110.230" }
 185.172.110.230 - - [10/Nov/2017:17:40:11] "GET /muieblackcat HTTP/1.1" 404 374 "-" "-"
 
+# failJSON: { "time": "2017-11-10T17:40:11", "match": true , "host": "185.172.110.230" }
+185.172.110.230 - - [10/Nov/2017:17:40:11] "GET //mysqladmin/scripts/setup.php HTTP/1.1" 404 385 "-" "-"
+
 # failJSON: { "time": "2017-11-10T20:30:48", "match": true , "host": "185.46.54.78" }
 185.46.54.78 - - [10/Nov/2017:20:30:48] "GET /cgi-sys/entropysearch.cgi HTTP/1.1" 404 368 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
 
