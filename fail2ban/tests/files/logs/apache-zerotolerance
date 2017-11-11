@@ -1,14 +1,47 @@
+# failJSON: { "time": "2017-11-01T16:24:06", "match": true , "host": "52.178.215.148" }
+52.178.215.148 - - [01/Nov/2017:16:24:06] "GET /xampp/phpmyadmin/scripts/setup.php HTTP/1.1" 404 469 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
+
 # failJSON: { "time": "2017-11-05T17:33:15", "match": true , "host": "155.94.88.58" }
 155.94.88.58 - - [05/Nov/2017:17:33:15] "GET / HTTP/1.0" 200 243 "-" "sysscan/1.0 (https://github.com/robertdavidgraham/sysscan)"
 
+# failJSON: { "time": "2017-11-06T07:58:01", "match": true , "host": "96.70.106.253" }
+96.70.106.253 - - [06/Nov/2017:07:58:01] "GET /dbadmin/scripts/setup.php HTTP/1.1" 404 460 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
+
+# failJSON: { "time": "2017-11-06T07:58:12", "match": true , "host": "96.70.106.253" }
+96.70.106.253 - - [06/Nov/2017:07:58:02] "GET /mysql/scripts/setup.php HTTP/1.1" 404 458 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
+
+# failJSON: { "time": "2017-11-06T07:58:10", "match": true , "host": "96.70.106.253" }
+96.70.106.253 - - [06/Nov/2017:07:58:10] "GET /pma/scripts/setup.php HTTP/1.1" 404 456 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
+
+# failJSON: { "time": "2017-11-06T07:58:11", "match": true , "host": "96.70.106.253" }
+96.70.106.253 - - [06/Nov/2017:07:58:11] "GET /scripts/setup.php HTTP/1.1" 404 452 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
+
+# failJSON: { "time": "2017-11-06T11:43:07", "match": true , "host": "123.151.206.98" }
+123.151.206.98 - - [06/Nov/2017:11:43:07] "GET / HTTP/1.0" 200 243 "-" "masscan/1.0"
+
+# failJSON: { "time": "2017-11-07T00:42:21", "match": true , "host": "62.28.96.6" }
+62.28.96.6 - - [07/Nov/2017:00:42:21] "GET /mysqladmin/scripts/setup.php HTTP/1.1" 404 463 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
+
 # failJSON: { "time": "2017-11-07T04:11:04", "match": true , "host": "112.213.105.48" }
 112.213.105.48 - - [07/Nov/2017:04:11:04] "GET /shell?%75%6E%61%6D%65%20%2D%61 HTTP/1.1" 404 496 "/shell?%75%6E%61%6D%65%20%2D%61" "Mozilla/4.0 (compatible; MSIE 9.0; Windows NT 6.1)"
+
+# failJSON: { "time": "2017-11-07T16:00:21", "match": true , "host": "112.53.201.170" }
+112.53.201.170 - - [07/Nov/2017:16:00:21] "HEAD http://1.1.1.1:80<html><head> HTTP/1.1" 400 0 "-" "-"
+
+# failJSON: { "time": "2017-11-07T17:49:37", "match": true , "host": "185.20.138.40" }
+185.20.138.40 - - [07/Nov/2017:17:49:37] "GET // HTTP/1.1" 200 243 "-" "() { :;};echo; /bin/bash -c \" echo 2014 | md5sum\""
 
 # failJSON: { "time": "2017-11-08T14:52:19", "match": true , "host": "202.143.153.189" }
 202.143.153.189 - - [08/Nov/2017:14:52:19] "GET /w00tw00t.at.ISC.SANS.DFind:) HTTP/1.1" 400 0 "-" "-"
 
 # failJSON: { "time": "2017-11-09T20:42:54", "match": true , "host": "179.232.234.102" }
 179.232.234.102 - - [09/Nov/2017:20:42:54] "GET /hndUnblock.cgi HTTP/1.1" 404 357 "-" "Wget(linux)"
+
+# failJSON: { "time": "2017-11-10T17:40:11", "match": true , "host": "185.172.110.230" }
+185.172.110.230 - - [10/Nov/2017:17:40:11] "GET /muieblackcat HTTP/1.1" 404 374 "-" "-"
+
+# failJSON: { "time": "2017-11-10T20:30:48", "match": true , "host": "185.46.54.78" }
+185.46.54.78 - - [10/Nov/2017:20:30:48] "GET /cgi-sys/entropysearch.cgi HTTP/1.1" 404 368 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
 
 # failJSON: { "time": "2017-11-10T20:31:06", "match": true , "host": "155.94.88.58" }
 155.94.88.58 - - [10/Nov/2017:20:31:06] "HEAD /phpmyadmin/ HTTP/1.1" 404 179 "-" "Mozilla/5.0 Jorgee"
