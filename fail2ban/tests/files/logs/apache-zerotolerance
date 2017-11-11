@@ -8,7 +8,7 @@
 96.70.106.253 - - [06/Nov/2017:07:58:01] "GET /dbadmin/scripts/setup.php HTTP/1.1" 404 460 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
 
 # failJSON: { "time": "2017-11-06T07:58:12", "match": true , "host": "96.70.106.253" }
-96.70.106.253 - - [06/Nov/2017:07:58:02] "GET /mysql/scripts/setup.php HTTP/1.1" 404 458 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
+96.70.106.253 - - [06/Nov/2017:07:58:12] "GET /mysql/scripts/setup.php HTTP/1.1" 404 458 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
 
 # failJSON: { "time": "2017-11-06T07:58:10", "match": true , "host": "96.70.106.253" }
 96.70.106.253 - - [06/Nov/2017:07:58:10] "GET /pma/scripts/setup.php HTTP/1.1" 404 456 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"
