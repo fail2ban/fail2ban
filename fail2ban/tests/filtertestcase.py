@@ -432,7 +432,7 @@ class IgnoreIPDNS(LogCaptureTestCase):
 
 	def testIgnoreIPDNSOK(self):
 		self.filter.addIgnoreIP("www.epfl.ch")
-		self.assertTrue(self.filter.inIgnoreIPList("128.178.50.12"))
+		self.assertTrue(self.filter.inIgnoreIPList("128.178.222.69"))
 		self.filter.addIgnoreIP("example.com")
 		self.assertTrue(self.filter.inIgnoreIPList("93.184.216.34"))
 		self.assertTrue(self.filter.inIgnoreIPList("2606:2800:220:1:248:1893:25c8:1946"))
@@ -440,9 +440,9 @@ class IgnoreIPDNS(LogCaptureTestCase):
 	def testIgnoreIPDNSNOK(self):
 		# Test DNS
 		self.filter.addIgnoreIP("www.epfl.ch")
-		self.assertFalse(self.filter.inIgnoreIPList("127.177.50.10"))
-		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.11"))
-		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.13"))
+		self.assertFalse(self.filter.inIgnoreIPList("127.178.222.69"))
+		self.assertFalse(self.filter.inIgnoreIPList("128.178.222.68"))
+		self.assertFalse(self.filter.inIgnoreIPList("128.178.222.70"))
 
 	def testIgnoreCmdApacheFakegooglebot(self):
 		if not STOCK: # pragma: no cover
@@ -450,7 +450,7 @@ class IgnoreIPDNS(LogCaptureTestCase):
 		cmd = os.path.join(STOCK_CONF_DIR, "filter.d/ignorecommands/apache-fakegooglebot")
 		## below test direct as python module:
 		mod = Utils.load_python_module(cmd)
-		self.assertFalse(mod.is_googlebot(mod.process_args([cmd, "128.178.50.12"])))
+		self.assertFalse(mod.is_googlebot(mod.process_args([cmd, "128.178.222.69"])))
 		self.assertFalse(mod.is_googlebot(mod.process_args([cmd, "192.0.2.1"])))
 		bot_ips = ['66.249.66.1']
 		for ip in bot_ips:
