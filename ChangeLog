@@ -43,9 +43,12 @@ ver. 0.10.2-dev-1 (2017/??/??) - development edition
   (if ever) used and can missing on some systems (e. g. debian stretch), see gh-1942.
 * config/paths-common.conf: added missing initial values (and small normalization in config/paths-*.conf)
   in order to avoid errors while interpolating (e. g. starting with systemd-backend), see gh-1955.
-* action.d/pf.conf: 
+* `action.d/pf.conf`: 
   - fixed syntax error in achnor definition (documentation, see gh-1919);
   - enclose ports in braces for multiport jails (see gh-1925);
+* `filter.d/sshd.conf`: extended failregex for modes "extra"/"aggressive": now finds all possible (also future)
+  forms of "no matching (cipher|mac|MAC|compression method|key exchange method|host key type) found", 
+  see "ssherr.c" for all possible SSH_ERR_..._ALG_MATCH errors (gh-1943, gh-1944);
 
 ### New Features
 
