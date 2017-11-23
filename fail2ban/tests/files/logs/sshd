@@ -243,3 +243,17 @@ Nov 26 15:03:30 host sshd[22440]: Connection from 192.0.2.3 port 39678 on 192.16
 Nov 26 15:03:31 host sshd[22440]: fatal: Unable to negotiate a key exchange method [preauth]
 # failJSON: { "time": "2004-11-26T15:03:32", "match": true , "host": "192.0.2.3", "filter": "sshd", "desc": "Second attempt within the same connect" }
 Nov 26 15:03:32 host sshd[22440]: fatal: Unable to negotiate a key exchange method [preauth]
+
+# gh-1943 (previous OpenSSH log-format)
+# failJSON: { "match": false }
+Oct 25 19:37:08 hostname sshd[22477]: Connection from 192.0.2.1 port 31309 on 192.0.2.8 port 22
+# failJSON: { "time": "2004-10-25T19:37:09", "match": true , "host": "192.0.2.1", "desc": "No matching mac found" }
+Oct 25 19:37:09 hostname sshd[22477]: fatal: no matching mac found: client hmac-xxx,hmac-xxx,hmac-xxx,hmac-xxx,hmac-xxx,hmac-xxx server hmac-xxx,hmac-xxx,umac-xxx,hmac-xxx,hmac-xxx,umac-xxx [preauth]
+
+# gh-1944 (newest OpenSSH log-format)
+# failJSON: { "time": "2004-10-26T15:30:40", "match": true , "host": "192.0.2.2", "desc": "No matching MAC found" }
+Oct 26 15:30:40 localhost sshd[14737]: Unable to negotiate with 192.0.2.2 port 50404: no matching MAC found. Their offer: hmac-sha1,hmac-sha1-96,hmac-md5,hmac-md5-96,hmac-ripemd160,hmac-ripemd160@openssh.com [preauth]
+# failJSON: { "time": "2004-11-26T13:03:38", "match": true , "host": "192.0.2.4", "desc": "No matching everything ... found." }
+Nov 26 13:03:38 srv sshd[14737]: Unable to negotiate with 192.0.2.4 port 50404: no matching host key type found. Their offer: ssh-dss
+# failJSON: { "time": "2004-11-26T13:03:39", "match": true , "host": "192.0.2.5", "desc": "No matching everything ... found." }
+Nov 26 13:03:39 srv sshd[14738]: fatal: Unable to negotiate with 192.0.2.5 port 55555: no matching everything new here found. Their offer: ...
