@@ -316,14 +316,14 @@ class IgnoreIPDNS(IgnoreIP):
 
 	def testIgnoreIPDNSOK(self):
 		self.filter.addIgnoreIP("www.epfl.ch")
-		self.assertTrue(self.filter.inIgnoreIPList("128.178.50.12"))
+		self.assertTrue(self.filter.inIgnoreIPList("128.178.222.69"))
 
 	def testIgnoreIPDNSNOK(self):
 		# Test DNS
 		self.filter.addIgnoreIP("www.epfl.ch")
-		self.assertFalse(self.filter.inIgnoreIPList("127.177.50.10"))
-		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.11"))
-		self.assertFalse(self.filter.inIgnoreIPList("128.178.50.13"))
+		self.assertFalse(self.filter.inIgnoreIPList("127.178.222.69"))
+		self.assertFalse(self.filter.inIgnoreIPList("128.178.222.68"))
+		self.assertFalse(self.filter.inIgnoreIPList("128.178.222.70"))
 
 
 class LogFile(LogCaptureTestCase):
