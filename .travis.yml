@@ -12,9 +12,10 @@ python:
   - 3.4
   - 3.5
   - 3.6
+  - 3.7-dev
   # disabled since setuptools dropped support for Python 3.0 - 3.2
   # - pypy3
-  - pypy3.3-5.2-alpha1
+  - pypy3.3-5.5-alpha
 before_install:
   - echo "running under $TRAVIS_PYTHON_VERSION"
   - if [[ $TRAVIS_PYTHON_VERSION == 2* || $TRAVIS_PYTHON_VERSION == pypy* && $TRAVIS_PYTHON_VERSION != pypy3* ]]; then export F2B_PY_2=true && echo "Set F2B_PY_2"; fi
