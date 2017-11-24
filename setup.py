@@ -88,10 +88,12 @@ class install_scripts_f2b(install_scripts):
 
 	def update_scripts(self, dry_run=False):
 		buildroot = os.path.dirname(self.build_dir)
+		install_dir = self.install_dir
 		try:
+			# remove root-base from install scripts path:
 			root = self.distribution.command_options['install']['root'][1]
-			if self.install_dir.startswith(root):
-				install_dir = self.install_dir[len(root):]
+			if install_dir.startswith(root):
+				install_dir = install_dir[len(root):]
 		except: # pragma: no cover
 			print('WARNING: Cannot find root-base option, check the bin-path to fail2ban-scripts in "fail2ban.service".')
 		print('Creating %s/fail2ban.service (from fail2ban.service.in): @BINDIR@ -> %s' % (buildroot, install_dir))
