@@ -151,24 +151,13 @@ class Server:
 			self.__asyncServer.start(sock, force)
 		except AsyncServerException as e:
 			logSys.error("Could not start server: %s", e)
-		# Removes the PID file.
-		try:
-			logSys.debug("Remove PID file %s", pidfile)
-			os.remove(pidfile)
-		except (OSError, IOError) as e: # pragma: no cover
-			logSys.error("Unable to remove PID file: %s", e)
-		logSys.info("Exiting Fail2ban")
-	
-	def quit(self):
-		# Stop communication first because if jail's unban action
-		# tries to communicate via fail2ban-client we get a lockup
-		# among threads.  So the simplest resolution is to stop all
-		# communications first (which should be ok anyways since we
-		# are exiting)
-		# See https://github.com/fail2ban/fail2ban/issues/7
-		if self.__asyncServer is not None:
-			self.__asyncServer.stop()
-			self.__asyncServer = None
+
+		logSys.info("Shutdown in progress...")
+
+		# Restore default signal handlers:
+		if _thread_name() == '_MainThread':
+			for s, sh in self.__prev_signals.iteritems():
+				signal.signal(s, sh)
 
 		# Now stop all the jails
 		self.stopAllJail()
@@ -179,18 +168,26 @@ class Server:
 			self.__db.close()
 			self.__db = None
 
-		# Only now shutdown the logging.
-		if self.__logTarget is not None:
-			with self.__loggingLock:
-				logging.shutdown()
+		# Removes the PID file.
+		try:
+			logSys.debug("Remove PID file %s", pidfile)
+			os.remove(pidfile)
+		except (OSError, IOError) as e: # pragma: no cover
+			logSys.error("Unable to remove PID file: %s", e)
+		logSys.info("Exiting Fail2ban")
 
-		# Restore default signal handlers:
-		if _thread_name() == '_MainThread':
-			for s, sh in self.__prev_signals.iteritems():
-				signal.signal(s, sh)
-
+	def quit(self):
 		# Prevent to call quit twice:
 		self.quit = lambda: False
+		# Stop communication first because if jail's unban action
+		# tries to communicate via fail2ban-client we get a lockup
+		# among threads.  So the simplest resolution is to stop all
+		# communications first (which should be ok anyways since we
+		# are exiting)
+		# See https://github.com/fail2ban/fail2ban/issues/7
+		if self.__asyncServer is not None:
+			self.__asyncServer.stop()
+			self.__asyncServer = None
 
 	def addJail(self, name, backend):
 		addflg = True
