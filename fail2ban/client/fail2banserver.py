@@ -210,7 +210,8 @@ class Fail2banServer(Fail2banCmdLine):
 					if server: # pragma: no cover
 						server.quit()
 					exit(-1)
-				logSys.debug('Starting server done')
+				if background:
+					logSys.debug('Starting server done')
 
 		except Exception as e:
 			if self._conf["verbose"] > 1:

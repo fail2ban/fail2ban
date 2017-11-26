@@ -27,7 +27,6 @@ __license__ = "GPL"
 import threading
 from threading import Lock, RLock
 import logging
-import logging.handlers
 import os
 import signal
 import stat
@@ -561,10 +560,8 @@ class Server:
 				self.__logTarget = target
 				return True
 			# set a format which is simpler for console use
-			fmt = "%(asctime)s %(name)-24s[%(process)d]: %(levelname)-7s %(message)s"
+			fmt = "%(name)-24s[%(process)d]: %(levelname)-7s %(message)s"
 			if systarget == "SYSLOG":
-				# Syslog daemons already add date to the message.
-				fmt = "%(name)s[%(process)d]: %(levelname)s %(message)s"
 				facility = logging.handlers.SysLogHandler.LOG_DAEMON
 				if self.__syslogSocket == "auto":
 					import platform
@@ -581,7 +578,7 @@ class Server:
 						"Syslog socket file: %s does not exists"
 						" or is not a socket" % self.__syslogSocket)
 					return False
-			elif systarget == "STDOUT":
+			elif systarget in ("STDOUT", "SYSOUT"):
 				hdlr = logging.StreamHandler(sys.stdout)
 			elif systarget == "STDERR":
 				hdlr = logging.StreamHandler(sys.stderr)
@@ -615,8 +612,14 @@ class Server:
 			if logger.getEffectiveLevel() <= logging.DEBUG: # pragma: no cover
 				if self.__verbose is None:
 					self.__verbose = logging.DEBUG - logger.getEffectiveLevel() + 1
+			# If handler don't already add date to the message:
+			addtime = systarget not in ("SYSLOG", "SYSOUT")
+			# verbose log-format:
 			if self.__verbose is not None and self.__verbose > 2: # pragma: no cover
-				fmt = getVerbosityFormat(self.__verbose-1)
+				fmt = getVerbosityFormat(self.__verbose-1,
+					addtime=addtime)
+			elif addtime:
+				fmt = "%(asctime)s " + fmt
 			# tell the handler to use this format
 			hdlr.setFormatter(logging.Formatter(fmt))
 			logger.addHandler(hdlr)
