@@ -27,7 +27,6 @@ __license__ = "GPL"
 import threading
 from threading import Lock, RLock
 import logging
-import logging.handlers
 import os
 import signal
 import stat
@@ -160,6 +159,9 @@ class Server:
 		except AsyncServerException as e:
 			logSys.error("Could not start server: %s", e)
 
+		# Stop (if not yet already executed):
+		self.quit()
+
 		# Removes the PID file.
 		try:
 			logSys.debug("Remove PID file %s", pidfile)
@@ -167,13 +169,11 @@ class Server:
 		except (OSError, IOError) as e: # pragma: no cover
 			logSys.error("Unable to remove PID file: %s", e)
 
-		# Stop (if not yet already executed):
-		self.quit()
-	
 	def quit(self):
-		# Give observer a small chance to complete its work before exit
-		if Observers.Main is not None:
-			Observers.Main.stop()
+		# Prevent to call quit twice:
+		self.quit = lambda: False
+
+		logSys.info("Shutdown in progress...")
 
 		# Stop communication first because if jail's unban action
 		# tries to communicate via fail2ban-client we get a lockup
@@ -184,6 +184,15 @@ class Server:
 		if self.__asyncServer is not None:
 			self.__asyncServer.stop_communication()
 
+		# Restore default signal handlers:
+		if _thread_name() == '_MainThread':
+			for s, sh in self.__prev_signals.iteritems():
+				signal.signal(s, sh)
+
+		# Give observer a small chance to complete its work before exit
+		if Observers.Main is not None:
+			Observers.Main.stop()
+
 		# Now stop all the jails
 		self.stopAllJail()
 
@@ -192,16 +201,6 @@ class Server:
 		if self.__db:
 			self.__db.close()
 			self.__db = None
-
-		# Only now shutdown the logging.
-		if self.__logTarget is not None:
-			with self.__loggingLock:
-				logging.shutdown()
-
-		# Restore default signal handlers:
-		if _thread_name() == '_MainThread':
-			for s, sh in self.__prev_signals.iteritems():
-				signal.signal(s, sh)
 
 		# Stop observer and exit
 		if Observers.Main is not None:
@@ -213,8 +212,6 @@ class Server:
 			self.__asyncServer = None
 		logSys.info("Exiting Fail2ban")
 
-		# Prevent to call quit twice:
-		self.quit = lambda: False
 
 	def addJail(self, name, backend):
 		addflg = True
@@ -590,10 +587,8 @@ class Server:
 				self.__logTarget = target
 				return True
 			# set a format which is simpler for console use
-			fmt = "%(asctime)s %(name)-24s[%(process)d]: %(levelname)-7s %(message)s"
+			fmt = "%(name)-24s[%(process)d]: %(levelname)-7s %(message)s"
 			if systarget == "SYSLOG":
-				# Syslog daemons already add date to the message.
-				fmt = "%(name)s[%(process)d]: %(levelname)s %(message)s"
 				facility = logging.handlers.SysLogHandler.LOG_DAEMON
 				if self.__syslogSocket == "auto":
 					import platform
@@ -610,7 +605,7 @@ class Server:
 						"Syslog socket file: %s does not exists"
 						" or is not a socket" % self.__syslogSocket)
 					return False
-			elif systarget == "STDOUT":
+			elif systarget in ("STDOUT", "SYSOUT"):
 				hdlr = logging.StreamHandler(sys.stdout)
 			elif systarget == "STDERR":
 				hdlr = logging.StreamHandler(sys.stderr)
@@ -644,8 +639,14 @@ class Server:
 			if logger.getEffectiveLevel() <= logging.DEBUG: # pragma: no cover
 				if self.__verbose is None:
 					self.__verbose = logging.DEBUG - logger.getEffectiveLevel() + 1
+			# If handler don't already add date to the message:
+			addtime = systarget not in ("SYSLOG", "SYSOUT")
+			# verbose log-format:
 			if self.__verbose is not None and self.__verbose > 2: # pragma: no cover
-				fmt = getVerbosityFormat(self.__verbose-1)
+				fmt = getVerbosityFormat(self.__verbose-1,
+					addtime=addtime)
+			elif addtime:
+				fmt = "%(asctime)s " + fmt
 			# tell the handler to use this format
 			hdlr.setFormatter(logging.Formatter(fmt))
 			logger.addHandler(hdlr)

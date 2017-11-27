@@ -108,7 +108,7 @@ _fail2ban () {
                     ;;
                 logtarget)
                     if [[ "$cmd" == "set" ]];then
-                        COMPREPLY=( $( compgen -W "STDOUT STDERR SYSLOG" -- "$cur" ) )
+                        COMPREPLY=( $( compgen -W "STDOUT STDERR SYSLOG SYSOUT" -- "$cur" ) )
                         _filedir # And files
                     fi
                     return 0

@@ -39,6 +39,8 @@ ver. 0.11.0-dev-0 (2017/??/??) - development nightly edition
   ports are enclosed in curly braces `{ }` in the `jail.local` etc. This may cause a double-brackets now.
 
 ### Fixes
+* Fixed logging to systemd-journal: new logtarget value SYSOUT can be used instead of STDOUT, to avoid 
+  write of the time-stamp, if logging to systemd-journal from foreground mode (gh-1876)
 * jail.conf: port `imap3` replaced with `imap` everywhere, since imap3 is not a standard port and old rarely 
   (if ever) used and can missing on some systems (e. g. debian stretch), see gh-1942.
 * config/paths-common.conf: added missing initial values (and small normalization in config/paths-*.conf)
