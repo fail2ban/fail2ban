@@ -8,8 +8,8 @@ PartOf=iptables.service firewalld.service ip6tables.service ipset.service
 Type=simple
 ExecStartPre=/bin/mkdir -p /var/run/fail2ban
 ExecStart=@BINDIR@/fail2ban-server -xf start
-# if should be logged in systemd journal, use following line or set logtarget to stdout in fail2ban.local
-# ExecStart=@BINDIR@/fail2ban-server -xf --logtarget=stdout start
+# if should be logged in systemd journal, use following line or set logtarget to sysout in fail2ban.local
+# ExecStart=@BINDIR@/fail2ban-server -xf --logtarget=sysout start
 ExecStop=@BINDIR@/fail2ban-client stop
 ExecReload=@BINDIR@/fail2ban-client reload
 PIDFile=/var/run/fail2ban/fail2ban.pid

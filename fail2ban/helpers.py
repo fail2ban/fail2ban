@@ -143,7 +143,7 @@ def str2LogLevel(value):
 		raise ValueError("Invalid log level %r" % value)
 	return ll
 
-def getVerbosityFormat(verbosity, fmt=' %(message)s'):
+def getVerbosityFormat(verbosity, fmt=' %(message)s', addtime=True):
 	"""Custom log format for the verbose runs
 	"""
 	if verbosity > 1: # pragma: no cover
@@ -152,7 +152,9 @@ def getVerbosityFormat(verbosity, fmt=' %(message)s'):
 		if verbosity > 2:
 			fmt = ' +%(relativeCreated)5d %(thread)X %(name)-25.25s %(levelname)-5.5s' + fmt
 		else:
-			fmt = ' %(asctime)-15s %(thread)X %(levelname)-5.5s' + fmt
+			fmt = ' %(thread)X %(levelname)-5.5s' + fmt
+			if addtime:
+				fmt = ' %(asctime)-15s' + fmt
 	return fmt
 
 

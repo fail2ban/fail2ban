@@ -99,7 +99,7 @@ class Fail2banCmdLine():
 		output("    -s <FILE>               socket path")
 		output("    -p <FILE>               pidfile path")
 		output("    --loglevel <LEVEL>      logging level")
-		output("    --logtarget <FILE>|STDOUT|STDERR|SYSLOG")
+		output("    --logtarget <TARGET>    logging target, use file-name or stdout, stderr, syslog or sysout.")
 		output("    --syslogsocket auto|<FILE>")
 		output("    -d                      dump configuration. For debugging")
 		output("    --dp, --dump-pretty     dump the configuration using more human readable representation")
