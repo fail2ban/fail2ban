@@ -53,6 +53,9 @@ ver. 0.10.2-dev-1 (2017/??/??) - development edition
   see "ssherr.c" for all possible SSH_ERR_..._ALG_MATCH errors (gh-1943, gh-1944);
 
 ### New Features
+* New Actions:
+  - `action.d/nginx-block-map.conf` - in order to ban not IP-related tickets via nginx (session blacklisting in
+    nginx-location with map-file);
 
 ### Enhancements
 * action.d/pf.conf: extended with bulk-unban, command `actionflush` in order to flush all bans at once.
