@@ -1185,7 +1185,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		'jails': (
 			'[nginx-blck-lst]',
 			'backend = polling',
-      'usedns = no',
+			'usedns = no',
 			'logpath = %(tmp)s/blck-failures.log',
 			'action = nginx-block-map[blck_lst_reload="", blck_lst_file="%(tmp)s/blck-lst.map"]',
 			'filter =',
