@@ -312,6 +312,9 @@ def with_foreground_server_thread(startextra={}):
 				finally:
 					DefLogSys.info('=== within server: end.  ===')
 					self.pruneLog()
+					# if seems to be down - try to catch end phase (wait a bit for end:True to recognize down state):
+					if not phase.get('end', None) and not os.path.exists(pjoin(tmp, "f2b.pid")):
+						Utils.wait_for(lambda: phase.get('end', None) is not None, MID_WAITTIME)
 					# stop (if still running):
 					if not phase.get('end', None):
 						self.execSuccess(startparams, "stop")

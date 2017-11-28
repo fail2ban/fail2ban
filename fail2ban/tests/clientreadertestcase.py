@@ -623,8 +623,6 @@ class JailsReaderTest(LogCaptureTestCase):
 						#print('****', actionName, opts.get('actionstart', ''))
 						self.assertIn('f2b-TEST', opts.get('actionstart', ''),
 							msg="Action file %r: interpolation of actionstart does not contains jail-name 'f2b-TEST'" % actionConfig)
-				self.assertIn('Init', actionReader.sections(),
-						msg="Action file %r is lacking [Init] section" % actionConfig)
 
 		def testReadStockJailConf(self):
 			jails = JailsReader(basedir=CONFIG_DIR, share_config=CONFIG_DIR_SHARE_CFG) # we are running tests from root project dir atm
