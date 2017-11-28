@@ -115,11 +115,12 @@ fail2banserver.PRODUCTION = False
 
 def _out_file(fn, handle=logSys.debug):
 	"""Helper which outputs content of the file at HEAVYDEBUG loglevels"""
-	handle('---- ' + fn + ' ----')
-	for line in fileinput.input(fn):
-		line = line.rstrip('\n')
-		handle(line)
-	handle('-'*30)
+	if (handle != logSys.debug or logSys.getEffectiveLevel() <= logging.DEBUG):
+		handle('---- ' + fn + ' ----')
+		for line in fileinput.input(fn):
+			line = line.rstrip('\n')
+			handle(line)
+		handle('-'*30)
 
 
 def _write_file(fn, mode, *lines):
@@ -127,8 +128,19 @@ def _write_file(fn, mode, *lines):
 	f.write('\n'.join(lines))
 	f.close()
 
+def _read_file(fn):
+	f = None
+	try:
+		f = open(fn)
+		return f.read()
+	finally:
+		if f is not None:
+			f.close()
 
-def _start_params(tmp, use_stock=False, logtarget="/dev/null", db=":memory:"):
+
+def _start_params(tmp, use_stock=False, use_stock_cfg=None, 
+	logtarget="/dev/null", db=":memory:", jails=("",), create_before_start=None
+):
 	cfg = pjoin(tmp, "config")
 	if db == 'auto':
 		db = pjoin(tmp, "f2b-db.sqlite3")
@@ -138,8 +150,7 @@ def _start_params(tmp, use_stock=False, logtarget="/dev/null", db=":memory:"):
 			"""Filters list of 'files' to contain only directories (under dir)"""
 			return [f for f in files if isdir(pjoin(dir, f))]
 		shutil.copytree(STOCK_CONF_DIR, cfg, ignore=ig_dirs)
-		os.symlink(os.path.abspath(pjoin(STOCK_CONF_DIR, "action.d")), pjoin(cfg, "action.d"))
-		os.symlink(os.path.abspath(pjoin(STOCK_CONF_DIR, "filter.d")), pjoin(cfg, "filter.d"))
+		use_stock_cfg = ('action.d', 'filter.d')
 		# replace fail2ban params (database with memory):
 		r = re.compile(r'^dbfile\s*=')
 		for line in fileinput.input(pjoin(cfg, "fail2ban.conf"), inplace=True):
@@ -170,13 +181,21 @@ def _start_params(tmp, use_stock=False, logtarget="/dev/null", db=":memory:"):
 			"",
 		)
 		_write_file(pjoin(cfg, "jail.conf"), "w",
-			"[INCLUDES]", "",
-			"[DEFAULT]", "",
-			"",
+			*((
+				"[INCLUDES]", "",
+			  "[DEFAULT]", "tmp = " + tmp, "",
+			)+jails)
 		)
 		if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
 			_out_file(pjoin(cfg, "fail2ban.conf"))
 			_out_file(pjoin(cfg, "jail.conf"))
+	# link stock actions and filters:
+	if use_stock_cfg and STOCK:
+		for n in use_stock_cfg:
+			os.symlink(os.path.abspath(pjoin(STOCK_CONF_DIR, n)), pjoin(cfg, n))
+	if create_before_start:
+		for n in create_before_start:
+			_write_file(n % {'tmp': tmp}, 'w', '')
 	# parameters (sock/pid and config, increase verbosity, set log, etc.):
 	vvv, llev = (), "INFO"
 	if unittest.F2B.log_level < logging.INFO: # pragma: no cover
@@ -191,17 +210,13 @@ def _start_params(tmp, use_stock=False, logtarget="/dev/null", db=":memory:"):
 	)
 
 def _get_pid_from_file(pidfile):
-	f = pid = None
+	pid = None
 	try:
-		f = open(pidfile)
-		pid = f.read()
+		pid = _read_file(pidfile)
 		pid = re.match(r'\S+', pid).group()
 		return int(pid)
 	except Exception as e: # pragma: no cover
 		logSys.debug(e)
-	finally:
-		if f is not None:
-			f.close()
 	return pid
 
 def _kill_srv(pidfile):
@@ -297,12 +312,16 @@ def with_foreground_server_thread(startextra={}):
 				finally:
 					DefLogSys.info('=== within server: end.  ===')
 					self.pruneLog()
-					# stop:
-					self.execSuccess(startparams, "stop")
-					# wait for end:
-					Utils.wait_for(lambda: phase.get('end', None) is not None, MAX_WAITTIME)
-					self.assertTrue(phase.get('end', None))
-					self.assertLogged("Shutdown successful", "Exiting Fail2ban")
+					# if seems to be down - try to catch end phase (wait a bit for end:True to recognize down state):
+					if not phase.get('end', None) and not os.path.exists(pjoin(tmp, "f2b.pid")):
+						Utils.wait_for(lambda: phase.get('end', None) is not None, MID_WAITTIME)
+					# stop (if still running):
+					if not phase.get('end', None):
+						self.execSuccess(startparams, "stop")
+						# wait for end:
+						Utils.wait_for(lambda: phase.get('end', None) is not None, MAX_WAITTIME)
+						self.assertTrue(phase.get('end', None))
+						self.assertLogged("Shutdown successful", "Exiting Fail2ban", all=True)
 			finally:
 				if th:
 					# we start client/server directly in current process (new thread),
@@ -1155,3 +1174,74 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"Jail 'test-jail1' stopped", 
 			"Jail 'test-jail1' started", all=True)
+
+	# test action.d/nginx-block-map.conf --
+	@with_foreground_server_thread(startextra={
+		# create log-file (avoid "not found" errors):
+		'create_before_start': ('%(tmp)s/blck-failures.log',),
+		# we need action.d/nginx-block-map.conf:
+		'use_stock_cfg': ('action.d',),
+		# jail-config:
+		'jails': (
+			'[nginx-blck-lst]',
+			'backend = polling',
+      'usedns = no',
+			'logpath = %(tmp)s/blck-failures.log',
+			'action = nginx-block-map[blck_lst_reload="", blck_lst_file="%(tmp)s/blck-lst.map"]',
+			'filter =',
+			'datepattern = ^Epoch',
+			'failregex = ^ failure "<F-ID>[^"]+</F-ID>" - <ADDR>',
+			'maxretry = 1', # ban by first failure
+			'enabled = true',
+	  )
+	})
+	def testServerActions_NginxBlockMap(self, tmp, startparams):
+		cfg = pjoin(tmp, "config")
+		lgfn = '%(tmp)s/blck-failures.log' % {'tmp': tmp}
+		mpfn = '%(tmp)s/blck-lst.map' % {'tmp': tmp}
+		# ban sessions (write log like nginx does it with f2b_session_errors log-format):
+		_write_file(lgfn, "w+",
+			str(int(MyTime.time())) + ' failure "125-000-001" - 192.0.2.1',
+			str(int(MyTime.time())) + ' failure "125-000-002" - 192.0.2.1',
+			str(int(MyTime.time())) + ' failure "125-000-003" - 192.0.2.1',
+			str(int(MyTime.time())) + ' failure "125-000-004" - 192.0.2.1',
+			str(int(MyTime.time())) + ' failure "125-000-005" - 192.0.2.1',
+		)
+		# check all sessions are banned (and blacklisted in map-file):
+		self.assertLogged(
+			"[nginx-blck-lst] Ban 125-000-001",
+			"[nginx-blck-lst] Ban 125-000-002",
+			"[nginx-blck-lst] Ban 125-000-003",
+			"[nginx-blck-lst] Ban 125-000-004",
+			"[nginx-blck-lst] Ban 125-000-005",
+			"Banned 5 / 5, 5 ticket(s)",
+			all=True, wait=MID_WAITTIME
+		)
+		_out_file(mpfn)
+		mp = _read_file(mpfn)
+		self.assertIn('\\125-000-001 1;\n', mp)
+		self.assertIn('\\125-000-002 1;\n', mp)
+		self.assertIn('\\125-000-003 1;\n', mp)
+		self.assertIn('\\125-000-004 1;\n', mp)
+		self.assertIn('\\125-000-005 1;\n', mp)
+
+		# unban 1, 2 and 5:
+		self.execSuccess(startparams, 'unban', '125-000-001', '125-000-002', '125-000-005')
+		_out_file(mpfn)
+		# check really unbanned but other sessions are still present (blacklisted in map-file):
+		mp = _read_file(mpfn)
+		self.assertNotIn('\\125-000-001 1;\n', mp)
+		self.assertNotIn('\\125-000-002 1;\n', mp)
+		self.assertNotIn('\\125-000-005 1;\n', mp)
+		self.assertIn('\\125-000-003 1;\n', mp)
+		self.assertIn('\\125-000-004 1;\n', mp)
+
+		# stop server and wait for end:
+		self.execSuccess(startparams, 'stop')
+		self.assertLogged("Shutdown successful", "Exiting Fail2ban", all=True, wait=MID_WAITTIME)
+
+		# check flushed (all sessions were deleted from map-file):
+		self.assertLogged("[nginx-blck-lst] Flush ticket(s) with nginx-block-map")
+		_out_file(mpfn)
+		mp = _read_file(mpfn)
+		self.assertEqual(mp, '')
