@@ -41,6 +41,7 @@ ver. 0.11.0-dev-0 (2017/??/??) - development nightly edition
 ### Fixes
 * Fixed logging to systemd-journal: new logtarget value SYSOUT can be used instead of STDOUT, to avoid 
   write of the time-stamp, if logging to systemd-journal from foreground mode (gh-1876)
+* Fixed recognition of the new date-format on mysqld-auth filter (gh-1639)
 * jail.conf: port `imap3` replaced with `imap` everywhere, since imap3 is not a standard port and old rarely 
   (if ever) used and can missing on some systems (e. g. debian stretch), see gh-1942.
 * config/paths-common.conf: added missing initial values (and small normalization in config/paths-*.conf)
@@ -53,6 +54,12 @@ ver. 0.11.0-dev-0 (2017/??/??) - development nightly edition
   see "ssherr.c" for all possible SSH_ERR_..._ALG_MATCH errors (gh-1943, gh-1944);
 
 ### New Features
+* datedetector: extended default date-patterns (allows extra space between the date and time stamps);
+  introduces 2 new format directives (with corresponding %Ex prefix for more precise parsing):
+  - %k - one- or two-digit number giving the hour of the day (0-23) on a 24-hour clock,
+    (corresponds %H, but allows space if not zero-padded).
+  - %l - one- or two-digit number giving the hour of the day (12-11) on a 12-hour clock,
+    (corresponds %I, but allows space if not zero-padded).
 * New Actions:
   - `action.d/nginx-block-map.conf` - in order to ban not IP-related tickets via nginx (session blacklisting in
     nginx-location with map-file);
@@ -456,7 +463,10 @@ releases.
 * filter.d/dovecot.conf:
     - fixed failregex, see gh-1879 (partially cherry-picked from gh-1880)
     - extended to match pam_authenticate failures with "Permission denied" (gh-1897)
-* filter.d/exim.conf - fixed failregex for case of flood attempts with `D=0s` (gh-1887)
+* filter.d/exim.conf
+    - fixed failregex for case of flood attempts with `D=0s` (gh-1887)
+    - fixed failregex of "AUTH command used when not advertised" to better handle the foreign
+      input SMTP command (lower/mixed case auth command, prevent injection) (gh-1979)
 * filter.d/postfix-*.conf - added optional port regex (gh-1902)
 
 ### New Features

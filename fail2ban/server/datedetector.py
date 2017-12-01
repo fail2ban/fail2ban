@@ -124,22 +124,22 @@ class DateDetectorCache(object):
 		"""
 		self.__tmpcache = [], []
 		# ISO 8601, simple date, optional subsecond and timezone:
-		# 2005-01-23T21:59:59.981746, 2005-01-23 21:59:59
+		# 2005-01-23T21:59:59.981746, 2005-01-23 21:59:59, 2005-01-23  8:59:59
 		# simple date: 2005/01/23 21:59:59 
 		# custom for syslog-ng 2006.12.21 06:43:20
-		self._cacheTemplate("%ExY(?P<_sep>[-/.])%m(?P=_sep)%d[T ]%H:%M:%S(?:[.,]%f)?(?:\s*%z)?")
+		self._cacheTemplate("%ExY(?P<_sep>[-/.])%m(?P=_sep)%d(?:T|  ?)%H:%M:%S(?:[.,]%f)?(?:\s*%z)?")
 		# asctime with optional day, subsecond and/or year:
 		# Sun Jan 23 21:59:59.011 2005 
-		self._cacheTemplate("(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?")
+		self._cacheTemplate("(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?")
 		# asctime with optional day, subsecond and/or year coming after day
 		# http://bugs.debian.org/798923
 		# Sun Jan 23 2005 21:59:59.011
-		self._cacheTemplate("(?:%a )?%b %d %ExY %H:%M:%S(?:\.%f)?")
+		self._cacheTemplate("(?:%a )?%b %d %ExY %k:%M:%S(?:\.%f)?")
 		# simple date too (from x11vnc): 23/01/2005 21:59:59 
 		# and with optional year given by 2 digits: 23/01/05 21:59:59 
 		# (See http://bugs.debian.org/537610)
 		# 17-07-2008 17:23:25
-		self._cacheTemplate("%d(?P<_sep>[-/])%m(?P=_sep)(?:%ExY|%Exy) %H:%M:%S")
+		self._cacheTemplate("%d(?P<_sep>[-/])%m(?P=_sep)(?:%ExY|%Exy) %k:%M:%S")
 		# Apache format optional time zone:
 		# [31/Oct/2006:09:22:55 -0000]
 		# 26-Jul-2007 15:20:52
@@ -150,8 +150,8 @@ class DateDetectorCache(object):
 		self._cacheTemplate("%m/%d/%ExY:%H:%M:%S")
 		# 01-27-2012 16:22:44.252
 		# subseconds explicit to avoid possible %m<->%d confusion
-		# with previous ("%d-%m-%ExY %H:%M:%S" by "%d(?P<_sep>[-/])%m(?P=_sep)(?:%ExY|%Exy) %H:%M:%S")
-		self._cacheTemplate("%m-%d-%ExY %H:%M:%S(?:\.%f)?")
+		# with previous ("%d-%m-%ExY %k:%M:%S" by "%d(?P<_sep>[-/])%m(?P=_sep)(?:%ExY|%Exy) %k:%M:%S")
+		self._cacheTemplate("%m-%d-%ExY %k:%M:%S(?:\.%f)?")
 		# Epoch
 		self._cacheTemplate('EPOCH')
 		# Only time information in the log
@@ -163,14 +163,14 @@ class DateDetectorCache(object):
 		# Apache Tomcat
 		self._cacheTemplate("%b %d, %ExY %I:%M:%S %p")
 		# ASSP: Apr-27-13 02:33:06
-		self._cacheTemplate("^%b-%d-%Exy %H:%M:%S")
-		# 20050123T215959, 20050123 215959
-		self._cacheTemplate("%ExY%Exm%Exd[T ]%ExH%ExM%ExS(?:[.,]%f)?(?:\s*%z)?")
+		self._cacheTemplate("^%b-%d-%Exy %k:%M:%S")
+		# 20050123T215959, 20050123 215959, 20050123  85959
+		self._cacheTemplate("%ExY%Exm%Exd(?:T|  ?)%ExH%ExM%ExS(?:[.,]%f)?(?:\s*%z)?")
 		# prefixed with optional named time zone (monit):
 		# PDT Apr 16 21:05:29
-		self._cacheTemplate("(?:%Z )?(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?")
+		self._cacheTemplate("(?:%Z )?(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?")
 		# +00:00 Jan 23 21:59:59.011 2005 
-		self._cacheTemplate("(?:%z )?(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?")
+		self._cacheTemplate("(?:%z )?(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?")
 		# TAI64N
 		self._cacheTemplate("TAI64N")
 		#

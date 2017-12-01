@@ -43,6 +43,13 @@ def _getYearCentRE(cent=(0,3), distance=3, now=(MyTime.now(), MyTime.alternateNo
 
 timeRE = TimeRE()
 
+# %k - one- or two-digit number giving the hour of the day (0-23) on a 24-hour clock,
+# (corresponds %H, but allows space if not zero-padded).
+# %l - one- or two-digit number giving the hour of the day (12-11) on a 12-hour clock,
+# (corresponds %I, but allows space if not zero-padded).
+timeRE['k'] = r" ?(?P<H>[0-2]?\d)"
+timeRE['l'] = r" ?(?P<I>1?\d)"
+
 # TODO: because python currently does not support mixing of case-sensitive with case-insensitive matching,
 #       check how TZ (in uppercase) can be combined with %a/%b etc. (that are currently case-insensitive), 
 #       to avoid invalid date-time recognition in strings like '11-Aug-2013 03:36:11.372 error ...' 
@@ -61,6 +68,8 @@ timeRE['Exz'] = r"(?P<z>(?:%s)?[+-][01]\d(?::?\d{2})?|%s)" % (TZ_ABBR_RE, TZ_ABB
 timeRE['Exd'] = r"(?P<d>3[0-1]|[1-2]\d|0[1-9])"
 timeRE['Exm'] = r"(?P<m>1[0-2]|0[1-9])"
 timeRE['ExH'] = r"(?P<H>2[0-3]|[0-1]\d)"
+timeRE['Exk'] = r" ?(?P<H>2[0-3]|[0-1]\d|\d)"
+timeRE['Exl'] = r" ?(?P<I>1[0-2]|\d)"
 timeRE['ExM'] = r"(?P<M>[0-5]\d)"
 timeRE['ExS'] = r"(?P<S>6[0-1]|[0-5]\d)"
 # more precise year patterns, within same century of last year and
