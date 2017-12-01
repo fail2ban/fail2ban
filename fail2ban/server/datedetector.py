@@ -164,7 +164,7 @@ class DateDetectorCache(object):
 		self._cacheTemplate("%b %d, %ExY %I:%M:%S %p")
 		# ASSP: Apr-27-13 02:33:06
 		self._cacheTemplate("^%b-%d-%Exy %k:%M:%S")
-		# 20050123T215959, 20050123 215959, , 20050123  85959
+		# 20050123T215959, 20050123 215959, 20050123  85959
 		self._cacheTemplate("%ExY%Exm%Exd(?:T|  ?)%ExH%ExM%ExS(?:[.,]%f)?(?:\s*%z)?")
 		# prefixed with optional named time zone (monit):
 		# PDT Apr 16 21:05:29
