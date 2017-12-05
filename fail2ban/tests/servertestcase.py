@@ -831,8 +831,8 @@ class TransmitterLogging(TransmitterBase):
 		for logTarget in logTargets:
 			os.remove(logTarget)
 
-		self.setGetTest("logtarget", "STDOUT")
-		self.setGetTest("logtarget", "STDERR")
+		self.setGetTest("logtarget", 'STDOUT[format="%(message)s"]', 'STDOUT')
+		self.setGetTest("logtarget", 'STDERR[datetime=off]', 'STDERR')
 
 	def testLogTargetSYSLOG(self):
 		if not os.path.exists("/dev/log"):
