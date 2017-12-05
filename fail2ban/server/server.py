@@ -37,7 +37,7 @@ from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
-from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, excepthook
+from ..helpers import getLogger, extractOptions, str2LogLevel, getVerbosityFormat, excepthook
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -547,6 +547,7 @@ class Server:
 	
 	def setLogTarget(self, target):
 		# check reserved targets in uppercase, don't change target, because it can be file:
+		target, logOptions = extractOptions(target)
 		systarget = target.upper()
 		with self.__loggingLock:
 			# don't set new handlers if already the same
@@ -559,7 +560,12 @@ class Server:
 			# set a format which is simpler for console use
 			fmt = "%(name)-24s[%(process)d]: %(levelname)-7s %(message)s"
 			if systarget == "SYSLOG":
-				facility = logging.handlers.SysLogHandler.LOG_DAEMON
+				facility = logOptions.get('facility', 'DAEMON').upper()
+				try:
+					facility = getattr(logging.handlers.SysLogHandler, 'LOG_' + facility)
+				except AttributeError: # pragma: no cover
+					logSys.error("Unable to set facility %r, using 'DAEMON'", logOptions.get('facility'))
+					facility = logging.handlers.SysLogHandler.LOG_DAEMON
 				if self.__syslogSocket == "auto":
 					import platform
 					self.__syslogSocket = self.__autoSyslogSocketPaths.get(
@@ -610,9 +616,16 @@ class Server:
 				if self.__verbose is None:
 					self.__verbose = logging.DEBUG - logger.getEffectiveLevel() + 1
 			# If handler don't already add date to the message:
-			addtime = systarget not in ("SYSLOG", "SYSOUT")
+			addtime = logOptions.get('datetime')
+			if addtime is not None:
+				addtime = addtime in ('1', 'on', 'true', 'yes')
+			else:
+				addtime = systarget not in ("SYSLOG", "SYSOUT")
+			# If log-format is redefined in options:
+			if logOptions.get('format', '') != '':
+				fmt = logOptions.get('format')
 			# verbose log-format:
-			if self.__verbose is not None and self.__verbose > 2: # pragma: no cover
+			elif self.__verbose is not None and self.__verbose > 2: # pragma: no cover
 				fmt = getVerbosityFormat(self.__verbose-1,
 					addtime=addtime)
 			elif addtime:
