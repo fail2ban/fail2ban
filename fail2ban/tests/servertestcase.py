@@ -42,7 +42,7 @@ from ..server.ticket import BanTicket
 from ..server.utils import Utils
 from .dummyjail import DummyJail
 from .utils import LogCaptureTestCase
-from ..helpers import getLogger, PREFER_ENC
+from ..helpers import getLogger, extractOptions, PREFER_ENC
 from .. import version
 
 try:
@@ -831,8 +831,8 @@ class TransmitterLogging(TransmitterBase):
 		for logTarget in logTargets:
 			os.remove(logTarget)
 
-		self.setGetTest("logtarget", "STDOUT")
-		self.setGetTest("logtarget", "STDERR")
+		self.setGetTest("logtarget", 'STDOUT[format="%(message)s"]', 'STDOUT')
+		self.setGetTest("logtarget", 'STDERR[datetime=off]', 'STDERR')
 
 	def testLogTargetSYSLOG(self):
 		if not os.path.exists("/dev/log"):
@@ -1034,7 +1034,7 @@ class LoggingTests(LogCaptureTestCase):
 					os.remove(f)
 
 
-from clientreadertestcase import ActionReader, JailReader, JailsReader, CONFIG_DIR, STOCK
+from clientreadertestcase import ActionReader, JailsReader, CONFIG_DIR, STOCK
 
 class ServerConfigReaderTests(LogCaptureTestCase):
 
@@ -1145,7 +1145,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 
 		def getDefaultJailStream(self, jail, act):
 			act = act.replace('%(__name__)s', jail)
-			actName, actOpt = JailReader.extractOptions(act)
+			actName, actOpt = extractOptions(act)
 			stream = [
 				['add', jail, 'polling'],
 				# ['set', jail, 'addfailregex', 'DUMMY-REGEX <HOST>'],

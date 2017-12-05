@@ -69,6 +69,13 @@ ver. 0.10.2-dev-1 (2017/??/??) - development edition
 ### Enhancements
 * jail.conf: extended with new parameter `mode` for the filters supporting it (gh-1988);
 * action.d/pf.conf: extended with bulk-unban, command `actionflush` in order to flush all bans at once.
+* Introduced new parameters for logging within fail2ban-server (gh-1980).
+  Usage `logtarget = target[facility=..., datetime=on|off, format="..."]`:
+  - `facility` - specify syslog facility (default `daemon`, see https://docs.python.org/2/library/logging.handlers.html#sysloghandler
+     for the list of facilities);
+  - `datetime` - add date-time to the message (default on, ignored if `format` specified);
+  - `format` - specify own format how it will be logged, for example for short-log into STDOUT:
+      `fail2ban-server -f --logtarget 'stdout[format="%(relativeCreated)5d | %(message)s"]' start`;
 
 
 ver. 0.10.1 (2017/10/12) - succeeded-before-friday-the-13th
