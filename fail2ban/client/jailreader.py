@@ -33,23 +33,13 @@ from .configreader import ConfigReaderUnshared, ConfigReader
 from .filterreader import FilterReader
 from .actionreader import ActionReader
 from ..version import version
-from ..helpers import getLogger
-from ..helpers import splitwords
+from ..helpers import getLogger, extractOptions, splitwords
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
 
 class JailReader(ConfigReader):
-	
-	# regex, to extract list of options:
-	optionCRE = re.compile(r"^([^\[]+)(?:\[(.*)\])?\s*$", re.DOTALL)
-	# regex, to iterate over single option in option list, syntax:
-	# `action = act[p1="...", p2='...', p3=...]`, where the p3=... not contains `,` or ']'
-	# since v0.10 separator extended with `]\s*[` for support of multiple option groups, syntax 
-	# `action = act[p1=...][p2=...]`
-	optionExtractRE = re.compile(
-		r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$)', re.DOTALL)
 	
 	def __init__(self, name, force_enable=False, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
@@ -134,7 +124,7 @@ class JailReader(ConfigReader):
 			# Read filter
 			flt = self.__opts["filter"]
 			if flt:
-				filterName, filterOpt = JailReader.extractOptions(flt)
+				filterName, filterOpt = extractOptions(flt)
 				if not filterName:
 					raise JailDefError("Invalid filter definition %r" % flt)
 				self.__filter = FilterReader(
@@ -164,7 +154,7 @@ class JailReader(ConfigReader):
 				try:
 					if not act:			  # skip empty actions
 						continue
-					actName, actOpt = JailReader.extractOptions(act)
+					actName, actOpt = extractOptions(act)
 					if not actName:
 						raise JailDefError("Invalid action definition %r" % act)
 					if actName.endswith(".py"):
@@ -268,22 +258,5 @@ class JailReader(ConfigReader):
 		stream.insert(0, ["add", self.__name, backend])
 		return stream
 	
-	@staticmethod
-	def extractOptions(option):
-		match = JailReader.optionCRE.match(option)
-		if not match:
-			# TODO proper error handling
-			return None, None
-		option_name, optstr = match.groups()
-		option_opts = dict()
-		if optstr:
-			for optmatch in JailReader.optionExtractRE.finditer(optstr):
-				opt = optmatch.group(1)
-				value = [
-					val for val in optmatch.group(2,3,4) if val is not None][0]
-				option_opts[opt.strip()] = value.strip()
-		return option_name, option_opts
-
-
 class JailDefError(Exception):
 	pass
