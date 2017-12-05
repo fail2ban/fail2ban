@@ -49,6 +49,7 @@ ver. 0.11.0-dev-0 (2017/??/??) - development nightly edition
 * `action.d/pf.conf`: 
   - fixed syntax error in achnor definition (documentation, see gh-1919);
   - enclose ports in braces for multiport jails (see gh-1925);
+* `action.d/firewallcmd-ipset.conf`: fixed create of set for ipv6 (missing `family inet6`, gh-1990)
 * `filter.d/sshd.conf`: extended failregex for modes "extra"/"aggressive": now finds all possible (also future)
   forms of "no matching (cipher|mac|MAC|compression method|key exchange method|host key type) found", 
   see "ssherr.c" for all possible SSH_ERR_..._ALG_MATCH errors (gh-1943, gh-1944);
@@ -60,12 +61,21 @@ ver. 0.11.0-dev-0 (2017/??/??) - development nightly edition
     (corresponds %H, but allows space if not zero-padded).
   - %l - one- or two-digit number giving the hour of the day (12-11) on a 12-hour clock,
     (corresponds %I, but allows space if not zero-padded).
+* `filter.d/exim.conf`: added mode `aggressive` to ban flood resp. DDOS-similar failures (gh-1983);
 * New Actions:
   - `action.d/nginx-block-map.conf` - in order to ban not IP-related tickets via nginx (session blacklisting in
     nginx-location with map-file);
 
 ### Enhancements
+* jail.conf: extended with new parameter `mode` for the filters supporting it (gh-1988);
 * action.d/pf.conf: extended with bulk-unban, command `actionflush` in order to flush all bans at once.
+* Introduced new parameters for logging within fail2ban-server (gh-1980).
+  Usage `logtarget = target[facility=..., datetime=on|off, format="..."]`:
+  - `facility` - specify syslog facility (default `daemon`, see https://docs.python.org/2/library/logging.handlers.html#sysloghandler
+     for the list of facilities);
+  - `datetime` - add date-time to the message (default on, ignored if `format` specified);
+  - `format` - specify own format how it will be logged, for example for short-log into STDOUT:
+      `fail2ban-server -f --logtarget 'stdout[format="%(relativeCreated)5d | %(message)s"]' start`;
 
 
 ver. 0.10.1 (2017/10/12) - succeeded-before-friday-the-13th

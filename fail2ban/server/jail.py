@@ -29,8 +29,7 @@ import random
 import Queue
 
 from .actions import Actions
-from ..client.jailreader import JailReader
-from ..helpers import getLogger, MyTime
+from ..helpers import getLogger, extractOptions, MyTime
 from .mytime import MyTime
 
 # Gets the instance of the logger.
@@ -90,7 +89,7 @@ class Jail(object):
 		return "%s(%r)" % (self.__class__.__name__, self.name)
 
 	def _setBackend(self, backend):
-		backend, beArgs = JailReader.extractOptions(backend)
+		backend, beArgs = extractOptions(backend)
 		backend = backend.lower()		# to assure consistent matching
 
 		backends = self._BACKENDS

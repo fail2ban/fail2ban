@@ -201,7 +201,7 @@ def _start_params(tmp, use_stock=False, use_stock_cfg=None,
 		_write_file(pjoin(cfg, "fail2ban.conf"), "w",
 			"[Definition]",
 			"loglevel = INFO",
-			"logtarget = " + logtarget,
+			"logtarget = " + logtarget.replace('%', '%%'),
 			"syslogsocket = auto",
 			"socket = " + pjoin(tmp, "f2b.sock"),
 			"pidfile = " + pjoin(tmp, "f2b.pid"),
@@ -767,7 +767,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 	def testKillAfterStart(self, tmp):
 		try:
 			# to prevent fork of test-cases process, start server in background via command:
-			startparams = _start_params(tmp, logtarget=pjoin(tmp, "f2b.log"))
+			startparams = _start_params(tmp, logtarget=pjoin(tmp,
+				'f2b.log[format="SRV: %(relativeCreated)3d | %(message)s", datetime=off]'))
 			# start (in new process, using the same python version):
 			cmd = (sys.executable, pjoin(BIN, SERVER))
 			logSys.debug('Start %s ...', cmd)

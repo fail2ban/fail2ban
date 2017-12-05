@@ -83,3 +83,17 @@
 2017-11-28 14:14:31 SMTP protocol error in "aUtH lOgIn" H=(roxzgj) [192.0.2.5] AUTH command used when not advertised
 # failJSON: { "time": "2017-11-28T14:14:32", "match": true , "host": "192.0.2.6", "desc": "quoted injecting on AUTH command" }
 2017-11-28 14:14:32 SMTP protocol error in "aUtH lOgIn" H=(test) [8.8.8.8]" H=(roxzgj) [192.0.2.6] AUTH command used when not advertised
+
+## no matches with `mode = normal`:
+
+# failJSON: { "match": false , "desc": "aggressive mode only" }
+2017-12-03 08:32:00 no host name found for IP address 192.0.2.8
+# failJSON: { "match": false , "desc": "aggressive mode only" }
+2017-12-03 08:51:35 no IP address found for host test.example.com (during SMTP connection from [192.0.2.9])
+
+# filterOptions: [{"mode": "aggressive"}]
+
+# failJSON: { "time": "2017-12-03T08:32:00", "match": true , "host": "192.0.2.8", "desc": "no host found for IP" }
+2017-12-03 08:32:00 no host name found for IP address 192.0.2.8
+# failJSON: { "time": "2017-12-03T08:51:35", "match": true , "host": "192.0.2.9", "desc": "no IP found for host" }
+2017-12-03 08:51:35 no IP address found for host test.example.com (during SMTP connection from [192.0.2.9])

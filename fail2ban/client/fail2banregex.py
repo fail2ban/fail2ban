@@ -46,12 +46,12 @@ except ImportError:
 	FilterSystemd = None
 
 from ..version import version
-from .jailreader import JailReader
 from .filterreader import FilterReader
 from ..server.filter import Filter, FileContainer
 from ..server.failregex import Regex, RegexException
 
-from ..helpers import str2LogLevel, getVerbosityFormat, FormatterWithTraceBack, getLogger, PREFER_ENC
+from ..helpers import str2LogLevel, getVerbosityFormat, FormatterWithTraceBack, getLogger, \
+  extractOptions, PREFER_ENC
 # Gets the instance of the logger.
 logSys = getLogger("fail2ban")
 
@@ -287,7 +287,7 @@ class Fail2banRegex(object):
 		fltFile = None
 		fltOpt = {}
 		if regextype == 'fail':
-			fltName, fltOpt = JailReader.extractOptions(value)
+			fltName, fltOpt = extractOptions(value)
 			if fltName is not None:
 				if "." in fltName[~5:]:
 					tryNames = (fltName,)
@@ -606,7 +606,7 @@ class Fail2banRegex(object):
 				return False
 			output( "Use         systemd journal" )
 			output( "Use         encoding : %s" % self._encoding )
-			backend, beArgs = JailReader.extractOptions(cmd_log)
+			backend, beArgs = extractOptions(cmd_log)
 			flt = FilterSystemd(None, **beArgs)
 			flt.setLogEncoding(self._encoding)
 			myjournal = flt.getJournalReader()

@@ -30,7 +30,7 @@ import tempfile
 import unittest
 from ..client.configreader import ConfigReader, ConfigReaderUnshared, NoSectionError
 from ..client import configparserinc
-from ..client.jailreader import JailReader
+from ..client.jailreader import JailReader, extractOptions
 from ..client.filterreader import FilterReader
 from ..client.jailsreader import JailsReader
 from ..client.actionreader import ActionReader, CommandAction
@@ -260,25 +260,25 @@ class JailReaderTest(LogCaptureTestCase):
 		# Simple example
 		option = "mail-whois[name=SSH]"
 		expected = ('mail-whois', {'name': 'SSH'})
-		result = JailReader.extractOptions(option)
+		result = extractOptions(option)
 		self.assertEqual(expected, result)
 
-		self.assertEqual(('mail.who_is', {}), JailReader.extractOptions("mail.who_is"))
-		self.assertEqual(('mail.who_is', {'a':'cat', 'b':'dog'}), JailReader.extractOptions("mail.who_is[a=cat,b=dog]"))
-		self.assertEqual(('mail--ho_is', {}), JailReader.extractOptions("mail--ho_is"))
+		self.assertEqual(('mail.who_is', {}), extractOptions("mail.who_is"))
+		self.assertEqual(('mail.who_is', {'a':'cat', 'b':'dog'}), extractOptions("mail.who_is[a=cat,b=dog]"))
+		self.assertEqual(('mail--ho_is', {}), extractOptions("mail--ho_is"))
 
-		self.assertEqual(('mail--ho_is', {}), JailReader.extractOptions("mail--ho_is['s']"))
+		self.assertEqual(('mail--ho_is', {}), extractOptions("mail--ho_is['s']"))
 		#self.printLog()
 		#self.assertLogged("Invalid argument ['s'] in ''s''")
 
-		self.assertEqual(('mail', {'a': ','}), JailReader.extractOptions("mail[a=',']"))
+		self.assertEqual(('mail', {'a': ','}), extractOptions("mail[a=',']"))
 
-		#self.assertRaises(ValueError, JailReader.extractOptions ,'mail-how[')
+		#self.assertRaises(ValueError, extractOptions ,'mail-how[')
 
 		# Empty option
 		option = "abc[]"
 		expected = ('abc', {})
-		result = JailReader.extractOptions(option)
+		result = extractOptions(option)
 		self.assertEqual(expected, result)
 
 		# More complex examples
@@ -296,11 +296,11 @@ class JailReaderTest(LogCaptureTestCase):
 			'opt10': "",
 			'opt11': "",
 		})
-		result = JailReader.extractOptions(option)
+		result = extractOptions(option)
 		self.assertEqual(expected, result)
 
 		# And multiple groups (`][` instead of `,`)
-		result = JailReader.extractOptions(option.replace(',', ']['))
+		result = extractOptions(option.replace(',', ']['))
 		expected2 = (expected[0],
 		 dict((k, v.replace(',', '][')) for k, v in expected[1].iteritems())
 		)
@@ -439,7 +439,7 @@ class FilterReaderTest(unittest.TestCase):
 
 	def testFilterReaderSubstitionKnown(self):
 		output = [['set', 'jailname', 'addfailregex', 'to=test,sweet@example.com,test2,sweet@example.com fromip=<IP>']]
-		filterName, filterOpt = JailReader.extractOptions(
+		filterName, filterOpt = extractOptions(
 			'substition[honeypot="<sweet>,<known/honeypot>", sweet="test,<known/honeypot>,test2"]')
 		filterReader = FilterReader('substition', "jailname", filterOpt,
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
@@ -650,7 +650,7 @@ class JailsReaderTest(LogCaptureTestCase):
 				if jail == 'INCLUDES':
 					continue
 				filterName = jails.get(jail, 'filter')
-				filterName, filterOpt = JailReader.extractOptions(filterName)
+				filterName, filterOpt = extractOptions(filterName)
 				allFilters.add(filterName)
 				self.assertTrue(len(filterName))
 				# moreover we must have a file for it
@@ -669,7 +669,7 @@ class JailsReaderTest(LogCaptureTestCase):
 				# somewhat duplicating here what is done in JailsReader if
 				# the jail is enabled
 				for act in actions.split('\n'):
-					actName, actOpt = JailReader.extractOptions(act)
+					actName, actOpt = extractOptions(act)
 					self.assertTrue(len(actName))
 					self.assertTrue(isinstance(actOpt, dict))
 					if actName == 'iptables-multiport':
@@ -696,7 +696,7 @@ class JailsReaderTest(LogCaptureTestCase):
 					if not (a.endswith('common.conf') or a.endswith('-aggressive.conf')))
 			# get filters of all jails (filter names without options inside filter[...])
 			filters_jail = set(
-				JailReader.extractOptions(jail.options['filter'])[0] for jail in jails.jails
+				extractOptions(jail.options['filter'])[0] for jail in jails.jails
 			)
 			self.maxDiff = None
 			self.assertTrue(filters.issubset(filters_jail),
