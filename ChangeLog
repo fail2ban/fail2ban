@@ -49,6 +49,7 @@ ver. 0.10.2-dev-1 (2017/??/??) - development edition
 * `action.d/pf.conf`: 
   - fixed syntax error in achnor definition (documentation, see gh-1919);
   - enclose ports in braces for multiport jails (see gh-1925);
+* `action.d/firewallcmd-ipset.conf`: fixed create of set for ipv6 (missing `family inet6`, gh-1990)
 * `filter.d/sshd.conf`: extended failregex for modes "extra"/"aggressive": now finds all possible (also future)
   forms of "no matching (cipher|mac|MAC|compression method|key exchange method|host key type) found", 
   see "ssherr.c" for all possible SSH_ERR_..._ALG_MATCH errors (gh-1943, gh-1944);
