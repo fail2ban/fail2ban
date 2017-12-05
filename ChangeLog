@@ -60,11 +60,13 @@ ver. 0.10.2-dev-1 (2017/??/??) - development edition
     (corresponds %H, but allows space if not zero-padded).
   - %l - one- or two-digit number giving the hour of the day (12-11) on a 12-hour clock,
     (corresponds %I, but allows space if not zero-padded).
+* `filter.d/exim.conf`: added mode `aggressive` to ban flood resp. DDOS-similar failures (gh-1983);
 * New Actions:
   - `action.d/nginx-block-map.conf` - in order to ban not IP-related tickets via nginx (session blacklisting in
     nginx-location with map-file);
 
 ### Enhancements
+* jail.conf: extended with new parameter `mode` for the filters supporting it (gh-1988);
 * action.d/pf.conf: extended with bulk-unban, command `actionflush` in order to flush all bans at once.
 
 
