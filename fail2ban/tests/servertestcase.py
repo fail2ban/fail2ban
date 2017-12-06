@@ -1656,6 +1656,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						"`ipset create f2b-j-w-fwcmd-ipset6 hash:ip timeout 600 family inet6`",
 						"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					),
+					'flush': (
+						"`ipset flush f2b-j-w-fwcmd-ipset`",
+						"`ipset flush f2b-j-w-fwcmd-ipset6`",
+					),
 					'stop': (
 						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 						"`ipset flush f2b-j-w-fwcmd-ipset`",
