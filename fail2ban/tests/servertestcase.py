@@ -1322,14 +1322,14 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables-ipset-proto6 --
-				('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
+				('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, bantime="10m", default-timeout=0, port="http", protocol="tcp", chain="<known/chain>"]', {
 					'ip4': (' f2b-j-w-iptables-ipset ',), 'ip6': (' f2b-j-w-iptables-ipset6 ',),
 					'ip4-start': (
-						"`ipset create f2b-j-w-iptables-ipset hash:ip`",
+						"`ipset create f2b-j-w-iptables-ipset hash:ip timeout 0`",
 						"`iptables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 					), 
 					'ip6-start': (
-						"`ipset create f2b-j-w-iptables-ipset6 hash:ip family inet6`",
+						"`ipset create f2b-j-w-iptables-ipset6 hash:ip timeout 0 family inet6`",
 						"`ip6tables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					),
 					'flush': (
@@ -1360,14 +1360,14 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# iptables-ipset-proto6-allports --
-				('j-w-iptables-ipset-ap', 'iptables-ipset-proto6-allports[name=%(__name__)s, bantime="10m", chain="<known/chain>"]', {
+				('j-w-iptables-ipset-ap', 'iptables-ipset-proto6-allports[name=%(__name__)s, bantime="10m", default-timeout=0, chain="<known/chain>"]', {
 					'ip4': (' f2b-j-w-iptables-ipset-ap ',), 'ip6': (' f2b-j-w-iptables-ipset-ap6 ',),
 					'ip4-start': (
-						"`ipset create f2b-j-w-iptables-ipset-ap hash:ip`",
+						"`ipset create f2b-j-w-iptables-ipset-ap hash:ip timeout 0`",
 						"`iptables -w -I INPUT -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
 					), 
 					'ip6-start': (
-						"`ipset create f2b-j-w-iptables-ipset-ap6 hash:ip family inet6`",
+						"`ipset create f2b-j-w-iptables-ipset-ap6 hash:ip timeout 0 family inet6`",
 						"`ip6tables -w -I INPUT -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					),
 					'flush': (
@@ -1667,14 +1667,14 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),					
 				}),
 				# firewallcmd-ipset --
-				('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
+				('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, bantime="10m", default-timeout=0, port="http", protocol="tcp", chain="<known/chain>"]', {
 					'ip4': (' f2b-j-w-fwcmd-ipset ',), 'ip6': (' f2b-j-w-fwcmd-ipset6 ',),
 					'ip4-start': (
-						"`ipset create f2b-j-w-fwcmd-ipset hash:ip`",
+						"`ipset create f2b-j-w-fwcmd-ipset hash:ip timeout 0`",
 						"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 					), 
 					'ip6-start': (
-						"`ipset create f2b-j-w-fwcmd-ipset6 hash:ip family inet6`",
+						"`ipset create f2b-j-w-fwcmd-ipset6 hash:ip timeout 0 family inet6`",
 						"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					),
 					'stop': (
