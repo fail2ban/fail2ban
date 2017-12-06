@@ -82,7 +82,7 @@ class Server:
 
 	def __sigTERMhandler(self, signum, frame): # pragma: no cover - indirect tested
 		logSys.debug("Caught signal %d. Exiting", signum)
-		self.quit_signal()
+		self.quit()
 	
 	def __sigUSR1handler(self, signum, fname): # pragma: no cover - indirect tested
 		logSys.debug("Caught signal %d. Flushing logs", signum)
@@ -152,7 +152,7 @@ class Server:
 		except AsyncServerException as e:
 			logSys.error("Could not start server: %s", e)
 
-		# Stop server
+		# Stop (if not yet already executed):
 		self.quit()
 
 		# Removes the PID file.
@@ -161,12 +161,21 @@ class Server:
 			os.remove(pidfile)
 		except (OSError, IOError) as e: # pragma: no cover
 			logSys.error("Unable to remove PID file: %s", e)
-		logSys.info("Exiting Fail2ban")
 
 	def quit(self):
-		self.quit_signal()
+		# Prevent to call quit twice:
+		self.quit = lambda: False
 
 		logSys.info("Shutdown in progress...")
+
+		# Stop communication first because if jail's unban action
+		# tries to communicate via fail2ban-client we get a lockup
+		# among threads.  So the simplest resolution is to stop all
+		# communications first (which should be ok anyways since we
+		# are exiting)
+		# See https://github.com/fail2ban/fail2ban/issues/7
+		if self.__asyncServer is not None:
+			self.__asyncServer.stop_communication()
 
 		# Restore default signal handlers:
 		if _thread_name() == '_MainThread':
@@ -182,18 +191,11 @@ class Server:
 			self.__db.close()
 			self.__db = None
 
-	def quit_signal(self):
-		# Prevent to call quit_signal twice:
-		self.quit_signal = lambda: False
-		# Stop communication first because if jail's unban action
-		# tries to communicate via fail2ban-client we get a lockup
-		# among threads.  So the simplest resolution is to stop all
-		# communications first (which should be ok anyways since we
-		# are exiting)
-		# See https://github.com/fail2ban/fail2ban/issues/7
+		# Stop async
 		if self.__asyncServer is not None:
 			self.__asyncServer.stop()
 			self.__asyncServer = None
+		logSys.info("Exiting Fail2ban")
 
 	def addJail(self, name, backend):
 		addflg = True
@@ -610,7 +612,7 @@ class Server:
 				try:
 					handler.flush()
 					handler.close()
-				except (ValueError, KeyError):  # pragma: no cover
+				except (ValueError, KeyError): # pragma: no cover
 					# Is known to be thrown after logging was shutdown once
 					# with older Pythons -- seems to be safe to ignore there
 					# At least it was still failing on 2.6.2-0ubuntu1 (jaunty)
