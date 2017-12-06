@@ -82,7 +82,7 @@ class Server:
 
 	def __sigTERMhandler(self, signum, frame): # pragma: no cover - indirect tested
 		logSys.debug("Caught signal %d. Exiting", signum)
-		self.quit()
+		self.quit_signal()
 	
 	def __sigUSR1handler(self, signum, fname): # pragma: no cover - indirect tested
 		logSys.debug("Caught signal %d. Flushing logs", signum)
@@ -152,6 +152,20 @@ class Server:
 		except AsyncServerException as e:
 			logSys.error("Could not start server: %s", e)
 
+		# Stop server
+		self.quit()
+
+		# Removes the PID file.
+		try:
+			logSys.debug("Remove PID file %s", pidfile)
+			os.remove(pidfile)
+		except (OSError, IOError) as e: # pragma: no cover
+			logSys.error("Unable to remove PID file: %s", e)
+		logSys.info("Exiting Fail2ban")
+
+	def quit(self):
+		self.quit_signal()
+
 		logSys.info("Shutdown in progress...")
 
 		# Restore default signal handlers:
@@ -168,17 +182,9 @@ class Server:
 			self.__db.close()
 			self.__db = None
 
-		# Removes the PID file.
-		try:
-			logSys.debug("Remove PID file %s", pidfile)
-			os.remove(pidfile)
-		except (OSError, IOError) as e: # pragma: no cover
-			logSys.error("Unable to remove PID file: %s", e)
-		logSys.info("Exiting Fail2ban")
-
-	def quit(self):
-		# Prevent to call quit twice:
-		self.quit = lambda: False
+	def quit_signal(self):
+		# Prevent to call quit_signal twice:
+		self.quit_signal = lambda: False
 		# Stop communication first because if jail's unban action
 		# tries to communicate via fail2ban-client we get a lockup
 		# among threads.  So the simplest resolution is to stop all

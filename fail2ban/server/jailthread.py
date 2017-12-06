@@ -67,8 +67,13 @@ class JailThread(Thread):
 		def run_with_except_hook(*args, **kwargs):
 			try:
 				run(*args, **kwargs)
-			except:
-				excepthook(*sys.exc_info())
+			except Exception as e:
+				# avoid very sporadic error "'NoneType' object has no attribute 'exc_info'" (https://bugs.python.org/issue7336)
+				# only extremely fast systems are affected ATM (2.7 / 3.x), if thread ends nothing is available here.
+				if sys is not None:
+					excepthook(*sys.exc_info())
+				else:
+					print(e)
 		self.run = run_with_except_hook
 
 	@abstractmethod
