@@ -62,7 +62,18 @@ class DatabaseTest(LogCaptureTestCase):
 		self.dbFilename = None
 		if not unittest.F2B.memory_db:
 			_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
-		self.db = getFail2BanDb(self.dbFilename)
+		self._db = ':auto-create-in-memory:'
+
+	@property
+	def db(self):
+		if isinstance(self._db, basestring) and self._db == ':auto-create-in-memory:':
+			self._db = getFail2BanDb(self.dbFilename)
+		return self._db
+	@db.setter
+	def db(self, value):
+		if isinstance(self._db, Fail2BanDb): # pragma: no cover
+			self._db.close()
+		self._db = value
 
 	def tearDown(self):
 		"""Call after every test case."""
@@ -106,23 +117,61 @@ class DatabaseTest(LogCaptureTestCase):
 			self.jail.name in self.db.getJailNames(),
 			"Jail not retained in Db after disconnect reconnect.")
 
-	def testUpdateDb(self):
+	def testRepairDb(self):
 		if Fail2BanDb is None: # pragma: no cover
 			return
 		self.db = None
 		if self.dbFilename is None: # pragma: no cover
 			_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
-		shutil.copyfile(
-			os.path.join(TEST_FILES_DIR, 'database_v1.db'), self.dbFilename)
-		self.db = Fail2BanDb(self.dbFilename)
-		self.assertEqual(self.db.getJailNames(), set(['DummyJail #29162448 with 0 tickets']))
-		self.assertEqual(self.db.getLogPaths(), set(['/tmp/Fail2BanDb_pUlZJh.log']))
-		ticket = FailTicket("127.0.0.1", 1388009242.26, [u"abc\n"])
-		self.assertEqual(self.db.getBans()[0], ticket)
+		# test truncated database with different sizes:
+		#   - 14000 bytes - seems to be reparable,
+		#   - 4000  bytes - is totally broken.
+		for truncSize in (14000, 4000):
+			self.pruneLog("[test-repair], next phase - file-size: %d" % truncSize)
+			shutil.copyfile(
+				os.path.join(TEST_FILES_DIR, 'database_v1.db'), self.dbFilename)
+			# produce currupt database:
+			f = os.open(self.dbFilename, os.O_RDWR)
+			os.ftruncate(f, truncSize)
+			os.close(f)
+			# test repair:
+			try:
+				self.db = Fail2BanDb(self.dbFilename)
+				if truncSize == 14000: # restored:
+					self.assertLogged("Repair seems to be successful",
+						"Check integrity", "Database updated", all=True)
+					self.assertEqual(self.db.getLogPaths(), set(['/tmp/Fail2BanDb_pUlZJh.log']))
+					self.assertEqual(len(self.db.getJailNames()), 1)
+				else: # recreated:
+					self.assertLogged("Repair seems to be failed",
+						"New database created.", all=True)
+					self.assertEqual(len(self.db.getLogPaths()), 0)
+					self.assertEqual(len(self.db.getJailNames()), 0)
+			finally:
+				if self.db and self.db._dbFilename != ":memory:":
+					os.remove(self.db._dbBackupFilename)
+					self.db = None
 
-		self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
-		self.assertRaises(NotImplementedError, self.db.updateDb, Fail2BanDb.__version__ + 1)
-		os.remove(self.db._dbBackupFilename)
+	def testUpdateDb(self):
+		if Fail2BanDb is None: # pragma: no cover
+			return
+		self.db = None
+		try:
+			if self.dbFilename is None: # pragma: no cover
+				_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
+			shutil.copyfile(
+				os.path.join(TEST_FILES_DIR, 'database_v1.db'), self.dbFilename)
+			self.db = Fail2BanDb(self.dbFilename)
+			self.assertEqual(self.db.getJailNames(), set(['DummyJail #29162448 with 0 tickets']))
+			self.assertEqual(self.db.getLogPaths(), set(['/tmp/Fail2BanDb_pUlZJh.log']))
+			ticket = FailTicket("127.0.0.1", 1388009242.26, [u"abc\n"])
+			self.assertEqual(self.db.getBans()[0], ticket)
+
+			self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
+			self.assertRaises(NotImplementedError, self.db.updateDb, Fail2BanDb.__version__ + 1)
+		finally:
+			if self.db and self.db._dbFilename != ":memory:":
+				os.remove(self.db._dbBackupFilename)
 
 	def testAddJail(self):
 		if Fail2BanDb is None: # pragma: no cover

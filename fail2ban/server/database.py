@@ -22,6 +22,7 @@ __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 import json
+import os
 import shutil
 import sqlite3
 import sys
@@ -31,6 +32,7 @@ from threading import RLock
 
 from .mytime import MyTime
 from .ticket import FailTicket
+from .utils import Utils
 from ..helpers import getLogger, PREFER_ENC
 
 # Gets the instance of the logger.
@@ -163,13 +165,17 @@ class Fail2BanDb(object):
 
 	def __init__(self, filename, purgeAge=24*60*60):
 		self.maxEntries = 50
+		self._lock = RLock()
+		self._dbFilename = filename
+		self._purgeAge = purgeAge
+		self._connectDB()
+
+	def _connectDB(self, checkIntegrity=False):
+		filename = self._dbFilename
 		try:
-			self._lock = RLock()
 			self._db = sqlite3.connect(
 				filename, check_same_thread=False,
 				detect_types=sqlite3.PARSE_DECLTYPES)
-			self._dbFilename = filename
-			self._purgeAge = purgeAge
 
 			self._bansMergedCache = {}
 
@@ -190,20 +196,38 @@ class Fail2BanDb(object):
 			pypy = False
 
 		cur = self._db.cursor()
-		cur.execute("PRAGMA foreign_keys = ON")
-		# speedup: write data through OS without syncing (no wait):
-		cur.execute("PRAGMA synchronous = OFF")
-		# speedup: transaction log in memory, alternate using OFF (disable, rollback will be impossible):
-		if not pypy:
-			cur.execute("PRAGMA journal_mode = MEMORY")
-		# speedup: temporary tables and indices are kept in memory:
-		cur.execute("PRAGMA temp_store = MEMORY")
-
 		try:
+			cur.execute("PRAGMA foreign_keys = ON")
+			# speedup: write data through OS without syncing (no wait):
+			cur.execute("PRAGMA synchronous = OFF")
+			# speedup: transaction log in memory, alternate using OFF (disable, rollback will be impossible):
+			if not pypy:
+				cur.execute("PRAGMA journal_mode = MEMORY")
+			# speedup: temporary tables and indices are kept in memory:
+			cur.execute("PRAGMA temp_store = MEMORY")
+
+			if checkIntegrity:
+				logSys.debug("  Check integrity ...")
+				cur.execute("PRAGMA integrity_check")
+				for s in cur.fetchall():
+					logSys.debug("  %s", s)
+				self._db.commit()
+
 			cur.execute("SELECT version FROM fail2banDb LIMIT 1")
 		except sqlite3.OperationalError:
 			logSys.warning("New database created. Version '%i'",
 				self.createDb())
+		except sqlite3.Error as e:
+			logSys.error(
+				"Error opening fail2ban persistent database '%s': %s",
+				filename, e.args[0])
+			# if not a file - raise an error:
+			if not os.path.isfile(filename):
+				raise
+			# try to repair it:
+			cur.close()
+			cur = None
+			self.repairDB()
 		else:
 			version = cur.fetchone()[0]
 			if version < Fail2BanDb.__version__:
@@ -217,15 +241,54 @@ class Fail2BanDb(object):
 						Fail2BanDb.__version__, version, newversion)
 					raise RuntimeError('Failed to fully update')
 		finally:
-			# pypy: set journal mode after possible upgrade db:
-			if pypy:
-				cur.execute("PRAGMA journal_mode = MEMORY")
-			cur.close()
+			if cur:
+				# pypy: set journal mode after possible upgrade db:
+				if pypy:
+					cur.execute("PRAGMA journal_mode = MEMORY")
+				cur.close()
 
 	def close(self):
 		logSys.debug("Close connection to database ...")
 		self._db.close()
 		logSys.info("Connection to database closed.")
+
+	@property
+	def _dbBackupFilename(self):
+		try:
+			return self.__dbBackupFilename
+		except AttributeError:
+			self.__dbBackupFilename = self._dbFilename + '.' + time.strftime('%Y%m%d-%H%M%S', MyTime.gmtime())
+			return self.__dbBackupFilename
+	
+	def repairDB(self):
+		# avoid endless recursion if reconnect failed again for some reasons:
+		_repairDB = self.repairDB
+		self.repairDB = None
+		try:
+			# backup
+			logSys.info("Trying to repair database %s", self._dbFilename)
+			shutil.move(self._dbFilename, self._dbBackupFilename)
+			logSys.info("  Database backup created: %s", self._dbBackupFilename)
+
+			# first try to repair using dump/restore in order 
+			Utils.executeCmd((r"""f2b_db=$0; f2b_dbbk=$1; sqlite3 "$f2b_dbbk" ".dump" | sqlite3 "$f2b_db" """,
+				self._dbFilename, self._dbBackupFilename))
+			dbFileSize = os.stat(self._dbFilename).st_size
+			if dbFileSize:
+				logSys.info("  Repair seems to be successful, restored %d byte(s).", dbFileSize)
+				# succeeded - try to reconnect:
+				self._connectDB(checkIntegrity=True)
+			else:
+				logSys.info("  Repair seems to be failed, restored %d byte(s).", dbFileSize)
+				raise Exception('Recreate ...')
+		except Exception as e:
+			# if still failed, just recreate database as fallback:
+			logSys.error("  Error repairing of fail2ban database '%s': %s",
+				self._dbFilename, e.args[0])
+			os.remove(self._dbFilename)
+			self._connectDB()
+		finally:
+			self.repairDB = _repairDB
 
 	@property
 	def filename(self):
@@ -271,9 +334,10 @@ class Fail2BanDb(object):
 			raise NotImplementedError(
 						"Attempt to travel to future version of database ...how did you get here??")
 
-		self._dbBackupFilename = self.filename + '.' + time.strftime('%Y%m%d-%H%M%S', MyTime.gmtime())
-		shutil.copyfile(self.filename, self._dbBackupFilename)
-		logSys.info("Database backup created: %s", self._dbBackupFilename)
+		logSys.info("Uprade database: %s", self._dbBackupFilename)
+		if not os.path.isfile(self._dbBackupFilename):
+			shutil.copyfile(self.filename, self._dbBackupFilename)
+			logSys.info("  Database backup created: %s", self._dbBackupFilename)
 
 		if version < 2:
 			cur.executescript("BEGIN TRANSACTION;"
