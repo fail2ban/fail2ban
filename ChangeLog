@@ -80,6 +80,7 @@ ver. 0.10.2-dev-1 (2017/??/??) - development edition
   'database disk image is malformed'). Fail2ban will create a backup, try to repair the database,
   if repair fails - recreate new database (gh-1465, gh-2004).
 
+
 ver. 0.10.1 (2017/10/12) - succeeded-before-friday-the-13th
 -----------
 
