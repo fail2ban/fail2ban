@@ -76,7 +76,9 @@ ver. 0.10.2-dev-1 (2017/??/??) - development edition
   - `datetime` - add date-time to the message (default on, ignored if `format` specified);
   - `format` - specify own format how it will be logged, for example for short-log into STDOUT:
       `fail2ban-server -f --logtarget 'stdout[format="%(relativeCreated)5d | %(message)s"]' start`;
-
+* Automatically recover or recreate corrupt persistent database (e. g. if failed to open with 
+  'database disk image is malformed'). Fail2ban will create a backup, try to repair the database,
+  if repair fails - recreate new database (gh-1465, gh-2004).
 
 ver. 0.10.1 (2017/10/12) - succeeded-before-friday-the-13th
 -----------
