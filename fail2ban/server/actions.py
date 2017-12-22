@@ -276,8 +276,10 @@ class Actions(JailThread, Mapping):
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 		while self.active:
 			if self.idle:
+				logSys.debug("Actions: enter idle mode")
 				Utils.wait_for(lambda: not self.active or not self.idle,
-					self.sleeptime * 10, self.sleeptime)
+					lambda: False, self.sleeptime)
+				logSys.debug("Actions: leave idle mode")
 				continue
 			if not Utils.wait_for(lambda: not self.active or self.__checkBan(), self.sleeptime):
 				self.__checkUnBan()

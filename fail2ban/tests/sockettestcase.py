@@ -31,8 +31,10 @@ import threading
 import time
 import unittest
 
+from .utils import LogCaptureTestCase
+
 from .. import protocol
-from ..server.asyncserver import AsyncServer, AsyncServerException
+from ..server.asyncserver import AsyncServer, AsyncServerException, loop
 from ..server.utils import Utils
 from ..client.csocket import CSocket
 
@@ -126,7 +128,20 @@ class Socket(unittest.TestCase):
 		self.assertFalse(os.path.exists(self.sock_name))
 
 
-class ClientMisc(unittest.TestCase):
+class ClientMisc(LogCaptureTestCase):
+
+	def testErrorsInLoop(self):
+		phase = {'cntr': 0}
+		def _active():
+			return phase['cntr'] < 40
+		def _poll(*args):
+			phase['cntr'] += 1
+			raise Exception('test *%d*' % phase['cntr'])
+		# test errors "catched" and logged:
+		loop(_active, use_poll=_poll)
+		self.assertLogged("test *1*", "test *10*", "test *20*", all=True)
+		self.assertLogged("Too many errors - stop logging connection errors")
+		self.assertNotLogged("test *21*", "test *22*", "test *23*", all=True)
 
 	def testPrintFormattedAndWiki(self):
 		# redirect stdout to devnull
