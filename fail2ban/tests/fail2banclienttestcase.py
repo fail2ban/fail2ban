@@ -96,6 +96,9 @@ class FailExitException(fail2bancmdline.ExitException):
 	pass
 
 
+SUCCESS = ExitException
+FAILED = FailExitException
+
 INTERACT = []
 
 
@@ -299,35 +302,40 @@ def with_foreground_server_thread(startextra={}):
 				)
 				th.daemon = True
 				th.start()
-				try:
-					# wait for start thread:
-					Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
-					self.assertTrue(phase.get('start', None))
-					# wait for server (socket and ready):
-					self._wait_for_srv(tmp, True, startparams=startparams)
-					DefLogSys.info('=== within server: begin ===')
-					self.pruneLog()
-					# several commands to server in body of decorated function:
-					return f(self, tmp, startparams, *args, **kwargs)
-				finally:
-					DefLogSys.info('=== within server: end.  ===')
-					self.pruneLog()
+				# to wait for end of server, default accept any exit code, because multi-threaded, 
+				# thus server can exit in-between...
+				def _waitForServerEnd(code=(SUCCESS, FAILED)):
 					# if seems to be down - try to catch end phase (wait a bit for end:True to recognize down state):
 					if not phase.get('end', None) and not os.path.exists(pjoin(tmp, "f2b.pid")):
 						Utils.wait_for(lambda: phase.get('end', None) is not None, MID_WAITTIME)
 					# stop (if still running):
 					if not phase.get('end', None):
-						self.execSuccess(startparams, "stop")
-						# wait for end:
+						self.execCmd(code, startparams, "stop")
+						# wait for end sign:
 						Utils.wait_for(lambda: phase.get('end', None) is not None, MAX_WAITTIME)
 						self.assertTrue(phase.get('end', None))
 						self.assertLogged("Shutdown successful", "Exiting Fail2ban", all=True)
+				self.waitForServerEnd = _waitForServerEnd
+				# wait for start thread:
+				Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
+				self.assertTrue(phase.get('start', None))
+				# wait for server (socket and ready):
+				self._wait_for_srv(tmp, True, startparams=startparams)
+				DefLogSys.info('=== within server: begin ===')
+				self.pruneLog()
+				# several commands to server in body of decorated function:
+				return f(self, tmp, startparams, *args, **kwargs)
 			finally:
 				if th:
+					# wait for server end (if not yet already exited):
+					DefLogSys.info('=== within server: end.  ===')
+					self.pruneLog()
+					self.waitForServerEnd()
 					# we start client/server directly in current process (new thread),
 					# so don't kill (same process) - if success, just wait for end of worker:
 					if phase.get('end', None):
 						th.join()
+				self.waitForServerEnd = None
 		return wrapper
 	return _deco_wrapper
 
@@ -388,11 +396,9 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 				logSys.debug("No log file %s to examine details of error", log)
 			raise
 
-	def execSuccess(self, startparams, *args):
-		raise NotImplementedError("To be defined in subclass")
-
-	def execFailed(self, startparams, *args):
-		raise NotImplementedError("To be defined in subclass")
+	def execCmd(self, exitType, startparams, *args):
+		self.assertRaises(exitType, self.exec_command_line[0],
+			(self.exec_command_line[1:] + startparams + args))
 
 	#
 	# Common tests
@@ -401,7 +407,7 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 		# start and wait to end (foreground):
 		logSys.debug("start of test worker")
 		phase['start'] = True
-		self.execSuccess(("-f",) + startparams, "start")
+		self.execCmd(SUCCESS, ("-f",) + startparams, "start")
 		# end :
 		phase['end'] = True
 		logSys.debug("end of test worker")
@@ -409,46 +415,40 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 	@with_foreground_server_thread()
 	def testStartForeground(self, tmp, startparams):
 		# several commands to server:
-		self.execSuccess(startparams, "ping")
-		self.execFailed(startparams, "~~unknown~cmd~failed~~")
-		self.execSuccess(startparams, "echo", "TEST-ECHO")
+		self.execCmd(SUCCESS, startparams, "ping")
+		self.execCmd(FAILED, startparams, "~~unknown~cmd~failed~~")
+		self.execCmd(SUCCESS, startparams, "echo", "TEST-ECHO")
 
 
 class Fail2banClientTest(Fail2banClientServerBase):
 
-	def execSuccess(self, startparams, *args):
-		self.assertRaises(ExitException, _exec_client,
-			((CLIENT,) + startparams + args))
-
-	def execFailed(self, startparams, *args):
-		self.assertRaises(FailExitException, _exec_client,
-			((CLIENT,) + startparams + args))
+	exec_command_line = (_exec_client, CLIENT,)
 
 	def testConsistency(self):
 		self.assertTrue(isfile(pjoin(BIN, CLIENT)))
 		self.assertTrue(isfile(pjoin(BIN, SERVER)))
 
 	def testClientUsage(self):
-		self.execSuccess((), "-h")
+		self.execCmd(SUCCESS, (), "-h")
 		self.assertLogged("Usage: " + CLIENT)
 		self.assertLogged("Report bugs to ")
 		self.pruneLog()
-		self.execSuccess((), "-vq", "-V")
+		self.execCmd(SUCCESS, (), "-vq", "-V")
 		self.assertLogged("Fail2Ban v" + fail2bancmdline.version)
 		self.pruneLog()
-		self.execSuccess((), "--str2sec", "1d12h30m")
+		self.execCmd(SUCCESS, (), "--str2sec", "1d12h30m")
 		self.assertLogged("131400")
 
 	@with_tmpdir
 	def testClientDump(self, tmp):
 		# use here the stock configuration (if possible)
 		startparams = _start_params(tmp, True)
-		self.execSuccess(startparams, "-vvd")
+		self.execCmd(SUCCESS, startparams, "-vvd")
 		self.assertLogged("Loading files")
 		self.assertLogged("['set', 'logtarget',")
 		self.pruneLog()
 		# pretty dump:
-		self.execSuccess(startparams, "--dp")
+		self.execCmd(SUCCESS, startparams, "--dp")
 		self.assertLogged("['set', 'logtarget',")
 		
 	@with_tmpdir
@@ -457,28 +457,28 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		# use once the stock configuration (to test starting also)
 		startparams = _start_params(tmp, True)
 		# start:
-		self.execSuccess(("-b",) + startparams, "start")
+		self.execCmd(SUCCESS, ("-b",) + startparams, "start")
 		# wait for server (socket and ready):
 		self._wait_for_srv(tmp, True, startparams=startparams)
 		self.assertLogged("Server ready")
 		self.assertLogged("Exit with code 0")
 		try:
-			self.execSuccess(startparams, "echo", "TEST-ECHO")
-			self.execFailed(startparams, "~~unknown~cmd~failed~~")
+			self.execCmd(SUCCESS, startparams, "echo", "TEST-ECHO")
+			self.execCmd(FAILED, startparams, "~~unknown~cmd~failed~~")
 			self.pruneLog()
 			# start again (should fail):
-			self.execFailed(("-b",) + startparams, "start")
+			self.execCmd(FAILED, ("-b",) + startparams, "start")
 			self.assertLogged("Server already running")
 		finally:
 			self.pruneLog()
 			# stop:
-			self.execSuccess(startparams, "stop")
+			self.execCmd(SUCCESS, startparams, "stop")
 			self.assertLogged("Shutdown successful")
 			self.assertLogged("Exit with code 0")
 
 		self.pruneLog()
 		# stop again (should fail):
-		self.execFailed(startparams, "stop")
+		self.execCmd(FAILED, startparams, "stop")
 		self.assertLogged("Failed to access socket path")
 		self.assertLogged("Is fail2ban running?")
 
@@ -489,7 +489,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		startparams = _start_params(tmp, logtarget=pjoin(tmp, "f2b.log"))
 		# if fast, start server process from client started direct here:
 		if unittest.F2B.fast: # pragma: no cover
-			self.execSuccess(startparams + ("start",))
+			self.execCmd(SUCCESS, startparams + ("start",))
 		else:
 			# start (in new process, using the same python version):
 			cmd = (sys.executable, pjoin(BIN, CLIENT))
@@ -503,12 +503,12 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		self.pruneLog()
 		try:
 			# echo from client (inside):
-			self.execSuccess(startparams, "echo", "TEST-ECHO")
+			self.execCmd(SUCCESS, startparams, "echo", "TEST-ECHO")
 			self.assertLogged("TEST-ECHO")
 			self.assertLogged("Exit with code 0")
 			self.pruneLog()
 			# test ping timeout:
-			self.execSuccess(startparams, "ping", "0.1")
+			self.execCmd(SUCCESS, startparams, "ping", "0.1")
 			self.assertLogged("Server replied: pong")
 			self.pruneLog()
 			# python 3 seems to bypass such short timeouts also, 
@@ -519,7 +519,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 				os.kill(pid, signal.SIGSTOP); # or SIGTSTP?
 				time.sleep(Utils.DEFAULT_SHORT_INTERVAL)
 				# test ping with short timeout:
-				self.execFailed(startparams, "ping", "1e-10")
+				self.execCmd(FAILED, startparams, "ping", "1e-10")
 			finally:
 				# resume:
 				os.kill(pid, signal.SIGCONT)
@@ -531,7 +531,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 				"status",
 				"exit"
 			]
-			self.execSuccess(startparams, "-i")
+			self.execCmd(SUCCESS, startparams, "-i")
 			self.assertLogged("INTERACT-ECHO")
 			self.assertLogged("Status", "Number of jail:")
 			self.assertLogged("Exit with code 0")
@@ -542,7 +542,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 				"restart",
 				"exit"
 			]
-			self.execSuccess(startparams, "-i")
+			self.execCmd(SUCCESS, startparams, "-i")
 			self.assertLogged("Reading config files:")
 			self.assertLogged("Shutdown successful")
 			self.assertLogged("Server ready")
@@ -553,18 +553,18 @@ class Fail2banClientTest(Fail2banClientServerBase):
 				"reload ~~unknown~jail~fail~~",
 				"exit"
 			]
-			self.execSuccess(startparams, "-i")
+			self.execCmd(SUCCESS, startparams, "-i")
 			self.assertLogged("Failed during configuration: No section: '~~unknown~jail~fail~~'")
 			self.pruneLog()
 			# test reload missing jail (direct):
-			self.execFailed(startparams, "reload", "~~unknown~jail~fail~~")
+			self.execCmd(FAILED, startparams, "reload", "~~unknown~jail~fail~~")
 			self.assertLogged("Failed during configuration: No section: '~~unknown~jail~fail~~'")
 			self.assertLogged("Exit with code -1")
 			self.pruneLog()
 		finally:
 			self.pruneLog()
 			# stop:
-			self.execSuccess(startparams, "stop")
+			self.execCmd(SUCCESS, startparams, "stop")
 			self.assertLogged("Shutdown successful")
 			self.assertLogged("Exit with code 0")
 
@@ -575,33 +575,33 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		startparams = _start_params(tmp, logtarget="INHERITED")
 
 		## wrong config directory
-		self.execFailed((),
+		self.execCmd(FAILED, (),
 			"--async", "-c", pjoin(tmp, "miss"), "start")
 		self.assertLogged("Base configuration directory " + pjoin(tmp, "miss") + " does not exist")
 		self.pruneLog()
 
 		## wrong socket
-		self.execFailed((),
+		self.execCmd(FAILED, (),
 			"--async", "-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "miss/f2b.sock"), "start")
 		self.assertLogged("There is no directory " + pjoin(tmp, "miss") + " to contain the socket file")
 		self.pruneLog()
 
 		## not running
-		self.execFailed((),
+		self.execCmd(FAILED, (),
 			"-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "f2b.sock"), "reload")
 		self.assertLogged("Could not find server")
 		self.pruneLog()
 
 		## already exists:
 		open(pjoin(tmp, "f2b.sock"), 'a').close()
-		self.execFailed((),
+		self.execCmd(FAILED, (),
 			"--async", "-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "f2b.sock"), "start")
 		self.assertLogged("Fail2ban seems to be in unexpected state (not running but the socket exists)")
 		self.pruneLog()
 		os.remove(pjoin(tmp, "f2b.sock"))
 
 		## wrong option:
-		self.execFailed((), "-s")
+		self.execCmd(FAILED, (), "-s")
 		self.assertLogged("Usage: ")
 		self.pruneLog()
 
@@ -611,13 +611,13 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		startparams = _start_params(tmp, logtarget="INHERITED")
 
 		# not started:
-		self.execFailed(startparams,
+		self.execCmd(FAILED, startparams,
 			"reload", "jail")
 		self.assertLogged("Could not find server")
 		self.pruneLog()
 
 		# unexpected arg:
-		self.execFailed(startparams,
+		self.execCmd(FAILED, startparams,
 			"--async", "reload", "--xxx", "jail")
 		self.assertLogged("Unexpected argument(s) for reload:")
 		self.pruneLog()
@@ -637,16 +637,10 @@ class Fail2banClientTest(Fail2banClientServerBase):
 
 class Fail2banServerTest(Fail2banClientServerBase):
 
-	def execSuccess(self, startparams, *args):
-		self.assertRaises(ExitException, _exec_server,
-			((SERVER,) + startparams + args))
-
-	def execFailed(self, startparams, *args):
-		self.assertRaises(FailExitException, _exec_server,
-			((SERVER,) + startparams + args))
+	exec_command_line = (_exec_server, SERVER,)
 
 	def testServerUsage(self):
-		self.execSuccess((), "-h")
+		self.execCmd(SUCCESS, (), "-h")
 		self.assertLogged("Usage: " + SERVER)
 		self.assertLogged("Report bugs to ")
 
@@ -666,12 +660,12 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged("Server ready")
 		self.pruneLog()
 		try:
-			self.execSuccess(startparams, "echo", "TEST-ECHO")
-			self.execFailed(startparams, "~~unknown~cmd~failed~~")
+			self.execCmd(SUCCESS, startparams, "echo", "TEST-ECHO")
+			self.execCmd(FAILED, startparams, "~~unknown~cmd~failed~~")
 		finally:
 			self.pruneLog()
 			# stop:
-			self.execSuccess(startparams, "stop")
+			self.execCmd(SUCCESS, startparams, "stop")
 			self.assertLogged("Shutdown successful")
 			self.assertLogged("Exit with code 0")
 
@@ -682,20 +676,20 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		startparams = _start_params(tmp, logtarget="INHERITED")
 
 		## wrong config directory
-		self.execFailed((),
+		self.execCmd(FAILED, (),
 			"-c", pjoin(tmp, "miss"))
 		self.assertLogged("Base configuration directory " + pjoin(tmp, "miss") + " does not exist")
 		self.pruneLog()
 
 		## wrong socket
-		self.execFailed((),
+		self.execCmd(FAILED, (),
 			"-c", pjoin(tmp, "config"), "-x", "-s", pjoin(tmp, "miss/f2b.sock"))
 		self.assertLogged("There is no directory " + pjoin(tmp, "miss") + " to contain the socket file")
 		self.pruneLog()
 
 		## already exists:
 		open(pjoin(tmp, "f2b.sock"), 'a').close()
-		self.execFailed((),
+		self.execCmd(FAILED, (),
 			"-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "f2b.sock"))
 		self.assertLogged("Fail2ban seems to be in unexpected state (not running but the socket exists)")
 		self.pruneLog()
@@ -710,7 +704,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 		# test configuration is correct:
 		self.pruneLog("[test-phase 0]")
-		self.execSuccess(startparams, "--test")
+		self.execCmd(SUCCESS, startparams, "--test")
 		self.assertLogged("OK: configuration test is successful")
 
 		# append one wrong configured jail:
@@ -719,14 +713,14 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 		# first try test config:
 		self.pruneLog("[test-phase 0a]")
-		self.execFailed(startparams, "--test")
+		self.execCmd(FAILED, startparams, "--test")
 		self.assertLogged("Unable to read the filter 'broken-jail-filter'",
 			"Errors in jail 'broken-jail'.",
 			"ERROR: test configuration failed", all=True)
 
 		# failed to start with test config:
 		self.pruneLog("[test-phase 0b]")
-		self.execFailed(startparams, "-t", "start")
+		self.execCmd(FAILED, startparams, "-t", "start")
 		self.assertLogged("Unable to read the filter 'broken-jail-filter'",
 			"Errors in jail 'broken-jail'.",
 			"ERROR: test configuration failed", all=True)
@@ -857,7 +851,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.pruneLog("[test-phase 1a]")
 		if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
 			_out_file(test1log)
-		self.execSuccess(startparams, "reload")
+		self.execCmd(SUCCESS, startparams, "reload")
 		self.assertLogged(
 			"Reload finished.",
 			"1 ticket(s) in 'test-jail1", all=True, wait=MID_WAITTIME)
@@ -886,7 +880,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		_write_file(test1log, "w+")
 		if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
 			_out_file(test1log)
-		self.execSuccess(startparams, "reload")
+		self.execCmd(SUCCESS, startparams, "reload")
 		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
 		# test not unbanned / banned again:
 		self.assertNotLogged(
@@ -918,7 +912,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			start= "               echo '[<name>] %s: started.'" % "test-action1",
 			reload="               echo '[<name>] %s: reloaded.'" % "test-action1", 
 			stop=  "               echo '[<name>] %s: stopped.'" % "test-action1")
-		self.execSuccess(startparams, "reload")
+		self.execCmd(SUCCESS, startparams, "reload")
 		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
 		# test not unbanned / banned again:
 		self.assertNotLogged(
@@ -979,7 +973,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 		# restart jail without unban all:
 		self.pruneLog("[test-phase 2c]")
-		self.execSuccess(startparams,
+		self.execCmd(SUCCESS, startparams,
 			"restart", "test-jail2")
 		self.assertLogged(
 			"Reload finished.",
@@ -1007,9 +1001,9 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 		# ban manually to test later flush by unban all:
 		self.pruneLog("[test-phase 2d]")
-		self.execSuccess(startparams,
+		self.execCmd(SUCCESS, startparams,
 			"set", "test-jail2", "banip", "192.0.2.21")
-		self.execSuccess(startparams,
+		self.execCmd(SUCCESS, startparams,
 			"set", "test-jail2", "banip", "192.0.2.22")
 		self.assertLogged(
 			"stdout: '[test-jail2] test-action3: ++ ban 192.0.2.22",
@@ -1017,7 +1011,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 		# restart jail with unban all:
 		self.pruneLog("[test-phase 2e]")
-		self.execSuccess(startparams,
+		self.execCmd(SUCCESS, startparams,
 			"restart", "--unban", "test-jail2")
 		self.assertLogged(
 			"Reload finished.",
@@ -1050,7 +1044,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 		# reload jail1 without restart (without ban/unban):
 		self.pruneLog("[test-phase 3]")
-		self.execSuccess(startparams, "reload", "test-jail1")
+		self.execCmd(SUCCESS, startparams, "reload", "test-jail1")
 		self.assertLogged(
 			"Reload finished.", all=True, wait=MID_WAITTIME)
 		self.assertLogged(
@@ -1065,7 +1059,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# whole reload, but this time with jail1 only (jail2 should be stopped via configuration):
 		self.pruneLog("[test-phase 4]")
 		_write_jail_cfg(enabled=[1])
-		self.execSuccess(startparams, "reload")
+		self.execCmd(SUCCESS, startparams, "reload")
 		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
 		# test both jails should be reloaded:
 		self.assertLogged(
@@ -1102,7 +1096,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 		# unban single ips:
 		self.pruneLog("[test-phase 6]")
-		self.execSuccess(startparams,
+		self.execCmd(SUCCESS, startparams,
 			"--async", "unban", "192.0.2.5", "192.0.2.6")
 		self.assertLogged(
 			"192.0.2.5 is not banned",
@@ -1111,7 +1105,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 		# reload all (one jail) with unban all:
 		self.pruneLog("[test-phase 7]")
-		self.execSuccess(startparams,
+		self.execCmd(SUCCESS, startparams,
 			"reload", "--unban")
 		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
 		# reloads unbanned all:
@@ -1134,7 +1128,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 		# unban all (just to test command, already empty - nothing to unban):
 		self.pruneLog("[test-phase 7b]")
-		self.execSuccess(startparams,
+		self.execCmd(SUCCESS, startparams,
 			"--async", "unban", "--all")
 		self.assertLogged(
 			"Flush ban list",
@@ -1143,7 +1137,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# backend-switch (restart instead of reload):
 		self.pruneLog("[test-phase 8a]")
 		_write_jail_cfg(enabled=[1], backend="xxx-unknown-backend-zzz")
-		self.execFailed(startparams, "reload")
+		self.execCmd(FAILED, startparams, "reload")
 		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
 		self.assertLogged(
 			"Restart jail 'test-jail1' (reason: 'polling' != ", 
@@ -1151,18 +1145,18 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 		self.pruneLog("[test-phase 8b]")
 		_write_jail_cfg(enabled=[1])
-		self.execSuccess(startparams, "reload")
+		self.execCmd(SUCCESS, startparams, "reload")
 		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)	
 
 		# several small cases (cover several parts):
 		self.pruneLog("[test-phase end-1]")
 		# wrong jail (not-started):
-		self.execFailed(startparams,
+		self.execCmd(FAILED, startparams,
 			"--async", "reload", "test-jail2")
 		self.assertLogged("the jail 'test-jail2' does not exist")
 		self.pruneLog()
 		# unavailable jail (but exit 0), using --if-exists option:
-		self.execSuccess(startparams,
+		self.execCmd(SUCCESS, startparams,
 			"--async", "reload", "--if-exists", "test-jail2")
 		self.assertNotLogged(
 			"Creating new jail 'test-jail2'",
@@ -1170,7 +1164,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 
 		# restart all jails (without restart server):
 		self.pruneLog("[test-phase end-2]")
-		self.execSuccess(startparams,
+		self.execCmd(SUCCESS, startparams,
 			"--async", "reload", "--restart", "--all")
 		self.assertLogged(
 			"Jail 'test-jail1' stopped", 
@@ -1215,7 +1209,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"[nginx-blck-lst] Ban 125-000-003",
 			"[nginx-blck-lst] Ban 125-000-004",
 			"[nginx-blck-lst] Ban 125-000-005",
-			"Banned 5 / 5, 5 ticket(s)",
+			"5 ticket(s)",
 			all=True, wait=MID_WAITTIME
 		)
 		_out_file(mpfn)
@@ -1227,7 +1221,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertIn('\\125-000-005 1;\n', mp)
 
 		# unban 1, 2 and 5:
-		self.execSuccess(startparams, 'unban', '125-000-001', '125-000-002', '125-000-005')
+		self.execCmd(SUCCESS, startparams, 'unban', '125-000-001', '125-000-002', '125-000-005')
 		_out_file(mpfn)
 		# check really unbanned but other sessions are still present (blacklisted in map-file):
 		mp = _read_file(mpfn)
@@ -1238,8 +1232,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertIn('\\125-000-004 1;\n', mp)
 
 		# stop server and wait for end:
-		self.execSuccess(startparams, 'stop')
-		self.assertLogged("Shutdown successful", "Exiting Fail2ban", all=True, wait=MID_WAITTIME)
+		self.execCmd(SUCCESS, startparams, 'stop')
+		self.waitForServerEnd(SUCCESS)
 
 		# check flushed (all sessions were deleted from map-file):
 		self.assertLogged("[nginx-blck-lst] Flush ticket(s) with nginx-block-map")
