@@ -122,7 +122,9 @@ def loop(active, timeout=None, use_poll=False):
 	if timeout is None:
 		timeout = Utils.DEFAULT_SLEEP_TIME
 	poll = asyncore.poll
-	if use_poll and asyncore.poll2 and hasattr(asyncore.select, 'poll'): # pragma: no cover
+	if callable(use_poll):
+		poll = use_poll
+	elif use_poll and asyncore.poll2 and hasattr(asyncore.select, 'poll'): # pragma: no cover
 		logSys.debug('Server listener (select) uses poll')
 		# poll2 expected a timeout in milliseconds (but poll and loop in seconds):
 		timeout = float(timeout) / 1000
