@@ -22,6 +22,7 @@ __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 import json
+import os
 import shutil
 import sqlite3
 import sys
@@ -31,6 +32,7 @@ from threading import RLock
 
 from .mytime import MyTime
 from .ticket import FailTicket
+from .utils import Utils
 from ..helpers import getLogger, PREFER_ENC
 
 # Gets the instance of the logger.
@@ -127,14 +129,15 @@ class Fail2BanDb(object):
 	purgeage
 	"""
 	__version__ = 4
-	# Note all _TABLE_* strings must end in ';' for py26 compatibility
-	_TABLE_fail2banDb = "CREATE TABLE fail2banDb(version INTEGER);"
-	_TABLE_jails = "CREATE TABLE jails(" \
+	# Note all SCRIPTS strings must end in ';' for py26 compatibility
+	_CREATE_SCRIPTS = (
+		 ('fail2banDb', "CREATE TABLE IF NOT EXISTS fail2banDb(version INTEGER);")
+		,('jails', "CREATE TABLE IF NOT EXISTS jails(" \
 			"name TEXT NOT NULL UNIQUE, " \
 			"enabled INTEGER NOT NULL DEFAULT 1" \
 			");" \
-			"CREATE INDEX jails_name ON jails(name);"
-	_TABLE_logs = "CREATE TABLE logs(" \
+			"CREATE INDEX IF NOT EXISTS jails_name ON jails(name);")
+		,('logs', "CREATE TABLE IF NOT EXISTS logs(" \
 			"jail TEXT NOT NULL, " \
 			"path TEXT, " \
 			"firstlinemd5 TEXT, " \
@@ -143,13 +146,13 @@ class Fail2BanDb(object):
 			"UNIQUE(jail, path)," \
 			"UNIQUE(jail, path, firstlinemd5)" \
 			");" \
-			"CREATE INDEX logs_path ON logs(path);" \
-			"CREATE INDEX logs_jail_path ON logs(jail, path);"
+			"CREATE INDEX IF NOT EXISTS logs_path ON logs(path);" \
+			"CREATE INDEX IF NOT EXISTS logs_jail_path ON logs(jail, path);")
 			#TODO: systemd journal features \
 			#"journalmatch TEXT, " \
 			#"journlcursor TEXT, " \
-			#"lastfiletime INTEGER DEFAULT 0, " # is this easily available \
-	_TABLE_bans = "CREATE TABLE bans(" \
+			#"lastfiletime INTEGER DEFAULT 0, " # is this easily available
+		,('bans', "CREATE TABLE IF NOT EXISTS bans(" \
 			"jail TEXT NOT NULL, " \
 			"ip TEXT, " \
 			"timeofban INTEGER NOT NULL, " \
@@ -158,11 +161,10 @@ class Fail2BanDb(object):
 			"data JSON, " \
 			"FOREIGN KEY(jail) REFERENCES jails(name) " \
 			");" \
-			"CREATE INDEX bans_jail_timeofban_ip ON bans(jail, timeofban);" \
-			"CREATE INDEX bans_jail_ip ON bans(jail, ip);" \
-			"CREATE INDEX bans_ip ON bans(ip);" \
-
-	_TABLE_bips = "CREATE TABLE bips(" \
+			"CREATE INDEX IF NOT EXISTS bans_jail_timeofban_ip ON bans(jail, timeofban);" \
+			"CREATE INDEX IF NOT EXISTS bans_jail_ip ON bans(jail, ip);" \
+			"CREATE INDEX IF NOT EXISTS bans_ip ON bans(ip);")
+		,('bips', "CREATE TABLE IF NOT EXISTS bips(" \
 			"ip TEXT NOT NULL, " \
 			"jail TEXT NOT NULL, " \
 			"timeofban INTEGER NOT NULL, " \
@@ -172,20 +174,26 @@ class Fail2BanDb(object):
 			"PRIMARY KEY(ip, jail), " \
 			"FOREIGN KEY(jail) REFERENCES jails(name) " \
 			");" \
-			"CREATE INDEX bips_timeofban ON bips(timeofban);" \
-			"CREATE INDEX bips_ip ON bips(ip);" \
+			"CREATE INDEX IF NOT EXISTS bips_timeofban ON bips(timeofban);" \
+			"CREATE INDEX IF NOT EXISTS bips_ip ON bips(ip);")
+	)
+	_CREATE_TABS = dict(_CREATE_SCRIPTS)
 
 
 	def __init__(self, filename, purgeAge=24*60*60, outDatedFactor=3):
 		self.maxEntries = 50
+		self._lock = RLock()
+		self._dbFilename = filename
+		self._purgeAge = purgeAge
+		self._outDatedFactor = outDatedFactor;
+		self._connectDB()
+
+	def _connectDB(self, checkIntegrity=False):
+		filename = self._dbFilename
 		try:
-			self._lock = RLock()
 			self._db = sqlite3.connect(
 				filename, check_same_thread=False,
 				detect_types=sqlite3.PARSE_DECLTYPES)
-			self._dbFilename = filename
-			self._purgeAge = purgeAge
-			self._outDatedFactor = outDatedFactor;
 
 			self._bansMergedCache = {}
 
@@ -206,42 +214,104 @@ class Fail2BanDb(object):
 			pypy = False
 
 		cur = self._db.cursor()
-		cur.execute("PRAGMA foreign_keys = ON")
-		# speedup: write data through OS without syncing (no wait):
-		cur.execute("PRAGMA synchronous = OFF")
-		# speedup: transaction log in memory, alternate using OFF (disable, rollback will be impossible):
-		if not pypy:
-			cur.execute("PRAGMA journal_mode = MEMORY")
-		# speedup: temporary tables and indices are kept in memory:
-		cur.execute("PRAGMA temp_store = MEMORY")
-
 		try:
+			cur.execute("PRAGMA foreign_keys = ON")
+			# speedup: write data through OS without syncing (no wait):
+			cur.execute("PRAGMA synchronous = OFF")
+			# speedup: transaction log in memory, alternate using OFF (disable, rollback will be impossible):
+			if not pypy:
+				cur.execute("PRAGMA journal_mode = MEMORY")
+			# speedup: temporary tables and indices are kept in memory:
+			cur.execute("PRAGMA temp_store = MEMORY")
+
 			cur.execute("SELECT version FROM fail2banDb LIMIT 1")
 		except sqlite3.OperationalError:
-			logSys.warning("New database created. Version '%i'",
+			logSys.warning("New database created. Version '%r'",
 				self.createDb())
+		except sqlite3.Error as e:
+			logSys.error(
+				"Error opening fail2ban persistent database '%s': %s",
+				filename, e.args[0])
+			# if not a file - raise an error:
+			if not os.path.isfile(filename):
+				raise
+			# try to repair it:
+			cur.close()
+			cur = None
+			self.repairDB()
 		else:
 			version = cur.fetchone()[0]
 			if version < Fail2BanDb.__version__:
 				newversion = self.updateDb(version)
 				if newversion == Fail2BanDb.__version__:
-					logSys.warning( "Database updated from '%i' to '%i'",
+					logSys.warning( "Database updated from '%r' to '%r'",
 						version, newversion)
 				else: # pragma: no cover
-					logSys.error( "Database update failed to achieve version '%i'"
-						": updated from '%i' to '%i'",
+					logSys.error( "Database update failed to achieve version '%r'"
+						": updated from '%r' to '%r'",
 						Fail2BanDb.__version__, version, newversion)
 					raise RuntimeError('Failed to fully update')
 		finally:
-			# pypy: set journal mode after possible upgrade db:
-			if pypy:
-				cur.execute("PRAGMA journal_mode = MEMORY")
-			cur.close()
+			if checkIntegrity:
+				logSys.debug("  Create missing tables/indices ...")
+				self._createDb(cur, incremental=True)
+				logSys.debug("  -> ok")
+				logSys.debug("  Check integrity ...")
+				cur.execute("PRAGMA integrity_check")
+				for s in cur.fetchall():
+					logSys.debug("  -> %s", ' '.join(s))
+				self._db.commit()
+			if cur:
+				# pypy: set journal mode after possible upgrade db:
+				if pypy:
+					cur.execute("PRAGMA journal_mode = MEMORY")
+				cur.close()
 
 	def close(self):
 		logSys.debug("Close connection to database ...")
 		self._db.close()
 		logSys.info("Connection to database closed.")
+
+	@property
+	def _dbBackupFilename(self):
+		try:
+			return self.__dbBackupFilename
+		except AttributeError:
+			self.__dbBackupFilename = self._dbFilename + '.' + time.strftime('%Y%m%d-%H%M%S', MyTime.gmtime())
+			return self.__dbBackupFilename
+	
+	def repairDB(self):
+		class RepairException(Exception):
+			pass
+		# avoid endless recursion if reconnect failed again for some reasons:
+		_repairDB = self.repairDB
+		self.repairDB = None
+		try:
+			# backup
+			logSys.info("Trying to repair database %s", self._dbFilename)
+			shutil.move(self._dbFilename, self._dbBackupFilename)
+			logSys.info("  Database backup created: %s", self._dbBackupFilename)
+
+			# first try to repair using dump/restore in order 
+			Utils.executeCmd((r"""f2b_db=$0; f2b_dbbk=$1; sqlite3 "$f2b_dbbk" ".dump" | sqlite3 "$f2b_db" """,
+				self._dbFilename, self._dbBackupFilename))
+			dbFileSize = os.stat(self._dbFilename).st_size
+			if dbFileSize:
+				logSys.info("  Repair seems to be successful, restored %d byte(s).", dbFileSize)
+				# succeeded - try to reconnect:
+				self._connectDB(checkIntegrity=True)
+			else:
+				logSys.info("  Repair seems to be failed, restored %d byte(s).", dbFileSize)
+				raise RepairException('Recreate ...')
+		except Exception as e:
+			# if still failed, just recreate database as fallback:
+			logSys.error("  Error repairing of fail2ban database '%s': %s",
+				self._dbFilename, e.args[0], 
+				exc_info=(not isinstance(e, RepairException) and logSys.getEffectiveLevel() <= 10))
+			os.remove(self._dbFilename)
+			self._connectDB(checkIntegrity=True)
+		finally:
+			self.repairDB = _repairDB
 
 	@property
 	def filename(self):
@@ -259,25 +329,28 @@ class Fail2BanDb(object):
 	def purgeage(self, value):
 		self._purgeAge = MyTime.str2seconds(value)
 
-	@commitandrollback
-	def createDb(self, cur):
+	def _createDb(self, cur, incremental=False):
 		"""Creates a new database, called during initialisation.
 		"""
-		# Version info
-		cur.executescript(Fail2BanDb._TABLE_fail2banDb)
-		cur.execute("INSERT INTO fail2banDb(version) VALUES(?)",
+		# create all (if not exists):
+		for (n, s) in Fail2BanDb._CREATE_SCRIPTS:
+			cur.executescript(s)
+		# save current database version (if not already set):			
+		cur.execute("INSERT INTO fail2banDb(version)"
+			" SELECT ? WHERE NOT EXISTS (SELECT 1 FROM fail2banDb LIMIT 1)",
 			(Fail2BanDb.__version__, ))
-		# Jails
-		cur.executescript(Fail2BanDb._TABLE_jails)
-		# Logs
-		cur.executescript(Fail2BanDb._TABLE_logs)
-		# Bans
-		cur.executescript(Fail2BanDb._TABLE_bans)
-		# BIPs (bad ips)
-		cur.executescript(Fail2BanDb._TABLE_bips)
-
 		cur.execute("SELECT version FROM fail2banDb LIMIT 1")
 		return cur.fetchone()[0]
+
+	@commitandrollback
+	def createDb(self, cur, incremental=False):
+		return self._createDb(cur, incremental);
+
+	def _tableExists(self, cur, table):
+		cur.execute("select 1 where exists ("
+			"select 1 from sqlite_master WHERE type='table' AND name=?)", (table,))
+		res = cur.fetchone()
+		return res is not None and res[0]
 
 	@commitandrollback
 	def updateDb(self, cur, version):
@@ -288,37 +361,44 @@ class Fail2BanDb(object):
 		if version > Fail2BanDb.__version__:
 			raise NotImplementedError(
 						"Attempt to travel to future version of database ...how did you get here??")
+		try:
+			logSys.info("Upgrade database: %s from version '%r'", self._dbBackupFilename, version)
+			if not os.path.isfile(self._dbBackupFilename):
+				shutil.copyfile(self.filename, self._dbBackupFilename)
+				logSys.info("  Database backup created: %s", self._dbBackupFilename)
 
-		self._dbBackupFilename = self.filename + '.' + time.strftime('%Y%m%d-%H%M%S', MyTime.gmtime())
-		shutil.copyfile(self.filename, self._dbBackupFilename)
-		logSys.info("Database backup created: %s", self._dbBackupFilename)
+			if version < 2 and self._tableExists(cur, "logs"):
+				cur.executescript("BEGIN TRANSACTION;"
+							"CREATE TEMPORARY TABLE logs_temp AS SELECT * FROM logs;"
+							"DROP TABLE logs;"
+							"%s;"
+							"INSERT INTO logs SELECT * from logs_temp;"
+							"DROP TABLE logs_temp;"
+							"UPDATE fail2banDb SET version = 2;"
+							"COMMIT;" % Fail2BanDb._CREATE_TABS['logs'])
 
-		if version < 2:
-			cur.executescript("BEGIN TRANSACTION;"
-						"CREATE TEMPORARY TABLE logs_temp AS SELECT * FROM logs;"
-						"DROP TABLE logs;"
-						"%s;"
-						"INSERT INTO logs SELECT * from logs_temp;"
-						"DROP TABLE logs_temp;"
-						"UPDATE fail2banDb SET version = 2;"
-						"COMMIT;" % Fail2BanDb._TABLE_logs)
+			if version < 3 and self._tableExists(cur, "bans"):
+				cur.executescript("BEGIN TRANSACTION;"
+							"CREATE TEMPORARY TABLE bans_temp AS SELECT jail, ip, timeofban, 600 as bantime, 1 as bancount, data FROM bans;"
+							"DROP TABLE bans;"
+							"%s;"
+							"INSERT INTO bans SELECT * from bans_temp;"
+							"DROP TABLE bans_temp;"
+							"COMMIT;" % Fail2BanDb._CREATE_TABS['bans'])
+			if version < 4:
+				cur.executescript("BEGIN TRANSACTION;"
+							"%s;"
+							"UPDATE fail2banDb SET version = 4;"
+							"COMMIT;" % Fail2BanDb._CREATE_TABS['bips'])
 
-		if version < 3:
-			cur.executescript("BEGIN TRANSACTION;"
-						"CREATE TEMPORARY TABLE bans_temp AS SELECT jail, ip, timeofban, 600 as bantime, 1 as bancount, data FROM bans;"
-						"DROP TABLE bans;"
-						"%s;"
-						"INSERT INTO bans SELECT * from bans_temp;"
-						"DROP TABLE bans_temp;"
-						"COMMIT;" % Fail2BanDb._TABLE_bans)
-		if version < 4:
-			cur.executescript("BEGIN TRANSACTION;"
-						"%s;"
-						"UPDATE fail2banDb SET version = 4;"
-						"COMMIT;" % Fail2BanDb._TABLE_bips)
-
-		cur.execute("SELECT version FROM fail2banDb LIMIT 1")
-		return cur.fetchone()[0]
+			cur.execute("SELECT version FROM fail2banDb LIMIT 1")
+			return cur.fetchone()[0]
+		except Exception as e:
+			# if still failed, just recreate database as fallback:
+			logSys.error("Failed to upgrade database '%s': %s",
+				self._dbFilename, e.args[0], 
+				exc_info=logSys.getEffectiveLevel() <= 10)
+			raise
 
 	@commitandrollback
 	def addJail(self, cur, jail):

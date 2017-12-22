@@ -30,9 +30,10 @@ import time
 import unittest
 
 from ..server.action import CommandAction, CallingMap, substituteRecursiveTags
-from ..server.actions import OrderedDict
+from ..server.actions import OrderedDict, Actions
 from ..server.utils import Utils
 
+from .dummyjail import DummyJail
 from .utils import LogCaptureTestCase
 from .utils import pid_exists
 
@@ -568,3 +569,19 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertIn("'b': 11", s)
 		self.assertIn("'c': ", s) # presents as callable
 		self.assertNotIn("'c': ''", s) # but not empty
+
+	def testActionsIdleMode(self):
+		a = Actions(DummyJail())
+		a.sleeptime = 0.0001;   # don't need to wait long
+		# enter idle mode right now (start idle):
+		a.idle = True;
+		# start:
+		a.start()
+		# wait for enter/leave of idle mode:
+		self.assertLogged("Actions: enter idle mode", wait=10)
+		# leave idle mode:
+		a.idle = False
+		self.assertLogged("Actions: leave idle mode", wait=10)
+		# stop it:
+		a.active = False
+		a.join()
