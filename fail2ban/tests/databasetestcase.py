@@ -144,7 +144,7 @@ class DatabaseTest(LogCaptureTestCase):
 					self.assertEqual(len(self.db.getJailNames()), 1)
 				else: # recreated:
 					self.assertLogged("Repair seems to be failed",
-						"New database created.", all=True)
+						"Check integrity", "New database created.", all=True)
 					self.assertEqual(len(self.db.getLogPaths()), 0)
 					self.assertEqual(len(self.db.getJailNames()), 0)
 			finally:

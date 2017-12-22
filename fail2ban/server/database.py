@@ -331,6 +331,12 @@ class Fail2BanDb(object):
 	def createDb(self, cur, incremental=False):
 		return self._createDb(cur, incremental);
 
+	def _tableExists(self, cur, table):
+		cur.execute("select 1 where exists ("
+			"select 1 from sqlite_master WHERE type='table' AND name=?)", (table,))
+		res = cur.fetchone()
+		return res is not None and res[0]
+
 	@commitandrollback
 	def updateDb(self, cur, version):
 		"""Update an existing database, called during initialisation.
@@ -340,14 +346,14 @@ class Fail2BanDb(object):
 		if version > Fail2BanDb.__version__:
 			raise NotImplementedError(
 						"Attempt to travel to future version of database ...how did you get here??")
+		try:
+			logSys.info("Upgrade database: %s from version '%r'", self._dbBackupFilename, version)
+			if not os.path.isfile(self._dbBackupFilename):
+				shutil.copyfile(self.filename, self._dbBackupFilename)
+				logSys.info("  Database backup created: %s", self._dbBackupFilename)
 
-		logSys.info("Uprade database: %s", self._dbBackupFilename)
-		if not os.path.isfile(self._dbBackupFilename):
-			shutil.copyfile(self.filename, self._dbBackupFilename)
-			logSys.info("  Database backup created: %s", self._dbBackupFilename)
-
-		if version < 2:
-			cur.executescript("BEGIN TRANSACTION;"
+			if version < 2 and self._tableExists(cur, "logs"):
+				cur.executescript("BEGIN TRANSACTION;"
 						"CREATE TEMPORARY TABLE logs_temp AS SELECT * FROM logs;"
 						"DROP TABLE logs;"
 						"%s;"
@@ -356,8 +362,14 @@ class Fail2BanDb(object):
 						"UPDATE fail2banDb SET version = 2;"
 						"COMMIT;" % Fail2BanDb._CREATE_TABS['logs'])
 
-		cur.execute("SELECT version FROM fail2banDb LIMIT 1")
-		return cur.fetchone()[0]
+			cur.execute("SELECT version FROM fail2banDb LIMIT 1")
+			return cur.fetchone()[0]
+		except Exception as e:
+			# if still failed, just recreate database as fallback:
+			logSys.error("Failed to upgrade database '%s': %s",
+				self._dbFilename, e.args[0], 
+				exc_info=logSys.getEffectiveLevel() <= 10)
+			raise
 
 	@commitandrollback
 	def addJail(self, cur, jail):
