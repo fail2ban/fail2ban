@@ -304,7 +304,7 @@ def with_foreground_server_thread(startextra={}):
 				th.start()
 				# to wait for end of server, default accept any exit code, because multi-threaded, 
 				# thus server can exit in-between...
-				def _waitForServerEnd(code=(SUCCESS, FAILED)):
+				def _stopAndWaitForServerEnd(code=(SUCCESS, FAILED)):
 					# if seems to be down - try to catch end phase (wait a bit for end:True to recognize down state):
 					if not phase.get('end', None) and not os.path.exists(pjoin(tmp, "f2b.pid")):
 						Utils.wait_for(lambda: phase.get('end', None) is not None, MID_WAITTIME)
@@ -315,7 +315,7 @@ def with_foreground_server_thread(startextra={}):
 						Utils.wait_for(lambda: phase.get('end', None) is not None, MAX_WAITTIME)
 						self.assertTrue(phase.get('end', None))
 						self.assertLogged("Shutdown successful", "Exiting Fail2ban", all=True)
-				self.waitForServerEnd = _waitForServerEnd
+				self.stopAndWaitForServerEnd = _stopAndWaitForServerEnd
 				# wait for start thread:
 				Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
 				self.assertTrue(phase.get('start', None))
@@ -330,12 +330,12 @@ def with_foreground_server_thread(startextra={}):
 					# wait for server end (if not yet already exited):
 					DefLogSys.info('=== within server: end.  ===')
 					self.pruneLog()
-					self.waitForServerEnd()
+					self.stopAndWaitForServerEnd()
 					# we start client/server directly in current process (new thread),
 					# so don't kill (same process) - if success, just wait for end of worker:
 					if phase.get('end', None):
 						th.join()
-				self.waitForServerEnd = None
+				self.stopAndWaitForServerEnd = None
 		return wrapper
 	return _deco_wrapper
 
@@ -1232,8 +1232,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertIn('\\125-000-004 1;\n', mp)
 
 		# stop server and wait for end:
-		self.execCmd(SUCCESS, startparams, 'stop')
-		self.waitForServerEnd(SUCCESS)
+		self.stopAndWaitForServerEnd(SUCCESS)
 
 		# check flushed (all sessions were deleted from map-file):
 		self.assertLogged("[nginx-blck-lst] Flush ticket(s) with nginx-block-map")
