@@ -347,7 +347,7 @@ class ObserverThread(JailThread):
 		self.__db = db
 
 	def db_purge(self):
-		logSys.info("Purge database event occurred")
+		logSys.debug("Purge database event occurred")
 		if self.__db is not None:
 			self.__db.purge()
 		# trigger timer again ...
