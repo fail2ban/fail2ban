@@ -243,9 +243,10 @@ class DatabaseTest(LogCaptureTestCase):
 		ticket = FailTicket("127.0.0.1", 0, ["abc\n"])
 		self.db.addBan(self.jail, ticket)
 
-		self.assertEqual(len(self.db.getBans(jail=self.jail)), 1)
+		tickets = self.db.getBans(jail=self.jail)
+		self.assertEqual(len(tickets), 1)
 		self.assertTrue(
-			isinstance(self.db.getBans(jail=self.jail)[0], FailTicket))
+			isinstance(tickets[0], FailTicket))
 
 	def testAddBanInvalidEncoded(self):
 		if Fail2BanDb is None: # pragma: no cover
@@ -278,10 +279,28 @@ class DatabaseTest(LogCaptureTestCase):
 			or readtickets[2] == tickets[2]
 		)
 
+	def _testAdd3Bans(self):
+		self.testAddJail()
+		for i in (1, 2, 3):
+			ticket = FailTicket(("192.0.2.%d" % i), 0, ["test\n"])
+			self.db.addBan(self.jail, ticket)
+		tickets = self.db.getBans(jail=self.jail)
+		self.assertEqual(len(tickets), 3)
+		return tickets
+
 	def testDelBan(self):
-		self.testAddBan()
-		ticket = self.db.getBans(jail=self.jail)[0]
-		self.db.delBan(self.jail, ticket.getIP())
+		tickets = self._testAdd3Bans()
+		# delete single IP:
+		self.db.delBan(self.jail, tickets[0].getIP())
+		self.assertEqual(len(self.db.getBans(jail=self.jail)), 2)
+		# delete two IPs:
+		self.db.delBan(self.jail, tickets[1].getIP(), tickets[2].getIP())
+		self.assertEqual(len(self.db.getBans(jail=self.jail)), 0)
+
+	def testFlushBans(self):
+		self._testAdd3Bans()
+		# flush all bans:
+		self.db.delBan(self.jail)
 		self.assertEqual(len(self.db.getBans(jail=self.jail)), 0)
 
 	def testGetBansWithTime(self):
