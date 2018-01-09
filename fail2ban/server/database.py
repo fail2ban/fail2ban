@@ -566,23 +566,30 @@ class Fail2BanDb(object):
 				ticket.getData()))
 
 	@commitandrollback
-	def delBan(self, cur, jail, ip):
-		"""Delete a ban from the database.
+	def delBan(self, cur, jail, *args):
+		"""Delete a single or multiple tickets from the database.
 
 		Parameters
 		----------
 		jail : Jail
-			Jail in which the ban has occurred.
-		ip : str
-			IP to be removed.
+			Jail in which the ticket(s) should be removed.
+		args : list of IP
+			IPs to be removed, if not given all tickets of jail will be removed.
 		"""
-		queryArgs = (jail.name, str(ip));
-		cur.execute(
-			"DELETE FROM bips WHERE jail = ? AND ip = ?", 
-			queryArgs)
-		cur.execute(
-			"DELETE FROM bans WHERE jail = ? AND ip = ?", 
-			queryArgs);
+		query1 = "DELETE FROM bips WHERE jail = ?"
+		query2 = "DELETE FROM bans WHERE jail = ?"
+		queryArgs = [jail.name];
+		if not len(args):
+			cur.execute(query1, queryArgs);
+			cur.execute(query2, queryArgs);
+			return
+		query1 += " AND ip = ?"
+		query2 += " AND ip = ?"
+		queryArgs.append('');
+		for ip in args:
+			queryArgs[1] = str(ip);
+			cur.execute(query1, queryArgs);
+			cur.execute(query2, queryArgs);
 
 	@commitandrollback
 	def _getBans(self, cur, jail=None, bantime=None, ip=None):

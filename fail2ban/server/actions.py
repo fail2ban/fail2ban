@@ -490,7 +490,7 @@ class Actions(JailThread, Mapping):
 		"""
 		log = True
 		if actions is None:
-			logSys.debug("Flush ban list")
+			logSys.debug("  Flush ban list")
 			lst = self.__banManager.flushBanList()
 		else:
 			log = False # don't log "[jail] Unban ..." if removing actions only.
@@ -505,16 +505,16 @@ class Actions(JailThread, Mapping):
 			else:
 				unbactions[name] = action
 		actions = unbactions
+		# flush the database also:
+		if db and self._jail.database is not None:
+			logSys.debug("  Flush jail in database")
+			self._jail.database.delBan(self._jail)
 		# unban each ticket with non-flasheable actions:
 		for ticket in lst:
-			# delete ip from database also:
-			if db and self._jail.database is not None:
-				ip = str(ticket.getIP())
-				self._jail.database.delBan(self._jail, ip)
 			# unban ip:
 			self.__unBan(ticket, actions=actions, log=log)
 			cnt += 1
-		logSys.debug("Unbanned %s, %s ticket(s) in %r", 
+		logSys.debug("  Unbanned %s, %s ticket(s) in %r", 
 			cnt, self.__banManager.size(), self._jail.name)
 		return cnt
 
