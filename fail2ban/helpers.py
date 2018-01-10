@@ -137,3 +137,32 @@ def splitwords(s):
 	if not s:
 		return []
 	return filter(bool, map(str.strip, re.split('[ ,\n]+', s)))
+
+
+#
+# Following function used for parse options from parameter (e.g. `name[p1=0, p2="..."][p3='...']`).
+#
+
+# regex, to extract list of options:
+OPTION_CRE = re.compile(r"^([^\[]+)(?:\[(.*)\])?\s*$", re.DOTALL)
+# regex, to iterate over single option in option list, syntax:
+# `action = act[p1="...", p2='...', p3=...]`, where the p3=... not contains `,` or ']'
+# since v0.10 separator extended with `]\s*[` for support of multiple option groups, syntax 
+# `action = act[p1=...][p2=...]`
+OPTION_EXTRACT_CRE = re.compile(
+	r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$)', re.DOTALL)
+
+def extractOptions(option):
+	match = OPTION_CRE.match(option)
+	if not match:
+		# TODO proper error handling
+		return None, None
+	option_name, optstr = match.groups()
+	option_opts = dict()
+	if optstr:
+		for optmatch in OPTION_EXTRACT_CRE.finditer(optstr):
+			opt = optmatch.group(1)
+			value = [
+				val for val in optmatch.group(2,3,4) if val is not None][0]
+			option_opts[opt.strip()] = value.strip()
+	return option_name, option_opts

@@ -27,24 +27,19 @@ __license__ = "GPL"
 import glob
 import json
 import os.path
-import re
 
 from .configreader import ConfigReaderUnshared, ConfigReader
 from .filterreader import FilterReader
 from .actionreader import ActionReader
 from ..version import version
 from ..helpers import getLogger
-from ..helpers import splitwords
+from ..helpers import extractOptions, splitwords
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
 
 class JailReader(ConfigReader):
-	
-	optionCRE = re.compile("^((?:\w|-|_|\.)+)(?:\[(.*)\])?$")
-	optionExtractRE = re.compile(
-		r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,]*))(?:,|$)')
 	
 	def __init__(self, name, force_enable=False, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
@@ -121,7 +116,7 @@ class JailReader(ConfigReader):
 		if self.isEnabled():
 			# Read filter
 			if self.__opts["filter"]:
-				filterName, filterOpt = JailReader.extractOptions(
+				filterName, filterOpt = extractOptions(
 					self.__opts["filter"])
 				self.__filter = FilterReader(
 					filterName, self.__name, filterOpt, share_config=self.share_config, basedir=self.getBaseDir())
@@ -150,7 +145,7 @@ class JailReader(ConfigReader):
 				try:
 					if not act:			  # skip empty actions
 						continue
-					actName, actOpt = JailReader.extractOptions(act)
+					actName, actOpt = extractOptions(act)
 					if actName.endswith(".py"):
 						self.__actions.append([
 							"set",
@@ -244,18 +239,4 @@ class JailReader(ConfigReader):
 		stream.insert(0, ["add", self.__name, backend])
 		return stream
 	
-	@staticmethod
-	def extractOptions(option):
-		match = JailReader.optionCRE.match(option)
-		if not match:
-			# TODO proper error handling
-			return None, None
-		option_name, optstr = match.groups()
-		option_opts = dict()
-		if optstr:
-			for optmatch in JailReader.optionExtractRE.finditer(optstr):
-				opt = optmatch.group(1)
-				value = [
-					val for val in optmatch.group(2,3,4) if val is not None][0]
-				option_opts[opt.strip()] = value.strip()
-		return option_name, option_opts
+JailReader.extractOptions = staticmethod(extractOptions)
