@@ -1666,7 +1666,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 						r"`firewall-cmd --direct --remove-rule ipv6 filter f2b-j-w-fwcmd-ap 0 -s 2001:db8:: -j REJECT --reject-with icmp6-port-unreachable`",
 					),					
 				}),
-				# firewallcmd-ipset --
+				# firewallcmd-ipset (multiport) --
 				('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, bantime="10m", default-timeout=0, port="http", protocol="tcp", chain="<known/chain>"]', {
 					'ip4': (' f2b-j-w-fwcmd-ipset ',), 'ip6': (' f2b-j-w-fwcmd-ipset6 ',),
 					'ip4-start': (
@@ -1702,6 +1702,44 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					),
 					'ip6-unban': (
 						r"`ipset del f2b-j-w-fwcmd-ipset6 2001:db8:: -exist`",
+					),					
+				}),
+				# firewallcmd-ipset (allports) --
+				('j-w-fwcmd-ipset-ap', 'firewallcmd-ipset[name=%(__name__)s, bantime="10m", actiontype=<allports>, protocol="tcp", chain="<known/chain>"]', {
+					'ip4': (' f2b-j-w-fwcmd-ipset-ap ',), 'ip6': (' f2b-j-w-fwcmd-ipset-ap6 ',),
+					'ip4-start': (
+						"`ipset create f2b-j-w-fwcmd-ipset-ap hash:ip timeout 600`",
+						"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -p tcp -m set --match-set f2b-j-w-fwcmd-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
+					), 
+					'ip6-start': (
+						"`ipset create f2b-j-w-fwcmd-ipset-ap6 hash:ip timeout 600 family inet6`",
+						"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -p tcp -m set --match-set f2b-j-w-fwcmd-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
+					),
+					'flush': (
+						"`ipset flush f2b-j-w-fwcmd-ipset-ap`",
+						"`ipset flush f2b-j-w-fwcmd-ipset-ap6`",
+					),
+					'stop': (
+						"`firewall-cmd --direct --remove-rule ipv4 filter INPUT_direct 0 -p tcp -m set --match-set f2b-j-w-fwcmd-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
+						"`ipset flush f2b-j-w-fwcmd-ipset-ap`",
+						"`ipset destroy f2b-j-w-fwcmd-ipset-ap`",
+						"`firewall-cmd --direct --remove-rule ipv6 filter INPUT_direct 0 -p tcp -m set --match-set f2b-j-w-fwcmd-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
+						"`ipset flush f2b-j-w-fwcmd-ipset-ap6`",
+						"`ipset destroy f2b-j-w-fwcmd-ipset-ap6`",
+					),
+					'ip4-check': (),
+					'ip6-check': (),
+					'ip4-ban': (
+						r"`ipset add f2b-j-w-fwcmd-ipset-ap 192.0.2.1 timeout 600 -exist`",
+					),
+					'ip4-unban': (
+						r"`ipset del f2b-j-w-fwcmd-ipset-ap 192.0.2.1 -exist`",
+					),
+					'ip6-ban': (
+						r"`ipset add f2b-j-w-fwcmd-ipset-ap6 2001:db8:: timeout 600 -exist`",
+					),
+					'ip6-unban': (
+						r"`ipset del f2b-j-w-fwcmd-ipset-ap6 2001:db8:: -exist`",
 					),					
 				}),
 			)

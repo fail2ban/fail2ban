@@ -473,6 +473,7 @@ releases.
     - fixed failregex AMI Asterisk authentification failed (see gh-1302)
     - removed invalid (vulnerable) regex blocking IPs using forign data (from header "from")
       thus not the IP-address that really originates the request (see gh-1927)
+    - fixed failregex for the SQL-injection attempts with single-quotes in connect-string (see gh-2011)
 * filter.d/dovecot.conf:
     - fixed failregex, see gh-1879 (partially cherry-picked from gh-1880)
     - extended to match pam_authenticate failures with "Permission denied" (gh-1897)
@@ -486,6 +487,7 @@ releases.
 
 ### Enhancements
 * action.d/cloudflare.conf - Cloudflare API v4 implementation (gh-1651)
+* action.d/firewallcmd-ipset.conf - new parameter `actiontype`, provides `allports` capability (gh-1167)
 * filter.d/kerio.conf - filter extended with new rules (see gh-1455)
 * filter.d/phpmyadmin-syslog.conf - new filter for phpMyAdmin using syslog for auth logging
 * filter.d/zoneminder.conf - new filter for ZoneMinder (gh-1376)
