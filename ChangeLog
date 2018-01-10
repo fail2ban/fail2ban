@@ -47,6 +47,7 @@ releases.
 * filter.d/kerio.conf - filter extended with new rules (see gh-1455)
 * filter.d/phpmyadmin-syslog.conf - new filter for phpMyAdmin using syslog for auth logging
 * filter.d/zoneminder.conf - new filter for ZoneMinder (gh-1376)
+* action.d/firewallcmd-ipset-allports.conf - new firewallcmd-ipset-allports action (gh-1167)
 
 
 ver. 0.9.7 (2017/05/11) - awaiting-victory
