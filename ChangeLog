@@ -50,9 +50,11 @@ ver. 0.11.0-dev-0 (2017/??/??) - development nightly edition
   - fixed syntax error in achnor definition (documentation, see gh-1919);
   - enclose ports in braces for multiport jails (see gh-1925);
 * `action.d/firewallcmd-ipset.conf`: fixed create of set for ipv6 (missing `family inet6`, gh-1990)
-* `filter.d/sshd.conf`: extended failregex for modes "extra"/"aggressive": now finds all possible (also future)
-  forms of "no matching (cipher|mac|MAC|compression method|key exchange method|host key type) found", 
-  see "ssherr.c" for all possible SSH_ERR_..._ALG_MATCH errors (gh-1943, gh-1944);
+* `filter.d/sshd.conf`:
+  - extended failregex for modes "extra"/"aggressive": now finds all possible (also future)
+    forms of "no matching (cipher|mac|MAC|compression method|key exchange method|host key type) found", 
+    see "ssherr.c" for all possible SSH_ERR_..._ALG_MATCH errors (gh-1943, gh-1944);
+  - fixed failregex in order to avoid banning of legitimate users with multiple public keys (gh-2014, gh-1263);
 
 ### New Features
 * datedetector: extended default date-patterns (allows extra space between the date and time stamps);
