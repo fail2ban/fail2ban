@@ -997,6 +997,7 @@ def get_monitor_failures_testcase(Filter_):
 			self.file.close()
 			self.filter.setMaxRetry(10)
 			self.filter.delLogPath(self.name)
+			_killfile(None, self.name)
 			# if we rename parent dir into a new location (simulate directory-base log rotation)
 			tmpsub1 = os.path.join(tmp, "1")
 			tmpsub2 = os.path.join(tmp, "2")
