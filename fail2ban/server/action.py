@@ -750,7 +750,10 @@ class CommandAction(ActionBase):
 					#    otherwise stop/start will theoretically remove all the bans,
 					#    but the tickets are still in BanManager, so in case of new failures
 					#    it will not be banned, because "already banned" will happen.
-					self.stop()
+					try:
+						self.stop()
+					except RuntimeError: # bypass error in stop (if start/check succeeded hereafter).
+						pass
 					self.start()
 				if not self.executeCmd(checkCmd, self.timeout):
 					self._logSys.critical("Unable to restore environment")
