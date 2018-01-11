@@ -141,10 +141,33 @@ Nov 11 08:04:52 redbamboo sshd[2737]: Failed password for invalid user test from
 # failJSON: { "time": "2004-11-11T08:04:52", "match": true , "host": "127.0.0.1", "desc": "More complex injecting on auth-info ssh test@localhost, auth-info: ' from 10.10.1.2 port 55555 ssh2'" }
 Nov 11 08:04:52 redbamboo sshd[2737]: Failed password for invalid user test from 127.0.0.1 port 58946 ssh2: from 10.10.1.2 port 55555 ssh2
 
+# Failure on connect of invalid user with public keys:
 # failJSON: { "time": "2005-07-05T18:22:44", "match": true , "host": "127.0.0.1", "desc": "Failed publickey for ..." }
-Jul 05 18:22:44 mercury sshd[4669]: Failed publickey for graysky from 127.0.0.1 port 37954 ssh2: RSA SHA256:v3dpapGleDaUKf$4V1vKyR9ZyUgjaJAmoCTcb2PLljI
+Jul 05 18:22:44 mercury sshd[4669]: Failed publickey for invalid user graysky from 127.0.0.1 port 37954 ssh2: RSA SHA256:v3dpapGleDaUKf$4V1vKyR9ZyUgjaJAmoCTcb2PLljI
 # failJSON: { "time": "2005-07-05T18:22:45", "match": true , "host": "aaaa:bbbb:cccc:1234::1:1", "desc": "Failed publickey for ..." }
-Jul 05 18:22:45 mercury sshd[4670]: Failed publickey for graysky from aaaa:bbbb:cccc:1234::1:1 port 37955 ssh2: RSA SHA256:v3dpapGleDaUKf$4V1vKyR9ZyUgjaJAmoCTcb2PLljI
+Jul 05 18:22:45 mercury sshd[4670]: Failed publickey for invalid user graysky from aaaa:bbbb:cccc:1234::1:1 port 37955 ssh2: RSA SHA256:v3dpapGleDaUKf$4V1vKyR9ZyUgjaJAmoCTcb2PLljI
+
+# Ignore tries of legitimate users with multiple public keys (gh-1263):
+# failJSON: { "match": false }
+Nov 28 09:16:03 srv sshd[32307]: Failed publickey for git from 192.0.2.1 port 57904 ssh2: ECDSA 0e:ff:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
+# failJSON: { "match": false }
+Nov 28 09:16:03 srv sshd[32307]: Failed publickey for git from 192.0.2.1 port 57904 ssh2: RSA 04:bc:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
+# failJSON: { "match": false }
+Nov 28 09:16:03 srv sshd[32307]: Postponed publickey for git from 192.0.2.1 port 57904 ssh2 [preauth]
+# failJSON: { "match": false }
+Nov 28 09:16:03 srv sshd[32307]: Accepted publickey for git from 192.0.2.1 port 57904 ssh2: DSA 36:48:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
+# failJSON: { "match": false, "desc": "Should be forgotten by success/accepted public key" }
+Nov 28 09:16:03 srv sshd[32307]: Connection closed by 192.0.2.1 [preauth]
+
+# Failure on connect with valid user-name but wrong public keys (retarded to disconnect/too many errors, because of gh-1263):
+# failJSON: { "match": false }
+Nov 28 09:16:05 srv sshd[32310]: Failed publickey for git from 192.0.2.111 port 57910 ssh2: ECDSA 1e:fe:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
+# failJSON: { "match": false }
+Nov 28 09:16:05 srv sshd[32310]: Failed publickey for git from 192.0.2.111 port 57910 ssh2: RSA 14:ba:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
+# failJSON: { "match": false }
+Nov 28 09:16:05 srv sshd[32310]: Disconnecting: Too many authentication failures for git [preauth]
+# failJSON: { "time": "2004-11-28T09:16:05", "match": true , "host": "192.0.2.111", "desc": "Should catch failure - no success/no accepted public key" }
+Nov 28 09:16:05 srv sshd[32310]: Connection closed by 192.0.2.111 [preauth]
 
 # failJSON: { "match": false }
 Nov 23 21:50:19 sshd[8148]: Disconnecting: Too many authentication failures for root [preauth]
