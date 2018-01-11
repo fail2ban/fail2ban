@@ -123,7 +123,7 @@ class FilterPyinotify(FileFilter):
 			self._addPending(path, event)
 			return
 		# do nothing if idle:
-		if self.idle:
+		if self.idle: # pragma: no cover (too sporadic to get idle in callback)
 			return
 		# be sure we process a file:
 		if not isWF:
