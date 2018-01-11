@@ -335,7 +335,16 @@ class CommandActionTest(LogCaptureTestCase):
 		self.__action.actionban = "rm /tmp/fail2ban.test"
 		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
 		self.assertRaises(RuntimeError, self.__action.ban, {'ip': None})
-		self.assertLogged('Unable to restore environment')
+		self.assertLogged('Invariant check failed', 'Unable to restore environment', all=True)
+		# 2nd time, try to restore with producing error in stop, but succeeded start hereafter:
+		self.pruneLog('[phase 2]')
+		self.__action.actionstart = "touch /tmp/fail2ban.test"
+		self.__action.actionstop = "rm /tmp/fail2ban.test"
+		self.__action.actionban = 'printf "%%b\n" <ip> >> /tmp/fail2ban.test'
+		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
+		self.__action.ban({'ip': None})
+		self.assertLogged('Invariant check failed')
+		self.assertNotLogged('Unable to restore environment')
 
 	def testExecuteActionCheckRepairEnvironment(self):
 		self.__action.actionstart = ""
