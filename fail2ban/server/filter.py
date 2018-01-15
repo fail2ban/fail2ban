@@ -1061,6 +1061,15 @@ class FileFilter(Filter):
 		ret.append(("File list", path))
 		return ret
 
+	def stop(self):
+		"""Stop monitoring of log-file(s)
+		"""
+		# stop files monitoring:
+		for path in self.__logs.keys():
+			self.delLogPath(path)
+		# stop thread:
+		super(Filter, self).stop()
+
 ##
 # FileContainer class.
 #

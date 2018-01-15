@@ -78,6 +78,7 @@ class FilterPyinotify(FileFilter):
 		self.__modified = False
 		# Pyinotify watch manager
 		self.__monitor = pyinotify.WatchManager()
+		self.__notifier = None
 		self.__watchFiles = dict()
 		self.__watchDirs = dict()
 		self.__pending = dict()
@@ -240,7 +241,7 @@ class FilterPyinotify(FileFilter):
 	def _delFileWatcher(self, path):
 		try:
 			wdInt = self.__watchFiles.pop(path)
-			if not self._delWatch(wdInt): # pragma: no cover
+			if not self._delWatch(wdInt):
 				logSys.debug("Non-existing file watcher %r for file %s", wdInt, path)
 			logSys.debug("Removed file watcher for %s", path)
 			return True
