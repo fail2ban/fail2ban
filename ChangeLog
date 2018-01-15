@@ -484,6 +484,7 @@ releases.
     - fixed failregex of "AUTH command used when not advertised" to better handle the foreign
       input SMTP command (lower/mixed case auth command, prevent injection) (gh-1979)
 * filter.d/postfix-*.conf - added optional port regex (gh-1902)
+* filter.d/sendmail-auth.conf - extended daemon for Fedora 24/RHEL - the daemon name is "sendmail" (gh-1632)
 
 ### New Features
 
