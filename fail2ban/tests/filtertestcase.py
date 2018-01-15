@@ -980,6 +980,21 @@ def get_monitor_failures_testcase(Filter_):
 			self.assert_correct_last_attempt(GetFailures.FAILURES_01)
 			self.assertEqual(self.filter.failManager.getFailTotal(), 6)
 
+		def test_pyinotify_delWatch(self):
+			if hasattr(self.filter, '_delWatch'): # pyinotify only
+				m = self.filter._FilterPyinotify__monitor
+				# remove existing watch:
+				self.assertTrue(self.filter._delWatch(m.get_wd(self.name)))
+				# mockup get_path to allow once find path for invalid wd-value:
+				_org_get_path = m.get_path
+				def _get_path(wd):
+					#m.get_path = _org_get_path
+					return 'test'
+				m.get_path = _get_path
+				# try remove watch using definitely not existing handle:
+				self.assertFalse(self.filter._delWatch(0x7fffffff))
+				m.get_path = _org_get_path
+
 		def test_del_file(self):
 			# test filter reaction by delete watching file:
 			self.file.close()
