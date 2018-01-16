@@ -5,3 +5,5 @@
 2012-09-26 10:24:35: (http_auth.c.1136) digest: auth failed for  xxx : wrong password, IP: 4.4.4.4
 # failJSON: { "time": "2013-08-25T00:24:55", "match": true , "host": "4.4.4.4" }
 2013-08-25 00:24:55: (http_auth.c.877) get_password failed, IP: 4.4.4.4
+# failJSON: { "time": "2018-01-16T14:10:32", "match": true , "host": "192.0.2.1", "desc": "http_auth -> mod_auth, gh-2018" }
+2018-01-16 14:10:32: (mod_auth.c.525) password doesn't match for /test-url username: test, IP: 192.0.2.1
