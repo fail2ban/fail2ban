@@ -7,4 +7,7 @@
 2014/04/01 22:20:38 [error] 30708#0: *3 user "scribendio": password mismatch, client: 10.0.2.2, server: , request: "GET / HTTP/1.1", host: "localhost:8443"
 # failJSON: { "time": "2014-04-02T12:37:58", "match": true, "host": "10.0.2.2" }
 2014/04/02 12:37:58 [error] 6563#0: *1861 user "scribendio": password mismatch, client: 10.0.2.2, server: scribend.io, request: "GET /admin HTTP/1.1", host: "scribend.io", referrer: "https://scribend.io/admin"
-
+# failJSON: { "time": "2014-04-03T22:20:38", "match": true, "host": "192.0.2.1", "desc": "user name with space" }
+2014/04/03 22:20:38 [error] 30708#0: *3 user "scriben dio": password mismatch, client: 192.0.2.1, server: , request: "GET / HTTP/1.1", host: "localhost:8443"
+# failJSON: { "time": "2014-04-03T22:20:40", "match": true, "host": "192.0.2.2", "desc": "trying injection on user name"}
+2014/04/03 22:20:40 [error] 30708#0: *3 user "test": password mismatch, client: 127.0.0.1, server: test, request: "GET / HTTP/1.1", host: "localhost:8443"": was not found in "/etc/nginx/.htpasswd", client: 192.0.2.2, server: , request: "GET / HTTP/1.1", host: "localhost:8443"
