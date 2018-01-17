@@ -42,6 +42,7 @@ clean: clean-inits
 	# Enforce removal of *.pyc files. Apparently dh_clean does
 	# not perform find on provided filename patterns.
 	find . -name \*.pyc -exec rm -f {} \;
+	rm -rf fail2ban.egg-info
 	rm -f config/filter.d/ignorecommands/apache-fakegooglebotc
 	rm -f bin/fail2ban-python
 	dh_clean
@@ -49,7 +50,7 @@ clean: clean-inits
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_clean
 	dh_installdirs
 
 	# Install the package into debian/fail2ban.
@@ -60,7 +61,7 @@ install: build
 	# Remove explicitely created /var/run/fail2ban
 	# just to please lintian since init file will
 	# take care about it anyways
-	rm -rf $(DESTDIR)/var/run/fail2ban
+	rm -rf $(DESTDIR)/var/run/fail2ban $(DESTDIR)/run/fail2ban
 	# Install bash completion
 	install -d $(DESTDIR)/etc/bash_completion.d
 	install -m 644 files/bash-completion $(DESTDIR)/etc/bash_completion.d/fail2ban

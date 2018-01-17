@@ -1,9 +1,9 @@
 fail2ban (0.10-1) unstable; urgency=low
 
-  * Non-maintainer upload.
   * New upstrem release
+  * Bump Standards Version 4.1.3
 
- -- Ervin Hegedus (HA2OS) <airween@gmail.com>  Sun, 26 Mar 2017 21:43:18 +0200
+ -- Ervin Hegedüs (HA2OS) <airween@gmail.com>  Wed, 17 Jan 2018 21:11:07 +0000
 
 fail2ban (0.8.13-1) unstable; urgency=low
 

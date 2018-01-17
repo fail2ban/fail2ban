@@ -2,7 +2,9 @@ f0d4eea878a0ae17b3b4def27c2f421c  usr/bin/fail2ban-client
 a8f42a8519c982792243a9feb537a681  usr/bin/fail2ban-regex
 6bc843c0bbf74556b520ab8177ec98ed  usr/bin/fail2ban-server
 87585e329855d662e6d8b130cbc9a090  usr/bin/fail2ban-testcases
-ad217a0c044e8ab69513fecf3b71f0cb  usr/lib/python2.7/dist-packages/fail2ban-0.10.0a2.egg-info
+ad217a0c044e8ab69513fecf3b71f0cb  usr/lib/python2.7/dist-packages/fail2ban-0.10.0a2.egg-info/PKG-INFO
+68b329da9893e34099c7d8ad5cb9c940  usr/lib/python2.7/dist-packages/fail2ban-0.10.0a2.egg-info/dependency_links.txt
+c1dc545641e62a3064092b6b5d3f388e  usr/lib/python2.7/dist-packages/fail2ban-0.10.0a2.egg-info/top_level.txt
 f56e3cdefe50ba330311bf35396efe84  usr/lib/python2.7/dist-packages/fail2ban/__init__.py
 1462fa8f21229ca8ce838cad186607d8  usr/lib/python2.7/dist-packages/fail2ban/client/__init__.py
 61c1ec99c4204f89e47d019f6ff2ddbc  usr/lib/python2.7/dist-packages/fail2ban/client/actionreader.py
@@ -52,7 +54,7 @@ a06da8c52795541e6c6cca1e760627b0  usr/lib/python2.7/dist-packages/fail2ban/setup
 b678e6c1446c07d370b8758259994921  usr/lib/python2.7/dist-packages/fail2ban/tests/action_d/__init__.py
 c1a3b57bcd07f22d7f3bdd578413a342  usr/lib/python2.7/dist-packages/fail2ban/tests/action_d/test_badips.py
 750edbc671bfcfed2ed0289e766c0674  usr/lib/python2.7/dist-packages/fail2ban/tests/action_d/test_smtp.py
-24447ff23b0fc75186c8899678e2d9ac  usr/lib/python2.7/dist-packages/fail2ban/tests/actionstestcase.py
+207dd3338ee797b422588b9d4a1e76e6  usr/lib/python2.7/dist-packages/fail2ban/tests/actionstestcase.py
 f8ebeff0abaa23f06398c976c8c3688a  usr/lib/python2.7/dist-packages/fail2ban/tests/actiontestcase.py
 60ae385d0ecf3bbe55d92bf72dbb4db3  usr/lib/python2.7/dist-packages/fail2ban/tests/banmanagertestcase.py
 49ec30cb6a7712372405d66788c51697  usr/lib/python2.7/dist-packages/fail2ban/tests/clientbeautifiertestcase.py
@@ -152,7 +154,7 @@ c1e72b8930f40ff5c416562a5a273aeb  usr/lib/python2.7/dist-packages/fail2ban/tests
 1474bc1e78f2503ada33a8f63349d974  usr/lib/python2.7/dist-packages/fail2ban/tests/files/logs/perdition
 a0d516f9a328ec2a5dfb91b42188c3b9  usr/lib/python2.7/dist-packages/fail2ban/tests/files/logs/php-url-fopen
 8b6e8017ddaed3901dcdde4e077d1fa4  usr/lib/python2.7/dist-packages/fail2ban/tests/files/logs/portsentry
-1b40a08c6f43c5112dce8e437bdd7531  usr/lib/python2.7/dist-packages/fail2ban/tests/files/logs/postfix
+7d2340b57b5d8e084e39f4d888979d87  usr/lib/python2.7/dist-packages/fail2ban/tests/files/logs/postfix
 45d476c0925cd86dfed9c0977b82bd85  usr/lib/python2.7/dist-packages/fail2ban/tests/files/logs/postfix-rbl
 29fefe65bbd18e200756da2be5474d40  usr/lib/python2.7/dist-packages/fail2ban/tests/files/logs/postfix-sasl
 4f2ad625aea2cfb1cc75016fe867e833  usr/lib/python2.7/dist-packages/fail2ban/tests/files/logs/proftpd
@@ -202,11 +204,11 @@ feba5ff644d7a87d0723d5dc8a00df42  usr/lib/python2.7/dist-packages/fail2ban/versi
 0e9bced25c56f09811aef746ae6ec50a  usr/share/doc/fail2ban/DEVELOP.gz
 a51ffcd5b1f638b62bb92e79ab265cc1  usr/share/doc/fail2ban/FILTERS.gz
 6cc36b965714fd781c4cc2f7a60b96ee  usr/share/doc/fail2ban/NEWS.Debian.gz
-7b2e06935f33a756ad43603749f2fef1  usr/share/doc/fail2ban/README.Debian.gz
+af142a4f4d087bc7d23667f18ca12920  usr/share/doc/fail2ban/README.Debian.gz
 303f2fbaf626a9b7dbfdab81d4a5fcf1  usr/share/doc/fail2ban/README.md.gz
 a42a0bf00d53fc5726f8e5933eea6f2a  usr/share/doc/fail2ban/TODO
 63cb49354db176099d468131b89b3600  usr/share/doc/fail2ban/TODO.Debian
-0756f92355c213b534033b3f0ef9430d  usr/share/doc/fail2ban/changelog.Debian.gz
+399afff6192a446f69dd265ee4817e20  usr/share/doc/fail2ban/changelog.Debian.gz
 944186392fd4556dba11b0eebb970b5c  usr/share/doc/fail2ban/changelog.gz
 e72173e0ab0aac06074699ef883b5a25  usr/share/doc/fail2ban/copyright
 7e6c15ad435f13aa649083dc35a76863  usr/share/doc/fail2ban/examples/ipmasq-ZZZzzz_fail2ban.rul
