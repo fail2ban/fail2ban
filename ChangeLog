@@ -15,7 +15,7 @@ Incompatibility list (compared to v.0.9):
     rewrite the regex like in example below resp. using `(?:(?P=ip4)|(?P=ip6)` instead of `(?P=host)`
     (or `(?:(?P=ip4)|(?P=ip6)|(?P=dns))` corresponding your `usedns` and `raw` settings).
 
-    Of course you can always your own capture-group (like below `_cond_ip_`) to do this.
+    Of course you can always define your own capture-group (like below `_cond_ip_`) to do this.
     ```
     testln="1500000000 failure from 192.0.2.1: bad host 192.0.2.1"
     fail2ban-regex "$testln" "^\s*failure from (?P<_cond_ip_><HOST>): bad host (?P=_cond_ip_)$"
@@ -35,8 +35,9 @@ ver. 0.10.2-dev-1 (2017/??/??) - development edition
 -----------
 
 ### Incompatibility list:
-* The configuration for multiport jails using banaction `pf` can be incompatible after upgrade, if
-  ports are enclosed in curly braces `{ }` in the `jail.local` etc. This may cause a double-brackets now.
+* The configuration for jails using banaction `pf` can be incompatible after upgrade, because pf-action uses
+  anchors now (see `action.d/pf.conf` for more information). If you want use obsolete handling without anchors,
+  just rewrite it in the `jail.local` by overwrite of `pfctl` parameter, e. g. like `banaction = pf[pfctl="pfctl"]`.
 
 ### Fixes
 * Fixed logging to systemd-journal: new logtarget value SYSOUT can be used instead of STDOUT, to avoid 
