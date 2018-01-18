@@ -34,6 +34,16 @@ Incompatibility list (compared to v.0.9):
 ver. 0.11.0-dev-0 (2017/??/??) - development nightly edition
 -----------
 
+### Fixes
+
+### New Features
+
+### Enhancements
+
+
+ver. 0.10.2 (2018/01/18) - nothing-burns-like-the-cold
+-----------
+
 ### Incompatibility list:
 * The configuration for jails using banaction `pf` can be incompatible after upgrade, because pf-action uses
   anchors now (see `action.d/pf.conf` for more information). If you want use obsolete handling without anchors,
