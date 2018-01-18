@@ -44,6 +44,7 @@ config/action.d/netscaler.conf
 config/action.d/nftables-allports.conf
 config/action.d/nftables-common.conf
 config/action.d/nftables-multiport.conf
+config/action.d/nginx-block-map.conf
 config/action.d/npf.conf
 config/action.d/nsupdate.conf
 config/action.d/osx-afctl.conf
