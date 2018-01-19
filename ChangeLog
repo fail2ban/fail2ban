@@ -31,7 +31,28 @@ Incompatibility list (compared to v.0.9):
   IPv6-capable now.
 
 
-ver. 0.11.0-dev-0 (2017/??/??) - development nightly edition
+ver. 0.11.0-dev-0 (20??/??/??) - development nightly edition
+-----------
+
+### Fixes
+* purge database will be executed now (within observer).
+* restoring currently banned ip after service restart fixed 
+  (now < timeofban + bantime), ignore old log failures (already banned)
+
+### New Features
+* Increment ban time (+ observer) functionality introduced.
+* Database functionality extended with bad ips.
+* New tags (usable in actions):
+  - `<bancount>` - ban count of this offender if known as bad (started by 1 for unknown)
+  - `<bantime>` - current ban-time of the ticket (prolongation can be retarded up to 10 sec.)
+* Introduced new action command `actionprolong` to prolong ban-time (e. g. set new timeout if expected);
+  Several actions (like ipset, etc.) rewritten using net logic with `actionprolong`.
+  Note: because ban-time is dynamic, it was removed from jail.conf as timeout argument (check jail.local).
+
+### Enhancements
+
+
+ver. 0.10.3-dev-1 (20??/??/??) - development edition
 -----------
 
 ### Fixes
