@@ -374,8 +374,11 @@ class FilterPyinotify(FileFilter):
 	def stop(self):
 		# stop filter thread:
 		super(FilterPyinotify, self).stop()
-		if self.__notifier: # stop the notifier
-			self.__notifier.stop()
+		try:
+			if self.__notifier: # stop the notifier
+				self.__notifier.stop()
+		except AttributeError: # pragma: no cover
+			if self.__notifier: raise
 
 	##
 	# Wait for exit with cleanup.
