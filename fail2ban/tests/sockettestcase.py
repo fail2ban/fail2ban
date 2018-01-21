@@ -31,8 +31,11 @@ import threading
 import time
 import unittest
 
+from .utils import LogCaptureTestCase
+
 from .. import protocol
-from ..server.asyncserver import AsyncServer, AsyncServerException
+from ..server.asyncserver import AsyncServer, AsyncServerException, loop
+from ..server.utils import Utils
 from ..client.csocket import CSocket
 
 
@@ -40,6 +43,7 @@ class Socket(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		super(Socket, self).setUp()
 		self.server = AsyncServer(self)
 		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'socket')
 		os.close(sock_fd)
@@ -54,14 +58,39 @@ class Socket(unittest.TestCase):
 		"""Test transmitter proceed method which just returns first arg"""
 		return message
 
+	def testStopPerCloseUnexpected(self):
+		# start in separate thread :
+		serverThread = threading.Thread(
+			target=self.server.start, args=(self.sock_name, False))
+		serverThread.daemon = True
+		serverThread.start()
+		self.assertTrue(Utils.wait_for(self.server.isActive, unittest.F2B.maxWaitTime(10)))
+		# unexpected stop directly after start:
+		self.server.close()
+		# wait for end of thread :
+		Utils.wait_for(lambda: not serverThread.isAlive() 
+			or serverThread.join(Utils.DEFAULT_SLEEP_INTERVAL), unittest.F2B.maxWaitTime(10))
+		self.assertFalse(serverThread.isAlive())
+		# clean :
+		self.server.stop()
+		self.assertFalse(self.server.isActive())
+		self.assertFalse(os.path.exists(self.sock_name))
+
+	def _serverSocket(self):
+		try:
+			return CSocket(self.sock_name)
+		except Exception as e:
+			return None
+
 	def testSocket(self):
 		serverThread = threading.Thread(
 			target=self.server.start, args=(self.sock_name, False))
 		serverThread.daemon = True
 		serverThread.start()
-		time.sleep(1)
+		self.assertTrue(Utils.wait_for(self.server.isActive, unittest.F2B.maxWaitTime(10)))
+		time.sleep(Utils.DEFAULT_SLEEP_TIME)
 
-		client = CSocket(self.sock_name)
+		client = Utils.wait_for(self._serverSocket, 2)
 		testMessage = ["A", "test", "message"]
 		self.assertEqual(client.send(testMessage), testMessage)
 
@@ -71,7 +100,11 @@ class Socket(unittest.TestCase):
 		client.close()
 
 		self.server.stop()
-		serverThread.join(1)
+		# wait for end of thread :
+		Utils.wait_for(lambda: not serverThread.isAlive() 
+			or serverThread.join(Utils.DEFAULT_SLEEP_INTERVAL), unittest.F2B.maxWaitTime(10))
+		self.assertFalse(serverThread.isAlive())
+		self.assertFalse(self.server.isActive())
 		self.assertFalse(os.path.exists(self.sock_name))
 
 	def testSocketForce(self):
@@ -85,14 +118,30 @@ class Socket(unittest.TestCase):
 			target=self.server.start, args=(self.sock_name, True))
 		serverThread.daemon = True
 		serverThread.start()
-		time.sleep(1)
+		self.assertTrue(Utils.wait_for(self.server.isActive, unittest.F2B.maxWaitTime(10)))
 
 		self.server.stop()
-		serverThread.join(1)
+		# wait for end of thread :
+		Utils.wait_for(lambda: not serverThread.isAlive() 
+			or serverThread.join(Utils.DEFAULT_SLEEP_INTERVAL), unittest.F2B.maxWaitTime(10))
+		self.assertFalse(self.server.isActive())
 		self.assertFalse(os.path.exists(self.sock_name))
 
 
-class ClientMisc(unittest.TestCase):
+class ClientMisc(LogCaptureTestCase):
+
+	def testErrorsInLoop(self):
+		phase = {'cntr': 0}
+		def _active():
+			return phase['cntr'] < 40
+		def _poll(*args):
+			phase['cntr'] += 1
+			raise Exception('test *%d*' % phase['cntr'])
+		# test errors "catched" and logged:
+		loop(_active, use_poll=_poll)
+		self.assertLogged("test *1*", "test *10*", "test *20*", all=True)
+		self.assertLogged("Too many errors - stop logging connection errors")
+		self.assertNotLogged("test *21*", "test *22*", "test *23*", all=True)
 
 	def testPrintFormattedAndWiki(self):
 		# redirect stdout to devnull

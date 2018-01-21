@@ -1,3 +1,5 @@
+# normal mode # filterOptions: {"mode": "normal"}
+
 # failJSON: { "time": "2005-02-25T03:01:10", "match": true , "host": "128.68.136.133" }
 Feb 25 03:01:10 kismet sm-acceptingconnections[27713]: s1P819mk027713: ruleset=check_rcpt, arg1=<asservnew@freemailhost.ru>, relay=128-68-136-133.broadband.corbina.ru [128.68.136.133], reject=550 5.7.1 <asservnew@freemailhost.ru>... Relaying denied. Proper authentication required.
 
@@ -69,20 +71,27 @@ Feb 22 14:02:44 batman sm-mta[4030]: s1MD2hsd004030: rrcs-24-73-201-194.se.biz.r
 
 
 # failJSON: { "match": false }
-Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <arhipov@domain.com>... No such user here
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026250: <arhipov@domain.com>... No such user here
 # failJSON: { "match": false }
-Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <anatoliy@domain.com>... No such user here
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026251: <anatoliy@domain.com>... No such user here
 # failJSON: { "match": false }
-Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <artem@domain.com>... No such user here
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026252: <artem@domain.com>... No such user here
 # failJSON: { "match": false }
-Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <anto@domain.com>... No such user here
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026252: <anto@domain.com>... No such user here
+
 # failJSON: { "match": false }
-Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <anton@domain.com>... No such user here
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <davaojk25@domain.com>... No such user here
 # failJSON: { "time": "2004-11-03T11:35:30", "match": true , "host": "95.32.23.163" }
 Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: from=<davaojk25@domain.com>, size=0, class=0, nrcpts=0, bodytype=8BITMIME, proto=ESMTP, daemon=MTA, relay=163.23.32.95.dsl-dynamic.vsi.ru [95.32.23.163]
 
 # failJSON: { "match": false }
-Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026254: <anton@domain.com>... No such user here
-# Different mail ID shouldn't match
-# failJSON: { "match": false }
-Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026255: from=<davaojk25@domain.com>, size=0, class=0, nrcpts=0, bodytype=8BITMIME, proto=ESMTP, daemon=MTA, relay=163.23.32.95.dsl-dynamic.vsi.ru [95.32.23.163]
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026252: <anton@domain.com>... No such user here
+# failJSON: { "match": false, "desc": "Different mail ID shouldn't match" }
+Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026255: from=<anton@domain.com>, size=0, class=0, nrcpts=0, bodytype=8BITMIME, proto=ESMTP, daemon=MTA, relay=163.23.32.95.dsl-dynamic.vsi.ru [95.32.23.163]
+
+# filterOptions: {"mode": "extra"}
+
+# failJSON: { "time": "2005-03-06T16:55:28", "match": true , "host": "192.0.2.194", "desc": "wrong resp. non RFC compiant (ddos prelude?), MTA-mode" }
+Mar  6 16:55:28 s192-168-0-1 sm-mta[20949]: v26LtRA0020949: some-host-24.example.org [192.0.2.194] did not issue MAIL/EXPN/VRFY/ETRN during connection to MTA
+# failJSON: { "time": "2005-03-07T15:04:37", "match": true , "host": "192.0.2.195", "desc": "wrong resp. non RFC compiant (ddos prelude?), MSP-mode, (may be forged)" }
+Mar  7 15:04:37 s192-168-0-1 sm-mta[18624]: v27K4Vj8018624: some-host-24.example.org [192.0.2.195] (may be forged) did not issue MAIL/EXPN/VRFY/ETRN during connection to MSP-v4

@@ -2,6 +2,15 @@
 #before = common.conf
 
 [Definition]
+# overwrite default daemon, additionally it should be accessible in jail with "%(known/_daemon)s":
+_daemon = test
+# interpolate previous regex (from test.conf) + new 2nd + dynamical substitution) of "two" an "where":
 failregex = %(known/failregex)s
-            failure test 2 (filter.d/test.local) <HOST>
+            failure %(_daemon)s <two> (filter.d/test.<where>) <HOST>
+# parameter "two" should be specified in jail by "filter=test[..., two=2]"
 
+[Init]
+# this parameter can be used in jail with "%(known/three)s":
+three = 3
+# this parameter "where" does not overwrite "where" in definition of test.conf (dynamical values only):
+where = local

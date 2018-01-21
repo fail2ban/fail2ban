@@ -32,10 +32,13 @@ import sys
 
 class CSocket:
 	
-	def __init__(self, sock="/var/run/fail2ban/fail2ban.sock"):
+	def __init__(self, sock="/var/run/fail2ban/fail2ban.sock", timeout=-1):
 		# Create an INET, STREAMing socket
 		#self.csock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.__csock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+		self.__deftout = self.__csock.gettimeout()
+		if timeout != -1:
+			self.settimeout(timeout)
 		#self.csock.connect(("localhost", 2222))
 		self.__csock.connect(sock)
 
@@ -44,9 +47,14 @@ class CSocket:
 	
 	def send(self, msg):
 		# Convert every list member to string
-		obj = dumps([str(m) for m in msg], HIGHEST_PROTOCOL)
+		obj = dumps(map(
+			lambda m: str(m) if not isinstance(m, (list, dict, set)) else m, msg),
+		  HIGHEST_PROTOCOL)
 		self.__csock.send(obj + CSPROTO.END)
 		return self.receive(self.__csock)
+
+	def settimeout(self, timeout):
+		self.__csock.settimeout(timeout if timeout != -1 else self.__deftout)
 
 	def close(self, sendEnd=True):
 		if not self.__csock:
