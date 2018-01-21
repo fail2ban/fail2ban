@@ -1,11 +1,18 @@
-fail2ban (0.9.7-3) UNRELEASED; urgency=medium
+fail2ban (0.10.2-1) UNRELEASED; urgency=medium
 
+  [ Yaroslav Halchenko ]
+  * New major upstream release
+    - Major performance improvements, especially in tests battery
+      execution, and shutdown (Closes: #878038)
+    - Incremental increase of bantime (Closes: #498164)
+    - IPv6 support (Closes: #881648, #470417)
+  
   [ Viktor Szépe ]
-
   * Install provided config for monit under /etc/monit/conf-available
     (instead of /etc/monit/monitrc.d, location changed after monit 1:5.15-2)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 27 Oct 2017 17:30:24 -0400
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 20 Jan 2018 22:05:17 -0500
 
 fail2ban (0.9.7-2) unstable; urgency=medium
 
