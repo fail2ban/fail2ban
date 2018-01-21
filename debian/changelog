@@ -11,7 +11,6 @@ fail2ban (0.10.2-1) UNRELEASED; urgency=medium
   * Install provided config for monit under /etc/monit/conf-available
     (instead of /etc/monit/monitrc.d, location changed after monit 1:5.15-2)
 
-
  -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 20 Jan 2018 22:05:17 -0500
 
 fail2ban (0.9.7-2) unstable; urgency=medium

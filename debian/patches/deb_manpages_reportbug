@@ -4,9 +4,9 @@ Subject: tune ups in upstream manpages to direct users to use reportbug
 
 --- a/man/fail2ban-client.1
 +++ b/man/fail2ban-client.1
-@@ -380,7 +380,7 @@ the action <ACT> for <JAIL>
- Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>.
- Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>.
+@@ -437,7 +437,7 @@ the action <ACT> for <JAIL>
+ .SH FILES
+ \fI/etc/fail2ban/*\fR
  .SH "REPORTING BUGS"
 -Report bugs to https://github.com/fail2ban/fail2ban/issues
 +Report bugs via Debian bug tracking system \fIhttp://www.debian.org/Bugs/\fR .
@@ -15,9 +15,9 @@ Subject: tune ups in upstream manpages to direct users to use reportbug
  .br
 --- a/man/fail2ban-server.1
 +++ b/man/fail2ban-server.1
-@@ -38,7 +38,7 @@ print the version
- Written by Cyril Jaquier <cyril.jaquier@fail2ban.org>.
- Many contributions by Yaroslav O. Halchenko <debian@onerussian.com>.
+@@ -69,7 +69,7 @@ display this help message
+ \fB\-V\fR, \fB\-\-version\fR
+ print the version
  .SH "REPORTING BUGS"
 -Report bugs to https://github.com/fail2ban/fail2ban/issues
 +Report bugs via Debian bug tracking system \fIhttp://www.debian.org/Bugs/\fR .
