@@ -169,13 +169,20 @@ class DatabaseTest(LogCaptureTestCase):
 
 			self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
 			self.assertRaises(NotImplementedError, self.db.updateDb, Fail2BanDb.__version__ + 1)
+			# check current bans (should find exactly 1 ticket after upgrade):
+			tickets = self.db.getCurrentBans(fromtime=1388009242, correctBanTime=False)
+			self.assertEqual(len(tickets), 1)
+			self.assertEqual(tickets[0].getBanTime(), -1); # ban-time still unknown (normally updated from jail)
 		finally:
 			if self.db and self.db._dbFilename != ":memory:":
 				os.remove(self.db._dbBackupFilename)
 
 	def testUpdateDb2(self):
-		if Fail2BanDb is None or self.db.filename == ':memory:': # pragma: no cover
+		if Fail2BanDb is None: # pragma: no cover
 			return
+		self.db = None
+		if self.dbFilename is None: # pragma: no cover
+			_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
 		shutil.copyfile(
 			os.path.join(TEST_FILES_DIR, 'database_v2.db'), self.dbFilename)
 		self.db = Fail2BanDb(self.dbFilename)
@@ -195,6 +202,11 @@ class DatabaseTest(LogCaptureTestCase):
 		self.assertEqual(bans[1].getIP(), "1.2.3.8")
 		# updated ?
 		self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
+		# check current bans (should find 2 tickets after upgrade):
+		self.jail = DummyJail(name='pam-generic')
+		tickets = self.db.getCurrentBans(jail=self.jail, fromtime=1417595494)
+		self.assertEqual(len(tickets), 2)
+		self.assertEqual(tickets[0].getBanTime(), 600)
 		# further update should fail:
 		self.assertRaises(NotImplementedError, self.db.updateDb, Fail2BanDb.__version__ + 1)
 		# clean:
@@ -380,7 +392,7 @@ class DatabaseTest(LogCaptureTestCase):
 			return
 		self.testAddJail()
 
-		jail2 = DummyJail()
+		jail2 = DummyJail(name='DummyJail-2')
 		self.db.addJail(jail2)
 
 		ticket = FailTicket("127.0.0.1", MyTime.time() - 40, ["abc\n"])
@@ -473,6 +485,13 @@ class DatabaseTest(LogCaptureTestCase):
 		tickets = self.db.getCurrentBans(jail=self.jail, forbantime=-1,
 			fromtime=MyTime.time() + MyTime.str2seconds("1year"))
 		self.assertEqual(len(tickets), 1)
+		self.assertEqual(tickets[0].getBanTime(), 600); # current jail ban time.
+		# change jail to persistent ban and try again:
+		self.jail.actions.setBanTime(-1)
+		tickets = self.db.getCurrentBans(jail=self.jail, forbantime=-1,
+			fromtime=MyTime.time() + MyTime.str2seconds("1year"))
+		self.assertEqual(len(tickets), 1)
+		self.assertEqual(tickets[0].getBanTime(), -1); # current jail ban time.
 
 	def testActionWithDB(self):
 		# test action together with database functionality

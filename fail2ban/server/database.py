@@ -378,18 +378,23 @@ class Fail2BanDb(object):
 							"COMMIT;" % Fail2BanDb._CREATE_TABS['logs'])
 
 			if version < 3 and self._tableExists(cur, "bans"):
+				# set ban-time to -1 (note it means rather unknown, as persistent, will be fixed by restore):
 				cur.executescript("BEGIN TRANSACTION;"
-							"CREATE TEMPORARY TABLE bans_temp AS SELECT jail, ip, timeofban, 600 as bantime, 1 as bancount, data FROM bans;"
+							"CREATE TEMPORARY TABLE bans_temp AS SELECT jail, ip, timeofban, -1 as bantime, 1 as bancount, data FROM bans;"
 							"DROP TABLE bans;"
-							"%s;"
+							"%s;\n"
 							"INSERT INTO bans SELECT * from bans_temp;"
 							"DROP TABLE bans_temp;"
 							"COMMIT;" % Fail2BanDb._CREATE_TABS['bans'])
-			if version < 4:
+			if version < 4 and not self._tableExists(cur, "bips"):
 				cur.executescript("BEGIN TRANSACTION;"
-							"%s;"
+							"%s;\n"
 							"UPDATE fail2banDb SET version = 4;"
 							"COMMIT;" % Fail2BanDb._CREATE_TABS['bips'])
+				if self._tableExists(cur, "bans"):
+					cur.execute(
+							"INSERT OR REPLACE INTO bips(ip, jail, timeofban, bantime, bancount, data)"
+							"  SELECT ip, jail, timeofban, bantime, bancount, data FROM bans order by timeofban")
 
 			cur.execute("SELECT version FROM fail2banDb LIMIT 1")
 			return cur.fetchone()[0]
@@ -753,9 +758,22 @@ class Fail2BanDb(object):
 		return cur.execute(query, queryArgs)
 
 	@commitandrollback
-	def getCurrentBans(self, cur, jail = None, ip = None, forbantime=None, fromtime=None):
+	def getCurrentBans(self, cur, jail=None, ip=None, forbantime=None, fromtime=None,
+		correctBanTime=True
+	):
+		"""Reads tickets (with merged info) currently affected from ban from the database.
+		
+		There are all the tickets corresponding parameters jail/ip, forbantime,
+		fromtime (normally now).
+		
+		If correctBanTime specified (default True) it will fix the restored ban-time 
+		(and therefore endOfBan) of the ticket (normally it is ban-time of jail as maximum)
+		for all tickets with ban-time greater (or persistent).
+		"""
 		tickets = []
 		ticket = None
+		if correctBanTime is True:
+			correctBanTime = jail.actions.getBanTime() if jail is not None else None
 
 		for ticket in self._getCurrentBans(cur, jail=jail, ip=ip, 
 			forbantime=forbantime, fromtime=fromtime
@@ -763,6 +781,9 @@ class Fail2BanDb(object):
 			# can produce unpack error (database may return sporadical wrong-empty row):
 			try:
 				banip, timeofban, bantime, bancount, data = ticket
+				# if persistent ban (or still unknown after upgrade), use current bantime of the jail:
+				if correctBanTime and (bantime == -1 or bantime > correctBanTime):
+					bantime = correctBanTime
 				# additionally check for empty values:
 				if banip is None or banip == "": # pragma: no cover
 					raise ValueError('unexpected value %r' % (banip,))

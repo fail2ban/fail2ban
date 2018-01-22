@@ -263,7 +263,7 @@ class Jail(object):
 			return self._banExtra.get(opt, None)
 		return self._banExtra
 
-	def restoreCurrentBans(self):
+	def restoreCurrentBans(self, correctBanTime=True):
 		"""Restore any previous valid bans from the database.
 		"""
 		try:
@@ -272,7 +272,9 @@ class Jail(object):
 				# use ban time as search time if we have not enabled a increasing:
 				if not self.getBanTimeExtra('increment'):
 					forbantime = self.actions.getBanTime()
-				for ticket in self.database.getCurrentBans(jail=self, forbantime=forbantime):
+				for ticket in self.database.getCurrentBans(jail=self, forbantime=forbantime,
+					correctBanTime=correctBanTime
+				):
 					try:
 						#logSys.debug('restored ticket: %s', ticket)
 						if self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True): continue

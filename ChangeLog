@@ -38,6 +38,8 @@ ver. 0.11.0-dev-0 (20??/??/??) - development nightly edition
 * purge database will be executed now (within observer).
 * restoring currently banned ip after service restart fixed 
   (now < timeofban + bantime), ignore old log failures (already banned)
+* upgrade database: update new created table `bips` with entries from table `bans` (allows restore
+  current bans after upgrade from version <= 0.10)
 
 ### New Features
 * Increment ban time (+ observer) functionality introduced.
@@ -50,6 +52,10 @@ ver. 0.11.0-dev-0 (20??/??/??) - development nightly edition
   Note: because ban-time is dynamic, it was removed from jail.conf as timeout argument (check jail.local).
 
 ### Enhancements
+* algorithm of restore current bans after restart changed: update the restored ban-time (and therefore 
+  end of ban) of the ticket with ban-time of jail (as maximum), for all tickets with ban-time greater
+  (or persistent); not affected if ban-time of the jail is unchanged between stop/start.
+
 
 
 ver. 0.10.3-dev-1 (20??/??/??) - development edition
