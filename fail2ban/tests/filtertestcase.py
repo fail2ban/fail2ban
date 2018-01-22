@@ -24,7 +24,6 @@ __license__ = "GPL"
 
 from __builtin__ import open as fopen
 import unittest
-import getpass
 import os
 import sys
 import time, datetime
@@ -43,13 +42,11 @@ from ..server.failmanager import FailManagerEmpty
 from ..server.ipdns import DNSUtils, IPAddr
 from ..server.mytime import MyTime
 from ..server.utils import Utils, uni_decode
-from .utils import setUpMyTime, tearDownMyTime, mtimesleep, with_tmpdir, LogCaptureTestCase
+from .utils import setUpMyTime, tearDownMyTime, mtimesleep, with_tmpdir, LogCaptureTestCase, \
+	CONFIG_DIR as STOCK_CONF_DIR
 from .dummyjail import DummyJail
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
-
-STOCK_CONF_DIR = "config"
-STOCK = os.path.exists(os.path.join(STOCK_CONF_DIR, 'fail2ban.conf'))
 
 
 # yoh: per Steven Hiscocks's insight while troubleshooting
@@ -445,8 +442,7 @@ class IgnoreIPDNS(LogCaptureTestCase):
 		self.assertFalse(self.filter.inIgnoreIPList("128.178.222.70"))
 
 	def testIgnoreCmdApacheFakegooglebot(self):
-		if not STOCK: # pragma: no cover
-			raise unittest.SkipTest('Skip test because of no STOCK config')
+		unittest.F2B.SkipIfCfgMissing(stock=True)
 		cmd = os.path.join(STOCK_CONF_DIR, "filter.d/ignorecommands/apache-fakegooglebot")
 		## below test direct as python module:
 		mod = Utils.load_python_module(cmd)

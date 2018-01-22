@@ -43,15 +43,13 @@ from .. import protocol
 from ..server import server
 from ..server.mytime import MyTime
 from ..server.utils import Utils
-from .utils import LogCaptureTestCase, logSys as DefLogSys, with_tmpdir, shutil, logging
-from .utils import CONFIG_DIR as STOCK_CONF_DIR
+from .utils import LogCaptureTestCase, logSys as DefLogSys, with_tmpdir, shutil, logging, \
+	STOCK, CONFIG_DIR as STOCK_CONF_DIR
 
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
-
-STOCK = exists(pjoin(STOCK_CONF_DIR, 'fail2ban.conf'))
 
 CLIENT = "fail2ban-client"
 SERVER = "fail2ban-server"
@@ -1171,6 +1169,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"Jail 'test-jail1' started", all=True)
 
 	# test action.d/nginx-block-map.conf --
+	@unittest.F2B.skip_if_cfg_missing(action="nginx-block-map")
 	@with_foreground_server_thread(startextra={
 		# create log-file (avoid "not found" errors):
 		'create_before_start': ('%(tmp)s/blck-failures.log',),
