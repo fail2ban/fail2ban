@@ -9,7 +9,10 @@ fail2ban (0.10.2-1) unstable; urgency=medium
     - IPv6 support (Closes: #881648, #470417)
   * A number of new patches added to address failing tests from
     https://github.com/fail2ban/fail2ban/pull/2025
-  * Boosted policy to 4.1.3
+  * debian/control
+    - Boosted policy to 4.1.3
+    - sqlite3 is now needed for some tests, thus added to build-depends
+      and suggests
 
   [ Viktor Szépe ]
   * Install provided config for monit under /etc/monit/conf-available
