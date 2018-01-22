@@ -1,12 +1,15 @@
-fail2ban (0.10.2-1) UNRELEASED; urgency=medium
+fail2ban (0.10.2-1) unstable; urgency=medium
 
   [ Yaroslav Halchenko ]
-  * New major upstream release
+  * New major upstream release (thanks to Ervin Hegedüs for help updating
+    packaging)
     - Major performance improvements, especially in tests battery
       execution, and shutdown (Closes: #878038)
     - Incremental increase of bantime (Closes: #498164)
     - IPv6 support (Closes: #881648, #470417)
-  
+  * A number of new patches added to address failing tests from
+    https://github.com/fail2ban/fail2ban/pull/2025
+
   [ Viktor Szépe ]
   * Install provided config for monit under /etc/monit/conf-available
     (instead of /etc/monit/monitrc.d, location changed after monit 1:5.15-2)
