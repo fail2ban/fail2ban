@@ -675,7 +675,15 @@ class LogFileMonitor(LogCaptureTestCase):
 		os.chmod(self.name, 0)
 		self.filter.getFailures(self.name)
 		failure_was_logged = self._is_logged('Unable to open %s' % self.name)
-		is_root = getpass.getuser() == 'root'
+		# verify that we cannot access the file. Checking by name of user is not
+		# sufficient since could be a fakeroot or some other super-user
+		try:
+			with open(self.name) as f:
+				f.read()
+			is_root = True
+		except IOError:
+			is_root = False
+
 		# If ran as root, those restrictive permissions would not
 		# forbid log to be read.
 		self.assertTrue(failure_was_logged != is_root)
