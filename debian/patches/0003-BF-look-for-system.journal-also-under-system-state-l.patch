@@ -1,0 +1,46 @@
+From 1618356ad52fbc79e4f7b4d0759ef05bec0ae7f1 Mon Sep 17 00:00:00 2001
+From: Yaroslav Halchenko <debian@onerussian.com>
+Date: Sun, 21 Jan 2018 21:05:32 -0500
+Subject: [PATCH 3/4] BF: look for system.journal also under system-state-logs
+ (i.e. /var/log)
+
+as it happens on Debian systems
+---
+ fail2ban/tests/filtertestcase.py | 21 ++++++++++++++++-----
+ 1 file changed, 16 insertions(+), 5 deletions(-)
+
+diff --git a/fail2ban/tests/filtertestcase.py b/fail2ban/tests/filtertestcase.py
+index 1803974b..b707beb5 100644
+--- a/fail2ban/tests/filtertestcase.py
++++ b/fail2ban/tests/filtertestcase.py
+@@ -1173,11 +1173,22 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
+ 			super(MonitorJournalFailures, self).tearDown()
+ 
+ 		def _getRuntimeJournal(self):
+-			# retrieve current system journal path
+-			tmp = Utils.executeCmd('find "$(systemd-path system-runtime-logs)" -name system.journal', 
+-				timeout=10, shell=True, output=True);
+-			self.assertTrue(tmp)
+-			return str(tmp[1].decode('utf-8')).split('\n')[0]
++			"""Retrieve current system journal path
++
++			If none found, None will be returned
++			"""
++			# Depending on the system, it could be found under /run or /var/log (e.g. Debian)
++			# which are pointed by different systemd-path variables.  We will
++			# check one at at time until the first hit
++			for systemd_var in 'system-runtime-logs', 'system-state-logs':
++				tmp = Utils.executeCmd(
++					'find "$(systemd-path %s)" -name system.journal' % systemd_var,
++					timeout=10, shell=True, output=True
++				)
++				self.assertTrue(tmp)
++				out = str(tmp[1].decode('utf-8')).split('\n')[0]
++				if out:
++					return out
+ 
+ 		def testJournalFilesArg(self):
+ 			# retrieve current system journal path
+-- 
+2.15.1
+

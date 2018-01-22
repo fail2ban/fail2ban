@@ -1,0 +1,28 @@
+From d1afbb566f0304487b5d578b4aacef8e647ee74b Mon Sep 17 00:00:00 2001
+From: Yaroslav Halchenko <debian@onerussian.com>
+Date: Sun, 21 Jan 2018 20:16:43 -0500
+Subject: [PATCH 2/4] ENH: verify that use_stock_cfg was not provided while
+ overriding it
+
+Just found this possibly confusing to outside programmer aspect
+so decided to make it more explicit
+---
+ fail2ban/tests/fail2banclienttestcase.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/fail2ban/tests/fail2banclienttestcase.py b/fail2ban/tests/fail2banclienttestcase.py
+index 65653a8e..94790b04 100644
+--- a/fail2ban/tests/fail2banclienttestcase.py
++++ b/fail2ban/tests/fail2banclienttestcase.py
+@@ -153,6 +153,8 @@ def _start_params(tmp, use_stock=False, use_stock_cfg=None,
+ 			"""Filters list of 'files' to contain only directories (under dir)"""
+ 			return [f for f in files if isdir(pjoin(dir, f))]
+ 		shutil.copytree(STOCK_CONF_DIR, cfg, ignore=ig_dirs)
++		assert use_stock_cfg is None, \
++			"We are about to overload use_stock_cfg from the one provided %s" % repr(use_stock_cfg)
+ 		use_stock_cfg = ('action.d', 'filter.d')
+ 		# replace fail2ban params (database with memory):
+ 		r = re.compile(r'^dbfile\s*=')
+-- 
+2.15.1
+
