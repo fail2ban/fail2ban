@@ -11,6 +11,21 @@ Currently, the major difference with upstream: python libraries are
 placed under /usr/share/fail2ban instead of /usr/lib/fail2ban to
 comply with policy regarding architecture independent resources.
 
+Shorewall and startup sequence (#847728)
+----------------------------------------
+
+If you are using systemd, create a
+/etc/systemd/system/fail2ban.service.d/override.conf with contents:
+
+[Unit]
+Requires=shorewall.service
+After=shorewall.service
+
+go guarantee a proper sequence of startup/shotdown (shorewall should
+be started before fail2ban, and stopped after).  Similar settings
+could be adopted for other firewall solutions.
+
+
 Upgrade from 0.6 versions:
 -------------------------
 
@@ -231,4 +246,4 @@ P.S. Anyone is welcome to recommend proper security solution to this
 issue, such as an alternative to sysklogd which allows better control
 over users logging to specific facilities (such as AUTH)
 
- -- Yaroslav Halchenko <debian@onerussian.com>, Fri, 15 Jul 2016 08:59:10 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>, Mon, 22 Jan 2018 10:37:00 -0500

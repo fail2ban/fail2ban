@@ -21,12 +21,16 @@ fail2ban (0.10.2-1) unstable; urgency=medium
     - Boosted policy to 4.1.3
     - sqlite3 is now needed for some tests, thus added to build-depends
       and suggests
+  * debian/README.Debian
+    - Instructions on how to establish correct startup/shutdown sequence
+      in systemd for shorewall (Closes: #847728). Thanks Ben Coleman for the
+      final recipe
 
   [ Viktor Szépe ]
   * Install provided config for monit under /etc/monit/conf-available
     (instead of /etc/monit/monitrc.d, location changed after monit 1:5.15-2)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 20 Jan 2018 22:05:17 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 22 Jan 2018 10:38:19 -0500
 
 fail2ban (0.9.7-2) unstable; urgency=medium
 
