@@ -172,8 +172,6 @@ class DatabaseTest(LogCaptureTestCase):
 				os.remove(self.db._dbBackupFilename)
 
 	def testUpdateDb2(self):
-		if Fail2BanDb is None: # pragma: no cover
-			return
 		self.db = None
 		if self.dbFilename is None: # pragma: no cover
 			_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
