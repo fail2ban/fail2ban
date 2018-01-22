@@ -35,6 +35,7 @@ override_dh_install:
 	rm -rf $(DESTDIR)/var/run/ $(DESTDIR)/run/
 	: # Install monit configuration
 	install -d $(DESTDIR)/etc/monit/conf-available
+	install -d $(DESTDIR)/etc/monit/monitrc.d
 	install -m 644 files/monit/fail2ban $(DESTDIR)/etc/monit/monitrc.d/fail2ban
 	: # Install bash completion
 	install -d $(DESTDIR)/etc/bash_completion.d
@@ -42,7 +43,7 @@ override_dh_install:
 	: # Install systemd files
 	install -d $(DESTDIR)/lib/systemd/system
 	install -d $(DESTDIR)/usr/lib/tmpfiles.d
-	install -m 644 files/fail2ban.service $(DESTDIR)/lib/systemd/system
+	install -m 644 build/fail2ban.service $(DESTDIR)/lib/systemd/system
 	install -m 644 files/fail2ban-tmpfiles.conf $(DESTDIR)/usr/lib/tmpfiles.d
 	install -d $(DESTDIR)/lib/systemd/system
 	: # Install default jail enabler
