@@ -32,7 +32,7 @@ import shutil
 from ..server.filter import FileContainer
 from ..server.mytime import MyTime
 from ..server.ticket import FailTicket
-from ..server.actions import Actions
+from ..server.actions import Actions, Utils
 from .dummyjail import DummyJail
 try:
 	from ..server.database import Fail2BanDb as Fail2BanDb
@@ -85,13 +85,11 @@ class DatabaseTest(LogCaptureTestCase):
 			os.remove(self.dbFilename)
 
 	def testGetFilename(self):
-		if Fail2BanDb is None or self.db.filename == ':memory:': # pragma: no cover
-			return
+		if self.db.filename == ':memory:': # pragma: no cover
+			raise unittest.SkipTest("in :memory: database")
 		self.assertEqual(self.dbFilename, self.db.filename)
 
 	def testPurgeAge(self):
-		if Fail2BanDb is None: # pragma: no cover
-			return
 		self.assertEqual(self.db.purgeage, 86400)
 		self.db.purgeage = '1y6mon15d5h30m'
 		self.assertEqual(self.db.purgeage, 48652200)
@@ -99,16 +97,14 @@ class DatabaseTest(LogCaptureTestCase):
 		self.assertEqual(self.db.purgeage, 48652200*2)
 
 	def testCreateInvalidPath(self):
-		if Fail2BanDb is None: # pragma: no cover
-			return
 		self.assertRaises(
 			sqlite3.OperationalError,
 			Fail2BanDb,
 			"/this/path/should/not/exist")
 
 	def testCreateAndReconnect(self):
-		if Fail2BanDb is None or self.db.filename == ':memory:': # pragma: no cover
-			return
+		if self.db.filename == ':memory:': # pragma: no cover
+			raise unittest.SkipTest("in :memory: database")
 		self.testAddJail()
 		# Reconnect...
 		self.db = Fail2BanDb(self.dbFilename)
@@ -118,8 +114,8 @@ class DatabaseTest(LogCaptureTestCase):
 			"Jail not retained in Db after disconnect reconnect.")
 
 	def testRepairDb(self):
-		if Fail2BanDb is None: # pragma: no cover
-			return
+		if not Utils.executeCmd("sqlite3 --version"): # pragma: no cover
+			raise unittest.SkipTest("no sqlite3 command")
 		self.db = None
 		if self.dbFilename is None: # pragma: no cover
 			_, self.dbFilename = tempfile.mkstemp(".db", "fail2ban_")
@@ -153,8 +149,6 @@ class DatabaseTest(LogCaptureTestCase):
 					self.db = None
 
 	def testUpdateDb(self):
-		if Fail2BanDb is None: # pragma: no cover
-			return
 		self.db = None
 		try:
 			if self.dbFilename is None: # pragma: no cover
@@ -213,8 +207,6 @@ class DatabaseTest(LogCaptureTestCase):
 		os.remove(self.db._dbBackupFilename)
 
 	def testAddJail(self):
-		if Fail2BanDb is None: # pragma: no cover
-			return
 		self.jail = DummyJail()
 		self.db.addJail(self.jail)
 		self.assertTrue(
@@ -222,8 +214,6 @@ class DatabaseTest(LogCaptureTestCase):
 			"Jail not added to database")
 
 	def testAddLog(self):
-		if Fail2BanDb is None: # pragma: no cover
-			return
 		self.testAddJail() # Jail required
 
 		_, filename = tempfile.mkstemp(".log", "Fail2BanDb_")
@@ -235,8 +225,6 @@ class DatabaseTest(LogCaptureTestCase):
 		os.remove(filename)
 
 	def testUpdateLog(self):
-		if Fail2BanDb is None: # pragma: no cover
-			return
 		self.testAddLog() # Add log file
 
 		# Write some text
@@ -276,8 +264,6 @@ class DatabaseTest(LogCaptureTestCase):
 		os.remove(filename)
 
 	def testAddBan(self):
-		if Fail2BanDb is None: # pragma: no cover
-			return
 		self.testAddJail()
 		ticket = FailTicket("127.0.0.1", 0, ["abc\n"])
 		self.db.addBan(self.jail, ticket)
@@ -288,8 +274,6 @@ class DatabaseTest(LogCaptureTestCase):
 			isinstance(tickets[0], FailTicket))
 
 	def testAddBanInvalidEncoded(self):
-		if Fail2BanDb is None: # pragma: no cover
-			return
 		self.testAddJail()
 		# invalid + valid, invalid + valid unicode, invalid + valid dual converted (like in filter:readline by fallback) ...
 		tickets = [
@@ -343,8 +327,6 @@ class DatabaseTest(LogCaptureTestCase):
 		self.assertEqual(len(self.db.getBans(jail=self.jail)), 0)
 
 	def testGetBansWithTime(self):
-		if Fail2BanDb is None: # pragma: no cover
-			return
 		self.testAddJail()
 		self.db.addBan(
 			self.jail, FailTicket("127.0.0.1", MyTime.time() - 60, ["abc\n"]))
@@ -357,8 +339,6 @@ class DatabaseTest(LogCaptureTestCase):
 		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=-1)), 2)
 
 	def testGetBansMerged_MaxEntries(self):
-		if Fail2BanDb is None: # pragma: no cover
-			return
 		self.testAddJail()
 		maxEntries = 2
 		failures = ["abc\n", "123\n", "ABC\n", "1234\n"]
@@ -388,8 +368,6 @@ class DatabaseTest(LogCaptureTestCase):
 		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxEntries:])
 
 	def testGetBansMerged(self):
-		if Fail2BanDb is None: # pragma: no cover
-			return
 		self.testAddJail()
 
 		jail2 = DummyJail(name='DummyJail-2')
@@ -529,8 +507,6 @@ class DatabaseTest(LogCaptureTestCase):
 		self.assertTrue(len(jails) == 0)
 
 	def testPurge(self):
-		if Fail2BanDb is None: # pragma: no cover
-			return
 		self.testAddJail() # Add jail
 
 		self.db.purge() # Jail enabled by default so shouldn't be purged
