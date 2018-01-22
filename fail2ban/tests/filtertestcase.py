@@ -1173,11 +1173,22 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			super(MonitorJournalFailures, self).tearDown()
 
 		def _getRuntimeJournal(self):
-			# retrieve current system journal path
-			tmp = Utils.executeCmd('find "$(systemd-path system-runtime-logs)" -name system.journal', 
-				timeout=10, shell=True, output=True);
-			self.assertTrue(tmp)
-			return str(tmp[1].decode('utf-8')).split('\n')[0]
+			"""Retrieve current system journal path
+
+			If none found, None will be returned
+			"""
+			# Depending on the system, it could be found under /run or /var/log (e.g. Debian)
+			# which are pointed by different systemd-path variables.  We will
+			# check one at at time until the first hit
+			for systemd_var in 'system-runtime-logs', 'system-state-logs':
+				tmp = Utils.executeCmd(
+					'find "$(systemd-path %s)" -name system.journal' % systemd_var,
+					timeout=10, shell=True, output=True
+				)
+				self.assertTrue(tmp)
+				out = str(tmp[1].decode('utf-8')).split('\n')[0]
+				if out:
+					return out
 
 		def testJournalFilesArg(self):
 			# retrieve current system journal path
