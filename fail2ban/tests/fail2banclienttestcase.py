@@ -44,13 +44,13 @@ from ..server import server
 from ..server.mytime import MyTime
 from ..server.utils import Utils
 from .utils import LogCaptureTestCase, logSys as DefLogSys, with_tmpdir, shutil, logging
+from .utils import CONFIG_DIR as STOCK_CONF_DIR
 
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
-STOCK_CONF_DIR = "config"
 STOCK = exists(pjoin(STOCK_CONF_DIR, 'fail2ban.conf'))
 
 CLIENT = "fail2ban-client"
