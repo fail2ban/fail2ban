@@ -7,6 +7,14 @@ fail2ban (0.10.2-1) unstable; urgency=medium
       execution, and shutdown (Closes: #878038)
     - Incremental increase of bantime (Closes: #498164)
     - IPv6 support (Closes: #881648, #470417)
+    - Some filters refactored/deprecated, e.g. to take advantage of new
+      filter option mode
+      - sshd-aggressive and sshd-ddos absorbed into sshd filter
+        (modes: normal, ddos, extra, or aggressive)
+      - postfix-rbl and postfix-sasl absorbed into postfix
+        (modes: more, normal, auth, rbl, ddos, extra, or aggressive)
+    - New actions: abuseipd, nginx-block-map
+    - New filters: phpmyadmin-syslog, zoneminder
   * A number of new patches added to address failing tests from
     https://github.com/fail2ban/fail2ban/pull/2025
   * debian/control

@@ -6,7 +6,7 @@ fail2ban (0.10.2-1) unstable; urgency=medium
   previous version(s) would either not work or would not work as intended.
 
   You are advised to accept new configuration and adjust it for your
-  customizations (if any).
+  customizations (if any).  See changelog.Debian.gz for more information.
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 21 Jan 2018 22:25:26 -0500
 
