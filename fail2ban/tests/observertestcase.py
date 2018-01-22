@@ -386,6 +386,7 @@ class BanTimeIncrDB(unittest.TestCase):
 
 		# two separate jails :
 		jail1 = DummyJail(backend='polling')
+		jail1.setBanTimeExtra('increment', 'true')
 		jail1.database = self.db
 		self.db.addJail(jail1)
 		jail2 = DummyJail(name='DummyJail-2', backend='polling')
@@ -433,7 +434,8 @@ class BanTimeIncrDB(unittest.TestCase):
 		# jail2 does not restore any bans (because all ban tickets should be already expired: stime-6000):
 		jail2.restoreCurrentBans(correctBanTime=False)
 		self.assertEqual(jail2.getFailTicket(), False)
-		# test again, but now normally (with maximum ban-time of restored ticket allowed):
+		# test again, but now normally (with maximum ban-time of restored ticket = allowed 10m = 600):
+		jail1.setBanTimeExtra('maxtime', '10m')
 		jail1.restoreCurrentBans()
 		ticket = jail1.getFailTicket()
 		self.assertTrue(ticket.restored)

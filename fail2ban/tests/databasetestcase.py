@@ -170,9 +170,9 @@ class DatabaseTest(LogCaptureTestCase):
 			self.assertEqual(self.db.updateDb(Fail2BanDb.__version__), Fail2BanDb.__version__)
 			self.assertRaises(NotImplementedError, self.db.updateDb, Fail2BanDb.__version__ + 1)
 			# check current bans (should find exactly 1 ticket after upgrade):
-			tickets = self.db.getCurrentBans(fromtime=1388009242, correctBanTime=False)
+			tickets = self.db.getCurrentBans(fromtime=1388009242, correctBanTime=123456)
 			self.assertEqual(len(tickets), 1)
-			self.assertEqual(tickets[0].getBanTime(), -1); # ban-time still unknown (normally updated from jail)
+			self.assertEqual(tickets[0].getBanTime(), 123456); # ban-time was unknown (normally updated from jail)
 		finally:
 			if self.db and self.db._dbFilename != ":memory:":
 				os.remove(self.db._dbBackupFilename)
