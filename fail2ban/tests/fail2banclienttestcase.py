@@ -153,7 +153,7 @@ def _start_params(tmp, use_stock=False, use_stock_cfg=None,
 			"""Filters list of 'files' to contain only directories (under dir)"""
 			return [f for f in files if isdir(pjoin(dir, f))]
 		shutil.copytree(STOCK_CONF_DIR, cfg, ignore=ig_dirs)
-		use_stock_cfg = ('action.d', 'filter.d')
+		if use_stock_cfg is None: use_stock_cfg = ('action.d', 'filter.d')
 		# replace fail2ban params (database with memory):
 		r = re.compile(r'^dbfile\s*=')
 		for line in fileinput.input(pjoin(cfg, "fail2ban.conf"), inplace=True):
