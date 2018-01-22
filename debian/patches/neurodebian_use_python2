@@ -1,32 +1,41 @@
 --- a/debian/control
 +++ b/debian/control
-@@ -2,7 +2,7 @@ Source: fail2ban
- Section: net
- Priority: optional
- Maintainer: Yaroslav Halchenko <debian@onerussian.com>
--Build-Depends: debhelper (>= 9), python3, python3-pyinotify, dh-systemd
-+Build-Depends: debhelper (>= 9), python (>= 2.6.6-3~), python-pyinotify, dh-python
+@@ -5,9 +5,10 @@ Maintainer: Yaroslav Halchenko <debian@o
+ Build-Depends:
+  debhelper (>= 9)
+  , debhelper (>= 9.20160709) | dh-systemd
+- , python3
+- , python3-pyinotify
++ , python
++ , python-pyinotify
+  , sqlite3
++ , dh-python
  Homepage: http://www.fail2ban.org
- Vcs-Git: git://github.com/fail2ban/fail2ban.git
+ Vcs-Git: git://github.com/fail2ban/fail2ban.git -b debian
  Vcs-Browser: http://github.com/fail2ban/fail2ban
-@@ -11,9 +11,9 @@ Standards-Version: 3.9.6
+@@ -16,8 +17,8 @@ Standards-Version: 4.1.3
  
  Package: fail2ban
  Architecture: all
 -Depends: ${python3:Depends}, ${misc:Depends}, lsb-base (>=2.0-7)
 -Recommends: python, iptables, whois, python3-pyinotify, python3-systemd
--Suggests: mailx, system-log-daemon, monit
 +Depends: ${python:Depends}, ${misc:Depends}, lsb-base (>=2.0-7)
-+Recommends: iptables, whois, python-pyinotify
-+Suggests: mailx, system-log-daemon, monit, python-systemd
++Recommends: python, iptables, whois, python-pyinotify
+ Suggests: mailx, system-log-daemon, monit, sqlite3
  Description: ban hosts that cause multiple authentication errors
   Fail2ban monitors log files (e.g. /var/log/auth.log,
-  /var/log/apache/access.log) and temporarily or persistently bans
+@@ -39,5 +40,5 @@ Description: ban hosts that cause multip
+   - whois -- used by a number of *mail-whois* actions to send notification
+     emails with whois information about attacker hosts. Unless you will use
+     those you don't need whois
+-  - python3-pyinotify -- unless you monitor services logs via systemd, you
++  - python-pyinotify -- unless you monitor services logs via systemd, you
+     need pyinotify for efficient monitoring for log files changes
 --- a/debian/rules
 +++ b/debian/rules
 @@ -9,13 +9,13 @@
  # Uncomment this to turn on verbose mode.
- #export DH_VERBOSE=1
+ export DH_VERBOSE=1
  
 -export PYBUILD_DISABLE_python2=1
 +export PYBUILD_DISABLE_python3=1
@@ -41,7 +50,7 @@
  
  override_dh_clean:
  	rm -rf fail2ban.egg-info
-@@ -37,7 +37,8 @@ override_dh_install:
+@@ -40,7 +40,8 @@ override_dh_install:
  	: # Install bash completion
  	install -d $(DESTDIR)/etc/bash_completion.d
  	install -m 644 files/bash-completion $(DESTDIR)/etc/bash_completion.d/fail2ban
@@ -50,4 +59,4 @@
 +	: # other systemd preparation activities are not carried out
  	install -d $(DESTDIR)/lib/systemd/system
  	install -d $(DESTDIR)/usr/lib/tmpfiles.d
- 	install -m 644 files/fail2ban.service $(DESTDIR)/lib/systemd/system
+ 	install -m 644 build/fail2ban.service $(DESTDIR)/lib/systemd/system
