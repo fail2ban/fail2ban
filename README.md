@@ -32,7 +32,7 @@ Required:
 
 Optional:
 - [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify)
-- Linux >= 2.6.13
+-  ↓ Linux >= 2.6.13
 - [gamin >= 0.0.21](https://www.gnome.org/~veillard/gamin)
 - [systemd >= 204](https://www.freedesktop.org/wiki/Software/systemd)
 - [dnspython](http://www.dnspython.org/)
