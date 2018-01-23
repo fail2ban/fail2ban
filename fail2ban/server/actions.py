@@ -415,7 +415,7 @@ class Actions(JailThread, Mapping):
 					diftm = ticket.getTime() - bTicket.getTime()
 					# log already banned with following level:
 					#   DEBUG   - before 3 seconds - certain interval for it, because of possible latency by recognizing in backends, etc.
-					#   NOTICE  - before 60 seconds - may still occurre if action are slow, or very high load in backend,
+					#   NOTICE  - before 60 seconds - may still occur if action is slow, or very high load in backend,
 					#   WARNING - after 60 seconds - very long time, something may be wrong
 					ll = logging.DEBUG   if diftm < 3 \
 					else logging.NOTICE  if diftm < 60 \

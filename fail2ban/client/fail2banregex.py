@@ -226,7 +226,7 @@ class LineStats(object):
 class Fail2banRegex(object):
 
 	def __init__(self, opts):
-		# set local protected memebers from given options:
+		# set local protected members from given options:
 		self.__dict__.update(dict(('_'+o,v) for o,v in opts.__dict__.iteritems()))
 		self._maxlines_set = False		  # so we allow to override maxlines in cmdline
 		self._datepattern_set = False
