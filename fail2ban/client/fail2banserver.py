@@ -128,10 +128,10 @@ class Fail2banServer(Fail2banCmdLine):
 	def getServerPath():
 		startdir = sys.path[0]
 		exe = os.path.abspath(os.path.join(startdir, SERVER))
-		if not os.path.isfile(exe): # may be uresolved in test-cases, so get relative starter (client):
+		if not os.path.isfile(exe): # may be unresolved in test-cases, so get relative starter (client):
 			startdir = os.path.dirname(sys.argv[0])
 			exe = os.path.abspath(os.path.join(startdir, SERVER))
-			if not os.path.isfile(exe): # may be uresolved in test-cases, so try to get relative bin-directory:
+			if not os.path.isfile(exe): # may be unresolved in test-cases, so try to get relative bin-directory:
 				startdir = os.path.dirname(os.path.abspath(__file__))
 				startdir = os.path.join(os.path.dirname(os.path.dirname(startdir)), "bin")
 				exe = os.path.abspath(os.path.join(startdir, SERVER))

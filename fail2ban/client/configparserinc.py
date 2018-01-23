@@ -20,7 +20,7 @@
 # Author: Yaroslav Halchenko
 # Modified: Cyril Jaquier
 
-__author__ = 'Yaroslav Halhenko, Serg G. Brester (aka sebres)'
+__author__ = 'Yaroslav Halchenko, Serg G. Brester (aka sebres)'
 __copyright__ = 'Copyright (c) 2007 Yaroslav Halchenko, 2015 Serg G. Brester (aka sebres)'
 __license__ = 'GPL'
 
