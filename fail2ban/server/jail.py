@@ -263,14 +263,23 @@ class Jail(object):
 			return self._banExtra.get(opt, None)
 		return self._banExtra
 
+	def getMaxBanTime(self):
+		"""Returns max possible ban-time of jail.
+		"""
+		return self._banExtra.get("maxtime", -1) \
+			if self._banExtra.get('increment') else self.actions.getBanTime()
+
 	def restoreCurrentBans(self, correctBanTime=True):
 		"""Restore any previous valid bans from the database.
 		"""
 		try:
 			if self.database is not None:
-				forbantime = None;
-				# use ban time as search time if we have not enabled a increasing:
-				if not self.getBanTimeExtra('increment'):
+				if self._banExtra.get('increment'):
+					forbantime = None;
+					if correctBanTime:
+						correctBanTime = self.getMaxBanTime()
+				else:
+					# use ban time as search time if we have not enabled a increasing:
 					forbantime = self.actions.getBanTime()
 				for ticket in self.database.getCurrentBans(jail=self, forbantime=forbantime,
 					correctBanTime=correctBanTime

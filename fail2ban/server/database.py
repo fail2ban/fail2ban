@@ -378,9 +378,9 @@ class Fail2BanDb(object):
 							"COMMIT;" % Fail2BanDb._CREATE_TABS['logs'])
 
 			if version < 3 and self._tableExists(cur, "bans"):
-				# set ban-time to -1 (note it means rather unknown, as persistent, will be fixed by restore):
+				# set ban-time to -2 (note it means rather unknown, as persistent, will be fixed by restore):
 				cur.executescript("BEGIN TRANSACTION;"
-							"CREATE TEMPORARY TABLE bans_temp AS SELECT jail, ip, timeofban, -1 as bantime, 1 as bancount, data FROM bans;"
+							"CREATE TEMPORARY TABLE bans_temp AS SELECT jail, ip, timeofban, -2 as bantime, 1 as bancount, data FROM bans;"
 							"DROP TABLE bans;"
 							"%s;\n"
 							"INSERT INTO bans SELECT * from bans_temp;"
@@ -747,7 +747,7 @@ class Fail2BanDb(object):
 		if ip is not None:
 			query += " AND ip=?"
 			queryArgs.append(ip)
-		query += " AND (timeofban + bantime > ? OR bantime = -1)"
+		query += " AND (timeofban + bantime > ? OR bantime <= -1)"
 		queryArgs.append(fromtime)
 		if forbantime not in (None, -1): # not specified or persistent (all)
 			query += " AND timeofban > ?"
@@ -773,7 +773,9 @@ class Fail2BanDb(object):
 		tickets = []
 		ticket = None
 		if correctBanTime is True:
-			correctBanTime = jail.actions.getBanTime() if jail is not None else None
+			correctBanTime = jail.getMaxBanTime() if jail is not None else None
+			# don't change if persistent allowed:
+			if correctBanTime == -1: correctBanTime = None
 
 		for ticket in self._getCurrentBans(cur, jail=jail, ip=ip, 
 			forbantime=forbantime, fromtime=fromtime
@@ -781,12 +783,17 @@ class Fail2BanDb(object):
 			# can produce unpack error (database may return sporadical wrong-empty row):
 			try:
 				banip, timeofban, bantime, bancount, data = ticket
-				# if persistent ban (or still unknown after upgrade), use current bantime of the jail:
-				if correctBanTime and (bantime == -1 or bantime > correctBanTime):
-					bantime = correctBanTime
 				# additionally check for empty values:
 				if banip is None or banip == "": # pragma: no cover
 					raise ValueError('unexpected value %r' % (banip,))
+				# if bantime unknown (after upgrade-db from earlier version), just use min known ban-time:
+				if bantime == -2: # todo: remove it in future version
+					bantime = jail.actions.getBanTime() if jail is not None else (
+						correctBanTime if correctBanTime else 600)
+				elif correctBanTime:
+					# if persistent ban (or greater as max), use current max-bantime of the jail:
+					if bantime == -1 or bantime > correctBanTime:
+						bantime = correctBanTime
 			except ValueError as e: # pragma: no cover
 				logSys.debug("get current bans: ignore row %r - %s", ticket, e)
 				continue
