@@ -383,7 +383,7 @@ class CommandAction(ActionBase):
 		except ValueError as e:
 			raise RuntimeError("Error %s action %s/%s: %r" % (operation, self._jail, self._name, e))
 
-	COND_FAMILIES = {'inet4':1, 'inet6':1}
+	COND_FAMILIES = ('inet4', 'inet6')
 
 	@property
 	def _startOnDemand(self):
