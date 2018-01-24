@@ -158,7 +158,7 @@ class FilterPoll(FileFilter):
 			self.__prevStats[filename] = stats
 			return True
 		except Exception as e:
-			# stil alive (may be deleted because multi-threaded):
+			# still alive (may be deleted because multi-threaded):
 			if not self.getLog(filename) or self.__prevStats.get(filename) is None:
 				logSys.warning("Log %r seems to be down: %s", filename, e)
 				return False

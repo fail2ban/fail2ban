@@ -931,11 +931,11 @@ class FileFilter(Filter):
 				if e.errno != 2: # errno.ENOENT
 					logSys.exception(e)
 				return False
-			except OSError as e: # pragma: no cover - requires race condition to tigger this
+			except OSError as e: # pragma: no cover - requires race condition to trigger this
 				logSys.error("Error opening %s", filename)
 				logSys.exception(e)
 				return False
-			except Exception as e: # pragma: no cover - Requires implemention error in FileContainer to generate
+			except Exception as e: # pragma: no cover - Requires implementation error in FileContainer to generate
 				logSys.error("Internal error in FileContainer open method - please report as a bug to https://github.com/fail2ban/fail2ban/issues")
 				logSys.exception(e)
 				return False
@@ -1043,7 +1043,7 @@ class FileFilter(Filter):
 				movecntr -= 1
 				if movecntr <= 0:
 		 			break
-				# we have found large area without any date mached 
+				# we have found large area without any date matched 
 				# or end of search - try min position (because can be end of previous line):
 				if minp != lastPos:
 					lastPos = tryPos = minp

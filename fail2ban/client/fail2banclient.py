@@ -228,9 +228,9 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		return True
 
 	##
-	def configureServer(self, async=True, phase=None):
-		# if asynchron start this operation in the new thread:
-		if async:
+	def configureServer(self, nonsync=True, phase=None):
+		# if asynchronous start this operation in the new thread:
+		if nonsync:
 			th = Thread(target=Fail2banClient.configureServer, args=(self, False, phase))
 			th.daemon = True
 			return th.start()

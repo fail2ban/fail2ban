@@ -59,6 +59,9 @@ if not CONFIG_DIR:
 	else:
 		CONFIG_DIR = '/etc/fail2ban'
 
+# Indicates that we've stock config:
+STOCK = os.path.exists(os.path.join(CONFIG_DIR, 'fail2ban.conf'))
+
 # During the test cases (or setup) use fail2ban modules from main directory:
 os.putenv('PYTHONPATH', os.path.dirname(os.path.dirname(os.path.dirname(
 	os.path.abspath(__file__)))))
@@ -187,6 +190,31 @@ class F2B(DefaultTestOptions):
 		pass
 	def SkipIfNoNetwork(self):
 		pass
+
+	def SkipIfCfgMissing(self, **kwargs):
+		"""Helper to check action/filter config is available
+		"""
+		if not STOCK: # pragma: no cover
+			if kwargs.get('stock'):
+				raise unittest.SkipTest('Skip test because of missing stock-config files')
+			for t in ('action', 'filter'):
+				v = kwargs.get(t)
+				if v is None: continue
+				if os.path.splitext(v)[1] == '': v += '.conf'
+				if not os.path.exists(os.path.join(CONFIG_DIR, t+'.d', v)):
+					raise unittest.SkipTest('Skip test because of missing %s-config for %r' % (t, v))
+
+	def skip_if_cfg_missing(self, **decargs):
+		"""Helper decorator to check action/filter config is available
+		"""
+		def _deco_wrapper(f):
+			@wraps(f)
+			def wrapper(self, *args, **kwargs):
+				unittest.F2B.SkipIfCfgMissing(**decargs)
+				return f(self, *args, **kwargs)
+			return wrapper
+		return _deco_wrapper
+
 	def maxWaitTime(self,wtime):
 		if self.fast:
 			wtime = float(wtime) / 10

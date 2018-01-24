@@ -44,15 +44,12 @@ from ..server import server
 from ..server.mytime import MyTime
 from ..server.utils import Utils
 from .utils import LogCaptureTestCase, logSys as DefLogSys, with_tmpdir, shutil, logging, \
-	TEST_NOW, tearDownMyTime
+	STOCK, CONFIG_DIR as STOCK_CONF_DIR, TEST_NOW, tearDownMyTime
 
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
-
-STOCK_CONF_DIR = "config"
-STOCK = exists(pjoin(STOCK_CONF_DIR, 'fail2ban.conf'))
 
 CLIENT = "fail2ban-client"
 SERVER = "fail2ban-server"
@@ -183,7 +180,7 @@ def _start_params(tmp, use_stock=False, use_stock_cfg=None,
 			"""Filters list of 'files' to contain only directories (under dir)"""
 			return [f for f in files if isdir(pjoin(dir, f))]
 		shutil.copytree(STOCK_CONF_DIR, cfg, ignore=ig_dirs)
-		use_stock_cfg = ('action.d', 'filter.d')
+		if use_stock_cfg is None: use_stock_cfg = ('action.d', 'filter.d')
 		# replace fail2ban params (database with memory):
 		r = re.compile(r'^dbfile\s*=')
 		for line in fileinput.input(pjoin(cfg, "fail2ban.conf"), inplace=True):
@@ -1205,6 +1202,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"Jail 'test-jail1' started", all=True)
 
 	# test action.d/nginx-block-map.conf --
+	@unittest.F2B.skip_if_cfg_missing(action="nginx-block-map")
 	@with_foreground_server_thread(startextra={
 		# create log-file (avoid "not found" errors):
 		'create_before_start': ('%(tmp)s/blck-failures.log',),

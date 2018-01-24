@@ -321,7 +321,7 @@ class CommandAction(ActionBase):
 
 	def __setattr__(self, name, value):
 		if not name.startswith('_') and not self.__init and not callable(value):
-			# special case for some pasrameters:
+			# special case for some parameters:
 			wrp = WRAP_CMD_PARAMS.get(name)
 			if wrp == 'ignore': # ignore (filter) dynamic parameters
 				return
@@ -349,7 +349,7 @@ class CommandAction(ActionBase):
 	def _properties(self):
 		"""A dictionary of the actions properties.
 
-		This is used to subsitute "tags" in the commands.
+		This is used to substitute "tags" in the commands.
 		"""
 		# if we have a properties - return it:
 		if self.__properties is not None:
@@ -395,7 +395,7 @@ class CommandAction(ActionBase):
 		except ValueError as e:
 			raise RuntimeError("Error %s action %s/%s: %r" % (operation, self._jail, self._name, e))
 
-	COND_FAMILIES = {'inet4':1, 'inet6':1}
+	COND_FAMILIES = ('inet4', 'inet6')
 
 	@property
 	def _startOnDemand(self):
@@ -492,13 +492,13 @@ class CommandAction(ActionBase):
 		"""Executes the "actionflush" command.
 		
 		Command executed in order to flush all bans at once (e. g. by stop/shutdown 
-		the system), instead of unbunning of each single ticket.
+		the system), instead of unbanning of each single ticket.
 
 		Replaces the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
 		family = []
-		# cumulate started families, if started on demand (conditional):
+		# collect started families, if started on demand (conditional):
 		if self._startOnDemand:
 			for f in CommandAction.COND_FAMILIES:
 				if self.__started.get(f) == 1: # only real started:
@@ -514,7 +514,7 @@ class CommandAction(ActionBase):
 		and executes the resulting command.
 		"""
 		family = []
-		# cumulate started families, if started on demand (conditional):
+		# collect started families, if started on demand (conditional):
 		if self._startOnDemand:
 			for f in CommandAction.COND_FAMILIES:
 				if self.__started.get(f) == 1: # only real started:
