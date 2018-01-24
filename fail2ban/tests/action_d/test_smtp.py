@@ -52,6 +52,7 @@ class SMTPActionTest(unittest.TestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		unittest.F2B.SkipIfCfgMissing(action='smtp.py')
 		super(SMTPActionTest, self).setUp()
 		self.jail = DummyJail()
 		pythonModule = os.path.join(CONFIG_DIR, "action.d", "smtp.py")

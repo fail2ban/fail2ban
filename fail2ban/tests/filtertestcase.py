@@ -24,7 +24,6 @@ __license__ = "GPL"
 
 from __builtin__ import open as fopen
 import unittest
-import getpass
 import os
 import sys
 import time, datetime
@@ -43,13 +42,11 @@ from ..server.failmanager import FailManagerEmpty
 from ..server.ipdns import DNSUtils, IPAddr
 from ..server.mytime import MyTime
 from ..server.utils import Utils, uni_decode
-from .utils import setUpMyTime, tearDownMyTime, mtimesleep, with_tmpdir, LogCaptureTestCase
+from .utils import setUpMyTime, tearDownMyTime, mtimesleep, with_tmpdir, LogCaptureTestCase, \
+	CONFIG_DIR as STOCK_CONF_DIR
 from .dummyjail import DummyJail
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
-
-STOCK_CONF_DIR = "config"
-STOCK = os.path.exists(os.path.join(STOCK_CONF_DIR, 'fail2ban.conf'))
 
 
 # yoh: per Steven Hiscocks's insight while troubleshooting
@@ -445,8 +442,7 @@ class IgnoreIPDNS(LogCaptureTestCase):
 		self.assertFalse(self.filter.inIgnoreIPList("128.178.222.70"))
 
 	def testIgnoreCmdApacheFakegooglebot(self):
-		if not STOCK: # pragma: no cover
-			raise unittest.SkipTest('Skip test because of no STOCK config')
+		unittest.F2B.SkipIfCfgMissing(stock=True)
 		cmd = os.path.join(STOCK_CONF_DIR, "filter.d/ignorecommands/apache-fakegooglebot")
 		## below test direct as python module:
 		mod = Utils.load_python_module(cmd)
@@ -675,7 +671,15 @@ class LogFileMonitor(LogCaptureTestCase):
 		os.chmod(self.name, 0)
 		self.filter.getFailures(self.name)
 		failure_was_logged = self._is_logged('Unable to open %s' % self.name)
-		is_root = getpass.getuser() == 'root'
+		# verify that we cannot access the file. Checking by name of user is not
+		# sufficient since could be a fakeroot or some other super-user
+		try:
+			with open(self.name) as f:
+				f.read()
+			is_root = True
+		except IOError:
+			is_root = False
+
 		# If ran as root, those restrictive permissions would not
 		# forbid log to be read.
 		self.assertTrue(failure_was_logged != is_root)
@@ -1173,11 +1177,22 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			super(MonitorJournalFailures, self).tearDown()
 
 		def _getRuntimeJournal(self):
-			# retrieve current system journal path
-			tmp = Utils.executeCmd('find "$(systemd-path system-runtime-logs)" -name system.journal', 
-				timeout=10, shell=True, output=True);
-			self.assertTrue(tmp)
-			return str(tmp[1].decode('utf-8')).split('\n')[0]
+			"""Retrieve current system journal path
+
+			If none found, None will be returned
+			"""
+			# Depending on the system, it could be found under /run or /var/log (e.g. Debian)
+			# which are pointed by different systemd-path variables.  We will
+			# check one at at time until the first hit
+			for systemd_var in 'system-runtime-logs', 'system-state-logs':
+				tmp = Utils.executeCmd(
+					'find "$(systemd-path %s)" -name system.journal' % systemd_var,
+					timeout=10, shell=True, output=True
+				)
+				self.assertTrue(tmp)
+				out = str(tmp[1].decode('utf-8')).split('\n')[0]
+				if out:
+					return out
 
 		def testJournalFilesArg(self):
 			# retrieve current system journal path

@@ -4,6 +4,8 @@ set -eu
 
 export PYTHONPATH=..
 
+f2bversion=$(../bin/fail2ban-client --version | head -n1 | sed -e 's,.* v,,g')
+
 # fail2ban-client
 echo -n "Generating fail2ban-client "
 help2man --section=1 --no-info --include=fail2ban-client.h2m --output fail2ban-client.1 ../bin/fail2ban-client
@@ -33,6 +35,11 @@ for LINE in $LINES; do
 		NEXT=0
 	fi
 done
+echo "[done]"
+
+# fail2ban-python
+echo -n "Generating fail2ban-python "
+help2man --version-string=f2bversion --section=1 --no-info --include=fail2ban-python.h2m --output fail2ban-python.1 ../bin/fail2ban-python
 echo "[done]"
 
 # fail2ban-server
