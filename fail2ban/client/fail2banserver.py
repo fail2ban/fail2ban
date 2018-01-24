@@ -164,21 +164,24 @@ class Fail2banServer(Fail2banCmdLine):
 					cli = self._Fail2banClient()
 					return cli.start(argv)
 
-			# Start the server:
-			from ..server.utils import Utils
-			# background = True, if should be new process running in background, otherwise start in foreground
-			# process will be forked in daemonize, inside of Server module.
-			# async = True, if started from client, should...
+			# Start the server, corresponding options:
+			#   background = True, if should be new process running in background, otherwise start in
+			#     foreground process will be forked in daemonize, inside of Server module.
+			#   nonsync = True, normally internal call only, if started from client, so configures
+			#     the server via asynchronous thread.
 			background = self._conf["background"]
-			async = self._conf.get("async", False)
+			nonsync = self._conf.get("async", False)
+
 			# If was started not from the client:
-			if not async:
+			if not nonsync:
+				# Load requirements on demand (we need utils only when asynchronous handling):
+				from ..server.utils import Utils
 				# Start new thread with client to read configuration and
 				# transfer it to the server:
 				cli = self._Fail2banClient()
 				phase = dict()
 				logSys.debug('Configure via async client thread')
-				cli.configureServer(async=True, phase=phase)
+				cli.configureServer(phase=phase)
 				# wait, do not continue if configuration is not 100% valid:
 				Utils.wait_for(lambda: phase.get('ready', None) is not None, self._conf["timeout"], 0.001)
 				logSys.log(5, '  server phase %s', phase)
@@ -195,7 +198,7 @@ class Fail2banServer(Fail2banCmdLine):
 			pid = os.getpid()
 			server = Fail2banServer.startServerDirect(self._conf, background)
 			# notify waiting thread server ready resp. done (background execution, error case, etc):
-			if not async:
+			if not nonsync:
 				_server_ready()
 			# If forked - just exit other processes
 			if pid != os.getpid(): # pragma: no cover
@@ -204,7 +207,7 @@ class Fail2banServer(Fail2banCmdLine):
 				cli._server = server
 
 			# wait for client answer "done":
-			if not async and cli:
+			if not nonsync and cli:
 				Utils.wait_for(lambda: phase.get('done', None) is not None, self._conf["timeout"], 0.001)
 				if not phase.get('done', False):
 					if server: # pragma: no cover
