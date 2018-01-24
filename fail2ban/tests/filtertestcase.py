@@ -673,10 +673,10 @@ class LogFileMonitor(LogCaptureTestCase):
 		failure_was_logged = self._is_logged('Unable to open %s' % self.name)
 		# verify that we cannot access the file. Checking by name of user is not
 		# sufficient since could be a fakeroot or some other super-user
+		is_root = True
 		try:
-			with open(self.name) as f:
+			with open(self.name) as f: # pragma: no cover - normally no root
 				f.read()
-			is_root = True
 		except IOError:
 			is_root = False
 
