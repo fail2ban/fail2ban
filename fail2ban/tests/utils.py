@@ -640,7 +640,9 @@ class LogCaptureTestCase(unittest.TestCase):
 		def __init__(self, lazy=True):
 			self._lock = threading.Lock()
 			self._val = None
+			self._dirty = True
 			self._recs = list()
+			self._nolckCntr = 0
 			self._strm = StringIO()
 			logging.Handler.__init__(self)
 			if lazy:
@@ -650,10 +652,11 @@ class LogCaptureTestCase(unittest.TestCase):
 			"""Truncate the internal buffer and records."""
 			if size:
 				raise Exception('invalid size argument: %r, should be None or 0' % size)
+			self._val = None
+			self._dirty = True
 			with self._lock:
-				self._strm.truncate(0)
-				self._val = None
 				self._recs = list()
+				self._strm.truncate(0)
 
 		def __write(self, record):
 			msg = record.getMessage() + '\n'
@@ -664,29 +667,42 @@ class LogCaptureTestCase(unittest.TestCase):
 
 		def getvalue(self):
 			"""Return current buffer as whole string."""
-			with self._lock:
-				# cached:
-				if self._val is not None:
-					return self._val
-				# submit already emitted (delivered to handle) records:
-				for record in self._recs:
-					self.__write(record)
-				self._recs = list()
-				# cache and return:
-				self._val = self._strm.getvalue()
+			# if cached (still unchanged/no write operation), we don't need to enter lock:
+			if not self._dirty:
 				return self._val
+			# try to lock, if not possible - return cached/empty (max 5 times):
+			lck = self._lock.acquire(False)
+			if not lck: # pargma: no cover (may be too sporadic on slow systems)
+				self._nolckCntr += 1
+				if self._nolckCntr <= 5:
+					return self._val if self._val is not None else ''
+				self._nolckCntr = 0
+				self._lock.acquire()
+			# minimize time of lock, avoid dead-locking during cross lock within self._strm ...
+			try:
+				recs = self._recs
+				self._recs = list()
+			finally:
+				self._lock.release()
+			# submit already emitted (delivered to handle) records:
+			for record in recs:
+				self.__write(record)
+			# cache and return:
+			self._val = self._strm.getvalue()
+			self._dirty = False
+			return self._val
 			 
 		def handle(self, record): # pragma: no cover
 			"""Handle the specified record direct (not lazy)"""
-			with self._lock:
-				self._val = None
-				self.__write(record)
+			self.__write(record)
+			self._dirty = True
 
 		def _handle_lazy(self, record):
 			"""Lazy handle the specified record on demand"""
 			with self._lock:
-				self._val = None
 				self._recs.append(record)
+			# logged - causes changed string buffer (signal by set _dirty):
+			self._dirty = True
 
 	def setUp(self):
 
