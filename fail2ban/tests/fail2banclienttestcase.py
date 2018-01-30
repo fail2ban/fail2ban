@@ -373,7 +373,7 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 			sock = pjoin(tmp, "f2b.sock")
 			# wait for server (socket):
 			ret = Utils.wait_for(lambda: phase.get('end') or exists(sock), MAX_WAITTIME)
-			if not ret or phase.get('end'):
+			if not ret or phase.get('end'): # pragma: no cover - test-failure case only
 				raise Exception(
 					'Unexpected: Socket file does not exists.\nStart failed: %r'
 					% (startparams,)
@@ -381,7 +381,7 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 			if ready:
 				# wait for communication with worker ready:
 				ret = Utils.wait_for(lambda: "Server ready" in self.getLog(), MAX_WAITTIME)
-				if not ret:
+				if not ret: # pragma: no cover - test-failure case only
 					raise Exception(
 						'Unexpected: Server ready was not found.\nStart failed: %r'
 						% (startparams,)
