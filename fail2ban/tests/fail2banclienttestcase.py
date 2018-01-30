@@ -318,7 +318,7 @@ def with_foreground_server_thread(startextra={}):
 				Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
 				self.assertTrue(phase.get('start', None))
 				# wait for server (socket and ready):
-				self._wait_for_srv(tmp, True, startparams=startparams)
+				self._wait_for_srv(tmp, True, startparams=startparams, phase=phase)
 				DefLogSys.info('=== within server: begin ===')
 				self.pruneLog()
 				# several commands to server in body of decorated function:
@@ -368,12 +368,12 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 		else:
 			raise FailExitException()
 
-	def _wait_for_srv(self, tmp, ready=True, startparams=None):
+	def _wait_for_srv(self, tmp, ready=True, startparams=None, phase={}):
 		try:
 			sock = pjoin(tmp, "f2b.sock")
 			# wait for server (socket):
-			ret = Utils.wait_for(lambda: exists(sock), MAX_WAITTIME)
-			if not ret:
+			ret = Utils.wait_for(lambda: phase.get('end') or exists(sock), MAX_WAITTIME)
+			if not ret or phase.get('end'):
 				raise Exception(
 					'Unexpected: Socket file does not exists.\nStart failed: %r'
 					% (startparams,)
@@ -405,10 +405,12 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 		# start and wait to end (foreground):
 		logSys.debug("start of test worker")
 		phase['start'] = True
-		self.execCmd(SUCCESS, ("-f",) + startparams, "start")
-		# end :
-		phase['end'] = True
-		logSys.debug("end of test worker")
+		try:
+			self.execCmd(SUCCESS, ("-f",) + startparams, "start")
+		finally:
+			# end :
+			phase['end'] = True
+			logSys.debug("end of test worker")
 
 	@with_foreground_server_thread()
 	def testStartForeground(self, tmp, startparams):
@@ -1173,7 +1175,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 	@with_foreground_server_thread(startextra={
 		# create log-file (avoid "not found" errors):
 		'create_before_start': ('%(tmp)s/blck-failures.log',),
-		# we need action.d/nginx-block-map.conf:
+		# we need action.d/nginx-block-map.conf and blocklist_de:
 		'use_stock_cfg': ('action.d',),
 		# jail-config:
 		'jails': (
@@ -1182,6 +1184,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			'usedns = no',
 			'logpath = %(tmp)s/blck-failures.log',
 			'action = nginx-block-map[blck_lst_reload="", blck_lst_file="%(tmp)s/blck-lst.map"]',
+			'         blocklist_de[actionban=\'curl() { echo "*** curl" "$*";}; <Definition/actionban>\', email="Fail2Ban <fail2ban@localhost>", '
+													  'apikey="TEST-API-KEY", agent="fail2ban-test-agent", service=<name>]',
 			'filter =',
 			'datepattern = ^Epoch',
 			'failregex = ^ failure "<F-ID>[^"]+</F-ID>" - <ADDR>',
@@ -1218,6 +1222,14 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertIn('\\125-000-003 1;\n', mp)
 		self.assertIn('\\125-000-004 1;\n', mp)
 		self.assertIn('\\125-000-005 1;\n', mp)
+
+		# check blocklist_de substitution:
+		self.assertLogged(
+			"stdout: '*** curl --fail --data-urlencode server=Fail2Ban <fail2ban@localhost>"
+				" --data apikey=TEST-API-KEY --data service=nginx-blck-lst ",
+			"stdout: '... --data format=text --user-agent fail2ban-test-agent",
+			all=True, wait=MID_WAITTIME
+		)
 
 		# unban 1, 2 and 5:
 		self.execCmd(SUCCESS, startparams, 'unban', '125-000-001', '125-000-002', '125-000-005')
