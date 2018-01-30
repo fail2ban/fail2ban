@@ -1223,11 +1223,11 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertIn('\\125-000-004 1;\n', mp)
 		self.assertIn('\\125-000-005 1;\n', mp)
 
-		# check blocklist_de substitution:
+		# check blocklist_de substitution (e. g. new-line after <matches>):
 		self.assertLogged(
 			"stdout: '*** curl --fail --data-urlencode server=Fail2Ban <fail2ban@localhost>"
-				" --data apikey=TEST-API-KEY --data service=nginx-blck-lst ",
-			"stdout: '... --data format=text --user-agent fail2ban-test-agent",
+			                 " --data apikey=TEST-API-KEY --data service=nginx-blck-lst ",
+			"stdout: ' --data format=text --user-agent fail2ban-test-agent",
 			all=True, wait=MID_WAITTIME
 		)
 
