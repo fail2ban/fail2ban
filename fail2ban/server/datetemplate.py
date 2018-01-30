@@ -47,6 +47,9 @@ RE_LINE_BOUND_END = re.compile(r'(?<![\\\|])(?:\$\)?)$')
 
 RE_ALPHA_PATTERN = re.compile(r'(?<!\%)\%[aAbBpc]')
 
+RE_EPOCH_PATTERN = re.compile(r"(?<!\\)\{L?EPOCH\}", re.IGNORECASE)
+
+
 class DateTemplate(object):
 	"""A template which searches for and returns a date from a log line.
 
@@ -192,14 +195,22 @@ class DateEpoch(DateTemplate):
 	regex
 	"""
 
-	def __init__(self, lineBeginOnly=False):
+	def __init__(self, lineBeginOnly=False, pattern=None, longFrm=False):
 		DateTemplate.__init__(self)
 		self.name = "Epoch"
-		if not lineBeginOnly:
-			regex = r"((?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=\baudit\()))\d{10,11}\b(?:\.\d{3,6})?)(?:(?(selinux)(?=:\d+\)))|(?(square)(?=\])))"
+		self._longFrm = longFrm;
+		epochRE = r"\d{10,11}\b(?:\.\d{3,6})?"
+		if longFrm:
+			self.name = "LongEpoch";
+			epochRE = r"\d{10,11}(?:\d{3}(?:\d{3})?)?"
+		if pattern:
+			regex = RE_EPOCH_PATTERN.sub("(%s)" % epochRE, pattern)
+			self.setRegex(regex)
+		elif not lineBeginOnly:
+			regex = r"((?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=\baudit\()))%s)(?:(?(selinux)(?=:\d+\)))|(?(square)(?=\])))" % epochRE
 			self.setRegex(regex, wordBegin=False) ;# already line begin resp. word begin anchored
 		else:
-			regex = r"((?P<square>(?<=^\[))?\d{10,11}\b(?:\.\d{3,6})?)(?(square)(?=\]))"
+			regex = r"((?P<square>(?<=^\[))?%s)(?(square)(?=\]))" % epochRE
 			self.setRegex(regex, wordBegin='start', wordEnd=True)
 
 	def getDate(self, line, dateMatch=None, default_tz=None):
@@ -220,8 +231,14 @@ class DateEpoch(DateTemplate):
 		if not dateMatch:
 			dateMatch = self.matchDate(line)
 		if dateMatch:
+			v = dateMatch.group(1)
 			# extract part of format which represents seconds since epoch
-			return (float(dateMatch.group(1)), dateMatch)
+			if self._longFrm and len(v) >= 13:
+				if len(v) >= 16:
+					v = float(v) / 1000000
+				else:
+					v = float(v) / 1000
+			return (float(v), dateMatch)
 
 
 class DatePatternRegex(DateTemplate):
