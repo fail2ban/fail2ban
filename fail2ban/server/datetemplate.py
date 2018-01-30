@@ -204,7 +204,7 @@ class DateEpoch(DateTemplate):
 			self.name = "LongEpoch";
 			epochRE = r"\d{10,11}(?:\d{3}(?:\d{3})?)?"
 		if pattern:
-			regex = RE_EPOCH_PATTERN.sub("(%s)" % epochRE, pattern)
+			regex = RE_EPOCH_PATTERN.sub(lambda v: "(%s)" % epochRE, pattern)
 			self.setRegex(regex)
 		elif not lineBeginOnly:
 			regex = r"((?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=\baudit\()))%s)(?:(?(selinux)(?=:\d+\)))|(?(square)(?=\])))" % epochRE
