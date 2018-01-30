@@ -199,12 +199,15 @@ class DateEpoch(DateTemplate):
 		DateTemplate.__init__(self)
 		self.name = "Epoch"
 		self._longFrm = longFrm;
+		self._grpIdx = 1
 		epochRE = r"\d{10,11}\b(?:\.\d{3,6})?"
 		if longFrm:
 			self.name = "LongEpoch";
-			epochRE = r"\d{10,11}(?:\d{3}(?:\d{3})?)?"
+			epochRE = r"\d{10,11}(?:\d{3}(?:\.\d{1,6}|\d{3})?)?"
 		if pattern:
-			regex = RE_EPOCH_PATTERN.sub(lambda v: "(%s)" % epochRE, pattern)
+			# pattern should capture/cut out the whole match:
+			regex = "(" + RE_EPOCH_PATTERN.sub(lambda v: "(%s)" % epochRE, pattern) + ")"
+			self._grpIdx = 2
 			self.setRegex(regex)
 		elif not lineBeginOnly:
 			regex = r"((?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=\baudit\()))%s)(?:(?(selinux)(?=:\d+\)))|(?(square)(?=\])))" % epochRE
@@ -231,10 +234,10 @@ class DateEpoch(DateTemplate):
 		if not dateMatch:
 			dateMatch = self.matchDate(line)
 		if dateMatch:
-			v = dateMatch.group(1)
+			v = dateMatch.group(self._grpIdx)
 			# extract part of format which represents seconds since epoch
 			if self._longFrm and len(v) >= 13:
-				if len(v) >= 16:
+				if len(v) >= 16 and '.' not in v:
 					v = float(v) / 1000000
 				else:
 					v = float(v) / 1000
