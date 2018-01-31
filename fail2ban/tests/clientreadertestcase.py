@@ -188,7 +188,7 @@ y = %(jail/y)s
 		self.assertEqual(self.c.get('jail', 'c'), 'def-c,b:"jail-b-test-b-def-b,a:`jail-a-test-a-def-a`"')
 		self.assertEqual(self.c.get('jail', 'd'), 'def-d-b:"def-b,a:`jail-a-test-a-def-a`"')
 		self.assertEqual(self.c.get('test', 'c'), 'def-c,b:"test-b-def-b,a:`test-a-def-a`"')
-		self.assertEqual(self.c.get('test', 'd'),  'def-d-b:"def-b,a:`test-a-def-a`"')
+		self.assertEqual(self.c.get('test', 'd'), 'def-d-b:"def-b,a:`test-a-def-a`"')
 		self.assertEqual(self.c.get('DEFAULT', 'c'), 'def-c,b:"def-b,a:`def-a`"')
 		self.assertEqual(self.c.get('DEFAULT', 'd'), 'def-d-b:"def-b,a:`def-a`"')
 		self.assertRaises(Exception, self.c.get, 'test', 'x')
@@ -437,9 +437,20 @@ class FilterReaderTest(unittest.TestCase):
 		self.assertSortedEqual(c, output)
 
 	def testFilterReaderSubstitionKnown(self):
-		output = [['set', 'jailname', 'addfailregex', 'to=test,sweet@example.com,test2,sweet@example.com fromip=<IP>']]
+		output = [['set', 'jailname', 'addfailregex', '^to=test,sweet@example.com,test2,sweet@example.com fromip=<IP>$']]
 		filterName, filterOpt = extractOptions(
-			'substition[honeypot="<sweet>,<known/honeypot>", sweet="test,<known/honeypot>,test2"]')
+			'substition[failregex="^<known/failregex>$", honeypot="<sweet>,<known/honeypot>", sweet="test,<known/honeypot>,test2"]')
+		filterReader = FilterReader('substition', "jailname", filterOpt,
+		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
+		filterReader.read()
+		filterReader.getOptions(None)
+		c = filterReader.convert()
+		self.assertSortedEqual(c, output)
+
+	def testFilterReaderSubstitionSection(self):
+		output = [['set', 'jailname', 'addfailregex', '^\s*to=fail2ban@localhost fromip=<IP>\s*$']]
+		filterName, filterOpt = extractOptions(
+			'substition[failregex="^\s*<Definition/failregex>\s*$", honeypot="<default/honeypot>"]')
 		filterReader = FilterReader('substition', "jailname", filterOpt,
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
 		filterReader.read()
