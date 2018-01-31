@@ -26,7 +26,8 @@ import time
 
 from threading import Lock
 
-from .datetemplate import re, DateTemplate, DatePatternRegex, DateTai64n, DateEpoch
+from .datetemplate import re, DateTemplate, DatePatternRegex, DateTai64n, DateEpoch, \
+	RE_EPOCH_PATTERN
 from .strptime import validateTimeZone
 from .utils import Utils
 from ..helpers import getLogger
@@ -36,7 +37,7 @@ logSys = getLogger(__name__)
 
 logLevel = 6
 
-RE_DATE_PREMATCH = re.compile("\{DATE\}", re.IGNORECASE)
+RE_DATE_PREMATCH = re.compile(r"(?<!\\)\{DATE\}", re.IGNORECASE)
 DD_patternCache = Utils.Cache(maxCount=1000, maxTime=60*60)
 
 
@@ -48,12 +49,18 @@ def _getPatternTemplate(pattern, key=None):
 	template = DD_patternCache.get(key)
 
 	if not template:
-		if key in ("EPOCH", "{^LN-BEG}EPOCH", "^EPOCH"):
-			template = DateEpoch(lineBeginOnly=(key != "EPOCH"))
-		elif key in ("TAI64N", "{^LN-BEG}TAI64N", "^TAI64N"):
-			template = DateTai64n(wordBegin=('start' if key != "TAI64N" else False))
-		else:
-			template = DatePatternRegex(pattern)
+		if "EPOCH" in key:
+			if RE_EPOCH_PATTERN.search(pattern):
+				template = DateEpoch(pattern=pattern, longFrm="LEPOCH" in key)
+			elif key in ("EPOCH", "{^LN-BEG}EPOCH", "^EPOCH"):
+				template = DateEpoch(lineBeginOnly=(key != "EPOCH"))
+			elif key in ("LEPOCH", "{^LN-BEG}LEPOCH", "^LEPOCH"):
+				template = DateEpoch(lineBeginOnly=(key != "LEPOCH"), longFrm=True)
+		if template is None:
+			if key in ("TAI64N", "{^LN-BEG}TAI64N", "^TAI64N"):
+				template = DateTai64n(wordBegin=('start' if key != "TAI64N" else False))
+			else:
+				template = DatePatternRegex(pattern)
 
 	DD_patternCache.set(key, template)
 	return template
