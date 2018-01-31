@@ -351,7 +351,7 @@ class DefinitionInitConfigReader(ConfigReader):
 			return self._defCache[optname]
 		except KeyError:
 			try:
-				v = self.get("Definition", optname, vars=self._pOpts)
+				v = self._cfg.get_ex("Definition", optname, vars=self._pOpts)
 			except (NoSectionError, NoOptionError, ValueError):
 				v = None
 			self._defCache[optname] = v
