@@ -312,7 +312,9 @@ def with_foreground_server_thread(startextra={}):
 						# wait for end sign:
 						Utils.wait_for(lambda: phase.get('end', None) is not None, MAX_WAITTIME)
 						self.assertTrue(phase.get('end', None))
-						self.assertLogged("Shutdown successful", "Exiting Fail2ban", all=True)
+						self.assertLogged("Shutdown successful", "Exiting Fail2ban", all=True, wait=MAX_WAITTIME)
+					# set to NOP: avoid dual call
+					self.stopAndWaitForServerEnd = lambda *args, **kwargs: None
 				self.stopAndWaitForServerEnd = _stopAndWaitForServerEnd
 				# wait for start thread:
 				Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
@@ -333,7 +335,6 @@ def with_foreground_server_thread(startextra={}):
 					# so don't kill (same process) - if success, just wait for end of worker:
 					if phase.get('end', None):
 						th.join()
-				self.stopAndWaitForServerEnd = None
 		return wrapper
 	return _deco_wrapper
 
