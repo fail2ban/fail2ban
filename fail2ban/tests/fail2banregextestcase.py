@@ -292,7 +292,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	def testRegexEpochPatterns(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
-			"-r", "-d", "^\[{LEPOCH}\]\s+", "--maxlines", "5",
+			"-r", "-d", r"^\[{LEPOCH}\]\s+", "--maxlines", "5",
 			"[1516469849] 192.0.2.1 FAIL: failure\n"
 			"[1516469849551] 192.0.2.2 FAIL: failure\n"
 			"[1516469849551000] 192.0.2.3 FAIL: failure\n"

@@ -448,9 +448,9 @@ class FilterReaderTest(unittest.TestCase):
 		self.assertSortedEqual(c, output)
 
 	def testFilterReaderSubstitionSection(self):
-		output = [['set', 'jailname', 'addfailregex', '^\s*to=fail2ban@localhost fromip=<IP>\s*$']]
+		output = [['set', 'jailname', 'addfailregex', '^\\s*to=fail2ban@localhost fromip=<IP>\\s*$']]
 		filterName, filterOpt = extractOptions(
-			'substition[failregex="^\s*<Definition/failregex>\s*$", honeypot="<default/honeypot>"]')
+			'substition[failregex="^\\s*<Definition/failregex>\\s*$", honeypot="<default/honeypot>"]')
 		filterReader = FilterReader('substition', "jailname", filterOpt,
 		  share_config=TEST_FILES_DIR_SHARE_CFG, basedir=TEST_FILES_DIR)
 		filterReader.read()
