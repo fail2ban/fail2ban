@@ -38,7 +38,8 @@ Optional:
 - [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify)
   - Linux >= 2.6.13
 - [gamin >= 0.0.21](http://www.gnome.org/~veillard/gamin)
-- [systemd >= 204](http://www.freedesktop.org/wiki/Software/systemd)
+- [systemd >= 204](http://www.freedesktop.org/wiki/Software/systemd) and python bindings:
+  - [python-systemd package](https://www.freedesktop.org/software/systemd/python-systemd/index.html)
 - [dnspython](http://www.dnspython.org/)
 
 To install, just do:
