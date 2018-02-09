@@ -614,7 +614,7 @@ class Fail2banRegex(object):
 			self.setDatePattern(None)
 			if journalmatch:
 				flt.addJournalMatch(journalmatch)
-			output( "Use    journal match : %s" % " ".join(journalmatch) )
+				output( "Use    journal match : %s" % " ".join(journalmatch) )
 			test_lines = journal_lines_gen(flt, myjournal)
 		else:
 			# if single line parsing (without buffering)
