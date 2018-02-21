@@ -20,6 +20,8 @@
 2013-06-02 09:05:48 [18505] SMTP protocol synchronization error (next input sent too soon: pipelining was not advertised): rejected "RSET" H=ba77.mx83.fr [82.96.160.77]:58302 I=[1.2.3.4]:25 next input="QUIT\r\n"
 # failJSON: { "time": "2013-06-02T09:22:05", "match": true , "host": "163.14.21.161" }
 2013-06-02 09:22:05 [19591] SMTP call from pc012-6201.spo.scu.edu.tw [163.14.21.161]:3767 I=[1.2.3.4]:25 dropped: too many nonmail commands (last was "RSET")
+# failJSON: { "time": "2013-06-02T09:22:06", "match": true , "host": "192.0.2.109" }
+2013-06-02 09:22:06 SMTP call from [192.0.2.109] dropped: too many syntax or protocol errors (last command was "AUTH LOGIN")
 # failJSON: { "time": "2013-06-02T15:06:18", "match": true , "host": "46.20.35.114" }
 2013-06-02 15:06:18 H=(VM-WIN2K3-1562) [46.20.35.114] sender verify fail for <usfh@technological-systems.com>: Unknown user
 # failJSON: { "time": "2013-06-07T02:02:09", "match": true , "host": "91.232.21.92" }

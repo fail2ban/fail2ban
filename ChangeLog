@@ -62,6 +62,7 @@ ver. 0.10.3-dev-1 (20??/??/??) - development edition
 -----------
 
 ### Fixes
+* `filter.d/exim.conf`: failregex extended - SMTP call dropped: too many syntax or protocol errors (gh-2048);
 
 ### New Features
 
