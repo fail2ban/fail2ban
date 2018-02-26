@@ -52,6 +52,9 @@ if sys.version_info >= (2,7): # pragma: no cover - may be unavailable
 			self.jail.actions.add("badips", pythonModule, initOpts={
 				'category': "ssh",
 				'banaction': "test",
+				'score': 5,
+				'key': "fail2ban-test-suite",
+				#'bankey': "fail2ban-test-suite",
 				'timeout': (3 if unittest.F2B.fast else 30),
 				})
 			self.action = self.jail.actions["badips"]
@@ -80,8 +83,8 @@ if sys.version_info >= (2,7): # pragma: no cover - may be unavailable
 
 		def testScore(self):
 			self.assertRaises(ValueError, setattr, self.action, "score", -5)
-			self.action.score = 5
-			self.action.score = "5"
+			self.action.score = 3
+			self.action.score = "3"
 
 		def testBanaction(self):
 			self.assertRaises(
@@ -97,11 +100,9 @@ if sys.version_info >= (2,7): # pragma: no cover - may be unavailable
 			self.action.updateperiod = 900
 			self.action.updateperiod = "900"
 
-		def testStart(self):
+		def testStartStop(self):
 			self.action.start()
-			self.assertTrue(len(self.action._bannedips) > 10)
-
-		def testStop(self):
-			self.testStart()
+			self.assertTrue(len(self.action._bannedips) > 10,
+				"%s is fewer as 10: %r" % (len(self.action._bannedips), self.action._bannedips))
 			self.action.stop()
 			self.assertTrue(len(self.action._bannedips) == 0)
