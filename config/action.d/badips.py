@@ -81,7 +81,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	"""
 
 	TIMEOUT = 10
-	_badips = "http://www.badips.com"
+	_badips = "https://www.badips.com"
 	def _Request(self, url, **argv):
 		return Request(url, headers={'User-Agent': self.agent}, **argv)
 
