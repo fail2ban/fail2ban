@@ -368,7 +368,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 			Any issues with badips.com request.
 		"""
 		try:
-			url = "/".join([self._badips, "add", self.category, aInfo['ip']])
+			url = "/".join([self._badips, "add", self.category, str(aInfo['ip'])])
 			if self.key:
 				url = "?".join([url, urlencode({'key': self.key})])
 			response = urlopen(self._Request(url), timeout=self.timeout)
