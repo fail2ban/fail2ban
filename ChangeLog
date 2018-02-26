@@ -44,6 +44,7 @@ ver. 0.10.3-dev-1 (20??/??/??) - development edition
 * possibility to specify own regex-pattern to match epoch date-time, e. g. `^\[{EPOCH}\]` or `^\[{LEPOCH}\]` (gh-2038);
   the epoch-pattern similar to `{DATE}` patterns does the capture and cuts out the match of whole pattern from the log-line,
   e. g. date-pattern `^\[{LEPOCH}\]\s+:` will match and cut out `[1516469849551000] :` from begin of the log-line.
+* `action.d/badips.py`: implicit convert IPAddr to str, solves an issue "expected string, IPAddr found" (gh-2059);
 
 
 ver. 0.10.2 (2018/01/18) - nothing-burns-like-the-cold
