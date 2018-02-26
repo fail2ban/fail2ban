@@ -186,6 +186,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 				urlencode({'age': age})])
 			if key:
 				url = "&".join([url, urlencode({'key': key})])
+			self._logSys.debug('badips.com: get list, url: %r', url)
 			response = urlopen(self._Request(url), timeout=self.timeout)
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
@@ -371,6 +372,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 			url = "/".join([self._badips, "add", self.category, str(aInfo['ip'])])
 			if self.key:
 				url = "?".join([url, urlencode({'key': self.key})])
+			self._logSys.debug('badips.com: ban, url: %r', url)
 			response = urlopen(self._Request(url), timeout=self.timeout)
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
