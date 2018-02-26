@@ -36,6 +36,7 @@ ver. 0.10.3-dev-1 (20??/??/??) - development edition
 
 ### Fixes
 * `filter.d/exim.conf`: failregex extended - SMTP call dropped: too many syntax or protocol errors (gh-2048);
+* (Free)BSD ipfw actionban fixed to allow same rule added several times (gh-2054);
 
 ### New Features
 
