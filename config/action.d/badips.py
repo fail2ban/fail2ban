@@ -81,7 +81,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	"""
 
 	TIMEOUT = 10
-	_badips = "http://www.badips.com"
+	_badips = "https://www.badips.com"
 	def _Request(self, url, **argv):
 		return Request(url, headers={'User-Agent': self.agent}, **argv)
 
@@ -186,6 +186,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 				urlencode({'age': age})])
 			if key:
 				url = "&".join([url, urlencode({'key': key})])
+			self._logSys.debug('badips.com: get list, url: %r', url)
 			response = urlopen(self._Request(url), timeout=self.timeout)
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
@@ -219,7 +220,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 
 	@bancategory.setter
 	def bancategory(self, bancategory):
-		if bancategory not in self.getCategories(incParents=True):
+		if bancategory != "any" and bancategory not in self.getCategories(incParents=True):
 			self._logSys.error("Category name '%s' not valid. "
 				"see badips.com for list of valid categories",
 				bancategory)
@@ -368,9 +369,10 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 			Any issues with badips.com request.
 		"""
 		try:
-			url = "/".join([self._badips, "add", self.category, aInfo['ip']])
+			url = "/".join([self._badips, "add", self.category, str(aInfo['ip'])])
 			if self.key:
 				url = "?".join([url, urlencode({'key': self.key})])
+			self._logSys.debug('badips.com: ban, url: %r', url)
 			response = urlopen(self._Request(url), timeout=self.timeout)
 		except HTTPError as response:
 			messages = json.loads(response.read().decode('utf-8'))
