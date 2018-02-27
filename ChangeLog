@@ -46,6 +46,7 @@ ver. 0.10.3-dev-1 (20??/??/??) - development edition
   the epoch-pattern similar to `{DATE}` patterns does the capture and cuts out the match of whole pattern from the log-line,
   e. g. date-pattern `^\[{LEPOCH}\]\s+:` will match and cut out `[1516469849551000] :` from begin of the log-line.
 * badips.py now uses https instead of plain http when requesting badips.com (gh-2057);
+* add support for "any" badips.py bancategory, to be able to retrieve IPs from all categories with a desired score (gh-2056);
 
 
 ver. 0.10.2 (2018/01/18) - nothing-burns-like-the-cold
