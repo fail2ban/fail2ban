@@ -54,10 +54,9 @@ class Socket(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
-		LogCaptureTestCase.setUp(self)
 		super(Socket, self).setUp()
 		self.server = AsyncServer(self)
-		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'socket')
+		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'f2b-socket')
 		os.close(sock_fd)
 		os.remove(sock_name)
 		self.sock_name = sock_name
@@ -120,7 +119,7 @@ class Socket(LogCaptureTestCase):
 
 		# test wrong message:
 		self.assertEqual(client.send([[TestMsg()]]), 'ERROR: test unpickle error')
-		self.assertLogged("Caught unhandled exception", "test unpickle error", all=True)
+		self.assertLogged("PROTO-error: load message failed:", "test unpickle error", all=True)
 
 		# test good message again:
 		self.assertEqual(client.send(testMessage), testMessage)
