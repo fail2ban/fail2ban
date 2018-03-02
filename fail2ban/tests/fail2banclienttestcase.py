@@ -239,6 +239,12 @@ def _start_params(tmp, use_stock=False, use_stock_cfg=None,
 		"--timeout", str(fail2bancmdline.MAX_WAITTIME),
 	)
 
+def _inherited_log(startparams):
+	try:
+		return startparams[startparams.index('--logtarget')+1] == 'INHERITED'
+	except ValueError:
+		return False
+
 def _get_pid_from_file(pidfile):
 	pid = None
 	try:
@@ -354,6 +360,13 @@ def with_foreground_server_thread(startextra={}):
 				self.pruneLog()
 				# several commands to server in body of decorated function:
 				return f(self, tmp, startparams, *args, **kwargs)
+			except Exception as e: # pragma: no cover
+				print('=== Catch an exception: %s' % e)
+				log = self.getLog()
+				if log:
+					print('=== Error of server, log: ===\n%s===' % log)
+					self.pruneLog()
+				raise
 			finally:
 				if th:
 					# wait for server end (if not yet already exited):
@@ -400,7 +413,8 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 		else:
 			raise FailExitException()
 
-	def _wait_for_srv(self, tmp, ready=True, startparams=None, phase={}):
+	def _wait_for_srv(self, tmp, ready=True, startparams=None, phase=None):
+		if not phase: phase = {}
 		try:
 			sock = pjoin(tmp, "f2b.sock")
 			# wait for server (socket):
@@ -415,14 +429,17 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 				ret = Utils.wait_for(lambda: "Server ready" in self.getLog(), MAX_WAITTIME)
 				if not ret: # pragma: no cover - test-failure case only
 					raise Exception(
-						'Unexpected: Server ready was not found.\nStart failed: %r'
-						% (startparams,)
+						'Unexpected: Server ready was not found, phase %r.\nStart failed: %r'
+						% (phase, startparams,)
 					)
 		except:  # pragma: no cover
+			if _inherited_log(startparams):
+				print('=== Error by wait fot server, log: ===\n%s===' % self.getLog())
+				self.pruneLog()
 			log = pjoin(tmp, "f2b.log")
 			if isfile(log):
 				_out_file(log)
-			else:
+			elif not _inherited_log(startparams):
 				logSys.debug("No log file %s to examine details of error", log)
 			raise
 
@@ -441,6 +458,7 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 			self.execCmd(SUCCESS, ("-f",) + startparams, "start")
 		finally:
 			# end :
+			phase['start'] = False
 			phase['end'] = True
 			logSys.debug("end of test worker")
 
@@ -1387,4 +1405,15 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"stdout: '[test-jail1] test-action2: ++ prolong 192.0.2.11 -c 2 -t 600 : ",
 			all=True, wait=MID_WAITTIME)
+
+	# test multiple start/stop of the server (threaded in foreground) --
+	if False: # pragma: no cover
+		@with_foreground_server_thread()
+		def _testServerStartStop(self, tmp, startparams):
+			# stop server and wait for end:
+			self.stopAndWaitForServerEnd(SUCCESS)
+
+		def testServerStartStop(self):
+			for i in xrange(2000):
+				self._testServerStartStop()
 

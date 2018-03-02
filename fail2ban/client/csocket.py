@@ -61,6 +61,7 @@ class CSocket:
 			return
 		if sendEnd:
 			self.__csock.sendall(CSPROTO.CLOSE + CSPROTO.END)
+		self.__csock.shutdown(socket.SHUT_RDWR)
 		self.__csock.close()
 		self.__csock = None
 	

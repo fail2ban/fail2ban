@@ -266,7 +266,7 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertEqual(('mail--ho_is', {}), extractOptions("mail--ho_is"))
 
 		self.assertEqual(('mail--ho_is', {}), extractOptions("mail--ho_is['s']"))
-		#self.printLog()
+		#print(self.getLog())
 		#self.assertLogged("Invalid argument ['s'] in ''s''")
 
 		self.assertEqual(('mail', {'a': ','}), extractOptions("mail[a=',']"))
@@ -528,7 +528,7 @@ class JailsReaderTestCache(LogCaptureTestCase):
 			# how many times jail.local was read:
 			cnt = self._getLoggedReadCount('jail.local')
 			# if cnt > 1:
-			# 	self.printLog()
+			# 	print(self.getLog())
 			self.assertTrue(cnt == 1, "Unexpected count by reading of jail files, cnt = %s" % cnt)
 
 			# read whole configuration like a file2ban-client, again ...
@@ -648,7 +648,7 @@ class JailsReaderTest(LogCaptureTestCase):
 		## We should not "read" some bogus jail
 		#old_comm_commands = comm_commands[:]   # make a copy
 		#self.assertRaises(ValueError, jails.getOptions, "BOGUS")
-		#self.printLog()
+		#print(self.getLog())
 		#self.assertLogged("No section: 'BOGUS'")
 		## and there should be no side-effects
 		#self.assertEqual(jails.convert(), old_comm_commands)

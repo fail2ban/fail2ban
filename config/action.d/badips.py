@@ -220,7 +220,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 
 	@bancategory.setter
 	def bancategory(self, bancategory):
-		if bancategory not in self.getCategories(incParents=True):
+		if bancategory != "any" and bancategory not in self.getCategories(incParents=True):
 			self._logSys.error("Category name '%s' not valid. "
 				"see badips.com for list of valid categories",
 				bancategory)

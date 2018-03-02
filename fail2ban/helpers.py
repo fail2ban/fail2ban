@@ -393,7 +393,9 @@ class BgService(object):
 		self.__count = self.__threshold;
 		if hasattr(gc, 'set_threshold'):
 			gc.set_threshold(0)
-		gc.disable()
+		# don't disable auto garbage, because of non-reference-counting python's (like pypy),
+		# otherwise it may leak there on objects like unix-socket, etc.
+		#gc.disable()
 
 	def service(self, force=False, wait=False):
 		self.__count -= 1
