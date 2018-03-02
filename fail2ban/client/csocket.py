@@ -45,13 +45,13 @@ class CSocket:
 	def __del__(self):
 		self.close(False)
 	
-	def send(self, msg):
+	def send(self, msg, nonblocking=False, timeout=None):
 		# Convert every list member to string
 		obj = dumps(map(
 			lambda m: str(m) if not isinstance(m, (list, dict, set)) else m, msg),
 		  HIGHEST_PROTOCOL)
 		self.__csock.send(obj + CSPROTO.END)
-		return self.receive(self.__csock)
+		return self.receive(self.__csock, nonblocking, timeout)
 
 	def settimeout(self, timeout):
 		self.__csock.settimeout(timeout if timeout != -1 else self.__deftout)
@@ -66,11 +66,13 @@ class CSocket:
 		self.__csock = None
 	
 	@staticmethod
-	def receive(sock):
+	def receive(sock, nonblocking=False, timeout=None):
 		msg = CSPROTO.EMPTY
+		if nonblocking: sock.setblocking(0)
+		if timeout: sock.settimeout(timeout)
 		while msg.rfind(CSPROTO.END) == -1:
-			chunk = sock.recv(6)
-			if chunk == '':
+			chunk = sock.recv(512)
+			if chunk in ('', b''): # python 3.x may return b'' instead of ''
 				raise RuntimeError("socket connection broken")
 			msg = msg + chunk
 		return loads(msg)
