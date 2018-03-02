@@ -110,7 +110,7 @@ May 27 00:16:33 host sshd[2364]: User root not allowed because account is locked
 # failJSON: { "match": false }
 May 27 00:16:33 host sshd[2364]: input_userauth_request: invalid user root [preauth]
 # failJSON: { "time": "2005-05-27T00:16:33", "match": true , "host": "198.51.100.76" }
-May 27 00:16:33 host sshd[2364]: Received disconnect from 198.51.100.76:11: Bye Bye [preauth]
+May 27 00:16:33 host sshd[2364]: Received disconnect from 198.51.100.76 port 58846:11: Bye Bye [preauth]
 
 # failJSON: { "time": "2004-09-29T16:28:02", "match": true , "host": "127.0.0.1" }
 Sep 29 16:28:02 spaceman sshd[16699]: Failed password for dan from 127.0.0.1 port 45416 ssh1
