@@ -102,7 +102,7 @@ class Utils():
 		def unset(self, k):
 			try:
 				del self._cache[k]
-			except KeyError: # pragma: no cover
+			except KeyError:
 				pass
 
 

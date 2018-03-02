@@ -1640,6 +1640,8 @@ class DNSUtilsTests(unittest.TestCase):
 			c.set(i, i)
 		for i in xrange(5):
 			self.assertEqual(c.get(i), i)
+		# remove unavailable key:
+		c.unset('a'); c.unset('a')
 
 	def testCacheMaxSize(self):
 		c = Utils.Cache(maxCount=5, maxTime=60)

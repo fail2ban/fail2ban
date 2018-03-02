@@ -76,6 +76,10 @@ class RequestHandler(asynchat.async_chat):
 		#logSys.debug("Received raw data: " + str(data))
 		self.__buffer.append(data)
 
+	# exception identifies deserialization errors (exception by load in pickle):
+	class LoadError(Exception):
+		pass
+
 	##
 	# Handles a new request.
 	#
@@ -93,7 +97,12 @@ class RequestHandler(asynchat.async_chat):
 				self.close_when_done()
 				return
 			# Deserialize
-			message = loads(message)
+			try:
+				message = loads(message)
+			except Exception as e:
+				logSys.error('PROTO-error: load message failed: %s', e,
+					exc_info=logSys.getEffectiveLevel()<logging.DEBUG)
+				raise RequestHandler.LoadError(e)
 			# Gives the message to the transmitter.
 			if self.__transmitter:
 				message = self.__transmitter.proceed(message)
@@ -104,8 +113,9 @@ class RequestHandler(asynchat.async_chat):
 			# Sends the response to the client.
 			self.push(message + CSPROTO.END)
 		except Exception as e:
-			logSys.error("Caught unhandled exception: %r", e,
-				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+			if not isinstance(e, RequestHandler.LoadError): # pragma: no cover - normally unreachable
+				logSys.error("Caught unhandled exception: %r", e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 			# Sends the response to the client.
 			message = dumps("ERROR: %s" % e, HIGHEST_PROTOCOL)
 			self.push(message + CSPROTO.END)
@@ -200,22 +210,20 @@ class AsyncServer(asyncore.dispatcher):
 	def handle_accept(self):
 		try:
 			conn, addr = self.accept()
-		except socket.error as e: # pragma: no cover
+		except Exception as e: # pragma: no cover
 			self.__errCount['accept'] += 1
 			if self.__errCount['accept'] < 20:
-				logSys.warning("Socket error: %s", e)
+				logSys.warning("Accept socket error: %s", e,
+					exc_info=(self.__errCount['accept'] <= 1))
 			elif self.__errCount['accept'] == 20:
 				logSys.error("Too many acceptor errors - stop logging errors")
 			elif self.__errCount['accept'] > 100:
 				if (
-					   e.args[0] == errno.EMFILE # [Errno 24] Too many open files
+					  (isinstance(e, socket.error) and e.args[0] == errno.EMFILE) # [Errno 24] Too many open files
 					or sum(self.__errCount.itervalues()) > 1000
 				):
-					logSys.critical("Too many errors - critical count reached %r", err_count)
+					logSys.critical("Too many errors - critical count reached %r", self.__errCount)
 					self.stop()
-			return
-		except TypeError as e: # pragma: no cover
-			logSys.warning("Type error: %s", e)
 			return
 		if self.__errCount['accept']:
 			self.__errCount['accept'] -= 1;
@@ -265,6 +273,13 @@ class AsyncServer(asyncore.dispatcher):
 		stopflg = False
 		if self.__active:
 			self.__loop = False
+			# shutdown socket here:
+			if self.socket:
+				try:
+					self.socket.shutdown(socket.SHUT_RDWR)
+				except socket.error: # pragma: no cover - normally unreachable
+					pass
+			# close connection:
 			asyncore.dispatcher.close(self)
 			# If not the loop thread (stops self in handler), wait (a little bit) 
 			# for the server leaves loop, before remove socket
@@ -284,14 +299,8 @@ class AsyncServer(asyncore.dispatcher):
 	
 	def stop_communication(self):
 		if self.__transmitter:
-			logSys.debug("Stop communication")
+			logSys.debug("Stop communication, shutdown")
 			self.__transmitter = None
-			# shutdown socket here:
-			if self.socket:
-				try:
-					self.socket.shutdown(socket.SHUT_RDWR)
-				except socket.error: # pragma: no cover - normally unreachable
-					pass
 
 	##
 	# Stops the server.
