@@ -807,8 +807,5 @@ class LogCaptureTestCase(unittest.TestCase):
 	def getLog(self):
 		return self._log.getvalue()
 
-	def printLog(self):
-		print(self._log.getvalue())
-
 
 pid_exists = Utils.pid_exists
