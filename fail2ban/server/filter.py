@@ -693,12 +693,12 @@ class Filter(JailThread):
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
 			if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG: # pragma: no cover
-				logSys.log(5, "  Looking for failregex %r", failRegex.getRegex())
+				logSys.log(5, "  Looking for failregex %d - %r", failRegexIndex, failRegex.getRegex())
 			failRegex.search(self.__lineBuffer, orgBuffer)
 			if not failRegex.hasMatched():
 				continue
 			# The failregex matched.
-			logSys.log(7, "  Matched %s", failRegex)
+			logSys.log(7, "  Matched failregex %d: %s", failRegexIndex, failRegex.getGroups())
 			# Checks if we must ignore this match.
 			if self.ignoreLine(failRegex.getMatchedTupleLines()) \
 					is not None:
