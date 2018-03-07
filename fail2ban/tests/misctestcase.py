@@ -287,6 +287,20 @@ class TestsUtilsTest(LogCaptureTestCase):
 		self.assertNotLogged('test "xyz"')
 		self.assertNotLogged('test', 'xyz', all=False)
 		self.assertNotLogged('test', 'xyz', 'zyx', all=True)
+		## maxWaitTime:
+		orgfast, unittest.F2B.fast = unittest.F2B.fast, False
+		self.assertFalse(isinstance(unittest.F2B.maxWaitTime(True), bool))
+		self.assertEqual(unittest.F2B.maxWaitTime(lambda: 50)(), 50)
+		self.assertEqual(unittest.F2B.maxWaitTime(25), 25)
+		self.assertEqual(unittest.F2B.maxWaitTime(25.), 25.0)
+		unittest.F2B.fast = True
+		try:
+			self.assertEqual(unittest.F2B.maxWaitTime(lambda: 50)(), 50)
+			self.assertEqual(unittest.F2B.maxWaitTime(25), 2.5)
+			self.assertEqual(unittest.F2B.maxWaitTime(25.), 25.0)
+		finally:
+			unittest.F2B.fast = orgfast
+		self.assertFalse(unittest.F2B.maxWaitTime(False))
 		## assertLogged, assertNotLogged negative case:
 		self.pruneLog()
 		logSys.debug('test "xyz"')
@@ -296,8 +310,12 @@ class TestsUtilsTest(LogCaptureTestCase):
 			self.assertNotLogged, 'test', 'xyz', all=True)
 		self._testAssertionErrorRE(r"was not found in the log",
 			self.assertLogged, 'test', 'zyx', all=True)
+		self._testAssertionErrorRE(r"was not found in the log, waited 1e-06",
+			self.assertLogged, 'test', 'zyx', all=True, wait=1e-6)
 		self._testAssertionErrorRE(r"None among .* was found in the log",
 			self.assertLogged, 'test_zyx', 'zyx', all=False)
+		self._testAssertionErrorRE(r"None among .* was found in the log, waited 1e-06",
+			self.assertLogged, 'test_zyx', 'zyx', all=False, wait=1e-6)
 		self._testAssertionErrorRE(r"All of the .* were found present in the log",
 			self.assertNotLogged, 'test', 'xyz', all=False)
 		## assertDictEqual:

@@ -180,6 +180,10 @@ def initProcess(opts):
 
 
 class F2B(DefaultTestOptions):
+
+	MAX_WAITTIME = 60
+	MID_WAITTIME = 30
+
 	def __init__(self, opts):
 		self.__dict__ = opts.__dict__
 		if self.fast:
@@ -215,8 +219,12 @@ class F2B(DefaultTestOptions):
 			return wrapper
 		return _deco_wrapper
 
-	def maxWaitTime(self,wtime):
-		if self.fast:
+	def maxWaitTime(self, wtime=True):
+		if isinstance(wtime, bool) and wtime:
+			wtime = self.MAX_WAITTIME
+		# short only integer interval (avoid by conditional wait with callable, and dual 
+		# wrapping in some routines, if it will be called twice):
+		if self.fast and isinstance(wtime, int):
 			wtime = float(wtime) / 10
 		return wtime
 
@@ -761,21 +769,24 @@ class LogCaptureTestCase(unittest.TestCase):
 		"""
 		wait = kwargs.get('wait', None)
 		if wait:
+			wait = unittest.F2B.maxWaitTime(wait)
 			res = Utils.wait_for(lambda: self._is_logged(*s, **kwargs), wait)
 		else:
 			res = self._is_logged(*s, **kwargs)
 		if not kwargs.get('all', False):
 			# at least one entry should be found:
-			if not res: # pragma: no cover
+			if not res:
 				logged = self._log.getvalue()
-				self.fail("None among %r was found in the log: ===\n%s===" % (s, logged))
+				self.fail("None among %r was found in the log%s: ===\n%s===" % (s, 
+					((', waited %s' % wait) if wait else ''), logged))
 		else:
 			# each entry should be found:
-			if not res: # pragma: no cover
+			if not res:
 				logged = self._log.getvalue()
 				for s_ in s:
 					if s_ not in logged:
-						self.fail("%r was not found in the log: ===\n%s===" % (s_, logged))
+						self.fail("%r was not found in the log%s: ===\n%s===" % (s_, 
+							((', waited %s' % wait) if wait else ''), logged))
 
 	def assertNotLogged(self, *s, **kwargs):
 		"""Assert that strings were not logged
@@ -792,11 +803,10 @@ class LogCaptureTestCase(unittest.TestCase):
 			for s_ in s:
 				if s_ not in logged:
 					return
-			if True: # pragma: no cover
-				self.fail("All of the %r were found present in the log: ===\n%s===" % (s, logged))
+			self.fail("All of the %r were found present in the log: ===\n%s===" % (s, logged))
 		else:
 			for s_ in s:
-				if s_ in logged: # pragma: no cover
+				if s_ in logged:
 					self.fail("%r was found in the log: ===\n%s===" % (s_, logged))
 
 	def pruneLog(self, logphase=None):

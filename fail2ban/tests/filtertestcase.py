@@ -82,10 +82,7 @@ def _killfile(f, name):
 		_killfile(None, name + '.bak')
 
 
-def _maxWaitTime(wtime):
-	if unittest.F2B.fast: # pragma: no cover
-		wtime /= 10.0
-	return wtime
+_maxWaitTime = unittest.F2B.maxWaitTime
 
 
 class _tmSerial():
@@ -657,12 +654,12 @@ class LogFileMonitor(LogCaptureTestCase):
 		_killfile(self.file, self.name)
 		pass
 
-	def isModified(self, delay=2.):
+	def isModified(self, delay=2):
 		"""Wait up to `delay` sec to assure that it was modified or not
 		"""
 		return Utils.wait_for(lambda: self.filter.isModified(self.name), _maxWaitTime(delay))
 
-	def notModified(self, delay=2.):
+	def notModified(self, delay=2):
 		"""Wait up to `delay` sec as long as it was not modified
 		"""
 		return Utils.wait_for(lambda: not self.filter.isModified(self.name), _maxWaitTime(delay))
@@ -817,7 +814,7 @@ class CommonMonitorTestCase(unittest.TestCase):
 		super(CommonMonitorTestCase, self).setUp()
 		self._failTotal = 0
 
-	def waitFailTotal(self, count, delay=1.):
+	def waitFailTotal(self, count, delay=1):
 		"""Wait up to `delay` sec to assure that expected failure `count` reached
 		"""
 		ret = Utils.wait_for(
@@ -826,7 +823,7 @@ class CommonMonitorTestCase(unittest.TestCase):
 		self._failTotal += count
 		return ret
 
-	def isFilled(self, delay=1.):
+	def isFilled(self, delay=1):
 		"""Wait up to `delay` sec to assure that it was modified or not
 		"""
 		return Utils.wait_for(self.jail.isFilled, _maxWaitTime(delay))
@@ -836,7 +833,7 @@ class CommonMonitorTestCase(unittest.TestCase):
 		"""
 		return Utils.wait_for(self.jail.isEmpty, _maxWaitTime(delay))
 
-	def waitForTicks(self, ticks, delay=2.):
+	def waitForTicks(self, ticks, delay=2):
 		"""Wait up to `delay` sec to assure that it was modified or not
 		"""
 		last_ticks = self.filter.ticks
