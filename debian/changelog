@@ -5,7 +5,8 @@ fail2ban (0.10.2-1) unstable; urgency=medium
     packaging)
     - Major performance improvements, especially in tests battery
       execution, and shutdown (Closes: #878038)
-    - Incremental increase of bantime (Closes: #498164)
+    - INCORRECT RECORD IN ORIGINAL changelog (will be fixed in 0.11):
+      Incremental increase of bantime (Bug: #498164)
     - IPv6 support (Closes: #881648, #470417)
     - Some filters refactored/deprecated, e.g. to take advantage of new
       filter option mode
