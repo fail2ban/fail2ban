@@ -37,6 +37,7 @@ ver. 0.10.3-dev-1 (20??/??/??) - development edition
 ### Fixes
 * `filter.d/asterisk.conf`: fixed failregex prefix by log over remote syslog server (gh-2060);
 * `filter.d/exim.conf`: failregex extended - SMTP call dropped: too many syntax or protocol errors (gh-2048);
+* `filter.d/recidive.conf`: fixed if logging into systemd-journal (SYSLOG) with daemon name in prefix, gh-2069;
 * `filter.d/sshd.conf`:
   - failregex got an optional space in order to match new log-format (see gh-2061);
   - fixed ddos-mode regex to match refactored message (some versions can contain port now, see gh-2062);
