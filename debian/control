@@ -17,7 +17,7 @@ Standards-Version: 4.1.3
 Package: fail2ban
 Architecture: all
 Depends: ${python3:Depends}, ${misc:Depends}, lsb-base (>=2.0-7)
-Recommends: python, iptables, whois, python3-pyinotify, python3-systemd
+Recommends: python, nftables, whois, python3-pyinotify, python3-systemd
 Suggests: mailx, system-log-daemon, monit, sqlite3
 Description: ban hosts that cause multiple authentication errors
  Fail2ban monitors log files (e.g. /var/log/auth.log,
@@ -34,8 +34,8 @@ Description: ban hosts that cause multiple authentication errors
  to be used with a variety of files and firewalls.  Following recommends
  are listed:
  .
-  - iptables -- default installation uses iptables for banning. You most
-    probably need it
+  - iptables/nftables -- default installation uses iptables for banning.
+    nftables is also suported. You most probably need it
   - whois -- used by a number of *mail-whois* actions to send notification
     emails with whois information about attacker hosts. Unless you will use
     those you don't need whois
