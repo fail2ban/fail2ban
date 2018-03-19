@@ -24,6 +24,8 @@ Feb 25 14:34:11 belka sshd[31603]: Failed password for invalid user ROOT from aa
 # failJSON: { "time": "2005-01-05T01:31:41", "match": true , "host": "1.2.3.4" }
 Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM 1.2.3.4
 # failJSON: { "time": "2005-01-05T01:31:41", "match": true , "host": "1.2.3.4" }
+Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM 1.2.3.4 port 12345 [preauth]
+# failJSON: { "time": "2005-01-05T01:31:41", "match": true , "host": "1.2.3.4" }
 Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM ::ffff:1.2.3.4
 
 #4
