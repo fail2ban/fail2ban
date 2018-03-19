@@ -144,6 +144,7 @@ def testSampleRegexsFactory(name, basedir):
 		regexsUsedRe = set()
 
 		# process each test-file (note: array filenames can grow during processing):
+		faildata = {}
 		i = 0
 		while i < len(filenames):
 			filename = filenames[i]; i += 1;
@@ -195,6 +196,7 @@ def testSampleRegexsFactory(name, basedir):
 					regexList = flt.getFailRegex()
 
 					try:
+						fail = {}
 						ret = flt.processLine(line)
 						if not ret:
 							# Bypass if filter constraint specified:
@@ -246,8 +248,8 @@ def testSampleRegexsFactory(name, basedir):
 						regexsUsedIdx.add(failregex)
 						regexsUsedRe.add(regexList[failregex])
 					except AssertionError as e: # pragma: no cover
-						raise AssertionError("%s: %s on: %s:%i, line:\n%s" % (
-									fltName, e, logFile.filename(), logFile.filelineno(), line))
+						raise AssertionError("%s: %s on: %s:%i, line:\n%s\nfaildata:%r, fail:%r" % (
+									fltName, e, logFile.filename(), logFile.filelineno(), line, faildata, fail))
 
 		# check missing samples for regex using each filter-options combination:
 		for fltName, flt in self._filters.iteritems():

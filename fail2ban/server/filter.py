@@ -692,43 +692,46 @@ class Filter(JailThread):
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
-			if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG: # pragma: no cover
-				logSys.log(5, "  Looking for failregex %d - %r", failRegexIndex, failRegex.getRegex())
-			failRegex.search(self.__lineBuffer, orgBuffer)
-			if not failRegex.hasMatched():
-				continue
-			# The failregex matched.
-			logSys.log(7, "  Matched failregex %d: %s", failRegexIndex, failRegex.getGroups())
-			# Checks if we must ignore this match.
-			if self.ignoreLine(failRegex.getMatchedTupleLines()) \
-					is not None:
-				# The ignoreregex matched. Remove ignored match.
-				self.__lineBuffer = failRegex.getUnmatchedTupleLines()
-				logSys.log(7, "  Matched ignoreregex and was ignored")
-				if not self.checkAllRegex:
-					break
-				else:
-					continue
-			if date is None:
-				logSys.warning(
-					"Found a match for %r but no valid date/time "
-					"found for %r. Please try setting a custom "
-					"date pattern (see man page jail.conf(5)). "
-					"If format is complex, please "
-					"file a detailed issue on"
-					" https://github.com/fail2ban/fail2ban/issues "
-					"in order to get support for this format.",
-					 "\n".join(failRegex.getMatchedLines()), timeText)
-				continue
-			self.__lineBuffer = failRegex.getUnmatchedTupleLines()
 			# retrieve failure-id, host, etc from failure match:
 			try:
+				if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG: # pragma: no cover
+					logSys.log(5, "  Looking for failregex %d - %r", failRegexIndex, failRegex.getRegex())
+				failRegex.search(self.__lineBuffer, orgBuffer)
+				if not failRegex.hasMatched():
+					continue
+				# current failure data (matched group dict):
+				fail = failRegex.getGroups()
+				# The failregex matched.
+				logSys.log(7, "  Matched failregex %d: %s", failRegexIndex, fail)
+				# Checks if we must ignore this match.
+				if self.ignoreLine(failRegex.getMatchedTupleLines()) \
+						is not None:
+					# The ignoreregex matched. Remove ignored match.
+					self.__lineBuffer = failRegex.getUnmatchedTupleLines()
+					logSys.log(7, "  Matched ignoreregex and was ignored")
+					if not self.checkAllRegex:
+						break
+					else:
+						continue
+				if date is None:
+					logSys.warning(
+						"Found a match for %r but no valid date/time "
+						"found for %r. Please try setting a custom "
+						"date pattern (see man page jail.conf(5)). "
+						"If format is complex, please "
+						"file a detailed issue on"
+						" https://github.com/fail2ban/fail2ban/issues "
+						"in order to get support for this format.",
+						 "\n".join(failRegex.getMatchedLines()), timeText)
+					continue
+				# we should check all regex (bypass on multi-line, otherwise too complex):
+				if not self.checkAllRegex or self.getMaxLines() > 1:
+					self.__lineBuffer = failRegex.getUnmatchedTupleLines()
+				# merge data if multi-line failure:
 				raw = returnRawHost
 				if preGroups:
-					fail = preGroups.copy()
-					fail.update(failRegex.getGroups())
-				else:
-					fail = failRegex.getGroups()
+					currFail, fail = fail, preGroups.copy()
+					fail.update(currFail)
 				# first try to check we have mlfid case (caching of connection id by multi-line):
 				mlfid = fail.get('mlfid')
 				if mlfid is not None:
