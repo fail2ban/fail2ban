@@ -207,12 +207,12 @@ class DateEpoch(DateTemplate):
 
 	def __init__(self, lineBeginOnly=False, pattern=None, longFrm=False):
 		DateTemplate.__init__(self)
-		self.name = "Epoch"
+		self.name = "Epoch" if not pattern else pattern
 		self._longFrm = longFrm;
 		self._grpIdx = 1
 		epochRE = r"\d{10,11}\b(?:\.\d{3,6})?"
 		if longFrm:
-			self.name = "LongEpoch";
+			self.name = "LongEpoch" if not pattern else pattern
 			epochRE = r"\d{10,11}(?:\d{3}(?:\.\d{1,6}|\d{3})?)?"
 		if pattern:
 			# pattern should capture/cut out the whole match:
