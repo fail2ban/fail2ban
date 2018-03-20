@@ -598,6 +598,24 @@ class Filter(JailThread):
 			return users
 		return None
 
+	# # ATM incremental (non-empty only) merge deactivated ...
+	# @staticmethod
+	# def _updateFailure(self, mlfidGroups, fail):
+	# 	# reset old failure-ids when new types of id available in this failure:
+	# 	fids = set()
+	# 	for k in ('fid', 'ip4', 'ip6', 'dns'):
+	# 		if fail.get(k):
+	# 			fids.add(k)
+	# 	if fids:
+	# 		for k in ('fid', 'ip4', 'ip6', 'dns'):
+	# 			if k not in fids:
+	# 				try:
+	# 					del mlfidGroups[k]
+	# 				except:
+	# 					pass
+	# 	# update not empty values:
+	# 	mlfidGroups.update(((k,v) for k,v in fail.iteritems() if v))
+
 	def _mergeFailure(self, mlfid, fail, failRegex):
 		mlfidFail = self.mlfidCache.get(mlfid) if self.__mlfidCache else None
 		users = None
@@ -614,8 +632,14 @@ class Filter(JailThread):
 				del mlfidGroups['nofail']
 			except KeyError:
 				pass
-			# update not empty values:
-			mlfidGroups.update(((k,v) for k,v in fail.iteritems() if v))
+			# # ATM incremental (non-empty only) merge deactivated (for future version only),
+			# # it can be simulated using alternate value tags, like <F-ALT_VAL>...</F-ALT_VAL>,
+			# # so previous value 'val' will be overwritten only if 'alt_val' is not empty...		
+			# _updateFailure(mlfidGroups, fail)
+			#
+			# overwrite multi-line failure with all values, available in fail:
+			mlfidGroups.update(fail)
+			# new merged failure data:
 			fail = mlfidGroups
 			# if forget (disconnect/reset) - remove cached entry:
 			if nfflgs & 2:

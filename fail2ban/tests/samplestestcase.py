@@ -262,8 +262,12 @@ def testSampleRegexsFactory(name, basedir):
 						regexsUsedIdx.add(failregex)
 						regexsUsedRe.add(regexList[failregex])
 					except AssertionError as e: # pragma: no cover
-						raise AssertionError("%s: %s on: %s:%i, line:\n%s\nfaildata:%r, fail:%r" % (
-									fltName, e, logFile.filename(), logFile.filelineno(), line, faildata, fail))
+						import pprint
+						raise AssertionError("%s: %s on: %s:%i, line:\n%s\n"
+							"faildata: %s\nfail: %s" % (
+								fltName, e, logFile.filename(), logFile.filelineno(), line,
+								'\n'.join(pprint.pformat(faildata).splitlines()),
+								'\n'.join(pprint.pformat(fail).splitlines())))
 
 		# check missing samples for regex using each filter-options combination:
 		for fltName, flt in self._filters.iteritems():
