@@ -151,6 +151,7 @@ def testSampleRegexsFactory(name, basedir):
 			logFile = fileinput.FileInput(os.path.join(TEST_FILES_DIR, "logs",
 				filename))
 
+			ignoreBlock = False
 			for line in logFile:
 				jsonREMatch = re.match("^#+ ?(failJSON|filterOptions|addFILE):(.+)$", line)
 				if jsonREMatch:
@@ -160,9 +161,13 @@ def testSampleRegexsFactory(name, basedir):
 						if jsonREMatch.group(1) == 'filterOptions':
 							# following lines with another filter options:
 							self._filterTests = []
+							ignoreBlock = False
 							for opts in (faildata if isinstance(faildata, list) else [faildata]):
 								# unique filter name (using options combination):
 								self.assertTrue(isinstance(opts, dict))
+								if opts.get('test.condition'):
+									ignoreBlock = not eval(opts.get('test.condition'))
+									del opts['test.condition']
 								fltName = opts.get('filterName')
 								if not fltName: fltName = str(opts) if opts else ''
 								fltName = name + fltName
@@ -179,10 +184,11 @@ def testSampleRegexsFactory(name, basedir):
 						raise ValueError("%s: %s:%i" %
 							(e, logFile.filename(), logFile.filelineno()))
 					line = next(logFile)
-				elif line.startswith("#") or not line.strip():
+				elif ignoreBlock or line.startswith("#") or not line.strip():
 					continue
 				else: # pragma: no cover - normally unreachable
 					faildata = {}
+				if ignoreBlock: continue
 
 				# if filter options was not yet specified:
 				if not self._filterTests:
@@ -224,9 +230,17 @@ def testSampleRegexsFactory(name, basedir):
 						for k, v in faildata.iteritems():
 							if k not in ("time", "match", "desc", "filter"):
 								fv = fail.get(k, None)
-								# Fallback for backwards compatibility (previously no fid, was host only):
-								if k == "host" and fv is None:
-									fv = fid
+								if fv is None:
+									# Fallback for backwards compatibility (previously no fid, was host only):
+									if k == "host":
+										fv = fid
+									# special case for attempts counter:
+									if k == "attempts":
+										fv = len(fail.get('matches', {}))
+								# compare sorted (if set)
+								if isinstance(fv, (set, list, dict)):
+									self.assertSortedEqual(fv, v)
+									continue
 								self.assertEqual(fv, v)
 
 						t = faildata.get("time", None)

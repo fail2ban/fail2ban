@@ -588,31 +588,62 @@ class Filter(JailThread):
 				return ignoreRegexIndex
 		return None
 
+	def _updateUsers(self, fail, user=()):
+		users = fail.get('users')
+		# only for regex contains user:
+		if user:
+			if not users:
+				fail['users'] = users = set()
+			users.add(user)
+			return users
+		return None
+
 	def _mergeFailure(self, mlfid, fail, failRegex):
 		mlfidFail = self.mlfidCache.get(mlfid) if self.__mlfidCache else None
+		users = None
+		nfflgs = 0
+		if fail.get('nofail'): nfflgs |= 1
+		if fail.get('mlfforget'): nfflgs |= 2
 		# if multi-line failure id (connection id) known:
 		if mlfidFail:
 			mlfidGroups = mlfidFail[1]
-			# update - if not forget (disconnect/reset):
-			if not fail.get('mlfforget'):
-				mlfidGroups.update(fail)
-			else:
-				self.mlfidCache.unset(mlfid) # remove cached entry
-			# merge with previous info:
-			fail2 = mlfidGroups.copy()
-			fail2.update(fail)
-			if not fail.get('nofail'): # be sure we've correct current state
-				try:
-					del fail2['nofail']
-				except KeyError:
-					pass
-			fail2["matches"] = fail.get("matches", []) + failRegex.getMatchedTupleLines()
-			fail = fail2
-		elif not fail.get('mlfforget'):
+			# update users set (hold all users of connect):
+			users = self._updateUsers(mlfidGroups, fail.get('user'))
+			# be sure we've correct current state ('nofail' only from last failure)
+			try:
+				del mlfidGroups['nofail']
+			except KeyError:
+				pass
+			# update not empty values:
+			mlfidGroups.update(((k,v) for k,v in fail.iteritems() if v))
+			fail = mlfidGroups
+			# if forget (disconnect/reset) - remove cached entry:
+			if nfflgs & 2:
+				self.mlfidCache.unset(mlfid)
+		elif not (nfflgs & 2): # not mlfforget
+			users = self._updateUsers(fail, fail.get('user'))
 			mlfidFail = [self.__lastDate, fail]
 			self.mlfidCache.set(mlfid, mlfidFail)
-			if fail.get('nofail'):
-				fail["matches"] = failRegex.getMatchedTupleLines()
+		# check users in order to avoid reset failure by multiple logon-attempts:
+		if users and len(users) > 1:
+			# we've new user, reset 'nofail' because of multiple users attempts:
+			try:
+				del fail['nofail']
+			except KeyError:
+				pass
+		# merge matches:
+		if not fail.get('nofail'): # current state (corresponding users)
+			try:
+				m = fail.pop("nofail-matches")
+				m += fail.get("matches", [])
+			except KeyError:
+				m = fail.get("matches", [])
+			if not (nfflgs & 2): # not mlfforget:
+				m += failRegex.getMatchedTupleLines()
+			fail["matches"] = m
+		elif not (nfflgs & 2) and (nfflgs & 1): # not mlfforget and nofail:
+			fail["nofail-matches"] = fail.get("nofail-matches", []) + failRegex.getMatchedTupleLines()
+		# return merged:
 		return fail
 
 
@@ -738,6 +769,7 @@ class Filter(JailThread):
 					fail = self._mergeFailure(mlfid, fail, failRegex)
 					# bypass if no-failure case:
 					if fail.get('nofail'):
+						# if not users or len(users) <= 1:
 						logSys.log(7, "Nofail by mlfid %r in regex %s: %s",
 							mlfid, failRegexIndex, fail.get('mlfforget', "waiting for failure"))
 						if not self.checkAllRegex: return failList

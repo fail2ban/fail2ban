@@ -134,7 +134,7 @@ Sep 29 17:15:02 spaceman sshd[12946]: Failed password for user from 127.0.0.1 po
 # failJSON: { "time": "2004-09-29T17:15:02", "match": true , "host": "127.0.0.1", "desc": "Injecting while exhausting initially present {0,100} match length limits set for ruser etc" }
 Sep 29 17:15:02 spaceman sshd[12946]: Failed password for user from 127.0.0.1 port 20000 ssh1: ruser XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX from 1.2.3.4
 # failJSON: { "time": "2004-09-29T17:15:03", "match": true , "host": "aaaa:bbbb:cccc:1234::1:1", "desc": "Injecting while exhausting initially present {0,100} match length limits set for ruser etc" }
-Sep 29 17:15:03 spaceman sshd[12946]: Failed password for user from aaaa:bbbb:cccc:1234::1:1 port 20000 ssh1: ruser XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX from 1.2.3.4
+Sep 29 17:15:03 spaceman sshd[12947]: Failed password for user from aaaa:bbbb:cccc:1234::1:1 port 20000 ssh1: ruser XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX from 1.2.3.4
 
 # failJSON: { "time": "2004-11-11T08:04:51", "match": true , "host": "127.0.0.1", "desc": "Injecting on username ssh 'from 10.10.1.1'@localhost" }
 Nov 11 08:04:51 redbamboo sshd[2737]: Failed password for invalid user from 10.10.1.1 from 127.0.0.1 port 58946 ssh2
@@ -212,9 +212,46 @@ Apr 27 13:02:04 host sshd[29116]: input_userauth_request: invalid user root [pre
 # failJSON: { "time": "2005-04-27T13:02:04", "match": true , "host": "1.2.3.4", "desc": "No Bye-Bye" }
 Apr 27 13:02:04 host sshd[29116]: Received disconnect from 1.2.3.4: 11: Normal Shutdown, Thank you for playing [preauth]
 
-# Match sshd auth errors on OpenSUSE systems
-# failJSON: { "time": "2015-04-16T20:02:50", "match": true , "host": "222.186.21.217", "desc": "Authentication for user failed" }
-2015-04-16T18:02:50.321974+00:00 host sshd[2716]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=222.186.21.217  user=root
+# Match sshd auth errors on OpenSUSE systems (gh-1024)
+# failJSON: { "match": false, "desc": "No failure until closed or another fail (e. g. F-MLFFORGET by success/accepted password can avoid failure, see gh-2070)" }
+2015-04-16T18:02:50.321974+00:00 host sshd[2716]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.0.2.112  user=root
+# failJSON: { "time": "2015-04-16T20:02:50", "match": true , "host": "192.0.2.112", "desc": "Should catch failure - no success/no accepted password" }
+2015-04-16T18:02:50.568798+00:00 host sshd[2716]: Connection closed by 192.0.2.112
+
+# disable this case for obsolete multi-line filter (zzz-sshd-obsolete...):
+# filterOptions: [{"test.condition": "name == 'sshd'"}]
+
+# 2 methods auth: pam_unix and pam_ldap are used in combination (gh-2070), succeeded after "failure" in first method:
+# failJSON: { "match": false , "desc": "No failure" }
+Mar  7 18:53:20 bar sshd[1556]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.0.2.113  user=rda
+# failJSON: { "match": false , "desc": "No failure" }
+Mar  7 18:53:20 bar sshd[1556]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=rda rhost=192.0.2.113 [preauth]
+# failJSON: { "match": false , "desc": "No failure" }
+Mar  7 18:53:20 bar sshd[1556]: Accepted password for rda from 192.0.2.113 port 52100 ssh2
+# failJSON: { "match": false , "desc": "No failure" }
+Mar  7 18:53:20 bar sshd[1556]: pam_unix(sshd:session): session opened for user rda by (uid=0)
+# failJSON: { "match": false , "desc": "No failure" }
+Mar  7 18:53:20 bar sshd[1556]: Connection closed by 192.0.2.113
+
+# several attempts, intruder tries to "forget" failed attempts by success login (all 3 attempts with different users):
+# failJSON: { "match": false , "desc": "Still no failure (first try)" }
+Mar  7 18:53:22 bar sshd[1558]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=root rhost=192.0.2.114
+# failJSON: { "time": "2005-03-07T18:53:23", "match": true , "attempts": 2, "users": ["root", "sudoer"], "host": "192.0.2.114", "desc": "Failure: attempt 2nd user" }
+Mar  7 18:53:23 bar sshd[1558]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=sudoer rhost=192.0.2.114
+# failJSON: { "time": "2005-03-07T18:53:24", "match": true , "attempts": 2, "users": ["root", "sudoer", "known"], "host": "192.0.2.114", "desc": "Failure: attempt 3rd user" }
+Mar  7 18:53:24 bar sshd[1558]: Accepted password for known from 192.0.2.114 port 52100 ssh2
+# failJSON: { "match": false , "desc": "No failure" }
+Mar  7 18:53:24 bar sshd[1558]: pam_unix(sshd:session): session opened for user known by (uid=0)
+
+# several attempts, intruder tries to "forget" failed attempts by success login (accepted for other user as in first failed attempt):
+# failJSON: { "match": false , "desc": "Still no failure (first try)" }
+Mar  7 18:53:32 bar sshd[1559]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=root rhost=192.0.2.116
+# failJSON: { "match": false , "desc": "Still no failure (second try, same user)" }
+Mar  7 18:53:32 bar sshd[1559]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=root rhost=192.0.2.116
+# failJSON: { "time": "2005-03-07T18:53:34", "match": true , "attempts": 2, "users": ["root", "known"], "host": "192.0.2.116", "desc": "Failure: attempt 2nd user" }
+Mar  7 18:53:34 bar sshd[1559]: Accepted password for known from 192.0.2.116 port 52100 ssh2
+# failJSON: { "match": false , "desc": "No failure" }
+Mar  7 18:53:38 bar sshd[1559]: Connection closed by 192.0.2.116
 
 # filterOptions: [{"mode": "ddos"}, {"mode": "aggressive"}]
 
