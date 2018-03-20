@@ -218,8 +218,8 @@ Apr 27 13:02:04 host sshd[29116]: Received disconnect from 1.2.3.4: 11: Normal S
 # failJSON: { "time": "2015-04-16T20:02:50", "match": true , "host": "192.0.2.112", "desc": "Should catch failure - no success/no accepted password" }
 2015-04-16T18:02:50.568798+00:00 host sshd[2716]: Connection closed by 192.0.2.112
 
-# disable this case for obsolete multi-line filter (zzz-sshd-obsolete...):
-# filterOptions: [{"test.condition": "name == 'sshd'"}]
+# disable this test-cases block for obsolete multi-line filter (zzz-sshd-obsolete...):
+# filterOptions: [{"test.condition":"name=='sshd'"}]
 
 # 2 methods auth: pam_unix and pam_ldap are used in combination (gh-2070), succeeded after "failure" in first method:
 # failJSON: { "match": false , "desc": "No failure" }
