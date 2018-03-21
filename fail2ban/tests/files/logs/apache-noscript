@@ -16,3 +16,5 @@
 # apache 2.4
 # failJSON: { "time": "2013-12-23T07:49:01", "match": true , "host": "204.232.202.107" }
 [Mon Dec 23 07:49:01.981912 2013] [:error] [pid 3790] [client 204.232.202.107:46301] script '/var/www/timthumb.php' not found or unable to stat
+# failJSON: { "time": "2018-03-11T08:56:20", "match": true , "host": "192.0.2.106", "desc": "php-fpm error" }
+[Sun Mar 11 08:56:20.913548 2018] [proxy_fcgi:error] [pid 742:tid 140142593419008] [client 192.0.2.106:50900] AH01071: Got error 'Primary script unknown\n'
