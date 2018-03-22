@@ -6,45 +6,47 @@
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
-Fail2Ban scans log files like `/var/log/auth.log` and bans IP addresses having
+Fail2Ban scans log files like `/var/log/auth.log` and bans IP addresses conducting
 too many failed login attempts. It does this by updating system firewall rules
 to reject new connections from those IP addresses, for a configurable amount
 of time. Fail2Ban comes out-of-the-box ready to read many standard log files,
-such as those for sshd and Apache, and is easy to configure to read any log
-file you choose, for any error you choose.
+such as those for sshd and Apache, and is easily configured to read any log
+file of your choosing, for any error you wish.
 
-Though Fail2Ban is able to reduce the rate of incorrect authentications
-attempts, it cannot eliminate the risk that weak authentication presents.
-Configure services to use only two factor or public/private authentication
+Though Fail2Ban is able to reduce the rate of incorrect authentication
+attempts, it cannot eliminate the risk presented by weak authentication.
+Set up services to use only two factor, or public/private authentication
 mechanisms if you really want to protect services.
 
-This README is a quick introduction to Fail2ban. More documentation, FAQ, HOWTOs
-are available in fail2ban(1) manpage and on the website http://www.fail2ban.org
+This README is a quick introduction to Fail2Ban. More documentation, FAQ, and HOWTOs
+to be found on fail2ban(1) manpage and the website: https://www.fail2ban.org
 
 Installation:
 -------------
 
-**It is possible that Fail2ban is already packaged for your distribution.  In
-this case, you should use it instead.**
+**It is possible that Fail2Ban is already packaged for your distribution.  In
+this case, you should use that instead.**
 
 Required:
-- [Python2 >= 2.6 or Python >= 3.2](http://www.python.org) or [PyPy](http://pypy.org)
+- [Python2 >= 2.6 or Python >= 3.2](https://www.python.org) or [PyPy](https://pypy.org)
 
 Optional:
-- [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify)
-  - Linux >= 2.6.13
+- [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify), may require:
+  * Linux >= 2.6.13
 - [gamin >= 0.0.21](http://www.gnome.org/~veillard/gamin)
-- [systemd >= 204](http://www.freedesktop.org/wiki/Software/systemd)
+- [systemd >= 204](http://www.freedesktop.org/wiki/Software/systemd) and python bindings:
+  * [python-systemd package](https://www.freedesktop.org/software/systemd/python-systemd/index.html)
 - [dnspython](http://www.dnspython.org/)
 
-To install, just do:
+
+To install:
 
     tar xvfj fail2ban-0.9.7.tar.bz2
     cd fail2ban-0.9.7
     python setup.py install
 
 This will install Fail2Ban into the python library directory. The executable
-scripts are placed into `/usr/bin`, and configuration under `/etc/fail2ban`.
+scripts are placed into `/usr/bin`, and configuration in `/etc/fail2ban`.
 
 Fail2Ban should be correctly installed now. Just type:
 
@@ -86,7 +88,7 @@ Contact:
 See [CONTRIBUTING.md](https://github.com/fail2ban/fail2ban/blob/master/CONTRIBUTING.md)
 
 ### You just appreciate this program:
-send kudos to the original author ([Cyril Jaquier](mailto: Cyril Jaquier <cyril.jaquier@fail2ban.org>))
+Send kudos to the original author ([Cyril Jaquier](mailto: Cyril Jaquier <cyril.jaquier@fail2ban.org>))
 or *better* to the [mailing list](https://lists.sourceforge.net/lists/listinfo/fail2ban-users)
 since Fail2Ban is "community-driven" for years now.
 
