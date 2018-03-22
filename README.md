@@ -31,11 +31,13 @@ Required:
 - [Python2 >= 2.6 or Python >= 3.2](https://www.python.org) or [PyPy](https://pypy.org)
 
 Optional:
-- [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify)
--  ↓ Linux >= 2.6.13
-- [gamin >= 0.0.21](https://www.gnome.org/~veillard/gamin)
-- [systemd >= 204](https://www.freedesktop.org/wiki/Software/systemd)
+- [pyinotify >= 0.8.3](https://github.com/seb-m/pyinotify), may require:
+  * Linux >= 2.6.13
+- [gamin >= 0.0.21](http://www.gnome.org/~veillard/gamin)
+- [systemd >= 204](http://www.freedesktop.org/wiki/Software/systemd) and python bindings:
+  * [python-systemd package](https://www.freedesktop.org/software/systemd/python-systemd/index.html)
 - [dnspython](http://www.dnspython.org/)
+
 
 To install:
 
