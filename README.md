@@ -46,8 +46,14 @@ To install, just do:
 
     tar xvfj fail2ban-0.11.0.tar.bz2
     cd fail2ban-0.11.0
-    python setup.py install
+    sudo python setup.py install
+   
+Alternatively, you can clone the source from GitHub to a directory of Your choice, and do the install from there. Pick the correct branch, for example, 0.11
 
+    git clone https://github.com/fail2ban/fail2ban.git
+    cd fail2ban
+    sudo python setup.py install 
+    
 This will install Fail2Ban into the python library directory. The executable
 scripts are placed into `/usr/bin`, and configuration under `/etc/fail2ban`.
 
@@ -57,6 +63,9 @@ Fail2Ban should be correctly installed now. Just type:
 
 to see if everything is alright. You should always use fail2ban-client and
 never call fail2ban-server directly.
+You can verify that you have the correct version installed with 
+
+    fail2ban-client version
 
 Please note that the system init/service script is not automatically installed.
 To enable fail2ban as an automatic service, simply copy the script for your
