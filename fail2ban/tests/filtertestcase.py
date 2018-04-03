@@ -82,10 +82,7 @@ def _killfile(f, name):
 		_killfile(None, name + '.bak')
 
 
-def _maxWaitTime(wtime):
-	if unittest.F2B.fast: # pragma: no cover
-		wtime /= 10.0
-	return wtime
+_maxWaitTime = unittest.F2B.maxWaitTime
 
 
 class _tmSerial():
@@ -657,12 +654,12 @@ class LogFileMonitor(LogCaptureTestCase):
 		_killfile(self.file, self.name)
 		pass
 
-	def isModified(self, delay=2.):
+	def isModified(self, delay=2):
 		"""Wait up to `delay` sec to assure that it was modified or not
 		"""
 		return Utils.wait_for(lambda: self.filter.isModified(self.name), _maxWaitTime(delay))
 
-	def notModified(self, delay=2.):
+	def notModified(self, delay=2):
 		"""Wait up to `delay` sec as long as it was not modified
 		"""
 		return Utils.wait_for(lambda: not self.filter.isModified(self.name), _maxWaitTime(delay))
@@ -817,7 +814,7 @@ class CommonMonitorTestCase(unittest.TestCase):
 		super(CommonMonitorTestCase, self).setUp()
 		self._failTotal = 0
 
-	def waitFailTotal(self, count, delay=1.):
+	def waitFailTotal(self, count, delay=1):
 		"""Wait up to `delay` sec to assure that expected failure `count` reached
 		"""
 		ret = Utils.wait_for(
@@ -826,7 +823,7 @@ class CommonMonitorTestCase(unittest.TestCase):
 		self._failTotal += count
 		return ret
 
-	def isFilled(self, delay=1.):
+	def isFilled(self, delay=1):
 		"""Wait up to `delay` sec to assure that it was modified or not
 		"""
 		return Utils.wait_for(self.jail.isFilled, _maxWaitTime(delay))
@@ -836,7 +833,7 @@ class CommonMonitorTestCase(unittest.TestCase):
 		"""
 		return Utils.wait_for(self.jail.isEmpty, _maxWaitTime(delay))
 
-	def waitForTicks(self, ticks, delay=2.):
+	def waitForTicks(self, ticks, delay=2):
 		"""Wait up to `delay` sec to assure that it was modified or not
 		"""
 		last_ticks = self.filter.ticks
@@ -1148,6 +1145,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		def setUp(self):
 			"""Call before every test case."""
 			super(MonitorJournalFailures, self).setUp()
+			self._runtimeJournal = None
 			self.test_file = os.path.join(TEST_FILES_DIR, "testcase-journal.log")
 			self.jail = DummyJail()
 			self.filter = None
@@ -1159,6 +1157,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				'TEST_FIELD': "1", 'TEST_UUID': self.test_uuid}
 
 		def _initFilter(self, **kwargs):
+			self._getRuntimeJournal() # check journal available
 			self.filter = Filter_(self.jail, **kwargs)
 			self.filter.addJournalMatch([
 				"SYSLOG_IDENTIFIER=fail2ban-testcases",
@@ -1179,21 +1178,26 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		def _getRuntimeJournal(self):
 			"""Retrieve current system journal path
 
-			If none found, None will be returned
+			If not found, SkipTest exception will be raised.
 			"""
-			# Depending on the system, it could be found under /run or /var/log (e.g. Debian)
-			# which are pointed by different systemd-path variables.  We will
-			# check one at at time until the first hit
-			for systemd_var in 'system-runtime-logs', 'system-state-logs':
-				tmp = Utils.executeCmd(
-					'find "$(systemd-path %s)" -name system.journal' % systemd_var,
-					timeout=10, shell=True, output=True
-				)
-				self.assertTrue(tmp)
-				out = str(tmp[1].decode('utf-8')).split('\n')[0]
-				if out:
-					return out
-
+			# we can cache it:
+			if self._runtimeJournal is None:
+				# Depending on the system, it could be found under /run or /var/log (e.g. Debian)
+				# which are pointed by different systemd-path variables.  We will
+				# check one at at time until the first hit
+				for systemd_var in 'system-runtime-logs', 'system-state-logs':
+					tmp = Utils.executeCmd(
+						'find "$(systemd-path %s)" -name system.journal' % systemd_var,
+						timeout=10, shell=True, output=True
+					)
+					self.assertTrue(tmp)
+					out = str(tmp[1].decode('utf-8')).split('\n')[0]
+					if out: break
+				self._runtimeJournal = out
+			if self._runtimeJournal:
+				return self._runtimeJournal
+			raise unittest.SkipTest('systemd journal seems to be not available (e. g. no rights to read)')
+		
 		def testJournalFilesArg(self):
 			# retrieve current system journal path
 			jrnlfile = self._getRuntimeJournal()

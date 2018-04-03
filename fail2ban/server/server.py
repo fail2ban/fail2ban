@@ -588,7 +588,7 @@ class Server:
 				self.__logTarget = target
 				return True
 			# set a format which is simpler for console use
-			fmt = "%(name)-24s[%(process)d]: %(levelname)-7s %(message)s"
+			fmt = "%(name)-23.23s [%(process)d]: %(levelname)-7s %(message)s"
 			if systarget == "SYSLOG":
 				facility = logOptions.get('facility', 'DAEMON').upper()
 				try:

@@ -37,8 +37,10 @@ RE_GROUPED = re.compile(r'(?<!(?:\(\?))(?<!\\)\((?!\?)')
 RE_GROUP = ( re.compile(r'^((?:\(\?\w+\))?\^?(?:\(\?\w+\))?)(.*?)(\$?)$'), r"\1(\2)\3" )
 
 RE_EXLINE_BOUND_BEG = re.compile(r'^\{\^LN-BEG\}')
+RE_EXSANC_BOUND_BEG = re.compile(r'^\(\?:\^\|\\b\|\\W\)')
+RE_EXEANC_BOUND_BEG = re.compile(r'\(\?=\\b\|\\W\|\$\)$')
 RE_NO_WRD_BOUND_BEG = re.compile(r'^\(*(?:\(\?\w+\))?(?:\^|\(*\*\*|\(\?:\^)')
-RE_NO_WRD_BOUND_END = re.compile(r'(?<!\\)(?:\$\)?|\*\*\)*)$')
+RE_NO_WRD_BOUND_END = re.compile(r'(?<!\\)(?:\$\)?|\\b|\\s|\*\*\)*)$')
 RE_DEL_WRD_BOUNDS = ( re.compile(r'^\(*(?:\(\?\w+\))?\(*\*\*|(?<!\\)\*\*\)*$'), 
 	                    lambda m: m.group().replace('**', '') )
 
@@ -131,7 +133,7 @@ class DateTemplate(object):
 		# remove possible special pattern "**" in front and end of regex:
 		regex = RE_DEL_WRD_BOUNDS[0].sub(RE_DEL_WRD_BOUNDS[1], regex)
 		self._regex = regex
-		logSys.debug('  constructed regex %s', regex)
+		logSys.log(7, '  constructed regex %s', regex)
 		self._cRegex = None
 
 	regex = property(getRegex, setRegex, doc=
@@ -182,6 +184,14 @@ class DateTemplate(object):
 		"""
 		raise NotImplementedError("getDate() is abstract")
 
+	@staticmethod
+	def unboundPattern(pattern):
+		return RE_EXEANC_BOUND_BEG.sub('',
+			RE_EXSANC_BOUND_BEG.sub('',
+				RE_EXLINE_BOUND_BEG.sub('', pattern)
+			)
+		)
+
 
 class DateEpoch(DateTemplate):
 	"""A date template which searches for Unix timestamps.
@@ -197,12 +207,12 @@ class DateEpoch(DateTemplate):
 
 	def __init__(self, lineBeginOnly=False, pattern=None, longFrm=False):
 		DateTemplate.__init__(self)
-		self.name = "Epoch"
+		self.name = "Epoch" if not pattern else pattern
 		self._longFrm = longFrm;
 		self._grpIdx = 1
 		epochRE = r"\d{10,11}\b(?:\.\d{3,6})?"
 		if longFrm:
-			self.name = "LongEpoch";
+			self.name = "LongEpoch" if not pattern else pattern
 			epochRE = r"\d{10,11}(?:\d{3}(?:\.\d{1,6}|\d{3})?)?"
 		if pattern:
 			# pattern should capture/cut out the whole match:

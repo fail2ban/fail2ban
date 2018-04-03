@@ -55,8 +55,8 @@ CLIENT = "fail2ban-client"
 SERVER = "fail2ban-server"
 BIN = dirname(Fail2banServer.getServerPath())
 
-MAX_WAITTIME = 30 if not unittest.F2B.fast else 5
-MID_WAITTIME = MAX_WAITTIME
+MAX_WAITTIME = unittest.F2B.maxWaitTime(unittest.F2B.MAX_WAITTIME)
+MID_WAITTIME = unittest.F2B.maxWaitTime(unittest.F2B.MID_WAITTIME)
 
 ##
 # Several wrappers and settings for proper testing:

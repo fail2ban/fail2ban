@@ -586,37 +586,93 @@ class Filter(JailThread):
 	# @return: a boolean
 
 	def ignoreLine(self, tupleLines):
+		buf = Regex._tupleLinesBuf(tupleLines)
 		for ignoreRegexIndex, ignoreRegex in enumerate(self.__ignoreRegex):
-			ignoreRegex.search(tupleLines)
+			ignoreRegex.search(buf, tupleLines)
 			if ignoreRegex.hasMatched():
 				return ignoreRegexIndex
 		return None
 
+	def _updateUsers(self, fail, user=()):
+		users = fail.get('users')
+		# only for regex contains user:
+		if user:
+			if not users:
+				fail['users'] = users = set()
+			users.add(user)
+			return users
+		return None
+
+	# # ATM incremental (non-empty only) merge deactivated ...
+	# @staticmethod
+	# def _updateFailure(self, mlfidGroups, fail):
+	# 	# reset old failure-ids when new types of id available in this failure:
+	# 	fids = set()
+	# 	for k in ('fid', 'ip4', 'ip6', 'dns'):
+	# 		if fail.get(k):
+	# 			fids.add(k)
+	# 	if fids:
+	# 		for k in ('fid', 'ip4', 'ip6', 'dns'):
+	# 			if k not in fids:
+	# 				try:
+	# 					del mlfidGroups[k]
+	# 				except:
+	# 					pass
+	# 	# update not empty values:
+	# 	mlfidGroups.update(((k,v) for k,v in fail.iteritems() if v))
+
 	def _mergeFailure(self, mlfid, fail, failRegex):
 		mlfidFail = self.mlfidCache.get(mlfid) if self.__mlfidCache else None
+		users = None
+		nfflgs = 0
+		if fail.get('nofail'): nfflgs |= 1
+		if fail.get('mlfforget'): nfflgs |= 2
 		# if multi-line failure id (connection id) known:
 		if mlfidFail:
 			mlfidGroups = mlfidFail[1]
-			# update - if not forget (disconnect/reset):
-			if not fail.get('mlfforget'):
-				mlfidGroups.update(fail)
-			else:
-				self.mlfidCache.unset(mlfid) # remove cached entry
-			# merge with previous info:
-			fail2 = mlfidGroups.copy()
-			fail2.update(fail)
-			if not fail.get('nofail'): # be sure we've correct current state
-				try:
-					del fail2['nofail']
-				except KeyError:
-					pass
-			fail2["matches"] = fail.get("matches", []) + failRegex.getMatchedTupleLines()
-			fail = fail2
-		elif not fail.get('mlfforget'):
+			# update users set (hold all users of connect):
+			users = self._updateUsers(mlfidGroups, fail.get('user'))
+			# be sure we've correct current state ('nofail' only from last failure)
+			try:
+				del mlfidGroups['nofail']
+			except KeyError:
+				pass
+			# # ATM incremental (non-empty only) merge deactivated (for future version only),
+			# # it can be simulated using alternate value tags, like <F-ALT_VAL>...</F-ALT_VAL>,
+			# # so previous value 'val' will be overwritten only if 'alt_val' is not empty...		
+			# _updateFailure(mlfidGroups, fail)
+			#
+			# overwrite multi-line failure with all values, available in fail:
+			mlfidGroups.update(fail)
+			# new merged failure data:
+			fail = mlfidGroups
+			# if forget (disconnect/reset) - remove cached entry:
+			if nfflgs & 2:
+				self.mlfidCache.unset(mlfid)
+		elif not (nfflgs & 2): # not mlfforget
+			users = self._updateUsers(fail, fail.get('user'))
 			mlfidFail = [self.__lastDate, fail]
 			self.mlfidCache.set(mlfid, mlfidFail)
-			if fail.get('nofail'):
-				fail["matches"] = failRegex.getMatchedTupleLines()
+		# check users in order to avoid reset failure by multiple logon-attempts:
+		if users and len(users) > 1:
+			# we've new user, reset 'nofail' because of multiple users attempts:
+			try:
+				del fail['nofail']
+			except KeyError:
+				pass
+		# merge matches:
+		if not fail.get('nofail'): # current state (corresponding users)
+			try:
+				m = fail.pop("nofail-matches")
+				m += fail.get("matches", [])
+			except KeyError:
+				m = fail.get("matches", [])
+			if not (nfflgs & 2): # not mlfforget:
+				m += failRegex.getMatchedTupleLines()
+			fail["matches"] = m
+		elif not (nfflgs & 2) and (nfflgs & 1): # not mlfforget and nofail:
+			fail["nofail-matches"] = fail.get("nofail-matches", []) + failRegex.getMatchedTupleLines()
+		# return merged:
 		return fail
 
 
@@ -630,6 +686,7 @@ class Filter(JailThread):
 	def findFailure(self, tupleLine, date=None):
 		failList = list()
 
+		ll = logSys.getEffectiveLevel()
 		returnRawHost = self.returnRawHost
 		cidr = IPAddr.CIDR_UNSPEC
 		if self.__useDns == "raw":
@@ -639,7 +696,7 @@ class Filter(JailThread):
 		# Checks if we mut ignore this line.
 		if self.ignoreLine([tupleLine[::2]]) is not None:
 			# The ignoreregex matched. Return.
-			logSys.log(7, "Matched ignoreregex and was \"%s\" ignored",
+			if ll <= 7: logSys.log(7, "Matched ignoreregex and was \"%s\" ignored",
 				"".join(tupleLine[::2]))
 			return failList
 
@@ -666,7 +723,7 @@ class Filter(JailThread):
 			date = self.__lastDate
 
 		if self.checkFindTime and date is not None and date < MyTime.time() - self.getFindTime():
-			logSys.log(5, "Ignore line since time %s < %s - %s", 
+			if ll <= 5: logSys.log(5, "Ignore line since time %s < %s - %s", 
 				date, MyTime.time(), self.getFindTime())
 			return failList
 
@@ -675,71 +732,75 @@ class Filter(JailThread):
 				self.__lineBuffer + [tupleLine[:3]])[-self.__lineBufferSize:]
 		else:
 			orgBuffer = self.__lineBuffer = [tupleLine[:3]]
-		logSys.log(5, "Looking for match of %r", self.__lineBuffer)
+		if ll <= 5: logSys.log(5, "Looking for match of %r", self.__lineBuffer)
+		buf = Regex._tupleLinesBuf(self.__lineBuffer)
 
 		# Pre-filter fail regex (if available):
 		preGroups = {}
 		if self.__prefRegex:
-			if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG: # pragma: no cover
-				logSys.log(5, "  Looking for prefregex %r", self.__prefRegex.getRegex())
-			self.__prefRegex.search(self.__lineBuffer)
+			if ll <= 5: logSys.log(5, "  Looking for prefregex %r", self.__prefRegex.getRegex())
+			self.__prefRegex.search(buf, self.__lineBuffer)
 			if not self.__prefRegex.hasMatched():
-				logSys.log(5, "  Prefregex not matched")
+				if ll <= 5: logSys.log(5, "  Prefregex not matched")
 				return failList
 			preGroups = self.__prefRegex.getGroups()
-			logSys.log(7, "  Pre-filter matched %s", preGroups)
+			if ll <= 7: logSys.log(7, "  Pre-filter matched %s", preGroups)
 			repl = preGroups.get('content')
 			# Content replacement:
 			if repl:
 				del preGroups['content']
-				self.__lineBuffer = [('', '', repl)]
+				self.__lineBuffer, buf = [('', '', repl)], None
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
-			if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG: # pragma: no cover
-				logSys.log(5, "  Looking for failregex %r", failRegex.getRegex())
-			failRegex.search(self.__lineBuffer, orgBuffer)
-			if not failRegex.hasMatched():
-				continue
-			# The failregex matched.
-			logSys.log(7, "  Matched %s", failRegex)
-			# Checks if we must ignore this match.
-			if self.ignoreLine(failRegex.getMatchedTupleLines()) \
-					is not None:
-				# The ignoreregex matched. Remove ignored match.
-				self.__lineBuffer = failRegex.getUnmatchedTupleLines()
-				logSys.log(7, "  Matched ignoreregex and was ignored")
-				if not self.checkAllRegex:
-					break
-				else:
-					continue
-			if date is None:
-				logSys.warning(
-					"Found a match for %r but no valid date/time "
-					"found for %r. Please try setting a custom "
-					"date pattern (see man page jail.conf(5)). "
-					"If format is complex, please "
-					"file a detailed issue on"
-					" https://github.com/fail2ban/fail2ban/issues "
-					"in order to get support for this format.",
-					 "\n".join(failRegex.getMatchedLines()), timeText)
-				continue
-			self.__lineBuffer = failRegex.getUnmatchedTupleLines()
-			# retrieve failure-id, host, etc from failure match:
 			try:
+				# buffer from tuples if changed: 
+				if buf is None:
+					buf = Regex._tupleLinesBuf(self.__lineBuffer)
+				if ll <= 5: logSys.log(5, "  Looking for failregex %d - %r", failRegexIndex, failRegex.getRegex())
+				failRegex.search(buf, orgBuffer)
+				if not failRegex.hasMatched():
+					continue
+				# current failure data (matched group dict):
+				fail = failRegex.getGroups()
+				# The failregex matched.
+				if ll <= 7: logSys.log(7, "  Matched failregex %d: %s", failRegexIndex, fail)
+				# Checks if we must ignore this match.
+				if self.ignoreLine(failRegex.getMatchedTupleLines()) \
+						is not None:
+					# The ignoreregex matched. Remove ignored match.
+					self.__lineBuffer, buf = failRegex.getUnmatchedTupleLines(), None
+					if ll <= 7: logSys.log(7, "  Matched ignoreregex and was ignored")
+					if not self.checkAllRegex:
+						break
+					else:
+						continue
+				if date is None:
+					logSys.warning(
+						"Found a match for %r but no valid date/time "
+						"found for %r. Please try setting a custom "
+						"date pattern (see man page jail.conf(5)). "
+						"If format is complex, please "
+						"file a detailed issue on"
+						" https://github.com/fail2ban/fail2ban/issues "
+						"in order to get support for this format.",
+						 "\n".join(failRegex.getMatchedLines()), timeText)
+					continue
+				# we should check all regex (bypass on multi-line, otherwise too complex):
+				if not self.checkAllRegex or self.getMaxLines() > 1:
+					self.__lineBuffer, buf = failRegex.getUnmatchedTupleLines(), None
+				# merge data if multi-line failure:
 				raw = returnRawHost
 				if preGroups:
-					fail = preGroups.copy()
-					fail.update(failRegex.getGroups())
-				else:
-					fail = failRegex.getGroups()
+					currFail, fail = fail, preGroups.copy()
+					fail.update(currFail)
 				# first try to check we have mlfid case (caching of connection id by multi-line):
 				mlfid = fail.get('mlfid')
 				if mlfid is not None:
 					fail = self._mergeFailure(mlfid, fail, failRegex)
 					# bypass if no-failure case:
 					if fail.get('nofail'):
-						logSys.log(7, "Nofail by mlfid %r in regex %s: %s",
+						if ll <= 7: logSys.log(7, "Nofail by mlfid %r in regex %s: %s",
 							mlfid, failRegexIndex, fail.get('mlfforget', "waiting for failure"))
 						if not self.checkAllRegex: return failList
 				else:
@@ -768,7 +829,7 @@ class Filter(JailThread):
 						cidr = IPAddr.CIDR_RAW
 				# if mlfid case (not failure):
 				if host is None:
-					logSys.log(7, "No failure-id by mlfid %r in regex %s: %s",
+					if ll <= 7: logSys.log(7, "No failure-id by mlfid %r in regex %s: %s",
 						mlfid, failRegexIndex, fail.get('mlfforget', "waiting for identifier"))
 					if not self.checkAllRegex: return failList
 					ips = [None]

@@ -24,6 +24,8 @@ Feb 25 14:34:11 belka sshd[31603]: Failed password for invalid user ROOT from aa
 # failJSON: { "time": "2005-01-05T01:31:41", "match": true , "host": "1.2.3.4" }
 Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM 1.2.3.4
 # failJSON: { "time": "2005-01-05T01:31:41", "match": true , "host": "1.2.3.4" }
+Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM 1.2.3.4 port 12345 [preauth]
+# failJSON: { "time": "2005-01-05T01:31:41", "match": true , "host": "1.2.3.4" }
 Jan  5 01:31:41 www sshd[1643]: ROOT LOGIN REFUSED FROM ::ffff:1.2.3.4
 
 #4
@@ -118,7 +120,7 @@ Sep 29 16:28:02 spaceman sshd[16699]: Failed password for dan from 127.0.0.1 por
 # failJSON: { "match": false, "desc": "no failure, just cache mlfid (conn-id)" }
 Sep 29 16:28:05 localhost sshd[16700]: Connection from 192.0.2.5
 # failJSON: { "match": false, "desc": "no failure, just covering mlfid (conn-id) forget" }
-Sep 29 16:28:05 localhost sshd[16700]: Connection closed by 192.0.2.5 [preauth]
+Sep 29 16:28:05 localhost sshd[16700]: Connection closed by 192.0.2.5
 
 # failJSON: { "time": "2004-09-29T17:15:02", "match": true , "host": "127.0.0.1" }
 Sep 29 17:15:02 spaceman sshd[12946]: Failed hostbased for dan from 127.0.0.1 port 45785 ssh2: RSA 8c:e3:aa:0f:64:51:02:f7:14:79:89:3f:65:84:7c:30, client user "dan", client host "localhost.localdomain"
@@ -157,7 +159,7 @@ Nov 28 09:16:03 srv sshd[32307]: Postponed publickey for git from 192.0.2.1 port
 # failJSON: { "match": false }
 Nov 28 09:16:03 srv sshd[32307]: Accepted publickey for git from 192.0.2.1 port 57904 ssh2: DSA 36:48:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
 # failJSON: { "match": false, "desc": "Should be forgotten by success/accepted public key" }
-Nov 28 09:16:03 srv sshd[32307]: Connection closed by 192.0.2.1 [preauth]
+Nov 28 09:16:03 srv sshd[32307]: Connection closed by 192.0.2.1
 
 # Failure on connect with valid user-name but wrong public keys (retarded to disconnect/too many errors, because of gh-1263):
 # failJSON: { "match": false }
@@ -177,7 +179,7 @@ Nov 23 21:50:37 sshd[8148]: Connection closed by 61.0.0.1 [preauth]
 # failJSON: { "match": false }
 Nov 23 21:50:19 sshd[9148]: Disconnecting: Too many authentication failures for root [preauth]
 # failJSON: { "match": false , "desc": "Pids don't match" }
-Nov 23 21:50:37 sshd[7148]: Connection closed by 61.0.0.1 [preauth]
+Nov 23 21:50:37 sshd[7148]: Connection closed by 61.0.0.1
 
 # failJSON: { "time": "2005-07-13T18:44:28", "match": true , "host": "89.24.13.192", "desc": "from gh-289" }
 Jul 13 18:44:28 mdop sshd[4931]: Received disconnect from 89.24.13.192: 3: com.jcraft.jsch.JSchException: Auth fail
@@ -210,9 +212,46 @@ Apr 27 13:02:04 host sshd[29116]: input_userauth_request: invalid user root [pre
 # failJSON: { "time": "2005-04-27T13:02:04", "match": true , "host": "1.2.3.4", "desc": "No Bye-Bye" }
 Apr 27 13:02:04 host sshd[29116]: Received disconnect from 1.2.3.4: 11: Normal Shutdown, Thank you for playing [preauth]
 
-# Match sshd auth errors on OpenSUSE systems
-# failJSON: { "time": "2015-04-16T20:02:50", "match": true , "host": "222.186.21.217", "desc": "Authentication for user failed" }
-2015-04-16T18:02:50.321974+00:00 host sshd[2716]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=222.186.21.217  user=root
+# Match sshd auth errors on OpenSUSE systems (gh-1024)
+# failJSON: { "match": false, "desc": "No failure until closed or another fail (e. g. F-MLFFORGET by success/accepted password can avoid failure, see gh-2070)" }
+2015-04-16T18:02:50.321974+00:00 host sshd[2716]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.0.2.112  user=root
+# failJSON: { "time": "2015-04-16T20:02:50", "match": true , "host": "192.0.2.112", "desc": "Should catch failure - no success/no accepted password" }
+2015-04-16T18:02:50.568798+00:00 host sshd[2716]: Connection closed by 192.0.2.112 [preauth]
+
+# disable this test-cases block for obsolete multi-line filter (zzz-sshd-obsolete...):
+# filterOptions: [{"test.condition":"name=='sshd'"}]
+
+# 2 methods auth: pam_unix and pam_ldap are used in combination (gh-2070), succeeded after "failure" in first method:
+# failJSON: { "match": false , "desc": "No failure" }
+Mar  7 18:53:20 bar sshd[1556]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.0.2.113  user=rda
+# failJSON: { "match": false , "desc": "No failure" }
+Mar  7 18:53:20 bar sshd[1556]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=rda rhost=192.0.2.113 [preauth]
+# failJSON: { "match": false , "desc": "No failure" }
+Mar  7 18:53:20 bar sshd[1556]: Accepted password for rda from 192.0.2.113 port 52100 ssh2
+# failJSON: { "match": false , "desc": "No failure" }
+Mar  7 18:53:20 bar sshd[1556]: pam_unix(sshd:session): session opened for user rda by (uid=0)
+# failJSON: { "match": false , "desc": "No failure" }
+Mar  7 18:53:20 bar sshd[1556]: Connection closed by 192.0.2.113
+
+# several attempts, intruder tries to "forget" failed attempts by success login (all 3 attempts with different users):
+# failJSON: { "match": false , "desc": "Still no failure (first try)" }
+Mar  7 18:53:22 bar sshd[1558]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=root rhost=192.0.2.114
+# failJSON: { "time": "2005-03-07T18:53:23", "match": true , "attempts": 2, "users": ["root", "sudoer"], "host": "192.0.2.114", "desc": "Failure: attempt 2nd user" }
+Mar  7 18:53:23 bar sshd[1558]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=sudoer rhost=192.0.2.114
+# failJSON: { "time": "2005-03-07T18:53:24", "match": true , "attempts": 2, "users": ["root", "sudoer", "known"], "host": "192.0.2.114", "desc": "Failure: attempt 3rd user" }
+Mar  7 18:53:24 bar sshd[1558]: Accepted password for known from 192.0.2.114 port 52100 ssh2
+# failJSON: { "match": false , "desc": "No failure" }
+Mar  7 18:53:24 bar sshd[1558]: pam_unix(sshd:session): session opened for user known by (uid=0)
+
+# several attempts, intruder tries to "forget" failed attempts by success login (accepted for other user as in first failed attempt):
+# failJSON: { "match": false , "desc": "Still no failure (first try)" }
+Mar  7 18:53:32 bar sshd[1559]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=root rhost=192.0.2.116
+# failJSON: { "match": false , "desc": "Still no failure (second try, same user)" }
+Mar  7 18:53:32 bar sshd[1559]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=root rhost=192.0.2.116
+# failJSON: { "time": "2005-03-07T18:53:34", "match": true , "attempts": 2, "users": ["root", "known"], "host": "192.0.2.116", "desc": "Failure: attempt 2nd user" }
+Mar  7 18:53:34 bar sshd[1559]: Accepted password for known from 192.0.2.116 port 52100 ssh2
+# failJSON: { "match": false , "desc": "No failure" }
+Mar  7 18:53:38 bar sshd[1559]: Connection closed by 192.0.2.116
 
 # filterOptions: [{"mode": "ddos"}, {"mode": "aggressive"}]
 
@@ -243,6 +282,14 @@ Nov 24 23:46:43 host sshd[32686]: fatal: Read from socket failed: Connection res
 # gh-1719:
 # failJSON: { "time": "2005-03-15T09:20:57", "match": true , "host": "192.0.2.39", "desc": "Singleline for connection reset by" }
 Mar 15 09:20:57 host sshd[28972]: Connection reset by 192.0.2.39 port 14282 [preauth]
+
+# filterOptions: [{"test.condition":"name=='sshd'", "mode": "ddos"}, {"test.condition":"name=='sshd'", "mode": "aggressive"}]
+
+# failJSON: { "time": "2005-03-15T09:21:01", "match": true , "host": "192.0.2.212", "desc": "DDOS mode causes failure on close within preauth stage" }
+Mar 15 09:21:01 host sshd[2717]: Connection closed by 192.0.2.212 [preauth]
+# failJSON: { "time": "2005-03-15T09:21:02", "match": true , "host": "192.0.2.212", "desc": "DDOS mode causes failure on close within preauth stage" }
+Mar 15 09:21:02 host sshd[2717]: Connection closed by 192.0.2.212 [preauth]
+
 
 
 # filterOptions: [{"mode": "extra"}, {"mode": "aggressive"}]
