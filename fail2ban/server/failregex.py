@@ -89,6 +89,11 @@ def mapTag2Opt(tag):
 	except KeyError:
 		return tag.lower()
 
+
+# alternate names to be merged, e. g. alt_user_1 -> user ...
+ALTNAME_PRE = 'alt_'
+ALTNAME_CRE = re.compile(r'^' + ALTNAME_PRE + r'(.*)(?:_\d+)?$')
+
 ##
 # Regular expression class.
 #
@@ -114,6 +119,14 @@ class Regex:
 		try:
 			self._regexObj = re.compile(regex, re.MULTILINE if multiline else 0)
 			self._regex = regex
+			self._altValues = {}
+			for k in filter(
+				lambda k: len(k) > len(ALTNAME_PRE) and k.startswith(ALTNAME_PRE),
+				self._regexObj.groupindex
+			):
+				n = ALTNAME_CRE.match(k).group(1)
+				self._altValues[k] = n
+			self._altValues = list(self._altValues.items()) if len(self._altValues) else None
 		except sre_constants.error:
 			raise RegexException("Unable to compile regular expression '%s'" %
 								 regex)
@@ -257,7 +270,16 @@ class Regex:
 	#
 
 	def getGroups(self):
-		return self._matchCache.groupdict()
+		if not self._altValues:
+			return self._matchCache.groupdict()
+		# merge alternate values (e. g. 'alt_user_1' -> 'user' or 'alt_host' -> 'host'):
+		fail = self._matchCache.groupdict()
+		#fail = fail.copy()
+		for k,n in self._altValues:
+			v = fail.get(k)
+			if v and not fail.get(n):
+				fail[n] = v
+		return fail
 
 	##
 	# Returns skipped lines.

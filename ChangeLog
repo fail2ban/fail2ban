@@ -41,6 +41,10 @@ ver. 0.10.3-dev-1 (20??/??/??) - development edition
 * `filter.d/sshd.conf`:
   - failregex got an optional space in order to match new log-format (see gh-2061);
   - fixed ddos-mode regex to match refactored message (some versions can contain port now, see gh-2062);
+  - fixed root login refused regex (optional port before preauth, gh-2080);
+  - avoid banning of legitimate users when pam_unix used in combination with other password method, so
+    bypass pam_unix failures if accepted available for this user gh-2070;
+  - amend to gh-1263 with better handling of multiple attempts (failures for different user-names recognized immediatelly);
 * `action.d/badips.py`: implicit convert IPAddr to str, solves an issue "expected string, IPAddr found" (gh-2059);
 * `action.d/hostsdeny.conf`: fixed IPv6 syntax (enclosed in square brackets, gh-2066);
 * (Free)BSD ipfw actionban fixed to allow same rule added several times (gh-2054);
