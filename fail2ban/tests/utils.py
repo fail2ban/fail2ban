@@ -680,7 +680,7 @@ class LogCaptureTestCase(unittest.TestCase):
 				return self._val
 			# try to lock, if not possible - return cached/empty (max 5 times):
 			lck = self._lock.acquire(False)
-			if not lck: # pargma: no cover (may be too sporadic on slow systems)
+			if not lck: # pragma: no cover (may be too sporadic on slow systems)
 				self._nolckCntr += 1
 				if self._nolckCntr <= 5:
 					return self._val if self._val is not None else ''

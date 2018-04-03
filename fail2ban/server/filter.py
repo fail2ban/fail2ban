@@ -582,8 +582,9 @@ class Filter(JailThread):
 	# @return: a boolean
 
 	def ignoreLine(self, tupleLines):
+		buf = Regex._tupleLinesBuf(tupleLines)
 		for ignoreRegexIndex, ignoreRegex in enumerate(self.__ignoreRegex):
-			ignoreRegex.search(tupleLines)
+			ignoreRegex.search(buf, tupleLines)
 			if ignoreRegex.hasMatched():
 				return ignoreRegexIndex
 		return None
@@ -681,6 +682,7 @@ class Filter(JailThread):
 	def findFailure(self, tupleLine, date=None):
 		failList = list()
 
+		ll = logSys.getEffectiveLevel()
 		returnRawHost = self.returnRawHost
 		cidr = IPAddr.CIDR_UNSPEC
 		if self.__useDns == "raw":
@@ -690,7 +692,7 @@ class Filter(JailThread):
 		# Checks if we mut ignore this line.
 		if self.ignoreLine([tupleLine[::2]]) is not None:
 			# The ignoreregex matched. Return.
-			logSys.log(7, "Matched ignoreregex and was \"%s\" ignored",
+			if ll <= 7: logSys.log(7, "Matched ignoreregex and was \"%s\" ignored",
 				"".join(tupleLine[::2]))
 			return failList
 
@@ -717,7 +719,7 @@ class Filter(JailThread):
 			date = self.__lastDate
 
 		if self.checkFindTime and date is not None and date < MyTime.time() - self.getFindTime():
-			logSys.log(5, "Ignore line since time %s < %s - %s", 
+			if ll <= 5: logSys.log(5, "Ignore line since time %s < %s - %s", 
 				date, MyTime.time(), self.getFindTime())
 			return failList
 
@@ -726,44 +728,45 @@ class Filter(JailThread):
 				self.__lineBuffer + [tupleLine[:3]])[-self.__lineBufferSize:]
 		else:
 			orgBuffer = self.__lineBuffer = [tupleLine[:3]]
-		logSys.log(5, "Looking for match of %r", self.__lineBuffer)
+		if ll <= 5: logSys.log(5, "Looking for match of %r", self.__lineBuffer)
+		buf = Regex._tupleLinesBuf(self.__lineBuffer)
 
 		# Pre-filter fail regex (if available):
 		preGroups = {}
 		if self.__prefRegex:
-			if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG: # pragma: no cover
-				logSys.log(5, "  Looking for prefregex %r", self.__prefRegex.getRegex())
-			self.__prefRegex.search(self.__lineBuffer)
+			if ll <= 5: logSys.log(5, "  Looking for prefregex %r", self.__prefRegex.getRegex())
+			self.__prefRegex.search(buf, self.__lineBuffer)
 			if not self.__prefRegex.hasMatched():
-				logSys.log(5, "  Prefregex not matched")
+				if ll <= 5: logSys.log(5, "  Prefregex not matched")
 				return failList
 			preGroups = self.__prefRegex.getGroups()
-			logSys.log(7, "  Pre-filter matched %s", preGroups)
+			if ll <= 7: logSys.log(7, "  Pre-filter matched %s", preGroups)
 			repl = preGroups.get('content')
 			# Content replacement:
 			if repl:
 				del preGroups['content']
-				self.__lineBuffer = [('', '', repl)]
+				self.__lineBuffer, buf = [('', '', repl)], None
 
 		# Iterates over all the regular expressions.
 		for failRegexIndex, failRegex in enumerate(self.__failRegex):
-			# retrieve failure-id, host, etc from failure match:
 			try:
-				if logSys.getEffectiveLevel() <= logging.HEAVYDEBUG: # pragma: no cover
-					logSys.log(5, "  Looking for failregex %d - %r", failRegexIndex, failRegex.getRegex())
-				failRegex.search(self.__lineBuffer, orgBuffer)
+				# buffer from tuples if changed: 
+				if buf is None:
+					buf = Regex._tupleLinesBuf(self.__lineBuffer)
+				if ll <= 5: logSys.log(5, "  Looking for failregex %d - %r", failRegexIndex, failRegex.getRegex())
+				failRegex.search(buf, orgBuffer)
 				if not failRegex.hasMatched():
 					continue
 				# current failure data (matched group dict):
 				fail = failRegex.getGroups()
 				# The failregex matched.
-				logSys.log(7, "  Matched failregex %d: %s", failRegexIndex, fail)
+				if ll <= 7: logSys.log(7, "  Matched failregex %d: %s", failRegexIndex, fail)
 				# Checks if we must ignore this match.
 				if self.ignoreLine(failRegex.getMatchedTupleLines()) \
 						is not None:
 					# The ignoreregex matched. Remove ignored match.
-					self.__lineBuffer = failRegex.getUnmatchedTupleLines()
-					logSys.log(7, "  Matched ignoreregex and was ignored")
+					self.__lineBuffer, buf = failRegex.getUnmatchedTupleLines(), None
+					if ll <= 7: logSys.log(7, "  Matched ignoreregex and was ignored")
 					if not self.checkAllRegex:
 						break
 					else:
@@ -781,7 +784,7 @@ class Filter(JailThread):
 					continue
 				# we should check all regex (bypass on multi-line, otherwise too complex):
 				if not self.checkAllRegex or self.getMaxLines() > 1:
-					self.__lineBuffer = failRegex.getUnmatchedTupleLines()
+					self.__lineBuffer, buf = failRegex.getUnmatchedTupleLines(), None
 				# merge data if multi-line failure:
 				raw = returnRawHost
 				if preGroups:
@@ -793,8 +796,7 @@ class Filter(JailThread):
 					fail = self._mergeFailure(mlfid, fail, failRegex)
 					# bypass if no-failure case:
 					if fail.get('nofail'):
-						# if not users or len(users) <= 1:
-						logSys.log(7, "Nofail by mlfid %r in regex %s: %s",
+						if ll <= 7: logSys.log(7, "Nofail by mlfid %r in regex %s: %s",
 							mlfid, failRegexIndex, fail.get('mlfforget', "waiting for failure"))
 						if not self.checkAllRegex: return failList
 				else:
@@ -823,7 +825,7 @@ class Filter(JailThread):
 						cidr = IPAddr.CIDR_RAW
 				# if mlfid case (not failure):
 				if host is None:
-					logSys.log(7, "No failure-id by mlfid %r in regex %s: %s",
+					if ll <= 7: logSys.log(7, "No failure-id by mlfid %r in regex %s: %s",
 						mlfid, failRegexIndex, fail.get('mlfforget', "waiting for identifier"))
 					if not self.checkAllRegex: return failList
 					ips = [None]

@@ -199,6 +199,13 @@ class Regex:
 		return self._regex
 	
 	##
+	# Returns string buffer using join of the tupleLines.
+	#
+	@staticmethod
+	def _tupleLinesBuf(tupleLines):
+		return "\n".join(map(lambda v: "".join(v[::2]), tupleLines)) + "\n"
+
+	##
 	# Searches the regular expression.
 	#
 	# Sets an internal cache (match object) in order to avoid searching for
@@ -207,8 +214,10 @@ class Regex:
 	# @param a list of tupples. The tupples are ( prematch, datematch, postdatematch )
 	
 	def search(self, tupleLines, orgLines=None):
-		self._matchCache = self._regexObj.search(
-			"\n".join("".join(value[::2]) for value in tupleLines) + "\n")
+		buf = tupleLines
+		if not isinstance(tupleLines, basestring):
+			buf = Regex._tupleLinesBuf(tupleLines)
+		self._matchCache = self._regexObj.search(buf)
 		if self._matchCache:
 			if orgLines is None: orgLines = tupleLines
 			# if single-line:
