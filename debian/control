@@ -5,7 +5,9 @@ Maintainer: Yaroslav Halchenko <debian@onerussian.com>
 Build-Depends:
  debhelper (>= 9)
  , debhelper (>= 9.20160709) | dh-systemd
+ , dh-python
  , python3
+ , python3-setuptools
  , python3-pyinotify
  , sqlite3
 Homepage: http://www.fail2ban.org

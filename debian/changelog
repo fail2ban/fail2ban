@@ -8,6 +8,10 @@ fail2ban (0.10.2-2) unstable; urgency=medium
     - remove all non-existing services from PartOf of fail2ban.service.
       Should resolve inability to restart firewalld (its .service is
       left in PartOf) upon upgrades.
+  * debian/control
+    - B-Depend on python3-setuptools and dh-python
+  * debian/rules
+    - Fixed up hardcoded path to the .build-ed package for testing
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 04 Apr 2018 00:47:53 -0400
 

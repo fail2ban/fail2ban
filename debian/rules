@@ -55,7 +55,7 @@ ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	cd build && \
 	 LC_ALL=C.UTF-8 \
 	 FAIL2BAN_CONFIG_DIR="$(CURDIR)/config" \
-	 PYTHONPATH="$(CURDIR)/.pybuild/pythonX.Y_$(PYVERSION)/build/" \
+     PYTHONPATH="$(CURDIR)/.pybuild/cpython3_$(PYVERSION)/build/" \
 	  scripts-*/fail2ban-testcases --no-network --verbosity=2
 endif
 
