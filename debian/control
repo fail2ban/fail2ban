@@ -37,7 +37,7 @@ Description: ban hosts that cause multiple authentication errors
  are listed:
  .
   - iptables/nftables -- default installation uses iptables for banning.
-    nftables is also suported. You most probably need it
+    nftables is also supported. You most probably need it
   - whois -- used by a number of *mail-whois* actions to send notification
     emails with whois information about attacker hosts. Unless you will use
     those you don't need whois
