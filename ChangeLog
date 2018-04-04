@@ -47,6 +47,7 @@ ver. 0.10.3-dev-1 (20??/??/??) - development edition
   - amend to gh-1263 with better handling of multiple attempts (failures for different user-names recognized immediatelly);
   - mode `ddos` (and `aggressive`) extended to catch `Connection closed by ... [preauth]`, so in DDOS mode
     it counts failure on closing connection within preauth-stage (gh-2085);
+* `action.d/abuseipdb.conf`: fixed curl cypher errors and comment quote-issue (gh-2044, gh-2101);
 * `action.d/badips.py`: implicit convert IPAddr to str, solves an issue "expected string, IPAddr found" (gh-2059);
 * `action.d/hostsdeny.conf`: fixed IPv6 syntax (enclosed in square brackets, gh-2066);
 * (Free)BSD ipfw actionban fixed to allow same rule added several times (gh-2054);
