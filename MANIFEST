@@ -391,6 +391,8 @@ kill-server
 man/fail2ban.1
 man/fail2ban-client.1
 man/fail2ban-client.h2m
+man/fail2ban-python.1
+man/fail2ban-python.h2m
 man/fail2ban-regex.1
 man/fail2ban-regex.h2m
 man/fail2ban-server.1
