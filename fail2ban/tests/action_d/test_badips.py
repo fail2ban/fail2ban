@@ -51,7 +51,7 @@ if sys.version_info >= (2,7): # pragma: no cover - may be unavailable
 						BadIPsActionTest.pythonModule = self.jail.actions._load_python_module(pythonModuleName)
 					BadIPsActionTest.modAction = BadIPsActionTest.pythonModule.Action
 					self.jail.actions._load_python_module(pythonModuleName)
-				BadIPsActionTest.available = BadIPsActionTest.modAction.isAvailable(timeout=2 if unittest.F2B.fast else 10)
+				BadIPsActionTest.available = BadIPsActionTest.modAction.isAvailable(timeout=2 if unittest.F2B.fast else 60)
 			if not BadIPsActionTest.available[0]:
 				raise unittest.SkipTest('Skip test because service is not available: %s' % BadIPsActionTest.available[1])
 
