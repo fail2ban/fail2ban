@@ -48,6 +48,7 @@ ver. 0.10.3-dev-1 (20??/??/??) - development edition
 ### New Features
 
 ### Enhancements
+* `filter.d/apache-auth.conf`: detection of Apache SNI errors resp. misredirect attempts (gh-2017, gh-2097);
 * `filter.d/apache-noscript.conf`: extend failregex to match "Primary script unknown", e. g. from php-fpm (gh-2073);
 * date-detector extended with long epoch (`LEPOCH`) to parse milliseconds/microseconds posix-dates (gh-2029);
 * possibility to specify own regex-pattern to match epoch date-time, e. g. `^\[{EPOCH}\]` or `^\[{LEPOCH}\]` (gh-2038);
