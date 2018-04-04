@@ -25,6 +25,7 @@ __license__ = "GPL"
 from __builtin__ import open as fopen
 import unittest
 import os
+import re
 import sys
 import time, datetime
 import tempfile
@@ -43,7 +44,7 @@ from ..server.ipdns import DNSUtils, IPAddr
 from ..server.mytime import MyTime
 from ..server.utils import Utils, uni_decode
 from .utils import setUpMyTime, tearDownMyTime, mtimesleep, with_tmpdir, LogCaptureTestCase, \
-	CONFIG_DIR as STOCK_CONF_DIR
+	logSys as DefLogSys, CONFIG_DIR as STOCK_CONF_DIR
 from .dummyjail import DummyJail
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
@@ -424,19 +425,35 @@ class IgnoreIPDNS(LogCaptureTestCase):
 		self.jail = DummyJail()
 		self.filter = FileFilter(self.jail)
 
-	def testIgnoreIPDNSOK(self):
-		self.filter.addIgnoreIP("www.epfl.ch")
-		self.assertTrue(self.filter.inIgnoreIPList("128.178.222.69"))
-		self.filter.addIgnoreIP("example.com")
-		self.assertTrue(self.filter.inIgnoreIPList("93.184.216.34"))
-		self.assertTrue(self.filter.inIgnoreIPList("2606:2800:220:1:248:1893:25c8:1946"))
-
-	def testIgnoreIPDNSNOK(self):
-		# Test DNS
-		self.filter.addIgnoreIP("www.epfl.ch")
-		self.assertFalse(self.filter.inIgnoreIPList("127.178.222.69"))
-		self.assertFalse(self.filter.inIgnoreIPList("128.178.222.68"))
-		self.assertFalse(self.filter.inIgnoreIPList("128.178.222.70"))
+	def testIgnoreIPDNS(self):
+		for dns in ("www.epfl.ch", "example.com"):
+			self.filter.addIgnoreIP(dns)
+			ips = DNSUtils.dnsToIp(dns)
+			self.assertTrue(len(ips) > 0)
+			# for each ip from dns check ip ignored:
+			for ip in ips:
+				ip = str(ip)
+				DefLogSys.debug('  ++ positive case for %s', ip)
+				self.assertTrue(self.filter.inIgnoreIPList(ip))
+				# check another ips (with increment/decrement of first/last part) not ignored:
+				iparr = []
+				ip2 = re.search(r'^([^.:]+)([.:])(.*?)([.:])([^.:]+)$', ip)
+				if ip2:
+					ip2 = ip2.groups()
+					for o in (0, 4):
+						for i in (1, -1):
+							ipo = list(ip2)
+							if ipo[1] == '.':
+								ipo[o] = str(int(ipo[o])+i)
+							else:
+								ipo[o] = '%x' % (int(ipo[o], 16)+i)
+							ipo = ''.join(ipo)
+							if ipo not in ips:
+								iparr.append(ipo)
+				self.assertTrue(len(iparr) > 0)
+				for ip in iparr:
+					DefLogSys.debug('  -- negative case for %s', ip)
+					self.assertFalse(self.filter.inIgnoreIPList(str(ip)))
 
 	def testIgnoreCmdApacheFakegooglebot(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
