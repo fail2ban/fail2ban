@@ -20,6 +20,8 @@
 import os
 import unittest
 import sys
+from socket import timeout
+from ssl import SSLError
 
 from ..actiontestcase import CallingMap
 from ..dummyjail import DummyJail
@@ -51,7 +53,7 @@ if sys.version_info >= (2,7): # pragma: no cover - may be unavailable
 						BadIPsActionTest.pythonModule = self.jail.actions._load_python_module(pythonModuleName)
 					BadIPsActionTest.modAction = BadIPsActionTest.pythonModule.Action
 					self.jail.actions._load_python_module(pythonModuleName)
-				BadIPsActionTest.available = BadIPsActionTest.modAction.isAvailable(timeout=2 if unittest.F2B.fast else 60)
+				BadIPsActionTest.available = BadIPsActionTest.modAction.isAvailable(timeout=2 if unittest.F2B.fast else 30)
 			if not BadIPsActionTest.available[0]:
 				raise unittest.SkipTest('Skip test because service is not available: %s' % BadIPsActionTest.available[1])
 
@@ -62,7 +64,7 @@ if sys.version_info >= (2,7): # pragma: no cover - may be unavailable
 				'score': 5,
 				'key': "fail2ban-test-suite",
 				#'bankey': "fail2ban-test-suite",
-				'timeout': (3 if unittest.F2B.fast else 30),
+				'timeout': (3 if unittest.F2B.fast else 60),
 				})
 			self.action = self.jail.actions["badips"]
 
@@ -108,11 +110,16 @@ if sys.version_info >= (2,7): # pragma: no cover - may be unavailable
 			self.action.updateperiod = "900"
 
 		def testStartStop(self):
-			self.action.start()
-			self.assertTrue(len(self.action._bannedips) > 10,
-				"%s is fewer as 10: %r" % (len(self.action._bannedips), self.action._bannedips))
-			self.action.stop()
-			self.assertTrue(len(self.action._bannedips) == 0)
+			try:
+				self.action.start()
+				self.assertTrue(len(self.action._bannedips) > 10,
+					"%s is fewer as 10: %r" % (len(self.action._bannedips), self.action._bannedips))
+				self.action.stop()
+				self.assertTrue(len(self.action._bannedips) == 0)
+			except (SSLError, timeout) as e: # pragma: no cover - timeout only
+				if not isinstance(e, timeout) and 'timed out' not in str(e):
+					raise
+				raise unittest.SkipTest('Skip test because of %s' % e)
 
 		def testBanIP(self):
 			aInfo = CallingMap({

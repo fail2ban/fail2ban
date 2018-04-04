@@ -44,6 +44,9 @@ ver. 0.10.4-dev-1 (20??/??/??) - development edition
 ver. 0.10.3 (2018/04/04) - the-time-is-always-right-to-do-what-is-right
 -----------
 
+### ver. 0.10.3.1:
+* fixed JSON serialization for the set-object within dump into database (gh-2103).
+
 ### Fixes
 * `filter.d/asterisk.conf`: fixed failregex prefix by log over remote syslog server (gh-2060);
 * `filter.d/exim.conf`: failregex extended - SMTP call dropped: too many syntax or protocol errors (gh-2048);
