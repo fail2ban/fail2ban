@@ -587,10 +587,12 @@ class Server:
 			if systarget == "INHERITED":
 				self.__logTarget = target
 				return True
+			padding = logOptions.get('padding')
 			# set a format which is simpler for console use
-			fmt = "%(name)-23.23s [%(process)d]: %(levelname)-7s %(message)s"
 			if systarget == "SYSLOG":
 				facility = logOptions.get('facility', 'DAEMON').upper()
+				# backwards compatibility - default no padding for syslog handler:
+				if padding is None: padding = '0'
 				try:
 					facility = getattr(logging.handlers.SysLogHandler, 'LOG_' + facility)
 				except AttributeError: # pragma: no cover
@@ -651,15 +653,19 @@ class Server:
 				addtime = addtime in ('1', 'on', 'true', 'yes')
 			else:
 				addtime = systarget not in ("SYSLOG", "SYSOUT")
+			if padding is not None:
+				padding = padding in ('1', 'on', 'true', 'yes') 
+			else:
+				padding = True
 			# If log-format is redefined in options:
 			if logOptions.get('format', '') != '':
 				fmt = logOptions.get('format')
-			# verbose log-format:
-			elif self.__verbose is not None and self.__verbose > 2: # pragma: no cover
-				fmt = getVerbosityFormat(self.__verbose-1,
-					addtime=addtime)
-			elif addtime:
-				fmt = "%(asctime)s " + fmt
+			else:
+				# verbose log-format:
+				verbose = 0
+				if self.__verbose is not None and self.__verbose > 2: # pragma: no cover
+					verbose = self.__verbose-1
+				fmt = getVerbosityFormat(verbose, addtime=addtime, padding=padding)
 			# tell the handler to use this format
 			hdlr.setFormatter(logging.Formatter(fmt))
 			logger.addHandler(hdlr)

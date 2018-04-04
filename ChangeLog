@@ -88,6 +88,8 @@ ver. 0.10.3-dev-1 (20??/??/??) - development edition
   e. g. date-pattern `^\[{LEPOCH}\]\s+:` will match and cut out `[1516469849551000] :` from begin of the log-line.
 * badips.py now uses https instead of plain http when requesting badips.com (gh-2057);
 * add support for "any" badips.py bancategory, to be able to retrieve IPs from all categories with a desired score (gh-2056);
+* Introduced new parameter `padding` for logging within fail2ban-server (default on, excepting SYSLOG):
+  Usage `logtarget = target[padding=on|off]`
 
 
 ver. 0.10.2 (2018/01/18) - nothing-burns-like-the-cold
