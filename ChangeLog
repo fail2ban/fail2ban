@@ -27,7 +27,7 @@ Incompatibility list (compared to v.0.9):
 * v.0.10 uses more precise date template handling, that can be theoretically incompatible to some
   user configurations resp. `datepattern`.
 
-* Since v0.10 fail2ban supports the matching of the IPv6 addresses, but not all ban actions are
+* Since v0.10 fail2ban supports the matching of IPv6 addresses, but not all ban actions are
   IPv6-capable now.
 
 
@@ -57,9 +57,21 @@ ver. 0.11.0-dev-0 (20??/??/??) - development nightly edition
   (or persistent); not affected if ban-time of the jail is unchanged between stop/start.
 
 
-
-ver. 0.10.3-dev-1 (20??/??/??) - development edition
+ver. 0.10.4-dev-1 (20??/??/??) - development edition
 -----------
+
+### Fixes
+
+### New Features
+
+### Enhancements
+
+
+ver. 0.10.3 (2018/04/04) - the-time-is-always-right-to-do-what-is-right
+-----------
+
+### ver. 0.10.3.1:
+* fixed JSON serialization for the set-object within dump into database (gh-2103).
 
 ### Fixes
 * `filter.d/asterisk.conf`: fixed failregex prefix by log over remote syslog server (gh-2060);
@@ -82,6 +94,8 @@ ver. 0.10.3-dev-1 (20??/??/??) - development edition
 * (Free)BSD ipfw actionban fixed to allow same rule added several times (gh-2054);
 
 ### New Features
+* several stability and performance optimizations, more effective filter parsing, etc;
+* stable runnable within python versions 3.6 (as well as within 3.7-dev);
 
 ### Enhancements
 * `filter.d/apache-auth.conf`: detection of Apache SNI errors resp. misredirect attempts (gh-2017, gh-2097);

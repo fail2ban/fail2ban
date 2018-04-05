@@ -39,9 +39,14 @@ from ..helpers import getLogger, PREFER_ENC
 logSys = getLogger(__name__)
 
 if sys.version_info >= (3,):
+	def _json_default(x):
+		if isinstance(x, set):
+			x = list(x)
+		return x
+
 	def _json_dumps_safe(x):
 		try:
-			x = json.dumps(x, ensure_ascii=False).encode(
+			x = json.dumps(x, ensure_ascii=False, default=_json_default).encode(
 				PREFER_ENC, 'replace')
 		except Exception as e: # pragma: no cover
 			logSys.error('json dumps failed: %s', e)
@@ -60,7 +65,7 @@ else:
 	def _normalize(x):
 		if isinstance(x, dict):
 			return dict((_normalize(k), _normalize(v)) for k, v in x.iteritems())
-		elif isinstance(x, list):
+		elif isinstance(x, (list, set)):
 			return [_normalize(element) for element in x]
 		elif isinstance(x, unicode):
 			return x.encode(PREFER_ENC)
@@ -561,14 +566,18 @@ class Fail2BanDb(object):
 		except KeyError:
 			pass
 		#TODO: Implement data parts once arbitrary match keys completed
+		data = ticket.getData()
+		matches = data.get('matches')
+		if matches and len(matches) > self.maxEntries:
+			data['matches'] = matches[-self.maxEntries:]
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
 			(jail.name, ip, int(round(ticket.getTime())), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
-				ticket.getData()))
+				data))
 		cur.execute(
 			"INSERT OR REPLACE INTO bips(ip, jail, timeofban, bantime, bancount, data) VALUES(?, ?, ?, ?, ?, ?)",
 			(ip, jail.name, int(round(ticket.getTime())), ticket.getBanTime(jail.actions.getBanTime()), ticket.getBanCount(),
-				ticket.getData()))
+				data))
 
 	@commitandrollback
 	def delBan(self, cur, jail, *args):
@@ -701,11 +710,11 @@ class Fail2BanDb(object):
 						else:
 							matches = m[-maxadd:] + matches
 					failures += data.get('failures', 1)
-					tickdata.update(data.get('data', {}))
+					data['failures'] = failures
+					data['matches'] = matches
+					tickdata.update(data)
 					prev_timeofban = timeofban
-				ticket = FailTicket(banip, prev_timeofban, matches)
-				ticket.setAttempt(failures)
-				ticket.setData(**tickdata)
+				ticket = FailTicket(banip, prev_timeofban, data=tickdata)
 				tickets.append(ticket)
 
 			if cacheKey:
