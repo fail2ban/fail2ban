@@ -43,7 +43,7 @@ class CSocket:
 		self.__csock.connect(sock)
 
 	def __del__(self):
-		self.close(False)
+		self.close()
 	
 	def send(self, msg, nonblocking=False, timeout=None):
 		# Convert every list member to string
@@ -56,13 +56,18 @@ class CSocket:
 	def settimeout(self, timeout):
 		self.__csock.settimeout(timeout if timeout != -1 else self.__deftout)
 
-	def close(self, sendEnd=True):
+	def close(self):
 		if not self.__csock:
 			return
-		if sendEnd:
+		try:
 			self.__csock.sendall(CSPROTO.CLOSE + CSPROTO.END)
-		self.__csock.shutdown(socket.SHUT_RDWR)
-		self.__csock.close()
+			self.__csock.shutdown(socket.SHUT_RDWR)
+		except socket.error: # pragma: no cover - normally unreachable
+			pass
+		try:
+			self.__csock.close()
+		except socket.error: # pragma: no cover - normally unreachable
+			pass
 		self.__csock = None
 	
 	@staticmethod
