@@ -1186,22 +1186,6 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 		#   'start', 'stop' - should be found (logged) on action start/stop,
 		#   etc.
 		testJailsActions = (
-			# hostsdeny --
-			('j-hostsdeny', 'hostsdeny[name=%(__name__)s, actionstop="rm <file>", file="/tmp/fail2ban.dummy"]', {
-				'ip4': ('family: inet4',), 'ip6': ('family: inet6',),
-				'ip4-ban': (
-					r'''`printf %b "ALL: 192.0.2.1\n" >> /tmp/fail2ban.dummy`''',
-				),
-				'ip4-unban': (
-					r'''`IP=$(echo "192.0.2.1" | sed 's/[][\.]/\\\0/g') && sed -i "/^ALL: $IP$/d" /tmp/fail2ban.dummy`''',
-				),
-				'ip6-ban': (
-					r'''`printf %b "ALL: [2001:db8::]\n" >> /tmp/fail2ban.dummy`''',
-				),
-				'ip6-unban': (
-					r'''`IP=$(echo "[2001:db8::]" | sed 's/[][\.]/\\\0/g') && sed -i "/^ALL: $IP$/d" /tmp/fail2ban.dummy`''',
-				),					
-			}),
 			# dummy --
 			('j-dummy', 'dummy[name=%(__name__)s, init="==", target="/tmp/fail2ban.dummy"]', {
 				'ip4': ('family: inet4',), 'ip6': ('family: inet6',),
@@ -1225,6 +1209,22 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),
 				'ip6-unban': (
 					'`echo "[j-dummy] dummy /tmp/fail2ban.dummy -- unbanned 2001:db8:: (family: inet6)"`',
+				),					
+			}),
+			# hostsdeny --
+			('j-hostsdeny', 'hostsdeny[name=%(__name__)s, actionstop="rm <file>", file="/tmp/fail2ban.dummy"]', {
+				'ip4': ('family: inet4',), 'ip6': ('family: inet6',),
+				'ip4-ban': (
+					r'''`printf %b "ALL: 192.0.2.1\n" >> /tmp/fail2ban.dummy`''',
+				),
+				'ip4-unban': (
+					r'''`IP=$(echo "192.0.2.1" | sed 's/[][\.]/\\\0/g') && sed -i "/^ALL: $IP$/d" /tmp/fail2ban.dummy`''',
+				),
+				'ip6-ban': (
+					r'''`printf %b "ALL: [2001:db8::]\n" >> /tmp/fail2ban.dummy`''',
+				),
+				'ip6-unban': (
+					r'''`IP=$(echo "[2001:db8::]" | sed 's/[][\.]/\\\0/g') && sed -i "/^ALL: $IP$/d" /tmp/fail2ban.dummy`''',
 				),					
 			}),
 			# iptables-multiport --
