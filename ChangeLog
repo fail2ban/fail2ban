@@ -35,6 +35,8 @@ ver. 0.10.4-dev-1 (20??/??/??) - development edition
 -----------
 
 ### Fixes
+* `action.d/hostsdeny.conf`: fix parameter in config (dynamic parameters stating with '_' are protected 
+  and don't allowed in command-actions), see gh-2114;
 
 ### New Features
 
