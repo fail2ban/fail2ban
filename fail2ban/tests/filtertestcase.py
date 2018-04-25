@@ -336,20 +336,20 @@ class IgnoreIP(LogCaptureTestCase):
 		ipList = ("127.0.0.1",)
 		# test ignoreSelf is false:
 		for ip in ipList:
-			self.assertFalse(self.filter.inIgnoreIPList(ip, log_ignore=True))
+			self.assertFalse(self.filter.inIgnoreIPList(ip))
 			self.assertNotLogged("[%s] Ignore %s by %s" % (self.jail.name, ip, "ignoreself rule"))
 		# test ignoreSelf with true:
 		self.filter.ignoreSelf = True
 		self.pruneLog()
 		for ip in ipList:
-			self.assertTrue(self.filter.inIgnoreIPList(ip, log_ignore=True))
+			self.assertTrue(self.filter.inIgnoreIPList(ip))
 			self.assertLogged("[%s] Ignore %s by %s" % (self.jail.name, ip, "ignoreself rule"))
 
 	def testIgnoreIPOK(self):
 		ipList = "127.0.0.1", "192.168.0.1", "255.255.255.255", "99.99.99.99"
 		for ip in ipList:
 			self.filter.addIgnoreIP(ip)
-			self.assertTrue(self.filter.inIgnoreIPList(ip, log_ignore=True))
+			self.assertTrue(self.filter.inIgnoreIPList(ip))
 			self.assertLogged("[%s] Ignore %s by %s" % (self.jail.name, ip, "ip"))
 
 	def testIgnoreIPNOK(self):
