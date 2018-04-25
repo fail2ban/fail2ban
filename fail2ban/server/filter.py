@@ -496,6 +496,7 @@ class Filter(JailThread):
 
 		# check own IPs should be ignored and 'ip' is self IP:
 		if self.__ignoreSelf and ip in DNSUtils.getSelfIPs():
+			self.logIgnoreIp(ip, log_ignore, ignore_source="ignoreself rule")
 			return True
 
 		for net in self.__ignoreIpList:
