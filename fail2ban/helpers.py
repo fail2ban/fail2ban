@@ -244,6 +244,10 @@ else:
 			return uni_decode(x, enc, 'replace')
 
 
+def _as_bool(val):
+	return bool(val) if not isinstance(val, basestring) \
+		else val.lower() in ('1', 'on', 'true', 'yes')
+
 #
 # Following function used for parse options from parameter (e.g. `name[p1=0, p2="..."][p3='...']`).
 #
