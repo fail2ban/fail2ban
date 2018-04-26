@@ -29,7 +29,7 @@ import random
 import Queue
 
 from .actions import Actions
-from ..helpers import getLogger, extractOptions, MyTime
+from ..helpers import getLogger, _as_bool, extractOptions, MyTime
 from .mytime import MyTime
 
 # Gets the instance of the logger.
@@ -223,8 +223,7 @@ class Jail(object):
 			del be[opt]
 		logSys.info('Set banTime.%s = %s', opt, value)
 		if opt == 'increment':
-			if isinstance(value, str):
-				be[opt] = value.lower() in ("yes", "true", "ok", "1")
+			be[opt] = _as_bool(value)
 			if be.get(opt) and self.database is None:
 				logSys.warning("ban time increment is not available as long jail database is not set")
 		if opt in ['maxtime', 'rndtime']:
