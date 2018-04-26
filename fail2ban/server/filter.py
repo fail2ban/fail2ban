@@ -419,7 +419,7 @@ class Filter(JailThread):
 	def addBannedIP(self, ip):
 		if not isinstance(ip, IPAddr):
 			ip = IPAddr(ip)
-		if self.inIgnoreIPList(ip):
+		if self.inIgnoreIPList(ip, log_ignore=False):
 			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.', ip)
 
 		unixTime = MyTime.time()
@@ -491,12 +491,13 @@ class Filter(JailThread):
 	# @param ip IP address object
 	# @return True if IP address is in ignore list
 
-	def inIgnoreIPList(self, ip, log_ignore=False):
+	def inIgnoreIPList(self, ip, log_ignore=True):
 		if not isinstance(ip, IPAddr):
 			ip = IPAddr(ip)
 
 		# check own IPs should be ignored and 'ip' is self IP:
 		if self.__ignoreSelf and ip in DNSUtils.getSelfIPs():
+			self.logIgnoreIp(ip, log_ignore, ignore_source="ignoreself rule")
 			return True
 
 		for net in self.__ignoreIpList:
@@ -549,7 +550,7 @@ class Filter(JailThread):
 				fail = element[3]
 				logSys.debug("Processing line with time:%s and ip:%s", 
 						unixTime, ip)
-				if self.inIgnoreIPList(ip, log_ignore=True):
+				if self.inIgnoreIPList(ip):
 					continue
 				logSys.info(
 					"[%s] Found %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")

@@ -1219,8 +1219,6 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'stop': (
 					'`echo "[j-dummy] dummy /tmp/fail2ban.dummy -- stopped"`',
 				),
-				'ip4-check': (),
-				'ip6-check': (),
 				'ip4-ban': (
 					'`echo "[j-dummy] dummy /tmp/fail2ban.dummy -- banned 192.0.2.1 (family: inet4)"`',
 				),
@@ -1232,6 +1230,22 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),
 				'ip6-unban': (
 					'`echo "[j-dummy] dummy /tmp/fail2ban.dummy -- unbanned 2001:db8:: (family: inet6)"`',
+				),					
+			}),
+			# hostsdeny --
+			('j-hostsdeny', 'hostsdeny[name=%(__name__)s, actionstop="rm <file>", file="/tmp/fail2ban.dummy"]', {
+				'ip4': ('family: inet4',), 'ip6': ('family: inet6',),
+				'ip4-ban': (
+					r'''`printf %b "ALL: 192.0.2.1\n" >> /tmp/fail2ban.dummy`''',
+				),
+				'ip4-unban': (
+					r'''`IP=$(echo "192.0.2.1" | sed 's/[][\.]/\\\0/g') && sed -i "/^ALL: $IP$/d" /tmp/fail2ban.dummy`''',
+				),
+				'ip6-ban': (
+					r'''`printf %b "ALL: [2001:db8::]\n" >> /tmp/fail2ban.dummy`''',
+				),
+				'ip6-unban': (
+					r'''`IP=$(echo "[2001:db8::]" | sed 's/[][\.]/\\\0/g') && sed -i "/^ALL: $IP$/d" /tmp/fail2ban.dummy`''',
 				),					
 			}),
 			# iptables-multiport --
@@ -1345,8 +1359,6 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`ipset flush f2b-j-w-iptables-ipset6`",
 					"`ipset destroy f2b-j-w-iptables-ipset6`",
 				),
-				'ip4-check': (),
-				'ip6-check': (),
 				'ip4-ban': (
 					r"`ipset add f2b-j-w-iptables-ipset 192.0.2.1 timeout 600 -exist`",
 				),
@@ -1383,8 +1395,6 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`ipset flush f2b-j-w-iptables-ipset-ap6`",
 					"`ipset destroy f2b-j-w-iptables-ipset-ap6`",
 				),
-				'ip4-check': (),
-				'ip6-check': (),
 				'ip4-ban': (
 					r"`ipset add f2b-j-w-iptables-ipset-ap 192.0.2.1 timeout 600 -exist`",
 				),
@@ -1692,8 +1702,6 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`ipset flush f2b-j-w-fwcmd-ipset6`",
 					"`ipset destroy f2b-j-w-fwcmd-ipset6`",
 				),
-				'ip4-check': (),
-				'ip6-check': (),
 				'ip4-ban': (
 					r"`ipset add f2b-j-w-fwcmd-ipset 192.0.2.1 timeout 600 -exist`",
 				),
@@ -1730,8 +1738,6 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`ipset flush f2b-j-w-fwcmd-ipset-ap6`",
 					"`ipset destroy f2b-j-w-fwcmd-ipset-ap6`",
 				),
-				'ip4-check': (),
-				'ip6-check': (),
 				'ip4-ban': (
 					r"`ipset add f2b-j-w-fwcmd-ipset-ap 192.0.2.1 timeout 600 -exist`",
 				),
@@ -1780,31 +1786,31 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				action.start()
 				if tests.get('start'):
 					self.assertLogged(*tests['start'], all=True)
-				else:
+				elif tests.get('ip4-start') and tests.get('ip6-start'):
 					self.assertNotLogged(*tests['ip4-start']+tests['ip6-start'], all=True)
 				# test ban ip4 :
 				self.pruneLog('# === ban-ipv4 ===')
 				action.ban(aInfos['ipv4'])
 				if tests.get('ip4-start'): self.assertLogged(*tests['ip4-start'], all=True)
 				if tests.get('ip6-start'): self.assertNotLogged(*tests['ip6-start'], all=True)
-				self.assertLogged(*tests['ip4-check']+tests['ip4-ban'], all=True)
+				self.assertLogged(*tests.get('ip4-check',())+tests['ip4-ban'], all=True)
 				self.assertNotLogged(*tests['ip6'], all=True)
 				# test unban ip4 :
 				self.pruneLog('# === unban ipv4 ===')
 				action.unban(aInfos['ipv4'])
-				self.assertLogged(*tests['ip4-check']+tests['ip4-unban'], all=True)
+				self.assertLogged(*tests.get('ip4-check',())+tests['ip4-unban'], all=True)
 				self.assertNotLogged(*tests['ip6'], all=True)
 				# test ban ip6 :
 				self.pruneLog('# === ban ipv6 ===')
 				action.ban(aInfos['ipv6'])
 				if tests.get('ip6-start'): self.assertLogged(*tests['ip6-start'], all=True)
 				if tests.get('ip4-start'): self.assertNotLogged(*tests['ip4-start'], all=True)
-				self.assertLogged(*tests['ip6-check']+tests['ip6-ban'], all=True)
+				self.assertLogged(*tests.get('ip6-check',())+tests['ip6-ban'], all=True)
 				self.assertNotLogged(*tests['ip4'], all=True)
 				# test unban ip6 :
 				self.pruneLog('# === unban ipv6 ===')
 				action.unban(aInfos['ipv6'])
-				self.assertLogged(*tests['ip6-check']+tests['ip6-unban'], all=True)
+				self.assertLogged(*tests.get('ip6-check',())+tests['ip6-unban'], all=True)
 				self.assertNotLogged(*tests['ip4'], all=True)
 				# test flush for actions should supported this:
 				if tests.get('flush'):
@@ -1814,7 +1820,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				# test stop :
 				self.pruneLog('# === stop ===')
 				action.stop()
-				self.assertLogged(*tests['stop'], all=True)
+				if tests.get('stop'): self.assertLogged(*tests['stop'], all=True)
 
 	def _executeMailCmd(self, realCmd, timeout=60):
 		# replace pipe to mail with pipe to cat:
