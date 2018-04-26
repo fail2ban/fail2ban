@@ -47,9 +47,7 @@ class CSocket:
 	
 	def send(self, msg, nonblocking=False, timeout=None):
 		# Convert every list member to string
-		obj = dumps(map(
-			lambda m: str(m) if not isinstance(m, (list, dict, set)) else m, msg),
-		  HIGHEST_PROTOCOL)
+		obj = dumps(map(CSocket.convert, msg), HIGHEST_PROTOCOL)
 		self.__csock.send(obj + CSPROTO.END)
 		return self.receive(self.__csock, nonblocking, timeout)
 
@@ -70,6 +68,14 @@ class CSocket:
 			pass
 		self.__csock = None
 	
+	@staticmethod
+	def convert(m):
+		"""Convert every "unexpected" member of message to string"""
+		if isinstance(m, (basestring, bool, int, float, list, dict, set)):
+			return m
+		else: # pragma: no cover
+			return str(m)
+
 	@staticmethod
 	def receive(sock, nonblocking=False, timeout=None):
 		msg = CSPROTO.EMPTY
