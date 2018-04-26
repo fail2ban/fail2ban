@@ -37,7 +37,8 @@ from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
-from ..helpers import getLogger, extractOptions, str2LogLevel, getVerbosityFormat, excepthook
+from ..helpers import getLogger, _as_bool, extractOptions, str2LogLevel, \
+	getVerbosityFormat, excepthook
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -313,7 +314,7 @@ class Server:
 	
 	# Filter
 	def setIgnoreSelf(self, name, value):
-		self.__jails[name].filter.ignoreSelf = value
+		self.__jails[name].filter.ignoreSelf = _as_bool(value)
 	
 	def getIgnoreSelf(self, name):
 		return self.__jails[name].filter.ignoreSelf
@@ -628,11 +629,11 @@ class Server:
 			# If handler don't already add date to the message:
 			addtime = logOptions.get('datetime')
 			if addtime is not None:
-				addtime = addtime in ('1', 'on', 'true', 'yes')
+				addtime = _as_bool(addtime)
 			else:
 				addtime = systarget not in ("SYSLOG", "SYSOUT")
 			if padding is not None:
-				padding = padding in ('1', 'on', 'true', 'yes') 
+				padding = _as_bool(padding) 
 			else:
 				padding = True
 			# If log-format is redefined in options:

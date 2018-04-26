@@ -29,7 +29,7 @@ import os
 from ConfigParser import NoOptionError, NoSectionError
 
 from .configparserinc import sys, SafeConfigParserWithIncludes, logLevel
-from ..helpers import getLogger, _merge_dicts, substituteRecursiveTags
+from ..helpers import getLogger, _as_bool, _merge_dicts, substituteRecursiveTags
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -339,7 +339,7 @@ class DefinitionInitConfigReader(ConfigReader):
 
 
 	def _convert_to_boolean(self, value):
-		return value.lower() in ("1", "yes", "true", "on")
+		return _as_bool(value)
 	
 	def getCombOption(self, optname):
 		"""Get combined definition option (as string) using pre-set and init
