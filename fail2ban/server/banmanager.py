@@ -156,7 +156,7 @@ class BanManager:
 		# get cymru info:
 		try:
 			for ip in banIPs:
-				# Reference: http://www.team-cymru.org/Services/ip-to-asn.html#dns
+				# Reference: https://www.team-cymru.com/IP-ASN-mapping.html#dns
 				question = ip.getPTR(
 					"origin.asn.cymru.com" if ip.isIPv4
 					else "origin6.asn.cymru.com"
