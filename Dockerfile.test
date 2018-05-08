@@ -1,0 +1,11 @@
+FROM python:alpine
+
+RUN apk --update add bash
+RUN pip install dnspython3
+
+WORKDIR /fail2ban
+COPY . /fail2ban
+RUN ./fail2ban-2to3
+
+ENV PATH="${PATH}:/fail2ban/bin"
+ENTRYPOINT ["fail2ban-testcases", "--verbosity=2"]
