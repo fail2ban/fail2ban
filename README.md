@@ -88,9 +88,9 @@ fail2ban(1) and jail.conf(5)  manpages for further references.
 Code status:
 ------------
 
-* travis-ci.org: [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=0.11)](https://travis-ci.org/fail2ban/fail2ban?branch=0.11) (0.11 branch) / [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=0.10)](https://travis-ci.org/fail2ban/fail2ban?branch=0.10) (0.10 branch) / [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=master)](https://travis-ci.org/fail2ban/fail2ban) (0.9 branch)
+* travis-ci.org: [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.svg?branch=0.11)](https://travis-ci.org/fail2ban/fail2ban?branch=0.11) (0.11 branch) / [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.svg?branch=0.10)](https://travis-ci.org/fail2ban/fail2ban?branch=0.10) (0.10 branch) / [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.svg?branch=master)](https://travis-ci.org/fail2ban/fail2ban) (0.9 branch)
 
-* coveralls.io: [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=0.11)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.11) (0.11 branch) / [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=0.10)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.10) / (0.10 branch)
+* coveralls.io: [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.svg?branch=0.11)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.11) (0.11 branch) / [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.svg?branch=0.10)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.10) / (0.10 branch)
 
 * codecov.io: [![codecov.io](https://codecov.io/gh/fail2ban/fail2ban/coverage.svg?branch=0.11)](https://codecov.io/gh/fail2ban/fail2ban/branch/0.11) (0.11 branch) / [![codecov.io](https://codecov.io/gh/fail2ban/fail2ban/coverage.svg?branch=0.10)](https://codecov.io/gh/fail2ban/fail2ban/branch/0.10) (0.10 branch)
 
