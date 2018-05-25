@@ -220,7 +220,7 @@ class JailReader(ConfigReader):
 					path, tail = path if len(path) > 1 else (path[0], "head")
 					pathList = JailReader._glob(path)
 					if len(pathList) == 0:
-						logSys.error("No file(s) found for glob %s" % path)
+						logSys.notice("No file(s) found for glob %s" % path)
 					for p in pathList:
 						found_files += 1
 						stream.append(
