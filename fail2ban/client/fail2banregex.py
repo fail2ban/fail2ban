@@ -45,7 +45,7 @@ try: # pragma: no cover
 except ImportError:
 	FilterSystemd = None
 
-from ..version import version
+from ..version import version, normVersion
 from .filterreader import FilterReader
 from ..server.filter import Filter, FileContainer
 from ..server.failregex import Regex, RegexException
@@ -92,6 +92,10 @@ def journal_lines_gen(flt, myjournal): # pragma: no cover
 		if not entry:
 			break
 		yield flt.formatJournalEntry(entry)
+
+def dumpNormVersion(*args):
+	output(normVersion())
+	sys.exit(0)
 
 def get_opt_parser():
 	# use module docstring for help output
@@ -145,6 +149,8 @@ Report bugs to https://github.com/fail2ban/fail2ban/issues
 			   dest="log_level",
 			   default='critical',
 			   help="Log level for the Fail2Ban logger to use"),
+		Option('-V', action="callback", callback=dumpNormVersion,
+			   help="get version in machine-readable short format"),
 		Option('-v', '--verbose', action="count", dest="verbose",
 			   default=0,
 			   help="Increase verbosity"),

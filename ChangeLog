@@ -41,6 +41,8 @@ ver. 0.10.4-dev-1 (20??/??/??) - development edition
 ### New Features
 
 ### Enhancements
+* since v.0.10.4, fail2ban-client, fail2ban-server and fail2ban-regex will return version without logo info,
+  additionally option `-V` can be used to get version in normalized machine-readable short format.
 
 
 ver. 0.10.3 (2018/04/04) - the-time-is-always-right-to-do-what-is-right
