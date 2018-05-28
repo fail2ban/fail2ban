@@ -347,6 +347,11 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	def testExecCmdLine_Usage(self):
 		self.assertNotEqual(_test_exec_command_line(), 0)
+		self.pruneLog()
+		self.assertEqual(_test_exec_command_line('-V'), 0)
+		self.assertLogged(fail2banregex.normVersion())
+		self.pruneLog()
+		self.assertEqual(_test_exec_command_line('--version'), 0)
 
 	def testExecCmdLine_Direct(self):
 		self.assertEqual(_test_exec_command_line(

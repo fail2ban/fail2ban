@@ -25,3 +25,7 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2005-2016 Yaroslav Halchenko,
 __license__ = "GPL-v2+"
 
 version = "0.11.0.dev2"
+
+def normVersion():
+  """ Returns fail2ban version in normalized machine-readable format"""
+  return version.replace('.fix', '').replace('.dev', '.')
