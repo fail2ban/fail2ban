@@ -35,6 +35,7 @@ ver. 0.10.4-dev-1 (20??/??/??) - development edition
 -----------
 
 ### Fixes
+* `filter.d/dovecot.conf`: failregex enhancement to catch sql password mismatch errors (gh-2153);
 * `action.d/hostsdeny.conf`: fix parameter in config (dynamic parameters stating with '_' are protected 
   and don't allowed in command-actions), see gh-2114;
 
