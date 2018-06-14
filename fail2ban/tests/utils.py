@@ -647,8 +647,8 @@ class LogCaptureTestCase(unittest.TestCase):
 
 		def __init__(self, lazy=True):
 			self._lock = threading.Lock()
-			self._val = None
-			self._dirty = True
+			self._val = ''
+			self._dirty = 0
 			self._recs = list()
 			self._nolckCntr = 0
 			self._strm = StringIO()
@@ -660,9 +660,9 @@ class LogCaptureTestCase(unittest.TestCase):
 			"""Truncate the internal buffer and records."""
 			if size:
 				raise Exception('invalid size argument: %r, should be None or 0' % size)
-			self._val = None
-			self._dirty = True
+			self._val = ''
 			with self._lock:
+				self._dirty = 0
 				self._recs = list()
 				self._strm.truncate(0)
 
@@ -680,37 +680,45 @@ class LogCaptureTestCase(unittest.TestCase):
 				return self._val
 			# try to lock, if not possible - return cached/empty (max 5 times):
 			lck = self._lock.acquire(False)
-			if not lck: # pragma: no cover (may be too sporadic on slow systems)
-				self._nolckCntr += 1
-				if self._nolckCntr <= 5:
-					return self._val if self._val is not None else ''
-				self._nolckCntr = 0
-				self._lock.acquire()
-			# minimize time of lock, avoid dead-locking during cross lock within self._strm ...
-			try:
-				recs = self._recs
-				self._recs = list()
-			finally:
+			# if records changed:
+			if self._dirty & 2:
+				if not lck: # pragma: no cover (may be too sporadic on slow systems)
+					self._nolckCntr += 1
+					if self._nolckCntr <= 5:
+						return self._val
+					self._nolckCntr = 0
+					self._lock.acquire()
+				# minimize time of lock, avoid dead-locking during cross lock within self._strm ...
+				try:
+					self._dirty &= ~3 # reset dirty records/buffer flag before cache value built
+					recs = self._recs
+					self._recs = list()
+				finally:
+					self._lock.release()
+				# submit already emitted (delivered to handle) records:
+				for record in recs:
+					self.__write(record)
+			elif lck: # reset dirty buffer flag (if we can lock, otherwise just next time):
+				self._dirty &= ~1 # reset dirty buffer flag
 				self._lock.release()
-			# submit already emitted (delivered to handle) records:
-			for record in recs:
-				self.__write(record)
-			# cache and return:
+			# cache (outside of log to avoid dead-locking during cross lock within self._strm):
 			self._val = self._strm.getvalue()
-			self._dirty = False
+			# return current string value:
 			return self._val
 			 
 		def handle(self, record): # pragma: no cover
 			"""Handle the specified record direct (not lazy)"""
 			self.__write(record)
-			self._dirty = True
+			# string buffer changed:
+			with self._lock:
+				self._dirty |= 1 # buffer changed
 
 		def _handle_lazy(self, record):
 			"""Lazy handle the specified record on demand"""
 			with self._lock:
 				self._recs.append(record)
-			# logged - causes changed string buffer (signal by set _dirty):
-			self._dirty = True
+				# logged - causes changed string buffer (signal by set _dirty):
+				self._dirty |= 2 # records changed
 
 	def setUp(self):
 
