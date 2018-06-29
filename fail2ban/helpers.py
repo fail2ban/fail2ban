@@ -36,8 +36,30 @@ from .server.mytime import MyTime
 PREFER_ENC = locale.getpreferredencoding()
 # correct preferred encoding if lang not set in environment:
 if PREFER_ENC.startswith('ANSI_'): # pragma: no cover
-	if all((os.getenv(v) in (None, "") for v in ('LANGUAGE', 'LC_ALL', 'LC_CTYPE', 'LANG'))):
+	if sys.stdout and not sys.stdout.encoding.startswith('ANSI_'):
+		PREFER_ENC = sys.stdout.encoding
+	elif all((os.getenv(v) in (None, "") for v in ('LANGUAGE', 'LC_ALL', 'LC_CTYPE', 'LANG'))):
 		PREFER_ENC = 'UTF-8';
+
+# py-2.x: try to minimize influence of sporadic conversion errors on python 2.x,
+# caused by implicit converting of string/unicode (e. g. `str(u"\uFFFD")` produces an error
+# if default encoding is 'ascii');
+if sys.version_info < (3,): # python >= 2.6
+  # correct default (global system) encoding (mostly UTF-8):
+	def __resetDefaultEncoding(encoding):
+		global PREFER_ENC
+		ode = sys.getdefaultencoding().upper()
+		if ode == 'ASCII' or ode != PREFER_ENC.upper():
+			# setdefaultencoding is normally deleted after site initialized, so hack-in using load of sys-module:
+			from imp import load_dynamic as __ldm
+			_sys = __ldm('_sys', 'sys')
+			_sys.setdefaultencoding(encoding)
+	# override to PREFER_ENC:
+	__resetDefaultEncoding(PREFER_ENC)
+	del __resetDefaultEncoding
+
+# todo: rewrite explicit (and implicit) str-conversions via encode/decode with IO-encoding (sys.stdout.encoding),
+# e. g. inside tags-replacement by command-actions, etc.
 
 
 def formatExceptionInfo():

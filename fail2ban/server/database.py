@@ -83,8 +83,8 @@ else:
 
 	def _json_loads_safe(x):
 		try:
-			x = _normalize(json.loads(x.decode(
-				PREFER_ENC, 'replace')))
+			x = json.loads(x.decode(
+				PREFER_ENC, 'replace'))
 		except Exception as e: # pragma: no cover
 			logSys.error('json loads failed: %s', e)
 			x = {}
