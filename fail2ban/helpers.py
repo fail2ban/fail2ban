@@ -87,11 +87,11 @@ if sys.version_info >= (3,):
 		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
 			if errors != 'strict': 
 				raise
-			return uni_decode(x, enc, 'replace')
+			return x.decode(enc, 'replace')
 	def uni_string(x):
 		if not isinstance(x, bytes):
 			return str(x)
-		return uni_decode(x)
+		return x.decode(PREFER_ENC, 'replace')
 else:
 	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
 		try:
@@ -101,12 +101,12 @@ else:
 		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
 			if errors != 'strict':
 				raise
-			return uni_decode(x, enc, 'replace')
-	if sys.getdefaultencoding().upper() != 'UTF-8':
+			return x.encode(enc, 'replace')
+	if sys.getdefaultencoding().upper() != 'UTF-8': # pragma: no cover - utf-8 is default encoding now
 		def uni_string(x):
 			if not isinstance(x, unicode):
 				return str(x)
-			return uni_decode(x)
+			return x.encode(PREFER_ENC, 'replace')
 	else:
 		uni_string = str
 
