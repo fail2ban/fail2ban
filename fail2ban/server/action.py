@@ -36,7 +36,7 @@ from .failregex import mapTag2Opt
 from .ipdns import asip, DNSUtils
 from .mytime import MyTime
 from .utils import Utils
-from ..helpers import getLogger, _merge_copy_dicts, substituteRecursiveTags, TAG_CRE, MAX_TAG_REPLACE_COUNT
+from ..helpers import getLogger, _merge_copy_dicts, uni_string, substituteRecursiveTags, TAG_CRE, MAX_TAG_REPLACE_COUNT
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -608,7 +608,7 @@ class CommandAction(ActionBase):
 				if value is None:
 					# fallback (no or default replacement)
 					return ADD_REPL_TAGS_CM.get(tag, m.group())
-			value = str(value)		# assure string
+			value = uni_string(value)		# assure string
 			if tag in cls._escapedTags:
 				# That one needs to be escaped since its content is
 				# out of our control
@@ -687,7 +687,7 @@ class CommandAction(ActionBase):
 			except KeyError:
 				# fallback (no or default replacement)
 				return ADD_REPL_TAGS_CM.get(tag, m.group())
-			value = str(value)		# assure string
+			value = uni_string(value)		# assure string
 			# replacement for tag:
 			return escapeVal(tag, value)
 		
@@ -701,7 +701,7 @@ class CommandAction(ActionBase):
 			def substTag(m):
 				tag = mapTag2Opt(m.groups()[0])
 				try:
-					value = str(tickData[tag])
+					value = uni_string(tickData[tag])
 				except KeyError:
 					return ""
 				return escapeVal("F_"+tag, value)

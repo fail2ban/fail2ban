@@ -49,11 +49,18 @@ if sys.version_info < (3,): # python >= 2.6
 	def __resetDefaultEncoding(encoding):
 		global PREFER_ENC
 		ode = sys.getdefaultencoding().upper()
-		if ode == 'ASCII' or ode != PREFER_ENC.upper():
+		if ode == 'ASCII' and ode != PREFER_ENC.upper():
 			# setdefaultencoding is normally deleted after site initialized, so hack-in using load of sys-module:
-			from imp import load_dynamic as __ldm
-			_sys = __ldm('_sys', 'sys')
-			_sys.setdefaultencoding(encoding)
+			_sys = sys
+			if not hasattr(_sys, "setdefaultencoding"):
+				try:
+					from imp import load_dynamic as __ldm
+					_sys = __ldm('_sys', 'sys')
+				except ImportError: # pragma: no cover (only if load_dynamic fails)
+					reload(sys)
+					_sys = sys
+			if hasattr(_sys, "setdefaultencoding"):
+				_sys.setdefaultencoding(encoding)
 	# override to PREFER_ENC:
 	__resetDefaultEncoding(PREFER_ENC)
 	del __resetDefaultEncoding
@@ -61,11 +68,58 @@ if sys.version_info < (3,): # python >= 2.6
 # todo: rewrite explicit (and implicit) str-conversions via encode/decode with IO-encoding (sys.stdout.encoding),
 # e. g. inside tags-replacement by command-actions, etc.
 
+#
+# Following "uni_decode", "uni_string" functions unified python independent any 
+# to string converting.
+#
+# Typical example resp. work-case for understanding the coding/decoding issues:
+#
+#   [isinstance('', str), isinstance(b'', str), isinstance(u'', str)]
+#   [True, True, False]; # -- python2
+#	  [True, False, True]; # -- python3
+#
+if sys.version_info >= (3,):
+	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
+		try:
+			if isinstance(x, bytes):
+				return x.decode(enc, errors)
+			return x
+		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
+			if errors != 'strict': 
+				raise
+			return uni_decode(x, enc, 'replace')
+	def uni_string(x):
+		if not isinstance(x, bytes):
+			return str(x)
+		return uni_decode(x)
+else:
+	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
+		try:
+			if isinstance(x, unicode):
+				return x.encode(enc, errors)
+			return x
+		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
+			if errors != 'strict':
+				raise
+			return uni_decode(x, enc, 'replace')
+	if sys.getdefaultencoding().upper() != 'UTF-8':
+		def uni_string(x):
+			if not isinstance(x, unicode):
+				return str(x)
+			return uni_decode(x)
+	else:
+		uni_string = str
+
+
+def _as_bool(val):
+	return bool(val) if not isinstance(val, basestring) \
+		else val.lower() in ('1', 'on', 'true', 'yes')
+
 
 def formatExceptionInfo():
 	""" Consistently format exception information """
 	cla, exc = sys.exc_info()[:2]
-	return (cla.__name__, str(exc))
+	return (cla.__name__, uni_string(exc))
 
 
 #
@@ -236,41 +290,6 @@ else:
 		return r
 
 #
-# Following "uni_decode" function unified python independent any to string converting
-#
-# Typical example resp. work-case for understanding the coding/decoding issues:
-#
-#   [isinstance('', str), isinstance(b'', str), isinstance(u'', str)]
-#   [True, True, False]; # -- python2
-#	  [True, False, True]; # -- python3
-#
-if sys.version_info >= (3,):
-	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
-		try:
-			if isinstance(x, bytes):
-				return x.decode(enc, errors)
-			return x
-		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
-			if errors != 'strict': 
-				raise
-			return uni_decode(x, enc, 'replace')
-else:
-	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
-		try:
-			if isinstance(x, unicode):
-				return x.encode(enc, errors)
-			return x
-		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
-			if errors != 'strict':
-				raise
-			return uni_decode(x, enc, 'replace')
-
-
-def _as_bool(val):
-	return bool(val) if not isinstance(val, basestring) \
-		else val.lower() in ('1', 'on', 'true', 'yes')
-
-#
 # Following function used for parse options from parameter (e.g. `name[p1=0, p2="..."][p3='...']`).
 #
 
@@ -347,7 +366,7 @@ def substituteRecursiveTags(inptags, conditional='',
 			if tag in ignore or tag in done: continue
 			# ignore replacing callable items from calling map - should be converted on demand only (by get):
 			if noRecRepl and callable(tags.getRawItem(tag)): continue
-			value = orgval = str(tags[tag])
+			value = orgval = uni_string(tags[tag])
 			# search and replace all tags within value, that can be interpolated using other tags:
 			m = tre_search(value)
 			refCounts = {}
@@ -382,7 +401,7 @@ def substituteRecursiveTags(inptags, conditional='',
 					m = tre_search(value, m.end())
 					continue
 				# if calling map - be sure we've string:
-				if noRecRepl: repl = str(repl)
+				if noRecRepl: repl = uni_string(repl)
 				value = value.replace('<%s>' % rtag, repl)
 				#logSys.log(5, 'value now: %s' % value)
 				# increment reference count:
