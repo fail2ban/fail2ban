@@ -44,7 +44,7 @@ if PREFER_ENC.startswith('ANSI_'): # pragma: no cover
 # py-2.x: try to minimize influence of sporadic conversion errors on python 2.x,
 # caused by implicit converting of string/unicode (e. g. `str(u"\uFFFD")` produces an error
 # if default encoding is 'ascii');
-if sys.version_info < (3,): # python >= 2.6
+if sys.version_info < (3,): # pragma: 3.x no cover
   # correct default (global system) encoding (mostly UTF-8):
 	def __resetDefaultEncoding(encoding):
 		global PREFER_ENC
@@ -56,7 +56,7 @@ if sys.version_info < (3,): # python >= 2.6
 				try:
 					from imp import load_dynamic as __ldm
 					_sys = __ldm('_sys', 'sys')
-				except ImportError: # pragma: no cover (only if load_dynamic fails)
+				except ImportError: # pragma: no cover - only if load_dynamic fails
 					reload(sys)
 					_sys = sys
 			if hasattr(_sys, "setdefaultencoding"):
@@ -78,7 +78,7 @@ if sys.version_info < (3,): # python >= 2.6
 #   [True, True, False]; # -- python2
 #	  [True, False, True]; # -- python3
 #
-if sys.version_info >= (3,):
+if sys.version_info >= (3,): # pragma: 2.x no cover
 	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
 		try:
 			if isinstance(x, bytes):
@@ -92,7 +92,7 @@ if sys.version_info >= (3,):
 		if not isinstance(x, bytes):
 			return str(x)
 		return x.decode(PREFER_ENC, 'replace')
-else:
+else: # pragma: 3.x no cover
 	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
 		try:
 			if isinstance(x, unicode):

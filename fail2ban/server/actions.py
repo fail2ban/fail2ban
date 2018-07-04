@@ -323,7 +323,7 @@ class Actions(JailThread, Mapping):
 			self.immutable = immutable
 			self.data = data
 		
-		def copy(self): # pargma: no cover
+		def copy(self): # pragma: no cover
 			return self.__class__(self.__ticket, self.__jail, self.immutable, self.data.copy())
 
 		def _mi4ip(self, overalljails=False):

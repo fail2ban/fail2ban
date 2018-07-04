@@ -45,7 +45,7 @@ def _json_default(x):
 		x = list(x)
 	return uni_string(x)
 
-if sys.version_info >= (3,):
+if sys.version_info >= (3,): # pragma: 2.x no cover
 	def _json_dumps_safe(x):
 		try:
 			x = json.dumps(x, ensure_ascii=False, default=_json_default).encode(
@@ -54,7 +54,8 @@ if sys.version_info >= (3,):
 			# adapter handler should be exception-safe, so avoid possible errors in log-handlers (concat, str. conversion, etc)
 			try:
 				logSys.error('json dumps failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
-			except: pass
+			except: # pragma: no cover
+				pass
 			x = '{}'
 		return x
 
@@ -65,10 +66,11 @@ if sys.version_info >= (3,):
 			# converter handler should be exception-safe, so avoid possible errors in log-handlers (concat, str. conversion, etc)
 			try:
 				logSys.error('json loads failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
-			except: pass
+			except: # pragma: no cover
+				pass
 			x = {}
 		return x
-else:
+else: # pragma: 3.x no cover
 	def _normalize(x):
 		if isinstance(x, dict):
 			return dict((_normalize(k), _normalize(v)) for k, v in x.iteritems())
@@ -88,7 +90,8 @@ else:
 			# adapter handler should be exception-safe, so avoid possible errors in log-handlers (concat, str. conversion, etc)
 			try:
 				logSys.error('json dumps failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
-			except: pass
+			except: # pragma: no cover
+				pass
 			x = '{}'
 		return x
 
@@ -99,7 +102,8 @@ else:
 			# converter handler should be exception-safe, so avoid possible errors in log-handlers (concat, str. conversion, etc)
 			try:
 				logSys.error('json loads failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
-			except: pass
+			except: # pragma: no cover
+				pass
 			x = {}
 		return x
 
