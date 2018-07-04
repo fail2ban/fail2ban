@@ -33,8 +33,8 @@ from StringIO import StringIO
 
 from utils import LogCaptureTestCase, logSys as DefLogSys
 
-from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger, uni_decode
-from ..helpers import splitwords
+from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger, \
+	splitwords, uni_decode, uni_string
 from ..server.mytime import MyTime
 
 
@@ -193,6 +193,14 @@ class TestsUtilsTest(LogCaptureTestCase):
 		self.assertEqual(mbasename("/long/path/base.py"), 'path.base')
 		self.assertEqual(mbasename("/long/path/base"), 'path.base')
 
+	def testUniConverters(self):
+		self.assertRaises(Exception, uni_decode, 
+			(b'test' if sys.version_info >= (3,) else u'test'), 'f2b-test::non-existing-encoding')
+		uni_decode((b'test\xcf' if sys.version_info >= (3,) else u'test\xcf'))
+		uni_string(b'test\xcf')
+		uni_string('test\xcf')
+		uni_string(u'test\xcf')
+
 	def testTraceBack(self):
 		# pretty much just a smoke test since tests runners swallow all the detail
 
@@ -304,8 +312,10 @@ class TestsUtilsTest(LogCaptureTestCase):
 		## assertLogged, assertNotLogged negative case:
 		self.pruneLog()
 		logSys.debug('test "xyz"')
-		self._testAssertionErrorRE(r"All of the .* were found present in the log",
+		self._testAssertionErrorRE(r".* was found in the log",
 			self.assertNotLogged, 'test "xyz"')
+		self._testAssertionErrorRE(r"All of the .* were found present in the log",
+			self.assertNotLogged, 'test "xyz"', 'test')
 		self._testAssertionErrorRE(r"was found in the log",
 			self.assertNotLogged, 'test', 'xyz', all=True)
 		self._testAssertionErrorRE(r"was not found in the log",

@@ -186,7 +186,7 @@ class F2B(DefaultTestOptions):
 
 	def __init__(self, opts):
 		self.__dict__ = opts.__dict__
-		if self.fast:
+		if self.fast: # pragma: no cover - normal mode in travis
 			self.memory_db = True
 			self.no_gamin = True
 		self.__dict__['share_config'] = {}
@@ -662,7 +662,7 @@ class LogCaptureTestCase(unittest.TestCase):
 			
 		def truncate(self, size=None):
 			"""Truncate the internal buffer and records."""
-			if size:
+			if size: # pragma: no cover - not implemented now
 				raise Exception('invalid size argument: %r, should be None or 0' % size)
 			self._val = ''
 			with self._lock:
@@ -674,8 +674,8 @@ class LogCaptureTestCase(unittest.TestCase):
 			msg = record.getMessage() + '\n'
 			try:
 				self._strm.write(msg)
-			except UnicodeEncodeError:
-				self._strm.write(msg.encode('UTF-8'))
+			except UnicodeEncodeError: # pragma: no cover - normally unreachable now
+				self._strm.write(msg.encode('UTF-8', 'replace'))
 
 		def getvalue(self):
 			"""Return current buffer as whole string."""
@@ -702,7 +702,8 @@ class LogCaptureTestCase(unittest.TestCase):
 				# submit already emitted (delivered to handle) records:
 				for record in recs:
 					self.__write(record)
-			elif lck: # reset dirty buffer flag (if we can lock, otherwise just next time):
+			elif lck: # pragma: no cover - too sporadic for coverage
+				# reset dirty buffer flag (if we can lock, otherwise just next time):
 				self._dirty &= ~1 # reset dirty buffer flag
 				self._lock.release()
 			# cache (outside of log to avoid dead-locking during cross lock within self._strm):
@@ -811,7 +812,7 @@ class LogCaptureTestCase(unittest.TestCase):
 		all : boolean (default False) if True should fail if any of s logged
 		"""
 		logged = self._log.getvalue()
-		if not kwargs.get('all', False):
+		if len(s) > 1 and not kwargs.get('all', False):
 			for s_ in s:
 				if s_ not in logged:
 					return

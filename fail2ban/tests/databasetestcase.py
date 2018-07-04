@@ -35,10 +35,11 @@ from ..server.ticket import FailTicket
 from ..server.actions import Actions, Utils
 from .dummyjail import DummyJail
 try:
-	from ..server.database import Fail2BanDb as Fail2BanDb
+	from ..server import database
+	Fail2BanDb = database.Fail2BanDb
 except ImportError: # pragma: no cover
 	Fail2BanDb = None
-from .utils import LogCaptureTestCase
+from .utils import LogCaptureTestCase, logSys as DefLogSys
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
@@ -275,30 +276,53 @@ class DatabaseTest(LogCaptureTestCase):
 		self.testAddJail()
 		# invalid + valid, invalid + valid unicode, invalid + valid dual converted (like in filter:readline by fallback) ...
 		tickets = [
-		  FailTicket("127.0.0.1", 0, ['user "\xd1\xe2\xe5\xf2\xe0"', 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
-		  FailTicket("127.0.0.2", 0, ['user "\xd1\xe2\xe5\xf2\xe0"', u'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
-		  FailTicket("127.0.0.3", 0, ['user "\xd1\xe2\xe5\xf2\xe0"', b'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'.decode('utf-8', 'replace')])
+		  FailTicket("127.0.0.1", 0, ['user "test"', 'user "\xd1\xe2\xe5\xf2\xe0"', 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
+		  FailTicket("127.0.0.2", 0, ['user "test"', u'user "\xd1\xe2\xe5\xf2\xe0"', u'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
+		  FailTicket("127.0.0.3", 0, ['user "test"', b'user "\xd1\xe2\xe5\xf2\xe0"', b'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"']),
+		  FailTicket("127.0.0.4", 0, ['user "test"', 'user "\xd1\xe2\xe5\xf2\xe0"', u'user "\xe4\xf6\xfc\xdf"']),
+		  FailTicket("127.0.0.5", 0, ['user "test"', 'unterminated \xcf']),
+		  FailTicket("127.0.0.6", 0, ['user "test"', u'unterminated \xcf']),
+		  FailTicket("127.0.0.7", 0, ['user "test"', b'unterminated \xcf'])
 		]
-		self.db.addBan(self.jail, tickets[0])
-		self.db.addBan(self.jail, tickets[1])
-		self.db.addBan(self.jail, tickets[2])
+		for ticket in tickets:
+			self.db.addBan(self.jail, ticket)
+
+		self.assertNotLogged("json dumps failed")
 
 		readtickets = self.db.getBans(jail=self.jail)
-		self.assertEqual(len(readtickets), 3)
-		## python 2 or 3 :
-		invstr = u'user "\ufffd\ufffd\ufffd\ufffd\ufffd"'.encode('utf-8', 'replace')
-		self.assertTrue(
-			   readtickets[0] == FailTicket("127.0.0.1", 0, [invstr, 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'])
-			or readtickets[0] == tickets[0]
-		)
-		self.assertTrue(
-			   readtickets[1] == FailTicket("127.0.0.2", 0, [invstr, u'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'.encode('utf-8', 'replace')])
-			or readtickets[1] == tickets[1]
-		)
-		self.assertTrue(
-			   readtickets[2] == FailTicket("127.0.0.3", 0, [invstr, 'user "\xc3\xa4\xc3\xb6\xc3\xbc\xc3\x9f"'])
-			or readtickets[2] == tickets[2]
-		)
+
+		self.assertNotLogged("json loads failed")
+
+		## all tickets available
+		self.assertEqual(len(readtickets), 7)
+
+		## too different to cover all possible constellations for python 2 and 3,
+		## can replace/ignore some non-ascii chars by json dump/load (unicode/str),
+		## so check ip and matches count only:
+		for i, ticket in enumerate(tickets):
+			DefLogSys.debug('readtickets[%d]: %r', i, readtickets[i].getData())
+			DefLogSys.debug(' == tickets[%d]: %r', i, ticket.getData())
+			self.assertEqual(readtickets[i].getIP(), ticket.getIP())
+			self.assertEqual(len(readtickets[i].getMatches()), len(ticket.getMatches()))
+
+		## simulate errors in dumps/loads:
+		priorEnc = database.PREFER_ENC
+		try:
+			database.PREFER_ENC = 'f2b-test::non-existing-encoding'
+
+			for ticket in tickets:
+				self.db.addBan(self.jail, ticket)
+
+			self.assertLogged("json dumps failed")
+
+			readtickets = self.db.getBans(jail=self.jail)
+
+			self.assertLogged("json loads failed")
+
+			## despite errors all tickets written and loaded (check adapter-handlers are error-safe):
+			self.assertEqual(len(readtickets), 14)
+		finally:
+			database.PREFER_ENC = priorEnc
 
 	def _testAdd3Bans(self):
 		self.testAddJail()
