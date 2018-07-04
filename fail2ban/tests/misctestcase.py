@@ -304,8 +304,10 @@ class TestsUtilsTest(LogCaptureTestCase):
 		## assertLogged, assertNotLogged negative case:
 		self.pruneLog()
 		logSys.debug('test "xyz"')
-		self._testAssertionErrorRE(r"All of the .* were found present in the log",
+		self._testAssertionErrorRE(r".* was found in the log",
 			self.assertNotLogged, 'test "xyz"')
+		self._testAssertionErrorRE(r"All of the .* were found present in the log",
+			self.assertNotLogged, 'test "xyz"', 'test')
 		self._testAssertionErrorRE(r"was found in the log",
 			self.assertNotLogged, 'test', 'xyz', all=True)
 		self._testAssertionErrorRE(r"was not found in the log",

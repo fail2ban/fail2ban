@@ -807,7 +807,7 @@ class LogCaptureTestCase(unittest.TestCase):
 		all : boolean (default False) if True should fail if any of s logged
 		"""
 		logged = self._log.getvalue()
-		if not kwargs.get('all', False):
+		if len(s) > 1 and not kwargs.get('all', False):
 			for s_ in s:
 				if s_ not in logged:
 					return
