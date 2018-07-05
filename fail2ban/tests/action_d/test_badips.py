@@ -29,9 +29,9 @@ from ..dummyjail import DummyJail
 from ..servertestcase import IPAddr
 from ..utils import LogCaptureTestCase, CONFIG_DIR
 
-if sys.version_info >= (3, ):
+if sys.version_info >= (3, ): # pragma: 2.x no cover
 	from urllib.error import HTTPError, URLError
-else:
+else: # pragma: 3.x no cover
 	from urllib2 import HTTPError, URLError
 
 def skip_if_not_available(f):

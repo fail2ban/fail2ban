@@ -18,16 +18,16 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import sys
-if sys.version_info < (2, 7):
+if sys.version_info < (2, 7): # pragma: no cover
 	raise ImportError("badips.py action requires Python >= 2.7")
 import json
 import threading
 import logging
-if sys.version_info >= (3, ):
+if sys.version_info >= (3, ): # pragma: 2.x no cover
 	from urllib.request import Request, urlopen
 	from urllib.parse import urlencode
 	from urllib.error import HTTPError
-else:
+else: # pragma: 3.x no cover
 	from urllib2 import Request, urlopen, HTTPError
 	from urllib import urlencode
 
