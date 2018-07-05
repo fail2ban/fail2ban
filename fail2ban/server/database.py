@@ -51,11 +51,8 @@ if sys.version_info >= (3,): # pragma: 2.x no cover
 			x = json.dumps(x, ensure_ascii=False, default=_json_default).encode(
 				PREFER_ENC, 'replace')
 		except Exception as e:
-			# adapter handler should be exception-safe, so avoid possible errors in log-handlers (concat, str. conversion, etc)
-			try:
-				logSys.error('json dumps failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
-			except: # pragma: no cover
-				pass
+			# adapter handler should be exception-safe
+			logSys.error('json dumps failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
 			x = '{}'
 		return x
 
@@ -63,11 +60,8 @@ if sys.version_info >= (3,): # pragma: 2.x no cover
 		try:
 			x = json.loads(x.decode(PREFER_ENC, 'replace'))
 		except Exception as e:
-			# converter handler should be exception-safe, so avoid possible errors in log-handlers (concat, str. conversion, etc)
-			try:
-				logSys.error('json loads failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
-			except: # pragma: no cover
-				pass
+			# converter handler should be exception-safe
+			logSys.error('json loads failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
 			x = {}
 		return x
 else: # pragma: 3.x no cover
@@ -87,11 +81,8 @@ else: # pragma: 3.x no cover
 		try:
 			x = json.dumps(_normalize(x), ensure_ascii=False, default=_json_default)
 		except Exception as e:
-			# adapter handler should be exception-safe, so avoid possible errors in log-handlers (concat, str. conversion, etc)
-			try:
-				logSys.error('json dumps failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
-			except: # pragma: no cover
-				pass
+			# adapter handler should be exception-safe
+			logSys.error('json dumps failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
 			x = '{}'
 		return x
 
@@ -99,11 +90,8 @@ else: # pragma: 3.x no cover
 		try:
 			x = json.loads(x.decode(PREFER_ENC, 'replace'))
 		except Exception as e:
-			# converter handler should be exception-safe, so avoid possible errors in log-handlers (concat, str. conversion, etc)
-			try:
-				logSys.error('json loads failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
-			except: # pragma: no cover
-				pass
+			# converter handler should be exception-safe
+			logSys.error('json loads failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
 			x = {}
 		return x
 
