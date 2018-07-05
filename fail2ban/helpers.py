@@ -45,7 +45,7 @@ if PREFER_ENC.startswith('ANSI_'): # pragma: no cover
 # caused by implicit converting of string/unicode (e. g. `str(u"\uFFFD")` produces an error
 # if default encoding is 'ascii');
 if sys.version_info < (3,): # pragma: 3.x no cover
-  # correct default (global system) encoding (mostly UTF-8):
+	# correct default (global system) encoding (mostly UTF-8):
 	def __resetDefaultEncoding(encoding):
 		global PREFER_ENC
 		ode = sys.getdefaultencoding().upper()

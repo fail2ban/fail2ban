@@ -40,7 +40,7 @@ logSys = getLogger(__name__)
 
 
 def _json_default(x):
-	"""Avoid errors on types unknow in json-adapters."""
+	"""Avoid errors on types unknown in json-adapters."""
 	if isinstance(x, set):
 		x = list(x)
 	return uni_string(x)
