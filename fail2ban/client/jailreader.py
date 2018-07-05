@@ -90,12 +90,12 @@ class JailReader(ConfigReader):
 		opts1st = [["bool", "enabled", False],
 				["string", "filter", ""]]
 		opts = [["bool", "enabled", False],
-				["string", "logpath", None],
-				["string", "logtimezone", None],
-				["string", "logencoding", None],
 				["string", "backend", "auto"],
 				["int",    "maxretry", None],
 				["string", "findtime", None],
+				["string", "logpath", None],
+				["string", "logtimezone", None],
+				["string", "logencoding", None],
 				["string", "bantime", None],
 				["string", "usedns", None], # be sure usedns is before all regex(s) in stream
 				["string", "failregex", None],
