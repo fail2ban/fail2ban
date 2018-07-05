@@ -764,8 +764,6 @@ class Fail2BanDb(object):
 		return cur.execute(query, queryArgs)
 
 	def _getCurrentBans(self, cur, jail = None, ip = None, forbantime=None, fromtime=None):
-		if fromtime is None:
-			fromtime = MyTime.time()
 		queryArgs = []
 		if jail is not None:
 			query = "SELECT ip, timeofban, bantime, bancount, data FROM bips WHERE jail=?"
@@ -798,6 +796,8 @@ class Fail2BanDb(object):
 		(and therefore endOfBan) of the ticket (normally it is ban-time of jail as maximum)
 		for all tickets with ban-time greater (or persistent).
 		"""
+		if fromtime is None:
+			fromtime = MyTime.time()
 		tickets = []
 		ticket = None
 		if correctBanTime is True:
@@ -822,6 +822,12 @@ class Fail2BanDb(object):
 					# if persistent ban (or greater as max), use current max-bantime of the jail:
 					if bantime == -1 or bantime > correctBanTime:
 						bantime = correctBanTime
+				# after correction check the end of ban again:
+				if bantime != -1 and timeofban + bantime <= fromtime:
+					# not persistent and too old - ignore it:
+					logSys.debug("ignore ticket (with new max ban-time %r): too old %r <= %r, ticket: %r",
+						bantime, timeofban + bantime, fromtime, ticket)
+					continue
 			except ValueError as e: # pragma: no cover
 				logSys.debug("get current bans: ignore row %r - %s", ticket, e)
 				continue

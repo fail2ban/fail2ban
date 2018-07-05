@@ -494,12 +494,13 @@ class DatabaseTest(LogCaptureTestCase):
 		# add persistent one:
 		ticket.setBanTime(-1)
 		self.db.addBan(self.jail, ticket)
-		# persistent bantime (-1), so never expired (1 persistent ticket):
+		# persistent bantime (-1), so never expired (but jail has other max bantime now):
 		tickets = self.db.getCurrentBans(jail=self.jail, forbantime=-1,
 			fromtime=MyTime.time() + MyTime.str2seconds("1year"))
-		self.assertEqual(len(tickets), 1)
-		self.assertEqual(tickets[0].getBanTime(), 600); # current jail ban time.
-		# change jail to persistent ban and try again:
+		# no tickets should be found (max ban time = 600):
+		self.assertEqual(len(tickets), 0)
+		self.assertLogged("ignore ticket (with new max ban-time %r)" % self.jail.getMaxBanTime())
+		# change jail to persistent ban and try again (1 persistent ticket):
 		self.jail.actions.setBanTime(-1)
 		tickets = self.db.getCurrentBans(jail=self.jail, forbantime=-1,
 			fromtime=MyTime.time() + MyTime.str2seconds("1year"))
