@@ -416,13 +416,10 @@ class TestsUtilsTest(LogCaptureTestCase):
 
 	def testLazyLogging(self):
 		logSys = DefLogSys
-		if unittest.F2B.log_lazy:
-			# wrong logging syntax will throw an error lazy (on demand):
-			logSys.debug('test', 1, 2, 3)
-			self.assertRaisesRegexp(Exception, 'not all arguments converted', lambda: self.assertNotLogged('test'))
-		else: # pragma: no cover
-			# wrong logging syntax will throw an error directly:
-			self.assertRaisesRegexp(Exception, 'not all arguments converted', lambda: logSys.debug('test', 1, 2, 3))
+		logSys.debug('lazy logging: %r', unittest.F2B.log_lazy)
+		# wrong logging syntax will don't throw an error anymore (logged now):
+		logSys.notice('test', 1, 2, 3)
+		self.assertLogged('not all arguments converted')
 
 
 class MyTimeTest(unittest.TestCase):
