@@ -90,9 +90,6 @@ class JailReader(ConfigReader):
 		opts1st = [["bool", "enabled", False],
 				["string", "filter", ""]]
 		opts = [["bool", "enabled", False],
-				["string", "logpath", None],
-				["string", "logtimezone", None],
-				["string", "logencoding", None],
 				["string", "backend", "auto"],
 				["int",    "maxretry", None],
 				["string", "findtime", None],
@@ -105,6 +102,9 @@ class JailReader(ConfigReader):
 				["string", "ignoreip", None],
 				["string", "filter", ""],
 				["string", "datepattern", None],
+				["string", "logtimezone", None],
+				["string", "logencoding", None],
+				["string", "logpath", None], # logpath after all log-related data (backend, date-pattern, etc)
 				["string", "action", ""]]
 
 		# Before interpolation (substitution) add static options always available as default:
