@@ -87,7 +87,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			args['files'] = list(set(files))
 
 		try:
-			args['flags'] = kwargs.pop('journalflags')
+			args['flags'] = int(kwargs.pop('journalflags'))
 		except KeyError:
 			pass
 
