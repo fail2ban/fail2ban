@@ -45,7 +45,7 @@ if PREFER_ENC.startswith('ANSI_'): # pragma: no cover
 # caused by implicit converting of string/unicode (e. g. `str(u"\uFFFD")` produces an error
 # if default encoding is 'ascii');
 if sys.version_info < (3,): # pragma: 3.x no cover
-  # correct default (global system) encoding (mostly UTF-8):
+	# correct default (global system) encoding (mostly UTF-8):
 	def __resetDefaultEncoding(encoding):
 		global PREFER_ENC
 		ode = sys.getdefaultencoding().upper()
@@ -201,6 +201,35 @@ class FormatterWithTraceBack(logging.Formatter):
 		record.tbc = record.tb = self._tb()
 		return logging.Formatter.format(self, record)
 
+
+__origLog = logging.Logger._log
+def __safeLog(self, level, msg, args, **kwargs):
+	"""Safe log inject to avoid possible errors by unsafe log-handlers, 
+	concat, str. conversion, representation fails, etc.
+
+	Used to intrude exception-safe _log-method instead of _log-method 
+	of Logger class to be always safe by logging and to get more-info about.
+
+	See testSafeLogging test-case for more information. At least the errors
+	covered in phase 3 seems to affected in all known pypy/python versions 
+	until now.
+	"""
+	try:
+		# if isEnabledFor(level) already called...
+		__origLog(self, level, msg, args, **kwargs)
+	except Exception as e: # pragma: no cover - unreachable if log-handler safe in this python-version
+		try:
+			for args in (
+				("logging failed: %r on %s", (e, uni_string(msg))),
+				("  args: %r", ([uni_string(a) for a in args],))
+			):
+				try:
+					__origLog(self, level, *args)
+				except: # pragma: no cover
+					pass
+		except: # pragma: no cover
+			pass
+logging.Logger._log = __safeLog
 
 def getLogger(name):
 	"""Get logging.Logger instance with Fail2Ban logger name convention

@@ -671,11 +671,14 @@ class LogCaptureTestCase(unittest.TestCase):
 				self._strm.truncate(0)
 
 		def __write(self, record):
-			msg = record.getMessage() + '\n'
 			try:
-				self._strm.write(msg)
-			except UnicodeEncodeError: # pragma: no cover - normally unreachable now
-				self._strm.write(msg.encode('UTF-8', 'replace'))
+				msg = record.getMessage() + '\n'
+				try:
+					self._strm.write(msg)
+				except UnicodeEncodeError: # pragma: no cover - normally unreachable now
+					self._strm.write(msg.encode('UTF-8', 'replace'))
+			except Exception as e: # pragma: no cover - normally unreachable
+				self._strm.write('Error by logging handler: %r' % e)
 
 		def getvalue(self):
 			"""Return current buffer as whole string."""

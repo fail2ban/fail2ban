@@ -305,6 +305,7 @@ class DatabaseTest(LogCaptureTestCase):
 			self.assertEqual(readtickets[i].getIP(), ticket.getIP())
 			self.assertEqual(len(readtickets[i].getMatches()), len(ticket.getMatches()))
 
+		self.pruneLog('[test-phase 2] simulate errors')
 		## simulate errors in dumps/loads:
 		priorEnc = database.PREFER_ENC
 		try:
@@ -323,6 +324,13 @@ class DatabaseTest(LogCaptureTestCase):
 			self.assertEqual(len(readtickets), 14)
 		finally:
 			database.PREFER_ENC = priorEnc
+		
+		## check the database is still operable (not locked) after all the errors:
+		self.pruneLog('[test-phase 3] still operable?')
+		self.db.addBan(self.jail, FailTicket("127.0.0.8"))
+		readtickets = self.db.getBans(jail=self.jail)
+		self.assertEqual(len(readtickets), 15)
+		self.assertNotLogged("json loads failed", "json dumps failed")
 
 	def _testAdd3Bans(self):
 		self.testAddJail()

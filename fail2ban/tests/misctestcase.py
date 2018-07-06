@@ -201,6 +201,48 @@ class TestsUtilsTest(LogCaptureTestCase):
 		uni_string('test\xcf')
 		uni_string(u'test\xcf')
 
+	def testSafeLogging(self):
+		# logging should be exception-safe, to avoid possible errors (concat, str. conversion, representation failures, etc)
+		logSys = DefLogSys
+		class Test:
+			def __init__(self, err=1):
+				self.err = err
+			def __repr__(self):
+				if self.err:
+					raise Exception('no represenation for test!')
+				else:
+					return u'conv-error (\xf2\xf0\xe5\xf2\xe8\xe9), unterminated utf \xcf'
+		test = Test()
+		logSys.log(logging.NOTICE, "test 1a: %r", test)
+		self.assertLogged("Traceback", "no represenation for test!")
+		self.pruneLog()
+		logSys.notice("test 1b: %r", test)
+		self.assertLogged("Traceback", "no represenation for test!")
+
+		self.pruneLog('[phase 2] test error conversion by encoding %s' % sys.getdefaultencoding())
+		test = Test(0)
+		# this may produce coversion error on ascii default encoding:
+		#str(test)
+		logSys.log(logging.NOTICE, "test 2a: %r, %s", test, test)
+		self.assertLogged("test 2a", "Error by logging handler", all=False)
+		logSys.notice("test 2b: %r, %s", test, test)
+		self.assertLogged("test 2b", "Error by logging handler", all=False)
+
+		self.pruneLog('[phase 3] test unexpected error in handler')
+		class _ErrorHandler(logging.Handler):
+			def handle(self, record):
+				raise Exception('error in handler test!')
+		_org_handler = logSys.handlers
+		try:
+			logSys.handlers = list(logSys.handlers)
+			logSys.handlers += [_ErrorHandler()]
+			logSys.log(logging.NOTICE, "test 3a")
+			logSys.notice("test 3b")
+		finally:
+			logSys.handlers = _org_handler
+		# we should reach this line without errors!
+		self.pruneLog('OK')
+
 	def testTraceBack(self):
 		# pretty much just a smoke test since tests runners swallow all the detail
 
@@ -374,13 +416,10 @@ class TestsUtilsTest(LogCaptureTestCase):
 
 	def testLazyLogging(self):
 		logSys = DefLogSys
-		if unittest.F2B.log_lazy:
-			# wrong logging syntax will throw an error lazy (on demand):
-			logSys.debug('test', 1, 2, 3)
-			self.assertRaisesRegexp(Exception, 'not all arguments converted', lambda: self.assertNotLogged('test'))
-		else: # pragma: no cover
-			# wrong logging syntax will throw an error directly:
-			self.assertRaisesRegexp(Exception, 'not all arguments converted', lambda: logSys.debug('test', 1, 2, 3))
+		logSys.debug('lazy logging: %r', unittest.F2B.log_lazy)
+		# wrong logging syntax will don't throw an error anymore (logged now):
+		logSys.notice('test', 1, 2, 3)
+		self.assertLogged('not all arguments converted')
 
 
 class MyTimeTest(unittest.TestCase):
