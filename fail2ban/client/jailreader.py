@@ -93,9 +93,6 @@ class JailReader(ConfigReader):
 				["string", "backend", "auto"],
 				["int",    "maxretry", None],
 				["string", "findtime", None],
-				["string", "logpath", None],
-				["string", "logtimezone", None],
-				["string", "logencoding", None],
 				["string", "bantime", None],
 				["string", "usedns", None], # be sure usedns is before all regex(s) in stream
 				["string", "failregex", None],
@@ -105,6 +102,9 @@ class JailReader(ConfigReader):
 				["string", "ignoreip", None],
 				["string", "filter", ""],
 				["string", "datepattern", None],
+				["string", "logtimezone", None],
+				["string", "logencoding", None],
+				["string", "logpath", None], # logpath after all log-related data (backend, date-pattern, etc)
 				["string", "action", ""]]
 
 		# Before interpolation (substitution) add static options always available as default:
