@@ -891,9 +891,6 @@ class FileFilter(Filter):
 			self.__logs[path] = log
 			logSys.info("Added logfile: %r (pos = %s, hash = %s)" , path, log.getPos(), log.getHash())
 			if autoSeek:
-				# if default, seek to "current time" - "find time":
-				if isinstance(autoSeek, bool):
-					autoSeek = MyTime.time() - self.getFindTime()
 				self.__autoSeek[path] = autoSeek
 			self._addLogPath(path)			# backend specific
 
@@ -1003,18 +1000,21 @@ class FileFilter(Filter):
 				return False
 
 			# seek to find time for first usage only (prevent performance decline with polling of big files)
-			if self.__autoSeek.get(filename):
-				startTime = self.__autoSeek[filename]
-				del self.__autoSeek[filename]
-				# prevent completely read of big files first time (after start of service), 
-				# initial seek to start time using half-interval search algorithm:
-				try:
-					self.seekToTime(log, startTime)
-				except Exception as e: # pragma: no cover
-					logSys.error("Error during seek to start time in \"%s\"", filename)
-					raise
-					logSys.exception(e)
-					return False
+			if self.__autoSeek:
+				startTime = self.__autoSeek.pop(filename, None)
+				if startTime:
+					# if default, seek to "current time" - "find time":
+					if isinstance(startTime, bool):
+						startTime = MyTime.time() - self.getFindTime()
+					# prevent completely read of big files first time (after start of service), 
+					# initial seek to start time using half-interval search algorithm:
+					try:
+						self.seekToTime(log, startTime)
+					except Exception as e: # pragma: no cover
+						logSys.error("Error during seek to start time in \"%s\"", filename)
+						raise
+						logSys.exception(e)
+						return False
 
 			if has_content:
 				while not self.idle:

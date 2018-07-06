@@ -733,7 +733,7 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(["status", "INVALID", "COMMAND"])[0],1)
 
-	def testJournalMatch(self):
+	def testJournalMatch(self): # pragma: systemd no cover
 		if not filtersystemd: # pragma: no cover
 			raise unittest.SkipTest("systemd python interface not available")
 		jailName = "TestJail2"
@@ -803,6 +803,28 @@ class Transmitter(TransmitterBase):
 		result = self.transm.proceed(
 			["set", jailName, "deljournalmatch", value])
 		self.assertTrue(isinstance(result[1], ValueError))
+	
+	def testJournalFlagsMatch(self): # pragma: systemd no cover
+		if not filtersystemd: # pragma: no cover
+			raise unittest.SkipTest("systemd python interface not available")
+		self.assertTrue(True)
+		jailName = "TestJail3"
+		self.server.addJail(jailName, "systemd[journalflags=2]")
+		values = [
+			"_SYSTEMD_UNIT=sshd.service",
+			"TEST_FIELD1=ABC",
+			"_HOSTNAME=example.com",
+		]
+		for n, value in enumerate(values):
+			self.assertEqual(
+				self.transm.proceed(
+					["set", jailName, "addjournalmatch", value]),
+				(0, [[val] for val in values[:n+1]]))
+		for n, value in enumerate(values):
+			self.assertEqual(
+				self.transm.proceed(
+					["set", jailName, "deljournalmatch", value]),
+				(0, [[val] for val in values[n+1:]]))
 
 
 class TransmitterLogging(TransmitterBase):

@@ -71,10 +71,14 @@ ver. 0.10.4-dev-1 (20??/??/??) - development edition
   - database: improve adapter/converter handlers working on invalid characters in sense of json and/or sqlite-database;
     additionally both are exception-safe now, so avoid possible locking of database (closes gh-2137);
   - logging in fail2ban is process-wide exception-safe now.
+* repaired start-time of initial seek to time (as well as other log-parsing related data), 
+  if parameter `logpath` specified before `findtime`, `backend`, `datepattern`, etc (gh-2173)
+* systemd: fixed type error on option `journalflags`: an integer is required (gh-2125);
 
 ### New Features
 
 ### Enhancements
+* `filter.d/dovecot.conf`: extended with tags F-USER (and alternatives) to collect user-logins (gh-2168)
 * since v.0.10.4, fail2ban-client, fail2ban-server and fail2ban-regex will return version without logo info,
   additionally option `-V` can be used to get version in normalized machine-readable short format.
 
