@@ -806,7 +806,7 @@ class Fail2BanDb(object):
 				if bantime == -2: # todo: remove it in future version
 					bantime = jail.actions.getBanTime() if jail is not None else (
 						correctBanTime if correctBanTime else 600)
-				elif correctBanTime:
+				elif correctBanTime and correctBanTime >= 0:
 					# if persistent ban (or greater as max), use current max-bantime of the jail:
 					if bantime == -1 or bantime > correctBanTime:
 						bantime = correctBanTime
