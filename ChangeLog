@@ -38,6 +38,13 @@ ver. 0.10.4-dev-1 (20??/??/??) - development edition
 * `filter.d/dovecot.conf`: failregex enhancement to catch sql password mismatch errors (gh-2153);
 * `action.d/hostsdeny.conf`: fix parameter in config (dynamic parameters stating with '_' are protected 
   and don't allowed in command-actions), see gh-2114;
+* decoding stability fix by wrong encoded characters like utf-8 surrogate pairs, etc (gh-2171):
+  - fail2ban running in the preferred encoding now (as default encoding also within python 2.x), mostly
+    `UTF-8` in opposite to `ascii` previously, so minimizes influence of implicit conversions errors;
+  - actions: avoid possible conversion errors on wrong-chars by replace tags;
+  - database: improve adapter/converter handlers working on invalid characters in sense of json and/or sqlite-database;
+    additionally both are exception-safe now, so avoid possible locking of database (closes gh-2137);
+  - logging in fail2ban is process-wide exception-safe now.
 
 ### New Features
 

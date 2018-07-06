@@ -290,6 +290,8 @@ class Actions(JailThread, Mapping):
 
 	class ActionInfo(CallingMap):
 
+		CM_REPR_ITEMS = ("fid", "raw-ticket")
+
 		AI_DICT = {
 			"ip":				lambda self: self.__ticket.getIP(),
 			"family":   lambda self: self['ip'].familyStr,
@@ -307,7 +309,9 @@ class Actions(JailThread, Mapping):
 			"ipmatches":			lambda self: "\n".join(self._mi4ip(True).getMatches()),
 			"ipjailmatches":	lambda self: "\n".join(self._mi4ip().getMatches()),
 			"ipfailures":			lambda self: self._mi4ip(True).getAttempt(),
-			"ipjailfailures":	lambda self: self._mi4ip().getAttempt()
+			"ipjailfailures":	lambda self: self._mi4ip().getAttempt(),
+			# raw ticket info:
+			"raw-ticket":			lambda self: repr(self.__ticket)
 		}
 
 		__slots__ = CallingMap.__slots__ + ('__ticket', '__jail', '__mi4ip')
@@ -319,7 +323,7 @@ class Actions(JailThread, Mapping):
 			self.immutable = immutable
 			self.data = data
 		
-		def copy(self): # pargma: no cover
+		def copy(self): # pragma: no cover
 			return self.__class__(self.__ticket, self.__jail, self.immutable, self.data.copy())
 
 		def _mi4ip(self, overalljails=False):

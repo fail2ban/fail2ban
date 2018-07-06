@@ -1223,8 +1223,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		_write_file(lgfn, "w+",
 			str(int(MyTime.time())) + ' failure "125-000-001" - 192.0.2.1',
 			str(int(MyTime.time())) + ' failure "125-000-002" - 192.0.2.1',
-			str(int(MyTime.time())) + ' failure "125-000-003" - 192.0.2.1',
-			str(int(MyTime.time())) + ' failure "125-000-004" - 192.0.2.1',
+			str(int(MyTime.time())) + ' failure "125-000-003" - 192.0.2.1 (\xf2\xf0\xe5\xf2\xe8\xe9)',
+			str(int(MyTime.time())) + ' failure "125-000-004" - 192.0.2.1 (\xf2\xf0\xe5\xf2\xe8\xe9)',
 			str(int(MyTime.time())) + ' failure "125-000-005" - 192.0.2.1',
 		)
 		# check all sessions are banned (and blacklisted in map-file):

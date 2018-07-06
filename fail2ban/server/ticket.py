@@ -138,7 +138,7 @@ class Ticket(object):
 		self._data['matches'] = matches or []
 
 	def getMatches(self):
-		return [(line if isinstance(line, basestring) else "".join(line)) \
+		return [(line if not isinstance(line, (list, tuple)) else "".join(line)) \
 			for line in self._data.get('matches', ())]
 
 	@property
