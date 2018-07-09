@@ -30,6 +30,7 @@ import re
 import sys
 import time
 
+from .actions import Actions
 from .failmanager import FailManagerEmpty, FailManager
 from .ipdns import DNSUtils, IPAddr
 from .ticket import FailTicket
@@ -418,11 +419,12 @@ class Filter(JailThread):
 	def addBannedIP(self, ip):
 		if not isinstance(ip, IPAddr):
 			ip = IPAddr(ip)
-		if self.inIgnoreIPList(ip, log_ignore=False):
-			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.', ip)
 
 		unixTime = MyTime.time()
-		self.failManager.addFailure(FailTicket(ip, unixTime), self.failManager.getMaxRetry())
+		ticket = FailTicket(ip, unixTime)
+		if self._inIgnoreIPList(ip, ticket, log_ignore=False):
+			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.', ip)
+		self.failManager.addFailure(ticket, self.failManager.getMaxRetry())
 
 		# Perform the banning of the IP now.
 		try: # pragma: no branch - exception is the only way out
@@ -487,13 +489,19 @@ class Filter(JailThread):
 	#
 	# Check if the given IP address matches an IP address/DNS or a CIDR
 	# mask in the ignore list.
-	# @param ip IP address object
+	# @param ip IP address object or ticket
 	# @return True if IP address is in ignore list
 
 	def inIgnoreIPList(self, ip, log_ignore=True):
-		if not isinstance(ip, IPAddr):
+		ticket = None
+		if isinstance(ip, FailTicket):
+			ticket = ip
+			ip = ticket.getIP()
+		elif not isinstance(ip, IPAddr):
 			ip = IPAddr(ip)
+		return self._inIgnoreIPList(ip, ticket, log_ignore)
 
+	def _inIgnoreIPList(self, ip, ticket, log_ignore=True):
 		# check own IPs should be ignored and 'ip' is self IP:
 		if self.__ignoreSelf and ip in DNSUtils.getSelfIPs():
 			self.logIgnoreIp(ip, log_ignore, ignore_source="ignoreself rule")
@@ -506,7 +514,11 @@ class Filter(JailThread):
 				return True
 
 		if self.__ignoreCommand:
-			command = CommandAction.replaceTag(self.__ignoreCommand, { 'ip': ip } )
+			if ticket:
+				aInfo = Actions.ActionInfo(ticket, self.jail)
+				command = CommandAction.replaceDynamicTags(self.__ignoreCommand, aInfo)
+			else:
+				command = CommandAction.replaceTag(self.__ignoreCommand, { 'ip': ip })
 			logSys.debug('ignore command: %s', command)
 			ret, ret_ignore = CommandAction.executeCmd(command, success_codes=(0, 1))
 			ret_ignore = ret and ret_ignore == 0
@@ -549,12 +561,12 @@ class Filter(JailThread):
 				fail = element[3]
 				logSys.debug("Processing line with time:%s and ip:%s", 
 						unixTime, ip)
-				if self.inIgnoreIPList(ip):
+				tick = FailTicket(ip, unixTime, data=fail)
+				if self._inIgnoreIPList(ip, tick):
 					continue
 				logSys.info(
 					"[%s] Found %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
 				)
-				tick = FailTicket(ip, unixTime, data=fail)
 				self.failManager.addFailure(tick)
 			# reset (halve) error counter (successfully processed line):
 			if self._errors:

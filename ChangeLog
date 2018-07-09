@@ -50,6 +50,8 @@ ver. 0.10.4-dev-1 (20??/??/??) - development edition
 * systemd: fixed type error on option `journalflags`: an integer is required (gh-2125);
 
 ### New Features
+* `ignorecommand` extended to use actions-similar replacement (capable to interpolate 
+  all possible tags like `<ip-host>`, `<family>`, `<fid>`, `F-USER` etc.)
 
 ### Enhancements
 * `filter.d/dovecot.conf`: extended with tags F-USER (and alternatives) to collect user-logins (gh-2168)

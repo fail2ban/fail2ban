@@ -38,7 +38,7 @@ except ImportError:
 
 from ..server.jail import Jail
 from ..server.filterpoll import FilterPoll
-from ..server.filter import Filter, FileFilter, FileContainer
+from ..server.filter import FailTicket, Filter, FileFilter, FileContainer
 from ..server.failmanager import FailManagerEmpty
 from ..server.ipdns import DNSUtils, IPAddr
 from ..server.mytime import MyTime
@@ -408,6 +408,24 @@ class IgnoreIP(LogCaptureTestCase):
 		self.pruneLog()
 		self.assertFalse(self.filter.inIgnoreIPList(""))
 		self.assertLogged("usage: ignorecommand IP", "returned 10", all=True)
+	
+	def testIgnoreCommandForTicket(self):
+		# by host of IP (2001:db8::1 and 2001:db8::ffff map to "test-host" and "test-other" in the test-suite):
+		self.filter.setIgnoreCommand('if [ "<ip-host>" = "test-host" ]; then exit 0; fi; exit 1')
+		self.pruneLog()
+		self.assertTrue(self.filter.inIgnoreIPList(FailTicket("2001:db8::1")))
+		self.assertLogged("returned successfully 0")
+		self.pruneLog()
+		self.assertFalse(self.filter.inIgnoreIPList(FailTicket("2001:db8::ffff")))
+		self.assertLogged("returned successfully 1")
+		# by user-name (ignore tester):
+		self.filter.setIgnoreCommand('if [ "<F-USER>" = "tester" ]; then exit 0; fi; exit 1')
+		self.pruneLog()
+		self.assertTrue(self.filter.inIgnoreIPList(FailTicket("tester", data={'user': 'tester'})))
+		self.assertLogged("returned successfully 0")
+		self.pruneLog()
+		self.assertFalse(self.filter.inIgnoreIPList(FailTicket("root", data={'user': 'root'})))
+		self.assertLogged("returned successfully 1", all=True)
 
 	def testIgnoreCauseOK(self):
 		ip = "93.184.216.34"
