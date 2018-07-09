@@ -81,6 +81,10 @@ class Filter(JailThread):
 		self.__ignoreSelf = True
 		## The ignore IP list.
 		self.__ignoreIpList = []
+		## External command
+		self.__ignoreCommand = False
+		## Cache for ignoreip:
+		self.__ignoreCache = None
 		## Size of line buffer
 		self.__lineBufferSize = 1
 		## Line buffer
@@ -90,8 +94,6 @@ class Filter(JailThread):
 		self.__lastDate = None
 		## if set, treat log lines without explicit time zone to be in this time zone
 		self.__logtimezone = None
-		## External command
-		self.__ignoreCommand = False
 		## Default or preferred encoding (to decode bytes from file or journal):
 		self.__encoding = PREFER_ENC
 		## Cache temporary holds failures info (used by multi-line for wrapping e. g. conn-id to host):
@@ -397,19 +399,34 @@ class Filter(JailThread):
 		raise Exception("run() is abstract")
 
 	##
-	# Set external command, for ignoredips
+	# External command, for ignoredips
 	#
 
-	def setIgnoreCommand(self, command):
+	@property
+	def ignoreCommand(self):
+		return self.__ignoreCommand
+
+	@ignoreCommand.setter
+	def ignoreCommand(self, command):
 		self.__ignoreCommand = command
 
 	##
-	# Get external command, for ignoredips
+	# Cache parameters for ignoredips
 	#
 
-	def getIgnoreCommand(self):
-		return self.__ignoreCommand
+	@property
+	def ignoreCache(self):
+		return [self.__ignoreCache[0], self.__ignoreCache[1].maxCount, self.__ignoreCache[1].maxTime] \
+			if self.__ignoreCache else None
 
+	@ignoreCache.setter
+	def ignoreCache(self, command):
+		if command:
+			self.__ignoreCache = command['key'], Utils.Cache(
+				maxCount=int(command.get('max-count', 100)), maxTime=MyTime.str2seconds(command.get('max-time', 5*60))
+			)
+		else:
+			self.__ignoreCache = None
 	##
 	# Ban an IP - http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
 	# Arturo 'Buanzo' Busleiman <buanzo@buanzo.com.ar>
@@ -502,29 +519,48 @@ class Filter(JailThread):
 		return self._inIgnoreIPList(ip, ticket, log_ignore)
 
 	def _inIgnoreIPList(self, ip, ticket, log_ignore=True):
+		aInfo = None
+		# cached ?
+		if self.__ignoreCache:
+			key, c = self.__ignoreCache
+			if ticket:
+				aInfo = Actions.ActionInfo(ticket, self.jail)
+				key = CommandAction.replaceDynamicTags(key, aInfo)
+			else:
+				aInfo = { 'ip': ip }
+				key = CommandAction.replaceTag(key, aInfo)
+			v = c.get(key)
+			if v is not None:
+				return v
+
 		# check own IPs should be ignored and 'ip' is self IP:
 		if self.__ignoreSelf and ip in DNSUtils.getSelfIPs():
 			self.logIgnoreIp(ip, log_ignore, ignore_source="ignoreself rule")
+			if self.__ignoreCache: c.set(key, True)
 			return True
 
 		for net in self.__ignoreIpList:
 			# check if the IP is covered by ignore IP
 			if ip.isInNet(net):
 				self.logIgnoreIp(ip, log_ignore, ignore_source=("ip" if net.isValid else "dns"))
+				if self.__ignoreCache: c.set(key, True)
 				return True
 
 		if self.__ignoreCommand:
 			if ticket:
-				aInfo = Actions.ActionInfo(ticket, self.jail)
+				if not aInfo: aInfo = Actions.ActionInfo(ticket, self.jail)
 				command = CommandAction.replaceDynamicTags(self.__ignoreCommand, aInfo)
 			else:
-				command = CommandAction.replaceTag(self.__ignoreCommand, { 'ip': ip })
+				if not aInfo: aInfo = { 'ip': ip }
+				command = CommandAction.replaceTag(self.__ignoreCommand, aInfo)
 			logSys.debug('ignore command: %s', command)
 			ret, ret_ignore = CommandAction.executeCmd(command, success_codes=(0, 1))
 			ret_ignore = ret and ret_ignore == 0
 			self.logIgnoreIp(ip, log_ignore and ret_ignore, ignore_source="command")
+			if self.__ignoreCache: c.set(key, ret_ignore)
 			return ret_ignore
 
+		if self.__ignoreCache: c.set(key, False)
 		return False
 
 	def processLine(self, line, date=None):
