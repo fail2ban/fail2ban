@@ -38,7 +38,7 @@ except ImportError:
 
 from ..server.jail import Jail
 from ..server.filterpoll import FilterPoll
-from ..server.filter import Filter, FileFilter, FileContainer
+from ..server.filter import FailTicket, Filter, FileFilter, FileContainer
 from ..server.failmanager import FailManagerEmpty
 from ..server.ipdns import DNSUtils, IPAddr
 from ..server.mytime import MyTime
@@ -401,13 +401,67 @@ class IgnoreIP(LogCaptureTestCase):
 		self.assertLogged('Requested to manually ban an ignored IP 192.168.1.32. User knows best. Proceeding to ban it.')
 
 	def testIgnoreCommand(self):
-		self.filter.setIgnoreCommand(sys.executable + ' ' + os.path.join(TEST_FILES_DIR, "ignorecommand.py <ip>"))
+		self.filter.ignoreCommand = sys.executable + ' ' + os.path.join(TEST_FILES_DIR, "ignorecommand.py <ip>")
 		self.assertTrue(self.filter.inIgnoreIPList("10.0.0.1"))
 		self.assertFalse(self.filter.inIgnoreIPList("10.0.0.0"))
 		self.assertLogged("returned successfully 0", "returned successfully 1", all=True)
 		self.pruneLog()
 		self.assertFalse(self.filter.inIgnoreIPList(""))
 		self.assertLogged("usage: ignorecommand IP", "returned 10", all=True)
+	
+	def testIgnoreCommandForTicket(self):
+		# by host of IP (2001:db8::1 and 2001:db8::ffff map to "test-host" and "test-other" in the test-suite):
+		self.filter.ignoreCommand = 'if [ "<ip-host>" = "test-host" ]; then exit 0; fi; exit 1'
+		self.pruneLog()
+		self.assertTrue(self.filter.inIgnoreIPList(FailTicket("2001:db8::1")))
+		self.assertLogged("returned successfully 0")
+		self.pruneLog()
+		self.assertFalse(self.filter.inIgnoreIPList(FailTicket("2001:db8::ffff")))
+		self.assertLogged("returned successfully 1")
+		# by user-name (ignore tester):
+		self.filter.ignoreCommand = 'if [ "<F-USER>" = "tester" ]; then exit 0; fi; exit 1'
+		self.pruneLog()
+		self.assertTrue(self.filter.inIgnoreIPList(FailTicket("tester", data={'user': 'tester'})))
+		self.assertLogged("returned successfully 0")
+		self.pruneLog()
+		self.assertFalse(self.filter.inIgnoreIPList(FailTicket("root", data={'user': 'root'})))
+		self.assertLogged("returned successfully 1", all=True)
+
+	def testIgnoreCache(self):
+		# like both test-cases above, just cached (so once per key)...
+		self.filter.ignoreCache = {"key":"<ip>"}
+		self.filter.ignoreCommand = 'if [ "<ip>" = "10.0.0.1" ]; then exit 0; fi; exit 1'
+		for i in xrange(5):
+			self.pruneLog()
+			self.assertTrue(self.filter.inIgnoreIPList("10.0.0.1"))
+			self.assertFalse(self.filter.inIgnoreIPList("10.0.0.0"))
+			if not i:
+				self.assertLogged("returned successfully 0", "returned successfully 1", all=True)
+			else:
+				self.assertNotLogged("returned successfully 0", "returned successfully 1", all=True)
+		# by host of IP:
+		self.filter.ignoreCache = {"key":"<ip-host>"}
+		self.filter.ignoreCommand = 'if [ "<ip-host>" = "test-host" ]; then exit 0; fi; exit 1'
+		for i in xrange(5):
+			self.pruneLog()
+			self.assertTrue(self.filter.inIgnoreIPList(FailTicket("2001:db8::1")))
+			self.assertFalse(self.filter.inIgnoreIPList(FailTicket("2001:db8::ffff")))
+			if not i:
+				self.assertLogged("returned successfully")
+			else:
+				self.assertNotLogged("returned successfully")
+		# by user-name:
+		self.filter.ignoreCache = {"key":"<F-USER>", "max-count":"10", "max-time":"1h"}
+		self.assertEqual(self.filter.ignoreCache, ["<F-USER>", 10, 60*60])
+		self.filter.ignoreCommand = 'if [ "<F-USER>" = "tester" ]; then exit 0; fi; exit 1'
+		for i in xrange(5):
+			self.pruneLog()
+			self.assertTrue(self.filter.inIgnoreIPList(FailTicket("tester", data={'user': 'tester'})))
+			self.assertFalse(self.filter.inIgnoreIPList(FailTicket("root", data={'user': 'root'})))
+			if not i:
+				self.assertLogged("returned successfully")
+			else:
+				self.assertNotLogged("returned successfully")
 
 	def testIgnoreCauseOK(self):
 		ip = "93.184.216.34"
@@ -472,7 +526,7 @@ class IgnoreIPDNS(LogCaptureTestCase):
 		self.assertRaises(ValueError, lambda: mod.is_googlebot(mod.process_args([cmd])))
 		self.assertRaises(ValueError, lambda: mod.is_googlebot(mod.process_args([cmd, "192.0"])))
 		## via command:
-		self.filter.setIgnoreCommand(cmd + " <ip>")
+		self.filter.ignoreCommand = cmd + " <ip>"
 		for ip in bot_ips:
 			self.assertTrue(self.filter.inIgnoreIPList(str(ip)), "test of googlebot ip %s failed" % ip)
 			self.assertLogged('-- returned successfully')
@@ -480,7 +534,7 @@ class IgnoreIPDNS(LogCaptureTestCase):
 		self.assertFalse(self.filter.inIgnoreIPList("192.0"))
 		self.assertLogged('Argument must be a single valid IP.')
 		self.pruneLog()
-		self.filter.setIgnoreCommand(cmd + " bad arguments <ip>")
+		self.filter.ignoreCommand = cmd + " bad arguments <ip>"
 		self.assertFalse(self.filter.inIgnoreIPList("192.0"))
 		self.assertLogged('Please provide a single IP as an argument.')
 

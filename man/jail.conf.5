@@ -233,7 +233,19 @@ list of IPs not to ban. They can include a DNS resp. CIDR mask too. The option a
 command that is executed to determine if the current candidate IP for banning (or failure-ID for raw IDs) should not be banned. The option affects additionally to \fBignoreself\fR and \fBignoreip\fR and will be first executed if both don't hit.
 .br
 IP will not be banned if command returns successfully (exit code 0).
-Like ACTION FILES, tags like <ip> are can be included in the ignorecommand value and will be substituted before execution. Currently only <ip> is supported however more will be added later.
+Like ACTION FILES, tags like <ip> are can be included in the ignorecommand value and will be substituted before execution.
+.TP
+.B ignorecache
+provide cache parameters (default disabled) for ignore failure check (caching of the result from `ignoreip`, `ignoreself` and `ignorecommand`), syntax:
+
+.RS
+.nf
+        ignorecache = key="<F-USER>@<ip-host>", max-count=100, max-time=5m
+        ignorecommand = if [ "<F-USER>" = "technical" ] && [ "<ip-host>" = "my-host.example.com" ]; then exit 0; fi;
+                        exit 1
+.fi
+This will cache the result of \fBignorecommand\fR (does not call it repeatedly) for 5 minutes (cache time) for maximal 100 entries (cache size), using values substituted like "user@host" as cache-keys.  Set option \fBignorecache\fR to empty value disables the cache.
+.RE
 .TP
 .B bantime
 effective ban duration (in seconds or time abbreviation format).

@@ -463,7 +463,14 @@ class Transmitter(TransmitterBase):
 			(0, False))
 
 	def testJailIgnoreCommand(self):
-		self.setGetTest("ignorecommand", "bin ", jail=self.jailName)
+		self.setGetTest("ignorecommand", "bin/ignore-command <ip>", jail=self.jailName)
+
+	def testJailIgnoreCache(self):
+		self.setGetTest("ignorecache", 
+			'key="<ip>",max-time=1d,max-count=9999', 
+			["<ip>", 9999, 24*60*60],
+			jail=self.jailName)
+		self.setGetTest("ignorecache", '', None, jail=self.jailName)
 
 	def testJailRegex(self):
 		self.jailAddDelRegexTest("failregex",

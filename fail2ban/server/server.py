@@ -391,10 +391,17 @@ class Server:
 		return self.__jails[name].filter.getLogTimeZone()
 
 	def setIgnoreCommand(self, name, value):
-		self.__jails[name].filter.setIgnoreCommand(value)
+		self.__jails[name].filter.ignoreCommand = value
 
 	def getIgnoreCommand(self, name):
-		return self.__jails[name].filter.getIgnoreCommand()
+		return self.__jails[name].filter.ignoreCommand
+
+	def setIgnoreCache(self, name, value):
+		value, options = extractOptions("cache["+value+"]")
+		self.__jails[name].filter.ignoreCache = options
+
+	def getIgnoreCache(self, name):
+		return self.__jails[name].filter.ignoreCache
 
 	def setPrefRegex(self, name, value):
 		flt = self.__jails[name].filter
