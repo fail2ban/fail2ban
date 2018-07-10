@@ -316,6 +316,7 @@ def initTests(opts):
 		c.set('203.0.113.%s' % i, None)
 		c.set('2001:db8::%s' %i, 'test-host')
 	# some legal ips used in our test cases (prevent slow dns-resolving and failures if will be changed later):
+	c.set('2001:db8::ffff', 'test-other')
 	c.set('87.142.124.10', 'test-host')
 	if unittest.F2B.no_network: # pragma: no cover
 		# precache all wrong dns to ip's used in test cases:
