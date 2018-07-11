@@ -32,11 +32,10 @@ from threading import Lock
 
 from .server.mytime import MyTime
 
-
 PREFER_ENC = locale.getpreferredencoding()
 # correct preferred encoding if lang not set in environment:
 if PREFER_ENC.startswith('ANSI_'): # pragma: no cover
-	if sys.stdout and not sys.stdout.encoding.startswith('ANSI_'):
+	if sys.stdout and sys.stdout.encoding is not None and not sys.stdout.encoding.startswith('ANSI_'):
 		PREFER_ENC = sys.stdout.encoding
 	elif all((os.getenv(v) in (None, "") for v in ('LANGUAGE', 'LC_ALL', 'LC_CTYPE', 'LANG'))):
 		PREFER_ENC = 'UTF-8';
