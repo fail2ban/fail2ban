@@ -28,17 +28,14 @@ __author__ = "Fail2Ban Developers"
 __copyright__ = "Copyright (c) 2004-2008 Cyril Jaquier, 2012-2014 Yaroslav Halchenko"
 __license__ = "GPL"
 
-import getopt
 import logging
 import os
 import shlex
 import sys
 import time
-import time
 import urllib
 from optparse import OptionParser, Option
 
-from ConfigParser import NoOptionError, NoSectionError, MissingSectionHeaderError
 
 try: # pragma: no cover
 	from ..server.filtersystemd import FilterSystemd

@@ -42,7 +42,6 @@ from ..server.ipdns import DNSUtils
 from ..server.mytime import MyTime
 from ..server.utils import Utils
 # for action_d.test_smtp :
-from ..server import asyncserver
 from ..version import version
 
 

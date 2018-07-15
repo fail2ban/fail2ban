@@ -31,7 +31,6 @@ import errno
 import fcntl
 import os
 import socket
-import sys
 import threading
 import traceback
 

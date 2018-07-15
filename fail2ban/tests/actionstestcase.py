@@ -24,7 +24,6 @@ __author__ = "Daniel Black"
 __copyright__ = "Copyright (c) 2013 Daniel Black"
 __license__ = "GPL"
 
-import time
 import os
 import tempfile
 

@@ -23,7 +23,6 @@ __copyright__ = "Copyright (c) 2013 Steven Hiscocks"
 __license__ = "GPL"
 
 import os
-import sys
 import unittest
 import tempfile
 import sqlite3
