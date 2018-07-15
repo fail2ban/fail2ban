@@ -25,6 +25,7 @@ extra_started_commands="reload showlog"
 
 command="/usr/bin/fail2ban-client"
 command_args="${FAIL2BAN_OPTIONS}"
+pidfile="/run/${RC_SVCNAME}/${RC_SVCNAME}.pid"
 
 depend() {
 	use logger
@@ -37,14 +38,14 @@ start() {
 	# remove stalled sock file after system crash
 	# bug 347477
 	rm -f /var/run/fail2ban/fail2ban.sock || return 1
-	start-stop-daemon --start --pidfile /var/run/fail2ban/fail2ban.pid \
+	start-stop-daemon --start --pidfile "${pidfile}" \
 	-- ${command} ${command_args} start
 	eend $? "Failed to start fail2ban"
 }
 
 stop() {
 	ebegin "Stopping fail2ban"
-	start-stop-daemon --stop --pidfile /var/run/fail2ban/fail2ban.pid --retry 30 \
+	start-stop-daemon --stop --pidfile "${pidfile}" --retry 30 \
 	-- ${command} ${command_args} stop
 	eend $? "Failed to stop fail2ban"
 }
