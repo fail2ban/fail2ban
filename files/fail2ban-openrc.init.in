@@ -19,7 +19,7 @@
 #
 
 description="Ban hosts that cause multiple authentication errors"
-description_reload="reload configuration"
+description_reload="reload configuration without dropping bans"
 extra_started_commands="reload"
 
 # Can't (and shouldn't) be changed by the end-user.
