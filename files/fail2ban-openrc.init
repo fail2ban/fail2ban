@@ -22,11 +22,23 @@ description="Ban hosts that cause multiple authentication errors"
 description_reload="reload configuration"
 extra_started_commands="reload"
 
+# Can't (and shouldn't) be changed by the end-user.
+FAIL2BAN_RUNDIR="/run/${RC_SVCNAME}"
+FAIL2BAN_SOCKET="${FAIL2BAN_RUNDIR}/${RC_SVCNAME}.sock"
+
+# This should be replaced by the build system, eventually.
+FAIL2BAN_BINDIR="/usr/bin"
+
 # The fail2ban-client program is also capable of starting and stopping
 # the server, but things are simpler if we let start-stop-daemon do it.
-command="/usr/bin/fail2ban-server"
-pidfile="/run/${RC_SVCNAME}/${RC_SVCNAME}.pid"
-command_args="${FAIL2BAN_OPTIONS} -p ${pidfile}"
+command="${FAIL2BAN_BINDIR}/fail2ban-server"
+pidfile="${FAIL2BAN_RUNDIR}/${RC_SVCNAME}.pid"
+
+# We force the pidfile/socket location in this service script because
+# we're taking responsibility for ensuring that their parent directory
+# exists and has the correct permissions (which we can't do if the
+# user is allowed to change them).
+command_args="${FAIL2BAN_OPTIONS} -p ${pidfile} -s ${FAIL2BAN_SOCKET}"
 retry="30"
 
 depend() {
@@ -35,7 +47,7 @@ depend() {
 }
 
 start_pre() {
-	checkpath -d "${pidfile%/*}" || return 1
+	checkpath -d "${FAIL2BAN_RUNDIR}" || return 1
 }
 
 reload() {
@@ -43,6 +55,6 @@ reload() {
 	# the server to reload(), so we have to use it here rather
 	# than e.g. sending a signal to the server daemon.
 	ebegin "Reloading ${RC_SVCNAME}"
-	"${command%/*}/fail2ban-client" ${command_args} reload
+	"${FAIL2BAN_BINDIR}/fail2ban-client" ${command_args} reload
 	eend $? "Failed to reload ${RC_SVCNAME}"
 }
