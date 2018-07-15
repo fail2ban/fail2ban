@@ -32,12 +32,16 @@ depend() {
 	after iptables
 }
 
+start_pre() {
+	checkpath -d "${pidfile%/*}" || return 1
+
+	# Remove stale socket after system crash, Gentoo bug 347477
+	rm -f /var/run/fail2ban/fail2ban.sock || return 1
+}
+
 start() {
 	ebegin "Starting fail2ban"
-	mkdir -p /var/run/fail2ban || return 1
-	# remove stalled sock file after system crash
-	# bug 347477
-	rm -f /var/run/fail2ban/fail2ban.sock || return 1
+
 	start-stop-daemon --start --pidfile "${pidfile}" \
 	-- ${command} ${command_args} start
 	eend $? "Failed to start fail2ban"
