@@ -20,8 +20,7 @@
 
 description="Daemon to ban hosts that cause multiple authentication errors"
 description_reload="reload configuration"
-description_showlog="show fail2ban logs"
-extra_started_commands="reload showlog"
+extra_started_commands="reload"
 
 command="/usr/bin/fail2ban-client"
 command_args="${FAIL2BAN_OPTIONS}"
@@ -59,8 +58,4 @@ reload() {
 	ebegin "Reloading ${RC_SVCNAME}"
 	${command} ${command_args} reload
 	eend $? "Failed to reload ${RC_SVCNAME}"
-}
-
-showlog(){
-	less /var/log/fail2ban.log
 }
