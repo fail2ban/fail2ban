@@ -26,7 +26,7 @@ extra_started_commands="reload showlog"
 FAIL2BAN="/usr/bin/fail2ban-client ${FAIL2BAN_OPTIONS}"
 
 depend() {
-	need logger
+	use logger
 	after iptables
 }
 
