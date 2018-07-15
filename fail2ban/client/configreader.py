@@ -28,7 +28,7 @@ import glob
 import os
 from ConfigParser import NoOptionError, NoSectionError
 
-from .configparserinc import sys, SafeConfigParserWithIncludes, logLevel
+from .configparserinc import SafeConfigParserWithIncludes, logLevel
 from ..helpers import getLogger, _as_bool, _merge_dicts, substituteRecursiveTags
 
 # Gets the instance of the logger.

@@ -24,7 +24,6 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2012 Yaroslav Halchenko"
 __license__ = "GPL"
 
 import fcntl
-import time
 
 import gamin
 
