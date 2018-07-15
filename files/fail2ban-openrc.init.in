@@ -44,7 +44,7 @@ depend() {
 }
 
 start_pre() {
-	checkpath -d "${FAIL2BAN_RUNDIR}" || return 1
+	checkpath -d "${FAIL2BAN_RUNDIR}"
 }
 
 reload() {
