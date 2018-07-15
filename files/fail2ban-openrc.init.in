@@ -43,14 +43,39 @@ depend() {
 	after iptables
 }
 
+checkconfig() {
+    "${command}" ${command_args} --test
+}
+
 start_pre() {
+	# If this isn't a restart, make sure that the user's config isn't
+	# busted before we try to start the daemon (this will produce
+	# better error messages than if we just try to start it blindly).
+	#
+	# If, on the other hand, this *is* a restart, then the stop_pre
+	# action will have ensured that the config is usable and we don't
+	# need to do that again.
+	if [ "${RC_CMD}" != "restart" ] ; then
+		checkconfig || return $?
+	fi
 	checkpath -d "${FAIL2BAN_RUNDIR}"
+}
+
+stop_pre() {
+	# If this is a restart, check to make sure the user's config
+	# isn't busted before we stop the running daemon.
+	if [ "${RC_CMD}" = "restart" ] ; then
+		checkconfig || return $?
+	fi
 }
 
 reload() {
 	# The fail2ban-client uses an undocumented protocol to tell
 	# the server to reload(), so we have to use it here rather
-	# than e.g. sending a signal to the server daemon.
+	# than e.g. sending a signal to the server daemon. Note that
+	# the reload will fail (on the server side) if the new config
+	# is invalid; we therefore don't need to test it ourselves
+	# with checkconfig() before initiating the reload.
 	ebegin "Reloading ${RC_SVCNAME}"
 	"@BINDIR@/fail2ban-client" ${command_args} reload
 	eend $? "Failed to reload ${RC_SVCNAME}"
