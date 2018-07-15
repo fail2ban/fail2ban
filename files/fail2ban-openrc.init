@@ -23,7 +23,8 @@ description_reload="reload configuration"
 description_showlog="show fail2ban logs"
 extra_started_commands="reload showlog"
 
-FAIL2BAN="/usr/bin/fail2ban-client ${FAIL2BAN_OPTIONS}"
+command="/usr/bin/fail2ban-client"
+command_args="${FAIL2BAN_OPTIONS}"
 
 depend() {
 	use logger
@@ -37,20 +38,20 @@ start() {
 	# bug 347477
 	rm -f /var/run/fail2ban/fail2ban.sock || return 1
 	start-stop-daemon --start --pidfile /var/run/fail2ban/fail2ban.pid \
-	-- ${FAIL2BAN} start
+	-- ${command} ${command_args} start
 	eend $? "Failed to start fail2ban"
 }
 
 stop() {
 	ebegin "Stopping fail2ban"
 	start-stop-daemon --stop --pidfile /var/run/fail2ban/fail2ban.pid --retry 30 \
-	-- ${FAIL2BAN} stop
+	-- ${command} ${command_args} stop
 	eend $? "Failed to stop fail2ban"
 }
 
 reload() {
 	ebegin "Reloading fail2ban"
-	${FAIL2BAN} reload
+	${command} ${command_args} reload
 	eend $? "Failed to reload fail2ban"
 }
 
