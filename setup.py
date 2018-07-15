@@ -95,24 +95,27 @@ class install_scripts_f2b(install_scripts):
 			if install_dir.startswith(root):
 				install_dir = install_dir[len(root):]
 		except: # pragma: no cover
-			print('WARNING: Cannot find root-base option, check the bin-path to fail2ban-scripts in "fail2ban.service".')
-		print('Creating %s/fail2ban.service (from fail2ban.service.in): @BINDIR@ -> %s' % (buildroot, install_dir))
-		with open(os.path.join(source_dir, 'files/fail2ban.service.in'), 'r') as fn:
-			lines = fn.readlines()
-		fn = None
-		if not dry_run:
-			fn = open(os.path.join(buildroot, 'fail2ban.service'), 'w')
-		try:
-			for ln in lines:
-				ln = re.sub(r'@BINDIR@', lambda v: install_dir, ln)
-				if dry_run:
-					sys.stdout.write(' | ' + ln)
-					continue
-				fn.write(ln)
-		finally:
-			if fn: fn.close()
-		if dry_run:
-			print(' `')
+			print('WARNING: Cannot find root-base option, check the bin-path to fail2ban-scripts in "fail2ban.service" and "fail2ban-openrc.init".')
+
+		scripts = ['fail2ban.service', 'fail2ban-openrc.init']
+		for script in scripts:
+			print('Creating %s/%s (from %s.in): @BINDIR@ -> %s' % (buildroot, script, script, install_dir))
+			with open(os.path.join(source_dir, 'files/%s.in' % script), 'r') as fn:
+				lines = fn.readlines()
+			fn = None
+			if not dry_run:
+				fn = open(os.path.join(buildroot, script), 'w')
+			try:
+				for ln in lines:
+					ln = re.sub(r'@BINDIR@', lambda v: install_dir, ln)
+					if dry_run:
+						sys.stdout.write(' | ' + ln)
+						continue
+					fn.write(ln)
+			finally:
+				if fn: fn.close()
+			if dry_run:
+				print(' `')
 
 
 # Wrapper to specify fail2ban own options:

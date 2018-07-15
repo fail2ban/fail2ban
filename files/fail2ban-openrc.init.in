@@ -26,12 +26,9 @@ extra_started_commands="reload"
 FAIL2BAN_RUNDIR="/run/${RC_SVCNAME}"
 FAIL2BAN_SOCKET="${FAIL2BAN_RUNDIR}/${RC_SVCNAME}.sock"
 
-# This should be replaced by the build system, eventually.
-FAIL2BAN_BINDIR="/usr/bin"
-
 # The fail2ban-client program is also capable of starting and stopping
 # the server, but things are simpler if we let start-stop-daemon do it.
-command="${FAIL2BAN_BINDIR}/fail2ban-server"
+command="@BINDIR@/fail2ban-server"
 pidfile="${FAIL2BAN_RUNDIR}/${RC_SVCNAME}.pid"
 
 # We force the pidfile/socket location in this service script because
@@ -55,6 +52,6 @@ reload() {
 	# the server to reload(), so we have to use it here rather
 	# than e.g. sending a signal to the server daemon.
 	ebegin "Reloading ${RC_SVCNAME}"
-	"${FAIL2BAN_BINDIR}/fail2ban-client" ${command_args} reload
+	"@BINDIR@/fail2ban-client" ${command_args} reload
 	eend $? "Failed to reload ${RC_SVCNAME}"
 }
