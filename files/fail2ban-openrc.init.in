@@ -23,6 +23,10 @@ description_reload="reload configuration without dropping bans"
 extra_started_commands="reload"
 
 # Can't (and shouldn't) be changed by the end-user.
+#
+# Note that @BINDIR@ is already supplied by the build system. Some
+# day, it might be nice to have @RUNDIR@ supplied by the build system
+# as well, so that we don't have to hard-code /run here.
 FAIL2BAN_RUNDIR="/run/${RC_SVCNAME}"
 FAIL2BAN_SOCKET="${FAIL2BAN_RUNDIR}/${RC_SVCNAME}.sock"
 
