@@ -375,8 +375,8 @@ files/fail2ban.service.in
 files/fail2ban-tmpfiles.conf
 files/fail2ban.upstart
 files/gen_badbots
-files/gentoo-confd
-files/gentoo-initd
+files/fail2ban-openrc.conf
+files/fail2ban-openrc.init
 files/ipmasq-ZZZzzz_fail2ban.rul
 files/logwatch/fail2ban
 files/logwatch/fail2ban-0.8.log
