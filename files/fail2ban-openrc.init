@@ -18,13 +18,15 @@
 # Author: Sireyessire, Cyril Jaquier
 #
 
-description="Daemon to ban hosts that cause multiple authentication errors"
+description="Ban hosts that cause multiple authentication errors"
 description_reload="reload configuration"
 extra_started_commands="reload"
 
-command="/usr/bin/fail2ban-client"
-command_args="${FAIL2BAN_OPTIONS}"
+# The fail2ban-client program is also capable of starting and stopping
+# the server, but things are simpler if we let start-stop-daemon do it.
+command="/usr/bin/fail2ban-server"
 pidfile="/run/${RC_SVCNAME}/${RC_SVCNAME}.pid"
+command_args="${FAIL2BAN_OPTIONS} -p ${pidfile}"
 retry="30"
 
 depend() {
@@ -34,28 +36,13 @@ depend() {
 
 start_pre() {
 	checkpath -d "${pidfile%/*}" || return 1
-
-	# Remove stale socket after system crash, Gentoo bug 347477
-	rm -f /var/run/fail2ban/fail2ban.sock || return 1
-}
-
-start() {
-	ebegin "Starting ${RC_SVCNAME}"
-
-	start-stop-daemon --start --pidfile "${pidfile}" \
-	-- ${command} ${command_args} start
-	eend $? "Failed to start ${RC_SVCNAME}"
-}
-
-stop() {
-	ebegin "Stopping ${RC_SVCNAME}"
-	start-stop-daemon --stop --pidfile "${pidfile}" --retry "${retry}" \
-	-- ${command} ${command_args} stop
-	eend $? "Failed to stop ${RC_SVCNAME}"
 }
 
 reload() {
+	# The fail2ban-client uses an undocumented protocol to tell
+	# the server to reload(), so we have to use it here rather
+	# than e.g. sending a signal to the server daemon.
 	ebegin "Reloading ${RC_SVCNAME}"
-	${command} ${command_args} reload
+	"${command%/*}/fail2ban-client" ${command_args} reload
 	eend $? "Failed to reload ${RC_SVCNAME}"
 }
