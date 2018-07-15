@@ -28,8 +28,7 @@ __license__ = "GPL"
 import threading
 from .jailthread import JailThread
 from .failmanager import FailManagerEmpty
-import os, logging, time, datetime, math, json, random
-import sys
+import logging, time, datetime
 from ..helpers import getLogger
 from .mytime import MyTime
 from .utils import Utils

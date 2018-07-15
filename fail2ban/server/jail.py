@@ -24,7 +24,6 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Y
 __license__ = "GPL"
 
 import logging
-import math
 import random
 import Queue
 

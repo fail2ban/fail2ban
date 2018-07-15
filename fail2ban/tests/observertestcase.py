@@ -28,7 +28,6 @@ import os
 import sys
 import unittest
 import tempfile
-import time
 
 from ..server.mytime import MyTime
 from ..server.ticket import FailTicket, BanTicket
@@ -36,7 +35,6 @@ from ..server.failmanager import FailManager
 from ..server.observer import Observers, ObserverThread
 from ..server.utils import Utils
 from .utils import LogCaptureTestCase
-from ..server.filter import Filter
 from .dummyjail import DummyJail
 
 from .databasetestcase import getFail2BanDb, Fail2BanDb

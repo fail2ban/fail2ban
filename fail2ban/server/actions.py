@@ -25,9 +25,6 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
 import logging
-import os
-import sys
-import time
 from collections import Mapping
 try:
 	from collections import OrderedDict

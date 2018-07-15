@@ -44,7 +44,7 @@ from ..server import server
 from ..server.mytime import MyTime
 from ..server.utils import Utils
 from .utils import LogCaptureTestCase, logSys as DefLogSys, with_tmpdir, shutil, logging, \
-	STOCK, CONFIG_DIR as STOCK_CONF_DIR, TEST_NOW, tearDownMyTime
+	STOCK, CONFIG_DIR as STOCK_CONF_DIR, tearDownMyTime
 
 from ..helpers import getLogger
 
