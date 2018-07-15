@@ -26,6 +26,7 @@ extra_started_commands="reload showlog"
 command="/usr/bin/fail2ban-client"
 command_args="${FAIL2BAN_OPTIONS}"
 pidfile="/run/${RC_SVCNAME}/${RC_SVCNAME}.pid"
+retry="30"
 
 depend() {
 	use logger
@@ -49,7 +50,7 @@ start() {
 
 stop() {
 	ebegin "Stopping ${RC_SVCNAME}"
-	start-stop-daemon --stop --pidfile "${pidfile}" --retry 30 \
+	start-stop-daemon --stop --pidfile "${pidfile}" --retry "${retry}" \
 	-- ${command} ${command_args} stop
 	eend $? "Failed to stop ${RC_SVCNAME}"
 }
