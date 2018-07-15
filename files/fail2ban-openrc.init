@@ -40,24 +40,24 @@ start_pre() {
 }
 
 start() {
-	ebegin "Starting fail2ban"
+	ebegin "Starting ${RC_SVCNAME}"
 
 	start-stop-daemon --start --pidfile "${pidfile}" \
 	-- ${command} ${command_args} start
-	eend $? "Failed to start fail2ban"
+	eend $? "Failed to start ${RC_SVCNAME}"
 }
 
 stop() {
-	ebegin "Stopping fail2ban"
+	ebegin "Stopping ${RC_SVCNAME}"
 	start-stop-daemon --stop --pidfile "${pidfile}" --retry 30 \
 	-- ${command} ${command_args} stop
-	eend $? "Failed to stop fail2ban"
+	eend $? "Failed to stop ${RC_SVCNAME}"
 }
 
 reload() {
-	ebegin "Reloading fail2ban"
+	ebegin "Reloading ${RC_SVCNAME}"
 	${command} ${command_args} reload
-	eend $? "Failed to reload fail2ban"
+	eend $? "Failed to reload ${RC_SVCNAME}"
 }
 
 showlog(){
