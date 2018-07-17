@@ -61,7 +61,9 @@ ver. 0.10.4-dev-1 (20??/??/??) - development edition
 -----------
 
 ### Fixes
-* `filter.d/dovecot.conf`: failregex enhancement to catch sql password mismatch errors (gh-2153);
+* `filter.d/dovecot.conf`: 
+  - failregex enhancement to catch sql password mismatch errors (gh-2153);
+  - disconnected with "proxy dest auth failed" (gh-2184);
 * `action.d/hostsdeny.conf`: fix parameter in config (dynamic parameters stating with '_' are protected 
   and don't allowed in command-actions), see gh-2114;
 * decoding stability fix by wrong encoded characters like utf-8 surrogate pairs, etc (gh-2171):
