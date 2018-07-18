@@ -201,6 +201,7 @@ def testSampleRegexsFactory(name, basedir):
 					flt, regexsUsedIdx = flt
 					regexList = flt.getFailRegex()
 
+					failregex = -1
 					try:
 						fail = {}
 						ret = flt.processLine(line)
@@ -263,9 +264,10 @@ def testSampleRegexsFactory(name, basedir):
 						regexsUsedRe.add(regexList[failregex])
 					except AssertionError as e: # pragma: no cover
 						import pprint
-						raise AssertionError("%s: %s on: %s:%i, line:\n%s\n"
+						raise AssertionError("%s: %s on: %s:%i, line:\n %sregex (%s):\n %s\n"
 							"faildata: %s\nfail: %s" % (
-								fltName, e, logFile.filename(), logFile.filelineno(), line,
+								fltName, e, logFile.filename(), logFile.filelineno(), 
+								line, failregex, regexList[failregex] if failregex != -1 else None,
 								'\n'.join(pprint.pformat(faildata).splitlines()),
 								'\n'.join(pprint.pformat(fail).splitlines())))
 
