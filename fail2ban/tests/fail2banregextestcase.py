@@ -209,7 +209,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 	def testVerboseFullSshd(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"-l", "notice", # put down log-level, because of too many debug-messages
-			"-v", "--verbose-date", "--print-all-matched",
+			"-v", "--verbose-date", "--print-all-matched", "--print-all-ignored",
 			"-c", CONFIG_DIR,
 			Fail2banRegexTest.FILENAME_SSHD, "sshd"
 		)
