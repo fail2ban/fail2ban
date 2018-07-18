@@ -411,17 +411,23 @@ class Fail2banRegex(object):
 	def testRegex(self, line, date=None):
 		orgLineBuffer = self._filter._Filter__lineBuffer
 		fullBuffer = len(orgLineBuffer) >= self._filter.getMaxLines()
+		is_ignored = False
 		try:
-			ret = self._filter.processLine(line, date)
+			found = self._filter.processLine(line, date)
 			lines = []
 			line = self._filter.processedLine()
-			for match in ret:
+			ret = []
+			for match in found:
 				# Append True/False flag depending if line was matched by
 				# more than one regex
 				match.append(len(ret)>1)
 				regex = self._failregex[match[0]]
 				regex.inc()
 				regex.appendIP(match)
+				if not match[3].get('nofail'):
+					ret.append(match)
+				else:
+					is_ignored = True
 		except RegexException as e: # pragma: no cover
 			output( 'ERROR: %s' % e )
 			return False
@@ -447,13 +453,13 @@ class Fail2banRegex(object):
 		if lines: # pre-lines parsed in multiline mode (buffering)
 			lines.append(line)
 			line = "\n".join(lines)
-		return line, ret
+		return line, ret, is_ignored
 
 	def process(self, test_lines):
 		t0 = time.time()
 		for line in test_lines:
 			if isinstance(line, tuple):
-				line_datetimestripped, ret = self.testRegex(
+				line_datetimestripped, ret, is_ignored = self.testRegex(
 					line[0], line[1])
 				line = "".join(line[0])
 			else:
@@ -461,8 +467,9 @@ class Fail2banRegex(object):
 				if line.startswith('#') or not line:
 					# skip comment and empty lines
 					continue
-				line_datetimestripped, ret = self.testRegex(line)
-			is_ignored = self.testIgnoreRegex(line_datetimestripped)
+				line_datetimestripped, ret, is_ignored = self.testRegex(line)
+			if not is_ignored:
+				is_ignored = self.testIgnoreRegex(line_datetimestripped)
 
 			if is_ignored:
 				self._line_stats.ignored += 1
