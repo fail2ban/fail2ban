@@ -180,10 +180,11 @@ do_reload() {
 #
 log_end_msg_wrapper()
 {
+	[ $1 -lt $2 ] && value=0 || value=1
 	if [ "$3" != "no" ]; then
-		[ $1 -lt $2 ] && value=0 || value=1
 		log_end_msg $value
 	fi
+	exit $value
 }
 
 command="$1"
