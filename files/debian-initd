@@ -188,7 +188,7 @@ log_end_msg_wrapper()
 	if [ "$3" != "no" ]; then
 		log_end_msg $value
 	fi
-	if [ $code != 0 ]; then
+	if [ $value != "0" ]; then
 		exit $1
 	fi
 }
