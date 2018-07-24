@@ -581,7 +581,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 			# test reload missing jail (direct):
 			self.execCmd(FAILED, startparams, "reload", "~~unknown~jail~fail~~")
 			self.assertLogged("Failed during configuration: No section: '~~unknown~jail~fail~~'")
-			self.assertLogged("Exit with code -1")
+			self.assertLogged("Exit with code 255")
 			self.pruneLog()
 		finally:
 			self.pruneLog()
