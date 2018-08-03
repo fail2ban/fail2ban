@@ -64,6 +64,14 @@ ver. 0.10.4-dev-1 (20??/??/??) - development edition
 * `filter.d/dovecot.conf`: 
   - failregex enhancement to catch sql password mismatch errors (gh-2153);
   - disconnected with "proxy dest auth failed" (gh-2184);
+* `filter.d/freeswitch.conf`:
+  - provide compatibility for log-format from gh-2193:
+    * extended with new default date-pattern `^(?:%%Y-)?%%m-%%d[ T]%%H:%%M:%%S(?:\.%%f)?` to cover
+      `YYYY-mm-dd HH:MM::SS.ms` as well as `mm-dd HH:MM::SS.ms` (so year is optional);
+    * more optional arguments in log-line (so accept [WARN] as well as [WARNING] and optional [SOFIA] hereafter);
+  - extended with mode parameter, allows to avoid matching of messages like `auth challenge (REGISTER)`
+    (see gh-2163) (currently `extra` as default to be backwards-compatible), see comments in filter
+    how to set it to mode `normal`.
 * `action.d/hostsdeny.conf`: fix parameter in config (dynamic parameters stating with '_' are protected 
   and don't allowed in command-actions), see gh-2114;
 * decoding stability fix by wrong encoded characters like utf-8 surrogate pairs, etc (gh-2171):
