@@ -56,7 +56,7 @@ Alternatively, you can clone the source from GitHub to a directory of Your choic
     sudo python setup.py install 
     
 This will install Fail2Ban into the python library directory. The executable
-scripts are placed into `/usr/bin`, and configuration in `/etc/fail2ban`.
+scripts are placed into `/usr/local/bin`, and configuration in `/etc/fail2ban`.
 
 Fail2Ban should be correctly installed now. Just type:
 
