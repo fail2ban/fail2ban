@@ -202,7 +202,7 @@ ver. 0.10.1 (2017/10/12) - succeeded-before-friday-the-13th
 * avoid using "ANSI_X3.4-1968" as preferred encoding (if missing environment variables 
   'LANGUAGE', 'LC_ALL', 'LC_CTYPE', and 'LANG', see gh-1587).
 * action.d/pf.conf: several fixes for pf-action like anchoring, etc. (see gh-1866, gh-1867);
-* fixed ignorself issue "Retrieving own IPs of localhost failed: inet_pton() argument 2 must be string, not int" (see gh-1865);
+* fixed ignoreself issue "Retrieving own IPs of localhost failed: inet_pton() argument 2 must be string, not int" (see gh-1865);
 * fixed tags `<fq-hostname>` and `<sh-hostname>`, could be used without ticket (a. g. in `actionstart` etc., gh-1859).
 
 * setup.py: fixed several setup facilities (gh-1874):
