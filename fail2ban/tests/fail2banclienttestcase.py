@@ -903,7 +903,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
 			_out_file(test1log)
 		self.execCmd(SUCCESS, startparams, "reload")
-		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		# test not unbanned / banned again:
 		self.assertNotLogged(
 			"[test-jail1] Unban 192.0.2.1", 
@@ -935,7 +935,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			reload="               echo '[<name>] %s: reloaded.'" % "test-action1", 
 			stop=  "               echo '[<name>] %s: stopped.'" % "test-action1")
 		self.execCmd(SUCCESS, startparams, "reload")
-		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		# test not unbanned / banned again:
 		self.assertNotLogged(
 			"[test-jail1] Unban 192.0.2.1", 
@@ -1067,8 +1067,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# reload jail1 without restart (without ban/unban):
 		self.pruneLog("[test-phase 3]")
 		self.execCmd(SUCCESS, startparams, "reload", "test-jail1")
-		self.assertLogged(
-			"Reload finished.", all=True, wait=MID_WAITTIME)
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		self.assertLogged(
 			"Reload jail 'test-jail1'",
 			"Jail 'test-jail1' reloaded", all=True)
@@ -1082,7 +1081,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.pruneLog("[test-phase 4]")
 		_write_jail_cfg(enabled=[1])
 		self.execCmd(SUCCESS, startparams, "reload")
-		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		# test both jails should be reloaded:
 		self.assertLogged(
 			"Reload jail 'test-jail1'")
@@ -1129,7 +1128,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.pruneLog("[test-phase 7]")
 		self.execCmd(SUCCESS, startparams,
 			"reload", "--unban")
-		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		# reloads unbanned all:
 		self.assertLogged(
 			"Jail 'test-jail1' reloaded",
@@ -1160,7 +1159,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.pruneLog("[test-phase 8a]")
 		_write_jail_cfg(enabled=[1], backend="xxx-unknown-backend-zzz")
 		self.execCmd(FAILED, startparams, "reload")
-		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		self.assertLogged(
 			"Restart jail 'test-jail1' (reason: 'polling' != ", 
 			"Unknown backend ", all=True)
@@ -1168,18 +1167,20 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.pruneLog("[test-phase 8b]")
 		_write_jail_cfg(enabled=[1])
 		self.execCmd(SUCCESS, startparams, "reload")
-		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)	
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 
 		# several small cases (cover several parts):
 		self.pruneLog("[test-phase end-1]")
 		# wrong jail (not-started):
 		self.execCmd(FAILED, startparams,
 			"--async", "reload", "test-jail2")
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		self.assertLogged("the jail 'test-jail2' does not exist")
 		self.pruneLog()
 		# unavailable jail (but exit 0), using --if-exists option:
 		self.execCmd(SUCCESS, startparams,
 			"--async", "reload", "--if-exists", "test-jail2")
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		self.assertNotLogged(
 			"Creating new jail 'test-jail2'",
 			"Jail 'test-jail2' started", all=True)
@@ -1188,9 +1189,10 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.pruneLog("[test-phase end-2]")
 		self.execCmd(SUCCESS, startparams,
 			"--async", "reload", "--restart", "--all")
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		self.assertLogged(
 			"Jail 'test-jail1' stopped", 
-			"Jail 'test-jail1' started", all=True)
+			"Jail 'test-jail1' started", all=True, wait=MID_WAITTIME)
 
 	# test action.d/nginx-block-map.conf --
 	@unittest.F2B.skip_if_cfg_missing(action="nginx-block-map")
