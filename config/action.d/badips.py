@@ -71,7 +71,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		Time in seconds between updating bad IPs blacklist.
 		Default 900 (15 minutes)
 	log : str, optional
-		Whether or not to log when an IP id (un)banned.
+		Whether or not to log when an IP is (un)banned.
 		Default `yes`.
 	agent : str, optional
 		User agent transmitted to server.
