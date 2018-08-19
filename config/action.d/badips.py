@@ -70,6 +70,9 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	updateperiod : int, optional
 		Time in seconds between updating bad IPs blacklist.
 		Default 900 (15 minutes)
+	log : str, optional
+		Whether or not to log when an IP id (un)banned.
+		Default `yes`.
 	agent : str, optional
 		User agent transmitted to server.
 		Default `Fail2Ban/ver.`
@@ -86,7 +89,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		return Request(url, headers={'User-Agent': self.agent}, **argv)
 
 	def __init__(self, jail, name, category, score=3, age="24h", key=None,
-		banaction=None, bancategory=None, bankey=None, updateperiod=900, agent="Fail2Ban", 
+		banaction=None, bancategory=None, bankey=None, updateperiod=900, log="yes", agent="Fail2Ban", 
 		timeout=TIMEOUT):
 		super(BadIPsAction, self).__init__(jail, name)
 
@@ -99,6 +102,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		self.banaction = banaction
 		self.bancategory = bancategory or category
 		self.bankey = bankey
+		self.log = log
 		self.updateperiod = updateperiod
 
 		self._bannedips = set()
@@ -289,9 +293,10 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 					exc_info=self._logSys.getEffectiveLevel()<=logging.DEBUG)
 			else:
 				self._bannedips.add(ip)
-				self._logSys.debug(
-					"Banned IP %s for jail '%s' with action '%s'",
-					ip, self._jail.name, self.banaction)
+				if self.log is "yes":
+					self._logSys.notice(
+						"Banned IP %s for jail '%s' with action '%s'",
+						ip, self._jail.name, self.banaction)
 
 	def _unbanIPs(self, ips):
 		for ip in ips:
@@ -304,14 +309,15 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 					'ipjailmatches': "",
 				})
 			except Exception as e:
-				self._logSys.info(
+				self._logSys.error(
 					"Error unbanning IP %s for jail '%s' with action '%s': %s",
 					ip, self._jail.name, self.banaction, e,
 					exc_info=self._logSys.getEffectiveLevel()<=logging.DEBUG)
 			else:
-				self._logSys.debug(
-					"Unbanned IP %s for jail '%s' with action '%s'",
-					ip, self._jail.name, self.banaction)
+				if self.log is "yes":
+					self._logSys.notice(
+						"Unbanned IP %s for jail '%s' with action '%s'",
+						ip, self._jail.name, self.banaction)
 			finally:
 				self._bannedips.remove(ip)
 
