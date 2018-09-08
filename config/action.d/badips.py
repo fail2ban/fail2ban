@@ -343,13 +343,16 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 				ips = self.getList(
 					self.bancategory, self.score, self.age, self.bankey)
 				# Remove old IPs no longer listed
-				self._unbanIPs(self._bannedips - ips)
+				s = self._bannedips - ips
+				m = len(s)
+				self._unbanIPs(s)
 				# Add new IPs which are now listed
-				self._banIPs(ips - self._bannedips)
-
-				self._logSys.debug(
-					"Updated IPs for jail '%s'. Update again in %i seconds",
-					self._jail.name, self.updateperiod)
+				s = ips - self._bannedips
+				p = len(s)
+				self._banIPs(s)
+				self._logSys.info(
+					"Updated IPs for jail '%s' (-%d/+%d). Update again in %i seconds",
+					self._jail.name, m, p, self.updateperiod)
 			finally:
 				self._timer = threading.Timer(self.updateperiod, self.update)
 				self._timer.start()
