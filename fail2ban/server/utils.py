@@ -141,12 +141,12 @@ class Utils():
 
 	@staticmethod
 	def executeCmd(realCmd, timeout=60, shell=True, output=False, tout_kill_tree=True, 
-		success_codes=(0,), varsDict=None):
+		success_codes=(0,), varsDict=None, sysTimeout=False):
 		"""Executes a command.
 
 		Parameters
 		----------
-		realCmd : str
+		realCmd : str or list
 			The command to execute.
 		timeout : int
 			The time out in seconds for the command.
@@ -158,6 +158,8 @@ class Utils():
 			If False, just indication of success is returned
 		varsDict: dict
 			variables supplied to the command (or to the shell script)
+		sysTimeout: bool
+			If True, use timeout system command, thus passive wait
 
 		Returns
 		-------
@@ -174,6 +176,14 @@ class Utils():
 		stdout = stderr = None
 		retcode = None
 		popen = env = None
+		if sysTimeout:
+			if isinstance(realCmd, list):
+				realCmd.insert(0, "timeout")
+				realCmd.insert(1, "-k")
+				realCmd.insert(2, str(Utils.DEFAULT_SLEEP_INTERVAL))
+				realCmd.insert(3, str(timeout))
+			else:
+				realCmd = "timeout -k " + str(Utils.DEFAULT_SLEEP_INTERVAL) + " " + str(timeout) + " " + realCmd
 		if varsDict:
 			if shell:
 				# build map as array of vars and command line array:
@@ -187,8 +197,13 @@ class Utils():
 				realCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell, env=env,
 				preexec_fn=os.setsid  # so that killpg does not kill our process
 			)
+			if sysTimeout:
+				retcode = popen.wait()
+				if retcode == 124:
+					retcode = 128 + 15
+			else:
+				retcode = popen.poll()
 			# wait with timeout for process has terminated:
-			retcode = popen.poll()
 			if retcode is None:
 				def _popen_wait_end():
 					retcode = popen.poll()
@@ -198,10 +213,12 @@ class Utils():
 				if retcode:
 					retcode = retcode[1]
 			# if timeout:
-			if retcode is None:
+			if retcode is None or (sysTimeout and (retcode == (128 + 15) or retcode == (128 + 9))):
 				if logCmd: logCmd(logging.ERROR); logCmd = None
 				logSys.error("%x -- timed out after %s seconds." %
 					(realCmdId, timeout))
+			# if timeout:
+			if retcode is None:
 				pgid = os.getpgid(popen.pid)
 				# if not tree - first try to terminate and then kill, otherwise - kill (-9) only:
 				os.killpg(pgid, signal.SIGTERM) # Terminate the process
