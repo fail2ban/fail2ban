@@ -141,7 +141,7 @@ class Utils():
 
 	@staticmethod
 	def executeCmd(realCmd, timeout=60, shell=True, output=False, tout_kill_tree=True, 
-		success_codes=(0,), varsDict=None, sysTimeout=False):
+		success_codes=(0,), varsDict=None):
 		"""Executes a command.
 
 		Parameters
@@ -158,8 +158,6 @@ class Utils():
 			If False, just indication of success is returned
 		varsDict: dict
 			variables supplied to the command (or to the shell script)
-		sysTimeout: bool
-			If True, use timeout system command, thus passive wait
 
 		Returns
 		-------
@@ -176,14 +174,13 @@ class Utils():
 		stdout = stderr = None
 		retcode = None
 		popen = env = None
-		if sysTimeout:
-			if isinstance(realCmd, list):
-				realCmd.insert(0, "timeout")
-				realCmd.insert(1, "-k")
-				realCmd.insert(2, str(Utils.DEFAULT_SLEEP_INTERVAL))
-				realCmd.insert(3, str(timeout))
-			else:
-				realCmd = "timeout -k " + str(Utils.DEFAULT_SLEEP_INTERVAL) + " " + str(timeout) + " " + realCmd
+		sysTimeout = False
+		if isinstance(realCmd, list):
+			if "timeout -k" in " ".join(realCmd):
+				sysTimeout = True
+		else:
+			if "timeout -k" in realCmd:
+				sysTimeout = True
 		if varsDict:
 			if shell:
 				# build map as array of vars and command line array:

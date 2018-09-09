@@ -817,4 +817,4 @@ class CommandAction(ActionBase):
 			return True
 
 		with _cmd_lock:
-			return Utils.executeCmd(realCmd, timeout, sysTimeout=True, shell=True, output=False, **kwargs)
+			return Utils.executeCmd(realCmd, timeout, shell=True, output=False, **kwargs)
