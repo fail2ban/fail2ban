@@ -11,8 +11,8 @@ Build-Depends:
  , python3-pyinotify
  , sqlite3
 Homepage: http://www.fail2ban.org
-Vcs-Git: git://github.com/fail2ban/fail2ban.git -b debian
-Vcs-Browser: http://github.com/fail2ban/fail2ban
+Vcs-Git: https://github.com/fail2ban/fail2ban.git -b debian
+Vcs-Browser: https://github.com/fail2ban/fail2ban
 Standards-Version: 4.1.3
 
 
