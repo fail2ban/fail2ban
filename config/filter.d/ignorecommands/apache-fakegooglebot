@@ -5,31 +5,34 @@
 # presence of host and cut commands
 #
 import sys
+from fail2ban.server.ipdns import DNSUtils, IPAddr
 
 def process_args(argv):
     if len(argv) != 2:
-       sys.stderr.write("Please provide a single IP as an argument. Got: %s\n"
+       raise ValueError("Please provide a single IP as an argument. Got: %s\n"
                         % (argv[1:]))
-       sys.exit(2)
-
     ip = argv[1]
 
-    from fail2ban.server.filter import DNSUtils
-    if not DNSUtils.isValidIP(ip):
-       sys.stderr.write("Argument must be a single valid IP. Got: %s\n"
+    if not IPAddr(ip).isValid:
+       raise ValueError("Argument must be a single valid IP. Got: %s\n"
                         % ip)
-       sys.exit(3)
     return ip
+
+google_ips = None
 
 def is_googlebot(ip):
     import re
-    from fail2ban.server.filter import DNSUtils
 
     host = DNSUtils.ipToName(ip)
     if not host or not re.match('.*\.google(bot)?\.com$', host):
-       sys.exit(1)
+       return False
     host_ips = DNSUtils.dnsToIp(host)
-    sys.exit(0 if ip in host_ips else 1)
+    return (ip in host_ips)
 
-if __name__ == '__main__':
-    is_googlebot(process_args(sys.argv))
+if __name__ == '__main__': # pragma: no cover
+    try:
+      ret = is_googlebot(process_args(sys.argv))
+    except ValueError as e:
+      sys.stderr.write(str(e))
+      sys.exit(2)
+    sys.exit(0 if ret else 1)

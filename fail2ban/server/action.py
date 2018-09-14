@@ -32,7 +32,11 @@ import time
 from abc import ABCMeta
 from collections import MutableMapping
 
-from ..helpers import getLogger
+from .failregex import mapTag2Opt
+from .ipdns import asip, DNSUtils
+from .mytime import MyTime
+from .utils import Utils
+from ..helpers import getLogger, _merge_copy_dicts, uni_string, substituteRecursiveTags, TAG_CRE, MAX_TAG_REPLACE_COUNT
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -40,26 +44,29 @@ logSys = getLogger(__name__)
 # Create a lock for running system commands
 _cmd_lock = threading.Lock()
 
-# Some hints on common abnormal exit codes
-_RETCODE_HINTS = {
-	127: '"Command not found".  Make sure that all commands in %(realCmd)r '
-			'are in the PATH of fail2ban-server process '
-			'(grep -a PATH= /proc/`pidof -x fail2ban-server`/environ). '
-			'You may want to start '
-			'"fail2ban-server -f" separately, initiate it with '
-			'"fail2ban-client reload" in another shell session and observe if '
-			'additional informative error messages appear in the terminals.'
-	}
+# Todo: make it configurable resp. automatically set, ex.: `[ -f /proc/net/if_inet6 ] && echo 'yes' || echo 'no'`:
+allowed_ipv6 = True
 
-# Dictionary to lookup signal name from number
-signame = dict((num, name)
-	for name, num in signal.__dict__.iteritems() if name.startswith("SIG"))
+# capture groups from filter for map to ticket data:
+FCUSTAG_CRE = re.compile(r'<F-([A-Z0-9_\-]+)>'); # currently uppercase only
 
-# max tag replacement count:
-MAX_TAG_REPLACE_COUNT = 10
+CONDITIONAL_FAM_RE = re.compile(r"^(\w+)\?(family)=")
+
+# Special tags:
+DYN_REPL_TAGS = {
+  # System-information:
+	"fq-hostname":	lambda: str(DNSUtils.getHostname(fqdn=True)),
+	"sh-hostname":	lambda: str(DNSUtils.getHostname(fqdn=False))
+}
+# New line, space
+ADD_REPL_TAGS = {
+  "br": "\n", 
+  "sp": " "
+}
+ADD_REPL_TAGS.update(DYN_REPL_TAGS)
 
 
-class CallingMap(MutableMapping):
+class CallingMap(MutableMapping, object):
 	"""A Mapping type which returns the result of callable values.
 
 	`CallingMap` behaves similar to a standard python dictionary,
@@ -76,23 +83,88 @@ class CallingMap(MutableMapping):
 		The dictionary data which can be accessed to obtain items uncalled
 	"""
 
+	CM_REPR_ITEMS = ()
+
+	# immutable=True saves content between actions, without interim copying (save original on demand, recoverable via reset)
+	__slots__ = ('data', 'storage', 'immutable', '__org_data')
 	def __init__(self, *args, **kwargs):
+		self.storage = dict()
+		self.immutable = True
 		self.data = dict(*args, **kwargs)
 
-	def __repr__(self):
-		return "%s(%r)" % (self.__class__.__name__, self.data)
+	def reset(self, immutable=True):
+		self.storage = dict()
+		try:
+			self.data = self.__org_data
+		except AttributeError:
+			pass
+		self.immutable = immutable
+
+	def _asrepr(self, calculated=False):
+		# be sure it is suitable as string, so use str as checker:
+		return "%s(%r)" % (self.__class__.__name__, self._asdict(calculated, str))
+
+	__repr__ = _asrepr
+
+	def _asdict(self, calculated=False, checker=None):
+		d = dict(self.data, **self.storage)
+		if not calculated:
+			return dict((n,v) for n,v in d.iteritems() \
+				if not callable(v) or n in self.CM_REPR_ITEMS)
+		for n,v in d.items():
+			if callable(v):
+				try:
+					# calculate:
+					v = self.__getitem__(n)
+					# convert if needed:
+					if checker: checker(v)
+					# store calculated:
+					d[n] = v
+				except: # can't calculate - just ignore it
+					pass
+		return d
+
+	def getRawItem(self, key):
+		try:
+			value = self.storage[key]
+		except KeyError:
+			value = self.data[key]
+		return value
 
 	def __getitem__(self, key):
-		value = self.data[key]
+		try:
+			value = self.storage[key]
+		except KeyError:
+			value = self.data[key]
 		if callable(value):
-			return value()
-		else:
-			return value
+			# check arguments can be supplied to callable (for backwards compatibility):
+			value = value(self) if hasattr(value, '__code__') and value.__code__.co_argcount else value()
+			self.storage[key] = value
+		return value
 
 	def __setitem__(self, key, value):
-		self.data[key] = value
+		# mutate to copy:
+		if self.immutable:
+			self.storage = self.storage.copy()
+			self.__org_data = self.data
+			self.data = self.data.copy()
+			self.immutable = False
+		self.storage[key] = value
+
+	def __unavailable(self, key):
+		raise KeyError("Key %r was deleted" % key)
 
 	def __delitem__(self, key):
+		# mutate to copy:
+		if self.immutable:
+			self.storage = self.storage.copy()
+			self.__org_data = self.data
+			self.data = self.data.copy()
+			self.immutable = False
+		try:
+			del self.storage[key]
+		except KeyError:
+			pass
 		del self.data[key]
 
 	def __iter__(self):
@@ -101,8 +173,8 @@ class CallingMap(MutableMapping):
 	def __len__(self):
 		return len(self.data)
 
-	def copy(self):
-		return self.__class__(self.data.copy())
+	def copy(self): # pragma: no cover
+		return self.__class__(_merge_copy_dicts(self.data, self.storage))
 
 
 class ActionBase(object):
@@ -155,17 +227,17 @@ class ActionBase(object):
 		self._name = name
 		self._logSys = getLogger("fail2ban.%s" % self.__class__.__name__)
 
-	def start(self):
+	def start(self): # pragma: no cover - abstract
 		"""Executed when the jail/action is started.
 		"""
 		pass
 
-	def stop(self):
+	def stop(self): # pragma: no cover - abstract
 		"""Executed when the jail/action is stopped.
 		"""
 		pass
 
-	def ban(self, aInfo):
+	def ban(self, aInfo): # pragma: no cover - abstract
 		"""Executed when a ban occurs.
 
 		Parameters
@@ -176,7 +248,11 @@ class ActionBase(object):
 		"""
 		pass
 
-	def unban(self, aInfo):
+	@property
+	def _prolongable(self): # pragma: no cover - abstract
+		return False
+
+	def unban(self, aInfo): # pragma: no cover - abstract
 		"""Executed when a ban expires.
 
 		Parameters
@@ -187,6 +263,11 @@ class ActionBase(object):
 		"""
 		pass
 
+
+WRAP_CMD_PARAMS = {
+	'timeout': 'str2seconds',
+	'bantime': 'ignore',
+}
 
 class CommandAction(ActionBase):
 	"""A action which executes OS shell commands.
@@ -206,6 +287,9 @@ class CommandAction(ActionBase):
 	Attributes
 	----------
 	actionban
+	actioncheck
+	actionreload
+	actionrepair
 	actionstart
 	actionstop
 	actionunban
@@ -214,85 +298,148 @@ class CommandAction(ActionBase):
 
 	_escapedTags = set(('matches', 'ipmatches', 'ipjailmatches'))
 
+	def clearAllParams(self):
+		""" Clear all lists/dicts parameters (used by reloading)
+		"""
+		self.__init = 1
+		try:
+			self.timeout = 60
+			## Command executed in order to initialize the system.
+			self.actionstart = ''
+			## Command executed when ticket gets banned.
+			self.actionban = ''
+			## Command executed when ticket gets removed.
+			self.actionunban = ''
+			## Command executed in order to check requirements.
+			self.actioncheck = ''
+			## Command executed in order to restore sane environment in error case.
+			self.actionrepair = ''
+			## Command executed in order to flush all bans at once (e. g. by stop/shutdown the system).
+			self.actionflush = ''
+			## Command executed in order to stop the system.
+			self.actionstop = ''
+			## Command executed in case of reloading action.
+			self.actionreload = ''
+		finally:
+			self.__init = 0
+
 	def __init__(self, jail, name):
 		super(CommandAction, self).__init__(jail, name)
-		self.timeout = 60
-		## Command executed in order to initialize the system.
-		self.actionstart = ''
-		## Command executed when an IP address gets banned.
-		self.actionban = ''
-		## Command executed when an IP address gets removed.
-		self.actionunban = ''
-		## Command executed in order to check requirements.
-		self.actioncheck = ''
-		## Command executed in order to stop the system.
-		self.actionstop = ''
+		self.__init = 1
+		self.__properties = None
+		self.__started = {}
+		self.__substCache = {}
+		self.clearAllParams()
 		self._logSys.debug("Created %s" % self.__class__)
 
 	@classmethod
 	def __subclasshook__(cls, C):
 		return NotImplemented # Standard checks
 
-	@property
-	def timeout(self):
-		"""Time out period in seconds for execution of commands.
-		"""
-		return self._timeout
+	def __setattr__(self, name, value):
+		if not name.startswith('_') and not self.__init and not callable(value):
+			# special case for some parameters:
+			wrp = WRAP_CMD_PARAMS.get(name)
+			if wrp == 'ignore': # ignore (filter) dynamic parameters
+				return
+			elif wrp == 'str2seconds':
+				value = str(MyTime.str2seconds(value))
+			# parameters changed - clear properties and substitution cache:
+			self.__properties = None
+			self.__substCache.clear()
+			#self._logSys.debug("Set action %r %s = %r", self._name, name, value)
+			self._logSys.debug("  Set %s = %r", name, value)
+		# set:
+		self.__dict__[name] = value
 
-	@timeout.setter
-	def timeout(self, timeout):
-		self._timeout = int(timeout)
-		self._logSys.debug("Set action %s timeout = %i" %
-			(self._name, self.timeout))
+	def __delattr__(self, name):
+		if not name.startswith('_'):
+			# parameters changed - clear properties and substitution cache:
+			self.__properties = None
+			self.__substCache.clear()
+			#self._logSys.debug("Unset action %r %s", self._name, name)
+			self._logSys.debug("  Unset %s", name)
+		# del:
+		del self.__dict__[name]
 
 	@property
 	def _properties(self):
 		"""A dictionary of the actions properties.
 
-		This is used to subsitute "tags" in the commands.
+		This is used to substitute "tags" in the commands.
 		"""
-		return dict(
+		# if we have a properties - return it:
+		if self.__properties is not None:
+			return self.__properties
+		# otherwise retrieve:
+		self.__properties = dict(
 			(key, getattr(self, key))
 			for key in dir(self)
 			if not key.startswith("_") and not callable(getattr(self, key)))
+		#
+		return self.__properties
 
 	@property
-	def actionstart(self):
-		"""The command executed on start of the jail/action.
+	def _substCache(self):
+		return self.__substCache
+
+	def _getOperation(self, tag, family):
+		return self.replaceTag(tag, self._properties,
+			conditional=('family=' + family), cache=self.__substCache)
+
+	def _executeOperation(self, tag, operation, family=[]):
+		"""Executes the operation commands (like "actionstart", "actionstop", etc).
+
+		Replace the tags in the action command with actions properties
+		and executes the resulting command.
 		"""
-		return self._actionstart
+		# check valid tags in properties (raises ValueError if self recursion, etc.):
+		res = True
+		try:
+			# common (resp. ipv4):
+			startCmd = None
+			if not family or 'inet4' in family:
+				startCmd = self._getOperation(tag, 'inet4')
+				if startCmd:
+					res &= self.executeCmd(startCmd, self.timeout)
+			# start ipv6 actions if available:
+			if allowed_ipv6 and (not family or 'inet6' in family):
+				startCmd6 = self._getOperation(tag, 'inet6')
+				if startCmd6 and startCmd6 != startCmd:
+					res &= self.executeCmd(startCmd6, self.timeout)
+			if not res:
+				raise RuntimeError("Error %s action %s/%s" % (operation, self._jail, self._name,))
+		except ValueError as e:
+			raise RuntimeError("Error %s action %s/%s: %r" % (operation, self._jail, self._name, e))
 
-	@actionstart.setter
-	def actionstart(self, value):
-		self._actionstart = value
-		self._logSys.debug("Set actionstart = %s" % value)
+	COND_FAMILIES = ('inet4', 'inet6')
 
-	def start(self):
+	@property
+	def _startOnDemand(self):
+		"""Checks the action depends on family (conditional)"""
+		v = self._properties.get('actionstart_on_demand')
+		if v is None:
+			v = False
+			for n in self._properties:
+				if CONDITIONAL_FAM_RE.match(n):
+					v = True
+					break
+		self._properties['actionstart_on_demand'] = v
+		return v
+
+	def start(self, family=[]):
 		"""Executes the "actionstart" command.
 
 		Replace the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
-		if (self._properties and
-			not self.substituteRecursiveTags(self._properties)):
-			self._logSys.error(
-				"properties contain self referencing definitions "
-				"and cannot be resolved")
-			raise RuntimeError("Error starting action")
-		startCmd = self.replaceTag(self.actionstart, self._properties)
-		if not self.executeCmd(startCmd, self.timeout):
-			raise RuntimeError("Error starting action")
-
-	@property
-	def actionban(self):
-		"""The command used when a ban occurs.
-		"""
-		return self._actionban
-
-	@actionban.setter
-	def actionban(self, value):
-		self._actionban = value
-		self._logSys.debug("Set actionban = %s" % value)
+		if not family:
+			# check the action depends on family (conditional):
+			if self._startOnDemand:
+				return True
+		elif self.__started.get(family): # pragma: no cover - normally unreachable
+			return True
+		return self._executeOperation('<actionstart>', 'starting', family=family)
 
 	def ban(self, aInfo):
 		"""Executes the "actionban" command.
@@ -306,19 +453,42 @@ class CommandAction(ActionBase):
 			Dictionary which includes information in relation to
 			the ban.
 		"""
-		if not self._processCmd(self.actionban, aInfo):
+		# if we should start the action on demand (conditional by family):
+		if self._startOnDemand:
+			family = aInfo.get('family')
+			if not self.__started.get(family):
+				self.start(family)
+				self.__started[family] = 1
+				# mark also another families as "started" (-1), if they are equal
+				# (on demand, but the same for ipv4 and ipv6):
+				cmd = self._getOperation('<actionstart>', family)
+				for f in CommandAction.COND_FAMILIES:
+					if f != family and not self.__started.get(f):
+						if cmd == self._getOperation('<actionstart>', f):
+							self.__started[f] = -1
+		# ban:
+		if not self._processCmd('<actionban>', aInfo):
 			raise RuntimeError("Error banning %(ip)s" % aInfo)
 
 	@property
-	def actionunban(self):
-		"""The command used when an unban occurs.
-		"""
-		return self._actionunban
+	def _prolongable(self):
+		return (hasattr(self, 'actionprolong') and self.actionprolong 
+			and not str(self.actionprolong).isspace())
+	
+	def prolong(self, aInfo):
+		"""Executes the "actionprolong" command.
 
-	@actionunban.setter
-	def actionunban(self, value):
-		self._actionunban = value
-		self._logSys.debug("Set actionunban = %s" % value)
+		Replaces the tags in the action command with actions properties
+		and ban information, and executes the resulting command.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
+		"""
+		if not self._processCmd('<actionprolong>', aInfo):
+			raise RuntimeError("Error prolonging %(ip)s" % aInfo)
 
 	def unban(self, aInfo):
 		"""Executes the "actionunban" command.
@@ -332,34 +502,27 @@ class CommandAction(ActionBase):
 			Dictionary which includes information in relation to
 			the ban.
 		"""
-		if not self._processCmd(self.actionunban, aInfo):
+		if not self._processCmd('<actionunban>', aInfo):
 			raise RuntimeError("Error unbanning %(ip)s" % aInfo)
 
-	@property
-	def actioncheck(self):
-		"""The command used to check the environment.
+	def flush(self):
+		"""Executes the "actionflush" command.
+		
+		Command executed in order to flush all bans at once (e. g. by stop/shutdown 
+		the system), instead of unbanning of each single ticket.
 
-		This is used prior to a ban taking place to ensure the
-		environment is appropriate. If this check fails, `stop` and
-		`start` is executed prior to the check being called again.
+		Replaces the tags in the action command with actions properties
+		and executes the resulting command.
 		"""
-		return self._actioncheck
-
-	@actioncheck.setter
-	def actioncheck(self, value):
-		self._actioncheck = value
-		self._logSys.debug("Set actioncheck = %s" % value)
-
-	@property
-	def actionstop(self):
-		"""The command executed when the jail/actions stops.
-		"""
-		return self._actionstop
-
-	@actionstop.setter
-	def actionstop(self, value):
-		self._actionstop = value
-		self._logSys.debug("Set actionstop = %s" % value)
+		family = []
+		# collect started families, if started on demand (conditional):
+		if self._startOnDemand:
+			for f in CommandAction.COND_FAMILIES:
+				if self.__started.get(f) == 1: # only real started:
+					family.append(f)
+			# if no started (on demand) actions:
+			if not family: return True
+		return self._executeOperation('<actionflush>', 'flushing', family=family)
 
 	def stop(self):
 		"""Executes the "actionstop" command.
@@ -367,79 +530,34 @@ class CommandAction(ActionBase):
 		Replaces the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
-		stopCmd = self.replaceTag(self.actionstop, self._properties)
-		if not self.executeCmd(stopCmd, self.timeout):
-			raise RuntimeError("Error stopping action")
+		family = []
+		# collect started families, if started on demand (conditional):
+		if self._startOnDemand:
+			for f in CommandAction.COND_FAMILIES:
+				if self.__started.get(f) == 1: # only real started:
+					family.append(f)
+					self.__started[f] = 0
+			# if no started (on demand) actions:
+			if not family: return True
+		return self._executeOperation('<actionstop>', 'stopping', family=family)
 
-	@classmethod
-	def substituteRecursiveTags(cls, tags):
-		"""Sort out tag definitions within other tags.
-		Since v.0.9.2 supports embedded interpolation (see test cases for examples).
-
-		so:		becomes:
-		a = 3		a = 3
-		b = <a>_3	b = 3_3
+	def reload(self, **kwargs):
+		"""Executes the "actionreload" command.
 
 		Parameters
 		----------
-		tags : dict
-			Dictionary of tags(keys) and their values.
+		kwargs : dict
+		  Currently unused, because CommandAction do not support initOpts
 
-		Returns
-		-------
-		dict
-			Dictionary of tags(keys) and their values, with tags
-			within the values recursively replaced.
+		Replaces the tags in the action command with actions properties
+		and executes the resulting command.
 		"""
-		t = re.compile(r'<([^ <>]+)>')
-		# repeat substitution while embedded-recursive (repFlag is True)
-		done = cls._escapedTags.copy()
-		while True:
-			repFlag = False
-			# substitute each value:
-			for tag in tags.iterkeys():
-				# ignore escaped or already done:
-				if tag in done: continue
-				value = str(tags[tag])
-				# search and replace all tags within value, that can be interpolated using other tags:
-				m = t.search(value)
-				refCounts = {}
-				#logSys.log(5, 'TAG: %s, value: %s' % (tag, value))
-				while m:
-					found_tag = m.group(1)
-					#logSys.log(5, 'found: %s' % found_tag)
-					if found_tag == tag or refCounts.get(found_tag, 1) > MAX_TAG_REPLACE_COUNT:
-						# recursive definitions are bad
-						#logSys.log(5, 'recursion fail tag: %s value: %s' % (tag, value) )
-						return False
-					if found_tag in cls._escapedTags or not found_tag in tags:
-						# Escaped or missing tags - just continue on searching after end of match
-						# Missing tags are ok - cInfo can contain aInfo elements like <HOST> and valid shell
-						# constructs like <STDIN>.
-						m = t.search(value, m.end())
-						continue
-					value = value.replace('<%s>' % found_tag , tags[found_tag])
-					#logSys.log(5, 'value now: %s' % value)
-					# increment reference count:
-					refCounts[found_tag] = refCounts.get(found_tag, 0) + 1
-					# the next match for replace:
-					m = t.search(value, m.start())
-				#logSys.log(5, 'TAG: %s, newvalue: %s' % (tag, value))
-				# was substituted?
-				if tags[tag] != value:
-					# check still contains any tag - should be repeated (possible embedded-recursive substitution):
-					if t.search(value):
-						repFlag = True
-					tags[tag] = value
-				# no more sub tags (and no possible composite), add this tag to done set (just to be faster):
-				if '<' not in value: done.add(tag)
-			# stop interpolation, if no replacements anymore:
-			if not repFlag:
-				break
-		return tags
+		return self._executeOperation('<actionreload>', 'reloading')
 
-	@staticmethod
-	def escapeTag(value):
+	ESCAPE_CRE = re.compile(r"""[\\#&;`|*?~<>^()\[\]{}$'"\n\r]""")
+	
+	@classmethod
+	def escapeTag(cls, value):
 		"""Escape characters which may be used for command injection.
 
 		Parameters
@@ -456,16 +574,19 @@ class CommandAction(ActionBase):
 		-----
 		The following characters are escaped::
 
-			\\#&;`|*?~<>^()[]{}$'"
+			\\#&;`|*?~<>^()[]{}$'"\n\r
 
 		"""
-		for c in '\\#&;`|*?~<>^()[]{}$\'"':
-			if c in value:
-				value = value.replace(c, '\\' + c)
+		_map2c = {'\n': 'n', '\r': 'r'}
+		def substChar(m):
+			c = m.group()
+			return '\\' + _map2c.get(c, c)
+		
+		value = cls.ESCAPE_CRE.sub(substChar, value)
 		return value
 
 	@classmethod
-	def replaceTag(cls, query, aInfo):
+	def replaceTag(cls, query, aInfo, conditional='', cache=None):
 		"""Replaces tags in `query` with property values.
 
 		Parameters
@@ -480,21 +601,156 @@ class CommandAction(ActionBase):
 		str
 			`query` string with tags replaced.
 		"""
-		string = query
-		aInfo = cls.substituteRecursiveTags(aInfo)
-		for tag in aInfo:
-			if "<%s>" % tag in query:
-				value = str(aInfo[tag])			  # assure string
-				if tag in cls._escapedTags:
-					# That one needs to be escaped since its content is
-					# out of our control
-					value = cls.escapeTag(value)
-				string = string.replace('<' + tag + '>', value)
-		# New line
-		string = string.replace("<br>", '\n')
-		return string
+		if '<' not in query: return query
 
-	def _processCmd(self, cmd, aInfo = None):
+		# use cache if allowed:
+		if cache is not None:
+			ckey = (query, conditional)
+			try:
+				return cache[ckey]
+			except KeyError:
+				pass
+
+		# **Important**: don't replace if calling map - contains dynamic values only,
+		# no recursive tags, otherwise may be vulnerable on foreign user-input:
+		noRecRepl = isinstance(aInfo, CallingMap)
+		subInfo = aInfo
+		if not noRecRepl:
+			# substitute tags recursive (and cache if possible),
+			# first try get cached tags dictionary:
+			subInfo = csubkey = None
+			if cache is not None:
+				csubkey = ('subst-tags', id(aInfo), conditional)
+				try:
+					subInfo = cache[csubkey]
+				except KeyError:
+					pass
+			# interpolation of dictionary:
+			if subInfo is None:
+				subInfo = substituteRecursiveTags(aInfo, conditional, ignore=cls._escapedTags)
+			# cache if possible:
+			if csubkey is not None:
+				cache[csubkey] = subInfo
+
+		# additional replacement as calling map:
+		ADD_REPL_TAGS_CM = CallingMap(ADD_REPL_TAGS)
+		# substitution callable, used by interpolation of each tag
+		def substVal(m):
+			tag = m.group(1)			# tagname from match
+			value = None
+			if conditional:
+				value = subInfo.get(tag + '?' + conditional)
+			if value is None:
+				value = subInfo.get(tag)
+				if value is None:
+					# fallback (no or default replacement)
+					return ADD_REPL_TAGS_CM.get(tag, m.group())
+			value = uni_string(value)		# assure string
+			if tag in cls._escapedTags:
+				# That one needs to be escaped since its content is
+				# out of our control
+				value = cls.escapeTag(value)
+			# replacement for tag:
+			return value
+
+		# interpolation of query:
+		count = MAX_TAG_REPLACE_COUNT + 1
+		while True:
+			value = TAG_CRE.sub(substVal, query)
+			# **Important**: no recursive replacement for tags from calling map (properties only):
+			if noRecRepl: break
+			# possible recursion ?
+			if value == query or '<' not in value: break
+			query = value
+			count -= 1
+			if count <= 0:
+				raise ValueError(
+					"unexpected too long replacement interpolation, "
+					"possible self referencing definitions in query: %s" % (query,))
+
+		# cache if possible:
+		if cache is not None:
+			cache[ckey] = value
+		#
+		return value
+
+	ESCAPE_CRE = re.compile(r"""[\\#&;`|*?~<>\^\(\)\[\]{}$'"\n\r]""")
+	ESCAPE_VN_CRE = re.compile(r"\W")
+
+	@classmethod
+	def replaceDynamicTags(cls, realCmd, aInfo):
+		"""Replaces dynamical tags in `query` with property values.
+
+		**Important**
+		-------------
+		Because this tags are dynamic resp. foreign (user) input:
+		  - values should be escaped (using "escape" as shell variable)
+		  - no recursive substitution (no interpolation for <a<b>>)
+		  - don't use cache
+
+		Parameters
+		----------
+		query : str
+			String with tags.
+		aInfo : dict
+			Tags(keys) and associated values for substitution in query.
+
+		Returns
+		-------
+		str
+			shell script as string or array with tags replaced (direct or as variables).
+		"""
+		# array for escaped vars:
+		varsDict = dict()
+
+		def escapeVal(tag, value):
+			# if the value should be escaped:
+			if cls.ESCAPE_CRE.search(value):
+				# That one needs to be escaped since its content is
+				# out of our control
+				tag = 'f2bV_%s' % cls.ESCAPE_VN_CRE.sub('_', tag)
+				varsDict[tag] = value # add variable
+				value = '$'+tag	# replacement as variable
+			# replacement for tag:
+			return value
+
+		# additional replacement as calling map:
+		ADD_REPL_TAGS_CM = CallingMap(ADD_REPL_TAGS)
+		# substitution callable, used by interpolation of each tag
+		def substVal(m):
+			tag = m.group(1)			# tagname from match
+			try:
+				value = aInfo[tag]
+			except KeyError:
+				# fallback (no or default replacement)
+				return ADD_REPL_TAGS_CM.get(tag, m.group())
+			value = uni_string(value)		# assure string
+			# replacement for tag:
+			return escapeVal(tag, value)
+		
+		# Replace normally properties of aInfo non-recursive:
+		realCmd = TAG_CRE.sub(substVal, realCmd)
+
+		# Replace ticket options (filter capture groups) non-recursive:
+		if '<' in realCmd:
+			tickData = aInfo.get("F-*")
+			if not tickData: tickData = {}
+			def substTag(m):
+				tag = mapTag2Opt(m.groups()[0])
+				try:
+					value = uni_string(tickData[tag])
+				except KeyError:
+					return ""
+				return escapeVal("F_"+tag, value)
+			
+			realCmd = FCUSTAG_CRE.sub(substTag, realCmd)
+
+		# build command corresponding "escaped" variables:
+		if varsDict:
+			realCmd = Utils.buildShellCmd(realCmd, varsDict)
+		return realCmd
+
+	def _processCmd(self, cmd, aInfo=None, conditional=''):
 		"""Executes a command with preliminary checks and substitutions.
 
 		Before executing any commands, executes the "check" command first
@@ -518,29 +774,59 @@ class CommandAction(ActionBase):
 			self._logSys.debug("Nothing to do")
 			return True
 
-		checkCmd = self.replaceTag(self.actioncheck, self._properties)
-		if not self.executeCmd(checkCmd, self.timeout):
-			self._logSys.error(
-				"Invariant check failed. Trying to restore a sane environment")
-			self.stop()
-			self.start()
-			if not self.executeCmd(checkCmd, self.timeout):
-				self._logSys.critical("Unable to restore environment")
-				return False
+		# conditional corresponding family of the given ip:
+		if conditional == '':
+			conditional = 'family=inet4'
+			if allowed_ipv6:
+				try:
+					ip = aInfo["ip"]
+					if ip and asip(ip).isIPv6:
+						conditional = 'family=inet6'
+				except KeyError:
+					pass
 
-		# Replace tags
-		if not aInfo is None:
-			realCmd = self.replaceTag(cmd, aInfo)
-		else:
-			realCmd = cmd
+		checkCmd = self.replaceTag('<actioncheck>', self._properties, 
+			conditional=conditional, cache=self.__substCache)
+		if checkCmd:
+			if not self.executeCmd(checkCmd, self.timeout):
+				self._logSys.error(
+					"Invariant check failed. Trying to restore a sane environment")
+				# try to find repair command, if exists - exec it:
+				repairCmd = self.replaceTag('<actionrepair>', self._properties, 
+					conditional=conditional, cache=self.__substCache)
+				if repairCmd:
+					if not self.executeCmd(repairCmd, self.timeout):
+						self._logSys.critical("Unable to restore environment")
+						return False
+				else:
+					# no repair command, try to restart action...
+					# [WARNING] TODO: be sure all banactions get a repair command, because
+					#    otherwise stop/start will theoretically remove all the bans,
+					#    but the tickets are still in BanManager, so in case of new failures
+					#    it will not be banned, because "already banned" will happen.
+					try:
+						self.stop()
+					except RuntimeError: # bypass error in stop (if start/check succeeded hereafter).
+						pass
+					self.start()
+				if not self.executeCmd(checkCmd, self.timeout):
+					self._logSys.critical("Unable to restore environment")
+					return False
 
 		# Replace static fields
-		realCmd = self.replaceTag(realCmd, self._properties)
+		realCmd = self.replaceTag(cmd, self._properties, 
+			conditional=conditional, cache=self.__substCache)
+
+		# Replace dynamical tags, important - don't cache, no recursion and auto-escape here
+		if aInfo is not None:
+			realCmd = self.replaceDynamicTags(realCmd, aInfo)
+		else:
+			realCmd = cmd
 
 		return self.executeCmd(realCmd, self.timeout)
 
 	@staticmethod
-	def executeCmd(realCmd, timeout=60):
+	def executeCmd(realCmd, timeout=60, **kwargs):
 		"""Executes a command.
 
 		Parameters
@@ -562,66 +848,11 @@ class CommandAction(ActionBase):
 		RuntimeError
 			If command execution times out.
 		"""
-		logSys.debug(realCmd)
+		if logSys.getEffectiveLevel() < logging.DEBUG: # pragma: no cover
+			logSys.log(9, realCmd)
 		if not realCmd:
 			logSys.debug("Nothing to do")
 			return True
 
-		_cmd_lock.acquire()
-		try:
-			retcode = None  # to guarantee being defined upon early except
-			stdout = tempfile.TemporaryFile(suffix=".stdout", prefix="fai2ban_")
-			stderr = tempfile.TemporaryFile(suffix=".stderr", prefix="fai2ban_")
-
-			popen = subprocess.Popen(
-				realCmd, stdout=stdout, stderr=stderr, shell=True,
-				preexec_fn=os.setsid  # so that killpg does not kill our process
-			)
-			stime = time.time()
-			retcode = popen.poll()
-			while time.time() - stime <= timeout and retcode is None:
-				time.sleep(0.1)
-				retcode = popen.poll()
-			if retcode is None:
-				logSys.error("%s -- timed out after %i seconds." %
-				    (realCmd, timeout))
-				pgid = os.getpgid(popen.pid)
-				os.killpg(pgid, signal.SIGTERM)  # Terminate the process
-				time.sleep(0.1)
-				retcode = popen.poll()
-				if retcode is None:  # Still going...
-					os.killpg(pgid, signal.SIGKILL)  # Kill the process
-					time.sleep(0.1)
-					retcode = popen.poll()
-		except OSError as e:
-			logSys.error("%s -- failed with %s" % (realCmd, e))
-		finally:
-			_cmd_lock.release()
-
-		std_level = retcode == 0 and logging.DEBUG or logging.ERROR
-		if std_level >= logSys.getEffectiveLevel():
-			stdout.seek(0)
-			logSys.log(std_level, "%s -- stdout: %r" % (realCmd, stdout.read()))
-			stderr.seek(0)
-			logSys.log(std_level, "%s -- stderr: %r" % (realCmd, stderr.read()))
-		stdout.close()
-		stderr.close()
-
-		if retcode == 0:
-			logSys.debug("%s -- returned successfully" % realCmd)
-			return True
-		elif retcode is None:
-			logSys.error("%s -- unable to kill PID %i" % (realCmd, popen.pid))
-		elif retcode < 0 or retcode > 128:
-			# dash would return negative while bash 128 + n
-			sigcode = -retcode if retcode < 0 else retcode - 128
-			logSys.error("%s -- killed with %s (return code: %s)" %
-				(realCmd, signame.get(sigcode, "signal %i" % sigcode), retcode))
-		else:
-			msg = _RETCODE_HINTS.get(retcode, None)
-			logSys.error("%s -- returned %i" % (realCmd, retcode))
-			if msg:
-				logSys.info("HINT on %i: %s"
-							% (retcode, msg % locals()))
-		return False
-
+		with _cmd_lock:
+			return Utils.executeCmd(realCmd, timeout, shell=True, output=False, **kwargs)

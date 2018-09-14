@@ -20,6 +20,8 @@
 2013-06-02 09:05:48 [18505] SMTP protocol synchronization error (next input sent too soon: pipelining was not advertised): rejected "RSET" H=ba77.mx83.fr [82.96.160.77]:58302 I=[1.2.3.4]:25 next input="QUIT\r\n"
 # failJSON: { "time": "2013-06-02T09:22:05", "match": true , "host": "163.14.21.161" }
 2013-06-02 09:22:05 [19591] SMTP call from pc012-6201.spo.scu.edu.tw [163.14.21.161]:3767 I=[1.2.3.4]:25 dropped: too many nonmail commands (last was "RSET")
+# failJSON: { "time": "2013-06-02T09:22:06", "match": true , "host": "192.0.2.109" }
+2013-06-02 09:22:06 SMTP call from [192.0.2.109] dropped: too many syntax or protocol errors (last command was "AUTH LOGIN")
 # failJSON: { "time": "2013-06-02T15:06:18", "match": true , "host": "46.20.35.114" }
 2013-06-02 15:06:18 H=(VM-WIN2K3-1562) [46.20.35.114] sender verify fail for <usfh@technological-systems.com>: Unknown user
 # failJSON: { "time": "2013-06-07T02:02:09", "match": true , "host": "91.232.21.92" }
@@ -83,3 +85,17 @@
 2017-11-28 14:14:31 SMTP protocol error in "aUtH lOgIn" H=(roxzgj) [192.0.2.5] AUTH command used when not advertised
 # failJSON: { "time": "2017-11-28T14:14:32", "match": true , "host": "192.0.2.6", "desc": "quoted injecting on AUTH command" }
 2017-11-28 14:14:32 SMTP protocol error in "aUtH lOgIn" H=(test) [8.8.8.8]" H=(roxzgj) [192.0.2.6] AUTH command used when not advertised
+
+## no matches with `mode = normal`:
+
+# failJSON: { "match": false , "desc": "aggressive mode only" }
+2017-12-03 08:32:00 no host name found for IP address 192.0.2.8
+# failJSON: { "match": false , "desc": "aggressive mode only" }
+2017-12-03 08:51:35 no IP address found for host test.example.com (during SMTP connection from [192.0.2.9])
+
+# filterOptions: [{"mode": "aggressive"}]
+
+# failJSON: { "time": "2017-12-03T08:32:00", "match": true , "host": "192.0.2.8", "desc": "no host found for IP" }
+2017-12-03 08:32:00 no host name found for IP address 192.0.2.8
+# failJSON: { "time": "2017-12-03T08:51:35", "match": true , "host": "192.0.2.9", "desc": "no IP found for host" }
+2017-12-03 08:51:35 no IP address found for host test.example.com (during SMTP connection from [192.0.2.9])

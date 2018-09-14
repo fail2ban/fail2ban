@@ -17,6 +17,9 @@ Sep 16 21:30:32 catinthehat mysqld: 130916 21:30:32 [Warning] Access denied for 
 
 # failJSON: { "time": "2015-10-07T06:09:42", "match": true , "host": "127.0.0.1", "desc": "mysql 5.6 log format" }
 2015-10-07 06:09:42 5907 [Warning] Access denied for user 'root'@'127.0.0.1' (using password: YES)
+# failJSON: { "time": "2015-10-07T08:25:38", "match": true , "host": "192.0.2.1", "desc": "log format with extra space between the date and time stamps, gh-1639" }
+2015-10-07  8:25:38 139845235329792 [Warning] Access denied for user 'user'@'192.0.2.1' (using password: YES)
+
 # failJSON: { "time": "2016-02-24T15:26:18", "match": true , "host": "localhost", "desc": "mysql 5.6 log format, Note instead of Warning" }
 2016-02-24T15:26:18.237955 6 [Note] Access denied for user 'root'@'localhost' (using password: YES)
 

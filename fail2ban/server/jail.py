@@ -24,17 +24,19 @@ __copyright__ = "Copyright (c) 2004 Cyril Jaquier, 2011-2012 Lee Clemens, 2012 Y
 __license__ = "GPL"
 
 import logging
+import math
+import random
 import Queue
 
 from .actions import Actions
-from ..client.jailreader import JailReader
-from ..helpers import getLogger
+from ..helpers import getLogger, _as_bool, extractOptions, MyTime
+from .mytime import MyTime
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
 
-class Jail:
+class Jail(object):
 	"""Fail2Ban jail, which manages a filter and associated actions.
 
 	The class handles the initialisation of a filter, and actions. It's
@@ -76,14 +78,18 @@ class Jail:
 		self.__name = name
 		self.__queue = Queue.Queue()
 		self.__filter = None
+		# Extra parameters for increase ban time
+		self._banExtra = {};
 		logSys.info("Creating new jail '%s'" % self.name)
-		self._setBackend(backend)
+		if backend is not None:
+			self._setBackend(backend)
+		self.backend = backend
 
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__.__name__, self.name)
 
 	def _setBackend(self, backend):
-		backend, beArgs = JailReader.extractOptions(backend)
+		backend, beArgs = extractOptions(backend)
 		backend = backend.lower()		# to assure consistent matching
 
 		backends = self._BACKENDS
@@ -108,11 +114,12 @@ class Jail:
 					logSys.info("Initiated %r backend" % b)
 				self.__actions = Actions(self)
 				return					# we are done
-			except ImportError as e:
+			except ImportError as e: # pragma: no cover
 				# Log debug if auto, but error if specific
 				logSys.log(
 					logging.DEBUG if backend == "auto" else logging.ERROR,
 					"Backend %r failed to initialize due to %s" % (b, e))
+		# pragma: no cover
 		# log error since runtime error message isn't printed, INVALID COMMAND
 		logSys.error(
 			"Failed to initialize any backend for Jail %r" % self.name)
@@ -191,8 +198,8 @@ class Jail:
 		Used by filter to add a failure for banning.
 		"""
 		self.__queue.put(ticket)
-		if self.database is not None:
-			self.database.addBan(self, ticket)
+		# add ban to database moved to observer (should previously check not already banned 
+		# and increase ticket time if "bantime.increment" set)
 
 	def getFailTicket(self):
 		"""Get a fail ticket from the jail.
@@ -200,9 +207,102 @@ class Jail:
 		Used by actions to get a failure for banning.
 		"""
 		try:
-			return self.__queue.get(False)
+			ticket = self.__queue.get(False)
+			return ticket
 		except Queue.Empty:
 			return False
+
+	def setBanTimeExtra(self, opt, value):
+		# merge previous extra with new option:
+		be = self._banExtra;
+		if value == '':
+			value = None
+		if value is not None:
+			be[opt] = value;
+		elif opt in be:
+			del be[opt]
+		logSys.info('Set banTime.%s = %s', opt, value)
+		if opt == 'increment':
+			be[opt] = _as_bool(value)
+			if be.get(opt) and self.database is None:
+				logSys.warning("ban time increment is not available as long jail database is not set")
+		if opt in ['maxtime', 'rndtime']:
+			if not value is None:
+				be[opt] = MyTime.str2seconds(value)
+		# prepare formula lambda:
+		if opt in ['formula', 'factor', 'maxtime', 'rndtime', 'multipliers'] or be.get('evformula', None) is None:
+			# split multifiers to an array begins with 0 (or empty if not set):
+			if opt == 'multipliers':
+				be['evmultipliers'] = [int(i) for i in (value.split(' ') if value is not None and value != '' else [])]
+			# if we have multifiers - use it in lambda, otherwise compile and use formula within lambda
+			multipliers = be.get('evmultipliers', [])
+			banFactor = eval(be.get('factor', "1"))
+			if len(multipliers):
+				evformula = lambda ban, banFactor=banFactor: (
+					ban.Time * banFactor * multipliers[ban.Count if ban.Count < len(multipliers) else -1]
+				)
+			else:
+				formula = be.get('formula', 'ban.Time * (1<<(ban.Count if ban.Count<20 else 20)) * banFactor')
+				formula = compile(formula, '~inline-conf-expr~', 'eval')
+				evformula = lambda ban, banFactor=banFactor, formula=formula: max(ban.Time, eval(formula))
+			# extend lambda with max time :
+			if not be.get('maxtime', None) is None:
+				maxtime = be['maxtime']
+				evformula = lambda ban, evformula=evformula: min(evformula(ban), maxtime)
+			# mix lambda with random time (to prevent bot-nets to calculate exact time IP can be unbanned):
+			if not be.get('rndtime', None) is None:
+				rndtime = be['rndtime']
+				evformula = lambda ban, evformula=evformula: (evformula(ban) + random.random() * rndtime)
+			# set to extra dict:
+			be['evformula'] = evformula
+		#logSys.info('banTimeExtra : %s' % json.dumps(be))
+
+	def getBanTimeExtra(self, opt=None):
+		if opt is not None:
+			return self._banExtra.get(opt, None)
+		return self._banExtra
+
+	def getMaxBanTime(self):
+		"""Returns max possible ban-time of jail.
+		"""
+		return self._banExtra.get("maxtime", -1) \
+			if self._banExtra.get('increment') else self.actions.getBanTime()
+
+	def restoreCurrentBans(self, correctBanTime=True):
+		"""Restore any previous valid bans from the database.
+		"""
+		try:
+			if self.database is not None:
+				if self._banExtra.get('increment'):
+					forbantime = None;
+					if correctBanTime:
+						correctBanTime = self.getMaxBanTime()
+				else:
+					# use ban time as search time if we have not enabled a increasing:
+					forbantime = self.actions.getBanTime()
+				for ticket in self.database.getCurrentBans(jail=self, forbantime=forbantime,
+					correctBanTime=correctBanTime
+				):
+					try:
+						#logSys.debug('restored ticket: %s', ticket)
+						if self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True): continue
+						# mark ticked was restored from database - does not put it again into db:
+						ticket.restored = True
+						# correct start time / ban time (by the same end of ban):
+						btm = ticket.getBanTime(forbantime)
+						diftm = MyTime.time() - ticket.getTime()
+						if btm != -1 and diftm > 0:
+							btm -= diftm
+						# ignore obsolete tickets:
+						if btm != -1 and btm <= 0:
+							continue
+						self.putFailTicket(ticket)
+					except Exception as e: # pragma: no cover
+						logSys.error('Restore ticket failed: %s', e, 
+							exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+		except Exception as e: # pragma: no cover
+			logSys.error('Restore bans failed: %s', e,
+				exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
 	def start(self):
 		"""Start the jail, by starting filter and actions threads.
@@ -210,26 +310,32 @@ class Jail:
 		Once stated, also queries the persistent database to reinstate
 		any valid bans.
 		"""
+		logSys.debug("Starting jail %r", self.name)
 		self.filter.start()
 		self.actions.start()
-		# Restore any previous valid bans from the database
-		if self.database is not None:
-			for ticket in self.database.getBansMerged(
-				jail=self, bantime=self.actions.getBanTime()):
-				if not self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True):
-					self.__queue.put(ticket)
-		logSys.info("Jail '%s' started" % self.name)
+		self.restoreCurrentBans()
+		logSys.info("Jail %r started", self.name)
 
-	def stop(self):
+	def stop(self, stop=True, join=True):
 		"""Stop the jail, by stopping filter and actions threads.
 		"""
-		self.filter.stop()
-		self.actions.stop()
-		self.filter.join()
-		self.actions.join()
-		logSys.info("Jail '%s' stopped" % self.name)
+		if stop:
+			logSys.debug("Stopping jail %r", self.name)
+		for obj in (self.filter, self.actions):
+			try:
+				## signal to stop filter / actions:
+				if stop:
+					obj.stop()
+				## wait for end of threads:
+				if join:
+					obj.join()
+			except Exception as e:
+				logSys.error("Stop %r of jail %r failed: %s", obj, self.name, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+		if join:
+			logSys.info("Jail %r stopped", self.name)
 
-	def is_alive(self):
-		"""Check jail "is_alive" by checking filter and actions threads.
+	def isAlive(self):
+		"""Check jail "isAlive" by checking filter and actions threads.
 		"""
-		return self.filter.is_alive() or self.actions.is_alive()
+		return self.filter.isAlive() or self.actions.isAlive()
