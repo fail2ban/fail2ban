@@ -62,14 +62,15 @@ class Jails(Mapping):
 		DuplicateJailException
 			If jail name is already present.
 		"""
-		try:
-			self.__lock.acquire()
+		with self.__lock:
 			if name in self._jails:
-				raise DuplicateJailException(name)
+				if noduplicates:
+					raise DuplicateJailException(name)
 			else:
 				self._jails[name] = Jail(name, backend, db)
-		finally:
-			self.__lock.release()
+
+	def exists(self, name):
+		return name in self._jails
 
 	def __getitem__(self, name):
 		try:

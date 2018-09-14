@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: t -*-
 # vi: set ft=python sts=4 ts=4 sw=4 noet :
 
@@ -27,24 +27,30 @@ import platform
 try:
 	import setuptools
 	from setuptools import setup
+	from setuptools.command.install import install
+	from setuptools.command.install_scripts import install_scripts
 except ImportError:
 	setuptools = None
 	from distutils.core import setup
 
+# all versions
+from distutils.command.build_py import build_py
+from distutils.command.build_scripts import build_scripts
+if setuptools is None:
+	from distutils.command.install import install
+	from distutils.command.install_scripts import install_scripts
 try:
 	# python 3.x
-	from distutils.command.build_py import build_py_2to3 as build_py
-	from distutils.command.build_scripts \
-		import build_scripts_2to3 as build_scripts
+	from distutils.command.build_py import build_py_2to3
+	from distutils.command.build_scripts import build_scripts_2to3
+	_2to3 = True
 except ImportError:
 	# python 2.x
-	from distutils.command.build_py import build_py
-	from distutils.command.build_scripts import build_scripts
-# all versions
-from distutils.command.install_scripts import install_scripts
+	_2to3 = False
 
 import os
 from os.path import isfile, join, isdir, realpath
+import re
 import sys
 import warnings
 from glob import glob
@@ -52,11 +58,25 @@ from glob import glob
 from fail2ban.setup import updatePyExec
 
 
+source_dir = os.path.realpath(os.path.dirname(
+	# __file__ seems to be overwritten sometimes on some python versions (e.g. bug of 2.6 by running under cProfile, etc.):
+	sys.argv[0] if os.path.basename(sys.argv[0]) == 'setup.py' else __file__
+))
+
 # Wrapper to install python binding (to current python version):
 class install_scripts_f2b(install_scripts):
 
 	def get_outputs(self):
 		outputs = install_scripts.get_outputs(self)
+		# setup.py --dry-run install:
+		dry_run = not outputs
+		self.update_scripts(dry_run)
+		if dry_run:
+			#bindir = self.install_dir
+			bindir = self.build_dir
+			print('creating fail2ban-python binding -> %s (dry-run, real path can be different)' % (bindir,))
+			print('Copying content of %s to %s' % (self.build_dir, self.install_dir));
+			return outputs
 		fn = None
 		for fn in outputs:
 			if os.path.basename(fn) == 'fail2ban-server':
@@ -66,13 +86,59 @@ class install_scripts_f2b(install_scripts):
 		updatePyExec(bindir)
 		return outputs
 
+	def update_scripts(self, dry_run=False):
+		buildroot = os.path.dirname(self.build_dir)
+		install_dir = self.install_dir
+		try:
+			# remove root-base from install scripts path:
+			root = self.distribution.command_options['install']['root'][1]
+			if install_dir.startswith(root):
+				install_dir = install_dir[len(root):]
+		except: # pragma: no cover
+			print('WARNING: Cannot find root-base option, check the bin-path to fail2ban-scripts in "fail2ban.service".')
+		print('Creating %s/fail2ban.service (from fail2ban.service.in): @BINDIR@ -> %s' % (buildroot, install_dir))
+		with open(os.path.join(source_dir, 'files/fail2ban.service.in'), 'r') as fn:
+			lines = fn.readlines()
+		fn = None
+		if not dry_run:
+			fn = open(os.path.join(buildroot, 'fail2ban.service'), 'w')
+		try:
+			for ln in lines:
+				ln = re.sub(r'@BINDIR@', lambda v: install_dir, ln)
+				if dry_run:
+					sys.stdout.write(' | ' + ln)
+					continue
+				fn.write(ln)
+		finally:
+			if fn: fn.close()
+		if dry_run:
+			print(' `')
+
+
+# Wrapper to specify fail2ban own options:
+class install_command_f2b(install):
+	user_options = install.user_options + [
+		('disable-2to3', None, 'Specify to deactivate 2to3, e.g. if the install runs from fail2ban test-cases.'),
+	]
+	def initialize_options(self):
+		self.disable_2to3 = None
+		install.initialize_options(self)
+	def finalize_options(self):
+		global _2to3
+		## in the test cases 2to3 should be already done (fail2ban-2to3):
+		if self.disable_2to3:
+			_2to3 = False
+		if _2to3:
+			cmdclass = self.distribution.cmdclass
+			cmdclass['build_py'] = build_py_2to3
+			cmdclass['build_scripts'] = build_scripts_2to3
+		install.finalize_options(self)
+	def run(self):
+		install.run(self)
+
 
 # Update fail2ban-python env to current python version (where f2b-modules located/installed)
-rootdir = os.path.realpath(os.path.dirname(
-	# __file__ seems to be overwritten sometimes on some python versions (e.g. bug of 2.6 by running under cProfile, etc.):
-	sys.argv[0] if os.path.basename(sys.argv[0]) == 'setup.py' else __file__
-))
-updatePyExec(os.path.join(rootdir, 'bin'))
+updatePyExec(os.path.join(source_dir, 'bin'))
 
 if setuptools and "test" in sys.argv:
 	import logging
@@ -143,7 +209,7 @@ setup(
 	platforms = "Posix",
 	cmdclass = {
 		'build_py': build_py, 'build_scripts': build_scripts, 
-		'install_scripts': install_scripts_f2b
+		'install_scripts': install_scripts_f2b, 'install': install_command_f2b
 	},
 	scripts = [
 		'bin/fail2ban-client',
@@ -179,7 +245,7 @@ setup(
 			glob("config/filter.d/*.conf")
 		),
 		('/etc/fail2ban/filter.d/ignorecommands',
-			glob("config/filter.d/ignorecommands/*")
+			[p for p in glob("config/filter.d/ignorecommands/*") if isfile(p)]
 		),
 		('/etc/fail2ban/action.d',
 			glob("config/action.d/*.conf") +
@@ -244,5 +310,8 @@ if isdir("/usr/lib/fail2ban"):
 if sys.argv[1] == "install":
 	print("")
 	print("Please do not forget to update your configuration files.")
-	print("They are in /etc/fail2ban/.")
+	print("They are in \"/etc/fail2ban/\".")
+	print("")
+	print("You can also install systemd service-unit file from \"build/fail2ban.service\"")
+	print("resp. corresponding init script from \"files/*-initd\".")
 	print("")
