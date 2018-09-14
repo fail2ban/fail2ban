@@ -805,7 +805,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"norestored = %(_exec_once)s",
 				"restore = ",
 				"info = ",
-				"_use_flush_ = echo [<name>] <actname>: -- flushing IPs",
+				"_use_flush_ = echo '[%(name)s] %(actname)s: -- flushing IPs'",
 				"actionstart =  echo '[%(name)s] %(actname)s: ** start'", start,
 				"actionreload = echo '[%(name)s] %(actname)s: .. reload'", reload,
 				"actionban =    echo '[%(name)s] %(actname)s: ++ ban <ip> %(restore)s%(info)s'", ban,
