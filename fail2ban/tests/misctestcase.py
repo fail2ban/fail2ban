@@ -23,22 +23,19 @@ __license__ = "GPL"
 
 import logging
 import os
-import re
 import sys
 import unittest
 import tempfile
 import shutil
 import fnmatch
-import datetime
 from glob import glob
 from StringIO import StringIO
 
 from utils import LogCaptureTestCase, logSys as DefLogSys
 
-from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger
-from ..helpers import splitwords
-from ..server.datedetector import DateDetector
-from ..server.datetemplate import DatePatternRegex
+from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger, \
+	splitwords, uni_decode, uni_string
+from ..server.mytime import MyTime
 
 
 class HelpersTest(unittest.TestCase):
@@ -73,23 +70,24 @@ class HelpersTest(unittest.TestCase):
 
 if sys.version_info >= (2,7):
 	def _sh_call(cmd):
-		import subprocess, locale
+		import subprocess
 		ret = subprocess.check_output(cmd, shell=True)
-		if sys.version_info >= (3,):
-			ret = ret.decode(locale.getpreferredencoding(), 'replace')
-		return str(ret).rstrip()
+		return uni_decode(ret).rstrip()
 else:
 	def _sh_call(cmd):
 		import subprocess
 		ret = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read()
-		return str(ret).rstrip()
+		return uni_decode(ret).rstrip()
 
 def _getSysPythonVersion():
 	return _sh_call("fail2ban-python -c 'import sys; print(tuple(sys.version_info))'")
 
+
 class SetupTest(unittest.TestCase):
 
 	def setUp(self):
+		super(SetupTest, self).setUp()
+		unittest.F2B.SkipIfFast()
 		setup = os.path.join(os.path.dirname(__file__), '..', '..', 'setup.py')
 		self.setup = os.path.exists(setup) and setup or None
 		if not self.setup and sys.version_info >= (2,7): # pragma: no cover - running not out of the source
@@ -103,13 +101,32 @@ class SetupTest(unittest.TestCase):
 				"Seems to be running with python distribution %s"
 				" -- install can be tested only with system distribution %s" % (str(tuple(sys.version_info)), sysVer))
 
+	def testSetupInstallDryRun(self):
+		if not self.setup:
+			return			  # if verbose skip didn't work out
+		tmp = tempfile.mkdtemp()
+		# suppress stdout (and stderr) if not heavydebug
+		supdbgout = ' >/dev/null 2>&1' if unittest.F2B.log_level >= logging.DEBUG else '' # HEAVYDEBUG
+		try:
+			# try dry-run:
+			os.system("%s %s --dry-run install --disable-2to3 --root=%s%s"
+					  % (sys.executable, self.setup , tmp, supdbgout))
+			# check nothing was created:
+			self.assertTrue(not os.listdir(tmp))
+		finally:
+			# clean up
+			shutil.rmtree(tmp)
+
 	def testSetupInstallRoot(self):
 		if not self.setup:
 			return			  # if verbose skip didn't work out
 		tmp = tempfile.mkdtemp()
+		remove_build = not os.path.exists('build')
+		# suppress stdout (and stderr) if not heavydebug
+		supdbgout = ' >/dev/null' if unittest.F2B.log_level >= logging.DEBUG else '' # HEAVYDEBUG
 		try:
-			os.system("%s %s install --root=%s >/dev/null"
-					  % (sys.executable, self.setup, tmp))
+			self.assertEqual(os.system("%s %s install --disable-2to3 --root=%s%s"
+					  % (sys.executable, self.setup, tmp, supdbgout)), 0)
 
 			def strippath(l):
 				return [x[len(tmp)+1:] for x in l]
@@ -160,8 +177,10 @@ class SetupTest(unittest.TestCase):
 			# clean up
 			shutil.rmtree(tmp)
 			# remove build directory
-			os.system("%s %s clean --all >/dev/null 2>&1"
-					  % (sys.executable, self.setup))
+			os.system("%s %s clean --all%s"
+					  % (sys.executable, self.setup, (supdbgout + ' 2>&1') if supdbgout else ''))
+			if remove_build and os.path.exists('build'):
+				shutil.rmtree('build')
 
 
 class TestsUtilsTest(LogCaptureTestCase):
@@ -173,6 +192,56 @@ class TestsUtilsTest(LogCaptureTestCase):
 		self.assertEqual(mbasename("/long/path/__init__.py"), 'path.__init__')
 		self.assertEqual(mbasename("/long/path/base.py"), 'path.base')
 		self.assertEqual(mbasename("/long/path/base"), 'path.base')
+
+	def testUniConverters(self):
+		self.assertRaises(Exception, uni_decode, 
+			(b'test' if sys.version_info >= (3,) else u'test'), 'f2b-test::non-existing-encoding')
+		uni_decode((b'test\xcf' if sys.version_info >= (3,) else u'test\xcf'))
+		uni_string(b'test\xcf')
+		uni_string('test\xcf')
+		uni_string(u'test\xcf')
+
+	def testSafeLogging(self):
+		# logging should be exception-safe, to avoid possible errors (concat, str. conversion, representation failures, etc)
+		logSys = DefLogSys
+		class Test:
+			def __init__(self, err=1):
+				self.err = err
+			def __repr__(self):
+				if self.err:
+					raise Exception('no represenation for test!')
+				else:
+					return u'conv-error (\xf2\xf0\xe5\xf2\xe8\xe9), unterminated utf \xcf'
+		test = Test()
+		logSys.log(logging.NOTICE, "test 1a: %r", test)
+		self.assertLogged("Traceback", "no represenation for test!")
+		self.pruneLog()
+		logSys.notice("test 1b: %r", test)
+		self.assertLogged("Traceback", "no represenation for test!")
+
+		self.pruneLog('[phase 2] test error conversion by encoding %s' % sys.getdefaultencoding())
+		test = Test(0)
+		# this may produce coversion error on ascii default encoding:
+		#str(test)
+		logSys.log(logging.NOTICE, "test 2a: %r, %s", test, test)
+		self.assertLogged("test 2a", "Error by logging handler", all=False)
+		logSys.notice("test 2b: %r, %s", test, test)
+		self.assertLogged("test 2b", "Error by logging handler", all=False)
+
+		self.pruneLog('[phase 3] test unexpected error in handler')
+		class _ErrorHandler(logging.Handler):
+			def handle(self, record):
+				raise Exception('error in handler test!')
+		_org_handler = logSys.handlers
+		try:
+			logSys.handlers = list(logSys.handlers)
+			logSys.handlers += [_ErrorHandler()]
+			logSys.log(logging.NOTICE, "test 3a")
+			logSys.notice("test 3b")
+		finally:
+			logSys.handlers = _org_handler
+		# we should reach this line without errors!
+		self.pruneLog('OK')
 
 	def testTraceBack(self):
 		# pretty much just a smoke test since tests runners swallow all the detail
@@ -268,19 +337,62 @@ class TestsUtilsTest(LogCaptureTestCase):
 		self.assertNotLogged('test "xyz"')
 		self.assertNotLogged('test', 'xyz', all=False)
 		self.assertNotLogged('test', 'xyz', 'zyx', all=True)
+		## maxWaitTime:
+		orgfast, unittest.F2B.fast = unittest.F2B.fast, False
+		self.assertFalse(isinstance(unittest.F2B.maxWaitTime(True), bool))
+		self.assertEqual(unittest.F2B.maxWaitTime(lambda: 50)(), 50)
+		self.assertEqual(unittest.F2B.maxWaitTime(25), 25)
+		self.assertEqual(unittest.F2B.maxWaitTime(25.), 25.0)
+		unittest.F2B.fast = True
+		try:
+			self.assertEqual(unittest.F2B.maxWaitTime(lambda: 50)(), 50)
+			self.assertEqual(unittest.F2B.maxWaitTime(25), 2.5)
+			self.assertEqual(unittest.F2B.maxWaitTime(25.), 25.0)
+		finally:
+			unittest.F2B.fast = orgfast
+		self.assertFalse(unittest.F2B.maxWaitTime(False))
 		## assertLogged, assertNotLogged negative case:
 		self.pruneLog()
 		logSys.debug('test "xyz"')
-		self._testAssertionErrorRE(r"All of the .* were found present in the log",
+		self._testAssertionErrorRE(r".* was found in the log",
 			self.assertNotLogged, 'test "xyz"')
+		self._testAssertionErrorRE(r"All of the .* were found present in the log",
+			self.assertNotLogged, 'test "xyz"', 'test')
 		self._testAssertionErrorRE(r"was found in the log",
 			self.assertNotLogged, 'test', 'xyz', all=True)
 		self._testAssertionErrorRE(r"was not found in the log",
 			self.assertLogged, 'test', 'zyx', all=True)
+		self._testAssertionErrorRE(r"was not found in the log, waited 1e-06",
+			self.assertLogged, 'test', 'zyx', all=True, wait=1e-6)
 		self._testAssertionErrorRE(r"None among .* was found in the log",
 			self.assertLogged, 'test_zyx', 'zyx', all=False)
+		self._testAssertionErrorRE(r"None among .* was found in the log, waited 1e-06",
+			self.assertLogged, 'test_zyx', 'zyx', all=False, wait=1e-6)
 		self._testAssertionErrorRE(r"All of the .* were found present in the log",
 			self.assertNotLogged, 'test', 'xyz', all=False)
+		## assertDictEqual:
+		self.assertDictEqual({'A': [1, 2]}, {'A': [1, 2]})
+		self.assertRaises(AssertionError, self.assertDictEqual, 
+			{'A': [1, 2]}, {'A': [2, 1]})
+		## assertSortedEqual:
+		self.assertSortedEqual(['A', 'B'], ['B', 'A'])
+		self.assertSortedEqual([['A', 'B']], [['B', 'A']], level=2)
+		self.assertSortedEqual([['A', 'B']], [['B', 'A']], nestedOnly=False)
+		self.assertRaises(AssertionError, lambda: self.assertSortedEqual(
+			[['A', 'B']], [['B', 'A']], level=1, nestedOnly=True))
+		self.assertSortedEqual({'A': ['A', 'B']}, {'A': ['B', 'A']}, nestedOnly=False)
+		self.assertRaises(AssertionError, lambda: self.assertSortedEqual(
+			{'A': ['A', 'B']}, {'A': ['B', 'A']}, level=1, nestedOnly=True))
+		self.assertSortedEqual(['Z', {'A': ['B', 'C'], 'B': ['E', 'F']}], [{'B': ['F', 'E'], 'A': ['C', 'B']}, 'Z'],
+			nestedOnly=False)
+		self.assertSortedEqual(['Z', {'A': ['B', 'C'], 'B': ['E', 'F']}], [{'B': ['F', 'E'], 'A': ['C', 'B']}, 'Z'],
+			level=-1)
+		self.assertRaises(AssertionError, lambda: self.assertSortedEqual(
+			['Z', {'A': ['B', 'C'], 'B': ['E', 'F']}], [{'B': ['F', 'E'], 'A': ['C', 'B']}, 'Z']))
+		self._testAssertionErrorRE(r"\['A'\] != \['C', 'B'\]",
+			self.assertSortedEqual, ['A'], ['C', 'B'])
+		self._testAssertionErrorRE(r"\['A', 'B'\] != \['B', 'C'\]",
+			self.assertSortedEqual, ['A', 'B'], ['C', 'B'])
 
 	def testFormatterWithTraceBack(self):
 		strout = StringIO()
@@ -302,86 +414,27 @@ class TestsUtilsTest(LogCaptureTestCase):
 		self.assertTrue(pindex > 10)	  # we should have some traceback
 		self.assertEqual(s[:pindex], s[pindex+1:pindex*2 + 1])
 
-iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
-
-
-class CustomDateFormatsTest(unittest.TestCase):
-
-	def testIso8601(self):
-		date = datetime.datetime.utcfromtimestamp(
-			iso8601.getDate("2007-01-25T12:00:00Z")[0])
-		self.assertEqual(
-			date,
-			datetime.datetime(2007, 1, 25, 12, 0))
-		self.assertRaises(TypeError, iso8601.getDate, None)
-		self.assertRaises(TypeError, iso8601.getDate, date)
-
-		self.assertEqual(iso8601.getDate(""), None)
-		self.assertEqual(iso8601.getDate("Z"), None)
-
-		self.assertEqual(iso8601.getDate("2007-01-01T120:00:00Z"), None)
-		self.assertEqual(iso8601.getDate("2007-13-01T12:00:00Z"), None)
-		date = datetime.datetime.utcfromtimestamp(
-			iso8601.getDate("2007-01-25T12:00:00+0400")[0])
-		self.assertEqual(
-			date,
-			datetime.datetime(2007, 1, 25, 8, 0))
-		date = datetime.datetime.utcfromtimestamp(
-			iso8601.getDate("2007-01-25T12:00:00+04:00")[0])
-		self.assertEqual(
-			date,
-			datetime.datetime(2007, 1, 25, 8, 0))
-		date = datetime.datetime.utcfromtimestamp(
-			iso8601.getDate("2007-01-25T12:00:00-0400")[0])
-		self.assertEqual(
-			date,
-			datetime.datetime(2007, 1, 25, 16, 0))
-		date = datetime.datetime.utcfromtimestamp(
-			iso8601.getDate("2007-01-25T12:00:00-04")[0])
-		self.assertEqual(
-			date,
-			datetime.datetime(2007, 1, 25, 16, 0))
-
-	def testAmbiguousDatePattern(self):
-		defDD = DateDetector()
-		defDD.addDefaultTemplate()
+	def testLazyLogging(self):
 		logSys = DefLogSys
-		for (matched, dp, line) in (
-			# positive case:
-			('Jan 23 21:59:59',   None, 'Test failure Jan 23 21:59:59 for 192.0.2.1'),
-			# ambiguous "unbound" patterns (missed):
-			(False,               None, 'Test failure TestJan 23 21:59:59.011 2015 for 192.0.2.1'),
-			(False,               None, 'Test failure Jan 23 21:59:59123456789 for 192.0.2.1'),
-			# ambiguous "no optional year" patterns (matched):
-			('Aug 8 11:25:50',      None, 'Aug 8 11:25:50 14430f2329b8 Authentication failed from 192.0.2.1'),
-			('Aug 8 11:25:50',      None, '[Aug 8 11:25:50] 14430f2329b8 Authentication failed from 192.0.2.1'),
-			('Aug 8 11:25:50 2014', None, 'Aug 8 11:25:50 2014 14430f2329b8 Authentication failed from 192.0.2.1'),
-			# direct specified patterns:
-			('20:00:00 01.02.2003',    r'%H:%M:%S %d.%m.%Y$', '192.0.2.1 at 20:00:00 01.02.2003'),
-			('[20:00:00 01.02.2003]',  r'\[%H:%M:%S %d.%m.%Y\]', '192.0.2.1[20:00:00 01.02.2003]'),
-			('[20:00:00 01.02.2003]',  r'\[%H:%M:%S %d.%m.%Y\]', '[20:00:00 01.02.2003]192.0.2.1'),
-			('[20:00:00 01.02.2003]',  r'\[%H:%M:%S %d.%m.%Y\]$', '192.0.2.1[20:00:00 01.02.2003]'),
-			('[20:00:00 01.02.2003]',  r'^\[%H:%M:%S %d.%m.%Y\]', '[20:00:00 01.02.2003]192.0.2.1'),
-			('[17/Jun/2011 17:00:45]', r'^\[%d/%b/%Y %H:%M:%S\]', '[17/Jun/2011 17:00:45] Attempt, IP address 192.0.2.1'),
-			('[17/Jun/2011 17:00:45]', r'\[%d/%b/%Y %H:%M:%S\]', 'Attempt [17/Jun/2011 17:00:45] IP address 192.0.2.1'),
-			('[17/Jun/2011 17:00:45]', r'\[%d/%b/%Y %H:%M:%S\]', 'Attempt IP address 192.0.2.1, date: [17/Jun/2011 17:00:45]'),
-			# direct specified patterns (begin/end, missed):
-			(False,                 r'%H:%M:%S %d.%m.%Y', '192.0.2.1x20:00:00 01.02.2003'),
-			(False,                 r'%H:%M:%S %d.%m.%Y', '20:00:00 01.02.2003x192.0.2.1'),
-			# direct specified patterns (begin/end, matched):
-			('20:00:00 01.02.2003', r'%H:%M:%S %d.%m.%Y', '192.0.2.1 20:00:00 01.02.2003'),
-			('20:00:00 01.02.2003', r'%H:%M:%S %d.%m.%Y', '20:00:00 01.02.2003 192.0.2.1'),
-		):
-			logSys.debug('== test: %r', (matched, dp, line))
-			if dp is None:
-				dd = defDD
-			else:
-				dp = DatePatternRegex(dp)
-				dd = DateDetector()
-				dd.appendTemplate(dp)
-			date = dd.getTime(line)
-			if matched:
-				self.assertTrue(date)
-				self.assertEqual(matched, date[1].group())
-			else:
-				self.assertEqual(date, None)
+		logSys.debug('lazy logging: %r', unittest.F2B.log_lazy)
+		# wrong logging syntax will don't throw an error anymore (logged now):
+		logSys.notice('test', 1, 2, 3)
+		self.assertLogged('not all arguments converted')
+
+
+class MyTimeTest(unittest.TestCase):
+
+	def testStr2Seconds(self):
+		# several formats / write styles:
+		str2sec = MyTime.str2seconds
+		self.assertEqual(str2sec('1y6mo30w15d12h35m25s'), 66821725)
+		self.assertEqual(str2sec('2yy 3mo 4ww 10dd 5hh 30mm 20ss'), 74307620)
+		self.assertEqual(str2sec('2 years 3 months 4 weeks 10 days 5 hours 30 minutes 20 seconds'), 74307620)
+		self.assertEqual(str2sec('1 year + 1 month - 1 week + 1 day'), 33669000)
+		self.assertEqual(str2sec('2 * 0.5 yea + 1*1 mon - 3*1/3 wee + 2/2 day - (2*12 hou 3*20 min 80 sec) '), 33578920.0)
+		self.assertEqual(str2sec('2*.5y+1*1mo-3*1/3w+2/2d-(2*12h3*20m80s) '), 33578920.0)
+		self.assertEqual(str2sec('1ye -2mo -3we -4da -5ho -6mi -7se'), 24119633)
+		# month and year in days :
+		self.assertEqual(float(str2sec("1 month")) / 60 / 60 / 24, 30.4375)
+		self.assertEqual(float(str2sec("1 year")) / 60 / 60 / 24, 365.25)
+

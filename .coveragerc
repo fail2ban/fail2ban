@@ -7,5 +7,6 @@ source =
 
 [report]
 exclude_lines =
-    pragma: no cover
-    pragma: systemd no cover
+    pragma: ?no ?cover
+    pragma: ?${F2B_PY}.x no ?cover
+    pragma: ?systemd no ?cover

@@ -22,7 +22,7 @@
 #  rename this file: (sudo) mv /etc/init.d/fail2ban.init /etc/init.d/fail2ban
 #  same with the logrotate file: (sudo) mv /etc/logrotate.d/fail2ban.logrotate /etc/logrotate.d/fail2ban
 #
-PATH=/usr/sbin:/usr/bin:/sbin:/bin
+PATH=/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bin
 DESC="authentication failure monitor"
 NAME=fail2ban
 
