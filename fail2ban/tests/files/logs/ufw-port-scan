@@ -1,2 +1,2 @@
-# failJSON: { "time": "Sep 14 21:11:55", "match": true , "host": "10.20.30.40" }
+# failJSON: { "time": "2004-09-14T21:11:55", "match": true , "host": "10.20.30.40" }
 Sep 14 21:11:55 sierra kernel: [UFW BLOCK] IN=eth0 OUT= MAC=ff:01:ff:ad:0e:ff:40:a6:77:42:ff:f0:ff:ff SRC=10.20.30.40 DST=70.40.10.10 LEN=60 TOS=0x00 PREC=0x00 TTL=47 ID=34642 DF PROTO=TCP SPT=60214 DPT=6379 WINDOW=29200 RES=0x00 SYN URGP=0
