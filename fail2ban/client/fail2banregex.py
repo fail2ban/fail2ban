@@ -668,7 +668,7 @@ def exec_command_line(*args):
 	if errors:
 		sys.stderr.write("\n".join(errors) + "\n\n")
 		parser.print_help()
-		sys.exit(-1)
+		sys.exit(255)
 
 	output( "" )
 	output( "Running tests" )
@@ -696,4 +696,4 @@ def exec_command_line(*args):
 
 	fail2banRegex = Fail2banRegex(opts)
 	if not fail2banRegex.start(args):
-		sys.exit(-1)
+		sys.exit(255)

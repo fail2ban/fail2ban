@@ -612,7 +612,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 			# test reload missing jail (direct):
 			self.execCmd(FAILED, startparams, "reload", "~~unknown~jail~fail~~")
 			self.assertLogged("Failed during configuration: No section: '~~unknown~jail~fail~~'")
-			self.assertLogged("Exit with code -1")
+			self.assertLogged("Exit with code 255")
 			self.pruneLog()
 		finally:
 			self.pruneLog()
@@ -836,7 +836,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"norestored = %(_exec_once)s",
 				"restore = ",
 				"info = ",
-				"_use_flush_ = echo [<name>] <actname>: -- flushing IPs",
+				"_use_flush_ = echo '[%(name)s] %(actname)s: -- flushing IPs'",
 				"actionstart =  echo '[%(name)s] %(actname)s: ** start'", start,
 				"actionreload = echo '[%(name)s] %(actname)s: .. reload'", reload,
 				"actionban =    echo '[%(name)s] %(actname)s: ++ ban <ip> %(restore)s%(info)s'", ban,

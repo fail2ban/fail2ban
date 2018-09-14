@@ -116,7 +116,7 @@ class Transmitter:
 		elif command[0] == "echo":
 			return command[1:]
 		elif command[0] == "server-status":
-			logSys.debug("Server ready")
+			logSys.debug("Status: ready")
 			return "Server ready"
 		elif command[0] == "sleep":
 			value = command[1]

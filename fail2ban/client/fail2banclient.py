@@ -69,7 +69,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		# Print a new line because we probably come from wait
 		output("")
 		logSys.warning("Caught signal %d. Exiting" % signum)
-		exit(-1)
+		exit(255)
 
 	def __ping(self, timeout=0.1):
 		return self.__processCmd([["ping"] + ([timeout] if timeout != -1 else [])],
@@ -500,5 +500,5 @@ def exec_command_line(argv):
 	if client.start(argv):
 		exit(0)
 	else:
-		exit(-1)
+		exit(255)
 

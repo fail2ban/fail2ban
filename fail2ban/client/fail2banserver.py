@@ -212,7 +212,7 @@ class Fail2banServer(Fail2banCmdLine):
 				if not phase.get('done', False):
 					if server: # pragma: no cover
 						server.quit()
-					exit(-1)
+					exit(255)
 				if background:
 					logSys.debug('Starting server done')
 
@@ -223,7 +223,7 @@ class Fail2banServer(Fail2banCmdLine):
 				logSys.error(e)
 			if server: # pragma: no cover
 				server.quit()
-			exit(-1)
+			exit(255)
 
 		return True
 
@@ -238,4 +238,4 @@ def exec_command_line(argv):
 	if server.start(argv):
 		exit(0)
 	else:
-		exit(-1)
+		exit(255)
