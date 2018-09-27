@@ -331,7 +331,7 @@ class CommandAction(ActionBase):
 		if not name.startswith('_') and not self.__init and not callable(value):
 			# special case for some parameters:
 			if name in ('timeout', 'bantime'):
-				value = str(MyTime.str2seconds(value))
+				value = MyTime.str2seconds(value)
 			# parameters changed - clear properties and substitution cache:
 			self.__properties = None
 			self.__substCache.clear()

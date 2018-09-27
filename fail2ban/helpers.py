@@ -429,7 +429,7 @@ def substituteRecursiveTags(inptags, conditional='',
 					m = tre_search(value, m.end())
 					continue
 				# if calling map - be sure we've string:
-				if noRecRepl: repl = uni_string(repl)
+				if not isinstance(repl, basestring): repl = uni_string(repl)
 				value = value.replace('<%s>' % rtag, repl)
 				#logSys.log(5, 'value now: %s' % value)
 				# increment reference count:
