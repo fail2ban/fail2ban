@@ -661,11 +661,11 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(
 				["set", self.jailName, "action", action, "timeout", "10"]),
-			(0, "10"))
+			(0, 10))
 		self.assertEqual(
 			self.transm.proceed(
 				["get", self.jailName, "action", action, "timeout"]),
-			(0, "10"))
+			(0, 10))
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "delaction", action]),
 			(0, None))

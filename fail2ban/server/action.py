@@ -343,7 +343,7 @@ class CommandAction(ActionBase):
 			if wrp == 'ignore': # ignore (filter) dynamic parameters
 				return
 			elif wrp == 'str2seconds':
-				value = str(MyTime.str2seconds(value))
+				value = MyTime.str2seconds(value)
 			# parameters changed - clear properties and substitution cache:
 			self.__properties = None
 			self.__substCache.clear()
