@@ -146,7 +146,7 @@ class Utils():
 
 		Parameters
 		----------
-		realCmd : str
+		realCmd : str or list
 			The command to execute.
 		timeout : int
 			The time out in seconds for the command.
@@ -174,6 +174,13 @@ class Utils():
 		stdout = stderr = None
 		retcode = None
 		popen = env = None
+		sysTimeout = False
+		if isinstance(realCmd, list):
+			if "timeout -k" in " ".join(realCmd):
+				sysTimeout = True
+		else:
+			if "timeout -k" in realCmd:
+				sysTimeout = True
 		if varsDict:
 			if shell:
 				# build map as array of vars and command line array:
@@ -187,8 +194,13 @@ class Utils():
 				realCmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=shell, env=env,
 				preexec_fn=os.setsid  # so that killpg does not kill our process
 			)
+			if sysTimeout:
+				retcode = popen.wait()
+				if retcode == 124:
+					retcode = 128 + 15
+			else:
+				retcode = popen.poll()
 			# wait with timeout for process has terminated:
-			retcode = popen.poll()
 			if retcode is None:
 				def _popen_wait_end():
 					retcode = popen.poll()
@@ -198,10 +210,12 @@ class Utils():
 				if retcode:
 					retcode = retcode[1]
 			# if timeout:
-			if retcode is None:
+			if retcode is None or (sysTimeout and (retcode == (128 + 15) or retcode == (128 + 9))):
 				if logCmd: logCmd(logging.ERROR); logCmd = None
 				logSys.error("%x -- timed out after %s seconds." %
 					(realCmdId, timeout))
+			# if timeout:
+			if retcode is None:
 				pgid = os.getpgid(popen.pid)
 				# if not tree - first try to terminate and then kill, otherwise - kill (-9) only:
 				os.killpg(pgid, signal.SIGTERM) # Terminate the process
