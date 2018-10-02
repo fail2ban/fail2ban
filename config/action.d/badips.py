@@ -104,7 +104,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		self.banaction = banaction
 		self.bancategory = bancategory or category
 		self.bankey = bankey
-		self.loglevel = str2LogLevel(loglevel) if isinstance(val, basestring) else loglevel
+		self.loglevel = str2LogLevel(loglevel)
 		self.updateperiod = updateperiod
 
 		self._bannedips = set()
@@ -350,7 +350,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 				s = ips - self._bannedips
 				p = len(s)
 				self._banIPs(s)
-				self._logSys.info(
+				self._logSys.log(self.loglevel,
 					"Updated IPs for jail '%s' (-%d/+%d). Update again in %i seconds",
 					self._jail.name, m, p, self.updateperiod)
 			finally:
