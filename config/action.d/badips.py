@@ -75,6 +75,9 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	loglevel : int/str, optional
 		Log level of the message when an IP is (un)banned.
 		Default `DEBUG`.
+	shortloglevel : int/str, optional
+		Log level of the summary message when a group of IPs is (un)banned.
+		Default `DEBUG`.
 	agent : str, optional
 		User agent transmitted to server.
 		Default `Fail2Ban/ver.`
@@ -91,8 +94,8 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		return Request(url, headers={'User-Agent': self.agent}, **argv)
 
 	def __init__(self, jail, name, category, score=3, age="24h", key=None,
-		banaction=None, bancategory=None, bankey=None, updateperiod=900, loglevel='DEBUG', agent="Fail2Ban", 
-		timeout=TIMEOUT):
+		banaction=None, bancategory=None, bankey=None, updateperiod=900, 
+		loglevel='DEBUG', shortloglevel='DEBUG', agent="Fail2Ban", timeout=TIMEOUT):
 		super(BadIPsAction, self).__init__(jail, name)
 
 		self.timeout = timeout
@@ -105,6 +108,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		self.bancategory = bancategory or category
 		self.bankey = bankey
 		self.loglevel = str2LogLevel(loglevel)
+		self.shortloglevel = str2LogLevel(shortloglevel)
 		self.updateperiod = updateperiod
 
 		self._bannedips = set()
@@ -350,9 +354,13 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 				s = ips - self._bannedips
 				p = len(s)
 				self._banIPs(s)
-				self._logSys.log(self.loglevel,
-					"Updated IPs for jail '%s' (-%d/+%d). Update again in %i seconds",
-					self._jail.name, m, p, self.updateperiod)
+				if m != 0 or p != 0:
+					self._logSys.log(self.shortloglevel,
+						"Updated IPs for jail '%s' (-%d/+%d)",
+						self._jail.name, m, p)
+				self._logSys.debug(
+					"Next update for jail '%' in %i seconds",
+					self._jail.name, self.updateperiod)
 			finally:
 				self._timer = threading.Timer(self.updateperiod, self.update)
 				self._timer.start()
