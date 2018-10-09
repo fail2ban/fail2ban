@@ -322,12 +322,16 @@ def initTests(opts):
 		# precache all wrong dns to ip's used in test cases:
 		c = DNSUtils.CACHE_nameToIp
 		for i in (
-			('999.999.999.999', []),
-			('abcdef.abcdef', []),
-			('192.168.0.', []),
-			('failed.dns.ch', []),
+			('999.999.999.999', set()),
+			('abcdef.abcdef', set()),
+			('192.168.0.', set()),
+			('failed.dns.ch', set()),
 		):
 			c.set(*i)
+		# if fast - precache all host names as localhost addresses (speed-up getSelfIPs/ignoreself):
+		if unittest.F2B.fast: # pragma: no cover
+			for i in DNSUtils.getSelfNames():
+				c.set(i, DNSUtils.dnsToIp('localhost'))
 
 
 def mtimesleep():
