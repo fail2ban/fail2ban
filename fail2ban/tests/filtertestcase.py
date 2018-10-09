@@ -1800,7 +1800,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 
 	def testUseDns(self):
 		res = DNSUtils.textToIp('www.example.com', 'no')
-		self.assertEqual(res, [])
+		self.assertSortedEqual(res, [])
 		res = DNSUtils.textToIp('www.example.com', 'warn')
 		# sort ipaddr, IPv4 is always smaller as IPv6
 		self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
@@ -1821,12 +1821,13 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 				# sort ipaddr, IPv4 is always smaller as IPv6
 				self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
 			else:
-				self.assertEqual(res, [])
+				self.assertSortedEqual(res, [])
 		# pure ips:
 		for s in ('93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'):
 			ips = DNSUtils.textToIp(s, 'yes')
-			self.assertEqual(ips, [s])
-			self.assertTrue(isinstance(ips[0], IPAddr))
+			self.assertSortedEqual(ips, [s])
+			for ip in ips:
+				self.assertTrue(isinstance(ip, IPAddr))
 
 	def testIpToName(self):
 		unittest.F2B.SkipIfNoNetwork()
