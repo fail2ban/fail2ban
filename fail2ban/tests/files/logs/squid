@@ -11,3 +11,12 @@
 
 # failJSON: { "time": "2013-12-09T00:09:06.000", "match": true , "host": "175.42.91.151" }
 1386544146.000      1 175.42.91.151 TCP_DENIED/403 3745 GET http://pkfsp.ru/wp-content/uploads/proxyc/engine.php - HIER_NONE/- text/html
+
+# failJSON: { "time": "2018-11-11T20:57:18.107", "match": true , "host": "71.6.200.217" }
+1541969838.107      0 71.6.200.217 TAG_NONE/400 4134 GET /cf_scripts/scripts/ajax/ckeditor/plugins/filemanager/filemanager.cfc?method=getfmfiles&returnformat=plain&path=. - HIER_NONE/- text/html
+
+# failJSON: { "time": "2018-11-11T20:08:11.248", "match": true , "host": "41.221.158.74" }
+1541966891.248      0 41.221.158.74 TAG_NONE/400 3895 GET / - HIER_NONE/- text/html
+
+# failJSON: { "time": "2018-11-11T12:08:56.727", "match": true , "host": "180.76.157.155" }
+1541938136.727      1 180.76.157.155 TAG_NONE/400 3910 GET /webdav/ - HIER_NONE/- text/html
