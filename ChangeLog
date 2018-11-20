@@ -35,8 +35,13 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
 -----------
 
 ### Fixes
+* `filter.d/sshd.conf`:
+  - captures `Disconnecting ...: Change of username or service not allowed` (gh-2239, gh-2279)
+  - captures `Disconnected from ... [preauth]` (`extra`/`aggressive` mode and preauth phase only, gh-2239, gh-2279)
 
 ### New Features
+* new failregex-flag tag `<F-MLFGAINED>` for failregex, signaled that the access to service was gained
+  (ATM used similar to tag `<F-NOFAIL>`, but it does not add the log-line to matches, gh-2279)
 
 ### Enhancements
 
