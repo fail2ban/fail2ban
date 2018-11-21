@@ -670,16 +670,21 @@ class Filter(JailThread):
 		mlfidFail = self.mlfidCache.get(mlfid) if self.__mlfidCache else None
 		users = None
 		nfflgs = 0
-		if fail.get('nofail'): nfflgs |= 1
+		if fail.get("mlfgained"):
+			nfflgs |= 9
+			if not fail.get('nofail'):
+				fail['nofail'] = fail["mlfgained"]
+		elif fail.get('nofail'): nfflgs |= 1
 		if fail.get('mlfforget'): nfflgs |= 2
 		# if multi-line failure id (connection id) known:
 		if mlfidFail:
 			mlfidGroups = mlfidFail[1]
 			# update users set (hold all users of connect):
 			users = self._updateUsers(mlfidGroups, fail.get('user'))
-			# be sure we've correct current state ('nofail' only from last failure)
+			# be sure we've correct current state ('nofail' and 'mlfgained' only from last failure)
 			try:
 				del mlfidGroups['nofail']
+				del mlfidGroups['mlfgained']
 			except KeyError:
 				pass
 			# # ATM incremental (non-empty only) merge deactivated (for future version only),
@@ -703,16 +708,17 @@ class Filter(JailThread):
 			# we've new user, reset 'nofail' because of multiple users attempts:
 			try:
 				del fail['nofail']
+				nfflgs &= ~1 # reset nofail
 			except KeyError:
 				pass
 		# merge matches:
-		if not fail.get('nofail'): # current state (corresponding users)
+		if not (nfflgs & 1): # current nofail state (corresponding users)
 			try:
 				m = fail.pop("nofail-matches")
 				m += fail.get("matches", [])
 			except KeyError:
 				m = fail.get("matches", [])
-			if not (nfflgs & 2): # not mlfforget:
+			if not (nfflgs & 8): # no gain signaled
 				m += failRegex.getMatchedTupleLines()
 			fail["matches"] = m
 		elif not (nfflgs & 2) and (nfflgs & 1): # not mlfforget and nofail:
