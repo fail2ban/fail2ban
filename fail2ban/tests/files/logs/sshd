@@ -253,6 +253,13 @@ Mar  7 18:53:34 bar sshd[1559]: Accepted password for known from 192.0.2.116 por
 # failJSON: { "match": false , "desc": "No failure" }
 Mar  7 18:53:38 bar sshd[1559]: Connection closed by 192.0.2.116
 
+# failJSON: { "time": "2005-03-19T16:47:48", "match": true , "attempts": 1, "user": "admin", "host": "192.0.2.117", "desc": "Failure: attempt invalid user" }
+Mar 19 16:47:48 test sshd[5672]: Invalid user admin from 192.0.2.117 port 44004
+# failJSON: { "time": "2005-03-19T16:47:49", "match": true , "attempts": 2, "user": "admin", "host": "192.0.2.117", "desc": "Failure: attempt to change user (disallowed)" }
+Mar 19 16:47:49 test sshd[5672]: Disconnecting invalid user admin 192.0.2.117 port 44004: Change of username or service not allowed: (admin,ssh-connection) -> (user,ssh-connection) [preauth]
+# failJSON: { "time": "2005-03-19T16:47:50", "match": false, "desc": "Disconnected during preauth phase (no failure in normal mode)" }
+Mar 19 16:47:50 srv sshd[5672]: Disconnected from authenticating user admin 192.0.2.6 port 33553 [preauth]
+
 # filterOptions: [{"mode": "ddos"}, {"mode": "aggressive"}]
 
 # http://forums.powervps.com/showthread.php?t=1667
@@ -334,3 +341,6 @@ Oct 26 15:30:40 localhost sshd[14737]: Unable to negotiate with 192.0.2.2 port 5
 Nov 26 13:03:38 srv sshd[14737]: Unable to negotiate with 192.0.2.4 port 50404: no matching host key type found. Their offer: ssh-dss
 # failJSON: { "time": "2004-11-26T13:03:39", "match": true , "host": "192.0.2.5", "desc": "No matching everything ... found." }
 Nov 26 13:03:39 srv sshd[14738]: fatal: Unable to negotiate with 192.0.2.5 port 55555: no matching everything new here found. Their offer: ...
+
+# failJSON: { "time": "2004-11-26T16:47:51", "match": true , "host": "192.0.2.6", "desc": "Disconnected during preauth phase (in extra/aggressive mode)" }
+Nov 26 16:47:51 srv sshd[19320]: Disconnected from authenticating user root 192.0.2.6 port 33553 [preauth]

@@ -82,7 +82,7 @@ strptime("2012", "%Y")
 
 # short names for pure numeric log-level ("Level 25" could be truncated by short formats):
 def _init():
-	for i in xrange(50):
+	for i in range(50):
 		if logging.getLevelName(i).startswith('Level'):
 			logging.addLevelName(i, '#%02d-Lev.' % i)
 _init()
