@@ -22,7 +22,8 @@ mechanisms if you really want to protect services.
 ------|------
 
 This README is a quick introduction to Fail2Ban. More documentation, FAQ, and HOWTOs
-to be found on fail2ban(1) manpage, [Documentation](https://fail2ban.readthedocs.io/), [Wiki](https://github.com/fail2ban/fail2ban/wiki)
+to be found on fail2ban(1) manpage, [Wiki](https://github.com/fail2ban/fail2ban/wiki),
+[Developers documentation](https://fail2ban.readthedocs.io/)
 and the website: https://www.fail2ban.org
 
 Installation:
