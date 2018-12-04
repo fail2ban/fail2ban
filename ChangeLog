@@ -105,6 +105,7 @@ ver. 0.10.4 (2018/10/04) - ten-four-on-due-date-ten-four
 * `filter.d/dovecot.conf`: extended with tags F-USER (and alternatives) to collect user-logins (gh-2168)
 * since v.0.10.4, fail2ban-client, fail2ban-server and fail2ban-regex will return version without logo info,
   additionally option `-V` can be used to get version in normalized machine-readable short format.
+* `action.d/badips.py`: add a `shortloglevel` option for the summary message, in addition to the existing `loglevel` one
 
 
 ver. 0.10.3 (2018/04/04) - the-time-is-always-right-to-do-what-is-right
