@@ -73,6 +73,17 @@ else: # pragma: no cover
 		return self._cp_interpolate_some(option, accum, rest, section, map, *args, **kwargs)
 	SafeConfigParser._interpolate_some = _interpolate_some
 
+def _expandConfFilesWithLocal(filenames):
+	"""Expands config files with local extension.
+	"""
+	newFilenames = []
+	for filename in filenames:
+		newFilenames.append(filename)
+		localname = os.path.splitext(filename)[0] + '.local'
+		if localname not in filenames and os.path.isfile(localname):
+			newFilenames.append(localname)
+	return newFilenames
+
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 logLevel = 7
@@ -245,6 +256,7 @@ after = 1.conf
 	def _getIncludes(self, filenames, seen=[]):
 		if not isinstance(filenames, list):
 			filenames = [ filenames ]
+		filenames = _expandConfFilesWithLocal(filenames)
 		# retrieve or cache include paths:
 		if self._cfg_share:
 			# cache/share include list:
