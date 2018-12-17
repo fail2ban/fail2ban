@@ -55,6 +55,7 @@ ver. 0.11.0-dev-0 (20??/??/??) - development nightly edition
 * algorithm of restore current bans after restart changed: update the restored ban-time (and therefore 
   end of ban) of the ticket with ban-time of jail (as maximum), for all tickets with ban-time greater
   (or persistent); not affected if ban-time of the jail is unchanged between stop/start.
+* added new setup-option `--without-tests` to skip building and installing of tests files (gh-2287).
 
 
 ver. 0.10.4-dev-1 (20??/??/??) - development edition
