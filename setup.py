@@ -134,7 +134,7 @@ class install_command_f2b(install):
 			cmdclass = self.distribution.cmdclass
 			cmdclass['build_py'] = build_py_2to3
 			cmdclass['build_scripts'] = build_scripts_2to3
-		if self.without_tests is None:
+		if not self.without_tests:
 			self.distribution.scripts += [
 				'bin/fail2ban-testcases',
 			]
