@@ -28,7 +28,8 @@ import re
 import shutil
 import tempfile
 import unittest
-from ..client.configreader import ConfigReader, ConfigReaderUnshared, NoSectionError
+from ..client.configreader import ConfigReader, ConfigReaderUnshared, \
+	DefinitionInitConfigReader, NoSectionError
 from ..client import configparserinc
 from ..client.jailreader import JailReader, extractOptions
 from ..client.filterreader import FilterReader
@@ -124,6 +125,54 @@ option = %s
 		self.assertEqual(self._getoption(), 990)
 		self._remove("c.d/90.conf")
 		self.assertEqual(self._getoption(), 2)
+
+	def testLocalInIncludes(self):
+		self._write("c.conf", value=None, content="""
+[INCLUDES]
+before = ib.conf
+after  = ia.conf
+[Definition]
+test = %(default/test)s
+""")
+		self._write("ib.conf", value=None, content="""
+[DEFAULT]
+test = A
+[Definition]
+option = 1
+""")
+		self._write("ib.local", value=None, content="""
+[DEFAULT]
+test = B
+[Definition]
+option = 2
+""")
+		self._write("ia.conf", value=None, content="""
+[DEFAULT]
+test = C
+[Definition]
+oafter = 3
+""")
+		self._write("ia.local", value=None, content="""
+[DEFAULT]
+test = D
+[Definition]
+oafter = 4
+""")
+		class TestDefConfReader(DefinitionInitConfigReader):
+			_configOpts = {
+			  "option": ["int", None],
+			  "oafter": ["int", None],
+				"test":   ["string", None],
+			}
+		self.c = TestDefConfReader('c', 'option', {})
+		self.c.setBaseDir(self.d)
+		self.assertTrue(self.c.read())
+		self.c.getOptions({}, all=True)
+		o = self.c.getCombined()
+		# test local wins (overwrite all options):
+		self.assertEqual(o.get('option'), 2)
+		self.assertEqual(o.get('oafter'), 4)
+		self.assertEqual(o.get('test'), 'D')
 
 	def testInterpolations(self):
 		self.assertFalse(self.c.read('i'))	# nothing is there yet
