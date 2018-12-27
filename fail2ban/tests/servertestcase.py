@@ -64,7 +64,7 @@ class TestServer(Server):
 		pass
 
 
-class TransmitterBase(unittest.TestCase):
+class TransmitterBase(LogCaptureTestCase):
 	
 	def setUp(self):
 		"""Call before every test case."""
@@ -332,11 +332,11 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "banip", "127.0.0.1"]),
 			(0, "127.0.0.1"))
-		time.sleep(Utils.DEFAULT_SLEEP_TIME) # Give chance to ban
+		self.assertLogged("Ban 127.0.0.1", wait=True) # Give chance to ban
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "banip", "Badger"]),
 			(0, "Badger")) #NOTE: Is IP address validated? Is DNS Lookup done?
-		time.sleep(Utils.DEFAULT_SLEEP_TIME) # Give chance to ban
+		self.assertLogged("Ban Badger", wait=True) # Give chance to ban
 		# Unban IP
 		self.assertEqual(
 			self.transm.proceed(
