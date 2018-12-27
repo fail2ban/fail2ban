@@ -111,7 +111,7 @@ class Utils():
 						if len(cache) >= self.maxCount:
 							if OrderedDict is not dict: # first (older):
 								cache.popitem(False)
-							else:
+							else: # pragma: 3.x no cover
 								cache.popitem()
 			cache[k] = (v, t + self.maxTime)
 
