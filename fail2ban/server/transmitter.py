@@ -390,6 +390,8 @@ class Transmitter:
 		# Action
 		elif command[1] == "bantime":
 			return self.__server.getBanTime(name)
+		elif command[1] == "banip":
+			return self.__server.getBanList(name)
 		elif command[1].startswith("bantime."):
 			opt = command[1][len("bantime."):]
 			return self.__server.getBanTimeExtra(name, opt)

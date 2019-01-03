@@ -103,6 +103,34 @@ class TransmitterBase(LogCaptureTestCase):
 			# if we expected to get it set without problem, check new value
 			self.assertEqual(v(self.transm.proceed(getCmd)), v((0, outValue)))
 
+	def getBanListTest(self, jail, banip=None, unbanip=None, outList=None):
+		"""Process set banip/set unbanip commands and compare the list of
+		banned IP addresses with outList."""
+		def v(value):
+			"""Prepare value for comparison."""
+			if value[1] is None:
+				tmp = []
+			else:
+				tmp = map(str, value[1])
+			return (value[0], sorted(tmp))
+
+		# Ban IP address
+		if banip is not None:
+			self.assertEqual(
+				self.transm.proceed(["set", jail, "banip", banip]),
+				(0, banip))
+			time.sleep(Utils.DEFAULT_SLEEP_TIME) # Give chance to ban
+		# Unban IP address
+		if unbanip is not None:
+			self.assertEqual(
+				self.transm.proceed(["set", jail, "unbanip", unbanip]),
+				(0, unbanip))
+			time.sleep(Utils.DEFAULT_SLEEP_TIME) # Give chance to unban
+		# Compare the list of banned IP addresses with outList
+		self.assertEqual(
+			v(self.transm.proceed(["get", jail, "banip"])),
+			v((0, outList)))
+
 	def setGetTestNOK(self, cmd, inValue, jail=None):
 		setCmd = ["set", cmd, inValue]
 		getCmd = ["get", cmd]
@@ -346,6 +374,28 @@ class Transmitter(TransmitterBase):
 		self.assertEqual(
 			self.transm.proceed(
 				["set", self.jailName, "unbanip", "192.168.1.1"])[0],1)
+
+	def testJailBanList(self):
+		jail = "TestJailBanList"
+		self.server.addJail(jail, FAST_BACKEND)
+		self.server.startJail(jail)
+
+		self.getBanListTest(jail)
+		self.getBanListTest(
+			jail, banip="127.0.0.1", outList=["127.0.0.1"])
+		self.getBanListTest(
+			jail, banip="192.168.0.1",
+			outList=["127.0.0.1", "192.168.0.1"])
+		self.getBanListTest(
+			jail, banip="192.168.1.10",
+			outList=["127.0.0.1", "192.168.0.1", "192.168.1.10"])
+		self.getBanListTest(
+			jail, unbanip="127.0.0.1",
+			outList=["192.168.0.1", "192.168.1.10"])
+		self.getBanListTest(
+			jail, unbanip="192.168.1.10", outList=["192.168.0.1"])
+		self.getBanListTest(jail, unbanip="192.168.0.1", outList=[])
+		self.getBanListTest(jail)
 
 	def testJailMaxRetry(self):
 		self.setGetTest("maxretry", "5", 5, jail=self.jailName)

@@ -180,6 +180,8 @@ class Beautifier:
 					msg = "The jail %s action %s has the following " \
 						"methods:\n" % (inC[1], inC[3])
 					msg += ", ".join(response)
+			elif inC[2] == "banip" and inC[0] == "get":
+				msg = " ".join(response)
 		except Exception:
 			logSys.warning("Beautifier error. Please report the error")
 			logSys.error("Beautify %r with %r failed", response, self.__inputCmd,
