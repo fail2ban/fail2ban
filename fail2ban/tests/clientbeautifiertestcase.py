@@ -261,3 +261,10 @@ class BeautifierTest(unittest.TestCase):
 
 		output = "Sorry but the command is invalid"
 		self.assertEqual(self.b.beautifyError(IndexError()), output)
+
+	def testJailBanList(self):
+		self.b.setInputCmd(["get", "ssh", "banip"])
+		response = ["192.168.0.1", "192.168.1.10"]
+		output = "192.168.0.1 192.168.1.10"
+		self.assertEqual(self.b.beautify(response), output)
+		self.assertEqual(self.b.beautify([]), "")

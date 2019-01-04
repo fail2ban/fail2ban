@@ -1227,6 +1227,36 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"Jail 'test-jail1' stopped", 
 			"Jail 'test-jail1' started", all=True, wait=MID_WAITTIME)
 
+		# test the list of banned IP addresses, step 0: prepare
+		self.pruneLog("[test-phase 9a]")
+		self.execCmd(SUCCESS, startparams, "reload", "--unban", "test-jail1")
+		self.assertLogged(
+			"Jail 'test-jail1' reloaded", wait=MID_WAITTIME)
+		# test the list of banned IP addresses, step 1: ban IP addresses
+		self.pruneLog("[test-phase 9b]")
+		self.execCmd(SUCCESS, startparams,
+			"set", "test-jail1", "banip", "192.168.0.1")
+		self.assertLogged("[test-jail1] Ban 192.168.0.1", wait=MID_WAITTIME)
+		self.execCmd(SUCCESS, startparams,
+			"set", "test-jail1", "banip", "192.168.1.10")
+		self.assertLogged("[test-jail1] Ban 192.168.1.10", wait=MID_WAITTIME)
+		self.execCmd(SUCCESS, startparams, "get", "test-jail1", "banip")
+		self.assertLogged(
+			"192.168.1.10 192.168.0.1",
+			"192.168.0.1 192.168.1.10", wait=MID_WAITTIME)
+		# test the list of banned IP addresses, step 2: unban IP addresses
+		self.pruneLog("[test-phase 9c]")
+		self.execCmd(SUCCESS, startparams,
+			"set", "test-jail1", "unbanip", "192.168.0.1")
+		self.assertLogged("[test-jail1] Unban 192.168.0.1", wait=MID_WAITTIME)
+		self.execCmd(SUCCESS, startparams,
+			"set", "test-jail1", "unbanip", "192.168.1.10")
+		self.assertLogged("[test-jail1] Unban 192.168.1.10", wait=MID_WAITTIME)
+		self.execCmd(SUCCESS, startparams, "get", "test-jail1", "banip")
+		self.assertNotLogged(
+			"192.168.1.10 192.168.0.1",
+			"192.168.0.1 192.168.1.10", wait=MID_WAITTIME)
+
 	# test action.d/nginx-block-map.conf --
 	@unittest.F2B.skip_if_cfg_missing(action="nginx-block-map")
 	@with_foreground_server_thread(startextra={
