@@ -103,26 +103,6 @@ class TransmitterBase(LogCaptureTestCase):
 			# if we expected to get it set without problem, check new value
 			self.assertEqual(v(self.transm.proceed(getCmd)), v((0, outValue)))
 
-	def getBanListTest(self, jail, banip=None, unbanip=None, outList=[]):
-		"""Process set banip/set unbanip commands and compare the list of
-		banned IP addresses with outList."""
-		# Ban IP address
-		if banip is not None:
-			self.assertEqual(
-				self.transm.proceed(["set", jail, "banip", banip]),
-				(0, banip))
-			self.assertLogged("Ban %s" % banip, wait=True) # Give chance to ban
-		# Unban IP address
-		if unbanip is not None:
-			self.assertEqual(
-				self.transm.proceed(["set", jail, "unbanip", unbanip]),
-				(0, unbanip))
-			self.assertLogged("Unban %s" % unbanip, wait=True) # Give chance to unban
-		# Compare the list of banned IP addresses with outList
-		self.assertSortedEqual(
-			self.transm.proceed(["get", jail, "banip"]),
-			(0, outList))
-
 	def setGetTestNOK(self, cmd, inValue, jail=None):
 		setCmd = ["set", cmd, inValue]
 		getCmd = ["get", cmd]
@@ -372,22 +352,40 @@ class Transmitter(TransmitterBase):
 		self.server.addJail(jail, FAST_BACKEND)
 		self.server.startJail(jail)
 
-		self.getBanListTest(jail)
-		self.getBanListTest(
-			jail, banip="127.0.0.1", outList=["127.0.0.1"])
-		self.getBanListTest(
-			jail, banip="192.168.0.1",
+		# Helper to process set banip/set unbanip commands and compare the list of
+		# banned IP addresses with outList.
+		def _getBanListTest(jail, banip=None, unbanip=None, outList=[]):
+			# Ban IP address
+			if banip is not None:
+				self.assertEqual(
+					self.transm.proceed(["set", jail, "banip", banip]),
+					(0, banip))
+				self.assertLogged("Ban %s" % banip, wait=True) # Give chance to ban
+			# Unban IP address
+			if unbanip is not None:
+				self.assertEqual(
+					self.transm.proceed(["set", jail, "unbanip", unbanip]),
+					(0, unbanip))
+				self.assertLogged("Unban %s" % unbanip, wait=True) # Give chance to unban
+			# Compare the list of banned IP addresses with outList
+			self.assertSortedEqual(
+				self.transm.proceed(["get", jail, "banip"]),
+				(0, outList))
+
+		_getBanListTest(jail,
+			outList=[])
+		_getBanListTest(jail, banip="127.0.0.1", 
+			outList=["127.0.0.1"])
+		_getBanListTest(jail, banip="192.168.0.1",
 			outList=["127.0.0.1", "192.168.0.1"])
-		self.getBanListTest(
-			jail, banip="192.168.1.10",
+		_getBanListTest(jail, banip="192.168.1.10",
 			outList=["127.0.0.1", "192.168.0.1", "192.168.1.10"])
-		self.getBanListTest(
-			jail, unbanip="127.0.0.1",
+		_getBanListTest(jail, unbanip="127.0.0.1",
 			outList=["192.168.0.1", "192.168.1.10"])
-		self.getBanListTest(
-			jail, unbanip="192.168.1.10", outList=["192.168.0.1"])
-		self.getBanListTest(jail, unbanip="192.168.0.1", outList=[])
-		self.getBanListTest(jail)
+		_getBanListTest(jail, unbanip="192.168.1.10",
+			outList=["192.168.0.1"])
+		_getBanListTest(jail, unbanip="192.168.0.1",
+			outList=[])
 
 	def testJailMaxRetry(self):
 		self.setGetTest("maxretry", "5", 5, jail=self.jailName)
