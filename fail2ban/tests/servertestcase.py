@@ -103,33 +103,25 @@ class TransmitterBase(LogCaptureTestCase):
 			# if we expected to get it set without problem, check new value
 			self.assertEqual(v(self.transm.proceed(getCmd)), v((0, outValue)))
 
-	def getBanListTest(self, jail, banip=None, unbanip=None, outList=None):
+	def getBanListTest(self, jail, banip=None, unbanip=None, outList=[]):
 		"""Process set banip/set unbanip commands and compare the list of
 		banned IP addresses with outList."""
-		def v(value):
-			"""Prepare value for comparison."""
-			if value[1] is None:
-				tmp = []
-			else:
-				tmp = map(str, value[1])
-			return (value[0], sorted(tmp))
-
 		# Ban IP address
 		if banip is not None:
 			self.assertEqual(
 				self.transm.proceed(["set", jail, "banip", banip]),
 				(0, banip))
-			time.sleep(Utils.DEFAULT_SLEEP_TIME) # Give chance to ban
+			self.assertLogged("Ban %s" % banip, wait=True) # Give chance to ban
 		# Unban IP address
 		if unbanip is not None:
 			self.assertEqual(
 				self.transm.proceed(["set", jail, "unbanip", unbanip]),
 				(0, unbanip))
-			time.sleep(Utils.DEFAULT_SLEEP_TIME) # Give chance to unban
+			self.assertLogged("Unban %s" % unbanip, wait=True) # Give chance to unban
 		# Compare the list of banned IP addresses with outList
-		self.assertEqual(
-			v(self.transm.proceed(["get", jail, "banip"])),
-			v((0, outList)))
+		self.assertSortedEqual(
+			self.transm.proceed(["get", jail, "banip"]),
+			(0, outList))
 
 	def setGetTestNOK(self, cmd, inValue, jail=None):
 		setCmd = ["set", cmd, inValue]
