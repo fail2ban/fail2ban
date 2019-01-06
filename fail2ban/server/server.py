@@ -510,7 +510,7 @@ class Server:
 	def getBanTime(self, name):
 		return self.__jails[name].actions.getBanTime()
 
-	def getBanList(self, name):
+	def getBanList(self, name, withTime=False):
 		"""Returns the list of banned IP addresses for a jail.
 
 		Parameters
@@ -523,7 +523,7 @@ class Server:
 		list
 			The list of banned IP addresses.
 		"""
-		return self.__jails[name].actions.getBanList()
+		return self.__jails[name].actions.getBanList(withTime)
 
 	def setBanTimeExtra(self, name, opt, value):
 		self.__jails[name].setBanTimeExtra(opt, value)

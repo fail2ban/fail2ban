@@ -204,7 +204,7 @@ class Actions(JailThread, Mapping):
 	def getBanTime(self):
 		return self.__banManager.getBanTime()
 
-	def getBanList(self):
+	def getBanList(self, withTime=False):
 		"""Returns the list of banned IP addresses.
 
 		Returns
@@ -212,7 +212,7 @@ class Actions(JailThread, Mapping):
 		list
 			The list of banned IP addresses.
 		"""
-		return self.__banManager.getBanList()
+		return self.__banManager.getBanList(ordered=True, withTime=withTime)
 
 	def removeBannedIP(self, ip=None, db=True, ifexists=False):
 		"""Removes banned IP calling actions' unban method
