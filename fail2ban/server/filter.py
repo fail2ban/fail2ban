@@ -602,7 +602,7 @@ class Filter(JailThread):
 				if self._inIgnoreIPList(ip, tick):
 					continue
 				logSys.info(
-					"[%s] Found %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
+					"[%s] Found %s - %s", self.jailName, ip, MyTime.time2str(unixTime)
 				)
 				self.failManager.addFailure(tick)
 				# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
@@ -1092,7 +1092,7 @@ class FileFilter(Filter):
 		fs = container.getFileSize()
 		if logSys.getEffectiveLevel() <= logging.DEBUG:
 			logSys.debug("Seek to find time %s (%s), file size %s", date, 
-				datetime.datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S"), fs)
+				MyTime.time2str(date), fs)
 		minp = container.getPos()
 		maxp = fs
 		tryPos = minp
@@ -1171,7 +1171,7 @@ class FileFilter(Filter):
 		container.setPos(foundPos)
 		if logSys.getEffectiveLevel() <= logging.DEBUG:
 			logSys.debug("Position %s from %s, found time %s (%s) within %s seeks", lastPos, fs, foundTime, 
-				(datetime.datetime.fromtimestamp(foundTime).strftime("%Y-%m-%d %H:%M:%S") if foundTime is not None else ''), cntr)
+				(MyTime.time2str(foundTime) if foundTime is not None else ''), cntr)
 		
 	def status(self, flavor="basic"):
 		"""Status of Filter plus files being monitored.
