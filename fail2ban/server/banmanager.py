@@ -102,9 +102,22 @@ class BanManager:
 	#
 	# @return IP list
 	
-	def getBanList(self):
+	def getBanList(self, ordered=False, withTime=False):
 		with self.__lock:
-			return self.__banList.keys()
+			if not ordered:
+				return self.__banList.keys()
+			lst = []
+			for ticket in self.__banList.itervalues():
+				eob = ticket.getEndOfBanTime(self.__banTime)
+				lst.append((ticket,eob))
+			lst.sort(key=lambda t: t[1])
+			t2s = MyTime.time2str
+			if withTime:
+				return ['%s \t%s + %d = %s' % (
+						t[0].getID(), 
+						t2s(t[0].getTime()), t[0].getBanTime(self.__banTime), t2s(t[1])
+					) for t in lst]
+			return [t[0].getID() for t in lst]
 
 	##
 	# Returns a iterator to ban list (used in reload, so idle).

@@ -393,7 +393,7 @@ class ObserverThread(JailThread):
 				return
 			# retry counter was increased - add it again:
 			logSys.info("[%s] Found %s, bad - %s, %s # -> %s%s", jail.name, ip, 
-				datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S"), banCount, retryCount,
+				MyTime.time2str(unixTime), banCount, retryCount,
 				(', Ban' if retryCount >= maxRetry else ''))
 			# retryCount-1, because a ticket was already once incremented by filter self
 			retryCount = failManager.addFailure(ticket, retryCount - 1, True)
@@ -454,7 +454,7 @@ class ObserverThread(JailThread):
 					# check current ticket time to prevent increasing for twice read tickets (restored from log file besides database after restart)
 					if ticket.getTime() > timeOfBan:
 						logSys.info('[%s] IP %s is bad: %s # last %s - incr %s to %s' % (jail.name, ip, banCount, 
-							datetime.datetime.fromtimestamp(timeOfBan).strftime("%Y-%m-%d %H:%M:%S"), 
+							MyTime.time2str(timeOfBan), 
 							datetime.timedelta(seconds=int(orgBanTime)), datetime.timedelta(seconds=int(banTime))));
 					else:
 						ticket.restored = True
@@ -485,7 +485,7 @@ class ObserverThread(JailThread):
 			if btime != -1:
 				bendtime = ticket.getTime() + btime
 				logtime = (datetime.timedelta(seconds=int(btime)),
-					datetime.datetime.fromtimestamp(bendtime).strftime("%Y-%m-%d %H:%M:%S"))
+					MyTime.time2str(bendtime))
 				# check ban is not too old :
 				if bendtime < MyTime.time():
 					logSys.debug('Ignore old bantime %s', logtime[1])

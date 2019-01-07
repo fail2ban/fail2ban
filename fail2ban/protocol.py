@@ -128,6 +128,7 @@ protocol = [
 ["get <JAIL> bantime", "gets the time a host is banned for <JAIL>"],
 ["get <JAIL> datepattern", "gets the patern used to match date/times for <JAIL>"],
 ["get <JAIL> usedns", "gets the usedns setting for <JAIL>"],
+["get <JAIL> banip [<SEP>|--with-time]", "gets the list of of banned IP addresses for <JAIL>. Optionally the separator character ('<SEP>', default is space) or the option '--with-time' (printing the times of ban) may be specified. The IPs are ordered by end of ban."],
 ["get <JAIL> maxretry", "gets the number of failures allowed for <JAIL>"],
 ["get <JAIL> maxlines", "gets the number of lines to buffer for <JAIL>"],
 ["get <JAIL> actions", "gets a list of actions for <JAIL>"],

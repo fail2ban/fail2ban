@@ -1064,6 +1064,17 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"stdout: '[test-jail2] test-action3: ++ ban 192.0.2.22",
 			"stdout: '[test-jail2] test-action3: ++ ban 192.0.2.22 ", all=True, wait=MID_WAITTIME)
 
+		# get banned ips:
+		_observer_wait_idle()
+		self.pruneLog("[test-phase 2d.1]")
+		self.execCmd(SUCCESS, startparams, "get", "test-jail2", "banip", "\n")
+		self.assertLogged(
+			"192.0.2.4", "192.0.2.8", "192.0.2.21", "192.0.2.22", all=True, wait=MID_WAITTIME)
+		self.pruneLog("[test-phase 2d.2]")
+		self.execCmd(SUCCESS, startparams, "get", "test-jail1", "banip")
+		self.assertLogged(
+			"192.0.2.1", "192.0.2.2", "192.0.2.3", "192.0.2.4", "192.0.2.8", all=True, wait=MID_WAITTIME)
+
 		# restart jail with unban all:
 		self.pruneLog("[test-phase 2e]")
 		self.execCmd(SUCCESS, startparams,
@@ -1397,6 +1408,11 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"stdout: '[test-jail1] test-action1: ++ ban 192.0.2.11 -c 2 -t 300 : ",
 			"stdout: '[test-jail1] test-action2: ++ ban 192.0.2.11 -c 2 -t 300 : ",
 			all=True, wait=MID_WAITTIME)
+		# get banned ips with time:
+		self.pruneLog("[test-phase 2) time+10m - get-ips]")
+		self.execCmd(SUCCESS, startparams, "get", "test-jail1", "banip", "--with-time")
+		self.assertLogged(
+			"192.0.2.11", "+ 300 =", all=True, wait=MID_WAITTIME)
 		# unblock observer here and wait it is done:
 		wakeObs = True
 		_observer_wait_idle()
@@ -1410,6 +1426,13 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"stdout: '[test-jail1] test-action2: ++ prolong 192.0.2.11 -c 2 -t 600 : ",
 			all=True, wait=MID_WAITTIME)
+
+		# get banned ips with time:
+		_observer_wait_idle()
+		self.pruneLog("[test-phase 2) time+11m - get-ips]")
+		self.execCmd(SUCCESS, startparams, "get", "test-jail1", "banip", "--with-time")
+		self.assertLogged(
+			"192.0.2.11", "+ 600 =", all=True, wait=MID_WAITTIME)
 
 	# test multiple start/stop of the server (threaded in foreground) --
 	if False: # pragma: no cover
