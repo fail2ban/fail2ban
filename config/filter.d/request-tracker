@@ -1,0 +1,9 @@
+#  Fail2Ban filter for Request tracker login failures
+
+#
+
+[Definition]
+
+failregex = RT: (?:\[\d+\]) FAILED LOGIN for .* from <HOST>
+
+ignoreregex =
