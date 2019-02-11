@@ -155,7 +155,7 @@ def _out_file(fn, handle=logSys.debug):
 
 def _write_file(fn, mode, *lines):
 	f = open(fn, mode)
-	f.write('\n'.join(lines))
+	f.write('\n'.join(lines)+('\n' if lines else ''))
 	f.close()
 
 def _read_file(fn):

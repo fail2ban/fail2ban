@@ -73,12 +73,15 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
   - MYSQL 8.0.13 compatibility (log-error-verbosity = 3), log-format contains few additional words
     enclosed in brackets after "[Note]" (gh-2314)
 * `files/fail2ban.service.in`: fixed systemd-unit template - missing nftables dependency (gh-2313)
+* several `action.d/mail*`: fixed usage with multiple log files (ultimate fix for gh-976, gh-2341)
 
 ### New Features
 * new failregex-flag tag `<F-MLFGAINED>` for failregex, signaled that the access to service was gained
   (ATM used similar to tag `<F-NOFAIL>`, but it does not add the log-line to matches, gh-2279)
 
 ### Enhancements
+* jail-reader extended (amend to gh-1622): actions support multi-line options now (interpolations
+  containing new-line);
 
 
 ver. 0.10.4 (2018/10/04) - ten-four-on-due-date-ten-four

@@ -353,6 +353,30 @@ class JailReaderTest(LogCaptureTestCase):
 		)
 		self.assertEqual(expected2, result)
 
+	def testMultiLineOption(self):
+		jail = JailReader('multi-log', force_enable=True, basedir=IMPERFECT_CONFIG, share_config=IMPERFECT_CONFIG_SHARE_CFG)
+		self.assertTrue(jail.read())
+		self.assertTrue(jail.getOptions())
+		self.assertEqual(jail.options['logpath'], 'a.log\nb.log\nc.log')
+		self.assertEqual(jail.options['action'], 'action[actname=\'ban\']\naction[actname=\'log\', logpath="a.log\nb.log\nc.log\nd.log"]\naction[actname=\'test\']')
+		self.assertSortedEqual([a.convert() for a in jail._JailReader__actions], [
+			[['set', 'multi-log', 'addaction', 'ban'], ['multi-set', 'multi-log', 'action', 'ban', [
+				['actionban', 'echo "name: ban, ban: <ip>, logs: a.log\nb.log\nc.log"'],
+				['actname', 'ban'],
+				['name', 'multi-log']
+			]]],
+			[['set', 'multi-log', 'addaction', 'log'], ['multi-set', 'multi-log', 'action', 'log', [
+				['actionban', 'echo "name: log, ban: <ip>, logs: a.log\nb.log\nc.log\nd.log"'],
+				['actname', 'log'],
+				['logpath', 'a.log\nb.log\nc.log\nd.log'], ['name', 'multi-log']
+			]]],
+			[['set', 'multi-log', 'addaction', 'test'], ['multi-set', 'multi-log', 'action', 'test', [
+				['actionban', 'echo "name: test, ban: <ip>, logs: a.log\nb.log\nc.log"'],
+				['actname', 'test'],
+				['name', 'multi-log']
+			]]]
+		])
+
 	def testVersionAgent(self):
 		unittest.F2B.SkipIfCfgMissing(stock=True)
 		jail = JailReader('blocklisttest', force_enable=True, basedir=CONFIG_DIR)

@@ -158,12 +158,21 @@ class JailReader(ConfigReader):
 				self.__filter.getOptions(self.__opts)
 		
 			# Read action
-			for act in self.__opts["action"].split('\n'):
+			prevln = ''
+			actlst = self.__opts["action"].split('\n')
+			for n, act in enumerate(actlst):
 				try:
 					if not act:			  # skip empty actions
 						continue
+					# join with previous line if needed (consider possible new-line):
+					if prevln: act = prevln + '\n' + act
 					actName, actOpt = extractOptions(act)
+					prevln = ''
 					if not actName:
+						# consider possible new-line, so repeat with joined next line's:
+						if n < len(actlst) - 1:
+							prevln = act
+							continue
 						raise JailDefError("Invalid action definition %r" % act)
 					if actName.endswith(".py"):
 						self.__actions.append([
