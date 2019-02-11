@@ -33,8 +33,8 @@ from StringIO import StringIO
 
 from utils import LogCaptureTestCase, logSys as DefLogSys
 
-from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger, uni_decode
-from ..helpers import splitwords
+from ..helpers import formatExceptionInfo, mbasename, TraceBack, FormatterWithTraceBack, getLogger, \
+	splitwords, uni_decode, uni_string
 from ..server.mytime import MyTime
 
 
@@ -193,6 +193,56 @@ class TestsUtilsTest(LogCaptureTestCase):
 		self.assertEqual(mbasename("/long/path/base.py"), 'path.base')
 		self.assertEqual(mbasename("/long/path/base"), 'path.base')
 
+	def testUniConverters(self):
+		self.assertRaises(Exception, uni_decode, 
+			(b'test' if sys.version_info >= (3,) else u'test'), 'f2b-test::non-existing-encoding')
+		uni_decode((b'test\xcf' if sys.version_info >= (3,) else u'test\xcf'))
+		uni_string(b'test\xcf')
+		uni_string('test\xcf')
+		uni_string(u'test\xcf')
+
+	def testSafeLogging(self):
+		# logging should be exception-safe, to avoid possible errors (concat, str. conversion, representation failures, etc)
+		logSys = DefLogSys
+		class Test:
+			def __init__(self, err=1):
+				self.err = err
+			def __repr__(self):
+				if self.err:
+					raise Exception('no represenation for test!')
+				else:
+					return u'conv-error (\xf2\xf0\xe5\xf2\xe8\xe9), unterminated utf \xcf'
+		test = Test()
+		logSys.log(logging.NOTICE, "test 1a: %r", test)
+		self.assertLogged("Traceback", "no represenation for test!")
+		self.pruneLog()
+		logSys.notice("test 1b: %r", test)
+		self.assertLogged("Traceback", "no represenation for test!")
+
+		self.pruneLog('[phase 2] test error conversion by encoding %s' % sys.getdefaultencoding())
+		test = Test(0)
+		# this may produce coversion error on ascii default encoding:
+		#str(test)
+		logSys.log(logging.NOTICE, "test 2a: %r, %s", test, test)
+		self.assertLogged("test 2a", "Error by logging handler", all=False)
+		logSys.notice("test 2b: %r, %s", test, test)
+		self.assertLogged("test 2b", "Error by logging handler", all=False)
+
+		self.pruneLog('[phase 3] test unexpected error in handler')
+		class _ErrorHandler(logging.Handler):
+			def handle(self, record):
+				raise Exception('error in handler test!')
+		_org_handler = logSys.handlers
+		try:
+			logSys.handlers = list(logSys.handlers)
+			logSys.handlers += [_ErrorHandler()]
+			logSys.log(logging.NOTICE, "test 3a")
+			logSys.notice("test 3b")
+		finally:
+			logSys.handlers = _org_handler
+		# we should reach this line without errors!
+		self.pruneLog('OK')
+
 	def testTraceBack(self):
 		# pretty much just a smoke test since tests runners swallow all the detail
 
@@ -287,17 +337,37 @@ class TestsUtilsTest(LogCaptureTestCase):
 		self.assertNotLogged('test "xyz"')
 		self.assertNotLogged('test', 'xyz', all=False)
 		self.assertNotLogged('test', 'xyz', 'zyx', all=True)
+		## maxWaitTime:
+		orgfast, unittest.F2B.fast = unittest.F2B.fast, False
+		self.assertFalse(isinstance(unittest.F2B.maxWaitTime(True), bool))
+		self.assertEqual(unittest.F2B.maxWaitTime(lambda: 50)(), 50)
+		self.assertEqual(unittest.F2B.maxWaitTime(25), 25)
+		self.assertEqual(unittest.F2B.maxWaitTime(25.), 25.0)
+		unittest.F2B.fast = True
+		try:
+			self.assertEqual(unittest.F2B.maxWaitTime(lambda: 50)(), 50)
+			self.assertEqual(unittest.F2B.maxWaitTime(25), 2.5)
+			self.assertEqual(unittest.F2B.maxWaitTime(25.), 25.0)
+		finally:
+			unittest.F2B.fast = orgfast
+		self.assertFalse(unittest.F2B.maxWaitTime(False))
 		## assertLogged, assertNotLogged negative case:
 		self.pruneLog()
 		logSys.debug('test "xyz"')
-		self._testAssertionErrorRE(r"All of the .* were found present in the log",
+		self._testAssertionErrorRE(r".* was found in the log",
 			self.assertNotLogged, 'test "xyz"')
+		self._testAssertionErrorRE(r"All of the .* were found present in the log",
+			self.assertNotLogged, 'test "xyz"', 'test')
 		self._testAssertionErrorRE(r"was found in the log",
 			self.assertNotLogged, 'test', 'xyz', all=True)
 		self._testAssertionErrorRE(r"was not found in the log",
 			self.assertLogged, 'test', 'zyx', all=True)
+		self._testAssertionErrorRE(r"was not found in the log, waited 1e-06",
+			self.assertLogged, 'test', 'zyx', all=True, wait=1e-6)
 		self._testAssertionErrorRE(r"None among .* was found in the log",
 			self.assertLogged, 'test_zyx', 'zyx', all=False)
+		self._testAssertionErrorRE(r"None among .* was found in the log, waited 1e-06",
+			self.assertLogged, 'test_zyx', 'zyx', all=False, wait=1e-6)
 		self._testAssertionErrorRE(r"All of the .* were found present in the log",
 			self.assertNotLogged, 'test', 'xyz', all=False)
 		## assertDictEqual:
@@ -346,13 +416,10 @@ class TestsUtilsTest(LogCaptureTestCase):
 
 	def testLazyLogging(self):
 		logSys = DefLogSys
-		if unittest.F2B.log_lazy:
-			# wrong logging syntax will throw an error lazy (on demand):
-			logSys.debug('test', 1, 2, 3)
-			self.assertRaisesRegexp(Exception, 'not all arguments converted', lambda: self.assertNotLogged('test'))
-		else: # pragma: no cover
-			# wrong logging syntax will throw an error directly:
-			self.assertRaisesRegexp(Exception, 'not all arguments converted', lambda: logSys.debug('test', 1, 2, 3))
+		logSys.debug('lazy logging: %r', unittest.F2B.log_lazy)
+		# wrong logging syntax will don't throw an error anymore (logged now):
+		logSys.notice('test', 1, 2, 3)
+		self.assertLogged('not all arguments converted')
 
 
 class MyTimeTest(unittest.TestCase):

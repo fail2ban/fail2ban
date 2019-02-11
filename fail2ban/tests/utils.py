@@ -56,8 +56,11 @@ if not CONFIG_DIR:
 # Use heuristic to figure out where configuration files are
 	if os.path.exists(os.path.join('config','fail2ban.conf')):
 		CONFIG_DIR = 'config'
-	else:
+	else: # pragma: no cover - normally unreachable
 		CONFIG_DIR = '/etc/fail2ban'
+
+# Indicates that we've stock config:
+STOCK = os.path.exists(os.path.join(CONFIG_DIR, 'fail2ban.conf'))
 
 # During the test cases (or setup) use fail2ban modules from main directory:
 os.putenv('PYTHONPATH', os.path.dirname(os.path.dirname(os.path.dirname(
@@ -177,9 +180,13 @@ def initProcess(opts):
 
 
 class F2B(DefaultTestOptions):
+
+	MAX_WAITTIME = 60
+	MID_WAITTIME = 30
+
 	def __init__(self, opts):
 		self.__dict__ = opts.__dict__
-		if self.fast:
+		if self.fast: # pragma: no cover - normal mode in travis
 			self.memory_db = True
 			self.no_gamin = True
 		self.__dict__['share_config'] = {}
@@ -187,8 +194,37 @@ class F2B(DefaultTestOptions):
 		pass
 	def SkipIfNoNetwork(self):
 		pass
-	def maxWaitTime(self,wtime):
-		if self.fast:
+
+	def SkipIfCfgMissing(self, **kwargs):
+		"""Helper to check action/filter config is available
+		"""
+		if not STOCK: # pragma: no cover
+			if kwargs.get('stock'):
+				raise unittest.SkipTest('Skip test because of missing stock-config files')
+			for t in ('action', 'filter'):
+				v = kwargs.get(t)
+				if v is None: continue
+				if os.path.splitext(v)[1] == '': v += '.conf'
+				if not os.path.exists(os.path.join(CONFIG_DIR, t+'.d', v)):
+					raise unittest.SkipTest('Skip test because of missing %s-config for %r' % (t, v))
+
+	def skip_if_cfg_missing(self, **decargs):
+		"""Helper decorator to check action/filter config is available
+		"""
+		def _deco_wrapper(f):
+			@wraps(f)
+			def wrapper(self, *args, **kwargs):
+				unittest.F2B.SkipIfCfgMissing(**decargs)
+				return f(self, *args, **kwargs)
+			return wrapper
+		return _deco_wrapper
+
+	def maxWaitTime(self, wtime=True):
+		if isinstance(wtime, bool) and wtime:
+			wtime = self.MAX_WAITTIME
+		# short only integer interval (avoid by conditional wait with callable, and dual 
+		# wrapping in some routines, if it will be called twice):
+		if self.fast and isinstance(wtime, int):
 			wtime = float(wtime) / 10
 		return wtime
 
@@ -280,17 +316,22 @@ def initTests(opts):
 		c.set('203.0.113.%s' % i, None)
 		c.set('2001:db8::%s' %i, 'test-host')
 	# some legal ips used in our test cases (prevent slow dns-resolving and failures if will be changed later):
+	c.set('2001:db8::ffff', 'test-other')
 	c.set('87.142.124.10', 'test-host')
 	if unittest.F2B.no_network: # pragma: no cover
 		# precache all wrong dns to ip's used in test cases:
 		c = DNSUtils.CACHE_nameToIp
 		for i in (
-			('999.999.999.999', []),
-			('abcdef.abcdef', []),
-			('192.168.0.', []),
-			('failed.dns.ch', []),
+			('999.999.999.999', set()),
+			('abcdef.abcdef', set()),
+			('192.168.0.', set()),
+			('failed.dns.ch', set()),
 		):
 			c.set(*i)
+		# if fast - precache all host names as localhost addresses (speed-up getSelfIPs/ignoreself):
+		if unittest.F2B.fast: # pragma: no cover
+			for i in DNSUtils.getSelfNames():
+				c.set(i, DNSUtils.dnsToIp('localhost'))
 
 
 def mtimesleep():
@@ -611,8 +652,10 @@ class LogCaptureTestCase(unittest.TestCase):
 
 		def __init__(self, lazy=True):
 			self._lock = threading.Lock()
-			self._val = None
+			self._val = ''
+			self._dirty = 0
 			self._recs = list()
+			self._nolckCntr = 0
 			self._strm = StringIO()
 			logging.Handler.__init__(self)
 			if lazy:
@@ -620,45 +663,71 @@ class LogCaptureTestCase(unittest.TestCase):
 			
 		def truncate(self, size=None):
 			"""Truncate the internal buffer and records."""
-			if size:
+			if size: # pragma: no cover - not implemented now
 				raise Exception('invalid size argument: %r, should be None or 0' % size)
+			self._val = ''
 			with self._lock:
-				self._strm.truncate(0)
-				self._val = None
+				self._dirty = 0
 				self._recs = list()
+				self._strm.truncate(0)
 
 		def __write(self, record):
-			msg = record.getMessage() + '\n'
 			try:
-				self._strm.write(msg)
-			except UnicodeEncodeError:
-				self._strm.write(msg.encode('UTF-8'))
+				msg = record.getMessage() + '\n'
+				try:
+					self._strm.write(msg)
+				except UnicodeEncodeError: # pragma: no cover - normally unreachable now
+					self._strm.write(msg.encode('UTF-8', 'replace'))
+			except Exception as e: # pragma: no cover - normally unreachable
+				self._strm.write('Error by logging handler: %r' % e)
 
 		def getvalue(self):
 			"""Return current buffer as whole string."""
-			with self._lock:
-				# cached:
-				if self._val is not None:
-					return self._val
-				# submit already emitted (delivered to handle) records:
-				for record in self._recs:
-					self.__write(record)
-				self._recs = list()
-				# cache and return:
-				self._val = self._strm.getvalue()
+			# if cached (still unchanged/no write operation), we don't need to enter lock:
+			if not self._dirty:
 				return self._val
+			# try to lock, if not possible - return cached/empty (max 5 times):
+			lck = self._lock.acquire(False)
+			# if records changed:
+			if self._dirty & 2:
+				if not lck: # pragma: no cover (may be too sporadic on slow systems)
+					self._nolckCntr += 1
+					if self._nolckCntr <= 5:
+						return self._val
+					self._nolckCntr = 0
+					self._lock.acquire()
+				# minimize time of lock, avoid dead-locking during cross lock within self._strm ...
+				try:
+					self._dirty &= ~3 # reset dirty records/buffer flag before cache value built
+					recs = self._recs
+					self._recs = list()
+				finally:
+					self._lock.release()
+				# submit already emitted (delivered to handle) records:
+				for record in recs:
+					self.__write(record)
+			elif lck: # pragma: no cover - too sporadic for coverage
+				# reset dirty buffer flag (if we can lock, otherwise just next time):
+				self._dirty &= ~1 # reset dirty buffer flag
+				self._lock.release()
+			# cache (outside of log to avoid dead-locking during cross lock within self._strm):
+			self._val = self._strm.getvalue()
+			# return current string value:
+			return self._val
 			 
 		def handle(self, record): # pragma: no cover
 			"""Handle the specified record direct (not lazy)"""
+			self.__write(record)
+			# string buffer changed:
 			with self._lock:
-				self._val = None
-				self.__write(record)
+				self._dirty |= 1 # buffer changed
 
 		def _handle_lazy(self, record):
 			"""Lazy handle the specified record on demand"""
 			with self._lock:
-				self._val = None
 				self._recs.append(record)
+				# logged - causes changed string buffer (signal by set _dirty):
+				self._dirty |= 2 # records changed
 
 	def setUp(self):
 
@@ -717,21 +786,24 @@ class LogCaptureTestCase(unittest.TestCase):
 		"""
 		wait = kwargs.get('wait', None)
 		if wait:
+			wait = unittest.F2B.maxWaitTime(wait)
 			res = Utils.wait_for(lambda: self._is_logged(*s, **kwargs), wait)
 		else:
 			res = self._is_logged(*s, **kwargs)
 		if not kwargs.get('all', False):
 			# at least one entry should be found:
-			if not res: # pragma: no cover
+			if not res:
 				logged = self._log.getvalue()
-				self.fail("None among %r was found in the log: ===\n%s===" % (s, logged))
+				self.fail("None among %r was found in the log%s: ===\n%s===" % (s, 
+					((', waited %s' % wait) if wait else ''), logged))
 		else:
 			# each entry should be found:
-			if not res: # pragma: no cover
+			if not res:
 				logged = self._log.getvalue()
 				for s_ in s:
 					if s_ not in logged:
-						self.fail("%r was not found in the log: ===\n%s===" % (s_, logged))
+						self.fail("%r was not found in the log%s: ===\n%s===" % (s_, 
+							((', waited %s' % wait) if wait else ''), logged))
 
 	def assertNotLogged(self, *s, **kwargs):
 		"""Assert that strings were not logged
@@ -744,15 +816,14 @@ class LogCaptureTestCase(unittest.TestCase):
 		all : boolean (default False) if True should fail if any of s logged
 		"""
 		logged = self._log.getvalue()
-		if not kwargs.get('all', False):
+		if len(s) > 1 and not kwargs.get('all', False):
 			for s_ in s:
 				if s_ not in logged:
 					return
-			if True: # pragma: no cover
-				self.fail("All of the %r were found present in the log: ===\n%s===" % (s, logged))
+			self.fail("All of the %r were found present in the log: ===\n%s===" % (s, logged))
 		else:
 			for s_ in s:
-				if s_ in logged: # pragma: no cover
+				if s_ in logged:
 					self.fail("%r was found in the log: ===\n%s===" % (s_, logged))
 
 	def pruneLog(self, logphase=None):
@@ -762,9 +833,6 @@ class LogCaptureTestCase(unittest.TestCase):
 
 	def getLog(self):
 		return self._log.getvalue()
-
-	def printLog(self):
-		print(self._log.getvalue())
 
 
 pid_exists = Utils.pid_exists

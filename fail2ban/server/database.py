@@ -33,55 +33,65 @@ from threading import RLock
 from .mytime import MyTime
 from .ticket import FailTicket
 from .utils import Utils
-from ..helpers import getLogger, PREFER_ENC
+from ..helpers import getLogger, uni_string, PREFER_ENC
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
-if sys.version_info >= (3,):
+
+def _json_default(x):
+	"""Avoid errors on types unknown in json-adapters."""
+	if isinstance(x, set):
+		x = list(x)
+	return uni_string(x)
+
+if sys.version_info >= (3,): # pragma: 2.x no cover
 	def _json_dumps_safe(x):
 		try:
-			x = json.dumps(x, ensure_ascii=False).encode(
+			x = json.dumps(x, ensure_ascii=False, default=_json_default).encode(
 				PREFER_ENC, 'replace')
-		except Exception as e: # pragma: no cover
-			logSys.error('json dumps failed: %s', e)
+		except Exception as e:
+			# adapter handler should be exception-safe
+			logSys.error('json dumps failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
 			x = '{}'
 		return x
 
 	def _json_loads_safe(x):
 		try:
-			x = json.loads(x.decode(
-				PREFER_ENC, 'replace'))
-		except Exception as e: # pragma: no cover
-			logSys.error('json loads failed: %s', e)
+			x = json.loads(x.decode(PREFER_ENC, 'replace'))
+		except Exception as e:
+			# converter handler should be exception-safe
+			logSys.error('json loads failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
 			x = {}
 		return x
-else:
+else: # pragma: 3.x no cover
 	def _normalize(x):
 		if isinstance(x, dict):
 			return dict((_normalize(k), _normalize(v)) for k, v in x.iteritems())
-		elif isinstance(x, list):
+		elif isinstance(x, (list, set)):
 			return [_normalize(element) for element in x]
 		elif isinstance(x, unicode):
-			return x.encode(PREFER_ENC)
-		else:
-			return x
+			# in 2.x default text_factory is unicode - so return proper unicode here:
+			return x.encode(PREFER_ENC, 'replace').decode(PREFER_ENC)
+		elif isinstance(x, basestring):
+			return x.decode(PREFER_ENC, 'replace')
+		return x
 
 	def _json_dumps_safe(x):
 		try:
-			x = json.dumps(_normalize(x), ensure_ascii=False).decode(
-				PREFER_ENC, 'replace')
-		except Exception as e: # pragma: no cover
-			logSys.error('json dumps failed: %s', e)
+			x = json.dumps(_normalize(x), ensure_ascii=False, default=_json_default)
+		except Exception as e:
+			# adapter handler should be exception-safe
+			logSys.error('json dumps failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
 			x = '{}'
 		return x
 
 	def _json_loads_safe(x):
 		try:
-			x = _normalize(json.loads(x.decode(
-				PREFER_ENC, 'replace')))
-		except Exception as e: # pragma: no cover
-			logSys.error('json loads failed: %s', e)
+			x = json.loads(x.decode(PREFER_ENC, 'replace'))
+		except Exception as e:
+			# converter handler should be exception-safe
+			logSys.error('json loads failed: %r', e, exc_info=logSys.getEffectiveLevel() <= 4)
 			x = {}
 		return x
 
@@ -179,6 +189,8 @@ class Fail2BanDb(object):
 			self._db = sqlite3.connect(
 				filename, check_same_thread=False,
 				detect_types=sqlite3.PARSE_DECLTYPES)
+			# # to allow use multi-byte utf-8
+			# self._db.text_factory = str
 
 			self._bansMergedCache = {}
 
@@ -527,10 +539,13 @@ class Fail2BanDb(object):
 		except KeyError:
 			pass
 		#TODO: Implement data parts once arbitrary match keys completed
+		data = ticket.getData()
+		matches = data.get('matches')
+		if matches and len(matches) > self.maxEntries:
+			data['matches'] = matches[-self.maxEntries:]
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
-			(jail.name, ip, int(round(ticket.getTime())),
-				ticket.getData()))
+			(jail.name, ip, int(round(ticket.getTime())), data))
 
 	@commitandrollback
 	def delBan(self, cur, jail, *args):
@@ -659,11 +674,11 @@ class Fail2BanDb(object):
 						else:
 							matches = m[-maxadd:] + matches
 					failures += data.get('failures', 1)
-					tickdata.update(data.get('data', {}))
+					data['failures'] = failures
+					data['matches'] = matches
+					tickdata.update(data)
 					prev_timeofban = timeofban
-				ticket = FailTicket(banip, prev_timeofban, matches)
-				ticket.setAttempt(failures)
-				ticket.setData(**tickdata)
+				ticket = FailTicket(banip, prev_timeofban, data=tickdata)
 				tickets.append(ticket)
 
 			if cacheKey:

@@ -43,22 +43,20 @@ from .. import protocol
 from ..server import server
 from ..server.mytime import MyTime
 from ..server.utils import Utils
-from .utils import LogCaptureTestCase, logSys as DefLogSys, with_tmpdir, shutil, logging
+from .utils import LogCaptureTestCase, logSys as DefLogSys, with_tmpdir, shutil, logging, \
+	STOCK, CONFIG_DIR as STOCK_CONF_DIR
 
 from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
-STOCK_CONF_DIR = "config"
-STOCK = exists(pjoin(STOCK_CONF_DIR, 'fail2ban.conf'))
-
 CLIENT = "fail2ban-client"
 SERVER = "fail2ban-server"
 BIN = dirname(Fail2banServer.getServerPath())
 
-MAX_WAITTIME = 30 if not unittest.F2B.fast else 5
-MID_WAITTIME = MAX_WAITTIME
+MAX_WAITTIME = unittest.F2B.maxWaitTime(unittest.F2B.MAX_WAITTIME)
+MID_WAITTIME = unittest.F2B.maxWaitTime(unittest.F2B.MID_WAITTIME)
 
 ##
 # Several wrappers and settings for proper testing:
@@ -128,7 +126,7 @@ def _out_file(fn, handle=logSys.debug):
 
 def _write_file(fn, mode, *lines):
 	f = open(fn, mode)
-	f.write('\n'.join(lines))
+	f.write('\n'.join(lines)+('\n' if lines else ''))
 	f.close()
 
 def _read_file(fn):
@@ -153,7 +151,7 @@ def _start_params(tmp, use_stock=False, use_stock_cfg=None,
 			"""Filters list of 'files' to contain only directories (under dir)"""
 			return [f for f in files if isdir(pjoin(dir, f))]
 		shutil.copytree(STOCK_CONF_DIR, cfg, ignore=ig_dirs)
-		use_stock_cfg = ('action.d', 'filter.d')
+		if use_stock_cfg is None: use_stock_cfg = ('action.d', 'filter.d')
 		# replace fail2ban params (database with memory):
 		r = re.compile(r'^dbfile\s*=')
 		for line in fileinput.input(pjoin(cfg, "fail2ban.conf"), inplace=True):
@@ -211,6 +209,12 @@ def _start_params(tmp, use_stock=False, use_stock_cfg=None,
 		"--logtarget", logtarget,) + llev + ("--syslogsocket", "auto",
 		"--timeout", str(fail2bancmdline.MAX_WAITTIME),
 	)
+
+def _inherited_log(startparams):
+	try:
+		return startparams[startparams.index('--logtarget')+1] == 'INHERITED'
+	except ValueError:
+		return False
 
 def _get_pid_from_file(pidfile):
 	pid = None
@@ -314,17 +318,26 @@ def with_foreground_server_thread(startextra={}):
 						# wait for end sign:
 						Utils.wait_for(lambda: phase.get('end', None) is not None, MAX_WAITTIME)
 						self.assertTrue(phase.get('end', None))
-						self.assertLogged("Shutdown successful", "Exiting Fail2ban", all=True)
+						self.assertLogged("Shutdown successful", "Exiting Fail2ban", all=True, wait=MAX_WAITTIME)
+					# set to NOP: avoid dual call
+					self.stopAndWaitForServerEnd = lambda *args, **kwargs: None
 				self.stopAndWaitForServerEnd = _stopAndWaitForServerEnd
 				# wait for start thread:
 				Utils.wait_for(lambda: phase.get('start', None) is not None, MAX_WAITTIME)
 				self.assertTrue(phase.get('start', None))
 				# wait for server (socket and ready):
-				self._wait_for_srv(tmp, True, startparams=startparams)
+				self._wait_for_srv(tmp, True, startparams=startparams, phase=phase)
 				DefLogSys.info('=== within server: begin ===')
 				self.pruneLog()
 				# several commands to server in body of decorated function:
 				return f(self, tmp, startparams, *args, **kwargs)
+			except Exception as e: # pragma: no cover
+				print('=== Catch an exception: %s' % e)
+				log = self.getLog()
+				if log:
+					print('=== Error of server, log: ===\n%s===' % log)
+					self.pruneLog()
+				raise
 			finally:
 				if th:
 					# wait for server end (if not yet already exited):
@@ -335,7 +348,6 @@ def with_foreground_server_thread(startextra={}):
 					# so don't kill (same process) - if success, just wait for end of worker:
 					if phase.get('end', None):
 						th.join()
-				self.stopAndWaitForServerEnd = None
 		return wrapper
 	return _deco_wrapper
 
@@ -370,12 +382,13 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 		else:
 			raise FailExitException()
 
-	def _wait_for_srv(self, tmp, ready=True, startparams=None):
+	def _wait_for_srv(self, tmp, ready=True, startparams=None, phase=None):
+		if not phase: phase = {}
 		try:
 			sock = pjoin(tmp, "f2b.sock")
 			# wait for server (socket):
-			ret = Utils.wait_for(lambda: exists(sock), MAX_WAITTIME)
-			if not ret:
+			ret = Utils.wait_for(lambda: phase.get('end') or exists(sock), MAX_WAITTIME)
+			if not ret or phase.get('end'): # pragma: no cover - test-failure case only
 				raise Exception(
 					'Unexpected: Socket file does not exists.\nStart failed: %r'
 					% (startparams,)
@@ -383,16 +396,19 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 			if ready:
 				# wait for communication with worker ready:
 				ret = Utils.wait_for(lambda: "Server ready" in self.getLog(), MAX_WAITTIME)
-				if not ret:
+				if not ret: # pragma: no cover - test-failure case only
 					raise Exception(
-						'Unexpected: Server ready was not found.\nStart failed: %r'
-						% (startparams,)
+						'Unexpected: Server ready was not found, phase %r.\nStart failed: %r'
+						% (phase, startparams,)
 					)
 		except:  # pragma: no cover
+			if _inherited_log(startparams):
+				print('=== Error by wait fot server, log: ===\n%s===' % self.getLog())
+				self.pruneLog()
 			log = pjoin(tmp, "f2b.log")
 			if isfile(log):
 				_out_file(log)
-			else:
+			elif not _inherited_log(startparams):
 				logSys.debug("No log file %s to examine details of error", log)
 			raise
 
@@ -407,10 +423,13 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 		# start and wait to end (foreground):
 		logSys.debug("start of test worker")
 		phase['start'] = True
-		self.execCmd(SUCCESS, ("-f",) + startparams, "start")
-		# end :
-		phase['end'] = True
-		logSys.debug("end of test worker")
+		try:
+			self.execCmd(SUCCESS, ("-f",) + startparams, "start")
+		finally:
+			# end :
+			phase['start'] = False
+			phase['end'] = True
+			logSys.debug("end of test worker")
 
 	@with_foreground_server_thread()
 	def testStartForeground(self, tmp, startparams):
@@ -433,7 +452,10 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		self.assertLogged("Usage: " + CLIENT)
 		self.assertLogged("Report bugs to ")
 		self.pruneLog()
-		self.execCmd(SUCCESS, (), "-vq", "-V")
+		self.execCmd(SUCCESS, (), "-V")
+		self.assertLogged(fail2bancmdline.normVersion())
+		self.pruneLog()
+		self.execCmd(SUCCESS, (), "-vq", "--version")
 		self.assertLogged("Fail2Ban v" + fail2bancmdline.version)
 		self.pruneLog()
 		self.execCmd(SUCCESS, (), "--str2sec", "1d12h30m")
@@ -559,7 +581,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 			# test reload missing jail (direct):
 			self.execCmd(FAILED, startparams, "reload", "~~unknown~jail~fail~~")
 			self.assertLogged("Failed during configuration: No section: '~~unknown~jail~fail~~'")
-			self.assertLogged("Exit with code -1")
+			self.assertLogged("Exit with code 255")
 			self.pruneLog()
 		finally:
 			self.pruneLog()
@@ -783,7 +805,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"norestored = %(_exec_once)s",
 				"restore = ",
 				"info = ",
-				"_use_flush_ = echo [<name>] <actname>: -- flushing IPs",
+				"_use_flush_ = echo '[%(name)s] %(actname)s: -- flushing IPs'",
 				"actionstart =  echo '[%(name)s] %(actname)s: ** start'", start,
 				"actionreload = echo '[%(name)s] %(actname)s: .. reload'", reload,
 				"actionban =    echo '[%(name)s] %(actname)s: ++ ban <ip> %(restore)s%(info)s'", ban,
@@ -881,7 +903,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
 			_out_file(test1log)
 		self.execCmd(SUCCESS, startparams, "reload")
-		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		# test not unbanned / banned again:
 		self.assertNotLogged(
 			"[test-jail1] Unban 192.0.2.1", 
@@ -913,7 +935,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			reload="               echo '[<name>] %s: reloaded.'" % "test-action1", 
 			stop=  "               echo '[<name>] %s: stopped.'" % "test-action1")
 		self.execCmd(SUCCESS, startparams, "reload")
-		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		# test not unbanned / banned again:
 		self.assertNotLogged(
 			"[test-jail1] Unban 192.0.2.1", 
@@ -1045,8 +1067,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# reload jail1 without restart (without ban/unban):
 		self.pruneLog("[test-phase 3]")
 		self.execCmd(SUCCESS, startparams, "reload", "test-jail1")
-		self.assertLogged(
-			"Reload finished.", all=True, wait=MID_WAITTIME)
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		self.assertLogged(
 			"Reload jail 'test-jail1'",
 			"Jail 'test-jail1' reloaded", all=True)
@@ -1060,7 +1081,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.pruneLog("[test-phase 4]")
 		_write_jail_cfg(enabled=[1])
 		self.execCmd(SUCCESS, startparams, "reload")
-		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		# test both jails should be reloaded:
 		self.assertLogged(
 			"Reload jail 'test-jail1'")
@@ -1107,7 +1128,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.pruneLog("[test-phase 7]")
 		self.execCmd(SUCCESS, startparams,
 			"reload", "--unban")
-		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		# reloads unbanned all:
 		self.assertLogged(
 			"Jail 'test-jail1' reloaded",
@@ -1138,7 +1159,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.pruneLog("[test-phase 8a]")
 		_write_jail_cfg(enabled=[1], backend="xxx-unknown-backend-zzz")
 		self.execCmd(FAILED, startparams, "reload")
-		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		self.assertLogged(
 			"Restart jail 'test-jail1' (reason: 'polling' != ", 
 			"Unknown backend ", all=True)
@@ -1146,18 +1167,20 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.pruneLog("[test-phase 8b]")
 		_write_jail_cfg(enabled=[1])
 		self.execCmd(SUCCESS, startparams, "reload")
-		self.assertLogged("Reload finished.", all=True, wait=MID_WAITTIME)	
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 
 		# several small cases (cover several parts):
 		self.pruneLog("[test-phase end-1]")
 		# wrong jail (not-started):
 		self.execCmd(FAILED, startparams,
 			"--async", "reload", "test-jail2")
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		self.assertLogged("the jail 'test-jail2' does not exist")
 		self.pruneLog()
 		# unavailable jail (but exit 0), using --if-exists option:
 		self.execCmd(SUCCESS, startparams,
 			"--async", "reload", "--if-exists", "test-jail2")
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		self.assertNotLogged(
 			"Creating new jail 'test-jail2'",
 			"Jail 'test-jail2' started", all=True)
@@ -1166,15 +1189,17 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.pruneLog("[test-phase end-2]")
 		self.execCmd(SUCCESS, startparams,
 			"--async", "reload", "--restart", "--all")
+		self.assertLogged("Reload finished.", wait=MID_WAITTIME)
 		self.assertLogged(
 			"Jail 'test-jail1' stopped", 
-			"Jail 'test-jail1' started", all=True)
+			"Jail 'test-jail1' started", all=True, wait=MID_WAITTIME)
 
 	# test action.d/nginx-block-map.conf --
+	@unittest.F2B.skip_if_cfg_missing(action="nginx-block-map")
 	@with_foreground_server_thread(startextra={
 		# create log-file (avoid "not found" errors):
 		'create_before_start': ('%(tmp)s/blck-failures.log',),
-		# we need action.d/nginx-block-map.conf:
+		# we need action.d/nginx-block-map.conf and blocklist_de:
 		'use_stock_cfg': ('action.d',),
 		# jail-config:
 		'jails': (
@@ -1183,12 +1208,14 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			'usedns = no',
 			'logpath = %(tmp)s/blck-failures.log',
 			'action = nginx-block-map[blck_lst_reload="", blck_lst_file="%(tmp)s/blck-lst.map"]',
+			'         blocklist_de[actionban=\'curl() { echo "*** curl" "$*";}; <Definition/actionban>\', email="Fail2Ban <fail2ban@localhost>", '
+													  'apikey="TEST-API-KEY", agent="fail2ban-test-agent", service=<name>]',
 			'filter =',
 			'datepattern = ^Epoch',
 			'failregex = ^ failure "<F-ID>[^"]+</F-ID>" - <ADDR>',
 			'maxretry = 1', # ban by first failure
 			'enabled = true',
-	  )
+		)
 	})
 	def testServerActions_NginxBlockMap(self, tmp, startparams):
 		cfg = pjoin(tmp, "config")
@@ -1198,8 +1225,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		_write_file(lgfn, "w+",
 			str(int(MyTime.time())) + ' failure "125-000-001" - 192.0.2.1',
 			str(int(MyTime.time())) + ' failure "125-000-002" - 192.0.2.1',
-			str(int(MyTime.time())) + ' failure "125-000-003" - 192.0.2.1',
-			str(int(MyTime.time())) + ' failure "125-000-004" - 192.0.2.1',
+			str(int(MyTime.time())) + ' failure "125-000-003" - 192.0.2.1 (\xf2\xf0\xe5\xf2\xe8\xe9)',
+			str(int(MyTime.time())) + ' failure "125-000-004" - 192.0.2.1 (\xf2\xf0\xe5\xf2\xe8\xe9)',
 			str(int(MyTime.time())) + ' failure "125-000-005" - 192.0.2.1',
 		)
 		# check all sessions are banned (and blacklisted in map-file):
@@ -1220,6 +1247,14 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertIn('\\125-000-004 1;\n', mp)
 		self.assertIn('\\125-000-005 1;\n', mp)
 
+		# check blocklist_de substitution (e. g. new-line after <matches>):
+		self.assertLogged(
+			"stdout: '*** curl --fail --data-urlencode server=Fail2Ban <fail2ban@localhost>"
+			                 " --data apikey=TEST-API-KEY --data service=nginx-blck-lst ",
+			"stdout: ' --data format=text --user-agent fail2ban-test-agent",
+			all=True, wait=MID_WAITTIME
+		)
+
 		# unban 1, 2 and 5:
 		self.execCmd(SUCCESS, startparams, 'unban', '125-000-001', '125-000-002', '125-000-005')
 		_out_file(mpfn)
@@ -1239,3 +1274,14 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		_out_file(mpfn)
 		mp = _read_file(mpfn)
 		self.assertEqual(mp, '')
+
+	# test multiple start/stop of the server (threaded in foreground) --
+	if False: # pragma: no cover
+		@with_foreground_server_thread()
+		def _testServerStartStop(self, tmp, startparams):
+			# stop server and wait for end:
+			self.stopAndWaitForServerEnd(SUCCESS)
+
+		def testServerStartStop(self):
+			for i in xrange(2000):
+				self._testServerStartStop()

@@ -89,6 +89,11 @@ def mapTag2Opt(tag):
 	except KeyError:
 		return tag.lower()
 
+
+# alternate names to be merged, e. g. alt_user_1 -> user ...
+ALTNAME_PRE = 'alt_'
+ALTNAME_CRE = re.compile(r'^' + ALTNAME_PRE + r'(.*)(?:_\d+)?$')
+
 ##
 # Regular expression class.
 #
@@ -114,6 +119,14 @@ class Regex:
 		try:
 			self._regexObj = re.compile(regex, re.MULTILINE if multiline else 0)
 			self._regex = regex
+			self._altValues = {}
+			for k in filter(
+				lambda k: len(k) > len(ALTNAME_PRE) and k.startswith(ALTNAME_PRE),
+				self._regexObj.groupindex
+			):
+				n = ALTNAME_CRE.match(k).group(1)
+				self._altValues[k] = n
+			self._altValues = list(self._altValues.items()) if len(self._altValues) else None
 		except sre_constants.error:
 			raise RegexException("Unable to compile regular expression '%s'" %
 								 regex)
@@ -186,6 +199,13 @@ class Regex:
 		return self._regex
 	
 	##
+	# Returns string buffer using join of the tupleLines.
+	#
+	@staticmethod
+	def _tupleLinesBuf(tupleLines):
+		return "\n".join(map(lambda v: "".join(v[::2]), tupleLines)) + "\n"
+
+	##
 	# Searches the regular expression.
 	#
 	# Sets an internal cache (match object) in order to avoid searching for
@@ -194,8 +214,10 @@ class Regex:
 	# @param a list of tupples. The tupples are ( prematch, datematch, postdatematch )
 	
 	def search(self, tupleLines, orgLines=None):
-		self._matchCache = self._regexObj.search(
-			"\n".join("".join(value[::2]) for value in tupleLines) + "\n")
+		buf = tupleLines
+		if not isinstance(tupleLines, basestring):
+			buf = Regex._tupleLinesBuf(tupleLines)
+		self._matchCache = self._regexObj.search(buf)
 		if self._matchCache:
 			if orgLines is None: orgLines = tupleLines
 			# if single-line:
@@ -248,7 +270,16 @@ class Regex:
 	#
 
 	def getGroups(self):
-		return self._matchCache.groupdict()
+		if not self._altValues:
+			return self._matchCache.groupdict()
+		# merge alternate values (e. g. 'alt_user_1' -> 'user' or 'alt_host' -> 'host'):
+		fail = self._matchCache.groupdict()
+		#fail = fail.copy()
+		for k,n in self._altValues:
+			v = fail.get(k)
+			if v and not fail.get(n):
+				fail[n] = v
+		return fail
 
 	##
 	# Returns skipped lines.

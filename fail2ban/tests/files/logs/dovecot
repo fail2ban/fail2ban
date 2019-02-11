@@ -43,6 +43,9 @@ Jan 29 05:13:50 mail dovecot: auth: passwd-file(username,1.2.3.4): unknown user
 # failJSON: { "time": "2005-01-29T13:54:06", "match": true , "host": "192.0.2.5" }
 Jan 29 13:54:06 auth-worker(22401): Info: sql(admin@example.de,192.0.2.5,<n4JLdHNVngZGpV2j>): unknown user
 
+#failJSON: { "time": "2005-06-11T13:57:17", "match": true, "host": "192.168.144.226" }
+Jun 11 13:57:17 main dovecot: auth: sql(admin@example.ru,192.168.144.226,<6rXunFtu493AqJDi>): Password mismatch
+
 # failJSON: { "time": "2005-01-29T14:38:51", "match": true , "host": "192.0.2.6", "desc": "PAM Permission denied (gh-1897)" }
 Jan 29 14:38:51 example.com dovecot[24941]: auth-worker(30165): pam(user@example.com,192.0.2.6,<PNHQq8pZhqIKAQGd>): pam_authenticate() failed: Permission denied
 
@@ -79,6 +82,9 @@ Jul 02 13:49:32 hostname dovecot[442]: pop3-login: Disconnected (no auth attempt
 
 # failJSON: { "time": "2005-03-23T06:10:52", "match": true , "host": "52.37.139.121" }
 Mar 23 06:10:52 auth: Info: ldap(dog,52.37.139.121,): invalid credentials
+
+# failJSON: { "time": "2005-07-17T09:21:22", "match": true , "host": "192.0.2.4", "desc": "proxy dest auth failed, gh-2184"}
+Jul 17 09:21:22 mailproxy dovecot: imap-login: Disconnected (proxy dest auth failed): user=<rtomes@acenet.com.au>, method=PLAIN, rip=192.0.2.4, lip=192.168.1.2, session=<NTI4FiZxcQCSud4G>
 
 # failJSON: { "time": "2005-07-26T11:11:21", "match": true , "host": "192.0.2.1" }
 Jul 26 11:11:21 hostname dovecot: imap-login: Disconnected: Too many invalid commands (tried to use disallowed plaintext auth): user=<test>, rip=192.0.2.1, lip=192.168.1.1, session=<S5dIdTFCDKUWWMbU>

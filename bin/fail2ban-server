@@ -22,7 +22,7 @@
 Fail2Ban reads log file that contains password failure report
 and bans the corresponding IP addresses using firewall rules.
 
-This tools starts/stops fail2ban server or does client/server communication,
+This tool starts/stops fail2ban server or does client/server communication
 to change/read parameters of the server or jails.
 
 """

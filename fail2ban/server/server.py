@@ -37,7 +37,8 @@ from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
-from ..helpers import getLogger, extractOptions, str2LogLevel, getVerbosityFormat, excepthook
+from ..helpers import getLogger, _as_bool, extractOptions, str2LogLevel, \
+	getVerbosityFormat, excepthook
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -313,7 +314,7 @@ class Server:
 	
 	# Filter
 	def setIgnoreSelf(self, name, value):
-		self.__jails[name].filter.ignoreSelf = value
+		self.__jails[name].filter.ignoreSelf = _as_bool(value)
 	
 	def getIgnoreSelf(self, name):
 		return self.__jails[name].filter.ignoreSelf
@@ -390,10 +391,17 @@ class Server:
 		return self.__jails[name].filter.getLogTimeZone()
 
 	def setIgnoreCommand(self, name, value):
-		self.__jails[name].filter.setIgnoreCommand(value)
+		self.__jails[name].filter.ignoreCommand = value
 
 	def getIgnoreCommand(self, name):
-		return self.__jails[name].filter.getIgnoreCommand()
+		return self.__jails[name].filter.ignoreCommand
+
+	def setIgnoreCache(self, name, value):
+		value, options = extractOptions("cache["+value+"]")
+		self.__jails[name].filter.ignoreCache = options
+
+	def getIgnoreCache(self, name):
+		return self.__jails[name].filter.ignoreCache
 
 	def setPrefRegex(self, name, value):
 		flt = self.__jails[name].filter
@@ -565,10 +573,12 @@ class Server:
 			if systarget == "INHERITED":
 				self.__logTarget = target
 				return True
+			padding = logOptions.get('padding')
 			# set a format which is simpler for console use
-			fmt = "%(name)-24s[%(process)d]: %(levelname)-7s %(message)s"
 			if systarget == "SYSLOG":
 				facility = logOptions.get('facility', 'DAEMON').upper()
+				# backwards compatibility - default no padding for syslog handler:
+				if padding is None: padding = '0'
 				try:
 					facility = getattr(logging.handlers.SysLogHandler, 'LOG_' + facility)
 				except AttributeError: # pragma: no cover
@@ -626,18 +636,22 @@ class Server:
 			# If handler don't already add date to the message:
 			addtime = logOptions.get('datetime')
 			if addtime is not None:
-				addtime = addtime in ('1', 'on', 'true', 'yes')
+				addtime = _as_bool(addtime)
 			else:
 				addtime = systarget not in ("SYSLOG", "SYSOUT")
+			if padding is not None:
+				padding = _as_bool(padding) 
+			else:
+				padding = True
 			# If log-format is redefined in options:
 			if logOptions.get('format', '') != '':
 				fmt = logOptions.get('format')
-			# verbose log-format:
-			elif self.__verbose is not None and self.__verbose > 2: # pragma: no cover
-				fmt = getVerbosityFormat(self.__verbose-1,
-					addtime=addtime)
-			elif addtime:
-				fmt = "%(asctime)s " + fmt
+			else:
+				# verbose log-format:
+				verbose = 0
+				if self.__verbose is not None and self.__verbose > 2: # pragma: no cover
+					verbose = self.__verbose-1
+				fmt = getVerbosityFormat(verbose, addtime=addtime, padding=padding)
 			# tell the handler to use this format
 			hdlr.setFormatter(logging.Formatter(fmt))
 			logger.addHandler(hdlr)

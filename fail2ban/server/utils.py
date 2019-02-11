@@ -27,8 +27,14 @@ import os
 import signal
 import subprocess
 import sys
+from	 threading import Lock
 import time
 from ..helpers import getLogger, _merge_dicts, uni_decode
+
+try:
+	from collections import OrderedDict
+except ImportError: # pragma: 3.x no cover
+	OrderedDict = dict
 
 if sys.version_info >= (3, 3):
 	import importlib.machinery
@@ -69,7 +75,8 @@ class Utils():
 
 		def __init__(self, *args, **kwargs):
 			self.setOptions(*args, **kwargs)
-			self._cache = {}
+			self._cache = OrderedDict()
+			self.__lock = Lock()
 
 		def setOptions(self, maxCount=1000, maxTime=60):
 			self.maxCount = maxCount
@@ -83,7 +90,7 @@ class Utils():
 			if v: 
 				if v[1] > time.time():
 					return v[0]
-				del self._cache[k]
+				self.unset(k)
 			return defv
 			
 		def set(self, k, v):
@@ -91,18 +98,27 @@ class Utils():
 			cache = self._cache  # for shorter local access
 			# clean cache if max count reached:
 			if len(cache) >= self.maxCount:
-				for (ck, cv) in cache.items():
-					if cv[1] < t:
-						del cache[ck]
-				# if still max count - remove any one:
-				if len(cache) >= self.maxCount:
-					cache.popitem()
+				# avoid multiple modification of list multi-threaded:
+				with self.__lock:
+					if len(cache) >= self.maxCount:
+						for (ck, cv) in cache.items():
+							# if expired:
+							if cv[1] <= t:
+								self.unset(ck)
+							elif OrderedDict is not dict:
+								break
+						# if still max count - remove any one:
+						if len(cache) >= self.maxCount:
+							if OrderedDict is not dict: # first (older):
+								cache.popitem(False)
+							else: # pragma: 3.x no cover
+								cache.popitem()
 			cache[k] = (v, t + self.maxTime)
 
 		def unset(self, k):
 			try:
 				del self._cache[k]
-			except KeyError: # pragme: no cover
+			except KeyError:
 				pass
 
 

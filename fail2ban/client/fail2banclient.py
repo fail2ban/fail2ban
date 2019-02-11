@@ -69,7 +69,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		# Print a new line because we probably come from wait
 		output("")
 		logSys.warning("Caught signal %d. Exiting" % signum)
-		exit(-1)
+		exit(255)
 
 	def __ping(self, timeout=0.1):
 		return self.__processCmd([["ping"] + ([timeout] if timeout != -1 else [])],
@@ -99,7 +99,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 					ret = client.send(c)
 					if ret[0] == 0:
 						logSys.log(5, "OK : %r", ret[1])
-						if showRet or c[0] == 'echo':
+						if showRet or c[0] in ('echo', 'server-status'):
 							output(beautifier.beautify(ret[1]))
 					else:
 						logSys.error("NOK: %r", ret[1].args)
@@ -128,7 +128,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 				except Exception as e: # pragma: no cover
 					if showRet or self._conf["verbose"] > 1:
 						logSys.debug(e)
-			if showRet or c[0] == 'echo':
+			if showRet or c[0] in ('echo', 'server-status'):
 				sys.stdout.flush()
 		return streamRet
 
@@ -186,7 +186,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 			logSys.error("Fail2ban seems to be in unexpected state (not running but the socket exists)")
 			return None
 
-		stream.append(['echo', 'Server ready'])
+		stream.append(['server-status'])
 		return stream
 
 	##
@@ -228,9 +228,9 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 		return True
 
 	##
-	def configureServer(self, async=True, phase=None):
-		# if asynchron start this operation in the new thread:
-		if async:
+	def configureServer(self, nonsync=True, phase=None):
+		# if asynchronous start this operation in the new thread:
+		if nonsync:
 			th = Thread(target=Fail2banClient.configureServer, args=(self, False, phase))
 			th.daemon = True
 			return th.start()
@@ -500,5 +500,5 @@ def exec_command_line(argv):
 	if client.start(argv):
 		exit(0)
 	else:
-		exit(-1)
+		exit(255)
 

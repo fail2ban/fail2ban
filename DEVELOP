@@ -262,12 +262,16 @@ FileContainer
     Keeps the position pointer
 
 
-dnsutils.py
-~~~~~~~~~~~
+ipdns.py
+~~~~~~~~
 
 DNSUtils
 
-  Utility class for DNS and IP handling
+  Utility class for DNS handling
+
+IPAddr
+
+  Object-class for IP address handling
 
 
 filter*.py

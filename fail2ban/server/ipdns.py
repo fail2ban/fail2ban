@@ -64,7 +64,7 @@ class DNSUtils:
 		if ips is not None: 
 			return ips
 		# retrieve ips
-		ips = list()
+		ips = set()
 		saveerr = None
 		for fam, ipfam in ((socket.AF_INET, IPAddr.FAM_IPv4), (socket.AF_INET6, IPAddr.FAM_IPv6)):
 			try:
@@ -75,7 +75,7 @@ class DNSUtils:
 					# (some python-versions resp. host configurations causes returning of integer there):
 					ip = IPAddr(str(result[4][0]), ipfam)
 					if ip.isValid:
-						ips.append(ip)
+						ips.add(ip)
 			except Exception as e:
 				saveerr = e
 		if not ips and saveerr:
@@ -103,19 +103,19 @@ class DNSUtils:
 	def textToIp(text, useDns):
 		""" Return the IP of DNS found in a given text.
 		"""
-		ipList = list()
+		ipList = set()
 		# Search for plain IP
 		plainIP = IPAddr.searchIP(text)
 		if plainIP is not None:
 			ip = IPAddr(plainIP)
 			if ip.isValid:
-				ipList.append(ip)
+				ipList.add(ip)
 
 		# If we are allowed to resolve -- give it a try if nothing was found
 		if useDns in ("yes", "warn") and not ipList:
 			# Try to get IP from possible DNS
 			ip = DNSUtils.dnsToIp(text)
-			ipList.extend(ip)
+			ipList.update(ip)
 			if ip and useDns == "warn":
 				logSys.warning("Determined IP using DNS Lookup: %s = %s",
 					text, ipList)

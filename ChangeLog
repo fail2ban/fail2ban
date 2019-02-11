@@ -27,8 +27,115 @@ Incompatibility list (compared to v.0.9):
 * v.0.10 uses more precise date template handling, that can be theoretically incompatible to some
   user configurations resp. `datepattern`.
 
-* Since v0.10 fail2ban supports the matching of the IPv6 addresses, but not all ban actions are
+* Since v0.10 fail2ban supports the matching of IPv6 addresses, but not all ban actions are
   IPv6-capable now.
+
+
+ver. 0.10.5-dev-1 (20??/??/??) - development edition
+-----------
+
+### Fixes
+* fixed read of included config-files (`.local` overwrites options of `.conf` for config-files 
+  included with before/after)
+* `filter.d/sshd.conf`:
+  - captures `Disconnecting ...: Change of username or service not allowed` (gh-2239, gh-2279)
+  - captures `Disconnected from ... [preauth]` (`extra`/`aggressive` mode and preauth phase only, gh-2239, gh-2279)
+* `filter.d/mysqld-auth.conf`: 
+  - MYSQL 8.0.13 compatibility (log-error-verbosity = 3), log-format contains few additional words
+    enclosed in brackets after "[Note]" (gh-2314)
+* `files/fail2ban.service.in`: fixed systemd-unit template - missing nftables dependency (gh-2313)
+
+### New Features
+* new failregex-flag tag `<F-MLFGAINED>` for failregex, signaled that the access to service was gained
+  (ATM used similar to tag `<F-NOFAIL>`, but it does not add the log-line to matches, gh-2279)
+
+### Enhancements
+
+
+ver. 0.10.4 (2018/10/04) - ten-four-on-due-date-ten-four
+-----------
+
+### Fixes
+* `filter.d/dovecot.conf`: 
+  - failregex enhancement to catch sql password mismatch errors (gh-2153);
+  - disconnected with "proxy dest auth failed" (gh-2184);
+* `filter.d/freeswitch.conf`:
+  - provide compatibility for log-format from gh-2193:
+    * extended with new default date-pattern `^(?:%%Y-)?%%m-%%d[ T]%%H:%%M:%%S(?:\.%%f)?` to cover
+      `YYYY-mm-dd HH:MM::SS.ms` as well as `mm-dd HH:MM::SS.ms` (so year is optional);
+    * more optional arguments in log-line (so accept [WARN] as well as [WARNING] and optional [SOFIA] hereafter);
+  - extended with mode parameter, allows to avoid matching of messages like `auth challenge (REGISTER)`
+    (see gh-2163) (currently `extra` as default to be backwards-compatible), see comments in filter
+    how to set it to mode `normal`.
+* `filter.d/domino-smtp.conf`:
+  - recognizes failures logged using another format (something like session-id, IP enclosed in square brackets);
+  - failregex extended to catch connections rejected for policy reasons (gh-2228);
+* `action.d/hostsdeny.conf`: fix parameter in config (dynamic parameters stating with '_' are protected 
+  and don't allowed in command-actions), see gh-2114;
+* decoding stability fix by wrong encoded characters like utf-8 surrogate pairs, etc (gh-2171):
+  - fail2ban running in the preferred encoding now (as default encoding also within python 2.x), mostly
+    `UTF-8` in opposite to `ascii` previously, so minimizes influence of implicit conversions errors;
+  - actions: avoid possible conversion errors on wrong-chars by replace tags;
+  - database: improve adapter/converter handlers working on invalid characters in sense of json and/or sqlite-database;
+    additionally both are exception-safe now, so avoid possible locking of database (closes gh-2137);
+  - logging in fail2ban is process-wide exception-safe now.
+* repaired start-time of initial seek to time (as well as other log-parsing related data), 
+  if parameter `logpath` specified before `findtime`, `backend`, `datepattern`, etc (gh-2173)
+* systemd: fixed type error on option `journalflags`: an integer is required (gh-2125);
+
+### New Features
+* new option `ignorecache` to improve performance of ignore failure check (using caching of `ignoreip`, 
+  `ignoreself` and `ignorecommand`), see `man jail.conf` for syntax-example;
+* `ignorecommand` extended to use actions-similar replacement (capable to interpolate 
+  all possible tags like `<ip-host>`, `<family>`, `<fid>`, `F-USER` etc.)
+
+### Enhancements
+* `filter.d/dovecot.conf`: extended with tags F-USER (and alternatives) to collect user-logins (gh-2168)
+* since v.0.10.4, fail2ban-client, fail2ban-server and fail2ban-regex will return version without logo info,
+  additionally option `-V` can be used to get version in normalized machine-readable short format.
+
+
+ver. 0.10.3 (2018/04/04) - the-time-is-always-right-to-do-what-is-right
+-----------
+
+### ver. 0.10.3.1:
+* fixed JSON serialization for the set-object within dump into database (gh-2103).
+
+### Fixes
+* `filter.d/asterisk.conf`: fixed failregex prefix by log over remote syslog server (gh-2060);
+* `filter.d/exim.conf`: failregex extended - SMTP call dropped: too many syntax or protocol errors (gh-2048);
+* `filter.d/recidive.conf`: fixed if logging into systemd-journal (SYSLOG) with daemon name in prefix, gh-2069;
+* `filter.d/sendmail-auth.conf`, `filter.d/sendmail-reject.conf` :
+  - fixed failregex, sendmail uses prefix 'IPv6:' logging of IPv6 addresses (gh-2064);
+* `filter.d/sshd.conf`:
+  - failregex got an optional space in order to match new log-format (see gh-2061);
+  - fixed ddos-mode regex to match refactored message (some versions can contain port now, see gh-2062);
+  - fixed root login refused regex (optional port before preauth, gh-2080);
+  - avoid banning of legitimate users when pam_unix used in combination with other password method, so
+    bypass pam_unix failures if accepted available for this user gh-2070;
+  - amend to gh-1263 with better handling of multiple attempts (failures for different user-names recognized immediatelly);
+  - mode `ddos` (and `aggressive`) extended to catch `Connection closed by ... [preauth]`, so in DDOS mode
+    it counts failure on closing connection within preauth-stage (gh-2085);
+* `action.d/abuseipdb.conf`: fixed curl cypher errors and comment quote-issue (gh-2044, gh-2101);
+* `action.d/badips.py`: implicit convert IPAddr to str, solves an issue "expected string, IPAddr found" (gh-2059);
+* `action.d/hostsdeny.conf`: fixed IPv6 syntax (enclosed in square brackets, gh-2066);
+* (Free)BSD ipfw actionban fixed to allow same rule added several times (gh-2054);
+
+### New Features
+* several stability and performance optimizations, more effective filter parsing, etc;
+* stable runnable within python versions 3.6 (as well as within 3.7-dev);
+
+### Enhancements
+* `filter.d/apache-auth.conf`: detection of Apache SNI errors resp. misredirect attempts (gh-2017, gh-2097);
+* `filter.d/apache-noscript.conf`: extend failregex to match "Primary script unknown", e. g. from php-fpm (gh-2073);
+* date-detector extended with long epoch (`LEPOCH`) to parse milliseconds/microseconds posix-dates (gh-2029);
+* possibility to specify own regex-pattern to match epoch date-time, e. g. `^\[{EPOCH}\]` or `^\[{LEPOCH}\]` (gh-2038);
+  the epoch-pattern similar to `{DATE}` patterns does the capture and cuts out the match of whole pattern from the log-line,
+  e. g. date-pattern `^\[{LEPOCH}\]\s+:` will match and cut out `[1516469849551000] :` from begin of the log-line.
+* badips.py now uses https instead of plain http when requesting badips.com (gh-2057);
+* add support for "any" badips.py bancategory, to be able to retrieve IPs from all categories with a desired score (gh-2056);
+* Introduced new parameter `padding` for logging within fail2ban-server (default on, excepting SYSLOG):
+  Usage `logtarget = target[padding=on|off]`
 
 
 ver. 0.10.2 (2018/01/18) - nothing-burns-like-the-cold
@@ -93,7 +200,7 @@ ver. 0.10.1 (2017/10/12) - succeeded-before-friday-the-13th
 * avoid using "ANSI_X3.4-1968" as preferred encoding (if missing environment variables 
   'LANGUAGE', 'LC_ALL', 'LC_CTYPE', and 'LANG', see gh-1587).
 * action.d/pf.conf: several fixes for pf-action like anchoring, etc. (see gh-1866, gh-1867);
-* fixed ignorself issue "Retrieving own IPs of localhost failed: inet_pton() argument 2 must be string, not int" (see gh-1865);
+* fixed ignoreself issue "Retrieving own IPs of localhost failed: inet_pton() argument 2 must be string, not int" (see gh-1865);
 * fixed tags `<fq-hostname>` and `<sh-hostname>`, could be used without ticket (a. g. in `actionstart` etc., gh-1859).
 
 * setup.py: fixed several setup facilities (gh-1874):

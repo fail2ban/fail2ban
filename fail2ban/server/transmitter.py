@@ -115,6 +115,9 @@ class Transmitter:
 			return cnt
 		elif command[0] == "echo":
 			return command[1:]
+		elif command[0] == "server-status":
+			logSys.debug("Status: ready")
+			return "Server ready"
 		elif command[0] == "sleep":
 			value = command[1]
 			time.sleep(float(value))
@@ -197,6 +200,10 @@ class Transmitter:
 			value = command[2]
 			self.__server.setIgnoreCommand(name, value)
 			return self.__server.getIgnoreCommand(name)
+		elif command[1] == "ignorecache":
+			value = command[2]
+			self.__server.setIgnoreCache(name, value)
+			return self.__server.getIgnoreCache(name)
 		elif command[1] == "addlogpath":
 			value = command[2]
 			tail = False
@@ -355,6 +362,8 @@ class Transmitter:
 			return self.__server.getIgnoreIP(name)
 		elif command[1] == "ignorecommand":
 			return self.__server.getIgnoreCommand(name)
+		elif command[1] == "ignorecache":
+			return self.__server.getIgnoreCache(name)
 		elif command[1] == "prefregex":
 			return self.__server.getPrefRegex(name)
 		elif command[1] == "failregex":

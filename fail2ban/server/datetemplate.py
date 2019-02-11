@@ -37,8 +37,10 @@ RE_GROUPED = re.compile(r'(?<!(?:\(\?))(?<!\\)\((?!\?)')
 RE_GROUP = ( re.compile(r'^((?:\(\?\w+\))?\^?(?:\(\?\w+\))?)(.*?)(\$?)$'), r"\1(\2)\3" )
 
 RE_EXLINE_BOUND_BEG = re.compile(r'^\{\^LN-BEG\}')
+RE_EXSANC_BOUND_BEG = re.compile(r'^\(\?:\^\|\\b\|\\W\)')
+RE_EXEANC_BOUND_BEG = re.compile(r'\(\?=\\b\|\\W\|\$\)$')
 RE_NO_WRD_BOUND_BEG = re.compile(r'^\(*(?:\(\?\w+\))?(?:\^|\(*\*\*|\(\?:\^)')
-RE_NO_WRD_BOUND_END = re.compile(r'(?<!\\)(?:\$\)?|\*\*\)*)$')
+RE_NO_WRD_BOUND_END = re.compile(r'(?<!\\)(?:\$\)?|\\b|\\s|\*\*\)*)$')
 RE_DEL_WRD_BOUNDS = ( re.compile(r'^\(*(?:\(\?\w+\))?\(*\*\*|(?<!\\)\*\*\)*$'), 
 	                    lambda m: m.group().replace('**', '') )
 
@@ -46,6 +48,9 @@ RE_LINE_BOUND_BEG = re.compile(r'^(?:\(\?\w+\))?(?:\^|\(\?:\^(?!\|))')
 RE_LINE_BOUND_END = re.compile(r'(?<![\\\|])(?:\$\)?)$')
 
 RE_ALPHA_PATTERN = re.compile(r'(?<!\%)\%[aAbBpc]')
+
+RE_EPOCH_PATTERN = re.compile(r"(?<!\\)\{L?EPOCH\}", re.IGNORECASE)
+
 
 class DateTemplate(object):
 	"""A template which searches for and returns a date from a log line.
@@ -128,7 +133,7 @@ class DateTemplate(object):
 		# remove possible special pattern "**" in front and end of regex:
 		regex = RE_DEL_WRD_BOUNDS[0].sub(RE_DEL_WRD_BOUNDS[1], regex)
 		self._regex = regex
-		logSys.debug('  constructed regex %s', regex)
+		logSys.log(7, '  constructed regex %s', regex)
 		self._cRegex = None
 
 	regex = property(getRegex, setRegex, doc=
@@ -179,6 +184,14 @@ class DateTemplate(object):
 		"""
 		raise NotImplementedError("getDate() is abstract")
 
+	@staticmethod
+	def unboundPattern(pattern):
+		return RE_EXEANC_BOUND_BEG.sub('',
+			RE_EXSANC_BOUND_BEG.sub('',
+				RE_EXLINE_BOUND_BEG.sub('', pattern)
+			)
+		)
+
 
 class DateEpoch(DateTemplate):
 	"""A date template which searches for Unix timestamps.
@@ -192,14 +205,25 @@ class DateEpoch(DateTemplate):
 	regex
 	"""
 
-	def __init__(self, lineBeginOnly=False):
+	def __init__(self, lineBeginOnly=False, pattern=None, longFrm=False):
 		DateTemplate.__init__(self)
-		self.name = "Epoch"
-		if not lineBeginOnly:
-			regex = r"((?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=\baudit\()))\d{10,11}\b(?:\.\d{3,6})?)(?:(?(selinux)(?=:\d+\)))|(?(square)(?=\])))"
+		self.name = "Epoch" if not pattern else pattern
+		self._longFrm = longFrm;
+		self._grpIdx = 1
+		epochRE = r"\d{10,11}\b(?:\.\d{3,6})?"
+		if longFrm:
+			self.name = "LongEpoch" if not pattern else pattern
+			epochRE = r"\d{10,11}(?:\d{3}(?:\.\d{1,6}|\d{3})?)?"
+		if pattern:
+			# pattern should capture/cut out the whole match:
+			regex = "(" + RE_EPOCH_PATTERN.sub(lambda v: "(%s)" % epochRE, pattern) + ")"
+			self._grpIdx = 2
+			self.setRegex(regex)
+		elif not lineBeginOnly:
+			regex = r"((?:^|(?P<square>(?<=^\[))|(?P<selinux>(?<=\baudit\()))%s)(?:(?(selinux)(?=:\d+\)))|(?(square)(?=\])))" % epochRE
 			self.setRegex(regex, wordBegin=False) ;# already line begin resp. word begin anchored
 		else:
-			regex = r"((?P<square>(?<=^\[))?\d{10,11}\b(?:\.\d{3,6})?)(?(square)(?=\]))"
+			regex = r"((?P<square>(?<=^\[))?%s)(?(square)(?=\]))" % epochRE
 			self.setRegex(regex, wordBegin='start', wordEnd=True)
 
 	def getDate(self, line, dateMatch=None, default_tz=None):
@@ -220,8 +244,14 @@ class DateEpoch(DateTemplate):
 		if not dateMatch:
 			dateMatch = self.matchDate(line)
 		if dateMatch:
+			v = dateMatch.group(self._grpIdx)
 			# extract part of format which represents seconds since epoch
-			return (float(dateMatch.group(1)), dateMatch)
+			if self._longFrm and len(v) >= 13:
+				if len(v) >= 16 and '.' not in v:
+					v = float(v) / 1000000
+				else:
+					v = float(v) / 1000
+			return (float(v), dateMatch)
 
 
 class DatePatternRegex(DateTemplate):
