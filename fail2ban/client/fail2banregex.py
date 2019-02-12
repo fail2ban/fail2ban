@@ -694,6 +694,14 @@ def exec_command_line(*args):
 	stdout.setFormatter(Formatter(getVerbosityFormat(opts.verbose, fmt)))
 	logSys.addHandler(stdout)
 
-	fail2banRegex = Fail2banRegex(opts)
+	try:
+		fail2banRegex = Fail2banRegex(opts)
+	except Exception as e:
+		if opts.verbose or logSys.getEffectiveLevel()<=logging.DEBUG:
+			logSys.critical(e, exc_info=True)
+		else:
+			output( 'ERROR: %s' % e )
+		sys.exit(255)
+
 	if not fail2banRegex.start(args):
 		sys.exit(255)
