@@ -123,6 +123,8 @@ do_start()
 		find /proc/net/xt_recent -name "fail2ban-*" -exec chown "$FAIL2BAN_USER" "{}" ";"
 	fi
 
+	# $DAEMON_ARGS need to be expanded possibly with multiple or no options
+	# shellcheck disable=SC2086
 	start-stop-daemon --start --quiet --chuid "$FAIL2BAN_USER" --exec "$DAEMON" -- \
 		$DAEMON_ARGS start >/dev/null \
 		|| return 2
