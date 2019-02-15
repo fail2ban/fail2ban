@@ -209,7 +209,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 	def testVerboseFullSshd(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"-l", "notice", # put down log-level, because of too many debug-messages
-			"-v", "--verbose-date", "--print-all-matched",
+			"-v", "--verbose-date", "--print-all-matched", "--print-all-ignored",
 			"-c", CONFIG_DIR,
 			Fail2banRegexTest.FILENAME_SSHD, "sshd"
 		)
@@ -290,6 +290,17 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Lines: 1 lines, 0 ignored, 1 matched, 0 missed')
 
+	def testRegexEpochPatterns(self):
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"-r", "-d", r"^\[{LEPOCH}\]\s+", "--maxlines", "5",
+			"[1516469849] 192.0.2.1 FAIL: failure\n"
+			"[1516469849551] 192.0.2.2 FAIL: failure\n"
+			"[1516469849551000] 192.0.2.3 FAIL: failure\n"
+			"[1516469849551.000] 192.0.2.4 FAIL: failure",
+			r"^<HOST> FAIL\b"
+		)
+		self.assertTrue(fail2banRegex.start(args))
+		self.assertLogged('Lines: 4 lines, 0 ignored, 4 matched, 0 missed')
 
 	def testWrongFilterFile(self):
 		# use test log as filter file to cover eror cases...
@@ -336,6 +347,11 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	def testExecCmdLine_Usage(self):
 		self.assertNotEqual(_test_exec_command_line(), 0)
+		self.pruneLog()
+		self.assertEqual(_test_exec_command_line('-V'), 0)
+		self.assertLogged(fail2banregex.normVersion())
+		self.pruneLog()
+		self.assertEqual(_test_exec_command_line('--version'), 0)
 
 	def testExecCmdLine_Direct(self):
 		self.assertEqual(_test_exec_command_line(

@@ -25,3 +25,6 @@ Sep 16 21:30:32 catinthehat mysqld: 130916 21:30:32 [Warning] Access denied for 
 
 # failJSON: { "time": "2016-02-24T15:26:18", "match": false , "host": "localhost", "desc": "A hypothetical example of injection having full log line first (for paranoid yoh)" }
 2016-02-24T15:26:18.237955 6 [Note] Access denied for user 'root'@'localhost' (using password: YES) condition lead to a hypothetical failure
+
+# failJSON: { "time": "2019-01-03T09:50:04", "match": true , "host": "192.0.2.1", "desc": "mysql 8.0.13 logging with details, (log-error-verbosity = 3, gh-2314)" }
+2019-01-03T08:50:04.634875Z 113 [Note] [MY-010926] [Server] Access denied for user 'root'@'192.0.2.1' (using password: NO)

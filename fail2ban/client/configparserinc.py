@@ -20,7 +20,7 @@
 # Author: Yaroslav Halchenko
 # Modified: Cyril Jaquier
 
-__author__ = 'Yaroslav Halhenko, Serg G. Brester (aka sebres)'
+__author__ = 'Yaroslav Halchenko, Serg G. Brester (aka sebres)'
 __copyright__ = 'Copyright (c) 2007 Yaroslav Halchenko, 2015 Serg G. Brester (aka sebres)'
 __license__ = 'GPL'
 
@@ -33,7 +33,7 @@ if sys.version_info >= (3,2):
 
 	# SafeConfigParser deprecated from Python 3.2 (renamed to ConfigParser)
 	from configparser import ConfigParser as SafeConfigParser, BasicInterpolation, \
-		InterpolationMissingOptionError, NoSectionError
+		InterpolationMissingOptionError, NoOptionError, NoSectionError
 
 	# And interpolation of __name__ was simply removed, thus we need to
 	# decorate default interpolator to handle it
@@ -63,7 +63,7 @@ if sys.version_info >= (3,2):
 
 else: # pragma: no cover
 	from ConfigParser import SafeConfigParser, \
-		InterpolationMissingOptionError, NoSectionError
+		InterpolationMissingOptionError, NoOptionError, NoSectionError
 
 	# Interpolate missing known/option as option from default section
 	SafeConfigParser._cp_interpolate_some = SafeConfigParser._interpolate_some
@@ -72,6 +72,17 @@ else: # pragma: no cover
 		self._map_section_options(section, option, rest, map)
 		return self._cp_interpolate_some(option, accum, rest, section, map, *args, **kwargs)
 	SafeConfigParser._interpolate_some = _interpolate_some
+
+def _expandConfFilesWithLocal(filenames):
+	"""Expands config files with local extension.
+	"""
+	newFilenames = []
+	for filename in filenames:
+		newFilenames.append(filename)
+		localname = os.path.splitext(filename)[0] + '.local'
+		if localname not in filenames and os.path.isfile(localname):
+			newFilenames.append(localname)
+	return newFilenames
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -112,6 +123,8 @@ after = 1.conf
 
 	SECTION_NAME = "INCLUDES"
 
+	SECTION_OPTNAME_CRE = re.compile(r'^([\w\-]+)/([^\s>]+)$')
+
 	SECTION_OPTSUBST_CRE = re.compile(r'%\(([\w\-]+/([^\)]+))\)s')
 
 	CONDITIONAL_RE = re.compile(r"^(\w+)(\?.+)$")
@@ -131,7 +144,36 @@ after = 1.conf
 			SafeConfigParser.__init__(self, *args, **kwargs)
 			self._cfg_share = share_config
 
-	def _map_section_options(self, section, option, rest, map):
+	def get_ex(self, section, option, raw=False, vars={}):
+		"""Get an option value for a given section.
+		
+		In opposite to `get`, it differentiate session-related option name like `sec/opt`.
+		"""
+		sopt = None
+		# if option name contains section:
+		if '/' in option:
+			sopt = SafeConfigParserWithIncludes.SECTION_OPTNAME_CRE.search(option)
+		# try get value from named section/option:
+		if sopt:
+			sec = sopt.group(1)
+			opt = sopt.group(2)
+			seclwr = sec.lower()
+			if seclwr == 'known':
+				# try get value firstly from known options, hereafter from current section:
+				sopt = ('KNOWN/'+section, section)
+			else:
+				sopt = (sec,) if seclwr != 'default' else ("DEFAULT",)
+			for sec in sopt:
+				try:
+					v = self.get(sec, opt, raw=raw)
+					return v
+				except (NoSectionError, NoOptionError) as e:
+					pass
+		# get value of section/option using given section and vars (fallback):
+		v = self.get(section, option, raw=raw, vars=vars)
+		return v
+
+	def _map_section_options(self, section, option, rest, defaults):
 		"""
 		Interpolates values of the section options (name syntax `%(section/option)s`).
 
@@ -139,37 +181,54 @@ after = 1.conf
 		"""
 		if '/' not in rest or '%(' not in rest: # pragma: no cover
 			return 0
+		rplcmnt = 0
 		soptrep = SafeConfigParserWithIncludes.SECTION_OPTSUBST_CRE.findall(rest)
 		if not soptrep: # pragma: no cover
 			return 0
 		for sopt, opt in soptrep:
-			if sopt not in map:
+			if sopt not in defaults:
 				sec = sopt[:~len(opt)]
 				seclwr = sec.lower()
 				if seclwr != 'default':
+					usedef = 0
 					if seclwr == 'known':
 						# try get raw value from known options:
 						try:
 							v = self._sections['KNOWN/'+section][opt]
 						except KeyError:
 							# fallback to default:
-							try:
-								v = self._defaults[opt]
-							except KeyError: # pragma: no cover
-								continue
+							usedef = 1
 					else:
 						# get raw value of opt in section:
-						v = self.get(sec, opt, raw=True)
+						try:
+							# if section not found - ignore:
+							try:
+								sec = self._sections[sec]
+							except KeyError: # pragma: no cover
+								continue
+							v = sec[opt]
+						except KeyError: # pragma: no cover
+							# fallback to default:
+							usedef = 1
 				else:
+					usedef = 1
+				if usedef:
 					try:
 						v = self._defaults[opt]
 					except KeyError: # pragma: no cover
 						continue
-				self._defaults[sopt] = v
-				try: # for some python versions need to duplicate it in map-vars also:
-					map[sopt] = v
-				except: pass
-		return 1
+				# replacement found:
+				rplcmnt = 1
+				try: # set it in map-vars (consider different python versions):
+					defaults[sopt] = v
+				except:
+					# try to set in first default map (corresponding vars):
+					try:
+						defaults._maps[0][sopt] = v
+					except: # pragma: no cover
+						# no way to update vars chain map - overwrite defaults:
+						self._defaults[sopt] = v
+		return rplcmnt
 
 	@property
 	def share_config(self):
@@ -197,6 +256,7 @@ after = 1.conf
 	def _getIncludes(self, filenames, seen=[]):
 		if not isinstance(filenames, list):
 			filenames = [ filenames ]
+		filenames = _expandConfFilesWithLocal(filenames)
 		# retrieve or cache include paths:
 		if self._cfg_share:
 			# cache/share include list:

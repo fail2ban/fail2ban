@@ -36,7 +36,7 @@ from .failregex import mapTag2Opt
 from .ipdns import asip, DNSUtils
 from .mytime import MyTime
 from .utils import Utils
-from ..helpers import getLogger, _merge_copy_dicts, substituteRecursiveTags, TAG_CRE, MAX_TAG_REPLACE_COUNT
+from ..helpers import getLogger, _merge_copy_dicts, uni_string, substituteRecursiveTags, TAG_CRE, MAX_TAG_REPLACE_COUNT
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -83,6 +83,8 @@ class CallingMap(MutableMapping, object):
 		The dictionary data which can be accessed to obtain items uncalled
 	"""
 
+	CM_REPR_ITEMS = ()
+
 	# immutable=True saves content between actions, without interim copying (save original on demand, recoverable via reset)
 	__slots__ = ('data', 'storage', 'immutable', '__org_data')
 	def __init__(self, *args, **kwargs):
@@ -98,14 +100,29 @@ class CallingMap(MutableMapping, object):
 			pass
 		self.immutable = immutable
 
-	def __repr__(self):
-		return "%s(%r)" % (self.__class__.__name__, self._asdict())
+	def _asrepr(self, calculated=False):
+		# be sure it is suitable as string, so use str as checker:
+		return "%s(%r)" % (self.__class__.__name__, self._asdict(calculated, str))
 
-	def _asdict(self):
-		try:
-			return dict(self)
-		except:
-			return dict(self.data, **self.storage)
+	__repr__ = _asrepr
+
+	def _asdict(self, calculated=False, checker=None):
+		d = dict(self.data, **self.storage)
+		if not calculated:
+			return dict((n,v) for n,v in d.iteritems() \
+				if not callable(v) or n in self.CM_REPR_ITEMS)
+		for n,v in d.items():
+			if callable(v):
+				try:
+					# calculate:
+					v = self.__getitem__(n)
+					# convert if needed:
+					if checker: checker(v)
+					# store calculated:
+					d[n] = v
+				except: # can't calculate - just ignore it
+					pass
+		return d
 
 	def getRawItem(self, key):
 		try:
@@ -156,7 +173,7 @@ class CallingMap(MutableMapping, object):
 	def __len__(self):
 		return len(self.data)
 
-	def copy(self): # pargma: no cover
+	def copy(self): # pragma: no cover
 		return self.__class__(_merge_copy_dicts(self.data, self.storage))
 
 
@@ -312,9 +329,9 @@ class CommandAction(ActionBase):
 
 	def __setattr__(self, name, value):
 		if not name.startswith('_') and not self.__init and not callable(value):
-			# special case for some pasrameters:
+			# special case for some parameters:
 			if name in ('timeout', 'bantime'):
-				value = str(MyTime.str2seconds(value))
+				value = MyTime.str2seconds(value)
 			# parameters changed - clear properties and substitution cache:
 			self.__properties = None
 			self.__substCache.clear()
@@ -337,7 +354,7 @@ class CommandAction(ActionBase):
 	def _properties(self):
 		"""A dictionary of the actions properties.
 
-		This is used to subsitute "tags" in the commands.
+		This is used to substitute "tags" in the commands.
 		"""
 		# if we have a properties - return it:
 		if self.__properties is not None:
@@ -383,7 +400,7 @@ class CommandAction(ActionBase):
 		except ValueError as e:
 			raise RuntimeError("Error %s action %s/%s: %r" % (operation, self._jail, self._name, e))
 
-	COND_FAMILIES = {'inet4':1, 'inet6':1}
+	COND_FAMILIES = ('inet4', 'inet6')
 
 	@property
 	def _startOnDemand(self):
@@ -460,13 +477,13 @@ class CommandAction(ActionBase):
 		"""Executes the "actionflush" command.
 		
 		Command executed in order to flush all bans at once (e. g. by stop/shutdown 
-		the system), instead of unbunning of each single ticket.
+		the system), instead of unbanning of each single ticket.
 
 		Replaces the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
 		family = []
-		# cumulate started families, if started on demand (conditional):
+		# collect started families, if started on demand (conditional):
 		if self._startOnDemand:
 			for f in CommandAction.COND_FAMILIES:
 				if self.__started.get(f) == 1: # only real started:
@@ -482,7 +499,7 @@ class CommandAction(ActionBase):
 		and executes the resulting command.
 		"""
 		family = []
-		# cumulate started families, if started on demand (conditional):
+		# collect started families, if started on demand (conditional):
 		if self._startOnDemand:
 			for f in CommandAction.COND_FAMILIES:
 				if self.__started.get(f) == 1: # only real started:
@@ -591,7 +608,7 @@ class CommandAction(ActionBase):
 				if value is None:
 					# fallback (no or default replacement)
 					return ADD_REPL_TAGS_CM.get(tag, m.group())
-			value = str(value)		# assure string
+			value = uni_string(value)		# assure string
 			if tag in cls._escapedTags:
 				# That one needs to be escaped since its content is
 				# out of our control
@@ -670,7 +687,7 @@ class CommandAction(ActionBase):
 			except KeyError:
 				# fallback (no or default replacement)
 				return ADD_REPL_TAGS_CM.get(tag, m.group())
-			value = str(value)		# assure string
+			value = uni_string(value)		# assure string
 			# replacement for tag:
 			return escapeVal(tag, value)
 		
@@ -684,7 +701,7 @@ class CommandAction(ActionBase):
 			def substTag(m):
 				tag = mapTag2Opt(m.groups()[0])
 				try:
-					value = str(tickData[tag])
+					value = uni_string(tickData[tag])
 				except KeyError:
 					return ""
 				return escapeVal("F_"+tag, value)

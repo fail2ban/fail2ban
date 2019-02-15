@@ -156,7 +156,7 @@ class BanManager:
 		# get cymru info:
 		try:
 			for ip in banIPs:
-				# Reference: http://www.team-cymru.org/Services/ip-to-asn.html#dns
+				# Reference: https://www.team-cymru.com/IP-ASN-mapping.html#dns
 				question = ip.getPTR(
 					"origin.asn.cymru.com" if ip.isIPv4
 					else "origin6.asn.cymru.com"
@@ -166,15 +166,21 @@ class BanManager:
 					answers = resolver.query(question, "TXT")
 					if not answers:
 						raise ValueError("No data retrieved")
+					asns = set()
+					countries = set()
+					rirs = set()
 					for rdata in answers:
 						asn, net, country, rir, changed =\
 							[answer.strip("'\" ") for answer in rdata.to_text().split("|")]
 						asn = self.handleBlankResult(asn)
 						country = self.handleBlankResult(country)
 						rir = self.handleBlankResult(rir)
-						return_dict["asn"].append(self.handleBlankResult(asn))
-						return_dict["country"].append(self.handleBlankResult(country))
-						return_dict["rir"].append(self.handleBlankResult(rir))
+						asns.add(self.handleBlankResult(asn))
+						countries.add(self.handleBlankResult(country))
+						rirs.add(self.handleBlankResult(rir))
+					return_dict["asn"].append(', '.join(sorted(asns)))
+					return_dict["country"].append(', '.join(sorted(countries)))
+					return_dict["rir"].append(', '.join(sorted(rirs)))
 				except dns.resolver.NXDOMAIN:
 					return_dict["asn"].append("nxdomain")
 					return_dict["country"].append("nxdomain")

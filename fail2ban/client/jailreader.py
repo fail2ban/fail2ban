@@ -90,9 +90,6 @@ class JailReader(ConfigReader):
 		opts1st = [["bool", "enabled", False],
 				["string", "filter", ""]]
 		opts = [["bool", "enabled", False],
-				["string", "logpath", None],
-				["string", "logtimezone", None],
-				["string", "logencoding", None],
 				["string", "backend", "auto"],
 				["int",    "maxretry", None],
 				["string", "findtime", None],
@@ -103,8 +100,12 @@ class JailReader(ConfigReader):
 				["string", "ignorecommand", None],
 				["bool",   "ignoreself", None],
 				["string", "ignoreip", None],
+				["string", "ignorecache", None],
 				["string", "filter", ""],
 				["string", "datepattern", None],
+				["string", "logtimezone", None],
+				["string", "logencoding", None],
+				["string", "logpath", None], # logpath after all log-related data (backend, date-pattern, etc)
 				["string", "action", ""]]
 
 		# Before interpolation (substitution) add static options always available as default:
@@ -150,12 +151,21 @@ class JailReader(ConfigReader):
 				self.__filter.getOptions(self.__opts)
 		
 			# Read action
-			for act in self.__opts["action"].split('\n'):
+			prevln = ''
+			actlst = self.__opts["action"].split('\n')
+			for n, act in enumerate(actlst):
 				try:
 					if not act:			  # skip empty actions
 						continue
+					# join with previous line if needed (consider possible new-line):
+					if prevln: act = prevln + '\n' + act
 					actName, actOpt = extractOptions(act)
+					prevln = ''
 					if not actName:
+						# consider possible new-line, so repeat with joined next line's:
+						if n < len(actlst) - 1:
+							prevln = act
+							continue
 						raise JailDefError("Invalid action definition %r" % act)
 					if actName.endswith(".py"):
 						self.__actions.append([
@@ -220,7 +230,7 @@ class JailReader(ConfigReader):
 					path, tail = path if len(path) > 1 else (path[0], "head")
 					pathList = JailReader._glob(path)
 					if len(pathList) == 0:
-						logSys.error("No file(s) found for glob %s" % path)
+						logSys.notice("No file(s) found for glob %s" % path)
 					for p in pathList:
 						found_files += 1
 						stream.append(

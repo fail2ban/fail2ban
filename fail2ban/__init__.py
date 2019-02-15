@@ -79,3 +79,10 @@ logging.handlers.SysLogHandler.priority_map['NOTICE'] = 'notice'
 from time import strptime
 # strptime thread safety hack-around - http://bugs.python.org/issue7980
 strptime("2012", "%Y")
+
+# short names for pure numeric log-level ("Level 25" could be truncated by short formats):
+def _init():
+	for i in range(50):
+		if logging.getLevelName(i).startswith('Level'):
+			logging.addLevelName(i, '#%02d-Lev.' % i)
+_init()

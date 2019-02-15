@@ -567,13 +567,18 @@ class CommandActionTest(LogCaptureTestCase):
 			'b': lambda self: self['a'] + 6,
 			'c': ''
 		})
-		s = repr(m)
+		s = repr(m); # only stored values (no calculated)
+		self.assertNotIn("'a': ", s)
+		self.assertNotIn("'b': ", s)
+		self.assertIn("'c': ''", s)
+
+		s = m._asrepr(True) # all values (including calculated)
 		self.assertIn("'a': 5", s)
 		self.assertIn("'b': 11", s)
 		self.assertIn("'c': ''", s)
 		
 		m['c'] = lambda self: self['xxx'] + 7; # unresolvable
-		s = repr(m)
+		s = m._asrepr(True)
 		self.assertIn("'a': 5", s)
 		self.assertIn("'b': 11", s)
 		self.assertIn("'c': ", s) # presents as callable
