@@ -33,7 +33,7 @@ SCRIPTNAME="/etc/init.d/$NAME"
 
 # Ad-hoc way to parse out socket file name
 SOCKFILE="$(grep -h '^[^#]*socket *=' "/etc/$NAME/$NAME.conf" "/etc/$NAME/$NAME.local" 2>/dev/null \
-  	| tail -n 1 | sed -e 's/.*socket *= *//g' -e 's/ *$//g')"
+	| tail -n 1 | sed -e 's/.*socket *= *//g' -e 's/ *$//g')"
 [ -z "$SOCKFILE" ] && SOCKFILE="/var/run/fail2ban.sock"
 
 # Exit if the package is not installed
