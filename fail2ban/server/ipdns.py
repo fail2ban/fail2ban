@@ -197,7 +197,7 @@ class IPAddr(object):
 	__slots__ = '_family','_addr','_plen','_maskplen','_raw'
 
 	# todo: make configurable the expired time and max count of cache entries:
-	CACHE_OBJ = Utils.Cache(maxCount=1000, maxTime=5*60)
+	CACHE_OBJ = Utils.Cache(maxCount=10000, maxTime=5*60)
 
 	CIDR_RAW = -2
 	CIDR_UNSPEC = -1
@@ -205,6 +205,10 @@ class IPAddr(object):
 	FAM_IPv6 = CIDR_RAW - socket.AF_INET6
 
 	def __new__(cls, ipstr, cidr=CIDR_UNSPEC):
+		if cidr == IPAddr.CIDR_RAW: # don't cache raw
+			ip = super(IPAddr, cls).__new__(cls)
+			ip.__init(ipstr, cidr)
+			return ip
 		# check already cached as IPAddr
 		args = (ipstr, cidr)
 		ip = IPAddr.CACHE_OBJ.get(args)
@@ -221,7 +225,8 @@ class IPAddr(object):
 					return ip
 		ip = super(IPAddr, cls).__new__(cls)
 		ip.__init(ipstr, cidr)
-		IPAddr.CACHE_OBJ.set(args, ip)
+		if ip._family != IPAddr.CIDR_RAW:
+			IPAddr.CACHE_OBJ.set(args, ip)
 		return ip
 
 	@staticmethod
