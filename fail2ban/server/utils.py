@@ -95,31 +95,35 @@ class Utils():
 			
 		def set(self, k, v):
 			t = time.time()
-			cache = self._cache  # for shorter local access
-			# clean cache if max count reached:
-			if len(cache) >= self.maxCount:
-				# avoid multiple modification of list multi-threaded:
-				with self.__lock:
-					if len(cache) >= self.maxCount:
-						for (ck, cv) in cache.items():
+			# avoid multiple modification of dict multi-threaded:
+			cache = self._cache
+			with self.__lock:
+				# clean cache if max count reached:
+				if len(cache) >= self.maxCount:
+					if OrderedDict is not dict:
+						# ordered (so remove some from ahead, FIFO)
+						while cache:
+							(ck, cv) = cache.popitem(last=False)
+							# if not yet expired (but has free slot for new entry):
+							if cv[1] > t and len(cache) < self.maxCount:
+								break
+					else: # pragma: 3.x no cover (dict is in 2.6 only)
+						remlst = []
+						for (ck, cv) in cache.iteritems():
 							# if expired:
 							if cv[1] <= t:
-								self.unset(ck)
-							elif OrderedDict is not dict:
-								break
+								remlst.append(ck)
+						for ck in remlst:
+							self._cache.pop(ck, None)
 						# if still max count - remove any one:
-						if len(cache) >= self.maxCount:
-							if OrderedDict is not dict: # first (older):
-								cache.popitem(False)
-							else: # pragma: 3.x no cover
-								cache.popitem()
-			cache[k] = (v, t + self.maxTime)
+						while cache and len(cache) >= self.maxCount:
+							cache.popitem()
+				# set now:
+				cache[k] = (v, t + self.maxTime)
 
 		def unset(self, k):
-			try:
-				del self._cache[k]
-			except KeyError:
-				pass
+			with self.__lock:
+				self._cache.pop(k, None)
 
 
 	@staticmethod

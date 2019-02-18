@@ -301,14 +301,17 @@ class DatePatternRegex(DateTemplate):
 		if wordBegin and RE_EXLINE_BOUND_BEG.search(pattern):
 			pattern = RE_EXLINE_BOUND_BEG.sub('', pattern)
 			wordBegin = 'start'
-		# wrap to regex:
-		fmt = self._patternRE.sub(r'%(\1)s', pattern)
-		self.name = fmt % self._patternName
-		regex = fmt % timeRE
-		# if expected add (?iu) for "ignore case" and "unicode":
-		if RE_ALPHA_PATTERN.search(pattern):
-			regex = r'(?iu)' + regex
-		super(DatePatternRegex, self).setRegex(regex, wordBegin, wordEnd)
+		try:
+			# wrap to regex:
+			fmt = self._patternRE.sub(r'%(\1)s', pattern)
+			self.name = fmt % self._patternName
+			regex = fmt % timeRE
+			# if expected add (?iu) for "ignore case" and "unicode":
+			if RE_ALPHA_PATTERN.search(pattern):
+				regex = r'(?iu)' + regex
+			super(DatePatternRegex, self).setRegex(regex, wordBegin, wordEnd)
+		except Exception as e:
+			raise TypeError("Failed to set datepattern '%s' (may be an invalid format or unescaped percent char): %s" % (pattern, e))
 
 	def getDate(self, line, dateMatch=None, default_tz=None):
 		"""Method to return the date for a log line.

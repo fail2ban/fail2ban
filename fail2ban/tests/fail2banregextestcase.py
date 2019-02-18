@@ -368,3 +368,16 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			r"Authentication failure"
 		), 0)
 		self.assertLogged('No failure-id group in ')
+
+	def testExecCmdLine_ErrorParam(self):
+		# single line error:
+		self.assertNotEqual(_test_exec_command_line(
+			'-l', 'notice', '-d', '%:%.%-', 'LOG', 'RE'
+		), 0)
+		self.assertLogged('ERROR: Failed to set datepattern')
+		# verbose (traceback/callstack):
+		self.pruneLog()
+		self.assertNotEqual(_test_exec_command_line(
+			'-v', '-d', '%:%.%-', 'LOG', 'RE'
+		), 0)
+		self.assertLogged('Failed to set datepattern')
