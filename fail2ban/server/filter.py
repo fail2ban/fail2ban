@@ -428,6 +428,34 @@ class Filter(JailThread):
 		else:
 			self.__ignoreCache = None
 
+	def performBan(self, ip=None):
+		"""Performs a ban for IPs (or given ip) that are reached maxretry of the jail."""
+		try: # pragma: no branch - exception is the only way out
+			while True:
+				ticket = self.failManager.toBan(ip)
+				self.jail.putFailTicket(ticket)
+		except FailManagerEmpty:
+			self.failManager.cleanup(MyTime.time())
+
+	def addAttempt(self, ip, *matches):
+		"""Generate a failed attempt for ip"""
+		if not isinstance(ip, IPAddr):
+			ip = IPAddr(ip)
+		matches = list(matches) # tuple to list
+
+		# Generate the failure attempt for the IP:
+		unixTime = MyTime.time()
+		ticket = FailTicket(ip, unixTime, matches=matches)
+		logSys.info(
+			"[%s] Attempt %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
+		)
+		self.failManager.addFailure(ticket, len(matches) or 1)
+
+		# Perform the ban if this attempt is resulted to:
+		self.performBan(ip)
+
+		return 1
+
 	##
 	# Ignore own IP/DNS.
 	#

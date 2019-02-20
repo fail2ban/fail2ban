@@ -473,9 +473,12 @@ class Server:
 	def setBanTime(self, name, value):
 		self.__jails[name].actions.setBanTime(value)
 	
+	def addAttemptIP(self, name, *args):
+		return self.__jails[name].filter.addAttempt(*args)
+
 	def setBanIP(self, name, value):
 		return self.__jails[name].actions.addBannedIP(value)
-		
+
 	def setUnbanIP(self, name=None, value=None, ifexists=True):
 		if name is not None:
 			# single jail:

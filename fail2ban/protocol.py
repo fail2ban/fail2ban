@@ -99,6 +99,7 @@ protocol = [
 ["set <JAIL> bantime <TIME>", "sets the number of seconds <TIME> a host will be banned for <JAIL>"], 
 ["set <JAIL> datepattern <PATTERN>", "sets the <PATTERN> used to match date/times for <JAIL>"],
 ["set <JAIL> usedns <VALUE>", "sets the usedns mode for <JAIL>"],
+["set <JAIL> attempt <IP> [<failure1> ... <failureN>]", "manually notify about <IP> failure"], 
 ["set <JAIL> banip <IP> ... <IP>", "manually Ban <IP> for <JAIL>"], 
 ["set <JAIL> unbanip [--report-absent] <IP> ... <IP>", "manually Unban <IP> in <JAIL>"], 
 ["set <JAIL> maxretry <RETRY>", "sets the number of failures <RETRY> before banning the host for <JAIL>"], 

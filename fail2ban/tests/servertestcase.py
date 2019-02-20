@@ -347,6 +347,25 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(
 				["set", self.jailName, "unbanip", "--report-absent", "192.0.2.255"])[0],1)
 
+	def testJailAttemptIP(self):
+		self.server.startJail(self.jailName) # Jail must be started
+
+		def attempt(ip, matches):
+			return self.transm.proceed(["set", self.jailName, "attempt", ip] + matches)
+
+		self.setGetTest("maxretry", "5", 5, jail=self.jailName)
+		# produce 2 single attempts per IP:
+		for i in (1, 2):
+			for ip in ("192.0.2.1", "192.0.2.2"):
+				self.assertEqual(attempt(ip, ["test failure %d" % i]), (0, 1))
+		self.assertLogged("192.0.2.1:2", "192.0.2.2:2", all=True, wait=True)
+		# this 3 attempts at once should cause a ban:
+		self.assertEqual(attempt(ip, ["test failure %d" % i for i in (3,4,5)]), (0, 1))
+		self.assertLogged("192.0.2.2:5", wait=True)
+		# resulted to ban for "192.0.2.2" but not for "192.0.2.1":
+		self.assertLogged("Ban 192.0.2.2", wait=True)
+		self.assertNotLogged("Ban 192.0.2.1")
+
 	def testJailMaxRetry(self):
 		self.setGetTest("maxretry", "5", 5, jail=self.jailName)
 		self.setGetTest("maxretry", "2", 2, jail=self.jailName)
