@@ -330,22 +330,22 @@ class Transmitter(TransmitterBase):
 		self.server.startJail(self.jailName) # Jail must be started
 
 		self.assertEqual(
-			self.transm.proceed(["set", self.jailName, "banip", "127.0.0.1"]),
-			(0, "127.0.0.1"))
-		self.assertLogged("Ban 127.0.0.1", wait=True) # Give chance to ban
+			self.transm.proceed(["set", self.jailName, "banip", "192.0.2.1", "192.0.2.1", "192.0.2.2"]),
+			(0, 2))
+		self.assertLogged("Ban 192.0.2.1", "Ban 192.0.2.2", all=True, wait=True) # Give chance to ban
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "banip", "Badger"]),
-			(0, "Badger")) #NOTE: Is IP address validated? Is DNS Lookup done?
+			(0, 1)) #NOTE: Is IP address validated? Is DNS Lookup done?
 		self.assertLogged("Ban Badger", wait=True) # Give chance to ban
 		# Unban IP
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "unbanip", "127.0.0.1"]),
-			(0, "127.0.0.1"))
+				["set", self.jailName, "unbanip", "192.0.2.255", "192.0.2.1", "192.0.2.2"]),
+			(0, 2))
 		# Unban IP which isn't banned
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "unbanip", "192.168.1.1"])[0],1)
+				["set", self.jailName, "unbanip", "--report-absent", "192.0.2.255"])[0],1)
 
 	def testJailMaxRetry(self):
 		self.setGetTest("maxretry", "5", 5, jail=self.jailName)

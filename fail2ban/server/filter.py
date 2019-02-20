@@ -427,31 +427,6 @@ class Filter(JailThread):
 			)
 		else:
 			self.__ignoreCache = None
-	##
-	# Ban an IP - http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
-	# Arturo 'Buanzo' Busleiman <buanzo@buanzo.com.ar>
-	#
-	# to enable banip fail2ban-client BAN command
-
-	def addBannedIP(self, ip):
-		if not isinstance(ip, IPAddr):
-			ip = IPAddr(ip)
-
-		unixTime = MyTime.time()
-		ticket = FailTicket(ip, unixTime)
-		if self._inIgnoreIPList(ip, ticket, log_ignore=False):
-			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.', ip)
-		self.failManager.addFailure(ticket, self.failManager.getMaxRetry())
-
-		# Perform the banning of the IP now.
-		try: # pragma: no branch - exception is the only way out
-			while True:
-				ticket = self.failManager.toBan(ip)
-				self.jail.putFailTicket(ticket)
-		except FailManagerEmpty:
-			self.failManager.cleanup(MyTime.time())
-
-		return ip
 
 	##
 	# Ignore own IP/DNS.

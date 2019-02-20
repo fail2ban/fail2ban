@@ -109,10 +109,7 @@ class Transmitter:
 			# if all ips:
 			if len(value) == 1 and value[0] == "--all":
 				return self.__server.setUnbanIP()
-			cnt = 0
-			for value in value:
-				cnt += self.__server.setUnbanIP(None, value)
-			return cnt
+			return self.__server.setUnbanIP(None, value)
 		elif command[0] == "echo":
 			return command[1:]
 		elif command[0] == "server-status":
@@ -286,12 +283,16 @@ class Transmitter:
 			self.__server.setBanTime(name, value)
 			return self.__server.getBanTime(name)
 		elif command[1] == "banip":
-			value = command[2]
+			value = command[2:]
 			return self.__server.setBanIP(name,value)
 		elif command[1] == "unbanip":
-			value = command[2]
-			self.__server.setUnbanIP(name, value)
-			return value
+			ifexists = True
+			if command[2] != "--report-absent":
+				value = command[2:]
+			else:
+				ifexists = False
+				value = command[3:]
+			return self.__server.setUnbanIP(name, value, ifexists=ifexists)
 		elif command[1] == "addaction":
 			args = [command[2]]
 			if len(command) > 3:

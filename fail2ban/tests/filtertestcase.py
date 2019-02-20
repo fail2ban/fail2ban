@@ -394,12 +394,6 @@ class IgnoreIP(LogCaptureTestCase):
 		self.assertLogged('Ignore 192.168.1.32')
 		tearDownMyTime()
 
-	def testIgnoreAddBannedIP(self):
-		self.filter.addIgnoreIP('192.168.1.0/25')
-		self.filter.addBannedIP('192.168.1.32')
-		self.assertNotLogged('Ignore 192.168.1.32')
-		self.assertLogged('Requested to manually ban an ignored IP 192.168.1.32. User knows best. Proceeding to ban it.')
-
 	def testIgnoreCommand(self):
 		self.filter.ignoreCommand = sys.executable + ' ' + os.path.join(TEST_FILES_DIR, "ignorecommand.py <ip>")
 		self.assertTrue(self.filter.inIgnoreIPList("10.0.0.1"))

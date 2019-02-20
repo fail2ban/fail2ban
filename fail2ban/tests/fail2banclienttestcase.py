@@ -1121,7 +1121,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"--async", "unban", "192.0.2.5", "192.0.2.6")
 		self.assertLogged(
 			"192.0.2.5 is not banned",
-			"[test-jail1] Unban 192.0.2.6", all=True
+			"[test-jail1] Unban 192.0.2.6", all=True, wait=MID_WAITTIME
 		)
 
 		# reload all (one jail) with unban all:
