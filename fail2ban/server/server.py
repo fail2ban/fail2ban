@@ -491,8 +491,6 @@ class Server:
 		ifexists |= (name is None)
 		for jail in jails:
 			cnt += jail.actions.removeBannedIP(value, ifexists=ifexists)
-		if value and not cnt:
-			logSys.info("%s is not banned", value)
 		return cnt
 		
 	def getBanTime(self, name):
