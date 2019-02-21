@@ -117,12 +117,7 @@ class FilterPoll(FileFilter):
 
 				self.ticks += 1
 				if self.__modified:
-					try:
-						while True:
-							ticket = self.failManager.toBan()
-							self.jail.putFailTicket(ticket)
-					except FailManagerEmpty:
-						self.failManager.cleanup(MyTime.time())
+					self.performBan()
 					self.__modified = False
 			except Exception as e: # pragma: no cover
 				if not self.active: # if not active - error by stop...

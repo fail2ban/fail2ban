@@ -246,8 +246,7 @@ class JailReader(ConfigReader):
 			elif opt == "backend":
 				backend = value
 			elif opt == "ignoreip":
-				for ip in splitwords(value):
-					stream.append(["set", self.__name, "addignoreip", ip])
+				stream.append(["set", self.__name, "addignoreip"] + splitwords(value))
 			elif opt in ("failregex", "ignoreregex"):
 				multi = []
 				for regex in value.split('\n'):
