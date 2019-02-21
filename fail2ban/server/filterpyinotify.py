@@ -140,12 +140,7 @@ class FilterPyinotify(FileFilter):
 		"""
 		if not self.idle:
 			self.getFailures(path)
-			try:
-				while True:
-					ticket = self.failManager.toBan()
-					self.jail.putFailTicket(ticket)
-			except FailManagerEmpty:
-				self.failManager.cleanup(MyTime.time())
+			self.performBan()
 			self.__modified = False
 
 	def _addPending(self, path, reason, isDir=False):

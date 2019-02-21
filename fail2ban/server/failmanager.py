@@ -162,7 +162,7 @@ class FailManager:
 	
 	def toBan(self, fid=None):
 		with self.__lock:
-			for fid in ([fid] if fid != None and fid in self.__failList else self.__failList):
+			for fid in ([fid] if fid is not None and fid in self.__failList else self.__failList):
 				data = self.__failList[fid]
 				if data.getRetry() >= self.__maxRetry:
 					del self.__failList[fid]

@@ -878,9 +878,9 @@ class JailsReaderTest(LogCaptureTestCase):
 							 % (option, commands))
 
 		# Set up of logging should come first
-		self.assertEqual(find_set('syslogsocket'), 0)
-		self.assertEqual(find_set('loglevel'), 1)
-		self.assertEqual(find_set('logtarget'), 2)
+		self.assertTrue(
+			find_set('syslogsocket') < find_set('loglevel') < find_set('logtarget')
+		)
 		# then dbfile should be before dbpurgeage
 		self.assertTrue(find_set('dbpurgeage') > find_set('dbfile'))
 
@@ -888,7 +888,7 @@ class JailsReaderTest(LogCaptureTestCase):
 		# server
 		self.assertSortedEqual(commands,
 						 [['set', 'dbfile',
-							'/var/lib/fail2ban/fail2ban.sqlite3'],
+								'/var/lib/fail2ban/fail2ban.sqlite3'],
 						  ['set', 'dbpurgeage', '1d'],
 						  ['set', 'loglevel', "INFO"],
 						  ['set', 'logtarget', '/var/log/fail2ban.log'],

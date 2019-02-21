@@ -35,6 +35,7 @@ except ImportError:
 	OrderedDict = dict
 
 from .banmanager import BanManager, BanTicket
+from .ipdns import IPAddr
 from .jailthread import JailThread
 from .action import ActionBase, CommandAction, CallingMap
 from .mytime import MyTime
@@ -214,6 +215,19 @@ class Actions(JailThread, Mapping):
 		"""
 		return self.__banManager.getBanList(ordered=True, withTime=withTime)
 
+	def addBannedIP(self, ip):
+		"""Ban an IP or list of IPs."""
+		unixTime = MyTime.time()
+
+		if isinstance(ip, list):
+			# Multiple IPs:
+			tickets = (BanTicket(ip if isinstance(ip, IPAddr) else IPAddr(ip), unixTime) for ip in ip)
+		else:
+			# Single IP:
+			tickets = (BanTicket(ip if isinstance(ip, IPAddr) else IPAddr(ip), unixTime),)
+
+		return self.__checkBan(tickets)
+
 	def removeBannedIP(self, ip=None, db=True, ifexists=False):
 		"""Removes banned IP calling actions' unban method
 
@@ -222,8 +236,8 @@ class Actions(JailThread, Mapping):
 
 		Parameters
 		----------
-		ip : str or IPAddr or None
-			The IP address to unban or all IPs if None
+		ip : list, str, IPAddr or None
+			The IP address (or multiple IPs as list) to unban or all IPs if None
 
 		Raises
 		------
@@ -233,6 +247,19 @@ class Actions(JailThread, Mapping):
 		# Unban all?
 		if ip is None:
 			return self.__flushBan(db)
+		# Multiple IPs:
+		if isinstance(ip, list):
+			missed = []
+			cnt = 0
+			for i in ip:
+				try:
+					cnt += self.removeBannedIP(i, db, ifexists)
+				except ValueError:
+					if not ifexists:
+						missed.append(i)
+			if missed:
+				raise ValueError("not banned: %r" % missed)
+			return cnt
 		# Single IP:
 		# Always delete ip from database (also if currently not banned)
 		if db and self._jail.database is not None:
@@ -243,9 +270,11 @@ class Actions(JailThread, Mapping):
 			# Unban the IP.
 			self.__unBan(ticket)
 		else:
+			msg = "%s is not banned" % ip
+			logSys.log(logging.MSG, msg)
 			if ifexists:
 				return 0
-			raise ValueError("%s is not banned" % ip)
+			raise ValueError(msg)
 		return 1
 
 
@@ -391,11 +420,20 @@ class Actions(JailThread, Mapping):
 		aInfo = Actions.ActionInfo(ticket, self._jail)
 		return aInfo
 
+	def __getFailTickets(self, count=100):
+		"""Generator to get maximal count failure tickets from fail-manager."""
+		cnt = 0
+		while cnt < count:
+			ticket = self._jail.getFailTicket()
+			if not ticket:
+				break
+			yield ticket
+			cnt += 1
 
-	def __checkBan(self):
+	def __checkBan(self, tickets=None):
 		"""Check for IP address to ban.
 
-		Look in the jail queue for FailTicket. If a ticket is available,
+		If tickets are not specified look in the jail queue for FailTicket. If a ticket is available,
 		it executes the "ban" command and adds a ticket to the BanManager.
 
 		Returns
@@ -404,10 +442,9 @@ class Actions(JailThread, Mapping):
 			True if an IP address get banned.
 		"""
 		cnt = 0
-		while cnt < 100:
-			ticket = self._jail.getFailTicket()
-			if not ticket:
-				break
+		if not tickets:
+			tickets = self.__getFailTickets()
+		for ticket in tickets:
 
 			bTicket = BanTicket.wrap(ticket)
 			btime = ticket.getBanTime(self.__banManager.getBanTime())

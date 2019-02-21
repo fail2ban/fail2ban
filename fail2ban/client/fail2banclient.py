@@ -186,8 +186,7 @@ class Fail2banClient(Fail2banCmdLine, Thread):
 			logSys.error("Fail2ban seems to be in unexpected state (not running but the socket exists)")
 			return None
 
-		stream.append(['server-status'])
-		return stream
+		return [["server-stream", stream], ['server-status']]
 
 	##
 	def __startServer(self, background=True):

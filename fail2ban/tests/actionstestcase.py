@@ -78,6 +78,16 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertEqual(self.__actions.getBanTime(),127)
 		self.assertRaises(ValueError, self.__actions.removeBannedIP, '127.0.0.1')
 
+	def testAddBannedIP(self):
+		self.assertEqual(self.__actions.addBannedIP('192.0.2.1'), 1)
+		self.assertLogged('Ban 192.0.2.1')
+		self.pruneLog()
+		self.assertEqual(self.__actions.addBannedIP(['192.0.2.1', '192.0.2.2', '192.0.2.3']), 2)
+		self.assertLogged('192.0.2.1 already banned')
+		self.assertNotLogged('Ban 192.0.2.1')
+		self.assertLogged('Ban 192.0.2.2')
+		self.assertLogged('Ban 192.0.2.3')
+
 	def testActionsOutput(self):
 		self.defaultActions()
 		self.__actions.start()

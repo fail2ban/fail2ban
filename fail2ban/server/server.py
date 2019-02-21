@@ -489,22 +489,24 @@ class Server:
 	def setBanTime(self, name, value):
 		self.__jails[name].actions.setBanTime(value)
 	
+	def addAttemptIP(self, name, *args):
+		return self.__jails[name].filter.addAttempt(*args)
+
 	def setBanIP(self, name, value):
-		return self.__jails[name].filter.addBannedIP(value)
-		
-	def setUnbanIP(self, name=None, value=None):
+		return self.__jails[name].actions.addBannedIP(value)
+
+	def setUnbanIP(self, name=None, value=None, ifexists=True):
 		if name is not None:
-			# in all jails:
+			# single jail:
 			jails = [self.__jails[name]]
 		else:
-			# single jail:
+			# in all jails:
 			jails = self.__jails.values()
 		# unban given or all (if value is None):
 		cnt = 0
+		ifexists |= (name is None)
 		for jail in jails:
-			cnt += jail.actions.removeBannedIP(value, ifexists=(name is None))
-		if value and not cnt:
-			logSys.info("%s is not banned", value)
+			cnt += jail.actions.removeBannedIP(value, ifexists=ifexists)
 		return cnt
 		
 	def getBanTime(self, name):
