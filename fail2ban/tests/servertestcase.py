@@ -41,7 +41,7 @@ from ..server.jailthread import JailThread
 from ..server.ticket import BanTicket
 from ..server.utils import Utils
 from .dummyjail import DummyJail
-from .utils import LogCaptureTestCase
+from .utils import LogCaptureTestCase, with_alt_time, MyTime
 from ..helpers import getLogger, extractOptions, PREFER_ENC
 from .. import version
 
@@ -374,6 +374,7 @@ class Transmitter(TransmitterBase):
 		self.assertLogged("Ban 192.0.2.2", wait=True)
 		self.assertNotLogged("Ban 192.0.2.1")
 
+	@with_alt_time
 	def testJailBanList(self):
 		jail = "TestJailBanList"
 		self.server.addJail(jail, FAST_BACKEND)
@@ -381,7 +382,7 @@ class Transmitter(TransmitterBase):
 
 		# Helper to process set banip/set unbanip commands and compare the list of
 		# banned IP addresses with outList.
-		def _getBanListTest(jail, banip=None, unbanip=None, outList=[]):
+		def _getBanListTest(jail, banip=None, unbanip=None, args=(), outList=[]):
 			# Ban IP address
 			if banip is not None:
 				self.assertEqual(
@@ -396,15 +397,18 @@ class Transmitter(TransmitterBase):
 				self.assertLogged("Unban %s" % unbanip, wait=True) # Give chance to unban
 			# Compare the list of banned IP addresses with outList
 			self.assertSortedEqual(
-				self.transm.proceed(["get", jail, "banip"]),
-				(0, outList))
+				self.transm.proceed(["get", jail, "banip"]+list(args)),
+				(0, outList), nestedOnly=False)
+			MyTime.setTime(MyTime.time() + 1)
 
 		_getBanListTest(jail,
 			outList=[])
-		_getBanListTest(jail, banip="127.0.0.1", 
-			outList=["127.0.0.1"])
-		_getBanListTest(jail, banip="192.168.0.1",
-			outList=["127.0.0.1", "192.168.0.1"])
+		_getBanListTest(jail, banip="127.0.0.1", args=('--with-time',), 
+			outList=["127.0.0.1 \t2005-08-14 12:00:01 + 600 = 2005-08-14 12:10:01"])
+		_getBanListTest(jail, banip="192.168.0.1", args=('--with-time',), 
+			outList=[
+				"127.0.0.1 \t2005-08-14 12:00:01 + 600 = 2005-08-14 12:10:01",
+				"192.168.0.1 \t2005-08-14 12:00:02 + 600 = 2005-08-14 12:10:02"])
 		_getBanListTest(jail, banip="192.168.1.10",
 			outList=["127.0.0.1", "192.168.0.1", "192.168.1.10"])
 		_getBanListTest(jail, unbanip="127.0.0.1",

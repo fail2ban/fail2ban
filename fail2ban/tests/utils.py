@@ -245,6 +245,17 @@ def with_tmpdir(f):
 			shutil.rmtree(tmp)
 	return wrapper
 
+def with_alt_time(f):
+	"""Helper decorator to execute test in alternate (fixed) test time."""
+	@wraps(f)
+	def wrapper(self, *args, **kwargs):
+		setUpMyTime()
+		try:
+			return f(self, *args, **kwargs)
+		finally:
+			tearDownMyTime()
+	return wrapper
+
 
 # backwards compatibility to python 2.6:
 if not hasattr(unittest, 'SkipTest'): # pragma: no cover
