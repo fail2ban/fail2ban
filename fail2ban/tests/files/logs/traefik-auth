@@ -1,0 +1,6 @@
+# failJSON: { "match": false }
+10.0.0.2 - - [18/Nov/2018:21:34:30 +0000] "GET /dashboard/ HTTP/2.0" 401 17 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0" 72 "Auth for frontend-Host-traefik-0" "/dashboard/" 0ms
+# failJSON: { "time": "2018-11-18T22:34:34", "match": true , "host": "10.0.0.2" }
+10.0.0.2 - username [18/Nov/2018:21:34:34 +0000] "GET /dashboard/ HTTP/2.0" 401 17 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0" 72 "Auth for frontend-Host-traefik-0" "/dashboard/" 0ms
+# failJSON: { "match": false }
+10.0.0.2 - username [27/Nov/2018:23:33:31 +0000] "GET /dashboard/ HTTP/2.0" 200 716 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0" 118 "Host-traefik-0" "/dashboard/" 4ms

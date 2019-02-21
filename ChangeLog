@@ -49,6 +49,7 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
 ### New Features
 * new failregex-flag tag `<F-MLFGAINED>` for failregex, signaled that the access to service was gained
   (ATM used similar to tag `<F-NOFAIL>`, but it does not add the log-line to matches, gh-2279)
+* `filter.d/traefik-auth.conf`: used to ban hosts, that were failed through traefik
 
 ### Enhancements
 * jail-reader extended (amend to gh-1622): actions support multi-line options now (interpolations
