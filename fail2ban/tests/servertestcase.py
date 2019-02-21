@@ -337,15 +337,23 @@ class Transmitter(TransmitterBase):
 			self.transm.proceed(["set", self.jailName, "banip", "Badger"]),
 			(0, 1)) #NOTE: Is IP address validated? Is DNS Lookup done?
 		self.assertLogged("Ban Badger", wait=True) # Give chance to ban
-		# Unban IP
+		# Unban IP (first/last are not banned, so checking unban of both other succeeds):
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "unbanip", "192.0.2.255", "192.0.2.1", "192.0.2.2"]),
+				["set", self.jailName, "unbanip", "192.0.2.255", "192.0.2.1", "192.0.2.2", "192.0.2.254"]),
 			(0, 2))
-		# Unban IP which isn't banned
+		self.assertLogged("Unban 192.0.2.1", "Unban 192.0.2.2", all=True, wait=True)
+		self.assertLogged("192.0.2.255 is not banned", "192.0.2.254 is not banned", all=True, wait=True)
+		self.pruneLog()
+		# Unban IP which isn't banned (error):
 		self.assertEqual(
 			self.transm.proceed(
 				["set", self.jailName, "unbanip", "--report-absent", "192.0.2.255"])[0],1)
+		# ... (no error, IPs logged only):
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "unbanip", "192.0.2.255", "192.0.2.254"]),(0, 0))
+		self.assertLogged("192.0.2.255 is not banned", "192.0.2.254 is not banned", all=True, wait=True)
 
 	def testJailAttemptIP(self):
 		self.server.startJail(self.jailName) # Jail must be started

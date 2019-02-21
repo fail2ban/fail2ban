@@ -186,8 +186,8 @@ class Transmitter:
 			self.__server.setIgnoreSelf(name, value)
 			return self.__server.getIgnoreSelf(name)
 		elif command[1] == "addignoreip":
-			value = command[2]
-			self.__server.addIgnoreIP(name, value)
+			for value in command[2:]:
+				self.__server.addIgnoreIP(name, value)
 			return self.__server.getIgnoreIP(name)
 		elif command[1] == "delignoreip":
 			value = command[2]

@@ -1194,6 +1194,14 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"Jail 'test-jail1' stopped", 
 			"Jail 'test-jail1' started", all=True, wait=MID_WAITTIME)
 
+		# Coverage for pickle of IPAddr (as string):
+		self.pruneLog("[test-phase end-3]")
+		self.execCmd(SUCCESS, startparams,
+			"--async", "set", "test-jail1", "addignoreip", "192.0.2.1/32", "2001:DB8::1/96")
+		self.execCmd(SUCCESS, startparams,
+			"--async", "get", "test-jail1", "ignoreip")
+		self.assertLogged("192.0.2.1/32", "2001:DB8::1/96", all=True)
+
 	# test action.d/nginx-block-map.conf --
 	@unittest.F2B.skip_if_cfg_missing(action="nginx-block-map")
 	@with_foreground_server_thread(startextra={
