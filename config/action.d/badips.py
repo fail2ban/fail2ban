@@ -32,7 +32,7 @@ else: # pragma: 3.x no cover
 	from urllib import urlencode
 
 from fail2ban.server.actions import ActionBase
-from fail2ban.helpers import str2LogLevel
+from fail2ban.helpers import splitwords, str2LogLevel
 
 
 
@@ -75,9 +75,9 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	loglevel : int/str, optional
 		Log level of the message when an IP is (un)banned.
 		Default `DEBUG`.
-	shortloglevel : int/str, optional
-		Log level of the summary message when a group of IPs is (un)banned.
-		Default `DEBUG`.
+		Can be also supplied as two-value list (comma- or space separated) to
+		provide level of the summary message when a group of IPs is (un)banned.
+		Example `DEBUG,INFO`.
 	agent : str, optional
 		User agent transmitted to server.
 		Default `Fail2Ban/ver.`
@@ -95,7 +95,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 
 	def __init__(self, jail, name, category, score=3, age="24h", key=None,
 		banaction=None, bancategory=None, bankey=None, updateperiod=900, 
-		loglevel='DEBUG', shortloglevel='DEBUG', agent="Fail2Ban", timeout=TIMEOUT):
+		loglevel='DEBUG', agent="Fail2Ban", timeout=TIMEOUT):
 		super(BadIPsAction, self).__init__(jail, name)
 
 		self.timeout = timeout
@@ -107,8 +107,9 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		self.banaction = banaction
 		self.bancategory = bancategory or category
 		self.bankey = bankey
-		self.loglevel = str2LogLevel(loglevel)
-		self.shortloglevel = str2LogLevel(shortloglevel)
+		loglevel = splitwords(loglevel)
+		self.sumloglevel = str2LogLevel(loglevel[-1])
+		self.loglevel = str2LogLevel(loglevel[0])
 		self.updateperiod = updateperiod
 
 		self._bannedips = set()
@@ -355,7 +356,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 				p = len(s)
 				self._banIPs(s)
 				if m != 0 or p != 0:
-					self._logSys.log(self.shortloglevel,
+					self._logSys.log(self.sumloglevel,
 						"Updated IPs for jail '%s' (-%d/+%d)",
 						self._jail.name, m, p)
 				self._logSys.debug(
