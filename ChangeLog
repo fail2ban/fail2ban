@@ -62,6 +62,9 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
   attempts (failure) for IP (resp. failure-ID), see gh-2351;
   Syntax:
   - `fail2ban-client set <jail> attempt <ip> [<failure-message1> ... <failure-messageN>]`
+* `action.d/badips.py`: option `loglevel` extended with level of summary message,
+  following example configuration logging summary with NOTICE and rest with DEBUG log-levels:
+  `action = badips.py[loglevel="debug, notice"]`
 
 
 ver. 0.10.4 (2018/10/04) - ten-four-on-due-date-ten-four

@@ -55,6 +55,7 @@ if sys.version_info >= (2,7): # pragma: no cover - may be unavailable
 		pythonModule = None
 		modAction = None
 
+		@skip_if_not_available
 		def setUp(self):
 			"""Call before every test case."""
 			super(BadIPsActionTest, self).setUp()
