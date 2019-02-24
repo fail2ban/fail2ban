@@ -479,7 +479,7 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		# use once the stock configuration (to test starting also)
 		startparams = _start_params(tmp, True)
 		# test additional options:
-		_write_file(pjoin(tmp, "config", "fail2ban.conf"), "a",
+		_write_file(pjoin(tmp, "config", "fail2ban.local"), "w",
 			"[Thread]",
 			"stacksize = 32"
 			"",

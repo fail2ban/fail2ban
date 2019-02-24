@@ -717,7 +717,7 @@ class Server:
 				raise KeyError("unknown option %r" % o)
 
 	def getThreadOptions(self):
-		return {'stacksize': threading.stack_size() / 1024}
+		return {'stacksize': threading.stack_size() // 1024}
 
 	def setDatabase(self, filename):
 		# if not changed - nothing to do
