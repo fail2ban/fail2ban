@@ -239,8 +239,10 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 			try:
 				if opttype == "bool":
 					v = self.getboolean(sec, optname)
+					if v is None: continue
 				elif opttype == "int":
 					v = self.getint(sec, optname)
+					if v is None: continue
 				else:
 					v = self.get(sec, optname, vars=pOptions)
 				values[optname] = v

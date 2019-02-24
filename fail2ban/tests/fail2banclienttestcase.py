@@ -478,6 +478,12 @@ class Fail2banClientTest(Fail2banClientServerBase):
 	def testClientStartBackgroundInside(self, tmp):
 		# use once the stock configuration (to test starting also)
 		startparams = _start_params(tmp, True)
+		# test additional options:
+		_write_file(pjoin(tmp, "config", "fail2ban.conf"), "a",
+			"[Thread]",
+			"stacksize = 32"
+			"",
+		)
 		# start:
 		self.execCmd(SUCCESS, ("-b",) + startparams, "start")
 		# wait for server (socket and ready):
@@ -485,10 +491,16 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		self.assertLogged("Server ready")
 		self.assertLogged("Exit with code 0")
 		try:
+			# check thread options were set:
+			self.pruneLog()
+			self.execCmd(SUCCESS, startparams, "get", "thread")
+			self.assertLogged("{'stacksize': 32}")
+			# several:
+			self.pruneLog()
 			self.execCmd(SUCCESS, startparams, "echo", "TEST-ECHO")
 			self.execCmd(FAILED, startparams, "~~unknown~cmd~failed~~")
-			self.pruneLog()
 			# start again (should fail):
+			self.pruneLog()
 			self.execCmd(FAILED, ("-b",) + startparams, "start")
 			self.assertLogged("Server already running")
 		finally:
