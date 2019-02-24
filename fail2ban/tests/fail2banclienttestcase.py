@@ -140,7 +140,8 @@ def _read_file(fn):
 
 
 def _start_params(tmp, use_stock=False, use_stock_cfg=None, 
-	logtarget="/dev/null", db=":memory:", jails=("",), create_before_start=None
+	logtarget="/dev/null", db=":memory:", f2b_local=(), jails=("",), 
+	create_before_start=None,
 ):
 	cfg = pjoin(tmp, "config")
 	if db == 'auto':
@@ -190,6 +191,9 @@ def _start_params(tmp, use_stock=False, use_stock_cfg=None,
 		if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
 			_out_file(pjoin(cfg, "fail2ban.conf"))
 			_out_file(pjoin(cfg, "jail.conf"))
+	if f2b_local:
+		_write_file(pjoin(cfg, "fail2ban.local"), "w", *f2b_local)
+
 	# link stock actions and filters:
 	if use_stock_cfg and STOCK:
 		for n in use_stock_cfg:
@@ -431,8 +435,16 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 			phase['end'] = True
 			logSys.debug("end of test worker")
 
-	@with_foreground_server_thread()
+	@with_foreground_server_thread(startextra={'f2b_local':(
+			"[Thread]",
+			"stacksize = 32"
+			"",
+		)})
 	def testStartForeground(self, tmp, startparams):
+		# check thread options were set:
+		self.pruneLog()
+		self.execCmd(SUCCESS, startparams, "get", "thread")
+		self.assertLogged("{'stacksize': 32}")
 		# several commands to server:
 		self.execCmd(SUCCESS, startparams, "ping")
 		self.execCmd(FAILED, startparams, "~~unknown~cmd~failed~~")
@@ -478,12 +490,6 @@ class Fail2banClientTest(Fail2banClientServerBase):
 	def testClientStartBackgroundInside(self, tmp):
 		# use once the stock configuration (to test starting also)
 		startparams = _start_params(tmp, True)
-		# test additional options:
-		_write_file(pjoin(tmp, "config", "fail2ban.local"), "w",
-			"[Thread]",
-			"stacksize = 32"
-			"",
-		)
 		# start:
 		self.execCmd(SUCCESS, ("-b",) + startparams, "start")
 		# wait for server (socket and ready):
@@ -491,16 +497,10 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		self.assertLogged("Server ready")
 		self.assertLogged("Exit with code 0")
 		try:
-			# check thread options were set:
-			self.pruneLog()
-			self.execCmd(SUCCESS, startparams, "get", "thread")
-			self.assertLogged("{'stacksize': 32}")
-			# several:
-			self.pruneLog()
 			self.execCmd(SUCCESS, startparams, "echo", "TEST-ECHO")
 			self.execCmd(FAILED, startparams, "~~unknown~cmd~failed~~")
-			# start again (should fail):
 			self.pruneLog()
+			# start again (should fail):
 			self.execCmd(FAILED, ("-b",) + startparams, "start")
 			self.assertLogged("Server already running")
 		finally:
