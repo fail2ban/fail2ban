@@ -24,7 +24,7 @@ __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
 __license__ = "GPL"
 
-from .configreader import ConfigReader, NoSectionError
+from .configreader import ConfigReader
 from ..helpers import getLogger, str2LogLevel
 
 # Gets the instance of the logger.
@@ -63,7 +63,7 @@ class Fail2banReader(ConfigReader):
 		# thread options:
 		opts = [["int", "stacksize", ],
 		]
-		if ConfigReader.has_section(self, "Thread"):
+		if self.has_section("Thread"):
 			thopt = ConfigReader.getOptions(self, "Thread", opts)
 			if thopt:
 				self.__opts['thread'] = thopt
