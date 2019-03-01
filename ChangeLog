@@ -52,6 +52,9 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
 * `filter.d/traefik-auth.conf`: used to ban hosts, that were failed through traefik
 
 ### Enhancements
+* fail2ban.conf: introduced new section `[Thread]` and option `stacksize` to configure default size
+  of the stack for threads running in fail2ban (gh-2356), it could be set in `fail2ban.local` to
+  avoid runtime error "can't start new thread" (see gh-969);
 * jail-reader extended (amend to gh-1622): actions support multi-line options now (interpolations
   containing new-line);
 * fail2ban-client: extended to ban/unban multiple tickets (see gh-2351, gh-2349);

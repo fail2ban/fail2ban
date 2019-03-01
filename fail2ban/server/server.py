@@ -709,6 +709,16 @@ class Server:
 				logSys.info("flush performed on %s" % self.__logTarget)
 			return "flushed"
 			
+	def setThreadOptions(self, value):
+		for o, v in value.iteritems():
+			if o == 'stacksize':
+				threading.stack_size(int(v)*1024)
+			else: # pragma: no cover
+				raise KeyError("unknown option %r" % o)
+
+	def getThreadOptions(self):
+		return {'stacksize': threading.stack_size() // 1024}
+
 	def setDatabase(self, filename):
 		# if not changed - nothing to do
 		if self.__db and self.__db.filename == filename:

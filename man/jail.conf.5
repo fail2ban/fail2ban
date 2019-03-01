@@ -127,9 +127,7 @@ Comments: use '#' for comment lines and '; ' (space is important) for inline com
 
 .SH "FAIL2BAN CONFIGURATION FILE(S) (\fIfail2ban.conf\fB)"
 
-These files have one section, [Definition].
-
-The items that can be set are:
+The items that can be set in section [Definition] are:
 .TP
 .B loglevel
 verbosity level of log output: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG, TRACEDEBUG, HEAVYDEBUG or corresponding numeric value (50-5). Default: ERROR (equal 40)
@@ -162,6 +160,15 @@ This defines where the persistent data for fail2ban is stored. This persistent d
 Database purge age in seconds. Default: 86400 (24hours)
 .br
 This sets the age at which bans should be purged from the database.
+
+.RE
+The config parameters of section [Thread] are:
+
+.TP
+.B stacksize
+Stack size of each thread in fail2ban. Default: 0 (platform or configured default)
+.br
+This specifies the stack size (in KiB) to be used for subsequently created threads, and must be 0 or a positive integer value of at least 32.
 
 .SH "JAIL CONFIGURATION FILE(S) (\fIjail.conf\fB)"
 The following options are applicable to any jail. They appear in a section specifying the jail name or in the \fI[DEFAULT]\fR section which defines default values to be used if not specified in the individual section.

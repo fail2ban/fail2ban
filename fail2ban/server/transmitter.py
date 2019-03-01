@@ -170,6 +170,10 @@ class Transmitter:
 				return self.__server.getSyslogSocket()
 			else:
 				raise Exception("Failed to change syslog socket")
+		#Thread
+		elif name == "thread":
+			value = command[1]
+			return self.__server.setThreadOptions(value)
 		#Database
 		elif name == "dbfile":
 			self.__server.setDatabase(command[1])
@@ -384,6 +388,9 @@ class Transmitter:
 			return self.__server.getLogTarget()
 		elif name == "syslogsocket":
 			return self.__server.getSyslogSocket()
+		#Thread
+		elif name == "thread":
+			return self.__server.getThreadOptions()
 		#Database
 		elif name == "dbfile":
 			db = self.__server.getDatabase()

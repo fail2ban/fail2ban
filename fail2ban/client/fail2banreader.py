@@ -60,12 +60,19 @@ class Fail2banReader(ConfigReader):
 			self.__opts.update(updateMainOpt)
 		# check given log-level:
 		str2LogLevel(self.__opts.get('loglevel', 0))
-	
+		# thread options:
+		opts = [["int", "stacksize", ],
+		]
+		if self.has_section("Thread"):
+			thopt = ConfigReader.getOptions(self, "Thread", opts)
+			if thopt:
+				self.__opts['thread'] = thopt
+
 	def convert(self):
 		# Ensure logtarget/level set first so any db errors are captured
 		# Also dbfile should be set before all other database options.
 		# So adding order indices into items, to be stripped after sorting, upon return
-		order = {"syslogsocket":0, "loglevel":1, "logtarget":2,
+		order = {"thread":0, "syslogsocket":11, "loglevel":12, "logtarget":13,
 			"dbfile":50, "dbpurgeage":51}
 		stream = list()
 		for opt in self.__opts:
