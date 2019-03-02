@@ -1,2 +1,2 @@
-# failJSON: { "time": "2019/03/01T22:53:49", "match": true , "host": "1.2.3.4" }
+# failJSON: { "time": "2019-03-01T22:53:49", "match": true , "host": "1.2.3.4" }
 2019/03/01 22:53:49 [error] 3202#0: *136 FastCGI sent in stderr: "Primary script unknown" while reading response header from upstream, client: 1.2.3.4, server: example.com, request: "GET /robots1.php HTTP/1.1", upstream: "fastcgi://127.0.0.1:9000", host: "example.com", referrer: "https://example.com/robots1.php"
