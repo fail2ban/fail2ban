@@ -1866,12 +1866,19 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 
 	def _executeMailCmd(self, realCmd, timeout=60):
 		# replace pipe to mail with pipe to cat:
-		realCmd = re.sub(r'\)\s*\|\s*mail\b([^\n]*)',
-			r') | cat; printf "\\n... | "; echo mail \1', realCmd)
+		cmd = realCmd
+		if isinstance(realCmd, list):
+			cmd = realCmd[0]
+		cmd = re.sub(r'\)\s*\|\s*mail\b([^\n]*)',
+			r') | cat; printf "\\n... | "; echo mail \1', cmd)
 		# replace abuse retrieving (possible no-network), just replace first occurrence of 'dig...':
-		realCmd = re.sub(r'\bADDRESSES=\$\(dig\s[^\n]+',
+		cmd = re.sub(r'\bADDRESSES=\$\(dig\s[^\n]+',
 			lambda m: 'ADDRESSES="abuse-1@abuse-test-server, abuse-2@abuse-test-server"',
-				realCmd, 1)
+				cmd, 1)
+		if isinstance(realCmd, list):
+			realCmd[0] = cmd
+		else:
+			realCmd = cmd
 		# execute action:
 		return _actions.CommandAction.executeCmd(realCmd, timeout=timeout)
 
@@ -1926,6 +1933,31 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'mail -s Hostname: test-host, family: inet6 - Abuse from 2001:db8::1 abuse-1@abuse-test-server abuse-2@abuse-test-server',
 				),
 			}),
+			# xarf-login-attack --
+			('j-xarf-abuse', 
+				'xarf-login-attack['
+				  'name=%(__name__)s, mailcmd="mail", mailargs="",' +
+				  # test reverse ip:
+				  'debug=1' +
+				  ']',
+			{
+				'ip4-ban': (
+					# test reverse ip:
+					'try to resolve 10.124.142.87.abuse-contacts.abusix.org',
+					'We have detected abuse from the IP address 87.142.124.10',
+					'Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10',
+					'Dec 31 11:55:01 [sshd] error: PAM: Authentication failure for test from 87.142.124.10',
+					# both abuse mails should be separated with space:
+					'mail abuse-1@abuse-test-server abuse-2@abuse-test-server',
+				),
+				'ip6-ban': (
+					# test reverse ip:
+					'try to resolve 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.abuse-contacts.abusix.org',
+					'We have detected abuse from the IP address 2001:db8::1',
+					# both abuse mails should be separated with space:
+					'mail abuse-1@abuse-test-server abuse-2@abuse-test-server',
+				),
+			}),
 		)
 		server = TestServer()
 		transm = server._Server__transm
@@ -1963,6 +1995,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					self.pruneLog('# === %s ===' % test)
 					ticket = BanTicket(ip)
 					ticket.setAttempt(100)
+					ticket.setMatches([
+						'Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10',
+						'Dec 31 11:55:01 [sshd] error: PAM: Authentication failure for test from 87.142.124.10'
+					])
 					ticket = _actions.Actions.ActionInfo(ticket, dmyjail)
 					action.ban(ticket)
 					self.assertLogged(*tests[test], all=True)
