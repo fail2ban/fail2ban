@@ -244,8 +244,8 @@ class Utils():
 				return False if not output else (False, stdout, stderr, retcode)
 
 		std_level = logging.DEBUG if retcode in success_codes else logging.ERROR
-		if std_level > logSys.getEffectiveLevel():
-			if logCmd: logCmd(std_level-1); logCmd = None
+		if std_level >= logSys.getEffectiveLevel():
+			if logCmd: logCmd(std_level-1 if std_level == logging.DEBUG else logging.ERROR); logCmd = None
 		# if we need output (to return or to log it): 
 		if output or std_level >= logSys.getEffectiveLevel():
 
