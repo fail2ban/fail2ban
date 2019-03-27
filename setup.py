@@ -53,6 +53,7 @@ from os.path import isfile, join, isdir, realpath
 import re
 import sys
 import warnings
+import pkg_resources
 from glob import glob
 
 from fail2ban.setup import updatePyExec
@@ -199,11 +200,12 @@ else:
 	setup_extra = {}
 
 data_files_extra = []
-if os.path.exists('/var/run'):
+if os.path.exists(pkg_resources.resource_filename('fail2ban', '/var/run')):
 	# if we are on the system with /var/run -- we are to use it for having fail2ban/
 	# directory there for socket file etc.
-	# realpath is used to possibly resolve /var/run -> /run symlink
-	data_files_extra += [(realpath('/var/run/fail2ban'), '')]
+	data_files_extra.append(
+		('/var/run/fail2ban', '')
+	)
 
 # Installing documentation files only under Linux or other GNU/ systems
 # (e.g. GNU/kFreeBSD), since others might have protective mechanisms forbidding
