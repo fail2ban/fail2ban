@@ -325,6 +325,8 @@ class Fail2banRegex(object):
 				## foreign file - readexplicit this file and includes if possible:
 				output( "Use %11s file : %s" % (regex, fltName) )
 				basedir = None
+				if not os.path.isabs(fltName): # avoid join with "filter.d" inside FilterReader
+					fltName = os.path.abspath(fltName)
 			if fltOpt:
 				output( "Use   filter options : %r" % fltOpt )
 			reader = FilterReader(fltName, 'fail2ban-regex-jail', fltOpt, share_config=self.share_config, basedir=basedir)
