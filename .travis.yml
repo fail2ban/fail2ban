@@ -41,6 +41,8 @@ install:
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then travis_retry sudo apt-get install -qq python-gamin && cp /usr/share/pyshared/gamin.py /usr/lib/pyshared/python2.7/_gamin.so $VIRTUAL_ENV/lib/python2.7/site-packages/; fi
   #   pyinotify
   - travis_retry pip install pyinotify
+  # Install helper tools
+  - sudo apt-get install shellcheck
 before_script:
   # Manually execute 2to3 for now
   - if [[ "$F2B_PY" = 3 ]]; then ./fail2ban-2to3; fi
@@ -53,6 +55,8 @@ script:
   - sudo $VENV_BIN/pip install .
   # Doc files should get installed on Travis under Linux
   - test -e /usr/share/doc/fail2ban/FILTERS
+  # Test initd script
+  - shellcheck -s bash -e SC1090,SC1091 files/debian-initd
 after_success:
   - if [[ "$F2B_COV" = 1 ]]; then coveralls; fi
   - codecov
