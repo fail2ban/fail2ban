@@ -34,7 +34,10 @@ import unittest
 from ..server.failregex import Regex
 from ..server.filter import Filter
 from ..client.filterreader import FilterReader
-from .utils import setUpMyTime, tearDownMyTime, CONFIG_DIR
+from .utils import setUpMyTime, tearDownMyTime, TEST_NOW, CONFIG_DIR
+
+# test-time in UTC as string in isoformat (2005-08-14T10:00:00):
+TEST_NOW_STR = datetime.datetime.utcfromtimestamp(TEST_NOW).isoformat()
 
 TEST_CONFIG_DIR = os.path.join(os.path.dirname(__file__), "config")
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
@@ -173,7 +176,7 @@ def testSampleRegexsFactory(name, basedir):
 								fltName = name + fltName
 								# read it:
 								flt = self._readFilter(fltName, name, basedir, opts=opts)
-								self._filterTests.append((fltName, flt))
+								self._filterTests.append((fltName, flt, opts))
 							continue
 						# addFILE - filename to "include" test-files should be additionally parsed:
 						if jsonREMatch.group(1) == 'addFILE':
@@ -194,17 +197,25 @@ def testSampleRegexsFactory(name, basedir):
 				if not self._filterTests:
 					fltName = name
 					flt = self._readFilter(fltName, name, basedir, opts=None)
-					self._filterTests = [(fltName, flt)]
+					self._filterTests = [(fltName, flt, {})]
 
 				# process line using several filter options (if specified in the test-file):
-				for fltName, flt in self._filterTests:
+				for fltName, flt, opts in self._filterTests:
 					flt, regexsUsedIdx = flt
 					regexList = flt.getFailRegex()
 
 					failregex = -1
 					try:
 						fail = {}
-						ret = flt.processLine(line)
+						# for logtype "journal" we don't need parse timestamp (simulate real systemd-backend handling):
+						checktime = True
+						if opts.get('logtype') != 'journal':
+							ret = flt.processLine(line)
+						else: # simulate journal processing, time is known from journal (formatJournalEntry):
+							checktime = False
+							if opts.get('test.prefix-line'): # journal backends creates common prefix-line:
+								line = opts.get('test.prefix-line') + line
+							ret = flt.processLine(('', TEST_NOW_STR, line.rstrip('\r\n')), TEST_NOW)
 						if not ret:
 							# Bypass if filter constraint specified:
 							if faildata.get('filter') and name != faildata.get('filter'):
@@ -245,20 +256,18 @@ def testSampleRegexsFactory(name, basedir):
 								self.assertEqual(fv, v)
 
 						t = faildata.get("time", None)
-						try:
-							jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S")
-						except ValueError:
-							jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f")
-
-						jsonTime = time.mktime(jsonTimeLocal.timetuple())
-						
-						jsonTime += jsonTimeLocal.microsecond / 1000000
-
-						self.assertEqual(fail2banTime, jsonTime,
-							"UTC Time  mismatch %s (%s) != %s (%s)  (diff %.3f seconds)" % 
-							(fail2banTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(fail2banTime)),
-							jsonTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(jsonTime)),
-							fail2banTime - jsonTime) )
+						if checktime or t is not None:
+							try:
+								jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S")
+							except ValueError:
+								jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f")
+							jsonTime = time.mktime(jsonTimeLocal.timetuple())
+							jsonTime += jsonTimeLocal.microsecond / 1000000
+							self.assertEqual(fail2banTime, jsonTime,
+								"UTC Time  mismatch %s (%s) != %s (%s)  (diff %.3f seconds)" % 
+								(fail2banTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(fail2banTime)),
+								jsonTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(jsonTime)),
+								fail2banTime - jsonTime) )
 
 						regexsUsedIdx.add(failregex)
 						regexsUsedRe.add(regexList[failregex])
