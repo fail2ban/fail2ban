@@ -43,7 +43,7 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
 * `filter.d/mysqld-auth.conf`: 
   - MYSQL 8.0.13 compatibility (log-error-verbosity = 3), log-format contains few additional words
     enclosed in brackets after "[Note]" (gh-2314)
-* `filter.d/sshd.conf`:
+* `filter.d/sendmail-reject.conf`:
   - `mode=extra` now captures port IDs of `TLSMTA` and `MSA` (defaults for ports 465 and 587 on some distros)
 
 * `files/fail2ban.service.in`: fixed systemd-unit template - missing nftables dependency (gh-2313)
