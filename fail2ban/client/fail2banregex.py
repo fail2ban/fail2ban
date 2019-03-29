@@ -261,6 +261,7 @@ class Fail2banRegex(object):
 		self._filter.checkFindTime = False
 		self._filter.checkAllRegex = True
 		self._opts = opts
+		self._backend = 'auto'
 
 	def decode_line(self, line):
 		return FileContainer.decode_line('<LOG>', self._encoding, line)
@@ -327,6 +328,8 @@ class Fail2banRegex(object):
 				basedir = None
 				if not os.path.isabs(fltName): # avoid join with "filter.d" inside FilterReader
 					fltName = os.path.abspath(fltName)
+			if not fltOpt.get('logtype'):
+				fltOpt['logtype'] = ['file','journal'][int(self._backend.startswith("systemd"))]
 			if fltOpt:
 				output( "Use   filter options : %r" % fltOpt )
 			reader = FilterReader(fltName, 'fail2ban-regex-jail', fltOpt, share_config=self.share_config, basedir=basedir)
@@ -596,6 +599,9 @@ class Fail2banRegex(object):
 	def start(self, args):
 
 		cmd_log, cmd_regex = args[:2]
+
+		if cmd_log.startswith("systemd-journal"): # pragma: no cover
+			self._backend = 'systemd'
 
 		try:
 			if not self.readRegex(cmd_regex, 'fail'): # pragma: no cover
