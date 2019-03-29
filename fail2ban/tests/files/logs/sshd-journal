@@ -1,0 +1,346 @@
+# Systemd-Journal filter coverage:
+#   disable this test-file for obsolete multi-line filter (zzz-sshd-obsolete..., it would work, but slow)
+# fileOptions: {"logtype": "journal", "test.condition":"name=='sshd'"}
+
+# filterOptions: [{}, {"mode": "aggressive"}]
+
+#1
+# failJSON: { "match": true , "host": "192.030.0.6" }
+srv sshd[13709]: error: PAM: Authentication failure for myhlj1374 from 192.030.0.6
+# failJSON: { "match": true , "host": "example.com" }
+srv sshd[28732]: error: PAM: Authentication failure for stefanor from example.com
+# failJSON: { "match": true , "host": "2606:2800:220:1:248:1893:25c8:1946" }
+srv sshd[28732]: error: PAM: Authentication failure for test-ipv6 from 2606:2800:220:1:248:1893:25c8:1946
+
+#2
+# failJSON: { "match": true , "host": "194.117.26.69" }
+srv sshd[31602]: Failed password for invalid user ROOT from 194.117.26.69 port 50273 ssh2
+# failJSON: { "match": true , "host": "aaaa:bbbb:cccc:1234::1:1" }
+srv sshd[31603]: Failed password for invalid user ROOT from aaaa:bbbb:cccc:1234::1:1 port 50273 ssh2
+# failJSON: { "match": true , "host": "194.117.26.70" }
+srv sshd[31602]: Failed password for invalid user ROOT from 194.117.26.70 port 12345
+# failJSON: { "match": true , "host": "aaaa:bbbb:cccc:1234::1:1" }
+srv sshd[31603]: Failed password for invalid user ROOT from aaaa:bbbb:cccc:1234::1:1 port 12345
+# failJSON: { "match": true , "host": "aaaa:bbbb:cccc:1234::1:1" }
+srv sshd[31603]: Failed password for invalid user ROOT from aaaa:bbbb:cccc:1234::1:1
+
+#3
+# failJSON: { "match": true , "host": "1.2.3.4" }
+srv sshd[1643]: ROOT LOGIN REFUSED FROM 1.2.3.4
+# failJSON: { "match": true , "host": "1.2.3.4" }
+srv sshd[1643]: ROOT LOGIN REFUSED FROM 1.2.3.4 port 12345 [preauth]
+# failJSON: { "match": true , "host": "1.2.3.4" }
+srv sshd[1643]: ROOT LOGIN REFUSED FROM ::ffff:1.2.3.4
+
+#4
+# failJSON: { "match": true , "host": "192.0.2.1", "desc": "Invalid user" }
+srv sshd[22708]: Invalid user ftp from 192.0.2.1
+# failJSON: { "match": true , "host": "192.0.2.2", "desc": "Invalid user with port" }
+srv sshd[22708]: Invalid user ftp from 192.0.2.2 port 37220
+
+#5 new filter introduced after looking at 44087D8C.9090407@bluewin.ch
+# failJSON: { "match": true , "host": "211.188.220.49" }
+srv sshd[31605]: User root from 211.188.220.49 not allowed because not listed in AllowUsers
+# failJSON: { "match": true , "host": "example.com" }
+srv sshd[31607]: User root from example.com not allowed because not listed in AllowUsers
+
+#6 ew filter introduced thanks to report Guido Bozzetto <reportbug@G-B.it>
+# failJSON: { "match": true , "host": "218.249.210.161" }
+srv sshd[5174]: refused connect from _U2FsdGVkX19P3BCJmFBHhjLza8BcMH06WCUVwttMHpE=_@::ffff:218.249.210.161 (::ffff:218.249.210.161)
+
+#7 added exclamation mark to BREAK-IN
+#  Now should be a negative since we decided not to catch those
+# failJSON: { "match": false }
+srv sshd[7592]: Address 1.2.3.4 maps to 1234.bbbbbb.com, but this does not map back to the address - POSSIBLE BREAK-IN ATTEMPT
+# failJSON: { "match": false }
+srv sshd[7592]: Address 1.2.3.4 maps to 1234.bbbbbb.com, but this does not map back to the address - POSSIBLE BREAK-IN ATTEMPT!
+
+#8 DenyUsers https://github.com/fail2ban/fail2ban/issues/47
+# failJSON: { "match": true , "host": "46.45.128.3" }
+srv sshd[5154]: User root from 46.45.128.3 not allowed because listed in DenyUsers
+
+#9 systemd with kernel entry:
+# failJSON: { "match": true , "host": "205.186.180.55" }
+srv sshd[20878]: kernel:[  970.699396]: Failed keyboard-interactive for <invalid username> from 205.186.180.55 port 42742 ssh2
+# failJSON: { "match": true , "ip4": "192.0.2.10" }
+srv sshd[20879]: kernel: [  970.699397] Failed password for user admin from 192.0.2.10 port 42745 ssh2
+# failJSON: { "match": true , "ip6": "2001:db8::1" }
+srv sshd[20880]: kernel:[12970.699398] Failed password for user admin from 2001:db8::1 port 42746 ssh2
+
+#10 OSX syslog error
+# failJSON: { "match": true , "host": "example.com" }
+srv sshd[62312]: error: PAM: authentication error for james from example.com via 192.168.1.201
+# failJSON: { "match": true , "host": "205.186.180.35" }
+srv sshd[63814]: Failed keyboard-interactive for <invalid username> from 205.186.180.35 port 42742 ssh2
+# failJSON: { "match": true , "host": "205.186.180.22" }
+srv sshd[63814]: Failed keyboard-interactive for james from 205.186.180.22 port 54520 ssh2
+# failJSON: { "match": true , "host": "205.186.180.42" }
+srv sshd[63814]: Failed keyboard-interactive for james from 205.186.180.42 port 54520 ssh2
+# failJSON: { "match": true , "host": "205.186.180.44" }
+srv sshd[63814]: Failed keyboard-interactive for <invalid username> from 205.186.180.44 port 42742 ssh2
+# failJSON: { "match": true , "host": "205.186.180.77" }
+srv sshd[2554]: Failed keyboard-interactive/pam for invalid user jamedds from 205.186.180.77 port 33723 ssh2
+# failJSON: { "match": true , "host": "205.186.180.88" }
+srv sshd[47831]: error: PAM: authentication failure for james from 205.186.180.88 via 192.168.1.201
+# failJSON: { "match": true , "host": "205.186.180.99" }
+srv sshd[47831]: error: PAM: Authentication failure for james from 205.186.180.99 via 192.168.1.201
+# failJSON: { "match": true , "host": "205.186.180.100" }
+srv sshd[47831]: error: PAM: Authentication error for james from 205.186.180.100 via 192.168.1.201
+# failJSON: { "match": true , "host": "205.186.180.101" }
+srv sshd[47831]: error: PAM: authentication error for james from 205.186.180.101 via 192.168.1.201
+# failJSON: { "match": true , "host": "205.186.180.102" }
+srv sshd[47831]: error: PAM: authentication error for james from 205.186.180.102
+# failJSON: { "match": true , "host": "205.186.180.103" }
+srv sshd[47831]: error: PAM: authentication error for james from 205.186.180.103
+
+# failJSON: { "match": false }
+srv sshd[3719]: User root not allowed because account is locked
+# failJSON: { "match": false }
+srv sshd[3719]: input_userauth_request: invalid user root [preauth]
+# failJSON: { "match": true , "host": "198.51.100.34" }
+srv sshd[3719]: error: Received disconnect from 198.51.100.34: 11: Bye Bye [preauth]
+# failJSON: { "match": true , "host": "10.215.4.227" }
+srv sshd[1328]: error: PAM: User not known to the underlying authentication module for illegal user kernelitshell from 10.215.4.227 
+# failJSON: { "match": true , "host": "example.com" }
+srv sshd[9739]: User allena from example.com not allowed because not in any group
+# failJSON: { "match": true , "host": "192.51.100.54" }
+srv sshd[5106]: User root from 192.51.100.54 not allowed because a group is listed in DenyGroups
+# failJSON: { "match": true , "host": "10.0.0.40" }
+srv sshd[1966]: User root from 10.0.0.40 not allowed because none of user's groups are listed in AllowGroups
+
+# failJSON: { "match": false }
+srv sshd[2364]: User root not allowed because account is locked
+# failJSON: { "match": false }
+srv sshd[2364]: input_userauth_request: invalid user root [preauth]
+# failJSON: { "match": true , "host": "198.51.100.76" }
+srv sshd[2364]: Received disconnect from 198.51.100.76 port 58846:11: Bye Bye [preauth]
+
+# failJSON: { "match": true , "host": "127.0.0.1" }
+srv sshd[16699]: Failed password for dan from 127.0.0.1 port 45416 ssh1
+
+# failJSON: { "match": false, "desc": "no failure, just cache mlfid (conn-id)" }
+srv sshd[16700]: Connection from 192.0.2.5
+# failJSON: { "match": false, "desc": "no failure, just covering mlfid (conn-id) forget" }
+srv sshd[16700]: Connection closed by 192.0.2.5
+
+# failJSON: { "match": true , "host": "127.0.0.1" }
+srv sshd[12946]: Failed hostbased for dan from 127.0.0.1 port 45785 ssh2: RSA 8c:e3:aa:0f:64:51:02:f7:14:79:89:3f:65:84:7c:30, client user "dan", client host "localhost.localdomain"
+
+# failJSON: { "match": true , "host": "127.0.0.1" }
+srv sshd[12946]: Failed hostbased for dan from 127.0.0.1 port 45785 ssh2: DSA 01:c0:79:41:91:31:9a:7d:95:23:91:ac:b1:6d:59:81, client user "dan", client host "localhost.localdomain"
+
+# failJSON: { "match": true , "host": "127.0.0.1", "desc": "Injecting into rhost for the format of OpenSSH >=6.3" }
+srv sshd[12946]: Failed password for user from 127.0.0.1 port 20000 ssh1: ruser from 1.2.3.4
+
+# failJSON: { "match": true , "host": "127.0.0.1", "desc": "Injecting while exhausting initially present {0,100} match length limits set for ruser etc" }
+srv sshd[12946]: Failed password for user from 127.0.0.1 port 20000 ssh1: ruser XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX from 1.2.3.4
+# failJSON: { "match": true , "host": "aaaa:bbbb:cccc:1234::1:1", "desc": "Injecting while exhausting initially present {0,100} match length limits set for ruser etc" }
+srv sshd[12946]: Failed password for user from aaaa:bbbb:cccc:1234::1:1 port 20000 ssh1: ruser XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX from 1.2.3.4
+
+# failJSON: { "match": true , "host": "127.0.0.1", "desc": "Injecting on username ssh 'from 10.10.1.1'@localhost" }
+srv sshd[2737]: Failed password for invalid user from 10.10.1.1 from 127.0.0.1 port 58946 ssh2
+# failJSON: { "match": true , "host": "127.0.0.1", "desc": "More complex injecting on username ssh 'test from 10.10.1.2 port 55555 ssh2'@localhost" }
+srv sshd[2737]: Failed password for invalid user test from 10.10.1.2 port 55555 ssh2 from 127.0.0.1 port 58946 ssh2
+# failJSON: { "match": true , "host": "127.0.0.1", "desc": "More complex injecting on auth-info ssh test@localhost, auth-info: ' from 10.10.1.2 port 55555 ssh2'" }
+srv sshd[2737]: Failed password for invalid user test from 127.0.0.1 port 58946 ssh2: from 10.10.1.2 port 55555 ssh2
+
+# Failure on connect of invalid user with public keys:
+# failJSON: { "match": true , "host": "127.0.0.1", "desc": "Failed publickey for ..." }
+srv sshd[4669]: Failed publickey for invalid user graysky from 127.0.0.1 port 37954 ssh2: RSA SHA256:v3dpapGleDaUKf$4V1vKyR9ZyUgjaJAmoCTcb2PLljI
+# failJSON: { "match": true , "host": "aaaa:bbbb:cccc:1234::1:1", "desc": "Failed publickey for ..." }
+srv sshd[4670]: Failed publickey for invalid user graysky from aaaa:bbbb:cccc:1234::1:1 port 37955 ssh2: RSA SHA256:v3dpapGleDaUKf$4V1vKyR9ZyUgjaJAmoCTcb2PLljI
+
+# Ignore tries of legitimate users with multiple public keys (gh-1263):
+# failJSON: { "match": false }
+srv sshd[32307]: Failed publickey for git from 192.0.2.1 port 57904 ssh2: ECDSA 0e:ff:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
+# failJSON: { "match": false }
+srv sshd[32307]: Failed publickey for git from 192.0.2.1 port 57904 ssh2: RSA 04:bc:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
+# failJSON: { "match": false }
+srv sshd[32307]: Postponed publickey for git from 192.0.2.1 port 57904 ssh2 [preauth]
+# failJSON: { "match": false }
+srv sshd[32307]: Accepted publickey for git from 192.0.2.1 port 57904 ssh2: DSA 36:48:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
+# failJSON: { "match": false, "desc": "Should be forgotten by success/accepted public key" }
+srv sshd[32307]: Connection closed by 192.0.2.1
+
+# Failure on connect with valid user-name but wrong public keys (retarded to disconnect/too many errors, because of gh-1263):
+# failJSON: { "match": false }
+srv sshd[32310]: Failed publickey for git from 192.0.2.111 port 57910 ssh2: ECDSA 1e:fe:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
+# failJSON: { "match": false }
+srv sshd[32310]: Failed publickey for git from 192.0.2.111 port 57910 ssh2: RSA 14:ba:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
+# failJSON: { "match": false }
+srv sshd[32310]: Disconnecting: Too many authentication failures for git [preauth]
+# failJSON: { "match": true , "host": "192.0.2.111", "desc": "Should catch failure - no success/no accepted public key" }
+srv sshd[32310]: Connection closed by 192.0.2.111 [preauth]
+
+# failJSON: { "match": false }
+srv sshd[8148]: Disconnecting: Too many authentication failures for root [preauth]
+# failJSON: { "match": true , "host": "61.0.0.1", "desc": "Multiline match for preauth failures" }
+srv sshd[8148]: Connection closed by 61.0.0.1 [preauth]
+
+# failJSON: { "match": false }
+srv sshd[9148]: Disconnecting: Too many authentication failures for root [preauth]
+# failJSON: { "match": false , "desc": "Pids don't match" }
+srv sshd[7148]: Connection closed by 61.0.0.1
+
+# failJSON: { "match": true , "host": "89.24.13.192", "desc": "from gh-289" }
+srv sshd[4931]: Received disconnect from 89.24.13.192: 3: com.jcraft.jsch.JSchException: Auth fail
+# failJSON: { "match": true , "host": "10.0.0.1", "desc": "space after port is optional (gh-1652)" }
+srv sshd[11808]: error: Received disconnect from 10.0.0.1 port 7736:3: com.jcraft.jsch.JSchException: Auth fail [preauth]
+
+# failJSON: { "match": true , "host": "94.249.236.6", "desc": "newer format per commit 36919d9f" }
+srv sshd[24077]: error: Received disconnect from 94.249.236.6: 3: com.jcraft.jsch.JSchException: Auth fail [preauth]
+
+# failJSON: { "match": true , "host": "94.249.236.6", "desc": "space in disconnect description per commit 36919d9f" }
+srv sshd[24077]: error: Received disconnect from 94.249.236.6: 3: Ha ha, suckers!: Auth fail [preauth]
+
+# failJSON: { "match": false }
+srv sshd[26713]: Connection from 115.249.163.77 port 51353
+# failJSON: { "match": true , "host": "115.249.163.77", "desc": "from gh-457" }
+srv sshd[26713]: Disconnecting: Too many authentication failures for root [preauth]
+
+# failJSON: { "match": false }
+srv sshd[26713]: Connection from 115.249.163.77 port 51353 on 127.0.0.1 port 22
+# failJSON: { "match": true , "host": "115.249.163.77", "desc": "Multiline match with interface address" }
+srv sshd[26713]: Disconnecting: Too many authentication failures [preauth]
+
+# failJSON: { "match": true , "host": "61.0.0.1", "desc": "New logline format as openssh 6.8 to replace prev multiline version" }
+srv sshd[21810]: error: maximum authentication attempts exceeded for root from 61.0.0.1 port 49940 ssh2 [preauth]
+
+# failJSON: { "match": false }
+srv sshd[29116]: User root not allowed because account is locked
+# failJSON: { "match": false }
+srv sshd[29116]: input_userauth_request: invalid user root [preauth]
+# failJSON: { "match": true , "host": "1.2.3.4", "desc": "No Bye-Bye" }
+srv sshd[29116]: Received disconnect from 1.2.3.4: 11: Normal Shutdown, Thank you for playing [preauth]
+
+# Match sshd auth errors on OpenSUSE systems (gh-1024)
+# failJSON: { "match": false, "desc": "No failure until closed or another fail (e. g. F-MLFFORGET by success/accepted password can avoid failure, see gh-2070)" }
+srv sshd[2716]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.0.2.112  user=root
+# failJSON: { "match": true , "host": "192.0.2.112", "desc": "Should catch failure - no success/no accepted password" }
+srv sshd[2716]: Connection closed by 192.0.2.112 [preauth]
+
+# filterOptions: [{}]
+
+# 2 methods auth: pam_unix and pam_ldap are used in combination (gh-2070), succeeded after "failure" in first method:
+# failJSON: { "match": false , "desc": "No failure" }
+srv sshd[1556]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.0.2.113  user=rda
+# failJSON: { "match": false , "desc": "No failure" }
+srv sshd[1556]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=rda rhost=192.0.2.113 [preauth]
+# failJSON: { "match": false , "desc": "No failure" }
+srv sshd[1556]: Accepted password for rda from 192.0.2.113 port 52100 ssh2
+# failJSON: { "match": false , "desc": "No failure" }
+srv sshd[1556]: pam_unix(sshd:session): session opened for user rda by (uid=0)
+# failJSON: { "match": false , "desc": "No failure" }
+srv sshd[1556]: Connection closed by 192.0.2.113
+
+# several attempts, intruder tries to "forget" failed attempts by success login (all 3 attempts with different users):
+# failJSON: { "match": false , "desc": "Still no failure (first try)" }
+srv sshd[1558]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=root rhost=192.0.2.114
+# failJSON: { "match": true , "attempts": 2, "users": ["root", "sudoer"], "host": "192.0.2.114", "desc": "Failure: attempt 2nd user" }
+srv sshd[1558]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=sudoer rhost=192.0.2.114
+# failJSON: { "match": true , "attempts": 2, "users": ["root", "sudoer", "known"], "host": "192.0.2.114", "desc": "Failure: attempt 3rd user" }
+srv sshd[1558]: Accepted password for known from 192.0.2.114 port 52100 ssh2
+# failJSON: { "match": false , "desc": "No failure" }
+srv sshd[1558]: pam_unix(sshd:session): session opened for user known by (uid=0)
+
+# several attempts, intruder tries to "forget" failed attempts by success login (accepted for other user as in first failed attempt):
+# failJSON: { "match": false , "desc": "Still no failure (first try)" }
+srv sshd[1559]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=root rhost=192.0.2.116
+# failJSON: { "match": false , "desc": "Still no failure (second try, same user)" }
+srv sshd[1559]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=root rhost=192.0.2.116
+# failJSON: { "match": true , "attempts": 2, "users": ["root", "known"], "host": "192.0.2.116", "desc": "Failure: attempt 2nd user" }
+srv sshd[1559]: Accepted password for known from 192.0.2.116 port 52100 ssh2
+# failJSON: { "match": false , "desc": "No failure" }
+srv sshd[1559]: Connection closed by 192.0.2.116
+
+# failJSON: { "match": true , "attempts": 1, "user": "admin", "host": "192.0.2.117", "desc": "Failure: attempt invalid user" }
+srv sshd[5672]: Invalid user admin from 192.0.2.117 port 44004
+# failJSON: { "match": true , "attempts": 2, "user": "admin", "host": "192.0.2.117", "desc": "Failure: attempt to change user (disallowed)" }
+srv sshd[5672]: Disconnecting invalid user admin 192.0.2.117 port 44004: Change of username or service not allowed: (admin,ssh-connection) -> (user,ssh-connection) [preauth]
+# failJSON: { "match": false, "desc": "Disconnected during preauth phase (no failure in normal mode)" }
+srv sshd[5672]: Disconnected from authenticating user admin 192.0.2.6 port 33553 [preauth]
+
+# filterOptions: [{"mode": "ddos"}, {"mode": "aggressive"}]
+
+# http://forums.powervps.com/showthread.php?t=1667
+# failJSON: { "match": true , "host": "69.61.56.114" }
+srv sshd[5937]: Did not receive identification string from 69.61.56.114
+# failJSON: { "match": true , "host": "192.0.2.5", "desc": "refactored message (with port now, gh-2062)" }
+srv sshd[8782]: Did not receive identification string from 192.0.2.5 port 35836
+
+# gh-864(1):
+# failJSON: { "match": false }
+srv sshd[32686]: SSH: Server;Ltype: Version;Remote: 127.0.0.1-1780;Protocol: 2.0;Client: libssh2_1.4.3
+# failJSON: { "match": true , "host": "127.0.0.1", "desc": "Multiline for connection reset by peer (1)" }
+srv sshd[32686]: fatal: Read from socket failed: Connection reset by peer [preauth]
+
+# gh-864(2):
+# failJSON: { "match": false }
+srv sshd[32686]: SSH: Server;Ltype: Kex;Remote: 127.0.0.1-1780;Enc: aes128-ctr;MAC: hmac-sha1;Comp: none [preauth]
+# failJSON: { "match": true , "host": "127.0.0.1", "desc": "Multiline for connection reset by peer (2)" }
+srv sshd[32686]: fatal: Read from socket failed: Connection reset by peer [preauth]
+
+# gh-864(3):
+# failJSON: { "match": false }
+srv sshd[32686]: SSH: Server;Ltype: Authname;Remote: 127.0.0.1-1780;Name: root [preauth]
+# failJSON: { "match": true , "host": "127.0.0.1", "desc": "Multiline for connection reset by peer (3)" }
+srv sshd[32686]: fatal: Read from socket failed: Connection reset by peer [preauth]
+
+# gh-1719:
+# failJSON: { "match": true , "host": "192.0.2.39", "desc": "Singleline for connection reset by" }
+srv sshd[28972]: Connection reset by 192.0.2.39 port 14282 [preauth]
+
+# failJSON: { "match": true , "host": "192.0.2.10", "user": "root", "desc": "user name additionally, gh-2185" }
+srv sshd[1296]: Connection closed by authenticating user root 192.0.2.10 port 46038 [preauth]
+# failJSON: { "match": true , "host": "192.0.2.11", "user": "test 127.0.0.1", "desc": "check inject on username, gh-2185" }
+srv sshd[1300]: Connection closed by authenticating user test 127.0.0.1 192.0.2.11 port 46039 [preauth]
+# failJSON: { "match": true , "host": "192.0.2.11", "user": "test 127.0.0.1 port 12345", "desc": "check inject on username, gh-2185" }
+srv sshd[1300]: Connection closed by authenticating user test 127.0.0.1 port 12345 192.0.2.11 port 46039 [preauth]
+
+# filterOptions: [{"mode": "ddos"}, {"mode": "aggressive"}]
+
+# failJSON: { "match": true , "host": "192.0.2.212", "desc": "DDOS mode causes failure on close within preauth stage" }
+srv sshd[2717]: Connection closed by 192.0.2.212 [preauth]
+# failJSON: { "match": true , "host": "192.0.2.212", "desc": "DDOS mode causes failure on close within preauth stage" }
+srv sshd[2717]: Connection closed by 192.0.2.212 [preauth]
+
+# filterOptions: [{"logtype": "journal", "mode": "extra"}, {"logtype": "journal", "mode": "aggressive"}]
+
+# several other cases from gh-864:
+# failJSON: { "match": true , "host": "127.0.0.1", "desc": "No supported authentication methods" }
+srv sshd[123]: Received disconnect from 127.0.0.1: 14: No supported authentication methods available [preauth]
+# failJSON: { "match": true , "host": "127.0.0.1", "desc": "No supported authentication methods" }
+srv sshd[123]: error: Received disconnect from 127.0.0.1: 14: No supported authentication methods available [preauth]
+# failJSON: { "match": true , "host": "192.168.2.92", "desc": "Optional space after port" }
+srv sshd[3625]: error: Received disconnect from 192.168.2.92 port 1684:14: No supported authentication methods available [preauth]
+
+# gh-1545:
+# failJSON: { "match": true , "host": "192.0.2.1", "desc": "No matching cipher" }
+srv sshd[45]: Unable to negotiate with 192.0.2.1 port 55419: no matching cipher found. Their offer: aes256-cbc,rijndael-cbc@lysator.liu.se,aes192-cbc,aes128-cbc,arcfour128,arcfour,3des-cbc,none [preauth]
+
+# gh-1117:
+# failJSON: { "match": true , "host": "192.0.2.2", "desc": "No matching key exchange method" }
+srv sshd[45]: fatal: Unable to negotiate with 192.0.2.2 port 55419: no matching key exchange method found. Their offer: diffie-hellman-group1-sha1
+# failJSON: { "match": false }
+srv sshd[22440]: Connection from 192.0.2.3 port 39678 on 192.168.1.9 port 22
+# failJSON: { "match": true , "host": "192.0.2.3", "desc": "Multiline - no matching key exchange method" }
+srv sshd[22440]: fatal: Unable to negotiate a key exchange method [preauth]
+# failJSON: { "match": true , "host": "192.0.2.3", "filter": "sshd", "desc": "Second attempt within the same connect" }
+srv sshd[22440]: fatal: Unable to negotiate a key exchange method [preauth]
+
+# gh-1943 (previous OpenSSH log-format)
+# failJSON: { "match": false }
+srv sshd[22477]: Connection from 192.0.2.1 port 31309 on 192.0.2.8 port 22
+# failJSON: { "match": true , "host": "192.0.2.1", "desc": "No matching mac found" }
+srv sshd[22477]: fatal: no matching mac found: client hmac-xxx,hmac-xxx,hmac-xxx,hmac-xxx,hmac-xxx,hmac-xxx server hmac-xxx,hmac-xxx,umac-xxx,hmac-xxx,hmac-xxx,umac-xxx [preauth]
+
+# gh-1944 (newest OpenSSH log-format)
+# failJSON: { "match": true , "host": "192.0.2.2", "desc": "No matching MAC found" }
+srv sshd[14737]: Unable to negotiate with 192.0.2.2 port 50404: no matching MAC found. Their offer: hmac-sha1,hmac-sha1-96,hmac-md5,hmac-md5-96,hmac-ripemd160,hmac-ripemd160@openssh.com [preauth]
+# failJSON: { "match": true , "host": "192.0.2.4", "desc": "No matching everything ... found." }
+srv sshd[14737]: Unable to negotiate with 192.0.2.4 port 50404: no matching host key type found. Their offer: ssh-dss
+# failJSON: { "match": true , "host": "192.0.2.5", "desc": "No matching everything ... found." }
+srv sshd[14738]: fatal: Unable to negotiate with 192.0.2.5 port 55555: no matching everything new here found. Their offer: ...
+
+# failJSON: { "match": true , "host": "192.0.2.6", "desc": "Disconnected during preauth phase (in extra/aggressive mode)" }
+srv sshd[19320]: Disconnected from authenticating user root 192.0.2.6 port 33553 [preauth]

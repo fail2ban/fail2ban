@@ -136,6 +136,10 @@ class FilterSamplesRegex(unittest.TestCase):
 		self._filters[fltName] = flt
 		return flt
 
+	@staticmethod
+	def _filterOptions(opts):
+				return dict((k, v) for k, v in opts.iteritems() if not k.startswith('test.'))
+		
 def testSampleRegexsFactory(name, basedir):
 	def testFilter(self):
 
@@ -147,6 +151,7 @@ def testSampleRegexsFactory(name, basedir):
 		regexsUsedRe = set()
 
 		# process each test-file (note: array filenames can grow during processing):
+		commonOpts = {}
 		faildata = {}
 		i = 0
 		while i < len(filenames):
@@ -156,27 +161,37 @@ def testSampleRegexsFactory(name, basedir):
 
 			ignoreBlock = False
 			for line in logFile:
-				jsonREMatch = re.match("^#+ ?(failJSON|filterOptions|addFILE):(.+)$", line)
+				jsonREMatch = re.match("^#+ ?(failJSON|(?:file|filter)Options|addFILE):(.+)$", line)
 				if jsonREMatch:
 					try:
 						faildata = json.loads(jsonREMatch.group(2))
+						# fileOptions - dict in JSON to control common test-file filter options:
+						if jsonREMatch.group(1) == 'fileOptions':
+							commonOpts = faildata
+							continue
 						# filterOptions - dict in JSON to control filter options (e. g. mode, etc.):
-						if jsonREMatch.group(1) == 'filterOptions':
+						if jsonREMatch.group(1) in 'filterOptions':
 							# following lines with another filter options:
 							self._filterTests = []
 							ignoreBlock = False
-							for opts in (faildata if isinstance(faildata, list) else [faildata]):
+							for faildata in (faildata if isinstance(faildata, list) else [faildata]):
+								if commonOpts: # merge with common file options:
+									opts = commonOpts.copy()
+									opts.update(faildata)
+								else:
+									opts = faildata
 								# unique filter name (using options combination):
 								self.assertTrue(isinstance(opts, dict))
 								if opts.get('test.condition'):
 									ignoreBlock = not eval(opts.get('test.condition'))
-									del opts['test.condition']
-								fltName = opts.get('filterName')
-								if not fltName: fltName = str(opts) if opts else ''
-								fltName = name + fltName
-								# read it:
-								flt = self._readFilter(fltName, name, basedir, opts=opts)
-								self._filterTests.append((fltName, flt, opts))
+								if not ignoreBlock:
+									fltOpts = self._filterOptions(opts)
+									fltName = opts.get('test.filter-name')
+									if not fltName: fltName = str(fltOpts) if fltOpts else ''
+									fltName = name + fltName
+									# read it:
+									flt = self._readFilter(fltName, name, basedir, opts=fltOpts)
+									self._filterTests.append((fltName, flt, opts))
 							continue
 						# addFILE - filename to "include" test-files should be additionally parsed:
 						if jsonREMatch.group(1) == 'addFILE':
