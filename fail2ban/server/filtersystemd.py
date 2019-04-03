@@ -204,7 +204,14 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 			if not v:
 				v = logentry.get('_PID')
 			if v:
-				logelements[-1] += ("[%i]" % v)
+				try: # [integer] (if already numeric):
+					v = "[%i]" % v
+				except TypeError:
+					try: # as [integer] (try to convert to int):
+						v = "[%i]" % int(v, 0)
+					except (TypeError, ValueError): # fallback - [string] as it is
+						v = "[%s]" % v
+				logelements[-1] += v
 			logelements[-1] += ":"
 			if logelements[-1] == "kernel:":
 				if '_SOURCE_MONOTONIC_TIMESTAMP' in logentry:
