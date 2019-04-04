@@ -170,7 +170,7 @@ def testSampleRegexsFactory(name, basedir):
 							commonOpts = faildata
 							continue
 						# filterOptions - dict in JSON to control filter options (e. g. mode, etc.):
-						if jsonREMatch.group(1) in 'filterOptions':
+						if jsonREMatch.group(1) == 'filterOptions':
 							# following lines with another filter options:
 							self._filterTests = []
 							ignoreBlock = False
