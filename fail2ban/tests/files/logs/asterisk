@@ -114,3 +114,10 @@ Nov 4 18:30:40 localhost asterisk[32229]: NOTICE[32257]: chan_sip.c:23417 in han
 
 # failJSON: { "time": "2005-03-01T15:35:53", "match": true , "host": "192.0.2.2", "desc": "log over remote syslog server" }
 Mar  1 15:35:53 pbx asterisk[2350]: WARNING[1195][C-00000b43]: Ext. s:6 in @ from-sip-external: "Rejecting unknown SIP connection from 192.0.2.2"
+
+# filterOptions: [{"logtype": "journal", "test.prefix-line": "server asterisk[123]: "}]
+
+# failJSON: { "match": true , "host": "192.0.2.1", "desc": "systemd-journal entry" }
+NOTICE[566]: chan_sip.c:28926 handle_request_register: Registration from '"28" <sip:28@127.0.0.100>' failed for '192.0.2.1:7998' - Wrong password
+# failJSON: { "match": true , "host": "192.0.2.2", "desc": "systemd-journal entry (with additional timestamp in message)" }
+[Mar 27 10:06:14] NOTICE[566]: chan_sip.c:28926 handle_request_register: Registration from '"1000" <sip:1000@127.0.0.100>' failed for '192.0.2.2:7998' - Wrong password
