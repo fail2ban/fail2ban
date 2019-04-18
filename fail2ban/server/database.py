@@ -541,8 +541,13 @@ class Fail2BanDb(object):
 		#TODO: Implement data parts once arbitrary match keys completed
 		data = ticket.getData()
 		matches = data.get('matches')
-		if matches and len(matches) > self.maxEntries:
-			data['matches'] = matches[-self.maxEntries:]
+		if self.maxEntries:
+			if matches and len(matches) > self.maxEntries:
+				data = data.copy()
+				data['matches'] = matches[-self.maxEntries:]
+		elif matches:
+			data = data.copy()
+			del data['matches']
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
 			(jail.name, ip, int(round(ticket.getTime())), data))
@@ -702,6 +707,8 @@ class Fail2BanDb(object):
 			queryArgs.append(fromtime - forbantime)
 		if ip is None:
 			query += " GROUP BY ip ORDER BY ip, timeofban DESC"
+		else:
+			query += " ORDER BY timeofban DESC LIMIT 1"
 		cur = self._db.cursor()
 		return cur.execute(query, queryArgs)
 
@@ -718,9 +725,10 @@ class Fail2BanDb(object):
 				# logSys.debug('restore ticket   %r, %r, %r', banip, timeofban, data)
 				ticket = FailTicket(banip, timeofban, data=data)
 				# logSys.debug('restored ticket: %r', ticket)
+				if ip is not None: return ticket
 				tickets.append(ticket)
 
-		return tickets if ip is None else ticket
+		return tickets
 
 	@commitandrollback
 	def purge(self, cur):

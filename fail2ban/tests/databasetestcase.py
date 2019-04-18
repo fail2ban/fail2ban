@@ -361,7 +361,6 @@ class DatabaseTest(LogCaptureTestCase):
 		ticket.setAttempt(len(failures))
 		self.db.addBan(self.jail, ticket)
 		# should retrieve 2 matches only, but count of all attempts:
-		self.db.maxEntries = maxEntries;
 		ticket = self.db.getBansMerged("127.0.0.1")
 		self.assertEqual(ticket.getAttempt(), 2 * len(failures))
 		self.assertEqual(len(ticket.getMatches()), maxEntries)
@@ -372,6 +371,13 @@ class DatabaseTest(LogCaptureTestCase):
 		self.assertEqual(ticket.getAttempt(), len(failures))
 		self.assertEqual(len(ticket.getMatches()), maxEntries)
 		self.assertEqual(ticket.getMatches(), matches2find[-maxEntries:])
+		# should retrieve 0 matches by last ban:
+		self.db.maxEntries = 0;
+		self.db.addBan(self.jail, ticket)
+		ticket = self.db.getCurrentBans(self.jail, "127.0.0.1", fromtime=MyTime.time()-100)
+		self.assertTrue(ticket is not None)
+		self.assertEqual(ticket.getAttempt(), len(failures))
+		self.assertEqual(len(ticket.getMatches()), 0)
 
 	def testGetBansMerged(self):
 		self.testAddJail()

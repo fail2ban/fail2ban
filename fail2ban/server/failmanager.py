@@ -87,7 +87,7 @@ class FailManager:
 					attempt = 1
 				else:
 					# will be incremented / extended (be sure we have at least +1 attempt):
-					matches = ticket.getMatches()
+					matches = ticket.getMatches() if self.maxEntries else None
 					attempt = ticket.getAttempt()
 					if attempt <= 0:
 						attempt += 1
@@ -98,9 +98,12 @@ class FailManager:
 					fData.setRetry(0)
 				fData.inc(matches, attempt, count)
 				# truncate to maxEntries:
-				matches = fData.getMatches()
-				if len(matches) > self.maxEntries:
-					fData.setMatches(matches[-self.maxEntries:])
+				if self.maxEntries:
+					matches = fData.getMatches()
+					if len(matches) > self.maxEntries:
+						fData.setMatches(matches[-self.maxEntries:])
+				else:
+					fData.setMatches(None)
 			except KeyError:
 				# if already FailTicket - add it direct, otherwise create (using copy all ticket data):
 				if isinstance(ticket, FailTicket):

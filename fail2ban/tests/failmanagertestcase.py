@@ -110,6 +110,14 @@ class AddFailure(unittest.TestCase):
 		self.assertEqual(ticket.getAttempt(), 2 * len(failures) + 1)
 		self.assertEqual(len(ticket.getMatches()), maxEntries)
 		self.assertEqual(ticket.getMatches(), failures[len(failures) - maxEntries:])
+		# no matches by maxEntries == 0 :
+		self.__failManager.maxEntries = 0
+		self.__failManager.addFailure(ticket)
+		manFailList = self.__failManager._FailManager__failList
+		ticket = manFailList["127.0.0.1"]
+		self.assertEqual(len(ticket.getMatches()), 0)
+		# test set matches None to None:
+		ticket.setMatches(None)
 	
 	def testFailManagerMaxTime(self):
 		self._addDefItems()
