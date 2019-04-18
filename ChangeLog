@@ -45,10 +45,26 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
     enclosed in brackets after "[Note]" (gh-2314)
 * `files/fail2ban.service.in`: fixed systemd-unit template - missing nftables dependency (gh-2313)
 * several `action.d/mail*`: fixed usage with multiple log files (ultimate fix for gh-976, gh-2341)
+* `filter.d/sendmail-reject.conf`: fixed journal usage for some systems (e. g. CentOS): if only identifier 
+  set to `sm-mta` (no unit `sendmail`) for some messages (gh-2385)
+* `filter.d/asterisk.conf`: asterisk can log additional timestamp if logs into systemd-journal
+  (regex extended with optional part matching this, gh-2383)
 
 ### New Features
 * new failregex-flag tag `<F-MLFGAINED>` for failregex, signaled that the access to service was gained
   (ATM used similar to tag `<F-NOFAIL>`, but it does not add the log-line to matches, gh-2279)
+* filters: introduced new configuration parameter `logtype` (default `file` for file-backends, and 
+  `journal` for journal-backends, gh-2387);
+* for better performance and safety the option `logtype` can be also used to
+  select short prefix-line for file-backends too for all filters using `__prefix_line` (`common.conf`),
+  if message logged only with `hostname svc[nnnn]` prefix (often the case on several systems):
+```ini
+[jail]
+backend = auto
+filter = flt[logtype=short]
+```
+* `filter.d/common.conf`: differentiate `__prefix_line` for file/journal logtype's (speedup and fix parsing
+  of systemd-journal);
 * `filter.d/traefik-auth.conf`: used to ban hosts, that were failed through traefik
 
 ### Enhancements
@@ -68,6 +84,9 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
 * `action.d/badips.py`: option `loglevel` extended with level of summary message,
   following example configuration logging summary with NOTICE and rest with DEBUG log-levels:
   `action = badips.py[loglevel="debug, notice"]`
+* samplestestcase.py (testSampleRegexsFactory) extended:
+  - allow coverage of journal logtype;
+  - new option `fileOptions` to set common filter/test options for whole test-file;
 
 
 ver. 0.10.4 (2018/10/04) - ten-four-on-due-date-ten-four
