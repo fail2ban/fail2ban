@@ -95,3 +95,8 @@ Nov  3 11:35:30 Microsoft sendmail[26254]: rA37ZTSC026255: from=<anton@domain.co
 Mar  6 16:55:28 s192-168-0-1 sm-mta[20949]: v26LtRA0020949: some-host-24.example.org [192.0.2.194] did not issue MAIL/EXPN/VRFY/ETRN during connection to MTA
 # failJSON: { "time": "2005-03-07T15:04:37", "match": true , "host": "192.0.2.195", "desc": "wrong resp. non RFC compiant (ddos prelude?), MSP-mode, (may be forged)" }
 Mar  7 15:04:37 s192-168-0-1 sm-mta[18624]: v27K4Vj8018624: some-host-24.example.org [192.0.2.195] (may be forged) did not issue MAIL/EXPN/VRFY/ETRN during connection to MSP-v4
+
+# failJSON: { "time": "2005-03-29T22:33:47", "match": true , "host": "104.152.52.29", "desc": "wrong resp. non RFC compiant (ddos prelude?), TLSMTA-mode" }
+Mar 29 22:33:47 kismet sm-mta[23221]: x2TMXH7Y023221: internettl.org [104.152.52.29] (may be forged) did not issue MAIL/EXPN/VRFY/ETRN during connection to TLSMTA
+# failJSON: { "time": "2005-03-29T22:51:42", "match": true , "host": "104.152.52.29", "desc": "wrong resp. non RFC compiant (ddos prelude?), MSA-mode" }
+Mar 29 22:51:42 kismet sm-mta[24202]: x2TMpAlI024202: internettl.org [104.152.52.29] (may be forged) did not issue MAIL/EXPN/VRFY/ETRN during connection to MSA

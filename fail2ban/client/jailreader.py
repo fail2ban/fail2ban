@@ -88,6 +88,7 @@ class JailReader(ConfigReader):
 
 	def getOptions(self):
 		opts1st = [["bool", "enabled", False],
+				["string", "backend", "auto"],
 				["string", "filter", ""]]
 		opts = [["bool", "enabled", False],
 				["string", "backend", "auto"],
@@ -135,6 +136,9 @@ class JailReader(ConfigReader):
 				filterName, filterOpt = extractOptions(flt)
 				if not filterName:
 					raise JailDefError("Invalid filter definition %r" % flt)
+				if not filterOpt.get('logtype'):
+					filterOpt['logtype'] = ['file','journal'][
+						int(self.__opts.get('backend', '').startswith("systemd"))]
 				self.__filter = FilterReader(
 					filterName, self.__name, filterOpt, 
 					share_config=self.share_config, basedir=self.getBaseDir())
@@ -230,7 +234,7 @@ class JailReader(ConfigReader):
 			stream.extend(self.__filter.convert())
 		for opt, value in self.__opts.iteritems():
 			if opt == "logpath":
-				if self.__opts.get('backend', None).startswith("systemd"): continue
+				if self.__opts.get('backend', '').startswith("systemd"): continue
 				found_files = 0
 				for path in value.split("\n"):
 					path = path.rsplit(" ", 1)

@@ -344,3 +344,5 @@ Nov 26 13:03:39 srv sshd[14738]: fatal: Unable to negotiate with 192.0.2.5 port 
 
 # failJSON: { "time": "2004-11-26T16:47:51", "match": true , "host": "192.0.2.6", "desc": "Disconnected during preauth phase (in extra/aggressive mode)" }
 Nov 26 16:47:51 srv sshd[19320]: Disconnected from authenticating user root 192.0.2.6 port 33553 [preauth]
+
+# addFILE: "sshd-journal"

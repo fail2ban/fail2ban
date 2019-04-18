@@ -25,6 +25,7 @@ __license__ = "GPL"
 
 import os
 import sys
+import unittest
 
 from ..client import fail2banregex
 from ..client.fail2banregex import Fail2banRegex, get_opt_parser, exec_command_line, output, str2LogLevel
@@ -315,6 +316,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		_decode_line_warn.clear()
 
 	def testWronChar(self):
+		unittest.F2B.SkipIfCfgMissing(stock=True)
 		self._reset()
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"-l", "notice", # put down log-level, because of too many debug-messages
@@ -331,6 +333,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertLogged('Nov  8 00:16:12 main sshd[32547]: pam_succeed_if(sshd:auth): error retrieving information about user llinco')
 
 	def testWronCharDebuggex(self):
+		unittest.F2B.SkipIfCfgMissing(stock=True)
 		self._reset()
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"-l", "notice", # put down log-level, because of too many debug-messages
@@ -381,3 +384,27 @@ class Fail2banRegexTest(LogCaptureTestCase):
 			'-v', '-d', '%:%.%-', 'LOG', 'RE'
 		), 0)
 		self.assertLogged('Failed to set datepattern')
+
+	def testLogtypeSystemdJournal(self): # pragma: no cover
+		if not fail2banregex.FilterSystemd:
+			raise unittest.SkipTest('Skip test because no systemd backand available')
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"systemd-journal", Fail2banRegexTest.FILTER_ZZZ_GEN
+			  +'[journalmatch="SYSLOG_IDENTIFIER=\x01\x02dummy\x02\x01",'
+				+' failregex="^\x00\x01\x02dummy regex, never match <F-ID>xxx</F-ID>"]'
+		)
+		self.assertTrue(fail2banRegex.start(args))
+		self.assertLogged("'logtype': 'journal'")
+		self.assertNotLogged("'logtype': 'file'")
+		self.assertLogged('Lines: 0 lines, 0 ignored, 0 matched, 0 missed')
+		self.pruneLog()
+		# logtype specified explicitly (should win in filter):
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"systemd-journal", Fail2banRegexTest.FILTER_ZZZ_GEN
+			  +'[logtype=file,'
+			  +' journalmatch="SYSLOG_IDENTIFIER=\x01\x02dummy\x02\x01",'
+				+' failregex="^\x00\x01\x02dummy regex, never match <F-ID>xxx</F-ID>"]'
+		)
+		self.assertTrue(fail2banRegex.start(args))
+		self.assertLogged("'logtype': 'file'")
+		self.assertNotLogged("'logtype': 'journal'")
