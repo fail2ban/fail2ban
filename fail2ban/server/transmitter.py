@@ -186,7 +186,7 @@ class Transmitter:
 		elif name == "dbmaxmatches":
 			db = self.__server.getDatabase()
 			if db is None:
-				logSys.msg("dbmaxmatches setting was not in effect since no db yet")
+				logSys.log(logging.MSG, "dbmaxmatches setting was not in effect since no db yet")
 				return None
 			else:
 				db.maxMatches = int(command[1])
@@ -195,7 +195,7 @@ class Transmitter:
 		elif name == "dbpurgeage":
 			db = self.__server.getDatabase()
 			if db is None:
-				logSys.warning("dbpurgeage setting was not in effect since no db yet")
+				logSys.log(logging.MSG, "dbpurgeage setting was not in effect since no db yet")
 				return None
 			else:
 				db.purgeage = command[1]

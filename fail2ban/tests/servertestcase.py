@@ -197,6 +197,8 @@ class Transmitter(TransmitterBase):
 		self.setGetTest("dbfile", tmpFilename)
 		# the same file name (again no jails / not changed):
 		self.setGetTest("dbfile", tmpFilename)
+		self.setGetTest("dbmaxmatches", "100", 100)
+		self.setGetTestNOK("dbmaxmatches", "LIZARD")
 		self.setGetTest("dbpurgeage", "600", 600)
 		self.setGetTestNOK("dbpurgeage", "LIZARD")
 		# the same file name (again with jails / not changed):
@@ -210,6 +212,12 @@ class Transmitter(TransmitterBase):
 			(0, None))
 		self.assertEqual(self.transm.proceed(
 			["get", "dbfile"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["set", "dbmaxmatches", "100"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["get", "dbmaxmatches"]),
 			(0, None))
 		self.assertEqual(self.transm.proceed(
 			["set", "dbpurgeage", "500"]),
