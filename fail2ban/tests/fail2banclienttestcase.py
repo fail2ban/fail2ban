@@ -179,6 +179,7 @@ def _start_params(tmp, use_stock=False, use_stock_cfg=None,
 			"pidfile = " + pjoin(tmp, "f2b.pid"),
 			"backend = polling",
 			"dbfile = " + db,
+			"dbmaxmatches = 100",
 			"dbpurgeage = 1d",
 			"",
 		)
