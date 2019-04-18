@@ -371,7 +371,15 @@ class DatabaseTest(LogCaptureTestCase):
 		self.assertEqual(ticket.getAttempt(), len(failures))
 		self.assertEqual(len(ticket.getMatches()), maxMatches)
 		self.assertEqual(ticket.getMatches(), matches2find[-maxMatches:])
-		# should retrieve 0 matches by last ban:
+		# maxmatches of jail < dbmaxmatches (so read 1 match and 0 matches):
+		ticket = self.db.getCurrentBans(self.jail, "127.0.0.1", fromtime=MyTime.time()-100,
+			maxmatches=1)
+		self.assertEqual(len(ticket.getMatches()), 1)
+		self.assertEqual(ticket.getMatches(), failures[3]['matches'])
+		ticket = self.db.getCurrentBans(self.jail, "127.0.0.1", fromtime=MyTime.time()-100,
+			maxmatches=0)
+		self.assertEqual(len(ticket.getMatches()), 0)
+		# dbmaxmatches = 0, should retrieve 0 matches by last ban:
 		self.db.maxMatches = 0;
 		self.db.addBan(self.jail, ticket)
 		ticket = self.db.getCurrentBans(self.jail, "127.0.0.1", fromtime=MyTime.time()-100)
