@@ -331,9 +331,9 @@ class DatabaseTest(LogCaptureTestCase):
 		# be returned
 		self.assertEqual(len(self.db.getBans(jail=self.jail,bantime=-1)), 2)
 
-	def testGetBansMerged_MaxEntries(self):
+	def testGetBansMerged_MaxMatches(self):
 		self.testAddJail()
-		maxEntries = 2
+		maxMatches = 2
 		failures = [
 			{"matches": ["abc\n"], "user": set(['test'])},
 			{"matches": ["123\n"], "user": set(['test'])},
@@ -349,12 +349,12 @@ class DatabaseTest(LogCaptureTestCase):
 			ticket.setAttempt(1)
 			self.db.addBan(self.jail, ticket)
 		# should retrieve 2 matches only, but count of all attempts:
-		self.db.maxEntries = maxEntries;
+		self.db.maxMatches = maxMatches;
 		ticket = self.db.getBansMerged("127.0.0.1")
 		self.assertEqual(ticket.getIP(), "127.0.0.1")
 		self.assertEqual(ticket.getAttempt(), len(failures))
-		self.assertEqual(len(ticket.getMatches()), maxEntries)
-		self.assertEqual(ticket.getMatches(), matches2find[-maxEntries:])
+		self.assertEqual(len(ticket.getMatches()), maxMatches)
+		self.assertEqual(ticket.getMatches(), matches2find[-maxMatches:])
     # add more failures at once:
 		ticket = FailTicket("127.0.0.1", MyTime.time() - 10, matches2find,
 			data={"user": set(['test', 'root'])})
@@ -363,16 +363,16 @@ class DatabaseTest(LogCaptureTestCase):
 		# should retrieve 2 matches only, but count of all attempts:
 		ticket = self.db.getBansMerged("127.0.0.1")
 		self.assertEqual(ticket.getAttempt(), 2 * len(failures))
-		self.assertEqual(len(ticket.getMatches()), maxEntries)
-		self.assertEqual(ticket.getMatches(), matches2find[-maxEntries:])
+		self.assertEqual(len(ticket.getMatches()), maxMatches)
+		self.assertEqual(ticket.getMatches(), matches2find[-maxMatches:])
 		# also using getCurrentBans:
 		ticket = self.db.getCurrentBans(self.jail, "127.0.0.1", fromtime=MyTime.time()-100)
 		self.assertTrue(ticket is not None)
 		self.assertEqual(ticket.getAttempt(), len(failures))
-		self.assertEqual(len(ticket.getMatches()), maxEntries)
-		self.assertEqual(ticket.getMatches(), matches2find[-maxEntries:])
+		self.assertEqual(len(ticket.getMatches()), maxMatches)
+		self.assertEqual(ticket.getMatches(), matches2find[-maxMatches:])
 		# should retrieve 0 matches by last ban:
-		self.db.maxEntries = 0;
+		self.db.maxMatches = 0;
 		self.db.addBan(self.jail, ticket)
 		ticket = self.db.getCurrentBans(self.jail, "127.0.0.1", fromtime=MyTime.time()-100)
 		self.assertTrue(ticket is not None)

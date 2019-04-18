@@ -177,7 +177,7 @@ class Fail2BanDb(object):
 
 
 	def __init__(self, filename, purgeAge=24*60*60):
-		self.maxEntries = 50
+		self.maxMatches = 10
 		self._lock = RLock()
 		self._dbFilename = filename
 		self._purgeAge = purgeAge
@@ -541,10 +541,10 @@ class Fail2BanDb(object):
 		#TODO: Implement data parts once arbitrary match keys completed
 		data = ticket.getData()
 		matches = data.get('matches')
-		if self.maxEntries:
-			if matches and len(matches) > self.maxEntries:
+		if self.maxMatches:
+			if matches and len(matches) > self.maxMatches:
 				data = data.copy()
-				data['matches'] = matches[-self.maxEntries:]
+				data['matches'] = matches[-self.maxMatches:]
 		elif matches:
 			data = data.copy()
 			del data['matches']
@@ -672,7 +672,7 @@ class Fail2BanDb(object):
 						tickdata = {}
 					m = data.get('matches', [])
 					# pre-insert "maxadd" enries (because tickets are ordered desc by time)
-					maxadd = self.maxEntries - len(matches)
+					maxadd = self.maxMatches - len(matches)
 					if maxadd > 0:
 						if len(m) <= maxadd:
 							matches = m + matches
