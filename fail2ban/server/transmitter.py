@@ -183,10 +183,19 @@ class Transmitter:
 			else:
 				if self.__quiet: return
 				return db.filename
+		elif name == "dbmaxmatches":
+			db = self.__server.getDatabase()
+			if db is None:
+				logSys.log(logging.MSG, "dbmaxmatches setting was not in effect since no db yet")
+				return None
+			else:
+				db.maxMatches = int(command[1])
+				if self.__quiet: return
+				return db.maxMatches
 		elif name == "dbpurgeage":
 			db = self.__server.getDatabase()
 			if db is None:
-				logSys.warning("dbpurgeage setting was not in effect since no db yet")
+				logSys.log(logging.MSG, "dbpurgeage setting was not in effect since no db yet")
 				return None
 			else:
 				db.purgeage = command[1]
@@ -310,6 +319,11 @@ class Transmitter:
 			self.__server.setLogTimeZone(name, value)
 			if self.__quiet: return
 			return self.__server.getLogTimeZone(name)
+		elif command[1] == "maxmatches":
+			value = command[2]
+			self.__server.setMaxMatches(name, int(value))
+			if self.__quiet: return
+			return self.__server.getMaxMatches(name)
 		elif command[1] == "maxretry":
 			value = command[2]
 			self.__server.setMaxRetry(name, int(value))
@@ -404,6 +418,12 @@ class Transmitter:
 				return None
 			else:
 				return db.filename
+		elif name == "dbmaxmatches":
+			db = self.__server.getDatabase()
+			if db is None:
+				return None
+			else:
+				return db.maxMatches
 		elif name == "dbpurgeage":
 			db = self.__server.getDatabase()
 			if db is None:
@@ -439,6 +459,8 @@ class Transmitter:
 			return self.__server.getDatePattern(name)
 		elif command[1] == "logtimezone":
 			return self.__server.getLogTimeZone(name)
+		elif command[1] == "maxmatches":
+			return self.__server.getMaxMatches(name)
 		elif command[1] == "maxretry":
 			return self.__server.getMaxRetry(name)
 		elif command[1] == "maxlines":

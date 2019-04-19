@@ -98,6 +98,8 @@ filter = flt[logtype=short]
 * `filter.d/traefik-auth.conf`: used to ban hosts, that were failed through traefik
 
 ### Enhancements
+* introduced new options: `dbmaxmatches` (fail2ban.conf) and `maxmatches` (jail.conf) to contol
+  how many matches per ticket fail2ban can hold in memory and store in database (gh-2402, gh-2118);
 * fail2ban.conf: introduced new section `[Thread]` and option `stacksize` to configure default size
   of the stack for threads running in fail2ban (gh-2356), it could be set in `fail2ban.local` to
   avoid runtime error "can't start new thread" (see gh-969);

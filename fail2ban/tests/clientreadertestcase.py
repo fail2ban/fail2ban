@@ -881,18 +881,20 @@ class JailsReaderTest(LogCaptureTestCase):
 		self.assertTrue(
 			find_set('syslogsocket') < find_set('loglevel') < find_set('logtarget')
 		)
-		# then dbfile should be before dbpurgeage
+		# then dbfile should be before dbmaxmatches and dbpurgeage
 		self.assertTrue(find_set('dbpurgeage') > find_set('dbfile'))
+		self.assertTrue(find_set('dbmaxmatches') > find_set('dbfile'))
 
 		# and there is logging information left to be passed into the
 		# server
-		self.assertSortedEqual(commands,
-						 [['set', 'dbfile',
-								'/var/lib/fail2ban/fail2ban.sqlite3'],
-						  ['set', 'dbpurgeage', '1d'],
-						  ['set', 'loglevel', "INFO"],
-						  ['set', 'logtarget', '/var/log/fail2ban.log'],
-						  ['set', 'syslogsocket', 'auto']])
+		self.assertSortedEqual(commands,[
+		  ['set', 'syslogsocket', 'auto'],
+		  ['set', 'loglevel', "INFO"],
+		  ['set', 'logtarget', '/var/log/fail2ban.log'],
+		  ['set', 'dbfile', '/var/lib/fail2ban/fail2ban.sqlite3'],
+		  ['set', 'dbmaxmatches', 10],
+		  ['set', 'dbpurgeage', '1d'],
+		 ])
 
 		# and if we force change configurator's fail2ban's baseDir
 		# there should be an error message (test visually ;) --

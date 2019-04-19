@@ -281,7 +281,7 @@ class Jail(object):
 					# use ban time as search time if we have not enabled a increasing:
 					forbantime = self.actions.getBanTime()
 				for ticket in self.database.getCurrentBans(jail=self, forbantime=forbantime,
-					correctBanTime=correctBanTime
+					correctBanTime=correctBanTime, maxmatches=self.filter.failManager.maxMatches
 				):
 					try:
 						#logSys.debug('restored ticket: %s', ticket)

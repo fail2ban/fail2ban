@@ -93,6 +93,7 @@ class JailReader(ConfigReader):
 		opts = [["bool", "enabled", False],
 				["string", "backend", "auto"],
 				["int",    "maxretry", None],
+				["int",    "maxmatches", None],
 				["string", "findtime", None],
 				["string", "bantime", None],
 				["bool",   "bantime.increment", None],

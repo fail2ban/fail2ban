@@ -168,6 +168,14 @@ persistent datastore. Set to
 get the location of fail2ban
 persistent datastore
 .TP
+\fBset dbmaxmatches <INT>\fR
+sets the max number of matches
+stored in database per ticket
+.TP
+\fBget dbmaxmatches\fR
+gets the max number of matches
+stored in database per ticket
+.TP
 \fBset dbpurgeage <SECONDS>\fR
 sets the max age in <SECONDS> that
 history of bans will be kept
@@ -286,6 +294,11 @@ sets the number of failures
 <RETRY> before banning the host
 for <JAIL>
 .TP
+\fBset <JAIL> maxmatches <INT>\fR
+sets the max number of matches
+stored in memory per ticket in
+<JAIL>
+.TP
 \fBset <JAIL> maxlines <LINES>\fR
 sets the number of <LINES> to
 buffer for regex search for <JAIL>
@@ -401,6 +414,11 @@ are ordered by end of ban.
 \fBget <JAIL> maxretry\fR
 gets the number of failures
 allowed for <JAIL>
+.TP
+\fBget <JAIL> maxmatches\fR
+gets the max number of matches
+stored in memory per ticket in
+<JAIL>
 .TP
 \fBget <JAIL> maxlines\fR
 gets the number of lines to buffer

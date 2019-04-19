@@ -197,6 +197,8 @@ class Transmitter(TransmitterBase):
 		self.setGetTest("dbfile", tmpFilename)
 		# the same file name (again no jails / not changed):
 		self.setGetTest("dbfile", tmpFilename)
+		self.setGetTest("dbmaxmatches", "100", 100)
+		self.setGetTestNOK("dbmaxmatches", "LIZARD")
 		self.setGetTest("dbpurgeage", "600", 600)
 		self.setGetTestNOK("dbpurgeage", "LIZARD")
 		# the same file name (again with jails / not changed):
@@ -210,6 +212,12 @@ class Transmitter(TransmitterBase):
 			(0, None))
 		self.assertEqual(self.transm.proceed(
 			["get", "dbfile"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["set", "dbmaxmatches", "100"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["get", "dbmaxmatches"]),
 			(0, None))
 		self.assertEqual(self.transm.proceed(
 			["set", "dbpurgeage", "500"]),
@@ -417,6 +425,12 @@ class Transmitter(TransmitterBase):
 			outList=["192.168.0.1"])
 		_getBanListTest(jail, unbanip="192.168.0.1",
 			outList=[])
+
+	def testJailMaxMatches(self):
+		self.setGetTest("maxmatches", "5", 5, jail=self.jailName)
+		self.setGetTest("maxmatches", "2", 2, jail=self.jailName)
+		self.setGetTest("maxmatches", "-2", -2, jail=self.jailName)
+		self.setGetTestNOK("maxmatches", "Duck", jail=self.jailName)
 
 	def testJailMaxRetry(self):
 		self.setGetTest("maxretry", "5", 5, jail=self.jailName)

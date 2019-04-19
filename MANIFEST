@@ -145,6 +145,7 @@ config/filter.d/sshd.conf
 config/filter.d/stunnel.conf
 config/filter.d/suhosin.conf
 config/filter.d/tine20.conf
+config/filter.d/traefik-auth.conf
 config/filter.d/uwimap-auth.conf
 config/filter.d/vsftpd.conf
 config/filter.d/webmin-auth.conf
@@ -335,9 +336,11 @@ fail2ban/tests/files/logs/solid-pop3d
 fail2ban/tests/files/logs/squid
 fail2ban/tests/files/logs/squirrelmail
 fail2ban/tests/files/logs/sshd
+fail2ban/tests/files/logs/sshd-journal
 fail2ban/tests/files/logs/stunnel
 fail2ban/tests/files/logs/suhosin
 fail2ban/tests/files/logs/tine20
+fail2ban/tests/files/logs/traefik-auth
 fail2ban/tests/files/logs/uwimap-auth
 fail2ban/tests/files/logs/vsftpd
 fail2ban/tests/files/logs/webmin-auth

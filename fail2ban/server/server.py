@@ -459,6 +459,12 @@ class Server:
 	def getUseDns(self, name):
 		return self.__jails[name].filter.getUseDns()
 	
+	def setMaxMatches(self, name, value):
+		self.__jails[name].filter.failManager.maxMatches = value
+	
+	def getMaxMatches(self, name):
+		return self.__jails[name].filter.failManager.maxMatches
+	
 	def setMaxRetry(self, name, value):
 		self.__jails[name].filter.setMaxRetry(value)
 	

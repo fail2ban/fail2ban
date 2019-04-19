@@ -144,7 +144,13 @@ class Ticket(object):
 		return self._data['failures']
 
 	def setMatches(self, matches):
-		self._data['matches'] = matches or []
+		if matches:
+			self._data['matches'] = matches
+		else:
+			try:
+				del self._data['matches']
+			except KeyError:
+				pass
 
 	def getMatches(self):
 		return [(line if not isinstance(line, (list, tuple)) else "".join(line)) \
