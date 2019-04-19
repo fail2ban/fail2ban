@@ -177,7 +177,7 @@ class Fail2BanDb(object):
 
 
 	def __init__(self, filename, purgeAge=24*60*60):
-		self.maxEntries = 50
+		self.maxMatches = 10
 		self._lock = RLock()
 		self._dbFilename = filename
 		self._purgeAge = purgeAge
@@ -541,8 +541,13 @@ class Fail2BanDb(object):
 		#TODO: Implement data parts once arbitrary match keys completed
 		data = ticket.getData()
 		matches = data.get('matches')
-		if matches and len(matches) > self.maxEntries:
-			data['matches'] = matches[-self.maxEntries:]
+		if self.maxMatches:
+			if matches and len(matches) > self.maxMatches:
+				data = data.copy()
+				data['matches'] = matches[-self.maxMatches:]
+		elif matches:
+			data = data.copy()
+			del data['matches']
 		cur.execute(
 			"INSERT INTO bans(jail, ip, timeofban, data) VALUES(?, ?, ?, ?)",
 			(jail.name, ip, int(round(ticket.getTime())), data))
@@ -667,7 +672,7 @@ class Fail2BanDb(object):
 						tickdata = {}
 					m = data.get('matches', [])
 					# pre-insert "maxadd" enries (because tickets are ordered desc by time)
-					maxadd = self.maxEntries - len(matches)
+					maxadd = self.maxMatches - len(matches)
 					if maxadd > 0:
 						if len(m) <= maxadd:
 							matches = m + matches
@@ -702,10 +707,12 @@ class Fail2BanDb(object):
 			queryArgs.append(fromtime - forbantime)
 		if ip is None:
 			query += " GROUP BY ip ORDER BY ip, timeofban DESC"
+		else:
+			query += " ORDER BY timeofban DESC LIMIT 1"
 		cur = self._db.cursor()
 		return cur.execute(query, queryArgs)
 
-	def getCurrentBans(self, jail = None, ip = None, forbantime=None, fromtime=None):
+	def getCurrentBans(self, jail = None, ip = None, forbantime=None, fromtime=None, maxmatches=None):
 		tickets = []
 		ticket = None
 
@@ -717,10 +724,20 @@ class Fail2BanDb(object):
 			for banip, timeofban, data in results:
 				# logSys.debug('restore ticket   %r, %r, %r', banip, timeofban, data)
 				ticket = FailTicket(banip, timeofban, data=data)
+				# filter matches if expected (current count > as maxmatches specified):
+				if maxmatches is None:
+					maxmatches = self.maxMatches
+				if maxmatches:
+					matches = ticket.getMatches()
+					if matches and len(matches) > maxmatches:
+						ticket.setMatches(matches[-maxmatches:])
+				else:
+					ticket.setMatches(None)
 				# logSys.debug('restored ticket: %r', ticket)
+				if ip is not None: return ticket
 				tickets.append(ticket)
 
-		return tickets if ip is None else ticket
+		return tickets
 
 	@commitandrollback
 	def purge(self, cur):

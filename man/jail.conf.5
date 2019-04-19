@@ -156,6 +156,11 @@ Database filename. Default: /var/lib/fail2ban/fail2ban.sqlite3
 .br
 This defines where the persistent data for fail2ban is stored. This persistent data allows bans to be reinstated and continue reading log files from the last read position when fail2ban is restarted. A value of \fINone\fR disables this feature.
 .TP
+.B dbmaxmatches
+Max number of matches stored in database per ticket. Default: 10
+.br
+This option sets the max number of matched log-lines could be stored per ticket in the database. This also affects values resolvable via tags \fB<ipmatches>\fR and \fB<ipjailmatches>\fR in actions.
+.TP
 .B dbpurgeage
 Database purge age in seconds. Default: 86400 (24hours)
 .br
@@ -276,6 +281,9 @@ regex (Python \fBreg\fRular \fBex\fRpression) to be added to the filter's failre
 .TP
 .B ignoreregex
 regex which, if the log line matches, would cause Fail2Ban not consider that line.  This line will be ignored even if it matches a failregex of the jail or any of its filters.
+.TP
+.B maxmatches
+max number of matched log-lines the jail would hold in memory per ticket. By default it is the same value as \fBmaxretry\fR of jail (or default).  This option also affects values resolvable via tag \fB<matches>\fR in actions.
 
 .SS Backends
 Available options are listed below.

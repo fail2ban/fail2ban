@@ -213,7 +213,8 @@ class Jail(object):
 		try:
 			if self.database is not None:
 				forbantime = self.actions.getBanTime()
-				for ticket in self.database.getCurrentBans(jail=self, forbantime=forbantime):
+				for ticket in self.database.getCurrentBans(jail=self, 
+						forbantime=forbantime, maxmatches=self.filter.failManager.maxMatches):
 					#logSys.debug('restored ticket: %s', ticket)
 					if not self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True):
 						# mark ticked was restored from database - does not put it again into db:
