@@ -3,3 +3,6 @@
 
 # failJSON: { "time": "2013-12-28T09:18:05", "match": true , "host": "32.65.254.69", "desc": "additional entry (and exact one space)" }
 [Sat Dec 28 09:18:05 2013] [error] [client 32.65.254.69] ModSecurity: [file "/etc/httpd/modsecurity.d/10_asl_rules.conf"] [line "635"] [id "340069"] [rev "4"] [msg "Atomicorp.com UNSUPPORTED DELAYED Rules: Web vulnerability scanner"] [severity "CRITICAL"] Access denied with code 403 (phase 2). Pattern match "(?:nessus(?:_is_probing_you_|test)|^/w00tw00t\\\\.at\\\\.)" at REQUEST_URI. [hostname "192.81.249.191"] [uri "/w00tw00t.at.blackhats.romanian.anti-sec:)"] [unique_id "4Q6RdsBR@b4AAA65LRUAAAAA"] 
+
+# failJSON: { "time": "2018-09-28T09:18:06", "match": true , "host": "192.0.2.1", "desc": "two client entries in message (gh-2247)" }
+[Sat Sep 28 09:18:06 2018] [error] [client 192.0.2.1:55555] [client 192.0.2.1] ModSecurity: [file "/etc/httpd/modsecurity.d/10_asl_rules.conf"] [line "635"] [id "340069"] [rev "4"] [msg "Atomicorp.com UNSUPPORTED DELAYED Rules: Web vulnerability scanner"] [severity "CRITICAL"] Access denied with code 403 (phase 2). Pattern match "(?:nessus(?:_is_probing_you_|test)|^/w00tw00t\\\\.at\\\\.)" at REQUEST_URI. [hostname "192.81.249.191"] [uri "/w00tw00t.at.blackhats.romanian.anti-sec:)"] [unique_id "4Q6RdsBR@b4AAA65LRUAAAAA"] 
