@@ -286,6 +286,16 @@ class Fail2banRegex(object):
 	def setJournalMatch(self, v):
 		self._journalmatch = v
 
+	def _dumpRealOptions(self, reader, fltOpt):
+		realopts = {}
+		combopts = reader.getCombined()
+		# output all options that are specified in filter-argument as well as some special (mostly interested):
+		for k in ['logtype', 'datepattern'] + fltOpt.keys():
+			# combined options win, but they contain only a sub-set in filter expected keys,
+			# so get the rest from definition section:
+			realopts[k] = combopts[k] if k in combopts else reader.get('Definition', k)
+		output("Real  filter options : %r" % realopts)
+
 	def readRegex(self, value, regextype):
 		assert(regextype in ('fail', 'ignore'))
 		regex = regextype + 'regex'
@@ -328,8 +338,6 @@ class Fail2banRegex(object):
 				basedir = None
 				if not os.path.isabs(fltName): # avoid join with "filter.d" inside FilterReader
 					fltName = os.path.abspath(fltName)
-			if not fltOpt.get('logtype'):
-				fltOpt['logtype'] = ['file','journal'][int(self._backend.startswith("systemd"))]
 			if fltOpt:
 				output( "Use   filter options : %r" % fltOpt )
 			reader = FilterReader(fltName, 'fail2ban-regex-jail', fltOpt, share_config=self.share_config, basedir=basedir)
@@ -347,7 +355,17 @@ class Fail2banRegex(object):
 			if not ret:
 				output( "ERROR: failed to load filter %s" % value )
 				return False
+			# overwrite default logtype (considering that the filter could specify this too in Definition/Init sections):
+			if not fltOpt.get('logtype'):
+				reader.merge_defaults({
+					'logtype': ['file','journal'][int(self._backend.startswith("systemd"))]
+				})
+			# get, interpolate and convert options:
 			reader.getOptions(None)
+			# show real options if expected:
+			if self._verbose > 1 or logSys.getEffectiveLevel()<=logging.DEBUG:
+				self._dumpRealOptions(reader, fltOpt)
+			# to stream:
 			readercommands = reader.convert()
 
 			regex_values = {}

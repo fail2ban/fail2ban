@@ -218,6 +218,18 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		# test failure line and not-failure lines both presents:
 		self.assertLogged("[29116]: User root not allowed because account is locked",
 			"[29116]: Received disconnect from 1.2.3.4", all=True)
+		self.pruneLog()
+		# show real options:
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"-l", "notice", # put down log-level, because of too many debug-messages
+			"-vv", "-c", CONFIG_DIR,
+			"Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 192.0.2.1",
+			"sshd[logtype=short]"
+		)
+		self.assertTrue(fail2banRegex.start(args))
+		# tet logtype is specified and set in real options:
+		self.assertLogged("Real  filter options :", "'logtype': 'short'", all=True)
+		self.assertNotLogged("'logtype': 'file'", "'logtype': 'journal'", all=True)
 
 	def testFastSshd(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
