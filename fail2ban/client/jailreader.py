@@ -111,8 +111,9 @@ class JailReader(ConfigReader):
 				["string", "action", ""]]
 
 		# Before interpolation (substitution) add static options always available as default:
-		defsec = self._cfg.get_defaults()
-		defsec["fail2ban_version"] = version
+		self.merge_defaults({
+			"fail2ban_version": version
+		})
 
 		try:
 
@@ -130,15 +131,17 @@ class JailReader(ConfigReader):
 				filterName, filterOpt = extractOptions(flt)
 				if not filterName:
 					raise JailDefError("Invalid filter definition %r" % flt)
-				if not filterOpt.get('logtype'):
-					filterOpt['logtype'] = ['file','journal'][
-						int(self.__opts.get('backend', '').startswith("systemd"))]
 				self.__filter = FilterReader(
 					filterName, self.__name, filterOpt, 
 					share_config=self.share_config, basedir=self.getBaseDir())
 				ret = self.__filter.read()
 				if not ret:
 					raise JailDefError("Unable to read the filter %r" % filterName)
+				if not filterOpt.get('logtype'):
+					# overwrite default logtype backend-related (considering that the filter settings may be overwritten):
+					self.__filter.merge_defaults({
+						'logtype': ['file','journal'][int(self.__opts.get('backend', '').startswith("systemd"))]
+					})
 				# merge options from filter as 'known/...' (all options unfiltered):
 				self.__filter.getOptions(self.__opts, all=True)
 				ConfigReader.merge_section(self, self.__name, self.__filter.getCombined(), 'known/')

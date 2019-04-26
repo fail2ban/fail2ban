@@ -120,6 +120,9 @@ class ConfigReader():
 		except AttributeError:
 			return False
 
+	def merge_defaults(self, d):
+		self._cfg.get_defaults().update(d)
+
 	def merge_section(self, section, *args, **kwargs):
 		try:
 			return self._cfg.merge_section(section, *args, **kwargs)
