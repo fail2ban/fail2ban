@@ -32,14 +32,93 @@ from threading import Lock
 
 from .server.mytime import MyTime
 
-
 PREFER_ENC = locale.getpreferredencoding()
+# correct preferred encoding if lang not set in environment:
+if PREFER_ENC.startswith('ANSI_'): # pragma: no cover
+	if sys.stdout and sys.stdout.encoding is not None and not sys.stdout.encoding.startswith('ANSI_'):
+		PREFER_ENC = sys.stdout.encoding
+	elif all((os.getenv(v) in (None, "") for v in ('LANGUAGE', 'LC_ALL', 'LC_CTYPE', 'LANG'))):
+		PREFER_ENC = 'UTF-8';
+
+# py-2.x: try to minimize influence of sporadic conversion errors on python 2.x,
+# caused by implicit converting of string/unicode (e. g. `str(u"\uFFFD")` produces an error
+# if default encoding is 'ascii');
+if sys.version_info < (3,): # pragma: 3.x no cover
+	# correct default (global system) encoding (mostly UTF-8):
+	def __resetDefaultEncoding(encoding):
+		global PREFER_ENC
+		ode = sys.getdefaultencoding().upper()
+		if ode == 'ASCII' and ode != PREFER_ENC.upper():
+			# setdefaultencoding is normally deleted after site initialized, so hack-in using load of sys-module:
+			_sys = sys
+			if not hasattr(_sys, "setdefaultencoding"):
+				try:
+					from imp import load_dynamic as __ldm
+					_sys = __ldm('_sys', 'sys')
+				except ImportError: # pragma: no cover - only if load_dynamic fails
+					reload(sys)
+					_sys = sys
+			if hasattr(_sys, "setdefaultencoding"):
+				_sys.setdefaultencoding(encoding)
+	# override to PREFER_ENC:
+	__resetDefaultEncoding(PREFER_ENC)
+	del __resetDefaultEncoding
+
+# todo: rewrite explicit (and implicit) str-conversions via encode/decode with IO-encoding (sys.stdout.encoding),
+# e. g. inside tags-replacement by command-actions, etc.
+
+#
+# Following "uni_decode", "uni_string" functions unified python independent any 
+# to string converting.
+#
+# Typical example resp. work-case for understanding the coding/decoding issues:
+#
+#   [isinstance('', str), isinstance(b'', str), isinstance(u'', str)]
+#   [True, True, False]; # -- python2
+#	  [True, False, True]; # -- python3
+#
+if sys.version_info >= (3,): # pragma: 2.x no cover
+	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
+		try:
+			if isinstance(x, bytes):
+				return x.decode(enc, errors)
+			return x
+		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
+			if errors != 'strict': 
+				raise
+			return x.decode(enc, 'replace')
+	def uni_string(x):
+		if not isinstance(x, bytes):
+			return str(x)
+		return x.decode(PREFER_ENC, 'replace')
+else: # pragma: 3.x no cover
+	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
+		try:
+			if isinstance(x, unicode):
+				return x.encode(enc, errors)
+			return x
+		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
+			if errors != 'strict':
+				raise
+			return x.encode(enc, 'replace')
+	if sys.getdefaultencoding().upper() != 'UTF-8': # pragma: no cover - utf-8 is default encoding now
+		def uni_string(x):
+			if not isinstance(x, unicode):
+				return str(x)
+			return x.encode(PREFER_ENC, 'replace')
+	else:
+		uni_string = str
+
+
+def _as_bool(val):
+	return bool(val) if not isinstance(val, basestring) \
+		else val.lower() in ('1', 'on', 'true', 'yes')
 
 
 def formatExceptionInfo():
 	""" Consistently format exception information """
 	cla, exc = sys.exc_info()[:2]
-	return (cla.__name__, str(exc))
+	return (cla.__name__, uni_string(exc))
 
 
 #
@@ -122,6 +201,35 @@ class FormatterWithTraceBack(logging.Formatter):
 		return logging.Formatter.format(self, record)
 
 
+__origLog = logging.Logger._log
+def __safeLog(self, level, msg, args, **kwargs):
+	"""Safe log inject to avoid possible errors by unsafe log-handlers, 
+	concat, str. conversion, representation fails, etc.
+
+	Used to intrude exception-safe _log-method instead of _log-method 
+	of Logger class to be always safe by logging and to get more-info about.
+
+	See testSafeLogging test-case for more information. At least the errors
+	covered in phase 3 seems to affected in all known pypy/python versions 
+	until now.
+	"""
+	try:
+		# if isEnabledFor(level) already called...
+		__origLog(self, level, msg, args, **kwargs)
+	except Exception as e: # pragma: no cover - unreachable if log-handler safe in this python-version
+		try:
+			for args in (
+				("logging failed: %r on %s", (e, uni_string(msg))),
+				("  args: %r", ([uni_string(a) for a in args],))
+			):
+				try:
+					__origLog(self, level, *args)
+				except: # pragma: no cover
+					pass
+		except: # pragma: no cover
+			pass
+logging.Logger._log = __safeLog
+
 def getLogger(name):
 	"""Get logging.Logger instance with Fail2Ban logger name convention
 	"""
@@ -139,7 +247,7 @@ def str2LogLevel(value):
 		raise ValueError("Invalid log level %r" % value)
 	return ll
 
-def getVerbosityFormat(verbosity, fmt=' %(message)s'):
+def getVerbosityFormat(verbosity, fmt=' %(message)s', addtime=True, padding=True):
 	"""Custom log format for the verbose runs
 	"""
 	if verbosity > 1: # pragma: no cover
@@ -148,7 +256,16 @@ def getVerbosityFormat(verbosity, fmt=' %(message)s'):
 		if verbosity > 2:
 			fmt = ' +%(relativeCreated)5d %(thread)X %(name)-25.25s %(levelname)-5.5s' + fmt
 		else:
-			fmt = ' %(asctime)-15s %(thread)X %(levelname)-5.5s' + fmt
+			fmt = ' %(thread)X %(levelname)-5.5s' + fmt
+			if addtime:
+				fmt = ' %(asctime)-15s' + fmt
+	else: # default (not verbose):
+		fmt = "%(name)-23.23s [%(process)d]: %(levelname)-7s" + fmt
+		if addtime:
+			fmt = "%(asctime)s " + fmt
+	# remove padding if not needed:
+	if not padding:
+		fmt = re.sub(r'(?<=\))-?\d+(?:\.\d+)?s', lambda m: 's', fmt)
 	return fmt
 
 
@@ -201,35 +318,32 @@ else:
 		return r
 
 #
-# Following "uni_decode" function unified python independent any to string converting
+# Following function used for parse options from parameter (e.g. `name[p1=0, p2="..."][p3='...']`).
 #
-# Typical example resp. work-case for understanding the coding/decoding issues:
-#
-#   [isinstance('', str), isinstance(b'', str), isinstance(u'', str)]
-#   [True, True, False]; # -- python2
-#	  [True, False, True]; # -- python3
-#
-if sys.version_info >= (3,):
-	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
-		try:
-			if isinstance(x, bytes):
-				return x.decode(enc, errors)
-			return x
-		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
-			if errors != 'strict': 
-				raise
-			return uni_decode(x, enc, 'replace')
-else:
-	def uni_decode(x, enc=PREFER_ENC, errors='strict'):
-		try:
-			if isinstance(x, unicode):
-				return x.encode(enc, errors)
-			return x
-		except (UnicodeDecodeError, UnicodeEncodeError): # pragma: no cover - unsure if reachable
-			if errors != 'strict':
-				raise
-			return uni_decode(x, enc, 'replace')
 
+# regex, to extract list of options:
+OPTION_CRE = re.compile(r"^([^\[]+)(?:\[(.*)\])?\s*$", re.DOTALL)
+# regex, to iterate over single option in option list, syntax:
+# `action = act[p1="...", p2='...', p3=...]`, where the p3=... not contains `,` or ']'
+# since v0.10 separator extended with `]\s*[` for support of multiple option groups, syntax 
+# `action = act[p1=...][p2=...]`
+OPTION_EXTRACT_CRE = re.compile(
+	r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$)', re.DOTALL)
+
+def extractOptions(option):
+	match = OPTION_CRE.match(option)
+	if not match:
+		# TODO proper error handling
+		return None, None
+	option_name, optstr = match.groups()
+	option_opts = dict()
+	if optstr:
+		for optmatch in OPTION_EXTRACT_CRE.finditer(optstr):
+			opt = optmatch.group(1)
+			value = [
+				val for val in optmatch.group(2,3,4) if val is not None][0]
+			option_opts[opt.strip()] = value.strip()
+	return option_name, option_opts
 
 #
 # Following facilities used for safe recursive interpolation of
@@ -280,7 +394,7 @@ def substituteRecursiveTags(inptags, conditional='',
 			if tag in ignore or tag in done: continue
 			# ignore replacing callable items from calling map - should be converted on demand only (by get):
 			if noRecRepl and callable(tags.getRawItem(tag)): continue
-			value = orgval = str(tags[tag])
+			value = orgval = uni_string(tags[tag])
 			# search and replace all tags within value, that can be interpolated using other tags:
 			m = tre_search(value)
 			refCounts = {}
@@ -315,7 +429,7 @@ def substituteRecursiveTags(inptags, conditional='',
 					m = tre_search(value, m.end())
 					continue
 				# if calling map - be sure we've string:
-				if noRecRepl: repl = str(repl)
+				if not isinstance(repl, basestring): repl = uni_string(repl)
 				value = value.replace('<%s>' % rtag, repl)
 				#logSys.log(5, 'value now: %s' % value)
 				# increment reference count:
@@ -359,7 +473,9 @@ class BgService(object):
 		self.__count = self.__threshold;
 		if hasattr(gc, 'set_threshold'):
 			gc.set_threshold(0)
-		gc.disable()
+		# don't disable auto garbage, because of non-reference-counting python's (like pypy),
+		# otherwise it may leak there on objects like unix-socket, etc.
+		#gc.disable()
 
 	def service(self, force=False, wait=False):
 		self.__count -= 1

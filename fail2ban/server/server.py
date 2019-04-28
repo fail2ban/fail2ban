@@ -27,7 +27,6 @@ __license__ = "GPL"
 import threading
 from threading import Lock, RLock
 import logging
-import logging.handlers
 import os
 import signal
 import stat
@@ -38,7 +37,8 @@ from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
-from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, excepthook
+from ..helpers import getLogger, _as_bool, extractOptions, str2LogLevel, \
+	getVerbosityFormat, excepthook
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -152,15 +152,23 @@ class Server:
 			self.__asyncServer.start(sock, force)
 		except AsyncServerException as e:
 			logSys.error("Could not start server: %s", e)
+
+		# Stop (if not yet already executed):
+		self.quit()
+
 		# Removes the PID file.
 		try:
 			logSys.debug("Remove PID file %s", pidfile)
 			os.remove(pidfile)
 		except (OSError, IOError) as e: # pragma: no cover
 			logSys.error("Unable to remove PID file: %s", e)
-		logSys.info("Exiting Fail2ban")
-	
+
 	def quit(self):
+		# Prevent to call quit twice:
+		self.quit = lambda: False
+
+		logSys.info("Shutdown in progress...")
+
 		# Stop communication first because if jail's unban action
 		# tries to communicate via fail2ban-client we get a lockup
 		# among threads.  So the simplest resolution is to stop all
@@ -168,8 +176,12 @@ class Server:
 		# are exiting)
 		# See https://github.com/fail2ban/fail2ban/issues/7
 		if self.__asyncServer is not None:
-			self.__asyncServer.stop()
-			self.__asyncServer = None
+			self.__asyncServer.stop_communication()
+
+		# Restore default signal handlers:
+		if _thread_name() == '_MainThread':
+			for s, sh in self.__prev_signals.iteritems():
+				signal.signal(s, sh)
 
 		# Now stop all the jails
 		self.stopAllJail()
@@ -180,18 +192,11 @@ class Server:
 			self.__db.close()
 			self.__db = None
 
-		# Only now shutdown the logging.
-		if self.__logTarget is not None:
-			with self.__loggingLock:
-				logging.shutdown()
-
-		# Restore default signal handlers:
-		if _thread_name() == '_MainThread':
-			for s, sh in self.__prev_signals.iteritems():
-				signal.signal(s, sh)
-
-		# Prevent to call quit twice:
-		self.quit = lambda: False
+		# Stop async
+		if self.__asyncServer is not None:
+			self.__asyncServer.stop()
+			self.__asyncServer = None
+		logSys.info("Exiting Fail2ban")
 
 	def addJail(self, name, backend):
 		addflg = True
@@ -309,7 +314,7 @@ class Server:
 	
 	# Filter
 	def setIgnoreSelf(self, name, value):
-		self.__jails[name].filter.ignoreSelf = value
+		self.__jails[name].filter.ignoreSelf = _as_bool(value)
 	
 	def getIgnoreSelf(self, name):
 		return self.__jails[name].filter.ignoreSelf
@@ -386,10 +391,17 @@ class Server:
 		return self.__jails[name].filter.getLogTimeZone()
 
 	def setIgnoreCommand(self, name, value):
-		self.__jails[name].filter.setIgnoreCommand(value)
+		self.__jails[name].filter.ignoreCommand = value
 
 	def getIgnoreCommand(self, name):
-		return self.__jails[name].filter.getIgnoreCommand()
+		return self.__jails[name].filter.ignoreCommand
+
+	def setIgnoreCache(self, name, value):
+		value, options = extractOptions("cache["+value+"]")
+		self.__jails[name].filter.ignoreCache = options
+
+	def getIgnoreCache(self, name):
+		return self.__jails[name].filter.ignoreCache
 
 	def setPrefRegex(self, name, value):
 		flt = self.__jails[name].filter
@@ -431,6 +443,12 @@ class Server:
 	def getUseDns(self, name):
 		return self.__jails[name].filter.getUseDns()
 	
+	def setMaxMatches(self, name, value):
+		self.__jails[name].filter.failManager.maxMatches = value
+	
+	def getMaxMatches(self, name):
+		return self.__jails[name].filter.failManager.maxMatches
+	
 	def setMaxRetry(self, name, value):
 		self.__jails[name].filter.setMaxRetry(value)
 	
@@ -461,22 +479,24 @@ class Server:
 	def setBanTime(self, name, value):
 		self.__jails[name].actions.setBanTime(value)
 	
+	def addAttemptIP(self, name, *args):
+		return self.__jails[name].filter.addAttempt(*args)
+
 	def setBanIP(self, name, value):
-		return self.__jails[name].filter.addBannedIP(value)
-		
-	def setUnbanIP(self, name=None, value=None):
+		return self.__jails[name].actions.addBannedIP(value)
+
+	def setUnbanIP(self, name=None, value=None, ifexists=True):
 		if name is not None:
-			# in all jails:
+			# single jail:
 			jails = [self.__jails[name]]
 		else:
-			# single jail:
+			# in all jails:
 			jails = self.__jails.values()
 		# unban given or all (if value is None):
 		cnt = 0
+		ifexists |= (name is None)
 		for jail in jails:
-			cnt += jail.actions.removeBannedIP(value, ifexists=(name is None))
-		if value and not cnt:
-			logSys.info("%s is not banned", value)
+			cnt += jail.actions.removeBannedIP(value, ifexists=ifexists)
 		return cnt
 		
 	def getBanTime(self, name):
@@ -551,6 +571,7 @@ class Server:
 	
 	def setLogTarget(self, target):
 		# check reserved targets in uppercase, don't change target, because it can be file:
+		target, logOptions = extractOptions(target)
 		systarget = target.upper()
 		with self.__loggingLock:
 			# don't set new handlers if already the same
@@ -560,12 +581,17 @@ class Server:
 			if systarget == "INHERITED":
 				self.__logTarget = target
 				return True
+			padding = logOptions.get('padding')
 			# set a format which is simpler for console use
-			fmt = "%(asctime)s %(name)-24s[%(process)d]: %(levelname)-7s %(message)s"
 			if systarget == "SYSLOG":
-				# Syslog daemons already add date to the message.
-				fmt = "%(name)s[%(process)d]: %(levelname)s %(message)s"
-				facility = logging.handlers.SysLogHandler.LOG_DAEMON
+				facility = logOptions.get('facility', 'DAEMON').upper()
+				# backwards compatibility - default no padding for syslog handler:
+				if padding is None: padding = '0'
+				try:
+					facility = getattr(logging.handlers.SysLogHandler, 'LOG_' + facility)
+				except AttributeError: # pragma: no cover
+					logSys.error("Unable to set facility %r, using 'DAEMON'", logOptions.get('facility'))
+					facility = logging.handlers.SysLogHandler.LOG_DAEMON
 				if self.__syslogSocket == "auto":
 					import platform
 					self.__syslogSocket = self.__autoSyslogSocketPaths.get(
@@ -581,7 +607,7 @@ class Server:
 						"Syslog socket file: %s does not exists"
 						" or is not a socket" % self.__syslogSocket)
 					return False
-			elif systarget == "STDOUT":
+			elif systarget in ("STDOUT", "SYSOUT"):
 				hdlr = logging.StreamHandler(sys.stdout)
 			elif systarget == "STDERR":
 				hdlr = logging.StreamHandler(sys.stderr)
@@ -604,7 +630,7 @@ class Server:
 				try:
 					handler.flush()
 					handler.close()
-				except (ValueError, KeyError):  # pragma: no cover
+				except (ValueError, KeyError): # pragma: no cover
 					# Is known to be thrown after logging was shutdown once
 					# with older Pythons -- seems to be safe to ignore there
 					# At least it was still failing on 2.6.2-0ubuntu1 (jaunty)
@@ -615,8 +641,25 @@ class Server:
 			if logger.getEffectiveLevel() <= logging.DEBUG: # pragma: no cover
 				if self.__verbose is None:
 					self.__verbose = logging.DEBUG - logger.getEffectiveLevel() + 1
-			if self.__verbose is not None and self.__verbose > 2: # pragma: no cover
-				fmt = getVerbosityFormat(self.__verbose-1)
+			# If handler don't already add date to the message:
+			addtime = logOptions.get('datetime')
+			if addtime is not None:
+				addtime = _as_bool(addtime)
+			else:
+				addtime = systarget not in ("SYSLOG", "SYSOUT")
+			if padding is not None:
+				padding = _as_bool(padding) 
+			else:
+				padding = True
+			# If log-format is redefined in options:
+			if logOptions.get('format', '') != '':
+				fmt = logOptions.get('format')
+			else:
+				# verbose log-format:
+				verbose = 0
+				if self.__verbose is not None and self.__verbose > 2: # pragma: no cover
+					verbose = self.__verbose-1
+				fmt = getVerbosityFormat(verbose, addtime=addtime, padding=padding)
 			# tell the handler to use this format
 			hdlr.setFormatter(logging.Formatter(fmt))
 			logger.addHandler(hdlr)
@@ -672,6 +715,16 @@ class Server:
 				logSys.info("flush performed on %s" % self.__logTarget)
 			return "flushed"
 			
+	def setThreadOptions(self, value):
+		for o, v in value.iteritems():
+			if o == 'stacksize':
+				threading.stack_size(int(v)*1024)
+			else: # pragma: no cover
+				raise KeyError("unknown option %r" % o)
+
+	def getThreadOptions(self):
+		return {'stacksize': threading.stack_size() // 1024}
+
 	def setDatabase(self, filename):
 		# if not changed - nothing to do
 		if self.__db and self.__db.filename == filename:

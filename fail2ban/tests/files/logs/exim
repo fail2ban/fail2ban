@@ -20,6 +20,8 @@
 2013-06-02 09:05:48 [18505] SMTP protocol synchronization error (next input sent too soon: pipelining was not advertised): rejected "RSET" H=ba77.mx83.fr [82.96.160.77]:58302 I=[1.2.3.4]:25 next input="QUIT\r\n"
 # failJSON: { "time": "2013-06-02T09:22:05", "match": true , "host": "163.14.21.161" }
 2013-06-02 09:22:05 [19591] SMTP call from pc012-6201.spo.scu.edu.tw [163.14.21.161]:3767 I=[1.2.3.4]:25 dropped: too many nonmail commands (last was "RSET")
+# failJSON: { "time": "2013-06-02T09:22:06", "match": true , "host": "192.0.2.109" }
+2013-06-02 09:22:06 SMTP call from [192.0.2.109] dropped: too many syntax or protocol errors (last command was "AUTH LOGIN")
 # failJSON: { "time": "2013-06-02T15:06:18", "match": true , "host": "46.20.35.114" }
 2013-06-02 15:06:18 H=(VM-WIN2K3-1562) [46.20.35.114] sender verify fail for <usfh@technological-systems.com>: Unknown user
 # failJSON: { "time": "2013-06-07T02:02:09", "match": true , "host": "91.232.21.92" }
@@ -53,7 +55,7 @@
 # failJSON: { "time": "2016-03-21T06:38:05", "match": true , "host": "49.212.207.15" }
 2016-03-21 06:38:05 [5718] no MAIL in SMTP connection from www3005.sakura.ne.jp [49.212.207.15]:28890 I=[172.89.0.6]:25 D=21s C=EHLO,STARTTLS
 # failJSON: { "time": "2016-03-21T06:57:36", "match": true , "host": "122.165.71.116" }
-2016-03-21 06:57:36 [5908] no MAIL in SMTP connection from [122.165.71.116]:2056 I=[172.89.0.6]:25 D=10s
+2016-03-21 06:57:36 [5908] no MAIL in SMTP connection from [122.165.71.116]:2056 I=[172.89.0.6]:25 D=0s
 # failJSON: { "time": "2016-03-21T06:57:36", "match": true , "host": "122.165.71.116" }
 2016-03-21 06:57:36 [5908] no MAIL in SMTP connection from [122.165.71.116] I=[172.89.0.6]:25 D=10s
 # failJSON: { "time": "2016-03-21T04:07:49", "match": true , "host": "174.137.147.204" }
@@ -76,3 +78,24 @@
 2017-04-23 22:45:59 fixed_login authenticator failed for bad.host.example.com [192.0.2.2]:54412 I=[172.89.0.6]:587: 535 Incorrect authentication data (set_id=user@example.com)
 # failJSON: { "time": "2017-05-01T07:42:42", "match": true , "host": "192.0.2.3", "desc": "rejected RCPT - Unrouteable address" }
 2017-05-01 07:42:42 H=some.rev.dns.if.found (the.connector.reports.this.name) [192.0.2.3] F=<some.name@some.domain> rejected RCPT <some.invalid.name@a.domain>: Unrouteable address
+
+# failJSON: { "time": "2017-11-28T14:14:30", "match": true , "host": "192.0.2.4", "desc": "lower case AUTH command" }
+2017-11-28 14:14:30 SMTP protocol error in "auth login" H=(roxzgj) [192.0.2.4] AUTH command used when not advertised
+# failJSON: { "time": "2017-11-28T14:14:31", "match": true , "host": "192.0.2.5", "desc": "mixed case AUTH command" }
+2017-11-28 14:14:31 SMTP protocol error in "aUtH lOgIn" H=(roxzgj) [192.0.2.5] AUTH command used when not advertised
+# failJSON: { "time": "2017-11-28T14:14:32", "match": true , "host": "192.0.2.6", "desc": "quoted injecting on AUTH command" }
+2017-11-28 14:14:32 SMTP protocol error in "aUtH lOgIn" H=(test) [8.8.8.8]" H=(roxzgj) [192.0.2.6] AUTH command used when not advertised
+
+## no matches with `mode = normal`:
+
+# failJSON: { "match": false , "desc": "aggressive mode only" }
+2017-12-03 08:32:00 no host name found for IP address 192.0.2.8
+# failJSON: { "match": false , "desc": "aggressive mode only" }
+2017-12-03 08:51:35 no IP address found for host test.example.com (during SMTP connection from [192.0.2.9])
+
+# filterOptions: [{"mode": "aggressive"}]
+
+# failJSON: { "time": "2017-12-03T08:32:00", "match": true , "host": "192.0.2.8", "desc": "no host found for IP" }
+2017-12-03 08:32:00 no host name found for IP address 192.0.2.8
+# failJSON: { "time": "2017-12-03T08:51:35", "match": true , "host": "192.0.2.9", "desc": "no IP found for host" }
+2017-12-03 08:51:35 no IP address found for host test.example.com (during SMTP connection from [192.0.2.9])

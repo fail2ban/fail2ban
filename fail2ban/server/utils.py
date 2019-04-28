@@ -27,8 +27,14 @@ import os
 import signal
 import subprocess
 import sys
+from	 threading import Lock
 import time
 from ..helpers import getLogger, _merge_dicts, uni_decode
+
+try:
+	from collections import OrderedDict
+except ImportError: # pragma: 3.x no cover
+	OrderedDict = dict
 
 if sys.version_info >= (3, 3):
 	import importlib.machinery
@@ -69,7 +75,8 @@ class Utils():
 
 		def __init__(self, *args, **kwargs):
 			self.setOptions(*args, **kwargs)
-			self._cache = {}
+			self._cache = OrderedDict()
+			self.__lock = Lock()
 
 		def setOptions(self, maxCount=1000, maxTime=60):
 			self.maxCount = maxCount
@@ -83,27 +90,40 @@ class Utils():
 			if v: 
 				if v[1] > time.time():
 					return v[0]
-				del self._cache[k]
+				self.unset(k)
 			return defv
 			
 		def set(self, k, v):
 			t = time.time()
-			cache = self._cache  # for shorter local access
-			# clean cache if max count reached:
-			if len(cache) >= self.maxCount:
-				for (ck, cv) in cache.items():
-					if cv[1] < t:
-						del cache[ck]
-				# if still max count - remove any one:
+			# avoid multiple modification of dict multi-threaded:
+			cache = self._cache
+			with self.__lock:
+				# clean cache if max count reached:
 				if len(cache) >= self.maxCount:
-					cache.popitem()
-			cache[k] = (v, t + self.maxTime)
+					if OrderedDict is not dict:
+						# ordered (so remove some from ahead, FIFO)
+						while cache:
+							(ck, cv) = cache.popitem(last=False)
+							# if not yet expired (but has free slot for new entry):
+							if cv[1] > t and len(cache) < self.maxCount:
+								break
+					else: # pragma: 3.x no cover (dict is in 2.6 only)
+						remlst = []
+						for (ck, cv) in cache.iteritems():
+							# if expired:
+							if cv[1] <= t:
+								remlst.append(ck)
+						for ck in remlst:
+							self._cache.pop(ck, None)
+						# if still max count - remove any one:
+						while cache and len(cache) >= self.maxCount:
+							cache.popitem()
+				# set now:
+				cache[k] = (v, t + self.maxTime)
 
 		def unset(self, k):
-			try:
-				del self._cache[k]
-			except KeyError: # pragme: no cover
-				pass
+			with self.__lock:
+				self._cache.pop(k, None)
 
 
 	@staticmethod
@@ -224,8 +244,8 @@ class Utils():
 				return False if not output else (False, stdout, stderr, retcode)
 
 		std_level = logging.DEBUG if retcode in success_codes else logging.ERROR
-		if std_level > logSys.getEffectiveLevel():
-			if logCmd: logCmd(std_level-1); logCmd = None
+		if std_level >= logSys.getEffectiveLevel():
+			if logCmd: logCmd(std_level-1 if std_level == logging.DEBUG else logging.ERROR); logCmd = None
 		# if we need output (to return or to log it): 
 		if output or std_level >= logSys.getEffectiveLevel():
 

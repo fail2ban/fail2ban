@@ -31,7 +31,7 @@ import time
 import unittest
 
 # Check if local fail2ban module exists, and use if it exists by
-# modifying the path. This is such that tests can be used in dev
+# modifying the path. This is done so that tests can be used in dev
 # environment.
 if os.path.exists("fail2ban/__init__.py"):
 	sys.path.insert(0, ".")

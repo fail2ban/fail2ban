@@ -43,7 +43,7 @@ class FailManager:
 		self.__maxRetry = 3
 		self.__maxTime = 600
 		self.__failTotal = 0
-		self.maxEntries = 50
+		self.maxMatches = 50
 		self.__bgSvc = BgService()
 	
 	def setFailTotal(self, value):
@@ -87,7 +87,7 @@ class FailManager:
 					attempt = 1
 				else:
 					# will be incremented / extended (be sure we have at least +1 attempt):
-					matches = ticket.getMatches()
+					matches = ticket.getMatches() if self.maxMatches else None
 					attempt = ticket.getAttempt()
 					if attempt <= 0:
 						attempt += 1
@@ -97,10 +97,13 @@ class FailManager:
 					fData.setLastReset(unixTime)
 					fData.setRetry(0)
 				fData.inc(matches, attempt, count)
-				# truncate to maxEntries:
-				matches = fData.getMatches()
-				if len(matches) > self.maxEntries:
-					fData.setMatches(matches[-self.maxEntries:])
+				# truncate to maxMatches:
+				if self.maxMatches:
+					matches = fData.getMatches()
+					if len(matches) > self.maxMatches:
+						fData.setMatches(matches[-self.maxMatches:])
+				else:
+					fData.setMatches(None)
 			except KeyError:
 				# if already FailTicket - add it direct, otherwise create (using copy all ticket data):
 				if isinstance(ticket, FailTicket):
@@ -159,7 +162,7 @@ class FailManager:
 	
 	def toBan(self, fid=None):
 		with self.__lock:
-			for fid in ([fid] if fid != None and fid in self.__failList else self.__failList):
+			for fid in ([fid] if fid is not None and fid in self.__failList else self.__failList):
 				data = self.__failList[fid]
 				if data.getRetry() >= self.__maxRetry:
 					del self.__failList[fid]

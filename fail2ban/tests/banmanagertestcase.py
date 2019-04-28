@@ -156,7 +156,7 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		if tc.available[0]:
 			cymru_info = self.__banManager.getBanListExtendedCymruInfo(
 				timeout=(2 if unittest.F2B.fast else 20))
-		else:
+		else: # pragma: no cover - availability (once after error case only)
 			cymru_info = tc.available[1]
 		if cymru_info.get("error"): # pragma: no cover - availability
 			tc.available = False, cymru_info
@@ -203,7 +203,7 @@ class StatusExtendedCymruInfo(unittest.TestCase):
 		ticket = BanTicket("8.0.0.0", 1167606000.0)
 		self.assertTrue(self.__banManager.addBanTicket(ticket))
 		cymru_info = self._getBanListExtendedCymruInfo()
-		self.assertDictEqual(dict((k, sorted(v)) for k, v in cymru_info.iteritems()),
-						  {"asn": sorted(["nxdomain", "3356",]),
-						   "country": sorted(["nxdomain", "US"]),
-						   "rir": sorted(["nxdomain", "arin"])})
+		self.assertSortedEqual(cymru_info,
+						  {"asn": ["nxdomain", "3356",],
+						   "country": ["nxdomain", "US"],
+						   "rir": ["nxdomain", "arin"]}, level=-1, key=str)

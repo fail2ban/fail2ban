@@ -125,6 +125,15 @@
 # failJSON: { "time": "2013-11-18T22:39:33", "match": true , "host": "91.49.82.139" }
 [Mon Nov 18 22:39:33 2013] [error] [client 91.49.82.139] user gg not found: /, referer: http://sj.hopto.org/management.html
 
+# failJSON: { "time": "2018-03-28T01:31:42", "match": true , "host": "91.49.82.139" }
+[Wed Mar 28 01:31:42.355210 2018] [ssl:error] [pid 6586] [client 91.49.82.139:58028] AH02031: Hostname www.testdom.com provided via SNI, but no hostname provided in HTTP request
+
+# failJSON: { "time": "2018-03-28T01:31:42", "match": true , "host": "91.49.82.139" }
+[Wed Mar 28 01:31:42.355210 2018] [ssl:error] [pid 6586] [client 91.49.82.139:58028] AH02032: Hostname www.testdom.com provided via SNI and hostname dummy.com provided via HTTP have no compatible SSL setup
+
+# failJSON: { "time": "2018-03-28T01:31:42", "match": true , "host": "91.49.82.139" }
+[Wed Mar 28 01:31:42.355210 2018] [ssl:error] [pid 6586] [client 91.49.82.139:58028] AH02033: No hostname was provided via SNI for a name based virtual host
+
 # filterOptions: {"logging": "syslog"}
 
 # failJSON: { "time": "2005-02-15T16:23:00", "match": true , "host": "192.0.2.1", "desc": "using syslog (ErrorLog syslog)" }

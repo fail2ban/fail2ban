@@ -1,4 +1,4 @@
-#!/sbin/runscript
+#!/sbin/openrc-run
 # This file is part of Fail2Ban.
 #
 # Fail2Ban is free software; you can redistribute it and/or modify
@@ -18,6 +18,9 @@
 # Author: Sireyessire, Cyril Jaquier
 #
 
+description="Daemon to ban hosts that cause multiple authentication errors"
+description_reload="reload configuration"
+description_showlog="show fail2ban logs"
 extra_started_commands="reload showlog"
 
 FAIL2BAN="/usr/bin/fail2ban-client ${FAIL2BAN_OPTIONS}"
@@ -41,7 +44,7 @@ start() {
 
 stop() {
 	ebegin "Stopping fail2ban"
-	start-stop-daemon --stop --pidfile /var/run/fail2ban/fail2ban.pid \
+	start-stop-daemon --stop --pidfile /var/run/fail2ban/fail2ban.pid --retry 30 \
 	-- ${FAIL2BAN} stop
 	eend $? "Failed to stop fail2ban"
 }

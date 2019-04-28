@@ -90,11 +90,16 @@ indicates that the specified file is to be parsed after the current file.
 .RE
 
 Using Python "string interpolation" mechanisms, other definitions are allowed and can later be used within other definitions as %(name)s.
-Additionally fail2ban has an extended interpolation feature named \fB%(known/parameter)s\fR (means last known option with name \fBparameter\fR). This interpolation makes possible to extend a stock filter or jail regexp in .local file (opposite to simply set failregex/ignoreregex that overwrites it), e.g.
+
+Fail2ban has more advanced syntax (similar python extended interpolation). This extended interpolation is using \fB%(section/parameter)s\fR to denote a value from a foreign section.
+.br
+Besides cross section interpolation the value of parameter in \fI[DEFAULT]\fR section can be retrieved with \fB%(default/parameter)s\fR.
+.br
+Fail2ban supports also another feature named \fB%(known/parameter)s\fR (means last known option with name \fBparameter\fR). This interpolation makes possible to extend a stock filter or jail regexp in .local file (opposite to simply set failregex/ignoreregex that overwrites it), e.g.
 
 .RS
 .nf
-baduseragents = IE|wget
+baduseragents = IE|wget|%(my-settings/baduseragents)s
 failregex = %(known/failregex)s
             useragent=%(baduseragents)s
 .fi
@@ -122,9 +127,7 @@ Comments: use '#' for comment lines and '; ' (space is important) for inline com
 
 .SH "FAIL2BAN CONFIGURATION FILE(S) (\fIfail2ban.conf\fB)"
 
-These files have one section, [Definition].
-
-The items that can be set are:
+The items that can be set in section [Definition] are:
 .TP
 .B loglevel
 verbosity level of log output: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG, TRACEDEBUG, HEAVYDEBUG or corresponding numeric value (50-5). Default: ERROR (equal 40)
@@ -153,10 +156,24 @@ Database filename. Default: /var/lib/fail2ban/fail2ban.sqlite3
 .br
 This defines where the persistent data for fail2ban is stored. This persistent data allows bans to be reinstated and continue reading log files from the last read position when fail2ban is restarted. A value of \fINone\fR disables this feature.
 .TP
+.B dbmaxmatches
+Max number of matches stored in database per ticket. Default: 10
+.br
+This option sets the max number of matched log-lines could be stored per ticket in the database. This also affects values resolvable via tags \fB<ipmatches>\fR and \fB<ipjailmatches>\fR in actions.
+.TP
 .B dbpurgeage
 Database purge age in seconds. Default: 86400 (24hours)
 .br
 This sets the age at which bans should be purged from the database.
+
+.RE
+The config parameters of section [Thread] are:
+
+.TP
+.B stacksize
+Stack size of each thread in fail2ban. Default: 0 (platform or configured default)
+.br
+This specifies the stack size (in KiB) to be used for subsequently created threads, and must be 0 or a positive integer value of at least 32.
 
 .SH "JAIL CONFIGURATION FILE(S) (\fIjail.conf\fB)"
 The following options are applicable to any jail. They appear in a section specifying the jail name or in the \fI[DEFAULT]\fR section which defines default values to be used if not specified in the individual section.
@@ -228,7 +245,19 @@ list of IPs not to ban. They can include a DNS resp. CIDR mask too. The option a
 command that is executed to determine if the current candidate IP for banning (or failure-ID for raw IDs) should not be banned. The option affects additionally to \fBignoreself\fR and \fBignoreip\fR and will be first executed if both don't hit.
 .br
 IP will not be banned if command returns successfully (exit code 0).
-Like ACTION FILES, tags like <ip> are can be included in the ignorecommand value and will be substituted before execution. Currently only <ip> is supported however more will be added later.
+Like ACTION FILES, tags like <ip> are can be included in the ignorecommand value and will be substituted before execution.
+.TP
+.B ignorecache
+provide cache parameters (default disabled) for ignore failure check (caching of the result from `ignoreip`, `ignoreself` and `ignorecommand`), syntax:
+
+.RS
+.nf
+        ignorecache = key="<F-USER>@<ip-host>", max-count=100, max-time=5m
+        ignorecommand = if [ "<F-USER>" = "technical" ] && [ "<ip-host>" = "my-host.example.com" ]; then exit 0; fi;
+                        exit 1
+.fi
+This will cache the result of \fBignorecommand\fR (does not call it repeatedly) for 5 minutes (cache time) for maximal 100 entries (cache size), using values substituted like "user@host" as cache-keys.  Set option \fBignorecache\fR to empty value disables the cache.
+.RE
 .TP
 .B bantime
 effective ban duration (in seconds or time abbreviation format).
@@ -252,6 +281,9 @@ regex (Python \fBreg\fRular \fBex\fRpression) to be added to the filter's failre
 .TP
 .B ignoreregex
 regex which, if the log line matches, would cause Fail2Ban not consider that line.  This line will be ignored even if it matches a failregex of the jail or any of its filters.
+.TP
+.B maxmatches
+max number of matched log-lines the jail would hold in memory per ticket. By default it is the same value as \fBmaxretry\fR of jail (or default).  This option also affects values resolvable via tag \fB<matches>\fR in actions.
 
 .SS Backends
 Available options are listed below.

@@ -33,23 +33,13 @@ from .configreader import ConfigReaderUnshared, ConfigReader
 from .filterreader import FilterReader
 from .actionreader import ActionReader
 from ..version import version
-from ..helpers import getLogger
-from ..helpers import splitwords
+from ..helpers import getLogger, extractOptions, splitwords
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
 
 
 class JailReader(ConfigReader):
-	
-	# regex, to extract list of options:
-	optionCRE = re.compile(r"^([^\[]+)(?:\[(.*)\])?\s*$", re.DOTALL)
-	# regex, to iterate over single option in option list, syntax:
-	# `action = act[p1="...", p2='...', p3=...]`, where the p3=... not contains `,` or ']'
-	# since v0.10 separator extended with `]\s*[` for support of multiple option groups, syntax 
-	# `action = act[p1=...][p2=...]`
-	optionExtractRE = re.compile(
-		r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$)', re.DOTALL)
 	
 	def __init__(self, name, force_enable=False, **kwargs):
 		ConfigReader.__init__(self, **kwargs)
@@ -98,13 +88,12 @@ class JailReader(ConfigReader):
 
 	def getOptions(self):
 		opts1st = [["bool", "enabled", False],
+				["string", "backend", "auto"],
 				["string", "filter", ""]]
 		opts = [["bool", "enabled", False],
-				["string", "logpath", None],
-				["string", "logtimezone", None],
-				["string", "logencoding", None],
 				["string", "backend", "auto"],
 				["int",    "maxretry", None],
+				["int",    "maxmatches", None],
 				["string", "findtime", None],
 				["string", "bantime", None],
 				["string", "usedns", None], # be sure usedns is before all regex(s) in stream
@@ -113,13 +102,18 @@ class JailReader(ConfigReader):
 				["string", "ignorecommand", None],
 				["bool",   "ignoreself", None],
 				["string", "ignoreip", None],
+				["string", "ignorecache", None],
 				["string", "filter", ""],
 				["string", "datepattern", None],
+				["string", "logtimezone", None],
+				["string", "logencoding", None],
+				["string", "logpath", None], # logpath after all log-related data (backend, date-pattern, etc)
 				["string", "action", ""]]
 
 		# Before interpolation (substitution) add static options always available as default:
-		defsec = self._cfg.get_defaults()
-		defsec["fail2ban_version"] = version
+		self.merge_defaults({
+			"fail2ban_version": version
+		})
 
 		try:
 
@@ -134,7 +128,7 @@ class JailReader(ConfigReader):
 			# Read filter
 			flt = self.__opts["filter"]
 			if flt:
-				filterName, filterOpt = JailReader.extractOptions(flt)
+				filterName, filterOpt = extractOptions(flt)
 				if not filterName:
 					raise JailDefError("Invalid filter definition %r" % flt)
 				self.__filter = FilterReader(
@@ -143,6 +137,11 @@ class JailReader(ConfigReader):
 				ret = self.__filter.read()
 				if not ret:
 					raise JailDefError("Unable to read the filter %r" % filterName)
+				if not filterOpt.get('logtype'):
+					# overwrite default logtype backend-related (considering that the filter settings may be overwritten):
+					self.__filter.merge_defaults({
+						'logtype': ['file','journal'][int(self.__opts.get('backend', '').startswith("systemd"))]
+					})
 				# merge options from filter as 'known/...' (all options unfiltered):
 				self.__filter.getOptions(self.__opts, all=True)
 				ConfigReader.merge_section(self, self.__name, self.__filter.getCombined(), 'known/')
@@ -160,12 +159,21 @@ class JailReader(ConfigReader):
 				self.__filter.getOptions(self.__opts)
 		
 			# Read action
-			for act in self.__opts["action"].split('\n'):
+			prevln = ''
+			actlst = self.__opts["action"].split('\n')
+			for n, act in enumerate(actlst):
 				try:
 					if not act:			  # skip empty actions
 						continue
-					actName, actOpt = JailReader.extractOptions(act)
+					# join with previous line if needed (consider possible new-line):
+					if prevln: act = prevln + '\n' + act
+					actName, actOpt = extractOptions(act)
+					prevln = ''
 					if not actName:
+						# consider possible new-line, so repeat with joined next line's:
+						if n < len(actlst) - 1:
+							prevln = act
+							continue
 						raise JailDefError("Invalid action definition %r" % act)
 					if actName.endswith(".py"):
 						self.__actions.append([
@@ -223,28 +231,30 @@ class JailReader(ConfigReader):
 			stream.extend(self.__filter.convert())
 		for opt, value in self.__opts.iteritems():
 			if opt == "logpath":
-				if self.__opts.get('backend', None).startswith("systemd"): continue
+				if self.__opts.get('backend', '').startswith("systemd"): continue
 				found_files = 0
 				for path in value.split("\n"):
 					path = path.rsplit(" ", 1)
 					path, tail = path if len(path) > 1 else (path[0], "head")
 					pathList = JailReader._glob(path)
 					if len(pathList) == 0:
-						logSys.error("No file(s) found for glob %s" % path)
+						logSys.notice("No file(s) found for glob %s" % path)
 					for p in pathList:
 						found_files += 1
 						stream.append(
 							["set", self.__name, "addlogpath", p, tail])
-				if not (found_files or allow_no_files):
-					raise ValueError(
-						"Have not found any log file for %s jail" % self.__name)
+				if not found_files:
+					msg = "Have not found any log file for %s jail" % self.__name
+					if not allow_no_files:
+						raise ValueError(msg)
+					logSys.warning(msg)
+					
 			elif opt == "logencoding":
 				stream.append(["set", self.__name, "logencoding", value])
 			elif opt == "backend":
 				backend = value
 			elif opt == "ignoreip":
-				for ip in splitwords(value):
-					stream.append(["set", self.__name, "addignoreip", ip])
+				stream.append(["set", self.__name, "addignoreip"] + splitwords(value))
 			elif opt in ("failregex", "ignoreregex"):
 				multi = []
 				for regex in value.split('\n'):
@@ -265,22 +275,5 @@ class JailReader(ConfigReader):
 		stream.insert(0, ["add", self.__name, backend])
 		return stream
 	
-	@staticmethod
-	def extractOptions(option):
-		match = JailReader.optionCRE.match(option)
-		if not match:
-			# TODO proper error handling
-			return None, None
-		option_name, optstr = match.groups()
-		option_opts = dict()
-		if optstr:
-			for optmatch in JailReader.optionExtractRE.finditer(optstr):
-				opt = optmatch.group(1)
-				value = [
-					val for val in optmatch.group(2,3,4) if val is not None][0]
-				option_opts[opt.strip()] = value.strip()
-		return option_name, option_opts
-
-
 class JailDefError(Exception):
 	pass

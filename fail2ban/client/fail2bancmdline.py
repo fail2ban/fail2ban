@@ -25,7 +25,7 @@ import logging
 import os
 import sys
 
-from ..version import version
+from ..version import version, normVersion
 from ..protocol import printFormatted
 from ..helpers import getLogger, str2LogLevel, getVerbosityFormat
 
@@ -78,12 +78,11 @@ class Fail2banCmdLine():
 		for o in obj.__dict__:
 			self.__dict__[o] = obj.__dict__[o]
 
-	def dispVersion(self):
-		output("Fail2Ban v" + version)
-		output("")
-		output("Copyright (c) 2004-2008 Cyril Jaquier, 2008- Fail2Ban Contributors")
-		output("Copyright of modifications held by their respective authors.")
-		output("Licensed under the GNU General Public License v2 (GPL).")
+	def dispVersion(self, short=False):
+		if not short:
+			output("Fail2Ban v" + version)
+		else:
+			output(normVersion())
 
 	def dispUsage(self):
 		""" Prints Fail2Ban command line options and exits
@@ -99,9 +98,10 @@ class Fail2banCmdLine():
 		output("    -s <FILE>               socket path")
 		output("    -p <FILE>               pidfile path")
 		output("    --loglevel <LEVEL>      logging level")
-		output("    --logtarget <FILE>|STDOUT|STDERR|SYSLOG")
+		output("    --logtarget <TARGET>    logging target, use file-name or stdout, stderr, syslog or sysout.")
 		output("    --syslogsocket auto|<FILE>")
 		output("    -d                      dump configuration. For debugging")
+		output("    --dp, --dump-pretty     dump the configuration using more human readable representation")
 		output("    -t, --test              test configuration (can be also specified with start parameters)")
 		output("    -i                      interactive mode")
 		output("    -v                      increase verbosity")
@@ -113,7 +113,7 @@ class Fail2banCmdLine():
 		output("    --timeout               timeout to wait for the server (for internal usage only, don't read configuration)")
 		output("    --str2sec <STRING>      convert time abbreviation format to seconds")
 		output("    -h, --help              display this help message")
-		output("    -V, --version           print the version")
+		output("    -V, --version           print the version (-V returns machine-readable short format)")
 
 		if not caller.endswith('server'):
 			output("")
@@ -137,8 +137,8 @@ class Fail2banCmdLine():
 				self._conf["pidfile"] = opt[1]
 			elif o.startswith("--log") or o.startswith("--sys"):
 				self._conf[ o[2:] ] = opt[1]
-			elif o == "-d":
-				self._conf["dump"] = True
+			elif o in ["-d", "--dp", "--dump-pretty"]:
+				self._conf["dump"] = True if o == "-d" else 2
 			elif o == "-t" or o == "--test":
 				self.cleanConfOnly = True
 				self._conf["test"] = True
@@ -167,7 +167,7 @@ class Fail2banCmdLine():
 				self.dispUsage()
 				return True
 			elif o in ["-V", "--version"]:
-				self.dispVersion()
+				self.dispVersion(o == "-V")
 				return True
 		return None
 
@@ -184,7 +184,8 @@ class Fail2banCmdLine():
 			# Reads the command line options.
 			try:
 				cmdOpts = 'hc:s:p:xfbdtviqV'
-				cmdLongOpts = ['loglevel=', 'logtarget=', 'syslogsocket=', 'test', 'async', 'timeout=', 'str2sec=', 'help', 'version']
+				cmdLongOpts = ['loglevel=', 'logtarget=', 'syslogsocket=', 'test', 'async',
+					'timeout=', 'str2sec=', 'help', 'version', 'dp', '--dump-pretty']
 				optList, self._args = getopt.getopt(self._argv[1:], cmdOpts, cmdLongOpts)
 			except getopt.GetoptError:
 				self.dispUsage()
@@ -240,7 +241,10 @@ class Fail2banCmdLine():
 				if readcfg:
 					ret, stream = self.readConfig()
 					readcfg = False
-				self.dumpConfig(stream)
+				if stream is not None:
+					self.dumpConfig(stream, self._conf["dump"] == 2)
+				else: # pragma: no cover
+					output("ERROR: The configuration stream failed because of the invalid syntax.")
 				if not self._conf.get("test", False):
 					return ret
 
@@ -275,7 +279,8 @@ class Fail2banCmdLine():
 			self.configurator.readAll()
 			ret = self.configurator.getOptions(jail, self._conf, 
 				ignoreWrong=not self.cleanConfOnly)
-			self.configurator.convertToProtocol()
+			self.configurator.convertToProtocol(
+				allow_no_files=self._conf.get("dump", False))
 			stream = self.configurator.getConfigStream()
 		except Exception as e:
 			logSys.error("Failed during configuration: %s" % e)
@@ -283,9 +288,15 @@ class Fail2banCmdLine():
 		return ret, stream
 
 	@staticmethod
-	def dumpConfig(cmd):
+	def dumpConfig(cmd, pretty=False):
+		if pretty:
+			from pprint import pformat
+			def _output(s):
+				output(pformat(s, width=1000, indent=2))
+		else:
+			_output = output
 		for c in cmd:
-			output(c)
+			_output(c)
 		return True
 
 	#

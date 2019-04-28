@@ -64,15 +64,19 @@ class DNSUtils:
 		if ips is not None: 
 			return ips
 		# retrieve ips
-		ips = list()
+		ips = set()
 		saveerr = None
 		for fam, ipfam in ((socket.AF_INET, IPAddr.FAM_IPv4), (socket.AF_INET6, IPAddr.FAM_IPv6)):
 			try:
 				for result in socket.getaddrinfo(dns, None, fam, 0, socket.IPPROTO_TCP):
-					ip = IPAddr(result[4][0], ipfam)
+					# if getaddrinfo returns something unexpected:
+					if len(result) < 4 or not len(result[4]): continue
+					# get ip from `(2, 1, 6, '', ('127.0.0.1', 0))`,be sure we've an ip-string
+					# (some python-versions resp. host configurations causes returning of integer there):
+					ip = IPAddr(str(result[4][0]), ipfam)
 					if ip.isValid:
-						ips.append(ip)
-			except socket.error as e:
+						ips.add(ip)
+			except Exception as e:
 				saveerr = e
 		if not ips and saveerr:
 			logSys.warning("Unable to find a corresponding IP address for %s: %s", dns, saveerr)
@@ -99,19 +103,19 @@ class DNSUtils:
 	def textToIp(text, useDns):
 		""" Return the IP of DNS found in a given text.
 		"""
-		ipList = list()
+		ipList = set()
 		# Search for plain IP
 		plainIP = IPAddr.searchIP(text)
 		if plainIP is not None:
 			ip = IPAddr(plainIP)
 			if ip.isValid:
-				ipList.append(ip)
+				ipList.add(ip)
 
 		# If we are allowed to resolve -- give it a try if nothing was found
 		if useDns in ("yes", "warn") and not ipList:
 			# Try to get IP from possible DNS
 			ip = DNSUtils.dnsToIp(text)
-			ipList.extend(ip)
+			ipList.update(ip)
 			if ip and useDns == "warn":
 				logSys.warning("Determined IP using DNS Lookup: %s = %s",
 					text, ipList)
@@ -193,7 +197,7 @@ class IPAddr(object):
 	__slots__ = '_family','_addr','_plen','_maskplen','_raw'
 
 	# todo: make configurable the expired time and max count of cache entries:
-	CACHE_OBJ = Utils.Cache(maxCount=1000, maxTime=5*60)
+	CACHE_OBJ = Utils.Cache(maxCount=10000, maxTime=5*60)
 
 	CIDR_RAW = -2
 	CIDR_UNSPEC = -1
@@ -201,6 +205,10 @@ class IPAddr(object):
 	FAM_IPv6 = CIDR_RAW - socket.AF_INET6
 
 	def __new__(cls, ipstr, cidr=CIDR_UNSPEC):
+		if cidr == IPAddr.CIDR_RAW: # don't cache raw
+			ip = super(IPAddr, cls).__new__(cls)
+			ip.__init(ipstr, cidr)
+			return ip
 		# check already cached as IPAddr
 		args = (ipstr, cidr)
 		ip = IPAddr.CACHE_OBJ.get(args)
@@ -217,7 +225,8 @@ class IPAddr(object):
 					return ip
 		ip = super(IPAddr, cls).__new__(cls)
 		ip.__init(ipstr, cidr)
-		IPAddr.CACHE_OBJ.set(args, ip)
+		if ip._family != IPAddr.CIDR_RAW:
+			IPAddr.CACHE_OBJ.set(args, ip)
 		return ip
 
 	@staticmethod
@@ -294,7 +303,7 @@ class IPAddr(object):
 			self._family = IPAddr.CIDR_RAW
 
 	def __repr__(self):
-		return self.ntoa
+		return repr(self.ntoa)
 
 	def __str__(self):
 		return self.ntoa

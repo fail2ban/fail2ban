@@ -117,12 +117,7 @@ class FilterPoll(FileFilter):
 
 				self.ticks += 1
 				if self.__modified:
-					try:
-						while True:
-							ticket = self.failManager.toBan()
-							self.jail.putFailTicket(ticket)
-					except FailManagerEmpty:
-						self.failManager.cleanup(MyTime.time())
+					self.performBan()
 					self.__modified = False
 			except Exception as e: # pragma: no cover
 				if not self.active: # if not active - error by stop...
@@ -158,13 +153,17 @@ class FilterPoll(FileFilter):
 			self.__prevStats[filename] = stats
 			return True
 		except Exception as e:
-			# stil alive (may be deleted because multi-threaded):
+			# still alive (may be deleted because multi-threaded):
 			if not self.getLog(filename) or self.__prevStats.get(filename) is None:
 				logSys.warning("Log %r seems to be down: %s", filename, e)
 				return False
 			# log error:
 			if self.__file404Cnt[filename] < 2:
-				logSys.error("Unable to get stat on %s because of: %s",
+				if e.errno == 2:
+					logSys.debug("Log absence detected (possibly rotation) for %s, reason: %s",
+							 filename, e)
+				else: # pragma: no cover
+					logSys.error("Unable to get stat on %s because of: %s",
 							 filename, e, 
 							 exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 			# increase file and common error counters:
@@ -175,3 +174,6 @@ class FilterPoll(FileFilter):
 				self.__file404Cnt[filename] = 0
 				self.delLogPath(filename)
 			return False
+
+	def getPendingPaths(self):
+		return self.__file404Cnt.keys()

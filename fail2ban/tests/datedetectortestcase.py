@@ -77,6 +77,48 @@ class DateDetectorTest(LogCaptureTestCase):
 				log = date + " [sshd] error: PAM: Authentication failure"
 				datelog = self.datedetector.getTime(log)
 				self.assertFalse(datelog)
+
+	def testGetEpochMsTime(self):
+		self.__datedetector = DateDetector()
+		self.__datedetector.appendTemplate('LEPOCH')
+		# correct short/long epoch time, using all variants:
+		for fact in (1, 1000, 1000000):
+			for dateUnix in (1138049999, 32535244799):
+				for date in ("%s", "[%s]", "[%s]", "audit(%s:101)"):
+					dateLong = dateUnix * fact
+					date = date % dateLong
+					log = date + " [sshd] error: PAM: Authentication failure"
+					datelog = self.datedetector.getTime(log)
+					self.assertTrue(datelog, "Parse epoch time for %s failed" % (date,))
+					( datelog, matchlog ) = datelog
+					self.assertEqual(int(datelog), dateUnix)
+					self.assertEqual(matchlog.group(1), str(dateLong))
+		# wrong, no epoch time (< 10 digits, more as 17 digits, begin/end of word) :
+		for dateUnix in ('123456789', '999999999999999999', '1138049999A', 'A1138049999'):
+			for date in ("%s", "[%s]", "[%s.555]", "audit(%s.555:101)"):
+				date = date % dateUnix
+				log = date + " [sshd] error: PAM: Authentication failure"
+				datelog = self.datedetector.getTime(log)
+				self.assertFalse(datelog)
+
+	def testGetEpochPattern(self):
+		self.__datedetector = DateDetector()
+		self.__datedetector.appendTemplate('(?<=\|\s){LEPOCH}(?=\s\|)')
+		# correct short/long epoch time, using all variants:
+		for fact in (1, 1000, 1000000):
+			for dateUnix in (1138049999, 32535244799):
+				dateLong = dateUnix * fact
+				log = "auth-error | %s | invalid password" % dateLong
+				datelog = self.datedetector.getTime(log)
+				self.assertTrue(datelog, "Parse epoch time failed: %r" % (log,))
+				( datelog, matchlog ) = datelog
+				self.assertEqual(int(datelog), dateUnix)
+				self.assertEqual(matchlog.group(1), str(dateLong))
+		# wrong epoch time format (does not match pattern):
+		for log in ("test%s123", "test-right | %stest", "test%s | test-left"):
+			log = log % dateLong
+			datelog = self.datedetector.getTime(log)
+			self.assertFalse(datelog)
 	
 	def testGetTime(self):
 		log = "Jan 23 21:59:59 [sshd] error: PAM: Authentication failure"

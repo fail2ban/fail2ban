@@ -128,10 +128,10 @@ class Fail2banServer(Fail2banCmdLine):
 	def getServerPath():
 		startdir = sys.path[0]
 		exe = os.path.abspath(os.path.join(startdir, SERVER))
-		if not os.path.isfile(exe): # may be uresolved in test-cases, so get relative starter (client):
+		if not os.path.isfile(exe): # may be unresolved in test-cases, so get relative starter (client):
 			startdir = os.path.dirname(sys.argv[0])
 			exe = os.path.abspath(os.path.join(startdir, SERVER))
-			if not os.path.isfile(exe): # may be uresolved in test-cases, so try to get relative bin-directory:
+			if not os.path.isfile(exe): # may be unresolved in test-cases, so try to get relative bin-directory:
 				startdir = os.path.dirname(os.path.abspath(__file__))
 				startdir = os.path.join(os.path.dirname(os.path.dirname(startdir)), "bin")
 				exe = os.path.abspath(os.path.join(startdir, SERVER))
@@ -164,21 +164,24 @@ class Fail2banServer(Fail2banCmdLine):
 					cli = self._Fail2banClient()
 					return cli.start(argv)
 
-			# Start the server:
-			from ..server.utils import Utils
-			# background = True, if should be new process running in background, otherwise start in foreground
-			# process will be forked in daemonize, inside of Server module.
-			# async = True, if started from client, should...
+			# Start the server, corresponding options:
+			#   background = True, if should be new process running in background, otherwise start in
+			#     foreground process will be forked in daemonize, inside of Server module.
+			#   nonsync = True, normally internal call only, if started from client, so configures
+			#     the server via asynchronous thread.
 			background = self._conf["background"]
-			async = self._conf.get("async", False)
+			nonsync = self._conf.get("async", False)
+
 			# If was started not from the client:
-			if not async:
+			if not nonsync:
+				# Load requirements on demand (we need utils only when asynchronous handling):
+				from ..server.utils import Utils
 				# Start new thread with client to read configuration and
 				# transfer it to the server:
 				cli = self._Fail2banClient()
 				phase = dict()
 				logSys.debug('Configure via async client thread')
-				cli.configureServer(async=True, phase=phase)
+				cli.configureServer(phase=phase)
 				# wait, do not continue if configuration is not 100% valid:
 				Utils.wait_for(lambda: phase.get('ready', None) is not None, self._conf["timeout"], 0.001)
 				logSys.log(5, '  server phase %s', phase)
@@ -195,7 +198,7 @@ class Fail2banServer(Fail2banCmdLine):
 			pid = os.getpid()
 			server = Fail2banServer.startServerDirect(self._conf, background)
 			# notify waiting thread server ready resp. done (background execution, error case, etc):
-			if not async:
+			if not nonsync:
 				_server_ready()
 			# If forked - just exit other processes
 			if pid != os.getpid(): # pragma: no cover
@@ -204,13 +207,14 @@ class Fail2banServer(Fail2banCmdLine):
 				cli._server = server
 
 			# wait for client answer "done":
-			if not async and cli:
+			if not nonsync and cli:
 				Utils.wait_for(lambda: phase.get('done', None) is not None, self._conf["timeout"], 0.001)
 				if not phase.get('done', False):
 					if server: # pragma: no cover
 						server.quit()
-					exit(-1)
-				logSys.debug('Starting server done')
+					exit(255)
+				if background:
+					logSys.debug('Starting server done')
 
 		except Exception as e:
 			if self._conf["verbose"] > 1:
@@ -219,7 +223,7 @@ class Fail2banServer(Fail2banCmdLine):
 				logSys.error(e)
 			if server: # pragma: no cover
 				server.quit()
-			exit(-1)
+			exit(255)
 
 		return True
 
@@ -234,4 +238,4 @@ def exec_command_line(argv):
 	if server.start(argv):
 		exit(0)
 	else:
-		exit(-1)
+		exit(255)

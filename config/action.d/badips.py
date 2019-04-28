@@ -18,20 +18,22 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import sys
-if sys.version_info < (2, 7):
+if sys.version_info < (2, 7): # pragma: no cover
 	raise ImportError("badips.py action requires Python >= 2.7")
 import json
 import threading
 import logging
-if sys.version_info >= (3, ):
+if sys.version_info >= (3, ): # pragma: 2.x no cover
 	from urllib.request import Request, urlopen
 	from urllib.parse import urlencode
 	from urllib.error import HTTPError
-else:
+else: # pragma: 3.x no cover
 	from urllib2 import Request, urlopen, HTTPError
 	from urllib import urlencode
 
 from fail2ban.server.actions import ActionBase
+from fail2ban.helpers import splitwords, str2LogLevel
+
 
 
 class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
@@ -70,6 +72,12 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	updateperiod : int, optional
 		Time in seconds between updating bad IPs blacklist.
 		Default 900 (15 minutes)
+	loglevel : int/str, optional
+		Log level of the message when an IP is (un)banned.
+		Default `DEBUG`.
+		Can be also supplied as two-value list (comma- or space separated) to
+		provide level of the summary message when a group of IPs is (un)banned.
+		Example `DEBUG,INFO`.
 	agent : str, optional
 		User agent transmitted to server.
 		Default `Fail2Ban/ver.`
@@ -81,13 +89,13 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	"""
 
 	TIMEOUT = 10
-	_badips = "http://www.badips.com"
+	_badips = "https://www.badips.com"
 	def _Request(self, url, **argv):
 		return Request(url, headers={'User-Agent': self.agent}, **argv)
 
 	def __init__(self, jail, name, category, score=3, age="24h", key=None,
-		banaction=None, bancategory=None, bankey=None, updateperiod=900, agent="Fail2Ban", 
-		timeout=TIMEOUT):
+		banaction=None, bancategory=None, bankey=None, updateperiod=900, 
+		loglevel='DEBUG', agent="Fail2Ban", timeout=TIMEOUT):
 		super(BadIPsAction, self).__init__(jail, name)
 
 		self.timeout = timeout
@@ -99,6 +107,9 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		self.banaction = banaction
 		self.bancategory = bancategory or category
 		self.bankey = bankey
+		loglevel = splitwords(loglevel)
+		self.sumloglevel = str2LogLevel(loglevel[-1])
+		self.loglevel = str2LogLevel(loglevel[0])
 		self.updateperiod = updateperiod
 
 		self._bannedips = set()
@@ -114,6 +125,15 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		except Exception as e: # pragma: no cover
 			return False, e
 
+	def logError(self, response, what=''): # pragma: no cover - sporadical (502: Bad Gateway, etc)
+		messages = {}
+		try:
+			messages = json.loads(response.read().decode('utf-8'))
+		except:
+			pass
+		self._logSys.error(
+			"%s. badips.com response: '%s'", what,
+				messages.get('err', 'Unknown'))
 
 	def getCategories(self, incParents=False):
 		"""Get badips.com categories.
@@ -133,11 +153,8 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		try:
 			response = urlopen(
 				self._Request("/".join([self._badips, "get", "categories"])), timeout=self.timeout)
-		except HTTPError as response:
-			messages = json.loads(response.read().decode('utf-8'))
-			self._logSys.error(
-				"Failed to fetch categories. badips.com response: '%s'",
-				messages['err'])
+		except HTTPError as response: # pragma: no cover
+			self.logError(response, "Failed to fetch categories")
 			raise
 		else:
 			response_json = json.loads(response.read().decode('utf-8'))
@@ -186,12 +203,10 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 				urlencode({'age': age})])
 			if key:
 				url = "&".join([url, urlencode({'key': key})])
+			self._logSys.debug('badips.com: get list, url: %r', url)
 			response = urlopen(self._Request(url), timeout=self.timeout)
-		except HTTPError as response:
-			messages = json.loads(response.read().decode('utf-8'))
-			self._logSys.error(
-				"Failed to fetch bad IP list. badips.com response: '%s'",
-				messages['err'])
+		except HTTPError as response: # pragma: no cover
+			self.logError(response, "Failed to fetch bad IP list")
 			raise
 		else:
 			return set(response.read().decode('utf-8').split())
@@ -219,7 +234,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 
 	@bancategory.setter
 	def bancategory(self, bancategory):
-		if bancategory not in self.getCategories(incParents=True):
+		if bancategory != "any" and bancategory not in self.getCategories(incParents=True):
 			self._logSys.error("Category name '%s' not valid. "
 				"see badips.com for list of valid categories",
 				bancategory)
@@ -285,7 +300,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 					exc_info=self._logSys.getEffectiveLevel()<=logging.DEBUG)
 			else:
 				self._bannedips.add(ip)
-				self._logSys.info(
+				self._logSys.log(self.loglevel,
 					"Banned IP %s for jail '%s' with action '%s'",
 					ip, self._jail.name, self.banaction)
 
@@ -300,12 +315,12 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 					'ipjailmatches': "",
 				})
 			except Exception as e:
-				self._logSys.info(
+				self._logSys.error(
 					"Error unbanning IP %s for jail '%s' with action '%s': %s",
 					ip, self._jail.name, self.banaction, e,
 					exc_info=self._logSys.getEffectiveLevel()<=logging.DEBUG)
 			else:
-				self._logSys.info(
+				self._logSys.log(self.loglevel,
 					"Unbanned IP %s for jail '%s' with action '%s'",
 					ip, self._jail.name, self.banaction)
 			finally:
@@ -333,12 +348,19 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 				ips = self.getList(
 					self.bancategory, self.score, self.age, self.bankey)
 				# Remove old IPs no longer listed
-				self._unbanIPs(self._bannedips - ips)
+				s = self._bannedips - ips
+				m = len(s)
+				self._unbanIPs(s)
 				# Add new IPs which are now listed
-				self._banIPs(ips - self._bannedips)
-
-				self._logSys.info(
-					"Updated IPs for jail '%s'. Update again in %i seconds",
+				s = ips - self._bannedips
+				p = len(s)
+				self._banIPs(s)
+				if m != 0 or p != 0:
+					self._logSys.log(self.sumloglevel,
+						"Updated IPs for jail '%s' (-%d/+%d)",
+						self._jail.name, m, p)
+				self._logSys.debug(
+					"Next update for jail '%' in %i seconds",
 					self._jail.name, self.updateperiod)
 			finally:
 				self._timer = threading.Timer(self.updateperiod, self.update)
@@ -368,19 +390,17 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 			Any issues with badips.com request.
 		"""
 		try:
-			url = "/".join([self._badips, "add", self.category, aInfo['ip']])
+			url = "/".join([self._badips, "add", self.category, str(aInfo['ip'])])
 			if self.key:
 				url = "?".join([url, urlencode({'key': self.key})])
+			self._logSys.debug('badips.com: ban, url: %r', url)
 			response = urlopen(self._Request(url), timeout=self.timeout)
-		except HTTPError as response:
-			messages = json.loads(response.read().decode('utf-8'))
-			self._logSys.error(
-				"Response from badips.com report: '%s'",
-				messages['err'])
+		except HTTPError as response: # pragma: no cover
+			self.logError(response, "Failed to ban")
 			raise
 		else:
 			messages = json.loads(response.read().decode('utf-8'))
-			self._logSys.info(
+			self._logSys.debug(
 				"Response from badips.com report: '%s'",
 				messages['suc'])
 

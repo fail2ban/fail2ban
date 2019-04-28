@@ -27,8 +27,7 @@ import logging
 import Queue
 
 from .actions import Actions
-from ..client.jailreader import JailReader
-from ..helpers import getLogger, MyTime
+from ..helpers import getLogger, extractOptions, MyTime
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -85,7 +84,7 @@ class Jail(object):
 		return "%s(%r)" % (self.__class__.__name__, self.name)
 
 	def _setBackend(self, backend):
-		backend, beArgs = JailReader.extractOptions(backend)
+		backend, beArgs = extractOptions(backend)
 		backend = backend.lower()		# to assure consistent matching
 
 		backends = self._BACKENDS
@@ -214,7 +213,8 @@ class Jail(object):
 		try:
 			if self.database is not None:
 				forbantime = self.actions.getBanTime()
-				for ticket in self.database.getCurrentBans(jail=self, forbantime=forbantime):
+				for ticket in self.database.getCurrentBans(jail=self, 
+						forbantime=forbantime, maxmatches=self.filter.failManager.maxMatches):
 					#logSys.debug('restored ticket: %s', ticket)
 					if not self.filter.inIgnoreIPList(ticket.getIP(), log_ignore=True):
 						# mark ticked was restored from database - does not put it again into db:

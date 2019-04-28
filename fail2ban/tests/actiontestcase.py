@@ -30,9 +30,10 @@ import time
 import unittest
 
 from ..server.action import CommandAction, CallingMap, substituteRecursiveTags
-from ..server.actions import OrderedDict
+from ..server.actions import OrderedDict, Actions
 from ..server.utils import Utils
 
+from .dummyjail import DummyJail
 from .utils import LogCaptureTestCase
 from .utils import pid_exists
 
@@ -334,7 +335,16 @@ class CommandActionTest(LogCaptureTestCase):
 		self.__action.actionban = "rm /tmp/fail2ban.test"
 		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
 		self.assertRaises(RuntimeError, self.__action.ban, {'ip': None})
-		self.assertLogged('Unable to restore environment')
+		self.assertLogged('Invariant check failed', 'Unable to restore environment', all=True)
+		# 2nd time, try to restore with producing error in stop, but succeeded start hereafter:
+		self.pruneLog('[phase 2]')
+		self.__action.actionstart = "touch /tmp/fail2ban.test"
+		self.__action.actionstop = "rm /tmp/fail2ban.test"
+		self.__action.actionban = 'printf "%%b\n" <ip> >> /tmp/fail2ban.test'
+		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
+		self.__action.ban({'ip': None})
+		self.assertLogged('Invariant check failed')
+		self.assertNotLogged('Unable to restore environment')
 
 	def testExecuteActionCheckRepairEnvironment(self):
 		self.__action.actionstart = ""
@@ -557,14 +567,35 @@ class CommandActionTest(LogCaptureTestCase):
 			'b': lambda self: self['a'] + 6,
 			'c': ''
 		})
-		s = repr(m)
+		s = repr(m); # only stored values (no calculated)
+		self.assertNotIn("'a': ", s)
+		self.assertNotIn("'b': ", s)
+		self.assertIn("'c': ''", s)
+
+		s = m._asrepr(True) # all values (including calculated)
 		self.assertIn("'a': 5", s)
 		self.assertIn("'b': 11", s)
 		self.assertIn("'c': ''", s)
 		
 		m['c'] = lambda self: self['xxx'] + 7; # unresolvable
-		s = repr(m)
+		s = m._asrepr(True)
 		self.assertIn("'a': 5", s)
 		self.assertIn("'b': 11", s)
 		self.assertIn("'c': ", s) # presents as callable
 		self.assertNotIn("'c': ''", s) # but not empty
+
+	def testActionsIdleMode(self):
+		a = Actions(DummyJail())
+		a.sleeptime = 0.0001;   # don't need to wait long
+		# enter idle mode right now (start idle):
+		a.idle = True;
+		# start:
+		a.start()
+		# wait for enter/leave of idle mode:
+		self.assertLogged("Actions: enter idle mode", wait=10)
+		# leave idle mode:
+		a.idle = False
+		self.assertLogged("Actions: leave idle mode", wait=10)
+		# stop it:
+		a.active = False
+		a.join()
