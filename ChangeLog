@@ -65,6 +65,8 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
 ### Fixes
 * fixed read of included config-files (`.local` overwrites options of `.conf` for config-files 
   included with before/after)
+* `action.d/helpers-common.conf`: rewritten grep arguments, now options `-wF` used to match only
+  whole words and fixed string (not as pattern), gh-2298
 * `filter.d/sshd.conf`:
   - captures `Disconnecting ...: Change of username or service not allowed` (gh-2239, gh-2279)
   - captures `Disconnected from ... [preauth]` (`extra`/`aggressive` mode and preauth phase only, gh-2239, gh-2279)
