@@ -866,7 +866,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"usedns = no",
 				"maxretry = 3",
 				"findtime = 10m",
-				"failregex = ^\s*failure <F-ERRCODE>401|403</F-ERRCODE> from <HOST>",
+				r"failregex = ^\s*failure <F-ERRCODE>401|403</F-ERRCODE> from <HOST>",
 				"datepattern = {^LN-BEG}EPOCH",
 				"ignoreip = 127.0.0.1/8 ::1", # just to cover ignoreip in jailreader/transmitter
 				"",
@@ -882,8 +882,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"logpath = " + test1log,
 				"          " + test2log if 2 in enabled else "",
 				"          " + test3log if 2 in enabled else "",
-				"failregex = ^\s*failure <F-ERRCODE>401|403</F-ERRCODE> from <HOST>",
-				"            ^\s*error <F-ERRCODE>401|403</F-ERRCODE> from <HOST>" \
+				r"failregex = ^\s*failure <F-ERRCODE>401|403</F-ERRCODE> from <HOST>",
+				r"            ^\s*error <F-ERRCODE>401|403</F-ERRCODE> from <HOST>" \
 					if 2 in enabled else "",
 				"enabled = true" if 1 in enabled else "",
 				"",

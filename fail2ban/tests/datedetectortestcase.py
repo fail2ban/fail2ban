@@ -103,7 +103,7 @@ class DateDetectorTest(LogCaptureTestCase):
 
 	def testGetEpochPattern(self):
 		self.__datedetector = DateDetector()
-		self.__datedetector.appendTemplate('(?<=\|\s){LEPOCH}(?=\s\|)')
+		self.__datedetector.appendTemplate(r'(?<=\|\s){LEPOCH}(?=\s\|)')
 		# correct short/long epoch time, using all variants:
 		for fact in (1, 1000, 1000000):
 			for dateUnix in (1138049999, 32535244799):
@@ -385,7 +385,7 @@ class DateDetectorTest(LogCaptureTestCase):
 		self.assertRaises(Exception, t.getDate, 'no date line')
 
 
-iso8601 = DatePatternRegex("%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
+iso8601 = DatePatternRegex(r"%Y-%m-%d[T ]%H:%M:%S(?:\.%f)?%z")
 
 class CustomDateFormatsTest(unittest.TestCase):
 

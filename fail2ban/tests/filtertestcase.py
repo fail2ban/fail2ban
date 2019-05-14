@@ -279,10 +279,10 @@ class BasicFilter(unittest.TestCase):
 	def testGetSetDatePattern(self):
 		self.assertEqual(self.filter.getDatePattern(),
 			(None, "Default Detectors"))
-		self.filter.setDatePattern("^%Y-%m-%d-%H%M%S.%f %z **")
+		self.filter.setDatePattern(r"^%Y-%m-%d-%H%M%S\.%f %z **")
 		self.assertEqual(self.filter.getDatePattern(),
-			("^%Y-%m-%d-%H%M%S.%f %z **",
-			"^Year-Month-Day-24hourMinuteSecond.Microseconds Zone offset **"))
+			(r"^%Y-%m-%d-%H%M%S\.%f %z **",
+			r"^Year-Month-Day-24hourMinuteSecond\.Microseconds Zone offset **"))
 
 	def testGetSetLogTimeZone(self):
 		self.assertEqual(self.filter.getLogTimeZone(), None)
@@ -389,7 +389,7 @@ class IgnoreIP(LogCaptureTestCase):
 		setUpMyTime()
 		self.filter.addIgnoreIP('192.168.1.0/25')
 		self.filter.addFailRegex('<HOST>')
-		self.filter.setDatePattern('{^LN-BEG}EPOCH')
+		self.filter.setDatePattern(r'{^LN-BEG}EPOCH')
 		self.filter.processLineAndAdd('1387203300.222 192.168.1.32')
 		self.assertLogged('Ignore 192.168.1.32')
 		tearDownMyTime()
@@ -580,7 +580,7 @@ class LogFileFilterPoll(unittest.TestCase):
 
 	def testSeekToTimeSmallFile(self):
 		# speedup search using exact date pattern:
-		self.filter.setDatePattern('^%ExY-%Exm-%Exd %ExH:%ExM:%ExS')
+		self.filter.setDatePattern(r'^%ExY-%Exm-%Exd %ExH:%ExM:%ExS')
 		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='.log')
 		time = 1417512352
 		f = open(fname, 'w')
@@ -666,7 +666,7 @@ class LogFileFilterPoll(unittest.TestCase):
 
 	def testSeekToTimeLargeFile(self):
 		# speedup search using exact date pattern:
-		self.filter.setDatePattern('^%ExY-%Exm-%Exd %ExH:%ExM:%ExS')
+		self.filter.setDatePattern(r'^%ExY-%Exm-%Exd %ExH:%ExM:%ExS')
 		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='.log')
 		time = 1417512352
 		f = open(fname, 'w')
@@ -723,7 +723,7 @@ class LogFileMonitor(LogCaptureTestCase):
 		self.filter = FilterPoll(DummyJail())
 		self.filter.addLogPath(self.name, autoSeek=False)
 		self.filter.active = True
-		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
+		self.filter.addFailRegex(r"(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 
 	def tearDown(self):
 		tearDownMyTime()
@@ -765,7 +765,7 @@ class LogFileMonitor(LogCaptureTestCase):
 
 	def testErrorProcessLine(self):
 		# speedup search using exact date pattern:
-		self.filter.setDatePattern('^%ExY-%Exm-%Exd %ExH:%ExM:%ExS')
+		self.filter.setDatePattern(r'^%ExY-%Exm-%Exd %ExH:%ExM:%ExS')
 		self.filter.sleeptime /= 1000.0
 		## produce error with not callable processLine:
 		_org_processLine = self.filter.processLine
@@ -829,7 +829,7 @@ class LogFileMonitor(LogCaptureTestCase):
 
 	def testNewChangeViaGetFailures_simple(self):
 		# speedup search using exact date pattern:
-		self.filter.setDatePattern('^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
+		self.filter.setDatePattern(r'^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
 		# suck in lines from this sample log file
 		self.filter.getFailures(self.name)
 		self.assertRaises(FailManagerEmpty, self.filter.failManager.toBan)
@@ -846,7 +846,7 @@ class LogFileMonitor(LogCaptureTestCase):
 
 	def testNewChangeViaGetFailures_rewrite(self):
 		# speedup search using exact date pattern:
-		self.filter.setDatePattern('^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
+		self.filter.setDatePattern(r'^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
 		#
 		# if we rewrite the file at once
 		self.file.close()
@@ -866,7 +866,7 @@ class LogFileMonitor(LogCaptureTestCase):
 
 	def testNewChangeViaGetFailures_move(self):
 		# speedup search using exact date pattern:
-		self.filter.setDatePattern('^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
+		self.filter.setDatePattern(r'^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
 		#
 		# if we move file into a new location while it has been open already
 		self.file.close()
@@ -940,9 +940,9 @@ def get_monitor_failures_testcase(Filter_):
 			self.filter = Filter_(self.jail)
 			self.filter.addLogPath(self.name, autoSeek=False)
 			# speedup search using exact date pattern:
-			self.filter.setDatePattern('^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
+			self.filter.setDatePattern(r'^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
 			self.filter.active = True
-			self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
+			self.filter.addFailRegex(r"(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 			self.filter.start()
 			# If filter is polling it would sleep a bit to guarantee that
 			# we have initial time-stamp difference to trigger "actions"
@@ -1244,7 +1244,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 				"SYSLOG_IDENTIFIER=fail2ban-testcases",
 				"TEST_FIELD=2",
 				"TEST_UUID=%s" % self.test_uuid])
-			self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
+			self.filter.addFailRegex(r"(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
 
 		def tearDown(self):
 			if self.filter and self.filter.active:
@@ -1440,7 +1440,7 @@ class GetFailures(LogCaptureTestCase):
 		self.filter = FileFilter(self.jail)
 		self.filter.active = True
 		# speedup search using exact date pattern:
-		self.filter.setDatePattern('^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
+		self.filter.setDatePattern(r'^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
 		# TODO Test this
 		#self.filter.setTimeRegex("\S{3}\s{1,2}\d{1,2} \d{2}:\d{2}:\d{2}")
 		#self.filter.setTimePattern("%b %d %H:%M:%S")
@@ -1485,7 +1485,7 @@ class GetFailures(LogCaptureTestCase):
 		failures = failures or GetFailures.FAILURES_01
 
 		self.filter.addLogPath(filename, autoSeek=0)
-		self.filter.addFailRegex("(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>$")
+		self.filter.addFailRegex(r"(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>$")
 		self.filter.getFailures(filename)
 		_assert_correct_last_attempt(self, self.filter,  failures)
 
@@ -1509,7 +1509,7 @@ class GetFailures(LogCaptureTestCase):
 				   % m for m in 53, 54, 57, 58])
 
 		self.filter.addLogPath(GetFailures.FILENAME_02, autoSeek=0)
-		self.filter.addFailRegex("Failed .* from <HOST>")
+		self.filter.addFailRegex(r"Failed .* from <HOST>")
 		self.filter.getFailures(GetFailures.FILENAME_02)
 		_assert_correct_last_attempt(self, self.filter, output)
 
@@ -1517,7 +1517,7 @@ class GetFailures(LogCaptureTestCase):
 		output = ('203.162.223.135', 7, 1124013544.0)
 
 		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=0)
-		self.filter.addFailRegex("error,relay=<HOST>,.*550 User unknown")
+		self.filter.addFailRegex(r"error,relay=<HOST>,.*550 User unknown")
 		self.filter.getFailures(GetFailures.FILENAME_03)
 		_assert_correct_last_attempt(self, self.filter, output)
 
@@ -1526,7 +1526,7 @@ class GetFailures(LogCaptureTestCase):
 		output = ('203.162.223.135', 5, 1124013544.0)
 
 		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=output[2] - 4*60)
-		self.filter.addFailRegex("error,relay=<HOST>,.*550 User unknown")
+		self.filter.addFailRegex(r"error,relay=<HOST>,.*550 User unknown")
 		self.filter.getFailures(GetFailures.FILENAME_03)
 		_assert_correct_last_attempt(self, self.filter, output)
 
@@ -1536,7 +1536,7 @@ class GetFailures(LogCaptureTestCase):
 		self.filter.setMaxRetry(1)
 
 		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=output[2])
-		self.filter.addFailRegex("error,relay=<HOST>,.*550 User unknown")
+		self.filter.addFailRegex(r"error,relay=<HOST>,.*550 User unknown")
 		self.filter.getFailures(GetFailures.FILENAME_03)
 		_assert_correct_last_attempt(self, self.filter, output)
 
@@ -1548,13 +1548,13 @@ class GetFailures(LogCaptureTestCase):
 				  ('212.41.96.185', 2, 1124013598.0))
 
 		# speedup search using exact date pattern:
-		self.filter.setDatePattern(('^%ExY(?P<_sep>[-/.])%m(?P=_sep)%d[T ]%H:%M:%S(?:[.,]%f)?(?:\s*%z)?',
-			'^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?',
-			'^EPOCH'
+		self.filter.setDatePattern((r'^%ExY(?P<_sep>[-/.])%m(?P=_sep)%d[T ]%H:%M:%S(?:[.,]%f)?(?:\s*%z)?',
+			r'^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?',
+			r'^EPOCH'
 		))
 		self.filter.setMaxRetry(2)
 		self.filter.addLogPath(GetFailures.FILENAME_04, autoSeek=0)
-		self.filter.addFailRegex("Invalid user .* <HOST>")
+		self.filter.addFailRegex(r"Invalid user .* <HOST>")
 		self.filter.getFailures(GetFailures.FILENAME_04)
 
 		_assert_correct_last_attempt(self, self.filter, output)
@@ -1574,7 +1574,7 @@ class GetFailures(LogCaptureTestCase):
 			fout.close()
 			#
 			output = ('192.0.2.0', 3, 1421262060.0)
-			failregex = "^\s*user \"[^\"]*\" from \"<HOST>\"\s*$"
+			failregex = r"^\s*user \"[^\"]*\" from \"<HOST>\"\s*$"
 
 			# test encoding auto or direct set of encoding:
 			for enc in (None, 'utf-8', 'ascii'):
@@ -1582,7 +1582,7 @@ class GetFailures(LogCaptureTestCase):
 					self.tearDown();self.setUp();
 					self.filter.setLogEncoding(enc);
 				# speedup search using exact date pattern:
-				self.filter.setDatePattern('^%ExY-%Exm-%Exd %ExH:%ExM:%ExS')
+				self.filter.setDatePattern(r'^%ExY-%Exm-%Exd %ExH:%ExM:%ExS')
 				self.assertNotLogged('Error decoding line');
 				self.filter.addLogPath(fname)
 				self.filter.addFailRegex(failregex)
@@ -1631,7 +1631,7 @@ class GetFailures(LogCaptureTestCase):
 			filter_.failManager.setMaxRetry(1)	# we might have just few failures
 
 			filter_.addLogPath(GetFailures.FILENAME_USEDNS, autoSeek=False)
-			filter_.addFailRegex("Failed .* from <HOST>")
+			filter_.addFailRegex(r"Failed .* from <HOST>")
 			filter_.getFailures(GetFailures.FILENAME_USEDNS)
 			_assert_correct_last_attempt(self, filter_, output)
 
@@ -1639,15 +1639,15 @@ class GetFailures(LogCaptureTestCase):
 		output = ('141.3.81.106', 8, 1124013541.0)
 
 		self.filter.addLogPath(GetFailures.FILENAME_02, autoSeek=False)
-		self.filter.addFailRegex("Failed .* from <HOST>")
-		self.filter.addFailRegex("Accepted .* from <HOST>")
+		self.filter.addFailRegex(r"Failed .* from <HOST>")
+		self.filter.addFailRegex(r"Accepted .* from <HOST>")
 		self.filter.getFailures(GetFailures.FILENAME_02)
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailuresIgnoreRegex(self):
 		self.filter.addLogPath(GetFailures.FILENAME_02, autoSeek=False)
-		self.filter.addFailRegex("Failed .* from <HOST>")
-		self.filter.addFailRegex("Accepted .* from <HOST>")
+		self.filter.addFailRegex(r"Failed .* from <HOST>")
+		self.filter.addFailRegex(r"Accepted .* from <HOST>")
 		self.filter.addIgnoreRegex("for roehl")
 
 		self.filter.getFailures(GetFailures.FILENAME_02)
@@ -1659,7 +1659,7 @@ class GetFailures(LogCaptureTestCase):
 			("192.0.43.11", 1, 1124013598.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
 		self.filter.setMaxLines(100)
-		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
+		self.filter.addFailRegex(r"^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.setMaxRetry(1)
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)
@@ -1677,7 +1677,7 @@ class GetFailures(LogCaptureTestCase):
 		output = [("192.0.43.10", 2, 1124013599.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
 		self.filter.setMaxLines(100)
-		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
+		self.filter.addFailRegex(r"^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
 		self.filter.addIgnoreRegex("rsync error: Received SIGINT")
 		self.filter.setMaxRetry(1)
 
@@ -1693,8 +1693,8 @@ class GetFailures(LogCaptureTestCase):
 			("192.0.43.15", 1, 1124013598.0)]
 		self.filter.addLogPath(GetFailures.FILENAME_MULTILINE, autoSeek=False)
 		self.filter.setMaxLines(100)
-		self.filter.addFailRegex("^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
-		self.filter.addFailRegex("^.* sendmail\[.*, msgid=<(?P<msgid>[^>]+).*relay=\[<HOST>\].*$<SKIPLINES>^.+ spamd: result: Y \d+ .*,mid=<(?P=msgid)>(,bayes=[.\d]+)?(,autolearn=\S+)?\s*$")
+		self.filter.addFailRegex(r"^.*rsyncd\[(?P<pid>\d+)\]: connect from .+ \(<HOST>\)$<SKIPLINES>^.+ rsyncd\[(?P=pid)\]: rsync error: .*$")
+		self.filter.addFailRegex(r"^.* sendmail\[.*, msgid=<(?P<msgid>[^>]+).*relay=\[<HOST>\].*$<SKIPLINES>^.+ spamd: result: Y \d+ .*,mid=<(?P=msgid)>(,bayes=[.\d]+)?(,autolearn=\S+)?\s*$")
 		self.filter.setMaxRetry(1)
 
 		self.filter.getFailures(GetFailures.FILENAME_MULTILINE)

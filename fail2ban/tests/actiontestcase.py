@@ -206,15 +206,15 @@ class CommandActionTest(LogCaptureTestCase):
 			"Text 890 text 123 ABC")
 		self.assertEqual(
 			self.__action.replaceTag("<matches>",
-				{'matches': "some >char< should \< be[ escap}ed&\n"}),
+				{'matches': "some >char< should \\< be[ escap}ed&\n"}),
 			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\\n")
 		self.assertEqual(
 			self.__action.replaceTag("<ipmatches>",
-				{'ipmatches': "some >char< should \< be[ escap}ed&\n"}),
+				{'ipmatches': "some >char< should \\< be[ escap}ed&\n"}),
 			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\\n")
 		self.assertEqual(
 			self.__action.replaceTag("<ipjailmatches>",
-				{'ipjailmatches': "some >char< should \< be[ escap}ed&\r\n"}),
+				{'ipjailmatches': "some >char< should \\< be[ escap}ed&\r\n"}),
 			"some \\>char\\< should \\\\\\< be\\[ escap\\}ed\\&\\r\\n")
 
 		# Recursive

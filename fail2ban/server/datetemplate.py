@@ -82,7 +82,7 @@ class DateTemplate(object):
 		return self._regex
 
 	def setRegex(self, regex, wordBegin=True, wordEnd=True):
-		"""Sets regex to use for searching for date in log line.
+		r"""Sets regex to use for searching for date in log line.
 
 		Parameters
 		----------
