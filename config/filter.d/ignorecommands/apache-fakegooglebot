@@ -24,7 +24,7 @@ def is_googlebot(ip):
     import re
 
     host = DNSUtils.ipToName(ip)
-    if not host or not re.match('.*\.google(bot)?\.com$', host):
+    if not host or not re.match(r'.*\.google(bot)?\.com$', host):
        return False
     host_ips = DNSUtils.dnsToIp(host)
     return (ip in host_ips)
