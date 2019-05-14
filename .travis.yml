@@ -4,39 +4,29 @@
 
 #os: linux
 
+language: python
+dist: xenial
+
 matrix:
   fast_finish: true
   include:
-  - dist: trusty   # required for Python 2.6
-    language: python
-    python: 2.6
-  - dist: trusty
-    language: python
-    python: pypy
-  - dist: xenial
-    language: python
-    python: 2.7
-  - dist: trusty
-    language: python
-    python: 3.3
-  - dist: xenial
-    language: python
-    python:  3.4
-  - dist: xenial
-    language: python
-    python:  3.5
-  - dist: xenial
-    language: python
-    python:  3.6
-  - dist: xenial
-    language: python
-    python:  3.7
-  - dist: xenial
-    language: python
-    python:  3.8-dev
-  - dist: xenial
-    language: python
-    python:  pypy3.5
+  - python: 2.6
+    dist: trusty   # required for Python 2.6
+  - python: 2.7
+    dist: trusty   # required for packages like gamin
+    name: 2.7 (trusty)
+  - python: 2.7
+    name: 2.7 (xenial)
+  - python: pypy
+    dist: trusty
+  - python: 3.3
+    dist: trusty
+  - python:  3.4
+  - python:  3.5
+  - python:  3.6
+  - python:  3.7
+  - python:  3.8-dev
+  - python:  pypy3.5
 before_install:
   - echo "running under $TRAVIS_PYTHON_VERSION"
   - if [[ $TRAVIS_PYTHON_VERSION == 2* || $TRAVIS_PYTHON_VERSION == pypy* && $TRAVIS_PYTHON_VERSION != pypy3* ]]; then export F2B_PY=2; fi
@@ -59,8 +49,8 @@ install:
   - if [[ "$F2B_PY" = 2 ]]; then travis_retry pip install dnspython || echo 'not installed'; fi
   - if [[ "$F2B_PY" = 3 ]]; then travis_retry pip install dnspython3 || echo 'not installed'; fi
   #   python systemd bindings:
-  - if [[ "$F2B_PY" = 2 ]]; then travis_retry sudo apt-get python-systemd || echo 'not installed'; fi
-  - if [[ "$F2B_PY" = 3 ]]; then travis_retry sudo apt-get python3-systemd || echo 'not installed'; fi
+  - if [[ "$F2B_PY" = 2 ]]; then travis_retry sudo apt-get install -qq python-systemd || echo 'not installed'; fi
+  - if [[ "$F2B_PY" = 3 ]]; then travis_retry sudo apt-get install -qq python3-systemd || echo 'not installed'; fi
   #   gamin - install manually (not in PyPI) - travis-ci system Python is 2.7
   - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then (travis_retry sudo apt-get install -qq python-gamin && cp /usr/share/pyshared/gamin.py /usr/lib/pyshared/python2.7/_gamin.so $VIRTUAL_ENV/lib/python2.7/site-packages/) || echo 'not installed'; fi
   #   pyinotify
