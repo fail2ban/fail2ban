@@ -1,20 +1,42 @@
 # vim ft=yaml
 # travis-ci.org definition for Fail2Ban build
 # https://travis-ci.org/fail2ban/fail2ban/
-dist: xenial   # required for Python >= 3.7
-language: python
-python:
-  #- 2.6
-  - 2.7
-  - pypy
-  # - 3.2
-  # - 3.3
-  - 3.4
-  - 3.5
-  - 3.6
-  - 3.7
-  - 3.8-dev
-  - pypy3.5
+
+#os: linux
+
+matrix:
+  fast_finish: true
+  include:
+  - dist: trusty   # required for Python 2.6
+    language: python
+    python: 2.6
+  - dist: trusty
+    language: python
+    python: pypy
+  - dist: xenial
+    language: python
+    python: 2.7
+  - dist: trusty
+    language: python
+    python: 3.3
+  - dist: xenial
+    language: python
+    python:  3.4
+  - dist: xenial
+    language: python
+    python:  3.5
+  - dist: xenial
+    language: python
+    python:  3.6
+  - dist: xenial
+    language: python
+    python:  3.7
+  - dist: xenial
+    language: python
+    python:  3.8-dev
+  - dist: xenial
+    language: python
+    python:  pypy3.5
 before_install:
   - echo "running under $TRAVIS_PYTHON_VERSION"
   - if [[ $TRAVIS_PYTHON_VERSION == 2* || $TRAVIS_PYTHON_VERSION == pypy* && $TRAVIS_PYTHON_VERSION != pypy3* ]]; then export F2B_PY=2; fi
@@ -64,8 +86,7 @@ script:
 after_success:
   - if [[ "$F2B_COV" = 1 ]]; then coveralls; fi
   - codecov
-matrix:
-  fast_finish: true
+
 # Might be worth looking into
 #notifications:
 #  email: true
