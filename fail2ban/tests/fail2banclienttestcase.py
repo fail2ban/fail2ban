@@ -1375,7 +1375,7 @@ class Fail2banServerTest(Fail2banClientServerBase):
 				"action = test-action1[name='%(__name__)s']",
 				"         test-action2[name='%(__name__)s']",
 				"logpath = " + test1log,
-				"failregex = ^\s*failure <F-ERRCODE>401|403</F-ERRCODE> from <HOST>:\s*<F-MSG>.*</F-MSG>$",
+				r"failregex = ^\s*failure <F-ERRCODE>401|403</F-ERRCODE> from <HOST>:\s*<F-MSG>.*</F-MSG>$",
 				"enabled = true",
 				"",
 			)
