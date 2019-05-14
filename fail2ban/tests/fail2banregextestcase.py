@@ -120,7 +120,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	def testDirectFound(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
-			"--datepattern", "^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
+			"--datepattern", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
 			"--print-all-matched", "--print-no-missed",
 			"Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 192.0.2.0",
 			r"Authentication failure for .*? from <HOST>$"
@@ -149,7 +149,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	def testDirectRE_1(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
-			"--datepattern", "^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
+			"--datepattern", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
 			"--print-all-matched",
 			Fail2banRegexTest.FILENAME_01, 
 			Fail2banRegexTest.RE_00
@@ -165,7 +165,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	def testDirectRE_1raw(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
-			"--datepattern", "^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
+			"--datepattern", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
 			"--print-all-matched", "--raw",
 			Fail2banRegexTest.FILENAME_01, 
 			Fail2banRegexTest.RE_00
@@ -175,7 +175,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	def testDirectRE_1raw_noDns(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
-			"--datepattern", "^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
+			"--datepattern", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
 			"--print-all-matched", "--raw", "--usedns=no",
 			Fail2banRegexTest.FILENAME_01, 
 			Fail2banRegexTest.RE_00
@@ -185,7 +185,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	def testDirectRE_2(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
-			"--datepattern", "^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
+			"--datepattern", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
 			"--print-all-matched",
 			Fail2banRegexTest.FILENAME_02, 
 			Fail2banRegexTest.RE_00
@@ -195,7 +195,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	def testVerbose(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(
-			"--datepattern", "^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
+			"--datepattern", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
 			"--timezone", "UTC+0200",
 			"--verbose", "--verbose-date", "--print-no-missed",
 			Fail2banRegexTest.FILENAME_02, 
@@ -332,7 +332,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self._reset()
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"-l", "notice", # put down log-level, because of too many debug-messages
-			"--datepattern", "^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
+			"--datepattern", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
 			Fail2banRegexTest.FILENAME_WRONGCHAR, Fail2banRegexTest.FILTER_SSHD
 		)
 		self.assertTrue(fail2banRegex.start(args))
@@ -349,7 +349,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self._reset()
 		(opts, args, fail2banRegex) = _Fail2banRegex(
 			"-l", "notice", # put down log-level, because of too many debug-messages
-			"--datepattern", "^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
+			"--datepattern", r"^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?",
 			"--debuggex", "--print-all-matched",
 			Fail2banRegexTest.FILENAME_WRONGCHAR, Fail2banRegexTest.FILTER_SSHD,
 			r"llinco[^\\]"
