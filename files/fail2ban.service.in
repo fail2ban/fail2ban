@@ -1,7 +1,7 @@
 [Unit]
 Description=Fail2Ban Service
 Documentation=man:fail2ban(1)
-After=network.target iptables.service firewalld.service ip6tables.service ipset.service nftables.service
+After=network.target remote-fs.target iptables.service firewalld.service ip6tables.service ipset.service nftables.service
 PartOf=iptables.service firewalld.service ip6tables.service ipset.service nftables.service
 
 [Service]
