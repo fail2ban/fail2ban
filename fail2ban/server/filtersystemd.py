@@ -232,7 +232,7 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 		logSys.debug("Read systemd journal entry: %r" %
 			"".join([date.isoformat(), logline]))
 		## use the same type for 1st argument:
-		return ((logline[:0], date.isoformat(), logline),
+		return ((logline[:0], date.isoformat(), logline.replace('\n', '\\n')),
 			time.mktime(date.timetuple()) + date.microsecond/1.0E6)
 
 	def seekToTime(self, date):
