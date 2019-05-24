@@ -35,6 +35,11 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
 -----------
 
 ### Fixes
+* [grave] fixed parsing of multi-line filters (`maxlines` > 1) together with systemd backend,
+  now systemd-filter replaces newlines in message from systemd journal with `\n` (otherwise 
+  multi-line parsing may be broken, because removal of matched string from multi-line buffer window
+  is confused by such extra new-lines, so they are retained and got matched on every followed 
+  message, see gh-2431)
 * fixed read of included config-files (`.local` overwrites options of `.conf` for config-files 
   included with before/after)
 * `action.d/helpers-common.conf`: rewritten grep arguments, now options `-wF` used to match only
