@@ -177,8 +177,7 @@ class BanTimeIncr(LogCaptureTestCase):
 		a.setBanTimeExtra('rndtime', None)
 
 
-class BanTimeIncrDB(unittest.TestCase):
-#class BanTimeIncrDB(LogCaptureTestCase):
+class BanTimeIncrDB(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
@@ -465,6 +464,7 @@ class BanTimeIncrDB(unittest.TestCase):
 		# purge database right now, but using timer, to test it also:
 		self.db._purgeAge = -240*60*60
 		obs.add_named_timer('DB_PURGE', 0.001, 'db_purge')
+		self.assertLogged("Purge database event occurred", wait=True); # wait for purge timer
 		# wait for timer ready
 		obs.wait_idle(0.025)
 		# wait for ready
