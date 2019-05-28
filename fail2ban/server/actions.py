@@ -371,7 +371,7 @@ class Actions(JailThread, Mapping):
 		def _getBanTime(self):
 			btime = self.__ticket.getBanTime()
 			if btime is None: btime = self.__jail.actions.getBanTime()
-			return btime
+			return int(btime)
 
 		def _mi4ip(self, overalljails=False):
 			"""Gets bans merged once, a helper for lambda(s), prevents stop of executing action by any exception inside.
