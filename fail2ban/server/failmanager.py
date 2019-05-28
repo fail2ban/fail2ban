@@ -107,7 +107,7 @@ class FailManager:
 			except KeyError:
 				# not found - already banned - prevent to add failure if comes from observer:
 				if observed or isinstance(ticket, BanTicket):
-					return
+					return ticket.getRetry()
 				# if already FailTicket - add it direct, otherwise create (using copy all ticket data):
 				if isinstance(ticket, FailTicket):
 					fData = ticket;
