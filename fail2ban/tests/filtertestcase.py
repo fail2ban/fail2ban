@@ -2032,8 +2032,8 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		sname = DNSUtils.getHostname(fqdn=False)
 		lname = DNSUtils.getHostname(fqdn=True)
 		# FQDN is not localhost if short hostname is not localhost too (or vice versa):
-		self.assertTrue(lname != 'localhost',
-		                sname != 'localhost')
+		self.assertEqual(lname != 'localhost',
+		                 sname != 'localhost')
 		# FQDN from short name should be long name:
 		self.assertEqual(getfqdn(sname), lname)
 		# FQDN from FQDN is the same:
