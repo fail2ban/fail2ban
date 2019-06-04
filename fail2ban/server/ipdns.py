@@ -42,6 +42,32 @@ def asip(ip):
 		return ip
 	return IPAddr(ip)
 
+def getfqdn(name=''):
+	"""Get fully-qualified hostname of given host, thereby resolve of an external
+	IPs and name will be preferred before the local domain (or a loopback), see gh-2438
+	"""
+	try:
+		name = name or socket.gethostname()
+		names = (
+			ai[3] for ai in socket.getaddrinfo(
+				name, None, 0, socket.SOCK_DGRAM, 0, socket.AI_CANONNAME
+			) if ai[3]
+		)
+		if names:
+			# first try to find a fqdn starting with the host name like www.domain.tld for www:
+			pref = name+'.'
+			first = None
+			for ai in names:
+				if ai.startswith(pref):
+					return ai
+				if not first: first = ai
+			# not found - simply use first known fqdn:
+			return first
+	except socket.error:
+		pass
+	# fallback to python's own getfqdn routine:
+	return socket.getfqdn(name)
+
 
 ##
 # Utils class for DNS handling.
@@ -132,7 +158,7 @@ class DNSUtils:
 		if name is None:
 			name = ''
 			for hostname in (
-				(socket.getfqdn, socket.gethostname) if fqdn else (socket.gethostname, socket.getfqdn)
+				(getfqdn, socket.gethostname) if fqdn else (socket.gethostname, getfqdn)
 			):
 				try:
 					name = hostname()
