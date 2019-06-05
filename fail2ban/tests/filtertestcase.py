@@ -40,7 +40,7 @@ from ..server.jail import Jail
 from ..server.filterpoll import FilterPoll
 from ..server.filter import FailTicket, Filter, FileFilter, FileContainer
 from ..server.failmanager import FailManagerEmpty
-from ..server.ipdns import DNSUtils, IPAddr
+from ..server.ipdns import getfqdn, DNSUtils, IPAddr
 from ..server.mytime import MyTime
 from ..server.utils import Utils, uni_decode
 from .utils import setUpMyTime, tearDownMyTime, mtimesleep, with_tmpdir, LogCaptureTestCase, \
@@ -2027,6 +2027,20 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 			self.assertEqual(id(ip1), id(ip2))
 		ip1 = IPAddr('93.184.216.34'); ip2 = IPAddr('93.184.216.34'); self.assertEqual(id(ip1), id(ip2))
 		ip1 = IPAddr('2606:2800:220:1:248:1893:25c8:1946'); ip2 = IPAddr('2606:2800:220:1:248:1893:25c8:1946'); self.assertEqual(id(ip1), id(ip2))
+
+	def testFQDN(self):
+		sname = DNSUtils.getHostname(fqdn=False)
+		lname = DNSUtils.getHostname(fqdn=True)
+		# FQDN is not localhost if short hostname is not localhost too (or vice versa):
+		self.assertEqual(lname != 'localhost',
+		                 sname != 'localhost')
+		# FQDN from short name should be long name:
+		self.assertEqual(getfqdn(sname), lname)
+		# FQDN from FQDN is the same:
+		self.assertEqual(getfqdn(lname), lname)
+		# coverage (targeting all branches): FQDN from loopback and DNS blackhole is always the same:
+		self.assertIn(getfqdn('localhost.'), ('localhost', 'localhost.'))
+		self.assertIn(getfqdn('as112.arpa.'), ('as112.arpa.', 'as112.arpa'))
 
 
 class JailTests(unittest.TestCase):
