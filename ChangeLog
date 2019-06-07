@@ -59,6 +59,8 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
   set to `sm-mta` (no unit `sendmail`) for some messages (gh-2385)
 * `filter.d/asterisk.conf`: asterisk can log additional timestamp if logs into systemd-journal
   (regex extended with optional part matching this, gh-2383)
+* `filter.d/postfix.conf`:
+    - regexp's accept variable suffix code in status of postfix for precise messages (gh-2442)
 
 ### New Features
 * new failregex-flag tag `<F-MLFGAINED>` for failregex, signaled that the access to service was gained
