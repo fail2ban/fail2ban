@@ -50,12 +50,19 @@ Jun 12 08:58:35 xxx postfix/smtpd[2931]: NOQUEUE: reject: RCPT from unknown[1.2.
 # failJSON: { "time": "2005-06-12T08:58:35", "match": true , "host": "1.2.3.4" }
 Jun 12 08:58:35 xxx postfix/smtpd[13533]: improper command pipelining after AUTH from unknown[1.2.3.4]: QUIT
 
-# ---------------------------------------
-# Test-cases of postfix-postscreen:
-# ---------------------------------------
-
 # failJSON: { "time": "2005-05-05T15:51:11", "match": true , "host": "216.245.194.173", "desc": "postfix postscreen / gh-1764" }
 May  5 15:51:11 xxx postfix/postscreen[1148]: NOQUEUE: reject: RCPT from [216.245.194.173]:60591: 550 5.7.1 Service unavailable; client [216.245.194.173] blocked using rbl.example.com; from=<spammer@example.com>, to=<goodguy@example.com>, proto=ESMTP, helo=<badguy.example.com>
+
+# failJSON: { "time": "2005-06-03T06:25:43", "match": true , "host": "192.0.2.11", "desc": "too many errors / gh-2439" }
+Jun  3 06:25:43 srv postfix/smtpd[29306]: too many errors after RCPT from example.com[192.0.2.11]
+
+# filterOptions: [{"mode": "errors"}]
+
+# failJSON: { "match": false, "desc": "ignore normal messages, jail for too many errors only" }
+Jun 12 08:58:35 srv postfix/smtpd[29306]: improper command pipelining after AUTH from unknown[192.0.2.11]: QUIT
+
+# failJSON: { "time": "2005-06-03T06:25:43", "match": true , "host": "192.0.2.11", "desc": "too many errors / gh-2439" }
+Jun  3 06:25:43 srv postfix/smtpd[29306]: too many errors after RCPT from example.com[192.0.2.11]
 
 # ---------------------------------------
 # Test-cases of postfix-rbl:
