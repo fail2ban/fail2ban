@@ -173,3 +173,27 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertNotLogged("Failed to execute unban")
 		self.assertLogged("action1 unban deleted aInfo IP")
 		self.assertLogged("action2 unban deleted aInfo IP")
+
+	def testUnbanOnBusyBanBombing(self):
+		# check unban happens in-between of "ban bombing" despite lower precedence,
+		# if it is not work, we'll see "Unbanned 25" earliest at flushing (after stop)
+
+		# each 3rd ban we should see an unban check (and tickets gets unbanned):
+		self.__actions.banPrecedence = 3
+
+		self.__actions.start()
+
+		i = 0
+		while i < 25:
+			ip = "192.0.2.%d" % i
+			self.__jail.putFailTicket(FailTicket(ip, 0))
+			if not i: # wait for first to start "ban bombing":
+				self.assertLogged('Ban %s' % ip, wait=True)
+			i += 1
+
+		# wait for last ban (all 25 tickets gets banned):
+		self.assertLogged(' / 25,', wait=True)
+		self.__actions.stop()
+		self.__actions.join()
+
+		self.assertNotLogged('Unbanned 25, 0 ticket(s)', wait=False)

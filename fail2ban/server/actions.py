@@ -81,6 +81,8 @@ class Actions(JailThread, Mapping):
 		self._actions = OrderedDict()
 		## The ban manager.
 		self.__banManager = BanManager()
+		## precedence of ban (over unban), so max number of tickets banned (to call an unban check):
+		self.banPrecedence = 10
 
 	@staticmethod
 	def _load_python_module(pythonModule):
@@ -296,6 +298,7 @@ class Actions(JailThread, Mapping):
 		bool
 			True when the thread exits nicely.
 		"""
+		cnt = 0
 		for name, action in self._actions.iteritems():
 			try:
 				action.start()
@@ -310,8 +313,14 @@ class Actions(JailThread, Mapping):
 					lambda: False, self.sleeptime)
 				logSys.debug("Actions: leave idle mode")
 				continue
-			if not Utils.wait_for(lambda: not self.active or self.__checkBan(), self.sleeptime):
-				self.__checkUnBan()
+			# wait for ban (stop if gets inactive):
+			bancnt = Utils.wait_for(lambda: not self.active or self.__checkBan(), self.sleeptime)
+			cnt += bancnt
+			# unban if nothing is banned not later than banned tickets >= banPrecedence
+			if not bancnt or cnt >= self.banPrecedence:
+				if self.active:
+					self.__checkUnBan()
+				cnt = 0
 		
 		self.__flushBan()
 		self.stopActions()
@@ -425,7 +434,7 @@ class Actions(JailThread, Mapping):
 		"""
 		cnt = 0
 		if not tickets:
-			tickets = self.__getFailTickets()
+			tickets = self.__getFailTickets(self.banPrecedence)
 		for ticket in tickets:
 			bTicket = BanManager.createBanTicket(ticket)
 			ip = bTicket.getIP()
