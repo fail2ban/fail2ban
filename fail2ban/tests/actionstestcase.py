@@ -32,7 +32,7 @@ from ..server.actions import Actions
 from ..server.ticket import FailTicket
 from ..server.utils import Utils
 from .dummyjail import DummyJail
-from .utils import LogCaptureTestCase
+from .utils import LogCaptureTestCase, with_alt_time, MyTime
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
@@ -173,3 +173,39 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertNotLogged("Failed to execute unban")
 		self.assertLogged("action1 unban deleted aInfo IP")
 		self.assertLogged("action2 unban deleted aInfo IP")
+
+	@with_alt_time
+	def testUnbanOnBusyBanBombing(self):
+		# check unban happens in-between of "ban bombing" despite lower precedence,
+		# if it is not work, we'll see "Unbanned 25" earliest at flushing (after stop)
+
+		# each 3rd ban we should see an unban check (and tickets gets unbanned):
+		self.__actions.banPrecedence = 3
+		self.__actions.setBanTime(100)
+
+		self.__actions.start()
+
+		MyTime.setTime(0); # avoid "expired bantime" (in 0.11)
+		i = 0
+		while i < 25:
+			ip = "192.0.2.%d" % i
+			self.__jail.putFailTicket(FailTicket(ip, 0))
+			i += 1
+
+		# wait for last ban (all 25 tickets gets banned):
+		self.assertLogged(' / 25,', wait=True)
+
+		MyTime.setTime(200); # unban time for 25 tickets reached
+
+		while i < 50:
+			ip = "192.0.2.%d" % i
+			self.__jail.putFailTicket(FailTicket(ip, 200))
+			i += 1
+
+		# wait for last ban (all 50 tickets gets banned):
+		self.assertLogged(' / 50,', wait=True)
+		self.__actions.stop()
+		self.__actions.join()
+
+		self.assertLogged('Unbanned 25, 0 ticket(s)')
+		self.assertNotLogged('Unbanned 50, 0 ticket(s)')
