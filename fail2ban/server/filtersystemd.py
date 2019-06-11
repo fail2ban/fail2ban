@@ -86,10 +86,12 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				files.extend(glob.glob(p))
 			args['files'] = list(set(files))
 
+		# Default flags is SYSTEM_ONLY(4). This would lead to ignore user session files,
+		# so can prevent "Too many open files" errors on a lot of user sessions (see gh-2392):
 		try:
 			args['flags'] = int(kwargs.pop('journalflags'))
 		except KeyError:
-			pass
+			args['flags'] = 4
 
 		return args
 
