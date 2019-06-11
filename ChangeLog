@@ -68,6 +68,9 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
   multi-line parsing may be broken, because removal of matched string from multi-line buffer window
   is confused by such extra new-lines, so they are retained and got matched on every followed 
   message, see gh-2431)
+* [stability] prevent race condition - no unban if the bans occur continuously (gh-2410);
+  now an unban-check will happen not later than 10 tickets get banned regardless there are
+  still active bans available (precedence of ban over unban-check is 10 now)
 * fixed read of included config-files (`.local` overwrites options of `.conf` for config-files 
   included with before/after)
 * `action.d/abuseipdb.conf`: switched to use AbuseIPDB API v2 (gh-2302)

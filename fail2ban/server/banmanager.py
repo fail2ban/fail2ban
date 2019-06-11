@@ -327,27 +327,32 @@ class BanManager:
 	# @param time the time
 	# @return the list of ticket to unban
 	
-	def unBanList(self, time):
+	def unBanList(self, time, maxCount=0x7fffffff):
 		with self.__lock:
 			# Permanent banning
 			if self.__banTime < 0:
 				return list()
 
 			# Check next unban time:
-			if self.__nextUnbanTime > time:
+			nextUnbanTime = self.__nextUnbanTime
+			if nextUnbanTime > time:
 				return list()
 
 			# Gets the list of ticket to remove (thereby correct next unban time).
 			unBanList = {}
-			self.__nextUnbanTime = BanTicket.MAX_TIME
+			nextUnbanTime = BanTicket.MAX_TIME
 			for fid,ticket in self.__banList.iteritems():
 				# current time greater as end of ban - timed out:
 				eob = ticket.getEndOfBanTime(self.__banTime)
 				if time > eob:
 					unBanList[fid] = ticket
-				elif self.__nextUnbanTime > eob:
-					self.__nextUnbanTime = eob
+					if len(unBanList) >= maxCount: # stop search cycle, so reset back the next check time
+						nextUnbanTime = self.__nextUnbanTime
+						break
+				elif nextUnbanTime > eob:
+					nextUnbanTime = eob
 
+			self.__nextUnbanTime = nextUnbanTime
 			# Removes tickets.
 			if len(unBanList):
 				if len(unBanList) / 2.0 <= len(self.__banList) / 3.0:

@@ -177,25 +177,27 @@ class ExecuteActions(LogCaptureTestCase):
 	@with_alt_time
 	def testUnbanOnBusyBanBombing(self):
 		# check unban happens in-between of "ban bombing" despite lower precedence,
-		# if it is not work, we'll see "Unbanned 25" earliest at flushing (after stop)
+		# if it is not work, we'll not see "Unbanned 30" (rather "Unbanned 50")
+		# because then all the unbans occur earliest at flushing (after stop)
 
-		# each 3rd ban we should see an unban check (and tickets gets unbanned):
+		# each 3rd ban we should see an unban check (and up to 5 tickets gets unbanned):
 		self.__actions.banPrecedence = 3
+		self.__actions.unbanMaxCount = 5
 		self.__actions.setBanTime(100)
 
 		self.__actions.start()
 
 		MyTime.setTime(0); # avoid "expired bantime" (in 0.11)
 		i = 0
-		while i < 25:
+		while i < 20:
 			ip = "192.0.2.%d" % i
 			self.__jail.putFailTicket(FailTicket(ip, 0))
 			i += 1
 
-		# wait for last ban (all 25 tickets gets banned):
-		self.assertLogged(' / 25,', wait=True)
+		# wait for last ban (all 20 tickets gets banned):
+		self.assertLogged(' / 20,', wait=True)
 
-		MyTime.setTime(200); # unban time for 25 tickets reached
+		MyTime.setTime(200); # unban time for 20 tickets reached
 
 		while i < 50:
 			ip = "192.0.2.%d" % i
@@ -207,5 +209,5 @@ class ExecuteActions(LogCaptureTestCase):
 		self.__actions.stop()
 		self.__actions.join()
 
-		self.assertLogged('Unbanned 25, 0 ticket(s)')
+		self.assertLogged('Unbanned 30, 0 ticket(s)')
 		self.assertNotLogged('Unbanned 50, 0 ticket(s)')

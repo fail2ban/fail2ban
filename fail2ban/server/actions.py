@@ -82,8 +82,10 @@ class Actions(JailThread, Mapping):
 		self._actions = OrderedDict()
 		## The ban manager.
 		self.__banManager = BanManager()
-		## precedence of ban (over unban), so max number of tickets banned (to call an unban check):
+		## Precedence of ban (over unban), so max number of tickets banned (to call an unban check):
 		self.banPrecedence = 10
+		## Max count of outdated tickets to unban per each __checkUnBan operation:
+		self.unbanMaxCount = self.banPrecedence * 2
 
 	@staticmethod
 	def _load_python_module(pythonModule):
@@ -330,7 +332,9 @@ class Actions(JailThread, Mapping):
 			# unban if nothing is banned not later than banned tickets >= banPrecedence
 			if not bancnt or cnt >= self.banPrecedence:
 				if self.active:
-					self.__checkUnBan()
+					# let shrink the ban list faster
+					bancnt *= 2
+					self.__checkUnBan(bancnt if bancnt and bancnt < self.unbanMaxCount else self.unbanMaxCount)
 				cnt = 0
 		
 		self.__flushBan()
@@ -526,12 +530,12 @@ class Actions(JailThread, Mapping):
 					self._jail.name, name, aInfo, e,
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 
-	def __checkUnBan(self):
+	def __checkUnBan(self, maxCount=None):
 		"""Check for IP address to unban.
 
 		Unban IP addresses which are outdated.
 		"""
-		lst = self.__banManager.unBanList(MyTime.time())
+		lst = self.__banManager.unBanList(MyTime.time(), maxCount)
 		for ticket in lst:
 			self.__unBan(ticket)
 		cnt = len(lst)
