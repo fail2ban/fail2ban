@@ -31,7 +31,7 @@ else: # pragma: 3.x no cover
 	from urllib2 import Request, urlopen, HTTPError
 	from urllib import urlencode
 
-from fail2ban.server.actions import ActionBase
+from fail2ban.server.actions import Actions, ActionBase, BanTicket
 from fail2ban.helpers import splitwords, str2LogLevel
 
 
@@ -286,13 +286,8 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	def _banIPs(self, ips):
 		for ip in ips:
 			try:
-				self._jail.actions[self.banaction].ban({
-					'ip': ip,
-					'failures': 0,
-					'matches': "",
-					'ipmatches': "",
-					'ipjailmatches': "",
-				})
+				ai = Actions.ActionInfo(BanTicket(ip), self._jail)
+				self._jail.actions[self.banaction].ban(ai)
 			except Exception as e:
 				self._logSys.error(
 					"Error banning IP %s for jail '%s' with action '%s': %s",
@@ -307,13 +302,8 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	def _unbanIPs(self, ips):
 		for ip in ips:
 			try:
-				self._jail.actions[self.banaction].unban({
-					'ip': ip,
-					'failures': 0,
-					'matches': "",
-					'ipmatches': "",
-					'ipjailmatches': "",
-				})
+				ai = Actions.ActionInfo(BanTicket(ip), self._jail)
+				self._jail.actions[self.banaction].unban(ai)
 			except Exception as e:
 				self._logSys.error(
 					"Error unbanning IP %s for jail '%s' with action '%s': %s",
