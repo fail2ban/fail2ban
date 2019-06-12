@@ -113,6 +113,7 @@ filter = flt[logtype=short]
 * `filter.d/common.conf`: differentiate `__prefix_line` for file/journal logtype's (speedup and fix parsing
   of systemd-journal);
 * `filter.d/traefik-auth.conf`: used to ban hosts, that were failed through traefik
+* `filter.d/znc-adminlog.conf`: new filter for ZNC (IRC bouncer); requires the adminlog module to be loaded
 
 ### Enhancements
 * introduced new options: `dbmaxmatches` (fail2ban.conf) and `maxmatches` (jail.conf) to contol
