@@ -293,7 +293,10 @@ class Fail2banRegex(object):
 		for k in ['logtype', 'datepattern'] + fltOpt.keys():
 			# combined options win, but they contain only a sub-set in filter expected keys,
 			# so get the rest from definition section:
-			realopts[k] = combopts[k] if k in combopts else reader.get('Definition', k)
+			try:
+				realopts[k] = combopts[k] if k in combopts else reader.get('Definition', k)
+			except NoOptionError: # pragma: no cover
+				pass
 		output("Real  filter options : %r" % realopts)
 
 	def readRegex(self, value, regextype):
