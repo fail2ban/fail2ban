@@ -35,6 +35,8 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
 -----------
 
 ### Fixes
+* [compatibility] systemd backend: default flags changed to SYSTEM_ONLY(4), fixed in gh-2444 in order to ignore
+  user session files per default, so could prevent "Too many open files" errors on a lot of user sessions (see gh-2392)
 * [grave] fixed parsing of multi-line filters (`maxlines` > 1) together with systemd backend,
   now systemd-filter replaces newlines in message from systemd journal with `\n` (otherwise 
   multi-line parsing may be broken, because removal of matched string from multi-line buffer window
