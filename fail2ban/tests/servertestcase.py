@@ -1941,8 +1941,8 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 		cmd = realCmd
 		if isinstance(realCmd, list):
 			cmd = realCmd[0]
-		cmd = re.sub(r'\)\s*\|\s*mail\b([^\n]*)',
-			r') | cat; printf "\\n... | "; echo mail \1', cmd)
+		cmd = re.sub(r'\)\s*\|\s*(\S*mail\b[^\n]*)',
+			r') | cat; printf "\\n... | "; echo \1', cmd)
 		# replace abuse retrieving (possible no-network), just replace first occurrence of 'dig...':
 		cmd = re.sub(r'\bADDRESSES=\$\(dig\s[^\n]+',
 			lambda m: 'ADDRESSES="abuse-1@abuse-test-server, abuse-2@abuse-test-server"',
@@ -1970,6 +1970,26 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'ip4-ban': (
 					'The IP 87.142.124.10 has just been banned by Fail2Ban after',
 					'100 attempts against j-mail-whois-lines.',
+					'Here is more information about 87.142.124.10 :',
+					'-- information about 87.142.124.10 --',
+					'Lines containing failures of 87.142.124.10 (max 2)',
+					'testcase01.log:Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10',
+					'testcase01a.log:Dec 31 11:55:01 [sshd] error: PAM: Authentication failure for test from 87.142.124.10',
+				),
+			}),
+			# sendmail-whois-lines --
+			('j-sendmail-whois-lines', 
+				'sendmail-whois-lines['
+				  '''name=%(__name__)s, grepopts="-m 1", grepmax=2, mailcmd='testmail -f "<sender>" "<dest>"', ''' +
+					# 2 logs to test grep from multiple logs:
+				  'logpath="' + os.path.join(TEST_FILES_DIR, "testcase01.log") + '\n' +
+			    '         ' + os.path.join(TEST_FILES_DIR, "testcase01a.log") + '", '
+				  '_whois_command="echo \'-- information about <ip> --\'"'
+				  ']',
+			{
+				'ip4-ban': (
+					'The IP 87.142.124.10 has just been banned by Fail2Ban after',
+					'100 attempts against j-sendmail-whois-lines.',
 					'Here is more information about 87.142.124.10 :',
 					'-- information about 87.142.124.10 --',
 					'Lines containing failures of 87.142.124.10 (max 2)',
