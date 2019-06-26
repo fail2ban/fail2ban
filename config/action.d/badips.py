@@ -54,9 +54,6 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	age : str, optional
 		Age of last report for bad IPs, per badips.com syntax.
 		Default "24h" (24 hours)
-	key : str, optional
-		Key issued by badips.com to report bans, for later retrieval
-		of personalised content.
 	banaction : str, optional
 		Name of banaction to use for blacklisting bad IPs. If `None`,
 		no blacklist of IPs will take place.
@@ -67,8 +64,8 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		"postfix", but want to use whole "mail" category for blacklist.
 		Default `category`.
 	bankey : str, optional
-		Key issued by badips.com to blacklist IPs reported with the
-		associated key.
+		Key issued by badips.com to retrieve personal list
+		of blacklist IPs.
 	updateperiod : int, optional
 		Time in seconds between updating bad IPs blacklist.
 		Default 900 (15 minutes)
@@ -93,7 +90,7 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	def _Request(self, url, **argv):
 		return Request(url, headers={'User-Agent': self.agent}, **argv)
 
-	def __init__(self, jail, name, category, score=3, age="24h", key=None,
+	def __init__(self, jail, name, category, score=3, age="24h",
 		banaction=None, bancategory=None, bankey=None, updateperiod=900, 
 		loglevel='DEBUG', agent="Fail2Ban", timeout=TIMEOUT):
 		super(BadIPsAction, self).__init__(jail, name)
@@ -103,7 +100,6 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		self.category = category
 		self.score = score
 		self.age = age
-		self.key = key
 		self.banaction = banaction
 		self.bancategory = bancategory or category
 		self.bankey = bankey
@@ -381,8 +377,6 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		"""
 		try:
 			url = "/".join([self._badips, "add", self.category, str(aInfo['ip'])])
-			if self.key:
-				url = "?".join([url, urlencode({'key': self.key})])
 			self._logSys.debug('badips.com: ban, url: %r', url)
 			response = urlopen(self._Request(url), timeout=self.timeout)
 		except HTTPError as response: # pragma: no cover
