@@ -83,7 +83,7 @@ if sys.version_info >= (2,7): # pragma: no cover - may be unavailable
 				'banaction': "test",
 				'age': "2w",
 				'score': 5,
-				'key': "fail2ban-test-suite",
+				#'key': "fail2ban-test-suite",
 				#'bankey': "fail2ban-test-suite",
 				'timeout': (3 if unittest.F2B.fast else 60),
 				})
