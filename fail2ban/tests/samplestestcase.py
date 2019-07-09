@@ -277,7 +277,7 @@ def testSampleRegexsFactory(name, basedir):
 							except ValueError:
 								jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f")
 							jsonTime = time.mktime(jsonTimeLocal.timetuple())
-							jsonTime += jsonTimeLocal.microsecond / 1000000
+							jsonTime += jsonTimeLocal.microsecond / 1000000.0
 							self.assertEqual(fail2banTime, jsonTime,
 								"UTC Time  mismatch %s (%s) != %s (%s)  (diff %.3f seconds)" % 
 								(fail2banTime, time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(fail2banTime)),
