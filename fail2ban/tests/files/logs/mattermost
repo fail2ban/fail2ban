@@ -1,6 +1,15 @@
+# For these to match "LogSettings -> FileJson" needs to be set to 'false'
 # failJSON: { "time": "2019-07-09T10:07:28", "match": true, "host": "192.0.2.1" }
 2019-07-09T10:07:28.113+0200	error	mlog/log.go:172	Unable to find an existing account matching your credentials. This team may require an invite from the team owner to join.	{"path": "/api/v4/users/login", "request_id": "abc123", "ip_addr": "192.0.2.1", "user_id": "", "method": "POST", "err_where": "GetUserForLogin", "http_code": 400, "err_details": ""}
 # failJSON: { "time": "2019-07-09T10:09:40", "match": true, "host": "192.0.2.1" }
 2019-07-09T10:09:40.840+0200	error	mlog/log.go:172	Error trying to authenticate MFA token	{"path": "/api/v4/users/login", "request_id": "def567", "ip_addr": "192.0.2.1", "user_id": "", "method": "POST", "err_where": "ValidateToken", "http_code": 401, "err_details": "invalid code"}
 # failJSON: { "time": "2019-07-09T12:53:10", "match": true, "host": "192.0.2.1" }
 2019-07-09T12:53:10.046+0200	error	mlog/log.go:172	Login failed because of invalid password	{"path": "/api/v4/users/login", "request_id": "ghi345", "ip_addr": "192.0.2.1", "user_id": "", "method": "POST", "err_where": "checkUserPassword", "http_code": 401, "err_details": "user_id=xyz123"}
+
+# For these to match "LogSettings -> FileJson" needs to be set to 'true'
+# failJSON: 
+{"level":"error","ts":1562574795.6335213,"caller":"mlog/log.go:172","msg":"Error trying to authenticate MFA token","path":"/api/v4/users/login","request_id":"xxx","ip_addr":"192.0.2.1","user_id":"xxx","method":"POST","err_where":"ValidateToken","http_code":401,"err_details":"invalid code"}
+# failJSON: 
+{"level":"error","ts":1561957767.752643,"caller":"mlog/log.go:172","msg":"Login failed because of invalid password","path":"/api/v4/users/login","request_id":"xxxx´","ip_addr":"192.0.2.1","user_id":"xxx","method":"POST","err_where":"checkUserPassword","http_code":401,"err_details":"user_id=xxx"}
+# failJSON: 
+{"level":"error","ts":1562571047.2427917,"caller":"mlog/log.go:172","msg":"Unable to find an existing account matching your credentials. This team may require an invite from the team owner to join.","path":"/api/v4/users/login","request_id":"xxx","ip_addr":"192.0.2.1","user_id":"","method":"POST","err_where":"GetUserForLogin","http_code":400,"err_details":""}
