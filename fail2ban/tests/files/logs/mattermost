@@ -12,6 +12,6 @@
 # failJSON: { "time": "2019-07-08T10:33:15.633521", "match": true, "host": "192.0.2.2" }
 {"level":"error","ts":1562574795.6335213,"caller":"mlog/log.go:172","msg":"Error trying to authenticate MFA token","path":"/api/v4/users/login","request_id":"xxx","ip_addr":"192.0.2.2","user_id":"xxx","method":"POST","err_where":"ValidateToken","http_code":401,"err_details":"invalid code"}
 # failJSON: { "time": "2019-07-01T07:09:27.752643", "match": true, "host": "192.0.2.2" }
-{"level":"error","ts":1561957767.752643,"caller":"mlog/log.go:172","msg":"Login failed because of invalid password","path":"/api/v4/users/login","request_id":"xxxx´","ip_addr":"192.0.2.2","user_id":"xxx","method":"POST","err_where":"checkUserPassword","http_code":401,"err_details":"user_id=xxx"}
+{"level":"error","ts":1561957767.752643,"caller":"mlog/log.go:172","msg":"Login failed because of invalid password","path":"/api/v4/users/login","request_id":"xxxx","ip_addr":"192.0.2.2","user_id":"xxx","method":"POST","err_where":"checkUserPassword","http_code":401,"err_details":"user_id=xxx"}
 # failJSON: { "time": "2019-07-08T09:30:47.242791", "match": true, "host": "192.0.2.2" }
 {"level":"error","ts":1562571047.2427917,"caller":"mlog/log.go:172","msg":"Unable to find an existing account matching your credentials. This team may require an invite from the team owner to join.","path":"/api/v4/users/login","request_id":"xxx","ip_addr":"192.0.2.2","user_id":"","method":"POST","err_where":"GetUserForLogin","http_code":400,"err_details":""}
