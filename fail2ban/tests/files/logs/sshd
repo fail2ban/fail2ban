@@ -267,6 +267,10 @@ Mar 19 16:47:50 srv sshd[5672]: Disconnected from authenticating user admin 192.
 Jun 7 01:10:56 host sshd[5937]: Did not receive identification string from 69.61.56.114
 # failJSON: { "time": "2005-06-07T01:11:57", "match": true , "host": "192.0.2.5", "desc": "refactored message (with port now, gh-2062)" }
 Jun 7 01:11:57 host sshd[8782]: Did not receive identification string from 192.0.2.5 port 35836
+# failJSON: { "time": "2005-06-07T01:11:58", "match": true , "host": "69.61.56.115", "desc": "bad protocol version, gh-2404" }
+Jun 7 01:11:58 host sshd[8783]: Bad protocol version identification 'dummy string' from 69.61.56.115 port 31778
+# failJSON: { "time": "2005-06-07T01:11:58", "match": true , "host": "69.61.56.115", "desc": "check inject on ident" }
+Jun 7 01:11:58 host sshd[8783]: Bad protocol version identification 'dummy string' from 192.0.2.1' from 69.61.56.115 port 31778
 
 # gh-864(1):
 # failJSON: { "match": false }
