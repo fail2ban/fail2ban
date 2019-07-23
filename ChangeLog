@@ -73,7 +73,8 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
 * new failregex-flag tag `<F-MLFGAINED>` for failregex, signaled that the access to service was gained
   (ATM used similar to tag `<F-NOFAIL>`, but it does not add the log-line to matches, gh-2279)
 * filters: introduced new configuration parameter `logtype` (default `file` for file-backends, and 
-  `journal` for journal-backends, gh-2387);
+  `journal` for journal-backends, gh-2387); can be also set to `rfc5424` to force filters (which include common.conf)
+  to use RFC 5424 conform prefix-line per default (gh-2467);
 * for better performance and safety the option `logtype` can be also used to
   select short prefix-line for file-backends too for all filters using `__prefix_line` (`common.conf`),
   if message logged only with `hostname svc[nnnn]` prefix (often the case on several systems):
