@@ -349,4 +349,12 @@ Nov 26 13:03:39 srv sshd[14738]: fatal: Unable to negotiate with 192.0.2.5 port 
 # failJSON: { "time": "2004-11-26T16:47:51", "match": true , "host": "192.0.2.6", "desc": "Disconnected during preauth phase (in extra/aggressive mode)" }
 Nov 26 16:47:51 srv sshd[19320]: Disconnected from authenticating user root 192.0.2.6 port 33553 [preauth]
 
+# filterOptions: {"test.condition":"name=='sshd'", "logtype": "rfc5424"}
+
+# failJSON: { "time": "2019-07-08T23:40:16", "match": true , "host": "192.0.2.1", "desc": "RFC 5424 format (gh-2309)" }
+<38>1 2019-07-08T17:40:16.954167-04:00 hostname.example.com sshd 57915 - - Failed unknown for invalid user redmond from 192.0.2.1 port 59197 ssh2
+
+# failJSON: { "time": "2019-07-08T23:40:17", "match": true , "host": "192.0.2.2", "desc": "RFC 5424 format with extra data and brackets in value (gh-2309)" }
+<38>1 2019-07-08T17:40:17.954167-04:00 hostname.example.com sshd 55555 - [timeQuality tzKnown="1" isSynced="0"][xxx@123 test="[brackets]"] Failed unknown for invalid user redmond from 192.0.2.2 port 55555 ssh2
+
 # addFILE: "sshd-journal"
