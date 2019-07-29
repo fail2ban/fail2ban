@@ -23,3 +23,6 @@ Aug 17 08:20:22 catinthehat named[2954]: client 223.252.23.219#56275: zone trans
 27-Aug-2013 17:49:45.330 client 59.167.242.100#44281 (watt.kiev.ua): zone transfer 'watt.kiev.ua/AXFR/IN' denied
 # failJSON: { "time": "2004-08-27T16:58:31", "match": true , "host": "176.9.92.38" }
 Aug 27 16:58:31 vhost1-ua named[29206]: client 176.9.92.38#42592 (simmarket.com.ua): bad zone transfer request: 'simmarket.com.ua/IN': non-authoritative zone (NOTAUTH)
+
+# failJSON: { "time": "2004-08-27T16:59:00", "match": true , "host": "192.0.2.1", "desc": "new log format, 9.11.0 (#2406)" }
+Aug 27 16:59:00 host named[28098]: client @0x7f6450002ef0 192.0.2.1#23332 (example.com): bad zone transfer request: 'test.com/IN': non-authoritative zone (NOTAUTH)

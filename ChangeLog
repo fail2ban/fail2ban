@@ -99,6 +99,9 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
     - extended with new postfix filter mode `errors` to match "too many errors" (gh-2439),
       also included within modes `normal`, `more` (`extra` and `aggressive`), since postfix
       parameter `smtpd_hard_error_limit` is default 20 (additionally consider `maxretry`)
+* `filter.d/named-refused.conf`:
+    - support BIND 9.11.0 log format (includes an additional field @0xXXX..., gh-2406);
+    - `prefregex` extended, more selective now (denied/NOTAUTH suffix moved from failregex, so no catch-all there anymore)
 
 ### New Features
 * new failregex-flag tag `<F-MLFGAINED>` for failregex, signaled that the access to service was gained
