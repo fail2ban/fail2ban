@@ -1280,6 +1280,11 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			jrnlfile = self._getRuntimeJournal()
 			self._initFilter(journalfiles=jrnlfile)
 
+		def testJournalFilesAndFlagsArgs(self):
+			# retrieve current system journal path
+			jrnlfile = self._getRuntimeJournal()
+			self._initFilter(journalfiles=jrnlfile, journalflags=0)
+
 		def testJournalPathArg(self):
 			# retrieve current system journal path
 			jrnlpath = self._getRuntimeJournal()
