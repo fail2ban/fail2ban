@@ -363,7 +363,7 @@ class ObserverThread(JailThread):
 		Observer will check ip was known (bad) and possibly increase an retry count
 		"""
 		# check jail active :
-		if not jail.isAlive():
+		if not jail.isAlive() or not jail.getBanTimeExtra("increment"):
 			return
 		ip = ticket.getIP()
 		unixTime = ticket.getTime()
