@@ -87,7 +87,7 @@ class FilterPyinotify(FileFilter):
 		logSys.debug("Created FilterPyinotify")
 
 	def callback(self, event, origin=''):
-		logSys.log(7, "[%s] %sCallback for Event: %s", self.jailName, origin, event)
+		logSys.log(4, "[%s] %sCallback for Event: %s", self.jailName, origin, event)
 		path = event.pathname
 		# check watching of this path:
 		isWF = False

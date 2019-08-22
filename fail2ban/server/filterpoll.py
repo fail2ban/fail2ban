@@ -98,8 +98,8 @@ class FilterPoll(FileFilter):
 	def run(self):
 		while self.active:
 			try:
-				if logSys.getEffectiveLevel() <= 6:
-					logSys.log(6, "Woke up idle=%s with %d files monitored",
+				if logSys.getEffectiveLevel() <= 4:
+					logSys.log(4, "Woke up idle=%s with %d files monitored",
 							   self.idle, self.getLogCount())
 				if self.idle:
 					if not Utils.wait_for(lambda: not self.active or not self.idle, 
@@ -140,10 +140,10 @@ class FilterPoll(FileFilter):
 			logStats = os.stat(filename)
 			stats = logStats.st_mtime, logStats.st_ino, logStats.st_size
 			pstats = self.__prevStats.get(filename, (0))
-			if logSys.getEffectiveLevel() <= 5:
+			if logSys.getEffectiveLevel() <= 4:
 				# we do not want to waste time on strftime etc if not necessary
 				dt = logStats.st_mtime - pstats[0]
-				logSys.log(5, "Checking %s for being modified. Previous/current stats: %s / %s. dt: %s",
+				logSys.log(4, "Checking %s for being modified. Previous/current stats: %s / %s. dt: %s",
 				           filename, pstats, stats, dt)
 				# os.system("stat %s | grep Modify" % filename)
 			self.__file404Cnt[filename] = 0

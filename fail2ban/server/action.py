@@ -397,20 +397,20 @@ class CommandAction(ActionBase):
 		res = True
 		try:
 			# common (resp. ipv4):
-			startCmd = None
+			cmd = self._getOperation(tag, 'inet4')
 			if not family or 'inet4' in family:
-				startCmd = self._getOperation(tag, 'inet4')
-				if startCmd:
-					res &= self.executeCmd(startCmd, self.timeout)
-			# start ipv6 actions if available:
+				if cmd:
+					res &= self.executeCmd(cmd, self.timeout)
+			# execute ipv6 operation if available (and not the same as ipv4):
 			if allowed_ipv6 and (not family or 'inet6' in family):
-				startCmd6 = self._getOperation(tag, 'inet6')
-				if startCmd6 and startCmd6 != startCmd:
-					res &= self.executeCmd(startCmd6, self.timeout)
+				cmd6 = self._getOperation(tag, 'inet6')
+				if cmd6 and cmd6 != cmd: # - avoid double execution of same command
+					res &= self.executeCmd(cmd6, self.timeout)
 			if not res:
 				raise RuntimeError("Error %s action %s/%s" % (operation, self._jail, self._name,))
 		except ValueError as e:
 			raise RuntimeError("Error %s action %s/%s: %r" % (operation, self._jail, self._name, e))
+		return res
 
 	COND_FAMILIES = ('inet4', 'inet6')
 
@@ -418,28 +418,32 @@ class CommandAction(ActionBase):
 	def _startOnDemand(self):
 		"""Checks the action depends on family (conditional)"""
 		v = self._properties.get('actionstart_on_demand')
-		if v is None:
-			v = False
-			for n in self._properties:
-				if CONDITIONAL_FAM_RE.match(n):
-					v = True
-					break
+		if v is not None:
+			return v
+		# not set - auto-recognize (depending on conditional):
+		v = False
+		for n in self._properties:
+			if CONDITIONAL_FAM_RE.match(n):
+				v = True
+				break
 		self._properties['actionstart_on_demand'] = v
 		return v
 
-	def start(self, family=[]):
+	def start(self, family=None, forceStart=False):
 		"""Executes the "actionstart" command.
 
 		Replace the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
-		if not family:
-			# check the action depends on family (conditional):
-			if self._startOnDemand:
+		# check the action depends on family (conditional):
+		if self._startOnDemand:
+			if not forceStart:
 				return True
 		elif self.__started.get(family): # pragma: no cover - normally unreachable
 			return True
-		return self._executeOperation('<actionstart>', 'starting', family=family)
+		ret = self._executeOperation('<actionstart>', 'starting', family=family)
+		self.__started[family] = ret
+		return ret
 
 	def ban(self, aInfo):
 		"""Executes the "actionban" command.
@@ -457,15 +461,7 @@ class CommandAction(ActionBase):
 		if self._startOnDemand:
 			family = aInfo.get('family')
 			if not self.__started.get(family):
-				self.start(family)
-				self.__started[family] = 1
-				# mark also another families as "started" (-1), if they are equal
-				# (on demand, but the same for ipv4 and ipv6):
-				cmd = self._getOperation('<actionstart>', family)
-				for f in CommandAction.COND_FAMILIES:
-					if f != family and not self.__started.get(f):
-						if cmd == self._getOperation('<actionstart>', f):
-							self.__started[f] = -1
+				self.start(family, forceStart=True)
 		# ban:
 		if not self._processCmd('<actionban>', aInfo):
 			raise RuntimeError("Error banning %(ip)s" % aInfo)
@@ -517,9 +513,7 @@ class CommandAction(ActionBase):
 		family = []
 		# collect started families, if started on demand (conditional):
 		if self._startOnDemand:
-			for f in CommandAction.COND_FAMILIES:
-				if self.__started.get(f) == 1: # only real started:
-					family.append(f)
+			family = [f for (f,v) in self.__started.iteritems() if v]
 			# if no started (on demand) actions:
 			if not family: return True
 		return self._executeOperation('<actionflush>', 'flushing', family=family)
@@ -533,12 +527,10 @@ class CommandAction(ActionBase):
 		family = []
 		# collect started families, if started on demand (conditional):
 		if self._startOnDemand:
-			for f in CommandAction.COND_FAMILIES:
-				if self.__started.get(f) == 1: # only real started:
-					family.append(f)
-					self.__started[f] = 0
+			family = [f for (f,v) in self.__started.iteritems() if v]
 			# if no started (on demand) actions:
 			if not family: return True
+		self.__started = {}
 		return self._executeOperation('<actionstop>', 'stopping', family=family)
 
 	def reload(self, **kwargs):

@@ -175,6 +175,7 @@ def _start_params(tmp, use_stock=False, use_stock_cfg=None,
 	cfg = pjoin(tmp, "config")
 	if db == 'auto':
 		db = pjoin(tmp, "f2b-db.sqlite3")
+	j_conf = 'jail.conf'
 	if use_stock and STOCK:
 		# copy config (sub-directories as alias):
 		def ig_dirs(dir, files):
@@ -196,6 +197,8 @@ def _start_params(tmp, use_stock=False, use_stock_cfg=None,
 			if r.match(line):
 				line = "backend = polling"
 			print(line)
+		# jails to local:
+		j_conf = 'jail.local' if jails else ''
 	else:
 		# just empty config directory without anything (only fail2ban.conf/jail.conf):
 		os.mkdir(cfg)
@@ -212,17 +215,23 @@ def _start_params(tmp, use_stock=False, use_stock_cfg=None,
 			"dbpurgeage = 1d",
 			"",
 		)
-		_write_file(pjoin(cfg, "jail.conf"), "w",
+	# write jails (local or conf):
+	if j_conf:
+		_write_file(pjoin(cfg, j_conf), "w",
 			*((
 				"[INCLUDES]", "",
 			  "[DEFAULT]", "tmp = " + tmp, "",
 			)+jails)
 		)
-		if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
-			_out_file(pjoin(cfg, "fail2ban.conf"))
-			_out_file(pjoin(cfg, "jail.conf"))
 	if f2b_local:
 		_write_file(pjoin(cfg, "fail2ban.local"), "w", *f2b_local)
+	if unittest.F2B.log_level < logging.DEBUG: # pragma: no cover
+		_out_file(pjoin(cfg, "fail2ban.conf"))
+		_out_file(pjoin(cfg, "jail.conf"))
+		if f2b_local:
+			_out_file(pjoin(cfg, "fail2ban.local"))
+		if j_conf and j_conf != "jail.conf":
+			_out_file(pjoin(cfg, j_conf))
 
 	# link stock actions and filters:
 	if use_stock_cfg and STOCK:
@@ -1339,6 +1348,121 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		_out_file(mpfn)
 		mp = _read_file(mpfn)
 		self.assertEqual(mp, '')
+
+	@unittest.F2B.skip_if_cfg_missing(filter="sendmail-auth")
+	@with_foreground_server_thread(startextra={
+		# create log-file (avoid "not found" errors):
+		'create_before_start': ('%(tmp)s/test.log',),
+		'use_stock': True,
+		# fail2ban.local:
+		'f2b_local': (
+			'[DEFAULT]',
+			'dbmaxmatches = 1'
+		),
+		# jail.local config:
+		'jails': (
+			# default:
+			'''test_action = dummy[actionstart_on_demand=1, init="start: %(__name__)s", target="%(tmp)s/test.txt",
+      actionban='<known/actionban>;
+        echo "<matches>"; printf "=====\\n%%b\\n=====\\n\\n" "<matches>" >> <target>']''',
+			# jail sendmail-auth:
+			'[sendmail-auth]',
+			'backend = polling',
+			'usedns = no',
+			'logpath = %(tmp)s/test.log',
+			'action = %(test_action)s',
+			'filter = sendmail-auth[logtype=short]',
+			'datepattern = ^Epoch',
+			'maxretry = 3',
+			'maxmatches = 2',
+			'enabled = true',
+			# jail sendmail-reject:
+			'[sendmail-reject]',
+			'backend = polling',
+			'usedns = no',
+			'logpath = %(tmp)s/test.log',
+			'action = %(test_action)s',
+			'filter = sendmail-reject[logtype=short]',
+			'datepattern = ^Epoch',
+			'maxretry = 3',
+			'enabled = true',
+		)
+	})
+	def testServerJails_Sendmail(self, tmp, startparams):
+		cfg = pjoin(tmp, "config")
+		lgfn = '%(tmp)s/test.log' % {'tmp': tmp}
+		tofn = '%(tmp)s/test.txt' % {'tmp': tmp}
+
+		smaut_msg = (
+			str(int(MyTime.time())) + ' smtp1 sm-mta[5133]: s1000000000001: [192.0.2.1]: possible SMTP attack: command=AUTH, count=1',
+			str(int(MyTime.time())) + ' smtp1 sm-mta[5133]: s1000000000002: [192.0.2.1]: possible SMTP attack: command=AUTH, count=2',
+			str(int(MyTime.time())) + ' smtp1 sm-mta[5133]: s1000000000003: [192.0.2.1]: possible SMTP attack: command=AUTH, count=3',
+		)
+		smrej_msg = (
+			str(int(MyTime.time())) + ' smtp1 sm-mta[21134]: s2000000000001: ruleset=check_rcpt, arg1=<123@example.com>, relay=xxx.dynamic.example.com [192.0.2.2], reject=550 5.7.1 <123@example.com>... Relaying denied. Proper authentication required.',
+			str(int(MyTime.time())) + ' smtp1 sm-mta[21134]: s2000000000002: ruleset=check_rcpt, arg1=<345@example.com>, relay=xxx.dynamic.example.com [192.0.2.2], reject=550 5.7.1 <345@example.com>... Relaying denied. Proper authentication required.',
+			str(int(MyTime.time())) + ' smtp1 sm-mta[21134]: s3000000000003: ruleset=check_rcpt, arg1=<567@example.com>, relay=xxx.dynamic.example.com [192.0.2.2], reject=550 5.7.1 <567@example.com>... Relaying denied. Proper authentication required.',
+		)
+
+		self.pruneLog("[test-phase sendmail-auth]")
+		# write log:
+		_write_file(lgfn, "w+", *smaut_msg)
+		# wait and check it caused banned (and dump in the test-file):
+		self.assertLogged(
+			"[sendmail-auth] Ban 192.0.2.1", "1 ticket(s) in 'sendmail-auth'", all=True, wait=MID_WAITTIME)
+		_out_file(tofn)
+		td = _read_file(tofn)
+		# check matches (maxmatches = 2, so only 2 & 3 available):
+		m = smaut_msg[0]
+		self.assertNotIn(m, td)
+		for m in smaut_msg[1:]:
+			self.assertIn(m, td)
+
+		self.pruneLog("[test-phase sendmail-reject]")
+		# write log:
+		_write_file(lgfn, "w+", *smrej_msg)
+		# wait and check it caused banned (and dump in the test-file):
+		self.assertLogged(
+			"[sendmail-reject] Ban 192.0.2.2", "1 ticket(s) in 'sendmail-reject'", all=True, wait=MID_WAITTIME)
+		_out_file(tofn)
+		td = _read_file(tofn)
+		# check matches (no maxmatches, so all matched messages are available):
+		for m in smrej_msg:
+			self.assertIn(m, td)
+
+		self.pruneLog("[test-phase restart sendmail-*]")
+		# restart jails (active ban-tickets should be restored):
+		self.execCmd(SUCCESS, startparams,
+			"reload", "--restart", "--all")
+		# wait a bit:
+		self.assertLogged(
+			"Reload finished.",
+			"[sendmail-auth] Restore Ban 192.0.2.1", "1 ticket(s) in 'sendmail-auth'", all=True, wait=MID_WAITTIME)
+		# check matches again - (dbmaxmatches = 1), so it should be only last match after restart:
+		td = _read_file(tofn)
+		m = smaut_msg[-1]
+		self.assertLogged(m)
+		self.assertIn(m, td)
+		for m in smaut_msg[0:-1]:
+			self.assertNotLogged(m)
+			self.assertNotIn(m, td)
+		# wait for restore of reject-jail:
+		self.assertLogged(
+			"[sendmail-reject] Restore Ban 192.0.2.2", "1 ticket(s) in 'sendmail-reject'", all=True, wait=MID_WAITTIME)
+		td = _read_file(tofn)
+		m = smrej_msg[-1]
+		self.assertLogged(m)
+		self.assertIn(m, td)
+		for m in smrej_msg[0:-1]:
+			self.assertNotLogged(m)
+			self.assertNotIn(m, td)
+
+		self.pruneLog("[test-phase stop server]")
+		# stop server and wait for end:
+		self.stopAndWaitForServerEnd(SUCCESS)
+
+		# just to debug actionstop:
+		self.assertFalse(exists(tofn))
 
 	@with_foreground_server_thread()
 	def testServerObserver(self, tmp, startparams):
