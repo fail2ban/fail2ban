@@ -321,6 +321,13 @@ class JailReaderTest(LogCaptureTestCase):
 		# maxlines:
 		self.assertEqual([['set', 'sshd-override-flt-opts', 'maxlines', 2]],
 			[o for o in stream if len(o) > 2 and o[2] == 'maxlines'])
+		# usedns should be before all regex in jail stream:
+		usednsidx = stream.index(['set', 'sshd-override-flt-opts', 'usedns', 'no'])
+		i = 0
+		for o in stream:
+			self.assertFalse(len(o) > 2 and o[2].endswith('regex'))
+			i += 1
+			if i > usednsidx: break
 		
 	def testSplitOption(self):
 		# Simple example

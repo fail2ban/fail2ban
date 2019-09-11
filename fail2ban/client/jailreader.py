@@ -105,7 +105,6 @@ class JailReader(ConfigReader):
 		"bantime.maxtime": ["string", None],
 		"bantime.rndtime": ["string", None],
 		"bantime.overalljails": ["bool", None],
-		"usedns": ["string", None], # be sure usedns is before all regex(s) in stream
 		"ignorecommand": ["string", None],
 		"ignoreself": ["bool", None],
 		"ignoreip": ["string", None],
@@ -113,10 +112,12 @@ class JailReader(ConfigReader):
 		"filter": ["string", ""],
 		"logtimezone": ["string", None],
 		"logencoding": ["string", None],
-		"logpath": ["string", None], # logpath after all log-related data (backend, date-pattern, etc)
+		"logpath": ["string", None],
 		"action": ["string", ""]
 	}
 	_configOpts.update(FilterReader._configOpts)
+
+	_ignoreOpts = set(['action', 'filter', 'enabled'] + FilterReader._configOpts.keys())
 
 	def getOptions(self):
 
@@ -234,6 +235,7 @@ class JailReader(ConfigReader):
 		 """
 
 		stream = []
+		stream2 = []
 		e = self.__opts.get('config-error')
 		if e:
 			stream.extend([['config-error', "Jail '%s' skipped, because of wrong configuration: %s" % (self.__name, e)]])
@@ -255,23 +257,22 @@ class JailReader(ConfigReader):
 						logSys.notice("No file(s) found for glob %s" % path)
 					for p in pathList:
 						found_files += 1
-						stream.append(
+						# logpath after all log-related data (backend, date-pattern, etc)
+						stream2.append(
 							["set", self.__name, "addlogpath", p, tail])
 				if not found_files:
 					msg = "Have not found any log file for %s jail" % self.__name
 					if not allow_no_files:
 						raise ValueError(msg)
 					logSys.warning(msg)
-					
-			elif opt == "logencoding":
-				stream.append(["set", self.__name, "logencoding", value])
 			elif opt == "backend":
 				backend = value
 			elif opt == "ignoreip":
 				stream.append(["set", self.__name, "addignoreip"] + splitwords(value))
-			elif (opt not in ('action', 'filter', 'enabled')
-				and opt not in FilterReader._configOpts):
+			elif opt not in JailReader._ignoreOpts:
 				stream.append(["set", self.__name, opt, value])
+		# consider options order (after other options):
+		if stream2: stream += stream2
 		for action in self.__actions:
 			if isinstance(action, (ConfigReaderUnshared, ConfigReader)):
 				stream.extend(action.convert())
