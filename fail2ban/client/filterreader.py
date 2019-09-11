@@ -37,6 +37,7 @@ logSys = getLogger(__name__)
 class FilterReader(DefinitionInitConfigReader):
 
 	_configOpts = {
+		"usedns": ["string", None],
 		"prefregex": ["string", None],
 		"ignoreregex": ["string", None],
 		"failregex": ["string", None],
@@ -61,6 +62,7 @@ class FilterReader(DefinitionInitConfigReader):
 
 	@staticmethod
 	def _fillStream(stream, opts, jailName):
+		prio0idx = 0
 		for opt, value in opts.iteritems():
 			if opt in ("failregex", "ignoreregex"):
 				if value is None: continue
@@ -73,9 +75,11 @@ class FilterReader(DefinitionInitConfigReader):
 					stream.append(["multi-set", jailName, "add" + opt, multi])
 				elif len(multi):
 					stream.append(["set", jailName, "add" + opt, multi[0]])
-			elif opt in ('maxlines', 'prefregex'):
-				# Be sure we set this options first.
-				stream.insert(0, ["set", jailName, opt, value])
+			elif opt in ('usedns', 'maxlines', 'prefregex'):
+				# Be sure we set this options first, and usedns is before all regex(s).
+				stream.insert(0 if opt == 'usedns' else prio0idx,
+					["set", jailName, opt, value])
+				prio0idx += 1
 			elif opt in ('datepattern'):
 				stream.append(["set", jailName, opt, value])
 			elif opt == 'journalmatch':
