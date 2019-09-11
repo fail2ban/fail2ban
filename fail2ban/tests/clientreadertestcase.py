@@ -302,6 +302,25 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertEqual(jail.getName(), 'sshd')
 		jail.setName('ssh-funky-blocker')
 		self.assertEqual(jail.getName(), 'ssh-funky-blocker')
+
+	def testOverrideFilterOptInJail(self):
+		unittest.F2B.SkipIfCfgMissing(stock=True); # expected include of common.conf
+		jail = JailReader('sshd-override-flt-opts', basedir=IMPERFECT_CONFIG,
+			share_config=IMPERFECT_CONFIG_SHARE_CFG, force_enable=True)
+		self.assertTrue(jail.read())
+		self.assertTrue(jail.getOptions())
+		self.assertTrue(jail.isEnabled())
+		stream = jail.convert()
+		# check filter options are overriden with values specified directly in jail:
+		# prefregex:
+		self.assertEqual([['set', 'sshd-override-flt-opts', 'prefregex', '^Test']],
+			[o for o in stream if len(o) > 2 and o[2] == 'prefregex'])
+		# journalmatch:
+		self.assertEqual([['set', 'sshd-override-flt-opts', 'addjournalmatch', '_COMM=test']],
+			[o for o in stream if len(o) > 2 and o[2] == 'addjournalmatch'])
+		# maxlines:
+		self.assertEqual([['set', 'sshd-override-flt-opts', 'maxlines', 2]],
+			[o for o in stream if len(o) > 2 and o[2] == 'maxlines'])
 		
 	def testSplitOption(self):
 		# Simple example
