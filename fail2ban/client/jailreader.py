@@ -86,36 +86,39 @@ class JailReader(ConfigReader):
 				logSys.warning("File %s is a dangling link, thus cannot be monitored" % p)
 		return pathList
 
+	_configOpts1st = {
+		"enabled": ["bool", False],
+		"backend": ["string", "auto"],
+		"filter": ["string", ""]
+	}
+	_configOpts = {
+		"enabled": ["bool", False],
+		"backend": ["string", "auto"],
+		"maxretry": ["int", None],
+		"maxmatches": ["int", None],
+		"findtime": ["string", None],
+		"bantime": ["string", None],
+		"bantime.increment": ["bool", None],
+		"bantime.factor": ["string", None],
+		"bantime.formula": ["string", None],
+		"bantime.multipliers": ["string", None],
+		"bantime.maxtime": ["string", None],
+		"bantime.rndtime": ["string", None],
+		"bantime.overalljails": ["bool", None],
+		"usedns": ["string", None], # be sure usedns is before all regex(s) in stream
+		"ignorecommand": ["string", None],
+		"ignoreself": ["bool", None],
+		"ignoreip": ["string", None],
+		"ignorecache": ["string", None],
+		"filter": ["string", ""],
+		"logtimezone": ["string", None],
+		"logencoding": ["string", None],
+		"logpath": ["string", None], # logpath after all log-related data (backend, date-pattern, etc)
+		"action": ["string", ""]
+	}
+	_configOpts.update(FilterReader._configOpts)
+
 	def getOptions(self):
-		opts1st = [["bool", "enabled", False],
-				["string", "backend", "auto"],
-				["string", "filter", ""]]
-		opts = [["bool", "enabled", False],
-				["string", "backend", "auto"],
-				["int",    "maxretry", None],
-				["int",    "maxmatches", None],
-				["string", "findtime", None],
-				["string", "bantime", None],
-				["bool",   "bantime.increment", None],
-				["string", "bantime.factor", None],
-				["string", "bantime.formula", None],
-				["string", "bantime.multipliers", None],
-				["string", "bantime.maxtime", None],
-				["string", "bantime.rndtime", None],
-				["bool",   "bantime.overalljails", None],
-				["string", "usedns", None], # be sure usedns is before all regex(s) in stream
-				["string", "failregex", None],
-				["string", "ignoreregex", None],
-				["string", "ignorecommand", None],
-				["bool",   "ignoreself", None],
-				["string", "ignoreip", None],
-				["string", "ignorecache", None],
-				["string", "filter", ""],
-				["string", "datepattern", None],
-				["string", "logtimezone", None],
-				["string", "logencoding", None],
-				["string", "logpath", None], # logpath after all log-related data (backend, date-pattern, etc)
-				["string", "action", ""]]
 
 		# Before interpolation (substitution) add static options always available as default:
 		self.merge_defaults({
@@ -125,7 +128,8 @@ class JailReader(ConfigReader):
 		try:
 
 			# Read first options only needed for merge defaults ('known/...' from filter):
-			self.__opts = ConfigReader.getOptions(self, self.__name, opts1st, shouldExist=True)
+			self.__opts = ConfigReader.getOptions(self, self.__name, self._configOpts1st,
+				shouldExist=True)
 			if not self.__opts: # pragma: no cover
 				raise JailDefError("Init jail options failed")
 		
@@ -157,7 +161,7 @@ class JailReader(ConfigReader):
 				logSys.warning("No filter set for jail %s" % self.__name)
 
 			# Read second all options (so variables like %(known/param) can be interpolated):
-			self.__opts = ConfigReader.getOptions(self, self.__name, opts)
+			self.__opts = ConfigReader.getOptions(self, self.__name, self._configOpts)
 			if not self.__opts: # pragma: no cover
 				raise JailDefError("Read jail options failed")
 		
@@ -234,8 +238,11 @@ class JailReader(ConfigReader):
 		if e:
 			stream.extend([['config-error', "Jail '%s' skipped, because of wrong configuration: %s" % (self.__name, e)]])
 			return stream
+		# fill jail with filter options, using filter (only not overriden in jail):
 		if self.__filter:
 			stream.extend(self.__filter.convert())
+		# and using options from jail:
+		FilterReader._fillStream(stream, self.__opts, self.__name)
 		for opt, value in self.__opts.iteritems():
 			if opt == "logpath":
 				if self.__opts.get('backend', '').startswith("systemd"): continue
@@ -262,17 +269,8 @@ class JailReader(ConfigReader):
 				backend = value
 			elif opt == "ignoreip":
 				stream.append(["set", self.__name, "addignoreip"] + splitwords(value))
-			elif opt in ("failregex", "ignoreregex"):
-				multi = []
-				for regex in value.split('\n'):
-					# Do not send a command if the rule is empty.
-					if regex != '':
-						multi.append(regex)
-				if len(multi) > 1:
-					stream.append(["multi-set", self.__name, "add" + opt, multi])
-				elif len(multi):
-					stream.append(["set", self.__name, "add" + opt, multi[0]])
-			elif opt not in ('action', 'filter', 'enabled'):
+			elif (opt not in ('action', 'filter', 'enabled')
+				and opt not in FilterReader._configOpts):
 				stream.append(["set", self.__name, opt, value])
 		for action in self.__actions:
 			if isinstance(action, (ConfigReaderUnshared, ConfigReader)):
