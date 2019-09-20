@@ -160,8 +160,8 @@ class Actions(JailThread, Mapping):
 				delacts = OrderedDict((name, action) for name, action in self._actions.iteritems()
 					if name not in self._reload_actions)
 				if len(delacts):
-					# unban all tickets using remove action only:
-					self.__flushBan(db=False, actions=delacts)
+					# unban all tickets using removed actions only:
+					self.__flushBan(db=False, actions=delacts, stop=True)
 					# stop and remove it:
 					self.stopActions(actions=delacts)
 				delattr(self, '_reload_actions')
@@ -326,7 +326,7 @@ class Actions(JailThread, Mapping):
 					self.__checkUnBan(bancnt if bancnt and bancnt < self.unbanMaxCount else self.unbanMaxCount)
 				cnt = 0
 		
-		self.__flushBan()
+		self.__flushBan(stop=True)
 		self.stopActions()
 		return True
 
@@ -494,7 +494,7 @@ class Actions(JailThread, Mapping):
 				cnt, self.__banManager.size(), self._jail.name)
 		return cnt
 
-	def __flushBan(self, db=False, actions=None):
+	def __flushBan(self, db=False, actions=None, stop=False):
 		"""Flush the ban list.
 
 		Unban all IP address which are still in the banning list.
@@ -513,11 +513,26 @@ class Actions(JailThread, Mapping):
 		# first we'll execute flush for actions supporting this operation:
 		unbactions = {}
 		for name, action in (actions if actions is not None else self._actions).iteritems():
-			if hasattr(action, 'flush') and action.actionflush:
-				logSys.notice("[%s] Flush ticket(s) with %s", self._jail.name, name)
-				action.flush()
-			else:
-				unbactions[name] = action
+			try:
+				if hasattr(action, 'flush') and (not isinstance(action, CommandAction) or action.actionflush):
+					logSys.notice("[%s] Flush ticket(s) with %s", self._jail.name, name)
+					action.flush()
+				else:
+					unbactions[name] = action
+			except Exception as e:
+				logSys.error("Failed to flush bans in jail '%s' action '%s': %s",
+					self._jail.name, name, e,
+					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
+				logSys.info("No flush occured, do consistency check")
+				def _beforeRepair():
+					if stop:
+						self._logSys.error("Invariant check failed. Flush is impossible.")
+						return False
+					return True
+				if not hasattr(action, 'consistencyCheck') or action.consistencyCheck(_beforeRepair):
+					# fallback to single unbans:
+					logSys.info("unban tickets each individualy")
+					unbactions[name] = action
 		actions = unbactions
 		# flush the database also:
 		if db and self._jail.database is not None:

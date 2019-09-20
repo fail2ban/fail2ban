@@ -50,6 +50,7 @@ allowed_ipv6 = True
 # capture groups from filter for map to ticket data:
 FCUSTAG_CRE = re.compile(r'<F-([A-Z0-9_\-]+)>'); # currently uppercase only
 
+COND_FAMILIES = ('inet4', 'inet6')
 CONDITIONAL_FAM_RE = re.compile(r"^(\w+)\?(family)=")
 
 # Special tags:
@@ -363,8 +364,8 @@ class CommandAction(ActionBase):
 		self.__properties = dict(
 			(key, getattr(self, key))
 			for key in dir(self)
-			if not key.startswith("_") and not callable(getattr(self, key)))
-		#
+			if not key.startswith("_") and not callable(getattr(self, key))
+		)
 		return self.__properties
 
 	@property
@@ -372,8 +373,13 @@ class CommandAction(ActionBase):
 		return self.__substCache
 
 	def _getOperation(self, tag, family):
+		# be sure family is enclosed as conditional value (if not overwritten in action):
+		if family and self._hasCondSection:
+			if 'family' not in self._properties and 'family?family='+family not in self._properties:
+				self._properties['family?family='+family] = family
+		# replace operation tag (interpolate all values):
 		return self.replaceTag(tag, self._properties,
-			conditional=('family=' + family), cache=self.__substCache)
+			conditional=('family='+family if family else ''), cache=self.__substCache)
 
 	def _executeOperation(self, tag, operation, family=[]):
 		"""Executes the operation commands (like "actionstart", "actionstop", etc).
@@ -400,7 +406,17 @@ class CommandAction(ActionBase):
 			raise RuntimeError("Error %s action %s/%s: %r" % (operation, self._jail, self._name, e))
 		return res
 
-	COND_FAMILIES = ('inet4', 'inet6')
+	@property
+	def _hasCondSection(self):
+		v = self._properties.get('__hasCondSection')
+		if v is None:
+			v = False
+			for n in self._properties:
+				if CONDITIONAL_FAM_RE.match(n):
+					v = True
+					break
+			self._properties['__hasCondSection'] = v
+		return v
 
 	@property
 	def _startOnDemand(self):
@@ -409,11 +425,7 @@ class CommandAction(ActionBase):
 		if v is not None:
 			return v
 		# not set - auto-recognize (depending on conditional):
-		v = False
-		for n in self._properties:
-			if CONDITIONAL_FAM_RE.match(n):
-				v = True
-				break
+		v = self._hasCondSection
 		self._properties['actionstart_on_demand'] = v
 		return v
 
@@ -513,6 +525,17 @@ class CommandAction(ActionBase):
 		and executes the resulting command.
 		"""
 		return self._executeOperation('<actionreload>', 'reloading')
+
+	def consistencyCheck(self, beforeRepair=None):
+		"""Executes the invariant check with repair if expected (conditional).
+		"""
+		ret = True
+		# for each started family:
+		if self.actioncheck:
+			for (family, started) in self.__started.iteritems():
+				if started and not self._invariantCheck(family, beforeRepair):
+					ret &= False
+		return ret
 
 	@staticmethod
 	def escapeTag(value):
@@ -705,7 +728,40 @@ class CommandAction(ActionBase):
 			realCmd = Utils.buildShellCmd(realCmd, varsDict)
 		return realCmd
 
-	def _processCmd(self, cmd, aInfo=None, conditional=''):
+	def _invariantCheck(self, family='', beforeRepair=None):
+		"""Executes a substituted `actioncheck` command.
+		"""
+		checkCmd = self._getOperation('<actioncheck>', family)
+		if not checkCmd or self.executeCmd(checkCmd, self.timeout):
+			return True
+		# if don't need repair/restore - just return:
+		if beforeRepair and not beforeRepair():
+			return False
+		self._logSys.error(
+			"Invariant check failed. Trying to restore a sane environment")
+		# try to find repair command, if exists - exec it:
+		repairCmd = self._getOperation('<actionrepair>', family)
+		if repairCmd:
+			if not self.executeCmd(repairCmd, self.timeout):
+				self._logSys.critical("Unable to restore environment")
+				return False
+		else:
+			# no repair command, try to restart action...
+			# [WARNING] TODO: be sure all banactions get a repair command, because
+			#    otherwise stop/start will theoretically remove all the bans,
+			#    but the tickets are still in BanManager, so in case of new failures
+			#    it will not be banned, because "already banned" will happen.
+			try:
+				self.stop()
+			except RuntimeError: # bypass error in stop (if start/check succeeded hereafter).
+				pass
+			self.start()
+		if not self.executeCmd(checkCmd, self.timeout):
+			self._logSys.critical("Unable to restore environment")
+			return False
+		return True
+
+	def _processCmd(self, cmd, aInfo=None):
 		"""Executes a command with preliminary checks and substitutions.
 
 		Before executing any commands, executes the "check" command first
@@ -730,47 +786,26 @@ class CommandAction(ActionBase):
 			return True
 
 		# conditional corresponding family of the given ip:
-		if conditional == '':
-			conditional = 'family=inet4'
-			if allowed_ipv6:
-				try:
-					ip = aInfo["ip"]
-					if ip and asip(ip).isIPv6:
-						conditional = 'family=inet6'
-				except KeyError:
-					pass
+		try:
+			family = aInfo["family"]
+		except KeyError:
+			family = ''
 
-		checkCmd = self.replaceTag('<actioncheck>', self._properties, 
-			conditional=conditional, cache=self.__substCache)
-		if checkCmd:
-			if not self.executeCmd(checkCmd, self.timeout):
-				self._logSys.error(
-					"Invariant check failed. Trying to restore a sane environment")
-				# try to find repair command, if exists - exec it:
-				repairCmd = self.replaceTag('<actionrepair>', self._properties, 
-					conditional=conditional, cache=self.__substCache)
-				if repairCmd:
-					if not self.executeCmd(repairCmd, self.timeout):
-						self._logSys.critical("Unable to restore environment")
-						return False
-				else:
-					# no repair command, try to restart action...
-					# [WARNING] TODO: be sure all banactions get a repair command, because
-					#    otherwise stop/start will theoretically remove all the bans,
-					#    but the tickets are still in BanManager, so in case of new failures
-					#    it will not be banned, because "already banned" will happen.
-					try:
-						self.stop()
-					except RuntimeError: # bypass error in stop (if start/check succeeded hereafter).
-						pass
-					self.start()
-				if not self.executeCmd(checkCmd, self.timeout):
-					self._logSys.critical("Unable to restore environment")
+		# invariant check:
+		if self.actioncheck:
+			# don't repair/restore if unban (no matter):
+			def _beforeRepair():
+				if cmd == '<actionunban>' and not self._properties.get('actionrepair_on_unban'):
+					self._logSys.error("Invariant check failed. Unban is impossible.")
 					return False
+				return True
+			ret = self._invariantCheck(family, _beforeRepair)
+			if not ret:
+				return False
 
 		# Replace static fields
 		realCmd = self.replaceTag(cmd, self._properties, 
-			conditional=conditional, cache=self.__substCache)
+			conditional=('family='+family if family else ''), cache=self.__substCache)
 
 		# Replace dynamical tags, important - don't cache, no recursion and auto-escape here
 		if aInfo is not None:

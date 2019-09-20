@@ -44,20 +44,20 @@ class ExecuteActions(LogCaptureTestCase):
 		super(ExecuteActions, self).setUp()
 		self.__jail = DummyJail()
 		self.__actions = Actions(self.__jail)
-		self.__tmpfile, self.__tmpfilename  = tempfile.mkstemp()
 
 	def tearDown(self):
 		super(ExecuteActions, self).tearDown()
-		os.remove(self.__tmpfilename)
 
-	def defaultActions(self):
+	def defaultAction(self):
 		self.__actions.add('ip')
-		self.__ip = self.__actions['ip']
-		self.__ip.actionstart = 'echo ip start 64 >> "%s"' % self.__tmpfilename
-		self.__ip.actionban = 'echo ip ban <ip> >> "%s"' % self.__tmpfilename
-		self.__ip.actionunban = 'echo ip unban <ip> >> "%s"' % self.__tmpfilename
-		self.__ip.actioncheck = 'echo ip check <ip> >> "%s"' % self.__tmpfilename
-		self.__ip.actionstop = 'echo ip stop >> "%s"' % self.__tmpfilename
+		act = self.__actions['ip']
+		act.actionstart = 'echo ip start'
+		act.actionban = 'echo ip ban <ip>'
+		act.actionunban = 'echo ip unban <ip>'
+		act.actioncheck = 'echo ip check'
+		act.actionflush = 'echo ip flush <family>'
+		act.actionstop = 'echo ip stop'
+		return act
 
 	def testActionsAddDuplicateName(self):
 		self.__actions.add('test')
@@ -89,13 +89,12 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertLogged('Ban 192.0.2.3')
 
 	def testActionsOutput(self):
-		self.defaultActions()
+		self.defaultAction()
 		self.__actions.start()
-		with open(self.__tmpfilename) as f:
-			self.assertTrue( Utils.wait_for(lambda: (f.read() == "ip start 64\n"), 3) )
-
+		self.assertLogged("stdout: %r" % 'ip start', wait=True)
 		self.__actions.stop()
 		self.__actions.join()
+		self.assertLogged("stdout: %r" % 'ip flush', "stdout: %r" % 'ip stop')
 		self.assertEqual(self.__actions.status(),[("Currently banned", 0 ),
                ("Total banned", 0 ), ("Banned IP list", [] )])
 
@@ -211,3 +210,30 @@ class ExecuteActions(LogCaptureTestCase):
 
 		self.assertLogged('Unbanned 30, 0 ticket(s)')
 		self.assertNotLogged('Unbanned 50, 0 ticket(s)')
+
+	@with_alt_time
+	def testActionsConsistencyCheck(self):
+		# flush is broken - test no unhandled except and invariant check:
+		act = self.defaultAction()
+		setattr(act, 'actionflush?family=inet6', 'echo ip flush <family>; exit 1')
+		act.actionstart_on_demand = True
+		self.__actions.start()
+		self.assertNotLogged("stdout: %r" % 'ip start')
+
+		self.assertEqual(self.__actions.addBannedIP('192.0.2.1'), 1)
+		self.assertEqual(self.__actions.addBannedIP('2001:db8::1'), 1)
+		self.assertLogged('Ban 192.0.2.1', 'Ban 2001:db8::1',
+			"stdout: %r" % 'ip start',
+			"stdout: %r" % 'ip ban 192.0.2.1',
+			"stdout: %r" % 'ip ban 2001:db8::1',
+			all=True, wait=True)
+
+		self.__actions._Actions__flushBan()
+		self.assertLogged('Failed to flush bans',
+			'No flush occured, do consistency check',
+			"stdout: %r" % 'ip ban 192.0.2.1',
+			all=True, wait=True)
+
+		self.__actions.stop()
+		self.__actions.join()
+
