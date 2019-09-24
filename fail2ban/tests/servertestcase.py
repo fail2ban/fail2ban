@@ -1257,29 +1257,32 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 		#   etc.
 		testJailsActions = (
 			# nftables-multiport --
-			('j-w-nft-mp', 'nftables-multiport[name=%(__name__)s, port="http,https", protocol="tcp"]', {
+			('j-w-nft-mp', 'nftables-multiport[name=%(__name__)s, port="http,https", protocol="tcp,udp,sctp"]', {
 				'ip4': ('ip ', 'ipv4_addr', 'addr-'), 'ip6': ('ip6 ', 'ipv6_addr', 'addr6-'),
 				'*-start': (
 					r"`nft add table inet f2b-table`",
 					r"`nft -- add chain inet f2b-table f2b-chain \{ type filter hook input priority -1 \; \}`",
+					# iterator over protocol is same for both families:
+					r"`for proto in $(echo 'tcp,udp,sctp' | sed 's/,/ /g'); do`",
+					r"`done`",
 				),
 				'ip4-start': (
 					r"`nft add set inet f2b-table addr-set-j-w-nft-mp \{ type ipv4_addr\; \}`",
-					r"`nft add rule inet f2b-table f2b-chain tcp dport \{ http,https \} ip saddr @addr-set-j-w-nft-mp reject`",
+					r"`nft add rule inet f2b-table f2b-chain $proto dport \{ http,https \} ip saddr @addr-set-j-w-nft-mp reject`",
 				), 
 				'ip6-start': (
 					r"`nft add set inet f2b-table addr6-set-j-w-nft-mp \{ type ipv6_addr\; \}`",
-					r"`nft add rule inet f2b-table f2b-chain tcp dport \{ http,https \} ip6 saddr @addr6-set-j-w-nft-mp reject`",
+					r"`nft add rule inet f2b-table f2b-chain $proto dport \{ http,https \} ip6 saddr @addr6-set-j-w-nft-mp reject`",
 				),
 				'flush': (
 					# todo
 				),
 				'stop': (
-					"`HANDLE_ID=$(nft -a list chain inet f2b-table f2b-chain | grep -m1 '@addr-set-j-w-nft-mp ' | grep -oe ' handle [0-9]*')`",
-					"`nft delete rule inet f2b-table f2b-chain $HANDLE_ID`",
+					"`$(nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-mp .* \Khandle (\d+)$') | while read -r hdl`",
+					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
 					"`nft delete set inet f2b-table addr-set-j-w-nft-mp`",
-					"`HANDLE_ID=$(nft -a list chain inet f2b-table f2b-chain | grep -m1 '@addr6-set-j-w-nft-mp ' | grep -oe ' handle [0-9]*')`",
-					"`nft delete rule inet f2b-table f2b-chain $HANDLE_ID`",
+					"`$(nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr6-set-j-w-nft-mp .* \Khandle (\d+)$') | while read -r hdl`",
+					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
 					"`nft delete set inet f2b-table addr6-set-j-w-nft-mp`",
 				),
 				'ip4-check': (
@@ -1320,11 +1323,11 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					# todo
 				),
 				'stop': (
-					"`HANDLE_ID=$(nft -a list chain inet f2b-table f2b-chain | grep -m1 '@addr-set-j-w-nft-ap ' | grep -oe ' handle [0-9]*')`",
-					"`nft delete rule inet f2b-table f2b-chain $HANDLE_ID`",
+					"`$(nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-ap .* \Khandle (\d+)$') | while read -r hdl`",
+					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
 					"`nft delete set inet f2b-table addr-set-j-w-nft-ap`",
-					"`HANDLE_ID=$(nft -a list chain inet f2b-table f2b-chain | grep -m1 '@addr6-set-j-w-nft-ap ' | grep -oe ' handle [0-9]*')`",
-					"`nft delete rule inet f2b-table f2b-chain $HANDLE_ID`",
+					"`$(nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr6-set-j-w-nft-ap .* \Khandle (\d+)$') | while read -r hdl`",
+					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
 					"`nft delete set inet f2b-table addr6-set-j-w-nft-ap`",
 				),
 				'ip4-check': (
