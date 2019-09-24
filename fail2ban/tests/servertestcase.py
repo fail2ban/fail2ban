@@ -1275,7 +1275,8 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					r"`nft add rule inet f2b-table f2b-chain $proto dport \{ http,https \} ip6 saddr @addr6-set-j-w-nft-mp reject`",
 				),
 				'flush': (
-					# todo
+					"`nft flush set inet f2b-table addr-set-j-w-nft-mp || ",
+					"`nft flush set inet f2b-table addr6-set-j-w-nft-mp || ",
 				),
 				'stop': (
 					"`$(nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-mp .* \Khandle (\d+)$') | while read -r hdl`",
@@ -1320,7 +1321,8 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					r"`nft add rule inet f2b-table f2b-chain meta l4proto \{ tcp,udp \} ip6 saddr @addr6-set-j-w-nft-ap reject`",
 				),
 				'flush': (
-					# todo
+					"`nft flush set inet f2b-table addr-set-j-w-nft-ap || ",
+					"`nft flush set inet f2b-table addr6-set-j-w-nft-ap || ",
 				),
 				'stop': (
 					"`$(nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-ap .* \Khandle (\d+)$') | while read -r hdl`",
