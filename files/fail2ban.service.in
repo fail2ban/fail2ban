@@ -13,7 +13,6 @@ ExecStart=@BINDIR@/fail2ban-server -xf start
 # ExecStart=@BINDIR@/fail2ban-server -xf --logtarget=sysout start
 ExecStop=@BINDIR@/fail2ban-client stop
 ExecReload=@BINDIR@/fail2ban-client reload
-PIDFile=/run/fail2ban/fail2ban.pid
 Restart=on-failure
 RestartPreventExitStatus=0 255
 
