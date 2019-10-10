@@ -28,3 +28,8 @@ Sep 16 21:30:32 catinthehat mysqld: 130916 21:30:32 [Warning] Access denied for 
 
 # failJSON: { "time": "2019-01-03T09:50:04", "match": true , "host": "192.0.2.1", "desc": "mysql 8.0.13 logging with details, (log-error-verbosity = 3, gh-2314)" }
 2019-01-03T08:50:04.634875Z 113 [Note] [MY-010926] [Server] Access denied for user 'root'@'192.0.2.1' (using password: NO)
+
+# failJSON: { "time": "2019-09-06T01:45:18", "match": true , "host": "192.0.2.2", "desc": "ISO timestamp within log message" }
+2019-09-06T01:45:18 srv mysqld: 2019-09-06  1:45:18 140581192722176 [Warning] Access denied for user 'global'@'192.0.2.2' (using password: YES)
+# failJSON: { "time": "2019-09-24T13:16:50", "match": true , "host": "192.0.2.3", "desc": "ISO timestamp within log message" }
+2019-09-24T13:16:50 srv mysqld[1234]: 2019-09-24 13:16:50 8756 [Warning] Access denied for user 'root'@'192.0.2.3' (using password: YES)
