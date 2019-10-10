@@ -74,6 +74,10 @@ Options:
     default is unset
  -p, --perfdata
     If you want to activate the perfdata output
+ -j, --jail
+    Specific jail to get information for, if not specified uses all jails
+ -f, --jailfilter
+    Filter to match a subset of all jails based on their name, if not specified shows all jails
  -v, --verbose
     Show details for command-line debugging (Nagios may truncate the output)
 
@@ -102,3 +106,16 @@ DEBUG : the jail apache has currently 0 banned IPs
 DEBUG : the jail ssh-ddos has currently 0 banned IPs
 DEBUG : the jail ssh has currently 0 banned IPs
 CHECK FAIL2BAN ACTIVITY - OK - 3 detected jails with 0 current banned IP(s) | currentBannedIP=0
+
+# for all the current jails matching filter
+$ ./check_fail2ban --verbose -p -w 1 -c 5 -P /usr/bin/fail2ban-client -f ssh
+DEBUG : fail2ban_client_path: /usr/bin/fail2ban-client
+DEBUG : /usr/bin/fail2ban-client exists and is executable
+DEBUG : final fail2ban command: /usr/bin/fail2ban-client
+DEBUG : warning threshold : 1, critical threshold : 5
+DEBUG : it seems the connection with the fail2ban server is ok
+DEBUG : jails list: apache, ssh-ddos, ssh
+DEBUG : the jail ssh-ddos has currently 0 banned IPs
+DEBUG : the jail ssh has currently 0 banned IPs
+CHECK FAIL2BAN ACTIVITY - OK - 2 detected jails with 0 current banned IP(s) | currentBannedIP=0
+
