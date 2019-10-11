@@ -50,6 +50,8 @@ Nov 4 18:30:40 localhost asterisk[32229]: NOTICE[32257]: chan_sip.c:23417 in han
 # failed authentication attempt on INVITE using PJSIP
 # failJSON: { "time": "2015-05-24T08:42:16", "match": true, "host": "10.250.251.252" }
 [2015-05-24 08:42:16] SECURITY[4583] res_security_log.c: SecurityEvent="ChallengeResponseFailed",EventTV="2015-05-24T08:42:16.296+0300",Severity="Error",Service="PJSIP",EventVersion="1",AccountID="<unknown>",SessionID="17a483d-eb8cc0-556164ab@1.2.3.4",LocalAddress="IPV4/UDP/1.2.3.4/5060",RemoteAddress="IPV4/UDP/10.250.251.252/5060",Challenge="1432446136/6d16ccf29ff59d423c6d548af00bf9b4",Response="849dfcf133d8156f77ef11a9194119df",ExpectedResponse=""
+# failJSON: { "time": "2019-09-20T19:12:43", "match": true, "host": "192.0.2.2", "desc": "TLS before address, gh-2531" }
+[2019-09-20 19:12:43] SECURITY[1724] res_security_log.c: SecurityEvent="ChallengeResponseFailed",EventTV="2019-09-20T19:12:43.659-0500",Severity="Error",Service="PJSIP",EventVersion="1",AccountID="<unknown>",SessionID="3686a690-f8ccac10-5677c924-51b54926",LocalAddress="IPV4/TLS/1.2.3.4/5062",RemoteAddress="IPV4/TLS/192.0.2.2/30245",Challenge="1569024763/510a7e1ed568b93ce283d1b16bc17a15",Response="8e181448412899ccb20ea585efc8bab0",ExpectedResponse=""
 
 # SessionID may contain any special characters and spaces
 # failJSON: { "time": "2015-05-25T07:19:19", "match": true, "host": "10.250.251.252" }
