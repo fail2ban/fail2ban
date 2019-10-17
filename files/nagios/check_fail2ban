@@ -109,15 +109,15 @@ my $fail2ban_client_path = '/usr/bin/fail2ban-client';
 my $fail2ban_socket = '';
 my $jail_specific = '';
 my $jail_name = '';
-my $jail_filter = '';
+my $use_regex = '';
 
 GetOptions (
     'P=s' => \ $fail2ban_client_path,
     'path-fail2ban_client=s' => \ $fail2ban_client_path,
     'j=s' => \ $jail_specific,
     'jail=s' => \ $jail_specific,
-    'f=s' => \ $jail_filter,
-    'jailfilter=s' => \ $jail_filter,
+    'r' => \ $use_regex,
+    'regex' => \ $use_regex,
     'w=i' => \ $warning,
     'warning=i' => \ $warning,
     'socket=s' => \ $fail2ban_socket,
@@ -183,50 +183,60 @@ else {
     print "DEBUG : it seems the connection with the fail2ban server is ok\n" if ($verbose_value);
 }
 
-
-### Only if you specify one jail
-if ($jail_specific) {
-    my $current_ban_number = currently_ban("$fail2ban_cmd","$jail_specific");
-    if ($current_ban_number == -1) {
-        print $display.' - CRITICAL - impossible to retrieve info about the jail '.$jail_specific;
-        exit $ERRORS{"CRITICAL"};
-    }
-    else {
-        $how_many_banned = int($current_ban_number);
-        $return_print = $how_many_banned.' current banned IP(s) for the specific jail '.$jail_specific;
-        $perf_print .= "$current_ban_number " if ($perfdata_value);
-    }
+# Retrieve the jails list
+my @jail_list = obtain_jail_list("$fail2ban_cmd");
+if ($jail_list[0] eq "-1") {
+   print $display.' - CRITICAL - impossible to retrieve the jail list'."\n";
+   exit $ERRORS{"CRITICAL"};
 }
-### To analyze all the jail
-else {
-    # Retrieve the jails list
-    my @jail_list = obtain_jail_list("$fail2ban_cmd");
-    if ($jail_list[0] eq "-1") {
-        print $display.' - CRITICAL - impossible to retrieve the jail list'."\n";
-        exit $ERRORS{"CRITICAL"};
-    }
-    my $filter_condition = 1;
-    foreach (@jail_list) {
-        my $jail_name = $_;
-        $jail_name =~ tr/ //ds;
-        if ($jail_filter ne ''){
-           $filter_condition = $jail_name =~ /$jail_filter/;
-        }
 
-        if ($filter_condition){
-            $how_many_jail ++;
-            my $current_ban_number = currently_ban("$fail2ban_cmd","$jail_name");
-            if ($current_ban_number == -1) {
-               print "DEBUG : problem to parse the current banned IPs for jail $jail_name\n" if ($verbose_value);
-            }
-            else {
-               print "DEBUG : the jail $jail_name has currently $current_ban_number banned IPs\n" if ($verbose_value);
-               $how_many_banned += int($current_ban_number);
-               $perf_print .= "$jail_name.currentBannedIP=$current_ban_number " if ($perfdata_value);
-            }
-        }
-    }
-    $return_print = $how_many_jail.' detected jails with '.$how_many_banned.' current banned IP(s)';
+my @selected_jail_list = @jail_list;
+my $jail_regex = "";
+if ($jail_specific)
+{
+   if ($use_regex) {
+      $jail_regex = "$jail_specific";
+   }
+   else {
+      $jail_regex = "^$jail_specific\$";
+   }
+   map { tr/ //ds; } @jail_list;
+   @selected_jail_list = grep { $_  =~ /$jail_regex/ } @jail_list;
+}
+
+foreach (@selected_jail_list) {
+   my $jail_name = $_;
+   $how_many_jail ++;
+
+   my $current_ban_number = currently_ban("$fail2ban_cmd","$jail_name");
+   if ($current_ban_number == -1) {
+      if (scalar @selected_jail_list == 1) {
+         print $display.' - CRITICAL - impossible to retrieve info about the jail '.$jail_specific;
+         exit $ERRORS{"CRITICAL"};
+      }
+      else {
+         print "DEBUG : problem to parse the current banned IPs for jail $jail_name\n" if ($verbose_value);
+      }
+   }
+   else {
+      print "DEBUG : the jail $jail_name has currently $current_ban_number banned IPs\n" if ($verbose_value);
+      $how_many_banned += int($current_ban_number);
+      $perf_print .= "$jail_name.currentBannedIP=$current_ban_number " if ($perfdata_value);
+   }
+}
+
+if ($jail_specific && !$use_regex){
+   if (scalar @selected_jail_list == 1) {
+      $return_print = $how_many_banned.' current banned IP(s) for the specific jail '.$jail_specific;
+   }
+   else {
+      print $display.' - CRITICAL - impossible to retrieve info about the jail '.$jail_specific;
+      exit $ERRORS{"CRITICAL"};
+   }
+}
+
+else {
+   $return_print = $how_many_jail.' selected jails out of '.  scalar @jail_list .' detected jails with ' .$how_many_banned.' current banned IP(s)';
 }
 
 ### Final
@@ -250,7 +260,7 @@ $script_name version $version by $author
 This plugin checks if the fail2ban server is running and how many IPs are currently banned.
 You can use this plugin to monitor all the jails or just a specific jail.
 
-Usage: /<path-to>/$script_name [-p] [-D "$display"] [-v] [-c 2] [-w 1] [-s /<path-to>/socket] [-P /usr/bin/fail2ban-client] [-j specificjail] [-f jailfilter] 
+Usage: /<path-to>/$script_name [-p] [-D "$display"] [-v] [-c 2] [-w 1] [-s /<path-to>/socket] [-P /usr/bin/fail2ban-client] [-j specificjail] [-r]
 
 Options:
  -h, --help
@@ -276,8 +286,8 @@ Options:
     If you want to activate the perfdata output
  -j, --jail
     Specific jail to get information for, if not specified uses all jails
- -f, --jailfilter
-    Filter to match a subset of all jails based on their name, if not specified shows all jails
+ -r --regex
+    Have --jail use a regex match to name instead of the exact name
  -v, --verbose
     Show details for command-line debugging (Nagios may truncate the output)
 

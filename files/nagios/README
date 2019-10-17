@@ -76,8 +76,8 @@ Options:
     If you want to activate the perfdata output
  -j, --jail
     Specific jail to get information for, if not specified uses all jails
- -f, --jailfilter
-    Filter to match a subset of all jails based on their name, if not specified shows all jails
+ -r --regex
+    Have --jail use a regex match to name instead of the exact name
  -v, --verbose
     Show details for command-line debugging (Nagios may truncate the output)
 
@@ -108,7 +108,7 @@ DEBUG : the jail ssh has currently 0 banned IPs
 CHECK FAIL2BAN ACTIVITY - OK - 3 detected jails with 0 current banned IP(s) | currentBannedIP=0
 
 # for all the current jails matching filter
-$ ./check_fail2ban --verbose -p -w 1 -c 5 -P /usr/bin/fail2ban-client -f ssh
+$ ./check_fail2ban --verbose -p -w 1 -c 5 -P /usr/bin/fail2ban-client -j ssh -r
 DEBUG : fail2ban_client_path: /usr/bin/fail2ban-client
 DEBUG : /usr/bin/fail2ban-client exists and is executable
 DEBUG : final fail2ban command: /usr/bin/fail2ban-client
