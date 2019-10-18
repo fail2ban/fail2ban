@@ -113,6 +113,16 @@ filter = flt[logtype=short]
   attempts (failure) for IP (resp. failure-ID), see gh-2351;
   Syntax:
   - `fail2ban-client set <jail> attempt <ip> [<failure-message1> ... <failure-messageN>]`
+* `action.d/nftables.conf`:
+  - isolate fail2ban rules into a dedicated table and chain (gh-2254)
+  - `nftables-allports` supports multiple protocols in single rule now
+  - combined nftables actions to single action `nftables`:
+    * `nftables-common` is removed (replaced with single action `nftables` now)
+    * `nftables-allports` is obsolete, superseded by `nftables[type=allports]`
+    * `nftables-multiport` is obsolete, superseded by `nftables[type=multiport]`
+  - allowed multiple protocols in `nftables[type=multiport]` action (single set with multiple rules
+    in chain), following configuration in jail would replace 3 separate actions, see
+    https://github.com/fail2ban/fail2ban/pull/2254#issuecomment-534684675
 * `action.d/badips.py`: option `loglevel` extended with level of summary message,
   following example configuration logging summary with NOTICE and rest with DEBUG log-levels:
   `action = badips.py[loglevel="debug, notice"]`
