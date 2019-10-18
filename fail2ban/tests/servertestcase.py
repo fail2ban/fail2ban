@@ -1340,14 +1340,14 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					r"`nft add rule inet f2b-table f2b-chain $proto dport \{ http,https \} ip6 saddr @addr6-set-j-w-nft-mp reject`",
 				),
 				'flush': (
-					"`(nft flush set inet f2b-table addr-set-j-w-nft-mp 2> /dev/null) || ",
-					"`(nft flush set inet f2b-table addr6-set-j-w-nft-mp 2> /dev/null) || ",
+					"`{ nft flush set inet f2b-table addr-set-j-w-nft-mp 2> /dev/null; } || ",
+					"`{ nft flush set inet f2b-table addr6-set-j-w-nft-mp 2> /dev/null; } || ",
 				),
 				'stop': (
-					"`(nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-mp\s+.*\s+\Khandle\s+(\d+)$') | while read -r hdl; do`",
+					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-mp\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
 					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
 					"`nft delete set inet f2b-table addr-set-j-w-nft-mp`",
-					"`(nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr6-set-j-w-nft-mp\s+.*\s+\Khandle\s+(\d+)$') | while read -r hdl; do`",
+					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr6-set-j-w-nft-mp\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
 					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
 					"`nft delete set inet f2b-table addr6-set-j-w-nft-mp`",
 				),
@@ -1358,16 +1358,16 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					r"`nft list chain inet f2b-table f2b-chain | grep -q '@addr6-set-j-w-nft-mp[ \t]'`",
 				),
 				'ip4-ban': (
-					r"`nft add element inet f2b-table addr-set-j-w-nft-mp { 192.0.2.1 }`",
+					r"`nft add element inet f2b-table addr-set-j-w-nft-mp \{ 192.0.2.1 \}`",
 				),
 				'ip4-unban': (
-					r"`nft delete element inet f2b-table addr-set-j-w-nft-mp { 192.0.2.1 }`",
+					r"`nft delete element inet f2b-table addr-set-j-w-nft-mp \{ 192.0.2.1 \}`",
 				),
 				'ip6-ban': (
-					r"`nft add element inet f2b-table addr6-set-j-w-nft-mp { 2001:db8:: }`",
+					r"`nft add element inet f2b-table addr6-set-j-w-nft-mp \{ 2001:db8:: \}`",
 				),
 				'ip6-unban': (
-					r"`nft delete element inet f2b-table addr6-set-j-w-nft-mp { 2001:db8:: }`",
+					r"`nft delete element inet f2b-table addr6-set-j-w-nft-mp \{ 2001:db8:: \}`",
 				),					
 			}),
 			# nft-allports --
@@ -1386,14 +1386,14 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					r"`nft add rule inet f2b-table f2b-chain meta l4proto \{ tcp,udp \} ip6 saddr @addr6-set-j-w-nft-ap reject`",
 				),
 				'flush': (
-					"`(nft flush set inet f2b-table addr-set-j-w-nft-ap 2> /dev/null) || ",
-					"`(nft flush set inet f2b-table addr6-set-j-w-nft-ap 2> /dev/null) || ",
+					"`{ nft flush set inet f2b-table addr-set-j-w-nft-ap 2> /dev/null; } || ",
+					"`{ nft flush set inet f2b-table addr6-set-j-w-nft-ap 2> /dev/null; } || ",
 				),
 				'stop': (
-					"`(nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-ap\s+.*\s+\Khandle\s+(\d+)$') | while read -r hdl; do`",
+					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-ap\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
 					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
 					"`nft delete set inet f2b-table addr-set-j-w-nft-ap`",
-					"`(nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr6-set-j-w-nft-ap\s+.*\s+\Khandle\s+(\d+)$') | while read -r hdl; do`",
+					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr6-set-j-w-nft-ap\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
 					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
 					"`nft delete set inet f2b-table addr6-set-j-w-nft-ap`",
 				),
@@ -1404,16 +1404,16 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					r"""`nft list chain inet f2b-table f2b-chain | grep -q '@addr6-set-j-w-nft-ap[ \t]'`""",
 				),
 				'ip4-ban': (
-					r"`nft add element inet f2b-table addr-set-j-w-nft-ap { 192.0.2.1 }`",
+					r"`nft add element inet f2b-table addr-set-j-w-nft-ap \{ 192.0.2.1 \}`",
 				),
 				'ip4-unban': (
-					r"`nft delete element inet f2b-table addr-set-j-w-nft-ap { 192.0.2.1 }`",
+					r"`nft delete element inet f2b-table addr-set-j-w-nft-ap \{ 192.0.2.1 \}`",
 				),
 				'ip6-ban': (
-					r"`nft add element inet f2b-table addr6-set-j-w-nft-ap { 2001:db8:: }`",
+					r"`nft add element inet f2b-table addr6-set-j-w-nft-ap \{ 2001:db8:: \}`",
 				),
 				'ip6-unban': (
-					r"`nft delete element inet f2b-table addr6-set-j-w-nft-ap { 2001:db8:: }`",
+					r"`nft delete element inet f2b-table addr6-set-j-w-nft-ap \{ 2001:db8:: \}`",
 				),					
 			}),
 			# dummy --
