@@ -79,6 +79,9 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
     - `prefregex` extended, more selective now (denied/NOTAUTH suffix moved from failregex, so no catch-all there anymore)
 
 ### New Features
+* new replacement tags for failregex to match subnets in form of IP-addresses with CIDR mask (gh-2559):
+  - `<CIDR>` - helper regex to match CIDR (simple integer form of net-mask);
+  - `<SUBNET>` - regex to match sub-net adresses (in form of IP/CIDR, also single IP is matched, so part /CIDR is optional);
 * new failregex-flag tag `<F-MLFGAINED>` for failregex, signaled that the access to service was gained
   (ATM used similar to tag `<F-NOFAIL>`, but it does not add the log-line to matches, gh-2279)
 * filters: introduced new configuration parameter `logtype` (default `file` for file-backends, and 

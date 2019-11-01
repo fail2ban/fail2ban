@@ -315,6 +315,19 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Lines: 4 lines, 0 ignored, 4 matched, 0 missed')
 
+	def testRegexSubnet(self):
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"-vv", "-d", r"^\[{LEPOCH}\]\s+", "--maxlines", "5",
+			"[1516469849] 192.0.2.1 FAIL: failure\n"
+			"[1516469849] 192.0.2.1/24 FAIL: failure\n"
+			"[1516469849] 2001:DB8:FF:FF::1 FAIL: failure\n"
+			"[1516469849] 2001:DB8:FF:FF::1/60 FAIL: failure\n",
+			r"^<SUBNET> FAIL\b"
+		)
+		self.assertTrue(fail2banRegex.start(args))
+		self.assertLogged('Lines: 4 lines, 0 ignored, 4 matched, 0 missed')
+		self.assertLogged('192.0.2.0/24', '2001:db8:ff:f0::/60', all=True)
+
 	def testWrongFilterFile(self):
 		# use test log as filter file to cover eror cases...
 		(opts, args, fail2banRegex) = _Fail2banRegex(
