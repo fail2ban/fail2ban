@@ -100,3 +100,6 @@ Mar  7 15:04:37 s192-168-0-1 sm-mta[18624]: v27K4Vj8018624: some-host-24.example
 Mar 29 22:33:47 kismet sm-mta[23221]: x2TMXH7Y023221: internettl.org [104.152.52.29] (may be forged) did not issue MAIL/EXPN/VRFY/ETRN during connection to TLSMTA
 # failJSON: { "time": "2005-03-29T22:51:42", "match": true , "host": "104.152.52.29", "desc": "wrong resp. non RFC compiant (ddos prelude?), MSA-mode" }
 Mar 29 22:51:42 kismet sm-mta[24202]: x2TMpAlI024202: internettl.org [104.152.52.29] (may be forged) did not issue MAIL/EXPN/VRFY/ETRN during connection to MSA
+
+# failJSON: { "time": "2005-03-29T22:51:43", "match": true , "host": "192.0.2.2", "desc": "long PID, ID longer as 14 chars (gh-2563)" }
+Mar 29 22:51:43 server sendmail[3529565]: xA32R2PQ3529565: [192.0.2.2] did not issue MAIL/EXPN/VRFY/ETRN during connection to MTA
