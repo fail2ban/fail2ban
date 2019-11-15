@@ -77,6 +77,8 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
 * `filter.d/named-refused.conf`:
     - support BIND 9.11.0 log format (includes an additional field @0xXXX..., gh-2406);
     - `prefregex` extended, more selective now (denied/NOTAUTH suffix moved from failregex, so no catch-all there anymore)
+* `filter.d/sendmail-auth.conf`, `filter.d/sendmail-reject.conf` :
+  - ID in prefix can be longer as 14 characters (gh-2563);
 
 ### New Features
 * new failregex-flag tag `<F-MLFGAINED>` for failregex, signaled that the access to service was gained
