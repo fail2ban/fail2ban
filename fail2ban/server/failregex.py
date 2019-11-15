@@ -37,25 +37,28 @@ R_HOST = [
 		r"""(?:::f{4,6}:)?(?P<ip4>%s)""" % (IPAddr.IP_4_RE,),
 		# separated ipv6:
 		r"""(?P<ip6>%s)""" % (IPAddr.IP_6_RE,),
-		# place-holder for ipv6 enclosed in optional [] (used in addr-, host-regex)
-		"",
 		# separated dns:
 		r"""(?P<dns>[\w\-.^_]*\w)""",
 		# place-holder for ADDR tag-replacement (joined):
 		"",
 		# place-holder for HOST tag replacement (joined):
-		""
+		"",
+		# CIDR in simplest integer form:
+		r"(?P<cidr>\d+)",
+		# place-holder for SUBNET tag-replacement
+		"",
 ]
 RI_IPV4 =		0
 RI_IPV6 =		1
-RI_IPV6BR =	2
-RI_DNS =		3
-RI_ADDR =		4
-RI_HOST =		5
+RI_DNS =		2
+RI_ADDR =		3
+RI_HOST =		4
+RI_CIDR =		5
+RI_SUBNET =	6
 
-R_HOST[RI_IPV6BR] =	r"""\[?%s\]?""" % (R_HOST[RI_IPV6],)
-R_HOST[RI_ADDR] =		"(?:%s)" % ("|".join((R_HOST[RI_IPV4], R_HOST[RI_IPV6BR])),)
-R_HOST[RI_HOST] =		"(?:%s)" % ("|".join((R_HOST[RI_IPV4], R_HOST[RI_IPV6BR], R_HOST[RI_DNS])),)
+R_HOST[RI_ADDR] =		r"\[?(?:%s|%s)\]?" % (R_HOST[RI_IPV4], R_HOST[RI_IPV6],)
+R_HOST[RI_HOST] =		r"(?:%s|%s)" % (R_HOST[RI_ADDR], R_HOST[RI_DNS],)
+R_HOST[RI_SUBNET] =	r"\[?(?:%s|%s)(?:/%s)?\]?" % (R_HOST[RI_IPV4], R_HOST[RI_IPV6], R_HOST[RI_CIDR],)
 
 RH4TAG = {
 	# separated ipv4 (self closed, closed):
@@ -68,6 +71,11 @@ RH4TAG = {
 	# for separate usage of 2 address groups only (regardless of `usedns`), `ip4` and `ip6` together
 	"ADDR":			R_HOST[RI_ADDR],
 	"F-ADDR/":	R_HOST[RI_ADDR],
+	# subnet tags for usage as `<ADDR>/<CIDR>` or `<SUBNET>`:
+	"CIDR":			R_HOST[RI_CIDR],
+	"F-CIDR/":	R_HOST[RI_CIDR],
+	"SUBNET":		R_HOST[RI_SUBNET],
+	"F-SUBNET/":R_HOST[RI_SUBNET],
 	# separated dns (self closed, closed):
 	"DNS":			R_HOST[RI_DNS],
 	"F-DNS/":		R_HOST[RI_DNS],
@@ -416,3 +424,7 @@ class FailRegex(Regex):
 	
 	def getHost(self):
 		return self.getFailID(("ip4", "ip6", "dns"))
+
+	def getIP(self):
+		fail = self.getGroups()
+		return IPAddr(self.getFailID(("ip4", "ip6")), int(fail.get("cidr") or IPAddr.CIDR_UNSPEC))
