@@ -387,12 +387,50 @@ class IgnoreIP(LogCaptureTestCase):
 
 	def testIgnoreInProcessLine(self):
 		setUpMyTime()
-		self.filter.addIgnoreIP('192.168.1.0/25')
-		self.filter.addFailRegex('<HOST>')
-		self.filter.setDatePattern(r'{^LN-BEG}EPOCH')
-		self.filter.processLineAndAdd('1387203300.222 192.168.1.32')
-		self.assertLogged('Ignore 192.168.1.32')
-		tearDownMyTime()
+		try:
+			self.filter.addIgnoreIP('192.168.1.0/25')
+			self.filter.addFailRegex('<HOST>')
+			self.filter.setDatePattern(r'{^LN-BEG}EPOCH')
+			self.filter.processLineAndAdd('1387203300.222 192.168.1.32')
+			self.assertLogged('Ignore 192.168.1.32')
+		finally:
+			tearDownMyTime()
+
+	def testTimeJump(self):
+		try:
+			self.filter.addFailRegex('^<HOST>')
+			self.filter.setDatePattern(r'{^LN-BEG}%Y-%m-%d %H:%M:%S(?:\s*%Z)?\s')
+			self.filter.setFindTime(10); # max 10 seconds back
+			#
+			self.pruneLog('[phase 1] DST time jump')
+			# check local time jump (DST hole):
+			MyTime.setTime(1572137999)
+			self.filter.processLineAndAdd('2019-10-27 02:59:59 192.0.2.5'); # +1 = 1
+			MyTime.setTime(1572138000)
+			self.filter.processLineAndAdd('2019-10-27 02:00:00 192.0.2.5'); # +1 = 2
+			MyTime.setTime(1572138001)
+			self.filter.processLineAndAdd('2019-10-27 02:00:01 192.0.2.5'); # +1 = 3
+			self.assertLogged(
+				'Current failures from 1 IPs (IP:count): 192.0.2.5:1', 
+				'Current failures from 1 IPs (IP:count): 192.0.2.5:2', 
+				'Current failures from 1 IPs (IP:count): 192.0.2.5:3',
+				"Total # of detected failures: 3.", all=True, wait=True)
+			self.assertNotLogged('Ignore line')
+			#
+			self.pruneLog('[phase 2] UTC time jump (NTP correction)')
+			# check time drifting backwards (NTP correction):
+			MyTime.setTime(1572210000)
+			self.filter.processLineAndAdd('2019-10-27 22:00:00 CET 192.0.2.6'); # +1 = 1
+			MyTime.setTime(1572200000)
+			self.filter.processLineAndAdd('2019-10-27 22:00:01 CET 192.0.2.6'); # +1 = 2 (logged before correction)
+			self.filter.processLineAndAdd('2019-10-27 19:13:20 CET 192.0.2.6'); # +1 = 3 (logged after correction)
+			self.filter.processLineAndAdd('2019-10-27 19:13:21 CET 192.0.2.6'); # +1 = 4
+			self.assertLogged(
+				'192.0.2.6:1', '192.0.2.6:2', '192.0.2.6:3', '192.0.2.6:4', 
+				"Total # of detected failures: 7.", all=True, wait=True)
+			self.assertNotLogged('Ignore line')
+		finally:
+			tearDownMyTime()
 
 	def testAddAttempt(self):
 		self.filter.setMaxRetry(3)
