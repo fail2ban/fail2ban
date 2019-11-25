@@ -277,7 +277,7 @@ It defaults to "auto" which will try "pyinotify", "gamin", "systemd" before "pol
 use DNS to resolve HOST names that appear in the logs. By default it is "warn" which will resolve hostnames to IPs however it will also log a warning. If you are using DNS here you could be blocking the wrong IPs due to the asymmetric nature of reverse DNS (that the application used to write the domain name to log) compared to forward DNS that fail2ban uses to resolve this back to an IP (but not necessarily the same one). Ideally you should configure your applications to log a real IP. This can be set to "yes" to prevent warnings in the log or "no" to disable DNS resolution altogether (thus ignoring entries where hostname, not an IP is logged)..
 .TP
 .B failregex
-regex (Python \fBreg\fRular \fBex\fRpression) to be added to the filter's failregexes. If this is useful for others using your application please share you regular expression with the fail2ban developers by reporting an issue (see REPORTING BUGS below).
+regex (Python \fBreg\fRular \fBex\fRpression) to be added to the filter's failregexes (see \fBfailregex\fR in section FILTER FILES for details). If this is useful for others using your application please share you regular expression with the fail2ban developers by reporting an issue (see REPORTING BUGS below).
 .TP
 .B ignoreregex
 regex which, if the log line matches, would cause Fail2Ban not consider that line.  This line will be ignored even if it matches a failregex of the jail or any of its filters.
@@ -428,8 +428,24 @@ Like action files, filter files are ini files. The main section is the [Definiti
 There are two filter definitions used in the [Definition] section:
 .TP
 .B failregex
-is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The tag \fI<HOST>\fR is used as part of the regex and is itself a regex
-for IPv4 addresses (and hostnames if \fBusedns\fR). Fail2Ban will work out which one of these it actually is.
+is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The standard replacement tags can be used as part of the regex:
+.RS
+.IP
+\fI<HOST>\fR - common regex for IP addresses and hostnames (if \fBusedns\fR is enabled). Fail2Ban will work out which one of these it actually is.
+.IP
+\fI<ADDR>\fR - regex for IP addresses (both families).
+.IP
+\fI<IP4>\fR - regex for IPv4 addresses.
+.IP
+\fI<IP6>\fR - regex for IPv6 addresses (also IP enclosed in brackets).
+.IP
+\fI<DNS>\fR - regex to match hostnames.
+.IP
+\fI<CIDR>\fR - helper regex to match CIDR (simple integer form of net-mask).
+.IP
+\fI<SUBNET>\fR - regex to match sub-net adresses (in form of IP/CIDR, also single IP is matched, so part /CIDR is optional).
+.RE
+.TP
 For multiline regexs the tag \fI<SKIPLINES>\fR should be used to separate lines. This allows lines between the matched lines to continue to be searched for other failures. The tag can be used multiple times.
 
 .TP

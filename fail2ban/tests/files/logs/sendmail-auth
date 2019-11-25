@@ -14,3 +14,6 @@ Feb 24 13:00:17 kismet sm-acceptingconnections[1499]: s1OHxxSn001499: 192.241.70
 # gh-1632, Fedora 24/RHEL - the daemon name is "sendmail":
 # failJSON: { "time": "2005-02-24T14:00:00", "match": true , "host": "192.0.2.1" }
 Feb 24 14:00:00 server sendmail[26592]: u0CB32qX026592: [192.0.2.1]: possible SMTP attack: command=AUTH, count=5
+
+# failJSON: { "time": "2005-02-24T14:00:01", "match": true , "host": "192.0.2.2", "desc": "long PID, ID longer as 14 chars (gh-2563)" }
+Feb 24 14:00:01 server sendmail[3529566]: xA32R2PQ3529566: [192.0.2.2]: possible SMTP attack: command=AUTH, count=5

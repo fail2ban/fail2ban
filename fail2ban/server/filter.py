@@ -869,12 +869,12 @@ class Filter(JailThread):
 				# ip-address or host:
 				host = fail.get('ip4')
 				if host is not None:
-					cidr = IPAddr.FAM_IPv4
+					cidr = int(fail.get('cidr') or IPAddr.FAM_IPv4)
 					raw = True
 				else:
 					host = fail.get('ip6')
 					if host is not None:
-						cidr = IPAddr.FAM_IPv6
+						cidr = int(fail.get('cidr') or IPAddr.FAM_IPv6)
 						raw = True
 				if host is None:
 					host = fail.get('dns')

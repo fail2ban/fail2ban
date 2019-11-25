@@ -19,3 +19,6 @@ Mar  9 09:18:32 hostname monit[5731]: HttpRequest: access denied -- client 1.2.3
 Mar  9 09:18:33 hostname monit[5731]: HttpRequest: access denied -- client 1.2.3.4: unknown user 'test1'
 # failJSON: { "time": "2005-03-09T09:18:34", "match": true, "host": "1.2.3.4", "desc": "wrong password try" }
 Mar  9 09:18:34 hostname monit[5731]: HttpRequest: access denied -- client 1.2.3.4: wrong password for user 'test2'
+
+# failJSON: { "time": "2005-08-06T10:14:52", "match": true, "host": "192.168.1.85", "desc": "IP in brackets, gh-2494" }
+[CEST Aug  6 10:14:52] error    : HttpRequest: access denied -- client [192.168.1.85]: wrong password for user 'root'
