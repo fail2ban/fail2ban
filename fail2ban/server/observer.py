@@ -62,7 +62,7 @@ class ObserverThread(JailThread):
 
 	def __init__(self):
     # init thread
-		super(ObserverThread, self).__init__(name='Observer')
+		super(ObserverThread, self).__init__(name='f2b/observer')
 		# before started - idle:
 		self.idle = True
 		## Event queue
