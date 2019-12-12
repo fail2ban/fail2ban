@@ -109,6 +109,8 @@ class Filter(JailThread):
 		self.checkFindTime = True
 		## Ticks counter
 		self.ticks = 0
+		## Thread name:
+		self.name="f2b/f."+self.jailName
 
 		self.dateDetector = DateDetector()
 		logSys.debug("Created %s", self)

@@ -75,7 +75,7 @@ class Actions(JailThread, Mapping):
 	"""
 
 	def __init__(self, jail):
-		JailThread.__init__(self)
+		JailThread.__init__(self, name="f2b/a."+jail.name)
 		## The jail which contains this action.
 		self._jail = jail
 		self._actions = OrderedDict()

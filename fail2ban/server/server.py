@@ -38,7 +38,7 @@ from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
 from ..helpers import getLogger, _as_bool, extractOptions, str2LogLevel, \
-	getVerbosityFormat, excepthook
+	getVerbosityFormat, excepthook, prctl_set_th_name
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -80,6 +80,8 @@ class Server:
 			'Linux': '/dev/log',
 		}
 		self.__prev_signals = {}
+		# replace real thread name with short process name (for top/ps/pstree or diagnostic):
+		prctl_set_th_name('f2b/server')
 
 	def __sigTERMhandler(self, signum, frame): # pragma: no cover - indirect tested
 		logSys.debug("Caught signal %d. Exiting", signum)

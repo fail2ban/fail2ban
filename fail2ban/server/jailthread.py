@@ -29,7 +29,7 @@ from threading import Thread
 from abc import abstractmethod
 
 from .utils import Utils
-from ..helpers import excepthook
+from ..helpers import excepthook, prctl_set_th_name
 
 
 class JailThread(Thread):
@@ -76,6 +76,15 @@ class JailThread(Thread):
 					print(e)
 		self.run = run_with_except_hook
 
+	if sys.version_info >= (3,): # pragma: 2.x no cover
+		def _bootstrap(self):
+			prctl_set_th_name(self.name)
+			return super(JailThread, self)._bootstrap();
+	else: # pragma: 3.x no cover
+		def __bootstrap(self):
+			prctl_set_th_name(self.name)
+			return Thread._Thread__bootstrap(self)
+
 	@abstractmethod
 	def status(self, flavor="basic"): # pragma: no cover - abstract
 		"""Abstract - Should provide status information.
@@ -108,4 +117,6 @@ class JailThread(Thread):
 		if self.active is not None:
 			super(JailThread, self).join()
 
-
+## python 2.x replace binding of private __bootstrap method:
+if sys.version_info < (3,): # pragma: 3.x no cover
+	JailThread._Thread__bootstrap = JailThread._JailThread__bootstrap
