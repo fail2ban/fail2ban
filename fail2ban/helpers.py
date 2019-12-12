@@ -461,14 +461,16 @@ def substituteRecursiveTags(inptags, conditional='',
 if _libcap:
 	def prctl_set_th_name(name):
 		"""Helper to set real thread name (used for identification and diagnostic purposes).
+
+		Side effect: name can be silently truncated to 15 bytes (16 bytes with NTS zero)
 		"""
 		try:
 			if sys.version_info >= (3,): # pragma: 2.x no cover
 				name = name.encode()
 			else: # pragma: 3.x no cover
 				name = bytes(name)
-			_libcap.prctl(15, name[0:15]) # PR_SET_NAME = 15, name can be up to 15 bytes long (16 bytes with NTS zero)
-		except:
+			_libcap.prctl(15, name) # PR_SET_NAME = 15
+		except: # pragma: no cover
 			pass
 else: # pragma: no cover
 	def prctl_set_th_name(name):
