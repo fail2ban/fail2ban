@@ -266,7 +266,7 @@ class BasicFilter(unittest.TestCase):
 
 	def setUp(self):
 		super(BasicFilter, self).setUp()
-		self.filter = Filter('name')
+		self.filter = Filter(None)
 
 	def testGetSetUseDNS(self):
 		# default is warn

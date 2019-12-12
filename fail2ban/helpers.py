@@ -32,6 +32,13 @@ from threading import Lock
 
 from .server.mytime import MyTime
 
+try:
+	import ctypes
+	_libcap = ctypes.CDLL('libcap.so.2')
+except:
+	_libcap = None
+
+
 PREFER_ENC = locale.getpreferredencoding()
 # correct preferred encoding if lang not set in environment:
 if PREFER_ENC.startswith('ANSI_'): # pragma: no cover
@@ -449,6 +456,23 @@ def substituteRecursiveTags(inptags, conditional='',
 		if not repFlag:
 			break
 	return tags
+
+
+if _libcap:
+	def prctl_set_th_name(name):
+		"""Helper to set real thread name (used for identification and diagnostic purposes).
+		"""
+		try:
+			if sys.version_info >= (3,): # pragma: 2.x no cover
+				name = name.encode()
+			else: # pragma: 3.x no cover
+				name = bytes(name)
+			_libcap.prctl(15, name[0:15]) # PR_SET_NAME = 15, name can be up to 15 bytes long (16 bytes with NTS zero)
+		except:
+			pass
+else: # pragma: no cover
+	def prctl_set_th_name(name):
+		pass
 
 
 class BgService(object):
