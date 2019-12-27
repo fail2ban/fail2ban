@@ -213,9 +213,9 @@ class ExecuteActions(LogCaptureTestCase):
 
 	@with_alt_time
 	def testActionsConsistencyCheck(self):
-		# flush is broken - test no unhandled except and invariant check:
+		# flush for inet6 is intentionally "broken" here - test no unhandled except and invariant check:
 		act = self.defaultAction()
-		setattr(act, 'actionflush?family=inet6', 'echo ip flush <family>; exit 1')
+		act['actionflush?family=inet6'] = 'echo ip flush <family>; exit 1'
 		act.actionstart_on_demand = True
 		self.__actions.start()
 		self.assertNotLogged("stdout: %r" % 'ip start')
@@ -228,11 +228,27 @@ class ExecuteActions(LogCaptureTestCase):
 			"stdout: %r" % 'ip ban 2001:db8::1',
 			all=True, wait=True)
 
+		# check should fail (so cause stop/start):
+		self.pruneLog('[test-phase 1] simulate inconsistent env')
+		act['actioncheck?family=inet6'] = 'echo ip check <family>; exit 1'
+		self.__actions._Actions__flushBan()
+		self.assertLogged('Failed to flush bans',
+			'No flush occured, do consistency check',
+			'Invariant check failed. Trying to restore a sane environment',
+			"stdout: %r" % 'ip stop',
+			"stdout: %r" % 'ip start',
+			all=True, wait=True)
+
+		# check succeeds:
+		self.pruneLog('[test-phase 2] consistent env')
+		act['actioncheck?family=inet6'] = act.actioncheck
 		self.__actions._Actions__flushBan()
 		self.assertLogged('Failed to flush bans',
 			'No flush occured, do consistency check',
 			"stdout: %r" % 'ip ban 192.0.2.1',
 			all=True, wait=True)
+
+		act['actionflush?family=inet6'] = act.actionflush
 
 		self.__actions.stop()
 		self.__actions.join()

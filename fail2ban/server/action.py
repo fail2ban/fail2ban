@@ -341,6 +341,8 @@ class CommandAction(ActionBase):
 		# set:
 		self.__dict__[name] = value
 
+	__setitem__ = __setattr__
+
 	def __delattr__(self, name):
 		if not name.startswith('_'):
 			# parameters changed - clear properties and substitution cache:
@@ -373,13 +375,12 @@ class CommandAction(ActionBase):
 		return self.__substCache
 
 	def _getOperation(self, tag, family):
-		# be sure family is enclosed as conditional value (if not overwritten in action):
-		if family and self._hasCondSection:
-			if 'family' not in self._properties and 'family?family='+family not in self._properties:
-				self._properties['family?family='+family] = family
-		# replace operation tag (interpolate all values):
+		# replace operation tag (interpolate all values), be sure family is enclosed as conditional value
+		# (as lambda in addrepl so only if not overwritten in action):
 		return self.replaceTag(tag, self._properties,
-			conditional=('family='+family if family else ''), cache=self.__substCache)
+			conditional=('family='+family if family else ''),
+			addrepl=(lambda tag:family if tag == 'family' else None),
+			cache=self.__substCache)
 
 	def _executeOperation(self, tag, operation, family=[]):
 		"""Executes the operation commands (like "actionstart", "actionstop", etc).
@@ -564,7 +565,7 @@ class CommandAction(ActionBase):
 		return value
 
 	@classmethod
-	def replaceTag(cls, query, aInfo, conditional='', cache=None):
+	def replaceTag(cls, query, aInfo, conditional='', addrepl=None, cache=None):
 		"""Replaces tags in `query` with property values.
 
 		Parameters
@@ -605,7 +606,8 @@ class CommandAction(ActionBase):
 					pass
 			# interpolation of dictionary:
 			if subInfo is None:
-				subInfo = substituteRecursiveTags(aInfo, conditional, ignore=cls._escapedTags)
+				subInfo = substituteRecursiveTags(aInfo, conditional, ignore=cls._escapedTags,
+					addrepl=addrepl)
 			# cache if possible:
 			if csubkey is not None:
 				cache[csubkey] = subInfo
