@@ -382,7 +382,7 @@ class CommandAction(ActionBase):
 			addrepl=(lambda tag:family if tag == 'family' else None),
 			cache=self.__substCache)
 
-	def _executeOperation(self, tag, operation, family=[]):
+	def _executeOperation(self, tag, operation, family=[], forceExec=False, afterExec=None):
 		"""Executes the operation commands (like "actionstart", "actionstop", etc).
 
 		Replace the tags in the action command with actions properties
@@ -395,12 +395,17 @@ class CommandAction(ActionBase):
 			cmd = self._getOperation(tag, 'inet4')
 			if not family or 'inet4' in family:
 				if cmd:
-					res &= self.executeCmd(cmd, self.timeout)
+					ret = self.executeCmd(cmd, self.timeout)
+					res &= ret
+					if afterExec: afterExec('inet4' if 'inet4' in family else '', ret)
 			# execute ipv6 operation if available (and not the same as ipv4):
 			if allowed_ipv6 and (not family or 'inet6' in family):
 				cmd6 = self._getOperation(tag, 'inet6')
-				if cmd6 and cmd6 != cmd: # - avoid double execution of same command
-					res &= self.executeCmd(cmd6, self.timeout)
+				forceExec |= (family and 'inet6' in family and 'inet4' not in family)
+				if cmd6 and (forceExec or cmd6 != cmd): # - avoid double execution of same command
+					ret = self.executeCmd(cmd6, self.timeout)
+					res &= ret
+					if afterExec: afterExec('inet6' if 'inet6' in family else '', ret)
 			if not res:
 				raise RuntimeError("Error %s action %s/%s" % (operation, self._jail, self._name,))
 		except ValueError as e:
@@ -440,10 +445,11 @@ class CommandAction(ActionBase):
 		if self._startOnDemand:
 			if not forceStart:
 				return True
-		elif self.__started.get(family): # pragma: no cover - normally unreachable
+		elif not forceStart and self.__started.get(family): # pragma: no cover - normally unreachable
 			return True
-		ret = self._executeOperation('<actionstart>', 'starting', family=family)
-		self.__started[family] = ret
+		ret = self._executeOperation('<actionstart>', 'starting', family=[family], forceExec=forceStart)
+		if ret:
+			self.__started[family] = 1
 		return ret
 
 	def ban(self, aInfo):
@@ -459,13 +465,14 @@ class CommandAction(ActionBase):
 			the ban.
 		"""
 		# if we should start the action on demand (conditional by family):
+		family = aInfo.get('family', '')
 		if self._startOnDemand:
-			family = aInfo.get('family')
 			if not self.__started.get(family):
 				self.start(family, forceStart=True)
 		# ban:
 		if not self._processCmd('<actionban>', aInfo):
 			raise RuntimeError("Error banning %(ip)s" % aInfo)
+		self.__started[family] |= 2; # contains items
 
 	def unban(self, aInfo):
 		"""Executes the "actionunban" command.
@@ -479,8 +486,10 @@ class CommandAction(ActionBase):
 			Dictionary which includes information in relation to
 			the ban.
 		"""
-		if not self._processCmd('<actionunban>', aInfo):
-			raise RuntimeError("Error unbanning %(ip)s" % aInfo)
+		family = aInfo.get('family', '')
+		if self.__started.get(family) & 2: # contains items
+			if not self._processCmd('<actionunban>', aInfo):
+				raise RuntimeError("Error unbanning %(ip)s" % aInfo)
 
 	def flush(self):
 		"""Executes the "actionflush" command.
@@ -491,27 +500,34 @@ class CommandAction(ActionBase):
 		Replaces the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
-		family = []
-		# collect started families, if started on demand (conditional):
-		if self._startOnDemand:
-			family = [f for (f,v) in self.__started.iteritems() if v]
-			# if no started (on demand) actions:
-			if not family: return True
-		return self._executeOperation('<actionflush>', 'flushing', family=family)
+		# collect started families, may be started on demand (conditional):
+		family = [f for (f,v) in self.__started.iteritems() if v & 3 == 3]; # started and contains items
+		# if nothing contains items:
+		if not family: return True
+		# flush:
+		def _afterFlush(family, ret):
+			if ret and self.__started.get(family):
+				self.__started[family] &= ~2; # no items anymore
+		return self._executeOperation('<actionflush>', 'flushing', family=family, afterExec=_afterFlush)
 
-	def stop(self):
+	def stop(self, family=None):
 		"""Executes the "actionstop" command.
 
 		Replaces the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
-		family = []
 		# collect started families, if started on demand (conditional):
-		if self._startOnDemand:
+		if family is None:
 			family = [f for (f,v) in self.__started.iteritems() if v]
 			# if no started (on demand) actions:
 			if not family: return True
-		self.__started = {}
+			self.__started = {}
+		else:
+			try:
+				self.__started[family] &= 0
+				family = [family]
+			except KeyError: # pragma: no cover
+				return True
 		return self._executeOperation('<actionstop>', 'stopping', family=family)
 
 	def reload(self, **kwargs):
@@ -533,8 +549,9 @@ class CommandAction(ActionBase):
 		ret = True
 		# for each started family:
 		if self.actioncheck:
-			for (family, started) in self.__started.iteritems():
+			for (family, started) in self.__started.items():
 				if started and not self._invariantCheck(family, beforeRepair):
+					self.__started[family] = 0
 					ret &= False
 		return ret
 
@@ -733,6 +750,9 @@ class CommandAction(ActionBase):
 	def _invariantCheck(self, family='', beforeRepair=None):
 		"""Executes a substituted `actioncheck` command.
 		"""
+		# for started action/family only (avoid check not started inet4 if inet6 gets broken):
+		if family != '' and family not in self.__started and not self.__started.get(''):
+			return True
 		checkCmd = self._getOperation('<actioncheck>', family)
 		if not checkCmd or self.executeCmd(checkCmd, self.timeout):
 			return True
@@ -754,10 +774,10 @@ class CommandAction(ActionBase):
 			#    but the tickets are still in BanManager, so in case of new failures
 			#    it will not be banned, because "already banned" will happen.
 			try:
-				self.stop()
+				self.stop(family)
 			except RuntimeError: # bypass error in stop (if start/check succeeded hereafter).
 				pass
-			self.start()
+			self.start(family)
 		if not self.executeCmd(checkCmd, self.timeout):
 			self._logSys.critical("Unable to restore environment")
 			return False

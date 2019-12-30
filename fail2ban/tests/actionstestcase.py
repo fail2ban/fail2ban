@@ -48,15 +48,15 @@ class ExecuteActions(LogCaptureTestCase):
 	def tearDown(self):
 		super(ExecuteActions, self).tearDown()
 
-	def defaultAction(self):
+	def defaultAction(self, o={}):
 		self.__actions.add('ip')
 		act = self.__actions['ip']
-		act.actionstart = 'echo ip start'
+		act.actionstart = 'echo ip start'+o.get('start', '')
 		act.actionban = 'echo ip ban <ip>'
 		act.actionunban = 'echo ip unban <ip>'
-		act.actioncheck = 'echo ip check'
-		act.actionflush = 'echo ip flush <family>'
-		act.actionstop = 'echo ip stop'
+		act.actioncheck = 'echo ip check'+o.get('check', '')
+		act.actionflush = 'echo ip flush'+o.get('flush', '')
+		act.actionstop = 'echo ip stop'+o.get('stop', '')
 		return act
 
 	def testActionsAddDuplicateName(self):
@@ -211,11 +211,10 @@ class ExecuteActions(LogCaptureTestCase):
 		self.assertLogged('Unbanned 30, 0 ticket(s)')
 		self.assertNotLogged('Unbanned 50, 0 ticket(s)')
 
-	@with_alt_time
 	def testActionsConsistencyCheck(self):
+		act = self.defaultAction({'check':' <family>', 'flush':' <family>'})
 		# flush for inet6 is intentionally "broken" here - test no unhandled except and invariant check:
-		act = self.defaultAction()
-		act['actionflush?family=inet6'] = 'echo ip flush <family>; exit 1'
+		act['actionflush?family=inet6'] = act.actionflush + '; exit 1'
 		act.actionstart_on_demand = True
 		self.__actions.start()
 		self.assertNotLogged("stdout: %r" % 'ip start')
@@ -230,26 +229,137 @@ class ExecuteActions(LogCaptureTestCase):
 
 		# check should fail (so cause stop/start):
 		self.pruneLog('[test-phase 1] simulate inconsistent env')
-		act['actioncheck?family=inet6'] = 'echo ip check <family>; exit 1'
+		act['actioncheck?family=inet6'] = act.actioncheck + '; exit 1'
 		self.__actions._Actions__flushBan()
-		self.assertLogged('Failed to flush bans',
+		self.assertLogged(
+			"stdout: %r" % 'ip flush inet4',
+			"stdout: %r" % 'ip flush inet6',
+			'Failed to flush bans',
 			'No flush occured, do consistency check',
 			'Invariant check failed. Trying to restore a sane environment',
-			"stdout: %r" % 'ip stop',
-			"stdout: %r" % 'ip start',
+			"stdout: %r" % 'ip stop',  # same for both families
+			'Unable to restore environment',
 			all=True, wait=True)
 
 		# check succeeds:
 		self.pruneLog('[test-phase 2] consistent env')
 		act['actioncheck?family=inet6'] = act.actioncheck
+		self.assertEqual(self.__actions.addBannedIP('2001:db8::1'), 1)
+		self.assertLogged('Ban 2001:db8::1',
+			"stdout: %r" % 'ip start',   # same for both families
+			"stdout: %r" % 'ip ban 2001:db8::1',
+			all=True, wait=True)
+		self.assertNotLogged("stdout: %r" % 'ip check inet4',
+			all=True)
+
+		self.pruneLog('[test-phase 3] failed flush in consistent env')
 		self.__actions._Actions__flushBan()
 		self.assertLogged('Failed to flush bans',
 			'No flush occured, do consistency check',
-			"stdout: %r" % 'ip ban 192.0.2.1',
+			"stdout: %r" % 'ip flush inet6',
+			"stdout: %r" % 'ip check inet6',
 			all=True, wait=True)
+		self.assertNotLogged(
+			"stdout: %r" % 'ip flush inet4',
+			"stdout: %r" % 'ip stop',
+			"stdout: %r" % 'ip start',
+			'Unable to restore environment',
+			all=True)
 
+		# stop, flush succeeds:
+		self.pruneLog('[test-phase end] flush successful')
 		act['actionflush?family=inet6'] = act.actionflush
-
 		self.__actions.stop()
 		self.__actions.join()
+		self.assertLogged(
+			"stdout: %r" % 'ip flush inet6',
+			"stdout: %r" % 'ip stop',    # same for both families
+			'action ip terminated',
+			all=True, wait=True)
+		# no flush for inet4 (already successfully flushed):
+		self.assertNotLogged("ERROR",
+			"stdout: %r" % 'ip flush inet4',
+			'Unban tickets each individualy',
+			all=True)
 
+	def testActionsConsistencyCheckDiffFam(self):
+		# same as testActionsConsistencyCheck, but different start/stop commands for both families
+		act = self.defaultAction({'start':' <family>', 'check':' <family>', 'flush':' <family>', 'stop':' <family>'})
+		# flush for inet6 is intentionally "broken" here - test no unhandled except and invariant check:
+		act['actionflush?family=inet6'] = act.actionflush + '; exit 1'
+		act.actionstart_on_demand = True
+		self.__actions.start()
+		self.assertNotLogged("stdout: %r" % 'ip start')
+
+		self.assertEqual(self.__actions.addBannedIP('192.0.2.1'), 1)
+		self.assertEqual(self.__actions.addBannedIP('2001:db8::1'), 1)
+		self.assertLogged('Ban 192.0.2.1', 'Ban 2001:db8::1',
+			"stdout: %r" % 'ip start inet4',
+			"stdout: %r" % 'ip ban 192.0.2.1',
+			"stdout: %r" % 'ip start inet6',
+			"stdout: %r" % 'ip ban 2001:db8::1',
+			all=True, wait=True)
+
+		# check should fail (so cause stop/start):
+		self.pruneLog('[test-phase 1] simulate inconsistent env')
+		act['actioncheck?family=inet6'] = act.actioncheck + '; exit 1'
+		self.__actions._Actions__flushBan()
+		self.assertLogged(
+			"stdout: %r" % 'ip flush inet4',
+			"stdout: %r" % 'ip flush inet6',
+			'Failed to flush bans',
+			'No flush occured, do consistency check',
+			'Invariant check failed. Trying to restore a sane environment',
+			"stdout: %r" % 'ip stop inet6',
+			'Unable to restore environment',
+			all=True, wait=True)
+		# start/stop should be called for inet6 only:
+		self.assertNotLogged(
+			"stdout: %r" % 'ip stop inet4',
+			all=True)
+
+		# check succeeds:
+		self.pruneLog('[test-phase 2] consistent env')
+		act['actioncheck?family=inet6'] = act.actioncheck
+		self.assertEqual(self.__actions.addBannedIP('2001:db8::1'), 1)
+		self.assertLogged('Ban 2001:db8::1',
+			"stdout: %r" % 'ip start inet6',
+			"stdout: %r" % 'ip ban 2001:db8::1',
+			all=True, wait=True)
+		self.assertNotLogged(
+			"stdout: %r" % 'ip check inet4',
+			"stdout: %r" % 'ip start inet4',
+			all=True)
+
+		self.pruneLog('[test-phase 3] failed flush in consistent env')
+		act['actioncheck?family=inet6'] = act.actioncheck
+		self.__actions._Actions__flushBan()
+		self.assertLogged('Failed to flush bans',
+			'No flush occured, do consistency check',
+			"stdout: %r" % 'ip flush inet6',
+			"stdout: %r" % 'ip check inet6',
+			all=True, wait=True)
+		self.assertNotLogged(
+			"stdout: %r" % 'ip flush inet4',
+			"stdout: %r" % 'ip stop inet4',
+			"stdout: %r" % 'ip start inet4',
+			"stdout: %r" % 'ip stop inet6',
+			"stdout: %r" % 'ip start inet6',
+			all=True)
+
+		# stop, flush succeeds:
+		self.pruneLog('[test-phase end] flush successful')
+		act['actionflush?family=inet6'] = act.actionflush
+		self.__actions.stop()
+		self.__actions.join()
+		self.assertLogged(
+			"stdout: %r" % 'ip flush inet6',
+			"stdout: %r" % 'ip stop inet4',
+			"stdout: %r" % 'ip stop inet6',
+			'action ip terminated',
+			all=True, wait=True)
+		# no flush for inet4 (already successfully flushed):
+		self.assertNotLogged("ERROR",
+			"stdout: %r" % 'ip flush inet4',
+			'Unban tickets each individualy',
+			all=True)

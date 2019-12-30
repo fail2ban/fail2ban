@@ -516,23 +516,24 @@ class Actions(JailThread, Mapping):
 			try:
 				if hasattr(action, 'flush') and (not isinstance(action, CommandAction) or action.actionflush):
 					logSys.notice("[%s] Flush ticket(s) with %s", self._jail.name, name)
-					action.flush()
-				else:
-					unbactions[name] = action
+					if action.flush():
+						continue
 			except Exception as e:
 				logSys.error("Failed to flush bans in jail '%s' action '%s': %s",
 					self._jail.name, name, e,
 					exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 				logSys.info("No flush occured, do consistency check")
-				def _beforeRepair():
-					if stop:
-						self._logSys.error("Invariant check failed. Flush is impossible.")
-						return False
-					return True
-				if not hasattr(action, 'consistencyCheck') or action.consistencyCheck(_beforeRepair):
-					# fallback to single unbans:
-					logSys.info("unban tickets each individualy")
-					unbactions[name] = action
+				if hasattr(action, 'consistencyCheck'):
+					def _beforeRepair():
+						if stop and not getattr(action, 'actionrepair_on_unban', None): # don't need repair on stop
+							self._logSys.error("Invariant check failed. Flush is impossible.")
+							return False
+						return True
+					action.consistencyCheck(_beforeRepair)
+					continue
+			# fallback to single unbans:
+			logSys.debug("  Unban tickets each individualy")
+			unbactions[name] = action
 		actions = unbactions
 		# flush the database also:
 		if db and self._jail.database is not None:
