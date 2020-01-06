@@ -440,18 +440,14 @@ class CommandAction(ActionBase):
 	@property
 	def _hasCondSection(self):
 		v = self._properties.get('__hasCondSection')
-		if v is None:
-			v = False
-			famset = set()
-			for n in self._properties:
-				grp = CONDITIONAL_FAM_RE.match(n)
-				if grp:
-					self._properties['__hasCondSection'] = v = True
-					if self._properties.get('families') or self._startOnDemand:
-						break
-					famset.add(grp.group(2))
-			self._properties['__families'] = famset
-			self._properties['__hasCondSection'] = v
+		if v is not None:
+			return v
+		v = False
+		for n in self._properties:
+			if CONDITIONAL_FAM_RE.match(n):
+				v = True
+				break
+		self._properties['__hasCondSection'] = v
 		return v
 
 	@property
