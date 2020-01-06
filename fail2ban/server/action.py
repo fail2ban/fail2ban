@@ -36,7 +36,8 @@ from .failregex import mapTag2Opt
 from .ipdns import asip, DNSUtils
 from .mytime import MyTime
 from .utils import Utils
-from ..helpers import getLogger, _merge_copy_dicts, uni_string, substituteRecursiveTags, TAG_CRE, MAX_TAG_REPLACE_COUNT
+from ..helpers import getLogger, _merge_copy_dicts, \
+	splitwords, substituteRecursiveTags, uni_string, TAG_CRE, MAX_TAG_REPLACE_COUNT
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -51,7 +52,7 @@ allowed_ipv6 = True
 FCUSTAG_CRE = re.compile(r'<F-([A-Z0-9_\-]+)>'); # currently uppercase only
 
 COND_FAMILIES = ('inet4', 'inet6')
-CONDITIONAL_FAM_RE = re.compile(r"^(\w+)\?(family)=")
+CONDITIONAL_FAM_RE = re.compile(r"^(\w+)\?(family)=(.*)$")
 
 # Special tags:
 DYN_REPL_TAGS = {
@@ -382,7 +383,33 @@ class CommandAction(ActionBase):
 			addrepl=(lambda tag:family if tag == 'family' else None),
 			cache=self.__substCache)
 
-	def _executeOperation(self, tag, operation, family=[], forceExec=False, afterExec=None):
+	def _operationExecuted(self, tag, family, *args):
+		""" Get, set or delete command of operation considering family.
+		"""
+		key = ('__eOpCmd',tag)
+		if not len(args): # get
+			if not callable(family): # pragma: no cover
+				return self.__substCache.get(key, {}).get(family)
+			# family as expression - use it to filter values:
+			return [v for f, v in self.__substCache.get(key, {}).iteritems() if family(f)]
+		cmd = args[0]
+		if cmd: # set:
+			try:
+				famd = self.__substCache[key]
+			except KeyError:
+				famd = self.__substCache[key] = {}
+			famd[family] = cmd
+		else: # delete (given family and all other with same command):
+			try:
+				famd = self.__substCache[key]
+				cmd = famd.pop(family)
+				for family, v in famd.items():
+					if v == cmd:
+						del famd[family]
+			except KeyError: # pragma: no cover
+				pass
+
+	def _executeOperation(self, tag, operation, family=[], afterExec=None):
 		"""Executes the operation commands (like "actionstart", "actionstop", etc).
 
 		Replace the tags in the action command with actions properties
@@ -390,26 +417,24 @@ class CommandAction(ActionBase):
 		"""
 		# check valid tags in properties (raises ValueError if self recursion, etc.):
 		res = True
-		try:
-			# common (resp. ipv4):
-			cmd = self._getOperation(tag, 'inet4')
-			if not family or 'inet4' in family:
-				if cmd:
+		err = 'Script error'
+		if not family: # all started:
+			family = [famoper for (famoper,v) in self.__started.iteritems() if v]
+		for famoper in family:
+			try:
+				cmd = self._getOperation(tag, famoper)
+				ret = True
+				# avoid double execution of same command for both families:
+				if cmd and cmd not in self._operationExecuted(tag, lambda f: f != famoper):
 					ret = self.executeCmd(cmd, self.timeout)
 					res &= ret
-					if afterExec: afterExec('inet4' if 'inet4' in family else '', ret)
-			# execute ipv6 operation if available (and not the same as ipv4):
-			if allowed_ipv6 and (not family or 'inet6' in family):
-				cmd6 = self._getOperation(tag, 'inet6')
-				forceExec |= (family and 'inet6' in family and 'inet4' not in family)
-				if cmd6 and (forceExec or cmd6 != cmd): # - avoid double execution of same command
-					ret = self.executeCmd(cmd6, self.timeout)
-					res &= ret
-					if afterExec: afterExec('inet6' if 'inet6' in family else '', ret)
-			if not res:
-				raise RuntimeError("Error %s action %s/%s" % (operation, self._jail, self._name,))
-		except ValueError as e:
-			raise RuntimeError("Error %s action %s/%s: %r" % (operation, self._jail, self._name, e))
+				if afterExec: afterExec(famoper, ret)
+				self._operationExecuted(tag, famoper, cmd if ret else None)
+			except ValueError as e:
+				res = False
+				err = e
+		if not res:
+			raise RuntimeError("Error %s action %s/%s: %r" % (operation, self._jail, self._name, err))
 		return res
 
 	@property
@@ -417,11 +442,31 @@ class CommandAction(ActionBase):
 		v = self._properties.get('__hasCondSection')
 		if v is None:
 			v = False
+			famset = set()
 			for n in self._properties:
-				if CONDITIONAL_FAM_RE.match(n):
-					v = True
-					break
+				grp = CONDITIONAL_FAM_RE.match(n)
+				if grp:
+					self._properties['__hasCondSection'] = v = True
+					if self._properties.get('families') or self._startOnDemand:
+						break
+					famset.add(grp.group(2))
+			self._properties['__families'] = famset
 			self._properties['__hasCondSection'] = v
+		return v
+
+	@property
+	def _families(self):
+		v = self._properties.get('__families')
+		if v: return v
+		v = self._properties.get('families')
+		if v and not isinstance(v, (list,set)): # pragma: no cover - still unused
+			v = splitwords(v)
+		elif self._hasCondSection: # all conditional families:
+			# todo: check it is needed at all # common (resp. ipv4) + ipv6 if allowed:
+			v = ['inet4', 'inet6'] if allowed_ipv6 else ['inet4']
+		else: # all action tags seems to be the same
+			v = ['']
+		self._properties['__families'] = v
 		return v
 
 	@property
@@ -435,7 +480,15 @@ class CommandAction(ActionBase):
 		self._properties['actionstart_on_demand'] = v
 		return v
 
-	def start(self, family=None, forceStart=False):
+	def start(self):
+		"""Executes the "actionstart" command.
+
+		Replace the tags in the action command with actions properties
+		and executes the resulting command.
+		"""
+		return self._start()
+
+	def _start(self, family='', forceStart=False):
 		"""Executes the "actionstart" command.
 
 		Replace the tags in the action command with actions properties
@@ -447,9 +500,12 @@ class CommandAction(ActionBase):
 				return True
 		elif not forceStart and self.__started.get(family): # pragma: no cover - normally unreachable
 			return True
-		ret = self._executeOperation('<actionstart>', 'starting', family=[family], forceExec=forceStart)
-		if ret:
-			self.__started[family] = 1
+		family = [family] if family != '' else self._families
+		def _started(family, ret):
+			if ret:
+				self._operationExecuted('<actionstop>', family, None)
+				self.__started[family] = 1
+		ret = self._executeOperation('<actionstart>', 'starting', family=family, afterExec=_started)
 		return ret
 
 	def ban(self, aInfo):
@@ -468,11 +524,11 @@ class CommandAction(ActionBase):
 		family = aInfo.get('family', '')
 		if self._startOnDemand:
 			if not self.__started.get(family):
-				self.start(family, forceStart=True)
+				self._start(family, forceStart=True)
 		# ban:
 		if not self._processCmd('<actionban>', aInfo):
 			raise RuntimeError("Error banning %(ip)s" % aInfo)
-		self.__started[family] |= 2; # contains items
+		self.__started[family] = self.__started.get(family, 0) | 3; # started and contains items
 
 	def unban(self, aInfo):
 		"""Executes the "actionunban" command.
@@ -487,7 +543,7 @@ class CommandAction(ActionBase):
 			the ban.
 		"""
 		family = aInfo.get('family', '')
-		if self.__started.get(family) & 2: # contains items
+		if self.__started.get(family, 0) & 2: # contains items
 			if not self._processCmd('<actionunban>', aInfo):
 				raise RuntimeError("Error unbanning %(ip)s" % aInfo)
 
@@ -510,14 +566,22 @@ class CommandAction(ActionBase):
 				self.__started[family] &= ~2; # no items anymore
 		return self._executeOperation('<actionflush>', 'flushing', family=family, afterExec=_afterFlush)
 
-	def stop(self, family=None):
+	def stop(self):
+		"""Executes the "actionstop" command.
+
+		Replaces the tags in the action command with actions properties
+		and executes the resulting command.
+		"""
+		return self._stop()
+
+	def _stop(self, family=''):
 		"""Executes the "actionstop" command.
 
 		Replaces the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
 		# collect started families, if started on demand (conditional):
-		if family is None:
+		if not family:
 			family = [f for (f,v) in self.__started.iteritems() if v]
 			# if no started (on demand) actions:
 			if not family: return True
@@ -528,7 +592,10 @@ class CommandAction(ActionBase):
 				family = [family]
 			except KeyError: # pragma: no cover
 				return True
-		return self._executeOperation('<actionstop>', 'stopping', family=family)
+		def _stopped(family, ret):
+			if ret:
+				self._operationExecuted('<actionstart>', family, None)
+		return self._executeOperation('<actionstop>', 'stopping', family=family, afterExec=_stopped)
 
 	def reload(self, **kwargs):
 		"""Executes the "actionreload" command.
@@ -551,7 +618,9 @@ class CommandAction(ActionBase):
 		if self.actioncheck:
 			for (family, started) in self.__started.items():
 				if started and not self._invariantCheck(family, beforeRepair):
+					# reset started flag and command of executed operation:
 					self.__started[family] = 0
+					self._operationExecuted('<actionstart>', family, None)
 					ret &= False
 		return ret
 
@@ -767,6 +836,7 @@ class CommandAction(ActionBase):
 			if not self.executeCmd(repairCmd, self.timeout):
 				self._logSys.critical("Unable to restore environment")
 				return False
+			self.__started[family] = 1
 		else:
 			# no repair command, try to restart action...
 			# [WARNING] TODO: be sure all banactions get a repair command, because
@@ -774,10 +844,10 @@ class CommandAction(ActionBase):
 			#    but the tickets are still in BanManager, so in case of new failures
 			#    it will not be banned, because "already banned" will happen.
 			try:
-				self.stop(family)
+				self._stop(family)
 			except RuntimeError: # bypass error in stop (if start/check succeeded hereafter).
 				pass
-			self.start(family)
+			self._start(family)
 		if not self.executeCmd(checkCmd, self.timeout):
 			self._logSys.critical("Unable to restore environment")
 			return False

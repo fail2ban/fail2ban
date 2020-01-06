@@ -34,8 +34,8 @@ from ..server.actions import OrderedDict, Actions
 from ..server.utils import Utils
 
 from .dummyjail import DummyJail
-from .utils import LogCaptureTestCase
-from .utils import pid_exists
+from .utils import pid_exists, with_tmpdir, LogCaptureTestCase
+
 
 class CommandActionTest(LogCaptureTestCase):
 
@@ -297,18 +297,21 @@ class CommandActionTest(LogCaptureTestCase):
 				"Text 000-567 text 567 '567'")
 		self.assertTrue(len(cache) >= 3)
 
-
-	def testExecuteActionBan(self):
-		self.__action.actionstart = "touch /tmp/fail2ban.test"
-		self.assertEqual(self.__action.actionstart, "touch /tmp/fail2ban.test")
-		self.__action.actionstop = "rm -f /tmp/fail2ban.test"
-		self.assertEqual(self.__action.actionstop, 'rm -f /tmp/fail2ban.test')
+	@with_tmpdir
+	def testExecuteActionBan(self, tmp):
+		tmp += "/fail2ban.test"
+		self.__action.actionstart = "touch '%s'" % tmp
+		self.__action.actionrepair = self.__action.actionstart
+		self.assertEqual(self.__action.actionstart, "touch '%s'" % tmp)
+		self.__action.actionstop = "rm -f '%s'" % tmp
+		self.assertEqual(self.__action.actionstop, "rm -f '%s'" % tmp)
 		self.__action.actionban = "echo -n"
 		self.assertEqual(self.__action.actionban, 'echo -n')
-		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
-		self.assertEqual(self.__action.actioncheck, '[ -e /tmp/fail2ban.test ]')
+		self.__action.actioncheck = "[ -e '%s' ]" % tmp
+		self.assertEqual(self.__action.actioncheck, "[ -e '%s' ]" % tmp)
 		self.__action.actionunban = "true"
 		self.assertEqual(self.__action.actionunban, 'true')
+		self.pruneLog()
 
 		self.assertNotLogged('returned')
 		# no action was actually executed yet
@@ -316,42 +319,66 @@ class CommandActionTest(LogCaptureTestCase):
 		self.__action.ban({'ip': None})
 		self.assertLogged('Invariant check failed')
 		self.assertLogged('returned successfully')
+		self.__action.stop()
+		self.assertLogged(self.__action.actionstop)
 
 	def testExecuteActionEmptyUnban(self):
+		# unban will be executed for actions with banned items only:
+		self.__action.actionban = ""
 		self.__action.actionunban = ""
+		self.__action.actionflush = "echo -n 'flush'"
+		self.__action.actionstop = "echo -n 'stop'"
+		self.__action.start();
+		self.__action.ban({});
+		self.pruneLog()
 		self.__action.unban({})
-		self.assertLogged('Nothing to do')
+		self.assertLogged('Nothing to do', wait=True)
+		# same as above but with interim flush, so no unban anymore:
+		self.__action.ban({});
+		self.pruneLog('[phase 2]')
+		self.__action.flush()
+		self.__action.unban({})
+		self.__action.stop()
+		self.assertLogged('stop', wait=True)
+		self.assertNotLogged('Nothing to do')
 
-	def testExecuteActionStartCtags(self):
+	@with_tmpdir
+	def testExecuteActionStartCtags(self, tmp):
+		tmp += '/fail2ban.test'
 		self.__action.HOST = "192.0.2.0"
-		self.__action.actionstart = "touch /tmp/fail2ban.test.<HOST>"
-		self.__action.actionstop = "rm -f /tmp/fail2ban.test.<HOST>"
-		self.__action.actioncheck = "[ -e /tmp/fail2ban.test.192.0.2.0 ]"
+		self.__action.actionstart = "touch '%s.<HOST>'" % tmp
+		self.__action.actionstop = "rm -f '%s.<HOST>'" % tmp
+		self.__action.actioncheck = "[ -e '%s.192.0.2.0' ]" % tmp
 		self.__action.start()
+		self.__action.consistencyCheck()
 
-	def testExecuteActionCheckRestoreEnvironment(self):
+	@with_tmpdir
+	def testExecuteActionCheckRestoreEnvironment(self, tmp):
+		tmp += '/fail2ban.test'
 		self.__action.actionstart = ""
-		self.__action.actionstop = "rm -f /tmp/fail2ban.test"
-		self.__action.actionban = "rm /tmp/fail2ban.test"
-		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
+		self.__action.actionstop = "rm -f '%s'" % tmp
+		self.__action.actionban = "rm '%s'" % tmp
+		self.__action.actioncheck = "[ -e '%s' ]" % tmp
 		self.assertRaises(RuntimeError, self.__action.ban, {'ip': None})
 		self.assertLogged('Invariant check failed', 'Unable to restore environment', all=True)
 		# 2nd time, try to restore with producing error in stop, but succeeded start hereafter:
 		self.pruneLog('[phase 2]')
-		self.__action.actionstart = "touch /tmp/fail2ban.test"
-		self.__action.actionstop = "rm /tmp/fail2ban.test"
-		self.__action.actionban = 'printf "%%b\n" <ip> >> /tmp/fail2ban.test'
-		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
+		self.__action.actionstart = "touch '%s'" % tmp
+		self.__action.actionstop = "rm '%s'" % tmp
+		self.__action.actionban = """printf "%%%%b\n" <ip> >> '%s'""" % tmp
+		self.__action.actioncheck = "[ -e '%s' ]" % tmp
 		self.__action.ban({'ip': None})
 		self.assertLogged('Invariant check failed')
 		self.assertNotLogged('Unable to restore environment')
 
-	def testExecuteActionCheckRepairEnvironment(self):
+	@with_tmpdir
+	def testExecuteActionCheckRepairEnvironment(self, tmp):
+		tmp += '/fail2ban.test'
 		self.__action.actionstart = ""
 		self.__action.actionstop = ""
-		self.__action.actionban = "rm /tmp/fail2ban.test"
-		self.__action.actioncheck = "[ -e /tmp/fail2ban.test ]"
-		self.__action.actionrepair = "echo 'repair ...'; touch /tmp/fail2ban.test"
+		self.__action.actionban = "rm '%s'" % tmp
+		self.__action.actioncheck = "[ -e '%s' ]" % tmp
+		self.__action.actionrepair = "echo 'repair ...'; touch '%s'" % tmp
 		# 1st time with success repair:
 		self.__action.ban({'ip': None})
 		self.assertLogged("Invariant check failed. Trying", "echo 'repair ...'", all=True)
@@ -379,13 +406,13 @@ class CommandActionTest(LogCaptureTestCase):
 				'user': "tester"
 			}
 		})
-		self.__action.actionban = "touch /tmp/fail2ban.test.123; echo 'failure <F-ID> of <F-USER> -<F-TEST>- from <ip>:<F-PORT>'"
-		self.__action.actionunban = "rm /tmp/fail2ban.test.<ABC>; echo 'user <F-USER> unbanned'"
+		self.__action.actionban = "echo '<ABC>, failure <F-ID> of <F-USER> -<F-TEST>- from <ip>:<F-PORT>'"
+		self.__action.actionunban = "echo '<ABC>, user <F-USER> unbanned'"
 		self.__action.ban(aInfo)
 		self.__action.unban(aInfo)
 		self.assertLogged(
-			" -- stdout: 'failure 111 of tester -- from 192.0.2.1:222'",
-			" -- stdout: 'user tester unbanned'",
+			" -- stdout: '123, failure 111 of tester -- from 192.0.2.1:222'",
+			" -- stdout: '123, user tester unbanned'",
 			all=True
 		)
 
