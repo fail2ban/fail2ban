@@ -28,11 +28,10 @@ import time
 import os
 import tempfile
 
-from ..server.actions import Actions
 from ..server.ticket import FailTicket
 from ..server.utils import Utils
 from .dummyjail import DummyJail
-from .utils import LogCaptureTestCase, with_alt_time, MyTime
+from .utils import LogCaptureTestCase, with_alt_time, with_tmpdir, MyTime
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "files")
 
@@ -43,7 +42,7 @@ class ExecuteActions(LogCaptureTestCase):
 		"""Call before every test case."""
 		super(ExecuteActions, self).setUp()
 		self.__jail = DummyJail()
-		self.__actions = Actions(self.__jail)
+		self.__actions = self.__jail.actions
 
 	def tearDown(self):
 		super(ExecuteActions, self).tearDown()
@@ -52,8 +51,8 @@ class ExecuteActions(LogCaptureTestCase):
 		self.__actions.add('ip')
 		act = self.__actions['ip']
 		act.actionstart = 'echo ip start'+o.get('start', '')
-		act.actionban = 'echo ip ban <ip>'
-		act.actionunban = 'echo ip unban <ip>'
+		act.actionban = 'echo ip ban <ip>'+o.get('ban', '')
+		act.actionunban = 'echo ip unban <ip>'+o.get('unban', '')
 		act.actioncheck = 'echo ip check'+o.get('check', '')
 		act.actionflush = 'echo ip flush'+o.get('flush', '')
 		act.actionstop = 'echo ip stop'+o.get('stop', '')
@@ -239,7 +238,7 @@ class ExecuteActions(LogCaptureTestCase):
 			"stdout: %r" % 'ip flush inet4',
 			"stdout: %r" % 'ip flush inet6',
 			'Failed to flush bans',
-			'No flush occured, do consistency check',
+			'No flush occurred, do consistency check',
 			'Invariant check failed. Trying to restore a sane environment',
 			"stdout: %r" % 'ip stop',  # same for both families
 			'Failed to flush bans',
@@ -259,7 +258,7 @@ class ExecuteActions(LogCaptureTestCase):
 		self.pruneLog('[test-phase 3] failed flush in consistent env')
 		self.__actions._Actions__flushBan()
 		self.assertLogged('Failed to flush bans',
-			'No flush occured, do consistency check',
+			'No flush occurred, do consistency check',
 			"stdout: %r" % 'ip flush inet6',
 			"stdout: %r" % 'ip check inet6',
 			all=True, wait=True)
@@ -341,7 +340,7 @@ class ExecuteActions(LogCaptureTestCase):
 			"stdout: %r" % 'ip flush inet4',
 			"stdout: %r" % 'ip flush inet6',
 			'Failed to flush bans',
-			'No flush occured, do consistency check',
+			'No flush occurred, do consistency check',
 			'Invariant check failed. Trying to restore a sane environment',
 			"stdout: %r" % 'ip stop inet6',
 			'Failed to flush bans in jail',
@@ -368,7 +367,7 @@ class ExecuteActions(LogCaptureTestCase):
 		act['actioncheck?family=inet6'] = act.actioncheck
 		self.__actions._Actions__flushBan()
 		self.assertLogged('Failed to flush bans',
-			'No flush occured, do consistency check',
+			'No flush occurred, do consistency check',
 			"stdout: %r" % 'ip flush inet6',
 			"stdout: %r" % 'ip check inet6',
 			all=True, wait=True)
@@ -396,3 +395,103 @@ class ExecuteActions(LogCaptureTestCase):
 			"stdout: %r" % 'ip flush inet4',
 			'Unban tickets each individualy',
 			all=True)
+
+	@with_alt_time
+	@with_tmpdir
+	def testActionsRebanBrokenAfterRepair(self, tmp):
+		act = self.defaultAction({
+			'start':' <family>; touch "<FN>"',
+			'check':' <family>; test -f "<FN>"',
+			'flush':' <family>; echo -n "" > "<FN>"',
+			'stop': ' <family>; rm -f "<FN>"',
+			'ban':  ' <family>; echo "<ip> <family>" >> "<FN>"',
+		})
+		act['FN'] = tmp+'/<family>'
+		act.actionstart_on_demand = True
+		act.actionrepair = 'echo ip repair <family>; touch "<FN>"'
+		act.actionreban = 'echo ip reban <ip> <family>; echo "<ip> <family> -- rebanned" >> "<FN>"'
+		self.pruneLog('[test-phase 0] initial ban')
+		self.assertEqual(self.__actions.addBannedIP(['192.0.2.1', '2001:db8::1']), 2)
+		self.assertLogged('Ban 192.0.2.1', 'Ban 2001:db8::1',
+			"stdout: %r" % 'ip start inet4',
+			"stdout: %r" % 'ip ban 192.0.2.1 inet4',
+			"stdout: %r" % 'ip start inet6',
+			"stdout: %r" % 'ip ban 2001:db8::1 inet6',
+			all=True)
+
+		self.pruneLog('[test-phase 1] check ban')
+		self.dumpFile(tmp+'/inet4')
+		self.assertLogged('192.0.2.1 inet4')
+		self.assertNotLogged('2001:db8::1 inet6')
+		self.pruneLog()
+		self.dumpFile(tmp+'/inet6')
+		self.assertLogged('2001:db8::1 inet6')
+		self.assertNotLogged('192.0.2.1 inet4')
+
+		# simulate 3 seconds past:
+		MyTime.setTime(MyTime.time() + 4)
+		# already banned produces events:
+		self.pruneLog('[test-phase 2] check already banned')
+		self.assertEqual(self.__actions.addBannedIP(['192.0.2.1', '2001:db8::1', '2001:db8::2']), 1)
+		self.assertLogged(
+			'192.0.2.1 already banned', '2001:db8::1 already banned', 'Ban 2001:db8::2',
+			"stdout: %r" % 'ip check inet4', # both checks occurred
+			"stdout: %r" % 'ip check inet6',
+			all=True)
+		self.dumpFile(tmp+'/inet4')
+		self.dumpFile(tmp+'/inet6')
+		# no reban should occur:
+		self.assertNotLogged('Reban 192.0.2.1', 'Reban 2001:db8::1',
+			"stdout: %r" % 'ip ban 192.0.2.1 inet4',
+			"stdout: %r" % 'ip reban 192.0.2.1 inet4',
+			"stdout: %r" % 'ip ban 2001:db8::1 inet6',
+			"stdout: %r" % 'ip reban 2001:db8::1 inet6',
+			'192.0.2.1 inet4 -- repaired',
+			'2001:db8::1 inet6 -- repaired',
+			all=True)
+
+		# simulate 3 seconds past:
+		MyTime.setTime(MyTime.time() + 4)
+		# break env (remove both files, so check would fail):
+		os.remove(tmp+'/inet4')
+		os.remove(tmp+'/inet6')
+		# test again already banned (it shall cause reban now):
+		self.pruneLog('[test-phase 3a] check reban after sane env repaired')
+		self.assertEqual(self.__actions.addBannedIP(['192.0.2.1', '2001:db8::1']), 2)
+		self.assertLogged(
+			"Invariant check failed. Trying to restore a sane environment",
+			"stdout: %r" % 'ip repair inet4', # both repairs occurred
+			"stdout: %r" % 'ip repair inet6',
+			"Reban 192.0.2.1, action 'ip'", "Reban 2001:db8::1, action 'ip'", # both rebans also
+			"stdout: %r" % 'ip reban 192.0.2.1 inet4',
+			"stdout: %r" % 'ip reban 2001:db8::1 inet6',
+			all=True)
+
+		# now last IP (2001:db8::2) - no repair, but still old epoch of ticket, so it gets rebanned:
+		self.pruneLog('[test-phase 3a] check reban by epoch mismatch (without repair)')
+		self.assertEqual(self.__actions.addBannedIP('2001:db8::2'), 1)
+		self.assertLogged(
+			"Reban 2001:db8::2, action 'ip'",
+			"stdout: %r" % 'ip reban 2001:db8::2 inet6',
+			all=True)
+		self.assertNotLogged(
+			"Invariant check failed. Trying to restore a sane environment",
+			"stdout: %r" % 'ip repair inet4', # both repairs occurred
+			"stdout: %r" % 'ip repair inet6',
+			"Reban 192.0.2.1, action 'ip'", "Reban 2001:db8::1, action 'ip'", # both rebans also
+			"stdout: %r" % 'ip reban 192.0.2.1 inet4',
+			"stdout: %r" % 'ip reban 2001:db8::1 inet6',
+			all=True)
+
+		# and bans present in files:
+		self.pruneLog('[test-phase 4] check reban')
+		self.dumpFile(tmp+'/inet4')
+		self.assertLogged('192.0.2.1 inet4 -- rebanned')
+		self.assertNotLogged('2001:db8::1 inet6 -- rebanned')
+		self.pruneLog()
+		self.dumpFile(tmp+'/inet6')
+		self.assertLogged(
+			'2001:db8::1 inet6 -- rebanned', 
+			'2001:db8::2 inet6 -- rebanned', all=True)
+		self.assertNotLogged('192.0.2.1 inet4 -- rebanned')
+

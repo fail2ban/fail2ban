@@ -217,6 +217,7 @@ class ActionBase(object):
 			"start",
 			"stop",
 			"ban",
+			"reban",
 			"unban",
 			)
 		for method in required:
@@ -250,6 +251,17 @@ class ActionBase(object):
 		"""
 		pass
 
+	def reban(self, aInfo): # pragma: no cover - abstract
+		"""Executed when a ban occurs.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
+		"""
+		return self.ban(aInfo)
+
 	def unban(self, aInfo): # pragma: no cover - abstract
 		"""Executed when a ban expires.
 
@@ -281,6 +293,7 @@ class CommandAction(ActionBase):
 	----------
 	actionban
 	actioncheck
+	actionreban
 	actionreload
 	actionrepair
 	actionstart
@@ -301,6 +314,7 @@ class CommandAction(ActionBase):
 			self.actionstart = ''
 			## Command executed when ticket gets banned.
 			self.actionban = ''
+			self.actionreban = ''
 			## Command executed when ticket gets removed.
 			self.actionunban = ''
 			## Command executed in order to check requirements.
@@ -504,8 +518,8 @@ class CommandAction(ActionBase):
 		ret = self._executeOperation('<actionstart>', 'starting', family=family, afterExec=_started)
 		return ret
 
-	def ban(self, aInfo):
-		"""Executes the "actionban" command.
+	def ban(self, aInfo, cmd='<actionban>'):
+		"""Executes the given command ("actionban" or "actionreban").
 
 		Replaces the tags in the action command with actions properties
 		and ban information, and executes the resulting command.
@@ -522,7 +536,7 @@ class CommandAction(ActionBase):
 			if not self.__started.get(family):
 				self._start(family, forceStart=True)
 		# ban:
-		if not self._processCmd('<actionban>', aInfo):
+		if not self._processCmd(cmd, aInfo):
 			raise RuntimeError("Error banning %(ip)s" % aInfo)
 		self.__started[family] = self.__started.get(family, 0) | 3; # started and contains items
 
@@ -542,6 +556,21 @@ class CommandAction(ActionBase):
 		if self.__started.get(family, 0) & 2: # contains items
 			if not self._processCmd('<actionunban>', aInfo):
 				raise RuntimeError("Error unbanning %(ip)s" % aInfo)
+
+	def reban(self, aInfo):
+		"""Executes the "actionreban" command if available, otherwise simply repeat "actionban".
+
+		Replaces the tags in the action command with actions properties
+		and ban information, and executes the resulting command.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
+		"""
+		# re-ban:
+		return self.ban(aInfo, '<actionreban>' if self.actionreban else '<actionban>')
 
 	def flush(self):
 		"""Executes the "actionflush" command.
@@ -812,6 +841,17 @@ class CommandAction(ActionBase):
 			realCmd = Utils.buildShellCmd(realCmd, varsDict)
 		return realCmd
 
+	@property
+	def banEpoch(self):
+		return getattr(self, '_banEpoch', 0)
+	def invalidateBanEpoch(self):
+		"""Increments ban epoch of jail and this action, so already banned tickets would cause
+		a re-ban for all tickets with previous epoch."""
+		if self._jail is not None:
+			self._banEpoch = self._jail.actions.banEpoch = self._jail.actions.banEpoch + 1
+		else:
+			self._banEpoch = self.banEpoch + 1
+
 	def _invariantCheck(self, family=None, beforeRepair=None, forceStart=True):
 		"""Executes a substituted `actioncheck` command.
 		"""
@@ -826,6 +866,8 @@ class CommandAction(ActionBase):
 			return -1
 		self._logSys.error(
 			"Invariant check failed. Trying to restore a sane environment")
+		# increment ban epoch of jail and this action (allows re-ban on already banned):
+		self.invalidateBanEpoch()
 		# try to find repair command, if exists - exec it:
 		repairCmd = self._getOperation('<actionrepair>', family)
 		if repairCmd:
