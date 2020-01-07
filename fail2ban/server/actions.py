@@ -493,8 +493,7 @@ class Actions(JailThread, Mapping):
 							(name, action) for name, action in self._actions.iteritems()
 								if action.banEpoch > bTicket.banEpoch)
 						cnt += self.__reBan(bTicket, actions=rebanacts)
-				else:
-					# pragma: no cover - unexpected: ticket is not banned for some reasons - reban using all actions:
+				else: # pragma: no cover - unexpected: ticket is not banned for some reasons - reban using all actions:
 					cnt += self.__reBan(bTicket)
 		if cnt:
 			logSys.debug("Banned %s / %s, %s ticket(s) in %r", cnt, 

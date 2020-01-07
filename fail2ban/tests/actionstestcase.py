@@ -495,3 +495,10 @@ class ExecuteActions(LogCaptureTestCase):
 			'2001:db8::2 inet6 -- rebanned', all=True)
 		self.assertNotLogged('192.0.2.1 inet4 -- rebanned')
 
+		# coverage - intended error in reban (no unhandled exception, message logged):
+		act.actionreban = ''
+		act.actionban = 'exit 1'
+		self.assertEqual(self.__actions._Actions__reBan(FailTicket("192.0.2.1", 0)), 0)
+		self.assertLogged(
+			'Failed to execute reban',
+			'Error banning 192.0.2.1', all=True)

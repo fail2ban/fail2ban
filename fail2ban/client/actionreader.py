@@ -46,6 +46,7 @@ class ActionReader(DefinitionInitConfigReader):
 		"actionrepair": ["string", None],
 		"actionrepair_on_unban": ["string", None],
 		"actionban": ["string", None],
+		"actionreban": ["string", None],
 		"actionunban": ["string", None],
 		"norestored": ["string", None],
 	}
