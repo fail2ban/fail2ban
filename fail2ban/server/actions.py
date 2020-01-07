@@ -593,7 +593,7 @@ class Actions(JailThread, Mapping):
 		if db and self._jail.database is not None:
 			logSys.debug("  Flush jail in database")
 			self._jail.database.delBan(self._jail)
-		# unban each ticket with non-flasheable actions:
+		# unban each ticket with non-flusheable actions:
 		for ticket in lst:
 			# unban ip:
 			self.__unBan(ticket, actions=actions, log=log)
