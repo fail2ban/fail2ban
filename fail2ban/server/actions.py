@@ -214,10 +214,10 @@ class Actions(JailThread, Mapping):
 
 		if isinstance(ip, list):
 			# Multiple IPs:
-			tickets = (BanTicket(ip if isinstance(ip, IPAddr) else IPAddr(ip), unixTime) for ip in ip)
+			tickets = (BanTicket(ip, unixTime) for ip in ip)
 		else:
 			# Single IP:
-			tickets = (BanTicket(ip if isinstance(ip, IPAddr) else IPAddr(ip), unixTime),)
+			tickets = (BanTicket(ip, unixTime),)
 
 		return self.__checkBan(tickets)
 

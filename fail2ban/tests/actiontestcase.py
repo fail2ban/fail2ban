@@ -587,6 +587,19 @@ class CommandActionTest(LogCaptureTestCase):
 		self.assertEqual(len(m), 3)
 		self.assertIn('c', m)
 		self.assertEqual((m['a'], m['b'], m['c']), (5, 11, 'test'))
+		# immutability of copy:
+		m['d'] = 'dddd'
+		m2 = m.copy()
+		m2['c'] = lambda self: self['a'] + 7
+		m2['a'] = 1
+		del m2['b']
+		del m2['d']
+		self.assertTrue('b' in m)
+		self.assertTrue('d' in m)
+		self.assertFalse('b' in m2)
+		self.assertFalse('d' in m2)
+		self.assertEqual((m['a'], m['b'], m['c'], m['d']), (5, 11, 'test', 'dddd'))
+		self.assertEqual((m2['a'], m2['c']), (1, 8))
 
 	def testCallingMapRep(self):
 		m = CallingMap({

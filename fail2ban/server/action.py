@@ -33,7 +33,7 @@ from abc import ABCMeta
 from collections import MutableMapping
 
 from .failregex import mapTag2Opt
-from .ipdns import asip, DNSUtils
+from .ipdns import DNSUtils
 from .mytime import MyTime
 from .utils import Utils
 from ..helpers import getLogger, _merge_copy_dicts, \
@@ -175,7 +175,7 @@ class CallingMap(MutableMapping, object):
 	def __len__(self):
 		return len(self.data)
 
-	def copy(self): # pragma: no cover
+	def copy(self):
 		return self.__class__(_merge_copy_dicts(self.data, self.storage))
 
 
