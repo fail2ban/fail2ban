@@ -484,7 +484,7 @@ class CommandAction(ActionBase):
 		"""
 		return self._start()
 
-	def _start(self, family='', forceStart=False):
+	def _start(self, family=None, forceStart=False):
 		"""Executes the "actionstart" command.
 
 		Replace the tags in the action command with actions properties
@@ -496,7 +496,7 @@ class CommandAction(ActionBase):
 				return True
 		elif not forceStart and self.__started.get(family): # pragma: no cover - normally unreachable
 			return True
-		family = [family] if family != '' else self._families
+		family = [family] if family is not None else self._families
 		def _started(family, ret):
 			if ret:
 				self._operationExecuted('<actionstop>', family, None)
@@ -570,14 +570,14 @@ class CommandAction(ActionBase):
 		"""
 		return self._stop()
 
-	def _stop(self, family=''):
+	def _stop(self, family=None):
 		"""Executes the "actionstop" command.
 
 		Replaces the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
 		# collect started families, if started on demand (conditional):
-		if not family:
+		if family is None:
 			family = [f for (f,v) in self.__started.iteritems() if v]
 			# if no started (on demand) actions:
 			if not family: return True
@@ -812,26 +812,27 @@ class CommandAction(ActionBase):
 			realCmd = Utils.buildShellCmd(realCmd, varsDict)
 		return realCmd
 
-	def _invariantCheck(self, family='', beforeRepair=None):
+	def _invariantCheck(self, family=None, beforeRepair=None, forceStart=True):
 		"""Executes a substituted `actioncheck` command.
 		"""
 		# for started action/family only (avoid check not started inet4 if inet6 gets broken):
-		if family != '' and family not in self.__started and not self.__started.get(''):
-			return True
+		if not forceStart and family is not None and family not in self.__started:
+			return 1
 		checkCmd = self._getOperation('<actioncheck>', family)
 		if not checkCmd or self.executeCmd(checkCmd, self.timeout):
-			return True
+			return 1
 		# if don't need repair/restore - just return:
 		if beforeRepair and not beforeRepair():
-			return False
+			return -1
 		self._logSys.error(
 			"Invariant check failed. Trying to restore a sane environment")
 		# try to find repair command, if exists - exec it:
 		repairCmd = self._getOperation('<actionrepair>', family)
 		if repairCmd:
 			if not self.executeCmd(repairCmd, self.timeout):
+				self.__started[family] = 0
 				self._logSys.critical("Unable to restore environment")
-				return False
+				return 0
 			self.__started[family] = 1
 		else:
 			# no repair command, try to restart action...
@@ -843,11 +844,11 @@ class CommandAction(ActionBase):
 				self._stop(family)
 			except RuntimeError: # bypass error in stop (if start/check succeeded hereafter).
 				pass
-			self._start(family)
-		if not self.executeCmd(checkCmd, self.timeout):
+			self._start(family, forceStart=forceStart or not self._startOnDemand)
+		if self.__started.get(family) and not self.executeCmd(checkCmd, self.timeout):
 			self._logSys.critical("Unable to restore environment")
-			return False
-		return True
+			return 0
+		return 1
 
 	def _processCmd(self, cmd, aInfo=None):
 		"""Executes a command with preliminary checks and substitutions.
@@ -876,7 +877,7 @@ class CommandAction(ActionBase):
 		# conditional corresponding family of the given ip:
 		try:
 			family = aInfo["family"]
-		except KeyError:
+		except (KeyError, TypeError):
 			family = ''
 
 		# invariant check:
@@ -887,8 +888,10 @@ class CommandAction(ActionBase):
 					self._logSys.error("Invariant check failed. Unban is impossible.")
 					return False
 				return True
-			ret = self._invariantCheck(family, _beforeRepair)
-			if not ret:
+			# check and repair if broken:
+			ret = self._invariantCheck(family, _beforeRepair, forceStart=(cmd != '<actionunban>'))
+			# if not sane (and not restored) return:
+			if ret != 1:
 				return False
 
 		# Replace static fields

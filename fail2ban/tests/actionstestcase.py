@@ -228,8 +228,12 @@ class ExecuteActions(LogCaptureTestCase):
 			all=True, wait=True)
 
 		# check should fail (so cause stop/start):
-		self.pruneLog('[test-phase 1] simulate inconsistent env')
+		self.pruneLog('[test-phase 1a] simulate inconsistent irreparable env by unban')
 		act['actioncheck?family=inet6'] = act.actioncheck + '; exit 1'
+		self.__actions.removeBannedIP('2001:db8::1')
+		self.assertLogged('Invariant check failed. Unban is impossible.',
+			wait=True)
+		self.pruneLog('[test-phase 1b] simulate inconsistent irreparable env by flush')
 		self.__actions._Actions__flushBan()
 		self.assertLogged(
 			"stdout: %r" % 'ip flush inet4',
@@ -238,7 +242,7 @@ class ExecuteActions(LogCaptureTestCase):
 			'No flush occured, do consistency check',
 			'Invariant check failed. Trying to restore a sane environment',
 			"stdout: %r" % 'ip stop',  # same for both families
-			'Unable to restore environment',
+			'Failed to flush bans',
 			all=True, wait=True)
 
 		# check succeeds:
@@ -283,11 +287,12 @@ class ExecuteActions(LogCaptureTestCase):
 			all=True)
 
 	def testActionsConsistencyCheckDiffFam(self):
-		# same as testActionsConsistencyCheck, but different start/stop commands for both families
+		# same as testActionsConsistencyCheck, but different start/stop commands for both families and repair on unban
 		act = self.defaultAction({'start':' <family>', 'check':' <family>', 'flush':' <family>', 'stop':' <family>'})
 		# flush for inet6 is intentionally "broken" here - test no unhandled except and invariant check:
 		act['actionflush?family=inet6'] = act.actionflush + '; exit 1'
 		act.actionstart_on_demand = True
+		act.actionrepair_on_unban = True
 		self.__actions.start()
 		self.assertNotLogged("stdout: %r" % 'ip start')
 
@@ -301,8 +306,36 @@ class ExecuteActions(LogCaptureTestCase):
 			all=True, wait=True)
 
 		# check should fail (so cause stop/start):
-		self.pruneLog('[test-phase 1] simulate inconsistent env')
 		act['actioncheck?family=inet6'] = act.actioncheck + '; exit 1'
+		self.pruneLog('[test-phase 1a] simulate inconsistent irreparable env by unban')
+		self.__actions.removeBannedIP('2001:db8::1')
+		self.assertLogged('Invariant check failed. Trying to restore a sane environment',
+			"stdout: %r" % 'ip stop inet6',
+			all=True, wait=True)
+		self.assertNotLogged(
+			"stdout: %r" % 'ip start inet6', # start on demand (not on repair)
+			"stdout: %r" % 'ip stop inet4',  # family inet4 is not affected
+			"stdout: %r" % 'ip start inet4',
+			all=True)
+
+		self.pruneLog('[test-phase 1b] simulate inconsistent irreparable env by ban')
+		self.assertEqual(self.__actions.addBannedIP('2001:db8::1'), 1)
+		self.assertLogged('Invariant check failed. Trying to restore a sane environment',
+			"stdout: %r" % 'ip stop inet6',
+			"stdout: %r" % 'ip start inet6',
+			"stdout: %r" % 'ip check inet6',
+			'Unable to restore environment',
+			'Failed to execute ban',
+			all=True, wait=True)
+		self.assertNotLogged(
+			"stdout: %r" % 'ip stop inet4',  # family inet4 is not affected
+			"stdout: %r" % 'ip start inet4',
+			all=True)
+
+		act['actioncheck?family=inet6'] = act.actioncheck
+		self.assertEqual(self.__actions.addBannedIP('2001:db8::2'), 1)
+		act['actioncheck?family=inet6'] = act.actioncheck + '; exit 1'
+		self.pruneLog('[test-phase 1c] simulate inconsistent irreparable env by flush')
 		self.__actions._Actions__flushBan()
 		self.assertLogged(
 			"stdout: %r" % 'ip flush inet4',
@@ -311,7 +344,7 @@ class ExecuteActions(LogCaptureTestCase):
 			'No flush occured, do consistency check',
 			'Invariant check failed. Trying to restore a sane environment',
 			"stdout: %r" % 'ip stop inet6',
-			'Unable to restore environment',
+			'Failed to flush bans in jail',
 			all=True, wait=True)
 		# start/stop should be called for inet6 only:
 		self.assertNotLogged(
