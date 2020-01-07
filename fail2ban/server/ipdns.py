@@ -202,6 +202,11 @@ class DNSUtils:
 		DNSUtils.CACHE_nameToIp.set(key, ips)
 		return ips
 
+	@staticmethod
+	def IPv6IsAllowed():
+		# return os.path.exists("/proc/net/if_inet6") || any((':' in ip) for ip in DNSUtils.getSelfIPs())
+		return any((':' in ip.ntoa) for ip in DNSUtils.getSelfIPs())
+
 
 ##
 # Class for IP address handling.

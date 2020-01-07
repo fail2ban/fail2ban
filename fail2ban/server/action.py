@@ -45,8 +45,8 @@ logSys = getLogger(__name__)
 # Create a lock for running system commands
 _cmd_lock = threading.Lock()
 
-# Todo: make it configurable resp. automatically set, ex.: `[ -f /proc/net/if_inet6 ] && echo 'yes' || echo 'no'`:
-allowed_ipv6 = True
+# Specifies whether IPv6 subsystem is available:
+allowed_ipv6 = DNSUtils.IPv6IsAllowed
 
 # capture groups from filter for map to ticket data:
 FCUSTAG_CRE = re.compile(r'<F-([A-Z0-9_\-]+)>'); # currently uppercase only
@@ -459,7 +459,7 @@ class CommandAction(ActionBase):
 			v = splitwords(v)
 		elif self._hasCondSection: # all conditional families:
 			# todo: check it is needed at all # common (resp. ipv4) + ipv6 if allowed:
-			v = ['inet4', 'inet6'] if allowed_ipv6 else ['inet4']
+			v = ['inet4', 'inet6'] if allowed_ipv6() else ['inet4']
 		else: # all action tags seems to be the same
 			v = ['']
 		self._properties['__families'] = v
