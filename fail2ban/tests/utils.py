@@ -754,10 +754,11 @@ class LogCaptureTestCase(unittest.TestCase):
 		# Let's log everything into a string
 		self._log = LogCaptureTestCase._MemHandler(unittest.F2B.log_lazy)
 		logSys.handlers = [self._log]
-		if self._old_level <= logging.DEBUG:
+		# lowest log level to capture messages (expected in tests) is Lev.9
+		if self._old_level <= logging.DEBUG: # pragma: no cover
 			logSys.handlers += self._old_handlers
-		else: # lowest log level to capture messages
-			logSys.setLevel(logging.DEBUG)
+		if self._old_level > logging.DEBUG-1:
+			logSys.setLevel(logging.DEBUG-1)
 		super(LogCaptureTestCase, self).setUp()
 
 	def tearDown(self):

@@ -1008,7 +1008,7 @@ class CommandAction(ActionBase):
 		RuntimeError
 			If command execution times out.
 		"""
-		if logSys.getEffectiveLevel() < logging.DEBUG: # pragma: no cover
+		if logSys.getEffectiveLevel() < logging.DEBUG:
 			logSys.log(9, realCmd)
 		if not realCmd:
 			logSys.debug("Nothing to do")
