@@ -44,7 +44,9 @@ class ActionReader(DefinitionInitConfigReader):
 		"actionreload": ["string", None],
 		"actioncheck": ["string", None],
 		"actionrepair": ["string", None],
+		"actionrepair_on_unban": ["string", None],
 		"actionban": ["string", None],
+		"actionreban": ["string", None],
 		"actionunban": ["string", None],
 		"norestored": ["string", None],
 	}
@@ -78,7 +80,7 @@ class ActionReader(DefinitionInitConfigReader):
 		opts = self.getCombined(
 			ignore=CommandAction._escapedTags | set(('timeout', 'bantime')))
 		# type-convert only after combined (otherwise boolean converting prevents substitution):
-		for o in ('norestored', 'actionstart_on_demand'):
+		for o in ('norestored', 'actionstart_on_demand', 'actionrepair_on_unban'):
 			if opts.get(o):
 				opts[o] = self._convert_to_boolean(opts[o])
 		
