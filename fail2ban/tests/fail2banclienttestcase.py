@@ -142,16 +142,7 @@ fail2banclient.input_command = _test_input_command
 fail2bancmdline.PRODUCTION = \
 fail2banserver.PRODUCTION = False
 
-
-def _out_file(fn, handle=logSys.debug):
-	"""Helper which outputs content of the file at HEAVYDEBUG loglevels"""
-	if (handle != logSys.debug or logSys.getEffectiveLevel() <= logging.DEBUG):
-		handle('---- ' + fn + ' ----')
-		for line in fileinput.input(fn):
-			line = line.rstrip('\n')
-			handle(line)
-		handle('-'*30)
-
+_out_file = LogCaptureTestCase.dumpFile
 
 def _write_file(fn, mode, *lines):
 	f = open(fn, mode)

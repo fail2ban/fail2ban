@@ -31,7 +31,7 @@ import unittest
 from ..client.configreader import ConfigReader, ConfigReaderUnshared, \
 	DefinitionInitConfigReader, NoSectionError
 from ..client import configparserinc
-from ..client.jailreader import JailReader, extractOptions
+from ..client.jailreader import JailReader, extractOptions, splitWithOptions
 from ..client.filterreader import FilterReader
 from ..client.jailsreader import JailsReader
 from ..client.actionreader import ActionReader, CommandAction
@@ -778,7 +778,7 @@ class JailsReaderTest(LogCaptureTestCase):
 
 			# somewhat duplicating here what is done in JailsReader if
 			# the jail is enabled
-			for act in actions.split('\n'):
+			for act in splitWithOptions(actions):
 				actName, actOpt = extractOptions(act)
 				self.assertTrue(len(actName))
 				self.assertTrue(isinstance(actOpt, dict))

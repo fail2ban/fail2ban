@@ -796,7 +796,7 @@ class Transmitter(TransmitterBase):
 		self.assertSortedEqual(
 			self.transm.proceed(["get", self.jailName, "actionmethods",
 				action])[1],
-			['ban', 'start', 'stop', 'testmethod', 'unban'])
+			['ban', 'reban', 'start', 'stop', 'testmethod', 'unban'])
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "action", action,
 				"testmethod", '{"text": "world!"}']),

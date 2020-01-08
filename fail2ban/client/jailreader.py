@@ -33,7 +33,7 @@ from .configreader import ConfigReaderUnshared, ConfigReader
 from .filterreader import FilterReader
 from .actionreader import ActionReader
 from ..version import version
-from ..helpers import getLogger, extractOptions, splitwords
+from ..helpers import getLogger, extractOptions, splitWithOptions, splitwords
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -171,21 +171,15 @@ class JailReader(ConfigReader):
 				self.__filter.getOptions(self.__opts)
 		
 			# Read action
-			prevln = ''
-			actlst = self.__opts["action"].split('\n')
-			for n, act in enumerate(actlst):
+			for act in splitWithOptions(self.__opts["action"]):
 				try:
+					act = act.strip()
 					if not act:			  # skip empty actions
 						continue
 					# join with previous line if needed (consider possible new-line):
-					if prevln: act = prevln + '\n' + act
 					actName, actOpt = extractOptions(act)
 					prevln = ''
 					if not actName:
-						# consider possible new-line, so repeat with joined next line's:
-						if n < len(actlst) - 1:
-							prevln = act
-							continue
 						raise JailDefError("Invalid action definition %r" % act)
 					if actName.endswith(".py"):
 						self.__actions.append([

@@ -33,10 +33,11 @@ from abc import ABCMeta
 from collections import MutableMapping
 
 from .failregex import mapTag2Opt
-from .ipdns import asip, DNSUtils
+from .ipdns import DNSUtils
 from .mytime import MyTime
 from .utils import Utils
-from ..helpers import getLogger, _merge_copy_dicts, uni_string, substituteRecursiveTags, TAG_CRE, MAX_TAG_REPLACE_COUNT
+from ..helpers import getLogger, _merge_copy_dicts, \
+	splitwords, substituteRecursiveTags, uni_string, TAG_CRE, MAX_TAG_REPLACE_COUNT
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -44,13 +45,14 @@ logSys = getLogger(__name__)
 # Create a lock for running system commands
 _cmd_lock = threading.Lock()
 
-# Todo: make it configurable resp. automatically set, ex.: `[ -f /proc/net/if_inet6 ] && echo 'yes' || echo 'no'`:
-allowed_ipv6 = True
+# Specifies whether IPv6 subsystem is available:
+allowed_ipv6 = DNSUtils.IPv6IsAllowed
 
 # capture groups from filter for map to ticket data:
 FCUSTAG_CRE = re.compile(r'<F-([A-Z0-9_\-]+)>'); # currently uppercase only
 
-CONDITIONAL_FAM_RE = re.compile(r"^(\w+)\?(family)=")
+COND_FAMILIES = ('inet4', 'inet6')
+CONDITIONAL_FAM_RE = re.compile(r"^(\w+)\?(family)=(.*)$")
 
 # Special tags:
 DYN_REPL_TAGS = {
@@ -173,7 +175,7 @@ class CallingMap(MutableMapping, object):
 	def __len__(self):
 		return len(self.data)
 
-	def copy(self): # pragma: no cover
+	def copy(self):
 		return self.__class__(_merge_copy_dicts(self.data, self.storage))
 
 
@@ -215,6 +217,7 @@ class ActionBase(object):
 			"start",
 			"stop",
 			"ban",
+			"reban",
 			"unban",
 			)
 		for method in required:
@@ -247,6 +250,17 @@ class ActionBase(object):
 			the ban.
 		"""
 		pass
+
+	def reban(self, aInfo): # pragma: no cover - abstract
+		"""Executed when a ban occurs.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
+		"""
+		return self.ban(aInfo)
 
 	@property
 	def _prolongable(self): # pragma: no cover - abstract
@@ -288,6 +302,7 @@ class CommandAction(ActionBase):
 	----------
 	actionban
 	actioncheck
+	actionreban
 	actionreload
 	actionrepair
 	actionstart
@@ -308,6 +323,7 @@ class CommandAction(ActionBase):
 			self.actionstart = ''
 			## Command executed when ticket gets banned.
 			self.actionban = ''
+			self.actionreban = ''
 			## Command executed when ticket gets removed.
 			self.actionunban = ''
 			## Command executed in order to check requirements.
@@ -352,6 +368,8 @@ class CommandAction(ActionBase):
 		# set:
 		self.__dict__[name] = value
 
+	__setitem__ = __setattr__
+
 	def __delattr__(self, name):
 		if not name.startswith('_'):
 			# parameters changed - clear properties and substitution cache:
@@ -375,8 +393,8 @@ class CommandAction(ActionBase):
 		self.__properties = dict(
 			(key, getattr(self, key))
 			for key in dir(self)
-			if not key.startswith("_") and not callable(getattr(self, key)))
-		#
+			if not key.startswith("_") and not callable(getattr(self, key))
+		)
 		return self.__properties
 
 	@property
@@ -384,10 +402,40 @@ class CommandAction(ActionBase):
 		return self.__substCache
 
 	def _getOperation(self, tag, family):
+		# replace operation tag (interpolate all values), be sure family is enclosed as conditional value
+		# (as lambda in addrepl so only if not overwritten in action):
 		return self.replaceTag(tag, self._properties,
-			conditional=('family=' + family), cache=self.__substCache)
+			conditional=('family='+family if family else ''),
+			addrepl=(lambda tag:family if tag == 'family' else None),
+			cache=self.__substCache)
 
-	def _executeOperation(self, tag, operation, family=[]):
+	def _operationExecuted(self, tag, family, *args):
+		""" Get, set or delete command of operation considering family.
+		"""
+		key = ('__eOpCmd',tag)
+		if not len(args): # get
+			if not callable(family): # pragma: no cover
+				return self.__substCache.get(key, {}).get(family)
+			# family as expression - use it to filter values:
+			return [v for f, v in self.__substCache.get(key, {}).iteritems() if family(f)]
+		cmd = args[0]
+		if cmd: # set:
+			try:
+				famd = self.__substCache[key]
+			except KeyError:
+				famd = self.__substCache[key] = {}
+			famd[family] = cmd
+		else: # delete (given family and all other with same command):
+			try:
+				famd = self.__substCache[key]
+				cmd = famd.pop(family)
+				for family, v in famd.items():
+					if v == cmd:
+						del famd[family]
+			except KeyError: # pragma: no cover
+				pass
+
+	def _executeOperation(self, tag, operation, family=[], afterExec=None):
 		"""Executes the operation commands (like "actionstart", "actionstop", etc).
 
 		Replace the tags in the action command with actions properties
@@ -395,24 +443,53 @@ class CommandAction(ActionBase):
 		"""
 		# check valid tags in properties (raises ValueError if self recursion, etc.):
 		res = True
-		try:
-			# common (resp. ipv4):
-			cmd = self._getOperation(tag, 'inet4')
-			if not family or 'inet4' in family:
-				if cmd:
-					res &= self.executeCmd(cmd, self.timeout)
-			# execute ipv6 operation if available (and not the same as ipv4):
-			if allowed_ipv6 and (not family or 'inet6' in family):
-				cmd6 = self._getOperation(tag, 'inet6')
-				if cmd6 and cmd6 != cmd: # - avoid double execution of same command
-					res &= self.executeCmd(cmd6, self.timeout)
-			if not res:
-				raise RuntimeError("Error %s action %s/%s" % (operation, self._jail, self._name,))
-		except ValueError as e:
-			raise RuntimeError("Error %s action %s/%s: %r" % (operation, self._jail, self._name, e))
+		err = 'Script error'
+		if not family: # all started:
+			family = [famoper for (famoper,v) in self.__started.iteritems() if v]
+		for famoper in family:
+			try:
+				cmd = self._getOperation(tag, famoper)
+				ret = True
+				# avoid double execution of same command for both families:
+				if cmd and cmd not in self._operationExecuted(tag, lambda f: f != famoper):
+					ret = self.executeCmd(cmd, self.timeout)
+					res &= ret
+				if afterExec: afterExec(famoper, ret)
+				self._operationExecuted(tag, famoper, cmd if ret else None)
+			except ValueError as e:
+				res = False
+				err = e
+		if not res:
+			raise RuntimeError("Error %s action %s/%s: %r" % (operation, self._jail, self._name, err))
 		return res
 
-	COND_FAMILIES = ('inet4', 'inet6')
+	@property
+	def _hasCondSection(self):
+		v = self._properties.get('__hasCondSection')
+		if v is not None:
+			return v
+		v = False
+		for n in self._properties:
+			if CONDITIONAL_FAM_RE.match(n):
+				v = True
+				break
+		self._properties['__hasCondSection'] = v
+		return v
+
+	@property
+	def _families(self):
+		v = self._properties.get('__families')
+		if v: return v
+		v = self._properties.get('families')
+		if v and not isinstance(v, (list,set)): # pragma: no cover - still unused
+			v = splitwords(v)
+		elif self._hasCondSection: # all conditional families:
+			# todo: check it is needed at all # common (resp. ipv4) + ipv6 if allowed:
+			v = ['inet4', 'inet6'] if allowed_ipv6() else ['inet4']
+		else: # all action tags seems to be the same
+			v = ['']
+		self._properties['__families'] = v
+		return v
 
 	@property
 	def _startOnDemand(self):
@@ -421,15 +498,19 @@ class CommandAction(ActionBase):
 		if v is not None:
 			return v
 		# not set - auto-recognize (depending on conditional):
-		v = False
-		for n in self._properties:
-			if CONDITIONAL_FAM_RE.match(n):
-				v = True
-				break
+		v = self._hasCondSection
 		self._properties['actionstart_on_demand'] = v
 		return v
 
-	def start(self, family=None, forceStart=False):
+	def start(self):
+		"""Executes the "actionstart" command.
+
+		Replace the tags in the action command with actions properties
+		and executes the resulting command.
+		"""
+		return self._start()
+
+	def _start(self, family=None, forceStart=False):
 		"""Executes the "actionstart" command.
 
 		Replace the tags in the action command with actions properties
@@ -439,14 +520,18 @@ class CommandAction(ActionBase):
 		if self._startOnDemand:
 			if not forceStart:
 				return True
-		elif self.__started.get(family): # pragma: no cover - normally unreachable
+		elif not forceStart and self.__started.get(family): # pragma: no cover - normally unreachable
 			return True
-		ret = self._executeOperation('<actionstart>', 'starting', family=family)
-		self.__started[family] = ret
+		family = [family] if family is not None else self._families
+		def _started(family, ret):
+			if ret:
+				self._operationExecuted('<actionstop>', family, None)
+				self.__started[family] = 1
+		ret = self._executeOperation('<actionstart>', 'starting', family=family, afterExec=_started)
 		return ret
 
-	def ban(self, aInfo):
-		"""Executes the "actionban" command.
+	def ban(self, aInfo, cmd='<actionban>'):
+		"""Executes the given command ("actionban" or "actionreban").
 
 		Replaces the tags in the action command with actions properties
 		and ban information, and executes the resulting command.
@@ -458,13 +543,14 @@ class CommandAction(ActionBase):
 			the ban.
 		"""
 		# if we should start the action on demand (conditional by family):
+		family = aInfo.get('family', '')
 		if self._startOnDemand:
-			family = aInfo.get('family')
 			if not self.__started.get(family):
-				self.start(family, forceStart=True)
+				self._start(family, forceStart=True)
 		# ban:
-		if not self._processCmd('<actionban>', aInfo):
+		if not self._processCmd(cmd, aInfo):
 			raise RuntimeError("Error banning %(ip)s" % aInfo)
+		self.__started[family] = self.__started.get(family, 0) | 3; # started and contains items
 
 	@property
 	def _prolongable(self):
@@ -498,8 +584,25 @@ class CommandAction(ActionBase):
 			Dictionary which includes information in relation to
 			the ban.
 		"""
-		if not self._processCmd('<actionunban>', aInfo):
-			raise RuntimeError("Error unbanning %(ip)s" % aInfo)
+		family = aInfo.get('family', '')
+		if self.__started.get(family, 0) & 2: # contains items
+			if not self._processCmd('<actionunban>', aInfo):
+				raise RuntimeError("Error unbanning %(ip)s" % aInfo)
+
+	def reban(self, aInfo):
+		"""Executes the "actionreban" command if available, otherwise simply repeat "actionban".
+
+		Replaces the tags in the action command with actions properties
+		and ban information, and executes the resulting command.
+
+		Parameters
+		----------
+		aInfo : dict
+			Dictionary which includes information in relation to
+			the ban.
+		"""
+		# re-ban:
+		return self.ban(aInfo, '<actionreban>' if self.actionreban else '<actionban>')
 
 	def flush(self):
 		"""Executes the "actionflush" command.
@@ -510,13 +613,15 @@ class CommandAction(ActionBase):
 		Replaces the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
-		family = []
-		# collect started families, if started on demand (conditional):
-		if self._startOnDemand:
-			family = [f for (f,v) in self.__started.iteritems() if v]
-			# if no started (on demand) actions:
-			if not family: return True
-		return self._executeOperation('<actionflush>', 'flushing', family=family)
+		# collect started families, may be started on demand (conditional):
+		family = [f for (f,v) in self.__started.iteritems() if v & 3 == 3]; # started and contains items
+		# if nothing contains items:
+		if not family: return True
+		# flush:
+		def _afterFlush(family, ret):
+			if ret and self.__started.get(family):
+				self.__started[family] &= ~2; # no items anymore
+		return self._executeOperation('<actionflush>', 'flushing', family=family, afterExec=_afterFlush)
 
 	def stop(self):
 		"""Executes the "actionstop" command.
@@ -524,14 +629,30 @@ class CommandAction(ActionBase):
 		Replaces the tags in the action command with actions properties
 		and executes the resulting command.
 		"""
-		family = []
+		return self._stop()
+
+	def _stop(self, family=None):
+		"""Executes the "actionstop" command.
+
+		Replaces the tags in the action command with actions properties
+		and executes the resulting command.
+		"""
 		# collect started families, if started on demand (conditional):
-		if self._startOnDemand:
+		if family is None:
 			family = [f for (f,v) in self.__started.iteritems() if v]
 			# if no started (on demand) actions:
 			if not family: return True
-		self.__started = {}
-		return self._executeOperation('<actionstop>', 'stopping', family=family)
+			self.__started = {}
+		else:
+			try:
+				self.__started[family] &= 0
+				family = [family]
+			except KeyError: # pragma: no cover
+				return True
+		def _stopped(family, ret):
+			if ret:
+				self._operationExecuted('<actionstart>', family, None)
+		return self._executeOperation('<actionstop>', 'stopping', family=family, afterExec=_stopped)
 
 	def reload(self, **kwargs):
 		"""Executes the "actionreload" command.
@@ -545,6 +666,20 @@ class CommandAction(ActionBase):
 		and executes the resulting command.
 		"""
 		return self._executeOperation('<actionreload>', 'reloading')
+
+	def consistencyCheck(self, beforeRepair=None):
+		"""Executes the invariant check with repair if expected (conditional).
+		"""
+		ret = True
+		# for each started family:
+		if self.actioncheck:
+			for (family, started) in self.__started.items():
+				if started and not self._invariantCheck(family, beforeRepair):
+					# reset started flag and command of executed operation:
+					self.__started[family] = 0
+					self._operationExecuted('<actionstart>', family, None)
+					ret &= False
+		return ret
 
 	ESCAPE_CRE = re.compile(r"""[\\#&;`|*?~<>^()\[\]{}$'"\n\r]""")
 	
@@ -578,7 +713,7 @@ class CommandAction(ActionBase):
 		return value
 
 	@classmethod
-	def replaceTag(cls, query, aInfo, conditional='', cache=None):
+	def replaceTag(cls, query, aInfo, conditional='', addrepl=None, cache=None):
 		"""Replaces tags in `query` with property values.
 
 		Parameters
@@ -619,7 +754,8 @@ class CommandAction(ActionBase):
 					pass
 			# interpolation of dictionary:
 			if subInfo is None:
-				subInfo = substituteRecursiveTags(aInfo, conditional, ignore=cls._escapedTags)
+				subInfo = substituteRecursiveTags(aInfo, conditional, ignore=cls._escapedTags,
+					addrepl=addrepl)
 			# cache if possible:
 			if csubkey is not None:
 				cache[csubkey] = subInfo
@@ -742,7 +878,58 @@ class CommandAction(ActionBase):
 			realCmd = Utils.buildShellCmd(realCmd, varsDict)
 		return realCmd
 
-	def _processCmd(self, cmd, aInfo=None, conditional=''):
+	@property
+	def banEpoch(self):
+		return getattr(self, '_banEpoch', 0)
+	def invalidateBanEpoch(self):
+		"""Increments ban epoch of jail and this action, so already banned tickets would cause
+		a re-ban for all tickets with previous epoch."""
+		if self._jail is not None:
+			self._banEpoch = self._jail.actions.banEpoch = self._jail.actions.banEpoch + 1
+		else:
+			self._banEpoch = self.banEpoch + 1
+
+	def _invariantCheck(self, family=None, beforeRepair=None, forceStart=True):
+		"""Executes a substituted `actioncheck` command.
+		"""
+		# for started action/family only (avoid check not started inet4 if inet6 gets broken):
+		if not forceStart and family is not None and family not in self.__started:
+			return 1
+		checkCmd = self._getOperation('<actioncheck>', family)
+		if not checkCmd or self.executeCmd(checkCmd, self.timeout):
+			return 1
+		# if don't need repair/restore - just return:
+		if beforeRepair and not beforeRepair():
+			return -1
+		self._logSys.error(
+			"Invariant check failed. Trying to restore a sane environment")
+		# increment ban epoch of jail and this action (allows re-ban on already banned):
+		self.invalidateBanEpoch()
+		# try to find repair command, if exists - exec it:
+		repairCmd = self._getOperation('<actionrepair>', family)
+		if repairCmd:
+			if not self.executeCmd(repairCmd, self.timeout):
+				self.__started[family] = 0
+				self._logSys.critical("Unable to restore environment")
+				return 0
+			self.__started[family] = 1
+		else:
+			# no repair command, try to restart action...
+			# [WARNING] TODO: be sure all banactions get a repair command, because
+			#    otherwise stop/start will theoretically remove all the bans,
+			#    but the tickets are still in BanManager, so in case of new failures
+			#    it will not be banned, because "already banned" will happen.
+			try:
+				self._stop(family)
+			except RuntimeError: # bypass error in stop (if start/check succeeded hereafter).
+				pass
+			self._start(family, forceStart=forceStart or not self._startOnDemand)
+		if self.__started.get(family) and not self.executeCmd(checkCmd, self.timeout):
+			self._logSys.critical("Unable to restore environment")
+			return 0
+		return 1
+
+	def _processCmd(self, cmd, aInfo=None):
 		"""Executes a command with preliminary checks and substitutions.
 
 		Before executing any commands, executes the "check" command first
@@ -767,47 +954,28 @@ class CommandAction(ActionBase):
 			return True
 
 		# conditional corresponding family of the given ip:
-		if conditional == '':
-			conditional = 'family=inet4'
-			if allowed_ipv6:
-				try:
-					ip = aInfo["ip"]
-					if ip and asip(ip).isIPv6:
-						conditional = 'family=inet6'
-				except KeyError:
-					pass
+		try:
+			family = aInfo["family"]
+		except (KeyError, TypeError):
+			family = ''
 
-		checkCmd = self.replaceTag('<actioncheck>', self._properties, 
-			conditional=conditional, cache=self.__substCache)
-		if checkCmd:
-			if not self.executeCmd(checkCmd, self.timeout):
-				self._logSys.error(
-					"Invariant check failed. Trying to restore a sane environment")
-				# try to find repair command, if exists - exec it:
-				repairCmd = self.replaceTag('<actionrepair>', self._properties, 
-					conditional=conditional, cache=self.__substCache)
-				if repairCmd:
-					if not self.executeCmd(repairCmd, self.timeout):
-						self._logSys.critical("Unable to restore environment")
-						return False
-				else:
-					# no repair command, try to restart action...
-					# [WARNING] TODO: be sure all banactions get a repair command, because
-					#    otherwise stop/start will theoretically remove all the bans,
-					#    but the tickets are still in BanManager, so in case of new failures
-					#    it will not be banned, because "already banned" will happen.
-					try:
-						self.stop()
-					except RuntimeError: # bypass error in stop (if start/check succeeded hereafter).
-						pass
-					self.start()
-				if not self.executeCmd(checkCmd, self.timeout):
-					self._logSys.critical("Unable to restore environment")
+		# invariant check:
+		if self.actioncheck:
+			# don't repair/restore if unban (no matter):
+			def _beforeRepair():
+				if cmd == '<actionunban>' and not self._properties.get('actionrepair_on_unban'):
+					self._logSys.error("Invariant check failed. Unban is impossible.")
 					return False
+				return True
+			# check and repair if broken:
+			ret = self._invariantCheck(family, _beforeRepair, forceStart=(cmd != '<actionunban>'))
+			# if not sane (and not restored) return:
+			if ret != 1:
+				return False
 
 		# Replace static fields
 		realCmd = self.replaceTag(cmd, self._properties, 
-			conditional=conditional, cache=self.__substCache)
+			conditional=('family='+family if family else ''), cache=self.__substCache)
 
 		# Replace dynamical tags, important - don't cache, no recursion and auto-escape here
 		if aInfo is not None:

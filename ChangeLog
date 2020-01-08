@@ -108,6 +108,10 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
 * `filter.d/sendmail-auth.conf`, `filter.d/sendmail-reject.conf` :
   - ID in prefix can be longer as 14 characters (gh-2563);
 * all filters would accept square brackets around IPv4 addresses also (e. g. monit-filter, gh-2494)
+* avoids unhandled exception during flush (gh-2588)
+* fixes pass2allow-ftp jail - due to inverted handling, action should prohibit access per default for any IP,
+  therefore reset start on demand parameter for this action (it will be started immediately by repair);
+* auto-detection of IPv6 subsystem availability (important for not on-demand actions or jails, like pass2allow);
 
 ### New Features
 * new replacement tags for failregex to match subnets in form of IP-addresses with CIDR mask (gh-2559):
@@ -164,6 +168,18 @@ filter = flt[logtype=short]
 * samplestestcase.py (testSampleRegexsFactory) extended:
   - allow coverage of journal logtype;
   - new option `fileOptions` to set common filter/test options for whole test-file;
+* large enhancement: auto-reban, improved invariant check and conditional operations (gh-2588):
+  - improves invariant check and repair (avoid unhandled exception, consider family on conditional operations, etc),
+    prepared for bulk re-ban in repair case (if bulk-ban becomes implemented);
+  - automatic reban (repeat banning action) after repair/restore sane environment, if already logged ticket causes
+    new failures (via new action operation `actionreban` or `actionban` if still not defined in action);
+  * introduces banning epoch for actions and tickets (to distinguish or recognize removed set of the tickets);
+  * invariant check avoids repair by unban/stop (unless parameter `actionrepair_on_unban` set to `true`);
+  * better handling for all conditional operations (distinguish families for certain operations like 
+    repair/flush/stop, prepared for other families, e. g. if different handling for subnets expected, etc);
+  * partially implements gh-980 (more breakdown safe handling);
+  * closes gh-1680 (better as large-scale banning implementation with on-demand reban by failure, 
+    at least unless a bulk-ban gets implemented);
 
 
 ver. 0.10.4 (2018/10/04) - ten-four-on-due-date-ten-four

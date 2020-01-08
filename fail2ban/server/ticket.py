@@ -215,6 +215,13 @@ class Ticket(object):
 		# return single value of data:
 		return self._data.get(key, default)
 
+	@property
+	def banEpoch(self):
+		return getattr(self, '_banEpoch', 0)
+	@banEpoch.setter
+	def banEpoch(self, value):
+		self._banEpoch = value
+
 
 class FailTicket(Ticket):
 

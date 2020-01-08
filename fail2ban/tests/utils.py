@@ -22,6 +22,7 @@ __author__ = "Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
+import fileinput
 import itertools
 import logging
 import optparse
@@ -745,11 +746,8 @@ class LogCaptureTestCase(unittest.TestCase):
 				self._dirty |= 2 # records changed
 
 	def setUp(self):
-
 		# For extended testing of what gets output into logging
 		# system, we will redirect it to a string
-		logSys = getLogger("fail2ban")
-
 		# Keep old settings
 		self._old_level = logSys.level
 		self._old_handlers = logSys.handlers
@@ -766,7 +764,6 @@ class LogCaptureTestCase(unittest.TestCase):
 		"""Call after every test case."""
 		# print "O: >>%s<<" % self._log.getvalue()
 		self.pruneLog()
-		logSys = getLogger("fail2ban")
 		logSys.handlers = self._old_handlers
 		logSys.level = self._old_level
 		super(LogCaptureTestCase, self).tearDown()
@@ -848,6 +845,16 @@ class LogCaptureTestCase(unittest.TestCase):
 
 	def getLog(self):
 		return self._log.getvalue()
+
+	@staticmethod
+	def dumpFile(fn, handle=logSys.debug):
+		"""Helper which outputs content of the file at HEAVYDEBUG loglevels"""
+		if (handle != logSys.debug or logSys.getEffectiveLevel() <= logging.DEBUG):
+			handle('---- ' + fn + ' ----')
+			for line in fileinput.input(fn):
+				line = line.rstrip('\n')
+				handle(line)
+			handle('-'*30)
 
 
 pid_exists = Utils.pid_exists

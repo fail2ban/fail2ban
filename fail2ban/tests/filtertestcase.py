@@ -40,7 +40,7 @@ from ..server.jail import Jail
 from ..server.filterpoll import FilterPoll
 from ..server.filter import FailTicket, Filter, FileFilter, FileContainer
 from ..server.failmanager import FailManagerEmpty
-from ..server.ipdns import getfqdn, DNSUtils, IPAddr
+from ..server.ipdns import asip, getfqdn, DNSUtils, IPAddr
 from ..server.mytime import MyTime
 from ..server.utils import Utils, uni_decode
 from .utils import setUpMyTime, tearDownMyTime, mtimesleep, with_tmpdir, LogCaptureTestCase, \
@@ -1843,11 +1843,15 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 	def setUp(self):
 		"""Call before every test case."""
 		super(DNSUtilsNetworkTests, self).setUp()
-		unittest.F2B.SkipIfNoNetwork()
+		#unittest.F2B.SkipIfNoNetwork()
 
 	def test_IPAddr(self):
-		self.assertTrue(IPAddr('192.0.2.1').isIPv4)
-		self.assertTrue(IPAddr('2001:DB8::').isIPv6)
+		ip4 = IPAddr('192.0.2.1')
+		ip6 = IPAddr('2001:DB8::')
+		self.assertTrue(ip4.isIPv4)
+		self.assertTrue(ip6.isIPv6)
+		self.assertTrue(asip('192.0.2.1').isIPv4)
+		self.assertTrue(id(asip(ip4)) == id(ip4))
 
 	def test_IPAddr_Raw(self):
 		# raw string:
@@ -1884,6 +1888,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 	def testUseDns(self):
 		res = DNSUtils.textToIp('www.example.com', 'no')
 		self.assertSortedEqual(res, [])
+		unittest.F2B.SkipIfNoNetwork()
 		res = DNSUtils.textToIp('www.example.com', 'warn')
 		# sort ipaddr, IPv4 is always smaller as IPv6
 		self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
@@ -1892,6 +1897,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
 
 	def testTextToIp(self):
+		unittest.F2B.SkipIfNoNetwork()
 		# Test hostnames
 		hostnames = [
 			'www.example.com',
@@ -1905,6 +1911,8 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 				self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
 			else:
 				self.assertSortedEqual(res, [])
+
+	def testIpToIp(self):
 		# pure ips:
 		for s in ('93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'):
 			ips = DNSUtils.textToIp(s, 'yes')
@@ -2061,6 +2069,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertTrue(IPAddr("2606:2800:220:1:248:1893:25c8:1946").isInNet(ips))
 
 	def testIPAddr_wrongDNS_IP(self):
+		unittest.F2B.SkipIfNoNetwork()
 		DNSUtils.dnsToIp('`this`.dns-is-wrong.`wrong-nic`-dummy')
 		DNSUtils.ipToName('*')
 
@@ -2083,6 +2092,9 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertEqual(getfqdn(lname), lname)
 		# coverage (targeting all branches): FQDN from loopback and DNS blackhole is always the same:
 		self.assertIn(getfqdn('localhost.'), ('localhost', 'localhost.'))
+	
+	def testFQDN_DNS(self):
+		unittest.F2B.SkipIfNoNetwork()
 		self.assertIn(getfqdn('as112.arpa.'), ('as112.arpa.', 'as112.arpa'))
 
 
