@@ -182,6 +182,15 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		)
 		self.assertTrue(fail2banRegex.start(args))
 		self.assertLogged('Lines: 19 lines, 0 ignored, 13 matched, 6 missed')
+		# usage of <F-ID>\S+</F-ID> causes raw handling automatically:
+		self.pruneLog()
+		(opts, args, fail2banRegex) = _Fail2banRegex(
+			"-d", "^Epoch",
+			"1490349000 test failed.dns.ch", "^\s*test <F-ID>\S+</F-ID>"
+		)
+		self.assertTrue(fail2banRegex.start(args))
+		self.assertLogged('Lines: 1 lines, 0 ignored, 1 matched, 0 missed', all=True)
+		self.assertNotLogged('Unable to find a corresponding IP address')
 
 	def testDirectRE_2(self):
 		(opts, args, fail2banRegex) = _Fail2banRegex(

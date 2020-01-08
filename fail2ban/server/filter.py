@@ -883,6 +883,7 @@ class Filter(JailThread):
 								fid = failRegex.getFailID()
 						host = fid
 						cidr = IPAddr.CIDR_RAW
+						raw = True
 				# if mlfid case (not failure):
 				if host is None:
 					if ll <= 7: logSys.log(7, "No failure-id by mlfid %r in regex %s: %s",
