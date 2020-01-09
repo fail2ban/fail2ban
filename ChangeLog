@@ -152,6 +152,10 @@ filter = flt[logtype=short]
   * partially implements gh-980 (more breakdown safe handling);
   * closes gh-1680 (better as large-scale banning implementation with on-demand reban by failure, 
     at least unless a bulk-ban gets implemented);
+* fail2ban-regex - several enhancements and fixes:
+  - improved usage output (don't put a long help if an error occurs);
+  - new option `--no-check-all` to avoid check of all regex's (first matched only);
+  - new option `-o`, `--out` to set token only provided in output (disables check-all and outputs only expected data).
 
 
 ver. 0.10.4 (2018/10/04) - ten-four-on-due-date-ten-four
