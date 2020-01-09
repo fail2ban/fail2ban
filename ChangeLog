@@ -85,7 +85,8 @@ ver. 0.10.5-dev-1 (20??/??/??) - development edition
 * `filter.d/sshd.conf`:
   - matches `Bad protocol version identification` in `ddos` and `aggressive` modes (gh-2404).
   - captures `Disconnecting ...: Change of username or service not allowed` (gh-2239, gh-2279)
-  - captures `Disconnected from ... [preauth]` (`extra`/`aggressive` mode and preauth phase only, gh-2239, gh-2279)
+  - captures `Disconnected from ... [preauth]`, preauth phase only, different handling by `extra`
+    (with supplied user only) and `ddos`/`aggressive` mode (gh-2115, gh-2239, gh-2279)
 * `filter.d/mysqld-auth.conf`: 
   - MYSQL 8.0.13 compatibility (log-error-verbosity = 3), log-format contains few additional words
     enclosed in brackets after "[Note]" (gh-2314)
@@ -180,6 +181,10 @@ filter = flt[logtype=short]
   * partially implements gh-980 (more breakdown safe handling);
   * closes gh-1680 (better as large-scale banning implementation with on-demand reban by failure, 
     at least unless a bulk-ban gets implemented);
+* fail2ban-regex - several enhancements and fixes:
+  - improved usage output (don't put a long help if an error occurs);
+  - new option `--no-check-all` to avoid check of all regex's (first matched only);
+  - new option `-o`, `--out` to set token only provided in output (disables check-all and outputs only expected data).
 
 
 ver. 0.10.4 (2018/10/04) - ten-four-on-due-date-ten-four
