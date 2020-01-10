@@ -108,7 +108,8 @@ usage = lambda: "%s [OPTIONS] <LOG> <REGEX> [IGNOREREGEX]" % sys.argv[0]
 class _f2bOptParser(OptionParser):
 	def format_help(self, *args, **kwargs):
 		""" Overwritten format helper with full ussage."""
-		return usage() + __doc__ + """
+		self.usage = ''
+		return "Usage: " + usage() + __doc__ + """
 LOG:
     string                  a string representing a log line
     filename                path to a log file (/var/log/auth.log)
@@ -121,7 +122,7 @@ REGEX:
 IGNOREREGEX:
     string                  a string representing an 'ignoreregex'
     filename                path to a filter file (filter.d/sshd.conf)
-		""" + OptionParser.format_help(self, *args, **kwargs) + """\n
+\n""" + OptionParser.format_help(self, *args, **kwargs) + """\n
 Report bugs to https://github.com/fail2ban/fail2ban/issues\n
 """ + __copyright__ + "\n"
 

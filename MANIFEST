@@ -42,7 +42,7 @@ config/action.d/mail-whois-lines.conf
 config/action.d/mynetwatchman.conf
 config/action.d/netscaler.conf
 config/action.d/nftables-allports.conf
-config/action.d/nftables-common.conf
+config/action.d/nftables.conf
 config/action.d/nftables-multiport.conf
 config/action.d/nginx-block-map.conf
 config/action.d/npf.conf
@@ -81,7 +81,9 @@ config/filter.d/apache-pass.conf
 config/filter.d/apache-shellshock.conf
 config/filter.d/assp.conf
 config/filter.d/asterisk.conf
+config/filter.d/bitwarden.conf
 config/filter.d/botsearch-common.conf
+config/filter.d/centreon.conf
 config/filter.d/common.conf
 config/filter.d/counter-strike.conf
 config/filter.d/courier-auth.conf
@@ -151,6 +153,7 @@ config/filter.d/vsftpd.conf
 config/filter.d/webmin-auth.conf
 config/filter.d/wuftpd.conf
 config/filter.d/xinetd-fail.conf
+config/filter.d/znc-adminlog.conf
 config/filter.d/zoneminder.conf
 config/jail.conf
 config/paths-arch.conf
@@ -277,9 +280,11 @@ fail2ban/tests/files/logs/apache-pass
 fail2ban/tests/files/logs/apache-shellshock
 fail2ban/tests/files/logs/assp
 fail2ban/tests/files/logs/asterisk
+fail2ban/tests/files/logs/bitwarden
 fail2ban/tests/files/logs/bsd/syslog-plain.txt
 fail2ban/tests/files/logs/bsd/syslog-v.txt
 fail2ban/tests/files/logs/bsd/syslog-vv.txt
+fail2ban/tests/files/logs/centreon
 fail2ban/tests/files/logs/counter-strike
 fail2ban/tests/files/logs/courier-auth
 fail2ban/tests/files/logs/courier-smtp
@@ -346,6 +351,7 @@ fail2ban/tests/files/logs/vsftpd
 fail2ban/tests/files/logs/webmin-auth
 fail2ban/tests/files/logs/wuftpd
 fail2ban/tests/files/logs/xinetd-fail
+fail2ban/tests/files/logs/znc-adminlog
 fail2ban/tests/files/logs/zoneminder
 fail2ban/tests/files/logs/zzz-generic-example
 fail2ban/tests/files/logs/zzz-sshd-obsolete-multiline
