@@ -31,8 +31,10 @@ Incompatibility list (compared to v.0.9):
   IPv6-capable now.
 
 
-ver. 0.10.5-dev-1 (20??/??/??) - development edition
+ver. 0.10.5 (2020/01/10) - deserve-more-respect-a-jedis-weapon-must
 -----------
+
+Yes, Hrrrm...
 
 ### Fixes
 * [compatibility] systemd backend: default flags changed to SYSTEM_ONLY(4), fixed in gh-2444 in order to ignore
