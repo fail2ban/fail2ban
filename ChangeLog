@@ -6,33 +6,36 @@
 Fail2Ban: Changelog
 ===================
 
-Incompatibility list (compared to v.0.9):
+ver. 0.11.1 (2020/01/11) - this-is-the-way
 -----------
 
-* Filter (or `failregex`) internal capture-groups:
+### Compatibility:
+* to v.0.10:
+  - 0.11 is totally compatible to 0.10 (configuration- and API-related stuff), but the database
+    got some new tables and fields (auto-converted during the first start), so once updated to 0.11, you
+    have to remove the database /var/lib/fail2ban/fail2ban.sqlite3 (or its different to 0.10 schema)
+    if you would need to downgrade to 0.10 for some reason.
+* to v.0.9:
+  - Filter (or `failregex`) internal capture-groups:
 
-  - If you've your own `failregex` or custom filters using conditional match `(?P=host)`, you should
-    rewrite the regex like in example below resp. using `(?:(?P=ip4)|(?P=ip6)` instead of `(?P=host)`
-    (or `(?:(?P=ip4)|(?P=ip6)|(?P=dns))` corresponding your `usedns` and `raw` settings).
+    * If you've your own `failregex` or custom filters using conditional match `(?P=host)`, you should
+      rewrite the regex like in example below resp. using `(?:(?P=ip4)|(?P=ip6)` instead of `(?P=host)`
+      (or `(?:(?P=ip4)|(?P=ip6)|(?P=dns))` corresponding your `usedns` and `raw` settings).
 
-    Of course you can always define your own capture-group (like below `_cond_ip_`) to do this.
-    ```
-    testln="1500000000 failure from 192.0.2.1: bad host 192.0.2.1"
-    fail2ban-regex "$testln" "^\s*failure from (?P<_cond_ip_><HOST>): bad host (?P=_cond_ip_)$"
-    ```
-  - New internal groups (currently reserved for internal usage):
-    `ip4`, `ip6`, `dns`, `fid`, `fport`, additionally `user` and another captures in lower case if
-    mapping from tag `<F-*>` used in failregex (e. g. `user` by `<F-USER>`).
+      Of course you can always define your own capture-group (like below `_cond_ip_`) to do this.
+      ```
+      testln="1500000000 failure from 192.0.2.1: bad host 192.0.2.1"
+      fail2ban-regex "$testln" "^\s*failure from (?P<_cond_ip_><HOST>): bad host (?P=_cond_ip_)$"
+      ```
+    * New internal groups (currently reserved for internal usage):
+      `ip4`, `ip6`, `dns`, `fid`, `fport`, additionally `user` and another captures in lower case if
+      mapping from tag `<F-*>` used in failregex (e. g. `user` by `<F-USER>`).
 
-* v.0.10 uses more precise date template handling, that can be theoretically incompatible to some
-  user configurations resp. `datepattern`.
+  - v.0.10 and 0.11 use more precise date template handling, that can be theoretically incompatible to some
+    user configurations resp. `datepattern`.
 
-* Since v0.10 fail2ban supports the matching of IPv6 addresses, but not all ban actions are
-  IPv6-capable now.
-
-
-ver. 0.11.0-dev-0 (20??/??/??) - development nightly edition
------------
+  - Since v0.10 fail2ban supports the matching of IPv6 addresses, but not all ban actions are
+    IPv6-capable now.
 
 ### Fixes
 * purge database will be executed now (within observer).
