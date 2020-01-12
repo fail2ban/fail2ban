@@ -217,7 +217,7 @@ fail2ban (0.8.11-1) unstable; urgency=low
 
   * Fresh upstream release
     - this release tightens all shipped filters to preclude
-      possible injections leading to targetted DoS attacks.
+      possible injections leading to targeted DoS attacks.
     - omitted entry for ~pre release changelog:
       - asterisk filter was fixed (Closes: #719662),
       - nginx filter/jail added (Closes: #668064)
@@ -251,7 +251,7 @@ fail2ban (0.8.11~pre1+git29-gccd2657-1) unstable; urgency=low
   * debian/jail.conf
     - slightly adjusted for changes in master (suhosin replaced
       lighttpd-auth filer name, and postfix-sasl for sasl)
-    - added nginx-http-auth.  More jails to be adopted from upsream.
+    - added nginx-http-auth.  More jails to be adopted from upstream.
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 10 Nov 2013 12:16:51 -0800
 
@@ -570,7 +570,7 @@ fail2ban (0.8.3-3) experimental; urgency=low
 
 fail2ban (0.8.3-2) unstable; urgency=low
 
-  * BF in apache-noscript.conf - regexp matched in referer (Closes: #492319).
+  * BF in apache-noscript.conf - regexp matched in referrer (Closes: #492319).
     Thanks Bernd Zeimetz.
   * BF: extended apache-noscript with additional regexp
 
@@ -580,7 +580,7 @@ fail2ban (0.8.3-1) unstable; urgency=low
 
   * Fresh upstream release
   * Boosted policy compliance to 3.8.0 (no changes needed)
-  * Specify explicitely facilities in "Failed .. for". Thanks Dean
+  * Specify explicitly facilities in "Failed .. for". Thanks Dean
     Gaudet. (closes: #481760)
   * Added failregex for "User not known" in sshd.conf. thanks Alexander
     Gerasiov (closes: #479966)
@@ -809,7 +809,7 @@ fail2ban (0.7.6-1) unstable; urgency=low
   * Refactored installed by debian package jail.conf:
     - Added option banaction which is to incorporate banning agent
       (usually some flavor of iptables rule), which can then be easily
-      overriden globally or per section
+      overridden globally or per section
     - Multiple actions are defined as action_* to serve as shortcuts
   * Initd script was modified to inform about present socket file which
     would forbid fail2ban-server from starting
@@ -937,7 +937,7 @@ fail2ban (0.7.4~pre20061023.2-1) experimental; urgency=low
 
 fail2ban (0.7.4~pre2006102-1) experimental; urgency=low
 
-  * Currrent snapshot of trunk
+  * Current snapshot of trunk
   * Removed outdated (applied in 0.7.4 or specific for 0.6.?) patches
     from debian/patches
   * Adjusted rule to install man pages -- only .1 files since there are also
@@ -1001,7 +1001,7 @@ fail2ban (0.6.1-9) unstable; urgency=low
 fail2ban (0.6.1-8) unstable; urgency=low
 
   * Removed bashism (arrays) from init.d script to make it POSIX shell
-    complient (closes: #368218)
+    compliant (closes: #368218)
   * Added new proftpd section
   * Added new saslauthd section. Thanks to martin f krafft
     <madduck@debian.org> (closes: #369483)
@@ -1022,7 +1022,7 @@ fail2ban (0.6.1-4) unstable; urgency=low
 
   * Adjusted debian packaging:
     - Clean up of debian/rules: removed commented out dh_ scripts which
-      definetly will never be used
+      definitely will never be used
     - debhelper and dpatch moved to Build-Depends
     - added --no-compile for python setup.py install, and removed explicit
       cleaning of .pyc's
@@ -1095,7 +1095,7 @@ fail2ban (0.6.0-4) unstable; urgency=low
     of "ChallengeResponseAuthentication no" and "PasswordAuthentication
     yes"
   * Fixed Apache timeregex and timepattern to confirm
-    the fomat of time stamp used in Debian's acccess.log (error.log uses
+    the fomat of time stamp used in Debian's access.log (error.log uses
     RFC 2822 format)
   * Added section ApacheAttacks to specify some common patterns of attacks on
     a webserver (awstats.pl as a try). This section stays split from Apache
@@ -1128,7 +1128,7 @@ fail2ban (0.6.0-2) unstable; urgency=low
 
 fail2ban (0.6.0-1) unstable; urgency=low
 
-  * Merged with the latest stable upstream release. That incure some
+  * Merged with the latest stable upstream release. That incur some
     changes for the Debian configuration of the package to be more
     upstream-like. Visible one is: subject in the sent email includes
     section outside of "[Fail2Ban]"
@@ -1204,7 +1204,7 @@ fail2ban (0.5.4-5.14) unstable; urgency=low
   * Added -e command line parameter to provide enabled sections from command
     line.
   * Added a cleanup of firewall rules on emergency shutdown when unknown
-    exception is catched.
+    exception is caught.
   * Fail2ban should not crash now if a wrong file name is specified in
     config.
 
@@ -1237,7 +1237,7 @@ fail2ban (0.5.4-3) unstable; urgency=low
 
 fail2ban (0.5.4-2) unstable; urgency=low
 
-  * Now exporting PATH explicitely in init.d/fail2ban script, to avoid
+  * Now exporting PATH explicitly in init.d/fail2ban script, to avoid
     problems finding iptables in the cases when PATH was not exported outside
     (cfengine, broken shell environment) (closes: #329304)
   * Removed -b from start-stop-daemon because fail2ban detahes on its own

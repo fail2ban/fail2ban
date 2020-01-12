@@ -21,7 +21,7 @@ If you are using systemd, create a
 Requires=shorewall.service
 After=shorewall.service
 
-go guarantee a proper sequence of startup/shotdown (shorewall should
+go guarantee a proper sequence of startup/shutdown (shorewall should
 be started before fail2ban, and stopped after).  Similar settings
 could be adopted for other firewall solutions.
 

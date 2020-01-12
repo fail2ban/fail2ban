@@ -47,7 +47,7 @@ EOF
 WARNING!
 
  Configuration file /etc/fail2ban.conf, failregex configuration
- parameter specificly, were changed in 0.5.4-5 to close reported
+ parameter specifically, were changed in 0.5.4-5 to close reported
  security breach, and in 0.5.4-5.14 to close few other bugs.
 
 updating from <0.5.4-5
