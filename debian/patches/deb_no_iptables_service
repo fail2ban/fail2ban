@@ -15,13 +15,15 @@ Origin: Fedora, Debian
 Bug-Debian: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=871993
 Last-Update: 2018-04-04
 
---- a/files/fail2ban.service.in
-+++ b/files/fail2ban.service.in
+Index: fail2ban/files/fail2ban.service.in
+===================================================================
+--- fail2ban.orig/files/fail2ban.service.in
++++ fail2ban/files/fail2ban.service.in
 @@ -2,7 +2,7 @@
  Description=Fail2Ban Service
  Documentation=man:fail2ban(1)
- After=network.target iptables.service firewalld.service ip6tables.service ipset.service
--PartOf=iptables.service firewalld.service ip6tables.service ipset.service
+ After=network.target iptables.service firewalld.service ip6tables.service ipset.service nftables.service
+-PartOf=iptables.service firewalld.service ip6tables.service ipset.service nftables.service
 +PartOf=firewalld.service
  
  [Service]

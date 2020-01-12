@@ -12,23 +12,3 @@ changed files etc
  setup.py | 6 ++++--
  1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/setup.py b/setup.py
-index 8da29268..850f748f 100755
---- a/setup.py
-+++ b/setup.py
-@@ -208,8 +208,10 @@ setup(
- 	license = "GPL",
- 	platforms = "Posix",
- 	cmdclass = {
--		'build_py': build_py, 'build_scripts': build_scripts, 
--		'install_scripts': install_scripts_f2b, 'install': install_command_f2b
-+		'build_py': build_py_2to3 if _2to3 else build_py,
-+		'build_scripts': build_scripts_2to3 if _2to3 else build_scripts,
-+		'install_scripts': install_scripts_f2b,
-+		'install': install_command_f2b
- 	},
- 	scripts = [
- 		'bin/fail2ban-client',
--- 
-2.15.1
-
