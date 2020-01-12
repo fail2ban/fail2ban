@@ -4,6 +4,7 @@ fail2ban (0.11.1-1) UNRELEASED; urgency=medium
   * New upstream release (Closes: #922539)
   * Import fail2ban in the Debian Python Umbrella (Closes: #947926)
   * Remove the old dep to Python (Closes: #945670)
+  * Run ./fail2ban-2to3 as part of the build to be Python 3 ready
 
   [ Jelmer Vernooĳ ]
   * Use secure URI in Vcs control header.
@@ -14,7 +15,7 @@ fail2ban (0.10.2-2) unstable; urgency=medium
 
   [ Arturo Borrero Gonzalez ]
   * Recommend nftables as an alternative to iptables (Closes: #892472)
-  
+
   [ Yaroslav Halchenko ]
   * debian/patches/deb_no_iptables_service (Closes: #871993)
     - remove all non-existing services from PartOf of fail2ban.service.

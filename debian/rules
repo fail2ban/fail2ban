@@ -24,6 +24,10 @@ override_dh_clean:
 	: # auto generated
 	-rm bin/fail2ban-python
 
+override_dh_auto_configure:
+	LANG=C ./fail2ban-2to3
+	dh_auto_configure
+
 override_dh_install:
 	rm -f $(DESTDIR)/usr/share/doc/fail2ban/README.Solaris
 	rm -f $(DESTDIR)/etc/fail2ban/paths-fedora.conf
