@@ -42,6 +42,32 @@ def asip(ip):
 		return ip
 	return IPAddr(ip)
 
+def getfqdn(name=''):
+	"""Get fully-qualified hostname of given host, thereby resolve of an external
+	IPs and name will be preferred before the local domain (or a loopback), see gh-2438
+	"""
+	try:
+		name = name or socket.gethostname()
+		names = (
+			ai[3] for ai in socket.getaddrinfo(
+				name, None, 0, socket.SOCK_DGRAM, 0, socket.AI_CANONNAME
+			) if ai[3]
+		)
+		if names:
+			# first try to find a fqdn starting with the host name like www.domain.tld for www:
+			pref = name+'.'
+			first = None
+			for ai in names:
+				if ai.startswith(pref):
+					return ai
+				if not first: first = ai
+			# not found - simply use first known fqdn:
+			return first
+	except socket.error:
+		pass
+	# fallback to python's own getfqdn routine:
+	return socket.getfqdn(name)
+
 
 ##
 # Utils class for DNS handling.
@@ -132,7 +158,7 @@ class DNSUtils:
 		if name is None:
 			name = ''
 			for hostname in (
-				(socket.getfqdn, socket.gethostname) if fqdn else (socket.gethostname, socket.getfqdn)
+				(getfqdn, socket.gethostname) if fqdn else (socket.gethostname, getfqdn)
 			):
 				try:
 					name = hostname()
@@ -176,6 +202,11 @@ class DNSUtils:
 		DNSUtils.CACHE_nameToIp.set(key, ips)
 		return ips
 
+	@staticmethod
+	def IPv6IsAllowed():
+		# return os.path.exists("/proc/net/if_inet6") || any((':' in ip) for ip in DNSUtils.getSelfIPs())
+		return any((':' in ip.ntoa) for ip in DNSUtils.getSelfIPs())
+
 
 ##
 # Class for IP address handling.
@@ -197,7 +228,7 @@ class IPAddr(object):
 	__slots__ = '_family','_addr','_plen','_maskplen','_raw'
 
 	# todo: make configurable the expired time and max count of cache entries:
-	CACHE_OBJ = Utils.Cache(maxCount=1000, maxTime=5*60)
+	CACHE_OBJ = Utils.Cache(maxCount=10000, maxTime=5*60)
 
 	CIDR_RAW = -2
 	CIDR_UNSPEC = -1
@@ -205,6 +236,10 @@ class IPAddr(object):
 	FAM_IPv6 = CIDR_RAW - socket.AF_INET6
 
 	def __new__(cls, ipstr, cidr=CIDR_UNSPEC):
+		if cidr == IPAddr.CIDR_RAW: # don't cache raw
+			ip = super(IPAddr, cls).__new__(cls)
+			ip.__init(ipstr, cidr)
+			return ip
 		# check already cached as IPAddr
 		args = (ipstr, cidr)
 		ip = IPAddr.CACHE_OBJ.get(args)
@@ -221,7 +256,8 @@ class IPAddr(object):
 					return ip
 		ip = super(IPAddr, cls).__new__(cls)
 		ip.__init(ipstr, cidr)
-		IPAddr.CACHE_OBJ.set(args, ip)
+		if ip._family != IPAddr.CIDR_RAW:
+			IPAddr.CACHE_OBJ.set(args, ip)
 		return ip
 
 	@staticmethod

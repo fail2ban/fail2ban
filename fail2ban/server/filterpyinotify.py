@@ -87,7 +87,7 @@ class FilterPyinotify(FileFilter):
 		logSys.debug("Created FilterPyinotify")
 
 	def callback(self, event, origin=''):
-		logSys.log(7, "[%s] %sCallback for Event: %s", self.jailName, origin, event)
+		logSys.log(4, "[%s] %sCallback for Event: %s", self.jailName, origin, event)
 		path = event.pathname
 		# check watching of this path:
 		isWF = False
@@ -140,12 +140,7 @@ class FilterPyinotify(FileFilter):
 		"""
 		if not self.idle:
 			self.getFailures(path)
-			try:
-				while True:
-					ticket = self.failManager.toBan()
-					self.jail.putFailTicket(ticket)
-			except FailManagerEmpty:
-				self.failManager.cleanup(MyTime.time())
+			self.performBan()
 			self.__modified = False
 
 	def _addPending(self, path, reason, isDir=False):

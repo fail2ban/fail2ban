@@ -86,10 +86,14 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 				files.extend(glob.glob(p))
 			args['files'] = list(set(files))
 
+		# Default flags is SYSTEM_ONLY(4). This would lead to ignore user session files,
+		# so can prevent "Too many open files" errors on a lot of user sessions (see gh-2392):
 		try:
 			args['flags'] = int(kwargs.pop('journalflags'))
 		except KeyError:
-			pass
+			# be sure all journal types will be opened if files specified (don't set flags):
+			if 'files' not in args or not len(args['files']):
+				args['flags'] = 4
 
 		return args
 
@@ -307,12 +311,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 					else:
 						break
 				if self.__modified:
-					try:
-						while True:
-							ticket = self.failManager.toBan()
-							self.jail.putFailTicket(ticket)
-					except FailManagerEmpty:
-						self.failManager.cleanup(MyTime.time())
+					self.performBan()
+					self.__modified = 0
 			except Exception as e: # pragma: no cover
 				if not self.active: # if not active - error by stop...
 					break

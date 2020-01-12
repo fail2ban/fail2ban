@@ -2,7 +2,7 @@
                         / _|__ _(_) |_  ) |__  __ _ _ _  
                        |  _/ _` | | |/ /| '_ \/ _` | ' \ 
                        |_| \__,_|_|_/___|_.__/\__,_|_||_|
-                       v0.10.3.dev1            20??/??/??
+                       v0.11.0.dev1            20??/??/??
 
 ## Fail2Ban: ban hosts that cause multiple authentication errors
 
@@ -18,11 +18,12 @@ attempts, it cannot eliminate the risk presented by weak authentication.
 Set up services to use only two factor, or public/private authentication
 mechanisms if you really want to protect services.
      
-<img src="http://www.worldipv6launch.org/wp-content/themes/ipv6/downloads/World_IPv6_launch_logo.svg" height="52pt"/> | Since v0.10 fail2ban supports the matching of the IPv6 addresses.
+<img src="http://www.worldipv6launch.org/wp-content/themes/ipv6/downloads/World_IPv6_launch_logo.svg" height="52pt"/> | Since v0.10 fail2ban supports the matching of IPv6 addresses.
 ------|------
 
 This README is a quick introduction to Fail2Ban. More documentation, FAQ, and HOWTOs
-to be found on fail2ban(1) manpage, [Wiki](https://github.com/fail2ban/fail2ban/wiki)
+to be found on fail2ban(1) manpage, [Wiki](https://github.com/fail2ban/fail2ban/wiki),
+[Developers documentation](https://fail2ban.readthedocs.io/)
 and the website: https://www.fail2ban.org
 
 Installation:
@@ -45,10 +46,16 @@ Optional:
 
 To install:
 
-    tar xvfj fail2ban-0.10.3.tar.bz2
-    cd fail2ban-0.10.3
-    python setup.py install
+    tar xvfj fail2ban-0.11.0.tar.bz2
+    cd fail2ban-0.11.0
+    sudo python setup.py install
+   
+Alternatively, you can clone the source from GitHub to a directory of Your choice, and do the install from there. Pick the correct branch, for example, 0.11
 
+    git clone https://github.com/fail2ban/fail2ban.git
+    cd fail2ban
+    sudo python setup.py install 
+    
 This will install Fail2Ban into the python library directory. The executable
 scripts are placed into `/usr/bin`, and configuration in `/etc/fail2ban`.
 
@@ -58,6 +65,9 @@ Fail2Ban should be correctly installed now. Just type:
 
 to see if everything is alright. You should always use fail2ban-client and
 never call fail2ban-server directly.
+You can verify that you have the correct version installed with 
+
+    fail2ban-client version
 
 Please note that the system init/service script is not automatically installed.
 To enable fail2ban as an automatic service, simply copy the script for your
@@ -79,11 +89,11 @@ fail2ban(1) and jail.conf(5)  manpages for further references.
 Code status:
 ------------
 
-* [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=0.10)](https://travis-ci.org/fail2ban/fail2ban?branch=0.10) travis-ci.org (0.10 branch) / [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.png?branch=master)](https://travis-ci.org/fail2ban/fail2ban) travis-ci.org (master branch)
+* travis-ci.org: [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.svg?branch=0.11)](https://travis-ci.org/fail2ban/fail2ban?branch=0.11) (0.11 branch) / [![tests status](https://secure.travis-ci.org/fail2ban/fail2ban.svg?branch=0.10)](https://travis-ci.org/fail2ban/fail2ban?branch=0.10) (0.10 branch) 
 
-* [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.png?branch=0.10)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.10)
+* coveralls.io: [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.svg?branch=0.11)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.11) (0.11 branch) / [![Coverage Status](https://coveralls.io/repos/fail2ban/fail2ban/badge.svg?branch=0.10)](https://coveralls.io/github/fail2ban/fail2ban?branch=0.10) / (0.10 branch)
 
-* [![codecov.io](https://codecov.io/gh/fail2ban/fail2ban/coverage.svg?branch=0.10)](https://codecov.io/gh/fail2ban/fail2ban/branch/0.10)
+* codecov.io: [![codecov.io](https://codecov.io/gh/fail2ban/fail2ban/coverage.svg?branch=0.11)](https://codecov.io/gh/fail2ban/fail2ban/branch/0.11) (0.11 branch) / [![codecov.io](https://codecov.io/gh/fail2ban/fail2ban/coverage.svg?branch=0.10)](https://codecov.io/gh/fail2ban/fail2ban/branch/0.10) (0.10 branch)
 
 Contact:
 --------

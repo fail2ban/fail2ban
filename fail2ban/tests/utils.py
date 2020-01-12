@@ -22,6 +22,7 @@ __author__ = "Yaroslav Halchenko"
 __copyright__ = "Copyright (c) 2013 Yaroslav Halchenko"
 __license__ = "GPL"
 
+import fileinput
 import itertools
 import logging
 import optparse
@@ -245,6 +246,17 @@ def with_tmpdir(f):
 			shutil.rmtree(tmp)
 	return wrapper
 
+def with_alt_time(f):
+	"""Helper decorator to execute test in alternate (fixed) test time."""
+	@wraps(f)
+	def wrapper(self, *args, **kwargs):
+		setUpMyTime()
+		try:
+			return f(self, *args, **kwargs)
+		finally:
+			tearDownMyTime()
+	return wrapper
+
 
 # backwards compatibility to python 2.6:
 if not hasattr(unittest, 'SkipTest'): # pragma: no cover
@@ -369,6 +381,7 @@ def gatherTests(regexps=None, opts=None):
 	from . import sockettestcase
 	from . import misctestcase
 	from . import databasetestcase
+	from . import observertestcase
 	from . import samplestestcase
 	from . import fail2banclienttestcase
 	from . import fail2banregextestcase
@@ -399,7 +412,6 @@ def gatherTests(regexps=None, opts=None):
 		tests = FilteredTestSuite()
 
 	# Server
-	#tests.addTest(unittest.makeSuite(servertestcase.StartStop))
 	tests.addTest(unittest.makeSuite(servertestcase.Transmitter))
 	tests.addTest(unittest.makeSuite(servertestcase.JailTests))
 	tests.addTest(unittest.makeSuite(servertestcase.RegexTests))
@@ -439,6 +451,10 @@ def gatherTests(regexps=None, opts=None):
 	tests.addTest(unittest.makeSuite(misctestcase.MyTimeTest))
 	# Database
 	tests.addTest(unittest.makeSuite(databasetestcase.DatabaseTest))
+	# Observer
+	tests.addTest(unittest.makeSuite(observertestcase.ObserverTest))
+	tests.addTest(unittest.makeSuite(observertestcase.BanTimeIncr))
+	tests.addTest(unittest.makeSuite(observertestcase.BanTimeIncrDB))
 
 	# Filter
 	tests.addTest(unittest.makeSuite(filtertestcase.IgnoreIP))
@@ -730,28 +746,25 @@ class LogCaptureTestCase(unittest.TestCase):
 				self._dirty |= 2 # records changed
 
 	def setUp(self):
-
 		# For extended testing of what gets output into logging
 		# system, we will redirect it to a string
-		logSys = getLogger("fail2ban")
-
 		# Keep old settings
 		self._old_level = logSys.level
 		self._old_handlers = logSys.handlers
 		# Let's log everything into a string
 		self._log = LogCaptureTestCase._MemHandler(unittest.F2B.log_lazy)
 		logSys.handlers = [self._log]
-		if self._old_level <= logging.DEBUG:
+		# lowest log level to capture messages (expected in tests) is Lev.9
+		if self._old_level <= logging.DEBUG: # pragma: no cover
 			logSys.handlers += self._old_handlers
-		else: # lowest log level to capture messages
-			logSys.setLevel(logging.DEBUG)
+		if self._old_level > logging.DEBUG-1:
+			logSys.setLevel(logging.DEBUG-1)
 		super(LogCaptureTestCase, self).setUp()
 
 	def tearDown(self):
 		"""Call after every test case."""
 		# print "O: >>%s<<" % self._log.getvalue()
 		self.pruneLog()
-		logSys = getLogger("fail2ban")
 		logSys.handlers = self._old_handlers
 		logSys.level = self._old_level
 		super(LogCaptureTestCase, self).tearDown()
@@ -833,6 +846,16 @@ class LogCaptureTestCase(unittest.TestCase):
 
 	def getLog(self):
 		return self._log.getvalue()
+
+	@staticmethod
+	def dumpFile(fn, handle=logSys.debug):
+		"""Helper which outputs content of the file at HEAVYDEBUG loglevels"""
+		if (handle != logSys.debug or logSys.getEffectiveLevel() <= logging.DEBUG):
+			handle('---- ' + fn + ' ----')
+			for line in fileinput.input(fn):
+				line = line.rstrip('\n')
+				handle(line)
+			handle('-'*30)
 
 
 pid_exists = Utils.pid_exists

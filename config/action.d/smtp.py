@@ -159,25 +159,25 @@ class SMTPAction(ActionBase):
 		try:
 			self._logSys.debug("Connected to SMTP '%s', response: %i: %s",
 				self.host, *smtp.connect(self.host))
-			if self.user and self.password:
+			if self.user and self.password: # pragma: no cover (ATM no tests covering that)
 				smtp.login(self.user, self.password)
 			failed_recipients = smtp.sendmail(
 				self.fromaddr, self.toaddr.split(", "), msg.as_string())
-		except smtplib.SMTPConnectError:
+		except smtplib.SMTPConnectError: # pragma: no cover
 			self._logSys.error("Error connecting to host '%s'", self.host)
 			raise
-		except smtplib.SMTPAuthenticationError:
+		except smtplib.SMTPAuthenticationError: # pragma: no cover
 			self._logSys.error(
 				"Failed to authenticate with host '%s' user '%s'",
 				self.host, self.user)
 			raise
-		except smtplib.SMTPException:
+		except smtplib.SMTPException: # pragma: no cover
 			self._logSys.error(
 				"Error sending mail to host '%s' from '%s' to '%s'",
 				self.host, self.fromaddr, self.toaddr)
 			raise
 		else:
-			if failed_recipients:
+			if failed_recipients: # pragma: no cover
 				self._logSys.warning(
 					"Email to '%s' failed to following recipients: %r",
 					self.toaddr, failed_recipients)
@@ -186,7 +186,7 @@ class SMTPAction(ActionBase):
 			try:
 				self._logSys.debug("Disconnected from '%s', response %i: %s",
 					self.host, *smtp.quit())
-			except smtplib.SMTPServerDisconnected:
+			except smtplib.SMTPServerDisconnected: # pragma: no cover
 				pass # Not connected
 
 	def start(self):

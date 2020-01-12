@@ -32,6 +32,13 @@ from threading import Lock
 
 from .server.mytime import MyTime
 
+try:
+	import ctypes
+	_libcap = ctypes.CDLL('libcap.so.2')
+except:
+	_libcap = None
+
+
 PREFER_ENC = locale.getpreferredencoding()
 # correct preferred encoding if lang not set in environment:
 if PREFER_ENC.startswith('ANSI_'): # pragma: no cover
@@ -329,6 +336,9 @@ OPTION_CRE = re.compile(r"^([^\[]+)(?:\[(.*)\])?\s*$", re.DOTALL)
 # `action = act[p1=...][p2=...]`
 OPTION_EXTRACT_CRE = re.compile(
 	r'([\w\-_\.]+)=(?:"([^"]*)"|\'([^\']*)\'|([^,\]]*))(?:,|\]\s*\[|$)', re.DOTALL)
+# split by new-line considering possible new-lines within options [...]:
+OPTION_SPLIT_CRE = re.compile(
+	r'(?:[^\[\n]+(?:\s*\[\s*(?:[\w\-_\.]+=(?:"[^"]*"|\'[^\']*\'|[^,\]]*)\s*(?:,|\]\s*\[)?\s*)*\])?\s*|[^\n]+)(?=\n\s*|$)', re.DOTALL)
 
 def extractOptions(option):
 	match = OPTION_CRE.match(option)
@@ -344,6 +354,9 @@ def extractOptions(option):
 				val for val in optmatch.group(2,3,4) if val is not None][0]
 			option_opts[opt.strip()] = value.strip()
 	return option_name, option_opts
+
+def splitWithOptions(option):
+	return OPTION_SPLIT_CRE.findall(option)
 
 #
 # Following facilities used for safe recursive interpolation of
@@ -379,8 +392,7 @@ def substituteRecursiveTags(inptags, conditional='',
 	"""
 	#logSys = getLogger("fail2ban")
 	tre_search = TAG_CRE.search
-	# copy return tags dict to prevent modifying of inptags:
-	tags = inptags.copy()
+	tags = inptags
 	# init:
 	ignore = set(ignore)
 	done = set()
@@ -442,6 +454,9 @@ def substituteRecursiveTags(inptags, conditional='',
 				# check still contains any tag - should be repeated (possible embedded-recursive substitution):
 				if tre_search(value):
 					repFlag = True
+				# copy return tags dict to prevent modifying of inptags:
+				if id(tags) == id(inptags):
+					tags = inptags.copy()
 				tags[tag] = value
 			# no more sub tags (and no possible composite), add this tag to done set (just to be faster):
 			if '<' not in value: done.add(tag)
@@ -449,6 +464,25 @@ def substituteRecursiveTags(inptags, conditional='',
 		if not repFlag:
 			break
 	return tags
+
+
+if _libcap:
+	def prctl_set_th_name(name):
+		"""Helper to set real thread name (used for identification and diagnostic purposes).
+
+		Side effect: name can be silently truncated to 15 bytes (16 bytes with NTS zero)
+		"""
+		try:
+			if sys.version_info >= (3,): # pragma: 2.x no cover
+				name = name.encode()
+			else: # pragma: 3.x no cover
+				name = bytes(name)
+			_libcap.prctl(15, name) # PR_SET_NAME = 15
+		except: # pragma: no cover
+			pass
+else: # pragma: no cover
+	def prctl_set_th_name(name):
+		pass
 
 
 class BgService(object):

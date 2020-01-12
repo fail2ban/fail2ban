@@ -54,6 +54,7 @@ class Socket(LogCaptureTestCase):
 
 	def setUp(self):
 		"""Call before every test case."""
+		LogCaptureTestCase.setUp(self)
 		super(Socket, self).setUp()
 		self.server = AsyncServer(self)
 		sock_fd, sock_name = tempfile.mkstemp('fail2ban.sock', 'f2b-socket')

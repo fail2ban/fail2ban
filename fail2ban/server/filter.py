@@ -33,6 +33,7 @@ import time
 from .actions import Actions
 from .failmanager import FailManagerEmpty, FailManager
 from .ipdns import DNSUtils, IPAddr
+from .observer import Observers
 from .ticket import FailTicket
 from .jailthread import JailThread
 from .datedetector import DateDetector, validateTimeZone
@@ -109,6 +110,8 @@ class Filter(JailThread):
 		self.checkFindTime = True
 		## Ticks counter
 		self.ticks = 0
+		## Thread name:
+		self.name="f2b/f."+self.jailName
 
 		self.dateDetector = DateDetector()
 		logSys.debug("Created %s", self)
@@ -427,23 +430,9 @@ class Filter(JailThread):
 			)
 		else:
 			self.__ignoreCache = None
-	##
-	# Ban an IP - http://blogs.buanzo.com.ar/2009/04/fail2ban-patch-ban-ip-address-manually.html
-	# Arturo 'Buanzo' Busleiman <buanzo@buanzo.com.ar>
-	#
-	# to enable banip fail2ban-client BAN command
 
-	def addBannedIP(self, ip):
-		if not isinstance(ip, IPAddr):
-			ip = IPAddr(ip)
-
-		unixTime = MyTime.time()
-		ticket = FailTicket(ip, unixTime)
-		if self._inIgnoreIPList(ip, ticket, log_ignore=False):
-			logSys.warning('Requested to manually ban an ignored IP %s. User knows best. Proceeding to ban it.', ip)
-		self.failManager.addFailure(ticket, self.failManager.getMaxRetry())
-
-		# Perform the banning of the IP now.
+	def performBan(self, ip=None):
+		"""Performs a ban for IPs (or given ip) that are reached maxretry of the jail."""
 		try: # pragma: no branch - exception is the only way out
 			while True:
 				ticket = self.failManager.toBan(ip)
@@ -451,7 +440,24 @@ class Filter(JailThread):
 		except FailManagerEmpty:
 			self.failManager.cleanup(MyTime.time())
 
-		return ip
+	def addAttempt(self, ip, *matches):
+		"""Generate a failed attempt for ip"""
+		if not isinstance(ip, IPAddr):
+			ip = IPAddr(ip)
+		matches = list(matches) # tuple to list
+
+		# Generate the failure attempt for the IP:
+		unixTime = MyTime.time()
+		ticket = FailTicket(ip, unixTime, matches=matches)
+		logSys.info(
+			"[%s] Attempt %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
+		)
+		self.failManager.addFailure(ticket, len(matches) or 1)
+
+		# Perform the ban if this attempt is resulted to:
+		self.performBan(ip)
+
+		return 1
 
 	##
 	# Ignore own IP/DNS.
@@ -601,9 +607,12 @@ class Filter(JailThread):
 				if self._inIgnoreIPList(ip, tick):
 					continue
 				logSys.info(
-					"[%s] Found %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
+					"[%s] Found %s - %s", self.jailName, ip, MyTime.time2str(unixTime)
 				)
 				self.failManager.addFailure(tick)
+				# report to observer - failure was found, for possibly increasing of it retry counter (asynchronous)
+				if Observers.Main is not None:
+					Observers.Main.add('failureFound', self.failManager, self.jail, tick)
 			# reset (halve) error counter (successfully processed line):
 			if self._errors:
 				self._errors //= 2
@@ -862,12 +871,12 @@ class Filter(JailThread):
 				# ip-address or host:
 				host = fail.get('ip4')
 				if host is not None:
-					cidr = IPAddr.FAM_IPv4
+					cidr = int(fail.get('cidr') or IPAddr.FAM_IPv4)
 					raw = True
 				else:
 					host = fail.get('ip6')
 					if host is not None:
-						cidr = IPAddr.FAM_IPv6
+						cidr = int(fail.get('cidr') or IPAddr.FAM_IPv6)
 						raw = True
 				if host is None:
 					host = fail.get('dns')
@@ -878,6 +887,7 @@ class Filter(JailThread):
 								fid = failRegex.getFailID()
 						host = fid
 						cidr = IPAddr.CIDR_RAW
+						raw = True
 				# if mlfid case (not failure):
 				if host is None:
 					if ll <= 7: logSys.log(7, "No failure-id by mlfid %r in regex %s: %s",
@@ -1088,7 +1098,7 @@ class FileFilter(Filter):
 		fs = container.getFileSize()
 		if logSys.getEffectiveLevel() <= logging.DEBUG:
 			logSys.debug("Seek to find time %s (%s), file size %s", date, 
-				datetime.datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S"), fs)
+				MyTime.time2str(date), fs)
 		minp = container.getPos()
 		maxp = fs
 		tryPos = minp
@@ -1167,7 +1177,7 @@ class FileFilter(Filter):
 		container.setPos(foundPos)
 		if logSys.getEffectiveLevel() <= logging.DEBUG:
 			logSys.debug("Position %s from %s, found time %s (%s) within %s seeks", lastPos, fs, foundTime, 
-				(datetime.datetime.fromtimestamp(foundTime).strftime("%Y-%m-%d %H:%M:%S") if foundTime is not None else ''), cntr)
+				(MyTime.time2str(foundTime) if foundTime is not None else ''), cntr)
 		
 	def status(self, flavor="basic"):
 		"""Status of Filter plus files being monitored.

@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 ### BEGIN INIT INFO
 # Provides:          fail2ban
 # Required-Start:    $local_fs $remote_fs
@@ -22,28 +22,28 @@
 #  rename this file: (sudo) mv /etc/init.d/fail2ban.init /etc/init.d/fail2ban
 #  same with the logrotate file: (sudo) mv /etc/logrotate.d/fail2ban.logrotate /etc/logrotate.d/fail2ban
 #
-PATH=/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bin
-DESC="authentication failure monitor"
-NAME=fail2ban
+PATH="/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bin"
+DESC="Authentication failure monitor"
+NAME="fail2ban"
 
 # fail2ban-client is not a daemon itself but starts a daemon and
 # loads its with configuration
-DAEMON=/usr/local/bin/$NAME-client
-SCRIPTNAME=/etc/init.d/$NAME
+DAEMON="/usr/local/bin/$NAME-client"
+SCRIPTNAME="/etc/init.d/$NAME"
 
 # Ad-hoc way to parse out socket file name
-SOCKFILE=`grep -h '^[^#]*socket *=' /etc/$NAME/$NAME.conf /etc/$NAME/$NAME.local 2>/dev/null \
-          | tail -n 1 | sed -e 's/.*socket *= *//g' -e 's/ *$//g'`
-[ -z "$SOCKFILE" ] && SOCKFILE='/var/run/fail2ban.sock'
+SOCKFILE="$(grep -h '^[^#]*socket *=' "/etc/$NAME/$NAME.conf" "/etc/$NAME/$NAME.local" 2>/dev/null \
+	| tail -n 1 | sed -e 's/.*socket *= *//g' -e 's/ *$//g')"
+[ -z "$SOCKFILE" ] && SOCKFILE="/var/run/fail2ban.sock"
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
 
 # Run as root by default.
-FAIL2BAN_USER=root
+FAIL2BAN_USER="root"
 
 # Read configuration variable file if it is present
-[ -r /etc/default/$NAME ] && . /etc/default/$NAME
+[ -r "/etc/default/$NAME" ] && . "/etc/default/$NAME"
 DAEMON_ARGS="$FAIL2BAN_OPTS"
 
 # Load the VERBOSE setting and other rcS variables
@@ -51,7 +51,8 @@ DAEMON_ARGS="$FAIL2BAN_OPTS"
 
 # Predefine what can be missing from lsb source later on -- necessary to run
 # on sarge. Just present it in a bit more compact way from what was shipped
-log_daemon_msg () {
+log_daemon_msg()
+{
 	[ -z "$1" ] && return 1
 	echo -n "$1:"
 	[ -z "$2" ] || echo -n " $2"
@@ -68,7 +69,7 @@ log_daemon_msg () {
 #
 report_bug()
 {
-	echo $*
+	echo "$*"
 	echo "Please submit a bug report to Debian BTS (reportbug fail2ban)"
 	exit 1
 }
@@ -80,10 +81,10 @@ report_bug()
 check_socket()
 {
 	# Return
-	#	0 if socket is present and readable
-	#	1 if socket file is not present
-	#	2 if socket file is present but not readable
-	#	3 if socket file is present but is not a socket
+	#       0 if socket is present and readable
+	#       1 if socket file is not present
+	#       2 if socket file is present but not readable
+	#       3 if socket file is present but is not a socket
 	[ -e "$SOCKFILE" ] || return 1
 	[ -r "$SOCKFILE" ] || return 2
 	[ -S "$SOCKFILE" ] || return 3
@@ -96,14 +97,14 @@ check_socket()
 do_start()
 {
 	# Return
-	#	0 if daemon has been started
-	#	1 if daemon was already running
-	#	2 if daemon could not be started
+	#       0 if daemon has been started
+	#       1 if daemon was already running
+	#       2 if daemon could not be started
 	do_status && return 1
 
 	if [ -e "$SOCKFILE" ]; then
 		log_failure_msg "Socket file $SOCKFILE is present"
-		[ "$1" = "force-start" ] \
+		[ "$1" = force-start ] \
 			&& log_success_msg "Starting anyway as requested" \
 			|| return 2
 		DAEMON_ARGS="$DAEMON_ARGS -x"
@@ -112,18 +113,20 @@ do_start()
 	# Assure that /var/run/fail2ban exists
 	[ -d /var/run/fail2ban ] || mkdir -p /var/run/fail2ban
 
-	if [ "$FAIL2BAN_USER" != "root" ]; then
+	if [ "$FAIL2BAN_USER" != root ]; then
 		# Make the socket directory, IP lists and fail2ban log
 		# files writable by fail2ban
 		chown "$FAIL2BAN_USER" /var/run/fail2ban
 		# Create the logfile if it doesn't exist
 		touch /var/log/fail2ban.log
 		chown "$FAIL2BAN_USER" /var/log/fail2ban.log
-		find /proc/net/xt_recent -name 'fail2ban-*' -exec chown "$FAIL2BAN_USER" {} \;
+		find /proc/net/xt_recent -name "fail2ban-*" -exec chown "$FAIL2BAN_USER" "{}" ";"
 	fi
 
-	start-stop-daemon --start --quiet --chuid "$FAIL2BAN_USER" --exec $DAEMON -- \
-		$DAEMON_ARGS start > /dev/null\
+	# $DAEMON_ARGS need to be expanded possibly with multiple or no options
+	# shellcheck disable=SC2086
+	start-stop-daemon --start --quiet --chuid "$FAIL2BAN_USER" --exec "$DAEMON" -- \
+		$DAEMON_ARGS start >/dev/null \
 		|| return 2
 
 	return 0
@@ -136,8 +139,8 @@ do_start()
 #
 do_status()
 {
-	$DAEMON ping > /dev/null 2>&1
-	return $?
+	$DAEMON ping >/dev/null 2>&1
+	return "$?"
 }
 
 #
@@ -146,22 +149,22 @@ do_status()
 do_stop()
 {
 	# Return
-	#	0 if daemon has been stopped
-	#	1 if daemon was already stopped
-	#	2 if daemon could not be stopped
-	#	other if a failure occurred
-	$DAEMON status > /dev/null 2>&1 || return 1
-	$DAEMON stop > /dev/null || return 2
+	#       0 if daemon has been stopped
+	#       1 if daemon was already stopped
+	#       2 if daemon could not be stopped
+	#       other if a failure occurred
+	$DAEMON status >/dev/null 2>&1 || return 1
+	$DAEMON stop >/dev/null || return 2
 
 	# now we need actually to wait a bit since it might take time
 	# for server to react on client's stop request. Especially
 	# important for restart command on slow boxes
 	count=1
-	while do_status && [ $count -lt 60 ]; do
+	while do_status && [ "$count" -lt 60 ]; do
 		sleep 1
-		count=$(($count+1))
+		count="$((count + 1))"
 	done
-	[ $count -lt 60 ] || return 3 # failed to stop
+	[ "$count" -lt 60 ] || return 3 # failed to stop
 
 	return 0
 }
@@ -169,8 +172,9 @@ do_stop()
 #
 # Function to reload configuration
 #
-do_reload() {
-	$DAEMON reload > /dev/null && return 0 || return 1
+do_reload()
+{
+	"$DAEMON" reload >/dev/null && return 0 || return 1
 	return 0
 }
 
@@ -180,16 +184,16 @@ do_reload() {
 #
 log_end_msg_wrapper()
 {
-	if [ $1 != 0 ] && [ $1 != $2 ]; then
-		value=1
+	if [ "$1" != 0 ] && [ "$1" != "$2" ]; then
+		value="1"
 	else
-		value=0
+		value="0"
 	fi
-	if [ "$3" != "no" ]; then
-		log_end_msg $value
+	if [ "$3" != no ]; then
+		log_end_msg "$value"
 	fi
-	if [ $value != "0" ]; then
-		exit $1
+	if [ "$value" != 0 ]; then
+		exit "$1"
 	fi
 }
 
@@ -198,13 +202,13 @@ case "$command" in
 	start|force-start)
 		[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
 		do_start "$command"
-		log_end_msg_wrapper $? 255 "$VERBOSE"
+		log_end_msg_wrapper "$?" 255 "$VERBOSE"
 		;;
 
 	stop)
 		[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
 		do_stop
-		log_end_msg_wrapper $? 255 "$VERBOSE"
+		log_end_msg_wrapper "$?" 255 "$VERBOSE"
 		;;
 
 	restart|force-reload)
@@ -213,41 +217,55 @@ case "$command" in
 		case "$?" in
 			0|1)
 				do_start
-				log_end_msg_wrapper $? 0 "always"
+				log_end_msg_wrapper "$?" 0 always
 				;;
 			*)
 				# Failed to stop
 				log_end_msg 1
 				;;
- 		esac
+		esac
 		;;
 
-	reload|force-reload)
-        log_daemon_msg "Reloading $DESC" "$NAME"
-        do_reload
-        log_end_msg $?
-        ;;
+	reload)
+		log_daemon_msg "Reloading $DESC" "$NAME"
+		do_reload
+		log_end_msg "$?"
+		;;
 
 	status)
 		log_daemon_msg "Status of $DESC"
 		do_status
-		case $? in
-			0)  log_success_msg " $NAME is running" ;;
+		case "$?" in
+			0)
+				log_success_msg " $NAME is running"
+				;;
 			255)
 				check_socket
-				case $? in
-					1)  log_failure_msg " $NAME is not running" && exit 3 ;;
-					0)  log_failure_msg " $NAME is not running but $SOCKFILE exists" && exit 3 ;;
-					2)  log_failure_msg " $SOCKFILE not readable, status of $NAME is unknown" && exit 3 ;;
-					3)  log_failure_msg " $SOCKFILE exists but not a socket, status of $NAME is unknown" && exit 3 ;;
-					*)  report_bug "Unknown return code from $NAME:check_socket." && exit 4 ;;
+				case "$?" in
+					1)
+						log_failure_msg " $NAME is not running" && exit 3
+						;;
+					0)
+						log_failure_msg " $NAME is not running but $SOCKFILE exists" && exit 3
+						;;
+					2)
+						log_failure_msg " $SOCKFILE not readable, status of $NAME is unknown" && exit 3
+						;;
+					3)
+						log_failure_msg " $SOCKFILE exists but not a socket, status of $NAME is unknown" && exit 3
+						;;
+					*)
+						report_bug "Unknown return code from $NAME:check_socket." && exit 4
+						;;
 				esac
 				;;
-			*)  report_bug "Unknown $NAME status code" && exit 4
+			*)
+				report_bug "Unknown $NAME status code" && exit 4
+				;;
 		esac
 		;;
 	*)
-		echo "Usage: $SCRIPTNAME {start|force-start|stop|restart|force-reload|status}" >&2
+		echo "Usage: $SCRIPTNAME {start|force-start|stop|restart|force-reload|status}" 1>&2
 		exit 3
 		;;
 esac

@@ -1,0 +1,5 @@
+# failJSON: { "time": "2019-11-25T18:04:49", "match": true , "host": "192.168.0.16" }
+2019-11-26 01:04:49.008 +08:00 [WRN] Failed login attempt. 192.168.0.16
+
+# failJSON: { "time": "2019-11-25T21:39:58", "match": true , "host": "192.168.0.21" }
+2019-11-25 21:39:58.464 +01:00 [WRN] Failed login attempt, 2FA invalid. 192.168.0.21

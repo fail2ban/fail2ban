@@ -1,21 +1,32 @@
 # vim ft=yaml
 # travis-ci.org definition for Fail2Ban build
 # https://travis-ci.org/fail2ban/fail2ban/
+
+#os: linux
+
 language: python
-python:
-  - 2.6
-  - 2.7
-  - pypy
-  # disabled until coverage module fixes up compatibility issue
-  # - 3.2
-  - 3.3
-  - 3.4
-  - 3.5
-  - 3.6
-  - 3.7-dev
-  # disabled since setuptools dropped support for Python 3.0 - 3.2
-  # - pypy3
-  - pypy3.3-5.5-alpha
+dist: xenial
+
+matrix:
+  fast_finish: true
+  include:
+  - python: 2.6
+    dist: trusty   # required for Python 2.6
+  - python: 2.7
+    dist: trusty   # required for packages like gamin
+    name: 2.7 (trusty)
+  - python: 2.7
+    name: 2.7 (xenial)
+  - python: pypy
+    dist: trusty
+  - python: 3.3
+    dist: trusty
+  - python:  3.4
+  - python:  3.5
+  - python:  3.6
+  - python:  3.7
+  - python:  3.8-dev
+  - python:  pypy3.5
 before_install:
   - echo "running under $TRAVIS_PYTHON_VERSION"
   - if [[ $TRAVIS_PYTHON_VERSION == 2* || $TRAVIS_PYTHON_VERSION == pypy* && $TRAVIS_PYTHON_VERSION != pypy3* ]]; then export F2B_PY=2; fi
@@ -35,15 +46,22 @@ install:
   #   codecov:
   - travis_retry pip install codecov
   #   dnspython or dnspython3
-  - if [[ "$F2B_PY" = 2 ]]; then travis_retry pip install dnspython; fi
-  - if [[ "$F2B_PY" = 3 ]]; then travis_retry pip install dnspython3; fi
+  - if [[ "$F2B_PY" = 2 ]]; then travis_retry pip install dnspython || echo 'not installed'; fi
+  - if [[ "$F2B_PY" = 3 ]]; then travis_retry pip install dnspython3 || echo 'not installed'; fi
+  #   python systemd bindings:
+  - if [[ "$F2B_PY" = 2 ]]; then travis_retry sudo apt-get install -qq python-systemd || echo 'not installed'; fi
+  - if [[ "$F2B_PY" = 3 ]]; then travis_retry sudo apt-get install -qq python3-systemd || echo 'not installed'; fi
   #   gamin - install manually (not in PyPI) - travis-ci system Python is 2.7
-  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then travis_retry sudo apt-get install -qq python-gamin && cp /usr/share/pyshared/gamin.py /usr/lib/pyshared/python2.7/_gamin.so $VIRTUAL_ENV/lib/python2.7/site-packages/; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 2.7 ]]; then (travis_retry sudo apt-get install -qq python-gamin && cp /usr/share/pyshared/gamin.py /usr/lib/pyshared/python2.7/_gamin.so $VIRTUAL_ENV/lib/python2.7/site-packages/) || echo 'not installed'; fi
   #   pyinotify
-  - travis_retry pip install pyinotify
+  - travis_retry pip install pyinotify || echo 'not installed'
+  # Install helper tools
+  - sudo apt-get install shellcheck
 before_script:
   # Manually execute 2to3 for now
   - if [[ "$F2B_PY" = 3 ]]; then ./fail2ban-2to3; fi
+  # (debug) output current preferred encoding:
+  - python -c 'import locale, sys; from fail2ban.helpers import PREFER_ENC; print(PREFER_ENC, locale.getpreferredencoding(), (sys.stdout and sys.stdout.encoding))'
 script:
   # Keep the legacy setup.py test approach of checking coverage for python2
   - if [[ "$F2B_PY" = 2 ]]; then coverage run setup.py test; fi
@@ -51,13 +69,14 @@ script:
   - if [[ "$F2B_PY" = 3 ]]; then coverage run bin/fail2ban-testcases --verbosity=2; fi
   # Use $VENV_BIN (not python) or else sudo will always run the system's python (2.7)
   - sudo $VENV_BIN/pip install .
-  # Doc files should get installed on Travis under Linux
-  - test -e /usr/share/doc/fail2ban/FILTERS
+  # Doc files should get installed on Travis under Linux (python >= 3.8 seem to use another path segment)
+  - if [[ $TRAVIS_PYTHON_VERSION < 3.8 ]]; then test -e /usr/share/doc/fail2ban/FILTERS; fi
+  # Test initd script
+  - shellcheck -s bash -e SC1090,SC1091 files/debian-initd
 after_success:
   - if [[ "$F2B_COV" = 1 ]]; then coveralls; fi
   - codecov
-matrix:
-  fast_finish: true
+
 # Might be worth looking into
 #notifications:
 #  email: true

@@ -31,8 +31,8 @@ else: # pragma: 3.x no cover
 	from urllib2 import Request, urlopen, HTTPError
 	from urllib import urlencode
 
-from fail2ban.server.actions import ActionBase
-from fail2ban.helpers import str2LogLevel
+from fail2ban.server.actions import Actions, ActionBase, BanTicket
+from fail2ban.helpers import splitwords, str2LogLevel
 
 
 
@@ -54,9 +54,6 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	age : str, optional
 		Age of last report for bad IPs, per badips.com syntax.
 		Default "24h" (24 hours)
-	key : str, optional
-		Key issued by badips.com to report bans, for later retrieval
-		of personalised content.
 	banaction : str, optional
 		Name of banaction to use for blacklisting bad IPs. If `None`,
 		no blacklist of IPs will take place.
@@ -67,14 +64,17 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		"postfix", but want to use whole "mail" category for blacklist.
 		Default `category`.
 	bankey : str, optional
-		Key issued by badips.com to blacklist IPs reported with the
-		associated key.
+		Key issued by badips.com to retrieve personal list
+		of blacklist IPs.
 	updateperiod : int, optional
 		Time in seconds between updating bad IPs blacklist.
 		Default 900 (15 minutes)
 	loglevel : int/str, optional
 		Log level of the message when an IP is (un)banned.
 		Default `DEBUG`.
+		Can be also supplied as two-value list (comma- or space separated) to
+		provide level of the summary message when a group of IPs is (un)banned.
+		Example `DEBUG,INFO`.
 	agent : str, optional
 		User agent transmitted to server.
 		Default `Fail2Ban/ver.`
@@ -90,9 +90,9 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	def _Request(self, url, **argv):
 		return Request(url, headers={'User-Agent': self.agent}, **argv)
 
-	def __init__(self, jail, name, category, score=3, age="24h", key=None,
-		banaction=None, bancategory=None, bankey=None, updateperiod=900, loglevel='DEBUG', agent="Fail2Ban", 
-		timeout=TIMEOUT):
+	def __init__(self, jail, name, category, score=3, age="24h",
+		banaction=None, bancategory=None, bankey=None, updateperiod=900, 
+		loglevel='DEBUG', agent="Fail2Ban", timeout=TIMEOUT):
 		super(BadIPsAction, self).__init__(jail, name)
 
 		self.timeout = timeout
@@ -100,11 +100,12 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		self.category = category
 		self.score = score
 		self.age = age
-		self.key = key
 		self.banaction = banaction
 		self.bancategory = bancategory or category
 		self.bankey = bankey
-		self.loglevel = str2LogLevel(loglevel)
+		loglevel = splitwords(loglevel)
+		self.sumloglevel = str2LogLevel(loglevel[-1])
+		self.loglevel = str2LogLevel(loglevel[0])
 		self.updateperiod = updateperiod
 
 		self._bannedips = set()
@@ -281,13 +282,8 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	def _banIPs(self, ips):
 		for ip in ips:
 			try:
-				self._jail.actions[self.banaction].ban({
-					'ip': ip,
-					'failures': 0,
-					'matches': "",
-					'ipmatches': "",
-					'ipjailmatches': "",
-				})
+				ai = Actions.ActionInfo(BanTicket(ip), self._jail)
+				self._jail.actions[self.banaction].ban(ai)
 			except Exception as e:
 				self._logSys.error(
 					"Error banning IP %s for jail '%s' with action '%s': %s",
@@ -302,13 +298,8 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 	def _unbanIPs(self, ips):
 		for ip in ips:
 			try:
-				self._jail.actions[self.banaction].unban({
-					'ip': ip,
-					'failures': 0,
-					'matches': "",
-					'ipmatches': "",
-					'ipjailmatches': "",
-				})
+				ai = Actions.ActionInfo(BanTicket(ip), self._jail)
+				self._jail.actions[self.banaction].unban(ai)
 			except Exception as e:
 				self._logSys.error(
 					"Error unbanning IP %s for jail '%s' with action '%s': %s",
@@ -350,9 +341,13 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 				s = ips - self._bannedips
 				p = len(s)
 				self._banIPs(s)
-				self._logSys.log(self.loglevel,
-					"Updated IPs for jail '%s' (-%d/+%d). Update again in %i seconds",
-					self._jail.name, m, p, self.updateperiod)
+				if m != 0 or p != 0:
+					self._logSys.log(self.sumloglevel,
+						"Updated IPs for jail '%s' (-%d/+%d)",
+						self._jail.name, m, p)
+				self._logSys.debug(
+					"Next update for jail '%' in %i seconds",
+					self._jail.name, self.updateperiod)
 			finally:
 				self._timer = threading.Timer(self.updateperiod, self.update)
 				self._timer.start()
@@ -382,8 +377,6 @@ class BadIPsAction(ActionBase): # pragma: no cover - may be unavailable
 		"""
 		try:
 			url = "/".join([self._badips, "add", self.category, str(aInfo['ip'])])
-			if self.key:
-				url = "?".join([url, urlencode({'key': self.key})])
 			self._logSys.debug('badips.com: ban, url: %r', url)
 			response = urlopen(self._Request(url), timeout=self.timeout)
 		except HTTPError as response: # pragma: no cover

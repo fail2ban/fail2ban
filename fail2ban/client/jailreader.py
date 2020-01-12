@@ -33,7 +33,7 @@ from .configreader import ConfigReaderUnshared, ConfigReader
 from .filterreader import FilterReader
 from .actionreader import ActionReader
 from ..version import version
-from ..helpers import getLogger, extractOptions, splitwords
+from ..helpers import getLogger, extractOptions, splitWithOptions, splitwords
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -86,36 +86,51 @@ class JailReader(ConfigReader):
 				logSys.warning("File %s is a dangling link, thus cannot be monitored" % p)
 		return pathList
 
+	_configOpts1st = {
+		"enabled": ["bool", False],
+		"backend": ["string", "auto"],
+		"filter": ["string", ""]
+	}
+	_configOpts = {
+		"enabled": ["bool", False],
+		"backend": ["string", "auto"],
+		"maxretry": ["int", None],
+		"maxmatches": ["int", None],
+		"findtime": ["string", None],
+		"bantime": ["string", None],
+		"bantime.increment": ["bool", None],
+		"bantime.factor": ["string", None],
+		"bantime.formula": ["string", None],
+		"bantime.multipliers": ["string", None],
+		"bantime.maxtime": ["string", None],
+		"bantime.rndtime": ["string", None],
+		"bantime.overalljails": ["bool", None],
+		"ignorecommand": ["string", None],
+		"ignoreself": ["bool", None],
+		"ignoreip": ["string", None],
+		"ignorecache": ["string", None],
+		"filter": ["string", ""],
+		"logtimezone": ["string", None],
+		"logencoding": ["string", None],
+		"logpath": ["string", None],
+		"action": ["string", ""]
+	}
+	_configOpts.update(FilterReader._configOpts)
+
+	_ignoreOpts = set(['action', 'filter', 'enabled'] + FilterReader._configOpts.keys())
+
 	def getOptions(self):
-		opts1st = [["bool", "enabled", False],
-				["string", "filter", ""]]
-		opts = [["bool", "enabled", False],
-				["string", "backend", "auto"],
-				["int",    "maxretry", None],
-				["string", "findtime", None],
-				["string", "bantime", None],
-				["string", "usedns", None], # be sure usedns is before all regex(s) in stream
-				["string", "failregex", None],
-				["string", "ignoreregex", None],
-				["string", "ignorecommand", None],
-				["bool",   "ignoreself", None],
-				["string", "ignoreip", None],
-				["string", "ignorecache", None],
-				["string", "filter", ""],
-				["string", "datepattern", None],
-				["string", "logtimezone", None],
-				["string", "logencoding", None],
-				["string", "logpath", None], # logpath after all log-related data (backend, date-pattern, etc)
-				["string", "action", ""]]
 
 		# Before interpolation (substitution) add static options always available as default:
-		defsec = self._cfg.get_defaults()
-		defsec["fail2ban_version"] = version
+		self.merge_defaults({
+			"fail2ban_version": version
+		})
 
 		try:
 
 			# Read first options only needed for merge defaults ('known/...' from filter):
-			self.__opts = ConfigReader.getOptions(self, self.__name, opts1st, shouldExist=True)
+			self.__opts = ConfigReader.getOptions(self, self.__name, self._configOpts1st,
+				shouldExist=True)
 			if not self.__opts: # pragma: no cover
 				raise JailDefError("Init jail options failed")
 		
@@ -134,6 +149,11 @@ class JailReader(ConfigReader):
 				ret = self.__filter.read()
 				if not ret:
 					raise JailDefError("Unable to read the filter %r" % filterName)
+				if not filterOpt.get('logtype'):
+					# overwrite default logtype backend-related (considering that the filter settings may be overwritten):
+					self.__filter.merge_defaults({
+						'logtype': ['file','journal'][int(self.__opts.get('backend', '').startswith("systemd"))]
+					})
 				# merge options from filter as 'known/...' (all options unfiltered):
 				self.__filter.getOptions(self.__opts, all=True)
 				ConfigReader.merge_section(self, self.__name, self.__filter.getCombined(), 'known/')
@@ -142,7 +162,7 @@ class JailReader(ConfigReader):
 				logSys.warning("No filter set for jail %s" % self.__name)
 
 			# Read second all options (so variables like %(known/param) can be interpolated):
-			self.__opts = ConfigReader.getOptions(self, self.__name, opts)
+			self.__opts = ConfigReader.getOptions(self, self.__name, self._configOpts)
 			if not self.__opts: # pragma: no cover
 				raise JailDefError("Read jail options failed")
 		
@@ -151,21 +171,15 @@ class JailReader(ConfigReader):
 				self.__filter.getOptions(self.__opts)
 		
 			# Read action
-			prevln = ''
-			actlst = self.__opts["action"].split('\n')
-			for n, act in enumerate(actlst):
+			for act in splitWithOptions(self.__opts["action"]):
 				try:
+					act = act.strip()
 					if not act:			  # skip empty actions
 						continue
 					# join with previous line if needed (consider possible new-line):
-					if prevln: act = prevln + '\n' + act
 					actName, actOpt = extractOptions(act)
 					prevln = ''
 					if not actName:
-						# consider possible new-line, so repeat with joined next line's:
-						if n < len(actlst) - 1:
-							prevln = act
-							continue
 						raise JailDefError("Invalid action definition %r" % act)
 					if actName.endswith(".py"):
 						self.__actions.append([
@@ -215,15 +229,19 @@ class JailReader(ConfigReader):
 		 """
 
 		stream = []
+		stream2 = []
 		e = self.__opts.get('config-error')
 		if e:
 			stream.extend([['config-error', "Jail '%s' skipped, because of wrong configuration: %s" % (self.__name, e)]])
 			return stream
+		# fill jail with filter options, using filter (only not overriden in jail):
 		if self.__filter:
 			stream.extend(self.__filter.convert())
+		# and using options from jail:
+		FilterReader._fillStream(stream, self.__opts, self.__name)
 		for opt, value in self.__opts.iteritems():
 			if opt == "logpath":
-				if self.__opts.get('backend', None).startswith("systemd"): continue
+				if self.__opts.get('backend', '').startswith("systemd"): continue
 				found_files = 0
 				for path in value.split("\n"):
 					path = path.rsplit(" ", 1)
@@ -233,33 +251,22 @@ class JailReader(ConfigReader):
 						logSys.notice("No file(s) found for glob %s" % path)
 					for p in pathList:
 						found_files += 1
-						stream.append(
+						# logpath after all log-related data (backend, date-pattern, etc)
+						stream2.append(
 							["set", self.__name, "addlogpath", p, tail])
 				if not found_files:
 					msg = "Have not found any log file for %s jail" % self.__name
 					if not allow_no_files:
 						raise ValueError(msg)
 					logSys.warning(msg)
-					
-			elif opt == "logencoding":
-				stream.append(["set", self.__name, "logencoding", value])
 			elif opt == "backend":
 				backend = value
 			elif opt == "ignoreip":
-				for ip in splitwords(value):
-					stream.append(["set", self.__name, "addignoreip", ip])
-			elif opt in ("failregex", "ignoreregex"):
-				multi = []
-				for regex in value.split('\n'):
-					# Do not send a command if the rule is empty.
-					if regex != '':
-						multi.append(regex)
-				if len(multi) > 1:
-					stream.append(["multi-set", self.__name, "add" + opt, multi])
-				elif len(multi):
-					stream.append(["set", self.__name, "add" + opt, multi[0]])
-			elif opt not in ('action', 'filter', 'enabled'):
+				stream.append(["set", self.__name, "addignoreip"] + splitwords(value))
+			elif opt not in JailReader._ignoreOpts:
 				stream.append(["set", self.__name, opt, value])
+		# consider options order (after other options):
+		if stream2: stream += stream2
 		for action in self.__actions:
 			if isinstance(action, (ConfigReaderUnshared, ConfigReader)):
 				stream.extend(action.convert())

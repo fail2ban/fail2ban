@@ -12,7 +12,8 @@ Jul 18 23:12:56 xxx postfix/smtpd[8738]: NOQUEUE: reject: RCPT from foo[192.51.1
 Jul 18 23:12:56 xxx postfix/smtpd[8738]: NOQUEUE: reject: RCPT from foo[192.51.100.43]: 554 5.7.1 <foo@bad.domain>: Sender address rejected: match bad.domain; from=<foo@bad.domain> to=<foo@porcupine.org> proto=SMTP helo=<192.51.100.43>
 # failJSON: { "time": "2005-08-10T10:55:38", "match": true , "host": "72.53.132.234" }
 Aug 10 10:55:38 f-vanier-bourgeois postfix/smtpd[2162]: NOQUEUE: reject: VRFY from 72-53-132-234.cpe.distributel.net[72.53.132.234]: 550 5.1.1 : Recipient address rejected: User unknown in local recipient tab
-
+# failJSON: { "time": "2005-08-13T15:45:46", "match": true , "host": "192.0.2.1" }
+Aug 13 15:45:46 server postfix/smtpd[13844]: 00ADB3C0899: reject: RCPT from example.com[192.0.2.1]: 550 5.1.1 <sales@server.com>: Recipient address rejected: User unknown in local recipient table; from=<xxxxxx@example.com> to=<sales@server.com> proto=ESMTP helo=<mail.example.com>
 
 # failJSON: { "time": "2005-01-12T11:07:49", "match": true , "host": "181.21.131.88" }
 Jan 12 11:07:49 emf1pt2-2-35-70 postfix/smtpd[13767]: improper command pipelining after DATA from unknown[181.21.131.88]:
@@ -25,6 +26,8 @@ Dec 18 02:05:46 platypus postfix/smtpd[16349]: improper command pipelining after
 
 # failJSON: { "time": "2004-12-21T21:17:29", "match": true , "host": "93.184.216.34" }
 Dec 21 21:17:29 xxx postfix/smtpd[7150]: NOQUEUE: reject: RCPT from badserver.example.com[93.184.216.34]: 450 4.7.1 Client host rejected: cannot find your hostname, [93.184.216.34]; from=<badactor@example.com> to=<goodguy@example.com> proto=ESMTP helo=<badserver.example.com>
+# failJSON: { "time": "2004-12-21T21:17:30", "match": true , "host": "93.184.216.34", "desc": "variable status code suffix, gh-2442" }
+Dec 21 21:17:30 xxx postfix/smtpd[7150]: NOQUEUE: reject: RCPT from badserver.example.com[93.184.216.34]: 450 4.7.25 Client host rejected: cannot find your hostname, [93.184.216.34]; from=<badactor@example.com> to=<goodguy@example.com> proto=ESMTP helo=<badserver.example.com>
 
 # failJSON: { "time": "2004-11-22T22:33:44", "match": true , "host": "1.2.3.4" }
 Nov 22 22:33:44 xxx postfix/smtpd[11111]: NOQUEUE: reject: RCPT from 1-2-3-4.example.com[1.2.3.4]: 450 4.1.8 <some@nonexistant.tld>: Sender address rejected: Domain not found; from=<some@nonexistant.tld> to=<goodguy@example.com> proto=ESMTP helo=<1-2-3-4.example.com>
@@ -47,12 +50,19 @@ Jun 12 08:58:35 xxx postfix/smtpd[2931]: NOQUEUE: reject: RCPT from unknown[1.2.
 # failJSON: { "time": "2005-06-12T08:58:35", "match": true , "host": "1.2.3.4" }
 Jun 12 08:58:35 xxx postfix/smtpd[13533]: improper command pipelining after AUTH from unknown[1.2.3.4]: QUIT
 
-# ---------------------------------------
-# Test-cases of postfix-postscreen:
-# ---------------------------------------
-
 # failJSON: { "time": "2005-05-05T15:51:11", "match": true , "host": "216.245.194.173", "desc": "postfix postscreen / gh-1764" }
 May  5 15:51:11 xxx postfix/postscreen[1148]: NOQUEUE: reject: RCPT from [216.245.194.173]:60591: 550 5.7.1 Service unavailable; client [216.245.194.173] blocked using rbl.example.com; from=<spammer@example.com>, to=<goodguy@example.com>, proto=ESMTP, helo=<badguy.example.com>
+
+# failJSON: { "time": "2005-06-03T06:25:43", "match": true , "host": "192.0.2.11", "desc": "too many errors / gh-2439" }
+Jun  3 06:25:43 srv postfix/smtpd[29306]: too many errors after RCPT from example.com[192.0.2.11]
+
+# filterOptions: [{"mode": "errors"}]
+
+# failJSON: { "match": false, "desc": "ignore normal messages, jail for too many errors only" }
+Jun 12 08:58:35 srv postfix/smtpd[29306]: improper command pipelining after AUTH from unknown[192.0.2.11]: QUIT
+
+# failJSON: { "time": "2005-06-03T06:25:43", "match": true , "host": "192.0.2.11", "desc": "too many errors / gh-2439" }
+Jun  3 06:25:43 srv postfix/smtpd[29306]: too many errors after RCPT from example.com[192.0.2.11]
 
 # ---------------------------------------
 # Test-cases of postfix-rbl:

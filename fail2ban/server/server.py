@@ -32,13 +32,14 @@ import signal
 import stat
 import sys
 
+from .observer import Observers, ObserverThread
 from .jails import Jails
 from .filter import FileFilter, JournalFilter
 from .transmitter import Transmitter
 from .asyncserver import AsyncServer, AsyncServerException
 from .. import version
 from ..helpers import getLogger, _as_bool, extractOptions, str2LogLevel, \
-	getVerbosityFormat, excepthook
+	getVerbosityFormat, excepthook, prctl_set_th_name
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -80,6 +81,8 @@ class Server:
 			'Linux': '/dev/log',
 		}
 		self.__prev_signals = {}
+		# replace real thread name with short process name (for top/ps/pstree or diagnostic):
+		prctl_set_th_name('f2b/server')
 
 	def __sigTERMhandler(self, signum, frame): # pragma: no cover - indirect tested
 		logSys.debug("Caught signal %d. Exiting", signum)
@@ -94,7 +97,7 @@ class Server:
 		self.__prev_signals[s] = signal.getsignal(s)
 		signal.signal(s, new)
 
-	def start(self, sock, pidfile, force=False, conf={}):
+	def start(self, sock, pidfile, force=False, observer=True, conf={}):
 		# First set the mask to only allow access to owner
 		os.umask(0077)
 		# Second daemonize before logging etc, because it will close all handles:
@@ -144,6 +147,12 @@ class Server:
 		except (OSError, IOError) as e: # pragma: no cover
 			logSys.error("Unable to create PID file: %s", e)
 		
+		# Create observers and start it:
+		if observer:
+			if Observers.Main is None:
+				Observers.Main = ObserverThread()
+				Observers.Main.start()
+
 		# Start the communication
 		logSys.debug("Starting communication")
 		try:
@@ -183,6 +192,10 @@ class Server:
 			for s, sh in self.__prev_signals.iteritems():
 				signal.signal(s, sh)
 
+		# Give observer a small chance to complete its work before exit
+		if Observers.Main is not None:
+			Observers.Main.stop()
+
 		# Now stop all the jails
 		self.stopAllJail()
 
@@ -192,11 +205,16 @@ class Server:
 			self.__db.close()
 			self.__db = None
 
+		# Stop observer and exit
+		if Observers.Main is not None:
+			Observers.Main.stop()
+			Observers.Main = None
 		# Stop async
 		if self.__asyncServer is not None:
 			self.__asyncServer.stop()
 			self.__asyncServer = None
 		logSys.info("Exiting Fail2ban")
+
 
 	def addJail(self, name, backend):
 		addflg = True
@@ -443,6 +461,12 @@ class Server:
 	def getUseDns(self, name):
 		return self.__jails[name].filter.getUseDns()
 	
+	def setMaxMatches(self, name, value):
+		self.__jails[name].filter.failManager.maxMatches = value
+	
+	def getMaxMatches(self, name):
+		return self.__jails[name].filter.failManager.maxMatches
+	
 	def setMaxRetry(self, name, value):
 		self.__jails[name].filter.setMaxRetry(value)
 	
@@ -473,26 +497,49 @@ class Server:
 	def setBanTime(self, name, value):
 		self.__jails[name].actions.setBanTime(value)
 	
+	def addAttemptIP(self, name, *args):
+		return self.__jails[name].filter.addAttempt(*args)
+
 	def setBanIP(self, name, value):
-		return self.__jails[name].filter.addBannedIP(value)
-		
-	def setUnbanIP(self, name=None, value=None):
+		return self.__jails[name].actions.addBannedIP(value)
+
+	def setUnbanIP(self, name=None, value=None, ifexists=True):
 		if name is not None:
-			# in all jails:
+			# single jail:
 			jails = [self.__jails[name]]
 		else:
-			# single jail:
+			# in all jails:
 			jails = self.__jails.values()
 		# unban given or all (if value is None):
 		cnt = 0
+		ifexists |= (name is None)
 		for jail in jails:
-			cnt += jail.actions.removeBannedIP(value, ifexists=(name is None))
-		if value and not cnt:
-			logSys.info("%s is not banned", value)
+			cnt += jail.actions.removeBannedIP(value, ifexists=ifexists)
 		return cnt
 		
 	def getBanTime(self, name):
 		return self.__jails[name].actions.getBanTime()
+
+	def getBanList(self, name, withTime=False):
+		"""Returns the list of banned IP addresses for a jail.
+
+		Parameters
+		----------
+		name : str
+			The name of a jail.
+
+		Returns
+		-------
+		list
+			The list of banned IP addresses.
+		"""
+		return self.__jails[name].actions.getBanList(withTime)
+
+	def setBanTimeExtra(self, name, opt, value):
+		self.__jails[name].setBanTimeExtra(opt, value)
+
+	def getBanTimeExtra(self, name, opt):
+		return self.__jails[name].getBanTimeExtra(opt)
 	
 	def isStarted(self):
 		return self.__asyncServer is not None and self.__asyncServer.isActive()
@@ -707,6 +754,16 @@ class Server:
 				logSys.info("flush performed on %s" % self.__logTarget)
 			return "flushed"
 			
+	def setThreadOptions(self, value):
+		for o, v in value.iteritems():
+			if o == 'stacksize':
+				threading.stack_size(int(v)*1024)
+			else: # pragma: no cover
+				raise KeyError("unknown option %r" % o)
+
+	def getThreadOptions(self):
+		return {'stacksize': threading.stack_size() // 1024}
+
 	def setDatabase(self, filename):
 		# if not changed - nothing to do
 		if self.__db and self.__db.filename == filename:
@@ -726,6 +783,8 @@ class Server:
 				logSys.error(
 					"Unable to import fail2ban database module as sqlite "
 					"is not available.")
+		if Observers.Main is not None:
+			Observers.Main.db_set(self.__db)
 	
 	def getDatabase(self):
 		return self.__db

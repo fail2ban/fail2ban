@@ -128,52 +128,52 @@ class DateDetectorCache(object):
 		# 2005-01-23T21:59:59.981746, 2005-01-23 21:59:59, 2005-01-23  8:59:59
 		# simple date: 2005/01/23 21:59:59 
 		# custom for syslog-ng 2006.12.21 06:43:20
-		"%ExY(?P<_sep>[-/.])%m(?P=_sep)%d(?:T|  ?)%H:%M:%S(?:[.,]%f)?(?:\s*%z)?",
+		r"%ExY(?P<_sep>[-/.])%m(?P=_sep)%d(?:T|  ?)%H:%M:%S(?:[.,]%f)?(?:\s*%z)?",
 		# asctime with optional day, subsecond and/or year:
 		# Sun Jan 23 21:59:59.011 2005 
-		"(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?",
+		r"(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?",
 		# asctime with optional day, subsecond and/or year coming after day
 		# http://bugs.debian.org/798923
 		# Sun Jan 23 2005 21:59:59.011
-		"(?:%a )?%b %d %ExY %k:%M:%S(?:\.%f)?",
+		r"(?:%a )?%b %d %ExY %k:%M:%S(?:\.%f)?",
 		# simple date too (from x11vnc): 23/01/2005 21:59:59 
 		# and with optional year given by 2 digits: 23/01/05 21:59:59 
 		# (See http://bugs.debian.org/537610)
 		# 17-07-2008 17:23:25
-		"%d(?P<_sep>[-/])%m(?P=_sep)(?:%ExY|%Exy) %k:%M:%S",
+		r"%d(?P<_sep>[-/])%m(?P=_sep)(?:%ExY|%Exy) %k:%M:%S",
 		# Apache format optional time zone:
 		# [31/Oct/2006:09:22:55 -0000]
 		# 26-Jul-2007 15:20:52
 		# named 26-Jul-2007 15:20:52.252
 		# roundcube 26-Jul-2007 15:20:52 +0200
-		"%d(?P<_sep>[-/])%b(?P=_sep)%ExY[ :]?%H:%M:%S(?:\.%f)?(?: %z)?",
+		r"%d(?P<_sep>[-/])%b(?P=_sep)%ExY[ :]?%H:%M:%S(?:\.%f)?(?: %z)?",
 		# CPanel 05/20/2008:01:57:39
-		"%m/%d/%ExY:%H:%M:%S",
+		r"%m/%d/%ExY:%H:%M:%S",
 		# 01-27-2012 16:22:44.252
 		# subseconds explicit to avoid possible %m<->%d confusion
 		# with previous ("%d-%m-%ExY %k:%M:%S" by "%d(?P<_sep>[-/])%m(?P=_sep)(?:%ExY|%Exy) %k:%M:%S")
-		"%m-%d-%ExY %k:%M:%S(?:\.%f)?",
+		r"%m-%d-%ExY %k:%M:%S(?:\.%f)?",
 		# Epoch
-		"EPOCH",
+		r"EPOCH",
 		# Only time information in the log
-		"{^LN-BEG}%H:%M:%S",
+		r"{^LN-BEG}%H:%M:%S",
 		# <09/16/08@05:03:30>
-		"^<%m/%d/%Exy@%H:%M:%S>",
+		r"^<%m/%d/%Exy@%H:%M:%S>",
 		# MySQL: 130322 11:46:11
-		"%Exy%Exm%Exd  ?%H:%M:%S",
+		r"%Exy%Exm%Exd  ?%H:%M:%S",
 		# Apache Tomcat
-		"%b %d, %ExY %I:%M:%S %p",
+		r"%b %d, %ExY %I:%M:%S %p",
 		# ASSP: Apr-27-13 02:33:06
-		"^%b-%d-%Exy %k:%M:%S",
+		r"^%b-%d-%Exy %k:%M:%S",
 		# 20050123T215959, 20050123 215959, 20050123  85959
-		"%ExY%Exm%Exd(?:T|  ?)%ExH%ExM%ExS(?:[.,]%f)?(?:\s*%z)?",
+		r"%ExY%Exm%Exd(?:T|  ?)%ExH%ExM%ExS(?:[.,]%f)?(?:\s*%z)?",
 		# prefixed with optional named time zone (monit):
 		# PDT Apr 16 21:05:29
-		"(?:%Z )?(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?",
+		r"(?:%Z )?(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?",
 		# +00:00 Jan 23 21:59:59.011 2005 
-		"(?:%z )?(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?",
+		r"(?:%z )?(?:%a )?%b %d %k:%M:%S(?:\.%f)?(?: %ExY)?",
 		# TAI64N
-		"TAI64N",
+		r"TAI64N",
 	]
 
 	@property

@@ -41,7 +41,7 @@ from ..server.jailthread import JailThread
 from ..server.ticket import BanTicket
 from ..server.utils import Utils
 from .dummyjail import DummyJail
-from .utils import LogCaptureTestCase
+from .utils import LogCaptureTestCase, with_alt_time, MyTime
 from ..helpers import getLogger, extractOptions, PREFER_ENC
 from .. import version
 
@@ -197,6 +197,8 @@ class Transmitter(TransmitterBase):
 		self.setGetTest("dbfile", tmpFilename)
 		# the same file name (again no jails / not changed):
 		self.setGetTest("dbfile", tmpFilename)
+		self.setGetTest("dbmaxmatches", "100", 100)
+		self.setGetTestNOK("dbmaxmatches", "LIZARD")
 		self.setGetTest("dbpurgeage", "600", 600)
 		self.setGetTestNOK("dbpurgeage", "LIZARD")
 		# the same file name (again with jails / not changed):
@@ -210,6 +212,12 @@ class Transmitter(TransmitterBase):
 			(0, None))
 		self.assertEqual(self.transm.proceed(
 			["get", "dbfile"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["set", "dbmaxmatches", "100"]),
+			(0, None))
+		self.assertEqual(self.transm.proceed(
+			["get", "dbmaxmatches"]),
 			(0, None))
 		self.assertEqual(self.transm.proceed(
 			["set", "dbpurgeage", "500"]),
@@ -330,22 +338,99 @@ class Transmitter(TransmitterBase):
 		self.server.startJail(self.jailName) # Jail must be started
 
 		self.assertEqual(
-			self.transm.proceed(["set", self.jailName, "banip", "127.0.0.1"]),
-			(0, "127.0.0.1"))
-		self.assertLogged("Ban 127.0.0.1", wait=True) # Give chance to ban
+			self.transm.proceed(["set", self.jailName, "banip", "192.0.2.1", "192.0.2.1", "192.0.2.2"]),
+			(0, 2))
+		self.assertLogged("Ban 192.0.2.1", "Ban 192.0.2.2", all=True, wait=True) # Give chance to ban
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "banip", "Badger"]),
-			(0, "Badger")) #NOTE: Is IP address validated? Is DNS Lookup done?
+			(0, 1)) #NOTE: Is IP address validated? Is DNS Lookup done?
 		self.assertLogged("Ban Badger", wait=True) # Give chance to ban
-		# Unban IP
+		# Unban IP (first/last are not banned, so checking unban of both other succeeds):
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "unbanip", "127.0.0.1"]),
-			(0, "127.0.0.1"))
-		# Unban IP which isn't banned
+				["set", self.jailName, "unbanip", "192.0.2.255", "192.0.2.1", "192.0.2.2", "192.0.2.254"]),
+			(0, 2))
+		self.assertLogged("Unban 192.0.2.1", "Unban 192.0.2.2", all=True, wait=True)
+		self.assertLogged("192.0.2.255 is not banned", "192.0.2.254 is not banned", all=True, wait=True)
+		self.pruneLog()
+		# Unban IP which isn't banned (error):
 		self.assertEqual(
 			self.transm.proceed(
-				["set", self.jailName, "unbanip", "192.168.1.1"])[0],1)
+				["set", self.jailName, "unbanip", "--report-absent", "192.0.2.255"])[0],1)
+		# ... (no error, IPs logged only):
+		self.assertEqual(
+			self.transm.proceed(
+				["set", self.jailName, "unbanip", "192.0.2.255", "192.0.2.254"]),(0, 0))
+		self.assertLogged("192.0.2.255 is not banned", "192.0.2.254 is not banned", all=True, wait=True)
+
+	def testJailAttemptIP(self):
+		self.server.startJail(self.jailName) # Jail must be started
+
+		def attempt(ip, matches):
+			return self.transm.proceed(["set", self.jailName, "attempt", ip] + matches)
+
+		self.setGetTest("maxretry", "5", 5, jail=self.jailName)
+		# produce 2 single attempts per IP:
+		for i in (1, 2):
+			for ip in ("192.0.2.1", "192.0.2.2"):
+				self.assertEqual(attempt(ip, ["test failure %d" % i]), (0, 1))
+		self.assertLogged("192.0.2.1:2", "192.0.2.2:2", all=True, wait=True)
+		# this 3 attempts at once should cause a ban:
+		self.assertEqual(attempt(ip, ["test failure %d" % i for i in (3,4,5)]), (0, 1))
+		self.assertLogged("192.0.2.2:5", wait=True)
+		# resulted to ban for "192.0.2.2" but not for "192.0.2.1":
+		self.assertLogged("Ban 192.0.2.2", wait=True)
+		self.assertNotLogged("Ban 192.0.2.1")
+
+	@with_alt_time
+	def testJailBanList(self):
+		jail = "TestJailBanList"
+		self.server.addJail(jail, FAST_BACKEND)
+		self.server.startJail(jail)
+
+		# Helper to process set banip/set unbanip commands and compare the list of
+		# banned IP addresses with outList.
+		def _getBanListTest(jail, banip=None, unbanip=None, args=(), outList=[]):
+			# Ban IP address
+			if banip is not None:
+				self.assertEqual(
+					self.transm.proceed(["set", jail, "banip", banip]),
+					(0, 1))
+				self.assertLogged("Ban %s" % banip, wait=True) # Give chance to ban
+			# Unban IP address
+			if unbanip is not None:
+				self.assertEqual(
+					self.transm.proceed(["set", jail, "unbanip", unbanip]),
+					(0, 1))
+				self.assertLogged("Unban %s" % unbanip, wait=True) # Give chance to unban
+			# Compare the list of banned IP addresses with outList
+			self.assertSortedEqual(
+				self.transm.proceed(["get", jail, "banip"]+list(args)),
+				(0, outList), nestedOnly=False)
+			MyTime.setTime(MyTime.time() + 1)
+
+		_getBanListTest(jail,
+			outList=[])
+		_getBanListTest(jail, banip="127.0.0.1", args=('--with-time',), 
+			outList=["127.0.0.1 \t2005-08-14 12:00:01 + 600 = 2005-08-14 12:10:01"])
+		_getBanListTest(jail, banip="192.168.0.1", args=('--with-time',), 
+			outList=[
+				"127.0.0.1 \t2005-08-14 12:00:01 + 600 = 2005-08-14 12:10:01",
+				"192.168.0.1 \t2005-08-14 12:00:02 + 600 = 2005-08-14 12:10:02"])
+		_getBanListTest(jail, banip="192.168.1.10",
+			outList=["127.0.0.1", "192.168.0.1", "192.168.1.10"])
+		_getBanListTest(jail, unbanip="127.0.0.1",
+			outList=["192.168.0.1", "192.168.1.10"])
+		_getBanListTest(jail, unbanip="192.168.1.10",
+			outList=["192.168.0.1"])
+		_getBanListTest(jail, unbanip="192.168.0.1",
+			outList=[])
+
+	def testJailMaxMatches(self):
+		self.setGetTest("maxmatches", "5", 5, jail=self.jailName)
+		self.setGetTest("maxmatches", "2", 2, jail=self.jailName)
+		self.setGetTest("maxmatches", "-2", -2, jail=self.jailName)
+		self.setGetTestNOK("maxmatches", "Duck", jail=self.jailName)
 
 	def testJailMaxRetry(self):
 		self.setGetTest("maxretry", "5", 5, jail=self.jailName)
@@ -711,7 +796,7 @@ class Transmitter(TransmitterBase):
 		self.assertSortedEqual(
 			self.transm.proceed(["get", self.jailName, "actionmethods",
 				action])[1],
-			['ban', 'start', 'stop', 'testmethod', 'unban'])
+			['ban', 'reban', 'start', 'stop', 'testmethod', 'unban'])
 		self.assertEqual(
 			self.transm.proceed(["set", self.jailName, "action", action,
 				"testmethod", '{"text": "world!"}']),
@@ -949,6 +1034,15 @@ class TransmitterLogging(TransmitterBase):
 		self.assertEqual(self.transm.proceed(["set", "logtarget", "STDERR"]), (0, "STDERR"))
 		self.assertEqual(self.transm.proceed(["flushlogs"]), (0, "flushed"))
 
+	def testBanTimeIncr(self):
+		self.setGetTest("bantime.increment", "true", True, jail=self.jailName)
+		self.setGetTest("bantime.rndtime", "30min", 30*60, jail=self.jailName)
+		self.setGetTest("bantime.maxtime", "1000 days", 1000*24*60*60, jail=self.jailName)
+		self.setGetTest("bantime.factor", "2", "2", jail=self.jailName)
+		self.setGetTest("bantime.formula", "ban.Time * math.exp(float(ban.Count+1)*banFactor)/math.exp(1*banFactor)", jail=self.jailName)
+		self.setGetTest("bantime.multipliers", "1 5 30 60 300 720 1440 2880", "1 5 30 60 300 720 1440 2880", jail=self.jailName)
+		self.setGetTest("bantime.overalljails", "true", "true", jail=self.jailName)
+
 
 class JailTests(unittest.TestCase):
 
@@ -976,28 +1070,28 @@ class RegexTests(unittest.TestCase):
 	def testHost(self):
 		self.assertRaises(RegexException, FailRegex, '')
 		self.assertRaises(RegexException, FailRegex, '^test no group$')
-		self.assertTrue(FailRegex('^test <HOST> group$'))
-		self.assertTrue(FailRegex('^test <IP4> group$'))
-		self.assertTrue(FailRegex('^test <IP6> group$'))
-		self.assertTrue(FailRegex('^test <DNS> group$'))
-		self.assertTrue(FailRegex('^test id group: ip:port = <F-ID><IP4>(?::<F-PORT/>)?</F-ID>$'))
-		self.assertTrue(FailRegex('^test id group: user:\(<F-ID>[^\)]+</F-ID>\)$'))
-		self.assertTrue(FailRegex('^test id group: anything = <F-ID/>$'))
+		self.assertTrue(FailRegex(r'^test <HOST> group$'))
+		self.assertTrue(FailRegex(r'^test <IP4> group$'))
+		self.assertTrue(FailRegex(r'^test <IP6> group$'))
+		self.assertTrue(FailRegex(r'^test <DNS> group$'))
+		self.assertTrue(FailRegex(r'^test id group: ip:port = <F-ID><IP4>(?::<F-PORT/>)?</F-ID>$'))
+		self.assertTrue(FailRegex(r'^test id group: user:\(<F-ID>[^\)]+</F-ID>\)$'))
+		self.assertTrue(FailRegex(r'^test id group: anything = <F-ID/>$'))
 		# Testing obscure case when host group might be missing in the matched pattern,
 		# e.g. if we made it optional.
-		fr = FailRegex('%%<HOST>?')
+		fr = FailRegex(r'%%<HOST>?')
 		self.assertFalse(fr.hasMatched())
 		fr.search([('%%',"","")])
 		self.assertTrue(fr.hasMatched())
 		self.assertRaises(RegexException, fr.getHost)
 		# The same as above but using separated IPv4/IPv6 expressions
-		fr = FailRegex('%%inet(?:=<F-IP4/>|inet6=<F-IP6/>)?')
+		fr = FailRegex(r'%%inet(?:=<F-IP4/>|inet6=<F-IP6/>)?')
 		self.assertFalse(fr.hasMatched())
 		fr.search([('%%inet=test',"","")])
 		self.assertTrue(fr.hasMatched())
 		self.assertRaises(RegexException, fr.getHost)
 		# Success case: using separated IPv4/IPv6 expressions (no HOST)
-		fr = FailRegex('%%(?:inet(?:=<IP4>|6=<IP6>)?|dns=<DNS>?)')
+		fr = FailRegex(r'%%(?:inet(?:=<IP4>|6=<IP6>)?|dns=<DNS>?)')
 		self.assertFalse(fr.hasMatched())
 		fr.search([('%%inet=192.0.2.1',"","")])
 		self.assertTrue(fr.hasMatched())
@@ -1009,11 +1103,39 @@ class RegexTests(unittest.TestCase):
 		self.assertTrue(fr.hasMatched())
 		self.assertEqual(fr.getHost(), 'example.com')
 		# Success case: using user as failure-id
-		fr = FailRegex('^test id group: user:\(<F-ID>[^\)]+</F-ID>\)$')
+		fr = FailRegex(r'^test id group: user:\(<F-ID>[^\)]+</F-ID>\)$')
 		self.assertFalse(fr.hasMatched())
 		fr.search([('test id group: user:(test login name)',"","")])
 		self.assertTrue(fr.hasMatched())
 		self.assertEqual(fr.getFailID(), 'test login name')
+		# Success case: subnet with IPAddr (IP and subnet) conversion:
+		fr = FailRegex(r'%%net=<SUBNET>')
+		fr.search([('%%net=192.0.2.1',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('192.0.2.1', 'inet4'))
+		fr.search([('%%net=192.0.2.1/24',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('192.0.2.0/24', 'inet4'))
+		fr.search([('%%net=2001:DB8:FF:FF::1',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('2001:db8:ff:ff::1', 'inet6'))
+		fr.search([('%%net=2001:DB8:FF:FF::1/60',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('2001:db8:ff:f0::/60', 'inet6'))
+		# CIDR:
+		fr = FailRegex(r'%%ip="<ADDR>", mask="<CIDR>?"')
+		fr.search([('%%ip="192.0.2.2", mask=""',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('192.0.2.2', 'inet4'))
+		fr.search([('%%ip="192.0.2.2", mask="24"',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('192.0.2.0/24', 'inet4'))
+		fr.search([('%%ip="2001:DB8:2FF:FF::1", mask=""',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('2001:db8:2ff:ff::1', 'inet6'))
+		fr.search([('%%ip="2001:DB8:2FF:FF::1", mask="60"',"","")])
+		ip = fr.getIP()
+		self.assertEqual((ip, ip.familyStr), ('2001:db8:2ff:f0::/60', 'inet6'))
 
 
 class _BadThread(JailThread):
@@ -1088,8 +1210,20 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				logSys.debug(l)
 		return True
 
+	def _testActionInfos(self):
+		if not hasattr(self, '__aInfos'):
+			dmyjail = DummyJail()
+			self.__aInfos = {}
+			for t, ip in (('ipv4', '192.0.2.1'), ('ipv6', '2001:DB8::')):
+				ticket = BanTicket(ip)
+				ticket.setBanTime(600)
+				self.__aInfos[t] = _actions.Actions.ActionInfo(ticket, dmyjail)
+		return self.__aInfos
+
 	def _testExecActions(self, server):
 		jails = server._Server__jails
+
+		aInfos = self._testActionInfos()
 		for jail in jails:
 			# print(jail, jails[jail])
 			for a in jails[jail].actions:
@@ -1106,16 +1240,16 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				action.start()
 				# test ban ip4 :
 				logSys.debug('# === ban-ipv4 ==='); self.pruneLog()
-				action.ban({'ip': IPAddr('192.0.2.1'), 'family': 'inet4'})
+				action.ban(aInfos['ipv4'])
 				# test unban ip4 :
 				logSys.debug('# === unban ipv4 ==='); self.pruneLog()
-				action.unban({'ip': IPAddr('192.0.2.1'), 'family': 'inet4'})
+				action.unban(aInfos['ipv4'])
 				# test ban ip6 :
 				logSys.debug('# === ban ipv6 ==='); self.pruneLog()
-				action.ban({'ip': IPAddr('2001:DB8::'), 'family': 'inet6'})
+				action.ban(aInfos['ipv6'])
 				# test unban ip6 :
 				logSys.debug('# === unban ipv6 ==='); self.pruneLog()
-				action.unban({'ip': IPAddr('2001:DB8::'), 'family': 'inet6'})
+				action.unban(aInfos['ipv6'])
 				# test stop :
 				logSys.debug('# === stop ==='); self.pruneLog()
 				action.stop()
@@ -1215,6 +1349,101 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 		#   'start', 'stop' - should be found (logged) on action start/stop,
 		#   etc.
 		testJailsActions = (
+			# nftables-multiport --
+			('j-w-nft-mp', 'nftables-multiport[name=%(__name__)s, port="http,https", protocol="tcp,udp,sctp"]', {
+				'ip4': ('ip ', 'ipv4_addr', 'addr-'), 'ip6': ('ip6 ', 'ipv6_addr', 'addr6-'),
+				'*-start': (
+					r"`nft add table inet f2b-table`",
+					r"`nft -- add chain inet f2b-table f2b-chain \{ type filter hook input priority -1 \; \}`",
+					# iterator over protocol is same for both families:
+					r"`for proto in $(echo 'tcp,udp,sctp' | sed 's/,/ /g'); do`",
+					r"`done`",
+				),
+				'ip4-start': (
+					r"`nft add set inet f2b-table addr-set-j-w-nft-mp \{ type ipv4_addr\; \}`",
+					r"`nft add rule inet f2b-table f2b-chain $proto dport \{ http,https \} ip saddr @addr-set-j-w-nft-mp reject`",
+				), 
+				'ip6-start': (
+					r"`nft add set inet f2b-table addr6-set-j-w-nft-mp \{ type ipv6_addr\; \}`",
+					r"`nft add rule inet f2b-table f2b-chain $proto dport \{ http,https \} ip6 saddr @addr6-set-j-w-nft-mp reject`",
+				),
+				'flush': (
+					"`{ nft flush set inet f2b-table addr-set-j-w-nft-mp 2> /dev/null; } || ",
+					"`{ nft flush set inet f2b-table addr6-set-j-w-nft-mp 2> /dev/null; } || ",
+				),
+				'stop': (
+					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-mp\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
+					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
+					"`nft delete set inet f2b-table addr-set-j-w-nft-mp`",
+					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr6-set-j-w-nft-mp\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
+					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
+					"`nft delete set inet f2b-table addr6-set-j-w-nft-mp`",
+				),
+				'ip4-check': (
+					r"`nft list chain inet f2b-table f2b-chain | grep -q '@addr-set-j-w-nft-mp[ \t]'`",
+				),
+				'ip6-check': (
+					r"`nft list chain inet f2b-table f2b-chain | grep -q '@addr6-set-j-w-nft-mp[ \t]'`",
+				),
+				'ip4-ban': (
+					r"`nft add element inet f2b-table addr-set-j-w-nft-mp \{ 192.0.2.1 \}`",
+				),
+				'ip4-unban': (
+					r"`nft delete element inet f2b-table addr-set-j-w-nft-mp \{ 192.0.2.1 \}`",
+				),
+				'ip6-ban': (
+					r"`nft add element inet f2b-table addr6-set-j-w-nft-mp \{ 2001:db8:: \}`",
+				),
+				'ip6-unban': (
+					r"`nft delete element inet f2b-table addr6-set-j-w-nft-mp \{ 2001:db8:: \}`",
+				),					
+			}),
+			# nft-allports --
+			('j-w-nft-ap', 'nftables-allports[name=%(__name__)s, protocol="tcp,udp"]', {
+				'ip4': ('ip ', 'ipv4_addr', 'addr-'), 'ip6': ('ip6 ', 'ipv6_addr', 'addr6-'),
+				'*-start': (
+					r"`nft add table inet f2b-table`",
+					r"`nft -- add chain inet f2b-table f2b-chain \{ type filter hook input priority -1 \; \}`",
+				),
+				'ip4-start': (
+					r"`nft add set inet f2b-table addr-set-j-w-nft-ap \{ type ipv4_addr\; \}`",
+					r"`nft add rule inet f2b-table f2b-chain meta l4proto \{ tcp,udp \} ip saddr @addr-set-j-w-nft-ap reject`",
+				), 
+				'ip6-start': (
+					r"`nft add set inet f2b-table addr6-set-j-w-nft-ap \{ type ipv6_addr\; \}`",
+					r"`nft add rule inet f2b-table f2b-chain meta l4proto \{ tcp,udp \} ip6 saddr @addr6-set-j-w-nft-ap reject`",
+				),
+				'flush': (
+					"`{ nft flush set inet f2b-table addr-set-j-w-nft-ap 2> /dev/null; } || ",
+					"`{ nft flush set inet f2b-table addr6-set-j-w-nft-ap 2> /dev/null; } || ",
+				),
+				'stop': (
+					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr-set-j-w-nft-ap\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
+					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
+					"`nft delete set inet f2b-table addr-set-j-w-nft-ap`",
+					"`{ nft -a list chain inet f2b-table f2b-chain | grep -oP '@addr6-set-j-w-nft-ap\s+.*\s+\Khandle\s+(\d+)$'; } | while read -r hdl; do`",
+					"`nft delete rule inet f2b-table f2b-chain $hdl; done`",
+					"`nft delete set inet f2b-table addr6-set-j-w-nft-ap`",
+				),
+				'ip4-check': (
+					r"""`nft list chain inet f2b-table f2b-chain | grep -q '@addr-set-j-w-nft-ap[ \t]'`""",
+				),
+				'ip6-check': (
+					r"""`nft list chain inet f2b-table f2b-chain | grep -q '@addr6-set-j-w-nft-ap[ \t]'`""",
+				),
+				'ip4-ban': (
+					r"`nft add element inet f2b-table addr-set-j-w-nft-ap \{ 192.0.2.1 \}`",
+				),
+				'ip4-unban': (
+					r"`nft delete element inet f2b-table addr-set-j-w-nft-ap \{ 192.0.2.1 \}`",
+				),
+				'ip6-ban': (
+					r"`nft add element inet f2b-table addr6-set-j-w-nft-ap \{ 2001:db8:: \}`",
+				),
+				'ip6-unban': (
+					r"`nft delete element inet f2b-table addr6-set-j-w-nft-ap \{ 2001:db8:: \}`",
+				),					
+			}),
 			# dummy --
 			('j-dummy', 'dummy[name=%(__name__)s, init="==", target="/tmp/fail2ban.dummy"]', {
 				'ip4': ('family: inet4',), 'ip6': ('family: inet6',),
@@ -1345,14 +1574,14 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),					
 			}),
 			# iptables-ipset-proto6 --
-			('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
+			('j-w-iptables-ipset', 'iptables-ipset-proto6[name=%(__name__)s, bantime="10m", default-timeout=0, port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': (' f2b-j-w-iptables-ipset ',), 'ip6': (' f2b-j-w-iptables-ipset6 ',),
 				'ip4-start': (
-					"`ipset create f2b-j-w-iptables-ipset hash:ip timeout 600`",
+					"`ipset create f2b-j-w-iptables-ipset hash:ip timeout 0`",
 					"`iptables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 				), 
 				'ip6-start': (
-					"`ipset create f2b-j-w-iptables-ipset6 hash:ip timeout 600 family inet6`",
+					"`ipset create f2b-j-w-iptables-ipset6 hash:ip timeout 0 family inet6`",
 					"`ip6tables -w -I INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 				),
 				'flush': (
@@ -1381,14 +1610,14 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),					
 			}),
 			# iptables-ipset-proto6-allports --
-			('j-w-iptables-ipset-ap', 'iptables-ipset-proto6-allports[name=%(__name__)s, bantime="10m", chain="<known/chain>"]', {
+			('j-w-iptables-ipset-ap', 'iptables-ipset-proto6-allports[name=%(__name__)s, bantime="10m", default-timeout=0, chain="<known/chain>"]', {
 				'ip4': (' f2b-j-w-iptables-ipset-ap ',), 'ip6': (' f2b-j-w-iptables-ipset-ap6 ',),
 				'ip4-start': (
-					"`ipset create f2b-j-w-iptables-ipset-ap hash:ip timeout 600`",
+					"`ipset create f2b-j-w-iptables-ipset-ap hash:ip timeout 0`",
 					"`iptables -w -I INPUT -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
 				), 
 				'ip6-start': (
-					"`ipset create f2b-j-w-iptables-ipset-ap6 hash:ip timeout 600 family inet6`",
+					"`ipset create f2b-j-w-iptables-ipset-ap6 hash:ip timeout 0 family inet6`",
 					"`ip6tables -w -I INPUT -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
 				),
 				'flush': (
@@ -1688,14 +1917,14 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),					
 			}),
 			# firewallcmd-ipset (multiport) --
-			('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
+			('j-w-fwcmd-ipset', 'firewallcmd-ipset[name=%(__name__)s, bantime="10m", default-timeout=0, port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': (' f2b-j-w-fwcmd-ipset ',), 'ip6': (' f2b-j-w-fwcmd-ipset6 ',),
 				'ip4-start': (
-					"`ipset create f2b-j-w-fwcmd-ipset hash:ip timeout 600`",
+					"`ipset create f2b-j-w-fwcmd-ipset hash:ip timeout 0`",
 					"`firewall-cmd --direct --add-rule ipv4 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset src -j REJECT --reject-with icmp-port-unreachable`",
 				), 
 				'ip6-start': (
-					"`ipset create f2b-j-w-fwcmd-ipset6 hash:ip timeout 600 family inet6`",
+					"`ipset create f2b-j-w-fwcmd-ipset6 hash:ip timeout 0 family inet6`",
 					"`firewall-cmd --direct --add-rule ipv6 filter INPUT_direct 0 -p tcp -m multiport --dports http -m set --match-set f2b-j-w-fwcmd-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`",
 				),
 				'flush': (
@@ -1778,10 +2007,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 
 		jails = server._Server__jails
 
-		tickets = {
-			'ip4': BanTicket('192.0.2.1'),
-			'ip6': BanTicket('2001:DB8::'),
-		}
+		aInfos = self._testActionInfos()
 		for jail, act, tests in testJailsActions:
 			# print(jail, jails[jail])
 			for a in jails[jail].actions:
@@ -1799,32 +2025,28 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					self.assertLogged(*tests['start'], all=True)
 				elif tests.get('ip4-start') and tests.get('ip6-start'):
 					self.assertNotLogged(*tests['ip4-start']+tests['ip6-start'], all=True)
-				ainfo = {
-					'ip4': _actions.Actions.ActionInfo(tickets['ip4'], jails[jail]),
-					'ip6': _actions.Actions.ActionInfo(tickets['ip6'], jails[jail]),
-				}
 				# test ban ip4 :
 				self.pruneLog('# === ban-ipv4 ===')
-				action.ban(ainfo['ip4'])
-				if tests.get('ip4-start'): self.assertLogged(*tests['ip4-start'], all=True)
+				action.ban(aInfos['ipv4'])
+				if tests.get('ip4-start'): self.assertLogged(*tests.get('*-start', ())+tests['ip4-start'], all=True)
 				if tests.get('ip6-start'): self.assertNotLogged(*tests['ip6-start'], all=True)
 				self.assertLogged(*tests.get('ip4-check',())+tests['ip4-ban'], all=True)
 				self.assertNotLogged(*tests['ip6'], all=True)
 				# test unban ip4 :
 				self.pruneLog('# === unban ipv4 ===')
-				action.unban(ainfo['ip4'])
+				action.unban(aInfos['ipv4'])
 				self.assertLogged(*tests.get('ip4-check',())+tests['ip4-unban'], all=True)
 				self.assertNotLogged(*tests['ip6'], all=True)
 				# test ban ip6 :
 				self.pruneLog('# === ban ipv6 ===')
-				action.ban(ainfo['ip6'])
-				if tests.get('ip6-start'): self.assertLogged(*tests['ip6-start'], all=True)
+				action.ban(aInfos['ipv6'])
+				if tests.get('ip6-start'): self.assertLogged(*tests.get('*-start', ())+tests['ip6-start'], all=True)
 				if tests.get('ip4-start'): self.assertNotLogged(*tests['ip4-start'], all=True)
 				self.assertLogged(*tests.get('ip6-check',())+tests['ip6-ban'], all=True)
 				self.assertNotLogged(*tests['ip4'], all=True)
 				# test unban ip6 :
 				self.pruneLog('# === unban ipv6 ===')
-				action.unban(ainfo['ip6'])
+				action.unban(aInfos['ipv6'])
 				self.assertLogged(*tests.get('ip6-check',())+tests['ip6-unban'], all=True)
 				self.assertNotLogged(*tests['ip4'], all=True)
 				# test flush for actions should supported this:
@@ -1839,12 +2061,19 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 
 	def _executeMailCmd(self, realCmd, timeout=60):
 		# replace pipe to mail with pipe to cat:
-		realCmd = re.sub(r'\)\s*\|\s*mail\b([^\n]*)',
-			r') | cat; printf "\\n... | "; echo mail \1', realCmd)
+		cmd = realCmd
+		if isinstance(realCmd, list):
+			cmd = realCmd[0]
+		cmd = re.sub(r'\)\s*\|\s*(\S*mail\b[^\n]*)',
+			r') | cat; printf "\\n... | "; echo \1', cmd)
 		# replace abuse retrieving (possible no-network), just replace first occurrence of 'dig...':
-		realCmd = re.sub(r'\bADDRESSES=\$\(dig\s[^\n]+',
+		cmd = re.sub(r'\bADDRESSES=\$\(dig\s[^\n]+',
 			lambda m: 'ADDRESSES="abuse-1@abuse-test-server, abuse-2@abuse-test-server"',
-				realCmd, 1)
+				cmd, 1)
+		if isinstance(realCmd, list):
+			realCmd[0] = cmd
+		else:
+			realCmd = cmd
 		# execute action:
 		return _actions.CommandAction.executeCmd(realCmd, timeout=timeout)
 
@@ -1864,6 +2093,26 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'ip4-ban': (
 					'The IP 87.142.124.10 has just been banned by Fail2Ban after',
 					'100 attempts against j-mail-whois-lines.',
+					'Here is more information about 87.142.124.10 :',
+					'-- information about 87.142.124.10 --',
+					'Lines containing failures of 87.142.124.10 (max 2)',
+					'testcase01.log:Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10',
+					'testcase01a.log:Dec 31 11:55:01 [sshd] error: PAM: Authentication failure for test from 87.142.124.10',
+				),
+			}),
+			# sendmail-whois-lines --
+			('j-sendmail-whois-lines', 
+				'sendmail-whois-lines['
+				  '''name=%(__name__)s, grepopts="-m 1", grepmax=2, mailcmd='testmail -f "<sender>" "<dest>"', ''' +
+					# 2 logs to test grep from multiple logs:
+				  'logpath="' + os.path.join(TEST_FILES_DIR, "testcase01.log") + '\n' +
+			    '         ' + os.path.join(TEST_FILES_DIR, "testcase01a.log") + '", '
+				  '_whois_command="echo \'-- information about <ip> --\'"'
+				  ']',
+			{
+				'ip4-ban': (
+					'The IP 87.142.124.10 has just been banned by Fail2Ban after',
+					'100 attempts against j-sendmail-whois-lines.',
 					'Here is more information about 87.142.124.10 :',
 					'-- information about 87.142.124.10 --',
 					'Lines containing failures of 87.142.124.10 (max 2)',
@@ -1897,6 +2146,31 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					'Lines containing failures of 2001:db8::1 (max 2)',
 					# both abuse mails should be separated with space:
 					'mail -s Hostname: test-host, family: inet6 - Abuse from 2001:db8::1 abuse-1@abuse-test-server abuse-2@abuse-test-server',
+				),
+			}),
+			# xarf-login-attack --
+			('j-xarf-abuse', 
+				'xarf-login-attack['
+				  'name=%(__name__)s, mailcmd="mail", mailargs="",' +
+				  # test reverse ip:
+				  'debug=1' +
+				  ']',
+			{
+				'ip4-ban': (
+					# test reverse ip:
+					'try to resolve 10.124.142.87.abuse-contacts.abusix.org',
+					'We have detected abuse from the IP address 87.142.124.10',
+					'Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10',
+					'Dec 31 11:55:01 [sshd] error: PAM: Authentication failure for test from 87.142.124.10',
+					# both abuse mails should be separated with space:
+					'mail abuse-1@abuse-test-server abuse-2@abuse-test-server',
+				),
+				'ip6-ban': (
+					# test reverse ip:
+					'try to resolve 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.abuse-contacts.abusix.org',
+					'We have detected abuse from the IP address 2001:db8::1',
+					# both abuse mails should be separated with space:
+					'mail abuse-1@abuse-test-server abuse-2@abuse-test-server',
 				),
 			}),
 		)
@@ -1936,6 +2210,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					self.pruneLog('# === %s ===' % test)
 					ticket = BanTicket(ip)
 					ticket.setAttempt(100)
+					ticket.setMatches([
+						'Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 87.142.124.10',
+						'Dec 31 11:55:01 [sshd] error: PAM: Authentication failure for test from 87.142.124.10'
+					])
 					ticket = _actions.Actions.ActionInfo(ticket, dmyjail)
 					action.ban(ticket)
 					self.assertLogged(*tests[test], all=True)

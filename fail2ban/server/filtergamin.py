@@ -64,7 +64,7 @@ class FilterGamin(FileFilter):
 		logSys.debug("Created FilterGamin")
 
 	def callback(self, path, event):
-		logSys.debug("Got event: " + repr(event) + " for " + path)
+		logSys.log(4, "Got event: " + repr(event) + " for " + path)
 		if event in (gamin.GAMCreated, gamin.GAMChanged, gamin.GAMExists):
 			logSys.debug("File changed: " + path)
 			self.__modified = True
@@ -79,12 +79,7 @@ class FilterGamin(FileFilter):
 		this is a common logic and must be shared/provided by FileFilter
 		"""
 		self.getFailures(path)
-		try:
-			while True:
-				ticket = self.failManager.toBan()
-				self.jail.putFailTicket(ticket)
-		except FailManagerEmpty:
-			self.failManager.cleanup(MyTime.time())
+		self.performBan()
 		self.__modified = False
 
 	##

@@ -31,7 +31,7 @@ import unittest
 from ..client.configreader import ConfigReader, ConfigReaderUnshared, \
 	DefinitionInitConfigReader, NoSectionError
 from ..client import configparserinc
-from ..client.jailreader import JailReader, extractOptions
+from ..client.jailreader import JailReader, extractOptions, splitWithOptions
 from ..client.filterreader import FilterReader
 from ..client.jailsreader import JailsReader
 from ..client.actionreader import ActionReader, CommandAction
@@ -302,6 +302,32 @@ class JailReaderTest(LogCaptureTestCase):
 		self.assertEqual(jail.getName(), 'sshd')
 		jail.setName('ssh-funky-blocker')
 		self.assertEqual(jail.getName(), 'ssh-funky-blocker')
+
+	def testOverrideFilterOptInJail(self):
+		unittest.F2B.SkipIfCfgMissing(stock=True); # expected include of common.conf
+		jail = JailReader('sshd-override-flt-opts', basedir=IMPERFECT_CONFIG,
+			share_config=IMPERFECT_CONFIG_SHARE_CFG, force_enable=True)
+		self.assertTrue(jail.read())
+		self.assertTrue(jail.getOptions())
+		self.assertTrue(jail.isEnabled())
+		stream = jail.convert()
+		# check filter options are overriden with values specified directly in jail:
+		# prefregex:
+		self.assertEqual([['set', 'sshd-override-flt-opts', 'prefregex', '^Test']],
+			[o for o in stream if len(o) > 2 and o[2] == 'prefregex'])
+		# journalmatch:
+		self.assertEqual([['set', 'sshd-override-flt-opts', 'addjournalmatch', '_COMM=test']],
+			[o for o in stream if len(o) > 2 and o[2] == 'addjournalmatch'])
+		# maxlines:
+		self.assertEqual([['set', 'sshd-override-flt-opts', 'maxlines', 2]],
+			[o for o in stream if len(o) > 2 and o[2] == 'maxlines'])
+		# usedns should be before all regex in jail stream:
+		usednsidx = stream.index(['set', 'sshd-override-flt-opts', 'usedns', 'no'])
+		i = 0
+		for o in stream:
+			self.assertFalse(len(o) > 2 and o[2].endswith('regex'))
+			i += 1
+			if i > usednsidx: break
 		
 	def testSplitOption(self):
 		# Simple example
@@ -752,7 +778,7 @@ class JailsReaderTest(LogCaptureTestCase):
 
 			# somewhat duplicating here what is done in JailsReader if
 			# the jail is enabled
-			for act in actions.split('\n'):
+			for act in splitWithOptions(actions):
 				actName, actOpt = extractOptions(act)
 				self.assertTrue(len(actName))
 				self.assertTrue(isinstance(actOpt, dict))
@@ -878,21 +904,23 @@ class JailsReaderTest(LogCaptureTestCase):
 							 % (option, commands))
 
 		# Set up of logging should come first
-		self.assertEqual(find_set('syslogsocket'), 0)
-		self.assertEqual(find_set('loglevel'), 1)
-		self.assertEqual(find_set('logtarget'), 2)
-		# then dbfile should be before dbpurgeage
+		self.assertTrue(
+			find_set('syslogsocket') < find_set('loglevel') < find_set('logtarget')
+		)
+		# then dbfile should be before dbmaxmatches and dbpurgeage
 		self.assertTrue(find_set('dbpurgeage') > find_set('dbfile'))
+		self.assertTrue(find_set('dbmaxmatches') > find_set('dbfile'))
 
 		# and there is logging information left to be passed into the
 		# server
-		self.assertSortedEqual(commands,
-						 [['set', 'dbfile',
-							'/var/lib/fail2ban/fail2ban.sqlite3'],
-						  ['set', 'dbpurgeage', '1d'],
-						  ['set', 'loglevel', "INFO"],
-						  ['set', 'logtarget', '/var/log/fail2ban.log'],
-						  ['set', 'syslogsocket', 'auto']])
+		self.assertSortedEqual(commands,[
+		  ['set', 'syslogsocket', 'auto'],
+		  ['set', 'loglevel', "INFO"],
+		  ['set', 'logtarget', '/var/log/fail2ban.log'],
+		  ['set', 'dbfile', '/var/lib/fail2ban/fail2ban.sqlite3'],
+		  ['set', 'dbmaxmatches', 10],
+		  ['set', 'dbpurgeage', '1d'],
+		 ])
 
 		# and if we force change configurator's fail2ban's baseDir
 		# there should be an error message (test visually ;) --

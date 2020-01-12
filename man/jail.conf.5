@@ -127,9 +127,7 @@ Comments: use '#' for comment lines and '; ' (space is important) for inline com
 
 .SH "FAIL2BAN CONFIGURATION FILE(S) (\fIfail2ban.conf\fB)"
 
-These files have one section, [Definition].
-
-The items that can be set are:
+The items that can be set in section [Definition] are:
 .TP
 .B loglevel
 verbosity level of log output: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG, TRACEDEBUG, HEAVYDEBUG or corresponding numeric value (50-5). Default: ERROR (equal 40)
@@ -158,10 +156,24 @@ Database filename. Default: /var/lib/fail2ban/fail2ban.sqlite3
 .br
 This defines where the persistent data for fail2ban is stored. This persistent data allows bans to be reinstated and continue reading log files from the last read position when fail2ban is restarted. A value of \fINone\fR disables this feature.
 .TP
+.B dbmaxmatches
+Max number of matches stored in database per ticket. Default: 10
+.br
+This option sets the max number of matched log-lines could be stored per ticket in the database. This also affects values resolvable via tags \fB<ipmatches>\fR and \fB<ipjailmatches>\fR in actions.
+.TP
 .B dbpurgeage
 Database purge age in seconds. Default: 86400 (24hours)
 .br
 This sets the age at which bans should be purged from the database.
+
+.RE
+The config parameters of section [Thread] are:
+
+.TP
+.B stacksize
+Stack size of each thread in fail2ban. Default: 0 (platform or configured default)
+.br
+This specifies the stack size (in KiB) to be used for subsequently created threads, and must be 0 or a positive integer value of at least 32.
 
 .SH "JAIL CONFIGURATION FILE(S) (\fIjail.conf\fB)"
 The following options are applicable to any jail. They appear in a section specifying the jail name or in the \fI[DEFAULT]\fR section which defines default values to be used if not specified in the individual section.
@@ -265,10 +277,13 @@ It defaults to "auto" which will try "pyinotify", "gamin", "systemd" before "pol
 use DNS to resolve HOST names that appear in the logs. By default it is "warn" which will resolve hostnames to IPs however it will also log a warning. If you are using DNS here you could be blocking the wrong IPs due to the asymmetric nature of reverse DNS (that the application used to write the domain name to log) compared to forward DNS that fail2ban uses to resolve this back to an IP (but not necessarily the same one). Ideally you should configure your applications to log a real IP. This can be set to "yes" to prevent warnings in the log or "no" to disable DNS resolution altogether (thus ignoring entries where hostname, not an IP is logged)..
 .TP
 .B failregex
-regex (Python \fBreg\fRular \fBex\fRpression) to be added to the filter's failregexes. If this is useful for others using your application please share you regular expression with the fail2ban developers by reporting an issue (see REPORTING BUGS below).
+regex (Python \fBreg\fRular \fBex\fRpression) to be added to the filter's failregexes (see \fBfailregex\fR in section FILTER FILES for details). If this is useful for others using your application please share you regular expression with the fail2ban developers by reporting an issue (see REPORTING BUGS below).
 .TP
 .B ignoreregex
 regex which, if the log line matches, would cause Fail2Ban not consider that line.  This line will be ignored even if it matches a failregex of the jail or any of its filters.
+.TP
+.B maxmatches
+max number of matched log-lines the jail would hold in memory per ticket. By default it is the same value as \fBmaxretry\fR of jail (or default).  This option also affects values resolvable via tag \fB<matches>\fR in actions.
 
 .SS Backends
 Available options are listed below.
@@ -413,8 +428,24 @@ Like action files, filter files are ini files. The main section is the [Definiti
 There are two filter definitions used in the [Definition] section:
 .TP
 .B failregex
-is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The tag \fI<HOST>\fR is used as part of the regex and is itself a regex
-for IPv4 addresses (and hostnames if \fBusedns\fR). Fail2Ban will work out which one of these it actually is.
+is the regex (\fBreg\fRular \fBex\fRpression) that will match failed attempts. The standard replacement tags can be used as part of the regex:
+.RS
+.IP
+\fI<HOST>\fR - common regex for IP addresses and hostnames (if \fBusedns\fR is enabled). Fail2Ban will work out which one of these it actually is.
+.IP
+\fI<ADDR>\fR - regex for IP addresses (both families).
+.IP
+\fI<IP4>\fR - regex for IPv4 addresses.
+.IP
+\fI<IP6>\fR - regex for IPv6 addresses (also IP enclosed in brackets).
+.IP
+\fI<DNS>\fR - regex to match hostnames.
+.IP
+\fI<CIDR>\fR - helper regex to match CIDR (simple integer form of net-mask).
+.IP
+\fI<SUBNET>\fR - regex to match sub-net adresses (in form of IP/CIDR, also single IP is matched, so part /CIDR is optional).
+.RE
+.TP
 For multiline regexs the tag \fI<SKIPLINES>\fR should be used to separate lines. This allows lines between the matched lines to continue to be searched for other failures. The tag can be used multiple times.
 
 .TP

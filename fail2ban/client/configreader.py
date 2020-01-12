@@ -120,6 +120,9 @@ class ConfigReader():
 		except AttributeError:
 			return False
 
+	def merge_defaults(self, d):
+		self._cfg.get_defaults().update(d)
+
 	def merge_section(self, section, *args, **kwargs):
 		try:
 			return self._cfg.merge_section(section, *args, **kwargs)
@@ -239,8 +242,10 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 			try:
 				if opttype == "bool":
 					v = self.getboolean(sec, optname)
+					if v is None: continue
 				elif opttype == "int":
 					v = self.getint(sec, optname)
+					if v is None: continue
 				else:
 					v = self.get(sec, optname, vars=pOptions)
 				values[optname] = v

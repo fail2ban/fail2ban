@@ -12,4 +12,9 @@ class TestAction(ActionBase):
         del aInfo['ip']
         self._logSys.info("%s unban deleted aInfo IP", self._name)
 
+    def flush(self):
+        # intended error to cover no unhandled exception occurs in flush
+        # as well as unbans are done individually after errored flush.
+        raise ValueError("intended error")
+
 Action = TestAction
