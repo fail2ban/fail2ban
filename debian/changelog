@@ -1,4 +1,4 @@
-fail2ban (0.11.1-1) UNRELEASED; urgency=medium
+fail2ban (0.11.1-1) experimental; urgency=medium
 
   [ Sylvestre Ledru ]
   * New upstream release (Closes: #922539)
