@@ -5,6 +5,7 @@ fail2ban (0.11.1-1) UNRELEASED; urgency=medium
   * Import fail2ban in the Debian Python Umbrella (Closes: #947926)
   * Remove the old dep to Python (Closes: #945670)
   * Run ./fail2ban-2to3 as part of the build to be Python 3 ready
+  * Update to SV: 4.4.1
 
   [ Jelmer Vernooĳ ]
   * Use secure URI in Vcs control header.
