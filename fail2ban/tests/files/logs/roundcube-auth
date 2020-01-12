@@ -8,19 +8,27 @@ Jul 11 03:06:37 myhostname roundcube: IMAP Error: Login failed for admin from 1.
 # Made up to attempts to inject a DoS on the server. Assume the user can manipulate the IMAP error response
 #
 # user = admin from 127.0.0.1
-# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4" }
+# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4", "desc": "Injecting on username 1" }
 Jul 11 03:06:37 myhostname roundcube: IMAP Error: Login failed for admin from 127.0.0.1 from 1.2.3.4. AUTHENTICATE PLAIN: A0002 NO Login failed. in /usr/share/roundcube/program/include/rcube_imap.php on line 205 (POST /wmail/?_task=login&_action=login)
+# user = admin from 127.0.0.1.
+# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4", "desc": "Injecting on username 1 (with dot)" }
+Jul 11 03:06:37 myhostname roundcube: IMAP Error: Login failed for admin from 127.0.0.1. from 1.2.3.4. AUTHENTICATE PLAIN: A0002 NO Login failed. in /usr/share/roundcube/program/include/rcube_imap.php on line 205 (POST /wmail/?_task=login&_action=login)
+#
 #
 # IMAP server logs user=${username}
-# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4" }
+# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4", "desc": "Injecting on username 2" }
 Jul 11 03:06:37 myhostname roundcube: IMAP Error: Login failed for admin from 127.0.0.1 from 1.2.3.4. AUTHENTICATE PLAIN: A0002 NO Login failed. user=admin from 127.0.0.1 in /usr/share/roundcube/program/include/rcube_imap.php on line 205 (POST /wmail/?_task=login&_action=login)
 #
+# IMAP server logs user=${username}
+# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4", "desc": "Injecting on username 2 (with dot)" }
+Jul 11 03:06:37 myhostname roundcube: IMAP Error: Login failed for admin from 127.0.0.1. from 1.2.3.4. AUTHENTICATE PLAIN: A0002 NO Login failed. user=admin from 127.0.0.1. in /usr/share/roundcube/program/include/rcube_imap.php on line 205 (POST /wmail/?_task=login&_action=login)
+#
 # Old roundcube version - no IMAP response
-# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4" }
+# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4", "desc": "Injecting on username 3" }
 Jul 11 03:06:37 myhostname roundcube: IMAP Error: Login failed for admin from 127.0.0.1 from 1.2.3.4
 #
 # user = admin from 127.0.0.1 in 
-# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4" }
+# failJSON: { "time": "2005-07-11T03:06:37", "match": true , "host": "1.2.3.4", "desc": "Injecting on username 4" }
 Jul 11 03:06:37 myhostname roundcube: IMAP Error: Login failed for admin from 127.0.0.1 in from 1.2.3.4. AUTHENTICATE PLAIN: A0002 NO Login failed. user=admin from 127.0.0.1 in in /usr/share/roundcube/program/include/rcube_imap.php on line 205 (POST /wmail/?_task=login&_action=login)
 
 # Roundcube 1.0.5 CentOS 6 (/var/log/roundcubemail/errors)
@@ -40,3 +48,9 @@ Jul 11 03:06:37 myhostname roundcube: IMAP Error: Login failed for admin from 12
 # Roundcube 1.1.1 (/var/log/roundcubemail/userlogins)
 # failJSON: { "time": "2015-05-10T19:02:52", "match": true , "host": "1.2.3.4" }
 [10-May-2015 13:02:52 -0400]: <4z506z6r> Failed login for admin@example.com from 1.2.3.4 in session 4z506z6rvddstv6k7jz08hxo27 (error: 0)
+
+# failJSON: { "time": "2016-01-17T10:09:06", "match": true , "host": "192.0.2.2", "desc": "X-Real-IP or/and X-Forwarded-For in-between, gh-1303"}
+[17-Jan-2016 11:09:06 +0200]: <j2pncet8> IMAP Error: Login failed for user@example.com from 192.0.2.2(X-Real-IP: 192.0.2.3,X-Forwarded-For: 192.0.2.4). AUTHENTICATE PLAIN: Authentication failed. in /usr/share/roundcubemail/program/lib/Roundcube/rcube_imap.php on line 197 (POST /?_task=login?_task=login&_action=login)
+
+# failJSON: { "time": "2005-05-19T06:07:48", "match": true , "host": "192.0.2.1", "desc": "Roundcube logged to journald instead to a local file."}
+May 19 06:07:48 server roundcube[21296]: <crk9n97i> IMAP Error: Login failed for test from 192.0.2.1. AUTHENTICATE PLAIN: Authentication failed. in /usr/share/php5/Roundcube/rcube_imap.php on line 193 (POST /mail/?_task=login&_action=login)

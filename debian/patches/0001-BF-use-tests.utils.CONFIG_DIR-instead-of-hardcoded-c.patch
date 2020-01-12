@@ -1,0 +1,34 @@
+From 1200f6388a9602e0248171b1a6cb75e073cb96b2 Mon Sep 17 00:00:00 2001
+From: Yaroslav Halchenko <debian@onerussian.com>
+Date: Sun, 21 Jan 2018 20:15:56 -0500
+Subject: [PATCH 1/4] BF: use tests.utils.CONFIG_DIR instead of hardcoded
+ "config" in fail2banclienttestcase
+
+Since otherwise cannot provide custom path to the config via env var
+and thus cannot test in a build directory which is out of source
+---
+ fail2ban/tests/fail2banclienttestcase.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fail2ban/tests/fail2banclienttestcase.py b/fail2ban/tests/fail2banclienttestcase.py
+index 1e2d1b33..65653a8e 100644
+--- a/fail2ban/tests/fail2banclienttestcase.py
++++ b/fail2ban/tests/fail2banclienttestcase.py
+@@ -44,13 +44,13 @@ from ..server import server
+ from ..server.mytime import MyTime
+ from ..server.utils import Utils
+ from .utils import LogCaptureTestCase, logSys as DefLogSys, with_tmpdir, shutil, logging
++from .utils import CONFIG_DIR as STOCK_CONF_DIR
+ 
+ from ..helpers import getLogger
+ 
+ # Gets the instance of the logger.
+ logSys = getLogger(__name__)
+ 
+-STOCK_CONF_DIR = "config"
+ STOCK = exists(pjoin(STOCK_CONF_DIR, 'fail2ban.conf'))
+ 
+ CLIENT = "fail2ban-client"
+-- 
+2.15.1
+

@@ -1,0 +1,22 @@
+--- a/fail2ban/tests/config/filter.d/zzz-generic-example.conf
++++ b/fail2ban/tests/config/filter.d/zzz-generic-example.conf
+@@ -8,7 +8,7 @@
+ # Read common prefixes. If any customizations available -- read them from
+ # common.local.  common.conf is a symlink to the original common.conf and
+ # should be copied (dereferenced) during installation
+-before = ../../../../config/filter.d/common.conf
++before = ../../../../../../../config/filter.d/common.conf
+ 
+ [Definition]
+ 
+--- a/fail2ban/tests/config/filter.d/zzz-sshd-obsolete-multiline.conf
++++ b/fail2ban/tests/config/filter.d/zzz-sshd-obsolete-multiline.conf
+@@ -5,7 +5,7 @@
+ 
+ # Read common prefixes. If any customizations available -- read them from
+ # common.local
+-before = ../../../../config/filter.d/common.conf
++before = ../../../../../../../config/filter.d/common.conf
+ 
+ [DEFAULT]
+ 

@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e
+
+if dpkg-maintscript-helper supports mv_conffile 2>/dev/null; then
+    dpkg-maintscript-helper mv_conffile /etc/fail2ban/action.d/firewall-cmd-direct-new.conf /etc/fail2ban/action.d/firewallcmd-new.conf 0.8.13-1~ -- "$@"
+    dpkg-maintscript-helper mv_conffile /etc/fail2ban/filter.d/lighttpd-fastcgi.conf /etc/fail2ban/filter.d/suhosin.conf 0.8.13-1~ -- "$@"
+    dpkg-maintscript-helper mv_conffile /etc/fail2ban/filter.d/sasl.conf /etc/fail2ban/filter.d/postfix-sasl.conf 0.8.13-1~ -- "$@"
+    dpkg-maintscript-helper mv_conffile /etc/fail2ban/filter.d/couriersmtp.conf /etc/fail2ban/filter.d/courier-smtp.conf 0.9.0-1~ -- "$@"
+    dpkg-maintscript-helper mv_conffile /etc/fail2ban/filter.d/courierlogin.conf /etc/fail2ban/filter.d/courier-auth.conf 0.9.0-1~ -- "$@"
+fi
+
+#DEBHELPER#
+
+exit 0

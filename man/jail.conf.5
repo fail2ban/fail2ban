@@ -90,11 +90,16 @@ indicates that the specified file is to be parsed after the current file.
 .RE
 
 Using Python "string interpolation" mechanisms, other definitions are allowed and can later be used within other definitions as %(name)s.
-Additionally fail2ban has an extended interpolation feature named \fB%(known/parameter)s\fR (means last known option with name \fBparameter\fR). This interpolation makes possible to extend a stock filter or jail regexp in .local file (opposite to simply set failregex/ignoreregex that overwrites it), e.g.
+
+Fail2ban has more advanced syntax (similar python extended interpolation). This extended interpolation is using \fB%(section/parameter)s\fR to denote a value from a foreign section.
+.br
+Besides cross section interpolation the value of parameter in \fI[DEFAULT]\fR section can be retrieved with \fB%(default/parameter)s\fR.
+.br
+Fail2ban supports also another feature named \fB%(known/parameter)s\fR (means last known option with name \fBparameter\fR). This interpolation makes possible to extend a stock filter or jail regexp in .local file (opposite to simply set failregex/ignoreregex that overwrites it), e.g.
 
 .RS
 .nf
-baduseragents = IE|wget
+baduseragents = IE|wget|%(my-settings/baduseragents)s
 failregex = %(known/failregex)s
             useragent=%(baduseragents)s
 .fi
@@ -127,10 +132,12 @@ These files have one section, [Definition].
 The items that can be set are:
 .TP
 .B loglevel
-verbosity level of log output: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG. Default: ERROR
+verbosity level of log output: CRITICAL, ERROR, WARNING, NOTICE, INFO, DEBUG, TRACEDEBUG, HEAVYDEBUG or corresponding numeric value (50-5). Default: ERROR (equal 40)
 .TP
 .B logtarget
-log target: filename, SYSLOG, STDERR or STDOUT. Default: STDERR
+log target: filename, SYSLOG, STDERR or STDOUT. Default: STDOUT if not set in fail2ban.conf/fail2ban.local
+.br
+Note. If fail2ban running as systemd-service, for logging to the systemd-journal, the logtarget could be set to STDOUT
 .br
 Only a single log target can be specified.
 If you change logtarget from the default value and you are using logrotate -- also adjust or disable rotation in the
@@ -176,6 +183,25 @@ Ensure syslog or the program that generates the log file isn't configured to com
 .B logencoding
 encoding of log files used for decoding. Default value of "auto" uses current system locale.
 .TP
+.B logtimezone
+Force the time zone for log lines that don't have one.
+
+If this option is not specified, log lines from which no explicit time zone has been found are interpreted by fail2ban in its own system time zone, and that may turn to be inappropriate. While the best practice is to configure the monitored applications to include explicit offsets, this option is meant to handle cases where that is not possible.
+
+The supported time zones in this option are those with fixed offset: Z, UTC[+-]hhmm (you can also use GMT as an alias to UTC).
+
+This option has no effect on log lines on which an explicit time zone has been found.
+Examples:
+
+.RS
+.nf
+        logtimezone = UTC
+        logtimezone = UTC+0200
+        logtimezone = GMT-0100
+.fi
+.RE
+
+.TP
 .B banaction
 banning action (default iptables-multiport) typically specified in the \fI[DEFAULT]\fR section for all jails.
 .br
@@ -197,20 +223,35 @@ Arguments can be passed to actions to override the default values from the [Init
 Values can also be quoted (required when value includes a ","). More that one action can be specified (in separate lines).
 .RE
 .TP
+.B ignoreself
+boolean value (default true) indicates the banning of own IP addresses should be prevented
+.TP
 .B ignoreip
-list of IPs not to ban. They can include a CIDR mask too.
+list of IPs not to ban. They can include a DNS resp. CIDR mask too. The option affects additionally to \fBignoreself\fR (if true) and don't need to contain own DNS resp. IPs of the running host.
 .TP
 .B ignorecommand
-command that is executed to determine if the current candidate IP for banning should not be banned.
+command that is executed to determine if the current candidate IP for banning (or failure-ID for raw IDs) should not be banned. The option affects additionally to \fBignoreself\fR and \fBignoreip\fR and will be first executed if both don't hit.
 .br
 IP will not be banned if command returns successfully (exit code 0).
-Like ACTION FILES, tags like <ip> are can be included in the ignorecommand value and will be substituted before execution. Currently only <ip> is supported however more will be added later.
+Like ACTION FILES, tags like <ip> are can be included in the ignorecommand value and will be substituted before execution.
+.TP
+.B ignorecache
+provide cache parameters (default disabled) for ignore failure check (caching of the result from `ignoreip`, `ignoreself` and `ignorecommand`), syntax:
+
+.RS
+.nf
+        ignorecache = key="<F-USER>@<ip-host>", max-count=100, max-time=5m
+        ignorecommand = if [ "<F-USER>" = "technical" ] && [ "<ip-host>" = "my-host.example.com" ]; then exit 0; fi;
+                        exit 1
+.fi
+This will cache the result of \fBignorecommand\fR (does not call it repeatedly) for 5 minutes (cache time) for maximal 100 entries (cache size), using values substituted like "user@host" as cache-keys.  Set option \fBignorecache\fR to empty value disables the cache.
+.RE
 .TP
 .B bantime
-effective ban duration (in seconds).
+effective ban duration (in seconds or time abbreviation format).
 .TP
 .B findtime
-time interval (in seconds) before the current time where failures will count towards a ban.
+time interval (in seconds or time abbreviation format) before the current time where failures will count towards a ban.
 .TP
 .B maxretry
 number of failures that have to occur in the last \fBfindtime\fR seconds to ban then IP.
@@ -253,6 +294,38 @@ enabled = true
 action = smtp.py[dest=chris@example.com, actname=smtp-chris]
          smtp.py[dest=sally@example.com, actname=smtp-sally]
 .fi
+
+.SH "TIME ABBREVIATION FORMAT"
+The time entries in fail2ban configuration (like \fBfindtime\fR or \fBbantime\fR) can be provided as integer in seconds or as string using special abbreviation format (e. g. \fB600\fR is the same as \fB10m\fR).
+
+.TP
+.B Abbreviation tokens:
+
+.RS
+.nf
+years?, yea?, yy?
+months?, mon?
+weeks?, wee?, ww?
+days?, da, dd?
+hours?, hou?, hh?
+minutes?, min?, mm?
+seconds?, sec?, ss?
+
+The question mark (?) means the optional character, so \fBday\fR as well as \fBdays\fR can be used.
+.fi
+.RE
+
+You can combine multiple tokens in format (separated with space resp. without separator), e. g.: \fB1y 6mo\fR or \fB1d12h30m\fR.
+.br
+Note that tokens \fBm\fR as well as \fBmm\fR means minutes, for month use abbreviation \fBmo\fR or \fBmon\fR.
+
+The time format can be tested using \fBfail2ban-client\fR:
+
+.RS
+.nf
+fail2ban-client --str2sec 1d12h
+.fi
+.RE
 
 .SH "ACTION CONFIGURATION FILES (\fIaction.d/*.conf\fB)"
 Action files specify which commands are executed to ban and unban an IP address.

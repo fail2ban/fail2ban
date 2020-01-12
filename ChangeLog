@@ -6,6 +6,551 @@
 Fail2Ban: Changelog
 ===================
 
+Incompatibility list (compared to v.0.9):
+-----------
+
+* Filter (or `failregex`) internal capture-groups:
+
+  - If you've your own `failregex` or custom filters using conditional match `(?P=host)`, you should
+    rewrite the regex like in example below resp. using `(?:(?P=ip4)|(?P=ip6)` instead of `(?P=host)`
+    (or `(?:(?P=ip4)|(?P=ip6)|(?P=dns))` corresponding your `usedns` and `raw` settings).
+
+    Of course you can always define your own capture-group (like below `_cond_ip_`) to do this.
+    ```
+    testln="1500000000 failure from 192.0.2.1: bad host 192.0.2.1"
+    fail2ban-regex "$testln" "^\s*failure from (?P<_cond_ip_><HOST>): bad host (?P=_cond_ip_)$"
+    ```
+  - New internal groups (currently reserved for internal usage):
+    `ip4`, `ip6`, `dns`, `fid`, `fport`, additionally `user` and another captures in lower case if
+    mapping from tag `<F-*>` used in failregex (e. g. `user` by `<F-USER>`).
+
+* v.0.10 uses more precise date template handling, that can be theoretically incompatible to some
+  user configurations resp. `datepattern`.
+
+* Since v0.10 fail2ban supports the matching of IPv6 addresses, but not all ban actions are
+  IPv6-capable now.
+
+
+ver. 0.10.5-dev-1 (20??/??/??) - development edition
+-----------
+
+### Fixes
+* fixed read of included config-files (`.local` overwrites options of `.conf` for config-files 
+  included with before/after)
+* `filter.d/sshd.conf`:
+  - captures `Disconnecting ...: Change of username or service not allowed` (gh-2239, gh-2279)
+  - captures `Disconnected from ... [preauth]` (`extra`/`aggressive` mode and preauth phase only, gh-2239, gh-2279)
+* `filter.d/mysqld-auth.conf`: 
+  - MYSQL 8.0.13 compatibility (log-error-verbosity = 3), log-format contains few additional words
+    enclosed in brackets after "[Note]" (gh-2314)
+* `files/fail2ban.service.in`: fixed systemd-unit template - missing nftables dependency (gh-2313)
+* several `action.d/mail*`: fixed usage with multiple log files (ultimate fix for gh-976, gh-2341)
+
+### New Features
+* new failregex-flag tag `<F-MLFGAINED>` for failregex, signaled that the access to service was gained
+  (ATM used similar to tag `<F-NOFAIL>`, but it does not add the log-line to matches, gh-2279)
+
+### Enhancements
+* jail-reader extended (amend to gh-1622): actions support multi-line options now (interpolations
+  containing new-line);
+
+
+ver. 0.10.4 (2018/10/04) - ten-four-on-due-date-ten-four
+-----------
+
+### Fixes
+* `filter.d/dovecot.conf`: 
+  - failregex enhancement to catch sql password mismatch errors (gh-2153);
+  - disconnected with "proxy dest auth failed" (gh-2184);
+* `filter.d/freeswitch.conf`:
+  - provide compatibility for log-format from gh-2193:
+    * extended with new default date-pattern `^(?:%%Y-)?%%m-%%d[ T]%%H:%%M:%%S(?:\.%%f)?` to cover
+      `YYYY-mm-dd HH:MM::SS.ms` as well as `mm-dd HH:MM::SS.ms` (so year is optional);
+    * more optional arguments in log-line (so accept [WARN] as well as [WARNING] and optional [SOFIA] hereafter);
+  - extended with mode parameter, allows to avoid matching of messages like `auth challenge (REGISTER)`
+    (see gh-2163) (currently `extra` as default to be backwards-compatible), see comments in filter
+    how to set it to mode `normal`.
+* `filter.d/domino-smtp.conf`:
+  - recognizes failures logged using another format (something like session-id, IP enclosed in square brackets);
+  - failregex extended to catch connections rejected for policy reasons (gh-2228);
+* `action.d/hostsdeny.conf`: fix parameter in config (dynamic parameters stating with '_' are protected 
+  and don't allowed in command-actions), see gh-2114;
+* decoding stability fix by wrong encoded characters like utf-8 surrogate pairs, etc (gh-2171):
+  - fail2ban running in the preferred encoding now (as default encoding also within python 2.x), mostly
+    `UTF-8` in opposite to `ascii` previously, so minimizes influence of implicit conversions errors;
+  - actions: avoid possible conversion errors on wrong-chars by replace tags;
+  - database: improve adapter/converter handlers working on invalid characters in sense of json and/or sqlite-database;
+    additionally both are exception-safe now, so avoid possible locking of database (closes gh-2137);
+  - logging in fail2ban is process-wide exception-safe now.
+* repaired start-time of initial seek to time (as well as other log-parsing related data), 
+  if parameter `logpath` specified before `findtime`, `backend`, `datepattern`, etc (gh-2173)
+* systemd: fixed type error on option `journalflags`: an integer is required (gh-2125);
+
+### New Features
+* new option `ignorecache` to improve performance of ignore failure check (using caching of `ignoreip`, 
+  `ignoreself` and `ignorecommand`), see `man jail.conf` for syntax-example;
+* `ignorecommand` extended to use actions-similar replacement (capable to interpolate 
+  all possible tags like `<ip-host>`, `<family>`, `<fid>`, `F-USER` etc.)
+
+### Enhancements
+* `filter.d/dovecot.conf`: extended with tags F-USER (and alternatives) to collect user-logins (gh-2168)
+* since v.0.10.4, fail2ban-client, fail2ban-server and fail2ban-regex will return version without logo info,
+  additionally option `-V` can be used to get version in normalized machine-readable short format.
+
+
+ver. 0.10.3 (2018/04/04) - the-time-is-always-right-to-do-what-is-right
+-----------
+
+### ver. 0.10.3.1:
+* fixed JSON serialization for the set-object within dump into database (gh-2103).
+
+### Fixes
+* `filter.d/asterisk.conf`: fixed failregex prefix by log over remote syslog server (gh-2060);
+* `filter.d/exim.conf`: failregex extended - SMTP call dropped: too many syntax or protocol errors (gh-2048);
+* `filter.d/recidive.conf`: fixed if logging into systemd-journal (SYSLOG) with daemon name in prefix, gh-2069;
+* `filter.d/sendmail-auth.conf`, `filter.d/sendmail-reject.conf` :
+  - fixed failregex, sendmail uses prefix 'IPv6:' logging of IPv6 addresses (gh-2064);
+* `filter.d/sshd.conf`:
+  - failregex got an optional space in order to match new log-format (see gh-2061);
+  - fixed ddos-mode regex to match refactored message (some versions can contain port now, see gh-2062);
+  - fixed root login refused regex (optional port before preauth, gh-2080);
+  - avoid banning of legitimate users when pam_unix used in combination with other password method, so
+    bypass pam_unix failures if accepted available for this user gh-2070;
+  - amend to gh-1263 with better handling of multiple attempts (failures for different user-names recognized immediatelly);
+  - mode `ddos` (and `aggressive`) extended to catch `Connection closed by ... [preauth]`, so in DDOS mode
+    it counts failure on closing connection within preauth-stage (gh-2085);
+* `action.d/abuseipdb.conf`: fixed curl cypher errors and comment quote-issue (gh-2044, gh-2101);
+* `action.d/badips.py`: implicit convert IPAddr to str, solves an issue "expected string, IPAddr found" (gh-2059);
+* `action.d/hostsdeny.conf`: fixed IPv6 syntax (enclosed in square brackets, gh-2066);
+* (Free)BSD ipfw actionban fixed to allow same rule added several times (gh-2054);
+
+### New Features
+* several stability and performance optimizations, more effective filter parsing, etc;
+* stable runnable within python versions 3.6 (as well as within 3.7-dev);
+
+### Enhancements
+* `filter.d/apache-auth.conf`: detection of Apache SNI errors resp. misredirect attempts (gh-2017, gh-2097);
+* `filter.d/apache-noscript.conf`: extend failregex to match "Primary script unknown", e. g. from php-fpm (gh-2073);
+* date-detector extended with long epoch (`LEPOCH`) to parse milliseconds/microseconds posix-dates (gh-2029);
+* possibility to specify own regex-pattern to match epoch date-time, e. g. `^\[{EPOCH}\]` or `^\[{LEPOCH}\]` (gh-2038);
+  the epoch-pattern similar to `{DATE}` patterns does the capture and cuts out the match of whole pattern from the log-line,
+  e. g. date-pattern `^\[{LEPOCH}\]\s+:` will match and cut out `[1516469849551000] :` from begin of the log-line.
+* badips.py now uses https instead of plain http when requesting badips.com (gh-2057);
+* add support for "any" badips.py bancategory, to be able to retrieve IPs from all categories with a desired score (gh-2056);
+* Introduced new parameter `padding` for logging within fail2ban-server (default on, excepting SYSLOG):
+  Usage `logtarget = target[padding=on|off]`
+
+
+ver. 0.10.2 (2018/01/18) - nothing-burns-like-the-cold
+-----------
+
+### Incompatibility list:
+* The configuration for jails using banaction `pf` can be incompatible after upgrade, because pf-action uses
+  anchors now (see `action.d/pf.conf` for more information). If you want use obsolete handling without anchors,
+  just rewrite it in the `jail.local` by overwrite of `pfctl` parameter, e. g. like `banaction = pf[pfctl="pfctl"]`.
+
+### Fixes
+* Fixed logging to systemd-journal: new logtarget value SYSOUT can be used instead of STDOUT, to avoid 
+  write of the time-stamp, if logging to systemd-journal from foreground mode (gh-1876)
+* Fixed recognition of the new date-format on mysqld-auth filter (gh-1639)
+* jail.conf: port `imap3` replaced with `imap` everywhere, since imap3 is not a standard port and old rarely 
+  (if ever) used and can missing on some systems (e. g. debian stretch), see gh-1942.
+* config/paths-common.conf: added missing initial values (and small normalization in config/paths-*.conf)
+  in order to avoid errors while interpolating (e. g. starting with systemd-backend), see gh-1955.
+* `action.d/pf.conf`: 
+  - fixed syntax error in achnor definition (documentation, see gh-1919);
+  - enclose ports in braces for multiport jails (see gh-1925);
+* `action.d/firewallcmd-ipset.conf`: fixed create of set for ipv6 (missing `family inet6`, gh-1990)
+* `filter.d/sshd.conf`:
+  - extended failregex for modes "extra"/"aggressive": now finds all possible (also future)
+    forms of "no matching (cipher|mac|MAC|compression method|key exchange method|host key type) found", 
+    see "ssherr.c" for all possible SSH_ERR_..._ALG_MATCH errors (gh-1943, gh-1944);
+  - fixed failregex in order to avoid banning of legitimate users with multiple public keys (gh-2014, gh-1263);
+
+### New Features
+* datedetector: extended default date-patterns (allows extra space between the date and time stamps);
+  introduces 2 new format directives (with corresponding %Ex prefix for more precise parsing):
+  - %k - one- or two-digit number giving the hour of the day (0-23) on a 24-hour clock,
+    (corresponds %H, but allows space if not zero-padded).
+  - %l - one- or two-digit number giving the hour of the day (12-11) on a 12-hour clock,
+    (corresponds %I, but allows space if not zero-padded).
+* `filter.d/exim.conf`: added mode `aggressive` to ban flood resp. DDOS-similar failures (gh-1983);
+* New Actions:
+  - `action.d/nginx-block-map.conf` - in order to ban not IP-related tickets via nginx (session blacklisting in
+    nginx-location with map-file);
+
+### Enhancements
+* jail.conf: extended with new parameter `mode` for the filters supporting it (gh-1988);
+* action.d/pf.conf: extended with bulk-unban, command `actionflush` in order to flush all bans at once.
+* Introduced new parameters for logging within fail2ban-server (gh-1980).
+  Usage `logtarget = target[facility=..., datetime=on|off, format="..."]`:
+  - `facility` - specify syslog facility (default `daemon`, see https://docs.python.org/2/library/logging.handlers.html#sysloghandler
+     for the list of facilities);
+  - `datetime` - add date-time to the message (default on, ignored if `format` specified);
+  - `format` - specify own format how it will be logged, for example for short-log into STDOUT:
+      `fail2ban-server -f --logtarget 'stdout[format="%(relativeCreated)5d | %(message)s"]' start`;
+* Automatically recover or recreate corrupt persistent database (e. g. if failed to open with 
+  'database disk image is malformed'). Fail2ban will create a backup, try to repair the database,
+  if repair fails - recreate new database (gh-1465, gh-2004).
+
+
+ver. 0.10.1 (2017/10/12) - succeeded-before-friday-the-13th
+-----------
+
+### Fixes
+* fix Gentoo init script's shebang to use openrc-run instead of runscript (gh-1891)
+* jail "pass2allow-ftp" supply blocktype and returntype parameters to the action (gh-1884)
+* avoid using "ANSI_X3.4-1968" as preferred encoding (if missing environment variables 
+  'LANGUAGE', 'LC_ALL', 'LC_CTYPE', and 'LANG', see gh-1587).
+* action.d/pf.conf: several fixes for pf-action like anchoring, etc. (see gh-1866, gh-1867);
+* fixed ignoreself issue "Retrieving own IPs of localhost failed: inet_pton() argument 2 must be string, not int" (see gh-1865);
+* fixed tags `<fq-hostname>` and `<sh-hostname>`, could be used without ticket (a. g. in `actionstart` etc., gh-1859).
+
+* setup.py: fixed several setup facilities (gh-1874):
+  - don't check return code by dry-run: returns 256 on some python/setuptool versions;
+  - `files/fail2ban.service` renamed as template to `files/fail2ban.service.in`;
+  - setup process generates `build/fail2ban.service` from `files/fail2ban.service.in` using distribution related bin-path;
+  - bug-fixing by running setup with option `--dry-run`;
+
+### New Features
+* introduced new command-line options `--dp`, `--dump-pretty` to dump the configuration using more
+  human readable representation (opposite to `-d`);
+
+### Enhancements
+* nftables actions are IPv6-capable now (gh-1893)
+* filter.d/dovecot.conf: introduced mode `aggressive` for cases like "disconnected before auth was ready" (gh-1880)
+
+
+ver. 0.10.0 (2017/08/09) - long-awaited 0.10th version
+-----------
+
+TODO: implementing of options resp. other tasks from PR #1346
+      documentation should be extended (new options, etc)
+      
+### Fixes
+* `filter.d/apache-auth.conf`:
+  - better failure recognition using short form of regex (url/referer are foreign inputs, see gh-1645)
+* `filter.d/apache-common.conf` (`filter.d/apache-*.conf`):
+  - support of apache log-format if logging into syslog/systemd (gh-1695), using parameter `logging`,
+    parameter usage for jail:
+      filter = apache-auth[logging=syslog]
+    parameter usage for `apache-common.local`:
+      logging = syslog
+* `filter.d/pam-generic.conf`:
+  - [grave] injection on user name to host fixed
+* `filter.d/sshd.conf`:
+  - rewritten using `prefregex` and used MLFID-related multi-line parsing
+    (by using tag `<F-MLFID>` instead of buffering with `maxlines`);
+  - optional parameter `mode` rewritten: normal (default), ddos, extra or aggressive (combines all),
+    see sshd for regex details)
+* `filter.d/sendmail-reject.conf`:
+  - rewritten using `prefregex` and used MLFID-related multi-line parsing;
+  - optional parameter `mode` introduced: normal (default), extra or aggressive
+* `filter.d/haproxy-http-auth`: do not mistake client port for part of an IPv6 address (gh-1745)
+* `filter.d/postfix.conf`:
+    - updated to latest postfix formats
+    - joined several postfix filter together (normalized and optimized version, gh-1825)
+    - introduced new parameter `mode` (see gh-1825): more (default, combines normal and rbl), auth, normal,
+      rbl, ddos, extra or aggressive (combines all)
+    - postfix postscreen (resp. other RBL's compatibility fix, gh-1764, gh-1825)
+* `filter.d/postfix-rbl.conf`: removed (replaced with `postfix[mode=rbl]`)
+* `filter.d/postfix-sasl.conf`: removed (replaced with `postfix[mode=auth]`)
+* `filter.d/roundcube-auth.conf`:
+    - fixed regex when `X-Real-IP` or/and `X-Forwarded-For` are present after host (gh-1303);
+    - fixed regex when logging authentication errors to journal instead to a local file (gh-1159);
+    - additionally fixed more complex injections on username (e. g. using dot after fake host).
+* `filter.d/ejabberd-auth.conf`: fixed failregex - accept new log-format (gh-993)
+* `action.d/complain.conf`
+  - fixed using new tag `<ip-rev>` (sh/dash compliant now)
+* `action.d/sendmail-geoip-lines.conf`
+  - fixed using new tag `<ip-host>` (without external command execution)
+* fail2ban-regex: fixed matched output by multi-line (buffered) parsing
+* fail2ban-regex: support for multi-line debuggex URL implemented (gh-422)
+* fixed ipv6-action errors on systems not supporting ipv6 and vice versa (gh-1741)
+* fixed directory-based log-rotate for pyinotify-backend (gh-1778)
+
+### New Features
+* New Actions:
+
+* New Filters:
+
+### Enhancements
+* Introduced new filter option `prefregex` for pre-filtering using single regular expression (gh-1698);
+* Many times faster and fewer CPU-hungry because of parsing with `maxlines=1`, so without 
+  line buffering (scrolling of the buffer-window).
+  Combination of tags `<F-MLFID>` and `<F-NOFAIL>` can be used now to process multi-line logs
+  using single-line expressions:
+  - tag `<F-MLFID>`: used to identify resp. store failure info for groups of log-lines with the same
+    identifier (e. g. combined failure-info for the same conn-id by `<F-MLFID>(?:conn-id)</F-MLFID>`,
+    see sshd.conf for example);
+  - tag `<F-MLFFORGET>`: can be used as mark to forget current multi-line MLFID (e. g. by connection 
+    closed, reset or disconnect etc);
+  - tag `<F-NOFAIL>`: used as mark for no-failure (helper to accumulate common failure-info, 
+    e. g. from lines that contain IP-address);
+  Opposite to obsolete multi-line parsing (using buffering with `maxlines`) it is more precise and 
+  can recognize multiple failure attempts within the same connection (MLFID).
+* Several filters optimized with pre-filtering using new option `prefregex`, and multiline filter 
+  using `<F-MLFID>` + `<F-NOFAIL>` combination;
+* Exposes filter group captures in actions (non-recursive interpolation of tags `<F-...>`, 
+  see gh-1698, gh-1110)
+* Some filters extended with user name (can be used in gh-1243 to distinguish IP and user,
+  resp. to remove after success login the user-related failures only);
+* Safer, more stable and faster replaceTag interpolation (switched from cycle over all tags
+  to re.sub with callable)
+* substituteRecursiveTags optimization + moved in helpers facilities (because currently used 
+  commonly in server and in client)
+* New tags (usable in actions):
+  - `<fid>` - failure identifier (if raw resp. failures without IP address)
+  - `<ip-rev>` - PTR reversed representation of IP address
+  - `<ip-host>` - host name of the IP address
+  - `<F-...>` - interpolates to the corresponding filter group capture `...`
+  - `<fq-hostname>` - fully-qualified name of host (the same as `$(hostname -f)`)
+  - `<sh-hostname>` - short hostname (the same as `$(uname -n)`)
+* Allow to use filter options by `fail2ban-regex`, example:
+  fail2ban-regex text.log "sshd[mode=aggressive]"
+* Samples test case factory extended with filter options - dict in JSON to control 
+  filter options (e. g. mode, etc.):
+  # filterOptions: {"mode": "aggressive"}
+* Introduced new jail option "ignoreself", specifies whether the local resp. own IP addresses 
+  should be ignored (default is true). Fail2ban will not ban a host which matches such addresses.
+  Option "ignoreip" affects additionally to "ignoreself" and don't need to include the DNS 
+  resp. IPs of the host self.
+* Regex will be compiled as MULTILINE only if needed (buffering with `maxlines` > 1), that enables:
+  - to improve performance by the single line parsing (see gh-1733);
+  - make regex more precise (because distinguish between anchors `^`/`$` for the begin/end of string
+    and the new-line character '\n', e. g. if coming from filters (like systemd journal) that allow
+    the parsing of log-entries contain new-line chars (as single entry);
+  - if multiline regex however expected (by single-line parsing without buffering) - prefix `(?m)` 
+    could be used in regex to enable it;
+* Implemented execution of `actionstart` on demand (conditional), if action depends on `family` (gh-1742):
+  - new action parameter `actionstart_on_demand` (bool) can be set to prevent/allow starting action
+    on demand (default retrieved automatically, if some conditional parameter `param?family=...` 
+    presents in action properties), see `action.d/pf.conf` for example;
+  - additionally `actionstop` will be executed only for families previously executing `actionstart`
+    (starting on demand only)
+* Introduced new command `actionflush`: executed in order to flush all bans at once 
+  e. g. by unban all, reload with removing action, stop, shutdown the system (gh-1743),
+  the actions having `actionflush` do not execute `actionunban` for each single ticket
+* Add new command `actionflush` default for several iptables/iptables-ipset actions (and common include);
+* Add new jail option `logtimezone` to force the timezone on log lines that don't have an explicit one (gh-1773)
+* Implemented zone abbreviations (like CET, CEST, etc.) and abbr+-offset functionality (accept zones
+  like 'CET+0100'), for the list of abbreviations see strptime.TZ_STR;
+* Introduced new option `--timezone` (resp. `--TZ`) for `fail2ban-regex`.
+* Tokens `%z` and `%Z` are changed (more precise now);
+* Introduced new tokens `%Exz` and `%ExZ` that fully support zone abbreviations and/or offset-based
+  zones (implemented as enhancement using custom `datepattern`, because may be too dangerous for default
+  patterns and tokens like `%z`);
+  Note: the extended tokens supported zone abbreviations, but it can parse 1 or 3-5 char(s) in lowercase.
+        Don't use them in default date-patterns (if not anchored, few precise resp. optional).
+        Because python currently does not support mixing of case-sensitive with case-insensitive matching,
+	the TZ (in uppercase) cannot be combined with `%a`/`%b` etc (that are currently case-insensitive),
+	to avoid invalid date-time recognition in strings like '11-Aug-2013 03:36:11.372 error ...' with
+	wrong TZ "error".
+        Hence `%z` currently match literal Z|UTC|GMT only (and offset-based), and `%Exz` - all zone 
+	abbreviations.
+* `filter.d/courier-auth.conf`: support failed logins with method only
+* Config reader's: introduced new syntax `%(section/option)s`, in opposite to extended interpolation of
+  python 3 `${section:option}` work with all supported python version in fail2ban and this syntax is 
+  like our another features like `%(known/option)s`, etc. (gh-1750)
+* Variable `default_backend` switched to `%(default/backend)s`, so totally backwards compatible now,
+  but now the setting of parameter `backend` in default section of `jail.local` can overwrite default
+  backend also (see gh-1750). In the future versions parameter `default_backend` can be removed (incompatibility, 
+  possibly some distributions affected).
+
+
+ver. 0.10.0-alpha-1 (2016/07/14) - ipv6-support-etc
+-----------
+
+### Fixes
+* [Grave] memory leak's fixed (gh-1277, gh-1234)
+* [Grave] Misleading date patterns defined more precisely (using extended syntax
+  `%Ex[mdHMS]` for exact two-digit match or e. g. `%ExY` as more precise year 
+  pattern, within same century of last year and the next 3 years)
+* [Grave] extends date detector template with distance (position of match in 
+  log-line), to prevent grave collision using (re)ordered template list (e.g.
+  find-spot of wrong date-match inside foreign input, misleading date patterns
+  by ambiguous formats, etc.)
+* Distance collision check always prefers template with shortest distance
+  (left for right) if date pattern is not anchored
+* Tricky bug fix: last position of log file will be never retrieved (gh-795),
+  because of CASCADE all log entries will be deleted from logs table together with jail, 
+  if used "INSERT OR REPLACE" statement
+* Asyncserver (asyncore) code fixed and test cases repaired (again gh-161)
+* testSocket: sporadical bug repaired - wait for server thread starts a socket (listener)
+* testExecuteTimeoutWithNastyChildren: sporadical bug repaired - wait for pid file inside bash,
+  kill tree in any case (gh-1155)
+* Fixed high-load of pyinotify-backend,
+  see https://github.com/fail2ban/fail2ban/issues/885#issuecomment-248964591
+* Database: stability fix - repack cursor iterator as long as locked
+* File filter backends: stability fix for sporadically errors - always close file
+  handle, otherwise may be locked (prevent log-rotate, etc.)
+* Pyinotify-backend: stability fix for sporadically errors in multi-threaded
+  environment (without lock)
+* Fixed sporadically error in testCymruInfoNxdomain, because of unsorted values
+* Misleading errors logged from ignorecommand in success case on retcode 1 (gh-1194)
+* fail2ban.service - systemd service updated (gh-1618):
+  - starting service in normal mode (without forking)
+  - does not restart if service exited normally (exit-code 0, e.g. stopped via fail2ban-client)
+  - does not restart if service can not start (exit-code 255, e.g. wrong configuration, etc.)
+  - service can be additionally started/stopped with commands (fail2ban-client, fail2ban-server)
+  - automatically creates `/var/run/fail2ban` directory before start fail2ban 
+    (systems with virtual resp. memory-based FS for `/var/run`), see gh-1531
+  - if fail2ban running as systemd-service, for logging to the systemd-journal, 
+    the `logtarget` could be set to STDOUT
+  - value `logtarget` for system targets allowed also in lowercase (stdout, stderr, syslog, etc.)
+* Fixed UTC/GMT named time zone, using `%Z` and `%z` patterns 
+  (special case with 0 zone offset, see gh-1575)
+* `filter.d/freeswitch.conf`
+    - Optional prefixes (server, daemon, dual time) if systemd daemon logs used (gh-1548)
+    - User part rewritten to accept IPv6 resp. domain after "@" (gh-1548)
+
+### New Features
+* IPv6 support:
+    - IP addresses are now handled as objects rather than strings capable for 
+      handling both address types IPv4 and IPv6
+    - iptables related actions have been amended to support IPv6 specific actions
+      additionally
+    - hostsdeny and route actions have been tested to be aware of v4 and v6 already
+    - pf action for *BSD systems has been improved and supports now also v4 and v6
+    - name resolution is now working for either address type
+    - new conditional section functionality used in config resp. includes:
+      - [Init?family=inet4] - IPv4 qualified hosts only
+      - [Init?family=inet6] - IPv6 qualified hosts only
+* New reload functionality (now totally without restart, unbanning/rebanning, etc.),
+  see gh-1557
+* Several commands extended and new commands introduced:
+  - `restart [--unban] [--if-exists] <JAIL>` - restarts the jail \<JAIL\>
+    (alias for `reload --restart ... <JAIL>`)
+  - `reload [--restart] [--unban] [--all]` - reloads the configuration without restarting
+    of the server, the option `--restart` activates completely restarting of affected jails,
+    thereby can unban IP addresses (if option `--unban` specified)
+  - `reload [--restart] [--unban] [--if-exists] <JAIL>` - reloads the jail \<JAIL\>,
+    or restarts it (if option `--restart` specified), at the same time unbans all IP addresses
+    banned in this jail, if option `--unban` specified
+  - `unban --all` - unbans all IP addresses (in all jails and database)
+  - `unban <IP> ... <IP>` - unbans \<IP\> (in all jails and database) (see gh-1388)
+  - introduced new option `-t` or `--test` to test configuration resp. start server only 
+    if configuration is clean (fails by wrong configured jails if option `-t` specified)
+* New command action parameter `actionrepair` - command executed in order to restore
+  sane environment in error case of `actioncheck`.
+* Reporting via abuseipdb.com:
+  - Bans can now be reported to abuseipdb
+  - Catagories must be set in the config
+  - Relevant log lines included in report
+
+### Enhancements
+* Huge increasing of fail2ban performance and especially test-cases performance (see gh-1109)
+* Datedetector: in-place reordering using hits and last used time: 
+  matchTime, template list etc. rewritten because of performance degradation
+* Prevent out of memory situation if many IP's makes extremely many failures (maxEntries)
+* Introduced string to seconds (str2seconds) for configuration entries with time,
+  use `1h` instead of `3600`, `1d` instead of `86400`, etc
+* seekToTime - prevent completely read of big files first time (after start of service), 
+  initial seek to start time using half-interval search algorithm (see issue gh-795)
+* Ticket and some other modules prepared to easy merge with newest version of 'ban-time-incr'
+* Cache dnsToIp, ipToName to prevent long wait during retrieving of ip/name,
+  especially for wrong dns or lazy dns-system
+* FailManager memory-optimization: increases performance, 
+  prevents memory leakage, because don't copy failures list on some operations
+* fail2ban-testcases - new options introduced:
+    - `-f`, `--fast` to decrease wait intervals, avoid passive waiting, and skip
+      few very slow test cases (implied memory database, see `-m` and no gamin tests `-g`)
+    - `-g`, `--no-gamin` to prevent running of tests that require the gamin (slow)
+    - `-m`, `--memory-db` - run database tests using memory instead of file
+    - `-i`, `--ignore` - negate [regexps] filter to ignore tests matched specified regexps
+* Background servicing: prevents memory leak on some platforms/python versions, using forced GC
+  in periodic intervals (latency and threshold)
+* executeCmd partially moved from action to new module utils
+* Several functionality of class `DNSUtils` moved to new class `IPAddr`, 
+  both classes moved to new module `ipdns`
+* Pseudo-conditional section introduced, for conditional substitution resp. 
+  evaluation of parameters for different family qualified hosts, 
+  syntax `[Section?family=inet6]` (currently use for IPv6-support only).
+* All the backends were rewritten to get reload-possibility, performance increased,
+  so fewer greedy regarding cpu- resp. system-load now
+* Numeric log-level allowed now in server (resp. fail2ban.conf);
+* Implemented better error handling in some multi-threaded routines; shutdown of jails
+  rewritten (faster and safer, does not breaks shutdown process if some error occurred)
+* Possibility for overwriting some configuration options (read with config-readers)
+  with command line option, e. g.:
+```bash
+## start server with DEBUG log-level (ignore level read from fail2ban.conf):
+fail2ban-client --loglevel DEBUG start
+## or
+fail2ban-server -c /cfg/path --loglevel DEBUG start
+## keep server log-level by reload (without restart it)
+fail2ban-client --loglevel DEBUG reload
+## switch log-level back to INFO:
+fail2ban-client set loglevel INFO
+```
+* Optimized BanManager: increase performance, fewer system load, try to prevent
+  memory leakage:
+  - better ban/unban handling within actions (e.g. used dict instead of list)
+  - don't copy bans resp. its list on some operations;
+  - added new unbantime handling to relieve unBanList (prevent permanent
+    searching for tickets to unban)
+  - prefer failure-ID as identifier of the ticket to its IP (most of the time
+    the same, but it can be something else e.g. user name in some complex jails,
+    as introduced in 0.10)
+* Regexp enhancements:
+  - build replacement of `<HOST>` substitution corresponding parameter
+    `usedns` - dns-part will be added only if `usedns` is not `no`,
+    also using fail2ban-regex
+  - new replacement for `<ADDR>` in opposition to `<HOST>`, for separate
+    usage of 2 address groups only (regardless of `usedns`), `ip4` and `ip6`
+    together, without host (dns)
+* Misconfigured jails don't prevent fail2ban from starting, server starts 
+  nevertheless, as long as one jail was successful configured (gh-1619)
+  Message about wrong jail configuration logged in client log (stdout, systemd
+  journal etc.) and in server log with error level
+* More precise date template handling (WARNING: theoretically possible incompatibilities):
+  - datedetector rewritten more strict as earlier;
+  - default templates can be specified exacter using prefix/suffix syntax (via `datepattern`);
+  - more as one date pattern can be specified using option `datepattern` now 
+    (new-line separated);
+  - some default options like `datepattern` can be specified directly in 
+    section `[Definition]`, that avoids contrary usage of unnecessarily `[Init]`
+    section, because of performance (each extra section costs time);
+  - option `datepattern` can be specified in jail also (e. g. jails without filters 
+    or custom log-format, new-line separated for multiple patterns);
+  - if first unnamed group specified in pattern, only this will be cut out from
+    search log-line (e. g.: `^date:[({DATE})]` will cut out only datetime match 
+    pattern, and leaves `date:[] ...` for searching in filter);
+  - faster match and fewer searching of appropriate templates
+    (DateDetector.matchTime calls rarer DateTemplate.matchDate now);
+  - several standard filters extended with exact prefixed or anchored date templates;
+* Added possibility to recognize restored state of the tickets (see gh-1669).
+  New option `norestored` introduced, to ignore restored tickets (after restart).
+  To avoid execution of ban/unban for the restored tickets, `norestored = true`
+  could be added in definition section of action.
+  For conditional usage in the shell-based actions an interpolation `<restored>` 
+  could be used also. E. g. it is enough to add following script-piece at begin
+  of `actionban` (or `actionunban`) to prevent execution:
+  `if [ '<restored>' = '1' ]; then exit 0; fi;`
+  Several actions extended now using `norestored` option:
+  - complain.conf
+  - dshield.conf
+  - mail-buffered.conf
+  - mail-whois-lines.conf
+  - mail-whois.conf
+  - mail.conf
+  - sendmail-buffered.conf
+  - sendmail-geoip-lines.conf
+  - sendmail-whois-ipjailmatches.conf
+  - sendmail-whois-ipmatches.conf
+  - sendmail-whois-lines.conf
+  - sendmail-whois-matches.conf
+  - sendmail-whois.conf
+  - sendmail.conf
+  - smtp.py
+  - xarf-login-attack.conf
+* fail2ban-testcases:
+  - `assertLogged` extended with parameter wait (to wait up to specified timeout,
+    before we throw assert exception) + test cases rewritten using that
+  - added `assertDictEqual` for compatibility to early python versions (< 2.7);
+  - new `with_foreground_server_thread` decorator to test several client/server commands
+
+
 ver. 0.9.8 (2016/XX/XXX) - wanna-be-released
 -----------
 

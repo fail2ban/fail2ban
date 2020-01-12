@@ -1,0 +1,28 @@
+From: Yaroslav Halchenko <debian@onerussian.com>
+Subject: Remove all non-provided .service's within PartOf of fail2ban.service
+
+  As reported and corroborated in the bug report, this causes inability
+  of firewalld to restart.
+  Correct solution would involve making systemd smarter and tune up
+  of involved .service files.
+  Since Debian ATM doesn't provide any of those ({ip{,6}tables,ipset}.service)
+  files, it should be safe and generic enough to just prune them from PartOf
+
+  Thanks  Joe Cooper <swelljoe@gmail.com> and Sunil Mohan Adapa <sunil@medhas.org>
+  for the reports and nagging ;)
+
+Origin: Fedora, Debian
+Bug-Debian: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=871993
+Last-Update: 2018-04-04
+
+--- a/files/fail2ban.service.in
++++ b/files/fail2ban.service.in
+@@ -2,7 +2,7 @@
+ Description=Fail2Ban Service
+ Documentation=man:fail2ban(1)
+ After=network.target iptables.service firewalld.service ip6tables.service ipset.service
+-PartOf=iptables.service firewalld.service ip6tables.service ipset.service
++PartOf=firewalld.service
+ 
+ [Service]
+ Type=simple

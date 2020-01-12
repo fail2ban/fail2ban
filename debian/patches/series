@@ -1,0 +1,9 @@
+deb_path_to_common
+deb_init_paths
+deb_manpages_reportbug
+0001-BF-use-tests.utils.CONFIG_DIR-instead-of-hardcoded-c.patch
+0002-ENH-verify-that-use_stock_cfg-was-not-provided-while.patch
+0003-BF-look-for-system.journal-also-under-system-state-l.patch
+0004-BF-use-build_-_2to3-if-in-_2to3.patch
+0001-BF-RF-test-for-being-a-root-to-check-if-actually-can.patch
+deb_no_iptables_service

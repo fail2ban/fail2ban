@@ -1,0 +1,70 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+export PYBUILD_DISABLE_python2=1
+
+%:
+	dh $@ --with python3,systemd --buildsystem pybuild
+
+DESTDIR=$(CURDIR)/debian/fail2ban
+PYVERSION=$(shell py3versions -dv)
+
+override_dh_clean:
+	rm -rf fail2ban.egg-info
+	-rm debian/fail2ban.init
+	dh_clean
+	: # auto generated
+	-rm bin/fail2ban-python
+
+override_dh_install:
+	rm -f $(DESTDIR)/usr/share/doc/fail2ban/README.Solaris
+	rm -f $(DESTDIR)/etc/fail2ban/paths-fedora.conf
+	rm -f $(DESTDIR)/etc/fail2ban/paths-freebsd.conf
+	rm -f $(DESTDIR)/etc/fail2ban/paths-osx.conf
+	: # Remove explicitely created /var/run/fail2ban
+	: # just to please lintian since init file will
+	: # take care about it anyways
+	rm -rf $(DESTDIR)/var/run/ $(DESTDIR)/run/
+	: # Install monit configuration
+	install -d $(DESTDIR)/etc/monit/conf-available
+	install -d $(DESTDIR)/etc/monit/monitrc.d
+	install -m 644 files/monit/fail2ban $(DESTDIR)/etc/monit/monitrc.d/fail2ban
+	: # Install bash completion
+	install -d $(DESTDIR)/etc/bash_completion.d
+	install -m 644 files/bash-completion $(DESTDIR)/etc/bash_completion.d/fail2ban
+	: # Install systemd files
+	install -d $(DESTDIR)/lib/systemd/system
+	install -d $(DESTDIR)/usr/lib/tmpfiles.d
+	install -m 644 build/fail2ban.service $(DESTDIR)/lib/systemd/system
+	install -m 644 files/fail2ban-tmpfiles.conf $(DESTDIR)/usr/lib/tmpfiles.d
+	install -d $(DESTDIR)/lib/systemd/system
+	: # Install default jail enabler
+	install -m 644 debian/debian-files/jail.d_defaults-debian.conf $(DESTDIR)/etc/fail2ban/jail.d/defaults-debian.conf
+	dh_install
+
+override_dh_auto_test:
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	cd build && \
+	 LC_ALL=C.UTF-8 \
+	 FAIL2BAN_CONFIG_DIR="$(CURDIR)/config" \
+     PYTHONPATH="$(CURDIR)/.pybuild/cpython3_$(PYVERSION)/build/" \
+	  scripts-*/fail2ban-testcases --no-network --verbosity=2
+endif
+
+override_dh_installexamples:
+	dh_installexamples files/ipmasq-* files/nagios files/cacti
+
+override_dh_installinit:
+	cp -p files/debian-initd debian/fail2ban.init
+	dh_installinit -- defaults 99
+
+override_dh_installman:
+	dh_installman man/*.[15]

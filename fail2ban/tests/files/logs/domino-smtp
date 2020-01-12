@@ -6,3 +6,8 @@
 08-09-2014 06:14:27   smtp: postmaster [1.2.3.4] authentication failure using internet password
 # failJSON: { "time": "2016-11-07T22:21:20", "match": true , "host": "1.2.3.4" }
 2016-11-07 22:21:20   smtp: postmaster [1.2.3.4] authentication failure using internet password
+
+# failJSON: { "time": "2018-09-19T17:25:50", "match": true , "host": "192.0.2.1", "desc":"different log-format" }
+2018-09-19 17:25:50   SMTP Server [0D14:0027-1334] Authentication failed for user Bad Hacker ; connecting host [192.0.2.1]
+# failJSON: { "time": "2018-09-19T17:25:52", "match": true , "host": "192.0.2.2", "desc":"gh-2228, rejected for policy reasons" }
+2018-09-19 17:25:52   SMTP Server [000527:000013-0000001227564800] Connection from [192.0.2.2] rejected for policy reasons. IP address of connecting host not found in reverse DNS lookup.

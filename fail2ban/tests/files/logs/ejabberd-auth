@@ -9,3 +9,12 @@ I(<0.370.0>:ejabberd_listener:281) : (#Port<0.6910>) Accepted connection {{192,0
 I(<0.1440.0>:ejabberd_c2s:813) : ({socket_state,tls,{tlssock,#Port<0.6910>,#Port<0.6912>},<0.1439.0>}) Failed authentication for user@example.com from IP 192.0.2.4 ({{192,0,2,4},12716})
 # failJSON: { "time": "2014-01-07T18:09:08", "match": true , "host": "1.2.3.4" }
 2014-01-07 18:09:08.512 [info] <0.22741.1>@ejabberd_c2s:wait_for_feature_request:662 ({socket_state,p1_tls,{tlssock,#Port<0.24718>,#Port<0.24720>},<0.22740.1>}) Failed authentication for test@example.com from IP 1.2.3.4
+
+# new format:
+
+# failJSON: { "time": "2015-03-19T13:57:35", "match": true , "host": "192.0.2.6" }
+2015-03-19 13:57:35.805 [info] <0.585.0>@ejabberd_c2s:wait_for_sasl_response:965 ({socket_state,p1_tls,{tlssock,#Port<0.6434>,#Port<0.6436>},<0.584.0>}) Failed authentication for robin@example.com from 192.0.2.6
+
+# 17.06 "new" format:
+# failJSON: { "time": "2017-07-29T08:24:04", "match": true , "host": "192.0.2.3" }
+2017-07-29 08:24:04.773 [info] <0.6668.0>@ejabberd_c2s:handle_auth_failure:433 (http_bind|ejabberd_bosh) Failed c2s PLAIN authentication for test@example.ch from ::FFFF:192.0.2.3: Invalid username or password

@@ -27,7 +27,7 @@ __license__ = "GPL"
 import time
 import json
 
-from ..helpers import getLogger
+from ..helpers import getLogger, logging
 from .. import version
 
 # Gets the instance of the logger.
@@ -52,13 +52,14 @@ class Transmitter:
 	
 	def proceed(self, command):
 		# Deserialize object
-		logSys.debug("Command: " + repr(command))
+		logSys.log(5, "Command: %r", command)
 		try:
 			ret = self.__commandHandler(command)
 			ack = 0, ret
 		except Exception as e:
-			logSys.warning("Command %r has failed. Received %r"
-						% (command, e))
+			logSys.warning("Command %r has failed. Received %r",
+						command, e, 
+						exc_info=logSys.getEffectiveLevel()<=logging.DEBUG)
 			ack = 1, e
 		return ack
 	
@@ -72,8 +73,8 @@ class Transmitter:
 			return "pong"
 		elif command[0] == "add":
 			name = command[1]
-			if name == "all":
-				raise Exception("Reserved name")
+			if name == "--all":
+				raise Exception("Reserved name %r" % (name,))
 			try:
 				backend = command[2]
 			except IndexError:
@@ -87,18 +88,44 @@ class Transmitter:
 		elif command[0] == "stop":
 			if len(command) == 1:
 				self.__server.quit()
-			elif command[1] == "all":
+			elif command[1] == "--all":
 				self.__server.stopAllJail()
 			else:
 				name = command[1]
 				self.__server.stopJail(name)
 			return None
+		elif command[0] == "reload":
+			opts = command[1:3]
+			try:
+				self.__server.reloadJails(*opts, begin=True)
+				for cmd in command[3]:
+					self.__commandHandler(cmd)
+			finally:
+				self.__server.reloadJails(*opts, begin=False)
+			return 'OK'
+		elif len(command) >= 2 and command[0] == "unban":
+			# unban in all jails:
+			value = command[1:]
+			# if all ips:
+			if len(value) == 1 and value[0] == "--all":
+				return self.__server.setUnbanIP()
+			cnt = 0
+			for value in value:
+				cnt += self.__server.setUnbanIP(None, value)
+			return cnt
+		elif command[0] == "echo":
+			return command[1:]
+		elif command[0] == "server-status":
+			logSys.debug("Status: ready")
+			return "Server ready"
 		elif command[0] == "sleep":
 			value = command[1]
-			time.sleep(int(value))
+			time.sleep(float(value))
 			return None
 		elif command[0] == "flushlogs":
 			return self.__server.flushLogs()
+		elif command[0] == "multi-set":
+			return self.__commandSet(command[1:], True)
 		elif command[0] == "set":
 			return self.__commandSet(command[1:])
 		elif command[0] == "get":
@@ -107,9 +134,12 @@ class Transmitter:
 			return self.status(command[1:])
 		elif command[0] == "version":
 			return version.version
+		elif command[0] == "config-error":
+			logSys.error(command[1])
+			return None
 		raise Exception("Invalid command")
 	
-	def __commandSet(self, command):
+	def __commandSet(self, command, multiple=False):
 		name = command[0]
 		# Logging
 		if name == "loglevel":
@@ -154,6 +184,10 @@ class Transmitter:
 				raise Exception("Invalid idle option, must be 'on' or 'off'")
 			return self.__server.getIdleJail(name)
 		# Filter
+		elif command[1] == "ignoreself":
+			value = command[2]
+			self.__server.setIgnoreSelf(name, value)
+			return self.__server.getIgnoreSelf(name)
 		elif command[1] == "addignoreip":
 			value = command[2]
 			self.__server.addIgnoreIP(name, value)
@@ -166,6 +200,10 @@ class Transmitter:
 			value = command[2]
 			self.__server.setIgnoreCommand(name, value)
 			return self.__server.getIgnoreCommand(name)
+		elif command[1] == "ignorecache":
+			value = command[2]
+			self.__server.setIgnoreCache(name, value)
+			return self.__server.getIgnoreCache(name)
 		elif command[1] == "addlogpath":
 			value = command[2]
 			tail = False
@@ -194,9 +232,15 @@ class Transmitter:
 			value = command[2:]
 			self.__server.delJournalMatch(name, value)
 			return self.__server.getJournalMatch(name)
+		elif command[1] == "prefregex":
+			value = command[2]
+			self.__server.setPrefRegex(name, value)
+			return self.__server.getPrefRegex(name)
 		elif command[1] == "addfailregex":
 			value = command[2]
-			self.__server.addFailRegex(name, value)
+			self.__server.addFailRegex(name, value, multiple=multiple)
+			if multiple:
+				return True
 			return self.__server.getFailRegex(name)
 		elif command[1] == "delfailregex":
 			value = int(command[2])
@@ -204,7 +248,9 @@ class Transmitter:
 			return self.__server.getFailRegex(name)
 		elif command[1] == "addignoreregex":
 			value = command[2]
-			self.__server.addIgnoreRegex(name, value)
+			self.__server.addIgnoreRegex(name, value, multiple=multiple)
+			if multiple:
+				return True
 			return self.__server.getIgnoreRegex(name)
 		elif command[1] == "delignoreregex":
 			value = int(command[2])
@@ -216,12 +262,16 @@ class Transmitter:
 			return self.__server.getUseDns(name)
 		elif command[1] == "findtime":
 			value = command[2]
-			self.__server.setFindTime(name, int(value))
+			self.__server.setFindTime(name, value)
 			return self.__server.getFindTime(name)
 		elif command[1] == "datepattern":
 			value = command[2]
 			self.__server.setDatePattern(name, value)
 			return self.__server.getDatePattern(name)
+		elif command[1] == "logtimezone":
+			value = command[2]
+			self.__server.setLogTimeZone(name, value)
+			return self.__server.getLogTimeZone(name)
 		elif command[1] == "maxretry":
 			value = command[2]
 			self.__server.setMaxRetry(name, int(value))
@@ -233,7 +283,7 @@ class Transmitter:
 		# command
 		elif command[1] == "bantime":
 			value = command[2]
-			self.__server.setBanTime(name, int(value))
+			self.__server.setBanTime(name, value)
 			return self.__server.getBanTime(name)
 		elif command[1] == "banip":
 			value = command[2]
@@ -254,16 +304,28 @@ class Transmitter:
 			return None
 		elif command[1] == "action":
 			actionname = command[2]
-			actionkey = command[3]
 			action = self.__server.getAction(name, actionname)
-			if callable(getattr(action, actionkey, None)):
-				actionvalue = json.loads(command[4]) if len(command)>4 else {}
-				return getattr(action, actionkey)(**actionvalue)
+			if multiple:
+				for cmd in command[3]:
+					logSys.log(5, "  %r", cmd)
+					actionkey = cmd[0]
+					if callable(getattr(action, actionkey, None)):
+						actionvalue = json.loads(cmd[1]) if len(cmd)>1 else {}
+						getattr(action, actionkey)(**actionvalue)
+					else:
+						actionvalue = cmd[1]
+						setattr(action, actionkey, actionvalue)
+				return True
 			else:
-				actionvalue = command[4]
-				setattr(action, actionkey, actionvalue)
-				return getattr(action, actionkey)
-		raise Exception("Invalid command (no set action or not yet implemented)")
+				actionkey = command[3]
+				if callable(getattr(action, actionkey, None)):
+					actionvalue = json.loads(command[4]) if len(command)>4 else {}
+					return getattr(action, actionkey)(**actionvalue)
+				else:
+					actionvalue = command[4]
+					setattr(action, actionkey, actionvalue)
+					return getattr(action, actionkey)
+		raise Exception("Invalid command %r (no set action or not yet implemented)" % (command[1],))
 	
 	def __commandGet(self, command):
 		name = command[0]
@@ -294,10 +356,16 @@ class Transmitter:
 			return self.__server.getLogEncoding(name)
 		elif command[1] == "journalmatch": # pragma: systemd no cover
 			return self.__server.getJournalMatch(name)
+		elif command[1] == "ignoreself":
+			return self.__server.getIgnoreSelf(name)
 		elif command[1] == "ignoreip":
 			return self.__server.getIgnoreIP(name)
 		elif command[1] == "ignorecommand":
 			return self.__server.getIgnoreCommand(name)
+		elif command[1] == "ignorecache":
+			return self.__server.getIgnoreCache(name)
+		elif command[1] == "prefregex":
+			return self.__server.getPrefRegex(name)
 		elif command[1] == "failregex":
 			return self.__server.getFailRegex(name)
 		elif command[1] == "ignoreregex":
@@ -308,6 +376,8 @@ class Transmitter:
 			return self.__server.getFindTime(name)
 		elif command[1] == "datepattern":
 			return self.__server.getDatePattern(name)
+		elif command[1] == "logtimezone":
+			return self.__server.getLogTimeZone(name)
 		elif command[1] == "maxretry":
 			return self.__server.getMaxRetry(name)
 		elif command[1] == "maxlines":

@@ -1,0 +1,249 @@
+fail2ban (>=0.7.0) for Debian
+-----------------------------
+
+This package is ~99% identical to the upstream version. Few features
+could have been added but not yet propagated into upstream version and
+some modifications might be Debian-specific. Debian specific jail.conf
+file is shipped. Original upstream file is available from
+/usr/share/doc/fail2ban/examples/jail.conf
+
+Currently, the major difference with upstream: python libraries are
+placed under /usr/share/fail2ban instead of /usr/lib/fail2ban to
+comply with policy regarding architecture independent resources.
+
+Shorewall and startup sequence (#847728)
+----------------------------------------
+
+If you are using systemd, create a
+/etc/systemd/system/fail2ban.service.d/override.conf with contents:
+
+[Unit]
+Requires=shorewall.service
+After=shorewall.service
+
+go guarantee a proper sequence of startup/shotdown (shorewall should
+be started before fail2ban, and stopped after).  Similar settings
+could be adopted for other firewall solutions.
+
+
+Upgrade from 0.6 versions:
+-------------------------
+
+* New Config Files Format:
+
+If you had introduced your own sections in /etc/fail2ban.conf, you
+would need manually to convert them into a new format. At minimum you
+need to create /etc/fail2ban/filter.d/NAME.local (leave .conf files
+for me and upstream please to avoid any conflicts -- introduce your
+changes in .local) with failregex in [Definition] section. And provide
+appropriate jail definition in /etc/fail2ban/jail.local
+
+
+* Enabled Sections:
+
+Only handling of ssh files is enabled by default. If you want to use
+fail2ban with apache, please enable apache section manually in
+/etc/fail2ban/jail.local by including next lines:
+
+[apache]
+enabled = true
+
+NOTE: -e command line parameter is non existent in 0.7.x
+
+
+* Interpolations vs actions/filters parameters:
+
+For details see #398739 or wait for a closure of #400416
+
+Every pair of .conf and then .local (if exists) files is read
+separately from any other configuration file, so interpolations cannot
+penetrate from jail.* into actions.d/*. To overcome this, it is
+necessary to create a PARAMETER which can be substituted in actions
+[Definition] section, if it is also defined in the [Init] section of
+that file and is used in place of necessary allocation as <PARAMETER>
+tag. Parameters can be specified in the definitions within
+jail.{conf,local}. For instance, 1 lengthy example, where the same
+name "fwchain" is used both as interpolation (in jail.local) and as a
+parameter (in iptables-flex.local) (from #398739)
+
+==> /etc/fail2ban/jail.local <==
+[DEFAULT]
+action = iptables-flex[name=%(__name__)s, port=%(port)s, fwchain=%(fwchain)s, post_start_commands=%(post_start_commands)s, pre_end_commands=%(pre_end_commands)s]
+fwchain = INPUT
+[ssh]
+fwchain = ssh-tarpit
+==> /etc/fail2ban/action.d/iptables-flex.local <==
+[Definition]
+actionstart = iptables -N fail2ban-<name>
+               iptables -I <fwchain> -m state --state NEW -p <protocol> --dport <port> -j fail2ban-<name>
+               iptables -I <fwchain> -j <whitelist>
+actionstop  = iptables -D <fwchain> -j <whitelist>
+               iptables -D <fwchain> -m state --state NEW -p <protocol> --dport <port> -j fail2ban-<name>
+               iptables -F fail2ban-<name>
+               iptables -X fail2ban-<name>
+actioncheck = iptables -n -L <fwchain> | grep -q fail2ban-<name>
+actionban   = iptables -I fail2ban-<name> 1 -s <ip> -j DROP
+actionunban = iptables -D fail2ban-<name> -s <ip> -j DROP
+[Init]
+whitelist = ssh-whitelist
+fwchain = INPUT
+name = default
+port = ssh
+protocol = tcp
+
+
+* Multiport banning: Comment for #373592, #545971
+
+iptables-multiport action is now default banaction (file jail.conf, to
+be customized within jail.local). Therefore assure that you have built
+multiport module if you use custom kernel.
+
+If you would like to ban all ports for that host, just redefine
+fwban/fwunban commands to don't have --dport %(port)s statement at
+all, or use shorewall, where actionban bans whole IP.
+
+* Blocking of NEW connections only
+Comment for the wishlist #350746.
+
+It might be benefitial in some cases to ban only new connections. For
+that just use iptables-new action instead of default banaction
+
+/etc/fail2ban/jail.local:
+
+[DEFAULT]
+banaction=iptables-new
+
+(you can override banaction within interesting for you section).
+ Also you can redefine the whole action parameter if you like.
+
+
+* Interaction with ipmasq
+  Comment to #461417
+
+Although fail2ban should detect and recreate missing chains if the external
+command wipes out iptables, it is better to explicitly to force-reload
+fail2ban. For this reason there is examples/ipmasq-ZZZzzz|fail2ban.rul file is
+shipped along to be installed under name ZZZzzz|fail2ban.rul within
+/etc/ipmasq.
+
+* Interaction with logrotate with custom logtarget
+  Comment to #631917
+
+if you use an alternative logtarget (e.g. SYSLOG) thus not using
+/var/log/fail2ban.log you should divert logrotate configuration into
+a disabled state, e.g.
+
+sudo dpkg-divert --rename --divert \
+	 /etc/logrotate.d/fail2ban.disabled /etc/logrotate.d/fail2ban
+
+
+Troubleshooting:
+---------------
+
+* Updated failregex:
+
+To resolve the security bug #330827 [1] failregex expressions must
+provide a named group (?P<host>...) as a placeholder of the abuser's
+host. Alternative tag (since 0.7.5) can be "<HOST>". The naming of the
+group was introduced to capture possible future generalizations of
+failregex to provide even more information.
+
+[1] http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=330827
+
+You might benefit from using fail2ban-regex command shipped along to
+construct and debug your failregex statements.
+
+* "Interpolations" in the config file:
+
+Since version 0.6.0-3 to reduce duplication, thus to improve
+readability of the config file, interpolations provided by the module
+ConfigParser are used. If you had custom sections defined before, you
+might benefit from updating config file and adding appropriate
+information for the new sections.
+
+N.B. If you have some nice additional sections defined, I would really
+appreciate if you share them with me or upstream author, so they could
+be eventually included in the fail2ban package for general use by the
+rest of the community.
+
+
+* Mailing:
+
+Since actions.d/mail*.conf commands rely on presence of "mail"
+command, mailx package (or another package providing mailx
+functionality such as mailutils) is required if those actions are
+activated in jail.{conf,local}.
+
+
+* Dirty exit:
+
+If firewall rules gets cleaned out before fail2ban exits (like was
+happening with firestarter), errors get reported during the exit of
+fail2ban, but they are "safe" and can be ignored.
+
+
+** SSHD Configuration Specific Problems
+
+* Ban "Not allowed" attempts:
+
+Make sure that you have
+ChallengeResponseAuthentication no
+PasswordAuthentication yes
+
+Details from the bug report #350980 [2]
+
+[2]  http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=350980
+
+
+* Not caught attempts to login as root
+
+On the boxes running older versions of openssh (e.g. sarge
+distribution) in the case when PermitRootLogin is set to something
+else than "yes" and iff AllowUsers is active, failed root logins do
+not confirm to the standard logging message -- they omit the source
+IP, thus allowing attack to persist since such messages are not caught
+by fail2ban.
+
+
+* Bantime:
+
+An IP is banned for "bantime" not since the last failed login attempt
+from the IP, but rather since the moment when failed login was
+detected by fail2ban. Thus, if fail2ban gets [re]started, any IP which
+had enough of failed logins with durations less than "findtime" between
+them prior to the [re]start moment, will be banned for
+"bantime" since [re]start moment, not since the last failed login
+time.
+
+* Findtime:
+
+"Findtime" option of a jail actually defines a duration to reset the
+counter of failed login attempts, if no new attempt was detected within
+that time frame (i.e.  within "findtime").
+
+See
+http://www.fail2ban.org/wiki/index.php/MANUAL_0_8#Jail_Options
+for more information on jail options.
+
+
+* Syslog entries can be 'forged' by a regular user
+
+From
+http://www.fail2ban.org/wiki/index.php/MANUAL_0_8#Possibility_of_DOS_attack_by_a_local_user
+
+Especially on systems which provide ssh/CGI/PHP services to unknown
+users it is possible to block other users from ssh and probably other
+access as a unprivileged user may issue:
+
+logger -p auth.warning -t 'sshd[123]' 'Illegal user user1 from 1.2.3.4'
+
+N.B. chmod o-x /usr/bin/logger should provide at least obfuscation
+solution
+
+Or the malicious user may write via PHP's openlog()/syslog() to syslog.
+
+P.S. Anyone is welcome to recommend proper security solution to this
+issue, such as an alternative to sysklogd which allows better control
+over users logging to specific facilities (such as AUTH)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>, Mon, 22 Jan 2018 10:37:00 -0500

@@ -1,0 +1,91 @@
+fail2ban (0.10.2-1) unstable; urgency=medium
+
+  This version is a major development leap forward to provide
+  IPv6 support, which also required extensions to the configuration
+  system.  That is why it is not unlikely that configuration left from the
+  previous version(s) would either not work or would not work as intended.
+
+  You are advised to accept new configuration and adjust it for your
+  customizations (if any).  See changelog.Debian.gz for more information.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 21 Jan 2018 22:25:26 -0500
+
+fail2ban (0.9.0+git48-gabcab00-1) experimental; urgency=low
+
+  [ Yaroslav Halchenko ]
+  * This version went through big refactoring which allowed to gain new
+    features such as multiline matching (see upstream's changelog for more
+    information).
+  * Although .local files are still supported, customizations are advised
+    to be provided under corresponding .d/ directories.  E.g. see
+    /etc/fail2ban/jail.d/defaults-debian.conf which is where now sshd
+    jail is enabled by default to match previous behavior of Fail2Ban in
+    Debian.
+
+  [ Daniel Schaal ]
+  * All jails definitions were rewritten to become more concise and uniform.
+    From this version on log paths are defined in distro specific files,
+    for Debian this is in /etc/fail2ban/paths-debian.conf.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 25 Mar 2014 08:38:31 -0400
+
+fail2ban (0.8.11-1) unstable; urgency=low
+
+  * retroactive for 0.8.9: by default iptables-* actions do not simply
+    DROP packets from offending IP but rather reject with
+    icmp-port-unreachable.  If DROP behaviour is preferable, provide
+    config/action.d/iptables-blocktype.local with [Init] section defining
+    blocktype = DROP or override action definition to provide
+    blocktype=DROP option in jail.local
+  * Many failregex's were tight-up in this release which could
+    theoretically effect operation in comparison to previous release(s).
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 16 Nov 2013 22:27:50 -0500
+
+fail2ban (0.8.4-3) unstable; urgency=low
+
+  * Jail named-refused-udp is unsafe and opens possibility for easy DoS,
+    thus discouraged to be used, and commented out (see #583364 for more
+    information).
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 28 Jun 2010 22:12:22 -0400
+
+fail2ban (0.7.1-0.2) unstable; urgency=low
+
+  fail2ban 0.7 is a complete rewrite of the 0.6 version, and if you
+  customized any of provided configuration or startup files
+  (/etc/default/fail2ban, /etc/fail2ban.conf, /etc/init.d/fail2ban),
+  please read further. The configuration scheme has changed upstream:
+  0.7 ignores /etc/fail2ban.conf and instead uses a split configuration
+  under /etc/fail2ban/. To retain your customizations, for example to
+  monitor anything other than sshd, you will need to set them under that
+  new directory; use *.local files for customizations. Please see
+  /usr/share/doc/fail2ban/README.Debian.gz and
+  http://fail2ban.sourceforge.net for further description of new
+  configuration scheme. Detailed documentation is under development (see
+  #400416).  When you are satisfied with the new settings, please delete
+  /etc/fail2ban.conf to avoid confusion.
+
+  Fail2ban 0.7 uses client/server architecture and fail2ban-client is to
+  substitute fail2ban command to provide an interface between the user and
+  fail2ban-server. That is why some command line parameters present in
+  fail2ban 0.6 are invalid in fail2ban-client. Such change affects
+  /etc/default/fail2ban; you should review that file if you customized it.
+  Please enable sections as directed in README.Debian.gz mentioned above.
+  You must use newly shipped init.d/fail2ban, or otherwise fail2ban will
+  not start.
+
+  This note was rewritten in release 0.7.5-2 to clarify its meaning.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat,  9 Dec 2006 18:24:36 -0500
+
+fail2ban (0.6.0-4) unstable; urgency=low
+
+  In this version the new section ApacheAttacks was introduced to ban IPs
+  which are found to run some known attack on the host. For now it captures
+  just awstats and mambo related attacks. To make this feature work, the bug of
+  wrongly specified timeregexp for Apache's access.log file was fixed.
+  Besides that group of log files has changed to be adm, and now they are
+  readable by the group.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 10 Feb 2006 13:05:07 -0500
