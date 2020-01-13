@@ -2064,6 +2064,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		)
 
 	def testIPAddr_CompareDNS(self):
+		unittest.F2B.SkipIfNoNetwork()
 		ips = IPAddr('example.com')
 		self.assertTrue(IPAddr("93.184.216.34").isInNet(ips))
 		self.assertTrue(IPAddr("2606:2800:220:1:248:1893:25c8:1946").isInNet(ips))
