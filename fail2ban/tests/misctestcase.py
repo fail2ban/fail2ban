@@ -66,6 +66,8 @@ class HelpersTest(unittest.TestCase):
 		self.assertEqual(splitwords(' 1, 2 , '), ['1', '2'])
 		self.assertEqual(splitwords(' 1\n  2'), ['1', '2'])
 		self.assertEqual(splitwords(' 1\n  2, 3'), ['1', '2', '3'])
+		# string as unicode:
+		self.assertEqual(splitwords(u' 1\n  2, 3'), ['1', '2', '3'])
 
 
 if sys.version_info >= (2,7):
