@@ -469,14 +469,14 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 
 	@with_foreground_server_thread(startextra={'f2b_local':(
 			"[Thread]",
-			"stacksize = 32"
+			"stacksize = 128"
 			"",
 		)})
 	def testStartForeground(self, tmp, startparams):
 		# check thread options were set:
 		self.pruneLog()
 		self.execCmd(SUCCESS, startparams, "get", "thread")
-		self.assertLogged("{'stacksize': 32}")
+		self.assertLogged("{'stacksize': 128}")
 		# several commands to server:
 		self.execCmd(SUCCESS, startparams, "ping")
 		self.execCmd(FAILED, startparams, "~~unknown~cmd~failed~~")
