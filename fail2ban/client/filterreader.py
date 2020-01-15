@@ -53,6 +53,14 @@ class FilterReader(DefinitionInitConfigReader):
 	def getFile(self):
 		return self.__file
 
+	def applyAutoOptions(self, backend):
+		# set init option to backend-related logtype, considering
+		# that the filter settings may be overwritten in its local:
+		if (not self._initOpts.get('logtype') and 
+		    not self.has_option('Definition', 'logtype', False)
+		  ):
+			self._initOpts['logtype'] = ['file','journal'][int(backend.startswith("systemd"))]
+
 	def convert(self):
 		stream = list()
 		opts = self.getCombined()
