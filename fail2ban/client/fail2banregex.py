@@ -372,11 +372,8 @@ class Fail2banRegex(object):
 			if not ret:
 				output( "ERROR: failed to load filter %s" % value )
 				return False
-			# overwrite default logtype (considering that the filter could specify this too in Definition/Init sections):
-			if not fltOpt.get('logtype'):
-				reader.merge_defaults({
-					'logtype': ['file','journal'][int(self._backend.startswith("systemd"))]
-				})
+			# set backend-related options (logtype):
+			reader.applyAutoOptions(self._backend)
 			# get, interpolate and convert options:
 			reader.getOptions(None)
 			# show real options if expected:

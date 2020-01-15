@@ -120,6 +120,10 @@ class ConfigReader():
 		except AttributeError:
 			return False
 
+	def has_option(self, sec, opt, withDefault=True):
+		return self._cfg.has_option(sec, opt) if withDefault \
+			else opt in self._cfg._sections.get(sec, {})
+
 	def merge_defaults(self, d):
 		self._cfg.get_defaults().update(d)
 
@@ -261,8 +265,8 @@ class ConfigReaderUnshared(SafeConfigParserWithIncludes):
 					logSys.warning("'%s' not defined in '%s'. Using default one: %r"
 								% (optname, sec, optvalue))
 					values[optname] = optvalue
-				elif logSys.getEffectiveLevel() <= logLevel:
-					logSys.log(logLevel, "Non essential option '%s' not defined in '%s'.", optname, sec)
+				# elif logSys.getEffectiveLevel() <= logLevel:
+				# 	logSys.log(logLevel, "Non essential option '%s' not defined in '%s'.", optname, sec)
 			except ValueError:
 				logSys.warning("Wrong value for '" + optname + "' in '" + sec +
 							"'. Using default one: '" + repr(optvalue) + "'")

@@ -142,11 +142,8 @@ class JailReader(ConfigReader):
 				ret = self.__filter.read()
 				if not ret:
 					raise JailDefError("Unable to read the filter %r" % filterName)
-				if not filterOpt.get('logtype'):
-					# overwrite default logtype backend-related (considering that the filter settings may be overwritten):
-					self.__filter.merge_defaults({
-						'logtype': ['file','journal'][int(self.__opts.get('backend', '').startswith("systemd"))]
-					})
+				# set backend-related options (logtype):
+				self.__filter.applyAutoOptions(self.__opts.get('backend', ''))
 				# merge options from filter as 'known/...' (all options unfiltered):
 				self.__filter.getOptions(self.__opts, all=True)
 				ConfigReader.merge_section(self, self.__name, self.__filter.getCombined(), 'known/')
