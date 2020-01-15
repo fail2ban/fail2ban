@@ -404,10 +404,13 @@ class CommandAction(ActionBase):
 	def _getOperation(self, tag, family):
 		# replace operation tag (interpolate all values), be sure family is enclosed as conditional value
 		# (as lambda in addrepl so only if not overwritten in action):
-		return self.replaceTag(tag, self._properties,
+		cmd = self.replaceTag(tag, self._properties,
 			conditional=('family='+family if family else ''),
-			addrepl=(lambda tag:family if tag == 'family' else None),
 			cache=self.__substCache)
+		if '<' not in cmd or not family: return cmd
+		# replace family as dynamic tags, important - don't cache, no recursion and auto-escape here:
+		cmd = self.replaceDynamicTags(cmd, {'family':family})
+		return cmd
 
 	def _operationExecuted(self, tag, family, *args):
 		""" Get, set or delete command of operation considering family.
