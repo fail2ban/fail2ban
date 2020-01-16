@@ -656,7 +656,7 @@ class JailsReaderTestCache(LogCaptureTestCase):
 			cnt = self._getLoggedReadCount(r'filter\.d/common\.conf')
 			self.assertTrue(cnt == 1, "Unexpected count by reading of filter files, cnt = %s" % cnt)
 			# same with action:
-			cnt = self._getLoggedReadCount(r'action\.d/iptables-common\.conf')
+			cnt = self._getLoggedReadCount(r'action\.d/iptables\.conf')
 			self.assertTrue(cnt == 1, "Unexpected count by reading of action files, cnt = %s" % cnt)
 		finally:
 			configparserinc.logLevel = saved_ll

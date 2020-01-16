@@ -1511,10 +1511,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`ip6tables -w -X f2b-j-w-iptables-mp`",
 				),
 				'ip4-check': (
-					r"""`iptables -w -n -L INPUT | grep -q 'f2b-j-w-iptables-mp[ \t]'`""",
+					r"""`iptables -w -C INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp`""",
 				),
 				'ip6-check': (
-					r"""`ip6tables -w -n -L INPUT | grep -q 'f2b-j-w-iptables-mp[ \t]'`""",
+					r"""`ip6tables -w -C INPUT -p tcp -m multiport --dports http,https -j f2b-j-w-iptables-mp`""",
 				),
 				'ip4-ban': (
 					r"`iptables -w -I f2b-j-w-iptables-mp 1 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
@@ -1555,10 +1555,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`ip6tables -w -X f2b-j-w-iptables-ap`",
 				),
 				'ip4-check': (
-					r"""`iptables -w -n -L INPUT | grep -q 'f2b-j-w-iptables-ap[ \t]'`""",
+					r"""`iptables -w -C INPUT -p tcp -j f2b-j-w-iptables-ap`""",
 				),
 				'ip6-check': (
-					r"""`ip6tables -w -n -L INPUT | grep -q 'f2b-j-w-iptables-ap[ \t]'`""",
+					r"""`ip6tables -w -C INPUT -p tcp -j f2b-j-w-iptables-ap`""",
 				),
 				'ip4-ban': (
 					r"`iptables -w -I f2b-j-w-iptables-ap 1 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
@@ -1645,7 +1645,7 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					r"`ipset del f2b-j-w-iptables-ipset-ap6 2001:db8:: -exist`",
 				),					
 			}),
-			# iptables --
+			# iptables (oneport) --
 			('j-w-iptables', 'iptables[name=%(__name__)s, bantime="10m", port="http", protocol="tcp", chain="<known/chain>"]', {
 				'ip4': ('`iptables ', 'icmp-port-unreachable'), 'ip6': ('`ip6tables ', 'icmp6-port-unreachable'),
 				'ip4-start': (
@@ -1671,10 +1671,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`ip6tables -w -X f2b-j-w-iptables`",
 				),
 				'ip4-check': (
-					r"""`iptables -w -n -L INPUT | grep -q 'f2b-j-w-iptables[ \t]'`""",
+					r"""`iptables -w -C INPUT -p tcp --dport http -j f2b-j-w-iptables`""",
 				),
 				'ip6-check': (
-					r"""`ip6tables -w -n -L INPUT | grep -q 'f2b-j-w-iptables[ \t]'`""",
+					r"""`ip6tables -w -C INPUT -p tcp --dport http -j f2b-j-w-iptables`""",
 				),
 				'ip4-ban': (
 					r"`iptables -w -I f2b-j-w-iptables 1 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
@@ -1715,10 +1715,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`ip6tables -w -X f2b-j-w-iptables-new`",
 				),
 				'ip4-check': (
-					r"""`iptables -w -n -L INPUT | grep -q 'f2b-j-w-iptables-new[ \t]'`""",
+					r"""`iptables -w -C INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`""",
 				),
 				'ip6-check': (
-					r"""`ip6tables -w -n -L INPUT | grep -q 'f2b-j-w-iptables-new[ \t]'`""",
+					r"""`ip6tables -w -C INPUT -m state --state NEW -p tcp --dport http -j f2b-j-w-iptables-new`""",
 				),
 				'ip4-ban': (
 					r"`iptables -w -I f2b-j-w-iptables-new 1 -s 192.0.2.1 -j REJECT --reject-with icmp-port-unreachable`",
@@ -1749,10 +1749,10 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`if [ `id -u` -eq 0 ];then ip6tables -w -D INPUT -m recent --update --seconds 3600 --name f2b-j-w-iptables-xtre6 -j REJECT --reject-with icmp6-port-unreachable;fi`",
 				),
 				'ip4-check': (
-					r"`test -e /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
+					r"`{ iptables -w -C INPUT -p tcp --dport ssh -j f2b-j-w-iptables-xtre; } && test -e /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
 				),
 				'ip6-check': (
-					r"`test -e /proc/net/xt_recent/f2b-j-w-iptables-xtre6`",
+					r"`{ ip6tables -w -C INPUT -p tcp --dport ssh -j f2b-j-w-iptables-xtre; } && test -e /proc/net/xt_recent/f2b-j-w-iptables-xtre6`",
 				),
 				'ip4-ban': (
 					r"`echo +192.0.2.1 > /proc/net/xt_recent/f2b-j-w-iptables-xtre`",
