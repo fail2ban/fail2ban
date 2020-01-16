@@ -227,6 +227,8 @@ fail2ban/tests/clientreadertestcase.py
 fail2ban/tests/config/action.d/action.conf
 fail2ban/tests/config/action.d/brokenaction.conf
 fail2ban/tests/config/fail2ban.conf
+fail2ban/tests/config/filter.d/checklogtype.conf
+fail2ban/tests/config/filter.d/checklogtype_test.conf
 fail2ban/tests/config/filter.d/simple.conf
 fail2ban/tests/config/filter.d/test.conf
 fail2ban/tests/config/filter.d/test.local

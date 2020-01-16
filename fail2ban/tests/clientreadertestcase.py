@@ -328,7 +328,22 @@ class JailReaderTest(LogCaptureTestCase):
 			self.assertFalse(len(o) > 2 and o[2].endswith('regex'))
 			i += 1
 			if i > usednsidx: break
-		
+
+	def testLogTypeOfBackendInJail(self):
+		unittest.F2B.SkipIfCfgMissing(stock=True); # expected include of common.conf
+		# test twice to check cache works peoperly:
+		for i in (1, 2):
+			# backend-related, overwritten in definition, specified in init parameters:
+			for prefline in ('JRNL', 'FILE', 'TEST', 'INIT'):
+				jail = JailReader('checklogtype_'+prefline.lower(), basedir=IMPERFECT_CONFIG,
+					share_config=IMPERFECT_CONFIG_SHARE_CFG, force_enable=True)
+				self.assertTrue(jail.read())
+				self.assertTrue(jail.getOptions())
+				stream = jail.convert()
+				# 'JRNL' for systemd, 'FILE' for file backend, 'TEST' for custom logtype (overwrite it):
+				self.assertEqual([['set', jail.getName(), 'addfailregex', '^%s failure from <HOST>$' % prefline]],
+					[o for o in stream if len(o) > 2 and o[2] == 'addfailregex'])
+
 	def testSplitOption(self):
 		# Simple example
 		option = "mail-whois[name=SSH]"
