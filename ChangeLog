@@ -9,11 +9,20 @@ Fail2Ban: Changelog
 ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 -----------
 
+### Compatibility:
+* to v.0.11:
+  - due to change of `actioncheck` behavior (gh-488), some actions can be incompatible as regards
+    the invariant check, if `actionban` or `actionunban` would not throw an error (exit code 
+    different from 0) in case of unsane environment.
+
 ### Fixes
 
 ### New Features
 
 ### Enhancements
+* `actioncheck` behavior is changed now (gh-488), so invariant check as well as restore or repair
+   of sane environment (in case of recognized unsane state) would only occur on action errors (e. g.
+   if ban or unban operations are exiting with other code as 0)
 
 
 ver. 0.11.1 (2020/01/11) - this-is-the-way
