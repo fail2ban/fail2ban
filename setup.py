@@ -119,9 +119,11 @@ class install_scripts_f2b(install_scripts):
 class install_command_f2b(install):
 	user_options = install.user_options + [
 		('disable-2to3', None, 'Specify to deactivate 2to3, e.g. if the install runs from fail2ban test-cases.'),
+		('without-tests', None, 'without tests files installation'),
 	]
 	def initialize_options(self):
 		self.disable_2to3 = None
+		self.without_tests = None
 		install.initialize_options(self)
 	def finalize_options(self):
 		global _2to3
@@ -132,6 +134,13 @@ class install_command_f2b(install):
 			cmdclass = self.distribution.cmdclass
 			cmdclass['build_py'] = build_py_2to3
 			cmdclass['build_scripts'] = build_scripts_2to3
+		if self.without_tests:
+			self.distribution.scripts.remove('bin/fail2ban-testcases')
+
+			self.distribution.packages.remove('fail2ban.tests')
+			self.distribution.packages.remove('fail2ban.tests.action_d')
+
+			del self.distribution.package_data['fail2ban.tests']
 		install.finalize_options(self)
 	def run(self):
 		install.run(self)
@@ -208,7 +217,7 @@ setup(
 	license = "GPL",
 	platforms = "Posix",
 	cmdclass = {
-		'build_py': build_py, 'build_scripts': build_scripts, 
+		'build_py': build_py, 'build_scripts': build_scripts,
 		'install_scripts': install_scripts_f2b, 'install': install_command_f2b
 	},
 	scripts = [
