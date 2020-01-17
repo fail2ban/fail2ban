@@ -1596,6 +1596,12 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 					"`ipset flush f2b-j-w-iptables-ipset6`",
 					"`ipset destroy f2b-j-w-iptables-ipset6`",
 				),
+				'ip4-check': (
+					r"""`iptables -w -C INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset src -j REJECT --reject-with icmp-port-unreachable`""",
+				),
+				'ip6-check': (
+					r"""`ip6tables -w -C INPUT -p tcp -m multiport --dports http -m set --match-set f2b-j-w-iptables-ipset6 src -j REJECT --reject-with icmp6-port-unreachable`""",
+				),
 				'ip4-ban': (
 					r"`ipset add f2b-j-w-iptables-ipset 192.0.2.1 timeout 600 -exist`",
 				),
@@ -1614,23 +1620,29 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				'ip4': (' f2b-j-w-iptables-ipset-ap ',), 'ip6': (' f2b-j-w-iptables-ipset-ap6 ',),
 				'ip4-start': (
 					"`ipset create f2b-j-w-iptables-ipset-ap hash:ip timeout 0`",
-					"`iptables -w -I INPUT -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
+					"`iptables -w -I INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
 				), 
 				'ip6-start': (
 					"`ipset create f2b-j-w-iptables-ipset-ap6 hash:ip timeout 0 family inet6`",
-					"`ip6tables -w -I INPUT -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
+					"`ip6tables -w -I INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
 				),
 				'flush': (
 					"`ipset flush f2b-j-w-iptables-ipset-ap`",
 					"`ipset flush f2b-j-w-iptables-ipset-ap6`",
 				),
 				'stop': (
-					"`iptables -w -D INPUT -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
+					"`iptables -w -D INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`",
 					"`ipset flush f2b-j-w-iptables-ipset-ap`",
 					"`ipset destroy f2b-j-w-iptables-ipset-ap`",
-					"`ip6tables -w -D INPUT -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
+					"`ip6tables -w -D INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`",
 					"`ipset flush f2b-j-w-iptables-ipset-ap6`",
 					"`ipset destroy f2b-j-w-iptables-ipset-ap6`",
+				),
+				'ip4-check': (
+					r"""`iptables -w -C INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap src -j REJECT --reject-with icmp-port-unreachable`""",
+				),
+				'ip6-check': (
+					r"""`ip6tables -w -C INPUT -p tcp -m set --match-set f2b-j-w-iptables-ipset-ap6 src -j REJECT --reject-with icmp6-port-unreachable`""",
 				),
 				'ip4-ban': (
 					r"`ipset add f2b-j-w-iptables-ipset-ap 192.0.2.1 timeout 600 -exist`",
