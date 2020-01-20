@@ -146,9 +146,11 @@ class ObserverThread(JailThread):
 	def pulse_notify(self):
 		"""Notify wakeup (sets /and resets/ notify event)
 		"""
-		if not self._paused and self._notify:
-			self._notify.set()
-			#self._notify.clear()
+		if not self._paused:
+			n = self._notify
+			if n:
+				n.set()
+				#n.clear()
 
 	def add(self, *event):
 		"""Add a event to queue and notify thread to wake up.
@@ -237,6 +239,7 @@ class ObserverThread(JailThread):
 						break
 				## end of main loop - exit
 			logSys.info("Observer stopped, %s events remaining.", len(self._queue))
+			self._notify = None
 			#print("Observer stopped, %s events remaining." % len(self._queue))
 		except Exception as e:
 			logSys.error('Observer stopped after error: %s', e, exc_info=True)
@@ -262,9 +265,8 @@ class ObserverThread(JailThread):
 			if not self.active:
 				super(ObserverThread, self).start()
 
-	def stop(self):
+	def stop(self, wtime=5, forceQuit=True):
 		if self.active and self._notify:
-			wtime = 5
 			logSys.info("Observer stop ... try to end queue %s seconds", wtime)
 			#print("Observer stop ....")
 			# just add shutdown job to make possible wait later until full (events remaining)
@@ -276,10 +278,15 @@ class ObserverThread(JailThread):
 				#self.pulse_notify()
 				self._notify = None
 			# wait max wtime seconds until full (events remaining)
-			self.wait_empty(wtime)
-			n.clear()
-			self.active = False
-			self.wait_idle(0.5)
+			if self.wait_empty(wtime) or forceQuit:
+				n.clear()
+				self.active = False; # leave outer (active) loop
+				self._paused = True; # leave inner (queue) loop
+				self.__db = None
+			else:
+				self._notify = n
+			return self.wait_idle(min(wtime, 0.5)) and not self.is_full
+		return True
 
 	@property
 	def is_full(self):

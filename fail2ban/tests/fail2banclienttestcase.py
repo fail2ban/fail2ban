@@ -343,6 +343,7 @@ def with_foreground_server_thread(startextra={}):
 				# to wait for end of server, default accept any exit code, because multi-threaded, 
 				# thus server can exit in-between...
 				def _stopAndWaitForServerEnd(code=(SUCCESS, FAILED)):
+					tearDownMyTime()
 					# if seems to be down - try to catch end phase (wait a bit for end:True to recognize down state):
 					if not phase.get('end', None) and not os.path.exists(pjoin(tmp, "f2b.pid")):
 						Utils.wait_for(lambda: phase.get('end', None) is not None, MID_WAITTIME)
@@ -1569,6 +1570,37 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.execCmd(SUCCESS, startparams, "get", "test-jail1", "banip", "--with-time")
 		self.assertLogged(
 			"192.0.2.11", "+ 600 =", all=True, wait=MID_WAITTIME)
+
+		# test stop with busy observer:
+		self.pruneLog("[test-phase end) stop on busy observer]")
+		tearDownMyTime()
+		a = {'state': 0}
+		obsMain = Observers.Main
+		def _long_action():
+			logSys.info('++ observer enters busy state ...')
+			a['state'] = 1
+			Utils.wait_for(lambda: a['state'] == 2, MAX_WAITTIME)
+			obsMain.db_purge(); # does nothing (db is already None)
+			logSys.info('-- observer leaves busy state.')
+		obsMain.add('call', _long_action)
+		obsMain.add('call', lambda: None)
+		# wait observer enter busy state:
+		Utils.wait_for(lambda: a['state'] == 1, MAX_WAITTIME)
+		# overwrite default wait time (normally 5 seconds):
+		obsMain_stop = obsMain.stop
+		def _stop(wtime=(0.01 if unittest.F2B.fast else 0.1), forceQuit=True):
+			return obsMain_stop(wtime, forceQuit)
+		obsMain.stop = _stop
+		# stop server and wait for end:
+		self.stopAndWaitForServerEnd(SUCCESS)
+		# check observer and db state:
+		self.assertNotLogged('observer leaves busy state')
+		self.assertFalse(obsMain.idle)
+		self.assertEqual(obsMain._ObserverThread__db, None)
+		# server is exited without wait for observer, stop it now:
+		a['state'] = 2
+		self.assertLogged('observer leaves busy state', wait=True)
+		obsMain.join()
 
 	# test multiple start/stop of the server (threaded in foreground) --
 	if False: # pragma: no cover
