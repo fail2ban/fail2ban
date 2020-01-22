@@ -223,11 +223,9 @@ def testSampleRegexsFactory(name, basedir):
 					try:
 						fail = {}
 						# for logtype "journal" we don't need parse timestamp (simulate real systemd-backend handling):
-						checktime = True
 						if opts.get('logtype') != 'journal':
 							ret = flt.processLine(line)
 						else: # simulate journal processing, time is known from journal (formatJournalEntry):
-							checktime = False
 							if opts.get('test.prefix-line'): # journal backends creates common prefix-line:
 								line = opts.get('test.prefix-line') + line
 							ret = flt.processLine(('', TEST_NOW_STR, line.rstrip('\r\n')), TEST_NOW)
@@ -271,7 +269,7 @@ def testSampleRegexsFactory(name, basedir):
 								self.assertEqual(fv, v)
 
 						t = faildata.get("time", None)
-						if checktime or t is not None:
+						if t is not None:
 							try:
 								jsonTimeLocal =	datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S")
 							except ValueError:
