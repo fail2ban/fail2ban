@@ -1,3 +1,9 @@
+fail2ban (0.11.1-1~exp4) UNRELEASED; urgency=medium
+
+  * Trim trailing whitespace.
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 23 Jan 2020 10:40:37 +0100
+
 fail2ban (0.11.1-1~exp3) experimental; urgency=medium
 
   * Add myself to the list of uploaders
@@ -114,7 +120,7 @@ fail2ban (0.9.5-1) unstable; urgency=medium
 
 fail2ban (0.9.4-1) unstable; urgency=medium
 
-  * Fresh upstream release.  
+  * Fresh upstream release.
     Debian's release codename  if-only-someone-helped-to-triage-DBTS
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 07 Mar 2016 21:50:50 -0500
@@ -148,7 +154,7 @@ fail2ban (0.9.1+git44-gd65c4f8-1) experimental; urgency=medium
     Closes: #767123
 
   [ Yaroslav Halchenko ]
-  * New upstream snapshot from 0.9.1-44-gd65c4f8 
+  * New upstream snapshot from 0.9.1-44-gd65c4f8
     - carries a lot of fixes and improvements. Consult upstream ChangeLog
     - debian's init file is now maintained in upstream codebase (for manual
       deployments)
@@ -536,7 +542,7 @@ fail2ban (0.8.3-6) unstable; urgency=low
     - Boosted policy to 3.8.2 (no changes are due).
     - Boosted debhelper compatibility to 5.
     - Misspell in README.Debian
-    - Removing stale /var/run/fail2ban from dirs -- should be created by 
+    - Removing stale /var/run/fail2ban from dirs -- should be created by
       init script
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 09 Jul 2009 01:08:40 -0400
@@ -563,7 +569,7 @@ fail2ban (0.8.3-3) experimental; urgency=low
   * Adjusted description of bantime/findtime in README.Debian (closes:
     #507771)
   * Synced current debian revision to FAIL2BAN-0_8@717 of upstream,
-    since it includes fixes to some forwarded bugs. Total list of 
+    since it includes fixes to some forwarded bugs. Total list of
     functional changes
     - Added actions to report abuse to ISP, DShield and myNetWatchman.
       Thanks to Russell Odom.
@@ -575,7 +581,7 @@ fail2ban (0.8.3-3) experimental; urgency=low
       Halchenko.
     - Removed "timeregex" and "timepattern" stuff that is not needed
       anymore.
-    - Added date template for Day-Month-Year Hour:Minute:Second 
+    - Added date template for Day-Month-Year Hour:Minute:Second
       (closes: #491253)
     - Added date pattern for Hour:Minute:Second. Thanks to Andreas
       Itzchak Rehberg.
@@ -1023,10 +1029,10 @@ fail2ban (0.6.1-8) unstable; urgency=low
   * Added new proftpd section
   * Added new saslauthd section. Thanks to martin f krafft
     <madduck@debian.org> (closes: #369483)
-  * Mentioned apache2 log file in Other. comment field for FILE in 
+  * Mentioned apache2 log file in Other. comment field for FILE in
     apache section.  Nothing has to be changed besides the logfile path to
     work with apache2 (closes: #342144)
-    
+
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 22 May 2006 15:37:17 -0400
 
 fail2ban (0.6.1-5) unstable; urgency=low
@@ -1095,7 +1101,7 @@ fail2ban (0.6.0-6) unstable; urgency=low
     key authentication fails
   * Included postrm script to remove log files during purge to comply with
     policy 10.8 (closes: #355443)
- 
+
  -- Yaroslav Halchenko <debian@onerussian.com>  Fri,  3 Mar 2006 16:32:38 -0500
 
 fail2ban (0.6.0-5) unstable; urgency=low
@@ -1140,7 +1146,7 @@ fail2ban (0.6.0-2) unstable; urgency=low
 
   * fail2ban path is inserted first in the list to avoid a conflict with
     existing elsewhere modules with the same names. (Thanks for report and
-    patch to Nick Craig-Wood) (closes: #343821) 
+    patch to Nick Craig-Wood) (closes: #343821)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 19 Dec 2005 17:44:58 +0200
 
