@@ -11,6 +11,8 @@ Currently, the major difference with upstream: python libraries are
 placed under /usr/share/fail2ban instead of /usr/lib/fail2ban to
 comply with policy regarding architecture independent resources.
 
+fail2ban supports both nftables and iptables.
+
 Shorewall and startup sequence (#847728)
 ----------------------------------------
 

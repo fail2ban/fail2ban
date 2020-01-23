@@ -1,6 +1,8 @@
 fail2ban (0.11.1-1~exp3) experimental; urgency=medium
 
   * Add myself to the list of uploaders
+  * nftables is now more important than iptables. Update of the priority
+    and doc
 
  --
 
