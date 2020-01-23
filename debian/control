@@ -33,7 +33,7 @@ Description: ban hosts that cause multiple authentication errors
  email.
  .
  By default, it comes with filter expressions for various services
- (sshd, apache, qmail, proftpd, sasl etc.) but configuration can be
+ (sshd, apache, proftpd, sasl, etc.) but configuration can be
  easily extended for monitoring any other text file.  All filters and
  actions are given in the config files, thus fail2ban can be adopted
  to be used with a variety of files and firewalls.  Following recommends
