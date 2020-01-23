@@ -2,7 +2,8 @@ Source: fail2ban
 Section: net
 Priority: optional
 Maintainer: Debian Python Modules Team <python-modules-team@lists.alioth.debian.org>
-Uploaders: Yaroslav Halchenko <debian@onerussian.com>
+Uploaders: Yaroslav Halchenko <debian@onerussian.com>,
+ Sylvestre Ledru <sylvestre@debian.org>
 Build-Depends:
  debhelper (>= 9)
  , debhelper (>= 9.20160709) | dh-systemd
