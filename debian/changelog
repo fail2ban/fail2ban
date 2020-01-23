@@ -4,6 +4,8 @@ fail2ban (0.11.1-1~exp4) UNRELEASED; urgency=medium
   * Remove patches neurodebian-backport.series, neurodebian_use_python2,
     saucy-dsc-patch, trusty-dsc-patch, utopic-dsc-patch, wheezy-dsc-
     patch that are missing from debian/patches/series.
+  * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository,
+    Repository-Browse.
 
  -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 23 Jan 2020 10:40:37 +0100
 
