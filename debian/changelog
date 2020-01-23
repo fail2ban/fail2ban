@@ -1,5 +1,8 @@
-fail2ban (0.11.1-1~exp4) UNRELEASED; urgency=medium
+fail2ban (0.11.1-1~exp3) UNRELEASED; urgency=medium
 
+  * Add myself to the list of uploaders
+  * nftables is now more important than iptables. Update of the priority
+    and doc
   * Trim trailing whitespace.
   * Remove patches neurodebian-backport.series, neurodebian_use_python2,
     saucy-dsc-patch, trusty-dsc-patch, utopic-dsc-patch, wheezy-dsc-
@@ -7,15 +10,7 @@ fail2ban (0.11.1-1~exp4) UNRELEASED; urgency=medium
   * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository,
     Repository-Browse.
 
- -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 23 Jan 2020 10:40:37 +0100
-
-fail2ban (0.11.1-1~exp3) experimental; urgency=medium
-
-  * Add myself to the list of uploaders
-  * nftables is now more important than iptables. Update of the priority
-    and doc
-
- --
+ -- Sylvestre Ledru <sylvestre@debian.org>  Thu, 23 Jan 2020 10:42:11 +0100
 
 fail2ban (0.11.1-1~exp2) experimental; urgency=medium
 
