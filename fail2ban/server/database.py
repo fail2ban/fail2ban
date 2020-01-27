@@ -754,7 +754,8 @@ class Fail2BanDb(object):
 		if overalljails or jail is None:
 			query += " GROUP BY ip ORDER BY timeofban DESC LIMIT 1"
 		cur = self._db.cursor()
-		return cur.execute(query, queryArgs)
+		# repack iterator as long as in lock:
+		return list(cur.execute(query, queryArgs))
 
 	def _getCurrentBans(self, cur, jail = None, ip = None, forbantime=None, fromtime=None):
 		queryArgs = []
