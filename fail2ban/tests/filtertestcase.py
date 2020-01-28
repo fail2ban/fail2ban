@@ -43,7 +43,8 @@ from ..server.failmanager import FailManagerEmpty
 from ..server.ipdns import asip, getfqdn, DNSUtils, IPAddr
 from ..server.mytime import MyTime
 from ..server.utils import Utils, uni_decode
-from .utils import setUpMyTime, tearDownMyTime, mtimesleep, with_tmpdir, LogCaptureTestCase, \
+from .databasetestcase import getFail2BanDb
+from .utils import setUpMyTime, tearDownMyTime, mtimesleep, with_alt_time, with_tmpdir, LogCaptureTestCase, \
 	logSys as DefLogSys, CONFIG_DIR as STOCK_CONF_DIR
 from .dummyjail import DummyJail
 
@@ -1396,6 +1397,52 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 			_copy_lines_to_journal(
 				self.test_file, self.journal_fields, skip=5, n=4)
 			self.assert_correct_ban("193.168.0.128", 3)
+
+		@with_alt_time
+		def test_grow_file_with_db(self):
+
+			def _gen_falure(ip):
+				# insert new failures ans check it is monitored:
+				fields = self.journal_fields
+				fields.update(TEST_JOURNAL_FIELDS)
+				journal.send(MESSAGE="error: PAM: Authentication failure for test from "+ip, **fields)
+				self.waitForTicks(1)
+				self.assert_correct_ban(ip, 1)
+
+			# coverage for update log:
+			self.jail.database = getFail2BanDb(':memory:')
+			self.jail.database.addJail(self.jail)
+			MyTime.setTime(time.time())
+			self._test_grow_file()
+			# stop:
+			self.filter.stop()
+			self.filter.join()
+			MyTime.setTime(time.time() + 2)
+			# update log manually (should cause a seek to end of log without wait for next second):
+			self.jail.database.updateJournal(self.jail, 'systemd-journal', MyTime.time(), 'TEST')
+			# check seek to last (simulated) position succeeds (without bans of previous copied tickets):
+			self._failTotal = 0
+			self._initFilter()
+			self.filter.setMaxRetry(1)
+			self.filter.start()
+			self.waitForTicks(1)
+			# check new IP but no old IPs found:
+			_gen_falure("192.0.2.5")
+			self.assertFalse(self.jail.getFailTicket())
+
+			# now the same with increased time (check now - findtime case):
+			self.filter.stop()
+			self.filter.join()
+			MyTime.setTime(time.time() + 10000)
+			self._failTotal = 0
+			self._initFilter()
+			self.filter.setMaxRetry(1)
+			self.filter.start()
+			self.waitForTicks(1)
+			MyTime.setTime(time.time() + 3)
+			# check new IP but no old IPs found:
+			_gen_falure("192.0.2.6")
+			self.assertFalse(self.jail.getFailTicket())
 
 		def test_delJournalMatch(self):
 			self._initFilter()

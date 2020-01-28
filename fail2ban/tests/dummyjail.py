@@ -35,7 +35,6 @@ class DummyJail(Jail):
 		self.lock = Lock()
 		self.queue = []
 		super(DummyJail, self).__init__(name='DummyJail', backend=backend)
-		self.__db = None
 		self.__actions = Actions(self)
 
 	def __len__(self):
@@ -63,7 +62,7 @@ class DummyJail(Jail):
 
 	@property
 	def name(self):
-		return "DummyJail #%s with %d tickets" % (id(self), len(self))
+		return "DummyJail" + ("" if self.database else " #%s with %d tickets" % (id(self), len(self)))
 
 	@property
 	def idle(self):
@@ -72,14 +71,6 @@ class DummyJail(Jail):
 	@idle.setter
 	def idle(self, value):
 		pass
-
-	@property
-	def database(self):
-		return self.__db;
-	
-	@database.setter
-	def database(self, value):
-		self.__db = value;
 
 	@property
 	def actions(self):

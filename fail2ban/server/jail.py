@@ -156,6 +156,10 @@ class Jail(object):
 		"""
 		return self.__db
 
+	@database.setter
+	def database(self, value):
+		self.__db = value;
+
 	@property
 	def filter(self):
 		"""The filter which the jail is using to monitor log files.
