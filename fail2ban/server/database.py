@@ -489,22 +489,24 @@ class Fail2BanDb(object):
 			If log was already present in database, value of last position
 			in the log file; else `None`
 		"""
+		return self._addLog(cur, jail, container.getFileName(), container.getPos(), container.getHash())
+
+	def _addLog(self, cur, jail, name, pos=0, md5=None):
 		lastLinePos = None
 		cur.execute(
 			"SELECT firstlinemd5, lastfilepos FROM logs "
 				"WHERE jail=? AND path=?",
-			(jail.name, container.getFileName()))
+			(jail.name, name))
 		try:
 			firstLineMD5, lastLinePos = cur.fetchone()
 		except TypeError:
-			firstLineMD5 = False
+			firstLineMD5 = None
 
-		cur.execute(
-				"INSERT OR REPLACE INTO logs(jail, path, firstlinemd5, lastfilepos) "
-					"VALUES(?, ?, ?, ?)",
-				(jail.name, container.getFileName(),
-					container.getHash(), container.getPos()))
-		if container.getHash() != firstLineMD5:
+		if not firstLineMD5 and (pos or md5):
+			cur.execute(
+					"INSERT OR REPLACE INTO logs(jail, path, firstlinemd5, lastfilepos) "
+						"VALUES(?, ?, ?, ?)", (jail.name, name, md5, pos))
+		if md5 is not None and md5 != firstLineMD5:
 			lastLinePos = None
 		return lastLinePos
 
@@ -533,7 +535,7 @@ class Fail2BanDb(object):
 		return set(row[0] for row in cur.fetchmany())
 
 	@commitandrollback
-	def updateLog(self, cur, *args, **kwargs):
+	def updateLog(self, cur, jail, container):
 		"""Updates hash and last position in log file.
 
 		Parameters
@@ -543,14 +545,48 @@ class Fail2BanDb(object):
 		container : FileContainer
 			File container of the log file being updated.
 		"""
-		self._updateLog(cur, *args, **kwargs)
+		self._updateLog(cur, jail, container.getFileName(), container.getPos(), container.getHash())
 
-	def _updateLog(self, cur, jail, container):
+	def _updateLog(self, cur, jail, name, pos, md5):
 		cur.execute(
 			"UPDATE logs SET firstlinemd5=?, lastfilepos=? "
-				"WHERE jail=? AND path=?",
-			(container.getHash(), container.getPos(),
-				jail.name, container.getFileName()))
+				"WHERE jail=? AND path=?", (md5, pos, jail.name, name))
+		# be sure it is set (if not available):
+		if not cur.rowcount:
+			cur.execute(
+					"INSERT OR REPLACE INTO logs(jail, path, firstlinemd5, lastfilepos) "
+						"VALUES(?, ?, ?, ?)", (jail.name, name, md5, pos))
+
+	@commitandrollback
+	def getJournalPos(self, cur, jail, name, time=0, iso=None):
+		"""Get journal position from database.
+
+		Parameters
+		----------
+		jail : Jail
+			Jail of which the journal belongs to.
+		name, time, iso :
+			Journal name (typically systemd-journal) and last known time.
+
+		Returns
+		-------
+		int (or float)
+			Last position (as time) if it was already present in database; else `None`
+		"""
+		return self._addLog(cur, jail, name, time, iso); # no hash, just time as iso
+
+	@commitandrollback
+	def updateJournal(self, cur, jail, name, time, iso):
+		"""Updates last position (as time) of journal.
+
+		Parameters
+		----------
+		jail : Jail
+			Jail of which the journal belongs to.
+		name, time, iso :
+			Journal name (typically systemd-journal) and last known time.
+		"""
+		self._updateLog(cur, jail, name, time, iso); # no hash, just time as iso
 
 	@commitandrollback
 	def addBan(self, cur, jail, ticket):
@@ -754,7 +790,8 @@ class Fail2BanDb(object):
 		if overalljails or jail is None:
 			query += " GROUP BY ip ORDER BY timeofban DESC LIMIT 1"
 		cur = self._db.cursor()
-		return cur.execute(query, queryArgs)
+		# repack iterator as long as in lock:
+		return list(cur.execute(query, queryArgs))
 
 	def _getCurrentBans(self, cur, jail = None, ip = None, forbantime=None, fromtime=None):
 		queryArgs = []

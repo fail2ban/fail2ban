@@ -193,11 +193,18 @@ class Server:
 				signal.signal(s, sh)
 
 		# Give observer a small chance to complete its work before exit
-		if Observers.Main is not None:
-			Observers.Main.stop()
+		obsMain = Observers.Main
+		if obsMain is not None:
+			if obsMain.stop(forceQuit=False):
+				obsMain = None
+			Observers.Main = None
 
 		# Now stop all the jails
 		self.stopAllJail()
+
+		# Stop observer ultimately
+		if obsMain is not None:
+			obsMain.stop()
 
 		# Explicit close database (server can leave in a thread, 
 		# so delayed GC can prevent commiting changes)
@@ -205,11 +212,7 @@ class Server:
 			self.__db.close()
 			self.__db = None
 
-		# Stop observer and exit
-		if Observers.Main is not None:
-			Observers.Main.stop()
-			Observers.Main = None
-		# Stop async
+		# Stop async and exit
 		if self.__asyncServer is not None:
 			self.__asyncServer.stop()
 			self.__asyncServer = None
