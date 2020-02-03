@@ -208,6 +208,25 @@ class FormatterWithTraceBack(logging.Formatter):
 		return logging.Formatter.format(self, record)
 
 
+logging.exitOnIOError = False
+def __stopOnIOError(logSys=None, logHndlr=None): # pragma: no cover
+	if logSys and len(logSys.handlers):
+		logSys.removeHandler(logSys.handlers[0])
+	if logHndlr:
+		logHndlr.close = lambda: None
+	logging.StreamHandler.flush = lambda self: None
+	#sys.excepthook = lambda *args: None
+	if logging.exitOnIOError:
+		try:
+			sys.stderr.close()
+		except:
+			pass
+		sys.exit(0)
+
+try:
+    BrokenPipeError
+except NameError: # pragma: 3.x no cover
+    BrokenPipeError = IOError
 __origLog = logging.Logger._log
 def __safeLog(self, level, msg, args, **kwargs):
 	"""Safe log inject to avoid possible errors by unsafe log-handlers, 
@@ -223,6 +242,10 @@ def __safeLog(self, level, msg, args, **kwargs):
 	try:
 		# if isEnabledFor(level) already called...
 		__origLog(self, level, msg, args, **kwargs)
+	except (BrokenPipeError, IOError) as e: # pragma: no cover
+		if e.errno == 32: # closed / broken pipe
+			__stopOnIOError(self)
+		raise
 	except Exception as e: # pragma: no cover - unreachable if log-handler safe in this python-version
 		try:
 			for args in (
@@ -236,6 +259,18 @@ def __safeLog(self, level, msg, args, **kwargs):
 		except: # pragma: no cover
 			pass
 logging.Logger._log = __safeLog
+
+__origLogFlush = logging.StreamHandler.flush
+def __safeLogFlush(self):
+	"""Safe flush inject stopping endless logging on closed streams (redirected pipe).
+	"""
+	try:
+		__origLogFlush(self)
+	except (BrokenPipeError, IOError) as e: # pragma: no cover
+		if e.errno == 32: # closed / broken pipe
+			__stopOnIOError(None, self)
+		raise
+logging.StreamHandler.flush = __safeLogFlush
 
 def getLogger(name):
 	"""Get logging.Logger instance with Fail2Ban logger name convention
