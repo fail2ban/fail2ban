@@ -81,8 +81,6 @@ class Server:
 			'Linux': '/dev/log',
 		}
 		self.__prev_signals = {}
-		# replace real thread name with short process name (for top/ps/pstree or diagnostic):
-		prctl_set_th_name('f2b/server')
 
 	def __sigTERMhandler(self, signum, frame): # pragma: no cover - indirect tested
 		logSys.debug("Caught signal %d. Exiting", signum)
@@ -113,6 +111,9 @@ class Server:
 				logSys.error(err)
 				raise ServerInitializationError(err)
 			# We are daemon.
+
+		# replace main thread (and process) name to identify server (for top/ps/pstree or diagnostic):
+		prctl_set_th_name(conf.get("pname", "fail2ban-server"))
 		
 		# Set all logging parameters (or use default if not specified):
 		self.__verbose = conf.get("verbose", None)
