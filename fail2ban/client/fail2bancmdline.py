@@ -97,6 +97,7 @@ class Fail2banCmdLine():
 		output("    -c <DIR>                configuration directory")
 		output("    -s <FILE>               socket path")
 		output("    -p <FILE>               pidfile path")
+		output("    --pname <NAME>          name of the process (main thread) to identify instance (default fail2ban-server)")
 		output("    --loglevel <LEVEL>      logging level")
 		output("    --logtarget <TARGET>    logging target, use file-name or stdout, stderr, syslog or sysout.")
 		output("    --syslogsocket auto|<FILE>")
@@ -185,7 +186,7 @@ class Fail2banCmdLine():
 			try:
 				cmdOpts = 'hc:s:p:xfbdtviqV'
 				cmdLongOpts = ['loglevel=', 'logtarget=', 'syslogsocket=', 'test', 'async',
-					'timeout=', 'str2sec=', 'help', 'version', 'dp', '--dump-pretty']
+					'pname=', 'timeout=', 'str2sec=', 'help', 'version', 'dp', '--dump-pretty']
 				optList, self._args = getopt.getopt(self._argv[1:], cmdOpts, cmdLongOpts)
 			except getopt.GetoptError:
 				self.dispUsage()
