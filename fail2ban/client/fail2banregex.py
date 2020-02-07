@@ -709,6 +709,7 @@ class Fail2banRegex(object):
 
 
 def exec_command_line(*args):
+	logging.exitOnIOError = True
 	parser = get_opt_parser()
 	(opts, args) = parser.parse_args(*args)
 	errors = []
