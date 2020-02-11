@@ -105,6 +105,8 @@ class Filter(JailThread):
 		self.returnRawHost = False
 		## check each regex (used for test purposes):
 		self.checkAllRegex = False
+		## avoid finding of pending failures (without ID/IP, used in fail2ban-regex):
+		self.ignorePending = True
 		## if true ignores obsolete failures (failure time < now - findTime):
 		self.checkFindTime = True
 		## Ticks counter
@@ -651,7 +653,7 @@ class Filter(JailThread):
 				fail['users'] = users = set()
 			users.add(user)
 			return users
-		return None
+		return users
 
 	# # ATM incremental (non-empty only) merge deactivated ...
 	# @staticmethod
@@ -680,25 +682,22 @@ class Filter(JailThread):
 			if not fail.get('nofail'):
 				fail['nofail'] = fail["mlfgained"]
 		elif fail.get('nofail'): nfflgs |= 1
-		if fail.get('mlfforget'): nfflgs |= 2
+		if fail.pop('mlfforget', None): nfflgs |= 2
 		# if multi-line failure id (connection id) known:
 		if mlfidFail:
 			mlfidGroups = mlfidFail[1]
 			# update users set (hold all users of connect):
 			users = self._updateUsers(mlfidGroups, fail.get('user'))
 			# be sure we've correct current state ('nofail' and 'mlfgained' only from last failure)
-			try:
-				del mlfidGroups['nofail']
-				del mlfidGroups['mlfgained']
-			except KeyError:
-				pass
+			mlfidGroups.pop('nofail', None)
+			mlfidGroups.pop('mlfgained', None)
 			# # ATM incremental (non-empty only) merge deactivated (for future version only),
 			# # it can be simulated using alternate value tags, like <F-ALT_VAL>...</F-ALT_VAL>,
 			# # so previous value 'val' will be overwritten only if 'alt_val' is not empty...		
 			# _updateFailure(mlfidGroups, fail)
 			#
 			# overwrite multi-line failure with all values, available in fail:
-			mlfidGroups.update(fail)
+			mlfidGroups.update(((k,v) for k,v in fail.iteritems() if v is not None))
 			# new merged failure data:
 			fail = mlfidGroups
 			# if forget (disconnect/reset) - remove cached entry:
@@ -709,20 +708,14 @@ class Filter(JailThread):
 			mlfidFail = [self.__lastDate, fail]
 			self.mlfidCache.set(mlfid, mlfidFail)
 		# check users in order to avoid reset failure by multiple logon-attempts:
-		if users and len(users) > 1:
+		if fail.pop('mlfpending', 0) or users and len(users) > 1:
 			# we've new user, reset 'nofail' because of multiple users attempts:
-			try:
-				del fail['nofail']
-				nfflgs &= ~1 # reset nofail
-			except KeyError:
-				pass
+			fail.pop('nofail', None)
+			nfflgs &= ~1 # reset nofail
 		# merge matches:
 		if not (nfflgs & 1): # current nofail state (corresponding users)
-			try:
-				m = fail.pop("nofail-matches")
-				m += fail.get("matches", [])
-			except KeyError:
-				m = fail.get("matches", [])
+			m = fail.pop("nofail-matches", [])
+			m += fail.get("matches", [])
 			if not (nfflgs & 8): # no gain signaled
 				m += failRegex.getMatchedTupleLines()
 			fail["matches"] = m
@@ -888,7 +881,8 @@ class Filter(JailThread):
 				if host is None:
 					if ll <= 7: logSys.log(7, "No failure-id by mlfid %r in regex %s: %s",
 						mlfid, failRegexIndex, fail.get('mlfforget', "waiting for identifier"))
-					if not self.checkAllRegex: return failList
+					fail['mlfpending'] = 1; # mark failure is pending
+					if not self.checkAllRegex and self.ignorePending: return failList
 					ips = [None]
 				# if raw - add single ip or failure-id,
 				# otherwise expand host to multiple ips using dns (or ignore it if not valid):

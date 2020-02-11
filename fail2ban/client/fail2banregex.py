@@ -272,6 +272,8 @@ class Fail2banRegex(object):
 		self._filter.returnRawHost = opts.raw
 		self._filter.checkFindTime = False
 		self._filter.checkAllRegex = opts.checkAllRegex and not opts.out
+		# ignore pending (without ID/IP), added to matches if it hits later (if ID/IP can be retreved)
+		self._filter.ignorePending = opts.out; 
 		self._backend = 'auto'
 
 	def output(self, line):
@@ -452,7 +454,6 @@ class Fail2banRegex(object):
 		try:
 			found = self._filter.processLine(line, date)
 			lines = []
-			line = self._filter.processedLine()
 			ret = []
 			for match in found:
 				# Append True/False flag depending if line was matched by
@@ -488,7 +489,7 @@ class Fail2banRegex(object):
 				self._line_stats.matched += 1
 				self._line_stats.missed -= 1
 		if lines: # pre-lines parsed in multiline mode (buffering)
-			lines.append(line)
+			lines.append(self._filter.processedLine())
 			line = "\n".join(lines)
 		return line, ret, is_ignored
 
@@ -523,7 +524,8 @@ class Fail2banRegex(object):
 							output(ret[1])
 					elif self._opts.out == 'msg':
 						for ret in ret:
-							output('\n'.join(map(lambda v:''.join(v for v in v), ret[3].get('matches'))))
+							for ret in ret[3].get('matches'):
+								output(''.join(v for v in ret))
 					elif self._opts.out == 'row':
 						for ret in ret:
 							output('[%r,\t%r,\t%r],' % (ret[1],ret[2],dict((k,v) for k, v in ret[3].iteritems() if k != 'matches')))
