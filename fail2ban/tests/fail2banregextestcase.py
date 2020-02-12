@@ -83,12 +83,28 @@ def _test_exec_command_line(*args):
 STR_00 = "Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 192.0.2.0"
 
 RE_00 = r"(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>"
-RE_00_ID = r"Authentication failure for <F-ID>.*?</F-ID> from <HOST>$"
-RE_00_USER = r"Authentication failure for <F-USER>.*?</F-USER> from <HOST>$"
+RE_00_ID = r"Authentication failure for <F-ID>.*?</F-ID> from <ADDR>$"
+RE_00_USER = r"Authentication failure for <F-USER>.*?</F-USER> from <ADDR>$"
 
 FILENAME_01 = os.path.join(TEST_FILES_DIR, "testcase01.log")
 FILENAME_02 = os.path.join(TEST_FILES_DIR, "testcase02.log")
 FILENAME_WRONGCHAR = os.path.join(TEST_FILES_DIR, "testcase-wrong-char.log")
+
+# STR_ML_SSHD -- multiline log-excerpt with two sessions:
+#   192.0.2.1 (sshd[32307]) makes 2 failed attempts using public keys (without "Disconnecting: Too many authentication"),
+#     and delayed success on accepted (STR_ML_SSHD_OK) or no success by close on preauth phase (STR_ML_SSHD_FAIL)
+#   192.0.2.2 (sshd[32310]) makes 2 failed attempts using public keys (with "Disconnecting: Too many authentication"),
+#     and closed on preauth phase
+STR_ML_SSHD = """Nov 28 09:16:03 srv sshd[32307]: Failed publickey for git from 192.0.2.1 port 57904 ssh2: ECDSA 0e:ff:xx:xx:xx:xx:xx:xx:xx:xx:xx:...
+Nov 28 09:16:03 srv sshd[32307]: Failed publickey for git from 192.0.2.1 port 57904 ssh2: RSA 04:bc:xx:xx:xx:xx:xx:xx:xx:xx:xx:...
+Nov 28 09:16:03 srv sshd[32307]: Postponed publickey for git from 192.0.2.1 port 57904 ssh2 [preauth]
+Nov 28 09:16:05 srv sshd[32310]: Failed publickey for git from 192.0.2.2 port 57910 ssh2: ECDSA 1e:fe:xx:xx:xx:xx:xx:xx:xx:xx:xx:...
+Nov 28 09:16:05 srv sshd[32310]: Failed publickey for git from 192.0.2.2 port 57910 ssh2: RSA 14:ba:xx:xx:xx:xx:xx:xx:xx:xx:xx:...
+Nov 28 09:16:05 srv sshd[32310]: Disconnecting: Too many authentication failures for git [preauth]
+Nov 28 09:16:05 srv sshd[32310]: Connection closed by 192.0.2.2 [preauth]"""
+STR_ML_SSHD_OK   = "Nov 28 09:16:06 srv sshd[32307]: Accepted publickey for git from 192.0.2.1 port 57904 ssh2: DSA 36:48:xx:xx:xx:xx:xx:xx:xx:xx:xx:..."
+STR_ML_SSHD_FAIL = "Nov 28 09:16:06 srv sshd[32307]: Connection closed by 192.0.2.1 [preauth]"
+
 
 FILENAME_SSHD = os.path.join(TEST_FILES_DIR, "logs", "sshd")
 FILTER_SSHD = os.path.join(CONFIG_DIR, 'filter.d', 'sshd.conf')
@@ -291,10 +307,10 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		# 
 		self.assertTrue(_test_exec(
 			"--usedns", "no", "-d", "^Epoch", "--print-all-matched",
-			"1490349000 FAIL: failure\nhost: 192.0.2.35",
+			"-L", "2", "1490349000 FAIL: failure\nhost: 192.0.2.35",
 			r"^\s*FAIL:\s*.*\nhost:\s+<HOST>$"
 		))
-		self.assertLogged('Lines: 1 lines, 0 ignored, 1 matched, 0 missed')
+		self.assertLogged('Lines: 2 lines, 0 ignored, 2 matched, 0 missed')
 
 	def testRegexEpochPatterns(self):
 		self.assertTrue(_test_exec(
@@ -340,6 +356,55 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertTrue(_test_exec('-o', 'user', STR_00, RE_00_USER))
 		self.assertLogged('kevin')
 		self.pruneLog()
+		# complex substitution using tags (ip, user, family):
+		self.assertTrue(_test_exec('-o', '<ip>, <F-USER>, <family>', STR_00, RE_00_USER))
+		self.assertLogged('192.0.2.0, kevin, inet4')
+		self.pruneLog()
+
+	def testFrmtOutputWrapML(self):
+		unittest.F2B.SkipIfCfgMissing(stock=True)
+		# complex substitution using tags and message (ip, user, msg):
+		self.assertTrue(_test_exec('-o', '<ip>, <F-USER>, <msg>',
+			'-c', CONFIG_DIR, '--usedns', 'no',
+			STR_ML_SSHD + "\n" + STR_ML_SSHD_OK, 'sshd[logtype=short, publickey=invalid]'))
+		# be sure we don't have IP in one line and have it in another:
+		lines = STR_ML_SSHD.split("\n")
+		self.assertTrue('192.0.2.2' not in lines[-2] and '192.0.2.2' in lines[-1])
+		# but both are in output "merged" with IP and user:
+		self.assertLogged(
+			'192.0.2.2, git, '+lines[-2],
+			'192.0.2.2, git, '+lines[-1],
+			all=True)
+		# nothing should be found for 192.0.2.1 (mode is not aggressive):
+		self.assertNotLogged('192.0.2.1, git, ')
+
+		# test with publickey (nofail) - would not produce output for 192.0.2.1 because accepted:
+		self.pruneLog("[test-phase 1] mode=aggressive & publickey=nofail + OK (accepted)")
+		self.assertTrue(_test_exec('-o', '<ip>, <F-USER>, <msg>',
+			'-c', CONFIG_DIR, '--usedns', 'no',
+			STR_ML_SSHD + "\n" + STR_ML_SSHD_OK, 'sshd[logtype=short, mode=aggressive]'))
+		self.assertLogged(
+			'192.0.2.2, git, '+lines[-4],
+			'192.0.2.2, git, '+lines[-3],
+			'192.0.2.2, git, '+lines[-2],
+			'192.0.2.2, git, '+lines[-1],
+			all=True)
+		# nothing should be found for 192.0.2.1 (access gained so failures ignored):
+		self.assertNotLogged('192.0.2.1, git, ')
+
+		# now same test but "accepted" replaced with "closed" on preauth phase:
+		self.pruneLog("[test-phase 2] mode=aggressive & publickey=nofail + FAIL (closed on preauth)")
+		self.assertTrue(_test_exec('-o', '<ip>, <F-USER>, <msg>',
+			'-c', CONFIG_DIR, '--usedns', 'no',
+			STR_ML_SSHD + "\n" + STR_ML_SSHD_FAIL, 'sshd[logtype=short, mode=aggressive]'))
+		# 192.0.2.1 should be found for every failure (2x failed key + 1x closed):
+		lines = STR_ML_SSHD.split("\n")[0:2] + STR_ML_SSHD_FAIL.split("\n")[-1:]
+		self.assertLogged(
+			'192.0.2.1, git, '+lines[-3],
+			'192.0.2.1, git, '+lines[-2],
+			'192.0.2.1, git, '+lines[-1],
+			all=True)
+
 
 	def testWrongFilterFile(self):
 		# use test log as filter file to cover eror cases...

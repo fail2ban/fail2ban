@@ -655,30 +655,12 @@ class Filter(JailThread):
 			return users
 		return users
 
-	# # ATM incremental (non-empty only) merge deactivated ...
-	# @staticmethod
-	# def _updateFailure(self, mlfidGroups, fail):
-	# 	# reset old failure-ids when new types of id available in this failure:
-	# 	fids = set()
-	# 	for k in ('fid', 'ip4', 'ip6', 'dns'):
-	# 		if fail.get(k):
-	# 			fids.add(k)
-	# 	if fids:
-	# 		for k in ('fid', 'ip4', 'ip6', 'dns'):
-	# 			if k not in fids:
-	# 				try:
-	# 					del mlfidGroups[k]
-	# 				except:
-	# 					pass
-	# 	# update not empty values:
-	# 	mlfidGroups.update(((k,v) for k,v in fail.iteritems() if v))
-
 	def _mergeFailure(self, mlfid, fail, failRegex):
 		mlfidFail = self.mlfidCache.get(mlfid) if self.__mlfidCache else None
 		users = None
 		nfflgs = 0
 		if fail.get("mlfgained"):
-			nfflgs |= 9
+			nfflgs |= (8|1)
 			if not fail.get('nofail'):
 				fail['nofail'] = fail["mlfgained"]
 		elif fail.get('nofail'): nfflgs |= 1
@@ -689,13 +671,11 @@ class Filter(JailThread):
 			# update users set (hold all users of connect):
 			users = self._updateUsers(mlfidGroups, fail.get('user'))
 			# be sure we've correct current state ('nofail' and 'mlfgained' only from last failure)
-			mlfidGroups.pop('nofail', None)
-			mlfidGroups.pop('mlfgained', None)
-			# # ATM incremental (non-empty only) merge deactivated (for future version only),
-			# # it can be simulated using alternate value tags, like <F-ALT_VAL>...</F-ALT_VAL>,
-			# # so previous value 'val' will be overwritten only if 'alt_val' is not empty...		
-			# _updateFailure(mlfidGroups, fail)
-			#
+			if mlfidGroups.pop('nofail', None): nfflgs |= 4
+			if mlfidGroups.pop('mlfgained', None): nfflgs |= 4
+			# if we had no pending failures then clear the matches (they are already provided):
+			if (nfflgs & 4) == 0 and not mlfidGroups.get('mlfpending', 0):
+				mlfidGroups.pop("matches", None)
 			# overwrite multi-line failure with all values, available in fail:
 			mlfidGroups.update(((k,v) for k,v in fail.iteritems() if v is not None))
 			# new merged failure data:
@@ -709,17 +689,18 @@ class Filter(JailThread):
 			self.mlfidCache.set(mlfid, mlfidFail)
 		# check users in order to avoid reset failure by multiple logon-attempts:
 		if fail.pop('mlfpending', 0) or users and len(users) > 1:
-			# we've new user, reset 'nofail' because of multiple users attempts:
+			# we've pending failures or new user, reset 'nofail' because of failures or multiple users attempts:
 			fail.pop('nofail', None)
-			nfflgs &= ~1 # reset nofail
+			fail.pop('mlfgained', None)
+			nfflgs &= ~(8|1) # reset nofail and gained
 		# merge matches:
-		if not (nfflgs & 1): # current nofail state (corresponding users)
+		if (nfflgs & 1) == 0: # current nofail state (corresponding users)
 			m = fail.pop("nofail-matches", [])
 			m += fail.get("matches", [])
-			if not (nfflgs & 8): # no gain signaled
+			if (nfflgs & 8) == 0: # no gain signaled
 				m += failRegex.getMatchedTupleLines()
 			fail["matches"] = m
-		elif not (nfflgs & 2) and (nfflgs & 1): # not mlfforget and nofail:
+		elif (nfflgs & 3) == 1: # not mlfforget and nofail:
 			fail["nofail-matches"] = fail.get("nofail-matches", []) + failRegex.getMatchedTupleLines()
 		# return merged:
 		return fail
@@ -895,6 +876,9 @@ class Filter(JailThread):
 				# otherwise, try to use dns conversion:
 				else:
 					ips = DNSUtils.textToIp(host, self.__useDns)
+				# if checkAllRegex we must make a copy (to be sure next RE doesn't change merged/cached failure):
+				if self.checkAllRegex and mlfid is not None:
+					fail = fail.copy()
 				# append failure with match to the list:
 				for ip in ips:
 					failList.append([failRegexIndex, ip, date, fail])

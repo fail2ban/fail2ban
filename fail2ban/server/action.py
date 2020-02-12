@@ -772,7 +772,7 @@ class CommandAction(ActionBase):
 	ESCAPE_VN_CRE = re.compile(r"\W")
 
 	@classmethod
-	def replaceDynamicTags(cls, realCmd, aInfo):
+	def replaceDynamicTags(cls, realCmd, aInfo, escapeVal=None):
 		"""Replaces dynamical tags in `query` with property values.
 
 		**Important**
@@ -797,16 +797,17 @@ class CommandAction(ActionBase):
 		# array for escaped vars:
 		varsDict = dict()
 
-		def escapeVal(tag, value):
-			# if the value should be escaped:
-			if cls.ESCAPE_CRE.search(value):
-				# That one needs to be escaped since its content is
-				# out of our control
-				tag = 'f2bV_%s' % cls.ESCAPE_VN_CRE.sub('_', tag)
-				varsDict[tag] = value # add variable
-				value = '$'+tag	# replacement as variable
-			# replacement for tag:
-			return value
+		if not escapeVal:
+			def escapeVal(tag, value):
+				# if the value should be escaped:
+				if cls.ESCAPE_CRE.search(value):
+					# That one needs to be escaped since its content is
+					# out of our control
+					tag = 'f2bV_%s' % cls.ESCAPE_VN_CRE.sub('_', tag)
+					varsDict[tag] = value # add variable
+					value = '$'+tag	# replacement as variable
+				# replacement for tag:
+				return value
 
 		# additional replacement as calling map:
 		ADD_REPL_TAGS_CM = CallingMap(ADD_REPL_TAGS)

@@ -493,8 +493,69 @@ class Fail2banRegex(object):
 			line = "\n".join(lines)
 		return line, ret, is_ignored
 
+	def _prepaireOutput(self):
+		"""Prepares output- and fetch-function corresponding given '--out' option (format)"""
+		ofmt = self._opts.out
+		if ofmt in ('id', 'ip'):
+			def _out(ret):
+				for r in ret:
+					output(r[1])
+		elif ofmt == 'msg':
+			def _out(ret):
+				for r in ret:
+					for r in r[3].get('matches'):
+						if not isinstance(r, basestring):
+							r = ''.join(r for r in r)
+						output(r)
+		elif ofmt == 'row':
+			def _out(ret):
+				for r in ret:
+					output('[%r,\t%r,\t%r],' % (r[1],r[2],dict((k,v) for k, v in r[3].iteritems() if k != 'matches')))
+		elif '<' not in ofmt:
+			def _out(ret):
+				for r in ret:
+					output(r[3].get(ofmt))
+		else: # extended format with tags substitution:
+			from ..server.actions import Actions, CommandAction, BanTicket
+			def _escOut(t, v):
+				# use safe escape (avoid inject on pseudo tag "\x00msg\x00"):
+				if t not in ('msg',):
+					return v.replace('\x00', '\\x00')
+				return v
+			def _out(ret):
+				rows = []
+				wrap = {'NL':0}
+				for r in ret:
+					ticket = BanTicket(r[1], time=r[2], data=r[3])
+					aInfo = Actions.ActionInfo(ticket)
+					# if msg tag is used - output if single line (otherwise let it as is to wrap multilines later):
+					def _get_msg(self):
+						if not wrap['NL'] and len(r[3].get('matches', [])) <= 1:
+							return self['matches']
+						else: # pseudo tag for future replacement:
+							wrap['NL'] = 1
+							return "\x00msg\x00"
+					aInfo['msg'] = _get_msg
+					# not recursive interpolation (use safe escape):
+					v = CommandAction.replaceDynamicTags(ofmt, aInfo, escapeVal=_escOut)
+					if wrap['NL']: # contains multiline tags (msg):
+						rows.append((r, v))
+						continue
+					output(v)
+				# wrap multiline tag (msg) interpolations to single line:
+				for r, v in rows:
+					for r in r[3].get('matches'):
+						if not isinstance(r, basestring):
+							r = ''.join(r for r in r)
+						r = v.replace("\x00msg\x00", r)
+						output(r)
+		return _out
+
+
 	def process(self, test_lines):
 		t0 = time.time()
+		if self._opts.out: # get out function
+			out = self._prepaireOutput()
 		for line in test_lines:
 			if isinstance(line, tuple):
 				line_datetimestripped, ret, is_ignored = self.testRegex(
@@ -509,49 +570,35 @@ class Fail2banRegex(object):
 			if not is_ignored:
 				is_ignored = self.testIgnoreRegex(line_datetimestripped)
 
+			if self._opts.out: # (formated) output:
+				if len(ret) > 0: out(ret)
+				continue
+
 			if is_ignored:
 				self._line_stats.ignored += 1
 				if not self._print_no_ignored and (self._print_all_ignored or self._line_stats.ignored <= self._maxlines + 1):
 					self._line_stats.ignored_lines.append(line)
 					if self._debuggex:
 						self._line_stats.ignored_lines_timeextracted.append(line_datetimestripped)
-
-			if len(ret) > 0:
-				assert(not is_ignored)
-				if self._opts.out:
-					if self._opts.out in ('id', 'ip'):
-						for ret in ret:
-							output(ret[1])
-					elif self._opts.out == 'msg':
-						for ret in ret:
-							for ret in ret[3].get('matches'):
-								output(''.join(v for v in ret))
-					elif self._opts.out == 'row':
-						for ret in ret:
-							output('[%r,\t%r,\t%r],' % (ret[1],ret[2],dict((k,v) for k, v in ret[3].iteritems() if k != 'matches')))
-					else:
-						for ret in ret:
-							output(ret[3].get(self._opts.out))
-					continue
+			elif len(ret) > 0:
 				self._line_stats.matched += 1
 				if self._print_all_matched:
 					self._line_stats.matched_lines.append(line)
 					if self._debuggex:
 						self._line_stats.matched_lines_timeextracted.append(line_datetimestripped)
 			else:
-				if not is_ignored:
-					self._line_stats.missed += 1
-					if not self._print_no_missed and (self._print_all_missed or self._line_stats.missed <= self._maxlines + 1):
-						self._line_stats.missed_lines.append(line)
-						if self._debuggex:
-							self._line_stats.missed_lines_timeextracted.append(line_datetimestripped)
+				self._line_stats.missed += 1
+				if not self._print_no_missed and (self._print_all_missed or self._line_stats.missed <= self._maxlines + 1):
+					self._line_stats.missed_lines.append(line)
+					if self._debuggex:
+						self._line_stats.missed_lines_timeextracted.append(line_datetimestripped)
 			self._line_stats.tested += 1
 
 		self._time_elapsed = time.time() - t0
 
 	def printLines(self, ltype):
 		lstats = self._line_stats
-		assert(self._line_stats.missed == lstats.tested - (lstats.matched + lstats.ignored))
+		assert(lstats.missed == lstats.tested - (lstats.matched + lstats.ignored))
 		lines = lstats[ltype]
 		l = lstats[ltype + '_lines']
 		multiline = self._filter.getMaxLines() > 1
@@ -688,10 +735,10 @@ class Fail2banRegex(object):
 			test_lines = journal_lines_gen(flt, myjournal)
 		else:
 			# if single line parsing (without buffering)
-			if self._filter.getMaxLines() <= 1:
+			if self._filter.getMaxLines() <= 1 and '\n' not in cmd_log:
 				self.output( "Use      single line : %s" % shortstr(cmd_log.replace("\n", r"\n")) )
 				test_lines = [ cmd_log ]
-			else: # multi line parsing (with buffering)
+			else: # multi line parsing (with and without buffering)
 				test_lines = cmd_log.split("\n")
 				self.output( "Use      multi line : %s line(s)" % len(test_lines) )
 				for i, l in enumerate(test_lines):
