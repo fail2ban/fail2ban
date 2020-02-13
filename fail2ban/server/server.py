@@ -57,6 +57,23 @@ except ImportError: # pragma: no cover
 def _thread_name():
 	return threading.current_thread().__class__.__name__
 
+try:
+	FileExistsError
+except NameError: # pragma: 3.x no cover
+	FileExistsError = OSError
+
+def _make_file_path(name):
+	"""Creates path of file (last level only) on demand"""
+	name = os.path.dirname(name)
+	# only if it is absolute (e. g. important for socket, so if unix path):
+	if os.path.isabs(name):
+		# be sure path exists (create last level of directory on demand):
+		try:
+			os.mkdir(name)
+		except (OSError, FileExistsError) as e:
+			if e.errno != 17: # pragma: no cover - not EEXIST is not covered
+				raise
+
 
 class Server:
 	
@@ -96,7 +113,7 @@ class Server:
 
 	def start(self, sock, pidfile, force=False, conf={}):
 		# First set the mask to only allow access to owner
-		os.umask(0077)
+		os.umask(0o077)
 		# Second daemonize before logging etc, because it will close all handles:
 		if self.__daemon: # pragma: no cover
 			logSys.info("Starting in daemon mode")
@@ -141,6 +158,7 @@ class Server:
 		# Creates a PID file.
 		try:
 			logSys.debug("Creating PID file %s", pidfile)
+			_make_file_path(pidfile)
 			pidFile = open(pidfile, 'w')
 			pidFile.write("%s\n" % os.getpid())
 			pidFile.close()
@@ -150,6 +168,7 @@ class Server:
 		# Start the communication
 		logSys.debug("Starting communication")
 		try:
+			_make_file_path(sock)
 			self.__asyncServer = AsyncServer(self.__transm)
 			self.__asyncServer.onstart = conf.get('onstart')
 			self.__asyncServer.start(sock, force)
@@ -741,6 +760,7 @@ class Server:
 			self.__db = None
 		else:
 			if Fail2BanDb is not None:
+				_make_file_path(filename)
 				self.__db = Fail2BanDb(filename)
 				self.__db.delAllJails()
 			else: # pragma: no cover
