@@ -107,6 +107,8 @@ class Filter(JailThread):
 		self.checkAllRegex = False
 		## avoid finding of pending failures (without ID/IP, used in fail2ban-regex):
 		self.ignorePending = True
+		## callback called on ignoreregex match :
+		self.onIgnoreRegex = None
 		## if true ignores obsolete failures (failure time < now - findTime):
 		self.checkFindTime = True
 		## Ticks counter
@@ -170,7 +172,7 @@ class Filter(JailThread):
 	# @param value the regular expression
 
 	def addFailRegex(self, value):
-		multiLine = self.getMaxLines() > 1
+		multiLine = self.__lineBufferSize > 1
 		try:
 			regex = FailRegex(value, prefRegex=self.__prefRegex, multiline=multiLine,
 				useDns=self.__useDns)
@@ -575,20 +577,33 @@ class Filter(JailThread):
 		"""
 		if date:
 			tupleLine = line
+			self.__lastTimeText = tupleLine[1]
+			self.__lastDate = date
 		else:
-			l = line.rstrip('\r\n')
 			logSys.log(7, "Working on line %r", line)
 
-			(timeMatch, template) = self.dateDetector.matchTime(l)
-			if timeMatch:
-				tupleLine  = (
-					l[:timeMatch.start(1)],
-					l[timeMatch.start(1):timeMatch.end(1)],
-					l[timeMatch.end(1):],
-					(timeMatch, template)
-				)
+			# try to parse date:
+			timeMatch = self.dateDetector.matchTime(line)
+			m = timeMatch[0]
+			if m:
+				s = m.start(1)
+				e = m.end(1)
+				m = line[s:e]
+				tupleLine = (line[:s], m, line[e:])
+				if m: # found and not empty - retrive date:
+					date = self.dateDetector.getTime(m, timeMatch)
+
+				if date is None:
+					if m: logSys.error("findFailure failed to parse timeText: %s", m)
+					date = self.__lastDate
+				else:
+					# Lets get the time part
+					date = date[0]
+					self.__lastTimeText = m
+					self.__lastDate = date
 			else:
-				tupleLine = (l, "", "", None)
+				tupleLine = (line, self.__lastTimeText, "")
+				date = self.__lastDate
 
 		# save last line (lazy convert of process line tuple to string on demand):
 		self.processedLine = lambda: "".join(tupleLine[::2])
@@ -630,20 +645,26 @@ class Filter(JailThread):
 			self._errors //= 2
 			self.idle = True
 
-	##
-	# Returns true if the line should be ignored.
-	#
-	# Uses ignoreregex.
-	# @param line: the line
-	# @return: a boolean
-
-	def ignoreLine(self, tupleLines):
-		buf = Regex._tupleLinesBuf(tupleLines)
+	def _ignoreLine(self, buf, orgBuffer, failRegex=None):
+		# if multi-line buffer - use matched only, otherwise (single line) - original buf:
+		if failRegex and self.__lineBufferSize > 1:
+			orgBuffer = failRegex.getMatchedTupleLines()
+			buf = Regex._tupleLinesBuf(orgBuffer)
+		# search ignored:
+		fnd = None
 		for ignoreRegexIndex, ignoreRegex in enumerate(self.__ignoreRegex):
-			ignoreRegex.search(buf, tupleLines)
+			ignoreRegex.search(buf, orgBuffer)
 			if ignoreRegex.hasMatched():
-				return ignoreRegexIndex
-		return None
+				fnd = ignoreRegexIndex
+				logSys.log(7, "  Matched ignoreregex %d and was ignored", fnd)
+				if self.onIgnoreRegex: self.onIgnoreRegex(fnd, ignoreRegex)
+				# remove ignored match:
+				if not self.checkAllRegex or self.__lineBufferSize > 1:
+					# todo: check ignoreRegex.getUnmatchedTupleLines() would be better (fix testGetFailuresMultiLineIgnoreRegex):
+					if failRegex:
+						self.__lineBuffer = failRegex.getUnmatchedTupleLines()
+				if not self.checkAllRegex: break
+		return fnd
 
 	def _updateUsers(self, fail, user=()):
 		users = fail.get('users')
@@ -713,7 +734,7 @@ class Filter(JailThread):
 	# to find the logging time.
 	# @return a dict with IP and timestamp.
 
-	def findFailure(self, tupleLine, date=None):
+	def findFailure(self, tupleLine, date):
 		failList = list()
 
 		ll = logSys.getEffectiveLevel()
@@ -723,62 +744,38 @@ class Filter(JailThread):
 			returnRawHost = True
 			cidr = IPAddr.CIDR_RAW
 
-		# Checks if we mut ignore this line.
-		if self.ignoreLine([tupleLine[::2]]) is not None:
-			# The ignoreregex matched. Return.
-			if ll <= 7: logSys.log(7, "Matched ignoreregex and was \"%s\" ignored",
-				"".join(tupleLine[::2]))
-			return failList
-
-		timeText = tupleLine[1]
-		if date:
-			self.__lastTimeText = timeText
-			self.__lastDate = date
-		elif timeText:
-
-			dateTimeMatch = self.dateDetector.getTime(timeText, tupleLine[3])
-
-			if dateTimeMatch is None:
-				logSys.error("findFailure failed to parse timeText: %s", timeText)
-				date = self.__lastDate
-
-			else:
-				# Lets get the time part
-				date = dateTimeMatch[0]
-
-				self.__lastTimeText = timeText
-				self.__lastDate = date
-		else:
-			timeText = self.__lastTimeText or "".join(tupleLine[::2])
-			date = self.__lastDate
-
 		if self.checkFindTime and date is not None and date < MyTime.time() - self.getFindTime():
 			if ll <= 5: logSys.log(5, "Ignore line since time %s < %s - %s", 
 				date, MyTime.time(), self.getFindTime())
 			return failList
 
 		if self.__lineBufferSize > 1:
-			orgBuffer = self.__lineBuffer = (
-				self.__lineBuffer + [tupleLine[:3]])[-self.__lineBufferSize:]
+			self.__lineBuffer.append(tupleLine)
+			orgBuffer = self.__lineBuffer = self.__lineBuffer[-self.__lineBufferSize:]
 		else:
-			orgBuffer = self.__lineBuffer = [tupleLine[:3]]
-		if ll <= 5: logSys.log(5, "Looking for match of %r", self.__lineBuffer)
-		buf = Regex._tupleLinesBuf(self.__lineBuffer)
+			orgBuffer = self.__lineBuffer = [tupleLine]
+		if ll <= 5: logSys.log(5, "Looking for match of %r", orgBuffer)
+		buf = Regex._tupleLinesBuf(orgBuffer)
+
+		# Checks if we must ignore this line (only if fewer ignoreregex than failregex).
+		if self.__ignoreRegex and len(self.__ignoreRegex) < len(self.__failRegex) - 2:
+			if self._ignoreLine(buf, orgBuffer) is not None:
+				# The ignoreregex matched. Return.
+				return failList
 
 		# Pre-filter fail regex (if available):
 		preGroups = {}
 		if self.__prefRegex:
 			if ll <= 5: logSys.log(5, "  Looking for prefregex %r", self.__prefRegex.getRegex())
-			self.__prefRegex.search(buf, self.__lineBuffer)
+			self.__prefRegex.search(buf, orgBuffer)
 			if not self.__prefRegex.hasMatched():
 				if ll <= 5: logSys.log(5, "  Prefregex not matched")
 				return failList
 			preGroups = self.__prefRegex.getGroups()
 			if ll <= 7: logSys.log(7, "  Pre-filter matched %s", preGroups)
-			repl = preGroups.get('content')
+			repl = preGroups.pop('content', None)
 			# Content replacement:
 			if repl:
-				del preGroups['content']
 				self.__lineBuffer, buf = [('', '', repl)], None
 
 		# Iterates over all the regular expressions.
@@ -796,15 +793,12 @@ class Filter(JailThread):
 				# The failregex matched.
 				if ll <= 7: logSys.log(7, "  Matched failregex %d: %s", failRegexIndex, fail)
 				# Checks if we must ignore this match.
-				if self.ignoreLine(failRegex.getMatchedTupleLines()) \
-						is not None:
+				if self.__ignoreRegex and self._ignoreLine(buf, orgBuffer, failRegex) is not None:
 					# The ignoreregex matched. Remove ignored match.
-					self.__lineBuffer, buf = failRegex.getUnmatchedTupleLines(), None
-					if ll <= 7: logSys.log(7, "  Matched ignoreregex and was ignored")
+					buf = None
 					if not self.checkAllRegex:
 						break
-					else:
-						continue
+					continue
 				if date is None:
 					logSys.warning(
 						"Found a match for %r but no valid date/time "
@@ -814,10 +808,10 @@ class Filter(JailThread):
 						"file a detailed issue on"
 						" https://github.com/fail2ban/fail2ban/issues "
 						"in order to get support for this format.",
-						 "\n".join(failRegex.getMatchedLines()), timeText)
+						 "\n".join(failRegex.getMatchedLines()), tupleLine[1])
 					continue
 				# we should check all regex (bypass on multi-line, otherwise too complex):
-				if not self.checkAllRegex or self.getMaxLines() > 1:
+				if not self.checkAllRegex or self.__lineBufferSize > 1:
 					self.__lineBuffer, buf = failRegex.getUnmatchedTupleLines(), None
 				# merge data if multi-line failure:
 				raw = returnRawHost
@@ -1056,7 +1050,7 @@ class FileFilter(Filter):
 					if not line or not self.active:
 						# The jail reached the bottom or has been stopped
 						break
-					self.processLineAndAdd(line)
+					self.processLineAndAdd(line.rstrip('\r\n'))
 		finally:
 			log.close()
 		db = self.jail.database

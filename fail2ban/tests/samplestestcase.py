@@ -32,7 +32,7 @@ import sys
 import time
 import unittest
 from ..server.failregex import Regex
-from ..server.filter import Filter
+from ..server.filter import Filter, FileContainer
 from ..client.filterreader import FilterReader
 from .utils import setUpMyTime, tearDownMyTime, TEST_NOW, CONFIG_DIR
 
@@ -157,10 +157,11 @@ def testSampleRegexsFactory(name, basedir):
 		while i < len(filenames):
 			filename = filenames[i]; i += 1;
 			logFile = fileinput.FileInput(os.path.join(TEST_FILES_DIR, "logs",
-				filename))
+				filename), mode='rb')
 
 			ignoreBlock = False
 			for line in logFile:
+				line = FileContainer.decode_line(logFile.filename(), 'UTF-8', line)
 				jsonREMatch = re.match("^#+ ?(failJSON|(?:file|filter)Options|addFILE):(.+)$", line)
 				if jsonREMatch:
 					try:
@@ -202,6 +203,7 @@ def testSampleRegexsFactory(name, basedir):
 						raise ValueError("%s: %s:%i" %
 							(e, logFile.filename(), logFile.filelineno()))
 					line = next(logFile)
+					line = FileContainer.decode_line(logFile.filename(), 'UTF-8', line)
 				elif ignoreBlock or line.startswith("#") or not line.strip():
 					continue
 				else: # pragma: no cover - normally unreachable
@@ -214,6 +216,7 @@ def testSampleRegexsFactory(name, basedir):
 					flt = self._readFilter(fltName, name, basedir, opts=None)
 					self._filterTests = [(fltName, flt, {})]
 
+				line = line.rstrip('\r\n')
 				# process line using several filter options (if specified in the test-file):
 				for fltName, flt, opts in self._filterTests:
 					# Bypass if constraint (as expression) is not valid:
@@ -230,7 +233,7 @@ def testSampleRegexsFactory(name, basedir):
 						else: # simulate journal processing, time is known from journal (formatJournalEntry):
 							if opts.get('test.prefix-line'): # journal backends creates common prefix-line:
 								line = opts.get('test.prefix-line') + line
-							ret = flt.processLine(('', TEST_NOW_STR, line.rstrip('\r\n')), TEST_NOW)
+							ret = flt.processLine(('', TEST_NOW_STR, line), TEST_NOW)
 						if ret:
 							# filter matched only (in checkAllRegex mode it could return 'nofail' too):
 							found = []

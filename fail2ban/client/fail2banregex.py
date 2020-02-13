@@ -273,7 +273,9 @@ class Fail2banRegex(object):
 		self._filter.checkFindTime = False
 		self._filter.checkAllRegex = opts.checkAllRegex and not opts.out
 		# ignore pending (without ID/IP), added to matches if it hits later (if ID/IP can be retreved)
-		self._filter.ignorePending = opts.out; 
+		self._filter.ignorePending = opts.out
+		# callback to increment ignored RE's by index (during process):
+		self._filter.onIgnoreRegex = self._onIgnoreRegex
 		self._backend = 'auto'
 
 	def output(self, line):
@@ -435,22 +437,17 @@ class Fail2banRegex(object):
 					'add%sRegex' % regextype.title())(regex.getFailRegex())
 		return True
 
-	def testIgnoreRegex(self, line):
-		found = False
-		try:
-			ret = self._filter.ignoreLine([(line, "", "")])
-			if ret is not None:
-				found = True
-				regex = self._ignoreregex[ret].inc()
-		except RegexException as e: # pragma: no cover
-			output( 'ERROR: %s' % e )
-			return False
-		return found
+	def _onIgnoreRegex(self, idx, ignoreRegex):
+		self._lineIgnored = True
+		self._ignoreregex[idx].inc()
 
 	def testRegex(self, line, date=None):
 		orgLineBuffer = self._filter._Filter__lineBuffer
+		# duplicate line buffer (list can be changed inplace during processLine):
+		if self._filter.getMaxLines() > 1:
+			orgLineBuffer = orgLineBuffer[:]
 		fullBuffer = len(orgLineBuffer) >= self._filter.getMaxLines()
-		is_ignored = False
+		is_ignored = self._lineIgnored = False
 		try:
 			found = self._filter.processLine(line, date)
 			lines = []
@@ -469,29 +466,30 @@ class Fail2banRegex(object):
 		except RegexException as e: # pragma: no cover
 			output( 'ERROR: %s' % e )
 			return False
-		for bufLine in orgLineBuffer[int(fullBuffer):]:
-			if bufLine not in self._filter._Filter__lineBuffer:
-				try:
-					self._line_stats.missed_lines.pop(
-						self._line_stats.missed_lines.index("".join(bufLine)))
-					if self._debuggex:
-						self._line_stats.missed_lines_timeextracted.pop(
-							self._line_stats.missed_lines_timeextracted.index(
-								"".join(bufLine[::2])))
-				except ValueError:
-					pass
-				# if buffering - add also another lines from match:
-				if self._print_all_matched:
-					if not self._debuggex:
-						self._line_stats.matched_lines.append("".join(bufLine))
-					else:
-						lines.append(bufLine[0] + bufLine[2])
-				self._line_stats.matched += 1
-				self._line_stats.missed -= 1
+		if self._filter.getMaxLines() > 1:
+			for bufLine in orgLineBuffer[int(fullBuffer):]:
+				if bufLine not in self._filter._Filter__lineBuffer:
+					try:
+						self._line_stats.missed_lines.pop(
+							self._line_stats.missed_lines.index("".join(bufLine)))
+						if self._debuggex:
+							self._line_stats.missed_lines_timeextracted.pop(
+								self._line_stats.missed_lines_timeextracted.index(
+									"".join(bufLine[::2])))
+					except ValueError:
+						pass
+					# if buffering - add also another lines from match:
+					if self._print_all_matched:
+						if not self._debuggex:
+							self._line_stats.matched_lines.append("".join(bufLine))
+						else:
+							lines.append(bufLine[0] + bufLine[2])
+					self._line_stats.matched += 1
+					self._line_stats.missed -= 1
 		if lines: # pre-lines parsed in multiline mode (buffering)
 			lines.append(self._filter.processedLine())
 			line = "\n".join(lines)
-		return line, ret, is_ignored
+		return line, ret, (is_ignored or self._lineIgnored)
 
 	def _prepaireOutput(self):
 		"""Prepares output- and fetch-function corresponding given '--out' option (format)"""
@@ -558,8 +556,7 @@ class Fail2banRegex(object):
 			out = self._prepaireOutput()
 		for line in test_lines:
 			if isinstance(line, tuple):
-				line_datetimestripped, ret, is_ignored = self.testRegex(
-					line[0], line[1])
+				line_datetimestripped, ret, is_ignored = self.testRegex(line[0], line[1])
 				line = "".join(line[0])
 			else:
 				line = line.rstrip('\r\n')
@@ -567,11 +564,9 @@ class Fail2banRegex(object):
 					# skip comment and empty lines
 					continue
 				line_datetimestripped, ret, is_ignored = self.testRegex(line)
-			if not is_ignored:
-				is_ignored = self.testIgnoreRegex(line_datetimestripped)
 
 			if self._opts.out: # (formated) output:
-				if len(ret) > 0: out(ret)
+				if len(ret) > 0 and not is_ignored: out(ret)
 				continue
 
 			if is_ignored:
