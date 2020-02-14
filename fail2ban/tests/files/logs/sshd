@@ -134,7 +134,7 @@ Sep 29 17:15:02 spaceman sshd[12946]: Failed password for user from 127.0.0.1 po
 # failJSON: { "time": "2004-09-29T17:15:02", "match": true , "host": "127.0.0.1", "desc": "Injecting while exhausting initially present {0,100} match length limits set for ruser etc" }
 Sep 29 17:15:02 spaceman sshd[12946]: Failed password for user from 127.0.0.1 port 20000 ssh1: ruser XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX from 1.2.3.4
 # failJSON: { "time": "2004-09-29T17:15:03", "match": true , "host": "aaaa:bbbb:cccc:1234::1:1", "desc": "Injecting while exhausting initially present {0,100} match length limits set for ruser etc" }
-Sep 29 17:15:03 spaceman sshd[12946]: Failed password for user from aaaa:bbbb:cccc:1234::1:1 port 20000 ssh1: ruser XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX from 1.2.3.4
+Sep 29 17:15:03 spaceman sshd[12947]: Failed password for user from aaaa:bbbb:cccc:1234::1:1 port 20000 ssh1: ruser XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX from 1.2.3.4
 
 # failJSON: { "time": "2004-11-11T08:04:51", "match": true , "host": "127.0.0.1", "desc": "Injecting on username ssh 'from 10.10.1.1'@localhost" }
 Nov 11 08:04:51 redbamboo sshd[2737]: Failed password for invalid user from 10.10.1.1 from 127.0.0.1 port 58946 ssh2
@@ -166,9 +166,11 @@ Nov 28 09:16:03 srv sshd[32307]: Connection closed by 192.0.2.1
 Nov 28 09:16:05 srv sshd[32310]: Failed publickey for git from 192.0.2.111 port 57910 ssh2: ECDSA 1e:fe:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
 # failJSON: { "match": false }
 Nov 28 09:16:05 srv sshd[32310]: Failed publickey for git from 192.0.2.111 port 57910 ssh2: RSA 14:ba:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
-# failJSON: { "match": false }
+# failJSON: { "constraint": "name == 'sshd'", "time": "2004-11-28T09:16:05", "match": true , "attempts": 3, "desc": "Should catch failure - no success/no accepted public key" }
 Nov 28 09:16:05 srv sshd[32310]: Disconnecting: Too many authentication failures for git [preauth]
-# failJSON: { "time": "2004-11-28T09:16:05", "match": true , "host": "192.0.2.111", "desc": "Should catch failure - no success/no accepted public key" }
+# failJSON: { "constraint": "opts.get('mode') != 'aggressive'", "match": false, "desc": "Nofail in normal mode, failure already produced above" }
+Nov 28 09:16:05 srv sshd[32310]: Connection closed by 192.0.2.111 [preauth]
+# failJSON: { "constraint": "opts.get('mode') == 'aggressive'", "time": "2004-11-28T09:16:05", "match": true , "host": "192.0.2.111", "attempts":1, "desc": "Matches in aggressive mode only" }
 Nov 28 09:16:05 srv sshd[32310]: Connection closed by 192.0.2.111 [preauth]
 
 # failJSON: { "match": false }
@@ -215,7 +217,7 @@ Apr 27 13:02:04 host sshd[29116]: Received disconnect from 1.2.3.4: 11: Normal S
 # Match sshd auth errors on OpenSUSE systems (gh-1024)
 # failJSON: { "match": false, "desc": "No failure until closed or another fail (e. g. F-MLFFORGET by success/accepted password can avoid failure, see gh-2070)" }
 2015-04-16T18:02:50.321974+00:00 host sshd[2716]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=192.0.2.112  user=root
-# failJSON: { "time": "2015-04-16T20:02:50", "match": true , "host": "192.0.2.112", "desc": "Should catch failure - no success/no accepted password" }
+# failJSON: { "constraint": "opts.get('mode') == 'aggressive'", "time": "2015-04-16T20:02:50", "match": true , "host": "192.0.2.112", "desc": "Should catch failure - no success/no accepted password" }
 2015-04-16T18:02:50.568798+00:00 host sshd[2716]: Connection closed by 192.0.2.112 [preauth]
 
 # disable this test-cases block for obsolete multi-line filter (zzz-sshd-obsolete...):
@@ -238,7 +240,7 @@ Mar  7 18:53:20 bar sshd[1556]: Connection closed by 192.0.2.113
 Mar  7 18:53:22 bar sshd[1558]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=root rhost=192.0.2.114
 # failJSON: { "time": "2005-03-07T18:53:23", "match": true , "attempts": 2, "users": ["root", "sudoer"], "host": "192.0.2.114", "desc": "Failure: attempt 2nd user" }
 Mar  7 18:53:23 bar sshd[1558]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=sudoer rhost=192.0.2.114
-# failJSON: { "time": "2005-03-07T18:53:24", "match": true , "attempts": 2, "users": ["root", "sudoer", "known"], "host": "192.0.2.114", "desc": "Failure: attempt 3rd user" }
+# failJSON: { "time": "2005-03-07T18:53:24", "match": true , "attempts": 1, "users": ["root", "sudoer", "known"], "host": "192.0.2.114", "desc": "Failure: attempt 3rd user" }
 Mar  7 18:53:24 bar sshd[1558]: Accepted password for known from 192.0.2.114 port 52100 ssh2
 # failJSON: { "match": false , "desc": "No failure" }
 Mar  7 18:53:24 bar sshd[1558]: pam_unix(sshd:session): session opened for user known by (uid=0)
@@ -248,14 +250,14 @@ Mar  7 18:53:24 bar sshd[1558]: pam_unix(sshd:session): session opened for user 
 Mar  7 18:53:32 bar sshd[1559]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=root rhost=192.0.2.116
 # failJSON: { "match": false , "desc": "Still no failure (second try, same user)" }
 Mar  7 18:53:32 bar sshd[1559]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser=root rhost=192.0.2.116
-# failJSON: { "time": "2005-03-07T18:53:34", "match": true , "attempts": 2, "users": ["root", "known"], "host": "192.0.2.116", "desc": "Failure: attempt 2nd user" }
+# failJSON: { "time": "2005-03-07T18:53:34", "match": true , "attempts": 3, "users": ["root", "known"], "host": "192.0.2.116", "desc": "Failure: attempt 2nd user" }
 Mar  7 18:53:34 bar sshd[1559]: Accepted password for known from 192.0.2.116 port 52100 ssh2
 # failJSON: { "match": false , "desc": "No failure" }
 Mar  7 18:53:38 bar sshd[1559]: Connection closed by 192.0.2.116
 
 # failJSON: { "time": "2005-03-19T16:47:48", "match": true , "attempts": 1, "user": "admin", "host": "192.0.2.117", "desc": "Failure: attempt invalid user" }
 Mar 19 16:47:48 test sshd[5672]: Invalid user admin from 192.0.2.117 port 44004
-# failJSON: { "time": "2005-03-19T16:47:49", "match": true , "attempts": 2, "user": "admin", "host": "192.0.2.117", "desc": "Failure: attempt to change user (disallowed)" }
+# failJSON: { "time": "2005-03-19T16:47:49", "match": true , "attempts": 1, "user": "admin", "host": "192.0.2.117", "desc": "Failure: attempt to change user (disallowed)" }
 Mar 19 16:47:49 test sshd[5672]: Disconnecting invalid user admin 192.0.2.117 port 44004: Change of username or service not allowed: (admin,ssh-connection) -> (user,ssh-connection) [preauth]
 # failJSON: { "time": "2005-03-19T16:47:50", "match": false, "desc": "Disconnected during preauth phase (no failure in normal mode)" }
 Mar 19 16:47:50 srv sshd[5672]: Disconnected from authenticating user admin 192.0.2.6 port 33553 [preauth]
@@ -332,7 +334,7 @@ Nov 26 13:03:30 srv sshd[45]: fatal: Unable to negotiate with 192.0.2.2 port 554
 Nov 26 15:03:30 host sshd[22440]: Connection from 192.0.2.3 port 39678 on 192.168.1.9 port 22
 # failJSON: { "time": "2004-11-26T15:03:31", "match": true , "host": "192.0.2.3", "desc": "Multiline - no matching key exchange method" }
 Nov 26 15:03:31 host sshd[22440]: fatal: Unable to negotiate a key exchange method [preauth]
-# failJSON: { "time": "2004-11-26T15:03:32", "match": true , "host": "192.0.2.3", "filter": "sshd", "desc": "Second attempt within the same connect" }
+# failJSON: { "time": "2004-11-26T15:03:32", "match": true , "host": "192.0.2.3", "constraint": "name == 'sshd'", "desc": "Second attempt within the same connect" }
 Nov 26 15:03:32 host sshd[22440]: fatal: Unable to negotiate a key exchange method [preauth]
 
 # gh-1943 (previous OpenSSH log-format)

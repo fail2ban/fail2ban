@@ -138,6 +138,8 @@ class Regex:
 		except sre_constants.error:
 			raise RegexException("Unable to compile regular expression '%s'" %
 								 regex)
+		# set fetch handler depending on presence of alternate tags:
+		self.getGroups = self._getGroupsWithAlt if self._altValues else self._getGroups
 
 	def __str__(self):
 		return "%s(%r)" % (self.__class__.__name__, self._regex)
@@ -277,17 +279,21 @@ class Regex:
 	# Returns all matched groups.
 	#
 
-	def getGroups(self):
-		if not self._altValues:
-			return self._matchCache.groupdict()
-		# merge alternate values (e. g. 'alt_user_1' -> 'user' or 'alt_host' -> 'host'):
+	def _getGroups(self):
+		return self._matchCache.groupdict()
+
+	def _getGroupsWithAlt(self):
 		fail = self._matchCache.groupdict()
+		# merge alternate values (e. g. 'alt_user_1' -> 'user' or 'alt_host' -> 'host'):
 		#fail = fail.copy()
 		for k,n in self._altValues:
 			v = fail.get(k)
 			if v and not fail.get(n):
 				fail[n] = v
 		return fail
+
+	def getGroups(self): # pragma: no cover - abstract function (replaced in __init__)
+		pass
 
 	##
 	# Returns skipped lines.
