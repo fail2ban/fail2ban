@@ -63,10 +63,7 @@ def open(*args):
 	if len(args) == 2:
 		# ~50kB buffer should be sufficient for all tests here.
 		args = args + (50000,)
-	if sys.version_info >= (3,):
-		return fopen(*args, **{'encoding': 'utf-8', 'errors': 'ignore'})
-	else:
-		return fopen(*args)
+	return fopen(*args)
 
 
 def _killfile(f, name):
@@ -200,7 +197,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	# polling filter could detect the change
 	mtimesleep()
 	if isinstance(in_, str): # pragma: no branch - only used with str in test cases
-		fin = open(in_, 'r')
+		fin = open(in_, 'rb')
 	else:
 		fin = in_
 	# Skip
@@ -210,7 +207,7 @@ def _copy_lines_between_files(in_, fout, n=None, skip=0, mode='a', terminal_line
 	i = 0
 	lines = []
 	while n is None or i < n:
-		l = fin.readline()
+		l = FileContainer.decode_line(in_, 'UTF-8', fin.readline()).rstrip('\r\n')
 		if terminal_line is not None and l == terminal_line:
 			break
 		lines.append(l)
@@ -238,7 +235,7 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 	Returns None
 	"""
 	if isinstance(in_, str): # pragma: no branch - only used with str in test cases
-		fin = open(in_, 'r')
+		fin = open(in_, 'rb')
 	else:
 		fin = in_
 	# Required for filtering
@@ -249,7 +246,7 @@ def _copy_lines_to_journal(in_, fields={},n=None, skip=0, terminal_line=""): # p
 	# Read/Write
 	i = 0
 	while n is None or i < n:
-		l = fin.readline()
+		l = FileContainer.decode_line(in_, 'UTF-8', fin.readline()).rstrip('\r\n')
 		if terminal_line is not None and l == terminal_line:
 			break
 		journal.send(MESSAGE=l.strip(), **fields)
@@ -1583,9 +1580,9 @@ class GetFailures(LogCaptureTestCase):
 		# We first adjust logfile/failures to end with CR+LF
 		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='crlf')
 		# poor man unix2dos:
-		fin, fout = open(GetFailures.FILENAME_01), open(fname, 'w')
-		for l in fin.readlines():
-			fout.write('%s\r\n' % l.rstrip('\n'))
+		fin, fout = open(GetFailures.FILENAME_01, 'rb'), open(fname, 'wb')
+		for l in fin.read().splitlines():
+			fout.write(l + b'\r\n')
 		fin.close()
 		fout.close()
 
