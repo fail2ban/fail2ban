@@ -4,6 +4,8 @@ fail2ban (0.11.1-1~exp3) experimental; urgency=medium
   * nftables is now more important than iptables. Update of the priority
     and doc (Closes: #946257)
   * Trim trailing whitespace.
+  * Fix package-installs-into-obsolete-dir
+    Install bash_completion script in usr/share/bash-completion/completions
   * Remove patches neurodebian-backport.series, neurodebian_use_python2,
     saucy-dsc-patch, trusty-dsc-patch, utopic-dsc-patch, wheezy-dsc-
     patch that are missing from debian/patches/series.

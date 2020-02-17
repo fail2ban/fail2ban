@@ -42,8 +42,8 @@ override_dh_install:
 	install -d $(DESTDIR)/etc/monit/monitrc.d
 	install -m 644 files/monit/fail2ban $(DESTDIR)/etc/monit/monitrc.d/fail2ban
 	: # Install bash completion
-	install -d $(DESTDIR)/etc/bash_completion.d
-	install -m 644 files/bash-completion $(DESTDIR)/etc/bash_completion.d/fail2ban
+	install -d $(DESTDIR)/usr/share/bash-completion/completions
+	install -m 644 files/bash-completion $(DESTDIR)/usr/share/bash-completion/completions/fail2ban
 	: # Install systemd files
 	install -d $(DESTDIR)/lib/systemd/system
 	install -d $(DESTDIR)/usr/lib/tmpfiles.d
