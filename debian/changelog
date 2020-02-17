@@ -2,7 +2,7 @@ fail2ban (0.11.1-1~exp3) experimental; urgency=medium
 
   * Add myself to the list of uploaders
   * nftables is now more important than iptables. Update of the priority
-    and doc
+    and doc (Closes: #946257)
   * Trim trailing whitespace.
   * Remove patches neurodebian-backport.series, neurodebian_use_python2,
     saucy-dsc-patch, trusty-dsc-patch, utopic-dsc-patch, wheezy-dsc-
