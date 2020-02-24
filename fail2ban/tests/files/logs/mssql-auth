@@ -1,0 +1,3 @@
+2020-02-24 16:05:21.00 Logon       Login failed for user 'Backend'. Reason: Could not find a login matching the name provided. [CLIENT: 212.96.131.253]
+2020-02-24 16:30:25.88 Logon       Login failed for user '===)jf02hüas9ä##22f'. Reason: Could not find a login matching the name provided. [CLIENT: 148.86.203.199]
+2020-02-24 16:31:12.20 Logon       Login failed for user ''. Reason: An attempt to login using SQL authentication failed. Server is configured for Integrated authentication only. [CLIENT: 105.254.136.171]
