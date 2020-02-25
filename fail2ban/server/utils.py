@@ -270,8 +270,9 @@ class Utils():
 				if stderr is not None and stderr != '' and std_level >= logSys.getEffectiveLevel():
 					for l in stderr.splitlines():
 						logSys.log(std_level, "%x -- stderr: %r", realCmdId, uni_decode(l))
-		popen.stdout.close()
-		popen.stderr.close()
+
+		if popen.stdout: popen.stdout.close()
+		if popen.stderr: popen.stderr.close()
 
 		success = False
 		if retcode in success_codes:
