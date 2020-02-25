@@ -6,9 +6,10 @@
 Fail2Ban: Changelog
 ===================
 
-Incompatibility list (compared to v.0.9):
+ver. 0.10.6-dev (20??/??/??) - development edition
 -----------
 
+### Incompatibility list (v.0.10 compared to v.0.9):
 * Filter (or `failregex`) internal capture-groups:
 
   - If you've your own `failregex` or custom filters using conditional match `(?P=host)`, you should
@@ -29,6 +30,12 @@ Incompatibility list (compared to v.0.9):
 
 * Since v0.10 fail2ban supports the matching of IPv6 addresses, but not all ban actions are
   IPv6-capable now.
+
+### Fixes
+
+### New Features
+
+### Enhancements
 
 
 ver. 0.10.5 (2020/01/10) - deserve-more-respect-a-jedis-weapon-must
