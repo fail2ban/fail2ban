@@ -16,6 +16,7 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
     different from 0) in case of unsane environment.
 
 ### Fixes
+* restoring a large number (500+ depending on files ulimit) of current bans when using PyPy fixed
 
 ### New Features
 
