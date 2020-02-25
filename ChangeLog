@@ -38,6 +38,7 @@ ver. 0.11.2-dev (20??/??/??) - development edition
     IPv6-capable now.
 
 ### Fixes
+* restoring a large number (500+ depending on files ulimit) of current bans when using PyPy fixed
 
 ### New Features
 
