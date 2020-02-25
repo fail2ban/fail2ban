@@ -6,7 +6,7 @@
 Fail2Ban: Changelog
 ===================
 
-ver. 0.11.1 (2020/01/11) - this-is-the-way
+ver. 0.11.2-dev (20??/??/??) - development edition
 -----------
 
 ### Compatibility:
@@ -36,6 +36,16 @@ ver. 0.11.1 (2020/01/11) - this-is-the-way
 
   - Since v0.10 fail2ban supports the matching of IPv6 addresses, but not all ban actions are
     IPv6-capable now.
+
+### Fixes
+
+### New Features
+
+### Enhancements
+
+
+ver. 0.11.1 (2020/01/11) - this-is-the-way
+-----------
 
 ### Fixes
 * purge database will be executed now (within observer).
