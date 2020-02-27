@@ -24,6 +24,11 @@
 # Check that the config file exists
 [ -f /etc/fail2ban/fail2ban.conf ] || exit 0
 
+# Check pid dir
+if [ ! -d '/var/run/fail2ban' ]; then
+    mkdir /var/run/fail2ban
+fi
+
 FAIL2BAN="/usr/bin/fail2ban-client"
 prog=fail2ban-server
 lockfile=${LOCKFILE-/var/lock/subsys/fail2ban}
