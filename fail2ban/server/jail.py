@@ -197,8 +197,6 @@ class Jail(object):
 		Used by filter to add a failure for banning.
 		"""
 		self.__queue.put(ticket)
-		if not ticket.restored and self.database is not None:
-			self.database.addBan(self, ticket)
 
 	def getFailTicket(self):
 		"""Get a fail ticket from the jail.

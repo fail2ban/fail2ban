@@ -452,7 +452,7 @@ class Actions(JailThread, Mapping):
 				logSys.notice("[%s] %sBan %s", self._jail.name, ('' if not bTicket.restored else 'Restore '), ip)
 				for name, action in self._actions.iteritems():
 					try:
-						if ticket.restored and getattr(action, 'norestored', False):
+						if bTicket.restored and getattr(action, 'norestored', False):
 							continue
 						if not aInfo.immutable: aInfo.reset()
 						action.ban(aInfo)
@@ -495,6 +495,9 @@ class Actions(JailThread, Mapping):
 						cnt += self.__reBan(bTicket, actions=rebanacts)
 				else: # pragma: no cover - unexpected: ticket is not banned for some reasons - reban using all actions:
 					cnt += self.__reBan(bTicket)
+			# add ban to database:
+			if not bTicket.restored and self._jail.database is not None:
+				self._jail.database.addBan(self._jail, bTicket)
 		if cnt:
 			logSys.debug("Banned %s / %s, %s ticket(s) in %r", cnt, 
 				self.__banManager.getBanTotal(), self.__banManager.size(), self._jail.name)

@@ -973,8 +973,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		# leave action2 just to test restored interpolation:
 		_write_jail_cfg(actions=[2,3])
 		
-		# write new failures:
 		self.pruneLog("[test-phase 2b]")
+		# write new failures:
 		_write_file(test2log, "w+", *(
 			(str(int(MyTime.time())) + "   error 403 from 192.0.2.2: test 2",) * 3 +
 		  (str(int(MyTime.time())) + "   error 403 from 192.0.2.3: test 2",) * 3 +
@@ -987,13 +987,19 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"2 ticket(s) in 'test-jail2",
 			"5 ticket(s) in 'test-jail1", all=True, wait=MID_WAITTIME)
+		# ban manually to cover restore in restart (phase 2c):
+		self.execCmd(SUCCESS, startparams,
+			"set", "test-jail2", "banip", "192.0.2.9")
+		self.assertLogged(
+			"3 ticket(s) in 'test-jail2", wait=MID_WAITTIME)
 		self.assertLogged(
 			"[test-jail1] Ban 192.0.2.2",
 			"[test-jail1] Ban 192.0.2.3",
 			"[test-jail1] Ban 192.0.2.4",
 			"[test-jail1] Ban 192.0.2.8",
 			"[test-jail2] Ban 192.0.2.4",
-			"[test-jail2] Ban 192.0.2.8", all=True)
+			"[test-jail2] Ban 192.0.2.8", 
+			"[test-jail2] Ban 192.0.2.9", all=True)
 		# test ips at all not visible for jail2:
 		self.assertNotLogged(
 			"[test-jail2] Found 192.0.2.2", 
@@ -1013,15 +1019,17 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"Reload finished.",
 			"Restore Ban",
-			"2 ticket(s) in 'test-jail2", all=True, wait=MID_WAITTIME)
+			"3 ticket(s) in 'test-jail2", all=True, wait=MID_WAITTIME)
 		# stop/start and unban/restore ban:
 		self.assertLogged(
-			"Jail 'test-jail2' stopped",
-			"Jail 'test-jail2' started",
 			"[test-jail2] Unban 192.0.2.4",
 			"[test-jail2] Unban 192.0.2.8",
+			"[test-jail2] Unban 192.0.2.9",
+			"Jail 'test-jail2' stopped",
+			"Jail 'test-jail2' started",
 			"[test-jail2] Restore Ban 192.0.2.4",
-			"[test-jail2] Restore Ban 192.0.2.8", all=True
+			"[test-jail2] Restore Ban 192.0.2.8",
+			"[test-jail2] Restore Ban 192.0.2.9", all=True
 		)
 		# test restored is 1 (only test-action2):
 		self.assertLogged(
@@ -1055,7 +1063,8 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"Jail 'test-jail2' stopped",
 			"Jail 'test-jail2' started",
 			"[test-jail2] Unban 192.0.2.4",
-			"[test-jail2] Unban 192.0.2.8", all=True
+			"[test-jail2] Unban 192.0.2.8",
+			"[test-jail2] Unban 192.0.2.9", all=True
 		)
 		# test unban (action2):
 		self.assertLogged(

@@ -33,6 +33,7 @@ ver. 0.10.6-dev (20??/??/??) - development edition
 
 ### Fixes
 * restoring a large number (500+ depending on files ulimit) of current bans when using PyPy fixed
+* manual ban is written to database, so can be restored by restart (gh-2647)
 
 ### New Features
 

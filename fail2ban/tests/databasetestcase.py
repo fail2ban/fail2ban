@@ -491,6 +491,7 @@ class DatabaseTest(LogCaptureTestCase):
 		# test action together with database functionality
 		self.testAddJail() # Jail required
 		self.jail.database = self.db
+		self.db.addJail(self.jail)
 		actions = Actions(self.jail)
 		actions.add(
 			"action_checkainfo",
