@@ -476,7 +476,7 @@ class Actions(JailThread, Mapping):
 				# do actions :
 				for name, action in self._actions.iteritems():
 					try:
-						if ticket.restored and getattr(action, 'norestored', False):
+						if bTicket.restored and getattr(action, 'norestored', False):
 							continue
 						if not aInfo.immutable: aInfo.reset()
 						action.ban(aInfo)
@@ -522,6 +522,8 @@ class Actions(JailThread, Mapping):
 						cnt += self.__reBan(bTicket, actions=rebanacts)
 				else: # pragma: no cover - unexpected: ticket is not banned for some reasons - reban using all actions:
 					cnt += self.__reBan(bTicket)
+			# add ban to database moved to observer (should previously check not already banned 
+			# and increase ticket time if "bantime.increment" set)
 		if cnt:
 			logSys.debug("Banned %s / %s, %s ticket(s) in %r", cnt, 
 				self.__banManager.getBanTotal(), self.__banManager.size(), self._jail.name)
