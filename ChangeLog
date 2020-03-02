@@ -43,6 +43,9 @@ ver. 0.11.2-dev (20??/??/??) - development edition
 ### New Features
 
 ### Enhancements
+* introduced new prefix `{UNB}` for `datepattern` to disable word boundaries in regex;
+* datetemplate: improved anchor detection for capturing groups `(^...)`;
+* performance optimization of `datepattern` (better search algorithm in datedetector, especially for single template);
 
 
 ver. 0.11.1 (2020/01/11) - this-is-the-way
