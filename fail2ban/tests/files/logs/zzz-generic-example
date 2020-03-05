@@ -60,3 +60,6 @@ Jun 22 20:37:04 server test-demo[402]: writeToStorage plist={
 [Jun 21 16:56:03] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.251
 # failJSON: { "match": false, "desc": "test 2nd ignoreregex" }
 [Jun 21 16:56:04] machine test-demo(pam_unix)[13709] F2B: error from 192.0.2.252
+
+# failJSON: { "match": false, "desc": "ignore other daemon" }
+[Jun 21 16:56:04] machine captain-nemo(pam_unix)[55555] F2B: error from 192.0.2.2
