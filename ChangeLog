@@ -40,6 +40,8 @@ ver. 0.11.2-dev (20??/??/??) - development edition
 ### Fixes
 * restoring a large number (500+ depending on files ulimit) of current bans when using PyPy fixed
 * manual ban is written to database, so can be restored by restart (gh-2647)
+* `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`
+  should be interpolated in definition section (inside the filter-config, gh-2650)
 
 ### New Features
 
