@@ -17,10 +17,16 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 
 ### Fixes
 * restoring a large number (500+ depending on files ulimit) of current bans when using PyPy fixed
+* manual ban is written to database, so can be restored by restart (gh-2647)
+* `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`
+  should be interpolated in definition section (inside the filter-config, gh-2650)
 
 ### New Features
 
 ### Enhancements
+* introduced new prefix `{UNB}` for `datepattern` to disable word boundaries in regex;
+* datetemplate: improved anchor detection for capturing groups `(^...)`;
+* performance optimization of `datepattern` (better search algorithm in datedetector, especially for single template);
 * `actioncheck` behavior is changed now (gh-488), so invariant check as well as restore or repair
    of sane environment (in case of recognized unsane state) would only occur on action errors (e. g.
    if ban or unban operations are exiting with other code as 0)

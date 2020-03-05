@@ -330,6 +330,27 @@ class DateDetectorTest(LogCaptureTestCase):
 		dt = '2005 Jun 03'; self.assertEqual(t.matchDate(dt).group(1), dt)
 		dt = '2005 JUN 03'; self.assertEqual(t.matchDate(dt).group(1), dt)
 
+	def testNotAnchoredCollision(self):
+		# try for patterns with and without word boundaries:
+		for dp in (r'%H:%M:%S', r'{UNB}%H:%M:%S'):
+			dd = DateDetector()
+			dd.appendTemplate(dp)
+			# boundary of timestamp changes right and left (and time is left and right in line):
+			for fmt in ('%s test', '%8s test', 'test %s', 'test %8s'):
+				for dt in (
+					'00:01:02',
+					'00:01:2',
+					'00:1:2',
+					'0:1:2',
+					'00:1:2',
+					'00:01:2',
+					'00:01:02',
+					'0:1:2',
+					'00:01:02',
+				):
+					t = dd.getTime(fmt % dt)
+					self.assertEqual((t[0], t[1].group()), (1123970462.0, dt))
+
 	def testAmbiguousInOrderedTemplates(self):
 		dd = self.datedetector
 		for (debit, line, cnt) in (
