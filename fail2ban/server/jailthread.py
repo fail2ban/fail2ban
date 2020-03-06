@@ -120,3 +120,6 @@ class JailThread(Thread):
 ## python 2.x replace binding of private __bootstrap method:
 if sys.version_info < (3,): # pragma: 3.x no cover
 	JailThread._Thread__bootstrap = JailThread._JailThread__bootstrap
+## python 3.9, restore isAlive method:
+elif not hasattr(JailThread, 'isAlive'): # pragma: 2.x no cover
+	 JailThread.isAlive = JailThread.is_alive
