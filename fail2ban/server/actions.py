@@ -497,9 +497,12 @@ class Actions(JailThread, Mapping):
 						cnt += self.__reBan(bTicket, actions=rebanacts)
 				else: # pragma: no cover - unexpected: ticket is not banned for some reasons - reban using all actions:
 					cnt += self.__reBan(bTicket)
-			# add ban to database (and ignore too old tickets, replace it with inOperation later):
-			if not bTicket.restored and self._jail.database is not None and bTicket.getTime() >= MyTime.time() - 60:
-				self._jail.database.addBan(self._jail, bTicket)
+			# add ban to database:
+			if not bTicket.restored and self._jail.database is not None:
+				# ignore too old (repeated and ignored) tickets,
+				# [todo] replace it with inOperation later (once it gets back-ported):
+				if not reason and bTicket.getTime() >= MyTime.time() - 60:
+					self._jail.database.addBan(self._jail, bTicket)
 		if cnt:
 			logSys.debug("Banned %s / %s, %s ticket(s) in %r", cnt, 
 				self.__banManager.getBanTotal(), self.__banManager.size(), self._jail.name)
