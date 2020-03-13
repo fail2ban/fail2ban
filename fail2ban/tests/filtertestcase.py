@@ -1719,6 +1719,7 @@ class GetFailures(LogCaptureTestCase):
 			self.pruneLog("[test-phase useDns=%s]" % useDns)
 			jail = DummyJail()
 			filter_ = FileFilter(jail, useDns=useDns)
+			filter_.banASAP = False # avoid immediate ban in this tests
 			filter_.active = True
 			filter_.failManager.setMaxRetry(1)	# we might have just few failures
 
