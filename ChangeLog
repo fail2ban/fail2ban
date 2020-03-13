@@ -16,6 +16,9 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
     different from 0) in case of unsane environment.
 
 ### Fixes
+* [stability] prevent race condition - no ban if filter (backend) is continuously busy if
+  too many messages will be found in log, e. g. initial scan of large log-file or journal (gh-2660)
+* python 3.9 compatibility (and Travis CI support)
 * restoring a large number (500+ depending on files ulimit) of current bans when using PyPy fixed
 * manual ban is written to database, so can be restored by restart (gh-2647)
 * `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`

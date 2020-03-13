@@ -140,7 +140,8 @@ class FilterPyinotify(FileFilter):
 		"""
 		if not self.idle:
 			self.getFailures(path)
-			self.performBan()
+			if not self.banASAP: # pragma: no cover
+				self.performBan()
 			self.__modified = False
 
 	def _addPending(self, path, reason, isDir=False):

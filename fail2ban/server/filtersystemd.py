@@ -318,7 +318,8 @@ class FilterSystemd(JournalFilter): # pragma: systemd no cover
 					else:
 						break
 				if self.__modified:
-					self.performBan()
+					if not self.banASAP: # pragma: no cover
+						self.performBan()
 					self.__modified = 0
 					# update position in log (time and iso string):
 					if self.jail.database is not None:
