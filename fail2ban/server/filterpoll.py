@@ -117,7 +117,8 @@ class FilterPoll(FileFilter):
 
 				self.ticks += 1
 				if self.__modified:
-					self.performBan()
+					if not self.banASAP: # pragma: no cover
+						self.performBan()
 					self.__modified = False
 			except Exception as e: # pragma: no cover
 				if not self.active: # if not active - error by stop...
