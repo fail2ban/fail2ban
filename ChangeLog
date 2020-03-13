@@ -32,6 +32,8 @@ ver. 0.10.6-dev (20??/??/??) - development edition
   IPv6-capable now.
 
 ### Fixes
+* [stability] prevent race condition - no ban if filter (backend) is continuously busy if
+  too many messages will be found in log, e. g. initial scan of large log-file or journal (gh-2660)
 * restoring a large number (500+ depending on files ulimit) of current bans when using PyPy fixed
 * manual ban is written to database, so can be restored by restart (gh-2647)
 * `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`

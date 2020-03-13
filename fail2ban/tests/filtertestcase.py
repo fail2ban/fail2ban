@@ -399,6 +399,7 @@ class IgnoreIP(LogCaptureTestCase):
 			self.filter.addFailRegex('^<HOST>')
 			self.filter.setDatePattern(r'{^LN-BEG}%Y-%m-%d %H:%M:%S(?:\s*%Z)?\s')
 			self.filter.setFindTime(10); # max 10 seconds back
+			self.filter.setMaxRetry(5); # don't ban here
 			#
 			self.pruneLog('[phase 1] DST time jump')
 			# check local time jump (DST hole):
@@ -757,6 +758,7 @@ class LogFileMonitor(LogCaptureTestCase):
 		_, self.name = tempfile.mkstemp('fail2ban', 'monitorfailures')
 		self.file = open(self.name, 'a')
 		self.filter = FilterPoll(DummyJail())
+		self.filter.banASAP = False # avoid immediate ban in this tests
 		self.filter.addLogPath(self.name, autoSeek=False)
 		self.filter.active = True
 		self.filter.addFailRegex(r"(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>")
@@ -974,6 +976,7 @@ def get_monitor_failures_testcase(Filter_):
 			self.file = open(self.name, 'a')
 			self.jail = DummyJail()
 			self.filter = Filter_(self.jail)
+			self.filter.banASAP = False # avoid immediate ban in this tests
 			self.filter.addLogPath(self.name, autoSeek=False)
 			# speedup search using exact date pattern:
 			self.filter.setDatePattern(r'^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')
@@ -1272,6 +1275,7 @@ def get_monitor_failures_journal_testcase(Filter_): # pragma: systemd no cover
 		def _initFilter(self, **kwargs):
 			self._getRuntimeJournal() # check journal available
 			self.filter = Filter_(self.jail, **kwargs)
+			self.filter.banASAP = False # avoid immediate ban in this tests
 			self.filter.addJournalMatch([
 				"SYSLOG_IDENTIFIER=fail2ban-testcases",
 				"TEST_FIELD=1",
@@ -1525,6 +1529,7 @@ class GetFailures(LogCaptureTestCase):
 		setUpMyTime()
 		self.jail = DummyJail()
 		self.filter = FileFilter(self.jail)
+		self.filter.banASAP = False # avoid immediate ban in this tests
 		self.filter.active = True
 		# speedup search using exact date pattern:
 		self.filter.setDatePattern(r'^(?:%a )?%b %d %H:%M:%S(?:\.%f)?(?: %ExY)?')

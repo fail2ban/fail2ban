@@ -111,6 +111,8 @@ class Filter(JailThread):
 		self.onIgnoreRegex = None
 		## if true ignores obsolete failures (failure time < now - findTime):
 		self.checkFindTime = True
+		## if true prevents against retarded banning in case of RC by too many failures (disabled only for test purposes):
+		self.banASAP = True
 		## Ticks counter
 		self.ticks = 0
 		## Thread name:
@@ -625,7 +627,11 @@ class Filter(JailThread):
 				logSys.info(
 					"[%s] Found %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
 				)
-				self.failManager.addFailure(tick)
+				attempts = self.failManager.addFailure(tick)
+				# avoid RC on busy filter (too many failures) - if attempts for IP/ID reached maxretry,
+				# we can speedup ban, so do it as soon as possible:
+				if self.banASAP and attempts >= self.failManager.getMaxRetry():
+					self.performBan(ip)
 			# reset (halve) error counter (successfully processed line):
 			if self._errors:
 				self._errors //= 2
