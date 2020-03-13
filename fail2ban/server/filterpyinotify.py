@@ -271,7 +271,13 @@ class FilterPyinotify(FileFilter):
 
 	def _addLogPath(self, path):
 		self._addFileWatcher(path)
-		self._process_file(path)
+		# initial scan:
+		if self.active:
+			# we can execute it right now:
+			self._process_file(path)
+		else:
+			# retard until filter gets started:
+			self._addPending(path, ('INITIAL', path))
 
     ##
 	# Delete a log path

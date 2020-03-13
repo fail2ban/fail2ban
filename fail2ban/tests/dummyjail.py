@@ -54,6 +54,10 @@ class DummyJail(Jail):
 		with self.lock:
 			return bool(self.queue)
 
+	@property
+	def hasFailTickets(self):
+		return bool(self.queue)
+
 	def putFailTicket(self, ticket):
 		with self.lock:
 			self.queue.append(ticket)
