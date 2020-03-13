@@ -457,10 +457,10 @@ class Filter(JailThread):
 		logSys.info(
 			"[%s] Attempt %s - %s", self.jailName, ip, datetime.datetime.fromtimestamp(unixTime).strftime("%Y-%m-%d %H:%M:%S")
 		)
-		self.failManager.addFailure(ticket, len(matches) or 1)
-
+		attempts = self.failManager.addFailure(ticket, len(matches) or 1)
 		# Perform the ban if this attempt is resulted to:
-		self.performBan(ip)
+		if attempts >= self.failManager.getMaxRetry():
+			self.performBan(ip)
 
 		return 1
 
