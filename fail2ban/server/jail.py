@@ -191,6 +191,12 @@ class Jail(object):
 			("Actions", self.actions.status(flavor=flavor)),
 			]
 
+	@property
+	def hasFailTickets(self):
+		"""Retrieve whether queue has tickets to ban.
+		"""
+		return not self.__queue.empty()
+
 	def putFailTicket(self, ticket):
 		"""Add a fail ticket to the jail.
 

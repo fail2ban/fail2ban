@@ -318,8 +318,10 @@ class Actions(JailThread, Mapping):
 				logSys.debug("Actions: leave idle mode")
 				continue
 			# wait for ban (stop if gets inactive):
-			bancnt = Utils.wait_for(lambda: not self.active or self.__checkBan(), self.sleeptime)
-			cnt += bancnt
+			bancnt = 0
+			if Utils.wait_for(lambda: not self.active or self._jail.hasFailTickets, self.sleeptime):
+				bancnt = self.__checkBan()
+				cnt += bancnt
 			# unban if nothing is banned not later than banned tickets >= banPrecedence
 			if not bancnt or cnt >= self.banPrecedence:
 				if self.active:
@@ -495,8 +497,8 @@ class Actions(JailThread, Mapping):
 						cnt += self.__reBan(bTicket, actions=rebanacts)
 				else: # pragma: no cover - unexpected: ticket is not banned for some reasons - reban using all actions:
 					cnt += self.__reBan(bTicket)
-			# add ban to database:
-			if not bTicket.restored and self._jail.database is not None:
+			# add ban to database (and ignore too old tickets, replace it with inOperation later):
+			if not bTicket.restored and self._jail.database is not None and bTicket.getTime() >= MyTime.time() - 60:
 				self._jail.database.addBan(self._jail, bTicket)
 		if cnt:
 			logSys.debug("Banned %s / %s, %s ticket(s) in %r", cnt, 
