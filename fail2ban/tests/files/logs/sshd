@@ -296,6 +296,9 @@ Nov 24 23:46:43 host sshd[32686]: fatal: Read from socket failed: Connection res
 # failJSON: { "time": "2005-03-15T09:20:57", "match": true , "host": "192.0.2.39", "desc": "Singleline for connection reset by" }
 Mar 15 09:20:57 host sshd[28972]: Connection reset by 192.0.2.39 port 14282 [preauth]
 
+# failJSON: { "time": "2005-03-16T09:29:50", "match": true , "host": "192.0.2.20", "desc": "connection reset by user (gh-2662)" }
+Mar 16 09:29:50 host sshd[19131]: Connection reset by authenticating user root 192.0.2.20 port 1558 [preauth]
+
 # failJSON: { "time": "2005-07-17T23:03:05", "match": true , "host": "192.0.2.10", "user": "root", "desc": "user name additionally, gh-2185" }
 Jul 17 23:03:05 srv sshd[1296]: Connection closed by authenticating user root 192.0.2.10 port 46038 [preauth]
 # failJSON: { "time": "2005-07-17T23:04:00", "match": true , "host": "192.0.2.11", "user": "test 127.0.0.1", "desc": "check inject on username, gh-2185" }
