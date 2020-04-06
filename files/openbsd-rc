@@ -1,0 +1,26 @@
+#!/bin/sh
+ 
+daemon="/usr/local/bin/fail2ban-client"
+ 
+. /etc/rc.d/rc.subr
+ 
+rc_bg=YES
+rc_reload=NO
+ 
+rc_pre() {
+    install -d -o root -m 0700 /var/run/fail2ban
+}
+ 
+rc_start() {
+    ${rcexec} "${daemon} start ${daemon_flags} ${_bg}"
+}
+ 
+rc_check() {
+    pgrep -q -f "fail2ban-server"
+}
+ 
+rc_stop() {
+    ${rcexec} "${daemon} stop"
+}
+ 
+rc_cmd $1
