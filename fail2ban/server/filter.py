@@ -80,6 +80,7 @@ class Filter(JailThread):
 		## Ignore own IPs flag:
 		self.__ignoreSelf = True
 		## The ignore IP list.
+		self.__ignoreIpSet = set()
 		self.__ignoreIpList = []
 		## External command
 		self.__ignoreCommand = False
@@ -489,28 +490,36 @@ class Filter(JailThread):
 		# Create IP address object
 		ip = IPAddr(ipstr)
 		# Avoid exact duplicates
-		if ip in self.__ignoreIpList:
-			logSys.warn("  Ignore duplicate %r (%r), already in ignore list", ip, ipstr)
+		if ip in self.__ignoreIpSet or ip in self.__ignoreIpList:
+			logSys.log(logging.MSG, "  Ignore duplicate %r (%r), already in ignore list", ip, ipstr)
 			return
 		# log and append to ignore list
 		logSys.debug("  Add %r to ignore list (%r)", ip, ipstr)
-		self.__ignoreIpList.append(ip)
+		# if single IP (not DNS or a subnet) add to set, otherwise to list:
+		if ip.isSingle:
+			self.__ignoreIpSet.add(ip)
+		else:
+			self.__ignoreIpList.append(ip)
 
 	def delIgnoreIP(self, ip=None):
 		# clear all:
 		if ip is None:
+			self.__ignoreIpSet.clear()
 			del self.__ignoreIpList[:]
 			return
 		# delete by ip:
 		logSys.debug("  Remove %r from ignore list", ip)
-		self.__ignoreIpList.remove(ip)
+		if ip in self.__ignoreIpSet:
+			self.__ignoreIpSet.remove(ip)
+		else:
+			self.__ignoreIpList.remove(ip)
 
 	def logIgnoreIp(self, ip, log_ignore, ignore_source="unknown source"):
 		if log_ignore:
 			logSys.info("[%s] Ignore %s by %s", self.jailName, ip, ignore_source)
 
 	def getIgnoreIP(self):
-		return self.__ignoreIpList
+		return self.__ignoreIpList + list(self.__ignoreIpSet)
 
 	##
 	# Check if IP address/DNS is in the ignore list.
@@ -550,8 +559,11 @@ class Filter(JailThread):
 			if self.__ignoreCache: c.set(key, True)
 			return True
 
+		# check if the IP is covered by ignore IP (in set or in subnet/dns):
+		if ip in self.__ignoreIpSet:
+			self.logIgnoreIp(ip, log_ignore, ignore_source="ip")
+			return True
 		for net in self.__ignoreIpList:
-			# check if the IP is covered by ignore IP
 			if ip.isInNet(net):
 				self.logIgnoreIp(ip, log_ignore, ignore_source=("ip" if net.isValid else "dns"))
 				if self.__ignoreCache: c.set(key, True)
