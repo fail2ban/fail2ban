@@ -1899,7 +1899,9 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		ip4 = IPAddr('192.0.2.1')
 		ip6 = IPAddr('2001:DB8::')
 		self.assertTrue(ip4.isIPv4)
+		self.assertTrue(ip4.isSingle)
 		self.assertTrue(ip6.isIPv6)
+		self.assertTrue(ip6.isSingle)
 		self.assertTrue(asip('192.0.2.1').isIPv4)
 		self.assertTrue(id(asip(ip4)) == id(ip4))
 
@@ -1908,6 +1910,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		r = IPAddr('xxx', IPAddr.CIDR_RAW)
 		self.assertFalse(r.isIPv4)
 		self.assertFalse(r.isIPv6)
+		self.assertFalse(r.isSingle)
 		self.assertTrue(r.isValid)
 		self.assertEqual(r, 'xxx')
 		self.assertEqual('xxx', str(r))
@@ -1916,6 +1919,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		r = IPAddr('1:2', IPAddr.CIDR_RAW)
 		self.assertFalse(r.isIPv4)
 		self.assertFalse(r.isIPv6)
+		self.assertFalse(r.isSingle)
 		self.assertTrue(r.isValid)
 		self.assertEqual(r, '1:2')
 		self.assertEqual('1:2', str(r))
@@ -1938,7 +1942,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 	def testUseDns(self):
 		res = DNSUtils.textToIp('www.example.com', 'no')
 		self.assertSortedEqual(res, [])
-		unittest.F2B.SkipIfNoNetwork()
+		#unittest.F2B.SkipIfNoNetwork()
 		res = DNSUtils.textToIp('www.example.com', 'warn')
 		# sort ipaddr, IPv4 is always smaller as IPv6
 		self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
@@ -1947,7 +1951,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertSortedEqual(res, ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946'])
 
 	def testTextToIp(self):
-		unittest.F2B.SkipIfNoNetwork()
+		#unittest.F2B.SkipIfNoNetwork()
 		# Test hostnames
 		hostnames = [
 			'www.example.com',
@@ -1971,7 +1975,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 				self.assertTrue(isinstance(ip, IPAddr))
 
 	def testIpToName(self):
-		unittest.F2B.SkipIfNoNetwork()
+		#unittest.F2B.SkipIfNoNetwork()
 		res = DNSUtils.ipToName('8.8.4.4')
 		self.assertTrue(res.endswith(('.google', '.google.com')))
 		# same as above, but with IPAddr:
@@ -1993,8 +1997,10 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		self.assertEqual(res.addr, 167772160L)
 		res = IPAddr('10.0.0.1', cidr=32L)
 		self.assertEqual(res.addr, 167772161L)
+		self.assertTrue(res.isSingle)
 		res = IPAddr('10.0.0.1', cidr=31L)
 		self.assertEqual(res.addr, 167772160L)
+		self.assertFalse(res.isSingle)
 
 		self.assertEqual(IPAddr('10.0.0.0').hexdump, '0a000000')
 		self.assertEqual(IPAddr('1::2').hexdump, '00010000000000000000000000000002')
@@ -2019,6 +2025,8 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 	def testIPAddr_InInet(self):
 		ip4net = IPAddr('93.184.0.1/24')
 		ip6net = IPAddr('2606:2800:220:1:248:1893:25c8:0/120')
+		self.assertFalse(ip4net.isSingle)
+		self.assertFalse(ip6net.isSingle)
 		# ip4:
 		self.assertTrue(IPAddr('93.184.0.1').isInNet(ip4net))
 		self.assertTrue(IPAddr('93.184.0.255').isInNet(ip4net))
@@ -2114,7 +2122,7 @@ class DNSUtilsNetworkTests(unittest.TestCase):
 		)
 
 	def testIPAddr_CompareDNS(self):
-		unittest.F2B.SkipIfNoNetwork()
+		#unittest.F2B.SkipIfNoNetwork()
 		ips = IPAddr('example.com')
 		self.assertTrue(IPAddr("93.184.216.34").isInNet(ips))
 		self.assertTrue(IPAddr("2606:2800:220:1:248:1893:25c8:1946").isInNet(ips))

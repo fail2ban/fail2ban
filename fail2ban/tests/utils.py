@@ -39,7 +39,7 @@ from cStringIO import StringIO
 from functools import wraps
 
 from ..helpers import getLogger, str2LogLevel, getVerbosityFormat, uni_decode
-from ..server.ipdns import DNSUtils
+from ..server.ipdns import IPAddr, DNSUtils
 from ..server.mytime import MyTime
 from ..server.utils import Utils
 # for action_d.test_smtp :
@@ -331,13 +331,21 @@ def initTests(opts):
 	c.set('2001:db8::ffff', 'test-other')
 	c.set('87.142.124.10', 'test-host')
 	if unittest.F2B.no_network: # pragma: no cover
-		# precache all wrong dns to ip's used in test cases:
+		# precache all ip to dns used in test cases:
+		c.set('192.0.2.888', None)
+		c.set('8.8.4.4', 'dns.google')
+		c.set('8.8.4.4', 'dns.google')
+		# precache all dns to ip's used in test cases:
 		c = DNSUtils.CACHE_nameToIp
 		for i in (
 			('999.999.999.999', set()),
 			('abcdef.abcdef', set()),
 			('192.168.0.', set()),
 			('failed.dns.ch', set()),
+			('doh1.2.3.4.buga.xxxxx.yyy.invalid', set()),
+			('1.2.3.4.buga.xxxxx.yyy.invalid', set()),
+			('example.com', set([IPAddr('2606:2800:220:1:248:1893:25c8:1946'), IPAddr('93.184.216.34')])),
+			('www.example.com', set([IPAddr('2606:2800:220:1:248:1893:25c8:1946'), IPAddr('93.184.216.34')])),
 		):
 			c.set(*i)
 		# if fast - precache all host names as localhost addresses (speed-up getSelfIPs/ignoreself):
