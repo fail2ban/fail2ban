@@ -1,8 +1,8 @@
-fail2ban (0.11.1-1~exp4) UNRELEASED; urgency=medium
+fail2ban (0.11.1-1) unstable; urgency=medium
 
-  * Fix day-of-week for changelog entry 0.5.4-2.
+  * Upload to unstable
 
- -- Debian Janitor <janitor@jelmer.uk>  Sun, 29 Mar 2020 17:32:54 +0000
+ -- Sylvestre Ledru <sylvestre@debian.org>  Mon, 02 Mar 2020 14:20:11 +0100
 
 fail2ban (0.11.1-1~exp3) experimental; urgency=medium
 
@@ -1279,7 +1279,7 @@ fail2ban (0.5.4-2) unstable; urgency=low
   * Added a keyword <section> in parsing of the subject and the body of an
     email sent out by fail2ban (closes: #330311)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 27 Sep 2005 08:09:06 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 27 Sep 2005 08:09:06 -0400
 
 fail2ban (0.5.4-1) unstable; urgency=low
 
