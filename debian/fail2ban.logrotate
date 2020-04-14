@@ -1,8 +1,10 @@
 /var/log/fail2ban.log {
-   
+
     weekly
     rotate 4
     compress
+    # Do not rotate if empty
+    notifempty
 
     delaycompress
     missingok
