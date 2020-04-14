@@ -1,3 +1,10 @@
+fail2ban (0.11.1-2) UNRELEASED; urgency=medium
+
+  * Do not rotate log if empty. Thanks to Ron Varburg for the patch
+    (Closes: #956681)
+
+ -- Sylvestre Ledru <sylvestre@debian.org>  Tue, 14 Apr 2020 11:44:23 +0200
+
 fail2ban (0.11.1-1) unstable; urgency=medium
 
   * Upload to unstable
