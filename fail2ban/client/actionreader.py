@@ -52,13 +52,17 @@ class ActionReader(DefinitionInitConfigReader):
 	}
 
 	def __init__(self, file_, jailName, initOpts, **kwargs):
+		# always supply jail name as name parameter if not specified in options:
+		n = initOpts.get("name")
+		if n is None:
+			initOpts["name"] = n = jailName
 		actname = initOpts.get("actname")
 		if actname is None:
 			actname = file_
+			# ensure we've unique action name per jail:
+			if n != jailName:
+				actname += n[len(jailName):] if n.startswith(jailName) else '-' + n
 			initOpts["actname"] = actname
-		# always supply jail name as name parameter if not specified in options:
-		if initOpts.get("name") is None:
-			initOpts["name"] = jailName
 		self._name = actname
 		DefinitionInitConfigReader.__init__(
 			self, file_, jailName, initOpts, **kwargs)
