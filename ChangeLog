@@ -42,6 +42,7 @@ ver. 0.10.6-dev (20??/??/??) - development edition
   should be interpolated in definition section (inside the filter-config, gh-2650)
 
 ### New Features
+* new filter and jail for GitLab recognizing failed application logins (gh-2689)
 
 ### Enhancements
 * introduced new prefix `{UNB}` for `datepattern` to disable word boundaries in regex;
