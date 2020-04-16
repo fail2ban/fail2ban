@@ -1,0 +1,11 @@
+--- fail2ban-0.11.1.orig/config/filter.d/roundcube-auth.conf
++++ fail2ban-0.11.1/config/filter.d/roundcube-auth.conf
+@@ -18,7 +18,7 @@ prefregex = ^\s*(\[\])?(%(__hostname)s\s
+ failregex = ^(?:FAILED login|Login failed) for <F-USER>.*</F-USER> from <HOST>(?:(?:\([^\)]*\))?\. (?:(?! from ).)*(?: user=(?P=user))? in \S+\.php on line \d+ \(\S+ \S+\))?$
+             ^(?:<[\w]+> )?Failed login for <F-USER>.*</F-USER> from <HOST> in session \w+( \(error: \d\))?$
+ 
+-ignoreregex = 
++ignoreregex = Could not connect to .* Connection refused
+ 
+ journalmatch = SYSLOG_IDENTIFIER=roundcube
+ 
