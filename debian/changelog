@@ -1,4 +1,4 @@
-fail2ban (0.11.1-2) UNRELEASED; urgency=medium
+fail2ban (0.11.1-2) unstable; urgency=medium
 
   * Do not rotate log if empty. Thanks to Ron Varburg for the patch
     (Closes: #956681)
