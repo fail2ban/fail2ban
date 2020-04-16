@@ -2,6 +2,9 @@ fail2ban (0.11.1-2) UNRELEASED; urgency=medium
 
   * Do not rotate log if empty. Thanks to Ron Varburg for the patch
     (Closes: #956681)
+  * Add Environment="PYTHONNOUSERSITE=yes" to the service file to avoid
+    fail2ban to read /root/.local/. Thanks to Russell Coker for the
+    investigation (Closes: #956177)
 
  -- Sylvestre Ledru <sylvestre@debian.org>  Tue, 14 Apr 2020 11:44:23 +0200
 
