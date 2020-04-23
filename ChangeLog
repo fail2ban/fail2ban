@@ -47,6 +47,11 @@ ver. 0.10.6-dev (20??/??/??) - development edition
 * `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`
   should be interpolated in definition section (inside the filter-config, gh-2650)
 * `filter.d/courier-smtp.conf`: prefregex extended to consider port in log-message (gh-2697)
+* `filter.d/traefik-auth.conf`: filter extended with parameter mode (`normal`, `ddos`, `aggressive`) to handle 
+  the match of username differently (gh-2693):
+  - `normal`: matches 401 with supplied username only
+  - `ddos`: matches 401 without supplied username only
+  - `aggressive`: matches 401 and any variant (with and without username)
 
 ### New Features
 
