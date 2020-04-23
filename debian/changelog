@@ -1,3 +1,10 @@
+fail2ban (0.11.1-3) unstable; urgency=medium
+
+  * remove deprecated package dh-systemd from the build deps
+    (Closes: #958625)
+
+ --
+
 fail2ban (0.11.1-2) unstable; urgency=medium
 
   * Do not rotate log if empty. Thanks to Ron Varburg for the patch
