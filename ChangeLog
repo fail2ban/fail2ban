@@ -44,6 +44,8 @@ ver. 0.10.6-dev (20??/??/??) - development edition
 * ensure we've unique action name per jail (also if parameter `actname` is not set but name deviates from standard name, gh-2686)
 * don't use `%(banaction)s` interpolation because it can be complex value (containing `[...]` and/or quotes), 
   so would bother the action interpolation
+* `action.d/*-ipset*.conf`: several ipset actions fixed (no timeout per default anymore), so no discrepancy
+  between ipset and fail2ban (removal from ipset will be managed by fail2ban only, gh-2703)
 * `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`
   should be interpolated in definition section (inside the filter-config, gh-2650)
 * `filter.d/courier-smtp.conf`: prefregex extended to consider port in log-message (gh-2697)
