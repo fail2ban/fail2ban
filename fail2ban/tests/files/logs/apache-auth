@@ -38,6 +38,9 @@
 # failJSON: { "time": "2013-07-20T21:39:11", "match": true , "host": "127.0.0.1" } 
 [Sat Jul 20 21:39:11.978080 2013] [auth_basic:error] [pid 17512:tid 140123053950720] [client 127.0.0.1:51390] AH01617: user username: authentication failure for "/basic/file": Password Mismatch
 
+# failJSON: { "time": "2020-02-14T16:46:21", "match": true , "host": "127.0.0.1" }
+[Fri Feb 14 16:46:21.972321 2020] [proxy_fcgi:error] [pid 21794] [client 127.0.0.1:0] AH01071: Got error 'PHP message: user "admin" authentication failure for "MyPortal"', referer: https://myportal.dom.com/
+
 # wget --http-user=wrongusername --http-password=wrongpass http://localhost/basic/file -O /dev/null
 # failJSON: { "time": "2013-07-17T22:32:48", "match": true , "host": "127.0.0.1" }
 [Wed Jul 17 22:32:48 2013] [error] [client 127.0.0.1] user wrongusername not found: /basic/file
