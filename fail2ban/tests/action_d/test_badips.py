@@ -153,5 +153,5 @@ if sys.version_info >= (2,7): # pragma: no cover - may be unavailable
 			# produce an error using wrong category/IP:
 			self.action._category = 'f2b-this-category-dont-available-test-suite-only'
 			aInfo['ip'] = ''
-			self.assertRaises(BadIPsActionTest.pythonModule.HTTPError, self.action.ban, aInfo)
-			self.assertLogged('IP is invalid', 'invalid category', wait=True, all=False)
+			self.action.ban(aInfo)
+			self.assertLogged('IP is invalid', 'Failed to ban', wait=True, all=False)
