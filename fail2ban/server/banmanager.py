@@ -104,7 +104,7 @@ class BanManager:
 	
 	def getBanList(self):
 		with self.__lock:
-			return self.__banList.keys()
+			return list(self.__banList.keys())
 
 	##
 	# Returns a iterator to ban list (used in reload, so idle).
@@ -112,8 +112,9 @@ class BanManager:
 	# @return ban list iterator
 	
 	def __iter__(self):
+		# ensure iterator is safe (traverse over the list in snapshot created within lock):
 		with self.__lock:
-			return self.__banList.itervalues()
+			return iter(list(self.__banList.values()))
 
 	##
 	# Returns normalized value
