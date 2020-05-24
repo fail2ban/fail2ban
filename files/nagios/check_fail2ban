@@ -224,7 +224,7 @@ else {
     }
     $return_print = $how_many_jail.' detected jails with '.$how_many_banned.' current banned IP(s)';
 }
-$perf_print = "jails=$how_many_jail currentBannedIp=$how_many_banned " . $perf_print if ($perfdata_summary_value);
+$perf_print = "jails=$how_many_jail currentBannedIP=$how_many_banned " . $perf_print if ($perfdata_summary_value);
 
 ### Final
 $plugstate = "CRITICAL" if ($how_many_banned >= $critical);
