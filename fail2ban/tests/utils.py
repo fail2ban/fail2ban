@@ -556,7 +556,7 @@ if not hasattr(unittest.TestCase, 'assertDictEqual'):
 			self.fail(msg)
 	unittest.TestCase.assertDictEqual = assertDictEqual
 
-def assertSortedEqual(self, a, b, level=1, nestedOnly=True, key=repr, msg=None):
+def assertSortedEqual(self, a, b, level=1, nestedOnly=False, key=repr, msg=None):
 	"""Compare complex elements (like dict, list or tuple) in sorted order until
 	level 0 not reached (initial level = -1 meant all levels),
 	or if nestedOnly set to True and some of the objects still contains nested lists or dicts.
@@ -566,6 +566,13 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=True, key=repr, msg=None):
 		if isinstance(v, dict):
 			return any(isinstance(v, (dict, list, tuple)) for v in v.itervalues())
 		return any(isinstance(v, (dict, list, tuple)) for v in v)
+	if nestedOnly:
+		_nest_sorted = sorted
+	else:
+		def _nest_sorted(v, key=key):
+			if isinstance(v, (set, list, tuple)):
+				return sorted(list(_nest_sorted(v, key) for v in v), key=key)
+			return v
 	# level comparison routine:
 	def _assertSortedEqual(a, b, level, nestedOnly, key):
 		# first the lengths:
@@ -584,8 +591,8 @@ def assertSortedEqual(self, a, b, level=1, nestedOnly=True, key=repr, msg=None):
 				elif v1 != v2:
 					raise ValueError('%r != %r' % (a, b))
 		else: # list, tuple, something iterable:
-			a = sorted(a, key=key)
-			b = sorted(b, key=key)
+			a = _nest_sorted(a, key=key)
+			b = _nest_sorted(b, key=key)
 			for v1, v2 in zip(a, b):
 				if isinstance(v1, (dict, list, tuple)) and isinstance(v2, (dict, list, tuple)):
 					_assertSortedEqual(v1, v2, level-1 if level != 0 else 0, nestedOnly, key)
