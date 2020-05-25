@@ -105,7 +105,7 @@ class BanManager:
 	def getBanList(self, ordered=False, withTime=False):
 		with self.__lock:
 			if not ordered:
-				return self.__banList.keys()
+				return list(self.__banList.keys())
 			lst = []
 			for ticket in self.__banList.itervalues():
 				eob = ticket.getEndOfBanTime(self.__banTime)
@@ -125,8 +125,9 @@ class BanManager:
 	# @return ban list iterator
 	
 	def __iter__(self):
+		# ensure iterator is safe (traverse over the list in snapshot created within lock):
 		with self.__lock:
-			return self.__banList.itervalues()
+			return iter(list(self.__banList.values()))
 
 	##
 	# Returns normalized value

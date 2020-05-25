@@ -390,7 +390,15 @@ class TestsUtilsTest(LogCaptureTestCase):
 		self.assertSortedEqual(['Z', {'A': ['B', 'C'], 'B': ['E', 'F']}], [{'B': ['F', 'E'], 'A': ['C', 'B']}, 'Z'],
 			level=-1)
 		self.assertRaises(AssertionError, lambda: self.assertSortedEqual(
-			['Z', {'A': ['B', 'C'], 'B': ['E', 'F']}], [{'B': ['F', 'E'], 'A': ['C', 'B']}, 'Z']))
+			['Z', {'A': ['B', 'C'], 'B': ['E', 'F']}], [{'B': ['F', 'E'], 'A': ['C', 'B']}, 'Z'],
+			nestedOnly=True))
+		self.assertSortedEqual(
+			(0, [['A1'], ['A2', 'A1'], []]),
+			(0, [['A1'], ['A1', 'A2'], []]),
+		)
+		self.assertSortedEqual(list('ABC'), list('CBA'))
+		self.assertRaises(AssertionError, self.assertSortedEqual, ['ABC'], ['CBA'])
+		self.assertRaises(AssertionError, self.assertSortedEqual, [['ABC']], [['CBA']])
 		self._testAssertionErrorRE(r"\['A'\] != \['C', 'B'\]",
 			self.assertSortedEqual, ['A'], ['C', 'B'])
 		self._testAssertionErrorRE(r"\['A', 'B'\] != \['B', 'C'\]",

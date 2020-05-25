@@ -111,6 +111,14 @@ jails and database)
 unbans <IP> (in all jails and
 database)
 .TP
+\fBbanned\fR
+return jails with banned IPs as
+dictionary
+.TP
+\fBbanned <IP> ... <IP>]\fR
+return list(s) of jails where
+given IP(s) are banned
+.TP
 \fBstatus\fR
 gets the current status of the
 server
@@ -355,6 +363,14 @@ calls the <METHOD> with
 for <JAIL>
 .IP
 JAIL INFORMATION
+.TP
+\fBget <JAIL> banned\fR
+return banned IPs of <JAIL>
+.TP
+\fBget <JAIL> banned <IP> ... <IP>]\fR
+return 1 if IP is banned in <JAIL>
+otherwise 0, or a list of 1/0 for
+multiple IPs
 .TP
 \fBget <JAIL> logpath\fR
 gets the list of the monitored

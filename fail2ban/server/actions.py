@@ -211,6 +211,14 @@ class Actions(JailThread, Mapping):
 	def getBanTime(self):
 		return self.__banManager.getBanTime()
 
+	def getBanned(self, ids):
+		lst = self.__banManager.getBanList()
+		if not ids:
+			return lst
+		if len(ids) == 1:
+			return 1 if ids[0] in lst else 0
+		return map(lambda ip: 1 if ip in lst else 0, ids)
+
 	def getBanList(self, withTime=False):
 		"""Returns the list of banned IP addresses.
 
