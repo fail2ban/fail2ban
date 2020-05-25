@@ -37,7 +37,7 @@ from threading import Thread
 
 from ..client import fail2banclient, fail2banserver, fail2bancmdline
 from ..client.fail2bancmdline import Fail2banCmdLine
-from ..client.fail2banclient import exec_command_line as _exec_client, VisualWait
+from ..client.fail2banclient import exec_command_line as _exec_client, CSocket, VisualWait
 from ..client.fail2banserver import Fail2banServer, exec_command_line as _exec_server
 from .. import protocol
 from ..server import server
@@ -452,6 +452,14 @@ class Fail2banClientServerBase(LogCaptureTestCase):
 	def execCmd(self, exitType, startparams, *args):
 		self.assertRaises(exitType, self.exec_command_line[0],
 			(self.exec_command_line[1:] + startparams + args))
+
+	def execCmdDirect(self, startparams, *args):
+		sock = startparams[startparams.index('-s')+1]
+		s = CSocket(sock)
+		try:
+			return s.send(args)
+		finally:
+			s.close()
 
 	#
 	# Common tests
@@ -1041,6 +1049,30 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			all=True)
 		# if observer available wait for it becomes idle (write all tickets to db):
 		_observer_wait_idle()
+		# test banned command:
+		self.assertSortedEqual(self.execCmdDirect(startparams,
+			'banned'), (0, [
+				{'test-jail1': ['192.0.2.4', '192.0.2.1', '192.0.2.8', '192.0.2.3', '192.0.2.2']},
+				{'test-jail2': ['192.0.2.4', '192.0.2.9', '192.0.2.8']}
+			]
+		))
+		self.assertSortedEqual(self.execCmdDirect(startparams,
+			'banned', '192.0.2.1', '192.0.2.4', '192.0.2.222'), (0, [
+			  ['test-jail1'], ['test-jail1', 'test-jail2'], []
+			]
+		))
+		self.assertSortedEqual(self.execCmdDirect(startparams,
+			'get', 'test-jail1', 'banned')[1], [
+				'192.0.2.4', '192.0.2.1', '192.0.2.8', '192.0.2.3', '192.0.2.2'])
+		self.assertSortedEqual(self.execCmdDirect(startparams,
+			'get', 'test-jail2', 'banned')[1], [
+				'192.0.2.4', '192.0.2.9', '192.0.2.8'])
+		self.assertEqual(self.execCmdDirect(startparams,
+			'get', 'test-jail1', 'banned', '192.0.2.3')[1],  1)
+		self.assertEqual(self.execCmdDirect(startparams,
+			'get', 'test-jail1', 'banned', '192.0.2.9')[1],  0)
+		self.assertEqual(self.execCmdDirect(startparams,
+			'get', 'test-jail1', 'banned', '192.0.2.3', '192.0.2.9')[1],  [1, 0])
 
 		# rotate logs:
 		_write_file(test1log, "w+")

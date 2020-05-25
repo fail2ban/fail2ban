@@ -22,10 +22,27 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 * python 3.9 compatibility (and Travis CI support)
 * restoring a large number (500+ depending on files ulimit) of current bans when using PyPy fixed
 * manual ban is written to database, so can be restored by restart (gh-2647)
+* `jail.conf`: don't specify `action` directly in jails (use `action_` or `banaction` instead)
+* no mails-action added per default anymore (e. g. to allow that `action = %(action_mw)s` should be specified
+  per jail or in default section in jail.local), closes gh-2357
+* ensure we've unique action name per jail (also if parameter `actname` is not set but name deviates from standard name, gh-2686)
+* don't use `%(banaction)s` interpolation because it can be complex value (containing `[...]` and/or quotes), 
+  so would bother the action interpolation
+* `action.d/*-ipset*.conf`: several ipset actions fixed (no timeout per default anymore), so no discrepancy
+  between ipset and fail2ban (removal from ipset will be managed by fail2ban only, gh-2703)
+* `action.d/cloudflare.conf`: fixed `actionunban` (considering new-line chars and optionally real json-parsing
+   with `jq`, gh-2140, gh-2656)
 * `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`
   should be interpolated in definition section (inside the filter-config, gh-2650)
+* `filter.d/courier-smtp.conf`: prefregex extended to consider port in log-message (gh-2697)
+* `filter.d/traefik-auth.conf`: filter extended with parameter mode (`normal`, `ddos`, `aggressive`) to handle 
+  the match of username differently (gh-2693):
+  - `normal`: matches 401 with supplied username only
+  - `ddos`: matches 401 without supplied username only
+  - `aggressive`: matches 401 and any variant (with and without username)
 
 ### New Features
+* new filter and jail for GitLab recognizing failed application logins (gh-2689)
 
 ### Enhancements
 * introduced new prefix `{UNB}` for `datepattern` to disable word boundaries in regex;

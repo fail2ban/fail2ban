@@ -379,6 +379,12 @@ class IPAddr(object):
 		"""
 		return self._family != socket.AF_UNSPEC
 
+	@property
+	def isSingle(self):
+		"""Returns whether the object is a single IP address (not DNS and subnet)
+		"""
+		return self._plen == {socket.AF_INET: 32, socket.AF_INET6: 128}.get(self._family, -1000)
+
 	def __eq__(self, other):
 		if self._family == IPAddr.CIDR_RAW and not isinstance(other, IPAddr):
 			return self._raw == other
