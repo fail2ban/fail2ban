@@ -321,6 +321,11 @@ Mar 15 09:21:02 host sshd[2717]: Connection closed by 192.0.2.212 [preauth]
 # failJSON: { "time": "2005-07-18T17:19:11", "match": true , "host": "192.0.2.4", "desc": "ddos: disconnect on preauth phase, gh-2115" }
 Jul 18 17:19:11 srv sshd[2101]: Disconnected from 192.0.2.4 port 36985 [preauth]
 
+# failJSON: { "time": "2005-06-06T04:17:04", "match": true , "host": "192.0.2.68", "dns": null, "user": "", "desc": "empty user, gh-2749" }
+Jun  6 04:17:04 host sshd[1189074]: Invalid user  from 192.0.2.68 port 34916
+# failJSON: { "time": "2005-06-06T04:17:09", "match": true , "host": "192.0.2.68", "dns": null, "user": "", "desc": "empty user, gh-2749" }
+Jun  6 04:17:09 host sshd[1189074]: Connection closed by invalid user  192.0.2.68 port 34916 [preauth]
+
 # filterOptions: [{"mode": "extra"}, {"mode": "aggressive"}]
 
 # several other cases from gh-864:
