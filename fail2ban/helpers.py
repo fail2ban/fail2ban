@@ -302,7 +302,7 @@ def getVerbosityFormat(verbosity, fmt=' %(message)s', addtime=True, padding=True
 			if addtime:
 				fmt = ' %(asctime)-15s' + fmt
 	else: # default (not verbose):
-		fmt = "%(name)-23.23s [%(process)d]: %(levelname)-7s" + fmt
+		fmt = "%(name)-24s[%(process)d]: %(levelname)-7s" + fmt
 		if addtime:
 			fmt = "%(asctime)s " + fmt
 	# remove padding if not needed:
