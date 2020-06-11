@@ -40,6 +40,7 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
   - `normal`: matches 401 with supplied username only
   - `ddos`: matches 401 without supplied username only
   - `aggressive`: matches 401 and any variant (with and without username)
+* `filter.d/sshd.conf`: normalizing of user pattern in all RE's, allowing empty user (gh-2749)
 
 ### New Features
 * new filter and jail for GitLab recognizing failed application logins (gh-2689)
