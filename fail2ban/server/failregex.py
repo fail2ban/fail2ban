@@ -131,23 +131,26 @@ class Regex:
 		try:
 			self._regexObj = re.compile(regex, re.MULTILINE if multiline else 0)
 			self._regex = regex
-			self._altValues = {}
-			self._tupleValues = {}
+			self._altValues = []
+			self._tupleValues = []
 			for k in filter(
 				lambda k: len(k) > len(COMPLNAME_PRE[0]), self._regexObj.groupindex
 			):
 				n = COMPLNAME_CRE.match(k)
 				if n:
-					if n.group(1) == ALTNAME_PRE:
-						self._altValues[k] = mapTag2Opt(n.group(2))
+					g, n = n.group(1), mapTag2Opt(n.group(2))
+					if g == ALTNAME_PRE:
+						self._altValues.append((k,n))
 					else:
-						self._tupleValues[k] = mapTag2Opt(n.group(2))
-			self._altValues = list(self._altValues.items()) if len(self._altValues) else None
-			self._tupleValues = list(self._tupleValues.items()) if len(self._tupleValues) else None
+						self._tupleValues.append((k,n))
+			self._altValues.sort()
+			self._tupleValues.sort()
+			self._altValues = self._altValues if len(self._altValues) else None
+			self._tupleValues = self._tupleValues if len(self._tupleValues) else None
 		except sre_constants.error:
 			raise RegexException("Unable to compile regular expression '%s'" %
 								 regex)
-		# set fetch handler depending on presence of alternate tags:
+		# set fetch handler depending on presence of alternate (or tuple) tags:
 		self.getGroups = self._getGroupsWithAlt if (self._altValues or self._tupleValues) else self._getGroups
 
 	def __str__(self):
