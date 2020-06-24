@@ -18,21 +18,22 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Serg G. Brester (sebres)
-# 
+#
 # This module was written as part of ban time increment feature.
 
 __author__ = "Serg G. Brester (sebres)"
 __copyright__ = "Copyright (c) 2014 Serg G. Brester"
 __license__ = "GPL"
 
+import datetime
+import logging
 import threading
+import time
 from .jailthread import JailThread
 from .failmanager import FailManagerEmpty
-import os, logging, time, datetime, math, json, random
-import sys
-from ..helpers import getLogger
 from .mytime import MyTime
 from .utils import Utils
+from ..helpers import getLogger
 
 # Gets the instance of the logger.
 logSys = getLogger(__name__)
@@ -70,7 +71,7 @@ class ObserverThread(JailThread):
 		self._queue = []
 		## Event, be notified if anything added to event queue
 		self._notify = threading.Event()
-		## Sleep for max 60 seconds, it possible to specify infinite to always sleep up to notifying via event, 
+		## Sleep for max 60 seconds, it possible to specify infinite to always sleep up to notifying via event,
 		## but so we can later do some service "events" occurred infrequently directly in main loop of observer (not using queue)
 		self.sleeptime = 60
 		#
@@ -87,7 +88,7 @@ class ObserverThread(JailThread):
 		except KeyError:
 			raise KeyError("Invalid event index : %s" % i)
 
-	def __delitem__(self, name):
+	def __delitem__(self, i):
 		try:
 			del self._queue[i]
 		except KeyError:
@@ -107,8 +108,8 @@ class ObserverThread(JailThread):
 
 	def add_named_timer(self, name, starttime, *event):
 		"""Add a named timer event to queue will start (and wake) in 'starttime' seconds
-		
-		Previous timer event with same name will be canceled and trigger self into 
+
+		Previous timer event with same name will be canceled and trigger self into
 		queue after new 'starttime' value
 		"""
 		t = self._timers.get(name, None)
@@ -255,8 +256,8 @@ class ObserverThread(JailThread):
 		return True
 
 	def isActive(self, fromStr=None):
-		# logSys.info("Observer alive, %s%s", 
-		# 	'active' if self.active else 'inactive', 
+		# logSys.info("Observer alive, %s%s",
+		# 	'active' if self.active else 'inactive',
 		# 	'' if fromStr is None else (", called from '%s'" % fromStr))
 		return self.active
 
@@ -280,8 +281,8 @@ class ObserverThread(JailThread):
 			# wait max wtime seconds until full (events remaining)
 			if self.wait_empty(wtime) or forceQuit:
 				n.clear()
-				self.active = False; # leave outer (active) loop
-				self._paused = True; # leave inner (queue) loop
+				self.active = False # leave outer (active) loop
+				self._paused = True # leave inner (queue) loop
 				self.__db = None
 			else:
 				self._notify = n
@@ -329,7 +330,7 @@ class ObserverThread(JailThread):
 
 	@property
 	def paused(self):
-		return self._paused;
+		return self._paused
 
 	@paused.setter
 	def paused(self, pause):
@@ -399,7 +400,7 @@ class ObserverThread(JailThread):
 			if retryCount <= 1:
 				return
 			# retry counter was increased - add it again:
-			logSys.info("[%s] Found %s, bad - %s, %s # -> %s%s", jail.name, ip, 
+			logSys.info("[%s] Found %s, bad - %s, %s # -> %s%s", jail.name, ip,
 				MyTime.time2str(unixTime), banCount, retryCount,
 				(', Ban' if retryCount >= maxRetry else ''))
 			# retryCount-1, because a ticket was already once incremented by filter self
@@ -453,16 +454,16 @@ class ObserverThread(JailThread):
 					# increment count in ticket (if still not increased from banmanager, test-cases?):
 					if banCount >= ticket.getBanCount():
 						ticket.setBanCount(banCount+1)
-					logSys.debug('IP %s was already banned: %s #, %s', ip, banCount, timeOfBan);
+					logSys.debug('IP %s was already banned: %s #, %s', ip, banCount, timeOfBan)
 					# calculate new ban time
 					if banCount > 0:
 						banTime = be['evformula'](self.BanTimeIncr(banTime, banCount))
 					ticket.setBanTime(banTime)
 					# check current ticket time to prevent increasing for twice read tickets (restored from log file besides database after restart)
 					if ticket.getTime() > timeOfBan:
-						logSys.info('[%s] IP %s is bad: %s # last %s - incr %s to %s' % (jail.name, ip, banCount, 
-							MyTime.time2str(timeOfBan), 
-							datetime.timedelta(seconds=int(orgBanTime)), datetime.timedelta(seconds=int(banTime))));
+						logSys.info('[%s] IP %s is bad: %s # last %s - incr %s to %s' % (jail.name, ip, banCount,
+							MyTime.time2str(timeOfBan),
+							datetime.timedelta(seconds=int(orgBanTime)), datetime.timedelta(seconds=int(banTime))))
 					else:
 						ticket.restored = True
 					break
@@ -501,7 +502,7 @@ class ObserverThread(JailThread):
 				logtime = ('permanent', 'infinite')
 			# if ban time was prolonged - log again with new ban time:
 			if btime != oldbtime:
-				logSys.notice("[%s] Increase Ban %s (%d # %s -> %s)", jail.name, 
+				logSys.notice("[%s] Increase Ban %s (%d # %s -> %s)", jail.name,
 					ip, ticket.getBanCount(), *logtime)
 				# delayed prolonging ticket via actions that expected this (not later than 10 sec):
 				logSys.log(5, "[%s] Observer: prolong %s in %s", jail.name, ip, (btime, oldbtime))
