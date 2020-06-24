@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # Author: Cyril Jaquier
-# 
+#
 
 __author__ = "Cyril Jaquier"
 __copyright__ = "Copyright (c) 2004 Cyril Jaquier"
@@ -36,7 +36,7 @@ logLevel = logging.DEBUG
 
 
 class FailManager:
-	
+
 	def __init__(self):
 		self.__lock = Lock()
 		self.__failList = dict()
@@ -45,33 +45,29 @@ class FailManager:
 		self.__failTotal = 0
 		self.maxMatches = 50
 		self.__bgSvc = BgService()
-	
+
 	def setFailTotal(self, value):
 		with self.__lock:
 			self.__failTotal = value
-		
+
 	def getFailTotal(self):
 		with self.__lock:
 			return self.__failTotal
-	
+
 	def getFailCount(self):
 		# may be slow on large list of failures, should be used for test purposes only...
 		with self.__lock:
 			return len(self.__failList), sum([f.getRetry() for f in self.__failList.values()])
 
-	def getFailTotal(self):
-		with self.__lock:
-			return self.__failTotal
-
 	def setMaxRetry(self, value):
 		self.__maxRetry = value
-	
+
 	def getMaxRetry(self):
 		return self.__maxRetry
-	
+
 	def setMaxTime(self, value):
 		self.__maxTime = value
-	
+
 	def getMaxTime(self):
 		return self.__maxTime
 
@@ -107,7 +103,7 @@ class FailManager:
 					return ticket.getRetry()
 				# if already FailTicket - add it direct, otherwise create (using copy all ticket data):
 				if isinstance(ticket, FailTicket):
-					fData = ticket;
+					fData = ticket
 				else:
 					fData = FailTicket.wrap(ticket)
 				if count > ticket.getAttempt():
@@ -128,11 +124,11 @@ class FailManager:
 
 		self.__bgSvc.service()
 		return attempts
-	
+
 	def size(self):
 		with self.__lock:
 			return len(self.__failList)
-	
+
 	def cleanup(self, time):
 		with self.__lock:
 			todelete = [fid for fid,item in self.__failList.iteritems() \
@@ -152,14 +148,14 @@ class FailManager:
 				self.__failList = dict((fid,item) for fid,item in self.__failList.iteritems() \
 					if item.getTime() + self.__maxTime > time)
 		self.__bgSvc.service()
-	
+
 	def delFailure(self, fid):
 		with self.__lock:
 			try:
 				del self.__failList[fid]
 			except KeyError:
 				pass
-	
+
 	def toBan(self, fid=None):
 		with self.__lock:
 			for fid in ([fid] if fid is not None and fid in self.__failList else self.__failList):
