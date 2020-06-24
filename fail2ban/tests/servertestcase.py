@@ -1296,11 +1296,11 @@ class ServerConfigReaderTests(LogCaptureTestCase):
 				),
 				'ip4-start': (
 					r"`nft add set inet f2b-table addr-set-j-w-nft-mp \{ type ipv4_addr\; \}`",
-					r"`nft add rule inet f2b-table f2b-chain $proto dport \{ http,https \} ip saddr @addr-set-j-w-nft-mp reject`",
+					r"`nft add rule inet f2b-table f2b-chain $proto dport \{ $(echo 'http,https' | sed s/:/-/g) \} ip saddr @addr-set-j-w-nft-mp reject`",
 				), 
 				'ip6-start': (
 					r"`nft add set inet f2b-table addr6-set-j-w-nft-mp \{ type ipv6_addr\; \}`",
-					r"`nft add rule inet f2b-table f2b-chain $proto dport \{ http,https \} ip6 saddr @addr6-set-j-w-nft-mp reject`",
+					r"`nft add rule inet f2b-table f2b-chain $proto dport \{ $(echo 'http,https' | sed s/:/-/g) \} ip6 saddr @addr6-set-j-w-nft-mp reject`",
 				),
 				'flush': (
 					"`{ nft flush set inet f2b-table addr-set-j-w-nft-mp 2> /dev/null; } || ",
