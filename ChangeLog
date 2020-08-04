@@ -72,6 +72,8 @@ ver. 0.11.2-dev (20??/??/??) - development edition
 * introduced new prefix `{UNB}` for `datepattern` to disable word boundaries in regex;
 * datetemplate: improved anchor detection for capturing groups `(^...)`;
 * performance optimization of `datepattern` (better search algorithm in datedetector, especially for single template);
+* extended capturing of alternate tags in filter, allowing combine of multiple groups to single tuple token with new tag
+  prefix `<F-TUPLE_`, that would combine value of `<F-V>` with all value of `<F-TUPLE_V?_n?>` tags (gh-2755)
 
 
 ver. 0.11.1 (2020/01/11) - this-is-the-way

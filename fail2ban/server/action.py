@@ -868,7 +868,7 @@ class CommandAction(ActionBase):
 			tickData = aInfo.get("F-*")
 			if not tickData: tickData = {}
 			def substTag(m):
-				tag = mapTag2Opt(m.groups()[0])
+				tag = mapTag2Opt(m.group(1))
 				try:
 					value = uni_string(tickData[tag])
 				except KeyError:

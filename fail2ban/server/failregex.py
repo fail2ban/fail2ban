@@ -87,20 +87,24 @@ RH4TAG = {
 
 # default failure groups map for customizable expressions (with different group-id):
 R_MAP = {
-	"ID": "fid",
-	"PORT": "fport",
+	"id": "fid",
+	"port": "fport",
 }
 
 def mapTag2Opt(tag):
-	try: # if should be mapped:
-		return R_MAP[tag]
-	except KeyError:
-		return tag.lower()
+	tag = tag.lower()
+	return R_MAP.get(tag, tag)
 
 
-# alternate names to be merged, e. g. alt_user_1 -> user ...
+# complex names:
+# ALT_   - alternate names to be merged, e. g. alt_user_1 -> user ...
 ALTNAME_PRE = 'alt_'
-ALTNAME_CRE = re.compile(r'^' + ALTNAME_PRE + r'(.*)(?:_\d+)?$')
+# TUPLE_ - names of parts to be combined to single value as tuple
+TUPNAME_PRE = 'tuple_'
+
+COMPLNAME_PRE = (ALTNAME_PRE, TUPNAME_PRE)
+COMPLNAME_CRE = re.compile(r'^(' + '|'.join(COMPLNAME_PRE) + r')(.*?)(?:_\d+)?$')
+
 
 ##
 # Regular expression class.
@@ -127,19 +131,27 @@ class Regex:
 		try:
 			self._regexObj = re.compile(regex, re.MULTILINE if multiline else 0)
 			self._regex = regex
-			self._altValues = {}
+			self._altValues = []
+			self._tupleValues = []
 			for k in filter(
-				lambda k: len(k) > len(ALTNAME_PRE) and k.startswith(ALTNAME_PRE),
-				self._regexObj.groupindex
+				lambda k: len(k) > len(COMPLNAME_PRE[0]), self._regexObj.groupindex
 			):
-				n = ALTNAME_CRE.match(k).group(1)
-				self._altValues[k] = n
-			self._altValues = list(self._altValues.items()) if len(self._altValues) else None
+				n = COMPLNAME_CRE.match(k)
+				if n:
+					g, n = n.group(1), mapTag2Opt(n.group(2))
+					if g == ALTNAME_PRE:
+						self._altValues.append((k,n))
+					else:
+						self._tupleValues.append((k,n))
+			self._altValues.sort()
+			self._tupleValues.sort()
+			self._altValues = self._altValues if len(self._altValues) else None
+			self._tupleValues = self._tupleValues if len(self._tupleValues) else None
 		except sre_constants.error:
 			raise RegexException("Unable to compile regular expression '%s'" %
 								 regex)
-		# set fetch handler depending on presence of alternate tags:
-		self.getGroups = self._getGroupsWithAlt if self._altValues else self._getGroups
+		# set fetch handler depending on presence of alternate (or tuple) tags:
+		self.getGroups = self._getGroupsWithAlt if (self._altValues or self._tupleValues) else self._getGroups
 
 	def __str__(self):
 		return "%s(%r)" % (self.__class__.__name__, self._regex)
@@ -284,12 +296,23 @@ class Regex:
 
 	def _getGroupsWithAlt(self):
 		fail = self._matchCache.groupdict()
-		# merge alternate values (e. g. 'alt_user_1' -> 'user' or 'alt_host' -> 'host'):
 		#fail = fail.copy()
-		for k,n in self._altValues:
-			v = fail.get(k)
-			if v and not fail.get(n):
-				fail[n] = v
+		# merge alternate values (e. g. 'alt_user_1' -> 'user' or 'alt_host' -> 'host'):
+		if self._altValues:
+			for k,n in self._altValues:
+				v = fail.get(k)
+				if v and not fail.get(n):
+					fail[n] = v
+		# combine tuple values (e. g. 'id', 'tuple_id' ... 'tuple_id_N' -> 'id'):
+		if self._tupleValues:
+			for k,n in self._tupleValues:
+				v = fail.get(k)
+				t = fail.get(n)
+				if isinstance(t, tuple):
+					t += (v,)
+				else:
+					t = (t,v,)
+				fail[n] = t
 		return fail
 
 	def getGroups(self): # pragma: no cover - abstract function (replaced in __init__)
