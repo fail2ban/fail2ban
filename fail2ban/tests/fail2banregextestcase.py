@@ -485,7 +485,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	def testLogtypeSystemdJournal(self): # pragma: no cover
 		if not fail2banregex.FilterSystemd:
-			raise unittest.SkipTest('Skip test because no systemd backand available')
+			raise unittest.SkipTest('Skip test because no systemd backend available')
 		self.assertTrue(_test_exec(
 			"systemd-journal", FILTER_ZZZ_GEN
 			  +'[journalmatch="SYSLOG_IDENTIFIER=\x01\x02dummy\x02\x01",'

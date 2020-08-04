@@ -54,6 +54,7 @@ ver. 0.11.2-dev (20??/??/??) - development edition
   between ipset and fail2ban (removal from ipset will be managed by fail2ban only, gh-2703)
 * `action.d/cloudflare.conf`: fixed `actionunban` (considering new-line chars and optionally real json-parsing
    with `jq`, gh-2140, gh-2656)
+* `action.d/nftables.conf` (type=multiport only): fixed port range selector, replacing `:` with `-` (gh-2763)
 * `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`
   should be interpolated in definition section (inside the filter-config, gh-2650)
 * `filter.d/courier-smtp.conf`: prefregex extended to consider port in log-message (gh-2697)
