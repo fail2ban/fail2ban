@@ -201,7 +201,8 @@ class TestsUtilsTest(LogCaptureTestCase):
 		uni_decode((b'test\xcf' if sys.version_info >= (3,) else u'test\xcf'))
 		uni_string(b'test\xcf')
 		uni_string('test\xcf')
-		uni_string(u'test\xcf')
+		if sys.version_info < (3,) and 'PyPy' not in sys.version:
+			uni_string(u'test\xcf')
 
 	def testSafeLogging(self):
 		# logging should be exception-safe, to avoid possible errors (concat, str. conversion, representation failures, etc)

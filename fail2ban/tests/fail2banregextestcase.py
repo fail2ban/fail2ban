@@ -340,6 +340,23 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		self.assertTrue(_test_exec('-o', 'id', STR_00, RE_00_ID))
 		self.assertLogged('kevin')
 		self.pruneLog()
+		# multiple id combined to a tuple (id, tuple_id):
+		self.assertTrue(_test_exec('-o', 'id', 
+			'1591983743.667 192.0.2.1 192.0.2.2',
+			r'^\s*<F-ID/> <F-TUPLE_ID>\S+</F-TUPLE_ID>'))
+		self.assertLogged(str(('192.0.2.1', '192.0.2.2')))
+		self.pruneLog()
+		# multiple id combined to a tuple, id first - (id, tuple_id_1, tuple_id_2):
+		self.assertTrue(_test_exec('-o', 'id', 
+			'1591983743.667 left 192.0.2.3 right',
+			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID/> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
+		self.pruneLog()
+		# id had higher precedence as ip-address:
+		self.assertTrue(_test_exec('-o', 'id', 
+			'1591983743.667 left [192.0.2.4]:12345 right',
+			r'^\s*<F-TUPLE_ID_1>\S+</F-TUPLE_ID_1> <F-ID><ADDR>:<F-PORT/></F-ID> <F-TUPLE_ID_2>\S+</F-TUPLE_ID_2>'))
+		self.assertLogged(str(('[192.0.2.4]:12345', 'left', 'right')))
+		self.pruneLog()
 		# row with id :
 		self.assertTrue(_test_exec('-o', 'row', STR_00, RE_00_ID))
 		self.assertLogged("['kevin'", "'ip4': '192.0.2.0'", "'fid': 'kevin'", all=True)
@@ -485,7 +502,7 @@ class Fail2banRegexTest(LogCaptureTestCase):
 
 	def testLogtypeSystemdJournal(self): # pragma: no cover
 		if not fail2banregex.FilterSystemd:
-			raise unittest.SkipTest('Skip test because no systemd backand available')
+			raise unittest.SkipTest('Skip test because no systemd backend available')
 		self.assertTrue(_test_exec(
 			"systemd-journal", FILTER_ZZZ_GEN
 			  +'[journalmatch="SYSLOG_IDENTIFIER=\x01\x02dummy\x02\x01",'

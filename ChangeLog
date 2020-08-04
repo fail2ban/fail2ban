@@ -32,6 +32,7 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
   between ipset and fail2ban (removal from ipset will be managed by fail2ban only, gh-2703)
 * `action.d/cloudflare.conf`: fixed `actionunban` (considering new-line chars and optionally real json-parsing
    with `jq`, gh-2140, gh-2656)
+* `action.d/nftables.conf` (type=multiport only): fixed port range selector, replacing `:` with `-` (gh-2763)
 * `filter.d/common.conf`: avoid substitute of default values in related `lt_*` section, `__prefix_line`
   should be interpolated in definition section (inside the filter-config, gh-2650)
 * `filter.d/courier-smtp.conf`: prefregex extended to consider port in log-message (gh-2697)
@@ -49,6 +50,8 @@ ver. 1.0.1-dev-1 (20??/??/??) - development nightly edition
 * introduced new prefix `{UNB}` for `datepattern` to disable word boundaries in regex;
 * datetemplate: improved anchor detection for capturing groups `(^...)`;
 * performance optimization of `datepattern` (better search algorithm in datedetector, especially for single template);
+* extended capturing of alternate tags in filter, allowing combine of multiple groups to single tuple token with new tag
+  prefix `<F-TUPLE_`, that would combine value of `<F-V>` with all value of `<F-TUPLE_V?_n?>` tags (gh-2755)
 * `actioncheck` behavior is changed now (gh-488), so invariant check as well as restore or repair
    of sane environment (in case of recognized unsane state) would only occur on action errors (e. g.
    if ban or unban operations are exiting with other code as 0)
