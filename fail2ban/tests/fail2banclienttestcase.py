@@ -1158,13 +1158,26 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertNotLogged("[test-jail1] Found 192.0.2.5")
 
 		# unban single ips:
-		self.pruneLog("[test-phase 6]")
+		self.pruneLog("[test-phase 6a]")
 		self.execCmd(SUCCESS, startparams,
 			"--async", "unban", "192.0.2.5", "192.0.2.6")
 		self.assertLogged(
 			"192.0.2.5 is not banned",
 			"[test-jail1] Unban 192.0.2.6", all=True, wait=MID_WAITTIME
 		)
+		# unban ips by subnet (cidr/mask):
+		self.pruneLog("[test-phase 6b]")
+		self.execCmd(SUCCESS, startparams,
+			"--async", "unban", "192.0.2.2/31")
+		self.assertLogged(
+			"[test-jail1] Unban 192.0.2.2",
+			"[test-jail1] Unban 192.0.2.3", all=True, wait=MID_WAITTIME
+		)		
+		self.execCmd(SUCCESS, startparams,
+			"--async", "unban", "192.0.2.8/31", "192.0.2.100/31")
+		self.assertLogged(
+			"[test-jail1] Unban 192.0.2.8",
+			"192.0.2.100/31 is not banned", all=True, wait=MID_WAITTIME)
 
 		# reload all (one jail) with unban all:
 		self.pruneLog("[test-phase 7]")
@@ -1175,8 +1188,6 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.assertLogged(
 			"Jail 'test-jail1' reloaded",
 			"[test-jail1] Unban 192.0.2.1",
-			"[test-jail1] Unban 192.0.2.2",
-			"[test-jail1] Unban 192.0.2.3",
 			"[test-jail1] Unban 192.0.2.4", all=True
 		)
 		# no restart occurred, no more ban (unbanned all using option "--unban"):
@@ -1184,8 +1195,6 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"Jail 'test-jail1' stopped",
 			"Jail 'test-jail1' started",
 			"[test-jail1] Ban 192.0.2.1",
-			"[test-jail1] Ban 192.0.2.2",
-			"[test-jail1] Ban 192.0.2.3",
 			"[test-jail1] Ban 192.0.2.4", all=True
 		)
 

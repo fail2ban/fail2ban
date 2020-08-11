@@ -251,7 +251,7 @@ class Actions(JailThread, Mapping):
 		if ip is None:
 			return self.__flushBan(db)
 		# Multiple IPs:
-		if isinstance(ip, list):
+		if isinstance(ip, (list, tuple)):
 			missed = []
 			cnt = 0
 			for i in ip:
@@ -273,6 +273,18 @@ class Actions(JailThread, Mapping):
 			# Unban the IP.
 			self.__unBan(ticket)
 		else:
+			# Multiple IPs by subnet or dns:
+			if not isinstance(ip, IPAddr):
+				ipa = IPAddr(ip)
+				if not ipa.isSingle: # subnet (mask/cidr) or raw (may be dns/hostname):
+					ips = filter(
+						lambda i: (
+							isinstance(i, IPAddr) and (i == ipa or i.isSingle and i.isInNet(ipa))
+						), self.__banManager.getBanList()
+					)
+					if ips:
+						return self.removeBannedIP(ips, db, ifexists)
+			# not found:
 			msg = "%s is not banned" % ip
 			logSys.log(logging.MSG, msg)
 			if ifexists:
