@@ -1179,6 +1179,21 @@ class Fail2banServerTest(Fail2banClientServerBase):
 			"[test-jail1] Unban 192.0.2.8",
 			"192.0.2.100/31 is not banned", all=True, wait=MID_WAITTIME)
 
+		# ban/unban subnet(s):
+		self.pruneLog("[test-phase 6c]")
+		self.execCmd(SUCCESS, startparams,
+			"--async", "set", "test-jail1", "banip", "192.0.2.96/28", "192.0.2.112/28")
+		self.assertLogged(
+			"[test-jail1] Ban 192.0.2.96/28",
+			"[test-jail1] Ban 192.0.2.112/28", all=True, wait=MID_WAITTIME
+		)
+		self.execCmd(SUCCESS, startparams,
+			"--async", "set", "test-jail1", "unbanip", "192.0.2.64/26"); # contains both subnets .96/28 and .112/28
+		self.assertLogged(
+			"[test-jail1] Unban 192.0.2.96/28",
+			"[test-jail1] Unban 192.0.2.112/28", all=True, wait=MID_WAITTIME
+		)
+
 		# reload all (one jail) with unban all:
 		self.pruneLog("[test-phase 7]")
 		self.execCmd(SUCCESS, startparams,

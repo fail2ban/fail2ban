@@ -277,11 +277,7 @@ class Actions(JailThread, Mapping):
 			if not isinstance(ip, IPAddr):
 				ipa = IPAddr(ip)
 				if not ipa.isSingle: # subnet (mask/cidr) or raw (may be dns/hostname):
-					ips = filter(
-						lambda i: (
-							isinstance(i, IPAddr) and (i == ipa or i.isSingle and i.isInNet(ipa))
-						), self.__banManager.getBanList()
-					)
+					ips = filter(ipa.contains, self.__banManager.getBanList())
 					if ips:
 						return self.removeBannedIP(ips, db, ifexists)
 			# not found:
