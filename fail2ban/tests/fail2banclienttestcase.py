@@ -623,12 +623,6 @@ class Fail2banClientTest(Fail2banClientServerBase):
 		self.assertLogged("Base configuration directory " + pjoin(tmp, "miss") + " does not exist")
 		self.pruneLog()
 
-		## wrong socket
-		self.execCmd(FAILED, (),
-			"--async", "-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "miss/f2b.sock"), "start")
-		self.assertLogged("There is no directory " + pjoin(tmp, "miss") + " to contain the socket file")
-		self.pruneLog()
-
 		## not running
 		self.execCmd(FAILED, (),
 			"-c", pjoin(tmp, "config"), "-s", pjoin(tmp, "f2b.sock"), "reload")
@@ -722,12 +716,6 @@ class Fail2banServerTest(Fail2banClientServerBase):
 		self.execCmd(FAILED, (),
 			"-c", pjoin(tmp, "miss"))
 		self.assertLogged("Base configuration directory " + pjoin(tmp, "miss") + " does not exist")
-		self.pruneLog()
-
-		## wrong socket
-		self.execCmd(FAILED, (),
-			"-c", pjoin(tmp, "config"), "-x", "-s", pjoin(tmp, "miss/f2b.sock"))
-		self.assertLogged("There is no directory " + pjoin(tmp, "miss") + " to contain the socket file")
 		self.pruneLog()
 
 		## already exists:
