@@ -298,7 +298,14 @@ requires Gamin (a file alteration monitor) to be installed. If Gamin is not inst
 uses a polling algorithm which does not require external libraries.
 .TP
 .B systemd
-uses systemd python library to access the systemd journal. Specifying \fBlogpath\fR is not valid for this backend and instead utilises \fBjournalmatch\fR from the jails associated filter config.
+uses systemd python library to access the systemd journal. Specifying \fBlogpath\fR is not valid for this backend and instead utilises \fBjournalmatch\fR from the jails associated filter config. Multiple systemd-specific flags can be passed to the backend, including \fBjournalpath\fR and \fBjournalfiles\fR, to explicitly set the path to a directory or set of files. \fBjournalflags\fR, which by default is 4 and excludes user session files, can be set to include them with \fBjournalflags=1\fR, see the python-systemd documentation for other settings and further details. Examples:
+.PP
+.RS
+.nf
+backend = systemd[journalpath=/run/log/journal/machine-1]
+backend = systemd[journalfiles="/path/to/system.journal, /path/to/user.journal"]
+backend = systemd[journalflags=1]
+.fi
 
 .SS Actions
 Each jail can be configured with only a single filter, but may have multiple actions. By default, the name of a action is the action filename, and in the case of Python actions, the ".py" file extension is stripped. Where multiple of the same action are to be used, the \fBactname\fR option can be assigned to the action to avoid duplication e.g.:

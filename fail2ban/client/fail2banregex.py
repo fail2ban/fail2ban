@@ -113,7 +113,9 @@ class _f2bOptParser(OptionParser):
 LOG:
     string                  a string representing a log line
     filename                path to a log file (/var/log/auth.log)
-    "systemd-journal"       search systemd journal (systemd-python required)
+    "systemd-journal"       search systemd journal. Optionally specify
+                            `systemd-journal[journalflags=X]` to determine
+                            which journals are used (systemd-python required)
 
 REGEX:
     string                  a string representing a 'failregex'
