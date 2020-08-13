@@ -1606,7 +1606,7 @@ class GetFailures(LogCaptureTestCase):
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailures03(self):
-		output = ('203.162.223.135', 7, 1124013544.0)
+		output = ('203.162.223.135', 9, 1124013600.0)
 
 		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=0)
 		self.filter.addFailRegex(r"error,relay=<HOST>,.*550 User unknown")
@@ -1615,7 +1615,7 @@ class GetFailures(LogCaptureTestCase):
 
 	def testGetFailures03_Seek1(self):
 		# same test as above but with seek to 'Aug 14 11:55:04' - so other output ...
-		output = ('203.162.223.135', 5, 1124013544.0)
+		output = ('203.162.223.135', 3, 1124013600.0)
 
 		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=output[2] - 4*60)
 		self.filter.addFailRegex(r"error,relay=<HOST>,.*550 User unknown")
@@ -1624,7 +1624,7 @@ class GetFailures(LogCaptureTestCase):
 
 	def testGetFailures03_Seek2(self):
 		# same test as above but with seek to 'Aug 14 11:59:04' - so other output ...
-		output = ('203.162.223.135', 1, 1124013544.0)
+		output = ('203.162.223.135', 2, 1124013600.0)
 		self.filter.setMaxRetry(1)
 
 		self.filter.addLogPath(GetFailures.FILENAME_03, autoSeek=output[2])
@@ -1652,6 +1652,7 @@ class GetFailures(LogCaptureTestCase):
 		_assert_correct_last_attempt(self, self.filter, output)
 
 	def testGetFailuresWrongChar(self):
+		self.filter.checkFindTime = False
 		# write wrong utf-8 char:
 		fname = tempfile.mktemp(prefix='tmp_fail2ban', suffix='crlf')
 		fout = fopen(fname, 'wb')
@@ -1672,6 +1673,7 @@ class GetFailures(LogCaptureTestCase):
 			for enc in (None, 'utf-8', 'ascii'):
 				if enc is not None:
 					self.tearDown();self.setUp();
+					self.filter.checkFindTime = False;
 					self.filter.setLogEncoding(enc);
 				# speedup search using exact date pattern:
 				self.filter.setDatePattern(r'^%ExY-%Exm-%Exd %ExH:%ExM:%ExS')

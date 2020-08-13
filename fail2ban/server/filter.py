@@ -633,6 +633,9 @@ class Filter(JailThread):
 				fail = element[3]
 				logSys.debug("Processing line with time:%s and ip:%s", 
 						unixTime, ip)
+				# ensure the time is not in the future, e. g. by some estimated (assumed) time:
+				if self.checkFindTime and unixTime > MyTime.time():
+					unixTime = MyTime.time()
 				tick = FailTicket(ip, unixTime, data=fail)
 				if self._inIgnoreIPList(ip, tick):
 					continue
@@ -936,7 +939,7 @@ class FileFilter(Filter):
 					log.setPos(lastpos)
 			self.__logs[path] = log
 			logSys.info("Added logfile: %r (pos = %s, hash = %s)" , path, log.getPos(), log.getHash())
-			if autoSeek:
+			if autoSeek and not tail:
 				self.__autoSeek[path] = autoSeek
 			self._addLogPath(path)			# backend specific
 
@@ -1206,7 +1209,7 @@ except ImportError: # pragma: no cover
 
 class FileContainer:
 
-	def __init__(self, filename, encoding, tail = False):
+	def __init__(self, filename, encoding, tail=False):
 		self.__filename = filename
 		self.setEncoding(encoding)
 		self.__tail = tail
