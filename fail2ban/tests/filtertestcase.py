@@ -394,12 +394,13 @@ class IgnoreIP(LogCaptureTestCase):
 		finally:
 			tearDownMyTime()
 
-	def testTimeJump(self):
+	def _testTimeJump(self, inOperation=False):
 		try:
 			self.filter.addFailRegex('^<HOST>')
 			self.filter.setDatePattern(r'{^LN-BEG}%Y-%m-%d %H:%M:%S(?:\s*%Z)?\s')
 			self.filter.setFindTime(10); # max 10 seconds back
 			self.filter.setMaxRetry(5); # don't ban here
+			self.filter.inOperation = inOperation
 			#
 			self.pruneLog('[phase 1] DST time jump')
 			# check local time jump (DST hole):
@@ -428,6 +429,47 @@ class IgnoreIP(LogCaptureTestCase):
 				'192.0.2.6:1', '192.0.2.6:2', '192.0.2.6:3', '192.0.2.6:4', 
 				"Total # of detected failures: 7.", all=True, wait=True)
 			self.assertNotLogged('Ignore line')
+		finally:
+			tearDownMyTime()
+	def testTimeJump(self):
+		self._testTimeJump(inOperation=False)
+	def testTimeJump_InOperation(self):
+		self._testTimeJump(inOperation=True)
+
+	def testWrongTimeZone(self):
+		try:
+			self.filter.addFailRegex('fail from <ADDR>$')
+			self.filter.setDatePattern(r'{^LN-BEG}%Y-%m-%d %H:%M:%S(?:\s*%Z)?\s')
+			self.filter.setMaxRetry(5); # don't ban here
+			self.filter.inOperation = True; # real processing (all messages are new)
+			# current time is 1h later than log-entries:
+			MyTime.setTime(1572138000+3600)
+			#
+			self.pruneLog("[phase 1] simulate wrong TZ")
+			for i in (1,2,3):
+				self.filter.processLineAndAdd('2019-10-27 02:00:00 fail from 192.0.2.15'); # +3 = 3
+			self.assertLogged(
+				"Simulate NOW in operation since found time has too large deviation",
+				"Please check jail has possibly a timezone issue.",
+				"192.0.2.15:1", "192.0.2.15:2", "192.0.2.15:3",
+				"Total # of detected failures: 3.", wait=True)
+			#
+			self.pruneLog("[phase 2] wrong TZ given in log")
+			for i in (1,2,3):
+				self.filter.processLineAndAdd('2019-10-27 04:00:00 GMT fail from 192.0.2.16'); # +3 = 6
+			self.assertLogged(
+				"192.0.2.16:1", "192.0.2.16:2", "192.0.2.16:3",
+				"Total # of detected failures: 6.", all=True, wait=True)
+			self.assertNotLogged("Found a match but no valid date/time found")
+			#
+			self.pruneLog("[phase 3] other timestamp (don't match datepattern), regex matches")
+			for i in range(3):
+				self.filter.processLineAndAdd('27.10.2019 04:00:00 fail from 192.0.2.17'); # +3 = 9
+			self.assertLogged(
+				"Found a match but no valid date/time found",
+				"Match without a timestamp:",
+				"192.0.2.17:1", "192.0.2.17:2", "192.0.2.17:3",
+				"Total # of detected failures: 9.", all=True, wait=True)
 		finally:
 			tearDownMyTime()
 

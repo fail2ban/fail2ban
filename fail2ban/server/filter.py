@@ -651,6 +651,7 @@ class Filter(JailThread):
 			else:
 				# in initialization (restore) phase, if too old - ignore:
 				if date is not None and date < MyTime.time() - self.getFindTime():
+					print('**********')
 					# log time zone issue as warning once per day:
 					self._logWarnOnce("_next_ignByTimeWarn",
 						("Ignore line since time %s < %s - %s",
@@ -860,12 +861,8 @@ class Filter(JailThread):
 					self._logWarnOnce("_next_noTimeWarn",
 						("Found a match but no valid date/time found for %r.", tupleLine[1]),
 						("Match without a timestamp: %s", "\n".join(failRegex.getMatchedLines())),
-						("Please try setting a custom "
-						"date pattern (see man page jail.conf(5)). "
-						"If format is complex, please "
-						"file a detailed issue on"
-						" https://github.com/fail2ban/fail2ban/issues "
-						"in order to get support for this format.",))
+						("Please try setting a custom date pattern (see man page jail.conf(5)).",)
+					)
 					if date is None and self.checkFindTime: continue
 				# we should check all regex (bypass on multi-line, otherwise too complex):
 				if not self.checkAllRegex or self.__lineBufferSize > 1:
