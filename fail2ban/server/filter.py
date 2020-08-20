@@ -625,6 +625,11 @@ class Filter(JailThread):
 						self.__lastDate = date
 					else:
 						logSys.error("findFailure failed to parse timeText: %s", m)
+				else:
+					# matched empty value - date is optional or not available - set it to now:
+					date = MyTime.time()
+					self.__lastTimeText = ""
+					self.__lastDate = date
 			else:
 				tupleLine = ("", "", line)
 			# still no date - try to use last known:
@@ -651,7 +656,6 @@ class Filter(JailThread):
 			else:
 				# in initialization (restore) phase, if too old - ignore:
 				if date is not None and date < MyTime.time() - self.getFindTime():
-					print('**********')
 					# log time zone issue as warning once per day:
 					self._logWarnOnce("_next_ignByTimeWarn",
 						("Ignore line since time %s < %s - %s",

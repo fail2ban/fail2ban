@@ -81,6 +81,7 @@ def _test_exec_command_line(*args):
 	return _exit_code
 
 STR_00 = "Dec 31 11:59:59 [sshd] error: PAM: Authentication failure for kevin from 192.0.2.0"
+STR_00_NODT = "[sshd] error: PAM: Authentication failure for kevin from 192.0.2.0"
 
 RE_00 = r"(?:(?:Authentication failure|Failed [-/\w+]+) for(?: [iI](?:llegal|nvalid) user)?|[Ii](?:llegal|nvalid) user|ROOT LOGIN REFUSED) .*(?: from|FROM) <HOST>"
 RE_00_ID = r"Authentication failure for <F-ID>.*?</F-ID> from <ADDR>$"
@@ -359,6 +360,24 @@ class Fail2banRegexTest(LogCaptureTestCase):
 		# complex substitution using tags (ip, user, family):
 		self.assertTrue(_test_exec('-o', '<ip>, <F-USER>, <family>', STR_00, RE_00_USER))
 		self.assertLogged('192.0.2.0, kevin, inet4')
+		self.pruneLog()
+
+	def testNoDateTime(self):
+		# datepattern doesn't match:
+		self.assertTrue(_test_exec('-d', '{^LN-BEG}EPOCH', '-o', 'Found-ID:<F-ID>', STR_00_NODT, RE_00_ID))
+		self.assertLogged(
+			"Found a match but no valid date/time found",
+			"Match without a timestamp:",
+			"Found-ID:kevin", all=True)
+		self.pruneLog()
+		# explicitly no datepattern:
+		self.assertTrue(_test_exec('-d', '{NONE}', '-o', 'Found-ID:<F-ID>', STR_00_NODT, RE_00_ID))
+		self.assertLogged(
+			"Found-ID:kevin", all=True)
+		self.assertNotLogged(
+			"Found a match but no valid date/time found",
+			"Match without a timestamp:", all=True)
+
 		self.pruneLog()
 
 	def testFrmtOutputWrapML(self):
